@@ -1,0 +1,12 @@
+module {!pack!} {
+    export class {!className!} extends {!classType!} {
+{!vars!}
+        public static  uiView:any ={!uiObj!};
+        constructor(){ super()}
+        createChildren():void {
+        {!viewClassMap!}
+            super.createChildren();
+            this.createView({!pack!}.{!className!}.uiView);
+        }
+    }
+}
