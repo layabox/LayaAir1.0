@@ -1,0 +1,2 @@
+var CLASS$=Laya.class;
+var STATICATTR$=Laya.static;
