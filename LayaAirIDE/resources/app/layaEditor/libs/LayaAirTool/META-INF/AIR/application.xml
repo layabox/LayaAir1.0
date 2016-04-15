@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<application xmlns="http://ns.adobe.com/air/application/18.0">
+  <id>LayaAirTool</id>
+  <versionNumber>1.0</versionNumber>
+  <filename>LayaAirTool</filename>
+  <name>LayaAirTool</name>
+  <initialWindow>
+    <title>LayaAir</title>
+    <content>LayaAirTool.swf</content>
+    <systemChrome>none</systemChrome>
+    <transparent>true</transparent>
+    <minimizable>false</minimizable>
+    <maximizable>false</maximizable>
+    <resizable>false</resizable>
+    <visible>true</visible>
+  </initialWindow>
+  <!-- 
+	More options:
+	http://livedocs.adobe.com/flex/3/html/File_formats_1.html#1043413
+	-->
+  <supportedProfiles>extendedDesktop desktop</supportedProfiles>
+  <icon>
+    <image16x16>icons/Laya16.png</image16x16>
+    <image32x32>icons/Laya32.png</image32x32>
+    <image36x36>icons/Laya36.png</image36x36>
+    <image48x48>icons/Laya48.png</image48x48>
+    <image57x57>icons/Laya57.png</image57x57>
+    <image72x72>icons/Laya72.png</image72x72>
+    <image114x114>icons/Laya114.png</image114x114>
+    <image128x128>icons/Laya128.png</image128x128>
+  </icon>
+  <android>
+    <manifestAdditions><![CDATA[<manifest android:installLocation="auto" xmlns:android="http://schemas.android.com/apk/res/android" />]]></manifestAdditions>
+  </android>
+  <copyright>LayaBox</copyright>
+</application>
