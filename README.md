@@ -50,6 +50,7 @@ LayaAir设计之初便以性能为最高优先级，引擎优先使用webgl渲�
 ####TS版本
     /// <reference path="../../libs/LayaAir.d.ts" />
    class Sprite_DisplayImage{
+   
     constructor(){
     
         Laya.init(550, 400);
@@ -59,7 +60,9 @@ LayaAir设计之初便以性能为最高优先级，引擎优先使用webgl渲�
         var ape:laya.display.Sprite = new laya.display.Sprite();
         //加载猩猩图片
         ape.loadImage("res/apes/monkey2.png", 220, 128);
+        
         Laya.stage.addChild(ape);
+        
       }
   }
   
