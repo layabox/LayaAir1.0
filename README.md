@@ -3,13 +3,13 @@
 ##LayaAir特点
 
 ####多语言支持
-同时支持AS3、TypeScript、JavaScript三种语言开发HTML5
+同时支持ActionScript3、TypeScript、JavaScript三种语言开发HTML5
 ####极致性能
 LayaAir设计之初便以性能为最高优先级，引擎优先使用webgl渲染，如果webgl不可用，转为canvas渲染，LayaAir唯一拥有大型游戏线上产品（裸跑）案例的HTML5引擎
 ####功能强大
-同时支持2D，3D，VR、时间轴动画、UI、粒子、骨骼、物理等
+同时支持2D，3D，VR、时间轴动画、UI系统、粒子动画、骨骼动画、物理系统等
 ####轻量易用
-引擎本身非常注意引擎本身的大小，是目前最小的HTML5引擎，API设计上追求简单易用
+引擎本身非常注意引擎本身的大小，是目前最小的HTML5引擎，API设计上追求简单易用，上手容易
 ####提供可视化辅助开发工具
 引擎提供可视化编辑器工具，让美术，策划，程序紧密配合，提高开发效率
 
@@ -63,6 +63,9 @@ LayaAir设计之初便以性能为最高优先级，引擎优先使用webgl渲�
 ##Demo演示
 
 http://layaair.ldc.layabox.com/demo/
+
+##基于LayaAir开发的游戏
+http://game.layabox.com/265
 
 ##API帮助
 
