@@ -1,4 +1,4 @@
-#LayaAir是HTML5开源引擎，支持2D，3D、时间轴动画、UI、粒子、骨骼、物理等，提供可视化编辑器，能够用来开发跨平台应用，开源免费。
+##LayaAir是HTML5开源引擎，支持2D，3D、时间轴动画、UI、粒子、骨骼、物理等，提供可视化编辑器，能够用来开发跨平台应用，开源免费。
 
 ##LayaAir特点
 
@@ -14,7 +14,7 @@ LayaAir设计之初便以性能为最高优先级，引擎优先使用webgl渲�
 
 
 
-##使用
+##开始使用
 ####JS版本
     Laya.init(550, 400);
     Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
@@ -24,26 +24,27 @@ LayaAir设计之初便以性能为最高优先级，引擎优先使用webgl渲�
     ape.loadImage("res/apes/monkey2.png", 220, 128);
     
     Laya.stage.addChild(ape);
+    
 ####AS版本
     package
     {
-    	import laya.display.Sprite;
-    	import laya.display.Stage;
+        import laya.display.Sprite;
+        import laya.display.Stage;
     	
-      public class Sprite_DisplayImage
-      {
-          public function Sprite_DisplayImage()
-          {
-              Laya.init(550, 400);
-  		      	Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
-               
-              var ape:Sprite = new Sprite();
-              //加载猩猩图片
-              ape.loadImage("res/apes/monkey2.png", 220, 128);
-               
-              Laya.stage.addChild(ape);
-          }
-      }
+        public class Sprite_DisplayImage
+        {
+            public function Sprite_DisplayImage()
+            {
+                Laya.init(550, 400);
+      		    Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
+                   
+                var ape:Sprite = new Sprite();
+                //加载猩猩图片
+                ape.loadImage("res/apes/monkey2.png", 220, 128);
+                   
+                Laya.stage.addChild(ape);
+            }
+        }
     }
 ####TS版本
     /// <reference path="../../libs/LayaAir.d.ts" />
