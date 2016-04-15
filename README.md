@@ -59,6 +59,23 @@ LayaAir设计之初便以性能为最高优先级，引擎优先使用webgl渲�
     Laya.stage.addChild(ape);
 
 
+
+##Demo演示
+
+http://layaair.ldc.layabox.com/demo/
+
+##API帮助
+
+http://layaair.ldc.layabox.com/api/
+
+##开发者中心
+
+http://ldc.layabox.com/
+
+##社区
+
+http://ask.layabox.com/
+
 ##文件结构
 LayaAirAS3 Actionscript3版本引擎库及示例教程
 
@@ -69,12 +86,3 @@ LayaAirTS Typesprite版本引擎库及示例教程
 LayaAirIDE LayaAir编辑器Win版本
 
 LayaAirIDEMac LayaAir编辑器Mac版本
-
-##辅助帮助
-API帮助网址
-
-http://layaair.ldc.layabox.com/api/
-
-Demo演示网址
-
-http://layaair.ldc.layabox.com/demo/
