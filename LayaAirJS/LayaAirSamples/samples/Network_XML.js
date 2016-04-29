@@ -1,4 +1,4 @@
-var Utils = laya.utils.Utils;
+var Utils = Laya.Utils;
 
 Laya.init(100, 100);
 

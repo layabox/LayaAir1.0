@@ -6,11 +6,11 @@ var X_OFFSET = 100;
 var Y_OFFSET = 50;
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
 var skins = ["res/ui/checkbox (1).png", "res/ui/checkbox (2).png", "res/ui/checkbox (3).png", "res/ui/checkbox (4).png", "res/ui/checkbox (5).png", "res/ui/checkbox (6).png"];
 
-Laya.loader.load(skins, laya.utils.Handler.create(this,onCheckBoxSkinLoaded));
+Laya.loader.load(skins, Laya.Handler.create(this,onCheckBoxSkinLoaded));
 
 function onCheckBoxSkinLoaded() 
 {
@@ -38,7 +38,7 @@ function onCheckBoxSkinLoaded()
 
 function createCheckBox(skin)
 {
-	var cb = new laya.ui.CheckBox(skin);
+	var cb = new Laya.CheckBox(skin);
 	Laya.stage.addChild(cb);
 
 	cb.labelColors = "white";

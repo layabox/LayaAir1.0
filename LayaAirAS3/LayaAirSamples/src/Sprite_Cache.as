@@ -19,7 +19,7 @@ package
 			
 			// 5000个随机摆放的文本
 			var text:Text;
-			for (var i:int = 0; i < 5000; i++)
+			for (var i:int = 0; i < 1000; i++)
 			{
 				text = new Text();
 				text.text = (Math.random() * 100).toFixed(0);

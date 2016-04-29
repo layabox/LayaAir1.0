@@ -1,15 +1,15 @@
 var sp;
 
-Laya.init(laya.utils.Browser.width, laya.utils.Browser.height, laya.webgl.WebGL);
+Laya.init(Laya.Browser.width, Laya.Browser.height, Laya.WebGL);
 Laya.stage.bgColor = "#000000"
-Laya.stage.sizeMode = laya.display.Stage.SIZE_FULL;
-Laya.stage.on(laya.events.Event.RESIZE, this, this.onResize);
-laya.utils.Stat.show();
+Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
+Laya.stage.on(Laya.Event.RESIZE, this, this.onResize);
+Laya.Stat.show();
 this.loadParticleFile("res/particles/particleNew.json");
 
 function loadParticleFile(fileName)
 {
-	Laya.loader.load(fileName, laya.utils.Handler.create(this, this.test));
+	Laya.loader.load(fileName, Laya.Handler.create(this, this.test));
 }
 
 function test(settings)
@@ -19,7 +19,7 @@ function test(settings)
 		this.sp.stop();
 		this.sp.removeSelf();
 	}
-	this.sp = new laya.particle.Particle2D(settings);
+	this.sp = new Laya.Particle2D(settings);
 	this.sp.emitter.start();
 	this.sp.play();
 	onResize(null);

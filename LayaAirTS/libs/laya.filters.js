@@ -2,11 +2,12 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Browser=laya.utils.Browser,ColorFilterAction=laya.filters.ColorFilterAction,Sprite=laya.display.Sprite;
-	var Filter=laya.filters.Filter,Matrix=laya.maths.Matrix,Rectangle=laya.maths.Rectangle,Point=laya.maths.Point;
-	var Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
-	var System=laya.system.System,ColorFilterActionGL=laya.filters.webgl.ColorFilterActionGL,RenderTarget2D=laya.webgl.resource.RenderTarget2D;
-	var Color=laya.utils.Color,Texture=laya.resource.Texture,FilterActionGL=laya.filters.webgl.FilterActionGL;
+	var Sprite=laya.display.Sprite,System=laya.system.System,Rectangle=laya.maths.Rectangle,RenderContext=laya.renders.RenderContext;
+	var Filter=laya.filters.Filter,Render=laya.renders.Render,Color=laya.utils.Color,Matrix=laya.maths.Matrix;
+	var Texture=laya.resource.Texture,Browser=laya.utils.Browser,FilterActionGL=laya.filters.webgl.FilterActionGL;
+	var Value2D=laya.webgl.shader.d2.value.Value2D,ShaderDefines2D=laya.webgl.shader.d2.ShaderDefines2D,SubmitCMD=laya.webgl.submit.SubmitCMD;
+	var BlendMode=laya.webgl.canvas.BlendMode,RenderTarget2D=laya.webgl.resource.RenderTarget2D,ColorFilterAction=laya.filters.ColorFilterAction;
+	var Point=laya.maths.Point,RenderSprite=laya.renders.RenderSprite,ColorFilterActionGL=laya.filters.webgl.ColorFilterActionGL;
 	//class laya.filters.GlowFilterAction
 	var GlowFilterAction=(function(){
 		function GlowFilterAction(){
@@ -63,28 +64,6 @@
 					}
 				return action;
 			}
-			Filter._filterStart=function (scope,sprite,context,x,y){
-				var b=scope.getValue("bounds");
-				var source=RenderTarget2D.create(b.width+20,b.height+20);
-				source.start();
-				scope.addValue("src",source);
-			}
-			Filter._filterEnd=function (scope,sprite,context,x,y){
-				var b=scope.getValue("bounds");
-				var source=scope.getValue("src");
-				source.end();
-				var out=RenderTarget2D.create(b.width+20,b.height+20);
-				out.start();
-				scope.addValue("out",out);
-				sprite._filterCache=out;
-			}
-			Filter._EndTarget=function (scope){
-				var out=scope.getValue("out");
-				out.end();
-			}
-			Filter._recycleScope=function (scope){
-				scope.recycle();
-			}
 		}
 
 		WebGLFilter.isInit=false;
@@ -123,6 +102,7 @@
 			//this._blurY=0;
 			//this.strength=NaN;
 			(strength===void 0)&& (strength=4);
+			WebGLFilter.enable();
 			BlurFilter.__super.call(this);
 			this.strength=strength;
 			this._action=System.createFilterAction(0x10);
@@ -170,7 +150,14 @@
 
 		__class(GlowFilter,'laya.filters.GlowFilter',_super);
 		var __proto=GlowFilter.prototype;
-		__getset(0,__proto,'type',function(){return 0});
+		__getset(0,__proto,'type',function(){
+			return 0x08;
+		});
+
+		__getset(0,__proto,'action',function(){
+			return this._action;
+		});
+
 		__getset(0,__proto,'offX',function(){
 			return this.elements[5];
 			},function(value){
@@ -214,7 +201,20 @@
 		}
 
 		// shader.u_texH=data.elements[8];
-		__proto.apply3d=function(scope,sprite,context,x,y){}
+		__proto.apply3d=function(scope,sprite,context,x,y){
+			var b=scope.getValue("bounds");
+			var shaderValue=Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.TEXTURE2D*/0x01,0);
+			shaderValue.setFilters([this.data]);
+			var tMatrix=Matrix.EMPTY;
+			tMatrix.identity();
+			context.ctx.drawTarget(scope,0,0,b.width,b.height,Matrix.EMPTY,"src",shaderValue);
+			shaderValue.setFilters(null);
+		}
+
+		__proto.setValue=function(shader){
+			shader.strength=this.data.strength;
+		}
+
 		__getset(0,__proto,'typeMix',function(){return /*laya.filters.Filter.BLUR*/0x10;});
 		return BlurFilterActionGL;
 	})(FilterActionGL)
@@ -223,8 +223,11 @@
 	//class laya.filters.webgl.GlowFilterActionGL extends laya.filters.webgl.FilterActionGL
 	var GlowFilterActionGL=(function(_super){
 		function GlowFilterActionGL(){
+			this.data=null;
+			this._initKey=false;
+			this._textureWidth=0;
+			this._textureHeight=0;
 			GlowFilterActionGL.__super.call(this);
-			this.data
 		}
 
 		__class(GlowFilterActionGL,'laya.filters.webgl.GlowFilterActionGL',_super);
@@ -232,7 +235,43 @@
 		Laya.imps(__proto,{"laya.filters.IFilterActionGL":true})
 		__proto.setValueMix=function(shader){}
 		__proto.apply3d=function(scope,sprite,context,x,y){
+			var b=scope.getValue("bounds");
+			var w=b.width,h=b.height;
+			this._textureWidth=w;
+			this._textureHeight=h;
+			var submit=SubmitCMD.create([scope,sprite,context,0,0],GlowFilterActionGL.tmpTarget);
+			context.ctx.addRenderObject(submit);
+			var shaderValue;
+			var mat=Matrix.TEMP;
+			mat.identity();
+			shaderValue=Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.TEXTURE2D*/0x01,0);
+			shaderValue.setFilters([this.data]);
+			context.ctx.drawTarget(scope,0,0,this._textureWidth,this._textureHeight,mat,"src",shaderValue,null,BlendMode.TOINT.overlay);
+			submit=SubmitCMD.create([scope,sprite,context,0,0],GlowFilterActionGL.startOut);
+			context.ctx.addRenderObject(submit);
+			shaderValue=Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.TEXTURE2D*/0x01,0);
+			context.ctx.drawTarget(scope,0,0,this._textureWidth,this._textureHeight,mat,"tmpTarget",shaderValue,Texture.INV_UV,BlendMode.TOINT.overlay);
+			shaderValue=Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.TEXTURE2D*/0x01,0);
+			context.ctx.drawTarget(scope,0,0,this._textureWidth,this._textureHeight,mat,"src",shaderValue);
+			submit=SubmitCMD.create([scope,sprite,context,0,0],GlowFilterActionGL.recycleTarget);
+			context.ctx.addRenderObject(submit);
 			return null;
+		}
+
+		__proto.setSpriteWH=function(sprite){
+			this._textureWidth=sprite.width;
+			this._textureHeight=sprite.height;
+		}
+
+		__proto.setValue=function(shader){
+			shader.u_offsetX=this.data.offX;
+			shader.u_offsetY=-this.data.offY;
+			shader.u_strength=1.0;
+			shader.u_blurX=this.data.blur;
+			shader.u_blurY=this.data.blur;
+			shader.u_textW=this._textureWidth;
+			shader.u_textH=this._textureHeight;
+			shader.u_color=this.data._color._color;
 		}
 
 		__getset(0,__proto,'typeMix',function(){return /*laya.filters.Filter.GLOW*/0x08;});
@@ -240,8 +279,9 @@
 			var b=scope.getValue("bounds");
 			var out=scope.getValue("out");
 			out.end();
-			var tmpTarget=RenderTarget2D.create(b.width+20,b.height+20);
+			var tmpTarget=RenderTarget2D.create(b.width,b.height);
 			tmpTarget.start();
+			tmpTarget.clear(0,0,0,0);
 			scope.addValue("tmpTarget",tmpTarget);
 		}
 
@@ -250,15 +290,13 @@
 			tmpTarget.end();
 			var out=scope.getValue("out");
 			out.start();
+			out.clear(0,0,0,0);
 		}
 
 		GlowFilterActionGL.recycleTarget=function(scope,sprite,context,x,y){
 			var src=scope.getValue("src");
-			src.recycle();
-			src.destroy();
 			var tmpTarget=scope.getValue("tmpTarget");
 			tmpTarget.recycle();
-			tmpTarget.destroy();
 		}
 
 		return GlowFilterActionGL;

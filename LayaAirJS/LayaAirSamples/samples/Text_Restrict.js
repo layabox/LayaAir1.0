@@ -17,7 +17,7 @@ input.restrict = "^\\x00-\\xFF";
 
 function createLabel(text)
 {
-	var label = new laya.display.Text();
+	var label = new Laya.Text();
 	label.text = text;
 	label.color = "white";
 	label.fontSize = 20;
@@ -27,7 +27,7 @@ function createLabel(text)
 
 function createInput()
 {
-	var input = new laya.display.Input();
+	var input = new Laya.Input();
 	input.size(200, 30);
 
 	input.borderColor = "#FFFF00";

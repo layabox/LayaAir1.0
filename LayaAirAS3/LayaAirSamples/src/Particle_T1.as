@@ -16,7 +16,7 @@ package
 		{
 			Laya.init(Browser.width, Browser.height, WebGL);
 			Laya.stage.bgColor="#000000"
-			Laya.stage.sizeMode=Stage.SIZE_FULL;
+			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.on(Event.RESIZE, this, this.onResize);
 			Stat.show();
 			this.loadParticleFile("res/particles/GravityMode.json");
@@ -35,7 +35,7 @@ package
 				this.sp.removeSelf();
 			}
 			this.sp=new Particle2D(settings);
-			this.sp.emitter.start();
+			this.sp.emitter.start(); 	
 			this.sp.play();
 			onResize(null);
 			Laya.stage.addChild(this.sp);

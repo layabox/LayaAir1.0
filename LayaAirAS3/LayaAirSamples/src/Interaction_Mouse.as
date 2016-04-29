@@ -97,6 +97,7 @@ package
 		{
 			txt = new Text();
 			
+			txt.overflow = Text.SCROLL;
 			txt.text = "请把鼠标移到到矩形方块,左右键操作触发相应事件\n";
 			txt.size(550, 300);
 			txt.pos(10, 50);

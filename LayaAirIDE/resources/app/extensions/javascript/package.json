@@ -1,0 +1,90 @@
+{
+	"name": "javascript",
+	"version": "0.1.0",
+	"publisher": "vscode",
+	"engines": {
+		"vscode": "*"
+	},
+	"contributes": {
+		"languages": [
+			{
+				"id": "javascriptreact",
+				"aliases": [
+					"JavaScript React",
+					"jsx"
+				],
+				"extensions": [
+					".jsx"
+				],
+				"configuration": "./javascript.configuration.json"
+			},
+			{
+				"id": "javascript",
+				"aliases": [
+					"JavaScript",
+					"javascript",
+					"js"
+				],
+				"extensions": [
+					".js",
+					".es6"
+				],
+				"filenames": [
+					"jakefile"
+				],
+				"firstLine": "^#!.*\\bnode",
+				"mimetypes": [
+					"text/javascript"
+				]
+			}
+		],
+		"grammars": [
+			{
+				"language": "javascriptreact",
+				"scopeName": "source.js",
+				"path": "./syntaxes/JavaScript.tmLanguage"
+			},
+			{
+				"language": "javascript",
+				"scopeName": "source.js",
+				"path": "./syntaxes/JavaScript.tmLanguage"
+			},
+			{
+				"scopeName": "source.js.regexp",
+				"path": "./syntaxes/Regular Expressions (JavaScript).tmLanguage"
+			}
+		],
+		"snippets": [
+			{
+				"language": "javascript",
+				"path": "./snippets/javascript.json"
+			},
+			{
+				"language": "javascriptreact",
+				"path": "./snippets/javascriptreact.json"
+			}
+		],
+		"jsonValidation": [
+			{
+				"fileMatch": "package.json",
+				"url": "http://json.schemastore.org/package"
+			},
+			{
+				"fileMatch": "bower.json",
+				"url": "http://json.schemastore.org/bower"
+			},
+			{
+				"fileMatch": ".bower.json",
+				"url": "http://json.schemastore.org/bower"
+			},
+			{
+				"fileMatch": ".bowerrc",
+				"url": "http://json.schemastore.org/bowerrc"
+			},
+			{
+				"fileMatch": "jsconfig.json",
+				"url": "./schemas/jsconfig.schema.json"
+			}
+		]
+	}
+}

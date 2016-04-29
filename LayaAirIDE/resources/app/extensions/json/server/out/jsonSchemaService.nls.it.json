@@ -1,0 +1,7 @@
+[
+	"Non è possibile caricare lo schema da '{0}': il contenuto non è disponibile.",
+	"Non è possibile analizzare il contenuto da '{0}': {1}.",
+	"Non è possibile caricare lo schema da '{0}': {1}",
+	"Non è possibile risolvere $ref '{0}' in {1}.",
+	"Si sono verificati problemi durante il caricamento del riferimento '{0}': {1}"
+]

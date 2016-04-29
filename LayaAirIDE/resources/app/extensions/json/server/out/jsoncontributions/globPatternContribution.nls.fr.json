@@ -1,0 +1,20 @@
+[
+	"Fichiers par extension",
+	"Faites correspondre tous les fichiers ayant une extension de fichier spécifique.",
+	"Fichiers avec plusieurs extensions",
+	"Faites correspondre tous les fichiers, indépendamment de leurs extensions.",
+	"Fichiers avec frères par nom",
+	"Faites correspondre les fichiers ayant des frères portant le même nom, mais avec une extension distincte.",
+	"Dossier par nom (premier niveau)",
+	"Faites correspondre un dossier de premier niveau portant un nom spécifique.",
+	"Dossiers avec plusieurs noms (premier niveau)",
+	"Faites correspondre plusieurs dossiers de premier niveau.",
+	"Dossier par nom (tous les emplacements)",
+	"Faites correspondre un dossier portant un nom spécifique, indépendamment de son emplacement.",
+	"Vrai",
+	"Activez le modèle.",
+	"Faux",
+	"Désactivez le modèle.",
+	"Fichiers avec frères par nom",
+	"Faites correspondre les fichiers ayant des frères portant le même nom, mais avec une extension distincte."
+]

@@ -6,10 +6,10 @@ var Y_OFFSET = 20;
 var skins;
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
 skins = ["res/ui/input (1).png", "res/ui/input (2).png", "res/ui/input (3).png", "res/ui/input (4).png"];
-Laya.loader.load(skins, laya.utils.Handler.create(this, onLoadComplete));//加载资源。
+Laya.loader.load(skins, Laya.Handler.create(this, onLoadComplete));//加载资源。
  
 function onLoadComplete()
 {
@@ -23,7 +23,7 @@ function onLoadComplete()
 
 function createInput(skin)
 {
-	var ti = new laya.ui.TextInput();
+	var ti = new Laya.TextInput();
 	
 	ti.inputElementXAdjuster = -1;
 	ti.inputElementYAdjuster = 1;

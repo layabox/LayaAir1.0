@@ -1,0 +1,6 @@
+/*---------------------------------------------------------------------------------------------
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for license information.
+ *---------------------------------------------------------------------------------------------*/
+define("vs/workbench/parts/debug/browser/repl.nls.ru",{"vs/workbench/parts/debug/browser/repl":["Панель цикла чтение-вычисление-печать"],"vs/workbench/parts/debug/browser/replViewer":["Состояние объекта записывается после первого вычисления","Щелкните, чтобы отслеживать (чтобы открыть сбоку экрана, щелкните, удерживая клавишу CMD)","Щелкните, чтобы отслеживать (чтобы открыть сбоку экрана, щелкните, удерживая клавишу CTRL)","Переменная {0} имеет значение {1}, цикл чтение-вычисление-печать, отладка","Выражение {0} имеет значение {1}, цикл чтение-вычисление-печать, отладка","{0}, цикл чтение-вычисление-печать, отладка","Выходная переменная {0} имеет значение {1}, цикл чтение-вычисление-печать, отладка"]});
+//# sourceMappingURL=https://ticino.blob.core.windows.net/sourcemaps/fa6d0f03813dfb9df4589c30121e9fcffa8a8ec8/vs\workbench\parts\debug\browser\repl.nls.ru.js.map

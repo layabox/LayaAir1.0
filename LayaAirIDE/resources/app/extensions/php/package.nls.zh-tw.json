@@ -1,0 +1,6 @@
+{
+	"configuration.validate.enable": "是否啟用 PHP 驗證。",
+	"configuration.validate.executablePath": "指向 PHP 可執行檔。",
+	"configuration.validate.run": "是否在儲存或輸入時執行 linter。",
+	"configuration.title": "PHP 設定選項"
+}

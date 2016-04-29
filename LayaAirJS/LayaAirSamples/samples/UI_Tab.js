@@ -1,10 +1,10 @@
 var skins = ["res/ui/tab1.png", "res/ui/tab2.png"];
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
 Laya.stage.bgColor = "#3d3d3d";
-Laya.loader.load(skins, laya.utils.Handler.create(this, onSkinLoaded));
+Laya.loader.load(skins, Laya.Handler.create(this, onSkinLoaded));
 
 function onSkinLoaded()
 {
@@ -19,7 +19,7 @@ function onSkinLoaded()
 
 function createTab(skin)
 {
-	var tab = new laya.ui.Tab();
+	var tab = new Laya.Tab();
 	tab.skin = skin;
 	
 	tab.labelBold = true;
@@ -33,7 +33,7 @@ function createTab(skin)
 	tab.selectedIndex = 1;
 
 	onSelect(tab.selectedIndex);
-	tab.selectHandler = new laya.utils.Handler(this, onSelect);
+	tab.selectHandler = new Laya.Handler(this, onSelect);
 	
 	Laya.stage.addChild(tab);
 	

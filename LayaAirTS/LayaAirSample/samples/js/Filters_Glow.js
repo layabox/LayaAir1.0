@@ -5,7 +5,7 @@ Laya.init(550, 400, laya.webgl.WebGL);
 Laya.loader.load("res/apes/monkey2.png", laya.utils.Handler.create(this, onAssetLoaded));
 function onAssetLoaded() {
     //创建一个发光滤镜
-    var glowFilter = new laya.filters.GlowFilter("#ffff00", 5, 10, 10);
+    var glowFilter = new laya.filters.GlowFilter("#ffff00", 20, 5, 5);
     var ape = new laya.display.Sprite();
     ape.pos(220, 120);
     ape.loadImage("res/apes/monkey2.png");

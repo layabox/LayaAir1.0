@@ -1,0 +1,9 @@
+precision mediump float;
+//precision mediump float;
+varying vec3 color;
+uniform float alpha;
+void main(){
+	//vec4 a=vec4(color.r, color.g, color.b, 1);
+	//a.a*=alpha;
+    gl_FragColor=vec4(color.r, color.g, color.b, alpha);
+}

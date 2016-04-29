@@ -1,0 +1,9 @@
+[
+	"Nel documento di indicizzazione NuGet manca il servizio {0}",
+	"project.json predefinito",
+	"{0} non è un documento JSON valido",
+	"La richiesta a {0} non è riuscita: {1}",
+	"La richiesta a {0} non è riuscita: {1}",
+	"{0}",
+	"Ultima versione: {0}"
+]

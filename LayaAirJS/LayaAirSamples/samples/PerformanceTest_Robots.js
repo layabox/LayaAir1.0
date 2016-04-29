@@ -5,21 +5,21 @@ var rowAmount = Math.ceil(robotAmount / colAmount);
 var textureWidth;
 var textureHeight;
 
-Laya.init(laya.utils.Browser.width, laya.utils.Browser.height, laya.webgl.WebGL);
+Laya.init(Laya.Browser.width, Laya.Browser.height, Laya.WebGL);
 Laya.stage.bgColor = "black";
 
-laya.utils.Stat.show();
+Laya.Stat.show();
 
 var assets = [];
-assets.push( { url:"res/robot/data.bin", type:laya.net.Loader.BUFFER } );
-assets.push( { url:"res/robot/texture.png", type:laya.net.Loader.IMAGE } );
-Laya.loader.load(assets, laya.utils.Handler.create(this, onAssetsLoaded));
+assets.push( { url:"res/robot/data.bin", type:Laya.Loader.BUFFER } );
+assets.push( { url:"res/robot/texture.png", type:Laya.Loader.IMAGE } );
+Laya.loader.load(assets, Laya.Handler.create(this, onAssetsLoaded));
 
 function onAssetsLoaded()
 {
-	var data = laya.net.Loader.getRes("res/robot/data.bin");
-	var img = laya.net.Loader.getRes("res/robot/texture.png");
-	var temp = new laya.ani.bone.Templet(data, img);
+	var data = Laya.Loader.getRes("res/robot/data.bin");
+	var img = Laya.Loader.getRes("res/robot/texture.png");
+	var temp = new Laya.Templet(data, img);
 	
 	textureWidth = temp.textureWidth;
 	textureHeight = temp.textureHeight;
@@ -43,7 +43,7 @@ function onAssetsLoaded()
 
 function createRobot(templet)
 {
-	var sk = new laya.ani.bone.Skeleton(templet);
+	var sk = new Laya.Skeleton(templet);
 	sk.pivot( -textureWidth, -textureHeight);
 	sk.scaleX = sk.scaleY = robotScale;
 	

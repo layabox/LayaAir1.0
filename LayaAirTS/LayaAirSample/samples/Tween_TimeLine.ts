@@ -4,6 +4,7 @@ module laya {
 	import Event = laya.events.Event;
 	import Keyboard = laya.events.Keyboard;
 	import TimeLine = laya.utils.TimeLine;
+	import Stage = laya.display.Stage;
 
 	export class Tween_TimeLine {
 		private target: Sprite;
@@ -11,6 +12,7 @@ module laya {
 
 		constructor() {
 			Laya.init(550, 400);
+			Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
 			this.setup();
 		}
 
@@ -45,6 +47,7 @@ module laya {
 		}
 
 		private createTimerLine(): void {
+			//第一事件如果起始时间为0就不会抛出。
 			this.timeLine.add("turnRight", 0);
 			this.timeLine.to(this.target, { x: 450, y: 100, scaleX: 0.5, scaleY: 0.5 }, 2000);
 			this.timeLine.add("turnDown", 0);
@@ -55,6 +58,17 @@ module laya {
 			this.timeLine.to(this.target, { x: 100, y: 100, scaleX: 1, scaleY: 1, alpha: 1 }, 2000);
 
 			this.timeLine.play(0, true);
+
+			this.timeLine.on(Event.COMPLETE, this, this.onComplete);
+			this.timeLine.on(Event.LABEL, this, this.onLabel);
+		}
+
+		private onComplete(): void {
+			console.log("timeLine complete!!!!");
+		}
+
+		private onLabel(label: String): void {
+			console.log("LabelName:" + label);
 		}
 
 		private createApe(): void {

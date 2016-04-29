@@ -1,20 +1,20 @@
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
 //由 20 个项目（排列成 4 x 5 矩阵）组成的数组，红色
 var redMat = 
-[1, 0, 0, 0, 0, 0, //R
- 0, 0, 0, 0, 0, 0, //G
- 0, 0, 0, 0, 0, 0, //B
- 1, 0, 0, 0, 0, 0];//A
+[1, 0, 0, 0, 0, //R
+ 0, 0, 0, 0, 0, //G
+ 0, 0, 0, 0, 0, //B
+ 1, 0, 0, 0, 0];//A
 
 //由 20 个项目（排列成 4 x 5 矩阵）组成的数组，灰图
 var grayscaleMat = [0.3086, 0.6094, 0.0820, 0, 0, 0.3086, 0.6094, 0.0820, 0, 0, 0.3086, 0.6094, 0.0820, 0, 0, 0, 0, 0, 1, 0];
 
 //创建一个颜色滤镜对象,红色
-var redFilter = new laya.filters.ColorFilter(redMat);
+var redFilter = new Laya.ColorFilter(redMat);
 //创建一个颜色滤镜对象，灰图
-var grayscaleFilter = new laya.filters.ColorFilter(grayscaleMat);
+var grayscaleFilter = new Laya.ColorFilter(grayscaleMat);
 
 // 猩猩原图
 var originalApe = createApe();
@@ -30,7 +30,7 @@ grayApe.pos(380, 100);
 
 function createApe()
 {
-	var ape = new laya.display.Sprite();
+	var ape = new Laya.Sprite();
 	ape.loadImage("res/apes/monkey2.png");
 	Laya.stage.addChild(ape);
 	

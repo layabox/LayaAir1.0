@@ -7,14 +7,12 @@ var performanceTest;
     var Browser = laya.utils.Browser;
     var Stat = laya.utils.Stat;
     var WebGL = laya.webgl.WebGL;
-    var AtlasManager = laya.webgl.atlas.AtlasManager;
     var PerformanceTest_Legend = (function () {
         function PerformanceTest_Legend() {
             this.players = [];
             this._width = Browser.width;
             this._height = Browser.height;
             Laya.init(Browser.width, Browser.height, WebGL);
-            AtlasManager.enable();
             Stat.show();
             Laya.stage.bgColor = "#000000";
             this.initHandler();

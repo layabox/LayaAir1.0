@@ -1,6 +1,6 @@
-var Text = laya.display.Text;
-var Handler = laya.utils.Handler;
-var BitmapFont = laya.display.BitmapFont;
+var Text = Laya.Text;
+var Handler = Laya.Handler;
+var BitmapFont = Laya.BitmapFont;
 
 var fontName = "diyFont";
 

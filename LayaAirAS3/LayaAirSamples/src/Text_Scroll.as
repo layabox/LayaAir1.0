@@ -4,26 +4,26 @@ package
 	import laya.display.Text;
 	import laya.events.Event;
 	
-	public class Scroll 
+	public class Text_Scroll 
 	{
 		private var txt:Text;
 		private var prevX:Number = 0;
 		private var prevY:Number = 0;
 		
-		public function Scroll() 
+		public function Text_Scroll() 
 		{
 			Laya.init(550, 400);
 			Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
 			
 			txt = new Text();
-			
+			txt.overflow = Text.SCROLL;
 			txt.text = 
-				"Layabox是性能最强的HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！\n" +
-				"Layabox是性能最强的HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！\n" +
-				"Layabox是性能最强的HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！\n" +
-				"Layabox是性能最强的HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！\n" +
-				"Layabox是性能最强的HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！\n" +
-				"Layabox是性能最强的HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！";
+				"Layabox是HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！\n" +
+				"Layabox是HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！\n" +
+				"Layabox是HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！\n" +
+				"Layabox是HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！\n" +
+				"Layabox是HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！\n" +
+				"Layabox是HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！";
 			
 			txt.pos(175, 150);
 			txt.size(200, 100);

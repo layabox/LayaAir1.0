@@ -1,0 +1,12 @@
+{
+	"messages": [
+		"not connected to runtime",
+		"cancelled because Node.js is unresponsive",
+		"timeout after {0} ms"
+	],
+	"keys": [
+		"not.connected",
+		"runtime.unresponsive",
+		"runtime.timeout"
+	]
+}

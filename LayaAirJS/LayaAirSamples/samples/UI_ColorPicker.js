@@ -1,16 +1,16 @@
 ﻿var skin = "res/ui/colorPicker.png";
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
-Laya.loader.load(skin, laya.utils.Handler.create(this,onColorPickerSkinLoaded));
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
+Laya.loader.load(skin, Laya.Handler.create(this,onColorPickerSkinLoaded));
 
 function onColorPickerSkinLoaded()
 {
-	var colorPicker = new laya.ui.ColorPicker();
+	var colorPicker = new Laya.ColorPicker();
 	colorPicker.skin = skin;
 	colorPicker.selectedColor = "#ff0033";
 	colorPicker.pos(100, 100);
-	colorPicker.changeHandler = new laya.utils.Handler(this, onChangeColor,[colorPicker]);
+	colorPicker.changeHandler = new Laya.Handler(this, onChangeColor,[colorPicker]);
 	Laya.stage.addChild(colorPicker);
 	
 	onChangeColor(colorPicker);

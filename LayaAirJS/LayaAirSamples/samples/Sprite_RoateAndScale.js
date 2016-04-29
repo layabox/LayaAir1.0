@@ -2,9 +2,9 @@ var ape;
 var scaleDelta = 0;
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
-ape = new laya.display.Sprite();
+ape = new Laya.Sprite();
 ape.loadImage("res/apes/monkey2.png");
 Laya.stage.addChild(ape);
 ape.pivot(55, 72);

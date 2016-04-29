@@ -1,5 +1,5 @@
-	var TiledMap = laya.map.TiledMap;
-	var Rectangle = laya.maths.Rectangle;
+	var TiledMap = Laya.TiledMap;
+	var Rectangle = Laya.Rectangle;
 
 	Laya.init(700, 800);
 

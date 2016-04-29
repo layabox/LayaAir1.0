@@ -1,0 +1,11 @@
+[
+	"Cree un archivo jsconfig.json para mejorar IntelliSense y la navegación de código en toda el área de trabajo.",
+	"Ignorar",
+	"Crear jsconfig.json",
+	"Cree un archivo jsconfig.json para disfrutar de una aplicación IntelliSense y una navegación de código más completas en todo el área de trabajo.",
+	"Para mejorar el rendimiento, excluya las carpetas con muchos archivos, como: {0}.",
+	"Para mejorar el rendimiento, excluya las carpetas con muchos archivos.",
+	"Configurar exclusiones",
+	"Configurar exclusiones",
+	"Para obtener un mejor rendimiento, no incluya las carpetas que contengan muchos archivos."
+]

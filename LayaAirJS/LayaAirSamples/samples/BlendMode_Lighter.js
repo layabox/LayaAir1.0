@@ -1,8 +1,8 @@
-var Animation = laya.display.Animation;
-var Sprite = laya.display.Sprite;
-var Handler = laya.utils.Handler;
-var Tween = laya.utils.Tween;
-var Utils = laya.utils.Utils;
+var Animation = Laya.Animation;
+var Sprite = Laya.Sprite;
+var Handler = Laya.Handler;
+var Tween = Laya.Tween;
+var Utils = Laya.Utils;
 
 var w = 1000;
 var h = 400;
@@ -66,6 +66,7 @@ function onTweenComplete()
 
 function renderBg()
 {
+	Laya.stage.graphics.clear();
 	Laya.stage.graphics.drawRect(0, 0, w, h, getColor());
 }
 

@@ -3,7 +3,6 @@ var width = laya.utils.Browser.width;
 var height = laya.utils.Browser.height;
 
 Laya.init(width, height, laya.webgl.WebGL);
-laya.webgl.atlas.AtlasManager.enable();
 laya.utils.Stat.show();
 Laya.stage.bgColor = "#000000";
 initHandler();

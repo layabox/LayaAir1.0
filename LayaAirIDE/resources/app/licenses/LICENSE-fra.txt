@@ -1,0 +1,61 @@
+TERMES DU CONTRAT DE LICENCE LOGICIEL MICROSOFT
+
+CODE MICROSOFT VISUAL STUDIO 
+
+Les présents termes du contrat de licence constituent un contrat entre Microsoft Corporation (ou en fonction du lieu où vous vivez, l’un de ses affiliés) et vous. Ils s’appliquent au logiciel visé ci-dessus. Les termes s’appliquent également à tout service et à toute mise à jour Microsoft pour ce logiciel, à moins que d’autres termes n’accompagnent ces éléments.
+
+SI VOUS VOUS CONFORMEZ AUX PRÉSENTS TERMES DU CONTRAT DE LICENCE, VOUS AVEZ LES DROITS CI-DESSOUS.
+
+1. INSTALLATION ET DROITS D’UTILISATION. 
+
+a. Stipulations générales. Vous êtes autorisé à utiliser un nombre quelconque de copies du logiciel pour développer et tester vos applications, ainsi que pour les déployer au sein de votre réseau d’entreprise interne.
+
+b. Utilisation dans le cadre d’une démonstration. Les utilisations autorisées ci-dessus comprennent l’utilisation du logiciel dans le cadre de la démonstration de vos applications.
+
+c. Copie de sauvegarde. Vous êtes autorisé à effectuer une ou plusieurs copies de sauvegarde du logiciel afin de le réinstaller.
+
+d. Programmes tiers. 
+	i. Le logiciel peut inclure des composants de tiers accompagnés de mentions légales distinctes ou régis par d’autres contrats, comme décrit dans le fichier ThirdPartyNotices fourni avec le logiciel. Même si ces composants sont régis par d’autres contrats, les exclusions et restrictions ci-après, notamment concernant les dommages, s’appliquent également. 
+	ii. Le logiciel inclut des composants tiers concédés sous licence dans le cadre de licences open source avec obligations de disponibilité du code source. Des copies desdites licences figurent dans le fichier ThirdPartyNotices ou dans le fichier credits accompagnant le logiciel. Nous pouvons vous fournir le code source correspondant complet si et dans la mesure où les licences open source concernées l’exigent. Il vous suffit d’envoyer un mandat ou un chèque de 5 USD à : Source Code Compliance Team, Microsoft Corporation, 1 Microsoft Way, Redmond, WA 98052, États-Unis. Veuillez indiquer « third party source code for Visual Studio Code » sur la ligne mémo de votre paiement. Vous pouvez également trouver une copie du code source à l’adresse thirdpartysource.microsoft.com/. 
+
+e. Extensions. Le logiciel vous donne la possibilité de télécharger d’autres packages logiciels de Microsoft ou de tiers à partir de notre marché d’extensions ou de gestionnaires de packages. Ces packages sont régis par des licences propres, et non par ce contrat. Microsoft ne distribue pas, ne vous concède aucun droit de licence et ne fournit aucune garantie pour les packages tiers.
+
+2. DONNÉES. Le logiciel peut collecter des informations sur vous et votre utilisation du logiciel et les envoyer à Microsoft. Microsoft est susceptible d’utiliser ces informations pour fournir des services et améliorer ses produits et services. Le logiciel peut également comprendre certaines fonctionnalités qui peuvent vous permettre de collecter des données auprès des utilisateurs de vos applications. Si vous utilisez ces fonctionnalités pour permettre la collecte de données dans vos applications, vous devez le faire en toute conformité avec la réglementation applicable, notamment en informant les utilisateurs de vos applications par l’intermédiaire de notifications appropriées. Consultez la déclaration relative aux données personnelles (go.microsoft.com/fwlink/?LinkID=528096&clcid=0x409) et la documentation dֹ’aide pour en savoir plus sur la collecte et l’utilisation de vos données. Votre utilisation du logiciel vaut acceptation de ces pratiques.
+
+3. MISES À JOUR. Le logiciel peut installer des mises à jour automatiques. En utilisant le logiciel, vous acceptez de recevoir ces mises à jour automatiques sans autre notification, et vous autorisez Microsoft à les télécharger et à les installer pour vous. Si vous ne souhaitez pas recevoir les mises à jour automatiques, vous pouvez les désactiver en suivant les instructions disponibles dans la documentation sur le site go.microsoft.com/fwlink/?LinkID=616397. 
+
+4. COMMENTAIRES. Si vous faites part de vos commentaires concernant le logiciel à Microsoft, vous concédez gracieusement à Microsoft le droit de les utiliser, de les partager et de les commercialiser de quelque façon que ce soit et à toute fin. Vous ne donnerez pas d’informations faisant l’objet d’une licence qui impose à Microsoft de concéder sous licence son logiciel ou sa documentation à des tiers du fait que nous y incluons vos commentaires. Ces droits survivent au présent contrat.
+
+5. CHAMP D’APPLICATION DE LA LICENCE. Le logiciel n’est pas vendu mais concédé sous licence. Le présent contrat vous confère certains droits d’utilisation du logiciel. Microsoft se réserve tous les autres droits. Sauf si la réglementation applicable vous confère d’autres droits, nonobstant la présente limitation, vous n’êtes autorisé à utiliser le logiciel qu’en conformité avec les termes du présent contrat. À cette fin, vous devez vous conformer aux restrictions techniques contenues dans le logiciel qui vous permettent de l’utiliser uniquement d’une certaine façon. Vous n’êtes pas autorisé à :
+	• contourner les restrictions techniques contenues dans le logiciel ;
+	• reconstituer la logique du logiciel, le décompiler ou le désassembler, ou tenter de quelque autre manière de dériver le code source du logiciel, sauf et uniquement dans la mesure : (i) autorisée par la réglementation applicable, en dépit de la présente limitation ; ou (ii) requise pour déboguer des modifications aux bibliothèques concédées sous licence dans le cadre de la licence publique générale limitée GNU, fournies avec le logiciel et liées à celui-ci ;
+	• supprimer, réduire, bloquer ou modifier toute mention légale de Microsoft ou de ses fournisseurs dans le logiciel ;
+	• utiliser le logiciel d’une manière contraire à la législation ; ou
+	• partager, publier ou prêter le logiciel, ou le fournir en tant que solution hébergée pour autrui, ou transférer le logiciel ou ce contrat à un tiers.
+
+6. SERVICE D’ASSISTANCE TECHNIQUE. Ce logiciel étant fourni « en l’état », Microsoft ne fournira aucun service d’assistance technique.
+
+7. INTÉGRALITÉ DES ACCORDS. Le présent contrat ainsi que les termes concernant les suppléments, les mises à jour, les services Internet et d’assistance technique que vous utilisez constituent l’intégralité des accords en ce qui concerne le logiciel et les services d’assistance technique.
+
+8. RESTRICTIONS À L’EXPORTATION. Le logiciel Microsoft, les services en ligne, les services professionnels et la technologie associée sont soumis à la réglementation américaine en matière d’exportation. Vous devez respecter toutes les lois et réglementations nationales et internationales applicables, y compris les réglementations en matière d’exportation (EAR, Export Administration Regulations) en vigueur aux États-Unis, les réglementations visant le trafic international d’armes (International Traffic in Arms Regulations), les programmes de sanction de l’Office of Foreign Assets Control, ainsi que les restrictions imposées par le gouvernement des États-Unis et d’autres pays concernant les utilisateurs finaux, les utilisations finales et les pays destinataires par rapport aux produits, services et technologies Microsoft. Des informations supplémentaires sont disponibles sur le site www.microsoft.com/exporting (en anglais).
+
+9. RÉGLEMENTATION APPLICABLE. Si vous avez acquis le logiciel aux États-Unis, les lois de l’État de Washington, États-Unis d’Amérique, régissent l’interprétation de ce contrat et s’appliquent en cas de réclamation pour manquement aux termes du contrat. Les lois de l’État dans lequel vous vivez régissent toutes les autres réclamations. Si vous avez acquis le logiciel dans un autre pays, ses lois s’appliquent.
+
+10. EFFET JURIDIQUE. Le présent contrat décrit certains droits légaux. Vous pouvez bénéficier d’autres droits prévus par les lois de votre État ou pays. Le présent contrat ne modifie pas les droits que vous confèrent les lois de votre État ou pays si celles-ci ne le permettent pas. Sans limiter la portée de ce qui précède, pour l’Australie, LA LOI AUSTRALIENNE SUR LA CONSOMMATION (AUSTRALIAN CONSUMER LAW) VOUS ACCORDE DES GARANTIES LÉGALES QU’AUCUN ÉLÉMENT DU PRÉSENT CONTRAT NE PEUT AFFECTER.
+
+11. EXCLUSIONS DE GARANTIE. LE LOGICIEL EST CONCÉDÉ SOUS LICENCE « EN L’ÉTAT ». VOUS ASSUMEZ TOUS LES RISQUES LIÉS À SON UTILISATION. MICROSOFT N’ACCORDE AUCUNE GARANTIE OU CONDITION EXPRESSE. LORSQUE CELA EST AUTORISÉ PAR VOTRE LÉGISLATION LOCALE, MICROSOFT EXCLUT LES GARANTIES IMPLICITES DE QUALITÉ, D’ADÉQUATION À UN USAGE PARTICULIER ET D’ABSENCE DE VIOLATION.
+
+12. LIMITATION ET EXCLUSION DE RESPONSABILITÉ EN CAS DE DOMMAGES. VOUS POUVEZ OBTENIR DE MICROSOFT ET DE SES FOURNISSEURS UNE INDEMNISATION EN CAS DE DOMMAGES DIRECTS LIMITÉE À 5,00 USD. VOUS NE POUVEZ PRÉTENDRE À AUCUNE INDEMNISATION POUR LES AUTRES DOMMAGES, Y COMPRIS LES DOMMAGES SPÉCIAUX, INDIRECTS, INCIDENTS OU ACCESSOIRES ET LES PERTES DE BÉNÉFICES.
+
+Cette limitation s’applique (a) à toute affaire liée au logiciel, aux services ou au contenu (y compris le code) figurant sur des sites Internet tiers ou dans des applications tierces ; et (b) aux réclamations pour manquement aux termes du contrat ou violation de garantie ou de condition, les réclamations en cas de responsabilité sans faute, de négligence ou autre délit dans la limite autorisée par la réglementation applicable.
+
+Elle s’applique également même si Microsoft avait ou aurait dû avoir connaissance de l’éventualité de tels dommages. La limitation ou l’exclusion ci-dessus peut également ne pas vous être applicable si votre État ou pays n’autorise pas l’exclusion ou la limitation de responsabilité pour les dommages incidents, indirects ou de quelque nature que ce soit.
+
+
+
+
+     
+
+
+
+

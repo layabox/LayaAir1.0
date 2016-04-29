@@ -11,14 +11,9 @@ package
 		public function Text_HTML()
 		{
 			Laya.init(550, 400, WebGL);
-
-			Laya.loader.load("res/html/test.html", Handler.create(this, onAssetLoaded));
-		}
-
-		private function onAssetLoaded():void
-		{
-			createParagraph();
-			showExternalHTML();
+			
+			createParagraph();	// 代码创建
+			showExternalHTML(); // 使用外部定义的html
 		}
 
 		private function createParagraph():void
@@ -31,7 +26,7 @@ package
 
 			var html:String = "<span color='#e3d26a'>使用</span>";
 			html += "<span style='color:#FFFFFF;font-weight:bold'>HTMLDivElement</span>";
-			html  += "<span color='#6ad2e3'>创建的</span><br/>";
+			html += "<span color='#6ad2e3'>创建的</span><br/>";
 			html += "<span color='#d26ae3'>HTML文本</span>";
 			
 			p.innerHTML = html;

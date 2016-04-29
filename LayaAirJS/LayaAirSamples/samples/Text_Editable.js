@@ -1,7 +1,7 @@
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
-var inputText = new laya.display.Input();
+var inputText = new Laya.Input();
 
 inputText.size(350, 100);
 inputText.pos(100, 150);

@@ -2,8 +2,8 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Sprite=laya.display.Sprite,Texture=laya.resource.Texture,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle;
-	var WebGL=laya.webgl.WebGL,Loader=laya.net.Loader,Handler=laya.utils.Handler,Browser=laya.utils.Browser;
+	var Texture=laya.resource.Texture,Browser=laya.utils.Browser,Sprite=laya.display.Sprite,Point=laya.maths.Point;
+	var Rectangle=laya.maths.Rectangle,WebGL=laya.webgl.WebGL,Loader=laya.net.Loader,Handler=laya.utils.Handler;
 	/**
 	*tiledMap是整个地图的核心
 	*地图以层级来划分地图（例如：地表层，植被层，建筑层）
@@ -935,7 +935,7 @@
 				this._aniDic={};
 			}
 			if (this._spriteNum==0){
-				Laya.timer.frameLoop(3,this,this.animate,null,true);
+				Laya.timer.frameLoop(3,this,this.animate);
 				this._preFrameTime=Browser.now();
 				this._frameIndex=0;
 				this._time=0;

@@ -1,0 +1,62 @@
+
+TÉRMINOS DE LICENCIA DEL SOFTWARE DE MICROSOFT
+
+MICROSOFT VISUAL STUDIO CODE 
+
+Los presentes términos de licencia constituyen un contrato entre Microsoft Corporation (o, en función de donde resida, una de sus filiales) y usted. Se aplican al software antes mencionado. Los términos también se aplican a cualquier servicio o actualización de Microsoft para el software, excepto en la medida que tengan términos diferentes.
+
+SI CUMPLE CON ESTOS TÉRMINOS DE LICENCIA, DISPONDRÁ DE LOS DERECHOS SIGUIENTES.
+
+1. DERECHOS DE INSTALACIÓN Y DE USO. 
+
+a. General. Puede utilizar cualquier número de copias del software para desarrollar y probar sus aplicaciones, incluyendo la implementación dentro de su red corporativa interna.
+
+b. Uso de demostración. Los usos permitidos anteriormente incluyen el uso del software en la demostración de sus aplicaciones.
+
+c. Copia de seguridad. Puede realizar una o más copias de seguridad del software, para que pueda volver a instalarlo.
+
+d. Programas de terceros. 
+	i. El software puede incluir componentes de terceros con notificaciones legales independientes o que se rijan por otros contratos, según se describe en el archivo ThirdPartyNotices que se incluye en el software. Incluso si dichos componentes se rigen por otros contratos, también se les aplican las exclusiones de responsabilidad y las limitaciones y exclusiones de indemnizaciones que se mencionan más abajo.
+	ii. El software contiene componentes de terceros que se licencian en virtud de licencias de código abierto con obligaciones de disponibilidad de código fuente. Las copias de esas licencias se incluyen en el archivo ThirdPartyNotices o se adjuntan con el archivo de créditos. Puede obtener el código fuente correspondiente completo de nosotros, si se requiere y tal como se requiera en virtud de las licencias de código abierto pertinente. Para hacerlo, envíe un giro postal o un cheque de 5 USD a: Source Code Compliance Team, Microsoft Corporation, 1 Microsoft Way, Redmond, WA 98052 USA. Escriba “código fuente de terceros para Visual Studio Code” en la línea de memorando de su pago. Además, el código está disponible en thirdpartysource.microsoft.com/. 
+
+e. Extensiones. El software le da la opción de descargar otros paquetes de software de Microsoft y de terceros desde nuestro marketplace de extensiones o de nuestros administradores de paquetes. Esos paquetes poseen sus propias licencias y se rigen por estas, no por este contrato. Microsoft no distribuye, licencia ni proporciona garantías de ningún tipo por los paquetes de terceros.
+
+2. DATOS. El software puede recopilar información sobre usted y el uso que hace del software, y enviar dicha información a Microsoft. Microsoft puede utilizar esta información para prestar servicios y mejorar nuestros productos y servicios. El software también podría incluir algunas características con las que usted podrá recopilar datos de los usuarios de sus aplicaciones. Si utiliza estas características para permitir la recopilación de datos en sus aplicaciones, debe cumplir con la legislación aplicable, que incluye la entrega de notificaciones pertinentes a los usuarios de sus aplicaciones. Puede obtener más información sobre la recopilación y el uso de datos en la documentación de ayuda y la declaración de privacidad disponibles en go.microsoft.com/fwlink/?LinkID=528096&clcid=0x409. El uso que hace del software funciona como su consentimiento para estas prácticas.
+
+3. ACTUALIZACIONES. El software puede instalar actualizaciones automáticas. Al utilizar el software, usted acepta recibir actualizaciones automáticas sin notificación adicional y permite a Microsoft descargarlas e instalarlas para usted. Si no desea recibir actualizaciones automáticas, puede desactivarlas siguiendo las instrucciones en la documentación en go.microsoft.com/fwlink/?LinkID=616397. 
+
+4. COMENTARIOS. Si usted proporciona comentarios a Microsoft sobre el software, otorga a Microsoft, de forma gratuita, el derecho a utilizar, compartir y comercializar sus comentarios de cualquier forma y para cualquier propósito. No otorgará comentarios que estén sujetos a una licencia que requiera que Microsoft licencie su software o documentación a terceros debido a la inclusión de sus comentarios en ellos. Estos derechos seguirán vigentes aún después de la terminación de este contrato.
+
+5. ÁMBITO DE LA LICENCIA. El software se cede bajo licencia y no es objeto de venta. Este contrato solo le otorga algunos derechos de uso del software. Microsoft se reserva todos los demás derechos. A menos que la legislación aplicable le otorgue más derechos a pesar de esta limitación, solo podrá utilizar el software tal como se permite expresamente en este contrato. Al hacerlo, deberá ajustarse a las limitaciones técnicas del software que solo permiten utilizarlo de determinadas formas. No podrá:
+	• eludir las limitaciones técnicas del software;
+	• utilizar técnicas de ingeniería inversa, descompilar ni desensamblar el software o de alguna forma intentar obtener el código fuente del software, salvo y únicamente en la medida que: (i) lo permita la legislación aplicable, a pesar de esta limitación; o (ii) se requiera para depurar cambios en cualquier biblioteca con licencia GNU Lesser General Public License que se incluya y vincule en el software;
+	• eliminar, minimizar, bloquear o modificar ninguna notificación de Microsoft o sus proveedores en el software;
+	• utilizar el software de ninguna manera que esté en contra de la ley o
+	• compartir, publicar o dar en préstamo el software, proporcionar el software como una solución alojada para que otros la utilicen, ni transmitir el software o este contrato a ningún tercero.
+
+6. SERVICIOS DE SOPORTE TÉCNICO. Debido a que este software se presenta “tal cual”, no podemos prestar servicios de soporte técnico para el mismo.
+
+7. CONTRATO COMPLETO. Este contrato y los términos aplicables a complementos, actualizaciones, servicios basados en Internet y servicios de soporte técnico que utilice constituyen el contrato completo respecto al software y a los servicios de soporte técnico.
+
+8. RESTRICCIONES EN MATERIA DE EXPORTACIÓN. El software de Microsoft, los servicios online, los servicios profesionales y la tecnología relacionada están sujetos a la jurisdicción en materia de exportaciones de los EE. UU. Debe cumplir con todas las leyes nacionales e internacionales correspondientes, incluida la Normativa de la Administración Estadounidense en materia de Exportación, la Normativa sobre Tráfico Internacional de Armas, los programas de sanciones de la Oficina de Control de Activos Extranjeros y las restricciones para usuarios finales, usos previstos y destinos de los Gobiernos de los EE. UU. y otros países en relación con los productos, los servicios y las tecnologías de Microsoft. Para obtener más información, consulte www.microsoft.com/exporting.
+
+9. LEGISLACIÓN APLICABLE. Si adquirió el software en los Estados Unidos, la legislación del estado de Washington regirá la interpretación de este contrato, así como las reclamaciones por incumplimiento, y la legislación del estado donde usted resida regirá todas las demás reclamaciones. Si adquirió el software en otro país, se aplicará la legislación de dicho país.
+
+10. EFECTOS LEGALES. En este contrato se describen determinados derechos legales. Puede que usted tenga otros derechos en virtud de las leyes de su estado o país. El presente contrato no modifica los derechos que le asisten en virtud de la legislación de su jurisdicción si dicha legislación no lo permite. Sin limitación de lo anterior, para Australia: USTED CUENTA CON GARANTÍAS LEGALES CONFORME A LA LEY DE PROTECCIÓN AL CONSUMIDOR DE AUSTRALIA Y NINGÚN PUNTO DE ESTOS TÉRMINOS PRETENDE MODIFICAR DICHOS DERECHOS.
+
+11. EXCLUSIÓN DE GARANTÍAS. EL SOFTWARE SE CONCEDE BAJO LICENCIA “TAL CUAL” Y, POR CONSIGUIENTE, USTED ASUME EL RIESGO DE UTILIZARLO. MICROSOFT NO OTORGA NINGUNA GARANTÍA NI CONDICIÓN EXPRESAS. EN LA MEDIDA EN QUE ASÍ LO PERMITA LA LEGISLACIÓN LOCAL, MICROSOFT EXCLUYE LAS GARANTÍAS IMPLÍCITAS DE COMERCIABILIDAD, IDONEIDAD PARA UN FIN PARTICULAR Y AUSENCIA DE INFRACCIÓN DE DERECHOS.
+
+12. LIMITACIÓN Y EXCLUSIÓN DE INDEMNIZACIONES. LA CANTIDAD MÁXIMA QUE SE PODRÁ OBTENER DE MICROSOFT Y DE SUS PROVEEDORES EN CONCEPTO DE INDEMNIZACIÓN POR DAÑOS DIRECTOS SERÁ DE 5 USD. NO PODRÁ OBTENER INDEMNIZACIÓN ALGUNA POR DAÑOS DE OTRA ÍNDOLE, INCLUIDOS LOS DAÑOS CONSECUENCIALES, POR LUCRO CESANTE, ESPECIALES, INDIRECTOS O INCIDENTALES.
+
+Esta limitación se aplica a: (a) todo lo relacionado con el software, los servicios, el contenido (incluido el código) de sitios de Internet de terceros o de aplicaciones de terceros y (b) reclamaciones por incumplimiento de contrato, incumplimiento de garantía, garantía o condición, responsabilidad objetiva, negligencia u otra responsabilidad extracontractual en la medida que lo permita la legislación aplicable.
+
+Asimismo, también será de aplicación incluso si Microsoft conocía o debería haber conocido la posibilidad de que se produjesen dichos daños. También pueden producirse situaciones en las que la limitación o exclusión precedente no pueda aplicarse a su caso porque la jurisdicción de su estado o país no admite la exclusión o limitación de daños incidentales, consecuenciales o de otra índole.
+
+
+
+
+     
+
+
+
+

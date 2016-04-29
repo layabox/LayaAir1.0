@@ -4,10 +4,10 @@ var moveSpeed = 2;
 var rotateSpeed = 2;
 var charactorGroup;
 		
-Laya.init(laya.utils.Browser.width, laya.utils.Browser.height, laya.webgl.WebGL);
-laya.utils.Stat.show();
+Laya.init(Laya.Browser.width, Laya.Browser.height, Laya.WebGL);
+Laya.Stat.show();
 
-Laya.loader.load("res/cartoonCharacters/cartoonCharactors.json", laya.utils.Handler.create(this, initCharactors), null, laya.net.Loader.ATLAS);
+Laya.loader.load("res/cartoonCharacters/cartoonCharactors.json", Laya.Handler.create(this, initCharactors), null, Laya.Loader.ATLAS);
 
 function initCharactors()
 {
@@ -30,7 +30,7 @@ function initCharactors()
 
 function createCharactor(skin, pivotX, pivotY, rotation)
 {
-	var charactor = new laya.display.Sprite();
+	var charactor = new Laya.Sprite();
 	charactor.loadImage(skin);
 	charactor.rotation = rotation;
 	charactor.pivot(pivotX, pivotY);

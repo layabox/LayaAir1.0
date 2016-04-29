@@ -1,0 +1,176 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">
+<head>
+	<meta charset=utf-8>
+	<style type="text/css">
+	*{margin:0;padding: 0}
+	body
+	{
+		font-family: Microsoft YaHei;
+		-webkit-app-region:drag;
+		overflow: hidden;
+		background-color    : #212121;
+	}
+
+	/*@-webkit-keyframes rotateAndScale*/
+	/*{*/
+		/*from*/
+		/*{*/
+			/*transform : rotateY(180deg) scale(0,1);*/
+		/*};*/
+		/*to*/
+		/*{*/
+			/*transform : rotateY(0deg) scale(1,1);*/
+		/*}*/
+	/*}*/
+
+
+	#container
+	{
+		position: absolute;
+		left: 0px;
+		top:0px;
+		width: 396px;
+		height: 245px;
+		/*border:1px solid #545454;*/
+	}
+
+	#logo
+	{
+		position : absolute;
+
+		animation: rotateAndScale 0.5s;
+	}
+
+	#console
+	{
+		color     : #ffffff;
+		overflow  : hidden;
+		width     : 465px;
+		position  : absolute;
+		top       : 256px;
+		font-size : 14px;
+		text-align: left;
+        margin-left: 204px;
+	}
+	#progressInfo
+	{
+		position    : absolute;
+		width       : 100%;
+		color       : #FFF;
+		top         : 79%;
+		text-align  : center;
+		font-size   : 12px;
+		font-weight : bold;
+	}
+    #closeBtn{
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        -webkit-app-region: no-drag;
+        cursor:pointer
+    }
+      #title{
+          position: absolute;
+          top: 219px;
+          left: 182px;
+          font-size: 24px;
+          color: #ffffff;
+          font-family: "微软雅黑";
+
+      }
+       #back{
+           background: #66D2FF;
+           width: 455px;
+           height: 3px;
+           top: 295px;
+           left: 6px;
+           position: absolute;
+           display: none;
+       }
+       #upback{
+           display: none;
+           background: rgba(255,255,255, 0.8);
+           width: 100px;
+           height: 3px;
+           top: 295px;
+           left: 6px;
+           max-width: 455px;
+           position: absolute;
+
+       }
+   </style>
+
+</head>
+<body>
+	<div id="container">
+		<img id    ="logo" src="res/logo/logo_gray_transparent.png">
+        <div id="title">全新体验</div>
+		<div id    ="console">初始化..</div>
+		<div id    ="progressInfo"></div>
+        <div id="back"></div>
+        <div id="upback"></div>
+	</div>
+    <!--<img  id="closeBtn" src="res/img/btn.png" onclick="closeWindow()">-->
+</body>
+
+<script type="text/javascript">
+
+		var c = document.getElementById('console')
+        var upback = document.getElementById("upback");
+        var back = document.getElementById("back");
+		var canvas = document.getElementById('canvas');
+        var timeOutId = setInterval(delayHandler,500)
+        var count = 0;
+        function delayHandler()
+        {
+            count++;
+            if(flag)
+            {
+                clearInterval(timeOutId)
+            }
+            if(count%5==0)
+            {
+                log("初始化.")
+            }else if(count%5==1){
+                log("初始化..")
+            }else if(count%5==2) {
+                log("初始化...")
+            }else if(count%5==3){
+                log("初始化....")
+            }else if(count%5==4){
+                log("初始化.....")
+            }
+        }
+		var msg;
+		function log(message)
+		{
+			console.log(message);
+			msg = message;
+			c.innerHTML = message;
+		}
+        var flag = false;
+		function startDownLoad(max)
+		{
+            flag = true;
+            clearInterval(timeOutId)
+            back.style.display = "block"
+            upback.style.display = "block";
+            upback.style.width = 0+"px"
+		}
+
+//		function progress(loaded)
+//		{
+//			c.innerHTML = '正在下载...';
+//            console.log(loaded+"==========")
+//            upback.style.width= (455*loaded)+"px";
+//		}
+//
+//		var ipc = require('ipc');
+//		function closeWindow()
+//		{
+//            clearInterval(timeOutId);
+//			ipc.sendSync('user-determinate-loading');
+//		}
+	</script>
+
+</html>

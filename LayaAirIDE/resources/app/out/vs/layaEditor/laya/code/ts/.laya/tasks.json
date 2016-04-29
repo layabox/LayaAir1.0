@@ -1,0 +1,13 @@
+{
+    "version": "0.1.0",
+    "command": "tsc",
+    "isShellCommand": true,
+    "args": [
+        "-p",
+        ".",
+        "--outDir",
+        "bin"
+    ],
+    "showOutput": "silent",
+    "problemMatcher": "$tsc"
+}

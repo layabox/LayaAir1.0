@@ -1,0 +1,20 @@
+{
+	"messages": [
+		"NuGet index document is missing service {0}",
+		"Default project.json",
+		"{0} is not a valid JSON document",
+		"Request to {0} failed: {1}",
+		"Request to {0} failed: {1}",
+		"{0}",
+		"Latest version: {0}"
+	],
+	"keys": [
+		"json.nugget.error.missingservice",
+		"json.project.default",
+		"json.nugget.error.invalidformat",
+		"json.nugget.error.indexaccess",
+		"json.nugget.error.access",
+		"json.nugget.package.hover",
+		"json.nugget.version.hover"
+	]
+}

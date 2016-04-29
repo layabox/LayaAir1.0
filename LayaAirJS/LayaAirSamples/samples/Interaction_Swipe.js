@@ -10,21 +10,21 @@ var leftPoint;
 var rightPoint;
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 //设置背景色
 Laya.stage.bgColor = "#ffeecc";
 
 //创建一个精灵对象，默认mouseEnabled属性为false，在增加鼠标监听后会自动设为true;
-var circle = new laya.display.Sprite();
+var circle = new Laya.Sprite();
 circle.graphics.drawCircle(50, 50, 50, "#00eeff");
 
 circle.pos(120, 150);
 //设置宽高（要接收鼠标事件必须设置宽高，否则不会被命中）  
 circle.size(100, 100);
 
-circle.on(laya.events.Event.MOUSE_DOWN, this, onMouseDown, [circle]);
-Laya.stage.on(laya.events.Event.MOUSE_UP, this, onMouseUp, [circle]);
-Laya.stage.on(laya.events.Event.MOUSE_OUT, this, onMouseUp, [circle]);
+circle.on(Laya.Event.MOUSE_DOWN, this, onMouseDown, [circle]);
+Laya.stage.on(Laya.Event.MOUSE_UP, this, onMouseUp, [circle]);
+Laya.stage.on(Laya.Event.MOUSE_OUT, this, onMouseUp, [circle]);
 
 Laya.stage.addChild(circle);
 //左侧临界点设为圆形初始位置
@@ -36,7 +36,7 @@ rightPoint = leftPoint + RULE;
 function onMouseDown(circle, e)
 {
 	//添加鼠标移到侦听
-	circle.on(laya.events.Event.MOUSE_MOVE, this, onMouseMove, [circle]);
+	circle.on(Laya.Event.MOUSE_MOVE, this, onMouseMove, [circle]);
 	//记录按下时坐标点
 	downPoint = Laya.stage.mouseX;
 }
@@ -45,7 +45,7 @@ function onMouseDown(circle, e)
 function onMouseUp(circle, e)
 {
 	//添加鼠标移到侦听
-	circle.off(laya.events.Event.MOUSE_MOVE, this, onMouseMove, [circle]);
+	circle.off(Laya.Event.MOUSE_MOVE, this, onMouseMove, [circle]);
 }
 
 /**移到事件处理*/
@@ -63,7 +63,7 @@ function onMouseMove(circle, e)
 			if (circle.x < rightPoint)
 			{
 				//实现圆形缓动
-				laya.utils.Tween.to(circle, {x: rightPoint}, 100);
+				Laya.Tween.to(circle, {x: rightPoint}, 100);
 			}
 		}
 		else//向左拖
@@ -72,7 +72,7 @@ function onMouseMove(circle, e)
 			if (circle.x > leftPoint)
 			{
 				//实现圆形缓动
-				laya.utils.Tween.to(circle, {x: leftPoint}, 100);
+				Laya.Tween.to(circle, {x: leftPoint}, 100);
 			}
 		}
 	}

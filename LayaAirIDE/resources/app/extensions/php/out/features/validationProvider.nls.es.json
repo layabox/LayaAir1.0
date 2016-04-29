@@ -1,0 +1,4 @@
+[
+	"No se puede validar el archivo PHP. El programa PHP no se encontró. Use el valor \"php.validate.executablePath\" para configurar la ubicación de \"php\"",
+	"No se pudo ejecutar el archivo PHP con la ruta de acceso: {0}. Se desconoce el motivo."
+]

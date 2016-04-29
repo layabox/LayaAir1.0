@@ -1,7 +1,7 @@
-﻿var HttpRequest = laya.net.HttpRequest;
-var Text = laya.display.Text;
-var Stage = laya.display.Stage;
-var Event = laya.events.Event;
+﻿var HttpRequest = Laya.HttpRequest;
+var Text = Laya.Text;
+var Stage = Laya.Stage;
+var Event = Laya.Event;
 
 Laya.init(550, 400);
 Laya.stage.scaleMode = Stage.SCALE_SHOWALL;

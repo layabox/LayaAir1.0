@@ -10,7 +10,7 @@ var yOffset;
 var skins;
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
 skins = [
 	"res/ui/button-1.png", "res/ui/button-2.png", "res/ui/button-3.png", 
@@ -21,7 +21,7 @@ skins = [
 xOffset = (Laya.stage.width - HORIZONTAL_SPACING * (COLUMNS - 1) - BUTTON_WIDTH) / 2;
 yOffset = (Laya.stage.height - VERTICAL_SPACING * (skins.length / COLUMNS - 1) - BUTTON_HEIGHT) / 2;
 
-Laya.loader.load(skins, laya.utils.Handler.create(this, onUIAssertLoaded));
+Laya.loader.load(skins, Laya.Handler.create(this, onUIAssertLoaded));
 
 function onUIAssertLoaded()
 {
@@ -36,7 +36,7 @@ function onUIAssertLoaded()
 
 function createButton(skin)
 {
-	var btn = new laya.ui.Button(skin);
+	var btn = new Laya.Button(skin);
 	Laya.stage.addChild(btn);
 	return btn;
 }

@@ -12,7 +12,7 @@ var core;
         function TestParticleSample3() {
             Laya.init(Browser.width, Browser.height, WebGL);
             Laya.stage.bgColor = "#000000";
-            Laya.stage.sizeMode = Stage.SIZE_FULL;
+            Laya.stage.scaleMode = Stage.SCALE_FULL;
             Laya.stage.on(Event.RESIZE, this, this.onResize);
             Stat.show();
             this.loadParticleFile("res/particles/particleNew.json");

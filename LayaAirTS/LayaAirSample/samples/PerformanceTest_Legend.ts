@@ -10,7 +10,6 @@ module performanceTest {
     import Handler=laya.utils.Handler;
     import Stat=laya.utils.Stat;
     import WebGL=laya.webgl.WebGL;
-    import AtlasManager=laya.webgl.atlas.AtlasManager;
 
     export class PerformanceTest_Legend {
         private  players = [];
@@ -20,7 +19,6 @@ module performanceTest {
             this._width = Browser.width;
             this._height = Browser.height;
             Laya.init(Browser.width, Browser.height, WebGL);
-            AtlasManager.enable();
             Stat.show();
             Laya.stage.bgColor = "#000000";
             this.initHandler();

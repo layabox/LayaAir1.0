@@ -1,0 +1,6 @@
+{
+	"configuration.validate.enable": "PHP の検証が有効かどうか。",
+	"configuration.validate.executablePath": "PHP の実行可能ファイルをポイントします。",
+	"configuration.validate.run": "リンターを保存時に実行するか、入力時に実行するか。",
+	"configuration.title": "PHP の構成オプション"
+}

@@ -1,0 +1,21 @@
+[
+	"Richiesta non valida. Non è possibile soddisfare la richiesta perché la sintassi non è valida.",
+	"Non autorizzato. Il server non risponde.",
+	"Accesso negato. Il server non risponde.",
+	"Non trovato. Il percorso richiesto non è stato trovato.",
+	"Metodo non consentito. Per effettuare la richiesta, è stato usato un metodo non supportato da tale posizione.",
+	"Non accettabile. Il server può solo generare una risposta non accettata dal client.",
+	"Autenticazione proxy obbligatoria. Il client deve prima eseguire l'autenticazione con il proxy.",
+	"Timeout richiesta. Si è verificato un timeout del server in attesa della richiesta.",
+	"Conflitto. Non è stato possibile completare la richiesta perché contiene un conflitto.",
+	"Non disponibile. La pagina richiesta non è più disponibile.",
+	"Lunghezza obbligatoria. Il valore \"Content-Length\" non è definito.",
+	"Precondizione non riuscita. Il server ha restituito false per la precondizione specificata nella richiesta.",
+	"Entità della richiesta troppo estesa. Il server non accetterà la richiesta perché l'entità della richiesta è troppo estesa.",
+	"URI della richiesta troppo lungo. Il server non accetterà la richiesta perché l'URL è troppo lungo.",
+	"Tipo di supporto non supportato. Il server non accetterà la richiesta perché il tipo di supporto non è supportato.",
+	"Errore interno del server.",
+	"Non implementato. Il server non riconosce il metodo della richiesta o non include la funzionalità necessaria per soddisfare la richiesta.",
+	"Servizio non disponibile. Il server non è attualmente disponibile perché in overload o inattivo.",
+	"Codice di stato HTTP {0}"
+]

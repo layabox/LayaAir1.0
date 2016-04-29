@@ -1,0 +1,6 @@
+{
+	"configuration.validate.enable": "Включена ли проверка PHP.",
+	"configuration.validate.executablePath": "Указывает на исполняемый файл PHP.",
+	"configuration.validate.run": "Запускается ли Linter при сохранении или в типе.",
+	"configuration.title": "Параметры конфигурации PHP"
+}

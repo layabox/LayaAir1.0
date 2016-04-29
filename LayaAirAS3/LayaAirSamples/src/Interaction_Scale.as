@@ -22,7 +22,6 @@ package
 			//创建精灵对象，默认mouseEnabled属性为false，在增加鼠标监听后会自动设为true;
 			rect = new Sprite();
 			rect.graphics.drawRect(0, 0, 300, 300, "#00eeff");
-			
 			rect.pivot(150,150);
 			rect.pos(275, 200);
 			rect.size(300, 300);

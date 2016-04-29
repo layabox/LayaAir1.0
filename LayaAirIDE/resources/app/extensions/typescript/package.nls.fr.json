@@ -1,0 +1,18 @@
+{
+	"typescript.reloadProjects.title": "Recharger le projet TypeScript",
+	"javascript.reloadProjects.title": "Recharger le projet JavaScript",
+	"configuration.typescript": "Configuration de TypeScript",
+	"typescript.useCodeSnippetsOnMethodSuggest.dec": "Fonctions complètes avec leur signature de paramètre.",
+	"typescript.tsdk.desc": "Spécifie le chemin de dossier contenant les fichiers tsserver et lib*.d.ts à utiliser.",
+	"typescript.validate.enable": "Activer/désactiver la validation TypeScript",
+	"format.insertSpaceAfterCommaDelimiter": "Définit le traitement des espaces après une virgule de délimitation",
+	"format.insertSpaceAfterSemicolonInForStatements": " Définit le traitement des espaces après un point-virgule dans une instruction for",
+	"format.insertSpaceBeforeAndAfterBinaryOperators": "Définit le traitement des espaces après un opérateur binaire",
+	"format.insertSpaceAfterKeywordsInControlFlowStatements": "Définit le traitement des espaces après des mots clés dans une instruction de flux de contrôle",
+	"format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": "Définit le traitement des espaces après le mot clé function pour les fonctions anonymes",
+	"format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis": "Définit le traitement des espaces après l'ouverture et avant la fermeture de parenthèses non vides",
+	"format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": "Définit le traitement des espaces après l'ouverture et avant la fermeture de crochets non vides",
+	"format.placeOpenBraceOnNewLineForFunctions": "Définit si une accolade ouvrante dans une fonction est placée ou non sur une nouvelle ligne",
+	"format.placeOpenBraceOnNewLineForControlBlocks": "Définit si une accolade ouvrante dans un bloc de contrôle est placée ou non sur une nouvelle ligne",
+	"javascript.validate.enable": "Activer/désactiver la validation JavaScript"
+}

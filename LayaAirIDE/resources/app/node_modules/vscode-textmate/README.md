@@ -1,0 +1,81 @@
+# VSCode TextMate
+
+An interpreter for grammar files as defined by TextMate. Supports loading grammar files from JSON or PLIST format. Cross - grammar injections are currently not supported.
+
+## Installing
+
+```sh
+npm install vscode-textmate
+```
+
+## Using
+
+```javascript
+var Registry = require('vscode-textmate').Registry;
+var registry = new Registry();
+var grammar = registry.loadGrammarFromPathSync('./javascript.tmbundle/Syntaxes/JavaScript.plist');
+
+var lineTokens = grammar.tokenizeLine('function add(a,b) { return a+b; }');
+for (var i = 0; i < lineTokens.tokens.length; i++) {
+	var token = lineTokens.tokens[i];
+	console.log('Token from ' + token.startIndex + ' to ' + token.endIndex + ' with scopes ' + token.scopes);
+}
+```
+
+## Using asynchronously
+
+Sometimes, it is necessary to manage the list of known grammars outside of `vscode-textmate`. The sample below shows how this works:
+
+```javascript
+var Registry = require('vscode-textmate').Registry;
+
+var registry = new Registry({
+	getFilePath: function (scopeName) {
+		// Return here the path to the grammar file for `scopeName`
+		if (scopeName === 'source.js') {
+			return './javascript.tmbundle/Syntaxes/JavaScript.plist';
+		}
+		return null;
+	}
+});
+
+// Load the JavaScript grammar and any other grammars included by it async.
+registry.loadGrammar('source.js', function(err, grammar) {
+	if (err) {
+		console.error(err);
+		return;
+	}
+
+	// at this point `grammar` is available...
+});
+
+```
+
+## Tokenizing multiple lines
+
+To tokenize multiple lines, you must pass in the previous returned `ruleStack`.
+
+```javascript
+var ruleStack = null;
+for (var i = 0; i < lines.length; i++) {
+	var r = grammar.tokenizeLine(lines[i], ruleStack);
+	console.log('Line: #' + i + ', tokens: ' + r.tokens);
+	ruleStack = r.ruleStack;
+}
+```
+
+## API doc
+
+See [the .d.ts file](./src/typings/main.d.ts)
+
+## Developing
+
+* Clone the repository
+* Run `npm install`
+* Compile in the background with `npm run watch`
+* Run tests with `npm test`
+* Run benchmark with `npm run benchmark`
+
+## License
+[MIT](https://github.com/Microsoft/vscode-textmate/blob/master/LICENSE.md)
+

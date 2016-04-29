@@ -1,0 +1,6 @@
+{
+	"configuration.validate.enable": "Gibt an, ob PHP-Überprüfung aktiviert ist.",
+	"configuration.validate.executablePath": "Zeigt auf die ausführbare PHP-Datei.",
+	"configuration.validate.run": "Gibt an, ob der Linter beim Speichern oder bei der Eingabe ausgeführt wird.",
+	"configuration.title": "PHP-Konfigurationsoptionen"
+}

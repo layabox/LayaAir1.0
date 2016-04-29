@@ -1,11 +1,11 @@
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_NOSCALE;
-Laya.stage.screenMode = laya.display.Stage.SCREEN_VERTICAL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_NOSCALE;
+Laya.stage.screenMode = Laya.Stage.SCREEN_VERTICAL;
 showText();
 
 function showText()
 {
-	var text = new laya.display.Text();
+	var text = new Laya.Text();
 	
 	text.text = "Orientation-Portrait";
 	text.color = "dimgray";

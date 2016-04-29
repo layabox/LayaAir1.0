@@ -2,19 +2,19 @@
 var apesCtn;
 
 Laya.init(500, 500);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
 // 每只猩猩距离中心点150像素
 var layoutRadius = 150;
 var radianUnit = Math.PI / 2;
 	
-apesCtn = new laya.display.Sprite();
+apesCtn = new Laya.Sprite();
 Laya.stage.addChild(apesCtn);
 
 // 添加4张猩猩图片
 for (var i = 0; i < 4; i++ )
 {
-	var ape = new laya.display.Sprite();
+	var ape = new Laya.Sprite();
 	ape.loadImage("res/apes/monkey" + i + ".png");
 	
 	ape.pivot(55, 72);

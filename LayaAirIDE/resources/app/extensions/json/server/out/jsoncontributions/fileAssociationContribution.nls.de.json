@@ -1,0 +1,6 @@
+[
+	"Dateien mit Erweiterung",
+	"Ordnet alle Dateien, deren Dateinamen mit dem Globmuster übereinstimmen, der Sprache mit der angegebenen ID zu.",
+	"Dateien mit Pfad",
+	"Ordnet alle Dateien, die mit dem absoluten Pfad des Globmusters in ihrem Pfad übereinstimmen, der Sprache mit der angegebenen ID zu."
+]

@@ -5,10 +5,10 @@ var Y_OFFSET = 120;
 var skins;
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
 skins = ["res/ui/radioButton (1).png", "res/ui/radioButton (2).png", "res/ui/radioButton (3).png"];
-Laya.loader.load(skins, laya.utils.Handler.create(this, initRadioGroups));
+Laya.loader.load(skins, Laya.Handler.create(this, initRadioGroups));
 
 function initRadioGroups()
 {
@@ -23,7 +23,7 @@ function initRadioGroups()
 
 function createRadioGroup(skin)
 {
-	var rg = new laya.ui.RadioGroup();
+	var rg = new Laya.RadioGroup();
 	rg.skin = skin;
 	
 	rg.space = 70;
@@ -35,7 +35,7 @@ function createRadioGroup(skin)
 	rg.labelColors = "#787878,#d3d3d3,#FFFFFF";
 	rg.labelPadding = "5,0,0,5";
 	
-	rg.selectHandler = new laya.utils.Handler(this, onSelectChange);
+	rg.selectHandler = new Laya.Handler(this, onSelectChange);
 	Laya.stage.addChild(rg);
 
 	return rg;

@@ -44,6 +44,7 @@ var laya;
             this.evalBgColor();
         };
         BlendMode_Lighter.prototype.renderBg = function () {
+            Laya.stage.graphics.clear();
             Laya.stage.graphics.drawRect(0, 0, this.w, this.h, this.getColor());
         };
         BlendMode_Lighter.prototype.getColor = function () {

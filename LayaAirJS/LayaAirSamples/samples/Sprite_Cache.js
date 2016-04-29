@@ -1,14 +1,14 @@
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
-laya.utils.Stat.show();
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
+Laya.Stat.show();
 
-var textBox = new laya.display.Sprite();
+var textBox = new Laya.Sprite();
 
 // 5000个随机摆放的文本
 var text;
 for (var i = 0; i < 5000; i++)
 {
-	text = new laya.display.Text();
+	text = new Laya.Text();
 	text.text = (Math.random() * 100).toFixed(0);
 	text.color = "#CCCCCC";
 	

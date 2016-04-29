@@ -5,20 +5,20 @@ var rect;
 
 //引擎初始化
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 //设置背景色
 Laya.stage.bgColor = "#ffeecc";
 
 //创建精灵对象，默认mouseEnabled属性为false，在增加鼠标监听后会自动设为true;
-rect = new laya.display.Sprite();
+rect = new Laya.Sprite();
 rect.graphics.drawRect(0, 0, 300, 300, "#00eeff");
 
 rect.pivot(150,150);
 rect.pos(275, 200);
 rect.size(300, 300);
 
-rect.on(laya.events.Event.MOUSE_DOWN, this, onMouseDown);
-rect.on(laya.events.Event.MOUSE_MOVE, this, onMouseMove);
+rect.on(Laya.Event.MOUSE_DOWN, this, onMouseDown);
+rect.on(Laya.Event.MOUSE_MOVE, this, onMouseMove);
 
 Laya.stage.addChild(rect);
 

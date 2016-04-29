@@ -22,7 +22,7 @@ package
 		{
 			Laya.init(Browser.width, Browser.height);
 			Stat.show(10, 10);
-			Laya.stage.sizeMode = Stage.SIZE_FULL;
+			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			createMap();
 			Laya.stage.on(Event.MOUSE_DOWN, this, this.mouseDown);//注册鼠标事件
 			Laya.stage.on(Event.MOUSE_UP, this, this.mouseUp);

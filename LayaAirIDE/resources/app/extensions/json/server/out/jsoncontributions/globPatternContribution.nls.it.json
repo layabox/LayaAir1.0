@@ -1,0 +1,20 @@
+[
+	"File in base all'estensione",
+	"Trova tutti i file di un'estensione di file specifica.",
+	"File con più estensioni",
+	"Trova tutti i file con qualsiasi estensione di file.",
+	"File con elementi di pari livello in base al nome",
+	"Trova file con elementi di pari livello e nome identico ma estensione diversa.",
+	"Cartella in base al nome (primo livello)",
+	"Trova una cartella di primo livello con un nome specifico.",
+	"Cartella con più nomi (primo livello)",
+	"Trova più cartelle di primo livello.",
+	"Cartella in base al nome (qualsiasi percorso)",
+	"Trova una cartella con un nome specifico in qualsiasi percorso.",
+	"True",
+	"Abilita il criterio.",
+	"False",
+	"Disabilita il criterio.",
+	"File con elementi di pari livello in base al nome",
+	"Trova file con elementi di pari livello e nome identico ma estensione diversa."
+]

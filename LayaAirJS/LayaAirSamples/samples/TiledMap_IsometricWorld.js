@@ -1,9 +1,9 @@
-var Sprite = laya.display.Sprite;
-var MapLayer = laya.map.MapLayer;
-var TiledMap = laya.map.TiledMap;
-var Rectangle = laya.maths.Rectangle;
-var Point = laya.maths.Point;
-var Handler = laya.utils.Handler;
+var Sprite = Laya.Sprite;
+var MapLayer = Laya.MapLayer;
+var TiledMap = Laya.TiledMap;
+var Rectangle = Laya.Rectangle;
+var Point = Laya.Point;
+var Handler = Laya.Handler;
 
 var tiledMap;
 var layer;
@@ -18,7 +18,7 @@ Laya.stage.on("click", this, onStageClick);
 function createMap()
 {
 	tiledMap = new TiledMap();
-	tiledMap.createMap("res/tiledMap/isometric_grass_and_water.json", new Rectangle(0, 0, Laya.stage.width, Laya.stage.height), Handler.create(this, mapLoaded));
+	tiledMap.createMap("res/tiledMap/isometric_grass_and_water.json", new Rectangle(0, 0, Laya.stage.width, Laya.stage.height), Handler.create(this, mapLoaded), null, new Point(1600, 800));
 }
 
 function onStageClick()

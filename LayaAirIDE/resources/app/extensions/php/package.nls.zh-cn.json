@@ -1,0 +1,6 @@
+{
+	"configuration.validate.enable": "不管 php 验证是否已启用。",
+	"configuration.validate.executablePath": "指向可执行的 php。",
+	"configuration.validate.run": "不管 linter 是在 save 还是在 type 上运行。",
+	"configuration.title": "PHP 配置选项"
+}

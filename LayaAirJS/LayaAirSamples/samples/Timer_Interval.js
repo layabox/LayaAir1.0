@@ -2,7 +2,7 @@ var rotateTimeBasedText;
 var rotateFrameRateBasedText;
 
 Laya.init(550 , 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
 rotateTimeBasedText = createText("基于时间旋转", 120, 170);
 rotateFrameRateBasedText = createText("基于帧频旋转", 350, 170);
@@ -12,7 +12,7 @@ Laya.timer.frameLoop(2, this, animateFrameRateBased);
 
 function createText(text, x, y)
 {
-	var t = new laya.display.Text();
+	var t = new Laya.Text();
 	t.text = text;
 	t.fontSize = 30;
 	t.color = "white";

@@ -1,10 +1,10 @@
 var MY_EVENT = "myEvent";
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 Laya.stage.bgColor = "#ffeecc";
 
-var sp = new laya.display.Sprite();
+var sp = new Laya.Sprite();
 //给sp增加一个自定义的事件侦听
 sp.on(MY_EVENT, this, onCustomTest);
 
@@ -22,7 +22,7 @@ function onCustomTest(param1, param2)
 /**添加文本*/
 function createTxt()
 {
-	txt = new laya.display.Text();
+	txt = new Laya.Text();
 	txt.text = "点击蓝色方块触发自定义事件";
 
 	txt.fontSize = 20;
@@ -34,13 +34,13 @@ function createTxt()
 /**添加一个显示对象*/
 function createRect()
 {
-	var rect = new laya.display.Sprite();
+	var rect = new Laya.Sprite();
 	rect.graphics.drawRect(0, 0, 100, 100, "#00eeff");
 
 	rect.pos(225, 150);
 	rect.size(100, 100);
 
-	rect.on(laya.events.Event.MOUSE_DOWN, this, onDown);
+	rect.on(Laya.Event.MOUSE_DOWN, this, onDown);
 
 	Laya.stage.addChild(rect);
 }

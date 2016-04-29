@@ -1,0 +1,20 @@
+[
+	"Dateien nach Erweiterung",
+	"Ordnet alle Dateien mit einer bestimmten Erweiterung zu.",
+	"Dateien mit mehreren Erweiterungen",
+	"Ordnet alle Dateien mit einer der Dateierweiterungen zu.",
+	"Dateien mit gleichgeordneten Elementen nach Name",
+	"Ordnet Dateien zu, die gleichgeordnete Elemente mit dem gleichen Namen und einer anderen Erweiterung besitzen.",
+	"Ordner nach Name (oberste Ebene)",
+	"Ordnet einen Ordner auf oberster Ebene einem bestimmten Namen zu.",
+	"Ordner mit mehreren Namen (oberste Ebene)",
+	"Ordnet mehrere Ordner auf oberster Ebene zu.",
+	"Ordner nach Name (beliebiger Speicherort)",
+	"Zuordnen eines Ordners mit einem bestimmten Namen an einem beliebigen Speicherort.",
+	"True",
+	"Aktiviert das Muster.",
+	"False",
+	"Deaktiviert das Muster.",
+	"Dateien mit gleichgeordneten Elementen nach Name",
+	"Ordnet Dateien zu, die gleichgeordnete Elemente mit dem gleichen Namen und einer anderen Erweiterung besitzen."
+]

@@ -1,15 +1,15 @@
 var txt;
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 Laya.stage.bgColor = "#ffeecc";
 
 var keyDownList = [];
 
 //添加键盘按下事件,一直按着某按键则会不断触发
-Laya.stage.on(laya.events.Event.KEY_DOWN, this, onKeyDown);
+Laya.stage.on(Laya.Event.KEY_DOWN, this, onKeyDown);
 //添加键盘抬起事件
-Laya.stage.on(laya.events.Event.KEY_UP, this, onKeyUp);
+Laya.stage.on(Laya.Event.KEY_UP, this, onKeyUp);
 
 Laya.timer.frameLoop(1, this, keyboardInspector);
 
@@ -45,7 +45,7 @@ function keyboardInspector()
 /**添加提示文本*/
 function createTxt()
 {
-	txt = new laya.display.Text();
+	txt = new Laya.Text();
 	
 	txt.size(550, 300);
 	txt.fontSize = 20;

@@ -1,8 +1,8 @@
 Laya.init(550, 400);
 Laya.stage.bgColor = "#ffeecc";
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
  
-var mc = new laya.ani.swf.MovieClip();
+var mc = new Laya.MovieClip();
 mc.load("res/swf/H5.swf");
  
 mc.scale(0.5, 0.5);

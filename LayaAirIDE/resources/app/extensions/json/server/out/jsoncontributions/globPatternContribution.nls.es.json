@@ -1,0 +1,20 @@
+[
+	"Archivos por extensión",
+	"Hacer coincidir todos los archivos que tengan una extensión de archivo determinada.",
+	"Archivos con varias extensiones",
+	"Hacer coincidir todos los archivos con cualquiera de las extensiones de archivo.",
+	"Archivos con elementos del mismo nivel por nombre",
+	"Hacer coincidir archivos que tienen elementos del mismo nivel con el mismo nombre pero con extensión diferente.",
+	"Carpeta por nombre (nivel superior)",
+	"Hacer coincidir una carpeta de nivel superior con un nombre específico.",
+	"Carpetas con varios nombres (nivel superior)",
+	"Hacer coincidir varias carpetas de nivel superior.",
+	"Carpeta por nombre (cualquier ubicación)",
+	"Hacer coincidir una carpeta con un nombre determinado en cualquier ubicación.",
+	"True",
+	"Habilitar el patrón.",
+	"False",
+	"Deshabilitar el patrón.",
+	"Archivos con elementos del mismo nivel por nombre",
+	"Hacer coincidir archivos que tienen elementos del mismo nivel con el mismo nombre pero con extensión diferente."
+]

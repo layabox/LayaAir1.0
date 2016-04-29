@@ -1,38 +1,33 @@
-var HTMLDivElement = laya.html.dom.HTMLDivElement;
-var HTMLIframeElement = laya.html.dom.HTMLIframeElement;
-var Handler = laya.utils.Handler;
-var WebGL = laya.webgl.WebGL;
+(function() {
+	var HTMLDivElement = Laya.HTMLDivElement;
+	var HTMLIframeElement = Laya.HTMLIframeElement;
+	var Handler = Laya.Handler;
+	var WebGL = Laya.WebGL;
 
-Laya.init(550, 400, WebGL);
+	Laya.init(550, 400, WebGL);
 
-Laya.loader.load("res/html/test.html", Handler.create(this, onAssetLoaded));
+	createParagraph(); // 代码创建
+	showExternalHTML(); // 使用外部定义的html
 
-function onAssetLoaded()
-{
-	createParagraph();
-	showExternalHTML();
-}
+	function createParagraph() {
+		var p = new HTMLDivElement();
+		Laya.stage.addChild(p);
 
-function createParagraph()
-{
-	var p = new HTMLDivElement();
-	Laya.stage.addChild(p);
+		p.style.font = "Impact";
+		p.style.fontSize = 30;
 
-	p.style.font = "Impact";
-	p.style.fontSize = 30;
+		var html = "<span color='#e3d26a'>使用</span>";
+		html += "<span style='color:#FFFFFF;font-weight:bold'>HTMLDivElement</span>";
+		html += "<span color='#6ad2e3'>创建的</span><br/>";
+		html += "<span color='#d26ae3'>HTML文本</span>";
 
-	var html = "<span color='#e3d26a'>使用</span>";
-	html += "<span style='color:#FFFFFF;font-weight:bold'>HTMLDivElement</span>";
-	html  += "<span color='#6ad2e3'>创建的</span><br/>";
-	html += "<span color='#d26ae3'>HTML文本</span>";
+		p.innerHTML = html;
+	}
 
-	p.innerHTML = html;
-}
-
-function showExternalHTML()
-{
-	var p = new HTMLIframeElement();
-	Laya.stage.addChild(p);
-	p.href = "res/html/test.html";
-	p.y = 100;
-}
+	function showExternalHTML() {
+		var p = new HTMLIframeElement();
+		Laya.stage.addChild(p);
+		p.href = "res/html/test.html";
+		p.y = 100;
+	}
+})();

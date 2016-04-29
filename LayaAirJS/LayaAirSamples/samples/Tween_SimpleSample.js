@@ -1,5 +1,5 @@
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 			
 var terminalX = 200;
 
@@ -14,14 +14,14 @@ characterB.y = 250;
 Laya.stage.graphics.drawLine(terminalX, 0, terminalX, Laya.stage.height, "#FFFFFF");
 
 // characterA使用Tween.to缓动
-laya.utils.Tween.to(characterA, { x : terminalX }, 1000);
+Laya.Tween.to(characterA, { x : terminalX }, 1000);
 // characterB使用Tween.from缓动
 characterB.x = terminalX;
-laya.utils.Tween.from(characterB, { x:0 }, 1000);
+Laya.Tween.from(characterB, { x:0 }, 1000);
 
 function createCharacter(skin)
 {
-	var character = new laya.display.Sprite();
+	var character = new Laya.Sprite();
 	character.loadImage(skin);
 	Laya.stage.addChild(character);
 

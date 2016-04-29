@@ -7,7 +7,6 @@ package
 	import laya.utils.Browser;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
-	import laya.webgl.atlas.AtlasManager;
 	
 	public class PerformanceTest_Legend
 	{
@@ -18,7 +17,6 @@ package
 		public function PerformanceTest_Legend()
 		{
 			Laya.init(width, height, WebGL);
-			AtlasManager.enable();
 			Stat.show()
 			Laya.stage.bgColor = "#000000";
 			initHandler();

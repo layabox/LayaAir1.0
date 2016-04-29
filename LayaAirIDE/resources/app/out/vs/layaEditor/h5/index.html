@@ -1,0 +1,205 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<link href="css/ouibounce.min.css" rel="stylesheet" type="text/css" />
+	<link href="css/layout.css" rel="stylesheet" type="text/css" />
+	<link href="css/menu.css" rel="stylesheet" type="text/css" />
+	<link href="css/bottombanner.css" rel="stylesheet" type="text/css" />
+	<style type="text/css">
+		.html-body-overflow
+		{
+			overflow-x:hidden;
+			overflow-y:hidden;
+		}
+	</style>
+</head>
+<body style="background-color:#2b2a2a;margin:0;overflow:none;overflow-x:hidden;overflow-y:hidden;border: solid 1px #000000;" onselectstart="return false">
+<!-- setting aria label to empty here seems to prevent NVDA from reading the full URL of the application on start/reload -->
+
+<!--<script src='layabuilder.max.js' loader='laya'></script>-->
+
+<div id="conList" style="display: none">
+	<div>
+		<ul id="nav">
+			<div style="top: 0px;float:left;margin:4px 4px 0 4px;"><img src="res/icons/32.png"  width="24px" height="24px;" /></div>
+			<li onclick="b_block(event)" onmouseover="overHandler(event)"><a class="hsubs" href="#">文件</a>
+				<ul class="subs" id="menuList">
+					<li><a href="#"style="padding: 8px 10px 10px 10px;height: 12px" onclick='createProHandler("newAS")'>新建项目<span></span></a></li>
+					<li><a href="#"style="padding: 8px 10px 10px 10px;height: 12px" onclick='openProHandler("openPro")'> 打开项目<span></span></a></li>
+					<li><a href="#"style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.action.files.newUntitledFile")'>新建文件<span>(Ctrl+N)</span></a></li>
+					<li style="border-bottom: solid 1px #222222"><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='oclick("newwindow")'>新建窗口<span>(Ctrl+Shift+N)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='oclick("newfile")'>打开文件</a></li>
+					<li style="border-bottom: solid 1px #222222"><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='oclick("openFolder")'>打开文件夹<span>(Ctrl+O)</span></a></li>
+					<li ><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.action.files.save")'>保存<span>(Ctrl+S)</span></a></li>
+					<li ><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.action.files.saveAs")'>另存<span>(Ctrl+Shift+N)</span></a></li>
+					<li style="border-bottom: solid 1px #222222"><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.action.files.saveAll")'>保存所有</a></li>
+					<!--<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.action.files.revert")'>还原文件</a></li>-->
+					<!--<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.action.closeActiveEditor")'>关闭编辑器<span>(Ctrl+F4)</span></a></li>-->
+					<!--&lt;!&ndash;<li ><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.action.closeFolder")'>关闭文件夹</a></li>&ndash;&gt;-->
+					<!--<li ><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.action.closeFolder")'>关闭窗口<span>(Ctrl+Shift+W)</span></a></li>-->
+					<!--<li style="border-top: solid 1px #222222"><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.action.closeActiveEditor")'>退出</a></li>-->
+				</ul>
+			</li>
+			<li onclick="b_block(event)" onmouseover="overHandler(event)"><a href="#" _fcksavedurl="#">编辑</a>
+				<ul class="subs" id="compileList">
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("undo")'>撤销<span>(Ctrl+Z)</span></a></li>
+					<li style="border-bottom: solid 1px #222222"><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("redo")'>重做<span>(Ctrl+Y)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("editor.action.clipboardCutAction")'>剪切<span>(Ctrl+X)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("editor.action.clipboardPasteAction")'>粘贴<span>(Ctrl+V)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("editor.action.clipboardCopyAction")'>复制<span>(Ctrl+C)</span></a></li>
+					<li style="border-bottom: solid 1px #222222"><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("editor.action.selectAll")'>全选<span>(Ctrl+A)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("actions.find")'>查找<span>(Ctrl+F)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;"onclick='sendMenuHandlerLaya("editor.action.startFindReplaceAction")'>替换<span>(Ctrl+H)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("workbench.view.search")'>全局搜索<span>(Ctrl+Shift+F)</span></a></li>
+				</ul>
+			</li>
+			<li onclick="b_block(event)" onmouseover="overHandler(event)"><a href="#" _fcksavedurl="#">视图</a>
+				<ul class="subs" id="compileList0">
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("workbench.view.explorer")'>文件(E)<span>(Ctrl+Shift+E)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("workbench.view.search")'>搜索(S)<span>(Ctrl+Shift+F)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("workbench.view.git")'>Git(G)<span>(Ctrl+Shift+G)</span></a></li>
+					<li style="border-bottom: solid 1px #222222"><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.view.debug")'>调试<span>(Ctrl+Shift+D)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("workbench.action.showCommands")'>命令面板(C)<span>(Ctrl+Shift+P)</span></a></li>
+					<li style="border-bottom: solid 1px #222222"><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.action.showErrorsWarnings")'>错误和警告<span>(Ctrl+Shift+M)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("workbench.action.output.toggleOutput")'>输出面板<span>(Ctrl+Shift+U)</span></a></li>
+					<li style="border-bottom: solid 1px #222222"><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.debug.action.toggleRepl")'>调试面板<span>(Ctrl+Shift+Y)</span></a></li>
+					<li style="border-bottom: solid 1px #222222"><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='oclick("F11")'>全屏<span>(F11)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("workbench.action.splitEditor")'>拆分编辑器<span>(Ctrl+\)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("workbench.action.toggleSidebarVisibility")'>切换侧边栏<span>(Ctrl+B)</span></a></li>
+					<li style="border-bottom: solid 1px #222222"><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='sendMenuHandlerLaya("workbench.action.toggleSidebarPosition")'>移动侧边栏<span>(Ctrl+Shift+F)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("workbench.action.zoomIn")'>放大(Z)<span>(Ctrl+=)</span></a></li>
+					<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='sendMenuHandlerLaya("workbench.action.zoomOut")'>缩小(u)<span>(Ctrl+-)</span></a></li>
+				</ul>
+			</li>
+			<!--<li onclick="b_block(event)"onmouseover="overHandler(event)"><a href="#" _fcksavedurl="#">工具</a>-->
+			<!--<ul class="subs">-->
+			<!--&lt;!&ndash;<li><a href="#" onclick='oclick("tojs")'>tojs工具</a></li>&ndash;&gt;-->
+			<!--<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='oclickHandler("flash")'>资源转换工具</a></li>-->
+			<!--<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='oclick("config")'>环境配置</a></li>-->
+			<!--<li><a href="#" style="padding: 8px 10px 10px 10px;height: 12px" onclick='oclick("compress")'>JS压缩</a></li>-->
+			<!--&lt;!&ndash;<li><a href="#" onclick='oclick("publish")'>项目JS加密</a></li>&ndash;&gt;-->
+			<!--&lt;!&ndash;<li><a href="#" onclick='oclick("Streamline")'>项目瘦身</a></li>&ndash;&gt;-->
+			<!--&lt;!&ndash;<li><a href="#">打包工具</a></li>&ndash;&gt;-->
+			<!--</ul>-->
+			<!--</li>-->
+			<!--<li><a href="#" _fcksavedurl="#">测试</a>-->
+			<!--</li>-->
+			<!--<li><a href="#" _fcksavedurl="#" onclick='oclick("发布")'>发布</a>-->
+			<!--</li>-->
+			<li><a href="http://ask.layabox.com/question" _fcksavedurl="#" onclick='oclick("layabox")'>社区</a>
+			</li>
+			<li onclick="b_block(event)" onmouseover="overHandler(event)"><a class="hsubs" href="#">帮助</a>
+				<ul class="subs">
+					<li ><a href="#" _fcksavedurl="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='oclick("f12")'>开发人员工具(F12)</a></li>
+					<!--<li style="border-bottom: solid 1px #222222"><a href="#" _fcksavedurl="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='oclick("f5")'>刷新页面(F5)</a></li>-->
+					<!--<li><a href="#" _fcksavedurl="#"  style="padding: 8px 10px 10px 10px;height: 12px;"onclick='oclick("index")'>欢迎页</a></li>-->
+					<li><a href="#" _fcksavedurl="#"  style="padding: 8px 10px 10px 10px;height: 12px;"onclick='oclick("layaboxPublic")'>官网</a></li>
+					<!--<li><a href="#" _fcksavedurl="#" onclick='oclick("文档")'>文档中心</a></li>-->
+					<li><a href="#" _fcksavedurl="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='oclick("layademo")'> 官网事例</a></li>
+					<li style="border-bottom: solid 1px #222222"><a href="#" _fcksavedurl="#" style="padding: 8px 10px 10px 10px;height: 12px;" onclick='oclick("downLoad")'>开发者中心</a></li>
+					<li><a href="#" _fcksavedurl="#" style="padding: 8px 10px 10px 10px;height: 12px;" >当前版本 0.9.8</a></li>
+				</ul>
+			</li>
+			<li>
+				<a href="#" _fcksavedurl="#" onclick='oclick("debugLaya")'>
+					<img src="res/img/1_07.png" style="position: absolute;top: 12px"><span>&nbsp&nbsp&nbsp&nbsp调试</span>
+				</a>
+			</li>
+			<li style="width: 20px;background:#212121"></li>
+			<li style="float: right"><a href="#" onclick='oclick("close")' style="font-size: 24px;bottom: 0px; padding: 0px 10px 4px 10px;textext-align:center">×</a>
+			<li style="float: right"><a href="#" onclick='oclick("restore")' style="font-size: 23px; bottom: 3px;padding: 0 10px 6px 10px;text-align: center;margin-top:3px">□</a>
+			<li style="float: right"><a href="#" onclick='oclick("minimize")' style="font-size: 12px;bottom: -3px; padding: 0px 10px 17px 10px;text-align: center">__</a>
+			<li style="float: right"><a href="#" onclick='oclick("changeViewUi")' title="切换到编辑模式(Alt+A)">
+			<img  style="position: absolute;top: 11px;" src="res/img/1_11.png">
+			<span>&nbsp&nbsp&nbsp&nbsp&nbsp编辑模式</span></a></li>
+		</ul>
+	</div>
+	<div id="ouibounce-modal">
+		<div class="modal">
+			<div class="conDialg">
+				<div class="modal-title">
+					<a href="#" id="layaPanelClose" onclick='closeWindHandler("ouibounce-modal")' style="font-size: 20px;color:#c9caca;font-weight:normal;text-decoration:none;padding: 2px 10px 0px 10px;float: right;";>×</a>
+					<h3 id="title_dialg">新建项目</h3>
+				</div>
+				<div class="modal-body">
+					<div id="flashResTool" style="display: none">
+						<input class="texti" type="text" id="proNameInput" placeholder=" 项目名称">
+						<input class="textii" type="text" id="proNameOutput" placeholder="选择路径">
+						<input class="btn" type="button" value="更改" id="compressChangeOutBtn" onclick="changeFolderPro(event)">
+						<select  id="proTypeLaya" style="height: 38px;width: 427px;position: absolute;top:199px;left: 57px;background-color: #494949;">
+							<option value ="volvo">ActionScript项目</option>
+							<option value ="saab">TypeScript项目</option>
+							<option value="opel">JavaScript项目</option>
+						</select>
+						<button class="btnPushJS"  onclick="createProWorkspace(event)">确定</button>
+					</div>
+					<div id="subpackage" style="display: block">
+						<div onclick="layaNewCreatePro()">
+							<img src="res/img/btn_new.png"  style="position: absolute;left: 100px;top: 100px">
+							<a style="position: absolute;top: 200px;left: 120px;font-size: 16px;color: azure;">新建项目</a>
+						</div>
+						<div onclick="openProHandler()">
+							<img src="res/img/btn_open.png"  style="position: absolute;right: 100px;top: 100px">
+							<a style="position: absolute;top: 200px;right: 120px;font-size: 16px;color: azure;">打开项目</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="layaAlert" id="layaAlertWarningOpen">
+	<div class="modal">
+		<div class="conDialg">
+			<div class="modal-title">
+				<a href="#" onclick='closeAlerHandler("layaAlertWarningOpen")' style="font-size: 14px;color:#c9caca;font-weight:normal;text-decoration:none;padding: 0px 10px 0px 10px;float: right;";>×</a>
+				<div>LayaAirIDE</div>
+			</div>
+			<div class="modal-body">
+				<p id="mesgLaya" style="margin-top: 36px;font-size: 14px;color: #c9caca;text-align: center"></p>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="layaAlert" id="layaAlertWarning">
+	<div class="modal">
+		<div class="conDialg">
+			<div class="modal-title">
+				<!--<a href="#" onclick='closeAlerHandler("layaAlertWarning")' style="font-size: 20px;color:#c9caca;font-weight:normal;text-decoration:none;padding: 0px 10px 0px 10px;float: right;";>×</a>-->
+				<div>LayaAirIDE</div>
+			</div>
+			<div class="modal-body">
+				<p id="conp" style="margin-top: 20px;font-size: 14px;color: #c9caca;text-align: center"></p>
+				<input class="btn" style="position: absolute;left: 86px" type="button" value="确定" onclick="okCreateLayaUI(event)">
+				<input class="btn" style="position: absolute;right: 86px" type="button" value="取消" onclick='closeAlerHandler("layaAlertWarning")'>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="layaAlert" id="layaPageSave">
+	<div class="modal">
+		<div class="conDialg">
+			<div class="modal-title">
+				<a href="#" onclick='closeAlerHandler("layaPageSave")' style="font-size: 16px;color:#c9caca;font-weight:normal;text-decoration:none;padding: 0px 10px 0px 10px;float: right;";>×</a>
+				<div>LayaAirIDE</div>
+			</div>
+			<div class="modal-body">
+				<p id="layapage" style="margin-top: 15px;font-size: 14px;color: #c9caca;text-align: center">页面尚未保存,是否保存这些修改</p>
+				<div>
+					<input class="btn" style="position: absolute;top: 100px;background-color: #287BBF;width: 80px"type="button" value="保存" onclick="layaPageSAveHandler()" >
+					<input class="btn" style="position: absolute;top: 100px;right: 136px;width: 80px" type="button" value="不保存" onclick="layaPageNoSAveHandler()" >
+					<input class="btn" style="position: absolute;right: 28px;top: 100px;width: 80px" type="button" value="取消" onclick='closeAlerHandler("layaPageSave")'>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script id="layaUIView"></script>
+<script id="layaCodeView"></script>
+<script src='index.js' loader='laya'></script>
+<!--<script id="layaUIView" src="vscode.js"></script>-->
+<div id="_dragBar"></div>
+</body>
+</html>

@@ -1,10 +1,10 @@
-var Stage = laya.display.Stage;
-var Event = laya.events.Event;
-var TiledMap = laya.map.TiledMap;
-var Rectangle = laya.maths.Rectangle;
-var Browser = laya.utils.Browser;
-var Handler = laya.utils.Handler;
-var Stat = laya.utils.Stat;
+var Stage = Laya.Stage;
+var Event = Laya.Event;
+var TiledMap = Laya.TiledMap;
+var Rectangle = Laya.Rectangle;
+var Browser = Laya.Browser;
+var Handler = Laya.Handler;
+var Stat = Laya.Stat;
 
 var tiledMap;
 var mLastMouseX = 0;
@@ -16,7 +16,7 @@ var mY = 0;
 Laya.init(Browser.width, Browser.height);
 Laya.stage.bgColor = "#666666";
 Stat.show(10, 10);
-Laya.stage.sizeMode = Stage.SIZE_FULL;
+Laya.stage.scaleMode = Stage.SCALE_FULL;
 createMap();
 Laya.stage.on(Event.MOUSE_DOWN, this, this.mouseDown);//注册鼠标事件
 Laya.stage.on(Event.MOUSE_UP, this, this.mouseUp);

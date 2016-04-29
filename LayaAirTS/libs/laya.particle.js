@@ -2,11 +2,12 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Shader=laya.webgl.shader.Shader,Texture=laya.resource.Texture,Buffer=laya.webgl.utils.Buffer,Sprite=laya.display.Sprite;
-	var Stat=laya.utils.Stat,Matrix=laya.maths.Matrix,Timer=laya.utils.Timer,WebGL=laya.webgl.WebGL,WebGLContext=laya.webgl.WebGLContext;
-	var BlendMode=laya.webgl.canvas.BlendMode,Stage=laya.display.Stage,MathUtil=laya.maths.MathUtil,RenderContext=laya.renders.RenderContext;
-	var Handler=laya.utils.Handler,Render=laya.renders.Render,RenderSprite=laya.renders.RenderSprite,Event=laya.events.Event;
-	var Utils=laya.utils.Utils,Browser=laya.utils.Browser,Value2D=laya.webgl.shader.d2.value.Value2D;
+	var Event=laya.events.Event,Loader=laya.net.Loader,Value2D=laya.webgl.shader.d2.value.Value2D,Shader=laya.webgl.shader.Shader;
+	var WebGLContext=laya.webgl.WebGLContext,Sprite=laya.display.Sprite,Handler=laya.utils.Handler,MathUtil=laya.maths.MathUtil;
+	var Stat=laya.utils.Stat,Render=laya.renders.Render,RenderSprite=laya.renders.RenderSprite,RenderContext=laya.renders.RenderContext;
+	var Texture=laya.resource.Texture,Matrix=laya.maths.Matrix,Timer=laya.utils.Timer,BlendMode=laya.webgl.canvas.BlendMode;
+	var WebGL=laya.webgl.WebGL,Utils=laya.utils.Utils,Buffer=laya.webgl.utils.Buffer,Stage=laya.display.Stage;
+	var Browser=laya.utils.Browser;
 	/**
 	*...
 	*@author ww
@@ -288,8 +289,8 @@
 			this.v_Color=null;
 			this.a_AgeAddScale=NaN;
 			this.oSize=NaN;
-			this._position=new Float32Array(3);
 			this._color=new Float32Array(4);
+			this._position=new Float32Array(3);
 		}
 
 		__class(CanvasShader,'laya.particle.particleUtils.CanvasShader');
@@ -453,20 +454,6 @@
 		__class(TestParticle,'laya.particle.TestParticle');
 		return TestParticle;
 	})()
-
-
-	//class laya.particle.shader.ParticleShader extends laya.webgl.shader.Shader
-	var ParticleShader=(function(_super){
-		function ParticleShader(){
-			ParticleShader.__super.call(this,ParticleShader.vs,ParticleShader.ps,"ParticleShader");
-		}
-
-		__class(ParticleShader,'laya.particle.shader.ParticleShader',_super);
-		__static(ParticleShader,
-		['vs',function(){return this.vs="attribute vec4 a_CornerTextureCoordinate;\nattribute vec3 a_Position;\nattribute vec3 a_Velocity;\nattribute vec4 a_Color;\nattribute vec3 a_SizeRotation;\nattribute vec4 a_RadiusRadian;\nattribute float a_AgeAddScale;\nattribute float a_Time;\n\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\n\nuniform  float u_CurrentTime;\nuniform float u_Duration;\nuniform float u_EndVelocity;\nuniform vec3 u_Gravity;\n\n#ifdef PARTICLE3D\n uniform mat4 u_WorldMat;\n uniform mat4 u_View;\n uniform mat4 u_Projection;\n uniform vec2 u_ViewportScale;\n#else\n uniform vec2 size;\n uniform mat4 mmat;\n#endif\n\nvec4 ComputeParticlePosition(in vec3 position, in vec3 velocity,in float age,in float normalizedAge)\n{\n\n   float startVelocity = length(velocity);//起始标量速度\n   float endVelocity = startVelocity * u_EndVelocity;//结束标量速度\n\n   float velocityIntegral = startVelocity * normalizedAge +(endVelocity - startVelocity) * normalizedAge *normalizedAge/2.0;//计算当前速度的标量（单位空间），vt=v0*t+(1/2)*a*(t^2)\n   \n   vec3 addPosition = normalize(velocity) * velocityIntegral * u_Duration;//计算受自身速度影响的位置，转换标量到矢量    \n   addPosition += u_Gravity * age * normalizedAge;//计算受重力影响的位置\n   \n   float radius=mix(a_RadiusRadian.x, a_RadiusRadian.y, normalizedAge); //计算粒子受半径和角度影响（无需计算角度和半径时，可用宏定义优化屏蔽此计算）\n   float radianHorizontal =a_RadiusRadian.z*normalizedAge;\n   float radianVertical =a_RadiusRadian.w*normalizedAge;\n   \n   float r =cos(radianVertical)* radius;\n   addPosition.y += sin(radianVertical) * radius;\n	\n   addPosition.x += cos(radianHorizontal) *r;\n   addPosition.z += sin(radianHorizontal) *r;\n  \n   #ifdef PARTICLE3D\n   position+=addPosition;\n    return  u_Projection*u_View*u_WorldMat*(vec4(position, 1.0));\n   #else\n   addPosition.y=-addPosition.y;//2D粒子位置更新需要取负，2D粒子坐标系Y轴正向朝上\n   position+=addPosition;\n    return vec4(position.xy,0.0,1.0);\n   #endif\n}\n\nfloat ComputeParticleSize(in float startSize,in float endSize, in float normalizedAge)\n{    \n    float size = mix(startSize, endSize, normalizedAge);\n    \n	#ifdef PARTICLE3D\n    //Project the size into screen coordinates.\n     return size * u_Projection[1][1];\n	#else\n	 return size;\n	#endif\n}\n\nmat2 ComputeParticleRotation(in float rot,in float age)\n{    \n    float rotation =rot * age;\n    //计算2x2旋转矩阵.\n    float c = cos(rotation);\n    float s = sin(rotation);\n    return mat2(c, -s, s, c);\n}\n\nvec4 ComputeParticleColor(in vec4 color,in float normalizedAge)\n{\n    //硬编码设置，使粒子淡入很快，淡出很慢,6.7的缩放因子把置归一在0到1之间，可以谷歌x*(1-x)*(1-x)*6.7的制图表\n    color.a *= normalizedAge * (1.0-normalizedAge) * (1.0-normalizedAge) * 6.7;\n   \n    return color;\n}\n\nvoid main()\n{\n   float age = u_CurrentTime - a_Time;\n   age *= 1.0 + a_AgeAddScale;\n   float normalizedAge = clamp(age / u_Duration,0.0,1.0);\n   gl_Position = ComputeParticlePosition(a_Position, a_Velocity, age, normalizedAge);//计算粒子位置\n   float pSize = ComputeParticleSize(a_SizeRotation.x,a_SizeRotation.y, normalizedAge);\n   mat2 rotation = ComputeParticleRotation(a_SizeRotation.z, age);\n	\n   #ifdef PARTICLE3D\n	gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize * u_ViewportScale;\n   #else\n	gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize;\n    gl_Position=vec4((gl_Position.x/size.x-0.5)*2.0,(0.5-gl_Position.y/size.y)*2.0,0.0,1.0);\n   #endif\n   \n   v_Color = ComputeParticleColor(a_Color, normalizedAge);\n   v_TextureCoordinate =a_CornerTextureCoordinate.zw;\n}\n\n"/*__INCLUDESTR__e:/trank/libs/layaair/particle/src/laya/particle/shader/files/particle.vs*/;},'ps',function(){return this.ps="precision highp float;\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\nuniform sampler2D u_texture;\n\nvoid main()\n{	\n	gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*v_Color;\n}"/*__INCLUDESTR__e:/trank/libs/layaair/particle/src/laya/particle/shader/files/particle.ps*/;}
-		]);
-		return ParticleShader;
-	})(Shader)
 
 
 	/**
@@ -716,13 +703,13 @@
 			this.settings=parSetting;
 			this._maxNumParticles=parSetting.maxPartices;
 			this.texture=new Texture();
-			this.texture.on(/*laya.events.Event.LOADED*/"loaded",this,this.textureLoaded);
+			this.texture.on(/*laya.events.Event.LOADED*/"loaded",this,this._textureLoaded);
 			this.texture.load(parSetting.textureName);
 		}
 
 		__class(ParticleTemplateCanvas,'laya.particle.ParticleTemplateCanvas',_super);
 		var __proto=ParticleTemplateCanvas.prototype;
-		__proto.textureLoaded=function(e){
+		__proto._textureLoaded=function(e){
 			this.setTexture(this.texture);
 			this._ready=true;
 		}
@@ -908,39 +895,6 @@
 	})(ParticleTemplateBase)
 
 
-	//class laya.particle.shader.value.ParticleShaderValue extends laya.webgl.shader.d2.value.Value2D
-	var ParticleShaderValue=(function(_super){
-		function ParticleShaderValue(){
-			this.a_CornerTextureCoordinate=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,0];
-			this.a_Position=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,16];
-			this.a_Velocity=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,28];
-			this.a_Color=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,40];
-			this.a_SizeRotation=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,56];
-			this.a_RadiusRadian=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,68];
-			this.a_AgeAddScale=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,84];
-			this.a_Time=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,88];
-			this.u_CurrentTime=NaN;
-			this.u_Duration=NaN;
-			this.u_Gravity=null;
-			this.u_EndVelocity=NaN;
-			this.u_texture=null;
-			ParticleShaderValue.__super.call(this,0,0);
-		}
-
-		__class(ParticleShaderValue,'laya.particle.shader.value.ParticleShaderValue',_super);
-		var __proto=ParticleShaderValue.prototype;
-		__proto.upload=function(){
-			this.refresh();
-			ParticleShaderValue.pShader.upload(this);
-		}
-
-		__static(ParticleShaderValue,
-		['pShader',function(){return this.pShader=new ParticleShader();}
-		]);
-		return ParticleShaderValue;
-	})(Value2D)
-
-
 	//class laya.particle.ParticleTemplate2D extends laya.particle.ParticleTemplateWebGL
 	var ParticleTemplate2D=(function(_super){
 		function ParticleTemplate2D(parSetting){
@@ -951,7 +905,11 @@
 			this.sv=new ParticleShaderValue();
 			ParticleTemplate2D.__super.call(this,parSetting);
 			this.texture=new Texture();
-			this.texture.load(this.settings.textureName);
+			var _this=this;
+			Laya.loader.load(this.settings.textureName,Handler.create(null,function(texture){
+				(texture.bitmap).enableMerageInAtlas=false;
+				_this.texture=texture;
+			}));
 			this.sv.u_Duration=this.settings.duration;
 			this.sv.u_Gravity=this.settings.gravity;
 			this.sv.u_EndVelocity=this.settings.endVelocity;
@@ -1015,6 +973,39 @@
 	})(ParticleTemplateWebGL)
 
 
+	//class laya.particle.shader.value.ParticleShaderValue extends laya.webgl.shader.d2.value.Value2D
+	var ParticleShaderValue=(function(_super){
+		function ParticleShaderValue(){
+			this.a_CornerTextureCoordinate=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,0];
+			this.a_Position=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,16];
+			this.a_Velocity=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,28];
+			this.a_Color=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,40];
+			this.a_SizeRotation=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,56];
+			this.a_RadiusRadian=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,68];
+			this.a_AgeAddScale=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,84];
+			this.a_Time=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,92,88];
+			this.u_CurrentTime=NaN;
+			this.u_Duration=NaN;
+			this.u_Gravity=null;
+			this.u_EndVelocity=NaN;
+			this.u_texture=null;
+			ParticleShaderValue.__super.call(this,0,0);
+		}
+
+		__class(ParticleShaderValue,'laya.particle.shader.value.ParticleShaderValue',_super);
+		var __proto=ParticleShaderValue.prototype;
+		__proto.upload=function(){
+			this.refresh();
+			ParticleShaderValue.pShader.upload(this);
+		}
+
+		__static(ParticleShaderValue,
+		['pShader',function(){return this.pShader=new ParticleShader();}
+		]);
+		return ParticleShaderValue;
+	})(Value2D)
+
+
 	//class laya.particle.Particle2D extends laya.display.Sprite
 	var Particle2D=(function(_super){
 		function Particle2D(setting){
@@ -1035,7 +1026,7 @@
 		__class(Particle2D,'laya.particle.Particle2D',_super);
 		var __proto=Particle2D.prototype;
 		__proto.play=function(){
-			Laya.timer.frameLoop(1,this,this.loop,null,true);
+			Laya.timer.frameLoop(1,this,this.loop);
 		}
 
 		__proto.stop=function(){
@@ -1077,25 +1068,25 @@
 	//class laya.particle.ParticlePlayer extends laya.display.Sprite
 	var ParticlePlayer=(function(_super){
 		function ParticlePlayer(){
-			this.particle=null;
+			this._particle=null;
 			ParticlePlayer.__super.call(this);
 		}
 
 		__class(ParticlePlayer,'laya.particle.ParticlePlayer',_super);
 		var __proto=ParticlePlayer.prototype;
 		__proto.loadParticleFile=function(fileName){
-			Laya.loader.load(fileName,Handler.create(this,this.setParticleSetting));
+			Laya.loader.load(fileName,Handler.create(this,this.setParticleSetting),null,/*laya.net.Loader.JSOn*/"json");
 		}
 
 		__proto.setParticleSetting=function(settings){
-			if (this.particle){
-				this.particle.stop();
-				this.particle.removeSelf();
+			if (this._particle){
+				this._particle.stop();
+				this._particle.removeSelf();
 			}
-			this.particle=new Particle2D(settings);
-			this.particle.emitter.start();
-			this.particle.play();
-			this.addChild(this.particle);
+			this._particle=new Particle2D(settings);
+			this._particle.emitter.start();
+			this._particle.play();
+			this.addChild(this._particle);
 		}
 
 		__getset(0,__proto,'file',null,function(path){
@@ -1104,6 +1095,20 @@
 
 		return ParticlePlayer;
 	})(Sprite)
+
+
+	//class laya.particle.shader.ParticleShader extends laya.webgl.shader.Shader
+	var ParticleShader=(function(_super){
+		function ParticleShader(){
+			ParticleShader.__super.call(this,ParticleShader.vs,ParticleShader.ps,"ParticleShader");
+		}
+
+		__class(ParticleShader,'laya.particle.shader.ParticleShader',_super);
+		__static(ParticleShader,
+		['vs',function(){return this.vs="attribute vec4 a_CornerTextureCoordinate;\nattribute vec3 a_Position;\nattribute vec3 a_Velocity;\nattribute vec4 a_Color;\nattribute vec3 a_SizeRotation;\nattribute vec4 a_RadiusRadian;\nattribute float a_AgeAddScale;\nattribute float a_Time;\n\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\n\nuniform  float u_CurrentTime;\nuniform float u_Duration;\nuniform float u_EndVelocity;\nuniform vec3 u_Gravity;\n\n#ifdef PARTICLE3D\n uniform mat4 u_WorldMat;\n uniform mat4 u_View;\n uniform mat4 u_Projection;\n uniform vec2 u_ViewportScale;\n#else\n uniform vec2 size;\n uniform mat4 mmat;\n#endif\n\nvec4 ComputeParticlePosition(in vec3 position, in vec3 velocity,in float age,in float normalizedAge)\n{\n\n   float startVelocity = length(velocity);//起始标量速度\n   float endVelocity = startVelocity * u_EndVelocity;//结束标量速度\n\n   float velocityIntegral = startVelocity * normalizedAge +(endVelocity - startVelocity) * normalizedAge *normalizedAge/2.0;//计算当前速度的标量（单位空间），vt=v0*t+(1/2)*a*(t^2)\n   \n   vec3 addPosition = normalize(velocity) * velocityIntegral * u_Duration;//计算受自身速度影响的位置，转换标量到矢量    \n   addPosition += u_Gravity * age * normalizedAge;//计算受重力影响的位置\n   \n   float radius=mix(a_RadiusRadian.x, a_RadiusRadian.y, normalizedAge); //计算粒子受半径和角度影响（无需计算角度和半径时，可用宏定义优化屏蔽此计算）\n   float radianHorizontal =a_RadiusRadian.z*normalizedAge;\n   float radianVertical =a_RadiusRadian.w*normalizedAge;\n   \n   float r =cos(radianVertical)* radius;\n   addPosition.y += sin(radianVertical) * radius;\n	\n   addPosition.x += cos(radianHorizontal) *r;\n   addPosition.z += sin(radianHorizontal) *r;\n  \n   #ifdef PARTICLE3D\n   position+=addPosition;\n    return  u_Projection*u_View*u_WorldMat*(vec4(position, 1.0));\n   #else\n   addPosition.y=-addPosition.y;//2D粒子位置更新需要取负，2D粒子坐标系Y轴正向朝上\n   position+=addPosition;\n    return vec4(position.xy,0.0,1.0);\n   #endif\n}\n\nfloat ComputeParticleSize(in float startSize,in float endSize, in float normalizedAge)\n{    \n    float size = mix(startSize, endSize, normalizedAge);\n    \n	#ifdef PARTICLE3D\n    //Project the size into screen coordinates.\n     return size * u_Projection[1][1];\n	#else\n	 return size;\n	#endif\n}\n\nmat2 ComputeParticleRotation(in float rot,in float age)\n{    \n    float rotation =rot * age;\n    //计算2x2旋转矩阵.\n    float c = cos(rotation);\n    float s = sin(rotation);\n    return mat2(c, -s, s, c);\n}\n\nvec4 ComputeParticleColor(in vec4 color,in float normalizedAge)\n{\n    //硬编码设置，使粒子淡入很快，淡出很慢,6.7的缩放因子把置归一在0到1之间，可以谷歌x*(1-x)*(1-x)*6.7的制图表\n    color.a *= normalizedAge * (1.0-normalizedAge) * (1.0-normalizedAge) * 6.7;\n   \n    return color;\n}\n\nvoid main()\n{\n   float age = u_CurrentTime - a_Time;\n   age *= 1.0 + a_AgeAddScale;\n   float normalizedAge = clamp(age / u_Duration,0.0,1.0);\n   gl_Position = ComputeParticlePosition(a_Position, a_Velocity, age, normalizedAge);//计算粒子位置\n   float pSize = ComputeParticleSize(a_SizeRotation.x,a_SizeRotation.y, normalizedAge);\n   mat2 rotation = ComputeParticleRotation(a_SizeRotation.z, age);\n	\n   #ifdef PARTICLE3D\n	gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize * u_ViewportScale;\n   #else\n	gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize;\n    gl_Position=vec4((gl_Position.x/size.x-0.5)*2.0,(0.5-gl_Position.y/size.y)*2.0,0.0,1.0);\n   #endif\n   \n   v_Color = ComputeParticleColor(a_Color, normalizedAge);\n   v_TextureCoordinate =a_CornerTextureCoordinate.zw;\n}\n\n"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/particle/src/laya/particle/shader/files/particle.vs*/;},'ps',function(){return this.ps="precision highp float;\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\nuniform sampler2D u_texture;\n\nvoid main()\n{	\n	gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*v_Color;\n}"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/particle/src/laya/particle/shader/files/particle.ps*/;}
+		]);
+		return ParticleShader;
+	})(Shader)
 
 
 

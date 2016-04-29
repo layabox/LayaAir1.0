@@ -1,0 +1,18 @@
+{
+	"typescript.reloadProjects.title": "Перезагрузка проекта TypeScript",
+	"javascript.reloadProjects.title": "Перезагрузка проекта JavaScript",
+	"configuration.typescript": "Конфигурация TypeScript",
+	"typescript.useCodeSnippetsOnMethodSuggest.dec": "Дополните функции сигнатурами их параметров.",
+	"typescript.tsdk.desc": "Указывает путь к папке, содержащей файлы tsserver и lib*.d.ts, которые необходимо использовать.",
+	"typescript.validate.enable": "Включить или отключить проверку TypeScript",
+	"format.insertSpaceAfterCommaDelimiter": "Определяет метод обработки пробелов после разделителя-запятой",
+	"format.insertSpaceAfterSemicolonInForStatements": " Определяет метод обработки пробелов после точки с запятой в операторе for",
+	"format.insertSpaceBeforeAndAfterBinaryOperators": "Определяет метод обработки пробелов после двоичного оператора",
+	"format.insertSpaceAfterKeywordsInControlFlowStatements": "Определяет метод обработки пробелов после ключевых слов в операторе потока управления",
+	"format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": "Определяет метод обработки пробелов после ключевого слова анонимной функции",
+	"format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis": "Определяет метод обработки пробелов после открытия и до закрытия непустых круглых скобок",
+	"format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": "Определяет метод обработки пробелов после открытия и до закрытия непустых квадратных скобок",
+	"format.placeOpenBraceOnNewLineForFunctions": "Определяет, помещается ли открывающая фигурная скобка в новую строку для функций",
+	"format.placeOpenBraceOnNewLineForControlBlocks": "Определяет, помещается ли открывающая фигурная скобка в новую строку для управляющих блоков",
+	"javascript.validate.enable": "Включить или отключить проверку JavaScript"
+}

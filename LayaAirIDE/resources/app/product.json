@@ -1,0 +1,76 @@
+{
+	"nameShort": "LayaAir",
+	"nameLong": "LayaAir",
+	"applicationName": "code",
+	"dataFolderName": ".vscode",
+	"win32MutexName": "vscode",
+	"licenseUrl": "http://go.microsoft.com/fwlink/?LinkID=533485",
+	"darwinBundleIdentifier": "com.microsoft.VSCode",
+	"win32AppId": "{{F8A2A208-72B3-4D61-95FC-8A65D340689B}",
+	"win32NameVersion": "Microsoft Visual Studio Code",
+	"win32DirName": "Microsoft VS Code",
+	"win32SetupExeBasename": "VSCodeSetup",
+	"win32AppUserModelId": "Microsoft.VisualStudioCode",
+	"win32RegValueName": "VSCode",
+	"darwinCredits": "resources/darwin/Credits.rtf",
+	"downloadUrl": "http://www.layabox.com/",
+	"updateUrl": "http://www.layabox.com/",
+	"quality": "stable",
+	"extensionsGallery": {
+		"serviceUrl": "https://marketplace.visualstudio.com/_apis/public/gallery",
+		"cacheUrl": "https://vscode.blob.core.windows.net/gallery/index",
+		"itemUrl": "https://marketplace.visualstudio.com/items"
+	},
+	"extensionTips": {
+		"ms-vscode.csharp": "{**/*.cs,**/project.json,**/global.json,**/*.csproj,**/*.sln}",
+		"ms-vscode.mono-debug": "{**/*.cs,**/*.csproj,**/*.sln}",
+		"msjsdiag.debugger-for-chrome": "{**/*.ts,**/*.tsx**/*.js,**/*.jsx,**/*.es6}",
+		"lukehoban.Go": "**/*.go",
+		"ms-vscode.PowerShell": "{**/*.ps,**/*.ps1}",
+		"austin.code-gnu-global": "{**/*.c,**/*.cpp,**/*.h}",
+		"Ionide.Ionide-fsharp": "{**/*.fsx,**/*.fsi,**/*.fs,**/*.ml,**/*.mli}",
+		"dbaeumer.vscode-eslint": "{**/*.js,**/*.jsx,**/*.es6}",
+		"eg2.tslint": "{**/*.ts,**/*.tsx}",
+		"Kasik96.format-indent": "{**/*.php}",
+		"felixfbecker.php-debug": "{**/*.php}",
+		"linyang95.phpmd": "{**/*.php}",
+		"ikappas.phpcs": "{**/*.php}",
+		"tht13.python": "{**/*.py}",
+		"donjayamanne.python": "{**/*.py}",
+		"magicstack.MagicPython": "{**/*.py}",
+		"saviorisdead.RustyCode": "{**/*.rs,**/*.rslib}",
+		"hars.CppSnippets": "{**/*.cpp,**/*.cc,**/*.h}",
+		"mitaki28.vscode-clang": "{**/*.cpp,**/*.cc,**/*.h}",
+		"ms-vscode.cpptools": "{**/*.c,**/*.cpp,**/*.cc,**/.cxx,**/*.hh,**/*.hpp,**/*.hxx,**/*.h}",
+		"seanmcbreen.Spell": "{**/*.md}",
+		"ms-vscode.Theme-MarkdownKit": "{**/*.md}",
+		"DavidAnson.vscode-markdownlint": "{**/*.md}"
+	},
+	"crashReporter": {
+		"productName": "VSCode",
+		"companyName": "Microsoft",
+		"submitURL": "https://ticinocrashreporter.azurewebsites.net/crash",
+		"extra": {
+			"vscode_sessionId": "$(sessionId)",
+			"vscode_version": "$(version)",
+			"vscode_commit": "$(commit)"
+		}
+	},
+	"enableTelemetry": true,
+	"aiConfig": {
+		"key": "8aa6e059-82b6-46f6-8138-5a43aa3dd621",
+		"asimovKey": "AIF-444c3af9-8e69-4462-ab49-4191e6ad1916"
+	},
+	"sendASmile": {
+		"reportIssueUrl": "http://go.microsoft.com/fwlink/?LinkId=534872",
+		"requestFeatureUrl": "http://go.microsoft.com/fwlink/?LinkID=533482"
+	},
+	"documentationUrl": "http://go.microsoft.com/fwlink/?LinkID=533484#vscode",
+	"releaseNotesUrl": "http://go.microsoft.com/fwlink/?LinkID=533483#vscode",
+	"twitterUrl": "http://go.microsoft.com/fwlink/?LinkID=533687",
+	"requestFeatureUrl": "http://go.microsoft.com/fwlink/?LinkID=533482",
+	"reportIssueUrl": "http://go.microsoft.com/fwlink/?LinkId=534872",
+	"privacyStatementUrl": "http://go.microsoft.com/fwlink/?LinkID=528096&clcid=0x409",
+	"commit": "fa6d0f03813dfb9df4589c30121e9fcffa8a8ec8",
+	"date": "2016-04-13T14:08:36.599Z"
+}

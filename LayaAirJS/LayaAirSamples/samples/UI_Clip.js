@@ -7,9 +7,9 @@ var currFrame;
 var controller;
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
-Laya.loader.load([buttonSkin, clipSkin, bgSkin], laya.utils.Handler.create(this,onSkinLoaded));
+Laya.loader.load([buttonSkin, clipSkin, bgSkin], Laya.Handler.create(this,onSkinLoaded));
 
 function onSkinLoaded()
 {
@@ -21,14 +21,14 @@ function onSkinLoaded()
 
 function showBg() 
 {
-	var bg = new laya.ui.Image(bgSkin);
+	var bg = new Laya.Image(bgSkin);
 	bg.pos(163, 50);
 	Laya.stage.addChild(bg);
 }
 
 function createTimerAnimation()
 {
-	counter = new laya.ui.Clip(clipSkin, 10, 1);
+	counter = new Laya.Clip(clipSkin, 10, 1);
 	counter.autoPlay = true;
 	counter.interval = 1000;
 	
@@ -39,7 +39,7 @@ function createTimerAnimation()
 
 function showTotalSeconds() 
 {
-	var clip = new laya.ui.Clip(clipSkin, 10, 1);
+	var clip = new Laya.Clip(clipSkin, 10, 1);
 	clip.index = clip.clipX - 1;
 	clip.pos(285, 130);
 	Laya.stage.addChild(clip);
@@ -47,7 +47,7 @@ function showTotalSeconds()
 
 function createController() 
 {
-	controller = new laya.ui.Button(buttonSkin, "暂停");
+	controller = new Laya.Button(buttonSkin, "暂停");
 	controller.labelBold = true;
 	controller.labelColors = "#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF";
 	

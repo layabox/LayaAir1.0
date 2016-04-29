@@ -10,6 +10,7 @@ var texts;
             Laya.init(550, 400);
             Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
             this.txt = new Text();
+            this.txt.overflow = Text.SCROLL;
             this.txt.text =
                 "Layabox是性能最强的HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！\n" +
                     "Layabox是性能最强的HTML5引擎技术提供商与优秀的游戏发行商，面向AS/JS/TS开发者提供HTML5开发技术方案！\n" +

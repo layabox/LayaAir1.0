@@ -1,5 +1,5 @@
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
 for (var i = 0; i < 10; i++)
 {
@@ -10,7 +10,7 @@ function onCallLater()
 {
 	console.log("onCallLater triggered");
 	
-	var text = new laya.display.Text();
+	var text = new Laya.Text();
 	text.font = "SimHei";
 	text.fontSize = 30;
 	text.color = "#FFFFFF";

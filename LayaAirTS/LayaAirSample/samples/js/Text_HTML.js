@@ -3,17 +3,13 @@ var laya;
 (function (laya) {
     var HTMLDivElement = laya.html.dom.HTMLDivElement;
     var HTMLIframeElement = laya.html.dom.HTMLIframeElement;
-    var Handler = laya.utils.Handler;
     var WebGL = laya.webgl.WebGL;
     var Text_HTML = (function () {
         function Text_HTML() {
             Laya.init(550, 400, WebGL);
-            Laya.loader.load("res/html/test.html", Handler.create(this, this.onAssetLoaded));
+            this.createParagraph(); // 代码创建
+            this.showExternalHTML(); // 使用外部定义的html
         }
-        Text_HTML.prototype.onAssetLoaded = function () {
-            this.createParagraph();
-            this.showExternalHTML();
-        };
         Text_HTML.prototype.createParagraph = function () {
             var p = new HTMLDivElement();
             Laya.stage.addChild(p);

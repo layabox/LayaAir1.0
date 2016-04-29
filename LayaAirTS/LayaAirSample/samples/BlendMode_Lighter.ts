@@ -58,6 +58,7 @@ module laya {
         }
 
         private renderBg(): void {
+            Laya.stage.graphics.clear();
             Laya.stage.graphics.drawRect(0, 0, this.w, this.h, this.getColor());
         }
 

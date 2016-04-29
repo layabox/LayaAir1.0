@@ -4,10 +4,10 @@ var ROBOT_TEXTURE_PATH = "res/robot/texture.png";
 Laya.init(100, 100);
 
 var assets = [];
-assets.push( { url:ROBOT_DATA_PATH, type:laya.net.Loader.BUFFER } );
-assets.push( { url:ROBOT_TEXTURE_PATH, type:laya.net.Loader.IMAGE } );
+assets.push( { url:ROBOT_DATA_PATH, type:Laya.Loader.BUFFER } );
+assets.push( { url:ROBOT_TEXTURE_PATH, type:Laya.Loader.IMAGE } );
 
-Laya.loader.load(assets, laya.utils.Handler.create(this, onAssetsLoaded));
+Laya.loader.load(assets, Laya.Handler.create(this, onAssetsLoaded));
 
 function onAssetsLoaded()
 {

@@ -1,6 +1,7 @@
 package
 {
 	import laya.display.Sprite;
+	import laya.display.Stage;
 	import laya.events.Event;
 	import laya.events.Keyboard;
 	import laya.utils.TimeLine;
@@ -13,6 +14,7 @@ package
 		public function Tween_TimeLine()
 		{
 			Laya.init(550, 400);
+			Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
 			setup();
 		}
 
@@ -51,6 +53,7 @@ package
 
 		private function createTimerLine():void
 		{
+			//第一事件如果起始时间为0就不会抛出。
 			timeLine.add("turnRight", 0);
 			timeLine.to(target, { x:450, y:100, scaleX:0.5, scaleY:0.5 },2000);
 			timeLine.add("turnDown", 0);
@@ -61,6 +64,19 @@ package
 			timeLine.to(target, { x:100, y:100, scaleX:1, scaleY:1, alpha:1 } ,2000);
 
 			timeLine.play(0, true);
+			
+			timeLine.on(Event.COMPLETE,this,this.onComplete);
+			timeLine.on(Event.LABEL, this, this.onLabel);
+		}
+		
+		private function onComplete():void
+		{
+			trace("timeLine complete!!!!");
+		}
+		
+		private function onLabel(label:String):void
+		{
+			trace("LabelName:" + label);
 		}
 
 		private function createApe():void

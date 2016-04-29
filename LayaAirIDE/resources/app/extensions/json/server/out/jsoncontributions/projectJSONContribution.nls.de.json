@@ -1,0 +1,9 @@
+[
+	"Das NuGet-Indexdokument fehlt im Dienst {0}.",
+	"Standarddatei \"project.json\"",
+	"{0} ist kein gültiges JSON-Dokument.",
+	"Fehler bei der Anforderung von {0}: {1}",
+	"Fehler bei der Anforderung von {0}: {1}",
+	"{0}",
+	"Aktuelle Version: {0}"
+]

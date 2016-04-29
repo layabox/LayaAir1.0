@@ -12,12 +12,7 @@ package
 		{
 			Laya.init(550, 400);
 			Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
-			//预加载图集
-			Laya.loader.load("res/fighter/fighter.json",Handler.create(this, onLoaded), null, Loader.ATLAS);
-		}
-		
-		private function onLoaded(data:*):void
-		{
+			
 			//创建一个动画对象
 			var ani:Animation = new Animation();
 			ani.loadAtlas("res/fighter/fighter.json");

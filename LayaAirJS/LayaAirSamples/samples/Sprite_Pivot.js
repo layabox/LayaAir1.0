@@ -1,7 +1,7 @@
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
-var sp1 = new laya.display.Sprite();
+var sp1 = new Laya.Sprite();
 sp1.loadImage("res/apes/monkey2.png", 0, 0);
 
 sp1.pos(150, 200);
@@ -11,7 +11,7 @@ sp1.pivot(55, 72);
 Laya.stage.addChild(sp1);
 
 //不设置轴心点默认为左上角
-sp2 = new laya.display.Sprite();
+sp2 = new Laya.Sprite();
 sp2.loadImage("res/apes/monkey2.png", 0, 0);
 sp2.size(110, 145);
 sp2.pos(400, 200);

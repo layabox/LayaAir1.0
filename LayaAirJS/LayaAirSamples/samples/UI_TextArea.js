@@ -1,12 +1,12 @@
 var skin = "res/ui/textarea.png";
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
-Laya.loader.load(skin, laya.utils.Handler.create(this, onLoadComplete));
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
+Laya.loader.load(skin, Laya.Handler.create(this, onLoadComplete));
  
 function onLoadComplete()
 {
-    var ta = new laya.ui.TextArea("");
+    var ta = new Laya.TextArea("");
     ta.skin = skin;
      
     ta.inputElementXAdjuster = -2;

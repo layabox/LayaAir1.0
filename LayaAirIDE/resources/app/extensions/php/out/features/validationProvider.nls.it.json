@@ -1,0 +1,4 @@
+[
+	"Non è possibile convalidare il file php. Il programma php non è stato trovato. Usare l'impostazione 'php.validate.executablePath' per configurare il percorso di 'php'",
+	"Non è stato possibile eseguire php con il percorso {0}. Il motivo è sconosciuto."
+]

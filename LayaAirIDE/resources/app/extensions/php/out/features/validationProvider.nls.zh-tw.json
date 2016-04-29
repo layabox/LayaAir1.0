@@ -1,0 +1,4 @@
+[
+	"無法驗證 PHP 檔案。找不到 PHP 程式。請使用 'php.validate.executablePath' 設定，對 'php' 的位置進行設定",
+	"無法使用路徑 {0} 執行 PHP。原因不明。"
+]

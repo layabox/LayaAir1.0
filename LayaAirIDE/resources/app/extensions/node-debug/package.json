@@ -1,0 +1,262 @@
+{
+	"name": "node-debug",
+	"displayName": "Node Debug",
+	"version": "0.10.13",
+	"publisher": "ms-vscode",
+	"description": "%extension.description%",
+	"categories": [
+		"Debuggers"
+	],
+	"author": {
+		"name": "Microsoft Corporation"
+	},
+	"license": "MIT",
+	"private": true,
+	"scripts": {
+		"prepublish": "node ./node_modules/gulp/bin/gulp.js build",
+		"build": "node ./node_modules/gulp/bin/gulp.js build",
+		"test": "node ./node_modules/mocha/bin/mocha --timeout 10000 -u tdd ./out/tests/",
+		"nodemon": "./node_modules/.bin/nodemon --debug --nolazy ./out/node/nodeDebug.js --server=4711"
+	},
+	"engines": {
+		"node": ">= 0.12.0",
+		"vscode": "^0.10.1"
+	},
+	"dependencies": {
+		"vscode-debugprotocol": "^1.7.0",
+		"vscode-debugadapter": "^1.7.0",
+		"source-map": "^0.5.3",
+		"vscode-nls": "^1.0.4"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Microsoft/vscode-node-debug.git"
+	},
+	"bugs": {
+		"url": "https://github.com/Microsoft/vscode-node-debug/issues"
+	},
+	"devDependencies": {
+		"gulp": "^3.9.0",
+		"gulp-util": "^3.0.5",
+		"gulp-typescript": "^2.12.0",
+		"gulp-sourcemaps": "^1.6.0",
+		"gulp-filter": "^3.0.1",
+		"gulp-azure-storage": "*",
+		"gulp-tslint": "^4.3.0",
+		"tslint-microsoft-contrib": "^2.0.0",
+		"git-rev-sync": "*",
+		"del": "*",
+		"run-sequence": "*",
+		"gulp-vinyl-zip": "*",
+		"mocha": "^2.4.5",
+		"tslint": "^3.5.0",
+		"typescript": "^1.8.2",
+		"vscode-nls-dev": "^1.0.3",
+		"vscode-debugadapter-testsupport": "^1.7.0",
+		"event-stream": "^3.3.2",
+		"nodemon": "^1.9.1"
+	},
+	"contributes": {
+		"debuggers": [
+			{
+				"type": "node",
+				"label": "%node.label%",
+				"enableBreakpointsFor": { "languageIds": ["javascript", "javascriptreact"] },
+				"program": "./out/node/nodeDebug.js",
+				"runtime": "node",
+				"aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
+				"initialConfigurations": [
+					{
+						"name": "%node.launch.config.name%",
+						"type": "node",
+						"request": "launch",
+						"program": "${workspaceRoot}/app.js",
+						"stopOnEntry": false,
+						"args": [],
+						"cwd": "${workspaceRoot}",
+                        "preLaunchTask": null,
+						"runtimeExecutable": null,
+						"runtimeArgs": ["--nolazy"],
+						"env": {
+							"NODE_ENV": "development"
+						},
+						"externalConsole": false,
+						"sourceMaps": false,
+						"outDir": null
+					},
+					{
+						"name": "%node.attach.config.name%",
+						"type": "node",
+						"request": "attach",
+						"port": 5858,
+						"address": "localhost",
+						"restart": false,
+						"sourceMaps": false,
+						"outDir": null,
+						"localRoot": "${workspaceRoot}",
+						"remoteRoot": null
+					}
+				],
+				"configurationAttributes": {
+					"launch": {
+						"required": ["program", "cwd"],
+						"properties": {
+							"program": {
+								"type": "string",
+								"description": "%node.launch.program.description%"
+							},
+							"stopOnEntry": {
+								"type": "boolean",
+								"description": "%node.stopOnEntry.description%",
+								"default": true
+							},
+							"externalConsole": {
+								"type": "boolean",
+								"description": "%node.launch.externalConsole.description%",
+								"default": true
+							},
+							"args": {
+								"type": "array",
+								"description": "%node.launch.args.description%",
+								"items": { "type": "string" },
+								"default": []
+							},
+							"cwd": {
+								"type": "string",
+								"description": "%node.launch.cwd.description%",
+								"default": "${workspaceRoot}"
+							},
+							"runtimeExecutable": {
+								"type": ["string", "null"],
+								"description": "%node.launch.runtimeExecutable.description%",
+								"default": null
+							},
+							"runtimeArgs": {
+								"type": "array",
+								"description": "%node.launch.runtimeArgs.description%",
+								"items": { "type": "string" },
+								"default": []
+							},
+							"env": {
+								"type": "object",
+								"additionalProperties": { "type": "string" },
+								"description": "%node.launch.env.description%",
+								"default": {}
+							},
+							"sourceMaps": {
+								"type": "boolean",
+								"description": "%node.sourceMaps.description%",
+								"default": true
+							},
+							"outDir": {
+								"type": ["string", "null"],
+								"description": "%node.outDir.description%",
+								"default": null
+							}
+						}
+					},
+					"attach": {
+						"properties": {
+							"port": {
+								"type": "number",
+								"description": "%node.attach.port.description%",
+								"default": 5858
+							},
+							"address": {
+								"type": "string",
+								"description": "%node.attach.address.description%",
+								"default": "localhost"
+							},
+							"timeout": {
+								"type": "number",
+								"description": "%node.attach.timeout.description%",
+								"default": 10000
+							},
+							"restart": {
+								"type": "boolean",
+								"description": "%node.attach.restart.description%",
+								"default": true
+							},
+							"sourceMaps": {
+								"type": "boolean",
+								"description": "%node.sourceMaps.description%",
+								"default": true
+							},
+							"outDir": {
+								"type": ["string", "null"],
+								"description": "%node.outDir.description%",
+								"default": null
+							},
+							"stopOnEntry": {
+								"type": "boolean",
+								"description": "%node.stopOnEntry.description%",
+								"default": true
+							},
+							"localRoot": {
+								"type": ["string", "null"],
+								"description": "%node.attach.localRoot.description%",
+								"default": null
+							},
+							"remoteRoot": {
+								"type": ["string", "null"],
+								"description": "%node.attach.remoteRoot.description%",
+								"default": null
+							}
+						}
+					}
+				}
+			},
+			{
+				"type": "extensionHost",
+				"label": "%extensionHost.label%",
+				"enableBreakpointsFor": { "languageIds": ["javascript"] },
+				"program": "./out/node/nodeDebug.js",
+				"runtime": "node",
+				"initialConfigurations": [{
+					"name": "%extensionHost.launch.config.name%",
+					"type": "extensionHost",
+					"request": "launch",
+					"runtimeExecutable": "${execPath}",
+					"args": [ "--extensionDevelopmentPath=${workspaceRoot}" ],
+					"stopOnEntry": false,
+					"sourceMaps": true,
+					"outDir": "out",
+					"preLaunchTask": "npm"
+				}],
+				"configurationAttributes": {
+					"launch": {
+						"required": ["runtimeExecutable", "args"],
+						"properties": {
+							"runtimeExecutable": {
+								"type": ["string", "null"],
+								"description": "%extensionHost.launch.runtimeExecutable.description%",
+								"default": "${execPath}"
+							},
+							"args": {
+								"type": "array",
+								"description": "%extensionHost.launch.args.description%",
+								"items": { "type": "string" },
+								"default": [ "--extensionDevelopmentPath=${workspaceRoot}" ]
+							},
+							"stopOnEntry": {
+								"type": "boolean",
+								"description": "%extensionHost.launch.stopOnEntry.description%",
+								"default": true
+							},
+							"sourceMaps": {
+								"type": "boolean",
+								"description": "%extensionHost.launch.sourceMaps.description%",
+								"default": true
+							},
+							"outDir": {
+								"type": ["string", "null"],
+								"description": "%extensionHost.launch.outDir.description%",
+								"default": "out"
+							}
+						}
+					}
+				}
+			}
+		]
+	}
+}

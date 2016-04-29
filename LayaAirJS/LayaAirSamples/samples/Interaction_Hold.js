@@ -1,12 +1,12 @@
-const HOLD_TRIGGER_TIME = 1000;
+var HOLD_TRIGGER_TIME = 1000;
 var isApeHold;
 
 Laya.init(550, 400);
 Laya.stage.bgColor = "#ffeecc";
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
 // 添加一只猩猩
-var ape = new laya.display.Sprite();
+var ape = new Laya.Sprite();
 ape.loadImage("res/apes/monkey2.png");
 ape.pos(260, 180);
 ape.pivot(55, 72);
@@ -14,18 +14,18 @@ ape.scale(0.8, 0.8);
 Laya.stage.addChild(ape);
 
 // 鼠标交互
-ape.on(laya.events.Event.MOUSE_DOWN, this, onApePress);
+ape.on(Laya.Event.MOUSE_DOWN, this, onApePress);
 
 function onApePress(e)
 {
 	// 鼠标按下后，HOLD_TRIGGER_TIME毫秒后hold
 	Laya.timer.once(HOLD_TRIGGER_TIME, this, onHold);
-	Laya.stage.on(laya.events.Event.MOUSE_UP, this, onApeRelease);
+	Laya.stage.on(Laya.Event.MOUSE_UP, this, onApeRelease);
 }
 
 function onHold()
 {
-	laya.utils.Tween.to(ape, { "scaleX":1, "scaleY":1 }, 500, laya.utils.Ease.bounceOut);
+	Laya.Tween.to(ape, { "scaleX":1, "scaleY":1 }, 500, Laya.Ease.bounceOut);
 	isApeHold = true;
 }
 
@@ -36,10 +36,10 @@ function onApeRelease()
 	if (isApeHold)
 	{
 		isApeHold = false;
-		laya.utils.Tween.to(ape, { "scaleX":.8, "scaleY":.8 }, 300);
+		Laya.Tween.to(ape, { "scaleX":.8, "scaleY":.8 }, 300);
 	}
 	else // 如果未触发hold，终止触发hold
 		Laya.timer.clear(this, onHold);
 
-	Laya.stage.off(laya.events.Event.MOUSE_UP, this, onApeRelease);
+	Laya.stage.off(Laya.Event.MOUSE_UP, this, onApeRelease);
 }

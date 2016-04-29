@@ -1,5 +1,5 @@
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
 createLabel("#FFFFFF", null).pos(30, 50);
 createLabel("#00FFFF", null).pos(290, 50);
@@ -12,7 +12,7 @@ function createLabel(color, strokeColor)
 {
 	const STROKE_WIDTH = 4;
 	
-	var label = new laya.ui.Label();
+	var label = new Laya.Label();
 	label.font = "Microsoft YaHei";
 	label.text = "SAMPLE DEMO";
 	label.fontSize = 30;

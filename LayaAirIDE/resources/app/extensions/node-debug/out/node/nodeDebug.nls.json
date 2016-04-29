@@ -1,0 +1,181 @@
+{
+	"messages": [
+		"entry",
+		"All Exceptions",
+		"Uncaught Exceptions",
+		"Cannot find runtime '{0}' on PATH.",
+		"Program path uses differently cased character as file on disk; this might result in breakpoints not being hit.",
+		"Cannot launch program '{0}'; enabling '{1}' might help.",
+		"Cannot launch program '{0}'; setting the '{1}' attribute might help.",
+		"Cannot launch debug target in terminal ({0}).",
+		"Cannot launch debug target ({0}).",
+		"Cannot connect to runtime process (timeout after {0} ms).",
+		"Cannot connect to runtime process (reason: {0}).",
+		"entry",
+		"Internal module {0} not found.",
+		"Breakpoint ignored because generated code not found (source map problem?).",
+		"breakpoint",
+		"content streamed from Node.js",
+		"content streamed from remote Node.js",
+		"inlined content from source map",
+		"core module",
+		"(anonymous function)",
+		"Global",
+		"Local",
+		"With",
+		"Closure",
+		"Catch",
+		"Block",
+		"Script",
+		"Unknown Scope Type: {0}",
+		"Exception",
+		"user request",
+		"not available",
+		"not available",
+		"invalid expression: {0}",
+		"<source not found>",
+		"Attribute '{0}' is missing or empty.",
+		"Attribute '{0}' does not exist ('{1}').",
+		"Attribute '{0}' is not absolute ('{1}'); consider adding '{2}' as a prefix to make it absolute.",
+		"More Information",
+		"Request '{_request}' was cancelled because Node.js is unresponsive.",
+		"Node.js did not repond to request '{_request}' in a reasonable amount of time.",
+		"exception",
+		"entry",
+		"breakpoint",
+		"debugger statement",
+		"step"
+	],
+	"keys": [
+		{
+			"key": "reason.entry",
+			"comment": [
+				"see https://github.com/Microsoft/vscode/issues/4568"
+			]
+		},
+		"exceptions.all",
+		"exceptions.uncaught",
+		"VSND2001",
+		"program.path.case.mismatch.warning",
+		"VSND2002",
+		"VSND2003",
+		"VSND2011",
+		"VSND2017",
+		"VSND2009",
+		"VSND2010",
+		{
+			"key": "reason.entry",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4568"
+			]
+		},
+		"VSND2019",
+		"sourcemapping.fail.message",
+		{
+			"key": "reason.breakpoint",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4568"
+			]
+		},
+		"content.streamed.from.node",
+		"content.streamed.from.remote.node",
+		"content.from.source.map",
+		"core.module",
+		"anonymous.function",
+		{
+			"key": "scope.global",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4569"
+			]
+		},
+		{
+			"key": "scope.local",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4569"
+			]
+		},
+		{
+			"key": "scope.with",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4569"
+			]
+		},
+		{
+			"key": "scope.closure",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4569"
+			]
+		},
+		{
+			"key": "scope.catch",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4569"
+			]
+		},
+		{
+			"key": "scope.block",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4569"
+			]
+		},
+		{
+			"key": "scope.script",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4569"
+			]
+		},
+		"scope.unknown",
+		{
+			"key": "scope.exception",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4569"
+			]
+		},
+		{
+			"key": "reason.user_request",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4568"
+			]
+		},
+		"eval.not.available",
+		"eval.not.available",
+		"eval.invalid.expression",
+		"source.not.found",
+		"attribute.missing",
+		"attribute.path.not.exist",
+		"attribute.path.not.absolute",
+		"more.information",
+		"VSND2015",
+		"VSND2016",
+		{
+			"key": "reason.exception",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4568"
+			]
+		},
+		{
+			"key": "reason.entry",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4568"
+			]
+		},
+		{
+			"key": "reason.breakpoint",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4568"
+			]
+		},
+		{
+			"key": "reason.debugger_statement",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4568"
+			]
+		},
+		{
+			"key": "reason.step",
+			"comment": [
+				"https://github.com/Microsoft/vscode/issues/4568"
+			]
+		}
+	]
+}

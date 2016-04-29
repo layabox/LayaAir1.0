@@ -16,7 +16,7 @@
     </define>
     <define append="true">
       <name>CONFIG::timeStamp</name>
-      <value>'4/11/2016'</value>
+      <value>'4/14/2016'</value>
     </define>
     <define append="true">
       <name>CONFIG::air</name>
@@ -47,7 +47,7 @@
     </source-path>
   </compiler>
   <file-specs>
-    <path-element>R:\SVN Repository\trunk\libs\LayaAir\publish\LayaAirPublish\LayaAirAS3\LayaAirSamples\src\TiledMap_PerspectiveWall.as</path-element>
+    <path-element>R:\SVN Repository\trunk\libs\LayaAir\publish\LayaAirPublish\LayaAirAS3\LayaAirSamples\src\Text_InputSingleline.as</path-element>
   </file-specs>
   <default-background-color>#CCE8CF</default-background-color>
   <default-frame-rate>30</default-frame-rate>

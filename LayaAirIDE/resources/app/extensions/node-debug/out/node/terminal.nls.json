@@ -1,0 +1,18 @@
+{
+	"messages": [
+		"External console not implemented on '{0}'.",
+		"VS Code Console",
+		"'{0}' not found",
+		"{0} failed with exit code {1}",
+		"Press any key to continue...",
+		"{0} failed with exit code {1}"
+	],
+	"keys": [
+		"external.console.not.implemented",
+		"console.title",
+		"program.not.found",
+		"program.failed",
+		"press.any.key",
+		"program.failed"
+	]
+}

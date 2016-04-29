@@ -1,0 +1,18 @@
+{
+	"typescript.reloadProjects.title": "TypeScript-Projekt erneut laden",
+	"javascript.reloadProjects.title": "JavaScript-Projekt erneut laden",
+	"configuration.typescript": "TypeScript-Konfiguration",
+	"typescript.useCodeSnippetsOnMethodSuggest.dec": "Vervollständigen Sie Funktionen mit deren Parametersignatur.",
+	"typescript.tsdk.desc": "Gibt den Ordnerpfad mit den zu verwendenden tsserver- und lib*.d.ts-Dateien an.",
+	"typescript.validate.enable": "TypeScript-Überprüfung aktivieren/deaktivieren",
+	"format.insertSpaceAfterCommaDelimiter": "Definiert die Verarbeitung von Leerzeichen nach einem Kommatrennzeichen.",
+	"format.insertSpaceAfterSemicolonInForStatements": " Definiert die Verarbeitung von Leerzeichen nach einem Semikolon in einer for-Anweisung.",
+	"format.insertSpaceBeforeAndAfterBinaryOperators": "Definiert die Verarbeitung von Leerzeichen nach einem binären Operator.",
+	"format.insertSpaceAfterKeywordsInControlFlowStatements": "Definiert die Verarbeitung von Leerzeichen nach Schlüsselwörtern in einer Flusssteuerungsanweisung.",
+	"format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": "Definiert die Verarbeitung von Leerzeichen nach einem Funktionsschlüsselwort für anonyme Funktionen.",
+	"format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis": "Definiert die Verarbeitung von Leerzeichen nach dem Öffnen und vor dem Schließen einer nicht leeren Klammer.",
+	"format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": "Definiert die Verarbeitung von Leerzeichen nach dem Öffnen und vor dem Schließen einer nicht leeren eckigen Klammer.",
+	"format.placeOpenBraceOnNewLineForFunctions": "Definiert, ob eine öffnende geschweifte Klammer in eine neue Zeile für Funktionen eingefügt wird.",
+	"format.placeOpenBraceOnNewLineForControlBlocks": "Definiert, ob eine öffnende geschweifte Klammer in eine neue Zeile für Kontrollblöcke eingefügt wird.",
+	"javascript.validate.enable": "JavaScript-Überprüfung aktivieren/deaktivieren"
+}

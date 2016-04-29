@@ -1,0 +1,63 @@
+
+CONDIZIONI DI LICENZA PER IL SOFTWARE MICROSOFT
+
+CODICE MICROSOFT VISUAL STUDIO 
+
+Le presenti condizioni di licenza costituiscono il contratto tra Microsoft Corporation (o, in base al luogo di residenza del licenziatario, una delle sue consociate) e il licenziatario, Le presenti condizioni si applicano al software di cui sopra. Le condizioni si applicano inoltre a qualsiasi servizio o aggiornamento di Microsoft relativo al software, a meno che questo non sia accompagnato da condizioni differenti.
+
+QUALORA IL LICENZIATARIO SI ATTENGA ALLE PRESENTI CONDIZIONI DI LICENZA, DISPORRÀ DEI 
+DIRITTI INDICATI DI SEGUITO.
+
+1. DIRITTI DI INSTALLAZIONE E DI UTILIZZO. 
+
+a. In generale. Il licenziatario potrà utilizzare un numero qualsiasi di copie del software per sviluppare e testare le proprie applicazioni, oltre che per distribuirle nella rete interna della società.
+
+b. Utilizzo dimostrativo. Gli utilizzi consentiti sopra includono l’uso del software per fornire una demo delle applicazioni sviluppate.
+
+c. Copia di backup. Il licenziatario potrà creare una o più copie di backup del software per eseguire una reinstallazione.
+
+d. Programmi di Terzi. 
+	i. Il software potrà includere componenti di terzi con comunicazioni legali distinte o disciplinati da altri contratti, come indicato nel file ThirdPartyNotices relativo al software. Anche nel caso in cui tali componenti siano disciplinati da contratti specifici, si applicano le dichiarazioni di non responsabilità e le limitazioni e le esclusioni di danni riportate di seguito.
+	ii. Il software contiene componenti terzi concessi in licenza nell'ambito di licenze open source soggette a obbligazioni di disponibilità del codice sorgente. Copie di tali licenze sono incluse nel file ThirdPartyNotices o fornite insieme al file credits. Il licenziatario potrà ottenere da Microsoft il corrispondente codice sorgente completo, se e come previsto dalle rispettive licenze open source, tramite l’invio di un ordine di denaro o di un assegno di 5,00 USD a: Source Code Compliance Team, Microsoft Corporation, 1 Microsoft Way, Redmond, WA 98052 USA. Il licenziatario dovrà scrivere “third party source code for Visual Studio Code” nella riga dell'oggetto del pagamento. Microsoft potrà inoltre rendere disponibile il codice sorgente all'indirizzo thirdpartysource.microsoft.com/. 
+
+e. Estensioni. Il software consente di scaricare altri pacchetti software di Microsoft e di terzi tramite il marketplace Microsoft o le funzionalità di gestione dei pacchetti. Tali pacchetti sono disciplinati da licenze proprie, non dal presente contratto. Microsoft non distribuisce, né concede in licenza o rilascia alcuna garanzia per i pacchetti di terzi.
+
+2. DATI. Microsoft potrà ricevere le informazioni sul licenziatario e sull’utilizzo del software che verranno raccolte tramite il software stesso. Microsoft potrà utilizzarle per erogare i servizi e migliorare i prodotti e i servizi offerti. Il software potrà inoltre includere alcune funzionalità che consentono al licenziatario di raccogliere dati degli utenti delle applicazioni. Qualora il licenziatario utilizzi queste funzionalità per consentire la raccolta dei dati nelle applicazioni, dovrà conformarsi alla legge applicabile, che prevede tra l’altro la fornitura di comunicazioni appropriate agli utenti delle applicazioni. Ulteriori informazioni sulla raccolta e il trattamento dei dati sono disponibili nella documentazione di supporto e nell’informativa sulla privacy all’indirizzo go.microsoft.com/fwlink/?LinkID=528096&clcid=0x409. L’utilizzo del software da parte del licenziatario costituisce accettazione implicita di tali criteri.
+
+3. AGGIORNAMENTI. Tramite il software potranno essere installati aggiornamenti automatici. Utilizzando il software, il licenziatario accetta di ricevere aggiornamenti automatici senza alcuna ulteriore comunicazione e autorizza Microsoft a scaricarli e a installarli in sua vece. In caso non desideri ricevere gli aggiornamenti automatici, il licenziatario può disattivarli seguendo le istruzioni fornite con la documentazione all'indirizzo go.microsoft.com/fwlink/?LinkID=616397. 
+
+4. COMMENTI. Qualora fornisca commenti sul software a Microsoft, il licenziatario conferisce a Microsoft, senza alcun costo aggiuntivo, il diritto di utilizzare, condividere e commercializzare tali commenti in qualsiasi modo e per qualsiasi scopo. Il licenziatario non fornirà a Microsoft commenti che siano soggetti a condizioni di licenza che impongano a Microsoft di concedere in licenza a terzi il suo software o la sua documentazione, a fronte dell’eventuale inclusione dei commenti nel software o nella documentazione stessa. Tali diritti estenderanno la loro validità temporale anche dopo la scadenza del presente contratto.
+
+5. AMBITO DI VALIDITÀ DELLA LICENZA. Il software non viene venduto, ma è concesso in licenza. Il presente contratto concede al licenziatario solo alcuni diritti di utilizzo del software. Microsoft si riserva tutti gli altri diritti. Nel limite massimo consentito dalla legge applicabile, il licenziatario potrà utilizzare il software esclusivamente nei modi espressamente concessi nel presente contratto. Nel far ciò, il licenziatario dovrà attenersi a qualsiasi limitazione tecnica presente nel software che gli consenta di utilizzarlo solo in determinati modi. Il licenziatario non potrà
+	• aggirare le limitazioni tecniche presenti nel software;
+	• decompilare o disassemblare il software, né in altro modo tentare di derivare il codice sorgente per il software, fatta eccezione e solo nella misura in cui tali attività siano: (i) consentite dalla legge applicabile, nonostante questa limitazione o (ii) necessarie per eseguire il debug delle modifiche alle librerie ricevute in licenza ai sensi della licenza GNU Lesser General Public License (GNU LGPL) che sono incluse e collegate tramite il software;
+	• rimuovere, ridurre, bloccare o modificare alcuna comunicazione di Microsoft o dei suoi fornitori che sia inclusa nel software;
+	• utilizzare il software in contrasto con la legge o
+	• condividere, pubblicare o concedere in prestito il software oppure fornirlo come soluzione ospitata utilizzabile da terzi né trasferire il software o il presente contratto a terzi.
+
+6. SERVIZI DI SUPPORTO TECNICO. Poiché il presente software viene fornito “com’è”, non è prevista la fornitura di servizi di supporto tecnico da parte di Microsoft.
+
+7. INTERO ACCORDO. Il presente accordo e le condizioni che disciplinano l’utilizzo dei supplementi, degli aggiornamenti, dei Servizi basati su Internet e dei servizi di supporto tecnico utilizzati dal licenziatario costituiscono l’intero accordo relativo al software e ai servizi di supporto tecnico.
+
+8. LIMITAZIONI RELATIVE ALL’ESPORTAZIONE. Il software, i servizi online, i servizi professionali e la tecnologia correlata di Microsoft sono soggetti alle limitazioni all’esportazione vigenti negli Stati Uniti. Il licenziatario dovrà conformarsi a tutte le leggi locali e internazionali applicabili, incluso quanto enunciato nelle Export Administration Regulations degli Stati Uniti, nell’International Traffic in Arms Regulations e nei programmi di sanzioni dell’Office of Foreign Assets Control, nonché alle limitazioni applicabili al Paese di destinazione, all’utente finale e all’utilizzo finale imposte dagli Stati Uniti e da altre autorità di controllo delle esportazioni relativamente ai prodotti, ai servizi e alle tecnologie Microsoft. Per ulteriori informazioni, il licenziatario potrà visitare la pagina www.microsoft.com/exporting.
+
+9. LEGGE APPLICABILE. Qualora il software sia stato acquistato negli Stati Uniti, il presente contratto è interpretato in base alla legge dello Stato di Washington e tale legge si applica ai reclami aventi a oggetto gli inadempimenti di tale contratto, mentre a tutti gli altri reclami si applicano le leggi dello Stato di residenza del licenziatario. Qualora il licenziatario abbia acquistato il software in qualsiasi altro Paese, si applicano le leggi di tale Paese.
+
+10. EFFETTI GIURIDICI. Il presente contratto descrive determinati diritti. Al licenziatario potranno essere concessi altri diritti ai sensi della legge del Paese di residenza. Il presente contratto non modifica i diritti del licenziatario che la legge del suo Paese di residenza non consente di modificare. Senza limitare in alcun modo quanto sopra, relativamente all’Australia, IL LICENZIATARIO È SOGGETTO ALLE GARANZIE DI LEGGE PREVISTE AI SENSI DELLA LEGGE AUSTRALIANA A TUTELA DEI CONSUMATORI (AUSTRALIAN CONSUMER LAW) E NESSUNA DISPOSIZIONE CONTENUTA NELLE PRESENTI CONDIZIONI INFLUISCE SU TALI DIRITTI.
+
+11. ESCLUSIONE DI GARANZIE. IL SOFTWARE VIENE CONCESSO IN LICENZA “COM’È”. IL LICENZIATARIO LO UTILIZZA A PROPRIO RISCHIO. MICROSOFT NON RICONOSCE CONDIZIONI O GARANZIE ESPRESSE. NELLA MISURA MASSIMA CONSENTITA DALLE LEGGI LOCALI, MICROSOFT ESCLUDE EVENTUALI GARANZIE IMPLICITE DI COMMERCIABILITÀ (QUALITÀ NON INFERIORE ALLA MEDIA), ADEGUATEZZA PER UNO SCOPO SPECIFICO E NON VIOLAZIONE DI DIRITTI DI TERZI.
+
+12. LIMITAZIONE DI RESPONSABILITÀ ED ESCLUSIONE DI DANNI. IL LICENZIATARIO PUÒ RICHIEDERE A MICROSOFT E AI SUOI FORNITORI IL SOLO RISARCIMENTO PER I DANNI DIRETTI NEL LIMITE DI CINQUE DOLLARI (USD 5). IL LICENZIATARIO NON HA DIRITTO DI OTTENERE IL RISARCIMENTO PER EVENTUALI ALTRI DANNI, INCLUSI DANNI CONSEQUENZIALI, SPECIALI, INDIRETTI, INCIDENTALI O RELATIVI ALLA PERDITA DI PROFITTI.
+
+Questa limitazione si applica (a) a qualsiasi questione relativa al software, ai servizi, al contenuto (incluso il codice) sui siti Internet o nelle applicazioni di terzi e (b) ai reclami relativi a inadempimento contrattuale, inadempimento delle garanzie o delle condizioni, responsabilità oggettiva, negligenza o altro illecito civile nella misura massima consentita dalla legge applicabile.
+
+Tale limitazione si applica anche nel caso in cui Microsoft sia stata informata o avrebbe dovuto essere informata della possibilità del verificarsi di tali danni. La limitazione o l’esclusione di cui sopra potrebbe non essere applicabile al licenziatario, in quanto l’esclusione o la limitazione di danni incidentali, consequenziali o di altro tipo potrebbe non essere consentita nel Paese di residenza del licenziatario.
+
+
+
+
+     
+
+
+
+

@@ -2,9 +2,9 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Animation=laya.display.Animation,Graphics=laya.display.Graphics,Handler=laya.utils.Handler,RenderSprite=laya.renders.RenderSprite;
-	var Event=laya.events.Event,Loader=laya.net.Loader,Arith=laya.maths.Arith,Matrix=laya.maths.Matrix,Texture=laya.resource.Texture;
-	var Byte=laya.utils.Byte,Sprite=laya.display.Sprite,URL=laya.net.URL;
+	var Animation=laya.display.Animation,Byte=laya.utils.Byte,Sprite=laya.display.Sprite,Event=laya.events.Event;
+	var Loader=laya.net.Loader,Matrix=laya.maths.Matrix,URL=laya.net.URL,Graphics=laya.display.Graphics,Handler=laya.utils.Handler;
+	var Arith=laya.maths.Arith,Texture=laya.resource.Texture;
 	//class laya.ani.bone.Templet
 	var Templet=(function(){
 		function Templet(data,tex){
@@ -237,6 +237,7 @@
 			if (!this._playing)
 				return;
 			this._playIndex++;
+			if (this._playIndex >=this.totalFrames)this._playIndex=0;
 			this._parse(this._playIndex);
 		}
 
@@ -246,8 +247,8 @@
 		}
 
 		__proto.gotoStop=function(frame){
-			this.play(frame);
 			this.stop();
+			this._displayFrame(frame);
 		}
 
 		__proto.clear=function(){
@@ -258,14 +259,18 @@
 
 		__proto.play=function(frameIndex){
 			(frameIndex===void 0)&& (frameIndex=-1);
+			this._displayFrame(frameIndex);
+			this._playing=true;
+			Laya.timer.loop(this.interval,this,this.update,null,true);
+		}
+
+		__proto._displayFrame=function(frameIndex){
+			(frameIndex===void 0)&& (frameIndex=-1);
 			if (frameIndex !=-1){
 				if (this._curIndex > frameIndex)
 					this._reset();
-				if (frameIndex !=this._curIndex)
-					this._parse(frameIndex);
+				this._parse(frameIndex);
 			}
-			this._playing=true;
-			Laya.timer.loop(this.interval,this,this.update,null,true);
 		}
 
 		__proto._reset=function(rm){
@@ -273,7 +278,6 @@
 			if (rm && this._curIndex !=1)
 				this.removeChildren();
 			this._curIndex=-1;
-			this._playIndex=-1;
 			this._Pos=this._start;
 		}
 
@@ -286,6 +290,7 @@
 			_data.pos=this._Pos;
 			this._ended=false;
 			this._playIndex=frameIndex;
+			if (this._curIndex >=frameIndex)this._curIndex=-1;
 			while ((this._curIndex <=frameIndex)&& (!this._ended)){
 				type=_data.getUint16();
 				switch (type){
@@ -304,9 +309,6 @@
 								sp.addChild(spp);
 								spp.size(_data.getFloat32(),_data.getFloat32());
 								var mat=_data._getMatrix();
-								spp.x=mat.tx;
-								spp.y=mat.ty;
-								mat.tx=mat.ty=0;
 								spp.transform=mat;
 							}
 							}else if (ttype==1){
@@ -338,9 +340,6 @@
 					case 7:
 						sp=_idOfSprite[ _data.getUint16()];
 						var mt=new Matrix(_data.getFloat32(),_data.getFloat32(),_data.getFloat32(),_data.getFloat32(),_data.getFloat32(),_data.getFloat32());
-						sp.x=mt.tx;
-						sp.y=mt.ty;
-						mt.tx=mt.ty=0;
 						sp.transform=mt;
 						break ;
 					case 8:
@@ -388,11 +387,11 @@
 			this.basePath=url.replace(".swf","/image/");
 			var data=Loader.getRes(url);
 			if (data){
-				this.initData(data);
+				this._initData(data);
 				}else {
 				var l=new Loader();
 				l.once(/*laya.events.Event.COMPLETE*/"complete",null,function(data){
-					_$this.initData(data);
+					_$this._initData(data);
 				});
 				l.once(/*laya.events.Event.ERROR*/"error",null,function(err){
 				});
@@ -400,7 +399,7 @@
 			}
 		}
 
-		__proto.initData=function(data){
+		__proto._initData=function(data){
 			this._data=new Byte(data);
 			var i=0,len=this._data.getUint16();
 			for (i=0;i < len;i++)
@@ -415,7 +414,7 @@
 		}
 
 		__getset(0,__proto,'currentFrame',function(){
-			return this._curIndex;
+			return this._playIndex;
 		});
 
 		__getset(0,__proto,'totalFrames',function(){
@@ -437,7 +436,8 @@
 			this._tp_=null;
 			Skeleton.__super.call(this);
 			if (!tmplete)return;
-			this._tp_=tmplete;this._count=tmplete.frameCount;
+			this._tp_=tmplete;
+			this._count=tmplete.frameCount;
 			this.interval=1000 / tmplete.frameRate;
 			this.frames=this._tp_._graphicsArrs_[0];
 		}
@@ -445,7 +445,8 @@
 		__class(Skeleton,'laya.ani.bone.Skeleton',_super);
 		var __proto=Skeleton.prototype;
 		__proto.setTpl=function(tpl){
-			this._tp_=tpl;this._count=tpl.frameCount;
+			this._tp_=tpl;
+			this._count=tpl.frameCount;
 			this.interval=1000 / tpl.frameRate;
 			this.setAnim(0);
 		}
@@ -466,18 +467,15 @@
 
 		__getset(0,__proto,'frames',_super.prototype._$get_frames,function(value){
 			this._frames=value;
-			this._renderType |=/*laya.renders.RenderSprite.GRAPHICS*/0x100;
 			this.repaint();
 		});
 
 		__getset(0,__proto,'index',_super.prototype._$get_index,function(value){
 			this._index=value;
-			if ((this._graphics=this._frames[value])!=null){
-				this.repaint();
-				return;
+			if ((this.graphics=this._frames[value])!=null){
+				}else {
+				this.graphics=this._frames[value]=this._tp_.planish(value,this._frames._index_);
 			}
-			this._graphics=this._frames[value]=this._tp_.planish(value,this._frames._index_);
-			this.repaint();
 		});
 
 		return Skeleton;

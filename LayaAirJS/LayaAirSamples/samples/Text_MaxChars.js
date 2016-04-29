@@ -1,4 +1,4 @@
-var Input = laya.display.Input;
+var Input = Laya.Input;
 
 Laya.init(550, 400);
 

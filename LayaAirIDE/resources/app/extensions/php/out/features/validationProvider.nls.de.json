@@ -1,0 +1,4 @@
+[
+	"Die PHP-Datei kann nicht überprüft werden. Die PHP-Anwendung wurde nicht gefunden. Verwenden Sie die Einstellung \"php.validate.executablePath\", um den Speicherort von \"php\" zu konfigurieren.",
+	"Fehler beim Ausführen von PHP mithilfe des Pfads \"{0}\". Die Ursache ist unbekannt."
+]

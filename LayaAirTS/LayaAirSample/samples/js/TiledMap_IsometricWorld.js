@@ -14,7 +14,7 @@ var laya;
         }
         TiledMap_IsometricWorld.prototype.createMap = function () {
             this.tiledMap = new TiledMap();
-            this.tiledMap.createMap("res/tiledMap/isometric_grass_and_water.json", new Rectangle(0, 0, Laya.stage.width, Laya.stage.height), Handler.create(this, this.mapLoaded));
+            this.tiledMap.createMap("res/tiledMap/isometric_grass_and_water.json", new Rectangle(0, 0, Laya.stage.width, Laya.stage.height), Handler.create(this, this.mapLoaded), null, new Point(1600, 800));
         };
         TiledMap_IsometricWorld.prototype.onStageClick = function () {
             var p = new Point(0, 0);

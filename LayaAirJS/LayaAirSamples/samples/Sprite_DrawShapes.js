@@ -1,7 +1,7 @@
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
-var sp = new laya.display.Sprite();
+var sp = new Laya.Sprite();
 Laya.stage.addChild(sp);
 
 //画线

@@ -1,0 +1,9 @@
+[
+	"Le service {0} ne figure pas dans le document d'index NuGet",
+	"Fichier project.json par défaut",
+	"{0} n'est pas un document JSON valide",
+	"Échec de la requête à {0} : {1}",
+	"Échec de la requête à {0} : {1}",
+	"{0}",
+	"Dernière version : {0}"
+]

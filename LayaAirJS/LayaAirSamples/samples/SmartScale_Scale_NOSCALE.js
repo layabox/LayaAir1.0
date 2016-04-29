@@ -1,7 +1,7 @@
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_NOSCALE;
+Laya.stage.scaleMode = Laya.Stage.SCALE_NOSCALE;
 
-var rect = new laya.display.Sprite();
+var rect = new Laya.Sprite();
 rect.graphics.drawRect(-100, -100, 200, 200, "gray");
 Laya.stage.addChild(rect);
 

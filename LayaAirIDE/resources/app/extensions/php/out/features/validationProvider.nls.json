@@ -1,0 +1,10 @@
+{
+	"messages": [
+		"Cannot validate the php file. The php program was not found. Use the 'php.validate.executablePath' setting to configure the location of 'php'",
+		"Failed to run php using path: {0}. Reason is unknown."
+	],
+	"keys": [
+		"noPHP",
+		"unknownReason"
+	]
+}

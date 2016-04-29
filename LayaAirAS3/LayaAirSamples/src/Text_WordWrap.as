@@ -1,12 +1,11 @@
-package 
+package
 {
 	import laya.display.Stage;
 	import laya.display.Text;
-	import laya.webgl.WebGL;
 	
 	public class Text_WordWrap
 	{
-		public function Text_WordWrap() 
+		public function Text_WordWrap()
 		{
 			Laya.init(550, 400);
 			Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
@@ -26,5 +25,5 @@ package
 			
 			Laya.stage.addChild(txt);
 		}
-	} 
+	}
 }

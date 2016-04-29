@@ -1,9 +1,9 @@
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 
 //显示两只猩猩
-var ape1 = new laya.display.Sprite();
-var ape2 = new laya.display.Sprite();
+var ape1 = new Laya.Sprite();
+var ape2 = new Laya.Sprite();
 
 ape1.loadImage("res/apes/monkey2.png");
 ape2.loadImage("res/apes/monkey2.png");

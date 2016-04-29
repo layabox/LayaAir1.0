@@ -1,8 +1,9 @@
 package 
 {
 	import laya.display.Sprite;
+	import laya.filters.BlurFilter;
+	import laya.filters.ColorFilter;
 	import laya.filters.GlowFilter;
-	import laya.filters.webgl.FilterINITGL;
 	import laya.utils.Handler;
 	import laya.webgl.WebGL;
 	
@@ -11,8 +12,6 @@ package
 		public function Filters_Glow() 
 		{
 			WebGL.enable();
-			//加入此类让滤镜类参与编译
-			FilterINITGL;
 			Laya.init(550, 400);
 			
 			Laya.loader.load("res/apes/monkey2.png", Handler.create(this, onAssetLoaded));
@@ -23,7 +22,7 @@ package
 			var img:* = Laya.loader.getRes("res/apes/monkey2.png");
 			
 			//创建一个发光滤镜
-			var glowFilter:GlowFilter = new GlowFilter("#ffff00", 5, 10, 10);
+			var glowFilter:GlowFilter = new GlowFilter("#ffff00", 20, 5, 5);
 			
 			var ape:Sprite = new Sprite();
 			ape.size(100, 100);
@@ -32,7 +31,7 @@ package
 			ape.graphics.drawTexture(img,0,0);
 			
 			//设置滤镜集合为发光滤镜
-			ape.filters = [glowFilter];
+			Laya.stage.filters = [glowFilter];
 			
 			Laya.stage.addChild(ape);
 		}

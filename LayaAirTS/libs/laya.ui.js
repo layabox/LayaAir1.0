@@ -2,19 +2,17 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Event=laya.events.Event,Loader=laya.net.Loader,Font=laya.display.css.Font,Input=laya.display.Input;
-	var Text=laya.display.Text,Sprite=laya.display.Sprite,Texture=laya.resource.Texture,ColorFilter=laya.filters.ColorFilter;
-	var Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Utils=laya.utils.Utils,Point=laya.maths.Point;
-	var Stage=laya.display.Stage,Rectangle=laya.maths.Rectangle,RenderSprite=laya.renders.RenderSprite,Node=laya.display.Node;
-	var Tween=laya.utils.Tween,Ease=laya.utils.Ease;
-	Laya.interface('laya.ui.IRender');
+	var Event=laya.events.Event,Loader=laya.net.Loader,Point=laya.maths.Point,ColorFilter=laya.filters.ColorFilter;
+	var Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Sprite=laya.display.Sprite,Texture=laya.resource.Texture;
+	var Font=laya.display.css.Font,Input=laya.display.Input,Utils=laya.utils.Utils,Text=laya.display.Text,Stage=laya.display.Stage;
+	var Rectangle=laya.maths.Rectangle,Node=laya.display.Node,Tween=laya.utils.Tween,Ease=laya.utils.Ease;
 	Laya.interface('laya.ui.IItem');
+	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.ISelect');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
 	*<code>LayoutStyle</code> 是一个布局样式类。
-	*@author yung
 	*/
 	//class laya.ui.LayoutStyle
 	var LayoutStyle=(function(){
@@ -38,7 +36,6 @@
 
 	/**
 	*<code>Styles</code> 定义了组件常用的样式属性。
-	*@author yung
 	*/
 	//class laya.ui.Styles
 	var Styles=(function(){
@@ -56,8 +53,7 @@
 
 
 	/**
-	*文本工具集。
-	*@author yung
+	*<code>UIUtils</code> 是文本工具集。
 	*/
 	//class laya.ui.UIUtils
 	var UIUtils=(function(){
@@ -133,10 +129,7 @@
 
 	/**
 	*<code>AutoBitmap</code> 类是用于表示位图图像或绘制图形的显示对象。
-	*
 	*<p>封装了位置，宽高及九宫格的处理，供UI组件使用。</p>
-	*
-	*@author lai
 	*/
 	//class laya.ui.AutoBitmap extends laya.display.Graphics
 	var AutoBitmap=(function(_super){
@@ -197,7 +190,7 @@
 				left && this.drawTexture(AutoBitmap.getTexture(source,0,top,left,sh-top-bottom),0,top,left,height-top-bottom);
 				right && this.drawTexture(AutoBitmap.getTexture(source,sw-right,top,right,sh-top-bottom),width-right,top,right,height-top-bottom);
 				this.drawTexture(AutoBitmap.getTexture(source,left,top,sw-left-right,sh-top-bottom),left,top,width-left-right,height-top-bottom);
-				if (this.autoCacheCmd)AutoBitmap.cmdCaches[key]=this._cmds;
+				if (this.autoCacheCmd)AutoBitmap.cmdCaches[key]=this.cmds;
 			}
 			this._repaint();
 		}
@@ -228,8 +221,6 @@
 		*</ul>
 		*同时也支持3宫格，比如0,4,0,4,1为水平3宫格，4,0,4,0,1为垂直3宫格，3宫格性能比9宫格高。
 		*</p>
-		*
-		*@param value
 		*/
 		__getset(0,__proto,'sizeGrid',function(){
 			return this._sizeGrid;
@@ -240,9 +231,7 @@
 
 		/**
 		*对象的纹理资源。
-		*
 		*@see laya.resource.Texture
-		*@return
 		*/
 		__getset(0,__proto,'source',function(){
 			return this._source;
@@ -303,8 +292,6 @@
 
 	/**
 	*<code>UIEvent</code> 类用来定义UI组件类的事件类型。
-	*@author yung
-	*
 	*/
 	//class laya.ui.UIEvent extends laya.events.Event
 	var UIEvent=(function(_super){
@@ -320,18 +307,16 @@
 
 	/**
 	*<code>Component</code> 是ui控件类的基类。
-	*
-	*
 	*<p>生命周期：preinitialize > createChildren > initialize > 组件构造函数</p>
 	*/
 	//class laya.ui.Component extends laya.display.Sprite
 	var Component=(function(_super){
 		function Component(){
+			this._comXml=null;
 			this._dataSource=null;
 			this._toolTip=null;
 			this._tag=null;
 			this._disabled=false;
-			this._comXml=null;
 			Component.__super.call(this);
 			this._layout=LayoutStyle.EMPTY;
 			this.preinitialize();
@@ -404,7 +389,6 @@
 		/**
 		*@private
 		*<p>获取对象的布局样式。</p>
-		*@return
 		*/
 		__proto.getLayout=function(){
 			this._layout===LayoutStyle.EMPTY && (this._layout=new LayoutStyle());
@@ -431,8 +415,10 @@
 		*父容器的 <code>Event.RESIZE</code> 事件侦听处理函数。
 		*/
 		__proto.onCompResize=function(){
-			this.resetLayoutX();
-			this.resetLayoutY();
+			if (this._layout.enable){
+				this.resetLayoutX();
+				this.resetLayoutY();
+			}
 		}
 
 		/**
@@ -506,8 +492,6 @@
 
 		/**
 		*<p>对象的显示宽度（以像素为单位）。</p>
-		*@return
-		*@internal #TM
 		*/
 		__getset(0,__proto,'displayWidth',function(){
 			return this.width *this.scaleX;
@@ -515,7 +499,6 @@
 
 		/**
 		*<p>在父容器中，此对象的水平方向中轴线与父容器的水平方向中心线的距离（以像素为单位）。</p>
-		*@return
 		*/
 		__getset(0,__proto,'centerX',function(){
 			return this._layout.centerX;
@@ -527,8 +510,6 @@
 
 		/**
 		*<p>对象的显示高度（以像素为单位）。</p>
-		*@return
-		*@internal #TM
 		*/
 		__getset(0,__proto,'displayHeight',function(){
 			return this.height *this.scaleY;
@@ -536,7 +517,6 @@
 
 		/**
 		*<p>显示对象的实际显示区域高度（以像素为单位）。</p>
-		*@return
 		*/
 		__getset(0,__proto,'measureHeight',function(){
 			var max=0;
@@ -552,7 +532,6 @@
 
 		/**
 		*<p>显示对象的实际显示区域宽度（以像素为单位）。</p>
-		*@return
 		*/
 		__getset(0,__proto,'measureWidth',function(){
 			var max=0;
@@ -624,10 +603,6 @@
 		});
 
 		/**
-		*
-		*@param value
-		*/
-		/**
 		*<p>鼠标悬停提示。</p>
 		*<p>可以赋值为文本 <code>String</code> 或函数 <code>Function</code> ，用来实现自定义样式的鼠标提示和参数携带等。</p>
 		*@example 以下例子展示了三种鼠标提示：
@@ -653,7 +628,6 @@
 		}
 
 		</listing>
-		*@return
 		*/
 		__getset(0,__proto,'toolTip',function(){
 			return this._toolTip;
@@ -672,7 +646,6 @@
 
 		/**
 		*<p>从组件顶边到其内容区域顶边之间的垂直距离（以像素为单位）。</p>
-		*@return
 		*/
 		__getset(0,__proto,'top',function(){
 			return this._layout.top;
@@ -684,7 +657,6 @@
 
 		/**
 		*<p>从组件底边到其内容区域底边之间的垂直距离（以像素为单位）。</p>
-		*@return
 		*/
 		__getset(0,__proto,'bottom',function(){
 			return this._layout.bottom;
@@ -696,7 +668,6 @@
 
 		/**
 		*<p>从组件左边到其内容区域左边之间的水平距离（以像素为单位）。</p>
-		*@return
 		*/
 		__getset(0,__proto,'left',function(){
 			return this._layout.left;
@@ -708,7 +679,6 @@
 
 		/**
 		*<p>从组件右边到其内容区域右边之间的水平距离（以像素为单位）。</p>
-		*@return
 		*/
 		__getset(0,__proto,'right',function(){
 			return this._layout.right;
@@ -720,7 +690,6 @@
 
 		/**
 		*<p>在父容器中，此对象的垂直方向中轴线与父容器的垂直方向中心线的距离（以像素为单位）。</p>
-		*@return
 		*/
 		__getset(0,__proto,'centerY',function(){
 			return this._layout.centerY;
@@ -732,7 +701,6 @@
 
 		/**
 		*<p>对象的标签。</p>
-		*@return
 		*@internal 冗余字段，可以用来储存数据。
 		*/
 		__getset(0,__proto,'tag',function(){
@@ -744,7 +712,7 @@
 		/**
 		*<p>指定对象是否可使用布局。</p>
 		*<p>如果值为true,则此对象可以使用布局样式，否则不使用布局样式。</p>
-		*@param value
+		*@param value 一个 Boolean 值，指定对象是否可使用布局。
 		*/
 		__getset(0,__proto,'layOutEabled',null,function(value){
 			if (this._layout.enable !=value){
@@ -756,21 +724,26 @@
 			}
 		});
 
+		/**
+		*XML 数据。
+		*/
 		__getset(0,__proto,'comXml',function(){
 			return this._comXml;
 			},function(value){
 			this._comXml=value;
 		});
 
+		/**@inheritDoc */
 		__getset(0,__proto,'x',_super.prototype._$get_x,function(value){
 			_super.prototype._$set_x.call(this,Math.round(value));
 		});
 
+		/**@inheritDoc */
 		__getset(0,__proto,'y',_super.prototype._$get_y,function(value){
 			_super.prototype._$set_y.call(this,Math.round(value));
 		});
 
-		/**是否禁用页面(变灰)*/
+		/**是否禁用页面(变灰)。*/
 		__getset(0,__proto,'disabled',function(){
 			return this._disabled;
 			},function(value){
@@ -786,7 +759,6 @@
 
 	/**
 	*<code>Box</code> 类是一个控件容器类。
-	*@author yung
 	*/
 	//class laya.ui.Box extends laya.ui.Component
 	var Box=(function(_super){
@@ -811,8 +783,7 @@
 
 
 	/**
-	*<code>Button</code> 组件用来表示常用的多态按钮。 <code>Button</code> 组件可显示文本标签、图标或同时显示两者。
-	*
+	*<code>Button</code> 组件用来表示常用的多态按钮。 <code>Button</code> 组件可显示文本标签、图标或同时显示两者。 *
 	*<p>可以是单态，两态和三态，默认三态(up,over,down)。</p>
 	*
 	*@example 以下示例代码，创建了一个 <code>Button</code> 实例。
@@ -889,8 +860,6 @@
 			*}
 		*}
 	*</listing>
-	*
-	*@author yung
 	*/
 	//class laya.ui.Button extends laya.ui.Component
 	var Button=(function(_super){
@@ -948,8 +917,7 @@
 
 		/**
 		*对象的 <code>Event.MOUSE_OVER、Event.MOUSE_OUT、Event.MOUSE_DOWN、Event.MOUSE_UP、Event.CLICK</code> 事件侦听处理函数。
-		*
-		*@param e
+		*@param e Event 对象。
 		*/
 		__proto.onMouse=function(e){
 			if ((this.toggle===false && this._selected)|| this.disabled)return;
@@ -1004,7 +972,6 @@
 		*<p>描边颜色，以字符串表示。</p>
 		*默认值为 "#000000"（黑色）;
 		*@see laya.display.Text.strokeColor()
-		*@return
 		*/
 		__getset(0,__proto,'labelStrokeColor',function(){
 			return this._text.strokeColor;
@@ -1015,11 +982,8 @@
 		/**
 		*<p>对象的皮肤资源地址。</p>
 		*支持单态，两态和三态，用 <code>stateNum</code> 属性设置
-		*
 		*<p>对象的皮肤地址，以字符串表示。</p>
-		*
 		*@see #stateNum
-		*@return
 		*/
 		__getset(0,__proto,'skin',function(){
 			return this._skin;
@@ -1033,7 +997,6 @@
 
 		/**
 		*对象的状态值。
-		*
 		*@see #stateMap
 		*/
 		__getset(0,__proto,'state',function(){
@@ -1047,7 +1010,6 @@
 
 		/**
 		*按钮的文本内容。
-		*@return
 		*/
 		__getset(0,__proto,'label',function(){
 			return this._text.text;
@@ -1072,7 +1034,6 @@
 		*经过状态皮肤、
 		*按下和选中状态皮肤</li>
 		*</p>
-		*@return
 		*/
 		__getset(0,__proto,'stateNum',function(){
 			return this._stateNum;
@@ -1086,10 +1047,9 @@
 		/**
 		*表示按钮各个状态下的描边颜色。
 		*<p><b>格式:</b> "upColor,overColor,downColor,disableColor"。</p>
-		*@return
 		*/
 		__getset(0,__proto,'strokeColors',function(){
-			return this._strokeColors?this._strokeColors.join(","):"";
+			return this._strokeColors ? this._strokeColors.join(","):"";
 			},function(value){
 			this._strokeColors=UIUtils.fillArray(Styles.buttonLabelColors,value,String);
 			this.callLater(this.changeState);
@@ -1099,7 +1059,6 @@
 		*<p>描边宽度（以像素为单位）。</p>
 		*默认值0，表示不描边。
 		*@see laya.display.Text.stroke()
-		*@return
 		*/
 		__getset(0,__proto,'labelStroke',function(){
 			return this._text.stroke;
@@ -1109,7 +1068,6 @@
 
 		/**
 		*@inheritDoc
-		*@return
 		*/
 		__getset(0,__proto,'measureHeight',function(){
 			this.runCallLater(this.changeClips);
@@ -1128,9 +1086,7 @@
 
 		/**
 		*表示按钮的选中状态。
-		*
 		*<p>如果值为true，表示该对象处于选中状态。否则该对象处于未选中状态。</p>
-		*@return
 		*/
 		__getset(0,__proto,'selected',function(){
 			return this._selected;
@@ -1144,9 +1100,7 @@
 
 		/**
 		*表示按钮各个状态下的文本颜色。
-		*
 		*<p><b>格式:</b> "upColor,overColor,downColor,disableColor"。</p>
-		*@return
 		*/
 		__getset(0,__proto,'labelColors',function(){
 			return this._labelColors.join(",");
@@ -1157,9 +1111,7 @@
 
 		/**
 		*表示按钮文本标签的边距。
-		*
 		*<p><b>格式：</b>"上边距,右边距,下边距,左边距"。</p>
-		*@return
 		*/
 		__getset(0,__proto,'labelPadding',function(){
 			return this._text.padding.join(",");
@@ -1169,9 +1121,7 @@
 
 		/**
 		*表示按钮文本标签的字体大小。
-		*
 		*@see laya.display.Text.fontSize()
-		*@return
 		*/
 		__getset(0,__proto,'labelSize',function(){
 			return this._text.fontSize;
@@ -1181,9 +1131,7 @@
 
 		/**
 		*表示按钮文本标签是否为粗体字。
-		*
 		*@see laya.display.Text.bold()
-		*@return
 		*/
 		__getset(0,__proto,'labelBold',function(){
 			return this._text.bold;
@@ -1191,7 +1139,7 @@
 			this._text.bold=value;
 		});
 
-		/**标签对齐模式，默认为居中对齐*/
+		/**标签对齐模式，默认为居中对齐。*/
 		__getset(0,__proto,'labelAlign',function(){
 			return this._text.align;
 			},function(value){
@@ -1200,9 +1148,7 @@
 
 		/**
 		*表示按钮文本标签的字体名称，以字符串形式表示。
-		*
 		*@see laya.display.Text.font()
-		*@return
 		*/
 		__getset(0,__proto,'labelFont',function(){
 			return this._text.font;
@@ -1212,7 +1158,6 @@
 
 		/**
 		*对象的点击事件处理器函数（无默认参数）。
-		*@return
 		*/
 		__getset(0,__proto,'clickHandler',function(){
 			return this._clickHandler;
@@ -1222,7 +1167,6 @@
 
 		/**
 		*按钮文本标签 <code>Text</code> 控件。
-		*@return
 		*/
 		__getset(0,__proto,'text',function(){
 			return this._text;
@@ -1378,7 +1322,6 @@
 		*}
 	*
 	*</listing>
-	*@author yung
 	*/
 	//class laya.ui.Clip extends laya.ui.Component
 	var Clip=(function(_super){
@@ -1405,10 +1348,7 @@
 
 		__class(Clip,'laya.ui.Clip',_super);
 		var __proto=Clip.prototype;
-		/**
-		*
-		*@inheritDoc
-		*/
+		/**@inheritDoc */
 		__proto.destroy=function(clearFromCache){
 			(clearFromCache===void 0)&& (clearFromCache=false);
 			_super.prototype.destroy.call(this,true);
@@ -1436,11 +1376,7 @@
 			this.on(/*laya.events.Event.UNDISPLAY*/"undisplay",this,this._onDisplay);
 		}
 
-		/**
-		*@private
-		*
-		*@param e
-		*/
+		/**@private */
 		__proto._onDisplay=function(e){
 			if (this._isPlaying){
 				if (this._displayInStage)this.play();
@@ -1466,8 +1402,8 @@
 		/**
 		*@private
 		*加载切片图片资源完成函数。
-		*@param url 资源地址
-		*@param img 纹理
+		*@param url 资源地址。
+		*@param img 纹理。
 		*/
 		__proto.loadComplete=function(url,img){
 			if (url===this._skin && img){
@@ -1482,6 +1418,7 @@
 				}
 				this.index=this._index;
 				this.event(/*laya.events.Event.LOADED*/"loaded");
+				this.onCompResize();
 			}
 		}
 
@@ -1491,14 +1428,14 @@
 		__proto.play=function(){
 			this._isPlaying=true;
 			this._index=0;
-			Laya.timer.loop(this.interval,this,this._loop,null,true);
+			Laya.timer.loop(this.interval,this,this._loop);
 		}
 
 		/**
 		*@private
 		*/
 		__proto._loop=function(){
-			if (this._style.visible){
+			if (this._style.visible && this._sources){
 				this.index=this._index,this._index++;
 				this._index >=this._sources.length && (this._index=0);
 			}
@@ -1634,7 +1571,7 @@
 			return this._index;
 			},function(value){
 			this._index=value;
-			this._bitmap&&this._sources && (this._bitmap.source=this._sources[value]);
+			this._bitmap && this._sources && (this._bitmap.source=this._sources[value]);
 			this.event(/*laya.events.Event.CHANGE*/"change");
 		});
 
@@ -1763,7 +1700,6 @@
 		*
 		*}
 	*</listing>
-	*@author yung
 	*/
 	//class laya.ui.ColorPicker extends laya.ui.Component
 	var ColorPicker=(function(_super){
@@ -1786,9 +1722,7 @@
 
 		__class(ColorPicker,'laya.ui.ColorPicker',_super);
 		var __proto=ColorPicker.prototype;
-		/**
-		*@inheritDoc
-		*/
+		/**@inheritDoc */
 		__proto.destroy=function(destroyChild){
 			(destroyChild===void 0)&& (destroyChild=true);
 			_super.prototype.destroy.call(this,destroyChild);
@@ -1939,7 +1873,6 @@
 
 		/**
 		*通过鼠标位置取对应的颜色块的颜色值。
-		*@return
 		*/
 		__proto.getColorByMouse=function(){
 			var point=this._colorTiles.getMousePoint();
@@ -1972,7 +1905,6 @@
 
 		/**
 		*表示颜色样本列表面板的边框颜色值。
-		*@return
 		*/
 		__getset(0,__proto,'borderColor',function(){
 			return this._borderColor;
@@ -1983,7 +1915,6 @@
 
 		/**
 		*表示选择的颜色值。
-		*@return
 		*/
 		__getset(0,__proto,'selectedColor',function(){
 			return this._selectedColor;
@@ -1999,7 +1930,6 @@
 
 		/**
 		*表示颜色输入框的背景颜色值。
-		*@return
 		*/
 		__getset(0,__proto,'inputBgColor',function(){
 			return this._inputBgColor;
@@ -2010,7 +1940,6 @@
 
 		/**
 		*@copy laya.ui.Button#skin
-		*@return
 		*/
 		__getset(0,__proto,'skin',function(){
 			return this._colorButton.skin;
@@ -2021,7 +1950,6 @@
 
 		/**
 		*表示颜色样本列表面板的背景颜色值。
-		*@return
 		*/
 		__getset(0,__proto,'bgColor',function(){
 			return this._bgColor;
@@ -2032,7 +1960,6 @@
 
 		/**
 		*表示颜色样本列表面板选择或输入的颜色值。
-		*@return
 		*/
 		__getset(0,__proto,'inputColor',function(){
 			return this._inputColor;
@@ -2196,9 +2123,6 @@
 			e.stopPropagation();
 		}
 
-		/**
-		*private
-		*/
 		__proto.onScrollBarDown=function(e){
 			e.stopPropagation();
 		}
@@ -2208,7 +2132,7 @@
 		}
 
 		/**
-		*@private (protected)
+		*@private
 		*/
 		__proto.changeList=function(){
 			this._listChanged=false;
@@ -2217,7 +2141,7 @@
 			this._itemHeight=this._itemSize+6;
 			this._list.itemRender={type:"Box",child:[{type:"Label",props:{name:"label",x:1,padding:"3,3,3,3",width:labelWidth,height:this._itemHeight,fontSize:this._itemSize,color:labelColor}}]};
 			this._list.repeatY=this._visibleNum;
-			if(this._scrollBar)
+			if (this._scrollBar)
 				this._scrollBar.x=this.width-this._scrollBar.width-1;
 			this._list.refresh();
 		}
@@ -2225,8 +2149,6 @@
 		/**
 		*@private
 		*下拉列表的鼠标事件响应函数。
-		*@param e
-		*@param index
 		*/
 		__proto.onlistItemMouse=function(e,index){
 			var type=e.type;
@@ -2249,7 +2171,6 @@
 
 		/**
 		*@private
-		*@param value
 		*/
 		__proto.switchTo=function(value){
 			this.isOpen=value;
@@ -2269,7 +2190,7 @@
 			this._itemChanged=false;
 			this.runCallLater(this.changeList);
 			this._listHeight=this._labels.length > 0 ? Math.min(this._visibleNum,this._labels.length)*this._itemHeight :this._itemHeight;
-			if(this._scrollBar)
+			if (this._scrollBar)
 				this._scrollBar.height=this._listHeight-2;
 			var g=this._list.graphics;
 			g.clear();
@@ -2295,7 +2216,6 @@
 
 		/**
 		*标签集合字符串。
-		*@return
 		*/
 		__getset(0,__proto,'labels',function(){
 			return this._labels.join(",");
@@ -2308,7 +2228,6 @@
 
 		/**
 		*@copy laya.ui.Button#skin
-		*@return
 		*/
 		__getset(0,__proto,'skin',function(){
 			return this._button.skin;
@@ -2331,7 +2250,6 @@
 
 		/**
 		*表示选择的下拉列表项的的标签。
-		*@return
 		*/
 		__getset(0,__proto,'selectedLabel',function(){
 			return this._selectedIndex >-1 && this._selectedIndex < this._labels.length ? this._labels[this._selectedIndex] :null;
@@ -2341,7 +2259,6 @@
 
 		/**
 		*表示选择的下拉列表项的索引。
-		*@return
 		*/
 		__getset(0,__proto,'selectedIndex',function(){
 			return this._selectedIndex;
@@ -2371,7 +2288,6 @@
 
 		/**
 		*改变下拉列表的选择项时执行的处理器(默认返回参数index:int)。
-		*@return
 		*/
 		__getset(0,__proto,'selectHandler',function(){
 			return this._selectHandler;
@@ -2381,9 +2297,7 @@
 
 		/**
 		*表示按钮的状态值。
-		*
 		*@see laya.ui.Button#stateNum
-		*@return
 		*/
 		__getset(0,__proto,'stateNum',function(){
 			return this._button.stateNum;
@@ -2393,7 +2307,6 @@
 
 		/**
 		*获取或设置没有滚动条的下拉列表中可显示的最大行数。
-		*@return
 		*/
 		__getset(0,__proto,'visibleNum',function(){
 			return this._visibleNum;
@@ -2405,7 +2318,6 @@
 		/**
 		*下拉列表项颜色。
 		*<p><b>格式：</b>"悬停或被选中时背景颜色,悬停或被选中时标签颜色,标签颜色,边框颜色,背景颜色"</p>
-		*@return
 		*/
 		__getset(0,__proto,'itemColors',function(){
 			return String(this._itemColors)
@@ -2416,7 +2328,6 @@
 
 		/**
 		*下拉列表项标签的字体大小。
-		*@return
 		*/
 		__getset(0,__proto,'itemSize',function(){
 			return this._itemSize;
@@ -2427,7 +2338,6 @@
 
 		/**
 		*表示下拉列表的打开状态。
-		*@return
 		*/
 		__getset(0,__proto,'isOpen',function(){
 			return this._isOpen;
@@ -2458,7 +2368,6 @@
 		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
 		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
 		*@see laya.ui.AutoBitmap.sizeGrid
-		*@return
 		*/
 		__getset(0,__proto,'sizeGrid',function(){
 			return this._button.sizeGrid;
@@ -2475,7 +2384,6 @@
 
 		/**
 		*滚动条皮肤。
-		*@return
 		*/
 		__getset(0,__proto,'scrollBarSkin',function(){
 			return this._scrollBarSkin;
@@ -2485,7 +2393,6 @@
 
 		/**
 		*获取对 <code>ComboBox</code> 组件所包含的 <code>VScrollBar</code> 滚动条组件的引用。
-		*@return
 		*/
 		__getset(0,__proto,'scrollBar',function(){
 			return this._scrollBar;
@@ -2493,7 +2400,6 @@
 
 		/**
 		*获取对 <code>ComboBox</code> 组件所包含的 <code>List</code> 列表组件的引用。
-		*@return
 		*/
 		__getset(0,__proto,'list',function(){
 			return this._list;
@@ -2510,7 +2416,6 @@
 		/**
 		*获取或设置对 <code>ComboBox</code> 组件所包含的 <code>Button</code> 组件的文本标签颜色。
 		*<p><b>格式：</b>upColor,overColor,downColor,disableColor</p>
-		*@return
 		*/
 		__getset(0,__proto,'labelColors',function(){
 			return this._button.labelColors;
@@ -2521,7 +2426,6 @@
 		/**
 		*获取或设置对 <code>ComboBox</code> 组件所包含的 <code>Button</code> 组件的文本边距。
 		*<p><b>格式：</b>上边距,右边距,下边距,左边距</p>
-		*@return
 		*/
 		__getset(0,__proto,'labelPadding',function(){
 			return this._button.text.padding.join(",");
@@ -2531,7 +2435,6 @@
 
 		/**
 		*获取或设置对 <code>ComboBox</code> 组件所包含的 <code>Button</code> 组件的标签字体大小。
-		*@return
 		*/
 		__getset(0,__proto,'labelSize',function(){
 			return this._button.text.fontSize;
@@ -2541,9 +2444,7 @@
 
 		/**
 		*表示按钮文本标签是否为粗体字。
-		*
 		*@see laya.display.Text#bold
-		*@return
 		*/
 		__getset(0,__proto,'labelBold',function(){
 			return this._button.text.bold;
@@ -2553,9 +2454,7 @@
 
 		/**
 		*表示按钮文本标签的字体名称，以字符串形式表示。
-		*
 		*@see laya.display.Text#font
-		*@return
 		*/
 		__getset(0,__proto,'labelFont',function(){
 			return this._button.text.font;
@@ -2569,13 +2468,11 @@
 
 	/**
 	*<code>ScrollBar</code> 组件是一个滚动条组件。
-	*
 	*<p>当数据太多以至于显示区域无法容纳时，最终用户可以使用 <code>ScrollBar</code> 组件控制所显示的数据部分。</p>
 	*<p> 滚动条由四部分组成：两个箭头按钮、一个轨道和一个滑块。 </p> *
 	*
 	*@see laya.ui.VScrollBar
 	*@see laya.ui.HScrollBar
-	*@author yung
 	*/
 	//class laya.ui.ScrollBar extends laya.ui.Component
 	var ScrollBar=(function(_super){
@@ -2745,7 +2642,7 @@
 			Tween.clearTween(this);
 			Laya.stage.once(/*laya.events.Event.MOUSE_UP*/"mouseup",this,this.onStageMouseUp2);
 			Laya.stage.once(/*laya.events.Event.MOUSE_OUT*/"mouseout",this,this.onStageMouseUp2);
-			Laya.timer.frameLoop(1,this,this.loop,null,true);
+			Laya.timer.frameLoop(1,this,this.loop);
 			this.event(/*laya.events.Event.START*/"start");
 		}
 
@@ -2849,7 +2746,7 @@
 		}
 
 		/**
-		*停止滑动
+		*停止滑动。
 		*/
 		__proto.stopScroll=function(){
 			this.onStageMouseUp2(null);
@@ -2968,7 +2865,7 @@
 		});
 
 		/**
-		*设置滚动对象。*
+		*设置滚动对象。
 		*@see laya.ui.TouchScroll#target
 		*/
 		__getset(0,__proto,'target',function(){
@@ -3022,13 +2919,11 @@
 
 	/**
 	*使用 <code>Slider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*
 	*<p>滑块的当前值由滑块端点（对应于滑块的最小值和最大值）之间滑块的相对位置确定。</p>
 	*<p>滑块允许最小值和最大值之间特定间隔内的值。滑块还可以使用数据提示显示其当前值。</p>
 	*
 	*@see laya.ui.HSlider
 	*@see laya.ui.VSlider
-	*@author yung
 	*/
 	//class laya.ui.Slider extends laya.ui.Component
 	var Slider=(function(_super){
@@ -3068,7 +2963,7 @@
 
 		/**@inheritDoc */
 		__proto.createChildren=function(){
-			this.addChild(this._bg=new Image2());
+			this.addChild(this._bg=new Image());
 			this.addChild(this._bar=new Button());
 		}
 
@@ -3150,7 +3045,7 @@
 			this._tx=Laya.stage.mouseX;
 			this._ty=Laya.stage.mouseY;
 			var pow=Math.pow(10,(this._tick+"").length-1);
-			this._value=Math.round(Math.round(this._value / this._tick)*this._tick*pow)/pow;
+			this._value=Math.round(Math.round(this._value / this._tick)*this._tick *pow)/ pow;
 			if (this._value !=oldValue){
 				this.sendChangeEvent();
 			}
@@ -3204,7 +3099,7 @@
 		*/
 		__proto.changeValue=function(){
 			var pow=Math.pow(10,(this._tick+"").length-1);
-			this._value=Math.round(Math.round(this._value / this._tick)*this._tick*pow)/pow;
+			this._value=Math.round(Math.round(this._value / this._tick)*this._tick *pow)/ pow;
 			this._value=this._value > this._max ? this._max :this._value < this._min ? this._min :this._value;
 			if (this.isVertical)this._bar.y=(this._value-this._min)/ (this._max-this._min)*(this.height-this._bar.height);
 			else this._bar.x=(this._value-this._min)/ (this._max-this._min)*(this.width-this._bar.width);
@@ -3213,7 +3108,6 @@
 		/**
 		*@private
 		*滑动条的 <code>Event.MOUSE_DOWN</code> 事件侦听处理函数。
-		*@param e
 		*/
 		__proto.onBgMouseDown=function(e){
 			var point=this._bg.getMousePoint();
@@ -3238,7 +3132,6 @@
 
 		/**
 		*获取或设置表示最高位置的数字。 默认值为100。
-		*@return
 		*/
 		__getset(0,__proto,'max',function(){
 			return this._max;
@@ -3251,7 +3144,6 @@
 
 		/**
 		*表示滑块按钮的引用。
-		*@return
 		*/
 		__getset(0,__proto,'bar',function(){
 			return this._bar;
@@ -3294,7 +3186,6 @@
 
 		/**
 		*获取或设置表示最低位置的数字。 默认值为0。
-		*@return
 		*/
 		__getset(0,__proto,'min',function(){
 			return this._min;
@@ -3307,7 +3198,6 @@
 
 		/**
 		*获取或设置表示当前滑块位置的数字。
-		*@return
 		*/
 		__getset(0,__proto,'value',function(){
 			return this._value;
@@ -3324,7 +3214,6 @@
 
 		/**
 		*一个布尔值，指定是否允许通过点击滑动条改变 <code>Slider</code> 的 <code>value</code> 属性值。
-		*@return
 		*/
 		__getset(0,__proto,'allowClickBack',function(){
 			return this._allowClickBack;
@@ -3352,8 +3241,6 @@
 
 	/**
 	*<code>Image</code> 类是用于表示位图图像或绘制图形的显示对象。
-	*
-	*
 	*@example 以下示例代码，创建了一个新的 <code>Image</code> 实例，设置了它的皮肤、位置信息，并添加到舞台上。
 	*<listing version="3.0">
 	*package
@@ -3430,7 +3317,7 @@
 	*@see laya.ui.AutoBitmap
 	*/
 	//class laya.ui.Image extends laya.ui.Component
-	var Image2=(function(_super){
+	var Image=(function(_super){
 		function Image(skin){
 			this._bitmap=null;
 			this._skin=null;
@@ -3438,7 +3325,7 @@
 			this.skin=skin;
 		}
 
-		__class(Image,'laya.ui.Image',_super,'Image2');
+		__class(Image,'laya.ui.Image',_super);
 		var __proto=Image.prototype;
 		/**@inheritDoc */
 		__proto.destroy=function(destroyChild){
@@ -3449,7 +3336,7 @@
 		}
 
 		/**
-		*销毁对象并释放加载的皮肤资源
+		*销毁对象并释放加载的皮肤资源。
 		*/
 		__proto.dispose=function(){
 			this.destroy(true);
@@ -3465,19 +3352,16 @@
 		/**
 		*@private
 		*设置皮肤资源。
-		*@param url
-		*@param value
 		*/
 		__proto.setSource=function(url,value){
 			url===this._skin && (this.source=value);
+			this.onCompResize();
 		}
 
 		/**
 		*<p>对象的皮肤地址，以字符串表示。</p>
-		*<p>如果资源未加载，则先加载资源，加载完成然后应用于此对象。</p>
+		*<p>如果资源未加载，则先加载资源，加载完成后应用于此对象。</p>
 		*<b>注意：</b>资源加载完成后，会自动缓存至资源库中。
-		*
-		*@return
 		*/
 		__getset(0,__proto,'skin',function(){
 			return this._skin;
@@ -3485,30 +3369,23 @@
 			if (this._skin !=value){
 				this._skin=value;
 				if (value){
-					this._addRenderType(/*laya.renders.RenderSprite.GRAPHICS*/0x100);
 					var source=Loader.getRes(value);
 					if (source)this.source=source;
 					else Laya.loader.load(this._skin,Handler.create(this,this.setSource,[this._skin]),null,/*laya.net.Loader.IMAGE*/"image");
 					}else {
 					this.source=null;
-					this._removeRenderType(/*laya.renders.RenderSprite.GRAPHICS*/0x100);
-					this._removeRenderType(/*laya.renders.RenderSprite.IMAGE*/0x01);
 				}
 			}
 		});
 
 		/**
 		*@copy laya.ui.AutoBitmap#source
-		*@return
 		*/
 		__getset(0,__proto,'source',function(){
 			return this._bitmap.source;
 			},function(value){
 			if (!this._bitmap)return;
-			if(value)
-				this._bitmap.source=value;
-			else
-			this._renderType &=~ /*laya.renders.RenderSprite.IMAGE*/0x01;
+			this._bitmap.source=value;
 			this.event(/*laya.events.Event.LOADED*/"loaded");
 			this.repaint();
 		});
@@ -3516,7 +3393,7 @@
 		/**@inheritDoc */
 		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
 			_super.prototype._$set_width.call(this,value);
-			this._bitmap.width=value==0?0.0000001:value;
+			this._bitmap.width=value==0 ? 0.0000001 :value;
 		});
 
 		/**@inheritDoc */
@@ -3545,7 +3422,7 @@
 		/**@inheritDoc */
 		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
 			_super.prototype._$set_height.call(this,value);
-			this._bitmap.height=value==0?0.0000001:value;
+			this._bitmap.height=value==0 ? 0.0000001 :value;
 		});
 
 		/**@inheritDoc */
@@ -3673,7 +3550,6 @@
 		*}
 	*</listing>
 	*@see laya.display.Text
-	*@author yung
 	*/
 	//class laya.ui.Label extends laya.ui.Component
 	var Label=(function(_super){
@@ -3701,7 +3577,6 @@
 
 		/**
 		*@copy laya.display.Text#leading
-		*@return
 		*/
 		__getset(0,__proto,'leading',function(){
 			return this._tf.leading;
@@ -3711,9 +3586,7 @@
 
 		/**
 		*当前文本内容字符串。
-		*
 		*@see laya.display.Text.text
-		*@return
 		*/
 		__getset(0,__proto,'text',function(){
 			return this._tf.text;
@@ -3726,7 +3599,6 @@
 
 		/**
 		*@copy laya.display.Text#color
-		*@return
 		*/
 		__getset(0,__proto,'color',function(){
 			return this._tf.color;
@@ -3736,7 +3608,6 @@
 
 		/**
 		*@copy laya.display.Text#strokeColor
-		*@return
 		*/
 		__getset(0,__proto,'strokeColor',function(){
 			return this._tf.strokeColor;
@@ -3767,7 +3638,6 @@
 
 		/**
 		*@copy laya.display.Text#italic
-		*@return
 		*/
 		__getset(0,__proto,'italic',function(){
 			return this._tf.italic;
@@ -3777,7 +3647,6 @@
 
 		/**
 		*@copy laya.display.Text#valign
-		*@return
 		*/
 		__getset(0,__proto,'valign',function(){
 			return this._tf.valign;
@@ -3787,7 +3656,6 @@
 
 		/**
 		*@copy laya.display.Text#align
-		*@return
 		*/
 		__getset(0,__proto,'align',function(){
 			return this._tf.align;
@@ -3797,7 +3665,6 @@
 
 		/**
 		*@copy laya.display.Text#bold
-		*@return
 		*/
 		__getset(0,__proto,'bold',function(){
 			return this._tf.bold;
@@ -3807,7 +3674,6 @@
 
 		/**
 		*文本控件实体 <code>Text</code> 实例。
-		*@return
 		*/
 		__getset(0,__proto,'textField',function(){
 			return this._tf;
@@ -3815,7 +3681,6 @@
 
 		/**
 		*@copy laya.display.Text#fontSize
-		*@return
 		*/
 		__getset(0,__proto,'fontSize',function(){
 			return this._tf.fontSize;
@@ -3827,7 +3692,6 @@
 		*<p>边距信息</p>
 		*<p>"上边距，右边距，下边距 , 左边距（边距以像素为单位）"</p>
 		*@see laya.display.Text.padding
-		*@return
 		*/
 		__getset(0,__proto,'padding',function(){
 			return this._tf.padding.join(",");
@@ -3837,7 +3701,6 @@
 
 		/**
 		*@copy laya.display.Text#bgColor
-		*@return
 		*/
 		__getset(0,__proto,'bgColor',function(){
 			return this._tf.bgColor
@@ -3847,7 +3710,6 @@
 
 		/**
 		*@inheritDoc
-		*@return
 		*/
 		__getset(0,__proto,'measureWidth',function(){
 			return this._tf.width;
@@ -3855,7 +3717,6 @@
 
 		/**
 		*@copy laya.display.Text#borderColor
-		*@return
 		*/
 		__getset(0,__proto,'borderColor',function(){
 			return this._tf.borderColor
@@ -3865,7 +3726,6 @@
 
 		/**
 		*@copy laya.display.Text#stroke
-		*@return
 		*/
 		__getset(0,__proto,'stroke',function(){
 			return this._tf.stroke;
@@ -3875,7 +3735,6 @@
 
 		/**
 		*@copy laya.display.Text#asPassword
-		*@return
 		*/
 		__getset(0,__proto,'asPassword',function(){
 			return this._tf.asPassword;
@@ -3885,7 +3744,6 @@
 
 		/**
 		*@inheritDoc
-		*@return
 		*/
 		__getset(0,__proto,'measureHeight',function(){
 			return this._tf.height;
@@ -3896,7 +3754,6 @@
 		*/
 		/**
 		*@inheritDoc
-		*@return
 		*/
 		__getset(0,__proto,'width',function(){
 			if (this._width || this._tf.text)return _super.prototype._$get_width.call(this);
@@ -4037,7 +3894,6 @@
 			*}
 		*}
 	*</listing>
-	*@author yung
 	*/
 	//class laya.ui.ProgressBar extends laya.ui.Component
 	var ProgressBar=(function(_super){
@@ -4065,8 +3921,8 @@
 
 		/**@inheritDoc */
 		__proto.createChildren=function(){
-			this.addChild(this._bg=new Image2());
-			this.addChild(this._bar=new Image2());
+			this.addChild(this._bg=new Image());
+			this.addChild(this._bar=new Image());
 			this._bar["_bitmap"].autoCacheCmd=false;
 		}
 
@@ -4090,7 +3946,6 @@
 
 		/**
 		*@copy laya.ui.Image#skin
-		*@return
 		*/
 		__getset(0,__proto,'skin',function(){
 			return this._skin;
@@ -4105,7 +3960,6 @@
 
 		/**
 		*获取进度条对象。
-		*@return
 		*/
 		__getset(0,__proto,'bar',function(){
 			return this._bar;
@@ -4126,7 +3980,6 @@
 		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
 		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
 		*@see laya.ui.AutoBitmap.sizeGrid
-		*@return
 		*/
 		__getset(0,__proto,'sizeGrid',function(){
 			return this._bg.sizeGrid;
@@ -4136,7 +3989,6 @@
 
 		/**
 		*获取背景条对象。
-		*@return
 		*/
 		__getset(0,__proto,'bg',function(){
 			return this._bg;
@@ -4152,7 +4004,6 @@
 		/**
 		*当前的进度量。
 		*<p><b>取值：</b>介于0和1之间。</p>
-		*@return
 		*/
 		__getset(0,__proto,'value',function(){
 			return this._value;
@@ -4282,7 +4133,6 @@
 			*}
 		*}
 	*</listing>
-	*@author yung
 	*/
 	//class laya.ui.CheckBox extends laya.ui.Button
 	var CheckBox=(function(_super){
@@ -4327,9 +4177,7 @@
 
 	/**
 	*<code>View</code> 是一个视图类。
-	*
 	*@internal <p><code>View</code></p>
-	*@author yung
 	*/
 	//class laya.ui.View extends laya.ui.Box
 	var View=(function(_super){
@@ -4350,7 +4198,7 @@
 		/**
 		*@private
 		*装载UI视图。用于加载模式。
-		*@param path
+		*@param path UI资源地址。
 		*/
 		__proto.loadUI=function(path){
 			var uiView=View.uiMap[path];
@@ -4361,7 +4209,7 @@
 			comp=comp || View.getCompInstance(uiView);
 			var child=uiView.child;
 			if (child){
-				for (var i=0,n=child.length;i<n;i++){
+				for (var i=0,n=child.length;i < n;i++){
 					var node=child[i];
 					if (comp.hasOwnProperty("itemRender")&& node.props.name=="render"){
 						(comp).itemRender=node;
@@ -4406,7 +4254,7 @@
 		View.uiMap={};
 		View.viewClassMap={};
 		__static(View,
-		['uiClassMap',function(){return this.uiClassMap={"ViewStack":ViewStack,"LinkButton":Button,"TextArea":TextArea,"ColorPicker":ColorPicker,"Box":Box,"Button":Button,"CheckBox":CheckBox,"Clip":Clip,"ComboBox":ComboBox,"Component":Component,"HScrollBar":HScrollBar,"HSlider":HSlider,"Image":Image2,"Label":Label,"List":List,"Panel":Panel,"ProgressBar":ProgressBar,"Radio":Radio,"RadioGroup":RadioGroup,"ScrollBar":ScrollBar,"Slider":Slider,"Tab":Tab,"TextInput":TextInput,"View":View,"VScrollBar":VScrollBar,"VSlider":VSlider,"Tree":Tree,"HBox":HBox,"VBox":VBox};}
+		['uiClassMap',function(){return this.uiClassMap={"ViewStack":ViewStack,"LinkButton":Button,"TextArea":TextArea,"ColorPicker":ColorPicker,"Box":Box,"Button":Button,"CheckBox":CheckBox,"Clip":Clip,"ComboBox":ComboBox,"Component":Component,"HScrollBar":HScrollBar,"HSlider":HSlider,"Image":Image,"Label":Label,"List":List,"Panel":Panel,"ProgressBar":ProgressBar,"Radio":Radio,"RadioGroup":RadioGroup,"ScrollBar":ScrollBar,"Slider":Slider,"Tab":Tab,"TextInput":TextInput,"View":View,"VScrollBar":VScrollBar,"VSlider":VSlider,"Tree":Tree,"HBox":HBox,"VBox":VBox};}
 		]);
 		return View;
 	})(Box)
@@ -4414,7 +4262,6 @@
 
 	/**
 	*<code>Group</code> 是一个可以自动布局的项集合控件。
-	*
 	*<p> <code>Group</code> 的默认项对象为 <code>Button</code> 类实例。
 	*<code>Group</code> 是 <code>Tab</code> 和 <code>RadioGroup</code> 的基类。</p>
 	*/
@@ -4445,6 +4292,7 @@
 		__class(Group,'laya.ui.Group',_super);
 		var __proto=Group.prototype;
 		Laya.imps(__proto,{"laya.ui.IItem":true})
+		/**@inheritDoc */
 		__proto.preinitialize=function(){
 			this.mouseEnabled=true;
 		}
@@ -4490,7 +4338,6 @@
 
 		/**
 		*删除一个项对象。
-		*
 		*@param item 需要删除的项对象。
 		*@param autoLayOut 是否自动布局，如果为true，会根据 <code>direction</code> 和 <code>space</code> 属性计算item的位置。
 		*/
@@ -4539,7 +4386,7 @@
 		/**
 		*@private
 		*项对象的点击事件侦听处理函数。
-		*@param index
+		*@param index 项索引。
 		*/
 		__proto.itemClick=function(index){
 			this.selectedIndex=index;
@@ -4560,7 +4407,6 @@
 		*创建一个项显示对象。
 		*@param skin 项对象的皮肤。
 		*@param label 项对象标签。
-		*@return
 		*/
 		__proto.createItem=function(skin,label){
 			return null;
@@ -4606,7 +4452,6 @@
 
 		/**
 		*表示当前选择的项索引。默认值为-1。
-		*@return
 		*/
 		__getset(0,__proto,'selectedIndex',function(){
 			return this._selectedIndex;
@@ -4624,7 +4469,6 @@
 		*<p>描边颜色，以字符串表示。</p>
 		*默认值为 "#000000"（黑色）;
 		*@see laya.display.Text.strokeColor()
-		*@return
 		*/
 		__getset(0,__proto,'labelStrokeColor',function(){
 			return this._labelStrokeColor;
@@ -4637,7 +4481,6 @@
 
 		/**
 		*@copy laya.ui.Image#skin
-		*@return
 		*/
 		__getset(0,__proto,'skin',function(){
 			return this._skin;
@@ -4650,7 +4493,6 @@
 
 		/**
 		*标签集合字符串。以逗号做分割，如"item0,item1,item2,item3,item4,item5"。
-		*@return
 		*/
 		__getset(0,__proto,'labels',function(){
 			return this._labels;
@@ -4672,13 +4514,7 @@
 		});
 
 		/**
-		*
-		*@param value
-		*/
-		/**
-		*
 		*@copy laya.ui.Button#labelColors()
-		*@return
 		*/
 		__getset(0,__proto,'labelColors',function(){
 			return this._labelColors;
@@ -4693,7 +4529,6 @@
 		*<p>描边宽度（以像素为单位）。</p>
 		*默认值0，表示不描边。
 		*@see laya.display.Text.stroke()
-		*@return
 		*/
 		__getset(0,__proto,'labelStroke',function(){
 			return this._labelStroke;
@@ -4705,13 +4540,7 @@
 		});
 
 		/**
-		*
-		*@param value
-		*/
-		/**
 		*表示按钮文本标签的字体大小。
-		*
-		*@return
 		*/
 		__getset(0,__proto,'stateNum',function(){
 			return this._stateNum;
@@ -4725,7 +4554,6 @@
 		/**
 		*<p>表示各个状态下的描边颜色。</p>
 		*@see laya.display.Text.strokeColor()
-		*@return
 		*/
 		__getset(0,__proto,'strokeColors',function(){
 			return this._strokeColors;
@@ -4737,13 +4565,7 @@
 		});
 
 		/**
-		*
-		*@param value
-		*/
-		/**
 		*表示按钮文本标签的字体大小。
-		*
-		*@return
 		*/
 		__getset(0,__proto,'labelSize',function(){
 			return this._labelSize;
@@ -4756,7 +4578,6 @@
 
 		/**
 		*项对象们之间的间隔（以像素为单位）。
-		*@return
 		*/
 		__getset(0,__proto,'space',function(){
 			return this._space;
@@ -4766,12 +4587,7 @@
 		});
 
 		/**
-		*
-		*@param value
-		*/
-		/**
 		*表示按钮文本标签是否为粗体字。
-		*@return
 		*/
 		__getset(0,__proto,'labelBold',function(){
 			return this._labelBold;
@@ -4783,14 +4599,8 @@
 		});
 
 		/**
-		*
-		*@param value
-		*/
-		/**
 		*表示按钮文本标签的边距。
-		*
 		*<p><b>格式：</b>"上边距,右边距,下边距,左边距"。</p>
-		*@return
 		*/
 		__getset(0,__proto,'labelPadding',function(){
 			return this._labelPadding;
@@ -4802,12 +4612,7 @@
 		});
 
 		/**
-		*
-		*@param value
-		*/
-		/**
 		*获取或设置当前选择的项对象。
-		*@return
 		*/
 		__getset(0,__proto,'selection',function(){
 			return this._selectedIndex >-1 && this._selectedIndex < this._items.length ? this._items[this._selectedIndex] :null;
@@ -4816,18 +4621,12 @@
 		});
 
 		/**
-		*
-		*@param value
-		*/
-		/**
 		*布局方向。
-		*
 		*<p>默认值为"horizontal"。</p>
 		*<p><b>取值：</b>
 		*<li>"horizontal"：表示水平布局。</li>
 		*<li>"vertical"：表示垂直布局。</li>
 		*</p>
-		*@return
 		*/
 		__getset(0,__proto,'direction',function(){
 			return this._direction;
@@ -4838,7 +4637,6 @@
 
 		/**
 		*项对象们的存放数组。
-		*@return
 		*/
 		__getset(0,__proto,'items',function(){
 			return this._items;
@@ -4856,7 +4654,9 @@
 	})(Box)
 
 
-	/**布局容器*/
+	/**
+	*<code>LayoutBox</code> 是一个布局容器类。
+	*/
 	//class laya.ui.LayoutBox extends laya.ui.Box
 	var LayoutBox=(function(_super){
 		function LayoutBox(){
@@ -4867,6 +4667,7 @@
 
 		__class(LayoutBox,'laya.ui.LayoutBox',_super);
 		var __proto=LayoutBox.prototype;
+		/**@inheritDoc */
 		__proto.addChild=function(child){
 			child.on(/*laya.events.Event.RESIZE*/"resize",this,this.onResize);
 			this.callLater(this.changeItems);
@@ -4877,39 +4678,46 @@
 			this.callLater(this.changeItems);
 		}
 
+		/**@inheritDoc */
 		__proto.addChildAt=function(child,index){
 			child.on(/*laya.events.Event.RESIZE*/"resize",this,this.onResize);
 			this.callLater(this.changeItems);
 			return laya.display.Node.prototype.addChildAt.call(this,child,index);
 		}
 
+		/**@inheritDoc */
 		__proto.removeChild=function(child){
 			child.off(/*laya.events.Event.RESIZE*/"resize",this,this.onResize);
 			this.callLater(this.changeItems);
 			return laya.display.Node.prototype.removeChild.call(this,child);
 		}
 
+		/**@inheritDoc */
 		__proto.removeChildAt=function(index){
 			this.getChildAt(index).off(/*laya.events.Event.RESIZE*/"resize",this,this.onResize);
 			this.callLater(this.changeItems);
 			return laya.display.Node.prototype.removeChildAt.call(this,index);
 		}
 
-		/**刷新*/
+		/**刷新。*/
 		__proto.refresh=function(){
 			this.callLater(this.changeItems);
 		}
 
+		/**
+		*改变子对象的布局。
+		*/
 		__proto.changeItems=function(){}
 		/**
-		*排序项目.可通过重写改变默认排序规则
-		*@param items
+		*排序项目列表。可通过重写改变默认排序规则。
+		*@param items 项目列表。
 		*/
 		__proto.sortItem=function(items){
-			if(items)items.sort(function(a,b){return a.y > b.y ? 1 :-1});
+			if (items)items.sort(function(a,b){return a.y > b.y ? 1 :-1
+			});
 		}
 
-		/**子对象的间隔*/
+		/**子对象的间隔。*/
 		__getset(0,__proto,'space',function(){
 			return this._space;
 			},function(value){
@@ -4917,7 +4725,7 @@
 			this.callLater(this.changeItems);
 		});
 
-		/**子对象对齐方式*/
+		/**子对象对齐方式。*/
 		__getset(0,__proto,'align',function(){
 			return this._align;
 			},function(value){
@@ -5032,8 +4840,6 @@
 			*}
 		*}
 	*</listing>
-	*
-	*@author yung
 	*/
 	//class laya.ui.List extends laya.ui.Box
 	var List=(function(_super){
@@ -5089,12 +4895,13 @@
 		}
 
 		__proto.onMouseDown=function(){
-			_super.prototype._$set_cacheAsBitmap.call(this,false);
+			this._$P.cacheAs=_super.prototype._$get_cacheAs.call(this);
+			_super.prototype._$set_cacheAs.call(this,"none");
 			this._scrollBar && this._scrollBar.once(/*laya.events.Event.END*/"end",this,this.onScrollEnd);
 		}
 
 		__proto.onScrollEnd=function(){
-			_super.prototype._$set_cacheAsBitmap.call(this,true);
+			_super.prototype._$set_cacheAs.call(this,this._$P.cacheAs);
 		}
 
 		/**
@@ -5189,7 +4996,6 @@
 
 		/**
 		*设置可视区域大小。
-		*
 		*<p>以（0，0，width参数，height参数）组成的矩形区域为可视区域。</p>
 		*@param width 可视区域宽度。
 		*@param height 可视区域高度。
@@ -5207,7 +5013,6 @@
 		/**
 		*@private
 		*单元格的鼠标事件侦听处理函数。
-		*@param e
 		*/
 		__proto.onCellMouse=function(e){
 			if (e.type===/*laya.events.Event.MOUSE_DOWN*/"mousedown")this._isMoved=false;
@@ -5239,6 +5044,7 @@
 			}
 		}
 
+		/**@inheritDoc */
 		__proto.changeSize=function(){
 			laya.ui.Component.prototype.changeSize.call(this);
 			if (this._scrollBar)
@@ -5248,7 +5054,6 @@
 		/**
 		*@private
 		*滚动条的 <code>Event.CHANGE</code> 事件侦听处理函数。
-		*@param e
 		*/
 		__proto.onScrollBarChange=function(e){
 			this.runCallLater(this.changeCells);
@@ -5346,7 +5151,6 @@
 		/**
 		*获取单元格数据源。
 		*@param index 单元格索引。
-		*@return
 		*/
 		__proto.getItem=function(index){
 			if (index >-1 && index < this._array.length){
@@ -5371,7 +5175,7 @@
 
 		/**
 		*添加单元格数据源。
-		*@param souce
+		*@param souce 数据源。
 		*/
 		__proto.addItem=function(souce){
 			this._array.push(souce);
@@ -5390,7 +5194,7 @@
 
 		/**
 		*通过数据源索引删除单元格数据源。
-		*@param index
+		*@param index 需要删除的数据源索引值。
 		*/
 		__proto.deleteItem=function(index){
 			this._array.splice(index,1);
@@ -5426,7 +5230,7 @@
 		/**
 		*<p>缓动滚动列表，以设定的数据索引对应的单元格为当前可视列表的第一项。</p>
 		*@param index 单元格在数据列表中的索引。
-		*@param time 缓动时间
+		*@param time 缓动时间。
 		*/
 		__proto.tweenTo=function(index,time){
 			(time===void 0)&& (time=200);
@@ -5438,50 +5242,17 @@
 			}
 		}
 
-		__getset(0,__proto,'cacheAsBitmap',_super.prototype._$get_cacheAsBitmap,function(value){
-			_super.prototype._$set_cacheAsBitmap.call(this,value);
+		/**@inheritDoc */
+		__getset(0,__proto,'cacheAs',_super.prototype._$get_cacheAs,function(value){
+			_super.prototype._$set_cacheAs.call(this,value);
 			if (this._scrollBar){
-				if (value)this.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onMouseDown);
+				if (value!=="none")this.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onMouseDown);
 				else this.off(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onMouseDown);
 			}
 		});
 
 		/**
-		*获取对 <code>List</code> 组件所包含的滚动条 <code>ScrollBar</code> 组件的引用。
-		*@return
-		*/
-		__getset(0,__proto,'scrollBar',function(){
-			return this._scrollBar;
-			},function(value){
-			if (this._scrollBar !=value){
-				this._scrollBar=value;
-				if (value){
-					this.addChild(this._scrollBar);
-					this._scrollBar.on(/*laya.events.Event.CHANGE*/"change",this,this.onScrollBarChange);
-					this._isVertical=this._scrollBar.isVertical;
-				}
-			}
-		});
-
-		/**
-		*单元格渲染器。
-		*<p><b>取值：</b>
-		*<ol>
-		*<li>单元格类对象。</li>
-		*<li> UI 的 JSON 描述。</li>
-		*</ol></p>
-		*@return
-		*/
-		__getset(0,__proto,'itemRender',function(){
-			return this._itemRender;
-			},function(value){
-			this._itemRender=value;
-			this.callLater(this.changeCells);
-		});
-
-		/**
 		*获取对 <code>List</code> 组件所包含的内容容器 <code>Box</code> 组件的引用。
-		*@return
 		*/
 		__getset(0,__proto,'content',function(){
 			return this._content;
@@ -5489,7 +5260,6 @@
 
 		/**
 		*水平方向滚动条皮肤。
-		*@return
 		*/
 		__getset(0,__proto,'hScrollBarSkin',function(){
 			return this._scrollBar ? this._scrollBar.skin :null;
@@ -5512,7 +5282,6 @@
 
 		/**
 		*垂直方向滚动条皮肤。
-		*@return
 		*/
 		__getset(0,__proto,'vScrollBarSkin',function(){
 			return this._scrollBar ? this._scrollBar.skin :null;
@@ -5528,8 +5297,38 @@
 		});
 
 		/**
+		*单元格渲染器。
+		*<p><b>取值：</b>
+		*<ol>
+		*<li>单元格类对象。</li>
+		*<li> UI 的 JSON 描述。</li>
+		*</ol></p>
+		*/
+		__getset(0,__proto,'itemRender',function(){
+			return this._itemRender;
+			},function(value){
+			this._itemRender=value;
+			this.callLater(this.changeCells);
+		});
+
+		/**
+		*获取对 <code>List</code> 组件所包含的滚动条 <code>ScrollBar</code> 组件的引用。
+		*/
+		__getset(0,__proto,'scrollBar',function(){
+			return this._scrollBar;
+			},function(value){
+			if (this._scrollBar !=value){
+				this._scrollBar=value;
+				if (value){
+					this.addChild(this._scrollBar);
+					this._scrollBar.on(/*laya.events.Event.CHANGE*/"change",this,this.onScrollBarChange);
+					this._isVertical=this._scrollBar.isVertical;
+				}
+			}
+		});
+
+		/**
 		*表示当前选择的项索引。
-		*@return
 		*/
 		__getset(0,__proto,'selectedIndex',function(){
 			return this._selectedIndex;
@@ -5556,7 +5355,6 @@
 
 		/**
 		*水平方向显示的单元格数量。
-		*@return
 		*/
 		__getset(0,__proto,'repeatX',function(){
 			return this._repeatX > 0 ? this._repeatX :this._repeatX2 > 0 ? this._repeatX2 :1;
@@ -5567,7 +5365,6 @@
 
 		/**
 		*垂直方向显示的单元格数量。
-		*@return
 		*/
 		__getset(0,__proto,'repeatY',function(){
 			return this._repeatY > 0 ? this._repeatY :this._repeatY2 > 0 ? this._repeatY2 :1;
@@ -5578,7 +5375,6 @@
 
 		/**
 		*水平方向显示的单元格之间的间距（以像素为单位）。
-		*@return
 		*/
 		__getset(0,__proto,'spaceX',function(){
 			return this._spaceX;
@@ -5589,7 +5385,6 @@
 
 		/**
 		*列表数据源。
-		*@return
 		*/
 		__getset(0,__proto,'array',function(){
 			return this._array;
@@ -5625,7 +5420,6 @@
 
 		/**
 		*垂直方向显示的单元格之间的间距（以像素为单位）。
-		*@return
 		*/
 		__getset(0,__proto,'spaceY',function(){
 			return this._spaceY;
@@ -5636,7 +5430,6 @@
 
 		/**
 		*当前选中的单元格数据源。
-		*@return
 		*/
 		__getset(0,__proto,'selectedItem',function(){
 			return this._selectedIndex !=-1 ? this._array[this._selectedIndex] :null;
@@ -5646,7 +5439,6 @@
 
 		/**
 		*获取或设置当前选择的单元格对象。
-		*@return
 		*/
 		__getset(0,__proto,'selection',function(){
 			return this.getCell(this._selectedIndex);
@@ -5656,7 +5448,6 @@
 
 		/**
 		*当前显示的单元格列表的开始索引。
-		*@return
 		*/
 		__getset(0,__proto,'startIndex',function(){
 			return this._startIndex;
@@ -5667,7 +5458,6 @@
 
 		/**
 		*列表的当前页码。
-		*@return
 		*/
 		__getset(0,__proto,'page',function(){
 			return this._page;
@@ -5682,7 +5472,6 @@
 
 		/**
 		*列表的数据总个数。
-		*@return
 		*/
 		__getset(0,__proto,'length',function(){
 			return this._array.length;
@@ -5698,7 +5487,6 @@
 
 		/**
 		*单元格集合。
-		*@return
 		*/
 		__getset(0,__proto,'cells',function(){
 			this.runCallLater(this.changeCells);
@@ -5711,11 +5499,6 @@
 
 	/**
 	*<code>Panel</code> 是一个面板容器类。
-	*
-	*
-	*
-	*@author yung
-	*
 	*/
 	//class laya.ui.Panel extends laya.ui.Box
 	var Panel=(function(_super){
@@ -5742,6 +5525,7 @@
 			this._content=null;
 		}
 
+		/**@inheritDoc */
 		__proto.destroyChildren=function(){
 			this._content.destroyChildren();
 		}
@@ -5761,7 +5545,6 @@
 		/**
 		*@private
 		*子对象的 <code>Event.RESIZE</code> 事件侦听处理函数。
-		*@param e
 		*/
 		__proto.onResize=function(e){
 			this.callLater(this.changeScroll);
@@ -5824,7 +5607,6 @@
 			var hShow=hscroll && contentW > this._width;
 			var showWidth=vShow ? this._width-vscroll.width :this._width;
 			var showHeight=hShow ? this._height-hscroll.height :this._height;
-			this.setContentSize(this._width,this._height);
 			if (vscroll){
 				vscroll.x=this._width-vscroll.width;
 				vscroll.y=0;
@@ -5841,6 +5623,12 @@
 				hscroll.thumbPercent=showWidth / contentW;
 				hscroll.setScroll(0,contentW-showWidth,hscroll.value);
 			}
+		}
+
+		/**@inheritDoc */
+		__proto.changeSize=function(){
+			laya.ui.Component.prototype.changeSize.call(this);
+			this.setContentSize(this._width,this._height);
 		}
 
 		/**
@@ -5861,7 +5649,7 @@
 		*@private
 		*滚动条的<code><code>Event.MOUSE_DOWN</code>事件侦听处理函数。</code>事件侦听处理函数。
 		*@param scrollBar 滚动条对象。
-		*@param e
+		*@param e Event 对象。
 		*/
 		__proto.onScrollBarChange=function(scrollBar,e){
 			var rect=this._content.scrollRect;
@@ -5891,13 +5679,14 @@
 		}
 
 		__proto.onMouseDown=function(){
-			_super.prototype._$set_cacheAsBitmap.call(this,false);
+			this._$P.cacheAs=_super.prototype._$get_cacheAs.call(this);
+			_super.prototype._$set_cacheAs.call(this,"none");
 			this._hScrollBar && this._hScrollBar.once(/*laya.events.Event.END*/"end",this,this.onScrollEnd);
 			this._vScrollBar && this._vScrollBar.once(/*laya.events.Event.END*/"end",this,this.onScrollEnd);
 		}
 
 		__proto.onScrollEnd=function(){
-			_super.prototype._$set_cacheAsBitmap.call(this,true);
+			_super.prototype._$set_cacheAs.call(this,this._$P.cacheAs);
 		}
 
 		/**@inheritDoc */
@@ -5908,7 +5697,6 @@
 		/**
 		*@private
 		*获取内容宽度（以像素为单位）。
-		*@return
 		*/
 		__getset(0,__proto,'contentWidth',function(){
 			var max=0;
@@ -5922,7 +5710,6 @@
 		/**
 		*@private
 		*获取内容高度（以像素为单位）。
-		*@return
 		*/
 		__getset(0,__proto,'contentHeight',function(){
 			var max=0;
@@ -5935,7 +5722,6 @@
 
 		/**
 		*垂直方向滚动条对象。
-		*@return
 		*/
 		__getset(0,__proto,'vScrollBar',function(){
 			return this._vScrollBar;
@@ -5943,7 +5729,6 @@
 
 		/**
 		*@inheritDoc
-		*@param value
 		*/
 		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
 			_super.prototype._$set_width.call(this,value);
@@ -5952,7 +5737,6 @@
 
 		/**
 		*水平方向滚动条皮肤。
-		*@return
 		*/
 		__getset(0,__proto,'hScrollBarSkin',function(){
 			return this._hScrollBar ? this._hScrollBar.skin :null;
@@ -5974,7 +5758,6 @@
 
 		/**
 		*垂直方向滚动条皮肤。
-		*@return
 		*/
 		__getset(0,__proto,'vScrollBarSkin',function(){
 			return this._vScrollBar ? this._vScrollBar.skin :null;
@@ -5990,7 +5773,6 @@
 
 		/**
 		*水平方向滚动条对象。
-		*@return
 		*/
 		__getset(0,__proto,'hScrollBar',function(){
 			return this._hScrollBar;
@@ -5998,15 +5780,15 @@
 
 		/**
 		*获取内容容器对象。
-		*@return
 		*/
 		__getset(0,__proto,'content',function(){
 			return this._content;
 		});
 
-		__getset(0,__proto,'cacheAsBitmap',_super.prototype._$get_cacheAsBitmap,function(value){
-			_super.prototype._$set_cacheAsBitmap.call(this,value);
-			if (value)this.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onMouseDown);
+		/**@inheritDoc */
+		__getset(0,__proto,'cacheAs',_super.prototype._$get_cacheAs,function(value){
+			_super.prototype._$set_cacheAs.call(this,value);
+			if (value!=="none")this.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onMouseDown);
 			else this.off(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onMouseDown);
 		});
 
@@ -6016,8 +5798,6 @@
 
 	/**
 	*使用 <code>HScrollBar</code> （水平 <code>ScrollBar</code> ）控件，可以在因数据太多而不能在显示区域完全显示时控制显示的数据部分。
-	*
-	*
 	*@example 以下示例代码，创建了一个 <code>HScrollBar</code> 实例。
 	*<listing version="3.0">
 	*package
@@ -6099,7 +5879,6 @@
 			*}
 		*}
 	*</listing>
-	*@author yung
 	*/
 	//class laya.ui.HScrollBar extends laya.ui.ScrollBar
 	var HScrollBar=(function(_super){
@@ -6121,10 +5900,7 @@
 	/**
 	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
 	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
-	*
-	*
 	*@see laya.ui.RadioGroup
-	*@author yung
 	*/
 	//class laya.ui.Radio extends laya.ui.Button
 	var Radio=(function(_super){
@@ -6169,9 +5945,6 @@
 
 		/**
 		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
-		*
-		*@internal ##?
-		*@return
 		*/
 		__getset(0,__proto,'value',function(){
 			return this._value !=null ? this._value :this.label;
@@ -6185,7 +5958,6 @@
 
 	/**
 	*使用 <code>HSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*
 	*<p> <code>HSlider</code> 控件采用水平方向。滑块轨道从左向右扩展，而标签位于轨道的顶部或底部。</p>
 	*
 	*@example 以下示例代码，创建了一个 <code>HSlider</code> 实例。
@@ -6285,7 +6057,6 @@
 	*</listing>
 	*
 	*@see laya.ui.Slider
-	*@author yung
 	*/
 	//class laya.ui.HSlider extends laya.ui.Slider
 	var HSlider=(function(_super){
@@ -6516,7 +6287,6 @@
 			*}
 		*}
 	*</listing>
-	*@author yung
 	*/
 	//class laya.ui.Tree extends laya.ui.Box
 	var Tree=(function(_super){
@@ -6563,7 +6333,6 @@
 		/**
 		*@private
 		*获取数据源集合。
-		*@return
 		*/
 		__proto.getArray=function(){
 			var arr=[];
@@ -6581,10 +6350,6 @@
 		/**
 		*@private
 		*获取项对象的深度。
-		*
-		*@param item 项对象。
-		*@param num
-		*@return
 		*/
 		__proto.getDepth=function(item,num){
 			(num===void 0)&& (num=0);
@@ -6595,8 +6360,6 @@
 		/**
 		*@private
 		*获取项对象的上一级的打开状态。
-		*@param item
-		*@return
 		*/
 		__proto.getParentOpenStatus=function(item){
 			var parent=item.nodeParent;
@@ -6657,9 +6420,9 @@
 		}
 
 		/**
-		*通过数据项索引，设置项对象的打开状态。
-		*@param index
-		*@param isOpen
+		*设置指定项索引的项对象的打开状态。
+		*@param index 项索引。
+		*@param isOpen 是否处于打开状态。
 		*/
 		__proto.setItemState=function(index,isOpen){
 			if (!this._list.array[index])return;
@@ -6667,6 +6430,9 @@
 			this._list.array=this.getArray();
 		}
 
+		/**
+		*刷新项列表。
+		*/
 		__proto.fresh=function(){
 			this._list.array=this.getArray();
 			this.repaint();
@@ -6674,12 +6440,7 @@
 
 		/**
 		*@private
-		*
 		*解析并处理XML类型的数据源。
-		*@param xml
-		*@param source
-		*@param nodeParent
-		*@param isRoot
 		*/
 		__proto.parseXml=function(xml,source,nodeParent,isRoot){
 			var obj;
@@ -6709,8 +6470,6 @@
 		/**
 		*@private
 		*处理数据项的打开状态。
-		*@param oldSource
-		*@param newSource
 		*/
 		__proto.parseOpenStatus=function(oldSource,newSource){
 			for (var i=0,n=newSource.length;i < n;i++){
@@ -6732,7 +6491,7 @@
 		*判断两个项对象在树结构中的父节点是否相同。
 		*@param item1 项对象。
 		*@param item2 项对象。
-		*@return
+		*@return 如果父节点相同值为true，否则值为false。
 		*/
 		__proto.isSameParent=function(item1,item2){
 			if (item1.nodeParent==null && item2.nodeParent==null)return true;
@@ -6744,8 +6503,8 @@
 		}
 
 		/**
-		*@internal ##??
-		*@param key
+		*更新项列表，显示指定键名的数据项。
+		*@param key 键名。
 		*/
 		__proto.filter=function(key){
 			if (Boolean(key)){
@@ -6759,10 +6518,7 @@
 
 		/**
 		*@private
-		*
-		*@param array
-		*@param result
-		*@param key
+		*获取数据源中指定键名的值。
 		*/
 		__proto.getFilterSource=function(array,result,key){
 			key=key.toLocaleLowerCase();
@@ -6781,12 +6537,10 @@
 
 		/**
 		*数据源发生变化后，是否保持之前打开状态，默认为true。
-		*
 		*<p><b>取值：</b>
 		*<li>true：保持之前打开状态。</li>
 		*<li>false：不保持之前打开状态。</li>
 		*</p>
-		*@return
 		*/
 		__getset(0,__proto,'keepStatus',function(){
 			return this._keepStatus;
@@ -6796,7 +6550,6 @@
 
 		/**
 		*此对象包含的<code>List</code>实例对象。
-		*@return
 		*/
 		__getset(0,__proto,'list',function(){
 			return this._list;
@@ -6804,7 +6557,6 @@
 
 		/**
 		*滚动条皮肤。
-		*@return
 		*/
 		__getset(0,__proto,'scrollBarSkin',function(){
 			return this._list.vScrollBarSkin;
@@ -6814,7 +6566,6 @@
 
 		/**
 		*列表数据源，只包含当前可视节点数据。
-		*@return
 		*/
 		__getset(0,__proto,'array',function(){
 			return this._list.array;
@@ -6828,7 +6579,6 @@
 
 		/**
 		*当前选中的项对象的数据源。
-		*@return
 		*/
 		__getset(0,__proto,'selectedItem',function(){
 			return this._list.selectedItem;
@@ -6838,7 +6588,6 @@
 
 		/**
 		*数据源，全部节点数据。
-		*@return
 		*/
 		__getset(0,__proto,'source',function(){
 			return this._source;
@@ -6846,14 +6595,11 @@
 
 		/**
 		*此对象包含的<code>List</code>实例的单元格渲染器。
-		*
 		*<p><b>取值：</b>
 		*<ol>
 		*<li>单元格类对象。</li>
 		*<li> UI 的 JSON 描述。</li>
 		*</ol></p>
-		*
-		*@return
 		*/
 		__getset(0,__proto,'itemRender',function(){
 			return this._list.itemRender;
@@ -6869,7 +6615,6 @@
 		/**
 		*单元格鼠标事件处理器。
 		*<p>默认返回参数（e:Event,index:int）。</p>
-		*@return
 		*/
 		__getset(0,__proto,'mouseHandler',function(){
 			return this._list.mouseHandler;
@@ -6879,7 +6624,6 @@
 
 		/**
 		*<code>Tree</code> 实例的渲染处理器。
-		*@return
 		*/
 		__getset(0,__proto,'renderHandler',function(){
 			return this._renderHandler;
@@ -6889,7 +6633,6 @@
 
 		/**
 		*左侧缩进距离（以像素为单位）。
-		*@return
 		*/
 		__getset(0,__proto,'spaceLeft',function(){
 			return this._spaceLeft;
@@ -6899,7 +6642,6 @@
 
 		/**
 		*每一项之间的间隔距离（以像素为单位）。
-		*@return
 		*/
 		__getset(0,__proto,'spaceBottom',function(){
 			return this._list.spaceY;
@@ -6909,7 +6651,6 @@
 
 		/**
 		*表示当前选择的项索引。
-		*@return
 		*/
 		__getset(0,__proto,'selectedIndex',function(){
 			return this._list.selectedIndex;
@@ -6919,7 +6660,6 @@
 
 		/**
 		*@inheritDoc
-		*@param value
 		*/
 		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
 			_super.prototype._$set_width.call(this,value);
@@ -6941,7 +6681,6 @@
 
 		/**
 		*xml结构的数据源。
-		*@param value
 		*/
 		__getset(0,__proto,'xml',null,function(value){
 			var arr=[];
@@ -6951,7 +6690,6 @@
 
 		/**
 		*表示选择的树节点项的<code>path</code>属性值。
-		*@return
 		*/
 		__getset(0,__proto,'selectedPath',function(){
 			if (this._list.selectedItem){
@@ -6966,7 +6704,6 @@
 
 	/**
 	*<code>ViewStack</code> 类用于视图堆栈类，用于视图的显示等设置处理。
-	*@author yung
 	*/
 	//class laya.ui.ViewStack extends laya.ui.Box
 	var ViewStack=(function(_super){
@@ -7000,7 +6737,6 @@
 
 		/**
 		*添加视图。
-		*
 		*@internal 添加视图对象，并设置此视图对象的<code>name</code> 属性。
 		*@param view 需要添加的视图对象。
 		*/
@@ -7040,7 +6776,7 @@
 		/**
 		*@private
 		*设置属性<code>selectedIndex</code>的值。
-		*@param index
+		*@param index 选中项索引值。
 		*/
 		__proto.setIndex=function(index){
 			this.selectedIndex=index;
@@ -7048,7 +6784,6 @@
 
 		/**
 		*表示当前视图索引。
-		*@return
 		*/
 		__getset(0,__proto,'selectedIndex',function(){
 			return this._selectedIndex;
@@ -7062,7 +6797,6 @@
 
 		/**
 		*获取或设置当前选择的项对象。
-		*@return
 		*/
 		__getset(0,__proto,'selection',function(){
 			return this._selectedIndex >-1 && this._selectedIndex < this._items.length ? this._items[this._selectedIndex] :null;
@@ -7073,7 +6807,6 @@
 		/**
 		*索引设置处理器。
 		*<p>默认回调参数：index:int</p>
-		*@return
 		*/
 		__getset(0,__proto,'setIndexHandler',function(){
 			return this._setIndexHandler;
@@ -7083,7 +6816,6 @@
 
 		/**
 		*视图集合数组。
-		*@return
 		*/
 		__getset(0,__proto,'items',function(){
 			return this._items;
@@ -7192,7 +6924,6 @@
 		*
 		*}
 	*</listing>
-	*@author yung
 	*/
 	//class laya.ui.VScrollBar extends laya.ui.ScrollBar
 	var VScrollBar=(function(_super){
@@ -7293,7 +7024,6 @@
 		*
 		*}
 	*</listing>
-	*@author yung
 	*/
 	//class laya.ui.TextInput extends laya.ui.Label
 	var TextInput=(function(_super){
@@ -7308,6 +7038,7 @@
 
 		__class(TextInput,'laya.ui.TextInput',_super);
 		var __proto=TextInput.prototype;
+		/**@inheritDoc */
 		__proto.preinitialize=function(){
 			this.mouseEnabled=true;
 		}
@@ -7364,14 +7095,13 @@
 			this.height=22;
 		}
 
-		/**选中输入框内的文本*/
+		/**选中输入框内的文本。*/
 		__proto.select=function(){
 			(this._tf).select();
 		}
 
 		/**
 		*表示此对象包含的文本背景 <code>AutoBitmap</code> 组件实例。
-		*@return
 		*/
 		__getset(0,__proto,'bg',function(){
 			return this._bg;
@@ -7405,7 +7135,6 @@
 
 		/**
 		*@copy laya.ui.Image#skin
-		*@return
 		*/
 		__getset(0,__proto,'skin',function(){
 			return this._skin;
@@ -7424,7 +7153,6 @@
 		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
 		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
 		*@see laya.ui.AutoBitmap.sizeGrid
-		*@return
 		*/
 		__getset(0,__proto,'sizeGrid',function(){
 			return this._bg && this._bg.sizeGrid ? this._bg.sizeGrid.join(","):null;
@@ -7433,7 +7161,9 @@
 			this._bg.sizeGrid=UIUtils.fillArray(Styles.defaultSizeGrid,value,Number);
 		});
 
-		/**移动平台输入期间的标题*/
+		/**
+		*@copy laya.display.Input#title
+		*/
 		__getset(0,__proto,'title',function(){
 			return (this._tf).title;
 			},function(value){
@@ -7458,7 +7188,6 @@
 		/**
 		*<p>指示当前是否是文本域。</p>
 		*值为true表示当前是文本域，否则不是文本域。
-		*@return
 		*/
 		__getset(0,__proto,'multiline',function(){
 			return (this._tf).multiline;
@@ -7466,11 +7195,20 @@
 			(this._tf).multiline=value;
 		});
 
-		/**限制输入的字符*/
+		/**限制输入的字符。*/
 		__getset(0,__proto,'restrict',function(){
 			return (this._tf).restrict;
 			},function(pattern){
 			(this._tf).restrict=pattern;
+		});
+
+		/**
+		*@copy laya.display.Input#clearOnFocus
+		*/
+		__getset(0,__proto,'clearOnFocus',function(){
+			return (this._tf).clearOnFocus;
+			},function(value){
+			(this._tf).clearOnFocus=value;
 		});
 
 		/**
@@ -7488,7 +7226,6 @@
 
 	/**
 	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*
 	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
 	*
 	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
@@ -7586,7 +7323,6 @@
 		*}
 	*</listing>
 	*@see laya.ui.Slider
-	*@author yung
 	*/
 	//class laya.ui.VSlider extends laya.ui.Slider
 	var VSlider=(function(_super){
@@ -7743,7 +7479,6 @@
 			*}
 		*}
 	*</listing>
-	*@author yung
 	*/
 	//class laya.ui.Dialog extends laya.ui.View
 	var Dialog=(function(_super){
@@ -7873,7 +7608,6 @@
 		Dialog.__init$=function(){
 			/**
 			*<code>DialogManager</code> 类用来管理对话框。
-			*@author yung
 			*/
 			//class DialogManager extends laya.display.Sprite
 			DialogManager=(function(_super){
@@ -7989,19 +7723,27 @@
 	})(View)
 
 
-	/**HBox容器*/
+	/**
+	*<code>VBox</code> 是一个垂直布局容器类。
+	*/
 	//class laya.ui.HBox extends laya.ui.LayoutBox
 	var HBox=(function(_super){
+		/**
+		*创建一个新的 <code>HBox</code> 类实例。
+		*/
 		function HBox(){
 			HBox.__super.call(this);
 		}
 
 		__class(HBox,'laya.ui.HBox',_super);
 		var __proto=HBox.prototype;
+		/**@inheritDoc */
 		__proto.sortItem=function(items){
-			if(items)items.sort(function(a,b){return a.x > b.x ? 1 :-1});
+			if (items)items.sort(function(a,b){return a.x > b.x ? 1 :-1
+			});
 		}
 
+		/**@inheritDoc */
 		__proto.changeItems=function(){
 			var items=[];
 			var maxHeight=0;
@@ -8125,7 +7867,6 @@
 		*
 		*}
 	*</listing>
-	*@author yung
 	*/
 	//class laya.ui.RadioGroup extends laya.ui.Group
 	var RadioGroup=(function(_super){
@@ -8144,8 +7885,7 @@
 
 
 	/**
-	*<code>Tab</code> 组件用来定义选项卡按钮组。
-	*
+	*<code>Tab</code> 组件用来定义选项卡按钮组。 *
 	*@internal <p>属性：<code>selectedIndex</code> 的默认值为-1。</p>
 	*
 	*@example 以下示例代码，创建了一个 <code>Tab</code> 实例。
@@ -8227,7 +7967,6 @@
 			*}
 		*}
 	*</listing>
-	*@author yung
 	*/
 	//class laya.ui.Tab extends laya.ui.Group
 	var Tab=(function(_super){
@@ -8248,15 +7987,21 @@
 	})(Group)
 
 
-	/**VBox容器*/
+	/**
+	*<code>VBox</code> 是一个垂直布局容器类。
+	*/
 	//class laya.ui.VBox extends laya.ui.LayoutBox
 	var VBox=(function(_super){
+		/**
+		*创建一个新的 <code>VBox</code> 类实例。
+		*/
 		function VBox(){
 			VBox.__super.call(this);
 		}
 
 		__class(VBox,'laya.ui.VBox',_super);
 		var __proto=VBox.prototype;
+		/**@inheritDoc */
 		__proto.changeItems=function(){
 			var items=[];
 			var maxWidth=0;
@@ -8295,8 +8040,6 @@
 
 	/**
 	*<code>TextArea</code> 类用于创建显示对象以显示和输入文本。
-	*
-	*
 	*@example 以下示例代码，创建了一个 <code>TextArea</code> 实例。
 	*<listing version="3.0">
 	*package
@@ -8381,7 +8124,6 @@
 			*}
 		*}
 	*</listing>
-	*@author yung
 	*/
 	//class laya.ui.TextArea extends laya.ui.TextInput
 	var TextArea=(function(_super){

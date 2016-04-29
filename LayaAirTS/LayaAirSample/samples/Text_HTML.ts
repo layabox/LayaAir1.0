@@ -9,12 +9,8 @@ module laya {
 		constructor() {
 			Laya.init(550, 400, WebGL);
 
-			Laya.loader.load("res/html/test.html", Handler.create(this, this.onAssetLoaded));
-		}
-
-		private onAssetLoaded(): void {
-			this.createParagraph();
-			this.showExternalHTML();
+			this.createParagraph(); // 代码创建
+			this.showExternalHTML(); // 使用外部定义的html
 		}
 
 		private createParagraph(): void {

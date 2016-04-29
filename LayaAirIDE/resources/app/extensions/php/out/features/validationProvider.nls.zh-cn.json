@@ -1,0 +1,4 @@
+[
+	"无法验证 php 文件。找不到 php 程序。请使用 \"php.validate.executablePath\" 设置来配置 \"php\" 的位置",
+	"使用路径运行 php 失败: {0}。原因未知。"
+]

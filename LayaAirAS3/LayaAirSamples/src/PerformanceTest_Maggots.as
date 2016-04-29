@@ -12,7 +12,7 @@ package
 		private var texturePath:String = "res/tinyMaggot.png";
 		
 		private var padding:int = 100;
-		private var maggotAmount:int = 17000;
+		private var maggotAmount:int = 5000;
 
 		private var tick:Number = 0;		
 		private var maggots:Array = [];

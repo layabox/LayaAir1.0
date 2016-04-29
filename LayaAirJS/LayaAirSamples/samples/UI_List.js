@@ -6,7 +6,7 @@
 		this.img = null;
 		Item.__super.call(this);
 		this.size(373, 85);
-		this.img = new laya.ui.Image();
+		this.img = new Laya.Image();
 		this.addChild(this.img);
 
 		this.setImg = function(src)
@@ -15,14 +15,14 @@
 		}
 	}
 	Laya.class(Item, "Item", _super)
-})(laya.ui.Box);
+})(Laya.Box);
 var myConsole;
 var sampleDemoArea;
 
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 	
-var list = new laya.ui.List();
+var list = new Laya.List();
 
 list.itemRender = Item;
 list.pos(90, 30);
@@ -34,9 +34,9 @@ list.repeatY = 4;
 list.vScrollBarSkin = "";
 
 list.selectEnable = true;
-list.selectHandler = new laya.utils.Handler(this, onSelect);
+list.selectHandler = new Laya.Handler(this, onSelect);
 
-list.renderHandler = new laya.utils.Handler(this, updateItem);
+list.renderHandler = new Laya.Handler(this, updateItem);
 Laya.stage.addChild(list);
 
 // 设置数据项为对应图片的路径

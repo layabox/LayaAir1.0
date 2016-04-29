@@ -1,0 +1,7 @@
+[
+	"Le chemin {0} ne pointe pas vers une installation valide de tsserver. Les fonctionnalités du langage TypeScript vont être désactivées.",
+	"Impossible de démarrer le serveur de langage TypeScript. Message d'erreur : {0}",
+	"personnalisé",
+	"Le service de langage TypeScript s'est subitement arrêté 5 fois au cours des 5 dernières minutes. Pensez à ouvrir un rapport de bogues.",
+	"Le service de langage TypeScript s'est subitement arrêté 5 fois juste après le démarrage et ne sera pas redémarré. Ouvrez un rapport de bogues."
+]

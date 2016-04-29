@@ -1,12 +1,13 @@
-var Sprite = laya.display.Sprite;
-var Event = laya.events.Event;
-var Keyboard = laya.events.Keyboard;
-var TimeLine = laya.utils.TimeLine;
+var Sprite = Laya.Sprite;
+var Event = Laya.Event;
+var Keyboard = Laya.Keyboard;
+var TimeLine = Laya.TimeLine;
 
 var target;
 var timeLine = new TimeLine();
 
 Laya.init(550, 400);
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 setup();
 
 function setup()
@@ -44,6 +45,7 @@ function keyDown(e)
 
 function createTimerLine()
 {
+	//第一事件如果起始时间为0就不会抛出。
 	timeLine.add("turnRight", 0);
 	timeLine.to(target,
 	{
@@ -81,6 +83,19 @@ function createTimerLine()
 	}, 2000);
 
 	timeLine.play(0, true);
+
+	timeLine.on(Event.COMPLETE, this, this.onComplete);
+	timeLine.on(Event.LABEL, this, this.onLabel);
+}
+
+function onComplete()
+{
+	console.log("timeLine complete!!!!");
+}
+
+function onLabel(label)
+{
+	console.log("LabelName:" + label);
 }
 
 function createApe()

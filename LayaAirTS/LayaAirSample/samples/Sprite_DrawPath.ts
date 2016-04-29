@@ -12,20 +12,19 @@ module sprites
             Laya.stage.addChild(canvas);
 
             var path:Array<any> = [];
-            path.push(["moveTo", 0, -130]);
-            path.push(["lineTo", 33, -33 ]);
-            path.push(["lineTo", 137, -30]);
-            path.push(["lineTo", 55, 32]);
-            path.push(["lineTo", 85, 130]);
-            path.push(["lineTo", 0, 73]);
-            path.push(["lineTo", -85, 130]);
-            path.push(["lineTo", -55, 32]);
-            path.push(["lineTo", -137, -30]);
-            path.push(["lineTo", -33, -33 ]);
-            path.push(["lineTo", 0, -130]);
-            path.push(["closePath"]);
+            
+            path.push(0, -130);
+            path.push(33, -33);
+            path.push(137, -30);
+            path.push(55, 32);
+            path.push(85, 130);
+            path.push(0, 73);
+            path.push(-85, 130);
+            path.push(-55, 32);
+            path.push(-137, -30);
+            path.push(-33, -33);
 
-            canvas.graphics.drawPath(275, 200, path, {fillStyle: "#00ffff"});
+            canvas.graphics.drawPoly(275, 200, path, "#00ffff");
         }
     }
 }

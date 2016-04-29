@@ -1,0 +1,6 @@
+[
+	"Archivos con extensión",
+	"Asigna todos los archivos cuyo nombre coincide con el patrón global al lenguaje con el identificador especificado.",
+	"Archivos con ruta de acceso",
+	"Asigna todos los archivos cuya ruta de acceso al lenguaje con el identificador especificado coincide con el patrón global de ruta de acceso absoluta."
+]

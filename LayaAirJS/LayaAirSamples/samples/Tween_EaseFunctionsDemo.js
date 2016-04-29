@@ -7,7 +7,7 @@
 
 		this.size(100, 20);
 		
-		label = new laya.ui.Label();
+		label = new Laya.Label();
 		label.fontSize = 12;
 		label.color = "#FFFFFF";
 		this.addChild(label);
@@ -19,7 +19,7 @@
 	}
 
 	Laya.class(ListItemRender, "ListItemRender", _super);
-})(laya.ui.Box);
+})(Laya.Box);
 
 
 var character;
@@ -27,7 +27,7 @@ var duration = 2000;
 var tween;
 	
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 Laya.stage.bgColor = "#3D3D3D";
 
 createCharacter();
@@ -36,7 +36,7 @@ createDurationCrontroller();
 
 function createCharacter()
 {
-	character = new laya.display.Sprite();
+	character = new Laya.Sprite();
 	character.loadImage("res/cartoonCharacters/1.png");
 	character.pos(100, 50);
 	Laya.stage.addChild(character);
@@ -44,7 +44,7 @@ function createCharacter()
 	
 function createEaseFunctionList()
 {
-	var easeFunctionsList = new laya.ui.List();
+	var easeFunctionsList = new Laya.List();
 	
 	easeFunctionsList.itemRender = ListItemRender;
 	easeFunctionsList.pos(5,5);
@@ -55,8 +55,8 @@ function createEaseFunctionList()
 	easeFunctionsList.vScrollBarSkin = '';
 
 	easeFunctionsList.selectEnable = true;
-	easeFunctionsList.selectHandler = new laya.utils.Handler(this, onEaseFunctionChange, [easeFunctionsList]);
-	easeFunctionsList.renderHandler = new laya.utils.Handler(this, renderList);
+	easeFunctionsList.selectHandler = new Laya.Handler(this, onEaseFunctionChange, [easeFunctionsList]);
+	easeFunctionsList.renderHandler = new Laya.Handler(this, renderList);
 	Laya.stage.addChild(easeFunctionsList);
 
 	var data = [];
@@ -87,13 +87,13 @@ function onEaseFunctionChange(list)
 	character.pos(100, 50);
 	
 	tween && tween.clear();
-	tween = laya.utils.Tween.to(character, { x : 350, y:250 }, duration, laya.utils.Ease[list.selectedItem]);
+	tween = Laya.Tween.to(character, { x : 350, y:250 }, duration, Laya.Ease[list.selectedItem]);
 }
 
 function createDurationCrontroller()
 {
 	var durationInput = createInputWidthLabel("Duration:", '2000', 400, 10);
-	durationInput.on(laya.events.Event.INPUT, this, function()
+	durationInput.on(Laya.Event.INPUT, this, function()
 	{
 		duration = parseInt(durationInput.text);
 	});
@@ -101,13 +101,13 @@ function createDurationCrontroller()
 
 function createInputWidthLabel(label, prompt, x, y)
 {
-	var text = new laya.display.Text();
+	var text = new Laya.Text();
 	text.text = label;
 	text.color = "white";
 	Laya.stage.addChild(text);
 	text.pos(x, y);
 	
-	var input = new laya.display.Input();
+	var input = new Laya.Input();
 	input.size(50,20);
 	input.text = prompt;
 	Laya.stage.addChild(input);

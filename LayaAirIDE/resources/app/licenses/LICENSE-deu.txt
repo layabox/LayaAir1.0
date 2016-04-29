@@ -1,0 +1,58 @@
+
+MICROSOFT-SOFTWARE-LIZENZBESTIMMUNGEN
+
+MICROSOFT VISUAL STUDIO CODE 
+
+Diese Lizenzbestimmungen sind ein Vertrag zwischen Ihnen und der Microsoft Corporation (bzw. abhängig von Ihrem Wohnsitz einem mit Microsoft verbundenem Unternehmen). Sie gelten für die oben genannte Software. Die Bestimmungen gelten ebenso für jegliche von Microsoft angebotenen Dienste oder Updates für die Software, sofern diesen keine anderen Bestimmungen beiliegen.
+
+WENN SIE DIESE LIZENZBESTIMMUNGEN EINHALTEN, VERFÜGEN SIE ÜBER DIE NACHFOLGEND 
+
+AUFGEFÜHRTEN RECHTE.
+
+1. RECHTE ZUR INSTALLATION UND NUTZUNG. 
+
+a. Allgemeines. Sie sind berechtigt, eine beliebige Anzahl von Kopien der Software zu verwenden, um Ihre Anwendungen, einschließlich deren Bereitstellung innerhalb Ihres internen Unternehmensnetzwerks, zu entwickeln und zu testen.
+
+b. Demo-Nutzung. Die vorstehend genehmigten Nutzungszwecke beinhalten die Nutzung der Software zur Demonstration Ihrer Anwendungen.
+
+c. Sicherungskopie. Sie sind berechtigt, zur erneuten Installation der Software eine oder mehrere Sicherungskopien der Software anzufertigen.
+
+d. Drittanbieterprogramme. 
+	i. Diese Software kann Komponenten Dritter enthalten, die gesonderten rechtlichen Anmerkungen oder anderen Verträgen unterliegen, wie in der der Software beiliegenden ThirdPartyNotices-Datei beschrieben ist. Selbst wenn diese Komponenten anderen Verträgen unterliegen, gelten dennoch die folgenden Verzichtserklärungen und Haftungseinschränkungen und -ausschlüsse. 
+	ii. Die Software enthält Komponenten Dritter, die unter Open Source-Lizenzen mit Verfügbarkeitsverpflichtungen für Quellcode lizenziert sind. Kopien dieser Lizenzen sind in der ThirdPartyNotices-Datei oder der beiliegenden Credits-Datei enthalten. Sie können den jeweiligen vollständigen Quellcode von uns gemäß der jeweiligen Open Source-Lizenzen erhalten, indem Sie eine Zahlungsanweisung oder einen Scheck über 5 $ an folgende Adresse senden: Source Code Compliance Team, Microsoft Corporation, 1 Microsoft Way, Redmond, WA 98052, USA. Tragen Sie in die Notizzeile der Zahlung „third party source code for Visual Studio Code“ ein. Möglicherweise stellen wir auch unter thirdpartysource.microsoft.com/eine Kopie des Quellcodes zur Verfügung. 
+
+e. Extensions. Die Software erlaubt es Ihnen, andere Softwarepakete von Microsoft und Dritten von unserem Erweiterungs-Marktplatz oder Paket-Managern herunterzuladen. Diese Pakete unterliegen ihren eigenen Lizenzen und nicht diesem Vertrag. Microsoft vertreibt, lizenziert und übernimmt keine Gewährleistung für Pakete Dritter.
+
+2. DATEN. Die Software kann Informationen über die Sie und die Nutzung der Software erheben und diese an Microsoft übermitteln. Microsoft kann diese Informationen verwenden, um unsere Produkte und Dienste bereitzustellen und zu verbessern. Außerdem enthält die Software möglicherweise einige Features, mit denen Sie Daten von Nutzern Ihrer Anwendungen erheben können. Wenn Sie diese Features nutzen, um die Datenerhebung in Ihren Anwendungen zu ermöglichen, müssen Sie das anwendbare Recht einhalten, einschließlich Bereitstellung entsprechender Benachrichtigungen an Nutzer Ihrer Anwendungen. Weitere Informationen zur Datenerhebung und die Nutzung finden Sie in der Hilfe und in der Datenschutzerklärung unter go.microsoft.com/fwlink/?LinkID=528096&clcid=0x409. Durch die Nutzung der Software erklären Sie sich mit diesen Praktiken einverstanden.
+
+3. UPDATES. Die Software installiert etwaige Updates automatisch. Durch Ihre Nutzung der Software erklären Sie sich mit dem Erhalt automatischer Updates ohne zusätzliche Benachrichtigung einverstanden und gestatten es Microsoft, die Updates für Sie herunterzuladen und zu installieren. Wenn Sie keine automatischen Updates erhalten möchten, können Sie diese deaktivieren, indem Sie die Anweisungen in der Dokumentation unter go.microsoft.com/fwlink/?LinkID=616397 befolgen. 
+
+4. FEEDBACK. Wenn Sie Microsoft Feedback zur Software geben, berechtigen Sie Microsoft, Ihr Feedback zu verwenden, an Dritte weiterzugeben und für kommerzielle Zwecke und in jeglicher Weise und für jeglichen Zweck zu nutzen, ohne dafür Gebühren zu berechnen. Sie dürfen kein Feedback geben, das unter einen Lizenzvertrag fällt, der es erforderlich macht, dass Microsoft die eigene Software oder Dokumentation an Dritte lizenziert, weil wir Ihr Feedback einfließen lassen. Diese Rechte sind über die Laufzeit dieses Vertrags hinaus gültig.
+
+5. GÜLTIGKEITSBEREICH DER LIZENZ. Die Software wird lizenziert, nicht verkauft. Dieser Vertrag gewährt Ihnen lediglich bestimmte Rechte zur Nutzung der Software. Alle anderen Rechte verbleiben bei Microsoft. Sie dürfen die Software nur wie in diesem Vertrag ausdrücklich gestattet nutzen, es sei denn, anwendbares Recht gibt Ihnen ungeachtet dieser Einschränkung umfassendere Rechte. Dabei sind Sie verpflichtet, technische Beschränkungen zu beachten, die Ihnen die Nutzung der Software nur auf bestimmte Art und Weise ermöglichen. Sie sind nicht berechtigt,
+	• technische Beschränkungen der Software zu umgehen,
+	• die Software zurückzuentwickeln (Reverse Engineering), zu dekompilieren oder zu disassemblieren oder in anderer Form zu versuchen, den Quellcode der Software abzuleiten, es sei denn, dass (und nur insoweit): (i) es das anwendbare Recht ungeachtet dieser Einschränkung gestattet, oder (ii) dies zum Debuggen von Änderungen an unter der GNU Lesser General Public License lizenzierten Bibliotheken, die in der Software enthalten sind und zu denen die Software Verknüpfungen enthält, erforderlich ist,
+	• Benachrichtigungen an Microsoft oder deren Lieferanten in der Software zu entfernen, zu minimieren, zu blockieren oder zu ändern;
+	• die Software auf eine Weise zu verwenden, die gegen das Gesetz verstößt, oder
+	• die Software weiterzugeben, zu veröffentlichen oder zu verleihen, die Software als gehostete Lösung zur Nutzung durch andere bereitzustellen oder die Software oder diesen Vertrag an Dritte zu übertragen.
+
+6. SUPPORTSERVICES. Da diese Software „wie besehen“ bereitgestellt wird, stellen wir möglicherweise keine dedizierten Supportservices bereit.
+
+7. GESAMTER VERTRAG. Dieser Vertrag sowie die Bestimmungen für von Ihnen genutzte Ergänzungen, Updates, internetbasierte Dienste und Supportservices stellen den gesamten Vertrag über die Software und die Supportservices dar.
+
+8. AUSFUHRBESCHRÄNKUNGEN. Microsoft-Software, -Onlinedienste, Professional Services und die zugehörige Technologie unterliegen dem US-amerikanischen Exportrecht. Sie sind verpflichtet, im Zusammenhang mit Produkten, Diensten und Technologien von Microsoft alle anwendbaren internationalen und nationalen Gesetze einzuhalten, einschließlich der Regelungen der USA zur Exportkontrolle (U.S. Export Administration Regulations), der Regelungen zu internationalem Waffenhandel (International Traffic in Arms Regulations), der Sanktionsprogramme des Office of Foreign Assets Control sowie Beschränkungen im Hinblick auf Endbenutzer, Endnutzung und Bestimmungsort, die von der Regierung der USA und anderen Regierungen erlassen wurden. Weitere Informationen finden Sie unter www.microsoft.com/exporting.
+
+9. ANWENDBARES RECHT. Wenn Sie die Software in den USA erworben haben, regeln die Gesetze des Bundesstaates Washington die Auslegung dieses Vertrags sowie Ansprüche, die aus einer Vertragsverletzung entstehen, und die Gesetze des Bundesstaates, in dem Sie leben, regeln alle anderen Ansprüche. Wenn Sie die Software in einem anderen Land erworben haben, gelten die Gesetze des betreffenden Lands.
+
+10. RECHTSGÜLTIGKEIT. Dieser Vertrag beschreibt bestimmte Rechte. Möglicherweise sehen die Gesetze Ihres Staats oder Lands andere Rechte vor. Dieser Vertrag ändert nicht Ihre Rechte, die sich aus den Gesetzen Ihres Staats oder Lands ergeben, wenn die Gesetze Ihres Staats oder Lands eben dies ausschließen. Ohne Einschränkung des Vorhergehenden gilt für Australien: NACH DEM AUSTRALIAN CONSUMER LAW GELTEN GESETZLICHE GARANTIEN, UND ES BESTEHT AN KEINER STELLE IN DIESEN BESTIMMUNGEN DIE ABSICHT, DIESE RECHTE EINZUSCHRÄNKEN.
+
+11. AUSSCHLUSS VON GARANTIEN. DIE SOFTWARE WIRD „WIE BESEHEN“ LIZENZIERT. SIE TRAGEN DAS MIT DER VERWENDUNG VERBUNDENE RISIKO. MICROSOFT GEWÄHRT KEINE AUSDRÜCKLICHEN GEWÄHRLEISTUNGEN ODER GARANTIEN. IM DURCH DAS ÖRTLICH ANWENDBARE RECHT ZUGELASSENEN UMFANG SCHLIESST MICROSOFT KONKLUDENTE GEWÄHRLEISTUNGEN DER HANDELSÜBLICHKEIT, EIGNUNG FÜR EINEN BESTIMMTEN ZWECK UND NICHTVERLETZUNG VON RECHTEN DRITTER AUS.
+
+12. BESCHRÄNKUNG UND AUSSCHLUSS VON SCHADENERSATZ. SIE KÖNNEN VON MICROSOFT UND DEREN LIEFERANTEN NUR EINEN ERSATZ FÜR DIREKTE SCHÄDEN BIS ZU EINEM BETRAG VON 5 US-DOLLAR ERHALTEN. SIE KÖNNEN KEINEN ERSATZ FÜR ANDERE SCHÄDEN ERHALTEN, EINSCHLIESSLICH FOLGESCHÄDEN, SCHÄDEN AUS ENTGANGENEM GEWINN, SPEZIELLE, INDIREKTE ODER ZUFÄLLIGE SCHÄDEN.
+
+Diese Einschränkung gilt für (a) jeden Gegenstand im Zusammenhang mit der Software, Diensten, Inhalten (einschließlich Code) auf Internetseiten von Drittanbietern oder Anwendungen von Dritten und (b) Ansprüche aus Vertragsverletzungen, Verletzungen der Garantie oder der Gewährleistung, verschuldensunabhängiger Haftung, Fahrlässigkeit oder anderen unerlaubten Handlungen im durch das anwendbare Recht zugelassenen Umfang.
+
+Sie hat auch dann Gültigkeit, wenn Microsoft von der Möglichkeit der Schäden gewusst hat oder hätte wissen müssen. Obige Beschränkung und obiger Ausschluss gelten möglicherweise nicht für Sie, weil Ihr Staat oder Land den Ausschluss oder die Beschränkung von zufälligen Schäden, Folgeschäden oder sonstigen Schäden nicht gestattet. Wenn Sie die Software in DEUTSCHLAND oder in ÖSTERREICH erworben haben, findet die Beschränkung im vorstehenden Absatz „Beschränkung und Ausschluss des Schadenersatzes“ auf Sie keine Anwendung. Stattdessen gelten für Schadenersatz oder Ersatz vergeblicher Aufwendungen, gleich aus welchem Rechtsgrund einschließlich unerlaubter Handlung, die folgenden Regelungen: Microsoft haftet bei Vorsatz, grober Fahrlässigkeit, bei Ansprüchen nach dem Produkthaftungsgesetz sowie bei Verletzung von Leben, Körper oder der Gesundheit nach den gesetzlichen Vorschriften. Microsoft haftet nicht für leichte Fahrlässigkeit. Wenn Sie die Software jedoch in Deutschland erworben haben, haftet Microsoft auch für leichte Fahrlässigkeit, wenn Microsoft eine Vertragspflicht verletzt, deren Erfüllung die ordnungsgemäße Durchführung des Vertrags überhaupt erst ermöglicht, deren Verletzung die Erreichung des Vertragszwecks gefährdet und auf deren Einhaltung Sie regelmäßig vertrauen dürfen (sog. „Kardinalpflichten“). In diesen Fällen ist die Haftung von Microsoft auf typische und vorhersehbare Schäden beschränkt. In allen anderen Fällen haftet Microsoft auch in Deutschland nicht für leichte Fahrlässigkeit.
+
+     
+

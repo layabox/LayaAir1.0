@@ -1,11 +1,11 @@
 Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
 Laya.stage.bgColor = "#151515";
 
 var skins = [];
 skins.push("res/ui/hslider.png", "res/ui/hslider$bar.png");
 skins.push("res/ui/vslider.png", "res/ui/vslider$bar.png");
-Laya.loader.load(skins, laya.utils.Handler.create(this, onLoadComplete));
+Laya.loader.load(skins, Laya.Handler.create(this, onLoadComplete));
 
 function onLoadComplete()
 {
@@ -15,7 +15,7 @@ function onLoadComplete()
 
 function placeHSlider()
 {
-	var hs = new laya.ui.HSlider();
+	var hs = new Laya.HSlider();
 	hs.skin = "res/ui/hslider.png";
 	
 	hs.width = 300;
@@ -25,13 +25,13 @@ function placeHSlider()
 	hs.value = 50;
 	hs.tick = 1;
 	
-	hs.changeHandler = new laya.utils.Handler(this, onChange);
+	hs.changeHandler = new Laya.Handler(this, onChange);
 	Laya.stage.addChild(hs);
 }
 
 function placeVSlider()
 {
-	var vs = new laya.ui.VSlider();
+	var vs = new Laya.VSlider();
 	
 	vs.skin = "res/ui/vslider.png";
 	
@@ -42,7 +42,7 @@ function placeVSlider()
 	vs.value = 50;
 	vs.tick = 1;
 	
-	vs.changeHandler = new laya.utils.Handler(this, onChange);
+	vs.changeHandler = new Laya.Handler(this, onChange);
 	Laya.stage.addChild(vs);
 }
 
