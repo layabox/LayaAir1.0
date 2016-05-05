@@ -67,7 +67,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
     new Sprite_DisplayImage();
 
 
-##Demo演示
+##演示Demo
 
 http://layaair.ldc.layabox.com/demo/
 
@@ -83,6 +83,11 @@ http://layaair.ldc.layabox.com/api/
 http://ldc.layabox.com/
 
 ##社区
+
+http://ask.layabox.com/
+
+##QQ群
+104144216
 
 http://ask.layabox.com/
 
