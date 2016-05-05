@@ -89,8 +89,6 @@ http://ask.layabox.com/
 ##QQ群
 104144216
 
-http://ask.layabox.com/
-
 ##文件结构
 LayaAirAS3 Actionscript3版本引擎库及示例教程
 
