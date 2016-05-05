@@ -3,7 +3,7 @@
 ##LayaAir特点
 
 ####极致性能
-LayaAir优先使用webgl渲染，如果webgl不可用，转为canvas渲染，引擎设计过程中处处以性能为优先原则，LayaAir是为裸跑而设计的HTML5引擎。
+LayaAir优先使用webgl渲染，如果webgl不可用，自动无缝转为canvas渲染，引擎设计过程中处处以性能为优先原则，LayaAir是为裸跑而设计的HTML5引擎。
 ####轻量易用
 LayaAir API设计上追求精简，简单易用，上手容易，引擎本身非常注意自身大小，是目前同等功能最小的HTML5引擎。
 3.支持多语言开发
