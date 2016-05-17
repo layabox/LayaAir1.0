@@ -1,5 +1,4 @@
-package laya.particle
-{
+package laya.particle {
 	import laya.display.Sprite;
 	import laya.display.Stage;
 	import laya.maths.MathUtil;
@@ -11,16 +10,16 @@ package laya.particle
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.IndexBuffer;
+	import laya.webgl.utils.VertexBuffer;
 	
 	/**
-	 * ...
-	 * @author laya
+	 *  @private 
 	 */
-	public class ParticleTemplateWebGL extends ParticleTemplateBase
-	{
+	public class ParticleTemplateWebGL extends ParticleTemplateBase {
 		protected var _vertices:Float32Array;
-		protected var _vertexBuffer:Buffer;
-		protected var _indexBuffer:Buffer;
+		protected var _vertexBuffer:VertexBuffer;
+		protected var _indexBuffer:IndexBuffer;
 		protected var _floatCountPerVertex:uint = 23;//0~3为CornerTextureCoordinate,4~6为Position,7~9Velocity,10到13为Color,14到16位SizeRotation，17到20位RadiusRadian，21为DurationAddScaleShaderValue,22为Time
 		
 		protected var _firstActiveElement:int;
@@ -31,24 +30,20 @@ package laya.particle
 		protected var _currentTime:Number = 0;
 		protected var _drawCounter:int;
 		
-		public function ParticleTemplateWebGL(parSetting:ParticleSettings)
-		{
+		public function ParticleTemplateWebGL(parSetting:ParticleSettings) {
 			settings = parSetting;
 		}
 		
-		protected function initialize():void
-		{
+		protected function initialize():void {
 			_vertices = new Float32Array(settings.maxPartices * _floatCountPerVertex * 4);
 			
 			var particleOffset:int;
-			for (var i:int = 0; i < settings.maxPartices; i++)
-			{
+			for (var i:int = 0; i < settings.maxPartices; i++) {
 				var random:Number = Math.random();
-				var cornerYSegement:Number = 1.0 / settings.textureCount;
+				var cornerYSegement:Number = settings.textureCount ? 1.0 / settings.textureCount : 1.0;
 				var cornerY:Number;
 				
-				for (cornerY = 0; cornerY < settings.textureCount; cornerY += cornerYSegement)
-				{
+				for (cornerY = 0; cornerY < settings.textureCount; cornerY += cornerYSegement) {
 					if (random < cornerY + cornerYSegement)
 						break;
 				}
@@ -75,14 +70,12 @@ package laya.particle
 			}
 		}
 		
-		protected function loadContent():void
-		{
-			_vertexBuffer = new Buffer(WebGLContext.ARRAY_BUFFER, null, null, WebGLContext.DYNAMIC_DRAW);
+		protected function loadContent():void {
+			_vertexBuffer = VertexBuffer.create(WebGLContext.DYNAMIC_DRAW);
 			
 			var indexes:Uint16Array = new Uint16Array(settings.maxPartices * 6);
 			
-			for (var i:int = 0; i < settings.maxPartices; i++)
-			{
+			for (var i:int = 0; i < settings.maxPartices; i++) {
 				indexes[i * 6 + 0] = (i * 4 + 0);
 				indexes[i * 6 + 1] = (i * 4 + 1);
 				indexes[i * 6 + 2] = (i * 4 + 2);
@@ -92,14 +85,13 @@ package laya.particle
 				indexes[i * 6 + 5] = (i * 4 + 3);
 			}
 			
-			_indexBuffer = new Buffer(WebGLContext.ELEMENT_ARRAY_BUFFER, null);
-			_indexBuffer.length = 0;
+			_indexBuffer =IndexBuffer.create();
+			_indexBuffer.clear();
 			_indexBuffer.append(indexes);
 			_indexBuffer.upload();
 		}
 		
-		public function update(elapsedTime:int):void
-		{
+		public function update(elapsedTime:int):void {
 			_currentTime += elapsedTime / 1000;
 			retireActiveParticles();
 			freeRetiredParticles();
@@ -111,11 +103,9 @@ package laya.particle
 				_drawCounter = 0;
 		}
 		
-		private function retireActiveParticles():void
-		{
+		private function retireActiveParticles():void {
 			var particleDuration:Number = settings.duration;
-			while (_firstActiveElement != _firstNewElement)
-			{
+			while (_firstActiveElement != _firstNewElement) {
 				var index:int = _firstActiveElement * _floatCountPerVertex * 4 + 22;//22为Time
 				var particleAge:Number = _currentTime - _vertices[index];
 				
@@ -131,10 +121,9 @@ package laya.particle
 			}
 		}
 		
-		private function freeRetiredParticles():void
-		{
-			while (_firstRetiredElement != _firstActiveElement)
-			{
+		private function freeRetiredParticles():void {
+			while (_firstRetiredElement != _firstActiveElement) {
+				
 				var age:int = _drawCounter - _vertices[_firstRetiredElement * _floatCountPerVertex * 4 + 22];//22为Time,注意Numver到Int类型转换,JS中可忽略
 				//GPU从不滞后于CPU两帧，出于显卡驱动BUG等安全因素考虑滞后三帧
 				if (age < 3)
@@ -147,26 +136,21 @@ package laya.particle
 			}
 		}
 		
-		public function addNewParticlesToVertexBuffer():void
-		{
-			_vertexBuffer.length = 0;
-			_vertexBuffer.setdata(_vertices);
+		public function addNewParticlesToVertexBuffer():void {
+			_vertexBuffer.clear();
+			_vertexBuffer.append(_vertices);
 			
 			var start:int;
-			if (_firstNewElement < _firstFreeElement)
-			{
+			if (_firstNewElement < _firstFreeElement) {
 				// 如果新增加的粒子在Buffer中是连续的区域，只upload一次
 				start = _firstNewElement * 4 * _floatCountPerVertex * 4;
 				_vertexBuffer.subUpload(start, start, start + (_firstFreeElement - _firstNewElement) * 4 * _floatCountPerVertex * 4);
-			}
-			else
-			{
+			} else {
 				//如果新增粒子区域超过Buffer末尾则循环到开头，需upload两次
 				start = _firstNewElement * 4 * _floatCountPerVertex * 4;
 				_vertexBuffer.subUpload(start, start, start + (settings.maxPartices - _firstNewElement) * 4 * _floatCountPerVertex * 4);
 				
-				if (_firstFreeElement > 0)
-				{
+				if (_firstFreeElement > 0) {
 					_vertexBuffer.setNeedUpload();
 					_vertexBuffer.subUpload(0, 0, _firstFreeElement * 4 * _floatCountPerVertex * 4);
 				}
@@ -187,8 +171,7 @@ package laya.particle
 			var particleData:ParticleData = ParticleData.Create(settings, position, velocity, _currentTime);
 			
 			var startIndex:int = _firstFreeElement * _floatCountPerVertex * 4;
-			for (var i:int = 0; i < 4; i++)
-			{
+			for (var i:int = 0; i < 4; i++) {
 				var j:int, offset:int;
 				for (j = 0, offset = 4; j < 3; j++)
 					_vertices[startIndex + i * _floatCountPerVertex + offset + j] = particleData.position[j];

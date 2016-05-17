@@ -1,12 +1,23 @@
 package laya.resource {
 	import laya.renders.Render;
 	import laya.utils.Browser;
+	import laya.utils.RunDriver;
 	
 	/**
-	 * <code>HTMLCanvas</code> 是 Html Canvas 的代理类，封装了 Canvas 的属性和方法。
+	 * <code>HTMLCanvas</code> 是 Html Canvas 的代理类，封装了 Canvas 的属性和方法。。请不要直接使用 new HTMLCanvas！
 	 */
 	public class HTMLCanvas extends Bitmap {
+		
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+		
+		/**
+		 * 根据指定的类型，创建一个 <code>HTMLCanvas</code> 实例。
+		 * @param	type 类型。2D、3D。
+		 */
+		public static var create:Function = function(type:String):HTMLCanvas
+		{
+			return new HTMLCanvas(type);
+		}
 		
 		/** 2D 模式。*/
 		public static const TYPE2D:String = "2D";
@@ -18,26 +29,26 @@ package laya.resource {
 		/** @private */
 		public static var _createContext:Function;
 		
-		private var _ctx:Context;
+		private var _ctx:*;
 		private var _is2D:Boolean = false;
 		
 		/**
-		 * 根据指定的类型，创建一个 <code>HTMLCanvas</code> 实例。
+		 * 根据指定的类型，创建一个 <code>HTMLCanvas</code> 实例。请不要直接使用 new HTMLCanvas！
 		 * @param	type 类型。2D、3D。
 		 */
 		public function HTMLCanvas(type:String) {
 			_source = this;
 			
-			if (type === "2D" || (type === "AUTO" && !Render.isWebGl)) {
+			if (type === "2D" || (type === "AUTO" && !Render.isWebGL)) {
 				_is2D = true;
 				_source = Browser.createElement("canvas");
-				var o:* = this;
-				o.getContext = function(contextID:String, other:*):Context {
+				var o:HTMLCanvas = this;
+				o.getContext = function(contextID:String, other:*=null):Context {
 					if (_ctx) return _ctx;
 					var ctx:* = _ctx = _source.getContext(contextID, other);
 					if (ctx) {
 						ctx._canvas = o;
-						ctx.size = function():void {
+						if(!Render.isFlash) ctx.size = function(w:Number, h:Number):void {
 						};
 					}
 					contextID === "2d" && Context._init(o, ctx);
@@ -89,7 +100,9 @@ package laya.resource {
 		 * @param	other
 		 * @return  Canvas 渲染上下文 Context 对象。
 		 */
-		public function getContext(contextID:String, other:* = null):Context {
+		/*[IF-FLASH]*/ public var getContext:Function =function
+		//[IF-SCRIPT] public function getContext
+		(contextID:String, other:* = null):Context {
 			return _ctx ? _ctx : (_ctx = _createContext(this));
 		}
 		

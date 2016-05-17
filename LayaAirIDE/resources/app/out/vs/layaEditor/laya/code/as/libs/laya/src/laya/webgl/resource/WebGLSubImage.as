@@ -118,7 +118,9 @@ package laya.webgl.resource {
 				throw "create GLTextur err:no data:" + canvas;
 			}
 			var glTex:* = _source = gl.createTexture();
-			gl.bindTexture(WebGLContext.TEXTURE_2D, glTex);
+			var  preTarget:*= WebGLContext.curBindTexTarget;
+			var  preTexture:*=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,WebGLContext.TEXTURE_2D, glTex);
 			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, canvas);
 			
 			var minFifter:int = this.minFifter;
@@ -147,7 +149,8 @@ package laya.webgl.resource {
 				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_S, WebGLContext.CLAMP_TO_EDGE);
 				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
 			}
-			gl.bindTexture(WebGLContext.TEXTURE_2D, null);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget, preTexture));
+			
 			canvas = null;
 			memorySize = _w * _h * 4;
 		}

@@ -139,8 +139,8 @@ package laya.events {
 			if (disableMouseEvent) return;
 			for (var i:int = 0, n:int = _lastOvers.length; i < n; i++) {
 				var ele:* = _lastOvers[i];
-				if (_currOvers.indexOf(ele) < 0) {
-					ele.$_MOUSEOVER = false;
+				if (!ele.destroyed && _currOvers.indexOf(ele) < 0) {
+					ele._set$P("$_MOUSEOVER", false);
 					ele.event(Event.MOUSE_OUT, _event.setTo(Event.MOUSE_OUT, ele, _target));
 				}
 			}
@@ -163,8 +163,8 @@ package laya.events {
 		
 		private function sendMouseOver(ele:*):void {
 			if (ele.parent) {
-				if (!ele.$_MOUSEOVER) {
-					ele.$_MOUSEOVER = true;
+				if (!ele._get$P("$_MOUSEOVER")) {
+					ele._set$P("$_MOUSEOVER", true);
 					ele.event(Event.MOUSE_OVER, _event.setTo(Event.MOUSE_OVER, ele, _target));
 				}
 				_currOvers.push(ele);
@@ -174,10 +174,10 @@ package laya.events {
 		
 		private function onMouseDown(ele:*):void {
 			if (_isLeftMouse) {
-				ele.$_MOUSEDOWN = true;
+				ele._set$P("$_MOUSEDOWN", true);
 				ele.event(Event.MOUSE_DOWN, _event.setTo(Event.MOUSE_DOWN, ele, _target));
 			} else {
-				ele.$_RIGHTMOUSEDOWN = true;
+				ele._set$P("$_RIGHTMOUSEDOWN", true);
 				ele.event(Event.RIGHT_MOUSE_DOWN, _event.setTo(Event.RIGHT_MOUSE_DOWN, ele, _target));
 			}
 			!_event._stoped && ele.parent && onMouseDown(ele.parent);
@@ -196,12 +196,12 @@ package laya.events {
 		}
 		
 		private function sendClick(ele:*, type:String):void {
-			if (type === Event.MOUSE_UP && ele.$_MOUSEDOWN) {
-				ele.$_MOUSEDOWN = false;
+			if (type === Event.MOUSE_UP && ele._get$P("$_MOUSEDOWN")) {
+				ele._set$P("$_MOUSEDOWN", false);
 				ele.event(Event.CLICK, _event.setTo(Event.CLICK, ele, _target));
 				_isDoubleClick && ele.event(Event.DOUBLE_CLICK, _event.setTo(Event.DOUBLE_CLICK, ele, _target));
-			} else if (type === Event.RIGHT_MOUSE_UP && ele.$_RIGHTMOUSEDOWN) {
-				ele.$_RIGHTMOUSEDOWN = false;
+			} else if (type === Event.RIGHT_MOUSE_UP && ele._get$P("$_RIGHTMOUSEDOWN")) {
+				ele._set$P("$_RIGHTMOUSEDOWN", false);
 				ele.event(Event.RIGHT_CLICK, _event.setTo(Event.RIGHT_CLICK, ele, _target));
 			}
 			!_event._stoped && ele.parent && sendClick(ele.parent, type);

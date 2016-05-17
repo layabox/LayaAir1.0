@@ -15,10 +15,17 @@ package laya.webgl.text
 	public class DrawText
 	{
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		private static var _wordsMsg:Object = /*[STATIC SAFE]*/{ };
-		private static var _textCache:Object = /*[STATIC SAFE]*/{};
-		private static var _charsTemp:Vector.<DrawTextChar> = /*[STATIC SAFE]*/ new Vector.<DrawTextChar>;
-		public static var _drawValue:CharValue = new CharValue();
+		
+		private static var _wordsMsg:Object ={};
+		private static var _textCache:Object ={};
+		private static var _charsTemp:Vector.<DrawTextChar>;
+		public static var _drawValue:CharValue;
+		
+		public static function __init__():void
+		{
+			_charsTemp = new Vector.<DrawTextChar>;
+			_drawValue=new CharValue();
+		}
 		
 		//如果stage缩放发生变化，应该清除所有文字信息，释放所有资源
 		
@@ -139,7 +146,7 @@ package laya.webgl.text
 			}
 			else
 			{
-				var id:String =txt+ font.toString() + fillColor + borderColor + lineWidth + sx + sy;
+				var id:String =txt+ font.toString() + fillColor + borderColor + lineWidth + sx + sy+textAlign;
 				var cache:Array = _textCache[id];
 				
 				if (cache) 

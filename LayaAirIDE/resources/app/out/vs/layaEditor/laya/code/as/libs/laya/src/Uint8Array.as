@@ -1,7 +1,9 @@
 /*[IF-FLASH]*/package
 {
-	public class Uint8Array {
+	/**
+	 * @private
+	 */
+	public dynamic class Uint8Array extends Array {
 		public function Uint8Array(...args) { }
-		public var length:int;
 	}
 }

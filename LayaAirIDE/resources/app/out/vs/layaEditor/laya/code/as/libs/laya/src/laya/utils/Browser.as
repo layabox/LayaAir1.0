@@ -2,8 +2,7 @@ package laya.utils {
 	import laya.media.h5audio.AudioSound;
 	import laya.media.webaudio.WebAudioSound;
 	import laya.resource.Context;
-	import laya.resource.HTMLCanvas;
-	
+	import laya.resource.HTMLCanvas;	
 	/**
 	 * <code>Browser</code> 是浏览器代理类。封装浏览器及原生 js 提供的一些功能。
 	 */
@@ -12,23 +11,23 @@ package laya.utils {
 		WebAudioSound;
 		
 		/** 浏览器原生 window 对象的引用。*/
-		public static var window:*;
+		public static var window:*=/*[STATIC SAFE]*/RunDriver.getWindow();
+		
 		/** 浏览器原生 document 对象的引用。*/
-		public static var document:*;
-		__JS__("Browser.window=window");
-		__JS__("Browser.document=window.document");
+		public static var document:*=window.document;
+
 		__JS__("Browser.document.__createElement=Browser.document.createElement");
 		__JS__("window.requestAnimationFrame=(function(){return window.requestAnimationFrame || window.webkitRequestAnimationFrame ||window.mozRequestAnimationFrame || window.oRequestAnimationFrame ||function (c){return window.setTimeout(c, 1000 / 60);};})()");
 		//强制修改body样式
-		__JS__("var bs=window.document.body.style;bs.margin=0;bs.overflow='hidden';");
+		__JS__("var $BS=window.document.body.style;$BS.margin=0;$BS.overflow='hidden';");
 		//强制修改meta标签
 		__JS__("var metas=window.document.getElementsByTagName('meta');");
-		__JS__("if(metas){var i=0,flag=false,content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no';");
+		__JS__("var i=0,flag=false,content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no';");
 		__JS__("while(i<metas.length){var meta = metas[i];if(meta.name == 'viewport'){meta.content = content;flag = true;break;}i++;}");
-		__JS__("if(!flag){meta = document.createElement('meta');meta.name='viewport',meta.content = content;document.getElementsByTagName('head')[0].appendChild(meta);}}");
+		__JS__("if(!flag){meta = document.createElement('meta');meta.name='viewport',meta.content = content;document.getElementsByTagName('head')[0].appendChild(meta);}");
 		
 		/** 浏览器代理信息。*/
-		public static const userAgent:String = /*[STATIC SAFE]*/ __JS__("navigator.userAgent");
+		public static const userAgent:String = /*[STATIC SAFE]*/window.navigator.userAgent;
 		/** @private */
 		private static const u:String = /*[STATIC SAFE]*/ userAgent;
 		/** 表示是否在 ios 设备。*/
@@ -52,22 +51,29 @@ package laya.utils {
 		/** 表示是否在 PC 端。*/
 		public static const onPC:Boolean = /*[STATIC SAFE]*/ !onMobile;
 		/** 表示是否是 HTTP 协议。*/
-		public static const httpProtocol:Boolean = /*[STATIC SAFE]*/ __JS__("window").location.protocol == "http:";
+		public static const httpProtocol:Boolean =/*[STATIC SAFE]*/window.location.protocol == "http:";
 		
 		/** @private */
-		public static var webAudioOK:Boolean;
+		public static var webAudioOK:Boolean=/*[STATIC SAFE]*/window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"] ? true : false;
 		/** @private */
-		public static var soundType:String;
-		webAudioOK = window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"] ? true : false;
-		soundType = webAudioOK ? "WEBAUDIOSOUND" : "AUDIOSOUND";
+		public static var soundType:String=/*[STATIC SAFE]*/webAudioOK ? "WEBAUDIOSOUND" : "AUDIOSOUND";
+		
 		__JS__("Sound = Browser.webAudioOK?WebAudioSound:AudioSound;");
-		
+		__JS__("if (Browser.webAudioOK) WebAudioSound.initWebAudio();");
 		/** 全局画布实例。*/
-		public static var canvas:HTMLCanvas = new HTMLCanvas('2D');
+		public static var canvas:HTMLCanvas = HTMLCanvas.create('2D');
 		/** 全局画布上绘图的环境。 */
 		public static var ctx:Context = canvas.getContext('2d');
 		/** @private */
 		private static var _pixelRatio:Number = -1;
+		
+		/**@private */
+		public static function __init__():void
+		{
+			if (canvas) return;
+			canvas = HTMLCanvas.create('2D');
+			ctx = canvas.getContext('2d');
+		}
 		
 		/**
 		 * 创建浏览器原生节点。
@@ -92,16 +98,14 @@ package laya.utils {
 		 * @param	type 节点对象。
 		 */
 		public static function removeElement(ele:*):void {
-			//[IF-JS]if(ele&&ele.parentNode)ele.parentNode.removeChild(ele);
+			if(ele&&ele.parentNode)ele.parentNode.removeChild(ele);
 		}
 		
 		/**
 		 * 获取浏览器当前时间戳，单位为毫秒。
 		 */
 		public static function now():Number {
-			//[IF-JS]return Date.now();
-			/*[IF-FLASH]*/
-			return 0;
+			return RunDriver.now();
 		}
 		
 		/** 浏览器可视宽度。*/
@@ -116,22 +120,19 @@ package laya.utils {
 		
 		/** 浏览器物理宽度。*/
 		public static function get width():Number {
+			__init__();
 			return ((Laya.stage && Laya.stage.canvasRotation) ? clientHeight : clientWidth) * pixelRatio;
 		}
 		
 		/** 浏览器物理高度。*/
 		public static function get height():Number {
+			__init__();
 			return ((Laya.stage && Laya.stage.canvasRotation) ? clientWidth : clientHeight) * pixelRatio;
 		}
 		
 		/** 设备像素比。*/
 		public static function get pixelRatio():Number {
-			if (_pixelRatio < 0) {
-				var ctx:* = Browser.ctx;
-				var backingStore:Number = ctx.backingStorePixelRatio || ctx.webkitBackingStorePixelRatio || ctx.mozBackingStorePixelRatio || ctx.msBackingStorePixelRatio || ctx.oBackingStorePixelRatio || ctx.backingStorePixelRatio || 1;
-				_pixelRatio = (Browser.window.devicePixelRatio || 1) / backingStore;
-			}
-			return _pixelRatio;
+			return RunDriver.getPixelRatio(_pixelRatio);
 		}
 	}
 }

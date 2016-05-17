@@ -1,5 +1,8 @@
-/*[IF-FLASH]*/package {
+/*[IF-FLASH]*/
+package {
+	
 	/**
+	 * @private
 	 * 声音
 	 */
 	public dynamic class Audio {
@@ -36,7 +39,7 @@
 		/**设置或返回音频/视频默认是否静音*/
 		public var defaultMuted:Boolean;
 		/**设置或返回音频/视频的默认播放速度*/
-		public var defaultPlaybackRate:Number;		
+		public var defaultPlaybackRate:Number;
 		/**返回表示音频/视频可寻址部分的 TimeRanges 对象*/
 		public var seekable:*;
 		/**返回表示音频/视频错误状态的 MediaError 对象*/
@@ -55,12 +58,12 @@
 		public var innerHTML:String;
 		
 		public function play():void {
-			
+		
 		}
 		
 		public function pause():void {
-			
-		}		
+		
+		}
 		
 		public function canPlayType(type:String):String {
 			return null;

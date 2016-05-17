@@ -1,14 +1,13 @@
 package laya.particle
 {	
 	/**
-	 * ...
-	 * @author ...
+	 * <code>ParticleSettings</code> 类是粒子配置数据类
 	 */
 	public class ParticleSettings
 	{
 		/**贴图*/
 		public var textureName:String = null;
-		/**贴图个数*/
+		/**贴图个数,默认为1可不设置*/
 		public var textureCount:int = 1;
 		/**由于循环队列判断算法，最大饱和粒子数为maxPartices-1*/
 		public var maxPartices:int = 100;
@@ -120,16 +119,15 @@ package laya.particle
 		/**发射器位置随机值,2D使用*/
 		public var positionVariance:Float32Array = new Float32Array([0, 0, 0]);
 		//.........................................................2D发射器参数.........................................................
-		
+		/**
+		 * 创建一个新的 <code>ParticleSettings</code> 类实例。
+		 * 
+		 */
 		public function ParticleSettings()
 		{
 		
 		}
 		
-		public static function fromFile(particleSettingFile:String):void
-		{
-		
-		}
 	
 	}
 

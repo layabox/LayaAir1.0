@@ -4,8 +4,7 @@ package laya.particle.particleUtils
 	import laya.maths.Matrix;
 	
 	/**
-	 * ...
-	 * @author ww
+	 *  @private
 	 */
 	public class CanvasShader
 	{

@@ -1,11 +1,9 @@
-/// <reference path="game/ui/layaUI.max.all.ts" />
-
-import test = game.ui.test.TestPageUI;
+import test = ui.test.TestPageUI;
 import Label = laya.ui.Label;
 import Handler = laya.utils.Handler;
 import Loader = laya.net.Loader;
 
-class TestUI extends game.ui.test.TestPageUI {
+class TestUI extends ui.test.TestPageUI {
 
 	constructor() {
 		super();
@@ -56,10 +54,10 @@ class TestUI extends game.ui.test.TestPageUI {
 
 // 程序入口
 Laya.init(600, 400);
-Laya.loader.load([{ url: "bin/h5/res/atlas/comp.json", type: Loader.ATLAS }], Handler.create(this, this.onLoaded));
+Laya.loader.load([{ url: "res/atlas/comp.json", type: Loader.ATLAS }], Handler.create(this, this.onLoaded));
 
 function onLoaded(): void {
-	//示例UI界面
+	//实例UI界面
 	var testUI: TestUI = new TestUI();
 	Laya.stage.addChild(testUI);
 }

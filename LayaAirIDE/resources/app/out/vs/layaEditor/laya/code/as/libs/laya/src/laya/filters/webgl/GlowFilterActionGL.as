@@ -15,6 +15,9 @@ package laya.filters.webgl
 	import laya.webgl.submit.SubmitCMD;
 	import laya.webgl.submit.SubmitCMDScope;
 	
+	/**
+	 * @private
+	 */
 	public class GlowFilterActionGL extends FilterActionGL implements IFilterActionGL
 	{
 		private var data:GlowFilter;
@@ -113,7 +116,7 @@ package laya.filters.webgl
 			shader.u_blurY = data.blur;
 			shader.u_textW = _textureWidth;
 			shader.u_textH = _textureHeight;
-			shader.u_color=data._color._color;
+			shader.u_color = data.getColor();
 		}
 	}
 }

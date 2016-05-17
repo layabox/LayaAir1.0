@@ -15967,7 +15967,7 @@ define("vs/base/browser/dom", ["require", "exports", "vs/base/common/async", "vs
     var ee = function (e) {
         function t(t, n, i, o) {
             e.call(this), this._node = t, this._type = n, this._useCapture = o || !1, this._wrapHandler = function (e) {
-                if(window.event.keyCode&&window.layaideconfig.mode=="1"){
+                if (window.event.keyCode && window.layaideconfig.mode == "1") {
                     return
                 }
                 e = e || window.event, i(e)
@@ -48535,6 +48535,7 @@ define("vs/workbench/parts/tasks/node/processRunnerSystem", ["require", "exports
         }, t.prototype.doExecuteTask = function (e, t) {
             var i = this, o = {}, s = this.configuration;
             this.validationStatus.isOK() || this.errorsShown ? this.clearOutput() : (this.showOutput(), this.errorsShown = !0);
+            this.showOutput();
             var c = this.configuration.args ? this.configuration.args.slice() : [];
             e.suppressTaskName || (this.fileConfig.taskSelector ? c.push(this.fileConfig.taskSelector + e.name) : c.push(e.name)), e.args && (c = c.concat(e.args)), c = this.resolveVariables(c);
             var l = this.resolveVariable(s.command);
@@ -51169,6 +51170,7 @@ define("vs/workbench/parts/output/common/outputServices", ["require", "exports",
         function e(e, t, n, i, r) {
             this.storageService = e, this.instantiationService = t, this.eventService = n, this.lifecycleService = i, this.panelService = r, this.serviceId = d.IOutputService, this._onOutput = new o.Emitter, this._onOutputChannel = new o.Emitter, this._onActiveOutputChannel = new o.Emitter, this.receivedOutput = Object.create(null);
             var s = u.Registry.as(d.Extensions.OutputChannels).getChannels();
+            layaEditeVscode = this;
             this.activeChannel = this.storageService.get(f, c.StorageScope.WORKSPACE, s && s.length > 0 ? s[0] : null)
         }
 
@@ -59664,7 +59666,7 @@ define("vs/workbench/electron-browser/integration", ["require", "exports", "vs/n
         return e.prototype.integrate = function (e) {
             var t = this, n = this.instantiationService.createInstance(_.ElectronWindow, S, e);
             window.sendLayaIpcMenu = function (n) {
-            console.log("Asdasdfasdfasdfasdfasdf");
+                console.log("Asdasdfasdfasdfasdfasdf");
                 t.keybindingService.executeCommand(n, {from: "menu"}).done(void 0, function (e) {
                     return t.messageService.show(s["default"].Error, e)
                 })
@@ -64777,38 +64779,38 @@ define("vs/workbench/parts/files/electron-browser/textFileServices", ["require",
                 return !t || e.toString() === t.toString()
             })
         },
-        t.prototype.confirmSave = function (e) {
-            if (this.contextService.getConfiguration().env.extensionDevelopmentPath)return d.ConfirmResult.DONT_SAVE;
-            var t = this.getDirty(e);
-            if (0 === t.length)return d.ConfirmResult.DONT_SAVE;
-            var i = [1 === t.length ? n.localize(0, null, o.basename(t[0].fsPath)) : n.localize(1, null)];
-            t.length > 1 && (i.push(""), i.push.apply(i, t.map(function (e) {
-                return o.basename(e.fsPath)
-            })), i.push(""));
-            var r = {
-                label: t.length > 1 ? this.mnemonicLabel(n.localize(2, null)) : this.mnemonicLabel(n.localize(3, null)),
-                result: d.ConfirmResult.SAVE
-            }, a = {
-                label: this.mnemonicLabel(n.localize(4, null)),
-                result: d.ConfirmResult.DONT_SAVE
-            }, c = {label: n.localize(5, null), result: d.ConfirmResult.CANCEL}, u = [r];
-            s.isWindows ? u.push(a, c) : u.push(c, a);
-            var l = {
-                title: "LayaAir",
-                message: i.join("\n"),
-                type: "warning",
-                detail: n.localize(6, null),
-                buttons: u.map(function (e) {
-                    return e.label
-                }),
-                noLink: !0,
-                cancelId: u.indexOf(c)
-            }, h = this.windowService.getWindow().showMessageBox(l);
-            window.dialgLaya = this.windowService.getWindow();
-            console.log("asdasfasdfasdfasdfasdfasfasfasfasdfasfasfasfas");
-            layaPageSaveAndCallBackResult = u[h].result;
-            return u[h].result;
-        }, t.prototype.mnemonicLabel = function (e) {
+            t.prototype.confirmSave = function (e) {
+                if (this.contextService.getConfiguration().env.extensionDevelopmentPath)return d.ConfirmResult.DONT_SAVE;
+                var t = this.getDirty(e);
+                if (0 === t.length)return d.ConfirmResult.DONT_SAVE;
+                var i = [1 === t.length ? n.localize(0, null, o.basename(t[0].fsPath)) : n.localize(1, null)];
+                t.length > 1 && (i.push(""), i.push.apply(i, t.map(function (e) {
+                    return o.basename(e.fsPath)
+                })), i.push(""));
+                var r = {
+                    label: t.length > 1 ? this.mnemonicLabel(n.localize(2, null)) : this.mnemonicLabel(n.localize(3, null)),
+                    result: d.ConfirmResult.SAVE
+                }, a = {
+                    label: this.mnemonicLabel(n.localize(4, null)),
+                    result: d.ConfirmResult.DONT_SAVE
+                }, c = {label: n.localize(5, null), result: d.ConfirmResult.CANCEL}, u = [r];
+                s.isWindows ? u.push(a, c) : u.push(c, a);
+                var l = {
+                    title: "LayaAir",
+                    message: i.join("\n"),
+                    type: "warning",
+                    detail: n.localize(6, null),
+                    buttons: u.map(function (e) {
+                        return e.label
+                    }),
+                    noLink: !0,
+                    cancelId: u.indexOf(c)
+                }, h = this.windowService.getWindow().showMessageBox(l);
+                window.dialgLaya = this.windowService.getWindow();
+                console.log("asdasfasdfasdfasdfasdfasfasfasfasdfasfasfasfas");
+                layaPageSaveAndCallBackResult = u[h].result;
+                return u[h].result;
+            }, t.prototype.mnemonicLabel = function (e) {
             return s.isWindows ? e.replace(/&&/g, "&") : e.replace(/&&/g, "")
         }, t.prototype.saveAll = function (e) {
             var t = [];
@@ -66844,9 +66846,14 @@ define("vs/workbench/parts/tasks/electron-browser/task.contribution", ["require"
 
         return e.prototype.render = function (t) {
             var i = this, o = [], r = document.createElement("div"), s = document.createElement("div"), a = document.createElement("a"), l = document.createElement("div"), d = document.createElement("div"), h = document.createElement("div");
+            window.tsErrorPanel = l;
+            var layapro = document.createElement("div");
             c.addClass(r, "task-statusbar-item"), c.addClass(s, "task-statusbar-item-progress"), r.appendChild(s), s.innerHTML = e.progressChars[0], G(s).hide(), c.addClass(a, "task-statusbar-item-label"), r.appendChild(a), c.addClass(l, "task-statusbar-item-label-error"), l.innerHTML = "0", a.appendChild(l), c.addClass(d, "task-statusbar-item-label-warning"), d.innerHTML = "0", a.appendChild(d), c.addClass(h, "task-statusbar-item-label-info"), a.appendChild(h), G(h).hide(), o.push(c.addDisposableListener(a, "click", function (e) {
                 i.quickOpenService.show("!")
             }));
+            s.id = "layaAndvscodeInfo"
+            layapro.id = "layaInfo"
+            c.addClass(layapro, "task-statusbar-item-label-info"), layapro.innerHTML = "准备就绪!", a.appendChild(layapro);
             var p = function (e, t) {
                 return t > 0 ? (e.innerHTML = t.toString(), G(e).show(), !0) : (G(e).hide(), !1)
             }, f = n.localize(15, null), m = function (e) {
@@ -70240,7 +70247,7 @@ define("vs/workbench/services/request/node/requestService", ["require", "exports
             var e = this;
             u.setUnexpectedErrorHandler(function (t) {
                 e.onUnexpectedError(t)
-            }),i.$(this.container).addClass("monaco-shell"),this.content = i.$(".monaco-shell-content").appendTo(this.container).getHTMLElement(),this.content.style.visibility='visible', this.writeTimers(), this.contentsContainer = this.createContents(i.$(this.content)), this.layout(), this.registerListeners();
+            }), i.$(this.container).addClass("monaco-shell"), this.content = i.$(".monaco-shell-content").appendTo(this.container).getHTMLElement(), this.content.style.visibility = 'visible',this.content.style.position ="absolute",this.content.style.top = layaTopClip ,this.writeTimers(), this.contentsContainer = this.createContents(i.$(this.content)), this.layout(), this.registerListeners();
             var t = this.storageService.get(h.Preferences.THEME, ce.StorageScope.GLOBAL, null);
             t || (t = xe.DEFAULT_THEME_ID, this.storageService.store(h.Preferences.THEME, t, ce.StorageScope.GLOBAL)), this.setTheme(t, !1), this.toUnbind.push(this.storageService.addListener2(ce.StorageEventType.STORAGE, function (t) {
                 t.key === h.Preferences.THEME && e.setTheme(t.newValue)
@@ -70302,7 +70309,7 @@ define("vs/workbench/services/request/node/requestService", ["require", "exports
         }, e.prototype.layout = function () {
             var e = i.$(this.container).getClientArea(), t = new i.Dimension(e.width, e.height);
             console.log("Asdasdfasdfasdfasdfasdfsdf");
-            this.contentsContainer.size(t.width, t.height- windclipHLaya), this.contextViewService.layout(), this.workbench.layout()
+            this.contentsContainer.size(t.width, t.height - windclipHLaya), this.contextViewService.layout(), this.workbench.layout()
         }, e.prototype.joinCreation = function () {
             return this.workbench.joinCreation()
         }, e.prototype.dispose = function (e) {

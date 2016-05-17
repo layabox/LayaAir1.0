@@ -335,10 +335,10 @@ package laya.ui {
 			}
 			_sources || (_sources = []);
 			_sources.length = 0;
-			var width:Number = img.width;
-			var height:Number = img.height / _stateNum;
+			var width:Number = img.sourceWidth;
+			var height:Number = img.sourceHeight / _stateNum;
 			for (var i:int = 0; i < _stateNum; i++) {
-				_sources.push(Texture.create(img, 0, height * i, width, height));
+				_sources.push(Texture.createFromTexture(img, 0, height * i, width, height));
 			}
 			if (_autoSize) {
 				_bitmap.width = _text.width = _width || width;

@@ -16,7 +16,7 @@ package laya.display.css {
 		/**@private */
 		protected static var _TF_EMPTY:Object;
 		/**@private */
-		protected var _tf:Object = _TF_EMPTY;
+		public var _tf:Object = _TF_EMPTY;
 		/**透明度。*/
 		public var alpha:Number = 1;
 		/**表示是否显示。*/
@@ -41,10 +41,17 @@ package laya.display.css {
 		
 		/**元素应用的 2D 或 3D 转换的值。该属性允许我们对元素进行旋转、缩放、移动或倾斜。*/
 		public function get transform():Object {
-			return _tf;
+			return getTransform();
+		}
+		public function set transform(value:*):void {
+			setTransform(value);
 		}
 		
-		public function set transform(value:*):void {
+		public function getTransform():Object
+		{
+			return _tf;
+		}
+		public function setTransform(value:*):void {
 			_tf = value === 'none' || !value ? _TF_EMPTY : value;
 		}
 		
@@ -54,9 +61,13 @@ package laya.display.css {
 		}
 		
 		public function set translateX(value:Number):void {
+			setTranslateX(value);
+		}
+		
+		public function setTranslateX(value:Number):void {
 			_tf === _TF_EMPTY && (_tf = _createTransform());
 			_tf.translateX = value;
-		}
+		}		
 		
 		/**定义转换，只是用 Y 轴的值。*/
 		public function get translateY():Number {
@@ -64,6 +75,9 @@ package laya.display.css {
 		}
 		
 		public function set translateY(value:Number):void {
+			setTranslateY(value);
+		}
+		public function setTranslateY(value:Number):void {
 			_tf === _TF_EMPTY && (_tf = _createTransform());
 			_tf.translateY = value;
 		}
@@ -74,6 +88,9 @@ package laya.display.css {
 		}
 		
 		public function set scaleX(value:Number):void {
+			setScaleX(value);
+		}
+		public function setScaleX(value:Number):void {
 			_tf === _TF_EMPTY && (_tf = _createTransform());
 			_tf.scaleX = value;
 		}
@@ -84,6 +101,9 @@ package laya.display.css {
 		}
 		
 		public function set scaleY(value:Number):void {
+			setScaleY(value);
+		}
+		public function setScaleY(value:Number):void {
 			_tf === _TF_EMPTY && (_tf = _createTransform());
 			_tf.scaleY = value;
 		}
@@ -94,6 +114,9 @@ package laya.display.css {
 		}
 		
 		public function set rotate(value:Number):void {
+			setRotate(value);
+		}
+		public function setRotate(value:Number):void {
 			_tf === _TF_EMPTY && (_tf = _createTransform());
 			_tf.rotate = value;
 		}
@@ -104,6 +127,9 @@ package laya.display.css {
 		}
 		
 		public function set skewX(value:Number):void {
+			setSkewX(value);
+		}
+		public function setSkewX(value:Number):void {
 			_tf === _TF_EMPTY && (_tf = _createTransform());
 			_tf.skewX = value;
 		}
@@ -114,6 +140,10 @@ package laya.display.css {
 		}
 		
 		public function set skewY(value:Number):void {
+			setSkewY(value);
+		}
+		
+		public function setSkewY(value:Number):void {
 			_tf === _TF_EMPTY && (_tf = _createTransform());
 			_tf.skewY = value;
 		}

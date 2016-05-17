@@ -58,14 +58,9 @@ package laya.media.webaudio {
 		
 		/**
 		 * 播放声音
-		 *
 		 */
 		override public function play():void {
-			if (this.bufferSource) {
-				this.bufferSource.disconnect();
-				this.bufferSource.onended = null;
-				this.bufferSource = null;
-			}
+			_clearBufferSource();
 			if (!audioBuffer) return;
 			var context:* = this.context;
 			var gain:* = this.gain;
@@ -108,8 +103,6 @@ package laya.media.webaudio {
 		
 		/**
 		 * 获取当前播放位置
-		 * @return
-		 *
 		 */
 		override public function get position():Number {
 			if (this.bufferSource) {
@@ -117,12 +110,8 @@ package laya.media.webaudio {
 			}
 			return 0;
 		}
-		
-		/**
-		 * 停止播放
-		 *
-		 */
-		override public function stop():void {
+		private function _clearBufferSource():void
+		{
 			if (this.bufferSource) {
 				var sourceNode:* = this.bufferSource;
 				if (sourceNode.stop) {
@@ -130,11 +119,18 @@ package laya.media.webaudio {
 				} else {
 					sourceNode.noteOff(0);
 				}
-				this.bufferSource.disconnect();
-				this.bufferSource = null;
-				
-				this.audioBuffer = null;
+				sourceNode.disconnect(0);
+				sourceNode.onended = null;
+				try { sourceNode.buffer = WebAudioSound._miniBuffer; } catch(e:*) {}
+				this.bufferSource = null;			
 			}
+		}
+		/**
+		 * 停止播放
+		 */
+		override public function stop():void {
+            _clearBufferSource();
+			this.audioBuffer = null;
 			if (gain)
 				gain.disconnect();
 			this.isStopped = true;
@@ -144,8 +140,6 @@ package laya.media.webaudio {
 		
 		/**
 		 * 设置音量
-		 * @param v
-		 *
 		 */
 		override public function set volume(v:Number):void {
 			if (this.isStopped) {
@@ -158,8 +152,6 @@ package laya.media.webaudio {
 		
 		/**
 		 * 获取音量
-		 * @return
-		 *
 		 */
 		override public function get volume():Number {
 			return this._volume;

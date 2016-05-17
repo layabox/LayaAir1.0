@@ -1,6 +1,7 @@
 package {
 	import laya.asyn.Asyn;
 	import laya.asyn.Deferred;
+	import laya.display.Input;
 	import laya.display.css.Font;
 	import laya.display.css.Style;
 	import laya.display.Stage;
@@ -15,6 +16,7 @@ package {
 	import laya.resource.ResourceManager;
 	import laya.utils.Browser;
 	import laya.utils.Timer;
+	import laya.utils.RunDriver;
 	
 	/**
 	 * <code>Laya</code> 是全局对象的引用入口集。
@@ -24,15 +26,15 @@ package {
 		/** 舞台对象的引用。*/
 		public static var stage:Stage = null;
 		/** 时间管理器的引用。*/
-		public static var timer:Timer = new Timer();
+		public static var timer:Timer =  null;
 		/** 加载管理器的引用。*/
-		public static var loader:LoaderManager = new LoaderManager();
+		public static var loader:LoaderManager = null;
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "0.9.8";
-		/** 表示是否是 3D 模式。*/
-		public static var is3DMode:Boolean;
+		public static var version:String = "0.9.9";
+		
+		
 		
 		/**
 		 * 初始化引擎。
@@ -41,6 +43,10 @@ package {
 		 * @param	插件列表，比如 WebGL。
 		 */
 		public static function init(width:Number, height:Number, ... plugins):void {
+			Browser.__init__();
+			timer = new Timer();
+			loader=new LoaderManager();
+			
 			for (var i:int = 0, n:int = plugins.length; i < n; i++) {
 				if (plugins[i].enable) plugins[i].enable();
 			}
@@ -50,8 +56,11 @@ package {
 			stage = new Stage();
 			
 			var location:* = Browser.window.location;
-			URL.rootPath = URL.basePath = URL.getPath(location.protocal == "file:" ? location.pathname : location.href);
-			
+			var pathName:String = location.pathname;
+			// 索引为2的字符如果是':'就是windows file协议
+			pathName = pathName.charAt(2) == ':' ? pathName.substring(1) : pathName;
+			URL.rootPath = URL.basePath = URL.getPath(location.protocol == "file:" ? pathName : location.origin + pathName);
+
 			initAsyn();
 			render = new Render(width, height);
 			stage.size(width, height);

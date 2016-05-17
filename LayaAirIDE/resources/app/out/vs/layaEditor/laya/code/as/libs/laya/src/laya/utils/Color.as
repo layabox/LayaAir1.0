@@ -33,10 +33,13 @@ package laya.utils {
 				if (str === null) str = "#000000";
 				
 				str.charAt(0) == '#' && (str = str.substr(1));
-				var color:int = numColor = __JS__('parseInt(str,16)');
+				var color:int = numColor = 
+				//[IF-SCRIPT] __JS__('parseInt(str,16)');
+				/*[IF-FLASH]*/ parseInt(str, 16);
 				var flag:Boolean = (str.length == 8);
 				if (flag) {
-					_color = [__JS__('parseInt(str.substr(0,2),16)') / 255, ((0x00FF0000 & color) >> 16) / 255, ((0x0000FF00 & color) >> 8) / 255, (0x000000FF & color) / 255];
+					//[IF-SCRIPT] _color = [__JS__('parseInt(str.substr(0,2),16)') / 255, ((0x00FF0000 & color) >> 16) / 255, ((0x0000FF00 & color) >> 8) / 255, (0x000000FF & color) / 255];
+					/*[IF-FLASH]*/ _color = [parseInt(str.substr(0,2),16) / 255, ((0x00FF0000 & color) >> 16) / 255, ((0x0000FF00 & color) >> 8) / 255, (0x000000FF & color) / 255];
 					return;
 				}
 			} else {

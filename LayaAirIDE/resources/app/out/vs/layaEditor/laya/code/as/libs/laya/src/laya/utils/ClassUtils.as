@@ -6,7 +6,7 @@ package laya.utils {
 	 */
 	public class ClassUtils {
 		
-		private static var _classMap:Object =/*[STATIC SAFE]*/ {'Sprite': 'laya.display.Sprite', 'Text': 'laya.display.Text', 'div': 'laya.html.dom.HTMLDivElement', 'img': 'laya.html.dom.HTMLImageElement', 'span': 'laya.html.dom.HTMLElement', 'br': 'laya.html.dom.HTMLBrElement', 'style': 'laya.html.dom.HTMLStyleElement', 'font': 'laya.html.dom.HTMLElement', 'Sprite3D': 'laya.d3.core.Sprite3D', 'Mesh': 'laya.d3.core.mesh.Mesh', 'Sky': 'laya.d3.core.sky.Sky'}
+		private static var _classMap:Object =/*[STATIC SAFE]*/ {'Sprite': 'laya.display.Sprite', 'Sprite3D': 'laya.d3.core.Sprite3D', 'Mesh': 'laya.d3.core.mesh.Mesh', 'Sky': 'laya.d3.core.sky.Sky', 'Text': 'laya.display.Text', 'div': 'laya.html.dom.HTMLDivElement', 'img': 'laya.html.dom.HTMLImageElement', 'span': 'laya.html.dom.HTMLElement', 'br': 'laya.html.dom.HTMLBrElement', 'style': 'laya.html.dom.HTMLStyleElement', 'font': 'laya.html.dom.HTMLElement', 'a': 'laya.html.dom.HTMLElement', '#text': 'laya.html.dom.HTMLElement'}
 		
 		/**
 		 * 注册 Class 映射。
@@ -55,8 +55,15 @@ package laya.utils {
 		 * 	"type":"Sprite",
 		 * 	"props":{
 		 * 		"x":100,
-		 * 		"y":{d:1},
-		 * 		"scale":{g:[2,2]}
+		 * 		"y":50,
+		 * 		"name":"item1",
+		 * 		"scale":[2,2]
+		 * 	},
+		 * 	"customProps":{
+		 * 		"x":100,
+		 * 		"y":50,
+		 * 		"name":"item1",
+		 * 		"scale":[2,2]
 		 * 	},
 		 * 	"child":[
 		 * 		{
@@ -74,9 +81,10 @@ package laya.utils {
 		 * @param	root 根节点，用来设置var定义。
 		 * @return	生成的节点。
 		 */
-		public static function createByJson(json:*, node:* = null, root:Node = null):* {
+		public static function createByJson(json:*, node:* = null, root:Node = null, customHandler:Handler = null):* {
 			if (json is String) json = JSON.parse(json);
 			var props:Object = json.props;
+			
 			if (!node) {
 				node = getInstance(props.runtime || json.type);
 				if (!node) return null;
@@ -87,19 +95,28 @@ package laya.utils {
 				for (var i:int = 0, n:int = child.length; i < n; i++) {
 					var data:Object = child[i];
 					if (data.props.name === "render" && node["_$set_itemRender"]) node.itemRender = data;
-					else node.addChild(createByJson(data, null, root));
+					else node.addChild(createByJson(data, null, root, customHandler));
 				}
 			}
 			
-			for (var prop:String in props) {
-				var value:* = props[prop];
-				if (prop === "var" && root) {
-					root[value] = node;
-				} else if (node["_$set_" + prop]) {
-					node[prop] = value;
-				} else if (node[prop]) {
-					if (value is Array) node[prop].apply(node, value)
-					else node[prop].call(node, value)
+			if (props) {
+				for (var prop:String in props) {
+					var value:* = props[prop];
+					if (prop === "var" && root) {
+						root[value] = node;
+					} else if (value is Array && node[prop] is Function) {
+						node[prop].apply(node, value);
+					} else {
+						node[prop] = value;
+					}
+				}
+			}
+			
+			var customProps:Object = json.customProps;
+			if (customHandler && customProps) {
+				for (prop in customProps) {
+					value = customProps[prop];
+					customHandler.runWith([node, prop, value]);
 				}
 			}
 			

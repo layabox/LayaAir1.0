@@ -12,7 +12,7 @@ package laya.webgl.shader.d2.value
 		public var u_strength:Number;
 		public var u_texW:int;
 		public var u_texH:int;
-		public function GlowSV()
+		public function GlowSV(args:*)
 		{
 			super( ShaderDefines2D.FILTERGLOW|ShaderDefines2D.TEXTURE2D);
 		}

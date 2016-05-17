@@ -161,6 +161,7 @@ package laya.media {
 			}
 			var channel:SoundChannel;
 			channel = tSound.play(0, loops);
+			channel.url = url;
 			channel.volume = (url == _tMusic) ? musicVolume : soundVolume;
 			channel.completeHandler = complete;
 			return channel;
@@ -189,7 +190,7 @@ package laya.media {
 			_tMusic = url;
 			if (_musicChannel)
 				_musicChannel.stop();
-			return _musicChannel = playSound(url, loops, complete, AudioSound);
+			return _musicChannel = playSound(url, loops, complete, null);
 		}
 		
 		/**

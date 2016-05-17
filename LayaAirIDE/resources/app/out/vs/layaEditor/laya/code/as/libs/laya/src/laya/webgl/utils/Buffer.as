@@ -1,4 +1,5 @@
 package laya.webgl.utils {
+	import laya.renders.Render;
 	import laya.resource.Resource;
 	import laya.utils.Byte;
 	import laya.utils.Stat;
@@ -29,7 +30,7 @@ package laya.webgl.utils {
 		public static const BLENDINDICES0:String = "BLENDINDICES";
 		
 		//Uniform
-		public static const MATRIX0:String = "MATRIX0";
+		public static const MVPMATRIX:String = "MVPMATRIX";
 		public static const MATRIX1:String = "MATRIX1";
 		public static const MATRIX2:String = "MATRIX2";
 		public static const DIFFUSETEXTURE:String = "DIFFUSETEXTURE";
@@ -92,117 +93,31 @@ package laya.webgl.utils {
 		public static const FLOAT32:int = 4;
 		public static const SHORT:int = 2;
 		
-		//! 全局的四边形索引缓冲区.
-		public static var QuadrangleIB:Buffer;
-		private static var _gl:WebGLContext;
-		private static var _bindActive:Array = [];
-		private static var _COUNT:int = 1;
+		protected static var _gl:WebGLContext;
+		protected static var _bindActive:Object = {};
+		protected static var _COUNT:int = 1;
 		
 		public static function __int__(gl:WebGLContext):void {
 			_gl = gl;
-			QuadrangleIB = new Buffer(WebGLContext.ELEMENT_ARRAY_BUFFER, INDEX, null, WebGLContext.STATIC_DRAW);
-			GlUtils.fillIBQuadrangle(QuadrangleIB, 16);
+			IndexBuffer.QuadrangleIB = IndexBuffer.create();
+			GlUtils.fillIBQuadrangle(IndexBuffer.QuadrangleIB, 16);
 		}
 		
 		public var _length:int = 0;
 		public var _upload:Boolean = true;
 		
-		private var _id:int;
-		private var _glTarget:*;
-		private var _buffer:ArrayBuffer;
-		private var _glBuffer:*;
-		private var _bufferUsage:int;
-		private var _floatArray32:Float32Array;
-		private var _uploadSize:int = 0;
-		private var _usage:String;
-		private var _maxsize:int = 0;
+		protected var _id:int;
+		protected var _type:*;
+		protected var _buffer:ArrayBuffer;
+		protected var _glBuffer:*;
+		protected var _bufferUsage:int;
+		protected var _uploadSize:int = 0;
+		protected var _maxsize:int = 0;
 		
-		/**
-		 *
-		 * @param	glTarget 	缓冲区类型
-		 * @param	usage  	如果指定glType为ELEMENT_ARRAY_BUFFER 后 usage会被设置为 INDEX;  多buffr 时候 要对应Shader的别名
-		 * @param	frome 	数据
-		 * @param	bufferUsage  可以使设置为 gl.STATIC_DRAW   gl.DYNAMIC_DRAW
-		 *  example
-		 *  多Buffer usage
-		 *  public static var bVertex:Buffer = new Buffer(Buffer.ARRAY_BUFFER,Buffer.POSITION,vertices);
-		 *	public static var bColors:Buffer = new Buffer(Buffer.ARRAY_BUFFER,Buffer.COLOR, colors);
-		 *	public static var bIndices:Buffer = new Buffer(Buffer.ELEMENT_ARRAY_BUFFER, Buffer.INDEX, indices);
-		 * 	example
-		 *  var _gib = gl.createBuffer();
-		 *  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, _gib);
-		 *  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, 9000 * bytesPerElement, gl.STATIC_DRAW);
-		 */
-		public function Buffer(glTarget:*, usage:String = null, frome:* = null, bufferUsage:int = 0x88E8 /*WebGLContext.DYNAMIC_DRAW*/) {
-			super();
-			//super(Resource.BUFFER, 0, ResourceMgr.GPU);
-			lock = true;
-			_gl = WebGL.mainContext;
-			_id = ++_COUNT;
-			_usage = usage;
-			glTarget == WebGLContext.ELEMENT_ARRAY_BUFFER && (glTarget = WebGLContext.ELEMENT_ARRAY_BUFFER, _usage = INDEX);
-			glTarget == WebGLContext.ARRAY_BUFFER && (glTarget = WebGLContext.ARRAY_BUFFER);
-			_glTarget = glTarget;
-			_bufferUsage = bufferUsage;
-			_buffer = new ArrayBuffer(8);
-			
-			frome && append(frome);
+		public function get bufferType():* {
+			return _type;
 		}
 		
-		public function getFloat32Array():Float32Array {
-			return _floatArray32 || (_floatArray32 = new Float32Array(_buffer));
-		}
-		
-		public function getUint16Array():Uint16Array {
-			return new Uint16Array(_buffer);
-		}
-		
-		public function clear():void {
-			_length = 0;
-			_upload = true;
-		}
-		
-		public function append(data:*):void {
-			_upload = true;
-			var szu8:int, n:*;
-			if (data is Uint8Array) {
-				szu8 = data.length;
-				_resizeBuffer(_length + szu8, true);
-				n = new Uint8Array(_buffer, _length);
-			} else if (data is Float32Array) {
-				szu8 = data.length * 4;
-				_resizeBuffer(_length + szu8, true);
-				n = new Float32Array(_buffer, _length);
-			} else if (data is Uint16Array) {
-				szu8 = data.length * 2;
-				_resizeBuffer(_length + szu8, true);
-				n = new Uint16Array(_buffer, _length);
-			}
-			n.set(data, 0);
-			_length += szu8;
-			_floatArray32 && (_floatArray32 = new Float32Array(_buffer));
-		}
-		
-		public function setdata(data:*):void {
-			_buffer = data.buffer;
-			_upload = true;
-			_floatArray32 || (_floatArray32 = new Float32Array(_buffer));
-			_length = _buffer.byteLength;
-		}
-		
-		public function getBuffer():ArrayBuffer {
-			return _buffer;
-		}
-		
-		/*调试用*/
-		public var _uint16:Uint16Array;
-		
-		public function get uintArray16():Uint16Array {
-			_uint16 = new Uint16Array(_buffer);
-			return _uint16;
-		}
-		
-		/*调试用*/
 		public function get bufferLength():int {
 			return _buffer.byteLength;
 		}
@@ -218,46 +133,61 @@ package laya.webgl.utils {
 			_length = value;
 		}
 		
-		public function seLength(value:int):void {
-			if (_length === value)
-				return;
-			value <= _buffer.byteLength || (_resizeBuffer(value * 2 + 256, true));
-			_length = value;
+		public function Buffer() {
+			super();
+			lock = true;
+			_gl = WebGL.mainContext;
+			_id = ++_COUNT;
+			Render.isFlash || (_buffer = new ArrayBuffer(8));
 		}
 		
-		public function get usage():String {
-			return _usage;
+		private function _bufferData():void {
+			_maxsize = Math.max(_maxsize, _length);
+			if (Stat.loopCount % 30 == 0) {
+				if (_buffer.byteLength > (_maxsize + 64)) {
+					memorySize = _buffer.byteLength;
+					_buffer = _buffer.slice(0, _maxsize + 64);
+					_checkFloatArray32Use();
+				}
+				_maxsize = _length;
+			}
+			if (_uploadSize < _buffer.byteLength) {
+				_uploadSize = _buffer.byteLength;
+				
+				_gl.bufferData(_type, _uploadSize, _bufferUsage);
+				memorySize = _uploadSize;
+			}
+			_gl.bufferSubData(_type, 0, _buffer);
+			Stat.bufferLen += _length;
 		}
 		
-		public function _resizeBuffer(nsz:int, copy:Boolean):Buffer //是否修改了长度
-		{
-			if (nsz < _buffer.byteLength)
-				return this;
-			memorySize = _buffer.byteLength;	//Resource.addCPUMemSize(nsz - _buffer.byteLength);
-			if (copy && _buffer && _buffer.byteLength > 0) {
-				var newbuffer:ArrayBuffer = new ArrayBuffer(nsz);
-				var n:* = new Uint8Array(newbuffer);
-				n.set(new Uint8Array(_buffer), 0);
-				_buffer = newbuffer;
-			} else
-				_buffer = new ArrayBuffer(nsz);
-			_floatArray32 && (_floatArray32 = new Float32Array(_buffer));
-			_upload = true;
+		private function _bufferSubData(offset:int = 0, dataStart:int = 0, dataLength:int = 0):void {
+			_maxsize = Math.max(_maxsize, _length);
+			if (Stat.loopCount % 30 == 0) {
+				if (_buffer.byteLength > (_maxsize + 64)) {
+					memorySize = _buffer.byteLength;
+					_buffer = _buffer.slice(0, _maxsize + 64);
+					_checkFloatArray32Use();
+				}
+				_maxsize = _length;
+			}
 			
-			return this;
+			if (_uploadSize < _buffer.byteLength) {
+				_uploadSize = _buffer.byteLength;
+				
+				_gl.bufferData(_type, _uploadSize, _bufferUsage);
+				memorySize = _uploadSize;
+			}
+			
+			if (dataStart || dataLength) {
+				var subBuffer:ArrayBuffer = _buffer.slice(dataStart, dataLength);
+				_gl.bufferSubData(_type, offset, subBuffer);
+			} else {
+				_gl.bufferSubData(_type, offset, _buffer);
+			}
 		}
 		
-		public function setNeedUpload():void {
-			_upload = true;
-		}
-		
-		public function getNeedUpload():Boolean {
-			return _upload;
-		}
-		
-		public function bind():void {
-			activeResource();
-			(_bindActive[_glTarget] === _glBuffer) || (_gl.bindBuffer(_glTarget, _bindActive[_glTarget] = _glBuffer), Shader.activeShader = null);
+		protected function _checkFloatArray32Use():void {
 		}
 		
 		override protected function recreateResource():void {
@@ -280,68 +210,109 @@ package laya.webgl.utils {
 			}
 		}
 		
-		public function upload():Boolean {
+		public function _bind():void {
+			activeResource();
+			(_bindActive[_type] === _glBuffer) || (_gl.bindBuffer(_type, _bindActive[_type] = _glBuffer), Shader.activeShader = null);
+		}
+		
+		public function _bind_upload():Boolean {
 			if (!_upload)
 				return false;
 			
 			_upload = false;
-			bind();
-			
-			_maxsize = Math.max(_maxsize, _length);
-			if (Stat.loopCount % 30 == 0) {
-				if (_buffer.byteLength > (_maxsize + 64)) {
-					memorySize = _buffer.byteLength;
-					_buffer = _buffer.slice(0, _maxsize + 64);
-					_floatArray32 && (_floatArray32 = new Float32Array(_buffer));
-				}
-				_maxsize = _length;
-			}
-			if (_uploadSize < _buffer.byteLength) {
-				_uploadSize = _buffer.byteLength;
-				
-				_gl.bufferData(_glTarget, _uploadSize, _bufferUsage);
-				memorySize = _uploadSize;
-			}
-			_gl.bufferSubData(_glTarget, 0, _buffer);
-			Stat.bufferLen += _length;
-			
+			_bind();
+			_bufferData();
 			return true;
+		}
+		
+		public function _bind_subUpload(offset:int = 0, dataStart:int = 0, dataLength:int = 0):Boolean {
+			if (!_upload)
+				return false;
+			
+			_upload = false;
+			_bind();
+			_bufferSubData(offset, dataStart, dataLength);
+			return true;
+		}
+		
+		public function _resizeBuffer(nsz:int, copy:Boolean):Buffer //是否修改了长度
+		{
+			if (nsz < _buffer.byteLength)
+				return this;
+			memorySize = nsz;
+			if (copy && _buffer && _buffer.byteLength > 0) {
+				var newbuffer:ArrayBuffer = new ArrayBuffer(nsz);
+				var n:* = new Uint8Array(newbuffer);
+				n.set(new Uint8Array(_buffer), 0);
+				_buffer = newbuffer;
+			} else
+				_buffer = new ArrayBuffer(nsz);
+			_checkFloatArray32Use();
+			_upload = true;
+			
+			return this;
+		}
+		
+		public function append(data:*):void {
+			_upload = true;
+			var szu8:int, n:*;
+			if (data is Uint8Array) {
+				szu8 = data.length;
+				_resizeBuffer(_length + szu8, true);
+				n = new Uint8Array(_buffer, _length);
+			} else if (data is Float32Array) {
+				szu8 = data.length * 4;
+				_resizeBuffer(_length + szu8, true);
+				n = new Float32Array(_buffer, _length);
+			} else if (data is Uint16Array) {
+				szu8 = data.length * 2;
+				_resizeBuffer(_length + szu8, true);
+				n = new Uint16Array(_buffer, _length);
+			}
+			n.set(data, 0);
+			_length += szu8;
+			_checkFloatArray32Use();
+		}
+		
+		/*
+		   public function setdata(data:*):void {
+		   _buffer = data.buffer;
+		   _upload = true;
+		   _length = _buffer.byteLength;
+		   _checkFloatArray32Use();
+		   }
+		 */
+		public function getBuffer():ArrayBuffer {
+			return _buffer;
+		}
+		
+		public function setNeedUpload():void {
+			_upload = true;
+		}
+		
+		public function getNeedUpload():Boolean {
+			return _upload;
+		}
+		
+		public function upload():Boolean {
+			var scuess:Boolean = _bind_upload();
+			_gl.bindBuffer(_type, null);
+			_bindActive[_type] = null;
+			Shader.activeShader = null
+			return scuess;
 		}
 		
 		public function subUpload(offset:int = 0, dataStart:int = 0, dataLength:int = 0):Boolean {
-			if (!_upload)
-				return false;
-			
-			_upload = false;
-			bind();
-			
-			_maxsize = Math.max(_maxsize, _length);
-			if (Stat.loopCount % 30 == 0) {
-				if (_buffer.byteLength > (_maxsize + 64)) {
-					memorySize = _buffer.byteLength;
-					_buffer = _buffer.slice(0, _maxsize + 64);
-					_floatArray32 && (_floatArray32 = new Float32Array(_buffer));
-				}
-				_maxsize = _length;
-			}
-			
-			if (_uploadSize < _buffer.byteLength) {
-				_uploadSize = _buffer.byteLength;
-				
-				_gl.bufferData(_glTarget, _uploadSize, _bufferUsage);
-				memorySize = _uploadSize;
-			}
-			if (dataStart || dataLength) {
-				var subBuffer:ArrayBuffer = _buffer.slice(dataStart, dataLength);
-				_gl.bufferSubData(_glTarget, offset, subBuffer);
-			} else {
-				_gl.bufferSubData(_glTarget, offset, _buffer);
-			}
-			return true;
+			var scuess:Boolean = _bind_subUpload();
+			_gl.bindBuffer(_type, null);
+			_bindActive[_type] = null;
+			Shader.activeShader = null
+			return scuess;
 		}
 		
-		public function upload_bind():void {
-			(_upload && upload()) || bind();
+		public function clear():void {
+			_length = 0;
+			_upload = true;
 		}
 		
 		/**
@@ -349,7 +320,6 @@ package laya.webgl.utils {
 		 */
 		public function disposeCPUData():void {
 			_buffer = null;
-			_floatArray32 = null;
 		}
 		
 		override public function dispose():void {

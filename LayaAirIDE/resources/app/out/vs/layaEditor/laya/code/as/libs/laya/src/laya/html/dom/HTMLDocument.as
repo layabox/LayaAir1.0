@@ -3,8 +3,7 @@ package laya.html.dom
 	import laya.display.css.CSSStyle;
 	
 	/**
-	 * ...
-	 * @author laya
+	 * @private
 	 */
 	public class HTMLDocument extends HTMLElement 
 	{

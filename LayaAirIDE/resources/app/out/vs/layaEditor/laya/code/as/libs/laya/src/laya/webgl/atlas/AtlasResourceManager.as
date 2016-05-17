@@ -133,7 +133,9 @@ package laya.webgl.atlas {
 				var maxAtlaserCount:int = _maxAtlaserCount;
 				for (var i:int = 0; i < maxAtlaserCount; i++) {
 					var altasIndex:int = (_curAtlasIndex + i) % maxAtlaserCount;
-					(_atlaserArray[altasIndex]) || (_atlaserArray.push(new Atlaser(_gridNumX, _gridNumY, _width, _height, _sid_++)));//不存在则创建大图合集
+					
+		
+					( _atlaserArray.length-1>=altasIndex) || (_atlaserArray.push(new Atlaser(_gridNumX, _gridNumY, _width, _height, _sid_++)));//不存在则创建大图合集
 					var atlas:Atlaser = _atlaserArray[altasIndex];
 					var bitmap:* = texture.bitmap;
 					
@@ -200,6 +202,15 @@ package laya.webgl.atlas {
 				_atlaserArray[i].dispose();
 			}
 			_atlaserArray.length = 0;
+		}
+		
+		public  function  getAtlaserCount():int
+		{
+			return _atlaserArray.length;
+		}
+		public  function  getAtlaserByIndex(index:int):Atlaser
+		{
+			return _atlaserArray[index];
 		}
 	}
 }

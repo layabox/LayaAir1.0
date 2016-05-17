@@ -1,5 +1,5 @@
 package laya.utils {
-	
+	/*[IF-FLASH]*/ import flash.utils.Dictionary;
 	/**
 	 * <code>Timer</code> 是时钟管理类。它是一个单例，可以通过 Laya.timer 访问。
 	 */
@@ -16,7 +16,8 @@ package laya.utils {
 		/**@private */
 		private var _mid:int = 1;
 		/**@private */
-		private var _map:Array = [];
+		/*[IF-FLASH]*/ private var _map:flash.utils.Dictionary = new flash.utils.Dictionary();
+		//[IF-JS] private var _map:Array = [];
 		/**@private */
 		private var _laters:Array = [];
 		/**@private */
@@ -154,6 +155,7 @@ package laya.utils {
 		
 		/** @private */
 		private function _indexHandler(handler:TimerHandler):void {
+			/*[IF-FLASH]*/ _map[handler.method] = handler; return;			
 			var caller:* = handler.caller;
 			var method:* = handler.method;
 			var cid:int = caller ? caller.$_GID || (caller.$_GID = Utils.getGID()) : 0;
@@ -223,8 +225,8 @@ package laya.utils {
 		public function clear(caller:*, method:Function):void {
 			var handler:TimerHandler = _getHandler(caller, method);
 			if (handler) {
-				_map[handler.key] = null;
-				handler.key = 0;
+				//[IF-JS] _map[handler.key] = null;handler.key = 0;
+				/*[IF-FLASH]*/ _map[handler.method] = null;
 				handler.clear();
 			}
 		}
@@ -237,8 +239,8 @@ package laya.utils {
 			for (var i:int = 0, n:int = _handlers.length; i < n; i++) {
 				var handler:TimerHandler = _handlers[i];
 				if (handler.caller === caller) {
-					_map[handler.key] = null;
-					handler.key = 0;
+					//[IF-JS] _map[handler.key] = null;handler.key = 0;
+					/*[IF-FLASH]*/ _map[handler.method] = null;
 					handler.clear();
 				}
 			}
@@ -246,6 +248,7 @@ package laya.utils {
 		
 		/** @private */
 		private function _getHandler(caller:*, method:*):TimerHandler {
+			/*[IF-FLASH]*/ return _map[method];
 			var cid:int = caller ? caller.$_GID || (caller.$_GID = Utils.getGID()) : 0;
 			var mid:int = method.$_TID || (method.$_TID = (_mid++) * 100000);
 			return _map[cid + mid];
@@ -284,11 +287,13 @@ package laya.utils {
 			var handler:TimerHandler = _getHandler(caller, method);
 			if (handler && handler.method != null) {
 				handler.run(true);
-				_map[handler.key] = null;
+				//[IF-JS] _map[handler.key] = null;
+				/*[IF-FLASH]*/ _map[handler.method] = null;
 			}
 		}
 	}
 }
+import laya.display.Node;
 
 /** @private */
 class TimerHandler {
@@ -309,7 +314,8 @@ class TimerHandler {
 	
 	public function run(widthClear:Boolean):void {
 		var caller:* = this.caller;
-		if (caller && caller.destroyed) return clear();
+		/*[IF-FLASH]*/ if ((caller is Node) && caller.destroyed) return clear();
+		//[IF-SCRIPT] if (caller && caller.destroyed) return clear();
 		var method:Function = this.method;
 		var args:Array = this.args;
 		widthClear && clear();

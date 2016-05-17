@@ -41,7 +41,7 @@ package laya.webgl.canvas.save
 			return value;
 		}
 		
-		private static function _init():*
+		public static function _init():*
 		{
 			var namemap:*= _namemap = { };
 			

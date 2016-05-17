@@ -3,6 +3,7 @@ package laya.webgl.display
 	import laya.display.Graphics;
 	import laya.renders.Render;
 	import laya.system.System;
+	import laya.utils.RunDriver;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer;
 	
@@ -26,10 +27,10 @@ package laya.webgl.display
 		
 		public function drawParticle(x:Number,y:Number,ps:*):void
 		{
-			var pt:*=System.createParticleTemplate2D(ps);
+			var pt:*=RunDriver.createParticleTemplate2D(ps);
 			pt.x=x;
 			pt.y=y;
-			_saveToCmd(Render.context.drawParticle, [pt]);
+			_saveToCmd(Render.context._drawParticle, [pt]);
 		}
 	}
 }

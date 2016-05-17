@@ -1,12 +1,13 @@
 package laya.renders {
+	import laya.display.Sprite;
 	import laya.display.css.CSSStyle;
 	import laya.display.css.Style;
-	import laya.display.Sprite;
 	import laya.filters.Filter;
 	import laya.maths.Matrix;
 	import laya.maths.Rectangle;
 	import laya.resource.HTMLCanvas;
-	import laya.system.System;
+	import laya.utils.Browser;
+	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	
 	/**
@@ -52,12 +53,12 @@ package laya.renders {
 		public static function __init__():void {
 			var i:int, len:int;
 			var initRender:RenderSprite;
-			initRender = System.createRenderSprite(INIT, null);
+			initRender = RunDriver.createRenderSprite(INIT, null);
 			len = renders.length = CHILDS * 2;
 			for (i = 0; i < len; i++)
 				renders[i] = initRender;
 			
-			renders[0] = System.createRenderSprite(0, null);
+			renders[0] = RunDriver.createRenderSprite(0, null);
 			
 			function _initSame(value:Array, o:RenderSprite):void {
 				var n:int = 0;
@@ -69,7 +70,7 @@ package laya.renders {
 			
 			_initSame([IMAGE, GRAPHICS, TRANSFORM, ALPHA], new RenderSprite(IMAGE, null));
 			
-			renders[IMAGE | GRAPHICS] = System.createRenderSprite(IMAGE | GRAPHICS, null);
+			renders[IMAGE | GRAPHICS] = RunDriver.createRenderSprite(IMAGE | GRAPHICS, null);
 			
 			renders[IMAGE | TRANSFORM | GRAPHICS] = new RenderSprite(IMAGE | TRANSFORM | GRAPHICS, null);
 		}
@@ -85,7 +86,7 @@ package laya.renders {
 			var tType:int = CHILDS;
 			while (tType > 1) {
 				if (tType & type)
-					rst = System.createRenderSprite(tType, rst);
+					rst = RunDriver.createRenderSprite(tType, rst);
 				tType = tType >> 1;
 			}
 			return rst;
@@ -161,8 +162,8 @@ package laya.renders {
 		
 		public function _custom(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			sprite.customRender(context, x, y);
-			var style:Style = sprite._style;
-			_next._fun.call(_next, sprite, context, x - style.translateX, y - style.translateY);
+			var tf:Object = sprite._style._tf;
+			_next._fun.call(_next, sprite, context, x - tf.translateX, y - tf.translateY);
 		}
 		
 		public function _clip(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
@@ -203,20 +204,20 @@ package laya.renders {
 		}
 		
 		public function _graphics(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			var style:Style = sprite._style;
-			sprite._graphics && sprite._graphics._render(sprite, context, x - style.translateX, y - style.translateY);
+			var tf:Object = sprite._style._tf;
+			sprite._graphics && sprite._graphics._render(sprite, context, x - tf.translateX, y - tf.translateY);
 			var next:RenderSprite = this._next;
 			next._fun.call(next, sprite, context, x, y);
 		}
 		
 		public function _image(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			var style:Style = sprite._style;
-			context.ctx.drawTexture2(x, y, style.translateX, style.translateY, sprite.transform, style.alpha, style.blendMode, sprite._graphics._one);
+			context.ctx.drawTexture2(x, y, style._tf.translateX, style._tf.translateY, sprite.transform, style.alpha, style.blendMode, sprite._graphics._one);
 		}
 		
 		public function _image2(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			var style:Style = sprite._style;
-			context.ctx.drawTexture2(x, y, style.translateX, style.translateY, sprite.transform, 1, null, sprite._graphics._one);
+			var tf:Object = sprite._style._tf;
+			context.ctx.drawTexture2(x, y, tf.translateX, tf.translateY, sprite.transform, 1, null, sprite._graphics._one);
 		}
 		
 		public function _alpha(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
@@ -246,8 +247,8 @@ package laya.renders {
 		public function _childs(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			//'use strict';
 			var style:Style = sprite._style;
-			x += -style.translateX + style.paddingLeft;
-			y += -style.translateY + style.paddingTop;
+			x += -style._tf.translateX + style.paddingLeft;
+			y += -style._tf.translateY + style.paddingTop;
 			var words:Vector.<Object> = sprite._getWords();
 			words && context.fillWords(words, x, y, (style as CSSStyle).font, (style as CSSStyle).color);
 			
@@ -287,10 +288,8 @@ package laya.renders {
 				if (!_cacheCanvas._cacheRec)
 					_cacheCanvas._cacheRec = new Rectangle();
 				var w:Number, h:Number;
-				
 				tRec = sprite.getSelfBounds();
-				if (_cacheCanvas.type === 'bitmap'&&(tRec.width > 2048 || tRec.height > 2048))
-				{
+				if (Render.isWebGL && _cacheCanvas.type === 'bitmap' && (tRec.width > 2048 || tRec.height > 2048)) {
 					throw new Error("cache bitmap size larger than 2048");
 				}
 				tRec.x -= sprite.pivotX;
@@ -299,14 +298,18 @@ package laya.renders {
 				tRec.y -= 10;
 				tRec.width += 20;
 				tRec.height += 20;
+				tRec.x = Math.floor(tRec.x + x) - x;
+				tRec.y = Math.floor(tRec.y + y) - y;
+				tRec.width = Math.floor(tRec.width);
+				tRec.height = Math.floor(tRec.height);
 				_cacheCanvas._cacheRec.copyFrom(tRec);
 				tRec = _cacheCanvas._cacheRec;
-				w = tRec.width;
-				h = tRec.height;
+				w = tRec.width * (Render.isWebGL?1:Browser.pixelRatio);
+				h = tRec.height * (Render.isWebGL?1:Browser.pixelRatio);
 				left = tRec.x;
 				top = tRec.y;
 				if (!tx) {
-					tx = _cacheCanvas.ctx = new RenderContext(w, h, new HTMLCanvas(HTMLCanvas.TYPEAUTO));
+					tx = _cacheCanvas.ctx = new RenderContext(w, h, HTMLCanvas.create(HTMLCanvas.TYPEAUTO));
 					tx.ctx.sprite = sprite;
 				}
 				
@@ -315,8 +318,20 @@ package laya.renders {
 				
 				canvas.clear();
 				(canvas.width != w || canvas.height != h) && canvas.size(w, h);
-				_next._fun.call(_next, sprite, tx, -left, -top);
-				sprite.applyFilters();
+				
+				//TODO:测试webgl下是否有缓存模糊问题
+				if (Browser.pixelRatio > 1 && !Render.isWebGL) {
+					var ctx:* = RenderContext(tx).ctx;
+					ctx.save();
+					ctx.scale(Browser.pixelRatio, Browser.pixelRatio);
+					_next._fun.call(_next, sprite, tx, -left, -top);
+					sprite.applyFilters();
+					ctx.restore();
+				} else {
+					_next._fun.call(_next, sprite, tx, -left, -top);
+					sprite.applyFilters();
+				}
+				
 				if (sprite._$P.isStatic) _cacheCanvas.reCache = false;
 				Stat.canvasReCache++;
 			} else {
@@ -325,8 +340,7 @@ package laya.renders {
 				top = tRec.y;
 				canvas = tx.canvas;
 			}
-			
-			context.drawCanvas(canvas, x + left, y + top, canvas.width, canvas.height);
+			context.drawCanvas(canvas, x + left, y + top, tRec.width, tRec.height);
 		}
 	}
 }

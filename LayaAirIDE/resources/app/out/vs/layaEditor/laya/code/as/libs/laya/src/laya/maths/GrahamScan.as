@@ -33,10 +33,40 @@ package laya.maths {
 			rst.length = 0;
 			if (tempUse) {
 				//				rst=_mPointList.slice(0,count);
-				Utils.getFrom(rst, _mPointList, count);
+				getFrom(rst, _mPointList, count);
 			} else {
 				//				rst=_mPointList.splice(0,count);
-				Utils.getFromR(rst, _mPointList, count);
+				getFromR(rst, _mPointList, count);
+			}
+			return rst;
+		}
+		
+		/**
+		 * 将数组 src 从索引0位置 依次取 cout 个项添加至 tst 数组的尾部。
+		 * @param	rst 原始数组，用于添加新的子元素。
+		 * @param	src 用于取子元素的数组。
+		 * @param	count 需要取得子元素个数。
+		 * @return 添加完子元素的 rst 对象。
+		 */
+		public static function getFrom(rst:Array, src:Array, count:int):Array {
+			var i:int;
+			for (i = 0; i < count; i++) {
+				rst.push(src[i]);
+			}
+			return rst;
+		}
+		
+		/**
+		 * 将数组 src 从末尾索引位置往头部索引位置方向 依次取 cout 个项添加至 tst 数组的尾部。
+		 * @param	rst 原始数组，用于添加新的子元素。
+		 * @param	src 用于取子元素的数组。
+		 * @param	count 需要取得子元素个数。
+		 * @return 添加完子元素的 rst 对象。
+		 */
+		public static function getFromR(rst:Array, src:Array, count:int):Array {
+			var i:int;
+			for (i = 0; i < count; i++) {
+				rst.push(src.pop());
 			}
 			return rst;
 		}
@@ -76,7 +106,7 @@ package laya.maths {
 		 * @return  最小多边形顶点集合
 		 */
 		public static function scanPList(pList:Array):Array {
-			return Utils.setValueArr(pList, pointListToPlist(scan(pListToPointList(pList, true))));
+			return Utils.copyArray(pList, pointListToPlist(scan(pListToPointList(pList, true))));
 		}
 		
 		
@@ -101,7 +131,7 @@ package laya.maths {
 				}
 			}
 			n = ch.length;
-			Utils.setValueArr(PointSet, ch);
+			Utils.copyArray(PointSet, ch);
 			//			PointSet=ch;
 			//			n=PointSet.length;
 			//找到最下且偏左的那个点  
@@ -127,7 +157,7 @@ package laya.maths {
 			ch.length = 0;
 			//trace("scan:",PointSet[0],PointSet[1],PointSet[2]);
 			if (PointSet.length < 3) {
-				return Utils.setValueArr(ch, PointSet);
+				return Utils.copyArray(ch, PointSet);
 			}
 			ch.push(PointSet[0], PointSet[1], PointSet[2]);
 			//ch=[PointSet[0],PointSet[1],PointSet[2]];

@@ -1,54 +1,68 @@
 package laya.ani.swf {
 	import laya.display.Sprite;
-	import laya.display.Sprite;
 	import laya.events.Event;
 	import laya.maths.Matrix;
 	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.utils.Byte;
+	
 	/**
-	 * ...
-	 * @author laya
+	 * <p> <code>MovieClip</code> 用于播放经过工具处理后的 swf 动画。</p>
 	 */
 	public class MovieClip extends Sprite {
+		/**@private */
 		protected static var _ValueList:Array = /*[STATIC SAFE]*/ ["x", "y", "width", "height", "scaleX", "scaleY", "rotation", "alpha"];
+		/** 播放间隔(单位：毫秒)。*/
 		public var interval:int = 30;
 		/**
-		 * 数据起始位置
+		 * @private
+		 * 数据起始位置。
 		 */
 		protected var _start:int = 0;
 		/**
-		 * 当前位置
+		 * @private
+		 * 当前位置。
 		 */
 		protected var _Pos:int = 0;
 		/**
-		 * 数据
+		 * @private
+		 * 数据。
 		 */
 		protected var _data:Byte;
 		/**
-		 * 当前帧
+		 * @private
+		 * 当前帧。
 		 */
 		protected var _curIndex:int;
+		/**@private */
 		protected var _playIndex:int;
+		/**@private */
 		protected var _playing:Boolean;
+		/**@private */
 		protected var _ended:Boolean = true;
 		/**
-		 * 总帧数
+		 * @private
+		 * 总帧数。
 		 */
 		protected var _frameCount:int;
 		/**
+		 * @private
 		 * id_data起始位置表
 		 */
 		public var _ids:Object;
 		/**
+		 * @private
 		 * id_实例表
 		 */
 		public var _idOfSprite:Array;
 		/**
-		 * 资源根目录
+		 * 资源根目录。
 		 */
 		public var basePath:String;
 		
+		/**
+		 * 创建一个 <code>MovieClip</code> 实例。
+		 */
 		public function MovieClip() {
 			_ids = {};
 			_idOfSprite = [];
@@ -56,14 +70,23 @@ package laya.ani.swf {
 			_playing = false;
 		}
 		
+		/**
+		 * 当前动画帧索引。
+		 */
 		public function get currentFrame():int {
 			return _playIndex;
 		}
 		
+		/**
+		 * 帧总数。
+		 */
 		public function get totalFrames():int {
 			return _frameCount;
 		}
 		
+		/**
+		 * 动画的帧更新处理函数。
+		 */
 		public function update():void {
 			if (!_data) return;
 			if (!_playing)
@@ -73,33 +96,45 @@ package laya.ani.swf {
 			_parse(_playIndex);
 		}
 		
+		/**
+		 * 停止播放动画。
+		 */
 		public function stop():void {
 			_playing = false;
 			Laya.timer.clear(this, update);
 		}
 		
+		/**
+		 * 将动画立即停止在指定帧。
+		 * @param	frame 帧索引。
+		 */
 		public function gotoStop(frame:int):void {
 			stop();
-			_displayFrame(frame);			
+			_displayFrame(frame);
 		}
 		
-		public function clear():void
-		{
+		/**
+		 * 清理。
+		 */
+		public function clear():void {
 			_idOfSprite.length = 0;
 			removeChildren();
 			graphics = null;
 		}
 		
+		/**
+		 * 播放动画。
+		 * @param	frameIndex 帧索引。
+		 */
 		public function play(frameIndex:int = -1):void {
-
+			
 			_displayFrame(frameIndex);
 			_playing = true;
 			//这里有问题吧》阿欢，如果已经在播如何办?
-			Laya.timer.loop(this.interval, this, update,null,true);
+			Laya.timer.loop(this.interval, this, update, null, true);
 		}
 		
-		private function _displayFrame(frameIndex:int = -1):void
-		{
+		private function _displayFrame(frameIndex:int = -1):void {
 			if (frameIndex != -1) {
 				if (_curIndex > frameIndex)
 					_reset();
@@ -107,6 +142,7 @@ package laya.ani.swf {
 				_parse(frameIndex);
 			}
 		}
+		
 		private function _reset(rm:Boolean = true):void {
 			if (rm && _curIndex != 1)
 				this.removeChildren();
@@ -124,7 +160,7 @@ package laya.ani.swf {
 			_data.pos = _Pos;
 			_ended = false;
 			_playIndex = frameIndex;
-			if (_curIndex >=frameIndex) _curIndex = -1;
+			if (_curIndex >= frameIndex) _curIndex = -1;
 			while ((_curIndex <= frameIndex) && (!_ended)) {
 				type = _data.getUint16();
 				switch (type) {
@@ -225,19 +261,26 @@ package laya.ani.swf {
 			_Pos = _data.pos;
 		}
 		
+		/**@private */
 		public function _setData(data:Byte, start:int):void {
 			_data = data;
 			_start = start + 3;
 		}
 		
-		public function set skin(path:String):void
-		{
+		/**
+		 * 资源地址。
+		 */
+		public function set url(path:String):void {
 			load(path);
 		}
+		
+		/**
+		 * 加载资源。
+		 * @param	url swf 资源地址。
+		 */
 		public function load(url:String):void {
 			url = URL.formatURL(url);
-			
-			basePath = url.replace(".swf", "/image/");
+			basePath = url.split(".swf")[0] + "/image/";
 			var data:* = Loader.getRes(url);
 			if (data) {
 				_initData(data);

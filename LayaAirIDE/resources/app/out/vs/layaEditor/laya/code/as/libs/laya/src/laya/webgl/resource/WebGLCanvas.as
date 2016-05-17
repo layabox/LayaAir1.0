@@ -1,5 +1,4 @@
 package laya.webgl.resource {
-	import laya.maths.Arith;
 	import laya.renders.Render;
 	import laya.resource.Bitmap;
 	import laya.resource.Context;
@@ -13,6 +12,11 @@ package laya.webgl.resource {
 	 */
 	public class WebGLCanvas extends Bitmap {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+		public static var create:Function = function(type:String):*
+		{
+			return new WebGLCanvas(type);
+		}
+			
 		public static var _createContext:Function;
 		
 		private var _ctx:Context;
@@ -35,7 +39,7 @@ package laya.webgl.resource {
 		public function WebGLCanvas(type:String) {
 			super();
 			_canvas = this;
-			if (type === "2D" || (type === "AUTO" && !Render.isWebGl)) {
+			if (type === "2D" || (type === "AUTO" && !Render.isWebGL)) {
 				_is2D = true;
 				_canvas = _source = Browser.createElement("canvas");//_canvas和_source均赋值
 				iscpuSource = true;
@@ -115,7 +119,9 @@ package laya.webgl.resource {
 			}
 			var glTex:* = _source = gl.createTexture();
 			iscpuSource = false;
-			gl.bindTexture(WebGLContext.TEXTURE_2D, glTex);
+			var  preTarget:*= WebGLContext.curBindTexTarget;
+			var  preTexture:*=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,WebGLContext.TEXTURE_2D, glTex);
 			
 			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _w, _h, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, null);
 			
@@ -124,14 +130,17 @@ package laya.webgl.resource {
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_S, WebGLContext.CLAMP_TO_EDGE);
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
 			memorySize = _w * _h * 4;
-			gl.bindTexture(WebGLContext.TEXTURE_2D, null);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget, preTexture));
 			_canvas = null;
 		}
 		
 		public function texSubImage2D(webglCanvas:WebGLCanvas, xoffset:Number, yoffset:Number):void {
 			var gl:WebGLContext = WebGL.mainContext;
-			gl.bindTexture(WebGLContext.TEXTURE_2D, _source);
+			var  preTarget:*= WebGLContext.curBindTexTarget;
+			var  preTexture:*=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,WebGLContext.TEXTURE_2D, _source);
 			gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, webglCanvas._source);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget, preTexture));
 		}
 	
 	}

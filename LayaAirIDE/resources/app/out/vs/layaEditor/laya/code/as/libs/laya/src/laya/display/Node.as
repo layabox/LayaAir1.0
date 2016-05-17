@@ -53,8 +53,10 @@ package laya.display {
 		protected var _displayInStage:Boolean;
 		/**@private 父节点对象*/
 		protected var _parent:Node;
+		/** @private */
+		private static const PROP_EMPTY:Object = {};
 		/**@private 系统保留的私有变量集合*/
-		public var _privates:Object;
+		public var _$P:Object = PROP_EMPTY;
 		
 		/**
 		 * <p>销毁此对象。</p>
@@ -72,7 +74,7 @@ package laya.display {
 			
 			this._childs = null;
 			
-			_privates && (this._privates = null);
+			_$P = null;
 			
 			//移除所有事件监听
 			this.offAll();
@@ -171,8 +173,15 @@ package laya.display {
 		}
 		
 		/**@private */
-		public function getPrivates():Object {
-			return _privates;
+		public function _get$P(key:String):* {
+			return this._$P[key];
+		}
+		
+		/**@private */
+		public function _set$P(key:String, value:*):* {
+			this._$P === PROP_EMPTY && (this._$P = {});
+			this._$P[key] = value;
+			return value;
 		}
 		
 		/**

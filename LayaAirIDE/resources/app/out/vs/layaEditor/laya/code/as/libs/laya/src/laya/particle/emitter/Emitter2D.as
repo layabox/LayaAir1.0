@@ -1,10 +1,3 @@
-///////////////////////////////////////////////////////////
-//  Emitter2D.as
-//  Macromedia ActionScript Implementation of the Class Emitter2D
-//  Created on:      2015-12-21 下午4:37:29
-//  Original author: ww
-///////////////////////////////////////////////////////////
-
 package laya.particle.emitter
 {
 	import laya.particle.ParticleSettings;
@@ -14,8 +7,7 @@ package laya.particle.emitter
 	
 	/**
 	 * 
-	 * @author ww
-	 * @version 1.0
+	 * @private
 	 * 
 	 * @created  2015-12-21 下午4:37:29
 	 */

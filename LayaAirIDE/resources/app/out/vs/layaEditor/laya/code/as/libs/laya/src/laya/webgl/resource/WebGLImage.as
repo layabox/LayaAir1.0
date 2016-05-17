@@ -13,12 +13,8 @@ package laya.webgl.resource {
 	 * ...
 	 * @author
 	 */
-	public class WebGLImage extends FileBitmap implements IMergeAtlasBitmap {
+	public class WebGLImage extends HTMLImage implements IMergeAtlasBitmap {
 		
-		/**异步加载锁*/
-		private var _recreateLock:Boolean = false;
-		/**异步加载完成后是否需要释放（有可能在恢复过程中,再次被释放，用此变量做标记）*/
-		private var _needReleaseAgain:Boolean = false;
 		/**HTML Image*/
 		private var _image:*;
 		/***是否创建私有Source,值为false时不根据src创建私有WebGLTexture,同时销毁时也只清空source=null,不调用WebGL.mainContext.deleteTexture类似函数，调用资源激活前有效*/
@@ -34,6 +30,20 @@ package laya.webgl.resource {
 		public var minFifter:int;//动态默认值，判断是否可生成miplevel
 		/**放大过滤器*/
 		public var magFifter:int;//动态默认值，判断是否可生成miplevel
+		
+		public function WebGLImage(im:*) {
+			super(null);
+			repeat = true;
+			mipmap = false;
+			minFifter = -1;
+			magFifter = -1;
+			_image = im || new Browser.window.Image();
+			_enableMerageInAtlas = true;
+		}
+		
+		protected override function _init_(im:*):void
+		{
+		}
 		
 		/**
 		 * 返回HTML Image,as3无internal货friend，通常禁止开发者修改image内的任何属性
@@ -103,16 +113,6 @@ package laya.webgl.resource {
 			}) : null);
 		}
 		
-		public function WebGLImage(im:* = null) {
-			super();
-			repeat = true;
-			mipmap = false;
-			minFifter = -1;
-			magFifter = -1;
-			_image = im || new Browser.window.Image();
-			_enableMerageInAtlas = true;
-		}
-		
 		/***重新创建资源*/
 		override protected function recreateResource():void {//未处理SRC恢复过程中更换问题
 			if (_src == null || _src === "")
@@ -164,13 +164,15 @@ package laya.webgl.resource {
 		}
 		
 		private function createWebGlTexture():void {
-			
 			var gl:WebGLContext = WebGL.mainContext;
 			if (!_image) {
 				throw "create GLTextur err:no data:" + _image;
 			}
 			var glTex:* = _source = gl.createTexture();
-			gl.bindTexture(WebGLContext.TEXTURE_2D, glTex);
+			
+			var  preTarget:*= WebGLContext.curBindTexTarget;
+			var  preTexture:*=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,WebGLContext.TEXTURE_2D, glTex);
 			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _image);
 			
 			var minFifter:int = this.minFifter;
@@ -199,8 +201,7 @@ package laya.webgl.resource {
 				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_S, WebGLContext.CLAMP_TO_EDGE);
 				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
 			}
-			
-			gl.bindTexture(WebGLContext.TEXTURE_2D, null);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget, preTexture));
 			_image = null;
 			
 			if (isPOT)
@@ -211,7 +212,7 @@ package laya.webgl.resource {
 		}
 		
 		/***调整尺寸*/
-		private function onresize():void {
+		override protected function onresize():void {
 			this._w = this._image.width;
 			this._h = this._image.height;
 			(AtlasResourceManager.enabled) && (_w < AtlasResourceManager.atlasLimitWidth && _h < AtlasResourceManager.atlasLimitHeight) ? _allowMerageInAtlas = true : _allowMerageInAtlas = false;

@@ -42,10 +42,6 @@ package laya.net {
 		/**@private */
 		private var _connected:Boolean;
 		/**@private */
-		private var _host:String;
-		/**@private */
-		private var _port:int;
-		/**@private */
 		private var _addInputPosition:int;
 		/**@private */
 		private var _input:Byte;
@@ -116,7 +112,7 @@ package laya.net {
 			endian = BIG_ENDIAN;
 			timeout = 20000;
 			_addInputPosition = 0;
-			if (port > 0 && port < 65535)
+			if (host&&port > 0 && port < 65535)
 				connect(host, port);
 		}
 		
@@ -125,17 +121,17 @@ package laya.net {
 		 * @param host 服务器地址。
 		 * @param port 服务器端口。
 		 */
-		public function connect(host:String, port:int):void {
-			if (_socket != null)
-				close();
-			
-			//			if( port < 0 || port > 65535 )
-			//				throw new Error("Invalid socket port number specified."+port);
-			
+		public function connect(host:String, port:int):void {		
 			var url:String = "ws://" + host + ":" + port;
-			
-			_host = host;
-			_port = port;
+			connectByUrl(url);		
+		}
+		/**
+		 * 连接到指定的url
+		 * @param url 连接目标
+		 */
+		public function connectByUrl(url:String):void {
+			if (_socket != null)
+				close();	
 			
 			_socket && _cleanSocket();
 			_socket = __JS__("new WebSocket(url)");
@@ -145,23 +141,21 @@ package laya.net {
 			_output.endian = endian;
 			_input = new _byteClass();
 			_input.endian = endian;
+			_addInputPosition = 0;
 			
-			_socket.onopen = function(... args):void {
-				onOpenHandler(args);
+			_socket.onopen = function(e:*):void {
+				onOpenHandler(e);
 			};
 			_socket.onmessage = function(msg:*):void {
 				onMessageHandler(msg);
 			};
-			_socket.onclose = function(... args):void {
-				onCloseHandler(args);
+			_socket.onclose = function(e:*):void {
+				onCloseHandler(e);
 			};
-			_socket.onerror = function(... args):void {
-				onErrorHandler(args);
-			};
-			
-			_socket.binaryType = "arraybuffer";
+			_socket.onerror = function(e:*):void {
+				onErrorHandler(e);
+			};	
 		}
-		
 		private function _cleanSocket():void {
 			try {
 				_socket.close();
@@ -181,18 +175,14 @@ package laya.net {
 			if (_socket != null) {
 				_cleanSocket();
 			}
-		/*else{
-		   throw"Operation attempted on invalid socket.";
-		   }*/
 		}
 		
 		/**
 		 * 连接建立成功 。
 		 */
-		protected function onOpenHandler(... args):void {
-			//trace("connected");
+		protected function onOpenHandler(e:*):void {
 			_connected = true;
-			event(Event.OPEN);
+			event(Event.OPEN,e);
 		}
 		
 		/**
@@ -200,7 +190,6 @@ package laya.net {
 		 * @param msg 数据。
 		 */
 		protected function onMessageHandler(msg:*):void {
-			//trace("msg:" + msg.data.length+"\n"+msg.data);
 			if (_input.length > 0 && _input.bytesAvailable < 1) {
 				_input.clear();
 				_addInputPosition = 0;
@@ -225,41 +214,36 @@ package laya.net {
 		/**
 		 * 连接被关闭处理方法。
 		 */
-		protected function onCloseHandler(... args):void {
-			//trace("onclose");
-			//这里不能主动派发close事件，因为flash这边仅在服务器关闭连接时调度 close 事件；在调用 close() 方法时不调度该事件  shaoxin.ji add
-			event(Event.CLOSE)
+		protected function onCloseHandler(e:*):void {
+			event(Event.CLOSE,e)
 		}
 		
 		/**
 		 * 出现异常处理方法。
 		 */
-		protected function onErrorHandler(... args):void {
-			//trace("ERROR");
-			event(Event.ERROR)
+		protected function onErrorHandler(e:*):void {
+			event(Event.ERROR,e)
 		}
 		
 		/**
-		 * 发送字符串数据到服务器。
-		 * @param	_str 需要发送的字符串。
+		 * 发送数据到服务器。
+		 * @param	data 需要发送的数据，可以是String或者ArrayBuffer。
 		 */
-		public function sendString(_str:String):void {
-			this._socket.send(_str);
+		public function send(data:*):void {
+			this._socket.send(data);
 		}
 		
 		/**
 		 * 发送缓冲区中的数据到服务器。
 		 */
 		public function flush():void {
-			//			if( _socket == null )
-			//				throw "Operation attempted on invalid socket.";
 			if (_output && _output.length > 0) {
 				try {
-					this._socket && this._socket.send(this._output.__getBuffer());
+					this._socket && this._socket.send(this._output.__getBuffer().slice(0, this._output.length));
 					_output.endian = endian;
 					_output.clear();
-				} catch (e:Event) {
-					//					throw "Operation attempted on invalid socket.";
+				} catch (e:*) {
+                     event(Event.ERROR,e);
 				}
 			}
 		}

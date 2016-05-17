@@ -6,6 +6,7 @@ package laya.net {
 	import laya.resource.HTMLImage;
 	import laya.resource.Texture;
 	import laya.utils.Browser;
+	import laya.utils.RunDriver;
 	
 	/**
 	 * 加载进度发生改变时调度。
@@ -125,7 +126,7 @@ package laya.net {
 		 * @param	url 资源地址。
 		 */
 		protected function _loadImage(url:String):void {
-			var image:HTMLImage = new HTMLImage();
+			var image:HTMLImage =HTMLImage.create();
 			var _this:Loader = this;
 			image.onload = function():void {
 				clear();
@@ -243,7 +244,7 @@ package laya.net {
 					
 					var map:Array = atlasMap[this._url] || (atlasMap[this._url] = []);
 					
-					var needSub:Boolean = Config.atlasEnable && Render.isWebGl;
+					var needSub:Boolean = Config.atlasEnable && Render.isWebGL;
 					for (var name:String in frames) {
 						var obj:Object = frames[name];//取对应的图
 						tPic = pics[obj.frame.idx ? obj.frame.idx : 0];//是否释放
@@ -259,7 +260,7 @@ package laya.net {
 						//loadedMap[url] = tex;
 						//map.push(tex);
 						//} else {
-						loadedMap[url] = Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y);
+						loadedMap[url] = Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h);
 						map.push(loadedMap[url]);
 							//}
 					}

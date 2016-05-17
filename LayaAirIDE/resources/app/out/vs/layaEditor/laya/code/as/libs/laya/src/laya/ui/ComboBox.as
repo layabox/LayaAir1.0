@@ -444,7 +444,7 @@ package laya.ui {
 					Point.EMPTY.setTo(0, 0);
 					var p:Point = localToGlobal(Point.EMPTY);
 					var py:Number = p.y + _button.height;
-					py = py + _listHeight <= Laya.stage.width ? py : p.y - _listHeight;
+					py = py + _listHeight <= Laya.stage.height ? py : p.y - _listHeight;
 					
 					_list.pos(p.x, py);
 					Laya.stage.addChild(_list);

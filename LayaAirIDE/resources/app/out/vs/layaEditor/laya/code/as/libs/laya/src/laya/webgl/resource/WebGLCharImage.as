@@ -6,6 +6,7 @@ package laya.webgl.resource {
 	import laya.resource.Texture;
 	import laya.system.System;
 	import laya.utils.Browser;
+	import laya.utils.RunDriver;
 	import laya.utils.Utils;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
@@ -68,7 +69,7 @@ package laya.webgl.resource {
 			this.char = char;
 			_enableMerageInAtlas = true;
 			
-			var bIsConchApp:Boolean = System.isConchApp;
+			var bIsConchApp:Boolean = Render.isConchApp;
 			if (bIsConchApp) {
 				__JS__("this._ctx = canvas;")
 			} else {
@@ -96,7 +97,7 @@ package laya.webgl.resource {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var char:DrawTextChar = this.char;
 			
-			var bIsConchApp:Boolean = System.isConchApp;
+			var bIsConchApp:Boolean = Render.isConchApp;
 			var xs:Number = char.xs, ys:Number = char.ys;
 			onresize(char.width + borderSize * 2, char.height + borderSize * 2);
 			canvas && (canvas.height = _h, canvas.width = _w);//canvas为公用，其它地方也可能修改其尺寸

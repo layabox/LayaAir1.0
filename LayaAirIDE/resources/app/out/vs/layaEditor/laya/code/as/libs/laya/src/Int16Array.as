@@ -1,5 +1,9 @@
-/*[IF-FLASH]*/package
-{
-	public var  Int16Array:*;
-	
+/*[IF-FLASH]*/
+package {
+	/**
+	 * @private
+	 */
+	public dynamic class Int16Array  extends Array {
+		public function Int16Array(...arg) { }
+	}
 }

@@ -6,10 +6,33 @@ package laya.resource {
 	 */
 	public class HTMLImage extends FileBitmap {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+		
+		/**
+		 * 创建一个 <code>HTMLImage</code> 实例。请不要直接使用 new HTMLImage
+		 */
+		public static var create:Function = function(im:* = null):HTMLImage
+		{
+			return new HTMLImage(im);
+		}
+		
 		/**异步加载锁*/
-		private var _recreateLock:Boolean = false;
+		protected var _recreateLock:Boolean = false;
 		/**异步加载完成后是否需要释放（有可能在恢复过程中,再次被释放，用此变量做标记）*/
-		private var _needReleaseAgain:Boolean = false;
+		protected var _needReleaseAgain:Boolean = false;
+		
+		/**
+		 * 创建一个 <code>HTMLImage</code> 实例。请不要直接使用 new HTMLImage
+		 */
+		public function HTMLImage(im:*) {
+			_w = 0;
+			_h = 0;
+			_init_(im);
+		}
+		
+		protected function _init_(im:*):void
+		{
+			_source = im || new Browser.window.Image();
+		}
 		
 		/***
 		 * HTML Image。
@@ -45,14 +68,6 @@ package laya.resource {
 			_source && (_source.onerror = _onerror != null ? (function():void {
 				_onerror()
 			}) : null);
-		}
-		
-		/**
-		 * 创建一个 <code>HTMLImage</code> 实例。
-		 */
-		public function HTMLImage(im:* = null) {
-			_source = im || new Browser.window.Image();
-			super();
 		}
 		
 		/**
@@ -98,7 +113,7 @@ package laya.resource {
 		}
 		
 		/*** 调整尺寸。*/
-		private function onresize():void {
+		protected function onresize():void {
 			this._w = this._source.width;
 			this._h = this._source.height;
 		}

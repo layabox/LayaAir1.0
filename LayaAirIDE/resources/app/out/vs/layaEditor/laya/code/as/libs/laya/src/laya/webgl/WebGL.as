@@ -12,13 +12,18 @@ package laya.webgl {
 	import laya.renders.RenderSprite;
 	import laya.resource.Bitmap;
 	import laya.resource.HTMLCanvas;
+	import laya.resource.HTMLImage;
+	import laya.resource.HTMLSubImage;
 	import laya.resource.ResourceManager;
 	import laya.resource.Texture;
 	import laya.system.System;
 	import laya.utils.Browser;
 	import laya.utils.Color;
+	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	import laya.webgl.atlas.AtlasResourceManager;
+	import laya.webgl.atlas.AtlasWebGLCanvas;
+	import laya.webgl.atlas.Atlaser;
 	import laya.webgl.canvas.BlendMode;
 	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.display.GraphicsGL;
@@ -34,13 +39,13 @@ package laya.webgl {
 	import laya.webgl.submit.Submit;
 	import laya.webgl.submit.SubmitCMD;
 	import laya.webgl.submit.SubmitCMDScope;
+	import laya.webgl.text.DrawText;
 	import laya.webgl.utils.Buffer;
 	import laya.webgl.utils.RenderSprite3D;
 	import laya.webgl.utils.RenderState2D;
 	
 	/**
-	 * ...
-	 * @author laya
+	 * @private
 	 */
 	public class WebGL {
 		public static var mainCanvas:HTMLCanvas;
@@ -53,39 +58,52 @@ package laya.webgl {
 		public static function enable():Boolean {
 			if (!isWebGLSupported()) return false;
 			
-			__JS__("HTMLImage=WebGLImage");
-			__JS__("HTMLCanvas=WebGLCanvas");
-			__JS__("HTMLSubImage=WebGLSubImage");
-			System.changeDefinition("HTMLImage", WebGLImage);
-			System.changeDefinition("HTMLCanvas", WebGLCanvas);
-			System.changeDefinition("HTMLSubImage", WebGLSubImage);
+			if (Render.isWebGL) return true;
+			
+			HTMLImage.create = function(im:* = null):HTMLImage {
+				return new WebGLImage(im);
+			}
+			
+			/*
+			   __JS__("HTMLImage=WebGLImage");
+			   __JS__("HTMLCanvas=WebGLCanvas");
+			   __JS__("HTMLSubImage=WebGLSubImage");
+			   System.changeDefinition("HTMLImage", WebGLImage);
+			   System.changeDefinition("HTMLCanvas", WebGLCanvas);
+			   System.changeDefinition("HTMLSubImage", WebGLSubImage);
+			 */
 			
 			Render.WebGL = WebGL;
-			System.createRenderSprite = function(type:int, next:RenderSprite):RenderSprite {
+			Render.isWebGL = true;
+			
+			DrawText.__init__();
+			
+			RunDriver.createRenderSprite = function(type:int, next:RenderSprite):RenderSprite {
 				return new RenderSprite3D(type, next);
 			}
-			System.createWebGLContext2D = function(c:HTMLCanvas):WebGLContext2D {
+			RunDriver.createWebGLContext2D = function(c:HTMLCanvas):WebGLContext2D {
 				return new WebGLContext2D(c);
 			}
-			System.changeWebGLSize = function(width:Number, height:Number):void {
+			RunDriver.changeWebGLSize = function(width:Number, height:Number):void {
 				WebGL.onStageResize(width, height);
 			}
-			System.createGraphics = function():GraphicsGL {
+			RunDriver.createGraphics = function():GraphicsGL {
 				return new GraphicsGL();
 			}
 			
-			var action:* = System.createFilterAction;
-			System.createFilterAction = action ? action : function(type:int):IFilterAction {
+			var action:* = RunDriver.createFilterAction;
+			RunDriver.createFilterAction = action ? action : function(type:int):IFilterAction {
 				return new ColorFilterActionGL()
 			}
-			Render.clear = function(color:String):void {
+			
+			RunDriver.clear = function(color:String):void {
 				RenderState2D.worldScissorTest && WebGL.mainContext.disable(WebGLContext.SCISSOR_TEST);
 				var c:Array = Color.create(color)._color;
 				Render.context.ctx.clearBG(c[0], c[1], c[2], c[3]);
 				RenderState2D.clear();
 			}
 			
-			System.addToAtlas = function(texture:Texture, force:Boolean = false):void {
+			RunDriver.addToAtlas = function(texture:Texture, force:Boolean = false):void {
 				var bitmap:Bitmap = texture.bitmap;
 				if ((bitmap is IMergeAtlasBitmap) && ((bitmap as IMergeAtlasBitmap).allowMerageInAtlas)) {
 					bitmap.on(Event.RECOVERED, null, function(bm:Bitmap):void {
@@ -95,7 +113,16 @@ package laya.webgl {
 			}
 			AtlasResourceManager.enable();
 			
-			System.drawToCanvas = function(sprite:Sprite, _renderType:int, canvasWidth:Number, canvasHeight:Number, offsetX:Number, offsetY:Number):* {
+			RunDriver.benginFlush = function():void {
+				var atlasResourceManager:AtlasResourceManager = AtlasResourceManager.instance;
+				var count:int = atlasResourceManager.getAtlaserCount();
+				for (var i:int = 0; i < count; i++) {
+					var atlerCanvas:AtlasWebGLCanvas = atlasResourceManager.getAtlaserByIndex(i).texture;
+					(atlerCanvas._flashCacheImageNeedFlush) && (RunDriver.flashFlushImage(atlerCanvas));
+				}
+			}
+			
+			RunDriver.drawToCanvas = function(sprite:Sprite, _renderType:int, canvasWidth:Number, canvasHeight:Number, offsetX:Number, offsetY:Number):* {
 				var renderTarget:RenderTarget2D = new RenderTarget2D(canvasWidth, canvasHeight, false, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, 0);
 				renderTarget.start();
 				renderTarget.clear(1.0, 0.0, 0.0, 1.0);
@@ -107,7 +134,7 @@ package laya.webgl {
 				return pixels;
 			}
 			
-			System.createFilterAction = function(type:int):* {
+			RunDriver.createFilterAction = function(type:int):* {
 				var action:*;
 				switch (type) {
 				case Filter.COLOR: 
@@ -142,8 +169,8 @@ package laya.webgl {
 				out.start();
 				out.clear(0, 0, 0, 0);
 				scope.addValue("out", out);
-				sprite._filterCache = out;
-				sprite._isHaveGlowFilter = scope.getValue("isHaveGlowFilter");
+				sprite._set$P('_filterCache', out);
+				sprite._set$P('_isHaveGlowFilter', scope.getValue("isHaveGlowFilter"));
 			}
 			
 			Filter._EndTarget = function(scope:SubmitCMDScope, context:RenderContext):void {
@@ -217,7 +244,7 @@ package laya.webgl {
 					var tHalfPadding:int = 0;
 					var tIsHaveGlowFilter:Boolean = false;
 					//这里判断是否存储了out，如果存储了直接用;
-					var out:RenderTarget2D = sprite._filterCache ? sprite._filterCache : null;
+					var out:RenderTarget2D = sprite._$P._filterCache ? sprite._$P._filterCache : null;
 					if (!out || sprite._repaint) {
 						
 						tIsHaveGlowFilter = sprite.isHaveGlowFilter();
@@ -313,6 +340,8 @@ package laya.webgl {
 		}
 		
 		public static function isWebGLSupported():String {
+			/*[IF-FLASH]*/
+			return 'webgl';
 			var canvas:* = Browser.createElement('canvas');
 			var gl:WebGLContext;
 			var names:Array = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
@@ -328,6 +357,8 @@ package laya.webgl {
 		
 		public static function onStageResize(width:Number, height:Number):void {
 			mainContext.viewport(0, 0, width, height);
+			/*[IF-FLASH]*/
+			mainContext.configureBackBuffer(width, height, 0, true);
 			RenderState2D.width = width;
 			RenderState2D.height = height;
 		}
@@ -338,8 +369,8 @@ package laya.webgl {
 		
 		/**只有微信或QQ且是experimental-webgl模式下起作用*/
 		public static function addRenderFinish():void {
-			if (_isExperimentalWebgl) {
-				Render.finish = function():void {
+			if (_isExperimentalWebgl || Render.isFlash) {
+				RunDriver.endFinish = function():void {
 					Render.context.ctx.finish();
 				}
 			}
@@ -348,7 +379,7 @@ package laya.webgl {
 		// 去掉finish的代码
 		public static function removeRenderFinish():void {
 			if (_isExperimentalWebgl) {
-				Render.finish = function():void {
+				RunDriver.endFinish = function():void {
 				}
 			}
 		}
@@ -356,8 +387,9 @@ package laya.webgl {
 		private static function onInvalidGLRes():void {
 			AtlasResourceManager.instance.freeAll();
 			ResourceManager.releaseContentManagers(true);
-		
 			doNodeRepaint(Laya.stage);
+			
+			mainContext.viewport(0, 0, RenderState2D.width, RenderState2D.height);
 			//Render.context.ctx._repaint = true;
 			//alert("释放资源");
 		}
@@ -375,7 +407,7 @@ package laya.webgl {
 			}
 			
 			var webGLName:String = isWebGLSupported();
-			var gl:WebGLContext = mainContext = canvas.getContext(webGLName, {stencil: true, alpha: false, antialias: true, premultipliedAlpha: false}) as WebGLContext;
+			var gl:WebGLContext = mainContext = RunDriver.newWebGLContext(canvas, webGLName) as WebGLContext;
 			
 			_isExperimentalWebgl = (webGLName != "webgl" && (Browser.onWeiXin || Browser.onMQQBrowser));
 			
@@ -395,7 +427,7 @@ package laya.webgl {
 			Shader2D.__init__();
 			Buffer.__int__(gl);
 			BlendMode._init_(gl);
-			if (System.isConchApp) {
+			if (Render.isConchApp) {
 				__JS__("conch.setOnInvalidGLRes(WebGL.onInvalidGLRes)");
 			}
 		}

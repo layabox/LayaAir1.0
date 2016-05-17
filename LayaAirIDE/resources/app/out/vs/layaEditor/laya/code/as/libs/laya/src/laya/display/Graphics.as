@@ -13,6 +13,7 @@ package laya.display {
 	import laya.resource.Texture;
 	import laya.utils.Color;
 	import laya.utils.Handler;
+	import laya.utils.RunDriver;
 	import laya.utils.Utils;
 	
 	/**
@@ -124,11 +125,11 @@ package laya.display {
 		public function getBoundPoints():Array {
 			if (!_temp || _temp.length < 1)
 				_temp = _getCmdPoints();
-			return _rstBoundPoints = Utils.setValueArr(_rstBoundPoints, _temp);
+			return _rstBoundPoints = Utils.copyArray(_rstBoundPoints, _temp);
 		}
 		
 		private function _getCmdPoints():Array {
-			var context:RenderContext = Render.context;
+			var context:RenderContext = Render._context;
 			var cmds:Array = this._cmds;
 			var rst:Array;
 			rst = _temp || (_temp = []);
@@ -204,7 +205,7 @@ package laya.display {
 				case context._drawLine: 
 					_addPointArrToRst(rst, [cmd[0], cmd[1], cmd[2], cmd[3]], tMatrix);
 					break;
-				case context.drawCurves: 
+				case context._drawCurves: 
 					//addPointArrToRst(rst, [cmd[0], cmd[1]], tMatrix);
 					//addPointArrToRst(rst, cmd[2], tMatrix, cmd[0], cmd[1]);
 					_addPointArrToRst(rst, Bezier.I.getBezierPoints(cmd[2]), tMatrix, cmd[0], cmd[1]);
@@ -225,7 +226,7 @@ package laya.display {
 				}
 			}
 			if (rst.length > 200) {
-				rst = Utils.setValueArr(rst, Rectangle._getWrapRec(rst)._getBoundPoints());
+				rst = Utils.copyArray(rst, Rectangle._getWrapRec(rst)._getBoundPoints());
 			} else if (rst.length > 8)
 				rst = GrahamScan.scanPList(rst);
 			return rst;
@@ -264,8 +265,16 @@ package laya.display {
 		 */
 		public function drawTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, m:Matrix = null):void {
 			_sp && (_sp._renderType |= RenderSprite.GRAPHICS);
-			if (!width) width = tex.width;
-			if (!height) height = tex.height;
+			if (!width) width = tex.sourceWidth;
+			if (!height) height = tex.sourceHeight;
+			
+			//处理透明区域裁剪
+			x += tex.offsetX;
+			y += tex.offsetY;
+			width = width - tex.sourceWidth + tex.width;
+			height = height - tex.sourceHeight + tex.height;
+			width < 0 && (width = 0);
+			height < 0 && (height = 0);
 			
 			var args:* = [tex, x, y, width, height, m];
 			if (_one == null) {
@@ -277,7 +286,7 @@ package laya.display {
 				_cmds.push(args);
 			}
 			
-			args.callee = m ? Render.context._drawTextureWithTransform : Render.context._drawTexture;
+			args.callee = m ? Render._context._drawTextureWithTransform : Render._context._drawTexture;
 			_repaint();
 		}
 		
@@ -334,7 +343,7 @@ package laya.display {
 		 * @param	height 高度。
 		 */
 		public function clipRect(x:Number, y:Number, width:Number, height:Number):void {
-			_saveToCmd(Render.context._clipRect, arguments);
+			_saveToCmd(Render._context._clipRect, arguments);
 		}
 		
 		/**
@@ -347,7 +356,7 @@ package laya.display {
 		 * @param	textAlign 文本对齐方式。
 		 */
 		public function fillText(text:String, x:Number, y:Number, font:String, color:String, textAlign:String):void {
-			_saveToCmd(Render.context._fillText, [text, x, y, font || Font.defaultFont, color, textAlign]);
+			_saveToCmd(Render._context._fillText, [text, x, y, font || Font.defaultFont, color, textAlign]);
 		}
 		
 		/**
@@ -362,7 +371,7 @@ package laya.display {
 		 * @param	textAlign 文本对齐方式。
 		 */
 		public function fillBorderText(text:*, x:Number, y:Number, font:String, fillColor:String, borderColor:String, lineWidth:Number, textAlign:String):void {
-			_saveToCmd(Render.context._fillBorderText, [text, x, y, font || Font.defaultFont, fillColor, borderColor, lineWidth, textAlign]);
+			_saveToCmd(Render._context._fillBorderText, [text, x, y, font || Font.defaultFont, fillColor, borderColor, lineWidth, textAlign]);
 		}
 		
 		/**
@@ -376,7 +385,7 @@ package laya.display {
 		 * @param	textAlign 文本对齐方式。
 		 */
 		public function strokeText(text:*, x:Number, y:Number, font:String, color:String, lineWidth:Number, textAlign:String):void {
-			_saveToCmd(Render.context._strokeText, [text, x, y, font || Font.defaultFont, color, lineWidth, textAlign]);
+			_saveToCmd(Render._context._strokeText, [text, x, y, font || Font.defaultFont, color, lineWidth, textAlign]);
 		}
 		
 		/**
@@ -384,7 +393,7 @@ package laya.display {
 		 * @param	value 透明度。
 		 */
 		public function alpha(value:Number):void {
-			_saveToCmd(Render.context._alpha, arguments);
+			_saveToCmd(Render._context._alpha, arguments);
 		}
 		
 		/**
@@ -392,7 +401,7 @@ package laya.display {
 		 * @param	value 混合模式。
 		 */
 		public function blendMode(value:String):void {
-			_saveToCmd(Render.context._blendMode, arguments);
+			_saveToCmd(Render._context._blendMode, arguments);
 		}
 		
 		/**
@@ -402,7 +411,7 @@ package laya.display {
 		 * @param	pivotY 垂直方向轴心点坐标。
 		 */
 		public function transform(mat:Matrix, pivotX:Number = 0, pivotY:Number = 0):void {
-			_saveToCmd(Render.context._transform, [mat, pivotX, pivotY]);
+			_saveToCmd(Render._context._transform, [mat, pivotX, pivotY]);
 		}
 		
 		/**
@@ -412,7 +421,7 @@ package laya.display {
 		 * @param	pivotY 垂直方向轴心点坐标。
 		 */
 		public function rotate(angle:Number, pivotX:Number = 0, pivotY:Number = 0):void {
-			_saveToCmd(Render.context._rotate, [angle, pivotX, pivotY]);
+			_saveToCmd(Render._context._rotate, [angle, pivotX, pivotY]);
 		}
 		
 		/**
@@ -423,7 +432,7 @@ package laya.display {
 		 * @param	pivotY 垂直方向轴心点坐标。
 		 */
 		public function scale(scaleX:Number, scaleY:Number, pivotX:Number = 0, pivotY:Number = 0):void {
-			_saveToCmd(Render.context._scale, [scaleX, scaleY, pivotX, pivotY]);
+			_saveToCmd(Render._context._scale, [scaleX, scaleY, pivotX, pivotY]);
 		}
 		
 		/**
@@ -432,21 +441,21 @@ package laya.display {
 		 * @param	y 添加到垂直坐标（y）上的值。
 		 */
 		public function translate(x:Number, y:Number):void {
-			_saveToCmd(Render.context._translate, [x, y]);
+			_saveToCmd(Render._context._translate, [x, y]);
 		}
 		
 		/**
 		 * 保存当前环境的状态。
 		 */
 		public function save():void {
-			_saveToCmd(Render.context.save, arguments);
+			_saveToCmd(Render._context._save, arguments);
 		}
 		
 		/**
 		 * 返回之前保存过的路径状态和属性。
 		 */
 		public function restore():void {
-			_saveToCmd(Render.context.restore, arguments);
+			_saveToCmd(Render._context._restore, arguments);
 		}
 		
 		/**
@@ -458,10 +467,10 @@ package laya.display {
 			_repaint();
 			var cmds:Array = this._cmds;
 			if (!cmds) {
-				return _one && _one.callee === Render.context._fillText && (_one[0] = text, true);
+				return _one && _one.callee === Render._context._fillText && (_one[0] = text, true);
 			}
 			for (var i:int = cmds.length - 1; i > -1; i--) {
-				if (cmds[i].callee === Render.context._fillText) {
+				if (cmds[i].callee === Render._context._fillText) {
 					cmds[i][0] = text;
 					return true;
 				}
@@ -478,10 +487,10 @@ package laya.display {
 			_repaint();
 			var cmds:Array = this._cmds;
 			if (!cmds) {
-				return _one && (_one.callee === Render.context._fillBorderText || _one.callee === Render.context._fillText) && (_one[4] = color, true);
+				return _one && (_one.callee === Render._context._fillBorderText || _one.callee === Render._context._fillText) && (_one[4] = color, true);
 			}
 			for (var i:int = cmds.length - 1; i > -1; i--) {
-				if (cmds[i].callee === Render.context._fillText) {
+				if (cmds[i].callee === Render._context._fillText) {
 					cmds[i][4] = color;
 					return true;
 				}
@@ -557,7 +566,7 @@ package laya.display {
 		 */
 		public function drawLine(fromX:Number, fromY:Number, toX:Number, toY:Number, lineColor:String, lineWidth:Number = 1):void {
 			var arr:Array = [fromX + 0.5, fromY + 0.5, toX + 0.5, toY + 0.5, lineColor, lineWidth];
-			_saveToCmd(Render.context._drawLine, arr);
+			_saveToCmd(Render._context._drawLine, arr);
 		}
 		
 		/**
@@ -570,9 +579,9 @@ package laya.display {
 		 */
 		public function drawLines(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):void {
 			var arr:Array = [x + 0.5, y + 0.5, points, lineColor, lineWidth];
-			if (Render.isWebGl)
+			if (Render.isWebGL)
 				arr[3] = Color.create(lineColor).numColor;
-			_saveToCmd(Render.isWebGl ? Render.context.drawLinesWebGL : Render.context.drawLines, arr);
+			_saveToCmd(Render.isWebGL? Render._context._drawLinesWebGL : Render._context._drawLines, arr);
 		}
 		
 		/**
@@ -585,9 +594,9 @@ package laya.display {
 		 */
 		public function drawCurves(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):void {
 			var arr:Array = [x + 0.5, y + 0.5, points, lineColor, lineWidth];
-			if (Render.isWebGl)
+			if (Render.isWebGL)
 				arr[3] = Color.create(lineColor).numColor;
-			_saveToCmd(Render.isWebGl ? Render.context.drawCurvesGL : Render.context.drawCurves, arr);
+			_saveToCmd(Render.isWebGL ? Render._context._drawCurvesGL : Render._context._drawCurves, arr);
 		}
 		
 		/**
@@ -603,7 +612,7 @@ package laya.display {
 		public function drawRect(x:Number, y:Number, width:Number, height:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? 0.5 : 0;
 			var arr:Array = [x + offset, y + offset, width, height, fillColor, lineColor, lineWidth];
-			_saveToCmd(Render.context._drawRect, arr);
+			_saveToCmd(Render._context._drawRect, arr);
 		}
 		
 		/**
@@ -618,11 +627,11 @@ package laya.display {
 		public function drawCircle(x:Number, y:Number, radius:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? 0.5 : 0;
 			var arr:Array = [x + offset, y + offset, radius, fillColor, lineColor, lineWidth];
-			if (Render.isWebGl) {
+			if (Render.isWebGL) {
 				arr[3] = fillColor ? Color.create(fillColor).numColor : fillColor;
 				arr[4] = lineColor ? Color.create(lineColor).numColor : lineColor;
 			}
-			_saveToCmd(Render.isWebGl ? Render.context._drawCircleWebGL : Render.context._drawCircle, arr);
+			_saveToCmd(Render.isWebGL? Render._context._drawCircleWebGL : Render._context._drawCircle, arr);
 		}
 		
 		/**
@@ -639,7 +648,7 @@ package laya.display {
 		public function drawPie(x:Number, y:Number, radius:Number, startAngle:Number, endAngle:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? 0.5 : 0;
 			var arr:Array = [x + offset, y + offset, radius, startAngle, endAngle, fillColor, lineColor, lineWidth];
-			if (Render.isWebGl) {
+			if (Render.isWebGL) {
 				startAngle = 90 - startAngle;
 				endAngle = 90 - endAngle;
 				arr[5] = fillColor ? Color.create(fillColor).numColor : fillColor;
@@ -647,7 +656,7 @@ package laya.display {
 			}
 			arr[3] = Utils.toRadian(startAngle);
 			arr[4] = Utils.toRadian(endAngle);
-			_saveToCmd(Render.isWebGl ? Render.context._drawPieWebGL : Render.context._drawPie, arr);
+			_saveToCmd(Render.isWebGL ? Render._context._drawPieWebGL : Render._context._drawPie, arr);
 		}
 		
 		private function _getPiePoints(x:Number, y:Number, radius:Number, startAngle:Number, endAngle:Number):Array {
@@ -676,7 +685,7 @@ package laya.display {
 		public function drawPoly(x:Number, y:Number, points:Array, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? 0.5 : 0;
 			var arr:Array = [x + offset, y + offset, points, fillColor, lineColor, lineWidth];
-			if (Render.isWebGl) {
+			if (Render.isWebGL) {
 				if (fillColor != null) {
 					arr[3] = Color.create(fillColor).numColor;
 				}
@@ -684,7 +693,7 @@ package laya.display {
 					arr[4] = Color.create(lineColor).numColor;
 				}
 			}
-			_saveToCmd(Render.isWebGl ? Render.context._drawPolyGL : Render.context._drawPoly, arr);
+			_saveToCmd(Render.isWebGL? Render._context._drawPolyGL : Render._context._drawPoly, arr);
 		}
 		
 		private function _getPathPoints(paths:Array):Array {
@@ -708,13 +717,13 @@ package laya.display {
 		 * 绘制路径。
 		 * @param	x 开始绘制的 X 轴位置。
 		 * @param	y 开始绘制的 Y 轴位置。
-		 * @param	paths 路径集合，路径支持以下格式：[["moveTo",x,y],["lineTo",x,y],["arcTo",x1,y1,x2,y2,r],["closePath"]]。
+		 * @param	paths 路径集合，路径支持以下格式：[["moveTo",x,y],["lineTo",x,y,x,y,x,y],["arcTo",x1,y1,x2,y2,r],["closePath"]]。
 		 * @param	brush 刷子定义，支持以下设置{fillStyle}。
 		 * @param	pen 画笔定义，支持以下设置{strokeStyle,lineWidth,lineJoin,lineCap,miterLimit}。
 		 */
 		public function drawPath(x:Number, y:Number, paths:Array, brush:Object = null, pen:Object = null):void {
 			var arr:Array = [x + 0.5, y + 0.5, paths, brush, pen];
-			_saveToCmd(Render.context._drawPath, arr);
+			_saveToCmd(Render._context._drawPath, arr);
 		}
 	}
 }

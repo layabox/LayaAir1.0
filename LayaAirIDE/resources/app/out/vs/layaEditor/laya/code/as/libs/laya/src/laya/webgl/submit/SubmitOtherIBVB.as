@@ -2,13 +2,14 @@ package laya.webgl.submit {
 	import laya.maths.Matrix;
 	import laya.webgl.submit.ISubmit;
 	import laya.utils.Stat;
+	import laya.webgl.utils.IndexBuffer;
+	import laya.webgl.utils.VertexBuffer;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.BlendMode;
 	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.shader.d2.value.Value2D;
-	import laya.webgl.utils.Buffer;
 	import laya.webgl.utils.CONST3D2D;
 	import laya.webgl.utils.RenderState2D;
 	/**
@@ -28,7 +29,7 @@ package laya.webgl.submit {
 			0, 0, 0, 1,
 		];
 		
-		public static function create(context:WebGLContext2D,vb:Buffer,ib:Buffer,numElement:int,shader:Shader,shaderValue:Value2D,startIndex:int,offset:int):SubmitOtherIBVB
+		public static function create(context:WebGLContext2D,vb:VertexBuffer,ib:IndexBuffer,numElement:int,shader:Shader,shaderValue:Value2D,startIndex:int,offset:int):SubmitOtherIBVB
 		{
 			var o:SubmitOtherIBVB = (!_cache._length)?(new SubmitOtherIBVB()):_cache[--_cache._length];
 			o._ib = ib;
@@ -43,8 +44,8 @@ package laya.webgl.submit {
 			return o;
 		}
 		protected var offset:int = 0;
-		protected var _vb : Buffer;
-		protected var _ib : Buffer;
+		protected var _vb : VertexBuffer;
+		protected var _ib : IndexBuffer;
 		protected var _blendFn:Function;
 		
 		public var _mat:Matrix;
@@ -79,8 +80,9 @@ package laya.webgl.submit {
 				if ( !source) return 1;
 				_shaderValue.texture = source;
 			}
-			_ib.upload_bind();
-			_vb.upload_bind();
+
+			_vb.bind_upload(_ib);
+			
 			var w:Array = RenderState2D.worldMatrix4;
 			var wmat:Matrix = Matrix.TEMP;
 			Matrix.mulPre(_mat,w[0],w[1],w[4],w[5],w[12],w[13], wmat);

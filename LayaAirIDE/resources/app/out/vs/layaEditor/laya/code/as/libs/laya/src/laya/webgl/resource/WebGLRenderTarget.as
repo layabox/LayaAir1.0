@@ -42,7 +42,9 @@ package laya.webgl.resource {
 			var gl:WebGLContext = WebGL.mainContext;
 			_frameBuffer || (_frameBuffer = gl.createFramebuffer());
 			_source || (_source = gl.createTexture());
-			gl.bindTexture(WebGLContext.TEXTURE_2D, _source);
+			var  preTarget:*= WebGLContext.curBindTexTarget;
+			var  preTexture:*=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,WebGLContext.TEXTURE_2D, _source);
 			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _w, _h, 0, _surfaceFormat, _surfaceType, null);
 			
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MIN_FILTER, WebGLContext.LINEAR);
@@ -70,11 +72,11 @@ package laya.webgl.resource {
 			}
 			
 			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
-			gl.bindTexture(WebGLContext.TEXTURE_2D, null);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget, preTexture));
 			gl.bindRenderbuffer(WebGLContext.RENDERBUFFER, null);
 			memorySize = _w * _h * 4;
-			
 			compoleteCreate();
+		
 		}
 		
 		override protected function detoryResource():void {

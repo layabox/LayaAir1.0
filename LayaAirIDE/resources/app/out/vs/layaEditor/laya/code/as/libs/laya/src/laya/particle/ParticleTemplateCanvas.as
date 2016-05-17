@@ -10,8 +10,7 @@ package laya.particle
 	import laya.utils.Utils;
 
 	/**
-	 * ...
-	 * @author ww
+	 *  @private 
 	 */
 	public class ParticleTemplateCanvas  extends ParticleTemplateBase
 	{
@@ -117,7 +116,7 @@ package laya.particle
 		{
 			if(!rst) rst=[];
 			rst.length=0;		
-			Utils.setValueArr(rst,PicTool.getRGBPic(texture));
+			Utils.copyArray(rst,PicTool.getRGBPic(texture));
 			return rst;
 		}
 

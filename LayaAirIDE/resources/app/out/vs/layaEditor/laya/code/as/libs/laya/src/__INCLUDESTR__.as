@@ -1,9 +1,10 @@
-/*[IF-FLASH]*/package {
+/*[IF-FLASH]*/
+package {
+	import laya.utils.RunDriver;
 	/**
-	 * ...
-	 * @author laya
+	 * @private
 	 */
-	public function __INCLUDESTR__(value:*):* {
-		return null;
+	public function __INCLUDESTR__(name:String):String {
+		return RunDriver.getIncludeStr(name);
 	}
 }

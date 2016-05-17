@@ -773,6 +773,15 @@ package laya.ui {
 		}
 		
 		/**
+		 * 设置单元格数据源。
+		 * @param index 单元格索引。
+		 * @param source 单元格数据源。
+		 */
+		public function setItem(index:int, source:Object):void {
+			changeItem(index, source);
+		}
+		
+		/**
 		 * 添加单元格数据源。
 		 * @param souce 数据源。
 		 */

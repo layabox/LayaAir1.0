@@ -2,7 +2,6 @@ package laya.display {
 	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.utils.Handler;
-	import laya.utils.Utils;
 	
 	/**
 	 * 动画播放完毕后调度。
@@ -84,8 +83,8 @@ package laya.display {
 	 * </listing>
 	 */
 	public class Animation extends Sprite {
-		/**@private */
-		private static var _urlReg:RegExp = /^(.*?)\{(.*?)\}(.*)$/;
+		/**全局缓存动画索引，存储全局Graphics动画数据，可以指定播放某个动画，比如ani.play(0 , true ,"hero_run"); */
+		public static var framesMap:Object = {};
 		/** 播放间隔(单位：毫秒)。*/
 		public var interval:int = Config.animationInterval;
 		/**是否循环播放 */
@@ -125,18 +124,24 @@ package laya.display {
 		 * 播放动画。
 		 * @param	start 开始播放的动画索引。
 		 * @param	loop 是否循环。
+		 * @param	name 如果name为空(可选)，则播放当前动画，如果不为空，则播放全局缓存动画（如果有）
 		 */
-		public function play(start:int = 0, loop:Boolean = true):void {
+		public function play(start:int = 0, loop:Boolean = true, name:String = ""):void {
+			if (name && framesMap[name]) {
+				this._frames = framesMap[name];
+				this._count = _frames.length;
+			}
 			this._isPlaying = true;
-			this._index = start;
+			this.index = start;
 			this.loop = loop;
 			if (this._frames && this._frames.length > 0 && this.interval > 0) {
+				_index++;
 				timerLoop(this.interval, this, _frameLoop, null, true);
 			}
 		}
 		
 		private function _frameLoop():void {
-			if (_style.visible) {
+			if (_style.visible && _style.alpha > 0.01) {
 				this.index = _index, _index++;
 				if (this._index >= this._count) {
 					if (loop) this._index = 0;
@@ -179,25 +184,11 @@ package laya.display {
 		
 		public function set frames(value:Array):void {
 			this._frames = value;
-			this._count = value.length;
-			if (_isPlaying) play(_index, loop)
-			else index = _index;
-		}
-		
-		/**
-		 * 加载图片集合，组成动画。
-		 * @param	urls 图片地址集合。如：[url1,url2,url3,...]。
-		 * @return 	返回动画本身。
-		 */
-		public function loadImages(urls:Array):Animation {
-			var arr:Array = [];
-			for (var i:int = 0, n:int = urls.length; i < n; i++) {
-				var g:Graphics = new Graphics();
-				g.loadImage(urls[i], 0, 0);
-				arr.push(g);
+			if (value) {
+				this._count = value.length;
+				if (_isPlaying) play(_index, loop);
+				else index = _index;
 			}
-			this.frames = arr;
-			return this;
 		}
 		
 		/**清理。方便对象复用。*/
@@ -208,50 +199,59 @@ package laya.display {
 		}
 		
 		/**
+		 * 加载图片集合，组成动画。
+		 * @param	urls 图片地址集合。如：[url1,url2,url3,...]。
+		 * @return 	返回动画本身。
+		 */
+		public function loadImages(urls:Array):Animation {
+			this.frames = createFrames(urls, "");
+			return this;
+		}
+		
+		/**
 		 * 加载并播放一个图集。
 		 * @param	url 图集地址。
 		 * @return 	返回动画本身。
 		 */
 		public function loadAtlas(url:String):Animation {
-			if (Loader.getAtlas(url)) onLoaded();
-			else Laya.loader.load(url, Handler.create(null, onLoaded), null, Loader.ATLAS);
-			function onLoaded():void {
-				var atlas:Array = Loader.getAtlas(url);
-				if (atlas && atlas.length) {
-					var arr:Array = [];
-					for (var i:int = 0, n:int = atlas.length; i < n; i++) {
-						var g:Graphics = new Graphics();
-						g.drawTexture(atlas[i], 0, 0);
-						arr.push(g);
-					}
-					this.frames = arr;
+			if (Loader.getAtlas(url)) onLoaded(url);
+			else Laya.loader.load(url, Handler.create(null, onLoaded, [url]), null, Loader.ATLAS);
+			function onLoaded(loadUrl:String):void {
+				if (url === loadUrl) {
+					this.frames = createFrames(url, "");
 				}
 			}
 			return this;
 		}
 		
 		/**
-		 * 根据地址创建一个动画。
-		 * @param	url 第一张图片的url地址，变化的参数用“{}”包含，比如res/ani{001}.png
-		 * @param	count 动画数量，会根据此数量替换url参数，比如url=res/ani{001}.png，count=3，会得到ani001.png，ani002.png，ani003.png
-		 * @return	返回一个 Animation 对象。
+		 * 创建动画模板，相同地址的动画可共享播放模板，而不必每次都创建一份新的，从而节省创建Graphics集合的开销
+		 * @param	url 图集路径(已经加载过的)或者url数组(可以异步加载)
+		 * @param	name 全局动画名称，如果name不为空，则缓存动画模板，否则不缓存
+		 * @return	Graphics动画模板
 		 */
-		public static function fromUrl(url:String, count:int):Animation {
-			var result:Array = _urlReg.exec(url);
-			var base:String = result[1];
-			var serialNum:String = result[2];
-			var extension:String = result[3];
-			var serialNumBegin:int = parseInt(serialNum);
-			var serialNumLength:int = serialNum.length;
-			
-			var urls:Array = [];
-			for (var i:int = 0; i < count; i++) {
-				var countNow:int = serialNumBegin + i;
-				var countString:String = Utils.preFixNumber(countNow, serialNumLength);
-				urls.push(base + countString + extension);
+		public static function createFrames(url:*, name:String):Array {
+			var arr:Array;
+			if (url is String) {
+				var atlas:Array = Loader.getAtlas(url);
+				if (atlas && atlas.length) {
+					arr = [];
+					for (var i:int = 0, n:int = atlas.length; i < n; i++) {
+						var g:Graphics = new Graphics();
+						g.drawTexture(atlas[i], 0, 0);
+						arr.push(g);
+					}
+				}
+			} else if (url is Array) {
+				arr = [];
+				for (i = 0, n = url.length; i < n; i++) {
+					g = new Graphics();
+					g.loadImage(url[i], 0, 0);
+					arr.push(g);
+				}
 			}
-			
-			return new Animation().loadImages(urls);
+			if (name) framesMap[name] = arr;
+			return arr;
 		}
 	}
 }

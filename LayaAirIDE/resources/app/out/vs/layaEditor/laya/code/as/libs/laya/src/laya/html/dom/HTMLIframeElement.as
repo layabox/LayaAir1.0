@@ -5,17 +5,21 @@ package laya.html.dom
 	import laya.events.Event;
 
 	/**
-	 * ...
-	 * @author laya
+	 * iframe标签类，目前用于加载外并解析数据
 	 */
 	public class HTMLIframeElement extends HTMLDivElement 
 	{
+		
 		public function HTMLIframeElement() 
 		{
 			super();
 			this._getCSSStyle().valign = "middle";
 		}
 		
+		/**
+		 * 加载html文件，并解析数据
+		 * @param	url
+		 */
 		override public function set href(url:String):void
 		{
 			url = formatURL(url);

@@ -5,8 +5,7 @@ package laya.html.dom{
 	import laya.events.Event;
 
 	/**
-	 * ...
-	 * @author laya
+	 * @private
 	 */
 	public class HTMLLinkElement extends HTMLElement 
 	{

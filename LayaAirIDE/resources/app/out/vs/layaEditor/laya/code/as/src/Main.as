@@ -1,7 +1,7 @@
 package {
-	import game.view.TestView;
 	import laya.net.Loader;
 	import laya.utils.Handler;
+	import view.TestView;
 	
 	public class Main {
 		
@@ -14,7 +14,7 @@ package {
 		}
 		
 		private function onLoaded():void {
-			//示例UI界面
+			//实例UI界面
 			var testView:TestView = new TestView();
 			Laya.stage.addChild(testView);
 		}

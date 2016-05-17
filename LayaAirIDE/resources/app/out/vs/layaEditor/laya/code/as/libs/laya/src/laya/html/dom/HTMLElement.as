@@ -11,8 +11,7 @@ package laya.html.dom
 	import laya.utils.Utils;
 	
 	/**
-	 * ...
-	 * @author laya
+	 * @private
 	 */
 	public class HTMLElement extends Sprite
 	{

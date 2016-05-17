@@ -89,7 +89,7 @@ package laya.ui {
 		 */
 		public function get width():Number {
 			if (_width) return _width;
-			if (_source) return _source.width;
+			if (_source) return _source.sourceWidth;
 			return 0;
 		}
 		
@@ -103,7 +103,7 @@ package laya.ui {
 		 */
 		public function get height():Number {
 			if (_height) return _height;
-			if (_source) return _source.height;
+			if (_source) return _source.sourceHeight;
 			return 0;
 		}
 		
@@ -141,8 +141,8 @@ package laya.ui {
 			var width:Number = this.width;
 			var height:Number = this.height;
 			var sizeGrid:Array = this._sizeGrid;
-			var sw:Number = source.width;
-			var sh:Number = source.height;
+			var sw:Number = source.sourceWidth;
+			var sh:Number = source.sourceHeight;
 			
 			//如果没有设置9宫格，或大小未改变，则直接用原图绘制
 			if (!sizeGrid || (sw === width && sh === height)) {
@@ -186,12 +186,12 @@ package laya.ui {
 			_repaint();
 		}
 		
-		private static function getTexture(source:*, x:Number, y:Number, width:Number, height:Number):Texture {
-			source.$GID || (source.$GID = Utils.getGID())
-			var key:String = source.$GID + "." + x + "." + y + "." + width + "." + height;
+		private static function getTexture(tex:*, x:Number, y:Number, width:Number, height:Number):Texture {
+			tex.$GID || (tex.$GID = Utils.getGID())
+			var key:String = tex.$GID + "." + x + "." + y + "." + width + "." + height;
 			var texture:Texture = textureCache[key];
 			if (!texture) {
-				texture = textureCache[key] = Texture.create(source, x, y, width, height);
+				texture = textureCache[key] = Texture.createFromTexture(tex, x, y, width, height);
 			}
 			return texture;
 		}

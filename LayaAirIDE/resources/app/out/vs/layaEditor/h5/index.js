@@ -1,21 +1,24 @@
 ﻿/**
- * Created by wangzhihua on 2016/3/21.
+ * Created by wangzhihua on 2016/4/21.
  */
 var fs = require('fs');
 var path = require('path');
 var electron = require('electron');
 var remote = electron.remote;
 var ipc = electron.ipcRenderer;
+var childProcess = require("child_process");
 var windowId = remote.getCurrentWindow().id;
 //remote.getCurrentWindow().openDevTools()
-var windclipHLaya = 36;
+var windclipHLaya = 0;
+var layaTopClip = "36px";
 var layaIDEMode = 0;//代码模式
 var layaideconfig = {};
 var dialogLaya = electron.remote.dialog;
-var layaIDEVersion = "0.9.8";
+var layaIDEVersion = "0.9.9";
 var uiConfigName = ".laya";
 var layawindowDebug;
 var layaWindowResutl = 4;
+var layaEditeVscode;
 function parseURLQueryArgs() {
     var result = {};
     var search = window.location.search;
@@ -31,10 +34,9 @@ function parseURLQueryArgs() {
             }
         }
     }
-
     return result;
 }
-
+remote.getCurrentWindow().setTitle("LayaAir")
 function createScript(src, onload) {
     var script = document.createElement('script');
     script.src = src;
@@ -121,15 +123,18 @@ var enableDeveloperTools = !configuration.isBuilt || !!configuration.extensionDe
 process.env['VSCODE_SHARED_IPC_HOOK'] = configuration.sharedIPCHandle;
 
 registerListeners(enableDeveloperTools);
+var layaDviCon = [flashResTool, compressJS, loadingCompress, subpackage];
 //初始化拖动条
 initMenuBar()
 function initMenuBar() {
     var _winddragBar = document.createElement("div");
     _winddragBar.style.position = "absolute";
-    _winddragBar.style.left = "600px";
+    _winddragBar.style.left = "360px";
     _winddragBar.style.right = "180px";
     _winddragBar.style.webkitAppRegion = "drag";
-    _winddragBar.style.height = "20px";
+    _winddragBar.style.height = "30px";
+    _winddragBar.id = "_layaDrop";
+    _winddragBar.style.top = "0px";
     document.body.appendChild(_winddragBar);
 }
 window.addEventListener('beforeunload', addOnBeforeUnload, false);
@@ -149,13 +154,15 @@ function initLaya() {
     if (!configuration.workspacePath) {
         layaideconfig = {};
         layaideconfig.mode = "0";
-        layaideconfig.recentOpenPath = {}
+        //layaideconfig.recentOpenPath = {};
+        layaideconfig.recentOpenPro = []
         //layaCodeView.src = "vscode.js";
+        conList.style.visibility = 'visible';
         conList.style.display = "block";
-        document.getElementById("ouibounce-modal").style.zIndex = 99999999999999999999;
+        document.getElementById("ouibounce-modal").style.zIndex = 99;
         title_dialg.innerText = "欢迎";
         layaPanelClose.style.display = "none"
-        showDiv("subpackage");
+        showDivPop(subpackage);
     } else {
         var filepath = remote.app.getDataPath() + path.sep + "layaconfig.json";
         try {
@@ -170,16 +177,21 @@ function initLaya() {
                 layaideconfig = JSON.parse(layaideconfig);
                 if (layaideconfig.mode == "1") {
                     //编辑器模式
-                    conList.style.display = "none";
+                    conList.style.visibility = 'hidden';
+                    editeMenu.style.display = "block";
+                    editeMenu.style.zIndex = 1000;
                     changeLayaViewMode();
                 } else {
                     //code 模式；
-                    conList.style.display = "block";
+                    conList.style.visibility = 'visible';
+                    conList.style.display = "block"
                     layaCodeView.src = "vscode.js";
                     var timeId = setInterval(function () {
                         divconLayaCode = document.getElementsByClassName("monaco-shell-content")[0];
                         if (divconLayaCode) {
                             divconLayaCode.style.visibility = 'visible';
+                            divconLayaCode.style.position = "absolute";
+                            divconLayaCode.style.top = layaTopClip;
                             initchangeBug();
                             clearInterval(timeId);
                             changeLayaIDECodeMode()
@@ -190,9 +202,11 @@ function initLaya() {
             } else {
                 layaideconfig = {};
                 layaideconfig.recentOpenPath = {};
+                layaideconfig.recentOpenPro = [];
                 layaideconfig.mode == "0";
                 layaCodeView.src = "vscode.js";
-                conList.style.display = "block";
+                conList.style.visibility = 'visible';
+                conList.style.display = "block"
                 subpackage.style.display = "block"
             }
         });
@@ -212,49 +226,67 @@ function initchangeBug() {
     li.role = "presentation";
     var ach = document.createElement("a");
     ach.className = "action-label debug0";
-    ach.title = "切换到UI编辑器模式(Alt+A)";
+    ach.title = "切换到UI编辑器模式(Alt+Q)";
     li.appendChild(ach);
     con.appendChild(li);
     // conList.style.display = "none";
     faceVs = document.getElementsByClassName("statusbar-item right");
-    faceVs[0].style.display = "none"
+    faceVs[0].style.display = "none";
+    //divconLayaCode.style.position ="absolute";
+    //divconLayaCode.style.top = layaTopClip;
 }
+var layaCanvasEd;
 function changeLayaIDECodeMode() {
+    //window.blur()
+    if (!configuration.workspacePath) {
+        return
+    }
     layaideconfig.mode = "0";
+    editeMenu.style.display = "none";
     if (!layaCodeView.src) {
         layaCodeView.src = "vscode.js";
         setTimeout(initchangeBug, 1000)
     }
     if (!divconLayaCode) {
         divconLayaCode = document.getElementsByClassName("monaco-shell-content")[0];
-        if (divconLayaCode)divconLayaCode.style.visibility = 'visible';
+        if (divconLayaCode) {
+            divconLayaCode.style.visibility = 'visible';
+            divconLayaCode.style.position = "absolute";
+            divconLayaCode.style.top = layaTopClip;
+        }
     } else if (divconLayaCode) {
-        divconLayaCode.style.visibility = 'visible'
+        divconLayaCode.style.visibility = 'visible';
+        divconLayaCode.style.position = "absolute";
+        divconLayaCode.style.top = layaTopClip;
     }
     if (!layaCanvasView) {
         var canvas = document.getElementsByTagName("canvas");
         for (var i = 0; i < canvas.length; i++) {
             if (canvas[i].className == "") {
                 layaCanvasView = canvas[i];
-                layaCanvasView.style.display = "none";
+                //layaCanvasView.style.display = "none";
+                document.body.removeChild(layaCanvasView);
+                // Laya.stage.visible = false;
                 if (laya)laya.events.KeyBoardManager.enabled = false;
                 break
             }
         }
     } else {
-        layaCanvasView.style.display = "none";
+        document.body.removeChild(layaCanvasView);
         if (laya)laya.events.KeyBoardManager.enabled = false;
     }
-    conList.style.display = "block";
+    if (window["laya"])laya.events.KeyBoardManager.enabled = false;
+    conList.style.visibility = 'visible';
+    conList.style.display = "block"
 
 }
 //新建工程
 function layaNewCreatePro(e) {
     document.getElementById("title_dialg").innerText = "新建项目";
-    document.getElementById("ouibounce-modal").style.zIndex = 99999999999999999999
+    document.getElementById("ouibounce-modal").style.zIndex = 9999
     flashResTool.style.display = "block";
     subpackage.style.display = "none"
-    showDiv("newProW");
+    showDiv();
 }
 //切换到编辑模式
 function layaAlert(e) {
@@ -270,6 +302,9 @@ function closeAlerHandler(id) {
     changeLayaIDECodeMode();
 }
 function changeLayaViewMode() {
+    if (!configuration.workspacePath) {
+        return
+    }
     if (!configuration.workspacePath || !fs.existsSync(configuration.workspacePath + path.sep + "laya" + path.sep + uiConfigName)) {
         layaAlert("该项目不是有效的LayaAir可视化项目,是否要创建？");
         return
@@ -280,23 +315,35 @@ function changeLayaViewMode() {
     }
     if (!divconLayaCode) {
         divconLayaCode = document.getElementsByClassName("monaco-shell-content")[0];
-        if (divconLayaCode)divconLayaCode.style.visibility = 'hidden';
+        if (divconLayaCode) {
+            divconLayaCode.style.visibility = 'hidden';
+            divconLayaCode.style.position = "absolute";
+            divconLayaCode.style.top = layaTopClip;
+        }
     } else {
         divconLayaCode.style.visibility = 'hidden';
+        divconLayaCode.style.position = "absolute";
+        divconLayaCode.style.top = layaTopClip;
     }
     if (!layaCanvasView) {
         var canvas = document.getElementsByTagName("canvas");
         for (var i = 0; i < canvas.length; i++) {
             if (canvas[i].className == "") {
                 layaCanvasView = canvas[i];
-                layaCanvasView.style.display = "block";
+                //    Laya.stage.visible = false;
+                document.body.appendChild(layaCanvasView);
+                //layaCanvasView.style.display = "block";
                 break
             }
         }
     } else {
-        layaCanvasView.style.display = "block";
+        //   Laya.stage.visible = false;
+        document.body.appendChild(layaCanvasView);
+        //layaCanvasView.style.display = "block";
     }
-    conList.style.display = "none";
+    conList.style.visibility = 'hidden';
+    editeMenu.style.display = "block";
+    editeMenu.style.zIndex = 1000;
     //if (laya)laya.editor.manager.ProjectManager.openProjectByPath(path.join(configuration.workspacePath, "laya", "Mylaya"));
     {
         setTimeout(function () {
@@ -307,6 +354,7 @@ function changeLayaViewMode() {
     //if (laya)laya.editor.manager.ProjectManager.openProjectByPath(path.join(configuration.workspacePath, "laya", "mylaya"));
 }
 var lastOpenProview;
+var tsErrorPanel;
 //菜单点击事件
 function oclick(type) {
     if (type == "close") {
@@ -338,15 +386,16 @@ function oclick(type) {
         window.open("http://www.layabox.com/")
     } else if (type == "layabox") {
         window.open("http://ask.layabox.com/question")
-    } else if (type == "apianddemo") {
-
-
+    } else if (type == "layademo") {
+        window.open("http://layaair.ldc.layabox.com/demo/#Sprite_DisplayImage")
     } else if (type == "downLoad") {
         window.open("http://ldc.layabox.com/")
     }
     else if ("debugLaya" == type) {
+        sendMenuHandlerLaya("workbench.action.files.saveAll");
+
         if (!configuration.workspacePath) {
-            layaAlert("该项目不是有效的LayaAir项目！");
+            layaAlertOpen("该项目不是有效的LayaAir项目！");
             return
         } else {
             var fileList = fs.readdirSync(configuration.workspacePath);
@@ -356,35 +405,100 @@ function oclick(type) {
                     var stat = fs.lstatSync(configuration.workspacePath + path.sep + fileList[i]);
                     if (!stat.isDirectory()) {
                         var data = fs.readFileSync(configuration.workspacePath + path.sep + fileList[i], "utf-8");
-                        var player=JSON.parse(data);
+                        data = data.replace(/\\/g, "/")
+                        var player = JSON.parse(data);
                         urlIndex = player.indexhtml;
-
                         break;
                     }
                 }
             }
             var url = urlIndex;
-            var urlIndex = configuration.workspacePath + path.sep + urlIndex
-            if (fs.existsSync(urlIndex)) {
-                if (!layawindowDebug) {
-                    var BrowserWindow = remote.BrowserWindow;
-
-                    layawindowDebug = new BrowserWindow({width: player.playerW, height: player.playerH, show: true, title: "LayaAir"});
-                    layawindowDebug.on('closed', function () {
-                        layawindowDebug = null;
-                    });
-                }
-                layawindowDebug.loadURL(urlIndex);
-                layawindowDebug.show();
-            } else {
-                layaAlertOpen("当前路径文件" + url + "不存在,  设置配置文件" + fileList[i] + "中indexHtml属性")
+            if (!url) {
+                layaAlertOpen("该项目不是有效的LayaAir项目！");
                 return
             }
-
-
+            debugButton.style.pointerEvents = "none";
+            debugButton.style.backgroundColor = "#585656"
+            var urlIndex = configuration.workspacePath + path.sep + urlIndex;
+            urlIndex = path.normalize(urlIndex)
+                //var ar ="tsc -p D:/Documents/myLayassffr -outDir D:/Documents/myLayassffree/bin";
+                if (fs.existsSync(configuration.workspacePath + path.sep + "tsconfig.json")) {
+                    tsStartHandler(player, urlIndex);
+                } else if (fs.existsSync(configuration.workspacePath + path.sep + "jsconfig.json")) {
+                    jsStartHandler(player, urlIndex)
+                } else {
+                    asStartHandler(player, urlIndex)
+                }
         }
 
     }
+}
+var layaWaitComplete = 0;
+function tsStartHandler(player, urlIndex) {
+    playerConfig = player;
+    layaEditeVscode.clearOutput("Tasks");
+    layaEditeVscode.append("Tasks", "准备编译...\n");
+    clearInterval(layaWaitComplete);
+    //layaEditeVscode.showOutput("Tasks", true);
+    var count = 0;
+    var arcount = [".", "...", ".....", "......", "........"];
+    var infoLaya = ["|", "/", "-", "\\", "|"]
+    if (tsErrorPanel.innerText == "0") {
+        layaAndvscodeInfo.className = "task-statusbar-item-progress";
+        layaWaitComplete = setInterval(function () {
+            count++;
+            count = count % 5;
+            layaInfo.innerHTML = "开始编译:" + arcount[count];
+            layaAndvscodeInfo.innerHTML = infoLaya[count]
+        }, 50);
+        var config = fs.readFileSync(configuration.workspacePath + path.sep + ".laya" + path.sep + "tasks.json", "utf-8");
+        var config = JSON.parse(config);
+        config = config.args[3].replace(/\\/g, path.sep);
+        var ar = "tsc -p " + configuration.workspacePath + " -outDir " + configuration.workspacePath + path.sep + config;
+        childProcess.exec(ar, {encoding: "binary", maxBuffer: 1024 * 1024 * 20}, function (err, stdOut, stdErr) {
+            clearInterval(layaWaitComplete);
+            layaInfo.innerHTML = "编译完成";
+            debugButton.style.pointerEvents = "";
+            debugButton.style.backgroundColor = ""
+            layaAndvscodeInfo.className = "task-statusbar-item-progress hidden";
+            if (stdOut||stdErr) {
+                layaEditeVscode.clearOutput("Tasks");
+                layaEditeVscode.showOutput("Tasks", true);
+                layaEditeVscode.append("Tasks", stdOut);
+                layaEditeVscode.append("Tasks", stdErrs);
+                layaEditeVscode.append("Tasks", " 编译完成。");
+            }
+            else {
+                //sendLayaIpcMenu("workbench.action.showErrorsWarnings");
+                if (fs.existsSync(urlIndex)){
+                    ipc.send("layaDebugerWinMessage", player, urlIndex);
+                }else{
+                    alert("可运行的html文件:"+urlIndex+"不存在!\n请指定配置文件中的html文件！")
+                }
+                layaEditeVscode.clearOutput("Tasks");
+                layaEditeVscode.append("Tasks", " 编译完成。");
+            }
+        });
+    } else {
+        sendLayaIpcMenu("workbench.action.showErrorsWarnings");
+        debugButton.style.pointerEvents = "";
+        debugButton.style.backgroundColor = ""
+    }
+}
+var playerConfig;
+function layaDebugGoon(player, urlIndex) {
+    layaPageSave.style.display = "none"
+    ipc.send("layaDebugerWinMessage", playerConfig, playerConfig.indexHtml);
+}
+function asStartHandler(player, urlIndex) {
+    asCompileModule(player)
+    return
+    //ipc.send("layaDebugerWinMessage", player, urlIndex);
+}
+function jsStartHandler(player, urlIndex) {
+    debugButton.style.pointerEvents = "";
+    debugButton.style.backgroundColor = ""
+    ipc.send("layaDebugerWinMessage", player, urlIndex);
 }
 function mouseOutHandler(e) {
     var par = e.currentTarget.children[1];
@@ -392,10 +506,9 @@ function mouseOutHandler(e) {
 }
 function overHandler(e) {
     var par = e.currentTarget.children[1];
-    par.style.display = "block";
+    par && (par.style.display = "block");
 }
 function b_block(e) {
-    e.preventDefault();
     var par = e.currentTarget.children[1];
     if (par.style.display == "none") {
         par.style.display = "block";
@@ -406,15 +519,18 @@ function b_block(e) {
 //新建项目
 function createProHandler(id) {
     document.getElementById("title_dialg").innerText = "新建项目";
-    document.getElementById("ouibounce-modal").style.zIndex = 99999999999999999999
-    flashResTool.style.display = "block";
-    subpackage.style.display = "none";
-    showDiv("newProW");
+    document.getElementById("ouibounce-modal").style.zIndex = 9999;
+    showDivPop(flashResTool);
+    showDiv(flashResTool);
 }
 function showDiv(id) {
     document.getElementById("ouibounce-modal").style.display = "block";
     proNameOutput.value = remote.app.getPath("documents") + path.sep + "myLaya";
     proNameInput.value = "myLaya"
+}
+function showDialg(id) {
+    document.getElementById("ouibounce-modal").style.display = "block";
+    id.style.display = "block";
 }
 function changeFolderPro(e) {
     dialogLaya.showOpenDialog({properties: ["openDirectory", 'createDirectory']}, function (path) {
@@ -423,28 +539,16 @@ function changeFolderPro(e) {
     });
 }
 function okCreateLayaUI() {
-    //var filestr = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<project version=" + "\"" + layaIDEVersion + "\"" + ">\n" + "	<!--assets异步资源目录，在这些目录里面的资源，不会被编译到swf里面，但会复制到发布目录-->\n" + "	<asynRes>img,temp,sound</asynRes>\n" + "	<!--assets不处理目录，在这些目录里面的资源，不会做任何处理（包括复制）-->\n" + "	<unDealRes>embed</unDealRes>\n" + "	<!--资源类型-->\n" + "	<resTypes>png,jpg</resTypes>\n" + "	<!--发布资源导出目录-->\n" + "	<resExportPath>bin/h5/res/atlas</resExportPath>\n" + "	<!--UICode导出目录-->\n" + "	<codeExportPath>src/game/ui</codeExportPath>\n" + "	<!--UICode默认导入类-->\n" + "	<codeImports>import laya.ui.*;</codeImports>\n" + "	<codeImportsJS>var View=laya.ui.View;\nvar Dialog=laya.ui.Dialog;</codeImportsJS>\n" + "	<!--UI模式（0:内嵌模式，1:加载模式）-->\n" + "	<uiType>0</uiType>\n" + "	<!--UI导出目录（加载模式可用）-->\n" + "	<uiExportPath>bin/ui.swf</uiExportPath>\n" + "	<!--容器列表（转换为容器功能使用）-->\n" + "	<boxTypes>Box,List,Tab,RadioGroup,ViewStack,Panel,HBox,VBox,Tree</boxTypes>\n" + "	<!--页面类型（用于自定义页面继承）-->\n" + "	<pageTypes>View,Dialog</pageTypes>\n" + "	<!--多模块开发时共用的资源目录-->\n" + "	<shareResPath></shareResPath>\n" + "	<!--语言类型-->\n" + "	<codeType>0</codeType>\n" + "</project>";
-    //mkdirsSyncLaya(proNameOutput.value);
-    //layacopyDirFile(path.dirname(__dirname) + path.sep + "laya" + path.sep + "default", configuration.workspacePath + path.sep + "laya");
-    var layaZipPath = path.dirname(__dirname) + path.sep + "laya" + path.sep + "code" + path.sep + "as";
-    //filestr = filestr.replace("<codeType>0</codeType>", "<codeType>" + proTypeLaya.selectedIndex + "</codeType>");
-    //fs.writeFileSync(configuration.workspacePath + path.sep + "laya" + path.sep + uiConfigName, filestr);
+    var layaZipPath = path.dirname(__dirname) + path.sep + "laya" + path.sep + "code" + path.sep + "as" + path.sep + "laya";
     layacopyDirFile(layaZipPath, configuration.workspacePath + path.sep + "laya");
-    var layaProperties = {};
-    layaProperties.proName = "MyLaya";
-    layaProperties.version = layaIDEVersion;
-    layaProperties.proType = "0";
-    layaProperties.playerW =800;
-    layaProperties.playerH =600;
-    layaProperties.indexhtml = "index.html";
-    fs.writeFileSync(configuration.workspacePath + path.sep + "MyLaya.laya", JSON.stringify(layaProperties));
     closeAlerHandler("layaAlertWarning");
     changeLayaViewMode();
     //ipc.send("vscode:openFolderPickerLaya", [proNameOutput.value]);
 }
 function createProWorkspace(type) {
-
-    //var filestr = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<project version=" + "\"" + layaIDEVersion + "\"" + ">\n" + "	<!--assets异步资源目录，在这些目录里面的资源，不会被编译到swf里面，但会复制到发布目录-->\n" + "	<asynRes>img,temp,sound</asynRes>\n" + "	<!--assets不处理目录，在这些目录里面的资源，不会做任何处理（包括复制）-->\n" + "	<unDealRes>embed</unDealRes>\n" + "	<!--资源类型-->\n" + "	<resTypes>png,jpg</resTypes>\n" + "	<!--发布资源导出目录-->\n" + "	<resExportPath>bin/h5/res/atlas</resExportPath>\n" + "	<!--UICode导出目录-->\n" + "	<codeExportPath>src/game/ui</codeExportPath>\n" + "	<!--UICode默认导入类-->\n" + "	<codeImports>import laya.ui.*;</codeImports>\n" + "	<codeImportsJS>var View=laya.ui.View;\nvar Dialog=laya.ui.Dialog;</codeImportsJS>\n" + "	<!--UI模式（0:内嵌模式，1:加载模式）-->\n" + "	<uiType>0</uiType>\n" + "	<!--UI导出目录（加载模式可用）-->\n" + "	<uiExportPath>bin/ui.swf</uiExportPath>\n" + "	<!--容器列表（转换为容器功能使用）-->\n" + "	<boxTypes>Box,List,Tab,RadioGroup,ViewStack,Panel,HBox,VBox,Tree</boxTypes>\n" + "	<!--页面类型（用于自定义页面继承）-->\n" + "	<pageTypes>View,Dialog</pageTypes>\n" + "	<!--多模块开发时共用的资源目录-->\n" + "	<shareResPath></shareResPath>\n" + "	<!--语言类型-->\n" + "	<codeType>0</codeType>\n" + "</project>";
+    if (!proNameOutput.value || !proNameInput.value) {
+        return
+    }
     if (proNameOutput.value) {
         document.getElementById("ouibounce-modal").style.display = "none";
         if (proTypeLaya.selectedIndex == 0) {
@@ -456,42 +560,33 @@ function createProWorkspace(type) {
             var layaZipPath = path.dirname(__dirname) + path.sep + "laya" + path.sep + "code" + path.sep + "js";
         }
         mkdirsSyncLaya(proNameOutput.value);
-        //layacopyDirFile(path.dirname(__dirname) + path.sep + "laya" + path.sep + "default", proNameOutput.value + path.sep + "laya");
-        //filestr = filestr.replace("<codeType>0</codeType>", "<codeType>" + proTypeLaya.selectedIndex + "</codeType>");
-        layacopyDirFile(layaZipPath, proNameOutput.value);
-        //fs.writeFileSync(proNameOutput.value + path.sep + "laya" + path.sep + uiConfigName, filestr);
-        var layaProperties = {};
-        layaProperties.proName = proNameInput.value;
-        layaProperties.version = layaIDEVersion;
-        layaProperties.proType = proTypeLaya.selectedIndex + "";
-        layaProperties.indexhtml = "index.html";
-        layaProperties.playerW =800;
-        layaProperties.playerH =600;
-        if (layaideconfig.recentOpenPath) {
-            layaideconfig.recentOpenPath[proNameOutput.value + path.sep + proNameInput.value + ".laya"] = 1;
+        if (layaideconfig.recentOpenPro) {
+            layaideconfig.recentOpenPro.unshift(proNameOutput.value + path.sep + proNameInput.value + ".laya");
         } else {
-            layaideconfig.recentOpenPath = {}
-            layaideconfig.recentOpenPath[proNameOutput.value + path.sep + proNameInput.value + ".laya"] = 1;
+            layaideconfig.recentOpenPro = [];
+            layaideconfig.recentOpenPro.unshift(proNameOutput.value + path.sep + proNameInput.value + ".laya");
         }
-        fs.writeFileSync(proNameOutput.value + path.sep + proNameInput.value + ".laya", JSON.stringify(layaProperties));
-        if (proTypeLaya.selectedIndex == 0) {
-            setTimeout(function(){
-                var fdd =fs.readFileSync(layaZipPath+path.sep+"LayaUISample.as3proj","utf-8");
-                fs.writeFileSync(proNameOutput.value+path.sep+layaProperties.proName+".as3proj",fdd);
-                var fb = fs.readFileSync(layaZipPath+path.sep+".project","utf-8");
-                fs.writeFileSync(proNameOutput.value+path.sep+".project",fb.replace("GameMain",layaProperties.proName))
-                fs.unlinkSync(proNameOutput.value+path.sep+"LayaUISample.as3proj");
-                setTimeout(function(){
-                    ipc.send("vscode:openFolderPickerLaya", [proNameOutput.value]);
-                },10)
-
-            },10)
+        //macHandler(proTypeLaya.selectedIndex,layaZipPath,proNameInput.value,proNameOutput.value);
+        if(process.platform === 'darwin')
+        {
+            macHandler(proTypeLaya.selectedIndex,layaZipPath,proNameInput.value,proNameOutput.value)
         }else{
-            setTimeout(function(){
-                ipc.send("vscode:openFolderPickerLaya", [proNameOutput.value]);
-            },10)
+            ipc.send("layaMessageCreatePro", proTypeLaya.selectedIndex,layaZipPath,proNameInput.value,proNameOutput.value);
         }
-        fs.writeFileSync(proNameOutput.value + path.sep + proNameInput.value + ".laya", JSON.stringify(layaProperties));
+        ipc.send("vscode:openFolderPickerLaya", [proNameOutput.value]);
+    }
+}
+function macHandler(type,layaZipPath)
+{
+    layacopyDirFile(layaZipPath, proNameOutput.value);
+    var layafile = fs.readFileSync(layaZipPath + path.sep + "myLaya.laya", "utf-8")
+    fs.unlinkSync(proNameOutput.value + path.sep + "myLaya.laya");
+    fs.writeFileSync(proNameOutput.value + path.sep + proNameInput.value + ".laya", layafile);
+    if(type==0)
+    {
+        var fb = fs.readFileSync(layaZipPath + path.sep + ".project", "utf-8");
+        fs.writeFileSync(proNameOutput.value + path.sep + ".project", fb.replace("GameMain", proNameInput.value))
+        fs.renameSync(proNameOutput.value + path.sep + "LayaUISample.as3proj", proNameOutput.value + path.sep + proNameInput.value + ".as3proj")
     }
 }
 function mkdirsSyncLaya(dirname, mode) {
@@ -510,9 +605,9 @@ function layacopyDirFile(from, to) {
     var path = require("path")
     var readDir = fs.readdirSync;
     var stat = fs.statSync;
-    var copDir = function(src,dst){
+    var copDir = function (src, dst) {
         var paths = fs.readdirSync(src);
-        paths.forEach(function(pathLaya){
+        paths.forEach(function (pathLaya) {
             var _src = src + path.sep + pathLaya;
             var _dst = dst + path.sep + pathLaya;
             var isDir = stat(_src);
@@ -523,6 +618,7 @@ function layacopyDirFile(from, to) {
             }
         })
     }
+
     function mkdirsSyncLaya(dirname, mode) {
         console.log(dirname);
         if (fs.existsSync(dirname)) {
@@ -534,6 +630,7 @@ function layacopyDirFile(from, to) {
             }
         }
     }
+
 // 在复制目录前需要判断该目录是否存在，不存在需要先创建目录
     var exists = function (src, dst, callback) {
         mkdirsSyncLaya(dst);
@@ -544,6 +641,9 @@ function layacopyDirFile(from, to) {
 }
 //菜单命令
 function sendMenuHandlerLaya(type) {
+    if (!configuration.workspacePath) {
+        return
+    }
     sendLayaIpcMenu(type);
 }
 function sendMsgLaya(msg) {
@@ -559,10 +659,12 @@ function openProHandler() {
         var data = fs.readFileSync(pathLaya, "utf-8");
         try {
             //正常打开项目code  模式的打开
+            data = data.replace(/\\/g, "/");
             var config = JSON.parse(data);
             if (config.proName || config.version) {
                 layaideconfig.mode = "0";
-                layaideconfig.recentOpenPath[pathLaya] = 1
+                //layaideconfig.recentOpenPath[pathLaya] = new Date().getTime();
+                layaideconfig.recentOpenPro.unshift(pathLaya);
                 addOnBeforeUnload();
                 ipc.send("vscode:openFolderPickerLaya", [path.dirname(pathLaya)]);
             }
@@ -571,7 +673,8 @@ function openProHandler() {
             if (path.basename(pathLaya) == uiConfigName) {
                 layaideconfig.mode = "1";
                 var pa = path.dirname(pathLaya);
-                layaideconfig.recentOpenPath[pa] = 1
+                //layaideconfig.recentOpenPath[pa] = new Date().getTime();
+                layaideconfig.recentOpenPro.unshift(pa);
                 pa = path.dirname(pa);
                 addOnBeforeUnload();
                 ipc.send("vscode:openFolderPickerLaya", [pa]);
@@ -589,8 +692,8 @@ function openProHandler() {
                 layaProperties.version = layaIDEVersion;
                 layaProperties.proType = proTypeLaya.selectedIndex + "";
                 layaProperties.indexhtml = "index.html";
-                layaProperties.playerW =800;
-                layaProperties.playerH =600;
+                layaProperties.playerW = 800;
+                layaProperties.playerH = 600;
                 var pathdir = path.dirname(pathLaya);
                 fs.writeFileSync(pathdir + path.sep + layaProperties.proName, JSON.stringify(layaProperties));
                 ipc.send("vscode:openFolderPickerLaya", [path.dirname(pathLaya)]);
@@ -599,9 +702,9 @@ function openProHandler() {
     });
 }
 function closeWindHandler(id) {
-    if (!layaCodeView.src) {
-        layaCodeView.src = "vscode.js";
-    }
+    //if (!layaCodeView.src) {
+    //    layaCodeView.src = "vscode.js";
+    //}
     document.getElementById(id).style.display = 'none';
 }
 function cancelBtnAlert() {
@@ -614,16 +717,37 @@ function onBtnAlert() {
 function initMenuPro() {
     setTimeout(function () {
         var item;
-        for (var key in layaideconfig.recentOpenPath) {
-            if (key) {
-                if (!fs.existsSync(key)) {
-                    delete layaideconfig.recentOpenPath[key]
-                } else {
-                    var src = key;
-                    item = createMenuItem(src, "menuList");
-                    item.addEventListener("click", itemclickHandler);
+        var i = 0;
+        if (layaideconfig.recentOpenPro && layaideconfig.recentOpenPro.length > 0) {
+            for (var k = 0; k < layaideconfig.recentOpenPro.length; k++) {
+                var src = layaideconfig.recentOpenPro[k];
+                if (!src)continue;
+                i++;
+                if(i>10)break;
+                layaideconfig.recentOpenPro.push(key);
+                item = createMenuItem(src, "menuList");
+                item.addEventListener("click", itemclickHandler);
+                item = createMenuItem(src, "menuListEd");
+                item.addEventListener("click", itemclickHandler);
+            }
+        } else {
+            layaideconfig.recentOpenPro = [];
+            for (var key in layaideconfig.recentOpenPath) {
+                if (key) {
+                    if (!fs.existsSync(key) || i > 10) {
+                        delete layaideconfig.recentOpenPath[key]
+                    } else {
+                        var src = key;
+                        layaideconfig.recentOpenPro.push(key);
+                        item = createMenuItem(src, "menuList");
+                        i++;
+                        item.addEventListener("click", itemclickHandler);
+                        item = createMenuItem(src, "menuListEd");
+                        item.addEventListener("click", itemclickHandler);
+                    }
                 }
             }
+
         }
 
         function itemclickHandler(e) {
@@ -638,6 +762,20 @@ function initMenuPro() {
 
     }, 1000)
 
+}
+function addMenuListItem(id, itemName, clickHandler) {
+    var con = document.getElementById(id);
+    var li = document.createElement("Li");
+    var a = document.createElement("a");
+    a.href = "#";
+    a.style = "padding: 8px 10px 10px 10px;height: 12px;";
+    a.style.height = "12px";
+    a.style.padding = "8px 10px";
+    a.innerText = itemName;
+    li.appendChild(a);
+    con.appendChild(li);
+    li.addEventListener("click", clickHandler)
+    return li;
 }
 ///------------------创建子菜单-------------------------；
 function createMenuItem(name, id) {
@@ -702,503 +840,195 @@ function layaPageSAveHandler() {
     tempFunction.save();
 
 }
-//
-//
-//var layaEditors = document.getElementById("workbench.parts.editor");
-//function sendMsgLaya(msg) {
-//    ipc.send(msg, windowId);
-//}
-////传递文件路径
-//function openFile(filePath) {
-//    ipc.send('vscode:windowOpen', [filePath]);
-//}
-//var windV = false;
-//var faceVs
-//function vscodeOpenFolder(p) {
-//    //configuration.workspacePath =path;
-//    ipc.send("vscode:openFolderPickerLaya", [p]);
-//}
-////window.onload = function () {
-////    if (window.layaProPathUI) {
-////        var layaProPathUI = window.layaProPathUI = path.dirname(window.layaProPathUI)
-////        if (layaProPathUI != configuration.workspacePath) {
-////            if (window.layaProPathUI) {
-////                ipc.send("vscode:openFolderPickerLaya", [layaProPathUI]);
-////            }
-////        }
-////    }
-////
-////}
-////if(window.layaProPathUI!=configuration.workspacePath)
-////{
-////    alert(window.layaProPathUI)
-////    window.layaProPathUI&&ipc.send("vscode:openFolderPickerLaya",[window.layaProPathUI]);
-////}
-//function createLayaTsconfig(pathfile, type) {
-//
-//    pathfile = path.dirname(pathfile);
-//    if (type == 0) {
-//        var layaZipPath = path.dirname(__dirname) + path.sep + "demos" + path.sep + "as";
-//    } else if (type == 1) {
-//        var layaZipPath = path.dirname(__dirname) + path.sep + "demos" + path.sep + "ts";
-//    } else {
-//        var layaZipPath = path.dirname(__dirname) + path.sep + "demos" + path.sep + "js";
-//    }
-//    laya.ide.devices.FileTools.copyDir(layaZipPath, pathfile);
-//    if (window.layaProPathUI) {
-//        var layaProPathUI = window.layaProPathUI = path.dirname(window.layaProPathUI)
-//        if (layaProPathUI != configuration.workspacePath) {
-//            if (window.layaProPathUI) {
-//                ipc.send("vscode:openFolderPickerLaya", [layaProPathUI]);
-//            }
-//        }
-//    }
-//}
-
-//var divconLaya
-//var timeId = setInterval(function () {
-//    divconLaya = document.getElementsByClassName("monaco-shell-content")[0];
-//    if (divconLaya) {
-//        divconLaya.style.visibility = 'visible';
-//        var con = document.getElementsByClassName("actions-container")[0]
-//        var li = document.createElement("li");
-//        li.onclick = function () {
-//            changeViewUILaya();
-//        }
-//        li.className = "action-item";
-//        li.role = "presentation";
-//        var ach = document.createElement("a");
-//        ach.className = "action-label debug0";
-//        ach.title = "切换到UI编辑器模式(Alt+A)";
-//        li.appendChild(ach);
-//        con.appendChild(li);
-//        // conList.style.display = "none";
-//        faceVs = document.getElementsByClassName("statusbar-item right");
-//        faceVs[0].style.display = "none"
-//        clearInterval(timeId);
-//    }
-//}, 1);
-//
-//function oclick(type) {
-//    if (type == "close") {
-//        remote.getCurrentWindow().close();
-//    } else if (type == "restore") {
-//        if (!remote.getCurrentWindow().isMaximized()) {
-//            remote.getCurrentWindow().maximize();
-//        } else {
-//            remote.getCurrentWindow().restore();
-//        }
-//    } else if (type == "minimize") {
-//        remote.getCurrentWindow().minimize()
-//    } else if (type == "f12") {
-//        remote.getCurrentWindow().openDevTools();
-//    } else if (type == "newfile") {
-//        sendMsgLaya("vscode:openFilePicker")
-//    } else if (type == "openFolder") {
-//        sendMsgLaya("vscode:openFolderPicker");
-//    } else if (type == "newwindow") {
-//        sendMsgLaya("vscode:openNewWindow");
-//    } else if (type == "F11") {
-//        remote.getCurrentWindow().setFullScreen(!remote.getCurrentWindow().isFullScreen())
-//    } else if (type == "flash") {
-//        document.getElementById("CompressJS").style = "block"
-//
-//    } else if (type == "changeViewUi") {
-//        changeViewUILaya();
-//    } else if (type == "layaboxPublic") {
-//        window.open("http://www.layabox.com/")
-//    } else if (type == "layabox") {
-//        window.open("http://ask.layabox.com/question")
-//    } else if (type == "apianddemo") {
-//
-//
-//    } else if (type == "downLoad") {
-//        window.open("http://ldc.layabox.com/")
-//    }
-//    else if ("debugLaya" == type) {
-//        var BrowserWindow = remote.BrowserWindow;
-//
-//        var win = new BrowserWindow({width: 800, height: 600, show: true, title: "LayaAir"});
-//        win.on('closed', function () {
-//            win = null;
-//        });
-//        if (configuration.workspacePath) {
-//            win.loadURL(configuration.workspacePath + path.sep + "index.html");
-//            win.show();
-//        }
-//    }
-//}
-//function changeViewUILaya() {
-//    if (!layaUIView.src) {
-//        layaUIView.src = "layabuilder.max.js"
-//    }
-//    if (!divconLaya) {
-//        divconLaya = document.getElementsByClassName("monaco-shell-content")[0];
-//    }
-//    if (!layaCanvas) {
-//        var canvas = document.getElementsByTagName("canvas");
-//        for (var i = 0; i < canvas.length; i++) {
-//            if (canvas[i].className == "") {
-//                layaCanvas = canvas[i];
-//                break
-//            }
-//        }
-//    }
-//    if (layaCanvas) {
-//        layaCanvas.style.display = "block";
-//    }
-//    conList.style.display = "none";
-//    divconLaya.style.visibility = 'hidden';
-//    if (laya)laya.editor.manager.ProjectManager.openProjectByPath(path.join(configuration.workspacePath, "laya", "mylaya"));
-//}
-//var layaCanvas
-//function changeViewCode() {
-//    if (!divconLaya) {
-//        divconLaya = document.getElementsByClassName("monaco-shell-content")[0];
-//    }
-//    if (!layaCanvas) {
-//        var canvas = document.getElementsByTagName("canvas");
-//        for (var i = 0; i < canvas.length; i++) {
-//            if (canvas[i].className == "") {
-//                layaCanvas = canvas[i];
-//                break
-//            }
-//        }
-//    }
-//    layaCanvas.style.display = "none";
-//    conList.style.display = "block";
-//    divconLaya.style.visibility = 'visible'
-//}
-//function sendMenuHandlerLaya(type) {
-//    sendLayaIpcMenu(type);
-//}
-//function mouseOutHandler(e) {
-//    var par = e.currentTarget.children[1];
-//    par.style.display = "none";
-//}
-//function overHandler(e) {
-//    var par = e.currentTarget.children[1];
-//    par.style.display = "block";
-//}
-//function b_block(e) {
-//    e.preventDefault();
-//    var par = e.currentTarget.children[1];
-//    if (par.style.display == "none") {
-//        par.style.display = "block";
-//    } else {
-//        par.style.display = "none";
-//    }
-//}
-//var globalShortcut = remote.globalShortcut;
-
 document.onkeydown = function () {
-
     var oEvent = window.event;
-    if (oEvent.altKey && oEvent.keyCode == "65") {
-        if (layaideconfig.mode == "1") {
-            changeLayaIDECodeMode();
-        } else {
-            changeLayaViewMode();
+    if (configuration.workspacePath) {
+        if (oEvent.altKey && oEvent.keyCode == "81") {
+            window.blur();
+            if (layaideconfig.mode == "1") {
+                changeLayaIDECodeMode();
+            } else {
+                changeLayaViewMode();
+            }
+        } else if (oEvent.keyCode == 116) {
+            if (layaideconfig.mode == "0") {
+                oclick("debugLaya");
+            }
         }
     }
+
 }
-//var proCodeType = 0;
-//function createProHandler(id) {
-//    document.getElementById("title_dialg").innerText = "新建项目";
-//    document.getElementById("ouibounce-modal").style.zIndex = 99999999999999999999
-//
-//    showDiv("newProW");
-//}
-//function openProHandler() {
-//
-//    dialogLaya.showOpenDialog({
-//        properties: ["openFile", 'createDirectory'],
-//        filters: [{name: 'All Files', extensions: ['laya']}]
-//    }, function (path) {
-//        path = path[0];
-//        changeViewUILaya();
-//        setTimeout(function () {
-//            laya.editor.manager.ProjectManager.openProjectByPath(path);
-//        }, 1000)
-//    });
-//}
-//function showDiv(id) {
-//    document.getElementById("ouibounce-modal").style.display = "block";
-//    proNameOutput.value = remote.app.getPath("documents");
-//    proNameInput.value = "Mylaya"
-//}
-//function closeWindHandler(id) {
-//    document.getElementById(id).style.display = 'none';
-//}
-//var dialogLaya = electron.remote.dialog;
-//function startProWork(e) {
-//    dialogLaya.showOpenDialog({properties: ["openDirectory", 'createDirectory']}, function (path) {
-//        path = path[0];
-//        proNameOutput.value = path;
-//    });
-//}
-//var layaProperties = {};
-//function newProWorkspace(type) {
-//    var filestr = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<project version=\"0.97\">\n" + "	<!--assets异步资源目录，在这些目录里面的资源，不会被编译到swf里面，但会复制到发布目录-->\n" + "	<asynRes>img,temp,sound</asynRes>\n" + "	<!--assets不处理目录，在这些目录里面的资源，不会做任何处理（包括复制）-->\n" + "	<unDealRes>embed</unDealRes>\n" + "	<!--资源类型-->\n" + "	<resTypes>png,jpg</resTypes>\n" + "	<!--发布资源导出目录-->\n" + "	<resExportPath>bin/h5</resExportPath>\n" + "	<!--UICode导出目录-->\n" + "	<codeExportPath>src/game/ui</codeExportPath>\n" + "	<!--UICode默认导入类-->\n" + "	<codeImports>import laya.ui.*;</codeImports>\n" + "	<codeImportsJS>var View=laya.ui.View;\nvar Dialog=laya.ui.Dialog;</codeImportsJS>\n" + "	<!--UI模式（0:内嵌模式，1:加载模式）-->\n" + "	<uiType>0</uiType>\n" + "	<!--UI导出目录（加载模式可用）-->\n" + "	<uiExportPath>bin/ui.swf</uiExportPath>\n" + "	<!--容器列表（转换为容器功能使用）-->\n" + "	<boxTypes>Box,List,Tab,RadioGroup,ViewStack,Panel,HBox,VBox,Tree</boxTypes>\n" + "	<!--页面类型（用于自定义页面继承）-->\n" + "	<pageTypes>View,Dialog</pageTypes>\n" + "	<!--多模块开发时共用的资源目录-->\n" + "	<shareResPath></shareResPath>\n" + "	<!--语言类型-->\n" + "	<codeType>0</codeType>\n" + "</project>";
-//    if (proNameOutput.value) {
-//        document.getElementById("ouibounce-modal").style.display = "none";
-//        if (proTypeLaya.selectedIndex == 0) {
-//            var layaZipPath = path.dirname(__dirname) + path.sep + "laya" + path.sep + "demos" + path.sep + "as";
-//        } else if (proTypeLaya.selectedIndex == 1) {
-//            var layaZipPath = path.dirname(__dirname) + path.sep + "laya" + path.sep + "demos" + path.sep + "ts";
-//        } else {
-//            var layaZipPath = path.dirname(__dirname) + path.sep + "laya" + path.sep + "demos" + path.sep + "js";
-//        }
-//        mkdirsSync(proNameOutput.value);
-//        setTimeout(function () {
-//            layacopyDirFile(path.dirname(__dirname) + path.sep + "laya" + path.sep + "default", proNameOutput.value + path.sep + "laya");
-//            filestr = filestr.replace("<codeType>0</codeType>", "<codeType>" + proTypeLaya.selectedIndex + "</codeType>");
-//            layacopyDirFile(layaZipPath, proNameOutput.value);
-//            fs.writeFileSync(proNameOutput.value + path.sep + "laya" + path.sep + proNameInput.value + ".laya", filestr);
-//            layaProperties.proName = proNameInput.value;
-//            fs.writeFileSync(proNameOutput.value, JSON.stringify(layaProperties + ".json"));
-//            ipc.send("vscode:openFolderPickerLaya", [proNameOutput.value]);
-//        }, 100)
-//    }
-//}
-//function mkdirsSync(dirname, mode) {
-//    console.log(dirname);
-//    if (fs.existsSync(dirname)) {
-//        return true;
-//    } else {
-//        if (mkdirsSync(path.dirname(dirname), mode)) {
-//            fs.mkdirSync(dirname, mode);
-//            return true;
-//        }
-//    }
-//}
-const Menu = remote.Menu;
-const MenuItem = remote.MenuItem;
-var template = [
-    {
-        label: '编辑',
-        submenu: [
-            {
-                label: '撤销',
-                accelerator: 'CmdOrCtrl+Z',
-                role: 'undo'
-            },
-            {
-                label: '重做',
-                accelerator: 'Shift+CmdOrCtrl+Z',
-                role: 'redo'
-            },
-            {
-                type: 'separator'
-            },
-            {
-                label: '剪切',
-                accelerator: 'CmdOrCtrl+X',
-                role: 'cut'
-            },
-            {
-                label: '复制',
-                accelerator: 'CmdOrCtrl+C',
-                role: 'copy'
-            },
-            {
-                label: '粘贴',
-                accelerator: 'CmdOrCtrl+V',
-                role: 'paste'
-            },
-            {
-                label: '全选',
-                accelerator: 'CmdOrCtrl+A',
-                role: 'selectall'
-            },
-        ]
-    },
-    {
-        label: '视图',
-        submenu: [
-            {
-                label: '重新加载',
-                accelerator: 'CmdOrCtrl+R',
-                click: function (item, focusedWindow) {
+function editeMenuhandler(type) {
+    var Keyboard = laya.events.Keyboard;
+    var ShortcutManager = laya.editor.manager.ShortcutManager;
+    switch (type) {
+        case "newProEditeMenu":
+            createProHandler();
+            layaideconfig.mode = "1";
+            break;
+        case "openProEditeMenu":
+            openProHandler();
+            break;
+        case "newUntitledFile":
+            ShortcutManager.exeKey(Keyboard.N, true);
+            break
+        case "newDir":
+            ShortcutManager.exeKey(Keyboard.D, true);
+            break;
+        case "setPage":
+            ShortcutManager.exeKey(Keyboard.P, true);
+            break;
+        case "setPro":
+            ShortcutManager.exeKey(Keyboard.F9);
+            break;
+        case "undoEd":
+            ShortcutManager.exeKey(Keyboard.Z, true);
+            break;
+        case"redoEd":
+            ShortcutManager.exeKey(Keyboard.Y, true);
+            break;
+        case "copyEd":
+            ShortcutManager.exeKey(Keyboard.C, true);
+            break;
+        case "pasteEd":
+            ShortcutManager.exeKey(Keyboard.V, true);
+            break;
+        case "paseteEdP":
+            ShortcutManager.exeKey(Keyboard.V, true, true);
+            break;
+        case "cutEd":
+            ShortcutManager.exeKey(Keyboard.X, true);
+            break;
+        case "selectAllEd":
+            ShortcutManager.exeKey(Keyboard.A, true);
+            break;
+        case "coverConEd":
+            ShortcutManager.exeKey(Keyboard.B, true);
+            break;
+        case "deleteEd":
+            ShortcutManager.exeKey(Keyboard.DELETE);
+            break;
+        case "fastMoveEd":
 
-                }
-            },
-            {
-                label: '切换全屏',
-                accelerator: (function () {
-                    if (process.platform == 'darwin')
-                        return 'Ctrl+Command+F';
-                    else
-                        return 'F11';
-                })(),
-                click: function (item, focusedWindow) {
-                    if (focusedWindow)
-                        focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
-                }
-            },
-            {
-                label: '打开开发者工具',
-                accelerator: (function () {
-                    if (process.platform == 'darwin')
-                        return 'Alt+Command+I';
-                    else
-                        return 'Ctrl+Shift+I';
-                })(),
-                click: function (item, focusedWindow) {
-                    if (focusedWindow)
-                        focusedWindow.webContents.toggleDevTools();
-                }
-            },
-        ]
-    },
-    {
-        label: '窗口',
-        role: 'window',
-        submenu: [
-            {
-                label: '最小化',
-                accelerator: 'CmdOrCtrl+M',
-                role: 'minimize'
-            },
-            {
-                label: '关闭',
-                accelerator: 'CmdOrCtrl+W',
-                role: 'close'
-            },
-        ]
-    },
-    {
-        label: '帮助',
-        role: 'help',
-        submenu: [
-            {
-                label: '问答社区',
-                click: function () {
-                    require('electron').shell.openExternal("http://ask.layabox.com/question")
-                }
-            },
-        ]
-    },
-];
-
-if (process.platform == 'darwin') {
-    var name = require('electron').remote.app.getName();
-    template.unshift({
-        label: name,
-        submenu: [
-            {
-                label: 'About ' + name,
-                role: 'about'
-            },
-            {
-                type: 'separator'
-            },
-            {
-                label: 'Services',
-                role: 'services',
-                submenu: []
-            },
-            {
-                type: 'separator'
-            },
-            {
-                label: 'Hide ' + name,
-                accelerator: 'Command+H',
-                role: 'hide'
-            },
-            {
-                label: 'Hide Others',
-                accelerator: 'Command+Alt+H',
-                role: 'hideothers'
-            },
-            {
-                label: 'Show All',
-                role: 'unhide'
-            },
-            {
-                type: 'separator'
-            },
-            {
-                label: 'Quit',
-                accelerator: 'Command+Q',
-                click: function () {
-                    app.quit();
-                }
-            },
-        ]
-    });
-    // Window menu.
-    template[3].submenu.push(
-        {
-            type: 'separator'
-        },
-        {
-            label: 'Bring All to Front',
-            role: 'front'
-        }
-    );
+            break;
+        case "remodeConEd":
+            ShortcutManager.exeKey(Keyboard.U, true);
+            break;
+        case "reCopyEd":
+            ShortcutManager.exeKey(Keyboard.R, true);
+            break
+        case "fixResEd":
+            laya.ide.event.IDEEvent.emitKeyEvent(Keyboard.K, true, false);
+            break;
+        case "findReplaceEd":
+            ShortcutManager.exeKey(Keyboard.F, true);
+            break;
+        case "saveEd":
+            ShortcutManager.exeKey(Keyboard.S, true);
+            break;
+        case "saveAllEd":
+            ShortcutManager.exeKey(Keyboard.S, true, true);
+            break;
+        case "bigViewEd":
+            ShortcutManager.exeKey(Keyboard.EQUAL, true);
+            break;
+        case "smallViewEd":
+            ShortcutManager.exeKey(Keyboard.MINUS, true);
+            break;
+        case "showViewEd":
+            ShortcutManager.exeKey(Keyboard.F8);
+            break;
+        case "resetViewEd":
+            ShortcutManager.exeKey(Keyboard.BACKSLASH, true);
+            break;
+        case "shoeViewDeEd":
+            ShortcutManager.exeKey(Keyboard.R, true, true);
+            laya.ide.event.IDEEvent.emitKeyEvent(Keyboard.R, true, true);
+            break;
+        case "upEd":
+            break;
+        case "downEd":
+            ShortcutManager.exeKey(Keyboard.DOWN, true);
+            IDEEvent.emitKeyEvent(Keyboard.DOWN, true);
+            break;
+        case "projPanelEd":
+            laya.ide.managers.LayoutRecManager.showPanelByClassName("PagePanel");
+            break;
+        case "resPanelEd":
+            laya.ide.managers.LayoutRecManager.showPanelByClassName("ResPanel");
+            break;
+        case "CompPanel":
+            laya.ide.managers.LayoutRecManager.showPanelByClassName("CompPanel");
+            break;
+        case "objPanelEd":
+            laya.ide.managers.LayoutRecManager.showPanelByClassName("PropPanel");
+            break;
+        case "displayTreePanel":
+            laya.ide.managers.LayoutRecManager.showPanelByClassName("DisplayTreePanel");
+            break;
+        case "timePanel":
+            laya.ide.managers.LayoutRecManager.showPanelByClassName("TimeLinePanel");
+            break;
+        case "资源转换工具":
+            CMDShell.exeFile(FileManager.getAppPath(Paths.AirTool), null, null);
+            break;
+        case "resetPanel":
+            ShortcutManager.exeKey(Keyboard.F3);
+            break;
+        case "changeProEditeMenu":
+            laya.editor.view.other.ConvertProject.instance.start();
+            break;
+        case "pushEd":
+            ShortcutManager.exeKey(Keyboard.F12);
+            break;
+        case "cleanPush":
+            ShortcutManager.exeKey(Keyboard.F12, true);
+            break;
+        case "pushFinalEd":
+            ShortcutManager.exeKey(Keyboard.F11);
+            break;
+        case "refreshPanelEd":
+            ShortcutManager.exeKey(Keyboard.F5);
+            break;
+        case "refreshPagePanelEd":
+            ShortcutManager.exeKey(Keyboard.F6);
+            break
+        case "refreshResPanelEd":
+            ShortcutManager.exeKey(Keyboard.F7);
+            break;
+        case"findNoPageEd":
+            ShortcutManager.exeKey(Keyboard.F4);
+            break;
+        case "altaPackEd":
+            laya.editor.view.other.PackAltas.instance.start();
+            break;
+        case "resCoverEd":
+            var dir = path.dirname(__dirname);
+            var file = path.join(dir, "libs", "LayaAirTool", "LayaAirTool.exe");
+            childProcess.execFile(file);
+            break;
+        case "jsCompress":
+            comprssJSModule()
+            break
+    }
 }
-
-var menu = Menu.buildFromTemplate(template);
-Menu.setApplicationMenu(menu);
-//function layacopyDirFile(from, to) {
-//    var fs = require('fs'),
-//        stat = fs.stat;
-//
-//    var copy = function (src, dst) {
-//        // 读取目录中的所有文件/目录
-//        fs.readdir(src, function (err, paths) {
-//            if (err) {
-//                throw err;
-//            }
-//            paths.forEach(function (pathLaya) {
-//                var _src = src + path.sep + pathLaya,
-//                    _dst = dst + path.sep + pathLaya,
-//                    readable, writable;
-//                stat(_src, function (err, st) {
-//                    if (err) {
-//                        throw err;
-//                    }
-//                    // 判断是否为文件
-//                    if (st.isFile()) {
-//                        // 创建读取流
-//                        readable = fs.createReadStream(_src);
-//                        // 创建写入流
-//                        writable = fs.createWriteStream(_dst);
-//                        // 通过管道来传输流
-//                        readable.pipe(writable);
-//                    }
-//                    // 如果是目录则递归调用自身
-//                    else if (st.isDirectory()) {
-//                        exists(_src, _dst, copy);
-//                    }
-//                });
-//            });
-//        });
-//    };
-//// 在复制目录前需要判断该目录是否存在，不存在需要先创建目录
-//    var exists = function (src, dst, callback) {
-//        fs.exists(dst, function (exists) {
-//            // 已存在
-//            if (exists) {
-//                callback(src, dst);
-//            }
-//            // 不存在
-//            else {
-//                fs.mkdir(dst, function () {
-//                    callback(src, dst);
-//                });
-//            }
-//        });
-//    };
-//// 复制目录
-//    exists(from, to, copy);
-//}
+function openUserPath() {
+    remote.shell.openItem(remote.app.getDataPath())
+}
 //window.onkeydown = function (e) {
 //    if (e.keyCode == 116) {
-//        remote.getCurrentWindow().reload()
+//        remote.getCurrentWindow().reload();
 //    }
+//
 //}
-//
-//
-//
+
+function showDivPop(id) {
+    document.getElementById("ouibounce-modal").style.display = "block"
+    for (var i = 0; i < layaDviCon.length; i++) {
+        layaDviCon[i].style.display = "none";
+    }
+    id.style.display = "block";
+}
+
+
+//outputService.append(_this.outputChannel, line + '\n')

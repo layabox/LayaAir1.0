@@ -1,17 +1,9 @@
-///////////////////////////////////////////////////////////
-//  CMDParticle.as
-//  Macromedia ActionScript Implementation of the Class CMDParticle
-//  Created on:      2015-8-25 下午3:41:07
-//  Original author: ww
-///////////////////////////////////////////////////////////
-
 package laya.particle.particleUtils
 {
 	
 	/**
 	 * 
-	 * @author ww
-	 * @version 1.0
+	 *  @private
 	 * 
 	 * @created  2015-8-25 下午3:41:07
 	 */

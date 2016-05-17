@@ -293,17 +293,13 @@ package laya.ui {
 			(_tf as Input).select();
 		}
 		
-		public function set restrict(pattern:String):void {
-			Input(_tf).restrict = pattern;
-		}
-		
 		/**限制输入的字符。*/
 		public function get restrict():String {
 			return Input(_tf).restrict;
 		}
 		
-		public function set title(value:String):void {
-			Input(_tf).title = value;
+		public function set restrict(pattern:String):void {
+			Input(_tf).restrict = pattern;
 		}
 		
 		/**
@@ -311,6 +307,10 @@ package laya.ui {
 		 */
 		public function get title():String {
 			return Input(_tf).title;
+		}
+		
+		public function set title(value:String):void {
+			Input(_tf).title = value;
 		}
 		
 		public function set clearOnFocus(value:Boolean):void {

@@ -1,7 +1,7 @@
-/*[IF-FLASH]*/package {
+/*[IF-FLASH]*/
+package {
 	/**
-	 * ...
-	 * @author laya
+	 * @private
 	 */
 	public function __JS__(value:*):* {
 		return null;

@@ -1,5 +1,8 @@
 package laya.net {
+	import laya.renders.Render;
+	import laya.system.System;
 	import laya.utils.Browser;
+	import laya.utils.RunDriver;
 	
 	/**
 	 * <p> <code>URL</code> 类用于定义地址信息。</p>
@@ -46,22 +49,24 @@ package laya.net {
 		public static var customFormat:Function;
 		
 		/**
-		 * 格式化指定的地址并返回。
+		 * 格式化指定的地址并	返回。
 		 * @param	url 地址。
 		 * @param	_basePath 路径。
 		 * @return 格式化处理后的地址。
-		 */
+		 */	
 		public static function formatURL(url:String, _basePath:String = null):String {
 			if (customFormat != null) url = customFormat(url, _basePath);
 			if (!url) return "null path";
-			
-			version[url] && (url += "?v=" + version[url]);
-			
-			if (!Browser.httpProtocol && url[0] == '/')
-				return rootPath + url;
+			if ( Render.isConchApp == false)
+			{
+				version[url] && (url += "?v=" + version[url]);
+			}
+			if (url.charAt(0) == '~')
+				return rootPath + url.substring(1);
 			
 			if (isAbsolute(url))
 				return url;
+				
 			return (_basePath || basePath) + url;
 		}
 		

@@ -11,7 +11,7 @@ package laya.webgl.atlas {
 	public class Atlaser extends AtlasGrid {
 		private var _atlasCanvas:AtlasWebGLCanvas;
 		private var _inAtlasTextureKey:Vector.<Texture>;
-		private var _inAtlasTextureBitmapValue:Vector.<Texture>;
+		private var _inAtlasTextureBitmapValue:Vector.<Bitmap>;
 		private var _inAtlasTextureOriUVValue:Vector.<Array>;
 		
 		private var _InAtlasWebGLImagesKey:Vector.<WebGLImage>;
@@ -32,7 +32,7 @@ package laya.webgl.atlas {
 		public function Atlaser(gridNumX:int, gridNumY:int, width:int, height:int, atlasID:uint) {
 			super(gridNumX, gridNumY, atlasID);
 			_inAtlasTextureKey = new Vector.<Texture>();
-			_inAtlasTextureBitmapValue = new Vector.<Texture>();
+			_inAtlasTextureBitmapValue = new Vector.<Bitmap>();
 			_inAtlasTextureOriUVValue = new Vector.<Array>();
 			_InAtlasWebGLImagesKey = new Vector.<WebGLImage>();
 			_InAtlasWebGLImagesOffsetValue = new Vector.<Array>();

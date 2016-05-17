@@ -17,6 +17,9 @@ package laya.resource {
 		
 		/*** @private */
 		public static function _init(canvas:HTMLCanvas, ctx:*):void {
+			
+			/*[IF-FLASH]*/ return;
+			
 			ctx.__fillText = ctx.fillText;
 			ctx.__fillRect = ctx.fillRect;
 			ctx.__strokeText = ctx.strokeText;
@@ -232,7 +235,7 @@ package laya.resource {
 		public function drawTexture(tex:Texture, x:Number, y:Number, width:Number, height:Number, tx:Number, ty:Number):void {
 			Stat.drawCall++;
 			var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
-			this.drawImage(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x + tex.offsetX + tx, y + tex.offsetY + ty, width, height);
+			this.drawImage(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x + tx, y + ty, width, height);
 		}
 		
 		/*** @private */
@@ -241,7 +244,7 @@ package laya.resource {
 			var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
 			this.save();
 			this.transform(m.a, m.b, m.c, m.d, m.tx + tx, m.ty + ty);
-			this.drawImage(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x + tex.offsetX, y + tex.offsetY, width, height);
+			this.drawImage(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x , y, width, height);
 			this.restore();
 		}
 		
@@ -262,11 +265,11 @@ package laya.resource {
 				this.save();
 				this.transform(m.a, m.b, m.c, m.d, m.tx + x, m.ty + y);
 				//this.drawTexture(args2[0], args2[1] - pivotX + x, args2[2] - pivotY + y, args2[3], args2[4], args2[5], 0, 0);
-				this.drawImage(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, args2[1] - pivotX + tex.offsetX, args2[2] - pivotY + tex.offsetY, args2[3], args2[4]);
+				this.drawImage(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, args2[1] - pivotX , args2[2] - pivotY, args2[3], args2[4]);
 				this.restore();
 			} else {
 				//this.drawTexture(args2[0], args2[1] - pivotX + x, args2[2] - pivotY + y, args2[3], args2[4], args2[5], 0, 0);
-				this.drawImage(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, args2[1] - pivotX + x + tex.offsetX, args2[2] - pivotY + y + tex.offsetY, args2[3], args2[4]);
+				this.drawImage(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, args2[1] - pivotX + x , args2[2] - pivotY + y, args2[3], args2[4]);
 			}
 			if (alphaChanged) this.globalAlpha = temp;
 		}
@@ -281,9 +284,6 @@ package laya.resource {
 			font && (this.font = font);
 			color && (this.fillStyle = color);
 			var _this:* = this;
-			//words.forEach(function(a:HTMLChar):void {
-			//_this.__fillText(a.char, a.x + x, a.y + y);
-			//});	
 			this.textBaseline = "top";
 			__JS__("this.textAlign = 'left'");
 			for (var i:int = 0, n:int = words.length; i < n; i++) {

@@ -112,6 +112,7 @@ package laya.webgl.utils {
 
 }
 import laya.utils.Browser;
+import laya.utils.RunDriver;
 import laya.webgl.utils.ShaderCompile;
 
 class ShaderScriptBlock
@@ -132,6 +133,8 @@ class ShaderScriptBlock
 		
 		if (!condition) return;
 		
+		/*[IF-FLASH]*/ this.condition = RunDriver.createShaderCondition(condition); return;
+		
 		//把条件的变量名加上this.
 		var newcondition:String = "";
 		var preIsParam:Boolean = false, isParam:Boolean;
@@ -146,8 +149,7 @@ class ShaderScriptBlock
 			}
 			newcondition += c;
 		}
-		var fn:String = "(function() {return " + newcondition + ";})";
-		this.condition =  Browser.window.eval(fn);//生成条件判断函数
+		this.condition = RunDriver.createShaderCondition(newcondition);
 	}
 	
 	public function  toscript(def:*,out:Array):Array
@@ -167,7 +169,7 @@ class ShaderScriptBlock
 			text && out.push(text);
 		}
 
-		this.childs.length>0 && this.childs.forEach(function(o:ShaderScriptBlock):void { o.toscript(def, out) } );
+		this.childs.length>0 && this.childs.forEach(function(o:ShaderScriptBlock, index :int, arr :Vector.<ShaderScriptBlock>):void { o.toscript(def, out) } );
 		
 		return out;
 	}

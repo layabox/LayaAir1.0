@@ -319,7 +319,7 @@ package laya.webgl
 		//潜在问题 WebGLContext为实例对象，以下渲染配置均属于实例对象，非静态
 		public static var _depthTest:Boolean = true;
 		public static var _depthMask:int = 1;
-		//public static var _depthFunc:int = -1;// Write it!!!
+		public static var _depthFunc:int = WebGLContext.LEQUAL; 
 	
 		public static var _blend:Boolean = false;
 		public static var _sFactor:int =WebGLContext.ONE;//待确认
@@ -328,6 +328,8 @@ package laya.webgl
 		public static var _cullFace:Boolean = false;
 		public static var _frontFace:int = WebGLContext.CCW;
 		
+		public static var curBindTexTarget:*;
+		public static var curBindTexValue:*;
 	
 		public static function setDepthTest(gl:WebGLContext, value:Boolean):void
 		{
@@ -358,7 +360,14 @@ package laya.webgl
 		{
 			value !== _frontFace && (_frontFace = value, gl.frontFace(value));
 		}
-
+		
+		public static function bindTexture(gl:WebGLContext,target:*, texture:*):void
+		{
+			gl.bindTexture(target, texture);
+			curBindTexTarget = target;
+			curBindTexValue = texture;
+		}
+	
 		
 		/*[IF-FLASH-BEGIN]*/
 		public var alpha:Number = 0;
@@ -392,7 +401,9 @@ package laya.webgl
 		
 		public function bindRenderbuffer(target:*, renderbuffer:*):void{}
 		
-		public function bindTexture(target:*, texture:*):void{}
+		public function bindTexture(target:*, texture:*):void { }
+		
+		public function useTexture(value:Boolean):void{}
 		
 		public function blendColor(red:*, green:*, blue:*, alpha:Number):void{}
 		
@@ -426,17 +437,17 @@ package laya.webgl
 		
 		public function copyTexSubImage2D(target:*, level:*, xoffset:int, yoffset:int, x:Number, y:Number, width:Number, height:Number):void{}
 		
-		public function createBuffer():void{}
+		public function createBuffer():*{}
 		
-		public function createFramebuffer():void{}
+		public function createFramebuffer():*{}
 		
-		public function createProgram():void{}
+		public function createProgram():*{}
 		
-		public function createRenderbuffer():void{}
+		public function createRenderbuffer():*{}
 		
-		public function createShader(type:*):void{}
+		public function createShader(type:*):*{}
 		
-		public function createTexture():void{}
+		public function createTexture():*{return null}
 		
 		public function cullFace(mode:*):void{}
 		
@@ -488,7 +499,7 @@ package laya.webgl
 		
 		public function getActiveUniform(program:*, index:int):*{return null;}
 		
-		public function getAttribLocation(program:*, name:String):int{return 0;}
+		public function getAttribLocation(program:*, name:String):*{return 0;}
 		
 		public function getParameter(pname:*):*{return null;}
 		
@@ -504,7 +515,7 @@ package laya.webgl
 		
 		public function getRenderbufferParameter(target:*, pname:*):*{return null;}
 		
-		public function getShaderParameter(shader:*, pname:*):void{}
+		public function getShaderParameter(shader:*, pname:*):*{}
 		
 		public function getShaderInfoLog(shader:*):*{return null;}
 		
@@ -574,67 +585,69 @@ package laya.webgl
 		
 		public function texSubImage2D(... args):void{}
 		
-		public function uniform1f(location:int, x:Number):void{}
+		public function uniform1f(location:*, x:Number):void{}
 		
-		public function uniform1fv(location:int, v:*):void{}
+		public function uniform1fv(location:*, v:*):void{}
 		
-		public function uniform1i(location:int, x:Number):void{}
+		public function uniform1i(location:*, x:Number):void{}
 		
-		public function uniform1iv(location:int, v:*):void{}
+		public function uniform1iv(location:*, v:*):void{}
 		
-		public function uniform2f(location:int, x:Number, y:Number):void{}
+		public function uniform2f(location:*, x:Number, y:Number):void{}
 		
-		public function uniform2fv(location:int, v:*):void{}
+		public function uniform2fv(location:*, v:*):void{}
 		
-		public function uniform2i(location:int, x:Number, y:Number):void{}
+		public function uniform2i(location:*, x:Number, y:Number):void{}
 		
-		public function uniform2iv(location:int, v:*):void{}
+		public function uniform2iv(location:*, v:*):void{}
 		
-		public function uniform3f(location:int, x:Number, y:Number, z:Number):void{}
+		public function uniform3f(location:*, x:Number, y:Number, z:Number):void{}
 		
-		public function uniform3fv(location:int, v:*):void{}
+		public function uniform3fv(location:*, v:*):void{}
 		
-		public function uniform3i(location:int, x:Number, y:Number, z:Number):void{}
+		public function uniform3i(location:*, x:Number, y:Number, z:Number):void{}
 		
-		public function uniform3iv(location:int, v:*):void{}
+		public function uniform3iv(location:*, v:*):void{}
 		
-		public function uniform4f(location:int, x:Number, y:Number, z:Number, w:Number):void{}
+		public function uniform4f(location:*, x:Number, y:Number, z:Number, w:Number):void{}
 		
-		public function uniform4fv(location:int, v:*):void{}
+		public function uniform4fv(location:*, v:*):void{}
 		
-		public function uniform4i(location:int, x:Number, y:Number, z:Number, w:Number):void{}
+		public function uniform4i(location:*, x:Number, y:Number, z:Number, w:Number):void{}
 		
-		public function uniform4iv(location:int, v:*):void{}
+		public function uniform4iv(location:*, v:*):void{}
 		
-		public function uniformMatrix2fv(location:int, transpose:*, value:*):void{}
+		public function uniformMatrix2fv(location:*, transpose:*, value:*):void{}
 		
-		public function uniformMatrix3fv(location:int, transpose:*, value:*):void{}
+		public function uniformMatrix3fv(location:*, transpose:*, value:*):void{}
 		
-		public function uniformMatrix4fv(location:int, transpose:*, value:*):void{}
+		public function uniformMatrix4fv(location:*, transpose:*, value:*):void{}
 		
 		public function useProgram(program:*):void{}
 		
 		public function validateProgram(program:*):void{}
 		
-		public function vertexAttrib1f(indx:int, x:Number):void{}
+		public function vertexAttrib1f(indx:*, x:Number):void{}
 		
-		public function vertexAttrib1fv(indx:int, values:*):void{}
+		public function vertexAttrib1fv(indx:*, values:*):void{}
 		
-		public function vertexAttrib2f(indx:int, x:Number, y:Number):void{}
+		public function vertexAttrib2f(indx:*, x:Number, y:Number):void{}
 		
-		public function vertexAttrib2fv(indx:int, values:*):void{}
+		public function vertexAttrib2fv(indx:*, values:*):void{}
 		
-		public function vertexAttrib3f(indx:int, x:Number, y:Number, z:Number):void{}
+		public function vertexAttrib3f(indx:*, x:Number, y:Number, z:Number):void{}
 		
-		public function vertexAttrib3fv(indx:int, values:*):void{}
+		public function vertexAttrib3fv(indx:*, values:*):void{}
 		
-		public function vertexAttrib4f(indx:int, x:Number, y:Number, z:Number, w:Number):void{}
+		public function vertexAttrib4f(indx:*, x:Number, y:Number, z:Number, w:Number):void{}
 		
-		public function vertexAttrib4fv(indx:int, values:*):void{}
+		public function vertexAttrib4fv(indx:*, values:*):void{}
 		
-		public function vertexAttribPointer(indx:int, size:*, type:*, normalized:*, stride:*, offset:int):void{}
+		public function vertexAttribPointer(indx:*, size:*, type:*, normalized:*, stride:*, offset:int):void{}
 		
-		public function viewport(x:Number, y:Number, width:Number, height:Number):void{}
+		public function viewport(x:Number, y:Number, width:Number, height:Number):void { }
+		
+		public function configureBackBuffer(width:int, height:int, antiAlias:int, enableDepthAndStencil:Boolean = true, wantsBestResolution:Boolean = false):void{};
 	/*[IF-FLASH-END]*/
 	}
 

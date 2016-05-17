@@ -28,6 +28,8 @@ package laya.utils {
 		private var _usedPool:Boolean;
 		/**唯一标识，TimeLintLite用到*/
 		public var gid:int = 0;
+		/**更新回调，缓动数值发生变化时，回调变化的值*/
+		public var update:Handler;
 		
 		/**
 		 * 缓动对象的props属性到目标值。
@@ -144,10 +146,11 @@ package laya.utils {
 		
 		/**执行缓动**/
 		private function _doEase():void {
-			updateEase(Browser.now());
+			_updateEase(Browser.now());
 		}
 		
-		public function updateEase(time:Number):void {
+		/**@private */
+		public function _updateEase(time:Number):void {
 			var target:* = this._target;
 			
 			//如果对象被销毁，则立即停止缓动
@@ -163,6 +166,7 @@ package laya.utils {
 				var prop:Array = props[i];
 				target[prop[0]] = prop[1] + (ratio * prop[2]);
 			}
+			if (update) update.run();
 		}
 		
 		/**

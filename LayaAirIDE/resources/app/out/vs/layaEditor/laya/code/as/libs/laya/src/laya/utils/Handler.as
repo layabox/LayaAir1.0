@@ -71,6 +71,7 @@ package laya.utils {
 			if (method == null) return;
 			var id:int = _id;
 			if (data == null) method.apply(caller, args);
+			/*[IF-FLASH]*/ else if (!args && !(data is Array)) method.call(caller, data);			
 			else if (!args && !data.unshift) method.call(caller, data);
 			else if (args) method.apply(caller, args ? args.concat(data) : data);
 			else method.apply(caller, data);

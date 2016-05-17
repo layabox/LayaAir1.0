@@ -642,7 +642,7 @@ package laya.display.css {
 		}
 		
 		/**@inheritDoc	 */
-		override public function set transform(value:*):void {
+		override public function setTransform(value:*):void {
 			(value === 'none') ? (_tf = _TF_EMPTY) : attrs(parseOneCSS(value, ','));
 		}
 		

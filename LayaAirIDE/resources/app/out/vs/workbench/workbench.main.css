@@ -5587,11 +5587,11 @@ hr.outlineRule.function, hr.outlineRule.method {
 }
 
 .monaco-workbench .part.editor.empty {
-    /*background-image: url(browser/parts/editor/media/letterpress.png)*/
+    background-image: url(browser/parts/editor/media/letterpress.png)
 }
 
 .monaco-workbench.hc-black .part.editor.empty, .monaco-workbench.vs-dark .part.editor.empty {
-    /*background-image: url(browser/parts/editor/media/letterpress-dark.png)*/
+    background-image: url(browser/parts/editor/media/letterpress-dark.png)
 }
 
 @media (-webkit-min-device-pixel-ratio: 2),(min-resolution: 192dppx) {
@@ -6033,7 +6033,7 @@ hr.outlineRule.function, hr.outlineRule.method {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    font-family: Segoe WPC, Segoe UI, SFUIText-Light, HelveticaNeue-Light, sans-serif;
+    font-family: Microsoft YaHei;
     font-size: 11px;
     -webkit-user-select: none;
     -ms-user-select: none;
@@ -6162,7 +6162,7 @@ a:active {
 }
 
 .monaco-shell input, .monaco-shell select {
-    font-family: Segoe UI, SFUIText-Light, HelveticaNeue-Light, sans-serif
+    font-family: Microsoft YaHei;
 }
 
 .monaco-shell .pointer {
@@ -6225,7 +6225,7 @@ a:active {
     display: inline-block;
     padding: 6px 16px;
     margin-right: 12px;
-    font-family: Segoe UI Semibold, Segoe UI, SFUIText-Light, HelveticaNeue-Light, sans-serif;
+    font-family: Microsoft YaHei;
     font-weight: 400;
     font-size: 12px;
     min-width: 65px;
@@ -6259,12 +6259,12 @@ a:active {
     padding: 0 16px;
     overflow-y: auto;
     overflow-x: hidden;
-    font-family: Segoe WPC, Segoe UI, SFUIText-Light, HelveticaNeue-Light, sans-serif;
+    font-family: Microsoft YaHei;
     font-size: 14px
 }
 
 .monaco-shell .monaco-notification-container > .notification > .notification-title {
-    font-family: Segoe UI Light, Segoe UI, SFUIText-Light, HelveticaNeue-Light, Helvetica Neue, sans-serif;
+    font-family: Microsoft YaHei;
     font-weight: 300;
     font-size: 2.5em
 }
@@ -6472,7 +6472,7 @@ a:active {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: pre;
-    font-family: Monaco, Menlo, Consolas, Droid Sans Mono, Inconsolata, Courier New, monospace
+    font-family: Microsoft YaHei;
 }
 
 .monaco-workbench .monaco-tree-row .expression.mac {
@@ -6982,7 +6982,7 @@ a:active {
 .monaco-shell .feedback-form h2 {
     margin: 0;
     padding: 0;
-    font-family: Segoe WPC, Segoe UI, SFUIDisplay-Light, HelveticaNeue-Light, sans-serif;
+    font-family: Microsoft YaHei;
     font-weight: 400;
     font-size: 1.8em
 }
@@ -7149,7 +7149,7 @@ a:active {
 }
 
 .monaco-shell.vs .feedback-form .feedback-alias, .monaco-shell.vs .feedback-form .feedback-description {
-    font-family: inherit;
+    font-family: Microsoft YaHei;
     border: 1px solid transparent
 }
 

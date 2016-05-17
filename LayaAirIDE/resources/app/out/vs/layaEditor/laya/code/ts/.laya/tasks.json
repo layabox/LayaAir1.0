@@ -6,7 +6,7 @@
         "-p",
         ".",
         "--outDir",
-        "bin"
+        "bin/js"
     ],
     "showOutput": "silent",
     "problemMatcher": "$tsc"

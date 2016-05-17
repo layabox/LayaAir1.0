@@ -6,9 +6,8 @@ package laya.display {
 	import laya.renders.Render;
 	import laya.renders.RenderContext;
 	import laya.resource.HTMLCanvas;
-	import laya.system.System;
 	import laya.utils.Browser;
-	import laya.utils.Log;
+	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	
 	/**
@@ -17,13 +16,12 @@ package laya.display {
 	 */
 	[Event(name = "resize", type = "laya.events.Event")]
 	/**
-	 * 舞台获得焦点时调度。
-	 * 比如浏览器或者当前标签被切换到后台后，重新切换回来时。
+	 * 舞台获得焦点时调度。比如浏览器或者当前标签被切换到后台后，重新切换回来时。
 	 * @eventType Event.FOCUS
 	 */
 	[Event(name = "focus", type = "laya.events.Event")]
 	/**
-	 * 舞台失去焦点时调度，比如浏览器或者当前标签被切换到后台后调度。
+	 * 舞台失去焦点时调度。比如浏览器或者当前标签被切换到后台后调度。
 	 * @eventType Event.BLUR
 	 */
 	[Event(name = "blur", type = "laya.events.Event")]
@@ -45,7 +43,7 @@ package laya.display {
 		public static const SCALE_FULL:String = "full";
 		/**应用保持设计宽度不变，高度根据屏幕比缩放，stage的宽度等于设计宽度，高度根据屏幕比率大小而变化*/
 		public static const SCALE_FIXED_WIDTH:String = "fixedwidth";
-		/**应用保持设计宽度不变，高度根据屏幕比缩放，stage的宽度等于设计宽度，高度根据屏幕比率大小而变化*/
+		/**应用保持设计高度不变，宽度根据屏幕比缩放，stage的高度等于设计宽度，宽度根据屏幕比率大小而变化*/
 		public static const SCALE_FIXED_HEIGHT:String = "fixedheight";
 		
 		/**画布水平居左对齐。*/
@@ -103,8 +101,6 @@ package laya.display {
 		/** @private */
 		private var _bgColor:String = "black";
 		/** @private */
-		private var _preLoopTime:Number = Browser.now();
-		/** @private */
 		private var _mouseMoveTime:Number = 0;
 		/** @private */
 		private var _renderCount:int = 0;
@@ -120,6 +116,7 @@ package laya.display {
 			})
 			window.addEventListener("blur", function():void {
 				_this.event(Event.BLUR);
+				if (this.focus && this.focus.focus) this.focus.focus = false;
 			})
 			window.addEventListener("resize", function():void {
 				_this._resetCanvas();
@@ -133,7 +130,7 @@ package laya.display {
 			on(Event.MOUSE_MOVE, this, _onmouseMove);
 		}
 		
-		/**@inheritDoc	 */
+		/**设置场景设计宽高*/
 		override public function size(width:Number, height:Number):Sprite {
 			this.desginWidth = this.width = width;
 			this.desginHeight = this.height = height;
@@ -156,7 +153,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 设置屏幕大小。
+		 * 设置屏幕大小，场景会根据屏幕大小进行适配。
 		 * @param	screenWidth		屏幕宽度。
 		 * @param	screenHeight	屏幕高度。
 		 */
@@ -225,6 +222,8 @@ package laya.display {
 			}
 			
 			//根据不同尺寸缩放stage画面
+			scaleX *= this.scaleX;
+			scaleY *= this.scaleY;
 			if (scaleX === 1 && scaleY === 1) {
 				transform && transform.identity();
 			} else {
@@ -235,7 +234,7 @@ package laya.display {
 			
 			//处理canvas大小			
 			canvas.size(canvasWidth, canvasHeight);
-			System.changeWebGLSize(canvasWidth, canvasHeight);
+			RunDriver.changeWebGLSize(canvasWidth, canvasHeight);
 			mat.scale(realWidth / canvasWidth / pixelRatio, realHeight / canvasHeight / pixelRatio);
 			
 			//处理水平对齐
@@ -271,12 +270,15 @@ package laya.display {
 		/**
 		 * <p>缩放模式。</p>
 		 * <p><ul>取值范围：
-		 * <li>"noScale" ：不缩放；</li>
-		 * <li>"exactFit" ：全屏不等比缩放；</li>
-		 * <li>"showAll" ：最小比例缩放；</li>
-		 * <li>"noBorder" ：最大比例缩放；</li>
+		 * <li>"noscale" ：不缩放；</li>
+		 * <li>"exactfit" ：全屏不等比缩放；</li>
+		 * <li>"showall" ：最小比例缩放；</li>
+		 * <li>"noborder" ：最大比例缩放；</li>
+		 * <li>"full" ：不缩放，stage的宽高等于屏幕宽高；</li>
+		 * <li>"fixedwidth" ：宽度不变，高度根据屏幕比缩放；</li>
+		 * <li>"fixedheight" ：高度不变，宽度根据屏幕比缩放；</li>
 		 * </ul></p>
-		 * 默认值为 "noScale"。
+		 * 默认值为 "noscale"。
 		 */
 		public function get scaleMode():String {
 			return _scaleMode;
@@ -396,17 +398,11 @@ package laya.display {
 		
 		/**@inheritDoc */
 		override public function render(context:RenderContext, x:Number, y:Number):void {
-			var loopTime:Number = Browser.now();
+			Render.isFlash && repaint();
 			
-			if (Log.enable() && (loopTime - now) > 500) {
-				Log.print("-------------render delay:" + (Browser.now() - now) + "  cound:" + _renderCount);
-			}
-			
-			now = loopTime;
-			
+			now = Browser.now();
 			_renderCount++;
 			
-			var delay:int = loopTime - _preLoopTime;
 			var isFastMode:Boolean = (frameRate !== FRAME_SLOW);
 			var isDoubleLoop:Boolean = (_renderCount % 2 === 0);
 			var ctx:* = Render.context;
@@ -418,18 +414,17 @@ package laya.display {
 				MouseManager.instance.runEvent();
 				Laya.timer._update();
 				if (this._style.visible) {
-					Render.isWebGl ? ctx.clear() : Render.clear(_bgColor);
+					Render.isWebGL ? ctx.clear() : RunDriver.clear(_bgColor);
 					super.render(context, x, y);
 				}
 			}
 			
 			if (this._style.visible && (isFastMode || !isDoubleLoop)) {
-				Render.isWebGl && Render.clear(_bgColor);
+				Render.isWebGL && RunDriver.clear(_bgColor);
+				RunDriver.benginFlush();
 				context.flush();
-				Render.finish();
+				RunDriver.endFinish();
 			}
-			
-			_preLoopTime = loopTime;
 		}
 	}
 }

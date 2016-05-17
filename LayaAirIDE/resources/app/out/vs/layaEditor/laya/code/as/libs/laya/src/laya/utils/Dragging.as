@@ -94,7 +94,6 @@ package laya.utils {
 				Laya.stage.off(Event.MOUSE_OUT, this, onStageMouseUp);
 				_dragging = false;
 				target && area && backToArea();
-				//target && (target.mouseEnabled = true);
 				clear();
 			}
 		}
@@ -115,8 +114,7 @@ package laya.utils {
 					_offsets.length = 0;
 					target.event(Event.DRAG_START, data);
 					MouseManager.instance.disableMouseEvent = _disableMouseEvent;
-					target["$_MOUSEDOWN"] = false;
-						//target.mouseEnabled = false;
+					target._set$P("$_MOUSEDOWN", false);
 				} else return;
 			} else {
 				_offsets.push(offsetX, offsetY);

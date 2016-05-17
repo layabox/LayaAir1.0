@@ -1,8 +1,8 @@
 package laya.html.dom 
 {
+	
 	/**
-	 * ...
-	 * @author laya
+	 * @private
 	 */
 	public class HTMLBrElement extends HTMLElement 
 	{

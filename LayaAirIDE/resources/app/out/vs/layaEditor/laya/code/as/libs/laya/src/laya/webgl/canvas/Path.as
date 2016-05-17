@@ -2,6 +2,8 @@ package laya.webgl.canvas
 {
 	import laya.maths.Rectangle;
 	import laya.webgl.shapes.LoopLine;
+	import laya.webgl.utils.IndexBuffer;
+	import laya.webgl.utils.VertexBuffer;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
@@ -15,7 +17,6 @@ package laya.webgl.canvas
 	import laya.webgl.shapes.Line;
 	import laya.webgl.shapes.Polygon;
 	import laya.webgl.shapes.Rect;
-	import laya.webgl.utils.Buffer;
 	
 	/**
 	 * ...
@@ -29,8 +30,8 @@ package laya.webgl.canvas
 		public var _y:Number=0;
 		public var _rect:Rectangle;
 		
-		public var ib:Buffer;
-		public var vb:Buffer;
+		public var ib:IndexBuffer;
+		public var vb:VertexBuffer;
 		public var dirty:Boolean=false;
 		public var geomatrys:Vector.<IShape>;
 		public var _curGeomatry:IShape;
@@ -43,8 +44,8 @@ package laya.webgl.canvas
 		{
 			geomatrys=new Vector.<IShape>();
 			var gl:WebGLContext=WebGL.mainContext;
-			ib=new Buffer(WebGLContext.ELEMENT_ARRAY_BUFFER,Buffer.INDEX,null,WebGLContext.STATIC_DRAW);
-			vb=new Buffer(WebGLContext.ARRAY_BUFFER);
+			ib = IndexBuffer.create();
+			vb = VertexBuffer.create();
 		}
 		
 		public function clear():void
@@ -72,14 +73,13 @@ package laya.webgl.canvas
 		{
 			var geo:BasePoly;
 			geomatrys.push(_curGeomatry=geo=new Circle(x,y,r,edges,color,borderWidth,borderColor));
-			if(!color)geo.fill=false; if(borderColor==undefined)geo.borderWidth=0;
+			if(borderColor==undefined)geo.borderWidth=0;
 		}
 		
 		public function fan(x:Number,y:Number,r:Number,r0:Number,r1:Number,color:uint,borderWidth:int,borderColor:Number):void
 		{
 			var geo:BasePoly;
 			geomatrys.push(_curGeomatry=geo=new Fan(x,y,r,r0,r1,color,borderWidth,borderColor));
-			if(!color)geo.fill=false;
 		}
 		
 		public function ellipse(x:Number,y:Number,rw:Number,rh:Number,color:uint,borderWidth:int,borderColor:Number):void

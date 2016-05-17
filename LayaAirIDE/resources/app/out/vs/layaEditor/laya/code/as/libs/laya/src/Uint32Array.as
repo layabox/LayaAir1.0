@@ -1,8 +1,11 @@
 /*[IF-FLASH]*/package
 {
-	public class Uint32Array
+	/**
+	 * @private
+	 */
+	public dynamic class Uint32Array extends Array
 	{
+		public static const BYTES_PER_ELEMENT:int = 1;		
 		public function Uint32Array(...arg) { }
-		public var length:int;
 	}
 }

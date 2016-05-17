@@ -56,7 +56,7 @@ Laya.class(TestUI, "TestUI", TestPageUI);
 
 
 Laya.init(600, 400);
-Laya.loader.load("bin/h5/res/atlas/comp.json", Handler.create(this, onAssetLoaded), null, Loader.ATLAS);
+Laya.loader.load("res/atlas/comp.json", Handler.create(this, onAssetLoaded), null, Loader.ATLAS);
 
 function onAssetLoaded()
 {

@@ -1,12 +1,12 @@
 <project version="0.9.8">
-   <asynRes>img,temp,sound                  </asynRes>
-   <unDealRes>embed                  </unDealRes>
+   <asynRes>img,temp,sound                     </asynRes>
+   <unDealRes>embed                     </unDealRes>
    <resTypes>png,jpg   </resTypes>
-   <resExportPath>bin/h5/res/atlas   </resExportPath>
-   <codeExportPath>src/game/ui   </codeExportPath>
-   <codeImports>import laya.ui.*;                  </codeImports>
-   <codeImportsJS>var View=laya.ui.View;
-var Dialog=laya.ui.Dialog;                  </codeImportsJS>
+   <resExportPath>bin/res/atlas   </resExportPath>
+   <codeExportPath>src/ui   </codeExportPath>
+   <codeImports><![CDATA[import laya.ui.*;                  ]]>   </codeImports>
+   <codeImportsJS><![CDATA[var View=laya.ui.View;
+var Dialog=laya.ui.Dialog;                  ]]>   </codeImportsJS>
    <uiType>0   </uiType>
    <uiExportPath>bin/ui.swf   </uiExportPath>
    <boxTypes>Box,List,Tab,RadioGroup,ViewStack,Panel,HBox,VBox,Tree   </boxTypes>
@@ -14,16 +14,16 @@ var Dialog=laya.ui.Dialog;                  </codeImportsJS>
    <shareResPath/>
    <codeType>2   </codeType>
    <resCanCompress/>
-   <resPublishQuality>80                  </resPublishQuality>
+   <resPublishQuality>80                     </resPublishQuality>
    <langPath/>
    <defaultFont/>
-   <codeImportsTS>import View=laya.ui.View;
-import Dialog=laya.ui.Dialog;               </codeImportsTS>
+   <codeImportsTS><![CDATA[import View=laya.ui.View;
+import Dialog=laya.ui.Dialog;               ]]>   </codeImportsTS>
    <textureWidth>2048   </textureWidth>
    <textureHeight>2048   </textureHeight>
-   <picWidth>2048   </picWidth>
-   <picHeight>2048   </picHeight>
-   <power2>true   </power2>
+   <picWidth>512   </picWidth>
+   <picHeight>512   </picHeight>
+   <power2>false   </power2>
    <trimempty>false   </trimempty>
-   <ver>0.9.5   </ver>
+   <ver>0.9.9 beta   </ver>
 </project>

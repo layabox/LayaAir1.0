@@ -99,6 +99,7 @@ package laya.webgl.submit {
 		{
 			return Submit.TYPE_CANVAS;
 		}
+		
 		private static var _cache:Array=/*[STATIC SAFE]*/(_cache = [], _cache._length = 0, _cache);
 	}
 

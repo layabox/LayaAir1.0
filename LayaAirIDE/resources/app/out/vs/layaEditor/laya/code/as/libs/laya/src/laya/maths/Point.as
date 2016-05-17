@@ -4,20 +4,15 @@ package laya.maths {
 	 * <code>Point</code> 对象表示二维坐标系统中的某个位置，其中 x 表示水平轴，y 表示垂直轴。
 	 */
 	public class Point {
-		/**
-		 * 临时使用的公用对象。
-		 */
-		public static const TEMP:Point =/*[STATIC SAFE]*/ new Point();
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+		/**临时使用的公用对象。*/
+		public static const TEMP:Point =/*[STATIC SAFE]*/ new Point();
+		/**@private 全局空的point对象(x=0，y=0)，不允许修改此对象内容*/
 		public static const EMPTY:Point =/*[STATIC SAFE]*/ new Point();
 		
-		/**
-		 * 该点的水平坐标。
-		 */
+		/**该点的水平坐标。*/
 		public var x:Number;
-		/**
-		 * 该点的垂直坐标。
-		 */
+		/**该点的垂直坐标。*/
 		public var y:Number;
 		
 		/**
@@ -40,6 +35,21 @@ package laya.maths {
 			this.x = x;
 			this.y = y;
 			return this;
+		}
+		
+		/**
+		 * 计算当前点和目标x，y点的距离
+		 * @param	x 水平坐标。
+		 * @param	y 垂直坐标。
+		 * @return	返回之间的距离
+		 */
+		public function distance(x:Number, y:Number):Number {
+			return Math.sqrt((this.x - x) * (this.x - x) + (this.y - y) * (this.y - y));
+		}
+		
+		/**返回包含 x 和 y 坐标的值的字符串。*/
+		public function toString():String {
+			return this.x + "," + this.y;
 		}
 	}
 }

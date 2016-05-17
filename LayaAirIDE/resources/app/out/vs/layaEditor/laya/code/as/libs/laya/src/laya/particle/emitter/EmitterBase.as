@@ -3,11 +3,14 @@ package laya.particle.emitter
 	import laya.particle.ParticleTemplateBase;
 	import laya.utils.Handler;
 	/**
-	 * ...
-	 * @author ww
+	 * <code>EmitterBase</code> 类是粒子发射器类
 	 */
 	public class EmitterBase 
 	{
+		/**
+		 * 创建一个新的 <code>EmitterBase</code> 类实例。
+		 * 
+		 */
 		public function EmitterBase() 
 		{
 			
@@ -29,9 +32,15 @@ package laya.particle.emitter
 		 */
 		public var minEmissionTime:Number = 1/60; 
 		
+		/**@private */
 		public var _particleTemplate:ParticleTemplateBase;
 		
 		
+		/**
+		 * 设置粒子粒子模板
+		 * @param particleTemplate 粒子模板
+		 * 
+		 */
 		public function set particleTemplate(particleTemplate:ParticleTemplateBase):void
 		{
 			this._particleTemplate = particleTemplate;
@@ -82,10 +91,19 @@ package laya.particle.emitter
 		{
 			_emissionTime = 0;
 		}
+		/**
+		 * 发射一个粒子 
+		 * 
+		 */
 		public function emit():void
 		{
 
 		}
+		/**
+		 * 时钟前进 
+		 * @param passedTime 前进时间
+		 * 
+		 */
 		public function advanceTime(passedTime:Number=1):void
 		{
 			_emissionTime-=passedTime;

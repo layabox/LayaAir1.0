@@ -47,54 +47,6 @@ function getNLSConfiguration() {
 }
 global.vscodeStart = Date.now();
 var app = require("electron").app, fs = require("fs"), path = require("path");
-//var unzip			= require('unzip');
-//
-var  ipcMain = require('electron').ipcMain;
-ipcMain.on("vscode:layaZipPath",function(e,from,to){
-    layacopyDirFile(from, to)
-})
-function layacopyDirFile(from, to) {
-    var fs = require('fs'),
-        stat = fs.stat;
-    var copy = function (src, dst) {
-        // 读取目录中的所有文件/目录
-        fs.readdir(src, function (err, paths) {
-            if (err) {
-                throw err;
-            }
-            paths.forEach(function (pathLaya) {
-                var _src = src + path.sep + pathLaya,
-                    _dst = dst + path.sep + pathLaya,
-                    readable, writable;
-                stat(_src, function (err, st) {
-                    if (err) {
-                        throw err;
-                    }
-                    // 判断是否为文件
-                    if (st.isFile()) {
-                        // 创建读取流
-                        readable = fs.createReadStream(_src);
-                        // 创建写入流
-                        writable = fs.createWriteStream(_dst);
-                        // 通过管道来传输流
-                        readable.pipe(writable);
-                    }
-                    // 如果是目录则递归调用自身
-                    else if (st.isDirectory()) {
-                        exists(_src, _dst, copy);
-                    }
-                });
-            });
-        });
-    };
-// 在复制目录前需要判断该目录是否存在，不存在需要先创建目录
-    var exists = function (src, dst, callback) {
-        mkdirsSyncLaya(dst);
-        callback(src, dst);
-    };
-// 复制目录
-    exists(from, to, copy);
-}
 try {
     process.env.VSCODE_CWD && process.chdir(process.env.VSCODE_CWD)
 } catch (err) {
@@ -106,19 +58,165 @@ if (process.env.VSCODE_DEV) {
 global.macOpenFiles = [], app.on("open-file", function (a, e) {
     global.macOpenFiles.push(e)
 }), app.once("ready", function () {
-    var  BrowserWindow = require('electron').BrowserWindow;
+    var BrowserWindow = require('electron').BrowserWindow;
 
-    var win = new BrowserWindow({ width: 465, height: 311, show: true,frame:false,title:"LayaAir"});
-    win.on('closed', function() {
+    var win = new BrowserWindow({width: 465, height: 311, show: true, frame: false, title: "LayaAir"});
+    win.on('closed', function () {
         win = null;
     });
-  console.log(__dirname+"==================================")
-    win.loadURL(path.join(__dirname,"vs","layaEditor","h5","loading.html"));
-    setTimeout(function(){
+
+    win.loadURL('file://'+path.join(__dirname, "vs", "layaEditor", "h5", "loading.html"));
+    setTimeout(function () {
         win.destroy()
         var a = getNLSConfiguration();
+        //fs.writeFileSync("c:/aa.txt",localeConfig+"Asdasd")
+        //console.log(process.argv[1]+"==================================")
         process.env.VSCODE_NLS_CONFIG = JSON.stringify(a), require("./bootstrap-amd").bootstrap("vs/workbench/electron-main/main")
-    },2000)
+    }, 2000)
 
 });
+var layaDebugerWin;
+var ipcMain = require('electron').ipcMain;
+var globalShortcut = require('electron').globalShortcut
+ipcMain.on('layaDebugerWinMessage', function (e, player,index) {
+    if (!layaDebugerWin) {
+        var BrowserWindow = require('electron').BrowserWindow;
+        layaDebugerWin = new BrowserWindow({width: player.playerW, height: player.playerH, show: true, frame: true, title: "LayaAir"});
+        layaDebugerWin.on('closed', function () {
+            layaDebugerWin = null;
+            //globalShortcut.unregisterAll();
+        });
+        layaDebugerWin.webContents.on('did-finish-load',function(){
+            layaDebugerWin.webContents.executeJavaScript('var electron = require("electron");var remote = electron.remote;document.onkeydown = function (oEvent) { if(oEvent.keyCode == 116){location.reload()}else if(oEvent.keyCode == 123){remote.getCurrentWindow().webContents.toggleDevTools()}}')
+        })
+
+        //globalShortcut.register('F5', function() {
+        //    layaDebugerWin.reload();
+        //});
+        initMenu();
+    }
+        layaDebugerWin.loadURL('file://'+index);
+        layaDebugerWin.show();
+});
+function initMenu() {
+    const Menu = require('electron').Menu;
+    const MenuItem = require('electron').MenuItem;
+    var template = [
+        {
+            label: '视图',
+            submenu: [
+                {
+                    label: '重新加载(F5)',
+                    click: function (item, focusedWindow) {
+                        layaDebugerWin.reload();
+                    }
+                },
+                {
+                    label: '打开开发者工具(F12)',
+                    accelerator: (function () {
+                        return 'F12';
+                    })(),
+                    click: function (item, focusedWindow) {
+                        if(layaDebugerWin)layaDebugerWin.webContents.toggleDevTools();
+                    }
+                },
+            ]
+        },
+        {
+            label: '窗口',
+            role: 'window',
+            submenu: [
+                {
+                    label: '最小化',
+                    accelerator: 'CmdOrCtrl+M',
+                    role: 'minimize'
+                },
+                {
+                    label: '关闭',
+                    accelerator: 'CmdOrCtrl+W',
+                    role: 'close'
+                },
+            ]
+        },
+        {
+            label: '帮助',
+            role: 'help',
+            submenu: [
+                {
+                    label: '问答社区',
+                    click: function () {
+                        require('electron').shell.openExternal("http://ask.layabox.com/question")
+                    }
+                },
+            ]
+        },
+    ];
+    var menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+}
 //# sourceMappingURL=https://ticino.blob.core.windows.net/sourcemaps/fa6d0f03813dfb9df4589c30121e9fcffa8a8ec8/main.js.map
+ipcMain.on('layaMessageCreatePro', function(e,type,layaZipPath,proNameInput,proNameOutput){
+        layacopyDirFile(layaZipPath, proNameOutput);
+        var layafile = fs.readFileSync(layaZipPath + path.sep + "myLaya.laya", "utf-8")
+        fs.unlinkSync(proNameOutput + path.sep + "myLaya.laya");
+        fs.writeFileSync(proNameOutput + path.sep + proNameInput + ".laya", layafile);
+        if(type==0)
+        {
+            var fb = fs.readFileSync(layaZipPath + path.sep + ".project", "utf-8");
+            fs.writeFileSync(proNameOutput + path.sep + ".project", fb.replace("GameMain", proNameInput))
+            fs.renameSync(proNameOutput + path.sep + "LayaUISample.as3proj", proNameOutput + path.sep + proNameInput + ".as3proj")
+        }
+
+});
+////----------------------------------------------------------------
+function mkdirsSyncLaya(dirname, mode) {
+    console.log(dirname);
+    if (fs.existsSync(dirname)) {
+        return true;
+    } else {
+        if (mkdirsSyncLaya(path.dirname(dirname), mode)) {
+            fs.mkdirSync(dirname, mode);
+            return true;
+        }
+    }
+}
+function layacopyDirFile(from, to) {
+    var fs = require('fs');
+    var path = require("path")
+    var readDir = fs.readdirSync;
+    var stat = fs.statSync;
+    var copDir = function (src, dst) {
+        var paths = fs.readdirSync(src);
+        paths.forEach(function (pathLaya) {
+            var _src = src + path.sep + pathLaya;
+            var _dst = dst + path.sep + pathLaya;
+            var isDir = stat(_src);
+            if (isDir.isFile()) {
+                fs.writeFileSync(_dst, fs.readFileSync(_src));
+            } else {
+                exists(_src, _dst, copDir);
+            }
+        })
+    }
+
+    function mkdirsSyncLaya(dirname, mode) {
+        console.log(dirname);
+        if (fs.existsSync(dirname)) {
+            return true;
+        } else {
+            if (mkdirsSyncLaya(path.dirname(dirname), mode)) {
+                fs.mkdirSync(dirname, mode);
+                return true;
+            }
+        }
+    }
+
+// 在复制目录前需要判断该目录是否存在，不存在需要先创建目录
+    var exists = function (src, dst, callback) {
+        mkdirsSyncLaya(dst);
+        callback(src, dst);
+    };
+// 复制目录
+    exists(from, to, copDir);
+}
+//-----------------------------------------------------------------------------------------

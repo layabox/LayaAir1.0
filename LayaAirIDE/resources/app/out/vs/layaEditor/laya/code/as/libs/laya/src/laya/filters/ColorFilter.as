@@ -1,6 +1,7 @@
 package laya.filters {
 	
 	import laya.system.System;
+	import laya.utils.RunDriver;
 	
 	/**
 	 * <p><code>ColorFilter</code> 是颜色滤镜。</p>
@@ -31,7 +32,7 @@ package laya.filters {
 			for (var i:int = 0; i < 20; i++) {
 				_elements[i] = mat[i];
 			}
-			_action = System.createFilterAction(COLOR);
+			_action = RunDriver.createFilterAction(COLOR);
 			_action.data = this;
 		}
 		

@@ -164,7 +164,7 @@ package laya.utils {
 						tTween = Pool.getItemByClass("tween", Tween);
 						tTween._create(tTweenData.target, tTweenData.data, tTweenData.duration, tTweenData.ease, Handler.create(this, _animComplete, [_gidIndex]), 0, false, tTweenData.isTo, true, false);
 						tTween.setStartTime(_currTime - (time - tTweenData.startTime));
-						tTween.updateEase(_currTime);
+						tTween._updateEase(_currTime);
 						tTween.gid = _gidIndex;
 						_tweenDic[_gidIndex] = tTween;
 					}
@@ -291,7 +291,7 @@ package laya.utils {
 			
 			for (var p:* in _tweenDic) {
 				tTween = _tweenDic[p];
-				tTween.updateEase(tCurrTime);
+				tTween._updateEase(tCurrTime);
 			}
 		}
 		

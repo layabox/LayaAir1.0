@@ -12,11 +12,14 @@ package laya.particle
 	import laya.webgl.resource.WebGLImage;
 	import laya.webgl.submit.ISubmit;
 
+	/**
+	 *  @private 
+	 */
 	public class ParticleTemplate2D extends ParticleTemplateWebGL implements ISubmit
 	{
 		public static var activeBlendType:int = -1;
-		
 		public var x:Number=0;
+		
 		public var y:Number=0;
 		public var blendType:int = 1;
 		public var sv:ParticleShaderValue = new ParticleShaderValue();
@@ -25,7 +28,6 @@ package laya.particle
 		public function ParticleTemplate2D(parSetting:ParticleSettings)
 		{
 			super(parSetting);
-			texture=new Texture();
 			var _this:ParticleTemplate2D = this;
 			Laya.loader.load(settings.textureName, Handler.create(null, function(texture:Texture):void{
 				(texture.bitmap as  WebGLImage).enableMerageInAtlas = false;
@@ -53,12 +55,8 @@ package laya.particle
 		
 		public function renderSubmit():int
 		{			
-			if (texture.loaded)
+			if (texture&&texture.loaded)
 			{
-				//for(var i:int=0;i<3;i++)
-				//{
-					//addParticleArray(new Float32Array([x,y,0]),new Float32Array([0,0,0]));
-				//}
 				update(Timer.DELTA);
 				sv.u_CurrentTime=_currentTime;
 				if (_firstNewElement != _firstFreeElement)
@@ -70,10 +68,7 @@ package laya.particle
 				if (_firstActiveElement != _firstFreeElement)
 				{
 					var gl:WebGLContext = WebGL.mainContext;
-					_vertexBuffer.bind();
-					_indexBuffer.bind();
-					_indexBuffer.upload_bind();
-					_vertexBuffer.upload_bind();
+					_vertexBuffer.bind(_indexBuffer);
 					sv.u_texture = texture.source;
 					sv.upload();
 					

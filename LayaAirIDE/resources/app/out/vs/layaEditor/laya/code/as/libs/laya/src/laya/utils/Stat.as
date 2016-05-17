@@ -64,20 +64,25 @@ package laya.utils {
 		 */
 		public static function show(x:Number = 0, y:Number = 0):void {
 			preFrameTime = _timer = Browser.now() - 1000;
-			_view[0] = {title: "FPS(3D)", value: "_fpsStr", color: "yellow", units: "int"};
+			
+			_view[0] = {title: "FPS(Canvas)", value: "_fpsStr", color: "yellow", units: "int"};
 			_view[1] = {title: "Sprite", value: "spriteDraw", color: "white", units: "int"};
 			_view[2] = {title: "DrawCall", value: "drawCall", color: "white", units: "int"};
 			_view[3] = {title: "Canvas", value: "_canvasStr", color: "white", units: "int"};
-			//_view[4] = {title: "MaxMem", value: "maxMemorySize", color: "white", units: "M"};
-			//_view[5] = {title: "CurMem", value: "currentMemorySize", color: "Yellow", units: "M"};
-			//_view[6] = {title: "TexMem", value: "texturesMemSize", color: "LightGoldenRodYellow", units: "M"};
-			//_view[7] = {title: "BufMem", value: "buffersMemSize", color: "LightGoldenRodYellow", units: "M"};
-			_view[4] = {title: "Shader", value: "shaderCall", color: "white", units: "int"};
-			//_view[9] = {title: "TriFaces", value: "trianglesFaces", color: "white", units: "int"};
-			//_view[10] = {title: "BufLen", value: "bufferLen", color: "white", units: "int"};
-			if (!Render.isWebGl) {
-				_view[0].title = "FPS(2D)";
-				_view.length = 4;
+			_view[4] = {title: "CurMem", value: "currentMemorySize", color: "yellow", units: "M"};
+			if (Render.isWebGL) {
+				if (!Render.is3DMode) {
+					_view[0].title = "FPS(WebGL)";
+					//_view[4] = {title: "MaxMem", value: "maxMemorySize", color: "white", units: "M"};
+					_view[4] = {title: "CurMem", value: "currentMemorySize", color: "yellow", units: "M"};
+					//_view[6] = {title: "TexMem", value: "texturesMemSize", color: "LightGoldenRodYellow", units: "M"};
+					//_view[7] = {title: "BufMem", value: "buffersMemSize", color: "LightGoldenRodYellow", units: "M"};
+					_view[5] = {title: "Shader", value: "shaderCall", color: "white", units: "int"};
+					//_view[9] = {title: "TriFaces", value: "trianglesFaces", color: "white", units: "int"};
+					//_view[10] = {title: "BufLen", value: "bufferLen", color: "white", units: "int"};
+				} else {
+					_view[0].title = "FPS(3D)";
+				}
 			}
 			
 			for (var i:int = 0; i < _view.length; i++) {
@@ -164,18 +169,18 @@ package laya.utils {
 			_fpsStr = _count + (renderSlow ? " slow" : "");
 			_canvasStr = canvasReCache + "/" + canvasNormal + "/" + canvasBitmap;
 			
-			var ctx:* = _ctx;
+			var ctx:Context = _ctx;
 			ctx.clearRect(0, 0, _width, _height);
-			ctx.fillStyle = "rgba(50,50,60,0.8)";
-			ctx.fillRect(0, 0, _width, _height);
+			ctx.fillStyle = "rgba(150,150,150,0.8)";
+			ctx.fillRect(0, 0, _width, _height, null);
 			for (i = 0; i < _view.length; i++) {
 				var one:* = _view[i];
 				ctx.fillStyle = "white";
-				ctx.fillText(one.title, one.x, one.y);
+				ctx.fillText(one.title, one.x, one.y, null, null, null);
 				ctx.fillStyle = one.color;
 				var value:* = Stat[one.value];
 				(one.units == "M") && (value = Math.floor(value / (1024 * 1024) * 100) / 100 + " M");
-				ctx.fillText(value + "", one.x + 60, one.y);
+				ctx.fillText(value + "", one.x + 70, one.y, null, null, null);
 			}
 			_count = 0;
 			_timer = timer;

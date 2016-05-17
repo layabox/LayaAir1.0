@@ -21,7 +21,11 @@ package laya.net {
 		 * @param value 键值。
 		 */
 		public static function setItem(key:String, value:String):void {
-			support && items.setItem(key, value);
+			try {
+				support && items.setItem(key, value);
+			} catch (e:*) {
+				trace("set localStorage failed", e);
+			}
 		}
 		
 		/**
@@ -39,7 +43,11 @@ package laya.net {
 		 * @param value 键值。是 <code>Object</code> 类型，此致会被转化为 JSON 字符串存储。
 		 */
 		public static function setJSON(key:String, value:Object):void {
-			support && items.setItem(key, JSON.stringify(value));
+			try {
+				support && items.setItem(key, JSON.stringify(value));
+			} catch (e:*) {
+				trace("set localStorage failed", e);
+			}
 		}
 		
 		/**

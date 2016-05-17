@@ -5,53 +5,34 @@ package laya.maths {
 	 */
 	public class Matrix {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		/** 一个初始化的 <code>Matrix</code> 对象。*/
+		/**@private 一个初始化的 <code>Matrix</code> 对象，不允许修改此对象内容。*/
 		public static var EMPTY:Matrix =/*[STATIC SAFE]*/ new Matrix();
 		/** 用于中转使用的 <code>Matrix</code> 对象。*/
 		public static var TEMP:Matrix =/*[STATIC SAFE]*/ new Matrix();
 		/**@private */
 		public static var _cache:* = [];
-		/**
-		 * 矩阵旋转角度的余弦值。
-		 */
-		public var cos:Number = 1;
-		/**
-		 * 矩阵旋转角度的正弦值。
-		 */
-		public var sin:Number = 0;
 		
-		/**
-		 * 缩放或旋转图像时影响像素沿 x 轴定位的值。
-		 */
+		/**矩阵旋转角度的余弦值。*/
+		public var cos:Number = 1;
+		/**矩阵旋转角度的正弦值。*/
+		public var sin:Number = 0;
+		/**缩放或旋转图像时影响像素沿 x 轴定位的值。*/
 		public var a:Number;
-		/**
-		 * 旋转或倾斜图像时影响像素沿 y 轴定位的值。
-		 */
+		/**旋转或倾斜图像时影响像素沿 y 轴定位的值。*/
 		public var b:Number;
-		/**
-		 * 旋转或倾斜图像时影响像素沿 x 轴定位的值。
-		 */
+		/**旋转或倾斜图像时影响像素沿 x 轴定位的值。*/
 		public var c:Number;
-		/**
-		 * 缩放或旋转图像时影响像素沿 y 轴定位的值。
-		 */
+		/**缩放或旋转图像时影响像素沿 y 轴定位的值。*/
 		public var d:Number;
-		/**
-		 * 沿 x 轴平移每个点的距离。
-		 */
+		/**沿 x 轴平移每个点的距离。*/
 		public var tx:Number;
-		/**
-		 * 沿 y 轴平移每个点的距离。
-		 */
+		/**沿 y 轴平移每个点的距离。*/
 		public var ty:Number;
-		/**
-		 * 是否有改变矩阵的值。
-		 */
-		public var bTransform:Boolean = false;
-		/**
-		 * 表示此对象是否在对象池中。
-		 */
+		
+		/**@private 表示此对象是否在对象池中。*/
 		public var inPool:Boolean = false;
+		/**@private 是否有改变矩阵的值。*/
+		public var bTransform:Boolean = false;
 		
 		/**
 		 * 使用指定参数创建新的 <code>Matrix</code> 对象。
@@ -83,9 +64,7 @@ package laya.maths {
 			return this;
 		}
 		
-		/**
-		 * @private
-		 */
+		/**@private*/
 		public function _checkTransform():Boolean {
 			return bTransform = (a !== 1 || b !== 0 || c !== 0 || d !== 1);
 		}
@@ -321,18 +300,7 @@ package laya.maths {
 			return out;
 		}
 		
-		/**
-		 * 
-		 * @param	m1
-		 * @param	ba
-		 * @param	bb
-		 * @param	bc
-		 * @param	bd
-		 * @param	btx
-		 * @param	bty
-		 * @param	out
-		 * @return
-		 */
+		/**@private */
 		public static function mulPre(m1:Matrix, ba:Number, bb:Number, bc:Number, bd:Number, btx:Number, bty:Number, out:Matrix):Matrix {
 			var aa:Number = m1.a, ab:Number = m1.b, ac:Number = m1.c, ad:Number = m1.d, atx:Number = m1.tx, aty:Number = m1.ty;
 			if (bb !== 0 || bc !== 0) {
@@ -353,6 +321,7 @@ package laya.maths {
 			return out;
 		}
 		
+		/**@private */
 		public static function mulPos(m1:Matrix, aa:Number, ab:Number, ac:Number, ad:Number, atx:Number, aty:Number, out:Matrix):Matrix {
 			var ba:Number = m1.a, bb:Number = m1.b, bc:Number = m1.c, bd:Number = m1.d, btx:Number = m1.tx, bty:Number = m1.ty;
 			if (bb !== 0 || bc !== 0) {
@@ -373,6 +342,7 @@ package laya.maths {
 			return out;
 		}
 		
+		/**@private */
 		public static function preMul(parent:Matrix, self:Matrix, out:Matrix):Matrix {
 			var pa:Number = parent.a, pb:Number = parent.b, pc:Number = parent.c, pd:Number = parent.d;
 			var na:Number = self.a, nb:Number = self.b, nc:Number = self.c, nd:Number = self.d, ntx:Number = self.tx, nty:Number = self.ty;
@@ -392,6 +362,7 @@ package laya.maths {
 			return out;
 		}
 		
+		/**@private */
 		public static function preMulXY(parent:Matrix, x:Number, y:Number, out:Matrix):Matrix {
 			var pa:Number = parent.a, pb:Number = parent.b, pc:Number = parent.c, pd:Number = parent.d;
 			out.a = pa;

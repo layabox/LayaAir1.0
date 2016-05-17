@@ -2,8 +2,7 @@ package laya.html.dom
 {
 	import laya.display.css.CSSStyle;
 	/**
-	 * ...
-	 * @author laya
+	 * @private
 	 */
 	public class HTMLStyleElement extends HTMLElement 
 	{
@@ -13,6 +12,9 @@ package laya.html.dom
 			visible = false;
 		}
 		
+		/**
+		 * 解析样式
+		 */
 		override public function set text(value:String):void
 		{
 			CSSStyle.parseCSS(value,null);			

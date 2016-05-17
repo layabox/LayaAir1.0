@@ -33,7 +33,9 @@
 		<prop name="enableRenderMerge" tips="在webgl模式下，是否强制合并批次，一些界面设置为ture可以提高性能" type="bool" default="false" />
 	</Component>
 	<Box className="laya.editorUI.Box" inherit="Component" resName="box" icon="Box" groups="公用,常用,宽高及位置" drag="3" />
-	<View className="laya.editorUI.View" inherit="Box" icon="View" groups="公用,常用,宽高及位置" drag="3" />
+	<View className="laya.editorUI.View" inherit="Box" icon="View" groups="公用,常用,宽高及位置" drag="3" >
+		<prop name="sceneColor" tips="参考背景颜色（实际运行中没有）" type="color" default="" group="常用"  />
+	</View>
 	<Dialog className="laya.editorUI.Dialog" inherit="View" icon="Panel" groups="公用,常用,宽高及位置" drag="3">
 		<prop name="dragArea" tips="拖动区域(格式:x, y, width, height)" type="string" default="" />
 		<prop name="popupCenter" tips="指定对话框是否居中弹出;" type="bool" default="" />
@@ -54,28 +56,30 @@
 		<prop name="skin" tips="地址,同url" type="string" default="" group="常用" />
 	</Clip>
 	<Label className="laya.editorUI.Label" inherit="Component" defaultValue="text='label'" resName="label" icon="Label" groups="公用,常用,宽高及位置" drag="3">
-		<prop name="align" tips="对齐" type="option" option="left,center,right" default="" group="常用" />
+		<prop name="text" tips="文本" type="string" default="" group="常用"  />
+		<prop name="color" tips="颜色" type="color" default="" group="常用"  />
 		<prop name="asPassword" tips="是否是密码" type="bool" default="false" />
 		<prop name="bold" tips="是否粗体" type="bool" default="false" group="常用" />
 		<prop name="bgColor" tips="背景颜色" type="color" default="" />
 		<prop name="borderColor" tips="文本边框背景颜色" type="color" default="" />
-		<prop name="color" tips="颜色" type="color" default="" />
-		<prop name="font" tips="字体" type="string" default="" />
-		<prop name="fontSize" tips="指定文本的字体大小" type="int" default="" />
+		<prop name="font" tips="字体" type="string" default="" group="常用" />
+		<prop name="fontSize" tips="指定文本的字体大小" type="int" default="" group="常用" />
 		<prop name="italic" tips="是否为斜体" type="bool" default=""/>
 		<prop name="leading" tips="段落空行" type="int" default="" />
 		<prop name="padding" tips="边距信息(上边距，右边距，下边距 , 左边距)" type="string" default="" />
-		<prop name="stroke" tips="描边宽度" type="number" default="0" group="常用"/>
-		<prop name="strokeColor" tips="描边颜色" type="color" default="#000000" group="常用"/>
-		<prop name="text" tips="文本" type="string" default="" group="常用"  />
+		<prop name="stroke" tips="描边宽度" type="number" default="0"/>
+		<prop name="strokeColor" tips="描边颜色" type="color" default="#000000"/>		
 		<prop name="valign" tips="文本的垂直显示方式" type="string" default="" />
 		<prop name="wordWrap" tips="文本是否自动换行，默认为false。 若值为true" type="bool" default="false" />
+		<prop name="align" tips="对齐" type="option" option="left,center,right" default="" group="常用" />
 	</Label>
 	<TextInput className="laya.editorUI.TextInput" inherit="Label" defaultValue="text='TextInput'" skinLabel="skin" resName="input" icon="TextInput" groups="公用,常用,宽高及位置" drag="3">
 		<prop name="multiline" tips="是否是文本域。 值为true表示当前是文本域，否则不是文本域" type="bool" default="" />
 		<prop name="sizeGrid" tips="九宫格信息(格式:上边距,右边距,下边距,左边距)" type="string" default="" group="常用" />
 		<prop name="skin" tips="背景皮肤" type="string" group="常用" />
 		<prop name="maxChars" tips="最大字符数" type="int" default="" />
+		<prop name="restrict" tips="限制输入的字符" type="string" />
+		<prop name="editable" tips="设置可编辑状态" type="bool" default="false" />
 	</TextInput>
 	<TextArea className="laya.editorUI.TextArea" inherit="TextInput" defaultValue="text='TextArea'" skinLabel="skin" resName="area" icon="TextArea" groups="公用,常用,宽高及位置"  drag="3" />
 	<Button className="laya.editorUI.Button" inherit="Component" skinLabel="skin" defaultValue="label='label'" resName="btn" icon="Button" groups="公用,常用,宽高及位置" drag="3">
@@ -126,7 +130,7 @@
 		<prop name="selectedIndex" tips="当前选择的项索引" type="int" default="" />
 		<prop name="selectEnable" tips="是否可以选中" type="bool" default="true" />
 		<prop name="spaceX" tips="X方向项间隔" type="int" default="" group="常用" />
-		<prop name="spaceY" tips="X方向项间隔" type="int" default="" group="常用" />
+		<prop name="spaceY" tips="Y方向项间隔" type="int" default="" group="常用" />
 		<prop name="startIndex" tips="当前显示的单元格列表的开始索引" type="int" default=""/>
 		<prop name="vScrollBarSkin" tips="垂直滚动条皮肤" type="string" default="" accept="res" group="常用" />
 		<prop name="hScrollBarSkin" tips="水平滚动条皮肤" type="string" default="" accept="res" group="常用" />
@@ -218,7 +222,7 @@
 		<prop name="visible" tips="是否显示" type="bool" default="true" />
 	</MixItems>
 	<ParticlePlayer className="laya.editorUI.ParticlePlayer" runClass="laya.particle.ParticlePlayer" icon="Box" groups="公用,常用,宽高及位置">
-		<prop name="file" tips="粒子文件" type="string" default="" group="公用" />
+		<prop name="url" tips="粒子文件" type="string" default="" group="公用" />
 		<prop name="var" tips="命名,页面内的全局引用" type="string" default="" group="公用" />
 		<prop name="name" tips="名称" type="string" default="" group="公用" />
 		<prop name="x" tips="x坐标" type="number" default="" group="宽高及位置" />
@@ -232,8 +236,23 @@
 		<prop name="visible" tips="是否显示" type="bool" default="true" />
 		<prop name="rotation" tips="旋转" type="number" default="" />
 	</ParticlePlayer>
-	<MovieClip className="laya.editorUI.MovieClip"  runClass="laya.ani.swf.MovieClip" icon="Box" extension="swf" groups="公用,常用,宽高及位置">
-		<prop name="file" tips="粒子文件" type="string" default="" group="公用" />
+        <HTMLDivElement className="laya.html.dom.HTMLDivElement" runClass="laya.html.dom.HTMLDivElement" defaultValue="innerHTML='htmlTxt' width='100' height='100'" resName="html" extension="html" icon="Label" groups="公用,常用,宽高及位置">
+		<prop name="innerHTML" tips="html内容" type="string" default="" group="常用" />
+		<prop name="var" tips="命名,页面内的全局引用" type="string" default="" group="公用" />
+		<prop name="name" tips="名称" type="string" default="" group="公用" />
+		<prop name="x" tips="x坐标" type="number" default="" group="宽高及位置" />
+		<prop name="y" tips="y坐标" type="number" default="" group="宽高及位置" />
+		<prop name="width" tips="宽度" type="number" default="" group="宽高及位置" />
+		<prop name="height" tips="高度" type="number" default="" group="宽高及位置" />
+		<prop name="alpha" tips="透明度" type="number" default="" />		
+		<prop name="mouseEnabled" tips="是否接收鼠标" type="bool" default="true" />
+		<prop name="scaleX" tips="缩放x" type="number" default="" />
+		<prop name="scaleY" tips="缩放y" type="number" default="" />
+		<prop name="visible" tips="是否显示" type="bool" default="true" />
+		<prop name="rotation" tips="旋转" type="number" default="" />
+	</HTMLDivElement>
+	<MovieClip className="laya.editorUI.MovieClip"  runClass="laya.ani.swf.MovieClip" skinLabel="url" icon="Box" extension="swf" groups="公用,常用,宽高及位置">
+		<prop name="url" tips="swf文件" type="string" default="" group="公用" />
 		<prop name="var" tips="命名,页面内的全局引用" type="string" default="" group="公用" />
 		<prop name="name" tips="名称" type="string" default="" group="公用" />
 		<prop name="x" tips="x坐标" type="number" default="" group="宽高及位置" />
@@ -247,8 +266,8 @@
 		<prop name="visible" tips="是否显示" type="bool" default="true" />
 		<prop name="rotation" tips="旋转" type="number" default="" />
 	</MovieClip>
-	<SkeletonPlayer className="laya.editorUI.SkeletonPlayer" runClass="laya.ani.bone.SkeletonPlayer"  icon="Box" extension="sk" groups="公用,常用,宽高及位置">
-		<prop name="file" tips="粒子文件" type="string" default="" group="公用" />
+	<SkeletonPlayer className="laya.editorUI.SkeletonPlayer" runClass="laya.ani.bone.SkeletonPlayer" skinLabel="url" icon="Box" extension="sk" groups="公用,常用,宽高及位置">
+		<prop name="url" tips="骨骼动画文件" type="string" default="" group="公用" />
 		<prop name="var" tips="命名,页面内的全局引用" type="string" default="" group="公用" />
 		<prop name="name" tips="名称" type="string" default="" group="公用" />
 		<prop name="x" tips="x坐标" type="number" default="" group="宽高及位置" />

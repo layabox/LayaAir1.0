@@ -8,7 +8,7 @@ package laya.webgl.shader.d2.value
 	{	
 		public var a_color:Array;
 
-		public function PrimitiveSV()
+		public function PrimitiveSV(args:*)
 		{
 			super(ShaderDefines2D.PRIMITIVE,0);
 			this.position=[2, WebGLContext.FLOAT, false, 5 * CONST3D2D.BYTES_PE, 0];

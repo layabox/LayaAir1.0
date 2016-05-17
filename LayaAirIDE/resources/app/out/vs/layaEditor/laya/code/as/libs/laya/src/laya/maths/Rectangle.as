@@ -5,9 +5,9 @@ package laya.maths {
 	 */
 	public class Rectangle {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		/** 全局空的矩形区域x=0,y=0,width=0,height=0*/
+		/**@private 全局空的矩形区域x=0,y=0,width=0,height=0，不允许修改此对象内容*/
 		public static const EMPTY:Rectangle =/*[STATIC SAFE]*/ new Rectangle();
-		/** 全局临时的矩形区域，此对象用于全局复用，以减少对象创建*/
+		/**全局临时的矩形区域，此对象用于全局复用，以减少对象创建*/
 		public static const TEMP:Rectangle =/*[STATIC SAFE]*/ new Rectangle();
 		
 		/** 矩形左上角的 X 轴坐标。*/

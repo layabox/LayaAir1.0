@@ -177,23 +177,28 @@ window.Laya=(function(window,document){
 
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
-	Laya.interface('laya.ui.IComponent');
-	Laya.interface('laya.resource.IDispose');
-	Laya.interface('laya.ui.IItem');
-	Laya.interface('laya.ui.IRender');
-	Laya.interface('laya.editor.core.IContent');
-	Laya.interface('laya.editor.core.IClip');
-	Laya.interface('laya.webgl.shapes.IShape');
-	Laya.interface('laya.webgl.resource.IMergeAtlasBitmap');
-	Laya.interface('laya.webgl.submit.ISubmit');
-	Laya.interface('laya.display.ILayout');
-	Laya.interface('laya.editor.core.Wraps.xml.IXMLElement');
-	Laya.interface('laya.ui.ISelect');
-	Laya.interface('laya.webgl.canvas.save.ISaveData');
 	Laya.interface('laya.filters.IFilter');
+	Laya.interface('laya.display.ILayout');
+	Laya.interface('laya.webgl.resource.IMergeAtlasBitmap');
+	Laya.interface('laya.ui.IComponent');
+	Laya.interface('laya.webgl.submit.ISubmit');
+	Laya.interface('laya.webgl.shapes.IShape');
+	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.editor.core.IClip');
+	Laya.interface('laya.editor.core.Wraps.xml.IXMLElement');
+	Laya.interface('laya.editor.core.IContent');
+	Laya.interface('laya.resource.IDispose');
 	Laya.interface('laya.filters.IFilterAction');
-	Laya.interface('laya.filters.IFilterActionGL','laya.filters.IFilterAction');
+	Laya.interface('laya.ui.IRender');
+	Laya.interface('laya.ui.IItem');
+	Laya.interface('laya.webgl.canvas.save.ISaveData');
 	Laya.interface('laya.ui.IBox','laya.ui.IComponent');
+	Laya.interface('laya.filters.IFilterActionGL','laya.filters.IFilterAction');
+	var sleep=Laya.sleep=function(value){
+		Asyn.sleep(value);
+	}
+
+
 	var await=Laya.await=function(caller,fn,nextLine){
 		Asyn._caller_=caller;
 		Asyn._callback_=fn;
@@ -201,8 +206,8 @@ window.Laya=(function(window,document){
 	}
 
 
-	var sleep=Laya.sleep=function(value){
-		Asyn.sleep(value);
+	var load=Laya.load=function(url,type){
+		return Asyn.load(url,type);
 	}
 
 
@@ -211,9 +216,101 @@ window.Laya=(function(window,document){
 	}
 
 
-	var load=Laya.load=function(url,type){
-		return Asyn.load(url,type);
-	}
+	/**
+	*...
+	*@author laya
+	*/
+	//class laya.utils.RunDriver
+	var RunDriver=(function(){
+		function RunDriver(){};
+		__class(RunDriver,'laya.utils.RunDriver');
+		RunDriver.FILTER_ACTIONS=[];
+		RunDriver._charSizeTestDiv=null
+		RunDriver.now=function(){
+			return Date.now();
+		}
+
+		RunDriver.getWindow=function(){
+			return window;
+		}
+
+		RunDriver.newWebGLContext=function(canvas,webGLName){
+			return canvas.getContext(webGLName,{stencil:true,alpha:false,antialias:true,premultipliedAlpha:false});
+		}
+
+		RunDriver.getPixelRatio=function(pixelRatio){
+			if (pixelRatio < 0){
+				var ctx=Browser.ctx;
+				var backingStore=ctx.backingStorePixelRatio || ctx.webkitBackingStorePixelRatio || ctx.mozBackingStorePixelRatio || ctx.msBackingStorePixelRatio || ctx.oBackingStorePixelRatio || ctx.backingStorePixelRatio || 1;
+				pixelRatio=(Browser.window.devicePixelRatio || 1)/ backingStore;
+			}
+			return pixelRatio;
+		}
+
+		RunDriver.getIncludeStr=function(name){
+			return null;
+		}
+
+		RunDriver.createShaderCondition=function(conditionScript){
+			var fn="(function() {return "+conditionScript+";})";
+			return Browser.window.eval(fn);
+		}
+
+		RunDriver.measureText=function(txt,font){
+			if (RunDriver._charSizeTestDiv==null){
+				RunDriver._charSizeTestDiv=Browser.createElement('div');
+				RunDriver._charSizeTestDiv.style.cssText="z-index:10000000;padding:0px;position: absolute;left:0px;visibility:hidden;top:0px;background:white";
+				Browser.document.body.appendChild(RunDriver._charSizeTestDiv);
+			}
+			RunDriver._charSizeTestDiv.style.font=font;
+			RunDriver._charSizeTestDiv.innerText=txt==" " ? "i" :txt;
+			return {width:RunDriver._charSizeTestDiv.offsetWidth,height:RunDriver._charSizeTestDiv.offsetHeight};
+		}
+
+		RunDriver.benginFlush=function(){
+		};
+
+		RunDriver.endFinish=function(){
+		};
+
+		RunDriver.addToAtlas=null
+		RunDriver.flashFlushImage=function(atlasWebGLCanvas){
+		};
+
+		RunDriver.drawToCanvas=function(sprite,_renderType,canvasWidth,canvasHeight,offsetX,offsetY){
+			var canvas=HTMLCanvas.create("2D");
+			var context=new RenderContext(canvasWidth,canvasHeight,canvas);
+			RenderSprite.renders[_renderType]._fun(sprite,context,offsetX,offsetY);
+			return canvas;
+		}
+
+		RunDriver.createParticleTemplate2D=null
+		RunDriver.createGLTextur=null;
+		RunDriver.createWebGLContext2D=null;
+		RunDriver.changeWebGLSize=function(w,h){
+		};
+
+		RunDriver.createRenderSprite=function(type,next){
+			return new RenderSprite(type,next);
+		}
+
+		RunDriver.createFilterAction=function(type){
+			return new ColorFilterAction();
+		}
+
+		RunDriver.createGraphics=function(){
+			return new Graphics();
+		}
+
+		RunDriver.clear=function(value){
+			Render._context.ctx.clear();
+		}
+
+		RunDriver.clearAtlas=function(value){
+		};
+
+		return RunDriver;
+	})()
 
 
 	/**
@@ -239,6 +336,9 @@ window.Laya=(function(window,document){
 
 		Laya.init=function(width,height,__plugins){
 			var plugins=[];for(var i=2,sz=arguments.length;i<sz;i++)plugins.push(arguments[i]);
+			Browser.__init__();
+			Laya.timer=new Timer();
+			Laya.loader=new LoaderManager();
 			for (var i=0,n=plugins.length;i < n;i++){
 				if (plugins[i].enable)plugins[i].enable();
 			}
@@ -247,7 +347,9 @@ window.Laya=(function(window,document){
 			ResourceManager.__init__();
 			Laya.stage=new Stage();
 			var location=Browser.window.location;
-			URL.rootPath=URL.basePath=URL.getPath(location.protocal=="file:" ? location.pathname :location.href);
+			var pathName=location.pathname;
+			pathName=pathName.charAt(2)==':' ? pathName.substring(1):pathName;
+			URL.rootPath=URL.basePath=URL.getPath(location.protocol=="file:" ? pathName :location.origin+pathName);
 			Laya.initAsyn();
 			Laya.render=new Render(width,height);
 			Laya.stage.size(width,height);
@@ -279,12 +381,10 @@ window.Laya=(function(window,document){
 		}
 
 		Laya.stage=null;
+		Laya.timer=null;
+		Laya.loader=null;
 		Laya.render=null
-		Laya.version="0.9.8";
-		Laya.is3DMode=false;
-		__static(Laya,
-		['timer',function(){return this.timer=new Timer();},'loader',function(){return this.loader=new LoaderManager();}
-		]);
+		Laya.version="0.9.9";
 		return Laya;
 	})()
 
@@ -611,8 +711,8 @@ window.Laya=(function(window,document){
 		ProjectSetting.langPath="";
 		ProjectSetting.textureWidth=2048;
 		ProjectSetting.textureHeight=2048;
-		ProjectSetting.picWidth=2048;
-		ProjectSetting.picHeight=2048;
+		ProjectSetting.picWidth=512;
+		ProjectSetting.picHeight=512;
 		ProjectSetting.power2="true";
 		ProjectSetting.trimempty="false";
 		__static(ProjectSetting,
@@ -761,8 +861,6 @@ window.Laya=(function(window,document){
 				tFrame.setAttribute("editorInfo",DesignInfo.getIDEValue(tFrameO,DesignInfo.frameSaveKeys));
 				frameXml.appendChild(tFrame);
 			}
-			aniXml.appendChild(frameXml);
-			console.log("xmlString:",xml.toXMLString());
 			return xml;
 		}
 
@@ -774,7 +872,8 @@ window.Laya=(function(window,document){
 			KeyValues=[];
 			for(key in node){
 				if(!DesignInfo.specialKeys.hasOwnProperty(key)||saveKeys.hasOwnProperty(key)){
-					KeyValues.push(key+"="+node[key]);
+					if(key=="compId")
+						KeyValues.push(key+"="+node[key]);
 				}
 			}
 			rst=KeyValues.join(";");
@@ -848,14 +947,20 @@ window.Laya=(function(window,document){
 			cList=xmlObj.cList;
 			var frames;
 			frames=[];
-			len=cList.length;
+			if(cList)
+				len=cList.length;
 			var tObj;
 			var childs;
 			childs=[];
 			for(i=0;i<len;i++){
 				tObj=cList[i];
-				if(tObj.Name=="parsererror")continue ;
+				if(tObj.Name=="parsererror"){
+					throw new Error();
+					continue ;
+				}
 				if(tObj.Name=="Ani")continue ;
+				if(!tObj.Name)continue ;
+				if(tObj.Name=="")continue ;
 				if(tObj.Name=="frame"){
 					frames.push(DesignInfo.createNodeObj(tObj));
 					}else{
@@ -863,7 +968,8 @@ window.Laya=(function(window,document){
 				}
 			}
 			rst.child=childs;
-			rst.frames=aniDic[rst.compId];
+			if(aniDic[rst.compId])
+				rst.frames=aniDic[rst.compId];
 			return rst;
 		}
 
@@ -874,6 +980,9 @@ window.Laya=(function(window,document){
 			rst.props={};
 			if(rst.type=="UIView"&&!rst.source){
 				rst.source=data.p.source;
+			}
+			if(!rst.type){
+				debugger;
 			}
 			DesignInfo.createValueObj(data.p,rst.props);
 			delete rst["frame"];
@@ -1953,6 +2062,7 @@ window.Laya=(function(window,document){
 		Keyboard.COMMAND=15;
 		Keyboard.CONTROL=17;
 		Keyboard.DELETE=46;
+		Keyboard.MacDELETE=8;
 		Keyboard.DOWN=40;
 		Keyboard.END=35;
 		Keyboard.ENTER=13;
@@ -2032,7 +2142,7 @@ window.Laya=(function(window,document){
 		Keyboard.MASTER_SHELL=16777246;
 		Keyboard.SEARCH=16777247;
 		__static(Keyboard,
-		['CharCodeStrings',function(){return this.CharCodeStrings=["Up","Down","Left","Right","F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11","F12","F13","F14","F15","F16","F17","F18","F19","F20","F21","F22","F23","F24","F25","F26","F27","F28","F29","F30","F31","F32","F33","F34","F35","Insert","Delete","Home","Begin","End","PgUp","PgDn","PrntScrn","ScrlLck","Pause","SysReq","Break","Reset","Stop","Menu","User","Sys","Print","ClrLn","ClrDsp","InsLn","DelLn","InsChr","DelChr","Prev","Next","Select","Exec","Undo","Redo","Find","Help","ModeSw"];},'MacDELETE',function(){return this.MacDELETE=uint=8;}
+		['CharCodeStrings',function(){return this.CharCodeStrings=["Up","Down","Left","Right","F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11","F12","F13","F14","F15","F16","F17","F18","F19","F20","F21","F22","F23","F24","F25","F26","F27","F28","F29","F30","F31","F32","F33","F34","F35","Insert","Delete","Home","Begin","End","PgUp","PgDn","PrntScrn","ScrlLck","Pause","SysReq","Break","Reset","Stop","Menu","User","Sys","Print","ClrLn","ClrDsp","InsLn","DelLn","InsChr","DelChr","Prev","Next","Select","Exec","Undo","Redo","Find","Help","ModeSw"];}
 		]);
 		return Keyboard;
 	})()
@@ -2361,6 +2471,7 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.getNodeValueStr=function(){
+			return this._nodeValue;
 			var rst;
 			rst="<![CDATA["+this._nodeValue+"]]>";
 			return rst;
@@ -2577,7 +2688,7 @@ window.Laya=(function(window,document){
 		LayaConfig.tipFollowMove=true;
 		LayaConfig.touchScrollEnable=true;
 		LayaConfig.mouseWheelEnable=true;
-		LayaConfig.VER="0.9.7";
+		LayaConfig.VER="0.9.9 beta";
 		LayaConfig.$HIDDEN="$HIDDEN";
 		LayaConfig.$LOCKED="$LOCKED";
 		return LayaConfig;
@@ -2659,13 +2770,16 @@ window.Laya=(function(window,document){
 					CodeManager.allInOnePre=CodeManager.tsCodePre;
 					allInOneFile=CodeManager.allInOnePre+"\n"+ProjectSetting.codeImportsTS;
 					break ;
-				}
+				};
+			var hasCodeFile=false;
+			hasCodeFile=false;
 			for(i=0;i<len;i++){
 				console.log("exportFile:",fileList[i]);
 				tFile=fileList[i];
 				if(FileTools.isDirectory(tFile)){
 					}else{
 					if(TypeManager.getFileType(tFile)=="Page"){
+						hasCodeFile=true;
 						code=FileManager.readTxtFile(tFile);
 						console.log("export Page:",code);
 						obj=ObjectTools.getObj(code);
@@ -2701,6 +2815,7 @@ window.Laya=(function(window,document){
 					}
 				}
 			}
+			if(!hasCodeFile)return;
 			if(ProjectSetting.codeType==2||ProjectSetting.codeType==1){
 				var fileType;
 				fileType=ProjectSetting.codeType==2?"js":"ts";
@@ -2711,7 +2826,6 @@ window.Laya=(function(window,document){
 				if(ProjectSetting.codeType==1){
 					var cmdTSC;
 					cmdTSC="tsc --out \""+tarFolder+"\" \""+codePath+"\"";
-					CMDShell.execute(cmdTSC);
 				}
 			}
 		}
@@ -3089,7 +3203,7 @@ window.Laya=(function(window,document){
 		ExportManager.export=function(release,complete,force){
 			(release===void 0)&& (release=false);
 			(force===void 0)&& (force=false);
-			ExportManager.clearRes=force;
+			ExportManager.clearRes=force||ExportManager.configChanged;
 			laya.editor.manager.ExportManager.complete=complete;
 			if (UIPanel.instance.hasChange){
 				Confirm.show("在发布代码之前，有页面还未保存，是否保存然后发布？","有页面未保存",ExportManager.confirmBack,[release]);
@@ -3145,6 +3259,7 @@ window.Laya=(function(window,document){
 				}else {
 				ExportManager.fileUnUsed={};
 			}
+			ExportManager.configChanged=false;
 		}
 
 		ExportManager.swfMap=null
@@ -3152,6 +3267,7 @@ window.Laya=(function(window,document){
 		ExportManager.fileUnUsed={};
 		ExportManager.complete=null
 		ExportManager.clearRes=false;
+		ExportManager.configChanged=false;
 		ExportManager.powerOfTwo=false;
 		return ExportManager;
 	})()
@@ -3352,12 +3468,19 @@ window.Laya=(function(window,document){
 		__class(LayerManager,'laya.editor.manager.LayerManager');
 		LayerManager.init=function(){
 			LayerManager.stage=new Box();
-			LayerManager.stage.left=0;
-			LayerManager.stage.right=0;
-			LayerManager.stage.top=0;
-			LayerManager.stage.bottom=0;
 			LayerManager.stage.mouseEnabled=true;
 			Laya.stage.addChild(LayerManager.stage);
+			Laya.stage.on("resize",null,LayerManager.onStage);
+		}
+
+		LayerManager.onStage=function(){
+			if (Browser.pixelRatio > 1){
+				Laya.stage._width=Browser.clientWidth;
+				Laya.stage._height=Browser.clientHeight;
+				Laya.stage.scale(Browser.pixelRatio,Browser.pixelRatio);
+			}
+			LayerManager.stage.width=Laya.stage._width;
+			LayerManager.stage.height=Laya.stage._height;
 		}
 
 		LayerManager.stage=null
@@ -3571,13 +3694,17 @@ window.Laya=(function(window,document){
 						code=FileManager.readTxtFile(tFile);
 						console.log("export Page:",code);
 						var uiObj;
-						uiObj=DesignInfo.xmlStrToUIObj(code);
-						console.log("uiObj:",uiObj);
-						ProjectConvertManager.adptObj(uiObj);
-						var tarFilePath;
-						tarFilePath=FileManager.getPath(tarPath,ProjectConvertManager.getNewProjectRelativePath(FileManager.getRelativePath(basePath,tFile)));
-						tarFilePath=tarFilePath.replace("."+ProjectConvertManager.oldUIExtension,"."+TypeManager.getExtension("Page"));
-						FileManager.createJSONFile(tarFilePath,uiObj);
+						try{
+							uiObj=DesignInfo.xmlStrToUIObj(code);
+							console.log("uiObj:",uiObj);
+							ProjectConvertManager.adptObj(uiObj);
+							var tarFilePath;
+							tarFilePath=FileManager.getPath(tarPath,ProjectConvertManager.getNewProjectRelativePath(FileManager.getRelativePath(basePath,tFile)));
+							tarFilePath=tarFilePath.replace("."+ProjectConvertManager.oldUIExtension,"."+TypeManager.getExtension("Page"));
+							FileManager.createJSONFile(tarFilePath,uiObj);
+							}catch(e){
+							Alert.show("转换文件失败：",tFile);
+						}
 					}
 				}
 			}
@@ -3609,6 +3736,14 @@ window.Laya=(function(window,document){
 		}
 
 		ProjectConvertManager.adptType=function(obj){
+			if(obj.type=="Label"&&obj.props){
+				var prop;
+				prop=obj.props;
+				if(prop.size){
+					prop.fontSize=prop.size;
+					delete prop["size"];
+				}
+			}
 			if(ProjectConvertManager.typeConvertO[obj.type]){
 				obj.type=ProjectConvertManager.typeConvertO[obj.type];
 			}
@@ -3704,12 +3839,16 @@ window.Laya=(function(window,document){
 				tKey=ProjectManager.keys[i];
 				tXml=new XMLElement();
 				tXml.setName(tKey);
-				tXml.value=ProjectSetting[tKey];
+				if(ProjectManager.SpecialXmlKeys[tKey]){
+					tXml.value="<![CDATA["+ProjectSetting[tKey]+"]]>";
+					}else{
+					tXml.value=ProjectSetting[tKey];
+				}
 				ProjectManager.xml.setChildByName(tKey,tXml);
 			}
 			tXml=new XMLElement();
 			tXml.setName("ver");
-			tXml.value="0.9.7";
+			tXml.value="0.9.9 beta";
 			ProjectManager.xml.setChildByName("ver",tXml);
 			FileManager.createTxtFile(SystemSetting.projectPath,ProjectManager.xml.toString());
 		}
@@ -3794,7 +3933,12 @@ window.Laya=(function(window,document){
 			"picWidth",
 			"picHeight",
 			"power2",
-			"trimempty"];}
+			"trimempty"];},'SpecialXmlKeys',function(){return this.SpecialXmlKeys={
+				"codeImports":true,
+				"codeImportsJS":true,
+				"codeImportsTS":true
+		};}
+
 		]);
 		return ProjectManager;
 	})()
@@ -4365,6 +4509,12 @@ window.Laya=(function(window,document){
 		__class(Utils,'laya.editor.utils.Utils');
 		Utils.clone=function(source){
 			return ObjectTools.copyObj(source);
+		}
+
+		Utils.bind=function(fun,_scope){
+			var rst;
+			rst=fun.bind(_scope);;
+			return rst;
 		}
 
 		Utils.createMaskArea=function(width,height,color,alpha){
@@ -5166,6 +5316,15 @@ window.Laya=(function(window,document){
 			FileTools.fs.writeFileSync(path,value);
 		}
 
+		FileTools.toBuffer=function(ab){
+			var buffer=new Device.Buffer(ab.byteLength);
+			var view=new Uint8Array(ab);
+			for (var i=0;i < buffer.length;++i){
+				buffer[i]=view[i];
+			}
+			return buffer;
+		}
+
 		FileTools.readFile=function(path,encoding){
 			(encoding===void 0)&& (encoding="utf8");
 			if (FileTools.fs.existsSync(path)){
@@ -5505,6 +5664,1127 @@ window.Laya=(function(window,document){
 
 		IPCTools.ipc=null
 		return IPCTools;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.Armature
+	var Armature=(function(){
+		function Armature(){
+			this.boneRoot=null;
+			this._currAnimationData=null;
+			this._timeLineLength=0;
+			this.display=null;
+			this.armatureData=null;
+			this.scale=1;
+			this.offsetX=0;
+			this.offsetY=0;
+			this.enableCache=false;
+			this._interpolationTransform=new DBTransform();
+		}
+
+		__class(Armature,'laya.ide.dragonBones.Armature');
+		var __proto=Armature.prototype;
+		__proto.update=function(x,y,scale){
+			var tMatrix=new Matrix();
+			tMatrix.a=tMatrix.d=scale;
+			tMatrix.tx=x;
+			tMatrix.ty=y;
+			this.boneRoot.update(tMatrix);
+		}
+
+		__proto.advanceTime=function(time){
+			time=time % this._timeLineLength;
+			console.log("time:"+time.toString());
+			if (this.enableCache){
+				return;
+			};
+			var tAni=this._currAnimationData;
+			if (tAni){
+				var tAniBoneData;
+				for (var i=0;i < tAni.boneArr.length;i++){
+					tAniBoneData=tAni.boneArr[i];
+					var tBone=this.boneRoot.findBone(tAniBoneData.name);
+					if (tBone){
+						var tTime=time;
+						var tTimeA=0;
+						var tNextFrameIndex=0;
+						var tFrameIndex=0;
+						for (var j=0;j < tAniBoneData.frameArr.length;j++){
+							var tBoneFrame=tAniBoneData.frameArr[j];
+							tTime-=tBoneFrame.duration;
+							if (tTime < 0){
+								tTime+=tBoneFrame.duration
+								tTimeA=tTime / tBoneFrame.duration;
+								tNextFrameIndex=j+1;
+								if (tNextFrameIndex > (tAniBoneData.frameArr.length-1)){
+									tNextFrameIndex=tAniBoneData.frameArr.length-1;
+								}
+								tFrameIndex=j;
+								break ;
+							}
+						}
+						this.interpolation(tAniBoneData.frameArr[tFrameIndex].transform,tAniBoneData.frameArr[tNextFrameIndex].transform,tTimeA,this._interpolationTransform);
+						tBone.setMatrix(this._interpolationTransform.getMatrix());
+					}
+				}
+			}
+			this.update(this.offsetX,this.offsetY,this.scale);
+			if (this.enableCache){
+				var tArray=[];
+				this.boneRoot.getMatrixArray(tArray);
+			}
+		}
+
+		//两个插值
+		__proto.interpolation=function(transA,transB,inter,transform){
+			var invInter=1-inter;
+			transform.scX=transB.scX *inter+transA.scX *invInter;
+			transform.scY=transB.scY *inter+transA.scY *invInter;
+			transform.skX=transB.skX *inter+transA.skX *invInter;
+			transform.skY=transB.skY *inter+transA.skY *invInter;
+			transform.x=transB.x *inter+transA.x *invInter;
+			transform.y=transB.y *inter+transA.y *invInter;
+		}
+
+		__proto.gotoAndPlay=function(actionName){
+			if (this.armatureData==null)return;
+			this._currAnimationData=this.armatureData.animationDic[actionName];
+			if (this._currAnimationData){
+				this._timeLineLength=this._currAnimationData.duration;
+				console.log(actionName+":"+this._timeLineLength.toString());
+			}
+		}
+
+		/**缓存动画的思路：对时间(S)进行分帧，然后动作的每帧的最终矩阵数据保存起来，然后再复用最终的矩阵生成graphics*/
+		__proto.enableAnimationCache=function(frameRate){}
+		return Armature;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBAniBoneData
+	var DBAniBoneData=(function(){
+		function DBAniBoneData(){
+			this.name=null;
+			this.scale=1.0;
+			this.offset=0;
+			this.frameArr=[];
+		}
+
+		__class(DBAniBoneData,'laya.ide.dragonBones.DBAniBoneData');
+		var __proto=DBAniBoneData.prototype;
+		__proto.initData=function(data){
+			this.name=data.name;
+			this.scale=data.scale;
+			this.offset=data.offset;
+			var tFrameData;
+			var tFrameDataArr=data.frame;
+			for (var i=0;i < tFrameDataArr.length;i++){
+				tFrameData=tFrameDataArr[i];
+				var tAnimBoneFrame=new DBAniBoneFrameData();
+				tAnimBoneFrame.initData(tFrameData);
+				this.frameArr.push(tAnimBoneFrame);
+			}
+		}
+
+		return DBAniBoneData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBAniBoneFrameData
+	var DBAniBoneFrameData=(function(){
+		function DBAniBoneFrameData(){
+			this.duration=1;
+			this.tweenEasing=0;
+			this.curve=[];
+			this.event=null;
+			this.sound=null;
+			this.transform=null;
+		}
+
+		__class(DBAniBoneFrameData,'laya.ide.dragonBones.DBAniBoneFrameData');
+		var __proto=DBAniBoneFrameData.prototype;
+		__proto.initData=function(data){
+			this.duration=data.duration;
+			this.tweenEasing=data.tweenEasing;
+			this.curve=data.curve;
+			this.event=data.event;
+			this.sound=data.sound;
+			var tTransform=new DBTransform();
+			tTransform.initData(data.transform);
+			this.transform=tTransform;
+		}
+
+		return DBAniBoneFrameData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBAnimationData
+	var DBAnimationData=(function(){
+		function DBAnimationData(){
+			this.name=null;
+			this.playTimes=0;
+			this.duration=1;
+			this.frameArr=[];
+			this.boneArr=[];
+			this.slotArr=[];
+		}
+
+		__class(DBAnimationData,'laya.ide.dragonBones.DBAnimationData');
+		var __proto=DBAnimationData.prototype;
+		__proto.initData=function(data){
+			this.name=data.name;
+			this.playTimes=data.playTimes;
+			this.duration=data.duration;
+			var tBone;
+			var tBoneArr=data.bone;
+			for (var i=0;i < tBoneArr.length;i++){
+				tBone=tBoneArr[i];
+				var tAniBone=new DBAniBoneData();
+				tAniBone.initData(tBone);
+				this.boneArr.push(tAniBone);
+			};
+			var tAniSlotData;
+			var tSlotData;
+			var tSlotDataArr=data.slot;
+			for (i=0;i < tSlotDataArr.length;i++){
+				tSlotData=tSlotDataArr[i];
+				tAniSlotData=new DBAniSlotData();
+				tAniSlotData.initData(tSlotData);
+			}
+		}
+
+		return DBAnimationData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBAniSlotData
+	var DBAniSlotData=(function(){
+		function DBAniSlotData(){
+			this.name=null;
+			this.frameArr=[];
+		}
+
+		__class(DBAniSlotData,'laya.ide.dragonBones.DBAniSlotData');
+		var __proto=DBAniSlotData.prototype;
+		__proto.initData=function(data){
+			this.name=data.name;
+			var tFrameData;
+			var tFrameDataArr;
+			tFrameDataArr=data.frame;
+			for (var i=0;i < tFrameDataArr.length;i++){
+				tFrameData=tFrameDataArr[i];
+				var tSlotFrameData=new DBAniSlotFrameData();
+				tSlotFrameData.initData(tFrameData);
+			}
+		}
+
+		return DBAniSlotData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBAniSlotFrameData
+	var DBAniSlotFrameData=(function(){
+		function DBAniSlotFrameData(){
+			this.duration=1;
+			this.tweenEasing=0;
+			this.curve=null;
+			this.displayIndex=0;
+		}
+
+		__class(DBAniSlotFrameData,'laya.ide.dragonBones.DBAniSlotFrameData');
+		var __proto=DBAniSlotFrameData.prototype;
+		__proto.initData=function(data){
+			this.duration=data.duration;
+			this.tweenEasing=data.tweenEasing;
+			this.curve=data.curve;
+			this.displayIndex=data.displayIndex;
+		}
+
+		return DBAniSlotFrameData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBArmatureData
+	var DBArmatureData=(function(){
+		function DBArmatureData(){
+			this.name=null;
+			this.frameRate=0;
+			this.type="Armature";
+			this.userData=null;
+			this.boneArr=[];
+			this.slotArr=[];
+			this.skinArr=[];
+			this.animationDic={};
+			this.animationArr=[];
+		}
+
+		__class(DBArmatureData,'laya.ide.dragonBones.DBArmatureData');
+		return DBArmatureData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBBone
+	var DBBone=(function(){
+		function DBBone(){
+			this.boneName=null;
+			this.parent=null;
+			this.childArray=null;
+			this.matrix=null;
+			this.mSlot=null;
+			this.mCurrMatrix=new Matrix();
+			this.mResultMatrix=new Matrix();
+			this.mResultMatrix.identity();
+		}
+
+		__class(DBBone,'laya.ide.dragonBones.DBBone');
+		var __proto=DBBone.prototype;
+		__proto.setData=function(data){
+			this.boneName=data.name;
+			if (this.boneName=="body"){
+				this.matrix=data.getMatrix();
+				}else {
+				this.matrix=data.getMatrix();
+			}
+			this.matrix.copy(this.mCurrMatrix);
+		}
+
+		__proto.setSlot=function(slotData){
+			var tSlot=new DBBoneSlot();
+			tSlot.slotData=slotData;
+			this.mSlot=tSlot;
+			return tSlot;
+		}
+
+		__proto.setMatrix=function(offsetMatrix){
+			Matrix.mul(offsetMatrix,this.matrix,this.mCurrMatrix);
+		}
+
+		__proto.findBone=function(name){
+			if (name==this.boneName){
+				return this;
+			}
+			if (this.childArray){
+				var tMyBone;
+				for (var i=0,n=this.childArray.length;i < n;i++){
+					tMyBone=this.childArray[i];
+					tMyBone=tMyBone.findBone(name);
+					if (tMyBone){
+						return tMyBone;
+					}
+				}
+			}
+			return null;
+		}
+
+		__proto.addChild=function(child){
+			if (this.childArray==null){
+				this.childArray=[];
+			}
+			this.childArray.push(child);
+		}
+
+		__proto.update=function(parentMatrix){
+			var tResultMatrix;
+			if (parentMatrix){
+				Matrix.mul(this.mCurrMatrix,parentMatrix,this.mResultMatrix);
+				tResultMatrix=this.mResultMatrix;
+				}else {
+				tResultMatrix=this.mCurrMatrix;
+			}
+			if (this.mSlot){
+				this.mSlot.setParentMatrix(tResultMatrix);
+			}
+			if (this.childArray){
+				var tMyBone;
+				for (var i=0,n=this.childArray.length;i < n;i++){
+					tMyBone=this.childArray[i];
+					tMyBone.update(tResultMatrix);
+				}
+			}
+		}
+
+		__proto.getMatrixArray=function(matrixArr){
+			var tMatrix=new Matrix();
+			this.mSlot.transform.copy(tMatrix);
+			matrixArr.push(tMatrix);
+			if (this.childArray !=null){
+				var tDBBone;
+				for (var i=0;i < this.childArray.length;i++){
+					tDBBone=this.childArray[i];
+					tDBBone.getMatrixArray(matrixArr);
+				}
+			}
+		}
+
+		return DBBone;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBBoneData
+	var DBBoneData=(function(){
+		function DBBoneData(){
+			this.name=null;
+			this.parent=null;
+			this.userData=null;
+			this.transform=null;
+			this.matrix=null;
+		}
+
+		__class(DBBoneData,'laya.ide.dragonBones.DBBoneData');
+		var __proto=DBBoneData.prototype;
+		__proto.initData=function(data){
+			this.name=data.name;
+			this.parent=data.parent;
+			this.userData=data.userData;
+		}
+
+		__proto.getMatrix=function(){
+			if (this.matrix==null){
+				this.matrix=this.transform.getMatrix();
+			}
+			return this.matrix;
+		}
+
+		return DBBoneData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBBoneSlotData
+	var DBBoneSlotData=(function(){
+		function DBBoneSlotData(){
+			this.name=null;
+			this.parent=null;
+			this.displayIndex=0;
+			this.blendMode=null;
+			this.userData=null;
+			this.color=null;
+			this.actions=null;
+		}
+
+		__class(DBBoneSlotData,'laya.ide.dragonBones.DBBoneSlotData');
+		var __proto=DBBoneSlotData.prototype;
+		__proto.initData=function(data){
+			this.name=data.name;
+			this.parent=data.parent;
+			this.displayIndex=data.displayIndex;
+		}
+
+		return DBBoneSlotData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBSkinData
+	var DBSkinData=(function(){
+		function DBSkinData(){
+			this.name=null;
+			this.slotArr=[];
+		}
+
+		__class(DBSkinData,'laya.ide.dragonBones.DBSkinData');
+		var __proto=DBSkinData.prototype;
+		__proto.initData=function(data){
+			this.name=data.name;
+			var tMySlotData;
+			var tSlotData;
+			var tSlotDataArr=data.slot;
+			for (var i=0;i < tSlotDataArr.length;i++){
+				tSlotData=tSlotDataArr[i];
+				tMySlotData=new DBSlotData();
+				tMySlotData.initData(tSlotData);
+				this.slotArr.push(tMySlotData);
+			}
+		}
+
+		return DBSkinData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBSkinSlotDisplayData
+	var DBSkinSlotDisplayData=(function(){
+		function DBSkinSlotDisplayData(){
+			this.name=null;
+			this.type=null;
+			this.transform=null;
+			this.pivot=null;
+			this.uvs=null;
+			this.triangles=null;
+			this.weights=null;
+			this.vertices=null;
+			this.slotPos=null;
+			this.bonePose=null;
+			this.edges=null;
+			this.userEdges=null;
+		}
+
+		__class(DBSkinSlotDisplayData,'laya.ide.dragonBones.DBSkinSlotDisplayData');
+		var __proto=DBSkinSlotDisplayData.prototype;
+		__proto.initData=function(data){
+			this.name=data.name;
+			this.type=data.type;
+			this.transform=new DBTransform();
+			this.transform.initData(data.transform);
+		}
+
+		return DBSkinSlotDisplayData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBSlotData
+	var DBSlotData=(function(){
+		function DBSlotData(){
+			this.name=null;
+			this.displayArr=[];
+		}
+
+		__class(DBSlotData,'laya.ide.dragonBones.DBSlotData');
+		var __proto=DBSlotData.prototype;
+		__proto.initData=function(data){
+			this.name=data.name;
+			var tMyDisplayData;
+			var tDisplayData;
+			var tDisplayDataArr=data.display;
+			for (var h=0;h < tDisplayDataArr.length;h++){
+				tDisplayData=tDisplayDataArr[h];
+				tMyDisplayData=new DBSkinSlotDisplayData();
+				tMyDisplayData.initData(tDisplayData);
+				this.displayArr.push(tMyDisplayData);
+			}
+		}
+
+		return DBSlotData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBTextureData
+	var DBTextureData=(function(){
+		function DBTextureData(){
+			this.x=0;
+			this.y=0;
+			this.w=0;
+			this.h=0;
+			this.frameX=0;
+			this.frameY=0;
+			this.frameW=0;
+			this.frameH=0;
+			this.name=null;
+		}
+
+		__class(DBTextureData,'laya.ide.dragonBones.DBTextureData');
+		return DBTextureData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBTransform
+	var DBTransform=(function(){
+		function DBTransform(){
+			this.skX=0;
+			this.skY=0;
+			this.scX=1;
+			this.scY=1;
+			this.x=0;
+			this.y=0;
+		}
+
+		__class(DBTransform,'laya.ide.dragonBones.DBTransform');
+		var __proto=DBTransform.prototype;
+		__proto.initData=function(data){
+			if (data.x !=undefined){
+				this.x=data.x;
+			}
+			if (data.y !=undefined){
+				this.y=data.y;
+			}
+			if (data.skX !=undefined){
+				this.skX=data.skX;
+			}
+			if (data.skY !=undefined){
+				this.skY=data.skY;
+			}
+			if (data.scX !=undefined){
+				this.scX=data.scX;
+			}
+			if (data.scY !=undefined){
+				this.scY=data.scY;
+			}
+		}
+
+		__proto.getMatrix=function(){
+			var tMatrix=new Matrix();
+			if (this.skX !=0 || this.skY !=0){
+				var tAngle=this.skX *Math.PI / 180;
+				var cos=Math.cos(tAngle),sin=Math.sin(tAngle);
+				tMatrix.setTo(this.scX *cos,this.scX *sin,this.scY *-sin,this.scY *cos,this.x,this.y);
+				}else {
+				tMatrix.setTo(this.scX,this.skX,this.skY,this.scY,this.x,this.y);
+			}
+			return tMatrix;
+		}
+
+		__proto.getData=function(){
+			return [this.scX,this.skX,this.skY,this.scY,this.x,this.y];
+		}
+
+		__proto.getMatrixData=function(){
+			var tMatrix=this.getMatrix();
+			return [tMatrix.a,tMatrix.b,tMatrix.c,tMatrix.d,tMatrix.tx,tMatrix.ty];
+		}
+
+		return DBTransform;
+	})()
+
+
+	//class laya.ide.dragonBones.DragonBoneTools
+	var DragonBoneTools=(function(){
+		function DragonBoneTools(){
+			this.mTexturePath=null;
+			this.mTextureJsonPath=null;
+			this.mSkeletonJsonPath=null;
+			this.mSaveAniPath=null;
+			this.mTexture=null;
+			this.mTextureJson=null;
+			this.mSkeletonJson=null;
+			this.versionPath="version4.5";
+			this.DBFileName="man";
+			this.mFactory=null;
+			this.mCompleteFun=null;
+			this.mFailFun=null;
+		}
+
+		__class(DragonBoneTools,'laya.ide.dragonBones.DragonBoneTools');
+		var __proto=DragonBoneTools.prototype;
+		__proto.loadFile=function(path,completeFun,failFun){
+			var fileName;
+			this.DBFileName=FileManager.getFileName(path);
+			this.versionPath=path;
+			this.mCompleteFun=completeFun;
+			this.mFailFun=failFun;
+			this.mTexturePath=FileManager.getPath(this.versionPath,"texture.png");
+			this.mTextureJsonPath=FileManager.getPath(this.versionPath,"texture.json");
+			this.mSkeletonJsonPath=FileManager.getPath(this.versionPath,this.DBFileName+".json");
+			this.mSaveAniPath=FileManager.getPath(this.versionPath,this.DBFileName+".bin");
+			Laya.loader.load([{url:this.mTexturePath,type:"image" },
+			{url:this.mTextureJsonPath,type:"json" },
+			{url:this.mSkeletonJsonPath,type:"json" }],Handler.create(this,this.onLoaded));
+		}
+
+		__proto.onLoaded=function(){
+			this.mTexture=Loader.getRes(this.mTexturePath);
+			this.mTextureJson=Loader.getRes(this.mTextureJsonPath);
+			this.mSkeletonJson=Loader.getRes(this.mSkeletonJsonPath);
+			this.mFactory=new LayaFactory();
+			this.mFactory.on("complete",this,this.onCompleteHandler);
+			this.mFactory.parseData(this.mTexture,this.mTextureJson,this.mSkeletonJson);
+		}
+
+		__proto.onCompleteHandler=function(){
+			var testLayaAnimation=new TestLayaAnimation();
+			var stringJSON=testLayaAnimation.getLayaDragonBoneAni(this.mFactory);
+			var layaAnimationData
+			layaAnimationData=JSON.parse(stringJSON);
+			var buffer=this.getObjectBuffer(layaAnimationData);
+			this.save(this.mSaveAniPath,buffer);
+		}
+
+		//readAniData("D:/Downloads/"+filename+".ani");
+		__proto.getObjectBuffer=function(obj){
+			var i=0,j=0,k=0,l=0,n=0;
+			var bytes=new Byte();
+			bytes.endian="littleEndian";
+			bytes.writeUTFString(obj.versionIdentifier);
+			bytes.writeUTFString(obj.aniClassName);
+			var kkk=0;
+			var stringArea="";
+			for (i=0;i < obj.animationDatas.length;i++){
+				for (j=0;j < obj.animationDatas[i].animationNodeDatas.length;j++){
+					stringArea+=obj.animationDatas[i].animationNodeDatas[j].name;
+					stringArea+="\n";
+					kkk++;
+				}
+				(i==obj.animationDatas.length-1)?stringArea+=obj.animationDatas[i].name:stringArea+=obj.animationDatas[i].name+"\n";
+			}
+			bytes.writeUTFString(stringArea);
+			var animationNum=obj.animationDatas.length;
+			bytes.writeUint8(animationNum);
+			var pospublicDataAddr=bytes.pos;
+			bytes.writeUint32(0);
+			var posexternalDataAddr=bytes.pos;
+			bytes.writeUint32(posexternalDataAddr);
+			var tBoneNum=0;
+			var tLastBoneNum=0;
+			var poslocalAnimationData=bytes.pos;
+			bytes.writeUint8(0);
+			for (i=0;i < animationNum;i++){
+				tLastBoneNum=tBoneNum;
+				tBoneNum+=obj.animationDatas[i].animationNodeDatas.length;
+				bytes.writeUint8(tBoneNum);
+				tBoneNum++;
+				bytes.writeFloat32(obj.animationDatas[i].duration);
+				var boneCount=obj.animationDatas[i].animationNodeDatas.length;
+				bytes.writeUint8(boneCount);
+				for (j=0;j < boneCount;j++){
+					bytes.writeInt16(tLastBoneNum+j);
+					var parentIndex=-1;
+					if (obj.animationDatas[i].animationNodeDatas[j].parent !=null){
+						for (var jj=0;jj < obj.animationDatas[i].animationNodeDatas.length;jj++){
+							if (obj.animationDatas[i].animationNodeDatas[j].parent.name==
+								obj.animationDatas[i].animationNodeDatas[jj].name){
+								parentIndex=jj;
+								break ;
+							}
+						};
+						var animationNodeData=obj.animationDatas[i].animationNodeDatas[j].parent;
+					}
+					bytes.writeInt16(parentIndex);
+					var bIsUseLerp=0;
+					if (obj.animationDatas[i].animationNodeDatas[j].isLerp==true)
+						bIsUseLerp=1;
+					else
+					bIsUseLerp=0;
+					bytes.writeUint8(bIsUseLerp);
+					var keyframeParamsOffset=i *(obj.animationDatas[i].animationNodeDatas[j].keyFrameLerpTypes.length+1)*2;
+					bytes.writeUint32(keyframeParamsOffset);
+					var privateDataLen=obj.animationDatas[i].animationNodeDatas[j].privateData.length;
+					bytes.writeUint16(privateDataLen);
+					for (k=0;k < privateDataLen;k++)
+					bytes.writeByte(obj.animationDatas[i].animationNodeDatas[j].privateData[k]);
+					var keyframeCount=obj.animationDatas[i].animationNodeDatas[j].keyFrameDatas.length;
+					bytes.writeUint16(keyframeCount);
+					for (k=0;k < obj.animationDatas[i].animationNodeDatas[j].keyFrameDatas.length;k++){
+						bytes.writeFloat32(obj.animationDatas[i].animationNodeDatas[j].keyFrameDatas[k].time);
+						for (l=0;l < obj.animationDatas[i].animationNodeDatas[j].keyFrameDatas[k].data.length;l++){
+							bytes.writeFloat32(obj.animationDatas[i].animationNodeDatas[j].keyFrameDatas[k].data[l]);
+						}
+					}
+				}
+			};
+			var nPublicAddr=bytes.pos;
+			for (i=0;i < obj.animationDatas.length;i++){
+				if (obj.animationDatas[i].animationNodeDatas.length > 0){
+					bytes.writeUint16(obj.animationDatas[i].animationNodeDatas[0].keyFrameWidth);
+					var tDataArray=obj.animationDatas[i].animationNodeDatas[0].keyFrameLerpTypes;
+					for (k=0;k < tDataArray.length;k++){
+						bytes.writeUint16(tDataArray[k]);
+					}
+				}
+				else{
+					bytes.writeUint16(0);
+				}
+			};
+			var nExternalAddr=bytes.pos;
+			var tTextureData;
+			var tTextureDataArray=obj.extenData.textureData;
+			bytes.writeUint8(tTextureDataArray.length);
+			var tTextureNameStr="";
+			if (tTextureDataArray.length > 0){
+				for (i=0,n=tTextureDataArray.length;i < n;i++){
+					tTextureData=tTextureDataArray[i];
+					tTextureNameStr+=tTextureData.name+"\n";
+				}
+			}
+			tTextureNameStr.substr(0,tTextureNameStr.length-2);
+			bytes.writeUTFString(tTextureNameStr);
+			for (i=0,n=tTextureDataArray.length;i < n;i++){
+				tTextureData=tTextureDataArray[i];
+				bytes.writeFloat32(tTextureData.x);
+				bytes.writeFloat32(tTextureData.y);
+				bytes.writeFloat32(tTextureData.w);
+				bytes.writeFloat32(tTextureData.h);
+				bytes.writeFloat32(tTextureData.frameX);
+				bytes.writeFloat32(tTextureData.frameY);
+				bytes.writeFloat32(tTextureData.frameW);
+				bytes.writeFloat32(tTextureData.frameH);
+			};
+			var tMatrixDataLen=obj.extenData.matrixDataLen;
+			var tLen=obj.extenData.srcBoneMatrixLength;
+			var tBoneMatrixArr=obj.extenData.srcBoneMatrix;
+			bytes.writeUint16(tMatrixDataLen);
+			bytes.writeUint16(tLen);
+			for (i=0;i < tLen;i++){
+				bytes.writeFloat32(tBoneMatrixArr[i]);
+			};
+			var tBoneSlotData;
+			var tBoneSlotArr=obj.extenData.BoneSlotArr;
+			bytes.writeInt16(tBoneSlotArr.length);
+			for (i=0;i < tBoneSlotArr.length;i++){
+				tBoneSlotData=tBoneSlotArr[i];
+				if (tBoneSlotData){
+					bytes.writeUTFString(tBoneSlotData.name);
+					bytes.writeUTFString(tBoneSlotData.parent);
+					bytes.writeInt16(tBoneSlotData.displayIndex);
+				}
+			};
+			var tSkinData;
+			var tSlotData;
+			var tDisplayData;
+			var tSkinDataArr=obj.extenData.SkinArr;
+			var tString="";
+			for (i=0;i < tSkinDataArr.length;i++){
+				tSkinData=tSkinDataArr[i];
+				tString+=tSkinData.name+"\n";
+				for (j=0;j < tSkinData.slotArr.length;j++){
+					tSlotData=tSkinData.slotArr[j];
+					tString+=tSlotData.name+"\n";
+					for (k=0;k < tSlotData.displayArr.length;k++){
+						tDisplayData=tSlotData.displayArr[k];
+						tString+=tDisplayData.name+"\n";
+					}
+				}
+			}
+			tString.substr(0,tString.length-2);
+			bytes.writeUTFString(tString);
+			bytes.writeUint8(tSkinDataArr.length);
+			for (i=0;i < tSkinDataArr.length;i++){
+				tSkinData=tSkinDataArr[i];
+				bytes.writeUint8(tSkinData.slotArr.length);
+				for (j=0;j < tSkinData.slotArr.length;j++){
+					tSlotData=tSkinData.slotArr[j];
+					bytes.writeUint8(tSlotData.displayArr.length);
+					for (k=0;k < tSlotData.displayArr.length;k++){
+						tDisplayData=tSlotData.displayArr[k];
+						bytes.writeFloat32(tDisplayData.transform.scX);
+						bytes.writeFloat32(tDisplayData.transform.skX);
+						bytes.writeFloat32(tDisplayData.transform.skY);
+						bytes.writeFloat32(tDisplayData.transform.scY);
+						bytes.writeFloat32(tDisplayData.transform.x);
+						bytes.writeFloat32(tDisplayData.transform.y);
+					}
+				}
+			}
+			bytes.pos=pospublicDataAddr;
+			bytes.writeUint32(nPublicAddr);
+			bytes.pos=posexternalDataAddr;
+			bytes.writeUint32(nExternalAddr);
+			bytes.pos=0;
+			return bytes.__getBuffer();
+		}
+
+		//保存文件
+		__proto.save=function(filename,dataView){
+			if (this.mCompleteFun !=null){
+				this.mCompleteFun.call(this,filename,dataView);
+			}
+			this.mCompleteFun=null;
+			this.mFailFun=null;
+		}
+
+		/*var text:String=dataView;
+		var name:String=filename;
+		var javascriptString:String="";
+		javascriptString+="window.URL = window.URL || window.webkitURL;";//cross browser
+		javascriptString+="var a = document.createElement('a');";
+		javascriptString+="var file = new Blob([text], {type: 'application/octet-stream'});";
+		javascriptString+="a.href = window.URL.createObjectURL(file);";
+		javascriptString+="a.download = name;";
+		javascriptString+="window.document.body.appendChild(a);";
+		javascriptString+="a.click();";
+		__JS__('eval(javascriptString)');*/
+		__proto.readAniData=function(url){
+			url=URL.formatURL(url);
+			var templet=new laya.d3.core.animation.KeyframesAniTemplet();
+			var onComp=function (data){
+				var arraybuffer=data;
+				templet.parse(arraybuffer,60);
+			};
+			var loader=new Loader();
+			loader.once("complete",null,onComp);
+			loader.load(url,"arraybuffer");
+		}
+
+		return DragonBoneTools;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.LayaAnimation.AnimationData
+	var AnimationData=(function(){
+		function AnimationData(){
+			this.name=null;
+			this.duration=NaN;
+			this.animationNodeDatas=[];
+		}
+
+		__class(AnimationData,'laya.ide.dragonBones.LayaAnimation.AnimationData');
+		return AnimationData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.LayaAnimation.AnimationNodeData
+	var AnimationNodeData=(function(){
+		function AnimationNodeData(){
+			this.name=null;
+			this.parent=null;
+			this.isLerp=false;
+			this.keyFrameWidth=0;
+			this.privateData=[];
+			this.keyFrameLerpTypes=[];
+			this.keyFrameDatas=[];
+		}
+
+		__class(AnimationNodeData,'laya.ide.dragonBones.LayaAnimation.AnimationNodeData');
+		return AnimationNodeData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.LayaAnimation.KeyFrameData
+	var KeyFrameData=(function(){
+		function KeyFrameData(){
+			this.time=NaN;
+			this.data=[];
+		}
+
+		__class(KeyFrameData,'laya.ide.dragonBones.LayaAnimation.KeyFrameData');
+		return KeyFrameData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.LayaAnimation.LayaAnimationData
+	var LayaAnimationData=(function(){
+		function LayaAnimationData(){
+			this.versionIdentifier=null;
+			this.aniClassName=null;
+			this.isAniDataRelative=false;
+			this.extenData={};
+			this.animationDatas=[];
+		}
+
+		__class(LayaAnimationData,'laya.ide.dragonBones.LayaAnimation.LayaAnimationData');
+		return LayaAnimationData;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.LayaAnimation.TestLayaAnimation
+	var TestLayaAnimation=(function(){
+		// constructor
+		function TestLayaAnimation(){}
+		__class(TestLayaAnimation,'laya.ide.dragonBones.LayaAnimation.TestLayaAnimation');
+		var __proto=TestLayaAnimation.prototype;
+		__proto.getLayaAni=function(storageName){
+			var layaAni;
+			layaAni=new LayaAnimationData();
+			layaAni.versionIdentifier="LAYASKELETON3D:01";
+			layaAni.aniClassName="ANICLASS";
+			layaAni.isAniDataRelative=true;
+			var animationData0=new AnimationData();
+			animationData0.name="animation0";
+			animationData0.duration=99;
+			layaAni.animationDatas.push(animationData0);
+			var animationData1=new AnimationData();
+			animationData1.name="animation1";
+			animationData1.duration=78;
+			layaAni.animationDatas.push(animationData1);
+			var animationNodeData0=new AnimationNodeData();
+			animationNodeData0.name="animationNode0";
+			animationNodeData0.isLerp=true;
+			animationNodeData0.keyFrameWidth=8;
+			animationNodeData0.keyFrameLerpTypes.push(0,0,0,1,1,1,2,2);
+			animationNodeData0.parent=null;
+			animationNodeData0.privateData=[];
+			animationData0.animationNodeDatas.push(animationNodeData0);
+			var animationNodeData1=new AnimationNodeData();
+			animationNodeData1.name="animationNode1";
+			animationNodeData1.isLerp=true;
+			animationNodeData1.keyFrameWidth=8;
+			animationNodeData1.keyFrameLerpTypes.push(0,0,0,1,1,1,2,2);
+			animationNodeData1.parent=animationNodeData0;
+			animationNodeData1.privateData=[];
+			animationData0.animationNodeDatas.push(animationNodeData1);
+			var keyFrameData0=new KeyFrameData();
+			keyFrameData0.time=0;
+			keyFrameData0.data=[1.2,3.4,23,45,66,566,0,77];
+			animationNodeData0.keyFrameDatas.push(keyFrameData0);
+			var keyFrameData1=new KeyFrameData();
+			keyFrameData1.time=100;
+			keyFrameData1.data=[8.3,3.4,23,45,66,566,77,12];
+			animationNodeData0.keyFrameDatas.push(keyFrameData1);
+			var keyFrameData2=new KeyFrameData();
+			keyFrameData2.time=200;
+			keyFrameData2.data=[15.0,7.4,33,4.5,6.6,56.6,7.7,233];
+			animationNodeData0.keyFrameDatas.push(keyFrameData2);
+			var stringJSON;
+			stringJSON=JSON.stringify(layaAni);
+			return stringJSON;
+		}
+
+		__proto.getLayaDragonBoneAni=function(factory){
+			var layaAni;
+			layaAni=new LayaAnimationData();
+			layaAni.versionIdentifier="DRAGONBONE:01";
+			layaAni.aniClassName="DragonBone";
+			layaAni.isAniDataRelative=true;
+			var tDBArmatureData;
+			var tDBAnimationData;
+			var tDBBoneData;
+			var tAnimationData;
+			var tAnimationNodeData;
+			var tBoneNodeDic={};
+			var tBoneNodeArr=[];
+			var tBoneMatrixArr=[];
+			var i=0,j=0,z=0,k=0;
+			for (i=0;i < factory.mArmatureArr.length;i++){
+				tDBArmatureData=factory.mArmatureArr[i];
+				var tOneFrameTime=1000 / tDBArmatureData.frameRate;
+				for (j=0;j < tDBArmatureData.animationArr.length;j++){
+					tBoneNodeDic={};
+					tBoneNodeArr=[];
+					tBoneMatrixArr=[];
+					for (z=0;z < tDBArmatureData.boneArr.length;z++){
+						tDBBoneData=tDBArmatureData.boneArr[z];
+						var tParentNode=tBoneNodeDic[tDBBoneData.parent];
+						if (tDBBoneData){
+							tAnimationNodeData=new AnimationNodeData();
+							tAnimationNodeData.name=tDBBoneData.name;
+							tAnimationNodeData.isLerp=true;
+							tAnimationNodeData.keyFrameLerpTypes.push(0,0,0,0,1,1,2,2);
+							tAnimationNodeData.parent=tParentNode;
+							tAnimationNodeData.privateData=[];
+							tAnimationNodeData.keyFrameWidth=6;
+							tBoneNodeDic[tAnimationNodeData.name]=tAnimationNodeData;
+							tBoneNodeArr.push(tAnimationNodeData);
+							var tFrameDataArr=tDBBoneData.transform.getData();
+							for (k=0;k < tFrameDataArr.length;k++){
+								tBoneMatrixArr.push(tFrameDataArr[k]);
+							}
+						}
+					}
+					tDBAnimationData=tDBArmatureData.animationArr[j];
+					tAnimationData=new AnimationData();
+					tAnimationData.name=tDBAnimationData.name;
+					tAnimationData.duration=tOneFrameTime *tDBAnimationData.duration;
+					layaAni.animationDatas.push(tAnimationData);
+					for (z=0;z < tBoneNodeArr.length;z++){
+						tAnimationData.animationNodeDatas.push(tBoneNodeArr[z]);
+					}
+					for (z=0;z < tDBArmatureData.boneArr.length;z++){
+						tDBBoneData=tDBArmatureData.boneArr[z];
+						var tDBAniBoneData=this.getDBAniBoneData(tDBAnimationData,tDBBoneData.name);
+						if (tDBAniBoneData){
+							tAnimationNodeData=tBoneNodeDic[tDBAniBoneData.name];
+							if (tAnimationNodeData){
+								var tDBAniBoneFrameData;
+								for (var h=0;h < tDBAniBoneData.frameArr.length;h++){
+									tDBAniBoneFrameData=tDBAniBoneData.frameArr[h];
+									var keyFrameData=new KeyFrameData();
+									keyFrameData.time=tDBAniBoneFrameData.duration *tOneFrameTime;
+									var tDataArr=keyFrameData.data=tDBAniBoneFrameData.transform.getData();
+									tAnimationNodeData.keyFrameDatas.push(keyFrameData);
+								}
+								if (tAnimationNodeData.keyFrameDatas.length > 0){
+									var keyFrameData=tAnimationNodeData.keyFrameDatas[tAnimationNodeData.keyFrameDatas.length-1];
+									if (keyFrameData){
+										if (keyFrameData.time !=0){
+											var tKeyFrameData=new KeyFrameData();
+											tKeyFrameData.time=0;
+											tKeyFrameData.data=keyFrameData.data;
+											tAnimationNodeData.keyFrameDatas.push(tKeyFrameData);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				layaAni.extenData.BoneSlotArr=tDBArmatureData.slotArr;
+				layaAni.extenData.SkinArr=tDBArmatureData.skinArr;
+				layaAni.extenData.textureData=factory.mDBTextureDataArray;
+			}
+			layaAni.extenData.matrixDataLen=6;
+			layaAni.extenData.srcBoneMatrixLength=tBoneMatrixArr.length;
+			layaAni.extenData.srcBoneMatrix=tBoneMatrixArr;
+			var stringJSON;
+			stringJSON=JSON.stringify(layaAni);
+			return stringJSON;
+		}
+
+		__proto.getDBAniBoneData=function(animationData,name){
+			for (var i=0,n=animationData.boneArr.length;i < n;i++){
+				var tAniBoneData=animationData.boneArr[i];
+				if (tAniBoneData.name==name){
+					return tAniBoneData;
+				}
+			}
+			return null;
+		}
+
+		return TestLayaAnimation;
 	})()
 
 
@@ -5910,12 +7190,10 @@ window.Laya=(function(window,document){
 		}
 
 		HtmlLayerManager.switchToTop=function(){
-			console.log("switchToTop");
 			HtmlLayerManager.setCanvasIndex(99);
 		}
 
 		HtmlLayerManager.switchToBack=function(){
-			console.log("switchToBack");
 			HtmlLayerManager.setCanvasIndex(1);
 		}
 
@@ -5975,6 +7253,11 @@ window.Laya=(function(window,document){
 		__proto.init=function(){
 			Laya.stage.on("keydown",this,this.keyDown);
 			Laya.stage.on("keyup",this,this.keyUp);
+			Laya.stage.on("blur",this,this.onBlur);
+		}
+
+		__proto.onBlur=function(){
+			this.isCommandKeyDown=false;
 		}
 
 		__proto.isCommandKey=function(keyCode){
@@ -5983,14 +7266,12 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.keyDown=function(e){
-			console.log("keyDown:",e.keyCode,e);
 			if(this.isCommandKey(e.keyCode)){
 				this.isCommandKeyDown=true;
 			}
 		}
 
 		__proto.keyUp=function(e){
-			console.log("keyUp:",e.keyCode,e);
 			if(this.isCommandKey(e.keyCode)){
 				this.isCommandKeyDown=false;
 			}
@@ -6305,11 +7586,10 @@ window.Laya=(function(window,document){
 			LayerManager.stage.addChild(LayoutRecManager._ct);
 			LayerManager.stage.on("resize",null,LayoutRecManager.resizeWork);
 			LayoutRecManager._ct.on("dragDrop",null,LayoutRecManager.onDragDrop);
-			LayerManager.stage.addChild(MenuBar.instance);
 			LayerManager.stage.addChild(QuickTool.instance);
 			MenuBar.instance.pos(1,1);
 			QuickTool.instance.pos(1,35);
-			LayoutRecManager.recoverLayoutInfo();
+			LayoutRecManager.layoutToPageType("Page");
 		}
 
 		LayoutRecManager.resizeWork=function(e){
@@ -6471,7 +7751,7 @@ window.Laya=(function(window,document){
 			saveO.width=LayoutRecManager._ct.width;
 			saveO.height=LayoutRecManager._ct.height;
 			saveO.items=rst;
-			FileManager.createTxtFile(FileManager.getAppPath(LayoutRecManager.tLayoutFile),ObjectTools.getJsonString(saveO));
+			FileManager.createTxtFile(FileManager.getDataPath(LayoutRecManager.tLayoutFile),ObjectTools.getJsonString(saveO));
 		}
 
 		LayoutRecManager.showPanelByClassName=function(className){
@@ -6506,14 +7786,14 @@ window.Laya=(function(window,document){
 			len=childs.length;
 			for (i=0;i < len;i++){
 				if (((childs[i])instanceof laya.editor.view.LayoutRec )){
-					Utils1.concatArr(layouts,childs[i].getUIs());
+					ObjectTools.concatArr(layouts,childs[i].getUIs());
 				}
 			}
 			childs=DisControlTool.getAllChild(LayerManager.stage);
 			len=childs.length;
 			for (i=0;i < len;i++){
 				if (((childs[i])instanceof laya.editor.view.LayoutRec )){
-					Utils1.concatArr(layouts,childs[i].getUIs());
+					ObjectTools.concatArr(layouts,childs[i].getUIs());
 				}
 			}
 			len=layouts.length;
@@ -6556,7 +7836,7 @@ window.Laya=(function(window,document){
 			LayoutRecManager.initClassToUIO();
 			LayoutRecManager._layoutFile=layoutFile;
 			var path;
-			path=FileManager.getAppPath(LayoutRecManager.tLayoutFile);
+			path=FileManager.getDataPath(LayoutRecManager.tLayoutFile);
 			if (!FileTools.exist(path)){
 				LayoutRecManager.createDefault();
 				return;
@@ -6883,7 +8163,7 @@ window.Laya=(function(window,document){
 			LayoutRecManager.clearAll();
 			LayoutRecManager.resizeWork();
 			var path;
-			path=FileManager.getAppPath("layout/default.config");
+			path=FileManager.getDataPath("layout/default.config");
 			if(FileTools.exist(path)){
 				LayoutRecManager.layoutByLayoutFile(path);
 				return;
@@ -7492,6 +8772,7 @@ window.Laya=(function(window,document){
 		function ResFileManager(){}
 		__class(ResFileManager,'laya.ide.managers.ResFileManager');
 		ResFileManager.setPath=function(path){
+			console.log("ResFileManager:setPath",path);
 			if(!FileTools.exist(path))return;
 			ResFileManager._prePath=path;
 			ResFileManager.basePath=FileTools.getAbsPath(path);
@@ -7529,6 +8810,10 @@ window.Laya=(function(window,document){
 					ResFileManager.clearRes(arr[i]);
 					loadList.push(arr[i]);
 				}
+			}
+			if(loadList.length<1){
+				ResFileManager.resLoaded();
+				return;
 			}
 			Laya.loader.load(loadList,new Handler(null,ResFileManager.resLoaded));
 		}
@@ -7976,10 +9261,10 @@ window.Laya=(function(window,document){
 		SysLog.log=function(msg,type){
 			(type===void 0)&& (type="log");
 			var str;
-			str=(Browser.now)+":"+type+":"+msg;
+			str=(Browser.now())+":"+type+":"+msg;
 			console.log(str);
 			if(SysLog.fileLogEnabled){
-				FileTools.appendFile(FileManager.getAppPath("log.txt"),"\n"+str);
+				FileTools.appendFile(FileManager.getDataPath("log.txt"),"\n"+str);
 			}
 		}
 
@@ -8459,10 +9744,13 @@ window.Laya=(function(window,document){
 				ViewRenderManager.renderHit.height=UIPanel.instance.height-dLen;
 				ViewRenderManager.renderHit.x=UIPanel.instance.x;
 				ViewRenderManager.renderHit.y=UIPanel.instance.y+dLen;
-				laya.ide.managers.ViewRenderManager.style.top=pos.y+dLen;
-				laya.ide.managers.ViewRenderManager.style.left=pos.x;
+				var style;
+				style=laya.ide.managers.ViewRenderManager.renderFrame.style;
+				style.top=pos.y+dLen+"px";
+				style.left=(pos.x)+"px";
+				console.log("ViewRenderManager:",ViewRenderManager.adpt);
 				laya.ide.managers.ViewRenderManager.renderFrame.width=ViewRenderManager.renderHit.width;
-				laya.ide.managers.ViewRenderManager.renderFrame.height=ViewRenderManager.renderHit.height;
+				laya.ide.managers.ViewRenderManager.renderFrame.height=ViewRenderManager.renderHit.height-5;
 				ViewRenderManager.hitBounds.width=ViewRenderManager.renderHit.width;
 				ViewRenderManager.hitBounds.height=ViewRenderManager.renderHit.height;
 				ViewRenderManager.hitBounds.x=0;
@@ -8762,6 +10050,69 @@ window.Laya=(function(window,document){
 
 		PreLoads.TestMode=false;
 		return PreLoads;
+	})()
+
+
+	/**
+	*
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2015-11-16 下午1:26:53
+	*/
+	//class ide.event.Notices
+	var Notices=(function(){
+		function Notices(){}
+		__class(Notices,'ide.event.Notices');
+		Notices.RENDER_INITED="RenderInited";
+		return Notices;
+	})()
+
+
+	/**
+	*...
+	*@author WW
+	*/
+	//class viewRender.ViewRenderBase
+	var ViewRenderBase=(function(){
+		function ViewRenderBase(){
+			this.initFuns();
+		}
+
+		__class(ViewRenderBase,'viewRender.ViewRenderBase');
+		var __proto=ViewRenderBase.prototype;
+		__proto.initFuns=function(){
+			Browser.window.renderBinds={};
+			Browser.window.renderBinds.setData=Utils1.bind(this.setData,this);
+			Browser.window.renderBinds.updateData=Utils1.bind(this.updateData
+			,this);
+			Browser.window.renderBinds.clearRender=Utils1.bind(this.clearRender,this);
+			Browser.window.renderBinds.sizeRender=Utils1.bind(this.sizeRender,this);
+			Browser.window.renderBinds.posRender=Utils1.bind(this.posRender,this);
+			Browser.window.renderBinds.getRenderData=Utils1.bind(this.getRenderData,this);
+			Browser.window.renderBinds.getStage=Utils1.bind(this.getStage,this);
+			Browser.window.renderBinds.setNotice=Utils1.bind(this.setNotice,this);
+		}
+
+		__proto.getRenderData=function(){
+			return null;
+		}
+
+		__proto.setData=function(data){}
+		__proto.updateData=function(data){}
+		__proto.clearRender=function(){}
+		__proto.sizeRender=function(width,height){}
+		__proto.posRender=function(x,y){}
+		__proto.getStage=function(){
+			return Laya.stage;
+		}
+
+		__proto.setNotice=function(notice){
+			Notice.I=notice;
+			Notice.notify("RenderInited");
+		}
+
+		return ViewRenderBase;
 	})()
 
 
@@ -9123,6 +10474,49 @@ window.Laya=(function(window,document){
 
 		__class(Style,'laya.display.css.Style');
 		var __proto=Style.prototype;
+		__proto.getTransform=function(){
+			return this._tf;
+		}
+
+		__proto.setTransform=function(value){
+			this._tf=value==='none' || !value ? Style._TF_EMPTY :value;
+		}
+
+		__proto.setTranslateX=function(value){
+			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
+			this._tf.translateX=value;
+		}
+
+		__proto.setTranslateY=function(value){
+			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
+			this._tf.translateY=value;
+		}
+
+		__proto.setScaleX=function(value){
+			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
+			this._tf.scaleX=value;
+		}
+
+		__proto.setScaleY=function(value){
+			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
+			this._tf.scaleY=value;
+		}
+
+		__proto.setRotate=function(value){
+			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
+			this._tf.rotate=value;
+		}
+
+		__proto.setSkewX=function(value){
+			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
+			this._tf.skewX=value;
+		}
+
+		__proto.setSkewY=function(value){
+			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
+			this._tf.skewY=value;
+		}
+
 		/**销毁此对象。*/
 		__proto.destroy=function(){
 			this.scrollRect=null;
@@ -9154,63 +10548,56 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'scaleX',function(){
 			return this._tf.scaleX;
 			},function(value){
-			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
-			this._tf.scaleX=value;
+			this.setScaleX(value);
 		});
 
 		/**Y 轴缩放值。*/
 		__getset(0,__proto,'scaleY',function(){
 			return this._tf.scaleY;
 			},function(value){
-			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
-			this._tf.scaleY=value;
+			this.setScaleY(value);
 		});
 
 		/**元素应用的 2D 或 3D 转换的值。该属性允许我们对元素进行旋转、缩放、移动或倾斜。*/
 		__getset(0,__proto,'transform',function(){
-			return this._tf;
+			return this.getTransform();
 			},function(value){
-			this._tf=value==='none' || !value ? Style._TF_EMPTY :value;
+			this.setTransform(value);
 		});
 
 		/**定义转换，只是用 X 轴的值。*/
 		__getset(0,__proto,'translateX',function(){
 			return this._tf.translateX;
 			},function(value){
-			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
-			this._tf.translateX=value;
+			this.setTranslateX(value);
 		});
 
 		/**定义转换，只是用 Y 轴的值。*/
 		__getset(0,__proto,'translateY',function(){
 			return this._tf.translateY;
 			},function(value){
-			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
-			this._tf.translateY=value;
+			this.setTranslateY(value);
 		});
 
 		/**定义旋转角度。*/
 		__getset(0,__proto,'rotate',function(){
 			return this._tf.rotate;
 			},function(value){
-			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
-			this._tf.rotate=value;
+			this.setRotate(value);
 		});
 
 		/**定义沿着 X 轴的 2D 倾斜转换。*/
 		__getset(0,__proto,'skewX',function(){
 			return this._tf.skewX;
 			},function(value){
-			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
-			this._tf.skewX=value;
+			this.setSkewX(value);
 		});
 
 		/**定义沿着 Y 轴的 2D 倾斜转换。*/
 		__getset(0,__proto,'skewY',function(){
 			return this._tf.skewY;
 			},function(value){
-			this._tf===Style._TF_EMPTY && (this._tf=Style._createTransform());
-			this._tf.skewY=value;
+			this.setSkewY(value);
 		});
 
 		/**是否为绝对定位。*/
@@ -9497,11 +10884,11 @@ window.Laya=(function(window,document){
 		__proto.getBoundPoints=function(){
 			if (!this._temp || this._temp.length < 1)
 				this._temp=this._getCmdPoints();
-			return this._rstBoundPoints=Utils1.setValueArr(this._rstBoundPoints,this._temp);
+			return this._rstBoundPoints=Utils1.copyArray(this._rstBoundPoints,this._temp);
 		}
 
 		__proto._getCmdPoints=function(){
-			var context=Render.context;
+			var context=Render._context;
 			var cmds=this._cmds;
 			var rst;
 			rst=this._temp || (this._temp=[]);
@@ -9571,7 +10958,7 @@ window.Laya=(function(window,document){
 					case context._drawLine:
 						Graphics._addPointArrToRst(rst,[cmd[0],cmd[1],cmd[2],cmd[3]],tMatrix);
 						break ;
-					case context.drawCurves:
+					case context._drawCurves:
 						Graphics._addPointArrToRst(rst,Bezier.I.getBezierPoints(cmd[2]),tMatrix,cmd[0],cmd[1]);
 						break ;
 					case context._drawPoly:
@@ -9587,7 +10974,7 @@ window.Laya=(function(window,document){
 					}
 			}
 			if (rst.length > 200){
-				rst=Utils1.setValueArr(rst,Rectangle._getWrapRec(rst)._getBoundPoints());
+				rst=Utils1.copyArray(rst,Rectangle._getWrapRec(rst)._getBoundPoints());
 			}else if (rst.length > 8)
 			rst=GrahamScan.scanPList(rst);
 			return rst;
@@ -9611,8 +10998,14 @@ window.Laya=(function(window,document){
 			(width===void 0)&& (width=0);
 			(height===void 0)&& (height=0);
 			this._sp && (this._sp._renderType |=0x100);
-			if (!width)width=tex.width;
-			if (!height)height=tex.height;
+			if (!width)width=tex.sourceWidth;
+			if (!height)height=tex.sourceHeight;
+			x+=tex.offsetX;
+			y+=tex.offsetY;
+			width=width-tex.sourceWidth+tex.width;
+			height=height-tex.sourceHeight+tex.height;
+			width < 0 && (width=0);
+			height < 0 && (height=0);
 			var args=[tex,x,y,width,height,m];
 			if (this._one==null){
 				this._one=args;
@@ -9622,7 +11015,7 @@ window.Laya=(function(window,document){
 				(this._cmds || (this._cmds=[])).length===0 && this._cmds.push(this._one);
 				this._cmds.push(args);
 			}
-			args.callee=m ? Render.context._drawTextureWithTransform :Render.context._drawTexture;
+			args.callee=m ? Render._context._drawTextureWithTransform :Render._context._drawTexture;
 			this._repaint();
 		}
 
@@ -9675,7 +11068,7 @@ window.Laya=(function(window,document){
 		*@param height 高度。
 		*/
 		__proto.clipRect=function(x,y,width,height){
-			this._saveToCmd(Render.context._clipRect,arguments);
+			this._saveToCmd(Render._context._clipRect,arguments);
 		}
 
 		/**
@@ -9688,7 +11081,7 @@ window.Laya=(function(window,document){
 		*@param textAlign 文本对齐方式。
 		*/
 		__proto.fillText=function(text,x,y,font,color,textAlign){
-			this._saveToCmd(Render.context._fillText,[text,x,y,font || Font.defaultFont,color,textAlign]);
+			this._saveToCmd(Render._context._fillText,[text,x,y,font || Font.defaultFont,color,textAlign]);
 		}
 
 		/**
@@ -9703,7 +11096,7 @@ window.Laya=(function(window,document){
 		*@param textAlign 文本对齐方式。
 		*/
 		__proto.fillBorderText=function(text,x,y,font,fillColor,borderColor,lineWidth,textAlign){
-			this._saveToCmd(Render.context._fillBorderText,[text,x,y,font || Font.defaultFont,fillColor,borderColor,lineWidth,textAlign]);
+			this._saveToCmd(Render._context._fillBorderText,[text,x,y,font || Font.defaultFont,fillColor,borderColor,lineWidth,textAlign]);
 		}
 
 		/**
@@ -9717,7 +11110,7 @@ window.Laya=(function(window,document){
 		*@param textAlign 文本对齐方式。
 		*/
 		__proto.strokeText=function(text,x,y,font,color,lineWidth,textAlign){
-			this._saveToCmd(Render.context._strokeText,[text,x,y,font || Font.defaultFont,color,lineWidth,textAlign]);
+			this._saveToCmd(Render._context._strokeText,[text,x,y,font || Font.defaultFont,color,lineWidth,textAlign]);
 		}
 
 		/**
@@ -9725,7 +11118,7 @@ window.Laya=(function(window,document){
 		*@param value 透明度。
 		*/
 		__proto.alpha=function(value){
-			this._saveToCmd(Render.context._alpha,arguments);
+			this._saveToCmd(Render._context._alpha,arguments);
 		}
 
 		/**
@@ -9733,7 +11126,7 @@ window.Laya=(function(window,document){
 		*@param value 混合模式。
 		*/
 		__proto.blendMode=function(value){
-			this._saveToCmd(Render.context._blendMode,arguments);
+			this._saveToCmd(Render._context._blendMode,arguments);
 		}
 
 		/**
@@ -9745,7 +11138,7 @@ window.Laya=(function(window,document){
 		__proto.transform=function(mat,pivotX,pivotY){
 			(pivotX===void 0)&& (pivotX=0);
 			(pivotY===void 0)&& (pivotY=0);
-			this._saveToCmd(Render.context._transform,[mat,pivotX,pivotY]);
+			this._saveToCmd(Render._context._transform,[mat,pivotX,pivotY]);
 		}
 
 		/**
@@ -9757,7 +11150,7 @@ window.Laya=(function(window,document){
 		__proto.rotate=function(angle,pivotX,pivotY){
 			(pivotX===void 0)&& (pivotX=0);
 			(pivotY===void 0)&& (pivotY=0);
-			this._saveToCmd(Render.context._rotate,[angle,pivotX,pivotY]);
+			this._saveToCmd(Render._context._rotate,[angle,pivotX,pivotY]);
 		}
 
 		/**
@@ -9770,7 +11163,7 @@ window.Laya=(function(window,document){
 		__proto.scale=function(scaleX,scaleY,pivotX,pivotY){
 			(pivotX===void 0)&& (pivotX=0);
 			(pivotY===void 0)&& (pivotY=0);
-			this._saveToCmd(Render.context._scale,[scaleX,scaleY,pivotX,pivotY]);
+			this._saveToCmd(Render._context._scale,[scaleX,scaleY,pivotX,pivotY]);
 		}
 
 		/**
@@ -9779,21 +11172,21 @@ window.Laya=(function(window,document){
 		*@param y 添加到垂直坐标（y）上的值。
 		*/
 		__proto.translate=function(x,y){
-			this._saveToCmd(Render.context._translate,[x,y]);
+			this._saveToCmd(Render._context._translate,[x,y]);
 		}
 
 		/**
 		*保存当前环境的状态。
 		*/
 		__proto.save=function(){
-			this._saveToCmd(Render.context.save,arguments);
+			this._saveToCmd(Render._context._save,arguments);
 		}
 
 		/**
 		*返回之前保存过的路径状态和属性。
 		*/
 		__proto.restore=function(){
-			this._saveToCmd(Render.context.restore,arguments);
+			this._saveToCmd(Render._context._restore,arguments);
 		}
 
 		/**
@@ -9805,10 +11198,10 @@ window.Laya=(function(window,document){
 			this._repaint();
 			var cmds=this._cmds;
 			if (!cmds){
-				return this._one && this._one.callee===Render.context._fillText && (this._one[0]=text,true);
+				return this._one && this._one.callee===Render._context._fillText && (this._one[0]=text,true);
 			}
 			for (var i=cmds.length-1;i >-1;i--){
-				if (cmds[i].callee===Render.context._fillText){
+				if (cmds[i].callee===Render._context._fillText){
 					cmds[i][0]=text;
 					return true;
 				}
@@ -9825,10 +11218,10 @@ window.Laya=(function(window,document){
 			this._repaint();
 			var cmds=this._cmds;
 			if (!cmds){
-				return this._one && (this._one.callee===Render.context._fillBorderText || this._one.callee===Render.context._fillText)&& (this._one[4]=color,true);
+				return this._one && (this._one.callee===Render._context._fillBorderText || this._one.callee===Render._context._fillText)&& (this._one[4]=color,true);
 			}
 			for (var i=cmds.length-1;i >-1;i--){
-				if (cmds[i].callee===Render.context._fillText){
+				if (cmds[i].callee===Render._context._fillText){
 					cmds[i][4]=color;
 					return true;
 				}
@@ -9905,7 +11298,7 @@ window.Laya=(function(window,document){
 		__proto.drawLine=function(fromX,fromY,toX,toY,lineColor,lineWidth){
 			(lineWidth===void 0)&& (lineWidth=1);
 			var arr=[fromX+0.5,fromY+0.5,toX+0.5,toY+0.5,lineColor,lineWidth];
-			this._saveToCmd(Render.context._drawLine,arr);
+			this._saveToCmd(Render._context._drawLine,arr);
 		}
 
 		/**
@@ -9919,9 +11312,9 @@ window.Laya=(function(window,document){
 		__proto.drawLines=function(x,y,points,lineColor,lineWidth){
 			(lineWidth===void 0)&& (lineWidth=1);
 			var arr=[x+0.5,y+0.5,points,lineColor,lineWidth];
-			if (Render.isWebGl)
+			if (Render.isWebGL)
 				arr[3]=Color.create(lineColor).numColor;
-			this._saveToCmd(Render.isWebGl ? Render.context.drawLinesWebGL :Render.context.drawLines,arr);
+			this._saveToCmd(Render.isWebGL? Render._context._drawLinesWebGL :Render._context._drawLines,arr);
 		}
 
 		/**
@@ -9935,9 +11328,9 @@ window.Laya=(function(window,document){
 		__proto.drawCurves=function(x,y,points,lineColor,lineWidth){
 			(lineWidth===void 0)&& (lineWidth=1);
 			var arr=[x+0.5,y+0.5,points,lineColor,lineWidth];
-			if (Render.isWebGl)
+			if (Render.isWebGL)
 				arr[3]=Color.create(lineColor).numColor;
-			this._saveToCmd(Render.isWebGl ? Render.context.drawCurvesGL :Render.context.drawCurves,arr);
+			this._saveToCmd(Render.isWebGL ? Render._context._drawCurvesGL :Render._context._drawCurves,arr);
 		}
 
 		/**
@@ -9954,7 +11347,7 @@ window.Laya=(function(window,document){
 			(lineWidth===void 0)&& (lineWidth=1);
 			var offset=lineColor ? 0.5 :0;
 			var arr=[x+offset,y+offset,width,height,fillColor,lineColor,lineWidth];
-			this._saveToCmd(Render.context._drawRect,arr);
+			this._saveToCmd(Render._context._drawRect,arr);
 		}
 
 		/**
@@ -9970,11 +11363,11 @@ window.Laya=(function(window,document){
 			(lineWidth===void 0)&& (lineWidth=1);
 			var offset=lineColor ? 0.5 :0;
 			var arr=[x+offset,y+offset,radius,fillColor,lineColor,lineWidth];
-			if (Render.isWebGl){
+			if (Render.isWebGL){
 				arr[3]=fillColor ? Color.create(fillColor).numColor :fillColor;
 				arr[4]=lineColor ? Color.create(lineColor).numColor :lineColor;
 			}
-			this._saveToCmd(Render.isWebGl ? Render.context._drawCircleWebGL :Render.context._drawCircle,arr);
+			this._saveToCmd(Render.isWebGL? Render._context._drawCircleWebGL :Render._context._drawCircle,arr);
 		}
 
 		/**
@@ -9992,7 +11385,7 @@ window.Laya=(function(window,document){
 			(lineWidth===void 0)&& (lineWidth=1);
 			var offset=lineColor ? 0.5 :0;
 			var arr=[x+offset,y+offset,radius,startAngle,endAngle,fillColor,lineColor,lineWidth];
-			if (Render.isWebGl){
+			if (Render.isWebGL){
 				startAngle=90-startAngle;
 				endAngle=90-endAngle;
 				arr[5]=fillColor ? Color.create(fillColor).numColor :fillColor;
@@ -10000,7 +11393,7 @@ window.Laya=(function(window,document){
 			}
 			arr[3]=Utils1.toRadian(startAngle);
 			arr[4]=Utils1.toRadian(endAngle);
-			this._saveToCmd(Render.isWebGl ? Render.context._drawPieWebGL :Render.context._drawPie,arr);
+			this._saveToCmd(Render.isWebGL ? Render._context._drawPieWebGL :Render._context._drawPie,arr);
 		}
 
 		__proto._getPiePoints=function(x,y,radius,startAngle,endAngle){
@@ -10030,7 +11423,7 @@ window.Laya=(function(window,document){
 			(lineWidth===void 0)&& (lineWidth=1);
 			var offset=lineColor ? 0.5 :0;
 			var arr=[x+offset,y+offset,points,fillColor,lineColor,lineWidth];
-			if (Render.isWebGl){
+			if (Render.isWebGL){
 				if (fillColor !=null){
 					arr[3]=Color.create(fillColor).numColor;
 				}
@@ -10038,7 +11431,7 @@ window.Laya=(function(window,document){
 					arr[4]=Color.create(lineColor).numColor;
 				}
 			}
-			this._saveToCmd(Render.isWebGl ? Render.context._drawPolyGL :Render.context._drawPoly,arr);
+			this._saveToCmd(Render.isWebGL? Render._context._drawPolyGL :Render._context._drawPoly,arr);
 		}
 
 		__proto._getPathPoints=function(paths){
@@ -10062,13 +11455,13 @@ window.Laya=(function(window,document){
 		*绘制路径。
 		*@param x 开始绘制的 X 轴位置。
 		*@param y 开始绘制的 Y 轴位置。
-		*@param paths 路径集合，路径支持以下格式：[["moveTo",x,y],["lineTo",x,y],["arcTo",x1,y1,x2,y2,r],["closePath"]]。
+		*@param paths 路径集合，路径支持以下格式：[["moveTo",x,y],["lineTo",x,y,x,y,x,y],["arcTo",x1,y1,x2,y2,r],["closePath"]]。
 		*@param brush 刷子定义，支持以下设置{fillStyle}。
 		*@param pen 画笔定义，支持以下设置{strokeStyle,lineWidth,lineJoin,lineCap,miterLimit}。
 		*/
 		__proto.drawPath=function(x,y,paths,brush,pen){
 			var arr=[x+0.5,y+0.5,paths,brush,pen];
-			this._saveToCmd(Render.context._drawPath,arr);
+			this._saveToCmd(Render._context._drawPath,arr);
 		}
 
 		/**@private */
@@ -10246,7 +11639,7 @@ window.Laya=(function(window,document){
 		}
 
 		KeyBoardManager._dispatch=function(e,type){
-			if(!KeyBoardManager.enabled)return;
+			if (!KeyBoardManager.enabled)return;
 			e.keyCode=e.keyCode || e.which || e.charCode;
 			if (type==="keydown")KeyBoardManager._pressKeys[e.keyCode]=true;
 			else if (type==="keyup")KeyBoardManager._pressKeys[e.keyCode]=null;
@@ -10386,8 +11779,8 @@ window.Laya=(function(window,document){
 			if (this.disableMouseEvent)return;
 			for (var i=0,n=this._lastOvers.length;i < n;i++){
 				var ele=this._lastOvers[i];
-				if (this._currOvers.indexOf(ele)< 0){
-					ele.$_MOUSEOVER=false;
+				if (!ele.destroyed && this._currOvers.indexOf(ele)< 0){
+					ele._set$P("$_MOUSEOVER",false);
 					ele.event("mouseout",this._event.setTo("mouseout",ele,this._target));
 				}
 			};
@@ -10410,8 +11803,8 @@ window.Laya=(function(window,document){
 
 		__proto.sendMouseOver=function(ele){
 			if (ele.parent){
-				if (!ele.$_MOUSEOVER){
-					ele.$_MOUSEOVER=true;
+				if (!ele._get$P("$_MOUSEOVER")){
+					ele._set$P("$_MOUSEOVER",true);
 					ele.event("mouseover",this._event.setTo("mouseover",ele,this._target));
 				}
 				this._currOvers.push(ele);
@@ -10421,10 +11814,10 @@ window.Laya=(function(window,document){
 
 		__proto.onMouseDown=function(ele){
 			if (this._isLeftMouse){
-				ele.$_MOUSEDOWN=true;
+				ele._set$P("$_MOUSEDOWN",true);
 				ele.event("mousedown",this._event.setTo("mousedown",ele,this._target));
 				}else {
-				ele.$_RIGHTMOUSEDOWN=true;
+				ele._set$P("$_RIGHTMOUSEDOWN",true);
 				ele.event("rightmousedown",this._event.setTo("rightmousedown",ele,this._target));
 			}
 			!this._event._stoped && ele.parent && this.onMouseDown(ele.parent);
@@ -10443,12 +11836,12 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.sendClick=function(ele,type){
-			if (type==="mouseup" && ele.$_MOUSEDOWN){
-				ele.$_MOUSEDOWN=false;
+			if (type==="mouseup" && ele._get$P("$_MOUSEDOWN")){
+				ele._set$P("$_MOUSEDOWN",false);
 				ele.event("click",this._event.setTo("click",ele,this._target));
 				this._isDoubleClick && ele.event("doubleclick",this._event.setTo("doubleclick",ele,this._target));
-				}else if (type==="rightmouseup" && ele.$_RIGHTMOUSEDOWN){
-				ele.$_RIGHTMOUSEDOWN=false;
+				}else if (type==="rightmouseup" && ele._get$P("$_RIGHTMOUSEDOWN")){
+				ele._set$P("$_RIGHTMOUSEDOWN",false);
 				ele.event("rightclick",this._event.setTo("rightclick",ele,this._target));
 			}
 			!this._event._stoped && ele.parent && this.sendClick(ele.parent,type);
@@ -10832,9 +12225,25 @@ window.Laya=(function(window,document){
 			if (!rst)rst=[];
 			rst.length=0;
 			if (tempUse){
-				Utils1.getFrom(rst,GrahamScan._mPointList,count);
+				GrahamScan.getFrom(rst,GrahamScan._mPointList,count);
 				}else {
-				Utils1.getFromR(rst,GrahamScan._mPointList,count);
+				GrahamScan.getFromR(rst,GrahamScan._mPointList,count);
+			}
+			return rst;
+		}
+
+		GrahamScan.getFrom=function(rst,src,count){
+			var i=0;
+			for (i=0;i < count;i++){
+				rst.push(src[i]);
+			}
+			return rst;
+		}
+
+		GrahamScan.getFromR=function(rst,src,count){
+			var i=0;
+			for (i=0;i < count;i++){
+				rst.push(src.pop());
 			}
 			return rst;
 		}
@@ -10859,7 +12268,7 @@ window.Laya=(function(window,document){
 		}
 
 		GrahamScan.scanPList=function(pList){
-			return Utils1.setValueArr(pList,GrahamScan.pointListToPlist(GrahamScan.scan(GrahamScan.pListToPointList(pList,true))));
+			return Utils1.copyArray(pList,GrahamScan.pointListToPlist(GrahamScan.scan(GrahamScan.pListToPointList(pList,true))));
 		}
 
 		GrahamScan.scan=function(PointSet){
@@ -10878,7 +12287,7 @@ window.Laya=(function(window,document){
 				}
 			}
 			n=ch.length;
-			Utils1.setValueArr(PointSet,ch);
+			Utils1.copyArray(PointSet,ch);
 			for (i=1;i < n;i++)
 			if ((PointSet[i].y < PointSet[k].y)|| ((PointSet[i].y==PointSet[k].y)&& (PointSet[i].x < PointSet[k].x)))
 				k=i;
@@ -10897,7 +12306,7 @@ window.Laya=(function(window,document){
 			ch=GrahamScan._temArr;
 			ch.length=0;
 			if (PointSet.length < 3){
-				return Utils1.setValueArr(ch,PointSet);
+				return Utils1.copyArray(ch,PointSet);
 			}
 			ch.push(PointSet[0],PointSet[1],PointSet[2]);
 			for (i=3;i < n;i++){
@@ -11037,8 +12446,8 @@ window.Laya=(function(window,document){
 			//this.d=NaN;
 			//this.tx=NaN;
 			//this.ty=NaN;
-			this.bTransform=false;
 			this.inPool=false;
+			this.bTransform=false;
 			(a===void 0)&& (a=1);
 			(b===void 0)&& (b=0);
 			(c===void 0)&& (c=0);
@@ -11067,9 +12476,7 @@ window.Laya=(function(window,document){
 			return this;
 		}
 
-		/**
-		*@private
-		*/
+		/**@private*/
 		__proto._checkTransform=function(){
 			return this.bTransform=(this.a!==1 || this.b!==0 || this.c!==0 || this.d!==1);
 		}
@@ -11463,6 +12870,21 @@ window.Laya=(function(window,document){
 			return this;
 		}
 
+		/**
+		*计算当前点和目标x，y点的距离
+		*@param x 水平坐标。
+		*@param y 垂直坐标。
+		*@return 返回之间的距离
+		*/
+		__proto.distance=function(x,y){
+			return Math.sqrt((this.x-x)*(this.x-x)+(this.y-y)*(this.y-y));
+		}
+
+		/**返回包含 x 和 y 坐标的值的字符串。*/
+		__proto.toString=function(){
+			return this.x+","+this.y;
+		}
+
 		Point.TEMP=new Point();
 		Point.EMPTY=new Point();
 		return Point;
@@ -11789,6 +13211,7 @@ window.Laya=(function(window,document){
 			};
 			var channel;
 			channel=tSound.play(0,loops);
+			channel.url=url;
 			channel.volume=(url==SoundManager._tMusic)? SoundManager.musicVolume :SoundManager.soundVolume;
 			channel.completeHandler=complete;
 			return channel;
@@ -11807,7 +13230,7 @@ window.Laya=(function(window,document){
 			SoundManager._tMusic=url;
 			if (SoundManager._musicChannel)
 				SoundManager._musicChannel.stop();
-			return SoundManager._musicChannel=SoundManager.playSound(url,loops,complete,AudioSound);
+			return SoundManager._musicChannel=SoundManager.playSound(url,loops,complete,null);
 		}
 
 		SoundManager.stopSound=function(url){
@@ -11895,9 +13318,11 @@ window.Laya=(function(window,document){
 		URL.formatURL=function(url,_basePath){
 			if (URL.customFormat !=null)url=URL.customFormat(url,_basePath);
 			if (!url)return "null path";
-			URL.version[url] && (url+="?v="+URL.version[url]);
-			if (!Browser.httpProtocol && url[0]=='/')
-				return URL.rootPath+url;
+			if (Render.isConchApp==false){
+				URL.version[url] && (url+="?v="+URL.version[url]);
+			}
+			if (url.charAt(0)=='~')
+				return URL.rootPath+url.substring(1);
 			if (URL.isAbsolute(url))
 				return url;
 			return (_basePath || URL.basePath)+url;
@@ -11937,13 +13362,13 @@ window.Laya=(function(window,document){
 		*@param height 游戏窗口高度。
 		*/
 		function Render(width,height){
-			Render._mainCanvas=new HTMLCanvas('2D');
+			Render._mainCanvas=HTMLCanvas.create('2D');
 			var style=Render._mainCanvas.source.style;
 			style.position='absolute';
 			style.top=style.left="0px";
 			style.background="#000000";
 			Render._mainCanvas.source.id="layaCanvas";
-			var isWebGl=Render.WebGL !=null;
+			var isWebGl=laya.renders.Render.isWebGL;
 			isWebGl && Render.WebGL.init(Render.canvas,width,height);
 			Browser.document.body.appendChild(Render._mainCanvas.source);
 			Render._context=new RenderContext(width,height,isWebGl ? null :Render._mainCanvas);
@@ -11960,11 +13385,6 @@ window.Laya=(function(window,document){
 			return Render._context;
 		});
 
-		/**是否是 WebGl 模式。*/
-		__getset(1,Render,'isWebGl',function(){
-			return Render.WebGL !=null;
-		});
-
 		/**渲染使用的画布引用。 */
 		__getset(1,Render,'canvas',function(){
 			return Render._mainCanvas;
@@ -11973,16 +13393,9 @@ window.Laya=(function(window,document){
 		Render._context=null
 		Render._mainCanvas=null
 		Render.WebGL=null
-		Render.clear=function(value){
-			Render._context.ctx.clear();
-		}
-
-		Render.clearAtlas=function(value){
-		};
-
-		Render.finish=function(){
-		};
-
+		Render.isConchApp=false;
+		Render.isWebGL=false;
+		Render.is3DMode=false;
 		return Render;
 	})()
 
@@ -11998,11 +13411,256 @@ window.Laya=(function(window,document){
 			this.y=0;
 			//this.canvas=null;
 			//this.ctx=null;
+			this._drawTexture=function(x,y,args){
+				args[0].loaded ? this.ctx.drawTexture(args[0],args[1],args[2],args[3],args[4],x,y):(this.ctx._repaint=true);
+			}
+			this._drawTextureWithTransform=function(x,y,args){
+				args[0].loaded ? this.ctx.drawTextureWithTransform(args[0],args[1],args[2],args[3],args[4],args[5],x,y):(this.ctx._repaint=true);
+			}
+			this._fillQuadrangle=function(x,y,args){
+				this.ctx.fillQuadrangle(args[0],args[1],args[2],args[3],args[4]);
+			}
+			this._drawRect=function(x,y,args){
+				var ctx=this.ctx;
+				if (args[4] !=null){
+					ctx.fillStyle=args[4];
+					ctx.fillRect(x+args[0],y+args[1],args[2],args[3],null);
+				}
+				if (args[5] !=null){
+					ctx.strokeStyle=args[5];
+					ctx.lineWidth=args[6];
+					ctx.strokeRect(x+args[0],y+args[1],args[2],args[3],args[6]);
+				}
+			}
+			this._drawPolyGL=function(x,y,args){
+				var points=args[2];
+				x+=args[0],y+=args[1];
+				this.ctx.drawPoly(x,y,points,args[3],args[5],args[4]);
+			}
+			this._drawPie=function(x,y,args){
+				var ctx=this.ctx;
+				ctx.translate(x+args[0],y+args[1]);
+				ctx.beginPath();
+				ctx.moveTo(0,0);
+				ctx.arc(0,0,args[2],args[3],args[4]);
+				ctx.closePath();
+				this._fillAndStroke(args[5],args[6],args[7]);
+				ctx.translate(-x-args[0],-y-args[1]);
+			}
+			this._drawPieWebGL=function(x,y,args){
+				var ctx=this.ctx;
+				ctx.lineWidth=args[7];
+				ctx.fan(x+this.x+args[0],y+this.y+args[1],args[2],args[3],args[4],args[5],args[6]);
+			}
+			this._clipRect=function(x,y,args){
+				this.ctx.clipRect(x+args[0],y+args[1],args[2],args[3]);
+			}
+			this._fillRect=function(x,y,args){
+				this.ctx.fillRect(x+args[0],y+args[1],args[2],args[3],args[4]);
+			}
+			this._drawCircle=function(x,y,args){
+				var ctx=this.ctx;
+				ctx.beginPath();
+				ctx.arc(args[0]+x,args[1]+y,args[2],0,RenderContext.PI2);
+				this._fillAndStroke(args[3],args[4],args[5]);
+			}
+			this._drawCircleWebGL=function(x,y,args){
+				this.ctx.drawCircle(x+this.x+args[0],y+this.y+args[1],args[2],40,args[4],args[5],args[3]);
+			}
+			this._fillCircle=function(x,y,args){
+				var ctx=this.ctx;
+				ctx.beginPath();
+				ctx.fillStyle=args[3];
+				ctx.arc(args[0]+x,args[1]+y,args[2],0,RenderContext.PI2);
+				ctx.fill();
+			}
+			this._setShader=function(x,y,args){
+				this.ctx.setShader(args[0]);
+			}
+			this._drawLine=function(x,y,args){
+				var ctx=this.ctx;
+				ctx.beginPath();
+				ctx.strokeStyle=args[4];
+				ctx.lineWidth=args[5];
+				ctx.moveTo(x+args[0],y+args[1]);
+				ctx.lineTo(x+args[2],y+args[3]);
+				ctx.stroke();
+			}
+			this._drawLines=function(x,y,args){
+				var ctx=this.ctx;
+				ctx.beginPath();
+				ctx.strokeStyle=args[3];
+				ctx.lineWidth=args[4];
+				var points=args[2];
+				x+=args[0],y+=args[1];
+				ctx.moveTo(x+points[0],y+points[1]);
+				var i=2,n=points.length;
+				while (i < n){
+					ctx.lineTo(x+points[i++],y+points[i++]);
+				}
+				ctx.stroke();
+			}
+			this._drawLinesWebGL=function(x,y,args){
+				this.ctx.drawLines(x+this.x+args[0],y+this.y+args[1],args[2],args[3],args[4]);
+			}
+			this._drawCurves=function(x,y,args){
+				var ctx=this.ctx;
+				ctx.beginPath();
+				ctx.strokeStyle=args[3];
+				ctx.lineWidth=args[4];
+				var points=args[2];
+				x+=args[0],y+=args[1];
+				ctx.moveTo(x+points[0],y+points[1]);
+				var i=2,n=points.length;
+				while (i < n){
+					ctx.quadraticCurveTo(x+points[i++],y+points[i++],x+points[i++],y+points[i++]);
+				}
+				ctx.stroke();
+			}
+			this._drawCurvesGL=function(x,y,args){
+				var points=args[2];
+				x+=args[0],y+=args[1];
+				var tBezier=Bezier.I;
+				var i=0;
+				var n=points.length;
+				var tResultArray=[];
+				while (i < n){
+					var tArray=tBezier.getBezierPoints([points[i++],points[i++],points[i++],points[i++],points[i++],points[i++]],30,2)
+					tResultArray=tResultArray.concat(tArray);
+					if (i < n){
+						i-=2;
+					}
+				}
+				this.ctx.drawLines(x,y,tResultArray,args[3],args[4]);
+			}
+			this._draw=function(x,y,args){
+				args[0].call(null,this,x,y);
+			}
+			this._transformByMatrix=function(x,y,args){
+				this.ctx.transformByMatrix(args[0]);
+			}
+			this._setTransform=function(x,y,args){
+				this.ctx.setTransform(args[0],args[1],args[2],args[3],args[4],args[5]);
+			}
+			this._setTransformByMatrix=function(x,y,args){
+				this.ctx.setTransformByMatrix(args[0]);
+			}
+			this._save=function(x,y,args){
+				this.ctx.save();
+			}
+			this._restore=function(x,y,args){
+				this.ctx.restore();
+			}
+			this._translate=function(x,y,args){
+				this.ctx.translate(args[0],args[1]);
+			}
+			this._transform=function(x,y,args){
+				this.ctx.translate(args[1]+x,args[2]+y);
+				var mat=args[0];
+				this.ctx.transform(mat.a,mat.b,mat.c,mat.d,mat.tx,mat.ty);
+				this.ctx.translate(-x-args[1],-y-args[2]);
+			}
+			this._rotate=function(x,y,args){
+				this.ctx.translate(args[1]+x,args[2]+y);
+				this.ctx.rotate(args[0]);
+				this.ctx.translate(-x-args[1],-y-args[2]);
+			}
+			this._scale=function(x,y,args){
+				this.ctx.translate(args[2]+x,args[3]+y);
+				this.ctx.scale(args[0],args[1]);
+				this.ctx.translate(-x-args[2],-y-args[3]);
+			}
+			this._alpha=function(x,y,args){
+				this.ctx.globalAlpha=args[0];
+			}
+			this._setAlpha=function(x,y,args){
+				this.ctx.globalAlpha=args[0];
+			}
+			this._fillText=function(x,y,args){
+				this.ctx.fillText(args[0],args[1]+x,args[2]+y,args[3],args[4],args[5]);
+			}
+			this._strokeText=function(x,y,args){
+				this.ctx.strokeText(args[0],args[1]+x,args[2]+y,args[3],args[4],args[5],args[6]);
+			}
+			this._fillBorderText=function(x,y,args){
+				this.ctx.fillBorderText(args[0],args[1]+x,args[2]+y,args[3],args[4],args[5],args[6],args[7]);
+			}
+			this._blendMode=function(x,y,args){
+				this.ctx.globalCompositeOperation=args[0];
+			}
+			this._beginClip=function(x,y,args){
+				this.ctx.beginClip && this.ctx.beginClip(x+args[0],y+args[1],args[2],args[3]);
+			}
+			this._setIBVB=function(x,y,args){
+				this.ctx.setIBVB(args[0]+x,args[1]+y,args[2],args[3],args[4],args[5],args[6],args[7]);
+			}
+			this._fillTrangles=function(x,y,args){
+				this.ctx.fillTrangles(args[0],args[1]+x,args[2]+y,args[3],args[4]);
+			}
+			this.drawPath=function(x,y,args){
+				this.ctx.drawPath(x+this.x+args[0],y+this.y+args[1],args[2],args[3],args[4]);
+			}
+			this._drawPath=function(x,y,args){
+				var ctx=this.ctx;
+				ctx.beginPath();
+				x+=args[0],y+=args[1];
+				var paths=args[2];
+				for (var i=0,n=paths.length;i < n;i++){
+					var path=paths[i];
+					switch (path[0]){
+						case "moveTo":
+							ctx.moveTo(x+path[1],y+path[2]);
+							break ;
+						case "lineTo":
+							ctx.lineTo(x+path[1],y+path[2]);
+							break ;
+						case "arcTo":
+							ctx.arcTo(x+path[1],y+path[2],x+path[3],y+path[4],path[5]);
+							break ;
+						case "closePath":
+							ctx.closePath();
+							break ;
+						}
+				};
+				var brush=args[3];
+				if (brush !=null){
+					ctx.fillStyle=brush.fillStyle;
+					ctx.fill();
+				};
+				var pen=args[4];
+				if (pen !=null){
+					ctx.strokeStyle=pen.strokeStyle;
+					ctx.lineWidth=pen.lineWidth || 1;
+					ctx.lineJoin=pen.lineJoin;
+					ctx.lineCap=pen.lineCap;
+					ctx.miterLimit=pen.miterLimit;
+					ctx.stroke();
+				}
+			}
+			this.drawPoly=function(x,y,args){
+				this.ctx.drawPoly(x+this.x+args[0],y+this.y+args[1],args[2],args[3],args[4],args[5],args[6]);
+			}
+			this._drawPoly=function(x,y,args){
+				var ctx=this.ctx;
+				ctx.beginPath();
+				var points=args[2];
+				x+=args[0],y+=args[1];
+				ctx.moveTo(x+points[0],y+points[1]);
+				var i=2,n=points.length;
+				while (i < n){
+					ctx.lineTo(x+points[i++],y+points[i++]);
+				}
+				ctx.closePath();
+				this._fillAndStroke(args[3],args[4],args[5]);
+			}
+			this._drawParticle=function(x,y,args){
+				this.ctx.drawParticle(x+this.x,y+this.y,args[0]);
+			}
 			if (canvas){
 				this.ctx=canvas.getContext('2d');
 				}else {
-				canvas=new HTMLCanvas("3D");
-				this.ctx=System.createWebGLContext2D(canvas);
+				canvas=HTMLCanvas.create("3D");
+				this.ctx=RunDriver.createWebGLContext2D(canvas);
 				canvas._setContext(this.ctx);
 			}
 			canvas.size(width,height);
@@ -12027,24 +13685,12 @@ window.Laya=(function(window,document){
 			tex.loaded ? this.ctx.drawTexture(tex,x,y,width,height,this.x,this.y):(this.ctx._repaint=true);
 		}
 
-		__proto._drawTexture=function(x,y,args){
-			args[0].loaded ? this.ctx.drawTexture(args[0],args[1],args[2],args[3],args[4],x,y):(this.ctx._repaint=true);
-		}
-
 		__proto.drawTextureWithTransform=function(tex,x,y,width,height,m){
 			tex.loaded ? this.ctx.drawTextureWithTransform(tex,x,y,width,height,m,this.x,this.y):(this.ctx._repaint=true);
 		}
 
-		__proto._drawTextureWithTransform=function(x,y,args){
-			args[0].loaded ? this.ctx.drawTextureWithTransform(args[0],args[1],args[2],args[3],args[4],args[5],x,y):(this.ctx._repaint=true);
-		}
-
 		__proto.fillQuadrangle=function(tex,x,y,point4,m){
 			this.ctx.fillQuadrangle(tex,x,y,point4,m);
-		}
-
-		__proto._fillQuadrangle=function(x,y,args){
-			this.ctx.fillQuadrangle(args[0],args[1],args[2],args[3],args[4]);
 		}
 
 		__proto.drawCanvas=function(canvas,x,y,width,height){
@@ -12059,123 +13705,25 @@ window.Laya=(function(window,document){
 			ctx.strokeRect(x+this.x,y+this.y,width,height,lineWidth);
 		}
 
-		__proto._drawRect=function(x,y,args){
+		__proto._fillAndStroke=function(fillColor,strokeColor,lineWidth){
 			var ctx=this.ctx;
-			if (args[4] !=null){
-				ctx.fillStyle=args[4];
-				ctx.fillRect(x+args[0],y+args[1],args[2],args[3]);
-			}
-			if (args[5] !=null){
-				ctx.strokeStyle=args[5];
-				ctx.lineWidth=args[6];
-				ctx.strokeRect(x+args[0],y+args[1],args[2],args[3],args[6]);
-			}
-		}
-
-		//x:Number,y:Number,points:Array,fillColor:String,lineColor:String=null,lineWidth:Number=1
-		__proto._drawPoly=function(x,y,args){
-			var ctx=this.ctx;
-			ctx.beginPath();
-			var points=args[2];
-			x+=args[0],y+=args[1];
-			ctx.moveTo(x+points[0],y+points[1]);
-			var i=2,n=points.length;
-			while (i < n){
-				ctx.lineTo(x+points[i++],y+points[i++]);
-			}
-			ctx.closePath();
-			this.fillAndStroke(args[3],args[4],args[5]);
-		}
-
-		__proto._drawPolyGL=function(x,y,args){
-			var points=args[2];
-			x+=args[0],y+=args[1];
-			this.ctx.drawPoly(x,y,points,args[3],args[5],args[4]);
-		}
-
-		//x:Number,y:Number,paths:Array,brush:Object=null,pen:Object=null
-		__proto._drawPath=function(x,y,args){
-			var ctx=this.ctx;
-			ctx.beginPath();
-			x+=args[0],y+=args[1];
-			var paths=args[2];
-			for (var i=0,n=paths.length;i < n;i++){
-				var path=paths[i];
-				switch (path[0]){
-					case "moveTo":
-						ctx.moveTo(x+path[1],y+path[2]);
-						break ;
-					case "lineTo":
-						ctx.lineTo(x+path[1],y+path[2]);
-						break ;
-					case "arcTo":
-						ctx.arcTo(x+path[1],y+path[2],x+path[3],y+path[4],path[5]);
-						break ;
-					case "closePath":
-						ctx.closePath();
-						break ;
-					}
-			};
-			var brush=args[3];
-			if (brush !=null){
-				ctx.fillStyle=brush.fillStyle;
-				ctx.fill();
-			};
-			var pen=args[4];
-			if (pen !=null){
-				ctx.strokeStyle=pen.strokeStyle;
-				ctx.lineWidth=pen.lineWidth || 1;
-				ctx.lineJoin=pen.lineJoin;
-				ctx.lineCap=pen.lineCap;
-				ctx.miterLimit=pen.miterLimit;
-				ctx.stroke();
-			}
-		}
-
-		__proto.fillAndStroke=function(fillColor,strokeColor,lineWidth){
 			if (fillColor !=null){
-				this.ctx.fillStyle=fillColor;
-				this.ctx.fill();
+				ctx.fillStyle=fillColor;
+				ctx.fill();
 			}
 			if (strokeColor !=null){
-				this.ctx.strokeStyle=strokeColor;
-				this.ctx.lineWidth=lineWidth;
-				this.ctx.stroke();
+				ctx.strokeStyle=strokeColor;
+				ctx.lineWidth=lineWidth;
+				ctx.stroke();
 			}
-		}
-
-		//矢量方法
-		__proto._drawPie=function(x,y,args){
-			var ctx=this.ctx;
-			ctx.translate(x+args[0],y+args[1]);
-			ctx.beginPath();
-			ctx.moveTo(0,0);
-			ctx.arc(0,0,args[2],args[3],args[4]);
-			ctx.closePath();
-			this.fillAndStroke(args[5],args[6],args[7]);
-			ctx.translate(-x-args[0],-y-args[1]);
-		}
-
-		__proto._drawPieWebGL=function(x,y,args){
-			var ctx=this.ctx;
-			ctx.lineWidth=args[7];
-			ctx.fan(x+this.x+args[0],y+this.y+args[1],args[2],args[3],args[4],args[5],args[6]);
 		}
 
 		__proto.clipRect=function(x,y,width,height){
 			this.ctx.clipRect(x+this.x,y+this.y,width,height);
 		}
 
-		__proto._clipRect=function(x,y,args){
-			this.ctx.clipRect(x+args[0],y+args[1],args[2],args[3]);
-		}
-
 		__proto.fillRect=function(x,y,width,height,fillStyle){
 			this.ctx.fillRect(x+this.x,y+this.y,width,height,fillStyle);
-		}
-
-		__proto._fillRect=function(x,y,args){
-			this.ctx.fillRect(x+args[0],y+args[1],args[2],args[3],args[4]);
 		}
 
 		__proto.drawCircle=function(x,y,radius,color,lineWidth){
@@ -12188,17 +13736,6 @@ window.Laya=(function(window,document){
 			ctx.stroke();
 		}
 
-		__proto._drawCircle=function(x,y,args){
-			var ctx=this.ctx;
-			ctx.beginPath();
-			ctx.arc(args[0]+x,args[1]+y,args[2],0,RenderContext.PI2);
-			this.fillAndStroke(args[3],args[4],args[5]);
-		}
-
-		__proto._drawCircleWebGL=function(x,y,args){
-			this.ctx.drawCircle(x+this.x+args[0],y+this.y+args[1],args[2],40,args[4],args[5],args[3]);
-		}
-
 		__proto.fillCircle=function(x,y,radius,color){
 			var ctx=this.ctx;
 			ctx.beginPath();
@@ -12207,20 +13744,8 @@ window.Laya=(function(window,document){
 			ctx.fill();
 		}
 
-		__proto._fillCircle=function(x,y,args){
-			var ctx=this.ctx;
-			ctx.beginPath();
-			ctx.fillStyle=args[3];
-			ctx.arc(args[0]+x,args[1]+y,args[2],0,RenderContext.PI2);
-			ctx.fill();
-		}
-
 		__proto.setShader=function(shader){
 			this.ctx.setShader(shader);
-		}
-
-		__proto._setShader=function(x,y,args){
-			this.ctx.setShader(args[0]);
 		}
 
 		__proto.drawLine=function(fromX,fromY,toX,toY,color,lineWidth){
@@ -12234,102 +13759,20 @@ window.Laya=(function(window,document){
 			ctx.stroke();
 		}
 
-		__proto._drawLine=function(x,y,args){
-			var ctx=this.ctx;
-			ctx.beginPath();
-			ctx.strokeStyle=args[4];
-			ctx.lineWidth=args[5];
-			ctx.moveTo(x+args[0],y+args[1]);
-			ctx.lineTo(x+args[2],y+args[3]);
-			ctx.stroke();
-		}
-
-		__proto.drawLines=function(x,y,args){
-			var ctx=this.ctx;
-			ctx.beginPath();
-			ctx.strokeStyle=args[3];
-			ctx.lineWidth=args[4];
-			var points=args[2];
-			x+=args[0],y+=args[1];
-			ctx.moveTo(x+points[0],y+points[1]);
-			var i=2,n=points.length;
-			while (i < n){
-				ctx.lineTo(x+points[i++],y+points[i++]);
-			}
-			ctx.stroke();
-		}
-
-		__proto.drawLinesWebGL=function(x,y,args){
-			this.ctx.drawLines(x+this.x+args[0],y+this.y+args[1],args[2],args[3],args[4]);
-		}
-
-		//x:Number,y:Number,points:Array,lineColor:String,lineWidth:Number=1
-		__proto.drawCurves=function(x,y,args){
-			var ctx=this.ctx;
-			ctx.beginPath();
-			ctx.strokeStyle=args[3];
-			ctx.lineWidth=args[4];
-			var points=args[2];
-			x+=args[0],y+=args[1];
-			ctx.moveTo(x+points[0],y+points[1]);
-			var i=2,n=points.length;
-			while (i < n){
-				ctx.quadraticCurveTo(x+points[i++],y+points[i++],x+points[i++],y+points[i++]);
-			}
-			ctx.stroke();
-		}
-
-		__proto.drawCurvesGL=function(x,y,args){
-			var points=args[2];
-			x+=args[0],y+=args[1];
-			var tBezier=Bezier.I;
-			var i=0;
-			var n=points.length;
-			var tResultArray=[];
-			while (i < n){
-				var tArray=tBezier.getBezierPoints([points[i++],points[i++],points[i++],points[i++],points[i++],points[i++]],30,2)
-				tResultArray=tResultArray.concat(tArray);
-				if (i < n){
-					i-=2;
-				}
-			}
-			this.ctx.drawLines(x,y,tResultArray,args[3],args[4]);
-		}
-
-		__proto.draw=function(x,y,args){
-			args[0].call(null,this,x,y);
-		}
-
 		__proto.clear=function(){
 			this.ctx.clear();
-		}
-
-		__proto.transform=function(a,b,c,d,tx,ty){
-			this.ctx.transform(a,b,c,d,tx,ty);
 		}
 
 		__proto.transformByMatrix=function(value){
 			this.ctx.transformByMatrix(value);
 		}
 
-		__proto._transformByMatrix=function(x,y,args){
-			this.ctx.transformByMatrix(args[0]);
-		}
-
 		__proto.setTransform=function(a,b,c,d,tx,ty){
 			this.ctx.setTransform(a,b,c,d,tx,ty);
 		}
 
-		__proto._setTransform=function(x,y,args){
-			this.ctx.setTransform(args[0],args[1],args[2],args[3],args[4],args[5]);
-		}
-
 		__proto.setTransformByMatrix=function(value){
 			this.ctx.setTransformByMatrix(value);
-		}
-
-		__proto._setTransformByMatrix=function(x,y,args){
-			this.ctx.setTransformByMatrix(args[0]);
 		}
 
 		__proto.save=function(){
@@ -12344,31 +13787,12 @@ window.Laya=(function(window,document){
 			this.ctx.translate(x,y);
 		}
 
-		__proto._translate=function(x,y,args){
-			this.ctx.translate(args[0],args[1]);
+		__proto.transform=function(a,b,c,d,tx,ty){
+			this.ctx.transform(a,b,c,d,tx,ty);
 		}
 
 		__proto.rotate=function(angle){
 			this.ctx.rotate(angle);
-		}
-
-		__proto._transform=function(x,y,args){
-			this.ctx.translate(args[1]+x,args[2]+y);
-			var mat=args[0];
-			this.ctx.transform(mat.a,mat.b,mat.c,mat.d,mat.tx,mat.ty);
-			this.ctx.translate(-x-args[1],-y-args[2]);
-		}
-
-		__proto._rotate=function(x,y,args){
-			this.ctx.translate(args[1]+x,args[2]+y);
-			this.ctx.rotate(args[0]);
-			this.ctx.translate(-x-args[1],-y-args[2]);
-		}
-
-		__proto._scale=function(x,y,args){
-			this.ctx.translate(args[2]+x,args[3]+y);
-			this.ctx.scale(args[0],args[1]);
-			this.ctx.translate(-x-args[2],-y-args[3]);
 		}
 
 		__proto.scale=function(scaleX,scaleY){
@@ -12379,16 +13803,8 @@ window.Laya=(function(window,document){
 			this.ctx.globalAlpha=value;
 		}
 
-		__proto._alpha=function(x,y,args){
-			this.ctx.globalAlpha=args[0];
-		}
-
 		__proto.setAlpha=function(value){
 			this.ctx.globalAlpha=value;
-		}
-
-		__proto._setAlpha=function(x,y,args){
-			this.ctx.globalAlpha=args[0];
 		}
 
 		__proto.fillWords=function(words,x,y,font,color){
@@ -12399,28 +13815,12 @@ window.Laya=(function(window,document){
 			this.ctx.fillText(text,x+this.x,y+this.y,font,color,textAlign);
 		}
 
-		__proto._fillText=function(x,y,args){
-			this.ctx.fillText(args[0],args[1]+x,args[2]+y,args[3],args[4],args[5]);
-		}
-
 		__proto.strokeText=function(text,x,y,font,color,lineWidth,textAlign){
 			this.ctx.strokeText(text,x+this.x,y+this.y,font,color,lineWidth,textAlign);
 		}
 
-		__proto._strokeText=function(x,y,args){
-			this.ctx.strokeText(args[0],args[1]+x,args[2]+y,args[3],args[4],args[5],args[6]);
-		}
-
-		__proto._fillBorderText=function(x,y,args){
-			this.ctx.fillBorderText(args[0],args[1]+x,args[2]+y,args[3],args[4],args[5],args[6],args[7]);
-		}
-
 		__proto.blendMode=function(type){
 			this.ctx.globalCompositeOperation=type;
-		}
-
-		__proto._blendMode=function(x,y,args){
-			this.ctx.globalCompositeOperation=args[0];
 		}
 
 		__proto.flush=function(){
@@ -12435,37 +13835,12 @@ window.Laya=(function(window,document){
 			this.ctx.beginClip && this.ctx.beginClip(x,y,w,h);
 		}
 
-		__proto._beginClip=function(x,y,args){
-			this.ctx.beginClip && this.ctx.beginClip(x+args[0],y+args[1],args[2],args[3]);
-		}
-
 		__proto.endClip=function(){
 			this.ctx.endClip && this.ctx.endClip();
 		}
 
-		__proto._setIBVB=function(x,y,args){
-			this.ctx.setIBVB(args[0]+x,args[1]+y,args[2],args[3],args[4],args[5],args[6],args[7]);
-		}
-
 		__proto.fillTrangles=function(x,y,args){
 			this.ctx.fillTrangles(args[0],args[1],args[2],args[3],args.length > 4 ? args[4] :null);
-		}
-
-		__proto._fillTrangles=function(x,y,args){
-			this.ctx.fillTrangles(args[0],args[1]+x,args[2]+y,args[3],args[4]);
-		}
-
-		__proto.drawPath=function(x,y,args){
-			this.ctx.drawPath(x+this.x+args[0],y+this.y+args[1],args[2],args[3],args[4]);
-		}
-
-		// polygon(x:Number,y:Number,r:Number,edges:Number,color:uint,borderWidth:int=2,borderColor:uint=0)
-		__proto.drawPoly=function(x,y,args){
-			this.ctx.drawPoly(x+this.x+args[0],y+this.y+args[1],args[2],args[3],args[4],args[5],args[6]);
-		}
-
-		__proto.drawParticle=function(x,y,args){
-			this.ctx.drawParticle(x+this.x,y+this.y,args[0]);
 		}
 
 		__getset(0,__proto,'enableMerge',null,function(value){
@@ -12552,8 +13927,8 @@ window.Laya=(function(window,document){
 		__proto._no=function(sprite,context,x,y){}
 		__proto._custom=function(sprite,context,x,y){
 			sprite.customRender(context,x,y);
-			var style=sprite._style;
-			this._next._fun.call(this._next,sprite,context,x-style.translateX,y-style.translateY);
+			var tf=sprite._style._tf;
+			this._next._fun.call(this._next,sprite,context,x-tf.translateX,y-tf.translateY);
 		}
 
 		__proto._clip=function(sprite,context,x,y){
@@ -12594,20 +13969,20 @@ window.Laya=(function(window,document){
 		}
 
 		__proto._graphics=function(sprite,context,x,y){
-			var style=sprite._style;
-			sprite._graphics && sprite._graphics._render(sprite,context,x-style.translateX,y-style.translateY);
+			var tf=sprite._style._tf;
+			sprite._graphics && sprite._graphics._render(sprite,context,x-tf.translateX,y-tf.translateY);
 			var next=this._next;
 			next._fun.call(next,sprite,context,x,y);
 		}
 
 		__proto._image=function(sprite,context,x,y){
 			var style=sprite._style;
-			context.ctx.drawTexture2(x,y,style.translateX,style.translateY,sprite.transform,style.alpha,style.blendMode,sprite._graphics._one);
+			context.ctx.drawTexture2(x,y,style._tf.translateX,style._tf.translateY,sprite.transform,style.alpha,style.blendMode,sprite._graphics._one);
 		}
 
 		__proto._image2=function(sprite,context,x,y){
-			var style=sprite._style;
-			context.ctx.drawTexture2(x,y,style.translateX,style.translateY,sprite.transform,1,null,sprite._graphics._one);
+			var tf=sprite._style._tf;
+			context.ctx.drawTexture2(x,y,tf.translateX,tf.translateY,sprite.transform,1,null,sprite._graphics._one);
 		}
 
 		__proto._alpha=function(sprite,context,x,y){
@@ -12635,8 +14010,8 @@ window.Laya=(function(window,document){
 
 		__proto._childs=function(sprite,context,x,y){
 			var style=sprite._style;
-			x+=-style.translateX+style.paddingLeft;
-			y+=-style.translateY+style.paddingTop;
+			x+=-style._tf.translateX+style.paddingLeft;
+			y+=-style._tf.translateY+style.paddingTop;
 			var words=sprite._getWords();
 			words && context.fillWords(words,x,y,(style).font,(style).color);
 			var childs=sprite._childs,n=childs.length,ele;
@@ -12672,7 +14047,7 @@ window.Laya=(function(window,document){
 					_cacheCanvas._cacheRec=new Rectangle();
 				var w,h;
 				tRec=sprite.getSelfBounds();
-				if (_cacheCanvas.type==='bitmap'&&(tRec.width > 2048 || tRec.height > 2048)){
+				if (Render.isWebGL && _cacheCanvas.type==='bitmap' && (tRec.width > 2048 || tRec.height > 2048)){
 					throw new Error("cache bitmap size larger than 2048");
 				}
 				tRec.x-=sprite.pivotX;
@@ -12681,22 +14056,35 @@ window.Laya=(function(window,document){
 				tRec.y-=10;
 				tRec.width+=20;
 				tRec.height+=20;
+				tRec.x=Math.floor(tRec.x+x)-x;
+				tRec.y=Math.floor(tRec.y+y)-y;
+				tRec.width=Math.floor(tRec.width);
+				tRec.height=Math.floor(tRec.height);
 				_cacheCanvas._cacheRec.copyFrom(tRec);
 				tRec=_cacheCanvas._cacheRec;
-				w=tRec.width;
-				h=tRec.height;
+				w=tRec.width *Browser.pixelRatio;
+				h=tRec.height *Browser.pixelRatio;
 				left=tRec.x;
 				top=tRec.y;
 				if (!tx){
-					tx=_cacheCanvas.ctx=new RenderContext(w,h,new HTMLCanvas("AUTO"));
+					tx=_cacheCanvas.ctx=new RenderContext(w,h,HTMLCanvas.create("AUTO"));
 					tx.ctx.sprite=sprite;
 				}
 				canvas=tx.canvas;
 				if (_cacheCanvas.type==='bitmap')canvas.asBitmap=true;
 				canvas.clear();
 				(canvas.width !=w || canvas.height !=h)&& canvas.size(w,h);
-				_next._fun.call(_next,sprite,tx,-left,-top);
-				sprite.applyFilters();
+				if (Browser.pixelRatio > 1){
+					var ctx=(tx).ctx;
+					ctx.save();
+					ctx.scale(Browser.pixelRatio,Browser.pixelRatio);
+					_next._fun.call(_next,sprite,tx,-left,-top);
+					sprite.applyFilters();
+					ctx.restore();
+					}else {
+					_next._fun.call(_next,sprite,tx,-left,-top);
+					sprite.applyFilters();
+				}
 				if (sprite._$P.isStatic)_cacheCanvas.reCache=false;
 				Stat.canvasReCache++;
 				}else {
@@ -12705,17 +14093,17 @@ window.Laya=(function(window,document){
 				top=tRec.y;
 				canvas=tx.canvas;
 			}
-			context.drawCanvas(canvas,x+left,y+top,canvas.width,canvas.height);
+			context.drawCanvas(canvas,x+left,y+top,tRec.width,tRec.height);
 		}
 
 		RenderSprite.__init__=function(){
 			var i=0,len=0;
 			var initRender;
-			initRender=System.createRenderSprite(0x11111,null);
+			initRender=RunDriver.createRenderSprite(0x11111,null);
 			len=RenderSprite.renders.length=0x800 *2;
 			for (i=0;i < len;i++)
 			RenderSprite.renders[i]=initRender;
-			RenderSprite.renders[0]=System.createRenderSprite(0,null);
+			RenderSprite.renders[0]=RunDriver.createRenderSprite(0,null);
 			function _initSame (value,o){
 				var n=0;
 				for (var i=0;i < value.length;i++){
@@ -12724,7 +14112,7 @@ window.Laya=(function(window,document){
 				}
 			}
 			_initSame([0x01,0x100,0x08,0x04],new RenderSprite(0x01,null));
-			RenderSprite.renders[0x01 | 0x100]=System.createRenderSprite(0x01 | 0x100,null);
+			RenderSprite.renders[0x01 | 0x100]=RunDriver.createRenderSprite(0x01 | 0x100,null);
 			RenderSprite.renders[0x01 | 0x08 | 0x100]=new RenderSprite(0x01 | 0x08 | 0x100,null);
 		}
 
@@ -12739,7 +14127,7 @@ window.Laya=(function(window,document){
 			var tType=0x800;
 			while (tType > 1){
 				if (tType & type)
-					rst=System.createRenderSprite(tType,rst);
+					rst=RunDriver.createRenderSprite(tType,rst);
 				tType=tType >> 1;
 			}
 			return rst;
@@ -12850,7 +14238,7 @@ window.Laya=(function(window,document){
 		__proto.drawTexture=function(tex,x,y,width,height,tx,ty){
 			Stat.drawCall++;
 			var uv=tex.uv,w=tex.bitmap.width,h=tex.bitmap.height;
-			this.drawImage(tex.bitmap.source,uv[0] *w,uv[1] *h,(uv[2]-uv[0])*w,(uv[5]-uv[3])*h,x+tex.offsetX+tx,y+tex.offsetY+ty,width,height);
+			this.drawImage(tex.bitmap.source,uv[0] *w,uv[1] *h,(uv[2]-uv[0])*w,(uv[5]-uv[3])*h,x+tx,y+ty,width,height);
 		}
 
 		/***@private */
@@ -12859,7 +14247,7 @@ window.Laya=(function(window,document){
 			var uv=tex.uv,w=tex.bitmap.width,h=tex.bitmap.height;
 			this.save();
 			this.transform(m.a,m.b,m.c,m.d,m.tx+tx,m.ty+ty);
-			this.drawImage(tex.bitmap.source,uv[0] *w,uv[1] *h,(uv[2]-uv[0])*w,(uv[5]-uv[3])*h,x+tex.offsetX,y+tex.offsetY,width,height);
+			this.drawImage(tex.bitmap.source,uv[0] *w,uv[1] *h,(uv[2]-uv[0])*w,(uv[5]-uv[3])*h,x ,y,width,height);
 			this.restore();
 		}
 
@@ -12877,10 +14265,10 @@ window.Laya=(function(window,document){
 			if (m){
 				this.save();
 				this.transform(m.a,m.b,m.c,m.d,m.tx+x,m.ty+y);
-				this.drawImage(tex.bitmap.source,uv[0] *w,uv[1] *h,(uv[2]-uv[0])*w,(uv[5]-uv[3])*h,args2[1]-pivotX+tex.offsetX,args2[2]-pivotY+tex.offsetY,args2[3],args2[4]);
+				this.drawImage(tex.bitmap.source,uv[0] *w,uv[1] *h,(uv[2]-uv[0])*w,(uv[5]-uv[3])*h,args2[1]-pivotX ,args2[2]-pivotY,args2[3],args2[4]);
 				this.restore();
 				}else {
-				this.drawImage(tex.bitmap.source,uv[0] *w,uv[1] *h,(uv[2]-uv[0])*w,(uv[5]-uv[3])*h,args2[1]-pivotX+x+tex.offsetX,args2[2]-pivotY+y+tex.offsetY,args2[3],args2[4]);
+				this.drawImage(tex.bitmap.source,uv[0] *w,uv[1] *h,(uv[2]-uv[0])*w,(uv[5]-uv[3])*h,args2[1]-pivotX+x ,args2[2]-pivotY+y,args2[3],args2[4]);
 			}
 			if (alphaChanged)this.globalAlpha=temp;
 		}
@@ -13248,41 +14636,13 @@ window.Laya=(function(window,document){
 		}
 
 		System.__init__=function(){
-			System.isConchApp=window.conch ? true :false;;
-			if (System.isConchApp){
+			Render.isConchApp=window.conch ? true :false;;
+			if (Render.isConchApp){
 				conch.disableConchResManager();
 				conch.disableConchAutoRestoreLostedDevice();
 			}
 		}
 
-		System.isConchApp=false;
-		System.FILTER_ACTIONS=[];
-		System.createRenderSprite=function(type,next){
-			return new RenderSprite(type,next);
-		}
-
-		System.createGLTextur=null;
-		System.createWebGLContext2D=null;
-		System.changeWebGLSize=function(w,h){
-		};
-
-		System.createGraphics=function(){
-			return new Graphics();
-		}
-
-		System.createFilterAction=function(type){
-			return new ColorFilterAction();
-		}
-
-		System.drawToCanvas=function(sprite,_renderType,canvasWidth,canvasHeight,offsetX,offsetY){
-			var canvas=new HTMLCanvas("2D");
-			var context=new RenderContext(canvasWidth,canvasHeight,canvas);
-			RenderSprite.renders[_renderType]._fun(sprite,context,offsetX,offsetY);
-			return canvas;
-		}
-
-		System.addToAtlas=null
-		System.createParticleTemplate2D=null
 		return System;
 	})()
 
@@ -13306,23 +14666,26 @@ window.Laya=(function(window,document){
 
 		/**设备像素比。*/
 		__getset(1,Browser,'pixelRatio',function(){
-			if (Browser._pixelRatio < 0){
-				var ctx=laya.utils.Browser.ctx;
-				var backingStore=ctx.backingStorePixelRatio || ctx.webkitBackingStorePixelRatio || ctx.mozBackingStorePixelRatio || ctx.msBackingStorePixelRatio || ctx.oBackingStorePixelRatio || ctx.backingStorePixelRatio || 1;
-				Browser._pixelRatio=(laya.utils.Browser.window.devicePixelRatio || 1)/ backingStore;
-			}
-			return Browser._pixelRatio;
+			return RunDriver.getPixelRatio(Browser._pixelRatio);
 		});
 
 		/**浏览器物理宽度。*/
 		__getset(1,Browser,'width',function(){
+			Browser.__init__();
 			return ((Laya.stage && Laya.stage.canvasRotation)? Browser.clientHeight :Browser.clientWidth)*Browser.pixelRatio;
 		});
 
 		/**浏览器物理高度。*/
 		__getset(1,Browser,'height',function(){
+			Browser.__init__();
 			return ((Laya.stage && Laya.stage.canvasRotation)? Browser.clientWidth :Browser.clientHeight)*Browser.pixelRatio;
 		});
+
+		Browser.__init__=function(){
+			if (Browser.canvas)return;
+			Browser.canvas=HTMLCanvas.create('2D');
+			Browser.ctx=Browser.canvas.getContext('2d');
+		}
 
 		Browser.createElement=function(type){
 			return Browser.document.__createElement(type);
@@ -13337,12 +14700,11 @@ window.Laya=(function(window,document){
 		}
 
 		Browser.now=function(){
-			return Date.now();
+			return RunDriver.now();
 		}
 
-		Browser.window=null
-		Browser.document=null
-		Browser.userAgent=navigator.userAgent;
+		Browser.window=RunDriver.getWindow();
+		Browser.userAgent=Browser.window.navigator.userAgent;
 		Browser.u=Browser.userAgent;
 		Browser.onIOS=!!Browser.u.match(/\(i[^;]+;(U;)? CPU.+Mac OS X/);
 		Browser.onMobile=!!Browser.u.match(/AppleWebKit.*Mobile.*/);
@@ -13354,28 +14716,27 @@ window.Laya=(function(window,document){
 		Browser.onMQQBrowser=Browser.u.indexOf("MQQBrowser")>-1;
 		Browser.onWeiXin=Browser.u.indexOf('MicroMessenger')>-1;
 		Browser.onPC=!Browser.onMobile;
-		Browser.httpProtocol=window.location.protocol=="http:";
-		Browser.webAudioOK=false;
-		Browser.soundType=null
+		Browser.httpProtocol=Browser.window.location.protocol=="http:";
+		Browser.webAudioOK=Browser.window["AudioContext"] || Browser.window["webkitAudioContext"] || Browser.window["mozAudioContext"] ? true :false;
+		Browser.soundType=Browser.webAudioOK ? "WEBAUDIOSOUND" :"AUDIOSOUND";
+		Browser.canvas=null
+		Browser.ctx=null
 		Browser._pixelRatio=-1;
 		__static(Browser,
-		['canvas',function(){return this.canvas=new HTMLCanvas('2D');},'ctx',function(){return this.ctx=Browser.canvas.getContext('2d');}
+		['document',function(){return this.document=Browser.window.document;}
 		]);
 		Browser.__init$=function(){
 			AudioSound;
 			WebAudioSound;
-			Browser.window=window;
-			Browser.document=window.document;
 			Browser.document.__createElement=Browser.document.createElement;
 			window.requestAnimationFrame=(function(){return window.requestAnimationFrame || window.webkitRequestAnimationFrame ||window.mozRequestAnimationFrame || window.oRequestAnimationFrame ||function (c){return window.setTimeout(c,1000 / 60);};})();
-			var bs=window.document.body.style;bs.margin=0;bs.overflow='hidden';;
+			var $BS=window.document.body.style;$BS.margin=0;$BS.overflow='hidden';;
 			var metas=window.document.getElementsByTagName('meta');;
-			if(metas){var i=0,flag=false,content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no';;
-				while(i<metas.length){var meta=metas[i];if(meta.name=='viewport'){meta.content=content;flag=true;break;}i++;};
-				if(!flag){meta=document.createElement('meta');meta.name='viewport',meta.content=content;document.getElementsByTagName('head')[0].appendChild(meta);}};
-			Browser.webAudioOK=Browser.window["AudioContext"] || Browser.window["webkitAudioContext"] || Browser.window["mozAudioContext"] ? true :false;
-			Browser.soundType=Browser.webAudioOK ? "WEBAUDIOSOUND" :"AUDIOSOUND";
+			var i=0,flag=false,content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no';;
+			while(i<metas.length){var meta=metas[i];if(meta.name=='viewport'){meta.content=content;flag=true;break;}i++;};
+			if(!flag){meta=document.createElement('meta');meta.name='viewport',meta.content=content;document.getElementsByTagName('head')[0].appendChild(meta);};
 			Sound=Browser.webAudioOK?WebAudioSound:AudioSound;;
+			if (Browser.webAudioOK)WebAudioSound.initWebAudio();;
 		}
 
 		return Browser;
@@ -13862,7 +15223,8 @@ window.Laya=(function(window,document){
 				this.strColor=str;
 				if (str===null)str="#000000";
 				str.charAt(0)=='#' && (str=str.substr(1));
-				var color=this.numColor=parseInt(str,16);
+				var color=this.numColor=
+				parseInt(str,16);
 				var flag=(str.length==8);
 				if (flag){
 					this._color=[parseInt(str.substr(0,2),16)/ 255,((0x00FF0000 & color)>> 16)/ 255,((0x0000FF00 & color)>> 8)/ 255,(0x000000FF & color)/ 255];
@@ -14004,7 +15366,7 @@ window.Laya=(function(window,document){
 					this._offsets.length=0;
 					this.target.event("dragstart",this.data);
 					MouseManager.instance.disableMouseEvent=this._disableMouseEvent;
-					this.target["$_MOUSEDOWN"]=false;
+					this.target._set$P("$_MOUSEDOWN",false);
 				}else return;
 				}else {
 				this._offsets.push(offsetX,offsetY);
@@ -14451,47 +15813,6 @@ window.Laya=(function(window,document){
 
 
 	/**
-	*<code>Log</code> 类用于显示日志记录信息。
-	*/
-	//class laya.utils.Log
-	var Log=(function(){
-		function Log(){};
-		__class(Log,'laya.utils.Log');
-		Log.start=function(){
-			Log._logdiv=Browser.window.document.createElement('div');
-			Browser.window.document.body.appendChild(Log._logdiv);
-			Log._logdiv.style.cssText="border:white;overflow:scroll;z-index:1000000;background:rgba(100,100,100,0.7);color:white;position: absolute;left:0px;top:0px;width:100%;height:50%";
-			Log._logdiv.onclick=function (){
-				if (Laya.__parseInt(this.style.width)==30){
-					this.style.width='100%';
-					this.style.height="50%";
-					this.style.overflow="scroll"
-					this.style.background="rgba(100,100,100,0.7)"
-					}else {
-					this.style.width=this.style.height="30px";
-					this.style.overflow="hidden";
-					this.style.background="white"
-				}
-			}
-		}
-
-		Log.print=function(value){
-			if (!Log._logdiv){
-				return;
-			}
-			Log._logdiv.innerText+=value+"\n";
-		}
-
-		Log.enable=function(){
-			return Log._logdiv !=null;
-		}
-
-		Log._logdiv=null
-		return Log;
-	})()
-
-
-	/**
 	*<code>Pool</code> 是对象池类，用于对象的存贮、重复使用。
 	*/
 	//class laya.utils.Pool
@@ -14555,14 +15876,19 @@ window.Laya=(function(window,document){
 			(x===void 0)&& (x=0);
 			(y===void 0)&& (y=0);
 			Stat.preFrameTime=Stat._timer=Browser.now()-1000;
-			Stat._view[0]={title:"FPS(3D)",value:"_fpsStr",color:"yellow",units:"int"};
+			Stat._view[0]={title:"FPS(Canvas)",value:"_fpsStr",color:"yellow",units:"int"};
 			Stat._view[1]={title:"Sprite",value:"spriteDraw",color:"white",units:"int"};
 			Stat._view[2]={title:"DrawCall",value:"drawCall",color:"white",units:"int"};
 			Stat._view[3]={title:"Canvas",value:"_canvasStr",color:"white",units:"int"};
-			Stat._view[4]={title:"Shader",value:"shaderCall",color:"white",units:"int"};
-			if (!Render.isWebGl){
-				Stat._view[0].title="FPS(2D)";
-				Stat._view.length=4;
+			Stat._view[4]={title:"CurMem",value:"currentMemorySize",color:"yellow",units:"M"};
+			if (Render.isWebGL){
+				if (!Render.is3DMode){
+					Stat._view[0].title="FPS(WebGL)";
+					Stat._view[4]={title:"CurMem",value:"currentMemorySize",color:"yellow",units:"M"};
+					Stat._view[5]={title:"Shader",value:"shaderCall",color:"white",units:"int"};
+					}else {
+					Stat._view[0].title="FPS(3D)";
+				}
 			}
 			for (var i=0;i < Stat._view.length;i++){
 				Stat._view[i].x=4;
@@ -14589,7 +15915,7 @@ window.Laya=(function(window,document){
 
 		Stat.clear=function(){
 			Stat.trianglesFaces=0;
-			Stat.drawCall=0;
+			Stat.drawCall=-6;
 			Stat.shaderCall=0;
 			Stat.spriteDraw=-1;
 			Stat.bufferLen=0;
@@ -14622,16 +15948,16 @@ window.Laya=(function(window,document){
 			Stat._canvasStr=Stat.canvasReCache+"/"+Stat.canvasNormal+"/"+Stat.canvasBitmap;
 			var ctx=Stat._ctx;
 			ctx.clearRect(0,0,Stat._width,Stat._height);
-			ctx.fillStyle="rgba(50,50,60,0.8)";
-			ctx.fillRect(0,0,Stat._width,Stat._height);
+			ctx.fillStyle="rgba(150,150,150,0.8)";
+			ctx.fillRect(0,0,Stat._width,Stat._height,null);
 			for (i=0;i < Stat._view.length;i++){
 				var one=Stat._view[i];
 				ctx.fillStyle="white";
-				ctx.fillText(one.title,one.x,one.y);
+				ctx.fillText(one.title,one.x,one.y,null,null,null);
 				ctx.fillStyle=one.color;
 				var value=Stat[one.value];
 				(one.units=="M")&& (value=Math.floor(value / (1024 *1024)*100)/ 100+" M");
-				ctx.fillText(value+"",one.x+60,one.y);
+				ctx.fillText(value+"",one.x+70,one.y,null,null,null);
 			}
 			Stat._count=0;
 			Stat._timer=timer;
@@ -14644,7 +15970,7 @@ window.Laya=(function(window,document){
 		Stat.texturesMemSize=0;
 		Stat.buffersMemSize=0;
 		Stat.shaderCall=0;
-		Stat.drawCall=0;
+		Stat.drawCall=-6;
 		Stat.trianglesFaces=0;
 		Stat.spriteDraw=0;
 		Stat.FPS=0;
@@ -14902,8 +16228,7 @@ window.Laya=(function(window,document){
 		__proto.clear=function(caller,method){
 			var handler=this._getHandler(caller,method);
 			if (handler){
-				this._map[handler.key]=null;
-				handler.key=0;
+				this._map[handler.key]=null;handler.key=0;
 				handler.clear();
 			}
 		}
@@ -14916,8 +16241,7 @@ window.Laya=(function(window,document){
 			for (var i=0,n=this._handlers.length;i < n;i++){
 				var handler=this._handlers[i];
 				if (handler.caller===caller){
-					this._map[handler.key]=null;
-					handler.key=0;
+					this._map[handler.key]=null;handler.key=0;
 					handler.clear();
 				}
 			}
@@ -15017,6 +16341,7 @@ window.Laya=(function(window,document){
 			//this._usedTimer=0;
 			//this._usedPool=false;
 			this.gid=0;
+			//this.update=null;
 		}
 
 		__class(Tween,'laya.utils.Tween');
@@ -15104,10 +16429,11 @@ window.Laya=(function(window,document){
 
 		/**执行缓动**/
 		__proto._doEase=function(){
-			this.updateEase(Browser.now());
+			this._updateEase(Browser.now());
 		}
 
-		__proto.updateEase=function(time){
+		/**@private */
+		__proto._updateEase=function(time){
 			var target=this._target;
 			if (target.destroyed)return Tween.clearTween(target);
 			var usedTimer=this._usedTimer=time-this._startTimer-this._delay;
@@ -15119,6 +16445,7 @@ window.Laya=(function(window,document){
 				var prop=props[i];
 				target[prop[0]]=prop[1]+(ratio *prop[2]);
 			}
+			if (this.update)this.update.run();
 		}
 
 		/**
@@ -15298,46 +16625,26 @@ window.Laya=(function(window,document){
 			return ("0000000000"+num).slice(-strLen);
 		}
 
-		Utils.concatArr=function(src,a){
-			if (!a)return src;
-			if (!src)return a;
-			var i=0,len=a.length;
+		Utils.concatArray=function(src,array){
+			if (!array)return src;
+			if (!src)return array;
+			var i=0,len=array.length;
 			for (i=0;i < len;i++){
-				src.push(a[i]);
+				src.push(array[i]);
 			}
 			return src;
 		}
 
-		Utils.clearArr=function(arr){
-			if (!arr)return arr;
-			arr.length=0;
-			return arr;
+		Utils.clearArray=function(array){
+			if (!array)return array;
+			array.length=0;
+			return array;
 		}
 
-		Utils.setValueArr=function(src,v){
+		Utils.copyArray=function(src,array){
 			src || (src=[]);
 			src.length=0;
-			return Utils.concatArr(src,v);
-		}
-
-		Utils.getFrom=function(rst,src,count){
-			var i=0;
-			for (i=0;i < count;i++){
-				rst.push(src[i]);
-			}
-			return rst;
-		}
-
-		Utils.getFromR=function(rst,src,count){
-			var i=0;
-			for (i=0;i < count;i++){
-				rst.push(src.pop());
-			}
-			return rst;
-		}
-
-		Utils.getGlobalRec=function(sprite){
-			return Utils.getGlobalRecByPoints(sprite,0,0,sprite.width,sprite.height);
+			return Utils.concatArray(src,array);
 		}
 
 		Utils.getGlobalRecByPoints=function(sprite,x0,y0,x1,y1){
@@ -15356,45 +16663,14 @@ window.Laya=(function(window,document){
 			return Utils.getGlobalRecByPoints(sprite,0,0,1,1);
 		}
 
-		Utils.enableDisplayTree=function(dis){
-			while (dis){
-				dis.mouseEnabled=true;
-				dis=dis.parent;
-			}
-		}
-
-		Utils.bind=function(fun,_scope){
+		Utils.bind=function(fun,scope){
 			var rst;
-			rst=fun.bind(_scope);;
+			rst=fun.bind(scope);;
 			return rst;
 		}
 
-		Utils.copyFunction=function(src,dec,permitOverrides){
-			for (var i in src){
-				if (!permitOverrides && dec[i])continue ;
-				dec[i]=src[i];
-			}
-		}
-
 		Utils.measureText=function(txt,font){
-			if (Utils._charSizeTestDiv==null){
-				Utils._charSizeTestDiv=Browser.createElement('div');
-				Utils._charSizeTestDiv.style.cssText="z-index:10000000;padding:0px;position: absolute;left:0px;visibility:hidden;top:0px;background:white";
-				Browser.document.body.appendChild(Utils._charSizeTestDiv);
-			}
-			Utils._charSizeTestDiv.style.font=font;
-			Utils._charSizeTestDiv.innerText=txt==" " ? "i" :txt;
-			var out={width:Utils._charSizeTestDiv.offsetWidth,height:Utils._charSizeTestDiv.offsetHeight};
-			return out;
-		}
-
-		Utils.regClass=function(className,fullClassName){
-			Utils._systemClass[className]=fullClassName;
-		}
-
-		Utils.New=function(className){
-			className=Utils._systemClass[className] || className;
-			return new Laya.__classmap[className];
+			return RunDriver.measureText(txt,font);
 		}
 
 		Utils.updateOrder=function(childs){
@@ -15430,74 +16706,434 @@ window.Laya=(function(window,document){
 			return repaint;
 		}
 
-		Utils.attachAllClassTimeDelay=function(timeout,exclude){
-			Utils._attachAllClassTimeDelay=timeout;
-			var __classmap=Laya["__classmap"];
-			var excludes=((exclude ? exclude.join('%'):"")+"%Laya%laya.ui.%laya.utils.Log%laya2.display%laya.utils2%laya.asyn%laya.display.css%laya.maths%laya.utils").split("%");
-			var j=0,excludelen=excludes.length;
-			for (var i in __classmap){
-				if (i.indexOf('.')< 0)continue ;
-				for (j=0;j < excludelen;j++){
-					if (i.indexOf(excludes[j])==0){
-						j=-1;
-						break ;
-					}
-				}
-				if (j > 0)Utils.attachClassTimeDelay(__classmap[i],i,timeout);
-			}
-		}
-
-		Utils.transPointList=function(pList,x,y){
-			var i=0,len=pList.length;
+		Utils.transPointList=function(points,x,y){
+			var i=0,len=points.length;
 			for (i=0;i < len;i+=2){
-				pList[i]+=x;
-				pList[i+1]+=y;
-			}
-		}
-
-		Utils.attachClassTimeDelay=function(_class,className,timeout){
-			var i;
-			var pre;
-			for (i in _class){
-				if (_class['_$GET_'+i] !=null || i.charAt(0)=='_')continue ;
-				pre=_class[i];
-				if (((typeof pre=='function'))){
-					_class[i]=function (_class,className,protoName,pre,timeout){
-						return function (){
-							var tm=Browser.now();
-							var r=pre.apply(_class,arguments);
-							if ((Browser.now()-tm)> timeout)Log.print("static prototype delay: "+className+"."+protoName+" "+(Browser.now()-tm));
-							return r;
-						}
-					}(_class,className,i,pre,timeout);
-				}
-			};
-			var __proto=_class.prototype;
-			for (i in __proto){
-				if (__proto['_$get_'+i] !=null || i.charAt(0)=='_')continue ;
-				pre=__proto[i];
-				if (((typeof pre=='function'))&& !pre.__ISCHECK){
-					pre.__ISCHECK=true;
-					__proto[i]=function (_class,className,protoName,pre,timeout){
-						return function (){
-							var tm=Browser.now();
-							var r=pre.apply(this,arguments);
-							if ((Browser.now()-tm)> timeout)Log.print("prototype delay:"+className+"."+protoName+" "+(Browser.now()-tm));
-							return r;
-						}
-					}(_class,className,i,pre,timeout);
-					__proto[i].__ISCHECK=true;
-				}
+				points[i]+=x;
+				points[i+1]+=y;
 			}
 		}
 
 		Utils._gid=1;
 		Utils._pi=180 / Math.PI;
 		Utils._pi2=Math.PI / 180;
-		Utils._charSizeTestDiv=null
-		Utils._systemClass={'Sprite':'laya.display.Sprite','Sprite3D':'laya.d3.display.Sprite3D','Mesh':'laya.d3.display.Mesh','Sky':'laya.d3.display.Sky','div':'laya.html.dom.HTMLDivElement','img':'laya.html.dom.HTMLImageElement','span':'laya.html.dom.HTMLElement','br':'laya.html.dom.HTMLBrElement','style':'laya.html.dom.HTMLStyleElement','font':'laya.html.dom.HTMLElement','a':'laya.html.dom.HTMLElement','#text':'laya.html.dom.HTMLElement'};
-		Utils._attachAllClassTimeDelay=-1;
 		return Utils;
+	})()
+
+
+	/**
+	*<code>EmitterBase</code> 类是粒子发射器类
+	*/
+	//class laya.particle.emitter.EmitterBase
+	var EmitterBase=(function(){
+		function EmitterBase(){
+			this._frameTime=0;
+			this._emissionRate=60;
+			this._emissionTime=0;
+			this.minEmissionTime=1/60;
+			this._particleTemplate=null;
+		}
+
+		__class(EmitterBase,'laya.particle.emitter.EmitterBase');
+		var __proto=EmitterBase.prototype;
+		/**
+		*开始发射粒子
+		*@param duration 发射持续的时间
+		*/
+		__proto.start=function(duration){
+			(duration===void 0)&& (duration=Number.MAX_VALUE);
+			if (this._emissionRate !=0)
+				this._emissionTime=duration;
+		}
+
+		/**
+		*停止发射粒子
+		*@param clearParticles 是否清理当前的粒子
+		*/
+		__proto.stop=function(){
+			this._emissionTime=0;
+		}
+
+		/**
+		*清理当前的活跃粒子
+		*@param clearTexture 是否清理贴图数据,若清除贴图数据将无法再播放
+		*/
+		__proto.clear=function(){
+			this._emissionTime=0;
+		}
+
+		/**
+		*发射一个粒子
+		*
+		*/
+		__proto.emit=function(){}
+		/**
+		*时钟前进
+		*@param passedTime 前进时间
+		*
+		*/
+		__proto.advanceTime=function(passedTime){
+			(passedTime===void 0)&& (passedTime=1);
+			this._emissionTime-=passedTime;
+			if(this._emissionTime<0)return;
+			this._frameTime+=passedTime;
+			if (this._frameTime < this.minEmissionTime)return;
+			while(this._frameTime>this.minEmissionTime){
+				this._frameTime-=this.minEmissionTime;
+				this.emit();
+			}
+		}
+
+		/**
+		*设置粒子粒子模板
+		*@param particleTemplate 粒子模板
+		*
+		*/
+		__getset(0,__proto,'particleTemplate',null,function(particleTemplate){
+			this._particleTemplate=particleTemplate;
+		});
+
+		/**
+		*设置粒子发射速率
+		*@param emissionRate 粒子发射速率 (个/秒)
+		*/
+		/**
+		*获取粒子发射速率
+		*@return 发射速率 粒子发射速率 (个/秒)
+		*/
+		__getset(0,__proto,'emissionRate',function(){
+			return this._emissionRate;
+			},function(_emissionRate){
+			if(_emissionRate<=0)return;
+			this._emissionRate=_emissionRate;
+			(_emissionRate>0)&&(this.minEmissionTime=1/_emissionRate);
+		});
+
+		return EmitterBase;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.particle.ParticleData
+	var ParticleData=(function(){
+		function ParticleData(){
+			this.position=null;
+			this.velocity=null;
+			this.color=null;
+			this.sizeRotation=null;
+			this.radiusRadian=null;
+			this.durationAddScale=NaN;
+			this.time=NaN;
+		}
+
+		__class(ParticleData,'laya.particle.ParticleData');
+		ParticleData.Create=function(settings,position,velocity,time){
+			var particleData=new ParticleData();
+			particleData.position=position;
+			MathUtil.scaleVector3(velocity,settings.emitterVelocitySensitivity,ParticleData._tempVelocity);
+			var horizontalVelocity=MathUtil.lerp(settings.minHorizontalVelocity,settings.maxHorizontalVelocity,Math.random());
+			var horizontalAngle=Math.random()*Math.PI *2;
+			ParticleData._tempVelocity[0]+=horizontalVelocity *Math.cos(horizontalAngle);
+			ParticleData._tempVelocity[2]+=horizontalVelocity *Math.sin(horizontalAngle);
+			ParticleData._tempVelocity[1]+=MathUtil.lerp(settings.minVerticalVelocity,settings.maxVerticalVelocity,Math.random());
+			particleData.velocity=ParticleData._tempVelocity;
+			particleData.color=ParticleData._tempColor;
+			var i=0;
+			if (settings.colorComponentInter){
+				for (i=0;i < 4;i++)
+				particleData.color[i]=MathUtil.lerp(settings.minColor[i],settings.maxColor[i],Math.random());
+				}else {
+				MathUtil.lerpVector4(settings.minColor,settings.maxColor,Math.random(),particleData.color);
+			}
+			particleData.sizeRotation=ParticleData._tempSizeRotation;
+			var sizeRandom=Math.random();
+			particleData.sizeRotation[0]=MathUtil.lerp(settings.minStartSize,settings.maxStartSize,sizeRandom);
+			particleData.sizeRotation[1]=MathUtil.lerp(settings.minEndSize,settings.maxEndSize,sizeRandom);
+			particleData.sizeRotation[2]=MathUtil.lerp(settings.minRotateSpeed,settings.maxRotateSpeed,Math.random());
+			particleData.radiusRadian=ParticleData._tempRadiusRadian;
+			var radiusRandom=Math.random();
+			particleData.radiusRadian[0]=MathUtil.lerp(settings.minStartRadius,settings.maxStartRadius,radiusRandom);
+			particleData.radiusRadian[1]=MathUtil.lerp(settings.minEndRadius,settings.maxEndRadius,radiusRandom);
+			particleData.radiusRadian[2]=MathUtil.lerp(settings.minHorizontalEndRadian,settings.maxHorizontalEndRadian,Math.random());
+			particleData.radiusRadian[3]=MathUtil.lerp(settings.minVerticalEndRadian,settings.maxVerticalEndRadian,Math.random());
+			particleData.durationAddScale=settings.ageAddScale *Math.random();
+			particleData.time=time;
+			return particleData;
+		}
+
+		__static(ParticleData,
+		['_tempVelocity',function(){return this._tempVelocity=new Float32Array(3);},'_tempColor',function(){return this._tempColor=new Float32Array(4);},'_tempSizeRotation',function(){return this._tempSizeRotation=new Float32Array(3);},'_tempRadiusRadian',function(){return this._tempRadiusRadian=new Float32Array(4);}
+		]);
+		return ParticleData;
+	})()
+
+
+	/**
+	*<code>ParticleSettings</code> 类是粒子配置数据类
+	*/
+	//class laya.particle.ParticleSettings
+	var ParticleSettings=(function(){
+		function ParticleSettings(){
+			this.textureName=null;
+			this.textureCount=1;
+			this.maxPartices=100;
+			this.duration=1;
+			this.ageAddScale=0;
+			this.minHorizontalVelocity=0;
+			this.maxHorizontalVelocity=0;
+			this.minVerticalVelocity=0;
+			this.maxVerticalVelocity=0;
+			this.endVelocity=1;
+			this.colorComponentInter=false;
+			this.minRotateSpeed=0;
+			this.maxRotateSpeed=0;
+			this.minStartSize=100;
+			this.maxStartSize=100;
+			this.minEndSize=100;
+			this.maxEndSize=100;
+			this.emitterVelocitySensitivity=1;
+			this.minStartRadius=0;
+			this.maxStartRadius=0;
+			this.minEndRadius=0;
+			this.maxEndRadius=0;
+			this.minHorizontalEndRadian=0;
+			this.maxHorizontalEndRadian=0;
+			this.minVerticalEndRadian=0;
+			this.maxVerticalEndRadian=0;
+			this.blendState=0;
+			this.emitterType="null";
+			this.emissionRate=0;
+			this.sphereEmitterRadius=1;
+			this.sphereEmitterVelocity=0;
+			this.sphereEmitterVelocityAddVariance=0;
+			this.ringEmitterRadius=30;
+			this.ringEmitterVelocity=0;
+			this.ringEmitterVelocityAddVariance=0;
+			this.ringEmitterUp=2;
+			this.gravity=new Float32Array([0,0,0]);
+			this.minColor=new Float32Array([1,1,1,1]);
+			this.maxColor=new Float32Array([1,1,1,1]);
+			this.pointEmitterPosition=new Float32Array([0,0,0]);
+			this.pointEmitterPositionVariance=new Float32Array([0,0,0]);
+			this.pointEmitterVelocity=new Float32Array([0,0,0]);
+			this.pointEmitterVelocityAddVariance=new Float32Array([0,0,0]);
+			this.boxEmitterCenterPosition=new Float32Array([0,0,0]);
+			this.boxEmitterSize=new Float32Array([0,0,0]);
+			this.boxEmitterVelocity=new Float32Array([0,0,0]);
+			this.boxEmitterVelocityAddVariance=new Float32Array([0,0,0]);
+			this.sphereEmitterCenterPosition=new Float32Array([0,0,0]);
+			this.ringEmitterCenterPosition=new Float32Array([0,0,0]);
+			this.positionVariance=new Float32Array([0,0,0]);
+		}
+
+		__class(ParticleSettings,'laya.particle.ParticleSettings');
+		return ParticleSettings;
+	})()
+
+
+	/**
+	*
+	*<code>ParticleTemplateBase</code> 类是粒子模板基类
+	*
+	*/
+	//class laya.particle.ParticleTemplateBase
+	var ParticleTemplateBase=(function(){
+		function ParticleTemplateBase(){
+			this.settings=null;
+			this.texture=null;
+		}
+
+		__class(ParticleTemplateBase,'laya.particle.ParticleTemplateBase');
+		var __proto=ParticleTemplateBase.prototype;
+		/**
+		*添加一个粒子
+		*@param position 粒子位置
+		*@param velocity 粒子速度
+		*
+		*/
+		__proto.addParticleArray=function(position,velocity){}
+		return ParticleTemplateBase;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.particle.particleUtils.CanvasShader
+	var CanvasShader=(function(){
+		function CanvasShader(){
+			this.u_EndVelocity=NaN;
+			this.u_Gravity=null;
+			this.u_Duration=NaN;
+			this.a_RadiusRadian=null;
+			this.a_Position=null;
+			this.a_SizeRotation=null;
+			this.a_Color=null;
+			this.a_Velocity=null;
+			this.gl_Position=null;
+			this.v_Color=null;
+			this.a_AgeAddScale=NaN;
+			this.oSize=NaN;
+			this._color=new Float32Array(4);
+			this._position=new Float32Array(3);
+		}
+
+		__class(CanvasShader,'laya.particle.particleUtils.CanvasShader');
+		var __proto=CanvasShader.prototype;
+		__proto.getLen=function(position){
+			return Math.sqrt(position[0] *position[0]+position[1] *position[1]+position[2] *position[2]);
+		}
+
+		__proto.ComputeParticlePosition=function(position,velocity,age,normalizedAge){
+			this._position[0]=position[0];
+			this._position[1]=position[1];
+			this._position[2]=position[2];
+			var startVelocity=this.getLen(velocity);
+			var endVelocity=startVelocity *this.u_EndVelocity;
+			var velocityIntegral=startVelocity *normalizedAge+(endVelocity-startVelocity)*normalizedAge *normalizedAge / 2.0;
+			var lenVelocity=NaN;
+			lenVelocity=this.getLen(velocity);
+			var i=0,len=0;
+			len=3;
+			for (i=0;i < len;i++){
+				this._position[i]+=this._position[i]+(velocity[i] / lenVelocity)*velocityIntegral *this.u_Duration;
+				this._position[i]+=this.u_Gravity[i] *age *normalizedAge;
+			};
+			var radius=MathUtil.lerp(this.a_RadiusRadian[0],this.a_RadiusRadian[1],normalizedAge);
+			var radianHorizontal=this.a_RadiusRadian[2] *normalizedAge;
+			var radianVertical=this.a_RadiusRadian[3] *normalizedAge;
+			var r=Math.cos(radianVertical)*radius;
+			this._position[1]+=Math.sin(radianVertical)*radius;
+			this._position[0]+=Math.cos(radianHorizontal)*r;
+			this._position[2]+=Math.sin(radianHorizontal)*r;
+			return new Float32Array([this._position[0],this._position[1],0.0,1.0]);
+		}
+
+		__proto.ComputeParticleSize=function(startSize,endSize,normalizedAge){
+			var size=MathUtil.lerp(startSize,endSize,normalizedAge);
+			return size;
+		}
+
+		__proto.ComputeParticleRotation=function(rot,age){
+			return rot *age;
+		}
+
+		__proto.ComputeParticleColor=function(projectedPosition,color,normalizedAge){
+			var rst=this._color;
+			rst[0]=color[0];
+			rst[1]=color[1];
+			rst[2]=color[2];
+			rst[3]=color[3]*normalizedAge *(1.0-normalizedAge)*(1.0-normalizedAge)*6.7;
+			return rst;
+		}
+
+		__proto.clamp=function(value,min,max){
+			if(value<min)return min;
+			if(value>max)return max;
+			return value;
+		}
+
+		__proto.getData=function(age){
+			age *=1.0+this.a_AgeAddScale;
+			var normalizedAge=this.clamp(age / this.u_Duration,0.0,1.0);
+			this.gl_Position=this.ComputeParticlePosition(this.a_Position,this.a_Velocity,age,normalizedAge);
+			var pSize=this.ComputeParticleSize(this.a_SizeRotation[0],this.a_SizeRotation[1],normalizedAge);
+			var rotation=this.ComputeParticleRotation(this.a_SizeRotation[2],age);
+			this.v_Color=this.ComputeParticleColor(this.gl_Position,this.a_Color,normalizedAge);
+			var matric=new Matrix();
+			var scale=NaN;
+			scale=pSize/this.oSize*2;
+			matric.scale(scale,scale);
+			matric.rotate(rotation);
+			matric.setTranslate(this.gl_Position[0],-this.gl_Position[1]);
+			var alpha=NaN;
+			alpha=this.v_Color[3];
+			return [this.v_Color,alpha,matric,this.v_Color[0]*alpha,this.v_Color[1]*alpha,this.v_Color[2]*alpha];
+		}
+
+		return CanvasShader;
+	})()
+
+
+	/**
+	*
+	*@private
+	*
+	*@created 2015-8-25 下午3:41:07
+	*/
+	//class laya.particle.particleUtils.CMDParticle
+	var CMDParticle=(function(){
+		function CMDParticle(){
+			this.maxIndex=0;
+			this.cmds=null;
+			this.id=0;
+		}
+
+		__class(CMDParticle,'laya.particle.particleUtils.CMDParticle');
+		var __proto=CMDParticle.prototype;
+		__proto.setCmds=function(cmds){
+			this.cmds=cmds;
+			this.maxIndex=cmds.length-1;
+		}
+
+		return CMDParticle;
+	})()
+
+
+	/**
+	*
+	*@private
+	*
+	*@created 2015-8-26 下午7:22:26
+	*/
+	//class laya.particle.particleUtils.PicTool
+	var PicTool=(function(){
+		function PicTool(){}
+		__class(PicTool,'laya.particle.particleUtils.PicTool');
+		PicTool.getCanvasPic=function(img,color){
+			img=img.bitmap;
+			var canvas=Browser.createElement("canvas");
+			var ctx=canvas.getContext('2d');
+			canvas.height=img.height;
+			canvas.width=img.width;
+			ctx.drawImage(img.source,0,0);
+			var imgdata=ctx.getImageData(0,0,canvas.width,canvas.height);
+			var data=imgdata.data;
+			var red=(color >> 16 & 0xFF);
+			var green=(color >> 8 & 0xFF);
+			var blue=(color & 0xFF);
+			for(var i=0,n=data.length;i<n;i+=4){
+				if(data[i+3]==0)continue ;
+				data[i]=red;
+				data[i+1]=green;
+				data[i+2]=blue;
+			}
+			ctx.putImageData(imgdata,0,0);
+			canvas.source=canvas;
+			return canvas;
+		}
+
+		PicTool.getRGBPic=function(img){
+			var rst;
+			rst=[new Texture(PicTool.getCanvasPic(img,0xFF0000)),new Texture(PicTool.getCanvasPic(img,0x00FF00)),new Texture(PicTool.getCanvasPic(img,0x0000FF))];
+			return rst;
+		}
+
+		return PicTool;
+	})()
+
+
+	/**
+	*...
+	*@author laya
+	*/
+	//class laya.webgl.shader.ShaderValue
+	var ShaderValue=(function(){
+		function ShaderValue(){}
+		__class(ShaderValue,'laya.webgl.shader.ShaderValue');
+		return ShaderValue;
 	})()
 
 
@@ -15606,8 +17242,6 @@ window.Laya=(function(window,document){
 	var UIConfig=(function(){
 		function UIConfig(){};
 		__class(UIConfig,'UIConfig');
-		UIConfig.resPath="";
-		UIConfig.uiPath="";
 		UIConfig.touchScrollEnable=true;
 		UIConfig.mouseWheelEnable=true;
 		UIConfig.showButtons=true;
@@ -17989,6 +19623,51 @@ window.Laya=(function(window,document){
 			return rst;
 		}
 
+		ObjectTools.concatArr=function(src,a){
+			if (!a)return src;
+			if (!src)return a;
+			var i=0,len=a.length;
+			for (i=0;i < len;i++){
+				src.push(a[i]);
+			}
+			return src;
+		}
+
+		ObjectTools.clearArr=function(arr){
+			if (!arr)return arr;
+			arr.length=0;
+			return arr;
+		}
+
+		ObjectTools.setValueArr=function(src,v){
+			src || (src=[]);
+			src.length=0;
+			return ObjectTools.concatArr(src,v);
+		}
+
+		ObjectTools.getFrom=function(rst,src,count){
+			var i=0;
+			for (i=0;i < count;i++){
+				rst.push(src[i]);
+			}
+			return rst;
+		}
+
+		ObjectTools.getFromR=function(rst,src,count){
+			var i=0;
+			for (i=0;i < count;i++){
+				rst.push(src.pop());
+			}
+			return rst;
+		}
+
+		ObjectTools.enableDisplayTree=function(dis){
+			while (dis){
+				dis.mouseEnabled=true;
+				dis=dis.parent;
+			}
+		}
+
 		ObjectTools.getJsonString=function(obj){
 			var rst;
 			rst=JSON.stringify(obj);
@@ -18685,7 +20364,11 @@ window.Laya=(function(window,document){
 			if(StringTool.isAbsPath(path)){
 				return path;
 			};
-			var tSign=FileTools.path.sep;
+			var tSign;
+			tSign="\\";
+			if(basePath.indexOf("/")>=0){
+				tSign="/";
+			}
 			if(basePath.charAt(basePath.length-1)==tSign){
 				basePath=basePath.substr(0,basePath.length-1);
 			};
@@ -19189,6 +20872,116 @@ window.Laya=(function(window,document){
 	})()
 
 
+	/**
+	*...
+	*@author yung
+	*/
+	//class ui.TestUI
+	var TestUI1=(function(){
+		function TestUI(){
+			Laya.init(1000,800);
+		}
+
+		__class(TestUI,'ui.TestUI',null,'TestUI1');
+		var __proto=TestUI.prototype;
+		__proto.onProgress=function(value){
+			console.log(value);
+		}
+
+		__proto.onLoaded=function(content){}
+		return TestUI;
+	})()
+
+
+	/**
+	*...
+	*@author laya
+	*/
+	//class laya.webgl.shader.ShaderDefines
+	var ShaderDefines=(function(){
+		function ShaderDefines(name2int,int2name,int2nameMap){
+			this._value=0;
+			//this._name2int=null;
+			//this._int2name=null;
+			//this._int2nameMap=null;
+			this._name2int=name2int;
+			this._int2name=int2name;
+			this._int2nameMap=int2nameMap;
+		}
+
+		__class(ShaderDefines,'laya.webgl.shader.ShaderDefines');
+		var __proto=ShaderDefines.prototype;
+		__proto.add=function(value){
+			if ((typeof value=='string'))value=this._name2int[value];
+			this._value |=value;
+			return this._value;
+		}
+
+		__proto.addInt=function(value){
+			this._value |=value;
+			return this._value;
+		}
+
+		__proto.remove=function(value){
+			if ((typeof value=='string'))value=this._name2int[value];
+			this._value &=(~value);
+			return this._value;
+		}
+
+		__proto.isDefine=function(def){
+			return (this._value & def)===def;
+		}
+
+		__proto.getValue=function(){
+			return this._value;
+		}
+
+		__proto.setValue=function(value){
+			this._value=value;
+		}
+
+		__proto.toNameDic=function(){
+			var r=this._int2nameMap[this._value];
+			return r?r:ShaderDefines._toText(this._value,this._int2name,this._int2nameMap);
+		}
+
+		ShaderDefines._reg=function(name,value,_name2int,_int2name){
+			_name2int[name]=value;
+			_int2name[value]=name;
+		}
+
+		ShaderDefines._toText=function(value,_int2name,_int2nameMap){
+			var r=_int2nameMap[value];
+			if (r)return r;
+			var o={};
+			var d=1;
+			for (var i=0;i < 32;i++){
+				d=1 << i;
+				if (d > value)break ;
+				if (value & d){
+					var name=_int2name[d];
+					name && (o[name]="");
+				}
+			}
+			_int2nameMap[value]=o;
+			return o;
+		}
+
+		ShaderDefines._toInt=function(names,_name2int){
+			var words=names.split('.');
+			var num=0;
+			for (var i=0,n=words.length;i < n;i++){
+				var value=_name2int[words[i]];
+				if (!value)throw new Error("Defines to int err:"+names+"/"+words[i]);
+				num |=value;
+			}
+			return num;
+		}
+
+		return ShaderDefines;
+	})()
+
+
 	//class laya.filters.webgl.FilterActionGL
 	var FilterActionGL=(function(){
 		function FilterActionGL(){}
@@ -19486,7 +21279,7 @@ window.Laya=(function(window,document){
 				var maxAtlaserCount=this._maxAtlaserCount;
 				for (var i=0;i < maxAtlaserCount;i++){
 					var altasIndex=(this._curAtlasIndex+i)% maxAtlaserCount;
-					(this._atlaserArray[altasIndex])|| (this._atlaserArray.push(new Atlaser(this._gridNumX,this._gridNumY,this._width,this._height,AtlasResourceManager._sid_++)));
+					(this._atlaserArray.length-1>=altasIndex)|| (this._atlaserArray.push(new Atlaser(this._gridNumX,this._gridNumY,this._width,this._height,AtlasResourceManager._sid_++)));
 					var atlas=this._atlaserArray[altasIndex];
 					var bitmap=texture.bitmap;
 					var webGLImageIndex=atlas.inAtlasWebGLImagesKey.indexOf(bitmap);
@@ -19550,6 +21343,14 @@ window.Laya=(function(window,document){
 				this._atlaserArray[i].dispose();
 			}
 			this._atlaserArray.length=0;
+		}
+
+		__proto.getAtlaserCount=function(){
+			return this._atlaserArray.length;
+		}
+
+		__proto.getAtlaserByIndex=function(index){
+			return this._atlaserArray[index];
 		}
 
 		__getset(1,AtlasResourceManager,'instance',function(){
@@ -19765,8 +21566,8 @@ window.Laya=(function(window,document){
 			this.geoStart=0;
 			this.geomatrys=[];
 			var gl=WebGL.mainContext;
-			this.ib=new Buffer(0x8893,"INDEX",null,0x88E4);
-			this.vb=new Buffer(0x8892);
+			this.ib=IndexBuffer.create();
+			this.vb=VertexBuffer.create();
 		}
 
 		__class(Path,'laya.webgl.canvas.Path');
@@ -19793,13 +21594,12 @@ window.Laya=(function(window,document){
 		__proto.circle=function(x,y,r,edges,color,borderWidth,borderColor){
 			var geo;
 			this.geomatrys.push(this._curGeomatry=geo=new Circle(x,y,r,edges,color,borderWidth,borderColor));
-			if(!color)geo.fill=false;if(borderColor==undefined)geo.borderWidth=0;
+			if(borderColor==undefined)geo.borderWidth=0;
 		}
 
 		__proto.fan=function(x,y,r,r0,r1,color,borderWidth,borderColor){
 			var geo;
 			this.geomatrys.push(this._curGeomatry=geo=new Fan(x,y,r,r0,r1,color,borderWidth,borderColor));
-			if(!color)geo.fill=false;
 		}
 
 		__proto.ellipse=function(x,y,rw,rh,color,borderWidth,borderColor){
@@ -20186,7 +21986,7 @@ window.Laya=(function(window,document){
 			//this.colorAdd=null;
 			//this.strokeStyle=null;
 			//this.fillStyle=null;
-			this.glTexture=new WebGLImage();
+			this.glTexture=HTMLImage.create();
 			this.defines=new ShaderDefines2D();
 		}
 
@@ -20215,107 +22015,6 @@ window.Laya=(function(window,document){
 		}
 
 		return Shader2D;
-	})()
-
-
-	/**
-	*...
-	*@author laya
-	*/
-	//class laya.webgl.shader.ShaderDefines
-	var ShaderDefines=(function(){
-		function ShaderDefines(name2int,int2name,int2nameMap){
-			this._value=0;
-			//this._name2int=null;
-			//this._int2name=null;
-			//this._int2nameMap=null;
-			this._name2int=name2int;
-			this._int2name=int2name;
-			this._int2nameMap=int2nameMap;
-		}
-
-		__class(ShaderDefines,'laya.webgl.shader.ShaderDefines');
-		var __proto=ShaderDefines.prototype;
-		__proto.add=function(value){
-			if ((typeof value=='string'))value=this._name2int[value];
-			this._value |=value;
-			return this._value;
-		}
-
-		__proto.addInt=function(value){
-			this._value |=value;
-			return this._value;
-		}
-
-		__proto.remove=function(value){
-			if ((typeof value=='string'))value=this._name2int[value];
-			this._value &=(~value);
-			return this._value;
-		}
-
-		__proto.isDefine=function(def){
-			return (this._value & def)===def;
-		}
-
-		__proto.getValue=function(){
-			return this._value;
-		}
-
-		__proto.setValue=function(value){
-			this._value=value;
-		}
-
-		__proto.toNameDic=function(){
-			var r=this._int2nameMap[this._value];
-			return r?r:ShaderDefines._toText(this._value,this._int2name,this._int2nameMap);
-		}
-
-		ShaderDefines._reg=function(name,value,_name2int,_int2name){
-			_name2int[name]=value;
-			_int2name[value]=name;
-		}
-
-		ShaderDefines._toText=function(value,_int2name,_int2nameMap){
-			var r=_int2nameMap[value];
-			if (r)return r;
-			var o={};
-			var d=1;
-			for (var i=0;i < 32;i++){
-				d=1 << i;
-				if (d > value)break ;
-				if (value & d){
-					var name=_int2name[d];
-					name && (o[name]="");
-				}
-			}
-			_int2nameMap[value]=o;
-			return o;
-		}
-
-		ShaderDefines._toInt=function(names,_name2int){
-			var words=names.split('.');
-			var num=0;
-			for (var i=0,n=words.length;i < n;i++){
-				var value=_name2int[words[i]];
-				if (!value)throw new Error("Defines to int err:"+names+"/"+words[i]);
-				num |=value;
-			}
-			return num;
-		}
-
-		return ShaderDefines;
-	})()
-
-
-	/**
-	*...
-	*@author laya
-	*/
-	//class laya.webgl.shader.ShaderValue
-	var ShaderValue=(function(){
-		function ShaderValue(){}
-		__class(ShaderValue,'laya.webgl.shader.ShaderValue');
-		return ShaderValue;
 	})()
 
 
@@ -20719,10 +22418,9 @@ window.Laya=(function(window,document){
 					return 1;
 				this.shaderValue.texture=this.shaderValue.textureHost.source;
 			}
-			this._ib.upload_bind();
-			this._vb.upload_bind();
-			this.shaderValue.upload();
+			this._vb.bind_upload(this._ib);
 			var gl=WebGL.mainContext;
+			this.shaderValue.upload();
 			if (Submit.activeBlendFunction!==this._blendFn){
 				gl.enable(0x0BE2);
 				this._blendFn(gl);
@@ -20743,7 +22441,7 @@ window.Laya=(function(window,document){
 		Submit.create=function(context,submitID,mergID,ib,vb,pos,sv){
 			var o=Submit._cache._length?Submit._cache[--Submit._cache._length]:new Submit();
 			if (vb==null){
-				vb=o._selfVb || (o._selfVb=new Buffer(0x8892));
+				vb=o._selfVb || (o._selfVb=VertexBuffer.create());
 				vb.clear();
 				pos=0;
 			}
@@ -20916,8 +22614,7 @@ window.Laya=(function(window,document){
 				if (!source)return 1;
 				this._shaderValue.texture=source;
 			}
-			this._ib.upload_bind();
-			this._vb.upload_bind();
+			this._vb.bind_upload(this._ib);
 			var w=RenderState2D.worldMatrix4;
 			var wmat=Matrix.TEMP;
 			Matrix.mulPre(this._mat,w[0],w[1],w[4],w[5],w[12],w[13],wmat);
@@ -21210,8 +22907,7 @@ window.Laya=(function(window,document){
 		var __proto=SubmitTarget.prototype;
 		Laya.imps(__proto,{"laya.webgl.submit.ISubmit":true})
 		__proto.renderSubmit=function(){
-			this._ib.upload_bind();
-			this._vb.upload_bind();
+			this._vb.bind_upload(this._ib);
 			var target=this.scope.getValue(this.proName);
 			this.shaderValue.texture=target.source;
 			this.shaderValue.upload();
@@ -21268,6 +22964,11 @@ window.Laya=(function(window,document){
 		var CharValue;
 		function DrawText(){};
 		__class(DrawText,'laya.webgl.text.DrawText');
+		DrawText.__init__=function(){
+			DrawText._charsTemp=new Array;
+			DrawText._drawValue=new CharValue();
+		}
+
 		DrawText.getChar=function(char,id,drawValue){
 			return DrawText._wordsMsg[id]=DrawTextChar.createOneChar(char,drawValue);
 		}
@@ -21376,10 +23077,8 @@ window.Laya=(function(window,document){
 
 		DrawText._wordsMsg={};
 		DrawText._textCache={};
-		DrawText._charsTemp=new Array;
-		__static(DrawText,
-		['_drawValue',function(){return this._drawValue=new CharValue();}
-		]);
+		DrawText._charsTemp=null
+		DrawText._drawValue=null
 		DrawText.__init$=function(){
 			//class CharValue
 			CharValue=(function(){
@@ -21449,7 +23148,7 @@ window.Laya=(function(window,document){
 			this.fillColor=drawValue.fillColor;
 			this.borderColor=drawValue.borderColor;
 			this.lineWidth=drawValue.lineWidth;
-			var bIsConchApp=System.isConchApp;
+			var bIsConchApp=Render.isConchApp;
 			if (bIsConchApp){
 				var pCanvas=ConchTextCanvas;
 				pCanvas._source=ConchTextCanvas;
@@ -21570,25 +23269,15 @@ window.Laya=(function(window,document){
 	var CONST3D2D=(function(){
 		function CONST3D2D(){};
 		__class(CONST3D2D,'laya.webgl.utils.CONST3D2D');
-		CONST3D2D.BYTES_PE=window.Float32Array && Float32Array.BYTES_PER_ELEMENT;
-		CONST3D2D.BYTES_PIDX=window.Uint16Array && Uint16Array.BYTES_PER_ELEMENT;
-		CONST3D2D.defaultMatrix4=[
-		1,0,0,0,
-		0,1,0,0,
-		0,0,1,0,
-		0,0,0,1,];
-		CONST3D2D.defaultMinusYMatrix4=[
-		1,0,0,0,
-		0,-1,0,0,
-		0,0,1,0,
-		0,0,0,1,];
-		CONST3D2D.uniformMatrix3=[
-		1,0 ,0,0,
-		0,1,0,0,
-		0,0,1,0];
+		CONST3D2D.defaultMatrix4=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+		CONST3D2D.defaultMinusYMatrix4=[1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1];
+		CONST3D2D.uniformMatrix3=[1,0,0,0,0,1,0,0,0,0,1,0];
 		CONST3D2D._TMPARRAY=[];
 		CONST3D2D._OFFSETX=0;
 		CONST3D2D._OFFSETY=0;
+		__static(CONST3D2D,
+		['BYTES_PE',function(){return this.BYTES_PE=Float32Array.BYTES_PER_ELEMENT;},'BYTES_PIDX',function(){return this.BYTES_PIDX=Uint16Array.BYTES_PER_ELEMENT;}
+		]);
 		return CONST3D2D;
 	})()
 
@@ -21613,7 +23302,7 @@ window.Laya=(function(window,document){
 			count=Math.floor(count);
 			buffer._resizeBuffer((count+1)*6 *2,false);
 			buffer.length=buffer.bufferLength;
-			var bufferData=new Uint16Array(buffer.getBuffer());
+			var bufferData=buffer.getUint16Array();
 			var idx=0;
 			for (var i=0;i < count;i++){
 				bufferData[idx++]=i *4;
@@ -21624,7 +23313,6 @@ window.Laya=(function(window,document){
 				bufferData[idx++]=i *4+2;
 			}
 			buffer.setNeedUpload();
-			buffer.upload();
 			return true;
 		}
 
@@ -21645,10 +23333,6 @@ window.Laya=(function(window,document){
 
 		GlUtils.fillQuadrangleImgVb=function(vb,x,y,point4,uv,m,_x,_y){
 			'use strict';
-			x |=0;
-			y |=0;
-			_x |=0;
-			_y |=0;
 			var vpos=(vb._length >> 2)+16;
 			vb.length=(vpos << 2);
 			var vbdata=vb.getFloat32Array();
@@ -21879,9 +23563,7 @@ window.Laya=(function(window,document){
 			mat && mat.transformPointArray(data,data);
 			var vpos=(vb._length >> 2)+16;
 			vb.length=(vpos << 2);
-			var vbdata=vb.getFloat32Array();
-			vbdata.set(data,vpos-16);
-			vb._upload=true;
+			vb.insertData(data,vpos-16);
 			return true;
 		}
 
@@ -22061,13 +23743,11 @@ window.Laya=(function(window,document){
 							preIsParam=isParam;
 						}
 						newcondition+=c;
-					};
-					var fn="(function() {return "+newcondition+";})";
-					this.condition=Browser.window.eval(fn);
+					}
+					this.condition=RunDriver.createShaderCondition(newcondition);
 				}
 				__class(ShaderScriptBlock,'');
 				var __proto=ShaderScriptBlock.prototype;
-				//生成条件判断函数
 				__proto.toscript=function(def,out){
 					if (this.type===0){
 						this.text && out.push(this.text);
@@ -22079,7 +23759,7 @@ window.Laya=(function(window,document){
 						if (!ifdef)return out;
 						this.text && out.push(this.text);
 					}
-					this.childs.length>0 && this.childs.forEach(function(o){o.toscript(def,out)});
+					this.childs.length>0 && this.childs.forEach(function(o,index,arr){o.toscript(def,out)});
 					return out;
 				}
 				return ShaderScriptBlock;
@@ -22091,8 +23771,7 @@ window.Laya=(function(window,document){
 
 
 	/**
-	*...
-	*@author laya
+	*@private
 	*/
 	//class laya.webgl.WebGL
 	var WebGL=(function(){
@@ -22100,36 +23779,36 @@ window.Laya=(function(window,document){
 		__class(WebGL,'laya.webgl.WebGL');
 		WebGL.enable=function(){
 			if (!WebGL.isWebGLSupported())return false;
-			HTMLImage=WebGLImage;
-			HTMLCanvas=WebGLCanvas;
-			HTMLSubImage=WebGLSubImage;
-			System.changeDefinition("HTMLImage",WebGLImage);
-			System.changeDefinition("HTMLCanvas",WebGLCanvas);
-			System.changeDefinition("HTMLSubImage",WebGLSubImage);
+			if (Render.isWebGL)return true;
+			HTMLImage.create=function (im){
+				return new WebGLImage(im);
+			}
 			Render.WebGL=WebGL;
-			System.createRenderSprite=function (type,next){
+			Render.isWebGL=true;
+			DrawText.__init__();
+			RunDriver.createRenderSprite=function (type,next){
 				return new RenderSprite3D(type,next);
 			}
-			System.createWebGLContext2D=function (c){
+			RunDriver.createWebGLContext2D=function (c){
 				return new WebGLContext2D(c);
 			}
-			System.changeWebGLSize=function (width,height){
+			RunDriver.changeWebGLSize=function (width,height){
 				laya.webgl.WebGL.onStageResize(width,height);
 			}
-			System.createGraphics=function (){
+			RunDriver.createGraphics=function (){
 				return new GraphicsGL();
 			};
-			var action=System.createFilterAction;
-			System.createFilterAction=action ? action :function (type){
+			var action=RunDriver.createFilterAction;
+			RunDriver.createFilterAction=action ? action :function (type){
 				return new ColorFilterActionGL()
 			}
-			Render.clear=function (color){
+			RunDriver.clear=function (color){
 				RenderState2D.worldScissorTest && laya.webgl.WebGL.mainContext.disable(0x0C11);
 				var c=Color.create(color)._color;
 				Render.context.ctx.clearBG(c[0],c[1],c[2],c[3]);
 				RenderState2D.clear();
 			}
-			System.addToAtlas=function (texture,force){
+			RunDriver.addToAtlas=function (texture,force){
 				(force===void 0)&& (force=false);
 				var bitmap=texture.bitmap;
 				if ((Laya.__typeof(bitmap,'laya.webgl.resource.IMergeAtlasBitmap'))&& ((bitmap).allowMerageInAtlas)){
@@ -22139,7 +23818,15 @@ window.Laya=(function(window,document){
 				}
 			}
 			AtlasResourceManager.enable();
-			System.drawToCanvas=function (sprite,_renderType,canvasWidth,canvasHeight,offsetX,offsetY){
+			RunDriver.benginFlush=function (){
+				var atlasResourceManager=AtlasResourceManager.instance;
+				var count=atlasResourceManager.getAtlaserCount();
+				for (var i=0;i < count;i++){
+					var atlerCanvas=atlasResourceManager.getAtlaserByIndex(i).texture;
+					(atlerCanvas._flashCacheImageNeedFlush)&& (RunDriver.flashFlushImage(atlerCanvas));
+				}
+			}
+			RunDriver.drawToCanvas=function (sprite,_renderType,canvasWidth,canvasHeight,offsetX,offsetY){
 				var renderTarget=new RenderTarget2D(canvasWidth,canvasHeight,false,0x1908,0x1401,0);
 				renderTarget.start();
 				renderTarget.clear(1.0,0.0,0.0,1.0);
@@ -22150,7 +23837,7 @@ window.Laya=(function(window,document){
 				renderTarget.dispose();
 				return pixels;
 			}
-			System.createFilterAction=function (type){
+			RunDriver.createFilterAction=function (type){
 				var action;
 				switch (type){
 					case 0x20:
@@ -22182,8 +23869,8 @@ window.Laya=(function(window,document){
 				out.start();
 				out.clear(0,0,0,0);
 				scope.addValue("out",out);
-				sprite._filterCache=out;
-				sprite._isHaveGlowFilter=scope.getValue("isHaveGlowFilter");
+				sprite._set$P('_filterCache',out);
+				sprite._set$P('_isHaveGlowFilter',scope.getValue("isHaveGlowFilter"));
 			}
 			Filter._EndTarget=function (scope,context){
 				var source=scope.getValue("src");
@@ -22245,7 +23932,7 @@ window.Laya=(function(window,document){
 					var tPadding=0;
 					var tHalfPadding=0;
 					var tIsHaveGlowFilter=false;
-					var out=sprite._filterCache ? sprite._filterCache :null;
+					var out=sprite._$P._filterCache ? sprite._$P._filterCache :null;
 					if (!out || sprite._repaint){
 						tIsHaveGlowFilter=sprite.isHaveGlowFilter();
 						scope.addValue("isHaveGlowFilter",tIsHaveGlowFilter);
@@ -22357,8 +24044,8 @@ window.Laya=(function(window,document){
 		}
 
 		WebGL.addRenderFinish=function(){
-			if (WebGL._isExperimentalWebgl){
-				Render.finish=function (){
+			if (WebGL._isExperimentalWebgl || Render.isFlash){
+				RunDriver.endFinish=function (){
 					Render.context.ctx.finish();
 				}
 			}
@@ -22366,7 +24053,7 @@ window.Laya=(function(window,document){
 
 		WebGL.removeRenderFinish=function(){
 			if (WebGL._isExperimentalWebgl){
-				Render.finish=function (){}
+				RunDriver.endFinish=function (){}
 			}
 		}
 
@@ -22374,6 +24061,7 @@ window.Laya=(function(window,document){
 			AtlasResourceManager.instance.freeAll();
 			ResourceManager.releaseContentManagers(true);
 			WebGL.doNodeRepaint(Laya.stage);
+			WebGL.mainContext.viewport(0,0,RenderState2D.width,RenderState2D.height);
 		}
 
 		WebGL.doNodeRepaint=function(sprite){
@@ -22388,7 +24076,7 @@ window.Laya=(function(window,document){
 				return new WebGLContext2D(canvas);
 			};
 			var webGLName=WebGL.isWebGLSupported();
-			var gl=WebGL.mainContext=canvas.getContext(webGLName,{stencil:true,alpha:false,antialias:true,premultipliedAlpha:false});
+			var gl=WebGL.mainContext=RunDriver.newWebGLContext(canvas,webGLName);
 			WebGL._isExperimentalWebgl=(webGLName !="webgl" && (Browser.onWeiXin || Browser.onMQQBrowser));
 			Browser.window.SetupWebglContext && Browser.window.SetupWebglContext(gl);
 			WebGL.onStageResize(width,height);
@@ -22403,7 +24091,7 @@ window.Laya=(function(window,document){
 			Shader2D.__init__();
 			Buffer.__int__(gl);
 			BlendMode._init_(gl);
-			if (System.isConchApp){
+			if (Render.isConchApp){
 				conch.setOnInvalidGLRes(WebGL.onInvalidGLRes);
 			}
 		}
@@ -22456,14 +24144,23 @@ window.Laya=(function(window,document){
 			value!==WebGLContext._frontFace && (WebGLContext._frontFace=value,gl.frontFace(value));
 		}
 
+		WebGLContext.bindTexture=function(gl,target,texture){
+			gl.bindTexture(target,texture);
+			WebGLContext.curBindTexTarget=target;
+			WebGLContext.curBindTexValue=texture;
+		}
+
 		WebGLContext._useProgram=null;
 		WebGLContext._depthTest=true;
 		WebGLContext._depthMask=1;
+		WebGLContext._depthFunc=0x0203;
 		WebGLContext._blend=false;
 		WebGLContext._sFactor=1;
 		WebGLContext._dFactor=0;
 		WebGLContext._cullFace=false;
 		WebGLContext._frontFace=0x0901;
+		WebGLContext.curBindTexTarget=null
+		WebGLContext.curBindTexValue=null
 		WebGLContext.__init$=function(){
 			;
 		}
@@ -22473,651 +24170,271 @@ window.Laya=(function(window,document){
 
 
 	/**
-	*
-	*@author ww
-	*@version 1.0
-	*
-	*@created 2015-11-16 下午1:26:53
+	*@private
 	*/
-	//class ide.event.Notices
-	var Notices=(function(){
-		function Notices(){}
-		__class(Notices,'ide.event.Notices');
-		Notices.RENDER_INITED="RenderInited";
-		return Notices;
+	//class laya.ani.AnimationState
+	var AnimationState=(function(){
+		function AnimationState(){}
+		__class(AnimationState,'laya.ani.AnimationState');
+		AnimationState.stopped=0;
+		AnimationState.paused=1;
+		AnimationState.playing=2;
+		return AnimationState;
 	})()
 
 
 	/**
-	*...
-	*@author WW
+	*@private
 	*/
-	//class viewRender.ViewRenderBase
-	var ViewRenderBase=(function(){
-		function ViewRenderBase(){
-			this.initFuns();
+	//class laya.ani.bone.BoneSlot
+	var BoneSlot=(function(){
+		function BoneSlot(){
+			this.textureArray=[];
+			this.displayDataArray=[];
+			this.currTexture=null;
+			this.currDisplayData=null;
+			this._parentMatrix=null;
 		}
 
-		__class(ViewRenderBase,'viewRender.ViewRenderBase');
-		var __proto=ViewRenderBase.prototype;
-		__proto.initFuns=function(){
-			Browser.window.renderBinds={};
-			Browser.window.renderBinds.setData=Utils1.bind(this.setData,this);
-			Browser.window.renderBinds.updateData=Utils1.bind(this.updateData,this);
-			Browser.window.renderBinds.clearRender=Utils1.bind(this.clearRender,this);
-			Browser.window.renderBinds.sizeRender=Utils1.bind(this.sizeRender,this);
-			Browser.window.renderBinds.posRender=Utils1.bind(this.posRender,this);
-			Browser.window.renderBinds.getRenderData=Utils1.bind(this.getRenderData,this);
-			Browser.window.renderBinds.getStage=Utils1.bind(this.getStage,this);
-			Browser.window.renderBinds.setNotice=Utils1.bind(this.setNotice,this);
+		__class(BoneSlot,'laya.ani.bone.BoneSlot');
+		var __proto=BoneSlot.prototype;
+		/**
+		*加入皮肤
+		*@param texture
+		*@param displayData
+		*/
+		__proto.addSprite=function(texture,displayData){
+			this.textureArray.push(texture);
+			this.displayDataArray.push(displayData);
+			displayData.name
+			this.showSpriteByIndex(0);
 		}
 
-		__proto.getRenderData=function(){
+		/**
+		*显示哪个皮肤
+		*@param index
+		*/
+		__proto.showSpriteByIndex=function(index){
+			if (index >-1 && index < this.textureArray.length){
+				this.currTexture=this.textureArray[index];
+				}else {
+				this.currTexture=null;
+			}
+			if (index >-1 && index < this.displayDataArray.length){
+				this.currDisplayData=this.displayDataArray[index];
+				}else {
+				this.currDisplayData=null;
+			}
+		}
+
+		/**
+		*替换皮肤
+		*@param _texture
+		*/
+		__proto.replaceSkin=function(_texture){
+			this.currTexture=_texture;
+		}
+
+		/**
+		*保存父矩阵的索引
+		*@param parentMatrix
+		*/
+		__proto.setParentMatrix=function(parentMatrix){
+			this._parentMatrix=parentMatrix;
+		}
+
+		/**
+		*把纹理画到Graphics上
+		*@param graphics
+		*/
+		__proto.draw=function(graphics){
+			if (this.currTexture==null || this.currDisplayData==null)return;
+			var tTexture=this.currTexture;
+			if (graphics){
+				var tCurrentMatrix=this.getDisplayMatrix();
+				if (tCurrentMatrix){
+					Matrix.mul(tCurrentMatrix,this._parentMatrix,Matrix.TEMP);
+					var tResultMatrix=new Matrix();
+					Matrix.TEMP.copy(tResultMatrix);
+					graphics.drawTexture(tTexture,-tTexture.sourceWidth / 2,-tTexture.sourceHeight / 2,tTexture.sourceWidth,tTexture.sourceHeight,tResultMatrix);
+				}
+			}
+		}
+
+		/**
+		*画骨骼的起始点，方便调试
+		*@param graphics
+		*/
+		__proto.drawBonePoint=function(graphics){
+			if (graphics && this._parentMatrix){
+				graphics.drawCircle(this._parentMatrix.tx,this._parentMatrix.ty,5,"#ff0000");
+			}
+		}
+
+		/**
+		*得到显示对象的矩阵
+		*@return
+		*/
+		__proto.getDisplayMatrix=function(){
+			if (this.currDisplayData){
+				return this.currDisplayData.transform.getMatrix();
+			}
 			return null;
 		}
 
-		__proto.setData=function(data){}
-		__proto.updateData=function(data){}
-		__proto.clearRender=function(){}
-		__proto.sizeRender=function(width,height){}
-		__proto.posRender=function(x,y){}
-		__proto.getStage=function(){
-			return Laya.stage;
-		}
-
-		__proto.setNotice=function(notice){
-			Notice.I=notice;
-			Notice.notify("RenderInited");
-		}
-
-		return ViewRenderBase;
-	})()
-
-
-	//class laya.ani.bone.Templet
-	var Templet=(function(){
-		function Templet(data,tex){
-			this._vision="";
-			//this._usePack=0;
-			//this._uv=null;
-			//this._bones=null;
-			this._anims=[];
-			//this._strArr=null;
-			this._targetAnim=[];
-			this._boneCount=0;
-			//this._boneMatrix=null;
-			this._textures=[];
-			//this._textureWidth=NaN;
-			//this._textureHeight=NaN;
-			this.frameCount=0;
-			this.frameRate=0;
-			this.animNames={};
-			this._graphicsArrs_=[];
-			//this._texture=null;
-			this._texture=tex;
-			this._textureWidth=tex.width;
-			this._textureHeight=tex.height;
-			this._execute(data);
-		}
-
-		__class(Templet,'laya.ani.bone.Templet');
-		var __proto=Templet.prototype;
-		__proto._execute=function(data){
-			var b=new Byte(data);
-			this._vision=[b.getUint8(),b.getUint8(),b.getUint8(),b.getUint8()].join(",");
-			this.frameRate=b.getUint8();
-			this._usePack=b.getUint8();
-			this._strArr=b.getString().split("\n");
-			var len=b.getInt16();
-			this._uv=b.getInt16Array(b.pos,len *8 *2);
-			for (var i=0;i < len;++i){
-				var u1=this._texture.uv[0],v1=this._texture.uv[1],u2=this._texture.uv[4],v2=this._texture.uv[5];
-				var inAltasUVWidth=(u2-u1),inAltasUVHeight=(v2-v1);
-				var uvStart=i *8,l=this._uv[uvStart],u=this._uv[uvStart+1],w=this._uv[uvStart+2],h=this._uv[uvStart+3];
-				var oriU1=l / this._textureWidth,oriU2=(l+w)/ this._textureWidth,oriV1=u / this._textureHeight,oriV2=(u+h)/ this._textureHeight;
-				var oriUV=[oriU1,oriV1,oriU2,oriV1,oriU2,oriV2,oriU1,oriV2];
-				var tex=this._textures[i]=new Texture(this._texture.bitmap,[u1+oriUV[0] *inAltasUVWidth,v1+oriUV[1] *inAltasUVHeight,u2-(1-oriUV[2])*inAltasUVWidth,v1+oriUV[3] *inAltasUVHeight,u2-(1-oriUV[4])*inAltasUVWidth,v2-(1-oriUV[5])*inAltasUVHeight,u1+oriUV[6] *inAltasUVWidth,v2-(1-oriUV[7])*inAltasUVHeight]);
-				tex.w=this._uv[uvStart+4];
-				tex.h=this._uv[uvStart+5];
-				tex.__w=w;
-				tex.__h=h;
-				tex._offsetX=this._uv[uvStart+6];
-				tex._offsetY=this._uv[uvStart+7];
-			}
-			this._boneCount=len=b.getInt16()
-			this._boneMatrix=b.getFloat32Array(b.pos,len *6 *4);
-			this._bones=b.getInt16Array(b.pos,len *4 *2);
-			len=b.getInt16();
-			for (var k=0;k < len;k++){
-				var arr=[];
-				arr._index_=k;
-				this._graphicsArrs_.push(arr);
-				var nameIndex=b.getInt16();
-				this.animNames[this._strArr[nameIndex]]=k;
-				this.frameCount=b.getInt16();
-				arr.length=arr._length=this.frameCount;
-				var blockNum=b.getInt16();
-				this._anims.push(b.getFloat32Array(b.pos,blockNum *Templet.SRC_ANIMLEN *4));
-				var outPut=new Float32Array(this.frameCount *this._boneCount *Templet.ANIMLEN);
-				this._targetAnim.push(outPut);
-				this.interpolation(this._anims[k],outPut,blockNum);
-			}
-		}
-
-		__proto.planish=function(i,_index_){
-			var outAnim=this._targetAnim[_index_];
-			var gr=new Graphics();
-			var planishMat=[];
-			var i_animlen=i *Templet.ANIMLEN;
-			for (var j=0;j < this._boneCount;j++){
-				var bStart=j *4;
-				var mStart=j *6;
-				var pIndex=this._bones[bStart];
-				var mAStart=j *this.frameCount *Templet.ANIMLEN+i_animlen;
-				var mM=this._getMat(this._boneMatrix,mStart);
-				var mAM,tmp,outM=new Matrix();
-				if (pIndex >-1){
-					var mpAStart=pIndex *this.frameCount *Templet.ANIMLEN+i_animlen;
-					var mpAM=planishMat[pIndex];
-					var nodeType=this._bones[bStart+2];
-					switch (nodeType){
-						case 0:
-							mAM=this._getMat(outAnim,mAStart);
-							tmp=Matrix.TEMP;
-							var tx=mAM.tx,ty=mAM.ty;
-							mAM.setTranslate(0,0);
-							Matrix.mul(mAM,mM,tmp);
-							tmp.translate(tx,ty);
-							Matrix.mul(tmp,mpAM,planishMat[j]=outM);
-							mAM=null;
-							break ;
-						case 1:;
-							var texIndex=outAnim[mAStart+7];
-							if (texIndex==-1)
-								continue ;
-							var alpha=outAnim[mAStart+6];
-							if (alpha < 0.001)continue ;
-							texIndex=outAnim[mAStart+7];
-							var tex=this._textures[texIndex];
-							mM.tx-=tex._offsetX;
-							mM.ty-=tex._offsetY;
-							Matrix.mul(mM,mpAM,outM);
-							if (alpha < 0.9999){
-								gr.save();
-								gr.alpha(alpha);
-								gr.drawTexture(tex,-tex.w / 2,-tex.w / 2,tex.__w,tex.__h,outM);
-								gr.restore();
-							}
-							else{
-								gr.drawTexture(tex,-tex.w / 2,-tex.w / 2,tex.__w,tex.__h,outM);
-							}
-							break ;
-						case 2:
-							break ;
-						default :
-							break ;
-						}
-				}
-				else{
-					mAM=this._getMat(outAnim,mAStart);
-					Matrix.mul(mAM,mM,planishMat[j]=outM);
-				}
-			}
-			return gr;
-		}
-
-		__proto.interpolation=function(input,outPut,blockNum){
-			var outFrameNum=0,i=0,j=0,k=0,start=0,duration=0,type=0,outStart=0,delta=NaN,next=0;
-			for (i=0;i < blockNum;i++,start+=Templet.SRC_ANIMLEN){
-				duration=input[start+6];
-				type=input[start+7];
-				if (duration > 1){
-					next=start+Templet.SRC_ANIMLEN;
-					for (j=0;j < duration;j++){
-						outStart=outFrameNum++*Templet.ANIMLEN;
-						if (type==-1){
-							for (k=0;k < 6;k++){
-								outPut[outStart+k]=input[start+k];
-							}
-							outPut[outStart+6]=input[start+8];
-							outPut[outStart+7]=input[start+9];
-						}
-						else{
-							for (k=0;k < 6;k++){
-								delta=input[next+k]-input[start+k];
-								if (k==1 || k==2)
-									delta=Arith.formatR(delta);
-								delta /=duration;
-								outPut[outStart+k]=j *delta+input[start+k];
-							}
-							delta=(input[next+8]-input[start+8])/ duration;
-							outPut[outStart+6]=j *delta+input[start+8];
-							outPut[outStart+7]=input[start+9];
-						}
-					}
-				}
-				else{
-					outStart=outFrameNum++*Templet.ANIMLEN;
-					for (j=0;j < 6;j++)
-					outPut[outStart+j]=input[start+j];
-					outPut[outStart+6]=1;
-					outPut[outStart+7]=input[start+9];
-				}
-			}
-		}
-
-		//贴图索引
-		__proto._getMat=function(tran,start){
-			var mat=new Matrix();
-			var a=tran[start],b=tran[start+1],c=tran[start+2],d=tran[start+3],tx=tran[start+4],ty=tran[start+5];
-			if (c !=0 || b !=0){
-				var cos=Math.cos(b),sin=Math.sin(b);
-				mat.setTo(a *cos,a *sin,d *-sin,d *cos,tx,ty);
-			}
-			else
-			mat.setTo(a,b,c,d,tx,ty);
-			return mat;
-		}
-
-		__getset(0,__proto,'textureWidth',function(){
-			return this._textureWidth;
-		});
-
-		__getset(0,__proto,'textureHeight',function(){
-			return this._textureHeight;
-		});
-
-		Templet.ANIMLEN=8;
-		Templet.SRC_ANIMLEN=10;
-		return Templet;
+		return BoneSlot;
 	})()
 
 
 	/**
-	*...
-	*@author ww
+	*@private
 	*/
-	//class laya.particle.emitter.EmitterBase
-	var EmitterBase=(function(){
-		function EmitterBase(){
-			this._frameTime=0;
-			this._emissionRate=60;
-			this._emissionTime=0;
-			this.minEmissionTime=1/60;
-			this._particleTemplate=null;
+	//class laya.ani.bone.SkinData
+	var SkinData=(function(){
+		function SkinData(){
+			this.name=null;
+			this.slotArr=[];
 		}
 
-		__class(EmitterBase,'laya.particle.emitter.EmitterBase');
-		var __proto=EmitterBase.prototype;
-		/**
-		*开始发射粒子
-		*@param duration 发射持续的时间
-		*/
-		__proto.start=function(duration){
-			(duration===void 0)&& (duration=Number.MAX_VALUE);
-			if (this._emissionRate !=0)
-				this._emissionTime=duration;
-		}
-
-		/**
-		*停止发射粒子
-		*@param clearParticles 是否清理当前的粒子
-		*/
-		__proto.stop=function(){
-			this._emissionTime=0;
-		}
-
-		/**
-		*清理当前的活跃粒子
-		*@param clearTexture 是否清理贴图数据,若清除贴图数据将无法再播放
-		*/
-		__proto.clear=function(){
-			this._emissionTime=0;
-		}
-
-		__proto.emit=function(){}
-		__proto.advanceTime=function(passedTime){
-			(passedTime===void 0)&& (passedTime=1);
-			this._emissionTime-=passedTime;
-			if(this._emissionTime<0)return;
-			this._frameTime+=passedTime;
-			if (this._frameTime < this.minEmissionTime)return;
-			while(this._frameTime>this.minEmissionTime){
-				this._frameTime-=this.minEmissionTime;
-				this.emit();
+		__class(SkinData,'laya.ani.bone.SkinData');
+		var __proto=SkinData.prototype;
+		__proto.initData=function(data){
+			this.name=data.name;
+			var tMySlotData;
+			var tSlotData;
+			var tSlotDataArr=data.slot;
+			for (var i=0;i < tSlotDataArr.length;i++){
+				tSlotData=tSlotDataArr[i];
+				tMySlotData=new SlotData();
+				tMySlotData.initData(tSlotData);
+				this.slotArr.push(tMySlotData);
 			}
 		}
 
-		__getset(0,__proto,'particleTemplate',null,function(particleTemplate){
-			this._particleTemplate=particleTemplate;
-		});
-
-		/**
-		*设置粒子发射速率
-		*@param emissionRate 粒子发射速率 (个/秒)
-		*/
-		/**
-		*获取粒子发射速率
-		*@return 发射速率 粒子发射速率 (个/秒)
-		*/
-		__getset(0,__proto,'emissionRate',function(){
-			return this._emissionRate;
-			},function(_emissionRate){
-			if(_emissionRate<=0)return;
-			this._emissionRate=_emissionRate;
-			(_emissionRate>0)&&(this.minEmissionTime=1/_emissionRate);
-		});
-
-		return EmitterBase;
+		return SkinData;
 	})()
 
 
 	/**
-	*...
-	*@author
+	*@private
 	*/
-	//class laya.particle.ParticleData
-	var ParticleData=(function(){
-		function ParticleData(){
-			this.position=null;
-			this.velocity=null;
-			this.color=null;
-			this.sizeRotation=null;
-			this.radiusRadian=null;
-			this.durationAddScale=NaN;
-			this.time=NaN;
+	//class laya.ani.bone.SkinSlotDisplayData
+	var SkinSlotDisplayData=(function(){
+		function SkinSlotDisplayData(){
+			this.name=null;
+			this.type=null;
+			this.transform=null;
+			this.pivot=null;
+			this.uvs=null;
+			this.triangles=null;
+			this.weights=null;
+			this.vertices=null;
+			this.slotPos=null;
+			this.bonePose=null;
+			this.edges=null;
+			this.userEdges=null;
 		}
 
-		__class(ParticleData,'laya.particle.ParticleData');
-		ParticleData.Create=function(settings,position,velocity,time){
-			var particleData=new ParticleData();
-			particleData.position=position;
-			MathUtil.scaleVector3(velocity,settings.emitterVelocitySensitivity,velocity);
-			var horizontalVelocity=MathUtil.lerp(settings.minHorizontalVelocity,settings.maxHorizontalVelocity,Math.random());
-			var horizontalAngle=Math.random()*Math.PI *2;
-			velocity[0]+=horizontalVelocity *Math.cos(horizontalAngle);
-			velocity[1]+=horizontalVelocity *Math.sin(horizontalAngle);
-			velocity[2]+=MathUtil.lerp(settings.minVerticalVelocity,settings.maxVerticalVelocity,Math.random());
-			particleData.velocity=velocity;
-			particleData.color=new Float32Array(4);
-			var i=0;
-			if (settings.colorComponentInter){
-				for (i=0;i < 4;i++)
-				particleData.color[i]=MathUtil.lerp(settings.minColor[i],settings.maxColor[i],Math.random());
+		__class(SkinSlotDisplayData,'laya.ani.bone.SkinSlotDisplayData');
+		var __proto=SkinSlotDisplayData.prototype;
+		__proto.initData=function(data){
+			this.name=data.name;
+			this.type=data.type;
+			this.transform=new Transform();
+			this.transform.initData(data.transform);
+		}
+
+		return SkinSlotDisplayData;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.ani.bone.SlotData
+	var SlotData=(function(){
+		function SlotData(){
+			this.name=null;
+			this.displayArr=[];
+		}
+
+		__class(SlotData,'laya.ani.bone.SlotData');
+		var __proto=SlotData.prototype;
+		__proto.initData=function(data){
+			this.name=data.name;
+			var tMyDisplayData;
+			var tDisplayData;
+			var tDisplayDataArr=data.display;
+			for (var h=0;h < tDisplayDataArr.length;h++){
+				tDisplayData=tDisplayDataArr[h];
+				tMyDisplayData=new SkinSlotDisplayData();
+				tMyDisplayData.initData(tDisplayData);
+				this.displayArr.push(tMyDisplayData);
 			}
-			else{
-				MathUtil.lerpVector4(settings.minColor,settings.maxColor,Math.random(),particleData.color);
+		}
+
+		return SlotData;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.ani.bone.Transform
+	var Transform=(function(){
+		function Transform(){
+			this.skX=0;
+			this.skY=0;
+			this.scX=1;
+			this.scY=1;
+			this.x=0;
+			this.y=0;
+			this.mMatrix=null;
+		}
+
+		__class(Transform,'laya.ani.bone.Transform');
+		var __proto=Transform.prototype;
+		__proto.initData=function(data){
+			if (data.x !=undefined){
+				this.x=data.x;
 			}
-			particleData.sizeRotation=new Float32Array(3);
-			var sizeRandom=Math.random();
-			particleData.sizeRotation[0]=MathUtil.lerp(settings.minStartSize,settings.maxStartSize,sizeRandom);
-			particleData.sizeRotation[1]=MathUtil.lerp(settings.minEndSize,settings.maxEndSize,sizeRandom);
-			particleData.sizeRotation[2]=MathUtil.lerp(settings.minRotateSpeed,settings.maxRotateSpeed,Math.random());
-			particleData.radiusRadian=new Float32Array(4);
-			var radiusRandom=Math.random();
-			particleData.radiusRadian[0]=MathUtil.lerp(settings.minStartRadius,settings.maxStartRadius,radiusRandom);
-			particleData.radiusRadian[1]=MathUtil.lerp(settings.minEndRadius,settings.maxEndRadius,radiusRandom);
-			particleData.radiusRadian[2]=MathUtil.lerp(settings.minHorizontalEndRadian,settings.maxHorizontalEndRadian,Math.random());
-			particleData.radiusRadian[3]=MathUtil.lerp(settings.minVerticalEndRadian,settings.maxVerticalEndRadian,Math.random());
-			particleData.durationAddScale=settings.ageAddScale *Math.random();
-			particleData.time=time;
-			return particleData;
-		}
-
-		return ParticleData;
-	})()
-
-
-	/**
-	*...
-	*@author ...
-	*/
-	//class laya.particle.ParticleSettings
-	var ParticleSettings=(function(){
-		function ParticleSettings(){
-			this.textureName=null;
-			this.textureCount=1;
-			this.maxPartices=100;
-			this.duration=1;
-			this.ageAddScale=0;
-			this.minHorizontalVelocity=0;
-			this.maxHorizontalVelocity=0;
-			this.minVerticalVelocity=0;
-			this.maxVerticalVelocity=0;
-			this.endVelocity=1;
-			this.colorComponentInter=false;
-			this.minRotateSpeed=0;
-			this.maxRotateSpeed=0;
-			this.minStartSize=100;
-			this.maxStartSize=100;
-			this.minEndSize=100;
-			this.maxEndSize=100;
-			this.emitterVelocitySensitivity=1;
-			this.minStartRadius=0;
-			this.maxStartRadius=0;
-			this.minEndRadius=0;
-			this.maxEndRadius=0;
-			this.minHorizontalEndRadian=0;
-			this.maxHorizontalEndRadian=0;
-			this.minVerticalEndRadian=0;
-			this.maxVerticalEndRadian=0;
-			this.blendState=0;
-			this.emitterType="null";
-			this.emissionRate=0;
-			this.sphereEmitterRadius=1;
-			this.sphereEmitterVelocity=0;
-			this.sphereEmitterVelocityAddVariance=0;
-			this.ringEmitterRadius=30;
-			this.ringEmitterVelocity=0;
-			this.ringEmitterVelocityAddVariance=0;
-			this.ringEmitterUp=2;
-			this.gravity=new Float32Array([0,0,0]);
-			this.minColor=new Float32Array([1,1,1,1]);
-			this.maxColor=new Float32Array([1,1,1,1]);
-			this.pointEmitterPosition=new Float32Array([0,0,0]);
-			this.pointEmitterPositionVariance=new Float32Array([0,0,0]);
-			this.pointEmitterVelocity=new Float32Array([0,0,0]);
-			this.pointEmitterVelocityAddVariance=new Float32Array([0,0,0]);
-			this.boxEmitterCenterPosition=new Float32Array([0,0,0]);
-			this.boxEmitterSize=new Float32Array([0,0,0]);
-			this.boxEmitterVelocity=new Float32Array([0,0,0]);
-			this.boxEmitterVelocityAddVariance=new Float32Array([0,0,0]);
-			this.sphereEmitterCenterPosition=new Float32Array([0,0,0]);
-			this.ringEmitterCenterPosition=new Float32Array([0,0,0]);
-			this.positionVariance=new Float32Array([0,0,0]);
-		}
-
-		__class(ParticleSettings,'laya.particle.ParticleSettings');
-		ParticleSettings.fromFile=function(particleSettingFile){}
-		return ParticleSettings;
-	})()
-
-
-	/**
-	*...
-	*@author
-	*/
-	//class laya.particle.ParticleTemplateBase
-	var ParticleTemplateBase=(function(){
-		function ParticleTemplateBase(){
-			this.settings=null;
-			this.texture=null;
-		}
-
-		__class(ParticleTemplateBase,'laya.particle.ParticleTemplateBase');
-		var __proto=ParticleTemplateBase.prototype;
-		__proto.addParticleArray=function(position,velocity){}
-		return ParticleTemplateBase;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.particle.particleUtils.CanvasShader
-	var CanvasShader=(function(){
-		function CanvasShader(){
-			this.u_EndVelocity=NaN;
-			this.u_Gravity=null;
-			this.u_Duration=NaN;
-			this.a_RadiusRadian=null;
-			this.a_Position=null;
-			this.a_SizeRotation=null;
-			this.a_Color=null;
-			this.a_Velocity=null;
-			this.gl_Position=null;
-			this.v_Color=null;
-			this.a_AgeAddScale=NaN;
-			this.oSize=NaN;
-			this._color=new Float32Array(4);
-			this._position=new Float32Array(3);
-		}
-
-		__class(CanvasShader,'laya.particle.particleUtils.CanvasShader');
-		var __proto=CanvasShader.prototype;
-		__proto.getLen=function(position){
-			return Math.sqrt(position[0] *position[0]+position[1] *position[1]+position[2] *position[2]);
-		}
-
-		__proto.ComputeParticlePosition=function(position,velocity,age,normalizedAge){
-			this._position[0]=position[0];
-			this._position[1]=position[1];
-			this._position[2]=position[2];
-			var startVelocity=this.getLen(velocity);
-			var endVelocity=startVelocity *this.u_EndVelocity;
-			var velocityIntegral=startVelocity *normalizedAge+(endVelocity-startVelocity)*normalizedAge *normalizedAge / 2.0;
-			var lenVelocity=NaN;
-			lenVelocity=this.getLen(velocity);
-			var i=0,len=0;
-			len=3;
-			for (i=0;i < len;i++){
-				this._position[i]+=this._position[i]+(velocity[i] / lenVelocity)*velocityIntegral *this.u_Duration;
-				this._position[i]+=this.u_Gravity[i] *age *normalizedAge;
-			};
-			var radius=MathUtil.lerp(this.a_RadiusRadian[0],this.a_RadiusRadian[1],normalizedAge);
-			var radianHorizontal=this.a_RadiusRadian[2] *normalizedAge;
-			var radianVertical=this.a_RadiusRadian[3] *normalizedAge;
-			var r=Math.cos(radianVertical)*radius;
-			this._position[1]+=Math.sin(radianVertical)*radius;
-			this._position[0]+=Math.cos(radianHorizontal)*r;
-			this._position[2]+=Math.sin(radianHorizontal)*r;
-			return new Float32Array([this._position[0],this._position[1],0.0,1.0]);
-		}
-
-		__proto.ComputeParticleSize=function(startSize,endSize,normalizedAge){
-			var size=MathUtil.lerp(startSize,endSize,normalizedAge);
-			return size;
-		}
-
-		__proto.ComputeParticleRotation=function(rot,age){
-			return rot *age;
-		}
-
-		__proto.ComputeParticleColor=function(projectedPosition,color,normalizedAge){
-			var rst=this._color;
-			rst[0]=color[0];
-			rst[1]=color[1];
-			rst[2]=color[2];
-			rst[3]=color[3]*normalizedAge *(1.0-normalizedAge)*(1.0-normalizedAge)*6.7;
-			return rst;
-		}
-
-		__proto.clamp=function(value,min,max){
-			if(value<min)return min;
-			if(value>max)return max;
-			return value;
-		}
-
-		__proto.getData=function(age){
-			age *=1.0+this.a_AgeAddScale;
-			var normalizedAge=this.clamp(age / this.u_Duration,0.0,1.0);
-			this.gl_Position=this.ComputeParticlePosition(this.a_Position,this.a_Velocity,age,normalizedAge);
-			var pSize=this.ComputeParticleSize(this.a_SizeRotation[0],this.a_SizeRotation[1],normalizedAge);
-			var rotation=this.ComputeParticleRotation(this.a_SizeRotation[2],age);
-			this.v_Color=this.ComputeParticleColor(this.gl_Position,this.a_Color,normalizedAge);
-			var matric=new Matrix();
-			var scale=NaN;
-			scale=pSize/this.oSize*2;
-			matric.scale(scale,scale);
-			matric.rotate(rotation);
-			matric.setTranslate(this.gl_Position[0],-this.gl_Position[1]);
-			var alpha=NaN;
-			alpha=this.v_Color[3];
-			return [this.v_Color,alpha,matric,this.v_Color[0]*alpha,this.v_Color[1]*alpha,this.v_Color[2]*alpha];
-		}
-
-		return CanvasShader;
-	})()
-
-
-	/**
-	*
-	*@author ww
-	*@version 1.0
-	*
-	*@created 2015-8-25 下午3:41:07
-	*/
-	//class laya.particle.particleUtils.CMDParticle
-	var CMDParticle=(function(){
-		function CMDParticle(){
-			this.maxIndex=0;
-			this.cmds=null;
-			this.id=0;
-		}
-
-		__class(CMDParticle,'laya.particle.particleUtils.CMDParticle');
-		var __proto=CMDParticle.prototype;
-		__proto.setCmds=function(cmds){
-			this.cmds=cmds;
-			this.maxIndex=cmds.length-1;
-		}
-
-		return CMDParticle;
-	})()
-
-
-	/**
-	*
-	*@author ww
-	*@version 1.0
-	*
-	*@created 2015-8-26 下午7:22:26
-	*/
-	//class laya.particle.particleUtils.PicTool
-	var PicTool=(function(){
-		function PicTool(){}
-		__class(PicTool,'laya.particle.particleUtils.PicTool');
-		PicTool.getCanvasPic=function(img,color){
-			img=img.bitmap;
-			var canvas=Browser.createElement("canvas");
-			var ctx=canvas.getContext('2d');
-			canvas.height=img.height;
-			canvas.width=img.width;
-			ctx.drawImage(img.source,0,0);
-			var imgdata=ctx.getImageData(0,0,canvas.width,canvas.height);
-			var data=imgdata.data;
-			var red=(color >> 16 & 0xFF);
-			var green=(color >> 8 & 0xFF);
-			var blue=(color & 0xFF);
-			for(var i=0,n=data.length;i<n;i+=4){
-				if(data[i+3]==0)continue ;
-				data[i]=red;
-				data[i+1]=green;
-				data[i+2]=blue;
+			if (data.y !=undefined){
+				this.y=data.y;
 			}
-			ctx.putImageData(imgdata,0,0);
-			canvas.source=canvas;
-			return canvas;
+			if (data.skX !=undefined){
+				this.skX=data.skX;
+			}
+			if (data.skY !=undefined){
+				this.skY=data.skY;
+			}
+			if (data.scX !=undefined){
+				this.scX=data.scX;
+			}
+			if (data.scY !=undefined){
+				this.scY=data.scY;
+			}
 		}
 
-		PicTool.getRGBPic=function(img){
-			var rst;
-			rst=[new Texture(PicTool.getCanvasPic(img,0xFF0000)),new Texture(PicTool.getCanvasPic(img,0x00FF00)),new Texture(PicTool.getCanvasPic(img,0x0000FF))];
-			return rst;
+		__proto.getMatrix=function(){
+			var tMatrix;
+			if (this.mMatrix){
+				tMatrix=this.mMatrix;
+				}else {
+				tMatrix=this.mMatrix=new Matrix();
+			}
+			tMatrix.a=Math.cos(this.skY);
+			tMatrix
+			if (this.skX !=0 || this.skY !=0){
+				var tAngle=this.skX *Math.PI / 180;
+				var cos=Math.cos(tAngle),sin=Math.sin(tAngle);
+				tMatrix.setTo(this.scX *cos,this.scX *sin,this.scY *-sin,this.scY *cos,this.x,this.y);
+				}else {
+				tMatrix.setTo(this.scX,this.skX,this.skY,this.scY,this.x,this.y);
+			}
+			return tMatrix;
 		}
 
-		return PicTool;
+		return Transform;
 	})()
 
 
@@ -23497,10 +24814,10 @@ window.Laya=(function(window,document){
 			this.destroyed=false;
 			this._displayInStage=false;
 			this._parent=null;
-			this._privates=null;
 			Node.__super.call(this);
 			this._childs=Node.ARRAY_EMPTY;
 			this.timer=Laya.timer;
+			this._$P=Node.PROP_EMPTY;
 		}
 
 		__class(Node,'laya.display.Node',_super);
@@ -23518,7 +24835,7 @@ window.Laya=(function(window,document){
 				else this.removeChildren();
 			}
 			this._childs=null;
-			this._privates && (this._privates=null);
+			this._$P=null;
 			this.offAll();
 		}
 
@@ -23614,8 +24931,15 @@ window.Laya=(function(window,document){
 		}
 
 		/**@private */
-		__proto.getPrivates=function(){
-			return this._privates;
+		__proto._get$P=function(key){
+			return this._$P[key];
+		}
+
+		/**@private */
+		__proto._set$P=function(key,value){
+			this._$P===Node.PROP_EMPTY && (this._$P={});
+			this._$P[key]=value;
+			return value;
 		}
 
 		/**
@@ -23887,6 +25211,7 @@ window.Laya=(function(window,document){
 		Node.ASK_VALUE_HTMLELEMENT=3;
 		Node.ASK_VALUE_SPRITE3D=100;
 		Node.ARRAY_EMPTY=[];
+		Node.PROP_EMPTY={};
 		return Node;
 	})(EventDispatcher)
 
@@ -23977,6 +25302,246 @@ window.Laya=(function(window,document){
 
 
 	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.LayaFactory extends laya.events.EventDispatcher
+	var LayaFactory=(function(_super){
+		function LayaFactory(){
+			this.mTexture=null;
+			this.mSubTextureArr=null;
+			this.mSubTextureDic={};
+			this.mArmatureDic={};
+			this.mSlotDic={};
+			this.mDisplay=null;
+			this.mArmatureArr=[];
+			this.mDBTextureDataArray=[];
+			LayaFactory.__super.call(this);
+		}
+
+		__class(LayaFactory,'laya.ide.dragonBones.LayaFactory',_super);
+		var __proto=LayaFactory.prototype;
+		__proto.parseData=function(texture,textureJson,skeletonJson){
+			this.mTexture=texture;
+			var tJsonData=textureJson;
+			this.mSubTextureArr=[];
+			var tSubTextureArr=tJsonData.SubTexture;
+			var tSubTexture;
+			var tDBTextureData
+			if (tSubTextureArr){
+				var tSubTextureData=null;
+				var tX=0;
+				var tY=0;
+				var tWidth=0;
+				var tHeight=0;
+				var tFrameX=0;
+				var tFrameY=0;
+				var tFrameWidth=0;
+				var tFrameHeight=0;
+				var tName;
+				for (var i=0,n=tSubTextureArr.length;i < n;i++){
+					tSubTextureData=tSubTextureArr[i];
+					tDBTextureData=new DBTextureData();
+					tDBTextureData.x=tX=tSubTextureData.x;
+					tDBTextureData.y=tY=tSubTextureData.y;
+					tDBTextureData.w=tWidth=tSubTextureData.width;
+					tDBTextureData.h=tHeight=tSubTextureData.height;
+					tDBTextureData.frameX=tFrameX=tSubTextureData.frameX;
+					tDBTextureData.frameY=tFrameY=tSubTextureData.frameY;
+					tDBTextureData.frameW=tFrameWidth=tSubTextureData.frameWidth;
+					tDBTextureData.frameH=tFrameHeight=tSubTextureData.frameHeight;
+					tDBTextureData.name=tName=tSubTextureData.name;
+					this.mDBTextureDataArray.push(tDBTextureData);
+					tSubTexture=Texture.create(this.mTexture,tX,tY,tWidth,tHeight,tFrameX,tFrameY);
+					this.mSubTextureArr.push(tSubTexture);
+					this.mSubTextureDic[tName]=tSubTexture;
+				}
+			}
+			this.skeletonComplete(skeletonJson);
+		}
+
+		__proto.skeletonComplete=function(e){
+			var i=0,j=0;
+			var tFrameRate=e.frameRate;
+			var tArmatureData;
+			var tArmatureDataArr=e.armature;
+			for (i=0;i < tArmatureDataArr.length;i++){
+				tArmatureData=tArmatureDataArr[i];
+				if (tArmatureData){
+					var tArmature=new DBArmatureData();
+					tArmature.name=tArmatureData.name;
+					tArmature.frameRate=tArmatureData.frameRate;
+					this.mArmatureDic[tArmature.name]=tArmature;
+					this.mArmatureArr.push(tArmature);
+					var tMyBoneData;
+					var tBoneData;
+					var tBoneDataArr=tArmatureData.bone;
+					for (j=0;j < tBoneDataArr.length;j++){
+						tBoneData=tBoneDataArr[j];
+						tMyBoneData=new DBBoneData();
+						tMyBoneData.initData(tBoneData);
+						tMyBoneData.transform=this.parseTransform(tBoneData.transform);
+						tArmature.boneArr.push(tMyBoneData);
+					};
+					var tBoneSlotData;
+					var tBoneSlotDataArr;
+					tBoneSlotDataArr=tArmatureData.slot;
+					for (j=0;j < tBoneSlotDataArr.length;j++){
+						tBoneSlotData=tBoneSlotDataArr[j];
+						if (tBoneSlotData){
+							var tMyBoneSlotData=new DBBoneSlotData();
+							tMyBoneSlotData.name=tBoneSlotData.name;
+							tMyBoneSlotData.parent=tBoneSlotData.parent;
+							tMyBoneSlotData.displayIndex=tBoneSlotData.displayIndex;
+							tMyBoneSlotData.blendMode=tBoneSlotData.blendMode;
+							tMyBoneSlotData.userData=tBoneSlotData.userData;
+							tArmature.slotArr.push(tMyBoneSlotData);
+						}
+					};
+					var tSkinData;
+					var tSkinArray=tArmatureData.skin;
+					if (tSkinArray){
+						var tMySkinData;
+						for (j=0;j < tSkinArray.length;j++){
+							tSkinData=tSkinArray[j];
+							tMySkinData=new DBSkinData();
+							tMySkinData.initData(tSkinData);
+							tArmature.skinArr.push(tMySkinData);
+						}
+					};
+					var tAnimationData;
+					var tAnimationDataArr=tArmatureData.animation;
+					for (j=0;j < tAnimationDataArr.length;j++){
+						tAnimationData=tAnimationDataArr[j];
+						var tMyAnimationData=new DBAnimationData();
+						tMyAnimationData.initData(tAnimationData);
+						tArmature.animationDic[tMyAnimationData.name]=tMyAnimationData;
+						tArmature.animationArr.push(tMyAnimationData);
+					}
+				}
+			}
+			this.event("complete");
+		}
+
+		__proto.buildArmature=function(armatureName){
+			var tArmature=new Armature;
+			tArmature.display=new Sprite();
+			var tArmatureData=this.mArmatureDic[armatureName];
+			tArmature.armatureData=tArmatureData;
+			if (tArmatureData){
+				var i=0,j=0,z=0;
+				var tMyBoneData;
+				var tParentBone;
+				var tMyBone;
+				var tRootBone;
+				for (i=0;i < tArmatureData.boneArr.length;i++){
+					tMyBoneData=tArmatureData.boneArr[i];
+					tMyBone=new DBBone();
+					tMyBone.setData(tMyBoneData);
+					if (tRootBone){
+						tParentBone=tRootBone.findBone(tMyBoneData.parent);
+						if (tParentBone){
+							tParentBone.addChild(tMyBone);
+							}else {
+							tRootBone=tMyBone;
+						}
+						}else {
+						tRootBone=tMyBone;
+					}
+				}
+				tArmature.boneRoot=tRootBone;
+				var tMyBoneSlot;
+				var tMyBoneSlotData;
+				for (i=0;i < tArmatureData.slotArr.length;i++){
+					tMyBoneSlotData=tArmatureData.slotArr[i];
+					tMyBone=tRootBone.findBone(tMyBoneSlotData.parent);
+					if (tMyBone){
+						this.mSlotDic[tMyBoneSlotData.name]=tMyBoneSlot=tMyBone.setSlot(tMyBoneSlotData);
+						tArmature.display.addChild(tMyBoneSlot);
+					}
+				};
+				var tMySkinData;
+				var tMySlotData;
+				var tMyDisplayData;
+				var tTexture;
+				for (i=0;i < tArmatureData.skinArr.length;i++){
+					if (i !=0)break ;
+					tMySkinData=tArmatureData.skinArr[i];
+					for (j=0;j < tMySkinData.slotArr.length;j++){
+						tMySlotData=tMySkinData.slotArr[j];
+						tMyBoneSlot=this.mSlotDic[tMySlotData.name];
+						if (tMyBoneSlot){
+							for (z=0;z < tMySlotData.displayArr.length;z++){
+								tMyDisplayData=tMySlotData.displayArr[z];
+								tTexture=this.getSpriteByName(tMyDisplayData.name);
+								if (tTexture){
+									tMyBoneSlot.addSprite(tTexture,tMyDisplayData);
+								}
+							}
+							tMyBoneSlot.showSprite(0);
+						}
+					}
+				}
+			}
+			return tArmature;
+		}
+
+		__proto.getSpriteByName=function(name){
+			var tTexture=this.mSubTextureDic[name];
+			return tTexture;
+		}
+
+		__proto.parseTransform=function(data,pivot){
+			var tTransform
+			if (data){
+				tTransform=new DBTransform();
+				tTransform.initData(data);
+			}
+			if (pivot){
+				pivot.x=data.pX;
+				pivot.y=data.pY;
+			}
+			return tTransform;
+		}
+
+		return LayaFactory;
+	})(EventDispatcher)
+
+
+	/**
+	*本类用于模块间消息传递
+	*@author ww
+	*/
+	//class ide.managers.Notice extends laya.events.EventDispatcher
+	var Notice=(function(_super){
+		function Notice(){
+			Notice.__super.call(this);
+		}
+
+		__class(Notice,'ide.managers.Notice',_super);
+		Notice.notify=function(type,data){
+			console.log("notify:",type,data);
+			Notice.I.event(type,data);
+		}
+
+		Notice.listen=function(type,_scope,fun,args,cancelBefore){
+			(cancelBefore===void 0)&& (cancelBefore=false);
+			if(cancelBefore)Notice.cancel(type,_scope,fun);
+			Notice.I.on(type,_scope,fun,args);
+		}
+
+		Notice.cancel=function(type,_scope,fun){
+			Notice.I.off(type,_scope,fun);
+		}
+
+		__static(Notice,
+		['I',function(){return this.I=new Notice();}
+		]);
+		return Notice;
+	})(EventDispatcher)
+
+
+	/**
 	*@private
 	*使用Audio标签播放声音
 	*/
@@ -24054,7 +25619,6 @@ window.Laya=(function(window,document){
 			var ad;
 			ad=AudioSound._audioCache[this.url];
 			if (!ad)return null;
-			ad.autoplay=true;
 			var tAd;
 			tAd=Pool.getItem("audio:"+this.url);
 			tAd=tAd?tAd:ad.cloneNode(true);
@@ -24164,6 +25728,7 @@ window.Laya=(function(window,document){
 			this.loaded=false;
 			this.data=null;
 			this.audioBuffer=null;
+			this.__toPlays=null;
 			WebAudioSound.__super.call(this);
 		}
 
@@ -24179,26 +25744,58 @@ window.Laya=(function(window,document){
 			this.url=url;
 			this.audioBuffer=WebAudioSound._dataCache[url];
 			if (this.audioBuffer){
-				_loaded();
+				this._loaded(this.audioBuffer);
 				return;
-			};
+			}
+			WebAudioSound.e.on("loaded:"+url,this,this._loaded);
+			WebAudioSound.e.on("err:"+url,this,this._err);
+			if (WebAudioSound.__loadingSound[url]){
+				return;
+			}
+			WebAudioSound.__loadingSound[url]=true;
 			var request=new Browser.window.XMLHttpRequest();
 			request.open("GET",url,true);
 			request.responseType="arraybuffer";
 			request.onload=function (){
 				me.data=request.response;
-				WebAudioSound.buffs.push({"buffer":me.data,"loaded":_loaded,"err":_err,"me":me,"url":me.url});
+				WebAudioSound.buffs.push({"buffer":me.data,"url":me.url});
 				WebAudioSound.decode();
 			};
 			request.send();
-			function _loaded (){
-				WebAudioSound._dataCache[url]=me.audioBuffer;
-				me.loaded=true;
-				me.event("complete");
+		}
+
+		__proto._err=function(){
+			this._removeLoadEvents();
+			this.event("error");
+		}
+
+		__proto._loaded=function(audioBuffer){
+			this._removeLoadEvents();
+			this.audioBuffer=audioBuffer;
+			WebAudioSound._dataCache[this.url]=this.audioBuffer;
+			this.loaded=true;
+			this.event("complete");
+		}
+
+		__proto._removeLoadEvents=function(){
+			WebAudioSound.e.off("loaded:"+this.url,this,this._loaded);
+			WebAudioSound.e.off("err:"+this.url,this,this._err);
+		}
+
+		__proto.__playAfterLoaded=function(){
+			if (!this.__toPlays)return;
+			var i=0,len=0;
+			var toPlays;
+			toPlays=this.__toPlays;
+			len=toPlays.length;
+			var tParams;
+			for (i=0;i < len;i++){
+				tParams=toPlays[i];
+				if(tParams[2]&&!(tParams [2]).isStopped){
+					this.play(tParams[0],tParams[1],tParams[2]);
+				}
 			}
-			function _err (){
-				me.event("error");
-			}
+			this.__toPlays.length=0;
 		}
 
 		/**
@@ -24214,7 +25811,9 @@ window.Laya=(function(window,document){
 			channel=channel ? channel :new WebAudioSoundChannel();
 			if (!this.audioBuffer){
 				if (this.url){
-					this.once("complete",this,this.play,[startTime,loops,channel]);
+					if (!this.__toPlays)this.__toPlays=[];
+					this.__toPlays.push([startTime,loops,channel]);
+					this.once("complete",this,this.__playAfterLoaded);
 					this.load(this.url);
 				}
 			}
@@ -24241,28 +25840,51 @@ window.Laya=(function(window,document){
 		}
 
 		WebAudioSound._done=function(audioBuffer){
-			WebAudioSound.tInfo["me"].audioBuffer=audioBuffer;
-			if (WebAudioSound.tInfo["loaded"]){
-				WebAudioSound.tInfo["loaded"]();
-			}
+			WebAudioSound.e.event("loaded:"+WebAudioSound.tInfo.url,audioBuffer);
 			WebAudioSound.isDecoding=false;
 			WebAudioSound.decode();
 		}
 
 		WebAudioSound._fail=function(){
-			if (WebAudioSound.tInfo["err"]){
-				WebAudioSound.tInfo["err"]();
-			}
+			WebAudioSound.e.event("err:"+WebAudioSound.tInfo.url,null);
 			WebAudioSound.isDecoding=false;
 			WebAudioSound.decode();
+		}
+
+		WebAudioSound._playEmptySound=function(){
+			if (WebAudioSound.ctx==null){return;};
+			var source=WebAudioSound.ctx.createBufferSource();
+			source.buffer=WebAudioSound._miniBuffer;
+			source.connect(WebAudioSound.ctx.destination);
+			source.start(0,0,0);
+		}
+
+		WebAudioSound._unlock=function(){
+			if (WebAudioSound._unlocked){return;}
+				WebAudioSound._playEmptySound();
+			if (WebAudioSound.ctx.state=="running"){
+				Browser.document.removeEventListener("mousedown",WebAudioSound._unlock,true);
+				Browser.document.removeEventListener("touchend",WebAudioSound._unlock,true);
+				WebAudioSound._unlocked=true;
+			}
+		}
+
+		WebAudioSound.initWebAudio=function(){
+			if (WebAudioSound.ctx.state !="running"){
+				WebAudioSound._unlock();
+				Browser.document.addEventListener("mousedown",WebAudioSound._unlock,true);
+				Browser.document.addEventListener("touchend",WebAudioSound._unlock,true);
+			}
 		}
 
 		WebAudioSound._dataCache={};
 		WebAudioSound.buffs=[];
 		WebAudioSound.isDecoding=false;
+		WebAudioSound._unlocked=false;
 		WebAudioSound.tInfo=null
+		WebAudioSound.__loadingSound={};
 		__static(WebAudioSound,
-		['window',function(){return this.window=Browser.window;},'webAudioOK',function(){return this.webAudioOK=WebAudioSound.window["AudioContext"] || WebAudioSound.window["webkitAudioContext"] || WebAudioSound.window["mozAudioContext"];},'ctx',function(){return this.ctx=WebAudioSound.webAudioOK ? new (WebAudioSound.window["AudioContext"] || WebAudioSound.window["webkitAudioContext"] || WebAudioSound.window["mozAudioContext"])():undefined;}
+		['window',function(){return this.window=Browser.window;},'webAudioOK',function(){return this.webAudioOK=WebAudioSound.window["AudioContext"] || WebAudioSound.window["webkitAudioContext"] || WebAudioSound.window["mozAudioContext"];},'ctx',function(){return this.ctx=WebAudioSound.webAudioOK ? new (WebAudioSound.window["AudioContext"] || WebAudioSound.window["webkitAudioContext"] || WebAudioSound.window["mozAudioContext"])():undefined;},'_miniBuffer',function(){return this._miniBuffer=WebAudioSound.ctx.createBuffer(1,1,22050);},'e',function(){return this.e=new EventDispatcher();}
 		]);
 		return WebAudioSound;
 	})(EventDispatcher)
@@ -24476,7 +26098,7 @@ window.Laya=(function(window,document){
 		*@param url 资源地址。
 		*/
 		__proto._loadImage=function(url){
-			var image=new HTMLImage();
+			var image=HTMLImage.create();
 			var _this=this;
 			image.onload=function (){
 				clear();
@@ -24526,7 +26148,8 @@ window.Laya=(function(window,document){
 
 		/**@private */
 		__proto.onError=function(message){
-			this.event("error",message);
+			this.event
+			("error",message);
 		}
 
 		/**
@@ -24582,12 +26205,12 @@ window.Laya=(function(window,document){
 					pics=this._data.pics;
 					var tPic;
 					var map=Loader.atlasMap[this._url] || (Loader.atlasMap[this._url]=[]);
-					var needSub=Config.atlasEnable && Render.isWebGl;
+					var needSub=Config.atlasEnable && Render.isWebGL;
 					for (var name in frames){
 						var obj=frames[name];
 						tPic=pics[obj.frame.idx ? obj.frame.idx :0];
 						var url=directory+name;
-						Loader.loadedMap[url]=Texture.create(tPic,obj.frame.x,obj.frame.y,obj.frame.w,obj.frame.h,obj.spriteSourceSize.x,obj.spriteSourceSize.y);
+						Loader.loadedMap[url]=Texture.create(tPic,obj.frame.x,obj.frame.y,obj.frame.w,obj.frame.h,obj.spriteSourceSize.x,obj.spriteSourceSize.y,obj.sourceSize.w,obj.sourceSize.h);
 						map.push(Loader.loadedMap[url]);
 					}
 					this.complete(this._data);
@@ -25133,41 +26756,44 @@ window.Laya=(function(window,document){
 	*/
 	//class laya.resource.Texture extends laya.events.EventDispatcher
 	var Texture=(function(_super){
-		function Texture(bitmapResource,uv){
+		function Texture(bitmap,uv){
 			//this.bitmap=null;
 			//this.uv=null;
+			this.offsetX=0;
+			this.offsetY=0;
+			this.sourceWidth=0;
+			this.sourceHeight=0;
 			//this._loaded=false;
 			this._w=0;
 			this._h=0;
-			this.offsetX=0;
-			this.offsetY=0;
 			Texture.__super.call(this);
-			this.set(bitmapResource,uv);
+			this.setTo(bitmap,uv);
 		}
 
 		__class(Texture,'laya.resource.Texture',_super);
 		var __proto=Texture.prototype;
 		/**
 		*设置此对象的位图资源、UV数据信息。
-		*@param bitmapResource 位图资源
+		*@param bitmap 位图资源
 		*@param uv UV数据信息
-		*@param canInAtlas 是否存入图集。
 		*/
-		__proto.set=function(bitmapResource,uv){
-			this.bitmap=bitmapResource;
+		__proto.setTo=function(bitmap,uv){
+			this.bitmap=bitmap;
 			this.uv=uv || Texture.DEF_UV;
-			if (bitmapResource){
-				this._w=bitmapResource.width;
-				this._h=bitmapResource.height;
+			if (bitmap){
+				this._w=bitmap.width;
+				this._h=bitmap.height;
+				this.sourceWidth=this.sourceWidth || this._w;
+				this.sourceHeight=this.sourceHeight || this._h
 				this._loaded=this._w > 0;
 				var _this=this;
 				if (this._loaded){
-					(System.addToAtlas)&& (System.addToAtlas(_this));
+					RunDriver.addToAtlas && RunDriver.addToAtlas(_this);
 					}else {
-					var bm=bitmapResource;
-					if (((bm instanceof laya.resource.HTMLImage ))&& (bm.image))
+					var bm=bitmap;
+					if ((bm instanceof laya.resource.HTMLImage )&& bm.image)
 						bm.image.addEventListener('load',function(e){
-						(System.addToAtlas)&& (System.addToAtlas(_this));
+						RunDriver.addToAtlas && RunDriver.addToAtlas(_this);
 					},false);
 				}
 			}
@@ -25190,15 +26816,15 @@ window.Laya=(function(window,document){
 		__proto.load=function(url){
 			var _$this=this;
 			this._loaded=false;
-			var fileBitmap=(this.bitmap || (this.bitmap=new HTMLImage()));
+			var fileBitmap=(this.bitmap || (this.bitmap=HTMLImage.create()));
 			var _this=this;
 			fileBitmap.onload=function (){
 				fileBitmap.onload=null;
 				_this._loaded=true;
-				_$this._w=fileBitmap.width;
-				_$this._h=fileBitmap.height;
+				_$this.sourceWidth=_$this._w=fileBitmap.width;
+				_$this.sourceHeight=_$this._h=fileBitmap.height;
 				_this.event("loaded",this);
-				(System.addToAtlas)&& (System.addToAtlas(_this));
+				(RunDriver.addToAtlas)&& (RunDriver.addToAtlas(_this));
 			};
 			fileBitmap.src=URL.formatURL(url);
 		}
@@ -25209,6 +26835,7 @@ window.Laya=(function(window,document){
 			return (this.uv && this.uv!==Texture.DEF_UV)? (this.uv[5]-this.uv[1])*this.bitmap.height :this.bitmap.height;
 			},function(value){
 			this._h=value;
+			this.sourceHeight || (this.sourceHeight=value);
 		});
 
 		/**
@@ -25237,6 +26864,7 @@ window.Laya=(function(window,document){
 			return (this.uv && this.uv!==Texture.DEF_UV)? (this.uv[2]-this.uv[0])*this.bitmap.width :this.bitmap.width;
 			},function(value){
 			this._w=value;
+			this.sourceWidth || (this.sourceWidth=value);
 		});
 
 		Texture.moveUV=function(offsetX,offsetY,uv){
@@ -25247,18 +26875,22 @@ window.Laya=(function(window,document){
 			return uv;
 		}
 
-		Texture.create=function(source,x,y,width,height,offsetX,offsetY){
+		Texture.create=function(source,x,y,width,height,offsetX,offsetY,sourceWidth,sourceHeight){
 			(offsetX===void 0)&& (offsetX=0);
 			(offsetY===void 0)&& (offsetY=0);
+			(sourceWidth===void 0)&& (sourceWidth=0);
+			(sourceHeight===void 0)&& (sourceHeight=0);
 			var uv=source.uv || Texture.DEF_UV;
-			var bitmapResource=source.bitmap || source;
-			var tex=new Texture(bitmapResource,null);
+			var bitmap=source.bitmap || source;
+			var tex=new Texture(bitmap,null);
 			tex.width=width;
 			tex.height=height;
 			tex.offsetX=offsetX;
 			tex.offsetY=offsetY;
-			var dwidth=1 / bitmapResource.width;
-			var dheight=1 / bitmapResource.height;
+			tex.sourceWidth=sourceWidth || width;
+			tex.sourceHeight=sourceHeight || height;
+			var dwidth=1 / bitmap.width;
+			var dheight=1 / bitmap.height;
 			x *=dwidth;
 			y *=dheight;
 			width *=dwidth;
@@ -25270,10 +26902,19 @@ window.Laya=(function(window,document){
 			return tex;
 		}
 
+		Texture.createFromTexture=function(texture,x,y,width,height){
+			var rect=Rectangle.TEMP.setTo(x-texture.offsetX,y-texture.offsetY,width,height);
+			var result=rect.intersection(Texture._rect1.setTo(0,0,texture.width,texture.height),Texture._rect2);
+			if (result)return Texture.create(texture,result.x,result.y,result.width,result.height,result.x-rect.x,result.y-rect.y,width,height);
+			else return new Texture(HTMLImage.create());
+		}
+
 		Texture.TEXTURE2D=1;
 		Texture.TEXTURE3D=2;
 		Texture.DEF_UV=[0,0,1.0,0,1.0,1.0,0,1.0];
 		Texture.INV_UV=[0,1,1.0,1,1.0,0.0,0,0.0];
+		Texture._rect1=new Rectangle();
+		Texture._rect2=new Rectangle();
 		return Texture;
 	})(EventDispatcher)
 
@@ -25831,6 +27472,11 @@ window.Laya=(function(window,document){
 			}
 		}
 
+		/**@inheritDoc */
+		__proto.setTransform=function(value){
+			(value==='none')? (this._tf=Style._TF_EMPTY):this.attrs(CSSStyle.parseOneCSS(value,','));
+		}
+
 		/**
 		*定义 X 轴、Y 轴移动转换。
 		*@param x X 轴平移量。
@@ -26229,11 +27875,6 @@ window.Laya=(function(window,document){
 				}
 		});
 
-		/**@inheritDoc */
-		__getset(0,__proto,'transform',_super.prototype._$get_transform,function(value){
-			(value==='none')? (this._tf=Style._TF_EMPTY):this.attrs(CSSStyle.parseOneCSS(value,','));
-		});
-
 		__getset(0,__proto,'_translate',null,function(value){
 			this.translate(value[0],value[1]);
 		});
@@ -26346,7 +27987,7 @@ window.Laya=(function(window,document){
 			for (var i=0;i < 20;i++){
 				this._elements[i]=mat[i];
 			}
-			this._action=System.createFilterAction(0x20);
+			this._action=RunDriver.createFilterAction(0x20);
 			this._action.data=this;
 		}
 
@@ -26404,8 +28045,8 @@ window.Laya=(function(window,document){
 			var width=this.width;
 			var height=this.height;
 			var sizeGrid=this._sizeGrid;
-			var sw=source.width;
-			var sh=source.height;
+			var sw=source.sourceWidth;
+			var sh=source.sourceHeight;
 			if (!sizeGrid || (sw===width && sh===height)){
 				this.clear();
 				this.drawTexture(source,0,0,width,height);
@@ -26493,7 +28134,7 @@ window.Laya=(function(window,document){
 		*/
 		__getset(0,__proto,'width',function(){
 			if (this._width)return this._width;
-			if (this._source)return this._source.width;
+			if (this._source)return this._source.sourceWidth;
 			return 0;
 			},function(value){
 			this._width=value;
@@ -26505,19 +28146,19 @@ window.Laya=(function(window,document){
 		*/
 		__getset(0,__proto,'height',function(){
 			if (this._height)return this._height;
-			if (this._source)return this._source.height;
+			if (this._source)return this._source.sourceHeight;
 			return 0;
 			},function(value){
 			this._height=value;
 			Laya.timer.callLater(this,this.changeSource);
 		});
 
-		AutoBitmap.getTexture=function(source,x,y,width,height){
-			source.$GID || (source.$GID=Utils1.getGID())
-			var key=source.$GID+"."+x+"."+y+"."+width+"."+height;
+		AutoBitmap.getTexture=function(tex,x,y,width,height){
+			tex.$GID || (tex.$GID=Utils1.getGID())
+			var key=tex.$GID+"."+x+"."+y+"."+width+"."+height;
 			var texture=AutoBitmap.textureCache[key];
 			if (!texture){
-				texture=AutoBitmap.textureCache[key]=Texture.create(source,x,y,width,height);
+				texture=AutoBitmap.textureCache[key]=Texture.createFromTexture(tex,x,y,width,height);
 			}
 			return texture;
 		}
@@ -26534,35 +28175,1076 @@ window.Laya=(function(window,document){
 
 
 	/**
-	*本类用于模块间消息传递
-	*@author ww
+	*
+	*@private
+	*
+	*@created 2015-12-21 下午4:37:29
 	*/
-	//class ide.managers.Notice extends laya.events.EventDispatcher
-	var Notice=(function(_super){
-		function Notice(){
-			Notice.__super.call(this);
+	//class laya.particle.emitter.Emitter2D extends laya.particle.emitter.EmitterBase
+	var Emitter2D=(function(_super){
+		function Emitter2D(_template){
+			this.settiong=null;
+			this._posRange=null;
+			this._canvasTemplate=null;
+			this._emitFun=null;
+			Emitter2D.__super.call(this);
+			this._particleTemplate=_template;
+			this.settiong=_template.settings;
+			this._posRange=this.settiong.positionVariance;
+			if((_template instanceof laya.particle.ParticleTemplate2D )){
+				this._emitFun=this.webGLEmit;
+			}else
+			if((_template instanceof laya.particle.ParticleTemplateCanvas )){
+				this._canvasTemplate=_template;
+				this._emitFun=this.canvasEmit;
+			}
 		}
 
-		__class(Notice,'ide.managers.Notice',_super);
-		Notice.notify=function(type,data){
-			console.log("notify:",type,data);
-			Notice.I.event(type,data);
+		__class(Emitter2D,'laya.particle.emitter.Emitter2D',_super);
+		var __proto=Emitter2D.prototype;
+		__proto.emit=function(){
+			_super.prototype.emit.call(this);
+			if(this._emitFun!=null)
+				this._emitFun();
 		}
 
-		Notice.listen=function(type,_scope,fun,args,cancelBefore){
-			(cancelBefore===void 0)&& (cancelBefore=false);
-			if(cancelBefore)Notice.cancel(type,_scope,fun);
-			Notice.I.on(type,_scope,fun,args);
+		__proto.getRandom=function(value){
+			return (Math.random()*2-1)*value;
 		}
 
-		Notice.cancel=function(type,_scope,fun){
-			Notice.I.off(type,_scope,fun);
+		__proto.webGLEmit=function(){
+			var pos=new Float32Array(3);
+			pos[0]=this.getRandom(this._posRange[0]);
+			pos[1]=this.getRandom(this._posRange[1]);
+			pos[2]=this.getRandom(this._posRange[2]);
+			var v=new Float32Array(3);
+			v[0]=0;
+			v[1]=0;
+			v[2]=0;
+			this._particleTemplate.addParticleArray(pos,v);
 		}
 
-		__static(Notice,
-		['I',function(){return this.I=new Notice();}
-		]);
-		return Notice;
+		__proto.canvasEmit=function(){
+			var pos=new Float32Array(3);
+			pos[0]=this.getRandom(this._posRange[0]);
+			pos[1]=this.getRandom(this._posRange[1]);
+			pos[2]=this.getRandom(this._posRange[2]);
+			var v=new Float32Array(3);
+			v[0]=0;
+			v[1]=0;
+			v[2]=0;
+			this._particleTemplate.addParticleArray(pos,v);
+		}
+
+		return Emitter2D;
+	})(EmitterBase)
+
+
+	/**
+	*@private
+	*/
+	//class laya.particle.ParticleTemplateWebGL extends laya.particle.ParticleTemplateBase
+	var ParticleTemplateWebGL=(function(_super){
+		function ParticleTemplateWebGL(parSetting){
+			this._vertices=null;
+			this._vertexBuffer=null;
+			this._indexBuffer=null;
+			this._floatCountPerVertex=23;
+			this._firstActiveElement=0;
+			this._firstNewElement=0;
+			this._firstFreeElement=0;
+			this._firstRetiredElement=0;
+			this._currentTime=0;
+			this._drawCounter=0;
+			ParticleTemplateWebGL.__super.call(this);
+			this.settings=parSetting;
+		}
+
+		__class(ParticleTemplateWebGL,'laya.particle.ParticleTemplateWebGL',_super);
+		var __proto=ParticleTemplateWebGL.prototype;
+		__proto.initialize=function(){
+			this._vertices=new Float32Array(this.settings.maxPartices *this._floatCountPerVertex *4);
+			var particleOffset=0;
+			for (var i=0;i < this.settings.maxPartices;i++){
+				var random=Math.random();
+				var cornerYSegement=this.settings.textureCount ? 1.0 / this.settings.textureCount :1.0;
+				var cornerY=NaN;
+				for (cornerY=0;cornerY < this.settings.textureCount;cornerY+=cornerYSegement){
+					if (random < cornerY+cornerYSegement)
+						break ;
+				}
+				particleOffset=i *this._floatCountPerVertex *4;
+				this._vertices[particleOffset+this._floatCountPerVertex *0+0]=-1;
+				this._vertices[particleOffset+this._floatCountPerVertex *0+1]=-1;
+				this._vertices[particleOffset+this._floatCountPerVertex *0+2]=0;
+				this._vertices[particleOffset+this._floatCountPerVertex *0+3]=cornerY;
+				this._vertices[particleOffset+this._floatCountPerVertex *1+0]=1;
+				this._vertices[particleOffset+this._floatCountPerVertex *1+1]=-1;
+				this._vertices[particleOffset+this._floatCountPerVertex *1+2]=1;
+				this._vertices[particleOffset+this._floatCountPerVertex *1+3]=cornerY;
+				this._vertices[particleOffset+this._floatCountPerVertex *2+0]=1;
+				this._vertices[particleOffset+this._floatCountPerVertex *2+1]=1;
+				this._vertices[particleOffset+this._floatCountPerVertex *2+2]=1;
+				this._vertices[particleOffset+this._floatCountPerVertex *2+3]=cornerY+cornerYSegement;
+				this._vertices[particleOffset+this._floatCountPerVertex *3+0]=-1;
+				this._vertices[particleOffset+this._floatCountPerVertex *3+1]=1;
+				this._vertices[particleOffset+this._floatCountPerVertex *3+2]=0;
+				this._vertices[particleOffset+this._floatCountPerVertex *3+3]=cornerY+cornerYSegement;
+			}
+		}
+
+		__proto.loadContent=function(){
+			this._vertexBuffer=VertexBuffer.create(0x88E8);
+			var indexes=new Uint16Array(this.settings.maxPartices *6);
+			for (var i=0;i < this.settings.maxPartices;i++){
+				indexes[i *6+0]=(i *4+0);
+				indexes[i *6+1]=(i *4+1);
+				indexes[i *6+2]=(i *4+2);
+				indexes[i *6+3]=(i *4+0);
+				indexes[i *6+4]=(i *4+2);
+				indexes[i *6+5]=(i *4+3);
+			}
+			this._indexBuffer=IndexBuffer.create();
+			this._indexBuffer.clear();
+			this._indexBuffer.append(indexes);
+			this._indexBuffer.upload();
+		}
+
+		__proto.update=function(elapsedTime){
+			this._currentTime+=elapsedTime / 1000;
+			this.retireActiveParticles();
+			this.freeRetiredParticles();
+			if (this._firstActiveElement==this._firstFreeElement)
+				this._currentTime=0;
+			if (this._firstRetiredElement==this._firstActiveElement)
+				this._drawCounter=0;
+		}
+
+		__proto.retireActiveParticles=function(){
+			var particleDuration=this.settings.duration;
+			while (this._firstActiveElement !=this._firstNewElement){
+				var index=this._firstActiveElement *this._floatCountPerVertex *4+22;
+				var particleAge=this._currentTime-this._vertices[index];
+				if (particleAge < particleDuration)
+					break ;
+				this._vertices[index]=this._drawCounter;
+				this._firstActiveElement++;
+				if (this._firstActiveElement >=this.settings.maxPartices)
+					this._firstActiveElement=0;
+			}
+		}
+
+		__proto.freeRetiredParticles=function(){
+			while (this._firstRetiredElement !=this._firstActiveElement){
+				var age=this._drawCounter-this._vertices[this._firstRetiredElement *this._floatCountPerVertex *4+22];
+				if (age < 3)
+					break ;
+				this._firstRetiredElement++;
+				if (this._firstRetiredElement >=this.settings.maxPartices)
+					this._firstRetiredElement=0;
+			}
+		}
+
+		__proto.addNewParticlesToVertexBuffer=function(){
+			this._vertexBuffer.clear();
+			this._vertexBuffer.append(this._vertices);
+			var start=0;
+			if (this._firstNewElement < this._firstFreeElement){
+				start=this._firstNewElement *4 *this._floatCountPerVertex *4;
+				this._vertexBuffer.subUpload(start,start,start+(this._firstFreeElement-this._firstNewElement)*4 *this._floatCountPerVertex *4);
+				}else {
+				start=this._firstNewElement *4 *this._floatCountPerVertex *4;
+				this._vertexBuffer.subUpload(start,start,start+(this.settings.maxPartices-this._firstNewElement)*4 *this._floatCountPerVertex *4);
+				if (this._firstFreeElement > 0){
+					this._vertexBuffer.setNeedUpload();
+					this._vertexBuffer.subUpload(0,0,this._firstFreeElement *4 *this._floatCountPerVertex *4);
+				}
+			}
+			this._firstNewElement=this._firstFreeElement;
+		}
+
+		__proto.addParticleArray=function(position,velocity){
+			var nextFreeParticle=this._firstFreeElement+1;
+			if (nextFreeParticle >=this.settings.maxPartices)
+				nextFreeParticle=0;
+			if (nextFreeParticle===this._firstRetiredElement)
+				return;
+			var particleData=ParticleData.Create(this.settings,position,velocity,this._currentTime);
+			var startIndex=this._firstFreeElement *this._floatCountPerVertex *4;
+			for (var i=0;i < 4;i++){
+				var j=0,offset=0;
+				for (j=0,offset=4;j < 3;j++)
+				this._vertices[startIndex+i *this._floatCountPerVertex+offset+j]=particleData.position[j];
+				for (j=0,offset=7;j < 3;j++)
+				this._vertices[startIndex+i *this._floatCountPerVertex+offset+j]=particleData.velocity[j];
+				for (j=0,offset=10;j < 4;j++)
+				this._vertices[startIndex+i *this._floatCountPerVertex+offset+j]=particleData.color[j];
+				for (j=0,offset=14;j < 3;j++)
+				this._vertices[startIndex+i *this._floatCountPerVertex+offset+j]=particleData.sizeRotation[j];
+				for (j=0,offset=17;j < 4;j++)
+				this._vertices[startIndex+i *this._floatCountPerVertex+offset+j]=particleData.radiusRadian[j];
+				this._vertices[startIndex+i *this._floatCountPerVertex+21]=particleData.durationAddScale;
+				this._vertices[startIndex+i *this._floatCountPerVertex+22]=particleData.time;
+			}
+			this._firstFreeElement=nextFreeParticle;
+		}
+
+		return ParticleTemplateWebGL;
+	})(ParticleTemplateBase)
+
+
+	/**
+	*@private
+	*/
+	//class laya.particle.ParticleTemplateCanvas extends laya.particle.ParticleTemplateBase
+	var ParticleTemplateCanvas=(function(_super){
+		function ParticleTemplateCanvas(parSetting){
+			this._ready=false;
+			this.textureList=[];
+			this.particleList=[];
+			this.pX=0;
+			this.pY=0;
+			this.activeParticles=[];
+			this.deadParticles=[];
+			this.iList=[];
+			this._maxNumParticles=0;
+			this.textureWidth=NaN;
+			this.dTextureWidth=NaN;
+			this.colorChange=true;
+			this.step=1/60;
+			this.canvasShader=new CanvasShader();
+			ParticleTemplateCanvas.__super.call(this);
+			this.settings=parSetting;
+			this._maxNumParticles=parSetting.maxPartices;
+			this.texture=new Texture();
+			this.texture.on("loaded",this,this._textureLoaded);
+			this.texture.load(parSetting.textureName);
+		}
+
+		__class(ParticleTemplateCanvas,'laya.particle.ParticleTemplateCanvas',_super);
+		var __proto=ParticleTemplateCanvas.prototype;
+		__proto._textureLoaded=function(e){
+			this.setTexture(this.texture);
+			this._ready=true;
+		}
+
+		__proto.clear=function(clearTexture){
+			(clearTexture===void 0)&& (clearTexture=true);
+			this.deadParticles.length=0;
+			this.activeParticles.length=0;
+			this.textureList.length=0;
+		}
+
+		/**
+		*设置纹理
+		*@param texture
+		*
+		*/
+		__proto.setTexture=function(texture){
+			this.texture=texture;
+			this.textureWidth=texture.width;
+			this.dTextureWidth=1/this.textureWidth;
+			this.pX=-texture.width*0.5;
+			this.pY=-texture.height*0.5;
+			this.textureList=ParticleTemplateCanvas.changeTexture(texture,this.textureList);
+			this.particleList.length=0;
+			this.deadParticles.length=0;
+			this.activeParticles.length=0;
+		}
+
+		/**
+		*创建一个粒子数据
+		*@return
+		*
+		*/
+		__proto._createAParticleData=function(position,velocity){
+			this.canvasShader.u_EndVelocity=this.settings.endVelocity;
+			this.canvasShader.u_Gravity=this.settings.gravity;
+			this.canvasShader.u_Duration=this.settings.duration;
+			var particle;
+			particle=ParticleData.Create(this.settings,position,velocity,0);
+			this.canvasShader.a_RadiusRadian=particle.radiusRadian;
+			this.canvasShader.a_Position=particle.position;
+			this.canvasShader.a_SizeRotation=particle.sizeRotation;
+			this.canvasShader.a_Color=particle.color;
+			this.canvasShader.a_Velocity=particle.velocity;
+			this.canvasShader.a_AgeAddScale=particle.durationAddScale;
+			this.canvasShader.oSize=this.textureWidth;
+			var rst=new CMDParticle();
+			var i=0,len=this.settings.duration/(1+particle.durationAddScale);
+			var params=[];
+			var mStep=NaN;
+			for(i=0;i<len;i+=this.step){
+				params.push(this.canvasShader.getData(i));
+			}
+			rst.id=this.particleList.length;
+			this.particleList.push(rst);
+			rst.setCmds(params);
+			return rst;
+		}
+
+		__proto.addParticleArray=function(position,velocity){
+			if(!this._ready)return;
+			var tParticle;
+			if(this.particleList.length<this._maxNumParticles){
+				tParticle=this._createAParticleData(position,velocity);
+				this.iList[tParticle.id]=0;
+				this.activeParticles.push(tParticle);
+				}else{
+				if(this.deadParticles.length>0){
+					tParticle=this.deadParticles.pop();
+					this.iList[tParticle.id]=0;
+					this.activeParticles.push(tParticle);
+				}
+			}
+		}
+
+		__proto.advanceTime=function(passedTime){
+			(passedTime===void 0)&& (passedTime=1);
+			if(!this._ready)return;
+			var particleList=this.activeParticles;
+			var pool=this.deadParticles;
+			var i=0,len=particleList.length;
+			var tcmd;
+			var tI=0;
+			var iList=this.iList;
+			for(i=len-1;i>-1;i--){
+				tcmd=particleList[i];
+				tI=iList[tcmd.id];
+				if(tI>=tcmd.maxIndex){
+					tI=0;
+					particleList.splice(i,1);
+					pool.push(tcmd);
+					}else{
+					tI+=1;
+				}
+				iList[tcmd.id]=tI;
+			}
+		}
+
+		__proto.render=function(context,x,y){
+			if(!this._ready)return;
+			if(this.activeParticles.length<1)return;
+			if(this.textureList.length<2)return;
+			this.canvasRender(context,x,y);
+		}
+
+		__proto.noColorRender=function(context,x,y){
+			var particleList=this.activeParticles;
+			var i=0,len=particleList.length;
+			var tcmd;
+			var tParam;
+			var tAlpha=NaN;
+			var px=this.pX,py=this.pY;
+			var pw=-px*2,ph=-py*2;
+			var tI=0;
+			var textureList=this.textureList;
+			var iList=this.iList;
+			var preAlpha=NaN;
+			context.translate(x,y);
+			preAlpha=context.ctx.globalAlpha;
+			for(i=0;i<len;i++){
+				tcmd=particleList[i];
+				tI=iList[tcmd.id];
+				tParam=tcmd.cmds[tI];
+				if ((tAlpha=tParam[1])<=0.01)continue ;
+				context.setAlpha(preAlpha*tAlpha);
+				context.drawTextureWithTransform(this.texture,px,py,pw,ph,tParam[2]);
+			}
+			context.setAlpha(preAlpha);
+			context.translate(-x,-y);
+		}
+
+		__proto.canvasRender=function(context,x,y){
+			var particleList=this.activeParticles;
+			var i=0,len=particleList.length;
+			var tcmd;
+			var tParam;
+			var tAlpha=NaN;
+			var px=this.pX,py=this.pY;
+			var pw=-px*2,ph=-py*2;
+			var tI=0;
+			var textureList=this.textureList;
+			var iList=this.iList;
+			var preAlpha=NaN;
+			var preB;
+			context.translate(x,y);
+			preAlpha=context.ctx.globalAlpha;
+			preB=context.ctx.globalCompositeOperation;
+			context.blendMode("lighter");
+			for(i=0;i<len;i++){
+				tcmd=particleList[i];
+				tI=iList[tcmd.id];
+				tParam=tcmd.cmds[tI];
+				if ((tAlpha=tParam[1])<=0.01)continue ;
+				context.save();
+				context.transformByMatrix(tParam[2]);
+				if(tParam[3]>0.01){
+					context.setAlpha(preAlpha*tParam[3]);
+					context.drawTexture(textureList[0],px,py,pw,ph);
+				}
+				if(tParam[4]>0.01){
+					context.setAlpha(preAlpha*tParam[4]);
+					context.drawTexture(textureList[1],px,py,pw,ph);
+				}
+				if(tParam[5]>0.01){
+					context.setAlpha(preAlpha*tParam[5]);
+					context.drawTexture(textureList[2],px,py,pw,ph);
+				}
+				context.restore();
+			}
+			context.setAlpha(preAlpha);
+			context.translate(-x,-y);
+			context.blendMode(preB);
+		}
+
+		ParticleTemplateCanvas.changeTexture=function(texture,rst){
+			if(!rst)rst=[];
+			rst.length=0;
+			Utils1.copyArray(rst,PicTool.getRGBPic(texture));
+			return rst;
+		}
+
+		return ParticleTemplateCanvas;
+	})(ParticleTemplateBase)
+
+
+	/**
+	*...
+	*@author laya
+	*/
+	//class laya.webgl.shader.d2.value.Value2D extends laya.webgl.shader.ShaderValue
+	var Value2D=(function(_super){
+		function Value2D(mainID,subID){
+			this.size=[0,0];
+			this.alpha=1.0;
+			this.mmat=null;
+			this.ALPHA=1.0;
+			this.shader=null;
+			this.mainID=0;
+			this.subID=0;
+			this.filters=null;
+			this.textureHost=null;
+			this.texture=null;
+			this.fillStyle=null;
+			this.color=null;
+			this.strokeStyle=null;
+			this.colorAdd=null;
+			this.glTexture=null;
+			this.u_mmat2=null;
+			this._inClassCache=null;
+			this._cacheID=0;
+			Value2D.__super.call(this);
+			this.defines=new ShaderDefines2D();
+			this.position=Value2D._POSITION;
+			this.mainID=mainID;
+			this.subID=subID;
+			this.textureHost=null;
+			this.texture=null;
+			this.fillStyle=null;
+			this.color=null;
+			this.strokeStyle=null;
+			this.colorAdd=null;
+			this.glTexture=null;
+			this.u_mmat2=null;
+			this._cacheID=mainID|subID;
+			this._inClassCache=Value2D._cache[this._cacheID];
+			if (mainID>0 && !this._inClassCache){
+				this._inClassCache=Value2D._cache[this._cacheID]=[];
+				this._inClassCache._length=0;
+			}
+			this.clear();
+		}
+
+		__class(Value2D,'laya.webgl.shader.d2.value.Value2D',_super);
+		var __proto=Value2D.prototype;
+		__proto.setValue=function(value){}
+		//throw new Error("todo in subclass");
+		__proto.refresh=function(){
+			var size=this.size;
+			size[0]=RenderState2D.width;
+			size[1]=RenderState2D.height;
+			this.alpha=this.ALPHA *RenderState2D.worldAlpha;
+			this.mmat=RenderState2D.worldMatrix4;
+			return this;
+		}
+
+		__proto._ShaderWithCompile=function(){
+			return Shader.withCompile(0,this.mainID,this.defines.toNameDic(),this.mainID | this.defines._value,Shader2X.create);
+		}
+
+		__proto._withWorldShaderDefines=function(){
+			var defs=RenderState2D.worldShaderDefines;
+			var sd=Shader.sharders [this.mainID | this.defines._value | defs.getValue()];
+			if (!sd){
+				var def={};
+				var dic;
+				var name;
+				dic=this.defines.toNameDic();for (name in dic)def[name]="";
+				dic=defs.toNameDic();for (name in dic)def[name]="";
+				sd=Shader.withCompile(0,this.mainID,def,this.mainID | this.defines._value| defs.getValue(),Shader2X.create);
+			};
+			var worldFilters=RenderState2D.worldFilters;
+			if (!worldFilters)return sd;
+			var n=worldFilters.length,f;
+			for (var i=0;i < n;i++){
+				((f=worldFilters[i]))&& f.action.setValue(this);
+			}
+			return sd;
+		}
+
+		__proto.upload=function(){
+			var renderstate2d=RenderState2D;
+			this.alpha=this.ALPHA *renderstate2d.worldAlpha;
+			var sd=renderstate2d.worldShaderDefines?this._withWorldShaderDefines():(Shader.sharders [this.mainID | this.defines._value] || this._ShaderWithCompile());
+			var params;
+			this.size[0]=renderstate2d.width,this.size[1]=renderstate2d.height;
+			this.mmat=renderstate2d.worldMatrix4;
+			if (Shader.activeShader!==sd){
+				if (sd._shaderValueWidth!==renderstate2d.width || sd._shaderValueHeight!==renderstate2d.height){
+					sd._shaderValueWidth=renderstate2d.width;
+					sd._shaderValueHeight=renderstate2d.height;
+				}
+				else{
+					params=sd._params2dQuick2 || sd._make2dQuick2();
+				}
+				sd.upload(this,params);
+			}
+			else{
+				if (sd._shaderValueWidth!==renderstate2d.width || sd._shaderValueHeight!==renderstate2d.height){
+					sd._shaderValueWidth=renderstate2d.width;
+					sd._shaderValueHeight=renderstate2d.height;
+				}
+				else{
+					params=(sd._params2dQuick1)|| sd._make2dQuick1();
+				}
+				sd.upload(this,params);
+			}
+		}
+
+		__proto.setFilters=function(value){
+			this.filters=value;
+			if (!value)
+				return;
+			var n=value.length,f;
+			for (var i=0;i < n;i++){
+				f=value[i]
+				if (f){
+					this.defines.add(f.type);
+					f.action.setValue(this);
+				}
+			}
+		}
+
+		__proto.clear=function(){
+			this.defines.setValue(this.subID);
+		}
+
+		__proto.release=function(){
+			this._inClassCache[this._inClassCache._length++]=this;
+			this.clear();
+		}
+
+		Value2D._initone=function(type,classT){
+			Value2D._typeClass[type]=classT;
+			Value2D._cache[type]=[];
+			Value2D._cache[type]._length=0;
+		}
+
+		Value2D.__init__=function(){
+			Value2D._POSITION=[2,0x1406,false,4 *CONST3D2D.BYTES_PE,0];
+			Value2D._TEXCOORD=[2,0x1406,false,4 *CONST3D2D.BYTES_PE,2 *CONST3D2D.BYTES_PE];
+			Value2D._initone(0x02,Color2dSV);
+			Value2D._initone(0x04,PrimitiveSV);
+			Value2D._initone(0x01,TextureSV);
+			Value2D._initone(0x01 | 0x40,TextSV);
+			Value2D._initone(0x01 | 0x08,TextureSV);
+		}
+
+		Value2D.create=function(mainType,subType){
+			var types=Value2D._cache[mainType|subType];
+			if (types._length)
+				return types[--types._length];
+			else
+			return new Value2D._typeClass[mainType|subType](subType);
+		}
+
+		Value2D._POSITION=null
+		Value2D._TEXCOORD=null
+		Value2D._cache=[];
+		Value2D._typeClass=[];
+		return Value2D;
+	})(ShaderValue)
+
+
+	/**
+	*@private
+	*/
+	//class laya.ani.AnimationPlayer extends laya.events.EventDispatcher
+	var AnimationPlayer=(function(_super){
+		function AnimationPlayer(cacheFrameRate){
+			this._templet=null;
+			this._currentTime=NaN;
+			this._currentFrameTime=NaN;
+			this._duration=NaN;
+			this._stopWhenCircleFinish=false;
+			this._elapsedPlaybackTime=NaN;
+			this._startPlayLoopCount=NaN;
+			this._currentAnimationClipIndex=0;
+			this._currentKeyframeIndex=0;
+			this._paused=false;
+			this._cacheFrameRate=0;
+			this._cacheFrameRateInterval=NaN;
+			this.playbackRate=1.0;
+			this.isCache=true;
+			this.returnToZeroStopped=true;
+			AnimationPlayer.__super.call(this);
+			(cacheFrameRate===void 0)&& (cacheFrameRate=60);
+			this._currentAnimationClipIndex=-1;
+			this._currentKeyframeIndex=-1;
+			this._currentTime=0.0;
+			this._duration=Number.MAX_VALUE;
+			this._stopWhenCircleFinish=false;
+			this._elapsedPlaybackTime=0;
+			this._startPlayLoopCount=-1;
+			this._cacheFrameRate=cacheFrameRate;
+			this._cacheFrameRateInterval=1000 / this._cacheFrameRate;
+		}
+
+		__class(AnimationPlayer,'laya.ani.AnimationPlayer',_super);
+		var __proto=AnimationPlayer.prototype;
+		/**
+		*播放动画
+		*@param name 动画名字
+		*@param playbackRate 播放速率
+		*@param duration 播放时长（Number.MAX_VALUE为循环播放，0为1次）
+		*/
+		__proto.play=function(index,playbackRate,duration){
+			(index===void 0)&& (index=0);
+			(playbackRate===void 0)&& (playbackRate=1.0);
+			(duration===void 0)&& (duration=Number.MAX_VALUE);
+			this._currentTime=0;
+			this._elapsedPlaybackTime=0;
+			this.playbackRate=playbackRate;
+			this._duration=duration;
+			this._paused=false;
+			this._currentAnimationClipIndex=index;
+			this._currentKeyframeIndex=0;
+			this._startPlayLoopCount=Stat.loopCount;
+			this.event("played");
+		}
+
+		/**
+		*停止播放当前动画
+		*@param immediate 是否立即停止
+		*/
+		__proto.stop=function(immediate){
+			(immediate===void 0)&& (immediate=true);
+			if (immediate){
+				this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
+				this.event("stopped");
+				}else {
+				this._stopWhenCircleFinish=true;
+			}
+		}
+
+		/**更新动画播放器 */
+		__proto.update=function(elapsedTime){
+			if (this._currentAnimationClipIndex===-1 || this._paused || !this._templet || !this._templet.loaded)
+				return;
+			var time=0;
+			(this._startPlayLoopCount!==Stat.loopCount)&& (time=elapsedTime *this.playbackRate,this._elapsedPlaybackTime+=time);
+			var currentAniClipDuration=this._templet.getAniDuration(this._currentAnimationClipIndex);
+			if ((this._duration!==0 && this._elapsedPlaybackTime >=this._duration)|| (this._duration===0 && this._elapsedPlaybackTime >=currentAniClipDuration)){
+				this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
+				this.event("stopped");
+				return;
+			}
+			time+=this._currentTime;
+			while (time >=currentAniClipDuration){
+				if (this._stopWhenCircleFinish){
+					this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
+					this._stopWhenCircleFinish=false;
+					this.event("stopped");
+					return;
+				}
+				time-=currentAniClipDuration;
+			}
+			this.currentTime=time;
+		}
+
+		/**
+		*获取当前动画索引
+		*@return value 当前动画索引
+		*/
+		__getset(0,__proto,'currentAnimationClipIndex',function(){
+			return this._currentAnimationClipIndex;
+		});
+
+		/**
+		*设置动画数据模板
+		*@param value 动画数据模板
+		*/
+		/**
+		*获取动画数据模板
+		*@param value 动画数据模板
+		*/
+		__getset(0,__proto,'templet',function(){
+			return this._templet;
+			},function(value){
+			if (!this.State===0)
+				this.stop(true);
+			this._templet=value;
+		});
+
+		/**
+		*获取当前帧数
+		*@return value 当前帧数
+		*/
+		__getset(0,__proto,'currentKeyframeIndex',function(){
+			return this._currentKeyframeIndex;
+		});
+
+		/**
+		*获取缓存帧率*
+		*@return value 缓存帧率
+		*/
+		__getset(0,__proto,'cacheFrameRate',function(){
+			return this._cacheFrameRate;
+		});
+
+		/**
+		*获取当前帧时间，不包括重播时间
+		*@return value 当前时间
+		*/
+		__getset(0,__proto,'currentFrameTime',function(){
+			return this._currentFrameTime;
+		});
+
+		/**
+		*设置当前播放位置
+		*@param value 当前时间
+		*/
+		/**
+		*获取当前精确时间，不包括重播时间
+		*@return value 当前时间
+		*/
+		__getset(0,__proto,'currentTime',function(){
+			return this._currentTime;
+			},function(value){
+			this._currentTime=value;
+			this._currentKeyframeIndex=Math.floor((this._currentTime % (this._templet.getAniDuration(this._currentAnimationClipIndex)))/ this._cacheFrameRateInterval);
+			this._currentFrameTime=this._currentKeyframeIndex *this._cacheFrameRateInterval;
+		});
+
+		/**
+		*获取当前播放状态
+		*@return 当前播放状态
+		*/
+		__getset(0,__proto,'State',function(){
+			if (this._currentAnimationClipIndex===-1)
+				return 0;
+			if (this._paused)
+				return 1;
+			return 2;
+		});
+
+		/**
+		*设置是否暂停
+		*@param value 是否暂停
+		*/
+		/**
+		*获取当前是否暂停
+		*@return 是否暂停
+		*/
+		__getset(0,__proto,'paused',function(){
+			return this._paused;
+			},function(value){
+			this._paused=value;
+			value && this.event("paused");
+		});
+
+		return AnimationPlayer;
+	})(EventDispatcher)
+
+
+	/**
+	*@private
+	*/
+	//class laya.ani.KeyframesAniTemplet extends laya.events.EventDispatcher
+	var KeyframesAniTemplet=(function(_super){
+		function KeyframesAniTemplet(){
+			this._aniMap={};
+			//this._publicExtData=null;
+			//this._useParent=false;
+			//this.unfixedCurrentFrameIndexes=null;
+			//this.unfixedCurrentTimes=null;
+			//this.unfixedKeyframes=null;
+			this.unfixedLastAniIndex=-1;
+			this._loaded=false;
+			this._animationDatasCache=[];
+			KeyframesAniTemplet.__super.call(this);
+			this._anis=new Array;
+		}
+
+		__class(KeyframesAniTemplet,'laya.ani.KeyframesAniTemplet',_super);
+		var __proto=KeyframesAniTemplet.prototype;
+		__proto.parse=function(data,playbackRate){
+			var i=0,j=0,k=0,n=0,l=0;
+			var read=new Byte(data);
+			var head=read.readUTFString();
+			var aniClassName=read.readUTFString();
+			var strList=read.readUTFString().split("\n");
+			var aniCount=read.getUint8();
+			var publicDataPos=read.getUint32();
+			var publicExtDataPos=read.getUint32();
+			var publicData;
+			if (publicDataPos > 0)
+				publicData=data.slice(publicDataPos,publicExtDataPos);
+			var publicRead=new Byte(publicData);
+			if (publicExtDataPos > 0)
+				this._publicExtData=data.slice(publicExtDataPos,data.byteLength);
+			this._useParent=!!read.getUint8();
+			this._anis.length=aniCount;
+			for (i=0;i < aniCount;i++){
+				var ani=this._anis[i]=
+				{};
+				ani.nodes=new Array;
+				var name=ani.name=strList[read.getUint8()];
+				this._aniMap[name]=i;
+				ani.bone3DMap={};
+				ani.playTime=read.getFloat32();
+				var boneCount=ani.nodes.length=read.getUint8();
+				ani.totalKeyframesLength=0;
+				for (j=0;j < boneCount;j++){
+					var node=ani.nodes[j]=
+					{};
+					node.childs=[];
+					var nameIndex=read.getInt16();
+					if (nameIndex >=0){
+						node.name=strList[nameIndex];
+						ani.bone3DMap[node.name]=j;
+					}
+					node.keyFrame=new Array;
+					node.parentIndex=read.getInt16();
+					node.parent=ani.nodes[node.parentIndex];
+					var isLerp=!!read.getUint8();
+					var keyframeParamsOffset=read.getUint32();
+					publicRead.pos=keyframeParamsOffset;
+					var keyframeDataCount=node.keyframeWidth=publicRead.getUint16();
+					ani.totalKeyframesLength+=keyframeDataCount;
+					if (isLerp){
+						node.interpolationMethod=[];
+						node.interpolationMethod.length=keyframeDataCount;
+						for (k=0;k < keyframeDataCount;k++)
+						node.interpolationMethod[k]=KeyframesAniTemplet.interpolation[publicRead.getUint8()];
+					}
+					if (node.parent !=null)
+						node.parent.childs.push(node);
+					var privateDataLen=read.getUint16();
+					if (privateDataLen > 0){
+						node.extenData=data.slice(read.pos,read.pos+privateDataLen);
+						read.pos+=privateDataLen;
+					};
+					var keyframeCount=read.getUint16();
+					node.keyFrame.length=keyframeCount;
+					var startTime=0;
+					for (k=0,n=keyframeCount;k < n;k++){
+						var keyFrame=node.keyFrame[k]=
+						{};
+						keyFrame.duration=read.getFloat32();
+						keyFrame.startTime=startTime;
+						keyFrame.data=new Float32Array(keyframeDataCount);
+						keyFrame.dData=new Float32Array(keyframeDataCount);
+						keyFrame.nextData=new Float32Array(keyframeDataCount);
+						for (l=0;l < keyframeDataCount;l++){
+							keyFrame.data[l]=read.getFloat32();
+							if (keyFrame.data[l] >-0.00000001 && keyFrame.data[l] < 0.00000001)keyFrame.data[l]=0;
+						}
+						startTime+=keyFrame.duration;
+					}
+					node.playTime=startTime;
+					this._calculateKeyFrame(node,keyframeCount,keyframeDataCount);
+					this._calculateKeyFrameIndex(node,playbackRate);
+				}
+			}
+			this._loaded=true;
+			this.event("loaded",this);
+		}
+
+		__proto._calculateKeyFrame=function(node,keyframeCount,keyframeDataCount){
+			var keyFrames=node.keyFrame;
+			keyFrames[keyframeCount]=keyFrames[0];
+			for (var i=0;i < keyframeCount;i++){
+				var keyFrame=keyFrames[i];
+				for (var j=0;j < keyframeDataCount;j++){
+					keyFrame.dData[j]=(keyFrame.duration===0)? 0 :(keyFrames[i+1].data[j]-keyFrame.data[j])/ keyFrame.duration;
+					keyFrame.nextData[j]=keyFrames[i+1].data[j];
+				}
+			}
+			keyFrames.length--;
+		}
+
+		__proto._calculateKeyFrameIndex=function(node,playbackRate){
+			var frameInterval=1000 / playbackRate;
+			node.frameCount=Math.floor(node.playTime / frameInterval);
+			node.fullFrame=new Uint16Array(node.frameCount+1);
+			for (var i=0,n=node.keyFrame.length;i < n;i++){
+				var keyFrame=node.keyFrame[i];
+				var tm=keyFrame.startTime;
+				var endTm=tm+keyFrame.duration+frameInterval;
+				do {
+					node.fullFrame[Math.floor(tm / frameInterval+0.5)]=i;
+					tm+=frameInterval;
+				}while (tm <=endTm);
+			}
+		}
+
+		__proto.getAnimationCount=function(){
+			return this._anis.length;
+		}
+
+		__proto.getAnimation=function(aniIndex){
+			return this._anis[aniIndex];
+		}
+
+		__proto.getAniDuration=function(aniIndex){
+			return this._anis[aniIndex].playTime;
+		}
+
+		__proto.getNodes=function(aniIndex){
+			return this._anis[aniIndex].nodes;
+		}
+
+		__proto.getNodeIndexWithName=function(aniIndex,name){
+			return this._anis[aniIndex].bone3DMap[name];
+		}
+
+		__proto.getNodeCount=function(aniIndex){
+			return this._anis[aniIndex].nodes.length;
+		}
+
+		__proto.getTotalkeyframesLength=function(aniIndex){
+			return this._anis[aniIndex].totalKeyframesLength;
+		}
+
+		__proto.getPublicExtData=function(){
+			return this._publicExtData;
+		}
+
+		__proto.getAnimationDataWithCache=function(cacheDatas,aniIndex,frameIndex){
+			var cache=cacheDatas[aniIndex];
+			return cache ? cache[frameIndex] :null;
+		}
+
+		__proto.setAnimationDataWithCache=function(cacheDatas,aniIndex,frameIndex,data){
+			var cache=cacheDatas[aniIndex];
+			cache || (cache=cacheDatas[aniIndex]=[],cache.length=30);
+			cache[frameIndex] || (cache[frameIndex]=new Float32Array(data.length));
+			cache[frameIndex].set(data,0);
+		}
+
+		__proto.getOriginalData=function(aniIndex,originalData,frameIndex,playCurTime){
+			var oneAni=this._anis[aniIndex];
+			var nodes=oneAni.nodes;
+			var j=0;
+			for (var i=0,n=nodes.length,outOfs=0;i < n;i++){
+				var node=nodes[i];
+				var key;
+				key=node.keyFrame[node.fullFrame[frameIndex]];
+				node.dataOffset=outOfs;
+				var dt=playCurTime-key.startTime;
+				for (j=0;j < node.keyframeWidth;){
+					j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
+				}
+				outOfs+=node.keyframeWidth;
+			}
+		}
+
+		__proto.getNodesCurrentFrameIndex=function(aniIndex,playCurTime){
+			var ani=this._anis[aniIndex];
+			var nodes=ani.nodes;
+			if (aniIndex!==this.unfixedLastAniIndex){
+				this.unfixedCurrentFrameIndexes=new Uint32Array(nodes.length);
+				this.unfixedCurrentTimes=new Float32Array(nodes.length);
+				this.unfixedLastAniIndex=aniIndex;
+			}
+			for (var i=0,n=nodes.length,outOfs=0;i < n;i++){
+				var node=nodes[i];
+				if (playCurTime < this.unfixedCurrentTimes[i])
+					this.unfixedCurrentFrameIndexes[i]=0;
+				this.unfixedCurrentTimes[i]=playCurTime;
+				while ((this.unfixedCurrentFrameIndexes[i] < node.keyFrame.length)){
+					if (node.keyFrame[this.unfixedCurrentFrameIndexes[i]].startTime > this.unfixedCurrentTimes[i])
+						break ;
+					this.unfixedCurrentFrameIndexes[i]++;
+				}
+				this.unfixedCurrentFrameIndexes[i]--;
+			}
+			return this.unfixedCurrentFrameIndexes;
+		}
+
+		__proto.getOriginalDataUnfixedRate=function(aniIndex,originalData,playCurTime){
+			var oneAni=this._anis[aniIndex];
+			var nodes=oneAni.nodes;
+			if (aniIndex!==this.unfixedLastAniIndex){
+				this.unfixedCurrentFrameIndexes=new Uint32Array(nodes.length);
+				this.unfixedCurrentTimes=new Float32Array(nodes.length);
+				this.unfixedKeyframes=__newvec(nodes.length);
+				this.unfixedLastAniIndex=aniIndex;
+			};
+			var j=0;
+			for (var i=0,n=nodes.length,outOfs=0;i < n;i++){
+				var node=nodes[i];
+				if (playCurTime < this.unfixedCurrentTimes[i])
+					this.unfixedCurrentFrameIndexes[i]=0;
+				this.unfixedCurrentTimes[i]=playCurTime;
+				while (this.unfixedCurrentFrameIndexes[i] < node.keyFrame.length){
+					if (node.keyFrame[this.unfixedCurrentFrameIndexes[i]].startTime > this.unfixedCurrentTimes[i])
+						break ;
+					this.unfixedKeyframes[i]=node.keyFrame[this.unfixedCurrentFrameIndexes[i]];
+					this.unfixedCurrentFrameIndexes[i]++;
+				};
+				var key=this.unfixedKeyframes[i];
+				node.dataOffset=outOfs;
+				var dt=playCurTime-key.startTime;
+				for (j=0;j < node.keyframeWidth;){
+					j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
+				}
+				outOfs+=node.keyframeWidth;
+			}
+		}
+
+		__getset(0,__proto,'loaded',function(){
+			return this._loaded;
+		});
+
+		KeyframesAniTemplet._LinearInterpolation_0=function(bone,index,out,outOfs,data,dt,dData,duration,nextData){
+			out[outOfs]=data[index]+dt *dData[index];
+			return 1;
+		}
+
+		KeyframesAniTemplet._QuaternionInterpolation_1=function(bone,index,out,outOfs,data,dt,dData,duration,nextData){
+			MathUtil.slerpQuaternionArray(data,index,nextData,index,dt / duration,out,outOfs);
+			return 4;
+		}
+
+		KeyframesAniTemplet._AngleInterpolation_2=function(bone,index,out,outOfs,data,dt,dData,duration,nextData){
+			return 0;
+		}
+
+		KeyframesAniTemplet._RadiansInterpolation_3=function(bone,index,out,outOfs,data,dt,dData,duration,nextData){
+			return 0;
+		}
+
+		KeyframesAniTemplet._Matrix4x4Interpolation_4=function(bone,index,out,outOfs,data,dt,dData,duration,nextData){
+			for (var i=0;i < 16;i++,index++)
+			out[outOfs+i]=data[index]+dt *dData[index];
+			return 16;
+		}
+
+		KeyframesAniTemplet.interpolation=[KeyframesAniTemplet._LinearInterpolation_0,KeyframesAniTemplet._QuaternionInterpolation_1,KeyframesAniTemplet._AngleInterpolation_2,KeyframesAniTemplet._RadiansInterpolation_3,KeyframesAniTemplet._Matrix4x4Interpolation_4];
+		return KeyframesAniTemplet;
 	})(EventDispatcher)
 
 
@@ -26583,10 +29265,10 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.drawParticle=function(x,y,ps){
-			var pt=System.createParticleTemplate2D(ps);
+			var pt=RunDriver.createParticleTemplate2D(ps);
 			pt.x=x;
 			pt.y=y;
-			this._saveToCmd(Render.context.drawParticle,[pt]);
+			this._saveToCmd(Render.context._drawParticle,[pt]);
 		}
 
 		return GraphicsGL;
@@ -26605,6 +29287,7 @@ window.Laya=(function(window,document){
 			this._y=0;
 			this._id=++WebGLContext2D._COUNT;
 			//this._other=null;
+			this._path=null;
 			this._drawCount=1;
 			this._maxNumEle=0;
 			this._clear=false;
@@ -26620,7 +29303,6 @@ window.Laya=(function(window,document){
 			this._saveMark=null;
 			//this.sprite=null;
 			WebGLContext2D.__super.call(this);
-			this._path=new Path();
 			this._width=99999999;
 			this._height=99999999;
 			this._clipRect=WebGLContext2D.MAXCLIPRECT;
@@ -26628,9 +29310,12 @@ window.Laya=(function(window,document){
 			this.drawTexture=this._drawTextureM;
 			this._canvas=c;
 			this._curMat=Matrix.create();
-			this._ib=Buffer.QuadrangleIB;
-			this._vb=new Buffer(0x8892);
-			this._vb.getFloat32Array();
+			if (Render.isFlash){
+				this._ib=IndexBuffer.create();
+				GlUtils.fillIBQuadrangle(this._ib,16);
+			}
+			else this._ib=IndexBuffer.QuadrangleIB;
+			this._vb=VertexBuffer.create();
 			this._other=ContextParams.DEFAULT;
 			this._save=[SaveMark.Create(this)];
 			this._save.length=10;
@@ -26653,7 +29338,7 @@ window.Laya=(function(window,document){
 			this._curMat && this._curMat.destroy();
 			this._targets && this._targets.destroy();
 			this._vb && this._vb.releaseResource();
-			this._ib && (this._ib !=Buffer.QuadrangleIB)&& this._ib.releaseResource();
+			this._ib && (this._ib !=IndexBuffer.QuadrangleIB)&& this._ib.releaseResource();
 		}
 
 		__proto.clear=function(){
@@ -26722,7 +29407,7 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.measureText=function(text){
-			return Utils1.measureText(text,this._other.font.toString());
+			return RunDriver.measureText(text,this._other.font.toString());
 		}
 
 		__proto._fillText=function(txt,words,x,y,fontStr,color,textAlign){
@@ -26837,13 +29522,14 @@ window.Laya=(function(window,document){
 			return null;
 		}
 
+		__proto.drawTexture=function(tex,x,y,width,height,tx,ty){
+			this._drawTextureM(tex,x,y,width,height,tx,ty,null);
+		}
+
 		__proto._drawTextureM=function(tex,x,y,width,height,tx,ty,m){
-			var _$this=this;
 			if (!(tex.loaded && tex.bitmap && tex.source)){
 				if (this.sprite){
-					Laya.timer.callLater(null,function(){
-						_$this.sprite.repaint();
-					});
+					Laya.timer.callLater(this,this._repaintSprite);
 				}
 				return;
 			};
@@ -26869,10 +29555,14 @@ window.Laya=(function(window,document){
 				}
 				this._curSubmit=submit;
 			}
-			if (GlUtils.fillRectImgVb(this._curSubmit._vb || this._vb,this._clipRect,x+tx+tex.offsetX,y+ty+tex.offsetY,width || tex.width,height || tex.height,tex.uv,m || this._curMat,this._x,this._y,0,0)){
+			if (GlUtils.fillRectImgVb(this._curSubmit._vb || this._vb,this._clipRect,x+tx,y+ty ,width || tex.width,height || tex.height,tex.uv,m || this._curMat,this._x,this._y,0,0)){
 				this._curSubmit._numEle+=6;
 				this._maxNumEle=Math.max(this._maxNumEle,this._curSubmit._numEle);
 			}
+		}
+
+		__proto._repaintSprite=function(){
+			this.sprite.repaint();
 		}
 
 		/**
@@ -26988,9 +29678,16 @@ window.Laya=(function(window,document){
 			var curMat=this._curMat;
 			this._x=x *curMat.a+y *curMat.c;
 			this._y=y *curMat.d+x *curMat.b;
-			if (transform && curMat.bTransform){
-				Matrix.mul(transform,curMat,WebGLContext2D._tmpMatrix);
-				transform=WebGLContext2D._tmpMatrix;
+			if (transform){
+				if (curMat.bTransform||transform.bTransform){
+					Matrix.mul(transform,curMat,WebGLContext2D._tmpMatrix);
+					transform=WebGLContext2D._tmpMatrix;
+				}
+				else {
+					this._x+=transform.tx+curMat.tx;
+					this._y+=transform.ty+curMat.ty;
+					transform=Matrix.EMPTY;
+				}
 			}
 			if (alpha===1 && !blendMode)
 				this._drawTextureM(args[0],args[1]-pivotX,args[2]-pivotY,args[3],args[4],0,0,transform);
@@ -27218,20 +29915,19 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.flush=function(){
-			this._ib.upload_bind();
 			var maxNum=Math.max(this._vb.length / (4 *16),this._maxNumEle / 6)+8;
 			if (maxNum > (this._ib.bufferLength / (6 *2))){
 				GlUtils.expandIBQuadrangle(this._ib,maxNum);
 			}
-			this._vb.upload_bind();
+			this._vb.bind_upload(this._ib);
 			this.submitElement(0,this._submits._length);
-			this._path.reset();
+			this._path && this._path.reset();
 			this._curSubmit=Submit.RENDERBASE;
 			return this._submits._length;
 		}
 
 		__proto.fan=function(x,y,r,sAngle,eAngle,fillColor,lineColor){
-			this._path.fan(x,y,r,sAngle,eAngle,fillColor,this._other.lineWidth ? this._other.lineWidth :1,lineColor);
+			this._getPath().fan(x,y,r,sAngle,eAngle,fillColor,this._other.lineWidth ? this._other.lineWidth :1,lineColor);
 			this._path.update();
 			var submit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,Value2D.create(0x04,0));
 			submit.shaderValue.ALPHA=this._shader2D.ALPHA;
@@ -27241,7 +29937,7 @@ window.Laya=(function(window,document){
 
 		/*画圆*/
 		__proto.drawCircle=function(x,y,r,edges,boderColor,lineWidth,color){
-			this._path.circle(x,y,r,edges,color,lineWidth ? lineWidth :1,boderColor);
+			this._getPath().circle(x,y,r,edges,color,lineWidth ? lineWidth :1,boderColor);
 			this._path.update();
 			var submit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,Value2D.create(0x04,0));
 			submit.shaderValue.ALPHA=this._shader2D.ALPHA;
@@ -27256,7 +29952,7 @@ window.Laya=(function(window,document){
 		*@param points
 		*/
 		__proto.drawPoly=function(x,y,points,color,lineWidth,boderColor){
-			this._path.polygon(x,y,points,color,lineWidth ? lineWidth :1,boderColor);
+			this._getPath().polygon(x,y,points,color,lineWidth ? lineWidth :1,boderColor);
 			this._path.update();
 			var tempSubmit;
 			var submit=SubmitStencil.create(4);
@@ -27284,7 +29980,7 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.drawPath=function(x,y,points,color,lineWidth){
-			this._path.drawPath(x,y,points,color,lineWidth);
+			this._getPath().drawPath(x,y,points,color,lineWidth);
 			this._path.update();
 			var submit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,Value2D.create(0x04,0));
 			this._submits[this._submits._length++]=submit;
@@ -27303,12 +29999,16 @@ window.Laya=(function(window,document){
 				points=points.concat();
 				this._curMat.transformPointArrayScale(points,points);
 			}
-			this._path.drawPath(tmp.x,tmp.y,points,color,lineWidth);
+			this._getPath().drawPath(tmp.x,tmp.y,points,color,lineWidth);
 			this._path.update();
 			var submit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,Value2D.create(0x04,0));
 			submit.shaderValue.ALPHA=this._shader2D.ALPHA;
 			submit.shaderValue.u_mmat2=RenderState2D.mat2MatArray(this._curMat,RenderState2D.TEMPMAT4_ARRAY);
 			this._submits[this._submits._length++]=submit;
+		}
+
+		__proto._getPath=function(){
+			return this._path || (this._path=new Path());
 		}
 
 		__getset(0,__proto,'asBitmap',null,function(value){
@@ -27662,174 +30362,6 @@ window.Laya=(function(window,document){
 	})(ShaderDefines)
 
 
-	/**
-	*...
-	*@author laya
-	*/
-	//class laya.webgl.shader.d2.value.Value2D extends laya.webgl.shader.ShaderValue
-	var Value2D=(function(_super){
-		function Value2D(mainID,subID){
-			this.size=[0,0];
-			this.alpha=1.0;
-			this.mmat=null;
-			this.ALPHA=1.0;
-			this.shader=null;
-			this.mainID=0;
-			this.subID=0;
-			this.filters=null;
-			this.textureHost=null;
-			this.texture=null;
-			this.fillStyle=null;
-			this.color=null;
-			this.strokeStyle=null;
-			this.colorAdd=null;
-			this.glTexture=null;
-			this.u_mmat2=null;
-			this._inClassCache=null;
-			this._cacheID=0;
-			Value2D.__super.call(this);
-			this.defines=new ShaderDefines2D();
-			this.position=Value2D._POSITION;
-			this.mainID=mainID;
-			this.subID=subID;
-			this.textureHost=null;
-			this.texture=null;
-			this.fillStyle=null;
-			this.color=null;
-			this.strokeStyle=null;
-			this.colorAdd=null;
-			this.glTexture=null;
-			this.u_mmat2=null;
-			this._cacheID=mainID|subID;
-			this._inClassCache=Value2D._cache[this._cacheID];
-			if (mainID>0 && !this._inClassCache){
-				this._inClassCache=Value2D._cache[this._cacheID]=[];
-				this._inClassCache._length=0;
-			}
-			this.clear();
-		}
-
-		__class(Value2D,'laya.webgl.shader.d2.value.Value2D',_super);
-		var __proto=Value2D.prototype;
-		__proto.setValue=function(value){}
-		//throw new Error("todo in subclass");
-		__proto.refresh=function(){
-			var size=this.size;
-			size[0]=RenderState2D.width;
-			size[1]=RenderState2D.height;
-			this.alpha=this.ALPHA *RenderState2D.worldAlpha;
-			this.mmat=RenderState2D.worldMatrix4;
-			return this;
-		}
-
-		__proto._ShaderWithCompile=function(){
-			return Shader.withCompile(0,this.mainID,this.defines.toNameDic(),this.mainID | this.defines._value,Shader2X.create);
-		}
-
-		__proto._withWorldShaderDefines=function(){
-			var defs=RenderState2D.worldShaderDefines;
-			var sd=Shader.sharders [this.mainID | this.defines._value | defs.getValue()];
-			if (!sd){
-				var def={};
-				var dic;
-				var name;
-				dic=this.defines.toNameDic();for (name in dic)def[name]="";
-				dic=defs.toNameDic();for (name in dic)def[name]="";
-				sd=Shader.withCompile(0,this.mainID,def,this.mainID | this.defines._value| defs.getValue(),Shader2X.create);
-			};
-			var worldFilters=RenderState2D.worldFilters;
-			if (!worldFilters)return sd;
-			var n=worldFilters.length,f;
-			for (var i=0;i < n;i++){
-				((f=worldFilters[i]))&& f.action.setValue(this);
-			}
-			return sd;
-		}
-
-		__proto.upload=function(){
-			var renderstate2d=RenderState2D;
-			this.alpha=this.ALPHA *renderstate2d.worldAlpha;
-			var sd=renderstate2d.worldShaderDefines?this._withWorldShaderDefines():(Shader.sharders [this.mainID | this.defines._value] || this._ShaderWithCompile());
-			var params;
-			this.size[0]=renderstate2d.width,this.size[1]=renderstate2d.height;
-			this.mmat=renderstate2d.worldMatrix4;
-			if (Shader.activeShader!==sd){
-				if (sd._shaderValueWidth!==renderstate2d.width || sd._shaderValueHeight!==renderstate2d.height){
-					sd._shaderValueWidth=renderstate2d.width;
-					sd._shaderValueHeight=renderstate2d.height;
-				}
-				else{
-					params=sd._params2dQuick2 || sd._make2dQuick2();
-				}
-				sd.upload(this,params);
-			}
-			else{
-				if (sd._shaderValueWidth!==renderstate2d.width || sd._shaderValueHeight!==renderstate2d.height){
-					sd._shaderValueWidth=renderstate2d.width;
-					sd._shaderValueHeight=renderstate2d.height;
-				}
-				else{
-					params=(sd._params2dQuick1)|| sd._make2dQuick1();
-				}
-				sd.upload(this,params);
-			}
-		}
-
-		__proto.setFilters=function(value){
-			this.filters=value;
-			if (!value)
-				return;
-			var n=value.length,f;
-			for (var i=0;i < n;i++){
-				f=value[i]
-				if (f){
-					this.defines.add(f.type);
-					f.action.setValue(this);
-				}
-			}
-		}
-
-		__proto.clear=function(){
-			this.defines.setValue(this.subID);
-		}
-
-		__proto.release=function(){
-			this._inClassCache[this._inClassCache._length++]=this;
-			this.clear();
-		}
-
-		Value2D._initone=function(type,classT){
-			Value2D._typeClass[type]=classT;
-			Value2D._cache[type]=[];
-			Value2D._cache[type]._length=0;
-		}
-
-		Value2D.__init__=function(){
-			Value2D._POSITION=[2,0x1406,false,4 *CONST3D2D.BYTES_PE,0];
-			Value2D._TEXCOORD=[2,0x1406,false,4 *CONST3D2D.BYTES_PE,2 *CONST3D2D.BYTES_PE];
-			Value2D._initone(0x02,Color2dSV);
-			Value2D._initone(0x04,PrimitiveSV);
-			Value2D._initone(0x01,TextureSV);
-			Value2D._initone(0x01 | 0x40,TextSV);
-			Value2D._initone(0x01 | 0x08,TextureSV);
-		}
-
-		Value2D.create=function(mainType,subType){
-			var types=Value2D._cache[mainType|subType];
-			if (types._length)
-				return types[--types._length];
-			else
-			return new Value2D._typeClass[mainType|subType](subType);
-		}
-
-		Value2D._POSITION=null
-		Value2D._TEXCOORD=null
-		Value2D._cache=[];
-		Value2D._typeClass=[];
-		return Value2D;
-	})(ShaderValue)
-
-
 	//class laya.webgl.shapes.Circle extends laya.webgl.shapes.BasePoly
 	var Circle=(function(_super){
 		function Circle(x,y,r,edges,color,borderWidth,borderColor){
@@ -28154,445 +30686,6 @@ window.Laya=(function(window,document){
 
 
 	/**
-	*
-	*@author ww
-	*@version 1.0
-	*
-	*@created 2015-12-21 下午4:37:29
-	*/
-	//class laya.particle.emitter.Emitter2D extends laya.particle.emitter.EmitterBase
-	var Emitter2D=(function(_super){
-		function Emitter2D(_template){
-			this.settiong=null;
-			this._posRange=null;
-			this._canvasTemplate=null;
-			this._emitFun=null;
-			Emitter2D.__super.call(this);
-			this._particleTemplate=_template;
-			this.settiong=_template.settings;
-			this._posRange=this.settiong.positionVariance;
-			if((_template instanceof laya.particle.ParticleTemplate2D )){
-				this._emitFun=this.webGLEmit;
-			}else
-			if((_template instanceof laya.particle.ParticleTemplateCanvas )){
-				this._canvasTemplate=_template;
-				this._emitFun=this.canvasEmit;
-			}
-		}
-
-		__class(Emitter2D,'laya.particle.emitter.Emitter2D',_super);
-		var __proto=Emitter2D.prototype;
-		__proto.emit=function(){
-			_super.prototype.emit.call(this);
-			if(this._emitFun!=null)
-				this._emitFun();
-		}
-
-		__proto.getRandom=function(value){
-			return (Math.random()*2-1)*value;
-		}
-
-		__proto.webGLEmit=function(){
-			var pos=new Float32Array(3);
-			pos[0]=this.getRandom(this._posRange[0]);
-			pos[1]=this.getRandom(this._posRange[1]);
-			pos[2]=this.getRandom(this._posRange[2]);
-			var v=new Float32Array(3);
-			v[0]=0;
-			v[1]=0;
-			v[2]=0;
-			this._particleTemplate.addParticleArray(pos,v);
-		}
-
-		__proto.canvasEmit=function(){
-			var pos=new Float32Array(3);
-			pos[0]=this.getRandom(this._posRange[0]);
-			pos[1]=this.getRandom(this._posRange[1]);
-			pos[2]=this.getRandom(this._posRange[2]);
-			var v=new Float32Array(3);
-			v[0]=0;
-			v[1]=0;
-			v[2]=0;
-			this._particleTemplate.addParticleArray(pos,v);
-		}
-
-		return Emitter2D;
-	})(EmitterBase)
-
-
-	/**
-	*...
-	*@author laya
-	*/
-	//class laya.particle.ParticleTemplateWebGL extends laya.particle.ParticleTemplateBase
-	var ParticleTemplateWebGL=(function(_super){
-		function ParticleTemplateWebGL(parSetting){
-			this._vertices=null;
-			this._vertexBuffer=null;
-			this._indexBuffer=null;
-			this._floatCountPerVertex=23;
-			this._firstActiveElement=0;
-			this._firstNewElement=0;
-			this._firstFreeElement=0;
-			this._firstRetiredElement=0;
-			this._currentTime=0;
-			this._drawCounter=0;
-			ParticleTemplateWebGL.__super.call(this);
-			this.settings=parSetting;
-		}
-
-		__class(ParticleTemplateWebGL,'laya.particle.ParticleTemplateWebGL',_super);
-		var __proto=ParticleTemplateWebGL.prototype;
-		__proto.initialize=function(){
-			this._vertices=new Float32Array(this.settings.maxPartices *this._floatCountPerVertex *4);
-			var particleOffset=0;
-			for (var i=0;i < this.settings.maxPartices;i++){
-				var random=Math.random();
-				var cornerYSegement=1.0 / this.settings.textureCount;
-				var cornerY=NaN;
-				for (cornerY=0;cornerY < this.settings.textureCount;cornerY+=cornerYSegement){
-					if (random < cornerY+cornerYSegement)
-						break ;
-				}
-				particleOffset=i *this._floatCountPerVertex *4;
-				this._vertices[particleOffset+this._floatCountPerVertex *0+0]=-1;
-				this._vertices[particleOffset+this._floatCountPerVertex *0+1]=-1;
-				this._vertices[particleOffset+this._floatCountPerVertex *0+2]=0;
-				this._vertices[particleOffset+this._floatCountPerVertex *0+3]=cornerY;
-				this._vertices[particleOffset+this._floatCountPerVertex *1+0]=1;
-				this._vertices[particleOffset+this._floatCountPerVertex *1+1]=-1;
-				this._vertices[particleOffset+this._floatCountPerVertex *1+2]=1;
-				this._vertices[particleOffset+this._floatCountPerVertex *1+3]=cornerY;
-				this._vertices[particleOffset+this._floatCountPerVertex *2+0]=1;
-				this._vertices[particleOffset+this._floatCountPerVertex *2+1]=1;
-				this._vertices[particleOffset+this._floatCountPerVertex *2+2]=1;
-				this._vertices[particleOffset+this._floatCountPerVertex *2+3]=cornerY+cornerYSegement;
-				this._vertices[particleOffset+this._floatCountPerVertex *3+0]=-1;
-				this._vertices[particleOffset+this._floatCountPerVertex *3+1]=1;
-				this._vertices[particleOffset+this._floatCountPerVertex *3+2]=0;
-				this._vertices[particleOffset+this._floatCountPerVertex *3+3]=cornerY+cornerYSegement;
-			}
-		}
-
-		__proto.loadContent=function(){
-			this._vertexBuffer=new Buffer(0x8892,null,null,0x88E8);
-			var indexes=new Uint16Array(this.settings.maxPartices *6);
-			for (var i=0;i < this.settings.maxPartices;i++){
-				indexes[i *6+0]=(i *4+0);
-				indexes[i *6+1]=(i *4+1);
-				indexes[i *6+2]=(i *4+2);
-				indexes[i *6+3]=(i *4+0);
-				indexes[i *6+4]=(i *4+2);
-				indexes[i *6+5]=(i *4+3);
-			}
-			this._indexBuffer=new Buffer(0x8893,null);
-			this._indexBuffer.length=0;
-			this._indexBuffer.append(indexes);
-			this._indexBuffer.upload();
-		}
-
-		__proto.update=function(elapsedTime){
-			this._currentTime+=elapsedTime / 1000;
-			this.retireActiveParticles();
-			this.freeRetiredParticles();
-			if (this._firstActiveElement==this._firstFreeElement)
-				this._currentTime=0;
-			if (this._firstRetiredElement==this._firstActiveElement)
-				this._drawCounter=0;
-		}
-
-		__proto.retireActiveParticles=function(){
-			var particleDuration=this.settings.duration;
-			while (this._firstActiveElement !=this._firstNewElement){
-				var index=this._firstActiveElement *this._floatCountPerVertex *4+22;
-				var particleAge=this._currentTime-this._vertices[index];
-				if (particleAge < particleDuration)
-					break ;
-				this._vertices[index]=this._drawCounter;
-				this._firstActiveElement++;
-				if (this._firstActiveElement >=this.settings.maxPartices)
-					this._firstActiveElement=0;
-			}
-		}
-
-		__proto.freeRetiredParticles=function(){
-			while (this._firstRetiredElement !=this._firstActiveElement){
-				var age=this._drawCounter-this._vertices[this._firstRetiredElement *this._floatCountPerVertex *4+22];
-				if (age < 3)
-					break ;
-				this._firstRetiredElement++;
-				if (this._firstRetiredElement >=this.settings.maxPartices)
-					this._firstRetiredElement=0;
-			}
-		}
-
-		__proto.addNewParticlesToVertexBuffer=function(){
-			this._vertexBuffer.length=0;
-			this._vertexBuffer.setdata(this._vertices);
-			var start=0;
-			if (this._firstNewElement < this._firstFreeElement){
-				start=this._firstNewElement *4 *this._floatCountPerVertex *4;
-				this._vertexBuffer.subUpload(start,start,start+(this._firstFreeElement-this._firstNewElement)*4 *this._floatCountPerVertex *4);
-			}
-			else{
-				start=this._firstNewElement *4 *this._floatCountPerVertex *4;
-				this._vertexBuffer.subUpload(start,start,start+(this.settings.maxPartices-this._firstNewElement)*4 *this._floatCountPerVertex *4);
-				if (this._firstFreeElement > 0){
-					this._vertexBuffer.setNeedUpload();
-					this._vertexBuffer.subUpload(0,0,this._firstFreeElement *4 *this._floatCountPerVertex *4);
-				}
-			}
-			this._firstNewElement=this._firstFreeElement;
-		}
-
-		__proto.addParticleArray=function(position,velocity){
-			var nextFreeParticle=this._firstFreeElement+1;
-			if (nextFreeParticle >=this.settings.maxPartices)
-				nextFreeParticle=0;
-			if (nextFreeParticle===this._firstRetiredElement)
-				return;
-			var particleData=ParticleData.Create(this.settings,position,velocity,this._currentTime);
-			var startIndex=this._firstFreeElement *this._floatCountPerVertex *4;
-			for (var i=0;i < 4;i++){
-				var j=0,offset=0;
-				for (j=0,offset=4;j < 3;j++)
-				this._vertices[startIndex+i *this._floatCountPerVertex+offset+j]=particleData.position[j];
-				for (j=0,offset=7;j < 3;j++)
-				this._vertices[startIndex+i *this._floatCountPerVertex+offset+j]=particleData.velocity[j];
-				for (j=0,offset=10;j < 4;j++)
-				this._vertices[startIndex+i *this._floatCountPerVertex+offset+j]=particleData.color[j];
-				for (j=0,offset=14;j < 3;j++)
-				this._vertices[startIndex+i *this._floatCountPerVertex+offset+j]=particleData.sizeRotation[j];
-				for (j=0,offset=17;j < 4;j++)
-				this._vertices[startIndex+i *this._floatCountPerVertex+offset+j]=particleData.radiusRadian[j];
-				this._vertices[startIndex+i *this._floatCountPerVertex+21]=particleData.durationAddScale;
-				this._vertices[startIndex+i *this._floatCountPerVertex+22]=particleData.time;
-			}
-			this._firstFreeElement=nextFreeParticle;
-		}
-
-		return ParticleTemplateWebGL;
-	})(ParticleTemplateBase)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.particle.ParticleTemplateCanvas extends laya.particle.ParticleTemplateBase
-	var ParticleTemplateCanvas=(function(_super){
-		function ParticleTemplateCanvas(parSetting){
-			this._ready=false;
-			this.textureList=[];
-			this.particleList=[];
-			this.pX=0;
-			this.pY=0;
-			this.activeParticles=[];
-			this.deadParticles=[];
-			this.iList=[];
-			this._maxNumParticles=0;
-			this.textureWidth=NaN;
-			this.dTextureWidth=NaN;
-			this.colorChange=true;
-			this.step=1/60;
-			this.canvasShader=new CanvasShader();
-			ParticleTemplateCanvas.__super.call(this);
-			this.settings=parSetting;
-			this._maxNumParticles=parSetting.maxPartices;
-			this.texture=new Texture();
-			this.texture.on("loaded",this,this._textureLoaded);
-			this.texture.load(parSetting.textureName);
-		}
-
-		__class(ParticleTemplateCanvas,'laya.particle.ParticleTemplateCanvas',_super);
-		var __proto=ParticleTemplateCanvas.prototype;
-		__proto._textureLoaded=function(e){
-			this.setTexture(this.texture);
-			this._ready=true;
-		}
-
-		__proto.clear=function(clearTexture){
-			(clearTexture===void 0)&& (clearTexture=true);
-			this.deadParticles.length=0;
-			this.activeParticles.length=0;
-			this.textureList.length=0;
-		}
-
-		/**
-		*设置纹理
-		*@param texture
-		*
-		*/
-		__proto.setTexture=function(texture){
-			this.texture=texture;
-			this.textureWidth=texture.width;
-			this.dTextureWidth=1/this.textureWidth;
-			this.pX=-texture.width*0.5;
-			this.pY=-texture.height*0.5;
-			this.textureList=ParticleTemplateCanvas.changeTexture(texture,this.textureList);
-			this.particleList.length=0;
-			this.deadParticles.length=0;
-			this.activeParticles.length=0;
-		}
-
-		/**
-		*创建一个粒子数据
-		*@return
-		*
-		*/
-		__proto._createAParticleData=function(position,velocity){
-			this.canvasShader.u_EndVelocity=this.settings.endVelocity;
-			this.canvasShader.u_Gravity=this.settings.gravity;
-			this.canvasShader.u_Duration=this.settings.duration;
-			var particle;
-			particle=ParticleData.Create(this.settings,position,velocity,0);
-			this.canvasShader.a_RadiusRadian=particle.radiusRadian;
-			this.canvasShader.a_Position=particle.position;
-			this.canvasShader.a_SizeRotation=particle.sizeRotation;
-			this.canvasShader.a_Color=particle.color;
-			this.canvasShader.a_Velocity=particle.velocity;
-			this.canvasShader.a_AgeAddScale=particle.durationAddScale;
-			this.canvasShader.oSize=this.textureWidth;
-			var rst=new CMDParticle();
-			var i=0,len=this.settings.duration/(1+particle.durationAddScale);
-			var params=[];
-			var mStep=NaN;
-			for(i=0;i<len;i+=this.step){
-				params.push(this.canvasShader.getData(i));
-			}
-			rst.id=this.particleList.length;
-			this.particleList.push(rst);
-			rst.setCmds(params);
-			return rst;
-		}
-
-		__proto.addParticleArray=function(position,velocity){
-			if(!this._ready)return;
-			var tParticle;
-			if(this.particleList.length<this._maxNumParticles){
-				tParticle=this._createAParticleData(position,velocity);
-				this.iList[tParticle.id]=0;
-				this.activeParticles.push(tParticle);
-				}else{
-				if(this.deadParticles.length>0){
-					tParticle=this.deadParticles.pop();
-					this.iList[tParticle.id]=0;
-					this.activeParticles.push(tParticle);
-				}
-			}
-		}
-
-		__proto.advanceTime=function(passedTime){
-			(passedTime===void 0)&& (passedTime=1);
-			if(!this._ready)return;
-			var particleList=this.activeParticles;
-			var pool=this.deadParticles;
-			var i=0,len=particleList.length;
-			var tcmd;
-			var tI=0;
-			var iList=this.iList;
-			for(i=len-1;i>-1;i--){
-				tcmd=particleList[i];
-				tI=iList[tcmd.id];
-				if(tI>=tcmd.maxIndex){
-					tI=0;
-					particleList.splice(i,1);
-					pool.push(tcmd);
-					}else{
-					tI+=1;
-				}
-				iList[tcmd.id]=tI;
-			}
-		}
-
-		__proto.render=function(context,x,y){
-			if(!this._ready)return;
-			if(this.activeParticles.length<1)return;
-			if(this.textureList.length<2)return;
-			this.canvasRender(context,x,y);
-		}
-
-		__proto.noColorRender=function(context,x,y){
-			var particleList=this.activeParticles;
-			var i=0,len=particleList.length;
-			var tcmd;
-			var tParam;
-			var tAlpha=NaN;
-			var px=this.pX,py=this.pY;
-			var pw=-px*2,ph=-py*2;
-			var tI=0;
-			var textureList=this.textureList;
-			var iList=this.iList;
-			var preAlpha=NaN;
-			context.translate(x,y);
-			preAlpha=context.ctx.globalAlpha;
-			for(i=0;i<len;i++){
-				tcmd=particleList[i];
-				tI=iList[tcmd.id];
-				tParam=tcmd.cmds[tI];
-				if ((tAlpha=tParam[1])<=0.01)continue ;
-				context.setAlpha(preAlpha*tAlpha);
-				context.drawTextureWithTransform(this.texture,px,py,pw,ph,tParam[2]);
-			}
-			context.setAlpha(preAlpha);
-			context.translate(-x,-y);
-		}
-
-		__proto.canvasRender=function(context,x,y){
-			var particleList=this.activeParticles;
-			var i=0,len=particleList.length;
-			var tcmd;
-			var tParam;
-			var tAlpha=NaN;
-			var px=this.pX,py=this.pY;
-			var pw=-px*2,ph=-py*2;
-			var tI=0;
-			var textureList=this.textureList;
-			var iList=this.iList;
-			var preAlpha=NaN;
-			var preB;
-			context.translate(x,y);
-			preAlpha=context.ctx.globalAlpha;
-			preB=context.ctx.globalCompositeOperation;
-			context.blendMode("lighter");
-			for(i=0;i<len;i++){
-				tcmd=particleList[i];
-				tI=iList[tcmd.id];
-				tParam=tcmd.cmds[tI];
-				if ((tAlpha=tParam[1])<=0.01)continue ;
-				context.save();
-				context.transformByMatrix(tParam[2]);
-				if(tParam[3]>0.01){
-					context.setAlpha(preAlpha*tParam[3]);
-					context.drawTexture(textureList[0],px,py,pw,ph);
-				}
-				if(tParam[4]>0.01){
-					context.setAlpha(preAlpha*tParam[4]);
-					context.drawTexture(textureList[1],px,py,pw,ph);
-				}
-				if(tParam[5]>0.01){
-					context.setAlpha(preAlpha*tParam[5]);
-					context.drawTexture(textureList[2],px,py,pw,ph);
-				}
-				context.restore();
-			}
-			context.setAlpha(preAlpha);
-			context.translate(-x,-y);
-			context.blendMode(preB);
-		}
-
-		ParticleTemplateCanvas.changeTexture=function(texture,rst){
-			if(!rst)rst=[];
-			rst.length=0;
-			Utils1.setValueArr(rst,PicTool.getRGBPic(texture));
-			return rst;
-		}
-
-		return ParticleTemplateCanvas;
-	})(ParticleTemplateBase)
-
-
-	/**
 	*<p> <code>Sprite</code> 类是基本显示列表构造块：一个可显示图形并且也可包含子项的显示列表节点。</p>
 	*
 	*@example 以下示例代码，创建了一个 <code>Text</code> 实例。
@@ -28757,7 +30850,6 @@ window.Laya=(function(window,document){
 			this.optimizeFloat=false;
 			Sprite.__super.call(this);
 			this._style=Style.EMPTY;
-			this._$P=Sprite.PropEmpty;
 		}
 
 		__class(Sprite,'laya.display.Sprite',_super);
@@ -28785,7 +30877,7 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.setBounds=function(bound){
-			this.get$P().uBounds=bound;
+			this._set$P("uBounds",bound);
 		}
 
 		/**
@@ -28794,7 +30886,8 @@ window.Laya=(function(window,document){
 		*@return 矩形区域。
 		*/
 		__proto.getBounds=function(){
-			return Rectangle._getWrapRec(this.boundPointsToParent(),Rectangle.TEMP);
+			if (!this._$P.mBounds)this._set$P("mBounds",new Rectangle());
+			return Rectangle._getWrapRec(this.boundPointsToParent(),this._$P.mBounds);
 		}
 
 		/**
@@ -28803,7 +30896,8 @@ window.Laya=(function(window,document){
 		*@return 矩形区域。
 		*/
 		__proto.getSelfBounds=function(){
-			return Rectangle._getWrapRec(this._getBoundPointsM(false),Rectangle.TEMP);
+			if (!this._$P.mBounds)this._set$P("mBounds",new Rectangle());
+			return Rectangle._getWrapRec(this._getBoundPointsM(false),this._$P.mBounds);
 		}
 
 		/**
@@ -28816,9 +30910,9 @@ window.Laya=(function(window,document){
 			(ifRotate===void 0)&& (ifRotate=false);
 			var pX=0,pY=0;
 			if (this._style){
-				pX=this._style.translateX;
-				pY=this._style.translateY;
-				ifRotate=ifRotate || (this._style.rotate!==0);
+				pX=this._style._tf.translateX;
+				pY=this._style._tf.translateY;
+				ifRotate=ifRotate || (this._style._tf.rotate!==0);
 				if (this._style.scrollRect){
 					pX+=this._style.scrollRect.x;
 					pY+=this._style.scrollRect.y;
@@ -28834,15 +30928,15 @@ window.Laya=(function(window,document){
 				return pList;
 			};
 			var tPoint=Point.TEMP;
-			var rst=[];
 			var i=0,len=pList.length;
 			for (i=0;i < len;i+=2){
 				tPoint.x=pList[i];
 				tPoint.y=pList[i+1];
 				this.toParentPoint(tPoint);
-				rst.push(tPoint.x,tPoint.y);
+				pList[i]=tPoint.x;
+				pList[i+1]=tPoint.y;
 			}
-			return rst;
+			return pList;
 		}
 
 		/**
@@ -28863,16 +30957,25 @@ window.Laya=(function(window,document){
 		__proto._getBoundPointsM=function(ifRotate){
 			(ifRotate===void 0)&& (ifRotate=false);
 			if (this._$P.uBounds)return this._$P.uBounds._getBoundPoints();
-			if (!this._$P.temBM)this.get$P().temBM=[];
-			var pList=this._graphics ? this._graphics.getBoundPoints():Utils1.clearArr(this._$P.temBM);
+			if (!this._$P.temBM)this._set$P("temBM",[]);
+			if (this.scrollRect){
+				var rst=Utils1.clearArray(this._$P.temBM);
+				var rec=Rectangle.TEMP;
+				rec.copyFrom(this.scrollRect);
+				Utils1.concatArray(rst,rec._getBoundPoints());
+				return rst;
+			};
+			var pList=this._graphics ? this._graphics.getBoundPoints():Utils1.clearArray(this._$P.temBM);
 			var child;
 			var cList;
-			for (var i=0,n=this.numChildren;i < n;i++){
-				child=this.getChildAt(i);
+			var __childs;
+			__childs=this._childs;
+			for (var i=0,n=__childs.length;i < n;i++){
+				child=__childs [i];
 				if ((child instanceof laya.display.Sprite )&& child.visible==true){
 					cList=child.boundPointsToParent(ifRotate);
 					if (cList)
-						pList=pList ? Utils1.concatArr(pList,cList):cList;
+						pList=pList ? Utils1.concatArray(pList,cList):cList;
 				}
 			}
 			return pList;
@@ -28888,12 +30991,6 @@ window.Laya=(function(window,document){
 			return this._style;
 		}
 
-		/**@private */
-		__proto.get$P=function(){
-			this._$P===Sprite.PropEmpty && (this._$P={});
-			return this._$P;
-		}
-
 		/**
 		*设置样式。
 		*@param value 样式。
@@ -28907,13 +31004,14 @@ window.Laya=(function(window,document){
 			'use strict';
 			this._tfChanged=false;
 			var style=this._style;
-			var sx=style.scaleX,sy=style.scaleY;
+			var tf=style._tf;
+			var sx=tf.scaleX,sy=tf.scaleY;
 			var m;
-			if (style.rotate || sx!==1 || sy!==1 || style.skewX || style.skewY){
+			if (tf.rotate || sx!==1 || sy!==1 || tf.skewX || tf.skewY){
 				m=this._transform || (this._transform=Matrix.create());
 				m.bTransform=true;
-				if (style.rotate){
-					var angle=style.rotate *0.0174532922222222;
+				if (tf.rotate){
+					var angle=tf.rotate *0.0174532922222222;
 					var cos=m.cos=Math.cos(angle);
 					var sin=m.sin=Math.sin(angle);
 					m.a=sx *cos;
@@ -28926,8 +31024,8 @@ window.Laya=(function(window,document){
 					m.a=sx;
 					m.d=sy;
 					m.c=m.b=m.tx=m.ty=0;
-					if (style.skewX || style.skewY){
-						return m.skew(style.skewX *0.0174532922222222,style.skewY *0.0174532922222222);
+					if (tf.skewX || tf.skewY){
+						return m.skew(tf.skewX *0.0174532922222222,tf.skewY *0.0174532922222222);
 					}
 					return m;
 				}
@@ -29022,7 +31120,7 @@ window.Laya=(function(window,document){
 		*@return HTMLCanvas 对象。
 		*/
 		__proto.drawToCanvas=function(canvasWidth,canvasHeight,offsetX,offsetY){
-			return System.drawToCanvas(this,this._renderType,canvasWidth,canvasHeight,offsetX,offsetY);
+			return RunDriver.drawToCanvas(this,this._renderType,canvasWidth,canvasHeight,offsetX,offsetY);
 		}
 
 		/**
@@ -29037,7 +31135,7 @@ window.Laya=(function(window,document){
 		*应用滤镜。
 		*/
 		__proto.applyFilters=function(){
-			if (Render.isWebGl)return;
+			if (Render.isWebGL)return;
 			var _filters;
 			_filters=this._$P.filters;
 			if (!_filters || _filters.length < 1)return;
@@ -29225,7 +31323,6 @@ window.Laya=(function(window,document){
 			(y===void 0)&& (y=0);
 			(width===void 0)&& (width=0);
 			(height===void 0)&& (height=0);
-			this.graphics.clear();
 			function loaded (tex){
 				_$this.size(tex.width,tex.height);
 				_$this.repaint();
@@ -29276,7 +31373,7 @@ window.Laya=(function(window,document){
 			(elasticDistance===void 0)&& (elasticDistance=0);
 			(elasticBackTime===void 0)&& (elasticBackTime=300);
 			(disableMouseEvent===void 0)&& (disableMouseEvent=false);
-			this._$P.dragging || (this.get$P().dragging=new Dragging());
+			this._$P.dragging || (this._set$P("dragging",new Dragging()));
 			this._$P.dragging.start(this,area,hasInertia,elasticDistance,elasticBackTime,data,disableMouseEvent);
 		}
 
@@ -29291,9 +31388,9 @@ window.Laya=(function(window,document){
 				this._$P.cacheCanvas.ctx.destroy();
 				this._$P.cacheCanvas.ctx=null;
 			};
-			var fc=this["_filterCache"];
-			fc && (fc.destroy(),fc.recycle(),this["_filterCache"]=null);
-			this["_isHaveGlowFilter"]=false;
+			var fc=this._$P._filterCache;
+			fc && (fc.destroy(),fc.recycle(),this._set$P('_filterCache',null));
+			this._set$P('_isHaveGlowFilter',false);
 			_super.prototype._setDisplay.call(this,value);
 		}
 
@@ -29402,7 +31499,7 @@ window.Laya=(function(window,document){
 		*表示显示对象的显示高度，以像素为单位。
 		*/
 		__getset(0,__proto,'viewHeight',function(){
-			return this.height *this._style.scaleY;
+			return this.height *this._style._tf.scaleY;
 		});
 
 		/**
@@ -29417,14 +31514,15 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'cacheAs',function(){
 			return this._$P.cacheCanvas==null ? "none" :this._$P.cacheCanvas.type;
 			},function(value){
-			if (value===(this._$P.cacheCanvas ? this._$P.cacheCanvas.type :"none"))return;
+			var cacheCanvas=this._$P.cacheCanvas;
+			if (value===(cacheCanvas ? cacheCanvas.type :"none"))return;
 			if (value!=="none"){
-				this._$P.cacheCanvas || (this.get$P().cacheCanvas=Pool.getItemByClass("cacheCanvas",Object));
-				this._$P.cacheCanvas.type=value;
-				this._$P.cacheCanvas.reCache=true;
+				cacheCanvas || (cacheCanvas=this._set$P("cacheCanvas",Pool.getItemByClass("cacheCanvas",Object)));
+				cacheCanvas.type=value;
+				cacheCanvas.reCache=true;
 				this._renderType |=0x10;
 				}else {
-				if (this._$P.cacheCanvas)Pool.recover("cacheCanvas",this._$P.cacheCanvas);
+				if (cacheCanvas)Pool.recover("cacheCanvas",cacheCanvas);
 				this._$P.cacheCanvas=null;
 				this._renderType &=~0x10;
 			}
@@ -29459,11 +31557,11 @@ window.Laya=(function(window,document){
 
 		/**水平倾斜角度，默认值为0。*/
 		__getset(0,__proto,'skewX',function(){
-			return this._style.skewX;
+			return this._style._tf.skewX;
 			},function(value){
 			var style=this.getStyle();
-			if (style.skewX!==value){
-				style.skewX=value;
+			if (style._tf.skewX!==value){
+				style.setSkewX(value);
 				this._tfChanged=true;
 				this._renderType |=0x08;
 				var p=this._parent;
@@ -29495,16 +31593,16 @@ window.Laya=(function(window,document){
 		*表示显示对象的显示宽度，以像素为单位。
 		*/
 		__getset(0,__proto,'viewWidth',function(){
-			return this.width *this._style.scaleX;
+			return this.width *this._style._tf.scaleX;
 		});
 
 		/**X轴缩放值，默认值为1。*/
 		__getset(0,__proto,'scaleX',function(){
-			return this._style.scaleX;
+			return this._style._tf.scaleX;
 			},function(value){
 			var style=this.getStyle();
-			if (style.scaleX!==value){
-				style.scaleX=value;
+			if (style._tf.scaleX!==value){
+				style.setScaleX(value);
 				this._tfChanged=true;
 				this._renderType |=0x08;
 				var p=this._parent;
@@ -29516,16 +31614,16 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'hitArea',function(){
 			return this._$P.hitArea;
 			},function(value){
-			this.get$P().hitArea=value;
+			this._set$P("hitArea",value);
 		});
 
 		/**旋转角度，默认值为0。*/
 		__getset(0,__proto,'rotation',function(){
-			return this._style.rotate;
+			return this._style._tf.rotate;
 			},function(value){
 			var style=this.getStyle();
-			if (style.rotate!==value){
-				style.rotate=value;
+			if (style._tf.rotate!==value){
+				style.setRotate(value);
 				this._tfChanged=true;
 				this._renderType |=0x08;
 				var p=this._parent;
@@ -29535,11 +31633,11 @@ window.Laya=(function(window,document){
 
 		/**Y轴缩放值，默认值为1。*/
 		__getset(0,__proto,'scaleY',function(){
-			return this._style.scaleY;
+			return this._style._tf.scaleY;
 			},function(value){
 			var style=this.getStyle();
-			if (style.scaleY!==value){
-				style.scaleY=value;
+			if (style._tf.scaleY!==value){
+				style.setScaleY(value);
 				this._tfChanged=true;
 				this._renderType |=0x08;
 				var p=this._parent;
@@ -29559,11 +31657,11 @@ window.Laya=(function(window,document){
 
 		/**垂直倾斜角度，默认值为0。*/
 		__getset(0,__proto,'skewY',function(){
-			return this._style.skewY;
+			return this._style._tf.skewY;
 			},function(value){
 			var style=this.getStyle();
-			if (style.skewY!==value){
-				style.skewY=value;
+			if (style._tf.skewY!==value){
+				style.setSkewY(value);
 				this._tfChanged=true;
 				this._renderType |=0x08;
 				var p=this._parent;
@@ -29591,17 +31689,17 @@ window.Laya=(function(window,document){
 
 		/**X轴 轴心点的位置，默认为0，轴心点会影响对象位置，缩放，旋转。*/
 		__getset(0,__proto,'pivotX',function(){
-			return this._style.translateX;
+			return this._style._tf.translateX;
 			},function(value){
-			this.getStyle().translateX=value;
+			this.getStyle().setTranslateX(value);
 			this.repaint();
 		});
 
 		/**Y轴 轴心点的位置，默认为0，轴心点会影响对象位置，缩放，旋转。*/
 		__getset(0,__proto,'pivotY',function(){
-			return this._style.translateY;
+			return this._style._tf.translateY;
 			},function(value){
-			this.getStyle().translateY=value;
+			this.getStyle().setTranslateY(value);
 			this.repaint();
 		});
 
@@ -29630,7 +31728,7 @@ window.Laya=(function(window,document){
 
 		/**绘图对象。*/
 		__getset(0,__proto,'graphics',function(){
-			return this._graphics || (this.graphics=System.createGraphics());
+			return this._graphics || (this.graphics=RunDriver.createGraphics());
 			},function(value){
 			if (this._graphics)this._graphics._sp=null;
 			this._graphics=value;
@@ -29651,8 +31749,8 @@ window.Laya=(function(window,document){
 			},function(value){
 			value && value.length===0 && (value=null);
 			if (this._$P.filters==value)return;
-			this.get$P().filters=value ? value.slice():null;
-			if (Render.isWebGl){
+			this._set$P("filters",value ? value.slice():null);
+			if (Render.isWebGL){
 				if (value && value.length){
 					this._renderType |=0x02;
 					}else {
@@ -29670,7 +31768,7 @@ window.Laya=(function(window,document){
 			return this._$P._mask;
 			},function(value){
 			this.cacheAsBitmap=true;
-			this.get$P()._mask=value;
+			this._set$P("_mask",value);
 			this._renderType |=0x20;
 			this.parentRepaint(this);
 		});
@@ -29694,7 +31792,7 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'enableRenderMerge',function(){
 			return this._enableRenderMerge;
 			},function(value){
-			if (Render.isWebGl){
+			if (Render.isWebGL){
 				if (value){
 					this._renderType |=0x400;
 					}else {
@@ -29732,7 +31830,6 @@ window.Laya=(function(window,document){
 			return new Sprite().loadImage(url);
 		}
 
-		Sprite.PropEmpty={};
 		return Sprite;
 	})(Node)
 
@@ -29876,14 +31973,9 @@ window.Laya=(function(window,document){
 		var __proto=WebAudioSoundChannel.prototype;
 		/**
 		*播放声音
-		*
 		*/
 		__proto.play=function(){
-			if (this.bufferSource){
-				this.bufferSource.disconnect();
-				this.bufferSource.onended=null;
-				this.bufferSource=null;
-			}
+			this._clearBufferSource();
 			if (!this.audioBuffer)return;
 			var context=this.context;
 			var gain=this.gain;
@@ -29920,11 +32012,7 @@ window.Laya=(function(window,document){
 			this.play();
 		}
 
-		/**
-		*停止播放
-		*
-		*/
-		__proto.stop=function(){
+		__proto._clearBufferSource=function(){
 			if (this.bufferSource){
 				var sourceNode=this.bufferSource;
 				if (sourceNode.stop){
@@ -29932,10 +32020,19 @@ window.Laya=(function(window,document){
 					}else {
 					sourceNode.noteOff(0);
 				}
-				this.bufferSource.disconnect();
+				sourceNode.disconnect(0);
+				sourceNode.onended=null;
+				try {sourceNode.buffer=WebAudioSound._miniBuffer;}catch(e){}
 				this.bufferSource=null;
-				this.audioBuffer=null;
 			}
+		}
+
+		/**
+		*停止播放
+		*/
+		__proto.stop=function(){
+			this._clearBufferSource();
+			this.audioBuffer=null;
 			if (this.gain)
 				this.gain.disconnect();
 			this.isStopped=true;
@@ -29945,8 +32042,6 @@ window.Laya=(function(window,document){
 
 		/**
 		*获取当前播放位置
-		*@return
-		*
 		*/
 		__getset(0,__proto,'position',function(){
 			if (this.bufferSource){
@@ -29957,13 +32052,9 @@ window.Laya=(function(window,document){
 
 		/**
 		*设置音量
-		*@param v
-		*
 		*/
 		/**
 		*获取音量
-		*@return
-		*
 		*/
 		__getset(0,__proto,'volume',function(){
 			return this._volume;
@@ -30035,6 +32126,402 @@ window.Laya=(function(window,document){
 		});
 
 		return Bitmap;
+	})(Resource)
+
+
+	/**
+	*...
+	*@author laya
+	*/
+	//class laya.webgl.shader.Shader extends laya.resource.Resource
+	var Shader=(function(_super){
+		function Shader(vs,ps,saveName,nameMap){
+			this.customCompile=false;
+			//this._nameMap=null;
+			//this._vs=null;
+			//this._ps=null;
+			this._curActTexIndex=0;
+			//this._reCompile=false;
+			this.tag={};
+			//this._vshader=null;
+			//this._pshader=null;
+			this._program=null;
+			this._params=null;
+			this._paramsMap={};
+			this._offset=0;
+			//this._id=0;
+			Shader.__super.call(this);
+			if (Render.isConchApp || Render.isFlash){
+				this.customCompile=true;
+			}
+			this._id=++Shader._count;
+			this._vs=vs;
+			this._ps=ps;
+			this._nameMap=nameMap ? nameMap :{};
+			saveName !=null && (Shader.sharders[saveName]=this);
+		}
+
+		__class(Shader,'laya.webgl.shader.Shader',_super);
+		var __proto=Shader.prototype;
+		__proto.recreateResource=function(){
+			this.startCreate();
+			this._compile();
+			this.compoleteCreate();
+			this.memorySize=0;
+		}
+
+		//忽略尺寸尺寸
+		__proto.detoryResource=function(){
+			WebGL.mainContext.deleteShader(this._vshader);
+			WebGL.mainContext.deleteShader(this._pshader);
+			WebGL.mainContext.deleteProgram(this._program);
+			this._vshader=this._pshader=this._program=null;
+			this._params=null;
+			this._paramsMap={};
+			this.memorySize=0;
+			this._curActTexIndex=0;
+		}
+
+		__proto._compile=function(){
+			if (!this._vs || !this._ps || this._params)
+				return;
+			this._reCompile=true;
+			this._params=[];
+			var text=[this._vs,this._ps];
+			var result;
+			if (this.customCompile)
+				result=this._preGetParams(this._vs,this._ps);
+			var gl=WebGL.mainContext;
+			this._program=gl.createProgram();
+			this._vshader=Shader._createShader(gl,text[0],0x8B31);
+			this._pshader=Shader._createShader(gl,text[1],0x8B30);
+			gl.attachShader(this._program,this._vshader);
+			gl.attachShader(this._program,this._pshader);
+			gl.linkProgram(this._program);
+			if (!this.customCompile && !gl.getProgramParameter(this._program,0x8B82)){
+				throw gl.getProgramInfoLog(this._program);
+			};
+			var one,i=0,j=0,n=0,location;
+			var attribNum=this.customCompile?result.attributes.length:gl.getProgramParameter(this._program,0x8B89);
+			for (i=0;i < attribNum;i++){
+				var attrib=this.customCompile?result.attributes[i]:gl.getActiveAttrib(this._program,i);
+				location=gl.getAttribLocation(this._program,attrib.name);
+				one={vartype:"attribute",ivartype:0,attrib:attrib,location:location,name:attrib.name,type:attrib.type,isArray:false,isSame:false,preValue:null,indexOfParams:0};
+				this._params.push(one);
+			};
+			var nUniformNum=this.customCompile?result.uniforms.length:gl.getProgramParameter(this._program,0x8B86);
+			for (i=0;i < nUniformNum;i++){
+				var uniform=this.customCompile?result.uniforms[i]:gl.getActiveUniform(this._program,i);
+				location=gl.getUniformLocation(this._program,uniform.name);
+				one={vartype:"uniform",ivartype:1,attrib:attrib,location:location,name:uniform.name,type:uniform.type,isArray:false,isSame:false,preValue:null,indexOfParams:0};
+				if (one.name.indexOf('[0]')> 0){
+					one.name=one.name.substr(0,one.name.length-3);
+					one.isArray=true;
+					one.location=gl.getUniformLocation(this._program,one.name);
+				}
+				this._params.push(one);
+			}
+			for (i=0,n=this._params.length;i < n;i++){
+				one=this._params[i];
+				one.indexOfParams=i;
+				one.index=1;
+				one.value=[one.location,null];
+				one.codename=one.name;
+				one.name=this._nameMap[one.codename] ? this._nameMap[one.codename] :one.codename;
+				this._paramsMap[one.name]=one;
+				one._this=this;
+				one.saveValue=[];
+				if (one.vartype==="attribute"){
+					one.fun=this._attribute;
+					continue ;
+				}
+				switch (one.type){
+					case 0x1406:
+						one.fun=one.isArray ? this._uniform1fv :this._uniform1f;
+						break ;
+					case 0x8B50:
+						one.fun=this._uniform_vec2;
+						break ;
+					case 0x8B51:
+						one.fun=this._uniform_vec3;
+						break ;
+					case 0x8B52:
+						one.fun=this._uniform_vec4;
+						break ;
+					case 0x8B5E:
+						one.fun=this._uniform_sampler2D;
+						break ;
+					case 0x8B5C:
+						one.fun=this._uniformMatrix4fv;
+						break ;
+					case 0x8B56:
+						one.fun=this._uniform1i;
+						break ;
+					case 0x8B60:
+					case 0x8B5A:
+					case 0x8B5B:
+						throw new Error("compile shader err!");
+						break ;
+					default :
+						throw new Error("compile shader err!");
+						break ;
+					}
+			}
+		}
+
+		/**
+		*根据变量名字获得
+		*@param name
+		*@return
+		*/
+		__proto.getUniform=function(name){
+			return this._paramsMap[name];
+		}
+
+		__proto._attribute=function(one,value){
+			var gl=WebGL.mainContext;
+			gl.enableVertexAttribArray(one.location);
+			gl.vertexAttribPointer(one.location,value[0],value[1],value[2],value[3],value[4]+this._offset);
+			return 2;
+		}
+
+		__proto._uniformMatrix4fv=function(one,value){
+			WebGL.mainContext.uniformMatrix4fv(one.location,false,value);
+			return 1;
+		}
+
+		__proto._uniform1i=function(one,value){
+			var saveValue=one.saveValue;
+			if (saveValue[0]!==value){
+				WebGL.mainContext.uniform1i(one.location,saveValue[0]=value);
+				return 1;
+			}
+			return 0;
+		}
+
+		__proto._uniform1f=function(one,value){
+			var saveValue=one.saveValue;
+			if (saveValue[0]!==value){
+				WebGL.mainContext.uniform1f(one.location,saveValue[0]=value);
+				return 1;
+			}
+			return 0;
+		}
+
+		__proto._uniform1fv=function(one,value){
+			var saveValue=one.saveValue;
+			if (saveValue[0]!==value){
+				WebGL.mainContext.uniform1fv(one.location,saveValue[0]=value);
+				return 1;
+			}
+			return 0;
+		}
+
+		__proto._uniform_vec2=function(one,value){
+			var saveValue=one.saveValue;
+			if (saveValue[0]!==value[0] || saveValue[1]!==value[1]){
+				WebGL.mainContext.uniform2f(one.location,saveValue[0]=value[0],saveValue[1]=value[1]);
+				return 1;
+			}
+			return 0;
+		}
+
+		__proto._uniform_vec3=function(one,value){
+			WebGL.mainContext.uniform3f(one.location,value[0],value[1],value[2]);
+			return 1;
+		}
+
+		__proto._uniform_vec4=function(one,value){
+			WebGL.mainContext.uniform4f(one.location,value[0],value[1],value[2],value[3]);
+			return 1;
+		}
+
+		__proto._uniform_sampler2D=function(one,value){
+			var gl=WebGL.mainContext;
+			var saveValue=one.saveValue;
+			if (saveValue[0]==null){
+				saveValue[0]=this._curActTexIndex;
+				gl.uniform1i(one.location,this._curActTexIndex);
+				gl.activeTexture(Shader._TEXTURES[this._curActTexIndex]);
+				WebGLContext.bindTexture(gl,0x0DE1,value);
+				this._curActTexIndex++;
+				return 1;
+			}
+			else{
+				gl.activeTexture(Shader._TEXTURES[saveValue[0]]);
+				WebGLContext.bindTexture(gl,0x0DE1,value);
+				return 0;
+			}
+		}
+
+		__proto._noSetValue=function(one){
+			console.log("no....:"+one.name);
+		}
+
+		//throw new Error("upload shader err,must set value:"+one.name);
+		__proto.uploadOne=function(name,value){
+			this.activeResource();
+			WebGLContext.UseProgram(this._program);
+			var one=this._paramsMap[name];
+			one.fun.call(this,one,value);
+		}
+
+		/**
+		*提交shader到GPU
+		*@param shaderValue
+		*/
+		__proto.upload=function(shaderValue,params){
+			Shader.activeShader=this;
+			this.activeResource();
+			WebGLContext.UseProgram(this._program);
+			if (this._reCompile){
+				params=this._params;
+				this._reCompile=false;
+				}else {
+				params=params || this._params;
+			};
+			var one,value,n=params.length,shaderCall=0;
+			for (var i=0;i < n;i++){
+				one=params[i];
+				((value=shaderValue[one.name])!==null)&& (shaderCall+=one.fun.call(this,one,value));
+			}
+			Stat.shaderCall+=shaderCall;
+		}
+
+		/**
+		*按数组的定义提交
+		*@param shaderValue 数组格式[name,[value,id],...]
+		*/
+		__proto.uploadArray=function(shaderValue,length,_bufferUsage){
+			Shader.activeShader=this;
+			this.activeResource();
+			var sameProgram=!WebGLContext.UseProgram(this._program);
+			var params=this._params,value;
+			var one,shaderCall=0,uploadArrayCount=Shader._uploadArrayCount++;
+			for (var i=length-2;i >=0;i-=2){
+				one=this._paramsMap[shaderValue[i]]
+				if (!one || one._uploadArrayCount===uploadArrayCount)
+					continue ;
+				one._uploadArrayCount=uploadArrayCount;
+				var v=shaderValue[i+1];
+				var uid=v[1];
+				if (sameProgram && one.ivartype===1 && uid > 0 && uid===one.__uploadid)
+					continue ;
+				value=v[0];
+				if (value !=null){
+					_bufferUsage && _bufferUsage[one.name] && _bufferUsage[one.name].bind();
+					shaderCall+=one.fun.call(this,one,value);
+					one.__uploadid=uid;
+				}
+			}
+			Stat.shaderCall+=shaderCall;
+		}
+
+		/**
+		*得到编译后的变量及相关预定义
+		*@return
+		*/
+		__proto.getParams=function(){
+			return this._params;
+		}
+
+		__proto._preGetParams=function(vs,ps){
+			var text=[vs,ps];
+			var result={};
+			var attributes=[];
+			var uniforms=[];
+			result.attributes=attributes;
+			result.uniforms=uniforms;
+			var removeAnnotation=new RegExp("(/\\*([^*]|[\\r\\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/)|(//.*)","g");
+			var reg=new RegExp("(\".*\")|('.*')|([\\w\\*-\\.+/()=<>{}\\\\]+)|([,;:\\\\])","g");
+			var i=0,n=0,one;
+			for (var s=0;s < 2;s++){
+				text[s]=text[s].replace(removeAnnotation,"");
+				var words=text[s].match(reg);
+				var str="";
+				var ofs=0;
+				for (i=0,n=words.length;i < n;i++){
+					var word=words[i];
+					if (word !="attribute" && word !="uniform"){
+						str+=word;
+						if (word !=";")str+=" ";
+						continue ;
+					}
+					one={type:Shader.shaderParamsMap[words[i+1]],name:words[i+2],size:isNaN(Laya.__parseInt(words[i+3]))? 1 :Laya.__parseInt(words[i+3])};
+					if (word=="attribute"){
+						attributes.push(one);
+						}else {
+						uniforms.push(one);
+					}
+					str+=one.vartype+" "+one.type+" "+one.name+" ";
+					if (words[i+3]==':'){
+						one.type=words[i+4];
+						i+=2;
+					}
+					i+=2;
+				}
+				text[s]=str;
+			}
+			return result;
+		}
+
+		__proto.dispose=function(){
+			this.resourceManager.removeResource(this);
+			_super.prototype.dispose.call(this);
+		}
+
+		Shader.getShader=function(name){
+			return Shader.sharders[name];
+		}
+
+		Shader.create=function(vs,ps,saveName,nameMap){
+			return new Shader(vs,ps,saveName,nameMap);
+		}
+
+		Shader.withCompile=function(nameID,mainID,define,shaderName,createShader){
+			if (shaderName && Shader.sharders[shaderName])
+				return Shader.sharders[shaderName];
+			var pre=Shader._preCompileShader[0.0002 *nameID+mainID];
+			if (!pre)
+				throw new Error("withCompile shader err!"+nameID+" "+mainID);
+			return pre.createShader(define,shaderName,createShader);
+		}
+
+		Shader.addInclude=function(fileName,txt){
+			if (!txt || txt.length===0)
+				throw new Error("add shader include file err:"+fileName);
+			if (Shader._includeFiles[fileName])
+				throw new Error("add shader include file err, has add:"+fileName);
+			Shader._includeFiles[fileName]=txt;
+		}
+
+		Shader.preCompile=function(nameID,mainID,vs,ps,nameMap){
+			var id=0.0002 *nameID+mainID;
+			Shader._preCompileShader[id]=new ShaderCompile(id,vs,ps,nameMap,Shader._includeFiles);
+		}
+
+		Shader._createShader=function(gl,str,type){
+			var shader=gl.createShader(type);
+			gl.shaderSource(shader,str);
+			gl.compileShader(shader);
+			if (!gl.getShaderParameter(shader,0x8B81)){
+				throw gl.getShaderInfoLog(shader);
+			}
+			return shader;
+		}
+
+		Shader._TEXTURES=[0x84C0,0x84C1,0x84C2,0x84C3,0x84C4,0x84C5,0x84C6,,0x84C7,0x84C8];
+		Shader._includeFiles={};
+		Shader._count=0;
+		Shader._preCompileShader={};
+		Shader._uploadArrayCount=1;
+		Shader.SHADERNAME2ID=0.0002;
+		Shader.activeShader=null
+		Shader.sharders=(Shader.sharders=[],Shader.sharders.length=0x20,Shader.sharders);
+		__static(Shader,
+		['shaderParamsMap',function(){return this.shaderParamsMap={"float":0x1406,"int":0x1404,"bool":0x8B56,"vec2":0x8B50,"vec3":0x8B51,"vec4":0x8B52,"ivec2":0x8B53,"ivec3":0x8B54,"ivec4":0x8B55,"bvec2":0x8B57,"bvec3":0x8B58,"bvec4":0x8B59,"mat2":0x8B5A,"mat3":0x8B5B,"mat4":0x8B5C,"sampler2D":0x8B5E,"samplerCube":0x8B60};},'nameKey',function(){return this.nameKey=new StringKey();}
+		]);
+		return Shader;
 	})(Resource)
 
 
@@ -30215,411 +32702,80 @@ window.Laya=(function(window,document){
 
 
 	/**
-	*...
-	*@author laya
+	*@private
 	*/
-	//class laya.webgl.shader.Shader extends laya.resource.Resource
-	var Shader=(function(_super){
-		function Shader(vs,ps,saveName,nameMap){
-			this.customCompile=false;
-			//this._nameMap=null;
-			//this._vs=null;
-			//this._ps=null;
-			//this._texIndex=0;
-			//this._reCompile=false;
-			this.tag={};
-			//this._vshader=null;
-			//this._pshader=null;
-			this._program=null;
-			this._params=null;
-			this._paramsMap={};
-			this._offset=0;
-			//this._id=0;
-			Shader.__super.call(this);
-			if (System.isConchApp){
-				this.customCompile=true;
-			}
-			this._id=++Shader._count;
-			this._vs=vs;
-			this._ps=ps;
-			this._nameMap=nameMap ? nameMap :{};
-			saveName !=null && (Shader.sharders[saveName]=this);
+	//class laya.particle.ParticleTemplate2D extends laya.particle.ParticleTemplateWebGL
+	var ParticleTemplate2D=(function(_super){
+		function ParticleTemplate2D(parSetting){
+			this.x=0;
+			this.y=0;
+			this.blendType=1;
+			this._startTime=0;
+			this.sv=new ParticleShaderValue();
+			ParticleTemplate2D.__super.call(this,parSetting);
+			var _this=this;
+			Laya.loader.load(this.settings.textureName,Handler.create(null,function(texture){
+				(texture.bitmap).enableMerageInAtlas=false;
+				_this.texture=texture;
+			}));
+			this.sv.u_Duration=this.settings.duration;
+			this.sv.u_Gravity=this.settings.gravity;
+			this.sv.u_EndVelocity=this.settings.endVelocity;
+			this.initialize();
+			this.loadContent();
 		}
 
-		__class(Shader,'laya.webgl.shader.Shader',_super);
-		var __proto=Shader.prototype;
-		__proto.recreateResource=function(){
-			this.startCreate();
-			this.compile();
-			this.compoleteCreate();
-			this.memorySize=0;
+		__class(ParticleTemplate2D,'laya.particle.ParticleTemplate2D',_super);
+		var __proto=ParticleTemplate2D.prototype;
+		Laya.imps(__proto,{"laya.webgl.submit.ISubmit":true})
+		__proto.getRenderType=function(){return-111}
+		__proto.releaseRender=function(){}
+		__proto.addParticleArray=function(position,velocity){
+			position[0]+=this.x;
+			position[1]+=this.y;
+			_super.prototype.addParticleArray.call(this,position,velocity);
 		}
 
-		//忽略尺寸尺寸
-		__proto.detoryResource=function(){
-			WebGL.mainContext.deleteShader(this._vshader);
-			WebGL.mainContext.deleteShader(this._pshader);
-			WebGL.mainContext.deleteProgram(this._program);
-			this._vshader=this._pshader=this._program=null;
-			this._params=null;
-			this._paramsMap={};
-			this.memorySize=0;
-		}
-
-		__proto.compileParams=function(){}
-		//TODO:待定,某些参数是否不用回复uniform.location
-		__proto.compile=function(){
-			if (!this._vs || !this._ps || this._params)
-				return;
-			this._reCompile=true;
-			this._params=[];
-			var text=[this._vs,this._ps];
-			var result;
-			if (this.customCompile)
-				result=this.preGetParams(this._vs,this._ps);
-			var gl=WebGL.mainContext;
-			this._program=gl.createProgram();
-			this._vshader=Shader._createShader(gl,text[0],0x8B31);
-			this._pshader=Shader._createShader(gl,text[1],0x8B30);
-			gl.attachShader(this._program,this._vshader);
-			gl.attachShader(this._program,this._pshader);
-			gl.linkProgram(this._program);
-			if (!gl.getProgramParameter(this._program,0x8B82)){
-				throw gl.getProgramInfoLog(this._program);
-			};
-			var one,i=0,j=0,n=0,location;
-			var attribNum=0;
-			if (this.customCompile)
-				attribNum=result.attributes.length;
-			else
-			attribNum=gl.getProgramParameter(this._program,0x8B89);
-			for (i=0;i < attribNum;i++){
-				var attrib;
-				if (this.customCompile)
-					attrib=result.attributes[i];
-				else
-				attrib=gl.getActiveAttrib(this._program,i);
-				location=gl.getAttribLocation(this._program,attrib.name);
-				one={vartype:"attribute",ivartype:0,attrib:attrib,location:location,name:attrib.name,type:attrib.type,isArray:false,isSame:false,preValue:null,indexOfParams:0};
-				this._params.push(one);
-			};
-			var nUniformNum=0;
-			if (this.customCompile)
-				nUniformNum=result.uniforms.length;
-			else
-			nUniformNum=gl.getProgramParameter(this._program,0x8B86);
-			for (i=0;i < nUniformNum;i++){
-				var uniform;
-				if (this.customCompile)
-					uniform=result.uniforms[i];
-				else
-				uniform=gl.getActiveUniform(this._program,i);
-				location=gl.getUniformLocation(this._program,uniform.name);
-				one={vartype:"uniform",ivartype:1,attrib:attrib,location:location,name:uniform.name,type:uniform.type,isArray:false,isSame:false,preValue:null,indexOfParams:0};
-				if (one.name.indexOf('[0]')> 0){
-					one.name=one.name.substr(0,one.name.length-3);
-					one.isArray=true;
-					one.location=gl.getUniformLocation(this._program,one.name);
+		__proto.renderSubmit=function(){
+			if (this.texture&&this.texture.loaded){
+				this.update(Timer.DELTA);
+				this.sv.u_CurrentTime=this._currentTime;
+				if (this._firstNewElement !=this._firstFreeElement){
+					this.addNewParticlesToVertexBuffer();
 				}
-				this._params.push(one);
-			}
-			for (i=0,n=this._params.length;i < n;i++){
-				one=this._params[i];
-				one.indexOfParams=i;
-				one.index=1;
-				one.value=[one.location,null];
-				one.codename=one.name;
-				one.name=this._nameMap[one.codename] ? this._nameMap[one.codename] :one.codename;
-				this._paramsMap[one.name]=one;
-				one._this=this;
-				one.saveValue=[];
-				if (one.vartype==="attribute"){
-					one.fun=this._attribute;
-					continue ;
-				}
-				switch (one.type){
-					case 0x1406:
-						one.fun=one.isArray ? this._uniform1fv :this._uniform1f;
-						break ;
-					case 0x8B50:
-						one.fun=this._uniform_vec2;
-						break ;
-					case 0x8B51:
-						one.fun=this._uniform_vec3;
-						break ;
-					case 0x8B52:
-						one.fun=this._uniform_vec4;
-						break ;
-					case 0x8B5E:
-						one.fun=this._uniform_sampler2D;
-						break ;
-					case 0x8B5C:
-						one.fun=this._uniformMatrix4fv;
-						break ;
-					case 0x8B56:
-						one.fun=this._uniform1i;
-						break ;
-					case 0x8B60:
-					case 0x8B5A:
-					case 0x8B5B:
-						throw new Error("compile shader err!");
-						break ;
-					default :
-						throw new Error("compile shader err!");
-						break ;
+				this.blend();
+				if (this._firstActiveElement !=this._firstFreeElement){
+					var gl=WebGL.mainContext;
+					this._vertexBuffer.bind(this._indexBuffer);
+					this.sv.u_texture=this.texture.source;
+					this.sv.upload();
+					if (this._firstActiveElement < this._firstFreeElement){
+						WebGL.mainContext.drawElements(0x0004,(this._firstFreeElement-this._firstActiveElement)*6,0x1403,this._firstActiveElement *6 *2);
 					}
+					else{
+						WebGL.mainContext.drawElements(0x0004,(this.settings.maxPartices-this._firstActiveElement)*6,0x1403,this._firstActiveElement *6 *2);
+						if (this._firstFreeElement > 0)
+							WebGL.mainContext.drawElements(0x0004,this._firstFreeElement *6,0x1403,0);
+					}
+					Stat.drawCall++;
+				}
+				this._drawCounter++;
 			}
-		}
-
-		/**
-		*根据变量名字获得
-		*@param name
-		*@return
-		*/
-		__proto.getUniform=function(name){
-			return this._paramsMap[name];
-		}
-
-		__proto._attribute=function(one,value){
-			var gl=WebGL.mainContext;
-			gl.enableVertexAttribArray(one.location);
-			gl.vertexAttribPointer(one.location,value[0],value[1],value[2],value[3],value[4]+this._offset);
-			return 2;
-		}
-
-		__proto._uniformMatrix4fv=function(one,value){
-			WebGL.mainContext.uniformMatrix4fv(one.location,false,value);
 			return 1;
 		}
 
-		__proto._uniform1i=function(one,value){
-			var saveValue=one.saveValue;
-			if (saveValue[0]!==value){
-				WebGL.mainContext.uniform1i(one.location,saveValue[0]=value);
-				return 1;
+		__proto.blend=function(){
+			if (ParticleTemplate2D.activeBlendType!==this.blendType){
+				var gl=WebGL.mainContext;
+				gl.enable(0x0BE2);
+				BlendMode.fns[this.blendType](gl);
+				ParticleTemplate2D.activeBlendType=this.blendType;
 			}
-			return 0;
 		}
 
-		__proto._uniform1f=function(one,value){
-			var saveValue=one.saveValue;
-			if (saveValue[0]!==value){
-				WebGL.mainContext.uniform1f(one.location,saveValue[0]=value);
-				return 1;
-			}
-			return 0;
-		}
-
-		__proto._uniform1fv=function(one,value){
-			var saveValue=one.saveValue;
-			if (saveValue[0]!==value){
-				WebGL.mainContext.uniform1fv(one.location,saveValue[0]=value);
-				return 1;
-			}
-			return 0;
-		}
-
-		__proto._uniform_vec2=function(one,value){
-			var saveValue=one.saveValue;
-			if (saveValue[0]!==value[0] || saveValue[1]!==value[1]){
-				WebGL.mainContext.uniform2f(one.location,saveValue[0]=value[0],saveValue[1]=value[1]);
-				return 1;
-			}
-			return 0;
-		}
-
-		__proto._uniform_vec3=function(one,value){
-			WebGL.mainContext.uniform3f(one.location,value[0],value[1],value[2]);
-			return 1;
-		}
-
-		__proto._uniform_vec4=function(one,value){
-			WebGL.mainContext.uniform4f(one.location,value[0],value[1],value[2],value[3]);
-			return 1;
-		}
-
-		__proto._uniform_sampler2D=function(one,value){
-			var gl=WebGL.mainContext;
-			gl.activeTexture(Shader._TEXTURES[this._texIndex]);
-			gl.bindTexture(0x0DE1,value);
-			var saveValue=one.saveValue;
-			if (saveValue[0]!==this._texIndex)
-				gl.uniform1i(one.location,saveValue[0]=this._texIndex);
-			this._texIndex++;
-			return 1;
-		}
-
-		__proto._noSetValue=function(one){
-			console.log("no....:"+one.name);
-		}
-
-		//throw new Error("upload shader err,must set value:"+one.name);
-		__proto.uploadOne=function(name,value){
-			this.activeResource();
-			WebGLContext.UseProgram(this._program);
-			var one=this._paramsMap[name];
-			one.fun.call(this,one,value);
-		}
-
-		/**
-		*提交shader到GPU
-		*@param shaderValue
-		*/
-		__proto.upload=function(shaderValue,params){
-			Shader.activeShader=this;
-			this.activeResource();
-			WebGLContext.UseProgram(this._program);
-			this._texIndex=0;
-			if (this._reCompile){
-				params=this._params;
-				this._reCompile=false;
-				}else {
-				params=params || this._params;
-			};
-			var one,value,n=params.length,shaderCall=0;
-			for (var i=0;i < n;i++){
-				one=params[i];
-				((value=shaderValue[one.name])!==null)&& (shaderCall+=one.fun.call(this,one,value));
-			}
-			Stat.shaderCall+=shaderCall;
-		}
-
-		/**
-		*按数组的定义提交
-		*@param shaderValue 数组格式[name,[value,id],...]
-		*/
-		__proto.uploadArray=function(shaderValue,length,_bufferUsage){
-			Shader.activeShader=this;
-			this.activeResource();
-			this._texIndex=0;
-			var sameProgram=!WebGLContext.UseProgram(this._program);
-			var params=this._params,value;
-			var one,shaderCall=0,uploadArrayCount=Shader._uploadArrayCount++;
-			for (var i=length-2;i >=0;i-=2){
-				one=this._paramsMap[shaderValue[i]]
-				if (!one || one._uploadArrayCount===uploadArrayCount)
-					continue ;
-				one._uploadArrayCount=uploadArrayCount;
-				var v=shaderValue[i+1];
-				var uid=v[1];
-				if (sameProgram && one.ivartype===1 && uid > 0 && uid===one.__uploadid)
-					continue ;
-				value=v[0];
-				if (value !=null){
-					_bufferUsage && _bufferUsage[one.name] && _bufferUsage[one.name].bind();
-					shaderCall+=one.fun.call(this,one,value);
-					one.__uploadid=uid;
-				}
-			}
-			Stat.shaderCall+=shaderCall;
-		}
-
-		/**
-		*得到编译后的变量及相关预定义
-		*@return
-		*/
-		__proto.getParams=function(){
-			return this._params;
-		}
-
-		__proto.preGetParams=function(vs,ps){
-			var text=[vs,ps];
-			var result={};
-			var attributes=[];
-			var uniforms=[];
-			result.attributes=attributes;
-			result.uniforms=uniforms;
-			var removeAnnotation=new RegExp("(/\\*([^*]|[\\r\\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/)|(//.*)","g");
-			var reg=new RegExp("(\".*\")|('.*')|([\\w\\*-\\.+/()=<>{}\\\\]+)|([,;:\\\\])","g");
-			var i=0,n=0,one;
-			for (var s=0;s < 2;s++){
-				text[s]=text[s].replace(removeAnnotation,"");
-				var words=text[s].match(reg);
-				var str="";
-				var ofs=0;
-				for (i=0,n=words.length;i < n;i++){
-					var word=words[i];
-					if (word !="attribute" && word !="uniform"){
-						str+=word;
-						if (word !=";")str+=" ";
-						continue ;
-					}
-					one={type:Shader.shaderParamsMap[words[i+1]],name:words[i+2],size:isNaN(Laya.__parseInt(words[i+3]))? 1 :Laya.__parseInt(words[i+3])};
-					if (word=="attribute"){
-						attributes.push(one);
-						}else {
-						uniforms.push(one);
-					}
-					str+=one.vartype+" "+one.type+" "+one.name+" ";
-					if (words[i+3]==':'){
-						one.type=words[i+4];
-						i+=2;
-					}
-					i+=2;
-				}
-				text[s]=str;
-			}
-			return result;
-		}
-
-		__proto.dispose=function(){
-			this.resourceManager.removeResource(this);
-			_super.prototype.dispose.call(this);
-		}
-
-		Shader.getShader=function(name){
-			return Shader.sharders[name];
-		}
-
-		Shader.create=function(vs,ps,saveName,nameMap){
-			return new Shader(vs,ps,saveName,nameMap);
-		}
-
-		Shader.withCompile=function(nameID,mainID,define,shaderName,createShader){
-			if (shaderName && Shader.sharders[shaderName])
-				return Shader.sharders[shaderName];
-			var pre=Shader._preCompileShader[0.0002 *nameID+mainID];
-			if (!pre)
-				throw new Error("withCompile shader err!"+nameID+" "+mainID);
-			return pre.createShader(define,shaderName,createShader);
-		}
-
-		Shader.addInclude=function(fileName,txt){
-			if (!txt || txt.length===0)
-				throw new Error("add shader include file err:"+fileName);
-			if (Shader._includeFiles[fileName])
-				throw new Error("add shader include file err, has add:"+fileName);
-			Shader._includeFiles[fileName]=txt;
-		}
-
-		Shader.preCompile=function(nameID,mainID,vs,ps,nameMap){
-			var id=0.0002 *nameID+mainID;
-			Shader._preCompileShader[id]=new ShaderCompile(id,vs,ps,nameMap,Shader._includeFiles);
-		}
-
-		Shader._createShader=function(gl,str,type){
-			var shader=gl.createShader(type);
-			gl.shaderSource(shader,str);
-			gl.compileShader(shader);
-			if (!gl.getShaderParameter(shader,0x8B81)){
-				throw gl.getShaderInfoLog(shader);
-			}
-			return shader;
-		}
-
-		Shader._TEXTURES=[0x84C0,0x84C1,0x84C2,0x84C3,0x84C4,0x84C5,0x84C6,,0x84C7,0x84C8];
-		Shader._includeFiles={};
-		Shader._count=0;
-		Shader._preCompileShader={};
-		Shader._uploadArrayCount=1;
-		Shader.SHADERNAME2ID=0.0002;
-		Shader.activeShader=null
-		Shader.sharders=(Shader.sharders=[],Shader.sharders.length=0x20,Shader.sharders);
-		__static(Shader,
-		['shaderParamsMap',function(){return this.shaderParamsMap={"float":0x1406,"int":0x1404,"bool":0x8B56,"vec2":0x8B50,"vec3":0x8B51,"vec4":0x8B52,"ivec2":0x8B53,"ivec3":0x8B54,"ivec4":0x8B55,"bvec2":0x8B57,"bvec3":0x8B58,"bvec4":0x8B59,"mat2":0x8B5A,"mat3":0x8B5B,"mat4":0x8B5C,"sampler2D":0x8B5E,"samplerCube":0x8B60};},'nameKey',function(){return this.nameKey=new StringKey();}
-		]);
-		return Shader;
-	})(Resource)
+		ParticleTemplate2D.activeBlendType=-1;
+		return ParticleTemplate2D;
+	})(ParticleTemplateWebGL)
 
 
 	/**
@@ -30628,116 +32784,71 @@ window.Laya=(function(window,document){
 	*/
 	//class laya.webgl.utils.Buffer extends laya.resource.Resource
 	var Buffer=(function(_super){
-		function Buffer(glTarget,usage,frome,bufferUsage){
+		function Buffer(){
 			this._length=0;
 			this._upload=true;
 			//this._id=0;
-			//this._glTarget=null;
+			//this._type=null;
 			//this._buffer=null;
 			//this._glBuffer=null;
 			//this._bufferUsage=0;
-			//this._floatArray32=null;
 			this._uploadSize=0;
-			//this._usage=null;
 			this._maxsize=0;
-			//this._uint16=null;
-			(bufferUsage===void 0)&& (bufferUsage=0x88E8);
 			Buffer.__super.call(this);
 			this.lock=true;
 			Buffer._gl=WebGL.mainContext;
-			this._$2__id=++Buffer._COUNT;
-			this._usage=usage;
-			glTarget==0x8893 && (glTarget=0x8893,this._usage="INDEX");
-			glTarget==0x8892 && (glTarget=0x8892);
-			this._glTarget=glTarget;
-			this._bufferUsage=bufferUsage;
-			this._buffer=new ArrayBuffer(8);
-			frome && this.append(frome);
+			this._id=++Buffer._COUNT;
+			Render.isFlash || (this._buffer=new ArrayBuffer(8));
 		}
 
 		__class(Buffer,'laya.webgl.utils.Buffer',_super);
 		var __proto=Buffer.prototype;
-		__proto.getFloat32Array=function(){
-			return this._floatArray32 || (this._floatArray32=new Float32Array(this._buffer));
-		}
-
-		__proto.getUint16Array=function(){
-			return new Uint16Array(this._buffer);
-		}
-
-		__proto.clear=function(){
-			this._length=0;
-			this._upload=true;
-		}
-
-		__proto.append=function(data){
-			this._upload=true;
-			var szu8=0,n;
-			if ((data instanceof Uint8Array)){
-				szu8=data.length;
-				this._resizeBuffer(this._length+szu8,true);
-				n=new Uint8Array(this._buffer,this._length);
-				}else if ((data instanceof Float32Array)){
-				szu8=data.length *4;
-				this._resizeBuffer(this._length+szu8,true);
-				n=new Float32Array(this._buffer,this._length);
-				}else if ((data instanceof Uint16Array)){
-				szu8=data.length *2;
-				this._resizeBuffer(this._length+szu8,true);
-				n=new Uint16Array(this._buffer,this._length);
+		__proto._bufferData=function(){
+			this._maxsize=Math.max(this._maxsize,this._length);
+			if (Stat.loopCount % 30==0){
+				if (this._buffer.byteLength > (this._maxsize+64)){
+					this.memorySize=this._buffer.byteLength;
+					this._buffer=this._buffer.slice(0,this._maxsize+64);
+					this._checkFloatArray32Use();
+				}
+				this._maxsize=this._length;
 			}
-			n.set(data,0);
-			this._length+=szu8;
-			this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
+			if (this._uploadSize < this._buffer.byteLength){
+				this._uploadSize=this._buffer.byteLength;
+				Buffer._gl.bufferData(this._type,this._uploadSize,this._bufferUsage);
+				this.memorySize=this._uploadSize;
+			}
+			Buffer._gl.bufferSubData(this._type,0,this._buffer);
+			Stat.bufferLen+=this._length;
 		}
 
-		__proto.setdata=function(data){
-			this._buffer=data.buffer;
-			this._upload=true;
-			this._floatArray32 || (this._floatArray32=new Float32Array(this._buffer));
-			this._length=this._buffer.byteLength;
+		__proto._bufferSubData=function(offset,dataStart,dataLength){
+			(offset===void 0)&& (offset=0);
+			(dataStart===void 0)&& (dataStart=0);
+			(dataLength===void 0)&& (dataLength=0);
+			this._maxsize=Math.max(this._maxsize,this._length);
+			if (Stat.loopCount % 30==0){
+				if (this._buffer.byteLength > (this._maxsize+64)){
+					this.memorySize=this._buffer.byteLength;
+					this._buffer=this._buffer.slice(0,this._maxsize+64);
+					this._checkFloatArray32Use();
+				}
+				this._maxsize=this._length;
+			}
+			if (this._uploadSize < this._buffer.byteLength){
+				this._uploadSize=this._buffer.byteLength;
+				Buffer._gl.bufferData(this._type,this._uploadSize,this._bufferUsage);
+				this.memorySize=this._uploadSize;
+			}
+			if (dataStart || dataLength){
+				var subBuffer=this._buffer.slice(dataStart,dataLength);
+				Buffer._gl.bufferSubData(this._type,offset,subBuffer);
+				}else {
+				Buffer._gl.bufferSubData(this._type,offset,this._buffer);
+			}
 		}
 
-		__proto.getBuffer=function(){
-			return this._buffer;
-		}
-
-		__proto.seLength=function(value){
-			if (this._length===value)
-				return;
-			value <=this._buffer.byteLength || (this._resizeBuffer(value *2+256,true));
-			this._length=value;
-		}
-
-		__proto._resizeBuffer=function(nsz,copy){
-			if (nsz < this._buffer.byteLength)
-				return this;
-			this.memorySize=this._buffer.byteLength;
-			if (copy && this._buffer && this._buffer.byteLength > 0){
-				var newbuffer=new ArrayBuffer(nsz);
-				var n=new Uint8Array(newbuffer);
-				n.set(new Uint8Array(this._buffer),0);
-				this._buffer=newbuffer;
-			}else
-			this._buffer=new ArrayBuffer(nsz);
-			this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
-			this._upload=true;
-			return this;
-		}
-
-		__proto.setNeedUpload=function(){
-			this._upload=true;
-		}
-
-		__proto.getNeedUpload=function(){
-			return this._upload;
-		}
-
-		__proto.bind=function(){
-			this.activeResource();
-			(Buffer._bindActive[this._glTarget]===this._glBuffer)|| (Buffer._gl.bindBuffer(this._glTarget,Buffer._bindActive[this._glTarget]=this._glBuffer),Shader.activeShader=null);
-		}
-
+		__proto._checkFloatArray32Use=function(){}
 		__proto.recreateResource=function(){
 			this.startCreate();
 			this._glBuffer || (this._glBuffer=Buffer._gl.createBuffer());
@@ -30758,63 +32869,112 @@ window.Laya=(function(window,document){
 			}
 		}
 
-		__proto.upload=function(){
+		__proto._bind=function(){
+			this.activeResource();
+			(Buffer._bindActive[this._type]===this._glBuffer)|| (Buffer._gl.bindBuffer(this._type,Buffer._bindActive[this._type]=this._glBuffer),Shader.activeShader=null);
+		}
+
+		__proto._bind_upload=function(){
 			if (!this._upload)
 				return false;
 			this._upload=false;
-			this.bind();
-			this._maxsize=Math.max(this._maxsize,this._length);
-			if (Stat.loopCount % 30==0){
-				if (this._buffer.byteLength > (this._maxsize+64)){
-					this.memorySize=this._buffer.byteLength;
-					this._buffer=this._buffer.slice(0,this._maxsize+64);
-					this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
-				}
-				this._maxsize=this._length;
-			}
-			if (this._uploadSize < this._buffer.byteLength){
-				this._uploadSize=this._buffer.byteLength;
-				Buffer._gl.bufferData(this._glTarget,this._uploadSize,this._bufferUsage);
-				this.memorySize=this._uploadSize;
-			}
-			Buffer._gl.bufferSubData(this._glTarget,0,this._buffer);
-			Stat.bufferLen+=this._length;
+			this._bind();
+			this._bufferData();
 			return true;
 		}
 
-		__proto.subUpload=function(offset,dataStart,dataLength){
+		__proto._bind_subUpload=function(offset,dataStart,dataLength){
 			(offset===void 0)&& (offset=0);
 			(dataStart===void 0)&& (dataStart=0);
 			(dataLength===void 0)&& (dataLength=0);
 			if (!this._upload)
 				return false;
 			this._upload=false;
-			this.bind();
-			this._maxsize=Math.max(this._maxsize,this._length);
-			if (Stat.loopCount % 30==0){
-				if (this._buffer.byteLength > (this._maxsize+64)){
-					this.memorySize=this._buffer.byteLength;
-					this._buffer=this._buffer.slice(0,this._maxsize+64);
-					this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
-				}
-				this._maxsize=this._length;
-			}
-			if (this._uploadSize < this._buffer.byteLength){
-				this._uploadSize=this._buffer.byteLength;
-				Buffer._gl.bufferData(this._glTarget,this._uploadSize,this._bufferUsage);
-				this.memorySize=this._uploadSize;
-			}
-			if (dataStart || dataLength){
-				var subBuffer=this._buffer.slice(dataStart,dataLength);
-				Buffer._gl.bufferSubData(this._glTarget,offset,subBuffer);
-				}else {
-				Buffer._gl.bufferSubData(this._glTarget,offset,this._buffer);
-			}
+			this._bind();
+			this._bufferSubData(offset,dataStart,dataLength);
 			return true;
 		}
 
-		__proto.upload_bind=function(){
-			(this._upload && this.upload())|| this.bind();
+		__proto._resizeBuffer=function(nsz,copy){
+			if (nsz < this._buffer.byteLength)
+				return this;
+			this.memorySize=nsz;
+			if (copy && this._buffer && this._buffer.byteLength > 0){
+				var newbuffer=new ArrayBuffer(nsz);
+				var n=new Uint8Array(newbuffer);
+				n.set(new Uint8Array(this._buffer),0);
+				this._buffer=newbuffer;
+			}else
+			this._buffer=new ArrayBuffer(nsz);
+			this._checkFloatArray32Use();
+			this._upload=true;
+			return this;
+		}
+
+		__proto.append=function(data){
+			this._upload=true;
+			var szu8=0,n;
+			if ((data instanceof Uint8Array)){
+				szu8=data.length;
+				this._resizeBuffer(this._length+szu8,true);
+				n=new Uint8Array(this._buffer,this._length);
+				}else if ((data instanceof Float32Array)){
+				szu8=data.length *4;
+				this._resizeBuffer(this._length+szu8,true);
+				n=new Float32Array(this._buffer,this._length);
+				}else if ((data instanceof Uint16Array)){
+				szu8=data.length *2;
+				this._resizeBuffer(this._length+szu8,true);
+				n=new Uint16Array(this._buffer,this._length);
+			}
+			n.set(data,0);
+			this._length+=szu8;
+			this._checkFloatArray32Use();
+		}
+
+		/*
+		public function setdata(data:*):void {
+			_buffer=data.buffer;
+			_upload=true;
+			_length=_buffer.byteLength;
+			_checkFloatArray32Use();
+		}
+
+		*/
+		__proto.getBuffer=function(){
+			return this._buffer;
+		}
+
+		__proto.setNeedUpload=function(){
+			this._upload=true;
+		}
+
+		__proto.getNeedUpload=function(){
+			return this._upload;
+		}
+
+		__proto.upload=function(){
+			var scuess=this._bind_upload();
+			Buffer._gl.bindBuffer(this._type,null);
+			Buffer._bindActive[this._type]=null;
+			Shader.activeShader=null
+			return scuess;
+		}
+
+		__proto.subUpload=function(offset,dataStart,dataLength){
+			(offset===void 0)&& (offset=0);
+			(dataStart===void 0)&& (dataStart=0);
+			(dataLength===void 0)&& (dataLength=0);
+			var scuess=this._bind_subUpload();
+			Buffer._gl.bindBuffer(this._type,null);
+			Buffer._bindActive[this._type]=null;
+			Shader.activeShader=null
+			return scuess;
+		}
+
+		__proto.clear=function(){
+			this._length=0;
+			this._upload=true;
 		}
 
 		/**
@@ -30822,7 +32982,6 @@ window.Laya=(function(window,document){
 		*/
 		__proto.disposeCPUData=function(){
 			this._buffer=null;
-			this._floatArray32=null;
 		}
 
 		__proto.dispose=function(){
@@ -30830,12 +32989,10 @@ window.Laya=(function(window,document){
 			_super.prototype.dispose.call(this);
 		}
 
-		__getset(0,__proto,'uintArray16',function(){
-			this._uint16=new Uint16Array(this._buffer);
-			return this._uint16;
+		__getset(0,__proto,'bufferType',function(){
+			return this._type;
 		});
 
-		/*调试用*/
 		__getset(0,__proto,'bufferLength',function(){
 			return this._buffer.byteLength;
 		});
@@ -30849,14 +33006,10 @@ window.Laya=(function(window,document){
 			this._length=value;
 		});
 
-		__getset(0,__proto,'usage',function(){
-			return this._usage;
-		});
-
 		Buffer.__int__=function(gl){
 			Buffer._gl=gl;
-			Buffer.QuadrangleIB=new Buffer(0x8893,"INDEX",null,0x88E4);
-			GlUtils.fillIBQuadrangle(Buffer.QuadrangleIB,16);
+			IndexBuffer.QuadrangleIB=IndexBuffer.create();
+			GlUtils.fillIBQuadrangle(IndexBuffer.QuadrangleIB,16);
 		}
 
 		Buffer.INDEX="INDEX";
@@ -30869,7 +33022,7 @@ window.Laya=(function(window,document){
 		Buffer.NEXTUV1="NEXTUV1";
 		Buffer.BLENDWEIGHT0="BLENDWEIGHT";
 		Buffer.BLENDINDICES0="BLENDINDICES";
-		Buffer.MATRIX0="MATRIX0";
+		Buffer.MVPMATRIX="MVPMATRIX";
 		Buffer.MATRIX1="MATRIX1";
 		Buffer.MATRIX2="MATRIX2";
 		Buffer.DIFFUSETEXTURE="DIFFUSETEXTURE";
@@ -30921,17 +33074,52 @@ window.Laya=(function(window,document){
 		Buffer.ENDVELOCITY="ENDVELOCITY";
 		Buffer.FLOAT32=4;
 		Buffer.SHORT=2;
-		Buffer.QuadrangleIB=null
 		Buffer._gl=null
-		Buffer._bindActive=[];
+		Buffer._bindActive={};
 		Buffer._COUNT=1;
 		return Buffer;
 	})(Resource)
 
 
+	/**
+	*@private
+	*/
+	//class laya.particle.shader.value.ParticleShaderValue extends laya.webgl.shader.d2.value.Value2D
+	var ParticleShaderValue=(function(_super){
+		function ParticleShaderValue(){
+			this.a_CornerTextureCoordinate=[4,0x1406,false,92,0];
+			this.a_Position=[3,0x1406,false,92,16];
+			this.a_Velocity=[3,0x1406,false,92,28];
+			this.a_Color=[4,0x1406,false,92,40];
+			this.a_SizeRotation=[3,0x1406,false,92,56];
+			this.a_RadiusRadian=[4,0x1406,false,92,68];
+			this.a_AgeAddScale=[1,0x1406,false,92,84];
+			this.a_Time=[1,0x1406,false,92,88];
+			this.u_CurrentTime=NaN;
+			this.u_Duration=NaN;
+			this.u_Gravity=null;
+			this.u_EndVelocity=NaN;
+			this.u_texture=null;
+			ParticleShaderValue.__super.call(this,0,0);
+		}
+
+		__class(ParticleShaderValue,'laya.particle.shader.value.ParticleShaderValue',_super);
+		var __proto=ParticleShaderValue.prototype;
+		__proto.upload=function(){
+			this.refresh();
+			ParticleShaderValue.pShader.upload(this);
+		}
+
+		__static(ParticleShaderValue,
+		['pShader',function(){return this.pShader=new ParticleShader();}
+		]);
+		return ParticleShaderValue;
+	})(Value2D)
+
+
 	//class laya.webgl.shader.d2.value.Color2dSV extends laya.webgl.shader.d2.value.Value2D
 	var Color2dSV=(function(_super){
-		function Color2dSV(){
+		function Color2dSV(args){
 			Color2dSV.__super.call(this,0x02,0);
 			this.color=[];
 		}
@@ -30975,7 +33163,7 @@ window.Laya=(function(window,document){
 
 	//class laya.webgl.shader.d2.value.PrimitiveSV extends laya.webgl.shader.d2.value.Value2D
 	var PrimitiveSV=(function(_super){
-		function PrimitiveSV(){
+		function PrimitiveSV(args){
 			this.a_color=null;
 			PrimitiveSV.__super.call(this,0x04,0);
 			this.position=[2,0x1406,false,5 *CONST3D2D.BYTES_PE,0];
@@ -30987,115 +33175,199 @@ window.Laya=(function(window,document){
 	})(Value2D)
 
 
-	//class laya.particle.shader.value.ParticleShaderValue extends laya.webgl.shader.d2.value.Value2D
-	var ParticleShaderValue=(function(_super){
-		function ParticleShaderValue(){
-			this.a_CornerTextureCoordinate=[4,0x1406,false,92,0];
-			this.a_Position=[3,0x1406,false,92,16];
-			this.a_Velocity=[3,0x1406,false,92,28];
-			this.a_Color=[4,0x1406,false,92,40];
-			this.a_SizeRotation=[3,0x1406,false,92,56];
-			this.a_RadiusRadian=[4,0x1406,false,92,68];
-			this.a_AgeAddScale=[1,0x1406,false,92,84];
-			this.a_Time=[1,0x1406,false,92,88];
-			this.u_CurrentTime=NaN;
-			this.u_Duration=NaN;
-			this.u_Gravity=null;
-			this.u_EndVelocity=NaN;
-			this.u_texture=null;
-			ParticleShaderValue.__super.call(this,0,0);
-		}
-
-		__class(ParticleShaderValue,'laya.particle.shader.value.ParticleShaderValue',_super);
-		var __proto=ParticleShaderValue.prototype;
-		__proto.upload=function(){
-			this.refresh();
-			ParticleShaderValue.pShader.upload(this);
-		}
-
-		__static(ParticleShaderValue,
-		['pShader',function(){return this.pShader=new ParticleShader();}
-		]);
-		return ParticleShaderValue;
-	})(Value2D)
-
-
-	//class laya.particle.ParticleTemplate2D extends laya.particle.ParticleTemplateWebGL
-	var ParticleTemplate2D=(function(_super){
-		function ParticleTemplate2D(parSetting){
-			this.x=0;
-			this.y=0;
-			this.blendType=1;
-			this._startTime=0;
-			this.sv=new ParticleShaderValue();
-			ParticleTemplate2D.__super.call(this,parSetting);
-			this.texture=new Texture();
-			var _this=this;
-			Laya.loader.load(this.settings.textureName,Handler.create(null,function(texture){
-				(texture.bitmap).enableMerageInAtlas=false;
-				_this.texture=texture;
-			}));
-			this.sv.u_Duration=this.settings.duration;
-			this.sv.u_Gravity=this.settings.gravity;
-			this.sv.u_EndVelocity=this.settings.endVelocity;
-			this.initialize();
-			this.loadContent();
-		}
-
-		__class(ParticleTemplate2D,'laya.particle.ParticleTemplate2D',_super);
-		var __proto=ParticleTemplate2D.prototype;
-		Laya.imps(__proto,{"laya.webgl.submit.ISubmit":true})
-		__proto.getRenderType=function(){return-111}
-		__proto.releaseRender=function(){}
-		__proto.addParticleArray=function(position,velocity){
-			position[0]+=this.x;
-			position[1]+=this.y;
-			_super.prototype.addParticleArray.call(this,position,velocity);
-		}
-
-		__proto.renderSubmit=function(){
-			if (this.texture.loaded){
-				this.update(Timer.DELTA);
-				this.sv.u_CurrentTime=this._currentTime;
-				if (this._firstNewElement !=this._firstFreeElement){
-					this.addNewParticlesToVertexBuffer();
-				}
-				this.blend();
-				if (this._firstActiveElement !=this._firstFreeElement){
-					var gl=WebGL.mainContext;
-					this._vertexBuffer.bind();
-					this._indexBuffer.bind();
-					this._indexBuffer.upload_bind();
-					this._vertexBuffer.upload_bind();
-					this.sv.u_texture=this.texture.source;
-					this.sv.upload();
-					if (this._firstActiveElement < this._firstFreeElement){
-						WebGL.mainContext.drawElements(0x0004,(this._firstFreeElement-this._firstActiveElement)*6,0x1403,this._firstActiveElement *6 *2);
-					}
-					else{
-						WebGL.mainContext.drawElements(0x0004,(this.settings.maxPartices-this._firstActiveElement)*6,0x1403,this._firstActiveElement *6 *2);
-						if (this._firstFreeElement > 0)
-							WebGL.mainContext.drawElements(0x0004,this._firstFreeElement *6,0x1403,0);
-					}
-					Stat.drawCall++;
-				}
-				this._drawCounter++;
-			}
-			return 1;
-		}
-
-		__proto.blend=function(){
-			if (ParticleTemplate2D.activeBlendType!==this.blendType){
-				var gl=WebGL.mainContext;
-				gl.enable(0x0BE2);
-				BlendMode.fns[this.blendType](gl);
-				ParticleTemplate2D.activeBlendType=this.blendType;
+	/**
+	*动画模板类
+	*/
+	//class laya.ani.bone.Templet extends laya.ani.KeyframesAniTemplet
+	var Templet=(function(_super){
+		function Templet(skeletonData,texture,playbackRate){
+			this._mainTexture=null;
+			this._textureJson=null;
+			this._graphicsCache=[];
+			this.srcBoneMatrixArr=[];
+			this.boneSlotDic={};
+			this.boneSlotArray=[];
+			this.skinDataArray=[];
+			this.subTextureDic={};
+			this._rate=60;
+			Templet.__super.call(this);
+			(playbackRate===void 0)&& (playbackRate=60);
+			if (skeletonData && texture){
+				this.parseData(texture,skeletonData,playbackRate);
 			}
 		}
 
-		ParticleTemplate2D.activeBlendType=-1;
-		return ParticleTemplate2D;
-	})(ParticleTemplateWebGL)
+		__class(Templet,'laya.ani.bone.Templet',_super);
+		var __proto=Templet.prototype;
+		/**
+		*解析骨骼动画数据
+		*@param skeletonData 骨骼动画信息及纹理分块信息
+		*@param texture 骨骼动画用到的纹理
+		*@param playbackRate 缓冲的帧率数据（会根据帧率去分帧）
+		*/
+		__proto.parseData=function(texture,skeletonData,playbackRate){
+			(playbackRate===void 0)&& (playbackRate=60);
+			this._mainTexture=texture;
+			this._rate=playbackRate;
+			this.parse(skeletonData,playbackRate);
+		}
+
+		/**
+		*创建动画
+		*@return
+		*/
+		__proto.buildArmature=function(){
+			return new Skeleton(this);
+		}
+
+		/**
+		*解析动画
+		*@param data
+		*@param playbackRate
+		*/
+		__proto.parse=function(data,playbackRate){
+			_super.prototype.parse.call(this,data,playbackRate);
+			this._parsePublicExtData();
+			this.event("complete",this);
+		}
+
+		/**
+		*解析自定义数据
+		*/
+		__proto._parsePublicExtData=function(){
+			var i=0,j=0,k=0,n=0;
+			for (i=0,n=this.getAnimationCount();i < n;i++){
+				this._graphicsCache.push([]);
+			};
+			var tByte=new Byte(this.getPublicExtData());
+			var tX=0,tY=0,tWidth=0,tHeight=0;
+			var tFrameX=0,tFrameY=0,tFrameWidth=0,tFrameHeight=0;
+			var tTextureLen=tByte.getUint8();
+			var tTextureName=tByte.readUTFString();
+			var tTextureNameArr=tTextureName.split("\n");
+			for (i=0;i < tTextureLen;i++){
+				tTextureName=tTextureNameArr[i];
+				tX=tByte.getFloat32();
+				tY=tByte.getFloat32();
+				tWidth=tByte.getFloat32();
+				tHeight=tByte.getFloat32();
+				tFrameX=tByte.getFloat32();
+				tFrameY=tByte.getFloat32();
+				tFrameWidth=tByte.getFloat32();
+				tFrameHeight=tByte.getFloat32();
+				this.subTextureDic[tTextureName]=Texture.create(this._mainTexture,tX,tY,tWidth,tHeight,-tFrameX,-tFrameY,tFrameWidth,tFrameHeight);
+			};
+			var tMatrixDataLen=tByte.getUint16();
+			var tLen=tByte.getUint16();
+			var parentIndex=0;
+			var bones=this.getNodes(0);
+			var boneLength=bones.length;
+			var tMatrixArray=this.srcBoneMatrixArr;
+			for (i=0;i < boneLength;i++){
+				var tResultTransform=new Transform();
+				tResultTransform.scX=tByte.getFloat32();
+				tResultTransform.skX=tByte.getFloat32();
+				tResultTransform.skY=tByte.getFloat32();
+				tResultTransform.scY=tByte.getFloat32();
+				tResultTransform.x=tByte.getFloat32();
+				tResultTransform.y=tByte.getFloat32();
+				tMatrixArray.push(tResultTransform);
+			};
+			var tBoneSlotLen=tByte.getInt16();
+			for (i=0;i < tBoneSlotLen;i++){
+				var tDBBoneSlot=new BoneSlot();
+				var tName=tByte.readUTFString();
+				var tParent=tByte.readUTFString();
+				var tDisplayIndex=tByte.getInt16();
+				this.boneSlotDic[tParent]=tDBBoneSlot;
+				this.boneSlotArray.push(tDBBoneSlot);
+			};
+			var tNameString=tByte.readUTFString();
+			var tNameArray=tNameString.split("\n");
+			var tNameStartIndex=0;
+			var tSkinDataLen=tByte.getUint8();
+			for (i=0;i < tSkinDataLen;i++){
+				var tSkinData=new SkinData();
+				tSkinData.name=tNameArray[tNameStartIndex++];
+				var tSlotDataLen=tByte.getUint8();
+				for (j=0;j < tSlotDataLen;j++){
+					var tSlotData=new SlotData();
+					tSlotData.name=tNameArray[tNameStartIndex++];
+					var tDisplayDataLen=tByte.getUint8();
+					for (k=0;k < tDisplayDataLen;k++){
+						var tDisplayData=new SkinSlotDisplayData();
+						tDisplayData.name=tNameArray[tNameStartIndex++];
+						tDisplayData.transform=new Transform();
+						tDisplayData.transform.scX=tByte.getFloat32();
+						tDisplayData.transform.skX=tByte.getFloat32();
+						tDisplayData.transform.skY=tByte.getFloat32();
+						tDisplayData.transform.scY=tByte.getFloat32();
+						tDisplayData.transform.x=tByte.getFloat32();
+						tDisplayData.transform.y=tByte.getFloat32();
+						tSlotData.displayArr.push(tDisplayData);
+					}
+					tSkinData.slotArr.push(tSlotData);
+				}
+				this.skinDataArray.push(tSkinData);
+			}
+		}
+
+		/**
+		*得到缓冲数据
+		*@param aniIndex
+		*@param frameIndex
+		*@return
+		*/
+		__proto.getGrahicsDataWithCache=function(aniIndex,frameIndex){
+			return this._graphicsCache[aniIndex][frameIndex];
+		}
+
+		/**
+		*保存缓冲grahpics
+		*@param aniIndex
+		*@param frameIndex
+		*@param graphics
+		*/
+		__proto.setGrahicsDataWithCache=function(aniIndex,frameIndex,graphics){
+			console.log("aniIndex:"+aniIndex.toString()+" frameIndex:"+frameIndex.toString());
+			this._graphicsCache[aniIndex][frameIndex]=graphics;
+		}
+
+		/**
+		*预留
+		*/
+		__proto.destory=function(){}
+		/**
+		*通过索引得动画名称
+		*@param index
+		*@return
+		*/
+		__proto.getAniNameByIndex=function(index){
+			var tAni=this.getAnimation(index);
+			if (tAni)return tAni.name;
+			return null;
+		}
+
+		__getset(0,__proto,'rate',function(){
+			return this._rate;
+		});
+
+		__getset(0,__proto,'textureWidth',function(){
+			if (this._mainTexture){
+				return this._mainTexture.sourceWidth;
+			}
+			return 0;
+		});
+
+		__getset(0,__proto,'textureHeight',function(){
+			if (this._mainTexture){
+				return this._mainTexture.sourceHeight;
+			}
+			return 0;
+		});
+
+		return Templet;
+	})(KeyframesAniTemplet)
 
 
 	/**
@@ -31208,7 +33480,7 @@ window.Laya=(function(window,document){
 		*父容器的 <code>Event.RESIZE</code> 事件侦听处理函数。
 		*/
 		__proto.onCompResize=function(){
-			if (this._layout.enable){
+			if (this._layout&&this._layout.enable){
 				this.resetLayoutX();
 				this.resetLayoutY();
 			}
@@ -31940,6 +34212,59 @@ window.Laya=(function(window,document){
 	})(Sprite)
 
 
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ide.dragonBones.DBBoneSlot extends laya.display.Sprite
+	var DBBoneSlot=(function(_super){
+		function DBBoneSlot(){
+			this.slotData=null;
+			this.textureArray=[];
+			this.displayDataArray=[];
+			this.currDisplayData=null;
+			DBBoneSlot.__super.call(this);
+			this.mResultMatrix=new Matrix();
+		}
+
+		__class(DBBoneSlot,'laya.ide.dragonBones.DBBoneSlot',_super);
+		var __proto=DBBoneSlot.prototype;
+		__proto.addSprite=function(texture,displayData){
+			this.textureArray.push(texture);
+			this.displayDataArray.push(displayData);
+		}
+
+		__proto.showSprite=function(index){
+			if (index < this.textureArray.length){
+				var tTexture=this.textureArray[index];
+				this.graphics.clear();
+				var tX=-tTexture.width / 2;
+				var tY=-tTexture.height / 2;
+				this.currDisplayData=this.displayDataArray[index];
+				this.graphics.drawTexture(tTexture,tX,tY,tTexture.width);
+			}
+		}
+
+		//this.graphics.fillBorderText(slotData.name,0,0,null,"#ff0000",null,0,"center");
+		__proto.displayMatrix=function(){
+			if (this.currDisplayData){
+				return this.currDisplayData.transform.getMatrix();
+			}
+			return null;
+		}
+
+		__proto.setParentMatrix=function(parentMatrix){
+			var tMatrix=this.displayMatrix();
+			if (tMatrix){
+				Matrix.mul(tMatrix,parentMatrix,this.mResultMatrix);
+				this.transform=this.mResultMatrix;
+			}
+		}
+
+		return DBBoneSlot;
+	})(Sprite)
+
+
 	// import tools.Watcher;
 	//class LayaBuilder extends laya.display.Sprite
 	var LayaBuilder=(function(_super){
@@ -31960,7 +34285,6 @@ window.Laya=(function(window,document){
 			Font.defaultFamily="Arial";
 			LayaBuilder.drag=new DragManager();
 			LayaBuilder.tip=new TipManager();
-			Laya.stage.sizeMode="full";
 			this.initBasics();
 			this.mouseEnabled=true;
 			Slider.label.color="#dddddd";
@@ -31987,9 +34311,10 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.adpts=function(){
-			Laya.timer.once(100,this,this.adptRenderFrame);
+			this.adptRenderFrame();
 		}
 
+		//Laya.timer.once(100,this,adptRenderFrame);
 		__proto.adptRenderFrame=function(){
 			ViewRenderManager.adpt();
 			DragBarManager.adpt();
@@ -32116,7 +34441,6 @@ window.Laya=(function(window,document){
 			ShortcutManager.init();
 			this.regSystemShortcuts();
 			this._isInitCompleted=true;
-			ProjectManager.loadProject(this._projectPath,new Handler(this,this.closeLoginPanel));
 			ProjectManager.setProjectOpened(this._builderConfig.lastProjects);
 		}
 
@@ -32188,241 +34512,6 @@ window.Laya=(function(window,document){
 		LayaBuilder.drag=null
 		LayaBuilder.tip=null
 		return LayaBuilder;
-	})(Sprite)
-
-
-	/**
-	*<p> <code>Animation</code> 类是位图动画,用于创建位图动画。</p>
-	*<p> <code>Animation</code> 类可以加载并显示一组位图图片，并组成动画进行播放。</p>
-	*@example 以下示例代码，创建了一个 <code>Text</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.display.Animation;
-		*import laya.net.Loader;
-		*import laya.utils.Handler;
-		*
-		*public class Animation_Example
-		*{
-			*public function Animation_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*init();//初始化
-				*}
-			*
-			*private function init():void
-			*{
-				*var animation:Animation=new Animation();//创建一个 Animation 类的实例对象 animation 。
-				*animation.loadAtlas("resource/ani/fighter.json");//加载图集并播放
-				*animation.x=200;//设置 animation 对象的属性 x 的值，用于控制 animation 对象的显示位置。
-				*animation.y=200;//设置 animation 对象的属性 x 的值，用于控制 animation 对象的显示位置。
-				*animation.interval=30;//设置 animation 对象的动画播放间隔时间，单位：毫秒。
-				*animation.play();//播放动画。
-				*Laya.stage.addChild(animation);//将 animation 对象添加到显示列表。
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Animation_Example();
-	*function Animation_Example(){
-		*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
-		*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-		*init();//初始化
-		*}
-	*function init()
-	*{
-		*var animation=new Animation();//创建一个 Animation 类的实例对象 animation 。
-		*animation.loadAtlas("resource/ani/fighter.json");//加载图集并播放
-		*animation.x=200;//设置 animation 对象的属性 x 的值，用于控制 animation 对象的显示位置。
-		*animation.y=200;//设置 animation 对象的属性 x 的值，用于控制 animation 对象的显示位置。
-		*animation.interval=30;//设置 animation 对象的动画播放间隔时间，单位：毫秒。
-		*animation.play();//播放动画。
-		*Laya.stage.addChild(animation);//将 animation 对象添加到显示列表。
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import Loader=laya.net.Loader;
-	*import Handler=laya.utils.Handler;
-	*class Animation_Example {
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load("resource/ani/fighter.json",Handler.create(this,this.onLoadComplete),null,Loader.ATLAS);
-			*}
-		*
-		*private init():void {
-			*var animation:Animation=new Animation();//创建一个 Animation 类的实例对象 animation 。
-			*animation.loadAtlas("resource/ani/fighter.json");//加载图集并播放
-			*animation.x=200;//设置 animation 对象的属性 x 的值，用于控制 animation 对象的显示位置。
-			*animation.y=200;//设置 animation 对象的属性 x 的值，用于控制 animation 对象的显示位置。
-			*animation.interval=30;//设置 animation 对象的动画播放间隔时间，单位：毫秒。
-			*animation.play();//播放动画。
-			*Laya.stage.addChild(animation);//将 animation 对象添加到显示列表。
-			*}
-		*}
-	*</listing>
-	*/
-	//class laya.display.Animation extends laya.display.Sprite
-	var Animation=(function(_super){
-		function Animation(){
-			this.loop=false;
-			this._frames=null;
-			this._index=0;
-			this._count=0;
-			this._isPlaying=false;
-			Animation.__super.call(this);
-			this.interval=Config.animationInterval;
-			this.on("display",this,this._$3__onDisplay);
-			this.on("undisplay",this,this._$3__onDisplay);
-		}
-
-		__class(Animation,'laya.display.Animation',_super);
-		var __proto=Animation.prototype;
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			this.stop();
-			_super.prototype.destroy.call(this,destroyChild);
-			this._frames=null;
-		}
-
-		__proto._$3__onDisplay=function(){
-			if (this._isPlaying){
-				if (this._displayInStage)this.play(this._index,this.loop);
-				else this.clearTimer(this,this._frameLoop);
-			}
-		}
-
-		/**
-		*播放动画。
-		*@param start 开始播放的动画索引。
-		*@param loop 是否循环。
-		*/
-		__proto.play=function(start,loop){
-			(start===void 0)&& (start=0);
-			(loop===void 0)&& (loop=true);
-			this._isPlaying=true;
-			this._index=start;
-			this.loop=loop;
-			if (this._frames && this._frames.length > 0 && this.interval > 0){
-				this.timerLoop(this.interval,this,this._frameLoop,null,true);
-			}
-		}
-
-		__proto._frameLoop=function(){
-			if (this._style.visible){
-				this.index=this._index,this._index++;
-				if (this._index >=this._count){
-					if (this.loop)this._index=0;
-					else {
-						this._index--;
-						this.stop();
-					}
-					this.event("complete");
-				}
-			}
-		}
-
-		/**
-		*停止播放。
-		*/
-		__proto.stop=function(){
-			this._isPlaying=false;
-			this.clearTimer(this,this._frameLoop);
-		}
-
-		/**
-		*加载图片集合，组成动画。
-		*@param urls 图片地址集合。如：[url1,url2,url3,...]。
-		*@return 返回动画本身。
-		*/
-		__proto.loadImages=function(urls){
-			var arr=[];
-			for (var i=0,n=urls.length;i < n;i++){
-				var g=new Graphics();
-				g.loadImage(urls[i],0,0);
-				arr.push(g);
-			}
-			this.frames=arr;
-			return this;
-		}
-
-		/**清理。方便对象复用。*/
-		__proto.clear=function(){
-			this.stop();
-			this.graphics=null;
-			this._frames=null;
-		}
-
-		/**
-		*加载并播放一个图集。
-		*@param url 图集地址。
-		*@return 返回动画本身。
-		*/
-		__proto.loadAtlas=function(url){
-			var _$this=this;
-			if (Loader.getAtlas(url))onLoaded();
-			else Laya.loader.load(url,Handler.create(null,onLoaded),null,"atlas");
-			function onLoaded (){
-				var atlas=Loader.getAtlas(url);
-				if (atlas && atlas.length){
-					var arr=[];
-					for (var i=0,n=atlas.length;i < n;i++){
-						var g=new Graphics();
-						g.drawTexture(atlas[i],0,0);
-						arr.push(g);
-					}
-					_$this.frames=arr;
-				}
-			}
-			return this;
-		}
-
-		/**当前播放索引。*/
-		__getset(0,__proto,'index',function(){
-			return this._index;
-			},function(value){
-			this._index=value;
-			if (this._frames)this.graphics=this._frames[value];
-		});
-
-		/**动画长度。*/
-		__getset(0,__proto,'count',function(){
-			return this._count;
-		});
-
-		/**Graphics集合*/
-		__getset(0,__proto,'frames',function(){
-			return this._frames;
-			},function(value){
-			this._frames=value;
-			this._count=value.length;
-			if (this._isPlaying)this.play(this._index,this.loop)
-				else this.index=this._index;
-		});
-
-		Animation.fromUrl=function(url,count){
-			var result=Animation._urlReg.exec(url);
-			var base=result[1];
-			var serialNum=result[2];
-			var extension=result[3];
-			var serialNumBegin=Laya.__parseInt(serialNum);
-			var serialNumLength=serialNum.length;
-			var urls=[];
-			for (var i=0;i < count;i++){
-				var countNow=serialNumBegin+i;
-				var countString=Utils1.preFixNumber(countNow,serialNumLength);
-				urls.push(base+countString+extension);
-			}
-			return new Animation().loadImages(urls);
-		}
-
-		__static(Animation,
-		['_urlReg',function(){return this._urlReg=/^(.*?)\{(.*?)\}(.*)$/;}
-		]);
-		return Animation;
 	})(Sprite)
 
 
@@ -32793,7 +34882,7 @@ window.Laya=(function(window,document){
 				if (wordWidth > wordWrapWidth){
 					if (this.wordWrap){
 						var newLine=line.substring(startIndex,j);
-						execResult=/\b\w+$/.exec(newLine);
+						execResult=/[^\x20-]+$/.exec(newLine);
 						if (execResult){
 							j=execResult.index+startIndex;
 							if (execResult.index==0)
@@ -32934,7 +35023,7 @@ window.Laya=(function(window,document){
 
 		/**当前文本的内容字符串。*/
 		__getset(0,__proto,'text',function(){
-			return this._text;
+			return this._text || '';
 			},function(value){
 			if (this._text!==value){
 				this.lang(value+"");
@@ -33222,7 +35311,6 @@ window.Laya=(function(window,document){
 			this.offset=new Point();
 			this.now=Browser.now();
 			this._canvasTransform=new Matrix();
-			this._preLoopTime=Browser.now();
 			this.mouseEnabled=true;
 			this._displayInStage=true;
 			var _this=this;
@@ -33232,6 +35320,7 @@ window.Laya=(function(window,document){
 			})
 			window.addEventListener("blur",function(){
 				_this.event("blur");
+				if (this.focus && this.focus.focus)this.focus.focus=false;
 			})
 			window.addEventListener("resize",function(){
 				_this._resetCanvas();
@@ -33246,7 +35335,7 @@ window.Laya=(function(window,document){
 
 		__class(Stage,'laya.display.Stage',_super);
 		var __proto=Stage.prototype;
-		/**@inheritDoc */
+		/**设置场景设计宽高*/
 		__proto.size=function(width,height){
 			this.desginWidth=this.width=width;
 			this.desginHeight=this.height=height;
@@ -33269,7 +35358,7 @@ window.Laya=(function(window,document){
 		}
 
 		/**
-		*设置屏幕大小。
+		*设置屏幕大小，场景会根据屏幕大小进行适配。
 		*@param screenWidth 屏幕宽度。
 		*@param screenHeight 屏幕高度。
 		*/
@@ -33330,6 +35419,8 @@ window.Laya=(function(window,document){
 					canvasWidth=Math.round(screenWidth / scaleY);
 					break ;
 				}
+			scaleX *=this.scaleX;
+			scaleY *=this.scaleY;
 			if (scaleX===1 && scaleY===1){
 				this.transform && this.transform.identity();
 				}else {
@@ -33338,7 +35429,7 @@ window.Laya=(function(window,document){
 				this.transform.d=scaleY / (realHeight / canvasHeight);
 			}
 			canvas.size(canvasWidth,canvasHeight);
-			System.changeWebGLSize(canvasWidth,canvasHeight);
+			RunDriver.changeWebGLSize(canvasWidth,canvasHeight);
 			mat.scale(realWidth / canvasWidth / pixelRatio,realHeight / canvasHeight / pixelRatio);
 			if (this._alignH==="left")this.offset.x=0;
 			else if (this._alignH==="right")this.offset.x=screenWidth-realWidth;
@@ -33384,13 +35475,9 @@ window.Laya=(function(window,document){
 
 		/**@inheritDoc */
 		__proto.render=function(context,x,y){
-			var loopTime=Browser.now();
-			if (Log.enable()&& (loopTime-this.now)> 500){
-				Log.print("-------------render delay:"+(Browser.now()-this.now)+"  cound:"+this._renderCount);
-			}
-			this.now=loopTime;
+			Render.isFlash && this.repaint();
+			this.now=Browser.now();
 			this._renderCount++;
-			var delay=loopTime-this._preLoopTime;
 			var isFastMode=(this.frameRate!=="slow");
 			var isDoubleLoop=(this._renderCount % 2===0);
 			var ctx=Render.context;
@@ -33400,27 +35487,30 @@ window.Laya=(function(window,document){
 				MouseManager.instance.runEvent();
 				Laya.timer._update();
 				if (this._style.visible){
-					Render.isWebGl ? ctx.clear():Render.clear(this._bgColor);
+					Render.isWebGL ? ctx.clear():RunDriver.clear(this._bgColor);
 					_super.prototype.render.call(this,context,x,y);
 				}
 			}
 			if (this._style.visible && (isFastMode || !isDoubleLoop)){
-				Render.isWebGl && Render.clear(this._bgColor);
+				Render.isWebGL && RunDriver.clear(this._bgColor);
+				RunDriver.benginFlush();
 				context.flush();
-				Render.finish();
+				RunDriver.endFinish();
 			}
-			this._preLoopTime=loopTime;
 		}
 
 		/**
 		*<p>缩放模式。</p>
 		*<p><ul>取值范围：
-		*<li>"noScale" ：不缩放；</li>
-		*<li>"exactFit" ：全屏不等比缩放；</li>
-		*<li>"showAll" ：最小比例缩放；</li>
-		*<li>"noBorder" ：最大比例缩放；</li>
+		*<li>"noscale" ：不缩放；</li>
+		*<li>"exactfit" ：全屏不等比缩放；</li>
+		*<li>"showall" ：最小比例缩放；</li>
+		*<li>"noborder" ：最大比例缩放；</li>
+		*<li>"full" ：不缩放，stage的宽高等于屏幕宽高；</li>
+		*<li>"fixedwidth" ：宽度不变，高度根据屏幕比缩放；</li>
+		*<li>"fixedheight" ：高度不变，宽度根据屏幕比缩放；</li>
 		*</ul></p>
-		*默认值为 "noScale"。
+		*默认值为 "noscale"。
 		*/
 		__getset(0,__proto,'scaleMode',function(){
 			return this._scaleMode;
@@ -33530,6 +35620,138 @@ window.Laya=(function(window,document){
 
 
 	/**
+	*<code>Particle2D</code> 类是2D粒子播放类
+	*
+	*/
+	//class laya.particle.Particle2D extends laya.display.Sprite
+	var Particle2D=(function(_super){
+		function Particle2D(setting){
+			this._particleTemplate=null;
+			this._canvasTemplate=null;
+			this._emitter=null;
+			Particle2D.__super.call(this);
+			if (Render.isWebGL){
+				this._particleTemplate=new ParticleTemplate2D(setting);
+				this.graphics._saveToCmd(Render.context._drawParticle,[this._particleTemplate]);
+				}else{
+				this._particleTemplate=this._canvasTemplate=new ParticleTemplateCanvas(setting);
+				this._renderType |=0x200;
+			}
+			this._emitter=new Emitter2D(this._particleTemplate);
+		}
+
+		__class(Particle2D,'laya.particle.Particle2D',_super);
+		var __proto=Particle2D.prototype;
+		/**
+		*播放
+		*
+		*/
+		__proto.play=function(){
+			Laya.timer.frameLoop(1,this,this._loop);
+		}
+
+		/**
+		*停止
+		*
+		*/
+		__proto.stop=function(){
+			Laya.timer.clear(this,this._loop);
+		}
+
+		/**@private */
+		__proto._loop=function(){
+			this.advanceTime(1/60);
+		}
+
+		/**
+		*时钟前进
+		*@param passedTime 时钟前进时间
+		*
+		*/
+		__proto.advanceTime=function(passedTime){
+			(passedTime===void 0)&& (passedTime=1);
+			if(this._canvasTemplate){
+				this._canvasTemplate.advanceTime(passedTime);
+			}
+			if (this._emitter){
+				this._emitter.advanceTime(passedTime);
+			}
+		}
+
+		/**@private */
+		__proto.customRender=function(context,x,y){
+			if (this._canvasTemplate){
+				this._canvasTemplate.render(context,x,y);
+			}
+		}
+
+		/**
+		*获取粒子发射器
+		*@return
+		*
+		*/
+		__getset(0,__proto,'emitter',function(){
+			return this._emitter;
+		});
+
+		return Particle2D;
+	})(Sprite)
+
+
+	/**
+	*
+	*<code>ParticlePlayer</code> 类是粒子播放容器类
+	*主要用于播放UI编辑器中拖放到UI上的粒子
+	*
+	*/
+	//class laya.particle.ParticlePlayer extends laya.display.Sprite
+	var ParticlePlayer=(function(_super){
+		function ParticlePlayer(){
+			this._particle=null;
+			ParticlePlayer.__super.call(this);
+		}
+
+		__class(ParticlePlayer,'laya.particle.ParticlePlayer',_super);
+		var __proto=ParticlePlayer.prototype;
+		/**
+		*加载粒子文件
+		*@param url 粒子文件地址
+		*
+		*/
+		__proto.loadParticle=function(url){
+			Laya.loader.load(url,Handler.create(this,this.setParticleSetting),null,"json");
+		}
+
+		/**
+		*设置粒子配置数据
+		*@param settings 粒子配置数据
+		*
+		*/
+		__proto.setParticleSetting=function(settings){
+			if (this._particle){
+				this._particle.stop();
+				this._particle.removeSelf();
+			}
+			this._particle=new Particle2D(settings);
+			this._particle.emitter.start();
+			this._particle.play();
+			this.addChild(this._particle);
+		}
+
+		/**
+		*设置 粒子文件地址
+		*@param path 粒子文件地址
+		*
+		*/
+		__getset(0,__proto,'url',null,function(url){
+			this.loadParticle(url);
+		});
+
+		return ParticlePlayer;
+	})(Sprite)
+
+
+	/**
 	*颜色选取类
 	*@author ww
 	*/
@@ -33565,7 +35787,6 @@ window.Laya=(function(window,document){
 			this.sideColor.pos(0,0);
 			this.sideColor.size(150,150);
 			this.sideColor.on("mousedown",this,this.sideColorClick);
-			this.sideColor.on("mouseup",this,this.sideColorMouseUp);
 			var i=0;
 			this.mainColor=new Sprite();
 			var g;
@@ -33633,6 +35854,7 @@ window.Laya=(function(window,document){
 			this.isChanging=true;
 			this.posSp.startDrag();
 			this.updatePosSpAndShowColor();
+			Laya.stage.once("mouseup",this,this.sideColorMouseUp);
 		}
 
 		__proto.sideColorMouseUp=function(e){
@@ -33643,6 +35865,10 @@ window.Laya=(function(window,document){
 		__proto.updatePosSpAndShowColor=function(){
 			this.posSp.x=this.sideColor.mouseX;
 			this.posSp.y=this.sideColor.mouseY;
+			if(this.posSp.x<0)this.posSp.x=0;
+			if(this.posSp.y<0)this.posSp.y=0;
+			if(this.posSp.x>150)this.posSp.x=150;
+			if(this.posSp.y>150)this.posSp.y=150;
 			this.updateDemoColor();
 		}
 
@@ -34073,94 +36299,230 @@ window.Laya=(function(window,document){
 	})(Sprite)
 
 
-	//class laya.particle.Particle2D extends laya.display.Sprite
-	var Particle2D=(function(_super){
-		function Particle2D(setting){
-			this._particleTemplate=null;
-			this._canvasTemplate=null;
-			this._emitter=null;
-			Particle2D.__super.call(this);
-			if (Render.isWebGl){
-				this._particleTemplate=new ParticleTemplate2D(setting);
-				this.graphics._saveToCmd(Render.context.drawParticle,[this._particleTemplate]);
-				}else{
-				this._particleTemplate=this._canvasTemplate=new ParticleTemplateCanvas(setting);
-				this._renderType |=0x200;
-			}
-			this._emitter=new Emitter2D(this._particleTemplate);
-		}
-
-		__class(Particle2D,'laya.particle.Particle2D',_super);
-		var __proto=Particle2D.prototype;
-		__proto.play=function(){
-			Laya.timer.frameLoop(1,this,this.loop);
-		}
-
-		__proto.stop=function(){
-			Laya.timer.clear(this,this.loop);
-		}
-
-		__proto.loop=function(){
-			this.advanceTime(1/60);
-		}
-
-		__proto.advanceTime=function(passedTime){
-			(passedTime===void 0)&& (passedTime=1);
-			if(this._canvasTemplate){
-				this._canvasTemplate.advanceTime(passedTime);
-			}
-			if (this._emitter){
-				this._emitter.advanceTime(passedTime);
-			}
-		}
-
-		__proto.customRender=function(context,x,y){
-			if (this._canvasTemplate){
-				this._canvasTemplate.render(context,x,y);
-			}
-		}
-
-		__getset(0,__proto,'emitter',function(){
-			return this._emitter;
-		});
-
-		return Particle2D;
-	})(Sprite)
-
-
 	/**
-	*...
-	*@author ww
+	*骨骼动画由KeyframesAniTemplet(LayaFactory),AnimationPlayer,Armature三部分组成
 	*/
-	//class laya.particle.ParticlePlayer extends laya.display.Sprite
-	var ParticlePlayer=(function(_super){
-		function ParticlePlayer(){
-			this._particle=null;
-			ParticlePlayer.__super.call(this);
+	//class laya.ani.bone.Skeleton extends laya.display.Sprite
+	var Skeleton=(function(_super){
+		function Skeleton(templet){
+			this._templet=null;
+			this._player=null;
+			this._curOriginalData=null;
+			this._boneMatrixArray=[];
+			this._lastTime=0;
+			this._currAniName=null;
+			this._currAniIndex=-1;
+			this._pause=false;
+			this._aniClipIndex=-1;
+			this._clipIndex=-1;
+			Skeleton.__super.call(this);
+			this._tempTransform=new Transform();
+			if(templet)
+				this.init(templet,templet.rate);
 		}
 
-		__class(ParticlePlayer,'laya.particle.ParticlePlayer',_super);
-		var __proto=ParticlePlayer.prototype;
-		__proto.loadParticleFile=function(fileName){
-			Laya.loader.load(fileName,Handler.create(this,this.setParticleSetting),null,"json");
+		__class(Skeleton,'laya.ani.bone.Skeleton',_super);
+		var __proto=Skeleton.prototype;
+		/**
+		*初始化动画
+		*@param templet
+		*/
+		__proto.init=function(templet,rate){
+			this._templet=templet;
+			this._player=new AnimationPlayer(rate);
+			this._player.templet=templet;
+			this._player.play();
+			this.parseSrcBoneMatrix();
+			this._lastTime=Browser.now();
+			Laya.stage.frameLoop(1,this,this.update,null,true);
 		}
 
-		__proto.setParticleSetting=function(settings){
-			if (this._particle){
-				this._particle.stop();
-				this._particle.removeSelf();
+		/**
+		*创建骨骼的矩阵，保证每次计算的最终结果
+		*/
+		__proto.parseSrcBoneMatrix=function(){
+			var tBoneLen=this._templet.getNodeCount(0);
+			for (var i=0;i < tBoneLen;i++){
+				this._boneMatrixArray.push(new Matrix());
 			}
-			this._particle=new Particle2D(settings);
-			this._particle.emitter.start();
-			this._particle.play();
-			this.addChild(this._particle);
+			this.showSkinByIndex(0);
 		}
 
-		__getset(0,__proto,'file',null,function(path){
-			this.loadParticleFile(path);
-		});
+		/**
+		*更新动画
+		*/
+		__proto.update=function(){
+			if (this._pause)return;
+			var tCurrTime=Laya.stage.now;
+			this._player.update(tCurrTime-this._lastTime);
+			this._lastTime=tCurrTime;
+			this._aniClipIndex=this._player.currentAnimationClipIndex;
+			this._clipIndex=this._player.currentKeyframeIndex;
+			if (this._aniClipIndex==-1)return;
+			var tGraphics=this._templet.getGrahicsDataWithCache(this._aniClipIndex,this._clipIndex);
+			if (tGraphics){
+				this.graphics=tGraphics;
+				return;
+			}
+			this.createGraphics();
+		}
 
-		return ParticlePlayer;
+		/**
+		*创建grahics图像
+		*/
+		__proto.createGraphics=function(){
+			var bones=this._templet.getNodes(this._aniClipIndex);
+			var boneCount=bones.length;
+			this._curOriginalData || (this._curOriginalData=new Float32Array(this._templet.getTotalkeyframesLength(0)));
+			this._templet.getOriginalData(this._aniClipIndex,this._curOriginalData,this._clipIndex,this._player.currentFrameTime);
+			var tParentMatrix;
+			var tResultMatrix;
+			var tStartIndex=0;
+			var i=0,j=0,k=0,n=0;
+			var tDBBoneSlot;
+			var tTempMatrix;
+			var tParentTransform;
+			for (i=0;i < boneCount;i++){
+				tResultMatrix=this._boneMatrixArray[i];
+				tStartIndex=i *6;
+				tParentTransform=this._templet.srcBoneMatrixArr[i];
+				this._tempTransform.scX=tParentTransform.scX *this._curOriginalData[tStartIndex];
+				this._tempTransform.skX=tParentTransform.skX+this._curOriginalData[tStartIndex+1];
+				this._tempTransform.skY=tParentTransform.skY+this._curOriginalData[tStartIndex+2];
+				this._tempTransform.scY=tParentTransform.scY *this._curOriginalData[tStartIndex+3];
+				this._tempTransform.x=tParentTransform.x+this._curOriginalData[tStartIndex+4];
+				this._tempTransform.y=tParentTransform.y+this._curOriginalData[tStartIndex+5];
+				tTempMatrix=this._tempTransform.getMatrix();
+				var tBone=bones[i];
+				if (tBone.parentIndex !=-1){
+					tParentMatrix=this._boneMatrixArray[tBone.parentIndex];
+					Matrix.mul(tTempMatrix,tParentMatrix,tResultMatrix);
+					}else {
+					tTempMatrix.copy(tResultMatrix);
+				}
+				tDBBoneSlot=this._templet.boneSlotDic[tBone.name];
+				if (tDBBoneSlot){
+					tDBBoneSlot.setParentMatrix(tResultMatrix);
+				}
+			};
+			var tGraphics;
+			this.graphics=tGraphics=new Graphics();
+			for (i=0,n=this._templet.boneSlotArray.length;i < n;i++){
+				tDBBoneSlot=this._templet.boneSlotArray[i];
+				tDBBoneSlot.draw(tGraphics);
+			}
+			this._templet.setGrahicsDataWithCache(this._aniClipIndex,this._clipIndex,tGraphics);
+		}
+
+		/**
+		*得到当前动画的数量
+		*@return
+		*/
+		__proto.getAnimNum=function(){
+			return this._templet.getAnimationCount();
+		}
+
+		/**
+		*得到指定动画的名字
+		*@param index
+		*/
+		__proto.getAniNameByIndex=function(index){
+			return this._templet.getAniNameByIndex(index);
+		}
+
+		__proto.getSlotByName=function(name){
+			return null;
+		}
+
+		/**
+		*
+		*@param skinIndex
+		*/
+		__proto.showSkinByIndex=function(skinIndex){
+			if (skinIndex < this._templet.skinDataArray.length){
+				var tDBSkinData;
+				var tDBSlotData;
+				var tDBDisplayData;
+				tDBSkinData=this._templet.skinDataArray[skinIndex];
+				for (var i=0,n=tDBSkinData.slotArr.length;i < n;i++){
+					tDBSlotData=tDBSkinData.slotArr[i];
+					var tDBBoneSlot=this._templet.boneSlotDic[tDBSlotData.name];
+					for (var j=0;j < tDBSlotData.displayArr.length;j++){
+						tDBDisplayData=tDBSlotData.displayArr[j];
+						var tTexture=this._templet.subTextureDic[tDBDisplayData.name];
+						tDBBoneSlot.addSprite(tTexture,tDBDisplayData);
+					}
+				}
+			}
+		}
+
+		/**
+		*根据动画，播放指定的动画
+		*@param name
+		*@param duration 播放时长（Number.MAX_VALUE为循环播放，0为1次）
+		*/
+		__proto.gotoAndPlay=function(name,duration){
+			(duration===void 0)&& (duration=Number.MAX_VALUE);
+			for (var i=0,n=this._templet.getAnimationCount();i < n;i++){
+				var animation=this._templet.getAnimation(i);
+				if (animation && name==animation.name){
+					this.gotoAndPlayByIndex(i,duration);
+					return;
+				}
+			}
+		}
+
+		/**
+		*通过动画索引，播放指定的动画
+		*@param index
+		*@param duration 播放时长（Number.MAX_VALUE为循环播放，0为1次）
+		*/
+		__proto.gotoAndPlayByIndex=function(index,duration){
+			(duration===void 0)&& (duration=Number.MAX_VALUE);
+			if (index >-1 && index < this.getAnimNum()){
+				if (this._currAniIndex !=index){
+					this._currAniIndex=index;
+					this._player.play(index,1,duration);
+				}
+			}
+		}
+
+		/**
+		*播放动画
+		*/
+		__proto.play=function(){
+			if (this._currAniIndex==-1 && this.getAnimNum()> 0){
+				this._currAniIndex=0;
+				this.gotoAndPlayByIndex(this._currAniIndex);
+			}
+			this._pause=false;
+		}
+
+		/**
+		*停止动画
+		*/
+		__proto.stop=function(){
+			this._pause=true;
+		}
+
+		/**
+		*销毁当前动画
+		*/
+		__proto.destory=function(){
+			this._templet=null;
+			this._player=null;
+			this._curOriginalData=null;
+			this._boneMatrixArray.length=0;
+			this._lastTime=0;
+			Laya.timer.clear(this,this.update);
+		}
+
+		__proto.stAnimName=function(name){
+			this.gotoAndPlay(name);
+			this.stop();
+		}
+
+		return Skeleton;
 	})(Sprite)
 
 
@@ -34204,7 +36566,7 @@ window.Laya=(function(window,document){
 
 
 	/**
-	*<code>HTMLCanvas</code> 是 Html Canvas 的代理类，封装了 Canvas 的属性和方法。
+	*<code>HTMLCanvas</code> 是 Html Canvas 的代理类，封装了 Canvas 的属性和方法。。请不要直接使用 new HTMLCanvas！
 	*/
 	//class laya.resource.HTMLCanvas extends laya.resource.Bitmap
 	var HTMLCanvas=(function(_super){
@@ -34214,7 +36576,7 @@ window.Laya=(function(window,document){
 			HTMLCanvas.__super.call(this);
 			var _$this=this;
 			this._source=this;
-			if (type==="2D" || (type==="AUTO" && !Render.isWebGl)){
+			if (type==="2D" || (type==="AUTO" && !Render.isWebGL)){
 				this._is2D=true;
 				this._source=Browser.createElement("canvas");
 				var o=this;
@@ -34223,7 +36585,7 @@ window.Laya=(function(window,document){
 					var ctx=_$this._ctx=_$this._source.getContext(contextID,other);
 					if (ctx){
 						ctx._canvas=o;
-						ctx.size=function (){
+						if(!Render.isFlash)ctx.size=function (w,h){
 						};
 					}
 					contextID==="2d" && Context._init(o,ctx);
@@ -34316,6 +36678,10 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'asBitmap',null,function(value){
 		});
 
+		HTMLCanvas.create=function(type){
+			return new HTMLCanvas(type);
+		}
+
 		HTMLCanvas.TYPE2D="2D";
 		HTMLCanvas.TYPE3D="3D";
 		HTMLCanvas.TYPEAUTO="AUTO";
@@ -34324,9 +36690,49 @@ window.Laya=(function(window,document){
 	})(Bitmap)
 
 
+	/**
+	*@private
+	*/
+	//class laya.resource.HTMLSubImage extends laya.resource.Bitmap
+	var HTMLSubImage=(function(_super){
+		//请不要直接使用new HTMLSubImage
+		function HTMLSubImage(canvas,offsetX,offsetY,width,height,atlasImage,src,allowMerageInAtlas){
+			HTMLSubImage.__super.call(this);
+			throw new Error("不允许new！");
+		}
+
+		__class(HTMLSubImage,'laya.resource.HTMLSubImage',_super);
+		HTMLSubImage.create=function(canvas,offsetX,offsetY,width,height,atlasImage,src,allowMerageInAtlas){
+			(allowMerageInAtlas===void 0)&& (allowMerageInAtlas=false);
+			return new HTMLSubImage(canvas,offsetX,offsetY,width,height,atlasImage,src,allowMerageInAtlas);
+		}
+
+		return HTMLSubImage;
+	})(Bitmap)
+
+
+	/**
+	*@private
+	*/
+	//class laya.particle.shader.ParticleShader extends laya.webgl.shader.Shader
+	var ParticleShader=(function(_super){
+		function ParticleShader(){
+			ParticleShader.__super.call(this,ParticleShader.vs,ParticleShader.ps,"ParticleShader");
+		}
+
+		__class(ParticleShader,'laya.particle.shader.ParticleShader',_super);
+		__static(ParticleShader,
+		['vs',function(){return this.vs="attribute vec4 a_CornerTextureCoordinate;\nattribute vec3 a_Position;\nattribute vec3 a_Velocity;\nattribute vec4 a_Color;\nattribute vec3 a_SizeRotation;\nattribute vec4 a_RadiusRadian;\nattribute float a_AgeAddScale;\nattribute float a_Time;\n\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\n\nuniform  float u_CurrentTime;\nuniform float u_Duration;\nuniform float u_EndVelocity;\nuniform vec3 u_Gravity;\n\n#ifdef PARTICLE3D\n uniform mat4 u_WorldMat;\n uniform mat4 u_View;\n uniform mat4 u_Projection;\n uniform vec2 u_ViewportScale;\n#else\n uniform vec2 size;\n uniform mat4 mmat;\n#endif\n\nvec4 ComputeParticlePosition(in vec3 position, in vec3 velocity,in float age,in float normalizedAge)\n{\n\n   float startVelocity = length(velocity);//起始标量速度\n   float endVelocity = startVelocity * u_EndVelocity;//结束标量速度\n\n   float velocityIntegral = startVelocity * normalizedAge +(endVelocity - startVelocity) * normalizedAge *normalizedAge/2.0;//计算当前速度的标量（单位空间），vt=v0*t+(1/2)*a*(t^2)\n   \n   vec3 addPosition = normalize(velocity) * velocityIntegral * u_Duration;//计算受自身速度影响的位置，转换标量到矢量    \n   addPosition += u_Gravity * age * normalizedAge;//计算受重力影响的位置\n   \n   float radius=mix(a_RadiusRadian.x, a_RadiusRadian.y, normalizedAge); //计算粒子受半径和角度影响（无需计算角度和半径时，可用宏定义优化屏蔽此计算）\n   float radianHorizontal =a_RadiusRadian.z*normalizedAge;\n   float radianVertical =a_RadiusRadian.w*normalizedAge;\n   \n   float r =cos(radianVertical)* radius;\n   addPosition.y += sin(radianVertical) * radius;\n	\n   addPosition.x += cos(radianHorizontal) *r;\n   addPosition.z += sin(radianHorizontal) *r;\n  \n   #ifdef PARTICLE3D\n   position+=addPosition;\n    return  u_Projection*u_View*u_WorldMat*(vec4(position, 1.0));\n   #else\n   addPosition.y=-addPosition.y;//2D粒子位置更新需要取负，2D粒子坐标系Y轴正向朝上\n   position+=addPosition;\n    return vec4(position.xy,0.0,1.0);\n   #endif\n}\n\nfloat ComputeParticleSize(in float startSize,in float endSize, in float normalizedAge)\n{    \n    float size = mix(startSize, endSize, normalizedAge);\n    \n	#ifdef PARTICLE3D\n    //Project the size into screen coordinates.\n     return size * u_Projection[1][1];\n	#else\n	 return size;\n	#endif\n}\n\nmat2 ComputeParticleRotation(in float rot,in float age)\n{    \n    float rotation =rot * age;\n    //计算2x2旋转矩阵.\n    float c = cos(rotation);\n    float s = sin(rotation);\n    return mat2(c, -s, s, c);\n}\n\nvec4 ComputeParticleColor(in vec4 color,in float normalizedAge)\n{\n    //硬编码设置，使粒子淡入很快，淡出很慢,6.7的缩放因子把置归一在0到1之间，可以谷歌x*(1-x)*(1-x)*6.7的制图表\n    color.a *= normalizedAge * (1.0-normalizedAge) * (1.0-normalizedAge) * 6.7;\n   \n    return color;\n}\n\nvoid main()\n{\n   float age = u_CurrentTime - a_Time;\n   age *= 1.0 + a_AgeAddScale;\n   float normalizedAge = clamp(age / u_Duration,0.0,1.0);\n   gl_Position = ComputeParticlePosition(a_Position, a_Velocity, age, normalizedAge);//计算粒子位置\n   float pSize = ComputeParticleSize(a_SizeRotation.x,a_SizeRotation.y, normalizedAge);\n   mat2 rotation = ComputeParticleRotation(a_SizeRotation.z, age);\n	\n   #ifdef PARTICLE3D\n	gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize * u_ViewportScale;\n   #else\n	gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize;\n    gl_Position=vec4((gl_Position.x/size.x-0.5)*2.0,(0.5-gl_Position.y/size.y)*2.0,0.0,1.0);\n   #endif\n   \n   v_Color = ComputeParticleColor(a_Color, normalizedAge);\n   v_TextureCoordinate =a_CornerTextureCoordinate.zw;\n}\n\n";},'ps',function(){return this.ps="precision highp float;\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\nuniform sampler2D u_texture;\n\nvoid main()\n{	\n	gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*v_Color;\n}";}
+		]);
+		return ParticleShader;
+	})(Shader)
+
+
 	//class laya.webgl.atlas.AtlasWebGLCanvas extends laya.resource.Bitmap
 	var AtlasWebGLCanvas=(function(_super){
 		function AtlasWebGLCanvas(){
+			this._flashCacheImage=null;
+			this._flashCacheImageNeedFlush=false;
 			AtlasWebGLCanvas.__super.call(this);
 		}
 
@@ -34337,13 +36743,15 @@ window.Laya=(function(window,document){
 			this.startCreate();
 			var gl=WebGL.mainContext;
 			var glTex=this._source=gl.createTexture();
-			gl.bindTexture(0x0DE1,glTex);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,0x0DE1,glTex);
 			gl.texImage2D(0x0DE1,0,0x1908,this._w,this._h,0,0x1908,0x1401,null);
 			gl.texParameteri(0x0DE1,0x2801,0x2601);
 			gl.texParameteri(0x0DE1,0x2800,0x2601);
 			gl.texParameteri(0x0DE1,0x2802,0x812F);
 			gl.texParameteri(0x0DE1,0x2803,0x812F);
-			gl.bindTexture(0x0DE1,null);
+			(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 			this.memorySize=this._w *this._h *4;
 			this.compoleteCreate();
 		}
@@ -34359,23 +36767,41 @@ window.Laya=(function(window,document){
 
 		/**采样image到WebGLTexture的一部分*/
 		__proto.texSubImage2D=function(source,xoffset,yoffset,bitmap){
-			var gl=WebGL.mainContext;
-			gl.bindTexture(0x0DE1,this._source);
-			(xoffset-1 >=0)&& (gl.texSubImage2D(0x0DE1,0,xoffset-1,yoffset,0x1908,0x1401,bitmap));
-			(xoffset+1 <=source.width)&& (gl.texSubImage2D(0x0DE1,0,xoffset+1,yoffset,0x1908,0x1401,bitmap));
-			(yoffset-1 >=0)&& (gl.texSubImage2D(0x0DE1,0,xoffset,yoffset-1,0x1908,0x1401,bitmap));
-			(yoffset+1 <=source.height)&& (gl.texSubImage2D(0x0DE1,0,xoffset,yoffset+1,0x1908,0x1401,bitmap));
-			gl.texSubImage2D(0x0DE1,0,xoffset,yoffset,0x1908,0x1401,bitmap);
-			gl.bindTexture(0x0DE1,null);
+			if (!Render.isFlash){
+				var gl=WebGL.mainContext;
+				var preTarget=WebGLContext.curBindTexTarget;
+				var preTexture=WebGLContext.curBindTexValue;
+				WebGLContext.bindTexture(gl,0x0DE1,this._source);
+				(xoffset-1 >=0)&& (gl.texSubImage2D(0x0DE1,0,xoffset-1,yoffset,0x1908,0x1401,bitmap));
+				(xoffset+1 <=source.width)&& (gl.texSubImage2D(0x0DE1,0,xoffset+1,yoffset,0x1908,0x1401,bitmap));
+				(yoffset-1 >=0)&& (gl.texSubImage2D(0x0DE1,0,xoffset,yoffset-1,0x1908,0x1401,bitmap));
+				(yoffset+1 <=source.height)&& (gl.texSubImage2D(0x0DE1,0,xoffset,yoffset+1,0x1908,0x1401,bitmap));
+				gl.texSubImage2D(0x0DE1,0,xoffset,yoffset,0x1908,0x1401,bitmap);
+				(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
+				}else {
+				if (!this._flashCacheImage){
+					this._flashCacheImage=HTMLImage.create();
+					this._flashCacheImage.image.createCanvas(this._w,this._h);
+				};
+				var bmData=bitmap.bitmapdata;
+				(xoffset-1 >=0)&& (this._flashCacheImage.image.copyPixels(bmData,0,0,bmData.width-1,bmData.height,xoffset,yoffset));
+				(xoffset+1 <=source.width)&& (this._flashCacheImage.image.copyPixels(bmData,0,0,bmData.width+1,bmData.height,xoffset,yoffset));
+				(yoffset-1 >=0)&& (this._flashCacheImage.image.copyPixels(bmData,0,0,bmData.width,bmData.height-1,xoffset,yoffset));
+				(yoffset+1 <=source.height)&& (this._flashCacheImage.image.copyPixels(bmData,0,0,bmData.width+1,bmData.height,xoffset,yoffset));
+				this._flashCacheImage.image.copyPixels(bmData,0,0,bmData.width,bmData.height,xoffset,yoffset);
+				(this._flashCacheImageNeedFlush)|| (this._flashCacheImageNeedFlush=true);
+			}
 		}
 
 		/**采样image到WebGLTexture的一部分*/
 		__proto.texSubImage2DPixel=function(source,xoffset,yoffset,width,height,pixel){
 			var gl=WebGL.mainContext;
-			gl.bindTexture(0x0DE1,this._source);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,0x0DE1,this._source);
 			var pixels=new Uint8Array(pixel.data);
 			gl.texSubImage2D(0x0DE1,0,xoffset,yoffset,width,height,0x1908,0x1401,pixels);
-			gl.bindTexture(0x0DE1,null);
+			(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 		}
 
 		/***
@@ -34412,7 +36838,7 @@ window.Laya=(function(window,document){
 			var _$this=this;
 			WebGLCanvas.__super.call(this);
 			this._canvas=this;
-			if (type==="2D" || (type==="AUTO" && !Render.isWebGl)){
+			if (type==="2D" || (type==="AUTO" && !Render.isWebGL)){
 				this._is2D=true;
 				this._canvas=this._source=Browser.createElement("canvas");
 				this.iscpuSource=true;
@@ -34486,21 +36912,26 @@ window.Laya=(function(window,document){
 			};
 			var glTex=this._source=gl.createTexture();
 			this.iscpuSource=false;
-			gl.bindTexture(0x0DE1,glTex);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,0x0DE1,glTex);
 			gl.texImage2D(0x0DE1,0,0x1908,this._w,this._h,0,0x1908,0x1401,null);
 			gl.texParameteri(0x0DE1,0x2800,0x2601);
 			gl.texParameteri(0x0DE1,0x2801,0x2601);
 			gl.texParameteri(0x0DE1,0x2802,0x812F);
 			gl.texParameteri(0x0DE1,0x2803,0x812F);
 			this.memorySize=this._w *this._h *4;
-			gl.bindTexture(0x0DE1,null);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget,preTexture));
 			this._canvas=null;
 		}
 
 		__proto.texSubImage2D=function(webglCanvas,xoffset,yoffset){
 			var gl=WebGL.mainContext;
-			gl.bindTexture(0x0DE1,this._source);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,0x0DE1,this._source);
 			gl.texSubImage2D(0x0DE1,0,xoffset,yoffset,0x1908,0x1401,webglCanvas._source);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget,preTexture));
 		}
 
 		/**
@@ -34518,6 +36949,10 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'asBitmap',null,function(value){
 			this._ctx && (this._ctx.asBitmap=value);
 		});
+
+		WebGLCanvas.create=function(type){
+			return new WebGLCanvas(type);
+		}
 
 		WebGLCanvas._createContext=null
 		return WebGLCanvas;
@@ -34541,7 +36976,7 @@ window.Laya=(function(window,document){
 			this.canvas=canvas;
 			this.char=char;
 			this._enableMerageInAtlas=true;
-			var bIsConchApp=System.isConchApp;
+			var bIsConchApp=Render.isConchApp;
 			if (bIsConchApp){
 				this._ctx=canvas;
 				}else {
@@ -34568,7 +37003,7 @@ window.Laya=(function(window,document){
 		__proto.recreateResource=function(){
 			this.startCreate();
 			var char=this.char;
-			var bIsConchApp=System.isConchApp;
+			var bIsConchApp=Render.isConchApp;
 			var xs=char.xs,ys=char.ys;
 			this.onresize(char.width+this.borderSize *2,char.height+this.borderSize *2);
 			this.canvas && (this.canvas.height=this._h,this.canvas.width=this._w);
@@ -34701,7 +37136,9 @@ window.Laya=(function(window,document){
 			var gl=WebGL.mainContext;
 			this._frameBuffer || (this._frameBuffer=gl.createFramebuffer());
 			this._source || (this._source=gl.createTexture());
-			gl.bindTexture(0x0DE1,this._source);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,0x0DE1,this._source);
 			gl.texImage2D(0x0DE1,0,0x1908,this._w,this._h,0,this._surfaceFormat,this._surfaceType,null);
 			gl.texParameteri(0x0DE1,0x2801,0x2601);
 			gl.texParameteri(0x0DE1,0x2802,0x812F);
@@ -34723,7 +37160,7 @@ window.Laya=(function(window,document){
 				gl.framebufferRenderbuffer(0x8D40,0x8D00,0x8D41,this._depthBuffer);
 			}
 			gl.bindFramebuffer(0x8D40,null);
-			gl.bindTexture(0x0DE1,null);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget,preTexture));
 			gl.bindRenderbuffer(0x8D41,null);
 			this.memorySize=this._w *this._h *4;
 			this.compoleteCreate();
@@ -34820,7 +37257,9 @@ window.Laya=(function(window,document){
 				throw "create GLTextur err:no data:"+this.canvas;
 			};
 			var glTex=this._source=gl.createTexture();
-			gl.bindTexture(0x0DE1,glTex);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,0x0DE1,glTex);
 			gl.texImage2D(0x0DE1,0,0x1908,0x1908,0x1401,this.canvas);
 			var minFifter=this.minFifter;
 			var magFifter=this.magFifter;
@@ -34845,7 +37284,7 @@ window.Laya=(function(window,document){
 				gl.texParameteri(0x0DE1,0x2802,0x812F);
 				gl.texParameteri(0x0DE1,0x2803,0x812F);
 			}
-			gl.bindTexture(0x0DE1,null);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget,preTexture));
 			this.canvas=null;
 			this.memorySize=this._w *this._h *4;
 		}
@@ -34899,38 +37338,6 @@ window.Laya=(function(window,document){
 
 
 	/**
-	*@author wk
-	*/
-	//class laya.webgl.shader.d2.filters.ColorFilter extends laya.webgl.shader.Shader
-	var ColorFilter1=(function(_super){
-		function ColorFilter(){
-			var vs="attribute vec4 position;\nattribute vec2 texcoord;\nuniform  mat4 mmat;\nuniform vec2 size;\nvarying vec2 v_texcoord;\nvoid main() {\n  gl_Position =mmat*vec4((position.x/size.x-0.5)*2.0,(0.5-position.y/size.y)*2.0,position.z,1.0);\n  v_texcoord = texcoord;\n}";
-			var ps="precision mediump float;\nvarying vec2 v_texcoord;\nuniform sampler2D texture;\nuniform float alpha;\nuniform float u_colorMatrix[20];\n\nvoid main(){\n 	vec4 rgba=gl_FragColor= texture2D(texture, v_texcoord)*vec4(1,1,1,alpha);\n   gl_FragColor.r =rgba.r*u_colorMatrix[0]+rgba.g*u_colorMatrix[1]+rgba.b*u_colorMatrix[2]+rgba.a*u_colorMatrix[3]+u_colorMatrix[4];\n   gl_FragColor.g =rgba.r*u_colorMatrix[5]+rgba.g*u_colorMatrix[6]+rgba.b*u_colorMatrix[7]+rgba.a*u_colorMatrix[8]+u_colorMatrix[9];\n   gl_FragColor.b =rgba.r*u_colorMatrix[10]+rgba.g*u_colorMatrix[11]+rgba.b*u_colorMatrix[12]+rgba.a*u_colorMatrix[13]+u_colorMatrix[14];\n   gl_FragColor.a =rgba.r*u_colorMatrix[15]+rgba.g*u_colorMatrix[16]+rgba.b*u_colorMatrix[17]+rgba.a*u_colorMatrix[18]+u_colorMatrix[19];	   \n}\n";
-			ColorFilter.__super.call(this,vs,ps,"colorFilter");
-		}
-
-		__class(ColorFilter,'laya.webgl.shader.d2.filters.ColorFilter',_super,'ColorFilter1');
-		return ColorFilter;
-	})(Shader)
-
-
-	/**
-	*@author wk
-	*/
-	//class laya.webgl.shader.d2.filters.GlowFilterShader extends laya.webgl.shader.Shader
-	var GlowFilterShader=(function(_super){
-		function GlowFilterShader(){
-			var vs="attribute vec4 position;\nattribute vec2 texcoord;\nuniform vec2 size;\nuniform  mat4 mmat;\nuniform  mat4 pmat;\nvarying vec2  v_texcoord;\nvoid main(){\n gl_Position =mmat*vec4((position.x/size.x-0.5)*2.0,(0.5-position.y/size.y)*2.0,position.z,1.0);\n  v_texcoord = texcoord;\n}";
-			var ps="precision mediump float;\nconst int c_FilterTime = 9;\nconst float c_Gene = (1.0/(1.0 + 2.0*(0.93 + 0.8 + 0.7 + 0.6 + 0.5 + 0.4 + 0.3 + 0.2 + 0.1)));\nuniform sampler2D texture;\nconst bool u_FiterMode=true;\nconst float u_GlowGene=1.5;\nconst vec4 u_GlowColor=vec4(1.0,0.0,0.0,0.5);\nconst float u_FilterOffset=2.0;\nconst float u_TexSpaceU=1.0/10.0;\nconst float u_TexSpaceV=1.0/10.0;\nvarying vec2 v_texcoord;\nvoid main()\n{\n	float aryAttenuation[c_FilterTime];\n	aryAttenuation[0] = 0.93;\n	aryAttenuation[1] = 0.8;\n	aryAttenuation[2] = 0.7;\n	aryAttenuation[3] = 0.6;\n	aryAttenuation[4] = 0.5;\n	aryAttenuation[5] = 0.4;\n	aryAttenuation[6] = 0.3;\n	aryAttenuation[7] = 0.2;\n	aryAttenuation[8] = 0.1;\n	vec4 vec4Color = texture2D(texture, v_texcoord)*c_Gene;\n	vec2 vec2FilterDir;\n	if(u_FiterMode)\n	  vec2FilterDir = vec2(u_FilterOffset*u_TexSpaceU/9.0, 0.0);\n	else\n		vec2FilterDir =  vec2(0.0, u_FilterOffset*u_TexSpaceV/9.0);\n	vec2 vec2Step = vec2FilterDir;\n	for(int i = 0;i< c_FilterTime; ++i){\n		vec4Color += texture2D(texture, v_texcoord + vec2Step)*aryAttenuation[i]*c_Gene;\n		vec4Color += texture2D(texture, v_texcoord - vec2Step)*aryAttenuation[i]*c_Gene;\n		vec2Step += vec2FilterDir;\n	}\n	if(u_FiterMode)\n		gl_FragColor = vec4Color.a*u_GlowColor*u_GlowGene;\n	else\n		gl_FragColor = vec4Color.a*u_GlowColor;\n}";
-			GlowFilterShader.__super.call(this,vs,ps,"glowFilter");
-		}
-
-		__class(GlowFilterShader,'laya.webgl.shader.d2.filters.GlowFilterShader',_super);
-		return GlowFilterShader;
-	})(Shader)
-
-
-	/**
 	*...
 	*@author laya
 	*/
@@ -34958,7 +37365,7 @@ window.Laya=(function(window,document){
 					var params=this._params,one;
 					for (var i=0,n=params.length;i < n;i++){
 						one=params[i];
-						if (one.name==="size" || one.name==="al2pha" || one.name==="mmat" || one.name==="position" || one.name==="texcoord")continue ;
+						if (!Render.isFlash && (one.name==="size" || one.name==="al2pha" || one.name==="mmat" || one.name==="position" || one.name==="texcoord"))continue ;
 						this._params2dQuick1.push(one);
 					}
 				}
@@ -34987,7 +37394,7 @@ window.Laya=(function(window,document){
 					var params=this._params,one;
 					for (var i=0,n=params.length;i < n;i++){
 						one=params[i];
-						if (one.name==="size"|| one.name==="al2pha")continue ;
+						if (!Render.isFlash && (one.name==="size"|| one.name==="al2pha"))continue ;
 						this._params2dQuick2.push(one);
 					}
 				}
@@ -35006,23 +37413,90 @@ window.Laya=(function(window,document){
 	})(Shader)
 
 
-	//class laya.particle.shader.ParticleShader extends laya.webgl.shader.Shader
-	var ParticleShader=(function(_super){
-		function ParticleShader(){
-			ParticleShader.__super.call(this,ParticleShader.vs,ParticleShader.ps,"ParticleShader");
+	/**
+	*...
+	*@author laya
+	*/
+	//class laya.webgl.utils.IndexBuffer extends laya.webgl.utils.Buffer
+	var IndexBuffer=(function(_super){
+		function IndexBuffer(){
+			IndexBuffer.__super.call(this);
+			this._bufferUsage=0x88E4;
+			this._type=0x8893;
 		}
 
-		__class(ParticleShader,'laya.particle.shader.ParticleShader',_super);
-		__static(ParticleShader,
-		['vs',function(){return this.vs="attribute vec4 a_CornerTextureCoordinate;\nattribute vec3 a_Position;\nattribute vec3 a_Velocity;\nattribute vec4 a_Color;\nattribute vec3 a_SizeRotation;\nattribute vec4 a_RadiusRadian;\nattribute float a_AgeAddScale;\nattribute float a_Time;\n\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\n\nuniform  float u_CurrentTime;\nuniform float u_Duration;\nuniform float u_EndVelocity;\nuniform vec3 u_Gravity;\n\n#ifdef PARTICLE3D\n uniform mat4 u_WorldMat;\n uniform mat4 u_View;\n uniform mat4 u_Projection;\n uniform vec2 u_ViewportScale;\n#else\n uniform vec2 size;\n uniform mat4 mmat;\n#endif\n\nvec4 ComputeParticlePosition(in vec3 position, in vec3 velocity,in float age,in float normalizedAge)\n{\n\n   float startVelocity = length(velocity);//起始标量速度\n   float endVelocity = startVelocity * u_EndVelocity;//结束标量速度\n\n   float velocityIntegral = startVelocity * normalizedAge +(endVelocity - startVelocity) * normalizedAge *normalizedAge/2.0;//计算当前速度的标量（单位空间），vt=v0*t+(1/2)*a*(t^2)\n   \n   vec3 addPosition = normalize(velocity) * velocityIntegral * u_Duration;//计算受自身速度影响的位置，转换标量到矢量    \n   addPosition += u_Gravity * age * normalizedAge;//计算受重力影响的位置\n   \n   float radius=mix(a_RadiusRadian.x, a_RadiusRadian.y, normalizedAge); //计算粒子受半径和角度影响（无需计算角度和半径时，可用宏定义优化屏蔽此计算）\n   float radianHorizontal =a_RadiusRadian.z*normalizedAge;\n   float radianVertical =a_RadiusRadian.w*normalizedAge;\n   \n   float r =cos(radianVertical)* radius;\n   addPosition.y += sin(radianVertical) * radius;\n	\n   addPosition.x += cos(radianHorizontal) *r;\n   addPosition.z += sin(radianHorizontal) *r;\n  \n   #ifdef PARTICLE3D\n   position+=addPosition;\n    return  u_Projection*u_View*u_WorldMat*(vec4(position, 1.0));\n   #else\n   addPosition.y=-addPosition.y;//2D粒子位置更新需要取负，2D粒子坐标系Y轴正向朝上\n   position+=addPosition;\n    return vec4(position.xy,0.0,1.0);\n   #endif\n}\n\nfloat ComputeParticleSize(in float startSize,in float endSize, in float normalizedAge)\n{    \n    float size = mix(startSize, endSize, normalizedAge);\n    \n	#ifdef PARTICLE3D\n    //Project the size into screen coordinates.\n     return size * u_Projection[1][1];\n	#else\n	 return size;\n	#endif\n}\n\nmat2 ComputeParticleRotation(in float rot,in float age)\n{    \n    float rotation =rot * age;\n    //计算2x2旋转矩阵.\n    float c = cos(rotation);\n    float s = sin(rotation);\n    return mat2(c, -s, s, c);\n}\n\nvec4 ComputeParticleColor(in vec4 color,in float normalizedAge)\n{\n    //硬编码设置，使粒子淡入很快，淡出很慢,6.7的缩放因子把置归一在0到1之间，可以谷歌x*(1-x)*(1-x)*6.7的制图表\n    color.a *= normalizedAge * (1.0-normalizedAge) * (1.0-normalizedAge) * 6.7;\n   \n    return color;\n}\n\nvoid main()\n{\n   float age = u_CurrentTime - a_Time;\n   age *= 1.0 + a_AgeAddScale;\n   float normalizedAge = clamp(age / u_Duration,0.0,1.0);\n   gl_Position = ComputeParticlePosition(a_Position, a_Velocity, age, normalizedAge);//计算粒子位置\n   float pSize = ComputeParticleSize(a_SizeRotation.x,a_SizeRotation.y, normalizedAge);\n   mat2 rotation = ComputeParticleRotation(a_SizeRotation.z, age);\n	\n   #ifdef PARTICLE3D\n	gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize * u_ViewportScale;\n   #else\n	gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize;\n    gl_Position=vec4((gl_Position.x/size.x-0.5)*2.0,(0.5-gl_Position.y/size.y)*2.0,0.0,1.0);\n   #endif\n   \n   v_Color = ComputeParticleColor(a_Color, normalizedAge);\n   v_TextureCoordinate =a_CornerTextureCoordinate.zw;\n}\n\n";},'ps',function(){return this.ps="precision highp float;\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\nuniform sampler2D u_texture;\n\nvoid main()\n{	\n	gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*v_Color;\n}";}
-		]);
-		return ParticleShader;
-	})(Shader)
+		__class(IndexBuffer,'laya.webgl.utils.IndexBuffer',_super);
+		var __proto=IndexBuffer.prototype;
+		__proto.getUint16Array=function(){
+			return new Uint16Array(this._buffer);
+		}
+
+		IndexBuffer.QuadrangleIB=null
+		IndexBuffer.create=function(){
+			return new IndexBuffer();
+		}
+
+		return IndexBuffer;
+	})(Buffer)
+
+
+	/**
+	*...
+	*@author laya
+	*/
+	//class laya.webgl.utils.VertexBuffer extends laya.webgl.utils.Buffer
+	var VertexBuffer=(function(_super){
+		function VertexBuffer(bufferUsage){
+			this._floatArray32=null;
+			VertexBuffer.__super.call(this);
+			this._bufferUsage=bufferUsage;
+			this._type=0x8892;
+			this.getFloat32Array();
+		}
+
+		__class(VertexBuffer,'laya.webgl.utils.VertexBuffer',_super);
+		var __proto=VertexBuffer.prototype;
+		__proto.getFloat32Array=function(){
+			return this._floatArray32 || (this._floatArray32=new Float32Array(this._buffer));
+		}
+
+		__proto.bind=function(ibBuffer){
+			(ibBuffer)&& (ibBuffer._bind());
+			this._bind();
+		}
+
+		__proto.insertData=function(data,pos){
+			var vbdata=this.getFloat32Array();
+			vbdata.set(data,pos);
+			this._upload=true;
+		}
+
+		__proto.bind_upload=function(ibBuffer){
+			(ibBuffer._bind_upload())|| (ibBuffer._bind());
+			(this._bind_upload())|| (this._bind());
+		}
+
+		__proto._checkFloatArray32Use=function(){
+			this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
+		}
+
+		__proto.disposeCPUData=function(){
+			_super.prototype.disposeCPUData.call(this);
+			this._floatArray32=null;
+		}
+
+		VertexBuffer.create=function(bufferUsage){
+			(bufferUsage===void 0)&& (bufferUsage=0x88E8);
+			return new VertexBuffer(bufferUsage);
+		}
+
+		return VertexBuffer;
+	})(Buffer)
 
 
 	//class laya.webgl.shader.d2.value.TextSV extends laya.webgl.shader.d2.value.TextureSV
 	var TextSV=(function(_super){
-		function TextSV(){
+		function TextSV(args){
 			TextSV.__super.call(this,0x40);
 			this.defines.add(0x40);
 		}
@@ -35040,7 +37514,7 @@ window.Laya=(function(window,document){
 
 		TextSV.create=function(){
 			if (TextSV._length)return TextSV.pool[--TextSV._length];
-			else return new TextSV();
+			else return new TextSV(null);
 		}
 
 		TextSV.pool=[];
@@ -35199,7 +37673,7 @@ window.Laya=(function(window,document){
 			this._cursorType=null;
 			this.isDraging=false;
 			DragBar.__super.call(this);
-			this._bitmap=new Image2();
+			this._bitmap=new Image();
 			(mouseType===void 0)&& (mouseType="R");
 			switch(mouseType){
 				case "R":
@@ -35222,12 +37696,10 @@ window.Laya=(function(window,document){
 		__class(DragBar,'laya.editor.comonents.DragBar',_super);
 		var __proto=DragBar.prototype;
 		__proto.dragingBegin=function(e){
-			console.log("draging begin");
 			this.isDraging=true;
 		}
 
 		__proto.dragingEnd=function(e){
-			console.log("dragingEnd");
 			this.isDraging=false;
 			CursorManager.setType("auto");
 		}
@@ -35821,6 +38293,7 @@ window.Laya=(function(window,document){
 		RuleGrid.LineColor="#696969";
 		RuleGrid.TextColor="#696969";
 		RuleGrid.defaultFont="10px Arial";
+		RuleGrid.drawLineWidth=1;
 		return RuleGrid;
 	})(Component)
 
@@ -35984,10 +38457,10 @@ window.Laya=(function(window,document){
 			}
 			this._sources || (this._sources=[]);
 			this._sources.length=0;
-			var width=img.width;
-			var height=img.height / this._stateNum;
+			var width=img.sourceWidth;
+			var height=img.sourceHeight / this._stateNum;
 			for (var i=0;i < this._stateNum;i++){
-				this._sources.push(Texture.create(img,0,height *i,width,height));
+				this._sources.push(Texture.createFromTexture(img,0,height *i,width,height));
 			}
 			if (this._autoSize){
 				this._bitmap.width=this._text.width=this._width || width;
@@ -36450,13 +38923,13 @@ window.Laya=(function(window,document){
 		*/
 		__proto.loadComplete=function(url,img){
 			if (url===this._skin && img){
-				this._clipWidth || (this._clipWidth=Math.ceil(img.width / this._clipX));
-				this._clipHeight || (this._clipHeight=Math.ceil(img.height / this._clipY));
+				this._clipWidth || (this._clipWidth=Math.ceil(img.sourceWidth / this._clipX));
+				this._clipHeight || (this._clipHeight=Math.ceil(img.sourceHeight / this._clipY));
 				this._sources || (this._sources=[]);
 				this._sources.length=0;
 				for (var i=0;i < this._clipY;i++){
 					for (var j=0;j < this._clipX;j++){
-						this._sources.push(Texture.create(img,this._clipWidth *j,this._clipHeight *i,this._clipWidth,this._clipHeight));
+						this._sources.push(Texture.createFromTexture(img,this._clipWidth *j,this._clipHeight *i,this._clipWidth,this._clipHeight));
 					}
 				}
 				this.index=this._index;
@@ -37395,7 +39868,7 @@ window.Laya=(function(window,document){
 					Point.EMPTY.setTo(0,0);
 					var p=this.localToGlobal(Point.EMPTY);
 					var py=p.y+this._button.height;
-					py=py+this._listHeight <=Laya.stage.width ? py :p.y-this._listHeight;
+					py=py+this._listHeight <=Laya.stage.height ? py :p.y-this._listHeight;
 					this._list.pos(p.x,py);
 					Laya.stage.addChild(this._list);
 					Laya.stage.once("mousedown",this,this.removeList);
@@ -38006,7 +40479,7 @@ window.Laya=(function(window,document){
 
 		/**@inheritDoc */
 		__proto.createChildren=function(){
-			this.addChild(this._bg=new Image2());
+			this.addChild(this._bg=new Image());
 			this.addChild(this._bar=new Button());
 		}
 
@@ -38360,7 +40833,7 @@ window.Laya=(function(window,document){
 	*@see laya.ui.AutoBitmap
 	*/
 	//class laya.ui.Image extends laya.ui.Component
-	var Image2=(function(_super){
+	var Image=(function(_super){
 		function Image(skin){
 			this._bitmap=null;
 			this._skin=null;
@@ -38368,7 +40841,7 @@ window.Laya=(function(window,document){
 			this.skin=skin;
 		}
 
-		__class(Image,'laya.ui.Image',_super,'Image2');
+		__class(Image,'laya.ui.Image',_super);
 		var __proto=Image.prototype;
 		/**@inheritDoc */
 		__proto.destroy=function(destroyChild){
@@ -38612,8 +41085,8 @@ window.Laya=(function(window,document){
 
 		/**@inheritDoc */
 		__proto.createChildren=function(){
-			this.addChild(this._bg=new Image2());
-			this.addChild(this._bar=new Image2());
+			this.addChild(this._bg=new Image());
+			this.addChild(this._bar=new Image());
 			this._bar["_bitmap"].autoCacheCmd=false;
 		}
 
@@ -38973,7 +41446,7 @@ window.Laya=(function(window,document){
 			var input=this.nativeInput;
 			this._focus=true;
 			var cssText=Input.cssStyle;
-			cssText+=";white-space:"+(this.wordWrap ? "normal" :"nowrap");
+			cssText+=";white-space:"+(this.wordWrap ? "pre-wrap" :"pre");
 			input.readOnly=!this._editable;
 			input.maxLength=this._maxChars;
 			var padding=this.padding;
@@ -38994,12 +41467,13 @@ window.Laya=(function(window,document){
 			this.typeset();
 			this._text=temp;
 			input.style.cssText=cssText;
-			input.type=this.asPassword ? "password" :"input";
+			input.type=this.asPassword ? "password" :"text";
 			input.focus();
 			Laya.stage.off("keydown",this,this.onKeyDown);
 			Laya.stage.on("keydown",this,this.onKeyDown);
 			Laya.stage.focus=this;
 			this.event("focus");
+			this.syncInputPosition();
 			Laya.timer.frameLoop(1,this,this.syncInputPosition);
 		}
 
@@ -39151,6 +41625,7 @@ window.Laya=(function(window,document){
 		Input.initInput=function(input){
 			var style=input.style;
 			style.cssText=Input.cssStyle;
+			input.setAttribute("class","laya");
 			input.addEventListener('input',function(e){
 				var target=input.target;
 				if (!target)
@@ -39245,58 +41720,6 @@ window.Laya=(function(window,document){
 	})(Text)
 
 
-	//class laya.ani.bone.Skeleton extends laya.display.Animation
-	var Skeleton=(function(_super){
-		function Skeleton(tmplete){
-			this._tp_=null;
-			Skeleton.__super.call(this);
-			if (!tmplete)return;
-			this._tp_=tmplete;
-			this._count=tmplete.frameCount;
-			this.interval=1000 / tmplete.frameRate;
-			this.frames=this._tp_._graphicsArrs_[0];
-		}
-
-		__class(Skeleton,'laya.ani.bone.Skeleton',_super);
-		var __proto=Skeleton.prototype;
-		__proto.setTpl=function(tpl){
-			this._tp_=tpl;
-			this._count=tpl.frameCount;
-			this.interval=1000 / tpl.frameRate;
-			this.setAnim(0);
-		}
-
-		__proto.setAnim=function(index){
-			this.frames=this._tp_._graphicsArrs_[index];
-		}
-
-		__proto.stAnimName=function(str){
-			this.frames=this._tp_._graphicsArrs_[this._tp_.animNames[str]];
-		}
-
-		__proto.pause=function(frame){
-			(frame===void 0)&& (frame=-1);
-			frame >-1 && (this.index=frame);
-			this.stop();
-		}
-
-		__getset(0,__proto,'frames',_super.prototype._$get_frames,function(value){
-			this._frames=value;
-			this.repaint();
-		});
-
-		__getset(0,__proto,'index',_super.prototype._$get_index,function(value){
-			this._index=value;
-			if ((this.graphics=this._frames[value])!=null){
-				}else {
-				this.graphics=this._frames[value]=this._tp_.planish(value,this._frames._index_);
-			}
-		});
-
-		return Skeleton;
-	})(Animation)
-
-
 	/**
 	*<code>HTMLImage</code> 用于创建 HTML Image 元素。
 	*/
@@ -39305,12 +41728,18 @@ window.Laya=(function(window,document){
 		function HTMLImage(im){
 			this._recreateLock=false;
 			this._needReleaseAgain=false;
-			this._source=im || new Browser.window.Image();
 			HTMLImage.__super.call(this);
+			this._w=0;
+			this._h=0;
+			this._init_(im);
 		}
 
 		__class(HTMLImage,'laya.resource.HTMLImage',_super);
 		var __proto=HTMLImage.prototype;
+		__proto._init_=function(im){
+			this._source=im || new Browser.window.Image();
+		}
+
 		/**
 		*@inheritDoc
 		*/
@@ -39405,213 +41834,63 @@ window.Laya=(function(window,document){
 			}):null);
 		});
 
+		HTMLImage.create=function(im){
+			return new HTMLImage(im);
+		}
+
 		return HTMLImage;
 	})(FileBitmap)
 
 
 	/**
-	*...
-	*@author
+	*<p> <code>SkeletonPlayer</code> 用于播放经过工具处理后的骨骼动画。</p>
 	*/
-	//class laya.webgl.resource.WebGLImage extends laya.resource.FileBitmap
-	var WebGLImage=(function(_super){
-		function WebGLImage(im){
-			this._recreateLock=false;
-			this._needReleaseAgain=false;
-			this._image=null;
-			this._allowMerageInAtlas=false;
-			this._enableMerageInAtlas=false;
-			this.repeat=false;
-			this.mipmap=false;
-			this.minFifter=0;
-			this.magFifter=0;
-			WebGLImage.__super.call(this);
-			this.repeat=true;
-			this.mipmap=false;
-			this.minFifter=-1;
-			this.magFifter=-1;
-			this._image=im || new Browser.window.Image();
-			this._enableMerageInAtlas=true;
+	//class laya.ani.bone.SkeletonPlayer extends laya.ani.bone.Skeleton
+	var SkeletonPlayer=(function(_super){
+		function SkeletonPlayer(tmplete){
+			this.completeHandler=null;
+			this.dataUrl=null;
+			this.imgUrl=null;
+			SkeletonPlayer.__super.call(this,tmplete);
+			this.on("complete",this,this._complete);
 		}
 
-		__class(WebGLImage,'laya.webgl.resource.WebGLImage',_super);
-		var __proto=WebGLImage.prototype;
-		Laya.imps(__proto,{"laya.webgl.resource.IMergeAtlasBitmap":true})
-		/***重新创建资源*/
-		__proto.recreateResource=function(){
-			var _$this=this;
-			if (this._src==null || this._src==="")
-				return;
-			this.startCreate();
-			if (!this._image){
-				this._recreateLock=true;
-				var _this=this;
-				this._image=new Browser.window.Image();
-				this._image.onload=function (){
-					_this._image.onload=null;
-					if (_this._needReleaseAgain){
-						_this._needReleaseAgain=false;
-						_this._image=null;
-						return;
-					}
-					(!(_this._allowMerageInAtlas && _this._enableMerageInAtlas))? (_this.createWebGlTexture()):(_$this.memorySize=0,_$this._recreateLock=false);
-					_this.compoleteCreate();
-				};
-				_this._image.src=this._src;
-				}else {
-				if (this._recreateLock){
-					return;
-				}
-				(!(this._allowMerageInAtlas && this._enableMerageInAtlas))? (this.createWebGlTexture()):(this.memorySize=0,this._recreateLock=false);
-				this.compoleteCreate();
+		__class(SkeletonPlayer,'laya.ani.bone.SkeletonPlayer',_super);
+		var __proto=SkeletonPlayer.prototype;
+		__proto._complete=function(){
+			if (this.completeHandler){
+				var tHd;
+				tHd=this.completeHandler;
+				this.completeHandler=null;
+				tHd.run();
 			}
 		}
 
-		/***复制资源,此方法为浅复制*/
-		__proto.copyTo=function(dec){
-			var webglImage=dec;
-			webglImage._image=this._image;
-			laya.resource.Bitmap.prototype.copyTo.call(this,webglImage);
+		/**
+		*加载资源。
+		*@param baseURL 资源地址。
+		*/
+		__proto.load=function(baseURL){
+			this.dataUrl=baseURL;
+			this.imgUrl=baseURL.replace(".sk",".png");
+			Laya.loader.load([{url:this.dataUrl,type:"arraybuffer"},{url:this.imgUrl,type:"image"}],Handler.create(this,this._resLoaded));
 		}
 
-		/***销毁资源*/
-		__proto.detoryResource=function(){
-			if (this._recreateLock){
-				this._needReleaseAgain=true;
-			}
-			if (this._source){
-				WebGL.mainContext.deleteTexture(this._source);
-				this._source=null;
-				this.memorySize=0;
-			}
-		}
-
-		__proto.createWebGlTexture=function(){
-			var gl=WebGL.mainContext;
-			if (!this._image){
-				throw "create GLTextur err:no data:"+this._image;
-			};
-			var glTex=this._source=gl.createTexture();
-			gl.bindTexture(0x0DE1,glTex);
-			gl.texImage2D(0x0DE1,0,0x1908,0x1908,0x1401,this._image);
-			var minFifter=this.minFifter;
-			var magFifter=this.magFifter;
-			var repeat=this.repeat ? 0x2901 :0x812F;
-			var isPOT=Arith.isPOT(this.width,this.height);
-			if (isPOT){
-				if (this.mipmap)
-					(minFifter!==-1)|| (minFifter=0x2703);
-				else
-				(minFifter!==-1)|| (minFifter=0x2601);
-				(magFifter!==-1)|| (magFifter=0x2601);
-				gl.texParameteri(0x0DE1,0x2800,magFifter);
-				gl.texParameteri(0x0DE1,0x2801,minFifter);
-				gl.texParameteri(0x0DE1,0x2802,repeat);
-				gl.texParameteri(0x0DE1,0x2803,repeat);
-				this.mipmap && gl.generateMipmap(0x0DE1);
-				}else {
-				(minFifter!==-1)|| (minFifter=0x2601);
-				(magFifter!==-1)|| (magFifter=0x2601);
-				gl.texParameteri(0x0DE1,0x2801,minFifter);
-				gl.texParameteri(0x0DE1,0x2800,magFifter);
-				gl.texParameteri(0x0DE1,0x2802,0x812F);
-				gl.texParameteri(0x0DE1,0x2803,0x812F);
-			}
-			gl.bindTexture(0x0DE1,null);
-			this._image=null;
-			if (isPOT)
-				this.memorySize=this._w *this._h *4 *(1+1 / 3);
-			else
-			this.memorySize=this._w *this._h *4;
-			this._recreateLock=false;
-		}
-
-		/***调整尺寸*/
-		__proto.onresize=function(){
-			this._w=this._image.width;
-			this._h=this._image.height;
-			(AtlasResourceManager.enabled)&& (this._w < AtlasResourceManager.atlasLimitWidth && this._h < AtlasResourceManager.atlasLimitHeight)? this._allowMerageInAtlas=true :this._allowMerageInAtlas=false;
-		}
-
-		__proto.clearAtlasSource=function(){
-			this._image=null;
-		}
-
-		__proto.dispose=function(){
-			this.resourceManager.removeResource(this);
-			laya.resource.Bitmap.prototype.dispose.call(this);
+		__proto._resLoaded=function(){
+			var _templet
+			_templet=new Templet(Loader.getRes(this.dataUrl),Loader.getRes(this.imgUrl));
+			this.init(_templet,_templet.rate);
 		}
 
 		/**
-		*返回HTML Image,as3无internal货friend，通常禁止开发者修改image内的任何属性
-		*@param HTML Image
+		*资源地址。
 		*/
-		__getset(0,__proto,'image',function(){
-			return this._image;
+		__getset(0,__proto,'url',null,function(path){
+			this.load(path);
 		});
 
-		/***
-		*设置onload函数
-		*@param value onload函数
-		*/
-		__getset(0,__proto,'onload',null,function(value){
-			var _$this=this;
-			this._onload=value;
-			this._image && (this._image.onload=this._onload !=null ? (function(){
-				_$this.onresize();
-				_$this._onload();
-			}):null);
-		});
-
-		/**
-		*设置文件路径全名
-		*@param 文件路径全名
-		*/
-		__getset(0,__proto,'src',_super.prototype._$get_src,function(value){
-			this._src=value;
-			this._image && (this._image.src=value);
-		});
-
-		/**
-		*是否创建私有Source
-		*@return 是否创建
-		*/
-		__getset(0,__proto,'allowMerageInAtlas',function(){
-			return this._allowMerageInAtlas;
-		});
-
-		__getset(0,__proto,'atlasSource',function(){
-			return this._image;
-		});
-
-		/**
-		*是否创建私有Source,通常禁止修改
-		*@param value 是否创建
-		*/
-		/**
-		*是否创建私有Source
-		*@return 是否创建
-		*/
-		__getset(0,__proto,'enableMerageInAtlas',function(){
-			return this._allowMerageInAtlas;
-			},function(value){
-			this._allowMerageInAtlas=value;
-		});
-
-		/***
-		*设置onerror函数
-		*@param value onerror函数
-		*/
-		__getset(0,__proto,'onerror',null,function(value){
-			var _$this=this;
-			this._onerror=value;
-			this._image && (this._image.onerror=this._onerror !=null ? (function(){
-				_$this._onerror()
-			}):null);
-		});
-
-		return WebGLImage;
-	})(FileBitmap)
+		return SkeletonPlayer;
+	})(Skeleton)
 
 
 	/**
@@ -39693,7 +41972,7 @@ window.Laya=(function(window,document){
 		View.uiMap={};
 		View.viewClassMap={};
 		__static(View,
-		['uiClassMap',function(){return this.uiClassMap={"ViewStack":ViewStack,"LinkButton":Button,"TextArea":TextArea,"ColorPicker":ColorPicker,"Box":Box,"Button":Button,"CheckBox":CheckBox,"Clip":Clip,"ComboBox":ComboBox,"Component":Component,"HScrollBar":HScrollBar,"HSlider":HSlider,"Image":Image2,"Label":Label,"List":List,"Panel":Panel,"ProgressBar":ProgressBar,"Radio":Radio,"RadioGroup":RadioGroup,"ScrollBar":ScrollBar,"Slider":Slider,"Tab":Tab,"TextInput":TextInput,"View":View,"VScrollBar":VScrollBar,"VSlider":VSlider,"Tree":Tree,"HBox":HBox,"VBox":VBox};}
+		['uiClassMap',function(){return this.uiClassMap={"ViewStack":ViewStack,"LinkButton":Button,"TextArea":TextArea,"ColorPicker":ColorPicker,"Box":Box,"Button":Button,"CheckBox":CheckBox,"Clip":Clip,"ComboBox":ComboBox,"Component":Component,"HScrollBar":HScrollBar,"HSlider":HSlider,"Image":Image,"Label":Label,"List":List,"Panel":Panel,"ProgressBar":ProgressBar,"Radio":Radio,"RadioGroup":RadioGroup,"ScrollBar":ScrollBar,"Slider":Slider,"Tab":Tab,"TextInput":TextInput,"View":View,"VScrollBar":VScrollBar,"VSlider":VSlider,"Tree":Tree,"HBox":HBox,"VBox":VBox};}
 		]);
 		return View;
 	})(Box)
@@ -39812,7 +42091,7 @@ window.Laya=(function(window,document){
 			var i=0,len=0;
 			var tarUpdaters;
 			tarUpdaters=tar._updaters;
-			tarUpdaters=Utils1.setValueArr([],tarUpdaters);
+			tarUpdaters=ObjectTools.setValueArr([],tarUpdaters);
 			len=tarUpdaters.length;
 			var tR;
 			var tType;
@@ -39829,7 +42108,7 @@ window.Laya=(function(window,document){
 			var i=0,len=0;
 			var tarUpdaters;
 			tarUpdaters=tar._updaters;
-			tarUpdaters=Utils1.setValueArr([],tarUpdaters);
+			tarUpdaters=ObjectTools.setValueArr([],tarUpdaters);
 			len=tarUpdaters.length;
 			var tR;
 			var tType;
@@ -40395,7 +42674,7 @@ window.Laya=(function(window,document){
 			this.data=null;
 			this.img=null;
 			ContextMenuItem.__super.call(this);
-			if(!this.img)this.img=new Image2();
+			if(!this.img)this.img=new Image();
 			if(txt!=""){
 				this.label=txt;
 				this.name=txt;
@@ -41208,6 +43487,15 @@ window.Laya=(function(window,document){
 					this.renderItem(this.getCell(index),index);
 				}
 			}
+		}
+
+		/**
+		*设置单元格数据源。
+		*@param index 单元格索引。
+		*@param source 单元格数据源。
+		*/
+		__proto.setItem=function(index,source){
+			this.changeItem(index,source);
 		}
 
 		/**
@@ -42188,7 +44476,7 @@ window.Laya=(function(window,document){
 			this.arrow.pos(0,5);
 			this.arrow.name="arrow";
 			this.addChild(this.arrow);
-			this.icon=new Image2("comp/clip_folder.png");
+			this.icon=new Image("comp/clip_folder.png");
 			this.icon.pos(14,4);
 			this.icon.name="folder";
 			this.addChild(this.icon);
@@ -43552,47 +45840,208 @@ window.Laya=(function(window,document){
 
 	/**
 	*...
-	*@author ww
+	*@author
 	*/
-	//class laya.ani.bone.SkeletonPlayer extends laya.ani.bone.Skeleton
-	var SkeletonPlayer=(function(_super){
-		function SkeletonPlayer(tmplete){
-			this.completeHandler=null;
-			this.dataUrl=null;
-			this.imgUrl=null;
-			SkeletonPlayer.__super.call(this,tmplete);
-			this.on("complete",this,this._complete);
+	//class laya.webgl.resource.WebGLImage extends laya.resource.HTMLImage
+	var WebGLImage=(function(_super){
+		function WebGLImage(im){
+			this._image=null;
+			this._allowMerageInAtlas=false;
+			this._enableMerageInAtlas=false;
+			this.repeat=false;
+			this.mipmap=false;
+			this.minFifter=0;
+			this.magFifter=0;
+			WebGLImage.__super.call(this,null);
+			this.repeat=true;
+			this.mipmap=false;
+			this.minFifter=-1;
+			this.magFifter=-1;
+			this._image=im || new Browser.window.Image();
+			this._enableMerageInAtlas=true;
 		}
 
-		__class(SkeletonPlayer,'laya.ani.bone.SkeletonPlayer',_super);
-		var __proto=SkeletonPlayer.prototype;
-		__proto._complete=function(){
-			if (this.completeHandler){
-				var tHd;
-				tHd=this.completeHandler;
-				this.completeHandler=null;
-				tHd.run();
+		__class(WebGLImage,'laya.webgl.resource.WebGLImage',_super);
+		var __proto=WebGLImage.prototype;
+		Laya.imps(__proto,{"laya.webgl.resource.IMergeAtlasBitmap":true})
+		__proto._init_=function(im){}
+		/***重新创建资源*/
+		__proto.recreateResource=function(){
+			var _$this=this;
+			if (this._src==null || this._src==="")
+				return;
+			this.startCreate();
+			if (!this._image){
+				this._recreateLock=true;
+				var _this=this;
+				this._image=new Browser.window.Image();
+				this._image.onload=function (){
+					_this._image.onload=null;
+					if (_this._needReleaseAgain){
+						_this._needReleaseAgain=false;
+						_this._image=null;
+						return;
+					}
+					(!(_this._allowMerageInAtlas && _this._enableMerageInAtlas))? (_this.createWebGlTexture()):(_$this.memorySize=0,_$this._recreateLock=false);
+					_this.compoleteCreate();
+				};
+				_this._image.src=this._src;
+				}else {
+				if (this._recreateLock){
+					return;
+				}
+				(!(this._allowMerageInAtlas && this._enableMerageInAtlas))? (this.createWebGlTexture()):(this.memorySize=0,this._recreateLock=false);
+				this.compoleteCreate();
 			}
 		}
 
-		__proto.load=function(baseURL){
-			this.dataUrl=baseURL;
-			this.imgUrl=baseURL.replace(".sk",".png");
-			Laya.loader.load([ {url:this.dataUrl,type:"arraybuffer" },{url:this.imgUrl,type:"image" }],Handler.create(this,this._resLoaded));
+		/***复制资源,此方法为浅复制*/
+		__proto.copyTo=function(dec){
+			var webglImage=dec;
+			webglImage._image=this._image;
+			laya.resource.Bitmap.prototype.copyTo.call(this,webglImage);
 		}
 
-		__proto._resLoaded=function(){
-			this._tp_=new Templet(Loader.getRes(this.dataUrl),Loader.getRes(this.imgUrl));
-			this.setTpl(this._tp_);
-			this.play();
+		/***销毁资源*/
+		__proto.detoryResource=function(){
+			if (this._recreateLock){
+				this._needReleaseAgain=true;
+			}
+			if (this._source){
+				WebGL.mainContext.deleteTexture(this._source);
+				this._source=null;
+				this.memorySize=0;
+			}
 		}
 
-		__getset(0,__proto,'skin',null,function(path){
-			this.load(path);
+		__proto.createWebGlTexture=function(){
+			var gl=WebGL.mainContext;
+			if (!this._image){
+				throw "create GLTextur err:no data:"+this._image;
+			};
+			var glTex=this._source=gl.createTexture();
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,0x0DE1,glTex);
+			gl.texImage2D(0x0DE1,0,0x1908,0x1908,0x1401,this._image);
+			var minFifter=this.minFifter;
+			var magFifter=this.magFifter;
+			var repeat=this.repeat ? 0x2901 :0x812F;
+			var isPOT=Arith.isPOT(this.width,this.height);
+			if (isPOT){
+				if (this.mipmap)
+					(minFifter!==-1)|| (minFifter=0x2703);
+				else
+				(minFifter!==-1)|| (minFifter=0x2601);
+				(magFifter!==-1)|| (magFifter=0x2601);
+				gl.texParameteri(0x0DE1,0x2800,magFifter);
+				gl.texParameteri(0x0DE1,0x2801,minFifter);
+				gl.texParameteri(0x0DE1,0x2802,repeat);
+				gl.texParameteri(0x0DE1,0x2803,repeat);
+				this.mipmap && gl.generateMipmap(0x0DE1);
+				}else {
+				(minFifter!==-1)|| (minFifter=0x2601);
+				(magFifter!==-1)|| (magFifter=0x2601);
+				gl.texParameteri(0x0DE1,0x2801,minFifter);
+				gl.texParameteri(0x0DE1,0x2800,magFifter);
+				gl.texParameteri(0x0DE1,0x2802,0x812F);
+				gl.texParameteri(0x0DE1,0x2803,0x812F);
+			}
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget,preTexture));
+			this._image=null;
+			if (isPOT)
+				this.memorySize=this._w *this._h *4 *(1+1 / 3);
+			else
+			this.memorySize=this._w *this._h *4;
+			this._recreateLock=false;
+		}
+
+		/***调整尺寸*/
+		__proto.onresize=function(){
+			this._w=this._image.width;
+			this._h=this._image.height;
+			(AtlasResourceManager.enabled)&& (this._w < AtlasResourceManager.atlasLimitWidth && this._h < AtlasResourceManager.atlasLimitHeight)? this._allowMerageInAtlas=true :this._allowMerageInAtlas=false;
+		}
+
+		__proto.clearAtlasSource=function(){
+			this._image=null;
+		}
+
+		__proto.dispose=function(){
+			this.resourceManager.removeResource(this);
+			_super.prototype.dispose.call(this);
+		}
+
+		/**
+		*返回HTML Image,as3无internal货friend，通常禁止开发者修改image内的任何属性
+		*@param HTML Image
+		*/
+		__getset(0,__proto,'image',function(){
+			return this._image;
 		});
 
-		return SkeletonPlayer;
-	})(Skeleton)
+		/***
+		*设置onload函数
+		*@param value onload函数
+		*/
+		__getset(0,__proto,'onload',null,function(value){
+			var _$this=this;
+			this._onload=value;
+			this._image && (this._image.onload=this._onload !=null ? (function(){
+				_$this.onresize();
+				_$this._onload();
+			}):null);
+		});
+
+		/**
+		*设置文件路径全名
+		*@param 文件路径全名
+		*/
+		__getset(0,__proto,'src',_super.prototype._$get_src,function(value){
+			this._src=value;
+			this._image && (this._image.src=value);
+		});
+
+		/**
+		*是否创建私有Source
+		*@return 是否创建
+		*/
+		__getset(0,__proto,'allowMerageInAtlas',function(){
+			return this._allowMerageInAtlas;
+		});
+
+		__getset(0,__proto,'atlasSource',function(){
+			return this._image;
+		});
+
+		/**
+		*是否创建私有Source,通常禁止修改
+		*@param value 是否创建
+		*/
+		/**
+		*是否创建私有Source
+		*@return 是否创建
+		*/
+		__getset(0,__proto,'enableMerageInAtlas',function(){
+			return this._allowMerageInAtlas;
+			},function(value){
+			this._allowMerageInAtlas=value;
+		});
+
+		/***
+		*设置onerror函数
+		*@param value onerror函数
+		*/
+		__getset(0,__proto,'onerror',null,function(value){
+			var _$this=this;
+			this._onerror=value;
+			this._image && (this._image.onerror=this._onerror !=null ? (function(){
+				_$this._onerror()
+			}):null);
+		});
+
+		return WebGLImage;
+	})(HTMLImage)
 
 
 	/**
@@ -44003,7 +46452,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(ColorPickerPanelUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"137","bottom":"0","left":"0","skin":"view/bg_panel.png","top":"0","right":"0","x":"165"}},{"type":"Image","props":{"height":"180","y":"9","width":"189","x":"5","skin":"comp/blank.png","var":"pickBack"}},{"type":"Label","props":{"y":"206","text":"Color：","width":"50","align":"left","height":"18","color":"#dddddd","x":"8"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","text":"#ffffff","skin":"comp/textinput.png","x":"50","color":"#8a8a8a","var":"colorTxt","y":"205","width":"138","left":"50","height":"22","padding":"0,5,0,5","right":"5"}},{"type":"Label","props":{"y":"233","text":"Red：","width":"50","align":"left","height":"18","color":"#dddddd","x":"8"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","text":"255","skin":"comp/textinput.png","x":"50","color":"#8a8a8a","var":"redTxt","y":"232","width":"135","left":"50","height":"22","padding":"0,5,0,5","right":"5"}},{"type":"Label","props":{"y":"262","text":"Green：","width":"50","align":"left","height":"18","color":"#dddddd","x":"8"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","text":"255","skin":"comp/textinput.png","x":"50","color":"#8a8a8a","var":"greenTxt","y":"261","width":"132","left":"50","height":"22","padding":"0,5,0,5","right":"5"}},{"type":"Label","props":{"y":"291","text":"Blue：","width":"50","align":"left","height":"18","color":"#dddddd","x":"8"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","text":"255","skin":"comp/textinput.png","x":"50","color":"#8a8a8a","var":"blueTxt","y":"290","width":"135","left":"50","height":"22","padding":"0,5,0,5","right":"5"}}],"props":{"height":"320","scenecolor":"#dddddd","width":"200"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"137","right":"0","left":"0","top":"0","skin":"view/bg_panel.png","bottom":"0","x":"165"}},{"type":"Image","props":{"var":"pickBack","y":"9","width":"189","height":"180","skin":"comp/blank.png","x":"5"}},{"type":"Label","props":{"y":"206","text":"Color：","width":"50","align":"left","height":"18","color":"#dddddd","x":"8"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","text":"#ffffff","color":"#8a8a8a","skin":"comp/textinput.png","x":"50","var":"colorTxt","y":"205","padding":"0,5,0,5","width":"138","left":"50","height":"22","right":"5"}},{"type":"Label","props":{"y":"233","text":"Red：","width":"50","align":"left","height":"18","color":"#dddddd","x":"8"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","text":"255","color":"#8a8a8a","skin":"comp/textinput.png","x":"50","var":"redTxt","y":"232","padding":"0,5,0,5","width":"135","left":"50","height":"22","right":"5"}},{"type":"Label","props":{"y":"262","text":"Green：","width":"50","align":"left","height":"18","color":"#dddddd","x":"8"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","text":"255","color":"#8a8a8a","skin":"comp/textinput.png","x":"50","var":"greenTxt","y":"261","padding":"0,5,0,5","width":"132","left":"50","height":"22","right":"5"}},{"type":"Label","props":{"y":"291","text":"Blue：","width":"50","align":"left","height":"18","color":"#dddddd","x":"8"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","text":"255","color":"#8a8a8a","skin":"comp/textinput.png","x":"50","var":"blueTxt","y":"290","padding":"0,5,0,5","width":"135","left":"50","height":"22","right":"5"}}],"type":"View","props":{"height":"320","width":"200","scenecolor":"#dddddd"}};}
 		]);
 		return ColorPickerPanelUI;
 	})(View)
@@ -44025,7 +46474,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(LayoutTabUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Button","props":{"sizeGrid":"4,4,4,4","height":"25","y":"0","label":"label","x":"0","skin":"view/tab2.png","labelColors":"#dddddd,#888888,#e0e0e0","width":"75","var":"btn"}},{"type":"Button","props":{"var":"close","skin":"view/btn_close1.png","y":"7","x":"59"}}],"props":{"scenecolor":"#dddddd"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Button","props":{"var":"btn","y":"0","label":"label","sizeGrid":"4,4,4,4","height":"25","labelColors":"#dddddd,#888888,#e0e0e0","skin":"view/tab2.png","width":"75","x":"0"}},{"type":"Button","props":{"var":"close","y":"7","skin":"view/btn_close1.png","x":"59"}}],"type":"View","props":{"scenecolor":"#dddddd"}};}
 		]);
 		return LayoutTabUI;
 	})(View)
@@ -44047,7 +46496,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(viewTabUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Button","props":{"sizeGrid":"4,4,4,4","height":"25","y":"0","label":"label","x":"0","labelMargin":"0,0,15,0","skin":"view/tab2.png","labelColors":"#dddddd,#888888,#e0e0e0","width":"75","var":"btn"}},{"type":"Button","props":{"var":"close","skin":"view/btn_close1.png","y":"7","x":"58"}}],"props":{"scenecolor":"#dddddd"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Button","props":{"var":"btn","y":"0","label":"label","labelMargin":"0,0,15,0","sizeGrid":"4,4,4,4","height":"25","labelColors":"#dddddd,#888888,#e0e0e0","skin":"view/tab2.png","width":"75","x":"0"}},{"type":"Button","props":{"var":"close","y":"7","skin":"view/btn_close1.png","x":"58"}}],"type":"View","props":{"scenecolor":"#dddddd"}};}
 		]);
 		return viewTabUI;
 	})(View)
@@ -44101,16 +46550,20 @@ window.Laya=(function(window,document){
 			comp=comp || UIView.getCompInstance(xml);
 			if (comp==null)return null;
 			var map=this.getLayersInfo(xml);
+			var child;
 			var list=xml.child;
 			if (list){
 				for (var j=0,n=list.length;j < n;j++){
 					var node=list[j];
 					if (Laya.__typeof(comp,'laya.ui.IRender')&& node.props.name=="render"){
+						if (child){
+							comp.addChild(child);
+						}
 						try {
 							comp["itemRender"]=node;
 						}catch (e){}
 						}else if(node){
-						var child=this.createComp(node,null,map);
+						child=this.createComp(node,null,map);
 						if (child){
 							comp.addChild(child);
 						}
@@ -44194,6 +46647,8 @@ window.Laya=(function(window,document){
 		}
 
 		UIView.createCompS=function(xml,comp,visibleMap){
+			if(UIView._createCompS_!=null){
+			};
 			var layer=xml.layer;
 			if (layer){
 				if (visibleMap[layer]==0){
@@ -44288,6 +46743,7 @@ window.Laya=(function(window,document){
 			return null;
 		}
 
+		UIView._createCompS_=null
 		return UIView;
 	})(UIBox)
 
@@ -44427,7 +46883,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(ItemGroupUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Image","props":{"sizeGrid":"3,3,3,3","height":"20","y":"0","mouseEnabled":"true","width":"100","var":"groubBar","left":"0","skin":"view/bg_bar.png","right":"0","x":"0"}},{"type":"Label","props":{"x":"29","y":"0","text":"label","mouseChildren":"false","mouseEnabled":"false","color":"#d8d8d8","var":"groupLabl"}},{"type":"Clip","props":{"x":"15","y":"4","mouseChildren":"false","mouseEnabled":"false","skin":"comp/clip_tree.png","clipY":"2","var":"arrowClip"}},{"type":"Box","child":[{"type":"Button","props":{"sizeGrid":"4,0,4,0","skin":"comp/button.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"label"}}],"props":{"var":"groupBox","y":"20","mouseEnabled":"true","left":"0","right":"0","x":"0"}}],"props":{"scenecolor":"#dddddd"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"3,3,3,3","y":"0","mouseEnabled":"true","right":"0","width":"100","left":"0","var":"groubBar","height":"20","skin":"view/bg_bar.png","x":"0"}},{"type":"Label","props":{"var":"groupLabl","y":"0","text":"label","mouseChildren":"false","mouseEnabled":"false","color":"#d8d8d8","x":"29"}},{"type":"Clip","props":{"var":"arrowClip","y":"4","clipY":"2","mouseChildren":"false","mouseEnabled":"false","skin":"comp/clip_tree.png","x":"15"}},{"child":[{"type":"Button","props":{"sizeGrid":"4,0,4,0","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","label":"label"}}],"type":"Box","props":{"var":"groupBox","y":"20","mouseEnabled":"true","x":"0","right":"0","left":"0"}}],"type":"View","props":{"scenecolor":"#dddddd"}};}
 		]);
 		return ItemGroupUI;
 	})(View)
@@ -44449,7 +46905,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(LayoutRecUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Image","props":{"var":"back","height":"25","y":"0","width":"600","left":"0","skin":"view/bg_panel_layoutrec.png","top":"0","right":"0","x":"0"}},{"type":"Tab","props":{"var":"tab","skin":"view/tab2.png","y":"0","sizeGrid":"0,4,0,4","x":"0"}}]};}
+		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Image","props":{"var":"back","y":"0","skin":"view/bg_panel_layoutrec.png","width":"600","left":"0","height":"25","top":"0","right":"0","x":"0"}},{"type":"Tab","props":{"var":"tab","sizeGrid":"0,4,0,4","y":"0","skin":"view/tab2.png","x":"0"}}]};}
 		]);
 		return LayoutRecUI;
 	})(View)
@@ -44475,7 +46931,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(MenuBarUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","height":"34","y":"0","width":"200","left":"0","skin":"view/bg_menu.png","right":"0","x":"0"}},{"type":"Image","props":{"skin":"view/logo.png","y":"6","x":"13"}},{"type":"Tab","child":[{"type":"Button","props":{"skin":"view/btn_menu.png","name":"item0","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","label":"项目(P)"}},{"type":"Button","props":{"skin":"view/btn_menu.png","name":"item1","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","label":"文件(F)","x":"68"}},{"type":"Button","props":{"skin":"view/btn_menu.png","name":"item2","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","label":"编辑(E)","x":"136"}},{"type":"Button","props":{"skin":"view/btn_menu.png","name":"item3","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","label":"视图(V)","x":"204"}},{"type":"Button","props":{"skin":"view/btn_menu.png","name":"item5","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","label":"发布(I)","x":"340"}},{"type":"Button","props":{"skin":"view/btn_menu.png","name":"item6","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","label":"插件(T)","x":"408"}},{"type":"Button","props":{"skin":"view/btn_menu.png","name":"item7","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","label":"关于(A)","x":"476"}},{"type":"Button","props":{"name":"item4","label":"窗口(W)","skin":"view/btn_menu.png","y":"0","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","x":"272"}}],"props":{"x":"40","y":"5","var":"tab"}},{"type":"Box","child":[{"type":"Button","props":{"var":"minBtn","skin":"view/btn_min.png","y":"0","x":"65"}},{"type":"Button","props":{"x":"98","skin":"view/btn_max.png","y":"0","var":"backBtn"}},{"type":"Button","props":{"x":"131","skin":"view/btn_close2.png","y":"0","var":"closeBtn"}},{"type":"Button","props":{"height":"24","name":"item5","label":"代码模式","var":"switchBtn","skin":"view/btn_menu.png","y":"5","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","width":"70","x":"0"}}],"props":{"x":"712","y":"1","right":"1","var":"btnBox"}}],"props":{"height":"34","scenecolor":"#dddddd","width":"600"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"0","right":"0","width":"200","left":"0","height":"34","skin":"view/bg_menu.png","x":"0"}},{"type":"Image","props":{"y":"6","skin":"view/logo.png","x":"13"}},{"child":[{"type":"Button","props":{"name":"item0","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","skin":"view/btn_menu.png","label":"项目(P)"}},{"type":"Button","props":{"name":"item1","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","skin":"view/btn_menu.png","label":"文件(F)","x":"68"}},{"type":"Button","props":{"name":"item2","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","skin":"view/btn_menu.png","label":"编辑(E)","x":"136"}},{"type":"Button","props":{"name":"item3","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","skin":"view/btn_menu.png","label":"视图(V)","x":"204"}},{"type":"Button","props":{"name":"item5","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","skin":"view/btn_menu.png","label":"发布(I)","x":"340"}},{"type":"Button","props":{"name":"item6","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","skin":"view/btn_menu.png","label":"插件(T)","x":"408"}},{"type":"Button","props":{"name":"item7","label":"关于(A)","visible":"false","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","skin":"view/btn_menu.png","x":"476"}},{"type":"Button","props":{"name":"item4","label":"窗口(W)","y":"0","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","skin":"view/btn_menu.png","x":"272"}}],"type":"Tab","props":{"var":"tab","y":"5","x":"40"}},{"child":[{"type":"Button","props":{"var":"minBtn","y":"0","skin":"view/btn_min.png","x":"65"}},{"type":"Button","props":{"var":"backBtn","y":"0","skin":"view/btn_max.png","x":"98"}},{"type":"Button","props":{"var":"closeBtn","y":"0","skin":"view/btn_close2.png","x":"131"}},{"type":"Button","props":{"var":"switchBtn","name":"item5","label":"代码模式","height":"24","y":"5","labelColors":"#e0e0e0,#e0e0e0,#e0e0e0","skin":"view/btn_menu.png","width":"79","x":"-12"}}],"type":"Box","props":{"var":"btnBox","y":"1","right":"1","x":"712"}}],"type":"View","props":{"height":"34","width":"600","scenecolor":"#dddddd"}};}
 		]);
 		return MenuBarUI;
 	})(View)
@@ -44495,7 +46951,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(NewsPageUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Image","props":{"skin":"news/news.png","y":"0","x":"0"}}],"props":{"height":"657","scenecolor":"#dddddd","width":"987"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"y":"0","skin":"news/news.png","x":"0"}}],"type":"View","props":{"height":"657","width":"987","scenecolor":"#dddddd"}};}
 		]);
 		return NewsPageUI;
 	})(View)
@@ -44511,6 +46967,7 @@ window.Laya=(function(window,document){
 		__class(DragBoxManager,'laya.editor.manager.DragBoxManager',_super);
 		var __proto=DragBoxManager.prototype;
 		__proto.addDrag=function(target,type){
+			this.removeDrag(target);
 			var dragBox=new DragBox(type);
 			this.addChild(dragBox);
 			dragBox.setTarget(target);
@@ -44559,7 +47016,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(PropGroupUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Image","props":{"sizeGrid":"3,3,3,3","height":"24","y":"0","mouseEnabled":"true","width":"100","var":"groubBar","left":"0","skin":"view/bg_bar.png","right":"0","x":"0"}},{"type":"Label","props":{"x":"19","y":"3","text":"label","mouseChildren":"false","mouseEnabled":"false","color":"#efeded","var":"groupLabl"}},{"type":"Clip","props":{"x":"5","y":"4","mouseChildren":"false","mouseEnabled":"false","skin":"comp/clip_tree.png","clipY":"2","var":"arrowClip"}},{"type":"Box","child":[{"type":"Button","props":{"sizeGrid":"4,0,4,0","skin":"comp/button.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"label"}}],"props":{"var":"groupBox","y":"24","mouseEnabled":"true","left":"0","right":"0","x":"0"}}],"props":{"scenecolor":"#dddddd"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"3,3,3,3","y":"0","mouseEnabled":"true","right":"0","width":"100","left":"0","var":"groubBar","height":"24","skin":"view/bg_bar.png","x":"0"}},{"type":"Label","props":{"var":"groupLabl","y":"3","text":"label","mouseChildren":"false","mouseEnabled":"false","color":"#efeded","x":"19"}},{"type":"Clip","props":{"var":"arrowClip","y":"4","clipY":"2","mouseChildren":"false","mouseEnabled":"false","skin":"comp/clip_tree.png","x":"5"}},{"child":[{"type":"Button","props":{"sizeGrid":"4,0,4,0","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","label":"label"}}],"type":"Box","props":{"var":"groupBox","y":"24","mouseEnabled":"true","x":"0","right":"0","left":"0"}}],"type":"View","props":{"scenecolor":"#dddddd"}};}
 		]);
 		return PropGroupUI;
 	})(View)
@@ -44580,7 +47037,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(QuickToolUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","height":"31","y":"1","width":"900","left":"0","skin":"view/bg_menu.png","var":"back","right":"0","x":"0"}},{"type":"Button","props":{"toolTip":"新建页面文件夹","y":"5","stateNum":"2","skin":"view/folder_add.png","name":"addFolder","x":"20"}},{"type":"Button","props":{"toolTip":"新建页面","y":"5","stateNum":"2","skin":"view/page_add.png","name":"addPage","x":"54"}},{"type":"Button","props":{"toolTip":"保存页面","y":"5","stateNum":"2","skin":"view/save.png","name":"save","x":"94"}},{"type":"Button","props":{"toolTip":"保存所有页面","y":"5","stateNum":"2","skin":"view/saveall.png","name":"saveAll","x":"128"}},{"type":"Button","props":{"toolTip":"恢复","y":"5","stateNum":"2","skin":"view/back.png","name":"back","x":"168"}},{"type":"Button","props":{"toolTip":"撤销恢复","y":"5","stateNum":"2","skin":"view/re.png","name":"reBack","x":"202"}},{"type":"Button","props":{"toolTip":"缩小视图","y":"5","stateNum":"2","skin":"view/zoom_in.png","name":"zoomIn","x":"242"}},{"type":"Button","props":{"toolTip":"放大视图","y":"5","stateNum":"2","skin":"view/zoom_out.png","name":"zoomOut","x":"276"}},{"type":"Button","props":{"toolTip":"恢复视图","y":"5","stateNum":"2","skin":"view/zoom_back.png","name":"zoomBack","x":"310"}},{"type":"Button","props":{"toolTip":"刷新资源及页面","y":"5","stateNum":"2","skin":"view/res.png","name":"refresh","x":"354"}},{"type":"Button","props":{"toolTip":"发布","y":"5","stateNum":"2","skin":"view/publish.png","name":"publish","x":"388"}},{"type":"Button","props":{"toolTip":"左对齐","y":"5","stateNum":"2","skin":"view/align_left.png","name":"alignLeft","x":"432"}},{"type":"Button","props":{"toolTip":"垂直居中对齐","y":"5","stateNum":"2","skin":"view/align_center.png","name":"alignCenter","x":"466"}},{"type":"Button","props":{"toolTip":"右对齐","y":"5","stateNum":"2","skin":"view/align_right.png","name":"alignRight","x":"500"}},{"type":"Button","props":{"toolTip":"顶部对齐","y":"5","stateNum":"2","skin":"view/align_top.png","name":"alignTop","x":"534"}},{"type":"Button","props":{"toolTip":"水平居中对齐","y":"5","stateNum":"2","skin":"view/align_middle.png","name":"alignMiddle","x":"566"}},{"type":"Button","props":{"toolTip":"底部对齐","y":"5","stateNum":"2","skin":"view/align_bottom.png","name":"alignbottom","x":"600"}},{"type":"Button","props":{"toolTip":"水平平均间隔","y":"5","stateNum":"2","skin":"view/space_h.png","name":"spaceH","x":"644"}},{"type":"Button","props":{"toolTip":"垂直平均间隔","y":"5","stateNum":"2","skin":"view/space_v.png","name":"spaceV","x":"678"}},{"type":"Button","props":{"toolTip":"移动到左上角","y":"5","stateNum":"2","skin":"view/move_top_left.png","name":"topLeft","x":"722"}},{"type":"Button","props":{"toolTip":"移动到右上角","y":"5","stateNum":"2","skin":"view/move_top_right.png","name":"topRight","x":"756"}},{"type":"Button","props":{"toolTip":"移动到水平居中","y":"5","stateNum":"2","skin":"view/center.png","name":"center","x":"850"}},{"type":"Button","props":{"toolTip":"移动到垂直居中","y":"5","stateNum":"2","skin":"view/middle.png","name":"middle","x":"884"}},{"type":"Button","props":{"toolTip":"移动到左下角","y":"5","stateNum":"2","skin":"view/move_bottom_left.png","name":"bottomLeft","x":"786"}},{"type":"Button","props":{"toolTip":"移动到右上角","y":"5","stateNum":"2","skin":"view/move_bottom_right.png","name":"bottomRight","x":"816"}}],"props":{"height":"32","scenecolor":"#dddddd","title":"工具","width":"900"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"0","right":"0","width":"900","left":"0","var":"back","height":"32","skin":"view/bg_menu.png","x":"0"}},{"type":"Button","props":{"toolTip":"新建页面文件夹","name":"addFolder","stateNum":"2","y":"5","skin":"view/folder_add.png","x":"20"}},{"type":"Button","props":{"toolTip":"新建页面","name":"addPage","stateNum":"2","y":"5","skin":"view/page_add.png","x":"54"}},{"type":"Button","props":{"toolTip":"保存页面","name":"save","stateNum":"2","y":"5","skin":"view/save.png","x":"94"}},{"type":"Button","props":{"toolTip":"保存所有页面","name":"saveAll","stateNum":"2","y":"5","skin":"view/saveall.png","x":"128"}},{"type":"Button","props":{"toolTip":"恢复","name":"back","stateNum":"2","y":"5","skin":"view/back.png","x":"168"}},{"type":"Button","props":{"toolTip":"撤销恢复","name":"reBack","stateNum":"2","y":"5","skin":"view/re.png","x":"202"}},{"type":"Button","props":{"toolTip":"缩小视图","name":"zoomIn","stateNum":"2","y":"5","skin":"view/zoom_in.png","x":"242"}},{"type":"Button","props":{"toolTip":"放大视图","name":"zoomOut","stateNum":"2","y":"5","skin":"view/zoom_out.png","x":"276"}},{"type":"Button","props":{"toolTip":"恢复视图","name":"zoomBack","stateNum":"2","y":"5","skin":"view/zoom_back.png","x":"310"}},{"type":"Button","props":{"toolTip":"刷新资源及页面","name":"refresh","stateNum":"2","y":"5","skin":"view/res.png","x":"354"}},{"type":"Button","props":{"toolTip":"发布","name":"publish","stateNum":"2","y":"5","skin":"view/publish.png","x":"388"}},{"type":"Button","props":{"toolTip":"左对齐","name":"alignLeft","stateNum":"2","y":"5","skin":"view/align_left.png","x":"432"}},{"type":"Button","props":{"toolTip":"垂直居中对齐","name":"alignCenter","stateNum":"2","y":"5","skin":"view/align_center.png","x":"466"}},{"type":"Button","props":{"toolTip":"右对齐","name":"alignRight","stateNum":"2","y":"5","skin":"view/align_right.png","x":"500"}},{"type":"Button","props":{"toolTip":"顶部对齐","name":"alignTop","stateNum":"2","y":"5","skin":"view/align_top.png","x":"534"}},{"type":"Button","props":{"toolTip":"水平居中对齐","name":"alignMiddle","stateNum":"2","y":"5","skin":"view/align_middle.png","x":"566"}},{"type":"Button","props":{"toolTip":"底部对齐","name":"alignbottom","stateNum":"2","y":"5","skin":"view/align_bottom.png","x":"600"}},{"type":"Button","props":{"toolTip":"水平平均间隔","name":"spaceH","stateNum":"2","y":"5","skin":"view/space_h.png","x":"644"}},{"type":"Button","props":{"toolTip":"垂直平均间隔","name":"spaceV","stateNum":"2","y":"5","skin":"view/space_v.png","x":"678"}},{"type":"Button","props":{"toolTip":"移动到左上角","name":"topLeft","stateNum":"2","y":"5","skin":"view/move_top_left.png","x":"722"}},{"type":"Button","props":{"toolTip":"移动到右上角","name":"topRight","stateNum":"2","y":"5","skin":"view/move_top_right.png","x":"756"}},{"type":"Button","props":{"toolTip":"移动到水平居中","name":"center","stateNum":"2","y":"5","skin":"view/center.png","x":"850"}},{"type":"Button","props":{"toolTip":"移动到垂直居中","name":"middle","stateNum":"2","y":"5","skin":"view/middle.png","x":"884"}},{"type":"Button","props":{"toolTip":"移动到左下角","name":"bottomLeft","stateNum":"2","y":"5","skin":"view/move_bottom_left.png","x":"786"}},{"type":"Button","props":{"toolTip":"移动到右下角","name":"bottomRight","stateNum":"2","y":"5","skin":"view/move_bottom_right.png","x":"816"}}],"type":"View","props":{"height":"32","title":"工具","width":"900","scenecolor":"#dddddd"}};}
 		]);
 		return QuickToolUI;
 	})(View)
@@ -44602,7 +47059,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(TemplateItemUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Image","props":{"skin":"view/bg_content.png","top":"0","right":"0","bottom":"0","left":"0"}},{"type":"Image","props":{"var":"imgBg","y":"8","bottom":"15","left":"2","skin":"comp/blank.png","top":"2","right":"2","x":"8"}},{"type":"Image","props":{"height":"20","y":"60","width":"74","left":"0","skin":"view/bg_content.png","right":"0","x":"0"}},{"type":"Label","props":{"y":"61","text":"控件名","width":"65","var":"tLabel","align":"center","height":"18","color":"#dddddd","left":"5","right":"5","x":"7"}}],"props":{"height":"80","scenecolor":"#dddddd","width":"80"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"bottom":"0","top":"0","skin":"view/bg_content.png","right":"0","left":"0"}},{"type":"Image","props":{"var":"imgBg","y":"8","right":"2","left":"2","top":"2","skin":"comp/blank.png","bottom":"15","x":"8"}},{"type":"Image","props":{"y":"60","right":"0","width":"74","left":"0","height":"20","skin":"view/bg_content.png","x":"0"}},{"type":"Label","props":{"var":"tLabel","y":"61","text":"控件名","width":"65","left":"5","align":"center","height":"18","color":"#dddddd","right":"5","x":"7"}}],"type":"View","props":{"height":"80","width":"80","scenecolor":"#dddddd"}};}
 		]);
 		return TemplateItemUI;
 	})(View)
@@ -44627,7 +47084,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(PlayControlUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"203","bottom":"0","left":"0","skin":"view/bg_panel.png","top":"0","right":"0","x":"222"}},{"type":"Image","props":{"x":"6","y":"4","mouseEnabled":"true","skin":"play/begin.png","name":"toBeginPos","var":"toBeginPos"}},{"type":"Image","props":{"height":"12","y":"4","width":"15","var":"pre","mouseEnabled":"true","skin":"play/back.png","name":"pre","x":"23"}},{"type":"Image","props":{"x":"40","y":"4","mouseEnabled":"true","skin":"play/play.png","name":"play","var":"play"}},{"type":"Image","props":{"x":"57","y":"4","mouseEnabled":"true","skin":"play/forward.png","name":"next","var":"next"}},{"type":"Image","props":{"x":"74","y":"4","mouseEnabled":"true","skin":"play/end.png","name":"toEndPos","var":"toEndPos"}}],"props":{"height":"20","scenecolor":"#dddddd","width":"95"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"203","right":"0","left":"0","top":"0","skin":"view/bg_panel.png","bottom":"0","x":"222"}},{"type":"Image","props":{"var":"toBeginPos","y":"4","mouseEnabled":"true","name":"toBeginPos","skin":"play/begin.png","x":"6"}},{"type":"Image","props":{"var":"pre","y":"4","width":"15","mouseEnabled":"true","height":"12","name":"pre","skin":"play/back.png","x":"23"}},{"type":"Image","props":{"var":"play","y":"4","mouseEnabled":"true","name":"play","skin":"play/play.png","x":"40"}},{"type":"Image","props":{"var":"next","y":"4","mouseEnabled":"true","name":"next","skin":"play/forward.png","x":"57"}},{"type":"Image","props":{"var":"toEndPos","y":"4","mouseEnabled":"true","name":"toEndPos","skin":"play/end.png","x":"74"}}],"type":"View","props":{"height":"20","width":"95","scenecolor":"#dddddd"}};}
 		]);
 		return PlayControlUI;
 	})(View)
@@ -44647,7 +47104,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(TimeGridUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"183","bottom":"0","left":"0","skin":"view/bg_panel.png","top":"0","right":"0","x":"202"}}],"props":{"scenecolor":"#dddddd"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"183","right":"0","left":"0","top":"0","skin":"view/bg_panel.png","bottom":"0","x":"202"}}],"type":"View","props":{"scenecolor":"#dddddd"}};}
 		]);
 		return TimeGridUI;
 	})(View)
@@ -44662,6 +47119,7 @@ window.Laya=(function(window,document){
 			this.codeView=null;
 			this.scaleInfo=null;
 			this.compInfo=null;
+			this.typeBtn=null;
 			UIViewerUI.__super.call(this);
 		}
 
@@ -44673,7 +47131,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(UIViewerUI,
-		['uiView',function(){return this.uiView={"type":"View","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"-62","bottom":"0","left":"0","skin":"view/bg_body.png","top":"0","right":"0","x":"482"}},{"type":"Tab","child":[{"type":"Button","props":{"sizeGrid":"2,2,2,2","skin":"view/tab3.png","name":"item0","labelColors":"#888888,#888888,#d0d0d0","label":"视图"}},{"type":"Button","props":{"sizeGrid":"3,3,3,3","name":"item1","label":"代码","skin":"view/tab3.png","labelColors":"#888888,#888888,#d0d0d0","x":"75"}}],"props":{"x":"119","y":"95","visible":"false","var":"tab"}},{"type":"ViewStack","child":[{"type":"Box","props":{"x":"0","name":"item0","y":"175","bottom":"2","width":"600","left":"2","height":"280","top":"2","right":"2","var":"designView"}},{"type":"TextArea","props":{"var":"codeView","font":"Consolas","text":"TextArea","top":"2","color":"#8080ff","fontSize":"14","bottom":"2","leading":"10","x":"558","y":"622","left":"2","name":"item1","padding":"5,5,5,5","right":"2"}}],"props":{"var":"viewStack","y":"1863","bottom":"0","left":"0","mouseEnabled":"true","top":"0","right":"0","x":"55"}},{"type":"Image","props":{"y":"387","bottom":"1","left":"1","skin":"comp/uibottom.png","right":"1","x":"5"}},{"type":"Label","props":{"y":"366","mouseEnabled":"false","bottom":"2","width":"200","x":"277","align":"right","height":"20","color":"#d8d8d8","right":"10","var":"scaleInfo"}},{"type":"Label","props":{"y":"378","padding":"0,10,0,10","left":"35","text":"label111","width":"300","x":"35","align":"left","height":"20","color":"#d8d8d8","bottom":"2","var":"compInfo"}},{"type":"Image","props":{"left":"15","skin":"comp/infoicon.png","y":"378","bottom":"8","x":"4"}}],"props":{"height":"400","bottom":"顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶","width":"600"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"-62","right":"0","left":"0","top":"0","skin":"view/bg_body.png","bottom":"0","x":"482"}},{"child":[{"type":"Button","props":{"sizeGrid":"2,2,2,2","name":"item0","labelColors":"#888888,#888888,#d0d0d0","skin":"view/tab3.png","label":"视图"}},{"type":"Button","props":{"sizeGrid":"3,3,3,3","name":"item1","label":"代码","labelColors":"#888888,#888888,#d0d0d0","skin":"view/tab3.png","x":"75"}}],"type":"Tab","props":{"var":"tab","y":"2","visible":"false","x":"6"}},{"child":[{"type":"Box","props":{"var":"designView","name":"item0","bottom":"2","width":"600","left":"2","height":"280","top":"2","right":"2"}},{"type":"TextArea","props":{"font":"Consolas","text":"TextArea","top":"2","color":"#8080ff","fontSize":"14","bottom":"30","leading":"10","x":"563","var":"codeView","y":"445","padding":"5,5,5,5","left":"2","name":"item1","right":"2"}}],"type":"ViewStack","props":{"var":"viewStack","y":"2120","bottom":"0","left":"0","mouseEnabled":"true","top":"0","right":"0","x":"66"}},{"type":"Image","props":{"y":"387","skin":"comp/uibottom.png","left":"1","bottom":"1","right":"1","x":"5"}},{"type":"Label","props":{"var":"scaleInfo","y":"378","bottom":"2","width":"102","mouseEnabled":"false","align":"right","height":"20","color":"#d8d8d8","right":"10","x":"488"}},{"type":"Label","props":{"var":"compInfo","y":"378","text":"label111","width":"300","left":"35","align":"left","height":"20","color":"#d8d8d8","padding":"0,10,0,10","bottom":"2","x":"35"}},{"type":"Image","props":{"left":"15","y":"378","skin":"comp/infoicon.png","bottom":"8","x":"4"}},{"type":"Clip","props":{"var":"typeBtn","y":"379","clipY":"2","bottom":"5","index":"0","skin":"view/codeswitch.png","right":"110","x":"420"}}],"type":"View","props":{"height":"400","bottom":"顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶顶","width":"600"}};}
 		]);
 		return UIViewerUI;
 	})(View)
@@ -44991,110 +47449,6 @@ window.Laya=(function(window,document){
 
 
 	/**
-	*<code>TextArea</code> 类用于创建显示对象以显示和输入文本。
-	*@example 以下示例代码，创建了一个 <code>TextArea</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.TextArea;
-		*import laya.utils.Handler;
-		*
-		*public class TextArea_Example
-		*{
-			*
-			*public function TextArea_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/input.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*
-			*private function onLoadComplete():void
-			*{
-				*var textArea:TextArea=new TextArea("这个一个TextArea实例。");//创建一个 TextArea 类的实例对象 textArea 。
-				*textArea.skin="resource/ui/input.png";//设置 textArea 的皮肤。
-				*textArea.sizeGrid="4,4,4,4";//设置 textArea 的网格信息。
-				*textArea.color="#008fff";//设置 textArea 的文本颜色。
-				*textArea.font="Arial";//设置 textArea 的字体。
-				*textArea.bold=true;//设置 textArea 的文本显示为粗体。
-				*textArea.fontSize=20;//设置 textArea 的文本字体大小。
-				*textArea.wordWrap=true;//设置 textArea 的文本自动换行。
-				*textArea.x=100;//设置 textArea 对象的属性 x 的值，用于控制 textArea 对象的显示位置。
-				*textArea.y=100;//设置 textArea 对象的属性 y 的值，用于控制 textArea 对象的显示位置。
-				*textArea.width=300;//设置 textArea 的宽度。
-				*textArea.height=200;//设置 textArea 的高度。
-				*Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
-				*}
-			*
-			*}
-		*
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高、渲染模式
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*Laya.loader.load(["resource/ui/input.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*var textArea=new laya.ui.TextArea("这个一个TextArea实例。");//创建一个 TextArea 类的实例对象 textArea 。
-		*textArea.skin="resource/ui/input.png";//设置 textArea 的皮肤。
-		*textArea.sizeGrid="4,4,4,4";//设置 textArea 的网格信息。
-		*textArea.color="#008fff";//设置 textArea 的文本颜色。
-		*textArea.font="Arial";//设置 textArea 的字体。
-		*textArea.bold=true;//设置 textArea 的文本显示为粗体。
-		*textArea.fontSize=20;//设置 textArea 的文本字体大小。
-		*textArea.wordWrap=true;//设置 textArea 的文本自动换行。
-		*textArea.x=100;//设置 textArea 对象的属性 x 的值，用于控制 textArea 对象的显示位置。
-		*textArea.y=100;//设置 textArea 对象的属性 y 的值，用于控制 textArea 对象的显示位置。
-		*textArea.width=300;//设置 textArea 的宽度。
-		*textArea.height=200;//设置 textArea 的高度。
-		*Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import TextArea=laya.ui.TextArea;
-	*import Handler=laya.utils.Handler;
-	*class TextArea_Example {
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/input.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*var textArea:TextArea=new TextArea("这个一个TextArea实例。");//创建一个 TextArea 类的实例对象 textArea 。
-			*textArea.skin="resource/ui/input.png";//设置 textArea 的皮肤。
-			*textArea.sizeGrid="4,4,4,4";//设置 textArea 的网格信息。
-			*textArea.color="#008fff";//设置 textArea 的文本颜色。
-			*textArea.font="Arial";//设置 textArea 的字体。
-			*textArea.bold=true;//设置 textArea 的文本显示为粗体。
-			*textArea.fontSize=20;//设置 textArea 的文本字体大小。
-			*textArea.wordWrap=true;//设置 textArea 的文本自动换行。
-			*textArea.x=100;//设置 textArea 对象的属性 x 的值，用于控制 textArea 对象的显示位置。
-			*textArea.y=100;//设置 textArea 对象的属性 y 的值，用于控制 textArea 对象的显示位置。
-			*textArea.width=300;//设置 textArea 的宽度。
-			*textArea.height=200;//设置 textArea 的高度。
-			*Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
-			*}
-		*}
-	*</listing>
-	*/
-	//class laya.ui.TextArea extends laya.ui.TextInput
-	var TextArea=(function(_super){
-		/**
-		*<p>创建一个新的 <code>TextArea</code> 示例。</p>
-		*@param text 文本内容字符串。
-		*/
-		function TextArea(text){
-			(text===void 0)&& (text="");
-			TextArea.__super.call(this,text);
-			this.multiline=true;
-		}
-
-		__class(TextArea,'laya.ui.TextArea',_super);
-		return TextArea;
-	})(TextInput)
-
-
-	/**
 	*节点树上用的List 支持多选
 	*@author ww
 	*@version 1.0
@@ -45220,6 +47574,110 @@ window.Laya=(function(window,document){
 
 		return ListEx;
 	})(List)
+
+
+	/**
+	*<code>TextArea</code> 类用于创建显示对象以显示和输入文本。
+	*@example 以下示例代码，创建了一个 <code>TextArea</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.TextArea;
+		*import laya.utils.Handler;
+		*
+		*public class TextArea_Example
+		*{
+			*
+			*public function TextArea_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/input.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*
+			*private function onLoadComplete():void
+			*{
+				*var textArea:TextArea=new TextArea("这个一个TextArea实例。");//创建一个 TextArea 类的实例对象 textArea 。
+				*textArea.skin="resource/ui/input.png";//设置 textArea 的皮肤。
+				*textArea.sizeGrid="4,4,4,4";//设置 textArea 的网格信息。
+				*textArea.color="#008fff";//设置 textArea 的文本颜色。
+				*textArea.font="Arial";//设置 textArea 的字体。
+				*textArea.bold=true;//设置 textArea 的文本显示为粗体。
+				*textArea.fontSize=20;//设置 textArea 的文本字体大小。
+				*textArea.wordWrap=true;//设置 textArea 的文本自动换行。
+				*textArea.x=100;//设置 textArea 对象的属性 x 的值，用于控制 textArea 对象的显示位置。
+				*textArea.y=100;//设置 textArea 对象的属性 y 的值，用于控制 textArea 对象的显示位置。
+				*textArea.width=300;//设置 textArea 的宽度。
+				*textArea.height=200;//设置 textArea 的高度。
+				*Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
+				*}
+			*
+			*}
+		*
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高、渲染模式
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*Laya.loader.load(["resource/ui/input.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*var textArea=new laya.ui.TextArea("这个一个TextArea实例。");//创建一个 TextArea 类的实例对象 textArea 。
+		*textArea.skin="resource/ui/input.png";//设置 textArea 的皮肤。
+		*textArea.sizeGrid="4,4,4,4";//设置 textArea 的网格信息。
+		*textArea.color="#008fff";//设置 textArea 的文本颜色。
+		*textArea.font="Arial";//设置 textArea 的字体。
+		*textArea.bold=true;//设置 textArea 的文本显示为粗体。
+		*textArea.fontSize=20;//设置 textArea 的文本字体大小。
+		*textArea.wordWrap=true;//设置 textArea 的文本自动换行。
+		*textArea.x=100;//设置 textArea 对象的属性 x 的值，用于控制 textArea 对象的显示位置。
+		*textArea.y=100;//设置 textArea 对象的属性 y 的值，用于控制 textArea 对象的显示位置。
+		*textArea.width=300;//设置 textArea 的宽度。
+		*textArea.height=200;//设置 textArea 的高度。
+		*Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import TextArea=laya.ui.TextArea;
+	*import Handler=laya.utils.Handler;
+	*class TextArea_Example {
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/input.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*var textArea:TextArea=new TextArea("这个一个TextArea实例。");//创建一个 TextArea 类的实例对象 textArea 。
+			*textArea.skin="resource/ui/input.png";//设置 textArea 的皮肤。
+			*textArea.sizeGrid="4,4,4,4";//设置 textArea 的网格信息。
+			*textArea.color="#008fff";//设置 textArea 的文本颜色。
+			*textArea.font="Arial";//设置 textArea 的字体。
+			*textArea.bold=true;//设置 textArea 的文本显示为粗体。
+			*textArea.fontSize=20;//设置 textArea 的文本字体大小。
+			*textArea.wordWrap=true;//设置 textArea 的文本自动换行。
+			*textArea.x=100;//设置 textArea 对象的属性 x 的值，用于控制 textArea 对象的显示位置。
+			*textArea.y=100;//设置 textArea 对象的属性 y 的值，用于控制 textArea 对象的显示位置。
+			*textArea.width=300;//设置 textArea 的宽度。
+			*textArea.height=200;//设置 textArea 的高度。
+			*Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
+			*}
+		*}
+	*</listing>
+	*/
+	//class laya.ui.TextArea extends laya.ui.TextInput
+	var TextArea=(function(_super){
+		/**
+		*<p>创建一个新的 <code>TextArea</code> 示例。</p>
+		*@param text 文本内容字符串。
+		*/
+		function TextArea(text){
+			(text===void 0)&& (text="");
+			TextArea.__super.call(this,text);
+			this.multiline=true;
+		}
+
+		__class(TextArea,'laya.ui.TextArea',_super);
+		return TextArea;
+	})(TextInput)
 
 
 	/**
@@ -45553,7 +48011,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(AlertUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"180","y":"0","width":"450","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"16","name":"close","x":"417"}},{"type":"Image","props":{"height":"32","y":"8","width":"397","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","text":"提示","x":"28","color":"#dddddd","fontSize":"14","var":"titleLbl"}},{"type":"Label","props":{"align":"center","text":"确认内容","mouseEnabled":"false","color":"#dddddd","multiline":"true","x":"43","y":"66","wordWrap":"true","mouseChildren":"false","var":"msgLbl","isHtml":"true","height":"56","width":"364"}},{"type":"Button","props":{"height":"30","name":"sure","label":"确定","skin":"comp/btn.png","y":"123","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"175"}}],"props":{"height":"180","scenecolor":"#dddddd","width":"450"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"450","height":"180","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"16","name":"close","skin":"view/btn_close.png","x":"417"}},{"type":"Image","props":{"y":"8","width":"397","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"var":"titleLbl","y":"18","text":"提示","color":"#dddddd","fontSize":"14","x":"28"}},{"type":"Label","props":{"text":"确认内容","mouseEnabled":"false","color":"#dddddd","multiline":"true","x":"43","var":"msgLbl","isHtml":"true","y":"66","wordWrap":"true","width":"364","align":"center","height":"56","mouseChildren":"false"}},{"type":"Button","props":{"name":"sure","label":"确定","height":"30","y":"123","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","width":"100","x":"175"}}],"type":"Dialog","props":{"height":"180","width":"450","scenecolor":"#dddddd"}};}
 		]);
 		return AlertUI;
 	})(Dialog)
@@ -45575,7 +48033,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(ConfirmUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"180","y":"0","width":"450","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"17","name":"close","x":"418"}},{"type":"Image","props":{"height":"32","y":"8","width":"397","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","text":"确认框","x":"28","color":"#dddddd","fontSize":"14","var":"titleLbl"}},{"type":"Label","props":{"align":"center","text":"确认内容","mouseEnabled":"false","color":"#dddddd","multiline":"true","x":"35.5","y":"67","wordWrap":"true","mouseChildren":"false","var":"msgLbl","isHtml":"true","height":"54","width":"379"}},{"type":"Button","props":{"height":"30","name":"cancel","width":"100","skin":"comp/btn.png","y":"125","labelColors":"#dddddd,#dddddd,#dddddd","label":"取消","x":"240"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"30","name":"sure","label":"确定","skin":"comp/button.png","y":"125","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"110"}}],"props":{"height":"180","scenecolor":"#dddddd","width":"450"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"450","height":"180","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"17","name":"close","skin":"view/btn_close.png","x":"418"}},{"type":"Image","props":{"y":"8","width":"397","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"var":"titleLbl","y":"18","text":"确认框","color":"#dddddd","fontSize":"14","x":"28"}},{"type":"Label","props":{"text":"确认内容","mouseEnabled":"false","color":"#dddddd","multiline":"true","x":"35.5","var":"msgLbl","isHtml":"true","y":"67","wordWrap":"true","width":"379","align":"center","height":"54","mouseChildren":"false"}},{"type":"Button","props":{"name":"cancel","width":"100","height":"30","y":"125","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"取消","x":"240"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","name":"sure","label":"确定","height":"30","y":"125","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","width":"100","x":"110"}}],"type":"Dialog","props":{"height":"180","width":"450","scenecolor":"#dddddd"}};}
 		]);
 		return ConfirmUI;
 	})(Dialog)
@@ -45597,7 +48055,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(WaitingUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"180","y":"0","width":"450","skin":"view/bg_dialog.png","x":"0"}},{"type":"Image","props":{"height":"32","y":"8","width":"433","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","text":"处理中","x":"28","color":"#dddddd","fontSize":"14","var":"titleLbl"}},{"type":"Label","props":{"isHtml":"true","y":"89","wordWrap":"true","text":"确认内容","width":"386","x":"29.5","align":"center","height":"49","color":"#dddddd","multiline":"true","var":"msgLbl"}}],"props":{"height":"180","scenecolor":"#dddddd","width":"450"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"450","height":"180","skin":"view/bg_dialog.png","x":"0"}},{"type":"Image","props":{"y":"8","width":"433","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"var":"titleLbl","y":"18","text":"处理中","color":"#dddddd","fontSize":"14","x":"28"}},{"type":"Label","props":{"var":"msgLbl","isHtml":"true","y":"89","wordWrap":"true","text":"确认内容","width":"386","align":"center","height":"49","color":"#dddddd","multiline":"true","x":"29.5"}}],"type":"Dialog","props":{"height":"180","width":"450","scenecolor":"#dddddd"}};}
 		]);
 		return WaitingUI;
 	})(Dialog)
@@ -45861,7 +48319,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(AboutUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"150","y":"0","width":"450","skin":"view/bg_dialog.png","x":"0"}},{"type":"Image","props":{"height":"32","y":"8","width":"398","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"关于","x":"28"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"16","name":"close","x":"418"}},{"type":"Label","props":{"y":"73","text":"当前版本","width":"251","var":"currVer","height":"23","color":"#dddddd","x":"130"}}],"props":{"height":"150","scenecolor":"#dddddd","width":"450"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"450","height":"150","skin":"view/bg_dialog.png","x":"0"}},{"type":"Image","props":{"y":"8","width":"398","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"关于","x":"28"}},{"type":"Button","props":{"y":"16","name":"close","skin":"view/btn_close.png","x":"418"}},{"type":"Label","props":{"var":"currVer","y":"73","text":"当前版本","width":"251","height":"23","color":"#dddddd","x":"130"}}],"type":"Dialog","props":{"height":"150","width":"450","scenecolor":"#dddddd"}};}
 		]);
 		return AboutUI;
 	})(Dialog)
@@ -45885,7 +48343,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(AddProjectUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"300","y":"0","width":"500","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"16","name":"close","x":"465"}},{"type":"Image","props":{"height":"32","y":"8","width":"446","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"新建项目","x":"28"}},{"type":"Label","props":{"y":"74.5","color":"#dddddd","text":"项目名称：","x":"32"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"73","padding":"0,5,0,5","width":"350","x":"105","skin":"comp/textinput.png","color":"#dddddd","var":"nameTxt"}},{"type":"Button","props":{"height":"30","y":"224","label":"确定","skin":"comp/btn.png","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"358"}},{"type":"Label","props":{"y":"119","color":"#dddddd","text":"项目位置：","x":"32"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"118","padding":"0,5,0,5","width":"260","x":"105","skin":"comp/textinput.png","color":"#dddddd","var":"pathTxt"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"24","y":"117","text":"项目名称：","width":"80","var":"browseBtn","skin":"comp/button.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"浏览","x":"375"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","height":"23","y":"164","labels":"ActionScript3,TypeScript,JavaScript","width":"350","var":"langDrop","skin":"comp/combobox.png","selectedIndex":"0","x":"107"}},{"type":"Label","props":{"y":"164","color":"#dddddd","text":"使用语言：","x":"32"}}],"props":{"height":"300","scenecolor":"#dddddd","width":"500"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"500","height":"300","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"16","name":"close","skin":"view/btn_close.png","x":"465"}},{"type":"Image","props":{"y":"8","width":"446","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"新建项目","x":"28"}},{"type":"Label","props":{"y":"74.5","color":"#dddddd","text":"项目名称：","x":"32"}},{"type":"TextInput","props":{"var":"nameTxt","y":"73","padding":"0,5,0,5","width":"350","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"105"}},{"type":"Button","props":{"y":"224","label":"确定","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","width":"100","x":"358"}},{"type":"Label","props":{"y":"119","color":"#dddddd","text":"项目位置：","x":"32"}},{"type":"TextInput","props":{"var":"pathTxt","y":"118","padding":"0,5,0,5","width":"260","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"105"}},{"type":"Button","props":{"var":"browseBtn","y":"117","text":"项目名称：","width":"80","sizeGrid":"4,0,4,0","height":"24","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","label":"浏览","x":"375"}},{"type":"ComboBox","props":{"selectedIndex":"0","sizeGrid":"3,20,3,3","y":"164","labels":"ActionScript3,TypeScript,JavaScript","width":"350","var":"langDrop","height":"23","skin":"comp/combobox.png","x":"107"}},{"type":"Label","props":{"y":"164","color":"#dddddd","text":"使用语言：","x":"32"}}],"type":"Dialog","props":{"height":"300","width":"500","scenecolor":"#dddddd"}};}
 		]);
 		return AddProjectUI;
 	})(Dialog)
@@ -45906,7 +48364,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(BoxCompUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"160","y":"0","width":"450","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"16","name":"close","x":"418"}},{"type":"Image","props":{"height":"32","y":"8","width":"396","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"转换为容器","x":"28"}},{"type":"Label","props":{"y":"80.5","color":"#dddddd","text":"容器类型：","x":"60"}},{"type":"Button","props":{"height":"30","y":"75","label":"确定","skin":"comp/btn.png","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"291"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","height":"23","y":"79","width":"130","var":"typeDrop","skin":"comp/combobox.png","labelColors":"#dddddd","scrollBarSkin":"comp/vscroll.png","x":"133"}}],"props":{"height":"160","scenecolor":"#dddddd","width":"450"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"450","height":"160","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"16","name":"close","skin":"view/btn_close.png","x":"418"}},{"type":"Image","props":{"y":"8","width":"396","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"转换为容器","x":"28"}},{"type":"Label","props":{"y":"80.5","color":"#dddddd","text":"容器类型：","x":"60"}},{"type":"Button","props":{"y":"75","label":"确定","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","width":"100","x":"291"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","y":"79","scrollBarSkin":"comp/vscroll.png","width":"130","var":"typeDrop","height":"23","labelColors":"#dddddd","skin":"comp/combobox.png","x":"133"}}],"type":"Dialog","props":{"height":"160","width":"450","scenecolor":"#dddddd"}};}
 		]);
 		return BoxCompUI;
 	})(Dialog)
@@ -45930,7 +48388,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(ConvertProjectUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"250","y":"0","width":"500","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"17","name":"close","x":"465"}},{"type":"Image","props":{"height":"32","y":"8","width":"441","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"转换项目","x":"28"}},{"type":"Button","props":{"height":"30","y":"188","label":"确定","skin":"comp/btn.png","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"366"}},{"type":"Label","props":{"y":"143","text":"目标项目位置：","width":"83","align":"right","height":"18","color":"#dddddd","x":"30"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"141","padding":"0,5,0,5","width":"250","x":"125","skin":"comp/textinput.png","color":"#dddddd","var":"pathTxt"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"24","y":"140","text":"项目名称：","width":"80","var":"browseBtn","skin":"comp/button.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"浏览","x":"385"}},{"type":"Label","props":{"y":"93","text":"原项目位置：","width":"90","align":"right","height":"18","color":"#dddddd","x":"26"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"92","padding":"0,5,0,5","width":"250","x":"125","skin":"comp/textinput.png","color":"#dddddd","var":"pathOldTxt"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"24","y":"91","text":"项目名称：","width":"80","var":"browseOldBtn","skin":"comp/button.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"浏览","x":"385"}},{"type":"Label","props":{"y":"56","color":"#00ccff","text":"项目转换可以把老的MornUI项目转换为LayaUI项目","x":"32"}}],"props":{"height":"250","scenecolor":"#dddddd","width":"500"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"500","height":"250","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"17","name":"close","skin":"view/btn_close.png","x":"465"}},{"type":"Image","props":{"y":"8","width":"441","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"转换项目","x":"28"}},{"type":"Button","props":{"y":"188","label":"确定","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","width":"100","x":"366"}},{"type":"Label","props":{"y":"143","text":"目标项目位置：","width":"83","align":"right","height":"18","color":"#dddddd","x":"30"}},{"type":"TextInput","props":{"var":"pathTxt","y":"141","padding":"0,5,0,5","width":"250","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"125"}},{"type":"Button","props":{"var":"browseBtn","y":"140","text":"项目名称：","width":"80","sizeGrid":"4,0,4,0","height":"24","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","label":"浏览","x":"385"}},{"type":"Label","props":{"y":"93","text":"原项目位置：","width":"90","align":"right","height":"18","color":"#dddddd","x":"26"}},{"type":"TextInput","props":{"var":"pathOldTxt","y":"92","padding":"0,5,0,5","width":"250","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"125"}},{"type":"Button","props":{"var":"browseOldBtn","y":"91","text":"项目名称：","width":"80","sizeGrid":"4,0,4,0","height":"24","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","label":"浏览","x":"385"}},{"type":"Label","props":{"y":"56","color":"#00ccff","text":"项目转换可以把老的MornUI项目转换为LayaUI项目","x":"32"}}],"type":"Dialog","props":{"height":"250","width":"500","scenecolor":"#dddddd"}};}
 		]);
 		return ConvertProjectUI;
 	})(Dialog)
@@ -45956,7 +48414,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(FindAndReplaceUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"380","y":"0","width":"500","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"17","name":"close","x":"467"}},{"type":"Image","props":{"height":"32","y":"8","width":"449","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"查找替换","x":"28"}},{"type":"Image","props":{"sizeGrid":"3,3,3,3","height":"144","y":"214","width":"454","skin":"view/bg_body.png","x":"24"}},{"type":"Label","props":{"var":"msgTxt","y":"193","color":"#dddddd","text":"共找到 {0} 个页面，双击列表打开页面","x":"25"}},{"type":"List","child":[{"type":"Box","child":[{"type":"Clip","props":{"height":"24","name":"selectBox","left":"0","skin":"comp/clip_selectBox.png","clipY":"2","right":"0"}},{"type":"Label","props":{"name":"label","text":"label","width":"150","left":"10","height":"24","color":"#dddddd","right":"80","x":"20"}}],"props":{"name":"render","right":"0","left":"0"}}],"props":{"y":"217","width":"450","var":"list","height":"140","repeatX":"1","vScrollBarSkin":"comp/vscroll.png","x":"26"}},{"type":"Label","props":{"y":"62.5","color":"#dddddd","text":"查找文本：","x":"82"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"61","padding":"0,5,0,5","width":"250","x":"155","skin":"comp/textinput.png","color":"#dddddd","var":"findTxt"}},{"type":"Label","props":{"y":"102","color":"#dddddd","text":"替换文本：","x":"82"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"101","padding":"0,5,0,5","width":"250","x":"155","skin":"comp/textinput.png","color":"#dddddd","var":"replaceTxt"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"30","y":"145","width":"100","x":"128","skin":"comp/button.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"查找","var":"findBtn"}},{"type":"Button","props":{"height":"30","y":"145","width":"100","x":"272","skin":"comp/btn.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"替换","var":"replaceBtn"}}],"props":{"height":"380","scenecolor":"#dddddd","width":"500"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"500","height":"380","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"17","name":"close","skin":"view/btn_close.png","x":"467"}},{"type":"Image","props":{"y":"8","width":"449","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"查找替换","x":"28"}},{"type":"Image","props":{"sizeGrid":"3,3,3,3","y":"214","width":"454","height":"144","skin":"view/bg_body.png","x":"24"}},{"type":"Label","props":{"var":"msgTxt","y":"193","color":"#dddddd","text":"共找到 {0} 个页面，双击列表打开页面","x":"25"}},{"child":[{"child":[{"type":"Clip","props":{"name":"selectBox","clipY":"2","right":"0","left":"0","height":"24","skin":"comp/clip_selectBox.png"}},{"type":"Label","props":{"name":"label","text":"label","width":"150","left":"10","height":"24","color":"#dddddd","right":"80","x":"20"}}],"type":"Box","props":{"name":"render","right":"0","left":"0"}}],"type":"List","props":{"var":"list","y":"217","width":"450","height":"140","repeatX":"1","vScrollBarSkin":"comp/vscroll.png","x":"26"}},{"type":"Label","props":{"y":"62.5","color":"#dddddd","text":"查找文本：","x":"82"}},{"type":"TextInput","props":{"var":"findTxt","y":"61","padding":"0,5,0,5","width":"250","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"155"}},{"type":"Label","props":{"y":"102","color":"#dddddd","text":"替换文本：","x":"82"}},{"type":"TextInput","props":{"var":"replaceTxt","y":"101","padding":"0,5,0,5","width":"250","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"155"}},{"type":"Button","props":{"var":"findBtn","y":"145","label":"查找","sizeGrid":"4,0,4,0","height":"30","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","width":"100","x":"128"}},{"type":"Button","props":{"var":"replaceBtn","y":"145","width":"100","height":"30","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"替换","x":"272"}}],"type":"Dialog","props":{"height":"380","width":"500","scenecolor":"#dddddd"}};}
 		]);
 		return FindAndReplaceUI;
 	})(Dialog)
@@ -45982,9 +48440,39 @@ window.Laya=(function(window,document){
 		}
 
 		__static(FindUnUsedResUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"380","y":"0","width":"500","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"16","name":"close","x":"468"}},{"type":"Image","props":{"height":"32","y":"8","width":"450","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"查找未被使用的资源","x":"28"}},{"type":"Image","props":{"sizeGrid":"3,3,3,3","height":"200","y":"158","width":"454","skin":"view/bg_body.png","x":"24"}},{"type":"Box","child":[{"type":"Label","props":{"color":"#dddddd","text":"共找到 {0} 个资源","var":"msgTxt"}},{"type":"Button","props":{"height":"20","y":"0","width":"50","var":"delBtn","skin":"comp/btn.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"删除","x":"347"}},{"type":"CheckBox","props":{"y":"3","label":"全选","x":"410","skin":"comp/checkbox.png","labelColors":"#dddddd","var":"checkSelectAll"}},{"type":"List","child":[{"type":"Box","child":[{"type":"Clip","props":{"height":"24","name":"selectBox","left":"0","skin":"comp/clip_selectBox.png","clipY":"2","right":"0"}},{"type":"Label","props":{"name":"label","text":"label","width":"360","height":"24","y":"0","color":"#dddddd","x":"5"}},{"type":"CheckBox","props":{"height":"13","y":"4","width":"13","skin":"comp/checkbox.png","name":"check","labelColors":"#dddddd","x":"409"}}],"props":{"name":"render","right":"0","left":"0"}}],"props":{"y":"26","width":"450","var":"list","height":"195","vScrollBarSkin":"comp/vscroll.png","x":"1"}}],"props":{"x":"25","y":"135","var":"resultBox"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"40","y":"62","label":"查找","x":"190","skin":"comp/button.png","labelColors":"#dddddd,#dddddd,#dddddd","width":"120","var":"findBtn"}}],"props":{"height":"380","scenecolor":"#dddddd","width":"500"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"500","height":"380","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"16","name":"close","skin":"view/btn_close.png","x":"468"}},{"type":"Image","props":{"y":"8","width":"450","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"查找未被使用的资源","x":"28"}},{"type":"Image","props":{"sizeGrid":"3,3,3,3","y":"158","width":"454","height":"200","skin":"view/bg_body.png","x":"24"}},{"child":[{"type":"Label","props":{"var":"msgTxt","color":"#dddddd","text":"共找到 {0} 个资源"}},{"type":"Button","props":{"var":"delBtn","y":"0","width":"50","height":"20","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"删除","x":"347"}},{"type":"CheckBox","props":{"var":"checkSelectAll","y":"3","label":"全选","labelColors":"#dddddd","skin":"comp/checkbox.png","x":"410"}},{"child":[{"child":[{"type":"Clip","props":{"name":"selectBox","clipY":"2","right":"0","left":"0","height":"24","skin":"comp/clip_selectBox.png"}},{"type":"Label","props":{"name":"label","text":"label","width":"360","height":"24","y":"0","color":"#dddddd","x":"5"}},{"type":"CheckBox","props":{"y":"4","width":"13","height":"13","name":"check","labelColors":"#dddddd","skin":"comp/checkbox.png","x":"409"}}],"type":"Box","props":{"name":"render","right":"0","left":"0"}}],"type":"List","props":{"var":"list","y":"26","width":"450","height":"195","vScrollBarSkin":"comp/vscroll.png","x":"1"}}],"type":"Box","props":{"var":"resultBox","y":"135","x":"25"}},{"type":"Button","props":{"var":"findBtn","y":"62","label":"查找","sizeGrid":"4,0,4,0","height":"40","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","width":"120","x":"190"}}],"type":"Dialog","props":{"height":"380","width":"500","scenecolor":"#dddddd"}};}
 		]);
 		return FindUnUsedResUI;
+	})(Dialog)
+
+
+	//class laya.editor.ui.other.PackAltasUI extends laya.ui.Dialog
+	var PackAltasUI=(function(_super){
+		function PackAltasUI(){
+			this.resExportPath=null;
+			this.resExportPathBtn=null;
+			this.resSrcPath=null;
+			this.resSrcPathBtn=null;
+			this.textureWidth=null;
+			this.textureHeight=null;
+			this.picWidth=null;
+			this.picHeight=null;
+			this.power2=null;
+			this.trimempty=null;
+			PackAltasUI.__super.call(this);
+		}
+
+		__class(PackAltasUI,'laya.editor.ui.other.PackAltasUI',_super);
+		var __proto=PackAltasUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(PackAltasUI.uiView);
+		}
+
+		__static(PackAltasUI,
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"550","height":"330","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"15","name":"close","skin":"view/btn_close.png","x":"516"}},{"type":"Image","props":{"y":"8","width":"500","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"图集打包","x":"28"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","y":"271","label":"确定","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","width":"100","x":"225"}},{"type":"Label","props":{"y":"120","text":"输出目录：","width":"100","align":"right","height":"20","color":"#dddddd","x":"41"}},{"type":"TextInput","props":{"var":"resExportPath","y":"121","padding":"0,5,0,5","width":"200","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"139"}},{"type":"Button","props":{"var":"resExportPathBtn","y":"119","text":"项目名称：","width":"80","height":"24","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"浏览","x":"343"}},{"type":"Label","props":{"y":"77","text":"资源根目录：","width":"100","align":"right","height":"20","color":"#dddddd","x":"41"}},{"type":"TextInput","props":{"var":"resSrcPath","y":"75","padding":"0,5,0,5","width":"200","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"139"}},{"type":"Button","props":{"var":"resSrcPathBtn","y":"74","text":"项目名称：","width":"80","height":"24","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"浏览","x":"343"}},{"type":"Label","props":{"y":"171","text":"图集最大宽：","width":"100","align":"right","height":"20","color":"#dddddd","x":"41"}},{"type":"TextInput","props":{"var":"textureWidth","y":"170","padding":"0,5,0,5","width":"82","sizeGrid":"3,3,3,3","height":"22","color":"#dddddd","skin":"comp/textinput.png","x":"139"}},{"type":"Label","props":{"y":"171","text":"图集最大高：","width":"83","align":"right","height":"20","color":"#dddddd","x":"230"}},{"type":"TextInput","props":{"var":"textureHeight","y":"170","padding":"0,5,0,5","width":"89","sizeGrid":"3,3,3,3","height":"22","color":"#dddddd","skin":"comp/textinput.png","x":"313"}},{"type":"Label","props":{"y":"219","text":"单图最大宽：","width":"100","align":"right","height":"20","color":"#dddddd","x":"41"}},{"type":"TextInput","props":{"var":"picWidth","y":"217","padding":"0,5,0,5","width":"81","sizeGrid":"3,3,3,3","height":"22","color":"#dddddd","skin":"comp/textinput.png","x":"139"}},{"type":"Label","props":{"y":"219","text":"单图最大高：","width":"79","align":"right","height":"20","color":"#dddddd","x":"231"}},{"type":"TextInput","props":{"var":"picHeight","y":"217","padding":"0,5,0,5","width":"90","sizeGrid":"3,3,3,3","height":"22","color":"#dddddd","skin":"comp/textinput.png","x":"312"}},{"type":"CheckBox","props":{"var":"power2","y":"174","selected":"true","labelColors":"#aaaaaa","skin":"comp/checkbox.png","label":"是否限定2的幂次方","x":"409"}},{"type":"CheckBox","props":{"var":"trimempty","y":"219","selected":"false","labelColors":"#aaaaaa","skin":"comp/checkbox.png","label":"是否裁剪空白区域","x":"408"}}],"type":"Dialog","props":{"height":"330","width":"550","scenecolor":"#dddddd"}};}
+		]);
+		return PackAltasUI;
 	})(Dialog)
 
 
@@ -46003,7 +48491,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(PreviewUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"137","right":"0","left":"0","skin":"view/bg_body.png","top":"0","bottom":"0","x":"164"}},{"type":"Panel","child":[{"type":"Button","props":{"sizeGrid":"4,0,4,0","skin":"comp/button.png","labelColors":"#aaaaaa,#aaaaaa,#aaaaaa","label":"label"}}],"props":{"var":"panel","hScrollBarSkin":"comp/hscroll.png","y":"26","bottom":"5","left":"5","top":"5","right":"5","vScrollBarSkin":"comp/vscroll.png","x":"21"}},{"type":"Button","props":{"name":"close","skin":"view/btn_close.png","y":"33","top":"5","right":"5","x":"550"}}],"props":{"height":"400","scenecolor":"#dddddd","width":"600"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"137","skin":"view/bg_body.png","left":"0","top":"0","right":"0","bottom":"0","x":"164"}},{"child":[{"type":"Button","props":{"sizeGrid":"4,0,4,0","labelColors":"#aaaaaa,#aaaaaa,#aaaaaa","skin":"comp/button.png","label":"label"}}],"type":"Panel","props":{"var":"panel","hScrollBarSkin":"comp/hscroll.png","y":"26","bottom":"5","left":"5","top":"5","right":"5","vScrollBarSkin":"comp/vscroll.png","x":"21"}},{"type":"Button","props":{"name":"close","right":"5","y":"33","top":"5","skin":"view/btn_close.png","x":"550"}}],"type":"Dialog","props":{"height":"400","width":"600","scenecolor":"#dddddd"}};}
 		]);
 		return PreviewUI;
 	})(Dialog)
@@ -46027,7 +48515,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(RepeatCompUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"220","y":"0","width":"450","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"16","name":"close","x":"419"}},{"type":"Image","props":{"height":"32","y":"8","width":"399","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"重复组件","x":"28"}},{"type":"Label","props":{"y":"72.5","color":"#dddddd","text":"行个数：","x":"92"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"71","padding":"0,5,0,5","text":"5","width":"45","x":"145","skin":"comp/textinput.png","color":"#dddddd","var":"rowTxt"}},{"type":"Button","props":{"height":"30","y":"157","label":"确定","skin":"comp/btn.png","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"175"}},{"type":"Label","props":{"y":"72","color":"#dddddd","text":"列个数：","x":"242"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"71","padding":"0,5,0,5","text":"1","width":"45","x":"295","skin":"comp/textinput.png","color":"#dddddd","var":"columnTxt"}},{"type":"Label","props":{"y":"112","color":"#dddddd","text":"右间距：","x":"92"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"111","padding":"0,5,0,5","text":"8","width":"45","x":"145","skin":"comp/textinput.png","color":"#dddddd","var":"paddingXTxt"}},{"type":"Label","props":{"y":"112","color":"#dddddd","text":"下间距：","x":"242"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"111","padding":"0,5,0,5","text":"8","width":"45","x":"295","skin":"comp/textinput.png","color":"#dddddd","var":"paddingYTxt"}}],"props":{"height":"220","scenecolor":"#dddddd","width":"450"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"450","height":"220","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"16","name":"close","skin":"view/btn_close.png","x":"419"}},{"type":"Image","props":{"y":"8","width":"399","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"重复组件","x":"28"}},{"type":"Label","props":{"y":"72.5","color":"#dddddd","text":"行个数：","x":"92"}},{"type":"TextInput","props":{"var":"rowTxt","y":"71","text":"5","width":"45","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"145"}},{"type":"Button","props":{"y":"157","label":"确定","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","width":"100","x":"175"}},{"type":"Label","props":{"y":"72","color":"#dddddd","text":"列个数：","x":"242"}},{"type":"TextInput","props":{"var":"columnTxt","y":"71","text":"1","width":"45","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"295"}},{"type":"Label","props":{"y":"112","color":"#dddddd","text":"右间距：","x":"92"}},{"type":"TextInput","props":{"var":"paddingXTxt","y":"111","text":"8","width":"45","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"145"}},{"type":"Label","props":{"y":"112","color":"#dddddd","text":"下间距：","x":"242"}},{"type":"TextInput","props":{"var":"paddingYTxt","y":"111","text":"8","width":"45","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"295"}}],"type":"Dialog","props":{"height":"220","width":"450","scenecolor":"#dddddd"}};}
 		]);
 		return RepeatCompUI;
 	})(Dialog)
@@ -46069,9 +48557,33 @@ window.Laya=(function(window,document){
 		}
 
 		__static(SetProjectUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"641","y":"0","width":"600","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"17","name":"close","x":"566"}},{"type":"Image","props":{"height":"32","y":"8","width":"547","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"项目设置","x":"28"}},{"type":"Label","props":{"y":"63.5","text":"位图资源类型：","width":"100","align":"right","height":"20","color":"#dddddd","x":"52"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"62","padding":"0,5,0,5","width":"200","x":"150","skin":"comp/textinput.png","color":"#dddddd","var":"resTypes"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"30","y":"580","label":"确定","skin":"comp/button.png","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"250"}},{"type":"Label","props":{"y":"98","text":"资源发布目录：","width":"100","align":"right","height":"20","color":"#dddddd","x":"52"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"97","padding":"0,5,0,5","width":"200","x":"150","skin":"comp/textinput.png","color":"#dddddd","var":"resExportPath"}},{"type":"Button","props":{"height":"24","y":"96","text":"项目名称：","width":"80","var":"resExportPathBtn","skin":"comp/btn.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"浏览","x":"354"}},{"type":"Image","props":{"skin":"comp/line.png","y":"213","width":"496","x":"40"}},{"type":"Label","props":{"y":"237","text":"UICode导入类：","width":"100","align":"right","height":"20","color":"#dddddd","x":"52"}},{"type":"TextArea","props":{"sizeGrid":"3,3,3,3","height":"60","y":"238","padding":"5,5,5,5","width":"300","var":"codeImports","skin":"comp/textinput.png","color":"#dddddd","scrollBarSkin":"comp/vscroll.png","x":"150"}},{"type":"Label","props":{"align":"left","y":"256","color":"#cccccc","text":"回车换行","x":"465"}},{"type":"Label","props":{"y":"312","text":"UICode发布目录：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"311","padding":"0,5,0,5","width":"200","x":"150","skin":"comp/textinput.png","color":"#dddddd","var":"codeExportPath"}},{"type":"Button","props":{"height":"24","y":"310","text":"项目名称：","width":"80","var":"codeExportPathBtn","skin":"comp/btn.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"浏览","x":"354"}},{"type":"Label","props":{"y":"369","text":"UI模式：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","y":"368","labels":"内嵌模式,加载模式","width":"200","var":"uiType","skin":"comp/combobox.png","x":"150"}},{"type":"Label","props":{"y":"400","text":"加载UI发布目录：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"399","padding":"0,5,0,5","width":"200","x":"150","skin":"comp/textinput.png","color":"#dddddd","var":"uiExportPath"}},{"type":"Image","props":{"skin":"comp/line.png","y":"429","width":"496","x":"40"}},{"type":"Label","props":{"y":"438","text":"容器列表：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"437","padding":"0,5,0,5","width":"200","x":"150","skin":"comp/textinput.png","color":"#dddddd","var":"boxTypes"}},{"type":"Label","props":{"y":"470","text":"页面类型：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"469","padding":"0,5,0,5","width":"200","x":"150","skin":"comp/textinput.png","color":"#dddddd","var":"pageTypes"}},{"type":"Label","props":{"y":"502","text":"共用资源目录：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"501","padding":"0,5,0,5","width":"200","x":"150","skin":"comp/textinput.png","color":"#dddddd","var":"shareResPath"}},{"type":"Button","props":{"height":"24","y":"500","text":"项目名称：","width":"80","var":"shareResPathBtn","skin":"comp/btn.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"浏览","x":"354"}},{"type":"Label","props":{"align":"left","y":"400","color":"#cccccc","text":"加载模式可用","x":"355"}},{"type":"Label","props":{"align":"left","y":"438","color":"#cccccc","text":"转换为容器功能使用","x":"355"}},{"type":"Label","props":{"align":"left","y":"470","color":"#cccccc","text":"用于自定义页面继承","x":"355"}},{"type":"Label","props":{"align":"left","y":"502","color":"#cccccc","text":"多项目共用的资源目录","x":"442"}},{"type":"Label","props":{"y":"534","text":"UI语言包路径：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"533","padding":"0,5,0,5","width":"200","x":"150","skin":"comp/textinput.png","color":"#dddddd","var":"langPath"}},{"type":"Button","props":{"height":"24","y":"532","text":"项目名称：","width":"80","var":"langPathBtn","skin":"comp/btn.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"浏览","x":"354"}},{"type":"Label","props":{"y":"531","wordWrap":"true","text":"设置后，会按照语言包内的配置替换UI界面语言","width":"130","align":"left","height":"80","color":"#cccccc","x":"442"}},{"type":"Label","props":{"align":"left","y":"98","color":"#cccccc","text":"需和项目在同一个盘符","x":"439"}},{"type":"Label","props":{"align":"left","y":"312","color":"#cccccc","text":"需和项目在同一个盘符","x":"439"}},{"type":"Label","props":{"y":"338","text":"语言：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","y":"337","labels":"ActionScript3,TypeScript,JavaScript","width":"200","var":"codeType","skin":"comp/combobox.png","x":"150"}},{"type":"Label","props":{"y":"189","text":"默认字体：","width":"100","align":"right","height":"20","color":"#dddddd","x":"53"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"188","padding":"0,5,0,5","width":"200","x":"150","skin":"comp/textinput.png","color":"#dddddd","var":"defaultFont"}},{"type":"Label","props":{"y":"130","text":"图集最大宽：","width":"100","align":"right","height":"20","color":"#dddddd","x":"52"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","height":"22","y":"129","padding":"0,5,0,5","width":"82","x":"150","skin":"comp/textinput.png","color":"#dddddd","var":"textureWidth"}},{"type":"Label","props":{"y":"128","text":"图集最大高：","width":"100","align":"right","height":"20","color":"#dddddd","x":"221"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","height":"22","y":"127","padding":"0,5,0,5","width":"89","x":"319","skin":"comp/textinput.png","color":"#dddddd","var":"textureHeight"}},{"type":"Label","props":{"y":"160","text":"单图最大宽：","width":"100","align":"right","height":"20","color":"#dddddd","x":"53"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","height":"22","y":"159","padding":"0,5,0,5","width":"81","x":"150","skin":"comp/textinput.png","color":"#dddddd","var":"picWidth"}},{"type":"Label","props":{"y":"158","text":"单图最大高：","width":"79","align":"right","height":"20","color":"#dddddd","x":"242"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","height":"22","y":"157","padding":"0,5,0,5","width":"90","x":"319","skin":"comp/textinput.png","color":"#dddddd","var":"picHeight"}},{"type":"CheckBox","props":{"y":"132","selected":"true","x":"440","skin":"comp/checkbox.png","labelColors":"#aaaaaa","label":"是否限定2的幂次方","var":"power2"}},{"type":"CheckBox","props":{"y":"157","selected":"false","x":"440","skin":"comp/checkbox.png","labelColors":"#aaaaaa","label":"是否裁剪空白区域","var":"trimempty"}}],"props":{"height":"580","scenecolor":"#dddddd","width":"600"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"600","height":"641","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"17","name":"close","skin":"view/btn_close.png","x":"566"}},{"type":"Image","props":{"y":"8","width":"547","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"项目设置","x":"28"}},{"type":"Label","props":{"y":"63.5","text":"位图资源类型：","width":"100","align":"right","height":"20","color":"#dddddd","x":"52"}},{"type":"TextInput","props":{"var":"resTypes","y":"62","padding":"0,5,0,5","width":"200","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","y":"580","label":"确定","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","width":"100","x":"250"}},{"type":"Label","props":{"y":"98","text":"资源发布目录：","width":"100","align":"right","height":"20","color":"#dddddd","x":"52"}},{"type":"TextInput","props":{"var":"resExportPath","y":"97","padding":"0,5,0,5","width":"200","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Button","props":{"var":"resExportPathBtn","y":"96","text":"项目名称：","width":"80","height":"24","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"浏览","x":"354"}},{"type":"Image","props":{"y":"213","skin":"comp/line.png","width":"496","x":"40"}},{"type":"Label","props":{"y":"237","text":"UICode导入类：","width":"100","align":"right","height":"20","color":"#dddddd","x":"52"}},{"type":"TextArea","props":{"var":"codeImports","y":"238","scrollBarSkin":"comp/vscroll.png","padding":"5,5,5,5","width":"300","sizeGrid":"3,3,3,3","height":"60","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Label","props":{"align":"left","y":"256","color":"#cccccc","text":"回车换行","x":"465"}},{"type":"Label","props":{"y":"312","text":"UICode发布目录：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"TextInput","props":{"var":"codeExportPath","y":"311","padding":"0,5,0,5","width":"200","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Button","props":{"var":"codeExportPathBtn","y":"310","text":"项目名称：","width":"80","height":"24","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"浏览","x":"354"}},{"type":"Label","props":{"y":"369","text":"UI模式：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","y":"368","labels":"内嵌模式,加载模式","width":"200","var":"uiType","skin":"comp/combobox.png","x":"150"}},{"type":"Label","props":{"y":"400","text":"加载UI发布目录：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"TextInput","props":{"var":"uiExportPath","y":"399","padding":"0,5,0,5","width":"200","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Image","props":{"y":"429","skin":"comp/line.png","width":"496","x":"40"}},{"type":"Label","props":{"y":"438","text":"容器列表：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"TextInput","props":{"var":"boxTypes","y":"437","padding":"0,5,0,5","width":"200","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Label","props":{"y":"470","text":"页面类型：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"TextInput","props":{"var":"pageTypes","y":"469","padding":"0,5,0,5","width":"200","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Label","props":{"y":"502","text":"共用资源目录：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"TextInput","props":{"var":"shareResPath","y":"501","padding":"0,5,0,5","width":"200","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Button","props":{"var":"shareResPathBtn","y":"500","text":"项目名称：","width":"80","height":"24","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"浏览","x":"354"}},{"type":"Label","props":{"align":"left","y":"400","color":"#cccccc","text":"加载模式可用","x":"355"}},{"type":"Label","props":{"align":"left","y":"438","color":"#cccccc","text":"转换为容器功能使用","x":"355"}},{"type":"Label","props":{"align":"left","y":"470","color":"#cccccc","text":"用于自定义页面继承","x":"355"}},{"type":"Label","props":{"align":"left","y":"502","color":"#cccccc","text":"多项目共用的资源目录","x":"442"}},{"type":"Label","props":{"y":"534","text":"UI语言包路径：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"TextInput","props":{"var":"langPath","y":"533","padding":"0,5,0,5","width":"200","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Button","props":{"var":"langPathBtn","y":"532","text":"项目名称：","width":"80","height":"24","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"浏览","x":"354"}},{"type":"Label","props":{"y":"531","wordWrap":"true","text":"设置后，会按照语言包内的配置替换UI界面语言","width":"130","align":"left","height":"80","color":"#cccccc","x":"442"}},{"type":"Label","props":{"align":"left","y":"98","color":"#cccccc","text":"需和项目在同一个盘符","x":"439"}},{"type":"Label","props":{"align":"left","y":"312","color":"#cccccc","text":"需和项目在同一个盘符","x":"439"}},{"type":"Label","props":{"y":"338","text":"语言：","width":"120","align":"right","height":"20","color":"#dddddd","x":"32"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","y":"337","labels":"ActionScript3,TypeScript,JavaScript","width":"200","var":"codeType","skin":"comp/combobox.png","x":"150"}},{"type":"Label","props":{"y":"189","text":"默认字体：","width":"100","align":"right","height":"20","color":"#dddddd","x":"53"}},{"type":"TextInput","props":{"var":"defaultFont","y":"188","padding":"0,5,0,5","width":"200","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Label","props":{"y":"130","text":"图集最大宽：","width":"100","align":"right","height":"20","color":"#dddddd","x":"52"}},{"type":"TextInput","props":{"var":"textureWidth","y":"129","padding":"0,5,0,5","width":"82","sizeGrid":"3,3,3,3","height":"22","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Label","props":{"y":"128","text":"图集最大高：","width":"100","align":"right","height":"20","color":"#dddddd","x":"221"}},{"type":"TextInput","props":{"var":"textureHeight","y":"127","padding":"0,5,0,5","width":"89","sizeGrid":"3,3,3,3","height":"22","color":"#dddddd","skin":"comp/textinput.png","x":"319"}},{"type":"Label","props":{"y":"160","text":"单图最大宽：","width":"100","align":"right","height":"20","color":"#dddddd","x":"53"}},{"type":"TextInput","props":{"var":"picWidth","y":"159","padding":"0,5,0,5","width":"81","sizeGrid":"3,3,3,3","height":"22","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Label","props":{"y":"158","text":"单图最大高：","width":"79","align":"right","height":"20","color":"#dddddd","x":"242"}},{"type":"TextInput","props":{"var":"picHeight","y":"157","padding":"0,5,0,5","width":"90","sizeGrid":"3,3,3,3","height":"22","color":"#dddddd","skin":"comp/textinput.png","x":"319"}},{"type":"CheckBox","props":{"var":"power2","y":"132","selected":"true","labelColors":"#aaaaaa","skin":"comp/checkbox.png","label":"是否限定2的幂次方","x":"440"}},{"type":"CheckBox","props":{"var":"trimempty","y":"157","selected":"false","labelColors":"#aaaaaa","skin":"comp/checkbox.png","label":"是否裁剪空白区域","x":"440"}}],"type":"Dialog","props":{"height":"580","width":"600","scenecolor":"#dddddd"}};}
 		]);
 		return SetProjectUI;
+	})(Dialog)
+
+
+	//class laya.editor.ui.other.SkeletonConvertUI extends laya.ui.Dialog
+	var SkeletonConvertUI=(function(_super){
+		function SkeletonConvertUI(){
+			this.resExportPath=null;
+			this.resExportPathBtn=null;
+			this.resSrcPath=null;
+			this.resSrcPathBtn=null;
+			SkeletonConvertUI.__super.call(this);
+		}
+
+		__class(SkeletonConvertUI,'laya.editor.ui.other.SkeletonConvertUI',_super);
+		var __proto=SkeletonConvertUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(SkeletonConvertUI.uiView);
+		}
+
+		__static(SkeletonConvertUI,
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"564","height":"300","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"14","name":"close","skin":"view/btn_close.png","x":"532"}},{"type":"Image","props":{"y":"8","width":"516","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"16","color":"#dddddd","fontSize":"14","text":"骨骼动画转换","x":"28"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","y":"218","label":"确定","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","width":"100","x":"240"}},{"type":"Label","props":{"y":"158","text":"输出目录：","width":"100","align":"right","height":"20","color":"#dddddd","x":"52"}},{"type":"TextInput","props":{"var":"resExportPath","y":"157","padding":"0,5,0,5","width":"266","sizeGrid":"3,3,3,3","height":"22","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Button","props":{"var":"resExportPathBtn","y":"156","text":"项目名称：","width":"80","height":"24","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"浏览","x":"433"}},{"type":"Label","props":{"y":"96","text":"资源根目录：","width":"100","align":"right","height":"20","color":"#dddddd","x":"52"}},{"type":"TextInput","props":{"var":"resSrcPath","y":"95","padding":"0,5,0,5","width":"268","sizeGrid":"3,3,3,3","height":"22","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"Button","props":{"var":"resSrcPathBtn","y":"94","text":"项目名称：","width":"80","height":"24","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"浏览","x":"433"}}],"type":"Dialog","props":{"height":"300","width":"564","scenecolor":"#dddddd"}};}
+		]);
+		return SkeletonConvertUI;
 	})(Dialog)
 
 
@@ -46089,40 +48601,9 @@ window.Laya=(function(window,document){
 		}
 
 		__static(StartPageUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"300","y":"0","width":"550","skin":"view/bg_dialog.png","x":"0"}},{"type":"Image","props":{"height":"32","y":"8","width":"535","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"15","color":"#d5d5d5","fontSize":"14","text":"欢迎使用LayaAirIDE","x":"27"}},{"type":"Button","props":{"y":"217","width":"223","labelSize":"18","height":"30","name":"newProject","labelColors":"#D8D8D8","label":"点击这里【创建新项目】","x":"35"}},{"type":"Button","props":{"y":"217","width":"243","labelSize":"18","height":"30","name":"openProject","labelColors":"#D8D8D8","label":"点击这里【打开已有项目】","x":"275"}},{"type":"Button","props":{"skin":"view/btn_open.png","y":"92","stateNum":"1","name":"openProject","x":"339"}},{"type":"Button","props":{"skin":"view/btn_new.png","y":"92","stateNum":"1","name":"newProject","x":"90"}}],"props":{"height":"300","scenecolor":"#dddddd","width":"550"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"550","height":"300","skin":"view/bg_dialog.png","x":"0"}},{"type":"Image","props":{"y":"8","width":"535","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"15","color":"#d5d5d5","fontSize":"14","text":"欢迎使用LayaAirIDE","x":"27"}},{"type":"Button","props":{"y":"217","width":"223","labelSize":"18","height":"30","name":"newProject","labelColors":"#D8D8D8","label":"点击这里【创建新项目】","x":"35"}},{"type":"Button","props":{"y":"217","width":"243","labelSize":"18","height":"30","name":"openProject","labelColors":"#D8D8D8","label":"点击这里【打开已有项目】","x":"275"}},{"type":"Button","props":{"y":"92","name":"openProject","stateNum":"1","skin":"view/btn_open.png","x":"339"}},{"type":"Button","props":{"y":"92","name":"newProject","stateNum":"1","skin":"view/btn_new.png","x":"90"}}],"type":"Dialog","props":{"height":"300","width":"550","scenecolor":"#dddddd"}};}
 		]);
 		return StartPageUI;
-	})(Dialog)
-
-
-	//class laya.editor.ui.page.AddAnimationUI extends laya.ui.Dialog
-	var AddAnimationUI=(function(_super){
-		function AddAnimationUI(){
-			this.title=null;
-			this.typeDrop=null;
-			this.nameTxt=null;
-			this.imgTxt=null;
-			this.widthTxt=null;
-			this.heightTxt=null;
-			this.bgColorPicker=null;
-			this.sureBtn=null;
-			this.selectBtn=null;
-			this.widthCheck=null;
-			this.heightCheck=null;
-			AddAnimationUI.__super.call(this);
-		}
-
-		__class(AddAnimationUI,'laya.editor.ui.page.AddAnimationUI',_super);
-		var __proto=AddAnimationUI.prototype;
-		__proto.createChildren=function(){
-			laya.ui.Component.prototype.createChildren.call(this);
-			this.createView(AddAnimationUI.uiView);
-		}
-
-		__static(AddAnimationUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"330","y":"0","width":"450","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"7","name":"close","x":"425"}},{"type":"Image","props":{"height":"32","y":"8","width":"423","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"var":"title","y":"5","color":"#dddddd","text":"新增动画","x":"16"}},{"type":"Label","props":{"y":"57","color":"#dddddd","text":"页面类型：","x":"78"}},{"type":"Label","props":{"y":"90","color":"#dddddd","text":"页面名称：","x":"78"}},{"type":"Label","props":{"y":"123","color":"#dddddd","text":"参考视图：","x":"78"}},{"type":"Label","props":{"y":"156","color":"#dddddd","text":"页面宽度：","x":"78"}},{"type":"Label","props":{"y":"189","color":"#dddddd","text":"页面高度：","x":"78"}},{"type":"Label","props":{"y":"222","color":"#dddddd","text":"参考背景：","x":"78"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","height":"23","y":"55","labels":"View,Dialog","scrollBarSkin":"comp/vscroll.png","width":"140","var":"typeDrop","skin":"comp/combobox.png","selectedIndex":"0","labelColors":"#dddddd","x":"151"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"89","padding":"0,5,0,5","width":"140","x":"151","skin":"comp/textinput.png","color":"#dddddd","var":"nameTxt"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"122","padding":"0,5,0,5","width":"100","x":"151","skin":"comp/textinput.png","color":"#dddddd","var":"imgTxt"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"155","padding":"0,5,0,5","text":"600","width":"140","var":"widthTxt","skin":"comp/textinput.png","color":"#dddddd","x":"151"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"188","padding":"0,5,0,5","text":"400","width":"140","var":"heightTxt","skin":"comp/textinput.png","color":"#dddddd","x":"151"}},{"type":"ColorPicker","props":{"var":"bgColorPicker","skin":"comp/color.png","y":"221","selectedcolor":"#dddddd","x":"151"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"30","y":"272","label":"新增","var":"sureBtn","skin":"comp/button.png","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"175"}},{"type":"Label","props":{"y":"123","color":"#dddddd","text":"(可选，参考背景)","x":"306"}},{"type":"Label","props":{"y":"221","color":"#dddddd","text":"(可选，设计面板的背景颜色)","x":"180"}},{"type":"Button","props":{"height":"22","y":"122","width":"40","var":"selectBtn","skin":"comp/btn.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"选择","x":"251"}},{"type":"CheckBox","props":{"y":"159","label":"仅作为参考宽度","x":"298","skin":"comp/checkbox.png","labelColors":"#aaaaaa","var":"widthCheck"}},{"type":"CheckBox","props":{"y":"192","label":"仅作为参考高度","x":"298","skin":"comp/checkbox.png","labelColors":"#aaaaaa","var":"heightCheck"}}],"props":{"height":"330","scenecolor":"#dddddd","width":"450"}};}
-		]);
-		return AddAnimationUI;
 	})(Dialog)
 
 
@@ -46144,11 +48625,13 @@ window.Laya=(function(window,document){
 			this._sceneBg=null;
 			this._count=0;
 			this._treeData=null;
+			this._createComp=null;
+			this._idUsed={};
 			Design.__super.call(this);
 			this._xmls=[];
 			this._xmlsRemoved=[];
 			this._currMouse=new Point();
-			this._bgLayer=new Image2();
+			this._bgLayer=new Image();
 			this._maskAboveLayer=new UIBox();
 			this._dragBoxLayer=new DragBoxManager();
 			this._selectLineLayer=new Sprite();
@@ -46290,6 +48773,8 @@ window.Laya=(function(window,document){
 				ObjectTools.setObjValue(selected.props,proName,pro);
 			}
 			console.log("changeProp from design");
+			var preComp;
+			preComp=this._compMap[selected.compId];
 			this.refreshComp(this._compMap[selected.compId],proName,pro);
 			this.nodeChanged(selected);
 			if(cache)
@@ -46300,7 +48785,12 @@ window.Laya=(function(window,document){
 				}
 				this.updateNameToPanels();
 			}
-			this._dragBoxLayer.refreshDrag(this.selectedComp);
+			if(preComp!=this._compMap[selected.compId]){
+				this.removeBorder(preComp);
+				this.unSelectComp(preComp);
+				this.selectComp(this._compMap[selected.compId]);
+				this.addBorder(this._compMap[selected.compId]);
+			}
 		}
 
 		__proto.updateChanges=function(){}
@@ -46366,6 +48856,7 @@ window.Laya=(function(window,document){
 				}
 				this.selectComp(item);
 			}
+			this.refresh();
 		}
 
 		/**处理鼠标按下*/
@@ -46490,25 +48981,25 @@ window.Laya=(function(window,document){
 			ePoint=Design._recPoints[1];
 			var i=0,len=0;
 			len=this._selectedComps.length;
-			var tComp;
-			tComp=this._selectedComps[0];
-			sPoint.x=tComp.x;
-			sPoint.y=tComp.y;
-			ePoint.x=tComp.x+tComp.width;
-			ePoint.y=tComp.y+tComp.height;
+			var tCompRec;
+			tCompRec=this._selectedComps[0].getBounds();
+			sPoint.x=tCompRec.x;
+			sPoint.y=tCompRec.y;
+			ePoint.x=tCompRec.x+tCompRec.width;
+			ePoint.y=tCompRec.y+tCompRec.height;
 			for(i=1;i<len;i++){
-				tComp=this._selectedComps[i];
-				if(sPoint.x>tComp.x){
-					sPoint.x=tComp.x;
+				tCompRec=this._selectedComps[i];
+				if(sPoint.x>tCompRec.x){
+					sPoint.x=tCompRec.x;
 				}
-				if(sPoint.y>tComp.y){
-					sPoint.y=tComp.y;
+				if(sPoint.y>tCompRec.y){
+					sPoint.y=tCompRec.y;
 				}
-				if(ePoint.x<tComp.x+tComp.width){
-					ePoint.x=tComp.x+tComp.width;
+				if(ePoint.x<tCompRec.x+tCompRec.width){
+					ePoint.x=tCompRec.x+tCompRec.width;
 				}
-				if(ePoint.y<tComp.y+tComp.height){
-					ePoint.y=tComp.y+tComp.height;
+				if(ePoint.y<tCompRec.y+tCompRec.height){
+					ePoint.y=tCompRec.y+tCompRec.height;
 				}
 			}
 		}
@@ -46789,6 +49280,11 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.createComp=function(xml,comp,visibleMap){
+			console.log("createComp:createComp");
+			if(this._createComp==null){
+				this._createComp=Utils.bind(this.createComp,this);
+			}
+			UIView._createCompS_=this._createComp;
 			comp=_super.prototype.createComp.call(this,xml,comp,visibleMap);
 			if (comp==null){
 				return null;
@@ -46940,6 +49436,7 @@ window.Laya=(function(window,document){
 			this._selectedComps.push(comp);
 			this.addBorder(comp);
 			this.callLater(this.changeSelectComp);
+			this._xml.selecteID=(comp).comXml.compId;
 		}
 
 		/**撤销组件选择*/
@@ -47120,7 +49617,7 @@ window.Laya=(function(window,document){
 					compId:compId,
 					source:path,
 					props:{
-						file:path,
+						url:path,
 						x:Math.floor(point.x),
 						y:Math.floor(point.y)
 					},
@@ -47154,9 +49651,6 @@ window.Laya=(function(window,document){
 				var tempData;
 				tempData=FileManager.readJSONFile(filePath);
 				this.reIDNode(tempData);
-				console.log("tempData",tempData);
-				console.log("boxXml",boxXml);
-				console.log("point:",point.x,point.y);
 				var addChilds;
 				addChilds=tempData.child;
 				if(!addChilds)addChilds=[];
@@ -47197,7 +49691,18 @@ window.Laya=(function(window,document){
 			}
 		}
 
-		__proto.ensureIDNode=function(node){
+		__proto.cleanIDUsed=function(){
+			var key;
+			for(key in this._idUsed){
+				delete this._idUsed[key];
+			}
+		}
+
+		__proto.ensureIDNode=function(node,root){
+			(root===void 0)&& (root=false);
+			if(root){
+				this.cleanIDUsed();
+			}
 			this.idNode(node,false);
 			var childs;
 			if(!node.child)node.child=[];
@@ -47313,9 +49818,12 @@ window.Laya=(function(window,document){
 
 		__proto.idNode=function(node,force){
 			(force===void 0)&& (force=false);
-			if(!force&&node.compId)return;
-			var compId=this._autoId++;
-			node.compId=compId;
+			if(!force&&node.compId&&(!this._idUsed[node.compId])){
+				}else{
+				var compId=this._autoId++;
+				node.compId=compId;
+			}
+			this._idUsed[node.compId]=true;
 		}
 
 		__proto.dealAction=function(funName,param){
@@ -47423,30 +49931,30 @@ window.Laya=(function(window,document){
 				if (type=="left"){
 					goal=target.x;
 					}else if (type=="right"){
-					goal=target.x+target.width;
+					goal=target.x+target.width*target.scaleX;
 					}else if (type=="top"){
 					goal=target.y;
 					}else if (type=="bottom"){
-					goal=target.y+target.height;
+					goal=target.y+target.height*target.scaleY;
 					}else if (type=="middle"){
-					goal=target.y+target.height *0.5;
+					goal=target.y+target.height *0.5*target.scaleY;
 					}else if (type=="center"){
-					goal=target.x+target.width *0.5;
+					goal=target.x+target.width *0.5*target.scaleX;
 				}
 				for (var i=1,n=this._selectedComps.length;i < n;i++){
 					target=this._selectedComps[i];
 					if (type=="left"){
 						goal=Math.min(target.x,goal);
 						}else if (type=="right"){
-						goal=Math.max(target.x+target.width,goal);
+						goal=Math.max(target.x+target.width*target.scaleX,goal);
 						}else if (type=="top"){
 						goal=Math.min(target.y,goal);
 						}else if (type=="bottom"){
-						goal=Math.max(target.y+target.height,goal);
+						goal=Math.max(target.y+target.height*target.scaleY,goal);
 						}else if (type=="middle"){
-						goal=Math.max(target.y+target.height *0.5,goal);
+						goal=Math.max(target.y+target.height*target.scaleY *0.5,goal);
 						}else if (type=="center"){
-						goal=Math.max(target.x+target.width *0.5,goal);
+						goal=Math.max(target.x+target.width*target.scaleX *0.5,goal);
 					}
 				}
 				for (var j=0,m=this._selectedComps.length;j < m;j++){
@@ -47457,15 +49965,15 @@ window.Laya=(function(window,document){
 					if (type=="left"){
 						target.x=props.x=goal;
 						}else if (type=="right"){
-						target.x=props.x=goal-target.width;
+						target.x=props.x=goal-target.width*target.scaleX;
 						}else if (type=="top"){
 						target.y=props.y=goal;
 						}else if (type=="bottom"){
-						target.y=props.y=goal-target.height;
+						target.y=props.y=goal-target.height*target.scaleY;
 						}else if (type=="middle"){
-						target.y=props.y=goal-target.height *0.5;
+						target.y=props.y=goal-target.height*target.scaleY *0.5;
 						}else if (type=="center"){
-						target.x=props.x=goal-target.width *0.5;
+						target.x=props.x=goal-target.width*target.scaleX *0.5;
 					}
 					this._dragBoxLayer.refreshDrag(target);
 					this.nodeChanged(info);
@@ -47484,22 +49992,22 @@ window.Laya=(function(window,document){
 					}else if (type=="top_right" && target.parent){
 					var width=(target.parent).width;
 					var height=(target.parent).height;
-					target.x=info.props.x=width-target.width;
+					target.x=info.props.x=width-target.width*target.scaleX;
 					target.y=0;
 					}else if (type=="bottom_left" && target.parent){
 					width=(target.parent).width;
 					height=(target.parent).height;
 					target.x=0;
-					target.y=info.props.y=height-target.height;
+					target.y=info.props.y=height-target.height*target.scaleY;
 					}else if (type=="bottom_right" && target.parent){
 					width=(target.parent).width;
 					height=(target.parent).height;
-					target.x=info.props.x=width-target.width;
-					target.y=info.props.y=height-target.height;
+					target.x=info.props.x=width-target.width*target.scaleX;
+					target.y=info.props.y=height-target.height*target.scaleY;
 					}else if (type=="center" && target.parent){
-					target.x=info.props.x=((target.parent).width-target.width)*0.5;
+					target.x=info.props.x=((target.parent).width-target.width*target.scaleX)*0.5;
 					}else if (type=="middle" && target.parent){
-					target.y=info.props.y=((target.parent).height-target.height)*0.5;
+					target.y=info.props.y=((target.parent).height-target.height*target.scaleY)*0.5;
 				}
 				this._dragBoxLayer.refreshDrag(target);
 				this.changeSelectComp();
@@ -47735,7 +50243,6 @@ window.Laya=(function(window,document){
 			}
 		});
 
-		//change(true);
 		__getset(0,__proto,'measureWidth',function(){
 			var max=0;
 			for (var i=this.numChildren-1;i >-1;i--){
@@ -47782,7 +50289,7 @@ window.Laya=(function(window,document){
 			},function(value){
 			console.log("recreate");
 			this._xml=value;
-			this.ensureIDNode(this._xml);
+			this.ensureIDNode(this._xml,true);
 			this.createView(this._xml);
 			this._treeData=TreeData.createByUIObj(this._xml);
 			this.updateTreePanels();
@@ -47938,6 +50445,37 @@ window.Laya=(function(window,document){
 	})(UIView)
 
 
+	//class laya.editor.ui.page.AddAnimationUI extends laya.ui.Dialog
+	var AddAnimationUI=(function(_super){
+		function AddAnimationUI(){
+			this.title=null;
+			this.typeDrop=null;
+			this.nameTxt=null;
+			this.imgTxt=null;
+			this.widthTxt=null;
+			this.heightTxt=null;
+			this.bgColorPicker=null;
+			this.sureBtn=null;
+			this.selectBtn=null;
+			this.widthCheck=null;
+			this.heightCheck=null;
+			AddAnimationUI.__super.call(this);
+		}
+
+		__class(AddAnimationUI,'laya.editor.ui.page.AddAnimationUI',_super);
+		var __proto=AddAnimationUI.prototype;
+		__proto.createChildren=function(){
+			laya.ui.Component.prototype.createChildren.call(this);
+			this.createView(AddAnimationUI.uiView);
+		}
+
+		__static(AddAnimationUI,
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"450","height":"330","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"7","name":"close","skin":"view/btn_close.png","x":"425"}},{"type":"Image","props":{"y":"8","width":"423","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"var":"title","y":"5","color":"#dddddd","text":"新增动画","x":"16"}},{"type":"Label","props":{"y":"57","color":"#dddddd","text":"页面类型：","x":"78"}},{"type":"Label","props":{"y":"90","color":"#dddddd","text":"页面名称：","x":"78"}},{"type":"Label","props":{"y":"123","color":"#dddddd","text":"参考视图：","x":"78"}},{"type":"Label","props":{"y":"156","color":"#dddddd","text":"页面宽度：","x":"78"}},{"type":"Label","props":{"y":"189","color":"#dddddd","text":"页面高度：","x":"78"}},{"type":"Label","props":{"y":"222","color":"#dddddd","text":"参考背景：","x":"78"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","var":"typeDrop","y":"55","labels":"View,Dialog","scrollBarSkin":"comp/vscroll.png","width":"140","selectedIndex":"0","height":"23","labelColors":"#dddddd","skin":"comp/combobox.png","x":"151"}},{"type":"TextInput","props":{"var":"nameTxt","y":"89","padding":"0,5,0,5","width":"140","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"151"}},{"type":"TextInput","props":{"var":"imgTxt","y":"122","padding":"0,5,0,5","width":"100","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"151"}},{"type":"TextInput","props":{"var":"widthTxt","y":"155","text":"600","width":"140","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"151"}},{"type":"TextInput","props":{"var":"heightTxt","y":"188","text":"400","width":"140","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"151"}},{"type":"ColorPicker","props":{"var":"bgColorPicker","selectedcolor":"#dddddd","y":"221","skin":"comp/color.png","x":"151"}},{"type":"Button","props":{"var":"sureBtn","y":"272","label":"新增","sizeGrid":"4,0,4,0","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","width":"100","x":"175"}},{"type":"Label","props":{"y":"123","color":"#dddddd","text":"(可选，参考背景)","x":"306"}},{"type":"Label","props":{"y":"221","color":"#dddddd","text":"(可选，设计面板的背景颜色)","x":"180"}},{"type":"Button","props":{"var":"selectBtn","y":"122","width":"40","height":"22","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"选择","x":"251"}},{"type":"CheckBox","props":{"var":"widthCheck","y":"159","label":"仅作为参考宽度","labelColors":"#aaaaaa","skin":"comp/checkbox.png","x":"298"}},{"type":"CheckBox","props":{"var":"heightCheck","y":"192","label":"仅作为参考高度","labelColors":"#aaaaaa","skin":"comp/checkbox.png","x":"298"}}],"type":"Dialog","props":{"height":"330","width":"450","scenecolor":"#dddddd"}};}
+		]);
+		return AddAnimationUI;
+	})(Dialog)
+
+
 	//class laya.editor.ui.page.AddDirectoryUI extends laya.ui.Dialog
 	var AddDirectoryUI=(function(_super){
 		function AddDirectoryUI(){
@@ -47953,7 +50491,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(AddDirectoryUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"150","y":"0","width":"420","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"16","name":"close","x":"389"}},{"type":"Image","props":{"height":"32","y":"8","width":"373","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","text":"新增页面目录","x":"28"}},{"type":"Label","props":{"y":"73.5","color":"#dddddd","text":"目录名称：","x":"44"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"72","padding":"0,5,0,5","width":"130","x":"117","skin":"comp/textinput.png","color":"#dddddd","var":"nameTxt"}},{"type":"Button","props":{"height":"30","y":"68","label":"新增","skin":"comp/btn.png","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"271"}}],"props":{"height":"150","scenecolor":"#dddddd","width":"420"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"420","height":"150","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"16","name":"close","skin":"view/btn_close.png","x":"389"}},{"type":"Image","props":{"y":"8","width":"373","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","text":"新增页面目录","x":"28"}},{"type":"Label","props":{"y":"73.5","color":"#dddddd","text":"目录名称：","x":"44"}},{"type":"TextInput","props":{"var":"nameTxt","y":"72","padding":"0,5,0,5","width":"130","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"117"}},{"type":"Button","props":{"y":"68","label":"新增","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","width":"100","x":"271"}}],"type":"Dialog","props":{"height":"150","width":"420","scenecolor":"#dddddd"}};}
 		]);
 		return AddDirectoryUI;
 	})(Dialog)
@@ -47979,7 +50517,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(AddDocumentUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"60,15,15,15","height":"400","y":"0","width":"550","skin":"view/bg_dialog1.png","x":"0"}},{"type":"Image","props":{"sizeGrid":"3,3,3,3","height":"324","y":"45","width":"491","skin":"view/bg_dialog2.png","x":"28"}},{"type":"Image","props":{"sizeGrid":"3,3,3,3","height":"23","y":"45","width":"491","skin":"view/newtitle_bg.png","x":"28"}},{"type":"Tab","props":{"selectedIndex":"0","y":"45","labels":"页面,粒子","x":"28","skin":"comp/tab3.png","var":"tab"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"20","name":"close","x":"512"}},{"type":"Image","props":{"height":"32","y":"12","width":"495","skin":"comp/blank.png","name":"drag","x":"12"}},{"type":"Label","props":{"y":"18","text":"新增文档","x":"28","color":"#dddddd","fontSize":"14","var":"title"}},{"type":"ViewStack","child":[{"type":"AddPage","props":{"name":"item0","runtime":"laya.editor.view.page.AddPage"}},{"type":"AddParticle","props":{"y":"2","name":"item1","runtime":"laya.editor.ui.page.AddParticleUI","x":"0"}}],"props":{"x":"68","y":"92","mouseEnabled":"true","var":"views"}},{"type":"Button","props":{"height":"30","y":"317","label":"确定","var":"sureBtn","skin":"comp/btn.png","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"408"}}],"props":{"height":"400","scenecolor":"#dddddd","width":"550"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"60,15,15,15","y":"0","width":"550","height":"400","skin":"view/bg_dialog1.png","x":"0"}},{"type":"Image","props":{"sizeGrid":"3,3,3,3","y":"45","width":"491","height":"324","skin":"view/bg_dialog2.png","x":"28"}},{"type":"Image","props":{"sizeGrid":"3,3,3,3","y":"45","width":"491","height":"23","skin":"view/newtitle_bg.png","x":"28"}},{"type":"Tab","props":{"selectedIndex":"0","y":"45","labels":"页面,粒子","var":"tab","skin":"comp/tab3.png","x":"28"}},{"type":"Button","props":{"y":"20","name":"close","skin":"view/btn_close.png","x":"512"}},{"type":"Image","props":{"y":"12","width":"495","height":"32","name":"drag","skin":"comp/blank.png","x":"12"}},{"type":"Label","props":{"var":"title","y":"18","text":"新增文档","color":"#dddddd","fontSize":"14","x":"28"}},{"child":[{"type":"AddPage","props":{"name":"item0","runtime":"laya.editor.view.page.AddPage"}},{"type":"AddParticle","props":{"y":"2","name":"item1","runtime":"laya.editor.ui.page.AddParticleUI","x":"0"}}],"type":"ViewStack","props":{"var":"views","y":"92","mouseEnabled":"true","x":"68"}},{"type":"Button","props":{"var":"sureBtn","y":"317","label":"确定","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","width":"100","x":"408"}}],"type":"Dialog","props":{"height":"400","width":"550","scenecolor":"#dddddd"}};}
 		]);
 		return AddDocumentUI;
 	})(Dialog)
@@ -48008,7 +50546,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(AddPageUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Label","props":{"y":"12","color":"#dddddd","text":"页面类型：","x":"10"}},{"type":"Label","props":{"y":"45","color":"#dddddd","text":"页面名称：","x":"10"}},{"type":"Label","props":{"y":"78","color":"#dddddd","text":"参考视图：","x":"10"}},{"type":"Label","props":{"y":"111","color":"#dddddd","text":"页面宽度：","x":"10"}},{"type":"Label","props":{"y":"144","color":"#dddddd","text":"页面高度：","x":"10"}},{"type":"Label","props":{"y":"177","color":"#dddddd","text":"参考背景：","x":"10"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","height":"23","selectedIndex":"0","labels":"View,Dialog","width":"160","var":"typeDrop","skin":"comp/combobox.png","y":"8","labelColors":"#dddddd","scrollBarSkin":"comp/vscroll.png","x":"83"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"42","padding":"0,5,0,5","width":"160","x":"83","skin":"comp/textinput.png","color":"#dddddd","var":"nameTxt"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"75","padding":"0,5,0,5","width":"120","x":"83","skin":"comp/textinput.png","color":"#dddddd","var":"imgTxt"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"108","padding":"0,5,0,5","text":"600","width":"160","var":"widthTxt","skin":"comp/textinput.png","color":"#dddddd","x":"83"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"141","padding":"0,5,0,5","text":"400","width":"160","var":"heightTxt","skin":"comp/textinput.png","color":"#dddddd","x":"83"}},{"type":"ColorPicker","props":{"var":"bgColorPicker","skin":"comp/color.png","y":"174","selectedcolor":"#dddddd","x":"83"}},{"type":"Label","props":{"y":"77","color":"#dddddd","text":"(可选，参考背景)","x":"249"}},{"type":"Label","props":{"y":"176","color":"#dddddd","text":"(可选，设计面板的背景颜色)","x":"112"}},{"type":"Button","props":{"height":"22","y":"75","width":"40","var":"selectBtn","skin":"comp/btn.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"选择","x":"203"}},{"type":"CheckBox","props":{"y":"112","label":"仅作为参考宽度","x":"249","skin":"comp/checkbox.png","labelColors":"#aaaaaa","var":"widthCheck"}},{"type":"CheckBox","props":{"y":"145","label":"仅作为参考高度","x":"249","skin":"comp/checkbox.png","labelColors":"#aaaaaa","var":"heightCheck"}}],"props":{"height":"250","scenecolor":"#dddddd","width":"400"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Label","props":{"y":"12","color":"#dddddd","text":"页面类型：","x":"10"}},{"type":"Label","props":{"y":"45","color":"#dddddd","text":"页面名称：","x":"10"}},{"type":"Label","props":{"y":"78","color":"#dddddd","text":"参考视图：","x":"10"}},{"type":"Label","props":{"y":"111","color":"#dddddd","text":"页面宽度：","x":"10"}},{"type":"Label","props":{"y":"144","color":"#dddddd","text":"页面高度：","x":"10"}},{"type":"Label","props":{"y":"177","color":"#dddddd","text":"参考背景：","x":"10"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","var":"typeDrop","y":"8","labels":"View,Dialog","scrollBarSkin":"comp/vscroll.png","width":"160","selectedIndex":"0","height":"23","labelColors":"#dddddd","skin":"comp/combobox.png","x":"83"}},{"type":"TextInput","props":{"var":"nameTxt","y":"42","padding":"0,5,0,5","width":"160","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"83"}},{"type":"TextInput","props":{"var":"imgTxt","y":"75","padding":"0,5,0,5","width":"120","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"83"}},{"type":"TextInput","props":{"var":"widthTxt","y":"108","text":"600","width":"160","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"83"}},{"type":"TextInput","props":{"var":"heightTxt","y":"141","text":"400","width":"160","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"83"}},{"type":"ColorPicker","props":{"var":"bgColorPicker","selectedcolor":"#dddddd","y":"174","skin":"comp/color.png","x":"83"}},{"type":"Label","props":{"y":"77","color":"#dddddd","text":"(可选，参考背景)","x":"249"}},{"type":"Label","props":{"y":"176","color":"#dddddd","text":"(可选，设计面板的背景颜色)","x":"112"}},{"type":"Button","props":{"var":"selectBtn","y":"75","width":"40","height":"22","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"选择","x":"203"}},{"type":"CheckBox","props":{"var":"widthCheck","y":"112","label":"仅作为参考宽度","labelColors":"#aaaaaa","skin":"comp/checkbox.png","x":"249"}},{"type":"CheckBox","props":{"var":"heightCheck","y":"145","label":"仅作为参考高度","labelColors":"#aaaaaa","skin":"comp/checkbox.png","x":"249"}}],"type":"Dialog","props":{"height":"250","width":"400","scenecolor":"#dddddd"}};}
 		]);
 		return AddPageUI;
 	})(Dialog)
@@ -48030,7 +50568,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(AddParticleUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Label","props":{"y":"48","color":"#dddddd","text":"粒子名称：","x":"10"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"47","padding":"0,5,0,5","width":"160","x":"83","skin":"comp/textinput.png","color":"#dddddd","var":"nameTxt"}},{"type":"Label","props":{"y":"10","color":"#dddddd","text":"页面类型：","x":"10"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","height":"23","selectedIndex":"0","labels":"重力模式,半径模式","width":"160","var":"typeDrop","skin":"comp/combobox.png","y":"9","labelColors":"#dddddd","scrollBarSkin":"comp/vscroll.png","x":"83"}}],"props":{"height":"200","scenecolor":"#dddddd","width":"400"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Label","props":{"y":"48","color":"#dddddd","text":"粒子名称：","x":"10"}},{"type":"TextInput","props":{"var":"nameTxt","y":"47","padding":"0,5,0,5","width":"160","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"83"}},{"type":"Label","props":{"y":"10","color":"#dddddd","text":"页面类型：","x":"10"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","var":"typeDrop","y":"9","labels":"重力模式,半径模式","scrollBarSkin":"comp/vscroll.png","width":"160","selectedIndex":"0","height":"23","labelColors":"#dddddd","skin":"comp/combobox.png","x":"83"}}],"type":"Dialog","props":{"height":"200","width":"400","scenecolor":"#dddddd"}};}
 		]);
 		return AddParticleUI;
 	})(Dialog)
@@ -48058,7 +50596,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(AddSceneUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Label","props":{"y":"12","color":"#dddddd","text":"场景名称：","x":"10"}},{"type":"Label","props":{"y":"45","color":"#dddddd","text":"参考视图：","x":"10"}},{"type":"Label","props":{"y":"78","color":"#dddddd","text":"场景宽度：","x":"10"}},{"type":"Label","props":{"y":"111","color":"#dddddd","text":"场景高度：","x":"10"}},{"type":"Label","props":{"y":"144","color":"#dddddd","text":"参考背景：","x":"10"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"10","padding":"0,5,0,5","width":"160","x":"83","skin":"comp/textinput.png","color":"#dddddd","var":"nameTxt"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"43","padding":"0,5,0,5","width":"120","x":"83","skin":"comp/textinput.png","color":"#dddddd","var":"imgTxt"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"76","padding":"0,5,0,5","text":"600","width":"160","var":"widthTxt","skin":"comp/textinput.png","color":"#dddddd","x":"83"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"109","padding":"0,5,0,5","text":"400","width":"160","var":"heightTxt","skin":"comp/textinput.png","color":"#dddddd","x":"83"}},{"type":"ColorPicker","props":{"var":"bgColorPicker","skin":"comp/color.png","y":"142","selectedcolor":"#dddddd","x":"83"}},{"type":"Label","props":{"y":"44","color":"#dddddd","text":"(可选，参考背景)","x":"248"}},{"type":"Label","props":{"y":"142","color":"#dddddd","text":"(可选，设计面板的背景颜色)","x":"112"}},{"type":"Button","props":{"height":"22","y":"43","width":"40","var":"selectBtn","skin":"comp/btn.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"选择","x":"202"}},{"type":"CheckBox","props":{"y":"80","label":"仅作为参考宽度","x":"248","skin":"comp/checkbox.png","labelColors":"#aaaaaa","var":"widthCheck"}},{"type":"CheckBox","props":{"y":"113","label":"仅作为参考高度","x":"248","skin":"comp/checkbox.png","labelColors":"#aaaaaa","var":"heightCheck"}}],"props":{"scenecolor":"#dddddd"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Label","props":{"y":"12","color":"#dddddd","text":"场景名称：","x":"10"}},{"type":"Label","props":{"y":"45","color":"#dddddd","text":"参考视图：","x":"10"}},{"type":"Label","props":{"y":"78","color":"#dddddd","text":"场景宽度：","x":"10"}},{"type":"Label","props":{"y":"111","color":"#dddddd","text":"场景高度：","x":"10"}},{"type":"Label","props":{"y":"144","color":"#dddddd","text":"参考背景：","x":"10"}},{"type":"TextInput","props":{"var":"nameTxt","y":"10","padding":"0,5,0,5","width":"160","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"83"}},{"type":"TextInput","props":{"var":"imgTxt","y":"43","padding":"0,5,0,5","width":"120","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"83"}},{"type":"TextInput","props":{"var":"widthTxt","y":"76","text":"600","width":"160","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"83"}},{"type":"TextInput","props":{"var":"heightTxt","y":"109","text":"400","width":"160","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"83"}},{"type":"ColorPicker","props":{"var":"bgColorPicker","selectedcolor":"#dddddd","y":"142","skin":"comp/color.png","x":"83"}},{"type":"Label","props":{"y":"44","color":"#dddddd","text":"(可选，参考背景)","x":"248"}},{"type":"Label","props":{"y":"142","color":"#dddddd","text":"(可选，设计面板的背景颜色)","x":"112"}},{"type":"Button","props":{"var":"selectBtn","y":"43","width":"40","height":"22","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"选择","x":"202"}},{"type":"CheckBox","props":{"var":"widthCheck","y":"80","label":"仅作为参考宽度","labelColors":"#aaaaaa","skin":"comp/checkbox.png","x":"248"}},{"type":"CheckBox","props":{"var":"heightCheck","y":"113","label":"仅作为参考高度","labelColors":"#aaaaaa","skin":"comp/checkbox.png","x":"248"}}],"type":"Dialog","props":{"scenecolor":"#dddddd"}};}
 		]);
 		return AddSceneUI;
 	})(Dialog)
@@ -48080,7 +50618,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(MovePageUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"200","y":"0","width":"440","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"16","name":"close","x":"407"}},{"type":"Image","props":{"height":"32","y":"8","width":"388","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"移动页面","x":"28"}},{"type":"Label","props":{"y":"55","wordWrap":"true","text":"确定移动页面吗？","width":"332","var":"msgLbl","align":"center","height":"43","color":"#dddddd","multiline":"true","x":"54"}},{"type":"CheckBox","props":{"y":"107","label":"是否更新页面嵌套引用(不选择能提高性能)","x":"99","skin":"comp/checkbox.png","labelColors":"#dddddd,#999999,#dddddd","selected":"true","var":"updateCheck"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"30","name":"sure","label":"确定","skin":"comp/button.png","y":"138","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"100"}},{"type":"Button","props":{"height":"30","name":"cancel","width":"100","skin":"comp/btn.png","y":"138","labelColors":"#dddddd,#dddddd,#dddddd","label":"取消","x":"240"}}],"props":{"height":"200","scenecolor":"#dddddd","width":"440"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"440","height":"200","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"16","name":"close","skin":"view/btn_close.png","x":"407"}},{"type":"Image","props":{"y":"8","width":"388","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"移动页面","x":"28"}},{"type":"Label","props":{"var":"msgLbl","y":"55","wordWrap":"true","text":"确定移动页面吗？","width":"332","align":"center","height":"43","color":"#dddddd","multiline":"true","x":"54"}},{"type":"CheckBox","props":{"var":"updateCheck","y":"107","label":"是否更新页面嵌套引用(不选择能提高性能)","labelColors":"#dddddd,#999999,#dddddd","skin":"comp/checkbox.png","selected":"true","x":"99"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","name":"sure","label":"确定","height":"30","y":"138","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","width":"100","x":"100"}},{"type":"Button","props":{"name":"cancel","width":"100","height":"30","y":"138","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"取消","x":"240"}}],"type":"Dialog","props":{"height":"200","width":"440","scenecolor":"#dddddd"}};}
 		]);
 		return MovePageUI;
 	})(Dialog)
@@ -48101,7 +50639,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(NeedSaveUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"200","y":"0","width":"470","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"16","name":"close","x":"438"}},{"type":"Image","props":{"height":"32","y":"8","width":"423","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"提醒","x":"28"}},{"type":"Label","props":{"y":"73","wordWrap":"true","text":"是否保存修改？","width":"383","var":"msgLbl","align":"center","height":"21","color":"#dddddd","multiline":"true","x":"43.5"}},{"type":"Box","child":[{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"30","name":"sure","label":"保存","skin":"comp/button.png","labelColors":"#dddddd,#dddddd,#dddddd","width":"100"}},{"type":"Button","props":{"height":"30","name":"cancel","width":"100","skin":"comp/btn.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"不保存","x":"130"}},{"type":"Button","props":{"height":"30","name":"close","width":"100","skin":"comp/btn.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"取消关闭","x":"260"}}],"props":{"y":"123","x":"55"}}],"props":{"height":"200","scenecolor":"#dddddd","width":"470"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"470","height":"200","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"16","name":"close","skin":"view/btn_close.png","x":"438"}},{"type":"Image","props":{"y":"8","width":"423","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"提醒","x":"28"}},{"type":"Label","props":{"var":"msgLbl","y":"73","wordWrap":"true","text":"是否保存修改？","width":"383","align":"center","height":"21","color":"#dddddd","multiline":"true","x":"43.5"}},{"child":[{"type":"Button","props":{"sizeGrid":"4,0,4,0","name":"sure","label":"保存","height":"30","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","width":"100"}},{"type":"Button","props":{"name":"cancel","width":"100","height":"30","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"不保存","x":"130"}},{"type":"Button","props":{"name":"close","width":"100","height":"30","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"取消关闭","x":"260"}}],"type":"Box","props":{"y":"123","x":"55"}}],"type":"Dialog","props":{"height":"200","width":"470","scenecolor":"#dddddd"}};}
 		]);
 		return NeedSaveUI;
 	})(Dialog)
@@ -48124,7 +50662,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(RenamePageUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"220","y":"0","width":"450","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"17","name":"close","x":"415"}},{"type":"Image","props":{"height":"32","y":"8","width":"394","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"重命名页面","x":"28"}},{"type":"Label","props":{"y":"87","color":"#dddddd","text":"新名称：","x":"101"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"86","padding":"0,5,0,5","width":"150","x":"157","skin":"comp/textinput.png","color":"#dddddd","var":"nameTxt"}},{"type":"CheckBox","props":{"y":"120","label":"是否更新页面嵌套引用(不选择能提高性能)","x":"155","skin":"comp/checkbox.png","labelColors":"#dddddd,#999999,#dddddd","selected":"true","var":"updateCheck"}},{"type":"Label","props":{"height":"20","y":"56","color":"#dddddd","text":"原名称：","x":"101"}},{"type":"Label","props":{"y":"56","text":"页面内容","width":"214","x":"157","height":"20","color":"#cccc00","var":"resLbl"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"30","name":"sure","label":"确定","skin":"comp/button.png","y":"156","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"105"}},{"type":"Button","props":{"height":"30","name":"cancel","width":"100","skin":"comp/btn.png","y":"156","labelColors":"#dddddd,#dddddd,#dddddd","label":"取消","x":"245"}}],"props":{"height":"220","scenecolor":"#dddddd","width":"450"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"450","height":"220","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"17","name":"close","skin":"view/btn_close.png","x":"415"}},{"type":"Image","props":{"y":"8","width":"394","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"重命名页面","x":"28"}},{"type":"Label","props":{"y":"87","color":"#dddddd","text":"新名称：","x":"101"}},{"type":"TextInput","props":{"var":"nameTxt","y":"86","padding":"0,5,0,5","width":"150","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"157"}},{"type":"CheckBox","props":{"var":"updateCheck","y":"120","label":"是否更新页面嵌套引用(不选择能提高性能)","labelColors":"#dddddd,#999999,#dddddd","skin":"comp/checkbox.png","selected":"true","x":"155"}},{"type":"Label","props":{"height":"20","y":"56","color":"#dddddd","text":"原名称：","x":"101"}},{"type":"Label","props":{"var":"resLbl","y":"56","text":"页面内容","width":"214","height":"20","color":"#cccc00","x":"157"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","name":"sure","label":"确定","height":"30","y":"156","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","width":"100","x":"105"}},{"type":"Button","props":{"name":"cancel","width":"100","height":"30","y":"156","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"取消","x":"245"}}],"type":"Dialog","props":{"height":"220","width":"450","scenecolor":"#dddddd"}};}
 		]);
 		return RenamePageUI;
 	})(Dialog)
@@ -48146,7 +50684,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(SetPagePropUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"360","y":"0","width":"450","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"17","name":"close","x":"413"}},{"type":"Image","props":{"height":"32","y":"8","width":"389","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"设置页面默认属性","x":"28"}},{"type":"Label","props":{"y":"58","color":"#dddddd","text":"页面名称：","x":"58"}},{"type":"Label","props":{"y":"89","color":"#dddddd","text":"默认属性：","x":"58"}},{"type":"Label","props":{"y":"120","wordWrap":"true","text":"示例(回车换行)\\ncolor=#00ff00\\nsize=14\\ntext=test","width":"100","isHtml":"true","height":"85","color":"#dddddd","multiline":"true","x":"26"}},{"type":"Button","props":{"height":"30","y":"299","label":"确定","skin":"comp/btn.png","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"126"}},{"type":"Label","props":{"y":"58","text":"页面内容","width":"260","var":"nameLbl","height":"20","color":"#cccc00","x":"126"}},{"type":"TextArea","props":{"sizeGrid":"3,3,3,3","skin":"comp/textarea.png","color":"#dddddd","multiline":"true","var":"propsTxt","y":"87","wordWrap":"true","width":"220","x":"126","margin":"2,2,2,2","height":"150","padding":"5,5,5,5","scrollBarSkin":"png.comp.vscroll","vScrollBarSkin":"comp/vscroll.png"}},{"type":"Label","props":{"y":"248","wordWrap":"true","text":"提示：页面嵌套时，会自动应用上面设置默认属性，此属性为全局属性","width":"269","height":"41","color":"#cc00","multiline":"true","x":"123"}}],"props":{"height":"360","scenecolor":"#dddddd","width":"450"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"450","height":"360","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"17","name":"close","skin":"view/btn_close.png","x":"413"}},{"type":"Image","props":{"y":"8","width":"389","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"设置页面默认属性","x":"28"}},{"type":"Label","props":{"y":"58","color":"#dddddd","text":"页面名称：","x":"58"}},{"type":"Label","props":{"y":"89","color":"#dddddd","text":"默认属性：","x":"58"}},{"type":"Label","props":{"isHtml":"true","y":"120","wordWrap":"true","text":"示例(回车换行)\\ncolor=#00ff00\\nsize=14\\ntext=test","width":"100","height":"85","color":"#dddddd","multiline":"true","x":"26"}},{"type":"Button","props":{"y":"299","label":"确定","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","width":"100","x":"126"}},{"type":"Label","props":{"var":"nameLbl","y":"58","text":"页面内容","width":"260","height":"20","color":"#cccc00","x":"126"}},{"type":"TextArea","props":{"sizeGrid":"3,3,3,3","scrollBarSkin":"png.comp.vscroll","margin":"2,2,2,2","color":"#dddddd","skin":"comp/textarea.png","multiline":"true","x":"126","var":"propsTxt","y":"87","wordWrap":"true","padding":"5,5,5,5","width":"220","height":"150","vScrollBarSkin":"comp/vscroll.png"}},{"type":"Label","props":{"y":"248","wordWrap":"true","text":"提示：页面嵌套时，会自动应用上面设置默认属性，此属性为全局属性","width":"269","height":"41","color":"#cc00","multiline":"true","x":"123"}}],"type":"Dialog","props":{"height":"360","width":"450","scenecolor":"#dddddd"}};}
 		]);
 		return SetPagePropUI;
 	})(Dialog)
@@ -48177,7 +50715,8 @@ window.Laya=(function(window,document){
 		}
 
 		__static(SetPageUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"330","y":"0","width":"470","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"16","name":"close","x":"439"}},{"type":"Image","props":{"height":"32","y":"8","width":"423","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","text":"设置页面","x":"28","color":"#dddddd","fontSize":"14","var":"title"}},{"type":"CheckBox","props":{"y":"159","label":"仅作为参考宽度","x":"298","skin":"comp/checkbox.png","labelColors":"#aaaaaa","var":"widthCheck"}},{"type":"CheckBox","props":{"y":"192","label":"仅作为参考高度","x":"298","skin":"comp/checkbox.png","labelColors":"#aaaaaa","var":"heightCheck"}},{"type":"Label","props":{"y":"57","color":"#dddddd","text":"页面类型：","x":"78"}},{"type":"Label","props":{"y":"90","color":"#dddddd","text":"页面名称：","x":"78"}},{"type":"Label","props":{"y":"123","color":"#dddddd","text":"参考视图：","x":"78"}},{"type":"Label","props":{"y":"156","color":"#dddddd","text":"页面宽度：","x":"78"}},{"type":"Label","props":{"y":"189","color":"#dddddd","text":"页面高度：","x":"78"}},{"type":"Label","props":{"y":"222","color":"#dddddd","text":"参考背景：","x":"78"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","height":"23","y":"55","labels":"View,Dialog","scrollBarSkin":"comp/vscroll.png","width":"140","var":"typeDrop","skin":"comp/combobox.png","selectedIndex":"0","labelColors":"#dddddd","x":"151"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"89","padding":"0,5,0,5","disabled":"true","width":"140","x":"151","skin":"comp/textinput.png","color":"#dddddd","var":"nameTxt"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","height":"22","y":"122","padding":"0,5,0,5","width":"108","x":"151","skin":"comp/textinput.png","color":"#dddddd","var":"imgTxt"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"155","padding":"0,5,0,5","text":"600","width":"140","var":"widthTxt","skin":"comp/textinput.png","color":"#dddddd","x":"151"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"188","padding":"0,5,0,5","text":"400","width":"140","var":"heightTxt","skin":"comp/textinput.png","color":"#dddddd","x":"151"}},{"type":"ColorPicker","props":{"var":"bgColorPicker","skin":"comp/color.png","y":"221","selectedcolor":"#dddddd","x":"151"}},{"type":"Button","props":{"height":"30","y":"271","label":"修改","var":"sureBtn","skin":"comp/btn.png","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"175"}},{"type":"Label","props":{"y":"123","color":"#dddddd","text":"(可选，参考背景)","x":"306"}},{"type":"Label","props":{"y":"221","color":"#dddddd","text":"(可选，设计面板的背景颜色)","x":"180"}},{"type":"Button","props":{"var":"selectBtn","skin":"comp/referback.png","y":"123","labelColors":"#dddddd,#dddddd,#dddddd","x":"266"}}],"props":{"height":"330","scenecolor":"#dddddd","width":"470"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0"
+						,"width":"470","height":"330","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"16","name":"close","skin":"view/btn_close.png","x":"439"}},{"type":"Image","props":{"y":"8","width":"423","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"var":"title","y":"18","text":"设置页面","color":"#dddddd","fontSize":"14","x":"28"}},{"type":"CheckBox","props":{"var":"widthCheck","y":"159","label":"仅作为参考宽度","labelColors":"#aaaaaa","skin":"comp/checkbox.png","x":"298"}},{"type":"CheckBox","props":{"var":"heightCheck","y":"192","label":"仅作为参考高度","labelColors":"#aaaaaa","skin":"comp/checkbox.png","x":"298"}},{"type":"Label","props":{"y":"57","color":"#dddddd","text":"页面类型：","x":"78"}},{"type":"Label","props":{"y":"90","color":"#dddddd","text":"页面名称：","x":"78"}},{"type":"Label","props":{"y":"123","color":"#dddddd","text":"参考视图：","x":"78"}},{"type":"Label","props":{"y":"156","color":"#dddddd","text":"页面宽度：","x":"78"}},{"type":"Label","props":{"y":"189","color":"#dddddd","text":"页面高度：","x":"78"}},{"type":"Label","props":{"y":"222","color":"#dddddd","text":"参考背景：","x":"78"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","var":"typeDrop","y":"55","labels":"View,Dialog","scrollBarSkin":"comp/vscroll.png","width":"140","selectedIndex":"0","height":"23","labelColors":"#dddddd","skin":"comp/combobox.png","x":"151"}},{"type":"TextInput","props":{"var":"nameTxt","y":"89","disabled":"true","width":"140","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"151"}},{"type":"TextInput","props":{"var":"imgTxt","y":"122","padding":"0,5,0,5","width":"108","sizeGrid":"3,3,3,3","height":"22","color":"#dddddd","skin":"comp/textinput.png","x":"151"}},{"type":"TextInput","props":{"var":"widthTxt","y":"155","text":"600","width":"140","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"151"}},{"type":"TextInput","props":{"var":"heightTxt","y":"188","text":"400","width":"140","padding":"0,5,0,5","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"151"}},{"type":"ColorPicker","props":{"var":"bgColorPicker","selectedcolor":"#dddddd","y":"221","skin":"comp/color.png","x":"151"}},{"type":"Button","props":{"var":"sureBtn","y":"271","label":"修改","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","width":"100","x":"175"}},{"type":"Label","props":{"y":"123","color":"#dddddd","text":"(可选，参考背景)","x":"306"}},{"type":"Label","props":{"y":"221","color":"#dddddd","text":"(可选，设计面板的背景颜色)","x":"180"}},{"type":"Button","props":{"var":"selectBtn","y":"123","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/referback.png","x":"266"}}],"type":"Dialog","props":{"height":"330","width":"470","scenecolor":"#dddddd"}};}
 		]);
 		return SetPageUI;
 	})(Dialog)
@@ -48199,7 +50738,8 @@ window.Laya=(function(window,document){
 		}
 
 		__static(MoveResUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"200","y":"0","width":"450","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"17","name":"close","x":"416"}},{"type":"Image","props":{"height":"32","y":"8","width":"396","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"移动资源","x":"28"}},{"type":"Label","props":{"y":"55","wordWrap":"true","text":"确定移动资源吗？","width":"350","var":"msgLbl","align":"center","height":"43","color":"#dddddd","multiline":"true","x":"50"}},{"type":"CheckBox","props":{"y":"100","label":"是否更新页面引用(不选择能提高性能)","x":"116","skin":"comp/checkbox.png","labelColors":"#dddddd,#999999,#dddddd","selected":"true","var":"updateCheck"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"30","name":"sure","label":"确定","skin":"comp/button.png","y":"140","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"100"}},{"type":"Button","props":{"height":"30","name":"cancel","width":"100","skin":"comp/btn.png","y":"140","labelColors":"#dddddd,#dddddd,#dddddd","label":"取消","x":"250"}}],"props":{"height":"200","scenecolor":"#dddddd","width":"450"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"450","height":"200","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"17","name":"close","skin":"view/btn_close.png","x":"416"}},{"type":"Image","props":{"y":"8","width":"396","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"移动资源","x":"28"}},{"type":"Label","props":{"var":"msgLbl","y":"55","wordWrap":"true","text":"确定移动资源吗？","width":"350","align":"center","height":"43","color":"#dddddd","multiline":"true","x":"50"}},{"type":"CheckBox","props":{"var":"updateCheck","y":"100","label":"是否更新页面引用(不选择能提高性能)","labelColors":"#dddddd,#999999,#dddddd","skin":"comp/checkbox.png","selected":"true","x":"116"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","name":"sure","label":"确定","height":"30","y":"140","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","width":"100","x":"100"}},{"type":"Button","props":{"name":"cancel","width":"100"
+						,"height":"30","y":"140","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"取消","x":"250"}}],"type":"Dialog","props":{"height":"200","width":"450","scenecolor":"#dddddd"}};}
 		]);
 		return MoveResUI;
 	})(Dialog)
@@ -48222,7 +50762,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(RenameResUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"220","y":"0","width":"450","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"17","name":"close","x":"416"}},{"type":"Image","props":{"height":"32","y":"8","width":"396","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"重命名资源","x":"28"}},{"type":"Label","props":{"y":"94","color":"#dddddd","text":"新名称：","x":"94"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"93","padding":"0,5,0,5","width":"150","x":"150","skin":"comp/textinput.png","color":"#dddddd","var":"nameTxt"}},{"type":"CheckBox","props":{"y":"129","label":"是否更新页面引用(不选择能提高性能)","x":"151","skin":"comp/checkbox.png","labelColors":"#dddddd,#999999,#dddddd","selected":"true","var":"updateCheck"}},{"type":"Label","props":{"height":"20","y":"63","color":"#dddddd","text":"原名称：","x":"94"}},{"type":"Label","props":{"y":"63","text":"资源内容","width":"214","x":"150","height":"20","color":"#cccc00","var":"resLbl"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","height":"30","name":"sure","label":"确定","skin":"comp/button.png","y":"158","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"100"}},{"type":"Button","props":{"height":"30","name":"cancel","width":"100","skin":"comp/btn.png","y":"158","labelColors":"#dddddd,#dddddd,#dddddd","label":"取消","x":"250"}}],"props":{"scenecolor":"#dddddd"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"450","height":"220","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"17","name":"close","skin":"view/btn_close.png","x":"416"}},{"type":"Image","props":{"y":"8","width":"396","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"重命名资源","x":"28"}},{"type":"Label","props":{"y":"94","color":"#dddddd","text":"新名称：","x":"94"}},{"type":"TextInput","props":{"var":"nameTxt","y":"93","padding":"0,5,0,5","width":"150","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"150"}},{"type":"CheckBox","props":{"var":"updateCheck","y":"129","label":"是否更新页面引用(不选择能提高性能)","labelColors":"#dddddd,#999999,#dddddd","skin":"comp/checkbox.png","selected":"true","x":"151"}},{"type":"Label","props":{"height":"20","y":"63","color":"#dddddd","text":"原名称：","x":"94"}},{"type":"Label","props":{"var":"resLbl","y":"63","text":"资源内容","width":"214","height":"20","color":"#cccc00","x":"150"}},{"type":"Button","props":{"sizeGrid":"4,0,4,0","name":"sure","label":"确定","height":"30","y":"158","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","width":"100","x":"100"}},{"type":"Button","props":{"name":"cancel","width":"100","height":"30","y":"158","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","label":"取消","x":"250"}}],"type":"Dialog","props":{"scenecolor":"#dddddd"}};}
 		]);
 		return RenameResUI;
 	})(Dialog)
@@ -48245,7 +50785,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(SetResPropUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"410","y":"0","width":"520","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"16","name":"close","x":"488"}},{"type":"Image","props":{"height":"32","y":"8","width":"470","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"资源属性设置","x":"28"}},{"type":"Label","props":{"y":"60","color":"#dddddd","text":"资源名称：","x":"94"}},{"type":"Label","props":{"y":"134","color":"#dddddd","text":"默认全局属性：","x":"69"}},{"type":"Label","props":{"y":"166","wordWrap":"true","text":"示例(回车换行)\\ncolor=#00ff00\\nsize=14\\ntext=test","width":"100","height":"115","color":"#dddddd","multiline":"true","x":"62"}},{"type":"Button","props":{"height":"30","y":"343","label":"确定","skin":"comp/btn.png","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"162"}},{"type":"Label","props":{"y":"60","text":"页面内容","width":"260","var":"nameLbl","height":"20","color":"#cccc00","x":"162"}},{"type":"TextArea","props":{"sizeGrid":"3,3,3,3","skin":"comp/textarea.png","color":"#dddddd","vScrollBarSkin":"comp/vscroll.png","var":"propsTxt","y":"133","width":"250","x":"162","margin":"2,2,2,2","height":"150","padding":"5,5,5,5","scrollBarSkin":"png.comp.vscroll"}},{"type":"Label","props":{"y":"93","color":"#dddddd","text":"组件类型：","x":"94"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","y":"92","labels":"Button,CheckBox,Clip,ComboBox,HScrollBar,HSlider,Image,Label,LinkButton,List,ProgressBar,Radio,RadioGroup,Tab,TextArea,TextInput,VScrollBar,VSlider,Tree","width":"150","var":"typeDrop","skin":"comp/combobox.png","scrollBarSkin":"comp/vscroll.png","x":"162"}},{"type":"Label","props":{"y":"292","wordWrap":"true","text":"提示：使用组件时，会自动应用上面设置默认属性。此属性为全局属性，","width":"312","height":"38","color":"#00cc00","x":"160"}}],"props":{"height":"410","scenecolor":"#dddddd","width":"520"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"520","height":"410","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"16","name":"close","skin":"view/btn_close.png","x":"488"}},{"type":"Image","props":{"y":"8","width":"470","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"y":"18","color":"#dddddd","fontSize":"14","text":"资源属性设置","x":"28"}},{"type":"Label","props":{"y":"60","color":"#dddddd","text":"资源名称：","x":"94"}},{"type":"Label","props":{"y":"134","color":"#dddddd","text":"默认全局属性：","x":"69"}},{"type":"Label","props":{"y":"166","wordWrap":"true","text":"示例(回车换行)\\ncolor=#00ff00\\nsize=14\\ntext=test","width":"100","height":"115","color":"#dddddd","multiline":"true","x":"62"}},{"type":"Button","props":{"y":"343","label":"确定","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","width":"100","x":"162"}},{"type":"Label","props":{"var":"nameLbl","y":"60","text":"页面内容","width":"260","height":"20","color":"#cccc00","x":"162"}},{"type":"TextArea","props":{"sizeGrid":"3,3,3,3","scrollBarSkin":"png.comp.vscroll","margin":"2,2,2,2","color":"#dddddd","skin":"comp/textarea.png","vScrollBarSkin":"comp/vscroll.png","x":"162","var":"propsTxt","y":"133","padding":"5,5,5,5","width":"250","height":"150"}},{"type":"Label","props":{"y":"93","color":"#dddddd","text":"组件类型：","x":"94"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","y":"92","labels":"Button,CheckBox,Clip,ComboBox,HScrollBar,HSlider,Image,Label,LinkButton,List,ProgressBar,Radio,RadioGroup,Tab,TextArea,TextInput,VScrollBar,VSlider,Tree","width":"150","var":"typeDrop","scrollBarSkin":"comp/vscroll.png","skin":"comp/combobox.png","x":"162"}},{"type":"Label","props":{"y":"292","wordWrap":"true","text":"提示：使用组件时，会自动应用上面设置默认属性。此属性为全局属性，","width":"312","height":"38","color":"#00cc00","x":"160"}}],"type":"Dialog","props":{"height":"410","width":"520","scenecolor":"#dddddd"}};}
 		]);
 		return SetResPropUI;
 	})(Dialog)
@@ -48269,7 +50809,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(AddTemplateUI,
-		['uiView',function(){return this.uiView={"type":"Dialog","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"220","y":"0","width":"470","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"skin":"view/btn_close.png","y":"17","name":"close","x":"440"}},{"type":"Image","props":{"height":"32","y":"8","width":"423","skin":"comp/blank.png","name":"drag","x":"8"}},{"type":"Label","props":{"y":"18","text":"转换成模板","width":"119","x":"28","height":"18","color":"#dddddd","fontSize":"14","var":"title"}},{"type":"Label","props":{"y":"74","color":"#dddddd","text":"目录：","x":"142"}},{"type":"Label","props":{"y":"108","color":"#dddddd","text":"页面名称：","x":"118"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","height":"23","y":"72","labels":"自定义模板,常用模板","scrollBarSkin":"comp/vscroll.png","width":"140","var":"typeDrop","skin":"comp/combobox.png","selectedIndex":"0","labelColors":"#dddddd","x":"191"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","y":"107","padding":"0,5,0,5","width":"140","x":"191","skin":"comp/textinput.png","color":"#dddddd","var":"nameTxt"}},{"type":"Button","props":{"height":"30","y":"159","label":"新增","var":"sureBtn","skin":"comp/btn.png","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","width":"100","x":"190"}}],"props":{"height":"220","scenecolor":"#dddddd","width":"470"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","width":"470","height":"220","skin":"view/bg_dialog.png","x":"0"}},{"type":"Button","props":{"y":"17","name":"close","skin":"view/btn_close.png","x":"440"}},{"type":"Image","props":{"y":"8","width":"423","height":"32","name":"drag","skin":"comp/blank.png","x":"8"}},{"type":"Label","props":{"var":"title","y":"18","text":"转换成模板","width":"119","height":"18","color":"#dddddd","fontSize":"14","x":"28"}},{"type":"Label","props":{"y":"74","color":"#dddddd","text":"目录：","x":"142"}},{"type":"Label","props":{"y":"108","color":"#dddddd","text":"页面名称：","x":"118"}},{"type":"ComboBox","props":{"sizeGrid":"3,20,3,3","var":"typeDrop","y":"72","labels":"自定义模板,常用模板","scrollBarSkin":"comp/vscroll.png","width":"140","selectedIndex":"0","height":"23","labelColors":"#dddddd","skin":"comp/combobox.png","x":"191"}},{"type":"TextInput","props":{"var":"nameTxt","y":"107","padding":"0,5,0,5","width":"140","sizeGrid":"3,3,3,3","color":"#dddddd","skin":"comp/textinput.png","x":"191"}},{"type":"Button","props":{"var":"sureBtn","y":"159","label":"新增","height":"30","name":"sure","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/btn.png","width":"100","x":"190"}}],"type":"Dialog","props":{"height":"220","width":"470","scenecolor":"#dddddd"}};}
 		]);
 		return AddTemplateUI;
 	})(Dialog)
@@ -48292,7 +50832,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(DisplayTreePanelUI,
-		['uiView',function(){return this.uiView={"type":"DragView","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","height":"300","y":"10","right":"0","width":"200","left":"0","skin":"view/bg_body.png","top":"0","bottom":"0","x":"10"}},{"type":"Box","child":[{"type":"Image","props":{"sizeGrid":"3,3,3,3","height":"28","right":"0","width":"191","left":"0","skin":"view/bg_panel_bar.png","top":"0","bottom":"0"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","skin":"comp/textinput.png","x":"80","color":"#dddddd","var":"fliterTxt","toolTip":"输入关键词过滤","y":"7","width":"148","left":"80","height":"20","padding":"0,0,0,18","right":"5"}},{"type":"Button","props":{"toolTip":"刷新页面列表","y":"5.5","stateNum":"3","skin":"view/refresh2.png","name":"refreshBtn","x":"3"}},{"type":"Clip","props":{"toolTip":"全部隐藏","y":"10.5","skin":"view/clip_hide.png","name":"ifShowAll","clipY":"2","x":"31"}},{"type":"Clip","props":{"toolTip":"全部锁定","y":"6.5","skin":"view/clip_lock.png","name":"ifLockAll","clipY":"2","x":"57"}},{"type":"Clip","props":{"skin":"view/search.png","y":"7","clipY":"2","index":"1","x":"82"}}],"props":{"var":"opBox","y":"291","right":"0","left":"0","height":"30","bottom":"0","x":"25"}},{"type":"TreeEx","child":[{"type":"Box","child":[{"type":"Clip","props":{"height":"26","y":"0","name":"selectBox","width":"184","left":"9","skin":"comp/clip_selectBox.png","clipY":"2","right":"0","x":"12"}},{"type":"Label","props":{"y":"3","padding":"4,0,0,0","text":"label","width":"108","left":"38","height":"18","name":"label","color":"#d8d8d8","right":"50","x":"38"}},{"type":"Clip","props":{"skin":"comp/clip_tree.png","y":"6","clipY":"2","name":"arrow","x":"0"}},{"type":"Clip","props":{"name":"ifShow","right":"38","mouseEnabled":"true","skin":"view/clip_hide.png","y":"7","clipY":"2","clipX":"1","x":"143"}},{"type":"Clip","props":{"name":"ifLock","right":"15","mouseEnabled":"true","skin":"view/clip_lock.png","y":"2","clipY":"2","clipX":"1","x":"160"}},{"type":"Image","props":{"skin":"comp/folder.png","y":"5","name":"icon","x":"14"}}],"props":{"name":"render","right":"0","left":"0"}}],"props":{"var":"displayTree","y":"45","bottom":"30","left":"2","top":"10","right":"2","scrollBarSkin":"comp/vscroll.png","x":"15"}}],"props":{"height":"400","scenecolor":"#dddddd","title":"层级","width":"200"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"10","bottom":"0","width":"200","left":"0","height":"300","top":"0","skin":"view/bg_body.png","right":"0","x":"10"}},{"child":[{"type":"Image","props":{"sizeGrid":"3,3,3,3","skin":"view/bg_panel_bar.png","width":"191","left":"0","height":"28","top":"0","bottom":"0","right":"0"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","toolTip":"输入关键词过滤","color":"#dddddd","skin":"comp/textinput.png","x":"80","var":"fliterTxt","y":"7","padding":"0,0,0,18","width":"148","left":"80","height":"20","right":"5"}},{"type":"Button","props":{"name":"refreshBtn","toolTip":"刷新页面列表","stateNum":"3","y":"5.5","skin":"view/refresh2.png","x":"3"}},{"type":"Clip","props":{"name":"ifShowAll","toolTip":"全部隐藏","clipY":"2","y":"10.5","skin":"view/clip_hide.png","x":"31"}},{"type":"Clip","props":{"name":"ifLockAll","toolTip":"全部锁定","clipY":"2","y":"6.5","skin":"view/clip_lock.png","x":"57"}},{"type":"Clip","props":{"y":"7","clipY":"2","skin":"view/search.png","index":"1","x":"82"}}],"type":"Box","props":{"var":"opBox","y":"291","right":"0","left":"0","height":"30","bottom":"0","x":"25"}},{"child":[{"child":[{"type":"Clip","props":{"y":"0","clipY":"2","right":"0","width":"184","left":"9","height":"26","name":"selectBox","skin":"comp/clip_selectBox.png","x":"12"}},{"type":"Label","props":{"padding":"4,0,0,0","y":"3","text":"label","width":"108","left":"38","height":"18","name":"label","color":"#d8d8d8","right":"50","x":"38"}},{"type":"Clip","props":{"y":"6","name":"arrow","clipY":"2","skin":"comp/clip_tree.png","x":"0"}},{"type":"Clip","props":{"clipX":"1","y":"7","clipY":"2","right":"38","mouseEnabled":"true","name":"ifShow","skin":"view/clip_hide.png","x":"143"}},{"type":"Clip","props":{"clipX":"1","y":"2","clipY":"2","right":"15","mouseEnabled":"true","name":"ifLock","skin":"view/clip_lock.png","x":"160"}},{"type":"Image","props":{"y":"5","name":"icon","skin":"comp/folder.png","x":"14"}}],"type":"Box","props":{"name":"render","right":"0","left":"0"}}],"type":"TreeEx","props":{"var":"displayTree","y":"45","scrollBarSkin":"comp/vscroll.png","bottom":"30","left":"2","top":"10","right":"2","x":"15"}}],"type":"DragView","props":{"height":"400","title":"层级","width":"200","scenecolor":"#dddddd"}};}
 		]);
 		return DisplayTreePanelUI;
 	})(DragView)
@@ -48315,7 +50855,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(PagePanelUI,
-		['uiView',function(){return this.uiView={"type":"DragView","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","height":"300","y":"0","right":"0","width":"200","left":"0","skin":"view/bg_body.png","top":"0","bottom":"0","x":"0"}},{"type":"Tree","child":[{"type":"Box","child":[{"type":"Clip","props":{"height":"24","y":"0","name":"selectBox","left":"9","skin":"comp/clip_selectBox.png","clipY":"2","right":"0","x":"13"}},{"type":"Image","props":{"skin":"comp/folder.png","name":"icon","y":"3","x":"15"}},{"type":"Label","props":{"y":"1","padding":"4,0,0,0","text":"label","width":"150","left":"38","height":"22","name":"label","color":"#d8d8d8","right":"0","x":"33"}},{"type":"Clip","props":{"skin":"comp/clip_tree.png","y":"5","clipY":"2","name":"arrow","x":"0"}}],"props":{"name":"render","right":"0","left":"0"}}],"props":{"y":"22","right":"2","width":"190","x":"306","left":"2","height":"260","top":"5","scrollBarSkin":"comp/vscroll.png","bottom":"29","var":"pageTree"}},{"type":"Box","child":[{"type":"Image","props":{"sizeGrid":"3,3,3,3","height":"28","right":"0","width":"191","left":"0","skin":"view/bg_panel_bar.png","top":"0","bottom":"0"}},{"type":"TextInput","props":{"sizeGrid":"5,5,5,5","skin":"comp/textinput.png","x":"80","color":"#dddddd","var":"fliterTxt","toolTip":"输入关键词过滤","y":"7","width":"148","left":"80","height":"20","padding":"0,0,0,18","right":"5"}},{"type":"Button","props":{"toolTip":"打开所在目录","height":"21","y":"6","stateNum":"3","width":"21","skin":"view/login2.png","name":"openDirBtn","x":"3"}},{"type":"Button","props":{"toolTip":"设置默认属性","y":"6","stateNum":"3","skin":"view/settings2.png","name":"setPropBtn","x":"29"}},{"type":"Button","props":{"toolTip":"刷新页面列表","y":"7","stateNum":"3","skin":"view/refresh2.png","name":"refreshBtn","x":"55"}},{"type":"Clip","props":{"skin":"view/search.png","y":"7","clipY":"2","index":"1","x":"79"}}],"props":{"var":"opBox","y":"281","right":"0","left":"0","height":"30","bottom":"0","x":"15"}}],"props":{"height":"300","scenecolor":"#dddddd","title":"项目","width":"200"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"0","bottom":"0","width":"200","left":"0","height":"300","top":"0","skin":"view/bg_body.png","right":"0","x":"0"}},{"child":[{"child":[{"type":"Clip","props":{"y":"0","clipY":"2","right":"0","left":"9","height":"24","name":"selectBox","skin":"comp/clip_selectBox.png","x":"13"}},{"type":"Image","props":{"name":"icon","y":"3","skin":"comp/folder.png","x":"15"}},{"type":"Label","props":{"padding":"4,0,0,0","y":"1","text":"label","width":"150","left":"38","height":"22","name":"label","color":"#d8d8d8","right":"0","x":"33"}},{"type":"Clip","props":{"y":"5","name":"arrow","clipY":"2","skin":"comp/clip_tree.png","x":"0"}}],"type":"Box","props":{"name":"render","right":"0","left":"0"}}],"type":"Tree","props":{"var":"pageTree","y":"22","scrollBarSkin":"comp/vscroll.png","bottom":"29","width":"190","left":"2","height":"260","top":"5","right":"2","x":"306"}},{"child":[{"type":"Image","props":{"sizeGrid":"3,3,3,3","skin":"view/bg_panel_bar.png","width":"191","left":"0","height":"28","top":"0","bottom":"0","right":"0"}},{"type":"TextInput","props":{"sizeGrid":"5,5,5,5","toolTip":"输入关键词过滤","color":"#dddddd","skin":"comp/textinput.png","x":"80","var":"fliterTxt","y":"7","padding":"0,0,0,18","width":"148","left":"80","height":"20","right":"5"}},{"type":"Button","props":{"toolTip":"打开所在目录","name":"openDirBtn","stateNum":"3","width":"21","height":"21","y":"6","skin":"view/login2.png","x":"3"}},{"type":"Button","props":{"name":"setPropBtn","toolTip":"设置默认属性","stateNum":"3","y":"6","skin":"view/settings2.png","x":"29"}},{"type":"Button","props":{"name":"refreshBtn","toolTip":"刷新页面列表","stateNum":"3","y":"7","skin":"view/refresh2.png","x":"55"}},{"type":"Clip","props":{"y":"7","clipY":"2","skin":"view/search.png","index":"1","x":"79"}}],"type":"Box","props":{"var":"opBox","y":"281","right":"0","left":"0","height":"30","bottom":"0","x":"15"}}],"type":"DragView","props":{"height":"300","title":"项目","width":"200","scenecolor":"#dddddd"}};}
 		]);
 		return PagePanelUI;
 	})(DragView)
@@ -48337,7 +50877,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(PropPanelUI,
-		['uiView',function(){return this.uiView={"type":"DragView","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","height":"300","y":"0","bottom":"0","width":"200","left":"0","skin":"view/bg_body.png","top":"0","right":"0","x":"0"}},{"type":"Image","props":{"var":"typeIcon","skin":"comp/image.png","y":"10","x":"7"}},{"type":"Label","props":{"y":"10","text":"label","x":"34","color":"#ffff00","fontSize":"14","bold":"true","var":"typeLbl"}}],"props":{"scenecolor":"#dddddd","minWidth":"200","title":"属性","mouseEnabled":"true"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"0","right":"0","width":"200","left":"0","height":"300","top":"0","skin":"view/bg_body.png","bottom":"0","x":"0"}},{"type":"Image","props":{"var":"typeIcon","y":"10","skin":"comp/image.png","x":"7"}},{"type":"Label","props":{"var":"typeLbl","y":"10","text":"label","color":"#ffff00","fontSize":"14","bold":"true","x":"34"}}],"type":"DragView","props":{"scenecolor":"#dddddd","minWidth":"200","title":"属性","mouseEnabled":"true"}};}
 		]);
 		return PropPanelUI;
 	})(DragView)
@@ -48361,7 +50901,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(ResPanelUI,
-		['uiView',function(){return this.uiView={"type":"DragView","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","height":"300","y":"48","right":"0","width":"200","left":"0","skin":"view/bg_body.png","top":"0","bottom":"0","x":"415"}},{"type":"Tree","child":[{"type":"Box","child":[{"type":"Clip","props":{"height":"25","y":"0","name":"selectBox","left":"9","skin":"comp/clip_selectBox.png","clipY":"2","right":"0","x":"13"}},{"type":"Image","props":{"skin":"comp/folder.png","name":"icon","y":"4","x":"14"}},{"type":"Label","props":{"y":"2","padding":"4,0,0,0","text":"label","width":"150","left":"38","height":"22","name":"label","color":"#d8d8d8","right":"0","x":"33"}},{"type":"Clip","props":{"skin":"comp/clip_tree.png","y":"6","clipY":"2","name":"arrow","x":"0"}}],"props":{"name":"render","right":"0","left":"0"}}],"props":{"y":"552","right":"2","width":"196","x":"173","left":"2","height":"136","top":"112","scrollBarSkin":"comp/vscroll.png","bottom":"29","var":"resTree"}},{"type":"Image","props":{"sizeGrid":"3,3,3,3","y":"3","width":"198","left":"1","height":"100","var":"resViewer","right":"1","x":"222"}},{"type":"Image","props":{"left":"2","skin":"comp/line.png","y":"106","right":"2","x":"2"}},{"type":"Box","child":[{"type":"Image","props":{"sizeGrid":"3,3,3,3","height":"28","right":"0","width":"191","left":"0","skin":"view/bg_panel_bar.png","top":"0","bottom":"0"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","skin":"comp/textinput.png","x":"80","color":"#dddddd","var":"fliterTxt","toolTip":"输入关键词过滤","y":"7","width":"148","left":"80","height":"20","padding":"0,0,0,18","right":"5"}},{"type":"Button","props":{"toolTip":"打开所在目录","y":"6","stateNum":"3","skin":"view/login2.png","name":"openDirBtn","x":"3"}},{"type":"Button","props":{"toolTip":"设置默认属性","y":"6","stateNum":"3","skin":"view/settings2.png","name":"setPropBtn","x":"29"}},{"type":"Button","props":{"toolTip":"刷新资源树","y":"7","stateNum":"3","skin":"view/refresh2.png","name":"refreshBtn","x":"55"}},{"type":"Clip","props":{"skin":"view/search.png","y":"7","clipY":"2","index":"1","x":"79"}}],"props":{"var":"opBox","y":"271","right":"0","width":"198","left":"0","height":"30","bottom":"0","x":"1"}}],"props":{"height":"300","scenecolor":"#dddddd","title":"资源","width":"200"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"48","bottom":"0","width":"200","left":"0","height":"300","top":"0","skin":"view/bg_body.png","right":"0","x":"415"}},{"child":[{"child":[{"type":"Clip","props":{"y":"0","clipY":"2","right":"0","left":"9","height":"25","name":"selectBox","skin":"comp/clip_selectBox.png","x":"13"}},{"type":"Image","props":{"name":"icon","y":"4","skin":"comp/folder.png","x":"14"}},{"type":"Label","props":{"padding":"4,0,0,0","y":"2","text":"label","width":"150","left":"38","height":"22","name":"label","color":"#d8d8d8","right":"0","x":"33"}},{"type":"Clip","props":{"y":"6","name":"arrow","clipY":"2","skin":"comp/clip_tree.png","x":"0"}}],"type":"Box","props":{"name":"render","right":"0","left":"0"}}],"type":"Tree","props":{"var":"resTree","y":"552","scrollBarSkin":"comp/vscroll.png","bottom":"29","width":"196","left":"2","height":"136","top":"112","right":"2","x":"173"}},{"type":"Image","props":{"sizeGrid":"3,3,3,3","y":"3","width":"198","left":"1","var":"resViewer","height":"100","right":"1","x":"222"}},{"type":"Image","props":{"left":"2","y":"106","skin":"comp/line.png","right":"2","x":"2"}},{"child":[{"type":"Image","props":{"sizeGrid":"3,3,3,3","skin":"view/bg_panel_bar.png","width":"191","left":"0","height":"28","top":"0","bottom":"0","right":"0"}},{"type":"TextInput","props":{"sizeGrid":"3,3,3,3","toolTip":"输入关键词过滤","color":"#dddddd","skin":"comp/textinput.png","x":"80","var":"fliterTxt","y":"7","padding":"0,0,0,18","width":"148","left":"80","height":"20","right":"5"}},{"type":"Button","props":{"name":"openDirBtn","toolTip":"打开所在目录","stateNum":"3","y":"6","skin":"view/login2.png","x":"3"}},{"type":"Button","props":{"name":"setPropBtn","toolTip":"设置默认属性","stateNum":"3","y":"6","skin":"view/settings2.png","x":"29"}},{"type":"Button","props":{"name":"refreshBtn","toolTip":"刷新资源树","stateNum":"3","y":"7","skin":"view/refresh2.png","x":"55"}},{"type":"Clip","props":{"y":"7","clipY":"2","skin":"view/search.png","index":"1","x":"79"}}],"type":"Box","props":{"var":"opBox","y":"271","right":"0","width":"198","left":"0","height":"30","bottom":"0","x":"1"}}],"type":"DragView","props":{"height":"300","title":"资源","width":"200","scenecolor":"#dddddd"}};}
 		]);
 		return ResPanelUI;
 	})(DragView)
@@ -48383,7 +50923,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(CompPanelUI,
-		['uiView',function(){return this.uiView={"type":"DragView","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","height":"31","y":"20","bottom":"0","left":"0","skin":"view/bg_body.png","var":"bg","top":"0","right":"0","x":"20"}},{"type":"Box","child":[{"type":"Button","props":{"sizeGrid":"4,0,4,0","skin":"comp/button.png","labelColors":"#dddddd,#dddddd,#dddddd","label":"label"}}],"props":{"var":"groupBox","y":"0","bottom":"2","mouseEnabled":"true","left":"0","top":"2","right":"0","x":"0"}}],"props":{"height":"400","scenecolor":"#dddddd","title":"模板","width":"600"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"20","right":"0","left":"0","var":"bg","height":"31","top":"0","skin":"view/bg_body.png","bottom":"0","x":"20"}},{"child":[{"type":"Button","props":{"sizeGrid":"4,0,4,0","labelColors":"#dddddd,#dddddd,#dddddd","skin":"comp/button.png","label":"label"}}],"type":"Box","props":{"var":"groupBox","y":"0","bottom":"2","mouseEnabled":"true","x":"0","top":"2","right":"0","left":"0"}}],"type":"DragView","props":{"height":"400","title":"模板","width":"600","scenecolor":"#dddddd"}};}
 		]);
 		return CompPanelUI;
 	})(DragView)
@@ -48408,7 +50948,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(TimeLinePanelUI,
-		['uiView',function(){return this.uiView={"type":"DragView","child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","height":"300","y":"0","right":"0","width":"200","left":"0","skin":"view/bg_panel.png","top":"0","bottom":"0","x":"0"}},{"type":"TimeGrid","props":{"var":"timeLine","runtime":"laya.editor.view.timeline.TimeGrid","y":"0","x":"203"}},{"type":"HScrollBar","props":{"height":"13","y":"284","right":"5","width":"266","x":"325","skin":"comp/hscroll.png","bottom":"5","var":"mHScroll"}},{"type":"VScrollBar","props":{"height":"264","y":"15","right":"2","width":"13","var":"mVScroll","skin":"comp/vscroll.png","top":"0","bottom":"20","x":"582"}},{"type":"PlayControl","props":{"runtime":"laya.editor.view.timeline.PlayControl","name":"playControl","bottom":"2","y":"277","right":"280","x":"221"}}],"props":{"scenecolor":"#dddddd","title":"时间轴","width":"600","left":"0","height":"300","minWidth":"400","bottom":"0","right":"0"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"50,15,15,15","y":"0","bottom":"0","width":"200","left":"0","height":"300","top":"0","skin":"view/bg_panel.png","right":"0","x":"0"}},{"type":"TimeGrid","props":{"var":"timeLine","runtime":"laya.editor.view.timeline.TimeGrid","y":"0","x":"203"}},{"type":"HScrollBar","props":{"var":"mHScroll","y":"284","bottom":"5","width":"266","height":"13","skin":"comp/hscroll.png","right":"5","x":"325"}},{"type":"VScrollBar","props":{"var":"mVScroll","y":"15","skin":"comp/vscroll.png","width":"13","height":"264","top":"0","bottom":"20","right":"2","x":"582"}},{"type":"PlayControl","props":{"runtime":"laya.editor.view.timeline.PlayControl","name":"playControl","bottom":"2","y":"277","right":"280","x":"221"}}],"type":"DragView","props":{"title":"时间轴","width":"600","scenecolor":"#dddddd","height":"300","minWidth":"400","bottom":"0","right":"0","left":"0"}};}
 		]);
 		return TimeLinePanelUI;
 	})(DragView)
@@ -48429,7 +50969,7 @@ window.Laya=(function(window,document){
 		}
 
 		__static(UIPanelUI,
-		['uiView',function(){return this.uiView={"type":"DragView","child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"-72","bottom":"0","left":"0","skin":"view/bg_body2.png","top":"0","right":"0","x":"472"}},{"type":"Image","props":{"sizeGrid":"3,3,3,3","height":"25","y":"0","width":"164","left":"0","skin":"view/bg_panel_layoutrec.png","right":"0","x":"0"}},{"type":"Tab","props":{"var":"tab","skin":"comp/tab.png","y":"0","labelColors":"#aaaaaa,#aaaaaa,#aaaaaa","x":"0"}}],"props":{"title":"UI","scenecolor":"#dddddd"}};}
+		['uiView',function(){return this.uiView={"child":[{"type":"Image","props":{"sizeGrid":"4,4,4,4","y":"-72","right":"0","left":"0","top":"0","skin":"view/bg_body2.png","bottom":"0","x":"472"}},{"type":"Image","props":{"sizeGrid":"3,3,3,3","y":"0","right":"0","width":"164","left":"0","height":"25","skin":"view/bg_panel_layoutrec.png","x":"0"}},{"type":"Tab","props":{"var":"tab","y":"0","labelColors":"#aaaaaa,#aaaaaa,#aaaaaa","skin":"comp/tab.png","x":"0"}}],"type":"DragView","props":{"title":"UI","scenecolor":"#dddddd"}};}
 		]);
 		return UIPanelUI;
 	})(DragView)
@@ -48744,7 +51284,7 @@ window.Laya=(function(window,document){
 			this._menuMap={};
 			this._menuContexts={
 				item0:[ "转换项目","","设置项目(F9)"],
-				item1:["新建目录(Ctrl+D)","新建文件(Ctrl+N)","","设置页面(Ctrl+P)","资源转换工具"],
+				item1:["新建目录(Ctrl+D)","新建文件(Ctrl+N)","","设置页面(Ctrl+P)","资源转换工具","图集打包工具"],
 				item2:["撤销(Ctrl+Z)","重做(Ctrl+Y)","","删除(Delete)","复制(Ctrl+C)","粘贴(Ctrl+V)","原位粘贴(Ctrl+Shift+V)","剪贴(Ctrl+X)","全选(Ctrl+A)","","移动组件(方向键)","快速移动(Ctrl+方向键)","","转换为容器(Ctrl+B)","移除容器(Ctrl+U)","重复复制(Ctrl+R)","定位资源(Ctrl+K)","","查找替换(Ctrl+F)","保存文件(Ctrl+S)","保存所有文件(Ctrl+Shift+S)"],
 				item3:["放大视图(Ctrl++)","缩小视图(Ctrl+-)","恢复视图(Ctrl+|)","","拖动视图(鼠标右键)","显示/隐藏参考视图(F8)","显示/隐藏标尺(Ctrl+Shift+R)","","节点向上(Ctrl+↑)","节点向下(Ctrl+↓)"],
 				item4:["项目面板","资源面板","属性面板","层级面板","模板面板","","恢复面板位置(F3)"],
@@ -48753,6 +51293,7 @@ window.Laya=(function(window,document){
 				item7:["关于","帮助"]
 			};
 			MenuBar.__super.call(this);
+			MenuBar.registButton("layaToolsMenu","骨骼动画转换",Utils1.bind(SkeletonConvert.instance.start,SkeletonConvert.instance));
 			Laya.stage.on("click",this,this.onStageClick);
 			this.tab.on("mousedown",this,this.onTabMouseDown);
 			this.tab.on("click",this,this.onTabClick);
@@ -48763,7 +51304,7 @@ window.Laya=(function(window,document){
 			this.backBtn.on("click",this,this.onBackBtnClick);
 			this.closeBtn.on("click",this,this.onCloseBtnClick);
 			this.switchBtn.on("click",this,this.onSwitchBtnDown);
-			var img=new Image2();
+			var img=new Image();
 			img.skin="view/editmode.png";
 			img.pos(1,6);
 			this.switchBtn.addChild(img);
@@ -49040,6 +51581,9 @@ window.Laya=(function(window,document){
 					case "资源转换工具":
 						CMDShell.exeFile(FileManager.getAppPath("libs/LayaAirTool/LayaAirTool.exe"),null,null);
 						break ;
+					case "图集打包工具":
+						PackAltas.instance.start();
+						break ;
 					case "定位资源(Ctrl+K)":
 						IDEEvent.emitKeyEvent(75,true,false);
 						break ;
@@ -49081,6 +51625,13 @@ window.Laya=(function(window,document){
 			return MenuBar._instance ? MenuBar._instance :MenuBar._instance=new MenuBar();
 		},laya.editor.ui.MenuBarUI._$SET_instance);
 
+		MenuBar.registButton=function(id,title,fun){
+			var registFun=Browser.window["addMenuListItem"];
+			if(registFun!=null){
+				registFun(id,title,fun);
+			}
+		}
+
 		MenuBar._instance=null
 		return MenuBar;
 	})(MenuBarUI)
@@ -49117,6 +51668,7 @@ window.Laya=(function(window,document){
 			this._lastSelectXml=null;
 			this.ruleSideLen=2;
 			this._gridPoints=[new Point(),new Point()];
+			this.preXmlStr=null;
 			UIViewer.__super.call(this);
 			this._ruleH=new RuleGrid();
 			this._ruleV=new RuleGrid();
@@ -49135,6 +51687,9 @@ window.Laya=(function(window,document){
 			this.designView.addChild(this._design);
 			this.tab.selectHandler=new Handler(this,this.onTabSelect);
 			this.tab.selectedIndex=0;
+			this.tab.visible=false;
+			this.typeBtn.index=1;
+			this.typeBtn.on("click",this,this.typeBtnClick);
 			this.addChild(this._ruleH);
 			this._ruleH.y=this.designView.y-0;
 			this._ruleH.type=0;
@@ -49143,12 +51698,20 @@ window.Laya=(function(window,document){
 			this._ruleV.y=this._ruleH.y+5;
 			this._ruleV.type=1;
 			this._ruleV.x=this.ruleSideLen;
+			this._ruleRangeLayer.mouseEnabled=false;
 			this.addChild(this._ruleRangeLayer);
 			this.onResize(null);
 			this.on("display",this,this.addListens);
 			this.on("undisplay",this,this.removeListens);
 			this.compInfo.color=this.scaleInfo.color="#636363";
 			this.setScaleInfo(1);
+			this.addChild(this.typeBtn);
+			this.codeView.wordWrap=true;
+		}
+
+		__proto.typeBtnClick=function(e){
+			this.typeBtn.index=1-this.typeBtn.index;
+			this.onTabSelect(1-this.typeBtn.index);
 		}
 
 		__proto.addListens=function(){
@@ -49225,7 +51788,6 @@ window.Laya=(function(window,document){
 
 		// _design.endDrag();
 		__proto.onDesignRightMouseDown=function(e){
-			console.log("onDesignRightMouseDown");
 			this._design.startDrag();
 			Laya.stage.once("rightmouseup",this,this.onDesignRightMouseUp);
 		}
@@ -49254,9 +51816,14 @@ window.Laya=(function(window,document){
 				tPoint=this._design.globalToLocal(tPoint);
 			}
 			this._ruleH.width=this.width;
+			var ruleWidth=50;
+			this._ruleH.setBounds(new Rectangle(0,0,this._ruleH.width,ruleWidth));
 			this._ruleH.renderMe(this.width,this._gridPoints[0].x,this._gridPoints[1].x);
 			this._ruleV.height=this.height-40;
+			this._ruleV.setBounds(new Rectangle(0,0,ruleWidth,this._ruleV.height));
+			this._ruleV.cacheAsBitmap=false;
 			this._ruleV.renderMe(this._ruleV.height,this._gridPoints[0].y,this._gridPoints[1].y);
+			this._ruleV.cacheAsBitmap=true;
 		}
 
 		/**根据页面地址加载页面*/
@@ -49312,19 +51879,79 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.showAndHidePanels=function(){}
+		//}
+		__proto.findSelecteStrPos=function(xmlStr,compID){
+			if(compID<1)return;
+			var pos=0;
+			pos=xmlStr.indexOf("compId="+compID+"\"");
+			if(pos<0)return;
+			var posBegin=0;
+			posBegin=xmlStr.lastIndexOf("<",pos);
+			var i=0;
+			var compType;
+			var posEnd=0;
+			compType="";
+			for(i=posBegin+1;i<xmlStr.length;i++){
+				if(xmlStr.charAt(i)==" ")break ;
+				compType+=xmlStr.charAt(i);
+			};
+			var iCount=0;
+			iCount=1;
+			var tStr;
+			var isFirst=true;
+			for(i=pos;i<xmlStr.length;i++){
+				if(xmlStr.charAt(i)==">"){
+					iCount--;
+					if(xmlStr.charAt(i-1)=="/"&& isFirst){
+						if(iCount==0){
+							console.log("posOk");
+							posEnd=i+1;
+							break ;
+						}
+					};
+					tStr=xmlStr.substr(i-compType.length,compType.length);
+					if(tStr==compType&&iCount==0){
+						console.log("posOk");
+						posEnd=i+1;
+						break ;
+					}
+					isFirst=false;
+				}
+				if(xmlStr.charAt(i)=="<")iCount++;
+			}
+			console.log("wrapPos:",posBegin,posEnd,xmlStr.substring(posBegin,posEnd));
+		}
+
 		/**切换设计和代码视图*/
 		__proto.onTabSelect=function(index){
+			console.log("onTabSelect:",index);
 			this.viewStack.selectedIndex=index;
 			this._ruleH.visible=this._ruleV.visible=index==0;
+			var backData;
 			if (index==1){
-				this.stage.focus=this.codeView.textField;
 				var xmlStr;
-				xmlStr=DesignInfo.uiObjToXml(this._design.xml);
-				DesignInfo.xmlStrToUIObj(xmlStr);
+				xmlStr=DesignInfo.uiObjToXml(this._design.xml).toXMLString();
+				backData=DesignInfo.xmlStrToUIObj(xmlStr);
 				console.log("uiObjO:",this._design.xml);
+				var selecteID=0;
+				selecteID=this._design.xml.selecteID;
 				this.codeView.text=xmlStr;
-				this.codeView.textField.event("mousedown",Event.EMPTY.setTo("mousedown",this.codeView.textField,this.codeView.textField));
-			}else {}
+				this.preXmlStr=xmlStr;
+				this.findSelecteStrPos(xmlStr.toString(),selecteID);
+				console.log("uiObjBack:",backData);
+				}else {
+				if(this.preXmlStr&&this.preXmlStr!=this.codeView.text){
+					console.log("xml changed");
+					try{
+						backData=DesignInfo.xmlStrToUIObj(this.codeView.text);
+						this._design.changeXml(backData);
+						}catch(e){
+						Alert.show("文本格式有错误！修改未生效");
+					}
+					}else{
+					console.log("xml nochange");
+				}
+			}
 			this.showAndHidePanels();
 		}
 
@@ -49472,6 +52099,7 @@ window.Laya=(function(window,document){
 			label.width=80;
 			label.height=20;
 			label.toolTip=tips;
+			label.textField.overflow=Text.HIDDEN;
 			if (this.isSpecial){
 				label.width=60;
 				}else{
@@ -49862,7 +52490,7 @@ window.Laya=(function(window,document){
 				this.btnDic[_btnNames[i]]=this.getChildByName(_btnNames[i]);
 			}
 			DisControlTool.removeItems(this._BtnList);
-			this.allBtns=Utils1.setValueArr([],this._BtnList);
+			this.allBtns=ObjectTools.setValueArr([],this._BtnList);
 			this.typeBtnsDic["Common"]=this.commonBtns;
 			this.typeBtnsDic["Zoom"]=this.zoomBtns;
 			this.typeBtnsDic["Align"]=this.alignBtns;
@@ -49880,7 +52508,7 @@ window.Laya=(function(window,document){
 			len=names.length;
 			for(i=0;i<len;i++){
 				if(names[i]=="|"){
-					names[i]=new Image2("view/line.png");
+					names[i]=new Image("view/line.png");
 					}else{
 					names[i]=this.btnDic[names[i]];
 				}
@@ -49896,12 +52524,12 @@ window.Laya=(function(window,document){
 			var tType;
 			var tTypeBtns;
 			len=types.length;
-			Utils1.clearArr(this._BtnList);
+			ObjectTools.clearArr(this._BtnList);
 			for(i=0;i<len;i++){
 				if(this._BtnList.length>0){
-					this._BtnList.push(new Image2("view/line.png"));
+					this._BtnList.push(new Image("view/line.png"));
 				}
-				Utils1.concatArr(this._BtnList,this.typeBtnsDic[types[i]]);
+				ObjectTools.concatArr(this._BtnList,this.typeBtnsDic[types[i]]);
 			}
 			DisControlTool.addItems(this._BtnList,this);
 			this.changeSize();
@@ -49923,7 +52551,7 @@ window.Laya=(function(window,document){
 			if (btn){
 				switch (btn.name){
 					case "addFolder":
-						ShortcutManager.exeKey(77,true);
+						ShortcutManager.exeKey(68,true);
 						break ;
 					case "addPage":
 						console.log("addPage 暂时被劫持");
@@ -50029,7 +52657,7 @@ window.Laya=(function(window,document){
 			this.imgHeight=NaN;
 			this.tImg=null;
 			TemplateItem.__super.call(this);
-			this.tImg=new Image2();
+			this.tImg=new Image();
 			this.tImg.on("loaded",this,this.adptImg);
 			this.imgWidth=this.imgBg.width;
 			this.imgHeight=this.imgBg.height;
@@ -50701,7 +53329,7 @@ window.Laya=(function(window,document){
 
 		__proto.setUpOtherList=function(_items){
 			if(!this._otherBack){
-				this._otherBack=new Image2();
+				this._otherBack=new Image();
 				this._otherBack.skin="view/bg_menu.png";
 			}
 			this._otherContainer.removeChildren();
@@ -50882,7 +53510,7 @@ window.Laya=(function(window,document){
 		__proto.onTextFieldLink=function(e){}
 		//}
 		__proto.start=function(){
-			this.currVer.text="当前版本："+"0.9.7";
+			this.currVer.text="当前版本："+"0.9.9 beta";
 			this.popup();
 		}
 
@@ -50956,7 +53584,7 @@ window.Laya=(function(window,document){
 
 		AddProject._instance=null
 		__static(AddProject,
-		['str',function(){return this.str="<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+"<project version=\""+"0.9.7"+"\">\n"+"	<!--assets异步资源目录，在这些目录里面的资源，不会被编译到swf里面，但会复制到发布目录-->\n"+"	<asynRes>img,temp,sound</asynRes>\n"+"	<!--assets不处理目录，在这些目录里面的资源，不会做任何处理（包括复制）-->\n"+"	<unDealRes>embed</unDealRes>\n"+"	<!--资源类型-->\n"+"	<resTypes>png,jpg</resTypes>\n"+"	<!--发布资源导出目录-->\n"+"	<resExportPath>bin/h5</resExportPath>\n"+"	<!--UICode导出目录-->\n"+"	<codeExportPath>src/game/ui</codeExportPath>\n"+"	<!--UICode默认导入类-->\n"+"	<codeImports>import laya.ui.*;</codeImports>\n"+"	<codeImportsJS>var View=laya.ui.View;\nvar Dialog=laya.ui.Dialog;</codeImportsJS>\n"+"	<!--UI模式（0:内嵌模式，1:加载模式）-->\n"+"	<uiType>0</uiType>\n"+"	<!--UI导出目录（加载模式可用）-->\n"+"	<uiExportPath>bin/ui.swf</uiExportPath>\n"+"	<!--容器列表（转换为容器功能使用）-->\n"+"	<boxTypes>Box,List,Tab,RadioGroup,ViewStack,Panel,HBox,VBox,Tree</boxTypes>\n"+"	<!--页面类型（用于自定义页面继承）-->\n"+"	<pageTypes>View,Dialog</pageTypes>\n"+"	<!--多模块开发时共用的资源目录-->\n"+"	<shareResPath></shareResPath>\n"+"	<!--语言类型-->\n"+"	<codeType>0</codeType>\n"+"</project>";}
+		['str',function(){return this.str="<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+"<project version=\""+"0.9.9 beta"+"\">\n"+"	<!--assets异步资源目录，在这些目录里面的资源，不会被编译到swf里面，但会复制到发布目录-->\n"+"	<asynRes>img,temp,sound</asynRes>\n"+"	<!--assets不处理目录，在这些目录里面的资源，不会做任何处理（包括复制）-->\n"+"	<unDealRes>embed</unDealRes>\n"+"	<!--资源类型-->\n"+"	<resTypes>png,jpg</resTypes>\n"+"	<!--发布资源导出目录-->\n"+"	<resExportPath>bin/h5</resExportPath>\n"+"	<!--UICode导出目录-->\n"+"	<codeExportPath>src/game/ui</codeExportPath>\n"+"	<!--UICode默认导入类-->\n"+"	<codeImports>import laya.ui.*;</codeImports>\n"+"	<codeImportsJS>var View=laya.ui.View;\nvar Dialog=laya.ui.Dialog;</codeImportsJS>\n"+"	<!--UI模式（0:内嵌模式，1:加载模式）-->\n"+"	<uiType>0</uiType>\n"+"	<!--UI导出目录（加载模式可用）-->\n"+"	<uiExportPath>bin/ui.swf</uiExportPath>\n"+"	<!--容器列表（转换为容器功能使用）-->\n"+"	<boxTypes>Box,List,Tab,RadioGroup,ViewStack,Panel,HBox,VBox,Tree</boxTypes>\n"+"	<!--页面类型（用于自定义页面继承）-->\n"+"	<pageTypes>View,Dialog</pageTypes>\n"+"	<!--多模块开发时共用的资源目录-->\n"+"	<shareResPath></shareResPath>\n"+"	<!--语言类型-->\n"+"	<codeType>0</codeType>\n"+"</project>";}
 		]);
 		return AddProject;
 	})(AddProjectUI)
@@ -51334,6 +53962,122 @@ window.Laya=(function(window,document){
 	})(FindUnUsedResUI)
 
 
+	/**
+	*
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2016-5-5 下午2:37:26
+	*/
+	//class laya.editor.view.other.PackAltas extends laya.editor.ui.other.PackAltasUI
+	var PackAltas=(function(_super){
+		function PackAltas(){
+			PackAltas.__super.call(this);
+			this.resSrcPathBtn.on("click",this,this.onSrcPathBtnClick);
+			this.resExportPathBtn.on("click",this,this.onResExportPathBtnClick);
+		}
+
+		__class(PackAltas,'laya.editor.view.other.PackAltas',_super);
+		var __proto=PackAltas.prototype;
+		__proto.init=function(){
+			ProjectSetting.adptPaths();
+			this.resExportPath.text="";
+			this.resSrcPath.text="";
+			this.textureWidth.text=StringTool.trimSide(ProjectSetting.textureWidth.toString());
+			this.textureHeight.text=StringTool.trimSide(ProjectSetting.textureHeight.toString());
+			this.picWidth.text=StringTool.trimSide(ProjectSetting.picWidth.toString());
+			this.picHeight.text=StringTool.trimSide(ProjectSetting.picHeight.toString());
+			this.power2.selected=StringTool.trimSide(ProjectSetting.power2)=="true";
+			this.trimempty.selected=StringTool.trimSide(ProjectSetting.trimempty)=="true";
+		}
+
+		__proto.start=function(){
+			this.init();
+			this.popup();
+		}
+
+		__proto.close=function(type){
+			if (type=="sure"){
+				if(PackAltas.folderOK(this.resSrcPath.text)&&PackAltas.folderOK(this.resExportPath.text)){
+					if(FileTools.exist(this.resSrcPath.text)){
+						this.packWork();
+						laya.ui.Dialog.prototype.close.call(this,type);
+						}else{
+						MessageManager.instance.show("图集资源目录不存在！！");
+					}
+					}else{
+					MessageManager.instance.show("请设置图集资源目录和输出目录！！");
+				}
+				}else{
+				laya.ui.Dialog.prototype.close.call(this,type);
+			}
+		}
+
+		__proto.packWork=function(){
+			var cmd="\""+FileManager.getAppPath("libs/TP/TileAtlasPacker")+"\""+
+			" -maxAltasWidth="+this.textureWidth.text+" -maxAltasHeight="+this.textureHeight.text+
+			" -tileWidthLimit="+this.picWidth.text+" -tileHeightLimit="+this.picHeight.text+
+			" "+"\""+this.resSrcPath.text+"\""+
+			" -outputDir="+"\""+this.resExportPath.text+"\"";
+			if(true){
+				cmd+=" -force=true";
+			}
+			if(this.power2.selected){
+				cmd+=" -powerOfTwo=true";
+			}
+			if(this.trimempty.selected){
+				cmd+=" -trim=true";
+				}else{
+				cmd+=" -trim=false";
+			}
+			console.log("exportPic:",cmd);
+			CMDShell.execute(cmd,PackAltas.packingCallback);
+			console.log(FileManager.getWorkPath(ProjectSetting.resExportPath));
+			Waiting.show("打包中，请稍等。。","打包图集");
+		}
+
+		__proto.onResExportPathBtnClick=function(event){
+			console.log(FileManager.getWorkPath(ProjectSetting.resExportPath));
+			DialogTools.showOpenDir("选择图集输出目录",Utils1.bind(this.onFileSelect1,this));
+		}
+
+		__proto.onFileSelect1=function(path){
+			console.log("dir select:"+path);
+			if (!path)return;
+			this.resExportPath.text=path[0];
+		}
+
+		__proto.onSrcPathBtnClick=function(event){
+			DialogTools.showOpenDir("选择资源目录",Utils1.bind(this.onFileSelect2,this));
+		}
+
+		__proto.onFileSelect2=function(path){
+			if (!path)return;
+			this.resSrcPath.text=path[0];
+		}
+
+		__getset(1,PackAltas,'instance',function(){
+			return PackAltas._instance ? PackAltas._instance :PackAltas._instance=new PackAltas();
+		},laya.editor.ui.other.PackAltasUI._$SET_instance);
+
+		PackAltas.packingCallback=function(err,stdOut,stdErr){
+			console.log("err:",err);
+			console.log("stdErr:",stdErr);
+			console.log("stdOut:",CMDShell.iconv.decode(stdOut,"gbk"));
+			Waiting.hide();
+			MessageManager.instance.show("打包成功");
+		}
+
+		PackAltas.folderOK=function(path){
+			if(path=="")return false;
+			return true;
+		}
+
+		PackAltas._instance=null
+		return PackAltas;
+	})(PackAltasUI)
+
+
 	/**预览
 	*@author yung
 	*/
@@ -51462,6 +54206,7 @@ window.Laya=(function(window,document){
 		__proto.close=function(type){
 			laya.ui.Dialog.prototype.close.call(this,type);
 			if (type=="sure"){
+				ExportManager.configChanged=true;
 				ProjectSetting.resTypes=this.resTypes.text.split(",");
 				ProjectSetting.resExportPath=StringTool.trimSide(this.resExportPath.text);
 				ProjectSetting.codeExportPath=StringTool.trimSide(this.codeExportPath.text);
@@ -51544,6 +54289,104 @@ window.Laya=(function(window,document){
 		SetProject._instance=null
 		return SetProject;
 	})(SetProjectUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.editor.view.other.SkeletonConvert extends laya.editor.ui.other.SkeletonConvertUI
+	var SkeletonConvert=(function(_super){
+		function SkeletonConvert(){
+			SkeletonConvert.__super.call(this);
+			this._dbTools=new laya.ide.dragonBones.DragonBoneTools();
+			this.resSrcPathBtn.on("click",this,this.onSrcPathBtnClick);
+			this.resExportPathBtn.on("click",this,this.onResExportPathBtnClick);
+		}
+
+		__class(SkeletonConvert,'laya.editor.view.other.SkeletonConvert',_super);
+		var __proto=SkeletonConvert.prototype;
+		__proto.init=function(){
+			this.resExportPath.text="";
+			this.resSrcPath.text="";
+		}
+
+		__proto.start=function(){
+			this.init();
+			this.popup();
+		}
+
+		__proto.close=function(type){
+			if (type=="sure"){
+				if(SkeletonConvert.folderOK(this.resSrcPath.text)&&SkeletonConvert.folderOK(this.resExportPath.text)){
+					if(FileTools.exist(this.resSrcPath.text)){
+						this.packWork();
+						laya.ui.Dialog.prototype.close.call(this,type);
+						}else{
+						MessageManager.instance.show("资源目录不存在！！");
+					}
+					}else{
+					MessageManager.instance.show("请设置资源目录和输出目录！！");
+				}
+				}else{
+				laya.ui.Dialog.prototype.close.call(this,type);
+			}
+		}
+
+		__proto.packWork=function(){
+			console.log("pack:",this.resExportPath.text);
+			SkeletonConvert._resExportPath=this.resExportPath.text;
+			Waiting.show("转换中，请稍等。。","转换");
+			this._dbTools.loadFile(this.resSrcPath.text,laya.editor.view.other.SkeletonConvert.packingCallback,laya.editor.view.other.SkeletonConvert.packFail);
+		}
+
+		__proto.onResExportPathBtnClick=function(event){
+			DialogTools.showOpenDir("选择输出目录",Utils.bind(this.onFileSelect1,this));
+		}
+
+		__proto.onFileSelect1=function(path){
+			console.log("dir select:"+path);
+			if (!path)return;
+			this.resExportPath.text=path[0];
+		}
+
+		__proto.onSrcPathBtnClick=function(event){
+			DialogTools.showOpenDir("选择目录",Utils.bind(this.onFileSelect2,this));
+		}
+
+		__proto.onFileSelect2=function(path){
+			if (!path)return;
+			this.resSrcPath.text=path[0];
+			if (this.resExportPath.text==""){
+				this.resExportPath.text=this.resSrcPath.text;
+			}
+		}
+
+		__getset(1,SkeletonConvert,'instance',function(){
+			return SkeletonConvert._instance ? SkeletonConvert._instance :SkeletonConvert._instance=new SkeletonConvert();
+		},laya.editor.ui.other.SkeletonConvertUI._$SET_instance);
+
+		SkeletonConvert.packingCallback=function(name,data){
+			console.log("pack:callBack:",name,data);
+			data=FileTools.toBuffer(data);
+			FileTools.createFile(name,data);
+			Waiting.hide();
+			MessageManager.instance.show("转换成功");
+		}
+
+		SkeletonConvert.packFail=function(msg){
+			Alert.show("转换失败\n"+msg);
+		}
+
+		SkeletonConvert.folderOK=function(path){
+			if(path=="")return false;
+			return true;
+		}
+
+		SkeletonConvert._instance=null
+		SkeletonConvert._resExportPath=null
+		return SkeletonConvert;
+	})(SkeletonConvertUI)
 
 
 	/**开始界面
@@ -52294,53 +55137,6 @@ window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
-	//class laya.editor.view.template.AddTemplate extends laya.editor.ui.template.AddTemplateUI
-	var AddTemplate=(function(_super){
-		function AddTemplate(){
-			this._srcPath=null;
-			AddTemplate.__super.call(this);
-		}
-
-		__class(AddTemplate,'laya.editor.view.template.AddTemplate',_super);
-		var __proto=AddTemplate.prototype;
-		__proto.initListener=function(){
-			Notice.listen("open_AddParticle",this,this.start);
-		}
-
-		__proto.start=function(srcPath,templateName){
-			(templateName===void 0)&& (templateName="template");
-			if (this.typeDrop.selectedIndex==-1){
-				this.typeDrop.selectedIndex=0;
-			}
-			this._srcPath=srcPath;
-			this.nameTxt.text=templateName;
-			this.popup();
-			Laya.stage.focus=this.nameTxt.textField;
-		}
-
-		__proto.close=function(type){
-			laya.ui.Dialog.prototype.close.call(this,type);
-			if (type=="sure"){
-				if (!Boolean(this.typeDrop.selectedLabel)){
-					return Alert.show("请选择模板目录");
-				}
-				TemplateManager.convertUIFileByPaths(this._srcPath,this.nameTxt.text,this.typeDrop.selectedLabel);
-			}
-		}
-
-		__getset(1,AddTemplate,'instance',function(){
-			return AddTemplate._instance ? AddTemplate._instance :AddTemplate._instance=new AddTemplate();
-		},laya.editor.ui.template.AddTemplateUI._$SET_instance);
-
-		AddTemplate._instance=null
-		return AddTemplate;
-	})(AddTemplateUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.editor.view.DisplayTreePanel extends laya.editor.ui.DisplayTreePanelUI
 	var DisplayTreePanel=(function(_super){
 		function DisplayTreePanel(){
@@ -52865,6 +55661,53 @@ window.Laya=(function(window,document){
 	})(DisplayTreePanelUI)
 
 
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.editor.view.template.AddTemplate extends laya.editor.ui.template.AddTemplateUI
+	var AddTemplate=(function(_super){
+		function AddTemplate(){
+			this._srcPath=null;
+			AddTemplate.__super.call(this);
+		}
+
+		__class(AddTemplate,'laya.editor.view.template.AddTemplate',_super);
+		var __proto=AddTemplate.prototype;
+		__proto.initListener=function(){
+			Notice.listen("open_AddParticle",this,this.start);
+		}
+
+		__proto.start=function(srcPath,templateName){
+			(templateName===void 0)&& (templateName="template");
+			if (this.typeDrop.selectedIndex==-1){
+				this.typeDrop.selectedIndex=0;
+			}
+			this._srcPath=srcPath;
+			this.nameTxt.text=templateName;
+			this.popup();
+			Laya.stage.focus=this.nameTxt.textField;
+		}
+
+		__proto.close=function(type){
+			laya.ui.Dialog.prototype.close.call(this,type);
+			if (type=="sure"){
+				if (!Boolean(this.typeDrop.selectedLabel)){
+					return Alert.show("请选择模板目录");
+				}
+				TemplateManager.convertUIFileByPaths(this._srcPath,this.nameTxt.text,this.typeDrop.selectedLabel);
+			}
+		}
+
+		__getset(1,AddTemplate,'instance',function(){
+			return AddTemplate._instance ? AddTemplate._instance :AddTemplate._instance=new AddTemplate();
+		},laya.editor.ui.template.AddTemplateUI._$SET_instance);
+
+		AddTemplate._instance=null
+		return AddTemplate;
+	})(AddTemplateUI)
+
+
 	/**页面列表
 	*@author yung
 	*/
@@ -52902,7 +55745,7 @@ window.Laya=(function(window,document){
 			this.pageTree.array=[];
 			this.pageTree.on("doubleclick",this,this.onPageTreeDoubleClick);
 			this.pageTree.on("keydown",this,this.onPageTreeKeyDown);
-			this.pageTree.on("rightclick",this,this.onTreeRightMouseDown);
+			this.pageTree.on("rightmousedown",this,this.onTreeRightMouseDown);
 			this.pageTree.mouseHandler=new Handler(this,this.onPageTreeMouse);
 			this.pageTree.renderHandler=new Handler(this,this.treeRender);
 			var menu=ContextMenu.createMenu("打开","重命名","转为模板","设置默认属性","删除","","新建页面","新建目录","打开所在目录");
@@ -53699,8 +56542,11 @@ window.Laya=(function(window,document){
 
 		/**刷新资源树*/
 		__proto.init=function(resPath,complete){
+			var force=false;
+			force=this._resPath==resPath;
 			this._resPath=resPath;
-			this.refresh(complete);
+			console.log("refreshRes init:",resPath);
+			this.refresh(complete,force);
 		}
 
 		__proto.onTreeMouse=function(e,index){
@@ -53745,9 +56591,10 @@ window.Laya=(function(window,document){
 		}
 
 		/**刷新*/
-		__proto.refresh=function(refreshComplete){
+		__proto.refresh=function(refreshComplete,force){
+			(force===void 0)&& (force=false);
 			console.log("refreshRes");
-			if(this.isRefreshing)return;
+			if(this.isRefreshing&&!force)return;
 			this._refreshComplete=refreshComplete;
 			this.isRefreshing=true;
 			ResFileManager.resLoadCompleteHandler=new Handler(this,this.createComplete);
@@ -53756,7 +56603,7 @@ window.Laya=(function(window,document){
 
 		//createComplete(null);
 		__proto.createComplete=function(){
-			console.log("try fresh resPanel");
+			console.log("refreshRes complete");
 			this.isRefreshing=false;
 			var arr;
 			arr=FileTools.getFileTreeArr(SystemSetting.assetsPath);
@@ -53875,7 +56722,7 @@ window.Laya=(function(window,document){
 			console.log("onResTreeChange");
 			if (this.resTree.selectedItem && !this.resTree.selectedItem.isDirectory){
 				var asset=this.resTree.selectedItem.path;
-				var img=new Image2();
+				var img=new Image();
 				img.skin=FileTools.getAbsPath(asset);
 				this.resViewer.addChild(img);
 				img.visible=false;
@@ -54260,7 +57107,7 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.dragComp=function(compData,target){
-			var img=new Image2();
+			var img=new Image();
 			img.skin=compData.image;
 			LayaBuilder.drag.doDrag(target,img,{type:"template",data:compData },new Point(5,5));
 		}
@@ -54317,7 +57164,7 @@ window.Laya=(function(window,document){
 			tUI.bottom=0;
 			this.groupBox.removeChildren();
 			this.groupBox.addChild(tUI);
-			Utils1.enableDisplayTree(tUI);
+			ObjectTools.enableDisplayTree(tUI);
 			this.adptSize();
 			Laya.timer.once(100,tUI,tUI.freshUI);
 		}
@@ -54335,7 +57182,7 @@ window.Laya=(function(window,document){
 			var groupList;
 			groupList=new GroupList();
 			groupList.setGroups(groups);
-			Utils1.enableDisplayTree(groupList);
+			ObjectTools.enableDisplayTree(groupList);
 			return groupList;
 		}
 
@@ -54343,7 +57190,7 @@ window.Laya=(function(window,document){
 			var group;
 			group=new ItemGroup();
 			group.setData(groupData.name,this.createGroupContent(groupData.items));
-			Utils1.enableDisplayTree(this.lastItem);
+			ObjectTools.enableDisplayTree(this.lastItem);
 			return group;
 		}
 
@@ -54423,7 +57270,7 @@ window.Laya=(function(window,document){
 
 		CompPanel._instance=null
 		__static(CompPanel,
-		['tipImg',function(){return this.tipImg=new Image2();}
+		['tipImg',function(){return this.tipImg=new Image();}
 		]);
 		return CompPanel;
 	})(CompPanelUI)
@@ -54699,10 +57546,17 @@ window.Laya=(function(window,document){
 			this._container.right=0;
 			this._container.mouseEnabled=true;
 			this.addChild(this._container);
+			this.on("mousewheel",this,this.mouseWheel);
 		}
 
 		__class(UIPanel,'laya.editor.view.UIPanel',_super);
 		var __proto=UIPanel.prototype;
+		__proto.mouseWheel=function(e){
+			if(KeyManager.I.isCommandKeyDown){
+				laya.editor.view.UIPanel.instance.setScale(e.delta/100);
+			}
+		}
+
 		__proto.initListener=function(){
 			Notice.listen("closePage",this,this.closePage);
 			Notice.listen("openPAGE",this,this.openPage);
@@ -55235,7 +58089,7 @@ window.Laya=(function(window,document){
 	})(UIPanelUI)
 
 
-	Laya.__init([LoaderManager,EventDispatcher,Timer,ShaderCompile,Browser,WebGLContext2D,Dialog,WebGLContext,AtlasGrid,RenderTargetMAX,DrawText]);
+	Laya.__init([EventDispatcher,ShaderCompile,Browser,WebGLContext2D,Dialog,LoaderManager,Timer,WebGLContext,AtlasGrid,RenderTargetMAX,DrawText]);
 	new LayaBuilder();
 
 })(window,document,Laya);

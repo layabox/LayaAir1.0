@@ -295,7 +295,7 @@ package laya.display {
 		
 		/** 当前文本的内容字符串。*/
 		public function get text():String {
-			return this._text;
+			return this._text || '';
 		}
 		
 		public function set text(value:String):void {
@@ -752,7 +752,7 @@ package laya.display {
 				var wordWrapWidth:Number = getWordWrapWidth();
 			}
 			
-			var lines:Array = text.split(/\r|\n|\\n/);
+			var lines:Array = text.replace(/\r\n/g, "\n").split("\n");
 			for (var i:int = 0, n:int = lines.length; i < n; i++) {
 				if (i < n - 1)
 					lines[i] += "\n"; //在换行处补上换行
@@ -796,23 +796,30 @@ package laya.display {
 			(maybeIndex == 0) && (maybeIndex = 1);
 			charsWidth = getTextWidth(line.substring(0, maybeIndex));
 			wordWidth = charsWidth;
-			for (var j:int = maybeIndex, m:int = line.length; j < m; j++) {
+			for (var j:int = maybeIndex, m:int = line.length; j < m; j++) 
+			{
+				// 逐字符测量后加入到总宽度中，在某些情况下自动换行不准确。
+				// 目前已知在全是字符1的自动换行就会出现这种情况。
+				// 考虑性能，保留这种非方式。
 				charsWidth = getTextWidth(line.charAt(j));
 				wordWidth += charsWidth;
 				if (wordWidth > wordWrapWidth) {
 					if (this.wordWrap) {
 						//截断换行单词
 						var newLine:String = line.substring(startIndex, j);
-						//按照英文单词字边界截取 因此将会无视中文
-						execResult = /\b\w+$/.exec(newLine);
-						if (execResult) {
-							j = execResult.index + startIndex;
-							//此行只够容纳这一个单词 强制换行
-							if (execResult.index == 0)
-								j += newLine.length;
-							//此行有多个单词 按单词分行
-							else
-								newLine = line.substring(startIndex, j);
+						if (newLine.charCodeAt(newLine.length - 1) < 255)
+						{
+							//按照英文单词字边界截取 因此将会无视中文
+							execResult = /[^\x20-]+$/.exec(newLine);
+							if (execResult) {
+								j = execResult.index + startIndex;
+								//此行只够容纳这一个单词 强制换行
+								if (execResult.index == 0)
+									j += newLine.length;
+								//此行有多个单词 按单词分行
+								else
+									newLine = line.substring(startIndex, j);
+							}
 						}
 						
 						//如果自动换行，则另起一行

@@ -273,14 +273,14 @@ package laya.ui {
 		 */
 		protected function loadComplete(url:String, img:Texture):void {
 			if (url === _skin && img) {
-				_clipWidth || (_clipWidth = Math.ceil(img.width / _clipX));
-				_clipHeight || (_clipHeight = Math.ceil(img.height / _clipY));
+				_clipWidth || (_clipWidth = Math.ceil(img.sourceWidth / _clipX));
+				_clipHeight || (_clipHeight = Math.ceil(img.sourceHeight / _clipY));
 				
 				_sources || (_sources = []);
 				_sources.length = 0;
 				for (var i:int = 0; i < _clipY; i++) {
 					for (var j:int = 0; j < _clipX; j++) {
-						_sources.push(Texture.create(img, _clipWidth * j, _clipHeight * i, _clipWidth, _clipHeight));
+						_sources.push(Texture.createFromTexture(img, _clipWidth * j, _clipHeight * i, _clipWidth, _clipHeight));
 					}
 				}
 				index = _index;

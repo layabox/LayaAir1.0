@@ -1,7 +1,10 @@
 package laya.filters
 {
 	import laya.utils.Browser;
-
+	
+	/**
+	 * @private
+	 */
 	public class GlowFilterAction implements IFilterAction
 	{
 		public static var Canvas:*=Browser.createElement("canvas");;
@@ -19,7 +22,7 @@ package laya.filters
 			canvas.width=sCanvas.width;
 			canvas.height=sCanvas.height;
 			ctx.shadowBlur=data.blur;
-			ctx.shadowColor=data.color;
+			//ctx.shadowColor=data.color;
 			ctx.shadowOffsetX=data.offX;
 			ctx.shadowOffsetY=data.offY;
 			ctx.drawImage(sCanvas,0,0);

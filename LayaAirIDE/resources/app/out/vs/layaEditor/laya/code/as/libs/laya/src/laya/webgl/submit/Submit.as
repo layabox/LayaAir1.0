@@ -2,6 +2,8 @@ package laya.webgl.submit {
 	import laya.maths.Matrix;
 	import laya.webgl.submit.ISubmit;
 	import laya.utils.Stat;
+	import laya.webgl.utils.IndexBuffer;
+	import laya.webgl.utils.VertexBuffer;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.BlendMode;
@@ -36,14 +38,14 @@ package laya.webgl.submit {
 		public static var RENDERBASE:Submit;
 		public static var activeBlendFunction:Function = null;
 
-		public static var _cache:Array =/*[STATIC SAFE]*/(_cache=[],_cache._length=0,_cache);
+		private static var _cache:Array =/*[STATIC SAFE]*/(_cache=[],_cache._length=0,_cache);
 
 		protected var _renderType:int;		
-		protected var _selfVb : Buffer;
-		protected var _ib : Buffer;
+		protected var _selfVb : VertexBuffer;
+		protected var _ib : IndexBuffer;
 		protected var _blendFn:Function;
 
-		public var _vb : Buffer;
+		public var _vb : VertexBuffer;
 
 		// 从VB中什么地方开始画，画到哪
 		public var _startIdx : int, _numEle : int;	
@@ -77,6 +79,7 @@ package laya.webgl.submit {
 		}
 
 		public function renderSubmit() : int {
+
 			if (_numEle === 0) return 1;//怎么会有_numEle是0的情况?
 			
 			if (shaderValue.textureHost) //TODO:阿欢调整
@@ -85,12 +88,15 @@ package laya.webgl.submit {
 					return 1;
 				shaderValue.texture = shaderValue.textureHost.source;
 			}
-			_ib.upload_bind();
-			_vb.upload_bind();
-			
-			shaderValue.upload();
+
+			_vb.bind_upload(_ib);
 
 			var gl:WebGLContext = WebGL.mainContext;
+
+			///*[IF-FLASH]*/gl.useTexture(shaderValue.texture!=null);
+
+			shaderValue.upload();
+
 			if (activeBlendFunction !== _blendFn)
 			{
 				gl.enable( WebGLContext.BLEND );
@@ -107,13 +113,13 @@ package laya.webgl.submit {
 		/*
 		 create方法只传对submit设置的值
 		*/
-		public static function create(context:WebGLContext2D,submitID:Number,mergID:int,ib:Buffer, vb:Buffer, pos:int,sv:Value2D):Submit
+		public static function create(context:WebGLContext2D,submitID:Number,mergID:int,ib:IndexBuffer, vb:VertexBuffer, pos:int,sv:Value2D):Submit
 		{
 			var o:Submit = _cache._length?_cache[--_cache._length]:new Submit();
 			
 			if (vb == null)
 			{
-				vb = o._selfVb || (o._selfVb=new Buffer(WebGLContext.ARRAY_BUFFER));
+				vb = o._selfVb || (o._selfVb=VertexBuffer.create());
 				vb.clear();
 				pos = 0;
 			}
@@ -133,7 +139,7 @@ package laya.webgl.submit {
 			return o;
 		}
 		
-		public static function createShape(ctx:WebGLContext2D,ib:Buffer,vb:Buffer,numEle:int,offset:int,sv:Value2D):Submit
+		public static function createShape(ctx:WebGLContext2D,ib:IndexBuffer,vb:VertexBuffer,numEle:int,offset:int,sv:Value2D):Submit
 		{
 			var o:Submit = (!_cache._length)?(new Submit()):_cache[--_cache._length];
 			o._ib=ib;

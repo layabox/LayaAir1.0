@@ -13,6 +13,9 @@ package laya.events {
 	public class KeyBoardManager {
 		private static var _pressKeys:Object = {};
 		
+		/**是否开启键盘事件，默认为true*/
+		public static var enabled:Boolean = true;
+		
 		/** @private */
 		public static function __init__():void {
 			_addEvent("keydown");
@@ -27,6 +30,7 @@ package laya.events {
 		}
 		
 		private static function _dispatch(e:Object, type:String):void {
+			if (!enabled) return;
 			e.keyCode = e.keyCode || e.which || e.charCode;
 			
 			//判断同时按下的键

@@ -33,7 +33,27 @@ package laya.media.webaudio {
 		/**
 		 * 是否在解码中
 		 */
-		private static var isDecoding:Boolean = false;
+		public static var isDecoding:Boolean = false;
+		
+		/**
+		 * 用于播放解锁声音以及解决Ios9版本的内存释放 
+		 */
+		public static var _miniBuffer:* =ctx.createBuffer(1, 1, 22050);
+		
+
+		/**
+		 * 事件派发器，用于处理加载解码完成事件的广播 
+		 */
+		public static var e:EventDispatcher = new EventDispatcher();
+		/**
+		 * 是否已解锁声音播放 
+		 */
+		private static var _unlocked:Boolean = false;
+		/**
+		 * 当前解码的声音信息
+		 */
+		public static var tInfo:*;
+		
 		
 		/**
 		 * 解码声音文件
@@ -47,10 +67,6 @@ package laya.media.webaudio {
 			tInfo = buffs.shift();
 			ctx.decodeAudioData(tInfo["buffer"], _done, _fail);
 		}
-		/**
-		 * 当前解码的声音信息
-		 */
-		public static var tInfo:*;
 		
 		/**
 		 * 解码成功回调
@@ -58,11 +74,7 @@ package laya.media.webaudio {
 		 *
 		 */
 		private static function _done(audioBuffer:*):void {
-			tInfo["me"].audioBuffer = audioBuffer;
-			
-			if (tInfo["loaded"]) {
-				tInfo["loaded"]();
-			}
+			e.event("loaded:"+tInfo.url, audioBuffer);
 			isDecoding = false;
 			decode();
 		}
@@ -73,11 +85,45 @@ package laya.media.webaudio {
 		 *
 		 */
 		private static function _fail():void {
-			if (tInfo["err"]) {
-				tInfo["err"]();
-			}
+			e.event("err:"+tInfo.url,null);
 			isDecoding = false;
 			decode();
+		}
+		
+		/**
+		 * 播放声音以解锁IOS的声音 
+		 * 
+		 */
+		private static function _playEmptySound():void{
+			if (ctx == null) {return;}
+			var source:* = ctx.createBufferSource();
+			source.buffer = _miniBuffer;
+			source.connect(ctx.destination);
+			source.start(0, 0, 0);
+		}
+		
+		
+		/**
+		 * 尝试解锁声音 
+		 * 
+		 */
+		private static function _unlock():void{
+			if (_unlocked) { return; }
+			_playEmptySound();
+			if (ctx.state == "running") {
+				Browser.document.removeEventListener("mousedown", _unlock, true);
+				Browser.document.removeEventListener("touchend", _unlock, true);
+				_unlocked = true;
+			}
+		};
+		
+		public static function initWebAudio():void
+		{
+			if (ctx.state != "running") {
+				_unlock(); // When played inside of a touch event, this will enable audio on iOS immediately.
+				Browser.document.addEventListener("mousedown", _unlock, true);
+				Browser.document.addEventListener("touchend", _unlock, true);
+			}
 		}
 		/**
 		 * 声音URL
@@ -96,13 +142,17 @@ package laya.media.webaudio {
 		 * 声音原始文件数据
 		 */
 		public var audioBuffer:*;
+		/**
+		 * 待播放的声音列表 
+		 */
+		private var __toPlays:Array;
 		
 		public function WebAudioSound() {
 		
 		}
 		
 		
-		
+		private static var __loadingSound:Object = { };
 		/**
 		 * 加载声音
 		 * @param url
@@ -115,31 +165,62 @@ package laya.media.webaudio {
 			
 			audioBuffer = _dataCache[url];
 			if (audioBuffer) {
-				_loaded();
+				_loaded(audioBuffer);
 				return;
 			}
+			e.on("loaded:" + url, this, _loaded);
+			e.on("err:" + url, this, _err);		
+			if (__loadingSound[url])
+			{		
+				return;
+			}
+			__loadingSound[url] = true;
+
 			var request:* = new Browser.window.XMLHttpRequest();
 			request.open("GET", url, true);
 			request.responseType = "arraybuffer";
 			request.onload = function():void {
-				me.data = request.response;
-				
-				buffs.push({"buffer": me.data, "loaded": _loaded, "err": _err, "me": me, "url": me.url});
+				me.data = request.response;			
+				buffs.push({"buffer": me.data, "url": me.url});
 				decode();
 			};
-			request.send();
-			
-			function _loaded():void {
-				_dataCache[url] = me.audioBuffer;
-				me.loaded = true;
-				me.event(Event.COMPLETE);
-			}
-			
-			function _err():void {
-				me.event(Event.ERROR);
-			}
+			request.send();		
+		}
+		private function _err():void {
+			    _removeLoadEvents();
+				this.event(Event.ERROR);
+		}
+		private function _loaded(audioBuffer:*):void {
+			    _removeLoadEvents();
+			    this.audioBuffer = audioBuffer;
+				_dataCache[url] = this.audioBuffer;
+				this.loaded = true;
+				this.event(Event.COMPLETE);
+		}
+		private function _removeLoadEvents():void
+		{
+			e.off("loaded:" + url, this, _loaded);
+			e.off("err:" + url, this, _err);
 		}
 		
+		private function __playAfterLoaded():void
+		{
+			if (!__toPlays) return;
+			var i:int, len:int;
+			var toPlays:Array;
+			toPlays = __toPlays;
+			len = toPlays.length;
+			var tParams:Array;
+			for (i = 0; i < len; i++)
+			{
+				tParams = toPlays[i];
+				if(tParams[2]&&!(tParams[2] as WebAudioSoundChannel).isStopped)
+				{
+					play(tParams[0],tParams[1],tParams[2]);
+			    }			
+			}
+			__toPlays.length = 0;
+		}
 		/**
 		 * 播放声音
 		 * @param startTime 起始时间
@@ -152,7 +233,9 @@ package laya.media.webaudio {
 			channel = channel ? channel : new WebAudioSoundChannel();
 			if (!audioBuffer) {
 				if (url) {
-					this.once(Event.COMPLETE, this, play, [startTime, loops, channel]);
+					if (!__toPlays) __toPlays = [];
+					__toPlays.push([startTime, loops, channel]);
+					this.once(Event.COMPLETE, this, __playAfterLoaded);
 					load(url);
 				}
 					//return null;

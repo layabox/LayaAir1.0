@@ -4,7 +4,6 @@ package laya.webgl.resource {
 	import laya.resource.Bitmap;
 	import laya.resource.IDispose;
 	import laya.resource.Texture;
-	import laya.webgl.shader.d2.filters.GlowFilterShader;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;

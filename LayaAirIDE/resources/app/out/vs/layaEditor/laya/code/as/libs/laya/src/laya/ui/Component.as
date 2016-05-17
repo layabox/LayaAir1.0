@@ -371,7 +371,7 @@ package laya.ui {
 		 * 父容器的 <code>Event.RESIZE</code> 事件侦听处理函数。
 		 */
 		protected function onCompResize():void {
-			if (_layout.enable) {
+			if (_layout&&_layout.enable) {
 				resetLayoutX();
 				resetLayoutY();				
 			}

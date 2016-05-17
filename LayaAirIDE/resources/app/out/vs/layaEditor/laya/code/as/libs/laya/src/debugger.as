@@ -1,8 +1,7 @@
-/*[IF-FLASH]*/package  
-{
+/*[IF-FLASH]*/
+package {
 	/**
-	 * ...
-	 * @author laya
+	 * @private
 	 */
 	public var debugger:int;
 }

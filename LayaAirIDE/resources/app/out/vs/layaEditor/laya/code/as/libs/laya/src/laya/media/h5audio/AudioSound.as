@@ -93,7 +93,6 @@ package laya.media.h5audio {
 			var ad:Audio;
 			ad = _audioCache[url];
 			if (!ad) return null;
-			ad.autoplay = true;
 			var tAd:Audio;
 			tAd=Pool.getItem("audio:"+url);
 			tAd=tAd?tAd:ad.cloneNode(true);

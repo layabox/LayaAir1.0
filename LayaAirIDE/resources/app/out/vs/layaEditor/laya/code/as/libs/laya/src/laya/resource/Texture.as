@@ -1,8 +1,10 @@
 package laya.resource {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
+	import laya.maths.Rectangle;
 	import laya.net.URL;
 	import laya.system.System;
+	import laya.utils.RunDriver;
 	
 	/**
 	 * 资源加载完成后调度。
@@ -19,15 +21,69 @@ package laya.resource {
 		public static const TEXTURE2D:int = 1;
 		/** 3D 纹理。*/
 		public static const TEXTURE3D:int = 2;
+		/**默认 UV 信息。*/
+		public static var DEF_UV:Array =/*[STATIC SAFE]*/ [0, 0, 1.0, 0, 1.0, 1.0, 0, 1.0];
+		/**反转 UV 信息。*/
+		public static var INV_UV:Array =/*[STATIC SAFE]*/ [0, 1, 1.0, 1, 1.0, 0.0, 0, 0.0];
+		/**@private */
+		private static var _rect1:Rectangle =/*[STATIC SAFE]*/ new Rectangle();
+		/**@private */
+		private static var _rect2:Rectangle =/*[STATIC SAFE]*/ new Rectangle();
+		
+		/** 图片或者canvas 。*/
+		public var bitmap:*;
+		/** UV信息。*/
+		public var uv:Array;
+		/**沿 X 轴偏移量。*/
+		public var offsetX:Number = 0;
+		/**沿 Y 轴偏移量。*/
+		public var offsetY:Number = 0;
+		/**原始宽度（包括被裁剪的透明区域）。*/
+		public var sourceWidth:Number = 0;
+		/**原始高度（包括被裁剪的透明区域）。*/
+		public var sourceHeight:Number = 0;
+		/** @private */
+		protected var _loaded:Boolean;
+		/** @private */
+		protected var _w:Number = 0;
+		/** @private */
+		protected var _h:Number = 0;
 		
 		/**
-		 * 默认 UV 信息。
+		 * 创建一个 <code>Texture</code> 实例。
+		 * @param	bitmap 位图资源。
+		 * @param	uv UV 数据信息。
 		 */
-		public static var DEF_UV:Array =/*[STATIC SAFE]*/ [0, 0, 1.0, 0, 1.0, 1.0, 0, 1.0];
+		public function Texture(bitmap:Bitmap = null, uv:Array = null) {
+			setTo(bitmap, uv);
+		}
+		
 		/**
-		 * 反转 UV 信息。
+		 * 设置此对象的位图资源、UV数据信息。
+		 * @param	bitmap 位图资源
+		 * @param	uv UV数据信息
 		 */
-		public static var INV_UV:Array =/*[STATIC SAFE]*/ [0, 1, 1.0, 1, 1.0, 0.0, 0, 0.0];
+		public function setTo(bitmap:Bitmap = null, uv:Array = null):void {
+			this.bitmap = bitmap;
+			this.uv = uv || DEF_UV;
+			if (bitmap) {
+				_w = bitmap.width;
+				_h = bitmap.height;
+				sourceWidth = sourceWidth || _w;
+				sourceHeight = sourceHeight || _h
+				_loaded = _w > 0;
+				var _this:Texture = this;
+				if (_loaded) {
+					RunDriver.addToAtlas && RunDriver.addToAtlas(_this);
+				} else {
+					var bm:* = bitmap;
+					if (bm is HTMLImage && bm.image)//必须是webglImage(只有必须是webglImage包含image)
+						bm.image.addEventListener('load', function(e:*):void {
+							RunDriver.addToAtlas && RunDriver.addToAtlas(_this);
+						}, false);
+				}
+			}
+		}
 		
 		/**
 		 * 平移 UV。
@@ -51,22 +107,25 @@ package laya.resource {
 		 * @param	y 起始绝对坐标 y 。
 		 * @param	width 宽绝对值。
 		 * @param	height 高绝对值。
-		 * @param	offsetX X 轴偏移量。
-		 * @param	offsetY Y 轴偏移量。
-		 * @param	canInAtlas 是否存入图集。
+		 * @param	offsetX X 轴偏移量（可选）。
+		 * @param	offsetY Y 轴偏移量（可选）。
+		 * @param	sourceWidth 原始宽度，包括被裁剪的透明区域（可选）。
+		 * @param	sourceHeight 原始高度，包括被裁剪的透明区域（可选）。
 		 * @return  <code>Texture</code> 对象。
 		 */
-		public static function create(source:*, x:Number, y:Number, width:Number, height:Number, offsetX:Number = 0, offsetY:Number = 0):Texture {
+		public static function create(source:*, x:Number, y:Number, width:Number, height:Number, offsetX:Number = 0, offsetY:Number = 0, sourceWidth:Number = 0, sourceHeight:Number = 0):Texture {
 			var uv:Array = source.uv || DEF_UV;
-			var bitmapResource:FileBitmap = source.bitmap || source;
-			var tex:Texture = new Texture(bitmapResource, null);
+			var bitmap:FileBitmap = source.bitmap || source;
+			var tex:Texture = new Texture(bitmap, null);
 			tex.width = width;
 			tex.height = height;
 			tex.offsetX = offsetX;
 			tex.offsetY = offsetY;
+			tex.sourceWidth = sourceWidth || width;
+			tex.sourceHeight = sourceHeight || height;
 			
-			var dwidth:Number = 1 / bitmapResource.width;
-			var dheight:Number = 1 / bitmapResource.height;
+			var dwidth:Number = 1 / bitmap.width;
+			var dheight:Number = 1 / bitmap.height;
 			x *= dwidth;
 			y *= dheight;
 			width *= dwidth;
@@ -79,26 +138,21 @@ package laya.resource {
 			return tex;
 		}
 		
-		/** 图片或者canvas 。*/
-		public var bitmap:*;
-		/** UV信息。*/
-		public var uv:Array;
 		/**
-		 * @private
-		 * */
-		protected var _loaded:Boolean;
-		/** @private */
-		protected var _w:Number = 0;
-		/** @private */
-		protected var _h:Number = 0;
-		/**
-		 * 沿 X 轴偏移量。
+		 * 截取Texture的一部分区域，生成新的Texture
+		 * @param	texture 目标Texture
+		 * @param	x 相对于目标Texture的x位置
+		 * @param	y 相对于目标Texture的y位置
+		 * @param	width 截取的宽度
+		 * @param	height 截取的高度
+		 * @return	返回一个新的Texture
 		 */
-		public var offsetX:Number = 0;
-		/**
-		 * 沿 Y 轴偏移量。
-		 */
-		public var offsetY:Number = 0;
+		public static function createFromTexture(texture:Texture, x:Number, y:Number, width:Number, height:Number):Texture {
+			var rect:Rectangle = Rectangle.TEMP.setTo(x - texture.offsetX, y - texture.offsetY, width, height);
+			var result:Rectangle = rect.intersection(_rect1.setTo(0, 0, texture.width, texture.height), _rect2);
+			if (result) return create(texture, result.x, result.y, result.width, result.height, result.x - rect.x, result.y - rect.y, width, height);
+			else return new Texture(HTMLImage.create());
+		}
 		
 		/**
 		 * 表示是否加载成功，只能表示初次载入成功（通常包含下载和载入）,并不能完全表示资源是否可立即使用（资源管理机制释放影响等）。
@@ -112,44 +166,6 @@ package laya.resource {
 		 */
 		public function get released():Boolean {
 			return bitmap.released;
-		}
-		
-		/**
-		 * 创建一个 <code>Texture</code> 实例。
-		 * @param	bitmapResource 位图资源。
-		 * @param	uv UV 数据信息。
-		 * @param	canInAtlas 是否存入图集。
-		 */
-		public function Texture(bitmapResource:Bitmap = null, uv:Array = null) {
-			super();
-			set(bitmapResource, uv);
-		}
-		
-		/**
-		 * 设置此对象的位图资源、UV数据信息。
-		 * @param	bitmapResource 位图资源
-		 * @param	uv UV数据信息
-		 * @param	canInAtlas 是否存入图集。
-		 */
-		public function set(bitmapResource:Bitmap = null, uv:Array = null):void {
-			this.bitmap = bitmapResource;
-			this.uv = uv || DEF_UV;
-			//canInAtlas = canInAtlas;
-			if (bitmapResource) {
-				_w = bitmapResource.width;
-				_h = bitmapResource.height;
-				_loaded = _w > 0;
-				var _this:Texture = this;
-				if (_loaded) {
-					(System.addToAtlas) && (System.addToAtlas(_this));
-				} else {
-					var bm:* = bitmapResource;
-					if ((bm is HTMLImage) && (bm.image))//必须是webglImage(只有必须是webglImage包含image)
-						bm.image.addEventListener('load', function(e:*):void {
-							(System.addToAtlas) && (System.addToAtlas(_this));
-						}, false);
-				}
-			}
 		}
 		
 		/** 激活资源。*/
@@ -177,6 +193,7 @@ package laya.resource {
 		
 		public function set width(value:Number):void {
 			_w = value;
+			sourceWidth || (sourceWidth = value);
 		}
 		
 		/** 实际高度。*/
@@ -187,6 +204,7 @@ package laya.resource {
 		
 		public function set height(value:Number):void {
 			_h = value;
+			sourceHeight || (sourceHeight = value);
 		}
 		
 		/**
@@ -195,18 +213,17 @@ package laya.resource {
 		 */
 		public function load(url:String):void {
 			_loaded = false;
-			var fileBitmap:FileBitmap = (this.bitmap || (this.bitmap = new HTMLImage())) as FileBitmap;//WebGl模式被自动替换为WebGLImage
+			var fileBitmap:FileBitmap = (this.bitmap || (this.bitmap = HTMLImage.create())) as FileBitmap;//WebGl模式被自动替换为WebGLImage
 			var _this:Texture = this;
 			fileBitmap.onload = function():void {
 				fileBitmap.onload = null;
 				_this._loaded = true;
-				_w = fileBitmap.width;
-				_h = fileBitmap.height;
+				sourceWidth = _w = fileBitmap.width;
+				sourceHeight = _h = fileBitmap.height;
 				_this.event(Event.LOADED, this);//this为webglimage 待调整
-				(System.addToAtlas) && (System.addToAtlas(_this));
+				(RunDriver.addToAtlas) && (RunDriver.addToAtlas(_this));
 			};
 			fileBitmap.src = URL.formatURL(url);
 		}
-	
 	}
 }

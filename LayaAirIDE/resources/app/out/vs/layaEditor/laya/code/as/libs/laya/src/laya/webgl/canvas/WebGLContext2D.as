@@ -4,6 +4,8 @@ package laya.webgl.canvas {
 	import laya.maths.Matrix;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
+	import laya.resource.Bitmap;
+	import laya.utils.RunDriver;
 	import laya.webgl.resource.RenderTargetMAX;
 	import laya.webgl.submit.ISubmit;
 	import laya.renders.Render;
@@ -22,6 +24,9 @@ package laya.webgl.canvas {
 	import laya.webgl.submit.SubmitCMDScope;
 	import laya.webgl.submit.SubmitScissor;
 	import laya.webgl.submit.SubmitStencil;
+	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.IndexBuffer;
+	import laya.webgl.utils.VertexBuffer;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.BlendMode;
@@ -47,7 +52,6 @@ package laya.webgl.canvas {
 	import laya.webgl.submit.SubmitTarget;
 	import laya.webgl.text.DrawText;
 	import laya.webgl.text.FontInContext;
-	import laya.webgl.utils.Buffer;
 	import laya.webgl.utils.CONST3D2D;
 	import laya.webgl.utils.GlUtils;
 	import laya.webgl.utils.RenderState2D;
@@ -84,7 +88,7 @@ package laya.webgl.canvas {
 		
 		private var _other:ContextParams;
 		
-		private var _path:Path = new Path();
+		private var _path:Path = null;
 		private var _drawCount:int = 1;
 		private var _maxNumEle:int = 0;
 		private var _clear:Boolean = false;
@@ -94,8 +98,8 @@ package laya.webgl.canvas {
 		public var _submits:* = [];
 		public var _mergeID:int = 0;
 		public var _curSubmit:* = null;
-		public var _ib:Buffer = null;
-		public var _vb:Buffer = null;// 不同的顶点格式，使用不同的顶点缓冲区		
+		public var _ib:IndexBuffer = null;
+		public var _vb:VertexBuffer = null;// 不同的顶点格式，使用不同的顶点缓冲区		
 		public var _clipRect:Rectangle = MAXCLIPRECT;
 		public var _curMat:Matrix;
 		public var _nBlendType:int = 0;
@@ -109,16 +113,21 @@ package laya.webgl.canvas {
 		public var sprite:Sprite;
 		
 		public function WebGLContext2D(c:HTMLCanvas) {
+			
 			__JS__('this.drawTexture = this._drawTextureM');
+			
 			_canvas = c;
 			
 			_curMat = Matrix.create();
 			
-			_ib = Buffer.QuadrangleIB;
+			if (Render.isFlash) 
+			{
+				_ib = IndexBuffer.create();
+				GlUtils.fillIBQuadrangle(_ib, 16);
+			}
+			else _ib = IndexBuffer.QuadrangleIB;
 			
-			_vb = new Buffer(WebGLContext.ARRAY_BUFFER);
-			
-			_vb.getFloat32Array();
+			_vb = VertexBuffer.create();
 			
 			_other = ContextParams.DEFAULT;
 			
@@ -144,7 +153,7 @@ package laya.webgl.canvas {
 			_targets && _targets.destroy();
 			
 			_vb && _vb.releaseResource();
-			_ib && (_ib != Buffer.QuadrangleIB) && _ib.releaseResource();
+			_ib && (_ib != IndexBuffer.QuadrangleIB) && _ib.releaseResource();
 		}
 		
 		override public function clear():void {
@@ -306,7 +315,7 @@ package laya.webgl.canvas {
 		}
 		
 		override public function measureText(text:String):* {
-			return Utils.measureText(text, _other.font.toString());
+			return RunDriver.measureText(text, _other.font.toString());
 		}
 		
 		override public function set font(str:String):void {
@@ -394,7 +403,7 @@ package laya.webgl.canvas {
 		}
 		
 		override public function fillRect(x:Number, y:Number, width:Number, height:Number, fillStyle:*):void {
-			var vb:Buffer = _vb;
+			var vb:VertexBuffer = _vb;
 			if (GlUtils.fillRectImgVb(vb, _clipRect, x, y, width, height, Texture.DEF_UV, _curMat, _x, _y, 0, 0)) {
 				var pre:DrawStyle = _shader2D.fillStyle;
 				fillStyle && (_shader2D.fillStyle = new DrawStyle(fillStyle));
@@ -439,27 +448,28 @@ package laya.webgl.canvas {
 			return null;
 		}
 		
+		public override function drawTexture(tex:Texture, x:Number, y:Number, width:Number, height:Number, tx:Number, ty:Number):void
+		{
+			_drawTextureM(tex, x, y, width, height, tx, ty, null);
+		}
+		
 		private function _drawTextureM(tex:Texture, x:Number, y:Number, width:Number, height:Number, tx:Number, ty:Number, m:Matrix):void {
-			
 			if (!(tex.loaded && tex.bitmap && tex.source))//source内调用tex.active();
 			{
 				if (sprite) {
-					Laya.timer.callLater(null, function():void {
-						sprite.repaint();
-					});
+					Laya.timer.callLater(this, _repaintSprite);
 				}
-				//_targets && (_targets.repaint = true);
 				return;
 			}
 			
-			var webGLImg:WebGLImage = tex.bitmap as WebGLImage;
+			var webGLImg:Bitmap = tex.bitmap as Bitmap;
 			var shader:Shader2D = _shader2D;
 			var curShader:Value2D = _curSubmit.shaderValue;
 			_drawCount++;
 			
 			if (shader.glTexture !== webGLImg || shader.ALPHA !== curShader.ALPHA) {
 				shader.glTexture = webGLImg;
-				var vb:Buffer = _vb
+				var vb:VertexBuffer = _vb;
 				var submit:Submit = null;
 				var submitID:Number;
 				var vbSize:int = (vb._length / 32) * 3;
@@ -476,10 +486,15 @@ package laya.webgl.canvas {
 				_curSubmit = submit;
 			}
 			
-			if (GlUtils.fillRectImgVb(_curSubmit._vb || _vb, _clipRect, x + tx + tex.offsetX, y + ty + tex.offsetY, width || tex.width, height || tex.height, tex.uv, m || _curMat, _x, _y, 0, 0)) {
+			if (GlUtils.fillRectImgVb(_curSubmit._vb || _vb, _clipRect, x + tx, y + ty , width || tex.width, height || tex.height, tex.uv, m || _curMat, _x, _y, 0, 0)) {
 				_curSubmit._numEle += 6;
 				_maxNumEle = Math.max(_maxNumEle, _curSubmit._numEle);
 			}
+		}
+		
+		private  function  _repaintSprite():void
+		{
+			sprite.repaint();
 		}
 		
 		/**
@@ -513,7 +528,7 @@ package laya.webgl.canvas {
 		}
 		
 		public function _drawText(tex:Texture, x:Number, y:Number, width:Number, height:Number, m:Matrix, tx:Number, ty:Number, dx:Number, dy:Number):void {
-			var webGLImg:WebGLImage = tex.bitmap as WebGLImage;
+			var webGLImg:Bitmap = tex.bitmap as Bitmap;
 			var shader:Shader2D = _shader2D;
 			var curShader:Value2D = _curSubmit.shaderValue;
 			_drawCount++;
@@ -521,7 +536,7 @@ package laya.webgl.canvas {
 			if (shader.glTexture !== webGLImg) {
 				shader.glTexture = webGLImg;
 				
-				var vb:Buffer = _vb;
+				var vb:VertexBuffer = _vb;
 				var submit:Submit = null;
 				var submitID:Number;
 				var vbSize:int = (vb._length / 32) * 3;
@@ -570,7 +585,7 @@ package laya.webgl.canvas {
 		
 		public function fillQuadrangle(tex:Texture, x:Number, y:Number, point4:Array, m:Matrix):void {
 			var submit:Submit = this._curSubmit;
-			var vb:Buffer = _vb;
+			var vb:VertexBuffer = _vb;
 			var shader:Shader2D = _shader2D;
 			var curShader:Value2D = submit.shaderValue;
 			if (tex.bitmap) {
@@ -600,10 +615,18 @@ package laya.webgl.canvas {
 			_x = x * curMat.a + y * curMat.c;
 			_y = y * curMat.d + x * curMat.b;
 			
-			if (transform && curMat.bTransform) {
-				Matrix.mul(transform, curMat, _tmpMatrix);
-				transform = _tmpMatrix;
+			if (transform) {
+				if (curMat.bTransform||transform.bTransform) {
+					Matrix.mul(transform, curMat, _tmpMatrix);
+					transform = _tmpMatrix;
+				} 
+				else {
+					_x += transform.tx + curMat.tx;
+					_y += transform.ty + curMat.ty;
+					transform = Matrix.EMPTY;
+				}
 			}
+			
 			if (alpha === 1 && !blendMode)
 				//tx:Texture, x:Number, y:Number, width:Number, height:Number
 				_drawTextureM(args[0], args[1] - pivotX, args[2] - pivotY, args[3], args[4], 0, 0, transform);
@@ -643,14 +666,14 @@ package laya.webgl.canvas {
 				save();
 				lineWidth = 4;
 				strokeStyle = src._targets ? "yellow" : "green";
-				strokeRect(x - 1, y - 1, width + 2, height + 2,1);
-				strokeRect(x, y, width, height,1);
+				strokeRect(x - 1, y - 1, width + 2, height + 2, 1);
+				strokeRect(x, y, width, height, 1);
 				restore();
 			}
 		}
 		
 		public function drawTarget(scope:*, x:Number, y:Number, width:Number, height:Number, m:Matrix, proName:String, shaderValue:Value2D, uv:Array = null, blend:int = -1):void {
-			var vb:Buffer = _vb;
+			var vb:VertexBuffer = _vb;
 			if (GlUtils.fillRectImgVb(vb, _clipRect, x, y, width, height, uv || Texture.DEF_UV, m || _curMat, _x, _y, 0, 0)) {
 				var shader:Shader2D = _shader2D;
 				shader.glTexture = null;
@@ -722,7 +745,7 @@ package laya.webgl.canvas {
 			_mergeID = 0;
 		}
 		
-		public function setIBVB(x:Number, y:Number, ib:Buffer, vb:Buffer, numElement:int, mat:Matrix, shader:Shader, shaderValues:Value2D, startIndex:int = 0, offset:int = 0):void {
+		public function setIBVB(x:Number, y:Number, ib:IndexBuffer, vb:VertexBuffer, numElement:int, mat:Matrix, shader:Shader, shaderValues:Value2D, startIndex:int = 0, offset:int = 0):void {
 			(ib === null) && (GlUtils.expandIBQuadrangle(_ib, (vb.length / (Buffer.FLOAT32 * 16) + 8)), ib = _ib);
 			if (!shaderValues || !shader)
 				throw Error("setIBVB must input:shader shaderValues");
@@ -741,7 +764,7 @@ package laya.webgl.canvas {
 		
 		public function fillTrangles(tex:Texture, x:Number, y:Number, points:Array, m:Matrix):void {
 			var submit:Submit = this._curSubmit;
-			var vb:Buffer = _vb;
+			var vb:VertexBuffer = _vb;
 			var shader:Shader2D = _shader2D;
 			var curShader:Value2D = submit.shaderValue;
 			var length:int = points.length >> 4 /*16*/;
@@ -766,7 +789,7 @@ package laya.webgl.canvas {
 		}
 		
 		public function closePath():void {
-			
+		
 		}
 		
 		override public function beginPath():void {
@@ -814,7 +837,7 @@ package laya.webgl.canvas {
 		
 		public function line(fromX:Number, fromY:Number, toX:Number, toY:Number, lineWidth:Number, mat:Matrix):void {
 			var submit:Submit = _curSubmit;
-			var vb:Buffer = _vb;
+			var vb:VertexBuffer = _vb;
 			if (GlUtils.fillLineVb(vb, _clipRect, fromX, fromY, toX, toY, lineWidth, mat)) {
 				var shader:Shader2D = _shader2D;
 				var curShader:Value2D = submit.shaderValue;
@@ -843,17 +866,16 @@ package laya.webgl.canvas {
 		}
 		
 		override public function flush():int {
-			_ib.upload_bind();
-			
 			var maxNum:int = Math.max(_vb.length / (Buffer.FLOAT32 * 16), _maxNumEle / 6) + 8;
 			if (maxNum > (_ib.bufferLength / (6 * Buffer.SHORT))) {
 				GlUtils.expandIBQuadrangle(_ib, maxNum);
 			}
 			
-			_vb.upload_bind();
+			_vb.bind_upload(_ib);
+			
 			submitElement(0, _submits._length);
 			
-			_path.reset();
+			_path &&  _path.reset();
 			
 			_curSubmit = Submit.RENDERBASE;
 			
@@ -861,7 +883,7 @@ package laya.webgl.canvas {
 		}
 		
 		public function fan(x:Number, y:Number, r:Number, sAngle:Number, eAngle:Number, fillColor:uint, lineColor:uint):void {
-			_path.fan(x, y, r, sAngle, eAngle, fillColor, _other.lineWidth ? _other.lineWidth : 1, lineColor);
+			_getPath().fan(x, y, r, sAngle, eAngle, fillColor, _other.lineWidth ? _other.lineWidth : 1, lineColor);
 			_path.update();
 			var submit:Submit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 			submit.shaderValue.ALPHA = _shader2D.ALPHA;
@@ -871,7 +893,7 @@ package laya.webgl.canvas {
 		
 		/*画圆*/
 		public function drawCircle(x:Number, y:Number, r:Number, edges:int, boderColor:uint, lineWidth:Number, color:uint):void {
-			_path.circle(x, y, r, edges, color, lineWidth ? lineWidth : 1, boderColor);
+			_getPath().circle(x, y, r, edges, color, lineWidth ? lineWidth : 1, boderColor);
 			_path.update();//要传入矩阵才能去转换点的变换，计算量啊。。。哎
 			var submit:Submit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 			submit.shaderValue.ALPHA = _shader2D.ALPHA;
@@ -887,7 +909,7 @@ package laya.webgl.canvas {
 		 * @param	points
 		 */
 		public function drawPoly(x:Number, y:Number, points:Array, color:uint, lineWidth:Number, boderColor:uint):void {
-			_path.polygon(x, y, points,color, lineWidth ? lineWidth : 1, boderColor);
+			_getPath().polygon(x, y, points, color, lineWidth ? lineWidth : 1, boderColor);
 			_path.update();
 			var tempSubmit:Submit;
 			//开启模板缓冲，把模板操作设为GL_INVERT
@@ -908,8 +930,7 @@ package laya.webgl.canvas {
 			submit = SubmitStencil.create(3);
 			addRenderObject(submit);
 			//画闭合线
-			if (lineWidth > 0)
-			{
+			if (lineWidth > 0) {
 				_path.loopLine(x, y, points, lineWidth, boderColor);
 				_path.update();
 				//开启模板缓冲，把模板操作设为GL_INVERT
@@ -922,7 +943,7 @@ package laya.webgl.canvas {
 		}
 		
 		public function drawPath(x:Number, y:Number, points:Array, color:uint, lineWidth:uint):void {
-			_path.drawPath(x, y, points, color, lineWidth);
+			_getPath().drawPath(x, y, points, color, lineWidth);
 			_path.update();
 			var submit:Submit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 			_submits[_submits._length++] = submit;
@@ -935,19 +956,27 @@ package laya.webgl.canvas {
 		}
 		
 		public function drawLines(x:Number, y:Number, points:Array, color:uint, lineWidth:uint):void {
+			
 			var tmp:Point = Point.TEMP;
 			this._curMat.transformPoint(x, y, tmp);
 			if (_curMat.bTransform) {
 				points = points.concat();
 				this._curMat.transformPointArrayScale(points, points);
 			}
-			_path.drawPath(tmp.x, tmp.y, points, color, lineWidth);
+			_getPath().drawPath(tmp.x, tmp.y, points, color, lineWidth);
 			_path.update();
 			var submit:Submit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 			submit.shaderValue.ALPHA = _shader2D.ALPHA;
 			submit.shaderValue.u_mmat2 = RenderState2D.mat2MatArray(_curMat, RenderState2D.TEMPMAT4_ARRAY);
 			_submits[_submits._length++] = submit;
 		}
+		
+		private function _getPath():Path
+		{
+			return _path || (_path = new Path());
+		}
+		
+		
 	}
 }
 import laya.webgl.resource.RenderTargetMAX;

@@ -286,6 +286,7 @@ package laya.display {
 		private static function initInput(input:*):void {
 			var style:* = input.style;
 			style.cssText = cssStyle;
+			input.setAttribute("class", "laya");
 			
 			input.addEventListener('input', function(e:*):void {
 				var target:* = input.target;
@@ -417,7 +418,6 @@ package laya.display {
 				if (value) {
 					input.target && (input.target.focus = false);
 					input.target = this;
-					
 					Browser.document.body.appendChild(input);
 					focusIn();
 				} else {
@@ -434,7 +434,7 @@ package laya.display {
 			this._focus = true;
 			
 			var cssText:String = cssStyle;
-			cssText += ";white-space:" + (wordWrap ? "normal" : "nowrap");
+			cssText += ";white-space:" + (wordWrap ? "pre-wrap" : "pre");
 			
 			input.readOnly = !this._editable;
 			input.maxLength = this._maxChars;
@@ -461,7 +461,7 @@ package laya.display {
 			this._text = temp;
 			
 			input.style.cssText = cssText;
-			input.type = asPassword ? "password" : "input";
+			input.type = asPassword ? "password" : "text";
 			
 			input.focus();
 			
@@ -470,6 +470,7 @@ package laya.display {
 			Laya.stage.focus = this;
 			event(Event.FOCUS);
 			
+			syncInputPosition();
 			Laya.timer.frameLoop(1, this, syncInputPosition);
 		}
 		

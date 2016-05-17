@@ -27,7 +27,7 @@ package laya.webgl.utils {
 		 *	 |__\|
 		 *	 3   2
 		 */
-		public static function fillIBQuadrangle(buffer:Buffer, count:int/*Quadrangle count*/):Boolean {
+		public static function fillIBQuadrangle(buffer:IndexBuffer, count:int/*Quadrangle count*/):Boolean {
 			if (count > 65535 / 4) {
 				throw Error("IBQuadrangle count:" + count + " must<:" + Math.floor(65535 / 4));
 				return false;
@@ -37,7 +37,7 @@ package laya.webgl.utils {
 			buffer._resizeBuffer((count + 1) * 6 * Buffer.SHORT, false);
 			buffer.length = buffer.bufferLength;
 			
-			var bufferData:Array = new Uint16Array(buffer.getBuffer()) as Array;
+			var bufferData:Uint16Array = buffer.getUint16Array();
 			var idx:int = 0;
 			for (var i:int = 0; i < count; i++) {
 				bufferData[idx++] = i * 4;
@@ -48,11 +48,11 @@ package laya.webgl.utils {
 				bufferData[idx++] = i * 4 + 2;
 			}
 			buffer.setNeedUpload();
-			buffer.upload();
+			//buffer.upload();
 			return true;
 		}
 		
-		public static function expandIBQuadrangle(buffer:Buffer, count:int/*Quadrangle count*/):void {
+		public static function expandIBQuadrangle(buffer:IndexBuffer, count:int/*Quadrangle count*/):void {
 			buffer.bufferLength >= (count * 6 * Buffer.SHORT) || fillIBQuadrangle(buffer, count);
 		}
 		
@@ -67,64 +67,8 @@ package laya.webgl.utils {
 			return value;
 		}
 		
-		/*
-		   // 填充ImageVb.
-		   public static function fillRectImgVb2(vb:Buffer,clip:Rectangle,x:Number, y:Number, width:Number, height:Number, uv:Array, m:Matrix,_x:Number,_y:Number):Boolean
-		   {
-		   var vpos:int = (vb._offset >> 2)/ *FLOAT32* /+Context._RECTVBSIZE;
-		   vpos>=vbdata.length && (vbdata=(vb.resizeBuffer((vpos<<3)/ * 2*Buffer.FLOAT32* / + 256,true).getFloat32Array()));
-		   var vbdata:* = vb.getFloat32Array();
-		   vb._offset = vpos << 2;// * Buffer.FLOAT32;
-		   vpos -= Context._RECTVBSIZE;
-		
-		   vbdata[vpos + 2] = uv[0];
-		   vbdata[vpos + 3] = uv[1];
-		   vbdata[vpos + 6] = uv[2];
-		   vbdata[vpos + 7] = uv[3];
-		   vbdata[vpos + 10] = uv[4];
-		   vbdata[vpos + 11] = uv[5];
-		   vbdata[vpos + 14] = uv[6];
-		   vbdata[vpos + 15] = uv[7];
-		   var a:Number = m.a, b:Number = m.b, c:Number = m.c, d:Number = m.d;
-		   if (a !== 1 || b !== 0 || c !== 0 || d !== 1)
-		   {
-		   var aX:Number = 0.0, aY:Number = 0.0;
-		   m.bTransform = true;
-		   var w0:Number = width * (1 - aX) + x, h0:Number = height * (1 - aY) + y;
-		   var w1:Number = width * -aX + x, h1:Number = height * -aY + y;
-		   var tx:Number = m.tx + _x, ty:Number = m.ty + _y;
-		   var aw1:Number = a * w1, ch1:Number = c * h1, dh1:Number = d * h1, bw1:Number = b * w1;
-		   var aw0:Number = a * w0, ch0:Number = c * h0, dh0:Number = d * h0, bw0:Number = b * w0;
-		   vbdata[vpos] = aw1 + ch1 + tx;
-		   vbdata[vpos + 1] = dh1 + bw1 + ty;
-		   vbdata[vpos + 4] = aw0 + ch1 + tx;
-		   vbdata[vpos + 5] = dh1 + bw0 + ty;
-		   vbdata[vpos + 8] = aw0 + ch0 + tx;
-		   vbdata[vpos + 9] = dh0 + bw0 + ty;
-		   vbdata[vpos + 12] = aw1 + ch0 + tx;
-		   vbdata[vpos + 13] = dh0 + bw1 + ty;
-		   }
-		   else
-		   {
-		   m.bTransform = false;
-		   x += m.tx + _x;
-		   y += m.ty + _y;
-		   vbdata[vpos] = vbdata[vpos + 12] = x;
-		   vbdata[vpos + 1] = vbdata[vpos + 5] = y;
-		   vbdata[vpos + 4] = vbdata[vpos + 8] = x + width;
-		   vbdata[vpos + 9] = vbdata[vpos + 13] = y + height;
-		   }
-		   vb._dataModify=true;
-		   return true;
-		   }
-		 */
-		public static function fillQuadrangleImgVb(vb:Buffer, x:Number, y:Number, point4:Array, uv:Array, m:Matrix, _x:Number, _y:Number):Boolean {
+		public static function fillQuadrangleImgVb(vb:VertexBuffer, x:Number, y:Number, point4:Array, uv:Array, m:Matrix, _x:Number, _y:Number):Boolean {
 			'use strict';
-			
-			x |= 0;
-			y |= 0;
-			_x |= 0;
-			_y |= 0;
 			
 			var vpos:int = (vb._length >> 2)/*FLOAT32*/ + WebGLContext2D._RECTVBSIZE;
 			vb.length = (vpos << 2);
@@ -172,7 +116,7 @@ package laya.webgl.utils {
 			return true;
 		}
 		
-		public static function fillTranglesVB(vb:Buffer, x:Number, y:Number, points:Array, m:Matrix, _x:Number, _y:Number):Boolean {
+		public static function fillTranglesVB(vb:VertexBuffer, x:Number, y:Number, points:Array, m:Matrix, _x:Number, _y:Number):Boolean {
 			'use strict';
 			//x |= 0; y |= 0;_x |= 0; _y |= 0;
 			
@@ -210,7 +154,7 @@ package laya.webgl.utils {
 			return true;
 		}
 		
-		public static function fillRectImgVb(vb:Buffer, clip:Rectangle, x:Number, y:Number, width:Number, height:Number, uv:Array, m:Matrix, _x:Number, _y:Number, dx:Number, dy:Number, round:Boolean = false):Boolean {
+		public static function fillRectImgVb(vb:VertexBuffer, clip:Rectangle, x:Number, y:Number, width:Number, height:Number, uv:Array, m:Matrix, _x:Number, _y:Number, dx:Number, dy:Number, round:Boolean = false):Boolean {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			'use strict';
 			
@@ -381,35 +325,12 @@ package laya.webgl.utils {
 			return true;
 		}
 		
-		public static function fillLineVb(vb:Buffer, clip:Rectangle, fx:Number, fy:Number, tx:Number, ty:Number, width:Number, mat:Matrix):Boolean {
+		public static function fillLineVb(vb:VertexBuffer, clip:Rectangle, fx:Number, fy:Number, tx:Number, ty:Number, width:Number, mat:Matrix):Boolean {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			'use strict';
 			
-			//			fx |= 0; fy |= 0;tx |= 0; ty |= 0;
-			
 			var linew:Number = width * .5;
-			/*
-			   if (clip.width !== WebGLContext2D._MAXSIZE)
-			   {
-			   var cBx:Number = clip.x, cBy:Number= clip.y,cEx:Number = clip.width + cBx, cEy:Number = clip.height + cBy,tmp:Number;
-			   if (fx === tx)
-			   {
-			   if (fx<cBx || fx>cEx) return false;
-			   if(!(fy < ty)){tmp = fy;fy = ty,ty = tmp};
-			   (fy > cBy) || (fy = cBy);
-			   (ty < cEy) || (ty = cEy);
-			   if (fy >= ty) return false;
-			   }
-			   if (fy === ty)
-			   {
-			   if (fy<cBy || fy>cEy) return false;
-			   if(!(fx < tx)){tmp = fx; fx = tx, tx = tmp };
-			   (fx > cBx) || (fx = cBx);
-			   (tx < cEx) || (tx = cEx);
-			   if (fx >= tx) return false;
-			   }
-			   }
-			 */
+
 			var data:Array = _fillLineArray;
 			var perpx:Number = -(fy - ty), perpy:Number = fx - tx;
 			var dist:Number = Math.sqrt(perpx * perpx + perpy * perpy);
@@ -418,9 +339,7 @@ package laya.webgl.utils {
 			mat && mat.transformPointArray(data, data);
 			var vpos:int = (vb._length >> 2)/*FLOAT32*/ + WebGLContext2D._RECTVBSIZE;
 			vb.length = (vpos << 2);
-			var vbdata:* = vb.getFloat32Array();
-			vbdata.set(data, vpos - WebGLContext2D._RECTVBSIZE);
-			vb._upload = true;
+			vb.insertData(data, vpos - WebGLContext2D._RECTVBSIZE);
 			return true;
 		}
 	}

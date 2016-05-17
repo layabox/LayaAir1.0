@@ -1,5 +1,4 @@
-package laya.html.utils
-{
+package laya.html.utils {
 	import laya.display.ILayout;
 	import laya.display.Sprite;
 	import laya.display.css.CSSStyle;
@@ -7,34 +6,31 @@ package laya.html.utils
 	import laya.utils.HTMLChar;
 	
 	/**
-	 * ...
-	 * @author laya
+	 * @private
+	 * HTML的布局类
+	 * 对HTML的显示对象进行排版
 	 */
-	public class Layout
-	{
+	public class Layout {
+		
 		private static var _will:Vector.<Sprite>;
 		private static var DIV_ELEMENT_PADDING:int = 10;
-		public static function later(element:Sprite):void
-		{
-			if (_will == null)
-			{
+		
+		public static function later(element:Sprite):void {
+			if (_will == null) {
 				_will = new Vector.<Sprite>();
-				Laya.stage.frameLoop(1, null, function():void
-					{
-						if (_will.length < 1)
-							return;
-						for (var i:int = 0; i < _will.length; i++)
-						{
-							Layout.layout(_will[i]);
-						}
-						_will.length = 0;
-					});
+				Laya.stage.frameLoop(1, null, function():void {
+					if (_will.length < 1)
+						return;
+					for (var i:int = 0; i < _will.length; i++) {
+						Layout.layout(_will[i]);
+					}
+					_will.length = 0;
+				});
 			}
 			_will.push(element);
 		}
 		
-		public static function layout(element:Sprite):Array
-		{
+		public static function layout(element:Sprite):Array {
 			if ((element._style._type & CSSStyle.ADDLAYOUTED) === 0)
 				return null;
 			
@@ -57,7 +53,7 @@ package laya.html.utils
 			   if (sz.width > element.width)
 			   return _multiLineLayout(htmlElement);
 			   return _singleLineTextLayout(htmlElement, sz.width, sz.height);
-			 }*/
+			   }*/
 			return _multiLineLayout(element);
 		}
 		
@@ -105,8 +101,8 @@ package laya.html.utils
 		   return [txtWidth, txtHeight];
 		   }
 		 */
-		public static function _multiLineLayout(element:Sprite):Array
-		{
+		
+		public static function _multiLineLayout(element:Sprite):Array {
 			var elements:Vector.<ILayout> = new Vector.<ILayout>;
 			element._addChildsToLayout(elements);
 			var i:int, n:int = elements.length, j:int;
@@ -125,7 +121,7 @@ package laya.html.utils
 			
 			var oneLayout:ILayout;
 			var x:Number = 0;
-			var y:Number = 0; 
+			var y:Number = 0;
 			var w:Number = 0;
 			var h:Number = 0;
 			var tBottom:Number = 0;
@@ -140,11 +136,10 @@ package laya.html.utils
 			curLine.h = 0;
 			if (style.italic)
 				width -= style.fontSize / 3;
-				
+			
 			var tWordWidth:Number = 0;
 			var tLineFirstKey:Boolean = true;
-			function addLine():void
-			{
+			function addLine():void {
 				curLine.y = y;
 				y += curLine.h + leading;
 				curLine.mWidth = tWordWidth;
@@ -158,25 +153,20 @@ package laya.html.utils
 			}
 			
 			//生成排版的行
-			for (i = 0; i < n; i++)
-			{
+			for (i = 0; i < n; i++) {
 				oneLayout = elements[i];
-				if (oneLayout == null)
-				{
-					if (!tLineFirstKey)
-					{
+				if (oneLayout == null) {
+					if (!tLineFirstKey) {
 						x += DIV_ELEMENT_PADDING;
 					}
 					curLine.wordStartIndex = curLine.elements.length;
 					continue;
 				}
 				tLineFirstKey = false;
-				if (oneLayout is HTMLBrElement)
-				{
+				if (oneLayout is HTMLBrElement) {
 					addLine();
 					continue;
-				}else if (oneLayout._isChar())
-				{
+				} else if (oneLayout._isChar()) {
 					htmlWord = oneLayout as HTMLChar;
 					if (!htmlWord.isWord) //如果是完整单词
 					{
@@ -191,9 +181,7 @@ package laya.html.utils
 						}
 						newLine = false;
 						tWordWidth += htmlWord.width;
-					}
-					else
-					{
+					} else {
 						newLine = nextNewline || (htmlWord.char === '\n');
 						curLine.wordStartIndex = curLine.elements.length;
 					}
@@ -202,12 +190,10 @@ package laya.html.utils
 					h = htmlWord.height;
 					nextNewline = false;
 					
-					newLine = newLine || ((x + w) > width );
+					newLine = newLine || ((x + w) > width);
 					newLine && addLine();
 					curLine.minTextHeight = Math.min(curLine.minTextHeight, oneLayout.height);
-				}
-				else
-				{
+				} else {
 					curStyle = oneLayout._getCSSStyle();
 					sprite = oneLayout as Sprite;
 					curPadding = curStyle.padding;
@@ -217,8 +203,7 @@ package laya.html.utils
 					h = sprite.viewHeight + curPadding[0] + curPadding[2];
 					nextNewline = curStyle.lineElement;
 					newLine = newLine || ((x + w) > width && curStyle.wordWrap);
-					if (newLine)
-					{
+					if (newLine) {
 						i -= 1;
 						newLine && addLine();
 						continue;
@@ -233,18 +218,16 @@ package laya.html.utils
 				curLine.w = x - letterSpacing;
 				curLine.y = y;
 				maxWidth = Math.max(x + exWidth, maxWidth);
-			} 
+			}
 			y = curLine.y + curLine.h;
 			
 			//如果行信息需要调整，包括有浮动，有居中等
-			if (endAdjust)
-			{
+			if (endAdjust) {
 				//var dy:Number = 0;
 				//valign === CSSStyle.VALIGN_MIDDLE && (dy = (height - y) / 2);
 				//valign === CSSStyle.VALIGN_BOTTOM && (dy = (height - y));
 				var tY:Number = 0;
-				for (i = 0, n = lines.length; i < n; i++)
-				{
+				for (i = 0, n = lines.length; i < n; i++) {
 					lines[i].updatePos(0, width, i, tY, align, valign, lineHeight);
 					tY += Math.max(lineHeight, lines[i].h);
 				}
@@ -255,7 +238,7 @@ package laya.html.utils
 			
 			return [maxWidth, y];
 		}
-		
+	
 	}
 
 }

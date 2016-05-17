@@ -1,10 +1,3 @@
-///////////////////////////////////////////////////////////
-//  PicTool.as
-//  Macromedia ActionScript Implementation of the Class PicTool
-//  Created on:      2015-8-26 下午7:22:26
-//  Original author: ww
-///////////////////////////////////////////////////////////
-
 package laya.particle.particleUtils
 {
 	import laya.utils.Browser;
@@ -12,8 +5,7 @@ package laya.particle.particleUtils
 	
 	/**
 	 * 
-	 * @author ww
-	 * @version 1.0
+	 * @private
 	 * 
 	 * @created  2015-8-26 下午7:22:26
 	 */

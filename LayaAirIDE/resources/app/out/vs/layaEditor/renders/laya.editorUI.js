@@ -6,8 +6,10 @@
 	var Utils=laya.utils.Utils,Texture=laya.resource.Texture,Event=laya.events.Event,Text=laya.display.Text,Byte=laya.utils.Byte;
 	var Sprite=laya.display.Sprite,Rectangle=laya.maths.Rectangle,Matrix=laya.maths.Matrix,Particle2D=laya.particle.Particle2D;
 	var URL=laya.net.URL,Loader1=laya.net.Loader,Font=laya.display.css.Font,Input=laya.display.Input,Point=laya.maths.Point;
-	var Ease=laya.utils.Ease,HTMLImage=laya.resource.HTMLImage,Node=laya.display.Node,EventDispatcher=laya.events.EventDispatcher;
-	var HttpRequest=laya.net.HttpRequest,Tween=laya.utils.Tween,Skeleton=laya.ani.bone.Skeleton,Templet=laya.ani.bone.Templet;
+	var Stat=laya.utils.Stat,CSSStyle=laya.display.css.CSSStyle,Ease=laya.utils.Ease,HTMLImage=laya.resource.HTMLImage;
+	var Node=laya.display.Node,EventDispatcher=laya.events.EventDispatcher,Tween=laya.utils.Tween,HttpRequest=laya.net.HttpRequest;
+	var Skeleton=laya.ani.bone.Skeleton,Templet=laya.ani.bone.Templet,HTMLChar=laya.utils.HTMLChar,RenderSprite=laya.renders.RenderSprite;
+	var Browser=laya.utils.Browser;
 	Laya.interface('laya.editorUI.ISelect');
 	/**
 	*<code>LayoutStyle</code> 是一个布局样式类。
@@ -125,6 +127,300 @@
 		['grayFilter',function(){return this.grayFilter=new ColorFilter([0.3086,0.6094,0.082,0,0,0.3086,0.6094,0.082,0,0,0.3086,0.6094,0.082,0,0,0,0,0,1,0]);}
 		]);
 		return UIUtils;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.html.utils.HTMLParse
+	var HTMLParse=(function(){
+		function HTMLParse(){};
+		__class(HTMLParse,'laya.html.utils.HTMLParse');
+		HTMLParse.parse=function(ower,xmlString,url){
+			xmlString="<root>"+xmlString+"</root>";
+			xmlString=xmlString.replace(HTMLParse.spacePattern,HTMLParse.char255);
+			var xml=new Browser.window.DOMParser().parseFromString(xmlString,"text/xml");
+			HTMLParse._parseXML(ower,xml.childNodes[0].childNodes,url);
+		}
+
+		HTMLParse._parseXML=function(parent,xml,url,href){
+			var i=0,n=0;
+			if (xml.item){
+				for (i=0,n=xml.length;i < n;++i){
+					HTMLParse._parseXML(parent,xml[i],url,href);
+				}
+				}else {
+				var node;
+				var nodeName;
+				if (xml.nodeType==3){
+					var txt;
+					if ((parent instanceof laya.html.dom.HTMLDivElement )){
+						nodeName=xml.nodeName.toLowerCase();
+						txt=xml.textContent.replace(/^\s+|\s+$/g,'');
+						if (txt.length > 0){
+							node=parent.addChild(Utils.New(nodeName));
+							((node).innerTEXT=txt.replace(HTMLParse.char255AndOneSpacePattern," "));
+						}
+						}else {
+						txt=xml.textContent.replace(/^\s+|\s+$/g,'');
+						if (txt.length > 0){
+							((parent).innerTEXT=txt.replace(HTMLParse.char255AndOneSpacePattern," "));
+						}
+					}
+					return;
+					}else {
+					nodeName=xml.nodeName.toLowerCase();
+					if (nodeName=="#comment")return;
+					node=parent.addChild(Utils.New(nodeName));
+					(node).URI=url;
+					(node).href=href;
+					var attributes=xml.attributes;
+					if (attributes && attributes.length > 0){
+						for (i=0,n=attributes.length;i < n;++i){
+							var attribute=attributes[i];
+							var attrName=attribute.nodeName;
+							var value=attribute.value;
+							node.setValue(attrName,value);
+						}
+					}
+					HTMLParse._parseXML(node,xml.childNodes,url,(node).href);
+				}
+			}
+		}
+
+		HTMLParse.char255=String.fromCharCode(255);
+		HTMLParse.spacePattern=/&nbsp;|&#160;/g;
+		HTMLParse.char255AndOneSpacePattern=new RegExp(String.fromCharCode(255)+"|(\\s+)","g");
+		return HTMLParse;
+	})()
+
+
+	/**
+	*@private
+	*HTML的布局类
+	*对HTML的显示对象进行排版
+	*/
+	//class laya.html.utils.Layout
+	var Layout=(function(){
+		function Layout(){};
+		__class(Layout,'laya.html.utils.Layout');
+		Layout.later=function(element){
+			if (Layout._will==null){
+				Layout._will=[];
+				Laya.stage.frameLoop(1,null,function(){
+					if (Layout._will.length < 1)
+						return;
+					for (var i=0;i < Layout._will.length;i++){
+						laya.html.utils.Layout.layout(Layout._will[i]);
+					}
+					Layout._will.length=0;
+				});
+			}
+			Layout._will.push(element);
+		}
+
+		Layout.layout=function(element){
+			if ((element._style._type & /*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200)===0)
+				return null;
+			element._style._type &=~ /*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200;
+			return Layout._multiLineLayout(element);
+		}
+
+		Layout._multiLineLayout=function(element){
+			var elements=new Array;
+			element._addChildsToLayout(elements);
+			var i=0,n=elements.length,j=0;
+			var style=element._getCSSStyle();
+			var letterSpacing=style.letterSpacing;
+			var leading=style.leading;
+			var lineHeight=style.lineHeight;
+			var widthAuto=style._widthAuto()|| !style.wordWrap;
+			var width=widthAuto ? 999999 :element.width;
+			var height=element.height;
+			var maxWidth=0;
+			var exWidth=style.italic ? style.fontSize / 3 :0;
+			var align=style._getAlign();
+			var valign=style._getValign();
+			var endAdjust=valign!==0 || align!==0 || lineHeight !=0;
+			var oneLayout;
+			var x=0;
+			var y=0;
+			var w=0;
+			var h=0;
+			var tBottom=0;
+			var lines=new Array;
+			var curStyle;
+			var curPadding;
+			var curLine=lines[0]=new LayoutLine();
+			var newLine=false,nextNewline=false;
+			var htmlWord;
+			var sprite;
+			curLine.h=0;
+			if (style.italic)
+				width-=style.fontSize / 3;
+			var tWordWidth=0;
+			var tLineFirstKey=true;
+			function addLine (){
+				curLine.y=y;
+				y+=curLine.h+leading;
+				curLine.mWidth=tWordWidth;
+				tWordWidth=0;
+				curLine=new LayoutLine();
+				lines.push(curLine);
+				curLine.h=0;
+				x=0;
+				tLineFirstKey=true;
+				newLine=false;
+			}
+			for (i=0;i < n;i++){
+				oneLayout=elements[i];
+				if (oneLayout==null){
+					if (!tLineFirstKey){
+						x+=Layout.DIV_ELEMENT_PADDING;
+					}
+					curLine.wordStartIndex=curLine.elements.length;
+					continue ;
+				}
+				tLineFirstKey=false;
+				if ((oneLayout instanceof laya.html.dom.HTMLBrElement )){
+					addLine();
+					continue ;
+					}else if (oneLayout._isChar()){
+					htmlWord=oneLayout;
+					if (!htmlWord.isWord){
+						if (lines.length > 0 && (x+w)> width && curLine.wordStartIndex > 0){
+							var tLineWord=0;
+							tLineWord=curLine.elements.length-curLine.wordStartIndex+1;
+							curLine.elements.length=curLine.wordStartIndex;
+							i-=tLineWord;
+							addLine();
+							continue ;
+						}
+						newLine=false;
+						tWordWidth+=htmlWord.width;
+						}else {
+						newLine=nextNewline || (htmlWord.char==='\n');
+						curLine.wordStartIndex=curLine.elements.length;
+					}
+					w=htmlWord.width+letterSpacing;
+					h=htmlWord.height;
+					nextNewline=false;
+					newLine=newLine || ((x+w)> width);
+					newLine && addLine();
+					curLine.minTextHeight=Math.min(curLine.minTextHeight,oneLayout.height);
+					}else {
+					curStyle=oneLayout._getCSSStyle();
+					sprite=oneLayout;
+					curPadding=curStyle.padding;
+					curStyle._getCssFloat()===0 || (endAdjust=true);
+					newLine=nextNewline || curStyle.lineElement;
+					w=sprite.viewWidth+curPadding[1]+curPadding[3]+letterSpacing;
+					h=sprite.viewHeight+curPadding[0]+curPadding[2];
+					nextNewline=curStyle.lineElement;
+					newLine=newLine || ((x+w)> width && curStyle.wordWrap);
+					if (newLine){
+						i-=1;
+						newLine && addLine();
+						continue ;
+					}
+				}
+				curLine.elements.push(oneLayout);
+				curLine.h=Math.max(curLine.h,h);
+				oneLayout.x=x;
+				oneLayout.y=y;
+				x+=w;
+				curLine.w=x-letterSpacing;
+				curLine.y=y;
+				maxWidth=Math.max(x+exWidth,maxWidth);
+			}
+			y=curLine.y+curLine.h;
+			if (endAdjust){
+				var tY=0;
+				for (i=0,n=lines.length;i < n;i++){
+					lines[i].updatePos(0,width,i,tY,align,valign,lineHeight);
+					tY+=Math.max(lineHeight,lines[i].h);
+				}
+			}
+			widthAuto && (element.width=maxWidth);
+			(y > element.height)&& (element.height=y);
+			return [maxWidth,y];
+		}
+
+		Layout._will=null
+		Layout.DIV_ELEMENT_PADDING=10;
+		return Layout;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.html.utils.LayoutLine
+	var LayoutLine=(function(){
+		function LayoutLine(){
+			this.x=0;
+			this.y=0;
+			this.w=0;
+			this.h=0;
+			this.wordStartIndex=0;
+			this.minTextHeight=99999;
+			this.mWidth=0;
+			this.elements=new Array;
+		}
+
+		__class(LayoutLine,'laya.html.utils.LayoutLine');
+		var __proto=LayoutLine.prototype;
+		/**
+		*底对齐（默认）
+		*@param left
+		*@param width
+		*@param dy
+		*@param align 水平
+		*@param valign 垂直
+		*@param lineHeight 行高
+		*/
+		__proto.updatePos=function(left,width,lineNum,dy,align,valign,lineHeight){
+			var w=0;
+			var one
+			if (this.elements.length > 0){
+				one=this.elements[this.elements.length-1];
+				w=one.x+one.width-this.elements[0].x;
+			};
+			var dx=0,ddy=NaN;
+			align===/*laya.display.css.CSSStyle.ALIGN_CENTER*/1 && (dx=(width-w)/ 2);
+			align===/*laya.display.css.CSSStyle.ALIGN_RIGHT*/2 && (dx=(width-w));
+			lineHeight===0 || valign !=0 || (valign=1);
+			for (var i=0,n=this.elements.length;i < n;i++){
+				one=this.elements[i];
+				var tCSSStyle=one._getCSSStyle();
+				dx!==0 && (one.x+=dx);
+				switch (tCSSStyle._getValign()){
+					case 0:
+						one.y=dy;
+						break ;
+					case /*laya.display.css.CSSStyle.VALIGN_MIDDLE*/1:;
+						var tMinTextHeight=0;
+						if (this.minTextHeight !=99999){
+							tMinTextHeight=this.minTextHeight;
+						};
+						var tBottomLineY=(tMinTextHeight+lineHeight)/ 2;
+						tBottomLineY=Math.max(tBottomLineY,this.h);
+						if ((one instanceof laya.html.dom.HTMLImageElement )){
+							ddy=dy+tBottomLineY-one.height;
+							}else {
+							ddy=dy+tBottomLineY-one.height;
+						}
+						one.y=ddy;
+						break ;
+					case /*laya.display.css.CSSStyle.VALIGN_BOTTOM*/2:
+						one.y=dy+(lineHeight-one.height);
+						break ;
+					}
+			}
+		}
+
+		return LayoutLine;
 	})()
 
 
@@ -358,7 +654,7 @@
 		}
 
 		__proto._loadImage=function(url){
-			var image=new HTMLImage();
+			var image=HTMLImage.create();
 			var _this=this;
 			image.onload=function (){
 				clear();
@@ -3468,6 +3764,193 @@
 
 
 	/**
+	*@private
+	*/
+	//class laya.html.dom.HTMLElement extends laya.editorUI.Component
+	var HTMLElement=(function(_super){
+		function HTMLElement(){
+			this.URI=null;
+			this._href=null;
+			HTMLElement.__super.call(this);
+			this._text=HTMLElement._EMPTYTEXT;
+			this.setStyle(new CSSStyle(this));
+			this._getCSSStyle().valign="middle";
+			this.mouseEnabled=true;
+		}
+
+		__class(HTMLElement,'laya.html.dom.HTMLElement',_super);
+		var __proto=HTMLElement.prototype;
+		__proto.appendChild=function(c){
+			return this.addChild(c);
+		}
+
+		__proto._getWords=function(){
+			var txt=this._text.text;
+			if (!txt || txt.length===0)
+				return null;
+			var words=this._text.words;
+			if (words && words.length===txt.length)
+				return words;
+			words===null && (this._text.words=words=[]);
+			words.length=txt.length;
+			var size;
+			var style=this.style;
+			var fontStr=style.font;
+			var startX=0;
+			for (var i=0,n=txt.length;i < n;i++){
+				size=Utils.measureText(txt[i],fontStr);
+				var tHTMLChar=words[i]=new HTMLChar(txt[i],size.width,size.height,style);
+				if (this.href){
+					var tSprite=new Sprite();
+					this.addChild(tSprite);
+					tHTMLChar.setSprite(tSprite);
+				}
+			}
+			return words;
+		}
+
+		__proto.showLinkSprite=function(){
+			var words=this._text.words;
+			if (words){
+				var tLinkSpriteList=[];
+				var tSprite;
+				var tHtmlChar;
+				for (var i=0;i < words.length;i++){
+					tHtmlChar=words[i];
+					tSprite=new Sprite();
+					tSprite.graphics.drawRect(0,0,tHtmlChar.width,tHtmlChar.height,"#ff0000");
+					tSprite.width=tHtmlChar.width;
+					tSprite.height=tHtmlChar.height;
+					this.addChild(tSprite);
+					tLinkSpriteList.push(tSprite);
+				}
+			}
+		}
+
+		__proto.layoutLater=function(){
+			var style=this.style;
+			if ((style._type & /*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200))return;
+			if (style.widthed(this)&& (this._childs.length>0 || this._getWords()!=null)&& style.block){
+				Layout.later(this);
+				style._type |=/*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200;
+			}
+			else{
+				this.parent && (this.parent).layoutLater();
+			}
+		}
+
+		__proto.setValue=function(name,value){
+			switch (name){
+				case 'style':
+					this.style.cssText(value);
+					return;
+				case 'class':
+					this.className=value;
+					return;
+				}
+			laya.display.Sprite.prototype.setValue.call(this,name,value);
+		}
+
+		__proto.updateHref=function(){
+			if (this._href !=null){
+				var words=this._getWords();
+				if (words){
+					var tHTMLChar;
+					var tSprite;
+					for (var i=0;i < words.length;i++){
+						tHTMLChar=words[i];
+						tSprite=tHTMLChar.getSprite();
+						if (tSprite){
+							var tHeight=tHTMLChar.height-1;
+							tSprite.graphics.drawLine(0,tHeight,tHTMLChar.width,tHeight,tHTMLChar._getCSSStyle().color);
+							tSprite.size(tHTMLChar.width,tHTMLChar.height);
+							tSprite.on(/*laya.events.Event.CLICK*/"click",this,this.onLinkHandler);
+						}
+					}
+				}
+			}
+		}
+
+		__proto.onLinkHandler=function(e){
+			switch(e.type){
+				case /*laya.events.Event.CLICK*/"click":
+					Laya.stage.event(/*laya.events.Event.LINK*/"link",[this.href]);
+					break ;
+				}
+		}
+
+		__proto.formatURL=function(url){
+			return URL.formatURL(url,this.URI ? this.URI.path :null);
+		}
+
+		__getset(0,__proto,'color',null,function(value){
+			this.style.color=value;
+		});
+
+		__getset(0,__proto,'id',null,function(value){
+			HTMLDocument.document.setElementById(value,this);
+		});
+
+		__getset(0,__proto,'href',function(){
+			return this._href;
+			},function(url){
+			this._href=url;
+			if (url !=null){
+				this.on(/*laya.events.Event.CLICK*/"click",this,this.onLinkHandler);
+				this.updateHref();
+			}
+		});
+
+		__getset(0,__proto,'parent',_super.prototype._$get_parent,function(value){
+			if ((value instanceof laya.html.dom.HTMLElement )){
+				var p=value;
+				this.URI || (this.URI=p.URI);
+				this.style.inherit(p.style);
+			}
+			_super.prototype._$set_parent.call(this,value);
+		});
+
+		__getset(0,__proto,'className',null,function(value){
+			this.style.attrs(HTMLDocument.document.styleSheets['.'+value]);
+		});
+
+		__getset(0,__proto,'text',function(){
+			return this._text.text;
+			},function(value){
+			if (this._text==HTMLElement._EMPTYTEXT){
+				this._text={text:value,words:null};
+			}
+			else{
+				this._text.text=value;
+				this._text.words && (this._text.words.length=0);
+			}
+			this._renderType |=/*laya.renders.RenderSprite.CHILDS*/0x800;
+			this.repaint();
+			this.updateHref();
+		});
+
+		__getset(0,__proto,'innerTEXT',function(){
+			return this._text.text;
+			},function(value){
+			this.text=value;
+		});
+
+		__getset(0,__proto,'style',function(){
+			return this._style;
+		});
+
+		__getset(0,__proto,'onClick',null,function(value){
+			var fn;
+			/*__JS__ */eval("fn=function(event){"+value+";}");
+			this.on(/*laya.events.Event.CLICK*/"click",this,fn);
+		});
+
+		HTMLElement._EMPTYTEXT={text:null,words:null};
+		return HTMLElement;
+	})(Component)
+
+
+	/**
 	*<code>Image</code> 类是用于表示位图图像或绘制图形的显示对象。
 	*
 	*
@@ -4061,44 +4544,72 @@
 			this._idOfSprite=null;
 			this.basePath=null;
 			MovieClip.__super.call(this);
-			this.size(100,100);
-			this.setBounds(new Rectangle(0,0,100,100));
 			this._ids={};
 			this._idOfSprite=[];
 			this._reset();
 			this._playing=false;
+			this.size(100,100);
+			this.setBounds(new Rectangle(0,0,100,100));
 		}
 
 		__class(MovieClip,'laya.editorUI.MovieClip',_super);
 		var __proto=MovieClip.prototype;
+		/**
+		*动画的帧更新处理函数。
+		*/
 		__proto.update=function(){
 			if (!this._data)return;
 			if (!this._playing)
 				return;
 			this._playIndex++;
+			if (this._playIndex >=this.totalFrames)this._playIndex=0;
 			this._parse(this._playIndex);
 		}
 
+		/**
+		*停止播放动画。
+		*/
 		__proto.stop=function(){
 			this._playing=false;
 			Laya.timer.clear(this,this.update);
 		}
 
+		/**
+		*将动画立即停止在指定帧。
+		*@param frame 帧索引。
+		*/
 		__proto.gotoStop=function(frame){
-			this.play(frame);
 			this.stop();
+			this._displayFrame(frame);
 		}
 
+		/**
+		*清理。
+		*/
+		__proto.clear=function(){
+			this._idOfSprite.length=0;
+			this.removeChildren();
+			this.graphics=null;
+		}
+
+		/**
+		*播放动画。
+		*@param frameIndex 帧索引。
+		*/
 		__proto.play=function(frameIndex){
+			(frameIndex===void 0)&& (frameIndex=-1);
+			this._displayFrame(frameIndex);
+			this._playing=true;
+			Laya.timer.loop(this.interval,this,this.update,null,true);
+		}
+
+		__proto._displayFrame=function(frameIndex){
 			(frameIndex===void 0)&& (frameIndex=-1);
 			if (frameIndex !=-1){
 				if (this._curIndex > frameIndex)
 					this._reset();
-				if (frameIndex !=this._curIndex)
-					this._parse(frameIndex);
+				this._parse(frameIndex);
 			}
-			this._playing=true;
-			Laya.timer.loop(this.interval,this,this.update,null,true);
 		}
 
 		__proto._reset=function(rm){
@@ -4106,7 +4617,6 @@
 			if (rm && this._curIndex !=1)
 				this.removeChildren();
 			this._curIndex=-1;
-			this._playIndex=-1;
 			this._Pos=this._start;
 		}
 
@@ -4119,6 +4629,7 @@
 			_data.pos=this._Pos;
 			this._ended=false;
 			this._playIndex=frameIndex;
+			if (this._curIndex >=frameIndex)this._curIndex=-1;
 			while ((this._curIndex <=frameIndex)&& (!this._ended)){
 				type=_data.getUint16();
 				switch (type){
@@ -4129,20 +4640,19 @@
 						_data.pos=tPos;
 						if ((ttype=_data.getUint8())==0){
 							var pid=_data.getUint16();
-							if (!(sp=_idOfSprite[key])){
+							sp=_idOfSprite[key]
+							if (!sp){
 								sp=_idOfSprite[key]=new Sprite();
 								var spp=new Sprite();
 								spp.loadImage(this.basePath+pid+".png");
 								sp.addChild(spp);
 								spp.size(_data.getFloat32(),_data.getFloat32());
 								var mat=_data._getMatrix();
-								spp.x=mat.tx;
-								spp.y=mat.ty;
-								mat.tx=mat.ty=0;
 								spp.transform=mat;
 							}
 							}else if (ttype==1){
-							if (!(mc=_idOfSprite[key])){
+							mc=_idOfSprite[key]
+							if (!mc){
 								_idOfSprite[key]=mc=new MovieClip();
 								mc.interval=this.interval;
 								mc._ids=this._ids;
@@ -4169,9 +4679,6 @@
 					case 7:
 						sp=_idOfSprite[ _data.getUint16()];
 						var mt=new Matrix(_data.getFloat32(),_data.getFloat32(),_data.getFloat32(),_data.getFloat32(),_data.getFloat32(),_data.getFloat32());
-						sp.x=mt.tx;
-						sp.y=mt.ty;
-						mt.tx=mt.ty=0;
 						sp.transform=mt;
 						break ;
 					case 8:
@@ -4208,22 +4715,27 @@
 			this._Pos=_data.pos;
 		}
 
+		/**@private */
 		__proto._setData=function(data,start){
 			this._data=data;
 			this._start=start+3;
 		}
 
+		/**
+		*加载资源。
+		*@param url swf 资源地址。
+		*/
 		__proto.load=function(url){
 			var _$this=this;
 			url=URL.formatURL(url);
-			this.basePath=url.replace(".swf","/image/");
+			this.basePath=url.split(".swf")[0]+"/image/";
 			var data=Loader1.getRes(url);
 			if (data){
-				this.initData(data);
+				this._initData(data);
 				}else {
 				var l=new Loader1();
 				l.once(/*laya.events.Event.COMPLETE*/"complete",null,function(data){
-					_$this.initData(data);
+					_$this._initData(data);
 				});
 				l.once(/*laya.events.Event.ERROR*/"error",null,function(err){
 				});
@@ -4231,7 +4743,7 @@
 			}
 		}
 
-		__proto.initData=function(data){
+		__proto._initData=function(data){
 			this._data=new Byte(data);
 			var i=0,len=this._data.getUint16();
 			for (i=0;i < len;i++)
@@ -4245,17 +4757,23 @@
 			this.event(/*laya.events.Event.LOADED*/"loaded");
 		}
 
-		__getset(0,__proto,'currentFrame',function(){
-			return this._curIndex;
-		});
-
-		__getset(0,__proto,'totalFrames',function(){
-			return this._frameCount;
-		});
-
-		__getset(0,__proto,'skin',null,function(path){
+		__getset(0,__proto,'url',null,function(path){
 			path=laya.ide.devices.FileTools.getAbsPath(laya.editor.manager.FileManager.getPath(laya.editor.config.SystemSetting.assetsPath,path));
 			this.load(path);
+		});
+
+		/**
+		*当前动画帧索引。
+		*/
+		__getset(0,__proto,'currentFrame',function(){
+			return this._playIndex;
+		});
+
+		/**
+		*帧总数。
+		*/
+		__getset(0,__proto,'totalFrames',function(){
+			return this._frameCount;
 		});
 
 		MovieClip._ValueList=["x","y","width","height","scaleX","scaleY","rotation","alpha"];
@@ -4280,7 +4798,7 @@
 		__class(ParticlePlayer,'laya.editorUI.ParticlePlayer',_super);
 		var __proto=ParticlePlayer.prototype;
 		Laya.imps(__proto,{"laya.ui.IComponent":true})
-		__proto.loadParticleFile=function(fileName){
+		__proto.loadParticle=function(fileName){
 			Laya.loader.load(fileName,new Handler(this,this.setParticleSetting),null,/*laya.editorUI.Loader.JSOn*/"json",1,false);
 		}
 
@@ -4298,9 +4816,9 @@
 			this.addChild(this.particle);
 		}
 
-		__getset(0,__proto,'file',null,function(path){
+		__getset(0,__proto,'url',null,function(path){
 			path=laya.ide.devices.FileTools.getAbsPath(laya.editor.manager.FileManager.getPath(laya.editor.config.SystemSetting.pagesPath,path));
-			this.loadParticleFile(path);
+			this.loadParticle(path);
 		});
 
 		return ParticlePlayer;
@@ -4560,6 +5078,67 @@
 
 
 	/**
+	*...
+	*@author ww
+	*/
+	//class laya.editorUI.SkeletonPlayer extends laya.ani.bone.Skeleton
+	var SkeletonPlayer=(function(_super){
+		function SkeletonPlayer(tmplete){
+			this._comXml=null;
+			this.completeHandler=null;
+			this.completeHandler=null;
+			this.dataUrl=null;
+			this.imgUrl=null;
+			SkeletonPlayer.__super.call(this,tmplete);
+			this.size(100,100);
+			this.setBounds(new Rectangle(0,0,100,100));
+			this.on(/*laya.events.Event.COMPLETE*/"complete",this,this.complete);
+		}
+
+		__class(SkeletonPlayer,'laya.editorUI.SkeletonPlayer',_super);
+		var __proto=SkeletonPlayer.prototype;
+		Laya.imps(__proto,{"laya.ui.IComponent":true})
+		__proto.complete=function(){
+			if (this.completeHandler){
+				var tHd;
+				tHd=this.completeHandler;
+				this.completeHandler=null;
+				tHd.run();
+			}
+		}
+
+		/**
+		*加载资源。
+		*@param baseURL 资源地址。
+		*/
+		__proto.load=function(baseURL){
+			this.dataUrl=baseURL;
+			this.imgUrl=baseURL.replace(".sk",".png");
+			Laya.loader.load([{url:this.dataUrl,type:/*laya.net.Loader.BUFFER*/"arraybuffer"},{url:this.imgUrl,type:/*laya.net.Loader.IMAGE*/"image"}],Handler.create(this,this._resLoaded));
+		}
+
+		__proto._resLoaded=function(){
+			var _templet
+			_templet=new Templet(Loader1.getRes(this.dataUrl),Loader1.getRes(this.imgUrl));
+			this.init(_templet,_templet.rate);
+		}
+
+		__getset(0,__proto,'comXml',function(){
+			return this._comXml;
+			},function(value){
+			this._comXml=value;
+		});
+
+		__getset(0,__proto,'url',null,function(path){
+			path=laya.ide.devices.FileTools.getAbsPath(laya.editor.manager.FileManager.getPath(laya.editor.config.SystemSetting.assetsPath,path));
+			this.load(path);
+		});
+
+		return SkeletonPlayer;
+	})(Skeleton)
+
+
+	/**
 	*<code>View</code> 是一个视图类。
 	*
 	*@internal <p><code>View</code></p>
@@ -4645,147 +5224,6 @@
 		]);
 		return View;
 	})(Box)
-
-
-	/**
-	*<code>CheckBox</code> 组件显示一个小方框，该方框内可以有选中标记。
-	*<code>CheckBox</code> 组件还可以显示可选的文本标签，默认该标签位于 CheckBox 右侧。
-	*<p><code>CheckBox</code> 使用 <code>dataSource</code>赋值时的的默认属性是：<code>selected</code>。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>CheckBox</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.CheckBox;
-		*import laya.utils.Handler;
-		*
-		*public class CheckBox_Example
-		*{
-			*public function CheckBox_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load("resource/ui/check.png",Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*
-			*private function onLoadComplete():void
-			*{
-				*trace("资源加载完成！");
-				*var checkBox:CheckBox=new CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的实例对象 checkBox ,传入它的皮肤skin和标签label。
-				*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
-				*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
-				*checkBox.clickHandler=new Handler(this,onClick,[checkBox]);//设置 checkBox 的点击事件处理器。
-				*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
-				*}
-			*
-			*private function onClick(checkBox:CheckBox):void
-			*{
-				*trace("输出选中状态: checkBox.selected = "+checkBox.selected);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*Laya.loader.load("resource/ui/check.png",laya.utils.Handler.create(this,loadComplete));//加载资源
-	*function loadComplete()
-	*{
-		*console.log("资源加载完成！");
-		*var checkBox=new laya.ui.CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的类的实例对象 checkBox ,传入它的皮肤skin和标签label。
-		*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
-		*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
-		*checkBox.clickHandler=new laya.utils.Handler(this,onClick,[checkBox],false);//设置 checkBox 的点击事件处理器。
-		*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
-		*}
-	*function onClick(checkBox)
-	*{
-		*console.log("checkBox.selected = ",checkBox.selected);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*Laya.loader.load("resource/ui/check.png",laya.utils.Handler.create(this,loadComplete));//加载资源
-	*function loadComplete()
-	*{
-		*console.log("资源加载完成！");
-		*var checkBox:laya.ui.CheckBox=new laya.ui.CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的类的实例对象 checkBox ,传入它的皮肤skin和标签label。
-		*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
-		*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
-		*checkBox.clickHandler=new laya.utils.Handler(this,this.onClick,[checkBox],false);//设置 checkBox 的点击事件处理器。
-		*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
-		*}
-	*function onClick(checkBox)
-	*{
-		*console.log("checkBox.selected = ",checkBox.selected);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import CheckBox=laya.ui.CheckBox;
-	*import Handler=laya.utils.Handler;
-	*class CheckBox_Example{
-		*constructor()
-		*{
-			*Laya.init(640,800);
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load("resource/ui/check.png",Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete()
-		*{
-			*var checkBox:CheckBox=new CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的实例对象 checkBox ,传入它的皮肤skin和标签label。
-			*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
-			*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
-			*checkBox.clickHandler=new Handler(this,this.onClick,[checkBox]);//设置 checkBox 的点击事件处理器。
-			*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
-			*}
-		*private onClick(checkBox:CheckBox):void
-		*{
-			*console.log("输出选中状态: checkBox.selected = "+checkBox.selected);
-			*}
-		*}
-	*</listing>
-	*@author yung
-	*/
-	//class laya.editorUI.CheckBox extends laya.editorUI.Button
-	var CheckBox=(function(_super){
-		/**
-		*创建一个新的 <code>CheckBox</code> 组件实例。
-		*@param skin 皮肤资源地址。
-		*@param label 文本标签的内容。
-		*/
-		function CheckBox(skin,label){
-			(label===void 0)&& (label="");
-			CheckBox.__super.call(this,skin,label);
-		}
-
-		__class(CheckBox,'laya.editorUI.CheckBox',_super);
-		var __proto=CheckBox.prototype;
-		/**@inheritDoc */
-		__proto.preinitialize=function(){
-			laya.editorUI.Component.prototype.preinitialize.call(this);
-			this.toggle=true;
-			this._autoSize=false;
-		}
-
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			_super.prototype.initialize.call(this);
-			this._text.align="left";
-			this._text.valign="top";
-			this._text.width=0;
-		}
-
-		/**@inheritDoc */
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			this._dataSource=value;
-			if ((typeof value=='boolean'))this.selected=value;
-			else if ((typeof value=='string'))this.selected=value==="true";
-			else _super.prototype._$set_dataSource.call(this,value);
-		});
-
-		return CheckBox;
-	})(Button)
 
 
 	/**
@@ -5226,6 +5664,147 @@
 
 		return Group;
 	})(Box)
+
+
+	/**
+	*<code>CheckBox</code> 组件显示一个小方框，该方框内可以有选中标记。
+	*<code>CheckBox</code> 组件还可以显示可选的文本标签，默认该标签位于 CheckBox 右侧。
+	*<p><code>CheckBox</code> 使用 <code>dataSource</code>赋值时的的默认属性是：<code>selected</code>。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>CheckBox</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.CheckBox;
+		*import laya.utils.Handler;
+		*
+		*public class CheckBox_Example
+		*{
+			*public function CheckBox_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load("resource/ui/check.png",Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*
+			*private function onLoadComplete():void
+			*{
+				*trace("资源加载完成！");
+				*var checkBox:CheckBox=new CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的实例对象 checkBox ,传入它的皮肤skin和标签label。
+				*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
+				*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
+				*checkBox.clickHandler=new Handler(this,onClick,[checkBox]);//设置 checkBox 的点击事件处理器。
+				*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
+				*}
+			*
+			*private function onClick(checkBox:CheckBox):void
+			*{
+				*trace("输出选中状态: checkBox.selected = "+checkBox.selected);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*Laya.loader.load("resource/ui/check.png",laya.utils.Handler.create(this,loadComplete));//加载资源
+	*function loadComplete()
+	*{
+		*console.log("资源加载完成！");
+		*var checkBox=new laya.ui.CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的类的实例对象 checkBox ,传入它的皮肤skin和标签label。
+		*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
+		*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
+		*checkBox.clickHandler=new laya.utils.Handler(this,onClick,[checkBox],false);//设置 checkBox 的点击事件处理器。
+		*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
+		*}
+	*function onClick(checkBox)
+	*{
+		*console.log("checkBox.selected = ",checkBox.selected);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*Laya.loader.load("resource/ui/check.png",laya.utils.Handler.create(this,loadComplete));//加载资源
+	*function loadComplete()
+	*{
+		*console.log("资源加载完成！");
+		*var checkBox:laya.ui.CheckBox=new laya.ui.CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的类的实例对象 checkBox ,传入它的皮肤skin和标签label。
+		*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
+		*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
+		*checkBox.clickHandler=new laya.utils.Handler(this,this.onClick,[checkBox],false);//设置 checkBox 的点击事件处理器。
+		*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
+		*}
+	*function onClick(checkBox)
+	*{
+		*console.log("checkBox.selected = ",checkBox.selected);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import CheckBox=laya.ui.CheckBox;
+	*import Handler=laya.utils.Handler;
+	*class CheckBox_Example{
+		*constructor()
+		*{
+			*Laya.init(640,800);
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load("resource/ui/check.png",Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete()
+		*{
+			*var checkBox:CheckBox=new CheckBox("resource/ui/check.png","这个是一个CheckBox组件。");//创建一个 CheckBox 类的实例对象 checkBox ,传入它的皮肤skin和标签label。
+			*checkBox.x=100;//设置 checkBox 对象的属性 x 的值，用于控制 checkBox 对象的显示位置。
+			*checkBox.y=100;//设置 checkBox 对象的属性 y 的值，用于控制 checkBox 对象的显示位置。
+			*checkBox.clickHandler=new Handler(this,this.onClick,[checkBox]);//设置 checkBox 的点击事件处理器。
+			*Laya.stage.addChild(checkBox);//将此 checkBox 对象添加到显示列表。
+			*}
+		*private onClick(checkBox:CheckBox):void
+		*{
+			*console.log("输出选中状态: checkBox.selected = "+checkBox.selected);
+			*}
+		*}
+	*</listing>
+	*@author yung
+	*/
+	//class laya.editorUI.CheckBox extends laya.editorUI.Button
+	var CheckBox=(function(_super){
+		/**
+		*创建一个新的 <code>CheckBox</code> 组件实例。
+		*@param skin 皮肤资源地址。
+		*@param label 文本标签的内容。
+		*/
+		function CheckBox(skin,label){
+			(label===void 0)&& (label="");
+			CheckBox.__super.call(this,skin,label);
+		}
+
+		__class(CheckBox,'laya.editorUI.CheckBox',_super);
+		var __proto=CheckBox.prototype;
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			laya.editorUI.Component.prototype.preinitialize.call(this);
+			this.toggle=true;
+			this._autoSize=false;
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			_super.prototype.initialize.call(this);
+			this._text.align="left";
+			this._text.valign="top";
+			this._text.width=0;
+		}
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if ((typeof value=='boolean'))this.selected=value;
+			else if ((typeof value=='string'))this.selected=value==="true";
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		return CheckBox;
+	})(Button)
 
 
 	/**布局容器*/
@@ -6399,70 +6978,6 @@
 
 
 	/**
-	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
-	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
-	*
-	*
-	*@see laya.ui.RadioGroup
-	*@author yung
-	*/
-	//class laya.editorUI.Radio extends laya.editorUI.Button
-	var Radio=(function(_super){
-		function Radio(skin,label){
-			this._value=null;
-			(label===void 0)&& (label="");
-			Radio.__super.call(this,skin,label);
-		}
-
-		__class(Radio,'laya.editorUI.Radio',_super);
-		var __proto=Radio.prototype;
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			_super.prototype.destroy.call(this,destroyChild);
-			this._value=null;
-		}
-
-		/**@inheritDoc */
-		__proto.preinitialize=function(){
-			laya.editorUI.Component.prototype.preinitialize.call(this);
-			this.toggle=false;
-			this._autoSize=false;
-		}
-
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			_super.prototype.initialize.call(this);
-			this._text.align="left";
-			this._text.valign="top";
-			this._text.width=0;
-		}
-
-		/**
-		*@private
-		*对象的<code>Event.CLICK</code>事件侦听处理函数。
-		*/
-		__proto.onClick=function(e){
-			this.selected=true;
-		}
-
-		/**
-		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
-		*
-		*@internal ##?
-		*@return
-		*/
-		__getset(0,__proto,'value',function(){
-			return this._value !=null ? this._value :this.label;
-			},function(obj){
-			this._value=obj;
-		});
-
-		return Radio;
-	})(Button)
-
-
-	/**
 	*使用 <code>HSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
 	*
 	*<p> <code>HSlider</code> 控件采用水平方向。滑块轨道从左向右扩展，而标签位于轨道的顶部或底部。</p>
@@ -6580,6 +7095,70 @@
 		__class(HSlider,'laya.editorUI.HSlider',_super);
 		return HSlider;
 	})(Slider)
+
+
+	/**
+	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
+	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
+	*
+	*
+	*@see laya.ui.RadioGroup
+	*@author yung
+	*/
+	//class laya.editorUI.Radio extends laya.editorUI.Button
+	var Radio=(function(_super){
+		function Radio(skin,label){
+			this._value=null;
+			(label===void 0)&& (label="");
+			Radio.__super.call(this,skin,label);
+		}
+
+		__class(Radio,'laya.editorUI.Radio',_super);
+		var __proto=Radio.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._value=null;
+		}
+
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			laya.editorUI.Component.prototype.preinitialize.call(this);
+			this.toggle=false;
+			this._autoSize=false;
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			_super.prototype.initialize.call(this);
+			this._text.align="left";
+			this._text.valign="top";
+			this._text.width=0;
+		}
+
+		/**
+		*@private
+		*对象的<code>Event.CLICK</code>事件侦听处理函数。
+		*/
+		__proto.onClick=function(e){
+			this.selected=true;
+		}
+
+		/**
+		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
+		*
+		*@internal ##?
+		*@return
+		*/
+		__getset(0,__proto,'value',function(){
+			return this._value !=null ? this._value :this.label;
+			},function(obj){
+			this._value=obj;
+		});
+
+		return Radio;
+	})(Button)
 
 
 	/**
@@ -7236,6 +7815,120 @@
 
 
 	/**
+	*DIV标签类（特别注意，此类有两个作用）
+	*1，用于解析数据，
+	*2，实际的标签显示对象（标签对象不等于解析类，比如当我们获取标签显示对象的宽和高，应先找到是标签对象）
+	*@author laya
+	*/
+	//class laya.html.dom.HTMLDivElement extends laya.html.dom.HTMLElement
+	var HTMLDivElement=(function(_super){
+		function HTMLDivElement(){
+			this.contextHeight=NaN;
+			this.contextWidth=NaN;
+			HTMLDivElement.__super.call(this);
+			this.style.block=true;
+			this.style.lineElement=true;
+			HTMLStyleElement;
+		}
+
+		__class(HTMLDivElement,'laya.html.dom.HTMLDivElement',_super);
+		var __proto=HTMLDivElement.prototype;
+		/**
+		*追加内容，解析并对显示对象排版
+		*@param text
+		*/
+		__proto.appendHTML=function(text){
+			HTMLParse.parse(this,text,this.URI);
+			this.layout();
+		}
+
+		/**
+		*@private
+		*@param out
+		*@return
+		*/
+		__proto._addChildsToLayout=function(out){
+			var words=this._getWords();
+			if (words==null && this._childs.length==0)return false;
+			words && words.forEach(function(o){
+				out.push(o);
+			});
+			var tFirstKey=true;
+			this._childs.forEach(function(o){
+				if (tFirstKey){
+					tFirstKey=false;
+					}else {
+					out.push(null);
+				}
+				o._addToLayout(out)
+			});
+			return true;
+		}
+
+		/**
+		*@private
+		*@param out
+		*/
+		__proto._addToLayout=function(out){
+			this.layout();
+		}
+
+		/**
+		*@private
+		*对显示内容进行排版
+		*/
+		__proto.layout=function(){
+			this.style._type |=/*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200;
+			var tArray=Layout.layout(this);
+			if (tArray){
+				this.contextWidth=tArray[0];
+				this.contextHeight=tArray[1];
+			}
+		}
+
+		/**
+		*@private
+		*@inheritDoc
+		*/
+		__proto._getBoundPointsM=function(ifRotate){
+			(ifRotate===void 0)&& (ifRotate=false);
+			console.log("htmlDivElement getBounds");
+			var rec=Rectangle.TEMP;
+			rec.setTo(0,0,this.width,this.height);
+			return rec._getBoundPoints();
+		}
+
+		/**
+		*设置标签内容
+		*/
+		__getset(0,__proto,'innerHTML',null,function(text){
+			this.removeChildren();
+			this.appendHTML(text);
+		});
+
+		/**
+		*标签的高度（标签时可用）
+		*如果对象的高度被设置过，返回设置的高度，如果没被设置过，则返回实际内容的高度
+		*/
+		__getset(0,__proto,'height',function(){
+			if (this._height)return this._height;
+			return this.contextHeight;
+		},_super.prototype._$set_height);
+
+		/**
+		*标签的宽度（标签时可用）
+		*如果对象的宽度被设置过，返回设置的宽度，如果没被设置过，则返回实际内容的宽度
+		*/
+		__getset(0,__proto,'width',function(){
+			if (this._width)return this._width;
+			return this.contextWidth;
+		},_super.prototype._$set_width);
+
+		return HTMLDivElement;
+	})(HTMLElement)
+
+
+	/**
 	*<code>ViewStack</code> 类用于视图堆栈类，用于视图的显示等设置处理。
 	*@author yung
 	*/
@@ -7844,59 +8537,174 @@
 
 
 	/**
-	*...
-	*@author ww
+	*@private
 	*/
-	//class laya.editorUI.SkeletonPlayer extends laya.ani.bone.Skeleton
-	var SkeletonPlayer=(function(_super){
-		function SkeletonPlayer(tmplete){
-			this._comXml=null;
-			this.completeHandler=null;
-			this.dataUrl=null;
-			this.imgUrl=null;
-			SkeletonPlayer.__super.call(this,tmplete);
-			this.size(100,100);
-			this.setBounds(new Rectangle(0,0,100,100));
-			this.on(/*laya.events.Event.COMPLETE*/"complete",this,this.complete);
+	//class laya.html.dom.HTMLBrElement extends laya.html.dom.HTMLElement
+	var HTMLBrElement=(function(_super){
+		function HTMLBrElement(){
+			HTMLBrElement.__super.call(this);
+			this.style.lineElement=true;
+			this.style.block=true;
 		}
 
-		__class(SkeletonPlayer,'laya.editorUI.SkeletonPlayer',_super);
-		var __proto=SkeletonPlayer.prototype;
-		Laya.imps(__proto,{"laya.ui.IComponent":true})
-		__proto.complete=function(){
-			if (this.completeHandler){
-				var tHd;
-				tHd=this.completeHandler;
-				this.completeHandler=null;
-				tHd.run();
+		__class(HTMLBrElement,'laya.html.dom.HTMLBrElement',_super);
+		return HTMLBrElement;
+	})(HTMLElement)
+
+
+	/**
+	*@private
+	*/
+	//class laya.html.dom.HTMLDocument extends laya.html.dom.HTMLElement
+	var HTMLDocument=(function(_super){
+		function HTMLDocument(){
+			this.all=new Array;
+			this.styleSheets=CSSStyle.styleSheets;
+			HTMLDocument.__super.call(this);
+		}
+
+		__class(HTMLDocument,'laya.html.dom.HTMLDocument',_super);
+		var __proto=HTMLDocument.prototype;
+		__proto.getElementById=function(id){
+			return this.all[id];
+		}
+
+		__proto.setElementById=function(id,e){
+			this.all[id]=e;
+		}
+
+		__static(HTMLDocument,
+		['document',function(){return this.document=new HTMLDocument();}
+		]);
+		return HTMLDocument;
+	})(HTMLElement)
+
+
+	/**
+	*@private
+	*/
+	//class laya.html.dom.HTMLImageElement extends laya.html.dom.HTMLElement
+	var HTMLImageElement=(function(_super){
+		function HTMLImageElement(){
+			this._tex=null;
+			this._url=null;
+			this._renderArgs=[];
+			HTMLImageElement.__super.call(this);
+			this.style.block=true;
+		}
+
+		__class(HTMLImageElement,'laya.html.dom.HTMLImageElement',_super);
+		var __proto=HTMLImageElement.prototype;
+		__proto._addToLayout=function(out){
+			!this._style.absolute && out.push(this);
+		}
+
+		__proto.render=function(context,x,y){
+			if (!this._tex || !this._tex.loaded || !this._tex.loaded || this._width < 1 || this._height < 1)return;
+			Stat.spriteDraw++;
+			this._renderArgs[0]=this._tex;
+			this._renderArgs[1]=this.x;
+			this._renderArgs[2]=this.y;
+			this._renderArgs[3]=this.width || this._tex.width;
+			this._renderArgs[4]=this.height || this._tex.height;
+			context.ctx.drawTexture2(x,y,this.style.translateX,this.style.translateY,this.transform,this.style.alpha,this.style.blendMode,this._renderArgs);
+		}
+
+		__getset(0,__proto,'src',null,function(url){
+			var _$this=this;
+			url=this.formatURL(url);
+			if (this._url==url)return;
+			this._url=url;
+			this._tex=Loader1.getRes(url)
+			if (!this._tex){
+				this._tex=new Texture();
+				this._tex.load(url);
+				Loader1.cacheRes(url,this._tex);
+			};
+			var tex=this._tex=Loader1.getRes(url);
+			if (!tex){
+				this._tex=tex=new Texture();
+				tex.load(url);
+				Loader1.cacheRes(url,tex);
 			}
-		}
-
-		__proto.load=function(baseURL){
-			this.dataUrl=baseURL;
-			this.imgUrl=baseURL.replace(".sk",".png");
-			Laya.loader.load([ {url:this.dataUrl,type:/*laya.net.Loader.BUFFER*/"arraybuffer" },{url:this.imgUrl,type:/*laya.net.Loader.IMAGE*/"image" }],Handler.create(this,this.resLoaded));
-		}
-
-		__proto.resLoaded=function(){
-			this._tp_=new Templet(Loader1.getRes(this.dataUrl),Loader1.getRes(this.imgUrl));
-			this.setTpl(this._tp_);
-			this.play();
-		}
-
-		__getset(0,__proto,'comXml',function(){
-			return this._comXml;
-			},function(value){
-			this._comXml=value;
+			function onloaded (){
+				var style=_$this._style;
+				var w=style.widthed(_$this)?-1:_$this._tex.width;
+				var h=style.heighted(_$this)?-1:_$this._tex.height;
+				if (!style.widthed(_$this)&& _$this._width !=_$this._tex.width){
+					_$this.width=_$this._tex.width;
+					_$this.parent && (_$this.parent).layoutLater();
+				}
+				if (!style.heighted(_$this)&& _$this._height !=_$this._tex.height){
+					_$this.height=_$this._tex.height;
+					_$this.parent && (_$this.parent).layoutLater();
+				}
+			}
+			tex.loaded?onloaded():tex.on(/*laya.events.Event.LOADED*/"loaded",null,onloaded);
 		});
 
-		__getset(0,__proto,'skin',null,function(path){
-			path=laya.ide.devices.FileTools.getAbsPath(laya.editor.manager.FileManager.getPath(laya.editor.config.SystemSetting.assetsPath,path));
-			this.load(path);
+		return HTMLImageElement;
+	})(HTMLElement)
+
+
+	/**
+	*@private
+	*/
+	//class laya.html.dom.HTMLLinkElement extends laya.html.dom.HTMLElement
+	var HTMLLinkElement=(function(_super){
+		function HTMLLinkElement(){
+			this.type=null;
+			HTMLLinkElement.__super.call(this);
+			this.visible=false;
+		}
+
+		__class(HTMLLinkElement,'laya.html.dom.HTMLLinkElement',_super);
+		var __proto=HTMLLinkElement.prototype;
+		__proto._onload=function(data){
+			switch(this.type){
+				case 'text/css':
+					CSSStyle.parseCSS(data,this.URI);
+					break ;
+				}
+		}
+
+		__getset(0,__proto,'href',_super.prototype._$get_href,function(url){
+			var _$this=this;
+			url=this.formatURL(url);
+			this.URI=new URL(url);
+			var l=new Loader1();
+			l.once(/*laya.events.Event.COMPLETE*/"complete",null,function(data){
+				_$this._onload(data);
+			});
+			l.load(url,/*laya.net.Loader.TEXT*/"text");
 		});
 
-		return SkeletonPlayer;
-	})(Skeleton)
+		HTMLLinkElement._cuttingStyle=new RegExp("((@keyframes[\\s\\t]+|)(.+))[\\t\\n\\r\\\s]*{","g");
+		return HTMLLinkElement;
+	})(HTMLElement)
+
+
+	/**
+	*@private
+	*/
+	//class laya.html.dom.HTMLStyleElement extends laya.html.dom.HTMLElement
+	var HTMLStyleElement=(function(_super){
+		function HTMLStyleElement(){
+			HTMLStyleElement.__super.call(this);
+			this.visible=false;
+		}
+
+		__class(HTMLStyleElement,'laya.html.dom.HTMLStyleElement',_super);
+		var __proto=HTMLStyleElement.prototype;
+		/**
+		*解析样式
+		*/
+		__getset(0,__proto,'text',_super.prototype._$get_text,function(value){
+			CSSStyle.parseCSS(value,null);
+		});
+
+		return HTMLStyleElement;
+	})(HTMLElement)
 
 
 	/**
@@ -8585,6 +9393,54 @@
 		VBox.RIGHT="right";
 		return VBox;
 	})(LayoutBox)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.editorUI.HtmlText extends laya.html.dom.HTMLDivElement
+	var HtmlText=(function(_super){
+		function HtmlText(){
+			HtmlText.__super.call(this);
+		}
+
+		__class(HtmlText,'laya.editorUI.HtmlText',_super);
+		return HtmlText;
+	})(HTMLDivElement)
+
+
+	/**
+	*iframe标签类，目前用于加载外并解析数据
+	*/
+	//class laya.html.dom.HTMLIframeElement extends laya.html.dom.HTMLDivElement
+	var HTMLIframeElement=(function(_super){
+		function HTMLIframeElement(){
+			HTMLIframeElement.__super.call(this);
+			this._getCSSStyle().valign="middle";
+		}
+
+		__class(HTMLIframeElement,'laya.html.dom.HTMLIframeElement',_super);
+		var __proto=HTMLIframeElement.prototype;
+		/**
+		*加载html文件，并解析数据
+		*@param url
+		*/
+		__getset(0,__proto,'href',_super.prototype._$get_href,function(url){
+			var _$this=this;
+			url=this.formatURL(url);
+			var l=new Loader1();
+			l.once(/*laya.events.Event.COMPLETE*/"complete",null,function(data){
+				var pre=_$this.URI;
+				_$this.URI=new URL(url);
+				_$this.innerHTML=data;
+				!pre || (_$this.URI=pre);
+			});
+			l.load(url,/*laya.net.Loader.TEXT*/"text");
+		});
+
+		return HTMLIframeElement;
+	})(HTMLDivElement)
 
 
 	/**

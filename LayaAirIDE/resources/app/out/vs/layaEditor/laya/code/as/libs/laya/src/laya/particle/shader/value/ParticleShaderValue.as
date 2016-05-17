@@ -5,6 +5,9 @@ package laya.particle.shader.value
 	import laya.webgl.shader.Shader;
 	import laya.webgl.shader.d2.value.Value2D;
 
+	/**
+	 *  @private 
+	 */
 	public class ParticleShaderValue extends Value2D
 	{
 		private static var pShader:ParticleShader=new ParticleShader();

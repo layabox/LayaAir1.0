@@ -3,11 +3,10 @@ package laya.webgl.shader {
 	import laya.resource.Resource;
 	import laya.utils.Browser;
 	import laya.resource.Texture;
+	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	import laya.utils.StringKey;
 	import laya.webgl.utils.Buffer;
-	import laya.webgl.shader.d2.filters.ColorFilter;
-	import laya.webgl.shader.d2.filters.GlowFilterShader;
 	import laya.webgl.utils.GlUtils;
 	import laya.webgl.utils.ShaderCompile;
 	import laya.webgl.submit.Submit;
@@ -86,7 +85,7 @@ package laya.webgl.shader {
 		private var _nameMap:*; //shader参数别名，语义
 		private var _vs:String
 		private var _ps:String;
-		private var _texIndex:int;
+		private var _curActTexIndex:int=0;
 		private var _reCompile:Boolean;
 		
 		//存储一些私有变量
@@ -108,20 +107,19 @@ package laya.webgl.shader {
 		 * @param	nameMap 帮助里要详细解释为什么需要nameMap
 		 */
 		public function Shader(vs:String, ps:String, saveName:* = null, nameMap:* = null) {
-			if (System.isConchApp) {
+			if (Render.isConchApp || Render.isFlash) {
 				customCompile = true;
 			}
 			_id = ++_count;
 			_vs = vs;
 			_ps = ps;
 			_nameMap = nameMap ? nameMap : {};
-			
 			saveName != null && (sharders[saveName] = this);
 		}
 		
 		override protected function recreateResource():void {
 			startCreate();
-			compile();
+			_compile();
 			compoleteCreate();
 			memorySize = 0;//忽略尺寸尺寸
 		}
@@ -134,64 +132,47 @@ package laya.webgl.shader {
 			_params = null;
 			_paramsMap = {};
 			memorySize = 0;
+			_curActTexIndex = 0;
 		}
 		
-		private function compileParams():void {
-			//TODO:待定,某些参数是否不用回复uniform.location
-		}
-		
-
-		private function compile():void {
+		private function _compile():void {
 			
 			if (!_vs || !_ps || _params)
 				return;
+				
 			_reCompile = true;
 			_params = [];
 			
 			var text:Array = [_vs, _ps];
 			var result:Object;
 			if (customCompile)
-				result = preGetParams(_vs, _ps);
+				result = _preGetParams(_vs, _ps);
 			var gl:WebGLContext = WebGL.mainContext;
 			_program = gl.createProgram();
 			_vshader = _createShader(gl, text[0], WebGLContext.VERTEX_SHADER);
 			_pshader = _createShader(gl, text[1], WebGLContext.FRAGMENT_SHADER);
+			
 			gl.attachShader(_program, _vshader);
 			gl.attachShader(_program, _pshader);
 			gl.linkProgram(_program);
-			if (!gl.getProgramParameter(_program, WebGLContext.LINK_STATUS)) {
+			if (!customCompile && !gl.getProgramParameter(_program, WebGLContext.LINK_STATUS)) {
 				throw gl.getProgramInfoLog(_program);
 			}
 			
 			var one:*, i:int, j:int, n:int, location:*;
-			var attribNum:int;
-			if (customCompile)
-				attribNum = result.attributes.length;//得到attribute的个数
-			else
-				attribNum = gl.getProgramParameter(_program, WebGLContext.ACTIVE_ATTRIBUTES); //得到attribute的个数
+			var attribNum:int=customCompile?result.attributes.length:gl.getProgramParameter(_program, WebGLContext.ACTIVE_ATTRIBUTES); //得到attribute的个数
+
 			for (i = 0; i < attribNum; i++) {
-				var attrib:*;
-				if (customCompile)
-					attrib = result.attributes[i];//attrib对象，{name,size,type}
-				else
-					attrib = gl.getActiveAttrib(_program, i); //attrib对象，{name,size,type}
-				
+				var attrib:*=customCompile?result.attributes[i]:gl.getActiveAttrib(_program, i); //attrib对象，{name,size,type}
 				location = gl.getAttribLocation(_program, attrib.name); //用名字来得到location	
 				one = {vartype: "attribute", ivartype: 0, attrib: attrib, location: location, name: attrib.name, type: attrib.type, isArray: false, isSame: false, preValue: null, indexOfParams: 0};
 				_params.push(one);
 			}
-			var nUniformNum:int;
-			if (customCompile)
-				nUniformNum = result.uniforms.length;//个数
-			else
-				nUniformNum = gl.getProgramParameter(_program, WebGLContext.ACTIVE_UNIFORMS); //个数
+			var nUniformNum:int=customCompile?result.uniforms.length:gl.getProgramParameter(_program, WebGLContext.ACTIVE_UNIFORMS); //个数
 			
 			for (i = 0; i < nUniformNum; i++) {
-				var uniform:*;
-				if (customCompile)
-					uniform = result.uniforms[i]; //得到uniform对象，包括名字等信息 {name,type,size}
-				else
-					uniform = gl.getActiveUniform(_program, i); //得到uniform对象，包括名字等信息 {name,type,size}
+				var uniform:*=customCompile?result.uniforms[i]:gl.getActiveUniform(_program, i);//得到uniform对象，包括名字等信息 {name,type,size}
+				
 				location = gl.getUniformLocation(_program, uniform.name); //用名字来得到location
 				one = {vartype: "uniform", ivartype: 1, attrib: attrib, location: location, name: uniform.name, type: uniform.type, isArray: false, isSame: false, preValue: null, indexOfParams: 0};
 				if (one.name.indexOf('[0]') > 0) {
@@ -200,6 +181,7 @@ package laya.webgl.shader {
 					one.location = gl.getUniformLocation(_program, one.name);
 				}
 				_params.push(one);
+			
 			}
 			
 			for (i = 0, n = _params.length; i < n; i++) {
@@ -256,6 +238,7 @@ package laya.webgl.shader {
 			var shader:* = gl.createShader(type);
 			gl.shaderSource(shader, str);
 			gl.compileShader(shader);
+			/*[IF-FLASH]*/ return shader;
 			if (!gl.getShaderParameter(shader, WebGLContext.COMPILE_STATUS)) {
 				throw gl.getShaderInfoLog(shader);
 			}
@@ -331,13 +314,22 @@ package laya.webgl.shader {
 		
 		private function _uniform_sampler2D(one:*, value:*):int {
 			var gl:WebGLContext = WebGL.mainContext;
-			gl.activeTexture(_TEXTURES[this._texIndex]);
-			gl.bindTexture(WebGLContext.TEXTURE_2D, value);
 			var saveValue:Array = one.saveValue;
-			if (saveValue[0] !== _texIndex)
-				gl.uniform1i(one.location, saveValue[0] = _texIndex);
-			this._texIndex++;
-			return 1;
+			if (saveValue[0] == null)
+			{
+				saveValue[0] = _curActTexIndex;
+				gl.uniform1i(one.location, _curActTexIndex);
+				gl.activeTexture(_TEXTURES[_curActTexIndex]);
+			    WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
+				_curActTexIndex++;
+				return 1;
+			}
+			else
+			{
+			   gl.activeTexture(_TEXTURES[saveValue[0]]);
+			   WebGLContext.bindTexture(gl,WebGLContext.TEXTURE_2D, value);
+			   return 0;
+			}
 		}
 		
 		private function _noSetValue(one:*):void {
@@ -360,7 +352,6 @@ package laya.webgl.shader {
 			activeShader = this;
 			activeResource();
 			WebGLContext.UseProgram(_program);
-			_texIndex = 0;
 
 			if (_reCompile) {
 				params = _params;
@@ -383,10 +374,11 @@ package laya.webgl.shader {
 		 * 按数组的定义提交
 		 * @param	shaderValue 数组格式[name,[value,id],...]
 		 */
+		
+		 
 		public function uploadArray(shaderValue:Array, length:int, _bufferUsage:*):void {
 			activeShader = this;
 			activeResource();
-			_texIndex = 0;
 			var sameProgram:Boolean = !WebGLContext.UseProgram(_program);
 			var params:* = _params, value:*;
 			var one:*, shaderCall:int = 0, uploadArrayCount:int = _uploadArrayCount++;
@@ -399,15 +391,16 @@ package laya.webgl.shader {
 				one._uploadArrayCount = uploadArrayCount;
 				
 				var v:Array = shaderValue[i + 1];
-				
 				var uid:Number = v[1];
+			
 				if (sameProgram && one.ivartype === 1 && uid > 0 && uid === one.__uploadid)
 					continue;
-				
+					
 				value = v[0];
 				if (value != null) {
 					_bufferUsage && _bufferUsage[one.name] && _bufferUsage[one.name].bind();
 					shaderCall += one.fun.call(this, one, value);
+					
 					one.__uploadid = uid;
 				}
 			}
@@ -422,7 +415,7 @@ package laya.webgl.shader {
 			return _params;
 		}
 		
-		protected function preGetParams(vs:String, ps:String):Object {
+		protected function _preGetParams(vs:String, ps:String):Object {
 			var text:Array = [vs, ps];
 			var result:Object = {};
 			var attributes:Array = [];

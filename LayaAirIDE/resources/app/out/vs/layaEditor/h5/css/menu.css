@@ -1,23 +1,26 @@
-#nav,#nav ul {
+.nav, .nav ul {
     list-style: none outside none;
     margin: 0;
     padding: 0;
+    font-family: Arial;;
 }
-#nav {
+
+.nav {
     /*background: url('menu_bg.png') no-repeat scroll 0 0 transparent width: auto;*/
     background-color: #212121;
     width: auto;
     margin: 0 0 0;
     clear: both;
     font-size: 12px;
-    height: 35px;
+    height: 34px;
     padding: 0 0 0 0px;
     position: relative;
-    -webkit-app-region : drag;
+    -webkit-app-region: no-drag;
 }
-#nav ul {
+
+.nav ul {
     background-color: #353535;
-    border:1px solid #222;
+    border: 1px solid #222;
     border-radius: 0 5px 5px 5px;
     border-width: 0 1px 1px;
     /*box-shadow: 0 5px 5px rgba(0, 0, 0, 0.5);*/
@@ -27,57 +30,72 @@
     top: -9999px;
     z-index: 2;
 }
-#nav li {
+
+.nav li {
     /*background: url('menu_line.png') no-repeat scroll right 5px transparent;*/
     float: left;
     position: relative;
     -webkit-app-region: no-drag;
     height: 30px;
 }
-#nav li a {
+
+.nav li a {
     color: #c9caca;
     display: block;
     float: left;
     font-weight: normal;
-
-    padding: 10px 10px 9px 10px;
+    white-space: nowrap;
+    padding: 10px 10px 5px 10px;
     position: relative;
     text-decoration: none;
+    font-family: Microsoft YaHei;
 
 }
-#nav li:hover > a {
+
+.nav li:hover > a {
     color: #00B4FF;
 }
-#nav li:hover,#nav a:hover, #nav a:active {
+
+.nav li:hover, #nav a:hover, #nav a:active {
     background: none repeat scroll 0 0 #3f3d3c;
     outline: 0 none;
 }
-#nav li:hover ul.subs {
+
+.nav li:hover ul.subs {
     left: -1px;
     top: 30px;
     width: 180px;
-
     -webkit-transform: scaleY(1);
     transform: scaleY(1);
+    font-family: Arial;
 }
-#nav li>a>span{
-    float:right;
+
+.nav li > a > span {
+    float: right;
 }
-.subb li.a{
-   color: #ff0000;
-   height: 10px;
+
+.subb li.a {
+    color: #ff0000;
+    height: 10px;
+    font-family: Arial;
 }
-#nav ul li {
+
+.nav ul li {
     background: none;
     width: 100%;
+    font-family: Arial;
 }
-#nav ul li a {
+
+.nav ul li a {
     float: none;
+    font-family: Arial;
 }
-#nav ul li:hover > a {
+
+.nav ul li:hover > a {
     background-color: #3f3d3c;
     color: #00B4FF;
 }
+
 .file {
     position: relative;
     display: inline-block;
@@ -87,6 +105,7 @@
     text-indent: 0;
 
 }
+
 .file input {
     position: absolute;
     right: 0;
@@ -94,11 +113,13 @@
     top: -10px;
     height: 100px;
 }
-.file:hover {   
+
+.file:hover {
     text-decoration: none;
     height: 500px;
 }
-.selfBtn{
+
+.selfBtn {
     text-transform: uppercase;
     font-weight: 300;
     padding: 2px;
@@ -109,55 +130,56 @@
     background-color: #000000;
     border: none;
     cursor: pointer;
-    -webkit-font-smoothing: antialiased ;
-    outline:medium
-}
-select{
-     outline-color:#595757;
-     font-size: 14px;
-     border: #595757 1px solid;
-     height: 21px;
-     background: #212121 0px 0px;
-     color: #9fa0a0;
-     outline:medium
+    -webkit-font-smoothing: antialiased;
+    outline: medium
 }
 
-.rightSideBar
-{
-    float:right; 
-    margin-top:7px;
-    margin-right:10px;
+select {
+    outline-color: #595757;
+    font-size: 14px;
+    border: #595757 1px solid;
+    height: 21px;
+    background: #212121 0px 0px;
+    color: #9fa0a0;
+    outline: medium
+}
+
+.rightSideBar {
+    float: right;
+    margin-top: 7px;
+    margin-right: 10px;
     padding-left: 10px;
-    -webkit-user-select:none
+    -webkit-user-select: none
 }
 
-.rightSideBar span
-{
+.rightSideBar span {
     color: #bababa;
 }
 
-.rightSideBar input
-{
+.rightSideBar input {
     color: #FFF;
-    width:40px;
-    height:20px;
+    width: 40px;
+    height: 20px;
     text-align: center;
     background: #222;
     color: #BABABA;
     border: 1px solid #595757;
 }
-.element{
+
+.element {
     float: left;
     color: #bababa;
     font-size: 14px;
     padding-left: 7px;
-    cursor:default;
+    cursor: default;
 
 }
-.element img{
-    margin-top:10px ;
+
+.element img {
+    margin-top: 10px;
 }
-#backImgdiv{
+
+#backImgdiv {
     display: none;
 }
 

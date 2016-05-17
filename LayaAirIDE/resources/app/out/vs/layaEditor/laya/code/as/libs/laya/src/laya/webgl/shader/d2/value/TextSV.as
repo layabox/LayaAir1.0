@@ -7,7 +7,7 @@ package laya.webgl.shader.d2.value
 	{
 		public static var pool:Array = [];
 		private static var _length:int=0;
-		public function TextSV()
+		public function TextSV(args:*)
 		{
 			super(ShaderDefines2D.COLORADD);
 			this.defines.add(ShaderDefines2D.COLORADD);
@@ -28,7 +28,7 @@ package laya.webgl.shader.d2.value
 		public static function create():TextSV
 		{
 			if (_length) return pool[--_length];
-			else return new TextSV();
+			else return new TextSV(null);
 		}
 	}
 	

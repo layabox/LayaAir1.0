@@ -2,13 +2,9 @@ package {
 	
 	/**全局配置*/
 	public class UIConfig {
-		/**资源路径*/
-		public static var resPath:String = "";
-		/**UI路径(UI加载模式可用)*/
-		public static var uiPath:String = "";
-		/**是否开启触摸*/
+		/**是否开启触摸滚动（针对滚动条）*/
 		public static var touchScrollEnable:Boolean = true;
-		/**是否开启滑轮滚动*/
+		/**是否开启滑轮滚动（针对滚动条）*/
 		public static var mouseWheelEnable:Boolean = true;
 		/**是否显示滚动条按钮*/
 		public static var showButtons:Boolean = true;

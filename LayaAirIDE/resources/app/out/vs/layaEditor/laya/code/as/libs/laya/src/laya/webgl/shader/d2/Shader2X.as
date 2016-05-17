@@ -1,4 +1,5 @@
 package laya.webgl.shader.d2 {
+	import laya.renders.Render;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.shader.ShaderValue;
 	import laya.webgl.shader.d2.value.Value2D;
@@ -13,7 +14,6 @@ package laya.webgl.shader.d2 {
 		
 		public  var  _shaderValueWidth:Number;
 		public  var  _shaderValueHeight:Number;
-		//public  var  _shaderValueWidth:Number;
 		
 		public function Shader2X(vs:String, ps:String, saveName:*=null, nameMap:*=null) 
 		{
@@ -38,7 +38,7 @@ package laya.webgl.shader.d2 {
 					for (var i:int = 0, n:int = params.length; i < n; i++)
 					{
 						one = params[i];
-						if (one.name === "size" || one.name === "al2pha" || one.name==="mmat" || one.name === "position" || one.name ==="texcoord") continue;
+						if (!Render.isFlash && (one.name === "size" || one.name === "al2pha" || one.name==="mmat" || one.name === "position" || one.name ==="texcoord")) continue;
 						_params2dQuick1.push(one);
 					}
 				}
@@ -75,7 +75,7 @@ package laya.webgl.shader.d2 {
 					for (var i:int = 0, n:int = params.length; i < n; i++)
 					{
 						one = params[i];
-						if (one.name === "size"|| one.name === "al2pha") continue;
+						if (!Render.isFlash && (one.name === "size"|| one.name === "al2pha")) continue;
 						_params2dQuick2.push(one);
 					}
 				}

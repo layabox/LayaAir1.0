@@ -5,7 +5,7 @@ package laya.webgl.shader.d2.value
 	
 	public class Color2dSV extends Value2D
 	{
-		public function Color2dSV()
+		public function Color2dSV(args:*)
 		{
 			super(ShaderDefines2D.COLOR2D, 0);
 			color = [];

@@ -10,9 +10,9 @@ package laya.html.dom
 	import laya.renders.RenderSprite;
 	import laya.resource.Texture;
 	import laya.utils.Stat;
+	
 	/**
-	 * ...
-	 * @author laya
+	 * @private
 	 */
 	public class HTMLImageElement extends HTMLElement 
 	{

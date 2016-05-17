@@ -1,9 +1,11 @@
 package laya.webgl.text
 {
+	import laya.renders.Render;
 	import laya.resource.Context;
 	import laya.resource.Texture;
 	import laya.system.System;
 	import laya.utils.Browser;
+	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	import laya.utils.Utils;
 	import laya.webgl.atlas.AtlasResourceManager;
@@ -41,7 +43,7 @@ package laya.webgl.text
 			borderColor = drawValue.borderColor;
 			lineWidth = drawValue.lineWidth;
 			
-			var bIsConchApp:Boolean = System.isConchApp;
+			var bIsConchApp:Boolean = Render.isConchApp;
 			if (bIsConchApp)
 			{
 				__JS__("var pCanvas = ConchTextCanvas");
