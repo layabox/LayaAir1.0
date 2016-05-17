@@ -14,20 +14,16 @@ module core {
 
         constructor() {
             Laya.init(Browser.width, Browser.height,WebGL);
+            Stat.show();
+
             Laya.stage.bgColor = "#000000"
             Laya.stage.scaleMode = Stage.SCALE_FULL;
             Laya.stage.on(Event.RESIZE, this, this.onResize);
-            Stat.show();
-            this.loadParticleFile("res/particles/GravityMode.json");
+
+            Laya.loader.load("res/particles/GravityMode.part", Handler.create(this, this.onAssetsLoaded), null, Loader.JSOn);
         }
-        public  loadParticleFile(fileName:string):void {
-            Laya.loader.load(fileName, Handler.create(this, this.test));
-        }
-        public  test(settings:ParticleSettings):void {
-            if (this.sp) {
-                this.sp.stop();
-                this.sp.removeSelf();
-            }
+
+        private onAssetsLoaded(settings: ParticleSettings): void {
             this.sp = new Particle2D(settings);
             this.sp.emitter.start();
             this.sp.play();

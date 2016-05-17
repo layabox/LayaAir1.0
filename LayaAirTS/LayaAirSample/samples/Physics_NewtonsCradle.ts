@@ -82,7 +82,7 @@ module laya
 		private onResize()
 		{
 			// 设置鼠标的坐标缩放
-			Matter.Mouse.setScale(this.mouseConstraint.mouse, {x: 1 / (Laya.stage.clientScaleX), y: 1 / (Laya.stage.clientScaleY)});
+			Matter.Mouse.setScale(this.mouseConstraint.mouse, { x: 1 / (Laya.stage.clientScaleX * Laya.stage._canvasTransform.a), y: 1 / (Laya.stage.clientScaleY * Laya.stage._canvasTransform.d) });
 		}
 	}
 }

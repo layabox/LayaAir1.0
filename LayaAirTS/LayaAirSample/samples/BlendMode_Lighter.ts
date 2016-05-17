@@ -25,7 +25,13 @@ module laya {
         }
 
         private createAnimation(): Animation {
-            var animation: Animation = Animation.fromUrl("res/phoenix/phoenix{0001}.jpg", 25);
+            var frames: Array<string> = [];
+            for (var i: number = 1; i <= 25; ++i) {
+                frames.push("res/phoenix/phoenix" + Utils.preFixNumber(i, 4) + ".jpg");
+            }
+
+            var animation: Animation = new Animation();
+            animation.loadImages(frames);
             Laya.stage.addChild(animation);
 
             var clips: Array<any> = animation.frames.concat();

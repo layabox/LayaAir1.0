@@ -1,24 +1,38 @@
-Laya.init(550, 400);
-Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
-Laya.Stat.show();
-
-var textBox = new Laya.Sprite();
-
-// 5000个随机摆放的文本
-var text;
-for (var i = 0; i < 5000; i++)
+(function()
 {
-	text = new Laya.Text();
-	text.text = (Math.random() * 100).toFixed(0);
-	text.color = "#CCCCCC";
-	
-	text.x = Math.random() * 550;
-	text.y = Math.random() * 400;
-	
-	textBox.addChild(text);
-}
+	var Sprite = Laya.Sprite;
+	var Text = Laya.Text;
 
-//缓存为静态图像
-textBox.cacheAsBitmap = true;
+	Laya.init(Browser.width, Browser.height);
+	Laya.Stat.show();
 
-Laya.stage.addChild(textBox);
+	init();
+
+	function init()
+	{
+		var scaleFactory = Browser.pixelRatio;
+		var textBox = new Sprite();
+
+		// 随机摆放文本
+		var text;
+		for (var i = 0; i < 1000; i++)
+		{
+			text = new Text();
+			text.fontSize = 20;
+			text.text = (Math.random() * 100).toFixed(0);
+			text.rotation = Math.random() * 360;
+			text.color = "#CCCCCC";
+
+			text.x = Math.random() * Laya.stage.width / scaleFactory;
+			text.y = Math.random() * Laya.stage.height / scaleFactory;
+
+			textBox.addChild(text);
+		}
+
+		//缓存为静态图像
+		textBox.cacheAsBitmap = true;
+		textBox.scale(scaleFactory, scaleFactory);
+
+		Laya.stage.addChild(textBox);
+	}
+})();

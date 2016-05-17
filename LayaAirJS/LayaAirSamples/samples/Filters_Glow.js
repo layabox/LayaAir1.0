@@ -1,21 +1,11 @@
-Laya.init(550, 400,Laya.WebGL);
-// Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
+Laya.init(550, 400, Laya.WebGL);
 
-//加载资源
-Laya.loader.load("res/apes/monkey2.png", Laya.Handler.create(this, onAssetLoaded));
+var ape = new Laya.Sprite();
+ape.loadImage("res/apes/monkey2.png");
+ape.pos(200, 100);
+Laya.stage.addChild(ape);
 
-function onAssetLoaded()
-{
-	//创建一个发光滤镜
-	var glowFilter = new Laya.GlowFilter("#ffff00", 20, 5, 5);
-
-	var ape = new Laya.Sprite();
-	ape.pos(220, 120);
-	
-	ape.loadImage("res/apes/monkey2.png");
-
-	//设置滤镜集合为发光滤镜
-	ape.filters = [glowFilter];
-
-	Laya.stage.addChild(ape);
-}
+//创建一个发光滤镜
+var glowFilter = new Laya.GlowFilter("#ffff00", 10, 0, 0);
+//设置滤镜集合为发光滤镜
+ape.filters = [glowFilter];

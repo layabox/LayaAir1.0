@@ -2,18 +2,19 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Arith=laya.maths.Arith,Browser=laya.utils.Browser,Render=laya.renders.Render,Bitmap=laya.resource.Bitmap;
-	var Rectangle=laya.maths.Rectangle,Context=laya.resource.Context,HTMLChar=laya.utils.HTMLChar,Sprite=laya.display.Sprite;
-	var Point=laya.maths.Point,ColorFilter=laya.filters.ColorFilter,Handler=laya.utils.Handler,Matrix=laya.maths.Matrix;
-	var RenderContext=laya.renders.RenderContext,Stat=laya.utils.Stat,HTMLCanvas=laya.resource.HTMLCanvas,HTMLImage=laya.resource.HTMLImage;
-	var Text=laya.display.Text,Texture=laya.resource.Texture,Color=laya.utils.Color,Utils=laya.utils.Utils,Config=Laya.Config;
-	var RenderSprite=laya.renders.RenderSprite,FileBitmap=laya.resource.FileBitmap,Graphics=laya.display.Graphics;
-	var System=laya.system.System,Event=laya.events.Event,Style=laya.display.css.Style,Resource=laya.resource.Resource;
-	var StringKey=laya.utils.StringKey,Byte=laya.utils.Byte,Filter=laya.filters.Filter,ResourceManager=laya.resource.ResourceManager;
+	var Browser=laya.utils.Browser,Arith=laya.maths.Arith,RunDriver=laya.utils.RunDriver,ColorFilter=laya.filters.ColorFilter;
+	var Config=Laya.Config,RenderSprite=laya.renders.RenderSprite,Matrix=laya.maths.Matrix,Rectangle=laya.maths.Rectangle;
+	var Stat=laya.utils.Stat,Render=laya.renders.Render,Bitmap=laya.resource.Bitmap,HTMLImage=laya.resource.HTMLImage;
+	var System=laya.system.System,Byte=laya.utils.Byte,Context=laya.resource.Context,HTMLChar=laya.utils.HTMLChar;
+	var Texture=laya.resource.Texture,Point=laya.maths.Point,Utils=laya.utils.Utils,Text=laya.display.Text,Sprite=laya.display.Sprite;
+	var FileBitmap=laya.resource.FileBitmap,RenderContext=laya.renders.RenderContext,Color=laya.utils.Color,HTMLCanvas=laya.resource.HTMLCanvas;
+	var Graphics=laya.display.Graphics,Event=laya.events.Event,Resource=laya.resource.Resource,StringKey=laya.utils.StringKey;
+	var Handler=laya.utils.Handler,Style=laya.display.css.Style,Filter=laya.filters.Filter,HTMLSubImage=laya.resource.HTMLSubImage;
+	var ResourceManager=laya.resource.ResourceManager;
+	Laya.interface('laya.webgl.resource.IMergeAtlasBitmap');
 	Laya.interface('laya.webgl.shapes.IShape');
 	Laya.interface('laya.webgl.submit.ISubmit');
 	Laya.interface('laya.webgl.canvas.save.ISaveData');
-	Laya.interface('laya.webgl.resource.IMergeAtlasBitmap');
 	Laya.interface('laya.filters.IFilterActionGL','laya.filters.IFilterAction');
 	//class laya.filters.webgl.FilterActionGL
 	var FilterActionGL=(function(){
@@ -324,7 +325,7 @@
 				var maxAtlaserCount=this._maxAtlaserCount;
 				for (var i=0;i < maxAtlaserCount;i++){
 					var altasIndex=(this._curAtlasIndex+i)% maxAtlaserCount;
-					(this._atlaserArray[altasIndex])|| (this._atlaserArray.push(new Atlaser(this._gridNumX,this._gridNumY,this._width,this._height,AtlasResourceManager._sid_++)));
+					(this._atlaserArray.length-1>=altasIndex)|| (this._atlaserArray.push(new Atlaser(this._gridNumX,this._gridNumY,this._width,this._height,AtlasResourceManager._sid_++)));
 					var atlas=this._atlaserArray[altasIndex];
 					var bitmap=texture.bitmap;
 					var webGLImageIndex=atlas.inAtlasWebGLImagesKey.indexOf(bitmap);
@@ -388,6 +389,14 @@
 				this._atlaserArray[i].dispose();
 			}
 			this._atlaserArray.length=0;
+		}
+
+		__proto.getAtlaserCount=function(){
+			return this._atlaserArray.length;
+		}
+
+		__proto.getAtlaserByIndex=function(index){
+			return this._atlaserArray[index];
 		}
 
 		__getset(1,AtlasResourceManager,'instance',function(){
@@ -603,8 +612,8 @@
 			this.geoStart=0;
 			this.geomatrys=[];
 			var gl=WebGL.mainContext;
-			this.ib=new Buffer(/*laya.webgl.WebGLContext.ELEMENT_ARRAY_BUFFER*/0x8893,/*laya.webgl.utils.Buffer.INDEX*/"INDEX",null,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
-			this.vb=new Buffer(/*laya.webgl.WebGLContext.ARRAY_BUFFER*/0x8892);
+			this.ib=IndexBuffer.create();
+			this.vb=VertexBuffer.create();
 		}
 
 		__class(Path,'laya.webgl.canvas.Path');
@@ -631,13 +640,12 @@
 		__proto.circle=function(x,y,r,edges,color,borderWidth,borderColor){
 			var geo;
 			this.geomatrys.push(this._curGeomatry=geo=new Circle(x,y,r,edges,color,borderWidth,borderColor));
-			if(!color)geo.fill=false;if(borderColor==undefined)geo.borderWidth=0;
+			if(borderColor==undefined)geo.borderWidth=0;
 		}
 
 		__proto.fan=function(x,y,r,r0,r1,color,borderWidth,borderColor){
 			var geo;
 			this.geomatrys.push(this._curGeomatry=geo=new Fan(x,y,r,r0,r1,color,borderWidth,borderColor));
-			if(!color)geo.fill=false;
 		}
 
 		__proto.ellipse=function(x,y,rw,rh,color,borderWidth,borderColor){
@@ -1024,31 +1032,31 @@
 			//this.colorAdd=null;
 			//this.strokeStyle=null;
 			//this.fillStyle=null;
-			this.glTexture=new WebGLImage();
+			this.glTexture=HTMLImage.create();
 			this.defines=new ShaderDefines2D();
 		}
 
 		__class(Shader2D,'laya.webgl.shader.d2.Shader2D');
 		Shader2D.__init__=function(){
-			Shader.addInclude("parts/ColorFilter_ps_uniform.glsl","uniform float u_colorMatrix[20];\n"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/colorfilter_ps_uniform.glsl*/);
-			Shader.addInclude("parts/ColorFilter_ps_logic.glsl","vec4 rgba=gl_FragColor;\ngl_FragColor.r =rgba.r*u_colorMatrix[0]+rgba.g*u_colorMatrix[1]+rgba.b*u_colorMatrix[2]+rgba.a*u_colorMatrix[3]+u_colorMatrix[4]/255.0;\ngl_FragColor.g =rgba.r*u_colorMatrix[5]+rgba.g*u_colorMatrix[6]+rgba.b*u_colorMatrix[7]+rgba.a*u_colorMatrix[8]+u_colorMatrix[9]/255.0;\ngl_FragColor.b =rgba.r*u_colorMatrix[10]+rgba.g*u_colorMatrix[11]+rgba.b*u_colorMatrix[12]+rgba.a*u_colorMatrix[13]+u_colorMatrix[14]/255.0;\ngl_FragColor.a =rgba.r*u_colorMatrix[15]+rgba.g*u_colorMatrix[16]+rgba.b*u_colorMatrix[17]+rgba.a*u_colorMatrix[18]+u_colorMatrix[19]/255.0;"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/colorfilter_ps_logic.glsl*/);
-			Shader.addInclude("parts/GlowFilter_ps_uniform.glsl","uniform vec4 u_color;\nuniform float u_strength;\nuniform float u_blurX;\nuniform float u_blurY;\nuniform float u_offsetX;\nuniform float u_offsetY;\nuniform float u_textW;\nuniform float u_textH;"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/glowfilter_ps_uniform.glsl*/);
-			Shader.addInclude("parts/GlowFilter_ps_logic.glsl","const float c_IterationTime = 10.0;\nfloat floatIterationTotalTime = c_IterationTime * c_IterationTime;\nvec4 vec4Color = vec4(0.0,0.0,0.0,0.0);\nvec2 vec2FilterDir = vec2(-(u_offsetX)/u_textW,-(u_offsetY)/u_textH);\nvec2 vec2FilterOff = vec2(u_blurX/u_textW/c_IterationTime * 2.0,u_blurY/u_textH/c_IterationTime * 2.0);\nfloat maxNum = u_blurX * u_blurY;\nvec2 vec2Off = vec2(0.0,0.0);\nfloat floatOff = c_IterationTime/2.0;\nfor(float i = 0.0;i<=c_IterationTime; ++i){\n	for(float j = 0.0;j<=c_IterationTime; ++j){\n		vec2Off = vec2(vec2FilterOff.x * (i - floatOff),vec2FilterOff.y * (j - floatOff));\n		vec4Color += texture2D(texture, v_texcoord + vec2FilterDir + vec2Off)/floatIterationTotalTime;\n	}\n}\ngl_FragColor = vec4(u_color.rgb,vec4Color.a * u_strength);"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/glowfilter_ps_logic.glsl*/);
-			Shader.addInclude("parts/BlurFilter_ps_logic.glsl","gl_FragColor=vec4(0.0);\ngl_FragColor += texture2D(texture, vBlurTexCoords[ 0])*0.004431848411938341;\ngl_FragColor += texture2D(texture, vBlurTexCoords[ 1])*0.05399096651318985;\ngl_FragColor += texture2D(texture, vBlurTexCoords[ 2])*0.2419707245191454;\ngl_FragColor += texture2D(texture, v_texcoord        )*0.3989422804014327;\ngl_FragColor += texture2D(texture, vBlurTexCoords[ 3])*0.2419707245191454;\ngl_FragColor += texture2D(texture, vBlurTexCoords[ 4])*0.05399096651318985;\ngl_FragColor += texture2D(texture, vBlurTexCoords[ 5])*0.004431848411938341;"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/blurfilter_ps_logic.glsl*/);
-			Shader.addInclude("parts/BlurFilter_ps_uniform.glsl","varying vec2 vBlurTexCoords[6];"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/blurfilter_ps_uniform.glsl*/);
-			Shader.addInclude("parts/BlurFilter_vs_uniform.glsl","uniform float strength;\nvarying vec2 vBlurTexCoords[6];"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/blurfilter_vs_uniform.glsl*/);
-			Shader.addInclude("parts/BlurFilter_vs_logic.glsl","\nvBlurTexCoords[ 0] = v_texcoord + vec2(-0.012 * strength, 0.0);\nvBlurTexCoords[ 1] = v_texcoord + vec2(-0.008 * strength, 0.0);\nvBlurTexCoords[ 2] = v_texcoord + vec2(-0.004 * strength, 0.0);\nvBlurTexCoords[ 3] = v_texcoord + vec2( 0.004 * strength, 0.0);\nvBlurTexCoords[ 4] = v_texcoord + vec2( 0.008 * strength, 0.0);\nvBlurTexCoords[ 5] = v_texcoord + vec2( 0.012 * strength, 0.0);"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/blurfilter_vs_logic.glsl*/);
-			Shader.addInclude("parts/ColorAdd_ps_uniform.glsl","uniform vec4 colorAdd;\n"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/coloradd_ps_uniform.glsl*/);
-			Shader.addInclude("parts/ColorAdd_ps_logic.glsl","gl_FragColor = vec4(colorAdd.rgb,colorAdd.a*gl_FragColor.a);"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/coloradd_ps_logic.glsl*/);
+			Shader.addInclude("parts/ColorFilter_ps_uniform.glsl","uniform float u_colorMatrix[20];\n"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/colorfilter_ps_uniform.glsl*/);
+			Shader.addInclude("parts/ColorFilter_ps_logic.glsl","vec4 rgba=gl_FragColor;\ngl_FragColor.r =rgba.r*u_colorMatrix[0]+rgba.g*u_colorMatrix[1]+rgba.b*u_colorMatrix[2]+rgba.a*u_colorMatrix[3]+u_colorMatrix[4]/255.0;\ngl_FragColor.g =rgba.r*u_colorMatrix[5]+rgba.g*u_colorMatrix[6]+rgba.b*u_colorMatrix[7]+rgba.a*u_colorMatrix[8]+u_colorMatrix[9]/255.0;\ngl_FragColor.b =rgba.r*u_colorMatrix[10]+rgba.g*u_colorMatrix[11]+rgba.b*u_colorMatrix[12]+rgba.a*u_colorMatrix[13]+u_colorMatrix[14]/255.0;\ngl_FragColor.a =rgba.r*u_colorMatrix[15]+rgba.g*u_colorMatrix[16]+rgba.b*u_colorMatrix[17]+rgba.a*u_colorMatrix[18]+u_colorMatrix[19]/255.0;"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/colorfilter_ps_logic.glsl*/);
+			Shader.addInclude("parts/GlowFilter_ps_uniform.glsl","uniform vec4 u_color;\nuniform float u_strength;\nuniform float u_blurX;\nuniform float u_blurY;\nuniform float u_offsetX;\nuniform float u_offsetY;\nuniform float u_textW;\nuniform float u_textH;"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/glowfilter_ps_uniform.glsl*/);
+			Shader.addInclude("parts/GlowFilter_ps_logic.glsl","const float c_IterationTime = 10.0;\nfloat floatIterationTotalTime = c_IterationTime * c_IterationTime;\nvec4 vec4Color = vec4(0.0,0.0,0.0,0.0);\nvec2 vec2FilterDir = vec2(-(u_offsetX)/u_textW,-(u_offsetY)/u_textH);\nvec2 vec2FilterOff = vec2(u_blurX/u_textW/c_IterationTime * 2.0,u_blurY/u_textH/c_IterationTime * 2.0);\nfloat maxNum = u_blurX * u_blurY;\nvec2 vec2Off = vec2(0.0,0.0);\nfloat floatOff = c_IterationTime/2.0;\nfor(float i = 0.0;i<=c_IterationTime; ++i){\n	for(float j = 0.0;j<=c_IterationTime; ++j){\n		vec2Off = vec2(vec2FilterOff.x * (i - floatOff),vec2FilterOff.y * (j - floatOff));\n		vec4Color += texture2D(texture, v_texcoord + vec2FilterDir + vec2Off)/floatIterationTotalTime;\n	}\n}\ngl_FragColor = vec4(u_color.rgb,vec4Color.a * u_strength);"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/glowfilter_ps_logic.glsl*/);
+			Shader.addInclude("parts/BlurFilter_ps_logic.glsl","gl_FragColor=vec4(0.0);\ngl_FragColor += texture2D(texture, vBlurTexCoords[ 0])*0.004431848411938341;\ngl_FragColor += texture2D(texture, vBlurTexCoords[ 1])*0.05399096651318985;\ngl_FragColor += texture2D(texture, vBlurTexCoords[ 2])*0.2419707245191454;\ngl_FragColor += texture2D(texture, v_texcoord        )*0.3989422804014327;\ngl_FragColor += texture2D(texture, vBlurTexCoords[ 3])*0.2419707245191454;\ngl_FragColor += texture2D(texture, vBlurTexCoords[ 4])*0.05399096651318985;\ngl_FragColor += texture2D(texture, vBlurTexCoords[ 5])*0.004431848411938341;"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/blurfilter_ps_logic.glsl*/);
+			Shader.addInclude("parts/BlurFilter_ps_uniform.glsl","varying vec2 vBlurTexCoords[6];"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/blurfilter_ps_uniform.glsl*/);
+			Shader.addInclude("parts/BlurFilter_vs_uniform.glsl","uniform float strength;\nvarying vec2 vBlurTexCoords[6];"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/blurfilter_vs_uniform.glsl*/);
+			Shader.addInclude("parts/BlurFilter_vs_logic.glsl","\nvBlurTexCoords[ 0] = v_texcoord + vec2(-0.012 * strength, 0.0);\nvBlurTexCoords[ 1] = v_texcoord + vec2(-0.008 * strength, 0.0);\nvBlurTexCoords[ 2] = v_texcoord + vec2(-0.004 * strength, 0.0);\nvBlurTexCoords[ 3] = v_texcoord + vec2( 0.004 * strength, 0.0);\nvBlurTexCoords[ 4] = v_texcoord + vec2( 0.008 * strength, 0.0);\nvBlurTexCoords[ 5] = v_texcoord + vec2( 0.012 * strength, 0.0);"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/blurfilter_vs_logic.glsl*/);
+			Shader.addInclude("parts/ColorAdd_ps_uniform.glsl","uniform vec4 colorAdd;\n"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/coloradd_ps_uniform.glsl*/);
+			Shader.addInclude("parts/ColorAdd_ps_logic.glsl","gl_FragColor = vec4(colorAdd.rgb,colorAdd.a*gl_FragColor.a);"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/parts/coloradd_ps_logic.glsl*/);
 			var vs,ps;
-			vs="attribute vec4 position;\nattribute vec2 texcoord;\nuniform vec2 size;\nuniform mat4 mmat;\nvarying vec2 v_texcoord;\n\n#include?BLUR_FILTER  \"parts/BlurFilter_vs_uniform.glsl\";\nvoid main() {\n  vec4 pos=mmat*position;\n  gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  v_texcoord = texcoord;\n  #include?BLUR_FILTER  \"parts/BlurFilter_vs_logic.glsl\";\n}"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/texture.vs*/;
-			ps="precision mediump float;\n//precision highp float;\nvarying vec2 v_texcoord;\nuniform sampler2D texture;\nuniform float alpha;\n#include?BLUR_FILTER  \"parts/BlurFilter_ps_uniform.glsl\";\n#include?COLOR_FILTER \"parts/ColorFilter_ps_uniform.glsl\";\n#include?GLOW_FILTER \"parts/GlowFilter_ps_uniform.glsl\";\n#include?COLOR_ADD \"parts/ColorAdd_ps_uniform.glsl\";\n\nvoid main() {\n   vec4 color= texture2D(texture, v_texcoord);\n   color.a*=alpha;\n   gl_FragColor=color;\n   #include?COLOR_ADD \"parts/ColorAdd_ps_logic.glsl\";   \n   #include?BLUR_FILTER  \"parts/BlurFilter_ps_logic.glsl\";\n   #include?COLOR_FILTER \"parts/ColorFilter_ps_logic.glsl\";\n   #include?GLOW_FILTER \"parts/GlowFilter_ps_logic.glsl\";\n}"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/texture.ps*/;
+			vs="attribute vec4 position;\nattribute vec2 texcoord;\nuniform vec2 size;\nuniform mat4 mmat;\nvarying vec2 v_texcoord;\n\n#include?BLUR_FILTER  \"parts/BlurFilter_vs_uniform.glsl\";\nvoid main() {\n  vec4 pos=mmat*position;\n  gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  v_texcoord = texcoord;\n  #include?BLUR_FILTER  \"parts/BlurFilter_vs_logic.glsl\";\n}"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/texture.vs*/;
+			ps="precision mediump float;\n//precision highp float;\nvarying vec2 v_texcoord;\nuniform sampler2D texture;\nuniform float alpha;\n#include?BLUR_FILTER  \"parts/BlurFilter_ps_uniform.glsl\";\n#include?COLOR_FILTER \"parts/ColorFilter_ps_uniform.glsl\";\n#include?GLOW_FILTER \"parts/GlowFilter_ps_uniform.glsl\";\n#include?COLOR_ADD \"parts/ColorAdd_ps_uniform.glsl\";\n\nvoid main() {\n   vec4 color= texture2D(texture, v_texcoord);\n   color.a*=alpha;\n   gl_FragColor=color;\n   #include?COLOR_ADD \"parts/ColorAdd_ps_logic.glsl\";   \n   #include?BLUR_FILTER  \"parts/BlurFilter_ps_logic.glsl\";\n   #include?COLOR_FILTER \"parts/ColorFilter_ps_logic.glsl\";\n   #include?GLOW_FILTER \"parts/GlowFilter_ps_logic.glsl\";\n}"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/texture.ps*/;
 			Shader.preCompile(0,/*laya.webgl.shader.d2.ShaderDefines2D.TEXTURE2D*/0x01,vs,ps,null);
-			vs="attribute vec4 position;\nuniform vec2 size;\nuniform mat4 mmat;\nvoid main() {\n  vec4 pos=mmat*position;\n  gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n}"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/line.vs*/;
-			ps="precision mediump float;\nuniform vec4 color;\nuniform float alpha;\n#include?COLOR_FILTER \"parts/ColorFilter_ps_uniform.glsl\";\nvoid main() {\n	vec4 a = vec4(color.r, color.g, color.b, color.a);\n	a.w = alpha;\n	gl_FragColor = a;\n	#include?COLOR_FILTER \"parts/ColorFilter_ps_logic.glsl\";\n}"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/line.ps*/;
+			vs="attribute vec4 position;\nuniform vec2 size;\nuniform mat4 mmat;\nvoid main() {\n  vec4 pos=mmat*position;\n  gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n}"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/line.vs*/;
+			ps="precision mediump float;\nuniform vec4 color;\nuniform float alpha;\n#include?COLOR_FILTER \"parts/ColorFilter_ps_uniform.glsl\";\nvoid main() {\n	vec4 a = vec4(color.r, color.g, color.b, color.a);\n	a.w = alpha;\n	gl_FragColor = a;\n	#include?COLOR_FILTER \"parts/ColorFilter_ps_logic.glsl\";\n}"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/line.ps*/;
 			Shader.preCompile(0,/*laya.webgl.shader.d2.ShaderDefines2D.COLOR2D*/0x02,vs,ps,null);
-			vs="attribute vec4 position;\nattribute vec3 a_color;\nuniform mat4 mmat;\nuniform mat4 u_mmat2;\nuniform vec2 size;\nvarying vec3 color;\nvoid main(){\n  vec4 pos=mmat*u_mmat2*position;\n  gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  color=a_color;\n}"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/primitive.vs*/;
-			ps="precision mediump float;\n//precision mediump float;\nvarying vec3 color;\nuniform float alpha;\nvoid main(){\n	//vec4 a=vec4(color.r, color.g, color.b, 1);\n	//a.a*=alpha;\n    gl_FragColor=vec4(color.r, color.g, color.b, alpha);\n}"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/files/primitive.ps*/;
+			vs="attribute vec4 position;\nattribute vec3 a_color;\nuniform mat4 mmat;\nuniform mat4 u_mmat2;\nuniform vec2 size;\nvarying vec3 color;\nvoid main(){\n  vec4 pos=mmat*u_mmat2*position;\n  gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  color=a_color;\n}"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/primitive.vs*/;
+			ps="precision mediump float;\n//precision mediump float;\nvarying vec3 color;\nuniform float alpha;\nvoid main(){\n	//vec4 a=vec4(color.r, color.g, color.b, 1);\n	//a.a*=alpha;\n    gl_FragColor=vec4(color.r, color.g, color.b, alpha);\n}"/*__INCLUDESTR__e:/trank/libs/layaair/webgl/src/laya/webgl/shader/d2/files/primitive.ps*/;
 			Shader.preCompile(0,/*laya.webgl.shader.d2.ShaderDefines2D.PRIMITIVE*/0x04,vs,ps,null);
 		}
 
@@ -1606,10 +1614,9 @@
 					return 1;
 				this.shaderValue.texture=this.shaderValue.textureHost.source;
 			}
-			this._ib.upload_bind();
-			this._vb.upload_bind();
-			this.shaderValue.upload();
+			this._vb.bind_upload(this._ib);
 			var gl=WebGL.mainContext;
+			this.shaderValue.upload();
 			if (Submit.activeBlendFunction!==this._blendFn){
 				gl.enable(/*laya.webgl.WebGLContext.BLEND*/0x0BE2);
 				this._blendFn(gl);
@@ -1630,7 +1637,7 @@
 		Submit.create=function(context,submitID,mergID,ib,vb,pos,sv){
 			var o=Submit._cache._length?Submit._cache[--Submit._cache._length]:new Submit();
 			if (vb==null){
-				vb=o._selfVb || (o._selfVb=new Buffer(/*laya.webgl.WebGLContext.ARRAY_BUFFER*/0x8892));
+				vb=o._selfVb || (o._selfVb=VertexBuffer.create());
 				vb.clear();
 				pos=0;
 			}
@@ -1803,8 +1810,7 @@
 				if (!source)return 1;
 				this._shaderValue.texture=source;
 			}
-			this._ib.upload_bind();
-			this._vb.upload_bind();
+			this._vb.bind_upload(this._ib);
 			var w=RenderState2D.worldMatrix4;
 			var wmat=Matrix.TEMP;
 			Matrix.mulPre(this._mat,w[0],w[1],w[4],w[5],w[12],w[13],wmat);
@@ -2097,8 +2103,7 @@
 		var __proto=SubmitTarget.prototype;
 		Laya.imps(__proto,{"laya.webgl.submit.ISubmit":true})
 		__proto.renderSubmit=function(){
-			this._ib.upload_bind();
-			this._vb.upload_bind();
+			this._vb.bind_upload(this._ib);
 			var target=this.scope.getValue(this.proName);
 			this.shaderValue.texture=target.source;
 			this.shaderValue.upload();
@@ -2155,6 +2160,11 @@
 		var CharValue;
 		function DrawText(){};
 		__class(DrawText,'laya.webgl.text.DrawText');
+		DrawText.__init__=function(){
+			DrawText._charsTemp=new Array;
+			DrawText._drawValue=new CharValue();
+		}
+
 		DrawText.getChar=function(char,id,drawValue){
 			return DrawText._wordsMsg[id]=DrawTextChar.createOneChar(char,drawValue);
 		}
@@ -2244,7 +2254,7 @@
 				DrawText._drawSlow(null,ctx,txt,words,curMat,font,textAlign,fillColor,borderColor,lineWidth,x,y,sx,sy);
 			}
 			else{
-				var id=txt+font.toString()+fillColor+borderColor+lineWidth+sx+sy;
+				var id=txt+font.toString()+fillColor+borderColor+lineWidth+sx+sy+textAlign;
 				var cache=DrawText._textCache[id];
 				if (cache){
 					DrawText._drawFast(cache,ctx,curMat,x,y);
@@ -2263,10 +2273,8 @@
 
 		DrawText._wordsMsg={};
 		DrawText._textCache={};
-		DrawText._charsTemp=new Array;
-		__static(DrawText,
-		['_drawValue',function(){return this._drawValue=new CharValue();}
-		]);
+		DrawText._charsTemp=null
+		DrawText._drawValue=null
 		DrawText.__init$=function(){
 			//class CharValue
 			CharValue=(function(){
@@ -2336,7 +2344,7 @@
 			this.fillColor=drawValue.fillColor;
 			this.borderColor=drawValue.borderColor;
 			this.lineWidth=drawValue.lineWidth;
-			var bIsConchApp=System.isConchApp;
+			var bIsConchApp=Render.isConchApp;
 			if (bIsConchApp){
 				/*__JS__ */var pCanvas=ConchTextCanvas;
 				/*__JS__ */pCanvas._source=ConchTextCanvas;
@@ -2457,25 +2465,15 @@
 	var CONST3D2D=(function(){
 		function CONST3D2D(){};
 		__class(CONST3D2D,'laya.webgl.utils.CONST3D2D');
-		CONST3D2D.BYTES_PE=/*__JS__ */window.Float32Array && Float32Array.BYTES_PER_ELEMENT;
-		CONST3D2D.BYTES_PIDX=/*__JS__ */window.Uint16Array && Uint16Array.BYTES_PER_ELEMENT;
-		CONST3D2D.defaultMatrix4=[
-		1,0,0,0,
-		0,1,0,0,
-		0,0,1,0,
-		0,0,0,1,];
-		CONST3D2D.defaultMinusYMatrix4=[
-		1,0,0,0,
-		0,-1,0,0,
-		0,0,1,0,
-		0,0,0,1,];
-		CONST3D2D.uniformMatrix3=[
-		1,0 ,0,0,
-		0,1,0,0,
-		0,0,1,0];
+		CONST3D2D.defaultMatrix4=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+		CONST3D2D.defaultMinusYMatrix4=[1,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,1];
+		CONST3D2D.uniformMatrix3=[1,0,0,0,0,1,0,0,0,0,1,0];
 		CONST3D2D._TMPARRAY=[];
 		CONST3D2D._OFFSETX=0;
 		CONST3D2D._OFFSETY=0;
+		__static(CONST3D2D,
+		['BYTES_PE',function(){return this.BYTES_PE=/*__JS__ */Float32Array.BYTES_PER_ELEMENT;},'BYTES_PIDX',function(){return this.BYTES_PIDX=/*__JS__ */Uint16Array.BYTES_PER_ELEMENT;}
+		]);
 		return CONST3D2D;
 	})()
 
@@ -2500,7 +2498,7 @@
 			count=Math.floor(count);
 			buffer._resizeBuffer((count+1)*6 */*laya.webgl.utils.Buffer.SHORT*/2,false);
 			buffer.length=buffer.bufferLength;
-			var bufferData=new Uint16Array(buffer.getBuffer());
+			var bufferData=buffer.getUint16Array();
 			var idx=0;
 			for (var i=0;i < count;i++){
 				bufferData[idx++]=i *4;
@@ -2511,7 +2509,6 @@
 				bufferData[idx++]=i *4+2;
 			}
 			buffer.setNeedUpload();
-			buffer.upload();
 			return true;
 		}
 
@@ -2532,10 +2529,6 @@
 
 		GlUtils.fillQuadrangleImgVb=function(vb,x,y,point4,uv,m,_x,_y){
 			'use strict';
-			x |=0;
-			y |=0;
-			_x |=0;
-			_y |=0;
 			var vpos=(vb._length >> 2)+/*laya.webgl.canvas.WebGLContext2D._RECTVBSIZE*/16;
 			vb.length=(vpos << 2);
 			var vbdata=vb.getFloat32Array();
@@ -2766,9 +2759,7 @@
 			mat && mat.transformPointArray(data,data);
 			var vpos=(vb._length >> 2)+/*laya.webgl.canvas.WebGLContext2D._RECTVBSIZE*/16;
 			vb.length=(vpos << 2);
-			var vbdata=vb.getFloat32Array();
-			vbdata.set(data,vpos-/*laya.webgl.canvas.WebGLContext2D._RECTVBSIZE*/16);
-			vb._upload=true;
+			vb.insertData(data,vpos-/*laya.webgl.canvas.WebGLContext2D._RECTVBSIZE*/16);
 			return true;
 		}
 
@@ -2948,13 +2939,11 @@
 							preIsParam=isParam;
 						}
 						newcondition+=c;
-					};
-					var fn="(function() {return "+newcondition+";})";
-					this.condition=Browser.window.eval(fn);
+					}
+					this.condition=RunDriver.createShaderCondition(newcondition);
 				}
 				__class(ShaderScriptBlock,'');
 				var __proto=ShaderScriptBlock.prototype;
-				//生成条件判断函数
 				__proto.toscript=function(def,out){
 					if (this.type===/*laya.webgl.utils.ShaderCompile.IFDEF_NO*/0){
 						this.text && out.push(this.text);
@@ -2966,7 +2955,7 @@
 						if (!ifdef)return out;
 						this.text && out.push(this.text);
 					}
-					this.childs.length>0 && this.childs.forEach(function(o){o.toscript(def,out)});
+					this.childs.length>0 && this.childs.forEach(function(o,index,arr){o.toscript(def,out)});
 					return out;
 				}
 				return ShaderScriptBlock;
@@ -2978,8 +2967,7 @@
 
 
 	/**
-	*...
-	*@author laya
+	*@private
 	*/
 	//class laya.webgl.WebGL
 	var WebGL=(function(){
@@ -2987,36 +2975,36 @@
 		__class(WebGL,'laya.webgl.WebGL');
 		WebGL.enable=function(){
 			if (!WebGL.isWebGLSupported())return false;
-			/*__JS__ */HTMLImage=WebGLImage;
-			/*__JS__ */HTMLCanvas=WebGLCanvas;
-			/*__JS__ */HTMLSubImage=WebGLSubImage;
-			System.changeDefinition("HTMLImage",WebGLImage);
-			System.changeDefinition("HTMLCanvas",WebGLCanvas);
-			System.changeDefinition("HTMLSubImage",WebGLSubImage);
+			if (Render.isWebGL)return true;
+			HTMLImage.create=function (im){
+				return new WebGLImage(im);
+			}
 			Render.WebGL=WebGL;
-			System.createRenderSprite=function (type,next){
+			Render.isWebGL=true;
+			DrawText.__init__();
+			RunDriver.createRenderSprite=function (type,next){
 				return new RenderSprite3D(type,next);
 			}
-			System.createWebGLContext2D=function (c){
+			RunDriver.createWebGLContext2D=function (c){
 				return new WebGLContext2D(c);
 			}
-			System.changeWebGLSize=function (width,height){
+			RunDriver.changeWebGLSize=function (width,height){
 				laya.webgl.WebGL.onStageResize(width,height);
 			}
-			System.createGraphics=function (){
+			RunDriver.createGraphics=function (){
 				return new GraphicsGL();
 			};
-			var action=System.createFilterAction;
-			System.createFilterAction=action ? action :function (type){
+			var action=RunDriver.createFilterAction;
+			RunDriver.createFilterAction=action ? action :function (type){
 				return new ColorFilterActionGL()
 			}
-			Render.clear=function (color){
+			RunDriver.clear=function (color){
 				RenderState2D.worldScissorTest && laya.webgl.WebGL.mainContext.disable(/*laya.webgl.WebGLContext.SCISSOR_TEST*/0x0C11);
 				var c=Color.create(color)._color;
 				Render.context.ctx.clearBG(c[0],c[1],c[2],c[3]);
 				RenderState2D.clear();
 			}
-			System.addToAtlas=function (texture,force){
+			RunDriver.addToAtlas=function (texture,force){
 				(force===void 0)&& (force=false);
 				var bitmap=texture.bitmap;
 				if ((Laya.__typeof(bitmap,'laya.webgl.resource.IMergeAtlasBitmap'))&& ((bitmap).allowMerageInAtlas)){
@@ -3025,7 +3013,16 @@
 					});
 				}
 			}
-			System.drawToCanvas=function (sprite,_renderType,canvasWidth,canvasHeight,offsetX,offsetY){
+			AtlasResourceManager.enable();
+			RunDriver.benginFlush=function (){
+				var atlasResourceManager=AtlasResourceManager.instance;
+				var count=atlasResourceManager.getAtlaserCount();
+				for (var i=0;i < count;i++){
+					var atlerCanvas=atlasResourceManager.getAtlaserByIndex(i).texture;
+					(atlerCanvas._flashCacheImageNeedFlush)&& (RunDriver.flashFlushImage(atlerCanvas));
+				}
+			}
+			RunDriver.drawToCanvas=function (sprite,_renderType,canvasWidth,canvasHeight,offsetX,offsetY){
 				var renderTarget=new RenderTarget2D(canvasWidth,canvasHeight,false,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,0);
 				renderTarget.start();
 				renderTarget.clear(1.0,0.0,0.0,1.0);
@@ -3036,7 +3033,7 @@
 				renderTarget.dispose();
 				return pixels;
 			}
-			System.createFilterAction=function (type){
+			RunDriver.createFilterAction=function (type){
 				var action;
 				switch (type){
 					case /*laya.filters.Filter.COLOR*/0x20:
@@ -3068,8 +3065,8 @@
 				out.start();
 				out.clear(0,0,0,0);
 				scope.addValue("out",out);
-				sprite._filterCache=out;
-				sprite._isHaveGlowFilter=scope.getValue("isHaveGlowFilter");
+				sprite._set$P('_filterCache',out);
+				sprite._set$P('_isHaveGlowFilter',scope.getValue("isHaveGlowFilter"));
 			}
 			Filter._EndTarget=function (scope,context){
 				var source=scope.getValue("src");
@@ -3131,7 +3128,7 @@
 					var tPadding=0;
 					var tHalfPadding=0;
 					var tIsHaveGlowFilter=false;
-					var out=sprite._filterCache ? sprite._filterCache :null;
+					var out=sprite._$P._filterCache ? sprite._$P._filterCache :null;
 					if (!out || sprite._repaint){
 						tIsHaveGlowFilter=sprite.isHaveGlowFilter();
 						scope.addValue("isHaveGlowFilter",tIsHaveGlowFilter);
@@ -3243,8 +3240,8 @@
 		}
 
 		WebGL.addRenderFinish=function(){
-			if (WebGL._isExperimentalWebgl){
-				Render.finish=function (){
+			if (WebGL._isExperimentalWebgl || Render.isFlash){
+				RunDriver.endFinish=function (){
 					Render.context.ctx.finish();
 				}
 			}
@@ -3252,7 +3249,7 @@
 
 		WebGL.removeRenderFinish=function(){
 			if (WebGL._isExperimentalWebgl){
-				Render.finish=function (){}
+				RunDriver.endFinish=function (){}
 			}
 		}
 
@@ -3260,6 +3257,7 @@
 			AtlasResourceManager.instance.freeAll();
 			ResourceManager.releaseContentManagers(true);
 			WebGL.doNodeRepaint(Laya.stage);
+			WebGL.mainContext.viewport(0,0,RenderState2D.width,RenderState2D.height);
 		}
 
 		WebGL.doNodeRepaint=function(sprite){
@@ -3274,7 +3272,7 @@
 				return new WebGLContext2D(canvas);
 			};
 			var webGLName=WebGL.isWebGLSupported();
-			var gl=WebGL.mainContext=canvas.getContext(webGLName,{stencil:true,alpha:false,antialias:true,premultipliedAlpha:false});
+			var gl=WebGL.mainContext=RunDriver.newWebGLContext(canvas,webGLName);
 			WebGL._isExperimentalWebgl=(webGLName !="webgl" && (Browser.onWeiXin || Browser.onMQQBrowser));
 			Browser.window.SetupWebglContext && Browser.window.SetupWebglContext(gl);
 			WebGL.onStageResize(width,height);
@@ -3289,7 +3287,7 @@
 			Shader2D.__init__();
 			Buffer.__int__(gl);
 			BlendMode._init_(gl);
-			if (System.isConchApp){
+			if (Render.isConchApp){
 				/*__JS__ */conch.setOnInvalidGLRes(WebGL.onInvalidGLRes);
 			}
 		}
@@ -3342,18 +3340,22 @@
 			value!==WebGLContext._frontFace && (WebGLContext._frontFace=value,gl.frontFace(value));
 		}
 
+		WebGLContext.bindTexture=function(gl,target,texture){
+			gl.bindTexture(target,texture);
+			WebGLContext.curBindTexTarget=target;
+			WebGLContext.curBindTexValue=texture;
+		}
+
 		WebGLContext._useProgram=null;
 		WebGLContext._depthTest=true;
 		WebGLContext._depthMask=1;
 		WebGLContext._blend=false;
 		WebGLContext._cullFace=false;
+		WebGLContext.curBindTexTarget=null
+		WebGLContext.curBindTexValue=null
 		__static(WebGLContext,
-		['_sFactor',function(){return this._sFactor=/*CLASS CONST:laya.webgl.WebGLContext.ONE*/1;},'_dFactor',function(){return this._dFactor=/*CLASS CONST:laya.webgl.WebGLContext.ZERO*/0;},'_frontFace',function(){return this._frontFace=/*CLASS CONST:laya.webgl.WebGLContext.CCW*/0x0901;}
+		['_depthFunc',function(){return this._depthFunc=/*CLASS CONST:laya.webgl.WebGLContext.LEQUAL*/0x0203;},'_sFactor',function(){return this._sFactor=/*CLASS CONST:laya.webgl.WebGLContext.ONE*/1;},'_dFactor',function(){return this._dFactor=/*CLASS CONST:laya.webgl.WebGLContext.ZERO*/0;},'_frontFace',function(){return this._frontFace=/*CLASS CONST:laya.webgl.WebGLContext.CCW*/0x0901;}
 		]);
-		WebGLContext.__init$=function(){
-			;
-		}
-
 		return WebGLContext;
 	})()
 
@@ -3394,10 +3396,10 @@
 		}
 
 		__proto.drawParticle=function(x,y,ps){
-			var pt=System.createParticleTemplate2D(ps);
+			var pt=RunDriver.createParticleTemplate2D(ps);
 			pt.x=x;
 			pt.y=y;
-			this._saveToCmd(Render.context.drawParticle,[pt]);
+			this._saveToCmd(Render.context._drawParticle,[pt]);
 		}
 
 		return GraphicsGL;
@@ -3416,6 +3418,7 @@
 			this._y=0;
 			this._id=++WebGLContext2D._COUNT;
 			//this._other=null;
+			this._path=null;
 			this._drawCount=1;
 			this._maxNumEle=0;
 			this._clear=false;
@@ -3431,7 +3434,6 @@
 			this._saveMark=null;
 			//this.sprite=null;
 			WebGLContext2D.__super.call(this);
-			this._path=new Path();
 			this._width=99999999;
 			this._height=99999999;
 			this._clipRect=WebGLContext2D.MAXCLIPRECT;
@@ -3439,9 +3441,12 @@
 			/*__JS__ */this.drawTexture=this._drawTextureM;
 			this._canvas=c;
 			this._curMat=Matrix.create();
-			this._ib=Buffer.QuadrangleIB;
-			this._vb=new Buffer(/*laya.webgl.WebGLContext.ARRAY_BUFFER*/0x8892);
-			this._vb.getFloat32Array();
+			if (Render.isFlash){
+				this._ib=IndexBuffer.create();
+				GlUtils.fillIBQuadrangle(this._ib,16);
+			}
+			else this._ib=IndexBuffer.QuadrangleIB;
+			this._vb=VertexBuffer.create();
 			this._other=ContextParams.DEFAULT;
 			this._save=[SaveMark.Create(this)];
 			this._save.length=10;
@@ -3464,7 +3469,7 @@
 			this._curMat && this._curMat.destroy();
 			this._targets && this._targets.destroy();
 			this._vb && this._vb.releaseResource();
-			this._ib && (this._ib !=Buffer.QuadrangleIB)&& this._ib.releaseResource();
+			this._ib && (this._ib !=IndexBuffer.QuadrangleIB)&& this._ib.releaseResource();
 		}
 
 		__proto.clear=function(){
@@ -3533,7 +3538,7 @@
 		}
 
 		__proto.measureText=function(text){
-			return Utils.measureText(text,this._other.font.toString());
+			return RunDriver.measureText(text,this._other.font.toString());
 		}
 
 		__proto._fillText=function(txt,words,x,y,fontStr,color,textAlign){
@@ -3648,13 +3653,14 @@
 			return null;
 		}
 
+		__proto.drawTexture=function(tex,x,y,width,height,tx,ty){
+			this._drawTextureM(tex,x,y,width,height,tx,ty,null);
+		}
+
 		__proto._drawTextureM=function(tex,x,y,width,height,tx,ty,m){
-			var _$this=this;
 			if (!(tex.loaded && tex.bitmap && tex.source)){
 				if (this.sprite){
-					Laya.timer.callLater(null,function(){
-						_$this.sprite.repaint();
-					});
+					Laya.timer.callLater(this,this._repaintSprite);
 				}
 				return;
 			};
@@ -3680,10 +3686,14 @@
 				}
 				this._curSubmit=submit;
 			}
-			if (GlUtils.fillRectImgVb(this._curSubmit._vb || this._vb,this._clipRect,x+tx+tex.offsetX,y+ty+tex.offsetY,width || tex.width,height || tex.height,tex.uv,m || this._curMat,this._x,this._y,0,0)){
+			if (GlUtils.fillRectImgVb(this._curSubmit._vb || this._vb,this._clipRect,x+tx,y+ty ,width || tex.width,height || tex.height,tex.uv,m || this._curMat,this._x,this._y,0,0)){
 				this._curSubmit._numEle+=6;
 				this._maxNumEle=Math.max(this._maxNumEle,this._curSubmit._numEle);
 			}
+		}
+
+		__proto._repaintSprite=function(){
+			this.sprite.repaint();
 		}
 
 		/**
@@ -3799,9 +3809,16 @@
 			var curMat=this._curMat;
 			this._x=x *curMat.a+y *curMat.c;
 			this._y=y *curMat.d+x *curMat.b;
-			if (transform && curMat.bTransform){
-				Matrix.mul(transform,curMat,WebGLContext2D._tmpMatrix);
-				transform=WebGLContext2D._tmpMatrix;
+			if (transform){
+				if (curMat.bTransform||transform.bTransform){
+					Matrix.mul(transform,curMat,WebGLContext2D._tmpMatrix);
+					transform=WebGLContext2D._tmpMatrix;
+				}
+				else {
+					this._x+=transform.tx+curMat.tx;
+					this._y+=transform.ty+curMat.ty;
+					transform=Matrix.EMPTY;
+				}
 			}
 			if (alpha===1 && !blendMode)
 				this._drawTextureM(args[0],args[1]-pivotX,args[2]-pivotY,args[3],args[4],0,0,transform);
@@ -4029,20 +4046,19 @@
 		}
 
 		__proto.flush=function(){
-			this._ib.upload_bind();
 			var maxNum=Math.max(this._vb.length / (/*laya.webgl.utils.Buffer.FLOAT32*/4 *16),this._maxNumEle / 6)+8;
 			if (maxNum > (this._ib.bufferLength / (6 */*laya.webgl.utils.Buffer.SHORT*/2))){
 				GlUtils.expandIBQuadrangle(this._ib,maxNum);
 			}
-			this._vb.upload_bind();
+			this._vb.bind_upload(this._ib);
 			this.submitElement(0,this._submits._length);
-			this._path.reset();
+			this._path && this._path.reset();
 			this._curSubmit=Submit.RENDERBASE;
 			return this._submits._length;
 		}
 
 		__proto.fan=function(x,y,r,sAngle,eAngle,fillColor,lineColor){
-			this._path.fan(x,y,r,sAngle,eAngle,fillColor,this._other.lineWidth ? this._other.lineWidth :1,lineColor);
+			this._getPath().fan(x,y,r,sAngle,eAngle,fillColor,this._other.lineWidth ? this._other.lineWidth :1,lineColor);
 			this._path.update();
 			var submit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.PRIMITIVE*/0x04,0));
 			submit.shaderValue.ALPHA=this._shader2D.ALPHA;
@@ -4052,7 +4068,7 @@
 
 		/*画圆*/
 		__proto.drawCircle=function(x,y,r,edges,boderColor,lineWidth,color){
-			this._path.circle(x,y,r,edges,color,lineWidth ? lineWidth :1,boderColor);
+			this._getPath().circle(x,y,r,edges,color,lineWidth ? lineWidth :1,boderColor);
 			this._path.update();
 			var submit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.PRIMITIVE*/0x04,0));
 			submit.shaderValue.ALPHA=this._shader2D.ALPHA;
@@ -4067,7 +4083,7 @@
 		*@param points
 		*/
 		__proto.drawPoly=function(x,y,points,color,lineWidth,boderColor){
-			this._path.polygon(x,y,points,color,lineWidth ? lineWidth :1,boderColor);
+			this._getPath().polygon(x,y,points,color,lineWidth ? lineWidth :1,boderColor);
 			this._path.update();
 			var tempSubmit;
 			var submit=SubmitStencil.create(4);
@@ -4095,7 +4111,7 @@
 		}
 
 		__proto.drawPath=function(x,y,points,color,lineWidth){
-			this._path.drawPath(x,y,points,color,lineWidth);
+			this._getPath().drawPath(x,y,points,color,lineWidth);
 			this._path.update();
 			var submit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.PRIMITIVE*/0x04,0));
 			this._submits[this._submits._length++]=submit;
@@ -4114,12 +4130,16 @@
 				points=points.concat();
 				this._curMat.transformPointArrayScale(points,points);
 			}
-			this._path.drawPath(tmp.x,tmp.y,points,color,lineWidth);
+			this._getPath().drawPath(tmp.x,tmp.y,points,color,lineWidth);
 			this._path.update();
 			var submit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.PRIMITIVE*/0x04,0));
 			submit.shaderValue.ALPHA=this._shader2D.ALPHA;
 			submit.shaderValue.u_mmat2=RenderState2D.mat2MatArray(this._curMat,RenderState2D.TEMPMAT4_ARRAY);
 			this._submits[this._submits._length++]=submit;
+		}
+
+		__proto._getPath=function(){
+			return this._path || (this._path=new Path());
 		}
 
 		__getset(0,__proto,'asBitmap',null,function(value){
@@ -4986,7 +5006,7 @@
 			//this._nameMap=null;
 			//this._vs=null;
 			//this._ps=null;
-			//this._texIndex=0;
+			this._curActTexIndex=0;
 			//this._reCompile=false;
 			this.tag={};
 			//this._vshader=null;
@@ -4997,7 +5017,7 @@
 			this._offset=0;
 			//this._id=0;
 			Shader.__super.call(this);
-			if (System.isConchApp){
+			if (Render.isConchApp || Render.isFlash){
 				this.customCompile=true;
 			}
 			this._id=++Shader._count;
@@ -5011,7 +5031,7 @@
 		var __proto=Shader.prototype;
 		__proto.recreateResource=function(){
 			this.startCreate();
-			this.compile();
+			this._compile();
 			this.compoleteCreate();
 			this.memorySize=0;
 		}
@@ -5025,11 +5045,10 @@
 			this._params=null;
 			this._paramsMap={};
 			this.memorySize=0;
+			this._curActTexIndex=0;
 		}
 
-		__proto.compileParams=function(){}
-		//TODO:待定,某些参数是否不用回复uniform.location
-		__proto.compile=function(){
+		__proto._compile=function(){
 			if (!this._vs || !this._ps || this._params)
 				return;
 			this._reCompile=true;
@@ -5037,7 +5056,7 @@
 			var text=[this._vs,this._ps];
 			var result;
 			if (this.customCompile)
-				result=this.preGetParams(this._vs,this._ps);
+				result=this._preGetParams(this._vs,this._ps);
 			var gl=WebGL.mainContext;
 			this._program=gl.createProgram();
 			this._vshader=Shader._createShader(gl,text[0],/*laya.webgl.WebGLContext.VERTEX_SHADER*/0x8B31);
@@ -5045,36 +5064,20 @@
 			gl.attachShader(this._program,this._vshader);
 			gl.attachShader(this._program,this._pshader);
 			gl.linkProgram(this._program);
-			if (!gl.getProgramParameter(this._program,/*laya.webgl.WebGLContext.LINK_STATUS*/0x8B82)){
+			if (!this.customCompile && !gl.getProgramParameter(this._program,/*laya.webgl.WebGLContext.LINK_STATUS*/0x8B82)){
 				throw gl.getProgramInfoLog(this._program);
 			};
 			var one,i=0,j=0,n=0,location;
-			var attribNum=0;
-			if (this.customCompile)
-				attribNum=result.attributes.length;
-			else
-			attribNum=gl.getProgramParameter(this._program,/*laya.webgl.WebGLContext.ACTIVE_ATTRIBUTES*/0x8B89);
+			var attribNum=this.customCompile?result.attributes.length:gl.getProgramParameter(this._program,/*laya.webgl.WebGLContext.ACTIVE_ATTRIBUTES*/0x8B89);
 			for (i=0;i < attribNum;i++){
-				var attrib;
-				if (this.customCompile)
-					attrib=result.attributes[i];
-				else
-				attrib=gl.getActiveAttrib(this._program,i);
+				var attrib=this.customCompile?result.attributes[i]:gl.getActiveAttrib(this._program,i);
 				location=gl.getAttribLocation(this._program,attrib.name);
 				one={vartype:"attribute",ivartype:0,attrib:attrib,location:location,name:attrib.name,type:attrib.type,isArray:false,isSame:false,preValue:null,indexOfParams:0};
 				this._params.push(one);
 			};
-			var nUniformNum=0;
-			if (this.customCompile)
-				nUniformNum=result.uniforms.length;
-			else
-			nUniformNum=gl.getProgramParameter(this._program,/*laya.webgl.WebGLContext.ACTIVE_UNIFORMS*/0x8B86);
+			var nUniformNum=this.customCompile?result.uniforms.length:gl.getProgramParameter(this._program,/*laya.webgl.WebGLContext.ACTIVE_UNIFORMS*/0x8B86);
 			for (i=0;i < nUniformNum;i++){
-				var uniform;
-				if (this.customCompile)
-					uniform=result.uniforms[i];
-				else
-				uniform=gl.getActiveUniform(this._program,i);
+				var uniform=this.customCompile?result.uniforms[i]:gl.getActiveUniform(this._program,i);
 				location=gl.getUniformLocation(this._program,uniform.name);
 				one={vartype:"uniform",ivartype:1,attrib:attrib,location:location,name:uniform.name,type:uniform.type,isArray:false,isSame:false,preValue:null,indexOfParams:0};
 				if (one.name.indexOf('[0]')> 0){
@@ -5201,13 +5204,20 @@
 
 		__proto._uniform_sampler2D=function(one,value){
 			var gl=WebGL.mainContext;
-			gl.activeTexture(Shader._TEXTURES[this._texIndex]);
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,value);
 			var saveValue=one.saveValue;
-			if (saveValue[0]!==this._texIndex)
-				gl.uniform1i(one.location,saveValue[0]=this._texIndex);
-			this._texIndex++;
-			return 1;
+			if (saveValue[0]==null){
+				saveValue[0]=this._curActTexIndex;
+				gl.uniform1i(one.location,this._curActTexIndex);
+				gl.activeTexture(Shader._TEXTURES[this._curActTexIndex]);
+				WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,value);
+				this._curActTexIndex++;
+				return 1;
+			}
+			else{
+				gl.activeTexture(Shader._TEXTURES[saveValue[0]]);
+				WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,value);
+				return 0;
+			}
 		}
 
 		__proto._noSetValue=function(one){
@@ -5230,7 +5240,6 @@
 			Shader.activeShader=this;
 			this.activeResource();
 			WebGLContext.UseProgram(this._program);
-			this._texIndex=0;
 			if (this._reCompile){
 				params=this._params;
 				this._reCompile=false;
@@ -5252,7 +5261,6 @@
 		__proto.uploadArray=function(shaderValue,length,_bufferUsage){
 			Shader.activeShader=this;
 			this.activeResource();
-			this._texIndex=0;
 			var sameProgram=!WebGLContext.UseProgram(this._program);
 			var params=this._params,value;
 			var one,shaderCall=0,uploadArrayCount=Shader._uploadArrayCount++;
@@ -5283,7 +5291,7 @@
 			return this._params;
 		}
 
-		__proto.preGetParams=function(vs,ps){
+		__proto._preGetParams=function(vs,ps){
 			var text=[vs,ps];
 			var result={};
 			var attributes=[];
@@ -5565,116 +5573,71 @@
 	*/
 	//class laya.webgl.utils.Buffer extends laya.resource.Resource
 	var Buffer=(function(_super){
-		function Buffer(glTarget,usage,frome,bufferUsage){
+		function Buffer(){
 			this._length=0;
 			this._upload=true;
 			//this._id=0;
-			//this._glTarget=null;
+			//this._type=null;
 			//this._buffer=null;
 			//this._glBuffer=null;
 			//this._bufferUsage=0;
-			//this._floatArray32=null;
 			this._uploadSize=0;
-			//this._usage=null;
 			this._maxsize=0;
-			//this._uint16=null;
-			(bufferUsage===void 0)&& (bufferUsage=0x88E8);
 			Buffer.__super.call(this);
 			this.lock=true;
 			Buffer._gl=WebGL.mainContext;
-			this._$2__id=++Buffer._COUNT;
-			this._usage=usage;
-			glTarget==/*laya.webgl.WebGLContext.ELEMENT_ARRAY_BUFFER*/0x8893 && (glTarget=/*laya.webgl.WebGLContext.ELEMENT_ARRAY_BUFFER*/0x8893,this._usage="INDEX");
-			glTarget==/*laya.webgl.WebGLContext.ARRAY_BUFFER*/0x8892 && (glTarget=/*laya.webgl.WebGLContext.ARRAY_BUFFER*/0x8892);
-			this._glTarget=glTarget;
-			this._bufferUsage=bufferUsage;
-			this._buffer=new ArrayBuffer(8);
-			frome && this.append(frome);
+			this._id=++Buffer._COUNT;
+			Render.isFlash || (this._buffer=new ArrayBuffer(8));
 		}
 
 		__class(Buffer,'laya.webgl.utils.Buffer',_super);
 		var __proto=Buffer.prototype;
-		__proto.getFloat32Array=function(){
-			return this._floatArray32 || (this._floatArray32=new Float32Array(this._buffer));
-		}
-
-		__proto.getUint16Array=function(){
-			return new Uint16Array(this._buffer);
-		}
-
-		__proto.clear=function(){
-			this._length=0;
-			this._upload=true;
-		}
-
-		__proto.append=function(data){
-			this._upload=true;
-			var szu8=0,n;
-			if ((data instanceof Uint8Array)){
-				szu8=data.length;
-				this._resizeBuffer(this._length+szu8,true);
-				n=new Uint8Array(this._buffer,this._length);
-				}else if ((data instanceof Float32Array)){
-				szu8=data.length *4;
-				this._resizeBuffer(this._length+szu8,true);
-				n=new Float32Array(this._buffer,this._length);
-				}else if ((data instanceof Uint16Array)){
-				szu8=data.length *2;
-				this._resizeBuffer(this._length+szu8,true);
-				n=new Uint16Array(this._buffer,this._length);
+		__proto._bufferData=function(){
+			this._maxsize=Math.max(this._maxsize,this._length);
+			if (Stat.loopCount % 30==0){
+				if (this._buffer.byteLength > (this._maxsize+64)){
+					this.memorySize=this._buffer.byteLength;
+					this._buffer=this._buffer.slice(0,this._maxsize+64);
+					this._checkFloatArray32Use();
+				}
+				this._maxsize=this._length;
 			}
-			n.set(data,0);
-			this._length+=szu8;
-			this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
+			if (this._uploadSize < this._buffer.byteLength){
+				this._uploadSize=this._buffer.byteLength;
+				Buffer._gl.bufferData(this._type,this._uploadSize,this._bufferUsage);
+				this.memorySize=this._uploadSize;
+			}
+			Buffer._gl.bufferSubData(this._type,0,this._buffer);
+			Stat.bufferLen+=this._length;
 		}
 
-		__proto.setdata=function(data){
-			this._buffer=data.buffer;
-			this._upload=true;
-			this._floatArray32 || (this._floatArray32=new Float32Array(this._buffer));
-			this._length=this._buffer.byteLength;
+		__proto._bufferSubData=function(offset,dataStart,dataLength){
+			(offset===void 0)&& (offset=0);
+			(dataStart===void 0)&& (dataStart=0);
+			(dataLength===void 0)&& (dataLength=0);
+			this._maxsize=Math.max(this._maxsize,this._length);
+			if (Stat.loopCount % 30==0){
+				if (this._buffer.byteLength > (this._maxsize+64)){
+					this.memorySize=this._buffer.byteLength;
+					this._buffer=this._buffer.slice(0,this._maxsize+64);
+					this._checkFloatArray32Use();
+				}
+				this._maxsize=this._length;
+			}
+			if (this._uploadSize < this._buffer.byteLength){
+				this._uploadSize=this._buffer.byteLength;
+				Buffer._gl.bufferData(this._type,this._uploadSize,this._bufferUsage);
+				this.memorySize=this._uploadSize;
+			}
+			if (dataStart || dataLength){
+				var subBuffer=this._buffer.slice(dataStart,dataLength);
+				Buffer._gl.bufferSubData(this._type,offset,subBuffer);
+				}else {
+				Buffer._gl.bufferSubData(this._type,offset,this._buffer);
+			}
 		}
 
-		__proto.getBuffer=function(){
-			return this._buffer;
-		}
-
-		__proto.seLength=function(value){
-			if (this._length===value)
-				return;
-			value <=this._buffer.byteLength || (this._resizeBuffer(value *2+256,true));
-			this._length=value;
-		}
-
-		__proto._resizeBuffer=function(nsz,copy){
-			if (nsz < this._buffer.byteLength)
-				return this;
-			this.memorySize=this._buffer.byteLength;
-			if (copy && this._buffer && this._buffer.byteLength > 0){
-				var newbuffer=new ArrayBuffer(nsz);
-				var n=new Uint8Array(newbuffer);
-				n.set(new Uint8Array(this._buffer),0);
-				this._buffer=newbuffer;
-			}else
-			this._buffer=new ArrayBuffer(nsz);
-			this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
-			this._upload=true;
-			return this;
-		}
-
-		__proto.setNeedUpload=function(){
-			this._upload=true;
-		}
-
-		__proto.getNeedUpload=function(){
-			return this._upload;
-		}
-
-		__proto.bind=function(){
-			this.activeResource();
-			(Buffer._bindActive[this._glTarget]===this._glBuffer)|| (Buffer._gl.bindBuffer(this._glTarget,Buffer._bindActive[this._glTarget]=this._glBuffer),Shader.activeShader=null);
-		}
-
+		__proto._checkFloatArray32Use=function(){}
 		__proto.recreateResource=function(){
 			this.startCreate();
 			this._glBuffer || (this._glBuffer=Buffer._gl.createBuffer());
@@ -5695,63 +5658,112 @@
 			}
 		}
 
-		__proto.upload=function(){
+		__proto._bind=function(){
+			this.activeResource();
+			(Buffer._bindActive[this._type]===this._glBuffer)|| (Buffer._gl.bindBuffer(this._type,Buffer._bindActive[this._type]=this._glBuffer),Shader.activeShader=null);
+		}
+
+		__proto._bind_upload=function(){
 			if (!this._upload)
 				return false;
 			this._upload=false;
-			this.bind();
-			this._maxsize=Math.max(this._maxsize,this._length);
-			if (Stat.loopCount % 30==0){
-				if (this._buffer.byteLength > (this._maxsize+64)){
-					this.memorySize=this._buffer.byteLength;
-					this._buffer=this._buffer.slice(0,this._maxsize+64);
-					this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
-				}
-				this._maxsize=this._length;
-			}
-			if (this._uploadSize < this._buffer.byteLength){
-				this._uploadSize=this._buffer.byteLength;
-				Buffer._gl.bufferData(this._glTarget,this._uploadSize,this._bufferUsage);
-				this.memorySize=this._uploadSize;
-			}
-			Buffer._gl.bufferSubData(this._glTarget,0,this._buffer);
-			Stat.bufferLen+=this._length;
+			this._bind();
+			this._bufferData();
 			return true;
 		}
 
-		__proto.subUpload=function(offset,dataStart,dataLength){
+		__proto._bind_subUpload=function(offset,dataStart,dataLength){
 			(offset===void 0)&& (offset=0);
 			(dataStart===void 0)&& (dataStart=0);
 			(dataLength===void 0)&& (dataLength=0);
 			if (!this._upload)
 				return false;
 			this._upload=false;
-			this.bind();
-			this._maxsize=Math.max(this._maxsize,this._length);
-			if (Stat.loopCount % 30==0){
-				if (this._buffer.byteLength > (this._maxsize+64)){
-					this.memorySize=this._buffer.byteLength;
-					this._buffer=this._buffer.slice(0,this._maxsize+64);
-					this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
-				}
-				this._maxsize=this._length;
-			}
-			if (this._uploadSize < this._buffer.byteLength){
-				this._uploadSize=this._buffer.byteLength;
-				Buffer._gl.bufferData(this._glTarget,this._uploadSize,this._bufferUsage);
-				this.memorySize=this._uploadSize;
-			}
-			if (dataStart || dataLength){
-				var subBuffer=this._buffer.slice(dataStart,dataLength);
-				Buffer._gl.bufferSubData(this._glTarget,offset,subBuffer);
-				}else {
-				Buffer._gl.bufferSubData(this._glTarget,offset,this._buffer);
-			}
+			this._bind();
+			this._bufferSubData(offset,dataStart,dataLength);
 			return true;
 		}
 
-		__proto.upload_bind=function(){
-			(this._upload && this.upload())|| this.bind();
+		__proto._resizeBuffer=function(nsz,copy){
+			if (nsz < this._buffer.byteLength)
+				return this;
+			this.memorySize=nsz;
+			if (copy && this._buffer && this._buffer.byteLength > 0){
+				var newbuffer=new ArrayBuffer(nsz);
+				var n=new Uint8Array(newbuffer);
+				n.set(new Uint8Array(this._buffer),0);
+				this._buffer=newbuffer;
+			}else
+			this._buffer=new ArrayBuffer(nsz);
+			this._checkFloatArray32Use();
+			this._upload=true;
+			return this;
+		}
+
+		__proto.append=function(data){
+			this._upload=true;
+			var szu8=0,n;
+			if ((data instanceof Uint8Array)){
+				szu8=data.length;
+				this._resizeBuffer(this._length+szu8,true);
+				n=new Uint8Array(this._buffer,this._length);
+				}else if ((data instanceof Float32Array)){
+				szu8=data.length *4;
+				this._resizeBuffer(this._length+szu8,true);
+				n=new Float32Array(this._buffer,this._length);
+				}else if ((data instanceof Uint16Array)){
+				szu8=data.length *2;
+				this._resizeBuffer(this._length+szu8,true);
+				n=new Uint16Array(this._buffer,this._length);
+			}
+			n.set(data,0);
+			this._length+=szu8;
+			this._checkFloatArray32Use();
+		}
+
+		/*
+		public function setdata(data:*):void {
+			_buffer=data.buffer;
+			_upload=true;
+			_length=_buffer.byteLength;
+			_checkFloatArray32Use();
+		}
+
+		*/
+		__proto.getBuffer=function(){
+			return this._buffer;
+		}
+
+		__proto.setNeedUpload=function(){
+			this._upload=true;
+		}
+
+		__proto.getNeedUpload=function(){
+			return this._upload;
+		}
+
+		__proto.upload=function(){
+			var scuess=this._bind_upload();
+			Buffer._gl.bindBuffer(this._type,null);
+			Buffer._bindActive[this._type]=null;
+			Shader.activeShader=null
+			return scuess;
+		}
+
+		__proto.subUpload=function(offset,dataStart,dataLength){
+			(offset===void 0)&& (offset=0);
+			(dataStart===void 0)&& (dataStart=0);
+			(dataLength===void 0)&& (dataLength=0);
+			var scuess=this._bind_subUpload();
+			Buffer._gl.bindBuffer(this._type,null);
+			Buffer._bindActive[this._type]=null;
+			Shader.activeShader=null
+			return scuess;
+		}
+
+		__proto.clear=function(){
+			this._length=0;
+			this._upload=true;
 		}
 
 		/**
@@ -5759,7 +5771,6 @@
 		*/
 		__proto.disposeCPUData=function(){
 			this._buffer=null;
-			this._floatArray32=null;
 		}
 
 		__proto.dispose=function(){
@@ -5767,12 +5778,10 @@
 			_super.prototype.dispose.call(this);
 		}
 
-		__getset(0,__proto,'uintArray16',function(){
-			this._uint16=new Uint16Array(this._buffer);
-			return this._uint16;
+		__getset(0,__proto,'bufferType',function(){
+			return this._type;
 		});
 
-		/*调试用*/
 		__getset(0,__proto,'bufferLength',function(){
 			return this._buffer.byteLength;
 		});
@@ -5786,14 +5795,10 @@
 			this._length=value;
 		});
 
-		__getset(0,__proto,'usage',function(){
-			return this._usage;
-		});
-
 		Buffer.__int__=function(gl){
 			Buffer._gl=gl;
-			Buffer.QuadrangleIB=new Buffer(/*laya.webgl.WebGLContext.ELEMENT_ARRAY_BUFFER*/0x8893,"INDEX",null,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
-			GlUtils.fillIBQuadrangle(Buffer.QuadrangleIB,16);
+			IndexBuffer.QuadrangleIB=IndexBuffer.create();
+			GlUtils.fillIBQuadrangle(IndexBuffer.QuadrangleIB,16);
 		}
 
 		Buffer.INDEX="INDEX";
@@ -5806,7 +5811,7 @@
 		Buffer.NEXTUV1="NEXTUV1";
 		Buffer.BLENDWEIGHT0="BLENDWEIGHT";
 		Buffer.BLENDINDICES0="BLENDINDICES";
-		Buffer.MATRIX0="MATRIX0";
+		Buffer.MVPMATRIX="MVPMATRIX";
 		Buffer.MATRIX1="MATRIX1";
 		Buffer.MATRIX2="MATRIX2";
 		Buffer.DIFFUSETEXTURE="DIFFUSETEXTURE";
@@ -5858,9 +5863,8 @@
 		Buffer.ENDVELOCITY="ENDVELOCITY";
 		Buffer.FLOAT32=4;
 		Buffer.SHORT=2;
-		Buffer.QuadrangleIB=null
 		Buffer._gl=null
-		Buffer._bindActive=[];
+		Buffer._bindActive={};
 		Buffer._COUNT=1;
 		return Buffer;
 	})(Resource)
@@ -5868,7 +5872,7 @@
 
 	//class laya.webgl.shader.d2.value.Color2dSV extends laya.webgl.shader.d2.value.Value2D
 	var Color2dSV=(function(_super){
-		function Color2dSV(){
+		function Color2dSV(args){
 			Color2dSV.__super.call(this,/*laya.webgl.shader.d2.ShaderDefines2D.COLOR2D*/0x02,0);
 			this.color=[];
 		}
@@ -5912,7 +5916,7 @@
 
 	//class laya.webgl.shader.d2.value.PrimitiveSV extends laya.webgl.shader.d2.value.Value2D
 	var PrimitiveSV=(function(_super){
-		function PrimitiveSV(){
+		function PrimitiveSV(args){
 			this.a_color=null;
 			PrimitiveSV.__super.call(this,/*laya.webgl.shader.d2.ShaderDefines2D.PRIMITIVE*/0x04,0);
 			this.position=[2,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,5 *CONST3D2D.BYTES_PE,0];
@@ -5927,6 +5931,8 @@
 	//class laya.webgl.atlas.AtlasWebGLCanvas extends laya.resource.Bitmap
 	var AtlasWebGLCanvas=(function(_super){
 		function AtlasWebGLCanvas(){
+			this._flashCacheImage=null;
+			this._flashCacheImageNeedFlush=false;
 			AtlasWebGLCanvas.__super.call(this);
 		}
 
@@ -5937,13 +5943,15 @@
 			this.startCreate();
 			var gl=WebGL.mainContext;
 			var glTex=this._source=gl.createTexture();
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
 			gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,this._w,this._h,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,null);
 			gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MIN_FILTER*/0x2801,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
 			gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MAG_FILTER*/0x2800,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
 			gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_S*/0x2802,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 			gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_T*/0x2803,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,null);
+			(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 			this.memorySize=this._w *this._h *4;
 			this.compoleteCreate();
 		}
@@ -5959,23 +5967,41 @@
 
 		/**采样image到WebGLTexture的一部分*/
 		__proto.texSubImage2D=function(source,xoffset,yoffset,bitmap){
-			var gl=WebGL.mainContext;
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,this._source);
-			(xoffset-1 >=0)&& (gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset-1,yoffset,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,bitmap));
-			(xoffset+1 <=source.width)&& (gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset+1,yoffset,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,bitmap));
-			(yoffset-1 >=0)&& (gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset,yoffset-1,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,bitmap));
-			(yoffset+1 <=source.height)&& (gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset,yoffset+1,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,bitmap));
-			gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset,yoffset,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,bitmap);
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,null);
+			if (!Render.isFlash){
+				var gl=WebGL.mainContext;
+				var preTarget=WebGLContext.curBindTexTarget;
+				var preTexture=WebGLContext.curBindTexValue;
+				WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,this._source);
+				(xoffset-1 >=0)&& (gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset-1,yoffset,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,bitmap));
+				(xoffset+1 <=source.width)&& (gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset+1,yoffset,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,bitmap));
+				(yoffset-1 >=0)&& (gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset,yoffset-1,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,bitmap));
+				(yoffset+1 <=source.height)&& (gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset,yoffset+1,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,bitmap));
+				gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset,yoffset,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,bitmap);
+				(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
+				}else {
+				if (!this._flashCacheImage){
+					this._flashCacheImage=HTMLImage.create();
+					this._flashCacheImage.image.createCanvas(this._w,this._h);
+				};
+				var bmData=bitmap.bitmapdata;
+				(xoffset-1 >=0)&& (this._flashCacheImage.image.copyPixels(bmData,0,0,bmData.width-1,bmData.height,xoffset,yoffset));
+				(xoffset+1 <=source.width)&& (this._flashCacheImage.image.copyPixels(bmData,0,0,bmData.width+1,bmData.height,xoffset,yoffset));
+				(yoffset-1 >=0)&& (this._flashCacheImage.image.copyPixels(bmData,0,0,bmData.width,bmData.height-1,xoffset,yoffset));
+				(yoffset+1 <=source.height)&& (this._flashCacheImage.image.copyPixels(bmData,0,0,bmData.width+1,bmData.height,xoffset,yoffset));
+				this._flashCacheImage.image.copyPixels(bmData,0,0,bmData.width,bmData.height,xoffset,yoffset);
+				(this._flashCacheImageNeedFlush)|| (this._flashCacheImageNeedFlush=true);
+			}
 		}
 
 		/**采样image到WebGLTexture的一部分*/
 		__proto.texSubImage2DPixel=function(source,xoffset,yoffset,width,height,pixel){
 			var gl=WebGL.mainContext;
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,this._source);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,this._source);
 			var pixels=new Uint8Array(pixel.data);
 			gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset,yoffset,width,height,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,pixels);
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,null);
+			(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 		}
 
 		/***
@@ -6012,7 +6038,7 @@
 			var _$this=this;
 			WebGLCanvas.__super.call(this);
 			this._canvas=this;
-			if (type==="2D" || (type==="AUTO" && !Render.isWebGl)){
+			if (type==="2D" || (type==="AUTO" && !Render.isWebGL)){
 				this._is2D=true;
 				this._canvas=this._source=Browser.createElement("canvas");
 				this.iscpuSource=true;
@@ -6086,21 +6112,26 @@
 			};
 			var glTex=this._source=gl.createTexture();
 			this.iscpuSource=false;
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
 			gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,this._w,this._h,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,null);
 			gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MAG_FILTER*/0x2800,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
 			gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MIN_FILTER*/0x2801,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
 			gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_S*/0x2802,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 			gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_T*/0x2803,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 			this.memorySize=this._w *this._h *4;
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,null);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget,preTexture));
 			this._canvas=null;
 		}
 
 		__proto.texSubImage2D=function(webglCanvas,xoffset,yoffset){
 			var gl=WebGL.mainContext;
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,this._source);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,this._source);
 			gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset,yoffset,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,webglCanvas._source);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget,preTexture));
 		}
 
 		/**
@@ -6118,6 +6149,10 @@
 		__getset(0,__proto,'asBitmap',null,function(value){
 			this._ctx && (this._ctx.asBitmap=value);
 		});
+
+		WebGLCanvas.create=function(type){
+			return new WebGLCanvas(type);
+		}
 
 		WebGLCanvas._createContext=null
 		return WebGLCanvas;
@@ -6141,7 +6176,7 @@
 			this.canvas=canvas;
 			this.char=char;
 			this._enableMerageInAtlas=true;
-			var bIsConchApp=System.isConchApp;
+			var bIsConchApp=Render.isConchApp;
 			if (bIsConchApp){
 				/*__JS__ */this._ctx=canvas;
 				}else {
@@ -6168,7 +6203,7 @@
 		__proto.recreateResource=function(){
 			this.startCreate();
 			var char=this.char;
-			var bIsConchApp=System.isConchApp;
+			var bIsConchApp=Render.isConchApp;
 			var xs=char.xs,ys=char.ys;
 			this.onresize(char.width+this.borderSize *2,char.height+this.borderSize *2);
 			this.canvas && (this.canvas.height=this._h,this.canvas.width=this._w);
@@ -6301,7 +6336,9 @@
 			var gl=WebGL.mainContext;
 			this._frameBuffer || (this._frameBuffer=gl.createFramebuffer());
 			this._source || (this._source=gl.createTexture());
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,this._source);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,this._source);
 			gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,this._w,this._h,0,this._surfaceFormat,this._surfaceType,null);
 			gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MIN_FILTER*/0x2801,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
 			gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_S*/0x2802,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
@@ -6323,7 +6360,7 @@
 				gl.framebufferRenderbuffer(/*laya.webgl.WebGLContext.FRAMEBUFFER*/0x8D40,/*laya.webgl.WebGLContext.DEPTH_ATTACHMENT*/0x8D00,/*laya.webgl.WebGLContext.RENDERBUFFER*/0x8D41,this._depthBuffer);
 			}
 			gl.bindFramebuffer(/*laya.webgl.WebGLContext.FRAMEBUFFER*/0x8D40,null);
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,null);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget,preTexture));
 			gl.bindRenderbuffer(/*laya.webgl.WebGLContext.RENDERBUFFER*/0x8D41,null);
 			this.memorySize=this._w *this._h *4;
 			this.compoleteCreate();
@@ -6420,7 +6457,9 @@
 				throw "create GLTextur err:no data:"+this.canvas;
 			};
 			var glTex=this._source=gl.createTexture();
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
 			gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this.canvas);
 			var minFifter=this.minFifter;
 			var magFifter=this.magFifter;
@@ -6445,7 +6484,7 @@
 				gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_S*/0x2802,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 				gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_T*/0x2803,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 			}
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,null);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget,preTexture));
 			this.canvas=null;
 			this.memorySize=this._w *this._h *4;
 		}
@@ -6499,38 +6538,6 @@
 
 
 	/**
-	*@author wk
-	*/
-	//class laya.webgl.shader.d2.filters.ColorFilter extends laya.webgl.shader.Shader
-	var ColorFilter1=(function(_super){
-		function ColorFilter(){
-			var vs="attribute vec4 position;\nattribute vec2 texcoord;\nuniform  mat4 mmat;\nuniform vec2 size;\nvarying vec2 v_texcoord;\nvoid main() {\n  gl_Position =mmat*vec4((position.x/size.x-0.5)*2.0,(0.5-position.y/size.y)*2.0,position.z,1.0);\n  v_texcoord = texcoord;\n}"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/filters/colorfilter.vert*/;
-			var ps="precision mediump float;\nvarying vec2 v_texcoord;\nuniform sampler2D texture;\nuniform float alpha;\nuniform float u_colorMatrix[20];\n\nvoid main(){\n 	vec4 rgba=gl_FragColor= texture2D(texture, v_texcoord)*vec4(1,1,1,alpha);\n   gl_FragColor.r =rgba.r*u_colorMatrix[0]+rgba.g*u_colorMatrix[1]+rgba.b*u_colorMatrix[2]+rgba.a*u_colorMatrix[3]+u_colorMatrix[4];\n   gl_FragColor.g =rgba.r*u_colorMatrix[5]+rgba.g*u_colorMatrix[6]+rgba.b*u_colorMatrix[7]+rgba.a*u_colorMatrix[8]+u_colorMatrix[9];\n   gl_FragColor.b =rgba.r*u_colorMatrix[10]+rgba.g*u_colorMatrix[11]+rgba.b*u_colorMatrix[12]+rgba.a*u_colorMatrix[13]+u_colorMatrix[14];\n   gl_FragColor.a =rgba.r*u_colorMatrix[15]+rgba.g*u_colorMatrix[16]+rgba.b*u_colorMatrix[17]+rgba.a*u_colorMatrix[18]+u_colorMatrix[19];	   \n}\n"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/filters/colorfilter.frag*/;
-			ColorFilter.__super.call(this,vs,ps,"colorFilter");
-		}
-
-		__class(ColorFilter,'laya.webgl.shader.d2.filters.ColorFilter',_super,'ColorFilter1');
-		return ColorFilter;
-	})(Shader)
-
-
-	/**
-	*@author wk
-	*/
-	//class laya.webgl.shader.d2.filters.GlowFilterShader extends laya.webgl.shader.Shader
-	var GlowFilterShader=(function(_super){
-		function GlowFilterShader(){
-			var vs="attribute vec4 position;\nattribute vec2 texcoord;\nuniform vec2 size;\nuniform  mat4 mmat;\nuniform  mat4 pmat;\nvarying vec2  v_texcoord;\nvoid main(){\n gl_Position =mmat*vec4((position.x/size.x-0.5)*2.0,(0.5-position.y/size.y)*2.0,position.z,1.0);\n  v_texcoord = texcoord;\n}"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/filters/glowfilter.vert*/;
-			var ps="precision mediump float;\nconst int c_FilterTime = 9;\nconst float c_Gene = (1.0/(1.0 + 2.0*(0.93 + 0.8 + 0.7 + 0.6 + 0.5 + 0.4 + 0.3 + 0.2 + 0.1)));\nuniform sampler2D texture;\nconst bool u_FiterMode=true;\nconst float u_GlowGene=1.5;\nconst vec4 u_GlowColor=vec4(1.0,0.0,0.0,0.5);\nconst float u_FilterOffset=2.0;\nconst float u_TexSpaceU=1.0/10.0;\nconst float u_TexSpaceV=1.0/10.0;\nvarying vec2 v_texcoord;\nvoid main()\n{\n	float aryAttenuation[c_FilterTime];\n	aryAttenuation[0] = 0.93;\n	aryAttenuation[1] = 0.8;\n	aryAttenuation[2] = 0.7;\n	aryAttenuation[3] = 0.6;\n	aryAttenuation[4] = 0.5;\n	aryAttenuation[5] = 0.4;\n	aryAttenuation[6] = 0.3;\n	aryAttenuation[7] = 0.2;\n	aryAttenuation[8] = 0.1;\n	vec4 vec4Color = texture2D(texture, v_texcoord)*c_Gene;\n	vec2 vec2FilterDir;\n	if(u_FiterMode)\n	  vec2FilterDir = vec2(u_FilterOffset*u_TexSpaceU/9.0, 0.0);\n	else\n		vec2FilterDir =  vec2(0.0, u_FilterOffset*u_TexSpaceV/9.0);\n	vec2 vec2Step = vec2FilterDir;\n	for(int i = 0;i< c_FilterTime; ++i){\n		vec4Color += texture2D(texture, v_texcoord + vec2Step)*aryAttenuation[i]*c_Gene;\n		vec4Color += texture2D(texture, v_texcoord - vec2Step)*aryAttenuation[i]*c_Gene;\n		vec2Step += vec2FilterDir;\n	}\n	if(u_FiterMode)\n		gl_FragColor = vec4Color.a*u_GlowColor*u_GlowGene;\n	else\n		gl_FragColor = vec4Color.a*u_GlowColor;\n}"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/webgl/src/laya/webgl/shader/d2/filters/glowfilter.frag*/;
-			GlowFilterShader.__super.call(this,vs,ps,"glowFilter");
-		}
-
-		__class(GlowFilterShader,'laya.webgl.shader.d2.filters.GlowFilterShader',_super);
-		return GlowFilterShader;
-	})(Shader)
-
-
-	/**
 	*...
 	*@author laya
 	*/
@@ -6558,7 +6565,7 @@
 					var params=this._params,one;
 					for (var i=0,n=params.length;i < n;i++){
 						one=params[i];
-						if (one.name==="size" || one.name==="al2pha" || one.name==="mmat" || one.name==="position" || one.name==="texcoord")continue ;
+						if (!Render.isFlash && (one.name==="size" || one.name==="al2pha" || one.name==="mmat" || one.name==="position" || one.name==="texcoord"))continue ;
 						this._params2dQuick1.push(one);
 					}
 				}
@@ -6587,7 +6594,7 @@
 					var params=this._params,one;
 					for (var i=0,n=params.length;i < n;i++){
 						one=params[i];
-						if (one.name==="size"|| one.name==="al2pha")continue ;
+						if (!Render.isFlash && (one.name==="size"|| one.name==="al2pha"))continue ;
 						this._params2dQuick2.push(one);
 					}
 				}
@@ -6606,9 +6613,90 @@
 	})(Shader)
 
 
+	/**
+	*...
+	*@author laya
+	*/
+	//class laya.webgl.utils.IndexBuffer extends laya.webgl.utils.Buffer
+	var IndexBuffer=(function(_super){
+		function IndexBuffer(){
+			IndexBuffer.__super.call(this);
+			this._bufferUsage=0x88E4;
+			this._type=/*laya.webgl.WebGLContext.ELEMENT_ARRAY_BUFFER*/0x8893;
+		}
+
+		__class(IndexBuffer,'laya.webgl.utils.IndexBuffer',_super);
+		var __proto=IndexBuffer.prototype;
+		__proto.getUint16Array=function(){
+			return new Uint16Array(this._buffer);
+		}
+
+		IndexBuffer.QuadrangleIB=null
+		IndexBuffer.create=function(){
+			return new IndexBuffer();
+		}
+
+		return IndexBuffer;
+	})(Buffer)
+
+
+	/**
+	*...
+	*@author laya
+	*/
+	//class laya.webgl.utils.VertexBuffer extends laya.webgl.utils.Buffer
+	var VertexBuffer=(function(_super){
+		function VertexBuffer(bufferUsage){
+			this._floatArray32=null;
+			VertexBuffer.__super.call(this);
+			this._bufferUsage=bufferUsage;
+			this._type=/*laya.webgl.WebGLContext.ARRAY_BUFFER*/0x8892;
+			this.getFloat32Array();
+		}
+
+		__class(VertexBuffer,'laya.webgl.utils.VertexBuffer',_super);
+		var __proto=VertexBuffer.prototype;
+		__proto.getFloat32Array=function(){
+			return this._floatArray32 || (this._floatArray32=new Float32Array(this._buffer));
+		}
+
+		__proto.bind=function(ibBuffer){
+			(ibBuffer)&& (ibBuffer._bind());
+			this._bind();
+		}
+
+		__proto.insertData=function(data,pos){
+			var vbdata=this.getFloat32Array();
+			vbdata.set(data,pos);
+			this._upload=true;
+		}
+
+		__proto.bind_upload=function(ibBuffer){
+			(ibBuffer._bind_upload())|| (ibBuffer._bind());
+			(this._bind_upload())|| (this._bind());
+		}
+
+		__proto._checkFloatArray32Use=function(){
+			this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
+		}
+
+		__proto.disposeCPUData=function(){
+			_super.prototype.disposeCPUData.call(this);
+			this._floatArray32=null;
+		}
+
+		VertexBuffer.create=function(bufferUsage){
+			(bufferUsage===void 0)&& (bufferUsage=0x88E8);
+			return new VertexBuffer(bufferUsage);
+		}
+
+		return VertexBuffer;
+	})(Buffer)
+
+
 	//class laya.webgl.shader.d2.value.GlowSV extends laya.webgl.shader.d2.value.TextureSV
 	var GlowSV=(function(_super){
-		function GlowSV(){
+		function GlowSV(args){
 			this.u_blurX=false;
 			this.u_color=null;
 			this.u_offset=null;
@@ -6634,7 +6722,7 @@
 
 	//class laya.webgl.shader.d2.value.TextSV extends laya.webgl.shader.d2.value.TextureSV
 	var TextSV=(function(_super){
-		function TextSV(){
+		function TextSV(args){
 			TextSV.__super.call(this,/*laya.webgl.shader.d2.ShaderDefines2D.COLORADD*/0x40);
 			this.defines.add(/*laya.webgl.shader.d2.ShaderDefines2D.COLORADD*/0x40);
 		}
@@ -6652,7 +6740,7 @@
 
 		TextSV.create=function(){
 			if (TextSV._length)return TextSV.pool[--TextSV._length];
-			else return new TextSV();
+			else return new TextSV(null);
 		}
 
 		TextSV.pool=[];
@@ -6665,11 +6753,9 @@
 	*...
 	*@author
 	*/
-	//class laya.webgl.resource.WebGLImage extends laya.resource.FileBitmap
+	//class laya.webgl.resource.WebGLImage extends laya.resource.HTMLImage
 	var WebGLImage=(function(_super){
 		function WebGLImage(im){
-			this._recreateLock=false;
-			this._needReleaseAgain=false;
 			this._image=null;
 			this._allowMerageInAtlas=false;
 			this._enableMerageInAtlas=false;
@@ -6677,7 +6763,7 @@
 			this.mipmap=false;
 			this.minFifter=0;
 			this.magFifter=0;
-			WebGLImage.__super.call(this);
+			WebGLImage.__super.call(this,null);
 			this.repeat=true;
 			this.mipmap=false;
 			this.minFifter=-1;
@@ -6689,6 +6775,7 @@
 		__class(WebGLImage,'laya.webgl.resource.WebGLImage',_super);
 		var __proto=WebGLImage.prototype;
 		Laya.imps(__proto,{"laya.webgl.resource.IMergeAtlasBitmap":true})
+		__proto._init_=function(im){}
 		/***重新创建资源*/
 		__proto.recreateResource=function(){
 			var _$this=this;
@@ -6744,7 +6831,9 @@
 				throw "create GLTextur err:no data:"+this._image;
 			};
 			var glTex=this._source=gl.createTexture();
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
+			var preTarget=WebGLContext.curBindTexTarget;
+			var preTexture=WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
 			gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this._image);
 			var minFifter=this.minFifter;
 			var magFifter=this.magFifter;
@@ -6769,7 +6858,7 @@
 				gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_S*/0x2802,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 				gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_T*/0x2803,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 			}
-			gl.bindTexture(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,null);
+			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget,preTexture));
 			this._image=null;
 			if (isPOT)
 				this.memorySize=this._w *this._h *4 *(1+1 / 3);
@@ -6791,7 +6880,7 @@
 
 		__proto.dispose=function(){
 			this.resourceManager.removeResource(this);
-			laya.resource.Bitmap.prototype.dispose.call(this);
+			_super.prototype.dispose.call(this);
 		}
 
 		/**
@@ -6863,8 +6952,8 @@
 		});
 
 		return WebGLImage;
-	})(FileBitmap)
+	})(HTMLImage)
 
 
-	Laya.__init([WebGLContext2D,ShaderCompile,WebGLContext,AtlasGrid,RenderTargetMAX,DrawText]);
+	Laya.__init([ShaderCompile,WebGLContext2D,AtlasGrid,RenderTargetMAX,DrawText]);
 })(window,document,Laya);

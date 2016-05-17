@@ -2,10 +2,13 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var CSSStyle=laya.display.css.CSSStyle,Node=laya.display.Node,WebGL=laya.webgl.WebGL,Sprite=laya.display.Sprite;
-	var Event=laya.events.Event,Loader=laya.net.Loader,URL=laya.net.URL,Browser=laya.utils.Browser,RenderContext=laya.renders.RenderContext;
-	var Stat=laya.utils.Stat,load=Laya.load,HTMLChar=laya.utils.HTMLChar,RenderSprite=laya.renders.RenderSprite;
-	var Utils=laya.utils.Utils,Texture=laya.resource.Texture;
+	var CSSStyle=laya.display.css.CSSStyle,ClassUtils=laya.utils.ClassUtils,Node=laya.display.Node,WebGL=laya.webgl.WebGL;
+	var Rectangle=laya.maths.Rectangle,URL=laya.net.URL,Sprite=laya.display.Sprite,Event=laya.events.Event,Loader=laya.net.Loader;
+	var Browser=laya.utils.Browser,HTMLChar=laya.utils.HTMLChar,RenderSprite=laya.renders.RenderSprite,Utils=laya.utils.Utils;
+	var Stat=laya.utils.Stat,RenderContext=laya.renders.RenderContext,Texture=laya.resource.Texture,load=Laya.load;
+	/**
+	*@private
+	*/
 	//class laya.html.utils.HTMLParse
 	var HTMLParse=(function(){
 		function HTMLParse(){};
@@ -19,21 +22,20 @@
 
 		HTMLParse._parseXML=function(parent,xml,url,href){
 			var i=0,n=0;
-			if(xml.item){
-				for(i=0,n=xml.length;i < n;++i){
+			if (xml.item){
+				for (i=0,n=xml.length;i < n;++i){
 					HTMLParse._parseXML(parent,xml[i],url,href);
 				}
-			}
-			else{
+				}else {
 				var node;
 				var nodeName;
-				if(xml.nodeType==3){
+				if (xml.nodeType==3){
 					var txt;
 					if ((parent instanceof laya.html.dom.HTMLDivElement )){
 						nodeName=xml.nodeName.toLowerCase();
 						txt=xml.textContent.replace(/^\s+|\s+$/g,'');
 						if (txt.length > 0){
-							node=parent.addChild (Utils.New(nodeName));
+							node=parent.addChild(ClassUtils.getInstance(nodeName));
 							((node).innerTEXT=txt.replace(HTMLParse.char255AndOneSpacePattern," "));
 						}
 						}else {
@@ -43,11 +45,10 @@
 						}
 					}
 					return;
-				}
-				else{
+					}else {
 					nodeName=xml.nodeName.toLowerCase();
 					if (nodeName=="#comment")return;
-					node=parent.addChild (Utils.New(nodeName));
+					node=parent.addChild(ClassUtils.getInstance(nodeName));
 					(node).URI=url;
 					(node).href=href;
 					var attributes=xml.attributes;
@@ -72,8 +73,9 @@
 
 
 	/**
-	*...
-	*@author laya
+	*@private
+	*HTML的布局类
+	*对HTML的显示对象进行排版
 	*/
 	//class laya.html.utils.Layout
 	var Layout=(function(){
@@ -173,8 +175,7 @@
 						}
 						newLine=false;
 						tWordWidth+=htmlWord.width;
-					}
-					else{
+						}else {
 						newLine=nextNewline || (htmlWord.char==='\n');
 						curLine.wordStartIndex=curLine.elements.length;
 					}
@@ -184,8 +185,7 @@
 					newLine=newLine || ((x+w)> width);
 					newLine && addLine();
 					curLine.minTextHeight=Math.min(curLine.minTextHeight,oneLayout.height);
-				}
-				else{
+					}else {
 					curStyle=oneLayout._getCSSStyle();
 					sprite=oneLayout;
 					curPadding=curStyle.padding;
@@ -230,8 +230,7 @@
 
 
 	/**
-	*...
-	*@author laya
+	*@private
 	*/
 	//class laya.html.utils.LayoutLine
 	var LayoutLine=(function(){
@@ -272,7 +271,7 @@
 				one=this.elements[i];
 				var tCSSStyle=one._getCSSStyle();
 				dx!==0 && (one.x+=dx);
-				switch(tCSSStyle._getValign()){
+				switch (tCSSStyle._getValign()){
 					case 0:
 						one.y=dy;
 						break ;
@@ -338,8 +337,8 @@
 		}
 
 		TestHTML.__init$=function(){
-			"/***********************************/\n/*http://www.layabox.com 2015/12/20*/\n/***********************************/\nwindow.Laya=(function(window,document){\n	var Laya={\n		__internals:[],\n		__packages:{},\n		__classmap:{'Object':Object,'Function':Function,'Array':Array,'String':String},\n		__sysClass:{'object':'Object','array':'Array','string':'String','dictionary':'Dictionary'},\n		__propun:{writable: true,enumerable: false,configurable: true},\n		__presubstr:String.prototype.substr,\n		__substr:function(ofs,sz){return arguments.length==1?Laya.__presubstr.call(this,ofs):Laya.__presubstr.call(this,ofs,sz>0?sz:(this.length+sz));},\n		__init:function(_classs){_classs.forEach(function(o){o.__init$ && o.__init$();});},\n		__parseInt:function(value){return !value?0:parseInt(value);},\n		__isClass:function(o){return o && (o.__isclass || o==Object || o==String || o==Array);},\n		__newvec:function(sz,value){\n			var d=[];\n			d.length=sz;\n			for(var i=0;i<sz;i++) d[i]=value;\n			return d;\n		},\n		__extend:function(d,b){\n			for (var p in b){\n				if (!b.hasOwnProperty(p)) continue;\n				var g = b.__lookupGetter__(p), s = b.__lookupSetter__(p); \n				if ( g || s ) {\n					g && d.__defineGetter__(p, g);\n					s && d.__defineSetter__(p, s);\n				} \n				else d[p] = b[p];\n			}\n			function __() { Laya.un(this,'constructor',d); }__.prototype=b.prototype;d.prototype=new __();Laya.un(d.prototype,'__imps',Laya.__copy({},b.prototype.__imps));\n		},\n		__copy:function(dec,src){\n			if(!src) return null;\n			dec=dec||{};\n			for(var i in src) dec[i]=src[i];\n			return dec;\n		},\n		__package:function(name,o){\n			if(Laya.__packages[name]) return;\n			Laya.__packages[name]=true;\n			var p=window,strs=name.split('.');\n			if(strs.length>1){\n				for(var i=0,sz=strs.length-1;i<sz;i++){\n					var c=p[strs[i]];\n					p=c?c:(p[strs[i]]={});\n				}\n			}\n			p[strs[strs.length-1]] || (p[strs[strs.length-1]]=o||{});\n		},\n		__hasOwnProperty:function(name,o){\n			o=o ||this;\n		    function classHas(name,o){\n				if(Object.hasOwnProperty.call(o.prototype,name)) return true;\n				var s=o.prototype.__super;\n				return s==null?null:classHas(name,s);\n			}\n			return (Object.hasOwnProperty.call(o,name)) || classHas(name,o.__class);\n		},\n		__typeof:function(o,value){\n			if(!o || !value) return false;\n			if(value==String) return (typeof o=='string');\n			if(value==Number) return (typeof o=='number');\n			if(value.__interface__) value=value.__interface__;\n			else if(typeof value!='string')  return (o instanceof value);\n			return (o.__imps && o.__imps[value]) || (o.__class==value);\n		},\n		__as:function(value,type){\n			return (this.__typeof(value,type))?value:null;\n		},		\n		interface:function(name,_super){\n			Laya.__package(name,{});\n			var ins=Laya.__internals;\n			var a=ins[name]=ins[name] || {};\n			a.self=name;\n			if(_super)a.extend=ins[_super]=ins[_super] || {};\n			var o=window,words=name.split('.');\n			for(var i=0;i<words.length-1;i++) o=o[words[i]];o[words[words.length-1]]={__interface__:name};\n		},\n		class:function(o,fullName,_super,miniName){\n			_super && Laya.__extend(o,_super);\n			if(fullName){\n				Laya.__package(fullName,o);\n				Laya.__classmap[fullName]=o;\n				if(fullName.indexOf('.')>0){\n					if(fullName.indexOf('laya.')==0){\n						var paths=fullName.split('.');\n						miniName=miniName || paths[paths.length-1];\n						if(Laya[miniName]) debugger;\n						Laya[miniName]=o;\n					}					\n				}\n				else {\n					if(fullName==\"Main\")\n						window.Main=o;\n					else{\n						if(Laya[fullName]){\n							console.log(\"Err!,Same class:\"+fullName,Laya[fullName]);\n							debugger;\n						}\n						Laya[fullName]=o;\n					}\n				}\n			}\n			var un=Laya.un,p=o.prototype;\n			un(p,'hasOwnProperty',Laya.__hasOwnProperty);\n			un(p,'__class',o);\n			un(p,'__super',_super);\n			un(p,'__className',fullName);\n			un(o,'__super',_super);\n			un(o,'__className',fullName);\n			un(o,'__isclass',true);\n			un(o,'super',function(o){this.__super.call(o);});\n		},\n		imps:function(dec,src){\n			if(!src) return null;\n			var d=dec.__imps|| Laya.un(dec,'__imps',{});\n			for(var i in src){\n				d[i]=src[i];\n				var c=i;\n				while((c=this.__internals[c]) && (c=c.extend) ){\n					c=c.self;d[c]=true;\n				}\n			}\n		},		\n		getset:function(isStatic,o,name,getfn,setfn){\n			if(!isStatic){\n				getfn && Laya.un(o,'_$get_'+name,getfn);\n				setfn && Laya.un(o,'_$set_'+name,setfn);\n			}\n			else{\n				getfn && (o['_$GET_'+name]=getfn);\n				setfn && (o['_$SET_'+name]=setfn);\n			}\n			if(getfn && setfn) \n				Object.defineProperty(o,name,{get:getfn,set:setfn,enumerable:false});\n			else{\n				getfn && Object.defineProperty(o,name,{get:getfn,enumerable:false});\n				setfn && Object.defineProperty(o,name,{set:setfn,enumerable:false});\n			}\n		},\n		static:function(_class,def){\n				for(var i=0,sz=def.length;i<sz;i+=2){\n					if(def[i]=='length') \n						_class.length=def[i+1].call(_class);\n					else{\n						function tmp(){\n							var name=def[i];\n							var getfn=def[i+1];\n							Object.defineProperty(_class,name,{\n								get:function(){delete this[name];return this[name]=getfn.call(this);},\n								set:function(v){delete this[name];this[name]=v;},enumerable: true,configurable: true});\n						}\n						tmp();\n					}\n				}\n		},		\n		un:function(obj,name,value){\n			arguments.length<3 &&(value=obj[name]);\n			Laya.__propun.value=value;\n			Object.defineProperty(obj, name, Laya.__propun);\n			return value;\n		},\n		uns:function(obj,names){\n			names.forEach(function(o){Laya.un(obj,o)});\n		}\n	};\n\n	window.console=window.console || ({log:function(){}});\n	window.trace=window.console.log;\n	Error.prototype.throwError=function(){throw arguments;};\n	String.prototype.substr=Laya.__substr;\n	Object.defineProperty(Array.prototype,'fixed',{enumerable: false});\n"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/html/src/tojs.head.js*/;
-			"	var iflash=window.iflash={utils:{}};\n	var LAYABOX=window.LAYABOX=window.LAYABOX || {\n		classmap:Laya.__classmap,\n		systemClass:Laya.__sysClass,\n	};\n	Function.prototype.BIND$ = function(o) {\n			this.__$BiD___ || (this.__$BiD___ = LAYABOX.__bindid++);\n			o.BIND$__ || (o.BIND$__={});\n			var fn=o.BIND$__[this.__$BiD___];\n			if(fn) return fn;\n			return o.BIND$__[this.__$BiD___]=this.bind(o);\n	};\n	Array.CASEINSENSITIVE = 1;\n	Array.DESCENDING = 2;\n	Array.NUMERIC = 16;\n	Array.RETURNINDEXEDARRAY = 8;\n	Array.UNIQUESORT = 4;\n	Object.defineProperty(Array.prototype,'fixed',{enumerable: false});\n	(function(defs){\n		var p=Date.prototype;\n		Object.defineProperty(p,'millisecondsUTC',{get:p.getUTCMilliseconds,enumerable: false});\n		Object.defineProperty(p,'minutesUTC',{get:p.getUTCMinutes,enumerable: false});\n		Object.defineProperty(p,'mouthUTC',{get:p.getUTCMonth,enumerable: false});\n		for(var i=0;i<defs.length;i++)\n			Object.defineProperty(p,defs[i],{get:p['get'+defs[i].charAt(0).toUpperCase()+defs[i].substr(1)]})\n	})(['date','day','fullYear','hours','millseconds','minutes','month','seconds','time','timezoneOffset','dateUTC','dayUTC','fullYearUTC','hoursUTC']);\n	LAYABOX.__bindid=1;	\n	LAYABOX.sortonNameArray2=function(array,name,options){\n		(options===void 0)&& (options=0);\n		var name0=name[0],name1=name[1],type=1;\n		if (options==(16 | 2))type=-1;\n		return array.sort(function(a,b){\n			if (b[name0]==a[name0]){\n				 return type *(a[name1]-b[name1]);\n			}else return type *(a[name0]-b[name0]);\n		});\n	};\n	LAYABOX.sortonNameArray=function(array,name,options){\n		(options===void 0)&& (options=0);\n		var name0=name[0],type=1;\n		(options==(16 | 2)) && (type=-1);\n		return array.sort(function(a,b){\n			if (b[name0]==a[name0]){\n				for (var i=1,sz=name.length;i < sz;i++){\n					var tmp=name[i];\n					if (b[tmp]!=a[tmp])return type *(a[tmp]-b[tmp]);\n				}\n				return 0;\n			}\n			else return type *(a[name0]-b[name0]);\n		});\n	};\n	LAYABOX.arraypresort=Array.prototype.sort;\n	Laya.un(Array.prototype,'sortOn',function(name,options){\n		if(name instanceof Function) return this.sort(name);\n		if((name instanceof Array)){\n			if(name.length==0)return this;\n			if(name.length==2)return LAYABOX.sortonNameArray2(this,name,options);\n			if(name.length>2)return LAYABOX.sortonNameArray(this,name,options);name=name[0];\n		}\n		if (options==16)return this.sort(function(a,b){return a[name]-b[name];});\n		if (options==2)return this.sort(function(a,b){return b[name]-a[name];});\n		if (options==(16 | 2))return this.sort(function(a,b){return b[name]-a[name];});\n		if (options==1) return this.sort();\n		return this.sort(function(a,b){return a[name]-b[name];});\n	});\n	Laya.un(Array.prototype,'sort',function(value){\n		if(value==16) return LAYABOX.arraypresort.call(this,function (a, b) {return a - b;});\n		if(value==(16|2)) return LAYABOX.arraypresort.call(this,function (a, b) {return b - a;});\n		if(value==1) return LAYABOX.arraypresort.call(this);\n		return LAYABOX.arraypresort.call(this,value);\n	});\n	LAYABOX.bind=function(obj,fn){\n		return obj==null || fn==null?null:fn.BIND$(obj);\n	};\n"/*__INCLUDESTR__r:/svn reponsitory/libs/layaair/html/src/tojs.flash.js*/;
+			"/***********************************/\n/*http://www.layabox.com 2015/12/20*/\n/***********************************/\nwindow.Laya=(function(window,document){\n	var Laya={\n		__internals:[],\n		__packages:{},\n		__classmap:{'Object':Object,'Function':Function,'Array':Array,'String':String},\n		__sysClass:{'object':'Object','array':'Array','string':'String','dictionary':'Dictionary'},\n		__propun:{writable: true,enumerable: false,configurable: true},\n		__presubstr:String.prototype.substr,\n		__substr:function(ofs,sz){return arguments.length==1?Laya.__presubstr.call(this,ofs):Laya.__presubstr.call(this,ofs,sz>0?sz:(this.length+sz));},\n		__init:function(_classs){_classs.forEach(function(o){o.__init$ && o.__init$();});},\n		__parseInt:function(value){return !value?0:parseInt(value);},\n		__isClass:function(o){return o && (o.__isclass || o==Object || o==String || o==Array);},\n		__newvec:function(sz,value){\n			var d=[];\n			d.length=sz;\n			for(var i=0;i<sz;i++) d[i]=value;\n			return d;\n		},\n		__extend:function(d,b){\n			for (var p in b){\n				if (!b.hasOwnProperty(p)) continue;\n				var g = b.__lookupGetter__(p), s = b.__lookupSetter__(p); \n				if ( g || s ) {\n					g && d.__defineGetter__(p, g);\n					s && d.__defineSetter__(p, s);\n				} \n				else d[p] = b[p];\n			}\n			function __() { Laya.un(this,'constructor',d); }__.prototype=b.prototype;d.prototype=new __();Laya.un(d.prototype,'__imps',Laya.__copy({},b.prototype.__imps));\n		},\n		__copy:function(dec,src){\n			if(!src) return null;\n			dec=dec||{};\n			for(var i in src) dec[i]=src[i];\n			return dec;\n		},\n		__package:function(name,o){\n			if(Laya.__packages[name]) return;\n			Laya.__packages[name]=true;\n			var p=window,strs=name.split('.');\n			if(strs.length>1){\n				for(var i=0,sz=strs.length-1;i<sz;i++){\n					var c=p[strs[i]];\n					p=c?c:(p[strs[i]]={});\n				}\n			}\n			p[strs[strs.length-1]] || (p[strs[strs.length-1]]=o||{});\n		},\n		__hasOwnProperty:function(name,o){\n			o=o ||this;\n		    function classHas(name,o){\n				if(Object.hasOwnProperty.call(o.prototype,name)) return true;\n				var s=o.prototype.__super;\n				return s==null?null:classHas(name,s);\n			}\n			return (Object.hasOwnProperty.call(o,name)) || classHas(name,o.__class);\n		},\n		__typeof:function(o,value){\n			if(!o || !value) return false;\n			if(value==String) return (typeof o=='string');\n			if(value==Number) return (typeof o=='number');\n			if(value.__interface__) value=value.__interface__;\n			else if(typeof value!='string')  return (o instanceof value);\n			return (o.__imps && o.__imps[value]) || (o.__class==value);\n		},\n		__as:function(value,type){\n			return (this.__typeof(value,type))?value:null;\n		},		\n		interface:function(name,_super){\n			Laya.__package(name,{});\n			var ins=Laya.__internals;\n			var a=ins[name]=ins[name] || {};\n			a.self=name;\n			if(_super)a.extend=ins[_super]=ins[_super] || {};\n			var o=window,words=name.split('.');\n			for(var i=0;i<words.length-1;i++) o=o[words[i]];o[words[words.length-1]]={__interface__:name};\n		},\n		class:function(o,fullName,_super,miniName){\n			_super && Laya.__extend(o,_super);\n			if(fullName){\n				Laya.__package(fullName,o);\n				Laya.__classmap[fullName]=o;\n				if(fullName.indexOf('.')>0){\n					if(fullName.indexOf('laya.')==0){\n						var paths=fullName.split('.');\n						miniName=miniName || paths[paths.length-1];\n						if(Laya[miniName]) debugger;\n						Laya[miniName]=o;\n					}					\n				}\n				else {\n					if(fullName==\"Main\")\n						window.Main=o;\n					else{\n						if(Laya[fullName]){\n							console.log(\"Err!,Same class:\"+fullName,Laya[fullName]);\n							debugger;\n						}\n						Laya[fullName]=o;\n					}\n				}\n			}\n			var un=Laya.un,p=o.prototype;\n			un(p,'hasOwnProperty',Laya.__hasOwnProperty);\n			un(p,'__class',o);\n			un(p,'__super',_super);\n			un(p,'__className',fullName);\n			un(o,'__super',_super);\n			un(o,'__className',fullName);\n			un(o,'__isclass',true);\n			un(o,'super',function(o){this.__super.call(o);});\n		},\n		imps:function(dec,src){\n			if(!src) return null;\n			var d=dec.__imps|| Laya.un(dec,'__imps',{});\n			for(var i in src){\n				d[i]=src[i];\n				var c=i;\n				while((c=this.__internals[c]) && (c=c.extend) ){\n					c=c.self;d[c]=true;\n				}\n			}\n		},		\n		getset:function(isStatic,o,name,getfn,setfn){\n			if(!isStatic){\n				getfn && Laya.un(o,'_$get_'+name,getfn);\n				setfn && Laya.un(o,'_$set_'+name,setfn);\n			}\n			else{\n				getfn && (o['_$GET_'+name]=getfn);\n				setfn && (o['_$SET_'+name]=setfn);\n			}\n			if(getfn && setfn) \n				Object.defineProperty(o,name,{get:getfn,set:setfn,enumerable:false});\n			else{\n				getfn && Object.defineProperty(o,name,{get:getfn,enumerable:false});\n				setfn && Object.defineProperty(o,name,{set:setfn,enumerable:false});\n			}\n		},\n		static:function(_class,def){\n				for(var i=0,sz=def.length;i<sz;i+=2){\n					if(def[i]=='length') \n						_class.length=def[i+1].call(_class);\n					else{\n						function tmp(){\n							var name=def[i];\n							var getfn=def[i+1];\n							Object.defineProperty(_class,name,{\n								get:function(){delete this[name];return this[name]=getfn.call(this);},\n								set:function(v){delete this[name];this[name]=v;},enumerable: true,configurable: true});\n						}\n						tmp();\n					}\n				}\n		},		\n		un:function(obj,name,value){\n			arguments.length<3 &&(value=obj[name]);\n			Laya.__propun.value=value;\n			Object.defineProperty(obj, name, Laya.__propun);\n			return value;\n		},\n		uns:function(obj,names){\n			names.forEach(function(o){Laya.un(obj,o)});\n		}\n	};\n\n	window.console=window.console || ({log:function(){}});\n	window.trace=window.console.log;\n	Error.prototype.throwError=function(){throw arguments;};\n	String.prototype.substr=Laya.__substr;\n	Object.defineProperty(Array.prototype,'fixed',{enumerable: false});\n"/*__INCLUDESTR__e:/trank/libs/layaair/html/src/tojs.head.js*/;
+			"	var iflash=window.iflash={utils:{}};\n	var LAYABOX=window.LAYABOX=window.LAYABOX || {\n		classmap:Laya.__classmap,\n		systemClass:Laya.__sysClass,\n	};\n	Function.prototype.BIND$ = function(o) {\n			this.__$BiD___ || (this.__$BiD___ = LAYABOX.__bindid++);\n			o.BIND$__ || (o.BIND$__={});\n			var fn=o.BIND$__[this.__$BiD___];\n			if(fn) return fn;\n			return o.BIND$__[this.__$BiD___]=this.bind(o);\n	};\n	Array.CASEINSENSITIVE = 1;\n	Array.DESCENDING = 2;\n	Array.NUMERIC = 16;\n	Array.RETURNINDEXEDARRAY = 8;\n	Array.UNIQUESORT = 4;\n	Object.defineProperty(Array.prototype,'fixed',{enumerable: false});\n	(function(defs){\n		var p=Date.prototype;\n		Object.defineProperty(p,'millisecondsUTC',{get:p.getUTCMilliseconds,enumerable: false});\n		Object.defineProperty(p,'minutesUTC',{get:p.getUTCMinutes,enumerable: false});\n		Object.defineProperty(p,'mouthUTC',{get:p.getUTCMonth,enumerable: false});\n		for(var i=0;i<defs.length;i++)\n			Object.defineProperty(p,defs[i],{get:p['get'+defs[i].charAt(0).toUpperCase()+defs[i].substr(1)]})\n	})(['date','day','fullYear','hours','millseconds','minutes','month','seconds','time','timezoneOffset','dateUTC','dayUTC','fullYearUTC','hoursUTC']);\n	LAYABOX.__bindid=1;	\n	LAYABOX.sortonNameArray2=function(array,name,options){\n		(options===void 0)&& (options=0);\n		var name0=name[0],name1=name[1],type=1;\n		if (options==(16 | 2))type=-1;\n		return array.sort(function(a,b){\n			if (b[name0]==a[name0]){\n				 return type *(a[name1]-b[name1]);\n			}else return type *(a[name0]-b[name0]);\n		});\n	};\n	LAYABOX.sortonNameArray=function(array,name,options){\n		(options===void 0)&& (options=0);\n		var name0=name[0],type=1;\n		(options==(16 | 2)) && (type=-1);\n		return array.sort(function(a,b){\n			if (b[name0]==a[name0]){\n				for (var i=1,sz=name.length;i < sz;i++){\n					var tmp=name[i];\n					if (b[tmp]!=a[tmp])return type *(a[tmp]-b[tmp]);\n				}\n				return 0;\n			}\n			else return type *(a[name0]-b[name0]);\n		});\n	};\n	LAYABOX.arraypresort=Array.prototype.sort;\n	Laya.un(Array.prototype,'sortOn',function(name,options){\n		if(name instanceof Function) return this.sort(name);\n		if((name instanceof Array)){\n			if(name.length==0)return this;\n			if(name.length==2)return LAYABOX.sortonNameArray2(this,name,options);\n			if(name.length>2)return LAYABOX.sortonNameArray(this,name,options);name=name[0];\n		}\n		if (options==16)return this.sort(function(a,b){return a[name]-b[name];});\n		if (options==2)return this.sort(function(a,b){return b[name]-a[name];});\n		if (options==(16 | 2))return this.sort(function(a,b){return b[name]-a[name];});\n		if (options==1) return this.sort();\n		return this.sort(function(a,b){return a[name]-b[name];});\n	});\n	Laya.un(Array.prototype,'sort',function(value){\n		if(value==16) return LAYABOX.arraypresort.call(this,function (a, b) {return a - b;});\n		if(value==(16|2)) return LAYABOX.arraypresort.call(this,function (a, b) {return b - a;});\n		if(value==1) return LAYABOX.arraypresort.call(this);\n		return LAYABOX.arraypresort.call(this,value);\n	});\n	LAYABOX.bind=function(obj,fn){\n		return obj==null || fn==null?null:fn.BIND$(obj);\n	};\n"/*__INCLUDESTR__e:/trank/libs/layaair/html/src/tojs.flash.js*/;
 		}
 
 		return TestHTML;
@@ -347,8 +346,7 @@
 
 
 	/**
-	*...
-	*@author laya
+	*@private
 	*/
 	//class laya.html.dom.HTMLElement extends laya.display.Sprite
 	var HTMLElement=(function(_super){
@@ -535,8 +533,7 @@
 
 
 	/**
-	*...
-	*@author laya
+	*@private
 	*/
 	//class laya.html.dom.HTMLBrElement extends laya.html.dom.HTMLElement
 	var HTMLBrElement=(function(_super){
@@ -552,8 +549,7 @@
 
 
 	/**
-	*...
-	*@author laya
+	*DIV标签
 	*/
 	//class laya.html.dom.HTMLDivElement extends laya.html.dom.HTMLElement
 	var HTMLDivElement=(function(_super){
@@ -563,17 +559,27 @@
 			HTMLDivElement.__super.call(this);
 			this.style.block=true;
 			this.style.lineElement=true;
+			this.style.width=200;
+			this.style.height=200;
 			HTMLStyleElement;
 		}
 
 		__class(HTMLDivElement,'laya.html.dom.HTMLDivElement',_super);
 		var __proto=HTMLDivElement.prototype;
+		/**
+		*追加内容，解析并对显示对象排版
+		*@param text
+		*/
 		__proto.appendHTML=function(text){
 			HTMLParse.parse(this,text,this.URI);
 			this.layout();
 		}
 
-		/**@private */
+		/**
+		*@private
+		*@param out
+		*@return
+		*/
 		__proto._addChildsToLayout=function(out){
 			var words=this._getWords();
 			if (words==null && this._childs.length==0)return false;
@@ -592,30 +598,50 @@
 			return true;
 		}
 
+		/**
+		*@private
+		*@param out
+		*/
 		__proto._addToLayout=function(out){
 			this.layout();
 		}
 
-		//!_style.absolute && out.push(this);
+		/**
+		*@private
+		*对显示内容进行排版
+		*/
 		__proto.layout=function(){
 			this.style._type |=/*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200;
 			var tArray=Layout.layout(this);
 			if (tArray){
-				this.contextWidth=tArray[0];
-				this.contextHeight=tArray[1];
+				if (!this._$P.mHtmlBounds)this._set$P("mHtmlBounds",new Rectangle());
+				var tRectangle=this._$P.mHtmlBounds;
+				tRectangle.x=tRectangle.y=0;
+				tRectangle.width=this.contextWidth=tArray[0];
+				tRectangle.height=this.contextHeight=tArray[1];
+				this.setBounds(tRectangle);
 			}
 		}
 
+		/**
+		*设置标签内容
+		*/
 		__getset(0,__proto,'innerHTML',null,function(text){
 			this.removeChildren();
 			this.appendHTML(text);
 		});
 
+		/**
+		*如果对象的高度被设置过，返回设置的高度，如果没被设置过，则返回实际内容的高度
+		*/
 		__getset(0,__proto,'height',function(){
 			if (this._height)return this._height;
 			return this.contextHeight;
 		},_super.prototype._$set_height);
 
+		/**
+		*如果对象的宽度被设置过，返回设置的宽度，如果没被设置过，则返回实际内容的宽度
+		*/
 		__getset(0,__proto,'width',function(){
 			if (this._width)return this._width;
 			return this.contextWidth;
@@ -626,8 +652,7 @@
 
 
 	/**
-	*...
-	*@author laya
+	*@private
 	*/
 	//class laya.html.dom.HTMLDocument extends laya.html.dom.HTMLElement
 	var HTMLDocument=(function(_super){
@@ -655,8 +680,7 @@
 
 
 	/**
-	*...
-	*@author laya
+	*@private
 	*/
 	//class laya.html.dom.HTMLImageElement extends laya.html.dom.HTMLElement
 	var HTMLImageElement=(function(_super){
@@ -723,8 +747,7 @@
 
 
 	/**
-	*...
-	*@author laya
+	*@private
 	*/
 	//class laya.html.dom.HTMLLinkElement extends laya.html.dom.HTMLElement
 	var HTMLLinkElement=(function(_super){
@@ -761,8 +784,7 @@
 
 
 	/**
-	*...
-	*@author laya
+	*@private
 	*/
 	//class laya.html.dom.HTMLStyleElement extends laya.html.dom.HTMLElement
 	var HTMLStyleElement=(function(_super){
@@ -773,6 +795,9 @@
 
 		__class(HTMLStyleElement,'laya.html.dom.HTMLStyleElement',_super);
 		var __proto=HTMLStyleElement.prototype;
+		/**
+		*解析样式
+		*/
 		__getset(0,__proto,'text',_super.prototype._$get_text,function(value){
 			CSSStyle.parseCSS(value,null);
 		});
@@ -782,8 +807,7 @@
 
 
 	/**
-	*...
-	*@author laya
+	*iframe标签类，目前用于加载外并解析数据
 	*/
 	//class laya.html.dom.HTMLIframeElement extends laya.html.dom.HTMLDivElement
 	var HTMLIframeElement=(function(_super){
@@ -794,6 +818,10 @@
 
 		__class(HTMLIframeElement,'laya.html.dom.HTMLIframeElement',_super);
 		var __proto=HTMLIframeElement.prototype;
+		/**
+		*加载html文件，并解析数据
+		*@param url
+		*/
 		__getset(0,__proto,'href',_super.prototype._$get_href,function(url){
 			var _$this=this;
 			url=this.formatURL(url);

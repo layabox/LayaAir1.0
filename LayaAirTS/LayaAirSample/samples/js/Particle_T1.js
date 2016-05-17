@@ -3,6 +3,7 @@ var core;
 (function (core) {
     var Stage = laya.display.Stage;
     var Event = laya.events.Event;
+    var Loader = laya.net.Loader;
     var Particle2D = laya.particle.Particle2D;
     var Handler = laya.utils.Handler;
     var Stat = laya.utils.Stat;
@@ -11,20 +12,13 @@ var core;
     var TestParticleSample1 = (function () {
         function TestParticleSample1() {
             Laya.init(Browser.width, Browser.height, WebGL);
+            Stat.show();
             Laya.stage.bgColor = "#000000";
             Laya.stage.scaleMode = Stage.SCALE_FULL;
             Laya.stage.on(Event.RESIZE, this, this.onResize);
-            Stat.show();
-            this.loadParticleFile("res/particles/GravityMode.json");
+            Laya.loader.load("res/particles/GravityMode.part", Handler.create(this, this.onAssetsLoaded), null, Loader.JSOn);
         }
-        TestParticleSample1.prototype.loadParticleFile = function (fileName) {
-            Laya.loader.load(fileName, Handler.create(this, this.test));
-        };
-        TestParticleSample1.prototype.test = function (settings) {
-            if (this.sp) {
-                this.sp.stop();
-                this.sp.removeSelf();
-            }
+        TestParticleSample1.prototype.onAssetsLoaded = function (settings) {
             this.sp = new Particle2D(settings);
             this.sp.emitter.start();
             this.sp.play();

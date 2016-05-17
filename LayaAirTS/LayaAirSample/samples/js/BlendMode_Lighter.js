@@ -4,6 +4,7 @@ var laya;
     var Animation = laya.display.Animation;
     var Handler = laya.utils.Handler;
     var Tween = laya.utils.Tween;
+    var Utils = laya.utils.Utils;
     var BlendMode_Lighter = (function () {
         function BlendMode_Lighter() {
             this.w = 1000;
@@ -18,7 +19,12 @@ var laya;
             Laya.timer.frameLoop(1, this, this.renderBg);
         }
         BlendMode_Lighter.prototype.createAnimation = function () {
-            var animation = Animation.fromUrl("res/phoenix/phoenix{0001}.jpg", 25);
+            var frames = [];
+            for (var i = 1; i <= 25; ++i) {
+                frames.push("res/phoenix/phoenix" + Utils.preFixNumber(i, 4) + ".jpg");
+            }
+            var animation = new Animation();
+            animation.loadImages(frames);
             Laya.stage.addChild(animation);
             var clips = animation.frames.concat();
             // 反转帧

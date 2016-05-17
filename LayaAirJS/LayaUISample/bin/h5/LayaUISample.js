@@ -52,8 +52,8 @@ function TestUI()
 		}
 	}
 }
+// 定义TestUI类，全名为TestUI，并且制定父类为TestPageUI，如果需要，还有第四个参数——简短类型。
 Laya.class(TestUI, "TestUI", TestPageUI);
-
 
 Laya.init(600, 400);
 Laya.loader.load("res/atlas/comp.json", Handler.create(this, onAssetLoaded), null, Loader.ATLAS);

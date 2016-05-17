@@ -24,7 +24,14 @@ Laya.timer.frameLoop(1, this, renderBg);
 
 function createAnimation()
 {
-	var animation = Animation.fromUrl("res/phoenix/phoenix{0001}.jpg", 25);
+	var frames = [];
+	for (var i = 1; i <= 25; ++i)
+	{
+		frames.push("res/phoenix/phoenix" + Utils.preFixNumber(i, 4) + ".jpg");
+	}
+
+	var animation = new Animation();
+	animation.loadImages(frames);
 	Laya.stage.addChild(animation);
 
 	var clips = animation.frames.concat();

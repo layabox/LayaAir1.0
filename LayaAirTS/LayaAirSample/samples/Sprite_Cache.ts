@@ -1,21 +1,49 @@
 /// <reference path="../../libs/LayaAir.d.ts" />
-Laya.init(550, 400);
-Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
-var textBox:laya.display.Sprite = new laya.display.Sprite();
-laya.utils.Stat.show();
-// 5000个随机摆放的文本
-var text:laya.display.Text;
-for (var i:number = 0; i < 5000; i++)
+module laya 
 {
-    text = new laya.display.Text();
-    text.text = (Math.random() * 100).toFixed(0);
-    text.color = "#CCCCCC";
+	import Sprite = laya.display.Sprite;
+	import Stage = laya.display.Stage;
+	import Text = laya.display.Text;
+	import Browser = laya.utils.Browser;
+	import Stat = laya.utils.Stat;
 
-    text.x = Math.random() * 550;
-    text.y = Math.random() * 400;
+	export class Sprite_Cache 
+	{
+		constructor() 
+		{
+			Laya.init(Browser.width, Browser.height);
+			Stat.show();
 
-    textBox.addChild(text);
+			this.init();
+		}
+
+		private init(): void 
+		{
+			var scaleFactory: number = Browser.pixelRatio;
+			var textBox: Sprite = new Sprite();
+
+			// 随机摆放文本
+			var text: Text;
+			for (var i: number = 0; i < 1000; i++) 
+			{
+				text = new Text();
+				text.fontSize = 20;
+				text.text = (Math.random() * 100).toFixed(0);
+				text.rotation = Math.random() * 360;
+				text.color = "#CCCCCC";
+
+				text.x = Math.random() * Laya.stage.width / scaleFactory;
+				text.y = Math.random() * Laya.stage.height / scaleFactory;
+
+				textBox.addChild(text);
+			}
+
+			//缓存为静态图像
+			textBox.cacheAsBitmap = true;
+			textBox.scale(scaleFactory, scaleFactory);
+
+			Laya.stage.addChild(textBox);
+		}
+	}
 }
-//缓存为静态图像
-textBox.cacheAsBitmap = true;
-Laya.stage.addChild(textBox);
+new laya.Sprite_Cache();

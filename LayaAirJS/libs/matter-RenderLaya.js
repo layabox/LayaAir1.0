@@ -125,14 +125,7 @@ var LayaRender = {};
     function setPixelRatio()
     {
         var pixelRatio;
-        if (Laya.stage.useHDRendering == false)
-        {
-            pixelRatio = 1;
-        }
-        else
-        {
-            pixelRatio = 1 / Browser.pixelRatio;
-        }
+		pixelRatio = 1;
         Laya.Render.canvas.source.setAttribute('data-pixel-ratio', pixelRatio);
     }
 

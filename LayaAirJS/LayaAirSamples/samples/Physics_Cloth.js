@@ -81,8 +81,8 @@
 		// 设置鼠标的坐标缩放
 		Matter.Mouse.setScale(engine.render.mouse,
 		{
-			x: 1 / (Laya.stage.clientScaleX),
-			y: 1 / (Laya.stage.clientScaleY)
+			x: 1 / (Laya.stage.clientScaleX * Laya.stage._canvasTransform.a),
+			y: 1 / (Laya.stage.clientScaleY * Laya.stage._canvasTransform.d)
 		});
 	}
 })();
