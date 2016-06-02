@@ -71,7 +71,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
 
 http://layaair.ldc.layabox.com/demo/
 
-http://layabox.github.io/LayaAirExamples/
+http://layabox.github.io/layaair-examples/
 
 ##基于LayaAir开发的游戏
 http://game.layabox.com/265
