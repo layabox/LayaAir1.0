@@ -10,6 +10,9 @@ gulp.task('copyas', function() {
 	gulp.src('../src/core/src/**')
     .pipe(gulp.dest('../bin/as/libs/src'));
 	
+	gulp.src('../src/core/jsc/**')
+    .pipe(gulp.dest('../bin/as/libs/src'));
+	
 	gulp.src('../src/filter/src/**')
     .pipe(gulp.dest('../bin/as/libs/src'));
 	
