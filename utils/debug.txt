@@ -1,2 +1,0 @@
-Project configuration:publish/LayaPublish.as3proj.
-******************************************************************************
