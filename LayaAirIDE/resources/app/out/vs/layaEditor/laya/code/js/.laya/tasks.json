@@ -1,1 +1,0 @@
-{"version":"0.1.0","command":"tsc","isShellCommand":true,"args":["-p",".","--outDir","bin/js"],"showOutput":"silent","problemMatcher":"$tsc"}

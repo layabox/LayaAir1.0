@@ -1,7 +1,0 @@
-[
-	"No se puede cargar el esquema de '{0}': no hay contenido.",
-	"No se puede analizar el contenido de '{0}': {1}.",
-	"No se puede cargar el esquema de '{0}': {1}",
-	"$ref '{0}' en {1} no se puede resolver.",
-	"Problemas al cargar la referencia '{0}': {1}"
-]

@@ -1,0 +1,23 @@
+WebGLActiveInfo
+
+name : String （名字）
+size : Number （数组长度大小）
+type : Number(类型数值，对应表如下)
+ 
+float,      FLOAT:int = 0x1406;
+int,        INT:int = 0x1404;
+bool，      BOOL:int = 0x8B56;
+vec2,       FLOAT_VEC2:int = 0x8B50;
+vec3,       FLOAT_VEC3:int = 0x8B51;
+vec4,       FLOAT_VEC4:int = 0x8B52;
+ivec2,      INT_VEC2:int = 0x8B53;
+ivec3,      INT_VEC3:int = 0x8B54;
+ivec4,      INT_VEC4:int = 0x8B55;
+bvec2,      BOOL_VEC2:int = 0x8B57;
+bvec3,      BOOL_VEC3:int = 0x8B58;
+bvec4,      BOOL_VEC4:int = 0x8B59;
+mat2,       FLOAT_MAT2:int = 0x8B5A;
+mat3,       FLOAT_MAT3:int = 0x8B5B;
+mat4,       FLOAT_MAT4:int = 0x8B5C;
+sample2D，  SAMPLER_2D:int = 0x8B5E;
+sampleCube，SAMPLER_CUBE:int = 0x8B60;

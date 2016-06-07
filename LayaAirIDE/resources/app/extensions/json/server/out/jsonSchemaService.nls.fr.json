@@ -1,7 +1,0 @@
-[
-	"Impossible de charger le schéma à partir de '{0}' : aucun contenu.",
-	"Impossible d'analyser le contenu à partir de '{0}' : {1}.",
-	"Impossible de charger le schéma à partir de '{0}' : {1}",
-	"Impossible de résoudre $ref '{0}' dans {1}.",
-	"Problèmes lors du chargement de la référence '{0}' : {1}"
-]
