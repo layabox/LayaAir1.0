@@ -1,4 +1,4 @@
-####LayaAir是HTML5开源引擎，支持canvas和webgl同时渲染，以高性能游戏设计，支持3D，VR，一套代码，三端齐发（Flash，HTML5，APP）
+##LayaAir是HTML5开源引擎，支持canvas和webgl同时渲染，以高性能游戏设计，支持3D，VR，一套代码，三端齐发（Flash，HTML5，APP）
 
 ##LayaAir特点
 
@@ -36,7 +36,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
 - VR
 
 ##开始使用
-###JS版本
+####JS版本
     Laya.init(550, 400);
     Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
     
@@ -46,7 +46,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
     
     Laya.stage.addChild(ape);
     
-###AS版本
+####AS版本
     package
     {
         import laya.display.Sprite;
@@ -67,7 +67,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
             }
         }
     }
-###TS版本
+####TS版本
     /// <reference path="../../libs/LayaAir.d.ts" />
     class Sprite_DisplayImage{
     
@@ -84,13 +84,12 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
     }
     new Sprite_DisplayImage();
 
-
 ##演示Demo
 
 - http://layaair.ldc.layabox.com/demo/
 - http://layabox.github.io/layaair-examples/
 
-##基于LayaAir开发的游戏
+##游戏展示
 http://game.layabox.com/265
 
 ##API帮助
@@ -111,5 +110,8 @@ http://ask.layabox.com/
 ##QQ群
 104144216
 
-##文件结构
-
+##目录结构
+- bin 编译好的类库，里面分为as，js，ts三种
+- samples 示例项目
+- src 类库源代码
+- utils 自动化编译及其他工具
