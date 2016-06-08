@@ -1,4 +1,6 @@
-##LayaAir是HTML5开源引擎，支持canvas和webgl同时渲染，以高性能游戏设计，支持3D，VR，一套代码，三端齐发（Flash，HTML5，APP）
+##LayaAir是HTML5开源引擎，支持canvas和webgl同时渲染，以高性能游戏设计，支持三种语言开发，一套代码三端齐发（Flash，HTML5，APP）
+
+
 
 ##LayaAir特点
 
