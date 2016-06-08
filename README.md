@@ -1,4 +1,4 @@
-###LayaAir是HTML5开源引擎，支持2D，3D、时间轴动画、UI、粒子、骨骼、物理等，提供可视化编辑器，能够用来开发跨平台游戏及应用，一切均开源免费，欢迎使用。
+####LayaAir是HTML5开源引擎，支持canvas和webgl同时渲染，以高性能游戏设计，支持3D，VR，一套代码，三端齐发（Flash，HTML5，APP）
 
 ##LayaAir特点
 
@@ -16,19 +16,37 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
 ####开源免费
 引擎全部开源并托管到github，并且全部免费使用，包括商用
 
+##当前功能
+- Webgl渲染
+- Canvas渲染
+- 矢量图
+- 图集支持
+- 加载管理器
+- HTML富文本
+- 位图字体
+- 遮罩
+- 滤镜
+- 时间轴动画
+- UI
+- 粒子
+- 骨骼
+- 物理系统
+- 可视化IDE
+- 3D
+- VR
 
 ##开始使用
-####JS版本
+###JS版本
     Laya.init(550, 400);
-    Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+    Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
     
-    var ape = new laya.display.Sprite();
+    var ape = new laya.Sprite();
     //加载猩猩图片
     ape.loadImage("res/apes/monkey2.png", 220, 128);
     
     Laya.stage.addChild(ape);
     
-####AS版本
+###AS版本
     package
     {
         import laya.display.Sprite;
@@ -49,15 +67,15 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
             }
         }
     }
-####TS版本
+###TS版本
     /// <reference path="../../libs/LayaAir.d.ts" />
     class Sprite_DisplayImage{
     
         constructor(){
             Laya.init(550, 400);
-            Laya.stage.scaleMode = laya.display.Stage.SCALE_SHOWALL;
+            Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
     
-            var ape:laya.display.Sprite = new laya.display.Sprite();
+            var ape = new Laya.Sprite();
             //加载猩猩图片
             ape.loadImage("res/apes/monkey2.png", 220, 128);
     
@@ -69,9 +87,8 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
 
 ##演示Demo
 
-http://layaair.ldc.layabox.com/demo/
-
-http://layabox.github.io/layaair-examples/
+- http://layaair.ldc.layabox.com/demo/
+- http://layabox.github.io/layaair-examples/
 
 ##基于LayaAir开发的游戏
 http://game.layabox.com/265
@@ -95,12 +112,4 @@ http://ask.layabox.com/
 104144216
 
 ##文件结构
-LayaAirAS3 Actionscript3版本引擎库及示例教程
 
-LayaAirJS Javascript版本引擎库及示例教程
-
-LayaAirTS Typesprite版本引擎库及示例教程
-
-LayaAirIDE LayaAir编辑器Win版本
-
-LayaAirIDEMac LayaAir编辑器Mac版本
