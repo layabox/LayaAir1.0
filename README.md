@@ -39,7 +39,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
 ##开始使用
 ####JS版本
     Laya.init(550, 400);
-    Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
+    Laya.stage.scaleMode = "showall";
     
     var ape = new laya.Sprite();
     //加载猩猩图片
@@ -58,7 +58,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
             public function Sprite_DisplayImage()
             {
                 Laya.init(550, 400);
-      		    Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
+      		    Laya.stage.scaleMode = "showall";
                    
                 var ape:Sprite = new Sprite();
                 //加载猩猩图片
@@ -74,7 +74,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
     
         constructor(){
             Laya.init(550, 400);
-            Laya.stage.scaleMode = Laya.Stage.SCALE_SHOWALL;
+            Laya.stage.scaleMode = "showall";
     
             var ape = new Laya.Sprite();
             //加载猩猩图片
