@@ -7005,7 +7005,7 @@ window.Laya=(function(window,document){
 							if (t > handler.exeTime){
 								handler.exeTime+=handler.delay;
 								handler.run(false);
-								if (t >=handler.exeTime){
+								if (t > handler.exeTime){
 									handler.exeTime+=Math.ceil((t-handler.exeTime)/ handler.delay)*handler.delay;
 								}
 							}

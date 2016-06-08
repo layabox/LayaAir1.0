@@ -66,7 +66,7 @@ package laya.utils {
 							if (t > handler.exeTime) {
 								handler.exeTime += handler.delay;
 								handler.run(false);
-								if (t >= handler.exeTime) {
+								if (t > handler.exeTime) {
 									//如果执行一次后还能再执行，做跳出处理，如果想用精确控制，请使用setInterval
 									handler.exeTime += Math.ceil((t - handler.exeTime) / handler.delay) * handler.delay;
 								}

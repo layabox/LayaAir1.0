@@ -47,7 +47,7 @@ module laya {
         private onMouseDown(e: Event): void {
             var touches: Array<any> = e.touches;
 
-            if (touches.length == 2) {
+            if (touches && touches.length == 2) {
                 this.lastDistance = this.getDistance(touches);
 
                 Laya.stage.on(Event.MOUSE_MOVE, this, this.onMouseMove);

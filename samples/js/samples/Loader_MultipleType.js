@@ -2,14 +2,13 @@
 {
 	var Loader  = laya.net.Loader;
 	var Handler = laya.utils.Handler;
-	var Browser = laya.utils.Browser;
 
 	var ROBOT_DATA_PATH = "res/skeleton/robot/robot.bin";
 	var ROBOT_TEXTURE_PATH = "res/skeleton/robot/texture.png";
 
 	(function()
 	{
-		Laya.init(Browser.width, Browser.height);
+		Laya.init(100, 100);
 
 		var assets = [];
 		assets.push(

@@ -51,7 +51,7 @@
 	{
 		var touches = e.touches;
 
-		if (touches.length == 2)
+		if (touches && touches.length == 2)
 		{
 			lastDistance = getDistance(touches);
 

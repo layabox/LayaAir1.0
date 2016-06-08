@@ -57,13 +57,13 @@ module laya {
 
 		private createTimerLine(): void {
 			//第一事件如果起始时间为0就不会抛出。
-			this.timeLine.add("turnRight", 0);
+			this.timeLine.addLabel("turnRight", 0);
 			this.timeLine.to(this.target, { x: 450, y: 100, scaleX: 0.5, scaleY: 0.5 }, 2000);
-			this.timeLine.add("turnDown", 0);
+			this.timeLine.addLabel("turnDown", 0);
 			this.timeLine.to(this.target, { x: 450, y: 300, scaleX: 0.2, scaleY: 1, alpha: 1 }, 2000);
-			this.timeLine.add("turnLeft", 0);
+			this.timeLine.addLabel("turnLeft", 0);
 			this.timeLine.to(this.target, { x: 100, y: 300, scaleX: 1, scaleY: 0.2, alpha: 0.1 }, 2000);
-			this.timeLine.add("turnUp", 0);
+			this.timeLine.addLabel("turnUp", 0);
 			this.timeLine.to(this.target, { x: 100, y: 100, scaleX: 1, scaleY: 1, alpha: 1 }, 2000);
 
 			this.timeLine.play(0, true);

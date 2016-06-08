@@ -61,7 +61,7 @@
 	function createTimerLine()
 	{
 		//第一事件如果起始时间为0就不会抛出。
-		timeLine.add("turnRight", 0);
+		timeLine.addLabel("turnRight", 0);
 		timeLine.to(target,
 		{
 			x: 450,
@@ -69,7 +69,7 @@
 			scaleX: 0.5,
 			scaleY: 0.5
 		}, 2000);
-		timeLine.add("turnDown", 0);
+		timeLine.addLabel("turnDown", 0);
 		timeLine.to(target,
 		{
 			x: 450,
@@ -78,7 +78,7 @@
 			scaleY: 1,
 			alpha: 1
 		}, 2000);
-		timeLine.add("turnLeft", 0);
+		timeLine.addLabel("turnLeft", 0);
 		timeLine.to(target,
 		{
 			x: 100,
@@ -87,7 +87,7 @@
 			scaleY: 0.2,
 			alpha: 0.1
 		}, 2000);
-		timeLine.add("turnUp", 0);
+		timeLine.addLabel("turnUp", 0);
 		timeLine.to(target,
 		{
 			x: 100,

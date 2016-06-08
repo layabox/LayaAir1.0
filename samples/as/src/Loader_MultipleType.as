@@ -2,7 +2,6 @@ package
 {
 	import laya.net.Loader;
 	import laya.utils.Handler;
-	import laya.utils.Browser;
 
 	public class Loader_MultipleType 
 	{
@@ -11,7 +10,7 @@ package
 		
 		public function Loader_MultipleType() 
 		{
-			Laya.init(Browser.width, Browser.height);
+			Laya.init(100, 100);
 			
 			var assets:Array = [];
 			assets.push( { url:ROBOT_DATA_PATH, type:Loader.BUFFER } );

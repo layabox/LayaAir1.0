@@ -381,36 +381,6 @@ window.Laya=(function(window,document){
 	})()
 
 
-	//class Animation_Altas
-	var Animation_Altas=(function(){
-		function Animation_Altas(){
-			this.AniConfPath="res/fighter/fighter.json";
-			Laya.init(Browser.clientWidth,Browser.clientHeight,WebGL);
-			Laya.stage.alignV="middle";
-			Laya.stage.alignH="center";
-			Laya.stage.scaleMode="showall";
-			Laya.stage.bgColor="#232628";
-			Laya.loader.load(this.AniConfPath,Handler.create(this,this.createAnimation),null,"atlas");
-		}
-
-		__class(Animation_Altas,'Animation_Altas');
-		var __proto=Animation_Altas.prototype;
-		__proto.createAnimation=function(){
-			var ani=new Animation();
-			ani.loadAtlas(this.AniConfPath);
-			ani.interval=30;
-			ani.index=1;
-			ani.play();
-			var bounds=ani.getGraphicBounds();
-			ani.pivot(bounds.width / 2,bounds.height / 2);
-			ani.pos(Laya.stage.width / 2,Laya.stage.height / 2);
-			Laya.stage.addChild(ani);
-		}
-
-		return Animation_Altas;
-	})()
-
-
 	/**
 	*<code>EventDispatcher</code> 类是可调度事件的所有类的基类。
 	*/
@@ -10494,10 +10464,6 @@ window.Laya=(function(window,document){
 		WebGLContext._frontFace=0x0901;
 		WebGLContext.curBindTexTarget=null
 		WebGLContext.curBindTexValue=null
-		WebGLContext.__init$=function(){
-			;
-		}
-
 		return WebGLContext;
 	})()
 
@@ -20233,7 +20199,5 @@ window.Laya=(function(window,document){
 	})(HTMLImage)
 
 
-	Laya.__init([EventDispatcher,WebGLContext,ShaderCompile,Timer,LoaderManager,WebGLContext2D,AtlasGrid,RenderTargetMAX,DrawText,Browser]);
-	new Animation_Altas();
-
+	Laya.__init([EventDispatcher,ShaderCompile,Timer,LoaderManager,WebGLContext2D,AtlasGrid,RenderTargetMAX,DrawText,Browser]);
 })(window,document,Laya);

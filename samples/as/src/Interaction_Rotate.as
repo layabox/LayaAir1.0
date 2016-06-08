@@ -50,7 +50,7 @@ package
 		{
 			var touches:Array = e.touches;
 
-			if(touches.length == 2)
+			if(touches && touches.length == 2)
 			{
 				preRadian = Math.atan2(
 					touches[0].stageY - touches[1].stageY, 
