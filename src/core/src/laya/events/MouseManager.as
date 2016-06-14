@@ -269,7 +269,7 @@ package laya.events {
 		
 		private function hitTest(sp:Sprite,mouseX:Number,mouseY:Number):Boolean {
 			var isHit:Boolean = false;
-			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough) {
+			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough || sp.hitArea) {
 				//判断是否在矩形区域内
 				var hitRect:Rectangle = this._rect;
 				if (!sp.mouseThrough) {

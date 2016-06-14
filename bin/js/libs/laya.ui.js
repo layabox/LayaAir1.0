@@ -2,14 +2,14 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Event=laya.events.Event,Loader=laya.net.Loader,Font=laya.display.css.Font,Input=laya.display.Input;
-	var ColorFilter=laya.filters.ColorFilter,Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Sprite=laya.display.Sprite;
-	var Point=laya.maths.Point,Texture=laya.resource.Texture,Text=laya.display.Text,Tween=laya.utils.Tween,Ease=laya.utils.Ease;
-	var Utils=laya.utils.Utils,Stage=laya.display.Stage,Rectangle=laya.maths.Rectangle,Node=laya.display.Node;
-	Laya.interface('laya.ui.IRender');
-	Laya.interface('laya.ui.IItem');
-	Laya.interface('laya.ui.IComponent');
+	var Sprite=laya.display.Sprite,ColorFilter=laya.filters.ColorFilter,Graphics=laya.display.Graphics;
+	var Handler=laya.utils.Handler,Event=laya.events.Event,Loader=laya.net.Loader,Texture=laya.resource.Texture;
+	var Font=laya.display.css.Font,Input=laya.display.Input,Text=laya.display.Text,Point=laya.maths.Point,Tween=laya.utils.Tween;
+	var Ease=laya.utils.Ease,Utils=laya.utils.Utils,Stage=laya.display.Stage,Rectangle=laya.maths.Rectangle,Node=laya.display.Node;
 	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.ui.IRender');
+	Laya.interface('laya.ui.IComponent');
+	Laya.interface('laya.ui.IItem');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
 	*<code>LayoutStyle</code> 是一个布局样式类。

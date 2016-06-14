@@ -2,12 +2,12 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Sprite=laya.display.Sprite,Filter=laya.filters.Filter,RenderTarget2D=laya.webgl.resource.RenderTarget2D;
-	var Matrix=laya.maths.Matrix,Rectangle=laya.maths.Rectangle,RenderContext=laya.renders.RenderContext,Texture=laya.resource.Texture;
-	var BlendMode=laya.webgl.canvas.BlendMode,ShaderDefines2D=laya.webgl.shader.d2.ShaderDefines2D,Value2D=laya.webgl.shader.d2.value.Value2D;
-	var RunDriver=laya.utils.RunDriver,SubmitCMD=laya.webgl.submit.SubmitCMD,SubmitCMDScope=laya.webgl.submit.SubmitCMDScope;
-	var FilterActionGL=laya.filters.webgl.FilterActionGL,Render=laya.renders.Render,Browser=laya.utils.Browser;
-	var Color=laya.utils.Color,ColorFilterActionGL=laya.filters.webgl.ColorFilterActionGL,ColorFilterAction=laya.filters.ColorFilterAction;
+	var Render=laya.renders.Render,Matrix=laya.maths.Matrix,Color=laya.utils.Color,RunDriver=laya.utils.RunDriver;
+	var SubmitCMD=laya.webgl.submit.SubmitCMD,Filter=laya.filters.Filter,Browser=laya.utils.Browser,Sprite=laya.display.Sprite;
+	var Value2D=laya.webgl.shader.d2.value.Value2D,Rectangle=laya.maths.Rectangle,RenderContext=laya.renders.RenderContext;
+	var ShaderDefines2D=laya.webgl.shader.d2.ShaderDefines2D,SubmitCMDScope=laya.webgl.submit.SubmitCMDScope;
+	var FilterActionGL=laya.filters.webgl.FilterActionGL,RenderTarget2D=laya.webgl.resource.RenderTarget2D,Texture=laya.resource.Texture;
+	var BlendMode=laya.webgl.canvas.BlendMode,ColorFilterActionGL=laya.filters.webgl.ColorFilterActionGL,ColorFilterAction=laya.filters.ColorFilterAction;
 	/**
 	*默认的FILTER,什么都不做
 	*@private

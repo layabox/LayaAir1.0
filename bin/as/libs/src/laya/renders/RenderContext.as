@@ -105,7 +105,7 @@ package laya.renders {
 			}
 			
 			//绘制矩形边框
-			if (strokeColor != null) {
+			if (strokeColor != null && lineWidth>0) {
 				ctx.strokeStyle = strokeColor;
 				ctx.lineWidth = lineWidth;
 				ctx.stroke();

@@ -2,9 +2,9 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var URL=laya.net.URL,Matrix=laya.maths.Matrix,Graphics=laya.display.Graphics,Handler=laya.utils.Handler;
-	var Event=laya.events.Event,Loader=laya.net.Loader,Texture=laya.resource.Texture,Byte=laya.utils.Byte,EventDispatcher=laya.events.EventDispatcher;
-	var MathUtil=laya.maths.MathUtil,Stat=laya.utils.Stat,Sprite=laya.display.Sprite,Browser=laya.utils.Browser;
+	var Byte=laya.utils.Byte,Sprite=laya.display.Sprite,Event=laya.events.Event,Loader=laya.net.Loader;
+	var URL=laya.net.URL,Matrix=laya.maths.Matrix,Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Texture=laya.resource.Texture;
+	var Browser=laya.utils.Browser,EventDispatcher=laya.events.EventDispatcher,Stat=laya.utils.Stat,MathUtil=laya.maths.MathUtil;
 	/**
 	*@private
 	*/

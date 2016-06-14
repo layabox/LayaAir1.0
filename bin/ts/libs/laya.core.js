@@ -184,14 +184,9 @@ window.Laya=(function(window,document){
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 	Laya.interface('laya.filters.IFilterAction');
-	Laya.interface('laya.resource.IDispose');
 	Laya.interface('laya.filters.IFilter');
 	Laya.interface('laya.display.ILayout');
-	var load=Laya.load=function(url,type){
-		return Asyn.load(url,type);
-	}
-
-
+	Laya.interface('laya.resource.IDispose');
 	var await=Laya.await=function(caller,fn,nextLine){
 		Asyn._caller_=caller;
 		Asyn._callback_=fn;
@@ -199,13 +194,18 @@ window.Laya=(function(window,document){
 	}
 
 
-	var wait=Laya.wait=function(conditions){
-		return Asyn.wait(conditions);
+	var load=Laya.load=function(url,type){
+		return Asyn.load(url,type);
 	}
 
 
 	var sleep=Laya.sleep=function(value){
 		Asyn.sleep(value);
+	}
+
+
+	var wait=Laya.wait=function(conditions){
+		return Asyn.wait(conditions);
 	}
 
 
@@ -2546,7 +2546,7 @@ window.Laya=(function(window,document){
 
 		__proto.hitTest=function(sp,mouseX,mouseY){
 			var isHit=false;
-			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough){
+			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough || sp.hitArea){
 				var hitRect=this._rect;
 				if (!sp.mouseThrough){
 					if (sp.hitArea)hitRect=sp.hitArea;
@@ -4429,7 +4429,7 @@ window.Laya=(function(window,document){
 				ctx.fillStyle=fillColor;
 				ctx.fill();
 			}
-			if (strokeColor !=null){
+			if (strokeColor !=null && lineWidth>0){
 				ctx.strokeStyle=strokeColor;
 				ctx.lineWidth=lineWidth;
 				ctx.stroke();
@@ -8897,6 +8897,46 @@ window.Laya=(function(window,document){
 
 
 	/**
+	*<p><code>ColorFilter</code> 是颜色滤镜。</p>
+	*/
+	//class laya.filters.ColorFilter extends laya.filters.Filter
+	var ColorFilter=(function(_super){
+		function ColorFilter(mat){
+			//this._elements=null;
+			ColorFilter.__super.call(this);
+			if (!mat){
+				this._elements=ColorFilter.DEFAULT._elements;
+				return;
+			}
+			this._elements=new Float32Array(20);
+			for (var i=0;i < 20;i++){
+				this._elements[i]=mat[i];
+			}
+			this._action=RunDriver.createFilterAction(0x20);
+			this._action.data=this;
+		}
+
+		__class(ColorFilter,'laya.filters.ColorFilter',_super);
+		var __proto=ColorFilter.prototype;
+		Laya.imps(__proto,{"laya.filters.IFilter":true})
+		/**@private */
+		__getset(0,__proto,'type',function(){
+			return 0x20;
+		});
+
+		/**@private */
+		__getset(0,__proto,'action',function(){
+			return this._action;
+		});
+
+		__static(ColorFilter,
+		['DEFAULT',function(){return this.DEFAULT=new ColorFilter([1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]);},'GRAY',function(){return this.GRAY=new ColorFilter([0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0]);}
+		]);
+		return ColorFilter;
+	})(Filter)
+
+
+	/**
 	*@private
 	*web audio api方式播放声音
 	*/
@@ -9067,46 +9107,6 @@ window.Laya=(function(window,document){
 		]);
 		return WebAudioSound;
 	})(EventDispatcher)
-
-
-	/**
-	*<p><code>ColorFilter</code> 是颜色滤镜。</p>
-	*/
-	//class laya.filters.ColorFilter extends laya.filters.Filter
-	var ColorFilter=(function(_super){
-		function ColorFilter(mat){
-			//this._elements=null;
-			ColorFilter.__super.call(this);
-			if (!mat){
-				this._elements=ColorFilter.DEFAULT._elements;
-				return;
-			}
-			this._elements=new Float32Array(20);
-			for (var i=0;i < 20;i++){
-				this._elements[i]=mat[i];
-			}
-			this._action=RunDriver.createFilterAction(0x20);
-			this._action.data=this;
-		}
-
-		__class(ColorFilter,'laya.filters.ColorFilter',_super);
-		var __proto=ColorFilter.prototype;
-		Laya.imps(__proto,{"laya.filters.IFilter":true})
-		/**@private */
-		__getset(0,__proto,'type',function(){
-			return 0x20;
-		});
-
-		/**@private */
-		__getset(0,__proto,'action',function(){
-			return this._action;
-		});
-
-		__static(ColorFilter,
-		['DEFAULT',function(){return this.DEFAULT=new ColorFilter([1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]);},'GRAY',function(){return this.GRAY=new ColorFilter([0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0]);}
-		]);
-		return ColorFilter;
-	})(Filter)
 
 
 	/**

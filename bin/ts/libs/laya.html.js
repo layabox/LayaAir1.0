@@ -2,10 +2,10 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var CSSStyle=laya.display.css.CSSStyle,ClassUtils=laya.utils.ClassUtils,Node=laya.display.Node,HTMLChar=laya.utils.HTMLChar;
-	var Sprite=laya.display.Sprite,Event=laya.events.Event,Loader=laya.net.Loader,URL=laya.net.URL,RenderSprite=laya.renders.RenderSprite;
-	var Utils=laya.utils.Utils,Stat=laya.utils.Stat,RenderContext=laya.renders.RenderContext,Rectangle=laya.maths.Rectangle;
-	var Browser=laya.utils.Browser,Texture=laya.resource.Texture;
+	var CSSStyle=laya.display.css.CSSStyle,ClassUtils=laya.utils.ClassUtils,Node=laya.display.Node,URL=laya.net.URL;
+	var Sprite=laya.display.Sprite,RenderContext=laya.renders.RenderContext,Utils=laya.utils.Utils,Browser=laya.utils.Browser;
+	var HTMLChar=laya.utils.HTMLChar,Event=laya.events.Event,Loader=laya.net.Loader,Rectangle=laya.maths.Rectangle;
+	var RenderSprite=laya.renders.RenderSprite,Stat=laya.utils.Stat,Texture=laya.resource.Texture;
 	/**
 	*@private
 	*/
