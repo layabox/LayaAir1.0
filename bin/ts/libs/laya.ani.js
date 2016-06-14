@@ -1612,7 +1612,7 @@
 				this._movieClipList=[this];
 				this.on(/*laya.events.Event.DISPLAY*/"display",this,this._$3__onDisplay);
 				this.on(/*laya.events.Event.UNDISPLAY*/"undisplay",this,this._$3__onDisplay);
-				}else{
+				}else {
 				this._movieClipList=parentMovieClip._movieClipList;
 				this._movieClipList.push(this);
 			}
@@ -1695,6 +1695,16 @@
 		}
 
 		/**
+		*跳到某帧并停止播放动画。
+		*@param frame 要跳到的帧
+		*
+		*/
+		__proto.gotoAndStop=function(frame){
+			this.index=frame;
+			this.stop();
+		}
+
+		/**
 		*清理。
 		*/
 		__proto.clear=function(){
@@ -1704,7 +1714,7 @@
 				var i=0,len=0;
 				len=this._movieClipList.length;
 				for (i=0;i < len;i++){
-					if(this._movieClipList[i]!=this)
+					if (this._movieClipList[i] !=this)
 						this._movieClipList[i].clear();
 				}
 				this._movieClipList.length=0;
@@ -1885,7 +1895,7 @@
 			this._setData(this._data,this._ids[32767]);
 			this._initState();
 			this.play(0);
-			if(!this._parentMovieClip)Laya.timer.loop(this.interval,this,this.updates,null,true);
+			if (!this._parentMovieClip)Laya.timer.loop(this.interval,this,this.updates,null,true);
 			this.event(/*laya.events.Event.LOADED*/"loaded");
 		}
 
@@ -1894,7 +1904,8 @@
 			return this._playIndex;
 			},function(value){
 			this._playIndex=value;
-			this._displayFrame(this._playIndex);
+			if (this._data)
+				this._displayFrame(this._playIndex);
 			if (this._labels && this._labels[value])this.event(/*laya.events.Event.LABEL*/"label",this._labels[value]);
 		});
 

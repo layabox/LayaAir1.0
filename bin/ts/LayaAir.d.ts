@@ -542,6 +542,11 @@ declare module laya.ani.swf {
          * @param	url swf 资源地址。
          */
         load(url: string): void;
+		/**
+         * 移动到某帧并停止。
+         * @param	frame 帧数。
+         */
+		gotoAndStop(frame:number): void;
     }
 }
 declare module laya.asyn {
@@ -2608,6 +2613,9 @@ declare module laya.display {
         static SCROLL: string;
         /**hidden 不显示超出文本域的字符。*/
         static HIDDEN: string;
+        public underline: boolean;
+        public underlineWidth: number;
+        public underlineColor: string;
         private static bitmapFonts;
         protected _text: string;
         protected _isChanged: boolean;

@@ -3350,6 +3350,10 @@
 		__static(WebGLContext,
 		['_depthFunc',function(){return this._depthFunc=/*CLASS CONST:laya.webgl.WebGLContext.LEQUAL*/0x0203;},'_sFactor',function(){return this._sFactor=/*CLASS CONST:laya.webgl.WebGLContext.ONE*/1;},'_dFactor',function(){return this._dFactor=/*CLASS CONST:laya.webgl.WebGLContext.ZERO*/0;},'_frontFace',function(){return this._frontFace=/*CLASS CONST:laya.webgl.WebGLContext.CCW*/0x0901;}
 		]);
+		WebGLContext.__init$=function(){
+			;
+		}
+
 		return WebGLContext;
 	})()
 
@@ -7299,5 +7303,5 @@
 	})(HTMLImage)
 
 
-	Laya.__init([WebGLContext2D,AtlasGrid,RenderTargetMAX,DrawText,ShaderCompile]);
+	Laya.__init([WebGLContext2D,AtlasGrid,WebGLContext,RenderTargetMAX,DrawText,ShaderCompile]);
 })(window,document,Laya);

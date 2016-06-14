@@ -1,4 +1,4 @@
-/// <reference path="../../libs/LayaAir.d.ts" />
+/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module performanceTest {
     import Animation = laya.display.Animation;
     import Input = laya.display.Input;

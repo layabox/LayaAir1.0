@@ -5,6 +5,7 @@ package laya.ani.swf {
 	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.utils.Byte;
+	
 	/**
 	 * 动画播放完毕后调度。
 	 * @eventType Event.COMPLETE
@@ -28,7 +29,6 @@ package laya.ani.swf {
 	 * @eventType Event.FRAME
 	 */
 	[Event(name = "frame", type = "laya.events.Event")]
-	
 	
 	/**
 	 * <p> <code>MovieClip</code> 用于播放经过工具处理后的 swf 动画。</p>
@@ -68,33 +68,29 @@ package laya.ani.swf {
 		public var interval:int = 30;
 		/**是否循环播放 */
 		public var loop:Boolean;
-
 		
 		/**
 		 * 创建一个 <code>MovieClip</code> 实例。
 		 */
-		public function MovieClip(parentMovieClip:MovieClip=null) {
+		public function MovieClip(parentMovieClip:MovieClip = null) {
 			_ids = {};
 			_idOfSprite = [];
 			_reset();
 			_playing = false;
 			
 			this._parentMovieClip = parentMovieClip;
-			if (!parentMovieClip)
-			{
+			if (!parentMovieClip) {
 				_movieClipList = [this];
 				on(Event.DISPLAY, this, _onDisplay);
-			    on(Event.UNDISPLAY, this, _onDisplay);
-			}else
-			{
+				on(Event.UNDISPLAY, this, _onDisplay);
+			} else {
 				_movieClipList = parentMovieClip._movieClipList;
 				_movieClipList.push(this);
 			}
 		}
 		
 		/** @inheritDoc */
-		override public function destroy(destroyChild:Boolean = true):void 
-		{
+		override public function destroy(destroyChild:Boolean = true):void {
 			clear();
 			super.destroy(destroyChild);
 		}
@@ -102,21 +98,20 @@ package laya.ani.swf {
 		private function _onDisplay():void {
 			
 			if (_displayInStage) Laya.timer.loop(this.interval, this, updates, null, true);
-				else Laya.timer.clear(this, updates);
-			
+			else Laya.timer.clear(this, updates);
+		
 		}
+		
 		/**@private 更新时间轴*/
-		public function updates():void
-		{
+		public function updates():void {
 			if (_parentMovieClip) return;
 			var i:int, len:int;
 			len = _movieClipList.length;
-			for (i = 0; i < len; i++)
-			{
+			for (i = 0; i < len; i++) {
 				_movieClipList[i].update();
 			}
 		}
-
+		
 		/**当前播放索引。*/
 		public function get index():int {
 			return _playIndex;
@@ -124,9 +119,11 @@ package laya.ani.swf {
 		
 		public function set index(value:int):void {
 			_playIndex = value;
-	        _displayFrame(_playIndex);
+			if (_data)
+				_displayFrame(_playIndex);
 			if (_labels && _labels[value]) event(Event.LABEL, _labels[value]);
 		}
+		
 		/**
 		 * 增加一个标签到index帧上，播放到此index后会派发label事件
 		 * @param	label	标签名称
@@ -152,6 +149,7 @@ package laya.ani.swf {
 				}
 			}
 		}
+		
 		/**
 		 * 帧总数。
 		 */
@@ -164,18 +162,16 @@ package laya.ani.swf {
 		 */
 		public function update():void {
 			if (!_data) return;
-			if (!_playing) return;			
+			if (!_playing) return;
 			_playIndex++;
-			if (_playIndex >= _count)
-			{
-				if (!this.loop)
-				{
+			if (_playIndex >= _count) {
+				if (!this.loop) {
 					_playIndex--;
 					stop();
 					return;
 				}
 				_playIndex = 0;
-			} 
+			}
 			_parse(_playIndex);
 			if (_labels && _labels[_playIndex]) event(Event.LABEL, _labels[_playIndex]);
 		}
@@ -187,23 +183,30 @@ package laya.ani.swf {
 			_playing = false;
 		}
 		
+		/**
+		 * 跳到某帧并停止播放动画。
+		 * @param frame 要跳到的帧
+		 *
+		 */
+		public function gotoAndStop(frame:int):void {
+			index = frame;
+			stop();
+		}
 		
 		/**
 		 * 清理。
 		 */
 		public function clear():void {
 			_idOfSprite.length = 0;
-			if (!_parentMovieClip)
-			{
+			if (!_parentMovieClip) {
 				Laya.timer.clear(this, updates);
-			    var i:int, len:int;
-			    len = _movieClipList.length;
-			    for (i = 0; i < len; i++)
-			    {
-				    if(_movieClipList[i]!=this)
-				    _movieClipList[i].clear();
-			    }
-			    _movieClipList.length = 0;
+				var i:int, len:int;
+				len = _movieClipList.length;
+				for (i = 0; i < len; i++) {
+					if (_movieClipList[i] != this)
+						_movieClipList[i].clear();
+				}
+				_movieClipList.length = 0;
 			}
 			
 			removeChildren();
@@ -215,10 +218,10 @@ package laya.ani.swf {
 		 * 播放动画。
 		 * @param	frameIndex 帧索引。
 		 */
-		public function play(frameIndex:int = -1,loop:Boolean=true):void {
+		public function play(frameIndex:int = -1, loop:Boolean = true):void {
 			this.loop = loop;
 			if (_data)
-			_displayFrame(frameIndex);
+				_displayFrame(frameIndex);
 			_playing = true;
 		}
 		
@@ -275,7 +278,7 @@ package laya.ani.swf {
 						if (!mc) {
 							_idOfSprite[key] = mc = new MovieClip(this);
 							mc.interval = interval;
-							mc._ids = _ids;		
+							mc._ids = _ids;
 							mc.basePath = basePath;
 							mc._setData(_data, tPos);
 							mc._initState();
@@ -328,11 +331,10 @@ package laya.ani.swf {
 				case 100: //cmdEnd
 					_count = _curIndex + 1;
 					_ended = true;
-					if (_playing)
-					{
+					if (_playing) {
 						event(Event.FRAME);
 						event(Event.END);
-					    event(Event.COMPLETE);
+						event(Event.COMPLETE);
 					}
 					_reset(false);
 					break;
@@ -375,12 +377,13 @@ package laya.ani.swf {
 				l.load(url, Loader.BUFFER);
 			}
 		}
-		private function _initState():void
-		{
+		
+		private function _initState():void {
 			_reset();
 			_ended = false;
 			while (!_ended) _parse(++_playIndex);
 		}
+		
 		private function _initData(data:*):void {
 			_data = new Byte(data);
 			var i:int, len:int = _data.getUint16();
@@ -389,7 +392,7 @@ package laya.ani.swf {
 			_setData(_data, _ids[32767]);
 			_initState();
 			play(0);
-			if(!_parentMovieClip) Laya.timer.loop(this.interval, this, updates, null, true);
+			if (!_parentMovieClip) Laya.timer.loop(this.interval, this, updates, null, true);
 			event(Event.LOADED);
 		}
 	}

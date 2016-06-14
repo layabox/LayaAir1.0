@@ -1,4 +1,4 @@
-/// <reference path="../../libs/LayaAir.d.ts" />
+/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Stage = laya.display.Stage;
 	import TiledMap = laya.map.TiledMap;
@@ -15,7 +15,6 @@ module laya {
 			Laya.stage.alignV = Stage.ALIGN_MIDDLE;
 			Laya.stage.alignH = Stage.ALIGN_CENTER;
 
-			Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
 			Laya.stage.bgColor = "#232628";
 
 			this.createMap();

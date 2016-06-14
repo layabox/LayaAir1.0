@@ -17,7 +17,6 @@ package
 			Laya.stage.alignV = Stage.ALIGN_MIDDLE;
 			Laya.stage.alignH = Stage.ALIGN_CENTER;
 
-			Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
 			Laya.stage.bgColor = "#232628";
 			
 			createMap();

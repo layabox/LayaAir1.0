@@ -1,4 +1,4 @@
-/// <reference path="../../libs/LayaAir.d.ts" />
+/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Loader = laya.net.Loader;
 	import Handler = laya.utils.Handler;

@@ -1,4 +1,4 @@
-/// <reference path="../../libs/LayaAir.d.ts" />
+/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Templet = laya.ani.bone.Templet;
     import Skeleton = laya.ani.bone.Skeleton;
@@ -36,7 +36,7 @@ module laya {
             Stat.show();
 
             this.mTexturePath = "res/skeleton/" + this.fileName + "/texture.png";
-            this.mAniPath = "res/skeleton/" + this.fileName + "/" + this.fileName + ".bin";
+            this.mAniPath = "res/skeleton/" + this.fileName + "/" + this.fileName + ".sk";
             Laya.loader.load([{ url: this.mTexturePath, type: Loader.IMAGE }, { url: this.mAniPath, type: Loader.BUFFER }], Handler.create(this, this.onAssetsLoaded));
         }
 
