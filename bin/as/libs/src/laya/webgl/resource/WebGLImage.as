@@ -54,7 +54,7 @@ package laya.webgl.resource {
 		 * @return 是否创建
 		 */
 		public function get enableMerageInAtlas():Boolean {
-			return _allowMerageInAtlas;
+			return _enableMerageInAtlas;
 		}
 		
 		/**
@@ -62,7 +62,7 @@ package laya.webgl.resource {
 		 * @param value 是否创建
 		 */
 		public function set enableMerageInAtlas(value:Boolean):void {
-			_allowMerageInAtlas = value;
+			_enableMerageInAtlas = value;
 		}
 		
 		
@@ -97,7 +97,7 @@ package laya.webgl.resource {
 			magFifter = -1;
 			_src = src;
 			_image = new Browser.window.Image();
-			//_image.crossOrigin = "anonymous";
+			_image.crossOrigin = "";
 			(src)&&(_image.src = src);WebGLImageCube
 			_enableMerageInAtlas = true;
 		}
@@ -167,7 +167,7 @@ package laya.webgl.resource {
 				startCreate();
 				var _this:WebGLImage = this;
 				_image = new Browser.window.Image();
-				//_image.crossOrigin = "anonymous";
+				_image.crossOrigin = "";
 				_image.onload = function():void {
 					if (_this._needReleaseAgain)//异步处理，加载完后可能，如果强制释放资源存在已被释放的风险
 					{

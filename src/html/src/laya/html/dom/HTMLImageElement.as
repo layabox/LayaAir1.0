@@ -76,7 +76,7 @@ package laya.html.dom
 
 			if (!_tex || !_tex.loaded || !_tex.loaded || _width < 1 || _height < 1) return;
 			
-			Stat.spriteDraw++;
+			Stat.spriteCount++;
 			
 			//tx:Texture, x:Number, y:Number, width:Number, height:Number
 			_renderArgs[0] = _tex;

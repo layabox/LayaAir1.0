@@ -200,6 +200,15 @@ package laya.display {
 			}
 		}
 		
+		/**
+		 * 切换到某帧并停止
+		 * @param	index 帧索引
+		 */
+		public function gotoAndStop(index:int):void {
+			this.index = index;
+			this.stop();
+		}
+		
 		/**当前播放索引。*/
 		public function get index():int {
 			return _index;
@@ -260,10 +269,11 @@ package laya.display {
 		 * @return 	返回动画本身。
 		 */
 		public function loadAtlas(url:String, loaded:Handler = null, cacheName:String = ""):Animation {
-			if (!_setFramesFromCache(cacheName)) {				
+			var _this:Animation = this;
+			if (!_this._setFramesFromCache(cacheName)) {
 				function onLoaded(loadUrl:String):void {
 					if (url === loadUrl) {
-						this.frames = createFrames(url, !framesMap[cacheName] ? cacheName : "");
+						_this.frames = createFrames(url, !framesMap[cacheName] ? cacheName : "");
 						if (loaded) loaded.run();
 					}
 				}

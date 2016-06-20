@@ -38,7 +38,7 @@ module laya {
             this.sp.size(200, 200);
             Laya.stage.addChild(this.sp);
 
-            this.sp.on(Interaction_CustomEvent.ROTATE, this.sp, this.onRotate);    // 侦听自定义的事件
+            this.sp.on(Interaction_CustomEvent.ROTATE, this, this.onRotate);    // 侦听自定义的事件
             this.sp.on(Event.CLICK, this, this.onSpriteClick);
         }
 
@@ -50,7 +50,7 @@ module laya {
 
         // 触发自定义的rotate事件
         private onRotate(newAngle: number): void {
-            Tween.to(this, { "rotation": newAngle }, 1000, Ease.elasticOut);
+            Tween.to(this.sp, { "rotation": newAngle }, 1000, Ease.elasticOut);
         }
     }
 }

@@ -13,7 +13,7 @@ package laya.webgl.resource {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		private const borderSize:int = 12;
 		private var _ctx:*;
-		/***是否创建私有Source,值为false时不根据src创建私有WebGLTexture,同时销毁时也只清空source=null,不调用WebGL.mainContext.deleteTexture类似函数，调用资源激活前有效*/
+		/***是否创建私有Source*/
 		private var _allowMerageInAtlas:Boolean;
 		/**是否允许加入大图合集*/
 		private var _enableMerageInAtlas:Boolean;
@@ -39,7 +39,7 @@ package laya.webgl.resource {
 		 * @return 是否创建
 		 */
 		public function get enableMerageInAtlas():Boolean {
-			return _allowMerageInAtlas;
+			return _enableMerageInAtlas;
 		}
 		
 		/**
@@ -47,7 +47,7 @@ package laya.webgl.resource {
 		 * @param value 是否创建
 		 */
 		public function set enableMerageInAtlas(value:Boolean):void {
-			_allowMerageInAtlas = value;
+			_enableMerageInAtlas = value;
 		}
 		
 		/**
@@ -80,7 +80,6 @@ package laya.webgl.resource {
 				char.width = t.width * xs;
 				char.height = t.height * ys;
 			}
-			
 			onresize(char.width + borderSize * 2, char.height + borderSize * 2);
 		}
 		
@@ -118,8 +117,6 @@ package laya.webgl.resource {
 					_ctx.scale(xs, ys);
 				}
 				
-			
-				
 				if (char.fillColor && char.borderColor) {
 					__JS__("this._ctx.strokeStyle = char.borderColor");
 					__JS__("this._ctx.lineWidth = char.lineWidth");
@@ -143,7 +140,6 @@ package laya.webgl.resource {
 			char.borderSize = borderSize;
 			compoleteCreate();
 		}
-
 		
 		private function onresize(w:Number, h:Number):void {
 			_w = w;
@@ -158,11 +154,6 @@ package laya.webgl.resource {
 		}
 		
 		public function clearAtlasSource():void {//canvas为公用绘制载体,资源恢复时会使用,无需清空
-		}
-		
-		override public function dispose():void {
-			resourceManager.removeResource(this);
-			super.dispose();
 		}
 	}
 

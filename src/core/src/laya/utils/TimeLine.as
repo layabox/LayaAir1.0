@@ -99,16 +99,12 @@ package laya.utils {
 		 * 移除指定的标签
 		 * @param	label
 		 */
-		public function removeLabel(label:String):void
-		{
-			if (_labelDic && _labelDic[label])
-			{
+		public function removeLabel(label:String):void {
+			if (_labelDic && _labelDic[label]) {
 				var tTweenData:tweenData = _labelDic[label];
-				if (tTweenData)
-				{
+				if (tTweenData) {
 					var tIndex:int = _tweenDataList.indexOf(label);
-					if (tIndex > -1)
-					{
+					if (tIndex > -1) {
 						_tweenDataList.splice(tIndex, 1);
 					}
 				}
@@ -128,7 +124,9 @@ package laya.utils {
 				tObject = _firstTweenDic[p];
 				if (tObject) {
 					for (var tDataP:* in tObject) {
-						tObject.diyTarget[tDataP] = tObject[tDataP];
+						if (tObject.diyTarget.hasOwnProperty(tDataP)) {
+							tObject.diyTarget[tDataP] = tObject[tDataP];
+						}
 					}
 				}
 			}
@@ -204,10 +202,7 @@ package laya.utils {
 		public function gotoLabel(Label:String):void {
 			if (_labelDic == null) return;
 			var tLabelData:tweenData = _labelDic[Label];
-			if (tLabelData) {
-				var tStartTime:Number = tLabelData.startTime;
-				gotoTime(tStartTime);
-			}
+			if (tLabelData) gotoTime(tLabelData.startTime);
 		}
 		
 		/**
@@ -249,7 +244,8 @@ package laya.utils {
 					if (tTweenData != null && tTweenData.type == 0) {
 						var tTarget:* = tTweenData.target;
 						//[IF-JS]var gid:int = (tTarget.$_GID || (tTarget.$_GID = Utils.getGID()));
-						/*[IF-FLASH]*/var gid:* = tTarget;
+						/*[IF-FLASH]*/
+						var gid:* = tTarget;
 						var tSrcData:Object = null;
 						//把对象的初始属性保留下来，方便跳转时，回复到初始状态
 						if (_firstTweenDic[gid] == null) {
@@ -339,8 +335,7 @@ package laya.utils {
 		 * @private
 		 * 得到帧索引
 		 */
-		public function get index():int
-		{
+		public function get index():int {
 			return _frameIndex;
 		}
 		
@@ -348,8 +343,7 @@ package laya.utils {
 		 * @private
 		 * 设置帧索引
 		 */
-		public function set index(value:int):void
-		{
+		public function set index(value:int):void {
 			_frameIndex = value;
 			gotoTime(_frameIndex / _frameRate * 1000);
 		}
@@ -357,8 +351,7 @@ package laya.utils {
 		/**
 		 * 得到总帧数据
 		 */
-		public function get total():int
-		{
+		public function get total():int {
 			_total = Math.floor(_startTime / 1000 * _frameRate);
 			return _total;
 		}

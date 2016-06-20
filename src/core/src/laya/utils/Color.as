@@ -22,6 +22,8 @@ package laya.utils {
 		/** uint 型颜色值。*/
 		public var numColor:uint;
 		
+		public var _drawStyle:*;
+		
 		/**
 		 * 根据指定的属性值，创建一个 <code>Color</code> 类的实例。
 		 * @param	str 颜色值。

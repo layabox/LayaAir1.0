@@ -189,8 +189,6 @@ package laya.display {
 		/**@private */
 		protected static var area:*;
 		/**@private */
-		protected static var promptSpan:*;
-		/**@private */
 		protected static var inputElement:*;
 		/**@private */
 		protected static var inputContainer:*;
@@ -210,8 +208,12 @@ package laya.display {
 		public var inputElementXAdjuster:int = 0;
 		/**原生输入框 Y 轴调整值，用来调整输入框坐标。*/
 		public var inputElementYAdjuster:int = 0;
-		/**移动平台输入期间的提示符。*/
-		public var prompt:String = '';
+		/**输入提示符。*/
+		private var _prompt:String = '';
+		/**输入提示符颜色。*/
+		private var _promptColor:String = "#A9A9A9";
+		private var _originColor:String;
+		private var _content:String = '';
 		
 		/**@private */
 		private static const inputHeight:int = 40;
@@ -278,29 +280,19 @@ package laya.display {
 				var style:* = inputContainer.style;
 				inputContainer.style.cssText = animationStyle;
 				// style.background = "#000000";
-				
-				// 移动平台输入框上方的提示符
-				promptSpan = Browser.createElement("span");
-				style = promptSpan.style;
-				style.position = "absolute";
-				style.color = "#FFFFFF";
-				style.font = "20px simHei";
-				style.backgroundColor = "#000000";
-				style.width = "100%";
-				style.lineHeight = "30px";
-				inputContainer.appendChild(promptSpan);
+				inputContainer.style.position = "relative";
 			}
 		}
 		
 		/**@private */
 		private static function _writeInputAniStyle():void {
-			var aniStyle:String = "{ from {} to { top:0px; }}";
+			var aniStyle:String = "{ from { } to { transform:translate3d(0px, 0px, 0px); }}";
 			var mobStyleNode:* = Browser.document.createElement("style");
 			mobStyleNode.innerHTML = "@keyframes input-ani" + aniStyle;
 			mobStyleNode.innerHTML += "@-webkit-keyframes input-ani" + aniStyle;
 			mobStyleNode.innerHTML += "@-moz-keyframes input-ani" + aniStyle;
 			mobStyleNode.innerHTML += "@-o-keyframes input-ani" + aniStyle;
-			Browser.document.getElementsByTagName("head")[0].appendChild(mobStyleNode);
+			Browser.document.head.appendChild(mobStyleNode);
 		}
 		
 		/**
@@ -363,7 +355,7 @@ package laya.display {
 		}
 		
 		/**@private */
-		private function _onUnDisplay(e:Event):void {
+		private function _onUnDisplay(e:Event = null):void {
 			focus = false;
 		}
 		
@@ -478,14 +470,16 @@ package laya.display {
 			var cssStyle:* = input.style;
 			cssStyle.cssText = _getCorretStyle();
 			cssStyle.whiteSpace = (wordWrap ? "pre-wrap" : "nowrap");
+			_setPromptColor();
 			
 			input.readOnly = !this._editable;
 			input.maxLength = this._maxChars;
 			
 			var padding:Array = this.padding;
 			
-			input.value = _text;
+			input.value = _content;
 			input.type = asPassword ? "password" : "text";
+			input.placeholder = _prompt;
 			
 			Laya.stage.off(Event.KEY_DOWN, this, _onKeyDown);
 			Laya.stage.on(Event.KEY_DOWN, this, _onKeyDown);
@@ -502,7 +496,7 @@ package laya.display {
 				typeset();
 				
 				// PC同步输入框外观。
-				cssStyle.color = color;
+				cssStyle.color = _originColor;
 				cssStyle.fontSize = fontSize + "px";
 				cssStyle.fontFamily = font;
 				cssStyle.lineHeight = (leading + fontSize) + "px";
@@ -514,17 +508,41 @@ package laya.display {
 				_syncInputTransform();
 				Laya.timer.frameLoop(1, this, _syncInputTransform);
 			} else {
-				promptSpan.innerText = prompt;
-				
 				var inputContainerStyle:* = inputContainer.style;
 				// 决定输入框高度
 				var hei:int = (this._multiline ? textAreaHeight : inputHeight);
 				cssStyle.height = hei + "px";
-				// 是否有prompt
-				cssStyle.top = (this.prompt ? 30 : 0) + "px";
 				// 动画开始前的位置
-				inputContainerStyle.top = -hei + "px";
+				inputContainerStyle.transform = "translate3d(0px," + ( -hei) + "px, 0px)";
 			}
+		}
+		
+		// 设置DOM输入框提示符颜色。
+		private function _setPromptColor():void 
+		{
+			// 创建style标签
+			var promptStyleDOM:* = Browser.getElementById("promptStyle");
+			if (!promptStyleDOM)
+			{
+				promptStyleDOM = Browser.createElement("style");
+				promptStyleDOM.setAttribute("id", "promptStyle");
+				Browser.document.head.appendChild(promptStyleDOM);
+			}
+			
+			// 设置style标签
+			promptStyleDOM.innerText = 
+				"input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {" + 
+					"color:" + _promptColor +
+				"}" +
+				"input:-moz-placeholder, textarea:-moz-placeholder {" +
+					"color:" + _promptColor +
+				"}" + 
+				"input::-moz-placeholder, textarea::-moz-placeholder {" +
+					"color:" + _promptColor +
+				"}" + 
+				"input:-ms-input-placeholder, textarea:-ms-input-placeholder {" +
+					"color:" + _promptColor +
+				"}";
 		}
 		
 		/**@private */
@@ -532,7 +550,17 @@ package laya.display {
 			this._focus = false;
 			
 			this._text = '';
-			super.text = inputElement.value;
+			_content = inputElement.value;
+			if (!_content)
+			{
+				super.text = _prompt;
+				super.color = _promptColor;
+			}
+			else
+			{
+				super.text = _content;
+				super.color = _originColor;
+			}
 			
 			Laya.stage.off(Event.KEY_DOWN, this, _onKeyDown);
 			Laya.stage.focus = null;
@@ -566,9 +594,11 @@ package laya.display {
 			
 			// 单行时不允许换行
 			if (!this._multiline)
-				value = value.replace(/\r\n|\n/g, '');
+				value = value.replace(/\r?\n/g, '');
 			
-			super.text = value;
+			_content = value;
+			
+			super.text = value || _prompt;
 		}
 		
 		override public function get text():String {
@@ -582,7 +612,9 @@ package laya.display {
 		override public function set color(value:String):void {
 			if (this._focus)
 				nativeInput.style.color = value;
-			super.color = value;
+			
+			super.color = _content ? value : _promptColor;
+			_originColor = value;
 		}
 		
 		/**限制输入的字符。*/
@@ -626,6 +658,38 @@ package laya.display {
 			if (value <= 0)
 				value = 1E5;
 			_maxChars = value;
+		}
+		
+		/**
+		 * 设置输入提示符。
+		 */
+		public function get prompt():String 
+		{
+			return _prompt;
+		}
+		
+		public function set prompt(value:String):void 
+		{
+			if (!_text && value)
+				super.color = _promptColor;
+			
+			this.promptColor = _promptColor;
+			super.text = _text || value;
+			_prompt = value;
+		}
+		
+		/**
+		 * 设置输入提示符颜色。
+		 */
+		public function get promptColor():String 	
+		{
+			return _promptColor;
+		}
+		
+		public function set promptColor(value:String):void 
+		{
+			_promptColor = value;
+			if (!_content)	super.color = value;
 		}
 	}
 }

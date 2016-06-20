@@ -49,7 +49,7 @@ package laya.utils {
 				return;
 			}
 			var frame:int = this.currFrame = this.currFrame + scale;
-			var now:Number = Browser.now()
+			var now:Number = Browser.now();
 			delta = now - _lastTimer;
 			var timer:Number = this.currTimer = this.currTimer + delta * scale;
 			_lastTimer = now;

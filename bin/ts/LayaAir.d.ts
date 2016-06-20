@@ -145,6 +145,11 @@ declare module laya.ani.bone {
          */
         drawBonePoint(graphics: laya.display.Graphics): void;
         /**
+         * 得到插糟的矩阵
+         * @return
+         */
+        getMatrix(): laya.maths.Matrix;
+        /**
          * 用原始数据拷贝出一个
          * @return
          */
@@ -259,6 +264,39 @@ declare module laya.ani.bone {
          */
         destory(): void;
         player: laya.ani.AnimationPlayer;
+    }
+}
+declare module laya.ani.bone {
+    /**
+     * <p> <code>SkeletonPlayer</code> 用于播放经过工具处理后的骨骼动画。</p>
+     */
+    class SkeletonPlayer extends laya.ani.bone.Skeleton {
+        /**
+         * 播放完成函数处理器。
+         */
+        completeHandler: laya.utils.Handler;
+        /**
+         * 骨骼动画的数据资源地址。
+         */
+        dataUrl: string;
+        /**
+         * 骨骼动画的图片资源地址。
+         */
+        imgUrl: string;
+        /**
+         * 创建一个 <code>SkeletonPlayer</code> 实例。
+         * @param	tmplete  数据模板 Templet 对象。
+         */
+        constructor(tmplete?: any);
+        /**
+         * 资源地址。
+         */
+        url: string;
+        /**
+         * 加载资源。
+         * @param	baseURL 资源地址。
+         */
+        load(baseURL: string): void;
     }
 }
 declare module laya.ani.bone {
@@ -524,6 +562,11 @@ declare module laya.ani.swf {
          */
         stop(): void;
         /**
+         * 跳到某帧并停止播放动画。
+         * @param frame 要跳到的帧
+         */
+        gotoAndStop(index: number): void;
+        /**
          * 清理。
          */
         clear(): void;
@@ -531,7 +574,7 @@ declare module laya.ani.swf {
          * 播放动画。
          * @param	frameIndex 帧索引。
          */
-        play(frameIndex?: number, loop?: boolean): void;
+        play(index?: number, loop?: boolean): void;
         _setData(data: laya.utils.Byte, start: number): void;
         /**
          * 资源地址。
@@ -542,11 +585,6 @@ declare module laya.ani.swf {
          * @param	url swf 资源地址。
          */
         load(url: string): void;
-		/**
-         * 移动到某帧并停止。
-         * @param	frame 帧数。
-         */
-		gotoAndStop(frame:number): void;
     }
 }
 declare module laya.asyn {
@@ -761,6 +799,11 @@ declare module laya.display {
          * @param	label 标签名字，如果label为空，则删除所有Label
          */
         removeLabel(label: string): void;
+        /**
+         * 切换到某帧并停止
+         * @param	index 帧索引
+         */
+        gotoAndStop(index: number): void;
         /**当前播放索引。*/
         index: number;
         /**动画长度。*/
@@ -841,6 +884,13 @@ declare module laya.display {
          * @return 宽度。
          */
         getTextWidth(text: string): number;
+        /**
+         * 获取字符之间的间距（以像素为单位）。
+         */
+        /**
+         * 设置字符之间的间距（以像素为单位）。
+         */
+        letterSpacing: number;
         /**
          * 获取最大字符宽度。
          */
@@ -1671,7 +1721,6 @@ declare module laya.display {
         private static mobileStyle;
         protected static input: any;
         protected static area: any;
-        protected static promptSpan: any;
         protected static inputElement: any;
         protected static inputContainer: any;
         protected _focus: boolean;
@@ -1683,8 +1732,6 @@ declare module laya.display {
         inputElementXAdjuster: number;
         /**原生输入框 Y 轴调整值，用来调整输入框坐标。*/
         inputElementYAdjuster: number;
-        /**移动平台输入期间的提示符。*/
-        prompt: string;
         /**表示是否处于输入状态。*/
         static isInputting: boolean;
         /**创建一个新的 <code>Input</code> 类实例。*/
@@ -1719,6 +1766,14 @@ declare module laya.display {
          * 设置字符数量限制时，小于等于0的值将会限制字符数量为10000。
          */
         maxChars: number;
+        /**
+         * 设置输入提示符。
+         */
+        prompt: string;
+        /**
+         * 设置输入提示符颜色。
+         */
+        promptColor: string;
     }
 }
 declare module laya.display {
@@ -2613,21 +2668,28 @@ declare module laya.display {
         static SCROLL: string;
         /**hidden 不显示超出文本域的字符。*/
         static HIDDEN: string;
-        public underline: boolean;
-        public underlineWidth: number;
-        public underlineColor: string;
-        private static bitmapFonts;
+        private static _bitmapFonts;
         protected _text: string;
         protected _isChanged: boolean;
         protected _textWidth: number;
         protected _textHeight: number;
         protected _lines: Array<any>;
+        protected _lineWidths: Array<any>;
         protected _startX: number;
         protected _startY: number;
         protected _lastVisibleLineIndex: number;
-        /**overflow 指定文本超出文本域后的行为。其值为常量VISIBLE、SCROLL和HIDDEN之一。
+        protected _words: Array<any>;
+        /**overflow 指定文本超出文本域后的行为。其值为"hidden"、"visible"和"scroll"之一。
          * 性能从高至低为：hidden > visible > scroll*/
         overflow: string;
+        /**
+         * 是否显示下划线。
+         */
+        underline: boolean;
+        /**
+         * 下划线的颜色，为null则使用字体颜色。
+         */
+        underlineColor: string;
         /**
          * 创建一个新的 <code>Text</code> 实例。
          */
@@ -2788,6 +2850,7 @@ declare module laya.display {
          */
         changeText(text: string): void;
         protected parseLines(text: string): void;
+        protected pushNewLineWidth(width: number): void;
         protected parseLine(line: string, wordWrapWidth: number): void;
         /**
          * 返回字符的位置信息。
@@ -2819,6 +2882,7 @@ declare module laya.display {
          * 获取纵向可滚动最大值。
          */
         maxScrollY: number;
+        lines: Array<any>;
     }
 }
 declare module laya.events {
@@ -5456,6 +5520,39 @@ declare module laya.particle {
 }
 declare module laya.particle {
     /**
+     *
+     * <code>ParticlePlayer</code> 类是粒子播放容器类
+     * 主要用于播放UI编辑器中拖放到UI上的粒子
+     *
+     */
+    class ParticlePlayer extends laya.display.Sprite {
+        /**
+         * 创建一个新的 <code>ParticlePlayer</code> 类实例。
+         *
+         */
+        constructor();
+        /**
+         * 设置 粒子文件地址
+         * @param path 粒子文件地址
+         *
+         */
+        url: string;
+        /**
+         * 加载粒子文件
+         * @param url 粒子文件地址
+         *
+         */
+        loadParticle(url: string): void;
+        /**
+         * 设置粒子配置数据
+         * @param settings 粒子配置数据
+         *
+         */
+        setParticleSetting(settings: ParticleSettings): void;
+    }
+}
+declare module laya.particle {
+    /**
      * <code>ParticleSettings</code> 类是粒子配置数据类
      */
     class ParticleSettings {
@@ -5697,8 +5794,8 @@ declare module laya.particle {
      */
     class ParticleTemplateWebGL extends ParticleTemplateBase {
         protected _vertices: Float32Array;
-        protected _vertexBuffer: laya.webgl.utils.VertexBuffer;
-        protected _indexBuffer: laya.webgl.utils.IndexBuffer;
+        protected _vertexBuffer: laya.webgl.utils.Buffer;
+        protected _indexBuffer: laya.webgl.utils.Buffer;
         protected _floatCountPerVertex: number;
         protected _firstActiveElement: number;
         protected _firstNewElement: number;
@@ -6010,6 +6107,7 @@ declare module laya.resource {
         _canvas: HTMLCanvas;
         _repaint: boolean;
         static _init(canvas: HTMLCanvas, ctx: any): void;
+        setIsMainContext(): void;
         font: string;
         textBaseline: string;
         fillStyle: any;
@@ -6037,9 +6135,9 @@ declare module laya.resource {
         clearRect(x: number, y: number, width: number, height: number): void;
         drawCanvas(canvas: HTMLCanvas, x: number, y: number, width: number, height: number): void;
         fillRect(x: number, y: number, width: number, height: number, style: any): void;
-        fillText(text: string, x: number, y: number, font: string, color: string, textAlign: string): void;
-        fillBorderText(text: string, x: number, y: number, font: string, fillColor: string, borderColor: string, lineWidth: number, textAlign: string): void;
-        strokeText(text: string, x: number, y: number, font: string, color: string, lineWidth: number, textAlign: string): void;
+        fillText(text: any, x: number, y: number, font: string, color: string, textAlign: string): void;
+        fillBorderText(text: any, x: number, y: number, font: string, fillColor: string, borderColor: string, lineWidth: number, textAlign: string): void;
+        strokeText(text: any, x: number, y: number, font: string, color: string, lineWidth: number, textAlign: string): void;
         transformByMatrix(value: laya.maths.Matrix): void;
         setTransformByMatrix(value: laya.maths.Matrix): void;
         clipRect(x: number, y: number, width: number, height: number): void;
@@ -6399,6 +6497,7 @@ declare module laya.resource {
         $_GID: number;
         /**图片地址*/
         url: string;
+        _uvID: number;
         /**
          * 创建一个 <code>Texture</code> 实例。
          * @param	bitmap 位图资源。
@@ -8544,6 +8643,27 @@ declare module laya.ui {
         height: number;
         /**@inheritDoc */
         dataSource: any;
+        /**
+         * @copy laya.display.Text#overflow
+         */
+        /**
+         * @copy laya.display.Text#overflow
+         */
+        overflow: string;
+        /**
+         * @copy laya.display.Text#underline
+         */
+        /**
+         * @copy laya.display.Text#underline
+         */
+        underline: string;
+        /**
+         * @copy laya.display.Text#underlineColor
+         */
+        /**
+         * @copy laya.display.Text#underlineColor
+         */
+        underlineColor: string;
     }
 }
 declare module laya.ui {
@@ -10896,6 +11016,7 @@ declare module laya.utils {
         strColor: string;
         /** uint 型颜色值。*/
         numColor: number;
+        _drawStyle: any;
         /**
          * 根据指定的属性值，创建一个 <code>Color</code> 类的实例。
          * @param	str 颜色值。
@@ -11611,22 +11732,14 @@ declare module laya.utils {
     class Stat {
         /**主舞台 <code>Stage</code> 渲染次数计数。 */
         static loopCount: number;
-        /** 自动释放机制的内存触发上限,以字节为单位。 */
-        static maxMemorySize: number;
-        /** 资源管理器所管理资源的累计内存,以字节为单位。*/
-        static currentMemorySize: number;
-        /** 纹理资源所占的内存。 */
-        static texturesMemSize: number;
-        /** 缓冲区内存大小。*/
-        static buffersMemSize: number;
         /** 着色器请求次数。*/
         static shaderCall: number;
         /** 描绘次数。*/
         static drawCall: number;
         /** 三角形面数。*/
         static trianglesFaces: number;
-        /** 精灵<code>Sprite</code> 的渲染次数。*/
-        static spriteDraw: number;
+        /** 精灵<code>Sprite</code> 的数量。*/
+        static spriteCount: number;
         /** 每秒帧数。*/
         static FPS: number;
         /** 画布 canvas 使用标准渲染的次数。*/
@@ -11635,14 +11748,10 @@ declare module laya.utils {
         static canvasBitmap: number;
         /** 画布 canvas 缓冲区重绘次数。*/
         static canvasReCache: number;
-        /** 当前帧与上一帧的时间间隔，以毫秒为单位。*/
-        static interval: number;
-        /** 记录上一帧的时间戳，以毫秒为单位。*/
-        static preFrameTime: number;
-        /** 上传至缓冲区的数据字节长度。*/
-        static bufferLen: number;
         /** 表示当前使用的是否为慢渲染模式。*/
         static renderSlow: boolean;
+        /** 资源管理器所管理资源的累计内存,以字节为单位。*/
+        static currentMemorySize: number;
         private static _fpsStr;
         private static _canvasStr;
         private static _canvas;
@@ -11652,6 +11761,9 @@ declare module laya.utils {
         private static _width;
         private static _height;
         private static _view;
+        private static _fontSize;
+        private static _first;
+        private static _vx;
         /**
          * 显示帧频信息。
          * @param	x X轴显示位置。
@@ -12105,6 +12217,22 @@ declare module laya.utils {
         static parseInt(str: string, radix?: number): number;
     }
 }
+declare module laya.utils {
+    /**
+     * @private
+     */
+    class WordText {
+        id: number;
+        save: Array<any>;
+        toUpperCase: string;
+        changed: boolean;
+        setText(txt: string): void;
+        toString(): string;
+        length: number;
+        charCodeAt(i: number): number;
+        charAt(i: number): string;
+    }
+}
 declare module laya.webgl.atlas {
     class Atlaser extends AtlasGrid {
         texture: AtlasWebGLCanvas;
@@ -12152,6 +12280,7 @@ declare module laya.webgl.atlas {
         static atlasTextureHeight: number;
         static gridSize: number;
         static maxTextureCount: number;
+        static _atlasRestore: number;
         static BOARDER_TYPE_NO: number;
         static BOARDER_TYPE_RIGHT: number;
         static BOARDER_TYPE_LEFT: number;
@@ -12250,6 +12379,7 @@ declare module laya.webgl.canvas {
     class DrawStyle {
         static DEFAULT: DrawStyle;
         _color: laya.utils.Color;
+        static create(value: any): DrawStyle;
         constructor(value: any);
         setValue(value: any): void;
         reset(): void;
@@ -12266,8 +12396,8 @@ declare module laya.webgl.canvas {
         _x: number;
         _y: number;
         _rect: laya.maths.Rectangle;
-        ib: laya.webgl.utils.IndexBuffer;
-        vb: laya.webgl.utils.VertexBuffer;
+        ib: laya.webgl.utils.IndexBuffer2D;
+        vb: laya.webgl.utils.VertexBuffer2D;
         dirty: boolean;
         geomatrys: Array<any>;
         _curGeomatry: laya.webgl.shapes.IShape;
@@ -12405,10 +12535,9 @@ declare module laya.webgl.canvas {
         _y: number;
         _id: number;
         _submits: any;
-        _mergeID: number;
         _curSubmit: any;
-        _ib: laya.webgl.utils.IndexBuffer;
-        _vb: laya.webgl.utils.VertexBuffer;
+        _ib: laya.webgl.utils.IndexBuffer2D;
+        _vb: laya.webgl.utils.VertexBuffer2D;
         _clipRect: laya.maths.Rectangle;
         _curMat: laya.maths.Matrix;
         _nBlendType: number;
@@ -12419,6 +12548,7 @@ declare module laya.webgl.canvas {
         /**所cacheAs精灵*/
         sprite: laya.display.Sprite;
         constructor(c: laya.resource.HTMLCanvas);
+        setIsMainContext(): void;
         clearBG(r: number, g: number, b: number, a: number): void;
         _getSubmits(): Array<any>;
         destroy(): void;
@@ -12439,9 +12569,9 @@ declare module laya.webgl.canvas {
         measureText(text: string): any;
         font: string;
         fillWords(words: Array<any>, x: number, y: number, fontStr: string, color: string): void;
-        fillText(txt: string, x: number, y: number, fontStr: string, color: string, textAlign: string): void;
-        strokeText(txt: string, x: number, y: number, fontStr: string, color: string, lineWidth: number, textAlign: string): void;
-        fillBorderText(txt: string, x: number, y: number, fontStr: string, fillColor: string, borderColor: string, lineWidth: number, textAlign: string): void;
+        fillText(txt: any, x: number, y: number, fontStr: string, color: string, textAlign: string): void;
+        strokeText(txt: any, x: number, y: number, fontStr: string, color: string, lineWidth: number, textAlign: string): void;
+        fillBorderText(txt: any, x: number, y: number, fontStr: string, fillColor: string, borderColor: string, lineWidth: number, textAlign: string): void;
         fillRect(x: number, y: number, width: number, height: number, fillStyle: any): void;
         setShader(shader: laya.webgl.shader.Shader): void;
         setFilters(value: Array<any>): void;
@@ -12458,7 +12588,7 @@ declare module laya.webgl.canvas {
         rotate(angle: number): void;
         scale(scaleX: number, scaleY: number): void;
         clipRect(x: number, y: number, width: number, height: number): void;
-        setIBVB(x: number, y: number, ib: laya.webgl.utils.IndexBuffer, vb: laya.webgl.utils.VertexBuffer, numElement: number, mat: laya.maths.Matrix, shader: laya.webgl.shader.Shader, shaderValues: laya.webgl.shader.d2.value.Value2D, startIndex?: number, offset?: number): void;
+        setIBVB(x: number, y: number, ib: laya.webgl.utils.IndexBuffer2D, vb: laya.webgl.utils.VertexBuffer2D, numElement: number, mat: laya.maths.Matrix, shader: laya.webgl.shader.Shader, shaderValues: laya.webgl.shader.d2.value.Value2D, startIndex?: number, offset?: number): void;
         addRenderObject(o: laya.webgl.submit.ISubmit): void;
         fillTrangles(tex: laya.resource.Texture, x: number, y: number, points: Array<any>, m: laya.maths.Matrix): void;
         submitElement(start: number, end: number): void;
@@ -12467,7 +12597,7 @@ declare module laya.webgl.canvas {
         /*******************************************start矢量绘制***************************************************/
         beginPath(): void;
         closePath(): void;
-        fill(): void;
+        fill(isConvexPolygon?: boolean): void;
         stroke(): void;
         line(fromX: number, fromY: number, toX: number, toY: number, lineWidth: number, mat: laya.maths.Matrix): void;
         moveTo(x: number, y: number): void;
@@ -12484,7 +12614,7 @@ declare module laya.webgl.canvas {
          * @param	y
          * @param	points
          */
-        drawPoly(x: number, y: number, points: Array<any>, color: number, lineWidth: number, boderColor: number): void;
+        drawPoly(x: number, y: number, points: Array<any>, color: number, lineWidth: number, boderColor: number, isConvexPolygon?: boolean): void;
         /*******************************************end矢量绘制***************************************************/
         drawParticle(x: number, y: number, pt: any): void;
     }
@@ -12523,6 +12653,7 @@ declare module laya.webgl.resource {
     class RenderTarget2D extends laya.resource.Texture implements laya.resource.IDispose {
         static TYPE2D: number;
         static TYPE3D: number;
+        private static POOL;
         surfaceFormat: number;
         surfaceType: number;
         depthStencilFormat: number;
@@ -12642,7 +12773,6 @@ declare module laya.webgl.resource {
         constructor(canvas: any, char?: laya.webgl.text.DrawTextChar);
         protected recreateResource(): void;
         clearAtlasSource(): void;
-        dispose(): void;
     }
 }
 declare module laya.webgl.resource {
@@ -12824,6 +12954,7 @@ declare module laya.webgl.shader.d2 {
         static FILTERBLUR: number;
         static FILTERCOLOR: number;
         static COLORADD: number;
+        static WORLDMAT: number;
         private static __name2int;
         private static __int2name;
         private static __int2nameMap;
@@ -12899,7 +13030,7 @@ declare module laya.webgl.shader.d2.value {
         mainID: number;
         subID: number;
         filters: Array<any>;
-        textureHost: any;
+        textureHost: laya.resource.Texture;
         texture: any;
         fillStyle: laya.webgl.canvas.DrawStyle;
         color: Array<any>;
@@ -12977,6 +13108,7 @@ declare module laya.webgl.shader {
          */
         getUniform(name: string): any;
         uploadOne(name: string, value: any): void;
+        uploadTexture2D(value: any): void;
         /**
          * 提交shader到GPU
          * @param	shaderValue
@@ -13125,25 +13257,24 @@ declare module laya.webgl.submit {
         static TYPE_TARGET: number;
         static TYPE_CHANGE_VALUE: number;
         static TYPE_SHAPE: number;
+        static TYPE_TEXTURE: number;
         static RENDERBASE: Submit;
         private static _cache;
-        protected _renderType: number;
-        protected _selfVb: laya.webgl.utils.VertexBuffer;
-        protected _ib: laya.webgl.utils.IndexBuffer;
+        protected _selfVb: laya.webgl.utils.VertexBuffer2D;
+        protected _ib: laya.webgl.utils.IndexBuffer2D;
         protected _blendFn: Function;
-        _vb: laya.webgl.utils.VertexBuffer;
+        _renderType: number;
+        _vb: laya.webgl.utils.VertexBuffer2D;
         _startIdx: number;
         _numEle: number;
-        _submitID: number;
-        _mergID: number;
         shaderValue: laya.webgl.shader.d2.value.Value2D;
         static __init__(): void;
         constructor(renderType?: number);
         releaseRender(): void;
         getRenderType(): number;
         renderSubmit(): number;
-        static create(context: laya.webgl.canvas.WebGLContext2D, submitID: number, mergID: number, ib: laya.webgl.utils.IndexBuffer, vb: laya.webgl.utils.VertexBuffer, pos: number, sv: laya.webgl.shader.d2.value.Value2D): Submit;
-        static createShape(ctx: laya.webgl.canvas.WebGLContext2D, ib: laya.webgl.utils.IndexBuffer, vb: laya.webgl.utils.VertexBuffer, numEle: number, offset: number, sv: laya.webgl.shader.d2.value.Value2D): Submit;
+        static create(context: laya.webgl.canvas.WebGLContext2D, ib: laya.webgl.utils.IndexBuffer2D, vb: laya.webgl.utils.VertexBuffer2D, pos: number, sv: laya.webgl.shader.d2.value.Value2D): Submit;
+        static createShape(ctx: laya.webgl.canvas.WebGLContext2D, ib: laya.webgl.utils.IndexBuffer2D, vb: laya.webgl.utils.VertexBuffer2D, numEle: number, offset: number, sv: laya.webgl.shader.d2.value.Value2D): Submit;
     }
 }
 declare module laya.webgl.submit {
@@ -13193,10 +13324,10 @@ declare module laya.webgl.submit {
     class SubmitOtherIBVB implements laya.webgl.submit.ISubmit {
         private static _cache;
         private static tempMatrix4;
-        static create(context: laya.webgl.canvas.WebGLContext2D, vb: laya.webgl.utils.VertexBuffer, ib: laya.webgl.utils.IndexBuffer, numElement: number, shader: laya.webgl.shader.Shader, shaderValue: laya.webgl.shader.d2.value.Value2D, startIndex: number, offset: number): SubmitOtherIBVB;
+        static create(context: laya.webgl.canvas.WebGLContext2D, vb: laya.webgl.utils.VertexBuffer2D, ib: laya.webgl.utils.IndexBuffer2D, numElement: number, shader: laya.webgl.shader.Shader, shaderValue: laya.webgl.shader.d2.value.Value2D, startIndex: number, offset: number): SubmitOtherIBVB;
         protected offset: number;
-        protected _vb: laya.webgl.utils.VertexBuffer;
-        protected _ib: laya.webgl.utils.IndexBuffer;
+        protected _vb: laya.webgl.utils.VertexBuffer2D;
+        protected _ib: laya.webgl.utils.IndexBuffer2D;
         protected _blendFn: Function;
         _mat: laya.maths.Matrix;
         _shader: laya.webgl.shader.Shader;
@@ -13239,8 +13370,8 @@ declare module laya.webgl.submit {
 declare module laya.webgl.submit {
     class SubmitTarget implements laya.webgl.submit.ISubmit {
         protected _renderType: number;
-        protected _vb: laya.webgl.utils.VertexBuffer;
-        protected _ib: laya.webgl.utils.IndexBuffer;
+        protected _vb: laya.webgl.utils.VertexBuffer2D;
+        protected _ib: laya.webgl.utils.IndexBuffer2D;
         _startIdx: number;
         _numEle: number;
         shaderValue: laya.webgl.shader.d2.value.Value2D;
@@ -13254,7 +13385,26 @@ declare module laya.webgl.submit {
         blend(): void;
         getRenderType(): number;
         releaseRender(): void;
-        static create(context: laya.webgl.canvas.WebGLContext2D, ib: laya.webgl.utils.IndexBuffer, vb: laya.webgl.utils.VertexBuffer, pos: number, sv: laya.webgl.shader.d2.value.Value2D, proName: string): SubmitTarget;
+        static create(context: laya.webgl.canvas.WebGLContext2D, ib: laya.webgl.utils.IndexBuffer2D, vb: laya.webgl.utils.VertexBuffer2D, pos: number, sv: laya.webgl.shader.d2.value.Value2D, proName: string): SubmitTarget;
+    }
+}
+declare module laya.webgl.submit {
+    /**
+     * ...
+     * @author laya
+     */
+    class SubmitTexture extends Submit {
+        protected _texs: Array<any>;
+        protected _texsID: Array<any>;
+        protected _vbPos: Array<any>;
+        _preIsSameTextureShader: boolean;
+        _isSameTexture: boolean;
+        constructor(renderType?: number);
+        releaseRender(): void;
+        addTexture(tex: laya.resource.Texture, vbpos: number): void;
+        checkTexture(): void;
+        renderSubmit(): number;
+        static create(context: laya.webgl.canvas.WebGLContext2D, ib: laya.webgl.utils.IndexBuffer2D, vb: laya.webgl.utils.VertexBuffer2D, pos: number, sv: laya.webgl.shader.d2.value.Value2D): SubmitTexture;
     }
 }
 declare module laya.webgl.text {
@@ -13263,15 +13413,16 @@ declare module laya.webgl.text {
      * @author laya
      */
     class DrawText {
+        private static _charsTemp;
         private static _textCachesPool;
         private static _curPoolIndex;
-        private static _wordsMsg;
-        private static _textCache;
-        private static _charsTemp;
+        private static _charsCache;
+        private static _textsCache;
         static _drawValue: CharValue;
+        static d: Array<any>;
         static __init__(): void;
         static getChar(char: string, id: number, drawValue: CharValue): DrawTextChar;
-        static drawText(ctx: laya.webgl.canvas.WebGLContext2D, txt: string, words: Array<any>, curMat: laya.maths.Matrix, font: FontInContext, textAlign: string, fillColor: string, borderColor: string, lineWidth: number, x: number, y: number): void;
+        static drawText(ctx: laya.webgl.canvas.WebGLContext2D, txt: any, words: Array<any>, curMat: laya.maths.Matrix, font: FontInContext, textAlign: string, fillColor: string, borderColor: string, lineWidth: number, x: number, y: number): void;
     }
     class CharValue {
         private static _keymap;
@@ -13284,6 +13435,7 @@ declare module laya.webgl.text {
         scaleX: number;
         scaleY: number;
         value(font: any, fillColor: string, borderColor: string, lineWidth: number, scaleX: number, scaleY: number): CharValue;
+        static clear(): void;
     }
 }
 declare module laya.webgl.text {
@@ -13337,17 +13489,6 @@ declare module laya.webgl.utils {
      */
     class Buffer extends laya.resource.Resource {
         static INDEX: string;
-        static POSITION0: string;
-        static NORMAL0: string;
-        static COLOR0: string;
-        static COLOR1: string;
-        static UV0: string;
-        static NEXTUV0: string;
-        static UV1: string;
-        static NEXTUV1: string;
-        static BLENDWEIGHT0: string;
-        static BLENDINDICES0: string;
-        static TANGENT0: string;
         static MVPMATRIX: string;
         static MATRIX1: string;
         static MATRIX2: string;
@@ -13388,12 +13529,6 @@ declare module laya.webgl.utils {
         static SPOTLIGHTDIFFUSE: string;
         static SPOTLIGHTAMBIENT: string;
         static SPOTLIGHTSPECULAR: string;
-        static CORNERTEXTURECOORDINATE: string;
-        static VELOCITY: string;
-        static SIZEROTATION: string;
-        static RADIUS: string;
-        static RADIAN: string;
-        static AGEADDSCALE: string;
         static TIME: string;
         static VIEWPORTSCALE: string;
         static CURRENTTIME: string;
@@ -13419,7 +13554,7 @@ declare module laya.webgl.utils {
         bufferLength: number;
         length: number;
         constructor();
-        protected _checkFloatArray32Use(): void;
+        protected _checkArrayUse(): void;
         protected recreateResource(): void;
         protected detoryResource(): void;
         _bind(): void;
@@ -13472,13 +13607,13 @@ declare module laya.webgl.utils {
          *	 |__\|
          *	 3   2
          */
-        static fillIBQuadrangle(buffer: IndexBuffer, count: number): boolean;
-        static expandIBQuadrangle(buffer: IndexBuffer, count: number): void;
+        static fillIBQuadrangle(buffer: IndexBuffer2D, count: number): boolean;
+        static expandIBQuadrangle(buffer: IndexBuffer2D, count: number): void;
         static mathCeilPowerOfTwo(value: number): number;
-        static fillQuadrangleImgVb(vb: VertexBuffer, x: number, y: number, point4: Array<any>, uv: Array<any>, m: laya.maths.Matrix, _x: number, _y: number): boolean;
-        static fillTranglesVB(vb: VertexBuffer, x: number, y: number, points: Array<any>, m: laya.maths.Matrix, _x: number, _y: number): boolean;
-        static fillRectImgVb(vb: VertexBuffer, clip: laya.maths.Rectangle, x: number, y: number, width: number, height: number, uv: Array<any>, m: laya.maths.Matrix, _x: number, _y: number, dx: number, dy: number, round?: boolean): boolean;
-        static fillLineVb(vb: VertexBuffer, clip: laya.maths.Rectangle, fx: number, fy: number, tx: number, ty: number, width: number, mat: laya.maths.Matrix): boolean;
+        static fillQuadrangleImgVb(vb: VertexBuffer2D, x: number, y: number, point4: Array<any>, uv: Array<any>, m: laya.maths.Matrix, _x: number, _y: number): boolean;
+        static fillTranglesVB(vb: VertexBuffer2D, x: number, y: number, points: Array<any>, m: laya.maths.Matrix, _x: number, _y: number): boolean;
+        static fillRectImgVb(vb: VertexBuffer2D, clip: laya.maths.Rectangle, x: number, y: number, width: number, height: number, uv: Array<any>, m: laya.maths.Matrix, _x: number, _y: number, dx: number, dy: number, round?: boolean): boolean;
+        static fillLineVb(vb: VertexBuffer2D, clip: laya.maths.Rectangle, fx: number, fy: number, tx: number, ty: number, width: number, mat: laya.maths.Matrix): boolean;
     }
 }
 declare module laya.webgl.utils {
@@ -13490,6 +13625,22 @@ declare module laya.webgl.utils {
         static QuadrangleIB: IndexBuffer;
         static create: Function;
         constructor(bufferUsage?: number);
+        getUint16Array(): Uint16Array;
+    }
+}
+declare module laya.webgl.utils {
+    /**
+     * ...
+     * @author laya
+     */
+    class IndexBuffer2D extends Buffer {
+        static QuadrangleIB: IndexBuffer2D;
+        static create: Function;
+        protected _uint8Array: Uint8Array;
+        protected _uint16Array: Uint16Array;
+        constructor(bufferUsage?: number);
+        protected _checkArrayUse(): void;
+        getUint8Array(): Uint8Array;
         getUint16Array(): Uint16Array;
     }
 }
@@ -13526,6 +13677,7 @@ declare module laya.webgl.utils {
         static curRenderTarget: laya.webgl.resource.RenderTarget2D;
         static width: number;
         static height: number;
+        static getMatrArray(): Array<any>;
         static mat2MatArray(mat: laya.maths.Matrix, matArray: Array<any>): Array<any>;
         static restoreTempArray(): void;
         static clear(): void;
@@ -13609,6 +13761,25 @@ declare module laya.webgl.utils {
         bind_upload(ibBuffer: IndexBuffer): void;
         protected _checkFloatArray32Use(): void;
         disposeCPUData(): void;
+    }
+}
+declare module laya.webgl.utils {
+    /**
+     * ...
+     * @author laya
+     */
+    class VertexBuffer2D extends Buffer {
+        static create: Function;
+        protected _floatArray32: Float32Array;
+        vertexStride: number;
+        constructor(vertexStride: number, bufferUsage: number);
+        getFloat32Array(): any;
+        bind(ibBuffer: IndexBuffer2D): void;
+        insertData(data: Array<any>, pos: number): void;
+        bind_upload(ibBuffer: IndexBuffer2D): void;
+        protected _checkArrayUse(): void;
+        disposeCPUData(): void;
+        protected detoryResource(): void;
     }
 }
 declare module laya.webgl.utils {
@@ -13994,11 +14165,11 @@ declare module laya.webgl {
         bufferData(target: any, size: any, usage: any): void;
         bufferSubData(target: any, offset: number, data: any): void;
         checkFramebufferStatus(target: any): any;
-        clear(mask: any): void;
+        clear(mask: number): void;
         clearColor(red: any, green: any, blue: any, alpha: number): void;
         clearDepth(depth: any): void;
         clearStencil(s: any): void;
-        colorMask(red: any, green: any, blue: any, alpha: any): void;
+        colorMask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;
         compileShader(shader: any): void;
         copyTexImage2D(target: any, level: any, internalformat: any, x: number, y: number, width: number, height: number, border: any): void;
         copyTexSubImage2D(target: any, level: any, xoffset: number, yoffset: number, x: number, y: number, width: number, height: number): void;
@@ -14067,12 +14238,12 @@ declare module laya.webgl {
         sampleCoverage(value: any, invert: any): void;
         scissor(x: number, y: number, width: number, height: number): void;
         shaderSource(shader: any, source: any): void;
-        stencilFunc(func: any, ref: any, mask: any): void;
-        stencilFuncSeparate(face: any, func: any, ref: any, mask: any): void;
+        stencilFunc(func: number, ref: number, mask: number): void;
+        stencilFuncSeparate(face: number, func: number, ref: number, mask: number): void;
         stencilMask(mask: any): void;
         stencilMaskSeparate(face: any, mask: any): void;
-        stencilOp(fail: any, zfail: any, zpass: any): void;
-        stencilOpSeparate(face: any, fail: any, zfail: any, zpass: any): void;
+        stencilOp(fail: number, zfail: number, zpass: number): void;
+        stencilOpSeparate(face: number, fail: number, zfail: number, zpass: number): void;
         texImage2D(...args: any[]): void;
         texParameterf(target: any, pname: any, param: any): void;
         texParameteri(target: any, pname: any, param: any): void;
@@ -14119,6 +14290,8 @@ declare module Laya {
     class BoneSlot extends laya.ani.bone.BoneSlot {
     }
     class Skeleton extends laya.ani.bone.Skeleton {
+    }
+    class SkeletonPlayer extends laya.ani.bone.SkeletonPlayer {
     }
     class SkinData extends laya.ani.bone.SkinData {
     }
@@ -14274,6 +14447,8 @@ declare module Laya {
     }
     class ParticleEmitter extends laya.particle.ParticleEmitter {
     }
+    class ParticlePlayer extends laya.particle.ParticlePlayer {
+    }
     class ParticleSettings extends laya.particle.ParticleSettings {
     }
     class ParticleTemplate2D extends laya.particle.ParticleTemplate2D {
@@ -14428,6 +14603,8 @@ declare module Laya {
     }
     class Utils extends laya.utils.Utils {
     }
+    class WordText extends laya.utils.WordText {
+    }
     class Atlaser extends laya.webgl.atlas.Atlaser {
     }
     class AtlasGrid extends laya.webgl.atlas.AtlasGrid {
@@ -14528,6 +14705,8 @@ declare module Laya {
     }
     class SubmitTarget extends laya.webgl.submit.SubmitTarget {
     }
+    class SubmitTexture extends laya.webgl.submit.SubmitTexture {
+    }
     class DrawText extends laya.webgl.text.DrawText {
     }
     class DrawTextChar extends laya.webgl.text.DrawTextChar {
@@ -14542,6 +14721,8 @@ declare module Laya {
     }
     class IndexBuffer extends laya.webgl.utils.IndexBuffer {
     }
+    class IndexBuffer2D extends laya.webgl.utils.IndexBuffer2D {
+    }
     class RenderSprite3D extends laya.webgl.utils.RenderSprite3D {
     }
     class RenderState2D extends laya.webgl.utils.RenderState2D {
@@ -14551,6 +14732,8 @@ declare module Laya {
     class ValusArray extends laya.webgl.utils.ValusArray {
     }
     class VertexBuffer extends laya.webgl.utils.VertexBuffer {
+    }
+    class VertexBuffer2D extends laya.webgl.utils.VertexBuffer2D {
     }
     class VertexDeclaration extends laya.webgl.utils.VertexDeclaration {
     }

@@ -179,15 +179,15 @@ package laya.utils {
 			//缓存当前属性
 			var target:* = this._target;
 			var props:* = this._props;
-			var handler:Handler = this._complete;
-			//先清理
-			clear();
+			var handler:Handler = this._complete;			
 			//设置终点属性
 			for (var i:int, n:int = props.length; i < n; i++) {
 				var prop:Array = props[i];
 				target[prop[0]] = prop[1] + prop[2];
 			}
 			if (update) update.run();
+			//清理
+			clear();
 			//回调
 			handler && handler.run();
 		}

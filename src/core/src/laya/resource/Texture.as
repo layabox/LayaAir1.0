@@ -49,6 +49,8 @@ package laya.resource {
 		public var url:String;
 		//public var repeat:Boolean = false;
 		
+		public var _uvID:int = 0;
+		
 		/**
 		 * 创建一个 <code>Texture</code> 实例。
 		 * @param	bitmap 位图资源。
@@ -80,7 +82,7 @@ package laya.resource {
 					RunDriver.addToAtlas && RunDriver.addToAtlas(_this);
 				} else {
 					var bm:* = bitmap;
-					if (bm is HTMLImage && bm.image)//必须是webglImage(只有必须是webglImage包含image)
+					if (bm is HTMLImage && bm.image)//必须是webglImage(只有webglImage包含image)
 						bm.image.addEventListener('load', function(e:*):void {
 							RunDriver.addToAtlas && RunDriver.addToAtlas(_this);
 						}, false);
@@ -198,9 +200,10 @@ package laya.resource {
 						bitmap.dispose();
 					}
 				}
+				bitmap = null;
 				if (url) Laya.loader.clearRes(url);
+				_loaded = false;
 			}
-			bitmap = null;
 			//uv = null;
 		}
 		

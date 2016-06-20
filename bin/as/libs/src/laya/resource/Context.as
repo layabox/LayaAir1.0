@@ -23,10 +23,14 @@ package laya.resource {
 			ctx.__fillText = ctx.fillText;
 			ctx.__fillRect = ctx.fillRect;
 			ctx.__strokeText = ctx.strokeText;
-			var funs:Array = ['fillWords', 'fillRect', 'strokeText', 'fillText', 'transformByMatrix', 'setTransformByMatrix', 'clipRect', 'drawTexture', 'drawTexture2', 'drawTextureWithTransform', 'flush', 'clear', 'destroy', 'drawCanvas', 'fillBorderText'];
+			var funs:Array = ['fillWords','setIsMainContext','fillRect', 'strokeText', 'fillText', 'transformByMatrix', 'setTransformByMatrix', 'clipRect', 'drawTexture', 'drawTexture2', 'drawTextureWithTransform', 'flush', 'clear', 'destroy', 'drawCanvas', 'fillBorderText'];
 			funs.forEach(function(i:String):void {
 				ctx[i] = _default[i];
 			});
+		}
+		
+		public function setIsMainContext():void
+		{
 		}
 		
 		/*[IF-FLASH-BEGIN]*/
@@ -171,7 +175,7 @@ package laya.resource {
 		}
 		
 		/*** @private */
-		public function fillText(text:String, x:Number, y:Number, font:String, color:String, textAlign:String):void {
+		public function fillText(text:*, x:Number, y:Number, font:String, color:String, textAlign:String):void {
 			Stat.drawCall++;
 			if (arguments.length > 3 && font != null) {
 				this.font = font;
@@ -183,7 +187,7 @@ package laya.resource {
 		}
 		
 		/*** @private */
-		public function fillBorderText(text:String, x:Number, y:Number, font:String, fillColor:String, borderColor:String, lineWidth:int, textAlign:String):void {
+		public function fillBorderText(text:*, x:Number, y:Number, font:String, fillColor:String, borderColor:String, lineWidth:int, textAlign:String):void {
 			Stat.drawCall++;
 			
 			this.font = font;
@@ -199,7 +203,7 @@ package laya.resource {
 		}
 		
 		/*** @private */
-		public function strokeText(text:String, x:Number, y:Number, font:String, color:String, lineWidth:Number, textAlign:String):void {
+		public function strokeText(text:*, x:Number, y:Number, font:String, color:String, lineWidth:Number, textAlign:String):void {
 			Stat.drawCall++;
 			if (arguments.length > 3 && font != null) {
 				this.font = font;

@@ -62,6 +62,8 @@ package laya.webgl.resource {
 			var preShaderDefines:ShaderDefines2D = RenderState2D.worldShaderDefines;
 			
 			RenderState2D.worldMatrix = _matrixDefault;
+			
+			RenderState2D.restoreTempArray();
 			RenderState2D.worldMatrix4 = RenderState2D.TEMPMAT4_ARRAY;
 			RenderState2D.worldAlpha = 1;
 			RenderState2D.worldFilters = null;

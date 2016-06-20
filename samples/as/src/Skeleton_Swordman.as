@@ -21,7 +21,7 @@ package
 		private const ANI_COME_ON_STAGE	:int = 6;
 		private const ANI_ATTACK2:int = 7;
 
-		private var dataPath:String = "res/skeleton/SwordsMan/SwordsMan_1.bin";
+		private var dataPath:String = "res/skeleton/SwordsMan/SwordsMan_1.sk";
 		private var texturePath:String = "res/skeleton/SwordsMan/texture.png";
 
 		private var factory:Templet;
@@ -85,7 +85,7 @@ package
 			// 创建骨骼动画
 			swordman = factory.buildArmature(2);
 			swordman.scale(InintialScale, InintialScale);
-			swordman.play(currAction = ANI_STAND);
+			swordman.play(currAction = ANI_STAND, true);
 			Laya.stage.addChild(swordman);
 			//swordman.filters = [new GlowFilter("#ffff00", 10, 0, 0)];
 			swordman.pos(200, landingY);

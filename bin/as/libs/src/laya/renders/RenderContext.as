@@ -5,6 +5,7 @@ package laya.renders {
 	import laya.resource.HTMLCanvas;
 	import laya.resource.Texture;
 	import laya.utils.RunDriver;
+	import laya.utils.Stat;
 	
 	/**
 	 * @private
@@ -96,15 +97,20 @@ package laya.renders {
 			}
 		}
 		
-		private function _fillAndStroke(fillColor:String, strokeColor:String, lineWidth:int):void {
-			//填充矩形
+		private function _fillAndStroke(fillColor:String, strokeColor:String, lineWidth:int, isConvexPolygon:Boolean = false):void {
+			//绘制填充区域
 			var ctx:* = this.ctx;
 			if (fillColor != null) {
 				ctx.fillStyle = fillColor;
-				ctx.fill();
+				if (Render.isWebGL)
+				{
+					ctx.fill(isConvexPolygon);
+				}else {
+					ctx.fill();
+				}
 			}
 			
-			//绘制矩形边框
+			//绘制边框
 			if (strokeColor != null && lineWidth>0) {
 				ctx.strokeStyle = strokeColor;
 				ctx.lineWidth = lineWidth;
@@ -123,7 +129,7 @@ package laya.renders {
 			ctx.arc(x + args[0], y + args[1], args[2], args[3], args[4]);
 			ctx.closePath();
 			//绘制
-			this._fillAndStroke(args[5], args[6], args[7]);
+			this._fillAndStroke(args[5], args[6], args[7],true);
 			//恢复中心点
 			//ctx.translate(-x - args[0], -y - args[1]);
 		}
@@ -144,6 +150,7 @@ package laya.renders {
 		}
 		
 		public function drawCircle(x:Number, y:Number, radius:Number, color:String, lineWidth:Number = 1):void {
+			Stat.drawCall++;
 			var ctx:* = this.ctx;
 			ctx.beginPath();
 			ctx.strokeStyle = color;
@@ -152,17 +159,18 @@ package laya.renders {
 			ctx.stroke();
 		}
 		
-		public var _drawCircle:Function=function(x:Number, y:Number, args:Array):void {
+		public var _drawCircle:Function = function(x:Number, y:Number, args:Array):void {
+			Stat.drawCall++;
 			var ctx:* = this.ctx;
-			
 			ctx.beginPath();
 			ctx.arc(args[0] + x, args[1] + y, args[2], 0, PI2);
 			ctx.closePath();
 			//绘制
-			this._fillAndStroke(args[3], args[4], args[5]);
+			this._fillAndStroke(args[3], args[4], args[5],true);
 		}
 		
 		public function fillCircle(x:Number, y:Number, radius:Number, color:String):void {
+			Stat.drawCall++;
 			var ctx:* = this.ctx;
 			ctx.beginPath();
 			ctx.fillStyle = color;
@@ -170,6 +178,7 @@ package laya.renders {
 			ctx.fill();
 		}
 		public var _fillCircle:Function=function(x:Number, y:Number, args:Array):void {
+			Stat.drawCall++;
 			var ctx:* = this.ctx;
 			ctx.beginPath();
 			ctx.fillStyle = args[3];

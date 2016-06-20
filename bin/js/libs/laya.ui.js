@@ -2,13 +2,14 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Sprite=laya.display.Sprite,ColorFilter=laya.filters.ColorFilter,Graphics=laya.display.Graphics;
-	var Handler=laya.utils.Handler,Event=laya.events.Event,Loader=laya.net.Loader,Texture=laya.resource.Texture;
-	var Font=laya.display.css.Font,Input=laya.display.Input,Text=laya.display.Text,Point=laya.maths.Point,Tween=laya.utils.Tween;
-	var Ease=laya.utils.Ease,Utils=laya.utils.Utils,Stage=laya.display.Stage,Rectangle=laya.maths.Rectangle,Node=laya.display.Node;
-	Laya.interface('laya.ui.ISelect');
-	Laya.interface('laya.ui.IRender');
+	var ColorFilter=laya.filters.ColorFilter,Ease=laya.utils.Ease,Event=laya.events.Event,Font=laya.display.css.Font;
+	var Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Input=laya.display.Input,Loader=laya.net.Loader;
+	var Node=laya.display.Node,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle,Sprite=laya.display.Sprite;
+	var Stage=laya.display.Stage,Text=laya.display.Text,Texture=laya.resource.Texture,Tween=laya.utils.Tween;
+	var Utils=laya.utils.Utils;
 	Laya.interface('laya.ui.IComponent');
+	Laya.interface('laya.ui.IRender');
+	Laya.interface('laya.ui.ISelect');
 	Laya.interface('laya.ui.IItem');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
@@ -1443,7 +1444,8 @@
 		*/
 		__proto.play=function(){
 			this._isPlaying=true;
-			this._index=0;
+			this.index=0;
+			this._index++;
 			Laya.timer.loop(this.interval,this,this._loop);
 		}
 
@@ -3783,6 +3785,42 @@
 			this._dataSource=value;
 			if ((typeof value=='number')|| (typeof value=='string'))this.text=value+"";
 			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		/**
+		*@copy laya.display.Text#overflow
+		*/
+		/**
+		*@copy laya.display.Text#overflow
+		*/
+		__getset(0,__proto,'overflow',function(){
+			return this._tf.overflow;
+			},function(value){
+			this._tf.overflow=value;
+		});
+
+		/**
+		*@copy laya.display.Text#underline
+		*/
+		/**
+		*@copy laya.display.Text#underline
+		*/
+		__getset(0,__proto,'underline',function(){
+			return this._tf.underline;
+			},function(value){
+			this._tf.underline=value;
+		});
+
+		/**
+		*@copy laya.display.Text#underlineColor
+		*/
+		/**
+		*@copy laya.display.Text#underlineColor
+		*/
+		__getset(0,__proto,'underlineColor',function(){
+			return this._tf.underlineColor;
+			},function(value){
+			this._tf.underlineColor=value;
 		});
 
 		return Label;
@@ -7564,20 +7602,18 @@
 					this.modalLayer.graphics.alpha(1 / UIConfig.popupBgAlpha);
 					for (var i=this.dialogLayer.numChildren-1;i >-1;i--){
 						var item=this.dialogLayer.getChildAt(i);
-						if (item.popupCenter){
-							item.x=(width-item.width)*0.5;
-							item.y=(height-item.height)*0.5;
-						}
+						if (item.popupCenter)this._centerDialog(item);
 					}
 					for (i=this.modalLayer.numChildren-1;i >-1;i--){
 						item=this.modalLayer.getChildAt(i);
 						if (item.isPopup){
-							if (item.popupCenter){
-								item.x=(width-item.width)*0.5;
-								item.y=(height-item.height)*0.5;
-							}
+							if (item.popupCenter)this._centerDialog(item);
 						}
 					}
+				}
+				__proto._centerDialog=function(dialog){
+					dialog.x=Math.round((this._stage.width-dialog.width)>> 1+dialog.pivotX);
+					dialog.y=Math.round((this._stage.height-dialog.height)>> 1+dialog.pivotY);
 				}
 				/**
 				*显示对话框(非模式窗口类型)。
@@ -7587,10 +7623,7 @@
 				__proto.show=function(dialog,closeOther){
 					(closeOther===void 0)&& (closeOther=false);
 					if (closeOther)this.dialogLayer.removeChildren();
-					if (dialog.popupCenter){
-						dialog.x=(this._stage.width-dialog.width)*0.5;
-						dialog.y=(this._stage.height-dialog.height)*0.5;
-					}
+					if (dialog.popupCenter)this._centerDialog(dialog);
 					this.dialogLayer.addChild(dialog);
 					this.event(/*laya.events.Event.OPEN*/"open");
 				}
@@ -7602,10 +7635,7 @@
 				__proto.popup=function(dialog,closeOther){
 					(closeOther===void 0)&& (closeOther=false);
 					if (closeOther)this.modalLayer.removeChildren();
-					if (dialog.popupCenter){
-						dialog.x=(this._stage.width-dialog.width)*0.5;
-						dialog.y=(this._stage.height-dialog.height)*0.5;
-					}
+					if (dialog.popupCenter)this._centerDialog(dialog);
 					this.modalLayer.addChild(dialog);
 					this.addChild(this.modalLayer);
 					this.event(/*laya.events.Event.OPEN*/"open");

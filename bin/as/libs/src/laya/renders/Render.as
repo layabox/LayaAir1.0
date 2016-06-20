@@ -48,7 +48,7 @@ package laya.renders {
 			isWebGl && WebGL.init(_mainCanvas, width, height);
 			Browser.container.appendChild(_mainCanvas.source);
 			_context = new RenderContext(width, height, isWebGl ? null : _mainCanvas);
-			
+			_context.ctx.setIsMainContext();
 			Browser.window.requestAnimationFrame(loop);
 			
 			function loop():void {

@@ -2,13 +2,13 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Matrix=laya.maths.Matrix,Timer=laya.utils.Timer,Event=laya.events.Event,Loader=laya.net.Loader;
-	var MathUtil=laya.maths.MathUtil,RenderContext=laya.renders.RenderContext,Utils=laya.utils.Utils,Texture=laya.resource.Texture;
-	var WebGL=laya.webgl.WebGL,IndexBuffer=laya.webgl.utils.IndexBuffer,Sprite=laya.display.Sprite,Stage=laya.display.Stage;
-	var Stat=laya.utils.Stat,WebGLContext=laya.webgl.WebGLContext,Shader=laya.webgl.shader.Shader,Buffer=laya.webgl.utils.Buffer;
-	var VertexBuffer=laya.webgl.utils.VertexBuffer,VertexDeclaration=laya.webgl.utils.VertexDeclaration,Value2D=laya.webgl.shader.d2.value.Value2D;
-	var Handler=laya.utils.Handler,Render=laya.renders.Render,RenderSprite=laya.renders.RenderSprite,WebGLImage=laya.webgl.resource.WebGLImage;
-	var BlendMode=laya.webgl.canvas.BlendMode,HTMLCanvas=laya.resource.HTMLCanvas;
+	var BlendMode=laya.webgl.canvas.BlendMode,Buffer=laya.webgl.utils.Buffer,Event=laya.events.Event,HTMLCanvas=laya.resource.HTMLCanvas;
+	var Handler=laya.utils.Handler,IndexBuffer2D=laya.webgl.utils.IndexBuffer2D,Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil;
+	var Matrix=laya.maths.Matrix,Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
+	var Shader=laya.webgl.shader.Shader,Sprite=laya.display.Sprite,Stage=laya.display.Stage,Stat=laya.utils.Stat;
+	var Texture=laya.resource.Texture,Timer=laya.utils.Timer,Utils=laya.utils.Utils,Value2D=laya.webgl.shader.d2.value.Value2D;
+	var VertexBuffer2D=laya.webgl.utils.VertexBuffer2D,WebGL=laya.webgl.WebGL,WebGLContext=laya.webgl.WebGLContext;
+	var WebGLImage=laya.webgl.resource.WebGLImage;
 	/**
 	*<code>EmitterBase</code> 类是粒子发射器类
 	*/
@@ -606,7 +606,6 @@
 		}
 
 		__proto.loadContent=function(){
-			this._vertexBuffer=VertexBuffer.create(new VertexDeclaration(-1),/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
 			var indexes=new Uint16Array(this.settings.maxPartices *6);
 			for (var i=0;i < this.settings.maxPartices;i++){
 				indexes[i *6+0]=(i *4+0);
@@ -616,7 +615,6 @@
 				indexes[i *6+4]=(i *4+2);
 				indexes[i *6+5]=(i *4+3);
 			}
-			this._indexBuffer=IndexBuffer.create(/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
 			this._indexBuffer.clear();
 			this._indexBuffer.append(indexes);
 			this._indexBuffer.upload();
@@ -973,6 +971,8 @@
 	//class laya.particle.ParticleTemplate2D extends laya.particle.ParticleTemplateWebGL
 	var ParticleTemplate2D=(function(_super){
 		function ParticleTemplate2D(parSetting){
+			this._vertexBuffer2D=null;
+			this._indexBuffer2D=null;
 			this.x=0;
 			this.y=0;
 			this._blendFn=null;
@@ -989,6 +989,8 @@
 			this.sv.u_EndVelocity=this.settings.endVelocity;
 			this._blendFn=BlendMode.fns[parSetting.blendState];
 			this.initialize();
+			this._vertexBuffer=this._vertexBuffer2D=VertexBuffer2D.create(-1,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
+			this._indexBuffer=this._indexBuffer2D=IndexBuffer2D.create(/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
 			this.loadContent();
 		}
 
@@ -1013,7 +1015,7 @@
 				this.blend();
 				if (this._firstActiveElement !=this._firstFreeElement){
 					var gl=WebGL.mainContext;
-					this._vertexBuffer.bind(this._indexBuffer);
+					this._vertexBuffer2D.bind(this._indexBuffer2D);
 					this.sv.u_texture=this.texture.source;
 					this.sv.upload();
 					if (this._firstActiveElement < this._firstFreeElement){

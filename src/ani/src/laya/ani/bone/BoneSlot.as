@@ -135,6 +135,15 @@ package laya.ani.bone {
 		}
 		
 		/**
+		 * 得到插糟的矩阵
+		 * @return
+		 */
+		public function getMatrix():Matrix
+		{
+			return _resultMatrix;
+		}
+		
+		/**
 		 * 用原始数据拷贝出一个
 		 * @return
 		 */

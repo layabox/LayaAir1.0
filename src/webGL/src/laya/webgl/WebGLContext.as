@@ -421,7 +421,7 @@ package laya.webgl
 		
 		public function checkFramebufferStatus(target:*):*{ return null; }
 		
-		public function clear(mask:*):void{}
+		public function clear(mask:uint):void{}
 		
 		public function clearColor(red:*, green:*, blue:*, alpha:Number):void{}
 		
@@ -429,7 +429,7 @@ package laya.webgl
 		
 		public function clearStencil(s:*):void{}
 		
-		public function colorMask(red:*, green:*, blue:*, alpha:*):void{}
+		public function colorMask(red:Boolean, green:Boolean, blue:Boolean, alpha:Boolean):void{}
 		
 		public function compileShader(shader:*):void{}
 		
@@ -567,17 +567,17 @@ package laya.webgl
 		
 		public function shaderSource(shader:*, source:*):void{}
 		
-		public function stencilFunc(func:*, ref:*, mask:*):void{}
+		public function stencilFunc(func:uint, ref:uint, mask:uint):void{}
 		
-		public function stencilFuncSeparate(face:*, func:*, ref:*, mask:*):void{}
+		public function stencilFuncSeparate(face:uint, func:uint, ref:uint, mask:uint):void{}
 		
 		public function stencilMask(mask:*):void{}
 		
 		public function stencilMaskSeparate(face:*, mask:*):void{}
 		
-		public function stencilOp(fail:*, zfail:*, zpass:*):void{}
+		public function stencilOp(fail:uint, zfail:uint, zpass:uint):void{}
 		
-		public function stencilOpSeparate(face:*, fail:*, zfail:*, zpass:*):void{}
+		public function stencilOpSeparate(face:uint, fail:uint, zfail:uint, zpass:uint):void{}
 		
 		public function texImage2D(... args):void{}
 		

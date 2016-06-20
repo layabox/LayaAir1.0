@@ -29,15 +29,17 @@
 	function createText(align, underlineWidth, underlineColor, x, y)
 	{
 		var txt = new Text();
-		txt.text = "Layabox\n是HTML5引擎技术提供商\n与优秀的游戏发行商\n	面向AS/JS/TS开发者提供HTML5开发技术方案";
+		txt.text = "Layabox\n是HTML5引擎技术提供商\n与优秀的游戏发行商\n面向AS/JS/TS开发者提供HTML5开发技术方案";
 
 		txt.size(300, 50);
 		txt.fontSize = 20;
 		txt.color = "#ffffff";
 		txt.align = align;
+
+		// 设置下划线
 		txt.underline = true;
-		txt.underlineWidth = underlineWidth;
 		txt.underlineColor = underlineColor;
+
 		txt.pos(x, y);
 
 		Laya.stage.addChild(txt);

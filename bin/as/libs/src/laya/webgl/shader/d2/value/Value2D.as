@@ -1,5 +1,6 @@
 package laya.webgl.shader.d2.value {
 	import laya.resource.Bitmap;
+	import laya.resource.Texture;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.DrawStyle;
 	import laya.webgl.shader.Shader;
@@ -16,6 +17,8 @@ package laya.webgl.shader.d2.value {
 	 */
 	public class Value2D  extends ShaderValue
 	{
+		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+
 		public static var _POSITION:Array;
 		public static var _TEXCOORD:Array;
 		
@@ -53,7 +56,7 @@ package laya.webgl.shader.d2.value {
 		public var subID:int=0;
 		public var filters:Array;
 		
-		public var textureHost:*;
+		public var textureHost:Texture;
 		public var texture:*;
 		public var fillStyle:DrawStyle;
 		public var color:Array;
@@ -107,6 +110,7 @@ package laya.webgl.shader.d2.value {
 		
 		private function _ShaderWithCompile():Shader2X
 		{
+			if ( RenderState2D.worldMatrix4 !== RenderState2D.TEMPMAT4_ARRAY) defines.add(ShaderDefines2D.WORLDMAT);
 			return  Shader.withCompile(0, mainID, defines.toNameDic(), mainID | defines._value, Shader2X.create) as Shader2X;
 		}
 		
@@ -144,9 +148,9 @@ package laya.webgl.shader.d2.value {
 			
 			var params:Array;
 			 
-			 this.size[0]  = renderstate2d.width, this.size[1] = renderstate2d.height;
-			 mmat = renderstate2d.worldMatrix4;
-			 
+			this.size[0]  = renderstate2d.width, this.size[1] = renderstate2d.height;
+			mmat = renderstate2d.worldMatrix4;
+			
 			if (Shader.activeShader!==sd)
 			{
 				if (sd._shaderValueWidth !==  renderstate2d.width ||  sd._shaderValueHeight !== renderstate2d.height){

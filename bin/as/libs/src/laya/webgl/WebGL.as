@@ -99,11 +99,16 @@ package laya.webgl {
 			}
 			
 			RunDriver.addToAtlas = function(texture:Texture, force:Boolean = false):void {
-				if (!Render.optimizeTextureMemory(texture.url, texture))
-					return;
 				var bitmap:Bitmap = texture.bitmap;
+				if (!Render.optimizeTextureMemory(texture.url, texture)) {
+					(bitmap as IMergeAtlasBitmap).enableMerageInAtlas = false;
+					return;
+				}
+				
 				if ((bitmap is IMergeAtlasBitmap) && ((bitmap as IMergeAtlasBitmap).allowMerageInAtlas)) {
 					bitmap.on(Event.RECOVERED, null, function(bm:Bitmap):void {
+						texture._uvID ++;
+						AtlasResourceManager._atlasRestore++;
 						((bitmap as IMergeAtlasBitmap).enableMerageInAtlas) && (AtlasResourceManager.instance.addToAtlas(texture));//资源恢复时重新加入大图集
 					});
 				}

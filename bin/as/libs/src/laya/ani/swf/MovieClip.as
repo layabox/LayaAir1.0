@@ -186,10 +186,9 @@ package laya.ani.swf {
 		/**
 		 * 跳到某帧并停止播放动画。
 		 * @param frame 要跳到的帧
-		 *
 		 */
-		public function gotoAndStop(frame:int):void {
-			index = frame;
+		public function gotoAndStop(index:int):void {
+			this.index = index;
 			stop();
 		}
 		
@@ -218,10 +217,10 @@ package laya.ani.swf {
 		 * 播放动画。
 		 * @param	frameIndex 帧索引。
 		 */
-		public function play(frameIndex:int = -1, loop:Boolean = true):void {
+		public function play(index:int = -1, loop:Boolean = true):void {
 			this.loop = loop;
 			if (_data)
-				_displayFrame(frameIndex);
+				_displayFrame(index);
 			_playing = true;
 		}
 		

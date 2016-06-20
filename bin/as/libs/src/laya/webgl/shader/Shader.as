@@ -368,6 +368,13 @@ package laya.webgl.shader {
 			one.fun.call(this, one, value);
 		}
 		
+		public function uploadTexture2D(value:*):void
+		{
+			var gl:WebGLContext = WebGL.mainContext;
+			gl.activeTexture(WebGLContext.TEXTURE0);
+			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
+		}
+		
 		/**
 		 * 提交shader到GPU
 		 * @param	shaderValue
@@ -388,7 +395,6 @@ package laya.webgl.shader {
 			for (var i:int = 0; i < n; i++) {
 				one = params[i];
 				((value = shaderValue[one.name]) !== null) && (shaderCall += one.fun.call(this, one, value));
-				
 			}
 			
 			Stat.shaderCall += shaderCall;
@@ -407,7 +413,7 @@ package laya.webgl.shader {
 			var params:* = _params, value:*;
 			var one:*, shaderCall:int = 0, uploadArrayCount:int = _uploadArrayCount++;
 			for (var i:int = length - 2; i >= 0; i -= 2) {
-				one = _paramsMap[shaderValue[i]]
+				one = _paramsMap[shaderValue[i]];
 				if (!one || one._uploadArrayCount === uploadArrayCount)
 					continue;
 				

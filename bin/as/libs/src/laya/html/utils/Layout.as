@@ -165,6 +165,8 @@ package laya.html.utils {
 				tLineFirstKey = false;
 				if (oneLayout is HTMLBrElement) {
 					addLine();
+					curLine.y = y;
+					curLine.h = lineHeight;
 					continue;
 				} else if (oneLayout._isChar()) {
 					htmlWord = oneLayout as HTMLChar;
@@ -227,9 +229,9 @@ package laya.html.utils {
 					lines[i].updatePos(0, width, i, tY, align, valign, lineHeight);
 					tY += Math.max(lineHeight, lines[i].h);
 				}
+				y = tY;
 			}
 			widthAuto && (element.width = maxWidth);
-			
 			(y > element.height) && (element.height = y);
 			
 			return [maxWidth, y];

@@ -12,7 +12,7 @@ package laya.webgl.utils {
 		public static const _MAXSIZE:int = 99999999;
 		
 		public static var TEMPMAT4_ARRAY:Array=/*[STATIC SAFE]*/ [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-		public static var worldMatrix4:Array = /*[STATIC SAFE]*/ [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+		public static var worldMatrix4:Array = /*[STATIC SAFE]*/ TEMPMAT4_ARRAY;
 		
 		public static var worldMatrix:Matrix = new Matrix();
 		
@@ -28,7 +28,12 @@ package laya.webgl.utils {
 		public static var curRenderTarget:RenderTarget2D;
 		
 		public static var width:Number=0;
-		public static var height:Number=0;
+		public static var height:Number = 0;
+		
+		public static function getMatrArray():Array
+		{
+			return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+		}
 		
 		public static function mat2MatArray(mat:Matrix,matArray:Array):Array
 		{

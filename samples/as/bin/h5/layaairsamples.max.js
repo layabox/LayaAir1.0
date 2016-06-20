@@ -177,14 +177,24 @@ window.Laya=(function(window,document){
 
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
-	Laya.interface('laya.webgl.shapes.IShape');
+	Laya.interface('laya.filters.IFilterAction');
 	Laya.interface('laya.webgl.resource.IMergeAtlasBitmap');
 	Laya.interface('laya.webgl.canvas.save.ISaveData');
-	Laya.interface('laya.filters.IFilterAction');
 	Laya.interface('laya.webgl.submit.ISubmit');
-	Laya.interface('laya.resource.IDispose');
 	Laya.interface('laya.display.ILayout');
+	Laya.interface('laya.webgl.shapes.IShape');
+	Laya.interface('laya.resource.IDispose');
 	Laya.interface('laya.filters.IFilterActionGL','laya.filters.IFilterAction');
+	var wait=Laya.wait=function(conditions){
+		return Asyn.wait(conditions);
+	}
+
+
+	var load=Laya.load=function(url,type){
+		return Asyn.load(url,type);
+	}
+
+
 	var await=Laya.await=function(caller,fn,nextLine){
 		Asyn._caller_=caller;
 		Asyn._callback_=fn;
@@ -194,16 +204,6 @@ window.Laya=(function(window,document){
 
 	var sleep=Laya.sleep=function(value){
 		Asyn.sleep(value);
-	}
-
-
-	var wait=Laya.wait=function(conditions){
-		return Asyn.wait(conditions);
-	}
-
-
-	var load=Laya.load=function(url,type){
-		return Asyn.load(url,type);
 	}
 
 
@@ -381,33 +381,39 @@ window.Laya=(function(window,document){
 	})()
 
 
-	//class Animation_Altas
-	var Animation_Altas=(function(){
-		function Animation_Altas(){
-			this.AniConfPath="res/fighter/fighter.json";
-			Laya.init(Browser.clientWidth,Browser.clientHeight,WebGL);
+	//class Text_ComplexStyle
+	var Text_ComplexStyle=(function(){
+		function Text_ComplexStyle(){
+			Laya.init(Browser.clientWidth,Browser.clientHeight);
 			Laya.stage.alignV="middle";
 			Laya.stage.alignH="center";
 			Laya.stage.scaleMode="showall";
 			Laya.stage.bgColor="#232628";
-			Laya.loader.load(this.AniConfPath,Handler.create(this,this.createAnimation),null,"atlas");
+			this.createText();
 		}
 
-		__class(Animation_Altas,'Animation_Altas');
-		var __proto=Animation_Altas.prototype;
-		__proto.createAnimation=function(){
-			var ani=new Animation();
-			ani.loadAtlas(this.AniConfPath);
-			ani.interval=30;
-			ani.index=1;
-			ani.play();
-			var bounds=ani.getGraphicBounds();
-			ani.pivot(bounds.width / 2,bounds.height / 2);
-			ani.pos(Laya.stage.width / 2,Laya.stage.height / 2);
-			Laya.stage.addChild(ani);
+		__class(Text_ComplexStyle,'Text_ComplexStyle');
+		var __proto=Text_ComplexStyle.prototype;
+		__proto.createText=function(){
+			var txt=new Text();
+			txt.text="Layabox是性能最强的HTML5引擎技术提供商与优秀的游戏发行商，面向Flash开发者提供HTML5开发技术方案！";
+			txt.width=400;
+			txt.wordWrap=true;
+			txt.align="center";
+			txt.fontSize=40;
+			txt.font="Microsoft YaHei";
+			txt.color="#ff0000";
+			txt.bold=true;
+			txt.leading=5;
+			txt.stroke=2;
+			txt.strokeColor="#ffffff";
+			txt.borderColor="#00ff00"
+			txt.x=(Laya.stage.width-txt.textWidth)/ 2;
+			txt.y=(Laya.stage.height-txt.textHeight)/ 2;
+			Laya.stage.addChild(txt);
 		}
 
-		return Animation_Altas;
+		return Text_ComplexStyle;
 	})()
 
 
@@ -706,6 +712,7 @@ window.Laya=(function(window,document){
 		function Config(){};
 		__class(Config,'Config');
 		Config.showLog=false;
+		Config.WebGLTextCacheCount=500;
 		Config.atlasEnable=false;
 		Config.showCanvasMark=false;
 		Config.CPUMemoryLimit=120 *1024 *1024;
@@ -887,6 +894,7 @@ window.Laya=(function(window,document){
 			this._spaceWidth=10;
 			this._leftPadding=0;
 			this._rightPadding=0;
+			this._letterSpacing=0;
 		}
 
 		__class(BitmapFont,'laya.display.BitmapFont');
@@ -982,9 +990,9 @@ window.Laya=(function(window,document){
 		*@return 宽度。
 		*/
 		__proto.getCharWidth=function(char){
-			if (char==" ")return this._spaceWidth;
+			if (char==" ")return this._spaceWidth+this._letterSpacing;
 			var tTexture=this.getCharTexture(char)
-			if (tTexture)return tTexture.width+tTexture.offsetX *2;
+			if (tTexture)return tTexture.width+tTexture.offsetX *2+this._letterSpacing;
 			return 0;
 		}
 
@@ -1005,7 +1013,7 @@ window.Laya=(function(window,document){
 		*获取最大字符宽度。
 		*/
 		__proto.getMaxWidth=function(){
-			return this._maxWidth;
+			return this._maxWidth+this._letterSpacing;
 		}
 
 		/**
@@ -1035,6 +1043,18 @@ window.Laya=(function(window,document){
 				tX+=this.getCharWidth(text[i]);
 			}
 		}
+
+		/**
+		*设置字符之间的间距（以像素为单位）。
+		*/
+		/**
+		*获取字符之间的间距（以像素为单位）。
+		*/
+		__getset(0,__proto,'letterSpacing',function(){
+			return this._letterSpacing;
+			},function(value){
+			this._letterSpacing=value;
+		});
 
 		return BitmapFont;
 	})()
@@ -1763,15 +1783,26 @@ window.Laya=(function(window,document){
 			this._repaint();
 			var cmds=this._cmds;
 			if (!cmds){
-				return this._one && this._one.callee===Render._context._fillText && (this._one[0]=text,true);
-			}
-			for (var i=cmds.length-1;i >-1;i--){
-				if (cmds[i].callee===Render._context._fillText){
-					cmds[i][0]=text;
+				if (this._one && this._isTextCmd(this._one.callee)){
+					if (this._one[0].toUpperCase)this._one[0]=text;
+					else this._one[0].setText(text);
 					return true;
+				}
+				}else {
+				for (var i=cmds.length-1;i >-1;i--){
+					if (this._isTextCmd(cmds[i].callee)){
+						if (cmds[i][0].toUpperCase)cmds[i][0]=text;
+						else cmds[i][0].setText(text);
+						return true;
+					}
 				}
 			}
 			return false;
+		}
+
+		/**@private */
+		__proto._isTextCmd=function(fun){
+			return fun===Render._context._fillText || fun===Render._context._fillBorderText || fun===Render._context._strokeText;
 		}
 
 		/**
@@ -1783,11 +1814,15 @@ window.Laya=(function(window,document){
 			this._repaint();
 			var cmds=this._cmds;
 			if (!cmds){
-				this._one && (this._one.callee===Render._context._fillBorderText || this._one.callee===Render._context._fillText)&& (this._one[4]=color);
+				if (this._one && this._isTextCmd(this._one.callee)){
+					this._one[4]=color;
+					if (!this._one[0].toUpperCase)this._one[0].changed=true;
+				}
 				}else {
 				for (var i=cmds.length-1;i >-1;i--){
-					if (cmds[i].callee===Render._context._fillText){
+					if (this._isTextCmd(cmds[i].callee)){
 						cmds[i][4]=color;
+						if (!cmds[i][0].toUpperCase)cmds[i][0].changed=true;
 					}
 				}
 			}
@@ -2464,7 +2499,7 @@ window.Laya=(function(window,document){
 
 		__proto.hitTest=function(sp,mouseX,mouseY){
 			var isHit=false;
-			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough){
+			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough || sp.hitArea){
 				var hitRect=this._rect;
 				if (!sp.mouseThrough){
 					if (sp.hitArea)hitRect=sp.hitArea;
@@ -2749,9 +2784,8 @@ window.Laya=(function(window,document){
 		*
 		*/
 		__proto.insertPoints=function(count,rst){
-			var i=0,len=0;
+			var i=NaN;
 			count=count > 0 ? count :5;
-			len=count;
 			var dLen=NaN;
 			dLen=1 / count;
 			for (i=0;i <=1;i+=dLen){
@@ -3910,6 +3944,7 @@ window.Laya=(function(window,document){
 			isWebGl && Render.WebGL.init(Render._mainCanvas,width,height);
 			Browser.container.appendChild(Render._mainCanvas.source);
 			Render._context=new RenderContext(width,height,isWebGl ? null :Render._mainCanvas);
+			Render._context.ctx.setIsMainContext();
 			Browser.window.requestAnimationFrame(loop);
 			function loop (){
 				Laya.stage._loop();
@@ -3980,7 +4015,7 @@ window.Laya=(function(window,document){
 				ctx.moveTo(x+args[0],y+args[1]);
 				ctx.arc(x+args[0],y+args[1],args[2],args[3],args[4]);
 				ctx.closePath();
-				this._fillAndStroke(args[5],args[6],args[7]);
+				this._fillAndStroke(args[5],args[6],args[7],true);
 			}
 			this._clipRect=function(x,y,args){
 				this.ctx.clipRect(x+args[0],y+args[1],args[2],args[3]);
@@ -3989,13 +4024,15 @@ window.Laya=(function(window,document){
 				this.ctx.fillRect(x+args[0],y+args[1],args[2],args[3],args[4]);
 			}
 			this._drawCircle=function(x,y,args){
+				Stat.drawCall++;
 				var ctx=this.ctx;
 				ctx.beginPath();
 				ctx.arc(args[0]+x,args[1]+y,args[2],0,RenderContext.PI2);
 				ctx.closePath();
-				this._fillAndStroke(args[3],args[4],args[5]);
+				this._fillAndStroke(args[3],args[4],args[5],true);
 			}
 			this._fillCircle=function(x,y,args){
+				Stat.drawCall++;
 				var ctx=this.ctx;
 				ctx.beginPath();
 				ctx.fillStyle=args[3];
@@ -4214,13 +4251,18 @@ window.Laya=(function(window,document){
 			ctx.strokeRect(x+this.x,y+this.y,width,height,lineWidth);
 		}
 
-		__proto._fillAndStroke=function(fillColor,strokeColor,lineWidth){
+		__proto._fillAndStroke=function(fillColor,strokeColor,lineWidth,isConvexPolygon){
+			(isConvexPolygon===void 0)&& (isConvexPolygon=false);
 			var ctx=this.ctx;
 			if (fillColor !=null){
 				ctx.fillStyle=fillColor;
-				ctx.fill();
+				if (Render.isWebGL){
+					ctx.fill(isConvexPolygon);
+					}else {
+					ctx.fill();
+				}
 			}
-			if (strokeColor !=null){
+			if (strokeColor !=null && lineWidth>0){
 				ctx.strokeStyle=strokeColor;
 				ctx.lineWidth=lineWidth;
 				ctx.stroke();
@@ -4238,6 +4280,7 @@ window.Laya=(function(window,document){
 
 		__proto.drawCircle=function(x,y,radius,color,lineWidth){
 			(lineWidth===void 0)&& (lineWidth=1);
+			Stat.drawCall++;
 			var ctx=this.ctx;
 			ctx.beginPath();
 			ctx.strokeStyle=color;
@@ -4247,6 +4290,7 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.fillCircle=function(x,y,radius,color){
+			Stat.drawCall++;
 			var ctx=this.ctx;
 			ctx.beginPath();
 			ctx.fillStyle=color;
@@ -4673,6 +4717,7 @@ window.Laya=(function(window,document){
 
 		__class(Context,'laya.resource.Context');
 		var __proto=Context.prototype;
+		__proto.setIsMainContext=function(){}
 		/***@private */
 		__proto.drawCanvas=function(canvas,x,y,width,height){
 			Stat.drawCall++;
@@ -4814,7 +4859,7 @@ window.Laya=(function(window,document){
 			ctx.__fillText=ctx.fillText;
 			ctx.__fillRect=ctx.fillRect;
 			ctx.__strokeText=ctx.strokeText;
-			var funs=['fillWords','fillRect','strokeText','fillText','transformByMatrix','setTransformByMatrix','clipRect','drawTexture','drawTexture2','drawTextureWithTransform','flush','clear','destroy','drawCanvas','fillBorderText'];
+			var funs=['fillWords','setIsMainContext','fillRect','strokeText','fillText','transformByMatrix','setTransformByMatrix','clipRect','drawTexture','drawTexture2','drawTextureWithTransform','flush','clear','destroy','drawCanvas','fillBorderText'];
 			funs.forEach(function(i){
 				ctx[i]=Context._default[i];
 			});
@@ -5735,6 +5780,7 @@ window.Laya=(function(window,document){
 			this._color=[];
 			//this.strColor=null;
 			//this.numColor=0;
+			//this._drawStyle=null;
 			if ((typeof str=='string')){
 				this.strColor=str;
 				if (str===null)str="#000000";
@@ -6391,93 +6437,83 @@ window.Laya=(function(window,document){
 		Stat.show=function(x,y){
 			(x===void 0)&& (x=0);
 			(y===void 0)&& (y=0);
-			Stat.preFrameTime=Stat._timer=Browser.now()-1000;
+			var pixel=Browser.pixelRatio;
+			Stat._width=pixel *120;
+			Stat._vx=pixel *70;
 			Stat._view[0]={title:"FPS(Canvas)",value:"_fpsStr",color:"yellow",units:"int"};
-			Stat._view[1]={title:"Sprite",value:"spriteDraw",color:"white",units:"int"};
+			Stat._view[1]={title:"Sprite",value:"spriteCount",color:"white",units:"int"};
 			Stat._view[2]={title:"DrawCall",value:"drawCall",color:"white",units:"int"};
 			Stat._view[3]={title:"CurMem",value:"currentMemorySize",color:"yellow",units:"M"};
 			if (Render.isWebGL){
+				Stat._view[4]={title:"Shader",value:"shaderCall",color:"white",units:"int"};
 				if (!Render.is3DMode){
 					Stat._view[0].title="FPS(WebGL)";
-					Stat._view[4]={title:"Canvas",value:"_canvasStr",color:"white",units:"int"};
+					Stat._view[5]={title:"Canvas",value:"_canvasStr",color:"white",units:"int"};
 					}else {
 					Stat._view[0].title="FPS(3D)";
 					Stat._view[5]={title:"TriFaces",value:"trianglesFaces",color:"white",units:"int"};
 				}
-				Stat._view[4]={title:"Shader",value:"shaderCall",color:"white",units:"int" };
-				Stat._view[5]={title:"Canvas",value:"_canvasStr",color:"white",units:"int"};
-			}
-			else{
+				}else {
 				Stat._view[4]={title:"Canvas",value:"_canvasStr",color:"white",units:"int"};
 			}
+			Stat._fontSize=12 *pixel;
 			for (var i=0;i < Stat._view.length;i++){
 				Stat._view[i].x=4;
-				Stat._view[i].y=i *12+2;
+				Stat._view[i].y=i *Stat._fontSize+2 *pixel;
 			}
-			Stat._height=Stat._view.length *12+4;
+			Stat._height=pixel *(Stat._view.length *12+3 *pixel);
 			if (!Stat._canvas){
 				Stat._canvas=new HTMLCanvas('2D');
 				Stat._canvas.size(Stat._width,Stat._height);
 				Stat._ctx=Stat._canvas.getContext('2d');
 				Stat._ctx.textBaseline="top";
-				var canvas=Stat._canvas.source;
-				canvas.style.cssText="pointer-events:none;z-index:100000;position: absolute;left:"+x+"px;top:"+y+"px;width:"+Stat._width+"px;height:"+Stat._height+"px;";
+				Stat._ctx.font=Stat._fontSize+"px Sans-serif";
+				Stat._canvas.source.style.cssText="pointer-events:none;background:rgba(150,150,150,0.8);z-index:100000;position: absolute;left:"+x+"px;top:"+y+"px;width:"+(Stat._width / pixel)+"px;height:"+(Stat._height / pixel)+"px;";
 			}
+			Stat._first=true;
+			Stat.loop();
+			Stat._first=false;
 			Laya.timer.frameLoop(1,Stat,Stat.loop);
 			Browser.container.appendChild(Stat._canvas.source);
 		}
 
 		Stat.hide=function(){
-			var canvas=Stat._canvas.source;
-			Browser.removeElement(canvas);
+			Browser.removeElement(Stat._canvas);
 			Laya.timer.clear(Stat,Stat.loop);
 		}
 
 		Stat.clear=function(){
-			Stat.trianglesFaces=0;
-			Stat.drawCall=-6;
-			Stat.shaderCall=0;
-			Stat.spriteDraw=-1;
-			Stat.bufferLen=0;
-			Stat.canvasNormal=0;
-			Stat.canvasBitmap=0;
-			Stat.canvasReCache=0;
+			Stat.trianglesFaces=Stat.drawCall=Stat.shaderCall=Stat.spriteCount=Stat.canvasNormal=Stat.canvasBitmap=Stat.canvasReCache=0;
 		}
 
 		Stat.loop=function(){
 			Stat._count++;
 			var timer=Browser.now();
-			Stat.interval=Browser.now()-Stat.preFrameTime;
-			Stat.preFrameTime=timer;
-			if (timer-Stat._timer < 1000){
-				Stat.clear();
-				return;
-			}
-			Stat._count=Math.round((Stat._count *1000)/ (timer-Stat._timer));
-			Stat.maxMemorySize=ResourceManager.systemResourceManager.autoReleaseMaxSize;
-			Stat.currentMemorySize=ResourceManager.systemResourceManager.memorySize;
-			Stat.texturesMemSize=0;
-			Stat.buffersMemSize=0;
-			for (var i=0;i < Resource.getLoadedResourcesCount();i++){
-				var resource=Resource.getLoadedResourceByIndex(i);
-				if (((resource instanceof laya.resource.Bitmap )))
-					Stat.texturesMemSize+=resource.memorySize;
-			}
-			Stat.FPS=Stat._count;
-			Stat._fpsStr=Stat._count+(Stat.renderSlow ? " slow" :"");
+			if (timer-Stat._timer < 1000)return;
+			var count=Stat._count;
+			Stat.FPS=Math.round((count *1000)/ (timer-Stat._timer));
+			Stat.trianglesFaces=Math.round(Stat.trianglesFaces / count);
+			Stat.drawCall=Math.round(Stat.drawCall / count);
+			Stat.shaderCall=Math.round(Stat.shaderCall / count);
+			Stat.spriteCount=Math.round(Stat.spriteCount / count)-1;
+			Stat.canvasNormal=Math.round(Stat.canvasNormal / count);
+			Stat.canvasBitmap=Math.round(Stat.canvasBitmap / count);
+			Stat.canvasReCache=Math.ceil(Stat.canvasReCache / count);
+			Stat._fpsStr=Stat.FPS+(Stat.renderSlow ? " slow" :"");
 			Stat._canvasStr=Stat.canvasReCache+"/"+Stat.canvasNormal+"/"+Stat.canvasBitmap;
+			Stat.currentMemorySize=ResourceManager.systemResourceManager.memorySize;
 			var ctx=Stat._ctx;
-			ctx.clearRect(0,0,Stat._width,Stat._height);
-			ctx.fillStyle="rgba(150,150,150,0.8)";
-			ctx.fillRect(0,0,Stat._width,Stat._height,null);
-			for (i=0;i < Stat._view.length;i++){
+			ctx.clearRect(Stat._first ? 0 :Stat._vx,0,Stat._width,Stat._height);
+			for (var i=0;i < Stat._view.length;i++){
 				var one=Stat._view[i];
-				ctx.fillStyle="white";
-				ctx.fillText(one.title,one.x,one.y,null,null,null);
+				if (Stat._first){
+					ctx.fillStyle="white";
+					ctx.fillText(one.title,one.x,one.y,null,null,null);
+				}
 				ctx.fillStyle=one.color;
 				var value=Stat[one.value];
 				(one.units=="M")&& (value=Math.floor(value / (1024 *1024)*100)/ 100+" M");
-				ctx.fillText(value+"",one.x+70,one.y,null,null,null);
+				ctx.fillText(value+"",one.x+Stat._vx,one.y,null,null,null);
 			}
 			Stat._count=0;
 			Stat._timer=timer;
@@ -6485,31 +6521,28 @@ window.Laya=(function(window,document){
 		}
 
 		Stat.loopCount=0;
-		Stat.maxMemorySize=0;
-		Stat.currentMemorySize=0;
-		Stat.texturesMemSize=0;
-		Stat.buffersMemSize=0;
 		Stat.shaderCall=0;
-		Stat.drawCall=-6;
+		Stat.drawCall=0;
 		Stat.trianglesFaces=0;
-		Stat.spriteDraw=0;
+		Stat.spriteCount=0;
 		Stat.FPS=0;
 		Stat.canvasNormal=0;
 		Stat.canvasBitmap=0;
 		Stat.canvasReCache=0;
-		Stat.interval=0;
-		Stat.preFrameTime=0;
-		Stat.bufferLen=0;
 		Stat.renderSlow=false;
+		Stat.currentMemorySize=0;
 		Stat._fpsStr=null
 		Stat._canvasStr=null
 		Stat._canvas=null
 		Stat._ctx=null
-		Stat._timer=NaN
+		Stat._timer=0;
 		Stat._count=0;
 		Stat._width=120;
 		Stat._height=100;
 		Stat._view=[];
+		Stat._fontSize=12;
+		Stat._first=false;
+		Stat._vx=NaN
 		return Stat;
 	})()
 
@@ -6584,7 +6617,7 @@ window.Laya=(function(window,document){
 				return;
 			};
 			var frame=this.currFrame=this.currFrame+this.scale;
-			var now=Browser.now()
+			var now=Browser.now();
 			Timer.delta=now-this._lastTimer;
 			var timer=this.currTimer=this.currTimer+Timer.delta *this.scale;
 			this._lastTimer=now;
@@ -6976,12 +7009,12 @@ window.Laya=(function(window,document){
 			var target=this._target;
 			var props=this._props;
 			var handler=this._complete;
-			this.clear();
 			for (var i=0,n=props.length;i < n;i++){
 				var prop=props[i];
 				target[prop[0]]=prop[1]+prop[2];
 			}
 			if (this.update)this.update.run();
+			this.clear();
 			handler && handler.run();
 		}
 
@@ -7249,6 +7282,46 @@ window.Laya=(function(window,document){
 	})()
 
 
+	/**
+	*@private
+	*/
+	//class laya.utils.WordText
+	var WordText=(function(){
+		function WordText(){
+			this.id=NaN;
+			this.save=[];
+			this.toUpperCase=null;
+			this.changed=false;
+			this._text=null;
+		}
+
+		__class(WordText,'laya.utils.WordText');
+		var __proto=WordText.prototype;
+		__proto.setText=function(txt){
+			this.changed=true;
+			this._text=txt;
+		}
+
+		__proto.toString=function(){
+			return this._text;
+		}
+
+		__proto.charCodeAt=function(i){
+			return this._text ? this._text.charCodeAt(i):NaN;
+		}
+
+		__proto.charAt=function(i){
+			return this._text ? this._text.charAt(i):null;
+		}
+
+		__getset(0,__proto,'length',function(){
+			return this._text ? this._text.length :0;
+		});
+
+		return WordText;
+	})()
+
+
 	//class laya.webgl.atlas.AtlasGrid
 	var AtlasGrid=(function(){
 		var TexMergeCellInfo,TexRowInfo,TexMergeTexSize;
@@ -7278,7 +7351,7 @@ window.Laya=(function(window,document){
 
 		//------------------------------------------------------------------------------
 		__proto.setAltasID=function(atlasID){
-			if(atlasID >=0){
+			if (atlasID >=0){
 				this._atlasID=atlasID;
 			}
 		}
@@ -7296,11 +7369,11 @@ window.Laya=(function(window,document){
 
 		//------------------------------------------------------------------------------
 		__proto._release=function(){
-			if(this._cells !=null){
+			if (this._cells !=null){
 				this._cells.length=0;
 				this._cells=null;
 			}
-			if(this._rowInfo){
+			if (this._rowInfo){
 				this._rowInfo.length=0;
 				this._rowInfo=null;
 			}
@@ -7314,10 +7387,10 @@ window.Laya=(function(window,document){
 			if (this._width==0)return false;
 			this._cells=new Array(this._width *this._height);
 			this._rowInfo=__newvec(this._height);
-			for(var i=0;i < this._height;i++){
+			for (var i=0;i < this._height;i++){
 				this._rowInfo[i]=new TexRowInfo();
 			}
-			for(i=0;i < this._width *this._height;i++){
+			for (i=0;i < this._width *this._height;i++){
 				this._cells[i]=new TexMergeCellInfo();
 			}
 			this._clear();
@@ -7327,7 +7400,7 @@ window.Laya=(function(window,document){
 		//------------------------------------------------------------------
 		__proto._get=function(width,height){
 			var pFillInfo=new MergeFillInfo();
-			if(width >=this._failSize.width && height >=this._failSize.height){
+			if (width >=this._failSize.width && height >=this._failSize.height){
 				return pFillInfo;
 			};
 			var rx=-1;
@@ -7335,22 +7408,22 @@ window.Laya=(function(window,document){
 			var nWidth=this._width;
 			var nHeight=this._height;
 			var pCellBox=this._cells;
-			for(var y=0;y < nHeight;y++){
-				if(this._rowInfo[y].spaceCount < width)continue ;
-				for(var x=0;x < nWidth;){
-					if (pCellBox[ y *nWidth+x].type !=0 || pCellBox[ y *nWidth+x].successionWidth < width || pCellBox[ y *nWidth+x].successionHeight < height){
+			for (var y=0;y < nHeight;y++){
+				if (this._rowInfo[y].spaceCount < width)continue ;
+				for (var x=0;x < nWidth;){
+					if (pCellBox[y *nWidth+x].type !=0 || pCellBox[y *nWidth+x].successionWidth < width || pCellBox[y *nWidth+x].successionHeight < height){
 						x+=pCellBox[y *nWidth+x].successionWidth;
 						continue ;
 					}
 					rx=x;
 					ry=y;
-					for(var xx=0;xx < width;xx++){
+					for (var xx=0;xx < width;xx++){
 						if (pCellBox[y *nWidth+x+xx].successionHeight < height){
 							rx=-1;
 							break ;
 						}
 					}
-					if(rx < 0){
+					if (rx < 0){
 						x+=pCellBox[y *nWidth+x].successionWidth;
 						continue ;
 					}
@@ -7368,37 +7441,37 @@ window.Laya=(function(window,document){
 			var nWidth=this._width;
 			var nHeghit=this._height;
 			this._check((x+w)<=nWidth && (y+h)<=nHeghit);
-			for(var yy=y;yy < (h+y);++yy){
+			for (var yy=y;yy < (h+y);++yy){
 				this._check(this._rowInfo[yy].spaceCount >=w);
 				this._rowInfo[yy].spaceCount-=w;
-				for(var xx=0;xx < w;xx++){
+				for (var xx=0;xx < w;xx++){
 					this._check(this._cells[x+yy *nWidth+xx].type==0);
 					this._cells[x+yy *nWidth+xx].type=type;
 					this._cells[x+yy *nWidth+xx].successionWidth=w;
 					this._cells[x+yy *nWidth+xx].successionHeight=h;
 				}
 			}
-			if(x>0){
-				for(yy=0;yy < h;++yy){
+			if (x > 0){
+				for (yy=0;yy < h;++yy){
 					var s=0;
-					for(xx=x-1;xx >=0;--xx,++s){
+					for (xx=x-1;xx >=0;--xx,++s){
 						if (this._cells[(y+yy)*nWidth+xx].type !=0)break ;
 					}
-					for(xx=s;xx>0;--xx){
+					for (xx=s;xx > 0;--xx){
 						this._cells[(y+yy)*nWidth+x-xx].successionWidth=xx;
-						this._check(xx>0);
+						this._check(xx > 0);
 					}
 				}
 			}
-			if(y > 0){
-				for(xx=x;xx < (x+w);++xx){
+			if (y > 0){
+				for (xx=x;xx < (x+w);++xx){
 					s=0;
-					for(yy=y-1;yy >=0;--yy,s++){
-						if(this._cells[ xx+yy*nWidth].type!=0)break ;
+					for (yy=y-1;yy >=0;--yy,s++){
+						if (this._cells[xx+yy *nWidth].type !=0)break ;
 					}
-					for(yy=s;yy>0;--yy){
-						this._cells[ xx+(y-yy)*nWidth].successionHeight=yy;
-						this._check(yy>0);
+					for (yy=s;yy > 0;--yy){
+						this._cells[xx+(y-yy)*nWidth].successionHeight=yy;
+						this._check(yy > 0);
 					}
 				}
 			}
@@ -7418,7 +7491,7 @@ window.Laya=(function(window,document){
 			}
 			for (var i=0;i < this._height;i++){
 				for (var j=0;j < this._width;j++){
-					var pCellbox=this._cells[ i *this._width+j];
+					var pCellbox=this._cells[i *this._width+j];
 					pCellbox.type=0;
 					pCellbox.successionWidth=this._width-j;
 					pCellbox.successionHeight=this._width-i;
@@ -7465,9 +7538,6 @@ window.Laya=(function(window,document){
 	})()
 
 
-	;
-	;
-	;
 	//class laya.webgl.atlas.AtlasResourceManager
 	var AtlasResourceManager=(function(){
 		function AtlasResourceManager(width,height,gridSize,maxTexNum){
@@ -7788,11 +7858,24 @@ window.Laya=(function(window,document){
 
 		__proto.equal=function(value){
 			if ((typeof value=='string'))return this._color.strColor===value;
+			if ((value instanceof laya.utils.Color ))return this._color.numColor===(value).numColor;
 			return false;
 		}
 
 		__proto.toColorStr=function(){
 			return this._color.strColor;
+		}
+
+		DrawStyle.create=function(value){
+			if (value){
+				var color;
+				if ((typeof value=='string'))color=Color.create(value);
+				else if ((value instanceof laya.utils.Color ))color=value;
+				if (color){
+					return color._drawStyle || (color._drawStyle=new DrawStyle(value));
+				}
+			}
+			return null;
 		}
 
 		DrawStyle.DEFAULT=new DrawStyle("#000000");
@@ -7822,8 +7905,8 @@ window.Laya=(function(window,document){
 			this.closePath=false;
 			this.geomatrys=[];
 			var gl=WebGL.mainContext;
-			this.ib=IndexBuffer.create(0x88E8);
-			this.vb=VertexBuffer.create(new VertexDeclaration(5));
+			this.ib=IndexBuffer2D.create(0x88E8);
+			this.vb=VertexBuffer2D.create(5);
 		}
 
 		__class(Path,'laya.webgl.canvas.Path');
@@ -7843,7 +7926,8 @@ window.Laya=(function(window,document){
 		__proto.polygon=function(x,y,points,color,borderWidth,borderColor){
 			var geo;
 			this.geomatrys.push(this._curGeomatry=geo=new Polygon(x,y,points,color,borderWidth,borderColor));
-			if(!color)geo.fill=false;if(borderColor==undefined)geo.borderWidth=0;
+			if (!color)geo.fill=false;
+			if (borderColor==undefined)geo.borderWidth=0;
 		}
 
 		__proto.drawLine=function(x,y,points,width,color){
@@ -7860,8 +7944,8 @@ window.Laya=(function(window,document){
 			var si=this.ib.length;
 			var len=this.geomatrys.length;
 			this.offset=si;
-			for(var i=this.geoStart;i<len;i++){
-				this.geomatrys[i].getData(this.ib,this.vb,this.vb.length/(5*4));
+			for (var i=this.geoStart;i < len;i++){
+				this.geomatrys[i].getData(this.ib,this.vb,this.vb.length / (5 *4));
 			}
 			this.geoStart=len;
 			this.count=(this.ib.length-si)/ CONST3D2D.BYTES_PIDX;
@@ -8140,6 +8224,7 @@ window.Laya=(function(window,document){
 			var preFilters=RenderState2D.worldFilters;
 			var preShaderDefines=RenderState2D.worldShaderDefines;
 			RenderState2D.worldMatrix=RenderTargetMAX._matrixDefault;
+			RenderState2D.restoreTempArray();
 			RenderState2D.worldMatrix4=RenderState2D.TEMPMAT4_ARRAY;
 			RenderState2D.worldAlpha=1;
 			RenderState2D.worldFilters=null;
@@ -8235,7 +8320,7 @@ window.Laya=(function(window,document){
 			Shader.addInclude("parts/ColorAdd_ps_uniform.glsl","uniform vec4 colorAdd;\n");
 			Shader.addInclude("parts/ColorAdd_ps_logic.glsl","gl_FragColor = vec4(colorAdd.rgb,colorAdd.a*gl_FragColor.a);");
 			var vs,ps;
-			vs="attribute vec4 position;\nattribute vec2 texcoord;\nuniform vec2 size;\nuniform mat4 mmat;\nvarying vec2 v_texcoord;\n\n#include?BLUR_FILTER  \"parts/BlurFilter_vs_uniform.glsl\";\nvoid main() {\n  vec4 pos=mmat*position;\n  gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  v_texcoord = texcoord;\n  #include?BLUR_FILTER  \"parts/BlurFilter_vs_logic.glsl\";\n}";
+			vs="attribute vec4 position;\nattribute vec2 texcoord;\nuniform vec2 size;\n\n#ifdef WORLDMAT\nuniform mat4 mmat;\n#endif\nvarying vec2 v_texcoord;\n\n#include?BLUR_FILTER  \"parts/BlurFilter_vs_uniform.glsl\";\nvoid main() {\n  #ifdef WORLDMAT\n  vec4 pos=mmat*position;\n  gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  #else\n  gl_Position =vec4((position.x/size.x-0.5)*2.0,(0.5-position.y/size.y)*2.0,position.z,1.0);\n  #endif\n  \n  v_texcoord = texcoord;\n  #include?BLUR_FILTER  \"parts/BlurFilter_vs_logic.glsl\";\n}";
 			ps="precision mediump float;\n//precision highp float;\nvarying vec2 v_texcoord;\nuniform sampler2D texture;\nuniform float alpha;\n#include?BLUR_FILTER  \"parts/BlurFilter_ps_uniform.glsl\";\n#include?COLOR_FILTER \"parts/ColorFilter_ps_uniform.glsl\";\n#include?GLOW_FILTER \"parts/GlowFilter_ps_uniform.glsl\";\n#include?COLOR_ADD \"parts/ColorAdd_ps_uniform.glsl\";\n\nvoid main() {\n   vec4 color= texture2D(texture, v_texcoord);\n   color.a*=alpha;\n   gl_FragColor=color;\n   #include?COLOR_ADD \"parts/ColorAdd_ps_logic.glsl\";   \n   #include?BLUR_FILTER  \"parts/BlurFilter_ps_logic.glsl\";\n   #include?COLOR_FILTER \"parts/ColorFilter_ps_logic.glsl\";\n   #include?GLOW_FILTER \"parts/GlowFilter_ps_logic.glsl\";\n}";
 			Shader.preCompile(0,0x01,vs,ps,null);
 			vs="attribute vec4 position;\nuniform vec2 size;\nuniform mat4 mmat;\nvoid main() {\n  vec4 pos=mmat*position;\n  gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n}";
@@ -8617,15 +8702,13 @@ window.Laya=(function(window,document){
 	//class laya.webgl.submit.Submit
 	var Submit=(function(){
 		function Submit(renderType){
-			//this._renderType=0;
 			//this._selfVb=null;
 			//this._ib=null;
 			//this._blendFn=null;
+			//this._renderType=0;
 			//this._vb=null;
 			//this._startIdx=0;
 			//this._numEle=0;
-			//this._submitID=NaN;
-			//this._mergID=0;
 			//this.shaderValue=null;
 			(renderType===void 0)&& (renderType=1);
 			this._renderType=renderType;
@@ -8638,7 +8721,6 @@ window.Laya=(function(window,document){
 			var cache=Submit._cache;
 			cache[cache._length++]=this;
 			this.shaderValue.release();
-			this._submitID=-1;
 			this._vb=null;
 		}
 
@@ -8648,10 +8730,12 @@ window.Laya=(function(window,document){
 
 		__proto.renderSubmit=function(){
 			if (this._numEle===0)return 1;
-			if (this.shaderValue.textureHost){
-				if (!this.shaderValue.textureHost.bitmap||!this.shaderValue.textureHost.source)
+			var _tex=this.shaderValue.textureHost;
+			if (_tex){
+				var source;
+				if (!_tex.bitmap || !(source=_tex.source))
 					return 1;
-				this.shaderValue.texture=this.shaderValue.textureHost.source;
+				this.shaderValue.texture=source;
 			}
 			this._vb.bind_upload(this._ib);
 			var gl=WebGL.mainContext;
@@ -8673,21 +8757,19 @@ window.Laya=(function(window,document){
 			s.shaderValue.ALPHA=-1234;
 		}
 
-		Submit.create=function(context,submitID,mergID,ib,vb,pos,sv){
-			var o=Submit._cache._length?Submit._cache[--Submit._cache._length]:new Submit();
+		Submit.create=function(context,ib,vb,pos,sv){
+			var o=Submit._cache._length ? Submit._cache[--Submit._cache._length] :new Submit();
 			if (vb==null){
-				vb=o._selfVb || (o._selfVb=VertexBuffer.create(new VertexDeclaration(-1)));
+				vb=o._selfVb || (o._selfVb=VertexBuffer2D.create(-1));
 				vb.clear();
 				pos=0;
 			}
 			o._ib=ib;
 			o._vb=vb;
-			o._submitID=submitID;
-			o._mergID=mergID;
 			o._startIdx=pos *CONST3D2D.BYTES_PIDX;
 			o._numEle=0;
 			var blendType=context._nBlendType;
-			o._blendFn=context._targets?BlendMode.targetFns[blendType]:BlendMode.fns[blendType];
+			o._blendFn=context._targets ? BlendMode.targetFns[blendType] :BlendMode.fns[blendType];
 			o.shaderValue=sv;
 			o.shaderValue.setValue(context._shader2D);
 			var filters=context._shader2D.filters;
@@ -8696,7 +8778,7 @@ window.Laya=(function(window,document){
 		}
 
 		Submit.createShape=function(ctx,ib,vb,numEle,offset,sv){
-			var o=(!Submit._cache._length)?(new Submit()):Submit._cache[--Submit._cache._length];
+			var o=(!Submit._cache._length)? (new Submit()):Submit._cache[--Submit._cache._length];
 			o._ib=ib;
 			o._vb=vb;
 			o._numEle=numEle;
@@ -8704,7 +8786,7 @@ window.Laya=(function(window,document){
 			o.shaderValue=sv;
 			o.shaderValue.setValue(ctx._shader2D);
 			var blendType=ctx._nBlendType;
-			o._blendFn=ctx._targets?BlendMode.targetFns[blendType]:BlendMode.fns[blendType];
+			o._blendFn=ctx._targets ? BlendMode.targetFns[blendType] :BlendMode.fns[blendType];
 			return o;
 		}
 
@@ -8722,6 +8804,7 @@ window.Laya=(function(window,document){
 		Submit.TYPE_TARGET=13;
 		Submit.TYPE_CHANGE_VALUE=14;
 		Submit.TYPE_SHAPE=15;
+		Submit.TYPE_TEXTURE=16;
 		Submit.RENDERBASE=null
 		Submit._cache=(Submit._cache=[],Submit._cache._length=0,Submit._cache);
 		return Submit;
@@ -8843,9 +8926,11 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.renderSubmit=function(){
-			if (this._shaderValue.textureHost){
-				var source=this._shaderValue.textureHost.source;
-				if (!source)return 1;
+			var _tex=this._shaderValue.textureHost;
+			if (_tex){
+				var source;
+				if (!_tex.bitmap || !(source=_tex.source))
+					return 1;
 				this._shaderValue.texture=source;
 			}
 			this._vb.bind_upload(this._ib);
@@ -8887,7 +8972,7 @@ window.Laya=(function(window,document){
 			var blendType=context._nBlendType;
 			o._blendFn=context._targets?BlendMode.targetFns[blendType]:BlendMode.fns[blendType];
 			o.offset=0;
-			o.startIndex=offset / (CONST3D2D.BYTES_PE *vb.vertexDeclaration.vertexStride)*1.5;
+			o.startIndex=offset / (CONST3D2D.BYTES_PE *vb.vertexStride)*1.5;
 			o.startIndex *=CONST3D2D.BYTES_PIDX;
 			return o;
 		}
@@ -9214,7 +9299,7 @@ window.Laya=(function(window,document){
 		}
 
 		DrawText.getChar=function(char,id,drawValue){
-			return DrawText._wordsMsg[id]=DrawTextChar.createOneChar(char,drawValue);
+			return DrawText._charsCache[id]=DrawTextChar.createOneChar(char,drawValue);
 		}
 
 		DrawText._drawSlow=function(save,ctx,txt,words,curMat,font,textAlign,fillColor,borderColor,lineWidth,x,y,sx,sy){
@@ -9227,14 +9312,14 @@ window.Laya=(function(window,document){
 				for (i=0,n=words.length;i < n;i++){
 					htmlWord=words[i];
 					id=htmlWord.charNum+drawValue.txtID;
-					chars[i]=oneChar=DrawText._wordsMsg[id] || DrawText.getChar(htmlWord.char,id,drawValue);
+					chars[i]=oneChar=DrawText._charsCache[id] || DrawText.getChar(htmlWord.char,id,drawValue);
 					oneChar.active();
 				}
 				}else {
 				chars.length=txt.length;
 				for (i=0,n=txt.length;i < n;i++){
 					id=txt.charCodeAt(i)+drawValue.txtID;
-					chars[i]=oneChar=DrawText._wordsMsg[id] || DrawText.getChar(txt.charAt(i),id,drawValue);
+					chars[i]=oneChar=DrawText._charsCache[id] || DrawText.getChar(txt.charAt(i),id,drawValue);
 					oneChar.active();
 					width+=oneChar.width;
 				}
@@ -9242,7 +9327,7 @@ window.Laya=(function(window,document){
 			var dx=0;
 			if (textAlign!==null && textAlign!=="left")
 				dx=-(textAlign=="center" ? (width / 2):width);
-			var uv,bdSz=NaN,texture,value;
+			var uv,bdSz=NaN,texture,value,saveLength=0;
 			if (words){
 				for (i=0,n=chars.length;i < n;i++){
 					oneChar=chars[i];
@@ -9259,11 +9344,12 @@ window.Laya=(function(window,document){
 					if (!oneChar.isSpace){
 						bdSz=oneChar.borderSize;
 						texture=oneChar.texture;
-						ctx._drawText(texture,x+dx-bdSz ,y-bdSz,texture.width,texture.height,curMat,0,0,0,0);
-						save && (save.push(value=[]),value[0]=texture,value[1]=dx-bdSz,value[2]=-bdSz);
+						ctx._drawText(texture,x+dx-bdSz,y-bdSz,texture.width,texture.height,curMat,0,0,0,0);
+						save && (value=save[saveLength++],value || (value=save[saveLength-1]=[]),value[0]=texture,value[1]=dx-bdSz,value[2]=-bdSz);
 					}
 					dx+=oneChar.width;
 				}
+				save && (save.length=saveLength);
 			}
 		}
 
@@ -9297,30 +9383,45 @@ window.Laya=(function(window,document){
 			if (words){
 				DrawText._drawSlow(null,ctx,txt,words,curMat,font,textAlign,fillColor,borderColor,lineWidth,x,y,sx,sy);
 				}else {
+				if (txt.toUpperCase===null){
+					var idNum=sx+sy*100000;
+					var myCache=txt;
+					if (!myCache.changed && myCache.id===idNum){
+						DrawText._drawFast(myCache.save,ctx,curMat,x,y);
+					}
+					else{
+						myCache.id=idNum;
+						myCache.changed=false;
+						DrawText._drawSlow(myCache.save,ctx,txt,words,curMat,font,textAlign,fillColor,borderColor,lineWidth,x,y,sx,sy);
+					}
+					return;
+				};
 				var id=txt+font.toString()+fillColor+borderColor+lineWidth+sx+sy+textAlign;
-				var cache=DrawText._textCache[id];
+				var cache=DrawText._textsCache[id];
 				if (cache){
 					DrawText._drawFast(cache,ctx,curMat,x,y);
 					}else {
-					DrawText._textCache.__length || (DrawText._textCache.__length=0);
-					if (DrawText._textCache.__length > 100){
-						DrawText._textCache={};
-						DrawText._textCache.__length=0;
+					DrawText._textsCache.__length || (DrawText._textsCache.__length=0);
+					if (DrawText._textsCache.__length >Config.WebGLTextCacheCount){
+						DrawText._textsCache={};
+						DrawText._textsCache.__length=0;
 						DrawText._curPoolIndex=0;
 					}
-					DrawText._textCachesPool[DrawText._curPoolIndex] ? (cache=DrawText._textCache[id]=DrawText._textCachesPool[DrawText._curPoolIndex],cache.length=0):(DrawText._textCachesPool[DrawText._curPoolIndex]=cache=DrawText._textCache[id]=[]);
+					DrawText._textCachesPool[DrawText._curPoolIndex] ? (cache=DrawText._textsCache[id]=DrawText._textCachesPool[DrawText._curPoolIndex],cache.length=0):(DrawText._textCachesPool[DrawText._curPoolIndex]=cache=DrawText._textsCache[id]=[]);
+					DrawText._textsCache.__length++
 					DrawText._curPoolIndex++;
 					DrawText._drawSlow(cache,ctx,txt,words,curMat,font,textAlign,fillColor,borderColor,lineWidth,x,y,sx,sy);
 				}
 			}
 		}
 
+		DrawText._charsTemp=null
 		DrawText._textCachesPool=[];
 		DrawText._curPoolIndex=0;
-		DrawText._wordsMsg={};
-		DrawText._textCache={};
-		DrawText._charsTemp=null
+		DrawText._charsCache={};
+		DrawText._textsCache={};
 		DrawText._drawValue=null
+		DrawText.d=[];
 		DrawText.__init$=function(){
 			//class CharValue
 			CharValue=(function(){
@@ -9349,6 +9450,10 @@ window.Laya=(function(window,document){
 						CharValue._keymap[key]=this.txtID;
 					}
 					return this;
+				}
+				CharValue.clear=function(){
+					CharValue._keymap={};
+					CharValue._keymapCount=1;
 				}
 				CharValue._keymap={};
 				CharValue._keymapCount=1;
@@ -9822,6 +9927,10 @@ window.Laya=(function(window,document){
 	var RenderState2D=(function(){
 		function RenderState2D(){};
 		__class(RenderState2D,'laya.webgl.utils.RenderState2D');
+		RenderState2D.getMatrArray=function(){
+			return [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+		}
+
 		RenderState2D.mat2MatArray=function(mat,matArray){
 			var m=mat;
 			var m4=matArray;
@@ -9856,7 +9965,7 @@ window.Laya=(function(window,document){
 
 		RenderState2D._MAXSIZE=99999999;
 		RenderState2D.TEMPMAT4_ARRAY=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
-		RenderState2D.worldMatrix4=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+		RenderState2D.worldMatrix4=RenderState2D.TEMPMAT4_ARRAY;
 		RenderState2D.worldAlpha=1.0;
 		RenderState2D.worldScissorTest=false;
 		RenderState2D.worldFilters=null
@@ -10014,91 +10123,6 @@ window.Laya=(function(window,document){
 
 	/**
 	*@private
-	*<code>Shader3D</code> 主要用数组的方式保存shader变量定义，后期合并ShaderValue不使用for in，性能较高。
-	*/
-	//class laya.webgl.utils.ValusArray
-	var ValusArray=(function(){
-		function ValusArray(){
-			this._data=[];
-			this._length=0;
-			this._data._length=0;
-		}
-
-		__class(ValusArray,'laya.webgl.utils.ValusArray');
-		var __proto=ValusArray.prototype;
-		__proto.pushValue=function(name,value,id){
-			this.setValue(this._length,name,value,id);
-			this._length+=2;
-		}
-
-		__proto.setValue=function(index,name,value,id){
-			this._data[index++]=name;
-			var d=this._data[index];
-			d || (d=this._data[index]=[value,0]);
-			d[0]=value;
-			d[1]=id;
-		}
-
-		__proto.pushArray=function(value){
-			var data=this._data;
-			var len=this._length;
-			var inData=value._data;
-			var dec,src;
-			for (var i=0,n=value.length;i < n;i++,len++){
-				data[len++]=inData[i++];
-				src=inData[i];
-				(dec=data[len])?(dec[0]=src[0],dec[1]=src[1]):(data[len]=[src[0],src[1]]);
-			}
-			this._length=len;
-		}
-
-		__proto.copyTo=function(dec){
-			dec || (dec=new ValusArray());
-			var values=this._data;
-			var decData=dec._data;
-			for(var i=0;i<this._length;i++)
-			decData[i]=values[i];
-			dec.length=this._length;
-			return dec;
-		}
-
-		__getset(0,__proto,'length',function(){
-			return this._length;
-			},function(value){
-			this._length=value;
-		});
-
-		__getset(0,__proto,'data',function(){
-			return this._data;
-		});
-
-		return ValusArray;
-	})()
-
-
-	/**
-	*...
-	*@author ...
-	*/
-	//class laya.webgl.utils.VertexDeclaration
-	var VertexDeclaration=(function(){
-		function VertexDeclaration(vertexStride){
-			this._vertexStride=0;
-			this._vertexStride=vertexStride;
-		}
-
-		__class(VertexDeclaration,'laya.webgl.utils.VertexDeclaration');
-		var __proto=VertexDeclaration.prototype;
-		__getset(0,__proto,'vertexStride',function(){
-			return this._vertexStride;
-		});
-
-		return VertexDeclaration;
-	})()
-
-
-	/**
-	*@private
 	*/
 	//class laya.webgl.WebGL
 	var WebGL=(function(){
@@ -10137,9 +10161,11 @@ window.Laya=(function(window,document){
 			}
 			RunDriver.addToAtlas=function (texture,force){
 				(force===void 0)&& (force=false);
-				if (!Render.optimizeTextureMemory(texture.url,texture))
-					return;
 				var bitmap=texture.bitmap;
+				if (!Render.optimizeTextureMemory(texture.url,texture)){
+					(bitmap).enableMerageInAtlas=false;
+					return;
+				}
 				if ((Laya.__typeof(bitmap,'laya.webgl.resource.IMergeAtlasBitmap'))&& ((bitmap).allowMerageInAtlas)){
 					bitmap.on("recovered",null,function(bm){
 						((bitmap).enableMerageInAtlas)&& (AtlasResourceManager.instance.addToAtlas(texture));
@@ -12128,6 +12154,7 @@ window.Laya=(function(window,document){
 		__proto._loadImage=function(url){
 			if (this._type==="nativeimage"){
 				var image=new Browser.window.Image();
+				image.crossOrigin="";
 				image.src=url;
 				}else {
 				image=new HTMLImage.create(url);
@@ -12315,6 +12342,9 @@ window.Laya=(function(window,document){
 				delete Loader.loadedMap[url];
 				}else {
 				var res=Loader.loadedMap[url];
+				if ((res instanceof laya.resource.Texture )&& res.bitmap){
+					(res).destroy();
+				}
 				delete Loader.loadedMap[url];
 			}
 		}
@@ -12339,7 +12369,7 @@ window.Laya=(function(window,document){
 		Loader.IMAGE="image";
 		Loader.SOUND="sound";
 		Loader.ATLAS="atlas";
-		Loader.typeMap={"png":"image","jpg":"image","txt":"text","json":"json","xml":"xml","als":"atlas","mp3":"sound","ogg":"sound","wav":"sound","part":"json"};
+		Loader.typeMap={"png":"image","jpg":"image","jpeg":"image","txt":"text","json":"json","xml":"xml","als":"atlas","mp3":"sound","ogg":"sound","wav":"sound","part":"json"};
 		Loader.parserMap={};
 		Loader.loadedMap={};
 		Loader.atlasMap={};
@@ -12861,6 +12891,7 @@ window.Laya=(function(window,document){
 			this._h=0;
 			//this.$_GID=NaN;
 			//this.url=null;
+			this._uvID=0;
 			Texture.__super.call(this);
 			if (bitmap){
 				bitmap.useNum++;
@@ -12918,9 +12949,9 @@ window.Laya=(function(window,document){
 						this.bitmap.dispose();
 					}
 				}
+				this.bitmap=null;
 				if (this.url)Laya.loader.clearRes(this.url);
 			}
-			this.bitmap=null;
 		}
 
 		/**
@@ -13043,21 +13074,21 @@ window.Laya=(function(window,document){
 		function Value2D(mainID,subID){
 			this.size=[0,0];
 			this.alpha=1.0;
-			this.mmat=null;
+			//this.mmat=null;
 			this.ALPHA=1.0;
-			this.shader=null;
-			this.mainID=0;
+			//this.shader=null;
+			//this.mainID=0;
 			this.subID=0;
-			this.filters=null;
-			this.textureHost=null;
-			this.texture=null;
-			this.fillStyle=null;
-			this.color=null;
-			this.strokeStyle=null;
-			this.colorAdd=null;
-			this.glTexture=null;
-			this.u_mmat2=null;
-			this._inClassCache=null;
+			//this.filters=null;
+			//this.textureHost=null;
+			//this.texture=null;
+			//this.fillStyle=null;
+			//this.color=null;
+			//this.strokeStyle=null;
+			//this.colorAdd=null;
+			//this.glTexture=null;
+			//this.u_mmat2=null;
+			//this._inClassCache=null;
 			this._cacheID=0;
 			Value2D.__super.call(this);
 			this.defines=new ShaderDefines2D();
@@ -13095,6 +13126,7 @@ window.Laya=(function(window,document){
 		}
 
 		__proto._ShaderWithCompile=function(){
+			if (RenderState2D.worldMatrix4!==RenderState2D.TEMPMAT4_ARRAY)this.defines.add(0x80);
 			return Shader.withCompile(0,this.mainID,this.defines.toNameDic(),this.mainID | this.defines._value,Shader2X.create);
 		}
 
@@ -13242,11 +13274,12 @@ window.Laya=(function(window,document){
 			this._id=++WebGLContext2D._COUNT;
 			//this._other=null;
 			this._path=null;
+			//this._primitiveValue2D=null;
 			this._drawCount=1;
 			this._maxNumEle=0;
 			this._clear=false;
+			this._isMain=false;
 			this._submits=[];
-			this._mergeID=0;
 			this._curSubmit=null;
 			this._ib=null;
 			this._vb=null;
@@ -13265,10 +13298,10 @@ window.Laya=(function(window,document){
 			this._canvas=c;
 			this._curMat=Matrix.create();
 			if (Render.isFlash){
-				this._ib=IndexBuffer.create(0x88E4);
+				this._ib=IndexBuffer2D.create(0x88E4);
 				GlUtils.fillIBQuadrangle(this._ib,16);
-			}else this._ib=IndexBuffer.QuadrangleIB;
-			this._vb=VertexBuffer.create(new VertexDeclaration(-1));
+			}else this._ib=IndexBuffer2D.QuadrangleIB;
+			this._vb=VertexBuffer2D.create(-1);
 			this._other=ContextParams.DEFAULT;
 			this._save=[SaveMark.Create(this)];
 			this._save.length=10;
@@ -13277,6 +13310,10 @@ window.Laya=(function(window,document){
 
 		__class(WebGLContext2D,'laya.webgl.canvas.WebGLContext2D',_super);
 		var __proto=WebGLContext2D.prototype;
+		__proto.setIsMainContext=function(){
+			this._isMain=true;
+		}
+
 		__proto.clearBG=function(r,g,b,a){
 			var gl=WebGL.mainContext;
 			gl.clearColor(r,g,b,a);
@@ -13291,7 +13328,7 @@ window.Laya=(function(window,document){
 			this._curMat && this._curMat.destroy();
 			this._targets && this._targets.destroy();
 			this._vb && this._vb.releaseResource();
-			this._ib && (this._ib !=IndexBuffer.QuadrangleIB)&& this._ib.releaseResource();
+			this._ib && (this._ib !=IndexBuffer2D.QuadrangleIB)&& this._ib.releaseResource();
 		}
 
 		__proto.clear=function(){
@@ -13299,7 +13336,6 @@ window.Laya=(function(window,document){
 			this._targets && (this._targets.repaint=true);
 			this._other=ContextParams.DEFAULT;
 			this._clear=true;
-			this._mergeID=0;
 			this._repaint=false;
 			this._drawCount=1;
 			this._other.lineWidth=this._shader2D.ALPHA=1.0;
@@ -13436,12 +13472,12 @@ window.Laya=(function(window,document){
 			var vb=this._vb;
 			if (GlUtils.fillRectImgVb(vb,this._clipRect,x,y,width,height,Texture.DEF_UV,this._curMat,this._x,this._y,0,0)){
 				var pre=this._shader2D.fillStyle;
-				fillStyle && (this._shader2D.fillStyle=new DrawStyle(fillStyle));
+				fillStyle && (this._shader2D.fillStyle=DrawStyle.create(fillStyle));
 				var shader=this._shader2D;
 				var curShader=this._curSubmit.shaderValue;
 				if (shader.fillStyle!==curShader.fillStyle || shader.ALPHA!==curShader.ALPHA){
 					shader.glTexture=null;
-					var submit=this._curSubmit=Submit.create(this,0,this._mergeID,this._ib,vb,((vb._length-16 *4)/ 32)*3,Value2D.create(0x02,0));
+					var submit=this._curSubmit=Submit.create(this,this._ib,vb,((vb._length-16 *4)/ 32)*3,Value2D.create(0x02,0));
 					submit.shaderValue.color=shader.fillStyle._color._color;
 					submit.shaderValue.ALPHA=shader.ALPHA;
 					this._submits[this._submits._length++]=submit;
@@ -13461,18 +13497,6 @@ window.Laya=(function(window,document){
 			this._shader2D.filters=value;
 			this._curSubmit=Submit.RENDERBASE;
 			this._drawCount++;
-			this._mergeID=0;
-		}
-
-		__proto._findSameSubmit=function(submitID){
-			for (var i=this._submits._length-1;i >=0;i--){
-				var submit=this._submits [i];
-				if (submit._mergID && submit._mergID!==this._mergeID)break ;
-				if (submit._submitID===submitID){
-					return submit;
-				}
-			}
-			return null;
 		}
 
 		__proto.drawTexture=function(tex,x,y,width,height,tx,ty){
@@ -13490,25 +13514,22 @@ window.Laya=(function(window,document){
 			var shader=this._shader2D;
 			var curShader=this._curSubmit.shaderValue;
 			this._drawCount++;
-			if (shader.glTexture!==webGLImg || shader.ALPHA!==curShader.ALPHA){
+			if (this._curSubmit._renderType!==16 || shader.glTexture!==webGLImg || shader.ALPHA!==curShader.ALPHA){
 				shader.glTexture=webGLImg;
 				var vb=this._vb;
 				var submit=null;
-				var submitID=NaN;
 				var vbSize=(vb._length / 32)*3;
-				if (this._mergeID){
-					submitID=webGLImg.id+shader.ALPHA / 10;
-					submit=this._findSameSubmit(submitID);
-					vb=null;
-				}
-				if (!submit){
-					submit=Submit.create(this,submitID,this._mergeID,this._ib,vb,vbSize,Value2D.create(0x01,0));
-					this._submits[this._submits._length++]=submit;
-					submit.shaderValue.textureHost=tex;
-				}
+				submit=SubmitTexture.create(this,this._ib,vb,vbSize,Value2D.create(0x01,0));
+				this._submits[this._submits._length++]=submit;
+				submit.shaderValue.textureHost=tex;
+				submit._renderType=16
+				submit._preIsSameTextureShader=this._curSubmit._renderType===16 && shader.ALPHA===curShader.ALPHA;
 				this._curSubmit=submit;
 			}
 			if (GlUtils.fillRectImgVb(this._curSubmit._vb || this._vb,this._clipRect,x+tx,y+ty,width || tex.width,height || tex.height,tex.uv,m || this._curMat,this._x,this._y,0,0)){
+				if (AtlasResourceManager.enabled && !this._isMain){
+					(this._curSubmit).addTexture(tex);
+				}
 				this._curSubmit._numEle+=6;
 				this._maxNumEle=Math.max(this._maxNumEle,this._curSubmit._numEle);
 			}
@@ -13530,22 +13551,15 @@ window.Laya=(function(window,document){
 				var submit=null;
 				var submitID=NaN;
 				var vbSize=(vb._length / 32)*3;
-				if (this._mergeID){
-					submitID=webGLImg.id+shader.ALPHA / 10+(AtlasResourceManager.enabled ? 0 :(shader.colorAdd.__id / 10000));
-					submit=this._findSameSubmit(submitID);
-					vb=null;
+				if (AtlasResourceManager.enabled){
+					submit=SubmitTexture.create(this,this._ib,vb,vbSize,Value2D.create(0x01,0));
+					}else {
+					submit=SubmitTexture.create(this,this._ib,vb,vbSize,TextSV.create());
+					submit.shaderValue.colorAdd=shader.colorAdd;
+					submit.shaderValue.defines.add(0x40);
 				}
-				if (!submit){
-					if (AtlasResourceManager.enabled){
-						submit=Submit.create(this,submitID,this._mergeID,this._ib,vb,vbSize,Value2D.create(0x01,0));
-						}else {
-						submit=Submit.create(this,submitID,this._mergeID,this._ib,vb,vbSize,TextSV.create());
-						submit.shaderValue.colorAdd=shader.colorAdd;
-						submit.shaderValue.defines.add(0x40);
-					}
-					submit.shaderValue.textureHost=tex;
-					this._submits[this._submits._length++]=submit;
-				}
+				submit.shaderValue.textureHost=tex;
+				this._submits[this._submits._length++]=submit;
 				this._curSubmit=submit;
 			}
 			tex.active();
@@ -13579,7 +13593,7 @@ window.Laya=(function(window,document){
 				var t_tex=tex.bitmap;
 				if (shader.glTexture !=t_tex || shader.ALPHA!==curShader.ALPHA){
 					shader.glTexture=t_tex;
-					submit=this._curSubmit=Submit.create(this,0,this._mergeID,this._ib,vb,((vb._length)/ 32)*3,Value2D.create(0x01,0));
+					submit=this._curSubmit=Submit.create(this,this._ib,vb,((vb._length)/ 32)*3,Value2D.create(0x01,0));
 					submit.shaderValue.glTexture=t_tex;
 					this._submits[this._submits._length++]=submit;
 				}
@@ -13587,9 +13601,9 @@ window.Laya=(function(window,document){
 				}else {
 				if (!submit.shaderValue.fillStyle || !submit.shaderValue.fillStyle.equal(tex)|| shader.ALPHA!==curShader.ALPHA){
 					shader.glTexture=null;
-					submit=this._curSubmit=Submit.create(this,0,this._mergeID,this._ib,vb,((vb._length)/ 32)*3,Value2D.create(0x02,0));
+					submit=this._curSubmit=Submit.create(this,this._ib,vb,((vb._length)/ 32)*3,Value2D.create(0x02,0));
 					submit.shaderValue.defines.add(0x02);
-					submit.shaderValue.fillStyle=new DrawStyle(tex);
+					submit.shaderValue.fillStyle=DrawStyle.create(tex);
 					this._submits[this._submits._length++]=submit;
 				}
 				GlUtils.fillQuadrangleImgVb(vb,x,y,point4,Texture.DEF_UV,m || this._curMat,this._x,this._y);
@@ -13719,7 +13733,6 @@ window.Laya=(function(window,document){
 			this._shader2D.glTexture=null;
 			submit.clipRect.copyFrom(clip);
 			this._curSubmit=Submit.RENDERBASE;
-			this._mergeID=0;
 		}
 
 		__proto.setIBVB=function(x,y,ib,vb,numElement,mat,shader,shaderValues,startIndex,offset){
@@ -13730,7 +13743,7 @@ window.Laya=(function(window,document){
 					ib=this._ib;
 					}else {
 					var falshVB=vb;
-					(falshVB._selfIB)|| (falshVB._selfIB=IndexBuffer.create(0x88E4));
+					(falshVB._selfIB)|| (falshVB._selfIB=IndexBuffer2D.create(0x88E4));
 					falshVB._selfIB.clear();
 					ib=falshVB._selfIB;
 				}
@@ -13759,7 +13772,7 @@ window.Laya=(function(window,document){
 			var length=points.length >> 4;
 			var t_tex=tex.bitmap;
 			if (shader.glTexture !=t_tex || shader.ALPHA!==curShader.ALPHA){
-				submit=this._curSubmit=Submit.create(this,0,this._mergeID,this._ib,vb,((vb._length)/ 32)*3,Value2D.create(0x01,0));
+				submit=this._curSubmit=Submit.create(this,this._ib,vb,((vb._length)/ 32)*3,Value2D.create(0x01,0));
 				submit.shaderValue.textureHost=tex;
 				this._submits[this._submits._length++]=submit;
 			}
@@ -13802,9 +13815,10 @@ window.Laya=(function(window,document){
 			this._path.closePath=true;
 		}
 
-		__proto.fill=function(){
+		__proto.fill=function(isConvexPolygon){
+			(isConvexPolygon===void 0)&& (isConvexPolygon=false);
 			var tPath=this._getPath();
-			this.drawPoly(0,0,tPath.tempArray,this.fillStyle._color.numColor,0,0);
+			this.drawPoly(0,0,tPath.tempArray,this.fillStyle._color.numColor,0,0,isConvexPolygon);
 		}
 
 		__proto.stroke=function(){
@@ -13812,9 +13826,9 @@ window.Laya=(function(window,document){
 			if (this.lineWidth > 0){
 				tPath.drawLine(0,0,tPath.tempArray,this.lineWidth,this.strokeStyle._color.numColor);
 				tPath.update();
-				var tempSubmit=Submit.createShape(this,tPath.ib,tPath.vb,tPath.count,tPath.offset,Value2D.create(0x04,0));
+				var tempSubmit=Submit.createShape(this,tPath.ib,tPath.vb,tPath.count,tPath.offset,this._getPriValue2D());
 				tempSubmit.shaderValue.ALPHA=this._shader2D.ALPHA;
-				tempSubmit.shaderValue.u_mmat2=RenderState2D.mat2MatArray(this._curMat,RenderState2D.TEMPMAT4_ARRAY);
+				tempSubmit.shaderValue.u_mmat2=RenderState2D.mat2MatArray(this._curMat,RenderState2D.getMatrArray());
 				this._submits[this._submits._length++]=tempSubmit;
 			}
 		}
@@ -13827,7 +13841,7 @@ window.Laya=(function(window,document){
 				var curShader=submit.shaderValue;
 				if (shader.strokeStyle!==curShader.strokeStyle || shader.ALPHA!==curShader.ALPHA){
 					shader.glTexture=null;
-					submit=this._curSubmit=Submit.create(this,0,this._mergeID,this._ib,vb,((vb._length-16 *4)/ 32)*3,Value2D.create(0x02,0));
+					submit=this._curSubmit=Submit.create(this,this._ib,vb,((vb._length-16 *4)/ 32)*3,Value2D.create(0x02,0));
 					submit.shaderValue.strokeStyle=shader.strokeStyle;
 					submit.shaderValue.mainID=0x02;
 					submit.shaderValue.ALPHA=shader.ALPHA;
@@ -13913,7 +13927,7 @@ window.Laya=(function(window,document){
 			}
 			if (r < 100){
 				ndivs=Math.max(10,da *r / 5);
-				}else if(r < 200){
+				}else if (r < 200){
 				ndivs=Math.max(10,da *r / 20);
 				}else {
 				ndivs=Math.max(10,da *r / 40);
@@ -13947,7 +13961,7 @@ window.Laya=(function(window,document){
 			var tBezier=Bezier.I;
 			var tResultArray=[];
 			var tArray=tBezier.getBezierPoints([this._path.getEndPointX(),this._path.getEndPointY(),cpx,cpy,x,y],30,2);
-			for (var i=0,n=tArray.length/2;i < n;i++){
+			for (var i=0,n=tArray.length / 2;i < n;i++){
 				this.lineTo(tArray[i *2],tArray[i *2+1]);
 			}
 			this.lineTo(x,y);
@@ -13974,30 +13988,39 @@ window.Laya=(function(window,document){
 		*@param y
 		*@param points
 		*/
-		__proto.drawPoly=function(x,y,points,color,lineWidth,boderColor){
+		__proto.drawPoly=function(x,y,points,color,lineWidth,boderColor,isConvexPolygon){
+			(isConvexPolygon===void 0)&& (isConvexPolygon=false);
+			this._shader2D.glTexture=null;
 			this._getPath().polygon(x,y,points,color,lineWidth ? lineWidth :1,boderColor);
 			this._path.update();
+			var tValue2D=this._getPriValue2D();
+			var tArray=RenderState2D.getMatrArray();
+			RenderState2D.mat2MatArray(this._curMat,tArray);
 			var tempSubmit;
-			var submit=SubmitStencil.create(4);
-			this.addRenderObject(submit);
-			tempSubmit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,Value2D.create(0x04,0));
+			if (!isConvexPolygon){
+				var submit=SubmitStencil.create(4);
+				this.addRenderObject(submit);
+				tempSubmit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,tValue2D);
+				tempSubmit.shaderValue.ALPHA=this._shader2D.ALPHA;
+				tempSubmit.shaderValue.u_mmat2=tArray;
+				this._submits[this._submits._length++]=tempSubmit;
+				submit=SubmitStencil.create(5);
+				this.addRenderObject(submit);
+			}
+			tempSubmit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,tValue2D);
 			tempSubmit.shaderValue.ALPHA=this._shader2D.ALPHA;
-			tempSubmit.shaderValue.u_mmat2=RenderState2D.mat2MatArray(this._curMat,RenderState2D.TEMPMAT4_ARRAY);
+			tempSubmit.shaderValue.u_mmat2=tArray;
 			this._submits[this._submits._length++]=tempSubmit;
-			submit=SubmitStencil.create(5);
-			this.addRenderObject(submit);
-			tempSubmit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,Value2D.create(0x04,0));
-			tempSubmit.shaderValue.ALPHA=this._shader2D.ALPHA;
-			tempSubmit.shaderValue.u_mmat2=RenderState2D.mat2MatArray(this._curMat,RenderState2D.TEMPMAT4_ARRAY);
-			this._submits[this._submits._length++]=tempSubmit;
-			submit=SubmitStencil.create(3);
-			this.addRenderObject(submit);
+			if (!isConvexPolygon){
+				submit=SubmitStencil.create(3);
+				this.addRenderObject(submit);
+			}
 			if (lineWidth > 0){
 				this._path.drawLine(x,y,points,lineWidth,boderColor);
 				this._path.update();
-				tempSubmit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,Value2D.create(0x04,0));
+				tempSubmit=Submit.createShape(this,this._path.ib,this._path.vb,this._path.count,this._path.offset,tValue2D);
 				tempSubmit.shaderValue.ALPHA=this._shader2D.ALPHA;
-				tempSubmit.shaderValue.u_mmat2=RenderState2D.mat2MatArray(this._curMat,RenderState2D.TEMPMAT4_ARRAY);
+				tempSubmit.shaderValue.u_mmat2=tArray;
 				this._submits[this._submits._length++]=tempSubmit;
 			}
 		}
@@ -14013,6 +14036,10 @@ window.Laya=(function(window,document){
 			return this._path || (this._path=new Path());
 		}
 
+		__proto._getPriValue2D=function(){
+			return this._primitiveValue2D || (this._primitiveValue2D=Value2D.create(0x04,0));
+		}
+
 		__getset(0,__proto,'asBitmap',null,function(value){
 			if (value){
 				this._targets || (this._targets=new RenderTargetMAX());
@@ -14025,7 +14052,7 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'fillStyle',function(){
 			return this._shader2D.fillStyle;
 			},function(value){
-			this._shader2D.fillStyle.equal(value)|| (SaveBase.save(this,0x2,this._shader2D,false),this._shader2D.fillStyle=new DrawStyle(value));
+			this._shader2D.fillStyle.equal(value)|| (SaveBase.save(this,0x2,this._shader2D,false),this._shader2D.fillStyle=DrawStyle.create(value));
 		});
 
 		/*,_shader2D.ALPHA=1*/
@@ -14052,7 +14079,6 @@ window.Laya=(function(window,document){
 			}
 		});
 
-		//}
 		__getset(0,__proto,'textBaseline',function(){
 			return this._other.textBaseline;
 			},function(value){
@@ -14070,7 +14096,7 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'strokeStyle',function(){
 			return this._shader2D.strokeStyle;
 			},function(value){
-			this._shader2D.strokeStyle.equal(value)|| (SaveBase.save(this,0x200,this._shader2D,false),this._shader2D.strokeStyle=new DrawStyle(value));
+			this._shader2D.strokeStyle.equal(value)|| (SaveBase.save(this,0x200,this._shader2D,false),this._shader2D.strokeStyle=DrawStyle.create(value));
 		});
 
 		__getset(0,__proto,'lineWidth',function(){
@@ -14341,6 +14367,7 @@ window.Laya=(function(window,document){
 			ShaderDefines2D.reg("BLUR_FILTER",0x10);
 			ShaderDefines2D.reg("COLOR_FILTER",0x20);
 			ShaderDefines2D.reg("COLOR_ADD",0x40);
+			ShaderDefines2D.reg("WORLDMAT",0x80);
 		}
 
 		ShaderDefines2D.reg=function(name,value){
@@ -14362,6 +14389,7 @@ window.Laya=(function(window,document){
 		ShaderDefines2D.FILTERBLUR=0x10;
 		ShaderDefines2D.FILTERCOLOR=0x20;
 		ShaderDefines2D.COLORADD=0x40;
+		ShaderDefines2D.WORLDMAT=0x80;
 		ShaderDefines2D.__name2int={};
 		ShaderDefines2D.__int2name=[];
 		ShaderDefines2D.__int2nameMap=[];
@@ -14392,7 +14420,7 @@ window.Laya=(function(window,document){
 			for (var i=0;i < tLen;i++){
 				tCurrX=points[i *2];
 				tCurrY=points[i *2+1];
-				if (tLastX !=tCurrX || tLastY !=tCurrY){
+				if (Math.abs(tLastX-tCurrX)> 0.01 || Math.abs(tLastY-tCurrY)>0.01){
 					this._points.push(tCurrX,tCurrY);
 				}
 				tLastX=tCurrX;
@@ -14402,7 +14430,7 @@ window.Laya=(function(window,document){
 			tCurrY=points[tLen *2+1];
 			tLastX=this._points[0];
 			tLastY=this._points[1];
-			if (tLastX !=tCurrX || tLastY !=tCurrY){
+			if (Math.abs(tLastX-tCurrX)> 0.01 || Math.abs(tLastY-tCurrY)>0.01){
 				this._points.push(tCurrX,tCurrY);
 			}
 			Line.__super.call(this,x,y,0,0,0,color,borderWidth,color,0);
@@ -14438,7 +14466,7 @@ window.Laya=(function(window,document){
 			for (var i=0;i < tLen;i++){
 				tCurrX=points[i *2];
 				tCurrY=points[i *2+1];
-				if (tLastX !=tCurrX || tLastY !=tCurrY){
+				if (Math.abs(tLastX-tCurrX)> 0.01 || Math.abs(tLastY-tCurrY)>0.01){
 					this._points.push(tCurrX,tCurrY);
 				}
 				tLastX=tCurrX;
@@ -14448,7 +14476,7 @@ window.Laya=(function(window,document){
 			tCurrY=points[tLen *2+1];
 			tLastX=this._points[0];
 			tLastY=this._points[1];
-			if (tLastX !=tCurrX || tLastY !=tCurrY){
+			if (Math.abs(tLastX-tCurrX)> 0.01 || Math.abs(tLastY-tCurrY)>0.01){
 				this._points.push(tCurrX,tCurrY);
 			}
 			LoopLine.__super.call(this,x,y,0,0,this._points.length / 2,0,width,color);
@@ -14660,6 +14688,124 @@ window.Laya=(function(window,document){
 
 		SubmitCanvas._cache=(SubmitCanvas._cache=[],SubmitCanvas._cache._length=0,SubmitCanvas._cache);
 		return SubmitCanvas;
+	})(Submit)
+
+
+	/**
+	*...
+	*@author laya
+	*/
+	//class laya.webgl.submit.SubmitTexture extends laya.webgl.submit.Submit
+	var SubmitTexture=(function(_super){
+		function SubmitTexture(renderType){
+			this._preIsSameTextureShader=false;
+			this._isSameTexture=true;
+			this._texs=new Array;
+			this._texsID=new Array;
+			(renderType===void 0)&& (renderType=1);
+			SubmitTexture.__super.call(this,renderType);
+		}
+
+		__class(SubmitTexture,'laya.webgl.submit.SubmitTexture',_super);
+		var __proto=SubmitTexture.prototype;
+		__proto.releaseRender=function(){
+			var cache=SubmitTexture._cache;
+			cache[cache._length++]=this;
+			this.shaderValue.release();
+			this._preIsSameTextureShader=false;
+			this._vb=null;
+			this._texs.length=0;
+			this._isSameTexture=true;
+		}
+
+		__proto.addTexture=function(tex){
+			this._texsID[this._texs.length]=tex._uvID;
+			this._texs.push(tex);
+		}
+
+		//检查材质是否修改，修改UV，设置是否是同一材质
+		__proto.checkTexture=function(){
+			if (this._texs.length< 1){
+				this._isSameTexture=true;
+				return;
+			};
+			var _tex=this.shaderValue.textureHost;
+			var webGLImg=_tex.bitmap;
+			if (webGLImg===null)return;
+			for (var i=0,s=this._texs.length;i < s;i++){
+				var tex2=this._texs[i];
+				if (this._texsID[i]!==tex2._uvID){
+				}
+				if (tex2.bitmap!==webGLImg){
+					this._isSameTexture=false;
+				}
+			}
+		}
+
+		__proto.renderSubmit=function(){
+			if (this._numEle===0)return 1;
+			var _tex=this.shaderValue.textureHost;
+			if (_tex){
+				var source;
+				if (!_tex.bitmap || !(source=_tex.source))
+					return 1;
+				this.shaderValue.texture=source;
+			}
+			this._vb.bind_upload(this._ib);
+			var gl=WebGL.mainContext;
+			if (BlendMode.activeBlendFunction!==this._blendFn){
+				gl.enable(0x0BE2);
+				this._blendFn(gl);
+				BlendMode.activeBlendFunction=this._blendFn;
+			}
+			Stat.drawCall++;
+			Stat.trianglesFaces+=this._numEle / 3;
+			if (this._preIsSameTextureShader && Shader.activeShader)
+				Shader.activeShader.uploadTexture2D(this.shaderValue.texture);
+			else this.shaderValue.upload();
+			this._isSameTexture=true;
+			if (this._texs.length > 1 && !this._isSameTexture){
+				var webGLImg=_tex.bitmap;
+				var index=0;
+				var shader=Shader.activeShader;
+				for (var i=0,s=this._texs.length;i < s;i++){
+					var tex2=this._texs[i];
+					if (tex2.bitmap!==webGLImg || (i+1)===s){
+						shader.uploadTexture2D(tex2.source);
+						gl.drawElements(0x0004,(i-index+1)*6,0x1403,this._startIdx+index*6*CONST3D2D.BYTES_PIDX);
+						webGLImg=tex2.bitmap;
+						index=i;
+					}
+				}
+			}
+			else{
+				gl.drawElements(0x0004,this._numEle,0x1403,this._startIdx);
+			}
+			return 1;
+		}
+
+		SubmitTexture.create=function(context,ib,vb,pos,sv){
+			var o=SubmitTexture._cache._length ? SubmitTexture._cache[--SubmitTexture._cache._length] :new SubmitTexture();
+			if (vb==null){
+				vb=o._selfVb || (o._selfVb=VertexBuffer2D.create(-1));
+				vb.clear();
+				pos=0;
+			}
+			o._ib=ib;
+			o._vb=vb;
+			o._startIdx=pos *CONST3D2D.BYTES_PIDX;
+			o._numEle=0;
+			var blendType=context._nBlendType;
+			o._blendFn=context._targets ? BlendMode.targetFns[blendType] :BlendMode.fns[blendType];
+			o.shaderValue=sv;
+			o.shaderValue.setValue(context._shader2D);
+			var filters=context._shader2D.filters;
+			filters && o.shaderValue.setFilters(filters);
+			return o;
+		}
+
+		SubmitTexture._cache=(SubmitTexture._cache=[],SubmitTexture._cache._length=0,SubmitTexture._cache);
+		return SubmitTexture;
 	})(Submit)
 
 
@@ -15082,7 +15228,7 @@ window.Laya=(function(window,document){
 		*@param y Y轴坐标。
 		*/
 		__proto.render=function(context,x,y){
-			Stat.spriteDraw++;
+			Stat.spriteCount++;
 			RenderSprite.renders[this._renderType]._fun(this,context,x+this._x,y+this._y);
 			this._repaint=0;
 		}
@@ -15131,9 +15277,11 @@ window.Laya=(function(window,document){
 		*/
 		__proto._isHaveGlowFilter=function(){
 			var i=0,len=0;
-			for (i=0;i < this.filters.length;i++){
-				if (this.filters[i].type==0x08){
-					return true;
+			if (this.filters){
+				for (i=0;i < this.filters.length;i++){
+					if (this.filters[i].type==0x08){
+						return true;
+					}
 				}
 			}
 			for (i=0,len=this._childs.length;i < len;i++){
@@ -15300,9 +15448,11 @@ window.Laya=(function(window,document){
 			(width===void 0)&& (width=0);
 			(height===void 0)&& (height=0);
 			function loaded (tex){
-				_$this.size(tex.width,tex.height);
-				_$this.repaint();
-				complete && complete.runWith(tex);
+				if (!_$this.destroyed){
+					_$this.size(tex.width,tex.height);
+					_$this.repaint();
+					complete && complete.runWith(tex);
+				}
 			}
 			this.graphics.loadImage(url,x,y,width,height,loaded);
 			return this;
@@ -16294,6 +16444,12 @@ window.Laya=(function(window,document){
 			one.fun.call(this,one,value);
 		}
 
+		__proto.uploadTexture2D=function(value){
+			var gl=WebGL.mainContext;
+			gl.activeTexture(0x84C0);
+			WebGLContext.bindTexture(gl,0x0DE1,value);
+		}
+
 		/**
 		*提交shader到GPU
 		*@param shaderValue
@@ -16327,7 +16483,7 @@ window.Laya=(function(window,document){
 			var params=this._params,value;
 			var one,shaderCall=0,uploadArrayCount=Shader._uploadArrayCount++;
 			for (var i=length-2;i >=0;i-=2){
-				one=this._paramsMap[shaderValue[i]]
+				one=this._paramsMap[shaderValue[i]];
 				if (!one || one._uploadArrayCount===uploadArrayCount)
 					continue ;
 				one._uploadArrayCount=uploadArrayCount;
@@ -16770,7 +16926,7 @@ window.Laya=(function(window,document){
 				if (this._buffer.byteLength > (this._maxsize+64)){
 					this.memorySize=this._buffer.byteLength;
 					this._buffer=this._buffer.slice(0,this._maxsize+64);
-					this._checkFloatArray32Use();
+					this._checkArrayUse();
 				}
 				this._maxsize=this._length;
 			}
@@ -16780,7 +16936,6 @@ window.Laya=(function(window,document){
 				this.memorySize=this._uploadSize;
 			}
 			Buffer._gl.bufferSubData(this._type,0,this._buffer);
-			Stat.bufferLen+=this._length;
 		}
 
 		__proto._bufferSubData=function(offset,dataStart,dataLength){
@@ -16792,7 +16947,7 @@ window.Laya=(function(window,document){
 				if (this._buffer.byteLength > (this._maxsize+64)){
 					this.memorySize=this._buffer.byteLength;
 					this._buffer=this._buffer.slice(0,this._maxsize+64);
-					this._checkFloatArray32Use();
+					this._checkArrayUse();
 				}
 				this._maxsize=this._length;
 			}
@@ -16809,7 +16964,7 @@ window.Laya=(function(window,document){
 			}
 		}
 
-		__proto._checkFloatArray32Use=function(){}
+		__proto._checkArrayUse=function(){}
 		__proto.recreateResource=function(){
 			this.startCreate();
 			this._glBuffer || (this._glBuffer=Buffer._gl.createBuffer());
@@ -16818,11 +16973,7 @@ window.Laya=(function(window,document){
 
 		__proto.detoryResource=function(){
 			if (this._glBuffer){
-				WebGL.mainContext.disableVertexAttribArray(0);
-				WebGL.mainContext.disableVertexAttribArray(1);
-				WebGL.mainContext.disableVertexAttribArray(2);
 				WebGL.mainContext.deleteBuffer(this._glBuffer);
-				var glBuffer=this._glBuffer;
 				this._glBuffer=null;
 				this._upload=true;
 				this._uploadSize=0;
@@ -16867,30 +17018,28 @@ window.Laya=(function(window,document){
 				this._buffer=newbuffer;
 			}else
 			this._buffer=new ArrayBuffer(nsz);
-			this._checkFloatArray32Use();
+			this._checkArrayUse();
 			this._upload=true;
 			return this;
 		}
 
 		__proto.append=function(data){
 			this._upload=true;
-			var szu8=0,n;
+			var byteLength=0,n;
+			byteLength=data.byteLength;
 			if ((data instanceof Uint8Array)){
-				szu8=data.length;
-				this._resizeBuffer(this._length+szu8,true);
+				this._resizeBuffer(this._length+byteLength,true);
 				n=new Uint8Array(this._buffer,this._length);
-				}else if ((data instanceof Float32Array)){
-				szu8=data.length *4;
-				this._resizeBuffer(this._length+szu8,true);
-				n=new Float32Array(this._buffer,this._length);
 				}else if ((data instanceof Uint16Array)){
-				szu8=data.length *2;
-				this._resizeBuffer(this._length+szu8,true);
+				this._resizeBuffer(this._length+byteLength,true);
 				n=new Uint16Array(this._buffer,this._length);
+				}else if ((data instanceof Float32Array)){
+				this._resizeBuffer(this._length+byteLength,true);
+				n=new Float32Array(this._buffer,this._length);
 			}
 			n.set(data,0);
-			this._length+=szu8;
-			this._checkFloatArray32Use();
+			this._length+=byteLength;
+			this._checkArrayUse();
 		}
 
 		/*
@@ -16969,22 +17118,11 @@ window.Laya=(function(window,document){
 
 		Buffer.__int__=function(gl){
 			Buffer._gl=gl;
-			IndexBuffer.QuadrangleIB=IndexBuffer.create(0x88E4);
-			GlUtils.fillIBQuadrangle(IndexBuffer.QuadrangleIB,16);
+			IndexBuffer2D.QuadrangleIB=IndexBuffer2D.create(0x88E4);
+			GlUtils.fillIBQuadrangle(IndexBuffer2D.QuadrangleIB,16);
 		}
 
 		Buffer.INDEX="INDEX";
-		Buffer.POSITION0="POSITION";
-		Buffer.NORMAL0="NORMAL";
-		Buffer.COLOR0="COLOR";
-		Buffer.COLOR1="COLOR1";
-		Buffer.UV0="UV";
-		Buffer.NEXTUV0="NEXTUV";
-		Buffer.UV1="UV1";
-		Buffer.NEXTUV1="NEXTUV1";
-		Buffer.BLENDWEIGHT0="BLENDWEIGHT";
-		Buffer.BLENDINDICES0="BLENDINDICES";
-		Buffer.TANGENT0="TANGENT0";
 		Buffer.MVPMATRIX="MVPMATRIX";
 		Buffer.MATRIX1="MATRIX1";
 		Buffer.MATRIX2="MATRIX2";
@@ -17025,12 +17163,6 @@ window.Laya=(function(window,document){
 		Buffer.SPOTLIGHTDIFFUSE="SPOTLIGHTDIFFUSE";
 		Buffer.SPOTLIGHTAMBIENT="SPOTLIGHTAMBIENT";
 		Buffer.SPOTLIGHTSPECULAR="SPOTLIGHTSPECULAR";
-		Buffer.CORNERTEXTURECOORDINATE="CORNERTEXTURECOORDINATE";
-		Buffer.VELOCITY="VELOCITY";
-		Buffer.SIZEROTATION="SIZEROTATION";
-		Buffer.RADIUS="RADIUS";
-		Buffer.RADIAN="RADIAN";
-		Buffer.AGEADDSCALE="AGEADDSCALE";
 		Buffer.TIME="TIME";
 		Buffer.VIEWPORTSCALE="VIEWPORTSCALE";
 		Buffer.CURRENTTIME="CURRENTTIME";
@@ -17102,286 +17234,6 @@ window.Laya=(function(window,document){
 		__class(PrimitiveSV,'laya.webgl.shader.d2.value.PrimitiveSV',_super);
 		return PrimitiveSV;
 	})(Value2D)
-
-
-	/**
-	*<p> <code>Animation</code> 类是位图动画,用于创建位图动画。</p>
-	*<p> <code>Animation</code> 类可以加载并显示一组位图图片，并组成动画进行播放。</p>
-	*@example 以下示例代码，创建了一个 <code>Text</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.display.Animation;
-		*import laya.net.Loader;
-		*import laya.utils.Handler;
-		*public class Animation_Example
-		*{
-			*public function Animation_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*init();//初始化
-				*}
-			*private function init():void
-			*{
-				*var animation:Animation=new Animation();//创建一个 Animation 类的实例对象 animation 。
-				*animation.loadAtlas("resource/ani/fighter.json");//加载图集并播放
-				*animation.x=200;//设置 animation 对象的属性 x 的值，用于控制 animation 对象的显示位置。
-				*animation.y=200;//设置 animation 对象的属性 x 的值，用于控制 animation 对象的显示位置。
-				*animation.interval=30;//设置 animation 对象的动画播放间隔时间，单位：毫秒。
-				*animation.play();//播放动画。
-				*Laya.stage.addChild(animation);//将 animation 对象添加到显示列表。
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Animation_Example();
-	*function Animation_Example(){
-		*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
-		*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-		*init();//初始化
-		*}
-	*function init()
-	*{
-		*var animation=new Laya.Animation();//创建一个 Animation 类的实例对象 animation 。
-		*animation.loadAtlas("resource/ani/fighter.json");//加载图集并播放
-		*animation.x=200;//设置 animation 对象的属性 x 的值，用于控制 animation 对象的显示位置。
-		*animation.y=200;//设置 animation 对象的属性 x 的值，用于控制 animation 对象的显示位置。
-		*animation.interval=30;//设置 animation 对象的动画播放间隔时间，单位：毫秒。
-		*animation.play();//播放动画。
-		*Laya.stage.addChild(animation);//将 animation 对象添加到显示列表。
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import Animation=laya.display.Animation;
-	*class Animation_Example {
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*this.init();
-			*}
-		*private init():void {
-			*var animation:Animation=new Laya.Animation();//创建一个 Animation 类的实例对象 animation 。
-			*animation.loadAtlas("resource/ani/fighter.json");//加载图集并播放
-			*animation.x=200;//设置 animation 对象的属性 x 的值，用于控制 animation 对象的显示位置。
-			*animation.y=200;//设置 animation 对象的属性 x 的值，用于控制 animation 对象的显示位置。
-			*animation.interval=30;//设置 animation 对象的动画播放间隔时间，单位：毫秒。
-			*animation.play();//播放动画。
-			*Laya.stage.addChild(animation);//将 animation 对象添加到显示列表。
-			*}
-		*}
-	*new Animation_Example();
-	*</listing>
-	*/
-	//class laya.display.Animation extends laya.display.Sprite
-	var Animation=(function(_super){
-		function Animation(){
-			this.loop=false;
-			this._frames=null;
-			this._index=0;
-			this._count=0;
-			this._isPlaying=false;
-			this._labels=null;
-			Animation.__super.call(this);
-			this.interval=Config.animationInterval;
-			this.on("display",this,this._$3__onDisplay);
-			this.on("undisplay",this,this._$3__onDisplay);
-		}
-
-		__class(Animation,'laya.display.Animation',_super);
-		var __proto=Animation.prototype;
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			this.stop();
-			_super.prototype.destroy.call(this,destroyChild);
-			this._frames=null;
-			this._labels=null;
-		}
-
-		__proto._$3__onDisplay=function(){
-			if (this._isPlaying){
-				if (this._displayInStage)this.play(this._index,this.loop);
-				else this.clearTimer(this,this._frameLoop);
-			}
-		}
-
-		/**
-		*播放动画。
-		*@param start 开始播放的动画索引。
-		*@param loop 是否循环。
-		*@param name 如果name为空(可选)，则播放当前动画，如果不为空，则播放全局缓存动画（如果有）
-		*/
-		__proto.play=function(start,loop,name){
-			(start===void 0)&& (start=0);
-			(loop===void 0)&& (loop=true);
-			(name===void 0)&& (name="");
-			this._setFramesFromCache(name);
-			this._isPlaying=true;
-			this.index=start;
-			this.loop=loop;
-			if (this._frames && this._frames.length > 1 && this.interval > 0){
-				this._index++;
-				this.timerLoop(this.interval,this,this._frameLoop,null,true);
-			}
-		}
-
-		__proto._setFramesFromCache=function(name){
-			if (name && Animation.framesMap[name]){
-				this._frames=Animation.framesMap[name];
-				this._count=this._frames.length;
-				return true;
-			}
-			return false;
-		}
-
-		__proto._frameLoop=function(){
-			if (this._style.visible && this._style.alpha > 0.01){
-				this.index=this._index,this._index++;
-				if (this._index >=this._count){
-					if (this.loop)this._index=0;
-					else {
-						this._index--;
-						this.stop();
-					}
-					this.event("complete");
-				}
-			}
-		}
-
-		/**
-		*停止播放。
-		*/
-		__proto.stop=function(){
-			this._isPlaying=false;
-			this.clearTimer(this,this._frameLoop);
-		}
-
-		/**
-		*增加一个标签到index帧上，播放到此index后会派发label事件
-		*@param label 标签名称
-		*@param index 索引位置
-		*/
-		__proto.addLabel=function(label,index){
-			if (!this._labels)this._labels={};
-			this._labels[index]=label;
-		}
-
-		/**
-		*删除某个标签
-		*@param label 标签名字，如果label为空，则删除所有Label
-		*/
-		__proto.removeLabel=function(label){
-			if (!label)this._labels=null;
-			else if (!this._labels){
-				for (var name in this._labels){
-					if (this._labels[name]===label){
-						delete this._labels[name];
-						break ;
-					}
-				}
-			}
-		}
-
-		/**清理。方便对象复用。*/
-		__proto.clear=function(){
-			this.stop();
-			this.graphics=null;
-			this._frames=null;
-			this._labels=null;
-		}
-
-		/**
-		*加载图片集合，组成动画。
-		*@param urls 图片地址集合。如：[url1,url2,url3,...]。
-		*@param cacheName 缓存为模板的名称，下次可以直接使用play调用，无需重新创建动画模板，设置为空则不缓存
-		*@return 返回动画本身。
-		*/
-		__proto.loadImages=function(urls,cacheName){
-			(cacheName===void 0)&& (cacheName="");
-			if (!this._setFramesFromCache(cacheName)){
-				this.frames=Animation.createFrames(urls,!Animation.framesMap[cacheName] ? cacheName :"");
-			}
-			return this;
-		}
-
-		/**
-		*加载并播放一个图集。
-		*@param url 图集地址。
-		*@param loaded 加载完毕回调
-		*@param cacheName 缓存为模板的名称，下次可以直接使用play调用，无需重新创建动画模板，设置为空则不缓存
-		*@return 返回动画本身。
-		*/
-		__proto.loadAtlas=function(url,loaded,cacheName){
-			var _$this=this;
-			(cacheName===void 0)&& (cacheName="");
-			if (!this._setFramesFromCache(cacheName)){
-				function onLoaded (loadUrl){
-					if (url===loadUrl){
-						_$this.frames=Animation.createFrames(url,!Animation.framesMap[cacheName] ? cacheName :"");
-						if (loaded)loaded.run();
-					}
-				}
-				if (Loader.getAtlas(url))onLoaded(url);
-				else Laya.loader.load(url,Handler.create(null,onLoaded,[url]),null,"atlas");
-			}
-			return this;
-		}
-
-		/**当前播放索引。*/
-		__getset(0,__proto,'index',function(){
-			return this._index;
-			},function(value){
-			this._index=value;
-			if (this._frames)this.graphics=this._frames[value];
-			if (this._labels && this._labels[value])this.event("label",this._labels[value]);
-		});
-
-		/**动画长度。*/
-		__getset(0,__proto,'count',function(){
-			return this._count;
-		});
-
-		/**Graphics集合*/
-		__getset(0,__proto,'frames',function(){
-			return this._frames;
-			},function(value){
-			this._frames=value;
-			if (value){
-				this._count=value.length;
-				if (this._isPlaying)this.play(this._index,this.loop);
-				else this.index=this._index;
-			}
-		});
-
-		Animation.createFrames=function(url,name){
-			var arr;
-			if ((typeof url=='string')){
-				var atlas=Loader.getAtlas(url);
-				if (atlas && atlas.length){
-					arr=[];
-					for (var i=0,n=atlas.length;i < n;i++){
-						var g=new Graphics();
-						g.drawTexture(Loader.getRes(atlas[i]),0,0);
-						arr.push(g);
-					}
-				}
-				}else if ((url instanceof Array)){
-				arr=[];
-				for (i=0,n=url.length;i < n;i++){
-					g=new Graphics();
-					g.loadImage(url[i],0,0);
-					arr.push(g);
-				}
-			}
-			if (name)Animation.framesMap[name]=arr;
-			return arr;
-		}
-
-		Animation.framesMap={};
-		return Animation;
-	})(Sprite)
 
 
 	/**
@@ -17481,9 +17333,14 @@ window.Laya=(function(window,document){
 			this._textWidth=0;
 			this._textHeight=0;
 			this._lines=[];
+			this._lineWidths=[];
 			this._startX=NaN;
 			this._startY=NaN;
 			this._lastVisibleLineIndex=-1;
+			this._word=null;
+			this.underline=false;
+			this.underlineWidth=1;
+			this.underlineColor=null;
 			Text.__super.call(this);
 			this.overflow=Text.VISIBLE;
 			this._style=new CSSStyle(this);
@@ -17619,6 +17476,7 @@ window.Laya=(function(window,document){
 				}
 				x=startX-(this._clipPoint ? this._clipPoint.x :0);
 				y=startY+lineHeight *i-(this._clipPoint ? this._clipPoint.y :0);
+				this.underline && this.drawUnderline(textAlgin,x,y,i);
 				if (tCurrBitmapFont){
 					var tWidth=this.width;
 					if (tCurrBitmapFont.autoScaleSize){
@@ -17626,7 +17484,13 @@ window.Laya=(function(window,document){
 					}
 					tCurrBitmapFont.drawText(word,this,x,y,this.align,tWidth);
 					}else {
-					style.stroke ? graphics.fillBorderText(word,x,y,ctxFont,this.color,style.strokeColor,style.stroke,textAlgin):graphics.fillText(word,x,y,ctxFont,this.color,textAlgin);
+					if (Render.isWebGL){
+						this._word || (this._word=new WordText());
+						this._word.setText(word);
+						}else {
+						this._word=word;
+					}
+					style.stroke ? graphics.fillBorderText(this._word,x,y,ctxFont,this.color,style.strokeColor,style.stroke,textAlgin):graphics.fillText(this._word,x,y,ctxFont,this.color,textAlgin);
 				}
 			}
 			if (tCurrBitmapFont && tCurrBitmapFont.autoScaleSize){
@@ -17637,6 +17501,29 @@ window.Laya=(function(window,document){
 				graphics.restore();
 			this._startX=startX;
 			this._startY=startY;
+		}
+
+		/**
+		*绘制下划线
+		*@param x 本行坐标
+		*@param y 本行坐标
+		*@param lineIndex 本行索引
+		*/
+		__proto.drawUnderline=function(align,x,y,lineIndex){
+			var lineWidth=this._lineWidths[lineIndex];
+			switch(align){
+				case 'center':
+					x-=lineWidth / 2;
+					break ;
+				case 'right':
+					x-=lineWidth;
+					break ;
+				case 'left':
+				default :
+					break ;
+				}
+			y+=this.fontSize;
+			this._graphics.drawLine(x,y,x+lineWidth,y,this.underlineColor || this.color,this.underlineWidth);
 		}
 
 		/**
@@ -17653,6 +17540,7 @@ window.Laya=(function(window,document){
 			}
 			Browser.context.font=this._getCSSStyle().font;
 			this._lines.length=0;
+			this._lineWidths.length=0;
 			this.parseLines(this._text);
 			this.evalTextSize();
 			if (this.checkEnabledViewportOrNot())
@@ -17669,11 +17557,7 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.evalTextSize=function(){
-			this._textWidth=0;
-			for (var n=0,len=this._lines.length;n < len;++n){
-				var word=this._lines[n];
-				this._textWidth=Math.max(this.getTextWidth(word)+this.padding[3]+this.padding[1],this._textWidth);
-			}
+			this._textWidth=this._lineWidths[0];
 			if (this._currBitmapFont){
 				this._textHeight=this._lines.length *(this._currBitmapFont.getMaxHeight()+this.leading)+this.padding[0]+this.padding[2];
 			}else
@@ -17712,11 +17596,29 @@ window.Laya=(function(window,document){
 			for (var i=0,n=lines.length;i < n;i++){
 				if (i < n-1)
 					lines[i]+="\n";
+				var line=lines[i];
 				if (needWordWrapOrTruncate)
-					this.parseLine(lines[i],wordWrapWidth);
-				else
-				this._lines[i]=lines[i];
+					this.parseLine(line,wordWrapWidth);
+				else{
+					this._lines.push(line);
+					this._lineWidths.push(this.getTextWidth(line));
+				}
 			}
+		}
+
+		/**
+		*pusn新的行宽，保持索引0的值最大
+		*@param width
+		*/
+		__proto.pushNewLineWidth=function(width){
+			if (this._lineWidths.length > 0){
+				if (width > this._lineWidths[0])
+					this._lineWidths.unshift(width);
+				else
+				this._lineWidths.push(width);
+			}
+			else
+			this._lineWidths.push(width);
 		}
 
 		/**
@@ -17736,6 +17638,7 @@ window.Laya=(function(window,document){
 			charsWidth=this.getTextWidth(line);
 			if (charsWidth <=wordWrapWidth){
 				lines.push(line);
+				this.pushNewLineWidth(charsWidth);
 				return;
 			}
 			charsWidth=this._currBitmapFont ? this._currBitmapFont.getMaxWidth():Browser.context.measureText("阳").width;
@@ -17760,6 +17663,7 @@ window.Laya=(function(window,document){
 							}
 						}
 						lines.push(newLine);
+						this.pushNewLineWidth(wordWidth-charsWidth);
 						startIndex=j;
 						if (j+maybeIndex < m){
 							j+=maybeIndex;
@@ -17768,17 +17672,21 @@ window.Laya=(function(window,document){
 							j--;
 							}else {
 							lines.push(line.substring(startIndex,m));
+							this.pushNewLineWidth(this.getTextWidth(lines[lines.length-1]));
 							startIndex=-1;
 							break ;
 						}
 						}else if (this.overflow==Text.HIDDEN){
 						lines.push(line.substring(0,j));
+						this.pushNewLineWidth(this.getTextWidth(lines[lines.length-1]));
 						return;
 					}
 				}
 			}
-			if (this.wordWrap && startIndex !=-1)
+			if (this.wordWrap && startIndex !=-1){
 				lines.push(line.substring(startIndex,m));
+				this.pushNewLineWidth(this.getTextWidth(lines[lines.length-1]));
+			}
 		}
 
 		__proto.getTextWidth=function(text){
@@ -17892,13 +17800,17 @@ window.Laya=(function(window,document){
 
 		/**当前文本的内容字符串。*/
 		__getset(0,__proto,'text',function(){
-			return this._text || '';
+			return this._text || "";
 			},function(value){
 			if (this._text!==value){
 				this.lang(value+"");
 				this.isChanged=true;
 				this.event("change");
 			}
+		});
+
+		__getset(0,__proto,'lines',function(){
+			return this._lines;
 		});
 
 		/**
@@ -18821,7 +18733,7 @@ window.Laya=(function(window,document){
 					var params=this._params,one;
 					for (var i=0,n=params.length;i < n;i++){
 						one=params[i];
-						if (!Render.isFlash && (one.name==="size" || one.name==="al2pha" || one.name==="mmat" || one.name==="position" || one.name==="texcoord"))continue ;
+						if (!Render.isFlash && (one.name==="size" || one.name==="mmat" || one.name==="position" || one.name==="texcoord"))continue ;
 						this._params2dQuick1.push(one);
 					}
 				}
@@ -18850,7 +18762,7 @@ window.Laya=(function(window,document){
 					var params=this._params,one;
 					for (var i=0,n=params.length;i < n;i++){
 						one=params[i];
-						if (!Render.isFlash && (one.name==="size"|| one.name==="al2pha"))continue ;
+						if (!Render.isFlash && (one.name==="size"))continue ;
 						this._params2dQuick2.push(one);
 					}
 				}
@@ -18969,12 +18881,6 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.clearAtlasSource=function(){}
-		//canvas为公用绘制载体,资源恢复时会使用,无需清空
-		__proto.dispose=function(){
-			this.resourceManager.removeResource(this);
-			_super.prototype.dispose.call(this);
-		}
-
 		/**
 		*是否创建私有Source
 		*@return 是否创建
@@ -18996,9 +18902,9 @@ window.Laya=(function(window,document){
 		*@return 是否创建
 		*/
 		__getset(0,__proto,'enableMerageInAtlas',function(){
-			return this._allowMerageInAtlas;
+			return this._enableMerageInAtlas;
 			},function(value){
-			this._allowMerageInAtlas=value;
+			this._enableMerageInAtlas=value;
 		});
 
 		return WebGLCharImage;
@@ -19112,6 +19018,7 @@ window.Laya=(function(window,document){
 				var _this=this;
 				for (var i=0;i < this._texCount;i++){
 					this._images[i]=new Browser.window.Image();
+					this._images[i].crossOrigin="";
 					var index=i;
 					this._images[index].onload=function (){
 						var j=0;
@@ -19289,28 +19196,39 @@ window.Laya=(function(window,document){
 	*...
 	*@author laya
 	*/
-	//class laya.webgl.utils.IndexBuffer extends laya.webgl.utils.Buffer
-	var IndexBuffer=(function(_super){
-		function IndexBuffer(bufferUsage){
+	//class laya.webgl.utils.IndexBuffer2D extends laya.webgl.utils.Buffer
+	var IndexBuffer2D=(function(_super){
+		function IndexBuffer2D(bufferUsage){
+			this._uint8Array=null;
+			this._uint16Array=null;
 			(bufferUsage===void 0)&& (bufferUsage=0x88E4);
-			IndexBuffer.__super.call(this);
+			IndexBuffer2D.__super.call(this);
 			this._bufferUsage=bufferUsage;
 			this._type=0x8893;
 		}
 
-		__class(IndexBuffer,'laya.webgl.utils.IndexBuffer',_super);
-		var __proto=IndexBuffer.prototype;
+		__class(IndexBuffer2D,'laya.webgl.utils.IndexBuffer2D',_super);
+		var __proto=IndexBuffer2D.prototype;
+		__proto._checkArrayUse=function(){
+			this._uint8Array && (this._uint8Array=new Uint8Array(this._buffer));
+			this._uint16Array && (this._uint16Array=new Uint16Array(this._buffer));
+		}
+
+		__proto.getUint8Array=function(){
+			return this._uint8Array || (this._uint8Array=new Uint8Array(this._buffer));
+		}
+
 		__proto.getUint16Array=function(){
-			return new Uint16Array(this._buffer);
+			return this._uint16Array || (this._uint16Array=new Uint16Array(this._buffer));
 		}
 
-		IndexBuffer.QuadrangleIB=null
-		IndexBuffer.create=function(bufferUsage){
+		IndexBuffer2D.QuadrangleIB=null
+		IndexBuffer2D.create=function(bufferUsage){
 			(bufferUsage===void 0)&& (bufferUsage=0x88E4);
-			return new IndexBuffer(bufferUsage);
+			return new IndexBuffer2D(bufferUsage);
 		}
 
-		return IndexBuffer;
+		return IndexBuffer2D;
 	})(Buffer)
 
 
@@ -19318,58 +19236,20 @@ window.Laya=(function(window,document){
 	*...
 	*@author laya
 	*/
-	//class laya.webgl.utils.VertexBuffer extends laya.webgl.utils.Buffer
-	var VertexBuffer=(function(_super){
-		function VertexBuffer(vertexDeclaration,bufferUsage){
+	//class laya.webgl.utils.VertexBuffer2D extends laya.webgl.utils.Buffer
+	var VertexBuffer2D=(function(_super){
+		function VertexBuffer2D(vertexStride,bufferUsage){
 			this._floatArray32=null;
-			this._vertexDeclaration=null;
-			this._attributeMap=[];
-			this.shaderAttribute={};
-			this._shaderValues=new ValusArray();
-			VertexBuffer.__super.call(this);
-			this._vertexDeclaration=vertexDeclaration;
+			this._vertexStride=0;
+			VertexBuffer2D.__super.call(this);
+			this._vertexStride=vertexStride;
 			this._bufferUsage=bufferUsage;
 			this._type=0x8892;
 			this.getFloat32Array();
 		}
 
-		__class(VertexBuffer,'laya.webgl.utils.VertexBuffer',_super);
-		var __proto=VertexBuffer.prototype;
-		/**
-		*获取ShaderAttribute。
-		*@param name 名称。
-		*/
-		__proto.getShaderAttribute=function(name){
-			return this.shaderAttribute[name];
-		}
-
-		/**
-		*添加ShaderAttribute。
-		*@param name 名称。
-		*@param value 值。
-		*@param id 优化id。
-		*/
-		__proto.addShaderAttribute=function(name,value,id){
-			this.shaderAttribute[name]=value;
-			this._attributeMap[name]=this._shaderValues.length;
-			this._shaderValues.pushValue(name,value,id);
-		}
-
-		/**
-		*添加或更新ShaderAttribute。
-		*@param name 名称。
-		*@param value 值。
-		*@param id 优化id。
-		*/
-		__proto.addOrUpdateShaderAttribute=function(name,value,id){
-			if (this._attributeMap[name]){
-				this.shaderAttribute[name]=value;
-				this._shaderValues.setValue(this._attributeMap[name],name,value,id);
-				}else {
-				this.addShaderAttribute(name,value,id);
-			}
-		}
-
+		__class(VertexBuffer2D,'laya.webgl.utils.VertexBuffer2D',_super);
+		var __proto=VertexBuffer2D.prototype;
 		__proto.getFloat32Array=function(){
 			return this._floatArray32 || (this._floatArray32=new Float32Array(this._buffer));
 		}
@@ -19390,7 +19270,7 @@ window.Laya=(function(window,document){
 			(this._bind_upload())|| (this._bind());
 		}
 
-		__proto._checkFloatArray32Use=function(){
+		__proto._checkArrayUse=function(){
 			this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
 		}
 
@@ -19399,20 +19279,25 @@ window.Laya=(function(window,document){
 			this._floatArray32=null;
 		}
 
-		__getset(0,__proto,'shaderValues',function(){
-			return this._shaderValues;
-		});
-
-		__getset(0,__proto,'vertexDeclaration',function(){
-			return this._vertexDeclaration;
-		});
-
-		VertexBuffer.create=function(vertexDeclaration,bufferUsage){
-			(bufferUsage===void 0)&& (bufferUsage=0x88E8);
-			return new VertexBuffer(vertexDeclaration,bufferUsage);
+		__proto.detoryResource=function(){
+			_super.prototype.detoryResource.call(this);
+			if (this._glBuffer){
+				WebGL.mainContext.disableVertexAttribArray(0);
+				WebGL.mainContext.disableVertexAttribArray(1);
+				WebGL.mainContext.disableVertexAttribArray(2);
+			}
 		}
 
-		return VertexBuffer;
+		__getset(0,__proto,'vertexStride',function(){
+			return this._vertexStride;
+		});
+
+		VertexBuffer2D.create=function(vertexStride,bufferUsage){
+			(bufferUsage===void 0)&& (bufferUsage=0x88E8);
+			return new VertexBuffer2D(vertexStride,bufferUsage);
+		}
+
+		return VertexBuffer2D;
 	})(Buffer)
 
 
@@ -19603,7 +19488,10 @@ window.Laya=(function(window,document){
 			this._restrictPattern=null;
 			this.inputElementXAdjuster=0;
 			this.inputElementYAdjuster=0;
-			this.prompt='';
+			this._prompt='';
+			this._promptColor="#A9A9A9";
+			this._originColor=null;
+			this._content='';
 			Input.__super.call(this);
 			this._maxChars=1E5;
 			this._width=100;
@@ -19685,11 +19573,13 @@ window.Laya=(function(window,document){
 			var cssStyle=input.style;
 			cssStyle.cssText=Input._getCorretStyle();
 			cssStyle.whiteSpace=(this.wordWrap ? "pre-wrap" :"nowrap");
+			this._setPromptColor();
 			input.readOnly=!this._editable;
 			input.maxLength=this._maxChars;
 			var padding=this.padding;
-			input.value=this._text;
+			input.value=this._content;
 			input.type=this.asPassword ? "password" :"text";
+			input.placeholder=this._prompt;
 			Laya.stage.off("keydown",this,this._onKeyDown);
 			Laya.stage.on("keydown",this,this._onKeyDown);
 			Laya.stage.focus=this;
@@ -19699,7 +19589,7 @@ window.Laya=(function(window,document){
 				var temp=this._text;
 				this._text="";
 				this.typeset();
-				cssStyle.color=this.color;
+				cssStyle.color=this._originColor;
 				cssStyle.fontSize=this.fontSize+"px";
 				cssStyle.fontFamily=this.font;
 				cssStyle.lineHeight=(this.leading+this.fontSize)+"px";
@@ -19709,20 +19599,49 @@ window.Laya=(function(window,document){
 				this._syncInputTransform();
 				Laya.timer.frameLoop(1,this,this._syncInputTransform);
 				}else {
-				Input.promptSpan.innerText=this.prompt;
 				var inputContainerStyle=Input.inputContainer.style;
 				var hei=(this._multiline ? 100 :40);
 				cssStyle.height=hei+"px";
-				cssStyle.top=(this.prompt ? 30 :0)+"px";
-				inputContainerStyle.top=-hei+"px";
+				inputContainerStyle.transform="translate3d(0px,"+(-hei)+"px, 0px)";
 			}
+		}
+
+		// 设置DOM输入框提示符颜色。
+		__proto._setPromptColor=function(){
+			var promptStyleDOM=Browser.getElementById("promptStyle");
+			if (!promptStyleDOM){
+				promptStyleDOM=Browser.createElement("style");
+				promptStyleDOM.setAttribute("id","promptStyle");
+				Browser.document.head.appendChild(promptStyleDOM);
+			}
+			promptStyleDOM.innerText=
+			"input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {"+
+			"color:"+this._promptColor+
+			"}"+
+			"input:-moz-placeholder, textarea:-moz-placeholder {"+
+			"color:"+this._promptColor+
+			"}"+
+			"input::-moz-placeholder, textarea::-moz-placeholder {"+
+			"color:"+this._promptColor+
+			"}"+
+			"input:-ms-input-placeholder, textarea:-ms-input-placeholder {"+
+			"color:"+this._promptColor+
+			"}";
 		}
 
 		/**@private */
 		__proto._focusOut=function(){
 			this._focus=false;
 			this._text='';
-			_super.prototype._$set_text.call(this,Input.inputElement.value);
+			this._content=Input.inputElement.value;
+			if (!this._content){
+				_super.prototype._$set_text.call(this,this._prompt);
+				_super.prototype._$set_color.call(this,this._promptColor);
+			}
+			else{
+				_super.prototype._$set_text.call(this,this._content);
+				_super.prototype._$set_color.call(this,this._originColor);
+			}
 			Laya.stage.off("keydown",this,this._onKeyDown);
 			Laya.stage.focus=null;
 			this.event("blur");
@@ -19756,7 +19675,18 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'color',_super.prototype._$get_color,function(value){
 			if (this._focus)
 				this.nativeInput.style.color=value;
-			_super.prototype._$set_color.call(this,value);
+			_super.prototype._$set_color.call(this,this._content?value:this._promptColor);
+			this._originColor=value;
+		});
+
+		/**
+		*设置输入提示符颜色。
+		*/
+		__getset(0,__proto,'promptColor',function(){
+			return this._promptColor;
+			},function(value){
+			this._promptColor=value;
+			if (!this._content)_super.prototype._$set_color.call(this,value);
 		});
 
 		/**
@@ -19801,8 +19731,9 @@ window.Laya=(function(window,document){
 				this.nativeInput.value=value || '';
 			}
 			if (!this._multiline)
-				value=value.replace(/\r\n|\n/g,'');
-			_super.prototype._$set_text.call(this,value);
+				value=value.replace(/\r?\n/g,'');
+			this._content=value;
+			_super.prototype._$set_text.call(this,value||this._prompt);
 		});
 
 		/**
@@ -19815,6 +19746,19 @@ window.Laya=(function(window,document){
 			if (value <=0)
 				value=1E5;
 			this._maxChars=value;
+		});
+
+		/**
+		*设置输入提示符。
+		*/
+		__getset(0,__proto,'prompt',function(){
+			return this._prompt;
+			},function(value){
+			if (!this._text && value)
+				_super.prototype._$set_color.call(this,this._promptColor);
+			this.promptColor=this._promptColor;
+			_super.prototype._$set_text.call(this,this._text||value);
+			this._prompt=value;
 		});
 
 		/**限制输入的字符。*/
@@ -19871,26 +19815,18 @@ window.Laya=(function(window,document){
 				var animationStyle="animation:input-ani 0.3s;"+"-moz-animation:input-ani 0.3s;"+"-webkit-animation:input-ani 0.3s;"+"-o-animation:input-ani 0.3s;"+"animation-fill-mode:forwards;"+"-moz-animation-fill-mode:forwards;"+"-webkit-animation-fill-mode:forwards;"+"-o-animation-fill-mode:forwards;";
 				var style=Input.inputContainer.style;
 				Input.inputContainer.style.cssText=animationStyle;
-				Input.promptSpan=Browser.createElement("span");
-				style=Input.promptSpan.style;
-				style.position="absolute";
-				style.color="#FFFFFF";
-				style.font="20px simHei";
-				style.backgroundColor="#000000";
-				style.width="100%";
-				style.lineHeight="30px";
-				Input.inputContainer.appendChild(Input.promptSpan);
+				Input.inputContainer.style.position="relative";
 			}
 		}
 
 		Input._writeInputAniStyle=function(){
-			var aniStyle="{ from {} to { top:0px; }}";
+			var aniStyle="{ from { } to { transform:translate3d(0px, 0px, 0px); }}";
 			var mobStyleNode=Browser.document.createElement("style");
 			mobStyleNode.innerHTML="@keyframes input-ani"+aniStyle;
 			mobStyleNode.innerHTML+="@-webkit-keyframes input-ani"+aniStyle;
 			mobStyleNode.innerHTML+="@-moz-keyframes input-ani"+aniStyle;
 			mobStyleNode.innerHTML+="@-o-keyframes input-ani"+aniStyle;
-			Browser.document.getElementsByTagName("head")[0].appendChild(mobStyleNode);
+			Browser.document.head.appendChild(mobStyleNode);
 		}
 
 		Input._initInput=function(input){
@@ -19931,7 +19867,6 @@ window.Laya=(function(window,document){
 		Input.mobileStyle="font-size:20px;"+"width:100%;"+"border:1px solid rgb(30,30,30);"+"outline:none;";
 		Input.input=null
 		Input.area=null
-		Input.promptSpan=null
 		Input.inputElement=null
 		Input.inputContainer=null
 		Input.inputHeight=40;
@@ -19958,6 +19893,7 @@ window.Laya=(function(window,document){
 		__proto._init_=function(src){
 			this._src=src;
 			this._source=new Browser.window.Image();
+			this._source.crossOrigin="";
 			(src)&& (this._source.src=src);
 		}
 
@@ -19974,6 +19910,7 @@ window.Laya=(function(window,document){
 				this.startCreate();
 				var _this=this;
 				this._source=new Browser.window.Image();
+				this._source.crossOrigin="";
 				this._source.onload=function (){
 					if (_this._needReleaseAgain){
 						_this._needReleaseAgain=false;
@@ -20064,6 +20001,7 @@ window.Laya=(function(window,document){
 			this.magFifter=-1;
 			this._src=src;
 			this._image=new Browser.window.Image();
+			this._image.crossOrigin="";
 			(src)&&(this._image.src=src);WebGLImageCube
 			this._enableMerageInAtlas=true;
 		}
@@ -20126,6 +20064,7 @@ window.Laya=(function(window,document){
 				this.startCreate();
 				var _this=this;
 				this._image=new Browser.window.Image();
+				this._image.crossOrigin="";
 				this._image.onload=function (){
 					if (_this._needReleaseAgain){
 						_this._needReleaseAgain=false;
@@ -20212,9 +20151,9 @@ window.Laya=(function(window,document){
 		*@return 是否创建
 		*/
 		__getset(0,__proto,'enableMerageInAtlas',function(){
-			return this._allowMerageInAtlas;
+			return this._enableMerageInAtlas;
 			},function(value){
-			this._allowMerageInAtlas=value;
+			this._enableMerageInAtlas=value;
 		});
 
 		/***
@@ -20233,7 +20172,7 @@ window.Laya=(function(window,document){
 	})(HTMLImage)
 
 
-	Laya.__init([EventDispatcher,WebGLContext,ShaderCompile,Timer,LoaderManager,WebGLContext2D,AtlasGrid,RenderTargetMAX,DrawText,Browser]);
-	new Animation_Altas();
+	Laya.__init([EventDispatcher,Browser,WebGLContext,ShaderCompile,Timer,LoaderManager,WebGLContext2D,AtlasGrid,RenderTargetMAX,DrawText]);
+	new Text_ComplexStyle();
 
 })(window,document,Laya);

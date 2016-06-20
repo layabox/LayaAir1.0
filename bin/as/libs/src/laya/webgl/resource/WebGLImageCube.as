@@ -148,7 +148,7 @@ package laya.webgl.resource {
 				
 				for (var i:int = 0; i < _texCount; i++) {
 					_images[i] = new Browser.window.Image();
-					//_images[i].crossOrigin = "anonymous";
+					_images[i].crossOrigin = "";
 					
 					var index:int = i;
 					_images[index].onload = function():void {

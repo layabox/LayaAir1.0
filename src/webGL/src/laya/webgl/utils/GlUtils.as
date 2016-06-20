@@ -24,7 +24,7 @@ package laya.webgl.utils {
 		 *	 |__\|
 		 *	 3   2
 		 */
-		public static function fillIBQuadrangle(buffer:IndexBuffer, count:int/*Quadrangle count*/):Boolean {
+		public static function fillIBQuadrangle(buffer:IndexBuffer2D, count:int/*Quadrangle count*/):Boolean {
 			if (count > 65535 / 4) {
 				throw Error("IBQuadrangle count:" + count + " must<:" + Math.floor(65535 / 4));
 				return false;
@@ -49,7 +49,7 @@ package laya.webgl.utils {
 			return true;
 		}
 		
-		public static function expandIBQuadrangle(buffer:IndexBuffer, count:int/*Quadrangle count*/):void {
+		public static function expandIBQuadrangle(buffer:IndexBuffer2D, count:int/*Quadrangle count*/):void {
 			buffer.bufferLength >= (count * 6 * Buffer.SHORT) || fillIBQuadrangle(buffer, count);
 		}
 		
@@ -64,7 +64,7 @@ package laya.webgl.utils {
 			return value;
 		}
 		
-		public static function fillQuadrangleImgVb(vb:VertexBuffer, x:Number, y:Number, point4:Array, uv:Array, m:Matrix, _x:Number, _y:Number):Boolean {
+		public static function fillQuadrangleImgVb(vb:VertexBuffer2D, x:Number, y:Number, point4:Array, uv:Array, m:Matrix, _x:Number, _y:Number):Boolean {
 			'use strict';
 			
 			var vpos:int = (vb._length >> 2)/*FLOAT32*/ + WebGLContext2D._RECTVBSIZE;
@@ -113,7 +113,7 @@ package laya.webgl.utils {
 			return true;
 		}
 		
-		public static function fillTranglesVB(vb:VertexBuffer, x:Number, y:Number, points:Array, m:Matrix, _x:Number, _y:Number):Boolean {
+		public static function fillTranglesVB(vb:VertexBuffer2D, x:Number, y:Number, points:Array, m:Matrix, _x:Number, _y:Number):Boolean {
 			'use strict';
 			//x |= 0; y |= 0;_x |= 0; _y |= 0;
 			
@@ -151,7 +151,7 @@ package laya.webgl.utils {
 			return true;
 		}
 		
-		public static function fillRectImgVb(vb:VertexBuffer, clip:Rectangle, x:Number, y:Number, width:Number, height:Number, uv:Array, m:Matrix, _x:Number, _y:Number, dx:Number, dy:Number, round:Boolean = false):Boolean {
+		public static function fillRectImgVb(vb:VertexBuffer2D, clip:Rectangle, x:Number, y:Number, width:Number, height:Number, uv:Array, m:Matrix, _x:Number, _y:Number, dx:Number, dy:Number, round:Boolean = false):Boolean {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			'use strict';
 			
@@ -322,7 +322,7 @@ package laya.webgl.utils {
 			return true;
 		}
 		
-		public static function fillLineVb(vb:VertexBuffer, clip:Rectangle, fx:Number, fy:Number, tx:Number, ty:Number, width:Number, mat:Matrix):Boolean {
+		public static function fillLineVb(vb:VertexBuffer2D, clip:Rectangle, fx:Number, fy:Number, tx:Number, ty:Number, width:Number, mat:Matrix):Boolean {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			'use strict';
 			

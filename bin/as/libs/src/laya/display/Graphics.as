@@ -10,13 +10,8 @@ package laya.display {
 	import laya.renders.Render;
 	import laya.renders.RenderContext;
 	import laya.renders.RenderSprite;
-	import laya.resource.Bitmap;
-	import laya.resource.HTMLImage;
 	import laya.resource.Texture;
-	import laya.utils.Browser;
-	import laya.utils.Color;
 	import laya.utils.Handler;
-	import laya.utils.RunDriver;
 	import laya.utils.Utils;
 	
 	/**
@@ -190,7 +185,7 @@ package laya.display {
 						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), tMatrix);
 					}
 					break;
-				case context._drawTextureWithTransform:
+				case context._drawTextureWithTransform: 
 					tMatrix.copy(tempMatrix);
 					tempMatrix.concat(cmd[5]);
 					if (cmd[3] && cmd[4]) {
@@ -272,11 +267,11 @@ package laya.display {
 			
 			width = width - tex.sourceWidth + tex.width;
 			height = height - tex.sourceHeight + tex.height;
-			if (width <= 0 || height <= 0)  return;
+			if (width <= 0 || height <= 0) return;
 			
 			//处理透明区域裁剪
 			x += tex.offsetX;
-			y += tex.offsetY;			
+			y += tex.offsetY;
 			
 			_sp && (_sp._renderType |= RenderSprite.GRAPHICS);
 			
@@ -451,15 +446,26 @@ package laya.display {
 			_repaint();
 			var cmds:Array = this._cmds;
 			if (!cmds) {
-				return _one && _one.callee === Render._context._fillText && (_one[0] = text, true);
-			}
-			for (var i:int = cmds.length - 1; i > -1; i--) {
-				if (cmds[i].callee === Render._context._fillText) {
-					cmds[i][0] = text;
+				if (_one && _isTextCmd(_one.callee)) {
+					if (_one[0].toUpperCase) _one[0] = text;
+					else _one[0].setText(text);
 					return true;
+				}
+			}else {
+				for (var i:int = cmds.length - 1; i > -1; i--) {
+				if (_isTextCmd(cmds[i].callee)) {
+						if (cmds[i][0].toUpperCase) cmds[i][0] = text;
+						else cmds[i][0].setText(text);
+						return true;
+					}
 				}
 			}
 			return false;
+		}
+		
+		/**@private */
+		private function _isTextCmd(fun:Function):Boolean {
+			return fun === Render._context._fillText || fun === Render._context._fillBorderText || fun === Render._context._strokeText;
 		}
 		
 		/**
@@ -471,11 +477,15 @@ package laya.display {
 			_repaint();
 			var cmds:Array = this._cmds;
 			if (!cmds) {
-				_one && (_one.callee === Render._context._fillBorderText || _one.callee === Render._context._fillText) && (_one[4] = color);
-			}else {
+				if (_one && _isTextCmd(_one.callee)) {
+					_one[4] = color;
+					if (!_one[0].toUpperCase) _one[0].changed = true;
+				}
+			} else {
 				for (var i:int = cmds.length - 1; i > -1; i--) {
-					if (cmds[i].callee === Render._context._fillText) {
-						cmds[i][4] = color;					
+					if (_isTextCmd(cmds[i].callee)) {
+						cmds[i][4] = color;
+						if (!cmds[i][0].toUpperCase) cmds[i][0].changed = true;
 					}
 				}
 			}
@@ -534,7 +544,7 @@ package laya.display {
 			_one.callee.call(context, x, y, _one);
 			if (sprite._renderType !== 2305) {
 				sprite._renderType |= RenderSprite.IMAGE;
-				//TODO:CHIND,IMAGE,GRAHPICS
+					//TODO:CHIND,IMAGE,GRAHPICS
 			}
 		}
 		

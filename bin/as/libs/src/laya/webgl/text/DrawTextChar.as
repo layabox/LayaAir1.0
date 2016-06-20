@@ -62,5 +62,4 @@ package laya.webgl.text
 			return char;
 		}
 	}
-
 }

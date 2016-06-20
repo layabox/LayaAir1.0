@@ -32,7 +32,7 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.0.0rc1";		
+		public static var version:String = "1.0.0RC2";		
 		
 		/**
 		 * 初始化引擎。

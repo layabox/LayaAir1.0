@@ -402,7 +402,8 @@ package laya.ui {
 		 */
 		public function play():void {
 			_isPlaying = true;
-			_index = 0;
+			this.index = 0;
+			this._index++;
 			Laya.timer.loop(this.interval, this, _loop);
 		}
 		

@@ -263,7 +263,7 @@ package laya.ani.bone {
 		 * 创建grahics图像
 		 */
 		private function _createGraphics():void {
-			var bones:Vector.<Object> = _templet.getNodes(_aniClipIndex);
+			var bones:Vector.<*> = _templet.getNodes(_aniClipIndex);
 			//_curOriginalData || (_curOriginalData = new Float32Array(_templet.getTotalkeyframesLength(0)));
 			_templet.getOriginalData(_aniClipIndex, _curOriginalData, _clipIndex, _player.currentFrameTime);
 			//_templet.getOriginalDataUnfixedRate(_aniClipIndex, _curOriginalData, _player.currentTime);

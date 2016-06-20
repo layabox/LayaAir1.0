@@ -12,6 +12,7 @@ package laya.webgl.canvas {
 	import laya.utils.Color;
 	import laya.utils.HTMLChar;
 	import laya.utils.RunDriver;
+	import laya.webgl.submit.SubmitTexture;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.atlas.AtlasResourceManager;
@@ -39,10 +40,9 @@ package laya.webgl.canvas {
 	import laya.webgl.text.FontInContext;
 	import laya.webgl.utils.Buffer;
 	import laya.webgl.utils.GlUtils;
-	import laya.webgl.utils.IndexBuffer;
+	import laya.webgl.utils.IndexBuffer2D;
 	import laya.webgl.utils.RenderState2D;
-	import laya.webgl.utils.VertexBuffer;
-	import laya.webgl.utils.VertexDeclaration;
+	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
 	 * ...
@@ -77,17 +77,19 @@ package laya.webgl.canvas {
 		private var _other:ContextParams;
 		
 		private var _path:Path = null;
+		private var _primitiveValue2D:Value2D;
 		private var _drawCount:int = 1;
 		private var _maxNumEle:int = 0;
 		private var _clear:Boolean = false;
 		private var _width:Number = _MAXSIZE;
 		private var _height:Number = _MAXSIZE;
+		private var _isMain:Boolean = false;
+		private var _atlasResourceChange:int = 0;
 		
 		public var _submits:* = [];
-		public var _mergeID:int = 0;
 		public var _curSubmit:* = null;
-		public var _ib:IndexBuffer = null;
-		public var _vb:VertexBuffer = null;// 不同的顶点格式，使用不同的顶点缓冲区		
+		public var _ib:IndexBuffer2D = null;
+		public var _vb:VertexBuffer2D = null;// 不同的顶点格式，使用不同的顶点缓冲区		
 		public var _clipRect:Rectangle = MAXCLIPRECT;
 		public var _curMat:Matrix;
 		public var _nBlendType:int = 0;
@@ -96,6 +98,7 @@ package laya.webgl.canvas {
 		
 		public var _saveMark:SaveMark = null;
 		public var _shader2D:Shader2D = new Shader2D();
+
 		
 		/**所cacheAs精灵*/
 		public var sprite:Sprite;
@@ -109,11 +112,11 @@ package laya.webgl.canvas {
 			_curMat = Matrix.create();
 			
 			if (Render.isFlash) {
-				_ib = IndexBuffer.create(WebGLContext.STATIC_DRAW);
+				_ib = IndexBuffer2D.create(WebGLContext.STATIC_DRAW);
 				GlUtils.fillIBQuadrangle(_ib, 16);
-			} else _ib = IndexBuffer.QuadrangleIB;
+			} else _ib = IndexBuffer2D.QuadrangleIB;
 			
-			_vb = VertexBuffer.create(new VertexDeclaration(-1));
+			_vb = VertexBuffer2D.create(-1);
 			
 			_other = ContextParams.DEFAULT;
 			
@@ -121,6 +124,11 @@ package laya.webgl.canvas {
 			_save.length = 10;
 			
 			clear();
+		}
+		
+		public override function setIsMainContext():void
+		{
+			this._isMain = true;
 		}
 		
 		public function clearBG(r:int, g:int, b:int, a:int):void {
@@ -139,7 +147,7 @@ package laya.webgl.canvas {
 			_targets && _targets.destroy();
 			
 			_vb && _vb.releaseResource();
-			_ib && (_ib != IndexBuffer.QuadrangleIB) && _ib.releaseResource();
+			_ib && (_ib != IndexBuffer2D.QuadrangleIB) && _ib.releaseResource();
 		}
 		
 		override public function clear():void {
@@ -149,7 +157,6 @@ package laya.webgl.canvas {
 			
 			_other = ContextParams.DEFAULT;
 			_clear = true;
-			_mergeID = 0;
 			
 			_repaint = false;
 			
@@ -197,7 +204,7 @@ package laya.webgl.canvas {
 		}
 		
 		override public function set fillStyle(value:*):void {
-			_shader2D.fillStyle.equal(value) || (SaveBase.save(this, SaveBase.TYPE_FILESTYLE, _shader2D, false), _shader2D.fillStyle = new DrawStyle(value));
+			_shader2D.fillStyle.equal(value) || (SaveBase.save(this, SaveBase.TYPE_FILESTYLE, _shader2D, false), _shader2D.fillStyle =DrawStyle.create(value));
 		}
 		
 		public function get fillStyle():* {
@@ -225,16 +232,6 @@ package laya.webgl.canvas {
 			return _other.textAlign;
 		}
 		
-		//TODO:功能移除掉
-		//public override function set enableMerge(value:Boolean):void {
-		//SaveBase.save(this, SaveBase.TYPE_ENABLEMERGE, this, true);
-		//_mergeID = _drawCount;
-		//}
-		//
-		//public override function get enableMerge():Boolean {
-		//return _mergeID > 0;
-		//}
-		
 		override public function set textBaseline(value:String):void {
 			(_other.textBaseline === value) || (_other = _other.make(), SaveBase.save(this, SaveBase.TYPE_TEXTBASELINE, _other, false), _other.textBaseline = value);
 		}
@@ -254,7 +251,7 @@ package laya.webgl.canvas {
 		}
 		
 		override public function set strokeStyle(value:*):void {
-			_shader2D.strokeStyle.equal(value) || (SaveBase.save(this, SaveBase.TYPE_STROKESTYLE, _shader2D, false), _shader2D.strokeStyle = new DrawStyle(value));
+			_shader2D.strokeStyle.equal(value) || (SaveBase.save(this, SaveBase.TYPE_STROKESTYLE, _shader2D, false), _shader2D.strokeStyle = DrawStyle.create(value));
 		}
 		
 		public function get strokeStyle():* {
@@ -313,7 +310,7 @@ package laya.webgl.canvas {
 			_other.font === FontInContext.EMPTY ? (_other.font = new FontInContext(str)) : (_other.font.setFont(str));
 		}
 		
-		private function _fillText(txt:String, words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, color:String, textAlign:String):void {
+		private function _fillText(txt:*, words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, color:String, textAlign:String):void {
 			var shader:Shader2D = _shader2D;
 			var curShader:Value2D = _curSubmit.shaderValue;
 			var font:FontInContext = fontStr ? FontInContext.create(fontStr) : _other.font;
@@ -339,11 +336,11 @@ package laya.webgl.canvas {
 			words.length > 0 && _fillText(null, words, x, y, fontStr, color, null);
 		}
 		
-		override public function fillText(txt:String, x:Number, y:Number, fontStr:String, color:String, textAlign:String):void {
+		override public function fillText(txt:*, x:Number, y:Number, fontStr:String, color:String, textAlign:String):void {
 			txt.length > 0 && _fillText(txt, null, x, y, fontStr, color, textAlign);
 		}
 		
-		override public function strokeText(txt:String, x:Number, y:Number, fontStr:String, color:String, lineWidth:Number, textAlign:String):void {
+		override public function strokeText(txt:*, x:Number, y:Number, fontStr:String, color:String, lineWidth:Number, textAlign:String):void {
 			if (txt.length === 0)
 				return;
 			var shader:Shader2D = _shader2D;
@@ -370,7 +367,7 @@ package laya.webgl.canvas {
 			}
 		}
 		
-		override public function fillBorderText(txt:String, x:Number, y:Number, fontStr:String, fillColor:String, borderColor:String, lineWidth:int, textAlign:String):void {
+		override public function fillBorderText(txt:*, x:Number, y:Number, fontStr:String, fillColor:String, borderColor:String, lineWidth:int, textAlign:String):void {
 			if (txt.length === 0)
 				return;
 			if (!AtlasResourceManager.enabled) {
@@ -390,17 +387,17 @@ package laya.webgl.canvas {
 		}
 		
 		override public function fillRect(x:Number, y:Number, width:Number, height:Number, fillStyle:*):void {
-			var vb:VertexBuffer = _vb;
+			var vb:VertexBuffer2D = _vb;
 			if (GlUtils.fillRectImgVb(vb, _clipRect, x, y, width, height, Texture.DEF_UV, _curMat, _x, _y, 0, 0)) {
 				var pre:DrawStyle = _shader2D.fillStyle;
-				fillStyle && (_shader2D.fillStyle = new DrawStyle(fillStyle));
+				fillStyle && (_shader2D.fillStyle = DrawStyle.create(fillStyle));
 				
 				var shader:Shader2D = _shader2D;
 				var curShader:Value2D = _curSubmit.shaderValue;
 				
 				if (shader.fillStyle !== curShader.fillStyle || shader.ALPHA !== curShader.ALPHA) {
 					shader.glTexture = null;
-					var submit:Submit = _curSubmit = Submit.create(this, 0, _mergeID, _ib, vb, ((vb._length - _RECTVBSIZE * Buffer.FLOAT32) / 32) * 3, Value2D.create(ShaderDefines2D.COLOR2D, 0));
+					var submit:Submit = _curSubmit = Submit.create(this, _ib, vb, ((vb._length - _RECTVBSIZE * Buffer.FLOAT32) / 32) * 3, Value2D.create(ShaderDefines2D.COLOR2D, 0));
 					submit.shaderValue.color = shader.fillStyle._color._color;
 					submit.shaderValue.ALPHA = shader.ALPHA;
 					_submits[_submits._length++] = submit;
@@ -420,21 +417,8 @@ package laya.webgl.canvas {
 			_shader2D.filters = value;
 			_curSubmit = Submit.RENDERBASE;
 			_drawCount++;
-			//_mergeID = _drawCount;
-			_mergeID = 0;
 		}
-		
-		private function _findSameSubmit(submitID:Number):Submit {
-			for (var i:int = _submits._length - 1; i >= 0; i--) {
-				var submit:Submit = _submits[i] as Submit;
-				if (submit._mergID && submit._mergID !== _mergeID) break;
-				if (submit._submitID === submitID) {
-					return submit;
-				}
-			}
-			return null;
-		}
-		
+				
 		public override function drawTexture(tex:Texture, x:Number, y:Number, width:Number, height:Number, tx:Number, ty:Number):void {
 			_drawTextureM(tex, x, y, width, height, tx, ty, null);
 		}
@@ -453,26 +437,24 @@ package laya.webgl.canvas {
 			var curShader:Value2D = _curSubmit.shaderValue;
 			_drawCount++;
 			
-			if (shader.glTexture !== webGLImg || shader.ALPHA !== curShader.ALPHA) {
+			if (_curSubmit._renderType !== Submit.TYPE_TEXTURE || shader.glTexture !== webGLImg || shader.ALPHA !== curShader.ALPHA) {
 				shader.glTexture = webGLImg;
-				var vb:VertexBuffer = _vb;
-				var submit:Submit = null;
-				var submitID:Number;
+				var vb:VertexBuffer2D = _vb;
+				var submit:SubmitTexture = null;
 				var vbSize:int = (vb._length / 32) * 3;
-				if (_mergeID) {
-					submitID = webGLImg.id + shader.ALPHA / 10;
-					submit = _findSameSubmit(submitID);
-					vb = null;
-				}
-				if (!submit) {
-					submit = Submit.create(this, submitID, _mergeID, _ib, vb, vbSize, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
-					_submits[_submits._length++] = submit;
-					submit.shaderValue.textureHost = tex;//TODO:阿欢调整
-				}
+				submit = SubmitTexture.create(this,  _ib, vb, vbSize, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
+				_submits[_submits._length++] = submit;
+				submit.shaderValue.textureHost = tex;//TODO:阿欢调整
+				submit._renderType = Submit.TYPE_TEXTURE
+				submit._preIsSameTextureShader = _curSubmit._renderType === Submit.TYPE_TEXTURE && shader.ALPHA === curShader.ALPHA;
 				_curSubmit = submit;
 			}
-			
-			if (GlUtils.fillRectImgVb(_curSubmit._vb || _vb, _clipRect, x + tx, y + ty, width || tex.width, height || tex.height, tex.uv, m || _curMat, _x, _y, 0, 0)) {
+	
+			var finalVB = _curSubmit._vb || _vb;
+			if (GlUtils.fillRectImgVb(finalVB, _clipRect, x + tx, y + ty, width || tex.width, height || tex.height, tex.uv, m || _curMat, _x, _y, 0, 0)) {
+				if (AtlasResourceManager.enabled && !this._isMain)//而且不是主画布
+					(_curSubmit as SubmitTexture).addTexture(tex, (finalVB._length >> 2)- WebGLContext2D._RECTVBSIZE);
+				
 				_curSubmit._numEle += 6;
 				_maxNumEle = Math.max(_maxNumEle, _curSubmit._numEle);
 			}
@@ -521,27 +503,20 @@ package laya.webgl.canvas {
 			if (shader.glTexture !== webGLImg) {
 				shader.glTexture = webGLImg;
 				
-				var vb:VertexBuffer = _vb;
-				var submit:Submit = null;
+				var vb:VertexBuffer2D = _vb;
+				var submit:SubmitTexture = null;
 				var submitID:Number;
 				var vbSize:int = (vb._length / 32) * 3;
-				if (_mergeID) {
-					submitID = webGLImg.id + shader.ALPHA / 10 + (AtlasResourceManager.enabled ? 0 : (shader.colorAdd.__id / 10000));
-					submit = _findSameSubmit(submitID);
-					vb = null;
+				if (AtlasResourceManager.enabled) {
+					//开启了大图合集
+					submit = SubmitTexture.create(this,  _ib, vb, vbSize, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
+				} else {
+					submit = SubmitTexture.create(this,  _ib, vb, vbSize, TextSV.create());
+					submit.shaderValue.colorAdd = shader.colorAdd;
+					submit.shaderValue.defines.add(ShaderDefines2D.COLORADD);
 				}
-				if (!submit) {
-					if (AtlasResourceManager.enabled) {
-						//开启了大图合集
-						submit = Submit.create(this, submitID, _mergeID, _ib, vb, vbSize, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
-					} else {
-						submit = Submit.create(this, submitID, _mergeID, _ib, vb, vbSize, TextSV.create());
-						submit.shaderValue.colorAdd = shader.colorAdd;
-						submit.shaderValue.defines.add(ShaderDefines2D.COLORADD);
-					}
-					submit.shaderValue.textureHost = tex;//TODO:阿欢调整
-					_submits[_submits._length++] = submit;
-				}
+				submit.shaderValue.textureHost = tex;//TODO:阿欢调整
+				_submits[_submits._length++] = submit;
 				_curSubmit = submit;
 			}
 			tex.active();
@@ -570,14 +545,14 @@ package laya.webgl.canvas {
 		
 		public function fillQuadrangle(tex:Texture, x:Number, y:Number, point4:Array, m:Matrix):void {
 			var submit:Submit = this._curSubmit;
-			var vb:VertexBuffer = _vb;
+			var vb:VertexBuffer2D = _vb;
 			var shader:Shader2D = _shader2D;
 			var curShader:Value2D = submit.shaderValue;
 			if (tex.bitmap) {
 				var t_tex:WebGLImage = tex.bitmap as WebGLImage;
 				if (shader.glTexture != t_tex || shader.ALPHA !== curShader.ALPHA) {
 					shader.glTexture = t_tex;
-					submit = _curSubmit = Submit.create(this, 0, _mergeID, _ib, vb, ((vb._length) / 32) * 3, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
+					submit = _curSubmit = Submit.create(this, _ib, vb, ((vb._length) / 32) * 3, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
 					submit.shaderValue.glTexture = t_tex;
 					_submits[_submits._length++] = submit;
 				}
@@ -585,9 +560,9 @@ package laya.webgl.canvas {
 			} else {
 				if (!submit.shaderValue.fillStyle || !submit.shaderValue.fillStyle.equal(tex) || shader.ALPHA !== curShader.ALPHA) {
 					shader.glTexture = null;
-					submit = _curSubmit = Submit.create(this, 0, _mergeID, _ib, vb, ((vb._length) / 32) * 3, Value2D.create(ShaderDefines2D.COLOR2D, 0));
+					submit = _curSubmit = Submit.create(this, _ib, vb, ((vb._length) / 32) * 3, Value2D.create(ShaderDefines2D.COLOR2D, 0));
 					submit.shaderValue.defines.add(ShaderDefines2D.COLOR2D);
-					submit.shaderValue.fillStyle = new DrawStyle(tex);
+					submit.shaderValue.fillStyle = DrawStyle.create(tex);
 					_submits[_submits._length++] = submit;
 				}
 				GlUtils.fillQuadrangleImgVb(vb, x, y, point4, Texture.DEF_UV, m || _curMat, _x, _y);
@@ -657,7 +632,7 @@ package laya.webgl.canvas {
 		}
 		
 		public function drawTarget(scope:*, x:Number, y:Number, width:Number, height:Number, m:Matrix, proName:String, shaderValue:Value2D, uv:Array = null, blend:int = -1):void {
-			var vb:VertexBuffer = _vb;
+			var vb:VertexBuffer2D = _vb;
 			if (GlUtils.fillRectImgVb(vb, _clipRect, x, y, width, height, uv || Texture.DEF_UV, m || _curMat, _x, _y, 0, 0)) {
 				var shader:Shader2D = _shader2D;
 				shader.glTexture = null;
@@ -725,17 +700,15 @@ package laya.webgl.canvas {
 			submit.clipRect.copyFrom(clip);
 			
 			_curSubmit = Submit.RENDERBASE;
-			
-			_mergeID = 0;
 		}
 		
-		public function setIBVB(x:Number, y:Number, ib:IndexBuffer, vb:VertexBuffer, numElement:int, mat:Matrix, shader:Shader, shaderValues:Value2D, startIndex:int = 0, offset:int = 0):void {
+		public function setIBVB(x:Number, y:Number, ib:IndexBuffer2D, vb:VertexBuffer2D, numElement:int, mat:Matrix, shader:Shader, shaderValues:Value2D, startIndex:int = 0, offset:int = 0):void {
 			if (ib === null) {
 				if (!Render.isFlash) {
 					ib = _ib;
 				} else {
 					var falshVB:* = vb;
-					(falshVB._selfIB) || (falshVB._selfIB = IndexBuffer.create(WebGLContext.STATIC_DRAW));
+					(falshVB._selfIB) || (falshVB._selfIB = IndexBuffer2D.create(WebGLContext.STATIC_DRAW));
 					falshVB._selfIB.clear();
 					ib = falshVB._selfIB;
 				}
@@ -759,14 +732,14 @@ package laya.webgl.canvas {
 		
 		public function fillTrangles(tex:Texture, x:Number, y:Number, points:Array, m:Matrix):void {
 			var submit:Submit = this._curSubmit;
-			var vb:VertexBuffer = _vb;
+			var vb:VertexBuffer2D = _vb;
 			var shader:Shader2D = _shader2D;
 			var curShader:Value2D = submit.shaderValue;
 			var length:int = points.length >> 4 /*16*/;
 			var t_tex:WebGLImage = tex.bitmap as WebGLImage;
 			
 			if (shader.glTexture != t_tex || shader.ALPHA !== curShader.ALPHA) {
-				submit = _curSubmit = Submit.create(this, 0, _mergeID, _ib, vb, ((vb._length) / 32) * 3, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
+				submit = _curSubmit = Submit.create(this, _ib, vb, ((vb._length) / 32) * 3, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
 				submit.shaderValue.textureHost = tex;//TODO:阿欢调整
 				_submits[_submits._length++] = submit;
 			}
@@ -793,6 +766,18 @@ package laya.webgl.canvas {
 				GlUtils.expandIBQuadrangle(_ib, maxNum);
 			}
 			
+			if (!this._isMain && AtlasResourceManager.enabled && AtlasResourceManager._atlasRestore>_atlasResourceChange)//这里还要判断大图合集是否修改
+			{
+				_atlasResourceChange=AtlasResourceManager._atlasRestore;
+				var renderList:Array = this._submits;
+				for (var i:int = 0, s:int = renderList._length; i < s; i++)
+				{
+					var submit:ISubmit = renderList[i] as ISubmit;
+					if (submit.getRenderType() === Submit.TYPE_TEXTURE) 
+						(submit as SubmitTexture).checkTexture();
+				}
+			}
+			
 			_vb.bind_upload(_ib);
 			
 			submitElement(0, _submits._length);
@@ -815,9 +800,9 @@ package laya.webgl.canvas {
 			_path.closePath = true;
 		}
 		
-		public function fill():void {
+		public function fill(isConvexPolygon:Boolean = false):void {
 			var tPath:Path = _getPath();
-			this.drawPoly(0, 0, tPath.tempArray, fillStyle._color.numColor, 0, 0);
+			this.drawPoly(0, 0, tPath.tempArray, fillStyle._color.numColor, 0, 0, isConvexPolygon);
 		}
 		
 		override public function stroke():void {
@@ -825,22 +810,22 @@ package laya.webgl.canvas {
 			if (lineWidth > 0) {
 				tPath.drawLine(0, 0, tPath.tempArray, lineWidth, this.strokeStyle._color.numColor);
 				tPath.update();
-				var tempSubmit:Submit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
+				var tempSubmit:Submit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, _getPriValue2D());
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-				tempSubmit.shaderValue.u_mmat2 = RenderState2D.mat2MatArray(_curMat, RenderState2D.TEMPMAT4_ARRAY);
+				tempSubmit.shaderValue.u_mmat2 = RenderState2D.mat2MatArray(_curMat, RenderState2D.getMatrArray());
 				_submits[_submits._length++] = tempSubmit;
 			}
 		}
 		
 		public function line(fromX:Number, fromY:Number, toX:Number, toY:Number, lineWidth:Number, mat:Matrix):void {
 			var submit:Submit = _curSubmit;
-			var vb:VertexBuffer = _vb;
+			var vb:VertexBuffer2D = _vb;
 			if (GlUtils.fillLineVb(vb, _clipRect, fromX, fromY, toX, toY, lineWidth, mat)) {
 				var shader:Shader2D = _shader2D;
 				var curShader:Value2D = submit.shaderValue;
 				if (shader.strokeStyle !== curShader.strokeStyle || shader.ALPHA !== curShader.ALPHA) {
 					shader.glTexture = null;
-					submit = _curSubmit = Submit.create(this, 0, _mergeID, _ib, vb, ((vb._length - _RECTVBSIZE * Buffer.FLOAT32) / 32) * 3, Value2D.create(ShaderDefines2D.COLOR2D, 0));
+					submit = _curSubmit = Submit.create(this, _ib, vb, ((vb._length - _RECTVBSIZE * Buffer.FLOAT32) / 32) * 3, Value2D.create(ShaderDefines2D.COLOR2D, 0));
 					submit.shaderValue.strokeStyle = shader.strokeStyle;
 					submit.shaderValue.mainID = ShaderDefines2D.COLOR2D;
 					submit.shaderValue.ALPHA = shader.ALPHA;
@@ -931,12 +916,11 @@ package laya.webgl.canvas {
 					}
 				}
 			}
-			if (r < 100)
-			{
+			if (r < 100) {
 				ndivs = Math.max(10, da * r / 5);
-			}else if(r < 200){
+			} else if (r < 200) {
 				ndivs = Math.max(10, da * r / 20);
-			}else {
+			} else {
 				ndivs = Math.max(10, da * r / 40);
 			}
 			
@@ -969,10 +953,9 @@ package laya.webgl.canvas {
 		override public function quadraticCurveTo(cpx:Number, cpy:Number, x:Number, y:Number):void {
 			var tBezier:Bezier = Bezier.I;
 			var tResultArray:Array = [];
-			var tArray:Array = tBezier.getBezierPoints([_path.getEndPointX(), _path.getEndPointY(), cpx, cpy, x, y],30,2);
-			for (var i:int = 0, n:int = tArray.length/2; i < n; i++)
-			{
-				lineTo(tArray[i *2], tArray[i * 2 + 1]);
+			var tArray:Array = tBezier.getBezierPoints([_path.getEndPointX(), _path.getEndPointY(), cpx, cpy, x, y], 30, 2);
+			for (var i:int = 0, n:int = tArray.length / 2; i < n; i++) {
+				lineTo(tArray[i * 2], tArray[i * 2 + 1]);
 			}
 			lineTo(x, y);
 		}
@@ -1001,37 +984,49 @@ package laya.webgl.canvas {
 		 * @param	y
 		 * @param	points
 		 */
-		public function drawPoly(x:Number, y:Number, points:Array, color:uint, lineWidth:Number, boderColor:uint):void {
+		public function drawPoly(x:Number, y:Number, points:Array, color:uint, lineWidth:Number, boderColor:uint, isConvexPolygon:Boolean = false):void {
+			_shader2D.glTexture = null;//置空下，打断纹理相同合并
 			_getPath().polygon(x, y, points, color, lineWidth ? lineWidth : 1, boderColor);
 			_path.update();
+			var tValue2D:Value2D = _getPriValue2D();
+			var tArray:Array = RenderState2D.getMatrArray();
+			RenderState2D.mat2MatArray(_curMat, tArray);
 			var tempSubmit:Submit;
-			//开启模板缓冲，把模板操作设为GL_INVERT
-			//开启模板缓冲，填充模板数据
-			var submit:SubmitStencil = SubmitStencil.create(4);
-			addRenderObject(submit);
-			tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
-			tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-			tempSubmit.shaderValue.u_mmat2 = RenderState2D.mat2MatArray(_curMat, RenderState2D.TEMPMAT4_ARRAY);
-			_submits[_submits._length++] = tempSubmit;
-			submit = SubmitStencil.create(5);
-			addRenderObject(submit);
+			if (!isConvexPolygon)
+			{
+				//开启模板缓冲，把模板操作设为GL_INVERT
+				//开启模板缓冲，填充模板数据
+				var submit:SubmitStencil = SubmitStencil.create(4);
+				addRenderObject(submit); 
+				tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, tValue2D);
+				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
+				tempSubmit.shaderValue.u_mmat2 = tArray;
+				_submits[_submits._length++] = tempSubmit;
+				submit = SubmitStencil.create(5);
+				addRenderObject(submit);
+			}
+			
 			//通过模板数据来开始真实的绘制
-			tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
+			tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, tValue2D);
 			tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-			tempSubmit.shaderValue.u_mmat2 = RenderState2D.mat2MatArray(_curMat, RenderState2D.TEMPMAT4_ARRAY);
+			tempSubmit.shaderValue.u_mmat2 = tArray;
 			_submits[_submits._length++] = tempSubmit;
-			submit = SubmitStencil.create(3);
-			addRenderObject(submit);
+			if (!isConvexPolygon)
+			{
+				submit = SubmitStencil.create(3);
+				addRenderObject(submit);
+			}
 			//画闭合线
 			if (lineWidth > 0) {
 				_path.drawLine(x, y, points, lineWidth, boderColor);
 				_path.update();
-				tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
+				tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, tValue2D);
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-				tempSubmit.shaderValue.u_mmat2 = RenderState2D.mat2MatArray(_curMat, RenderState2D.TEMPMAT4_ARRAY);
+				tempSubmit.shaderValue.u_mmat2 = tArray;
 				_submits[_submits._length++] = tempSubmit;
 			}
 		}
+		
 		/*******************************************end矢量绘制***************************************************/
 		public function drawParticle(x:Number, y:Number, pt:*):void {
 			pt.x = x;
@@ -1042,7 +1037,11 @@ package laya.webgl.canvas {
 		private function _getPath():Path {
 			return _path || (_path = new Path());
 		}
-	
+		
+		private function _getPriValue2D():Value2D {
+			//return _primitiveValue2D || (_primitiveValue2D = Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
+			return _primitiveValue2D = Value2D.create(ShaderDefines2D.PRIMITIVE, 0);
+		}
 	}
 }
 import laya.webgl.text.FontInContext;

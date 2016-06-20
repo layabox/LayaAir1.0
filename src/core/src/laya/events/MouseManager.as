@@ -69,7 +69,7 @@ package laya.events {
 					_this.mouseDownTime = -Browser.now();
 				}
 			}, true);
-			Browser.document.addEventListener('mousemove', function(e:*):void {
+			canvas.addEventListener('mousemove', function(e:*):void {
 				if (enabled) {
 					//e.preventDefault();
 					var now:Number = Browser.now();
@@ -120,6 +120,7 @@ package laya.events {
 			_this._target = null;
 			
 			_point.setTo(e.clientX, e.clientY);
+			//trace(e.clientX, e.clientY);
 			_stage._canvasTransform.invertTransformPoint(_point);
 			
 			e.stageX = _this.mouseX = _point.x;

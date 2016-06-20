@@ -10,17 +10,16 @@ package laya.particle {
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer;
-	import laya.webgl.utils.IndexBuffer;
-	import laya.webgl.utils.VertexBuffer;
-	import laya.webgl.utils.VertexDeclaration;
+	import laya.webgl.utils.IndexBuffer2D;
+	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
 	 *  @private
 	 */
 	public class ParticleTemplateWebGL extends ParticleTemplateBase {
 		protected var _vertices:Float32Array;
-		protected var _vertexBuffer:VertexBuffer;
-		protected var _indexBuffer:IndexBuffer;
+		protected var _vertexBuffer:Buffer;
+		protected var _indexBuffer:Buffer;
 		protected var _floatCountPerVertex:uint = 29;//0~3为CornerTextureCoordinate,4~6为Position,7~9Velocity,10到13为StartColor,14到17为EndColor,18到20位SizeRotation，21到22位Radius,23到26位Radian，27为DurationAddScaleShaderValue,28为Time
 		
 		protected var _firstActiveElement:int;
@@ -72,7 +71,7 @@ package laya.particle {
 		}
 		
 		protected function loadContent():void {
-			_vertexBuffer = VertexBuffer.create(new VertexDeclaration(-1),WebGLContext.DYNAMIC_DRAW);
+			
 			
 			var indexes:Uint16Array = new Uint16Array(settings.maxPartices * 6);
 			
@@ -86,7 +85,6 @@ package laya.particle {
 				indexes[i * 6 + 5] = (i * 4 + 3);
 			}
 			
-			_indexBuffer = IndexBuffer.create(WebGLContext.STATIC_DRAW );
 			_indexBuffer.clear();
 			_indexBuffer.append(indexes);
 			_indexBuffer.upload();

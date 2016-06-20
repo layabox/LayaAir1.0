@@ -121,7 +121,7 @@ package laya.ani {
 					
 					node.keyFrame = new Vector.<KeyFramesContent>;
 					node.parentIndex = read.getInt16();//父对象编号，相对本动画(INT16,-1表示没有)
-					node.parent = ani.nodes[node.parentIndex];
+					node.parentIndex == -1 ? node.parent = null:node.parent = ani.nodes[node.parentIndex]
 					
 					var isLerp:Boolean = !!read.getUint8();//该节点是否插值
 					var keyframeParamsOffset:uint = read.getUint32();//相对于数据扩展区的偏移地址

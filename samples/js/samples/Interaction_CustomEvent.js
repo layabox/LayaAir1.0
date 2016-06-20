@@ -38,7 +38,7 @@
 		sp.size(200, 200);
 		Laya.stage.addChild(sp);
 
-		sp.on(ROTATE, sp, onRotate); // 侦听自定义的事件
+		sp.on(ROTATE, this, onRotate); // 侦听自定义的事件
 		sp.on(Event.CLICK, this, onSpriteClick);
 	}
 
@@ -53,7 +53,7 @@
 	// 触发自定义的rotate事件
 	function onRotate(newAngle)
 	{
-		Tween.to(this,
+		Tween.to(sp,
 		{
 			"rotation": newAngle
 		}, 1000, Ease.elasticOut);

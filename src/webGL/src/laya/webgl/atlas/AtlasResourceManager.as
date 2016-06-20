@@ -6,10 +6,12 @@ package laya.webgl.atlas {
 		private static var _enabled:Boolean = false;
 		private static var _atlasLimitWidth:int;
 		private static var _atlasLimitHeight:int;
+
 		public static var atlasTextureWidth:int;
 		public static var atlasTextureHeight:int;
 		public static var gridSize:int;
 		public static var maxTextureCount:int;
+		public static var _atlasRestore:int=0;
 		
 		public static var BOARDER_TYPE_NO:int = 0;
 		public static var BOARDER_TYPE_RIGHT:int = 1;
@@ -17,6 +19,7 @@ package laya.webgl.atlas {
 		public static var BOARDER_TYPE_BOTTOM:int = 4;
 		public static var BOARDER_TYPE_TOP:int = 8;
 		public static var BOARDER_TYPE_ALL:int = 15;
+		
 		private static var _sid_:int = 0;
 		private static var _Instance:AtlasResourceManager = null;
 		

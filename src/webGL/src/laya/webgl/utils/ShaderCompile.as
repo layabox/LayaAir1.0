@@ -104,6 +104,7 @@ package laya.webgl.utils {
 					defMap[i] = true;
 				}
 			}
+			//trace("createShader:" + defineStr);
 			var vs:Array= _VS.toscript(defMap, []);
 			var ps:Array = _PS.toscript(defMap, []);
 			return (createShader as Function || Shader.create as Function)(defineStr+vs.join('\n'), defineStr+ps.join('\n'), shaderName, _nameMap);

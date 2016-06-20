@@ -1,8 +1,8 @@
 package laya.webgl.submit {
 	import laya.webgl.submit.ISubmit;
 	import laya.utils.Stat;
-	import laya.webgl.utils.IndexBuffer;
-	import laya.webgl.utils.VertexBuffer;
+	import laya.webgl.utils.IndexBuffer2D;
+	import laya.webgl.utils.VertexBuffer2D;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.BlendMode;
@@ -14,8 +14,8 @@ package laya.webgl.submit {
 	public class SubmitTarget implements ISubmit
 	{
 		protected var _renderType:int;		
-		protected var _vb : VertexBuffer;
-		protected var _ib : IndexBuffer;	
+		protected var _vb : VertexBuffer2D;
+		protected var _ib : IndexBuffer2D;	
 		public var _startIdx : int, _numEle : int;		
 		
 		public var shaderValue:Value2D;
@@ -66,7 +66,7 @@ package laya.webgl.submit {
 			cache[cache._length++] = this;
 		}
 		
-		public static function create(context:WebGLContext2D,ib:IndexBuffer, vb:VertexBuffer, pos:int,sv:Value2D,proName:String):SubmitTarget
+		public static function create(context:WebGLContext2D,ib:IndexBuffer2D, vb:VertexBuffer2D, pos:int,sv:Value2D,proName:String):SubmitTarget
 		{
 			var o:SubmitTarget=_cache._length?_cache[--_cache._length]:new SubmitTarget();
 			o._ib = ib;

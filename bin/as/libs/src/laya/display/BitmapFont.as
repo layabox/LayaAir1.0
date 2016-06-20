@@ -22,6 +22,7 @@ package laya.display {
 		private var _spaceWidth:Number = 10;
 		private var _leftPadding:Number = 0;
 		private var _rightPadding:Number = 0;
+		private var _letterSpacing:Number = 0;
 		
 		/**
 		 * 通过指定位图字体文件路径，加载位图字体文件。
@@ -122,9 +123,9 @@ package laya.display {
 		 * @return 宽度。
 		 */
 		public function getCharWidth(char:String):Number {
-			if (char == " ") return _spaceWidth;
+			if (char == " ") return _spaceWidth + _letterSpacing;
 			var tTexture:Texture = getCharTexture(char)
-			if (tTexture) return tTexture.width + tTexture.offsetX * 2;
+			if (tTexture) return tTexture.width + tTexture.offsetX * 2 + _letterSpacing;
 			return 0;
 		}
 		
@@ -142,10 +143,25 @@ package laya.display {
 		}
 		
 		/**
+		 * 获取字符之间的间距（以像素为单位）。
+		 */
+		public function get letterSpacing():Number {
+			return _letterSpacing;
+		}
+		
+		/**
+		 * 设置字符之间的间距（以像素为单位）。
+		 */
+		public function set letterSpacing(value:Number):void {
+			_letterSpacing = value;
+		}
+		
+		
+		/**
 		 * 获取最大字符宽度。
 		 */
 		public function getMaxWidth():Number {
-			return _maxWidth;
+			return _maxWidth + _letterSpacing;
 		}
 		
 		/**

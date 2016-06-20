@@ -20,7 +20,7 @@ package laya.webgl.shapes {
 			{
 				tCurrX = points[i * 2];
 				tCurrY = points[i * 2 + 1];
-				if (tLastX != tCurrX || tLastY != tCurrY)
+				if (Math.abs(tLastX - tCurrX)> 0.01 || Math.abs(tLastY - tCurrY)>0.01)
 				{
 					_points.push(tCurrX, tCurrY);
 				}
@@ -31,7 +31,7 @@ package laya.webgl.shapes {
 			tCurrY = points[tLen * 2 + 1];
 			tLastX = _points[0];
 			tLastY = _points[1];
-			if (tLastX != tCurrX || tLastY != tCurrY)
+			if (Math.abs(tLastX - tCurrX)> 0.01 || Math.abs(tLastY - tCurrY)>0.01)
 			{
 				_points.push(tCurrX, tCurrY);
 			}

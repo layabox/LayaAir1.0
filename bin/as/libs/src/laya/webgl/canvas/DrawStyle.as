@@ -11,6 +11,23 @@ package laya.webgl.canvas
 		public static var DEFAULT:DrawStyle=/*[STATIC SAFE]*/ new DrawStyle("#000000")
 		
 		public var _color:Color=Color.create("black");
+
+		public static function create(value:*):DrawStyle
+		{
+			if (value)
+			{
+				var color:Color;
+				
+				if (value is String) color = Color.create(value as String);
+				else if (value is Color) color = value as Color;
+				
+				if (color)
+				{
+					return color._drawStyle || (color._drawStyle=new DrawStyle(value));
+				}				
+			}
+			return null;
+		}
 		
 		public function DrawStyle(value:*) 
 		{
@@ -42,6 +59,7 @@ package laya.webgl.canvas
 		public function equal(value:*):Boolean
 		{
 			if (value is String) return _color.strColor === value as String;
+			if (value is Color) return _color.numColor === (value as Color).numColor;
 			return false;
 		}
 		
@@ -49,7 +67,6 @@ package laya.webgl.canvas
 		{
 			return _color.strColor;
 		}
-		
 	}
 
 }

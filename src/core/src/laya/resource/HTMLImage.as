@@ -52,7 +52,7 @@ package laya.resource {
 		protected function _init_(src:String):void {
 			_src = src;
 			_source = new Browser.window.Image();
-			//_source.crossOrigin = "anonymous";
+			_source.crossOrigin = "";
 		    (src) && (_source.src = src);
 		}
 		
@@ -69,7 +69,7 @@ package laya.resource {
 				startCreate();
 				var _this:HTMLImage = this;
 				_source = new Browser.window.Image();
-				//_source.crossOrigin = "anonymous";
+				_source.crossOrigin = "";
 				_source.onload = function():void {
 					if (_this._needReleaseAgain)//异步处理，加载完后可能，如果强制释放资源存在已被释放的风险
 					{

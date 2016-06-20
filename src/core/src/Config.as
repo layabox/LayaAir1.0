@@ -6,13 +6,20 @@ package {
 	public class Config {
 		/**
 		 * 是否显示 log 信息。
-		 */public static var showLog:Boolean = false;
+		 */
+		public static var showLog:Boolean = false;
+		 
+		/**
+		 * WebGL模式下文本缓存最大数量。
+		 */
+		public static var WebGLTextCacheCount:int = 500; 
+		
 		/**
 		 * 表示是否使用了大图合集功能。
 		 */
 		public static var atlasEnable:Boolean = false;
 		/**
-		 * 是否显示遮罩图边框。
+		 * 是否显示画布图边框，用于调试。
 		 */
 		public static var showCanvasMark:Boolean = false;
 		/**

@@ -5,10 +5,10 @@ package laya.net {
 	import laya.utils.Handler;
 	
 	/**
-	 * 加载进度发生改变时调度。
-	 * @eventType Event.PROGRESS
+	 * 加载完成时调度。
+	 * @eventType Event.COMPLETE
 	 * */
-	[Event(name = "progress", type = "laya.events.Event")]
+	[Event(name = "complete", type = "laya.events.Event")]
 	
 	/**
 	 * 加载出错时调度。

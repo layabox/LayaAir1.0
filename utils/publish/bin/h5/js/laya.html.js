@@ -2,10 +2,10 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var CSSStyle=laya.display.css.CSSStyle,ClassUtils=laya.utils.ClassUtils,Node=laya.display.Node,URL=laya.net.URL;
-	var Sprite=laya.display.Sprite,RenderContext=laya.renders.RenderContext,Utils=laya.utils.Utils,Browser=laya.utils.Browser;
-	var HTMLChar=laya.utils.HTMLChar,Event=laya.events.Event,Loader=laya.net.Loader,Rectangle=laya.maths.Rectangle;
-	var RenderSprite=laya.renders.RenderSprite,Stat=laya.utils.Stat,Texture=laya.resource.Texture;
+	var Browser=laya.utils.Browser,CSSStyle=laya.display.css.CSSStyle,ClassUtils=laya.utils.ClassUtils;
+	var Event=laya.events.Event,HTMLChar=laya.utils.HTMLChar,Loader=laya.net.Loader,Node=laya.display.Node,Rectangle=laya.maths.Rectangle;
+	var RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite,Sprite=laya.display.Sprite;
+	var Stat=laya.utils.Stat,Texture=laya.resource.Texture,URL=laya.net.URL,Utils=laya.utils.Utils;
 	/**
 	*@private
 	*/
@@ -170,6 +170,8 @@
 				tLineFirstKey=false;
 				if ((oneLayout instanceof laya.html.dom.HTMLBrElement )){
 					addLine();
+					curLine.y=y;
+					curLine.h=lineHeight;
 					continue ;
 					}else if (oneLayout._isChar()){
 					htmlWord=oneLayout;
@@ -222,6 +224,7 @@
 					lines[i].updatePos(0,width,i,tY,align,valign,lineHeight);
 					tY+=Math.max(lineHeight,lines[i].h);
 				}
+				y=tY;
 			}
 			widthAuto && (element.width=maxWidth);
 			(y > element.height)&& (element.height=y);
@@ -659,7 +662,7 @@
 
 		__proto.render=function(context,x,y){
 			if (!this._tex || !this._tex.loaded || !this._tex.loaded || this._width < 1 || this._height < 1)return;
-			Stat.spriteDraw++;
+			Stat.spriteCount++;
 			this._renderArgs[0]=this._tex;
 			this._renderArgs[1]=this.x;
 			this._renderArgs[2]=this.y;

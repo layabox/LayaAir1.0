@@ -300,7 +300,7 @@ package laya.ui {
 		/**
 		 * 颜色值输入框 <code>Event.CHANGE</code> 事件侦听处理函数。
 		 */
-		private function onColorInputChange(e:Event):void {
+		private function onColorInputChange(e:Event = null):void {
 			if (_colorInput.text) drawBlock(_colorInput.text);
 			else drawBlock("#FFFFFF");
 		}

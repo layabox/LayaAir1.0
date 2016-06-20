@@ -2,9 +2,10 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Byte=laya.utils.Byte,Sprite=laya.display.Sprite,Event=laya.events.Event,Loader=laya.net.Loader;
-	var URL=laya.net.URL,Matrix=laya.maths.Matrix,Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Texture=laya.resource.Texture;
-	var Browser=laya.utils.Browser,EventDispatcher=laya.events.EventDispatcher,Stat=laya.utils.Stat,MathUtil=laya.maths.MathUtil;
+	var Browser=laya.utils.Browser,Byte=laya.utils.Byte,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher;
+	var Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil;
+	var Matrix=laya.maths.Matrix,Sprite=laya.display.Sprite,Stat=laya.utils.Stat,Texture=laya.resource.Texture;
+	var URL=laya.net.URL;
 	/**
 	*@private
 	*/
@@ -135,6 +136,14 @@
 				return this.currDisplayData.transform.getMatrix();
 			}
 			return null;
+		}
+
+		/**
+		*得到插糟的矩阵
+		*@return
+		*/
+		__proto.getMatrix=function(){
+			return this._resultMatrix;
 		}
 
 		/**
@@ -556,7 +565,7 @@
 					}
 					node.keyFrame=new Array;
 					node.parentIndex=read.getInt16();
-					node.parent=ani.nodes[node.parentIndex];
+					node.parentIndex==-1 ? node.parent=null:node.parent=ani.nodes[node.parentIndex];
 					var isLerp=!!read.getUint8();
 					var keyframeParamsOffset=read.getUint32();
 					publicRead.pos=keyframeParamsOffset;
@@ -1697,10 +1706,9 @@
 		/**
 		*跳到某帧并停止播放动画。
 		*@param frame 要跳到的帧
-		*
 		*/
-		__proto.gotoAndStop=function(frame){
-			this.index=frame;
+		__proto.gotoAndStop=function(index){
+			this.index=index;
 			this.stop();
 		}
 
@@ -1728,12 +1736,12 @@
 		*播放动画。
 		*@param frameIndex 帧索引。
 		*/
-		__proto.play=function(frameIndex,loop){
-			(frameIndex===void 0)&& (frameIndex=-1);
+		__proto.play=function(index,loop){
+			(index===void 0)&& (index=-1);
 			(loop===void 0)&& (loop=true);
 			this.loop=loop;
 			if (this._data)
-				this._displayFrame(frameIndex);
+				this._displayFrame(index);
 			this._playing=true;
 		}
 

@@ -1,9 +1,10 @@
 package laya.webgl.submit {
 	import laya.maths.Matrix;
+	import laya.resource.Texture;
 	import laya.webgl.submit.ISubmit;
 	import laya.utils.Stat;
-	import laya.webgl.utils.IndexBuffer;
-	import laya.webgl.utils.VertexBuffer;
+	import laya.webgl.utils.IndexBuffer2D;
+	import laya.webgl.utils.VertexBuffer2D;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.BlendMode;
@@ -29,7 +30,7 @@ package laya.webgl.submit {
 			0, 0, 0, 1,
 		];
 		
-		public static function create(context:WebGLContext2D,vb:VertexBuffer,ib:IndexBuffer,numElement:int,shader:Shader,shaderValue:Value2D,startIndex:int,offset:int):SubmitOtherIBVB
+		public static function create(context:WebGLContext2D,vb:VertexBuffer2D,ib:IndexBuffer2D,numElement:int,shader:Shader,shaderValue:Value2D,startIndex:int,offset:int):SubmitOtherIBVB
 		{
 			var o:SubmitOtherIBVB = (!_cache._length)?(new SubmitOtherIBVB()):_cache[--_cache._length];
 			o._ib = ib;
@@ -45,14 +46,14 @@ package laya.webgl.submit {
 			// River: 目前的SubmitOtherIBVB只支持triangleList,所以下面的方式合理
 			// 4是每个float值4个
 			o.offset = 0;
-			o.startIndex = offset / (CONST3D2D.BYTES_PE * vb.vertexDeclaration.vertexStride) * 1.5 ; 
+			o.startIndex = offset / (CONST3D2D.BYTES_PE * vb.vertexStride) * 1.5 ; 
 			o.startIndex *= CONST3D2D.BYTES_PIDX;
 				
 			return o;
 		}
 		protected var offset:int = 0;
-		protected var _vb : VertexBuffer;
-		protected var _ib : IndexBuffer;
+		protected var _vb : VertexBuffer2D;
+		protected var _ib : IndexBuffer2D;
 		protected var _blendFn:Function;
 		
 		public var _mat:Matrix;
@@ -80,13 +81,15 @@ package laya.webgl.submit {
 		}
 		
 		public function renderSubmit() : int {
-			if (_shaderValue.textureHost)//TODO:阿欢调整
+			var _tex:Texture = _shaderValue.textureHost;
+			if (_tex)
 			{
-				var source:*= _shaderValue.textureHost.source;
-				if ( !source) return 1;
+				var source:*;
+				if (!_tex.bitmap || !(source=_tex.source))
+					return 1;
 				_shaderValue.texture = source;
 			}
-
+			
 			_vb.bind_upload(_ib);
 			
 			var w:Array = RenderState2D.worldMatrix4;

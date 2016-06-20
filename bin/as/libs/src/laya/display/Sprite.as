@@ -808,7 +808,7 @@ package laya.display {
 		 * @param	y Y轴坐标。
 		 */
 		public function render(context:RenderContext, x:Number, y:Number):void {
-			Stat.spriteDraw++;
+			Stat.spriteCount++;
 			RenderSprite.renders[_renderType]._fun(this, context, x + _x, y + _y);
 			_repaint = 0;
 		}
@@ -900,9 +900,11 @@ package laya.display {
 		 */
 		public function _isHaveGlowFilter():Boolean {
 			var i:int, len:int;
-			for (i = 0; i < filters.length; i++) {
-				if (filters[i].type == Filter.GLOW) {
-					return true;
+			if (filters){
+				for (i = 0; i < filters.length; i++) {
+					if (filters[i].type == Filter.GLOW) {
+						return true;
+					}
 				}
 			}
 			for (i = 0, len = _childs.length; i < len; i++) {
@@ -1068,9 +1070,11 @@ package laya.display {
 		public function loadImage(url:String, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, complete:Handler = null):Sprite {
 			//TODO:graphics.clear();
 			function loaded(tex:Texture):void {
-				size(tex.width, tex.height);
-				repaint();
-				complete && complete.runWith(tex);
+				if (!destroyed) {
+					size(tex.width, tex.height);
+					repaint();
+					complete && complete.runWith(tex);
+				}
 			}
 			graphics.loadImage(url, x, y, width, height, loaded);
 			return this;

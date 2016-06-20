@@ -43,7 +43,7 @@ package laya.net {
 		/** 图集类型，加载完成后返回图集json信息(并创建图集内小图Texture)。*/
 		public static const ATLAS:String = "atlas";
 		/** 文件后缀和类型对应表。*/
-		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json"};
+		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json"};
 		/**资源解析函数对应表，用来扩展更多类型的资源加载解析*/
 		public static var parserMap:Object = /*[STATIC SAFE]*/ {};
 		/** 已加载的资源池。*/
@@ -130,7 +130,7 @@ package laya.net {
 		protected function _loadImage(url:String):void {
 			if (_type === "nativeimage") {
 				var image:* = new Browser.window.Image();
-				//image.crossOrigin = "anonymous";
+				image.crossOrigin = "";
 				image.src = url;
 			} else {
 				image = new HTMLImage.create(url);
@@ -261,6 +261,7 @@ package laya.net {
 						map.push(url);
 							//}
 					}
+					/*[IF-FLASH]*/map.sort();
 					
 					//if (needSub)
 					//for (i = 0; i < pics.length; i++)
@@ -354,6 +355,9 @@ package laya.net {
 				delete loadedMap[url];
 			} else {
 				var res:* = loadedMap[url];
+				if (res is Texture && res.bitmap) {
+					Texture(res).destroy();
+				}
 				delete loadedMap[url];
 			}
 		}

@@ -11,12 +11,17 @@ package laya.particle
 	import laya.webgl.canvas.BlendMode;
 	import laya.webgl.resource.WebGLImage;
 	import laya.webgl.submit.ISubmit;
+	import laya.webgl.utils.IndexBuffer2D;
+	import laya.webgl.utils.VertexBuffer2D;
 
 	/**
 	 *  @private 
 	 */
 	public class ParticleTemplate2D extends ParticleTemplateWebGL implements ISubmit
 	{
+		private var _vertexBuffer2D:VertexBuffer2D;
+		private var _indexBuffer2D:IndexBuffer2D;
+		
 		public static var activeBlendType:int = -1;
 		public var x:Number=0;
 		
@@ -25,6 +30,9 @@ package laya.particle
 		public var sv:ParticleShaderValue = new ParticleShaderValue();
 		
 		private var _startTime:int;
+		
+
+		
 		public function ParticleTemplate2D(parSetting:ParticleSettings)
 		{
 			super(parSetting);
@@ -39,6 +47,9 @@ package laya.particle
 			
 			_blendFn = BlendMode.fns[parSetting.blendState]; //context._targets?BlendMode.targetFns[blendType]:BlendMode.fns[blendType];
 			initialize();
+			
+			_vertexBuffer =_vertexBuffer2D= VertexBuffer2D.create( -1, WebGLContext.DYNAMIC_DRAW);
+			_indexBuffer = _indexBuffer2D=IndexBuffer2D.create(WebGLContext.STATIC_DRAW );
 			loadContent();
 		}
 		
@@ -71,7 +82,7 @@ package laya.particle
 				if (_firstActiveElement != _firstFreeElement)
 				{
 					var gl:WebGLContext = WebGL.mainContext;
-					_vertexBuffer.bind(_indexBuffer);
+					_vertexBuffer2D.bind(_indexBuffer2D);
 					sv.u_texture = texture.source;
 					sv.upload();
 					

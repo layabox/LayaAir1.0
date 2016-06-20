@@ -36,7 +36,6 @@ package laya.webgl.atlas {
 			_atlasCanvas.width = width;
 			_atlasCanvas.height = height;
 			_atlasCanvas.activeResource();
-			//_atlasCanvas.resourceManager.removeResource(_atlasCanvas);
 			_atlasCanvas.lock = true;
 		}
 		

@@ -18,19 +18,6 @@ package laya.webgl.utils {
 		//语义类型枚举
 		public static const INDEX:String = "INDEX";
 		
-		//Attribute
-		public static const POSITION0:String = "POSITION";
-		public static const NORMAL0:String = "NORMAL";
-		public static const COLOR0:String = "COLOR";
-		public static const COLOR1:String = "COLOR1";
-		public static const UV0:String = "UV";
-		public static const NEXTUV0:String = "NEXTUV";
-		public static const UV1:String = "UV1";
-		public static const NEXTUV1:String = "NEXTUV1";
-		public static const BLENDWEIGHT0:String = "BLENDWEIGHT";
-		public static const BLENDINDICES0:String = "BLENDINDICES";
-		public static const TANGENT0:String = "TANGENT0";
-		
 		//Uniform
 		public static const MVPMATRIX:String = "MVPMATRIX";
 		public static const MATRIX1:String = "MATRIX1";
@@ -80,12 +67,6 @@ package laya.webgl.utils {
 		public static const SPOTLIGHTSPECULAR:String = "SPOTLIGHTSPECULAR";
 		
 		//................................................................................................................
-		public static const CORNERTEXTURECOORDINATE:String = "CORNERTEXTURECOORDINATE";
-		public static const VELOCITY:String = "VELOCITY";
-		public static const SIZEROTATION:String = "SIZEROTATION";
-		public static const RADIUS:String = "RADIUS";
-		public static const RADIAN:String = "RADIAN";
-		public static const AGEADDSCALE:String = "AGEADDSCALE";
 		public static const TIME:String = "TIME";
 		public static const VIEWPORTSCALE:String = "VIEWPORTSCALE";
 		public static const CURRENTTIME:String = "CURRENTTIME";
@@ -103,8 +84,8 @@ package laya.webgl.utils {
 		
 		public static function __int__(gl:WebGLContext):void {
 			_gl = gl;
-			IndexBuffer.QuadrangleIB = IndexBuffer.create(WebGLContext.STATIC_DRAW);
-			GlUtils.fillIBQuadrangle(IndexBuffer.QuadrangleIB, 16);
+			IndexBuffer2D.QuadrangleIB = IndexBuffer2D.create(WebGLContext.STATIC_DRAW);
+			GlUtils.fillIBQuadrangle(IndexBuffer2D.QuadrangleIB, 16);
 		}
 		
 		public var _length:int = 0;
@@ -151,7 +132,7 @@ package laya.webgl.utils {
 				if (_buffer.byteLength > (_maxsize + 64)) {
 					memorySize = _buffer.byteLength;
 					_buffer = _buffer.slice(0, _maxsize + 64);
-					_checkFloatArray32Use();
+					_checkArrayUse();
 				}
 				_maxsize = _length;
 			}
@@ -162,7 +143,6 @@ package laya.webgl.utils {
 				memorySize = _uploadSize;
 			}
 			_gl.bufferSubData(_type, 0, _buffer);
-			Stat.bufferLen += _length;
 		}
 		
 		private function _bufferSubData(offset:int = 0, dataStart:int = 0, dataLength:int = 0):void {
@@ -171,7 +151,7 @@ package laya.webgl.utils {
 				if (_buffer.byteLength > (_maxsize + 64)) {
 					memorySize = _buffer.byteLength;
 					_buffer = _buffer.slice(0, _maxsize + 64);
-					_checkFloatArray32Use();
+					_checkArrayUse();
 				}
 				_maxsize = _length;
 			}
@@ -191,7 +171,7 @@ package laya.webgl.utils {
 			}
 		}
 		
-		protected function _checkFloatArray32Use():void {
+		protected function _checkArrayUse():void {
 		}
 		
 		override protected function recreateResource():void {
@@ -202,11 +182,7 @@ package laya.webgl.utils {
 		
 		override protected function detoryResource():void {
 			if (_glBuffer) {
-				WebGL.mainContext.disableVertexAttribArray(0);//临时修复警告和闪屏
-				WebGL.mainContext.disableVertexAttribArray(1);//临时修复警告和闪屏
-				WebGL.mainContext.disableVertexAttribArray(2);//临时修复警告和闪屏
 				WebGL.mainContext.deleteBuffer(_glBuffer);
-				var glBuffer:* = _glBuffer;
 				_glBuffer = null;
 				_upload = true;
 				_uploadSize = 0;
@@ -251,7 +227,7 @@ package laya.webgl.utils {
 				_buffer = newbuffer;
 			} else
 				_buffer = new ArrayBuffer(nsz);
-			_checkFloatArray32Use();
+			_checkArrayUse();
 			_upload = true;
 			
 			return this;
@@ -259,23 +235,21 @@ package laya.webgl.utils {
 		
 		public function append(data:*):void {
 			_upload = true;
-			var szu8:int, n:*;
+			var byteLength:int, n:*;
+			byteLength = data.byteLength;
 			if (data is Uint8Array) {
-				szu8 = data.length;
-				_resizeBuffer(_length + szu8, true);
+				_resizeBuffer(_length + byteLength, true);
 				n = new Uint8Array(_buffer, _length);
-			} else if (data is Float32Array) {
-				szu8 = data.length * 4;
-				_resizeBuffer(_length + szu8, true);
-				n = new Float32Array(_buffer, _length);
 			} else if (data is Uint16Array) {
-				szu8 = data.length * 2;
-				_resizeBuffer(_length + szu8, true);
+				_resizeBuffer(_length + byteLength, true);
 				n = new Uint16Array(_buffer, _length);
+			} else if (data is Float32Array) {
+				_resizeBuffer(_length + byteLength, true);
+				n = new Float32Array(_buffer, _length);
 			}
 			n.set(data, 0);
-			_length += szu8;
-			_checkFloatArray32Use();
+			_length += byteLength;
+			_checkArrayUse();
 		}
 		
 		/*

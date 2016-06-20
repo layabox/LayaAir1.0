@@ -30,9 +30,11 @@ module laya {
 			txt.fontSize = 20;
 			txt.color = "#ffffff";
 			txt.align = align;
+
+			// 设置下划线
 			txt.underline = true;
-			txt.underlineWidth = underlineWidth;
 			txt.underlineColor = underlineColor;
+
 			txt.pos(x, y);
 
 			Laya.stage.addChild(txt);

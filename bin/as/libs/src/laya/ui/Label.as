@@ -397,5 +397,47 @@ package laya.ui {
 			if (value is Number || value is String) text = value + "";
 			else super.dataSource = value;
 		}
+		
+		/**
+		 * @copy laya.display.Text#overflow
+		 */
+		public function get overflow():String{
+			return _tf.overflow;
+		}
+		
+		/**
+		 * @copy laya.display.Text#overflow
+		 */
+		public function set overflow(value:String):void{
+			_tf.overflow = value;
+		}
+		
+		/**
+		 * @copy laya.display.Text#underline
+		 */
+		public function get underline():Boolean{
+			return _tf.underline;
+		}
+		
+		/**
+		 * @copy laya.display.Text#underline
+		 */
+		public function set underline(value:Boolean):void{
+			_tf.underline = value;
+		}
+		
+		/**
+		 * @copy laya.display.Text#underlineColor
+		 */
+		public function get underlineColor():String{
+			return _tf.underlineColor;
+		}
+		
+		/**
+		 * @copy laya.display.Text#underlineColor
+		 */
+		public function set underlineColor(value:String):void{
+			_tf.underlineColor = value;
+		}
 	}
 }

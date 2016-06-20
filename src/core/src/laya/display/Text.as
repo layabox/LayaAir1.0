@@ -4,8 +4,10 @@ package laya.display {
 	import laya.events.Event;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
+	import laya.renders.Render;
 	import laya.resource.Context;
 	import laya.utils.Browser;
+	import laya.utils.WordText;
 	
 	/**
 	 * 文本内容发生改变后调度。
@@ -109,8 +111,8 @@ package laya.display {
 		public static var SCROLL:String = "scroll";
 		/**hidden 不显示超出文本域的字符。*/
 		public static var HIDDEN:String = "hidden";
-		/**位图字体字典。*/		
-		private static var bitmapFonts:Object;
+		/**位图字体字典。*/
+		private static var _bitmapFonts:Object;
 		/** @private */
 		private var _clipPoint:Point;
 		/**当前使用的位置字体。*/
@@ -125,15 +127,28 @@ package laya.display {
 		protected var _textHeight:Number = 0;
 		/**@private 存储文字行数信息。*/
 		protected var _lines:Array = [];
+		/**@private 保存每行宽度*/
+		protected var _lineWidths:Array = [];
 		/**@private 文本的内容位置 X 轴信息。*/
 		protected var _startX:Number;
 		/** @private 文本的内容位置X轴信息。 */
 		protected var _startY:Number;
 		/**  @private 当前可视行索引。*/
-		protected var _lastVisibleLineIndex:int = -1;		
-		/**overflow 指定文本超出文本域后的行为。其值为常量VISIBLE、SCROLL和HIDDEN之一。
+		protected var _lastVisibleLineIndex:int = -1;
+		/**  @private 当前可视行索引。*/
+		protected var _words:Vector.<WordText>;
+		
+		/**overflow 指定文本超出文本域后的行为。其值为"hidden"、"visible"和"scroll"之一。
 		 * 性能从高至低为：hidden > visible > scroll*/
 		public var overflow:String = VISIBLE;
+		/**
+		 * 是否显示下划线。
+		 */
+		public var underline:Boolean = false;
+		/**
+		 * 下划线的颜色，为null则使用字体颜色。
+		 */
+		public var underlineColor:String = null;
 		
 		/**
 		 * 创建一个新的 <code>Text</code> 实例。
@@ -149,8 +164,8 @@ package laya.display {
 		 * @param	bitmapFont	位图字体文件。
 		 */
 		public static function registerBitmapFont(name:String, bitmapFont:BitmapFont):void {
-			bitmapFonts || (bitmapFonts = {});
-			bitmapFonts[name] = bitmapFont;
+			_bitmapFonts || (_bitmapFonts = {});
+			_bitmapFonts[name] = bitmapFont;
 		}
 		
 		/**
@@ -159,12 +174,12 @@ package laya.display {
 		 * @param	destory		是否销毁当前字体文件。
 		 */
 		public static function unregisterBitmapFont(name:String, destory:Boolean = true):void {
-			if (bitmapFonts && bitmapFonts[name]) {
-				var tBitmapFont:BitmapFont = bitmapFonts[name];
+			if (_bitmapFonts && _bitmapFonts[name]) {
+				var tBitmapFont:BitmapFont = _bitmapFonts[name];
 				if (destory) {
 					tBitmapFont.destory();
 				}
-				delete bitmapFonts[name];
+				delete _bitmapFonts[name];
 			}
 		}
 		
@@ -172,6 +187,10 @@ package laya.display {
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
 			_lines = null;
+			if (_words) {
+				_words.length = 0;
+				_words = null;
+			}
 		}
 		
 		/**
@@ -248,7 +267,7 @@ package laya.display {
 		
 		/** 当前文本的内容字符串。*/
 		public function get text():String {
-			return this._text || '';
+			return this._text || "";
 		}
 		
 		public function set text(value:String):void {
@@ -298,8 +317,8 @@ package laya.display {
 				_currBitmapFont = null;
 				scale(1, 1);
 			}
-			if (bitmapFonts && bitmapFonts[value]) {
-				_currBitmapFont = bitmapFonts[value];
+			if (_bitmapFonts && _bitmapFonts[value]) {
+				_currBitmapFont = _bitmapFonts[value];
 			}
 			_getCSSStyle().fontFamily = value;
 			isChanged = true;
@@ -559,7 +578,6 @@ package laya.display {
 			
 			//渲染
 			if (_clipPoint) {
-				// trace("[RENDER TEXT] 	Text Clip Enabled actualSize(" + _textWidth + ', ' + _textHeight + ') size(' + _width + ', ' + _height + ")");
 				graphics.save();
 				if (tCurrBitmapFont && tCurrBitmapFont.autoScaleSize) {
 					var tClipWidth:int;
@@ -581,6 +599,7 @@ package laya.display {
 			var end:int = Math.min(_lines.length, visibleLineCount + begin) || 1;
 			for (var i:int = begin; i < end; i++) {
 				var word:String = lines[i];
+				var _word:*;
 				if (style.password) {
 					var len:int = word.length;
 					word = "";
@@ -590,6 +609,9 @@ package laya.display {
 				}
 				x = startX - (_clipPoint ? _clipPoint.x : 0);
 				y = startY + lineHeight * i - (_clipPoint ? _clipPoint.y : 0);
+				
+				underline && drawUnderline(textAlgin, x, y, i);
+				
 				if (tCurrBitmapFont) {
 					var tWidth:Number = width;
 					if (tCurrBitmapFont.autoScaleSize) {
@@ -597,7 +619,14 @@ package laya.display {
 					}
 					tCurrBitmapFont.drawText(word, this, x, y, align, tWidth);
 				} else {
-					style.stroke ? graphics.fillBorderText(word, x, y, ctxFont, color, style.strokeColor, style.stroke, textAlgin) : graphics.fillText(word, x, y, ctxFont, color, textAlgin);
+					if (Render.isWebGL) {
+						_words || (_words = new Vector.<WordText>());
+						_word = _words.length > (i - begin) ? _words[i - begin] : new WordText();
+						_word.setText(word);
+					} else {
+						_word = word;
+					}
+					style.stroke ? graphics.fillBorderText(_word, x, y, ctxFont, color, style.strokeColor, style.stroke, textAlgin) : graphics.fillText(_word, x, y, ctxFont, color, textAlgin);
 				}
 			}
 			if (tCurrBitmapFont && tCurrBitmapFont.autoScaleSize) {
@@ -612,12 +641,29 @@ package laya.display {
 			_startY = startY;
 		}
 		
-		//private function drawBg(style:CSSStyle):void {
-		//if (style.backgroundColor || style.borderColor) {
-		//trace("wwww",width, height);
-		////graphics.drawRect(0, 0, width, height, (style.backgroundColor == "") ? null : style.backgroundColor, style.borderColor);
-		//}
-		//}
+		/**
+		 * 绘制下划线
+		 * @param	x 本行坐标
+		 * @param	y 本行坐标
+		 * @param	lineIndex 本行索引
+		 */
+		private function drawUnderline(align:String, x:Number, y:Number, lineIndex:int):void {
+			var lineWidth:Number = _lineWidths[lineIndex];
+			switch (align) {
+			case 'center': 
+				x -= lineWidth / 2;
+				break;
+			case 'right': 
+				x -= lineWidth;
+				break;
+			case 'left': 
+			default: 
+				break;
+			}
+			
+			y += fontSize;
+			_graphics.drawLine(x, y, x + lineWidth, y, underlineColor || color, 1);
+		}
 		
 		/**
 		 * <p>排版文本。</p>
@@ -636,6 +682,7 @@ package laya.display {
 			Browser.context.font = _getCSSStyle().font;
 			
 			_lines.length = 0;
+			_lineWidths.length = 0;
 			parseLines(this._text);
 			
 			evalTextSize();
@@ -660,12 +707,8 @@ package laya.display {
 		}
 		
 		private function evalTextSize():void {
-			_textWidth = 0;
-			//计算textWidth
-			for (var n:int = 0, len:int = _lines.length; n < len; ++n) {
-				var word:String = _lines[n];
-				_textWidth = Math.max(getTextWidth(word) + padding[3] + padding[1], _textWidth);
-			}
+			// _lineWidths的第一个元素即使最大值
+			_textWidth = _lineWidths[0];
 			
 			//计算textHeight
 			if (_currBitmapFont) {
@@ -710,13 +753,30 @@ package laya.display {
 				if (i < n - 1)
 					lines[i] += "\n"; //在换行处补上换行
 				
+				var line:String = lines[i];
 				// 开启了自动换行需要计算换行位置
 				// overflow为hidden需要计算截断位置
 				if (needWordWrapOrTruncate)
-					parseLine(lines[i], wordWrapWidth);
-				else
-					_lines[i] = lines[i];
+					parseLine(line, wordWrapWidth);
+				else {
+					_lines.push(line);
+					_lineWidths.push(getTextWidth(line));
+				}
 			}
+		}
+		
+		/**
+		 * pusn新的行宽，保持索引0的值最大
+		 * @param	width
+		 */
+		protected function pushNewLineWidth(width:Number):void {
+			if (_lineWidths.length > 0) {
+				if (width > _lineWidths[0])
+					_lineWidths.unshift(width);
+				else
+					_lineWidths.push(width);
+			} else
+				_lineWidths.push(width);
 		}
 		
 		/**
@@ -740,6 +800,7 @@ package laya.display {
 			//优化1，如果一行小于宽度，则直接跳过遍历
 			if (charsWidth <= wordWrapWidth) {
 				lines.push(line);
+				pushNewLineWidth(charsWidth);
 				return;
 			}
 			
@@ -775,6 +836,7 @@ package laya.display {
 						
 						//如果自动换行，则另起一行
 						lines.push(newLine);
+						pushNewLineWidth(wordWidth - charsWidth);
 						//如果非自动换行，则只截取字符串
 						startIndex = j;
 						if (j + maybeIndex < m) {
@@ -786,17 +848,21 @@ package laya.display {
 						} else {
 							//此处执行将不会在循环结束后再push一次
 							lines.push(line.substring(startIndex, m));
+							pushNewLineWidth(getTextWidth(lines[lines.length - 1]));
 							startIndex = -1;
 							break;
 						}
 					} else if (this.overflow == HIDDEN) {
 						lines.push(line.substring(0, j));
+						pushNewLineWidth(getTextWidth(lines[lines.length - 1]));
 						return;
 					}
 				}
 			}
-			if (wordWrap && startIndex != -1)
+			if (wordWrap && startIndex != -1) {
 				lines.push(line.substring(startIndex, m));
+				pushNewLineWidth(getTextWidth(lines[lines.length - 1]));
+			}
 		}
 		
 		private function getTextWidth(text:String):Number {
@@ -915,6 +981,10 @@ package laya.display {
 		 */
 		public function get maxScrollY():int {
 			return (textHeight < _height) ? 0 : _textHeight - _height;
+		}
+		
+		public function get lines():Array {
+			return _lines;
 		}
 	}
 }

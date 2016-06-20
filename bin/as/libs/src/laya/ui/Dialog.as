@@ -320,20 +320,19 @@ class DialogManager extends Sprite {
 		
 		for (var i:int = dialogLayer.numChildren - 1; i > -1; i--) {
 			var item:Dialog = dialogLayer.getChildAt(i) as Dialog;
-			if (item.popupCenter) {
-				item.x = (width - item.width) * 0.5;
-				item.y = (height - item.height) * 0.5;
-			}
+			if (item.popupCenter) _centerDialog(item);
 		}
 		for (i = modalLayer.numChildren - 1; i > -1; i--) {
 			item = modalLayer.getChildAt(i) as Dialog;
 			if (item.isPopup) {
-				if (item.popupCenter) {
-					item.x = (width - item.width) * 0.5;
-					item.y = (height - item.height) * 0.5;
-				}
+				if (item.popupCenter) _centerDialog(item);
 			}
 		}
+	}
+	
+	private function _centerDialog(dialog:Dialog):void {
+		dialog.x = Math.round((_stage.width - dialog.width) >> 1 + dialog.pivotX);
+		dialog.y = Math.round((_stage.height - dialog.height) >> 1 + dialog.pivotY);
 	}
 	
 	/**
@@ -343,10 +342,7 @@ class DialogManager extends Sprite {
 	 */
 	public function show(dialog:Dialog, closeOther:Boolean = false):void {
 		if (closeOther) dialogLayer.removeChildren();
-		if (dialog.popupCenter) {
-			dialog.x = (_stage.width - dialog.width) * 0.5;
-			dialog.y = (_stage.height - dialog.height) * 0.5;
-		}
+		if (dialog.popupCenter) _centerDialog(dialog);
 		dialogLayer.addChild(dialog);
 		event(Event.OPEN);
 	}
@@ -358,10 +354,7 @@ class DialogManager extends Sprite {
 	 */
 	public function popup(dialog:Dialog, closeOther:Boolean = false):void {
 		if (closeOther) modalLayer.removeChildren();
-		if (dialog.popupCenter) {
-			dialog.x = (_stage.width - dialog.width) * 0.5;
-			dialog.y = (_stage.height - dialog.height) * 0.5;
-		}
+		if (dialog.popupCenter) _centerDialog(dialog);
 		modalLayer.addChild(dialog);
 		addChild(modalLayer);
 		event(Event.OPEN);

@@ -61,9 +61,8 @@ package laya.maths {
 		 *
 		 */
 		public function insertPoints(count:Number, rst:Array):void {
-			var i:int, len:int;
+			var i:Number;
 			count = count > 0 ? count : 5;
-			len = count;
 			var dLen:Number;
 			dLen = 1 / count;
 			for (i = 0; i <= 1; i += dLen) {
