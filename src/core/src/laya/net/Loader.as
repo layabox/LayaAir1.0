@@ -5,6 +5,7 @@ package laya.net {
 	import laya.resource.HTMLImage;
 	import laya.resource.Texture;
 	import laya.utils.Browser;
+	import laya.utils.Handler;
 	
 	/**
 	 * 加载进度发生改变时调度。
@@ -90,7 +91,14 @@ package laya.net {
 			
 			//如果自定义了解析器，则自己解析
 			if (parserMap[type] != null) {
-				parserMap[type].call(null, this);
+				if(parserMap[type] is Handler)
+				{
+					parserMap[type].runWith(this);
+				}
+				else
+				{
+					parserMap[type].call(null, this);                    
+				}
 				return;
 			}
 			
