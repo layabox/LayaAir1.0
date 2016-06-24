@@ -24,9 +24,9 @@ package laya.net {
 	 */
 	public class HttpRequest extends EventDispatcher {
 		
-		private var _http:* = new Browser.window.XMLHttpRequest();
-		private var _responseType:String;
-		private var _data:*;
+		protected var _http:* = new Browser.window.XMLHttpRequest();
+		protected var _responseType:String;
+		protected var _data:*;
 		
 		/**
 		 * 发送请求。
