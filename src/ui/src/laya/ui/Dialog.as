@@ -331,8 +331,8 @@ class DialogManager extends Sprite {
 	}
 	
 	private function _centerDialog(dialog:Dialog):void {
-		dialog.x = Math.round((_stage.width - dialog.width) >> 1 + dialog.pivotX);
-		dialog.y = Math.round((_stage.height - dialog.height) >> 1 + dialog.pivotY);
+		dialog.x = Math.round(((_stage.width - dialog.width) >> 1) + dialog.pivotX);
+		dialog.y = Math.round(((_stage.height - dialog.height) >> 1) + dialog.pivotY);
 	}
 	
 	/**
