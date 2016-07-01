@@ -8,9 +8,9 @@ package laya.filters {
 	public class ColorFilter extends Filter implements IFilter {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		/**默认颜色滤镜。*/
-		public static var DEFAULT:ColorFilter = new ColorFilter([1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0]);
+		private static var _DEFAULT:ColorFilter;
 		/**灰色滤镜。*/
-		public static var GRAY:ColorFilter = new ColorFilter([0.3, 0.59, 0.11, 0, 0, 0.3, 0.59, 0.11, 0, 0, 0.3, 0.59, 0.11, 0, 0, 0, 0, 0, 1, 0]);
+		private static var _GRAY:ColorFilter;
 		/** @private */
 		public var _mat:Float32Array;
 		/** @private */
@@ -67,6 +67,20 @@ package laya.filters {
 		/**@private */
 		override public function get action():IFilterAction {
 			return _action;
+		}
+		
+		static public function get DEFAULT():ColorFilter {
+			if (!_DEFAULT) {
+				_DEFAULT = new ColorFilter([1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0]);
+			}
+			return _DEFAULT;
+		}
+		
+		static public function get GRAY():ColorFilter {
+			if (!_GRAY) {
+				_GRAY = new ColorFilter([0.3, 0.59, 0.11, 0, 0, 0.3, 0.59, 0.11, 0, 0, 0.3, 0.59, 0.11, 0, 0, 0, 0, 0, 1, 0]);
+			}
+			return _GRAY;
 		}
 	}
 }

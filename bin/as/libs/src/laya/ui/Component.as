@@ -330,7 +330,7 @@ package laya.ui {
 		public function set anchorY(value:Number):void {
 			getLayout().anchorY = value;
 			layOutEabled = true;
-			resetLayoutX();
+			resetLayoutY();
 		}
 		
 		/**
@@ -415,7 +415,7 @@ package laya.ui {
 			var parent:Sprite = this.parent as Sprite;
 			if (parent) {
 				var layout:LayoutStyle = _layout;
-				if (!isNaN(layout.anchorY)) this.pivotY = layout.anchorY * width;
+				if (!isNaN(layout.anchorY)) this.pivotY = layout.anchorY * height;
 				if (!isNaN(layout.centerY)) {
 					y = (parent.height - displayHeight) * 0.5 + layout.centerY;
 				} else if (!isNaN(layout.top)) {
