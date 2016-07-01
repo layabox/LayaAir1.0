@@ -1,5 +1,4 @@
 package laya.net {
-	///*[IF-FLASH]*/import flash.utils.ByteArray;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.media.Sound;
@@ -317,7 +316,7 @@ package laya.net {
 		 */
 		public function endLoad(content:* = null):void {
 			content && (this._data = content);
-			///*[IF-FLASH]*/if( this._data is ByteArray ) this._data = new ArrayBuffer( this._data );
+			/*[IF-FLASH]*/if(this._data.hasOwnProperty("atomicCompareAndSwapIntAt")) this._data = new ArrayBuffer( this._data );
 			if (this._cache) loadedMap[this._url] = this._data;
 			event(Event.PROGRESS, 1);
 			event(Event.COMPLETE, data is Array ? [data] : data);

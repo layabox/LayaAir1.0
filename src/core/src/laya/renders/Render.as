@@ -1,5 +1,4 @@
 package laya.renders {
-	///*[IF-FLASH]*/import laya.flash.Window;
 	import laya.resource.HTMLCanvas;
 	import laya.utils.Browser;
 	
@@ -14,8 +13,11 @@ package laya.renders {
 		public static var _mainCanvas:HTMLCanvas;
 		/** @private */
 		public static var WebGL:*;
+		/**@private */
 		public static const NODE:int = 0x01;
+		/**@private */
 		public static const WEBGL:int = 0x02;
+		/**@private */
 		public static const CONCH:int = 0x04;
 		
 		/*[IF-FLASH-BEGIN]*/
@@ -27,57 +29,51 @@ package laya.renders {
 		public static var isWebGL:Boolean = false;
 		/** 表示是否是 3D 模式。*/
 		public static var is3DMode:Boolean;
+		
 		/**是否是加速器 只读*/
 		public static function get isConchApp():Boolean {
 			return __JS__("(window.ConchRenderType & 0x04) == 0x04");
 		}
+		
 		/**加速器模式下设置是否是节点模式 如果是否就是非节点模式 默认为canvas模式 如果设置了isConchWebGL则是webGL模式*/
-		public static function get isConchNode():Boolean{
+		public static function get isConchNode():Boolean {
 			return __JS__("(window.ConchRenderType & 5) == 5");
 		}
 		
 		public static function set isConchNode(b:Boolean):void {
-			if (b)
-			{
+			if (b) {
 				__JS__("window.ConchRenderType |= 0x01");
-			}
-			else
-			{
-			    __JS__("window.ConchRenderType &= ~ 0x01");
+			} else {
+				__JS__("window.ConchRenderType &= ~ 0x01");
 			}
 		}
+		
 		/**加速器模式下设置是否是WebGL模式*/
 		public static function get isConchWebGL():Boolean {
 			return __JS__("window.ConchRenderType==6");
 		}
 		
 		public static function set isConchWebGL(b:Boolean):void {
-			if (b)
-			{
+			if (b) {
 				isConchNode = false;
-				 __JS__("window.ConchRenderType |= 0x02");
-			}
-			else
-			{
-				 __JS__("window.ConchRenderType &= ~ 0x02");
+				__JS__("window.ConchRenderType |= 0x02");
+			} else {
+				__JS__("window.ConchRenderType &= ~ 0x02");
 			}
 		}
 		
-		
-		
-		public static var optimizeTextureMemory:Function = function(url:String, texture:*):Boolean
-		{
+		/**@private */
+		public static var optimizeTextureMemory:Function = function(url:String, texture:*):Boolean {
 			return true;
 		}
 		__JS__("window.ConchRenderType|=(!window.conch?0:0x04);");
+		
 		/**
 		 * 初始化引擎。
 		 * @param	width 游戏窗口宽度。
 		 * @param	height	游戏窗口高度。
 		 */
 		public function Render(width:Number, height:Number) {
-			//_mainCanvas = HTMLCanvas.create('2D');
-			
 			var style:* = _mainCanvas.source.style;
 			style.position = 'absolute';
 			style.top = style.left = "0px";
@@ -96,10 +92,12 @@ package laya.renders {
 				Laya.stage._loop();
 				Browser.window.requestAnimationFrame(loop);
 			}
-			///*[IF-Flash]*/Window.stage.addEventListener("enterFrame", enterFrame );
+			/*[IF-Flash]*/
+			Browser.window.stageIn.addEventListener("enterFrame", _enterFrame);
 		}
 		
-		private function enterFrame( e:*= null ) : void {
+		/**@private */
+		private function _enterFrame(e:* = null):void {
 			Laya.stage._loop();
 		}
 		

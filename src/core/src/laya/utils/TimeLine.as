@@ -283,6 +283,7 @@ package laya.utils {
 					gotoTime(0);
 				} else {
 					_complete();
+					pause();
 					return;
 				}
 			}

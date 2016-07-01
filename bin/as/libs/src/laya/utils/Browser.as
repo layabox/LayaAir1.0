@@ -1,6 +1,6 @@
 package laya.utils {
-	import laya.media.h5audio.AudioSound;
-	import laya.media.webaudio.WebAudioSound;
+	//[IF-JS]import laya.media.h5audio.AudioSound;
+	//[IF-JS]import laya.media.webaudio.WebAudioSound;
 	import laya.renders.Render;
 	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
@@ -9,8 +9,8 @@ package laya.utils {
 	 * <code>Browser</code> 是浏览器代理类。封装浏览器及原生 js 提供的一些功能。
 	 */
 	public class Browser {
-		AudioSound;
-		WebAudioSound;
+		//[IF-JS]AudioSound;
+		//[IF-JS]WebAudioSound;
 		/** 浏览器原生 window 对象的引用。*/
 		public static var window:* =/*[STATIC SAFE]*/ RunDriver.getWindow();
 		/** 浏览器原生 document 对象的引用。*/

@@ -24,19 +24,12 @@ package laya.net {
 	 * <code>HttpRequest</code> 通过 HTTP 协议传送或接收 XML 及其他数据。
 	 */
 	public class HttpRequest extends EventDispatcher {
-<<<<<<< HEAD
 		/**@private */
 		protected  var _http:* = new Browser.window.XMLHttpRequest();
 		/**@private */
 		protected  var _responseType:String;
 		/**@private */
 		protected  var _data:*;
-=======
-		
-		protected var _http:* = new Browser.window.XMLHttpRequest();
-		protected var _responseType:String;
-		protected var _data:*;
->>>>>>> origin/master
 		
 		/**
 		 * 发送请求。
