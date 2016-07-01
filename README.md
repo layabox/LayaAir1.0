@@ -51,7 +51,7 @@ our official Layabox Github with complete engine source version, free of charge,
 
 ##Beginner usage
 ####JS version
-Laya.init(550, 400);
+    Laya.init(550, 400);
     Laya.stage.scaleMode = "showall";
     
     var ape = new laya.Sprite();
