@@ -45,11 +45,9 @@ package laya.net {
 		/**@private */
 		private var _addInputPosition:int;
 		/**@private */
-		private var _input:Byte;
+		private var _input:*;
 		/**@private */
-		private var _output:Byte;
-		/**@private */
-		private var _bytes:Byte;
+		private var _output:*;
 		/**
 		 * 表示建立连接时需等待的毫秒数。
 		 */
@@ -67,14 +65,14 @@ package laya.net {
 		/**
 		 * 表示服务端发来的数据。
 		 */
-		public function get input():Byte {
+		public function get input():* {
 			return _input;
 		}
 		
 		/**
 		 * 表示需要发送至服务端的缓冲区中的数据。
 		 */
-		public function get output():Byte {
+		public function get output():* {
 			return _output;
 		}
 		
