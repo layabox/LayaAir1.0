@@ -1,4 +1,5 @@
 package laya.utils {
+	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
@@ -54,9 +55,14 @@ package laya.utils {
 		 * @param value 需要解析的字符串。
 		 * @return js原生的XML对象。
 		 */
-		public static function parseXMLFromString(value:String):XmlDom {
+		public static var parseXMLFromString:Function = function(value:String):XmlDom {
 			var rst:*;
+			value = value.replace(/>\s+</g, '><');
 			__JS__("rst=(new DOMParser()).parseFromString(value,'text/xml')");
+			if (rst.firstChild.textContent.indexOf("This page contains the following errors") > -1)
+			{
+				throw new Error(rst.firstChild.firstChild.textContent);
+			}
 			return rst;
 		}
 		
@@ -195,8 +201,14 @@ package laya.utils {
 						else break;
 					}
 					if (z > childs[mid]._zOrder) mid++;
+					var f:Node = c.parent;
 					childs.splice(i, 1);
 					childs.splice(mid, 0, c);
+					if (f && f.model)
+					{
+						f.model&&f.model.removeChild(c.model);
+						f.model && f.model.addChildAt(c.model, mid);
+					}
 					repaint = true;
 				}
 			}

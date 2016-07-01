@@ -29,7 +29,7 @@ package
 			Laya.loader.load([texture1, texture2], Handler.create(this, onAssetsLoaded));
 		}
 		
-		private function onAssetsLoaded():void
+		private function onAssetsLoaded(e:*=null):void
 		{
 			ape = new Sprite();
 			Laya.stage.addChild(ape);
@@ -42,7 +42,7 @@ package
 			ape.on("click", this, switchTexture);
 		}
 		
-		private function switchTexture():void
+		private function switchTexture(e:*=null):void
 		{
 			var textureUrl:String = (flag = !flag) ? texture1 : texture2;
 			

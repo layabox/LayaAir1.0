@@ -3,7 +3,7 @@
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
 	var Browser=laya.utils.Browser,Handler=laya.utils.Handler,Loader=laya.net.Loader,Point=laya.maths.Point;
-	var Rectangle=laya.maths.Rectangle,Sprite=laya.display.Sprite,Texture=laya.resource.Texture,WebGL=laya.webgl.WebGL;
+	var Rectangle=laya.maths.Rectangle,Sprite=laya.display.Sprite,Texture=laya.resource.Texture;
 	/**
 	*tiledMap是整个地图的核心
 	*地图以层级来划分地图（例如：地表层，植被层，建筑层）
@@ -43,6 +43,8 @@
 			this._completeHandler=null;
 			this._index=0;
 			this._animationDic={};
+			this._properties=null;
+			this._tileProperties={};
 			this._orientation="orthogonal";
 			this._renderOrder="right-down";
 			this._colorArray=["FF","00","33","66"];
@@ -101,6 +103,7 @@
 			this._mapSprite=new Sprite();
 			Laya.stage.addChild(this._mapSprite);
 			var tJsonData=this._jsonData=e;
+			this._properties=tJsonData.properties;
 			this._orientation=tJsonData.orientation;
 			this._renderOrder=tJsonData.renderorder;
 			this._mapW=tJsonData.width;
@@ -117,6 +120,7 @@
 				tileset=tArray[i];
 				tTileSet=new TileSet();
 				tTileSet.init(tileset);
+				this._tileProperties[i]=tTileSet.tileproperties;
 				this._tileSetArray.push(tTileSet);
 				var tTiles=tileset.tiles;
 				if (tTiles){
@@ -245,6 +249,32 @@
 		__proto.getTexture=function(index){
 			if (index < this._tileTexSetArr.length){
 				return this._tileTexSetArr[index];
+			}
+			return null;
+		}
+
+		/**
+		*得到地图的自定义属性
+		*@param name 属性名称
+		*@return
+		*/
+		__proto.getMapProperties=function(name){
+			if (this._properties){
+				return this._properties[name];
+			}
+			return null;
+		}
+
+		/**
+		*得到tile自定义属性
+		*@param index 地图块索引
+		*@param id 具体的TileSetID
+		*@param name 属性名称
+		*@return
+		*/
+		__proto.getTileProperties=function(index,id,name){
+			if (this._tileProperties[index] && this._tileProperties[index][id]){
+				return this._tileProperties[index][id][name];
 			}
 			return null;
 		}
@@ -699,6 +729,11 @@
 			for (var p in tDic){
 				delete tDic[p];
 			}
+			this._properties=null;
+			tDic=this._tileProperties;
+			for (p in tDic){
+				delete tDic[p];
+			}
 			this._currTileSet=null;
 			this._completeHandler=null;
 			this._mapRect.clearAll();
@@ -946,6 +981,7 @@
 					this.tilewidth=0;
 					this.titleoffsetX=0;
 					this.titleoffsetY=0;
+					this.tileproperties=null;
 				}
 				__class(TileSet,'');
 				var __proto=TileSet.prototype;
@@ -960,6 +996,7 @@
 					this.spacing=data.spacing;
 					this.tileheight=data.tileheight;
 					this.tilewidth=data.tilewidth;
+					this.tileproperties=data.tileproperties;
 					var tTileoffset=data.tileoffset;
 					if (tTileoffset){
 						this.titleoffsetX=tTileoffset.x;
@@ -1260,6 +1297,7 @@
 			this._mapHeightHalf=0;
 			this._gridSpriteArray=[];
 			this._objDic=null;
+			this._properties=null;
 			this.layerName=null;
 			MapLayer.__super.call(this);
 			this._tempMapPos=new Point();
@@ -1280,6 +1318,7 @@
 			var tTileW=map.tileWidth;
 			var tTileH=map.tileHeight;
 			this.layerName=layerData.name;
+			this._properties=layerData.properties;
 			this.alpha=layerData.opacity;
 			this._tileWidthHalf=tTileW / 2;
 			this._tileHeightHalf=tTileH / 2;
@@ -1347,6 +1386,18 @@
 		__proto.getObjectByName=function(objName){
 			if (this._objDic){
 				return this._objDic[objName];
+			}
+			return null;
+		}
+
+		/**
+		*得到地图层的自定义属性
+		*@param name
+		*@return
+		*/
+		__proto.getLayerProperties=function(name){
+			if (this._properties){
+				return this._properties[name];
 			}
 			return null;
 		}
@@ -1597,6 +1648,7 @@
 				tGridSprite=this._gridSpriteArray[i];
 				tGridSprite.clearAll();
 			}
+			this._properties=null;
 			this._tempMapPos=null;
 		}
 

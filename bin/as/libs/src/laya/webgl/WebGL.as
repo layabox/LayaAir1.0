@@ -11,6 +11,7 @@ package laya.webgl {
 	import laya.renders.RenderContext;
 	import laya.renders.RenderSprite;
 	import laya.resource.Bitmap;
+	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
 	import laya.resource.HTMLImage;
 	import laya.resource.ResourceManager;
@@ -30,6 +31,8 @@ package laya.webgl {
 	import laya.webgl.shader.d2.Shader2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.shader.d2.value.Value2D;
+	import laya.webgl.shader.Shader;
+	import laya.webgl.shader.ShaderValue;
 	import laya.webgl.submit.Submit;
 	import laya.webgl.submit.SubmitCMD;
 	import laya.webgl.submit.SubmitCMDScope;
@@ -37,6 +40,11 @@ package laya.webgl {
 	import laya.webgl.utils.Buffer;
 	import laya.webgl.utils.RenderSprite3D;
 	import laya.webgl.utils.RenderState2D;
+	
+	import laya.webgl.shader.d2.Shader2X;
+	import laya.webgl.utils.GlUtils;
+	import laya.webgl.utils.IndexBuffer2D;
+	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
 	 * @private
@@ -50,7 +58,64 @@ package laya.webgl {
 		private static var _bg_null:Array =/*[STATIC SAFE]*/ [0, 0, 0, 0];
 		private static var _isExperimentalWebgl:Boolean = false;
 		
+		private static function Float32ArraySlice():Float32Array {
+			var _this:* =__JS__("this");
+			var sz:int = _this.length;
+			var dec:Float32Array = new Float32Array(_this.length);
+			for (var i:int = 0; i < sz; i++) dec[i] = _this[i];
+			return dec;
+		}
+		
+		private static function expandContext():void
+		{
+			var from:* = Context.prototype;
+			var to:* = __JS__("CanvasRenderingContext2D.prototype");
+			to.fillTrangles = from.fillTrangles;
+			Buffer.__int__(null);
+			to.setIBVB = function(x:Number, y:Number, ib:IndexBuffer2D, vb:VertexBuffer2D, numElement:int, mat:Matrix, shader:Shader, shaderValues:ShaderValue, startIndex:int=0, offset:int=0):void {
+				if (ib === null) {
+					this._ib = this._ib|| IndexBuffer2D.QuadrangleIB;
+					ib=this._ib;
+					GlUtils.expandIBQuadrangle(ib, (vb.length / (4 * 16) + 8));
+				}
+				this._setIBVB(x,y,ib,vb,numElement,mat,shader,shaderValues,startIndex,offset);
+			};
+			
+			to.fillTrangles=function(tex:Texture, x:Number, y:Number, points:Array, m:Matrix):void{
+				this._curMat = this._curMat || Matrix.create();
+				this._vb = this._vb || VertexBuffer2D.create();
+				if(!this._ib){
+					this._ib=IndexBuffer2D.create();
+					GlUtils.fillIBQuadrangle(this._ib,length/4);
+				}
+				var vb:VertexBuffer2D=this._vb;
+				var length:int = points.length >> 4;
+				GlUtils.fillTranglesVB(vb, x, y, points, m || this._curMat, 0, 0);
+				GlUtils.expandIBQuadrangle(this._ib,(vb.length / (4 *16)+8));
+				var shaderValues:Value2D = new Value2D( 0x01, 0);//     Value2D.create(0x01, 0);
+				shaderValues.textureHost = tex;
+				//var sd = RenderState2D.worldShaderDefines?shaderValues._withWorldShaderDefines():(Shader.sharders [shaderValues.mainID | shaderValues.defines._value] );
+				
+				//var sd = new Shader2X("attribute vec4 position; attribute vec2 texcoord; uniform vec2 size; uniform mat4 mmat; varying vec2 v_texcoord; void main() { vec4 pos=mmat*position; gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0); v_texcoord = texcoord; }", "precision mediump float; varying vec2 v_texcoord; uniform sampler2D texture; void main() { vec4 color= texture2D(texture, v_texcoord); color.a*=1.0; gl_FragColor=color; }");
+				
+				var sd:Shader =new Shader2X("attribute vec2 position; attribute vec2 texcoord; uniform vec2 size; uniform mat4 mmat; varying vec2 v_texcoord; void main() { vec4 p=vec4(position.xy,0.0,1.0);vec4 pos=mmat*p; gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0); v_texcoord = texcoord; }"
+				,
+				"precision mediump float; varying vec2 v_texcoord; uniform sampler2D texture; void main() {vec4 color= texture2D(texture, v_texcoord); color.a*=1.0; gl_FragColor= color;}");
+
+				__JS__("vb._vertType =3");//表示使用XYUV
+				this._setIBVB(x, y, this._ib, vb, length * 6, m, sd, shaderValues, 0, 0);
+			}
+		}
+		
 		public static function enable():Boolean {
+			if (Render.isConchApp)
+			{
+				if (!Render.isConchWebGL)
+				{
+					expandContext();
+					return false;
+				}
+			}
 			if (!isWebGLSupported()) return false;
 			
 			if (Render.isWebGL) return true;
@@ -107,7 +172,7 @@ package laya.webgl {
 				
 				if ((bitmap is IMergeAtlasBitmap) && ((bitmap as IMergeAtlasBitmap).allowMerageInAtlas)) {
 					bitmap.on(Event.RECOVERED, null, function(bm:Bitmap):void {
-						texture._uvID ++;
+						texture._uvID++;
 						AtlasResourceManager._atlasRestore++;
 						((bitmap as IMergeAtlasBitmap).enableMerageInAtlas) && (AtlasResourceManager.instance.addToAtlas(texture));//资源恢复时重新加入大图集
 					});
@@ -241,7 +306,7 @@ package laya.webgl {
 					var p:Point = Point.TEMP;
 					var tMatrix:Matrix = context.ctx._getTransformMatrix();
 					var mat:Matrix = Matrix.create();
-					tMatrix.copy(mat);
+					tMatrix.copyTo(mat);
 					var tPadding:int = 0;
 					var tHalfPadding:int = 0;
 					var tIsHaveGlowFilter:Boolean = false;
@@ -289,7 +354,7 @@ package laya.webgl {
 								context.addRenderObject(submit);
 								shaderValue = Value2D.create(ShaderDefines2D.TEXTURE2D, 0);
 								Matrix.TEMP.identity();
-								context.ctx.drawTarget(scope, 0, 0, b.width, b.height, Matrix.TEMP, "out", shaderValue);
+								context.ctx.drawTarget(scope, 0, 0, b.width, b.height, Matrix.TEMP, "out", shaderValue,null,BlendMode.TOINT.overlay);
 								submit = SubmitCMD.create([scope], Filter._useOut);
 								context.addRenderObject(submit);
 							}
@@ -329,13 +394,15 @@ package laya.webgl {
 					shaderValue = Value2D.create(ShaderDefines2D.TEXTURE2D, 0);
 					//把最后的out纹理画出来
 					Matrix.TEMP.identity();
-					context.ctx.drawTarget(scope, x, y, b.width, b.height, Matrix.TEMP, "out", shaderValue);
+					(context.ctx as WebGLContext2D).drawTarget(scope, x, y, b.width, b.height, Matrix.TEMP, "out", shaderValue,null, BlendMode.TOINT.overlay);
+					
 					//把对象放回池子中
 					submit = SubmitCMD.create([scope], Filter._recycleScope);
 					context.addRenderObject(submit);
 					mat.destroy();
 				}
 			}
+			Float32Array.prototype.slice || (Float32Array.prototype.slice = Float32ArraySlice);
 			return true;
 		}
 		
@@ -390,6 +457,9 @@ package laya.webgl {
 			doNodeRepaint(Laya.stage);
 			
 			mainContext.viewport(0, 0, RenderState2D.width, RenderState2D.height);
+			
+			Laya.stage.event(Event.DEVICE_LOST);
+			
 			//Render.context.ctx._repaint = true;
 			//alert("释放资源");
 		}

@@ -200,7 +200,7 @@ package laya.display {
 		/**@private */
 		protected var _editable:Boolean = true;
 		/**@private */
-		protected var _restrictPattern:RegExp;
+		protected var _restrictPattern:Object;
 		/**@private */
 		protected var _maxChars:int = 1E5;
 		
@@ -212,7 +212,7 @@ package laya.display {
 		private var _prompt:String = '';
 		/**输入提示符颜色。*/
 		private var _promptColor:String = "#A9A9A9";
-		private var _originColor:String;
+		private var _originColor:String = "#000000";
 		private var _content:String = '';
 		
 		/**@private */
@@ -273,6 +273,7 @@ package laya.display {
 			inputContainer.appendChild(input);
 			inputContainer.appendChild(area);
 			inputContainer.style.position = "absolute";
+			//[IF-SCRIPT] inputContainer.setPos = function(x:int, y:int):void { inputContainer.style.left = x + 'px'; inputContainer.style.top = y + 'px'; };
 			
 			if (Browser.onMobile) {
 				// 移动平台输入框动画样式
@@ -323,11 +324,21 @@ package laya.display {
 			input.addEventListener('mousemove', _stopEvent);
 			input.addEventListener('mousedown', _stopEvent);
 			input.addEventListener('touchmove', _stopEvent);
+			
+			/*[IF-SCRIPT-BEGIN]
+			if(!Render.isConchApp)
+			{
+				input.setColor = function(color:String):void { input.style.color = color; };
+				input.setFontSize = function(fontSize:int):void { input.style.fontSize = fontSize + 'px'; };
+				input.setSize = function(w:int, h:int):void { input.style.width = w + 'px'; input.style.height = h + 'px'; };
+			}
+			input.setFontFace = function(fontFace:String):void { input.style.fontFamily = fontFace; };
+			[IF-SCRIPT-END]*/
 		}
 		
 		/**@private */
 		private static function _stopEvent(e:*):void {
-			e.stopPropagation();
+			e.stopPropagation && e.stopPropagation();
 		}
 		
 		/**@private
@@ -362,7 +373,7 @@ package laya.display {
 		/**@private */
 		private function _onMouseDown(e:Event):void {
 			focus = true;
-			Browser.document.addEventListener(Browser.onPC ? "mousedown" : "touchstart", Input._checkBlur);
+			Browser.document.addEventListener(Browser.enableTouch?"touchstart":"mousedown", Input._checkBlur);
 		}
 		
 		/**@private */
@@ -388,21 +399,34 @@ package laya.display {
 			rec = Utils.getGlobalPosAndScale(this);
 			
 			var a:Number = stage._canvasTransform.a, d:Number = stage._canvasTransform.d;
-			inputContainer.style.left = (rec.x + padding[3] + inputElementXAdjuster) * stage.clientScaleX * a + stage.offset.x + "px";
-			inputContainer.style.top = (rec.y + padding[0] + inputElementYAdjuster) * stage.clientScaleY * d + stage.offset.y + "px";
+			var x:Number = (rec.x + padding[3] + inputElementXAdjuster) * stage.clientScaleX * a + stage.offset.x ;
+			var y:Number =  (rec.y + padding[0] + inputElementYAdjuster) * stage.clientScaleY * d + stage.offset.y ;
+			inputContainer.setPos(x, y);
 			
 			var inputWid:int = _width - padding[1] - padding[3];
 			var inputHei:int = _height - padding[0] - padding[2];
-			style.width = inputWid + "px";
-			style.height = inputHei + "px";
+			nativeInput.setSize(inputWid, inputHei);
+			
+			if (Render.isConchApp)
+			{
+				nativeInput.setPos(x, y);
+			}
 			
 			//不可见
 			if (!_getVisible()) focus = false;
 			
 			if (stage.transform || rec.width != 1 || rec.height != 1 || a != 1 || d != 1) {
-				var ts:String = "scale(" + stage.clientScaleX * a * rec.width + "," + stage.clientScaleY * d * rec.height + ")";
+				x = stage.clientScaleX * a * rec.width;
+				y=  stage.clientScaleY * d * rec.height
+				var ts:String = "scale(" + x + "," + y + ")";
 				if (ts != style.transform)
+				{
 					style.transform = ts;
+					if (Render.isConchApp)
+					{
+						nativeInput.setScale(x, y);
+					}
+				}
 			}
 		}
 		
@@ -449,6 +473,10 @@ package laya.display {
 					
 					_focusOut();
 					Browser.container.removeChild(inputContainer);
+					if (Render.isConchApp)
+					{
+						input.setPos( -10000, -10000);
+					}
 				}
 			}
 		}
@@ -465,6 +493,8 @@ package laya.display {
 		/**@private */
 		private function _focusIn():void {
 			var input:* = nativeInput;
+			/*[IF-FLASH]*/ input.setRestrict(_restrictPattern);
+			
 			this._focus = true;
 			
 			var cssStyle:* = input.style;
@@ -496,16 +526,17 @@ package laya.display {
 				typeset();
 				
 				// PC同步输入框外观。
-				cssStyle.color = _originColor;
-				cssStyle.fontSize = fontSize + "px";
-				cssStyle.fontFamily = font;
+				input.setColor(_originColor);
+				input.setFontSize(fontSize);
+				input.setFontFace(font);
 				cssStyle.lineHeight = (leading + fontSize) + "px";
 				cssStyle.fontStyle = (italic ? "italic" : "normal");
 				cssStyle.fontWeight = (bold ? "bold" : "normal");
 				cssStyle.textAlign = align;
-				
+
 				// 输入框重定位。
 				_syncInputTransform();
+				if(!Render.isConchApp)
 				Laya.timer.frameLoop(1, this, _syncInputTransform);
 			} else {
 				var inputContainerStyle:* = inputContainer.style;
@@ -525,7 +556,6 @@ package laya.display {
 			if (!promptStyleDOM)
 			{
 				promptStyleDOM = Browser.createElement("style");
-				promptStyleDOM.setAttribute("id", "promptStyle");
 				Browser.document.head.appendChild(promptStyleDOM);
 			}
 			
@@ -565,11 +595,10 @@ package laya.display {
 			Laya.stage.off(Event.KEY_DOWN, this, _onKeyDown);
 			Laya.stage.focus = null;
 			event(Event.BLUR);
-			
+			if (Render.isConchApp) this.nativeInput.blur();
 			// 只有PC会注册此事件。
 			Browser.onPC && Laya.timer.clear(this, _syncInputTransform);
-			
-			Browser.document.removeEventListener(Browser.onPC ? "mousedown" : "touchstart", Input._checkBlur);
+			Browser.document.removeEventListener(Browser.enableTouch?"touchstart":"mousedown", Input._checkBlur);
 		}
 		
 		/**@private */
@@ -582,23 +611,29 @@ package laya.display {
 		}
 		
 		/**@private */
-		private function _onKeyDown(e:Event):void {
+		private function _onKeyDown(e:*):void {
 			if (e.keyCode === 13) event(Event.ENTER);
 		}
 		
 		/**@inheritDoc */
 		override public function set text(value:String):void {
-			if (this._focus) {
+			value += '';
+			
+			if (this._focus) 
+			{
 				nativeInput.value = value || '';
+				event(Event.CHANGE);
 			}
-			
-			// 单行时不允许换行
-			if (!this._multiline)
-				value = value.replace(/\r?\n/g, '');
-			
-			_content = value;
-			
-			super.text = value || _prompt;
+			else
+			{
+				// 单行时不允许换行
+				if (!this._multiline)
+					value = value.replace(/\r?\n/g, '');
+				
+				_content = value;
+				
+				super.text = value || _prompt;
+			}
 		}
 		
 		override public function get text():String {
@@ -611,7 +646,7 @@ package laya.display {
 		/**@inheritDoc */
 		override public function set color(value:String):void {
 			if (this._focus)
-				nativeInput.style.color = value;
+				nativeInput.setColor(value);
 			
 			super.color = _content ? value : _promptColor;
 			_originColor = value;
@@ -619,14 +654,23 @@ package laya.display {
 		
 		/**限制输入的字符。*/
 		public function get restrict():String {
-			return _restrictPattern ? _restrictPattern.source : "";
+			if (_restrictPattern)
+			{
+				/*[IF-FLASH]*/ return _restrictPattern as String;
+				return _restrictPattern.source;
+			}
+			return "";
 		}
 		
 		public function set restrict(pattern:String):void {
+			// AS保存字符串
+			/*[IF-FLASH]*/ _restrictPattern = pattern; return;
+			
+			// H5保存RegExp
 			if (pattern) {
 				pattern = "[^" + pattern + "]";
 				
-				// 如果pattern为^\00-\FF，则我们需要的正则是\00-\FF
+				// 如果pattern为^\00-\FF，则我们需要的正则表达式是\00-\FF
 				if (pattern.indexOf("^^") > -1)
 					pattern = pattern.replace("^^", "");
 				

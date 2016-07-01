@@ -8,6 +8,7 @@ package laya.ui {
 	 * <p>封装了位置，宽高及九宫格的处理，供UI组件使用。</p>
 	 */
 	public final class AutoBitmap extends Graphics {
+		private var _isChanged:Boolean;
 		/**
 		 * @private
 		 * 渲染命令缓存
@@ -81,7 +82,7 @@ package laya.ui {
 		
 		public function set sizeGrid(value:Array):void {
 			_sizeGrid = value;
-			Laya.timer.callLater(this, changeSource);
+			_setChanged();
 		}
 		
 		/**
@@ -94,8 +95,10 @@ package laya.ui {
 		}
 		
 		public function set width(value:Number):void {
-			_width = value;
-			Laya.timer.callLater(this, changeSource);
+			if (_width != value) {
+				_width = value;
+				_setChanged();
+			}
 		}
 		
 		/**
@@ -108,8 +111,10 @@ package laya.ui {
 		}
 		
 		public function set height(value:Number):void {
-			_height = value;
-			Laya.timer.callLater(this, changeSource);
+			if (_height != value) {
+				_height = value;
+				_setChanged();
+			}
 		}
 		
 		/**
@@ -123,10 +128,18 @@ package laya.ui {
 		public function set source(value:Texture):void {
 			if (value) {
 				_source = value
-				Laya.timer.callLater(this, changeSource);
+				_setChanged();
 			} else {
 				_source = null;
 				clear();
+			}
+		}
+		
+		/** @private */
+		protected function _setChanged():void {
+			if (!_isChanged) {
+				_isChanged = true;
+				Laya.timer.callLater(this, changeSource);
 			}
 		}
 		
@@ -135,6 +148,7 @@ package laya.ui {
 		 * 修改纹理资源。
 		 */
 		private function changeSource():void {
+			_isChanged = false;
 			var source:Texture = this._source;
 			if (!source) return;
 			

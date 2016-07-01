@@ -1,6 +1,6 @@
 package laya.display.css {
-	import laya.display.css.Style;
 	import laya.display.Sprite;
+	import laya.display.css.Style;
 	import laya.events.Event;
 	import laya.net.URL;
 	import laya.renders.RenderContext;
@@ -109,7 +109,7 @@ package laya.display.css {
 		}
 		
 		/**@inheritDoc	 */
-		public function widthed(sprite:Sprite):Boolean {
+		public function widthed(sprite:*):Boolean {
 			return (_type & _WIDTH_SET) != 0;
 		}
 		
@@ -183,7 +183,7 @@ package laya.display.css {
 		 * @param	sprite 显示对象 Sprite。
 		 * @return 一个Boolean 表示是否已设置高度。
 		 */
-		public function heighted(sprite:Sprite):Boolean {
+		public function heighted(sprite:*):Boolean {
 			return (_type & _HEIGHT_SET) != 0;
 		}
 		
@@ -550,6 +550,10 @@ package laya.display.css {
 		}
 		
 		public function set borderColor(value:String):void {
+			if (!value) {
+				_border = null;
+				return;
+			}
 			_border || (_border = {size: 1, type: 'solid'});
 			_border.color = (value == null) ? null : Color.create(value);
 			_ower._renderType |= RenderSprite.STYLE;
@@ -565,10 +569,14 @@ package laya.display.css {
 		 * 背景颜色。
 		 */
 		public function get backgroundColor():String {
-			return _bgground ? _bgground.color : "";
+			return _bgground ? _bgground.color : null;
 		}
 		
 		public function set background(value:String):void {
+			if (!value) {
+				_bgground = null;
+				return;
+			}
 			_bgground || (_bgground = {});
 			_bgground.color = value;
 			_type |= _BACKGROUND_SET;
@@ -579,6 +587,8 @@ package laya.display.css {
 		override public function render(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			var w:Number = sprite.width;
 			var h:Number = sprite.height;
+			x -= sprite.pivotX;
+			y -= sprite.pivotY;
 			_bgground && _bgground.color != null && context.ctx.fillRect(x, y, w, h, _bgground.color);
 			_border && _border.color && context.drawRect(x, y, w, h, _border.color.strColor, _border.size);
 		}
@@ -711,6 +721,11 @@ package laya.display.css {
 				var attr:String = attrs[i];
 				var ofs:int = attr.indexOf(':');
 				var name:String = attr.substr(0, ofs).replace(/^\s+|\s+$/g, '');
+				
+				// 最后一个元素是空元素。
+				if (name.length == 0)
+					continue;
+				
 				var value:String = attr.substr(ofs + 1).replace(/^\s+|\s+$/g, '');//去掉前后空格和\n\t
 				var one:Array = [name, value];
 				switch (name) {

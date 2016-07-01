@@ -24,7 +24,7 @@ package
 			Laya.loader.load(skins, Handler.create(this, onSkinLoaded));
 		}
 		
-		private function onSkinLoaded():void
+		private function onSkinLoaded(e:*=null):void
 		{
 			var tabA:Tab = createTab(skins[0]);
 			tabA.pos(40, 120);

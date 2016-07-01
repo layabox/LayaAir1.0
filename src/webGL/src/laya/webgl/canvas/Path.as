@@ -3,7 +3,6 @@ package laya.webgl.canvas {
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shapes.BasePoly;
-	import laya.webgl.shapes.Ellipse;
 	import laya.webgl.shapes.IShape;
 	import laya.webgl.shapes.Line;
 	import laya.webgl.shapes.LoopLine;

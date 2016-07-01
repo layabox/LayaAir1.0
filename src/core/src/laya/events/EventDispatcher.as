@@ -151,6 +151,7 @@ package laya.events {
 		}
 		
 		private function _recoverHandlers(arr:*):void {
+			if(!arr) return;
 			if (arr.run) {
 				arr.recover();
 			} else {

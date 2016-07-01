@@ -1,10 +1,8 @@
 package laya.html.utils {
-	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.html.dom.HTMLDivElement;
 	import laya.html.dom.HTMLElement;
 	import laya.net.URL;
-	import laya.utils.Browser;
 	import laya.utils.ClassUtils;
 	import laya.utils.Utils;
 	
@@ -26,7 +24,7 @@ package laya.html.utils {
 			xmlString = xmlString.replace(/<br>/g, "<br/>");
 			xmlString = "<root>" + xmlString + "</root>";
 			xmlString = xmlString.replace(spacePattern, char255);
-			var xml:* = new Browser.window.DOMParser().parseFromString(xmlString, "text/xml");
+			var xml:* = Utils.parseXMLFromString(xmlString);
 			/*if (xml.firstChild.innerHTML.indexOf("<parsererror ") == 0)
 			   {
 			   throw new Error("HTML parsererror:" + xmlString);
@@ -42,7 +40,7 @@ package laya.html.utils {
 		 */
 		private static function _parseXML(parent:Sprite, xml:*, url:URL, href:String = null):void {
 			var i:int, n:int;
-			if (xml.item)	//判断xml是否是NodeList（NodeList有item函数 Element没有）
+			if (xml.join || xml.item)	//判断xml是否是NodeList或AS中为Array
 			{
 				for (i = 0, n = xml.length; i < n; ++i) {
 					_parseXML(parent, xml[i], url, href);
@@ -54,6 +52,10 @@ package laya.html.utils {
 				{
 					var txt:String;
 					if (parent is HTMLDivElement) {
+						if (xml.nodeName == null)
+						{
+							xml.nodeName = "#text";
+						}
 						nodeName = xml.nodeName.toLowerCase();
 						txt = xml.textContent.replace(/^\s+|\s+$/g, '');//去掉前后空格和\n\t
 						if (txt.length > 0) {

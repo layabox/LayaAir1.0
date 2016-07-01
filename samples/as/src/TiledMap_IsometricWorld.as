@@ -37,7 +37,7 @@ package
 			tiledMap.createMap("res/tiledMap/isometric_grass_and_water.json", new Rectangle(0, 0, Laya.stage.width, Laya.stage.height), Handler.create(this, mapLoaded), null, new Point(1600, 800));
 		}
 		
-		private function onStageClick():void
+		private function onStageClick(e:*=null):void
 		{
 			var p:Point = new Point(0, 0);
 			layer.getTilePositionByScreenPos(Laya.stage.mouseX, Laya.stage.mouseY, p);
@@ -45,13 +45,13 @@ package
 			sprite.pos(p.x, p.y);
 		}
 		
-		private function mapLoaded():void
+		private function mapLoaded(e:*=null):void
 		{
 			layer = tiledMap.getLayerByIndex(0);
 			
 			var radiusX:Number = 32;
 			var radiusY:Number = Math.tan(180 / Math.PI * 30) * radiusX;
-			var color:String = "FF7F50";
+			var color:String = "#FF7F50";
 			
 			sprite = new Sprite();
 			sprite.graphics.drawLine(0, 0, -radiusX, radiusY, color);

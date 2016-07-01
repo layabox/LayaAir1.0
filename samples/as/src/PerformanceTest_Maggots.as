@@ -30,7 +30,7 @@ package
 			Laya.loader.load(texturePath, Handler.create(this, onTextureLoaded));
 		}
 		
-		private function onTextureLoaded():void
+		private function onTextureLoaded(e:*=null):void
 		{
 			maggotTexture = Laya.loader.getRes(texturePath);
 			initMaggots();
@@ -45,7 +45,7 @@ package
 				if (i % 16000 == 0)
 					maggotContainer = createNewContainer();
 
-				var maggot:Sprite = newMaggot();
+				var maggot:Maggot = newMaggot();
 				maggotContainer.addChild(maggot);
 				maggots.push(maggot);
 			}
@@ -63,9 +63,9 @@ package
 			return container;
 		}
 
-		private function newMaggot():Sprite
+		private function newMaggot():Maggot
 		{
-			var maggot:* = new Sprite();
+			var maggot:Maggot = new Maggot();
 			maggot.graphics.drawTexture(maggotTexture, 0, 0);
 
 			maggot.pivot(16.5, 35);
@@ -120,7 +120,14 @@ package
 			
 			tick += 0.1;
 		}
-	
 	}
+}
 
+import laya.display.Sprite;
+class Maggot extends Sprite
+{
+	public var direction:Number;
+	public var turningSpeed:Number;
+	public var speed:Number;
+	public var offset:Number;
 }

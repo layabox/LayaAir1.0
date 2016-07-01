@@ -26,7 +26,7 @@ import laya.display.Animation;
 			Laya.loader.load(AniConfPath, Handler.create(this, createAnimation), null, Loader.ATLAS);
 		}
 		
-		private function createAnimation():void
+		private function createAnimation(_e:*=null):void
 		{
 			var ani:Animation = new Animation();
 			ani.loadAtlas(AniConfPath);			// 加载图集动画

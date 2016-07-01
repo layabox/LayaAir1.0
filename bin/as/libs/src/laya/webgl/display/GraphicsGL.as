@@ -17,11 +17,11 @@ package laya.webgl.display
 		}
 		
 		public function setShader(shader:Shader):void {
-			_saveToCmd(Render.context._setShader, arguments);
+			_saveToCmd(Render.context._setShader, [shader]);
 		}
 		
 		public function setIBVB(x:Number, y:Number, ib:Buffer, vb:Buffer, numElement:int, shader:Shader):void {
-			_saveToCmd(Render.context._setIBVB, arguments);
+			_saveToCmd(Render.context._setIBVB, [x,y,ib,vb,numElement,shader]);
 		}
 		
 		

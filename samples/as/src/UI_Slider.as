@@ -25,7 +25,7 @@ package
 			Laya.loader.load(skins, Handler.create(this, onLoadComplete));
 		}
 		
-		private function onLoadComplete():void
+		private function onLoadComplete(e:*=null):void
 		{
 			placeHSlider();
 			placeVSlider();

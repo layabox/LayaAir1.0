@@ -140,6 +140,8 @@ package laya.ui {
 		protected var _isPlaying:Boolean;
 		/**@private */
 		protected var _index:int = 0;
+		/**@private */
+		protected var _clipChanged:Boolean;
 		
 		/**
 		 * 创建一个新的 <code>Clip</code> 示例。
@@ -183,9 +185,9 @@ package laya.ui {
 		/**@private	 */
 		protected function _onDisplay(e:Event = null):void {
 			if (_isPlaying) {
-				if (_displayInStage) play();
+				if (_displayedInStage) play();
 				else stop();
-			} else if (_autoPlay && _displayInStage) {
+			} else if (_autoPlay && _displayedInStage) {
 				play();
 			}
 		}
@@ -199,7 +201,7 @@ package laya.ui {
 		
 		public function set skin(value:String):void {
 			_skin = value;
-			callLater(changeClip);
+			_setClipChanged()
 		}
 		
 		/**X轴（横向）切片数量。*/
@@ -209,7 +211,7 @@ package laya.ui {
 		
 		public function set clipX(value:int):void {
 			_clipX = value;
-			callLater(changeClip);
+			_setClipChanged()
 		}
 		
 		/**Y轴(竖向)切片数量。*/
@@ -219,7 +221,7 @@ package laya.ui {
 		
 		public function set clipY(value:int):void {
 			_clipY = value;
-			callLater(changeClip);
+			_setClipChanged()
 		}
 		
 		/**
@@ -231,7 +233,7 @@ package laya.ui {
 		
 		public function set clipWidth(value:Number):void {
 			_clipWidth = value;
-			callLater(changeClip);
+			_setClipChanged()
 		}
 		
 		/**
@@ -243,7 +245,7 @@ package laya.ui {
 		
 		public function set clipHeight(value:Number):void {
 			_clipHeight = value;
-			callLater(changeClip);
+			_setClipChanged()
 		}
 		
 		/**
@@ -251,6 +253,7 @@ package laya.ui {
 		 * 改变切片的资源、切片的大小。
 		 */
 		protected function changeClip():void {
+			_clipChanged = false;
 			var img:* = Loader.getRes(_skin);
 			if (img) {
 				loadComplete(_skin, img);
@@ -279,7 +282,7 @@ package laya.ui {
 				}
 				index = _index;
 				event(Event.LOADED);
-				onCompResize();	
+				onCompResize();
 			}
 		}
 		
@@ -437,6 +440,14 @@ package laya.ui {
 		 */
 		public function get bitmap():AutoBitmap {
 			return _bitmap;
+		}
+		
+		/**@private */
+		protected function _setClipChanged():void {
+			if (!_clipChanged) {
+				_clipChanged = true;
+				callLater(changeClip);
+			}
 		}
 	}
 }

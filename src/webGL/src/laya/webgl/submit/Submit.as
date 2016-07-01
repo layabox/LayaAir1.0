@@ -1,6 +1,4 @@
 package laya.webgl.submit {
-	import laya.maths.Matrix;
-	import laya.resource.Bitmap;
 	import laya.resource.Texture;
 	import laya.webgl.submit.ISubmit;
 	import laya.utils.Stat;
@@ -10,9 +8,7 @@ package laya.webgl.submit {
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.BlendMode;
 	import laya.webgl.canvas.WebGLContext2D;
-	import laya.webgl.shader.Shader;
 	import laya.webgl.shader.d2.value.Value2D;
-	import laya.webgl.utils.Buffer;
 	import laya.webgl.utils.CONST3D2D;
 	
 	/**
@@ -74,20 +70,15 @@ package laya.webgl.submit {
 		}
 		
 		public function renderSubmit():int {
-			
 			if (_numEle === 0) return 1;//怎么会有_numEle是0的情况?
-			
 			var _tex:Texture = shaderValue.textureHost;
-			if (_tex)
-			{
-				var source:*;
-				if (!_tex.bitmap || !(source=_tex.source))
+			if (_tex) {	
+				var source:* = _tex.source;
+				if (!_tex.bitmap || !source)
 					return 1;
 				shaderValue.texture = source;
 			}
-			
 			_vb.bind_upload(_ib);
-			
 			var gl:WebGLContext = WebGL.mainContext;
 			
 			///*[IF-FLASH]*/gl.useTexture(shaderValue.texture!=null);

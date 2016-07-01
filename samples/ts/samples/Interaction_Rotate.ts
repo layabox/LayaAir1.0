@@ -56,13 +56,16 @@ module laya {
 
         private onMouseMove(e: Event): void {
             var touches: Array<any> = e.touches;
-            var nowRadian: number = Math.atan2(
-                touches[0].stageY - touches[1].stageY,
-                touches[0].stageX - touches[1].stageX);
+			if (touches && touches.length == 2)
+			{
+				var nowRadian: number = Math.atan2(
+					touches[0].stageY - touches[1].stageY,
+					touches[0].stageX - touches[1].stageX);
 
-            this.sp.rotation += 180 / Math.PI * (nowRadian - this.preRadian);
+				this.sp.rotation += 180 / Math.PI * (nowRadian - this.preRadian);
 
-            this.preRadian = nowRadian;
+				this.preRadian = nowRadian;
+			}
         }
 
         private onMouseUp(e: Event): void {

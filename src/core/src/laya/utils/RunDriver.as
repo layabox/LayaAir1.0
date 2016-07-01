@@ -29,8 +29,7 @@ package laya.utils {
 		}
 		
 		public static var newWebGLContext:Function = function(canvas:*, webGLName:String):* {
-			//new FlashWebGLContext();
-			return canvas.getContext(webGLName, {stencil: true, alpha: false, antialias: true, premultipliedAlpha: false});
+			return canvas.getContext(webGLName, {stencil: true, alpha: false, antialias: Config.isAntialias, premultipliedAlpha: false});
 		}
 		
 		public static var getPixelRatio:Function = function(pixelRatio:Number):Number {
@@ -52,6 +51,12 @@ package laya.utils {
 		}
 		
 		public static var measureText:Function = function(txt:String, font:String):* {
+			if (Render.isConchApp)
+			{
+				var ctx:* = __JS__("ConchTextCanvas");
+				ctx.font = font;
+				return ctx.measureText(txt);
+			}
 			if (_charSizeTestDiv == null) {
 				_charSizeTestDiv = Browser.createElement('div');
 				_charSizeTestDiv.style.cssText = "z-index:10000000;padding:0px;position: absolute;left:0px;visibility:hidden;top:0px;background:white";

@@ -1,30 +1,29 @@
-/// <reference path="../../libs/LayaAir.d.ts" />
+/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 var laya;
 (function (laya) {
     var Utils = laya.utils.Utils;
     var Network_XML = (function () {
         function Network_XML() {
-            Laya.init(100, 100);
+            Laya.init(550, 400);
+            this.setup();
+        }
+        Network_XML.prototype.setup = function () {
             var xmlValueContainsError = "<root><item>item a</item><item>item b</item>somethis...</root1>";
             var xmlValue = "<root><item>item a</item><item>item b</item>somethings...</root>";
             this.proessXML(Utils.parseXMLFromString(xmlValueContainsError));
             console.log("\n");
             this.proessXML(Utils.parseXMLFromString(xmlValue));
-        }
-        // 使用xml
-        Network_XML.prototype.proessXML = function (xml) {
-            var parserError = this.getParserError(xml);
-            if (parserError) {
-                console.log(parserError);
-            }
-            else {
-                this.printDirectChildren(xml);
-            }
         };
-        // 是否存在解析错误
-        Network_XML.prototype.getParserError = function (xml) {
-            var error = xml.firstChild.firstChild.nodeName == "parsererror";
-            return error ? xml.firstChild.firstChild.textContent : null;
+        // 使用xml
+        Network_XML.prototype.proessXML = function (source) {
+            try {
+                var xml = Utils.parseXMLFromString(source);
+            }
+            catch (e) {
+                console.log(e.massage);
+                return;
+            }
+            this.printDirectChildren(xml);
         };
         // 打印直接子级
         Network_XML.prototype.printDirectChildren = function (xml) {

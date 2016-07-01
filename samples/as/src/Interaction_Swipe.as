@@ -74,7 +74,7 @@ package
 		}
 		
 		/**按下事件处理*/
-		private function onMouseDown(e:Event):void
+		private function onMouseDown(e:Event=null):void
 		{
 			//添加鼠标移到侦听
 			Laya.stage.on(Event.MOUSE_MOVE, this, onMouseMove);
@@ -84,13 +84,13 @@ package
 			Laya.stage.on(Event.MOUSE_OUT, this, onMouseUp);
 		}
 		/**移到事件处理*/
-		private function onMouseMove(e:Event):void
+		private function onMouseMove(e:Event=null):void
 		{
 			button.x = Math.max(Math.min(Laya.stage.mouseX, endPosition), beginPosition);
 		} 
 		
 		/**抬起事件处理*/
-		private function onMouseUp(e:Event):void
+		private function onMouseUp(e:Event=null):void
 		{
 			Laya.stage.off(Event.MOUSE_MOVE, this, onMouseMove);
 			Laya.stage.off(Event.MOUSE_UP, this, onMouseUp);

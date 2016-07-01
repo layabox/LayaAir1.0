@@ -36,7 +36,7 @@ package laya.webgl.canvas.save
 			var no:* = _no;
 			var o:SaveTransform = no._length > 0?no[--no._length]:(new SaveTransform());
 			o._savematrix = context._curMat;
-			context._curMat = context._curMat.copy(o._matrix);
+			context._curMat = context._curMat.copyTo(o._matrix);
 			var _save:Array = context._save;
 			_save[_save._length++] = o;
 		}		

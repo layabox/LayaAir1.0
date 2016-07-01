@@ -53,7 +53,6 @@ package laya.media.h5audio {
 				//this.audio.play();
 				event(Event.ERROR);
 			}
-		
 		}
 		
 		/**

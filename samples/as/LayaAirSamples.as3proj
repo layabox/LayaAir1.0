@@ -8,7 +8,7 @@
     <movie fps="30" />
     <movie width="800" />
     <movie height="600" />
-    <movie version="18" />
+    <movie version="0" />
     <movie minorVersion="0" />
     <movie platform="Flash Player" />
     <movie background="#CCE8CF" />
@@ -16,7 +16,7 @@
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
     <class path="src" />
-    <class path="..\..\bin\as\libs\src" />
+    <class path="..\..\bin\as\libs" />
   </classpaths>
   <!-- Build options -->
   <build>

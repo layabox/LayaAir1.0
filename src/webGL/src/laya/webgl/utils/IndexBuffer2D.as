@@ -1,4 +1,5 @@
 package laya.webgl.utils {
+	import laya.renders.Render;
 	import laya.webgl.WebGLContext;
 	
 	/**
@@ -20,6 +21,7 @@ package laya.webgl.utils {
 			super();
 			_bufferUsage = bufferUsage;
 			_type = WebGLContext.ELEMENT_ARRAY_BUFFER;
+			Render.isFlash || (_buffer = new ArrayBuffer(8));
 		}
 		
 		override protected function _checkArrayUse():void {

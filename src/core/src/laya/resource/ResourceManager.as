@@ -247,13 +247,12 @@ package laya.resource {
 		 * 卸载此资源管理器载入的资源。
 		 */
 		public function unload():void {
-			if (this === _systemResourceManager)
-				throw new Error("systemResourceManager不能被释放！");
-			
+			//if (this === _systemResourceManager)
+				//throw new Error("systemResourceManager不能被释放！");
 			var tempResources:Vector.<Resource> = _resources.slice(0, _resources.length);
 			for (var i:int = 0; i < tempResources.length; i++) {
 				var resource:Resource = tempResources[i];
-				resource.resourceManager.removeResource(resource);
+				//resource.resourceManager.removeResource(resource);//TODO:暂时屏蔽，dispose中会调用
 				resource.dispose();
 			}
 			tempResources.length = 0;

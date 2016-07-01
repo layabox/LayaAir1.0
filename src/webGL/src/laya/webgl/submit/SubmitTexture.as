@@ -27,10 +27,9 @@ package laya.webgl.submit {
 		protected var _vbPos:Vector.<int> = new Vector.<int>;
 		public var _preIsSameTextureShader:Boolean = false;
 		public var _isSameTexture:Boolean = true;
-		
+
 		public function SubmitTexture(renderType:int = TYPE_2D) {
 			super(renderType);
-		
 		}
 		
 		public override function releaseRender():void {
@@ -57,17 +56,20 @@ package laya.webgl.submit {
 				return;
 			}
 			var _tex:Texture = shaderValue.textureHost;
-			var newUV:Array = _tex.uv;
+			
 			var webGLImg:Bitmap = _tex.bitmap as Bitmap;
 			if (webGLImg === null) return;
 			
-			var vbdata:* = _vb.getFloat32Array();
+			var vbdata: * = _vb.getFloat32Array();
 			for (var i:int = 0, s:int = _texs.length; i < s; i++) {
-				var tex2:Texture = _texs[i];
-				if (_texsID[i] !== tex2._uvID) {
+				var tex:Texture = _texs[i];
+				tex.active();
+				var newUV:Array = tex.uv;
+				if (_texsID[i] !== tex._uvID) {
 					//修改UV
-					_texsID[i] = tex2._uvID;
+					_texsID[i] = tex._uvID;
 					var vbPos:int = _vbPos[i];
+					
 					vbdata[vbPos + 2] = newUV[0];
 					vbdata[vbPos + 3] = newUV[1];
 					vbdata[vbPos + 6] = newUV[2];
@@ -76,20 +78,21 @@ package laya.webgl.submit {
 					vbdata[vbPos + 11] = newUV[5];
 					vbdata[vbPos + 14] = newUV[6];
 					vbdata[vbPos + 15] = newUV[7];
+					_vb.setNeedUpload();
 				}
-				if (tex2.bitmap !== webGLImg) {
+				if (tex.bitmap !== webGLImg) {
 					_isSameTexture = false;
 				}
 			}
+		
 		}
 		
 		public override function renderSubmit():int {
-			
 			if (_numEle === 0) return 1;
 			var _tex:Texture = shaderValue.textureHost;
 			if (_tex) {
-				var source:*;
-				if (!_tex.bitmap || !(source = _tex.source))
+				var source:* = _tex.source;
+				if (!_tex.bitmap || !source)
 					return 1;
 				shaderValue.texture = source;
 			}
@@ -106,6 +109,7 @@ package laya.webgl.submit {
 			
 			Stat.drawCall++;
 			Stat.trianglesFaces += _numEle / 3;
+			
 			
 			if (_preIsSameTextureShader && Shader.activeShader)
 				Shader.activeShader.uploadTexture2D(shaderValue.texture);

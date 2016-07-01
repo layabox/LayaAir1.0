@@ -121,7 +121,7 @@ package laya.display {
 		
 		private function _onDisplay():void {
 			if (_isPlaying) {
-				if (_displayInStage) play(_index, loop);
+				if (_displayedInStage) play(_index, loop);
 				else clearTimer(this, _frameLoop);
 			}
 		}

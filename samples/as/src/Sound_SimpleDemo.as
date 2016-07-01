@@ -60,13 +60,13 @@ package
 			return button;
 		}
 		
-		private function onPlayMusic(e:Event):void 
+		private function onPlayMusic(e:Event=null):void 
 		{
 			trace("播放音乐");
 			SoundManager.playMusic("res/sounds/bgm.mp3", 1, new Handler(this, onComplete));
 		}
 		
-		private function onPlaySound(e:Event):void 
+		private function onPlaySound(e:Event=null):void 
 		{
 			trace("播放音效");
 			SoundManager.playSound("res/sounds/btn.mp3", 1, new Handler(this, onComplete));

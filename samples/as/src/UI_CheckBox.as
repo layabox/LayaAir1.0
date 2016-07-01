@@ -33,7 +33,7 @@ package
 			Laya.loader.load(skins, Handler.create(this,onCheckBoxSkinLoaded));
 		}
 		
-		private function onCheckBoxSkinLoaded():void 
+		private function onCheckBoxSkinLoaded(e:*=null):void 
 		{
 			var cb:CheckBox;
 			for (var i:int = 0; i < COL_AMOUNT; ++i)

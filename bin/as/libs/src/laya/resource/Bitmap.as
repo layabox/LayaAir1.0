@@ -1,6 +1,7 @@
 package laya.resource {
 	
 	/**
+	 * @private
 	 * <code>Bitmap</code> 是图片资源类。
 	 */
 	public class Bitmap extends Resource {
@@ -13,7 +14,7 @@ package laya.resource {
 		protected var _w:Number;
 		/**@private 高度*/
 		protected var _h:Number;
-		
+		/**@private */
 		public var useNum:int = 0;
 		
 		/***

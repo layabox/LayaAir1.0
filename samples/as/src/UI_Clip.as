@@ -31,7 +31,7 @@ package
 			Laya.loader.load([buttonSkin, clipSkin, bgSkin], laya.utils.Handler.create(this,onSkinLoaded));
 		}
 		
-		private function onSkinLoaded():void
+		private function onSkinLoaded(e:*=null):void
 		{
 			showBg();
 			createTimerAnimation();
@@ -81,7 +81,7 @@ package
 			Laya.stage.addChild(controller);
 		}
 		
-		private function onClipSwitchState():void 
+		private function onClipSwitchState(e:*=null):void 
 		{
 			if (counter.isPlaying)
 			{

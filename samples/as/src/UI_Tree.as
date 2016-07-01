@@ -4,6 +4,7 @@ package
 	import laya.ui.Tree;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
+	import laya.utils.Utils;
 	import laya.webgl.WebGL;
 
 	public class UI_Tree
@@ -32,7 +33,7 @@ package
 			Laya.loader.load(res, new Handler(this, onLoadComplete));
 		}
 		
-		private function onLoadComplete():void
+		private function onLoadComplete(e:*=null):void
 		{
 			// 组装tree的数据
 			var treeData:String = "<data>";
@@ -47,8 +48,7 @@ package
 			}
 			treeData += "</data>";
 			// 解析tree的数据
-			var domParser:* = new Browser.window.DOMParser();
-			var xml:* = domParser.parseFromString(treeData, "text/xml");
+			var xml:* = Utils.parseXMLFromString(treeData);
 			
 			var tree:Tree = new Tree();
 			tree.scrollBarSkin = "res/ui/vscroll.png";

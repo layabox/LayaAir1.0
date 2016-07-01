@@ -46,7 +46,7 @@ module laya {
 
 			var radiusX: number = 32;
 			var radiusY: number = Math.tan(180 / Math.PI * 30) * radiusX;
-			var color: string = "FF7F50";
+			var color: string = "#FF7F50";
 
 			this.sprite = new Sprite();
 			this.sprite.graphics.drawLine(0, 0, -radiusX, radiusY, color);

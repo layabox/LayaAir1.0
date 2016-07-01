@@ -1,6 +1,7 @@
 package {
 	import laya.asyn.Asyn;
 	import laya.asyn.Deferred;
+	import laya.display.Graphics;
 	import laya.display.Input;
 	import laya.display.css.Font;
 	import laya.display.css.Style;
@@ -13,10 +14,10 @@ package {
 	import laya.net.URL;
 	import laya.renders.Render;
 	import laya.renders.RenderSprite;
+	import laya.resource.Context;
 	import laya.resource.ResourceManager;
 	import laya.utils.Browser;
 	import laya.utils.Timer;
-	import laya.utils.RunDriver;
 	
 	/**
 	 * <code>Laya</code> 是全局对象的引用入口集。
@@ -32,7 +33,7 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.0.0RC2";		
+		public static var version:String = "1.0.0Release";
 		
 		/**
 		 * 初始化引擎。
@@ -43,8 +44,11 @@ package {
 		 */
 		public static function init(width:Number, height:Number, ... plugins):* {
 			Browser.__init__();
+			Context.__init__();
+			Graphics.__init__();
 			timer = new Timer();
-			loader=new LoaderManager();
+			loader = new LoaderManager();
+			/*[IF-FLASH]*/width = Browser.clientWidth; height = Browser.clientHeight;
 			
 			for (var i:int = 0, n:int = plugins.length; i < n; i++) {
 				if (plugins[i].enable) plugins[i].enable();
@@ -53,7 +57,7 @@ package {
 			Style.__init__();
 			ResourceManager.__init__();
 			stage = new Stage();
-			
+			stage.model&&stage.model.setRootNode();
 			var location:* = Browser.window.location;
 			var pathName:String = location.pathname;
 			// 索引为2的字符如果是':'就是windows file协议

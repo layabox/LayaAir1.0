@@ -1,4 +1,5 @@
 package laya.utils {
+	import laya.display.Node;
 	/*[IF-FLASH]*/import flash.utils.Dictionary;
 	/**
 	 * <code>Tween</code>  是一个缓动类。使用实现目标对象属性的渐变。
@@ -7,7 +8,7 @@ package laya.utils {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
 		/**@private */
-		/*[IF-FLASH]*/ private static var tweenMap:flash.utils.Dictionary = new flash.utils.Dictionary();
+		/*[IF-FLASH]*/ private static var tweenMap:flash.utils.Dictionary = new flash.utils.Dictionary(true);
 		//[IF-JS] private static var tweenMap:Array = {};
 		/**@private */
 		private var _complete:Handler;
@@ -156,7 +157,8 @@ package laya.utils {
 			var target:* = this._target;
 			
 			//如果对象被销毁，则立即停止缓动
-			if (target.destroyed) return clearTween(target);
+			/*[IF-FLASH]*/if (target is Node && target.destroyed) return clearTween(target);
+			//[IF-JS]if (target.destroyed) return clearTween(target);
 			
 			var usedTimer:Number = this._usedTimer = time - this._startTimer - this._delay;
 			if (usedTimer < 0) return;

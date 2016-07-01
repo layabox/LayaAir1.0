@@ -2,6 +2,7 @@ package laya.net {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.utils.Browser;
+	import laya.utils.Utils;
 	
 	/**
 	 * 请求进度改变时调度。
@@ -23,10 +24,19 @@ package laya.net {
 	 * <code>HttpRequest</code> 通过 HTTP 协议传送或接收 XML 及其他数据。
 	 */
 	public class HttpRequest extends EventDispatcher {
+<<<<<<< HEAD
+		/**@private */
+		protected  var _http:* = new Browser.window.XMLHttpRequest();
+		/**@private */
+		protected  var _responseType:String;
+		/**@private */
+		protected  var _data:*;
+=======
 		
 		protected var _http:* = new Browser.window.XMLHttpRequest();
 		protected var _responseType:String;
 		protected var _data:*;
+>>>>>>> origin/master
 		
 		/**
 		 * 发送请求。
@@ -52,49 +62,53 @@ package laya.net {
 			}
 			http.responseType = responseType !== "arraybuffer" ? "text" : "arraybuffer";
 			http.onerror = function(e:*):void {
-				_this.onError(e);
+				_this._onError(e);
 			}
 			http.onabort = function(e:*):void {
-				_this.onAbort(e);
+				_this._onAbort(e);
 			}
 			http.onprogress = function(e:*):void {
-				_this.onProgress(e);
+				_this._onProgress(e);
 			}
 			http.onload = function(e:*):void {
-				_this.onLoad(e);
+				_this._onLoad(e);
 			}
 			http.send(data);
 		}
 		
 		/**
+		 * @private
 		 * 请求进度的侦听处理函数。
 		 * @param	e 事件对象。
 		 */
-		protected function onProgress(e:*):void {
+		protected function _onProgress(e:*):void {
 			if (e && e.lengthComputable) event(Event.PROGRESS, e.loaded / e.total);
 		}
 		
 		/**
+		 * @private
 		 * 请求中断的侦听处理函数。
 		 * @param	e 事件对象。
 		 */
-		protected function onAbort(e:*):void {
+		protected function _onAbort(e:*):void {
 			error("Request was aborted by user");
 		}
 		
 		/**
+		 * @private
 		 * 请求出错侦的听处理函数。
 		 * @param	e 事件对象。
 		 */
-		protected function onError(e:*):void {
+		protected function _onError(e:*):void {
 			error("Request failed Status:" + this._http.status + " text:" + this._http.statusText);
 		}
 		
 		/**
+		 * @private
 		 * 请求消息返回的侦听处理函数。
 		 * @param	e 事件对象。
 		 */
-		protected function onLoad(e:*):void {
+		protected function _onLoad(e:*):void {
 			var http:* = this._http;
 			var status:Number = http.status !== undefined ? http.status : 200;
 			
@@ -106,6 +120,7 @@ package laya.net {
 		}
 		
 		/**
+		 * @private
 		 * 请求错误的处理函数。
 		 * @param	message 错误信息。
 		 */
@@ -115,6 +130,7 @@ package laya.net {
 		}
 		
 		/**
+		 * @private
 		 * 请求成功完成的处理函数。
 		 */
 		protected function complete():void {
@@ -122,8 +138,7 @@ package laya.net {
 			if (_responseType === "json") {
 				this._data = JSON.parse(_http.responseText);
 			} else if (_responseType === "xml") {
-				var dom:* = new Browser.window.DOMParser();
-				this._data = dom.parseFromString(_http.responseText, "text/xml");
+				this._data = Utils.parseXMLFromString(_http.responseText);
 			} else {
 				this._data = _http.response || _http.responseText;
 			}
@@ -131,6 +146,7 @@ package laya.net {
 		}
 		
 		/**
+		 * @private
 		 * 清除当前请求。
 		 */
 		protected function clear():void {

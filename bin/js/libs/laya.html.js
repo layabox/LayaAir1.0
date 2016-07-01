@@ -17,13 +17,13 @@
 			xmlString=xmlString.replace(/<br>/g,"<br/>");
 			xmlString="<root>"+xmlString+"</root>";
 			xmlString=xmlString.replace(HTMLParse.spacePattern,HTMLParse.char255);
-			var xml=new Browser.window.DOMParser().parseFromString(xmlString,"text/xml");
+			var xml=Utils.parseXMLFromString(xmlString);
 			HTMLParse._parseXML(ower,xml.childNodes[0].childNodes,url);
 		}
 
 		HTMLParse._parseXML=function(parent,xml,url,href){
 			var i=0,n=0;
-			if (xml.item){
+			if (xml.join || xml.item){
 				for (i=0,n=xml.length;i < n;++i){
 					HTMLParse._parseXML(parent,xml[i],url,href);
 				}
@@ -33,6 +33,9 @@
 				if (xml.nodeType==3){
 					var txt;
 					if ((parent instanceof laya.html.dom.HTMLDivElement )){
+						if (xml.nodeName==null){
+							xml.nodeName="#text";
+						}
 						nodeName=xml.nodeName.toLowerCase();
 						txt=xml.textContent.replace(/^\s+|\s+$/g,'');
 						if (txt.length > 0){
@@ -343,8 +346,8 @@
 			var fontStr=style.font;
 			var startX=0;
 			for (var i=0,n=txt.length;i < n;i++){
-				size=Utils.measureText(txt[i],fontStr);
-				var tHTMLChar=words[i]=new HTMLChar(txt[i],size.width,size.height,style);
+				size=Utils.measureText(txt.charAt(i),fontStr);
+				var tHTMLChar=words[i]=new HTMLChar(txt.charAt(i),size.width,size.height,style);
 				if (this.href){
 					var tSprite=new Sprite();
 					this.addChild(tSprite);
@@ -549,14 +552,15 @@
 				out.push(o);
 			});
 			var tFirstKey=true;
-			this._childs.forEach(function(o){
+			for (var i=0,len=this._childs.length;i < len;i++){
+				var o=this._childs[i];
 				if (tFirstKey){
 					tFirstKey=false;
 					}else {
 					out.push(null);
 				}
 				o._addToLayout(out)
-			});
+			}
 			return true;
 		}
 

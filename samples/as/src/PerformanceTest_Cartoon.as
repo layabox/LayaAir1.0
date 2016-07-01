@@ -26,7 +26,7 @@ package
 			Laya.loader.load("res/cartoonCharacters/cartoonCharactors.json", Handler.create(this, createCharacters), null, Loader.ATLAS);
 		}
 		
-		private function createCharacters():void
+		private function createCharacters(e:*=null):void
 		{
 			characterGroup = [];
 

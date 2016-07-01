@@ -1,5 +1,4 @@
 /*[IF-FLASH]*/package {
-	import flash.utils.ByteArray;
 	/**
 	 * littleEndian和bigEndian在As内是用不到的,传入参数仅用于兼容JS
 	 * @private

@@ -62,13 +62,16 @@
 	function onMouseMove(e)
 	{
 		var touches = e.touches;
-		var nowRadian = Math.atan2(
-			touches[0].stageY - touches[1].stageY,
-			touches[0].stageX - touches[1].stageX);
+		if (touches && touches.length == 2)
+		{
+			var nowRadian = Math.atan2(
+				touches[0].stageY - touches[1].stageY,
+				touches[0].stageX - touches[1].stageX);
 
-		sp.rotation += 180 / Math.PI * (nowRadian - preRadian);
+			sp.rotation += 180 / Math.PI * (nowRadian - preRadian);
 
-		preRadian = nowRadian;
+			preRadian = nowRadian;
+		}
 	}
 
 	function onMouseUp(e)

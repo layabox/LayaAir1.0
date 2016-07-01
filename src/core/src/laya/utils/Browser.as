@@ -1,6 +1,7 @@
 package laya.utils {
 	import laya.media.h5audio.AudioSound;
 	import laya.media.webaudio.WebAudioSound;
+	import laya.renders.Render;
 	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
 	
@@ -61,6 +62,9 @@ package laya.utils {
 		
 		__JS__("Sound = Browser.webAudioOK?WebAudioSound:AudioSound;");
 		__JS__("if (Browser.webAudioOK) WebAudioSound.initWebAudio();");
+		/** @private */
+		public static var enableTouch:Boolean;
+		__JS__("Browser.enableTouch=(('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch)");
 		/** 全局画布实例（非主画布）。*/
 		/*[IF-FLASH]*/
 		public static var canvas:HTMLCanvas;
@@ -74,6 +78,7 @@ package laya.utils {
 		
 		/**@private */
 		public static function __init__():void {
+			Render._mainCanvas =Render._mainCanvas||HTMLCanvas.create('2D');
 			if (canvas) return;
 			canvas = HTMLCanvas.create('2D');
 			context = canvas.getContext('2d');

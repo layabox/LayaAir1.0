@@ -166,7 +166,7 @@ package laya.ui {
 		 *     console.log("button.selected = ", button.selected);
 		 * }
 		 * </listing>
-		 */		
+		 */
 		public var toggle:Boolean;
 		/**
 		 * @private
@@ -222,6 +222,10 @@ package laya.ui {
 		 * 按钮的点击事件函数。
 		 */
 		protected var _clickHandler:Handler;
+		/**
+		 * @private
+		 */
+		protected var _stateChanged:Boolean = false;
 		
 		/**
 		 * 创建一个新的 <code>Button</code> 类实例。
@@ -291,7 +295,7 @@ package laya.ui {
 			if (_skin != value) {
 				_skin = value;
 				callLater(changeClips);
-				callLater(changeState);
+				_setStateChanged();
 			}
 		}
 		
@@ -372,9 +376,9 @@ package laya.ui {
 		
 		public function set label(value:String):void {
 			if (_text.text != value) {
-				value && !_text.displayInStage && addChild(_text);
+				value && !_text.displayedInStage && addChild(_text);
 				_text.text = value;
-				callLater(changeState);
+				_setStateChanged();
 			}
 		}
 		
@@ -405,7 +409,7 @@ package laya.ui {
 		protected function set state(value:int):void {
 			if (_state != value) {
 				_state = value;
-				callLater(changeState);
+				_setStateChanged();
 			}
 		}
 		
@@ -414,6 +418,7 @@ package laya.ui {
 		 * 改变对象的状态。
 		 */
 		protected function changeState():void {
+			_stateChanged = false;
 			runCallLater(changeClips);
 			var index:int = _state < _stateNum ? _state : _stateNum - 1;
 			_sources && (_bitmap.source = _sources[index]);
@@ -433,7 +438,7 @@ package laya.ui {
 		
 		public function set labelColors(value:String):void {
 			_labelColors = UIUtils.fillArray(Styles.buttonLabelColors, value, String);
-			callLater(changeState);
+			_setStateChanged();
 		}
 		
 		/**
@@ -446,7 +451,7 @@ package laya.ui {
 		
 		public function set strokeColors(value:String):void {
 			_strokeColors = UIUtils.fillArray(Styles.buttonLabelColors, value, String);
-			callLater(changeState);
+			_setStateChanged();
 		}
 		
 		/**
@@ -588,6 +593,14 @@ package laya.ui {
 		
 		public function set labelAlign(value:String):void {
 			_text.align = value;
+		}
+		
+		/**@private */
+		protected function _setStateChanged():void {
+			if (!_stateChanged) {
+				_stateChanged = true;
+				callLater(changeState);
+			}
 		}
 	}
 }

@@ -5,6 +5,7 @@ module laya {
     import Browser = laya.utils.Browser;
     import Handler = laya.utils.Handler;
     import WebGL = laya.webgl.WebGL;
+    import Utils = laya.utils.Utils;
 
     export class UI_Tree {
         constructor() {
@@ -32,7 +33,7 @@ module laya {
 
         private onLoadComplete(): void {
             // 组装tree的数据
-            var treeData: String = "<data>";
+            var treeData: string = "<data>";
             for (var i: number = 0; i < 5; ++i) {
                 treeData += "<item label='Directory " + (i + 1) + "' isOpen='true'>";
                 for (var j: number = 0; j < 5; ++j) {
@@ -42,8 +43,7 @@ module laya {
             }
             treeData += "</data>";
             // 解析tree的数据
-            var domParser: any = new Browser.window.DOMParser();
-            var xml: any = domParser.parseFromString(treeData, "text/xml");
+            var xml:any = Utils.parseXMLFromString(treeData);
 
             var tree: Tree = new Tree();
             tree.scrollBarSkin = "res/ui/vscroll.png";

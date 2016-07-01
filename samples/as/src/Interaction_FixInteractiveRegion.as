@@ -95,7 +95,7 @@ package
 		}
 		
 		/**侦听处理方法*/
-		private function onDown(e:Event):void
+		private function onDown(e:Event=null):void
 		{
 			logger.text += "点击 - " + e.target.name + "\n";
 		}

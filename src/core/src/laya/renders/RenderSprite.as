@@ -7,6 +7,7 @@ package laya.renders {
 	import laya.maths.Rectangle;
 	import laya.resource.HTMLCanvas;
 	import laya.utils.Browser;
+	import laya.utils.HTMLChar;
 	import laya.utils.Pool;
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
@@ -19,13 +20,13 @@ package laya.renders {
 		/** @private */
 		public static const IMAGE:int = 0x01;
 		/** @private */
-		public static const FILTERS:int = 0x02;
+		public static const ALPHA:int = 0x02;
 		/** @private */
-		public static const ALPHA:int = 0x04;
+		public static const TRANSFORM:int = 0x04;
 		/** @private */
-		public static const TRANSFORM:int = 0x08;
+		public static const CANVAS:int = 0x08;
 		/** @private */
-		public static const CANVAS:int = 0x10;
+		public static const FILTERS:int = 0x10;
 		/** @private */
 		public static const BLEND:int = 0x20;
 		/** @private */
@@ -236,7 +237,7 @@ package laya.renders {
 			var style:Style = sprite._style;
 			x += -style._tf.translateX + style.paddingLeft;
 			y += -style._tf.translateY + style.paddingTop;
-			var words:Vector.<Object> = sprite._getWords();
+			var words:Vector.<HTMLChar> = sprite._getWords();
 			words && context.fillWords(words, x, y, (style as CSSStyle).font, (style as CSSStyle).color);
 			
 			var childs:Array = sprite._childs, n:int = childs.length, ele:Sprite;
@@ -331,10 +332,16 @@ package laya.renders {
 					ctx.scale(scaleX, scaleY);
 					_next._fun.call(_next, sprite, tx, -left, -top);
 					ctx.restore();
-					sprite._applyFilters();
+					if(!Render.isConchApp||Render.isConchWebGL)sprite._applyFilters();
 				} else {
+					ctx = RenderContext(tx).ctx;
+					if (!Render.isConchWebGL&&Render.isConchApp)
+					{
+						var t:Array = sprite._$P.rgbg;
+						t&&ctx.setFilter(t[0],t[1],t[2],t[3]);
+					}
 					_next._fun.call(_next, sprite, tx, -left, -top);
-					sprite._applyFilters();
+					if(!Render.isConchApp||Render.isConchWebGL)sprite._applyFilters();
 				}
 				
 				if (sprite._$P.staticCache) _cacheCanvas.reCache = false;

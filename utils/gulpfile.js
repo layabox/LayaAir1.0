@@ -30,6 +30,9 @@ gulp.task('copyas', function() {
 	
 	gulp.src('../src/webGL/src/**')
     .pipe(gulp.dest('../bin/as/libs/src'));
+	
+	gulp.src('../src/d3/src/**')
+    .pipe(gulp.dest('../bin/as/libs/src'));
 });
 
 gulp.task('compile',["copyas"], function(cb) {

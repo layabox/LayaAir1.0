@@ -1,57 +1,53 @@
 package
 {
 	import laya.utils.Utils;
+	
 	public class Network_XML
 	{
-
+		
 		public function Network_XML()
 		{
 			Laya.init(550, 400);
-
+			
 			setup();
 		}
-
+		
 		private function setup():void
 		{
 			var xmlValueContainsError:String = "<root><item>item a</item><item>item b</item>somethis...</root1>";
 			var xmlValue:String = "<root><item>item a</item><item>item b</item>somethings...</root>";
-
-			proessXML(Utils.parseXMLFromString(xmlValueContainsError));
+			
+			proessXML(xmlValueContainsError);
 			trace("\n");
-			proessXML(Utils.parseXMLFromString(xmlValue));
+			proessXML(xmlValue);
 		}
-
+		
 		// 使用xml
-		private function proessXML(xml:XmlDom):void
+		private function proessXML(source:String):void
 		{
-			var parserError:String = getParserError(xml);
-			if (parserError)
+			try
 			{
-				trace(parserError);
+				var xml:XmlDom = Utils.parseXMLFromString(source);
 			}
-			else
+			catch (e:Error)
 			{
-				printDirectChildren(xml);
+				trace(e.massage);
+				return;
 			}
+			
+			printDirectChildren(xml);
 		}
-
-		// 是否存在解析错误
-		private function getParserError(xml:XmlDom):String
-		{
-			var error:Boolean = xml.firstChild.firstChild.nodeName == "parsererror";
-			return error ? xml.firstChild.firstChild.textContent : null;
-		}
-
+		
 		// 打印直接子级
 		private function printDirectChildren(xml:XmlDom):void
 		{
-			var rootNode:XmlDom = xml.firstChild;
-
+			var rootNode:XmlDom = xml.firstChild as XmlDom;
+			
 			var nodes:Array = rootNode.childNodes;
 			for (var i:int = 0; i < nodes.length; i++)
 			{
-				var node:XmlDom = nodes[i];
-
+				var node:Object = nodes[i];
+				
 				// 本节点为元素节点
 				if (node.nodeType == 1)
 				{
@@ -59,14 +55,13 @@ package
 					trace("元素节点，第一个子节点值为：" + node.firstChild.nodeValue);
 				}
 				// 本节点是文本节点
-				else if(node.nodeType == 3)
+				else if (node.nodeType == 3)
 				{
 					trace("文本节点：" + node.nodeValue);
 				}
 				trace("\n");
 			}
 		}
-
-
+	
 	}
 }

@@ -80,11 +80,13 @@
 	function getDistance(points)
 	{
 		var distance = 0;
+		if (points && points.length == 2)
+		{
+			var dx = points[0].stageX - points[1].stageX;
+			var dy = points[0].stageY - points[1].stageY;
 
-		var dx = points[0].stageX - points[1].stageX;
-		var dy = points[0].stageY - points[1].stageY;
-
-		distance = Math.sqrt(dx * dx + dy * dy);
+			distance = Math.sqrt(dx * dx + dy * dy);
+		}
 		return distance;
 	}
 })();

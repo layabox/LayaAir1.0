@@ -120,7 +120,6 @@ package laya.events {
 			_this._target = null;
 			
 			_point.setTo(e.clientX, e.clientY);
-			trace(e.clientX, e.clientY);
 			_stage._canvasTransform.invertTransformPoint(_point);
 			
 			e.stageX = _this.mouseX = _point.x;
@@ -197,6 +196,7 @@ package laya.events {
 		}
 		
 		private function sendClick(ele:*, type:String):void {
+			if (ele.destroyed) return;
 			if (type === Event.MOUSE_UP && ele._get$P("$_MOUSEDOWN")) {
 				ele._set$P("$_MOUSEDOWN", false);
 				ele.event(Event.CLICK, _event.setTo(Event.CLICK, ele, _target));
@@ -245,13 +245,14 @@ package laya.events {
 			//先判定子对象是否命中
 			if (!disableMouseEvent) {
 				var flag:Boolean = false;
-				if (sp.hitTestFirst && !hitTest(sp, mouseX, mouseY)) {
+				//优先判断父对象
+				if (sp.hitTestPrior && !sp.mouseThrough && !hitTest(sp, mouseX, mouseY)) {
 					return false;
 				}
 				for (var i:int = sp._childs.length - 1; i > -1; i--) {
 					var child:Sprite = sp._childs[i];
 					//只有接受交互事件的，才进行处理
-					if (child.mouseEnabled && child.visible) {
+					if (!child.destroyed && child.mouseEnabled && child.visible) {
 						flag = check(child, mouseX + (scrollRect ? scrollRect.x : 0), mouseY + (scrollRect ? scrollRect.y : 0), callBack);
 						if (flag) return true;
 					}
@@ -263,12 +264,16 @@ package laya.events {
 			if (isHit) {
 				_target = sp;
 				callBack.call(this, sp);
+			} else if (callBack === onMouseUp && sp === _stage) {
+				//如果stage外mouseUP
+				_target = _stage;
+				callBack.call(this, _target);
 			}
 			
 			return isHit;
 		}
 		
-		private function hitTest(sp:Sprite,mouseX:Number,mouseY:Number):Boolean {
+		private function hitTest(sp:Sprite, mouseX:Number, mouseY:Number):Boolean {
 			var isHit:Boolean = false;
 			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough || sp.hitArea) {
 				//判断是否在矩形区域内

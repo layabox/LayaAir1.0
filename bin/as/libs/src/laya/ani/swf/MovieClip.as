@@ -5,6 +5,7 @@ package laya.ani.swf {
 	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.utils.Byte;
+	import laya.utils.Handler;
 	
 	/**
 	 * 动画播放完毕后调度。
@@ -77,7 +78,6 @@ package laya.ani.swf {
 			_idOfSprite = [];
 			_reset();
 			_playing = false;
-			
 			this._parentMovieClip = parentMovieClip;
 			if (!parentMovieClip) {
 				_movieClipList = [this];
@@ -95,11 +95,10 @@ package laya.ani.swf {
 			super.destroy(destroyChild);
 		}
 		
-		private function _onDisplay():void {
-			
-			if (_displayInStage) Laya.timer.loop(this.interval, this, updates, null, true);
-			else Laya.timer.clear(this, updates);
-		
+		/**@private */
+		private function _onDisplay():void {			
+			if (_displayedInStage) Laya.timer.loop(this.interval, this, updates, null, true);
+			else Laya.timer.clear(this, updates);		
 		}
 		
 		/**@private 更新时间轴*/
@@ -108,7 +107,7 @@ package laya.ani.swf {
 			var i:int, len:int;
 			len = _movieClipList.length;
 			for (i = 0; i < len; i++) {
-				_movieClipList[i].update();
+				_movieClipList[i]._update();
 			}
 		}
 		
@@ -158,9 +157,10 @@ package laya.ani.swf {
 		}
 		
 		/**
+		 * @private
 		 * 动画的帧更新处理函数。
 		 */
-		public function update():void {
+		private function _update():void {
 			if (!_data) return;
 			if (!_playing) return;
 			_playIndex++;
@@ -206,8 +206,7 @@ package laya.ani.swf {
 						_movieClipList[i].clear();
 				}
 				_movieClipList.length = 0;
-			}
-			
+			}		
 			removeChildren();
 			graphics = null;
 			_parentMovieClip = null;
@@ -215,15 +214,16 @@ package laya.ani.swf {
 		
 		/**
 		 * 播放动画。
-		 * @param	frameIndex 帧索引。
+		 * @param	index 帧索引。
 		 */
-		public function play(index:int = -1, loop:Boolean = true):void {
+		public function play(index:int = 0, loop:Boolean = true):void {
 			this.loop = loop;
 			if (_data)
 				_displayFrame(index);
 			_playing = true;
 		}
 		
+		/**@private */
 		private function _displayFrame(frameIndex:int = -1):void {
 			if (frameIndex != -1) {
 				if (_curIndex > frameIndex) _reset();
@@ -231,12 +231,14 @@ package laya.ani.swf {
 			}
 		}
 		
+		/**@private */
 		private function _reset(rm:Boolean = true):void {
 			if (rm && _curIndex != 1) this.removeChildren();
 			_curIndex = -1;
 			_Pos = _start;
 		}
 		
+		/**@private */
 		private function _parse(frameIndex:int):void {
 			var curChild:Sprite = this;
 			var mc:MovieClip, sp:Sprite, key:int, type:int, tPos:int, ttype:int, ifAdd:Boolean = false;
@@ -302,7 +304,8 @@ package laya.ani.swf {
 					break;
 				case 7: //SetTransform
 					sp = _idOfSprite[ /*key*/_data.getUint16()]; //.transform=mt;
-					var mt:Matrix = new Matrix(_data.getFloat32(), _data.getFloat32(), _data.getFloat32(), _data.getFloat32(), _data.getFloat32(), _data.getFloat32());
+					var mt:Matrix = sp.transform || Matrix.create();
+					mt.setTo(_data.getFloat32(), _data.getFloat32(), _data.getFloat32(), _data.getFloat32(), _data.getFloat32(), _data.getFloat32());
 					sp.transform = mt;
 					break;
 				case 8: //pos
@@ -324,7 +327,7 @@ package laya.ani.swf {
 					break;
 				case 99: //FrameBegin				
 					_curIndex = _data.getUint16();
-					ifAdd && this.updateOrder();
+					ifAdd && this.updateZOrder();
 					_playing && _curIndex > _playIndex && event(Event.FRAME);
 					break;
 				case 100: //cmdEnd
@@ -369,20 +372,26 @@ package laya.ani.swf {
 			if (data) {
 				_initData(data);
 			} else {
-				var l:Loader = new Loader();
-				l.once(Event.COMPLETE, null, function(data:*):void {
-					_initData(data);
-				});
-				l.load(url, Loader.BUFFER);
+				Laya.loader.load(url, Handler.create(this, _onLoaded), null, Loader.BUFFER);
 			}
 		}
 		
+		/**@private */
+		private function _onLoaded(data:*):void {
+			_initData(data);
+		}
+		
+		/**@private */
 		private function _initState():void {
 			_reset();
 			_ended = false;
+			var preState:Boolean = _playing;
+			_playing = false;
 			while (!_ended) _parse(++_playIndex);
+			_playing = preState;
 		}
 		
+		/**@private */
 		private function _initData(data:*):void {
 			_data = new Byte(data);
 			var i:int, len:int = _data.getUint16();
@@ -391,8 +400,9 @@ package laya.ani.swf {
 			_setData(_data, _ids[32767]);
 			_initState();
 			play(0);
-			if (!_parentMovieClip) Laya.timer.loop(this.interval, this, updates, null, true);
 			event(Event.LOADED);
+			if (!_parentMovieClip) Laya.timer.loop(this.interval, this, updates, null, true);
+			
 		}
 	}
 }

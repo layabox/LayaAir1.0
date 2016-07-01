@@ -91,8 +91,13 @@ package laya.utils {
 			_first = true;
 			loop();
 			_first = false;
-			Laya.timer.frameLoop(1, Stat, loop);
 			Browser.container.appendChild(_canvas.source);
+			enable();
+		}
+		
+		/**激活帧率统计*/
+		public static function enable():void {
+			Laya.timer.frameLoop(1, Stat, loop);
 		}
 		
 		/**
@@ -132,36 +137,38 @@ package laya.utils {
 			//计算更精确的FPS值
 			FPS = Math.round((count * 1000) / (timer - _timer));
 			
-			//计算平均值
-			trianglesFaces = Math.round(trianglesFaces / count);
-			drawCall = Math.round(drawCall / count);
-			shaderCall = Math.round(shaderCall / count);
-			spriteCount = Math.round(spriteCount / count) - 1;
-			canvasNormal = Math.round(canvasNormal / count);
-			canvasBitmap = Math.round(canvasBitmap / count);
-			canvasReCache = Math.ceil(canvasReCache / count);
-			
-			_fpsStr = FPS + (renderSlow ? " slow" : "");
-			_canvasStr = canvasReCache + "/" + canvasNormal + "/" + canvasBitmap;
-			currentMemorySize = ResourceManager.systemResourceManager.memorySize;
-			
-			var ctx:Context = _ctx;
-			ctx.clearRect(_first ? 0 : _vx, 0, _width, _height);
-			for (var i:int = 0; i < _view.length; i++) {
-				var one:* = _view[i];
-				//只有第一次才渲染标题文字，减少文字渲染次数
-				if (_first) {
-					ctx.fillStyle = "white";
-					ctx.fillText(one.title, one.x, one.y, null, null, null);
+			if (_canvas) {
+				//计算平均值
+				trianglesFaces = Math.round(trianglesFaces / count);
+				drawCall = Math.round(drawCall / count);
+				shaderCall = Math.round(shaderCall / count);
+				spriteCount = Math.round(spriteCount / count) - 1;
+				canvasNormal = Math.round(canvasNormal / count);
+				canvasBitmap = Math.round(canvasBitmap / count);
+				canvasReCache = Math.ceil(canvasReCache / count);
+				
+				_fpsStr = FPS + (renderSlow ? " slow" : "");
+				_canvasStr = canvasReCache + "/" + canvasNormal + "/" + canvasBitmap;
+				currentMemorySize = ResourceManager.systemResourceManager.memorySize;
+				
+				var ctx:Context = _ctx;
+				ctx.clearRect(_first ? 0 : _vx, 0, _width, _height);
+				for (var i:int = 0; i < _view.length; i++) {
+					var one:* = _view[i];
+					//只有第一次才渲染标题文字，减少文字渲染次数
+					if (_first) {
+						ctx.fillStyle = "white";
+						ctx.fillText(one.title, one.x, one.y, null, null, null);
+					}
+					ctx.fillStyle = one.color;
+					var value:* = Stat[one.value];
+					(one.units == "M") && (value = Math.floor(value / (1024 * 1024) * 100) / 100 + " M");
+					ctx.fillText(value + "", one.x + _vx, one.y, null, null, null);
 				}
-				ctx.fillStyle = one.color;
-				var value:* = Stat[one.value];
-				(one.units == "M") && (value = Math.floor(value / (1024 * 1024) * 100) / 100 + " M");
-				ctx.fillText(value + "", one.x + _vx, one.y, null, null, null);
+				clear();
 			}
 			_count = 0;
 			_timer = timer;
-			clear();
 		}
 	}
 }

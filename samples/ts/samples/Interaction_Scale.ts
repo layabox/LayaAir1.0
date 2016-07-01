@@ -72,11 +72,13 @@ module laya {
         /**计算两个触摸点之间的距离*/
         private getDistance(points: Array<any>): number {
             var distance: number = 0;
+			if (points && points.length == 2)
+			{
+				var dx: number = points[0].stageX - points[1].stageX;
+				var dy: number = points[0].stageY - points[1].stageY;
 
-            var dx: number = points[0].stageX - points[1].stageX;
-            var dy: number = points[0].stageY - points[1].stageY;
-
-            distance = Math.sqrt(dx * dx + dy * dy);
+				distance = Math.sqrt(dx * dx + dy * dy);
+			}
             return distance;
         }
     }

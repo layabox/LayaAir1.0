@@ -20,17 +20,17 @@
 		Laya.stage.scaleMode = "showall";
 		Laya.stage.bgColor = "#232628";
 
-		Laya.loader.load("res/bg.jpg", Handler.create(this, setup));
+		Laya.loader.load("res/bg2.png", Handler.create(this, setup));
 	})();
 
 	function setup()
 	{
 		var bg = new Sprite();
-		bg.loadImage("res/bg.jpg");
+		bg.loadImage("res/bg2.png");
 		Laya.stage.addChild(bg);
 
 		bg2 = new Sprite();
-		bg2.loadImage("res/bg.jpg");
+		bg2.loadImage("res/bg2.png");
 		Laya.stage.addChild(bg2);
 		bg2.scale(3, 3);
 
@@ -52,6 +52,5 @@
 
 		maskSp.x = Laya.stage.mouseX;
 		maskSp.y = Laya.stage.mouseY;
-		bg2.repaint();
 	}
 })();

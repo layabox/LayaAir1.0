@@ -3,13 +3,13 @@
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
 	var ColorFilter=laya.filters.ColorFilter,Ease=laya.utils.Ease,Event=laya.events.Event,Font=laya.display.css.Font;
-	var Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Input=laya.display.Input,Loader=laya.net.Loader;
-	var Node=laya.display.Node,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle,Sprite=laya.display.Sprite;
-	var Stage=laya.display.Stage,Text=laya.display.Text,Texture=laya.resource.Texture,Tween=laya.utils.Tween;
-	var Utils=laya.utils.Utils;
+	var FrameAnimation=laya.display.FrameAnimation,Graphics=laya.display.Graphics,Handler=laya.utils.Handler;
+	var Input=laya.display.Input,Loader=laya.net.Loader,Node=laya.display.Node,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle;
+	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Text=laya.display.Text,Texture=laya.resource.Texture;
+	var Tween=laya.utils.Tween,Utils=laya.utils.Utils;
 	Laya.interface('laya.ui.IComponent');
-	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.IItem');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
@@ -135,6 +135,7 @@
 	//class laya.ui.AutoBitmap extends laya.display.Graphics
 	var AutoBitmap=(function(_super){
 		function AutoBitmap(){
+			this._isChanged=false;
 			this.autoCacheCmd=true;
 			this._width=0;
 			this._height=0;
@@ -152,11 +153,20 @@
 			this._sizeGrid=null;
 		}
 
+		/**@private */
+		__proto._setChanged=function(){
+			if (!this._isChanged){
+				this._isChanged=true;
+				Laya.timer.callLater(this,this.changeSource);
+			}
+		}
+
 		/**
 		*@private
 		*修改纹理资源。
 		*/
 		__proto.changeSource=function(){
+			this._isChanged=false;
 			var source=this._source;
 			if (!source)return;
 			var width=this.width;
@@ -227,7 +237,7 @@
 			return this._sizeGrid;
 			},function(value){
 			this._sizeGrid=value;
-			Laya.timer.callLater(this,this.changeSource);
+			this._setChanged();
 		});
 
 		/**
@@ -239,7 +249,7 @@
 			},function(value){
 			if (value){
 				this._source=value
-				Laya.timer.callLater(this,this.changeSource);
+				this._setChanged();
 				}else {
 				this._source=null;
 				this.clear();
@@ -254,8 +264,10 @@
 			if (this._source)return this._source.sourceWidth;
 			return 0;
 			},function(value){
-			this._width=value;
-			Laya.timer.callLater(this,this.changeSource);
+			if (this._width !=value){
+				this._width=value;
+				this._setChanged();
+			}
 		});
 
 		/**
@@ -266,8 +278,10 @@
 			if (this._source)return this._source.sourceHeight;
 			return 0;
 			},function(value){
-			this._height=value;
-			Laya.timer.callLater(this,this.changeSource);
+			if (this._height !=value){
+				this._height=value;
+				this._setChanged();
+			}
 		});
 
 		AutoBitmap.getTexture=function(tex,x,y,width,height){
@@ -896,6 +910,7 @@
 			this._autoSize=true;
 			this._sources=null;
 			this._clickHandler=null;
+			this._stateChanged=false;
 			Button.__super.call(this);
 			this._labelColors=Styles.buttonLabelColors;
 			this._stateNum=Styles.buttonStateNum;
@@ -982,12 +997,21 @@
 		*改变对象的状态。
 		*/
 		__proto.changeState=function(){
+			this._stateChanged=false;
 			this.runCallLater(this.changeClips);
 			var index=this._state < this._stateNum ? this._state :this._stateNum-1;
 			this._sources && (this._bitmap.source=this._sources[index]);
 			if (this.label){
 				this._text.color=this._labelColors[index];
 				if (this._strokeColors)this._text.strokeColor=this._strokeColors[index];
+			}
+		}
+
+		/**@private */
+		__proto._setStateChanged=function(){
+			if (!this._stateChanged){
+				this._stateChanged=true;
+				this.callLater(this.changeState);
 			}
 		}
 
@@ -1014,7 +1038,7 @@
 			if (this._skin !=value){
 				this._skin=value;
 				this.callLater(this.changeClips);
-				this.callLater(this.changeState);
+				this._setStateChanged();
 			}
 		});
 
@@ -1027,7 +1051,7 @@
 			},function(value){
 			if (this._state !=value){
 				this._state=value;
-				this.callLater(this.changeState);
+				this._setStateChanged();
 			}
 		});
 
@@ -1038,9 +1062,9 @@
 			return this._text.text;
 			},function(value){
 			if (this._text.text !=value){
-				value && !this._text.displayInStage && this.addChild(this._text);
+				value && !this._text.displayedInStage && this.addChild(this._text);
 				this._text.text=value;
-				this.callLater(this.changeState);
+				this._setStateChanged();
 			}
 		});
 
@@ -1075,7 +1099,7 @@
 			return this._strokeColors ? this._strokeColors.join(","):"";
 			},function(value){
 			this._strokeColors=UIUtils.fillArray(Styles.buttonLabelColors,value,String);
-			this.callLater(this.changeState);
+			this._setStateChanged();
 		});
 
 		/**
@@ -1129,7 +1153,7 @@
 			return this._labelColors.join(",");
 			},function(value){
 			this._labelColors=UIUtils.fillArray(Styles.buttonLabelColors,value,String);
-			this.callLater(this.changeState);
+			this._setStateChanged();
 		});
 
 		/**
@@ -1355,6 +1379,7 @@
 			this._complete=null;
 			this._isPlaying=false;
 			this._index=0;
+			this._clipChanged=false;
 			Clip.__super.call(this);
 			(clipX===void 0)&& (clipX=1);
 			(clipY===void 0)&& (clipY=1);
@@ -1396,9 +1421,9 @@
 		/**@private */
 		__proto._onDisplay=function(e){
 			if (this._isPlaying){
-				if (this._displayInStage)this.play();
+				if (this._displayedInStage)this.play();
 				else this.stop();
-				}else if (this._autoPlay && this._displayInStage){
+				}else if (this._autoPlay && this._displayedInStage){
 				this.play();
 			}
 		}
@@ -1408,6 +1433,7 @@
 		*改变切片的资源、切片的大小。
 		*/
 		__proto.changeClip=function(){
+			this._clipChanged=false;
 			var img=Loader.getRes(this._skin);
 			if (img){
 				this.loadComplete(this._skin,img);
@@ -1467,6 +1493,14 @@
 			Laya.timer.clear(this,this._loop);
 		}
 
+		/**@private */
+		__proto._setClipChanged=function(){
+			if (!this._clipChanged){
+				this._clipChanged=true;
+				this.callLater(this.changeClip);
+			}
+		}
+
 		/**
 		*表示是否自动播放动画，若自动播放值为true,否则值为false;
 		*<p>可控制切片动画的播放、停止。</p>
@@ -1485,7 +1519,7 @@
 			return this._clipX;
 			},function(value){
 			this._clipX=value;
-			this.callLater(this.changeClip);
+			this._setClipChanged()
 		});
 
 		/**
@@ -1495,7 +1529,7 @@
 			return this._skin;
 			},function(value){
 			this._skin=value;
-			this.callLater(this.changeClip);
+			this._setClipChanged()
 		});
 
 		/**
@@ -1514,7 +1548,7 @@
 			return this._clipY;
 			},function(value){
 			this._clipY=value;
-			this.callLater(this.changeClip);
+			this._setClipChanged()
 		});
 
 		/**
@@ -1524,7 +1558,7 @@
 			return this._clipWidth;
 			},function(value){
 			this._clipWidth=value;
-			this.callLater(this.changeClip);
+			this._setClipChanged()
 		});
 
 		/**@inheritDoc */
@@ -1540,7 +1574,7 @@
 			return this._clipHeight;
 			},function(value){
 			this._clipHeight=value;
-			this.callLater(this.changeClip);
+			this._setClipChanged()
 		});
 
 		/**
@@ -1726,6 +1760,7 @@
 			this._colorButton=null;
 			this._colors=[];
 			this._selectedColor="#000000";
+			this._panelChanged=false;
 			ColorPicker.__super.call(this);
 		}
 
@@ -1780,6 +1815,7 @@
 		*改变颜色样本列表面板。
 		*/
 		__proto.changePanel=function(){
+			this._panelChanged=false;
 			var g=this._colorPanel.graphics;
 			g.clear();
 			g.drawRect(0,0,230,166,this._bgColor,this._borderColor);
@@ -1912,6 +1948,14 @@
 			g.drawRect(0,0,this._colorButton.width,this._colorButton.height,showColor);
 		}
 
+		/**@private */
+		__proto._setPanelChanged=function(){
+			if (!this._panelChanged){
+				this._panelChanged=true;
+				this.callLater(this.changePanel);
+			}
+		}
+
 		/**
 		*表示颜色样本列表面板的边框颜色值。
 		*/
@@ -1919,7 +1963,7 @@
 			return this._borderColor;
 			},function(value){
 			this._borderColor=value;
-			this.callLater(this.changePanel);
+			this._setPanelChanged();
 		});
 
 		/**
@@ -1944,7 +1988,7 @@
 			return this._inputBgColor;
 			},function(value){
 			this._inputBgColor=value;
-			this.callLater(this.changePanel);
+			this._setPanelChanged();
 		});
 
 		/**
@@ -1964,7 +2008,7 @@
 			return this._bgColor;
 			},function(value){
 			this._bgColor=value;
-			this.callLater(this.changePanel);
+			this._setPanelChanged();
 		});
 
 		/**
@@ -1974,7 +2018,7 @@
 			return this._inputColor;
 			},function(value){
 			this._inputColor=value;
-			this.callLater(this.changePanel);
+			this._setPanelChanged();
 		});
 
 		return ColorPicker;
@@ -3184,8 +3228,10 @@
 		__getset(0,__proto,'tick',function(){
 			return this._tick;
 			},function(value){
-			this._tick=value;
-			this.callLater(this.changeValue);
+			if (this._tick !=value){
+				this._tick=value;
+				this.callLater(this.changeValue);
+			}
 		});
 
 		/**
@@ -4070,6 +4116,24 @@
 
 
 	/**
+	*关键帧动画播放类
+	*
+	*/
+	//class laya.ui.FrameClip extends laya.display.FrameAnimation
+	var FrameClip=(function(_super){
+		/**
+		*创建一个 <code>FrameClip</code> 实例。
+		*/
+		function FrameClip(){
+			FrameClip.__super.call(this);
+		}
+
+		__class(FrameClip,'laya.ui.FrameClip',_super);
+		return FrameClip;
+	})(FrameAnimation)
+
+
+	/**
 	*<code>CheckBox</code> 组件显示一个小方框，该方框内可以有选中标记。
 	*<code>CheckBox</code> 组件还可以显示可选的文本标签，默认该标签位于 CheckBox 右侧。
 	*<p><code>CheckBox</code> 使用 <code>dataSource</code>赋值时的的默认属性是：<code>selected</code>。</p>
@@ -4194,8 +4258,12 @@
 	*/
 	//class laya.ui.View extends laya.ui.Box
 	var View=(function(_super){
-		function View(){View.__super.call(this);;
-		};
+		function View(){
+			this._idMap=null;
+			this._aniList=null;
+			View.__super.call(this);
+			if (this._width > 0 && !this.mouseThrough)this.hitTestPrior=true;
+		}
 
 		__class(View,'laya.ui.View',_super);
 		var __proto=View.prototype;
@@ -4205,7 +4273,32 @@
 		*@param uiView 视图数据信息。
 		*/
 		__proto.createView=function(uiView){
+			if (uiView.animations && !this._idMap)this._idMap={};
 			View.createComp(uiView,this,this);
+			if (uiView.animations){
+				var anilist=[];
+				var animations=uiView.animations;
+				var i=0,len=animations.length;
+				var tAni;
+				var tAniO;
+				for (i=0;i < len;i++){
+					tAni=new FrameClip();
+					tAniO=animations[i];
+					tAni._setUp(this._idMap,tAniO);
+					this[tAniO.name]=tAni;
+					tAni._setControlNode(this);
+					switch(tAniO.action){
+						case 1:
+							tAni.play(0,false);
+							break ;
+						case 2:
+							tAni.play(0,true);
+							break ;
+						}
+					anilist.push(tAni);
+				}
+				this._aniList=anilist;
+			}
 		}
 
 		/**
@@ -4237,6 +4330,9 @@
 				View.setCompValue(comp,prop,value,view);
 			}
 			if (Laya.__typeof(comp,'laya.ui.IItem'))(comp).initItems();
+			if (uiView.compId&&view&&view._idMap){
+				view._idMap[uiView.compId]=comp;
+			}
 			return comp;
 		}
 
@@ -4299,6 +4395,7 @@
 			this._labelPadding=null;
 			this._labelAlign=null;
 			this._stateNum=0;
+			this._labelChanged=false;
 			Group.__super.call(this);
 			this.skin=skin;
 			this.labels=labels;
@@ -4432,6 +4529,7 @@
 		*更改项对象的属性值。
 		*/
 		__proto.changeLabels=function(){
+			this._labelChanged=false;
 			if (this._items){
 				var left=0
 				for (var i=0,n=this._items.length;i < n;i++){
@@ -4465,6 +4563,14 @@
 			this.runCallLater(this.changeLabels);
 		}
 
+		/**@private */
+		__proto._setLabelChanged=function(){
+			if (!this._labelChanged){
+				this._labelChanged=true;
+				this.callLater(this.changeLabels);
+			}
+		}
+
 		/**
 		*表示当前选择的项索引。默认值为-1。
 		*/
@@ -4490,7 +4596,7 @@
 			},function(value){
 			if (this._labelStrokeColor !=value){
 				this._labelStrokeColor=value;
-				this.callLater(this.changeLabels);
+				this._setLabelChanged();
 			}
 		});
 
@@ -4502,7 +4608,7 @@
 			},function(value){
 			if (this._skin !=value){
 				this._skin=value;
-				this.callLater(this.changeLabels);
+				this._setLabelChanged();
 			}
 		});
 
@@ -4515,7 +4621,7 @@
 			if (this._labels !=value){
 				this._labels=value;
 				this.removeChildren();
-				this.callLater(this.changeLabels);
+				this._setLabelChanged();
 				if (this._labels){
 					var a=this._labels.split(",");
 					for (var i=0,n=a.length;i < n;i++){
@@ -4536,7 +4642,7 @@
 			},function(value){
 			if (this._labelColors !=value){
 				this._labelColors=value;
-				this.callLater(this.changeLabels);
+				this._setLabelChanged();
 			}
 		});
 
@@ -4550,7 +4656,7 @@
 			},function(value){
 			if (this._labelStroke !=value){
 				this._labelStroke=value;
-				this.callLater(this.changeLabels);
+				this._setLabelChanged();
 			}
 		});
 
@@ -4562,7 +4668,7 @@
 			},function(value){
 			if (this._stateNum !=value){
 				this._stateNum=value;
-				this.callLater(this.changeLabels);
+				this._setLabelChanged();
 			}
 		});
 
@@ -4575,7 +4681,7 @@
 			},function(value){
 			if (this._strokeColors !=value){
 				this._strokeColors=value;
-				this.callLater(this.changeLabels);
+				this._setLabelChanged();
 			}
 		});
 
@@ -4587,7 +4693,7 @@
 			},function(value){
 			if (this._labelSize !=value){
 				this._labelSize=value;
-				this.callLater(this.changeLabels);
+				this._setLabelChanged();
 			}
 		});
 
@@ -4598,7 +4704,7 @@
 			return this._space;
 			},function(value){
 			this._space=value;
-			this.callLater(this.changeLabels);
+			this._setLabelChanged();
 		});
 
 		/**
@@ -4609,7 +4715,7 @@
 			},function(value){
 			if (this._labelBold !=value){
 				this._labelBold=value;
-				this.callLater(this.changeLabels);
+				this._setLabelChanged();
 			}
 		});
 
@@ -4622,7 +4728,7 @@
 			},function(value){
 			if (this._labelPadding !=value){
 				this._labelPadding=value;
-				this.callLater(this.changeLabels);
+				this._setLabelChanged();
 			}
 		});
 
@@ -4647,7 +4753,7 @@
 			return this._direction;
 			},function(value){
 			this._direction=value;
-			this.callLater(this.changeLabels);
+			this._setLabelChanged();
 		});
 
 		/**
@@ -4677,6 +4783,7 @@
 		function LayoutBox(){
 			this._space=0;
 			this._align="none";
+			this._itemChanged=false;
 			LayoutBox.__super.call(this);
 		}
 
@@ -4685,44 +4792,47 @@
 		/**@inheritDoc */
 		__proto.addChild=function(child){
 			child.on(/*laya.events.Event.RESIZE*/"resize",this,this.onResize);
-			this.callLater(this.changeItems);
+			this._setItemChanged();
 			return laya.display.Node.prototype.addChild.call(this,child);
 		}
 
 		__proto.onResize=function(e){
-			this.callLater(this.changeItems);
+			this._setItemChanged();
 		}
 
 		/**@inheritDoc */
 		__proto.addChildAt=function(child,index){
 			child.on(/*laya.events.Event.RESIZE*/"resize",this,this.onResize);
-			this.callLater(this.changeItems);
+			this._setItemChanged();
 			return laya.display.Node.prototype.addChildAt.call(this,child,index);
 		}
 
 		/**@inheritDoc */
 		__proto.removeChild=function(child){
 			child.off(/*laya.events.Event.RESIZE*/"resize",this,this.onResize);
-			this.callLater(this.changeItems);
+			this._setItemChanged();
 			return laya.display.Node.prototype.removeChild.call(this,child);
 		}
 
 		/**@inheritDoc */
 		__proto.removeChildAt=function(index){
 			this.getChildAt(index).off(/*laya.events.Event.RESIZE*/"resize",this,this.onResize);
-			this.callLater(this.changeItems);
+			this._setItemChanged();
 			return laya.display.Node.prototype.removeChildAt.call(this,index);
 		}
 
 		/**刷新。*/
 		__proto.refresh=function(){
-			this.callLater(this.changeItems);
+			this._setItemChanged();
 		}
 
 		/**
 		*改变子对象的布局。
 		*/
-		__proto.changeItems=function(){}
+		__proto.changeItems=function(){
+			this._itemChanged=false;
+		}
+
 		/**
 		*排序项目列表。可通过重写改变默认排序规则。
 		*@param items 项目列表。
@@ -4732,12 +4842,19 @@
 			});
 		}
 
+		__proto._setItemChanged=function(){
+			if (!this._itemChanged){
+				this._itemChanged=true;
+				this.callLater(this.changeItems);
+			}
+		}
+
 		/**子对象的间隔。*/
 		__getset(0,__proto,'space',function(){
 			return this._space;
 			},function(value){
 			this._space=value;
-			this.callLater(this.changeItems);
+			this._setItemChanged();
 		});
 
 		/**子对象对齐方式。*/
@@ -4745,7 +4862,7 @@
 			return this._align;
 			},function(value){
 			this._align=value;
-			this.callLater(this.changeItems);
+			this._setItemChanged();
 		});
 
 		return LayoutBox;
@@ -4807,6 +4924,45 @@
 			*addChild(label);
 			*}
 		*}
+	*</listing>
+	*<listing version="3.0">
+	*(function (_super){
+		*function Item(){
+			*Item.__super.call(this);//初始化父类
+			*this.graphics.drawRect(0,0,100,20,"#ff0000");
+			*var label=new laya.ui.Label();//创建一个 Label 类的实例对象 label 。
+			*label.text="100000";//设置 label 的文本内容。
+			*label.name="label";//设置 label 的name属性值。
+			*label.size(100,20);//设置 label 的宽度、高度。
+			*this.addChild(label);//将 label 添加到显示列表。
+			*};
+		*Laya.class(Item,"mypackage.listExample.Item",_super);//注册类 Item 。
+		*})(laya.ui.Box);
+	*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+	*var res=["resource/ui/vscroll.png","resource/ui/vscroll$bar.png","resource/ui/vscroll$down.png","resource/ui/vscroll$up.png"];
+	*Laya.loader.load(res,new laya.utils.Handler(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*var arr=[];//创建一个数组，用于存贮列表的数据信息。
+		*for (var i=0;i &lt;20;i++){
+			*arr.push({label:"item"+i});
+			*}
+		*var list=new laya.ui.List();//创建一个 List 类的实例对象 list 。
+		*list.itemRender=mypackage.listExample.Item;//设置 list 的单元格渲染器。
+		*list.repeatX=1;//设置 list 的水平方向单元格数量。
+		*list.repeatY=10;//设置 list 的垂直方向单元格数量。
+		*list.vScrollBarSkin="resource/ui/vscroll.png";//设置 list 的垂直方向滚动条皮肤。
+		*list.array=arr;//设置 list 的列表数据源。
+		*list.pos(100,100);//设置 list 的位置。
+		*list.selectEnable=true;//设置 list 可选。
+		*list.selectHandler=new laya.utils.Handler(this,onSelect);//设置 list 改变选择项执行的处理器。
+		*Laya.stage.addChild(list);//将 list 添加到显示列表。
+		*}
+	*function onSelect(index)
+	*{
+		*console.log("当前选择的项目索引： index= ",index);
+		*}
+	*
 	*</listing>
 	*<listing version="3.0">
 	*import List=laya.ui.List;
@@ -4879,6 +5035,7 @@
 			this._isMoved=false;
 			this.cacheContent=false;
 			this._createdLine=0;
+			this._cellChanged=false;
 			List.__super.call(this);
 			this._cells=[];
 		}
@@ -4921,6 +5078,7 @@
 		*@internal 在此销毁、创建单元格，并设置单元格的位置等属性。相当于此列表内容发送改变时调用此函数。
 		*/
 		__proto.changeCells=function(){
+			this._cellChanged=false;
 			if (this._itemRender){
 				for (var i=this._cells.length-1;i >-1;i--){
 					this._cells[i].destroy();
@@ -5022,6 +5180,7 @@
 			if (this._scrollBar){
 				this._content.scrollRect || (this._content.scrollRect=new Rectangle());
 				this._content.scrollRect.setTo(0,0,width,height);
+				this._content.model&&this._content.model.scrollRect(0,0,width,height);
 				this.event(/*laya.events.Event.RESIZE*/"resize");
 			}
 		}
@@ -5063,6 +5222,7 @@
 		/**@inheritDoc */
 		__proto.changeSize=function(){
 			laya.ui.Component.prototype.changeSize.call(this);
+			this.setContentSize(this.width,this.height);
 			if (this._scrollBar)
 				Laya.timer.once(10,this,this.onScrollBarChange);
 		}
@@ -5113,9 +5273,15 @@
 					this._createdLine+=num;
 					this.renderItems(this._createdLine *lineX,0);
 				}
+			};
+			var r=this._content.scrollRect;
+			if (this._isVertical){
+				r.y=scrollValue;
 			}
-			if (this._isVertical)this._content.scrollRect.y=scrollValue;
-			else this._content.scrollRect.x=scrollValue;
+			else{
+				r.x=scrollValue;
+			}
+			this._content.model&&this._content.model.scrollRect(r.x,r.y,r.width,r.height);
 			this.repaint();
 		}
 
@@ -5280,6 +5446,14 @@
 			}
 		}
 
+		/**@private */
+		__proto._setCellChanged=function(){
+			if (!this._cellChanged){
+				this._cellChanged=true;
+				this.callLater(this.changeCells);
+			}
+		}
+
 		/**@inheritDoc */
 		__getset(0,__proto,'cacheAs',_super.prototype._$get_cacheAs,function(value){
 			_super.prototype._$set_cacheAs.call(this,value);
@@ -5310,13 +5484,13 @@
 			scrollBar.skin=value;
 			this.scrollBar=scrollBar;
 			this.addChild(scrollBar);
-			this.callLater(this.changeCells);
+			this._setCellChanged();
 		});
 
 		/**@inheritDoc */
 		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
 			_super.prototype._$set_height.call(this,value);
-			this.callLater(this.changeCells);
+			this._setCellChanged();
 		});
 
 		/**
@@ -5332,7 +5506,7 @@
 			scrollBar.skin=value;
 			this.scrollBar=scrollBar;
 			this.addChild(scrollBar);
-			this.callLater(this.changeCells);
+			this._setCellChanged();
 		});
 
 		/**
@@ -5347,7 +5521,7 @@
 			return this._itemRender;
 			},function(value){
 			this._itemRender=value;
-			this.callLater(this.changeCells);
+			this._setCellChanged();
 		});
 
 		/**
@@ -5389,7 +5563,7 @@
 		/**@inheritDoc */
 		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
 			_super.prototype._$set_width.call(this,value);
-			this.callLater(this.changeCells);
+			this._setCellChanged();
 		});
 
 		/**
@@ -5399,7 +5573,7 @@
 			return this._repeatX > 0 ? this._repeatX :this._repeatX2 > 0 ? this._repeatX2 :1;
 			},function(value){
 			this._repeatX=value;
-			this.callLater(this.changeCells);
+			this._setCellChanged();
 		});
 
 		/**
@@ -5409,7 +5583,7 @@
 			return this._repeatY > 0 ? this._repeatY :this._repeatY2 > 0 ? this._repeatY2 :1;
 			},function(value){
 			this._repeatY=value;
-			this.callLater(this.changeCells);
+			this._setCellChanged();
 		});
 
 		/**
@@ -5419,7 +5593,7 @@
 			return this._spaceX;
 			},function(value){
 			this._spaceX=value;
-			this.callLater(this.changeCells);
+			this._setCellChanged();
 		});
 
 		/**
@@ -5458,7 +5632,7 @@
 			return this._spaceY;
 			},function(value){
 			this._spaceY=value;
-			this.callLater(this.changeCells);
+			this._setCellChanged();
 		});
 
 		/**
@@ -5539,6 +5713,7 @@
 			this._content=null;
 			this._vScrollBar=null;
 			this._hScrollBar=null;
+			this._scrollChanged=false;
 			Panel.__super.call(this);
 			this.width=this.height=100;
 			this._content.optimizeScrollRect=true;
@@ -5571,7 +5746,7 @@
 		/**@inheritDoc */
 		__proto.addChild=function(child){
 			child.on(/*laya.events.Event.RESIZE*/"resize",this,this.onResize);
-			this.callLater(this.changeScroll);
+			this._setScrollChanged();
 			return this._content.addChild(child);
 		}
 
@@ -5580,27 +5755,27 @@
 		*子对象的 <code>Event.RESIZE</code> 事件侦听处理函数。
 		*/
 		__proto.onResize=function(){
-			this.callLater(this.changeScroll);
+			this._setScrollChanged();
 		}
 
 		/**@inheritDoc */
 		__proto.addChildAt=function(child,index){
 			child.on(/*laya.events.Event.RESIZE*/"resize",this,this.onResize);
-			this.callLater(this.changeScroll);
+			this._setScrollChanged();
 			return this._content.addChildAt(child,index);
 		}
 
 		/**@inheritDoc */
 		__proto.removeChild=function(child){
 			child.off(/*laya.events.Event.RESIZE*/"resize",this,this.onResize);
-			this.callLater(this.changeScroll);
+			this._setScrollChanged();
 			return this._content.removeChild(child);
 		}
 
 		/**@inheritDoc */
 		__proto.removeChildAt=function(index){
 			this.getChildAt(index).off(/*laya.events.Event.RESIZE*/"resize",this,this.onResize);
-			this.callLater(this.changeScroll);
+			this._setScrollChanged();
 			return this._content.removeChildAt(index);
 		}
 
@@ -5611,7 +5786,7 @@
 			for (var i=this._content.numChildren-1;i >-1;i--){
 				this._content.removeChildAt(i);
 			}
-			this.callLater(this.changeScroll);
+			this._setScrollChanged();
 			return this;
 		}
 
@@ -5632,6 +5807,7 @@
 
 		/**@private */
 		__proto.changeScroll=function(){
+			this._scrollChanged=false;
 			var contentW=this.contentWidth;
 			var contentH=this.contentHeight;
 			var vscroll=this._vScrollBar;
@@ -5676,6 +5852,7 @@
 			content.height=height;
 			content.scrollRect || (content.scrollRect=new Rectangle());
 			content.scrollRect.setTo(0,0,width,height);
+			content.model&&content.model.scrollRect(0,0,width,height);
 		}
 
 		/**
@@ -5689,6 +5866,7 @@
 			if (rect){
 				var start=Math.round(scrollBar.value);
 				scrollBar.isVertical ? rect.y=start :rect.x=start;
+				this._content.model&&this._content.model.scrollRect(rect.x,rect.y,rect.width,rect.height);
 			}
 		}
 
@@ -5720,6 +5898,14 @@
 
 		__proto.onScrollEnd=function(){
 			_super.prototype._$set_cacheAs.call(this,this._$P.cacheAs);
+		}
+
+		/**@private */
+		__proto._setScrollChanged=function(){
+			if (!this._scrollChanged){
+				this._scrollChanged=true;
+				this.callLater(this.changeScroll);
+			}
 		}
 
 		/**@inheritDoc */
@@ -5765,7 +5951,7 @@
 		*/
 		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
 			_super.prototype._$set_width.call(this,value);
-			this.callLater(this.changeScroll);
+			this._setScrollChanged();
 		});
 
 		/**
@@ -5778,7 +5964,7 @@
 				laya.display.Node.prototype.addChild.call(this,this._hScrollBar=new HScrollBar());
 				this._hScrollBar.on(/*laya.events.Event.CHANGE*/"change",this,this.onScrollBarChange,[this._hScrollBar]);
 				this._hScrollBar.target=this._content;
-				this.callLater(this.changeScroll);
+				this._setScrollChanged();
 			}
 			this._hScrollBar.skin=value;
 		});
@@ -5786,7 +5972,7 @@
 		/**@inheritDoc */
 		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
 			_super.prototype._$set_height.call(this,value);
-			this.callLater(this.changeScroll);
+			this._setScrollChanged();
 		});
 
 		/**
@@ -5799,7 +5985,7 @@
 				laya.display.Node.prototype.addChild.call(this,this._vScrollBar=new VScrollBar());
 				this._vScrollBar.on(/*laya.events.Event.CHANGE*/"change",this,this.onScrollBarChange,[this._vScrollBar]);
 				this._vScrollBar.target=this._content;
-				this.callLater(this.changeScroll);
+				this._setScrollChanged();
 			}
 			this._vScrollBar.skin=value;
 		});
@@ -6682,8 +6868,7 @@
 		/**@inheritDoc */
 		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
 			this._dataSource=value;
-			if (Laya.__typeof(value,laya.ui.XmlDom))this.xml=value;
-			else _super.prototype._$set_dataSource.call(this,value);
+			_super.prototype._$set_dataSource.call(this,value);
 		});
 
 		/**
@@ -6932,6 +7117,107 @@
 		__class(VScrollBar,'laya.ui.VScrollBar',_super);
 		return VScrollBar;
 	})(ScrollBar)
+
+
+	/**
+	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.ui.VSlider;
+		*import laya.utils.Handler;
+		*public class VSlider_Example
+		*{
+			*private var vSlider:VSlider;
+			*public function VSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+				*vSlider.min=0;//设置 vSlider 最低位置值。
+				*vSlider.max=10;//设置 vSlider 最高位置值。
+				*vSlider.value=2;//设置 vSlider 当前位置值。
+				*vSlider.tick=1;//设置 vSlider 刻度值。
+				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
+				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var vSlider;
+	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+		*vSlider.min=0;//设置 vSlider 最低位置值。
+		*vSlider.max=10;//设置 vSlider 最高位置值。
+		*vSlider.value=2;//设置 vSlider 当前位置值。
+		*vSlider.tick=1;//设置 vSlider 刻度值。
+		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
+		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
+		*}
+	*function onChange(value){
+		*console.log("滑块的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import HSlider=laya.ui.HSlider;
+	*import VSlider=laya.ui.VSlider;
+	*import Handler=laya.utils.Handler;
+	*class VSlider_Example {
+		*private vSlider:VSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
+			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
+			*this.vSlider.min=0;//设置 vSlider 最低位置值。
+			*this.vSlider.max=10;//设置 vSlider 最高位置值。
+			*this.vSlider.value=2;//设置 vSlider 当前位置值。
+			*this.vSlider.tick=1;//设置 vSlider 刻度值。
+			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
+			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
+			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.VSlider extends laya.ui.Slider
+	var VSlider=(function(_super){
+		function VSlider(){VSlider.__super.call(this);;
+		};
+
+		__class(VSlider,'laya.ui.VSlider',_super);
+		return VSlider;
+	})(Slider)
 
 
 	/**
@@ -7205,109 +7491,17 @@
 			(this._tf).maxChars=value;
 		});
 
+		/**
+		*@copy laya.display.Input#focus
+		*/
+		__getset(0,__proto,'focus',function(){
+			return (this._tf).focus;
+			},function(value){
+			(this._tf).focus=value;
+		});
+
 		return TextInput;
 	})(Label)
-
-
-	/**
-	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.ui.VSlider;
-		*import laya.utils.Handler;
-		*public class VSlider_Example
-		*{
-			*private var vSlider:VSlider;
-			*public function VSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-				*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-				*vSlider.min=0;//设置 vSlider 最低位置值。
-				*vSlider.max=10;//设置 vSlider 最高位置值。
-				*vSlider.value=2;//设置 vSlider 当前位置值。
-				*vSlider.tick=1;//设置 vSlider 刻度值。
-				*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-				*vSlider.changeHandler=new Handler(this,onChange);//设置 vSlider 位置变化处理器。
-				*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var vSlider;
-	*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*vSlider=new laya.ui.VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-		*vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-		*vSlider.min=0;//设置 vSlider 最低位置值。
-		*vSlider.max=10;//设置 vSlider 最高位置值。
-		*vSlider.value=2;//设置 vSlider 当前位置值。
-		*vSlider.tick=1;//设置 vSlider 刻度值。
-		*vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-		*vSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 vSlider 位置变化处理器。
-		*Laya.stage.addChild(vSlider);//把 vSlider 添加到显示列表。
-		*}
-	*function onChange(value){
-		*console.log("滑块的位置： value="+value);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import HSlider=laya.ui.HSlider;
-	*import VSlider=laya.ui.VSlider;
-	*import Handler=laya.utils.Handler;
-	*class VSlider_Example {
-		*private vSlider:VSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/vslider.png","resource/ui/vslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.vSlider=new VSlider();//创建一个 VSlider 类的实例对象 vSlider 。
-			*this.vSlider.skin="resource/ui/vslider.png";//设置 vSlider 的皮肤。
-			*this.vSlider.min=0;//设置 vSlider 最低位置值。
-			*this.vSlider.max=10;//设置 vSlider 最高位置值。
-			*this.vSlider.value=2;//设置 vSlider 当前位置值。
-			*this.vSlider.tick=1;//设置 vSlider 刻度值。
-			*this.vSlider.x=100;//设置 vSlider 对象的属性 x 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.y=100;//设置 vSlider 对象的属性 y 的值，用于控制 vSlider 对象的显示位置。
-			*this.vSlider.changeHandler=new Handler(this,this.onChange);//设置 vSlider 位置变化处理器。
-			*Laya.stage.addChild(this.vSlider);//把 vSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*</listing>
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.VSlider extends laya.ui.Slider
-	var VSlider=(function(_super){
-		function VSlider(){VSlider.__super.call(this);;
-		};
-
-		__class(VSlider,'laya.ui.VSlider',_super);
-		return VSlider;
-	})(Slider)
 
 
 	/**
@@ -7612,8 +7806,8 @@
 					}
 				}
 				__proto._centerDialog=function(dialog){
-					dialog.x=Math.round((this._stage.width-dialog.width)>> 1+dialog.pivotX);
-					dialog.y=Math.round((this._stage.height-dialog.height)>> 1+dialog.pivotY);
+					dialog.x=Math.round(((this._stage.width-dialog.width)>> 1)+dialog.pivotX);
+					dialog.y=Math.round(((this._stage.height-dialog.height)>> 1)+dialog.pivotY);
 				}
 				/**
 				*显示对话框(非模式窗口类型)。
@@ -7700,6 +7894,7 @@
 
 		/**@inheritDoc */
 		__proto.changeItems=function(){
+			this._itemChanged=false;
 			var items=[];
 			var maxHeight=0;
 			for (var i=0,n=this.numChildren;i < n;i++){
@@ -7940,6 +8135,7 @@
 		var __proto=VBox.prototype;
 		/**@inheritDoc */
 		__proto.changeItems=function(){
+			this._itemChanged=false;
 			var items=[];
 			var maxWidth=0;
 			for (var i=0,n=this.numChildren;i < n;i++){

@@ -73,7 +73,7 @@ package laya.webgl.resource {
 			if (bIsConchApp) {
 				_ctx.font = char.font;
 				t = _ctx.measureText(char.char);
-				char.width = t.width1 * xs;
+				char.width = t.width * xs;
 				char.height = t.height * ys;
 			} else {
 				t = Utils.measureText(char.char, char.font);
@@ -97,7 +97,12 @@ package laya.webgl.resource {
 				 *  参数说明：格式为	样式(normal、italic、oblique)	加粗	font-size	字体	borderSize	border颜色	DecorationLine(0代表没有 1下划线 2中划线 3上划线)	线的颜色
 				 *  参数说明：格式为	normal 100 16px Arial 1 #ff0000 1 #00ff00
 				 */
-				var sFont:String = "normal 100 " + char.fontSize + "px Arial";
+				var nFontSize:int = char.fontSize;
+				if (xs != 1 || ys != 1) {
+					//TODO先凑合一下，回头再把scale信息传入到C++
+					nFontSize  = parseInt(nFontSize* ((xs>ys)?xs:ys)+"");
+				}
+				var sFont:String = "normal 100 " + nFontSize + "px Arial";
 				if (char.borderColor) {
 					sFont += " 1 " + char.borderColor;
 				}

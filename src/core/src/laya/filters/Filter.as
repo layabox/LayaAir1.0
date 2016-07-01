@@ -5,11 +5,11 @@ package laya.filters {
 	 */
 	public class Filter implements IFilter 
 	{
-		/** 模糊滤镜。*/
+		/**@private 模糊滤镜。*/
 		public static const BLUR:int = 0x10;
-		/** 颜色滤镜。*/
+		/**@private 颜色滤镜。*/
 		public static const COLOR:int = 0x20;
-		/** 发光滤镜。*/
+		/**@private 发光滤镜。*/
 		public static const GLOW:int = 0x08;	
 		
 		/** @private */

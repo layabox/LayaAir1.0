@@ -25,7 +25,7 @@ package
 			Laya.loader.load(apePath, Handler.create(this, createApe));
 		}
 
-		private function createApe():void
+		private function createApe(_e:*=null):void
 		{
 			var ape:Sprite = new Sprite();
 			ape.loadImage(apePath);

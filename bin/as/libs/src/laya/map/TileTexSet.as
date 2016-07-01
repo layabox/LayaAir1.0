@@ -142,15 +142,12 @@ package laya.map {
 			offX = 0;
 			offY = 0;
 			
-			//下面是动画支持需要的
 			textureArray = null;
 			durationTimeArray = null;
 			isAnimation = false;
-			
 			_spriteNum = 0;
 			_aniDic = null;
 			_frameIndex = 0;
-			
 			_preFrameTime = 0;
 			_time = 0;
 			_interval = 0;

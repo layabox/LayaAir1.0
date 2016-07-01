@@ -27,27 +27,21 @@ package laya.webgl.shader.d2 {
 		
 		public function _make2dQuick1():Array
 		{
-			try{
-				if (!_params2dQuick1)
-				{
-					activeResource();
-					
-					_params2dQuick1 = [];
-					
-					var params:Array = _params, one:*;
-					for (var i:int = 0, n:int = params.length; i < n; i++)
-					{
-						one = params[i];
-						if (!Render.isFlash && (one.name === "size" || one.name==="mmat" || one.name === "position" || one.name ==="texcoord")) continue;
-						_params2dQuick1.push(one);
-					}
-				}
-				return _params2dQuick1;
-			}
-			catch (e:*)
+			if (!_params2dQuick1)
 			{
+				activeResource();
+				
+				_params2dQuick1 = [];
+				
+				var params:Array = _params, one:*;
+				for (var i:int = 0, n:int = params.length; i < n; i++)
+				{
+					one = params[i];
+					if (!Render.isFlash && (one.name === "size" || one.name==="mmat" || one.name === "position" || one.name ==="texcoord")) continue;
+					_params2dQuick1.push(one);
+				}
 			}
-			return null;
+			return _params2dQuick1;
 		}
 		
 		override protected function detoryResource():void 
@@ -64,27 +58,21 @@ package laya.webgl.shader.d2 {
 		
 		public function _make2dQuick2():Array
 		{
-			try{
-				if (!_params2dQuick2)
-				{
-					activeResource();
-					
-					_params2dQuick2 = [];
-					
-					var params:Array = _params, one:*;
-					for (var i:int = 0, n:int = params.length; i < n; i++)
-					{
-						one = params[i];
-						if (!Render.isFlash && (one.name === "size")) continue;
-						_params2dQuick2.push(one);
-					}
-				}
-				return _params2dQuick2;
-			}
-			catch (e:*)
+			if (!_params2dQuick2)
 			{
+				activeResource();
+				
+				_params2dQuick2 = [];
+				
+				var params:Array = _params, one:*;
+				for (var i:int = 0, n:int = params.length; i < n; i++)
+				{
+					one = params[i];
+					if (!Render.isFlash && (one.name === "size")) continue;
+					_params2dQuick2.push(one);
+				}
 			}
-			return null;
+			return _params2dQuick2;
 		}
 		
 		public static function create(vs:String, ps:String, saveName:*= null, nameMap:*= null):Shader

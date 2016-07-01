@@ -6,6 +6,8 @@ package laya.utils {
 	public class Timer {
 		/** 两次时针直接的时间间隔。*/
 		public static var delta:int = 0;
+		/**@private */
+		private static var _pool:Array = [];
 		
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		/** 时针缩放。*/
@@ -19,16 +21,14 @@ package laya.utils {
 		/**@private */
 		private var _mid:int = 1;
 		/**@private */
-		/*[IF-FLASH]*/ private var _map:flash.utils.Dictionary = new flash.utils.Dictionary();
+		/*[IF-FLASH]*/ private var _map:flash.utils.Dictionary = new flash.utils.Dictionary(true);
 		//[IF-JS] private var _map:Array = [];
 		/**@private */
 		private var _laters:Array = [];
 		/**@private */
 		private var _handlers:Array = [];
 		/**@private */
-		private var _temp:Array = [];
-		/**@private */
-		private var _pool:Array = [];
+		private var _temp:Array = [];		
 		/**@private */
 		private var _count:int = 0;
 		
@@ -286,10 +286,10 @@ package laya.utils {
 		 */
 		public function runCallLater(caller:*, method:Function):void {
 			var handler:TimerHandler = _getHandler(caller, method);
-			if (handler && handler.method != null) {
-				handler.run(true);
+			if (handler && handler.method != null) {				
 				//[IF-JS] _map[handler.key] = null;
 				/*[IF-FLASH]*/ _map[handler.method] = null;
+				handler.run(true);
 			}
 		}
 	}

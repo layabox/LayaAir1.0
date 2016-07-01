@@ -52,7 +52,7 @@ package
 			return button;
 		}
 		
-		private function onDecreaseAlpha1(e:Event):void
+		private function onDecreaseAlpha1(e:Event=null):void
 		{
 			//移除鼠标单击事件
 			button1.off(Event.CLICK, this, onDecreaseAlpha1);
@@ -60,7 +60,7 @@ package
 			Laya.timer.once(3000, this, onComplete1);
 		}
 		
-		private function onDecreaseAlpha2(e:Event):void
+		private function onDecreaseAlpha2(e:Event=null):void
 		{
 			//移除鼠标单击事件
 			button2.off(Event.CLICK, this, onDecreaseAlpha2);

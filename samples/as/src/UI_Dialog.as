@@ -31,7 +31,7 @@ package
 			Laya.loader.load(assets, Handler.create(this, onSkinLoadComplete));
 		}
 		
-		private function onSkinLoadComplete():void
+		private function onSkinLoadComplete(e:*=null):void
 		{
 			var dialog:Dialog = new Dialog();
 			

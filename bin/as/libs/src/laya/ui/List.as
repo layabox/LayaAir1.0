@@ -73,6 +73,49 @@ package laya.ui {
 	 *	}
 	 * </listing>
 	 * <listing version="3.0">
+	 * (function (_super){
+	 *     function Item(){
+	 *         Item.__super.call(this);//初始化父类
+	 *         this.graphics.drawRect(0, 0, 100, 20, "#ff0000");
+	 *         var label = new laya.ui.Label();//创建一个 Label 类的实例对象 label 。
+	 *         label.text = "100000";//设置 label 的文本内容。
+	 *         label.name = "label";//设置 label 的name属性值。
+	 *         label.size(100, 20);//设置 label 的宽度、高度。
+	 *         this.addChild(label);//将 label 添加到显示列表。
+	 *     };
+	 *     Laya.class(Item,"mypackage.listExample.Item",_super);//注册类 Item 。
+	 * })(laya.ui.Box);
+	
+	 * Laya.init(640, 800);//设置游戏画布宽高、渲染模式。
+	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色。
+	 * var res = ["resource/ui/vscroll.png", "resource/ui/vscroll$bar.png", "resource/ui/vscroll$down.png", "resource/ui/vscroll$up.png"];
+	 * Laya.loader.load(res, new laya.utils.Handler(this, onLoadComplete));//加载资源。
+	
+	 * function onLoadComplete() {
+	 *     var arr = [];//创建一个数组，用于存贮列表的数据信息。
+	 *     for (var i = 0; i &lt; 20; i++) {
+	 *         arr.push({label: "item" + i});
+	 *     }
+	
+	 *     var list = new laya.ui.List();//创建一个 List 类的实例对象 list 。
+	 *     list.itemRender = mypackage.listExample.Item;//设置 list 的单元格渲染器。
+	 *     list.repeatX = 1;//设置 list 的水平方向单元格数量。
+	 *     list.repeatY = 10;//设置 list 的垂直方向单元格数量。
+	 *     list.vScrollBarSkin = "resource/ui/vscroll.png";//设置 list 的垂直方向滚动条皮肤。
+	 *     list.array = arr;//设置 list 的列表数据源。
+	 *     list.pos(100, 100);//设置 list 的位置。
+	 *     list.selectEnable = true;//设置 list 可选。
+	 *     list.selectHandler = new laya.utils.Handler(this, onSelect);//设置 list 改变选择项执行的处理器。
+	 *     Laya.stage.addChild(list);//将 list 添加到显示列表。
+	 * }
+	
+	 * function onSelect(index)
+	 * {
+	 *     console.log("当前选择的项目索引： index= ", index);
+	 * }
+	 *
+	 * </listing>
+	 * <listing version="3.0">
 	 * import List = laya.ui.List;
 	 * import Handler = laya.utils.Handler;
 	 * public class List_Example {
@@ -169,6 +212,8 @@ package laya.ui {
 		public var cacheContent:Boolean;
 		/**@private */
 		protected var _createdLine:int = 0;
+		/**@private */
+		protected var _cellChanged:Boolean;
 		
 		/**@inheritDoc */
 		override public function destroy(destroyChild:Boolean = true):void {
@@ -230,7 +275,7 @@ package laya.ui {
 			scrollBar.skin = value;
 			this.scrollBar = scrollBar;
 			addChild(scrollBar);
-			callLater(changeCells);
+			_setCellChanged();
 		}
 		
 		/**
@@ -248,7 +293,7 @@ package laya.ui {
 			scrollBar.skin = value;
 			this.scrollBar = scrollBar;
 			addChild(scrollBar);
-			callLater(changeCells);
+			_setCellChanged();
 		}
 		
 		/**
@@ -283,19 +328,19 @@ package laya.ui {
 		
 		public function set itemRender(value:*):void {
 			_itemRender = value;
-			callLater(changeCells);
+			_setCellChanged();
 		}
 		
 		/**@inheritDoc */
 		override public function set width(value:Number):void {
 			super.width = value;
-			callLater(changeCells);
+			_setCellChanged();
 		}
 		
 		/**@inheritDoc */
 		override public function set height(value:Number):void {
 			super.height = value;
-			callLater(changeCells);
+			_setCellChanged();
 		}
 		
 		/**
@@ -307,7 +352,7 @@ package laya.ui {
 		
 		public function set repeatX(value:int):void {
 			_repeatX = value;
-			callLater(changeCells);
+			_setCellChanged();
 		}
 		
 		/**
@@ -319,7 +364,7 @@ package laya.ui {
 		
 		public function set repeatY(value:int):void {
 			_repeatY = value;
-			callLater(changeCells);
+			_setCellChanged();
 		}
 		
 		/**
@@ -331,7 +376,7 @@ package laya.ui {
 		
 		public function set spaceX(value:int):void {
 			_spaceX = value;
-			callLater(changeCells);
+			_setCellChanged();
 		}
 		
 		/**
@@ -343,7 +388,7 @@ package laya.ui {
 		
 		public function set spaceY(value:int):void {
 			_spaceY = value;
-			callLater(changeCells);
+			_setCellChanged();
 		}
 		
 		/**
@@ -352,6 +397,7 @@ package laya.ui {
 		 * @internal 在此销毁、创建单元格，并设置单元格的位置等属性。相当于此列表内容发送改变时调用此函数。
 		 */
 		protected function changeCells():void {
+			_cellChanged = false;
 			if (_itemRender) {
 				//销毁老单元格
 				for (var i:int = _cells.length - 1; i > -1; i--) {
@@ -420,7 +466,8 @@ package laya.ui {
 		}
 		
 		protected function createItem():Box {
-			return _itemRender is Function ? new _itemRender() : View.createComp(_itemRender) as Box;
+			/*[IF-FLASH]*/return _itemRender.prototype!=null? new _itemRender() : View.createComp(_itemRender) as Box;
+			//[IF-JS]return _itemRender is Function ? new _itemRender() : View.createComp(_itemRender) as Box;
 		}
 		
 		/**
@@ -466,6 +513,7 @@ package laya.ui {
 			if (_scrollBar) {
 				_content.scrollRect || (_content.scrollRect = new Rectangle());
 				_content.scrollRect.setTo(0, 0, width, height);
+				_content.model&&_content.model.scrollRect(0, 0, width, height);//通知微端
 				event(Event.RESIZE);
 			}
 		}
@@ -507,6 +555,7 @@ package laya.ui {
 		/** @inheritDoc */
 		override protected function changeSize():void {
 			super.changeSize();
+			setContentSize(this.width,this.height);
 			if (_scrollBar)
 				Laya.timer.once(10, this, onScrollBarChange);
 		}
@@ -515,7 +564,7 @@ package laya.ui {
 		 * @private
 		 * 滚动条的 <code>Event.CHANGE</code> 事件侦听处理函数。
 		 */
-		protected function onScrollBarChange(e:Event):void {
+		protected function onScrollBarChange(e:Event=null):void {
 			runCallLater(changeCells);
 			var scrollValue:Number = _scrollBar.value;
 			var lineX:int = (_isVertical ? this.repeatX : this.repeatY);
@@ -561,9 +610,14 @@ package laya.ui {
 				}
 			}
 			
-			if (_isVertical) _content.scrollRect.y = scrollValue;
-			else _content.scrollRect.x = scrollValue;
-			
+			var r:Rectangle = _content.scrollRect;
+			if (_isVertical) {
+				r.y = scrollValue;
+			}
+			else{
+				r.x = scrollValue;
+			}
+			_content.model&&_content.model.scrollRect(r.x, r.y, r.width, r.height);
 			repaint();
 		}
 		
@@ -856,6 +910,14 @@ package laya.ui {
 				Tween.to(_scrollBar, {value: Math.floor(index / numX) * _cellSize}, time, null, null, 0, true);
 			} else {
 				startIndex = index;
+			}
+		}
+		
+		/**@private */
+		protected function _setCellChanged():void {
+			if (!_cellChanged) {
+				_cellChanged = true;
+				callLater(changeCells);
 			}
 		}
 	}

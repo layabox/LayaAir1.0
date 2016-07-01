@@ -1,0 +1,144 @@
+package laya.d3.resource.models {
+	import laya.d3.core.material.Material;
+	import laya.d3.core.render.IRender;
+	import laya.d3.core.render.RenderState;
+	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector3;
+	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.utils.ValusArray;
+	import laya.utils.Stat;
+	import laya.webgl.WebGLContext;
+	import laya.webgl.shader.Shader;
+	import laya.webgl.utils.Buffer;
+	
+	/**
+	  * @private
+	 * <code>PrimitiveMesh</code> 类用于创建基本网格的父类。
+	 */
+	public class PrimitiveMesh extends BaseMesh implements IRender {
+		protected var vertexStructWidth:int = 8;
+		protected var _numberVertices:int;
+		protected var _numberIndices:int;
+		protected var _vertexBuffer:Buffer;
+		protected var _indexBuffer:Buffer;
+		
+		//TODO::临时放在此处,后期调整易移除....................
+		public var _indexOfHost:int;
+		
+		public function get sortID():int {
+			return -1;
+		}
+		
+		public function get indexOfHost():int {
+			return _indexOfHost;
+		}
+		
+		private var _positionShaderValue:* = [3, WebGLContext.FLOAT, false, 32, 0];
+		private var _normalShaderValue:* = [3, WebGLContext.FLOAT, false, 32, 12];
+		private var _textureCoordinateShaderValue:* = [2, WebGLContext.FLOAT, false, 32, 24];
+		public var shaderValue:ValusArray;
+		protected var _texShaderDef:int = 0;
+		//TODO::临时放在此处,后期调整易移除....................
+		
+		/**
+		 * 受CPUData释放影响
+		 */
+		override public function get positions():Vector.<Vector3>//WEBGL1.0不能从Buffer显存中获取内存数据
+		{
+			//顶点结构是Position,Normal,UV
+			var verticesPosition:Vector.<Vector3> = new Vector.<Vector3>();
+			var vertices:Float32Array = _vertexBuffer.getFloat32Array();
+			var vertexCount:int = vertices.length/ vertexStructWidth;
+			for (var i:int = 0; i < vertexCount; i++) {
+				verticesPosition[i] = new Vector3(vertices[i * vertexStructWidth + 0], vertices[i * vertexStructWidth + 1], vertices[i * vertexStructWidth + 2]);
+			}
+			return verticesPosition;
+		}
+		
+		public function PrimitiveMesh() {
+				super();
+			_indexOfHost = 0;
+			_subMeshCount = 1;
+		
+		}
+		
+		public function _render(state:RenderState):Boolean {
+			_vertexBuffer._bind();//临时置前
+			_indexBuffer._bind();//临时置前
+			
+			//TODO::临时放在此处,后期调整易移除......................
+			var material:Material = state.renderObj.material;
+			if (material) {
+				var shader:Shader = getShader(state, material);
+				
+				var presz:int = state.shaderValue.length;
+				shaderValue && (state.shaderValue.pushArray(shaderValue));
+				
+				var meshSprite:MeshSprite = state.owner as MeshSprite;
+				var worldMat:Matrix4x4 = meshSprite.transform.getWorldMatrix(-2);
+				var worldTransformModifyID:Number = state.renderObj.tag.worldTransformModifyID;
+				state.shaderValue.pushValue(Buffer.MATRIX1, worldMat.elements, worldTransformModifyID);
+				Matrix4x4.multiply(state.projectionViewMatrix, worldMat, state.owner.wvpMatrix);
+				state.shaderValue.pushValue(Buffer.MVPMATRIX, meshSprite.wvpMatrix.elements, state.camera.transform._worldTransformModifyID + worldTransformModifyID);
+				
+				if (!material.upload(state, null, shader)) {
+					state.shaderValue.length = presz;
+					return false;
+				}
+				state.shaderValue.length = presz;
+			}
+			//TODO::临时放在此处,后期调整易移除....................
+			
+			state.context.drawElements(WebGLContext.TRIANGLES, _numberIndices, WebGLContext.UNSIGNED_SHORT, 0);
+			Stat.drawCall++;
+			Stat.trianglesFaces += _numberIndices / 3;
+			return true;
+		}
+		
+		//TODO:是否需要该接口
+		override public function RenderSubMesh(state:RenderState, subMeshIndex:int):void {
+			super.RenderSubMesh(state, subMeshIndex);
+		}
+		
+		override public function disposeCPUMemory():void {
+			_vertexBuffer.disposeCPUData();
+			_indexBuffer.disposeCPUData();
+			memorySize = _vertexBuffer.length + _indexBuffer.length;
+		}
+		
+		override protected function detoryResource():void {
+			(_vertexBuffer) && (_vertexBuffer.dispose(), _vertexBuffer = null);
+			(_indexBuffer) && (_indexBuffer.dispose(), _indexBuffer = null);
+			memorySize = 0;
+		}
+		
+		protected function getShader(state:RenderState, material:Material):Shader //TODO:临时放在此处,后期调整易移除
+		{
+			if (!material)
+				return null;
+			
+			material.addOrUpdateShaderAttribute(Buffer.POSITION0, _positionShaderValue, -1);
+			material.addOrUpdateShaderAttribute(Buffer.NORMAL0, _normalShaderValue, -1);
+			material.addOrUpdateShaderAttribute(Buffer.UV0, _textureCoordinateShaderValue, -1);
+			
+			material.diffuseTexture && (_texShaderDef |= ShaderDefines3D.DIFFUSEMAP);//每帧都判断性能有问题，只有修改材质时才判断
+			material.normalTexture && (_texShaderDef |= ShaderDefines3D.NORMALMAP);
+			material.specularTexture && (_texShaderDef |= ShaderDefines3D.SPECULARMAP);
+			material.emissiveTexture && (_texShaderDef |= ShaderDefines3D.EMISSIVEMAP);
+			material.ambientTexture && (_texShaderDef |= ShaderDefines3D.AMBIENTMAP);
+			material.reflectTexture && (_texShaderDef |= ShaderDefines3D.REFLECTMAP);
+			_texShaderDef |= ShaderDefines3D.UVTRANSFORM;
+			
+			var def:int = 0;
+			var shaderAttribute:* = material.shaderAttribute;
+			(shaderAttribute.UV) && (def |= _texShaderDef);
+			(shaderAttribute.COLOR) && (def |= ShaderDefines3D.COLOR);
+			(state.scene.enableFog) && (def |= ShaderDefines3D.FOG);
+			def > 0 && state.shaderDefs.addInt(def);
+			var shader:Shader = material.getShader(state);
+			return shader;
+		}
+	
+	}
+
+}

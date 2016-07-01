@@ -2,6 +2,7 @@ package laya.display {
 	import laya.display.css.CSSStyle;
 	
 	/**
+	 * @private
 	 *  <code>ILayout</code> 类是显示对象的布局接口。
 	 */
 	public interface ILayout {

@@ -58,7 +58,7 @@ package
 		/**
 		 * 鼠标响应事件处理
 		 */
-		private function mouseHandler(e:Event):void
+		private function mouseHandler(e:Event=null):void
 		{
 			switch (e.type)
 			{

@@ -157,6 +157,8 @@ package laya.ui {
 		 * 表示选择的颜色值。
 		 */
 		protected var _selectedColor:String = "#000000";
+		/** @private */
+		protected var _panelChanged:Boolean;
 		
 		/**@inheritDoc */
 		override public function destroy(destroyChild:Boolean = true):void {
@@ -211,6 +213,7 @@ package laya.ui {
 		 * 改变颜色样本列表面板。
 		 */
 		protected function changePanel():void {
+			_panelChanged = false;
 			var g:Graphics = _colorPanel.graphics;
 			g.clear();
 			//g.drawRect(0, 0, 230, 166, _bgColor);
@@ -395,7 +398,7 @@ package laya.ui {
 		
 		public function set bgColor(value:String):void {
 			_bgColor = value;
-			callLater(changePanel);
+			_setPanelChanged();
 		}
 		
 		/**
@@ -407,7 +410,7 @@ package laya.ui {
 		
 		public function set borderColor(value:String):void {
 			_borderColor = value;
-			callLater(changePanel);
+			_setPanelChanged();
 		}
 		
 		/**
@@ -419,7 +422,7 @@ package laya.ui {
 		
 		public function set inputColor(value:String):void {
 			_inputColor = value;
-			callLater(changePanel);
+			_setPanelChanged();
 		}
 		
 		/**
@@ -431,7 +434,15 @@ package laya.ui {
 		
 		public function set inputBgColor(value:String):void {
 			_inputBgColor = value;
-			callLater(changePanel);
+			_setPanelChanged();
+		}
+		
+		/**@private */
+		protected function _setPanelChanged():void {
+			if (!_panelChanged) {
+				_panelChanged = true;
+				callLater(changePanel);
+			}
 		}
 	}
 }

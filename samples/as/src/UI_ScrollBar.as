@@ -25,7 +25,7 @@ package
 			Laya.loader.load(skins, Handler.create(this, onSkinLoadComplete));
 		}
 
-		private function onSkinLoadComplete():void
+		private function onSkinLoadComplete(e:*=null):void
 		{
 			placeHScroller();
 			placeVScroller();

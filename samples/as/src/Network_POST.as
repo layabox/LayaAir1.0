@@ -51,17 +51,17 @@ package
 			Laya.stage.addChild(logger);
 		}
 		
-		private function onHttpRequestError(e:*):void
+		private function onHttpRequestError(e:*=null):void
 		{
 			trace(e);
 		}
 		
-		private function onHttpRequestProgress(e:*):void
+		private function onHttpRequestProgress(e:*=null):void
 		{
 			trace(e)
 		}
 		
-		private function onHttpRequestComplete(e:*):void
+		private function onHttpRequestComplete(e:*=null):void
 		{
 			logger.text += "收到数据：" + hr.data;
 		}

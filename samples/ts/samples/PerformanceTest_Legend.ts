@@ -52,9 +52,10 @@ module performanceTest {
 
         private animateHandler(): void {
             var ani: Animation;
-            for (var i: number = 0; i < this.players.length; i++) {
+            var numChildren: number = this.players.length;
+            for (var i: number = 0; i < numChildren; i++) {
                 ani = this.players[i];
-                ani.x += ani["speed"];
+                ani.x += i / numChildren * 3 + 2;
                 if (ani.x > this.width) {
                     ani.x = -100;
                 }
@@ -85,7 +86,6 @@ module performanceTest {
                 //设置位置
                 ani.pos(Math.random() * this.width, Math.random() * this.height);
                 ani.zOrder = ani.y;
-                ani["speed"] = Math.random() + 0.2;
                 //设置播放间隔（单位：毫秒）
                 ani.interval = 100;
                 //当前播放索引

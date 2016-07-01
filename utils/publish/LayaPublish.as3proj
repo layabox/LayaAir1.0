@@ -18,13 +18,14 @@
     <class path="src" />
     <class path="..\..\src\core\jsc" />
     <class path="..\..\src\core\src" />
-    <class path="..\..\src\webGL\src" />
-    <class path="..\..\src\ui\src" />
     <class path="..\..\src\ani\src" />
     <class path="..\..\src\filter\src" />
     <class path="..\..\src\html\src" />
     <class path="..\..\src\particle\src" />
     <class path="..\..\src\plugins\tiledmap\src" />
+    <class path="..\..\src\ui\src" />
+    <class path="..\..\src\webGL\src" />
+    <class path="..\..\src\d3\src" />
   </classpaths>
   <!-- Build options -->
   <build>

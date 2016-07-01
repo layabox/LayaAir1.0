@@ -124,7 +124,7 @@ package laya.webgl.utils
 				Matrix.mul(transform, m2, m2);
 				m2._checkTransform();
 				_next._fun.call(_next, sprite, context, 0, 0);
-				m1.copy(m2);
+				m1.copyTo(m2);
 				m1.destroy();
 				transform.tx = transform.ty = 0;
 			} else {

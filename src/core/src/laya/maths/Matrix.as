@@ -264,19 +264,19 @@ package laya.maths {
 		
 		/**
 		 * 将指定矩阵与当前矩阵连接，从而将这两个矩阵的几何效果有效地结合在一起。
-		 * @param	mtx 要连接到源矩阵的矩阵。
+		 * @param	matrix 要连接到源矩阵的矩阵。
 		 * @return 当前矩阵。
 		 */
-		public function concat(mtx:Matrix):Matrix {
+		public function concat(matrix:Matrix):Matrix {
 			var a:Number = this.a;
 			var c:Number = this.c;
 			var tx:Number = this.tx;
-			this.a = a * mtx.a + this.b * mtx.c;
-			this.b = a * mtx.b + this.b * mtx.d;
-			this.c = c * mtx.a + this.d * mtx.c;
-			this.d = c * mtx.b + this.d * mtx.d;
-			this.tx = tx * mtx.a + this.ty * mtx.c + mtx.tx;
-			this.ty = tx * mtx.b + this.ty * mtx.d + mtx.ty;
+			this.a = a * matrix.a + this.b * matrix.c;
+			this.b = a * matrix.b + this.b * matrix.d;
+			this.c = c * matrix.a + this.d * matrix.c;
+			this.d = c * matrix.b + this.d * matrix.d;
+			this.tx = tx * matrix.a + this.ty * matrix.c + matrix.tx;
+			this.ty = tx * matrix.b + this.ty * matrix.d + matrix.ty;
 			return this;
 		}
 		
@@ -404,7 +404,7 @@ package laya.maths {
 		 * @param	dec 要复制当前矩阵数据的 Matrix 对象。
 		 * @return 已复制当前矩阵数据的 Matrix 对象。
 		 */
-		public function copy(dec:Matrix):Matrix {
+		public function copyTo(dec:Matrix):Matrix {
 			dec.a = a;
 			dec.b = b;
 			dec.c = c;

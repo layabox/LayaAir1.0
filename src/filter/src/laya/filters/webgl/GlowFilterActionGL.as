@@ -41,11 +41,14 @@ package laya.filters.webgl{
 		
 		public static function tmpTarget(scope:SubmitCMDScope, sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			var b:Rectangle = scope.getValue("bounds");
-			var out:*=scope.getValue("out");
+			var out:*= scope.getValue("out");
 			out.end();
 			var tmpTarget:RenderTarget2D = RenderTarget2D.create(b.width, b.height);
 			tmpTarget.start();
-			tmpTarget.clear(0,0,0,0);
+			var color:Array = scope.getValue("color");
+			if (color) {	
+				tmpTarget.clear(color[0],color[1],color[2],0);
+			}
 			scope.addValue("tmpTarget", tmpTarget);
 		}
 		
@@ -54,7 +57,10 @@ package laya.filters.webgl{
 			tmpTarget.end();
 			var out:*= scope.getValue("out");
 			out.start();
-			out.clear(0, 0, 0, 0);
+			var color:Array = scope.getValue("color");
+			if (color) {	
+				out.clear(color[0],color[1],color[2],0);
+			}
 		}
 		
 		public static function recycleTarget(scope:SubmitCMDScope, sprite:Sprite, context:RenderContext, x:Number, y:Number):void{
@@ -64,7 +70,8 @@ package laya.filters.webgl{
 		}
 		
 		override public function apply3d(scope:SubmitCMDScope, sprite:Sprite, context:RenderContext, x:Number, y:Number):*{
-			var b:Rectangle=scope.getValue("bounds");
+			var b:Rectangle = scope.getValue("bounds");
+			scope.addValue("color", data.getColor());
 			var w:int = b.width, h:int = b.height;
 			_textureWidth = w;
 			_textureHeight = h;

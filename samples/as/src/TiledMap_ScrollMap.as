@@ -46,27 +46,27 @@ package
 		/**
 		 * 地图加载完成的回调
 		 */
-		private function completeHandler():void
+		private function completeHandler(e:*=null):void
 		{
 			Laya.stage.on(Event.RESIZE, this, this.resize);
 			resize();
 		}
 
 		//鼠标按下拖动地图
-		private function mouseDown():void
+		private function mouseDown(e:*=null):void
 		{
 			mLastMouseX = Laya.stage.mouseX;
 			mLastMouseY = Laya.stage.mouseY;
 			Laya.stage.on(Event.MOUSE_MOVE, this, this.mouseMove);
 		}
 
-		private function mouseMove():void
+		private function mouseMove(e:*=null):void
 		{
 			//移动地图视口
 			tiledMap.moveViewPort(mX - (Laya.stage.mouseX - mLastMouseX), mY - (Laya.stage.mouseY - mLastMouseY));
 		}
 
-		private function mouseUp():void
+		private function mouseUp(e:*=null):void
 		{
 			mX = mX - (Laya.stage.mouseX - mLastMouseX);
 			mY = mY - (Laya.stage.mouseY - mLastMouseY);
@@ -74,7 +74,7 @@ package
 		}
 
 		 // 窗口大小改变，把地图的视口区域重设下
-		private function resize():void
+		private function resize(e:*=null):void
 		{
 			//改变地图视口大小
 			tiledMap.changeViewPort(mX, mY, Browser.width, Browser.height);

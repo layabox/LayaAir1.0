@@ -56,7 +56,7 @@ package laya.particle.emitter {
 		 * 开始发射粒子
 		 * @param duration 发射持续的时间
 		 */
-		public function start(duration:Number = Number.MAX_VALUE):void {
+		public function start(duration:Number = 1.7976931348623157e+308):void {
 			if (_emissionRate != 0)
 				_emissionTime = duration;
 		}

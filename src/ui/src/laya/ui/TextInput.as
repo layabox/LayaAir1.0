@@ -152,28 +152,28 @@ package laya.ui {
 		/**
 		 * @private
 		 */
-		private function onFocus(e:Event):void {
+		private function onFocus(e:Event=null):void {
 			event(Event.FOCUS, this);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function onBlur(e:Event):void {
+		private function onBlur(e:Event=null):void {
 			event(Event.BLUR, this);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function onInput(e:Event):void {
+		private function onInput(e:Event=null):void {
 			event(Event.INPUT, this);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function onEnter(e:Event):void {
+		private function onEnter(e:Event=null):void {
 			event(Event.ENTER, this);
 		}
 		
@@ -317,6 +317,17 @@ package laya.ui {
 		
 		public function set maxChars(value:int):void {
 			Input(_tf).maxChars = value;
+		}
+		
+		/**
+		 * @copy laya.display.Input#focus
+		 */
+		public function get focus():Boolean {
+			return Input(_tf).focus;
+		}
+		
+		public function set focus(value:Boolean):void {
+			Input(_tf).focus = value;
 		}
 	}
 }

@@ -25,7 +25,7 @@ package laya.map {
 		private var _objDic:Object = null;//用来做字典，方便查询
 		
 		private var _tempMapPos:Point = new Point();//临时变量
-		
+		private var _properties:*;
 		/**当前Layer的名称*/
 		public var layerName:String = null;
 		
@@ -45,7 +45,7 @@ package laya.map {
 			var tTileH:int = map.tileHeight;
 			
 			layerName = layerData.name;
-			
+			_properties = layerData.properties;
 			this.alpha = layerData.opacity;
 			
 			_tileWidthHalf = tTileW / 2;
@@ -120,6 +120,20 @@ package laya.map {
 		public function getObjectByName(objName:String):GridSprite {
 			if (_objDic) {
 				return _objDic[objName];
+			}
+			return null;
+		}
+		
+		/**
+		 * 得到地图层的自定义属性
+		 * @param	name
+		 * @return
+		 */
+		public function getLayerProperties(name:String):*
+		{
+			if (_properties)
+			{
+				return _properties[name];
 			}
 			return null;
 		}
@@ -376,7 +390,7 @@ package laya.map {
 				tGridSprite = _gridSpriteArray[i];
 				tGridSprite.clearAll();
 			}
-			
+			_properties = null;
 			_tempMapPos = null;
 		}
 	}

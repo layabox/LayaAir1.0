@@ -16,16 +16,18 @@ package laya.resource {
 		public var _repaint:Boolean = false;
 		
 		/*** @private */
-		public static function _init(canvas:HTMLCanvas, ctx:*):void {
+		public static function __init__():void {
 			
 			/*[IF-FLASH]*/ return;
+			var from:* = Context.prototype;
+			var to:* = __JS__("CanvasRenderingContext2D.prototype");
 			
-			ctx.__fillText = ctx.fillText;
-			ctx.__fillRect = ctx.fillRect;
-			ctx.__strokeText = ctx.strokeText;
+			to.__fillText = to.fillText;
+			to.__fillRect = to.fillRect;
+			to.__strokeText = to.strokeText;
 			var funs:Array = ['fillWords','setIsMainContext','fillRect', 'strokeText', 'fillText', 'transformByMatrix', 'setTransformByMatrix', 'clipRect', 'drawTexture', 'drawTexture2', 'drawTextureWithTransform', 'flush', 'clear', 'destroy', 'drawCanvas', 'fillBorderText'];
 			funs.forEach(function(i:String):void {
-				ctx[i] = _default[i];
+				to[i] = from[i];
 			});
 		}
 		

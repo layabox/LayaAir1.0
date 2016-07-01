@@ -28,7 +28,7 @@ package
 			createText('right', 3, "#FF7F50", 210, 290);
 		}
 	
-		private function createText(align:String, underlineWidth:int, underlineColor:int, x:int, y:int):Text
+		private function createText(align:String, underlineWidth:int, underlineColor:String, x:int, y:int):Text
 		{
 			var txt:Text = new Text();
 			

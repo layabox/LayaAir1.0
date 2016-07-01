@@ -89,7 +89,7 @@ package laya.html.dom
 			return _style as CSSStyle;
 		}
 		
-		override public function _getWords():Vector.<Object>
+		override public function _getWords():Vector.<HTMLChar>
 		{
 			var txt:String = _text.text;
 			if (!txt || txt.length === 0)
@@ -97,7 +97,7 @@ package laya.html.dom
 			
 			var words:Vector.<HTMLChar> = _text.words;
 			if (words && words.length === txt.length)
-				return words as Vector.<Object>;
+				return words as Vector.<HTMLChar>;
 			words === null && (_text.words = words = new Vector.<HTMLChar>());
 			words.length = txt.length;
 			
@@ -108,8 +108,8 @@ package laya.html.dom
 			var startX:int = 0;
 			for (var i:int = 0, n:int = txt.length; i < n; i++)
 			{
-				size = Utils.measureText(txt[i], fontStr);
-				var tHTMLChar:HTMLChar = words[i] = new HTMLChar(txt[i], size.width, size.height, style);
+				size = Utils.measureText(txt.charAt(i), fontStr);
+				var tHTMLChar:HTMLChar = words[i] = new HTMLChar(txt.charAt(i), size.width, size.height, style);
 				if (href)
 				{
 					var tSprite:Sprite = new Sprite();
@@ -117,7 +117,7 @@ package laya.html.dom
 					tHTMLChar.setSprite(tSprite);
 				}
 			}
-			return words  as Vector.<Object>;
+			return words;
 		}
 		
 		public function showLinkSprite():void

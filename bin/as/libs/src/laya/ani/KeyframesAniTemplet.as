@@ -9,6 +9,8 @@ package laya.ani {
 	 */
 	public class KeyframesAniTemplet extends EventDispatcher// extends Resource
 	{
+		/**唯一标识ID计数器。*/
+		private static var _uniqueIDCounter:int = 1;
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		public static var interpolation:Array = /*[STATIC SAFE]*/ [_LinearInterpolation_0, _QuaternionInterpolation_1, _AngleInterpolation_2, _RadiansInterpolation_3, _Matrix4x4Interpolation_4, _NoInterpolation_5];
 		
@@ -72,11 +74,11 @@ package laya.ani {
 			var read:Byte = new Byte(data);
 			
 			var head:String = read.readUTFString();//LAYAANIMATION:1.0.0
-			if (head != KeyframesAniTemplet.LAYA_ANIMATION_VISION)
-			{
-				trace("[Error] Version " + head + " The engine is inconsistent, update to the version " + KeyframesAniTemplet.LAYA_ANIMATION_VISION + " please.");
-				return;
-			}
+			//if (head != KeyframesAniTemplet.LAYA_ANIMATION_VISION)
+			//{
+			//trace("[Error] Version " + head + " The engine is inconsistent, update to the version " + KeyframesAniTemplet.LAYA_ANIMATION_VISION + " please.");
+			//return;
+			//}
 			var aniClassName:String = read.readUTFString();//字符串(动画播放器类名，缺省为ANI)
 			
 			var strList:Array = read.readUTFString().split("\n");//字符串(\n分割 UTF8 )
@@ -121,7 +123,7 @@ package laya.ani {
 					
 					node.keyFrame = new Vector.<KeyFramesContent>;
 					node.parentIndex = read.getInt16();//父对象编号，相对本动画(INT16,-1表示没有)
-					node.parentIndex == -1 ? node.parent = null:node.parent = ani.nodes[node.parentIndex]
+					node.parentIndex == -1 ? node.parent = null : node.parent = ani.nodes[node.parentIndex]
 					
 					var isLerp:Boolean = !!read.getUint8();//该节点是否插值
 					var keyframeParamsOffset:uint = read.getUint32();//相对于数据扩展区的偏移地址

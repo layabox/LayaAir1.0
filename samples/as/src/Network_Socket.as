@@ -4,12 +4,12 @@ package
 	import laya.net.Socket;
 	import laya.utils.Byte;
 	
-	public class NetWork_Socket
+	public class Network_Socket
 	{
 		private var socket:Socket;
 		private var output:Byte;
 		
-		public function NetWork_Socket()
+		public function Network_Socket()
 		{
 			Laya.init(550, 400);
 			
@@ -30,7 +30,7 @@ package
 			socket.on(Event.ERROR, this, onConnectError);
 		}
 		
-		private function onSocketOpen():void
+		private function onSocketOpen(e:*=null):void
 		{
 			trace("Connected");
 			
@@ -46,12 +46,12 @@ package
 			socket.flush();
 		}
 		
-		private function onSocketClose():void
+		private function onSocketClose(e:*=null):void
 		{
 			trace("Socket closed");
 		}
 		
-		private function onMessageReveived(message:*):void
+		private function onMessageReveived(message:*=null):void
 		{
 			trace("Message from server:");
 			if (message is String)
@@ -64,10 +64,9 @@ package
 			}
 		}
 
-		private function onConnectError(e:Event):void
+		private function onConnectError(e:Event=null):void
 		{
 			trace("error");
 		}
 	}
-}
 }

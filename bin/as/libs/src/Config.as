@@ -4,10 +4,6 @@ package {
 	 *  Config 用于配置一些全局参数。
 	 */
 	public class Config {
-		/**
-		 * 是否显示 log 信息。
-		 */
-		public static var showLog:Boolean = false;
 		 
 		/**
 		 * WebGL模式下文本缓存最大数量。
@@ -34,5 +30,10 @@ package {
 		 * 动画 Animation 的默认播放时间间隔，单位为毫秒。
 		 */
 		public static var animationInterval:int = 30;
+		/**
+		 * 设置是否抗锯齿，只对2D(WebGL)、3D有效。
+		 */
+		public static var isAntialias:Boolean = false;
+		
 	}
 }

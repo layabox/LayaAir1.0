@@ -1,4 +1,5 @@
 package laya.webgl.utils {
+	import laya.renders.Render;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
@@ -25,6 +26,7 @@ package laya.webgl.utils {
 			_vertexStride = vertexStride;
 			_bufferUsage = bufferUsage;
 			_type = WebGLContext.ARRAY_BUFFER;
+			Render.isFlash || (_buffer = new ArrayBuffer(8));
 			getFloat32Array();
 		}
 		
@@ -60,11 +62,11 @@ package laya.webgl.utils {
 		
 		override protected function detoryResource():void {
 			super.detoryResource();
-			if (_glBuffer) {
+			//if (_glBuffer) {
 				WebGL.mainContext.disableVertexAttribArray(0);//临时修复警告和闪屏
 				WebGL.mainContext.disableVertexAttribArray(1);//临时修复警告和闪屏
 				WebGL.mainContext.disableVertexAttribArray(2);//临时修复警告和闪屏
-			}
+			//}
 		}
 	
 	}

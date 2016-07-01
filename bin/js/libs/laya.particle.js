@@ -2,13 +2,12 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var BlendMode=laya.webgl.canvas.BlendMode,Buffer=laya.webgl.utils.Buffer,Event=laya.events.Event,HTMLCanvas=laya.resource.HTMLCanvas;
+	var BlendMode=laya.webgl.canvas.BlendMode,Event=laya.events.Event,HTMLCanvas=laya.resource.HTMLCanvas;
 	var Handler=laya.utils.Handler,IndexBuffer2D=laya.webgl.utils.IndexBuffer2D,Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil;
 	var Matrix=laya.maths.Matrix,Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
 	var Shader=laya.webgl.shader.Shader,Sprite=laya.display.Sprite,Stage=laya.display.Stage,Stat=laya.utils.Stat;
 	var Texture=laya.resource.Texture,Timer=laya.utils.Timer,Utils=laya.utils.Utils,Value2D=laya.webgl.shader.d2.value.Value2D;
 	var VertexBuffer2D=laya.webgl.utils.VertexBuffer2D,WebGL=laya.webgl.WebGL,WebGLContext=laya.webgl.WebGLContext;
-	var WebGLImage=laya.webgl.resource.WebGLImage;
 	/**
 	*<code>EmitterBase</code> 类是粒子发射器类
 	*/
@@ -29,7 +28,7 @@
 		*@param duration 发射持续的时间
 		*/
 		__proto.start=function(duration){
-			(duration===void 0)&& (duration=Number.MAX_VALUE);
+			(duration===void 0)&& (duration=1.7976931348623157e+308);
 			if (this._emissionRate !=0)
 				this._emissionTime=duration;
 		}
@@ -451,19 +450,24 @@
 			var canvas=new HTMLCanvas("2D");
 			var ctx=canvas.getContext('2d');
 			canvas.size(img.width,img.height);
-			ctx.drawImage(img.source,0,0);
-			var imgdata=ctx.getImageData(0,0,canvas.width,canvas.height);
-			var data=imgdata.data;
 			var red=(color >> 16 & 0xFF);
 			var green=(color >> 8 & 0xFF);
 			var blue=(color & 0xFF);
-			for (var i=0,n=data.length;i < n;i+=4){
-				if (data[i+3]==0)continue ;
-				data[i]=red;
-				data[i+1]=green;
-				data[i+2]=blue;
+			if(Render.isConchApp){
+				ctx.setFilter(red/255,green/255,blue/255,0);
 			}
-			ctx.putImageData(imgdata,0,0);
+			ctx.drawImage(img.source,0,0);
+			if (!Render.isConchApp){
+				var imgdata=ctx.getImageData(0,0,canvas.width,canvas.height);
+				var data=imgdata.data;
+				for (var i=0,n=data.length;i < n;i+=4){
+					if (data[i+3]==0)continue ;
+					data[i]=red;
+					data[i+1]=green;
+					data[i+2]=blue;
+				}
+				ctx.putImageData(imgdata,0,0);
+			}
 			return canvas;
 		}
 
@@ -930,44 +934,6 @@
 	/**
 	*@private
 	*/
-	//class laya.particle.shader.value.ParticleShaderValue extends laya.webgl.shader.d2.value.Value2D
-	var ParticleShaderValue=(function(_super){
-		function ParticleShaderValue(){
-			this.a_CornerTextureCoordinate=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,0];
-			this.a_Position=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,16];
-			this.a_Velocity=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,28];
-			this.a_StartColor=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,40];
-			this.a_EndColor=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,56];
-			this.a_SizeRotation=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,72];
-			this.a_Radius=[2,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,84];
-			this.a_Radian=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,92];
-			this.a_AgeAddScale=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,108];
-			this.a_Time=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,112];
-			this.u_CurrentTime=NaN;
-			this.u_Duration=NaN;
-			this.u_Gravity=null;
-			this.u_EndVelocity=NaN;
-			this.u_texture=null;
-			ParticleShaderValue.__super.call(this,0,0);
-		}
-
-		__class(ParticleShaderValue,'laya.particle.shader.value.ParticleShaderValue',_super);
-		var __proto=ParticleShaderValue.prototype;
-		__proto.upload=function(){
-			this.refresh();
-			ParticleShaderValue.pShader.upload(this);
-		}
-
-		__static(ParticleShaderValue,
-		['pShader',function(){return this.pShader=new ParticleShader();}
-		]);
-		return ParticleShaderValue;
-	})(Value2D)
-
-
-	/**
-	*@private
-	*/
 	//class laya.particle.ParticleTemplate2D extends laya.particle.ParticleTemplateWebGL
 	var ParticleTemplate2D=(function(_super){
 		function ParticleTemplate2D(parSetting){
@@ -1042,9 +1008,52 @@
 			}
 		}
 
+		__proto.dispose=function(){
+			this._vertexBuffer.dispose();
+			this._indexBuffer.dispose();
+		}
+
 		ParticleTemplate2D.activeBlendType=-1;
 		return ParticleTemplate2D;
 	})(ParticleTemplateWebGL)
+
+
+	/**
+	*@private
+	*/
+	//class laya.particle.shader.value.ParticleShaderValue extends laya.webgl.shader.d2.value.Value2D
+	var ParticleShaderValue=(function(_super){
+		function ParticleShaderValue(){
+			this.a_CornerTextureCoordinate=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,0];
+			this.a_Position=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,16];
+			this.a_Velocity=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,28];
+			this.a_StartColor=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,40];
+			this.a_EndColor=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,56];
+			this.a_SizeRotation=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,72];
+			this.a_Radius=[2,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,84];
+			this.a_Radian=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,92];
+			this.a_AgeAddScale=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,108];
+			this.a_Time=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,112];
+			this.u_CurrentTime=NaN;
+			this.u_Duration=NaN;
+			this.u_Gravity=null;
+			this.u_EndVelocity=NaN;
+			this.u_texture=null;
+			ParticleShaderValue.__super.call(this,0,0);
+		}
+
+		__class(ParticleShaderValue,'laya.particle.shader.value.ParticleShaderValue',_super);
+		var __proto=ParticleShaderValue.prototype;
+		__proto.upload=function(){
+			this.refresh();
+			ParticleShaderValue.pShader.upload(this);
+		}
+
+		__static(ParticleShaderValue,
+		['pShader',function(){return this.pShader=new ParticleShader();}
+		]);
+		return ParticleShaderValue;
+	})(Value2D)
 
 
 	/**
@@ -1080,7 +1089,7 @@
 		__proto.setParticleSetting=function(setting){
 			if (!setting)return this.stop();
 			ParticleSettings.checkSetting(setting);
-			this._renderType |=/*laya.renders.RenderSprite.CUSTOM*/0x200;
+			this.customRenderEnable=true;
 			if (Render.isWebGL){
 				this._particleTemplate=new ParticleTemplate2D(setting);
 				this.graphics._saveToCmd(Render.context._drawParticle,[this._particleTemplate]);
@@ -1145,6 +1154,13 @@
 			if (this._canvasTemplate){
 				this._canvasTemplate.render(context,x,y);
 			}
+		}
+
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			if ((this._particleTemplate instanceof laya.particle.ParticleTemplate2D ))
+				(this._particleTemplate).dispose();
+			_super.prototype.destroy.call(this,destroyChild);
 		}
 
 		/**

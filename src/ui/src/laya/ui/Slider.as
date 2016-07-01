@@ -277,8 +277,10 @@ package laya.ui {
 		}
 		
 		public function set tick(value:Number):void {
-			_tick = value;
-			callLater(changeValue);
+			if (_tick != value) {
+				_tick = value;
+				callLater(changeValue);
+			}
 		}
 		
 		/**

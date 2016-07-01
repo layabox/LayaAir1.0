@@ -35,12 +35,14 @@ package laya.webgl.submit {
 			_vb.bind_upload(_ib);
 			
 			var target:RenderTarget2D = scope.getValue(proName);
-			shaderValue.texture=target.source;
-			shaderValue.upload();
-			blend();
-			Stat.drawCall++;
-			Stat.trianglesFaces += _numEle/3;
-			WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, this._numEle, WebGLContext.UNSIGNED_SHORT, this._startIdx);
+			if (target)	{//??为什么会出现为空的情况
+				shaderValue.texture=target.source;
+				shaderValue.upload();
+				blend();
+				Stat.drawCall++;
+				Stat.trianglesFaces += _numEle/3;
+				WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, this._numEle, WebGLContext.UNSIGNED_SHORT, this._startIdx);
+			}
 			return 1;
 		}
 		

@@ -4,8 +4,8 @@ package laya.ui {
 	import laya.ui.CheckBox;
 	import laya.ui.Component;
 	import laya.ui.IItem;
-	import laya.ui.Image;
 	import laya.ui.IRender;
+	import laya.ui.Image;
 	import laya.ui.Label;
 	import laya.ui.ProgressBar;
 	import laya.ui.Radio;
@@ -30,15 +30,53 @@ package laya.ui {
 		 * @private
 		 * UI视图类映射。
 		 */
-		protected static var viewClassMap:Object = {};
+		protected static var viewClassMap:Object = { };
 		
+		public function View() {
+			if (_width > 0 && !mouseThrough) hitTestPrior = true;
+		}
+		
+		/**@private */
+		public var _idMap:Object;
+		/**@private */
+		public var _aniList:Array;
 		/**
 		 * @private
 		 * 通过视图数据创建视图。
 		 * @param uiView 视图数据信息。
 		 */
 		protected function createView(uiView:Object):void {
+			if (uiView.animations && !this._idMap) this._idMap = { };
 			createComp(uiView, this, this);
+			
+			if (uiView.animations)
+			{
+				var anilist:Array=[];
+				var animations:Array= uiView.animations;
+				var i:int, len:int= animations.length;
+				var tAni:FrameClip;
+				var tAniO:Object;
+				for (i = 0; i < len; i++)
+				{
+					tAni = new FrameClip();
+					tAniO = animations[i];
+					tAni._setUp(_idMap,tAniO );
+					this[tAniO.name] = tAni;
+					tAni._setControlNode(this);
+					switch(tAniO.action)
+					{
+						case 1:
+							tAni.play(0, false);
+							break;
+						case 2:
+							tAni.play(0, true);
+							break;
+					}
+					anilist.push(tAni);
+				}
+				_aniList = anilist;
+			}
+			
 		}
 		
 		/**
@@ -79,6 +117,10 @@ package laya.ui {
 			}
 			
 			if (comp is IItem) IItem(comp).initItems();
+			if (uiView.compId&&view&&view._idMap)
+			{
+				view._idMap[uiView.compId] = comp;
+			}
 			
 			return comp;
 		}

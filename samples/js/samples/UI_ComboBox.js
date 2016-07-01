@@ -5,7 +5,7 @@
 	var Handler  = Laya.Handler;
 	var WebGL    = Laya.WebGL;
 
-	var skin = "res/ui/comboBox.png";
+	var skin = "res/ui/combobox.png";
 
 	(function()
 	{

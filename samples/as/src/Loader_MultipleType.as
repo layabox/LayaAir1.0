@@ -19,7 +19,7 @@ package
 			Laya.loader.load(assets, Handler.create(this, onAssetsLoaded));
 		}
 		
-		private function onAssetsLoaded():void
+		private function onAssetsLoaded(e:*=null):void
 		{
 			var robotData:* = Loader.getRes(ROBOT_DATA_PATH);
 			var robotTexture:* = Loader.getRes(ROBOT_TEXTURE_PATH);

@@ -55,7 +55,8 @@ package laya.particle {
 		public function setParticleSetting(setting:ParticleSettings):void {
 			if (!setting) return stop();
 			ParticleSettings.checkSetting(setting);
-			_renderType |= RenderSprite.CUSTOM;
+			//_renderType |= RenderSprite.CUSTOM;
+			customRenderEnable = true;//设置custom渲染
 			if (Render.isWebGL) {
 				_particleTemplate = new ParticleTemplate2D(setting);
 				this.graphics._saveToCmd(Render.context._drawParticle, [_particleTemplate]);
@@ -127,6 +128,13 @@ package laya.particle {
 			if (_canvasTemplate) {
 				_canvasTemplate.render(context, x, y);
 			}
+		}
+		
+		override public function destroy(destroyChild:Boolean = true):void 
+		{
+			if ( _particleTemplate  is ParticleTemplate2D)
+			 (_particleTemplate  as ParticleTemplate2D).dispose();
+			super.destroy(destroyChild);
 		}
 	}
 }

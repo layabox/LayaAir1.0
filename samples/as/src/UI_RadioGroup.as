@@ -28,7 +28,7 @@ package
 			Laya.loader.load(skins, Handler.create(this, initRadioGroups));
 		}
 
-		private function initRadioGroups():void
+		private function initRadioGroups(e:*=null):void
 		{
 			for (var i:int = 0; i < skins.length;++i)
 			{

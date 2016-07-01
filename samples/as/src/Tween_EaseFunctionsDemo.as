@@ -82,12 +82,12 @@ package
 			easeFunctionsList.array = data;
 		}
 
-		private function renderList(item:ListItemRender):void
+		private function renderList(item:ListItemRender,e:*=null):void
 		{
 			item.setLabel(item.dataSource);
 		}
 		
-		private function onEaseFunctionChange(list:List):void
+		private function onEaseFunctionChange(list:List,e:*=null):void
 		{
 			character.pos(100, 50);
 			

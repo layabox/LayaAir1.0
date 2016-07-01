@@ -145,16 +145,16 @@ package laya.net {
 			_addInputPosition = 0;
 			
 			_socket.onopen = function(e:*):void {
-				onOpenHandler(e);
+				_onOpen(e);
 			};
 			_socket.onmessage = function(msg:*):void {
-				onMessageHandler(msg);
+				_onMessage(msg);
 			};
 			_socket.onclose = function(e:*):void {
-				onCloseHandler(e);
+				_onClose(e);
 			};
 			_socket.onerror = function(e:*):void {
-				onErrorHandler(e);
+				_onError(e);
 			};	
 			
 		}
@@ -163,6 +163,7 @@ package laya.net {
 				_socket.close();
 			} catch (e:*) {
 			}
+			_connected=false;
 			_socket.onopen = null;
 			_socket.onmessage = null;
 			_socket.onclose = null;
@@ -180,18 +181,20 @@ package laya.net {
 		}
 		
 		/**
+		 * @private
 		 * 连接建立成功 。
 		 */
-		protected function onOpenHandler(e:*):void {
+		protected function _onOpen(e:*):void {
 			_connected = true;
 			event(Event.OPEN,e);
 		}
 		
 		/**
+		 * @private
 		 * 接收到数据处理方法。
 		 * @param msg 数据。
 		 */
-		protected function onMessageHandler(msg:*):void {
+		protected function _onMessage(msg:*):void {
 			if (_input.length > 0 && _input.bytesAvailable < 1) {
 				_input.clear();
 				_addInputPosition = 0;
@@ -214,16 +217,19 @@ package laya.net {
 		}
 		
 		/**
+		 * @private
 		 * 连接被关闭处理方法。
 		 */
-		protected function onCloseHandler(e:*):void {
+		protected function _onClose(e:*):void {
+			_connected=false;
 			event(Event.CLOSE,e)
 		}
 		
 		/**
+		 * @private
 		 * 出现异常处理方法。
 		 */
-		protected function onErrorHandler(e:*):void {
+		protected function _onError(e:*):void {
 			event(Event.ERROR,e)
 		}
 		

@@ -54,6 +54,7 @@ package laya.ani.bone {
 		
 		private var _index:int = -1;
 		private var _total:int = -1;
+		private var _indexControl:Boolean = false;
 		//加载路径
 		private var _aniPath:String;
 		private var _texturePath:String;
@@ -94,9 +95,9 @@ package laya.ani.bone {
 			_player.play();
 			_parseSrcBoneMatrix();
 			
-			_player.on(Event.PLAYED, this, onPlay);
-			_player.on(Event.STOPPED, this, onStop);
-			_player.on(Event.PAUSED, this, onPause);
+			_player.on(Event.PLAYED, this, _onPlay);
+			_player.on(Event.STOPPED, this, _onStop);
+			_player.on(Event.PAUSED, this, _onPause);
 		}
 		
 		/**
@@ -126,13 +127,13 @@ package laya.ani.bone {
 			_complete = complete;
 			_loadAniMode = aniMode;
 			_texturePath = path.replace(".sk", ".png").replace(".bin", ".png");
-			Laya.loader.load([{url: path, type: Loader.BUFFER}, {url: _texturePath, type: Loader.IMAGE}], Handler.create(this, onLoaded));
+			Laya.loader.load([{url: path, type: Loader.BUFFER}, {url: _texturePath, type: Loader.IMAGE}], Handler.create(this, _onLoaded));
 		}
 		
 		/**
 		 * 加载完成
 		 */
-		private function onLoaded():void {
+		private function _onLoaded():void {
 			var tTexture:Texture = Loader.getRes(_texturePath);
 			var arraybuffer:ArrayBuffer = Loader.getRes(_aniPath);
 			if (tTexture == null || arraybuffer == null) return;
@@ -144,13 +145,13 @@ package laya.ani.bone {
 			tFactory = Templet.TEMPLET_DICTIONARY[_aniPath];
 			if (tFactory)
 			{
-				tFactory.isParseFail ? parseFail():parseComplete();
+				tFactory.isParseFail ? _parseFail():_parseComplete();
 			}else {
 				tFactory = new Templet();
 				tFactory.url = _aniPath;
 				Templet.TEMPLET_DICTIONARY[_aniPath] = tFactory;
-				tFactory.on(Event.COMPLETE, this, parseComplete);
-				tFactory.on(Event.ERROR, this, parseFail);
+				tFactory.on(Event.COMPLETE, this, _parseComplete);
+				tFactory.on(Event.ERROR, this, _parseFail);
 				tFactory.parseData(tTexture, arraybuffer, 60);
 			}
 		}
@@ -158,7 +159,7 @@ package laya.ani.bone {
 		/**
 		 * 解析完成
 		 */
-		private function parseComplete():void
+		private function _parseComplete():void
 		{
 			var tTemple:Templet = Templet.TEMPLET_DICTIONARY[_aniPath];
 			if (tTemple)
@@ -172,7 +173,7 @@ package laya.ani.bone {
 		/**
 		 * 解析失败
 		 */
-		public function parseFail():void
+		private function _parseFail():void
 		{
 			trace("[Error]:"+_aniPath + "解析失败");
 		}
@@ -180,21 +181,21 @@ package laya.ani.bone {
 		/**
 		 * 传递PLAY事件
 		 */
-		private function onPlay():void {
+		private function _onPlay():void {
 			this.event(Event.PLAYED);
 		}
 		
 		/**
 		 * 传递STOP事件
 		 */
-		private function onStop():void {
+		private function _onStop():void {
 			this.event(Event.STOPPED);
 		}
 		
 		/**
 		 * 传递PAUSE事件
 		 */
-		private function onPause():void {
+		private function _onPause():void {
 			this.event(Event.PAUSED);
 		}
 		
@@ -233,11 +234,19 @@ package laya.ani.bone {
 		
 		/**
 		 * 更新动画
+		 * @param	autoKey true为正常更新，false为index手动更新
 		 */
-		private function _update():void {
+		private function _update(autoKey:Boolean = true):void {
 			if (_pause) return;
-			var tCurrTime:Number = Laya.stage.now;
-			_player.update(tCurrTime - _lastTime);
+			if (autoKey && _indexControl)
+			{
+				return;
+			}
+			var tCurrTime:Number = Laya.timer.currTimer;
+			if (autoKey)
+			{
+				_player.update(tCurrTime - _lastTime);
+			}
 			_lastTime = tCurrTime;
 			_aniClipIndex = _player.currentAnimationClipIndex;
 			_clipIndex = _player.currentKeyframeIndex;
@@ -294,7 +303,7 @@ package laya.ani.bone {
 					tParentMatrix = _boneMatrixArray[tBone.parentIndex];
 					Matrix.mul(tTempMatrix, tParentMatrix, tResultMatrix);
 				} else {
-					tTempMatrix.copy(tResultMatrix);
+					tTempMatrix.copyTo(tResultMatrix);
 				}
 				tDBBoneSlotArr = _bindBoneBoneSlotDic[tBone.name];
 				if (tDBBoneSlotArr) {
@@ -445,6 +454,7 @@ package laya.ani.bone {
 		 * @param	force		false,如果要播的动画跟上一个相同就不生效,true,强制生效
 		 */
 		public function play(nameOrIndex:*, loop:Boolean, force:Boolean = true):void {
+			_indexControl = false;
 			var index:int = -1;
 			var duration:Number;
 			if (loop) {
@@ -518,6 +528,7 @@ package laya.ani.bone {
 		 * 恢复动画的播放
 		 */
 		public function resume():void {
+			_indexControl = false;
 			if (_pause) {
 				_pause = false;
 				if (_player) {
@@ -563,7 +574,45 @@ package laya.ani.bone {
 			_lastTime = 0;//上次的帧时间
 			Laya.timer.clear(this, _update);
 		}
-
+		
+		/**
+		 * @private
+		 * 得到帧索引
+		 */
+		public function get index():int {
+			return _index;
+		}
+		
+		/**
+		 * @private
+		 * 设置帧索引
+		 */
+		public function set index(value:int):void {
+			if (player)
+			{
+				_index = value;
+				_player.currentTime = _index * 1000 / _player.cacheFrameRate;
+				_indexControl = true;
+				_update(false);
+			}
+		}
+		
+		/**
+		 * 得到总帧数据
+		 */
+		public function get total():int {
+			if (_templet && _player)
+			{
+				_total = Math.floor(_templet.getAniDuration(_player.currentAnimationClipIndex) / 1000 * 60);
+			}else {
+				_total = -1;
+			}
+			return _total;
+		}
+		
+		/**
+		 * 得到播放器的引用
+		 */
 		public function get player():AnimationPlayer
 		{
 			return _player;

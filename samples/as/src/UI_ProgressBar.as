@@ -24,7 +24,7 @@ package
 			Laya.loader.load(["res/ui/progressBar.png", "res/ui/progressBar$bar.png"], Handler.create(this, onLoadComplete));
 		}
 		
-		private function onLoadComplete():void
+		private function onLoadComplete(e:*=null):void
 		{
 			progressBar = new ProgressBar("res/ui/progressBar.png");
 			

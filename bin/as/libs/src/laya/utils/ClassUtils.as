@@ -6,7 +6,7 @@ package laya.utils {
 	 */
 	public class ClassUtils {
 		
-		private static var _classMap:Object =/*[STATIC SAFE]*/ {'Sprite': 'laya.display.Sprite', 'Text': 'laya.display.Text', 'div': 'laya.html.dom.HTMLDivElement', 'img': 'laya.html.dom.HTMLImageElement', 'span': 'laya.html.dom.HTMLElement', 'br': 'laya.html.dom.HTMLBrElement', 'style': 'laya.html.dom.HTMLStyleElement', 'font': 'laya.html.dom.HTMLElement', 'a': 'laya.html.dom.HTMLElement', '#text': 'laya.html.dom.HTMLElement'}
+		public static var _classMap:Object =/*[STATIC SAFE]*/ {'Sprite': 'laya.display.Sprite', 'Text': 'laya.display.Text', 'div': 'laya.html.dom.HTMLDivElement', 'img': 'laya.html.dom.HTMLImageElement', 'span': 'laya.html.dom.HTMLElement', 'br': 'laya.html.dom.HTMLBrElement', 'style': 'laya.html.dom.HTMLStyleElement', 'font': 'laya.html.dom.HTMLElement', 'a': 'laya.html.dom.HTMLElement', '#text': 'laya.html.dom.HTMLElement'}
 		
 		/**
 		 * 注册 Class 映射。
@@ -30,7 +30,7 @@ package laya.utils {
 		 * @param	className 类名。
 		 * @return
 		 */
-		public static function getClass(className:String):* {
+		public static var getClass:Function = function(className:String):* {
 			var classObject:* = _classMap[className] || className;
 			if (classObject is String) return Laya["__classmap"][classObject];
 			return classObject;

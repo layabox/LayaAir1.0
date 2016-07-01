@@ -29,7 +29,7 @@ package
 			}
 		}
 		
-		private function onCallLater():void
+		private function onCallLater(e:*=null):void
 		{
 			trace("onCallLater triggered");
 			

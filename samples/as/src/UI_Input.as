@@ -28,7 +28,7 @@ package
             Laya.loader.load(skins, Handler.create(this, onLoadComplete));//加载资源。
         }
          
-        private function onLoadComplete():void
+        private function onLoadComplete(e:*=null):void
         {
 			for (var i:int = 0; i < skins.length;++i)
 			{

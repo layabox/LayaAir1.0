@@ -52,6 +52,8 @@ package laya.ui {
 		protected var _labelAlign:String;
 		/**@private */
 		protected var _stateNum:int;
+		/**@private */
+		protected var _labelChanged:Boolean;
 		
 		/**
 		 * 创建一个新的 <code>Group</code> 类实例。
@@ -198,7 +200,7 @@ package laya.ui {
 		public function set skin(value:String):void {
 			if (_skin != value) {
 				_skin = value;
-				callLater(changeLabels);
+				_setLabelChanged();
 			}
 		}
 		
@@ -213,7 +215,7 @@ package laya.ui {
 			if (_labels != value) {
 				_labels = value;
 				removeChildren();
-				callLater(changeLabels);
+				_setLabelChanged();
 				if (_labels) {
 					var a:Array = _labels.split(",");
 					for (var i:int = 0, n:int = a.length; i < n; i++) {
@@ -246,7 +248,7 @@ package laya.ui {
 		public function set labelColors(value:String):void {
 			if (_labelColors != value) {
 				_labelColors = value;
-				callLater(changeLabels);
+				_setLabelChanged();
 			}
 		}
 		
@@ -262,7 +264,7 @@ package laya.ui {
 		public function set labelStroke(value:Number):void {
 			if (_labelStroke != value) {
 				_labelStroke = value;
-				callLater(changeLabels);
+				_setLabelChanged();
 			}
 		}
 		
@@ -278,7 +280,7 @@ package laya.ui {
 		public function set labelStrokeColor(value:String):void {
 			if (_labelStrokeColor != value) {
 				_labelStrokeColor = value;
-				callLater(changeLabels);
+				_setLabelChanged();
 			}
 		}
 		
@@ -293,7 +295,7 @@ package laya.ui {
 		public function set strokeColors(value:String):void {
 			if (_strokeColors != value) {
 				_strokeColors = value;
-				callLater(changeLabels);
+				_setLabelChanged();
 			}
 		}
 		
@@ -307,7 +309,7 @@ package laya.ui {
 		public function set labelSize(value:int):void {
 			if (_labelSize != value) {
 				_labelSize = value;
-				callLater(changeLabels);
+				_setLabelChanged();
 			}
 		}
 		
@@ -321,7 +323,7 @@ package laya.ui {
 		public function set stateNum(value:int):void {
 			if (_stateNum != value) {
 				_stateNum = value;
-				callLater(changeLabels);
+				_setLabelChanged();
 			}
 		}
 		
@@ -335,7 +337,7 @@ package laya.ui {
 		public function set labelBold(value:Boolean):void {
 			if (_labelBold != value) {
 				_labelBold = value;
-				callLater(changeLabels);
+				_setLabelChanged();
 			}
 		}
 		
@@ -350,7 +352,7 @@ package laya.ui {
 		public function set labelPadding(value:String):void {
 			if (_labelPadding != value) {
 				_labelPadding = value;
-				callLater(changeLabels);
+				_setLabelChanged();
 			}
 		}
 		
@@ -368,7 +370,7 @@ package laya.ui {
 		
 		public function set direction(value:String):void {
 			_direction = value;
-			callLater(changeLabels);
+			_setLabelChanged();
 		}
 		
 		/**
@@ -380,7 +382,7 @@ package laya.ui {
 		
 		public function set space(value:Number):void {
 			_space = value;
-			callLater(changeLabels);
+			_setLabelChanged();
 		}
 		
 		/**
@@ -388,6 +390,7 @@ package laya.ui {
 		 * 更改项对象的属性值。
 		 */
 		protected function changeLabels():void {
+			_labelChanged = false;
 			if (_items) {
 				var left:Number = 0
 				for (var i:int = 0, n:int = _items.length; i < n; i++) {
@@ -445,6 +448,14 @@ package laya.ui {
 			if (value is int || value is String) selectedIndex = int(value);
 			else if (value is Array) labels = (value as Array).join(",");
 			else super.dataSource = value;
+		}
+		
+		/**@private */
+		protected function _setLabelChanged():void {
+			if (!_labelChanged) {
+				_labelChanged = true;
+				callLater(changeLabels);
+			}
 		}
 	}
 }

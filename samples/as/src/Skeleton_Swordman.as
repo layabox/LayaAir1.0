@@ -68,7 +68,7 @@ package
 			Laya.loader.load(assets, Handler.create(this, onAssetLoaded));
 		}
 
-		private function onAssetLoaded():void
+		private function onAssetLoaded(e:*=null):void
 		{
 			// 获取资源
 			var texture:Texture = Loader.getRes(texturePath);
@@ -80,7 +80,7 @@ package
 			factory.parseData(texture, data, 60);
 		}
 
-		private function onSkeletonDataParsed():void
+		private function onSkeletonDataParsed(e:*=null):void
 		{
 			// 创建骨骼动画
 			swordman = factory.buildArmature(2);
@@ -97,12 +97,12 @@ package
 			Laya.timer.frameLoop(1, this, gameLoop);
 		}
 
-		private function onKeyDown(e:Event):void
+		private function onKeyDown(e:*=null):void
 		{
 			keyList[e.keyCode] = true;
 		}
 
-		private function onKeyUp(e:Event):void
+		private function onKeyUp(e:*=null):void
 		{
 			keyList[e.keyCode] = false;
 		}
@@ -302,13 +302,13 @@ package
 			}
 		}
 
-		private function isPlayingMovingAnimation()
+		private function isPlayingMovingAnimation() : Boolean
 		{
 			return	isRunning ||
 					isSprinting;
 		}
 
-		private function isPlayingOtherAnimation()
+		private function isPlayingOtherAnimation() : Boolean
 		{
 			return	isJumping	||
 					isAttacking	||
@@ -316,7 +316,7 @@ package
 		}
 
 		// 监测动作结束
-		private function onAnimationFinish(e:Event):void
+		private function onAnimationFinish(e:Event=null):void
 		{
 			switch(currAction)
 			{

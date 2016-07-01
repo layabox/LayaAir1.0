@@ -3,6 +3,7 @@ package laya.display {
 	import laya.display.css.Style;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
+	import laya.filters.ColorFilter;
 	import laya.filters.Filter;
 	import laya.maths.GrahamScan;
 	import laya.maths.Matrix;
@@ -15,6 +16,7 @@ package laya.display {
 	import laya.resource.Texture;
 	import laya.utils.Dragging;
 	import laya.utils.Handler;
+	import laya.utils.HTMLChar;
 	import laya.utils.Pool;
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
@@ -198,6 +200,8 @@ package laya.display {
 	 * </listing>
 	 */
 	public class Sprite extends Node implements ILayout {
+		/** @private */
+		public static var CustomList:Array = [];
 		/**指定当mouseEnabled=true时，是否可穿透。默认值为false，如果设置为true，则点击空白区域可以穿透过去。*/
 		public var mouseThrough:Boolean = false;
 		/** @private 矩阵变换信息。*/
@@ -218,7 +222,7 @@ package laya.display {
 		/** @private 鼠标状态，0:auto,1:mouseEnabled=false,2:mouseEnabled=true。*/
 		protected var _mouseEnableState:int = 0;
 		/** @private Z排序，设置后，可手动调用updateOrder更新排序。*/
-		public var _zOrder:int = 0;
+		public var _zOrder:Number = 0;
 		
 		//以下变量为系统调用，请不要直接使用
 		/** @private */
@@ -233,15 +237,31 @@ package laya.display {
 		 * 在手动设置宽高属性之后该属性不起作用。
 		 */
 		public var autoSize:Boolean = false;
-		/**@private 如果为true，鼠标先检测父对象，碰撞后再检测子对象，否则先检测子对象*/
-		public var hitTestFirst:Boolean = false;
+		/**
+		 * 指定鼠标碰撞检测是否优先检测自己。默认为false
+		 * 鼠标碰撞检测是优先检测子对象，然后冒泡到父对象，如果hitTestPrior=true
+		 * 鼠标碰撞优先检测本对象，本对象被击中后，才进一步检测子对象。
+		 * 对于已知大小的容器（特别是根容器），设置此值为true，能减少节点碰撞，提高性能。默认为false
+		 */
+		public var hitTestPrior:Boolean = false;
+		
+		private var _optimizeScrollRect:Boolean = false;
+		
+		public function get optimizeScrollRect():Boolean {
+			return _optimizeScrollRect;
+		}
 		
 		/**
 		 * <p>指定是否对使用了 scrollRect 的显示对象进行优化处理。</p>
 		 * <p>默认为false(不优化)。</p>
 		 * <p>当值为ture时：将对此对象使用了scrollRect 设定的显示区域以外的显示内容不进行渲染，以提高性能。</p>
 		 */
-		public var optimizeScrollRect:Boolean = false;
+		public function set optimizeScrollRect(b:Boolean):void {
+			if (_optimizeScrollRect != b) {
+				_optimizeScrollRect = b;
+				model && model.optimizeScrollRect(b);
+			}
+		}
 		
 		/**@inheritDoc */
 		override public function destroy(destroyChild:Boolean = true):void {
@@ -250,12 +270,11 @@ package laya.display {
 			this._transform = null;
 			this._style = null;
 			this._graphics = null;
-			this._$P = null
 			//TODO:OTHER
 		}
 		
-		/**根据Z进行重新排序。*/
-		public function updateOrder():void {
+		/**根据zOrder进行重新排序。*/
+		public function updateZOrder():void {
 			Utils.updateOrder(_childs) && repaint();
 		}
 		
@@ -267,7 +286,24 @@ package laya.display {
 		}
 		
 		public function set cacheAsBitmap(value:Boolean):void {
-			cacheAs = value ? "normal" : "none";
+			cacheAs = value ? (_$P["hasFilter"] ? "none":"normal") : "none";
+		}
+		
+		/**
+		 * 开启自定义渲染，只有开启自定义渲染，才能使用customRender函数渲染
+		 */
+		public function set customRenderEnable(b:Boolean):void {
+			if (b) {
+				_renderType |= RenderSprite.CUSTOM;
+				if (Render.isConchNode) {
+					Sprite.CustomList.push(this);
+					var canvas:HTMLCanvas = new HTMLCanvas("2d");
+					canvas._setContext(__JS__("new CanvasRenderingContext2D()"));
+					__JS__("this.customContext = new RenderContext(0, 0, canvas)");
+					canvas.context.setCanvasType && canvas.context.setCanvasType(2);
+					model.custom(canvas.context);
+				}
+			}
 		}
 		
 		/**
@@ -291,23 +327,23 @@ package laya.display {
 				cacheCanvas.type = value;
 				cacheCanvas.reCache = true;
 				_renderType |= RenderSprite.CANVAS;
+				if(value=="bitmap")model && model.cacheAs(1);
 				_set$P("cacheForFilters", false);
 			} else {
-				if (_$P["hasFilter"])
-				{
+				if (_$P["hasFilter"]) {
 					_set$P("cacheForFilters", true);
-				}else
-				{
+				} else {
 					if (cacheCanvas) Pool.recover("cacheCanvas", cacheCanvas);
-				    _$P.cacheCanvas = null;
-				    _renderType &= ~RenderSprite.CANVAS;
+					_$P.cacheCanvas = null;
+					_renderType &= ~RenderSprite.CANVAS;
+					model && model.cacheAs(0);
 				}
 				
 			}
 			repaint();
 		}
 		
-		/**cacheAs时此值才有效，staticCache=true时，子对象变化时不会自动更新缓存，只能通过调用reCache方法手动刷新。*/
+		/**设置cacheAs为非空时此值才有效，staticCache=true时，子对象变化时不会自动更新缓存，只能通过调用reCache方法手动刷新。*/
 		public function get staticCache():Boolean {
 			return _$P.staticCache;
 		}
@@ -319,7 +355,7 @@ package laya.display {
 			}
 		}
 		
-		/**在设置cacheAsBtimap=true或者staticCache=true的情况下，调用此方法会重新刷新缓存。*/
+		/**在设置cacheAs或staticCache=true的情况下，调用此方法会重新刷新缓存。*/
 		public function reCache():void {
 			if (_$P.cacheCanvas) _$P.cacheCanvas.reCache = true;
 		}
@@ -330,8 +366,9 @@ package laya.display {
 		}
 		
 		public function set x(value:Number):void {
+			if (this.destroyed) return;
 			var p:Sprite = _parent as Sprite;
-			this._x !== value && (this._x = value, p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint()));
+			this._x !== value && (this._x = value, model && model.pos(value, this._y), p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint()), this._$P.maskParent && _$P.maskParent._repaint === 0 && (_$P.maskParent._repaint = 1, _$P.maskParent.parentRepaint()));
 		}
 		
 		/**表示显示对象相对于父容器的垂直方向坐标值。*/
@@ -340,8 +377,9 @@ package laya.display {
 		}
 		
 		public function set y(value:Number):void {
+			if (this.destroyed) return;
 			var p:Sprite = _parent as Sprite;
-			this._y !== value && (this._y = value, p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint()));
+			this._y !== value && (this._y = value, model && model.pos(this._x, value), p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint()), this._$P.maskParent && _$P.maskParent._repaint === 0 && (_$P.maskParent._repaint = 1, _$P.maskParent.parentRepaint()));
 		}
 		
 		/**
@@ -353,7 +391,7 @@ package laya.display {
 		}
 		
 		public function set width(value:Number):void {
-			this._width !== value && (this._width = value, repaint());
+			this._width !== value && (this._width = value, model && model.size(value, this._height), repaint());
 		}
 		
 		/**
@@ -365,7 +403,7 @@ package laya.display {
 		}
 		
 		public function set height(value:Number):void {
-			this._height !== value && (this._height = value, repaint());
+			this._height !== value && (this._height = value, model && model.size(this._width, value), repaint());
 		}
 		
 		/**
@@ -451,7 +489,7 @@ package laya.display {
 		 * @return 一个 Rectangle 对象，表示获取到的显示区域。
 		 */
 		public function getGraphicBounds():Rectangle {
-			if (!this._graphics) return Rectangle.TEMP.setTo(0,0,0,0);
+			if (!this._graphics) return Rectangle.TEMP.setTo(0, 0, 0, 0);
 			return this._graphics.getBounds();
 		}
 		
@@ -518,6 +556,7 @@ package laya.display {
 			if (style._tf.scaleX !== value) {
 				style.setScaleX(value);
 				_tfChanged = true;
+				model && model.scale(value, style._tf.scaleY);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
 				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
@@ -534,6 +573,7 @@ package laya.display {
 			if (style._tf.scaleY !== value) {
 				style.setScaleY(value);
 				_tfChanged = true;
+				model && model.scale(style._tf.scaleX, value);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
 				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
@@ -550,6 +590,7 @@ package laya.display {
 			if (style._tf.rotate !== value) {
 				style.setRotate(value);
 				_tfChanged = true;
+				model && model.rotate(value);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
 				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
@@ -582,6 +623,7 @@ package laya.display {
 			if (style._tf.skewY !== value) {
 				style.setSkewY(value);
 				_tfChanged = true;
+				model && model.skew(style._tf.skewX, value);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
 				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
@@ -642,9 +684,13 @@ package laya.display {
 				_x = value.tx;
 				_y = value.ty;
 				value.tx = value.ty = 0;
+				model && model.transform(value.a, value.b, value.c, value.d, _x, _y);
 			}
 			if (value) _renderType |= RenderSprite.TRANSFORM;
-			else _renderType &= ~RenderSprite.TRANSFORM;
+			else {
+				_renderType &= ~RenderSprite.TRANSFORM;
+				model && model.removeType(RenderSprite.TRANSFORM);
+			}
 			parentRepaint();
 		}
 		
@@ -655,6 +701,7 @@ package laya.display {
 		
 		public function set pivotX(value:Number):void {
 			getStyle().setTranslateX(value);
+			model && model.pivot(value, this._style._tf.translateY);
 			repaint();
 		}
 		
@@ -665,6 +712,7 @@ package laya.display {
 		
 		public function set pivotY(value:Number):void {
 			getStyle().setTranslateY(value);
+			model && model.pivot(this._style._tf.translateX, value);
 			repaint();
 		}
 		
@@ -677,6 +725,7 @@ package laya.display {
 			if (_style.alpha !== value) {
 				value = value < 0 ? 0 : (value > 1 ? 1 : value);
 				getStyle().alpha = value;
+				model && model.alpha(value);
 				if (value !== 1) _renderType |= RenderSprite.ALPHA;
 				else _renderType &= ~RenderSprite.ALPHA;
 				parentRepaint();
@@ -691,6 +740,7 @@ package laya.display {
 		public function set visible(value:Boolean):void {
 			if (_style.visible !== value) {
 				getStyle().visible = value;
+				model && model.visible(value);
 				parentRepaint();
 			}
 		}
@@ -702,6 +752,7 @@ package laya.display {
 		
 		public function set blendMode(value:String):void {
 			getStyle().blendMode = value;
+			model && model.blendMode(value);
 			if (value && value != "source-over") _renderType |= RenderSprite.BLEND;
 			else _renderType &= ~RenderSprite.BLEND;
 			parentRepaint();
@@ -719,10 +770,12 @@ package laya.display {
 				_renderType &= ~RenderSprite.IMAGE;
 				_renderType |= RenderSprite.GRAPHICS;
 				value._sp = this;
+				model && model.graphics(this._graphics);
 					//if (value.empty()) _renderType &= ~RenderSprite.IMAGE;
 			} else {
 				_renderType &= ~RenderSprite.GRAPHICS;
 				_renderType &= ~RenderSprite.IMAGE;
+				model && model.removeType(RenderSprite.GRAPHICS);
 			}
 			repaint();
 		}
@@ -735,8 +788,13 @@ package laya.display {
 		public function set scrollRect(value:Rectangle):void {
 			getStyle().scrollRect = value;
 			repaint();
-			if (value) _renderType |= RenderSprite.CLIP;
-			else _renderType &= ~RenderSprite.CLIP;
+			if (value) {
+				_renderType |= RenderSprite.CLIP;
+				model && model.scrollRect(value.x, value.y, value.width, value.height);
+			} else {
+				_renderType &= ~RenderSprite.CLIP;
+				model && model.removeType(RenderSprite.CLIP);
+			}
 		}
 		
 		/**
@@ -863,33 +921,34 @@ package laya.display {
 			value && value.length === 0 && (value = null);
 			if (_$P.filters == value) return;
 			_set$P("filters", value ? value.slice() : null);
+			if (Render.isConchApp)
+			{
+				if (_$P.filters && _$P.filters.length == 1 && (_$P.filters[0] is ColorFilter))
+				{
+					var t:Array=_$P.rgbg = _$P.filters[0].getRGBG();
+					model && model.filter(t[0], t[1], t[2], t[3]);
+				}
+			}
+			
 			if (Render.isWebGL) {
 				if (value && value.length) {
 					_renderType |= RenderSprite.FILTERS;
 				} else {
 					_renderType &= ~RenderSprite.FILTERS;
 				}
-				repaint();
-				return;
 			}
-			if (value && value.length > 0)
-			{
-				if (!cacheAsBitmap)
-				{
-					cacheAsBitmap = true;
-					_set$P("cacheForFilters",true);
+			if (value && value.length > 0) {
+				if (cacheAs != "bitmap") {
+					if(!Render.isConchNode)cacheAs = "bitmap";
+					_set$P("cacheForFilters", true);
 				}
-				
 				_set$P("hasFilter", true);
-			}else
-			{
+			} else {
 				_set$P("hasFilter", false);
-				if (_$P["cacheForFilters"]&&cacheAsBitmap)
-				{
-					cacheAsBitmap = false;
+				if (_$P["cacheForFilters"] && cacheAs == "bitmap") {
+					cacheAs = "none";
 				}
 			}
-			
 			repaint();
 		}
 		
@@ -900,7 +959,7 @@ package laya.display {
 		 */
 		public function _isHaveGlowFilter():Boolean {
 			var i:int, len:int;
-			if (filters){
+			if (filters) {
 				for (i = 0; i < filters.length; i++) {
 					if (filters[i].type == Filter.GLOW) {
 						return true;
@@ -922,7 +981,7 @@ package laya.display {
 		 * @return  转换后的坐标的点。
 		 */
 		public function localToGlobal(point:Point, createNewPoint:Boolean = false):Point {
-			if (!_displayInStage || !point) return point;
+			if (!_displayedInStage || !point) return point;
 			if (createNewPoint === true) {
 				point = new Point(point.x, point.y);
 			}
@@ -943,7 +1002,7 @@ package laya.display {
 		 * @return 转换后的坐标的点。
 		 */
 		public function globalToLocal(point:Point, createNewPoint:Boolean = false):Point {
-			if (!_displayInStage || !point) return point;
+			if (!_displayedInStage || !point) return point;
 			if (createNewPoint === true) {
 				point = new Point(point.x, point.y);
 			}
@@ -1021,7 +1080,7 @@ package laya.display {
 		override public function on(type:String, caller:*, listener:Function, args:Array = null):EventDispatcher {
 			//如果是鼠标事件，则设置自己和父对象为可接受鼠标交互事件
 			if (_mouseEnableState !== 1 && isMouseEvent(type)) {
-				if (_displayInStage) _onDisplay();
+				if (_displayedInStage) _onDisplay();
 				else super.once(Event.DISPLAY, this, _onDisplay);
 			}
 			return super.on(type, caller, listener, args);
@@ -1039,7 +1098,7 @@ package laya.display {
 		override public function once(type:String, caller:*, listener:Function, args:Array = null):EventDispatcher {
 			//如果是鼠标事件，则设置自己和父对象为可接受鼠标交互事件
 			if (_mouseEnableState !== 1 && isMouseEvent(type)) {
-				if (_displayInStage) _onDisplay();
+				if (_displayedInStage) _onDisplay();
 				else super.once(Event.DISPLAY, this, _onDisplay);
 			}
 			return super.once(type, caller, listener, args);
@@ -1057,8 +1116,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 加载并显示一个图片。
-		 * <p><b>注意：</b>调用本方法自动调用 graphics.clear()（清除所有命令），只显示新load的图片，如果想显示多个，请用 graphics.drawTexture 或者 graphics.loadImage 。</p>
+		 * 加载并显示一个图片。功能等同于Graphics.loadImage
 		 * @param	url	图片地址。
 		 * @param	x 显示图片的x位置
 		 * @param	y 显示图片的y位置
@@ -1068,10 +1126,9 @@ package laya.display {
 		 * @return	返回精灵对象本身
 		 */
 		public function loadImage(url:String, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, complete:Handler = null):Sprite {
-			//TODO:graphics.clear();
 			function loaded(tex:Texture):void {
 				if (!destroyed) {
-					size(tex.width, tex.height);
+					size(x + (width || tex.width), y + (height || tex.height));
 					repaint();
 					complete && complete.runWith(tex);
 				}
@@ -1089,7 +1146,7 @@ package laya.display {
 			return new Sprite().loadImage(url);
 		}
 		
-		/**cacheAsBitmap值为true时，手动重新缓存本对象。*/
+		/**cacheAs后，设置自己和父对象缓存失效。*/
 		public function repaint():void {
 			(_repaint === 0) && (_repaint = 1, parentRepaint());
 		}
@@ -1104,15 +1161,15 @@ package laya.display {
 		}
 		
 		/**@inheritDoc	*/
-		override public function _childChanged(child:Node = null):void {
+		override protected function _childChanged(child:Node = null):void {
 			if (_childs.length) _renderType |= RenderSprite.CHILDS;
 			else _renderType &= ~RenderSprite.CHILDS;
 			
-			if (child && Sprite(child).zOrder) Laya.timer.callLater(this, updateOrder);
+			if (child && Sprite(child).zOrder) Laya.timer.callLater(this, updateZOrder);
 			repaint();
 		}
 		
-		/**cacheAs时，手动重新缓存父对象。 */
+		/**cacheAs时，设置所有父对象缓存失效。 */
 		public function parentRepaint():void {
 			var p:Sprite = _parent as Sprite;
 			p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
@@ -1138,8 +1195,11 @@ package laya.display {
 		}
 		
 		public function set mask(value:Sprite):void {
+			if (mask && mask._$P.maskParent) return;
 			cacheAs = "bitmap";
 			_set$P("_mask", value);
+			value._set$P("maskParent", this);
+			model && model.mask(value ? value.model : null);
 			_renderType |= RenderSprite.BLEND;
 			parentRepaint();
 		}
@@ -1220,29 +1280,30 @@ package laya.display {
 		}
 		
 		/** z排序，更改此值，按照值的大小进行显示层级排序。*/
-		public function get zOrder():int {
+		public function get zOrder():Number {
 			return _zOrder;
 		}
 		
-		public function set zOrder(value:int):void {
+		public function set zOrder(value:Number):void {
 			if (_zOrder != value) {
 				_zOrder = value;
-				_parent && Laya.timer.callLater(_parent, updateOrder);
+				_parent && Laya.timer.callLater(_parent, updateZOrder);
 			}
 		}
 		
 		/**@private */
-		public function _getWords():Vector.<Object> {
+		public function _getWords():Vector.<HTMLChar> {
 			return null;
 		}
 		
 		/**@private */
 		public function _addChildsToLayout(out:Vector.<ILayout>):Boolean {
-			var words:Vector.<Object> = _getWords();
+			var words:Vector.<HTMLChar> = _getWords();
 			if (words == null && _childs.length == 0) return false;
-			words && words.forEach(function(o:*):void {
-				out.push(o);
-			});
+			for (var i:int = 0, n:int = words.length; i < n; i++)
+			{
+				out.push(words[i]);
+			}
 			_childs.forEach(function(o:Sprite):void {
 				o._style._enableLayout() && o._addToLayout(out);
 			});
@@ -1286,7 +1347,8 @@ package laya.display {
 				height = parseFloat(value);
 				break;
 			default: 
-				this[name] = value;
+				/*[IF-FLASH]*/if(this.hasOwnProperty(name))
+					this[name] = value;
 			}
 		}
 		

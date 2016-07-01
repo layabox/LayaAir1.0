@@ -14,7 +14,6 @@ package laya.webgl.submit {
 		public var args:Array;
 		public function SubmitCMD()
 		{
-			//debugger;
 		}
 		
 		public function renderSubmit():int

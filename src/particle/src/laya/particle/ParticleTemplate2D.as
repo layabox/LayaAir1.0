@@ -115,5 +115,11 @@ package laya.particle
 				BlendMode.activeBlendFunction = _blendFn;
 			}
 		}
+		
+		public function dispose():void
+		{
+			_vertexBuffer.dispose();
+			_indexBuffer.dispose();
+		}
 	}
 }

@@ -46,7 +46,7 @@ package
 			Laya.timer.frameLoop(1, this, animate);
 		}
 		
-		private function animate(e:Event):void 
+		private function animate(e:Event=null):void 
 		{
 			sp1.rotation += 2;
 			sp2.rotation += 2;

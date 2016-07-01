@@ -110,7 +110,7 @@ package laya.webgl.shader.d2.value {
 		
 		private function _ShaderWithCompile():Shader2X
 		{
-			if ( RenderState2D.worldMatrix4 !== RenderState2D.TEMPMAT4_ARRAY) defines.add(ShaderDefines2D.WORLDMAT);
+			
 			return  Shader.withCompile(0, mainID, defines.toNameDic(), mainID | defines._value, Shader2X.create) as Shader2X;
 		}
 		
@@ -124,7 +124,7 @@ package laya.webgl.shader.d2.value {
 				var dic:Object;
 				var name:String;
 				 dic = defines.toNameDic(); for (name in dic) def[name] = "";
-				 dic= defs.toNameDic(); for (name in dic) def[name] = "";
+				 dic = defs.toNameDic(); for (name in dic) def[name] = "";
 				sd=Shader.withCompile(0, mainID, def, mainID | defines._value| defs.getValue(), Shader2X.create) as Shader2X;
 			}
 			var worldFilters:Array = RenderState2D.worldFilters; 
@@ -144,6 +144,7 @@ package laya.webgl.shader.d2.value {
 			var renderstate2d:*= RenderState2D;
 			alpha = ALPHA * renderstate2d.worldAlpha;
 			
+			if ( RenderState2D.worldMatrix4 !== RenderState2D.TEMPMAT4_ARRAY) defines.add(ShaderDefines2D.WORLDMAT);
 			var sd:Shader2X = renderstate2d.worldShaderDefines?_withWorldShaderDefines():(Shader.sharders[mainID | defines._value] as Shader2X || _ShaderWithCompile());
 			
 			var params:Array;

@@ -13,11 +13,12 @@ package laya.filters.webgl
 	public class ColorFilterActionGL extends FilterActionGL implements IFilterActionGL
 	{
 		public var data:ColorFilter;
-		public function ColorFilterActionGL(){}
+		public function ColorFilterActionGL() { }
 		
 		override public function setValue(shader:*):void
 		{
-			shader.u_colorMatrix=  data._elements;
+			shader.colorMat = data._mat;
+			shader.colorAlpha = data._alpha;
 		}
 		
 		override public function apply3d(scope:SubmitCMDScope, sprite:Sprite, context:RenderContext, x:Number, y:Number):*

@@ -84,8 +84,6 @@ package laya.display {
 		public var offset:Point = new Point();
 		/**帧率类型，支持三种模式：fast-60帧(默认)，slow-30帧，mouse-30帧，但鼠标活动后会自动加速到60，鼠标不动2秒后降低为30帧，以节省消耗。*/
 		public var frameRate:String = "fast";
-		/**本帧开始时间，只读，如果不是对精度要求过高，建议使用此时间，比Browser.now()快3倍。*/
-		public var now:Number = Browser.now();
 		/**设计宽度（初始化时设置的宽度Laya.init(width,height)）*/
 		public var desginWidth:Number = 0;
 		/**设计高度（初始化时设置的高度Laya.init(width,height)）*/
@@ -114,7 +112,8 @@ package laya.display {
 		
 		public function Stage() {
 			this.mouseEnabled = true;
-			this._displayInStage = true;
+			this.hitTestPrior = true;
+			this._displayedInStage = true;
 			
 			var _this:Stage = this;
 			var window:* = Browser.window;
@@ -126,15 +125,32 @@ package laya.display {
 				if (this.focus && this.focus.focus) this.focus.focus = false;
 			})
 			window.addEventListener("resize", function():void {
+				if (_this.preventResize()) return;
+				
 				_this._resetCanvas();
 				Laya.timer.once(100, _this, _this._changeCanvasSize);
 			})
 			window.addEventListener("orientationchange", function(e:*):void {
+				// 转屏后收回输入法。以免resize后的canvas尺寸缩小。
+				// 仅移动端如此。
+				if (Browser.onMobile && Input.isInputting)
+					Input["inputElement"].target.focus = false;
+				
 				_this._resetCanvas();
 				Laya.timer.once(100, _this, _this._changeCanvasSize);
 			})
 			
 			on(Event.MOUSE_MOVE, this, _onmouseMove);
+		}
+		
+		/**
+		 * 在移动端输入时，输入法弹出期间不进行画布尺寸重置。
+		 */
+		private function preventResize():Boolean
+		{
+			return (
+				Browser.onMobile &&
+				Input.isInputting);
 		}
 		
 		/**设置场景设计宽高*/
@@ -156,7 +172,7 @@ package laya.display {
 			var canvasStyle:* = canvas.source.style;
 			canvas.size(1, 1);
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "";
-			this.visible = false;
+			this.renderingEnabled = false;
 		}
 		
 		/**
@@ -164,7 +180,7 @@ package laya.display {
 		 * @param	screenWidth		屏幕宽度。
 		 * @param	screenHeight	屏幕高度。
 		 */
-		public function setScreenSize(screenWidth:Number, screenHeight:Number):void {
+		public function setScreenSize(screenWidth:Number, screenHeight:Number):void {			
 			//计算是否旋转
 			var rotation:Boolean = false;
 			if (_screenMode !== SCREEN_NONE) {
@@ -237,6 +253,7 @@ package laya.display {
 				transform || (transform = new Matrix());
 				transform.a = scaleX / (realWidth / canvasWidth);
 				transform.d = scaleY / (realHeight / canvasHeight);
+				model&&model.scale(transform.a, transform.d);//由于上面的两句通知不到微端
 			}
 			
 			//处理canvas大小			
@@ -267,9 +284,11 @@ package laya.display {
 			}
 			
 			if (mat.a < 0.00000000000001) mat.a = mat.d = 0;
+			if (mat.tx < 0.00000000000001) mat.tx = 0;
+			if (mat.ty < 0.00000000000001) mat.ty = 0;
 			canvasStyle.transformOrigin = canvasStyle.webkitTransformOrigin = canvasStyle.msTransformOrigin = canvasStyle.mozTransformOrigin = canvasStyle.oTransformOrigin = "0px 0px 0px";
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "matrix(" + mat.toString() + ")";
-			this.visible = true;
+			this.renderingEnabled = true;
 			_repaint = 1;
 			event(Event.RESIZE);
 		}
@@ -337,7 +356,11 @@ package laya.display {
 		}
 		
 		public function set bgColor(value:String):void {
+			if (Render.isWebGL && value == null){
+				value = "#000000";
+			}
 			_bgColor = value;
+			model && model.bgColor(value);
 			if (value) {
 				Render.canvas.style.background = value;
 			} else {
@@ -407,10 +430,9 @@ package laya.display {
 		override public function render(context:RenderContext, x:Number, y:Number):void {
 			Render.isFlash && repaint();
 			
-			now = Browser.now();
 			_renderCount++;
 			
-			var frameMode:String = frameRate === FRAME_MOUSE ? (((now - _mouseMoveTime) < 2000) ? FRAME_FAST : FRAME_SLOW) : frameRate;
+			var frameMode:String = frameRate === FRAME_MOUSE ? (((Browser.now() - _mouseMoveTime) < 2000) ? FRAME_FAST : FRAME_SLOW) : frameRate;
 			var isFastMode:Boolean = (frameMode !== FRAME_SLOW);
 			var isDoubleLoop:Boolean = (_renderCount % 2 === 0);
 			var ctx:* = Render.context;
@@ -421,13 +443,21 @@ package laya.display {
 				Stat.loopCount++;
 				MouseManager.instance.runEvent();
 				Laya.timer._update();
-				if (this._style.visible && renderingEnabled) {
+				if (Render.isConchNode) {
+					var customList:Array = Sprite.CustomList;
+					for (var i:Number = 0, n:Number = customList.length; i < n; i++)
+					{
+						customList[i].customRender(customList[i].customContext, 0, 0);
+					}
+					return;
+				}
+				if (renderingEnabled) {
 					Render.isWebGL ? ctx.clear() : RunDriver.clear(_bgColor);
 					super.render(context, x, y);
 				}
 			}
-			
-			if (this._style.visible && renderingEnabled && (isFastMode || !isDoubleLoop)) {
+			if (Render.isConchNode) return;
+			if (renderingEnabled && (isFastMode || !isDoubleLoop)) {
 				Render.isWebGL && RunDriver.clear(_bgColor);
 				RunDriver.benginFlush();
 				context.flush();

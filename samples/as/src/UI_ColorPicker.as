@@ -24,7 +24,7 @@ package
 			Laya.loader.load(skin, Handler.create(this, onColorPickerSkinLoaded));
 		}
 		
-		private function onColorPickerSkinLoaded():void
+		private function onColorPickerSkinLoaded(e:*=null):void
 		{
 			var colorPicker:ColorPicker = new ColorPicker();
 			colorPicker.selectedColor = "#ff0033";
@@ -37,7 +37,7 @@ package
 			onChangeColor(colorPicker);
 		}
 		
-		private function onChangeColor(colorPicker:ColorPicker):void
+		private function onChangeColor(colorPicker:ColorPicker,e:*=null):void
 		{
 			trace(colorPicker.selectedColor);
 		}

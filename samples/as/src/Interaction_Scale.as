@@ -48,7 +48,7 @@ package
 			sp.on(Event.MOUSE_DOWN, this, onMouseDown);
 		}
 		
-		private function onMouseDown(e:Event):void
+		private function onMouseDown(e:Event=null):void
 		{
 			var touches:Array = e.touches;
 
@@ -60,7 +60,7 @@ package
 			}
 		}
 		
-		private function onMouseMove(e:Event):void
+		private function onMouseMove(e:Event=null):void
 		{
 			var distance:Number = getDistance(e.touches);
 
@@ -72,7 +72,7 @@ package
 			lastDistance = distance;
 		}
 
-		private function onMouseUp(e:Event):void
+		private function onMouseUp(e:Event=null):void
 		{
 			Laya.stage.off(Event.MOUSE_MOVE, this, onMouseMove);
 		}
@@ -81,11 +81,13 @@ package
 		private function getDistance(points:Array):Number
 		{
 			var distance:Number = 0;
+            if (points && points.length == 2)
+			{
+				var dx:Number = points[0].stageX - points[1].stageX;
+				var dy:Number = points[0].stageY - points[1].stageY;
 
-			var dx:Number = points[0].stageX - points[1].stageX;
-			var dy:Number = points[0].stageY - points[1].stageY;
-
-			distance = Math.sqrt(dx * dx + dy * dy);
+				distance = Math.sqrt(dx * dx + dy * dy);
+			}
 			return distance;
 		}
 	}

@@ -164,7 +164,7 @@ package laya.ani {
 		 * @param	playbackRate 播放速率
 		 * @param	duration 播放时长（Number.MAX_VALUE为循环播放，0为1次）
 		 */
-		public function play(index:int = 0, playbackRate:Number = 1.0, duration:Number = Number.MAX_VALUE):void {
+		public function play(index:int = 0, playbackRate:Number = 1.0, duration:Number = 1.7976931348623157e+308):void {
 			_currentTime = 0;
 			_elapsedPlaybackTime = 0;
 			this.playbackRate = playbackRate;

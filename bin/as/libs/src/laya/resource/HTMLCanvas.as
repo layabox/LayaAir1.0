@@ -51,7 +51,7 @@ package laya.resource {
 						if(!Render.isFlash) ctx.size = function(w:Number, h:Number):void {
 						};
 					}
-					contextID === "2d" && Context._init(o, ctx);
+					//contextID === "2d" && Context._init(o, ctx);
 					return ctx;
 				}
 			} else _source = {};

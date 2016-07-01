@@ -51,8 +51,8 @@ package laya.ani.bone {
 		private var _rate:int = 60;
 		/**
 		 * 解析骨骼动画数据
-		 * @param	skeletonData	骨骼动画信息及纹理分块信息
 		 * @param	texture			骨骼动画用到的纹理
+		 * @param	skeletonData	骨骼动画信息及纹理分块信息
 		 * @param	playbackRate	缓冲的帧率数据（会根据帧率去分帧）
 		 */
 		public function parseData(texture:Texture, skeletonData:ArrayBuffer, playbackRate:int = 60):void {

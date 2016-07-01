@@ -309,7 +309,7 @@ class DialogManager extends Sprite {
 	 * 舞台的 <code>Event.RESIZE</code> 事件侦听处理函数。
 	 * @param e
 	 */
-	private function onResize(e:Event):void {
+	private function onResize(e:Event=null):void {
 		var width:Number = modalLayer.width = _stage.width;
 		var height:Number = modalLayer.height = _stage.height;
 		
@@ -331,8 +331,8 @@ class DialogManager extends Sprite {
 	}
 	
 	private function _centerDialog(dialog:Dialog):void {
-		dialog.x = Math.round((_stage.width - dialog.width) >> 1 + dialog.pivotX);
-		dialog.y = Math.round((_stage.height - dialog.height) >> 1 + dialog.pivotY);
+		dialog.x = Math.round(((_stage.width - dialog.width) >> 1) + dialog.pivotX);
+		dialog.y = Math.round(((_stage.height - dialog.height) >> 1) + dialog.pivotY);
 	}
 	
 	/**

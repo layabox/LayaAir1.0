@@ -28,7 +28,7 @@ package
 			Laya.loader.load(ApePath, Handler.create(this, setup));
 		}
 
-		private function setup():void
+		private function setup(e:*=null):void
 		{
 			normalizeApe();
 			makeRedApe();

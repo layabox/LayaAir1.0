@@ -370,6 +370,7 @@ package laya.webgl.shader {
 		
 		public function uploadTexture2D(value:*):void
 		{
+			Stat.shaderCall ++;
 			var gl:WebGLContext = WebGL.mainContext;
 			gl.activeTexture(WebGLContext.TEXTURE0);
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);

@@ -45,18 +45,18 @@ package
 		}
 		
 		/**键盘按下处理*/
-		private function onKeyDown(e:Event):void
+		private function onKeyDown(e:*=null):void
 		{
 			keyDownList[e["keyCode"]] = true;
 		}
 		
 		/**键盘抬起处理*/
-		private function onKeyUp(e:Event):void
+		private function onKeyUp(e:*=null):void
 		{
 			delete keyDownList[e["keyCode"]];
 		}
 		
-		private function keyboardInspector():void
+		private function keyboardInspector(e:*=null):void
 		{
 			var numKeyDown:int = keyDownList.length;
 			

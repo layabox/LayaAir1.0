@@ -35,12 +35,125 @@ package laya.display {
 		private var _bounds:Rectangle;
 		/**@private */
 		private var _rstBoundPoints:Array;
+		/**@private */
+		public static function __init__():void {
+		   if (Render.isConchNode)
+		   {
+			   var from:*= Graphics.prototype;
+			   var to:*= __JS__("ConchGraphics.prototype");
+			   var list:Array = ["_addCmd","clear","destory","alpha","rotate","transform","scale","translate","save","restore","clipRect","blendMode","fillText","fillBorderText","_fands","drawRect","drawCircle","drawPie","drawPoly","drawPath","drawImageM","drawLine","drawLines","_drawPs","drawCurves","replaceText","replaceTextColor"];
+			   for (var i:int = 0,len:int=list.length;i <=len; i++)
+			   {
+				   var temp:String=list[i];
+				   from[temp] = to[temp];
+			   }
+			   from._saveToCmd = null;
+			   from.drawTexture= function(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, m:Matrix = null):void {
+					if (!width) width = tex.sourceWidth;
+					if (!height) height = tex.sourceHeight;
+					
+					width = width - tex.sourceWidth + tex.width;
+					height = height - tex.sourceHeight + tex.height;
+					if (width <= 0 || height <= 0)  return;
+					
+					//处理透明区域裁剪
+					x += tex.offsetX;
+					y += tex.offsetY;			
+					var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
+					this.drawImageM(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x , y , width, height,m);
+				}
+				from._getCmdPoints = function():Array {
+						var rst:Array;
+						rst = this._temp || (this._temp = []);
+						rst.length = 0;
+						if (!this._cmds||this._cmds.length==0)
+							return [];
+						var matrixs:Array;
+						matrixs = [];
+						var tMatrix:Matrix = new Matrix();
+						var tempMatrix:Matrix = _tempMatrix;
+						var cmd:Object;
+						for (var i:int = 0, n:int = this._cmds.length; i < n; i++) {
+							cmd = this._cmds[i];	
+							switch(cmd[0])
+							{
+								case 3://case context._rotate: 
+									tempMatrix.identity();
+									tempMatrix.translate(-cmd[2], -cmd[3]);
+									tempMatrix.rotate(cmd[1]);
+									tempMatrix.translate(cmd[2], cmd[3]);
+									this._switchMatrix(tMatrix, tempMatrix);
+									break;
+								case 4://context._transform: 
+									tempMatrix.identity();
+									tempMatrix.translate(-cmd[2], -cmd[3]);
+									tempMatrix.concat(cmd[1]);
+									tempMatrix.translate(cmd[2], cmd[3]);
+									break;
+								case 5://scale
+									tempMatrix.identity();
+									tempMatrix.translate(-cmd[3], -cmd[4]);
+									tempMatrix.scale(cmd[1],cmd[2]);
+									tempMatrix.translate(cmd[3], cmd[4]);
+									this._switchMatrix(tMatrix, tempMatrix);
+									break;
+								case 6://translate		
+									tempMatrix.identity();
+									tempMatrix.translate(cmd[1], cmd[2]);
+								    this._switchMatrix(tMatrix, tempMatrix);
+									break;
+								case 7: //save
+									matrixs.push(tMatrix);
+									tMatrix = tMatrix.clone();
+									break;
+								case 8: //restore
+									tMatrix = matrixs.pop();
+									break;
+								case 13://case context._drawRect:
+									_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
+									break;
+								case 14://case context._drawCircle
+								    _addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - cmd[3], cmd[2] - cmd[3], cmd[3] + cmd[3], cmd[3] + cmd[3]), tMatrix);
+									break;
+								case 16://case context._drawTexture: 
+								    _addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
+									break;
+								case 17://case context._drawTextureTransform: 
+									tMatrix.copyTo(tempMatrix);
+									tempMatrix.concat(cmd[5]);
+									_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tempMatrix);
+									break;
+								case 15://drawPie
+									_addPointArrToRst(rst, this._getPiePoints(cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]), tMatrix);
+									break;
+								case 18://drawpoly
+									_addPointArrToRst(rst, cmd[3], tMatrix, cmd[1], cmd[2]);
+									break;
+								case 19://drawPath
+									_addPointArrToRst(rst, this._getPathPoints(cmd[3]), tMatrix, cmd[1], cmd[2]);
+									break;
+								case 20://drawLine
+									_addPointArrToRst(rst, [cmd[1], cmd[2], cmd[3], cmd[4]], tMatrix);
+									break;
+								case 22://		case context._drawCurves: 
+									_addPointArrToRst(rst, Bezier.I.getBezierPoints(cmd[3]), tMatrix, cmd[1], cmd[2]);
+							}
+						}
+						return rst;
+				}
+		   }
+		}
 		
 		/**
 		 *  创建一个新的 <code>Graphics</code> 类实例。
 		 */
 		public function Graphics() {
 			_render = _renderEmpty;
+			if (Render.isConchNode)
+			{
+			 __JS__("this._nativeObj=new _conchGraphics();");
+			 __JS__("this.id=this._nativeObj.conchID;");
+			}
 		}
 		
 		/**
@@ -56,7 +169,7 @@ package laya.display {
 		}
 		
 		/**
-		 * <p>清理此对象。</p>
+		 * <p>清空绘制命令。</p>
 		 */
 		public function clear():void {
 			_one = null;
@@ -186,7 +299,7 @@ package laya.display {
 					}
 					break;
 				case context._drawTextureWithTransform: 
-					tMatrix.copy(tempMatrix);
+					tMatrix.copyTo(tempMatrix);
 					tempMatrix.concat(cmd[5]);
 					if (cmd[3] && cmd[4]) {
 						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tempMatrix);
@@ -234,7 +347,7 @@ package laya.display {
 		
 		private function _switchMatrix(tMatix:Matrix, tempMatrix:Matrix):void {
 			tempMatrix.concat(tMatix);
-			tempMatrix.copy(tMatix);
+			tempMatrix.copyTo(tMatix);
 		}
 		
 		private static function _addPointArrToRst(rst:Array, points:Array, matrix:Matrix, dx:Number = 0, dy:Number = 0):void {
@@ -276,16 +389,17 @@ package laya.display {
 			_sp && (_sp._renderType |= RenderSprite.GRAPHICS);
 			
 			var args:* = [tex, x, y, width, height, m];
-			if (_one == null) {
+			args.callee = m ? Render._context._drawTextureWithTransform : Render._context._drawTexture;
+			if (m) {
+				_saveToCmd(args.callee, args);
+			} else if (_one == null) {
 				_one = args;
 				_render = _renderOneImg;
 			} else {
 				_render = _renderAll;
 				(_cmds || (_cmds = [])).length === 0 && _cmds.push(_one);
 				_cmds.push(args);
-			}
-			
-			args.callee = m ? Render._context._drawTextureWithTransform : Render._context._drawTexture;
+			}			
 			_repaint();
 		}
 		
@@ -297,7 +411,6 @@ package laya.display {
 		}
 		
 		/*public function fillImage(img:Texture, x:Number, y:Number, width:Number, height:Number, repeat:Boolean = true):void {
-		   debugger;
 		   }*/
 		
 		/**
@@ -322,14 +435,14 @@ package laya.display {
 		}
 		
 		/**
-		 * 画布的剪裁区域，超出剪裁区域的坐标可以画图，但不能显示。
+		 * 设置剪裁区域，超出剪裁区域的坐标不显示。
 		 * @param	x X 轴偏移量。
 		 * @param	y Y 轴偏移量。
 		 * @param	width 宽度。
 		 * @param	height 高度。
 		 */
 		public function clipRect(x:Number, y:Number, width:Number, height:Number):void {
-			_saveToCmd(Render._context._clipRect, arguments);
+			_saveToCmd(Render._context._clipRect, [x,y,width,height]);
 		}
 		
 		/**
@@ -379,7 +492,7 @@ package laya.display {
 		 * @param	value 透明度。
 		 */
 		public function alpha(value:Number):void {
-			_saveToCmd(Render._context._alpha, arguments);
+			_saveToCmd(Render._context._alpha, [value]);
 		}
 		
 		/**
@@ -388,8 +501,8 @@ package laya.display {
 		 * @param	pivotX 水平方向轴心点坐标。
 		 * @param	pivotY 垂直方向轴心点坐标。
 		 */
-		public function transform(mat:Matrix, pivotX:Number = 0, pivotY:Number = 0):void {
-			_saveToCmd(Render._context._transform, [mat, pivotX, pivotY]);
+		public function transform(matrix:Matrix, pivotX:Number = 0, pivotY:Number = 0):void {
+			_saveToCmd(Render._context._transform, [matrix, pivotX, pivotY]);
 		}
 		
 		/**
@@ -426,14 +539,14 @@ package laya.display {
 		 * 保存当前环境的状态。
 		 */
 		public function save():void {
-			_saveToCmd(Render._context._save, arguments);
+			_saveToCmd(Render._context._save, []);
 		}
 		
 		/**
 		 * 返回之前保存过的路径状态和属性。
 		 */
 		public function restore():void {
-			_saveToCmd(Render._context._restore, arguments);
+			_saveToCmd(Render._context._restore, []);
 		}
 		
 		/**

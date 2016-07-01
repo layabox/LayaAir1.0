@@ -25,7 +25,7 @@ package
             Laya.loader.load(skin, Handler.create(this, onLoadComplete));
         }
         
-        private function onLoadComplete():void
+        private function onLoadComplete(e:*=null):void
         {
             var ta:TextArea = new TextArea("");
             ta.skin = skin;

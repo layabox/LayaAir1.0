@@ -30,7 +30,7 @@ package
 			Laya.loader.load(ApePath, Handler.create(this, setup));
 		}
 
-		private function setup():void
+		private function setup(_e:*=null):void
 		{
 			createApe();
 			showDragRegion();
@@ -64,7 +64,7 @@ package
 				null, "#FFFFFF", 2);
 		}
 		
-		private function onStartDrag(e:Event):void
+		private function onStartDrag(e:Event=null):void
 		{
 			//鼠标按下开始拖拽(设置了拖动区域和超界弹回的滑动效果)
 			ape.startDrag(dragRegion, true, 100);

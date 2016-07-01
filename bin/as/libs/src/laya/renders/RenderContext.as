@@ -1,9 +1,9 @@
 package laya.renders {
-	import laya.maths.Bezier;
 	import laya.maths.Matrix;
 	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
 	import laya.resource.Texture;
+	import laya.utils.HTMLChar;
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	
@@ -346,7 +346,7 @@ package laya.renders {
 			this.ctx.globalAlpha = args[0];
 		}
 		
-		public function fillWords(words:Vector.<Object>, x:Number, y:Number, font:String, color:String):void {
+		public function fillWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String):void {
 			this.ctx.fillWords(words, x, y, font, color);
 		}
 		

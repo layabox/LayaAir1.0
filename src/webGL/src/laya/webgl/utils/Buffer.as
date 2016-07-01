@@ -19,6 +19,7 @@ package laya.webgl.utils {
 		public static const INDEX:String = "INDEX";
 		
 		//Uniform
+		public static const UNICOLOR:String = "UNICOLOR";
 		public static const MVPMATRIX:String = "MVPMATRIX";
 		public static const MATRIX1:String = "MATRIX1";
 		public static const MATRIX2:String = "MATRIX2";
@@ -118,15 +119,18 @@ package laya.webgl.utils {
 			_length = value;
 		}
 		
+		public function get bufferUsage():int {
+			return _bufferUsage;
+		}
+		
 		public function Buffer() {
 			super();
 			lock = true;
 			_gl = WebGL.mainContext;
 			_id = ++_COUNT;
-			Render.isFlash || (_buffer = new ArrayBuffer(8));
 		}
 		
-		private function _bufferData():void {
+		protected function _bufferData():void {
 			_maxsize = Math.max(_maxsize, _length);
 			if (Stat.loopCount % 30 == 0) {
 				if (_buffer.byteLength > (_maxsize + 64)) {
@@ -145,7 +149,7 @@ package laya.webgl.utils {
 			_gl.bufferSubData(_type, 0, _buffer);
 		}
 		
-		private function _bufferSubData(offset:int = 0, dataStart:int = 0, dataLength:int = 0):void {
+		protected function _bufferSubData(offset:int = 0, dataStart:int = 0, dataLength:int = 0):void {
 			_maxsize = Math.max(_maxsize, _length);
 			if (Stat.loopCount % 30 == 0) {
 				if (_buffer.byteLength > (_maxsize + 64)) {
@@ -184,10 +188,11 @@ package laya.webgl.utils {
 			if (_glBuffer) {
 				WebGL.mainContext.deleteBuffer(_glBuffer);
 				_glBuffer = null;
-				_upload = true;
-				_uploadSize = 0;
-				memorySize = 0;
 			}
+			_upload = true;
+			_uploadSize = 0;
+			memorySize = 0;
+			//_buffer = null;//临时屏蔽
 		}
 		
 		public function _bind():void {
@@ -198,7 +203,6 @@ package laya.webgl.utils {
 		public function _bind_upload():Boolean {
 			if (!_upload)
 				return false;
-			
 			_upload = false;
 			_bind();
 			_bufferData();

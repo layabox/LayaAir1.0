@@ -62,7 +62,7 @@ package laya.net {
 		 */
 		public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true):LoaderManager {
 			if (url is Array) return _loadAssets(url as Array, complete, progress, cache);
-			//url = URL.formatURL(url);
+			url = URL.formatURL(url);
 			var content:* = Loader.getRes(url);
 			if (content != null) {
 				complete && complete.runWith(content);
@@ -110,8 +110,9 @@ package laya.net {
 			});
 			
 			var _this:LoaderManager = this;
-			function onLoaded(data:*):void {
+			function onLoaded(data:*=null):void {
 				loader.offAll();
+				loader._data = null;
 				_this._loaders.push(loader);
 				_this._endLoad(resInfo, data);
 				_this._loaderCount--;
@@ -193,7 +194,7 @@ package laya.net {
 				load(item.url, Handler.create(item, loadComplete, [item]), progressHandler, item.type, item.priority || 1, cache);
 			}
 			
-			function loadComplete(item:Object, content:*):void {
+			function loadComplete(item:Object, content:*= null):void {
 				loadedSize++;
 				item.progress = 1;
 				if (loadedSize === itemCount && complete) {

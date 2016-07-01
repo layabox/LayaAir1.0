@@ -156,7 +156,7 @@ window.Laya=(function(window,document){
 				}
 		},		
 		un:function(obj,name,value){
-			arguments.length<3 &&(value=obj[name]);
+			value || (value=obj[name]);
 			Laya.__propun.value=value;
 			Object.defineProperty(obj, name, Laya.__propun);
 			return value;
@@ -183,15 +183,11 @@ window.Laya=(function(window,document){
 
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
+	Laya.interface('laya.runtime.IConchNode');
 	Laya.interface('laya.display.ILayout');
 	Laya.interface('laya.resource.IDispose');
-	Laya.interface('laya.filters.IFilterAction');
 	Laya.interface('laya.filters.IFilter');
-	var wait=Laya.wait=function(conditions){
-		return Asyn.wait(conditions);
-	}
-
-
+	Laya.interface('laya.filters.IFilterAction');
 	var sleep=Laya.sleep=function(value){
 		Asyn.sleep(value);
 	}
@@ -199,6 +195,11 @@ window.Laya=(function(window,document){
 
 	var load=Laya.load=function(url,type){
 		return Asyn.load(url,type);
+	}
+
+
+	var wait=Laya.wait=function(conditions){
+		return Asyn.wait(conditions);
 	}
 
 
@@ -227,7 +228,7 @@ window.Laya=(function(window,document){
 		}
 
 		RunDriver.newWebGLContext=function(canvas,webGLName){
-			return canvas.getContext(webGLName,{stencil:true,alpha:false,antialias:true,premultipliedAlpha:false});
+			return canvas.getContext(webGLName,{stencil:true,alpha:false,antialias:Config.isAntialias,premultipliedAlpha:false});
 		}
 
 		RunDriver.getPixelRatio=function(pixelRatio){
@@ -249,6 +250,11 @@ window.Laya=(function(window,document){
 		}
 
 		RunDriver.measureText=function(txt,font){
+			if (Render.isConchApp){
+				var ctx=/*__JS__ */ConchTextCanvas;
+				ctx.font=font;
+				return ctx.measureText(txt);
+			}
 			if (RunDriver._charSizeTestDiv==null){
 				RunDriver._charSizeTestDiv=Browser.createElement('div');
 				RunDriver._charSizeTestDiv.style.cssText="z-index:10000000;padding:0px;position: absolute;left:0px;visibility:hidden;top:0px;background:white";
@@ -329,6 +335,8 @@ window.Laya=(function(window,document){
 		Laya.init=function(width,height,__plugins){
 			var plugins=[];for(var i=2,sz=arguments.length;i<sz;i++)plugins.push(arguments[i]);
 			Browser.__init__();
+			Context.__init__();
+			Graphics.__init__();
 			Laya.timer=new Timer();
 			Laya.loader=new LoaderManager();
 			for (var i=0,n=plugins.length;i < n;i++){
@@ -338,6 +346,7 @@ window.Laya=(function(window,document){
 			Style.__init__();
 			ResourceManager.__init__();
 			Laya.stage=new Stage();
+			Laya.stage.model&&Laya.stage.model.setRootNode();
 			var location=Browser.window.location;
 			var pathName=location.pathname;
 			pathName=pathName.charAt(2)==':' ? pathName.substring(1):pathName;
@@ -378,7 +387,7 @@ window.Laya=(function(window,document){
 		Laya.timer=null;
 		Laya.loader=null;
 		Laya.render=null
-		Laya.version="1.0.0RC2";
+		Laya.version="1.0.0Release";
 		return Laya;
 	})()
 
@@ -390,13 +399,13 @@ window.Laya=(function(window,document){
 	var Config=(function(){
 		function Config(){};
 		__class(Config,'Config');
-		Config.showLog=false;
 		Config.WebGLTextCacheCount=500;
 		Config.atlasEnable=false;
 		Config.showCanvasMark=false;
 		Config.CPUMemoryLimit=120 *1024 *1024;
 		Config.GPUMemoryLimit=160 *1024 *1024;
 		Config.animationInterval=30;
+		Config.isAntialias=false;
 		return Config;
 	})()
 
@@ -700,6 +709,7 @@ window.Laya=(function(window,document){
 		}
 
 		__proto._recoverHandlers=function(arr){
+			if(!arr)return;
 			if (arr.run){
 				arr.recover();
 				}else {
@@ -970,7 +980,7 @@ window.Laya=(function(window,document){
 		__proto.getTextWidth=function(text){
 			var tWidth=0;
 			for (var i=0,n=text.length;i < n;i++){
-				tWidth+=this.getCharWidth(text[i]);
+				tWidth+=this.getCharWidth(text.charAt(i));
 			}
 			return tWidth;
 		}
@@ -997,16 +1007,16 @@ window.Laya=(function(window,document){
 			var tWidth=0;
 			var tTexture;
 			for (var i=0,n=text.length;i < n;i++){
-				tWidth+=this.getCharWidth(text[i]);
+				tWidth+=this.getCharWidth(text.charAt(i));
 			};
 			var dx=this._leftPadding;
 			align==="center" && (dx=(width-tWidth)/ 2);
 			align==="right" && (dx=(width-tWidth)-this._rightPadding);
 			var tX=0;
 			for (i=0,n=text.length;i < n;i++){
-				tTexture=this.getCharTexture(text[i]);
+				tTexture=this.getCharTexture(text.charAt(i));
 				if (tTexture)sprite.graphics.drawTexture(tTexture,drawX+tX+dx,drawY,tTexture.width,tTexture.height);
-				tX+=this.getCharWidth(text[i]);
+				tX+=this.getCharWidth(text.charAt(i));
 			}
 		}
 
@@ -1386,6 +1396,10 @@ window.Laya=(function(window,document){
 			//this._rstBoundPoints=null;
 			this._render=this._renderEmpty;
 			this._render=this._renderEmpty;
+			if (Render.isConchNode){
+				/*__JS__ */this._nativeObj=new _conchGraphics();;
+				/*__JS__ */this.id=this._nativeObj.conchID;;
+			}
 		}
 
 		__class(Graphics,'laya.display.Graphics');
@@ -1403,7 +1417,7 @@ window.Laya=(function(window,document){
 		}
 
 		/**
-		*<p>清理此对象。</p>
+		*<p>清空绘制命令。</p>
 		*/
 		__proto.clear=function(){
 			this._one=null;
@@ -1511,7 +1525,7 @@ window.Laya=(function(window,document){
 						}
 						break ;
 					case context._drawTextureWithTransform:
-						tMatrix.copy(tempMatrix);
+						tMatrix.copyTo(tempMatrix);
 						tempMatrix.concat(cmd[5]);
 						if (cmd[3] && cmd[4]){
 							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],cmd[3],cmd[4]),tempMatrix);
@@ -1554,7 +1568,7 @@ window.Laya=(function(window,document){
 
 		__proto._switchMatrix=function(tMatix,tempMatrix){
 			tempMatrix.concat(tMatix);
-			tempMatrix.copy(tMatix);
+			tempMatrix.copyTo(tMatix);
 		}
 
 		/**
@@ -1578,7 +1592,10 @@ window.Laya=(function(window,document){
 			y+=tex.offsetY;
 			this._sp && (this._sp._renderType |=/*laya.renders.RenderSprite.GRAPHICS*/0x100);
 			var args=[tex,x,y,width,height,m];
-			if (this._one==null){
+			args.callee=m ? Render._context._drawTextureWithTransform :Render._context._drawTexture;
+			if (m){
+				this._saveToCmd(args.callee,args);
+				}else if (this._one==null){
 				this._one=args;
 				this._render=this._renderOneImg;
 				}else {
@@ -1586,7 +1603,6 @@ window.Laya=(function(window,document){
 				(this._cmds || (this._cmds=[])).length===0 && this._cmds.push(this._one);
 				this._cmds.push(args);
 			}
-			args.callee=m ? Render._context._drawTextureWithTransform :Render._context._drawTexture;
 			this._repaint();
 		}
 
@@ -1619,14 +1635,14 @@ window.Laya=(function(window,document){
 		}
 
 		/**
-		*画布的剪裁区域，超出剪裁区域的坐标可以画图，但不能显示。
+		*设置剪裁区域，超出剪裁区域的坐标不显示。
 		*@param x X 轴偏移量。
 		*@param y Y 轴偏移量。
 		*@param width 宽度。
 		*@param height 高度。
 		*/
 		__proto.clipRect=function(x,y,width,height){
-			this._saveToCmd(Render._context._clipRect,arguments);
+			this._saveToCmd(Render._context._clipRect,[x,y,width,height]);
 		}
 
 		/**
@@ -1676,7 +1692,7 @@ window.Laya=(function(window,document){
 		*@param value 透明度。
 		*/
 		__proto.alpha=function(value){
-			this._saveToCmd(Render._context._alpha,arguments);
+			this._saveToCmd(Render._context._alpha,[value]);
 		}
 
 		/**
@@ -1685,10 +1701,10 @@ window.Laya=(function(window,document){
 		*@param pivotX 水平方向轴心点坐标。
 		*@param pivotY 垂直方向轴心点坐标。
 		*/
-		__proto.transform=function(mat,pivotX,pivotY){
+		__proto.transform=function(matrix,pivotX,pivotY){
 			(pivotX===void 0)&& (pivotX=0);
 			(pivotY===void 0)&& (pivotY=0);
-			this._saveToCmd(Render._context._transform,[mat,pivotX,pivotY]);
+			this._saveToCmd(Render._context._transform,[matrix,pivotX,pivotY]);
 		}
 
 		/**
@@ -1729,14 +1745,14 @@ window.Laya=(function(window,document){
 		*保存当前环境的状态。
 		*/
 		__proto.save=function(){
-			this._saveToCmd(Render._context._save,arguments);
+			this._saveToCmd(Render._context._save,[]);
 		}
 
 		/**
 		*返回之前保存过的路径状态和属性。
 		*/
 		__proto.restore=function(){
-			this._saveToCmd(Render._context._restore,arguments);
+			this._saveToCmd(Render._context._restore,[]);
 		}
 
 		/**
@@ -2021,6 +2037,110 @@ window.Laya=(function(window,document){
 			this._repaint();
 		});
 
+		Graphics.__init__=function(){
+			if (Render.isConchNode){
+				var from=laya.display.Graphics.prototype;
+				var to=/*__JS__ */ConchGraphics.prototype;
+				var list=["_addCmd","clear","destory","alpha","rotate","transform","scale","translate","save","restore","clipRect","blendMode","fillText","fillBorderText","_fands","drawRect","drawCircle","drawPie","drawPoly","drawPath","drawImageM","drawLine","drawLines","_drawPs","drawCurves","replaceText","replaceTextColor"];
+				for (var i=0,len=list.length;i <=len;i++){
+					var temp=list[i];
+					from[temp]=to[temp];
+				}
+				from._saveToCmd=null;
+				from.drawTexture=function (tex,x,y,width,height,m){
+					(width===void 0)&& (width=0);
+					(height===void 0)&& (height=0);
+					if (!width)width=tex.sourceWidth;
+					if (!height)height=tex.sourceHeight;
+					width=width-tex.sourceWidth+tex.width;
+					height=height-tex.sourceHeight+tex.height;
+					if (width <=0 || height <=0)return;
+					x+=tex.offsetX;
+					y+=tex.offsetY;
+					var uv=tex.uv,w=tex.bitmap.width,h=tex.bitmap.height;
+					this.drawImageM(tex.bitmap.source,uv[0] *w,uv[1] *h,(uv[2]-uv[0])*w,(uv[5]-uv[3])*h,x ,y ,width,height,m);
+				}
+				from._getCmdPoints=function (){
+					var rst;
+					rst=this._temp || (this._temp=[]);
+					rst.length=0;
+					if (!this._cmds||this._cmds.length==0)
+						return [];
+					var matrixs;
+					matrixs=[];
+					var tMatrix=new Matrix();
+					var tempMatrix=Graphics._tempMatrix;
+					var cmd;
+					for (var i=0,n=this._cmds.length;i < n;i++){
+						cmd=this._cmds[i];
+						switch(cmd[0]){
+							case 3:
+								tempMatrix.identity();
+								tempMatrix.translate(-cmd[2],-cmd[3]);
+								tempMatrix.rotate(cmd[1]);
+								tempMatrix.translate(cmd[2],cmd[3]);
+								this._switchMatrix(tMatrix,tempMatrix);
+								break ;
+							case 4:
+								tempMatrix.identity();
+								tempMatrix.translate(-cmd[2],-cmd[3]);
+								tempMatrix.concat(cmd[1]);
+								tempMatrix.translate(cmd[2],cmd[3]);
+								break ;
+							case 5:
+								tempMatrix.identity();
+								tempMatrix.translate(-cmd[3],-cmd[4]);
+								tempMatrix.scale(cmd[1],cmd[2]);
+								tempMatrix.translate(cmd[3],cmd[4]);
+								this._switchMatrix(tMatrix,tempMatrix);
+								break ;
+							case 6:
+								tempMatrix.identity();
+								tempMatrix.translate(cmd[1],cmd[2]);
+								this._switchMatrix(tMatrix,tempMatrix);
+								break ;
+							case 7:
+								matrixs.push(tMatrix);
+								tMatrix=tMatrix.clone();
+								break ;
+							case 8:
+								tMatrix=matrixs.pop();
+								break ;
+							case 13:
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],cmd[3],cmd[4]),tMatrix);
+								break ;
+							case 14:
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-cmd[3],cmd[2]-cmd[3],cmd[3]+cmd[3],cmd[3]+cmd[3]),tMatrix);
+								break ;
+							case 16:
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],cmd[3],cmd[4]),tMatrix);
+								break ;
+							case 17:
+								tMatrix.copyTo(tempMatrix);
+								tempMatrix.concat(cmd[5]);
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],cmd[3],cmd[4]),tempMatrix);
+								break ;
+							case 15:
+								Graphics._addPointArrToRst(rst,this._getPiePoints(cmd[1],cmd[2],cmd[3],cmd[4],cmd[5]),tMatrix);
+								break ;
+							case 18:
+								Graphics._addPointArrToRst(rst,cmd[3],tMatrix,cmd[1],cmd[2]);
+								break ;
+							case 19:
+								Graphics._addPointArrToRst(rst,this._getPathPoints(cmd[3]),tMatrix,cmd[1],cmd[2]);
+								break ;
+							case 20:
+								Graphics._addPointArrToRst(rst,[cmd[1],cmd[2],cmd[3],cmd[4]],tMatrix);
+								break ;
+							case 22:
+								Graphics._addPointArrToRst(rst,Bezier.I.getBezierPoints(cmd[3]),tMatrix,cmd[1],cmd[2]);
+							}
+					}
+					return rst;
+				}
+			}
+		}
+
 		Graphics._addPointArrToRst=function(rst,points,matrix,dx,dy){
 			(dx===void 0)&& (dx=0);
 			(dy===void 0)&& (dy=0);
@@ -2057,6 +2177,7 @@ window.Laya=(function(window,document){
 			//this.currentTarget=null;
 			//this._stoped=false;
 			//this.touchId=0;
+			//this.keyCode=0;
 		}
 
 		__class(Event,'laya.events.Event');
@@ -2180,6 +2301,7 @@ window.Laya=(function(window,document){
 		Event.LINK="link";
 		Event.LABEL="label";
 		Event.FULL_SCREEN_CHANGE="fullscreenchange";
+		Event.DEVICE_LOST="devicelost";
 		return Event;
 	})()
 
@@ -2516,6 +2638,7 @@ window.Laya=(function(window,document){
 		}
 
 		__proto.sendClick=function(ele,type){
+			if (ele.destroyed)return;
 			if (type===/*laya.events.Event.MOUSE_UP*/"mouseup" && ele._get$P("$_MOUSEDOWN")){
 				ele._set$P("$_MOUSEDOWN",false);
 				ele.event(/*laya.events.Event.CLICK*/"click",this._event.setTo(/*laya.events.Event.CLICK*/"click",ele,this._target));
@@ -2554,12 +2677,12 @@ window.Laya=(function(window,document){
 			}
 			if (!this.disableMouseEvent){
 				var flag=false;
-				if (sp.hitTestFirst && !this.hitTest(sp,mouseX,mouseY)){
+				if (sp.hitTestPrior && !sp.mouseThrough && !this.hitTest(sp,mouseX,mouseY)){
 					return false;
 				}
 				for (var i=sp._childs.length-1;i >-1;i--){
 					var child=sp._childs[i];
-					if (child.mouseEnabled && child.visible){
+					if (!child.destroyed && child.mouseEnabled && child.visible){
 						flag=this.check(child,mouseX+(scrollRect ? scrollRect.x :0),mouseY+(scrollRect ? scrollRect.y :0),callBack);
 						if (flag)return true;
 					}
@@ -2569,6 +2692,9 @@ window.Laya=(function(window,document){
 			if (isHit){
 				this._target=sp;
 				callBack.call(this,sp);
+				}else if (callBack===this.onMouseUp && sp===this._stage){
+				this._target=this._stage;
+				callBack.call(this,this._target);
 			}
 			return isHit;
 		}
@@ -2739,12 +2865,13 @@ window.Laya=(function(window,document){
 
 		__proto.getColor=function(red,green,blue,alpha){
 			var rst=[];
-			if (this.data._elements){
-				var a=this.data._elements;
-				rst[0]=a[0] *red+a[1] *green+a[2] *blue+a[3] *alpha+a[4];
-				rst[1]=a[5] *red+a[6] *green+a[7] *blue+a[8] *alpha+a[9];
-				rst[2]=a[10] *red+a[11] *green+a[12] *blue+a[13] *alpha+a[14];
-				rst[3]=a[15] *red+a[16] *green+a[17] *blue+a[18] *alpha+a[19];
+			if (this.data._mat && this.data._alpha){
+				var mat=this.data._mat;
+				var tempAlpha=this.data._alpha;
+				rst[0]=mat[0] *red+mat[1] *green+mat[2] *blue+mat[3] *alpha+tempAlpha[0];
+				rst[1]=mat[4] *red+mat[5] *green+mat[6] *blue+mat[7] *alpha+tempAlpha[1];
+				rst[2]=mat[8] *red+mat[9] *green+mat[10] *blue+mat[11] *alpha+tempAlpha[2];
+				rst[3]=mat[12] *red+mat[13] *green+mat[14] *blue+mat[15] *alpha+tempAlpha[3];
 			}
 			return rst;
 		}
@@ -3366,19 +3493,19 @@ window.Laya=(function(window,document){
 
 		/**
 		*将指定矩阵与当前矩阵连接，从而将这两个矩阵的几何效果有效地结合在一起。
-		*@param mtx 要连接到源矩阵的矩阵。
+		*@param matrix 要连接到源矩阵的矩阵。
 		*@return 当前矩阵。
 		*/
-		__proto.concat=function(mtx){
+		__proto.concat=function(matrix){
 			var a=this.a;
 			var c=this.c;
 			var tx=this.tx;
-			this.a=a *mtx.a+this.b *mtx.c;
-			this.b=a *mtx.b+this.b *mtx.d;
-			this.c=c *mtx.a+this.d *mtx.c;
-			this.d=c *mtx.b+this.d *mtx.d;
-			this.tx=tx *mtx.a+this.ty *mtx.c+mtx.tx;
-			this.ty=tx *mtx.b+this.ty *mtx.d+mtx.ty;
+			this.a=a *matrix.a+this.b *matrix.c;
+			this.b=a *matrix.b+this.b *matrix.d;
+			this.c=c *matrix.a+this.d *matrix.c;
+			this.d=c *matrix.b+this.d *matrix.d;
+			this.tx=tx *matrix.a+this.ty *matrix.c+matrix.tx;
+			this.ty=tx *matrix.b+this.ty *matrix.d+matrix.ty;
 			return this;
 		}
 
@@ -3404,7 +3531,7 @@ window.Laya=(function(window,document){
 		*@param dec 要复制当前矩阵数据的 Matrix 对象。
 		*@return 已复制当前矩阵数据的 Matrix 对象。
 		*/
-		__proto.copy=function(dec){
+		__proto.copyTo=function(dec){
 			dec.a=this.a;
 			dec.b=this.b;
 			dec.c=this.c;
@@ -4090,8 +4217,8 @@ window.Laya=(function(window,document){
 			return this._path;
 		});
 
-		URL.formatURL=function(url,_basePath){
-			if (URL.customFormat !=null)url=URL.customFormat(url,_basePath);
+		URL.formatURL=function(url,base){
+			if (URL.customFormat !=null)url=URL.customFormat(url,base);
 			if (!url)return "null path";
 			if (Render.isConchApp==false){
 				URL.version[url] && (url+="?v="+URL.version[url]);
@@ -4100,7 +4227,7 @@ window.Laya=(function(window,document){
 				return URL.rootPath+url.substring(1);
 			if (URL.isAbsolute(url))
 				return url;
-			return (_basePath || URL.basePath)+url;
+			return (base || URL.basePath)+url;
 		}
 
 		URL.isAbsolute=function(url){
@@ -4137,7 +4264,6 @@ window.Laya=(function(window,document){
 		*@param height 游戏窗口高度。
 		*/
 		function Render(width,height){
-			Render._mainCanvas=HTMLCanvas.create('2D');
 			var style=Render._mainCanvas.source.style;
 			style.position='absolute';
 			style.top=style.left="0px";
@@ -4156,9 +4282,45 @@ window.Laya=(function(window,document){
 		}
 
 		__class(Render,'laya.renders.Render');
+		var __proto=Render.prototype;
+		///*[IF-Flash]*/Window.stage.addEventListener("enterFrame",enterFrame );
+		__proto.enterFrame=function(e){
+			Laya.stage._loop();
+		}
+
+		/**是否是加速器 只读*/
+		__getset(1,Render,'isConchApp',function(){
+			return /*__JS__ */(window.ConchRenderType & 0x04)==0x04;
+		});
+
+		/**加速器模式下设置是否是节点模式 如果是否就是非节点模式 默认为canvas模式 如果设置了isConchWebGL则是webGL模式*/
+		__getset(1,Render,'isConchNode',function(){
+			return /*__JS__ */(window.ConchRenderType & 5)==5;
+			},function(b){
+			if (b){
+				/*__JS__ */window.ConchRenderType |=0x01;
+			}
+			else{
+				/*__JS__ */window.ConchRenderType &=~ 0x01;
+			}
+		});
+
 		/**目前使用的渲染器。*/
 		__getset(1,Render,'context',function(){
 			return Render._context;
+		});
+
+		/**加速器模式下设置是否是WebGL模式*/
+		__getset(1,Render,'isConchWebGL',function(){
+			return /*__JS__ */window.ConchRenderType==6;
+			},function(b){
+			if (b){
+				Render.isConchNode=false;
+				/*__JS__ */window.ConchRenderType |=0x02;
+			}
+			else{
+				/*__JS__ */window.ConchRenderType &=~ 0x02;
+			}
 		});
 
 		/**渲染使用的原生画布引用。 */
@@ -4169,11 +4331,18 @@ window.Laya=(function(window,document){
 		Render._context=null
 		Render._mainCanvas=null
 		Render.WebGL=null
-		Render.isConchApp=false;
+		Render.NODE=0x01;
+		Render.WEBGL=0x02;
+		Render.CONCH=0x04;
 		Render.isWebGL=false;
 		Render.is3DMode=false;
 		Render.optimizeTextureMemory=function(url,texture){
 			return true;
+		}
+
+		Render.__init$=function(){
+			/*__JS__ */window.ConchRenderType=window.ConchRenderType||1;;
+			/*__JS__ */window.ConchRenderType|=(!window.conch?0:0x04);;
 		}
 
 		return Render;
@@ -4622,16 +4791,16 @@ window.Laya=(function(window,document){
 				case 0x01:
 					this._fun=this._image;
 					return;
-				case 0x04:
+				case 0x02:
 					this._fun=this._alpha;
 					return;
-				case 0x08:
+				case 0x04:
 					this._fun=this._transform;
 					return;
 				case 0x20:
 					this._fun=this._blend;
 					return;
-				case 0x10:
+				case 0x08:
 					this._fun=this._canvas;
 					return;
 				case 0x40:
@@ -4652,10 +4821,10 @@ window.Laya=(function(window,document){
 				case 0x01 | 0x100:
 					this._fun=this._image2;
 					return;
-				case 0x01 | 0x08 | 0x100:
+				case 0x01 | 0x04 | 0x100:
 					this._fun=this._image2;
 					return;
-				case 0x02:
+				case 0x10:
 					this._fun=Filter._filter;
 					return;
 				case 0x11111:
@@ -4836,10 +5005,15 @@ window.Laya=(function(window,document){
 					ctx.scale(scaleX,scaleY);
 					_next._fun.call(_next,sprite,tx,-left,-top);
 					ctx.restore();
-					sprite._applyFilters();
+					if(!Render.isConchApp||Render.isConchWebGL)sprite._applyFilters();
 					}else {
+					ctx=(tx).ctx;
+					if (!Render.isConchWebGL&&Render.isConchApp){
+						var t=sprite._$P.rgbg;
+						t&&ctx.setFilter(t[0],t[1],t[2],t[3]);
+					}
 					_next._fun.call(_next,sprite,tx,-left,-top);
-					sprite._applyFilters();
+					if(!Render.isConchApp||Render.isConchWebGL)sprite._applyFilters();
 				}
 				if (sprite._$P.staticCache)_cacheCanvas.reCache=false;
 				Stat.canvasReCache++;
@@ -4867,9 +5041,9 @@ window.Laya=(function(window,document){
 					RenderSprite.renders[n]=o;
 				}
 			}
-			_initSame([0x01,0x100,0x08,0x04],new RenderSprite(0x01,null));
+			_initSame([0x01,0x100,0x04,0x02],new RenderSprite(0x01,null));
 			RenderSprite.renders[0x01 | 0x100]=RunDriver.createRenderSprite(0x01 | 0x100,null);
-			RenderSprite.renders[0x01 | 0x08 | 0x100]=new RenderSprite(0x01 | 0x08 | 0x100,null);
+			RenderSprite.renders[0x01 | 0x04 | 0x100]=new RenderSprite(0x01 | 0x04 | 0x100,null);
 		}
 
 		RenderSprite._initRenderFun=function(sprite,context,x,y){
@@ -4890,10 +5064,10 @@ window.Laya=(function(window,document){
 		}
 
 		RenderSprite.IMAGE=0x01;
-		RenderSprite.FILTERS=0x02;
-		RenderSprite.ALPHA=0x04;
-		RenderSprite.TRANSFORM=0x08;
-		RenderSprite.CANVAS=0x10;
+		RenderSprite.ALPHA=0x02;
+		RenderSprite.TRANSFORM=0x04;
+		RenderSprite.CANVAS=0x08;
+		RenderSprite.FILTERS=0x10;
 		RenderSprite.BLEND=0x20;
 		RenderSprite.CLIP=0x40;
 		RenderSprite.STYLE=0x80;
@@ -5058,13 +5232,15 @@ window.Laya=(function(window,document){
 			this._repaint=false;
 		}
 
-		Context._init=function(canvas,ctx){
-			ctx.__fillText=ctx.fillText;
-			ctx.__fillRect=ctx.fillRect;
-			ctx.__strokeText=ctx.strokeText;
+		Context.__init__=function(){
+			var from=laya.resource.Context.prototype;
+			var to=/*__JS__ */CanvasRenderingContext2D.prototype;
+			to.__fillText=to.fillText;
+			to.__fillRect=to.fillRect;
+			to.__strokeText=to.strokeText;
 			var funs=['fillWords','setIsMainContext','fillRect','strokeText','fillText','transformByMatrix','setTransformByMatrix','clipRect','drawTexture','drawTexture2','drawTextureWithTransform','flush','clear','destroy','drawCanvas','fillBorderText'];
 			funs.forEach(function(i){
-				ctx[i]=Context._default[i];
+				to[i]=from[i];
 			});
 		}
 
@@ -5159,12 +5335,9 @@ window.Laya=(function(window,document){
 		*卸载此资源管理器载入的资源。
 		*/
 		__proto.unload=function(){
-			if (this===ResourceManager._systemResourceManager)
-				throw new Error("systemResourceManager不能被释放！");
 			var tempResources=this._resources.slice(0,this._resources.length);
 			for (var i=0;i < tempResources.length;i++){
 				var resource=tempResources[i];
-				resource.resourceManager.removeResource(resource);
 				resource.dispose();
 			}
 			tempResources.length=0;
@@ -5386,7 +5559,6 @@ window.Laya=(function(window,document){
 		}
 
 		System.__init__=function(){
-			Render.isConchApp=/*__JS__ */window.conch ? true :false;;
 			if (Render.isConchApp){
 				/*__JS__ */conch.disableConchResManager();
 				/*__JS__ */conch.disableConchAutoRestoreLostedDevice();
@@ -5446,6 +5618,7 @@ window.Laya=(function(window,document){
 		});
 
 		Browser.__init__=function(){
+			Render._mainCanvas=Render._mainCanvas||HTMLCanvas.create('2D');
 			if (Browser.canvas)return;
 			Browser.canvas=HTMLCanvas.create('2D');
 			Browser.context=Browser.canvas.getContext('2d');
@@ -5484,6 +5657,7 @@ window.Laya=(function(window,document){
 		Browser.httpProtocol=Browser.window.location.protocol=="http:";
 		Browser.webAudioOK=Browser.window["AudioContext"] || Browser.window["webkitAudioContext"] || Browser.window["mozAudioContext"] ? true :false;
 		Browser.soundType=Browser.webAudioOK ? "WEBAUDIOSOUND" :"AUDIOSOUND";
+		Browser.enableTouch=false;
 		Browser._pixelRatio=-1;
 		__static(Browser,
 		['document',function(){return this.document=Browser.window.document;},'context',function(){return this.context=Browser.canvas.getContext('2d');},'canvas',function(){return this.canvas=HTMLCanvas.create('2D');}
@@ -5500,6 +5674,7 @@ window.Laya=(function(window,document){
 			/*__JS__ */if(!flag){meta=document.createElement('meta');meta.name='viewport',meta.content=content;document.getElementsByTagName('head')[0].appendChild(meta);};
 			/*__JS__ */Sound=Browser.webAudioOK?WebAudioSound:AudioSound;;
 			/*__JS__ */if (Browser.webAudioOK)WebAudioSound.initWebAudio();;
+			/*__JS__ */Browser.enableTouch=(('ontouchstart' in window)|| window.DocumentTouch && document instanceof DocumentTouch);
 		}
 
 		return Browser;
@@ -5512,15 +5687,15 @@ window.Laya=(function(window,document){
 	*/
 	//class laya.utils.Byte
 	var Byte=(function(){
-		function Byte(d){
+		function Byte(data){
 			this._xd_=true;
 			this._allocated_=8;
 			//this._d_=null;
 			//this._u8d_=null;
 			this._pos_=0;
 			this._length=0;
-			if (d){
-				this._u8d_=new Uint8Array(d);
+			if (data){
+				this._u8d_=new Uint8Array(data);
 				this._d_=new DataView(this._u8d_.buffer);
 				this._length=this._d_.byteLength;
 				}else {
@@ -5989,12 +6164,6 @@ window.Laya=(function(window,document){
 			return ClassUtils._classMap[className];
 		}
 
-		ClassUtils.getClass=function(className){
-			var classObject=ClassUtils._classMap[className] || className;
-			if ((typeof classObject=='string'))return Laya["__classmap"][classObject];
-			return classObject;
-		}
-
 		ClassUtils.getInstance=function(className){
 			var compClass=ClassUtils.getClass(className);
 			if (compClass)return new compClass();
@@ -6041,6 +6210,12 @@ window.Laya=(function(window,document){
 		}
 
 		ClassUtils._classMap={'Sprite':'laya.display.Sprite','Text':'laya.display.Text','div':'laya.html.dom.HTMLDivElement','img':'laya.html.dom.HTMLImageElement','span':'laya.html.dom.HTMLElement','br':'laya.html.dom.HTMLBrElement','style':'laya.html.dom.HTMLStyleElement','font':'laya.html.dom.HTMLElement','a':'laya.html.dom.HTMLElement','#text':'laya.html.dom.HTMLElement'};
+		ClassUtils.getClass=function(className){
+			var classObject=ClassUtils._classMap[className] || className;
+			if ((typeof classObject=='string'))return Laya["__classmap"][classObject];
+			return classObject;
+		}
+
 		return ClassUtils;
 	})()
 
@@ -6745,30 +6920,37 @@ window.Laya=(function(window,document){
 		function Log(){};
 		__class(Log,'laya.utils.Log');
 		Log.enable=function(){
-			Log._logdiv=Browser.window.document.createElement('div');
-			Browser.window.document.body.appendChild(Log._logdiv);
-			Log._logdiv.style.cssText="border:white;overflow:scroll;z-index:1000000;background:rgba(100,100,100,0.7);color:white;position: absolute;left:0px;top:0px;width:100%;height:50%";
-			Log._logdiv.onclick=function (){
-				if (parseInt(this.style.width)==30){
-					this.style.width='100%';
-					this.style.height="50%";
-					this.style.overflow="scroll"
-					this.style.background="rgba(100,100,100,0.7)"
-					}else {
-					this.style.width=this.style.height="30px";
-					this.style.overflow="hidden";
-					this.style.background="white"
-				}
+			if (!Log._logdiv){
+				Log._logdiv=Browser.window.document.createElement('div');
+				Browser.window.document.body.appendChild(Log._logdiv);
+				Log._logdiv.style.cssText="pointer-events:none;border:white;overflow:hidden;z-index:1000000;background:rgba(100,100,100,0.6);color:white;position: absolute;left:0px;top:0px;width:1px;height:1px;";
+			}
+			Log.toggle();
+		}
+
+		Log.toggle=function(){
+			var style=Log._logdiv.style;
+			if (style.width=="1px"){
+				style.width=style.height="50%";
+				}else {
+				style.width=style.height="1px";
 			}
 		}
 
 		Log.print=function(value){
 			if (Log._logdiv){
+				Log._count++;
+				if (Log._count > 50){
+					Log._logdiv.innerText="";
+					Log._count=1;
+				}
 				Log._logdiv.innerText+=value+"\n";
+				Log._logdiv.scrollTop=Log._logdiv.scrollHeight;
 			}
 		}
 
 		Log._logdiv=null
+		Log._count=0;
 		return Log;
 	})()
 
@@ -6873,8 +7055,12 @@ window.Laya=(function(window,document){
 			Stat._first=true;
 			Stat.loop();
 			Stat._first=false;
-			Laya.timer.frameLoop(1,Stat,Stat.loop);
 			Browser.container.appendChild(Stat._canvas.source);
+			Stat.enable();
+		}
+
+		Stat.enable=function(){
+			Laya.timer.frameLoop(1,Stat,Stat.loop);
 		}
 
 		Stat.hide=function(){
@@ -6892,32 +7078,34 @@ window.Laya=(function(window,document){
 			if (timer-Stat._timer < 1000)return;
 			var count=Stat._count;
 			Stat.FPS=Math.round((count *1000)/ (timer-Stat._timer));
-			Stat.trianglesFaces=Math.round(Stat.trianglesFaces / count);
-			Stat.drawCall=Math.round(Stat.drawCall / count);
-			Stat.shaderCall=Math.round(Stat.shaderCall / count);
-			Stat.spriteCount=Math.round(Stat.spriteCount / count)-1;
-			Stat.canvasNormal=Math.round(Stat.canvasNormal / count);
-			Stat.canvasBitmap=Math.round(Stat.canvasBitmap / count);
-			Stat.canvasReCache=Math.ceil(Stat.canvasReCache / count);
-			Stat._fpsStr=Stat.FPS+(Stat.renderSlow ? " slow" :"");
-			Stat._canvasStr=Stat.canvasReCache+"/"+Stat.canvasNormal+"/"+Stat.canvasBitmap;
-			Stat.currentMemorySize=ResourceManager.systemResourceManager.memorySize;
-			var ctx=Stat._ctx;
-			ctx.clearRect(Stat._first ? 0 :Stat._vx,0,Stat._width,Stat._height);
-			for (var i=0;i < Stat._view.length;i++){
-				var one=Stat._view[i];
-				if (Stat._first){
-					ctx.fillStyle="white";
-					ctx.fillText(one.title,one.x,one.y,null,null,null);
+			if (Stat._canvas){
+				Stat.trianglesFaces=Math.round(Stat.trianglesFaces / count);
+				Stat.drawCall=Math.round(Stat.drawCall / count);
+				Stat.shaderCall=Math.round(Stat.shaderCall / count);
+				Stat.spriteCount=Math.round(Stat.spriteCount / count)-1;
+				Stat.canvasNormal=Math.round(Stat.canvasNormal / count);
+				Stat.canvasBitmap=Math.round(Stat.canvasBitmap / count);
+				Stat.canvasReCache=Math.ceil(Stat.canvasReCache / count);
+				Stat._fpsStr=Stat.FPS+(Stat.renderSlow ? " slow" :"");
+				Stat._canvasStr=Stat.canvasReCache+"/"+Stat.canvasNormal+"/"+Stat.canvasBitmap;
+				Stat.currentMemorySize=ResourceManager.systemResourceManager.memorySize;
+				var ctx=Stat._ctx;
+				ctx.clearRect(Stat._first ? 0 :Stat._vx,0,Stat._width,Stat._height);
+				for (var i=0;i < Stat._view.length;i++){
+					var one=Stat._view[i];
+					if (Stat._first){
+						ctx.fillStyle="white";
+						ctx.fillText(one.title,one.x,one.y,null,null,null);
+					}
+					ctx.fillStyle=one.color;
+					var value=Stat[one.value];
+					(one.units=="M")&& (value=Math.floor(value / (1024 *1024)*100)/ 100+" M");
+					ctx.fillText(value+"",one.x+Stat._vx,one.y,null,null,null);
 				}
-				ctx.fillStyle=one.color;
-				var value=Stat[one.value];
-				(one.units=="M")&& (value=Math.floor(value / (1024 *1024)*100)/ 100+" M");
-				ctx.fillText(value+"",one.x+Stat._vx,one.y,null,null,null);
+				Stat.clear();
 			}
 			Stat._count=0;
 			Stat._timer=timer;
-			Stat.clear();
 		}
 
 		Stat.loopCount=0;
@@ -6998,7 +7186,6 @@ window.Laya=(function(window,document){
 			this._laters=[];
 			this._handlers=[];
 			this._temp=[];
-			this._pool=[];
 			this._count=0;
 			this.currTimer=Browser.now();
 			this._lastTimer=Browser.now();
@@ -7072,7 +7259,7 @@ window.Laya=(function(window,document){
 		__proto._recoverHandler=function(handler){
 			this._map[handler.key]=null;
 			handler.clear();
-			this._pool.push(handler);
+			Timer._pool.push(handler);
 		}
 
 		/**@private */
@@ -7094,7 +7281,7 @@ window.Laya=(function(window,document){
 					return;
 				}
 			}
-			handler=this._pool.length > 0 ? this._pool.pop():new TimerHandler();
+			handler=Timer._pool.length > 0 ? Timer._pool.pop():new TimerHandler();
 			handler.repeat=repeat;
 			handler.userFrame=useFrame;
 			handler.delay=delay;
@@ -7170,7 +7357,7 @@ window.Laya=(function(window,document){
 
 		/**返回统计信息。*/
 		__proto.toString=function(){
-			return "callLater:"+this._laters.length+" handlers:"+this._handlers.length+" pool:"+this._pool.length;
+			return "callLater:"+this._laters.length+" handlers:"+this._handlers.length+" pool:"+Timer._pool.length;
 		}
 
 		/**
@@ -7215,8 +7402,8 @@ window.Laya=(function(window,document){
 		*/
 		__proto.callLater=function(caller,method,args){
 			if (this._getHandler(caller,method)==null){
-				if (this._pool.length)
-					var handler=this._pool.pop();
+				if (Timer._pool.length)
+					var handler=Timer._pool.pop();
 				else handler=new TimerHandler();
 				handler.caller=caller;
 				handler.method=method;
@@ -7234,12 +7421,13 @@ window.Laya=(function(window,document){
 		__proto.runCallLater=function(caller,method){
 			var handler=this._getHandler(caller,method);
 			if (handler && handler.method !=null){
-				handler.run(true);
 				this._map[handler.key]=null;
+				handler.run(true);
 			}
 		}
 
 		Timer.delta=0;
+		Timer._pool=[];
 		Timer.__init$=function(){
 			/**@private */
 			//class TimerHandler
@@ -7570,12 +7758,6 @@ window.Laya=(function(window,document){
 			return Utils._gid++;
 		}
 
-		Utils.parseXMLFromString=function(value){
-			var rst;
-			/*__JS__ */rst=(new DOMParser()).parseFromString(value,'text/xml');
-			return rst;
-		}
-
 		Utils.concatArray=function(source,array){
 			if (!array)return source;
 			if (!source)return array;
@@ -7652,8 +7834,13 @@ window.Laya=(function(window,document){
 						else break ;
 					}
 					if (z > childs[mid]._zOrder)mid++;
+					var f=c.parent;
 					childs.splice(i,1);
 					childs.splice(mid,0,c);
+					if (f && f.model){
+						f.model&&f.model.removeChild(c.model);
+						f.model && f.model.addChildAt(c.model,mid);
+					}
 					repaint=true;
 				}
 			}
@@ -7678,6 +7865,16 @@ window.Laya=(function(window,document){
 		Utils._gid=1;
 		Utils._pi=180 / Math.PI;
 		Utils._pi2=Math.PI / 180;
+		Utils.parseXMLFromString=function(value){
+			var rst;
+			value=value.replace(/>\s+</g,'><');
+			/*__JS__ */rst=(new DOMParser()).parseFromString(value,'text/xml');
+			if (rst.firstChild.textContent.indexOf("This page contains the following errors")>-1){
+				throw new Error(rst.firstChild.firstChild.textContent);
+			}
+			return rst;
+		}
+
 		return Utils;
 	})()
 
@@ -7730,12 +7927,14 @@ window.Laya=(function(window,document){
 		function Node(){
 			this.name="";
 			this.destroyed=false;
-			this._displayInStage=false;
+			this._displayedInStage=false;
 			this._parent=null;
+			this.model=null;
 			Node.__super.call(this);
 			this._childs=Node.ARRAY_EMPTY;
 			this.timer=Laya.timer;
 			this._$P=Node.PROP_EMPTY;
+			this.model=Render.isConchNode?/*__JS__ */new ConchNode():null;
 		}
 
 		__class(Node,'laya.display.Node',_super);
@@ -7778,11 +7977,16 @@ window.Laya=(function(window,document){
 			if (node._parent===this){
 				this._childs.splice(this.getChildIndex(node),1);
 				this._childs.push(node);
+				if (this.model){
+					this.model.removeChild(node.model);
+					this.model.addChildAt(node.model,this._childs.length-1);
+				}
 				this._childChanged();
 				}else {
 				node.parent && node.parent.removeChild(node);
 				this._childs===Node.ARRAY_EMPTY && (this._childs=[]);
 				this._childs.push(node);
+				this.model&&this.model.addChildAt(node.model,this._childs.length-1);
 				node.parent=this;
 			}
 			return node;
@@ -7812,11 +8016,16 @@ window.Laya=(function(window,document){
 				if (node._parent===this){
 					this._childs.splice(this.getChildIndex(node),1);
 					this._childs.splice(index,0,node);
+					if (this.model){
+						this.model.removeChild(node.model);
+						this.model.addChildAt(node.model,index);
+					}
 					this._childChanged();
 					}else {
 					node.parent && node.parent.removeChild(node);
 					this._childs===Node.ARRAY_EMPTY && (this._childs=[]);
 					this._childs.splice(index,0,node);
+					this.model&&this.model.addChildAt(node.model,index);
 					node.parent=this;
 				}
 				return node;
@@ -7883,6 +8092,10 @@ window.Laya=(function(window,document){
 			var oldIndex=this.getChildIndex(node);
 			childs.splice(oldIndex,1);
 			childs.splice(index,0,node);
+			if (this.model){
+				this.model.removeChild(node.model);
+				this.model.addChildAt(node.model,index);
+			}
 			this._childChanged();
 			return node;
 		}
@@ -7933,6 +8146,7 @@ window.Laya=(function(window,document){
 			var node=this.getChildAt(index);
 			if (node){
 				this._childs.splice(index,1);
+				this.model&&this.model.removeChild(node.model);
 				node.parent=null;
 			}
 			return node;
@@ -7957,6 +8171,7 @@ window.Laya=(function(window,document){
 				}
 				for (var i=0,n=arr.length;i < n;i++){
 					arr[i].parent=null;
+					this.model && this.model.removeChild(arr[i].model);
 				}
 			}
 			return this;
@@ -7973,6 +8188,10 @@ window.Laya=(function(window,document){
 			var index=this._childs.indexOf(oldNode);
 			if (index >-1){
 				this._childs.splice(index,1,newNode);
+				if (this.model){
+					this.model.removeChild(oldNode.model);
+					this.model.addChildAt(newNode.model,index);
+				}
 				oldNode.parent=null;
 				newNode.parent=this;
 				return newNode;
@@ -7982,8 +8201,8 @@ window.Laya=(function(window,document){
 
 		/**@private */
 		__proto._setDisplay=function(value){
-			if (this._displayInStage!==value){
-				this._displayInStage=value;
+			if (this._displayedInStage!==value){
+				this._displayedInStage=value;
 				if (value)this.event(/*laya.events.Event.DISPLAY*/"display");
 				else this.event(/*laya.events.Event.UNDISPLAY*/"undisplay");
 			}
@@ -8007,7 +8226,7 @@ window.Laya=(function(window,document){
 			}
 		}
 
-		/**is
+		/**
 		*当前容器是否包含 <code>node</code> 节点。
 		*@param node 某一个节点 <code>Node</code>。
 		*@return 一个布尔值表示是否包含<code>node</code>节点。
@@ -8082,6 +8301,11 @@ window.Laya=(function(window,document){
 			this.timer.clear(caller,method);
 		}
 
+		/**表示是否在显示列表中显示。是否在显示渲染列表中。*/
+		__getset(0,__proto,'displayedInStage',function(){
+			return this._displayedInStage;
+		});
+
 		/**
 		*子对象数量。
 		*/
@@ -8097,7 +8321,7 @@ window.Laya=(function(window,document){
 				if (value){
 					this._parent=value;
 					this.event(/*laya.events.Event.ADDED*/"added");
-					value.displayInStage && this._displayChild(this,true);
+					value.displayedInStage && this._displayChild(this,true);
 					value._childChanged(this);
 					}else {
 					this.event(/*laya.events.Event.REMOVED*/"removed");
@@ -8106,11 +8330,6 @@ window.Laya=(function(window,document){
 					this._parent=value;
 				}
 			}
-		});
-
-		/**表示是否在显示列表中显示。是否在显示渲染列表中。*/
-		__getset(0,__proto,'displayInStage',function(){
-			return this._displayInStage;
 		});
 
 		Node.ARRAY_EMPTY=[];
@@ -8258,6 +8477,8 @@ window.Laya=(function(window,document){
 		__proto.render=function(sprite,context,x,y){
 			var w=sprite.width;
 			var h=sprite.height;
+			x-=sprite.pivotX;
+			y-=sprite.pivotY;
 			this._bgground && this._bgground.color !=null && context.ctx.fillRect(x,y,w,h,this._bgground.color);
 			this._border && this._border.color && context.drawRect(x,y,w,h,this._border.color.strColor,this._border.size);
 		}
@@ -8629,6 +8850,10 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'borderColor',function(){
 			return (this._border && this._border.color)? this._border.color.strColor :null;
 			},function(value){
+			if (!value){
+				this._border=null;
+				return;
+			}
 			this._border || (this._border={size:1,type:'solid'});
 			this._border.color=(value==null)? null :Color.create(value);
 			this._ower._renderType |=/*laya.renders.RenderSprite.STYLE*/0x80;
@@ -8650,7 +8875,7 @@ window.Laya=(function(window,document){
 		*背景颜色。
 		*/
 		__getset(0,__proto,'backgroundColor',function(){
-			return this._bgground ? this._bgground.color :"";
+			return this._bgground ? this._bgground.color :null;
 			},function(value){
 			if (value==='none')this._bgground=null;
 			else (this._bgground || (this._bgground={}),this._bgground.color=value);
@@ -8663,6 +8888,10 @@ window.Laya=(function(window,document){
 		});
 
 		__getset(0,__proto,'background',null,function(value){
+			if (!value){
+				this._bgground=null;
+				return;
+			}
 			this._bgground || (this._bgground={});
 			this._bgground.color=value;
 			this._type |=0x4000;
@@ -8707,6 +8936,8 @@ window.Laya=(function(window,document){
 				var attr=attrs[i];
 				var ofs=attr.indexOf(':');
 				var name=attr.substr(0,ofs).replace(/^\s+|\s+$/g,'');
+				if (name.length==0)
+					continue ;
 				var value=attr.substr(ofs+1).replace(/^\s+|\s+$/g,'');
 				var one=[name,value];
 				switch (name){
@@ -9137,46 +9368,6 @@ window.Laya=(function(window,document){
 
 
 	/**
-	*<p><code>ColorFilter</code> 是颜色滤镜。</p>
-	*/
-	//class laya.filters.ColorFilter extends laya.filters.Filter
-	var ColorFilter=(function(_super){
-		function ColorFilter(mat){
-			//this._elements=null;
-			ColorFilter.__super.call(this);
-			if (!mat){
-				this._elements=ColorFilter.DEFAULT._elements;
-				return;
-			}
-			this._elements=new Float32Array(20);
-			for (var i=0;i < 20;i++){
-				this._elements[i]=mat[i];
-			}
-			this._action=RunDriver.createFilterAction(0x20);
-			this._action.data=this;
-		}
-
-		__class(ColorFilter,'laya.filters.ColorFilter',_super);
-		var __proto=ColorFilter.prototype;
-		Laya.imps(__proto,{"laya.filters.IFilter":true})
-		/**@private */
-		__getset(0,__proto,'type',function(){
-			return 0x20;
-		});
-
-		/**@private */
-		__getset(0,__proto,'action',function(){
-			return this._action;
-		});
-
-		__static(ColorFilter,
-		['DEFAULT',function(){return this.DEFAULT=new ColorFilter([1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]);},'GRAY',function(){return this.GRAY=new ColorFilter([0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0]);}
-		]);
-		return ColorFilter;
-	})(Filter)
-
-
-	/**
 	*<code>HttpRequest</code> 通过 HTTP 协议传送或接收 XML 及其他数据。
 	*/
 	//class laya.net.HttpRequest extends laya.events.EventDispatcher
@@ -9216,49 +9407,53 @@ window.Laya=(function(window,document){
 			}
 			http.responseType=responseType!=="arraybuffer" ? "text" :"arraybuffer";
 			http.onerror=function (e){
-				_this.onError(e);
+				_this._onError(e);
 			}
 			http.onabort=function (e){
-				_this.onAbort(e);
+				_this._onAbort(e);
 			}
 			http.onprogress=function (e){
-				_this.onProgress(e);
+				_this._onProgress(e);
 			}
 			http.onload=function (e){
-				_this.onLoad(e);
+				_this._onLoad(e);
 			}
 			http.send(data);
 		}
 
 		/**
+		*@private
 		*请求进度的侦听处理函数。
 		*@param e 事件对象。
 		*/
-		__proto.onProgress=function(e){
+		__proto._onProgress=function(e){
 			if (e && e.lengthComputable)this.event(/*laya.events.Event.PROGRESS*/"progress",e.loaded / e.total);
 		}
 
 		/**
+		*@private
 		*请求中断的侦听处理函数。
 		*@param e 事件对象。
 		*/
-		__proto.onAbort=function(e){
+		__proto._onAbort=function(e){
 			this.error("Request was aborted by user");
 		}
 
 		/**
+		*@private
 		*请求出错侦的听处理函数。
 		*@param e 事件对象。
 		*/
-		__proto.onError=function(e){
+		__proto._onError=function(e){
 			this.error("Request failed Status:"+this._http.status+" text:"+this._http.statusText);
 		}
 
 		/**
+		*@private
 		*请求消息返回的侦听处理函数。
 		*@param e 事件对象。
 		*/
-		__proto.onLoad=function(e){
+		__proto._onLoad=function(e){
 			var http=this._http;
 			var status=http.status!==undefined ? http.status :200;
 			if (status===200 || status===204 || status===0){
@@ -9269,6 +9464,7 @@ window.Laya=(function(window,document){
 		}
 
 		/**
+		*@private
 		*请求错误的处理函数。
 		*@param message 错误信息。
 		*/
@@ -9278,6 +9474,7 @@ window.Laya=(function(window,document){
 		}
 
 		/**
+		*@private
 		*请求成功完成的处理函数。
 		*/
 		__proto.complete=function(){
@@ -9285,8 +9482,7 @@ window.Laya=(function(window,document){
 			if (this._responseType==="json"){
 				this._data=JSON.parse(this._http.responseText);
 				}else if (this._responseType==="xml"){
-				var dom=new Browser.window.DOMParser();
-				this._data=dom.parseFromString(this._http.responseText,"text/xml");
+				this._data=Utils.parseXMLFromString(this._http.responseText);
 				}else {
 				this._data=this._http.response || this._http.responseText;
 			}
@@ -9294,6 +9490,7 @@ window.Laya=(function(window,document){
 		}
 
 		/**
+		*@private
 		*清除当前请求。
 		*/
 		__proto.clear=function(){
@@ -9313,6 +9510,71 @@ window.Laya=(function(window,document){
 
 		return HttpRequest;
 	})(EventDispatcher)
+
+
+	/**
+	*<p><code>ColorFilter</code> 是颜色滤镜。</p>
+	*/
+	//class laya.filters.ColorFilter extends laya.filters.Filter
+	var ColorFilter=(function(_super){
+		function ColorFilter(mat){
+			//this._mat=null;
+			//this._alpha=null;
+			ColorFilter.__super.call(this);
+			if (!mat){
+				mat=[0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0];
+			}
+			this._mat=new Float32Array(16);
+			this._alpha=new Float32Array(4);
+			var j=0;
+			var z=0;
+			for (var i=0;i < 20;i++){
+				if (i % 5 !=4){
+					this._mat[j++]=mat[i];
+					}else {
+					this._alpha[z++]=mat[i];
+				}
+			}
+			this._action=RunDriver.createFilterAction(0x20);
+			this._action.data=this;
+		}
+
+		__class(ColorFilter,'laya.filters.ColorFilter',_super);
+		var __proto=ColorFilter.prototype;
+		Laya.imps(__proto,{"laya.filters.IFilter":true})
+		/**@private */
+		__proto.getRGBG=function(){
+			var mat=this._mat;
+			var tRed=mat[0]+mat[1]+mat[2]+mat[3]+this._alpha[0] *0.25;
+			var tGreed=mat[4]+mat[5]+mat[6]+mat[7]+this._alpha[1] *0.25;
+			var tBlue=mat[8]+mat[9]+mat[10]+mat[11]+this._alpha[2] *0.25;
+			var tAlph=mat[12]+mat[13]+mat[14]+mat[15]+this._alpha[3] *0.25;
+			var tSrcMin=Math.min(tRed,tGreed,tBlue);
+			var tSrcMax=Math.max(tRed,tGreed,tBlue);
+			var tSrcLen=tSrcMax-tSrcMin;
+			var tSrcCen=tSrcLen / 2+tSrcMin;
+			var tResultRed=tRed *tRed / tSrcCen *0.55;
+			var tResultGreed=tGreed *tGreed / tSrcCen *0.55;
+			var tResultBlue=tBlue *tBlue / tSrcCen *0.55;
+			var tGray=1.0-(tSrcLen / 1.05);
+			return [tResultRed,tResultGreed,tResultBlue,tGray];
+		}
+
+		/**@private */
+		__getset(0,__proto,'type',function(){
+			return 0x20;
+		});
+
+		/**@private */
+		__getset(0,__proto,'action',function(){
+			return this._action;
+		});
+
+		__static(ColorFilter,
+		['DEFAULT',function(){return this.DEFAULT=new ColorFilter([1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]);},'GRAY',function(){return this.GRAY=new ColorFilter([0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0]);}
+		]);
+		return ColorFilter;
+	})(Filter)
 
 
 	/**
@@ -9351,7 +9613,8 @@ window.Laya=(function(window,document){
 				return;
 			}
 			if (Loader.parserMap[type] !=null){
-				Loader.parserMap[type].call(null,this);
+				if (((Loader.parserMap[type])instanceof laya.utils.Handler ))Loader.parserMap[type].runWith(this);
+				else Loader.parserMap[type].call(null,this);
 				return;
 			}
 			if (type==="image" || type==="htmlimage" || type==="nativeimage")return this._loadImage(url);
@@ -9606,11 +9869,11 @@ window.Laya=(function(window,document){
 		Loader.typeMap={"png":"image","jpg":"image","jpeg":"image","txt":"text","json":"json","xml":"xml","als":"atlas","mp3":"sound","ogg":"sound","wav":"sound","part":"json"};
 		Loader.parserMap={};
 		Loader.loadedMap={};
+		Loader.maxTimeOut=100;
 		Loader.atlasMap={};
 		Loader._loaders=[];
 		Loader._isWorking=false;
 		Loader._startIndex=0;
-		Loader.maxTimeOut=100;
 		Loader._extReg=/\.(\w+)\??/g;
 		return Loader;
 	})(EventDispatcher)
@@ -9655,6 +9918,7 @@ window.Laya=(function(window,document){
 			(priority===void 0)&& (priority=1);
 			(cache===void 0)&& (cache=true);
 			if ((url instanceof Array))return this._loadAssets(url,complete,progress,cache);
+			url=URL.formatURL(url);
 			var content=Loader.getRes(url);
 			if (content !=null){
 				complete && complete.runWith(content);
@@ -9702,6 +9966,7 @@ window.Laya=(function(window,document){
 			var _this=this;
 			function onLoaded (data){
 				loader.offAll();
+				loader._data=null;
 				_this._loaders.push(loader);
 				_this._endLoad(resInfo,data);
 				_this._loaderCount--;
@@ -9874,16 +10139,16 @@ window.Laya=(function(window,document){
 			this._input.endian=this.endian;
 			this._addInputPosition=0;
 			this._socket.onopen=function (e){
-				_$this.onOpenHandler(e);
+				_$this._onOpen(e);
 			};
 			this._socket.onmessage=function (msg){
-				_$this.onMessageHandler(msg);
+				_$this._onMessage(msg);
 			};
 			this._socket.onclose=function (e){
-				_$this.onCloseHandler(e);
+				_$this._onClose(e);
 			};
 			this._socket.onerror=function (e){
-				_$this.onErrorHandler(e);
+				_$this._onError(e);
 			};
 		}
 
@@ -9891,6 +10156,7 @@ window.Laya=(function(window,document){
 			try {
 				this._socket.close();
 			}catch (e){}
+			this._connected=false;
 			this._socket.onopen=null;
 			this._socket.onmessage=null;
 			this._socket.onclose=null;
@@ -9908,18 +10174,20 @@ window.Laya=(function(window,document){
 		}
 
 		/**
+		*@private
 		*连接建立成功 。
 		*/
-		__proto.onOpenHandler=function(e){
+		__proto._onOpen=function(e){
 			this._connected=true;
 			this.event(/*laya.events.Event.OPEN*/"open",e);
 		}
 
 		/**
+		*@private
 		*接收到数据处理方法。
 		*@param msg 数据。
 		*/
-		__proto.onMessageHandler=function(msg){
+		__proto._onMessage=function(msg){
 			if (this._input.length > 0 && this._input.bytesAvailable < 1){
 				this._input.clear();
 				this._addInputPosition=0;
@@ -9942,16 +10210,19 @@ window.Laya=(function(window,document){
 		}
 
 		/**
+		*@private
 		*连接被关闭处理方法。
 		*/
-		__proto.onCloseHandler=function(e){
+		__proto._onClose=function(e){
+			this._connected=false;
 			this.event(/*laya.events.Event.CLOSE*/"close",e)
 		}
 
 		/**
+		*@private
 		*出现异常处理方法。
 		*/
-		__proto.onErrorHandler=function(e){
+		__proto._onError=function(e){
 			this.event(/*laya.events.Event.ERROR*/"error",e)
 		}
 
@@ -10980,8 +11251,8 @@ window.Laya=(function(window,document){
 			this._graphics=null;
 			this._renderType=0;
 			this.autoSize=false;
-			this.hitTestFirst=false;
-			this.optimizeScrollRect=false;
+			this.hitTestPrior=false;
+			this._optimizeScrollRect=false;
 			Sprite.__super.call(this);
 			this._style=Style.EMPTY;
 		}
@@ -10997,15 +11268,14 @@ window.Laya=(function(window,document){
 			this._transform=null;
 			this._style=null;
 			this._graphics=null;
-			this._$P=null
 		}
 
-		/**根据Z进行重新排序。*/
-		__proto.updateOrder=function(){
+		/**根据zOrder进行重新排序。*/
+		__proto.updateZOrder=function(){
 			Utils.updateOrder(this._childs)&& this.repaint();
 		}
 
-		/**在设置cacheAsBtimap=true或者staticCache=true的情况下，调用此方法会重新刷新缓存。*/
+		/**在设置cacheAs或staticCache=true的情况下，调用此方法会重新刷新缓存。*/
 		__proto.reCache=function(){
 			if (this._$P.cacheCanvas)this._$P.cacheCanvas.reCache=true;
 		}
@@ -11172,7 +11442,7 @@ window.Laya=(function(window,document){
 				}else {
 				this._transform && this._transform.destroy();
 				this._transform=null;
-				this._renderType &=~ /*laya.renders.RenderSprite.TRANSFORM*/0x08;
+				this._renderType &=~ /*laya.renders.RenderSprite.TRANSFORM*/0x04;
 			}
 			return m;
 		}
@@ -11318,7 +11588,7 @@ window.Laya=(function(window,document){
 		*/
 		__proto.localToGlobal=function(point,createNewPoint){
 			(createNewPoint===void 0)&& (createNewPoint=false);
-			if (!this._displayInStage || !point)return point;
+			if (!this._displayedInStage || !point)return point;
 			if (createNewPoint===true){
 				point=new Point(point.x,point.y);
 			};
@@ -11339,7 +11609,7 @@ window.Laya=(function(window,document){
 		*/
 		__proto.globalToLocal=function(point,createNewPoint){
 			(createNewPoint===void 0)&& (createNewPoint=false);
-			if (!this._displayInStage || !point)return point;
+			if (!this._displayedInStage || !point)return point;
 			if (createNewPoint===true){
 				point=new Point(point.x,point.y);
 			};
@@ -11414,7 +11684,7 @@ window.Laya=(function(window,document){
 		*/
 		__proto.on=function(type,caller,listener,args){
 			if (this._mouseEnableState!==1 && this.isMouseEvent(type)){
-				if (this._displayInStage)this._$2__onDisplay();
+				if (this._displayedInStage)this._$2__onDisplay();
 				else laya.events.EventDispatcher.prototype.once.call(this,/*laya.events.Event.DISPLAY*/"display",this,this._$2__onDisplay);
 			}
 			return laya.events.EventDispatcher.prototype.on.call(this,type,caller,listener,args);
@@ -11431,7 +11701,7 @@ window.Laya=(function(window,document){
 		*/
 		__proto.once=function(type,caller,listener,args){
 			if (this._mouseEnableState!==1 && this.isMouseEvent(type)){
-				if (this._displayInStage)this._$2__onDisplay();
+				if (this._displayedInStage)this._$2__onDisplay();
 				else laya.events.EventDispatcher.prototype.once.call(this,/*laya.events.Event.DISPLAY*/"display",this,this._$2__onDisplay);
 			}
 			return laya.events.EventDispatcher.prototype.once.call(this,type,caller,listener,args);
@@ -11449,8 +11719,7 @@ window.Laya=(function(window,document){
 		}
 
 		/**
-		*加载并显示一个图片。
-		*<p><b>注意：</b>调用本方法自动调用 graphics.clear()（清除所有命令），只显示新load的图片，如果想显示多个，请用 graphics.drawTexture 或者 graphics.loadImage 。</p>
+		*加载并显示一个图片。功能等同于Graphics.loadImage
 		*@param url 图片地址。
 		*@param x 显示图片的x位置
 		*@param y 显示图片的y位置
@@ -11467,7 +11736,7 @@ window.Laya=(function(window,document){
 			(height===void 0)&& (height=0);
 			function loaded (tex){
 				if (!_$this.destroyed){
-					_$this.size(tex.width,tex.height);
+					_$this.size(x+(width || tex.width),y+(height || tex.height));
 					_$this.repaint();
 					complete && complete.runWith(tex);
 				}
@@ -11476,7 +11745,7 @@ window.Laya=(function(window,document){
 			return this;
 		}
 
-		/**cacheAsBitmap值为true时，手动重新缓存本对象。*/
+		/**cacheAs后，设置自己和父对象缓存失效。*/
 		__proto.repaint=function(){
 			(this._repaint===0)&& (this._repaint=1,this.parentRepaint());
 		}
@@ -11494,11 +11763,11 @@ window.Laya=(function(window,document){
 		__proto._childChanged=function(child){
 			if (this._childs.length)this._renderType |=/*laya.renders.RenderSprite.CHILDS*/0x800;
 			else this._renderType &=~ /*laya.renders.RenderSprite.CHILDS*/0x800;
-			if (child && (child).zOrder)Laya.timer.callLater(this,this.updateOrder);
+			if (child && (child).zOrder)Laya.timer.callLater(this,this.updateZOrder);
 			this.repaint();
 		}
 
-		/**cacheAs时，手动重新缓存父对象。 */
+		/**cacheAs时，设置所有父对象缓存失效。 */
 		__proto.parentRepaint=function(){
 			var p=this._parent;
 			p && p._repaint===0 && (p._repaint=1,p.parentRepaint());
@@ -11565,9 +11834,9 @@ window.Laya=(function(window,document){
 		__proto._addChildsToLayout=function(out){
 			var words=this._getWords();
 			if (words==null && this._childs.length==0)return false;
-			words && words.forEach(function(o){
-				out.push(o);
-			});
+			for (var i=0,n=words.length;i < n;i++){
+				out.push(words[i]);
+			}
 			this._childs.forEach(function(o){
 				o._style._enableLayout()&& o._addToLayout(out);
 			});
@@ -11623,12 +11892,58 @@ window.Laya=(function(window,document){
 		}
 
 		/**
+		*<p>指定是否对使用了 scrollRect 的显示对象进行优化处理。</p>
+		*<p>默认为false(不优化)。</p>
+		*<p>当值为ture时：将对此对象使用了scrollRect 设定的显示区域以外的显示内容不进行渲染，以提高性能。</p>
+		*/
+		__getset(0,__proto,'optimizeScrollRect',function(){
+			return this._optimizeScrollRect;
+			},function(b){
+			if (this._optimizeScrollRect !=b){
+				this._optimizeScrollRect=b;
+				this.model && this.model.optimizeScrollRect(b);
+			}
+		});
+
+		/**X轴缩放值，默认值为1。*/
+		__getset(0,__proto,'scaleX',function(){
+			return this._style._tf.scaleX;
+			},function(value){
+			var style=this.getStyle();
+			if (style._tf.scaleX!==value){
+				style.setScaleX(value);
+				this._tfChanged=true;
+				this.model && this.model.scale(value,style._tf.scaleY);
+				this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x04;
+				var p=this._parent;
+				p && p._repaint===0 && (p._repaint=1,p.parentRepaint());
+			}
+		});
+
+		/**
 		*指定显示对象是否缓存为静态图像。功能同cacheAs的normal模式。
 		*/
 		__getset(0,__proto,'cacheAsBitmap',function(){
 			return this.cacheAs!=="none";
 			},function(value){
-			this.cacheAs=value ? "normal" :"none";
+			this.cacheAs=value ? (this._$P["hasFilter"] ? "none":"normal"):"none";
+		});
+
+		/**
+		*开启自定义渲染，只有开启自定义渲染，才能使用customRender函数渲染
+		*/
+		__getset(0,__proto,'customRenderEnable',null,function(b){
+			if (b){
+				this._renderType |=/*laya.renders.RenderSprite.CUSTOM*/0x200;
+				if (Render.isConchNode){
+					laya.display.Sprite.CustomList.push(this);
+					var canvas=new HTMLCanvas("2d");
+					canvas._setContext(/*__JS__ */new CanvasRenderingContext2D());
+					/*__JS__ */this.customContext=new RenderContext(0,0,canvas);
+					canvas.context.setCanvasType && canvas.context.setCanvasType(2);
+					this.model.custom(canvas.context);
+				}
+			}
 		});
 
 		/**
@@ -11649,21 +11964,23 @@ window.Laya=(function(window,document){
 				cacheCanvas || (cacheCanvas=this._set$P("cacheCanvas",Pool.getItemByClass("cacheCanvas",Object)));
 				cacheCanvas.type=value;
 				cacheCanvas.reCache=true;
-				this._renderType |=/*laya.renders.RenderSprite.CANVAS*/0x10;
+				this._renderType |=/*laya.renders.RenderSprite.CANVAS*/0x08;
+				if(value=="bitmap")this.model && this.model.cacheAs(1);
 				this._set$P("cacheForFilters",false);
 				}else {
 				if (this._$P["hasFilter"]){
 					this._set$P("cacheForFilters",true);
-					}else{
+					}else {
 					if (cacheCanvas)Pool.recover("cacheCanvas",cacheCanvas);
 					this._$P.cacheCanvas=null;
-					this._renderType &=~ /*laya.renders.RenderSprite.CANVAS*/0x10;
+					this._renderType &=~ /*laya.renders.RenderSprite.CANVAS*/0x08;
+					this.model && this.model.cacheAs(0);
 				}
 			}
 			this.repaint();
 		});
 
-		/**cacheAs时此值才有效，staticCache=true时，子对象变化时不会自动更新缓存，只能通过调用reCache方法手动刷新。*/
+		/**设置cacheAs为非空时此值才有效，staticCache=true时，子对象变化时不会自动更新缓存，只能通过调用reCache方法手动刷新。*/
 		__getset(0,__proto,'staticCache',function(){
 			return this._$P.staticCache;
 			},function(value){
@@ -11677,16 +11994,18 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'x',function(){
 			return this._x;
 			},function(value){
+			if (this.destroyed)return;
 			var p=this._parent;
-			this._x!==value && (this._x=value,p && p._repaint===0 && (p._repaint=1,p.parentRepaint()));
+			this._x!==value && (this._x=value,this.model && this.model.pos(value,this._y),p && p._repaint===0 && (p._repaint=1,p.parentRepaint()),this._$P.maskParent && this._$P.maskParent._repaint===0 && (this._$P.maskParent._repaint=1,this._$P.maskParent.parentRepaint()));
 		});
 
 		/**表示显示对象相对于父容器的垂直方向坐标值。*/
 		__getset(0,__proto,'y',function(){
 			return this._y;
 			},function(value){
+			if (this.destroyed)return;
 			var p=this._parent;
-			this._y!==value && (this._y=value,p && p._repaint===0 && (p._repaint=1,p.parentRepaint()));
+			this._y!==value && (this._y=value,this.model && this.model.pos(this._x,value),p && p._repaint===0 && (p._repaint=1,p.parentRepaint()),this._$P.maskParent && this._$P.maskParent._repaint===0 && (this._$P.maskParent._repaint=1,this._$P.maskParent.parentRepaint()));
 		});
 
 		/**水平倾斜角度，默认值为0。*/
@@ -11697,7 +12016,7 @@ window.Laya=(function(window,document){
 			if (style._tf.skewX!==value){
 				style.setSkewX(value);
 				this._tfChanged=true;
-				this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x08;
+				this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x04;
 				var p=this._parent;
 				p && p._repaint===0 && (p._repaint=1,p.parentRepaint());
 			}
@@ -11710,7 +12029,7 @@ window.Laya=(function(window,document){
 			if (!this.autoSize)return this._width;
 			return this.getSelfBounds().width;
 			},function(value){
-			this._width!==value && (this._width=value,this.repaint());
+			this._width!==value && (this._width=value,this.model && this.model.size(value,this._height),this.repaint());
 		});
 
 		/**
@@ -11720,21 +12039,7 @@ window.Laya=(function(window,document){
 			if (!this.autoSize)return this._height;
 			return this.getSelfBounds().height;
 			},function(value){
-			this._height!==value && (this._height=value,this.repaint());
-		});
-
-		/**X轴缩放值，默认值为1。*/
-		__getset(0,__proto,'scaleX',function(){
-			return this._style._tf.scaleX;
-			},function(value){
-			var style=this.getStyle();
-			if (style._tf.scaleX!==value){
-				style.setScaleX(value);
-				this._tfChanged=true;
-				this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x08;
-				var p=this._parent;
-				p && p._repaint===0 && (p._repaint=1,p.parentRepaint());
-			}
+			this._height!==value && (this._height=value,this.model && this.model.size(this._width,value),this.repaint());
 		});
 
 		/**手动设置的可点击区域。*/
@@ -11752,7 +12057,8 @@ window.Laya=(function(window,document){
 			if (style._tf.rotate!==value){
 				style.setRotate(value);
 				this._tfChanged=true;
-				this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x08;
+				this.model && this.model.rotate(value);
+				this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x04;
 				var p=this._parent;
 				p && p._repaint===0 && (p._repaint=1,p.parentRepaint());
 			}
@@ -11766,7 +12072,8 @@ window.Laya=(function(window,document){
 			if (style._tf.scaleY!==value){
 				style.setScaleY(value);
 				this._tfChanged=true;
-				this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x08;
+				this.model && this.model.scale(style._tf.scaleX,value);
+				this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x04;
 				var p=this._parent;
 				p && p._repaint===0 && (p._repaint=1,p.parentRepaint());
 			}
@@ -11777,6 +12084,7 @@ window.Laya=(function(window,document){
 			return this._style.blendMode;
 			},function(value){
 			this.getStyle().blendMode=value;
+			this.model && this.model.blendMode(value);
 			if (value && value !="source-over")this._renderType |=/*laya.renders.RenderSprite.BLEND*/0x20;
 			else this._renderType &=~ /*laya.renders.RenderSprite.BLEND*/0x20;
 			this.parentRepaint();
@@ -11790,7 +12098,8 @@ window.Laya=(function(window,document){
 			if (style._tf.skewY!==value){
 				style.setSkewY(value);
 				this._tfChanged=true;
-				this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x08;
+				this.model && this.model.skew(style._tf.skewX,value);
+				this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x04;
 				var p=this._parent;
 				p && p._repaint===0 && (p._repaint=1,p.parentRepaint());
 			}
@@ -11808,9 +12117,13 @@ window.Laya=(function(window,document){
 				this._x=value.tx;
 				this._y=value.ty;
 				value.tx=value.ty=0;
+				this.model && this.model.transform(value.a,value.b,value.c,value.d,this._x,this._y);
 			}
-			if (value)this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x08;
-			else this._renderType &=~ /*laya.renders.RenderSprite.TRANSFORM*/0x08;
+			if (value)this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x04;
+			else {
+				this._renderType &=~ /*laya.renders.RenderSprite.TRANSFORM*/0x04;
+				this.model && this.model.removeType(/*laya.renders.RenderSprite.TRANSFORM*/0x04);
+			}
 			this.parentRepaint();
 		});
 
@@ -11819,6 +12132,7 @@ window.Laya=(function(window,document){
 			return this._style._tf.translateX;
 			},function(value){
 			this.getStyle().setTranslateX(value);
+			this.model && this.model.pivot(value,this._style._tf.translateY);
 			this.repaint();
 		});
 
@@ -11827,6 +12141,7 @@ window.Laya=(function(window,document){
 			return this._style._tf.translateY;
 			},function(value){
 			this.getStyle().setTranslateY(value);
+			this.model && this.model.pivot(this._style._tf.translateX,value);
 			this.repaint();
 		});
 
@@ -11837,8 +12152,9 @@ window.Laya=(function(window,document){
 			if (this._style.alpha!==value){
 				value=value < 0 ? 0 :(value > 1 ? 1 :value);
 				this.getStyle().alpha=value;
-				if (value!==1)this._renderType |=/*laya.renders.RenderSprite.ALPHA*/0x04;
-				else this._renderType &=~ /*laya.renders.RenderSprite.ALPHA*/0x04;
+				this.model && this.model.alpha(value);
+				if (value!==1)this._renderType |=/*laya.renders.RenderSprite.ALPHA*/0x02;
+				else this._renderType &=~ /*laya.renders.RenderSprite.ALPHA*/0x02;
 				this.parentRepaint();
 			}
 		});
@@ -11849,6 +12165,7 @@ window.Laya=(function(window,document){
 			},function(value){
 			if (this._style.visible!==value){
 				this.getStyle().visible=value;
+				this.model && this.model.visible(value);
 				this.parentRepaint();
 			}
 		});
@@ -11863,9 +12180,11 @@ window.Laya=(function(window,document){
 				this._renderType &=~ /*laya.renders.RenderSprite.IMAGE*/0x01;
 				this._renderType |=/*laya.renders.RenderSprite.GRAPHICS*/0x100;
 				value._sp=this;
+				this.model && this.model.graphics(this._graphics);
 				}else {
 				this._renderType &=~ /*laya.renders.RenderSprite.GRAPHICS*/0x100;
 				this._renderType &=~ /*laya.renders.RenderSprite.IMAGE*/0x01;
+				this.model && this.model.removeType(/*laya.renders.RenderSprite.GRAPHICS*/0x100);
 			}
 			this.repaint();
 		});
@@ -11876,8 +12195,13 @@ window.Laya=(function(window,document){
 			},function(value){
 			this.getStyle().scrollRect=value;
 			this.repaint();
-			if (value)this._renderType |=/*laya.renders.RenderSprite.CLIP*/0x40;
-			else this._renderType &=~ /*laya.renders.RenderSprite.CLIP*/0x40;
+			if (value){
+				this._renderType |=/*laya.renders.RenderSprite.CLIP*/0x40;
+				this.model && this.model.scrollRect(value.x,value.y,value.width,value.height);
+				}else {
+				this._renderType &=~ /*laya.renders.RenderSprite.CLIP*/0x40;
+				this.model && this.model.removeType(/*laya.renders.RenderSprite.CLIP*/0x40);
+			}
 		});
 
 		/**滤镜集合。*/
@@ -11887,25 +12211,29 @@ window.Laya=(function(window,document){
 			value && value.length===0 && (value=null);
 			if (this._$P.filters==value)return;
 			this._set$P("filters",value ? value.slice():null);
+			if (Render.isConchApp){
+				if (this._$P.filters && this._$P.filters.length==1 && (((this._$P.filters[0])instanceof laya.filters.ColorFilter ))){
+					var t=this._$P.rgbg=this._$P.filters[0].getRGBG();
+					this.model && this.model.filter(t[0],t[1],t[2],t[3]);
+				}
+			}
 			if (Render.isWebGL){
 				if (value && value.length){
-					this._renderType |=/*laya.renders.RenderSprite.FILTERS*/0x02;
+					this._renderType |=/*laya.renders.RenderSprite.FILTERS*/0x10;
 					}else {
-					this._renderType &=~ /*laya.renders.RenderSprite.FILTERS*/0x02;
+					this._renderType &=~ /*laya.renders.RenderSprite.FILTERS*/0x10;
 				}
-				this.repaint();
-				return;
 			}
 			if (value && value.length > 0){
-				if (!this.cacheAsBitmap){
-					this.cacheAsBitmap=true;
+				if (this.cacheAs !="bitmap"){
+					if(!Render.isConchNode)this.cacheAs="bitmap";
 					this._set$P("cacheForFilters",true);
 				}
 				this._set$P("hasFilter",true);
-				}else{
+				}else {
 				this._set$P("hasFilter",false);
-				if (this._$P["cacheForFilters"]&&this.cacheAsBitmap){
-					this.cacheAsBitmap=false;
+				if (this._$P["cacheForFilters"] && this.cacheAs=="bitmap"){
+					this.cacheAs="none";
 				}
 			}
 			this.repaint();
@@ -11915,8 +12243,11 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'mask',function(){
 			return this._$P._mask;
 			},function(value){
+			if (this.mask && this.mask._$P.maskParent)return;
 			this.cacheAs="bitmap";
 			this._set$P("_mask",value);
+			value._set$P("maskParent",this);
+			this.model && this.model.mask(value ? value.model :null);
 			this._renderType |=/*laya.renders.RenderSprite.BLEND*/0x20;
 			this.parentRepaint();
 		});
@@ -11956,7 +12287,7 @@ window.Laya=(function(window,document){
 			},function(value){
 			if (this._zOrder !=value){
 				this._zOrder=value;
-				this._parent && Laya.timer.callLater(this._parent,this.updateOrder);
+				this._parent && Laya.timer.callLater(this._parent,this.updateZOrder);
 			}
 		});
 
@@ -11964,6 +12295,7 @@ window.Laya=(function(window,document){
 			return new Sprite().loadImage(url);
 		}
 
+		Sprite.CustomList=[];
 		return Sprite;
 	})(Node)
 
@@ -12156,9 +12488,13 @@ window.Laya=(function(window,document){
 				}
 				sourceNode.disconnect(0);
 				sourceNode.onended=null;
-				try {sourceNode.buffer=WebAudioSound._miniBuffer;}catch(e){}
+				if (!WebAudioSoundChannel._tryCleanFailed)this._tryClearBuffer(sourceNode);
 				this.bufferSource=null;
 			}
+		}
+
+		__proto._tryClearBuffer=function(sourceNode){
+			try {sourceNode.buffer=WebAudioSound._miniBuffer;}catch (e){WebAudioSoundChannel._tryCleanFailed=true;}
 		}
 
 		/**
@@ -12200,11 +12536,13 @@ window.Laya=(function(window,document){
 			this.gain.gain.value=v;
 		});
 
+		WebAudioSoundChannel._tryCleanFailed=false;
 		return WebAudioSoundChannel;
 	})(SoundChannel)
 
 
 	/**
+	*@private
 	*<code>Bitmap</code> 是图片资源类。
 	*/
 	//class laya.resource.Bitmap extends laya.resource.Resource
@@ -12352,7 +12690,7 @@ window.Laya=(function(window,document){
 
 		__proto._$3__onDisplay=function(){
 			if (this._isPlaying){
-				if (this._displayInStage)this.play(this._index,this.loop);
+				if (this._displayedInStage)this.play(this._index,this.loop);
 				else this.clearTimer(this,this._frameLoop);
 			}
 		}
@@ -12544,6 +12882,152 @@ window.Laya=(function(window,document){
 
 
 	/**
+	*动画播放控制器
+	*
+	*/
+	//class laya.display.AnimationPlayerBase extends laya.display.Sprite
+	var AnimationPlayerBase=(function(_super){
+		function AnimationPlayerBase(){
+			this.loop=false;
+			this._index=0;
+			this._count=0;
+			this._isPlaying=false;
+			this._labels=null;
+			this._controlNode=null;
+			AnimationPlayerBase.__super.call(this);
+			this.interval=Config.animationInterval;
+		}
+
+		__class(AnimationPlayerBase,'laya.display.AnimationPlayerBase',_super);
+		var __proto=AnimationPlayerBase.prototype;
+		/**
+		*播放动画。
+		*@param start 开始播放的动画索引。
+		*@param loop 是否循环。
+		*@param name 如果name为空(可选)，则播放当前动画，如果不为空，则播放全局缓存动画（如果有）
+		*/
+		__proto.play=function(start,loop,name){
+			(start===void 0)&& (start=0);
+			(loop===void 0)&& (loop=true);
+			(name===void 0)&& (name="");
+			this._isPlaying=true;
+			this.index=start;
+			this.loop=loop;
+			if (this.interval > 0){
+				this._index++;
+				Laya.timer.loop(this.interval,this,this._frameLoop,null,true);
+			}
+		}
+
+		/**@private */
+		__proto._frameLoop=function(){
+			this.index=this._index,this._index++;
+			if (this._index >=this._count){
+				if (this.loop)this._index=0;
+				else {
+					this._index--;
+					this.stop();
+				}
+				this.event(/*laya.events.Event.COMPLETE*/"complete");
+			}
+		}
+
+		/**@private */
+		__proto._setControlNode=function(node){
+			if(this._controlNode){
+				this._controlNode.off(/*laya.events.Event.DISPLAY*/"display",this,this._$3__onDisplay);
+				this._controlNode.off(/*laya.events.Event.UNDISPLAY*/"undisplay",this,this._$3__onDisplay);
+			}
+			this._controlNode=node;
+			if(node){
+				node.on(/*laya.events.Event.DISPLAY*/"display",this,this._$3__onDisplay);
+				node.on(/*laya.events.Event.UNDISPLAY*/"undisplay",this,this._$3__onDisplay);
+			}
+		}
+
+		/**@private */
+		__proto._$3__onDisplay=function(){
+			if (this._isPlaying){
+				if (this._controlNode.displayedInStage)this.play(this._index,this.loop);
+				else Laya.timer.clear(this,this._frameLoop);
+			}
+		}
+
+		/**
+		*停止播放。
+		*/
+		__proto.stop=function(){
+			this._isPlaying=false;
+			Laya.timer.clear(this,this._frameLoop);
+		}
+
+		/**
+		*增加一个标签到index帧上，播放到此index后会派发label事件
+		*@param label 标签名称
+		*@param index 索引位置
+		*/
+		__proto.addLabel=function(label,index){
+			if (!this._labels)this._labels={};
+			this._labels[index]=label;
+		}
+
+		/**
+		*删除某个标签
+		*@param label 标签名字，如果label为空，则删除所有Label
+		*/
+		__proto.removeLabel=function(label){
+			if (!label)this._labels=null;
+			else if (!this._labels){
+				for (var name in this._labels){
+					if (this._labels[name]===label){
+						delete this._labels[name];
+						break ;
+					}
+				}
+			}
+		}
+
+		/**
+		*切换到某帧并停止
+		*@param index 帧索引
+		*/
+		__proto.gotoAndStop=function(index){
+			this.index=index;
+			this.stop();
+		}
+
+		/**
+		*@private
+		*显示到某帧
+		*@param value 帧索引
+		*
+		*/
+		__proto._displayToIndex=function(value){}
+		/**清理。方便对象复用。*/
+		__proto.clear=function(){
+			this.stop();
+			this._labels=null;
+		}
+
+		/**当前播放索引。*/
+		__getset(0,__proto,'index',function(){
+			return this._index;
+			},function(value){
+			this._index=value;
+			this._displayToIndex(value);
+			if (this._labels && this._labels[value])this.event(/*laya.events.Event.LABEL*/"label",this._labels[value]);
+		});
+
+		/**动画长度。*/
+		__getset(0,__proto,'count',function(){
+			return this._count;
+		});
+
+		return AnimationPlayerBase;
+	})(Sprite)
+
+
+	/**
 	*<p> <code>Text</code> 类用于创建显示对象以显示文本。</p>
 	*@example 以下示例代码，创建了一个 <code>Text</code> 实例。
 	*<listing version="3.0">
@@ -12645,6 +13129,7 @@ window.Laya=(function(window,document){
 			this._startY=NaN;
 			this._lastVisibleLineIndex=-1;
 			this._words=null;
+			this._charSize={};
 			this.underline=false;
 			this.underlineColor=null;
 			Text.__super.call(this);
@@ -12733,7 +13218,7 @@ window.Laya=(function(window,document){
 			var startX=padding[3];
 			var textAlgin="left";
 			var lines=this._lines;
-			var lineHeight=this.leading+this.fontSize;
+			var lineHeight=this.leading+this._charSize.height;
 			var tCurrBitmapFont=this._currBitmapFont;
 			if (tCurrBitmapFont){
 				lineHeight=this.leading+tCurrBitmapFont.getMaxHeight();
@@ -12834,7 +13319,7 @@ window.Laya=(function(window,document){
 				default :
 					break ;
 				}
-			y+=this.fontSize;
+			y+=this._charSize.height;
 			this._graphics.drawLine(x,y,x+lineWidth,y,this.underlineColor || this.color,1);
 		}
 
@@ -12862,7 +13347,7 @@ window.Laya=(function(window,document){
 			var endLine=this._lines.length;
 			if (this.overflow !=Text.VISIBLE){
 				var func=this.overflow==Text.HIDDEN ? Math.floor :Math.ceil;
-				endLine=Math.min(endLine,func((this.height-this.padding[0]-this.padding[2])/ (this.leading+this.fontSize)));
+				endLine=Math.min(endLine,func((this.height-this.padding[0]-this.padding[2])/ (this.leading+this._charSize.height)));
 			}
 			this.renderText(0,endLine);
 			this.repaint();
@@ -12873,7 +13358,8 @@ window.Laya=(function(window,document){
 			if (this._currBitmapFont){
 				this._textHeight=this._lines.length *(this._currBitmapFont.getMaxHeight()+this.leading)+this.padding[0]+this.padding[2];
 			}else
-			this._textHeight=this._lines.length *(this.fontSize+this.leading)+this.padding[0]+this.padding[2];
+			this._textHeight=this._lines.length *(this._charSize.height+this.leading)+this.padding[0]+this.padding[2];
+			this.model && this.model.size(this._width || this._textWidth,this._height || this._textHeight);
 		}
 
 		__proto.checkEnabledViewportOrNot=function(){
@@ -12887,8 +13373,8 @@ window.Laya=(function(window,document){
 		*/
 		__proto.changeText=function(text){
 			if (this._text!==text){
-				this.lang(text);
-				if (this._graphics && this._graphics.replaceText(text)){
+				this.lang(text+"");
+				if (this._graphics && this._graphics.replaceText(this._text)){
 					}else {
 					this.typeset();
 				}
@@ -12904,6 +13390,9 @@ window.Laya=(function(window,document){
 			if (needWordWrapOrTruncate){
 				var wordWrapWidth=this.getWordWrapWidth();
 			};
+			var measureResult=Browser.context.measureText("阳");
+			this._charSize.width=measureResult.width;
+			this._charSize.height=(measureResult.height || this.fontSize);
 			var lines=text.replace(/\r\n/g,"\n").split("\n");
 			for (var i=0,n=lines.length;i < n;i++){
 				if (i < n-1)
@@ -12951,8 +13440,9 @@ window.Laya=(function(window,document){
 				lines.push(line);
 				this.pushNewLineWidth(charsWidth);
 				return;
-			}
-			charsWidth=this._currBitmapFont ? this._currBitmapFont.getMaxWidth():Browser.context.measureText("阳").width;
+			};
+			var charSize=Browser.context.measureText("阳");
+			charsWidth=this._currBitmapFont ? this._currBitmapFont.getMaxWidth():charSize.width;
 			maybeIndex=Math.floor(wordWrapWidth / charsWidth);
 			(maybeIndex==0)&& (maybeIndex=1);
 			charsWidth=this.getTextWidth(line.substring(0,maybeIndex));
@@ -13045,7 +13535,7 @@ window.Laya=(function(window,document){
 			Browser.context.font=ctxFont;
 			var width=Browser.context.measureText(this._text.substring(startIndex,charIndex)).width;
 			var point=out || new Point();
-			return point.setTo(this._startX+width-(this._clipPoint ? this._clipPoint.x :0),this._startY+line *(this.fontSize+this.leading)-(this._clipPoint ? this._clipPoint.y :0));
+			return point.setTo(this._startX+width-(this._clipPoint ? this._clipPoint.x :0),this._startY+line *(this._charSize.height+this.leading)-(this._clipPoint ? this._clipPoint.y :0));
 		}
 
 		/**
@@ -13064,8 +13554,10 @@ window.Laya=(function(window,document){
 				return this._width;
 			return this.textWidth;
 			},function(value){
-			_super.prototype._$set_width.call(this,value);
-			this.isChanged=true;
+			if (value !=this._width){
+				_super.prototype._$set_width.call(this,value);
+				this.isChanged=true;
+			}
 		});
 
 		/**
@@ -13091,12 +13583,13 @@ window.Laya=(function(window,document){
 		*@inheritDoc
 		*/
 		__getset(0,__proto,'height',function(){
-			if (this._height)
-				return this._height;
+			if (this._height)return this._height;
 			return this.textHeight;
 			},function(value){
-			_super.prototype._$set_height.call(this,value);
-			this.isChanged=true;
+			if (value !=this._height){
+				_super.prototype._$set_height.call(this,value);
+				this.isChanged=true;
+			}
 		});
 
 		/**
@@ -13250,6 +13743,7 @@ window.Laya=(function(window,document){
 			return this._getCSSStyle().backgroundColor;
 			},function(value){
 			this._getCSSStyle().backgroundColor=value;
+			this.model && this.model.bgColor(value);
 			this.isChanged=true;
 		});
 
@@ -13260,6 +13754,7 @@ window.Laya=(function(window,document){
 			return this._getCSSStyle().borderColor;
 			},function(value){
 			this._getCSSStyle().borderColor=value;
+			this.model && this.model.border(value);
 			this.isChanged=true;
 		});
 
@@ -13313,7 +13808,7 @@ window.Laya=(function(window,document){
 			value=value < this.padding[3] ? this.padding[3] :value;
 			var maxScrollX=this._textWidth-this._width;
 			value=value > maxScrollX ? maxScrollX :value;
-			var visibleLineCount=this._height / (this.fontSize+this.leading)| 0+1;
+			var visibleLineCount=this._height / (this._charSize.height+this.leading)| 0+1;
 			this._clipPoint.x=value;
 			this.renderText(this._lastVisibleLineIndex,visibleLineCount);
 		});
@@ -13334,9 +13829,9 @@ window.Laya=(function(window,document){
 			value=value < this.padding[0] ? this.padding[0] :value;
 			var maxScrollY=this._textHeight-this._height;
 			value=value > maxScrollY ? maxScrollY :value;
-			var startLine=value / (this.fontSize+this.leading)| 0;
+			var startLine=value / (this._charSize.height+this.leading)| 0;
 			this._lastVisibleLineIndex=startLine;
-			var visibleLineCount=(this._height / (this.fontSize+this.leading)| 0)+1;
+			var visibleLineCount=(this._height / (this._charSize.height+this.leading)| 0)+1;
 			this._clipPoint.y=value;
 			this.renderText(startLine,visibleLineCount);
 		});
@@ -13402,10 +13897,10 @@ window.Laya=(function(window,document){
 			this._renderCount=0;
 			Stage.__super.call(this);
 			this.offset=new Point();
-			this.now=Browser.now();
 			this._canvasTransform=new Matrix();
 			this.mouseEnabled=true;
-			this._displayInStage=true;
+			this.hitTestPrior=true;
+			this._displayedInStage=true;
 			var _this=this;
 			var window=Browser.window;
 			window.addEventListener("focus",function(){
@@ -13416,10 +13911,13 @@ window.Laya=(function(window,document){
 				if (this.focus && this.focus.focus)this.focus.focus=false;
 			})
 			window.addEventListener("resize",function(){
+				if (_this.preventResize())return;
 				_this._resetCanvas();
 				Laya.timer.once(100,_this,_this._changeCanvasSize);
 			})
 			window.addEventListener("orientationchange",function(e){
+				if (Browser.onMobile && Input.isInputting)
+					Input["inputElement"].target.focus=false;
 				_this._resetCanvas();
 				Laya.timer.once(100,_this,_this._changeCanvasSize);
 			})
@@ -13428,6 +13926,15 @@ window.Laya=(function(window,document){
 
 		__class(Stage,'laya.display.Stage',_super);
 		var __proto=Stage.prototype;
+		/**
+		*在移动端输入时，输入法弹出期间不进行画布尺寸重置。
+		*/
+		__proto.preventResize=function(){
+			return (
+			Browser.onMobile &&
+			Input.isInputting);
+		}
+
 		/**设置场景设计宽高*/
 		__proto.size=function(width,height){
 			this.desginWidth=this.width=width;
@@ -13447,7 +13954,7 @@ window.Laya=(function(window,document){
 			var canvasStyle=canvas.source.style;
 			canvas.size(1,1);
 			canvasStyle.transform=canvasStyle.webkitTransform=canvasStyle.msTransform=canvasStyle.mozTransform=canvasStyle.oTransform="";
-			this.visible=false;
+			this.renderingEnabled=false;
 		}
 
 		/**
@@ -13520,6 +14027,7 @@ window.Laya=(function(window,document){
 				this.transform || (this.transform=new Matrix());
 				this.transform.a=scaleX / (realWidth / canvasWidth);
 				this.transform.d=scaleY / (realHeight / canvasHeight);
+				this.model&&this.model.scale(this.transform.a,this.transform.d);
 			}
 			canvas.size(canvasWidth,canvasHeight);
 			RunDriver.changeWebGLSize(canvasWidth,canvasHeight);
@@ -13541,9 +14049,11 @@ window.Laya=(function(window,document){
 				}
 			}
 			if (mat.a < 0.00000000000001)mat.a=mat.d=0;
+			if (mat.tx < 0.00000000000001)mat.tx=0;
+			if (mat.ty < 0.00000000000001)mat.ty=0;
 			canvasStyle.transformOrigin=canvasStyle.webkitTransformOrigin=canvasStyle.msTransformOrigin=canvasStyle.mozTransformOrigin=canvasStyle.oTransformOrigin="0px 0px 0px";
 			canvasStyle.transform=canvasStyle.webkitTransform=canvasStyle.msTransform=canvasStyle.mozTransform=canvasStyle.oTransform="matrix("+mat.toString()+")";
-			this.visible=true;
+			this.renderingEnabled=true;
 			this._repaint=1;
 			this.event(/*laya.events.Event.RESIZE*/"resize");
 		}
@@ -13569,9 +14079,8 @@ window.Laya=(function(window,document){
 		/**@inheritDoc */
 		__proto.render=function(context,x,y){
 			Render.isFlash && this.repaint();
-			this.now=Browser.now();
 			this._renderCount++;
-			var frameMode=this.frameRate==="mouse" ? (((this.now-this._mouseMoveTime)< 2000)? "fast" :"slow"):this.frameRate;
+			var frameMode=this.frameRate==="mouse" ? (((Browser.now()-this._mouseMoveTime)< 2000)? "fast" :"slow"):this.frameRate;
 			var isFastMode=(frameMode!=="slow");
 			var isDoubleLoop=(this._renderCount % 2===0);
 			var ctx=Render.context;
@@ -13580,12 +14089,20 @@ window.Laya=(function(window,document){
 				Stat.loopCount++;
 				MouseManager.instance.runEvent();
 				Laya.timer._update();
-				if (this._style.visible && this.renderingEnabled){
+				if (Render.isConchNode){
+					var customList=Sprite.CustomList;
+					for (var i=0,n=customList.length;i < n;i++){
+						customList[i].customRender(customList[i].customContext,0,0);
+					}
+					return;
+				}
+				if (this.renderingEnabled){
 					Render.isWebGL ? ctx.clear():RunDriver.clear(this._bgColor);
 					_super.prototype.render.call(this,context,x,y);
 				}
 			}
-			if (this._style.visible && this.renderingEnabled && (isFastMode || !isDoubleLoop)){
+			if (Render.isConchNode)return;
+			if (this.renderingEnabled && (isFastMode || !isDoubleLoop)){
 				Render.isWebGL && RunDriver.clear(this._bgColor);
 				RunDriver.benginFlush();
 				context.flush();
@@ -13679,7 +14196,11 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'bgColor',function(){
 			return this._bgColor;
 			},function(value){
+			if (Render.isWebGL && value==null){
+				value="#000000";
+			}
 			this._bgColor=value;
+			this.model && this.model.bgColor(value);
 			if (value){
 				Render.canvas.style.background=value;
 				}else {
@@ -13766,6 +14287,7 @@ window.Laya=(function(window,document){
 
 
 	/**
+	*@private
 	*<code>FileBitmap</code> 是图片文件资源类。
 	*/
 	//class laya.resource.FileBitmap extends laya.resource.Bitmap
@@ -13827,7 +14349,6 @@ window.Laya=(function(window,document){
 						if(!Render.isFlash)ctx.size=function (w,h){
 						};
 					}
-					contextID==="2d" && Context._init(o,ctx);
 					return ctx;
 				}
 			}else this._source={};
@@ -13939,6 +14460,193 @@ window.Laya=(function(window,document){
 
 		return HTMLSubImage;
 	})(Bitmap)
+
+
+	/**
+	*关键帧动画播放类
+	*
+	*/
+	//class laya.display.FrameAnimation extends laya.display.AnimationPlayerBase
+	var FrameAnimation=(function(_super){
+		function FrameAnimation(){
+			this._targetDic=null;
+			this._animationData=null;
+			FrameAnimation.__super.call(this);
+			if(FrameAnimation._sortIndexFun==null){
+				FrameAnimation._sortIndexFun=MathUtil.SortByKey("index",false,true);
+			}
+		}
+
+		__class(FrameAnimation,'laya.display.FrameAnimation',_super);
+		var __proto=FrameAnimation.prototype;
+		/**
+		*@private
+		*初始化动画数据
+		*@param targetDic 对象表
+		*@param animationData 动画数据
+		*
+		*/
+		__proto._setUp=function(targetDic,animationData){
+			this._labels=null;
+			this._targetDic=targetDic;
+			this._animationData=animationData;
+			this.interval=1000 / animationData.frameRate;
+			this._calculateDatas();
+		}
+
+		/**@inheritDoc */
+		__proto.clear=function(){
+			_super.prototype.clear.call(this);
+			this._targetDic=null;
+			this._animationData=null;
+		}
+
+		/**@inheritDoc */
+		__proto._displayToIndex=function(value){
+			if(!this._animationData)return;
+			if(value<0)value=0;
+			if(value>this._count)value=this._count;
+			var nodes=this._animationData.nodes,i=0,len=nodes.length;
+			for(i=0;i<len;i++){
+				this._displayNodeToFrame(nodes[i],value);
+			}
+		}
+
+		/**
+		*@private
+		*将节点设置到某一帧的状态
+		*@param node 节点ID
+		*@param frame
+		*@param targetDic 节点表
+		*
+		*/
+		__proto._displayNodeToFrame=function(node,frame,targetDic){
+			if(!targetDic)targetDic=this._targetDic;
+			var target=targetDic[node.target];
+			if(!target){
+				return;
+			};
+			var frames=node.frames,key,propFrames,value;
+			var keys=node.keys,i=0,len=keys.length;
+			for(i=0;i<len;i++){
+				key=keys[i];
+				propFrames=frames[key];
+				if(propFrames.length>frame){
+					value=propFrames[frame];
+					}else{
+					value=propFrames[propFrames.length-1];
+				}
+				target[key]=value;
+			}
+		}
+
+		/**
+		*@private
+		*计算帧数据
+		*
+		*/
+		__proto._calculateDatas=function(){
+			if(!this._animationData)return;
+			var nodes=this._animationData.nodes,i=0,len=nodes.length,tNode;
+			this._count=0;
+			for(i=0;i<len;i++){
+				tNode=nodes[i];
+				this._calculateNodeKeyFrames(tNode);
+			}
+			this._count+=1;
+		}
+
+		/**
+		*@private
+		*计算某个节点的帧数据
+		*@param node
+		*
+		*/
+		__proto._calculateNodeKeyFrames=function(node){
+			var keyFrames=node.keyframes,key,tKeyFrames,target=node.target;
+			if(!node.frames){
+				node.frames={};
+			}
+			if(!node.keys){
+				node.keys=[];
+				}else{
+				node.keys.length=0;
+			}
+			for(key in keyFrames){
+				tKeyFrames=keyFrames[key];
+				if(!node.frames[key]){
+					node.frames[key]=[];
+				}
+				tKeyFrames.sort(FrameAnimation._sortIndexFun);
+				node.keys.push(key);
+				this._calculateNodePropFrames(tKeyFrames,node.frames[key],key,target);
+			}
+		}
+
+		/**
+		*@private
+		*计算节点某个属性的帧数据
+		*@param keyframes
+		*@param frames
+		*@param key
+		*@param target
+		*
+		*/
+		__proto._calculateNodePropFrames=function(keyframes,frames,key,target){
+			var i=0,len=keyframes.length-1;
+			frames.length=keyframes[len].index+1;
+			for(i=0;i<len;i++){
+				this._dealKeyFrame(keyframes[i]);
+				this._calculateFrameValues(keyframes[i],keyframes[i+1],frames);
+			}
+			if(len==0){
+				frames[0]=keyframes[0].value;
+			}
+			this._dealKeyFrame(keyframes[i]);
+		}
+
+		/**
+		*@private
+		*
+		*/
+		__proto._dealKeyFrame=function(keyFrame){
+			if (keyFrame.label&&keyFrame.label !="")this.addLabel(keyFrame.label,keyFrame.index);
+		}
+
+		/**
+		*@private
+		*计算两个关键帧直接的帧数据
+		*@param startFrame
+		*@param endFrame
+		*@param result
+		*
+		*/
+		__proto._calculateFrameValues=function(startFrame,endFrame,result){
+			var i=0,easeFun;
+			var start=startFrame.index,end=endFrame.index;
+			var startValue=startFrame.value;
+			var dValue=endFrame.value-startFrame.value;
+			var dLen=end-start;
+			if(end>this._count)this._count=end;
+			if(startFrame.tween){
+				easeFun=Ease[startFrame.tweenMethod];
+				if(easeFun==null){
+					easeFun=Ease.linearNone;
+				}
+				for(i=start;i<end;i++){
+					result[i]=easeFun(i-start,startValue,dValue,dLen);
+				}
+				}else{
+				for(i=start;i<end;i++){
+					result[i]=startValue;
+				}
+			}
+			result[endFrame.index]=endFrame.value;
+		}
+
+		FrameAnimation._sortIndexFun=null
+		return FrameAnimation;
+	})(AnimationPlayerBase)
 
 
 	/**
@@ -14101,7 +14809,7 @@ window.Laya=(function(window,document){
 			this.inputElementYAdjuster=0;
 			this._prompt='';
 			this._promptColor="#A9A9A9";
-			this._originColor=null;
+			this._originColor="#000000";
 			this._content='';
 			Input.__super.call(this);
 			this._maxChars=1E5;
@@ -14123,7 +14831,7 @@ window.Laya=(function(window,document){
 		/**@private */
 		__proto._onMouseDown=function(e){
 			this.focus=true;
-			Browser.document.addEventListener(Browser.onPC ? "mousedown" :"touchstart",laya.display.Input._checkBlur);
+			Browser.document.addEventListener(Browser.enableTouch?"touchstart":"mousedown",laya.display.Input._checkBlur);
 		}
 
 		/**@inheritDoc*/
@@ -14140,17 +14848,26 @@ window.Laya=(function(window,document){
 			var rec;
 			rec=Utils.getGlobalPosAndScale(this);
 			var a=stage._canvasTransform.a,d=stage._canvasTransform.d;
-			Input.inputContainer.style.left=(rec.x+this.padding[3]+this.inputElementXAdjuster)*stage.clientScaleX *a+stage.offset.x+"px";
-			Input.inputContainer.style.top=(rec.y+this.padding[0]+this.inputElementYAdjuster)*stage.clientScaleY *d+stage.offset.y+"px";
+			var x=(rec.x+this.padding[3]+this.inputElementXAdjuster)*stage.clientScaleX *a+stage.offset.x;
+			var y=(rec.y+this.padding[0]+this.inputElementYAdjuster)*stage.clientScaleY *d+stage.offset.y;
+			Input.inputContainer.setPos(x,y);
 			var inputWid=this._width-this.padding[1]-this.padding[3];
 			var inputHei=this._height-this.padding[0]-this.padding[2];
-			style.width=inputWid+"px";
-			style.height=inputHei+"px";
+			this.nativeInput.setSize(inputWid,inputHei);
+			if (Render.isConchApp){
+				this.nativeInput.setPos(x,y);
+			}
 			if (!this._getVisible())this.focus=false;
 			if (stage.transform || rec.width !=1 || rec.height !=1 || a !=1 || d !=1){
-				var ts="scale("+stage.clientScaleX *a *rec.width+","+stage.clientScaleY *d *rec.height+")";
-				if (ts !=style.transform)
+				x=stage.clientScaleX *a *rec.width;
+				y=stage.clientScaleY *d *rec.height;
+				var ts="scale("+x+","+y+")";
+				if (ts !=style.transform){
 					style.transform=ts;
+					if (Render.isConchApp){
+						this.nativeInput.setScale(x,y);
+					}
+				}
 			}
 		}
 
@@ -14200,15 +14917,16 @@ window.Laya=(function(window,document){
 				var temp=this._text;
 				this._text="";
 				this.typeset();
-				cssStyle.color=this._originColor;
-				cssStyle.fontSize=this.fontSize+"px";
-				cssStyle.fontFamily=this.font;
+				input.setColor(this._originColor);
+				input.setFontSize(this.fontSize);
+				input.setFontFace(this.font);
 				cssStyle.lineHeight=(this.leading+this.fontSize)+"px";
 				cssStyle.fontStyle=(this.italic ? "italic" :"normal");
 				cssStyle.fontWeight=(this.bold ? "bold" :"normal");
 				cssStyle.textAlign=this.align;
 				this._syncInputTransform();
-				Laya.timer.frameLoop(1,this,this._syncInputTransform);
+				if(!Render.isConchApp)
+					Laya.timer.frameLoop(1,this,this._syncInputTransform);
 				}else {
 				var inputContainerStyle=Input.inputContainer.style;
 				var hei=(this._multiline ? 100 :40);
@@ -14222,7 +14940,6 @@ window.Laya=(function(window,document){
 			var promptStyleDOM=Browser.getElementById("promptStyle");
 			if (!promptStyleDOM){
 				promptStyleDOM=Browser.createElement("style");
-				promptStyleDOM.setAttribute("id","promptStyle");
 				Browser.document.head.appendChild(promptStyleDOM);
 			}
 			promptStyleDOM.innerText=
@@ -14256,8 +14973,9 @@ window.Laya=(function(window,document){
 			Laya.stage.off(/*laya.events.Event.KEY_DOWN*/"keydown",this,this._onKeyDown);
 			Laya.stage.focus=null;
 			this.event(/*laya.events.Event.BLUR*/"blur");
+			if (Render.isConchApp)this.nativeInput.blur();
 			Browser.onPC && Laya.timer.clear(this,this._syncInputTransform);
-			Browser.document.removeEventListener(Browser.onPC ? "mousedown" :"touchstart",laya.display.Input._checkBlur);
+			Browser.document.removeEventListener(Browser.enableTouch?"touchstart":"mousedown",laya.display.Input._checkBlur);
 		}
 
 		/**@private */
@@ -14285,7 +15003,7 @@ window.Laya=(function(window,document){
 		/**@inheritDoc */
 		__getset(0,__proto,'color',_super.prototype._$get_color,function(value){
 			if (this._focus)
-				this.nativeInput.style.color=value;
+				this.nativeInput.setColor(value);
 			_super.prototype._$set_color.call(this,this._content?value:this._promptColor);
 			this._originColor=value;
 		});
@@ -14327,6 +15045,9 @@ window.Laya=(function(window,document){
 					input.target=null;
 					this._focusOut();
 					Browser.container.removeChild(Input.inputContainer);
+					if (Render.isConchApp){
+						input.setPos(-10000,-10000);
+					}
 				}
 			}
 		});
@@ -14338,13 +15059,17 @@ window.Laya=(function(window,document){
 			else
 			return this._text || "";
 			},function(value){
+			value+='';
 			if (this._focus){
 				this.nativeInput.value=value || '';
+				this.event(/*laya.events.Event.CHANGE*/"change");
 			}
-			if (!this._multiline)
-				value=value.replace(/\r?\n/g,'');
-			this._content=value;
-			_super.prototype._$set_text.call(this,value||this._prompt);
+			else{
+				if (!this._multiline)
+					value=value.replace(/\r?\n/g,'');
+				this._content=value;
+				_super.prototype._$set_text.call(this,value||this._prompt);
+			}
 		});
 
 		/**
@@ -14374,7 +15099,10 @@ window.Laya=(function(window,document){
 
 		/**限制输入的字符。*/
 		__getset(0,__proto,'restrict',function(){
-			return this._restrictPattern ? this._restrictPattern.source :"";
+			if (this._restrictPattern){
+				return this._restrictPattern.source;
+			}
+			return "";
 			},function(pattern){
 			if (pattern){
 				pattern="[^"+pattern+"]";
@@ -14422,6 +15150,7 @@ window.Laya=(function(window,document){
 			Input.inputContainer.appendChild(Input.input);
 			Input.inputContainer.appendChild(Input.area);
 			Input.inputContainer.style.position="absolute";
+			Input.inputContainer.setPos=function (x,y){Input.inputContainer.style.left=x+'px';Input.inputContainer.style.top=y+'px';};
 			if (Browser.onMobile){
 				var animationStyle="animation:input-ani 0.3s;"+"-moz-animation:input-ani 0.3s;"+"-webkit-animation:input-ani 0.3s;"+"-o-animation:input-ani 0.3s;"+"animation-fill-mode:forwards;"+"-moz-animation-fill-mode:forwards;"+"-webkit-animation-fill-mode:forwards;"+"-o-animation-fill-mode:forwards;";
 				var style=Input.inputContainer.style;
@@ -14457,10 +15186,16 @@ window.Laya=(function(window,document){
 			input.addEventListener('mousemove',Input._stopEvent);
 			input.addEventListener('mousedown',Input._stopEvent);
 			input.addEventListener('touchmove',Input._stopEvent);
+			if(!Render.isConchApp){
+				input.setColor=function (color){input.style.color=color;};
+				input.setFontSize=function (fontSize){input.style.fontSize=fontSize+'px';};
+				input.setSize=function (w,h){input.style.width=w+'px';input.style.height=h+'px';};
+			}
+			input.setFontFace=function (fontFace){input.style.fontFamily=fontFace;};
 		}
 
 		Input._stopEvent=function(e){
-			e.stopPropagation();
+			e.stopPropagation && e.stopPropagation();
 		}
 
 		Input._getCorretStyle=function(){
@@ -14591,7 +15326,7 @@ window.Laya=(function(window,document){
 	})(FileBitmap)
 
 
-	Laya.__init([EventDispatcher,Browser,Timer,LoaderManager,LocalStorage,TimeLine]);
+	Laya.__init([EventDispatcher,LoaderManager,Render,Browser,Timer,LocalStorage,TimeLine]);
 })(window,document,Laya);
 
 (function(window,document,Laya){

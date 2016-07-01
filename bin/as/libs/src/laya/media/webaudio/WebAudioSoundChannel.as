@@ -45,6 +45,7 @@ package laya.media.webaudio {
 		private var context:* = WebAudioSound.ctx;
 		
 		private var _onPlayEnd:Function;
+		private static var _tryCleanFailed:Boolean = false;
 		
 		public function WebAudioSoundChannel() {
 			super();
@@ -121,9 +122,13 @@ package laya.media.webaudio {
 				}
 				sourceNode.disconnect(0);
 				sourceNode.onended = null;
-				try { sourceNode.buffer = WebAudioSound._miniBuffer; } catch(e:*) {}
+				if (!_tryCleanFailed) _tryClearBuffer(sourceNode);
 				this.bufferSource = null;			
 			}
+		}
+		private function _tryClearBuffer(sourceNode:*):void
+		{
+			try { sourceNode.buffer = WebAudioSound._miniBuffer; } catch (e:*) { _tryCleanFailed = true; }
 		}
 		/**
 		 * 停止播放

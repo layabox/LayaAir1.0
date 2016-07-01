@@ -7,7 +7,6 @@ package laya.map {
 	import laya.net.Loader;
 	import laya.resource.Texture;
 	import laya.utils.Handler;
-	import laya.webgl.WebGL;
 	import laya.map.MapLayer;
 	
 	/**
@@ -81,7 +80,9 @@ package laya.map {
 		private var _mapRect:GRect = new GRect();		//当前视口显示的块范围
 		private var _mapLastRect:GRect = new GRect();	//上次视口显示的块范围
 		private var _index:int = 0;
-		private var _animationDic:Object = {};		//需要创建的动画数据
+		private var _animationDic:Object = { };		//需要创建的动画数据
+		private var _properties:*;					//当前地图的自定义属性
+		private var _tileProperties:Object = { };	//图块属性
 		//默认的地图类型（具体要看JSON文件）
 		private var _orientation:String = "orthogonal";
 		//默认的tile渲染顺序（具体要看JSON文件）
@@ -142,6 +143,7 @@ package laya.map {
 			Laya.stage.addChild(_mapSprite);
 			var tJsonData:* = _jsonData = e;
 			
+			_properties = tJsonData.properties;
 			_orientation = tJsonData.orientation;
 			_renderOrder = tJsonData.renderorder;
 			_mapW = tJsonData.width;
@@ -162,6 +164,7 @@ package laya.map {
 				tileset = tArray[i];
 				tTileSet = new TileSet();
 				tTileSet.init(tileset);
+				_tileProperties[i] = tTileSet.tileproperties;
 				_tileSetArray.push(tTileSet);
 				//动画数据
 				var tTiles:* = tileset.tiles;
@@ -304,6 +307,36 @@ package laya.map {
 		public function getTexture(index:int):TileTexSet {
 			if (index < _tileTexSetArr.length) {
 				return _tileTexSetArr[index];
+			}
+			return null;
+		}
+		
+		/**
+		 * 得到地图的自定义属性
+		 * @param	name		属性名称
+		 * @return
+		 */
+		public function getMapProperties(name:String):*
+		{
+			if (_properties)
+			{
+				return _properties[name];
+			}
+			return null;
+		}
+		
+		/**
+		 * 得到tile自定义属性
+		 * @param	index		地图块索引
+		 * @param	id			具体的TileSetID
+		 * @param	name		属性名称
+		 * @return
+		 */
+		public function getTileProperties(index:int,id:int, name:String):*
+		{
+			if (_tileProperties[index] && _tileProperties[index][id])
+			{
+				return _tileProperties[index][id][name];
 			}
 			return null;
 		}
@@ -815,6 +848,12 @@ package laya.map {
 				delete tDic[p];
 			}
 			
+			_properties = null;
+			tDic = _tileProperties;
+			for (p in tDic) {
+				delete tDic[p];
+			}
+			
 			_currTileSet = null;
 			_completeHandler = null;
 			
@@ -1041,6 +1080,7 @@ class TileSet {
 	
 	public var titleoffsetX:int = 0;
 	public var titleoffsetY:int = 0;
+	public var tileproperties:*;
 	
 	public function init(data:*):void {
 		firstgid = data.firstgid;
@@ -1054,18 +1094,8 @@ class TileSet {
 		tileheight = data.tileheight;
 		tilewidth = data.tilewidth;
 		
-		/*
-		 * 自定义属性
-		   var tTileProperties = data.tileproperties;
-		   if (tTileProperties)
-		   {
-		   for (var p in tTileProperties)
-		   {
-		   var tObject =
-		   tTileProperties[p];
-		   }
-		   }
-		 */
+		//自定义属性
+		tileproperties = data.tileproperties;
 		var tTileoffset:* = data.tileoffset;
 		if (tTileoffset) {
 			titleoffsetX = tTileoffset.x;

@@ -52,7 +52,7 @@ package laya.webgl.resource {
 						ctx.size = function():void {
 						};
 					}
-					contextID === "2d" && Context._init(o, ctx);
+					//contextID === "2d" && Context._init(o, ctx);
 					return ctx;
 				}
 			} else _canvas = {};

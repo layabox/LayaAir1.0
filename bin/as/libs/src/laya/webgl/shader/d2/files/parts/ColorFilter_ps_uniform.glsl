@@ -1,1 +1,2 @@
-uniform float u_colorMatrix[20];
+uniform vec4 colorAlpha;
+uniform mat4 colorMat;

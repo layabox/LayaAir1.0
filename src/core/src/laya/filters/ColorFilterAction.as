@@ -49,12 +49,13 @@ package laya.filters {
 		private function getColor(red:int, green:int, blue:int, alpha:Number):Array {
 			var rst:Array = [];
 			
-			if (data._elements) {
-				var a:Float32Array = data._elements;
-				rst[0] = a[0] * red + a[1] * green + a[2] * blue + a[3] * alpha + a[4];
-				rst[1] = a[5] * red + a[6] * green + a[7] * blue + a[8] * alpha + a[9];
-				rst[2] = a[10] * red + a[11] * green + a[12] * blue + a[13] * alpha + a[14];
-				rst[3] = a[15] * red + a[16] * green + a[17] * blue + a[18] * alpha + a[19];
+			if (data._mat && data._alpha) {
+				var mat:Float32Array = data._mat;
+				var tempAlpha:Float32Array = data._alpha;
+				rst[0] = mat[0] * red + mat[1] * green + mat[2] * blue + mat[3] * alpha + tempAlpha[0];
+				rst[1] = mat[4] * red + mat[5] * green + mat[6] * blue + mat[7] * alpha + tempAlpha[1];
+				rst[2] = mat[8] * red + mat[9] * green + mat[10] * blue + mat[11] * alpha + tempAlpha[2];
+				rst[3] = mat[12] * red + mat[13] * green + mat[14] * blue + mat[15] * alpha + tempAlpha[3];
 			}
 			return rst;
 		}

@@ -21,7 +21,7 @@ package laya.system {
 		 * 初始化。
 		 */
 		public static function __init__():void {
-			Render.isConchApp = __JS__("window.conch ? true : false;");
+	
 			if (Render.isConchApp) {
 				__JS__("conch.disableConchResManager()");
 				__JS__("conch.disableConchAutoRestoreLostedDevice()");

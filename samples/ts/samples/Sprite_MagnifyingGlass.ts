@@ -23,17 +23,17 @@ module laya
 			Laya.stage.scaleMode = "showall";
 			Laya.stage.bgColor = "#232628";
 
-			Laya.loader.load("res/bg.jpg", Handler.create(this, this.setup));
+			Laya.loader.load("res/bg2.png", Handler.create(this, this.setup));
 		}
 
 		private setup():void
 		{
 			var bg:Sprite = new Sprite();
-			bg.loadImage("res/bg.jpg");
+			bg.loadImage("res/bg2.png");
 			Laya.stage.addChild(bg);
 
 			this.bg2 = new Sprite();
-			this.bg2.loadImage("res/bg.jpg");
+			this.bg2.loadImage("res/bg2.png");
 			Laya.stage.addChild(this.bg2);
 			this.bg2.scale(3, 3);
 			
@@ -55,7 +55,6 @@ module laya
 
 			this.maskSp.x = Laya.stage.mouseX;
 			this.maskSp.y = Laya.stage.mouseY;
-			this.bg2.repaint();	 
 		}
 	}
 }	

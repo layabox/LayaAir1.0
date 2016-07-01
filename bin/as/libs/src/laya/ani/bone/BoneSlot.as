@@ -106,7 +106,7 @@ package laya.ani.bone {
 						}else {
 							tResultMatrix = new Matrix();
 						}
-						Matrix.TEMP.copy(tResultMatrix);
+						Matrix.TEMP.copyTo(tResultMatrix);
 						graphics.drawTexture(tTexture, -tTexture.sourceWidth / 2, -tTexture.sourceHeight / 2, tTexture.sourceWidth, tTexture.sourceHeight, tResultMatrix);
 					}
 				}

@@ -126,6 +126,8 @@ package laya.events {
 		public static const LABEL:String = "label";
 		/**浏览器全屏更改时触发*/
 		public static const FULL_SCREEN_CHANGE:String = "fullscreenchange";
+		/**显卡设备丢失时触发*/
+		public static const DEVICE_LOST:String = "devicelost";
 		
 		/** 事件类型。*/
 		public var type:String;
@@ -139,6 +141,8 @@ package laya.events {
 		public var _stoped:Boolean;
 		/** 分配给触摸点的唯一标识号（作为 int）。*/
 		public var touchId:int;
+		/**键盘值*/
+		public var keyCode:int;
 		
 		/**
 		 * 设置事件数据。

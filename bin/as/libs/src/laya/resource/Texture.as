@@ -19,7 +19,8 @@ package laya.resource {
 		/**默认 UV 信息。*/
 		public static var DEF_UV:Array =/*[STATIC SAFE]*/ [0, 0, 1.0, 0, 1.0, 1.0, 0, 1.0];
 		/**反转 UV 信息。*/
-		public static var INV_UV:Array =/*[STATIC SAFE]*/ [0, 1, 1.0, 1, 1.0, 0.0, 0, 0.0];
+		/*[IF-FLASH]*/public static var INV_UV:Array =/*[STATIC SAFE]*/ [0, 0, 1.0, 0, 1.0, 1.0, 0, 1.0];
+		//[IF-JS]public static var INV_UV:Array =/*[STATIC SAFE]*/ [0, 1, 1.0, 1, 1.0, 0.0, 0, 0.0];
 		/**@private */
 		private static var _rect1:Rectangle =/*[STATIC SAFE]*/ new Rectangle();
 		/**@private */
@@ -48,7 +49,7 @@ package laya.resource {
 		/**图片地址*/
 		public var url:String;
 		//public var repeat:Boolean = false;
-		
+		/** @private */
 		public var _uvID:int = 0;
 		
 		/**
@@ -121,7 +122,7 @@ package laya.resource {
 		public static function create(source:*, x:Number, y:Number, width:Number, height:Number, offsetX:Number = 0, offsetY:Number = 0, sourceWidth:Number = 0, sourceHeight:Number = 0):Texture {
 			var btex:Boolean = source is Texture;
 			var uv:Array = btex ? source.uv : DEF_UV;
-			var bitmap:FileBitmap = btex ? source.bitmap : source;
+			var bitmap:* = btex ? source.bitmap : source;
 			var tex:Texture = new Texture(bitmap, null);
 			tex.width = width;
 			tex.height = height;

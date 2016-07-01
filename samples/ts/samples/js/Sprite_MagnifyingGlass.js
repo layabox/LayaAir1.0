@@ -36,7 +36,6 @@ var laya;
             this.bg2.y = -Laya.stage.mouseY * 2;
             this.maskSp.x = Laya.stage.mouseX;
             this.maskSp.y = Laya.stage.mouseY;
-            this.bg2.repaint();
         };
         return Sprite_MagnifyingGlass;
     }());

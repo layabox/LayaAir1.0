@@ -1,6 +1,7 @@
 package laya.resource {
 	
 	/**
+	 * @private
 	 * <code>FileBitmap</code> 是图片文件资源类。
 	 */
 	public class FileBitmap extends Bitmap {

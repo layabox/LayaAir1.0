@@ -268,7 +268,7 @@ package laya.ui {
 		 * @private
 		 * 此对象包含的<code>List</code>实例的<code>Event.CHANGE</code>事件侦听处理函数。
 		 */
-		protected function onListChange(e:Event):void {
+		protected function onListChange(e:Event=null):void {
 			event(Event.CHANGE);
 		}
 		
@@ -537,8 +537,8 @@ package laya.ui {
 		/**@inheritDoc */
 		override public function set dataSource(value:*):void {
 			_dataSource = value;
-			if (value is XmlDom) xml = value as XmlDom;
-			else super.dataSource = value;
+			//if (value is XmlDom) xml = value as XmlDom;
+			super.dataSource = value;
 		}
 		
 		/**

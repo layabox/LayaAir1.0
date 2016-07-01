@@ -7,7 +7,7 @@ package
 	
 	public class UI_ComboBox	
 	{
-		private var skin:String = "res/ui/comboBox.png";
+		private var skin:String = "res/ui/combobox.png";
 		
 		public function UI_ComboBox() 
 		{
@@ -23,7 +23,7 @@ package
 			Laya.loader.load(skin, Handler.create(this, onLoadComplete));
 		}
 		
-		private function onLoadComplete():void
+		private function onLoadComplete(e:*=null):void
 		{
 			var cb:ComboBox = createComboBox(skin);
 			cb.autoSize = true;
@@ -42,7 +42,7 @@ package
 			return comboBox;
 		}
 		
-		private function onSelect(cb:ComboBox):void
+		private function onSelect(cb:ComboBox,e:*=null):void
 		{
 			trace("选中了： " + cb.selectedLabel);
 		}

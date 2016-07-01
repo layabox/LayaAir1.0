@@ -41,9 +41,9 @@ package
 			Laya.loader.load(skins, Handler.create(this, onUIAssetsLoaded));
 		}
 		
-		private function onUIAssetsLoaded():void
+		private function onUIAssetsLoaded(e:*=null):void
 		{
-			for(var i:int = 0, len = skins.length; i < len; ++i)
+			for(var i:int = 0, len : int = skins.length; i < len; ++i)
 			{
 				var btn:Button = createButton(skins[i]);
 				var x:Number = i % COLUMNS * HORIZONTAL_SPACING + xOffset;

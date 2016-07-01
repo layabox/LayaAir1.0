@@ -33,7 +33,7 @@ package
 			Laya.loader.load(apePath, Handler.create(this, createApe));
 		}
 
-		private function createApe():void
+		private function createApe(_e:*=null):void
 		{
 			// 添加一只猩猩
 			ape = new Sprite();
@@ -49,21 +49,21 @@ package
 			ape.on(Event.MOUSE_DOWN, this, onApePress);
 		}
 
-		private function onApePress(e:Event):void
+		private function onApePress(e:Event=null):void
 		{
 			// 鼠标按下后，HOLD_TRIGGER_TIME毫秒后hold
 			Laya.timer.once(HOLD_TRIGGER_TIME, this, onHold);
 			Laya.stage.on(Event.MOUSE_UP, this, onApeRelease);
 		}
 
-		private function onHold():void
+		private function onHold(e:*=null):void
 		{
 			Tween.to(ape, { "scaleX":1, "scaleY":1 }, 500, Ease.bounceOut);
 			isApeHold = true;
 		}
 
 		/** 鼠标放开后停止hold */
-		private function onApeRelease():void
+		private function onApeRelease(e:*=null):void
 		{
 			// 鼠标放开时，如果正在hold，则播放放开的效果
 			if (isApeHold)

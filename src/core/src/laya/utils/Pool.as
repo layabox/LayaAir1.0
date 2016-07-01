@@ -7,7 +7,7 @@ package laya.utils {
 		
 		/**@private  对象存放池。*/
 		private static var _poolDic:Object = { };
-		/*[IF-FLASH]*/private static var _inPoolDic:flash.utils.Dictionary=new flash.utils.Dictionary();
+		/*[IF-FLASH]*/private static var _inPoolDic:flash.utils.Dictionary=new flash.utils.Dictionary(true);
 		/**@private */
 		private static const InPoolSign:String = "__InPool";
 		

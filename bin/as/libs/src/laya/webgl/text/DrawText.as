@@ -125,7 +125,7 @@ package laya.webgl.text {
 			} else scale = false;
 			
 			if (scale) {
-				curMat = curMat.copy(WebGLContext2D._tmpMatrix);
+				curMat = curMat.copyTo(WebGLContext2D._tmpMatrix);
 				curMat.scale(1 / sx, 1 / sy);
 				curMat._checkTransform();
 				x *= sx;

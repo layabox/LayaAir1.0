@@ -41,7 +41,7 @@ package
 			Laya.loader.load([{url:mTexturePath, type: Loader.IMAGE}, {url:mAniPath, type: Loader.BUFFER}], Handler.create(this, onAssetsLoaded));
 		}
 		
-		public function onAssetsLoaded():void
+		public function onAssetsLoaded(e:*=null):void
 		{
 			var tTexture:Texture = Loader.getRes(mTexturePath);
 			var arraybuffer:ArrayBuffer = Loader.getRes(mAniPath);      
@@ -50,7 +50,7 @@ package
 			mFactory.parseData(tTexture, arraybuffer,10);
 		}
 		
-		private function parseComplete():void
+		private function parseComplete(e:*=null):void
 		{
 			for (var i:int = 0; i < rowCount; i++)
 			{
@@ -69,7 +69,7 @@ package
 		
 		private var mActionIndex:int = 0;
 		
-		public function toggleAction(e:*):void
+		public function toggleAction(e:*=null):void
 		{
 			mActionIndex++;
 			var tAnimNum:int = mArmature.getAnimNum();

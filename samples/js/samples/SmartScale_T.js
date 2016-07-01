@@ -17,7 +17,7 @@
 	(function()
 	{
 		// 不支持WebGL时自动切换至Canvas
-		Laya.init(1136, 640, WebGL);
+		Laya.init(1136, 640);
 
 		//设置适配模式
 		Laya.stage.scaleMode = "noscale";

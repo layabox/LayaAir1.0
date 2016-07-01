@@ -48,11 +48,11 @@ package laya.net {
 		/**
 		 * 格式化指定的地址并	返回。
 		 * @param	url 地址。
-		 * @param	_basePath 路径。
+		 * @param	base 路径。
 		 * @return 格式化处理后的地址。
 		 */	
-		public static function formatURL(url:String, _basePath:String = null):String {
-			if (customFormat != null) url = customFormat(url, _basePath);
+		public static function formatURL(url:String, base:String = null):String {
+			if (customFormat != null) url = customFormat(url, base);
 			if (!url) return "null path";
 			if ( Render.isConchApp == false)
 			{
@@ -64,7 +64,7 @@ package laya.net {
 			if (isAbsolute(url))
 				return url;
 				
-			return (_basePath || basePath) + url;
+			return (base || basePath) + url;
 		}
 		
 		/**
@@ -77,6 +77,7 @@ package laya.net {
 		}
 		
 		/**
+		 * @private
 		 * 获取指定 URL 的路径。
 		 * <p><b>注意：</b>末尾有斜杠（/）。</p>
 		 * @param	url 地址。

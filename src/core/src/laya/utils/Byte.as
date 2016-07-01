@@ -54,11 +54,11 @@ package laya.utils {
 		
 		/**
 		 * 创建一个 <code>Byte</code> 类的实例。
-		 * @param	d 用于指定元素的数目、类型化数组、ArrayBuffer。
+		 * @param	data 用于指定元素的数目、类型化数组、ArrayBuffer。
 		 */
-		public function Byte(d:* = null) {
-			if (d) {
-				this._u8d_ = new Uint8Array(d);
+		public function Byte(data:* = null) {
+			if (data) {
+				this._u8d_ = new Uint8Array(data);
 				this._d_ = new DataView(this._u8d_.buffer);
 				_length = this._d_.byteLength;
 			} else {

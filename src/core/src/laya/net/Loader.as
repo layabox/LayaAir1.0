@@ -1,4 +1,5 @@
 package laya.net {
+	///*[IF-FLASH]*/import flash.utils.ByteArray;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.media.Sound;
@@ -49,26 +50,29 @@ package laya.net {
 		public static var parserMap:Object = /*[STATIC SAFE]*/ {};
 		/** 已加载的资源池。*/
 		public static const loadedMap:Object = {};
-		/** 已加载的图集资源池。*/
-		private static const atlasMap:Object = {};
-		private static var _loaders:Array = [];
-		private static var _isWorking:Boolean = false;
-		private static var _startIndex:int = 0;
-		/** 每帧回调最大超时时间。*/
+		/** 每帧回调最大超时时间，如果超时，则下帧再处理。*/
 		public static var maxTimeOut:int = 100;
+		/**@private 已加载的图集资源池。*/
+		protected static const atlasMap:Object = {};
+		/**@private */
+		protected static var _loaders:Array = [];
+		/**@private */
+		protected static var _isWorking:Boolean = false;
+		/**@private */
+		protected static var _startIndex:int = 0;
 		
 		/**@private 加载后的数据对象，只读*/
-		private var _data:*;
+		public var _data:*;
 		/**@private */
-		private var _url:String;
+		protected var _url:String;
 		/**@private */
-		private var _type:String;
+		protected var _type:String;
 		/**@private */
-		private var _cache:Boolean;
+		protected var _cache:Boolean;
 		/**@private */
-		private var _http:HttpRequest;
+		protected var _http:HttpRequest;
 		/**@private */
-		private static var _extReg:RegExp =/*[STATIC SAFE]*/ /\.(\w+)\??/g;
+		protected static var _extReg:RegExp =/*[STATIC SAFE]*/ /\.(\w+)\??/g;
 		
 		/**
 		 * 加载资源。
@@ -91,6 +95,10 @@ package laya.net {
 			
 			//如果自定义了解析器，则自己解析
 			if (parserMap[type] != null) {
+<<<<<<< HEAD
+				if (parserMap[type] is Handler) parserMap[type].runWith(this);
+				else parserMap[type].call(null, this);
+=======
 				if(parserMap[type] is Handler)
 				{
 					parserMap[type].runWith(this);
@@ -99,6 +107,7 @@ package laya.net {
 				{
 					parserMap[type].call(null, this);                    
 				}
+>>>>>>> origin/master
 				return;
 			}
 			
@@ -201,7 +210,7 @@ package laya.net {
 		 * 资源加载完成的处理函数。
 		 * @param	data 数据。
 		 */
-		protected function onLoaded(data:*):void {
+		protected function onLoaded(data:* = null):void {
 			var type:String = this._type;
 			if (type === IMAGE) {
 				var tex:Texture = new Texture(data);
@@ -269,7 +278,8 @@ package laya.net {
 						map.push(url);
 							//}
 					}
-					/*[IF-FLASH]*/map.sort();
+					/*[IF-FLASH]*/
+					map.sort();
 					
 					//if (needSub)
 					//for (i = 0; i < pics.length; i++)
@@ -318,6 +328,7 @@ package laya.net {
 		 */
 		public function endLoad(content:* = null):void {
 			content && (this._data = content);
+			///*[IF-FLASH]*/if( this._data is ByteArray ) this._data = new ArrayBuffer( this._data );
 			if (this._cache) loadedMap[this._url] = this._data;
 			event(Event.PROGRESS, 1);
 			event(Event.COMPLETE, data is Array ? [data] : data);

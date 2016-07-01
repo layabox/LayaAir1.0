@@ -44,7 +44,7 @@ package
 			sp.on(Event.CLICK, this, onSpriteClick);
 		}
 
-		private function onSpriteClick(e:Event):void
+		private function onSpriteClick(e:Event=null):void
 		{
 			var randomAngle:int = Math.random() * 180;
 			//发送自定义事件

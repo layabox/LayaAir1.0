@@ -137,7 +137,7 @@ package laya.display {
 		public function getTextWidth(text:String):Number {
 			var tWidth:Number = 0;
 			for (var i:int = 0, n:int = text.length; i < n; i++) {
-				tWidth += getCharWidth(text[i]);
+				tWidth += getCharWidth(text.charAt(i));
 			}
 			return tWidth;
 		}
@@ -179,16 +179,16 @@ package laya.display {
 			var tWidth:int = 0;
 			var tTexture:Texture;
 			for (var i:int = 0, n:int = text.length; i < n; i++) {
-				tWidth += getCharWidth(text[i]);
+				tWidth += getCharWidth(text.charAt(i));
 			}
 			var dx:Number = _leftPadding;
 			align === "center" && (dx = (width - tWidth) / 2);
 			align === "right" && (dx = (width - tWidth) - _rightPadding);
 			var tX:Number = 0;
 			for (i = 0, n = text.length; i < n; i++) {
-				tTexture = getCharTexture(text[i]);
+				tTexture = getCharTexture(text.charAt(i));
 				if (tTexture) sprite.graphics.drawTexture(tTexture, drawX + tX + dx, drawY, tTexture.width, tTexture.height);
-				tX += getCharWidth(text[i]);
+				tX += getCharWidth(text.charAt(i));
 			}
 		}
 	}

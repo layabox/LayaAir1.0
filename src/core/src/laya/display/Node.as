@@ -1,6 +1,9 @@
 package laya.display {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
+	import laya.renders.Render;
+	import laya.runtime.IConchNode;
+	import laya.utils.RunDriver;
 	import laya.utils.Timer;
 	
 	/**
@@ -39,14 +42,20 @@ package laya.display {
 		/**时间控制器，默认为Laya.timer。*/
 		public var timer:Timer = Laya.timer;
 		/**@private 是否在显示列表中显示*/
-		protected var _displayInStage:Boolean;
+		protected var _displayedInStage:Boolean;
 		/**@private 父节点对象*/
 		protected var _parent:Node;
 		/** @private */
 		private static const PROP_EMPTY:Object = {};
 		/**@private 系统保留的私有变量集合*/
 		public var _$P:Object = PROP_EMPTY;
-		
+		/**@private */
+		public var model:IConchNode;
+		/**@private */
+		public function Node()
+		{
+			model = Render.isConchNode?__JS__("new ConchNode()"):null;
+		}
 		/**
 		 * <p>销毁此对象。</p>
 		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
@@ -91,11 +100,17 @@ package laya.display {
 			if (node._parent === this) {
 				this._childs.splice(getChildIndex(node), 1);
 				this._childs.push(node);
+				if (model)
+				{
+					model.removeChild(node.model);
+					model.addChildAt(node.model, this._childs.length - 1);
+				}
 				_childChanged();
 			} else {
 				node.parent && node.parent.removeChild(node);
 				this._childs === ARRAY_EMPTY && (this._childs = []);
 				this._childs.push(node);
+				model&&model.addChildAt(node.model, this._childs.length - 1);
 				node.parent = this;
 			}
 			return node;
@@ -125,11 +140,17 @@ package laya.display {
 				if (node._parent === this) {
 					this._childs.splice(getChildIndex(node), 1);
 					this._childs.splice(index, 0, node);
+					if (model)
+					{
+						model.removeChild(node.model);
+					    model.addChildAt(node.model, index);
+					}
 					_childChanged();
 				} else {
 					node.parent && node.parent.removeChild(node);
 					this._childs === ARRAY_EMPTY && (this._childs = []);
 					this._childs.splice(index, 0, node);
+					model&&model.addChildAt(node.model, index);
 					node.parent = this;
 				}
 				return node;
@@ -197,6 +218,11 @@ package laya.display {
 			var oldIndex:int = getChildIndex(node);
 			childs.splice(oldIndex, 1);
 			childs.splice(index, 0, node);
+			if (model)
+			{
+				model.removeChild(node.model);
+				model.addChildAt(node.model, index);
+			}
 			_childChanged();
 			return node;
 		}
@@ -206,7 +232,7 @@ package laya.display {
 		 * 子节点发生改变。
 		 * @param	child 子节点。
 		 */
-		public function _childChanged(child:Node = null):void {
+		protected function _childChanged(child:Node = null):void {
 		
 		}
 		
@@ -250,6 +276,7 @@ package laya.display {
 			var node:Node = getChildAt(index);
 			if (node) {
 				this._childs.splice(index, 1);
+				model&&model.removeChild(node.model);
 				node.parent = null;
 			}
 			return node;
@@ -272,6 +299,7 @@ package laya.display {
 				}
 				for (var i:int = 0, n:int = arr.length; i < n; i++) {
 					arr[i].parent = null;
+					model && model.removeChild(arr[i].model);
 				}
 			}
 			return this;
@@ -288,6 +316,11 @@ package laya.display {
 			var index:int = this._childs.indexOf(oldNode);
 			if (index > -1) {
 				this._childs.splice(index, 1, newNode);
+				if (model)
+				{
+					model.removeChild(oldNode.model);
+					model.addChildAt(newNode.model, index);
+				}
 				oldNode.parent = null;
 				newNode.parent = this;
 				return newNode;
@@ -313,7 +346,7 @@ package laya.display {
 					this._parent = value;
 					//如果父对象可见，则设置子对象可见					
 					event(Event.ADDED);
-					value.displayInStage && _displayChild(this, true);
+					value.displayedInStage && _displayChild(this, true);
 					value._childChanged(this);
 				} else {
 					//设置子对象不可见
@@ -326,14 +359,14 @@ package laya.display {
 		}
 		
 		/**表示是否在显示列表中显示。是否在显示渲染列表中。*/
-		public function get displayInStage():Boolean {
-			return _displayInStage;
+		public function get displayedInStage():Boolean {
+			return _displayedInStage;
 		}
 		
 		/** @private */
 		public function _setDisplay(value:Boolean):void {
-			if (_displayInStage !== value) {
-				_displayInStage = value;
+			if (_displayedInStage !== value) {
+				_displayedInStage = value;
 				if (value) event(Event.DISPLAY);
 				else event(Event.UNDISPLAY);
 			}
@@ -357,7 +390,7 @@ package laya.display {
 			}
 		}
 		
-		/**is
+		/**
 		 * 当前容器是否包含 <code>node</code> 节点。
 		 * @param	node  某一个节点 <code>Node</code>。
 		 * @return	一个布尔值表示是否包含<code>node</code>节点。

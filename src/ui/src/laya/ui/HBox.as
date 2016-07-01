@@ -35,6 +35,7 @@ package laya.ui {
 		
 		/** @inheritDoc	*/
 		override protected function changeItems():void {
+			_itemChanged = false;
 			var items:Array = [];
 			var maxHeight:Number = 0;
 			for (var i:int = 0, n:int = numChildren; i < n; i++) {

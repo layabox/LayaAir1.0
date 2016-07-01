@@ -19,5 +19,8 @@ path:"../../src/ani/src"
 module:"laya.filter"
 path:"../../src/filter/src"
 
+module:"laya.d3"
+path:"../../src/d3/src"
+
 module:"laya.tiledmap"
 path:"../../src/plugins/tiledmap/src"

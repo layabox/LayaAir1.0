@@ -6,8 +6,7 @@
 	var ColorFilterActionGL=laya.filters.webgl.ColorFilterActionGL,Filter=laya.filters.Filter,FilterActionGL=laya.filters.webgl.FilterActionGL;
 	var Matrix=laya.maths.Matrix,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render,RenderContext=laya.renders.RenderContext;
 	var RenderTarget2D=laya.webgl.resource.RenderTarget2D,RunDriver=laya.utils.RunDriver,ShaderDefines2D=laya.webgl.shader.d2.ShaderDefines2D;
-	var Sprite=laya.display.Sprite,SubmitCMD=laya.webgl.submit.SubmitCMD,SubmitCMDScope=laya.webgl.submit.SubmitCMDScope;
-	var Texture=laya.resource.Texture,Value2D=laya.webgl.shader.d2.value.Value2D;
+	var Sprite=laya.display.Sprite,SubmitCMD=laya.webgl.submit.SubmitCMD,Texture=laya.resource.Texture,Value2D=laya.webgl.shader.d2.value.Value2D;
 	/**
 	*默认的FILTER,什么都不做
 	*@private
@@ -154,6 +153,7 @@
 		}
 
 		/**
+		*@private
 		*滤镜类型
 		*/
 		__getset(0,__proto,'type',function(){
@@ -248,6 +248,7 @@
 		__proto.setValueMix=function(shader){}
 		__proto.apply3d=function(scope,sprite,context,x,y){
 			var b=scope.getValue("bounds");
+			scope.addValue("color",this.data.getColor());
 			var w=b.width,h=b.height;
 			this._textureWidth=w;
 			this._textureHeight=h;
@@ -293,7 +294,10 @@
 			out.end();
 			var tmpTarget=RenderTarget2D.create(b.width,b.height);
 			tmpTarget.start();
-			tmpTarget.clear(0,0,0,0);
+			var color=scope.getValue("color");
+			if (color){
+				tmpTarget.clear(color[0],color[1],color[2],0);
+			}
 			scope.addValue("tmpTarget",tmpTarget);
 		}
 
@@ -302,7 +306,10 @@
 			tmpTarget.end();
 			var out=scope.getValue("out");
 			out.start();
-			out.clear(0,0,0,0);
+			var color=scope.getValue("color");
+			if (color){
+				out.clear(color[0],color[1],color[2],0);
+			}
 		}
 
 		GlowFilterActionGL.recycleTarget=function(scope,sprite,context,x,y){

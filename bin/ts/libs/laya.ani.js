@@ -110,7 +110,7 @@
 							}else {
 							tResultMatrix=new Matrix();
 						}
-						Matrix.TEMP.copy(tResultMatrix);
+						Matrix.TEMP.copyTo(tResultMatrix);
 						graphics.drawTexture(tTexture,-tTexture.sourceWidth / 2,-tTexture.sourceHeight / 2,tTexture.sourceWidth,tTexture.sourceHeight,tResultMatrix);
 					}
 				}
@@ -356,7 +356,7 @@
 		__proto.play=function(index,playbackRate,duration){
 			(index===void 0)&& (index=0);
 			(playbackRate===void 0)&& (playbackRate=1.0);
-			(duration===void 0)&& (duration=Number.MAX_VALUE);
+			(duration===void 0)&& (duration=1.7976931348623157e+308);
 			this._currentTime=0;
 			this._elapsedPlaybackTime=0;
 			this.playbackRate=playbackRate;
@@ -527,10 +527,6 @@
 			var i=0,j=0,k=0,n=0,l=0;
 			var read=new Byte(data);
 			var head=read.readUTFString();
-			if (head !=laya.ani.KeyframesAniTemplet.LAYA_ANIMATION_VISION){
-				console.log("[Error] Version "+head+" The engine is inconsistent, update to the version "+laya.ani.KeyframesAniTemplet.LAYA_ANIMATION_VISION+" please.");
-				return;
-			};
 			var aniClassName=read.readUTFString();
 			var strList=read.readUTFString().split("\n");
 			var aniCount=read.getUint8();
@@ -565,7 +561,7 @@
 					}
 					node.keyFrame=new Array;
 					node.parentIndex=read.getInt16();
-					node.parentIndex==-1 ? node.parent=null:node.parent=ani.nodes[node.parentIndex];
+					node.parentIndex==-1 ? node.parent=null :node.parent=ani.nodes[node.parentIndex];
 					var isLerp=!!read.getUint8();
 					var keyframeParamsOffset=read.getUint32();
 					publicRead.pos=keyframeParamsOffset;
@@ -791,6 +787,7 @@
 			return 1;
 		}
 
+		KeyframesAniTemplet._uniqueIDCounter=1;
 		KeyframesAniTemplet.interpolation=[KeyframesAniTemplet._LinearInterpolation_0,KeyframesAniTemplet._QuaternionInterpolation_1,KeyframesAniTemplet._AngleInterpolation_2,KeyframesAniTemplet._RadiansInterpolation_3,KeyframesAniTemplet._Matrix4x4Interpolation_4,KeyframesAniTemplet._NoInterpolation_5];
 		KeyframesAniTemplet.LAYA_ANIMATION_VISION="LAYAANIMATION:1.0.0";
 		return KeyframesAniTemplet;
@@ -823,8 +820,8 @@
 		var __proto=Templet.prototype;
 		/**
 		*解析骨骼动画数据
-		*@param skeletonData 骨骼动画信息及纹理分块信息
 		*@param texture 骨骼动画用到的纹理
+		*@param skeletonData 骨骼动画信息及纹理分块信息
 		*@param playbackRate 缓冲的帧率数据（会根据帧率去分帧）
 		*/
 		__proto.parseData=function(texture,skeletonData,playbackRate){
@@ -1097,6 +1094,7 @@
 			this._boneSlotArray=null;
 			this._index=-1;
 			this._total=-1;
+			this._indexControl=false;
 			this._aniPath=null;
 			this._texturePath=null;
 			this._complete=null;
@@ -1131,9 +1129,9 @@
 			this._player.templet=templet;
 			this._player.play();
 			this._parseSrcBoneMatrix();
-			this._player.on(/*laya.events.Event.PLAYED*/"played",this,this.onPlay);
-			this._player.on(/*laya.events.Event.STOPPED*/"stopped",this,this.onStop);
-			this._player.on(/*laya.events.Event.PAUSED*/"paused",this,this.onPause);
+			this._player.on(/*laya.events.Event.PLAYED*/"played",this,this._onPlay);
+			this._player.on(/*laya.events.Event.STOPPED*/"stopped",this,this._onStop);
+			this._player.on(/*laya.events.Event.PAUSED*/"paused",this,this._onPause);
 		}
 
 		/**
@@ -1148,13 +1146,13 @@
 			this._complete=complete;
 			this._loadAniMode=aniMode;
 			this._texturePath=path.replace(".sk",".png").replace(".bin",".png");
-			Laya.loader.load([{url:path,type:/*laya.net.Loader.BUFFER*/"arraybuffer"},{url:this._texturePath,type:/*laya.net.Loader.IMAGE*/"image"}],Handler.create(this,this.onLoaded));
+			Laya.loader.load([{url:path,type:/*laya.net.Loader.BUFFER*/"arraybuffer"},{url:this._texturePath,type:/*laya.net.Loader.IMAGE*/"image"}],Handler.create(this,this._onLoaded));
 		}
 
 		/**
 		*加载完成
 		*/
-		__proto.onLoaded=function(){
+		__proto._onLoaded=function(){
 			var tTexture=Loader.getRes(this._texturePath);
 			var arraybuffer=Loader.getRes(this._aniPath);
 			if (tTexture==null || arraybuffer==null)return;
@@ -1164,13 +1162,13 @@
 			var tFactory;
 			tFactory=Templet.TEMPLET_DICTIONARY[this._aniPath];
 			if (tFactory){
-				tFactory.isParseFail ? this.parseFail():this.parseComplete();
+				tFactory.isParseFail ? this._parseFail():this._parseComplete();
 				}else {
 				tFactory=new Templet();
 				tFactory.url=this._aniPath;
 				Templet.TEMPLET_DICTIONARY[this._aniPath]=tFactory;
-				tFactory.on(/*laya.events.Event.COMPLETE*/"complete",this,this.parseComplete);
-				tFactory.on(/*laya.events.Event.ERROR*/"error",this,this.parseFail);
+				tFactory.on(/*laya.events.Event.COMPLETE*/"complete",this,this._parseComplete);
+				tFactory.on(/*laya.events.Event.ERROR*/"error",this,this._parseFail);
 				tFactory.parseData(tTexture,arraybuffer,60);
 			}
 		}
@@ -1178,7 +1176,7 @@
 		/**
 		*解析完成
 		*/
-		__proto.parseComplete=function(){
+		__proto._parseComplete=function(){
 			var tTemple=Templet.TEMPLET_DICTIONARY[this._aniPath];
 			if (tTemple){
 				this.init(tTemple,this._loadAniMode);
@@ -1190,28 +1188,28 @@
 		/**
 		*解析失败
 		*/
-		__proto.parseFail=function(){
+		__proto._parseFail=function(){
 			console.log("[Error]:"+this._aniPath+"解析失败");
 		}
 
 		/**
 		*传递PLAY事件
 		*/
-		__proto.onPlay=function(){
+		__proto._onPlay=function(){
 			this.event(/*laya.events.Event.PLAYED*/"played");
 		}
 
 		/**
 		*传递STOP事件
 		*/
-		__proto.onStop=function(){
+		__proto._onStop=function(){
 			this.event(/*laya.events.Event.STOPPED*/"stopped");
 		}
 
 		/**
 		*传递PAUSE事件
 		*/
-		__proto.onPause=function(){
+		__proto._onPause=function(){
 			this.event(/*laya.events.Event.PAUSED*/"paused");
 		}
 
@@ -1250,11 +1248,18 @@
 
 		/**
 		*更新动画
+		*@param autoKey true为正常更新，false为index手动更新
 		*/
-		__proto._update=function(){
+		__proto._update=function(autoKey){
+			(autoKey===void 0)&& (autoKey=true);
 			if (this._pause)return;
-			var tCurrTime=Laya.stage.now;
-			this._player.update(tCurrTime-this._lastTime);
+			if (autoKey && this._indexControl){
+				return;
+			};
+			var tCurrTime=Laya.timer.currTimer;
+			if (autoKey){
+				this._player.update(tCurrTime-this._lastTime);
+			}
 			this._lastTime=tCurrTime;
 			this._aniClipIndex=this._player.currentAnimationClipIndex;
 			this._clipIndex=this._player.currentKeyframeIndex;
@@ -1306,7 +1311,7 @@
 					tParentMatrix=this._boneMatrixArray[tBone.parentIndex];
 					Matrix.mul(tTempMatrix,tParentMatrix,tResultMatrix);
 					}else {
-					tTempMatrix.copy(tResultMatrix);
+					tTempMatrix.copyTo(tResultMatrix);
 				}
 				tDBBoneSlotArr=this._bindBoneBoneSlotDic[tBone.name];
 				if (tDBBoneSlotArr){
@@ -1451,6 +1456,7 @@
 		*/
 		__proto.play=function(nameOrIndex,loop,force){
 			(force===void 0)&& (force=true);
+			this._indexControl=false;
 			var index=-1;
 			var duration=NaN;
 			if (loop){
@@ -1524,6 +1530,7 @@
 		*恢复动画的播放
 		*/
 		__proto.resume=function(){
+			this._indexControl=false;
 			if (this._pause){
 				this._pause=false;
 				if (this._player){
@@ -1569,6 +1576,28 @@
 			Laya.timer.clear(this,this._update);
 		}
 
+		/**
+		*@private
+		*设置帧索引
+		*/
+		/**
+		*@private
+		*得到帧索引
+		*/
+		__getset(0,__proto,'index',function(){
+			return this._index;
+			},function(value){
+			if (this.player){
+				this._index=value;
+				this._player.currentTime=this._index *1000 / this._player.cacheFrameRate;
+				this._indexControl=true;
+				this._update(false);
+			}
+		});
+
+		/**
+		*得到播放器的引用
+		*/
 		__getset(0,__proto,'player',function(){
 			return this._player;
 		});
@@ -1583,6 +1612,18 @@
 			return this._aniPath;
 			},function(path){
 			this.load(path);
+		});
+
+		/**
+		*得到总帧数据
+		*/
+		__getset(0,__proto,'total',function(){
+			if (this._templet && this._player){
+				this._total=Math.floor(this._templet.getAniDuration(this._player.currentAnimationClipIndex)/ 1000 *60);
+				}else {
+				this._total=-1;
+			}
+			return this._total;
 		});
 
 		return Skeleton;
@@ -1636,8 +1677,9 @@
 			_super.prototype.destroy.call(this,destroyChild);
 		}
 
+		/**@private */
 		__proto._$3__onDisplay=function(){
-			if (this._displayInStage)Laya.timer.loop(this.interval,this,this.updates,null,true);
+			if (this._displayedInStage)Laya.timer.loop(this.interval,this,this.updates,null,true);
 			else Laya.timer.clear(this,this.updates);
 		}
 
@@ -1647,7 +1689,7 @@
 			var i=0,len=0;
 			len=this._movieClipList.length;
 			for (i=0;i < len;i++){
-				this._movieClipList[i].update();
+				this._movieClipList[i]._update();
 			}
 		}
 
@@ -1678,9 +1720,10 @@
 		}
 
 		/**
+		*@private
 		*动画的帧更新处理函数。
 		*/
-		__proto.update=function(){
+		__proto._update=function(){
 			if (!this._data)return;
 			if (!this._playing)return;
 			this._playIndex++;
@@ -1734,10 +1777,10 @@
 
 		/**
 		*播放动画。
-		*@param frameIndex 帧索引。
+		*@param index 帧索引。
 		*/
 		__proto.play=function(index,loop){
-			(index===void 0)&& (index=-1);
+			(index===void 0)&& (index=0);
 			(loop===void 0)&& (loop=true);
 			this.loop=loop;
 			if (this._data)
@@ -1745,6 +1788,7 @@
 			this._playing=true;
 		}
 
+		/**@private */
 		__proto._displayFrame=function(frameIndex){
 			(frameIndex===void 0)&& (frameIndex=-1);
 			if (frameIndex !=-1){
@@ -1753,6 +1797,7 @@
 			}
 		}
 
+		/**@private */
 		__proto._reset=function(rm){
 			(rm===void 0)&& (rm=true);
 			if (rm && this._curIndex !=1)this.removeChildren();
@@ -1760,6 +1805,7 @@
 			this._Pos=this._start;
 		}
 
+		/**@private */
 		__proto._parse=function(frameIndex){
 			var curChild=this;
 			var mc,sp,key=0,type=0,tPos=0,ttype=0,ifAdd=false;
@@ -1820,7 +1866,8 @@
 						break ;
 					case 7:
 						sp=_idOfSprite[ _data.getUint16()];
-						var mt=new Matrix(_data.getFloat32(),_data.getFloat32(),_data.getFloat32(),_data.getFloat32(),_data.getFloat32(),_data.getFloat32());
+						var mt=sp.transform || Matrix.create();
+						mt.setTo(_data.getFloat32(),_data.getFloat32(),_data.getFloat32(),_data.getFloat32(),_data.getFloat32(),_data.getFloat32());
 						sp.transform=mt;
 						break ;
 					case 8:
@@ -1842,7 +1889,7 @@
 						break ;
 					case 99:
 						this._curIndex=_data.getUint16();
-						ifAdd && this.updateOrder();
+						ifAdd && this.updateZOrder();
 						this._playing && this._curIndex > this._playIndex && this.event(/*laya.events.Event.FRAME*/"enterframe");
 						break ;
 					case 100:
@@ -1871,7 +1918,6 @@
 		*@param url swf 资源地址。
 		*/
 		__proto.load=function(url){
-			var _$this=this;
 			url=URL.formatURL(url);
 			this.basePath=url.split(".swf")[0]+"/image/";
 			this.stop();
@@ -1881,20 +1927,26 @@
 			if (data){
 				this._initData(data);
 				}else {
-				var l=new Loader();
-				l.once(/*laya.events.Event.COMPLETE*/"complete",null,function(data){
-					_$this._initData(data);
-				});
-				l.load(url,/*laya.net.Loader.BUFFER*/"arraybuffer");
+				Laya.loader.load(url,Handler.create(this,this._onLoaded),null,/*laya.net.Loader.BUFFER*/"arraybuffer");
 			}
 		}
 
+		/**@private */
+		__proto._onLoaded=function(data){
+			this._initData(data);
+		}
+
+		/**@private */
 		__proto._initState=function(){
 			this._reset();
 			this._ended=false;
+			var preState=this._playing;
+			this._playing=false;
 			while (!this._ended)this._parse(++this._playIndex);
+			this._playing=preState;
 		}
 
+		/**@private */
 		__proto._initData=function(data){
 			this._data=new Byte(data);
 			var i=0,len=this._data.getUint16();
@@ -1903,8 +1955,8 @@
 			this._setData(this._data,this._ids[32767]);
 			this._initState();
 			this.play(0);
-			if (!this._parentMovieClip)Laya.timer.loop(this.interval,this,this.updates,null,true);
 			this.event(/*laya.events.Event.LOADED*/"loaded");
+			if (!this._parentMovieClip)Laya.timer.loop(this.interval,this,this.updates,null,true);
 		}
 
 		/**当前播放索引。*/

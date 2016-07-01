@@ -33,6 +33,7 @@ package laya.filters {
 		}
 		
 		/**
+		 * @private
 		 * 滤镜类型
 		 */
 		override public function get type():int {

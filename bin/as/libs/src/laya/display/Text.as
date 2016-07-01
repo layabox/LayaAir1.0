@@ -137,6 +137,8 @@ package laya.display {
 		protected var _lastVisibleLineIndex:int = -1;
 		/**  @private 当前可视行索引。*/
 		protected var _words:Vector.<WordText>;
+		/**  @private */
+		protected var _charSize:Object = {};
 		
 		/**overflow 指定文本超出文本域后的行为。其值为"hidden"、"visible"和"scroll"之一。
 		 * 性能从高至低为：hidden > visible > scroll*/
@@ -223,8 +225,10 @@ package laya.display {
 		}
 		
 		override public function set width(value:Number):void {
-			super.width = value;
-			isChanged = true;
+			if (value != _width) {
+				super.width = value;
+				isChanged = true;
+			}
 		}
 		
 		/**
@@ -239,14 +243,15 @@ package laya.display {
 		 * @inheritDoc
 		 */
 		override public function get height():Number {
-			if (_height)
-				return _height;
+			if (_height) return _height;
 			return textHeight;
 		}
 		
 		override public function set height(value:Number):void {
-			super.height = value;
-			isChanged = true;
+			if (value != _height) {
+				super.height = value;
+				isChanged = true;
+			}
 		}
 		
 		/**
@@ -462,6 +467,7 @@ package laya.display {
 		
 		public function set bgColor(value:String):void {
 			_getCSSStyle().backgroundColor = value;
+			model && model.bgColor(value);
 			isChanged = true;
 		}
 		
@@ -474,6 +480,7 @@ package laya.display {
 		
 		public function set borderColor(value:String):void {
 			_getCSSStyle().borderColor = value;
+			model && model.border(value);
 			isChanged = true;
 		}
 		
@@ -544,7 +551,7 @@ package laya.display {
 			var startX:Number = padding[3];
 			var textAlgin:String = "left";
 			var lines:Array = _lines;
-			var lineHeight:Number = leading + fontSize;
+			var lineHeight:Number = leading + _charSize.height;
 			var tCurrBitmapFont:BitmapFont = _currBitmapFont;
 			if (tCurrBitmapFont) {
 				lineHeight = leading + tCurrBitmapFont.getMaxHeight();
@@ -661,7 +668,7 @@ package laya.display {
 				break;
 			}
 			
-			y += fontSize;
+			y += _charSize.height;
 			_graphics.drawLine(x, y, x + lineWidth, y, underlineColor || color, 1);
 		}
 		
@@ -686,7 +693,6 @@ package laya.display {
 			parseLines(this._text);
 			
 			evalTextSize();
-			
 			//启用Viewport
 			if (checkEnabledViewportOrNot())
 				_clipPoint || (this._clipPoint = new Point(0, 0));
@@ -698,7 +704,7 @@ package laya.display {
 			// overflow为scroll或visible时会截行
 			if (overflow != VISIBLE) {
 				var func:Function = overflow == HIDDEN ? Math.floor : Math.ceil;
-				endLine = Math.min(endLine, func((height - padding[0] - padding[2]) / (leading + fontSize)));
+				endLine = Math.min(endLine, func((height - padding[0] - padding[2]) / (leading + _charSize.height)));
 			}
 			
 			renderText(0, endLine);
@@ -714,7 +720,8 @@ package laya.display {
 			if (_currBitmapFont) {
 				_textHeight = _lines.length * (_currBitmapFont.getMaxHeight() + leading) + padding[0] + padding[2];
 			} else
-				_textHeight = _lines.length * (fontSize + leading) + padding[0] + padding[2];
+				_textHeight = _lines.length * (_charSize.height + leading) + padding[0] + padding[2];
+			model && model.size(this._width || _textWidth, this._height || _textHeight);
 		}
 		
 		private function checkEnabledViewportOrNot():Boolean {
@@ -728,8 +735,8 @@ package laya.display {
 		 */
 		public function changeText(text:String):void {
 			if (_text !== text) {
-				lang(text);
-				if (this._graphics && this._graphics.replaceText(text)) {
+				lang(text + "");
+				if (this._graphics && this._graphics.replaceText(_text)) {
 					//repaint();
 				} else {
 					typeset();
@@ -747,6 +754,9 @@ package laya.display {
 			if (needWordWrapOrTruncate) {
 				var wordWrapWidth:Number = getWordWrapWidth();
 			}
+			var measureResult:* = Browser.context.measureText("阳");
+			_charSize.width = measureResult.width;
+			_charSize.height = (measureResult.height || fontSize);
 			
 			var lines:Array = text.replace(/\r\n/g, "\n").split("\n");
 			for (var i:int = 0, n:int = lines.length; i < n; i++) {
@@ -804,7 +814,8 @@ package laya.display {
 				return;
 			}
 			
-			charsWidth = _currBitmapFont ? _currBitmapFont.getMaxWidth() : Browser.context.measureText("阳").width;
+			var charSize:Object = Browser.context.measureText("阳");
+			charsWidth = _currBitmapFont ? _currBitmapFont.getMaxWidth() : charSize.width;
 			//优化2，预算第几个字符会超出，减少遍历及字符宽度度量
 			maybeIndex = Math.floor(wordWrapWidth / charsWidth);
 			(maybeIndex == 0) && (maybeIndex = 1);
@@ -912,7 +923,7 @@ package laya.display {
 			Browser.context.font = ctxFont;
 			var width:Number = Browser.context.measureText(_text.substring(startIndex, charIndex)).width;
 			var point:Point = out || new Point();
-			return point.setTo(_startX + width - (_clipPoint ? _clipPoint.x : 0), _startY + line * (fontSize + leading) - (_clipPoint ? _clipPoint.y : 0));
+			return point.setTo(_startX + width - (_clipPoint ? _clipPoint.x : 0), _startY + line * (_charSize.height + leading) - (_clipPoint ? _clipPoint.y : 0));
 		}
 		
 		/**
@@ -927,7 +938,7 @@ package laya.display {
 			var maxScrollX:int = _textWidth - _width;
 			value = value > maxScrollX ? maxScrollX : value;
 			
-			var visibleLineCount:int = _height / (fontSize + leading) | 0 + 1;
+			var visibleLineCount:int = _height / (_charSize.height + leading) | 0 + 1;
 			this._clipPoint.x = value;
 			renderText(_lastVisibleLineIndex, visibleLineCount);
 		}
@@ -952,10 +963,10 @@ package laya.display {
 			var maxScrollY:int = _textHeight - _height;
 			value = value > maxScrollY ? maxScrollY : value;
 			
-			var startLine:int = value / (fontSize + leading) | 0;
+			var startLine:int = value / (_charSize.height + leading) | 0;
 			
 			_lastVisibleLineIndex = startLine;
-			var visibleLineCount:int = (_height / (fontSize + leading) | 0) + 1;
+			var visibleLineCount:int = (_height / (_charSize.height + leading) | 0) + 1;
 			_clipPoint.y = value;
 			renderText(startLine, visibleLineCount);
 		}

@@ -84,8 +84,8 @@ package laya.webgl.submit {
 			var _tex:Texture = _shaderValue.textureHost;
 			if (_tex)
 			{
-				var source:*;
-				if (!_tex.bitmap || !(source=_tex.source))
+				var source:* = _tex.source;
+				if (!_tex.bitmap || !source)
 					return 1;
 				_shaderValue.texture = source;
 			}

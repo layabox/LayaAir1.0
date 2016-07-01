@@ -7,6 +7,9 @@ package laya.webgl.shader.d2.value
 	{
 		public var texcoord:Array = _TEXCOORD;
 		public var u_colorMatrix:Array;
+		public var strength : Number = 0;
+		public var colorMat : Array = null;
+		public var colorAlpha : Array = null;
 		
 		public function TextureSV(subID:int=0)
 		{

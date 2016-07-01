@@ -8,6 +8,7 @@ package laya.html.dom {
 	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.utils.Browser;
+	import laya.utils.HTMLChar;
 	
 	/**
 	 * DIV标签
@@ -50,13 +51,16 @@ package laya.html.dom {
 		 * @return
 		 */
 		override public function _addChildsToLayout(out:Vector.<ILayout>):Boolean {
-			var words:Vector.<Object> = _getWords();
+			var words:Vector.<HTMLChar> = _getWords();
 			if (words == null && _childs.length == 0) return false;
 			words && words.forEach(function(o:*):void {
 				out.push(o);
 			});
 			var tFirstKey:Boolean = true;
-			_childs.forEach(function(o:Sprite):void {
+			
+			for (var i:int = 0, len:int = _childs.length; i < len; i++)
+			{
+				var o:Sprite = _childs[i];
 				if (tFirstKey) {
 					tFirstKey = false;
 				} else {
@@ -64,7 +68,7 @@ package laya.html.dom {
 				}
 				//o._style._enableLayout() && o._addToLayout(out);
 				o._addToLayout(out)
-			});
+			}
 			return true;
 		}
 		
