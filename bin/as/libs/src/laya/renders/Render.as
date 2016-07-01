@@ -92,8 +92,7 @@ package laya.renders {
 				Laya.stage._loop();
 				Browser.window.requestAnimationFrame(loop);
 			}
-			/*[IF-Flash]*/
-			Browser.window.stageIn.addEventListener("enterFrame", _enterFrame);
+			/*[IF-FLASH]*/Browser.window.stageIn.addEventListener("enterFrame", _enterFrame);
 		}
 		
 		/**@private */
