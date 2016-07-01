@@ -1,0 +1,71 @@
+package laya.d3.core.mesh {
+	import laya.d3.loaders.LoadModel;
+	import laya.d3.core.render.RenderObject;
+	import laya.d3.core.render.RenderQuene;
+	import laya.d3.resource.models.BaseMesh;
+	import laya.d3.resource.models.PrimitiveMesh;
+	import laya.d3.resource.models.Sphere;
+	import laya.d3.resource.tempelet.MeshTemplet;
+	import laya.d3.core.scene.Scene;
+	import laya.d3.core.Sprite3D;
+	import laya.d3.core.material.Material;
+	import laya.d3.math.Matrix4x4;
+	import laya.d3.core.render.RenderState;
+	import laya.events.Event;
+	import laya.net.Loader;
+	import laya.net.URL;
+	import laya.resource.Resource;
+	import laya.utils.Stat;
+	import laya.webgl.shader.ShaderValue;
+	import laya.webgl.utils.Buffer;
+	
+	/**
+	 * @private
+	 * <code>MeshSprite</code> 类用于创建网格精灵。
+	 */
+	public class MeshSprite extends Sprite3D {
+		public var mesh:BaseMesh;
+		public var materials:Vector.<Material>;
+		
+		public function MeshSprite(mesh:BaseMesh, materials:Vector.<Material> = null) {
+			materials ? this.materials = materials : this.materials = new Vector.<Material>();
+			this.mesh = mesh;
+		}
+		
+		public override function update(state:RenderState):void {
+			state.owner = this;
+			var preWorldTransformModifyID:int = state.worldTransformModifyID;
+			state.worldTransformModifyID += transform._worldTransformModifyID;
+			transform.getWorldMatrix(state.worldTransformModifyID);
+			
+			if (state.renderClip.view(this)) {
+				_updateComponents(state);
+				
+				if (mesh is PrimitiveMesh) {
+					
+					var o:RenderObject;
+					var material:Material = materials[0];
+					if (!material.transparent || (material.transparent && material.transparentMode === 0))
+						o = material.cullFace ? state.scene.getRenderObject(RenderQuene.OPAQUE) : state.scene.getRenderObject(RenderQuene.OPAQUE_DOUBLEFACE);
+					else if (material.transparent && material.transparentMode === 1) {
+						if (material.transparentAddtive)
+							o = material.cullFace ? state.scene.getRenderObject(RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE) : state.scene.getRenderObject(RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND);
+						else
+							o = material.cullFace ? state.scene.getRenderObject(RenderQuene.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE) : state.scene.getRenderObject(RenderQuene.DEPTHREAD_ALPHA_BLEND);
+					}
+					o.spirit3D = state.owner;
+					o.renderElement = mesh as PrimitiveMesh;
+					o.material = material;
+					o.tag || (o.tag = new Object());
+					o.tag.worldTransformModifyID = state.worldTransformModifyID;
+				}
+				
+				_lateUpdateComponents(state);
+				Stat.spriteDraw++;
+			}
+			
+			state.worldTransformModifyID = preWorldTransformModifyID;
+			_childs.length && _updateChilds(state);
+		}
+	}
+}

@@ -1,0 +1,1 @@
+gl_FragColor = gl_FragColor * colorMat + colorAlpha/255.0;
