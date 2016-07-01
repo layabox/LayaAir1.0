@@ -5,7 +5,7 @@ Develop once, publish for 3 target platform (flash, HTML5, mobile)
 
 ##LayaAir features
 
-- high performance
+- High performance
 
 Display render is set priority to WebGL mode. However, renderer fallback using Canvas for systems with missing/incompatible graphics cards.
 LayaAir is design to be run without Plugin.
