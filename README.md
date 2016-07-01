@@ -1,4 +1,4 @@
-##LayaAir is an open-source HTML5 engine
+#LayaAir is an open-source HTML5 engine
 It provides Canvas and WebGl for rendering, if Webgl is not supported, it switch automatically into Canvas mode.
 LayaAir Engine is designed for high performance games and support ActionScript 3.0, TypeScript, JavaScript programming language.
 Develop once, publish for 3 target platform (flash, HTML5, mobile)
@@ -131,7 +131,7 @@ http://ask.layabox.com/
 - src [Source Code Library]
 - utils [Automated compilation and other tools]
 
-##LayaAir是HTML5开源引擎
+#LayaAir是HTML5开源引擎
 提供Canvas和Webgl同时渲染，如果Webgl不可用，则可自动切换到Canvas模式。引擎为高性能游戏设计，支持AS,TS,JS三种语言开发，一套代码三端齐发（Flash，HTML5，APP）。
 
 ##LayaAir特点
