@@ -36,7 +36,7 @@ our official Layabox Github with complete engine source version, free of charge,
 - Vector renderer
 - Atlas texture support
 - Load Manager
-- HTML Text
+- HTML text
 - Bitmap fonts
 - Mask
 - Filter
