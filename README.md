@@ -33,10 +33,10 @@ our official Layabox Github with complete engine source version, free of charge,
 ##general features overview
 - Webgl rendering
 - Canvas rendering
-- vector renderer
+- Vector renderer
 - Atlas texture support
 - Load Manager
-- HTML
+- HTML Text
 - Bitmap fonts
 - Mask
 - Filter
@@ -56,7 +56,7 @@ our official Layabox Github with complete engine source version, free of charge,
     
     var ape = new laya.Sprite();
     //Loading our monkey
-    ape.loadImage("res/apes/monkey2.png", 220, 128);
+    ape.loadImage("res/apes/monkey2.png");
     
     Laya.stage.addChild(ape);
 	
@@ -75,7 +75,7 @@ our official Layabox Github with complete engine source version, free of charge,
                    
                 var ape:Sprite = new Sprite();
                 //Loading our monkey
-                ape.loadImage("res/apes/monkey2.png", 220, 128);
+                ape.loadImage("res/apes/monkey2.png");
                    
                 Laya.stage.addChild(ape);
             }
@@ -92,7 +92,7 @@ our official Layabox Github with complete engine source version, free of charge,
     
             var ape = new Laya.Sprite();
             //Loading our monkey
-            ape.loadImage("res/apes/monkey2.png", 220, 128);
+            ape.loadImage("res/apes/monkey2.png");
     
             Laya.stage.addChild(ape);
         }
@@ -186,7 +186,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
     
     var ape = new laya.Sprite();
     //加载猩猩图片
-    ape.loadImage("res/apes/monkey2.png", 220, 128);
+    ape.loadImage("res/apes/monkey2.png");
     
     Laya.stage.addChild(ape);
     
@@ -205,7 +205,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
                    
                 var ape:Sprite = new Sprite();
                 //加载猩猩图片
-                ape.loadImage("res/apes/monkey2.png", 220, 128);
+                ape.loadImage("res/apes/monkey2.png");
                    
                 Laya.stage.addChild(ape);
             }
@@ -221,7 +221,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
     
             var ape = new Laya.Sprite();
             //加载猩猩图片
-            ape.loadImage("res/apes/monkey2.png", 220, 128);
+            ape.loadImage("res/apes/monkey2.png");
     
             Laya.stage.addChild(ape);
         }
