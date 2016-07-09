@@ -3,6 +3,7 @@ package laya.resource {
 	import laya.events.EventDispatcher;
 	import laya.maths.Rectangle;
 	import laya.net.URL;
+	import laya.renders.Render;
 	import laya.utils.RunDriver;
 	
 	/**
@@ -19,7 +20,8 @@ package laya.resource {
 		/**默认 UV 信息。*/
 		public static var DEF_UV:Array =/*[STATIC SAFE]*/ [0, 0, 1.0, 0, 1.0, 1.0, 0, 1.0];
 		/**反转 UV 信息。*/
-		/*[IF-FLASH]*/public static var INV_UV:Array =/*[STATIC SAFE]*/ [0, 0, 1.0, 0, 1.0, 1.0, 0, 1.0];
+		/*[IF-FLASH]*/
+		public static var INV_UV:Array =/*[STATIC SAFE]*/ [0, 0, 1.0, 0, 1.0, 1.0, 0, 1.0];
 		//[IF-JS]public static var INV_UV:Array =/*[STATIC SAFE]*/ [0, 1, 1.0, 1, 1.0, 0.0, 0, 0.0];
 		/**@private */
 		private static var _rect1:Rectangle =/*[STATIC SAFE]*/ new Rectangle();
@@ -231,14 +233,33 @@ package laya.resource {
 		}
 		
 		/**
+		 * 获取当前纹理是否启用了线性采样
+		 */
+		public function get isLinearSampling():Boolean {
+			return Render.isWebGL ? (bitmap.minFifter != 0x2600) : true;
+		}
+		
+		/**
+		 * 设置线性采样的状态（目前只能第一次绘制前设置false生效,来关闭线性采样）
+		 */
+		public function set isLinearSampling(value:Boolean):void {
+			if (!value && Render.isWebGL) {
+				if (!value && (bitmap.minFifter == -1) && (bitmap.magFifter == -1)) {
+					bitmap.minFifter = 0x2600;
+					bitmap.magFifter = 0x2600;
+					bitmap.enableMerageInAtlas = false;
+				}
+			}
+		}
+		
+		/**
 		 * 加载指定地址的图片。
 		 * @param	url 图片地址。
 		 */
 		public function load(url:String):void {
 			_loaded = false;
 			var fileBitmap:FileBitmap = (this.bitmap || (this.bitmap = HTMLImage.create(URL.formatURL(url)))) as FileBitmap;//WebGl模式被自动替换为WebGLImage
-			if (fileBitmap)
-			{
+			if (fileBitmap) {
 				fileBitmap.useNum++;
 			}
 			var _this:Texture = this;
@@ -251,5 +272,10 @@ package laya.resource {
 				(RunDriver.addToAtlas) && (RunDriver.addToAtlas(_this));
 			};
 		}
+		
+		public function addTextureToAtlas(e:*=null):void {
+			RunDriver.addTextureToAtlas(this);
+		}
+	
 	}
 }

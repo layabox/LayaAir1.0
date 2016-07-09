@@ -49,7 +49,7 @@ package laya.display
 			this.loop = loop;
 			if (this.interval > 0) {
 				_index++;
-				Laya.timer.loop(this.interval, this, _frameLoop, null, true);
+				timerLoop(this.interval, this, _frameLoop, null, true);
 			}
 		}
 		/**@private */
@@ -84,7 +84,7 @@ package laya.display
 		private function _onDisplay():void {
 			if (_isPlaying) {
 				if (_controlNode.displayedInStage) play(_index, loop);
-				else Laya.timer.clear(this, _frameLoop);
+				else clearTimer(this, _frameLoop);
 			}
 		}
 		/**
@@ -92,7 +92,7 @@ package laya.display
 		 */
 		public function stop():void {
 			this._isPlaying = false;
-			Laya.timer.clear(this, _frameLoop);
+			clearTimer(this, _frameLoop);
 		}
 		
 		/**

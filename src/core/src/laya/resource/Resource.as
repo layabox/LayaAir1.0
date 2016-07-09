@@ -3,11 +3,11 @@ package laya.resource {
 	import laya.events.EventDispatcher;
 	import laya.utils.Stat;
 	
-	/**
-	 * 当设置内存尺寸时调度。回调参数为内存变化量。
-	 * @eventType Event.MEMORY_CHANGED
-	 */
-	[Event(name = "memorychanged", type = "laya.events.Event")]
+	///**
+	 //* 当设置内存尺寸时调度。回调参数为内存变化量。
+	 //* @eventType Event.MEMORY_CHANGED
+	 //*/
+	//[Event(name = "memorychanged", type = "laya.events.Event")]
 	
 	/**
 	 * 释放资源时调度。
@@ -175,7 +175,8 @@ package laya.resource {
 		public function set memorySize(value:int):void {
 			var offsetValue:int = value - _memorySize;
 			_memorySize = value;
-			this.event(Event.MEMORY_CHANGED, offsetValue);
+			//this.event(Event.MEMORY_CHANGED, offsetValue);
+			resourceManager && resourceManager.addSize(offsetValue);
 		}
 		
 		/**

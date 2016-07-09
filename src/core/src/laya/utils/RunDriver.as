@@ -7,6 +7,7 @@ package laya.utils {
 	import laya.renders.RenderSprite;
 	import laya.resource.HTMLCanvas;
 	import laya.display.Graphics;
+	import laya.resource.Texture;
 	
 	/**
 	 * @private
@@ -51,8 +52,7 @@ package laya.utils {
 		}
 		
 		public static var measureText:Function = function(txt:String, font:String):* {
-			if (Render.isConchApp)
-			{
+			if (Render.isConchApp) {
 				var ctx:* = __JS__("ConchTextCanvas");
 				ctx.font = font;
 				return ctx.measureText(txt);
@@ -145,6 +145,10 @@ package laya.utils {
 		 * 清空纹理函数。
 		 */
 		public static var clearAtlas:Function = function(value:String):void {
+		};
+		
+		/** @private */
+		public static var addTextureToAtlas:Function = function(value:Texture):void {
 		};
 	
 	}

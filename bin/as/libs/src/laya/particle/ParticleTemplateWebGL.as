@@ -71,8 +71,6 @@ package laya.particle {
 		}
 		
 		protected function loadContent():void {
-			
-			
 			var indexes:Uint16Array = new Uint16Array(settings.maxPartices * 6);
 			
 			for (var i:int = 0; i < settings.maxPartices; i++) {

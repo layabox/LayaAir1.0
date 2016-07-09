@@ -99,7 +99,7 @@ package laya.display {
 		/**
 		 * 销毁位图字体，调用Text.unregisterBitmapFont 时，默认会销毁。
 		 */
-		public function destory():void {
+		public function destroy():void {
 			var tTexture:Texture = null;
 			for (var p:* in _fontCharDic) {
 				tTexture = _fontCharDic[p];

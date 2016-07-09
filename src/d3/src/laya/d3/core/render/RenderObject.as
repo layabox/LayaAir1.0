@@ -1,6 +1,5 @@
 package laya.d3.core.render {
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.fileModel.Mesh;
 	import laya.d3.core.material.Material;
 	
 	/**

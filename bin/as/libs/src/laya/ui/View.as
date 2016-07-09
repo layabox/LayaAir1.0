@@ -60,8 +60,11 @@ package laya.ui {
 				{
 					tAni = new FrameClip();
 					tAniO = animations[i];
-					tAni._setUp(_idMap,tAniO );
-					this[tAniO.name] = tAni;
+					tAni._setUp(_idMap, tAniO );
+					if (this.hasOwnProperty(tAniO.name))
+					{
+						this[tAniO.name] = tAni;
+					}			
 					tAni._setControlNode(this);
 					switch(tAniO.action)
 					{

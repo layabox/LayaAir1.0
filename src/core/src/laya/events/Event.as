@@ -112,8 +112,8 @@ package laya.events {
 		public static const LAYER_CHANGED:String = "layerchanged";
 		/** 定义 hierarchyloaded 事件对象的 type 属性值。*/
 		public static const HIERARCHY_LOADED:String = "hierarchyloaded";
-		/** 定义 memorychanged 事件对象的 type 属性值。*/
-		public static const MEMORY_CHANGED:String = "memorychanged";
+		///** 定义 memorychanged 事件对象的 type 属性值。*/
+		//public static const MEMORY_CHANGED:String = "memorychanged";
 		/** 定义 recovering 事件对象的 type 属性值。*/
 		public static const RECOVERING:String = "recovering";
 		/** 定义 recovered 事件对象的 type 属性值。*/

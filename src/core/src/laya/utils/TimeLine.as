@@ -392,7 +392,7 @@ package laya.utils {
 		/**
 		 * 彻底销毁此对象。
 		 */
-		public function destory():void {
+		public function destroy():void {
 			reset();
 			_labelDic = null;
 			_tweenDic = null;

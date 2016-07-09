@@ -20,21 +20,21 @@ package laya.webgl.utils {
 		public function IndexBuffer2D(bufferUsage:int = WebGLContext.STATIC_DRAW) {
 			super();
 			_bufferUsage = bufferUsage;
-			_type = WebGLContext.ELEMENT_ARRAY_BUFFER;
-			Render.isFlash || (_buffer = new ArrayBuffer(8));
+			_bufferType = WebGLContext.ELEMENT_ARRAY_BUFFER;
+			Render.isFlash || (_data = new ArrayBuffer(8));
 		}
 		
 		override protected function _checkArrayUse():void {
-			_uint8Array && (_uint8Array = new Uint8Array(_buffer));
-			_uint16Array && (_uint16Array = new Uint16Array(_buffer));
+			_uint8Array && (_uint8Array = new Uint8Array(_data));
+			_uint16Array && (_uint16Array = new Uint16Array(_data));
 		}
 		
 		public function getUint8Array():Uint8Array {
-			return _uint8Array || (_uint8Array = new Uint8Array(_buffer));
+			return _uint8Array || (_uint8Array = new Uint8Array(_data));
 		}
 		
 		public function getUint16Array():Uint16Array {
-			return _uint16Array || (_uint16Array = new Uint16Array(_buffer));
+			return _uint16Array || (_uint16Array = new Uint16Array(_data));
 		}
 	
 	}

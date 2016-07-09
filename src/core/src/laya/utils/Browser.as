@@ -10,14 +10,13 @@ package laya.utils {
 	 */
 	public class Browser {
 		//[IF-JS]AudioSound;
-		//[IF-JS]WebAudioSound;
-		/** 浏览器原生 window 对象的引用。*/
-		public static var window:*;
-		/** 浏览器原生 document 对象的引用。*/
-		public static var document:* ;
+		//[IF-JS]WebAudioSound;		
 		/** @private */
-		private static var _container:*;
-		
+		private static var _window:*;	
+		/** @private */
+		private static var _document:* ;
+		/** @private */
+		private static var _container:*;		
 		/** 浏览器代理信息。*/
 		public static var userAgent:String;
 		/** @private */
@@ -59,11 +58,12 @@ package laya.utils {
 		
 		/**@private */
 		public static function __init__():void {
-			if (window) return;
-			window=RunDriver.getWindow();				
-			document = window.document;
+			if (_window) return;
+			_window=RunDriver.getWindow();				
+			_document = window.document;
 			
 			__JS__("Browser.document.__createElement=Browser.document.createElement");
+			//TODO:优化
 			__JS__("window.requestAnimationFrame=(function(){return window.requestAnimationFrame || window.webkitRequestAnimationFrame ||window.mozRequestAnimationFrame || window.oRequestAnimationFrame ||function (c){return window.setTimeout(c, 1000 / 60);};})()");
 			//强制修改body样式
 			__JS__("var $BS=window.document.body.style;$BS.margin=0;$BS.overflow='hidden';");
@@ -93,7 +93,7 @@ package laya.utils {
 			__JS__("Sound = Browser.webAudioOK?WebAudioSound:AudioSound;");
 			__JS__("if (Browser.webAudioOK) WebAudioSound.initWebAudio();");			
 			__JS__("Browser.enableTouch=(('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch)");			
-						
+			__JS__("window.focus()");
 			
 			Render._mainCanvas =Render._mainCanvas||HTMLCanvas.create('2D');
 			if (canvas) return;
@@ -185,6 +185,18 @@ package laya.utils {
 		
 		public static function set container(value:*):void {
 			_container = value;
+		}
+		
+		/** 浏览器原生 window 对象的引用。*/
+		static public function get window():* {
+			__init__();
+			return _window;
+		}
+		
+		/** 浏览器原生 document 对象的引用。*/
+		static public function get document():* {
+			__init__();
+			return _document;
 		}
 	}
 }

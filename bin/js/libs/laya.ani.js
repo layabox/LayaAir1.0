@@ -484,6 +484,14 @@
 		});
 
 		/**
+		*获取缓存帧率间隔时间
+		*@return 缓存帧率间隔时间
+		*/
+		__getset(0,__proto,'cacheFrameRateInterval',function(){
+			return this._cacheFrameRateInterval;
+		});
+
+		/**
 		*设置是否暂停
 		*@param value 是否暂停
 		*/
@@ -597,7 +605,7 @@
 						}
 						startTime+=keyFrame.duration;
 					}
-					node.playTime=startTime;
+					node.playTime=ani.playTime;
 					this._calculateKeyFrame(node,keyframeCount,keyframeDataCount);
 					this._calculateKeyFrameIndex(node,playbackRate);
 				}

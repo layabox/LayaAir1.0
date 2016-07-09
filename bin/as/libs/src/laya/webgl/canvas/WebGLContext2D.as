@@ -817,7 +817,7 @@ package laya.webgl.canvas {
 			if (lineWidth > 0) {
 				tPath.drawLine(0, 0, tPath.tempArray, lineWidth, this.strokeStyle._color.numColor);
 				tPath.update();
-				var tempSubmit:Submit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, _getPriValue2D());
+				var tempSubmit:Submit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
 				tempSubmit.shaderValue.u_mmat2 = RenderState2D.mat2MatArray(_curMat, RenderState2D.getMatrArray());
 				_submits[_submits._length++] = tempSubmit;
@@ -994,7 +994,6 @@ package laya.webgl.canvas {
 			_shader2D.glTexture = null;//置空下，打断纹理相同合并
 			_getPath().polygon(x, y, points, color, lineWidth ? lineWidth : 1, boderColor);
 			_path.update();
-			var tValue2D:Value2D = _getPriValue2D();
 			var tArray:Array = RenderState2D.getMatrArray();
 			RenderState2D.mat2MatArray(_curMat, tArray);
 			var tempSubmit:Submit;
@@ -1003,16 +1002,15 @@ package laya.webgl.canvas {
 				//开启模板缓冲，填充模板数据
 				var submit:SubmitStencil = SubmitStencil.create(4);
 				addRenderObject(submit);
-				tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, tValue2D);
+				tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
 				tempSubmit.shaderValue.u_mmat2 = tArray;
 				_submits[_submits._length++] = tempSubmit;
 				submit = SubmitStencil.create(5);
 				addRenderObject(submit);
 			}
-			
 			//通过模板数据来开始真实的绘制
-			tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, tValue2D);
+			tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 			tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
 			tempSubmit.shaderValue.u_mmat2 = tArray;
 			_submits[_submits._length++] = tempSubmit;
@@ -1024,7 +1022,7 @@ package laya.webgl.canvas {
 			if (lineWidth > 0) {
 				_path.drawLine(x, y, points, lineWidth, boderColor);
 				_path.update();
-				tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, tValue2D);
+				tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
 				tempSubmit.shaderValue.u_mmat2 = tArray;
 				_submits[_submits._length++] = tempSubmit;
@@ -1040,11 +1038,6 @@ package laya.webgl.canvas {
 		
 		private function _getPath():Path {
 			return _path || (_path = new Path());
-		}
-		
-		private function _getPriValue2D():Value2D {
-			//return _primitiveValue2D || (_primitiveValue2D = Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
-			return _primitiveValue2D = Value2D.create(ShaderDefines2D.PRIMITIVE, 0);
 		}
 	}
 }

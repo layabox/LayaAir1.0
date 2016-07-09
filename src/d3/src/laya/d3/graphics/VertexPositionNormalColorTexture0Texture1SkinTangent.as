@@ -68,7 +68,7 @@ package laya.d3.graphics {
 			return _vertexDeclaration;
 		}
 		
-		public function VertexPositionNormalColorTexture0SkinTangent(position:Vector3, normal:Vector3, color:Vector4, textureCoordinate0:Vector2, textureCoordinate1:Vector2, tangent:Vector3, blendIndex:Vector4, blendWeight:Vector4) {
+		public function VertexPositionNormalColorTexture0SkinTangent(position:Vector3, normal:Vector3, color:Vector4, textureCoordinate0:Vector2, textureCoordinate1:Vector2, tangent:Vector3, blendIndex:Vector4, blendWeight:Vector4):void {
 			_position = position;
 			_normal = normal;
 			_color = color;

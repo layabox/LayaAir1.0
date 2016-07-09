@@ -28,6 +28,8 @@ package laya.d3.graphics {
 		private var _vertexDeclaration:VertexDeclaration;
 		private var _material:Material;
 		
+		private var _vertexDatas:Float32Array;
+		private var _indexDatas:Uint16Array;
 		private var _vertexBuffer:VertexBuffer3D;
 		private var _indexBuffer:IndexBuffer3D;
 		
@@ -78,8 +80,10 @@ package laya.d3.graphics {
 			_vertexDeclaration = vertexDeclaration;
 			_material = material;
 			
-			_vertexBuffer = new VertexBuffer3D(_vertexDeclaration, maxVertexCount, WebGLContext.DYNAMIC_DRAW);
-			_indexBuffer = new IndexBuffer3D(maxIndexCount, WebGLContext.DYNAMIC_DRAW);
+			_vertexDatas = new Float32Array(_vertexDeclaration.vertexStride / 4 * maxVertexCount);
+			_indexDatas = new Uint16Array(maxIndexCount);
+			_vertexBuffer = VertexBuffer3D.create(_vertexDeclaration, maxVertexCount, WebGLContext.DYNAMIC_DRAW);
+			_indexBuffer = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, maxIndexCount, WebGLContext.DYNAMIC_DRAW);
 			
 			_lastRenderObjects = new Vector.<IRender>();
 			_renderObjects = new Vector.<IRender>();
@@ -92,46 +96,38 @@ package laya.d3.graphics {
 			if (!_needReMerage && _lastRenderObjects.length != _renderObjects.length) {
 				_needReMerage = true;
 			}
-			
 			_currentIndexCount = 0;
 			_currentVertexCount = 0;
 			
 			if (_needReMerage) {
 				_needReMerage = false;
 				
-				_indexBuffer.clear();
-				_vertexBuffer.clear();
+				var curMerVerCount:int = 0;
+				var curMerIndCount:int = 0;
 				_elementCount = 0;
 				
 				for (var i:int = 0; i < _renderObjects.length; i++) {
 					var renderObj:IRender = _renderObjects[i];
+					var subVertexDatas:Float32Array = renderObj.getBakedVertexs();
+					var subIndexDatas:Uint16Array = renderObj.getBakedIndices();
 					
-					var vertexDatas:Float32Array = renderObj.getBakedVertexs();
-					//renderObj.getVertexBuffer().releaseResource(true);//Buffer默认加锁，需强制释放,待斟酌。
-					var indexDatas:Uint16Array = renderObj.getBakedIndices();
-					//renderObj.getIndexBuffer().releaseResource(true);//Buffer默认加锁，需强制释放,待斟酌。
+					var indexOffset:int = curMerVerCount / (_vertexDeclaration.vertexStride / 4);
+					var indexStart:int = curMerIndCount;
+					var indexEnd:int = indexStart + subIndexDatas.length;
 					
-					//_indexBuffer.append(indexDatas);
-					//_vertexBuffer.append(vertexDatas);
-					
-					var indexOffset:int = _vertexBuffer.length / _vertexDeclaration.vertexStride;
-					var indexStart:int = _indexBuffer.length / 2;
-					var indexEnd:int = indexStart + indexDatas.length;
-					var batchIndexDatas:Uint16Array = _indexBuffer.getUint16Array();
-					batchIndexDatas.set(indexDatas, _indexBuffer.length / 2);
+					_indexDatas.set(subIndexDatas, curMerIndCount);
 					for (var k:int = indexStart; k < indexEnd; k++)
-						batchIndexDatas[k] = indexOffset + batchIndexDatas[k];
+						_indexDatas[k] = indexOffset + _indexDatas[k];
+					curMerIndCount += subIndexDatas.length;
 					
-					_indexBuffer.length += indexDatas.length * 2;
-					_indexBuffer.setNeedUpload();
+					_vertexDatas.set(subVertexDatas, curMerVerCount);
+					curMerVerCount += subVertexDatas.length;
 					
-					var batchVertexDatas:Float32Array = _vertexBuffer.getFloat32Array();
-					batchVertexDatas.set(vertexDatas, _vertexBuffer.length / 4);
-					_vertexBuffer.length += vertexDatas.length * 4;
-					_vertexBuffer.setNeedUpload();
+					_elementCount += subIndexDatas.length;
 					
-					_elementCount += indexDatas.length;
 				}
+				_vertexBuffer.setData(_vertexDatas);
+				_indexBuffer.setData(_indexDatas);
 			}
 			
 			_lastRenderObjects = _renderObjects.slice();
@@ -179,17 +175,18 @@ package laya.d3.graphics {
 			
 			if (material.normalTexture && !vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TANGENT0]) {
 				//是否放到事件触发。
-				var vertexDatas:Float32Array = vb.getFloat32Array();
-				var newVertexDatas:Float32Array = Utils3D.GenerateTangent(vertexDatas, vb.vertexDeclaration.vertexStride / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TEXTURECOORDINATE0][4] / 4, ib.getUint16Array());
+				var vertexDatas:Float32Array = vb.getData();
+				var newVertexDatas:Float32Array = Utils3D.GenerateTangent(vertexDatas, vb.vertexDeclaration.vertexStride / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TEXTURECOORDINATE0][4] / 4, ib.getData());
 				var vertexDeclaration:VertexDeclaration = Utils3D.getVertexTangentDeclaration(vb.vertexDeclaration.getVertexElements());
 				
 				var newVB:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, WebGLContext.STATIC_DRAW);
-				newVB.append(newVertexDatas);
+				newVB.setData(newVertexDatas);
 				vb.dispose();
-				vb = newVB;
+				_vertexBuffer =vb= newVB;
 			}
 			
-			vb.bind_upload(ib);
+			vb._bind();
+			ib._bind();
 			
 			if (material) {
 				var shader:Shader = _getShader(state, vb, material);
@@ -209,7 +206,6 @@ package laya.d3.graphics {
 			state.context.drawElements(WebGLContext.TRIANGLES, _elementCount, WebGLContext.UNSIGNED_SHORT, 0);
 			Stat.drawCall++;
 			Stat.trianglesFaces += _elementCount / 3;
-			
 			return true;
 		}
 	}

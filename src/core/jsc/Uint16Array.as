@@ -8,6 +8,8 @@
 		
 		private var vecData : Vector.<uint> = null;
 		
+		public var buffer:*;
+		
 		public function Uint16Array(...arg) {
 			if ( arg.length == 1 ) {
 			    // 引擎和项目内有这类的应用:

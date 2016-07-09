@@ -7,9 +7,9 @@ package laya.webgl.atlas {
 		private static var _atlasLimitWidth:int;
 		private static var _atlasLimitHeight:int;
 
+		public static const gridSize:int=16;
 		public static var atlasTextureWidth:int;
 		public static var atlasTextureHeight:int;
-		public static var gridSize:int;
 		public static var maxTextureCount:int;
 		public static var _atlasRestore:int=0;
 		
@@ -38,7 +38,7 @@ package laya.webgl.atlas {
 		
 		public static function get instance():AtlasResourceManager {
 			if (!_Instance) {
-				_Instance = new AtlasResourceManager(atlasTextureWidth, atlasTextureHeight, gridSize, maxTextureCount);
+				_Instance = new AtlasResourceManager(AtlasResourceManager.atlasTextureWidth, AtlasResourceManager.atlasTextureHeight, AtlasResourceManager.gridSize, AtlasResourceManager.maxTextureCount);
 			}
 			return _Instance;
 		}
@@ -77,8 +77,7 @@ package laya.webgl.atlas {
 		public static function __init__():void {
 			atlasTextureWidth = 2048;
 			atlasTextureHeight = 2048;
-			gridSize = 16;
-			maxTextureCount = 8;
+			maxTextureCount = 6;
 			atlasLimitWidth = 512;
 			atlasLimitHeight = 512;
 		}

@@ -220,7 +220,7 @@ package laya.resource {
 				resource._resourceManager = this;
 				_resources.push(resource);
 				addSize(resource.memorySize);
-				resource.on(Event.MEMORY_CHANGED, this, addSize);
+				//resource.on(Event.MEMORY_CHANGED, this, addSize);
 				return true;
 			}
 			return false;
@@ -237,7 +237,7 @@ package laya.resource {
 				_resources.splice(index, 1);
 				resource._resourceManager = null;
 				_memorySize -= resource.memorySize;
-				resource.off(Event.MEMORY_CHANGED, this, addSize);
+				//resource.off(Event.MEMORY_CHANGED, this, addSize);
 				return true;
 			}
 			return false;
@@ -302,7 +302,7 @@ package laya.resource {
 		 * 增加内存。
 		 * @param add 需要增加的内存大小。
 		 */
-		private function addSize(add:int):void {
+		public function addSize(add:int):void {
 			if (add)//add如果为0传进来则为undefined
 			{
 				if (autoRelease && add > 0)//启动回收机制且增加尺寸才出发垃圾回收，如果为负则不

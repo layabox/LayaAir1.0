@@ -46,6 +46,7 @@ package laya.utils {
 		 * @param	target		要控制的对象。
 		 * @param	props		要控制对象的属性。
 		 * @param	duration	对象TWEEN的时间。
+		 * @param	ease		缓动类型
 		 * @param	offset		相对于上一个对象，偏移多长时间（单位：毫秒）。
 		 */
 		public function to(target:*, props:Object, duration:Number, ease:Function = null, offset:Number = 0):void {
@@ -57,6 +58,7 @@ package laya.utils {
 		 * @param	target		target 目标对象(即将更改属性值的对象)
 		 * @param	props		要控制对象的属性
 		 * @param	duration	对象TWEEN的时间
+		 * @param	ease		缓动类型
 		 * @param	offset		相对于上一个对象，偏移多长时间（单位：毫秒）
 		 */
 		public function from(target:*, props:Object, duration:Number, ease:Function = null, offset:Number = 0):void {
@@ -390,7 +392,7 @@ package laya.utils {
 		/**
 		 * 彻底销毁此对象。
 		 */
-		public function destory():void {
+		public function destroy():void {
 			reset();
 			_labelDic = null;
 			_tweenDic = null;

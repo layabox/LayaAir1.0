@@ -31,8 +31,6 @@ package laya.d3.resource.tempelet {
 		protected var _sharderNameID:int;
 		protected var _shader:Shader;
 		
-		
-		
 		public function get indexOfHost():int {
 			return 0;
 		}
@@ -65,8 +63,8 @@ package laya.d3.resource.tempelet {
 			
 			initialize();
 			loadShaderParams();
-			_vertexBuffer = _vertexBuffer3D = VertexBuffer3D.create(VertexParticle.vertexDeclaration,parSetting.maxPartices*4, WebGLContext.DYNAMIC_DRAW);
-			_indexBuffer = _indexBuffer3D = IndexBuffer3D.create(parSetting.maxPartices*6,WebGLContext.STATIC_DRAW);
+			_vertexBuffer = _vertexBuffer3D = VertexBuffer3D.create(VertexParticle.vertexDeclaration, parSetting.maxPartices * 4, WebGLContext.DYNAMIC_DRAW);
+			_indexBuffer = _indexBuffer3D = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT,parSetting.maxPartices * 6, WebGLContext.STATIC_DRAW, true);
 			loadContent();
 		}
 		
@@ -94,6 +92,41 @@ package laya.d3.resource.tempelet {
 			addParticleArray(position.elements, velocity.elements);
 		}
 		
+		override protected function loadContent():void {
+			var indexes:Uint16Array = new Uint16Array(settings.maxPartices * 6);
+			
+			for (var i:int = 0; i < settings.maxPartices; i++) {
+				indexes[i * 6 + 0] = (i * 4 + 0);
+				indexes[i * 6 + 1] = (i * 4 + 1);
+				indexes[i * 6 + 2] = (i * 4 + 2);
+				
+				indexes[i * 6 + 3] = (i * 4 + 0);
+				indexes[i * 6 + 4] = (i * 4 + 2);
+				indexes[i * 6 + 5] = (i * 4 + 3);
+			}
+			
+			_indexBuffer3D.setData(indexes);
+		}
+		
+		override public function addNewParticlesToVertexBuffer():void {
+			var start:int;
+			if (_firstNewElement < _firstFreeElement) {
+				// 如果新增加的粒子在Buffer中是连续的区域，只upload一次
+				start = _firstNewElement * 4 * _floatCountPerVertex;
+				_vertexBuffer3D.setData(_vertices, start, start,  (_firstFreeElement - _firstNewElement) * 4 * _floatCountPerVertex);
+				
+			} else {
+				//如果新增粒子区域超过Buffer末尾则循环到开头，需upload两次
+				start = _firstNewElement * 4 * _floatCountPerVertex ;
+				_vertexBuffer3D.setData(_vertices,start, start, (settings.maxPartices - _firstNewElement) * 4 * _floatCountPerVertex);
+				
+				if (_firstFreeElement > 0) {
+					_vertexBuffer3D.setData(_vertices,0, 0, _firstFreeElement * 4 * _floatCountPerVertex);
+				}
+			}
+			_firstNewElement = _firstFreeElement;
+		}
+		
 		public function _render(state:RenderState):Boolean {
 			if (texture && texture.loaded) {
 				//设备丢失时.............................................................
@@ -105,7 +138,9 @@ package laya.d3.resource.tempelet {
 				
 				if (_firstActiveElement != _firstFreeElement) {
 					var gl:WebGLContext = WebGL.mainContext;
-					_vertexBuffer3D.bind(_indexBuffer3D);
+					//_vertexBuffer3D.bind(_indexBuffer3D);
+					_vertexBuffer3D._bind();
+					_indexBuffer._bind();
 					
 					_shader = getShader(state);
 					
@@ -141,12 +176,12 @@ package laya.d3.resource.tempelet {
 						Stat.drawCall++;
 					} else {
 						drawVertexCount = (settings.maxPartices - _firstActiveElement) * 6;
-						WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, (settings.maxPartices - _firstActiveElement) * 6, WebGLContext.UNSIGNED_SHORT, _firstActiveElement * 6 * 2);//2为ushort字节数
+						WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, drawVertexCount, WebGLContext.UNSIGNED_SHORT, _firstActiveElement * 6 * 2);//2为ushort字节数
 						Stat.trianglesFaces += drawVertexCount / 3;
 						Stat.drawCall++;
 						if (_firstFreeElement > 0) {
 							drawVertexCount = _firstFreeElement * 6;
-							WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, _firstFreeElement * 6, WebGLContext.UNSIGNED_SHORT, 0);
+							WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, drawVertexCount, WebGLContext.UNSIGNED_SHORT, 0);
 							Stat.trianglesFaces += drawVertexCount / 3;
 							Stat.drawCall++;
 						}

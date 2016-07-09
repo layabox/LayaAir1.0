@@ -45,7 +45,7 @@
         {
          "columns":4,
          "firstgid":1,
-         "image":"res/tiledMap/perspective_walls.png",
+         "image":"perspective_walls.png",
          "imageheight":256,
          "imagewidth":256,
          "margin":0,

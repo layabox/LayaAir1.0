@@ -20,14 +20,10 @@ package laya.d3.loaders {
 	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.net.URL;
-	import laya.resource.Texture;
 	import laya.utils.Byte;
 	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.resource.WebGLImage;
-	import laya.webgl.utils.IndexBuffer2D;
-	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
 	 * @private
@@ -218,19 +214,24 @@ package laya.d3.loaders {
 			
 			var vertexDeclaration:VertexDeclaration = _getVertexDeclaration();
 			
-			var vb:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, vbsize / vertexDeclaration.vertexStride, WebGLContext.STATIC_DRAW);
-			vb.append(new Uint8Array(arrayBuffer, vbofs + _DATA.offset, vbsize));
+			var vb:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, vbsize / vertexDeclaration.vertexStride, WebGLContext.STATIC_DRAW,true);
+			var vbStart:int = vbofs + _DATA.offset;
+			var vbArrayBuffer:ArrayBuffer = arrayBuffer.slice(vbStart, vbStart + vbsize);
+			vb.setData(new Float32Array(vbArrayBuffer));
 			submesh.setVB(vb);
 			
 			var vertexElements:Array = vb.vertexDeclaration.getVertexElements();
 			for (var i:int = 0; i < vertexElements.length; i++)
 				submesh._bufferUsage[(vertexElements[i] as VertexElement).elementUsage] = vb;
 			
-			var ib:IndexBuffer3D = IndexBuffer3D.create(ibsize / 2, WebGLContext.STATIC_DRAW);
-			ib.append(new Uint8Array(arrayBuffer, ibofs + _DATA.offset, ibsize));
+			var ib:IndexBuffer3D = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT,ibsize / 2, WebGLContext.STATIC_DRAW, true);
+			var ibStart:int =ibofs + _DATA.offset;
+			var ibArrayBuffer:ArrayBuffer= arrayBuffer.slice(ibStart, ibStart+ibsize);
+			ib.setData(new Uint16Array(ibArrayBuffer));
 			submesh.setIB(ib, ibsize / 2);
-			ib.getUint16Array();
-			submesh._setBoneDic(new Uint8Array(arrayBuffer, boneDicofs + _DATA.offset, boneDicsize));
+			
+			var boneDicArrayBuffer:ArrayBuffer= arrayBuffer.slice(boneDicofs + _DATA.offset, boneDicofs + _DATA.offset+boneDicsize);
+			submesh._setBoneDic(new Uint8Array(boneDicArrayBuffer));
 			
 			_meshTemplet.add(submesh);
 			

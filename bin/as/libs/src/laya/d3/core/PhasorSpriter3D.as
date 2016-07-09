@@ -1,5 +1,6 @@
 package laya.d3.core {
 	import laya.d3.core.render.RenderState;
+	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.utils.Stat;
@@ -9,7 +10,6 @@ package laya.d3.core {
 	import laya.webgl.utils.Buffer;
 	import laya.webgl.utils.IndexBuffer2D;
 	import laya.webgl.utils.VertexBuffer2D;
-	import laya.webgl.utils.VertexElementUsage;
 	
 	/**
 	 * @private
@@ -347,9 +347,9 @@ package laya.d3.core {
 				return;
 				
 			_ib.clear();
-			_ib.append(_ibData);
+			_ib.append(_ibData);//TODO:待调整
 			_vb.clear();
-			_vb.append(_vbData);
+			_vb.append(_vbData);//TODO:待调整
 			
 			_vb.bind_upload(_ib);
 			

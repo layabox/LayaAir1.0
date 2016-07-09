@@ -85,30 +85,16 @@ package laya.display {
 	 * new Animation_Example();
 	 * </listing>
 	 */
-	public class Animation extends Sprite {
+	public class Animation extends AnimationPlayerBase {
 		/**全局缓存动画索引，存储全局Graphics动画数据，可以指定播放某个动画，比如ani.play(0 , true ,"hero_run"); */
 		public static var framesMap:Object = {};
-		/** 播放间隔(单位：毫秒)。*/
-		public var interval:int = Config.animationInterval;
-		/**是否循环播放 */
-		public var loop:Boolean;
 		/**@private */
-		protected var _frames:Array;
-		/**@private */
-		protected var _index:int;
-		/**@private */
-		protected var _count:int;
-		/**@private */
-		protected var _isPlaying:Boolean;
-		/**@private */
-		protected var _labels:Object;
-		
+		protected var _frames:Array;		
 		/**
 		 * 创建一个新的 <code>Animation</code> 实例。
 		 */
 		public function Animation():void {
-			on(Event.DISPLAY, this, _onDisplay);
-			on(Event.UNDISPLAY, this, _onDisplay);
+			_setControlNode(this);
 		}
 		
 		/** @inheritDoc */
@@ -118,21 +104,14 @@ package laya.display {
 			this._frames = null;
 			this._labels = null;
 		}
-		
-		private function _onDisplay():void {
-			if (_isPlaying) {
-				if (_displayedInStage) play(_index, loop);
-				else clearTimer(this, _frameLoop);
-			}
-		}
-		
+			
 		/**
 		 * 播放动画。
 		 * @param	start 开始播放的动画索引。
 		 * @param	loop 是否循环。
 		 * @param	name 如果name为空(可选)，则播放当前动画，如果不为空，则播放全局缓存动画（如果有）
 		 */
-		public function play(start:int = 0, loop:Boolean = true, name:String = ""):void {
+		override public function play(start:int = 0, loop:Boolean = true, name:String = ""):void {
 			_setFramesFromCache(name);
 			this._isPlaying = true;
 			this.index = start;
@@ -152,80 +131,16 @@ package laya.display {
 			return false;
 		}
 		
-		protected function _frameLoop():void {
+		override protected function _frameLoop():void {
 			if (_style.visible && _style.alpha > 0.01) {
-				this.index = _index, _index++;
-				if (this._index >= this._count) {
-					if (loop) this._index = 0;
-					else {
-						_index--;
-						stop();
-					}
-					event(Event.COMPLETE);
-				}
+				super._frameLoop();
 			}
 		}
-		
-		/**
-		 * 停止播放。
-		 */
-		public function stop():void {
-			this._isPlaying = false;
-			clearTimer(this, _frameLoop);
-		}
-		
-		/**
-		 * 增加一个标签到index帧上，播放到此index后会派发label事件
-		 * @param	label	标签名称
-		 * @param	index	索引位置
-		 */
-		public function addLabel(label:String, index:int):void {
-			if (!_labels) _labels = {};
-			_labels[index] = label;
-		}
-		
-		/**
-		 * 删除某个标签
-		 * @param	label 标签名字，如果label为空，则删除所有Label
-		 */
-		public function removeLabel(label:String):void {
-			if (!label) _labels = null;
-			else if (!_labels) {
-				for (var name:String in _labels) {
-					if (_labels[name] === label) {
-						delete _labels[name];
-						break;
-					}
-				}
-			}
-		}
-		
-		/**
-		 * 切换到某帧并停止
-		 * @param	index 帧索引
-		 */
-		public function gotoAndStop(index:int):void {
-			this.index = index;
-			this.stop();
-		}
-		
-		/**当前播放索引。*/
-		public function get index():int {
-			return _index;
-		}
-		
-		public function set index(value:int):void {
-			_index = value;
+				
+		override protected function _displayToIndex(value:int):void
+		{	
 			if (this._frames) this.graphics = this._frames[value];
-			
-			if (_labels && _labels[value]) event(Event.LABEL, _labels[value]);
 		}
-		
-		/**动画长度。*/
-		public function get count():int {
-			return _count;
-		}
-		
 		/**Graphics集合*/
 		public function get frames():Array {
 			return _frames;
@@ -241,7 +156,7 @@ package laya.display {
 		}
 		
 		/**清理。方便对象复用。*/
-		public function clear():void {
+		override public function clear():void {
 			stop();
 			this.graphics = null;
 			this._frames = null;

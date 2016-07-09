@@ -4,7 +4,7 @@ package laya.filters {
 	 * <code>ColorFilterAction</code> 是一个颜色滤镜应用类。
 	 */
 	public class ColorFilterAction implements IFilterAction {
-		private var data:ColorFilter;
+		public var data:ColorFilter;
 		
 		/**
 		 * 创建一个 <code>ColorFilterAction</code> 实例。

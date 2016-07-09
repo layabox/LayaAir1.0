@@ -1,29 +1,14 @@
 package laya.d3.resource.tempelet {
-	import laya.d3.core.fileModel.Mesh;
 	import laya.d3.core.material.Material;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.resource.tempelet.MeshTemplet;
 	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.IndexBuffer2D;
-	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
 	 * <code>SubMesh</code> 类用于创建子网格数据模板。
 	 */
 	public class SubMeshTemplet {
-		/**
-		 * @private
-		 */
-		public static function _copyBone(index:Uint8Array, bonesData:Float32Array, out:Float32Array):void {
-			for (var i:int = 0, n:int = index.length, ii:int = 0; i < n; i++) {
-				for (var j:int = 0; j < 16; j++, ii++) {
-					out[ii] = bonesData[(index[i] << 4) + j];
-				}
-			}
-		}
-		
 		/** @private */
 		protected var _ib:IndexBuffer3D;
 		/** @private */
@@ -41,6 +26,8 @@ package laya.d3.resource.tempelet {
 		/** @private */
 		public var _boneIndex:Uint8Array;
 		/** @private */
+		public var _cacheBoneDatas:Vector.<Float32Array>;
+		/** @private */
 		public var _boneData:Float32Array;
 		
 		/** @private */
@@ -50,8 +37,6 @@ package laya.d3.resource.tempelet {
 		
 		/**获取顶点索引，UV动画使用。*/
 		public var verticesIndices:Uint32Array;
-		
-		
 		
 		/**
 		 * 获取材质
@@ -77,8 +62,6 @@ package laya.d3.resource.tempelet {
 			_meshTemplet = templet;
 		}
 		
-		
-		
 		/**
 		 * @private
 		 */
@@ -98,6 +81,7 @@ package laya.d3.resource.tempelet {
 		public function _setBoneDic(boneDic:Uint8Array):void {
 			_boneIndex = boneDic;
 			_meshTemplet.disableUseFullBone();
+			_cacheBoneDatas = new Vector.<Float32Array>();
 			_boneData = new Float32Array(_boneIndex.length * 16);
 		}
 		

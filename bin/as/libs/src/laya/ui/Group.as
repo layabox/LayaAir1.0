@@ -445,7 +445,7 @@ package laya.ui {
 		/**@inheritDoc */
 		override public function set dataSource(value:*):void {
 			_dataSource = value;
-			if (value is int || value is String) selectedIndex = int(value);
+			if (value is int || value is String) selectedIndex = parseInt(value);
 			else if (value is Array) labels = (value as Array).join(",");
 			else super.dataSource = value;
 		}

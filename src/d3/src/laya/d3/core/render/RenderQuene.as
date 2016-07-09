@@ -1,17 +1,11 @@
 package laya.d3.core.render {
 	import laya.d3.component.Component3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.fileModel.Mesh;
-	import laya.d3.core.fileModel.SubMesh;
 	import laya.d3.core.material.Material;
-	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.StaticBatch;
 	import laya.d3.graphics.StaticBatchManager;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
-	import laya.d3.math.Vector3;
-	import laya.d3.resource.tempelet.SubMeshTemplet;
-	import laya.utils.Stat;
 	import laya.webgl.WebGLContext;
 	
 	/**

@@ -58,6 +58,13 @@ package laya.d3.graphics {
 				_staticBatchs[i]._finsh();
 			}
 		}
+		
+		public function dispose():void
+		{
+			_keys.length = 0;
+			_useFPS.length = 0;
+			_staticBatchs.length = 0;
+		}
 	
 	}
 

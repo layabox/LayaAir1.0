@@ -50,7 +50,7 @@ package laya.d3.graphics {
 			return _vertexDeclaration;
 		}
 		
-		public function VertexPositionNormalTexture0Tangent(position:Vector3, normal:Vector3, textureCoordinate0:Vector2, textureCoordinate1:Vector2, tangent:Vector3) {
+		public function VertexPositionNormalTexture0Tangent(position:Vector3, normal:Vector3, textureCoordinate0:Vector2, textureCoordinate1:Vector2, tangent:Vector3):void {
 			_position = position;
 			_normal = normal;
 			_textureCoordinate0 = textureCoordinate0;

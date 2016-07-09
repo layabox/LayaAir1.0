@@ -7,10 +7,10 @@
 	var Input=laya.display.Input,Loader=laya.net.Loader,Node=laya.display.Node,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle;
 	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Text=laya.display.Text,Texture=laya.resource.Texture;
 	var Tween=laya.utils.Tween,Utils=laya.utils.Utils;
-	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.ISelect');
-	Laya.interface('laya.ui.IRender');
+	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IItem');
+	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
 	*<code>LayoutStyle</code> 是一个布局样式类。
@@ -135,12 +135,12 @@
 	//class laya.ui.AutoBitmap extends laya.display.Graphics
 	var AutoBitmap=(function(_super){
 		function AutoBitmap(){
-			this._isChanged=false;
 			this.autoCacheCmd=true;
 			this._width=0;
 			this._height=0;
 			this._source=null;
 			this._sizeGrid=null;
+			this._isChanged=false;
 			AutoBitmap.__super.call(this);
 		}
 
@@ -166,6 +166,7 @@
 		*修改纹理资源。
 		*/
 		__proto.changeSource=function(){
+			if (AutoBitmap.cacheCount++> 50)AutoBitmap.clearCache();
 			this._isChanged=false;
 			var source=this._source;
 			if (!source)return;
@@ -297,11 +298,13 @@
 		}
 
 		AutoBitmap.clearCache=function(){
+			AutoBitmap.cacheCount=0;
 			AutoBitmap.cmdCaches={};
 			AutoBitmap.textureCache={};
 		}
 
 		AutoBitmap.cmdCaches={};
+		AutoBitmap.cacheCount=0;
 		AutoBitmap.textureCache={};
 		return AutoBitmap;
 	})(Graphics)
@@ -467,7 +470,7 @@
 			var parent=this.parent;
 			if (parent){
 				var layout=this._layout;
-				if (!isNaN(layout.anchorY))this.pivotY=layout.anchorY *this.width;
+				if (!isNaN(layout.anchorY))this.pivotY=layout.anchorY *this.height;
 				if (!isNaN(layout.centerY)){
 					this.y=(parent.height-this.displayHeight)*0.5+layout.centerY;
 					}else if (!isNaN(layout.top)){
@@ -734,7 +737,7 @@
 			},function(value){
 			this.getLayout().anchorY=value;
 			this.layOutEabled=true;
-			this.resetLayoutX();
+			this.resetLayoutY();
 		});
 
 		/**
@@ -4285,7 +4288,9 @@
 					tAni=new FrameClip();
 					tAniO=animations[i];
 					tAni._setUp(this._idMap,tAniO);
-					this[tAniO.name]=tAni;
+					if (this.hasOwnProperty(tAniO.name)){
+						this[tAniO.name]=tAni;
+					}
 					tAni._setControlNode(this);
 					switch(tAniO.action){
 						case 1:
@@ -4766,7 +4771,7 @@
 		/**@inheritDoc */
 		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
 			this._dataSource=value;
-			if (((typeof value=='number')&& Math.floor(value)==value)|| (typeof value=='string'))this.selectedIndex=int(value);
+			if (((typeof value=='number')&& Math.floor(value)==value)|| (typeof value=='string'))this.selectedIndex=parseInt(value);
 			else if ((value instanceof Array))this.labels=(value).join(",");
 			else _super.prototype._$set_dataSource.call(this,value);
 		});
@@ -5551,12 +5556,6 @@
 				this.changeSelectStatus();
 				this.event(/*laya.events.Event.CHANGE*/"change");
 				this.selectHandler && this.selectHandler.runWith(value);
-			}
-			if (this.selectEnable && this._scrollBar){
-				var numX=this._isVertical ? this.repeatX :this.repeatY;
-				if (value < this._startIndex || (value+numX > this._startIndex+this.repeatX *this.repeatY)){
-					this.scrollTo(value);
-				}
 			}
 		});
 
@@ -7017,7 +7016,7 @@
 		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
 			this._dataSource=value;
 			if (((typeof value=='number')&& Math.floor(value)==value)|| (typeof value=='string')){
-				this.selectedIndex=int(value);
+				this.selectedIndex=parseInt(value);
 				}else {
 				for (var prop in this._dataSource){
 					if (this.hasOwnProperty(prop)){

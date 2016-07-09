@@ -7,7 +7,7 @@ package laya.webgl.atlas {
 		private var _texCount:uint = 0;
 		private var _failSize:TexMergeTexSize = new TexMergeTexSize();
 		private var _rowInfo:Vector.<TexRowInfo> = null;
-		private var _cells:Vector.<TexMergeCellInfo> = null;
+		private var _cells:Uint8Array = null;
 		
 		//------------------------------------------------------------------------------
 		public function AtlasGrid(width:uint = 0, height:uint = 0, atlasID:uint = 0) {
@@ -62,13 +62,10 @@ package laya.webgl.atlas {
 			_height = height;
 			_release();
 			if (_width == 0) return false;
-			_cells = new Vector.<TexMergeCellInfo>(_width * _height);
+			_cells = new Uint8Array(_width * _height*3);
 			_rowInfo = new Vector.<TexRowInfo>(_height);
 			for (var i:uint = 0; i < _height; i++) {
 				_rowInfo[i] = new TexRowInfo();
-			}
-			for (i = 0; i < _width * _height; i++) {
-				_cells[i] = new TexMergeCellInfo();
 			}
 			_clear();
 			return true;
@@ -87,27 +84,30 @@ package laya.webgl.atlas {
 			var nWidth:int = this._width;
 			var nHeight:int = this._height;
 			//定义一个变量为了指向 m_pCells
-			var pCellBox:Vector.<TexMergeCellInfo> = this._cells;
+			var pCellBox:Uint8Array = this._cells;
 			
 			//遍历查找合适的位置
 			for (var y:int = 0; y < nHeight; y++) {
 				//如果该行的空白数 小于 要放入的宽度返回
 				if (this._rowInfo[y].spaceCount < width) continue;
 				for (var x:int = 0; x < nWidth; ) {
-					if (pCellBox[y * nWidth + x].type != 0 || pCellBox[y * nWidth + x].successionWidth < width || pCellBox[y * nWidth + x].successionHeight < height) {
-						x += pCellBox[y * nWidth + x].successionWidth;
+					
+					var tm:int = (y * nWidth + x) * 3;
+					
+					if (pCellBox[tm] != 0 || pCellBox[tm+1] < width || pCellBox[tm+2] < height) {
+						x += pCellBox[tm+1];
 						continue;
 					}
 					rx = x;
 					ry = y;
 					for (var xx:int = 0; xx < width; xx++) {
-						if (pCellBox[y * nWidth + x + xx].successionHeight < height) {
+						if (pCellBox[3*xx+tm+2] < height) {
 							rx = -1;
 							break;
 						}
 					}
 					if (rx < 0) {
-						x += pCellBox[y * nWidth + x].successionWidth;
+						x += pCellBox[tm+1];
 						continue;
 					}
 					pFillInfo.ret = true;
@@ -132,10 +132,11 @@ package laya.webgl.atlas {
 				this._check(this._rowInfo[yy].spaceCount >= w);
 				this._rowInfo[yy].spaceCount -= w;
 				for (var xx:int = 0; xx < w; xx++) {
-					this._check(_cells[x + yy * nWidth + xx].type == 0);
-					_cells[x + yy * nWidth + xx].type = type;
-					_cells[x + yy * nWidth + xx].successionWidth = w;
-					_cells[x + yy * nWidth + xx].successionHeight = h;
+					var tm:int = (x + yy * nWidth + xx) * 3;
+					this._check(_cells[tm] == 0);
+					_cells[tm] = type;
+					_cells[tm+1] = w;
+					_cells[tm+2] = h;
 				}
 			}
 			//调整我左方相邻空白格子的宽度连续信息描述
@@ -143,10 +144,10 @@ package laya.webgl.atlas {
 				for (yy = 0; yy < h; ++yy) {
 					var s:int = 0;
 					for (xx = x - 1; xx >= 0; --xx, ++s) {
-						if (_cells[(y + yy) * nWidth + xx].type != 0) break;
+						if (_cells[((y + yy) * nWidth + xx)*3] != 0) break;
 					}
 					for (xx = s; xx > 0; --xx) {
-						_cells[(y + yy) * nWidth + x - xx].successionWidth = xx;
+						_cells[((y + yy) * nWidth + x - xx)*3+1] = xx;
 						this._check(xx > 0);
 					}
 				}
@@ -156,10 +157,10 @@ package laya.webgl.atlas {
 				for (xx = x; xx < (x + w); ++xx) {
 					s = 0;
 					for (yy = y - 1; yy >= 0; --yy, s++) {
-						if (this._cells[xx + yy * nWidth].type != 0) break;
+						if (this._cells[(xx + yy * nWidth)*3] != 0) break;
 					}
 					for (yy = s; yy > 0; --yy) {
-						this._cells[xx + (y - yy) * nWidth].successionHeight = yy;
+						this._cells[(xx + (y - yy) * nWidth)*3+2] = yy;
 						this._check(yy > 0);
 					}
 				}
@@ -180,10 +181,10 @@ package laya.webgl.atlas {
 			}
 			for (var i:int = 0; i < this._height; i++) {
 				for (var j:int = 0; j < this._width; j++) {
-					var pCellbox:TexMergeCellInfo = this._cells[i * _width + j];
-					pCellbox.type = 0;
-					pCellbox.successionWidth = _width - j;
-					pCellbox.successionHeight = _width - i;
+					var tm:int = (i * _width + j) * 3;
+					this._cells[tm] = 0;
+					this._cells[tm+1] = _width - j;
+					this._cells[tm+2]= _width - i;
 				}
 			}
 			_failSize.width = _width + 1;
@@ -191,14 +192,6 @@ package laya.webgl.atlas {
 		}
 		//------------------------------------------------------------------
 	}
-}
-
-//------------------------------------------------------------------------------
-class TexMergeCellInfo//一个格子的信息
-{
-	public var type:int = 0;
-	public var successionWidth:uint = 0;	//连续的宽度
-	public var successionHeight:uint = 0;	//连续的高度
 }
 
 //------------------------------------------------------------------------------

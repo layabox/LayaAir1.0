@@ -3,19 +3,19 @@
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
 	var AnimationPlayer=laya.ani.AnimationPlayer,AnimationState=laya.ani.AnimationState,AtlasResourceManager=laya.webgl.atlas.AtlasResourceManager;
-	var Buffer=laya.webgl.utils.Buffer,Byte=laya.utils.Byte,ClassUtils=laya.utils.ClassUtils,EmitterBase=laya.particle.emitter.EmitterBase;
-	var Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher,Handler=laya.utils.Handler,IndexBuffer2D=laya.webgl.utils.IndexBuffer2D;
-	var KeyframesAniTemplet=laya.ani.KeyframesAniTemplet,Loader=laya.net.Loader,Node=laya.display.Node,ParticleSettings=laya.particle.ParticleSettings;
-	var ParticleShader=laya.particle.shader.ParticleShader,ParticleTemplateWebGL=laya.particle.ParticleTemplateWebGL;
-	var Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
-	var RenderState2D=laya.webgl.utils.RenderState2D,Resource=laya.resource.Resource,RunDriver=laya.utils.RunDriver;
-	var Shader=laya.webgl.shader.Shader,ShaderDefines=laya.webgl.shader.ShaderDefines,Sprite=laya.display.Sprite;
-	var Stat=laya.utils.Stat,Texture=laya.resource.Texture,URL=laya.net.URL,ValusArray=laya.webgl.utils.ValusArray;
+	var Browser=laya.utils.Browser,Buffer=laya.webgl.utils.Buffer,Byte=laya.utils.Byte,ClassUtils=laya.utils.ClassUtils;
+	var EmitterBase=laya.particle.emitter.EmitterBase,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher;
+	var Handler=laya.utils.Handler,IndexBuffer2D=laya.webgl.utils.IndexBuffer2D,KeyframesAniTemplet=laya.ani.KeyframesAniTemplet;
+	var Loader=laya.net.Loader,Node=laya.display.Node,ParticleSettings=laya.particle.ParticleSettings,ParticleShader=laya.particle.shader.ParticleShader;
+	var ParticleTemplateWebGL=laya.particle.ParticleTemplateWebGL,Render=laya.renders.Render,RenderContext=laya.renders.RenderContext;
+	var RenderSprite=laya.renders.RenderSprite,RenderState2D=laya.webgl.utils.RenderState2D,Resource=laya.resource.Resource;
+	var RunDriver=laya.utils.RunDriver,Shader=laya.webgl.shader.Shader,ShaderDefines=laya.webgl.shader.ShaderDefines;
+	var Sprite=laya.display.Sprite,Stat=laya.utils.Stat,Texture=laya.resource.Texture,URL=laya.net.URL,ValusArray=laya.webgl.utils.ValusArray;
 	var VertexBuffer2D=laya.webgl.utils.VertexBuffer2D,WebGL=laya.webgl.WebGL,WebGLContext=laya.webgl.WebGLContext;
 	var WebGLImage=laya.webgl.resource.WebGLImage,WebGLImageCube=laya.webgl.resource.WebGLImageCube,WebGLRenderTarget=laya.webgl.resource.WebGLRenderTarget;
-	Laya.interface('laya.d3.core.render.IRender');
 	Laya.interface('laya.d3.graphics.IVertex');
 	Laya.interface('laya.d3.core.render.IUpdate');
+	Laya.interface('laya.d3.core.render.IRender');
 	/**
 	*<code>SubMesh</code> 类用于创建子网格。
 	*/
@@ -53,7 +53,7 @@
 					return this._bakedVertexes;
 				var byteSizeInFloat=4;
 				var vb=this._templet.getVB();
-				this._bakedVertexes=(vb.getFloat32Array().slice());
+				this._bakedVertexes=(vb.getData().slice());
 				var vertexDeclaration=vb.vertexDeclaration;
 				var positionOffset=vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.POSITION0*/"POSITION"][4] / byteSizeInFloat;
 				var normalOffset=vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.NORMAL0*/"NORMAL"][4] / byteSizeInFloat;
@@ -73,7 +73,7 @@
 		__proto.getBakedIndices=function(){
 			if (this._bakedIndices)
 				return this._bakedIndices;
-			return this._bakedIndices=this._templet.getIB().getUint16Array();
+			return this._bakedIndices=this._templet.getIB().getData();
 		}
 
 		/**
@@ -104,17 +104,19 @@
 			var ib=tem.getIB();
 			var material=tem.getMaterial((state.owner).materials || meshTem.materials);
 			if (material.normalTexture && !vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.TANGENT0*/"TANGENT0"]){
-				var vertexDatas=vb.getFloat32Array();
-				var newVertexDatas=Utils3D.GenerateTangent(vertexDatas,vb.vertexDeclaration.vertexStride / 4,vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.POSITION0*/"POSITION"][4] / 4,vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.TEXTURECOORDINATE0*/"UV"][4] / 4,ib.getUint16Array());
+				var vertexDatas=vb.getData();
+				var newVertexDatas=Utils3D.GenerateTangent(vertexDatas,vb.vertexDeclaration.vertexStride / 4,vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.POSITION0*/"POSITION"][4] / 4,vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.TEXTURECOORDINATE0*/"UV"][4] / 4,ib.getData());
 				var vertexDeclaration=Utils3D.getVertexTangentDeclaration(vb.vertexDeclaration.getVertexElements());
 				var newVB=VertexBuffer3D.create(vertexDeclaration,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
-				newVB.append(newVertexDatas);
-				tem.getVB().dispose();
+				newVB.setData(newVertexDatas);
+				vb.dispose();
 				tem.setVB(newVB);
+				vb=newVB;
 				this.templet._bufferUsage[ /*laya.d3.graphics.VertexElementUsage.TANGENT0*/"TANGENT0"]=newVB;
 			}
 			if (ib===null)return false;
-			vb ? vb.bind_upload(ib):meshTem.vb.bind_upload(ib);
+			vb._bind();
+			ib._bind();
 			if (material){
 				var shader=this._getShader(state,vb,material);
 				var presz=state.shaderValue.length;
@@ -671,8 +673,8 @@
 			var presz=this._renderState.shaderValue.length;
 			var predef=this._renderState.shaderDefs.getValue();
 			this._shader=this.getShader(this._renderState);
-			this._renderState.shaderValue.pushValue(laya.webgl.utils.VertexElementUsage.POSITION0,this._posShaderValue,-1);
-			this._renderState.shaderValue.pushValue(laya.webgl.utils.VertexElementUsage.COLOR0,this._colorShaderValue,-1);
+			this._renderState.shaderValue.pushValue(/*laya.d3.graphics.VertexElementUsage.POSITION0*/"POSITION",this._posShaderValue,-1);
+			this._renderState.shaderValue.pushValue(/*laya.d3.graphics.VertexElementUsage.COLOR0*/"COLOR",this._colorShaderValue,-1);
 			this._renderState.shaderValue.pushValue(/*laya.webgl.utils.Buffer.MVPMATRIX*/"MVPMATRIX",this._wvpMatrix.elements,-1);
 			this._renderState.shaderValue.pushValue(/*laya.webgl.utils.Buffer.LUMINANCE*/"LUMINANCE",1.0,-1);
 			this._shader.uploadArray(this._renderState.shaderValue.data,this._renderState.shaderValue.length,null);
@@ -1397,6 +1399,8 @@
 			this._elementCount=0;
 			this._vertexDeclaration=null;
 			this._material=null;
+			this._vertexDatas=null;
+			this._indexDatas=null;
 			this._vertexBuffer=null;
 			this._indexBuffer=null;
 			this._lastRenderObjects=null;
@@ -1406,8 +1410,10 @@
 			this._elementCount=0;
 			this._vertexDeclaration=vertexDeclaration;
 			this._material=material;
-			this._vertexBuffer=new VertexBuffer3D(this._vertexDeclaration,StaticBatch.maxVertexCount,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
-			this._indexBuffer=new IndexBuffer3D(StaticBatch.maxIndexCount,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
+			this._vertexDatas=new Float32Array(this._vertexDeclaration.vertexStride / 4 *StaticBatch.maxVertexCount);
+			this._indexDatas=new Uint16Array(StaticBatch.maxIndexCount);
+			this._vertexBuffer=VertexBuffer3D.create(this._vertexDeclaration,StaticBatch.maxVertexCount,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
+			this._indexBuffer=IndexBuffer3D.create(/*laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort",StaticBatch.maxIndexCount,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
 			this._lastRenderObjects=[];
 			this._renderObjects=[];
 			this._needReMerage=false;
@@ -1447,28 +1453,26 @@
 			this._currentVertexCount=0;
 			if (this._needReMerage){
 				this._needReMerage=false;
-				this._indexBuffer.clear();
-				this._vertexBuffer.clear();
+				var curMerVerCount=0;
+				var curMerIndCount=0;
 				this._elementCount=0;
 				for (var i=0;i < this._renderObjects.length;i++){
 					var renderObj=this._renderObjects[i];
-					var vertexDatas=renderObj.getBakedVertexs();
-					var indexDatas=renderObj.getBakedIndices();
-					var indexOffset=this._vertexBuffer.length / this._vertexDeclaration.vertexStride;
-					var indexStart=this._indexBuffer.length / 2;
-					var indexEnd=indexStart+indexDatas.length;
-					var batchIndexDatas=this._indexBuffer.getUint16Array();
-					batchIndexDatas.set(indexDatas,this._indexBuffer.length / 2);
+					var subVertexDatas=renderObj.getBakedVertexs();
+					var subIndexDatas=renderObj.getBakedIndices();
+					var indexOffset=curMerVerCount / (this._vertexDeclaration.vertexStride / 4);
+					var indexStart=curMerIndCount;
+					var indexEnd=indexStart+subIndexDatas.length;
+					this._indexDatas.set(subIndexDatas,curMerIndCount);
 					for (var k=indexStart;k < indexEnd;k++)
-					batchIndexDatas[k]=indexOffset+batchIndexDatas[k];
-					this._indexBuffer.length+=indexDatas.length *2;
-					this._indexBuffer.setNeedUpload();
-					var batchVertexDatas=this._vertexBuffer.getFloat32Array();
-					batchVertexDatas.set(vertexDatas,this._vertexBuffer.length / 4);
-					this._vertexBuffer.length+=vertexDatas.length *4;
-					this._vertexBuffer.setNeedUpload();
-					this._elementCount+=indexDatas.length;
+					this._indexDatas[k]=indexOffset+this._indexDatas[k];
+					curMerIndCount+=subIndexDatas.length;
+					this._vertexDatas.set(subVertexDatas,curMerVerCount);
+					curMerVerCount+=subVertexDatas.length;
+					this._elementCount+=subIndexDatas.length;
 				}
+				this._vertexBuffer.setData(this._vertexDatas);
+				this._indexBuffer.setData(this._indexDatas);
 			}
 			this._lastRenderObjects=this._renderObjects.slice();
 			this._renderObjects.length=0;
@@ -1508,15 +1512,16 @@
 			var ib=this._indexBuffer;
 			var material=this._material;
 			if (material.normalTexture && !vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.TANGENT0*/"TANGENT0"]){
-				var vertexDatas=vb.getFloat32Array();
-				var newVertexDatas=Utils3D.GenerateTangent(vertexDatas,vb.vertexDeclaration.vertexStride / 4,vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.POSITION0*/"POSITION"][4] / 4,vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.TEXTURECOORDINATE0*/"UV"][4] / 4,ib.getUint16Array());
+				var vertexDatas=vb.getData();
+				var newVertexDatas=Utils3D.GenerateTangent(vertexDatas,vb.vertexDeclaration.vertexStride / 4,vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.POSITION0*/"POSITION"][4] / 4,vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.TEXTURECOORDINATE0*/"UV"][4] / 4,ib.getData());
 				var vertexDeclaration=Utils3D.getVertexTangentDeclaration(vb.vertexDeclaration.getVertexElements());
 				var newVB=VertexBuffer3D.create(vertexDeclaration,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
-				newVB.append(newVertexDatas);
+				newVB.setData(newVertexDatas);
 				vb.dispose();
-				vb=newVB;
+				this._vertexBuffer=vb=newVB;
 			}
-			vb.bind_upload(ib);
+			vb._bind();
+			ib._bind();
 			if (material){
 				var shader=this._getShader(state,vb,material);
 				var presz=state.shaderValue.length;
@@ -1608,6 +1613,12 @@
 			for (var i=0;i < this._keys.length;i++){
 				this._staticBatchs[i]._finsh();
 			}
+		}
+
+		__proto.dispose=function(){
+			this._keys.length=0;
+			this._useFPS.length=0;
+			this._staticBatchs.length=0;
 		}
 
 		StaticBatchManager.maxVertexDeclaration=1000;
@@ -3415,17 +3426,21 @@
 			submesh.material=material;
 			submesh.verticesIndices=new Uint32Array(arrayBuffer.slice(vbIndicesofs+this._DATA.offset,vbIndicesofs+this._DATA.offset+vbIndicessize));
 			var vertexDeclaration=this._getVertexDeclaration();
-			var vb=VertexBuffer3D.create(vertexDeclaration,vbsize / vertexDeclaration.vertexStride,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
-			vb.append(new Uint8Array(arrayBuffer,vbofs+this._DATA.offset,vbsize));
+			var vb=VertexBuffer3D.create(vertexDeclaration,vbsize / vertexDeclaration.vertexStride,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4,true);
+			var vbStart=vbofs+this._DATA.offset;
+			var vbArrayBuffer=arrayBuffer.slice(vbStart,vbStart+vbsize);
+			vb.setData(new Float32Array(vbArrayBuffer));
 			submesh.setVB(vb);
 			var vertexElements=vb.vertexDeclaration.getVertexElements();
 			for (var i=0;i < vertexElements.length;i++)
 			submesh._bufferUsage[(vertexElements [i]).elementUsage]=vb;
-			var ib=IndexBuffer3D.create(ibsize / 2,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
-			ib.append(new Uint8Array(arrayBuffer,ibofs+this._DATA.offset,ibsize));
+			var ib=IndexBuffer3D.create(/*laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort",ibsize / 2,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4,true);
+			var ibStart=ibofs+this._DATA.offset;
+			var ibArrayBuffer=arrayBuffer.slice(ibStart,ibStart+ibsize);
+			ib.setData(new Uint16Array(ibArrayBuffer));
 			submesh.setIB(ib,ibsize / 2);
-			ib.getUint16Array();
-			submesh._setBoneDic(new Uint8Array(arrayBuffer,boneDicofs+this._DATA.offset,boneDicsize));
+			var boneDicArrayBuffer=arrayBuffer.slice(boneDicofs+this._DATA.offset,boneDicofs+this._DATA.offset+boneDicsize);
+			submesh._setBoneDic(new Uint8Array(boneDicArrayBuffer));
 			this._meshTemplet.add(submesh);
 			return true;
 		}
@@ -5365,7 +5380,7 @@
 		}
 
 		__proto.loadContent=function(){
-			this._vertexBuffer=new VertexBuffer3D(VertexGlitter.vertexDeclaration,this.setting.maxSegments *2,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
+			this._vertexBuffer=VertexBuffer3D.create(VertexGlitter.vertexDeclaration,this.setting.maxSegments *2,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
 		}
 
 		__proto.loadShaderParams=function(){
@@ -5397,11 +5412,11 @@
 			if (this.texture && this.texture.loaded){
 				this.update(state.elapsedTime);
 				if (this._firstNewElement !=this._firstFreeElement){
-					this.addNewParticlesToVertexBuffer();
+					this.addNewGlitterSegementToVertexBuffer();
 				}
 				if (this._firstActiveElement !=this._firstFreeElement){
 					var gl=WebGL.mainContext;
-					this._vertexBuffer.bind(null);
+					this._vertexBuffer.bindWithIndexBuffer(null);
 					this._shader=this.getShader(state);
 					var presz=this._shaderValue.length;
 					this._shaderValue.pushArray(state.shaderValue);
@@ -5415,14 +5430,24 @@
 					this._shaderValue.data[1][1]=this.texture.bitmap.id;
 					this._shader.uploadArray(this._shaderValue.data,this._shaderValue.length,null);
 					this._shaderValue.length=presz;
+					var drawVertexCount=0;
 					if (this._firstActiveElement < this._firstFreeElement){
-						WebGL.mainContext.drawArrays(/*laya.webgl.WebGLContext.TRIANGLE_STRIP*/0x0005,this._firstActiveElement *2,(this._firstFreeElement-this._firstActiveElement)*2);
+						drawVertexCount=(this._firstFreeElement-this._firstActiveElement)*2;
+						WebGL.mainContext.drawArrays(/*laya.webgl.WebGLContext.TRIANGLE_STRIP*/0x0005,this._firstActiveElement *2,drawVertexCount);
+						Stat.trianglesFaces+=drawVertexCount-2;
+						Stat.drawCall++;
 						}else {
-						WebGL.mainContext.drawArrays(/*laya.webgl.WebGLContext.TRIANGLE_STRIP*/0x0005,this._firstActiveElement *2,(this.setting.maxSegments-this._firstActiveElement)*2);
-						if (this._firstFreeElement > 0)
-							WebGL.mainContext.drawArrays(/*laya.webgl.WebGLContext.TRIANGLE_STRIP*/0x0005,0,this._firstFreeElement *2);
+						drawVertexCount=(this.setting.maxSegments-this._firstActiveElement)*2;
+						WebGL.mainContext.drawArrays(/*laya.webgl.WebGLContext.TRIANGLE_STRIP*/0x0005,this._firstActiveElement *2,drawVertexCount);
+						Stat.trianglesFaces+=drawVertexCount-2;
+						Stat.drawCall++;
+						if (this._firstFreeElement > 0){
+							drawVertexCount=this._firstFreeElement *2;
+							WebGL.mainContext.drawArrays(/*laya.webgl.WebGLContext.TRIANGLE_STRIP*/0x0005,0,drawVertexCount);
+							Stat.trianglesFaces+=drawVertexCount-2;
+							Stat.drawCall++;
+						}
 					}
-					Stat.drawCall++;
 				}
 				this._drawCounter++;
 			}
@@ -5491,19 +5516,16 @@
 			}
 		}
 
-		__proto.addNewParticlesToVertexBuffer=function(){
-			this._vertexBuffer.clear()
-			this._vertexBuffer.append(this._vertices);
+		__proto.addNewGlitterSegementToVertexBuffer=function(){
 			var start=0;
 			if (this._firstActiveElement < this._firstFreeElement){
-				start=this._firstActiveElement *2 *this._floatCountPerVertex *4;
-				this._vertexBuffer.subUpload(start,start,start+(this._firstFreeElement-this._firstActiveElement)*2 *this._floatCountPerVertex *4);
+				start=this._firstActiveElement *2 *this._floatCountPerVertex;
+				this._vertexBuffer.setData(this._vertices,start,start,(this._firstFreeElement-this._firstActiveElement)*2 *this._floatCountPerVertex);
 				}else {
-				start=this._firstActiveElement *2 *this._floatCountPerVertex *4;
-				this._vertexBuffer.subUpload(start,start,start+(this.setting.maxSegments-this._firstActiveElement)*2 *this._floatCountPerVertex *4);
+				start=this._firstActiveElement *2 *this._floatCountPerVertex;
+				this._vertexBuffer.setData(this._vertices,start,start,(this.setting.maxSegments-this._firstActiveElement)*2 *this._floatCountPerVertex);
 				if (this._firstFreeElement > 0){
-					this._vertexBuffer.setNeedUpload();
-					this._vertexBuffer.subUpload(0,0,this._firstFreeElement *2 *this._floatCountPerVertex *4);
+					this._vertexBuffer.setData(this._vertices,0,0,this._firstFreeElement *2 *this._floatCountPerVertex);
 				}
 			}
 			this._firstNewElement=this._firstFreeElement;
@@ -5625,6 +5647,7 @@
 			this._vb=null;
 			this._meshTemplet=null;
 			this._boneIndex=null;
+			this._cacheBoneDatas=null;
 			this._boneData=null;
 			this._bufferUsage={};
 			this._finalBufferUsageDic=null;
@@ -5651,6 +5674,7 @@
 		__proto._setBoneDic=function(boneDic){
 			this._boneIndex=boneDic;
 			this._meshTemplet.disableUseFullBone();
+			this._cacheBoneDatas=[];
 			this._boneData=new Float32Array(this._boneIndex.length *16);
 		}
 
@@ -5711,14 +5735,6 @@
 			this._materialIndex=value;
 		});
 
-		SubMeshTemplet._copyBone=function(index,bonesData,out){
-			for (var i=0,n=index.length,ii=0;i < n;i++){
-				for (var j=0;j < 16;j++,ii++){
-					out[ii]=bonesData[(index[i] << 4)+j];
-				}
-			}
-		}
-
 		return SubMeshTemplet;
 	})()
 
@@ -5738,8 +5754,8 @@
 			Shader3D.U3DPARTICLE=Shader.nameKey.add("U3DPARTICLE");
 			Shader3D.GLITTER=Shader.nameKey.add("GLITTER");
 			Shader3D.SIMPLE_EFFECT=Shader.nameKey.add("SIMPLE_EFFECT");
-			Shader.addInclude("LightHelper.glsl","\nstruct DirectionLight\n{\n vec3 Direction;\n vec3 Diffuse;\n vec3 Ambient;\n vec3 Specular;\n};\n\nstruct PointLight\n{\n vec3 Diffuse;\n vec3 Ambient;\n vec3 Specular;\n vec3 Attenuation;\n vec3 Position;\n float Range;\n};\n\nstruct SpotLight\n{\n vec3 Diffuse;\n vec3 Ambient;\n vec3 Specular;\n vec3 Attenuation;\n vec3 Position;\n vec3 Direction;\n float Spot;\n float Range;\n};\n\n\nvoid  computeDirectionLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in DirectionLight dirLight,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)\n{\n	dif=vec3(0.0);//不初始化在IOS中闪烁，PC中不会闪烁\n	amb=vec3(0.0);\n	spec=vec3(0.0);\n	vec3 lightVec=-normalize(dirLight.Direction);\n	\n	amb=matAmb*dirLight.Ambient;\n	\n	float  diffuseFactor=dot(lightVec, normal);\n	\n	if(diffuseFactor>0.0)\n	{\n	   vec3 v = reflect(-lightVec, normal);\n	   float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);\n	   \n	   dif = diffuseFactor * matDif * dirLight.Diffuse;\n	   spec = specFactor * matSpe.rgb * dirLight.Specular;\n	}\n	\n}\n\nvoid computePointLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in PointLight poiLight, in vec3 pos,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)\n{\n	dif=vec3(0.0);\n	amb=vec3(0.0);\n	spec=vec3(0.0);\n	vec3 lightVec = poiLight.Position - pos;\n		\n	float d = length(lightVec);\n	\n	if( d > poiLight.Range )\n		return;\n		\n	lightVec /= d; \n	\n	amb = matAmb * poiLight.Ambient;	\n\n	float diffuseFactor = dot(lightVec, normal);\n\n	if( diffuseFactor > 0.0 )\n	{\n		vec3 v= reflect(-lightVec, normal);\n		float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);\n					\n		dif = diffuseFactor * matDif * poiLight.Diffuse;\n		spec = specFactor * matSpe.rgb * poiLight.Specular;\n	}\n\n	float attenuate = 1.0 / dot(poiLight.Attenuation, vec3(1.0, d, d*d));\n\n	dif *= attenuate;\n	spec*= attenuate;\n}\n\nvoid ComputeSpotLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in SpotLight spoLight,in vec3 pos, in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)\n{\n	amb = vec3(0.0);\n	dif =vec3(0.0);\n	spec= vec3(0.0);\n	vec3 lightVec = spoLight.Position - pos;\n		\n	float d = length(lightVec);\n	\n	if( d > spoLight.Range)\n		return;\n		\n	lightVec /= d; \n	\n	amb = matAmb * spoLight.Ambient;	\n\n	float diffuseFactor = dot(lightVec, normal);\n\n	if(diffuseFactor > 0.0)\n	{\n		vec3 v= reflect(-lightVec, normal);\n		float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);\n					\n		dif = diffuseFactor * matDif * spoLight.Diffuse;\n		spec = specFactor * matSpe.rgb * spoLight.Specular;\n	}\n	\n	float spot = pow(max(dot(-lightVec, normalize(spoLight.Direction)), 0.0), spoLight.Spot);\n\n	float attenuate = spot/dot(spoLight.Attenuation, vec3(1.0, d, d*d));\n\n	amb *= spot;\n	dif *= attenuate;\n	spec*= attenuate;\n}\n\nvec3 NormalSampleToWorldSpace(vec3 normalMapSample, vec3 unitNormal, vec3 tangent)\n{\n	vec3 normalT = 2.0*normalMapSample - 1.0;\n\n	// Build orthonormal basis.\n	vec3 N = normalize(unitNormal);\n	vec3 T = normalize( tangent- dot(tangent, N)*N);\n	vec3 B = cross(T, N);\n\n	mat3 TBN = mat3(T, B, N);\n\n	// Transform from tangent space to world space.\n	vec3 bumpedNormal = TBN*normalT;\n\n	return bumpedNormal;\n}\n"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/lighthelper.glsl*/);
-			Shader.addInclude("VRHelper.glsl","\nvec4 DistortFishEye(vec4 p)\n{\n    vec2 v = p.xy / p.w;\n    float radius = length(v);// Convert to polar coords\n    if (radius > 0.0)\n    {\n      float theta = atan(v.y,v.x);\n      \n      radius = pow(radius, 0.93);// Distort:\n\n      v.x = radius * cos(theta);// Convert back to Cartesian\n      v.y = radius * sin(theta);\n      p.xy = v.xy * p.w;\n    }\n    return p;\n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/vrhelper.glsl*/);
+			Shader.addInclude("LightHelper.glsl","\nstruct DirectionLight\n{\n vec3 Direction;\n vec3 Diffuse;\n vec3 Ambient;\n vec3 Specular;\n};\n\nstruct PointLight\n{\n vec3 Diffuse;\n vec3 Ambient;\n vec3 Specular;\n vec3 Attenuation;\n vec3 Position;\n float Range;\n};\n\nstruct SpotLight\n{\n vec3 Diffuse;\n vec3 Ambient;\n vec3 Specular;\n vec3 Attenuation;\n vec3 Position;\n vec3 Direction;\n float Spot;\n float Range;\n};\n\n\nvoid  computeDirectionLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in DirectionLight dirLight,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)\n{\n	dif=vec3(0.0);//不初始化在IOS中闪烁，PC中不会闪烁\n	amb=vec3(0.0);\n	spec=vec3(0.0);\n	vec3 lightVec=-normalize(dirLight.Direction);\n	\n	amb=matAmb*dirLight.Ambient;\n	\n	float  diffuseFactor=dot(lightVec, normal);\n	\n	if(diffuseFactor>0.0)\n	{\n	   vec3 v = reflect(-lightVec, normal);\n	   float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);\n	   \n	   dif = diffuseFactor * matDif * dirLight.Diffuse;\n	   spec = specFactor * matSpe.rgb * dirLight.Specular;\n	}\n	\n}\n\nvoid computePointLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in PointLight poiLight, in vec3 pos,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)\n{\n	dif=vec3(0.0);\n	amb=vec3(0.0);\n	spec=vec3(0.0);\n	vec3 lightVec = poiLight.Position - pos;\n		\n	float d = length(lightVec);\n	\n	if( d > poiLight.Range )\n		return;\n		\n	lightVec /= d; \n	\n	amb = matAmb * poiLight.Ambient;	\n\n	float diffuseFactor = dot(lightVec, normal);\n\n	if( diffuseFactor > 0.0 )\n	{\n		vec3 v= reflect(-lightVec, normal);\n		float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);\n					\n		dif = diffuseFactor * matDif * poiLight.Diffuse;\n		spec = specFactor * matSpe.rgb * poiLight.Specular;\n	}\n\n	float attenuate = 1.0 / dot(poiLight.Attenuation, vec3(1.0, d, d*d));\n\n	dif *= attenuate;\n	spec*= attenuate;\n}\n\nvoid ComputeSpotLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in SpotLight spoLight,in vec3 pos, in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)\n{\n	amb = vec3(0.0);\n	dif =vec3(0.0);\n	spec= vec3(0.0);\n	vec3 lightVec = spoLight.Position - pos;\n		\n	float d = length(lightVec);\n	\n	if( d > spoLight.Range)\n		return;\n		\n	lightVec /= d; \n	\n	amb = matAmb * spoLight.Ambient;	\n\n	float diffuseFactor = dot(lightVec, normal);\n\n	if(diffuseFactor > 0.0)\n	{\n		vec3 v= reflect(-lightVec, normal);\n		float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);\n					\n		dif = diffuseFactor * matDif * spoLight.Diffuse;\n		spec = specFactor * matSpe.rgb * spoLight.Specular;\n	}\n	\n	float spot = pow(max(dot(-lightVec, normalize(spoLight.Direction)), 0.0), spoLight.Spot);\n\n	float attenuate = spot/dot(spoLight.Attenuation, vec3(1.0, d, d*d));\n\n	amb *= spot;\n	dif *= attenuate;\n	spec*= attenuate;\n}\n\nvec3 NormalSampleToWorldSpace(vec3 normalMapSample, vec3 unitNormal, vec3 tangent)\n{\n	vec3 normalT = 2.0*normalMapSample - 1.0;\n\n	// Build orthonormal basis.\n	vec3 N = normalize(unitNormal);\n	vec3 T = normalize( tangent- dot(tangent, N)*N);\n	vec3 B = cross(T, N);\n\n	mat3 TBN = mat3(T, B, N);\n\n	// Transform from tangent space to world space.\n	vec3 bumpedNormal = TBN*normalT;\n\n	return bumpedNormal;\n}\n"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/lighthelper.glsl*/);
+			Shader.addInclude("VRHelper.glsl","\nvec4 DistortFishEye(vec4 p)\n{\n    vec2 v = p.xy / p.w;\n    float radius = length(v);// Convert to polar coords\n    if (radius > 0.0)\n    {\n      float theta = atan(v.y,v.x);\n      \n      radius = pow(radius, 0.93);// Distort:\n\n      v.x = radius * cos(theta);// Convert back to Cartesian\n      v.y = radius * sin(theta);\n      p.xy = v.xy * p.w;\n    }\n    return p;\n}"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/vrhelper.glsl*/);
 			var vs,ps;
 			var shaderNameMap={
 				'a_Position':/*laya.d3.graphics.VertexElementUsage.POSITION0*/"POSITION",
@@ -5791,11 +5807,11 @@
 				'u_SpotLight.Ambient':/*laya.webgl.utils.Buffer.SPOTLIGHTAMBIENT*/"SPOTLIGHTAMBIENT",
 				'u_SpotLight.Specular':/*laya.webgl.utils.Buffer.SPOTLIGHTSPECULAR*/"SPOTLIGHTSPECULAR"
 			};
-			vs="#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT \"LightHelper.glsl\";\n\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n#include?VR \"VRHelper.glsl\";\n\n\n\n#ifdef DIFFUSEMAP||((DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&COLOR&&SPECULARMAP)\nattribute vec2 a_Texcoord0;\nvarying vec2 v_Texcoord0;\n  #ifdef MIXUV\n  attribute vec2 a_TexcoordNext0;\n  uniform float  u_UVAge;\n  #endif\n  #ifdef UVTRANSFORM\n  uniform mat4 u_UVMatrix;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nattribute vec2 a_Texcoord1;\nvarying vec2 v_Texcoord1;\n#endif\n\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n#ifdef BONE\nattribute vec4 a_BoneIndices;\nattribute vec4 a_BoneWeights;\nconst int c_MaxBoneCount = 24;\nuniform mat4 u_Bones[c_MaxBoneCount];\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP\nattribute vec3 a_Normal;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG||REFLECTMAP\nuniform mat4 u_WorldMat;\nuniform vec3 u_CameraPos;\n#endif\n\n#ifdef DIRECTIONLIGHT\nuniform DirectionLight u_DirectionLight;\n#endif\n\n#ifdef POINTLIGHT\nuniform PointLight u_PointLight;\n#endif\n\n#ifdef SPOTLIGHT\nuniform SpotLight u_SpotLight;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\nuniform vec3 u_MaterialDiffuse;\nuniform vec4 u_MaterialSpecular;\n\nvarying vec3 v_Diffuse;\nvarying vec3 v_Ambient;\nvarying vec3 v_Specular;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||AMBIENTMAP\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef FOG\nvarying float v_ToEyeLength;\n#endif\n\n#ifdef REFLECTMAP\nvarying vec3 v_ToEye;\nvarying vec3 v_Normal;\n#endif\n\n\nvoid main()\n{\n #ifdef BONE\n mat4 skinTransform=mat4(0.0);\n skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n vec4 position=skinTransform*a_Position;\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * position);\n   #else\n   gl_Position = u_MvpMatrix * position;\n   #endif\n #else\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n   #else\n   gl_Position = u_MvpMatrix * a_Position;\n   #endif\n #endif\n \n \n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP\n  #ifdef BONE\n  vec3 normal=normalize( mat3(u_WorldMat*skinTransform)*a_Normal);\n  #else\n  vec3 normal=normalize( mat3(u_WorldMat)*a_Normal);\n  #endif\n \n  #ifdef REFLECTMAP\n  v_Normal=normal;\n  #endif\n#endif\n \n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\n  v_Diffuse=vec3(0.0);\n  v_Ambient=vec3(0.0);\n  v_Specular=vec3(0.0);\n  vec3 dif, amb, spe;\n#endif\n\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG||REFLECTMAP\n  #ifdef BONE\n  vec3 positionWorld=(u_WorldMat*position).xyz;\n  #else\n  vec3 positionWorld=(u_WorldMat*a_Position).xyz;\n  #endif\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG||REFLECTMAP\nvec3 toEye;\n  #ifdef FOG\n  toEye=u_CameraPos-positionWorld;\n  v_ToEyeLength=length(toEye);\n  toEye/=v_ToEyeLength;\n  #else\n  toEye=normalize(u_CameraPos-positionWorld);\n  #endif\n \n  #ifdef REFLECTMAP\n  v_ToEye=toEye;\n  #endif\n#endif\n \n#ifdef DIRECTIONLIGHT\ncomputeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);\nv_Diffuse+=dif;\nv_Ambient+=amb;\nv_Specular+=spe;\n#endif\n \n#ifdef POINTLIGHT\ncomputePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,positionWorld,normal,toEye, dif, amb, spe);\nv_Diffuse+=dif;\nv_Ambient+=amb;\nv_Specular+=spe;\n#endif\n\n#ifdef SPOTLIGHT\nComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,positionWorld,normal,toEye, dif, amb, spe);\nv_Diffuse+=dif;\nv_Ambient+=amb;\nv_Specular+=spe;\n#endif\n  \n#ifdef DIFFUSEMAP||((DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&COLOR&&SPECULARMAP)\n  #ifdef MIXUV\n  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n  #else\n  v_Texcoord0=a_Texcoord0;\n  #endif\n  #ifdef UVTRANSFORM\n  v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nv_Texcoord1=a_Texcoord1;\n#endif\n  \n#ifdef COLOR\nv_Color=a_Color;\n#endif\n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/vertexsimpletextureskinnedmesh.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Luminance;\n\n#ifdef ALPHATEST\nuniform float u_AlphaTestValue;\n#endif\n\n#ifdef DIFFUSEMAP\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef REFLECTMAP\nuniform samplerCube u_ReflectTexture;\nuniform vec3 u_MaterialReflect;\n#endif\n\n\n#ifdef DIFFUSEMAP||((DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&COLOR&&SPECULARMAP)\nvarying vec2 v_Texcoord0;\n#endif\n\n#ifdef AMBIENTMAP\nvarying vec2 v_Texcoord1;\nuniform sampler2D u_AmbientTexture;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||AMBIENTMAP\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\nvarying vec3 v_Diffuse;\nvarying vec3 v_Ambient;\nvarying vec3 v_Specular;\n  #ifdef (DIFFUSEMAP||COLOR)&&SPECULARMAP\n  uniform sampler2D u_SpecularTexture;\n  #endif\n#endif\n\n#ifdef FOG\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\nvarying float v_ToEyeLength;\n#endif\n\n#ifdef MIXUV\nuniform float  u_UVAniAge;\n#endif\n\n#ifdef REFLECTMAP\nvarying vec3 v_Normal;\nvarying vec3 v_ToEye;\n#endif\n\n\nvoid main()\n{\n #ifdef DIFFUSEMAP&&!COLOR\n gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n #endif \n \n #ifdef COLOR&&!DIFFUSEMAP\n gl_FragColor=v_Color;\n #endif \n \n #ifdef DIFFUSEMAP&&COLOR\n vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n gl_FragColor=texColor*v_Color;\n #endif\n \n #ifdef !DIFFUSEMAP&&!COLOR\n gl_FragColor=vec4(1.0,1.0,1.0,1.0);\n #endif \n \n #ifdef AMBIENTMAP\n gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_Texcoord1).rgb);\n #endif \n \n gl_FragColor.rgb=gl_FragColor.rgb*u_Luminance;\n  \n #ifdef ALPHATEST\n   if(gl_FragColor.a-u_AlphaTestValue<0.0)\n    discard;\n #endif\n \n \n #ifdef REFLECTMAP\n vec3 normal=normalize(v_Normal);\n #endif 	\n\n  \n #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\n   #ifdef (DIFFUSEMAP||COLOR)&&SPECULARMAP\n   vec3 specular =v_Specular*texture2D(u_SpecularTexture,v_Texcoord0).rgb;\n   gl_FragColor =vec4( gl_FragColor.rgb*(v_Ambient + v_Diffuse)+specular,gl_FragColor.a);\n   #else\n   gl_FragColor =vec4( gl_FragColor.rgb*(v_Ambient + v_Diffuse)+v_Specular,gl_FragColor.a);\n   #endif\n #endif\n \n #ifdef REFLECTMAP\n vec3 incident = -v_ToEye;\n vec3 reflectionVector = reflect(incident,v_Normal);\n vec3 reflectionColor  = textureCube(u_ReflectTexture,reflectionVector).rgb;\n gl_FragColor.rgb += u_MaterialReflect*reflectionColor;\n #endif\n \n #ifdef FOG\n float lerpFact=clamp((v_ToEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n #endif\n}\n\n"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/vertexsimpletextureskinnedmesh.ps*/;
+			vs="#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT \"LightHelper.glsl\";\n\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n#include?VR \"VRHelper.glsl\";\n\n\n\n#ifdef DIFFUSEMAP||((DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&COLOR&&SPECULARMAP)\nattribute vec2 a_Texcoord0;\nvarying vec2 v_Texcoord0;\n  #ifdef MIXUV\n  attribute vec2 a_TexcoordNext0;\n  uniform float  u_UVAge;\n  #endif\n  #ifdef UVTRANSFORM\n  uniform mat4 u_UVMatrix;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nattribute vec2 a_Texcoord1;\nvarying vec2 v_Texcoord1;\n#endif\n\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n#ifdef BONE\nattribute vec4 a_BoneIndices;\nattribute vec4 a_BoneWeights;\nconst int c_MaxBoneCount = 24;\nuniform mat4 u_Bones[c_MaxBoneCount];\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP\nattribute vec3 a_Normal;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG||REFLECTMAP\nuniform mat4 u_WorldMat;\nuniform vec3 u_CameraPos;\n#endif\n\n#ifdef DIRECTIONLIGHT\nuniform DirectionLight u_DirectionLight;\n#endif\n\n#ifdef POINTLIGHT\nuniform PointLight u_PointLight;\n#endif\n\n#ifdef SPOTLIGHT\nuniform SpotLight u_SpotLight;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\nuniform vec3 u_MaterialDiffuse;\nuniform vec4 u_MaterialSpecular;\n\nvarying vec3 v_Diffuse;\nvarying vec3 v_Ambient;\nvarying vec3 v_Specular;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||AMBIENTMAP\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef FOG\nvarying float v_ToEyeLength;\n#endif\n\n#ifdef REFLECTMAP\nvarying vec3 v_ToEye;\nvarying vec3 v_Normal;\n#endif\n\n\nvoid main()\n{\n #ifdef BONE\n mat4 skinTransform=mat4(0.0);\n skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n vec4 position=skinTransform*a_Position;\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * position);\n   #else\n   gl_Position = u_MvpMatrix * position;\n   #endif\n #else\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n   #else\n   gl_Position = u_MvpMatrix * a_Position;\n   #endif\n #endif\n \n \n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP\n  #ifdef BONE\n  vec3 normal=normalize( mat3(u_WorldMat*skinTransform)*a_Normal);\n  #else\n  vec3 normal=normalize( mat3(u_WorldMat)*a_Normal);\n  #endif\n \n  #ifdef REFLECTMAP\n  v_Normal=normal;\n  #endif\n#endif\n \n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\n  v_Diffuse=vec3(0.0);\n  v_Ambient=vec3(0.0);\n  v_Specular=vec3(0.0);\n  vec3 dif, amb, spe;\n#endif\n\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG||REFLECTMAP\n  #ifdef BONE\n  vec3 positionWorld=(u_WorldMat*position).xyz;\n  #else\n  vec3 positionWorld=(u_WorldMat*a_Position).xyz;\n  #endif\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG||REFLECTMAP\nvec3 toEye;\n  #ifdef FOG\n  toEye=u_CameraPos-positionWorld;\n  v_ToEyeLength=length(toEye);\n  toEye/=v_ToEyeLength;\n  #else\n  toEye=normalize(u_CameraPos-positionWorld);\n  #endif\n \n  #ifdef REFLECTMAP\n  v_ToEye=toEye;\n  #endif\n#endif\n \n#ifdef DIRECTIONLIGHT\ncomputeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);\nv_Diffuse+=dif;\nv_Ambient+=amb;\nv_Specular+=spe;\n#endif\n \n#ifdef POINTLIGHT\ncomputePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,positionWorld,normal,toEye, dif, amb, spe);\nv_Diffuse+=dif;\nv_Ambient+=amb;\nv_Specular+=spe;\n#endif\n\n#ifdef SPOTLIGHT\nComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,positionWorld,normal,toEye, dif, amb, spe);\nv_Diffuse+=dif;\nv_Ambient+=amb;\nv_Specular+=spe;\n#endif\n  \n#ifdef DIFFUSEMAP||((DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&COLOR&&SPECULARMAP)\n  #ifdef MIXUV\n  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n  #else\n  v_Texcoord0=a_Texcoord0;\n  #endif\n  #ifdef UVTRANSFORM\n  v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nv_Texcoord1=a_Texcoord1;\n#endif\n  \n#ifdef COLOR\nv_Color=a_Color;\n#endif\n}"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/vertexsimpletextureskinnedmesh.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Luminance;\n\n#ifdef ALPHATEST\nuniform float u_AlphaTestValue;\n#endif\n\n#ifdef DIFFUSEMAP\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef REFLECTMAP\nuniform samplerCube u_ReflectTexture;\nuniform vec3 u_MaterialReflect;\n#endif\n\n\n#ifdef DIFFUSEMAP||((DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&COLOR&&SPECULARMAP)\nvarying vec2 v_Texcoord0;\n#endif\n\n#ifdef AMBIENTMAP\nvarying vec2 v_Texcoord1;\nuniform sampler2D u_AmbientTexture;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||AMBIENTMAP\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\nvarying vec3 v_Diffuse;\nvarying vec3 v_Ambient;\nvarying vec3 v_Specular;\n  #ifdef (DIFFUSEMAP||COLOR)&&SPECULARMAP\n  uniform sampler2D u_SpecularTexture;\n  #endif\n#endif\n\n#ifdef FOG\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\nvarying float v_ToEyeLength;\n#endif\n\n#ifdef MIXUV\nuniform float  u_UVAniAge;\n#endif\n\n#ifdef REFLECTMAP\nvarying vec3 v_Normal;\nvarying vec3 v_ToEye;\n#endif\n\n\nvoid main()\n{\n #ifdef DIFFUSEMAP&&!COLOR\n gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n #endif \n \n #ifdef COLOR&&!DIFFUSEMAP\n gl_FragColor=v_Color;\n #endif \n \n #ifdef DIFFUSEMAP&&COLOR\n vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n gl_FragColor=texColor*v_Color;\n #endif\n \n #ifdef !DIFFUSEMAP&&!COLOR\n gl_FragColor=vec4(1.0,1.0,1.0,1.0);\n #endif \n \n #ifdef AMBIENTMAP\n gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_Texcoord1).rgb);\n #endif \n \n gl_FragColor.rgb=gl_FragColor.rgb*u_Luminance;\n  \n #ifdef ALPHATEST\n   if(gl_FragColor.a-u_AlphaTestValue<0.0)\n    discard;\n #endif\n \n \n #ifdef REFLECTMAP\n vec3 normal=normalize(v_Normal);\n #endif 	\n\n  \n #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\n   #ifdef (DIFFUSEMAP||COLOR)&&SPECULARMAP\n   vec3 specular =v_Specular*texture2D(u_SpecularTexture,v_Texcoord0).rgb;\n   gl_FragColor =vec4( gl_FragColor.rgb*(v_Ambient + v_Diffuse)+specular,gl_FragColor.a);\n   #else\n   gl_FragColor =vec4( gl_FragColor.rgb*(v_Ambient + v_Diffuse)+v_Specular,gl_FragColor.a);\n   #endif\n #endif\n \n #ifdef REFLECTMAP\n vec3 incident = -v_ToEye;\n vec3 reflectionVector = reflect(incident,v_Normal);\n vec3 reflectionColor  = textureCube(u_ReflectTexture,reflectionVector).rgb;\n gl_FragColor.rgb += u_MaterialReflect*reflectionColor;\n #endif\n \n #ifdef FOG\n float lerpFact=clamp((v_ToEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n #endif\n}\n\n"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/vertexsimpletextureskinnedmesh.ps*/;
 			Shader.preCompile(Shader3D.SIMPLE,/*laya.d3.shader.ShaderDefines3D.VERTEXSHADERING*/0x1000 ,vs,ps,shaderNameMap);
-			vs="#include?VR \"VRHelper.glsl\";\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n\n\n#ifdef DIFFUSEMAP||((DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&(COLOR&&SPECULARMAP||NORMALMAP))\nattribute vec2 a_Texcoord0;\nvarying vec2 v_Texcoord0;\n  #ifdef MIXUV\n  attribute vec2 a_TexcoordNext0;\n  uniform float  u_UVAge;\n  #endif\n  #ifdef UVTRANSFORM \n  uniform mat4 u_UVMatrix;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nattribute vec2 a_Texcoord1;\nvarying vec2 v_Texcoord1;\n#endif\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n#ifdef BONE\nattribute vec4 a_BoneIndices;\nattribute vec4 a_BoneWeights;\nconst int c_MaxBoneCount = 24;\nuniform mat4 u_Bones[c_MaxBoneCount];\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP\nattribute vec3 a_Normal;\nvarying vec3 v_Normal;\n#endif\n\n#ifdef (DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP)&&NORMALMAP\nattribute vec3 a_Tangent0;\nvarying vec3 v_Tangent0;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG||REFLECTMAP\nuniform mat4 u_WorldMat;\nvarying vec3 v_PositionWorld;\n#endif\n\n\nvoid main()\n{\n #ifdef BONE\n mat4 skinTransform=mat4(0.0);\n skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n vec4 position=skinTransform*a_Position;\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * position);\n   #else\n   gl_Position = u_MvpMatrix * position;\n   #endif\n #else\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n   #else\n   gl_Position = u_MvpMatrix * a_Position;\n   #endif\n #endif\n \n\n #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP\n mat3 worldMat;\n   #ifdef BONE\n   worldMat=mat3(u_WorldMat*skinTransform);\n   #else\n   worldMat=mat3(u_WorldMat);\n   #endif  \n v_Normal=worldMat*a_Normal;\n   #ifdef (DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&NORMALMAP\n   v_Tangent0=worldMat*a_Tangent0;\n   #endif\n #endif\n \n #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG\n   #ifdef BONE\n   v_PositionWorld=(u_WorldMat*position).xyz;\n   #else\n   v_PositionWorld=(u_WorldMat*a_Position).xyz;\n   #endif\n #endif\n \n#ifdef DIFFUSEMAP||((DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&(COLOR&&SPECULARMAP||NORMALMAP))\n  #ifdef MIXUV\n  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n  #else\n  v_Texcoord0=a_Texcoord0;\n  #endif\n  #ifdef UVTRANSFORM\n  v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nv_Texcoord1=a_Texcoord1;\n#endif\n\n  \n#ifdef COLOR\nv_Color=a_Color;\n#endif\n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/pixelsimpletextureskinnedmesh.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\n#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT \"LightHelper.glsl\";\n\nuniform float u_Luminance;\n\n#ifdef ALPHATEST\nuniform float u_AlphaTestValue;\n#endif\n\n#ifdef DIFFUSEMAP\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef REFLECTMAP\nuniform samplerCube u_ReflectTexture;\nuniform vec3 u_MaterialReflect;\n#endif\n\n#ifdef DIFFUSEMAP||((DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&(COLOR&&SPECULARMAP||NORMALMAP))\nvarying vec2 v_Texcoord0;\n#endif\n\n#ifdef AMBIENTMAP\nvarying vec2 v_Texcoord1;\nuniform sampler2D u_AmbientTexture;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\nuniform vec3 u_MaterialDiffuse;\nuniform vec4 u_MaterialSpecular;\n  #ifdef (DIFFUSEMAP||COLOR)&&SPECULARMAP \n  uniform sampler2D u_SpecularTexture;\n  #endif\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||AMBIENTMAP\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef FOG\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\n#ifdef MIXUV\nuniform float  u_UVAniAge;\n#endif\n\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP\nvarying vec3 v_Normal;\n#endif\n\n#ifdef (DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&NORMALMAP\nuniform sampler2D u_NormalTexture;\nvarying vec3 v_Tangent0;\n#endif\n\n#ifdef DIRECTIONLIGHT\nuniform DirectionLight u_DirectionLight;\n#endif\n\n#ifdef POINTLIGHT\nuniform PointLight u_PointLight;\n#endif\n\n#ifdef SPOTLIGHT\nuniform SpotLight u_SpotLight;\n#endif\n\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG||REFLECTMAP\nuniform vec3 u_CameraPos;\nvarying vec3 v_PositionWorld;\n#endif\n\n\nvoid main()\n{\n  #ifdef DIFFUSEMAP&&!COLOR\n  gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  #endif \n  \n  #ifdef COLOR&&!DIFFUSEMAP\n  gl_FragColor=v_Color;\n  #endif \n  \n  #ifdef DIFFUSEMAP&&COLOR\n  vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  gl_FragColor=texColor*v_Color;\n  #endif\n  \n  #ifdef !DIFFUSEMAP&&!COLOR\n  gl_FragColor=vec4(1.0,1.0,1.0,1.0);\n  #endif \n  \n  #ifdef AMBIENTMAP\n  gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_Texcoord1).rgb);\n  #endif \n  \n  gl_FragColor.rgb=gl_FragColor.rgb*u_Luminance;\n  \n  #ifdef ALPHATEST\n  if(gl_FragColor.a-u_AlphaTestValue<0.0)\n    discard;\n  #endif\n  \n  \n  #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP\n  vec3 normal;\n    #ifdef (DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&NORMALMAP\n    vec3 normalMapSample = texture2D(u_NormalTexture, v_Texcoord0).rgb;\n	normal = normalize(NormalSampleToWorldSpace(normalMapSample, v_Normal, v_Tangent0));\n	#else\n	normal = normalize(v_Normal);\n    #endif\n  #endif\n	\n  #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\n  vec3 diffuse = vec3(0.0);\n  vec3 ambient = vec3(0.0);\n  vec3 specular= vec3(0.0);\n  vec3 dif, amb, spe;\n  #endif\n  \n  #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG||REFLECTMAP\n  vec3 toEye;\n    #ifdef FOG\n	toEye=u_CameraPos-v_PositionWorld;\n    float toEyeLength=length(toEye);\n    toEye/=toEyeLength;\n    #else\n	toEye=normalize(u_CameraPos-v_PositionWorld);\n    #endif\n  #endif\n	\n  #ifdef DIRECTIONLIGHT\n  computeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);\n  diffuse+=dif;\n  ambient+=amb;\n  specular+=spe;\n  #endif\n \n  #ifdef POINTLIGHT\n  computePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n  diffuse+=dif;\n  ambient+=amb;\n  specular+=spe;\n  #endif\n\n  #ifdef SPOTLIGHT\n  ComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n  diffuse+=dif;\n  ambient+=amb;\n  specular+=spe;\n  #endif\n  \n\n  \n  \n  \n  #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\n    #ifdef (DIFFUSEMAP||COLOR)&&SPECULARMAP\n    specular =specular*texture2D(u_SpecularTexture, v_Texcoord0).rgb;\n    #endif\n  gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse) + specular,gl_FragColor.a);\n  #endif\n  \n  #ifdef REFLECTMAP\n  vec3 incident = -toEye;\n  vec3 reflectionVector = reflect(incident,normal);\n  vec3 reflectionColor  = textureCube(u_ReflectTexture,reflectionVector).rgb;\n  gl_FragColor.rgb += u_MaterialReflect*reflectionColor;\n  #endif\n  \n  #ifdef FOG\n  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n  #endif\n}\n\n"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/pixelsimpletextureskinnedmesh.ps*/;
+			vs="#include?VR \"VRHelper.glsl\";\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n\n\n#ifdef DIFFUSEMAP||((DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&(COLOR&&SPECULARMAP||NORMALMAP))\nattribute vec2 a_Texcoord0;\nvarying vec2 v_Texcoord0;\n  #ifdef MIXUV\n  attribute vec2 a_TexcoordNext0;\n  uniform float  u_UVAge;\n  #endif\n  #ifdef UVTRANSFORM \n  uniform mat4 u_UVMatrix;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nattribute vec2 a_Texcoord1;\nvarying vec2 v_Texcoord1;\n#endif\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n#ifdef BONE\nattribute vec4 a_BoneIndices;\nattribute vec4 a_BoneWeights;\nconst int c_MaxBoneCount = 24;\nuniform mat4 u_Bones[c_MaxBoneCount];\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP\nattribute vec3 a_Normal;\nvarying vec3 v_Normal;\n#endif\n\n#ifdef (DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP)&&NORMALMAP\nattribute vec3 a_Tangent0;\nvarying vec3 v_Tangent0;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG||REFLECTMAP\nuniform mat4 u_WorldMat;\nvarying vec3 v_PositionWorld;\n#endif\n\n\nvoid main()\n{\n #ifdef BONE\n mat4 skinTransform=mat4(0.0);\n skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n vec4 position=skinTransform*a_Position;\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * position);\n   #else\n   gl_Position = u_MvpMatrix * position;\n   #endif\n #else\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n   #else\n   gl_Position = u_MvpMatrix * a_Position;\n   #endif\n #endif\n \n\n #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP\n mat3 worldMat;\n   #ifdef BONE\n   worldMat=mat3(u_WorldMat*skinTransform);\n   #else\n   worldMat=mat3(u_WorldMat);\n   #endif  \n v_Normal=worldMat*a_Normal;\n   #ifdef (DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&NORMALMAP\n   v_Tangent0=worldMat*a_Tangent0;\n   #endif\n #endif\n \n #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG\n   #ifdef BONE\n   v_PositionWorld=(u_WorldMat*position).xyz;\n   #else\n   v_PositionWorld=(u_WorldMat*a_Position).xyz;\n   #endif\n #endif\n \n#ifdef DIFFUSEMAP||((DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&(COLOR&&SPECULARMAP||NORMALMAP))\n  #ifdef MIXUV\n  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n  #else\n  v_Texcoord0=a_Texcoord0;\n  #endif\n  #ifdef UVTRANSFORM\n  v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nv_Texcoord1=a_Texcoord1;\n#endif\n\n  \n#ifdef COLOR\nv_Color=a_Color;\n#endif\n}"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/pixelsimpletextureskinnedmesh.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\n#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT \"LightHelper.glsl\";\n\nuniform float u_Luminance;\n\n#ifdef ALPHATEST\nuniform float u_AlphaTestValue;\n#endif\n\n#ifdef DIFFUSEMAP\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef REFLECTMAP\nuniform samplerCube u_ReflectTexture;\nuniform vec3 u_MaterialReflect;\n#endif\n\n#ifdef DIFFUSEMAP||((DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&(COLOR&&SPECULARMAP||NORMALMAP))\nvarying vec2 v_Texcoord0;\n#endif\n\n#ifdef AMBIENTMAP\nvarying vec2 v_Texcoord1;\nuniform sampler2D u_AmbientTexture;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\nuniform vec3 u_MaterialDiffuse;\nuniform vec4 u_MaterialSpecular;\n  #ifdef (DIFFUSEMAP||COLOR)&&SPECULARMAP \n  uniform sampler2D u_SpecularTexture;\n  #endif\n#endif\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||AMBIENTMAP\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef FOG\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\n#ifdef MIXUV\nuniform float  u_UVAniAge;\n#endif\n\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP\nvarying vec3 v_Normal;\n#endif\n\n#ifdef (DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&NORMALMAP\nuniform sampler2D u_NormalTexture;\nvarying vec3 v_Tangent0;\n#endif\n\n#ifdef DIRECTIONLIGHT\nuniform DirectionLight u_DirectionLight;\n#endif\n\n#ifdef POINTLIGHT\nuniform PointLight u_PointLight;\n#endif\n\n#ifdef SPOTLIGHT\nuniform SpotLight u_SpotLight;\n#endif\n\n\n#ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG||REFLECTMAP\nuniform vec3 u_CameraPos;\nvarying vec3 v_PositionWorld;\n#endif\n\n\nvoid main()\n{\n  #ifdef DIFFUSEMAP&&!COLOR\n  gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  #endif \n  \n  #ifdef COLOR&&!DIFFUSEMAP\n  gl_FragColor=v_Color;\n  #endif \n  \n  #ifdef DIFFUSEMAP&&COLOR\n  vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  gl_FragColor=texColor*v_Color;\n  #endif\n  \n  #ifdef !DIFFUSEMAP&&!COLOR\n  gl_FragColor=vec4(1.0,1.0,1.0,1.0);\n  #endif \n  \n  #ifdef AMBIENTMAP\n  gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_Texcoord1).rgb);\n  #endif \n  \n  gl_FragColor.rgb=gl_FragColor.rgb*u_Luminance;\n  \n  #ifdef ALPHATEST\n  if(gl_FragColor.a-u_AlphaTestValue<0.0)\n    discard;\n  #endif\n  \n  \n  #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||REFLECTMAP\n  vec3 normal;\n    #ifdef (DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT)&&NORMALMAP\n    vec3 normalMapSample = texture2D(u_NormalTexture, v_Texcoord0).rgb;\n	normal = normalize(NormalSampleToWorldSpace(normalMapSample, v_Normal, v_Tangent0));\n	#else\n	normal = normalize(v_Normal);\n    #endif\n  #endif\n	\n  #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\n  vec3 diffuse = vec3(0.0);\n  vec3 ambient = vec3(0.0);\n  vec3 specular= vec3(0.0);\n  vec3 dif, amb, spe;\n  #endif\n  \n  #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT||FOG||REFLECTMAP\n  vec3 toEye;\n    #ifdef FOG\n	toEye=u_CameraPos-v_PositionWorld;\n    float toEyeLength=length(toEye);\n    toEye/=toEyeLength;\n    #else\n	toEye=normalize(u_CameraPos-v_PositionWorld);\n    #endif\n  #endif\n	\n  #ifdef DIRECTIONLIGHT\n  computeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);\n  diffuse+=dif;\n  ambient+=amb;\n  specular+=spe;\n  #endif\n \n  #ifdef POINTLIGHT\n  computePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n  diffuse+=dif;\n  ambient+=amb;\n  specular+=spe;\n  #endif\n\n  #ifdef SPOTLIGHT\n  ComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n  diffuse+=dif;\n  ambient+=amb;\n  specular+=spe;\n  #endif\n  \n\n  \n  \n  \n  #ifdef DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT\n    #ifdef (DIFFUSEMAP||COLOR)&&SPECULARMAP\n    specular =specular*texture2D(u_SpecularTexture, v_Texcoord0).rgb;\n    #endif\n  gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse) + specular,gl_FragColor.a);\n  #endif\n  \n  #ifdef REFLECTMAP\n  vec3 incident = -toEye;\n  vec3 reflectionVector = reflect(incident,normal);\n  vec3 reflectionColor  = textureCube(u_ReflectTexture,reflectionVector).rgb;\n  gl_FragColor.rgb += u_MaterialReflect*reflectionColor;\n  #endif\n  \n  #ifdef FOG\n  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n  #endif\n}\n\n"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/pixelsimpletextureskinnedmesh.ps*/;
 			Shader.preCompile(Shader3D.SIMPLE,/*laya.d3.shader.ShaderDefines3D.PIXELSHADERING*/0x2000,vs,ps,shaderNameMap);
 			shaderNameMap={
 				'a_Position':/*laya.d3.graphics.VertexElementUsage.POSITION0*/"POSITION",
@@ -5815,8 +5831,8 @@
 				'u_Ambient':/*laya.webgl.utils.Buffer.MATERIALAMBIENT*/"MATERIALAMBIENT",
 				'u_UVMatrix':/*laya.webgl.utils.Buffer.MATRIX2*/"MATRIX2"
 			};
-			vs="#include?VR \"VRHelper.glsl\";\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\nuniform mat4 u_UVMatrix;\n\n#ifdef DIFFUSEMAP&&NORMALMAP&&SPECULARMAP&&EMISSIVEMAP&&AMBIENTMAP\nattribute vec2 a_Texcoord;\nvarying vec2 v_Texcoord;\nvarying vec2 v_TiledTexcoord;\n#endif\n\n#ifdef FOG\nuniform mat4 u_WorldMat;\nvarying vec3 v_PositionWorld;\n#endif\n\n\nvoid main()\n{\n #ifdef VR\n gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n #else\n gl_Position = u_MvpMatrix * a_Position;\n #endif\n \n #ifdef FOG\n v_PositionWorld=(u_WorldMat*a_Position).xyz;\n #endif\n \n #ifdef DIFFUSEMAP&&NORMALMAP&&SPECULARMAP&&EMISSIVEMAP&&AMBIENTMAP\n v_Texcoord=a_Texcoord;\n v_TiledTexcoord=(u_UVMatrix*vec4(a_Texcoord,0.0,1.0)).xy;\n #endif\n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/modelterrain.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Luminance;\nuniform vec3 u_Ambient;\n\n#ifdef FOG\nuniform vec3 u_CameraPos;\nvarying vec3 v_PositionWorld;\n\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\n#ifdef DIFFUSEMAP&&NORMALMAP&&SPECULARMAP&&EMISSIVEMAP&&AMBIENTMAP\n  varying vec2 v_Texcoord;\n  varying vec2 v_TiledTexcoord;\n  uniform sampler2D u_BlendTexture;\n  uniform sampler2D u_LayerTexture0;\n  uniform sampler2D u_LayerTexture1;\n  uniform sampler2D u_LayerTexture2;\n  uniform sampler2D u_LayerTexture3;\n#endif\n\nvoid main()\n{	\n  #ifdef DIFFUSEMAP&&NORMALMAP&&SPECULARMAP&&EMISSIVEMAP&&AMBIENTMAP\n  vec4 blend=texture2D(u_BlendTexture, v_Texcoord);\n  vec4 c0=texture2D(u_LayerTexture0, v_TiledTexcoord);\n  vec4 c1=texture2D(u_LayerTexture1, v_TiledTexcoord);\n  vec4 c2=texture2D(u_LayerTexture2, v_TiledTexcoord);\n  vec4 c3=texture2D(u_LayerTexture3, v_TiledTexcoord);\n  vec4 texColor = c0;\n  texColor = mix(texColor, c1, blend.r);\n  texColor = mix(texColor, c2, blend.g);\n  texColor = mix(texColor, c3, blend.b);\n  gl_FragColor=vec4(texColor.rgb*u_Ambient.rgb*blend.a*u_Luminance,1.0);\n  #endif \n  \n  #ifdef FOG\n  vec3 toEye=u_CameraPos-v_PositionWorld;\n  float toEyeLength=length(toEye);\n  \n  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n  #endif\n}\n\n"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/modelterrain.ps*/;
+			vs="#include?VR \"VRHelper.glsl\";\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\nuniform mat4 u_UVMatrix;\n\n#ifdef DIFFUSEMAP&&NORMALMAP&&SPECULARMAP&&EMISSIVEMAP&&AMBIENTMAP\nattribute vec2 a_Texcoord;\nvarying vec2 v_Texcoord;\nvarying vec2 v_TiledTexcoord;\n#endif\n\n#ifdef FOG\nuniform mat4 u_WorldMat;\nvarying vec3 v_PositionWorld;\n#endif\n\n\nvoid main()\n{\n #ifdef VR\n gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n #else\n gl_Position = u_MvpMatrix * a_Position;\n #endif\n \n #ifdef FOG\n v_PositionWorld=(u_WorldMat*a_Position).xyz;\n #endif\n \n #ifdef DIFFUSEMAP&&NORMALMAP&&SPECULARMAP&&EMISSIVEMAP&&AMBIENTMAP\n v_Texcoord=a_Texcoord;\n v_TiledTexcoord=(u_UVMatrix*vec4(a_Texcoord,0.0,1.0)).xy;\n #endif\n}"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/modelterrain.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Luminance;\nuniform vec3 u_Ambient;\n\n#ifdef FOG\nuniform vec3 u_CameraPos;\nvarying vec3 v_PositionWorld;\n\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\n#ifdef DIFFUSEMAP&&NORMALMAP&&SPECULARMAP&&EMISSIVEMAP&&AMBIENTMAP\n  varying vec2 v_Texcoord;\n  varying vec2 v_TiledTexcoord;\n  uniform sampler2D u_BlendTexture;\n  uniform sampler2D u_LayerTexture0;\n  uniform sampler2D u_LayerTexture1;\n  uniform sampler2D u_LayerTexture2;\n  uniform sampler2D u_LayerTexture3;\n#endif\n\nvoid main()\n{	\n  #ifdef DIFFUSEMAP&&NORMALMAP&&SPECULARMAP&&EMISSIVEMAP&&AMBIENTMAP\n  vec4 blend=texture2D(u_BlendTexture, v_Texcoord);\n  vec4 c0=texture2D(u_LayerTexture0, v_TiledTexcoord);\n  vec4 c1=texture2D(u_LayerTexture1, v_TiledTexcoord);\n  vec4 c2=texture2D(u_LayerTexture2, v_TiledTexcoord);\n  vec4 c3=texture2D(u_LayerTexture3, v_TiledTexcoord);\n  vec4 texColor = c0;\n  texColor = mix(texColor, c1, blend.r);\n  texColor = mix(texColor, c2, blend.g);\n  texColor = mix(texColor, c3, blend.b);\n  gl_FragColor=vec4(texColor.rgb*u_Ambient.rgb*blend.a*u_Luminance,1.0);\n  #endif \n  \n  #ifdef FOG\n  vec3 toEye=u_CameraPos-v_PositionWorld;\n  float toEyeLength=length(toEye);\n  \n  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n  #endif\n}\n\n"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/modelterrain.ps*/;
 			Shader.preCompile(Shader3D.TERRAIN,/*laya.d3.shader.ShaderDefines3D.VERTEXSHADERING*/0x1000 ,vs,ps,shaderNameMap);
 			Shader.preCompile(Shader3D.TERRAIN,/*laya.d3.shader.ShaderDefines3D.PIXELSHADERING*/0x2000,vs,ps,shaderNameMap);
 			shaderNameMap={
@@ -5876,8 +5892,8 @@
 				'u_Color':/*laya.webgl.utils.Buffer.UNICOLOR*/"UNICOLOR" ,
 				'u_Duration':/*laya.webgl.utils.Buffer.DURATION*/"DURATION"
 			};
-			vs="attribute vec4 a_Position;\nattribute vec2 a_Texcoord0;\nattribute float a_Time;\n\nuniform mat4 u_MvpMatrix;\nuniform  float u_CurrentTime;\nuniform  vec4 u_Color;\nuniform float u_Duration;\n\nvarying vec2 v_Texcoord;\nvarying vec4 v_Color;\n\n\nvoid main()\n{\n  gl_Position = u_MvpMatrix * a_Position;\n  \n  float age = u_CurrentTime-a_Time;\n  float normalizedAge = clamp(age / u_Duration,0.0,1.0);\n   \n  v_Texcoord=a_Texcoord0;\n  \n  v_Color=u_Color;\n  v_Color.a*=1.0-normalizedAge;\n}\n"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/glitter.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Luminance;\nuniform sampler2D u_Texture;\n\nvarying vec2 v_Texcoord;\nvarying vec4 v_Color;\n\n\nvoid main()\n{	\n  gl_FragColor=texture2D(u_Texture, v_Texcoord)*v_Color;\n  gl_FragColor.rgb=gl_FragColor.rgb*u_Luminance;\n}\n\n"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/glitter.ps*/;
+			vs="attribute vec4 a_Position;\nattribute vec2 a_Texcoord0;\nattribute float a_Time;\n\nuniform mat4 u_MvpMatrix;\nuniform  float u_CurrentTime;\nuniform  vec4 u_Color;\nuniform float u_Duration;\n\nvarying vec2 v_Texcoord;\nvarying vec4 v_Color;\n\n\nvoid main()\n{\n  gl_Position = u_MvpMatrix * a_Position;\n  \n  float age = u_CurrentTime-a_Time;\n  float normalizedAge = clamp(age / u_Duration,0.0,1.0);\n   \n  v_Texcoord=a_Texcoord0;\n  \n  v_Color=u_Color;\n  v_Color.a*=1.0-normalizedAge;\n}\n"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/glitter.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Luminance;\nuniform sampler2D u_Texture;\n\nvarying vec2 v_Texcoord;\nvarying vec4 v_Color;\n\n\nvoid main()\n{	\n  gl_FragColor=texture2D(u_Texture, v_Texcoord)*v_Color;\n  gl_FragColor.rgb=gl_FragColor.rgb*u_Luminance;\n}\n\n"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/glitter.ps*/;
 			Shader.preCompile(Shader3D.GLITTER,/*laya.d3.shader.ShaderDefines3D.VERTEXSHADERING*/0x1000 ,vs,ps,shaderNameMap);
 			Shader.preCompile(Shader3D.GLITTER,/*laya.d3.shader.ShaderDefines3D.PIXELSHADERING*/0x2000,vs,ps,shaderNameMap);
 			shaderNameMap={
@@ -5897,11 +5913,11 @@
 				'u_UVAge':/*laya.webgl.utils.Buffer.FLOAT0*/"FLOAT0",
 				'u_UVAniAge':/*laya.webgl.utils.Buffer.UVAGEX*/"UVAGEX"
 			};
-			vs="attribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n#ifdef DIFFUSEMAP\nattribute vec2 a_Texcoord0;\nattribute vec2 a_Texcoord1;\nvarying vec2 v_Texcoord0;\nvarying vec2 v_Texcoord1;\n#ifdef MIXUV\nattribute vec2 a_TexcoordNext0;\nattribute vec2 a_TexcoordNext1;\nuniform float  u_UVAge;\n#endif\n#endif\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n\nvoid main()\n{\n gl_Position = u_MvpMatrix * a_Position;\n \n \n #ifdef DIFFUSEMAP\n  #ifdef MIXUV\n  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n   v_Texcoord1=mix(a_Texcoord1,a_TexcoordNext1,u_UVAge);\n  #else\n  v_Texcoord0=a_Texcoord0;\n  v_Texcoord1=a_Texcoord1;\n  #endif\n #endif\n  \n #ifdef COLOR\n v_Color=a_Color;\n #endif\n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/simpleeffect.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Luminance;\n\n#ifdef DIFFUSEMAP\nvarying vec2 v_Texcoord0;\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef SPECULARMAP \nvarying vec2 v_Texcoord1;\nuniform sampler2D u_SpecularTexture;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n\n\n#ifdef FOG\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\nvoid main()\n{\n  \n  #ifdef DIFFUSEMAP&&!COLOR\n  gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  #endif \n  \n  #ifdef COLOR&&!DIFFUSEMAP\n  gl_FragColor=v_Color;\n  #endif \n  \n  #ifdef DIFFUSEMAP&&COLOR\n  vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  gl_FragColor=texColor*v_Color;\n  #endif\n  \n  #ifdef SPECULARMAP \n  vec4 specularColor=texture2D(u_SpecularTexture, v_Texcoord1);\n  gl_FragColor=gl_FragColor*specularColor;\n  #endif\n \n  gl_FragColor.rgb=gl_FragColor.rgb*u_Luminance;\n  \n  #ifdef FOG\n  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n  #endif\n}\n\n"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/simpleeffect.ps*/;
+			vs="attribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n#ifdef DIFFUSEMAP\nattribute vec2 a_Texcoord0;\nattribute vec2 a_Texcoord1;\nvarying vec2 v_Texcoord0;\nvarying vec2 v_Texcoord1;\n#ifdef MIXUV\nattribute vec2 a_TexcoordNext0;\nattribute vec2 a_TexcoordNext1;\nuniform float  u_UVAge;\n#endif\n#endif\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n\nvoid main()\n{\n gl_Position = u_MvpMatrix * a_Position;\n \n \n #ifdef DIFFUSEMAP\n  #ifdef MIXUV\n  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n   v_Texcoord1=mix(a_Texcoord1,a_TexcoordNext1,u_UVAge);\n  #else\n  v_Texcoord0=a_Texcoord0;\n  v_Texcoord1=a_Texcoord1;\n  #endif\n #endif\n  \n #ifdef COLOR\n v_Color=a_Color;\n #endif\n}"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/simpleeffect.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Luminance;\n\n#ifdef DIFFUSEMAP\nvarying vec2 v_Texcoord0;\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef SPECULARMAP \nvarying vec2 v_Texcoord1;\nuniform sampler2D u_SpecularTexture;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n\n\n#ifdef FOG\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\nvoid main()\n{\n  \n  #ifdef DIFFUSEMAP&&!COLOR\n  gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  #endif \n  \n  #ifdef COLOR&&!DIFFUSEMAP\n  gl_FragColor=v_Color;\n  #endif \n  \n  #ifdef DIFFUSEMAP&&COLOR\n  vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  gl_FragColor=texColor*v_Color;\n  #endif\n  \n  #ifdef SPECULARMAP \n  vec4 specularColor=texture2D(u_SpecularTexture, v_Texcoord1);\n  gl_FragColor=gl_FragColor*specularColor;\n  #endif\n \n  gl_FragColor.rgb=gl_FragColor.rgb*u_Luminance;\n  \n  #ifdef FOG\n  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n  #endif\n}\n\n"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/simpleeffect.ps*/;
 			Shader.preCompile(Shader3D.SIMPLE_EFFECT,/*laya.d3.shader.ShaderDefines3D.VERTEXSHADERING*/0x1000 ,vs,ps,shaderNameMap);
-			vs="attribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n#ifdef DIFFUSEMAP\nattribute vec2 a_Texcoord0;\nattribute vec2 a_Texcoord1;\nvarying vec2 v_Texcoord0;\nvarying vec2 v_Texcoord1;\n#ifdef MIXUV\nattribute vec2 a_TexcoordNext0;\nattribute vec2 a_TexcoordNext1;\nuniform float  u_UVAge;\n#endif\n#endif\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n\nvoid main()\n{\n gl_Position = u_MvpMatrix * a_Position;\n \n \n #ifdef DIFFUSEMAP\n  #ifdef MIXUV\n  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n   v_Texcoord1=mix(a_Texcoord1,a_TexcoordNext1,u_UVAge);\n  #else\n  v_Texcoord0=a_Texcoord0;\n  v_Texcoord1=a_Texcoord1;\n  #endif\n #endif\n  \n #ifdef COLOR\n v_Color=a_Color;\n #endif\n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/simpleeffect.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Luminance;\n\n#ifdef DIFFUSEMAP\nvarying vec2 v_Texcoord0;\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef SPECULARMAP \nvarying vec2 v_Texcoord1;\nuniform sampler2D u_SpecularTexture;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n\n\n#ifdef FOG\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\nvoid main()\n{\n  \n  #ifdef DIFFUSEMAP&&!COLOR\n  gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  #endif \n  \n  #ifdef COLOR&&!DIFFUSEMAP\n  gl_FragColor=v_Color;\n  #endif \n  \n  #ifdef DIFFUSEMAP&&COLOR\n  vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  gl_FragColor=texColor*v_Color;\n  #endif\n  \n  #ifdef SPECULARMAP \n  vec4 specularColor=texture2D(u_SpecularTexture, v_Texcoord1);\n  gl_FragColor=gl_FragColor*specularColor;\n  #endif\n \n  gl_FragColor.rgb=gl_FragColor.rgb*u_Luminance;\n  \n  #ifdef FOG\n  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n  #endif\n}\n\n"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/simpleeffect.ps*/;
+			vs="attribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n#ifdef DIFFUSEMAP\nattribute vec2 a_Texcoord0;\nattribute vec2 a_Texcoord1;\nvarying vec2 v_Texcoord0;\nvarying vec2 v_Texcoord1;\n#ifdef MIXUV\nattribute vec2 a_TexcoordNext0;\nattribute vec2 a_TexcoordNext1;\nuniform float  u_UVAge;\n#endif\n#endif\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n\nvoid main()\n{\n gl_Position = u_MvpMatrix * a_Position;\n \n \n #ifdef DIFFUSEMAP\n  #ifdef MIXUV\n  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n   v_Texcoord1=mix(a_Texcoord1,a_TexcoordNext1,u_UVAge);\n  #else\n  v_Texcoord0=a_Texcoord0;\n  v_Texcoord1=a_Texcoord1;\n  #endif\n #endif\n  \n #ifdef COLOR\n v_Color=a_Color;\n #endif\n}"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/simpleeffect.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Luminance;\n\n#ifdef DIFFUSEMAP\nvarying vec2 v_Texcoord0;\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef SPECULARMAP \nvarying vec2 v_Texcoord1;\nuniform sampler2D u_SpecularTexture;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n\n\n#ifdef FOG\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\nvoid main()\n{\n  \n  #ifdef DIFFUSEMAP&&!COLOR\n  gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  #endif \n  \n  #ifdef COLOR&&!DIFFUSEMAP\n  gl_FragColor=v_Color;\n  #endif \n  \n  #ifdef DIFFUSEMAP&&COLOR\n  vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  gl_FragColor=texColor*v_Color;\n  #endif\n  \n  #ifdef SPECULARMAP \n  vec4 specularColor=texture2D(u_SpecularTexture, v_Texcoord1);\n  gl_FragColor=gl_FragColor*specularColor;\n  #endif\n \n  gl_FragColor.rgb=gl_FragColor.rgb*u_Luminance;\n  \n  #ifdef FOG\n  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n  #endif\n}\n\n"/*__INCLUDESTR__e:/layabox/trunk/libs/layaair/publish/layaairpublish/src/d3/src/laya/d3/shader/files/simpleeffect.ps*/;
 			Shader.preCompile(Shader3D.SIMPLE_EFFECT,/*laya.d3.shader.ShaderDefines3D.PIXELSHADERING*/0x2000,vs,ps,shaderNameMap);
 		}
 
@@ -8201,8 +8217,8 @@
 			ParticleTemplet3D.__super.call(this,parSetting);
 			this.initialize();
 			this.loadShaderParams();
-			this._vertexBuffer=this._vertexBuffer3D=VertexBuffer3D.create(VertexParticle.vertexDeclaration,parSetting.maxPartices*4,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
-			this._indexBuffer=this._indexBuffer3D=IndexBuffer3D.create(parSetting.maxPartices*6,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
+			this._vertexBuffer=this._vertexBuffer3D=VertexBuffer3D.create(VertexParticle.vertexDeclaration,parSetting.maxPartices *4,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
+			this._indexBuffer=this._indexBuffer3D=IndexBuffer3D.create(/*laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort",parSetting.maxPartices *6,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4,true);
 			this.loadContent();
 		}
 
@@ -8251,6 +8267,34 @@
 			this.addParticleArray(position.elements,velocity.elements);
 		}
 
+		__proto.loadContent=function(){
+			var indexes=new Uint16Array(this.settings.maxPartices *6);
+			for (var i=0;i < this.settings.maxPartices;i++){
+				indexes[i *6+0]=(i *4+0);
+				indexes[i *6+1]=(i *4+1);
+				indexes[i *6+2]=(i *4+2);
+				indexes[i *6+3]=(i *4+0);
+				indexes[i *6+4]=(i *4+2);
+				indexes[i *6+5]=(i *4+3);
+			}
+			this._indexBuffer3D.setData(indexes);
+		}
+
+		__proto.addNewParticlesToVertexBuffer=function(){
+			var start=0;
+			if (this._firstNewElement < this._firstFreeElement){
+				start=this._firstNewElement *4 *this._floatCountPerVertex;
+				this._vertexBuffer3D.setData(this._vertices,start,start,(this._firstFreeElement-this._firstNewElement)*4 *this._floatCountPerVertex);
+				}else {
+				start=this._firstNewElement *4 *this._floatCountPerVertex;
+				this._vertexBuffer3D.setData(this._vertices,start,start,(this.settings.maxPartices-this._firstNewElement)*4 *this._floatCountPerVertex);
+				if (this._firstFreeElement > 0){
+					this._vertexBuffer3D.setData(this._vertices,0,0,this._firstFreeElement *4 *this._floatCountPerVertex);
+				}
+			}
+			this._firstNewElement=this._firstFreeElement;
+		}
+
 		__proto._render=function(state){
 			if (this.texture && this.texture.loaded){
 				if (this._firstNewElement !=this._firstFreeElement){
@@ -8258,7 +8302,8 @@
 				}
 				if (this._firstActiveElement !=this._firstFreeElement){
 					var gl=WebGL.mainContext;
-					this._vertexBuffer3D.bind(this._indexBuffer3D);
+					this._vertexBuffer3D._bind();
+					this._indexBuffer._bind();
 					this._shader=this.getShader(state);
 					var presz=this._shaderValue.length;
 					this._shaderValue.pushArray(state.shaderValue);
@@ -8282,12 +8327,12 @@
 						Stat.drawCall++;
 						}else {
 						drawVertexCount=(this.settings.maxPartices-this._firstActiveElement)*6;
-						WebGL.mainContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,(this.settings.maxPartices-this._firstActiveElement)*6,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
+						WebGL.mainContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
 						Stat.trianglesFaces+=drawVertexCount / 3;
 						Stat.drawCall++;
 						if (this._firstFreeElement > 0){
 							drawVertexCount=this._firstFreeElement *6;
-							WebGL.mainContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,this._firstFreeElement *6,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,0);
+							WebGL.mainContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,0);
 							Stat.trianglesFaces+=drawVertexCount / 3;
 							Stat.drawCall++;
 						}
@@ -9181,69 +9226,119 @@
 	*/
 	//class laya.d3.graphics.IndexBuffer3D extends laya.webgl.utils.Buffer
 	var IndexBuffer3D=(function(_super){
-		function IndexBuffer3D(indexCount,bufferUsage){
-			this._uint8Array=null;
-			this._uint16Array=null;
+		function IndexBuffer3D(indexType,indexCount,bufferUsage,canRead){
+			this._indexType=null;
 			this._indexCount=0;
+			this._canRead=false;
 			(bufferUsage===void 0)&& (bufferUsage=/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
+			(canRead===void 0)&& (canRead=false);
 			IndexBuffer3D.__super.call(this);
+			this._indexType=indexType;
 			this._indexCount=indexCount;
 			this._bufferUsage=bufferUsage;
-			this._type=/*laya.webgl.WebGLContext.ELEMENT_ARRAY_BUFFER*/0x8893;
-			this._buffer=new ArrayBuffer(2 *indexCount);
+			this._bufferType=/*laya.webgl.WebGLContext.ELEMENT_ARRAY_BUFFER*/0x8893;
+			this._canRead=canRead;
+			this._bind();
+			var byteLength=0;
+			if (indexType==/*CLASS CONST:laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort")
+				byteLength=2 *indexCount;
+			else if (indexType==/*CLASS CONST:laya.d3.graphics.IndexBuffer3D.INDEXTYPE_UBYTE*/"ubyte")
+			byteLength=indexCount;
+			this._length=byteLength;
+			Buffer._gl.bufferData(this._bufferType,byteLength,this._bufferUsage);
+			if (canRead){
+				if (indexType==/*CLASS CONST:laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort")
+					this._data=new Uint16Array(indexCount);
+				else if (indexType==/*CLASS CONST:laya.d3.graphics.IndexBuffer3D.INDEXTYPE_UBYTE*/"ubyte")
+				this._data=new Uint8Array(indexCount);
+			}
 		}
 
 		__class(IndexBuffer3D,'laya.d3.graphics.IndexBuffer3D',_super);
 		var __proto=IndexBuffer3D.prototype;
-		//TODO:临时
-		__proto._bufferData=function(){
-			this._maxsize=Math.max(this._maxsize,this._length);
-			if (this._uploadSize < this._buffer.byteLength){
-				this._uploadSize=this._buffer.byteLength;
-				Buffer._gl.bufferData(this._type,this._uploadSize,this._bufferUsage);
-				this.memorySize=this._uploadSize;
+		/**
+		*设置数据。
+		*@param data 索引数据。
+		*@param bufferOffset 索引缓冲中的偏移。
+		*@param dataStartIndex 索引数据的偏移。
+		*@param dataCount 索引数据的数量。
+		*/
+		__proto.setData=function(data,bufferOffset,dataStartIndex,dataCount){
+			(bufferOffset===void 0)&& (bufferOffset=0);
+			(dataStartIndex===void 0)&& (dataStartIndex=0);
+			(dataCount===void 0)&& (dataCount=4294967295);
+			var byteCount=0;
+			if (this._indexType==/*CLASS CONST:laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort"){
+				byteCount=2;
+				if (dataStartIndex!==0 || dataCount!==4294967295)
+					data=new Uint16Array(data.buffer,dataStartIndex *byteCount,dataCount);
+				}else if (this._indexType==/*CLASS CONST:laya.d3.graphics.IndexBuffer3D.INDEXTYPE_UBYTE*/"ubyte"){
+				byteCount=1;
+				if (dataStartIndex!==0 || dataCount!==4294967295)
+					data=new Uint8Array(data.buffer,dataStartIndex *byteCount,dataCount);
 			}
-			Buffer._gl.bufferSubData(this._type,0,this._buffer);
-		}
-
-		__proto._bufferSubData=function(offset,dataStart,dataLength){
-			(offset===void 0)&& (offset=0);
-			(dataStart===void 0)&& (dataStart=0);
-			(dataLength===void 0)&& (dataLength=0);
-			this._maxsize=Math.max(this._maxsize,this._length);
-			if (this._uploadSize < this._buffer.byteLength){
-				this._uploadSize=this._buffer.byteLength;
-				Buffer._gl.bufferData(this._type,this._uploadSize,this._bufferUsage);
-				this.memorySize=this._uploadSize;
-			}
-			if (dataStart || dataLength){
-				var subBuffer=this._buffer.slice(dataStart,dataLength);
-				Buffer._gl.bufferSubData(this._type,offset,subBuffer);
-				}else {
-				Buffer._gl.bufferSubData(this._type,offset,this._buffer);
+			this._bind();
+			Buffer._gl.bufferSubData(this._bufferType,bufferOffset *byteCount,data);
+			if (this._canRead){
+				if (bufferOffset!==0 || dataStartIndex!==0 || dataCount!==4294967295){
+					var maxLength=this._data.length-bufferOffset;
+					if (dataCount > maxLength)
+						dataCount=maxLength;
+					for (var i=0;i < dataCount;i++)
+					this._data[bufferOffset+i]=data[i];
+					}else {
+					this._data=data;
+				}
 			}
 		}
 
-		__proto._checkArrayUse=function(){
-			this._uint8Array && (this._uint8Array=new Uint8Array(this._buffer));
-			this._uint16Array && (this._uint16Array=new Uint16Array(this._buffer));
+		/**
+		*获取索引数据。
+		*@return 索引数据。
+		*/
+		__proto.getData=function(){
+			if (this._canRead)
+				return this._data;
+			else
+			throw new Error("Can't read data from VertexBuffer with only write flag!");
 		}
 
-		__proto.getUint8Array=function(){
-			return this._uint8Array || (this._uint8Array=new Uint8Array(this._buffer));
+		/**彻底销毁索引缓冲。*/
+		__proto.dispose=function(){
+			this._data=null;
+			_super.prototype.dispose.call(this);
 		}
 
-		__proto.getUint16Array=function(){
-			return this._uint16Array || (this._uint16Array=new Uint16Array(this._buffer));
-		}
+		/**
+		*获取索引类型。
+		*@return 索引类型。
+		*/
+		__getset(0,__proto,'indexType',function(){
+			return this._indexType;
+		});
 
+		/**
+		*获取索引个数。
+		*@return 索引个数。
+		*/
 		__getset(0,__proto,'indexCount',function(){
 			return this._indexCount;
 		});
 
-		IndexBuffer3D.create=function(indexCount,bufferUsage){
+		/**
+		*获取是否可读。
+		*@return 是否可读。
+		*/
+		__getset(0,__proto,'canRead',function(){
+			return this._canRead;
+		});
+
+		IndexBuffer3D.INDEXTYPE_UBYTE="ubyte";
+		IndexBuffer3D.INDEXTYPE_USHORT="ushort";
+		IndexBuffer3D.create=function(indexType,indexCount,bufferUsage,canRead){
 			(bufferUsage===void 0)&& (bufferUsage=/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
-			return new IndexBuffer3D(indexCount,bufferUsage);
+			(canRead===void 0)&& (canRead=false);
+			return new IndexBuffer3D(indexType,indexCount,bufferUsage,canRead);
 		}
 
 		return IndexBuffer3D;
@@ -9251,82 +9346,79 @@
 
 
 	/**
-	*<code>IndexBuffer3D</code> 类用于创建顶点缓冲。
+	*<code>VertexBuffer3D</code> 类用于创建顶点缓冲。
 	*/
 	//class laya.d3.graphics.VertexBuffer3D extends laya.webgl.utils.Buffer
 	var VertexBuffer3D=(function(_super){
-		function VertexBuffer3D(vertexDeclaration,vertexCount,bufferUsage){
-			this._floatArray32=null;
+		function VertexBuffer3D(vertexDeclaration,vertexCount,bufferUsage,canRead){
 			this._vertexDeclaration=null;
 			this._vertexCount=0;
+			this._canRead=false;
+			(canRead===void 0)&& (canRead=false);
 			VertexBuffer3D.__super.call(this);
 			this._vertexDeclaration=vertexDeclaration;
 			this._vertexCount=vertexCount;
 			this._bufferUsage=bufferUsage;
-			this._type=/*laya.webgl.WebGLContext.ARRAY_BUFFER*/0x8892;
-			this._buffer=new ArrayBuffer(this._vertexDeclaration.vertexStride*vertexCount);
-			this.getFloat32Array();
+			this._bufferType=/*laya.webgl.WebGLContext.ARRAY_BUFFER*/0x8892;
+			this._canRead=canRead;
+			this._bind();
+			var byteLength=this._vertexDeclaration.vertexStride *vertexCount;
+			this._length=byteLength;
+			Buffer._gl.bufferData(this._bufferType,byteLength,this._bufferUsage);
+			canRead && (this._data=new Float32Array(byteLength / 4));
 		}
 
 		__class(VertexBuffer3D,'laya.d3.graphics.VertexBuffer3D',_super);
 		var __proto=VertexBuffer3D.prototype;
-		__proto._bufferData=function(){
-			this._maxsize=Math.max(this._maxsize,this._length);
-			if (this._uploadSize < this._buffer.byteLength){
-				this._uploadSize=this._buffer.byteLength;
-				Buffer._gl.bufferData(this._type,this._uploadSize,this._bufferUsage);
-				this.memorySize=this._uploadSize;
-			}
-			Buffer._gl.bufferSubData(this._type,0,this._buffer);
-		}
-
-		__proto._bufferSubData=function(offset,dataStart,dataLength){
-			(offset===void 0)&& (offset=0);
-			(dataStart===void 0)&& (dataStart=0);
-			(dataLength===void 0)&& (dataLength=0);
-			this._maxsize=Math.max(this._maxsize,this._length);
-			if (this._uploadSize < this._buffer.byteLength){
-				this._uploadSize=this._buffer.byteLength;
-				Buffer._gl.bufferData(this._type,this._uploadSize,this._bufferUsage);
-				this.memorySize=this._uploadSize;
-			}
-			if (dataStart || dataLength){
-				var subBuffer=this._buffer.slice(dataStart,dataLength);
-				Buffer._gl.bufferSubData(this._type,offset,subBuffer);
-				}else {
-				Buffer._gl.bufferSubData(this._type,offset,this._buffer);
-			}
-		}
-
-		__proto.getFloat32Array=function(){
-			return this._floatArray32 || (this._floatArray32=new Float32Array(this._buffer));
-		}
-
-		__proto.bind=function(ibBuffer){
-			(ibBuffer)&& (ibBuffer._bind());
+		/**
+		*和索引缓冲一起绑定。
+		*@param ib 索引缓冲。
+		*/
+		__proto.bindWithIndexBuffer=function(ib){
+			(ib)&& (ib._bind());
 			this._bind();
 		}
 
-		__proto.insertData=function(data,pos){
-			var vbdata=this.getFloat32Array();
-			vbdata.set(data,pos);
-			this._upload=true;
+		/**
+		*设置数据。
+		*@param data 顶点数据。
+		*@param bufferOffset 顶点缓冲中的偏移。
+		*@param dataStartIndex 顶点数据的偏移。
+		*@param dataCount 顶点数据的数量。
+		*/
+		__proto.setData=function(data,bufferOffset,dataStartIndex,dataCount){
+			(bufferOffset===void 0)&& (bufferOffset=0);
+			(dataStartIndex===void 0)&& (dataStartIndex=0);
+			(dataCount===void 0)&& (dataCount=4294967295);
+			if (dataStartIndex!==0 || dataCount!==4294967295)
+				data=new Float32Array(data.buffer,dataStartIndex *4,dataCount);
+			this._bind();
+			Buffer._gl.bufferSubData(this._bufferType,bufferOffset *4,data);
+			if (this._canRead){
+				if (bufferOffset!==0 || dataStartIndex!==0 || dataCount!==4294967295){
+					var maxLength=this._data.length-bufferOffset;
+					if (dataCount > maxLength)
+						dataCount=maxLength;
+					for (var i=0;i < dataCount;i++)
+					this._data[bufferOffset+i]=data[i];
+					}else {
+					this._data=data;
+				}
+			}
 		}
 
-		__proto.bind_upload=function(ibBuffer){
-			(ibBuffer._bind_upload())|| (ibBuffer._bind());
-			(this._bind_upload())|| (this._bind());
+		/**
+		*获取顶点数据。
+		*@return 顶点数据。
+		*/
+		__proto.getData=function(){
+			if (this._canRead)
+				return this._data;
+			else
+			throw new Error("Can't read data from VertexBuffer with only write flag!");
 		}
 
-		__proto._checkArrayUse=function(){
-			this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
-		}
-
-		__proto.disposeCPUData=function(){
-			_super.prototype.disposeCPUData.call(this);
-			this._floatArray32=null;
-		}
-
+		/**销毁顶点缓冲。*/
 		__proto.detoryResource=function(){
 			var elements=this._vertexDeclaration.getVertexElements();
 			for (var i=0;i < elements.length;i++)
@@ -9334,17 +9426,41 @@
 			_super.prototype.detoryResource.call(this);
 		}
 
+		/**彻底销毁顶点缓冲。*/
+		__proto.dispose=function(){
+			_super.prototype.dispose.call(this);
+			this._data=null;
+			this._vertexDeclaration=null;
+		}
+
+		/**
+		*获取顶点结构声明。
+		*@return 顶点结构声明。
+		*/
 		__getset(0,__proto,'vertexDeclaration',function(){
 			return this._vertexDeclaration;
 		});
 
+		/**
+		*获取顶点个数。
+		*@return 顶点个数。
+		*/
 		__getset(0,__proto,'vertexCount',function(){
 			return this._vertexCount;
 		});
 
-		VertexBuffer3D.create=function(vertexDeclaration,vertexCount,bufferUsage){
+		/**
+		*获取是否可读。
+		*@return 是否可读。
+		*/
+		__getset(0,__proto,'canRead',function(){
+			return this._canRead;
+		});
+
+		VertexBuffer3D.create=function(vertexDeclaration,vertexCount,bufferUsage,canRead){
 			(bufferUsage===void 0)&& (bufferUsage=/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
-			return new VertexBuffer3D(vertexDeclaration,vertexCount,bufferUsage);
+			(canRead===void 0)&& (canRead=false);
+			return new VertexBuffer3D(vertexDeclaration,vertexCount,bufferUsage,canRead);
 		}
 
 		return VertexBuffer3D;
@@ -9435,6 +9551,9 @@
 		__proto.dispose=function(){
 			this._resourceManager.removeResource(this);
 			laya.resource.Resource.prototype.dispose.call(this);
+			this._materials=null;
+			this._subMeshes=null;
+			this._vb=null;
 		}
 
 		__getset(0,__proto,'loaded',function(){
@@ -9606,10 +9725,12 @@
 		function SkinAnimations(){
 			this._tempCurBonesData=null;
 			this._tempCurAnimationData=null;
+			this._tempFrameIndex=-1;
+			this._tempIsCache=false;
 			this._curOriginalData=null;
 			this._extenData=null;
 			this._lastFrameIndex=-1;
-			this._subMeshes=null;
+			this._ownerMesh=null;
 			this._curBonesDatas=null;
 			this._curAnimationDatas=null;
 			SkinAnimations.__super.call(this);
@@ -9624,18 +9745,46 @@
 		*/
 		__proto._load=function(owner){
 			var _$this=this;
-			owner.on(/*laya.events.Event.LOADED*/"loaded",this,function(mesh){
-				_$this._subMeshes=mesh.templet.subMeshes;
-			});
-			this.on(/*laya.events.Event.LOADED*/"loaded",this,function(){
-				_$this._templet._animationDatasCache[0]=[];
-				_$this._templet._animationDatasCache[1]=[];
-			});
+			this._ownerMesh=(owner);
 			this.player.on(/*laya.events.Event.STOPPED*/"stopped",this,function(){
 				_$this._lastFrameIndex=-1;
 				if (_$this.player.returnToZeroStopped)
 					_$this._curBonesDatas=_$this._curAnimationDatas=null;
 			});
+		}
+
+		/**
+		*@private
+		*预缓存帧动画数据（需确保动画模板、模型模板都已加载完成）。
+		*@param animationClipIndex 动画索引
+		*@param meshTemplet 动画模板
+		*/
+		__proto.preComputeKeyFrames=function(animationClipIndex){
+			var maxKeyFrame=Math.floor(this._templet.getAniDuration(animationClipIndex)/ this.player.cacheFrameRateInterval);
+			for (var frameIndex=0;frameIndex <=maxKeyFrame;frameIndex++){
+				(this._templet._animationDatasCache[0])|| (this._templet._animationDatasCache[0]=[]);
+				(this._templet._animationDatasCache[1])|| (this._templet._animationDatasCache[1]=[]);
+				var cacheData=this._templet.getAnimationDataWithCache(this._templet._animationDatasCache[0],animationClipIndex,frameIndex);
+				if (cacheData){
+					console.log("已缓存");
+					continue ;
+				};
+				var bones=this._templet.getNodes(animationClipIndex);
+				var boneFloatCount=bones.length *16;
+				this._curAnimationDatas=new Float32Array(boneFloatCount);
+				this._curBonesDatas=new Float32Array(boneFloatCount);
+				this._curOriginalData || (this._curOriginalData=new Float32Array(this._templet.getTotalkeyframesLength(animationClipIndex)));
+				this._templet.getOriginalData(animationClipIndex,this._curOriginalData,frameIndex,this.player.cacheFrameRateInterval *frameIndex);
+				this._extenData || (this._extenData=new Float32Array(this._templet.getPublicExtData()));
+				Utils3D._computeSkinAnimationData(bones,this._curOriginalData,this._extenData,this._curBonesDatas,this._curAnimationDatas);
+				this._templet.setAnimationDataWithCache(this._templet._animationDatasCache[0],animationClipIndex,frameIndex,this._curAnimationDatas);
+				this._templet.setAnimationDataWithCache(this._templet._animationDatasCache[1],animationClipIndex,frameIndex,this._curBonesDatas);
+				var subMeshes=this._ownerMesh.templet.subMeshes;
+				for (var j=0;j < subMeshes.length;j++){
+					var subMesh=subMeshes[j];
+					SkinAnimations._copyBoneAndCache(frameIndex,subMesh._boneIndex,this._curAnimationDatas,subMesh._cacheBoneDatas);
+				}
+			}
 		}
 
 		/**
@@ -9648,11 +9797,13 @@
 			if (this.player.State!==/*laya.ani.AnimationState.playing*/2 || !this._templet || !this._templet.loaded)
 				return;
 			var rate=this.player.playbackRate *state.scene.timer.scale;
-			var isCache=this.player.isCache && rate >=1.0;
-			var frameIndex=isCache ? this.currentFrameIndex :-1;
+			var isCache=this._tempIsCache=this.player.isCache && rate >=1.0;
+			var frameIndex=this._tempFrameIndex=isCache ? this.currentFrameIndex :-1;
 			if (frameIndex!==-1 && this._lastFrameIndex===frameIndex){
 				return;
-			};
+			}
+			(this._templet._animationDatasCache[0])|| (this._templet._animationDatasCache[0]=[]);
+			(this._templet._animationDatasCache[1])|| (this._templet._animationDatasCache[1]=[]);
 			var animationClipIndex=this.currentAnimationClipIndex;
 			if (isCache){
 				var cacheData=this._templet.getAnimationDataWithCache(this._templet._animationDatasCache[0],animationClipIndex,frameIndex);
@@ -9664,13 +9815,13 @@
 				}
 			};
 			var bones=this._templet.getNodes(animationClipIndex);
-			var boneCount=bones.length;
+			var boneFloatCount=bones.length *16;
 			if (isCache){
-				this._curAnimationDatas=new Float32Array(boneCount *16);
-				this._curBonesDatas=new Float32Array(boneCount *16);
+				this._curAnimationDatas=new Float32Array(boneFloatCount);
+				this._curBonesDatas=new Float32Array(boneFloatCount);
 				}else {
-				(this._tempCurAnimationData)|| (this._tempCurAnimationData=new Float32Array(boneCount *16));
-				(this._tempCurBonesData)|| (this._tempCurBonesData=new Float32Array(boneCount *16));
+				(this._tempCurAnimationData)|| (this._tempCurAnimationData=new Float32Array(boneFloatCount));
+				(this._tempCurBonesData)|| (this._tempCurBonesData=new Float32Array(boneFloatCount));
 				this._curAnimationDatas=this._tempCurAnimationData;
 				this._curBonesDatas=this._tempCurBonesData;
 			}
@@ -9696,9 +9847,14 @@
 		__proto._preRenderUpdate=function(state){
 			if (this._curAnimationDatas){
 				state.shaderDefs.addInt(/*laya.d3.shader.ShaderDefines3D.BONE*/0x200);
-				var subMesh=this._subMeshes[state.renderObj.renderElement.indexOfHost];
-				SubMeshTemplet._copyBone(subMesh._boneIndex,this._curAnimationDatas,subMesh._boneData);
-				state.shaderValue.pushValue(/*laya.webgl.utils.Buffer.MATRIXARRAY0*/"MATRIXARRAY0",subMesh._boneData,-1);
+				var subMesh=this._ownerMesh.templet.subMeshes[state.renderObj.renderElement.indexOfHost];
+				if (this._tempIsCache){
+					SkinAnimations._copyBoneAndCache(this._tempFrameIndex,subMesh._boneIndex,this._curAnimationDatas,subMesh._cacheBoneDatas);
+					state.shaderValue.pushValue(/*laya.webgl.utils.Buffer.MATRIXARRAY0*/"MATRIXARRAY0",subMesh._cacheBoneDatas[this._tempFrameIndex],-1);
+					}else {
+					SkinAnimations._copyBone(subMesh._boneIndex,this._curAnimationDatas,subMesh._boneData);
+					state.shaderValue.pushValue(/*laya.webgl.utils.Buffer.MATRIXARRAY0*/"MATRIXARRAY0",subMesh._boneData,-1);
+				}
 			}
 		}
 
@@ -9726,6 +9882,27 @@
 			this._curOriginalData=this._extenData=null;
 			_super.prototype._$set_url.call(this,value);
 		});
+
+		SkinAnimations._copyBoneAndCache=function(frameIndex,index,bonesData,out){
+			var data=out[frameIndex];
+			if (!data)
+				(data=out[frameIndex]=new Float32Array(index.length *16));
+			else
+			return;
+			for (var i=0,n=index.length,ii=0;i < n;i++){
+				for (var j=0;j < 16;j++,ii++){
+					data[ii]=bonesData[(index[i] << 4)+j];
+				}
+			}
+		}
+
+		SkinAnimations._copyBone=function(index,bonesData,out){
+			for (var i=0,n=index.length,ii=0;i < n;i++){
+				for (var j=0;j < 16;j++,ii++){
+					out[ii]=bonesData[(index[i] << 4)+j];
+				}
+			}
+		}
 
 		return SkinAnimations;
 	})(KeyframeAnimations)

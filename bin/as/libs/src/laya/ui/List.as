@@ -644,12 +644,12 @@ package laya.ui {
 				selectHandler && selectHandler.runWith(value);
 			}
 			
-			if (selectEnable && _scrollBar) {
-				var numX:int = _isVertical ? repeatX : repeatY;
-				if (value < _startIndex || (value + numX > _startIndex + repeatX * repeatY)) {
-					scrollTo(value);
-				}
-			}
+			//if (selectEnable && _scrollBar) {
+				//var numX:int = _isVertical ? repeatX : repeatY;
+				//if (value < _startIndex || (value + numX > _startIndex + repeatX * repeatY)) {
+					//scrollTo(value);
+				//}
+			//}
 		}
 		
 		/**

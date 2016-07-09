@@ -27,8 +27,6 @@ package laya.net {
 	 * <code>Loader</code> 类可用来加载文本、JSON、XML、二进制、图像等资源。
 	 */
 	public class Loader extends EventDispatcher {
-		/**根路径，完整路径由basePath+url组成*/
-		public static var basePath:String = "";
 		/** 文本类型，加载完成后返回文本。*/
 		public static const TEXT:String = "text";
 		/** JSON 类型，加载完成后返回json数据。*/

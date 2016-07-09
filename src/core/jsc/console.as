@@ -137,41 +137,41 @@ class Console {
 	 * 一般信息
 	 */
 	public function info(... arg):void {
-	
+		trace(arg);
 	}
 	
 	/**
 	 * 日志信息
 	 */
 	public function log(... arg):void {
-	
+		trace(arg);
 	}
 	
 	/**
 	 * 调试信息
 	 */
 	public function debug(... arg):void {
-	
+		trace(arg);
 	}
 	
 	/**
 	 * 警告信息
 	 */
 	public function warn(... arg):void {
-	
+		trace(arg);
 	}
 	
 	/**
 	 * 错误信息
 	 */
 	public function error(... arg):void {
-	
+		trace(arg);
 	}
 	
 	/**
 	 * 追踪函数的调用轨迹
 	 */
 	public function trace(... args):void {
-	
+		//trace(arg);
 	}
 }

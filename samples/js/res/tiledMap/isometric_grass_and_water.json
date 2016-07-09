@@ -23,7 +23,7 @@
         {
          "columns":4,
          "firstgid":1,
-         "image":"res/tiledMap/isometric_grass_and_water.png",
+         "image":"isometric_grass_and_water.png",
          "imageheight":384,
          "imagewidth":256,
          "margin":0,
@@ -37,7 +37,7 @@
                 {
                  "name":"Grass",
                  "tile":0
-                },
+                }, 
                 {
                  "name":"Water",
                  "tile":22

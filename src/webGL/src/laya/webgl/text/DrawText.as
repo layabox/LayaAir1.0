@@ -26,10 +26,19 @@ package laya.webgl.text {
 		//private static var _charsCacheCount:int=0;
 		///**最大字符缓存数量*/
 		//public static var maxCacheCharsCount:int = 10;
-		
+		private static var _charSeg : ICharSegment = null; 
 		public static function __init__():void {
 			_charsTemp = new Vector.<DrawTextChar>;
 			_drawValue = new CharValue();
+			_charSeg = new CharSegment();
+		}
+		
+		/**
+		 * 项目层根据当前的语言特性，设置自己的分词器，如泰语需要特殊的处理
+		 * @param	charseg
+		 */
+		public static function customCharSeg( charseg: ICharSegment ) : void {
+			_charSeg = charseg;
 		}
 		
 		//如果stage缩放发生变化，应该清除所有文字信息，释放所有资源
@@ -38,7 +47,7 @@ package laya.webgl.text {
 			//_charsCacheCount ++;
 			return _charsCache[id] = DrawTextChar.createOneChar(char, drawValue);
 		}
-		
+				
 		private static function _drawSlow(save:Array, ctx:WebGLContext2D, txt:String, words:Vector.<HTMLChar>, curMat:Matrix, font:FontInContext, textAlign:String, fillColor:String, borderColor:String, lineWidth:int, x:Number, y:Number, sx:Number, sy:Number):void {
 			//if (_charsCacheCount > maxCacheCharsCount) {
 			//_charsCacheCount = 0;
@@ -62,13 +71,20 @@ package laya.webgl.text {
 					oneChar.active();
 				}
 			} else {
-				chars.length = txt.length;
-				for (i = 0, n = txt.length; i < n; i++) {
-					id = txt.charCodeAt(i) + drawValue.txtID;
-					chars[i] = oneChar = _charsCache[id] || getChar(txt.charAt(i), id, drawValue);
+				// River: 使用新的分词模式来解决类似于泰文的问题
+				if ( txt is WordText )
+					_charSeg.textToSpit( (txt as WordText).toString() );
+				else
+					_charSeg.textToSpit( txt );
+				
+				var len : int = _charSeg.length();
+				chars.length = len;
+				for (i = 0, n = len; i < n; i++) {
+					id = _charSeg.getCharCode(i) + drawValue.txtID;
+					chars[i] = oneChar = _charsCache[id] || getChar(_charSeg.getChar(i), id, drawValue);
 					oneChar.active();
 					width += oneChar.width;
-				}
+				}							
 			}
 			
 			var dx:Number = 0;

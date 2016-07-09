@@ -8,6 +8,8 @@
 		
 		private var vecData : Vector.<Number> = null;
 		
+		public var buffer:*;
+		
 		public function Float32Array(...arg) {
 			if ( arg.length == 1 ) {
 				if ( arg[0] is Vector.<Number> ) {
@@ -44,7 +46,7 @@
 			return vecData;
 		}
 		
-		public var buffer:*;
+		
 		
 		public function subarray(start:int, end:int = -1):Float32Array { return null; };
 		

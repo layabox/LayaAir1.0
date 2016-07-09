@@ -4,6 +4,7 @@ package
 	import laya.display.Text;
 	import laya.events.Event;
 	import laya.utils.Browser;
+	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	
 	public class Text_Scroll 
@@ -16,6 +17,7 @@ package
 		{
 			// 不支持WebGL时自动切换至Canvas
 			Laya.init(Browser.clientWidth, Browser.clientHeight, WebGL);
+			Stat.show();
 
 			Laya.stage.alignV = Stage.ALIGN_MIDDLE;
 			Laya.stage.alignH = Stage.ALIGN_CENTER;

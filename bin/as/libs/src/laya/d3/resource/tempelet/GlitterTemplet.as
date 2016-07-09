@@ -113,7 +113,7 @@ package laya.d3.resource.tempelet {
 		}
 		
 		protected function loadContent():void {
-			_vertexBuffer = new VertexBuffer3D(VertexGlitter.vertexDeclaration, setting.maxSegments * 2, WebGLContext.DYNAMIC_DRAW);
+			_vertexBuffer = VertexBuffer3D.create(VertexGlitter.vertexDeclaration, setting.maxSegments * 2, WebGLContext.DYNAMIC_DRAW);
 		}
 		
 		protected function loadShaderParams():void {
@@ -154,12 +154,12 @@ package laya.d3.resource.tempelet {
 				//...................................................................................
 				
 				if (_firstNewElement != _firstFreeElement) {
-					addNewParticlesToVertexBuffer();
+					addNewGlitterSegementToVertexBuffer();
 				}
 				
 				if (_firstActiveElement != _firstFreeElement) {
 					var gl:WebGLContext = WebGL.mainContext;
-					_vertexBuffer.bind(null);
+					_vertexBuffer.bindWithIndexBuffer(null);
 					
 					_shader = getShader(state);
 					
@@ -187,15 +187,27 @@ package laya.d3.resource.tempelet {
 					
 					_shaderValue.length = presz;
 					
+					var drawVertexCount:int;
 					if (_firstActiveElement < _firstFreeElement) {
-						WebGL.mainContext.drawArrays(WebGLContext.TRIANGLE_STRIP, _firstActiveElement * 2, (_firstFreeElement - _firstActiveElement) * 2);
+						drawVertexCount = (_firstFreeElement - _firstActiveElement) * 2;
+						WebGL.mainContext.drawArrays(WebGLContext.TRIANGLE_STRIP, _firstActiveElement * 2, drawVertexCount);
+						Stat.trianglesFaces += drawVertexCount-2;
+						Stat.drawCall++;
 					} else {
-						WebGL.mainContext.drawArrays(WebGLContext.TRIANGLE_STRIP, _firstActiveElement * 2, (setting.maxSegments - _firstActiveElement) * 2);
+						drawVertexCount =(setting.maxSegments - _firstActiveElement) * 2;
+						WebGL.mainContext.drawArrays(WebGLContext.TRIANGLE_STRIP, _firstActiveElement * 2, drawVertexCount);
+						Stat.trianglesFaces += drawVertexCount-2;
+						Stat.drawCall++;
 						if (_firstFreeElement > 0)
-							WebGL.mainContext.drawArrays(WebGLContext.TRIANGLE_STRIP, 0, _firstFreeElement * 2);
+						{
+							drawVertexCount =_firstFreeElement * 2;
+							WebGL.mainContext.drawArrays(WebGLContext.TRIANGLE_STRIP, 0, drawVertexCount);
+							Stat.trianglesFaces += drawVertexCount-2;
+							Stat.drawCall++;
+						}
 					}
 					
-					Stat.drawCall++;
+					
 				}
 				
 				_drawCounter++;
@@ -276,24 +288,19 @@ package laya.d3.resource.tempelet {
 			}
 		}
 		
-		public function addNewParticlesToVertexBuffer():void//通常只更新（_firstNewParticle - _firstActiveParticle）,但因为动态修改了UV数据所以更新（_firstFreeParticle - _firstActiveParticle）
+		public function addNewGlitterSegementToVertexBuffer():void//通常只更新（_firstNewParticle - _firstActiveParticle）,但因为动态修改了UV数据所以更新（_firstFreeParticle - _firstActiveParticle）
 		{
-			
-			_vertexBuffer.clear()
-			_vertexBuffer.append(_vertices);
-			
 			var start:int;
 			if (_firstActiveElement < _firstFreeElement) {
 				// 如果新增加的粒子在Buffer中是连续的区域，只upload一次
-				start = _firstActiveElement * 2 * _floatCountPerVertex * 4;
-				_vertexBuffer.subUpload(start, start, start + (_firstFreeElement - _firstActiveElement) * 2 * _floatCountPerVertex * 4);
+				start = _firstActiveElement * 2 * _floatCountPerVertex;
+				_vertexBuffer.setData(_vertices,start, start, (_firstFreeElement - _firstActiveElement) * 2 * _floatCountPerVertex);
 			} else {
 				//如果新增粒子区域超过Buffer末尾则循环到开头，需upload两次
-				start = _firstActiveElement * 2 * _floatCountPerVertex * 4;
-				_vertexBuffer.subUpload(start, start, start + (setting.maxSegments - _firstActiveElement) * 2 * _floatCountPerVertex * 4);
+				start = _firstActiveElement * 2 * _floatCountPerVertex;
+				_vertexBuffer.setData(_vertices,start, start,  (setting.maxSegments - _firstActiveElement) * 2 * _floatCountPerVertex);
 				if (_firstFreeElement > 0) {
-					_vertexBuffer.setNeedUpload();
-					_vertexBuffer.subUpload(0, 0, _firstFreeElement * 2 * _floatCountPerVertex * 4);
+					_vertexBuffer.setData(_vertices,0, 0, _firstFreeElement * 2 * _floatCountPerVertex);
 				}
 			}
 			_firstNewElement = _firstFreeElement;

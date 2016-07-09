@@ -113,8 +113,12 @@ package laya.d3.resource.tempelet {
 		
 		override public function dispose():void 
 		{
-					_resourceManager.removeResource(this);
+		
+			_resourceManager.removeResource(this);
 			super.dispose();
+			_materials = null;
+			_subMeshes = null;
+			_vb = null;
 		}
 	}
 }

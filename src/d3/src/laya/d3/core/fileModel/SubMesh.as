@@ -83,7 +83,7 @@ package laya.d3.core.fileModel {
 				
 				const byteSizeInFloat:int = 4;
 				var vb:VertexBuffer3D = _templet.getVB();
-				_bakedVertexes = (vb.getFloat32Array().slice() as Float32Array);//在红米2S微信中发现不支持slice();
+				_bakedVertexes = (vb.getData().slice() as Float32Array);//在红米2S微信中发现不支持slice();
 				
 				var vertexDeclaration:VertexDeclaration = vb.vertexDeclaration;
 				var positionOffset:int = vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / byteSizeInFloat;
@@ -106,7 +106,7 @@ package laya.d3.core.fileModel {
 			if (_bakedIndices)
 				return _bakedIndices;
 			
-			return _bakedIndices = _templet.getIB().getUint16Array();
+			return _bakedIndices = _templet.getIB().getData();
 		}
 		
 		/**
@@ -146,20 +146,22 @@ package laya.d3.core.fileModel {
 			
 			if (material.normalTexture && !vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TANGENT0]) {
 				//是否放到事件触发。
-				var vertexDatas:Float32Array = vb.getFloat32Array();
-				var newVertexDatas:Float32Array = Utils3D.GenerateTangent(vertexDatas, vb.vertexDeclaration.vertexStride / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TEXTURECOORDINATE0][4] / 4, ib.getUint16Array());
+				var vertexDatas:Float32Array = vb.getData();
+				var newVertexDatas:Float32Array = Utils3D.GenerateTangent(vertexDatas, vb.vertexDeclaration.vertexStride / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TEXTURECOORDINATE0][4] / 4, ib.getData());
 				var vertexDeclaration:VertexDeclaration = Utils3D.getVertexTangentDeclaration(vb.vertexDeclaration.getVertexElements());
 				
 				var newVB:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, WebGLContext.STATIC_DRAW);
-				newVB.append(newVertexDatas);
-				tem.getVB().dispose();
+				newVB.setData(newVertexDatas);
+				vb.dispose();
 				tem.setVB(newVB);
+				vb = newVB;
 				
 				templet._bufferUsage[VertexElementUsage.TANGENT0] = newVB;
 			}
 			
 			if (ib === null) return false;
-			vb ? vb.bind_upload(ib) : meshTem.vb.bind_upload(ib);//TODO:合并问题。
+			vb._bind();
+			ib._bind();
 			
 			if (material) {
 				var shader:Shader = _getShader(state, vb, material);

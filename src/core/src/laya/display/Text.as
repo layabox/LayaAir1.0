@@ -173,13 +173,13 @@ package laya.display {
 		/**
 		 * 移除注册的位图字体文件。
 		 * @param	name		位图字体的名称。
-		 * @param	destory		是否销毁当前字体文件。
+		 * @param	destroy		是否销毁当前字体文件。
 		 */
-		public static function unregisterBitmapFont(name:String, destory:Boolean = true):void {
+		public static function unregisterBitmapFont(name:String, destroy:Boolean = true):void {
 			if (_bitmapFonts && _bitmapFonts[name]) {
 				var tBitmapFont:BitmapFont = _bitmapFonts[name];
-				if (destory) {
-					tBitmapFont.destory();
+				if (destroy) {
+					tBitmapFont.destroy();
 				}
 				delete _bitmapFonts[name];
 			}
@@ -297,7 +297,7 @@ package laya.display {
 		 * @param	...args 文本替换参数。
 		 */
 		public function lang(text:String, arg1:* = null, arg2:* = null, arg3:* = null, arg4:* = null, arg5:* = null, arg6:* = null, arg7:* = null, arg8:* = null, arg9:* = null, arg10:* = null):void {
-			text = langPacks ? langPacks[text] : text;
+			text = langPacks&&langPacks[text] ? langPacks[text] : text;
 			if (arguments.length < 2) {
 				this._text = text;
 			} else {
@@ -713,14 +713,14 @@ package laya.display {
 		}
 		
 		private function evalTextSize():void {
-			// _lineWidths的第一个元素即使最大值
-			_textWidth = _lineWidths[0];
+			_textWidth = Math.max.apply(this, _lineWidths);
 			
 			//计算textHeight
-			if (_currBitmapFont) {
+			if (_currBitmapFont) 
 				_textHeight = _lines.length * (_currBitmapFont.getMaxHeight() + leading) + padding[0] + padding[2];
-			} else
+			else
 				_textHeight = _lines.length * (_charSize.height + leading) + padding[0] + padding[2];
+			
 			model && model.size(this._width || _textWidth, this._height || _textHeight);
 		}
 		
@@ -769,24 +769,10 @@ package laya.display {
 				if (needWordWrapOrTruncate)
 					parseLine(line, wordWrapWidth);
 				else {
-					_lines.push(line);
 					_lineWidths.push(getTextWidth(line));
+					_lines.push(line);
 				}
 			}
-		}
-		
-		/**
-		 * pusn新的行宽，保持索引0的值最大
-		 * @param	width
-		 */
-		protected function pushNewLineWidth(width:Number):void {
-			if (_lineWidths.length > 0) {
-				if (width > _lineWidths[0])
-					_lineWidths.unshift(width);
-				else
-					_lineWidths.push(width);
-			} else
-				_lineWidths.push(width);
 		}
 		
 		/**
@@ -810,12 +796,11 @@ package laya.display {
 			//优化1，如果一行小于宽度，则直接跳过遍历
 			if (charsWidth <= wordWrapWidth) {
 				lines.push(line);
-				pushNewLineWidth(charsWidth);
+				_lineWidths.push(charsWidth);
 				return;
 			}
 			
-			var charSize:Object = Browser.context.measureText("阳");
-			charsWidth = _currBitmapFont ? _currBitmapFont.getMaxWidth() : charSize.width;
+			charsWidth = _currBitmapFont ? _currBitmapFont.getMaxWidth() : _charSize.width;
 			//优化2，预算第几个字符会超出，减少遍历及字符宽度度量
 			maybeIndex = Math.floor(wordWrapWidth / charsWidth);
 			(maybeIndex == 0) && (maybeIndex = 1);
@@ -847,7 +832,7 @@ package laya.display {
 						
 						//如果自动换行，则另起一行
 						lines.push(newLine);
-						pushNewLineWidth(wordWidth - charsWidth);
+						_lineWidths.push(wordWidth - charsWidth);
 						//如果非自动换行，则只截取字符串
 						startIndex = j;
 						if (j + maybeIndex < m) {
@@ -859,20 +844,20 @@ package laya.display {
 						} else {
 							//此处执行将不会在循环结束后再push一次
 							lines.push(line.substring(startIndex, m));
-							pushNewLineWidth(getTextWidth(lines[lines.length - 1]));
+							_lineWidths.push(getTextWidth(lines[lines.length - 1]));
 							startIndex = -1;
 							break;
 						}
 					} else if (this.overflow == HIDDEN) {
 						lines.push(line.substring(0, j));
-						pushNewLineWidth(getTextWidth(lines[lines.length - 1]));
+						_lineWidths.push(getTextWidth(lines[lines.length - 1]));
 						return;
 					}
 				}
 			}
 			if (wordWrap && startIndex != -1) {
 				lines.push(line.substring(startIndex, m));
-				pushNewLineWidth(getTextWidth(lines[lines.length - 1]));
+				_lineWidths.push(getTextWidth(lines[lines.length - 1]));
 			}
 		}
 		
@@ -921,7 +906,7 @@ package laya.display {
 			//计算字符的宽度
 			var ctxFont:String = (italic ? "italic " : "") + (bold ? "bold " : "") + fontSize + "px " + font;
 			Browser.context.font = ctxFont;
-			var width:Number = Browser.context.measureText(_text.substring(startIndex, charIndex)).width;
+			var width:Number = getTextWidth(_text.substring(startIndex, charIndex));
 			var point:Point = out || new Point();
 			return point.setTo(_startX + width - (_clipPoint ? _clipPoint.x : 0), _startY + line * (_charSize.height + leading) - (_clipPoint ? _clipPoint.y : 0));
 		}

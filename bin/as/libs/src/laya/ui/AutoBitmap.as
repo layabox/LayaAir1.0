@@ -8,12 +8,15 @@ package laya.ui {
 	 * <p>封装了位置，宽高及九宫格的处理，供UI组件使用。</p>
 	 */
 	public final class AutoBitmap extends Graphics {
-		private var _isChanged:Boolean;
+		
 		/**
 		 * @private
 		 * 渲染命令缓存
 		 */
 		private static var cmdCaches:Object = {};
+		
+		/**@private */
+		private static var cacheCount:int = 0;
 		/**
 		 * @private
 		 * texture缓存
@@ -41,6 +44,8 @@ package laya.ui {
 		 * 网格数据
 		 */
 		private var _sizeGrid:Array;
+		/**@private */
+		private var _isChanged:Boolean;
 		
 		/**@inheritDoc */
 		override public function destroy():void {
@@ -148,6 +153,7 @@ package laya.ui {
 		 * 修改纹理资源。
 		 */
 		private function changeSource():void {
+			if (cacheCount++ > 50) clearCache();
 			_isChanged = false;
 			var source:Texture = this._source;
 			if (!source) return;
@@ -216,6 +222,7 @@ package laya.ui {
 		 *  清理命令缓存。
 		 */
 		public static function clearCache():void {
+			cacheCount = 0;
 			cmdCaches = {};
 			textureCache = {};
 		}

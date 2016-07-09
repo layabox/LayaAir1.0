@@ -1,106 +1,140 @@
 package laya.d3.graphics {
 	import laya.renders.Render;
+	import laya.utils.Browser;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.utils.Buffer;
 	import laya.webgl.utils.ValusArray;
 	
-	    /**
-	 * <code>IndexBuffer3D</code> 类用于创建顶点缓冲。
+	/**
+	 * <code>VertexBuffer3D</code> 类用于创建顶点缓冲。
 	 */
 	public class VertexBuffer3D extends Buffer {
-		public static var create:Function = function(vertexDeclaration:VertexDeclaration, vertexCount:int, bufferUsage:int = WebGLContext.STATIC_DRAW):VertexBuffer3D {
-			return new VertexBuffer3D(vertexDeclaration, vertexCount, bufferUsage);
+		
+		/**
+		 * 创建VertexBuffer3D。
+		 * @param	vertexDeclaration 顶点声明。
+		 * @param	vertexCount 顶点个数。
+		 * @param	bufferUsage VertexBuffer3D用途类型。
+		 * @param	canRead 是否可读。
+		 * @return	    顶点缓冲。
+		 */
+		public static var create:Function = function(vertexDeclaration:VertexDeclaration, vertexCount:int, bufferUsage:int = WebGLContext.STATIC_DRAW, canRead:Boolean = false):VertexBuffer3D {
+			return new VertexBuffer3D(vertexDeclaration, vertexCount, bufferUsage, canRead);
 		}
 		
-		private var _floatArray32:Float32Array;
+		/** @private */
 		private var _vertexDeclaration:VertexDeclaration;
+		/** @private */
 		private var _vertexCount:int;
+		/** @private */
+		private var _canRead:Boolean;
 		
+		/**
+		 * 获取顶点结构声明。
+		 *   @return	顶点结构声明。
+		 */
 		public function get vertexDeclaration():VertexDeclaration {
 			return _vertexDeclaration;
 		}
 		
+		/**
+		 * 获取顶点个数。
+		 *   @return	顶点个数。
+		 */
 		public function get vertexCount():int {
 			return _vertexCount;
 		}
 		
-		public function VertexBuffer3D(vertexDeclaration:VertexDeclaration, vertexCount:int, bufferUsage:int) {
+		/**
+		 * 获取是否可读。
+		 *   @return	是否可读。
+		 */
+		public function get canRead():Boolean {
+			return _canRead;
+		}
+		
+		/**
+		 * 创建一个 <code>VertexBuffer3D,不建议开发者使用并用VertexBuffer3D.create()代替</code> 实例。
+		 * @param	vertexDeclaration 顶点声明。
+		 * @param	vertexCount 顶点个数。
+		 * @param	bufferUsage VertexBuffer3D用途类型。
+		 * @param	canRead 是否可读。
+		 */
+		public function VertexBuffer3D(vertexDeclaration:VertexDeclaration, vertexCount:int, bufferUsage:int, canRead:Boolean = false) {
 			super();
 			_vertexDeclaration = vertexDeclaration;
 			_vertexCount = vertexCount;
 			_bufferUsage = bufferUsage;
-			_type = WebGLContext.ARRAY_BUFFER;
-			_buffer = new ArrayBuffer(_vertexDeclaration.vertexStride*vertexCount);
-		
-			getFloat32Array();
-		}
-		
-				override protected function _bufferData():void {
-			_maxsize = Math.max(_maxsize, _length);
-			if (_uploadSize < _buffer.byteLength) {
-				_uploadSize = _buffer.byteLength;
-				
-				_gl.bufferData(_type, _uploadSize, _bufferUsage);
-				memorySize = _uploadSize;
-			}
-			_gl.bufferSubData(_type, 0, _buffer);
-		}
-		
-		override protected function _bufferSubData(offset:int = 0, dataStart:int = 0, dataLength:int = 0):void {
-			_maxsize = Math.max(_maxsize, _length);
+			_bufferType = WebGLContext.ARRAY_BUFFER;
+			_canRead = canRead;
 			
-			if (_uploadSize < _buffer.byteLength) {
-				_uploadSize = _buffer.byteLength;
-				
-				_gl.bufferData(_type, _uploadSize, _bufferUsage);
-				memorySize = _uploadSize;
-			}
-			
-			if (dataStart || dataLength) {
-				var subBuffer:ArrayBuffer = _buffer.slice(dataStart, dataLength);
-				_gl.bufferSubData(_type, offset, subBuffer);
-			} else {
-				_gl.bufferSubData(_type, offset, _buffer);
-			}
+			_bind();
+			var byteLength:int = _vertexDeclaration.vertexStride * vertexCount;
+			_length = byteLength;
+			_gl.bufferData(_bufferType, byteLength, _bufferUsage);
+			canRead && (_data = new Float32Array(byteLength / 4));
 		}
 		
-		public function getFloat32Array():Float32Array {
-			return _floatArray32 || (_floatArray32 = new Float32Array(_buffer));
-		}
-		
-		public function bind(ibBuffer:IndexBuffer3D):void {
-			(ibBuffer) && (ibBuffer._bind());
+		/**
+		 * 和索引缓冲一起绑定。
+		 * @param	ib 索引缓冲。
+		 */
+		public function bindWithIndexBuffer(ib:IndexBuffer3D):void {
+			(ib) && (ib._bind());
 			_bind();
 		}
 		
-		public function insertData(data:Array, pos:int):void {
-			var vbdata:* = getFloat32Array();
-			vbdata.set(data, pos);
-			_upload = true;
+		/**
+		 * 设置数据。
+		 * @param	data 顶点数据。
+		 * @param	bufferOffset 顶点缓冲中的偏移。
+		 * @param	dataStartIndex 顶点数据的偏移。
+		 * @param	dataCount 顶点数据的数量。
+		 */
+		public function setData(data:Float32Array, bufferOffset:int = 0, dataStartIndex:int = 0, dataCount:int = 4294967295/*uint.MAX_VALUE*/):void {
+			if (dataStartIndex !== 0 || dataCount !== 4294967295/*uint.MAX_VALUE*/)
+				data = new Float32Array(data.buffer, dataStartIndex * 4, dataCount);
+			_bind();
+			_gl.bufferSubData(_bufferType, bufferOffset * 4, data);//offset==0情况下，某些特殊设备或情况下直接bufferData速度是否优于bufferSubData
+			
+			if (_canRead) {
+				if (bufferOffset !== 0 || dataStartIndex !== 0 || dataCount !== 4294967295/*uint.MAX_VALUE*/) {
+					var maxLength:int = _data.length - bufferOffset;
+					if (dataCount > maxLength)
+						dataCount = maxLength;
+					for (var i:int = 0; i < dataCount; i++)
+						_data[bufferOffset + i] = data[i];
+				} else {
+					_data = data;
+				}
+			}
 		}
 		
-		public function bind_upload(ibBuffer:IndexBuffer3D):void {
-			(ibBuffer._bind_upload()) || (ibBuffer._bind());
-			(_bind_upload()) || (_bind());
+		/**
+		 * 获取顶点数据。
+		 *   @return	顶点数据。
+		 */
+		public function getData():Float32Array {
+			if (_canRead)
+				return _data;
+			else
+				throw new Error("Can't read data from VertexBuffer with only write flag!");
 		}
 		
-		override protected function _checkArrayUse():void {
-			_floatArray32 && (_floatArray32 = new Float32Array(_buffer));
-		}
-		
-		override public function disposeCPUData():void {
-			super.disposeCPUData();
-			_floatArray32 = null;
-		}
-		
+		/** 销毁顶点缓冲。*/
 		override protected function detoryResource():void {
-			//TODO:应该判定当前状态是否绑定，如绑定则disableVertexAttribArray。
-			var elements:Array = _vertexDeclaration.getVertexElements();
+			var elements:Array = _vertexDeclaration.getVertexElements();//TODO:应该判定当前状态是否绑定，如绑定则disableVertexAttribArray。
 			for (var i:int = 0; i < elements.length; i++)
 				WebGL.mainContext.disableVertexAttribArray(i);
-			
 			super.detoryResource();
+		}
+		
+		/** 彻底销毁顶点缓冲。*/
+		override public function dispose():void {
+			super.dispose();
+			_data = null;
+			_vertexDeclaration = null;
 		}
 	
 	}

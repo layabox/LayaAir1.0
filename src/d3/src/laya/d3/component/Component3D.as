@@ -1,14 +1,10 @@
 package laya.d3.component {
-	import laya.d3.component.animation.CameraAnimations;
-	import laya.d3.component.animation.SkinAnimations;
-	import laya.d3.component.animation.UVAnimations;
 	import laya.d3.core.Layer;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.IUpdate;
 	import laya.d3.core.render.RenderState;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
-	import laya.utils.ClassUtils;
 	
 	/**
 	 * 在enable属性发生变化后调度。

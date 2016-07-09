@@ -133,7 +133,7 @@ package laya.ui {
 		override public function set dataSource(value:*):void {
 			_dataSource = value;
 			if (value is int || value is String) {
-				selectedIndex = int(value);
+				selectedIndex = parseInt(value);
 			} else {
 				for (var prop:String in _dataSource) {
 					if (hasOwnProperty(prop)) {

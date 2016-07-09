@@ -1195,10 +1195,17 @@ package laya.display {
 		}
 		
 		public function set mask(value:Sprite):void {
-			if (mask && mask._$P.maskParent) return;
-			cacheAs = "bitmap";
-			_set$P("_mask", value);
-			value._set$P("maskParent", this);
+			if (value && mask && mask._$P.maskParent) return;
+			if (value)
+			{
+				cacheAs = "bitmap";
+				_set$P("_mask", value);
+				value._set$P("maskParent", this);
+			}else {
+				cacheAs = "none";
+				mask && mask._set$P("maskParent", null);
+				_set$P("_mask", value);
+			}
 			model && model.mask(value ? value.model : null);
 			_renderType |= RenderSprite.BLEND;
 			parentRepaint();
@@ -1242,9 +1249,11 @@ package laya.display {
 				Pool.recover("RenderContext", _$P.cacheCanvas.ctx);
 				_$P.cacheCanvas.ctx = null;
 			}
-			var fc:* = _$P._filterCache;
-			fc && (fc.destroy(), fc.recycle(), this._set$P('_filterCache', null));
-			this._set$P('_isHaveGlowFilter', false);
+			if (!value){
+				var fc:* = _$P._filterCache;
+				fc && (fc.destroy(), fc.recycle(), this._set$P('_filterCache', null));
+				_$P._isHaveGlowFilter && this._set$P('_isHaveGlowFilter', false);
+			}
 			super._setDisplay(value);
 		}
 		

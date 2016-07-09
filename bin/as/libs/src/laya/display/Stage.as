@@ -117,28 +117,39 @@ package laya.display {
 			
 			var _this:Stage = this;
 			var window:* = Browser.window;
+			
 			window.addEventListener("focus", function():void {
 				_this.event(Event.FOCUS);
-			})
+			});
 			window.addEventListener("blur", function():void {
 				_this.event(Event.BLUR);
-				if (this.focus && this.focus.focus) this.focus.focus = false;
-			})
+				if (_this._isInputting()) Input["inputElement"].target.focus = false;
+			});
+			window.addEventListener("visibilitychange", function():void {
+				switch (Browser.document.visibilityState) {
+				case "hidden": 
+					_this.event(Event.BLUR);
+					if (_this._isInputting()) Input["inputElement"].target.focus = false;
+					break;
+				case "visible": 
+					_this.event(Event.FOCUS);
+					break;
+				}
+			});
 			window.addEventListener("resize", function():void {
-				if (_this.preventResize()) return;
+				if (_this._isInputting()) return;
 				
 				_this._resetCanvas();
 				Laya.timer.once(100, _this, _this._changeCanvasSize);
-			})
+			});
 			window.addEventListener("orientationchange", function(e:*):void {
 				// 转屏后收回输入法。以免resize后的canvas尺寸缩小。
 				// 仅移动端如此。
-				if (Browser.onMobile && Input.isInputting)
-					Input["inputElement"].target.focus = false;
+				if (_this._isInputting()) Input["inputElement"].target.focus = false;
 				
 				_this._resetCanvas();
 				Laya.timer.once(100, _this, _this._changeCanvasSize);
-			})
+			});
 			
 			on(Event.MOUSE_MOVE, this, _onmouseMove);
 		}
@@ -146,11 +157,8 @@ package laya.display {
 		/**
 		 * 在移动端输入时，输入法弹出期间不进行画布尺寸重置。
 		 */
-		private function preventResize():Boolean
-		{
-			return (
-				Browser.onMobile &&
-				Input.isInputting);
+		private function _isInputting():Boolean {
+			return (Browser.onMobile && Input.isInputting);
 		}
 		
 		/**设置场景设计宽高*/
@@ -180,7 +188,7 @@ package laya.display {
 		 * @param	screenWidth		屏幕宽度。
 		 * @param	screenHeight	屏幕高度。
 		 */
-		public function setScreenSize(screenWidth:Number, screenHeight:Number):void {			
+		public function setScreenSize(screenWidth:Number, screenHeight:Number):void {
 			//计算是否旋转
 			var rotation:Boolean = false;
 			if (_screenMode !== SCREEN_NONE) {
@@ -253,7 +261,7 @@ package laya.display {
 				transform || (transform = new Matrix());
 				transform.a = scaleX / (realWidth / canvasWidth);
 				transform.d = scaleY / (realHeight / canvasHeight);
-				model&&model.scale(transform.a, transform.d);//由于上面的两句通知不到微端
+				model && model.scale(transform.a, transform.d);//由于上面的两句通知不到微端
 			}
 			
 			//处理canvas大小			
@@ -356,9 +364,6 @@ package laya.display {
 		}
 		
 		public function set bgColor(value:String):void {
-			if (Render.isWebGL && value == null){
-				value = "#000000";
-			}
 			_bgColor = value;
 			model && model.bgColor(value);
 			if (value) {
@@ -445,8 +450,7 @@ package laya.display {
 				Laya.timer._update();
 				if (Render.isConchNode) {
 					var customList:Array = Sprite.CustomList;
-					for (var i:Number = 0, n:Number = customList.length; i < n; i++)
-					{
+					for (var i:Number = 0, n:Number = customList.length; i < n; i++) {
 						customList[i].customRender(customList[i].customContext, 0, 0);
 					}
 					return;

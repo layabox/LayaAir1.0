@@ -1,5 +1,6 @@
 package laya.events {
 	
+	import laya.display.Input;
 	import laya.display.Sprite;
 	import laya.display.Stage;
 	import laya.maths.Matrix;
@@ -57,7 +58,7 @@ package laya.events {
 			}
 			canvas.addEventListener('mousedown', function(e:*):void {
 				if (enabled) {
-					e.preventDefault();
+					//e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = Browser.now();
 				}
@@ -86,14 +87,14 @@ package laya.events {
 			})
 			canvas.addEventListener("touchstart", function(e:*):void {
 				if (enabled) {
-					e.preventDefault();
+					//if(!Input.isInputting) e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = Browser.now();
 				}
 			});
 			canvas.addEventListener("touchend", function(e:*):void {
 				if (enabled) {
-					e.preventDefault();
+					if(!Input.isInputting) e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = -Browser.now();
 				}
@@ -122,8 +123,8 @@ package laya.events {
 			_point.setTo(e.clientX, e.clientY);
 			_stage._canvasTransform.invertTransformPoint(_point);
 			
-			e.stageX = _this.mouseX = _point.x;
-			e.stageY = _this.mouseY = _point.y;
+			_this.mouseX = _point.x;
+			_this.mouseY = _point.y;
 			_this._event.touchId = e.identifier;
 		}
 		

@@ -3,7 +3,7 @@
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
 	var Browser=laya.utils.Browser,Handler=laya.utils.Handler,Loader=laya.net.Loader,Point=laya.maths.Point;
-	var Rectangle=laya.maths.Rectangle,Sprite=laya.display.Sprite,Texture=laya.resource.Texture;
+	var Rectangle=laya.maths.Rectangle,Render=laya.renders.Render,Sprite=laya.display.Sprite,Texture=laya.resource.Texture;
 	/**
 	*tiledMap是整个地图的核心
 	*地图以层级来划分地图（例如：地表层，植被层，建筑层）
@@ -57,6 +57,9 @@
 			this._viewPortY=0;
 			this._viewPortWidth=0;
 			this._viewPortHeight=0;
+			this._enableLinear=true;
+			this._resPath=null;
+			this._pathArray=null;
 			this._rect=new Rectangle();
 			this._paddingRect=new Rectangle();
 			this._mapRect=new GRect();
@@ -72,8 +75,11 @@
 		*@param completeHandler 地图创建完成的回调函数
 		*@param viewRectPadding 视口扩充区域，把视口区域上、下、左、右扩充一下，防止视口移动时的穿帮
 		*@param gridSize grid大小
+		*@param enableLinear 是否开启线性取样（为false时，可以解决地图黑线的问题，但画质会锐化）
 		*/
-		__proto.createMap=function(mapName,viewRect,completeHandler,viewRectPadding,gridSize){
+		__proto.createMap=function(mapName,viewRect,completeHandler,viewRectPadding,gridSize,enableLinear){
+			(enableLinear===void 0)&& (enableLinear=true);
+			this._enableLinear=enableLinear;
 			this._rect.x=viewRect.x;
 			this._rect.y=viewRect.y;
 			this._rect.width=viewRect.width;
@@ -90,6 +96,8 @@
 				this._gridWidth=gridSize.x;
 				this._gridHeight=gridSize.y;
 			}
+			this._resPath=mapName.substr(0,mapName.lastIndexOf("/"));
+			this._pathArray=this._resPath.split("/");
 			this._jsonLoader=new Loader();
 			this._jsonLoader.once("complete",this,this.onJsonComplete);
 			this._jsonLoader.load(mapName,/*laya.net.Loader.JSON*/"json",false);
@@ -116,7 +124,8 @@
 			var tArray=tJsonData.tilesets;
 			var tileset;
 			var tTileSet;
-			for (var i=0;i < tArray.length;i++){
+			var i=0;
+			for (i=0;i < tArray.length;i++){
 				tileset=tArray[i];
 				tTileSet=new TileSet();
 				tTileSet.init(tileset);
@@ -143,8 +152,46 @@
 				tTileSet=this._currTileSet=this._tileSetArray.shift();
 				this._loader=new Loader();
 				this._loader.once("complete",this,this.onTextureComplete);
-				this._loader.load(tTileSet.image,/*laya.net.Loader.IMAGE*/"image",false);
+				var tPath=this.mergePath(this._resPath,tTileSet.image);
+				this._loader.load(tPath,/*laya.net.Loader.IMAGE*/"image",false);
 			}
+		}
+
+		/**
+		*合并路径
+		*@param resPath
+		*@param relativePath
+		*@return
+		*/
+		__proto.mergePath=function(resPath,relativePath){
+			var tResultPath="";
+			var tImageArray=relativePath.split("/");
+			var tParentPathNum=0;
+			var i=0;
+			for (i=tImageArray.length-1;i >=0;i--){
+				if (tImageArray[i]==".."){
+					tParentPathNum++;
+				}
+			}
+			if (tParentPathNum==0){
+				tResultPath=resPath+"/"+relativePath;
+				return tResultPath;
+			};
+			var tSrcNum=this._pathArray.length-tParentPathNum;
+			if (tSrcNum < 0){
+				console.log("[error]path does not exist");
+			}
+			for (i=0;i < tSrcNum;i++){
+				if (i==0){
+					tResultPath+=this._pathArray[i];
+					}else {
+					tResultPath=tResultPath+"/"+this._pathArray[i];
+				}
+			}
+			for (i=tParentPathNum;i < tImageArray.length;i++){
+				tResultPath=tResultPath+"/"+tImageArray[i];
+			}
+			return tResultPath;
 		}
 
 		/**
@@ -154,6 +201,11 @@
 		__proto.onTextureComplete=function(e){
 			var json=this._jsonData;
 			var tTexture=e;
+			if (Render.isWebGL && (!this._enableLinear)){
+				tTexture.bitmap.minFifter=0x2600;
+				tTexture.bitmap.magFifter=0x2600;
+				tTexture.bitmap.enableMerageInAtlas=false;
+			}
 			this._texArray.push(tTexture);
 			var tSubTexture=null;
 			var tTileSet=this._currTileSet;
@@ -178,7 +230,8 @@
 			if (this._tileSetArray.length > 0){
 				tTileSet=this._currTileSet=this._tileSetArray.shift();
 				this._loader.once("complete",this,this.onTextureComplete);
-				this._loader.load(tTileSet.image,/*laya.net.Loader.IMAGE*/"image",false);
+				var tPath=this.mergePath(this._resPath,tTileSet.image);
+				this._loader.load(tPath,/*laya.net.Loader.IMAGE*/"image",false);
 				}else {
 				this._currTileSet=null;
 				this.initMap();
@@ -685,7 +738,7 @@
 		/**
 		*销毁地图
 		*/
-		__proto.destory=function(){
+		__proto.destroy=function(){
 			this._orientation="orthogonal";
 			this._jsonData=null;
 			var i=0;

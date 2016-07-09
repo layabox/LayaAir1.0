@@ -117,7 +117,7 @@ package laya.d3.component.animation {
 							bufferUsage["UV" + c.toString()] = bufferUsage["NEXTUV" + c.toString()] = _uvAnimationBuffers[i][c];
 						
 						_uvAnimationBuffers[i][c].clear();
-						_uvAnimationBuffers[i][c].append(animationDatas);
+						_uvAnimationBuffers[i][c].append(animationDatas);//TODO:待调整
 						_uvAnimationBuffers[i][c].upload();
 					}
 				}

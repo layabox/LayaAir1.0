@@ -61,7 +61,7 @@ package laya.resource {
 		 */
 		override protected function recreateResource():void {
 			if (_src === "")
-				throw new Error("src不能为空！");
+				throw new Error("src no null！");
 	
 			_needReleaseAgain = false;
 			if (!_source) {

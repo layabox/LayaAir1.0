@@ -41,7 +41,7 @@ package laya.display {
 		   {
 			   var from:*= Graphics.prototype;
 			   var to:*= __JS__("ConchGraphics.prototype");
-			   var list:Array = ["_addCmd","clear","destory","alpha","rotate","transform","scale","translate","save","restore","clipRect","blendMode","fillText","fillBorderText","_fands","drawRect","drawCircle","drawPie","drawPoly","drawPath","drawImageM","drawLine","drawLines","_drawPs","drawCurves","replaceText","replaceTextColor"];
+			   var list:Array = ["_addCmd","clear","destroy","alpha","rotate","transform","scale","translate","save","restore","clipRect","blendMode","fillText","fillBorderText","_fands","drawRect","drawCircle","drawPie","drawPoly","drawPath","drawImageM","drawLine","drawLines","_drawPs","drawCurves","replaceText","replaceTextColor"];
 			   for (var i:int = 0,len:int=list.length;i <=len; i++)
 			   {
 				   var temp:String=list[i];

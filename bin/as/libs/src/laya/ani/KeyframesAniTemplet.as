@@ -167,7 +167,7 @@ package laya.ani {
 						}
 						startTime += keyFrame.duration;
 					}
-					node.playTime = startTime;
+					node.playTime = ani.playTime;//节点总时间可能比总时长大，次处修正
 					_calculateKeyFrame(node, keyframeCount, keyframeDataCount);
 					
 					_calculateKeyFrameIndex(node, playbackRate);//计算全帧索引

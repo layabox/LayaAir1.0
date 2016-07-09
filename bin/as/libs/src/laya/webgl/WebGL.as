@@ -59,59 +59,54 @@ package laya.webgl {
 		private static var _isExperimentalWebgl:Boolean = false;
 		
 		private static function Float32ArraySlice():Float32Array {
-			var _this:* =__JS__("this");
+			var _this:* = __JS__("this");
 			var sz:int = _this.length;
 			var dec:Float32Array = new Float32Array(_this.length);
 			for (var i:int = 0; i < sz; i++) dec[i] = _this[i];
 			return dec;
 		}
 		
-		private static function expandContext():void
-		{
+		private static function expandContext():void {
 			var from:* = Context.prototype;
 			var to:* = __JS__("CanvasRenderingContext2D.prototype");
 			to.fillTrangles = from.fillTrangles;
 			Buffer.__int__(null);
-			to.setIBVB = function(x:Number, y:Number, ib:IndexBuffer2D, vb:VertexBuffer2D, numElement:int, mat:Matrix, shader:Shader, shaderValues:ShaderValue, startIndex:int=0, offset:int=0):void {
+			to.setIBVB = function(x:Number, y:Number, ib:IndexBuffer2D, vb:VertexBuffer2D, numElement:int, mat:Matrix, shader:Shader, shaderValues:ShaderValue, startIndex:int = 0, offset:int = 0):void {
 				if (ib === null) {
-					this._ib = this._ib|| IndexBuffer2D.QuadrangleIB;
-					ib=this._ib;
+					this._ib = this._ib || IndexBuffer2D.QuadrangleIB;
+					ib = this._ib;
 					GlUtils.expandIBQuadrangle(ib, (vb.length / (4 * 16) + 8));
 				}
-				this._setIBVB(x,y,ib,vb,numElement,mat,shader,shaderValues,startIndex,offset);
+				this._setIBVB(x, y, ib, vb, numElement, mat, shader, shaderValues, startIndex, offset);
 			};
 			
-			to.fillTrangles=function(tex:Texture, x:Number, y:Number, points:Array, m:Matrix):void{
+			to.fillTrangles = function(tex:Texture, x:Number, y:Number, points:Array, m:Matrix):void {
 				this._curMat = this._curMat || Matrix.create();
 				this._vb = this._vb || VertexBuffer2D.create();
-				if(!this._ib){
-					this._ib=IndexBuffer2D.create();
-					GlUtils.fillIBQuadrangle(this._ib,length/4);
+				if (!this._ib) {
+					this._ib = IndexBuffer2D.create();
+					GlUtils.fillIBQuadrangle(this._ib, length / 4);
 				}
-				var vb:VertexBuffer2D=this._vb;
+				var vb:VertexBuffer2D = this._vb;
 				var length:int = points.length >> 4;
 				GlUtils.fillTranglesVB(vb, x, y, points, m || this._curMat, 0, 0);
-				GlUtils.expandIBQuadrangle(this._ib,(vb.length / (4 *16)+8));
-				var shaderValues:Value2D = new Value2D( 0x01, 0);//     Value2D.create(0x01, 0);
+				GlUtils.expandIBQuadrangle(this._ib, (vb.length / (4 * 16) + 8));
+				var shaderValues:Value2D = new Value2D(0x01, 0);//     Value2D.create(0x01, 0);
 				shaderValues.textureHost = tex;
 				//var sd = RenderState2D.worldShaderDefines?shaderValues._withWorldShaderDefines():(Shader.sharders [shaderValues.mainID | shaderValues.defines._value] );
 				
 				//var sd = new Shader2X("attribute vec4 position; attribute vec2 texcoord; uniform vec2 size; uniform mat4 mmat; varying vec2 v_texcoord; void main() { vec4 pos=mmat*position; gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0); v_texcoord = texcoord; }", "precision mediump float; varying vec2 v_texcoord; uniform sampler2D texture; void main() { vec4 color= texture2D(texture, v_texcoord); color.a*=1.0; gl_FragColor=color; }");
 				
-				var sd:Shader =new Shader2X("attribute vec2 position; attribute vec2 texcoord; uniform vec2 size; uniform mat4 mmat; varying vec2 v_texcoord; void main() { vec4 p=vec4(position.xy,0.0,1.0);vec4 pos=mmat*p; gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0); v_texcoord = texcoord; }"
-				,
-				"precision mediump float; varying vec2 v_texcoord; uniform sampler2D texture; void main() {vec4 color= texture2D(texture, v_texcoord); color.a*=1.0; gl_FragColor= color;}");
-
+				var sd:Shader = new Shader2X("attribute vec2 position; attribute vec2 texcoord; uniform vec2 size; uniform mat4 mmat; varying vec2 v_texcoord; void main() { vec4 p=vec4(position.xy,0.0,1.0);vec4 pos=mmat*p; gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0); v_texcoord = texcoord; }", "precision mediump float; varying vec2 v_texcoord; uniform sampler2D texture; void main() {vec4 color= texture2D(texture, v_texcoord); color.a*=1.0; gl_FragColor= color;}");
+				
 				__JS__("vb._vertType =3");//表示使用XYUV
 				this._setIBVB(x, y, this._ib, vb, length * 6, m, sd, shaderValues, 0, 0);
 			}
 		}
 		
 		public static function enable():Boolean {
-			if (Render.isConchApp)
-			{
-				if (!Render.isConchWebGL)
-				{
+			if (Render.isConchApp) {
+				if (!Render.isConchWebGL) {
 					expandContext();
 					return false;
 				}
@@ -158,8 +153,12 @@ package laya.webgl {
 			
 			RunDriver.clear = function(color:String):void {
 				RenderState2D.worldScissorTest && WebGL.mainContext.disable(WebGLContext.SCISSOR_TEST);
-				var c:Array = Color.create(color)._color;
-				Render.context.ctx.clearBG(c[0], c[1], c[2], c[3]);
+				if (color == null) {
+					Render.context.ctx.clearBG(0, 0, 0, 0);
+				} else {
+					var c:Array = Color.create(color)._color;
+					Render.context.ctx.clearBG(c[0], c[1], c[2], c[3]);
+				}
 				RenderState2D.clear();
 			}
 			
@@ -171,11 +170,7 @@ package laya.webgl {
 				}
 				
 				if ((bitmap is IMergeAtlasBitmap) && ((bitmap as IMergeAtlasBitmap).allowMerageInAtlas)) {
-					bitmap.on(Event.RECOVERED, null, function(bm:Bitmap):void {
-						texture._uvID++;
-						AtlasResourceManager._atlasRestore++;
-						((bitmap as IMergeAtlasBitmap).enableMerageInAtlas) && (AtlasResourceManager.instance.addToAtlas(texture));//资源恢复时重新加入大图集
-					});
+					bitmap.on(Event.RECOVERED, texture, texture.addTextureToAtlas);
 				}
 			}
 			AtlasResourceManager._enable();
@@ -209,6 +204,12 @@ package laya.webgl {
 					break;
 				}
 				return action;
+			}
+			
+			RunDriver.addTextureToAtlas = function(texture:Texture):void {
+				texture._uvID++;
+				AtlasResourceManager._atlasRestore++;
+				((texture.bitmap as IMergeAtlasBitmap).enableMerageInAtlas) && (AtlasResourceManager.instance.addToAtlas(texture));//资源恢复时重新加入大图集
 			}
 			
 			Filter._filterStart = function(scope:SubmitCMDScope, sprite:*, context:RenderContext, x:Number, y:Number):void {
@@ -354,7 +355,7 @@ package laya.webgl {
 								context.addRenderObject(submit);
 								shaderValue = Value2D.create(ShaderDefines2D.TEXTURE2D, 0);
 								Matrix.TEMP.identity();
-								context.ctx.drawTarget(scope, 0, 0, b.width, b.height, Matrix.TEMP, "out", shaderValue,null,BlendMode.TOINT.overlay);
+								context.ctx.drawTarget(scope, 0, 0, b.width, b.height, Matrix.TEMP, "out", shaderValue, null, BlendMode.TOINT.overlay);
 								submit = SubmitCMD.create([scope], Filter._useOut);
 								context.addRenderObject(submit);
 							}
@@ -394,7 +395,7 @@ package laya.webgl {
 					shaderValue = Value2D.create(ShaderDefines2D.TEXTURE2D, 0);
 					//把最后的out纹理画出来
 					Matrix.TEMP.identity();
-					(context.ctx as WebGLContext2D).drawTarget(scope, x, y, b.width, b.height, Matrix.TEMP, "out", shaderValue,null, BlendMode.TOINT.overlay);
+					(context.ctx as WebGLContext2D).drawTarget(scope, x, y, b.width, b.height, Matrix.TEMP, "out", shaderValue, null, BlendMode.TOINT.overlay);
 					
 					//把对象放回池子中
 					submit = SubmitCMD.create([scope], Filter._recycleScope);
@@ -459,7 +460,7 @@ package laya.webgl {
 			mainContext.viewport(0, 0, RenderState2D.width, RenderState2D.height);
 			
 			Laya.stage.event(Event.DEVICE_LOST);
-			
+		
 			//Render.context.ctx._repaint = true;
 			//alert("释放资源");
 		}
@@ -481,8 +482,12 @@ package laya.webgl {
 			
 			_isExperimentalWebgl = (webGLName != "webgl" && (Browser.onWeiXin || Browser.onMQQBrowser));
 			
-			var precisionFormat:* = WebGL.mainContext.getShaderPrecisionFormat(WebGLContext.FRAGMENT_SHADER, WebGLContext.HIGH_FLOAT);
-			precisionFormat.precision ? frameShaderHighPrecision = true : frameShaderHighPrecision = false;
+			frameShaderHighPrecision = false;
+			try {//某些浏览器中未实现此函数，使用try catch增强兼容性。
+				var precisionFormat:* = WebGL.mainContext.getShaderPrecisionFormat(WebGLContext.FRAGMENT_SHADER, WebGLContext.HIGH_FLOAT);
+				precisionFormat.precision ? frameShaderHighPrecision = true : frameShaderHighPrecision = false;
+			} catch (e:*) {
+			}
 			
 			Browser.window.SetupWebglContext && Browser.window.SetupWebglContext(gl);
 			

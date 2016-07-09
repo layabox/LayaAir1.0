@@ -134,6 +134,14 @@ package laya.ani {
 		}
 		
 		/**
+		 * 获取缓存帧率间隔时间
+		 * @return	缓存帧率间隔时间
+		 */
+		public function get cacheFrameRateInterval():Number {
+			return _cacheFrameRateInterval;
+		}
+		
+		/**
 		 * 获取当前播放状态
 		 * @return	当前播放状态
 		 */
@@ -153,7 +161,6 @@ package laya.ani {
 			_stopWhenCircleFinish = false;
 			_elapsedPlaybackTime = 0;
 			_startPlayLoopCount = -1;
-			//cacheFrameRate = 60;
 			_cacheFrameRate = cacheFrameRate;
 			_cacheFrameRateInterval = 1000 / _cacheFrameRate;
 		}

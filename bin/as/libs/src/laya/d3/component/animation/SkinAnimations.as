@@ -13,18 +13,51 @@ package laya.d3.component.animation {
 	 * <code>SkinAnimations</code> 类用于创建蒙皮动画组件。
 	 */
 	public class SkinAnimations extends KeyframeAnimations {
+		/**
+		 * @private
+		 */
+		protected static function _copyBoneAndCache(frameIndex:int, index:Uint8Array, bonesData:Float32Array, out:Vector.<Float32Array>):void {
+			var data:Float32Array = out[frameIndex];
+			if (!data)
+				(data = out[frameIndex] = new Float32Array(index.length * 16));
+			else
+				return;
+			
+			for (var i:int = 0, n:int = index.length, ii:int = 0; i < n; i++) {
+				for (var j:int = 0; j < 16; j++, ii++) {
+					data[ii] = bonesData[(index[i] << 4) + j];
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected static function _copyBone(index:Uint8Array, bonesData:Float32Array, out:Float32Array):void {
+			for (var i:int = 0, n:int = index.length, ii:int = 0; i < n; i++) {
+				for (var j:int = 0; j < 16; j++, ii++) {
+					out[ii] = bonesData[(index[i] << 4) + j];
+				}
+			}
+		}
+		
 		/** @private */
 		protected var _tempCurBonesData:Float32Array;
 		/** @private */
 		protected var _tempCurAnimationData:Float32Array;
+		/** @private */
+		protected var _tempFrameIndex:int = -1;
+		/** @private */
+		protected var _tempIsCache:Boolean = false;
 		/** @private */
 		protected var _curOriginalData:Float32Array;
 		/** @private */
 		protected var _extenData:Float32Array;
 		/** @private */
 		protected var _lastFrameIndex:int = -1;
+		
 		/** @private */
-		protected var _subMeshes:Vector.<SubMeshTemplet>;
+		protected var _ownerMesh:Mesh;
 		/** @private */
 		protected var _curBonesDatas:Float32Array;
 		/** @private */
@@ -68,22 +101,55 @@ package laya.d3.component.animation {
 		 * @param	owner 所属精灵对象。
 		 */
 		override public function _load(owner:Sprite3D):void {
-			owner.on(Event.LOADED, this, function(mesh:Mesh):void {
-				_subMeshes = mesh.templet.subMeshes;
-			});
-			
-			on(Event.LOADED, this, function():void {
-				_templet._animationDatasCache[0] = [];
-				_templet._animationDatasCache[1] = [];
-			});
+			_ownerMesh = (owner as Mesh);
 			
 			player.on(Event.STOPPED, this, function():void {
 				_lastFrameIndex = -1;
 				//_curOriginalData = _extenData = null;//替换文件_extenData不清空会产生BUG，用了旧文件的_extenData;
-				
 				if (player.returnToZeroStopped)
 					_curBonesDatas = _curAnimationDatas = null;
 			});
+		}
+		
+		/**
+		 * @private
+		 * 预缓存帧动画数据（需确保动画模板、模型模板都已加载完成）。
+		 * @param	animationClipIndex 动画索引
+		 * @param	meshTemplet 动画模板
+		 */
+		public function preComputeKeyFrames(animationClipIndex:int):void {
+			var maxKeyFrame:int = Math.floor(_templet.getAniDuration(animationClipIndex) / player.cacheFrameRateInterval);
+			for (var frameIndex:int = 0; frameIndex <= maxKeyFrame; frameIndex++) {
+				(_templet._animationDatasCache[0]) || (_templet._animationDatasCache[0] = []);
+				(_templet._animationDatasCache[1]) || (_templet._animationDatasCache[1] = []);
+				
+				var cacheData:Float32Array = _templet.getAnimationDataWithCache(_templet._animationDatasCache[0], animationClipIndex, frameIndex);
+				if (cacheData) {
+					trace("已缓存");
+					continue;
+				}
+				
+				var bones:Vector.<Object> = _templet.getNodes(animationClipIndex);
+				var boneFloatCount:int = bones.length * 16;
+				_curAnimationDatas = new Float32Array(boneFloatCount);
+				_curBonesDatas = new Float32Array(boneFloatCount);
+				
+				_curOriginalData || (_curOriginalData = new Float32Array(_templet.getTotalkeyframesLength(animationClipIndex)));
+				
+				_templet.getOriginalData(animationClipIndex, _curOriginalData, frameIndex, player.cacheFrameRateInterval * frameIndex/*player.currentFrameTime*/);
+				
+				_extenData || (_extenData = new Float32Array(_templet.getPublicExtData()));
+				Utils3D._computeSkinAnimationData(bones, _curOriginalData, _extenData, _curBonesDatas, _curAnimationDatas);
+				
+				_templet.setAnimationDataWithCache(_templet._animationDatasCache[0], animationClipIndex, frameIndex, _curAnimationDatas);//缓存动画数据
+				_templet.setAnimationDataWithCache(_templet._animationDatasCache[1], animationClipIndex, frameIndex, _curBonesDatas);//缓存骨骼数据
+				
+				var  subMeshes:Vector.<SubMeshTemplet> = _ownerMesh.templet.subMeshes;
+				for (var j:int = 0; j < subMeshes.length; j++) {
+					var subMesh:SubMeshTemplet = subMeshes[j];
+					_copyBoneAndCache(frameIndex, subMesh._boneIndex, _curAnimationDatas, subMesh._cacheBoneDatas);
+				}
+			}
 		}
 		
 		/**
@@ -98,13 +164,15 @@ package laya.d3.component.animation {
 				return;
 			
 			var rate:Number = player.playbackRate * state.scene.timer.scale;
-			var isCache:Boolean = player.isCache && rate >= 1.0;//是否可以缓存
-			var frameIndex:int = isCache ? currentFrameIndex : -1;//慢动作或者不缓存时frameIndex为-1
+			var isCache:Boolean = _tempIsCache = player.isCache && rate >= 1.0;//是否可以缓存
+			var frameIndex:int = _tempFrameIndex = isCache ? currentFrameIndex : -1;//慢动作或者不缓存时frameIndex为-1
 			if (frameIndex !== -1 && _lastFrameIndex === frameIndex)//与上一次更新同帧则直接返回
 			{
 				return;
 			}
 			
+			(_templet._animationDatasCache[0]) || (_templet._animationDatasCache[0] = []);
+			(_templet._animationDatasCache[1]) || (_templet._animationDatasCache[1] = []);
 			var animationClipIndex:int = currentAnimationClipIndex;
 			if (isCache) {
 				var cacheData:Float32Array = _templet.getAnimationDataWithCache(_templet._animationDatasCache[0], animationClipIndex, frameIndex);
@@ -117,13 +185,13 @@ package laya.d3.component.animation {
 			}
 			
 			var bones:Vector.<Object> = _templet.getNodes(animationClipIndex);
-			var boneCount:int = bones.length;
+			var boneFloatCount:int = bones.length * 16;
 			if (isCache) {
-				_curAnimationDatas = new Float32Array(boneCount * 16);
-				_curBonesDatas = new Float32Array(boneCount * 16);
+				_curAnimationDatas = new Float32Array(boneFloatCount);
+				_curBonesDatas = new Float32Array(boneFloatCount);
 			} else {//非缓存或慢动作用临时数组做计算,只new一次
-				(_tempCurAnimationData) || (_tempCurAnimationData = new Float32Array(boneCount * 16));//使用临时数组，防止对已缓存数据造成破坏
-				(_tempCurBonesData) || (_tempCurBonesData = new Float32Array(boneCount * 16));//使用临时数组，防止对已缓存数据造成破坏
+				(_tempCurAnimationData) || (_tempCurAnimationData = new Float32Array(boneFloatCount));//使用临时数组，防止对已缓存数据造成破坏
+				(_tempCurBonesData) || (_tempCurBonesData = new Float32Array(boneFloatCount));//使用临时数组，防止对已缓存数据造成破坏
 				_curAnimationDatas = _tempCurAnimationData;
 				_curBonesDatas = _tempCurBonesData;
 			}
@@ -153,10 +221,16 @@ package laya.d3.component.animation {
 		 */
 		public override function _preRenderUpdate(state:RenderState):void {
 			if (_curAnimationDatas) {
-				state.shaderDefs.addInt(ShaderDefines3D.BONE);//准备state相关数据
-				var subMesh:SubMeshTemplet = _subMeshes[state.renderObj.renderElement.indexOfHost];
-				SubMeshTemplet._copyBone(subMesh._boneIndex, _curAnimationDatas, subMesh._boneData);
-				state.shaderValue.pushValue(Buffer.MATRIXARRAY0, subMesh._boneData, -1);
+				state.shaderDefs.addInt(ShaderDefines3D.BONE);
+				var subMesh:SubMeshTemplet = _ownerMesh.templet.subMeshes[state.renderObj.renderElement.indexOfHost];
+				
+				if (_tempIsCache) {
+					_copyBoneAndCache(_tempFrameIndex, subMesh._boneIndex, _curAnimationDatas, subMesh._cacheBoneDatas);
+					state.shaderValue.pushValue(Buffer.MATRIXARRAY0, subMesh._cacheBoneDatas[_tempFrameIndex], -1);
+				} else {
+					_copyBone(subMesh._boneIndex, _curAnimationDatas, subMesh._boneData);
+					state.shaderValue.pushValue(Buffer.MATRIXARRAY0, subMesh._boneData, -1);
+				}
 			}
 		}
 	}

@@ -1,4 +1,5 @@
-package laya.display {
+package laya.display
+{
 	import laya.events.Event;
 	import laya.maths.Rectangle;
 	import laya.renders.Render;
@@ -176,14 +177,8 @@ package laya.display {
 	 * }
 	 * </listing>
 	 */
-	public class Input extends Text {
-		/**@private */
-		private static var inherentStyle:String = /*[STATIC SAFE]*/ "position:absolute;resize:none;z-index:999;transform-origin:0 0;-webkit-transform-origin:0 0;-moz-transform-origin:0 0;-o-transform-origin:0 0;";
-		/**@private */
-		private static var pcStyle:String = /*[STATIC SAFE]*/ "background-color:transparent;border:none;outline:none;font-family:SimHei;";
-		/**@private */
-		private static var mobileStyle:String = /*[STATIC SAFE]*/ "font-size:20px;" + "width:100%;" + "border:1px solid rgb(30,30,30);" + "outline:none;";
-		
+	public class Input extends Text
+	{
 		/**@private */
 		protected static var input:*;
 		/**@private */
@@ -192,6 +187,10 @@ package laya.display {
 		protected static var inputElement:*;
 		/**@private */
 		protected static var inputContainer:*;
+		/**@private */
+		protected static var confirmButton:*;
+		/**@private */
+		protected static var promptStyleDOM:*;
 		
 		/**@private */
 		protected var _focus:Boolean;
@@ -216,15 +215,14 @@ package laya.display {
 		private var _content:String = '';
 		
 		/**@private */
-		private static const inputHeight:int = 40;
-		/**@private */
-		private static const textAreaHeight:int = 100;
+		private static const inputHeight:int = 45;
 		
 		/**表示是否处于输入状态。*/
 		public static var isInputting:Boolean = false;
 		
 		/**创建一个新的 <code>Input</code> 类实例。*/
-		public function Input() {
+		public function Input()
+		{
 			_width = 100;
 			_height = 20;
 			
@@ -236,124 +234,148 @@ package laya.display {
 		}
 		
 		/**@private */
-		public static function __init__():void {
-			Browser.onMobile && _writeInputAniStyle();
+		public static function __init__():void
+		{
 			_createInputElement();
 			
 			// 移动端通过画布的touchend调用focus
-			if (Browser.onMobile) {
-				Render.canvas.addEventListener("touchend", function():void {
-					// 只有 非Mac移动设备的QQ浏览器有效。
-					if (Input.isInputting && !(Browser.onIPhone || Browser.onIPad)) {
-						var input:* = Input.input.parentElement ? Input.input : Input.area;
-						input.focus();
-					}
-				});
+			if (Browser.onMobile)
+			{
+				Render.canvas.addEventListener("click", _popupInputMethod);
 			}
 		}
 		
-		/**
-		 * <p>获取活动的输入框。</p>
-		 * @internal 调度 <code>focus</code> 事件之后会设置输入框的位置等信息,在移动平台使用。
-		 */
-		private static function _getActiveInput():* {
-			if (Browser.container.contains(input))
-				return input;
-			else if (Browser.container.contains(area))
-				return area;
-			return null;
+		// 移动平台在单击事件触发后弹出输入法
+		private static function _popupInputMethod():void
+		{
+			if (!Input.isInputting) return;
+			
+			var input:* = Input.inputElement;
+			
+			// 设置光标位置至末尾。
+			input.selectionStart = input.selectionEnd = input.value.length;
+			// 弹出输入法。
+			input.focus();
+			
+			// 安卓微信（不适用QQ内核）输入框会被输入法挡住，将其移至上方
+			if (Browser.onAndriod && Browser.onWeiXin && !Browser.onMQQBrowser)
+			{
+				Input.inputContainer.style.top = '40px';
+			}
 		}
 		
 		/**@private */
-		private static function _createInputElement():void {
+		private static function _createInputElement():void
+		{
 			_initInput(area = Browser.createElement("textarea"));
 			_initInput(input = Browser.createElement("input"));
 			
 			inputContainer = Browser.createElement("div");
 			inputContainer.appendChild(input);
 			inputContainer.appendChild(area);
-			inputContainer.style.position = "absolute";
 			//[IF-SCRIPT] inputContainer.setPos = function(x:int, y:int):void { inputContainer.style.left = x + 'px'; inputContainer.style.top = y + 'px'; };
 			
-			if (Browser.onMobile) {
-				// 移动平台输入框动画样式
-				var animationStyle:String = "animation:input-ani 0.3s;" + "-moz-animation:input-ani 0.3s;" + "-webkit-animation:input-ani 0.3s;" + "-o-animation:input-ani 0.3s;" + "animation-fill-mode:forwards;" + "-moz-animation-fill-mode:forwards;" + "-webkit-animation-fill-mode:forwards;" + "-o-animation-fill-mode:forwards;";
+			if (Browser.onMobile)
+			{
 				var style:* = inputContainer.style;
-				inputContainer.style.cssText = animationStyle;
-				// style.background = "#000000";
-				inputContainer.style.position = "relative";
+				style.position = 'fixed';
+				style.bottom = '0px';
+				style.boxSizing = 'border-box';
+				style.border = "1px solid gray";
+				style.backgroundColor = "white";
+				
+				// 确定按钮
+				confirmButton = Browser.createElement("button");
+				inputContainer.appendChild(confirmButton);
+				confirmButton.innerText = "确定";
+				style = confirmButton.style;
+				style.float = 'right';
+				style.width = '50px';
+				style.top = '1px';
+				style.height = inputHeight - 2 + 'px';
+				style.border = 'none';
+				style.background = "rgb(221,221,221)";
+				confirmButton.onclick = function():void{ Input.inputElement.target.focus = false; }
 			}
-		}
-		
-		/**@private */
-		private static function _writeInputAniStyle():void {
-			var aniStyle:String = "{ from { } to { transform:translate3d(0px, 0px, 0px); }}";
-			var mobStyleNode:* = Browser.document.createElement("style");
-			mobStyleNode.innerHTML = "@keyframes input-ani" + aniStyle;
-			mobStyleNode.innerHTML += "@-webkit-keyframes input-ani" + aniStyle;
-			mobStyleNode.innerHTML += "@-moz-keyframes input-ani" + aniStyle;
-			mobStyleNode.innerHTML += "@-o-keyframes input-ani" + aniStyle;
-			Browser.document.head.appendChild(mobStyleNode);
+			else
+			{
+				inputContainer.style.position = "absolute";
+			}
 		}
 		
 		/**
 		 * @private
 		 * @param	input 输入框的引用实例。
 		 */
-		private static function _initInput(input:*):void {
-			input.style.cssText = _getCorretStyle();
-			
-			input.addEventListener('input', function(e:*):void {
-				var target:* = input.target;
-				if (!target)
-					return;
-				
-				var value:String = input.value;
-				
-				// 对输入字符进行限制
-				if (target._restrictPattern) {
-					value = value.replace(target._restrictPattern, "");
-					input.value = value;
-				}
-				
-				target._text = value;
-				
-				target.event(Event.INPUT);
-			});
-			
-			input.addEventListener('mousemove', _stopEvent);
-			input.addEventListener('mousedown', _stopEvent);
-			input.addEventListener('touchmove', _stopEvent);
-			
-			/*[IF-SCRIPT-BEGIN]
-			if(!Render.isConchApp)
+		private static function _initInput(input:*):void
+		{
+			var style:* = input.style;
+			style.cssText = "position:absolute;overflow:hidden;resize:none;z-index:999;transform-origin:0 0;-webkit-transform-origin:0 0;-moz-transform-origin:0 0;-o-transform-origin:0 0;";
+			style.resize = 'none';
+			style.backgroundColor = 'transparent';
+			style.border = 'none';
+			style.outline = 'none';
+
+			if (Browser.onMobile)
 			{
-				input.setColor = function(color:String):void { input.style.color = color; };
-				input.setFontSize = function(fontSize:int):void { input.style.fontSize = fontSize + 'px'; };
-				input.setSize = function(w:int, h:int):void { input.style.width = w + 'px'; input.style.height = h + 'px'; };
+				style.padding = '7px 6px 7px 6px';
+				style.lineHeight = '29px';
+				style.fontFamily = 'Arial,Helvetica,sans-serif';
+				style.fontSize = '20px';
+				style.background = 'transparent';
+				style.border = 'none';
 			}
-			input.setFontFace = function(fontFace:String):void { input.style.fontFamily = fontFace; };
-			[IF-SCRIPT-END]*/
+			
+			input.addEventListener('input', _processInputting);
+			
+			//input.addEventListener('mousemove', _stopEvent);
+			//input.addEventListener('mousedown', _stopEvent);
+			//input.addEventListener('touchmove', _stopEvent);
+		
+			/*[IF-SCRIPT-BEGIN]
+		   if(!Render.isConchApp)
+		   {
+		   input.setColor = function(color:String):void { input.style.color = color; };
+		   input.setFontSize = function(fontSize:int):void { input.style.fontSize = fontSize + 'px'; };
+		   input.setSize = function(w:int, h:int):void { input.style.width = w + 'px'; input.style.height = h + 'px'; };
+		   }
+		   input.setFontFace = function(fontFace:String):void { input.style.fontFamily = fontFace; };
+		   [IF-SCRIPT-END]*/
+		}
+		
+		private static function _processInputting(e:*):void
+		{
+			var input:* = Input.inputElement.target;
+				
+			var value:String = Input.inputElement.value;
+			
+			// 对输入字符进行限制
+			if (input._restrictPattern)
+			{
+				value = value.replace(input._restrictPattern, "");
+				Input.inputElement.value = value;
+			}
+			
+			if(Browser.onPC)
+				input._text = value;
+			else
+				input.__super.prototype._$set_text.call(input, value);
 		}
 		
 		/**@private */
-		private static function _stopEvent(e:*):void {
+		private static function _stopEvent(e:*):void
+		{
 			e.stopPropagation && e.stopPropagation();
 		}
 		
-		/**@private
-		 * 样式在PC和Mobile两端不同。
-		 */
-		private static function _getCorretStyle():String {
-			return inherentStyle + (Browser.onMobile ? mobileStyle : pcStyle)
-		}
-		
 		/**表示是否是多行输入框。*/
-		public function get multiline():Boolean {
+		public function get multiline():Boolean
+		{
 			return _multiline;
 		}
 		
-		public function set multiline(value:Boolean):void {
+		public function set multiline(value:Boolean):void
+		{
 			_multiline = value;
 			valign = value ? "top" : "middle";
 		}
@@ -361,46 +383,53 @@ package laya.display {
 		/**
 		 * 获取对输入框的引用实例。
 		 */
-		public function get nativeInput():* {
+		public function get nativeInput():*
+		{
 			return _multiline ? area : input;
 		}
 		
 		/**@private */
-		private function _onUnDisplay(e:Event = null):void {
+		private function _onUnDisplay(e:Event = null):void
+		{
 			focus = false;
 		}
 		
 		/**@private */
-		private function _onMouseDown(e:Event):void {
+		private function _onMouseDown(e:Event):void
+		{
 			focus = true;
-			Browser.document.addEventListener(Browser.enableTouch?"touchstart":"mousedown", Input._checkBlur);
+			Browser.document.addEventListener(Browser.enableTouch ? "touchstart" : "mousedown", Input._checkBlur);
 		}
 		
 		/**@private */
-		private static function _checkBlur(e:*):void {
+		private static function _checkBlur(e:*):void
+		{
 			// 点击输入框之外的地方会终止输入。
-			if (e.target != Input.input && e.target != Input.area) {
+			if (e.target != Input.input && e.target != Input.area && e.target != confirmButton)
+			{
 				Input.inputElement.target.focus = false;
 			}
 		}
 		
 		/**@inheritDoc*/
-		override public function render(context:RenderContext, x:Number, y:Number):void {
+		override public function render(context:RenderContext, x:Number, y:Number):void
+		{
 			super.render(context, x, y);
 		}
 		
 		/**
 		 * 在输入期间，如果 Input 实例的位置改变，调用该方法同步输入框的位置。
 		 */
-		private function _syncInputTransform():void {
+		private function _syncInputTransform():void
+		{
 			var style:* = nativeInput.style;
 			var stage:Stage = Laya.stage;
 			var rec:Rectangle;
 			rec = Utils.getGlobalPosAndScale(this);
 			
 			var a:Number = stage._canvasTransform.a, d:Number = stage._canvasTransform.d;
-			var x:Number = (rec.x + padding[3] + inputElementXAdjuster) * stage.clientScaleX * a + stage.offset.x ;
-			var y:Number =  (rec.y + padding[0] + inputElementYAdjuster) * stage.clientScaleY * d + stage.offset.y ;
+			var x:Number = (rec.x + padding[3] + inputElementXAdjuster) * stage.clientScaleX * a + stage.offset.x;
+			var y:Number = (rec.y + padding[0] + inputElementYAdjuster) * stage.clientScaleY * d + stage.offset.y;
 			inputContainer.setPos(x, y);
 			
 			var inputWid:int = _width - padding[1] - padding[3];
@@ -415,9 +444,10 @@ package laya.display {
 			//不可见
 			if (!_getVisible()) focus = false;
 			
-			if (stage.transform || rec.width != 1 || rec.height != 1 || a != 1 || d != 1) {
+			if (stage.transform || rec.width != 1 || rec.height != 1 || a != 1 || d != 1)
+			{
 				x = stage.clientScaleX * a * rec.width;
-				y=  stage.clientScaleY * d * rec.height
+				y = stage.clientScaleY * d * rec.height
 				var ts:String = "scale(" + x + "," + y + ")";
 				if (ts != style.transform)
 				{
@@ -431,9 +461,11 @@ package laya.display {
 		}
 		
 		/**@private */
-		private function _getVisible():Boolean {
+		private function _getVisible():Boolean
+		{
 			var target:* = this;
-			while (target) {
+			while (target)
+			{
 				if (target.visible === false) return false;
 				target = target.parent;
 			}
@@ -441,26 +473,31 @@ package laya.display {
 		}
 		
 		/**选中所有文本。*/
-		public function select():void {
+		public function select():void
+		{
 			nativeInput.select();
 		}
 		
 		/**
 		 * 表示焦点是否在显示对象上。
 		 */
-		public function get focus():Boolean {
+		public function get focus():Boolean
+		{
 			return _focus;
 		}
 		
 		// 移动平台最后单击画布才会调用focus
 		// 因此 调用focus接口是无法都在移动平台立刻弹出键盘的
-		public function set focus(value:Boolean):void {
+		public function set focus(value:Boolean):void
+		{
 			var input:* = nativeInput;
 			
-			if (_focus !== value) {
+			if (_focus !== value)
+			{
 				Input.isInputting = value;
 				
-				if (value) {
+				if (value)
+				{
 					input.target && (input.target.focus = false);
 					input.target = this;
 					
@@ -468,21 +505,24 @@ package laya.display {
 					Browser.container.appendChild(inputContainer);
 					
 					_focusIn();
-				} else {
+				}
+				else
+				{
 					input.target = null;
 					
 					_focusOut();
 					Browser.container.removeChild(inputContainer);
 					if (Render.isConchApp)
 					{
-						input.setPos( -10000, -10000);
+						input.setPos(-10000, -10000);
 					}
 				}
 			}
 		}
 		
 		/**@private 设置输入法（textarea或input）*/
-		private function _setInputMethod():void {
+		private function _setInputMethod():void
+		{
 			input.parentElement && (inputContainer.removeChild(input));
 			area.parentElement && (inputContainer.removeChild(area));
 			
@@ -491,14 +531,14 @@ package laya.display {
 		}
 		
 		/**@private */
-		private function _focusIn():void {
+		private function _focusIn():void
+		{
 			var input:* = nativeInput;
 			/*[IF-FLASH]*/ input.setRestrict(_restrictPattern);
 			
 			this._focus = true;
 			
 			var cssStyle:* = input.style;
-			cssStyle.cssText = _getCorretStyle();
 			cssStyle.whiteSpace = (wordWrap ? "pre-wrap" : "nowrap");
 			_setPromptColor();
 			
@@ -516,43 +556,47 @@ package laya.display {
 			Laya.stage.focus = this;
 			event(Event.FOCUS);
 			
-			if (Browser.onPC) {
+			if (Browser.onPC)
+			{
 				// PC端直接调用focus进入焦点。
 				input.focus();
 				
 				// PC浏览器隐藏文字
 				var temp:String = _text;
-				this._text = "";
+				this._text = null;
 				typeset();
 				
 				// PC同步输入框外观。
 				input.setColor(_originColor);
 				input.setFontSize(fontSize);
 				input.setFontFace(font);
+				if (Render.isConchApp)
+				{
+					input.setMultiAble&&input.setMultiAble(_multiline);
+				}
 				cssStyle.lineHeight = (leading + fontSize) + "px";
 				cssStyle.fontStyle = (italic ? "italic" : "normal");
 				cssStyle.fontWeight = (bold ? "bold" : "normal");
 				cssStyle.textAlign = align;
-
+				
 				// 输入框重定位。
 				_syncInputTransform();
-				if(!Render.isConchApp)
-				Laya.timer.frameLoop(1, this, _syncInputTransform);
-			} else {
-				var inputContainerStyle:* = inputContainer.style;
-				// 决定输入框高度
-				var hei:int = (this._multiline ? textAreaHeight : inputHeight);
-				cssStyle.height = hei + "px";
-				// 动画开始前的位置
-				inputContainerStyle.transform = "translate3d(0px," + ( -hei) + "px, 0px)";
+				if (!Render.isConchApp)
+					Laya.timer.frameLoop(1, this, _syncInputTransform);
+			}
+			else
+			{
+				cssStyle.height = inputContainer.style.height = inputHeight + "px";
+				cssStyle.width = Browser.window.innerWidth - confirmButton.offsetWidth+ 'px';
+				inputContainer.style.width = Browser.window.innerWidth + 'px';
 			}
 		}
 		
 		// 设置DOM输入框提示符颜色。
-		private function _setPromptColor():void 
+		private function _setPromptColor():void
 		{
 			// 创建style标签
-			var promptStyleDOM:* = Browser.getElementById("promptStyle");
+			promptStyleDOM = Browser.getElementById("promptStyle");
 			if (!promptStyleDOM)
 			{
 				promptStyleDOM = Browser.createElement("style");
@@ -560,26 +604,15 @@ package laya.display {
 			}
 			
 			// 设置style标签
-			promptStyleDOM.innerText = 
-				"input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {" + 
-					"color:" + _promptColor +
-				"}" +
-				"input:-moz-placeholder, textarea:-moz-placeholder {" +
-					"color:" + _promptColor +
-				"}" + 
-				"input::-moz-placeholder, textarea::-moz-placeholder {" +
-					"color:" + _promptColor +
-				"}" + 
-				"input:-ms-input-placeholder, textarea:-ms-input-placeholder {" +
-					"color:" + _promptColor +
-				"}";
+			promptStyleDOM.innerText = "input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {" + "color:" + _promptColor + "}" + "input:-moz-placeholder, textarea:-moz-placeholder {" + "color:" + _promptColor + "}" + "input::-moz-placeholder, textarea::-moz-placeholder {" + "color:" + _promptColor + "}" + "input:-ms-input-placeholder, textarea:-ms-input-placeholder {" + "color:" + _promptColor + "}";
 		}
 		
 		/**@private */
-		private function _focusOut():void {
+		private function _focusOut():void
+		{
 			this._focus = false;
 			
-			this._text = '';
+			this._text = null;
 			_content = inputElement.value;
 			if (!_content)
 			{
@@ -598,28 +631,28 @@ package laya.display {
 			if (Render.isConchApp) this.nativeInput.blur();
 			// 只有PC会注册此事件。
 			Browser.onPC && Laya.timer.clear(this, _syncInputTransform);
-			Browser.document.removeEventListener(Browser.enableTouch?"touchstart":"mousedown", Input._checkBlur);
+			Browser.document.removeEventListener(Browser.enableTouch ? "touchstart" : "mousedown", Input._checkBlur);
 		}
 		
 		/**@private */
-		private function _removeNeedlessInputMethod():void {
-			var body:* = Browser.container;
-			if (!this._multiline && body.contains(input) && body.contains(area))
-				body.removeChild(input);
-			else if (this._multiline && body.contains(area) && body.contains(input))
-				body.removeChild(area);
-		}
-		
-		/**@private */
-		private function _onKeyDown(e:*):void {
-			if (e.keyCode === 13) event(Event.ENTER);
+		private function _onKeyDown(e:*):void
+		{
+			if (e.keyCode === 13)
+			{
+				// 移动平台单行输入状态下点击回车收回输入法。 
+				if (Browser.onMobile && !this._multiline)
+					this.focus = false;
+					
+				event(Event.ENTER);
+			}
 		}
 		
 		/**@inheritDoc */
-		override public function set text(value:String):void {
+		override public function set text(value:String):void
+		{
 			value += '';
 			
-			if (this._focus) 
+			if (this._focus)
 			{
 				nativeInput.value = value || '';
 				event(Event.CHANGE);
@@ -636,7 +669,8 @@ package laya.display {
 			}
 		}
 		
-		override public function get text():String {
+		override public function get text():String
+		{
 			if (this._focus)
 				return nativeInput.value;
 			else
@@ -644,7 +678,8 @@ package laya.display {
 		}
 		
 		/**@inheritDoc */
-		override public function set color(value:String):void {
+		override public function set color(value:String):void
+		{
 			if (this._focus)
 				nativeInput.setColor(value);
 			
@@ -653,21 +688,28 @@ package laya.display {
 		}
 		
 		/**限制输入的字符。*/
-		public function get restrict():String {
+		public function get restrict():String
+		{
 			if (_restrictPattern)
 			{
-				/*[IF-FLASH]*/ return _restrictPattern as String;
+				/*[IF-FLASH]*/
+				return _restrictPattern as String;
 				return _restrictPattern.source;
 			}
 			return "";
 		}
 		
-		public function set restrict(pattern:String):void {
+		public function set restrict(pattern:String):void
+		{
 			// AS保存字符串
-			/*[IF-FLASH]*/ _restrictPattern = pattern; return;
+			/*[IF-FLASH-BEGIN]*/
+			_restrictPattern = pattern;
+			return;
+			/*[IF-FLASH-END]*/
 			
 			// H5保存RegExp
-			if (pattern) {
+			if (pattern)
+			{
 				pattern = "[^" + pattern + "]";
 				
 				// 如果pattern为^\00-\FF，则我们需要的正则表达式是\00-\FF
@@ -675,18 +717,21 @@ package laya.display {
 					pattern = pattern.replace("^^", "");
 				
 				_restrictPattern = new RegExp(pattern, "g");
-			} else
+			}
+			else
 				_restrictPattern = null;
 		}
 		
 		/**
 		 * 是否可编辑。
 		 */
-		public function set editable(value:Boolean):void {
+		public function set editable(value:Boolean):void
+		{
 			_editable = value;
 		}
 		
-		public function get editable():Boolean {
+		public function get editable():Boolean
+		{
 			return _editable;
 		}
 		
@@ -694,11 +739,13 @@ package laya.display {
 		 * 字符数量限制，默认为10000。
 		 * 设置字符数量限制时，小于等于0的值将会限制字符数量为10000。
 		 */
-		public function get maxChars():int {
+		public function get maxChars():int
+		{
 			return _maxChars;
 		}
 		
-		public function set maxChars(value:int):void {
+		public function set maxChars(value:int):void
+		{
 			if (value <= 0)
 				value = 1E5;
 			_maxChars = value;
@@ -707,12 +754,12 @@ package laya.display {
 		/**
 		 * 设置输入提示符。
 		 */
-		public function get prompt():String 
+		public function get prompt():String
 		{
 			return _prompt;
 		}
 		
-		public function set prompt(value:String):void 
+		public function set prompt(value:String):void
 		{
 			if (!_text && value)
 				super.color = _promptColor;
@@ -725,15 +772,15 @@ package laya.display {
 		/**
 		 * 设置输入提示符颜色。
 		 */
-		public function get promptColor():String 	
+		public function get promptColor():String
 		{
 			return _promptColor;
 		}
 		
-		public function set promptColor(value:String):void 
+		public function set promptColor(value:String):void
 		{
 			_promptColor = value;
-			if (!_content)	super.color = value;
+			if (!_content) super.color = value;
 		}
 	}
 }

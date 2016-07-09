@@ -5,6 +5,7 @@ package laya.map {
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
 	import laya.net.Loader;
+	import laya.renders.Render;
 	import laya.resource.Texture;
 	import laya.utils.Handler;
 	import laya.map.MapLayer;
@@ -99,6 +100,11 @@ package laya.map {
 		private var _viewPortY:Number = 0;
 		private var _viewPortWidth:Number = 0;
 		private var _viewPortHeight:Number = 0;
+		//是否开启线性取样
+		private var _enableLinear:Boolean = true;
+		//资源的相对路径
+		private var _resPath:String;
+		private var _pathArray:Array;
 		
 		public function TiledMap() {
 		
@@ -106,13 +112,15 @@ package laya.map {
 		
 		/**
 		 * 创建地图
-		 * @param	mapName JSON文件名字
-		 * @param	viewRect 视口区域
+		 * @param	mapName 		JSON文件名字
+		 * @param	viewRect 		视口区域
 		 * @param	completeHandler 地图创建完成的回调函数
 		 * @param	viewRectPadding 视口扩充区域，把视口区域上、下、左、右扩充一下，防止视口移动时的穿帮
-		 * @param	gridSize grid大小
+		 * @param	gridSize 		grid大小
+		 * @param	enableLinear 	是否开启线性取样（为false时，可以解决地图黑线的问题，但画质会锐化）
 		 */
-		public function createMap(mapName:String, viewRect:Rectangle, completeHandler:Handler, viewRectPadding:Rectangle = null, gridSize:Point = null):void {
+		public function createMap(mapName:String, viewRect:Rectangle, completeHandler:Handler, viewRectPadding:Rectangle = null, gridSize:Point = null, enableLinear:Boolean = true):void {
+			_enableLinear = enableLinear;
 			_rect.x = viewRect.x;
 			_rect.y = viewRect.y;
 			_rect.width = viewRect.width;
@@ -129,6 +137,8 @@ package laya.map {
 				_gridWidth = gridSize.x;
 				_gridHeight = gridSize.y;
 			}
+			_resPath = mapName.substr(0, mapName.lastIndexOf("/"));
+			_pathArray = _resPath.split("/");
 			_jsonLoader = new Loader();
 			_jsonLoader.once("complete", this, onJsonComplete);
 			_jsonLoader.load(mapName, Loader.JSON, false);
@@ -160,7 +170,8 @@ package laya.map {
 			var tArray:Array = tJsonData.tilesets;
 			var tileset:*;
 			var tTileSet:TileSet;
-			for (var i:int = 0; i < tArray.length; i++) {
+			var i:int = 0;
+			for (i = 0; i < tArray.length; i++) {
 				tileset = tArray[i];
 				tTileSet = new TileSet();
 				tTileSet.init(tileset);
@@ -189,8 +200,54 @@ package laya.map {
 				tTileSet = _currTileSet = _tileSetArray.shift();
 				_loader = new Loader();
 				_loader.once("complete", this, onTextureComplete);
-				_loader.load(tTileSet.image, Loader.IMAGE, false);
+				var tPath:String = mergePath(_resPath, tTileSet.image);
+				_loader.load(tPath, Loader.IMAGE, false);
 			}
+		}
+		
+		/**
+		 * 合并路径
+		 * @param	resPath
+		 * @param	relativePath
+		 * @return
+		 */
+		private function mergePath(resPath:String,relativePath:String):String
+		{
+			var tResultPath:String = "";
+			var tImageArray:Array = relativePath.split("/");
+			var tParentPathNum:int = 0;
+			var i:int = 0;
+			for (i = tImageArray.length - 1; i >= 0; i--)
+			{
+				if (tImageArray[i] == "..")
+				{
+					tParentPathNum++;
+				}
+			}
+			if (tParentPathNum == 0)
+			{
+				tResultPath = resPath + "/" + relativePath;
+				return tResultPath;
+			}
+			var tSrcNum:int = _pathArray.length - tParentPathNum;
+			if (tSrcNum < 0)
+			{
+				trace("[error]path does not exist");
+			}
+			for (i = 0; i < tSrcNum; i++)
+			{
+				if (i == 0)
+				{
+					tResultPath += _pathArray[i];
+				}else {
+					tResultPath = tResultPath + "/" + _pathArray[i];
+				}
+			}
+			for (i = tParentPathNum; i < tImageArray.length; i++)
+			{
+				tResultPath = tResultPath + "/" + tImageArray[i];
+			}
+			return tResultPath;
 		}
 		
 		/**
@@ -200,6 +257,12 @@ package laya.map {
 		private function onTextureComplete(e:*):void {
 			var json:* = _jsonData;
 			var tTexture:Texture = e;
+			if (Render.isWebGL && (!_enableLinear))
+			{
+				tTexture.bitmap.minFifter = 0x2600;
+				tTexture.bitmap.magFifter = 0x2600;
+				tTexture.bitmap.enableMerageInAtlas = false;
+			}
 			_texArray.push(tTexture);
 			var tSubTexture:Texture = null;
 			
@@ -229,7 +292,8 @@ package laya.map {
 			if (_tileSetArray.length > 0) {
 				tTileSet = _currTileSet = _tileSetArray.shift();
 				_loader.once("complete", this, onTextureComplete);
-				_loader.load(tTileSet.image, Loader.IMAGE, false);
+				var tPath:String = mergePath(_resPath, tTileSet.image);
+				_loader.load(tPath, Loader.IMAGE, false);
 			} else {
 				_currTileSet = null;
 				initMap();
@@ -791,7 +855,7 @@ package laya.map {
 		/**
 		 * 销毁地图
 		 */
-		public function destory():void {
+		public function destroy():void {
 			_orientation = ORIENTATION_ORTHOGONAL;
 			//json数据
 			_jsonData = null;
