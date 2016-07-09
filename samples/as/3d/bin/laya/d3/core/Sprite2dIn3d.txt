@@ -1,0 +1,51 @@
+package laya.d3.core 
+{
+	import laya.d3.core.Sprite3D;
+	import laya.d3.core.render.RenderState;
+	import laya.display.Sprite;
+	import laya.renders.Render;
+	import laya.renders.RenderContext;
+	import laya.resource.Texture;
+	import laya.webgl.resource.RenderTarget2D;
+	
+	/**
+	 * @private
+	 * <code>Sprite2dIn3d</code> 类用于创建2D模式下的三维模型。
+	 */
+	public class Sprite2dIn3d extends Sprite3D 
+	{
+		private var _renderTargetTexture:Texture;
+		private var _target:Sprite;
+		
+		public function Sprite2dIn3d() 
+		{
+			super();
+		}
+		
+		public function set spriteTarget(value:Sprite):void
+		{
+			_target = value;
+			if (_renderTargetTexture)
+			{
+				var renderTarget:RenderTarget2D = new RenderTarget2D(_target.width,_target.height,RenderTarget2D.TYPE3D);
+				_renderTargetTexture= new Texture(renderTarget);
+			}
+		}
+		
+		public function get spriteTarget():Sprite
+		{
+			return _target;
+		}
+		
+		public function render(state:RenderState):void {
+			if (!_renderTargetTexture) return;
+			(_renderTargetTexture.bitmap as RenderTarget2D).start();
+
+			_target.render(Render.context, 0, 0);
+			
+			(_renderTargetTexture.bitmap as RenderTarget2D).end();
+		}
+		
+	}
+
+}

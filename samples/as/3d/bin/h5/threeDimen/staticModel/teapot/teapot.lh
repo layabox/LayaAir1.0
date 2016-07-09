@@ -1,0 +1,29 @@
+{
+  "type": "Mesh",
+  "props": {
+    "isStatic": false,
+    "name": "Teapot001",
+    "load": [
+      "teapot-Teapot001.lm"
+    ]
+  },
+  "customProps": {
+    "translate": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "rotation": [
+      -0.707106769,
+      0.0,
+      0.0,
+      0.707106769
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "child": []
+}

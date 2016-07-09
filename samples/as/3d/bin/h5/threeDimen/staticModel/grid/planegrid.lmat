@@ -1,0 +1,49 @@
+{
+  "type": "Material",
+  "props": {
+    "name": "planegrid",
+    "transparent": false,
+    "cullFace": true
+  },
+  "customProps": {
+    "ambientColor": [
+      0.6,
+      0.6,
+      0.6
+    ],
+    "diffuseColor": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "specularColor": [
+      1.0,
+      1.0,
+      1.0,
+      8.0
+    ],
+    "reflectColor": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "diffuseTexture": {
+      "texture2D": "grid.jpg"
+    },
+    "normalTexture": {
+      "texture2D": ""
+    },
+    "specularTexture": {
+      "texture2D": ""
+    },
+    "emissiveTexture": {
+      "texture2D": ""
+    },
+    "ambientTexture": {
+      "texture2D": ""
+    },
+    "reflectTexture": {
+      "texture2D": ""
+    }
+  }
+}

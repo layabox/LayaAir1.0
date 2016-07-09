@@ -1,0 +1,29 @@
+{
+  "type": "Mesh",
+  "props": {
+    "isStatic": false,
+    "name": "Sphere001",
+    "load": [
+      "sphere-Sphere001.lm"
+    ]
+  },
+  "customProps": {
+    "translate": [
+      1.92356547E-11,
+      0.5,
+      1.14440915E-07
+    ],
+    "rotation": [
+      -0.707106769,
+      0.0,
+      0.0,
+      0.707106769
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "child": []
+}

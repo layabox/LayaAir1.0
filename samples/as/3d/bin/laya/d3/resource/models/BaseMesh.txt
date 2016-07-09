@@ -1,0 +1,52 @@
+package laya.d3.resource.models {
+	import laya.d3.core.render.RenderState;
+	import laya.d3.math.BoundBox;
+	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Vector3;
+	import laya.resource.Resource;
+	
+     /**
+	  * @private
+	 * <code>BaseMesh</code> 类用于创建网格的父类。
+	 */
+	public class BaseMesh extends Resource {
+		protected  var _boundSphere:BoundSphere;
+		protected var  _boundBox:BoundBox;
+		protected var _subMeshCount:int;
+		protected var _vertices:Vector.<Vector3>;
+		
+		public  function  get  boundSphere():BoundSphere
+		{
+		return _boundSphere;
+		}
+		public  function  get boundBox():BoundBox
+		{
+		return  _boundBox;
+		}
+		
+		public function get subMeshCount():int {
+			return _subMeshCount;
+		}
+		
+		public function get positions():Vector.<Vector3> {
+			throw new Error("未Override,请重载该属性！");
+		}
+		
+		public function BaseMesh() {
+		}
+		
+		public function Render(state:RenderState):void {
+			throw new Error("未Override,请重载该方法！");
+		}
+		
+		public function RenderSubMesh(state:RenderState, subMeshIndex:int):void {
+			throw new Error("未Override,请重载该方法！");
+		}
+		
+		public function disposeCPUMemory():void {
+			throw new Error("未Override,请重载该方法！");
+		}
+	
+	}
+
+}
