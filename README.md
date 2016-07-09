@@ -1,137 +1,4 @@
-#LayaAir is an open-source HTML5 engine
-It provides Canvas and WebGl for rendering, if Webgl is not supported, it switch automatically into Canvas mode.
-LayaAir Engine is designed for high performance games and support ActionScript 3.0, TypeScript, JavaScript programming language.
-Develop once, publish for 3 target platform (flash, HTML5, mobile)
-
-##LayaAir features
-
-- High performance
-
-Display render is set priority to WebGL mode. However, renderer fallback using Canvas for systems with missing/incompatible graphics cards.
-LayaAir is design to be run without Plugin.
-
-- Light weight and easy to use
-
-LayaAir API is designed to be simple, easy to handle, concepted to require small size installation. It can run basic and complete need for HTML5 engine.
-
-- Multi-language development support
-
-Build your HTML5 application from ActionScript 3.0、TypeScript、JavaScript project.
-
-- Complete feature
-
-functionality for 2D, 3D, VR, Timeline animation controls, slow motion, UI system, particle animation, skeletal animation, physical systems, etc.
-
-- Provide a visual assistance in the development and tool flow
-
-LayaAirIDE offer code development tools and visual editor. Clear workflow make, ergonomic, designed development efficiency.
-
-- Open-source and free
-
-our official Layabox Github with complete engine source version, free of charge, including commercial usage.
-
-##general features overview
-- Webgl rendering
-- Canvas rendering
-- Vector renderer
-- Atlas texture support
-- Load Manager
-- HTML text
-- Bitmap fonts
-- Mask
-- Filter
-- Animation timeline
-- UI
-- Particle system
-- Bones animation
-- Physical systems
-- IDE viewer
-- 3D
-- VR
-
-##Beginner usage
-####JS version
-    Laya.init(550, 400);
-    Laya.stage.scaleMode = "showall";
-    
-    var ape = new laya.Sprite();
-    //Loading our monkey
-    ape.loadImage("res/apes/monkey2.png");
-    
-    Laya.stage.addChild(ape);
-	
-####AS version
-    package
-    {
-        import laya.display.Sprite;
-        import laya.display.Stage;
-    	
-        public class Sprite_DisplayImage
-        {
-            public function Sprite_DisplayImage()
-            {
-                Laya.init(550, 400);
-      		    Laya.stage.scaleMode = "showall";
-                   
-                var ape:Sprite = new Sprite();
-                //Loading our monkey
-                ape.loadImage("res/apes/monkey2.png");
-                   
-                Laya.stage.addChild(ape);
-            }
-        }
-    }
-	
-####TS version
-    /// <reference path="../../libs/LayaAir.d.ts" />
-    class Sprite_DisplayImage{
-    
-        constructor(){
-            Laya.init(550, 400);
-            Laya.stage.scaleMode = "showall";
-    
-            var ape = new Laya.Sprite();
-            //Loading our monkey
-            ape.loadImage("res/apes/monkey2.png");
-    
-            Laya.stage.addChild(ape);
-        }
-    }
-    new Sprite_DisplayImage();
-	
-##Samples Demo
-
-- http://layaair.ldc.layabox.com/demo/
-- http://layabox.github.io/layaair-examples/
-
-##Games Demo
-http://game.layabox.com/265
-
-##API Help
-
-http://layaair.ldc.layabox.com/api/
-
-##Documentation Tutorial
-http://ldc.layabox.com/index.php?m=content&c=index&a=show&catid=8&id=10
-
-##Developer Center
-
-http://ldc.layabox.com/
-
-##Community
-
-http://ask.layabox.com/
-
-##QQ Group
-104144216
-
-##Folder structure
-- bin [Compiled librairy，divided for as，js，ts]
-- samples [Example project]
-- src [Source Code Library]
-- utils [Automated compilation and other tools]
-
-#LayaAir是HTML5开源引擎
+##LayaAir是HTML5开源引擎
 提供Canvas和Webgl同时渲染，如果Webgl不可用，则可自动切换到Canvas模式。引擎为高性能游戏设计，支持AS,TS,JS三种语言开发，一套代码三端齐发（Flash，HTML5，APP）。
 
 ##LayaAir特点
@@ -186,7 +53,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
     
     var ape = new laya.Sprite();
     //加载猩猩图片
-    ape.loadImage("res/apes/monkey2.png");
+    ape.loadImage("res/apes/monkey2.png", 220, 128);
     
     Laya.stage.addChild(ape);
     
@@ -205,7 +72,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
                    
                 var ape:Sprite = new Sprite();
                 //加载猩猩图片
-                ape.loadImage("res/apes/monkey2.png");
+                ape.loadImage("res/apes/monkey2.png", 220, 128);
                    
                 Laya.stage.addChild(ape);
             }
@@ -221,7 +88,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
     
             var ape = new Laya.Sprite();
             //加载猩猩图片
-            ape.loadImage("res/apes/monkey2.png");
+            ape.loadImage("res/apes/monkey2.png", 220, 128);
     
             Laya.stage.addChild(ape);
         }

@@ -1,0 +1,116 @@
+{
+  "type": "Sprite3D",
+  "props": {
+    "name": "RootNode",
+    "load": [
+      null
+    ]
+  },
+  "customProps": {
+    "translate": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "rotation": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "child": [
+    {
+      "type": "Mesh",
+      "props": {
+        "isStatic": false,
+        "name": "rock_geo",
+        "load": [
+          "lizard-rock_geo.lm"
+        ]
+      },
+      "customProps": {
+        "translate": [
+          -2.52925588E-06,
+          3.73966941E-07,
+          -1.52463451E-06
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "child": []
+    },
+    {
+      "type": "Mesh",
+      "props": {
+        "isStatic": false,
+        "name": "lizard_geo",
+        "load": [
+          "lizard-lizard_geo.lm"
+        ]
+      },
+      "customProps": {
+        "translate": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "child": []
+    },
+    {
+      "type": "Mesh",
+      "props": {
+        "isStatic": false,
+        "name": "eye_geo",
+        "load": [
+          "lizard-eye_geo.lm"
+        ]
+      },
+      "customProps": {
+        "translate": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "child": []
+    }
+  ]
+}
