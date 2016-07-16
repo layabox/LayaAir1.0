@@ -15,7 +15,7 @@ package
 			// 无加载失败重试
 			Laya.loader.retryNum = 0;
 
-			var urls:Array = ["do not exist", "res/fighter/fighter.png", "res/legend/map.jpg"];
+			var urls:Array = ["do not exist", "../../../../res/fighter/fighter.png", "../../../../res/legend/map.jpg"];
 			Laya.loader.load(urls, Handler.create(this, onAssetLoaded), Handler.create(this, onLoading, null, false), Loader.TEXT);
 
 			// 侦听加载失败

@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Sprite = laya.display.Sprite;
 	import Stage = laya.display.Stage;
@@ -20,7 +19,7 @@ module laya {
 			Laya.stage.scaleMode = Stage.SCALE_NOBORDER;
 
 			// create a background texture
-			Laya.stage.loadImage("res/pixi/laserBG.jpg");
+			Laya.stage.loadImage("../../res/pixi/laserBG.jpg");
 
 			Laya.stage.frameLoop(1, this, this.animate);
 		}
@@ -30,7 +29,7 @@ module laya {
 				this.tick = 0;
 				// iterate through the dudes and update the positions
 				var laser: Laser = new Laser();
-				laser.loadImage("res/pixi/laser0" + ((this.type % 5) + 1) + ".png");
+				laser.loadImage("../../res/pixi/laser0" + ((this.type % 5) + 1) + ".png");
 				this.type++;
 
 				laser.life = 0;

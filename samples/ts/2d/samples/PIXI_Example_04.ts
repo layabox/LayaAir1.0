@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Sprite= laya.display.Sprite;
 	import Text= laya.display.Text;
@@ -31,7 +30,7 @@ module laya {
 			for (var i:number = 0; i < this.starCount; i++)
 			{
 				var tempBall:Sprite = new Sprite();
-				tempBall.loadImage("res/pixi/bubble_32x32.png");
+				tempBall.loadImage("../../res/pixi/bubble_32x32.png");
 				
 				tempBall.x = (Math.random() * this.w) - this.slideX;
 				tempBall.y = (Math.random() * this.h) - this.slideY;

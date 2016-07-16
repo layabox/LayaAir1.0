@@ -42,7 +42,7 @@ package
 		private function createCharacter():void 
 		{
 			character = new Sprite();
-			character.loadImage("res/cartoonCharacters/1.png");
+			character.loadImage("../../../../res/cartoonCharacters/1.png");
 			character.pos(100, 50);
 			Laya.stage.addChild(character);
 		}

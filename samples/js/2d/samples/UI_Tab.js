@@ -5,7 +5,7 @@
 	var Handler = Laya.Handler;
 	var WebGL = Laya.WebGL;
 
-	var skins = ["res/ui/tab1.png", "res/ui/tab2.png"];
+	var skins = ["../../res/ui/tab1.png", "../../res/ui/tab2.png"];
 
 	(function()
 	{

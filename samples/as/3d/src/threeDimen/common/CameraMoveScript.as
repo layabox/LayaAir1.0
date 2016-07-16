@@ -15,6 +15,7 @@ package threeDimen.common {
 	import laya.events.Event;
 	import laya.events.KeyBoardManager;
 	import laya.utils.Browser;
+	import laya.utils.Stat;
 	
 	/**
 	 * ...

@@ -73,14 +73,14 @@ package laya.webgl.canvas {
 		}
 		
 		public function update():void {
-			var si:int = ib.length;
+			var si:int = ib.byteLength;
 			var len:int = geomatrys.length;
 			this.offset = si;
 			for (var i:int = geoStart; i < len; i++) {
-				geomatrys[i].getData(ib, vb, vb.length / (5 * 4));
+				geomatrys[i].getData(ib, vb, vb.byteLength / (5 * 4));
 			}
 			geoStart = len;//记录下一次 该从哪个位置开始计算几何图形的数据
-			this.count = (ib.length - si) / CONST3D2D.BYTES_PIDX;
+			this.count = (ib.byteLength - si) / CONST3D2D.BYTES_PIDX;
 		}
 		
 		public function reset():void {

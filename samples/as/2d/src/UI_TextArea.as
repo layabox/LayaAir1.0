@@ -8,7 +8,7 @@ package
     
 	public class UI_TextArea
 	{
-		private var skin:String = "res/ui/textarea.png";
+		private var skin:String = "../../../../res/ui/textarea.png";
 		
 		public function UI_TextArea()
 		{

@@ -64,7 +64,7 @@ package
 			var frames:Array = [];
 			for (var i:int = 1; i <= 25; ++i)
 			{
-				frames.push("res/phoenix/phoenix" + preFixNumber(i, 4) + ".jpg");
+				frames.push("../../../../res/phoenix/phoenix" + preFixNumber(i, 4) + ".jpg");
 			}
 			
 			var animation:Animation = new Animation();
@@ -112,7 +112,7 @@ package
 		{
 			Laya.stage.graphics.clear();
 			Laya.stage.graphics.drawRect(
-				0, (Laya.stage.height - phoenixHeight * Browser.pixelRatio) / 2, 
+				0, 0, 
 				phoenixWidth, phoenixHeight, getHexColorString());
 		}
 		

@@ -1,4 +1,5 @@
 package laya.filters {
+	import laya.display.Sprite;
 	import laya.renders.Render;
 	import laya.utils.RunDriver;
 	
@@ -35,6 +36,14 @@ package laya.filters {
 		 */
 		override public function get type():int {
 			return BLUR;
+		}
+		
+		/**
+		 * @private 通知微端
+		 */
+		public override function callNative(sp:Sprite):void
+		{
+			sp.model &&sp.model.blurFilter&&sp.model.blurFilter(strength);
 		}
 	}
 }

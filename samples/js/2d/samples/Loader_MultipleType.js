@@ -3,8 +3,8 @@
 	var Loader  = laya.net.Loader;
 	var Handler = laya.utils.Handler;
 
-	var ROBOT_DATA_PATH = "res/skeleton/robot/robot.bin";
-	var ROBOT_TEXTURE_PATH = "res/skeleton/robot/texture.png";
+	var ROBOT_DATA_PATH = "../../res/skeleton/robot/robot.bin";
+	var ROBOT_TEXTURE_PATH = "../../res/skeleton/robot/texture.png";
 
 	(function()
 	{

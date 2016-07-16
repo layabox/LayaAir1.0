@@ -6,6 +6,7 @@ package laya.d3.resource.tempelet {
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexGlitter;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.resource.Texture;
@@ -15,7 +16,7 @@ package laya.d3.resource.tempelet {
 	import laya.webgl.WebGLContext;
 	import laya.webgl.resource.WebGLImage;
 	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.ValusArray;
 	import laya.webgl.utils.VertexBuffer2D;
 	
@@ -79,7 +80,7 @@ package laya.d3.resource.tempelet {
 			return 1;
 		}
 		
-		public function getBakedVertexs(index:int = 0):Float32Array {
+		public function getBakedVertexs(index:int, transform:Matrix4x4):Float32Array {
 			return null;
 		}
 		
@@ -121,7 +122,7 @@ package laya.d3.resource.tempelet {
 			
 			if (setting.texturePath)//预设纹理ShaderValue
 			{
-				_shaderValue.pushValue(Buffer.DIFFUSETEXTURE, null, -1);
+				_shaderValue.pushValue(Buffer2D.DIFFUSETEXTURE, null, -1);
 				var _this:GlitterTemplet = this;
 				Laya.loader.load(setting.texturePath, Handler.create(null, function(texture:Texture):void {
 					(texture.bitmap as WebGLImage).enableMerageInAtlas = false;
@@ -172,13 +173,13 @@ package laya.d3.resource.tempelet {
 					//_shaderValue.pushValue(Buffer.UV0, _uvShaderValue, -1);
 					//_shaderValue.pushValue(Buffer.TIME, _timeShaderValue, -1);
 					
-					_shaderValue.pushValue(Buffer.UNICOLOR, setting.color.elements, -1);
-					_shaderValue.pushValue(Buffer.MVPMATRIX, state.projectionViewMatrix.elements, -1);
-					_shaderValue.pushValue(Buffer.DURATION, setting.lifeTime, -1);
-					_shaderValue.pushValue(Buffer.LUMINANCE, 1.0, -1);
+					_shaderValue.pushValue(Buffer2D.UNICOLOR, setting.color.elements, -1);
+					_shaderValue.pushValue(Buffer2D.MVPMATRIX, state.projectionViewMatrix.elements, -1);
+					_shaderValue.pushValue(Buffer2D.DURATION, setting.lifeTime, -1);
+					_shaderValue.pushValue(Buffer2D.LUMINANCE, 1.0, -1);
 					
 					//设置粒子的时间参数，可通过此参数停止粒子动画
-					_shaderValue.pushValue(Buffer.CURRENTTIME, _currentTime, -1);
+					_shaderValue.pushValue(Buffer2D.CURRENTTIME, _currentTime, -1);
 					
 					_shaderValue.data[1][0] = texture.source;
 					_shaderValue.data[1][1] = texture.bitmap.id;

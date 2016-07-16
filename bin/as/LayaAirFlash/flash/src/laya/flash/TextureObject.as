@@ -7,6 +7,7 @@
 	import flash.display3D.Context3DWrapMode;
 	import flash.display3D.textures.Texture;
 	import laya.webgl.WebGLContext;
+
 	/**
 	 * ...
 	 * @author rivetr
@@ -15,7 +16,7 @@
 	{
 		public static var _context3D:Context3D;
 		private static var _lastSamplerID : int = -1;
-		public var _texture : Texture;
+		private var _texture : Texture;
 		private var _width : int = 0;
 		private var _height : int = 0;
 		private var _stateArr : Object = {};
@@ -24,6 +25,8 @@
 		private var _wrap : String = Context3DWrapMode.CLAMP;
 		private var _filter : String = Context3DTextureFilter.NEAREST;
 		private var _mipfilter : String = Context3DMipFilter.MIPNONE;
+		
+		private var _dinit : Boolean = false;
 		
 		public function TextureObject() 
 		{		
@@ -41,6 +44,13 @@
 			return x;
 		}		
 		
+		public function set dinit( _b : Boolean ) : void {
+			_dinit = _b;
+		}
+		public function get dinit() : Boolean {
+			return _dinit;
+		}
+		
 		public static function clearSampler() : void {
 			_lastSamplerID = -1;
 		}
@@ -52,11 +62,16 @@
 			return _height;
 		}
 		
+		public function get texture() : Texture {
+			return _texture;
+		}
+		
 		public function getTexFromSize( wid : int, heig : int ) : Texture {
 			if ( ( _width == wid ) && (_height == heig ) ) return _texture;
 			if ( _texture != null ) _texture.dispose();
 			_width = _to2(wid); _height = _to2(heig);
 			_texture = _context3D.createTexture( _width, _height, Context3DTextureFormat.BGRA, false );
+			_dinit = false;
 			return _texture;
 		}
 		

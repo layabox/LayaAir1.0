@@ -35,7 +35,7 @@ package
 			for (var i:int = 0; i < starCount; i++)
 			{
 				var tempBall:Sprite = new Sprite();
-				tempBall.loadImage("res/pixi/bubble_32x32.png");
+				tempBall.loadImage("../../../../res/pixi/bubble_32x32.png");
 				
 				tempBall.x = (Math.random() * w) - slideX;
 				tempBall.y = (Math.random() * h) - slideY;

@@ -10,7 +10,7 @@ import laya.display.Animation;
 
 	public class Animation_Altas
 	{
-		private const AniConfPath:String = "res/fighter/fighter.json";
+		private const AniConfPath:String = "../../../../res/fighter/fighter.json";
 		
 		public function Animation_Altas()
 		{

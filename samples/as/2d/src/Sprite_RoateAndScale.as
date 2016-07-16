@@ -29,7 +29,7 @@ package
 		{
 			ape = new Sprite();
 			
-			ape.loadImage("res/apes/monkey2.png");
+			ape.loadImage("../../../../res/apes/monkey2.png");
 			Laya.stage.addChild(ape);
 			ape.pivot(55, 72);
 			ape.x = Laya.stage.width / 2;

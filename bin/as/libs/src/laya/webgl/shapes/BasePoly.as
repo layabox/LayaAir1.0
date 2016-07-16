@@ -2,7 +2,7 @@ package laya.webgl.shapes
 {
 	
 	import laya.maths.Point;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	//此类可以减少代码
 	public class BasePoly implements IShape
 	{
@@ -24,7 +24,7 @@ package laya.webgl.shapes
 			this.borderColor = borderColor;
 		}
 		
-		public function getData(ib:Buffer, vb:Buffer, start:int):void
+		public function getData(ib:Buffer2D, vb:Buffer2D, start:int):void
 		{
 			
 		}

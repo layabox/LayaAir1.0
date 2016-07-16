@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Stage = laya.display.Stage;
     import TextArea = laya.ui.TextArea;
@@ -7,7 +6,7 @@ module laya {
     import WebGL = laya.webgl.WebGL;
 
     export class UI_TextArea {
-        private skin: string = "res/ui/textarea.png";
+        private skin: string = "../../res/ui/textarea.png";
 
         constructor() {
             // 不支持WebGL时自动切换至Canvas

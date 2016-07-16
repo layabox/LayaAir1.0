@@ -1,7 +1,7 @@
-package laya.display
-{
+package laya.display {
 	import laya.events.Event;
-	import laya.events.EventDispatcher;	
+	import laya.events.EventDispatcher;
+	
 	/**
 	 * 动画播放完毕后调度。
 	 * @eventType Event.COMPLETE
@@ -13,15 +13,11 @@ package laya.display
 	 * @eventType Event.LABEL
 	 */
 	[Event(name = "label", type = "laya.events.Event")]
+	
 	/**
 	 *  动画播放控制器
-	 * 
 	 */
-	public class AnimationPlayerBase extends Sprite
-	{
-		public function AnimationPlayerBase()
-		{
-		}
+	public class AnimationPlayerBase extends Sprite {
 		/** 播放间隔(单位：毫秒)。*/
 		public var interval:int = Config.animationInterval;
 		/**是否循环播放 */
@@ -52,8 +48,9 @@ package laya.display
 				timerLoop(this.interval, this, _frameLoop, null, true);
 			}
 		}
+		
 		/**@private */
-		protected function _frameLoop():void {		
+		protected function _frameLoop():void {
 			this.index = _index, _index++;
 			if (this._index >= this._count) {
 				if (loop) this._index = 0;
@@ -62,24 +59,22 @@ package laya.display
 					stop();
 				}
 				event(Event.COMPLETE);
-			}		
+			}
 		}
+		
 		/**@private */
-		public function _setControlNode(node:Sprite):void
-		{
-			if(_controlNode)
-			{
+		public function _setControlNode(node:Sprite):void {
+			if (_controlNode) {
 				_controlNode.off(Event.DISPLAY, this, _onDisplay);
 				_controlNode.off(Event.UNDISPLAY, this, _onDisplay);
 			}
-			_controlNode=node;
-			if(node)
-			{
+			_controlNode = node;
+			if (node) {
 				node.on(Event.DISPLAY, this, _onDisplay);
 				node.on(Event.UNDISPLAY, this, _onDisplay);
-			}
-			
+			}		
 		}
+		
 		/**@private */
 		private function _onDisplay():void {
 			if (_isPlaying) {
@@ -87,6 +82,7 @@ package laya.display
 				else clearTimer(this, _frameLoop);
 			}
 		}
+		
 		/**
 		 * 停止播放。
 		 */
@@ -143,17 +139,18 @@ package laya.display
 		
 		/**
 		 * @private
-		 * 显示到某帧 
+		 * 显示到某帧
 		 * @param value 帧索引
-		 * 
+		 *
 		 */
-		protected function _displayToIndex(value:int):void
-		{			
+		protected function _displayToIndex(value:int):void {
 		}
+		
 		/**动画长度。*/
 		public function get count():int {
 			return _count;
 		}
+		
 		/**清理。方便对象复用。*/
 		public function clear():void {
 			stop();

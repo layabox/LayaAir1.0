@@ -92,7 +92,7 @@ package
 		private function createApe():void
 		{
 			target = new Sprite();
-			target.loadImage("res/apes/monkey2.png");
+			target.loadImage("../../../../res/apes/monkey2.png");
 			Laya.stage.addChild(target);
 			target.pivot(55, 72);
 			target.pos(100,100);

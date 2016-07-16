@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Browser = laya.utils.Browser;
 	import Stat = laya.utils.Stat;

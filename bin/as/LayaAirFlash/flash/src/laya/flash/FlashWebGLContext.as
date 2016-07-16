@@ -607,6 +607,10 @@
 			}else {
 				compiledObj = JSON.parse(com.adobe.glsl2agal.compileShader( shader.source, 1, true,true ));	
 			}
+			
+			// TEST CODE for shader:
+			//compiledObj.glslsource = shader.source;
+			
 			shader.compiledObj = compiledObj;
 		}
 		
@@ -630,7 +634,7 @@
 				return;
 			}
 			var tbuf : Buffer = buffer as Buffer;
-			tbuf.bufferType === WebGLContext.ELEMENT_ARRAY_BUFFER?(_activeIBuf=tbuf as FlashIndexBuffer):(_activeVBuf=tbuf as FlashVertexBuffer);
+			tbuf.bufferType == WebGLContext.ELEMENT_ARRAY_BUFFER?(_activeIBuf=tbuf as FlashIndexBuffer):(_activeVBuf=tbuf as FlashVertexBuffer);
 		}
 		
 		/**
@@ -798,8 +802,7 @@
 			throw "no";
 		}
 		public override function drawElements(mode:*, count:int, type:*, offset:int):void {
-			if ( _activeVBuf == null ) {
-				//throw "Not set VBuffer...";
+			if ( (_activeVBuf == null) || (!_nInitTex) ) {
 				return;
 			}
 			
@@ -826,6 +829,7 @@
 			_useTexture[_actTexUnit] = true;
 		}
 		
+		private var _nInitTex : Boolean = true;
 		private static var _useTexture : Vector.<Boolean> = new Vector.<Boolean>(8);
 		public override function useTexture(value:Boolean):void
 		{
@@ -836,7 +840,8 @@
 			
 			if ( value && (!_useTexture[_actTexUnit]) ) {
 				var texObj : TextureObject = _activeTex[WebGLContext.TEXTURE_2D] as TextureObject;
-				_context3D.setTextureAt(_actTexUnit, texObj._texture );
+				_context3D.setTextureAt(_actTexUnit, texObj.texture );
+				_nInitTex = texObj.dinit;
 				_csetMaxTex = _actTexUnit + 1;
 				texObj.setTexSamplerState( _actTexUnit );				
 			}
@@ -853,7 +858,8 @@
 		public override function bindTexture(target:*, texture:*):void
 		{
 			_activeTex[target] = texture;			
-			_context3D.setTextureAt(_actTexUnit, (texture as TextureObject)._texture );
+			_context3D.setTextureAt(_actTexUnit, (texture as TextureObject).texture );
+			_nInitTex = (texture as TextureObject).dinit;
 			_csetMaxTex = _actTexUnit + 1;
 			(texture as TextureObject).setTexSamplerState( _actTexUnit );			
 		}
@@ -889,6 +895,7 @@
 					if (args[8]  is ByteArray ) {
 						devTex = tex.getTexFromSize( args[3], args[4] );
 						devTex.uploadFromByteArray( args[8], 0);
+						tex.dinit = true;
 					}
 					else if ( args[8] is FlashImage ) {
 						tbi = (args[5] as FlashImage).bitmap;					
@@ -905,12 +912,13 @@
 							_mat.identity();
 							_mat.a = fwi / bdata.width;
 							_mat.d = fhe / bdata.height;
-							fbi.draw( bdata, _mat,null,null,null,true );
+							fbi.draw( bdata, _mat,null,null,null,false );
 							bdata = fbi;
 						}												
 						_tba.length = fwi * 4 * fhe;
 						bdata.copyPixelsToByteArray( _tmpRec, _tba );
-						devTex.uploadFromByteArray( _tba,0 );
+						devTex.uploadFromByteArray( _tba, 0 );
+						tex.dinit = true;
 					} else if ( args[8] == null ) {
 						devTex = tex.getTexFromSize( args[3], args[4] );
 					}else {
@@ -933,13 +941,14 @@
 							_mat.identity();
 							_mat.a = fwi / bdata.width;
 							_mat.d = fhe / bdata.height;
-							fbi.draw( bdata, _mat,null,null,null,true );
+							fbi.draw( bdata, _mat,null,null,null,false );
 							bdata = fbi;
 						}						
 						_tba.length = fwi * 4 * fhe;
 						bdata.copyPixelsToByteArray( _tmpRec, _tba );				
 						devTex.uploadFromByteArray( _tba, 0 );
-						
+						tex.dinit = true;
+						break;
 						if ( fwi < 1024 ) break;					
 						// Generate Mipmap:
 						// 目前暂只有超过1024 Size的Texture生成MipMap 
@@ -955,7 +964,7 @@
 							_matrix.a = _rect.width/fwi;
 							_matrix.d = _rect.height / fhe;
 							mipmap.fillRect( _rect, 0);				
-							mipmap.draw(bdata, _matrix, null, null, null, true);							
+							mipmap.draw(bdata, _matrix, null, null, null, false );							
 							devTex.uploadFromBitmapData(mipmap, i);
 							i ++;
 							w >>= 1;
@@ -1015,8 +1024,12 @@
 			(framebuffer as FrameBuffObj).texture = null;
 		}
 		
+
 		public override function bindFramebuffer(target:*, framebuffer:*):void {
 			if ( target != WebGLContext.FRAMEBUFFER ) throw Error( "Error Para..." );
+			if ( (framebuffer == null) && (_activeFrameBuffer != null) ) 
+				_activeFrameBuffer.texture.dinit = true;
+			
 			this._activeFrameBuffer = framebuffer;
 			if ( framebuffer == null ) {
 				_context3D.setRenderToBackBuffer();
@@ -1024,7 +1037,7 @@
 			}
 			var fbuf : FrameBuffObj = framebuffer as FrameBuffObj;
 			if ( fbuf.texture != null ) {
-				_context3D.setRenderToTexture( fbuf.texture._texture );			
+				_context3D.setRenderToTexture( fbuf.texture.texture );					
 				if ( _bUpdateVP ) updateVP();
 				WebGLContext._sFactor = WebGLContext.SRC_ALPHA;
 				WebGLContext._dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;

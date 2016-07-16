@@ -22,7 +22,7 @@
 		
 		Stat.show();
 		
-		Laya.loader.load("res/cartoonCharacters/cartoonCharactors.json", Handler.create(this, createCharacters), null, Loader.ATLAS);
+		Laya.loader.load("../../res/cartoonCharacters/cartoonCharactors.json", Handler.create(this, createCharacters), null, Loader.ATLAS);
 	})();
 
 	function createCharacters()

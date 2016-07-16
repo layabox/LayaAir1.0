@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Stage = laya.display.Stage;
     import RadioGroup = laya.ui.RadioGroup;
@@ -22,7 +21,7 @@ module laya {
             Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
             Laya.stage.bgColor = "#232628";
 
-            this.skins = ["res/ui/radioButton (1).png", "res/ui/radioButton (2).png", "res/ui/radioButton (3).png"];
+            this.skins = ["../../res/ui/radioButton (1).png", "../../res/ui/radioButton (2).png", "../../res/ui/radioButton (3).png"];
             Laya.loader.load(this.skins, Handler.create(this, this.initRadioGroups));
         }
 

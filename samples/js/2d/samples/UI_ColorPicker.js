@@ -6,7 +6,7 @@
 	var Handler     = Laya.Handler;
 	var WebGL       = Laya.WebGL;
 
-	var skin = "res/ui/colorPicker.png";
+	var skin = "../../res/ui/colorPicker.png";
 
 	(function()
 	{

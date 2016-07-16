@@ -8,7 +8,7 @@ package
 	
 	public class UI_ColorPicker
 	{
-		private var skin:String = "res/ui/colorPicker.png";
+		private var skin:String = "../../../../res/ui/colorPicker.png";
 		
 		public function UI_ColorPicker()
 		{

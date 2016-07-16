@@ -30,7 +30,7 @@ package
 			var gap:int = 300;
 
 			sp1 = new Sprite();
-			sp1.loadImage("res/apes/monkey2.png", 0, 0);
+			sp1.loadImage("../../../../res/apes/monkey2.png", 0, 0);
 			
 			sp1.pos((Laya.stage.width - gap) / 2, Laya.stage.height / 2);
 			//设置轴心点为中心
@@ -39,7 +39,7 @@ package
 			
 			//不设置轴心点默认为左上角
 			sp2 = new Sprite();
-			sp2.loadImage("res/apes/monkey2.png", 0, 0);
+			sp2.loadImage("../../../../res/apes/monkey2.png", 0, 0);
 			sp2.pos((Laya.stage.width + gap) / 2, Laya.stage.height / 2);
 			Laya.stage.addChild(sp2);
 			

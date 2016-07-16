@@ -1,4 +1,5 @@
 package laya.filters {
+	import laya.display.Sprite;
 
 	/**
 	 * <code>Filter</code> 是滤镜基类。
@@ -40,6 +41,9 @@ package laya.filters {
 		/**@private 滤镜类型。*/
 		public function get type():int{return -1}
 		/**@private 滤镜动作。*/
-		public function get action():IFilterAction{return _action}		
+		public function get action():IFilterAction { return _action }	
+		/**@private */
+		public function callNative(sp:Sprite):void { }
+		
 	}
 }

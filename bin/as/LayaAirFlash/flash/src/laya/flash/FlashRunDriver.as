@@ -34,7 +34,7 @@
 			return new FlashWebGLContext();
 		}
 		
-		public static function getPixelRatio(pixelRatio:Number):Number {
+		public static function getPixelRatio(pixelRatio:Number=1):Number {
 			return 1;
 		}
 		

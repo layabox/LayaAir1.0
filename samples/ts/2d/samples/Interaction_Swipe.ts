@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Sprite = laya.display.Sprite;
     import Stage = laya.display.Stage;

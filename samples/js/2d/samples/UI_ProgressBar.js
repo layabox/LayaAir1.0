@@ -18,12 +18,12 @@
 		Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
 		Laya.stage.bgColor = "#232628";
 
-		Laya.loader.load(["res/ui/progressBar.png", "res/ui/progressBar$bar.png"], Handler.create(this, onLoadComplete));
+		Laya.loader.load(["../../res/ui/progressBar.png", "../../res/ui/progressBar$bar.png"], Handler.create(this, onLoadComplete));
 	})();
 
 	function onLoadComplete()
 	{
-		progressBar = new ProgressBar("res/ui/progressBar.png");
+		progressBar = new ProgressBar("../../res/ui/progressBar.png");
 
 		progressBar.width = 400;
 

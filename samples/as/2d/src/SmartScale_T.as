@@ -31,7 +31,7 @@ package  {
 			
 			//实例一个背景
 			var bg:Image = new Image();
-			bg.skin = "res/bg.jpg";
+			bg.skin = "../../../../res/bg.jpg";
 			Laya.stage.addChild(bg);
 			
 			//实例一个文本
@@ -45,7 +45,7 @@ package  {
 			
 			//实例一个小人，放到右上角，并相对布局
 			var boy1:Image = new Image();
-			boy1.skin = "res/cartoonCharacters/1.png";
+			boy1.skin = "../../../../res/cartoonCharacters/1.png";
 			boy1.top = 0;
 			boy1.right = 0;
 			boy1.on("click", this, onBoyClick);
@@ -53,7 +53,7 @@ package  {
 			
 			//实例一个小人，放到右下角，并相对布局
 			var boy2:Image = new Image();
-			boy2.skin = "res/cartoonCharacters/2.png";
+			boy2.skin = "../../../../res/cartoonCharacters/2.png";
 			boy2.bottom = 0;
 			boy2.right = 0;
 			boy2.on("click", this, onBoyClick);

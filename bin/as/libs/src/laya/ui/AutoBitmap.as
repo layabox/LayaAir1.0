@@ -226,5 +226,16 @@ package laya.ui {
 			cmdCaches = {};
 			textureCache = {};
 		}
+		
+		/**@private 缓存资源*/
+		public static function setCache(key:String, value:*):void {
+			cacheCount++;
+			textureCache[key] = value;
+		}
+		
+		/**@private 获取资源*/
+		public static function getCache(key:String):*{
+			return textureCache[key];
+		}
 	}
 }

@@ -27,11 +27,11 @@ package
 		{
 			var terminalX:int = 200;
 			
-			var characterA:Sprite = createCharacter("res/cartoonCharacters/1.png");
+			var characterA:Sprite = createCharacter("../../../../res/cartoonCharacters/1.png");
 			characterA.pivot(46.5, 50);
 			characterA.y = 100;
 			
-			var characterB:Sprite = createCharacter("res/cartoonCharacters/2.png");
+			var characterB:Sprite = createCharacter("../../../../res/cartoonCharacters/2.png");
 			characterB.pivot(34, 50);
 			characterB.y = 250;
 

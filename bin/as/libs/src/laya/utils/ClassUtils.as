@@ -81,12 +81,12 @@ package laya.utils {
 		 * @param	root 根节点，用来设置var定义。
 		 * @return	生成的节点。
 		 */
-		public static function createByJson(json:*, node:* = null, root:Node = null, customHandler:Handler = null):* {
+		public static function createByJson(json:*, node:* = null, root:Node = null, customHandler:Handler = null, instanceHandler:Handler = null):* {
 			if (json is String) json = JSON.parse(json);
 			var props:Object = json.props;
 			
 			if (!node) {
-				node = getInstance(props.runtime || json.type);
+				node = instanceHandler ? instanceHandler.runWith(json.instanceParams) : getInstance(props.runtime || json.type);
 				if (!node) return null;
 			}
 			
@@ -95,7 +95,7 @@ package laya.utils {
 				for (var i:int = 0, n:int = child.length; i < n; i++) {
 					var data:Object = child[i];
 					if (data.props.name === "render" && node["_$set_itemRender"]) node.itemRender = data;
-					else node.addChild(createByJson(data, null, root, customHandler));
+					else node.addChild(createByJson(data, null, root, customHandler, instanceHandler));
 				}
 			}
 			

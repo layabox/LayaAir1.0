@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import MovieClip = laya.ani.swf.MovieClip;
 	import Stage = laya.display.Stage;
@@ -6,7 +5,7 @@ module laya {
 	import WebGL = laya.webgl.WebGL;
 
 	export class Animation_SWF {
-		private SWFPath: string = "res/swf/dragon.swf";
+		private SWFPath: string = "../../res/swf/dragon.swf";
 
 		private MCWidth: number = 318;
 		private MCHeight: number = 406;

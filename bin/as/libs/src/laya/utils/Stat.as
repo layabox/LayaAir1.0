@@ -104,7 +104,7 @@ package laya.utils {
 		 * 隐藏帧频信息。
 		 */
 		public static function hide():void {
-			Browser.removeElement(_canvas);
+			Browser.removeElement(_canvas.source);
 			Laya.timer.clear(Stat, loop);
 		}
 		

@@ -1,5 +1,6 @@
 package laya.filters {
 	
+	import laya.display.Sprite;
 	import laya.utils.RunDriver;
 	
 	/**
@@ -81,6 +82,15 @@ package laya.filters {
 				_GRAY = new ColorFilter([0.3, 0.59, 0.11, 0, 0, 0.3, 0.59, 0.11, 0, 0, 0.3, 0.59, 0.11, 0, 0, 0, 0, 0, 1, 0]);
 			}
 			return _GRAY;
+		}
+		
+		/**
+		 * @private 通知微端
+		 */
+		public override function callNative(sp:Sprite):void
+		{
+			var t:Array=sp._$P.rgbg =getRGBG();
+			sp.model && sp.model.filter(t[0], t[1], t[2], t[3]);
 		}
 	}
 }

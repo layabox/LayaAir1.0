@@ -11,7 +11,7 @@ package
 	
 	public class Interaction_Drag
 	{
-		private const ApePath:String = "res/apes/monkey2.png";
+		private const ApePath:String = "../../../../res/apes/monkey2.png";
 
 		private var ape:Sprite;
 		private var dragRegion:Rectangle;

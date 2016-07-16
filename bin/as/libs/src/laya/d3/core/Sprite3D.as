@@ -184,13 +184,12 @@ package laya.d3.core {
 		public function _update(state:RenderState):void {
 			state.owner = this;
 			var preTransformID:int = state.worldTransformModifyID;
+			
+			var canView:Boolean = state.renderClip.view(this);
+			(canView) && (_updateComponents(state));
 			state.worldTransformModifyID += transform._worldTransformModifyID;
 			transform.getWorldMatrix(state.worldTransformModifyID);
-			if (state.renderClip.view(this)) {
-				_updateComponents(state);
-				_lateUpdateComponents(state);
-			}
-			
+			(canView) && (_lateUpdateComponents(state));
 			_childs.length && _updateChilds(state);
 			state.worldTransformModifyID = preTransformID;
 		}
@@ -267,12 +266,12 @@ package laya.d3.core {
 			var onComp:Function = function(data:String):void {
 				var preBasePath:String = URL.basePath;
 				URL.basePath = URL.getPath(URL.formatURL(url));
-				addChild(ClassUtils.createByJson(data, null, _this, Handler.create(null, Utils3D._parseHierarchy, null, false)));
+				addChild(ClassUtils.createByJson(data, null, _this, Handler.create(null, Utils3D._parseHierarchyProp, null, false), Handler.create(null, Utils3D._parseHierarchyNode, null, false)));
 				URL.basePath = preBasePath;
 				event(Event.HIERARCHY_LOADED, _this);
 			}
 			loader.once(Event.COMPLETE, null, onComp);
 			loader.load(url, Loader.TEXT);
-		}	
+		}
 	}
 }

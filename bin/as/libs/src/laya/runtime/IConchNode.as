@@ -59,6 +59,10 @@ package laya.runtime
 		function border(color:String):void;
 		/**@private */
 		function optimizeScrollRect(b:Boolean):void;
+		/**@private */
+		function blurFilter(strength:Number):void;
+		/**@private */
+		function glowFilter(color:String, blur:Number, offX:Number, offY:Number):void;
 	}
 
 }

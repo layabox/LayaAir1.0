@@ -325,11 +325,17 @@ package laya.renders {
 				canvas.clear();
 				(canvas.width != w || canvas.height != h) && canvas.size(w, h);
 				
+				var t:Array;
 				//TODO:测试webgl下是否有缓存模糊问题
 				if (scaleX!=1||scaleY!=1) {
 					var ctx:* = RenderContext(tx).ctx;
 					ctx.save();
 					ctx.scale(scaleX, scaleY);
+					if (!Render.isConchWebGL&&Render.isConchApp)
+					{
+						t = sprite._$P.rgbg;
+						t&&ctx.setFilter(t[0],t[1],t[2],t[3]);
+					}
 					_next._fun.call(_next, sprite, tx, -left, -top);
 					ctx.restore();
 					if(!Render.isConchApp||Render.isConchWebGL)sprite._applyFilters();
@@ -337,7 +343,7 @@ package laya.renders {
 					ctx = RenderContext(tx).ctx;
 					if (!Render.isConchWebGL&&Render.isConchApp)
 					{
-						var t:Array = sprite._$P.rgbg;
+						t = sprite._$P.rgbg;
 						t&&ctx.setFilter(t[0],t[1],t[2],t[3]);
 					}
 					_next._fun.call(_next, sprite, tx, -left, -top);

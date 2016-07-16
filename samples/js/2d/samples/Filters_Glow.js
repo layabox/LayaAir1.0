@@ -8,7 +8,7 @@
 	var Handler    = laya.utils.Handler;
 	var WebGL      = laya.webgl.WebGL;
 
-	var apePath = "res/apes/monkey2.png";
+	var apePath = "../../res/apes/monkey2.png";
 
 	var ape;
 

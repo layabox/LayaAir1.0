@@ -1,6 +1,8 @@
 package laya.d3.graphics {
+	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.Material;
 	import laya.d3.core.render.IRender;
+	import laya.d3.core.render.RenderObject;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.shader.ShaderDefines3D;
@@ -8,15 +10,14 @@ package laya.d3.graphics {
 	import laya.utils.Stat;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.ValusArray;
 	
 	/**
-	 * ...
-	 * @author ...
+	 * @private
+	 * <code>StaticBatch</code> 类用于创建静态批处理。
 	 */
 	public class StaticBatch implements IRender {
-		/** @private */
 		public static var maxVertexCount:int = 65535;
 		public static var maxIndexCount:int = 120000;
 		
@@ -33,9 +34,10 @@ package laya.d3.graphics {
 		private var _vertexBuffer:VertexBuffer3D;
 		private var _indexBuffer:IndexBuffer3D;
 		
-		public var _lastRenderObjects:Vector.<IRender>;
-		public var _renderObjects:Vector.<IRender>;
-		public var _needReMerage:Boolean;
+		private var _lastRenderObjects:Vector.<IRender>;
+		private var _renderObjects:Vector.<IRender>;
+		private var _renderOwners:Vector.<Sprite3D>;
+		private var _needReMerage:Boolean;
 		
 		public function get indexOfHost():int {
 			return 0;
@@ -64,16 +66,13 @@ package laya.d3.graphics {
 			return _indexBuffer;
 		}
 		
-		public function getBakedVertexs(index:int = 0):Float32Array {
+		public function getBakedVertexs(index:int, transform:Matrix4x4):Float32Array {
 			return null;
 		}
 		
 		public function getBakedIndices():* {
 			return null;
 		}
-		
-		private static var ID:int = 0;
-		public var id:int = 0;
 		
 		public function StaticBatch(vertexDeclaration:VertexDeclaration, material:Material) {
 			_elementCount = 0;
@@ -87,11 +86,10 @@ package laya.d3.graphics {
 			
 			_lastRenderObjects = new Vector.<IRender>();
 			_renderObjects = new Vector.<IRender>();
+			_renderOwners = new Vector.<Sprite3D>();
 			_needReMerage = false;
-			id = ++ID;
 		}
 		
-		/**所有addRenderObj后调用*/
 		public function _finsh():void {
 			if (!_needReMerage && _lastRenderObjects.length != _renderObjects.length) {
 				_needReMerage = true;
@@ -108,7 +106,7 @@ package laya.d3.graphics {
 				
 				for (var i:int = 0; i < _renderObjects.length; i++) {
 					var renderObj:IRender = _renderObjects[i];
-					var subVertexDatas:Float32Array = renderObj.getBakedVertexs();
+					var subVertexDatas:Float32Array = renderObj.getBakedVertexs(0, _renderOwners[i].transform.getWorldMatrix(-2));
 					var subIndexDatas:Uint16Array = renderObj.getBakedIndices();
 					
 					var indexOffset:int = curMerVerCount / (_vertexDeclaration.vertexStride / 4);
@@ -132,11 +130,9 @@ package laya.d3.graphics {
 			
 			_lastRenderObjects = _renderObjects.slice();
 			_renderObjects.length = 0;
+			_renderOwners.length = 0;
 		}
 		
-		/**
-		 * @private
-		 */
 		private function _getShader(state:RenderState, vertexBuffer:VertexBuffer3D, material:Material):Shader {
 			if (!material)
 				return null;
@@ -150,15 +146,18 @@ package laya.d3.graphics {
 			return shader;
 		}
 		
-		public function addRenderObj(renderObj:IRender):Boolean {
-			var indexCount:int = _currentIndexCount + renderObj.getIndexBuffer().length / 2;//TODO:可能为1
-			var vertexCount:int = _currentVertexCount + renderObj.getVertexBuffer().length / _vertexDeclaration.vertexStride;
+		public function addRenderObj(renderObj:RenderObject):Boolean {
+			var renderElement:IRender = renderObj.renderElement;
+			var indexbuffer:IndexBuffer3D = renderElement.getIndexBuffer();
+			var indexCount:int = _currentIndexCount + indexbuffer.byteLength / indexbuffer.indexTypeByteCount;
+			var vertexCount:int = _currentVertexCount + renderElement.getVertexBuffer().byteLength / _vertexDeclaration.vertexStride;
 			
 			if (vertexCount > maxVertexCount || indexCount > maxIndexCount)
 				return false;
 			
-			_renderObjects.push(renderObj);//需始终有IB，需处理
-			if (!_needReMerage && _lastRenderObjects.indexOf(renderObj) === -1)
+			_renderObjects.push(renderElement);//需始终有IB，需处理
+			_renderOwners.push(renderObj.owner);
+			if (!_needReMerage && _lastRenderObjects.indexOf(renderElement) === -1)
 				_needReMerage = true;
 			
 			_currentIndexCount = indexCount;
@@ -182,7 +181,7 @@ package laya.d3.graphics {
 				var newVB:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, WebGLContext.STATIC_DRAW);
 				newVB.setData(newVertexDatas);
 				vb.dispose();
-				_vertexBuffer =vb= newVB;
+				_vertexBuffer = vb = newVB;
 			}
 			
 			vb._bind();
@@ -194,8 +193,8 @@ package laya.d3.graphics {
 				var presz:int = state.shaderValue.length;
 				state.shaderValue.pushArray(vb.vertexDeclaration.shaderValues);
 				
-				state.shaderValue.pushValue(Buffer.MATRIX1, Matrix4x4.DEFAULT.elements, -1);//待优化
-				state.shaderValue.pushValue(Buffer.MVPMATRIX, state.projectionViewMatrix.elements, state.camera.transform._worldTransformModifyID + state.camera._projectionMatrixModifyID);
+				state.shaderValue.pushValue(Buffer2D.MATRIX1, Matrix4x4.DEFAULT.elements, -1);//待优化
+				state.shaderValue.pushValue(Buffer2D.MVPMATRIX, state.projectionViewMatrix.elements, state.camera.transform._worldTransformModifyID + state.camera._projectionMatrixModifyID);
 				if (!material.upload(state, null, shader)) {
 					state.shaderValue.length = presz;
 					return false;

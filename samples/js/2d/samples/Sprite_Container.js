@@ -36,7 +36,7 @@
 		for (var i = 0; i < 4; i++)
 		{
 			var ape = new Sprite();
-			ape.loadImage("res/apes/monkey" + i + ".png");
+			ape.loadImage("../../res/apes/monkey" + i + ".png");
 
 			ape.pivot(55, 72);
 

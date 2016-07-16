@@ -5,6 +5,7 @@ package laya.ui {
 	import laya.resource.Texture;
 	import laya.ui.AutoBitmap;
 	import laya.ui.UIUtils;
+	import laya.utils.Browser;
 	import laya.utils.Handler;
 	
 	/**
@@ -242,7 +243,6 @@ package laya.ui {
 			super.destroy(destroyChild);
 			_bitmap && _bitmap.destroy();
 			_text && _text.destroy(destroyChild);
-			_sources && (_sources.length = 0);
 			_bitmap = null;
 			_text = null;
 			_clickHandler = null;
@@ -252,16 +252,24 @@ package laya.ui {
 		/**@inheritDoc */
 		override protected function createChildren():void {
 			graphics = _bitmap = new AutoBitmap();
-			_text = new Text();
-			_text.overflow = Text.HIDDEN;
-			_text.align = "center";
-			_text.valign = "middle";
+		}
+		
+		/**@private */
+		protected function createText():void {
+			if (!_text) {
+				_text = new Text();
+				_text.overflow = Text.HIDDEN;
+				_text.align = "center";
+				_text.valign = "middle";
+			}
 		}
 		
 		/**@inheritDoc */
 		override protected function initialize():void {
-			on(Event.MOUSE_OVER, this, onMouse);
-			on(Event.MOUSE_OUT, this, onMouse);
+			if (Browser.onPC) {
+				on(Event.MOUSE_OVER, this, onMouse);
+				on(Event.MOUSE_OUT, this, onMouse);
+			}
 			on(Event.MOUSE_DOWN, this, onMouse);
 			on(Event.MOUSE_UP, this, onMouse);
 			on(Event.CLICK, this, onMouse);
@@ -334,18 +342,32 @@ package laya.ui {
 				trace("lose skin", _skin);
 				return;
 			}
-			_sources || (_sources = []);
-			_sources.length = 0;
 			var width:Number = img.sourceWidth;
 			var height:Number = img.sourceHeight / _stateNum;
-			for (var i:int = 0; i < _stateNum; i++) {
-				_sources.push(Texture.createFromTexture(img, 0, height * i, width, height));
+			var key:String = _skin + _stateNum;
+			var clips:Array = AutoBitmap.getCache(key);
+			if (clips) _sources = clips;
+			else {
+				_sources = [];
+				if (_stateNum === 1) {
+					_sources.push(img);
+				} else {
+					for (var i:int = 0; i < _stateNum; i++) {
+						_sources.push(Texture.createFromTexture(img, 0, height * i, width, height));
+					}
+				}
+				AutoBitmap.setCache(key, _sources);
 			}
+			
 			if (_autoSize) {
-				_bitmap.width = _text.width = _width || width;
-				_bitmap.height = _text.height = _height || height;
+				_bitmap.width = _width || width;
+				_bitmap.height = _height || height;
+				if (_text) {
+					_text.width = _bitmap.width;
+					_text.height = _bitmap.height;
+				}
 			} else {
-				_text.x = width;
+				_text && (_text.x = width);
 			}
 		}
 		
@@ -356,7 +378,7 @@ package laya.ui {
 			runCallLater(changeClips);
 			if (_autoSize) return _bitmap.width;
 			runCallLater(changeState);
-			return _bitmap.width + _text.width;
+			return _bitmap.width + _text ? _text.width : 0;
 		}
 		
 		/**
@@ -371,10 +393,12 @@ package laya.ui {
 		 * 按钮的文本内容。
 		 */
 		public function get label():String {
-			return _text.text;
+			return _text ? _text.text : null;
 		}
 		
 		public function set label(value:String):void {
+			if (!_text && !value) return;
+			createText();
 			if (_text.text != value) {
 				value && !_text.displayedInStage && addChild(_text);
 				_text.text = value;
@@ -459,10 +483,12 @@ package laya.ui {
 		 * <p><b>格式：</b>"上边距,右边距,下边距,左边距"。</p>
 		 */
 		public function get labelPadding():String {
+			createText();
 			return _text.padding.join(",");
 		}
 		
 		public function set labelPadding(value:String):void {
+			createText();
 			_text.padding = UIUtils.fillArray(Styles.labelPadding, value, Number);
 		}
 		
@@ -471,10 +497,12 @@ package laya.ui {
 		 * @see laya.display.Text.fontSize()
 		 */
 		public function get labelSize():int {
+			createText();
 			return _text.fontSize;
 		}
 		
 		public function set labelSize(value:int):void {
+			createText();
 			_text.fontSize = value
 		}
 		
@@ -484,10 +512,12 @@ package laya.ui {
 		 * @see laya.display.Text.stroke()
 		 */
 		public function get labelStroke():Number {
+			createText();
 			return _text.stroke;
 		}
 		
 		public function set labelStroke(value:Number):void {
+			createText();
 			_text.stroke = value
 		}
 		
@@ -497,10 +527,12 @@ package laya.ui {
 		 * @see laya.display.Text.strokeColor()
 		 */
 		public function get labelStrokeColor():String {
+			createText();
 			return _text.strokeColor;
 		}
 		
 		public function set labelStrokeColor(value:String):void {
+			createText();
 			_text.strokeColor = value
 		}
 		
@@ -509,10 +541,12 @@ package laya.ui {
 		 * @see laya.display.Text.bold()
 		 */
 		public function get labelBold():Boolean {
+			createText();
 			return _text.bold;
 		}
 		
 		public function set labelBold(value:Boolean):void {
+			createText();
 			_text.bold = value;
 		}
 		
@@ -521,11 +555,24 @@ package laya.ui {
 		 * @see laya.display.Text.font()
 		 */
 		public function get labelFont():String {
+			createText();
 			return _text.font;
 		}
 		
 		public function set labelFont(value:String):void {
+			createText();
 			_text.font = value;
+		}
+		
+		/**标签对齐模式，默认为居中对齐。*/
+		public function get labelAlign():String {
+			createText()
+			return _text.align;
+		}
+		
+		public function set labelAlign(value:String):void {
+			createText()
+			_text.align = value;
 		}
 		
 		/**
@@ -543,6 +590,7 @@ package laya.ui {
 		 * 按钮文本标签 <code>Text</code> 控件。
 		 */
 		public function get text():Text {
+			createText();
 			return _text;
 		}
 		
@@ -566,7 +614,7 @@ package laya.ui {
 			super.width = value;
 			if (_autoSize) {
 				_bitmap.width = value;
-				_text.width = value;
+				_text && (_text.width = value);
 			}
 		}
 		
@@ -575,7 +623,7 @@ package laya.ui {
 			super.height = value;
 			if (_autoSize) {
 				_bitmap.height = value;
-				_text.height = value;
+				_text && (_text.height = value);
 			}
 		}
 		
@@ -584,15 +632,6 @@ package laya.ui {
 			_dataSource = value;
 			if (value is Number || value is String) label = value + "";
 			else super.dataSource = value;
-		}
-		
-		/**标签对齐模式，默认为居中对齐。*/
-		public function get labelAlign():String {
-			return _text.align;
-		}
-		
-		public function set labelAlign(value:String):void {
-			_text.align = value;
 		}
 		
 		/**@private */

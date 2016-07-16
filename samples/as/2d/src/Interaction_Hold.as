@@ -13,7 +13,7 @@ package
 	public class Interaction_Hold
 	{
 		private const HOLD_TRIGGER_TIME:int = 1000;
-		private const apePath:String = "res/apes/monkey2.png";
+		private const apePath:String = "../../../../res/apes/monkey2.png";
 
 		//触发hold事件时间为1秒
 		private var ape:Sprite;

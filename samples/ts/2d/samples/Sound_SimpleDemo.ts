@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Sprite = laya.display.Sprite;
     import Stage = laya.display.Stage;
@@ -59,12 +58,12 @@ module laya {
 
         private onPlayMusic(e: Event): void {
             console.log("播放音乐");
-            SoundManager.playMusic("res/sounds/bgm.mp3", 1, new Handler(this, this.onComplete));
+            SoundManager.playMusic("../../res/sounds/bgm.mp3", 1, new Handler(this, this.onComplete));
         }
 
         private onPlaySound(e: Event): void {
             console.log("播放音效");
-            SoundManager.playSound("res/sounds/btn.mp3", 1, new Handler(this, this.onComplete));
+            SoundManager.playSound("../../res/sounds/btn.mp3", 1, new Handler(this, this.onComplete));
         }
 
         private onComplete(): void {

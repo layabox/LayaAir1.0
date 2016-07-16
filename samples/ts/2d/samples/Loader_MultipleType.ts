@@ -1,11 +1,10 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Loader = laya.net.Loader;
 	import Handler = laya.utils.Handler;
 
 	export class Loader_MultipleType {
-		private ROBOT_DATA_PATH: string = "res/skeleton/robot/robot.bin";
-		private ROBOT_TEXTURE_PATH: string = "res/skeleton/robot/texture.png";
+		private ROBOT_DATA_PATH: string = "../../res/skeleton/robot/robot.bin";
+		private ROBOT_TEXTURE_PATH: string = "../../res/skeleton/robot/texture.png";
 
 		constructor() {
 			Laya.init(100, 100);

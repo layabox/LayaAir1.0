@@ -12,7 +12,7 @@ package laya.webgl.submit {
 	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.shader.d2.value.Value2D;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.CONST3D2D;
 	
 	/**
@@ -86,14 +86,16 @@ package laya.webgl.submit {
 			}
 		
 		}
-		
+		private static var _shaderSet : Boolean = true;
 		public override function renderSubmit():int {
 			if (_numEle === 0) return 1;
 			var _tex:Texture = shaderValue.textureHost;
 			if (_tex) {
 				var source:* = _tex.source;
-				if (!_tex.bitmap || !source)
+				if (!_tex.bitmap || !source) {
+					_shaderSet = false;
 					return 1;
+				}
 				shaderValue.texture = source;
 			}
 			
@@ -110,10 +112,10 @@ package laya.webgl.submit {
 			Stat.drawCall++;
 			Stat.trianglesFaces += _numEle / 3;
 			
-			
-			if (_preIsSameTextureShader && Shader.activeShader)
+			if (_preIsSameTextureShader && Shader.activeShader && _shaderSet )
 				Shader.activeShader.uploadTexture2D(shaderValue.texture);
 			else shaderValue.upload();
+			_shaderSet = true;
 			
 			_isSameTexture = true;//暂时使用
 			if (_texs.length > 1 && !_isSameTexture)//如果不是同一个材质了，要拆开提交

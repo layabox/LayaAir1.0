@@ -1,5 +1,5 @@
 package laya.webgl.shapes {
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	
 	public class Polygon extends BasePoly {
 		
@@ -10,7 +10,7 @@ package laya.webgl.shapes {
 			super(x, y, 0, 0, _points.length / 2, color, borderWidth, borderColor);
 		}
 		
-		override public function getData(ib:Buffer, vb:Buffer, start:int):void {
+		override public function getData(ib:Buffer2D, vb:Buffer2D, start:int):void {
 			var indices:Array = [];
 			var verts:Array = [];
 			

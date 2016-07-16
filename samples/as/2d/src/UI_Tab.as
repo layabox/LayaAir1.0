@@ -7,7 +7,7 @@ package
 	
 	public class UI_Tab
 	{
-		private var skins:Array = ["res/ui/tab1.png", "res/ui/tab2.png"];
+		private var skins:Array = ["../../../../res/ui/tab1.png", "../../../../res/ui/tab2.png"];
 		
 		public function UI_Tab()
 		{

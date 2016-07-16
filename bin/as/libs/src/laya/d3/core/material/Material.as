@@ -9,7 +9,7 @@ package laya.d3.core.material {
 	import laya.resource.Texture;
 	import laya.utils.Stat;
 	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.ValusArray;
 	
 	/**
@@ -108,6 +108,8 @@ package laya.d3.core.material {
 		public var cullFace:Boolean = true;
 		/**AlphaBlend模式下是否使用加色法。*/
 		public var transparentAddtive:Boolean = false;//只适用于1为AlphaBlend模式
+		/**是否天空。*/
+		public var  isSky:Boolean = false;
 		
 		/***/
 		public var loaded:Boolean = false;
@@ -178,7 +180,7 @@ package laya.d3.core.material {
 		 */
 		public function set alphaTestValue(value:Number):void {
 			_alphaTestValue = value;
-			_pushShaderValue(ALPHATESTVALUE, Buffer.ALPHATESTVALUE, _transparent && _transparentMode === 0 ? _alphaTestValue : null, _id);
+			_pushShaderValue(ALPHATESTVALUE, Buffer2D.ALPHATESTVALUE, _transparent && _transparentMode === 0 ? _alphaTestValue : null, _id);
 		}
 		
 		/**
@@ -194,7 +196,7 @@ package laya.d3.core.material {
 		 * @param value 漫反射贴图。
 		 */
 		public function set diffuseTexture(value:Texture):void {
-			_setTexture(value, DIFFUSETEXTURE, Buffer.DIFFUSETEXTURE);
+			_setTexture(value, DIFFUSETEXTURE, Buffer2D.DIFFUSETEXTURE);
 			_getShaderDefineValue();
 		}
 		
@@ -211,7 +213,7 @@ package laya.d3.core.material {
 		 * @param value 法线贴图。
 		 */
 		public function set normalTexture(value:Texture):void {
-			_setTexture(value, NORMALTEXTURE, Buffer.NORMALTEXTURE);
+			_setTexture(value, NORMALTEXTURE, Buffer2D.NORMALTEXTURE);
 			_getShaderDefineValue();
 		}
 		
@@ -228,7 +230,7 @@ package laya.d3.core.material {
 		 * @param value  高光贴图。
 		 */
 		public function set specularTexture(value:Texture):void {
-			_setTexture(value, SPECULARTEXTURE, Buffer.SPECULARTEXTURE);
+			_setTexture(value, SPECULARTEXTURE, Buffer2D.SPECULARTEXTURE);
 			_getShaderDefineValue();
 		}
 		
@@ -245,7 +247,7 @@ package laya.d3.core.material {
 		 * @param value 放射贴图。
 		 */
 		public function set emissiveTexture(value:Texture):void {
-			_setTexture(value, EMISSIVETEXTURE, Buffer.EMISSIVETEXTURE);
+			_setTexture(value, EMISSIVETEXTURE, Buffer2D.EMISSIVETEXTURE);
 			_getShaderDefineValue();
 		}
 		
@@ -262,7 +264,7 @@ package laya.d3.core.material {
 		 * @param  value 环境贴图。
 		 */
 		public function set ambientTexture(value:Texture):void {
-			_setTexture(value, AMBIENTTEXTURE, Buffer.AMBIENTTEXTURE);
+			_setTexture(value, AMBIENTTEXTURE, Buffer2D.AMBIENTTEXTURE);
 			_getShaderDefineValue();
 		}
 		
@@ -279,7 +281,7 @@ package laya.d3.core.material {
 		 * @param value 反射贴图。
 		 */
 		public function set reflectTexture(value:Texture):void {
-			_setTexture(value, REFLECTTEXTURE, Buffer.REFLECTTEXTURE);
+			_setTexture(value, REFLECTTEXTURE, Buffer2D.REFLECTTEXTURE);
 			_getShaderDefineValue();
 		}
 		
@@ -297,7 +299,7 @@ package laya.d3.core.material {
 		 */
 		public function set ambientColor(value:Vector3):void {
 			_color[AMBIENTCOLOR] = value;
-			_pushShaderValue(AMBIENTCOLOR, Buffer.MATERIALAMBIENT, value.elements, _id);
+			_pushShaderValue(AMBIENTCOLOR, Buffer2D.MATERIALAMBIENT, value.elements, _id);
 		}
 		
 		/**
@@ -306,7 +308,7 @@ package laya.d3.core.material {
 		 */
 		public function set diffuseColor(value:Vector3):void {
 			_color[DIFFUSECOLOR] = value;
-			_pushShaderValue(DIFFUSECOLOR, Buffer.MATERIALDIFFUSE, value.elements, _id);
+			_pushShaderValue(DIFFUSECOLOR, Buffer2D.MATERIALDIFFUSE, value.elements, _id);
 		}
 		
 		/**
@@ -315,7 +317,7 @@ package laya.d3.core.material {
 		 */
 		public function set specularColor(value:Vector4):void {
 			_color[SPECULARCOLOR] = value;
-			_pushShaderValue(SPECULARCOLOR, Buffer.MATERIALSPECULAR, value.elements, _id);
+			_pushShaderValue(SPECULARCOLOR, Buffer2D.MATERIALSPECULAR, value.elements, _id);
 		}
 		
 		/**
@@ -324,7 +326,7 @@ package laya.d3.core.material {
 		 */
 		public function set reflectColor(value:Vector3):void {
 			_color[REFLECTCOLOR] = value;
-			_pushShaderValue(REFLECTCOLOR, Buffer.MATERIALREFLECT, value.elements, _id);
+			_pushShaderValue(REFLECTCOLOR, Buffer2D.MATERIALREFLECT, value.elements, _id);
 		}
 		
 		/**
@@ -333,7 +335,7 @@ package laya.d3.core.material {
 		 */
 		public function set luminance(value:Number):void {
 			_luminance = value;
-			_pushShaderValue(LUMINANCE, Buffer.LUMINANCE, _luminance, _id);
+			_pushShaderValue(LUMINANCE, Buffer2D.LUMINANCE, _luminance, _id);
 		}
 		
 		/**
@@ -351,7 +353,7 @@ package laya.d3.core.material {
 		public function set transformUV(value:TransformUV):void {
 			_transformUV = value;
 			var uvMat:Matrix4x4 = _transformUV.matrix;
-			_pushShaderValue(TRANSFORMUV, Buffer.MATRIX2, uvMat.elements, _id);
+			_pushShaderValue(TRANSFORMUV, Buffer2D.MATRIX2, uvMat.elements, _id);
 			_getShaderDefineValue();
 		}
 		
@@ -365,11 +367,11 @@ package laya.d3.core.material {
 			_color[SPECULARCOLOR] = SPECULARCOLORVALUE;
 			_color[REFLECTCOLOR] = REFLECTCOLORVALUE;
 			
-			_pushShaderValue(AMBIENTCOLOR, Buffer.MATERIALAMBIENT, _color[AMBIENTCOLOR].elements, _id);
-			_pushShaderValue(DIFFUSECOLOR, Buffer.MATERIALDIFFUSE, _color[DIFFUSECOLOR].elements, _id);
-			_pushShaderValue(SPECULARCOLOR, Buffer.MATERIALSPECULAR, _color[SPECULARCOLOR].elements, _id);
-			_pushShaderValue(REFLECTCOLOR, Buffer.MATERIALREFLECT, _color[REFLECTCOLOR].elements, _id);
-			_pushShaderValue(LUMINANCE, Buffer.LUMINANCE, _luminance, _id);
+			_pushShaderValue(AMBIENTCOLOR, Buffer2D.MATERIALAMBIENT, _color[AMBIENTCOLOR].elements, _id);
+			_pushShaderValue(DIFFUSECOLOR, Buffer2D.MATERIALDIFFUSE, _color[DIFFUSECOLOR].elements, _id);
+			_pushShaderValue(SPECULARCOLOR, Buffer2D.MATERIALSPECULAR, _color[SPECULARCOLOR].elements, _id);
+			_pushShaderValue(REFLECTCOLOR, Buffer2D.MATERIALREFLECT, _color[REFLECTCOLOR].elements, _id);
+			_pushShaderValue(LUMINANCE, Buffer2D.LUMINANCE, _luminance, _id);
 			
 			alphaTestValue = _alphaTestValue;
 		}

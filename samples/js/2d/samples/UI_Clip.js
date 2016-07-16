@@ -7,9 +7,9 @@
 	var Handler = Laya.Handler;
 	var WebGL   = Laya.WebGL;
 
-	var buttonSkin = "res/ui/button-7.png";
-	var clipSkin = "res/ui/num0-9.png";
-	var bgSkin = "res/ui/coutDown.png";
+	var buttonSkin = "../../res/ui/button-7.png";
+	var clipSkin = "../../res/ui/num0-9.png";
+	var bgSkin = "../../res/ui/coutDown.png";
 
 	var counter, currFrame, controller;
 

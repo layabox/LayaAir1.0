@@ -27,7 +27,7 @@ package
 			Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
 			Laya.stage.bgColor = "#232628";
 		
-			assets = ["res/ui/dialog (1).png", "res/ui/close.png"];
+			assets = ["../../../../res/ui/dialog (1).png", "../../../../res/ui/close.png"];
 			Laya.loader.load(assets, Handler.create(this, onSkinLoadComplete));
 		}
 		

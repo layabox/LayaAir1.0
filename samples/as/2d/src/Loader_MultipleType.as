@@ -5,8 +5,8 @@ package
 
 	public class Loader_MultipleType 
 	{
-		private const ROBOT_DATA_PATH:String = "res/skeleton/robot/robot.bin";
-		private const ROBOT_TEXTURE_PATH:String = "res/skeleton/robot/texture.png";
+		private const ROBOT_DATA_PATH:String = "../../../../res/skeleton/robot/robot.bin";
+		private const ROBOT_TEXTURE_PATH:String = "../../../../res/skeleton/robot/texture.png";
 		
 		public function Loader_MultipleType() 
 		{

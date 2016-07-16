@@ -2,6 +2,7 @@ package
 {
 	import laya.display.Stage;
 	import laya.net.Loader;
+	import laya.net.URL;
 	import laya.particle.Particle2D;
 	import laya.particle.ParticleSettings;
 	import laya.utils.Browser;
@@ -26,6 +27,7 @@ package
 
 			Stat.show();
 			
+			URL.basePath += "../../../../";
 			Laya.loader.load("res/particles/RadiusMode.part", Handler.create(this, onAssetsLoaded), null, Loader.JSON);
 		}
 

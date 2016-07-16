@@ -6,7 +6,7 @@
     var Handler  = Laya.Handler;
     var WebGL    = Laya.WebGL;
 
-    var skin = "res/ui/textarea.png";
+    var skin = "../../res/ui/textarea.png";
 
     (function()
     {

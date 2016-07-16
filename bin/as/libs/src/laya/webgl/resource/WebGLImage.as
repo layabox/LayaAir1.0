@@ -198,6 +198,7 @@ package laya.webgl.resource {
 			if (_source) {
 				WebGL.mainContext.deleteTexture(_source);
 				_source = null;
+				_image = null;
 				memorySize = 0;
 			}
 		}

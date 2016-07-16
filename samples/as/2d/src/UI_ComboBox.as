@@ -7,7 +7,7 @@ package
 	
 	public class UI_ComboBox	
 	{
-		private var skin:String = "res/ui/combobox.png";
+		private var skin:String = "../../../../res/ui/combobox.png";
 		
 		public function UI_ComboBox() 
 		{

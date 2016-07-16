@@ -20,7 +20,7 @@
 
 	function setup()
 	{
-		var dialog = new Image("res/ui/dialog (3).png");
+		var dialog = new Image("../../res/ui/dialog (3).png");
 		dialog.pos(165, 62.5);
 		Laya.stage.addChild(dialog);
 	}

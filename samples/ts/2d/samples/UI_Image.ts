@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Stage = laya.display.Stage;
 	import Image = laya.ui.Image;
@@ -19,7 +18,7 @@ module laya {
 		}
 
 		private setup(): void {
-			var dialog: Image = new Image("res/ui/dialog (3).png");
+			var dialog: Image = new Image("../../res/ui/dialog (3).png");
 			dialog.pos(165, 62.5);
 			Laya.stage.addChild(dialog);
 		}

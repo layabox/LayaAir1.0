@@ -609,21 +609,7 @@
 			}
 		}
 
-		__proto.loadContent=function(){
-			var indexes=new Uint16Array(this.settings.maxPartices *6);
-			for (var i=0;i < this.settings.maxPartices;i++){
-				indexes[i *6+0]=(i *4+0);
-				indexes[i *6+1]=(i *4+1);
-				indexes[i *6+2]=(i *4+2);
-				indexes[i *6+3]=(i *4+0);
-				indexes[i *6+4]=(i *4+2);
-				indexes[i *6+5]=(i *4+3);
-			}
-			this._indexBuffer.clear();
-			this._indexBuffer.append(indexes);
-			this._indexBuffer.upload();
-		}
-
+		__proto.loadContent=function(){}
 		__proto.update=function(elapsedTime){
 			this._currentTime+=elapsedTime / 1000;
 			this.retireActiveParticles();
@@ -659,24 +645,7 @@
 			}
 		}
 
-		__proto.addNewParticlesToVertexBuffer=function(){
-			this._vertexBuffer.clear();
-			this._vertexBuffer.append(this._vertices);
-			var start=0;
-			if (this._firstNewElement < this._firstFreeElement){
-				start=this._firstNewElement *4 *this._floatCountPerVertex *4;
-				this._vertexBuffer.subUpload(start,start,start+(this._firstFreeElement-this._firstNewElement)*4 *this._floatCountPerVertex *4);
-				}else {
-				start=this._firstNewElement *4 *this._floatCountPerVertex *4;
-				this._vertexBuffer.subUpload(start,start,start+(this.settings.maxPartices-this._firstNewElement)*4 *this._floatCountPerVertex *4);
-				if (this._firstFreeElement > 0){
-					this._vertexBuffer.setNeedUpload();
-					this._vertexBuffer.subUpload(0,0,this._firstFreeElement *4 *this._floatCountPerVertex *4);
-				}
-			}
-			this._firstNewElement=this._firstFreeElement;
-		}
-
+		__proto.addNewParticlesToVertexBuffer=function(){}
 		__proto.addParticleArray=function(position,velocity){
 			var nextFreeParticle=this._firstFreeElement+1;
 			if (nextFreeParticle >=this.settings.maxPartices)
@@ -971,6 +940,39 @@
 			_super.prototype.addParticleArray.call(this,position,velocity);
 		}
 
+		__proto.loadContent=function(){
+			var indexes=new Uint16Array(this.settings.maxPartices *6);
+			for (var i=0;i < this.settings.maxPartices;i++){
+				indexes[i *6+0]=(i *4+0);
+				indexes[i *6+1]=(i *4+1);
+				indexes[i *6+2]=(i *4+2);
+				indexes[i *6+3]=(i *4+0);
+				indexes[i *6+4]=(i *4+2);
+				indexes[i *6+5]=(i *4+3);
+			}
+			this._indexBuffer2D.clear();
+			this._indexBuffer2D.append(indexes);
+			this._indexBuffer2D.upload();
+		}
+
+		__proto.addNewParticlesToVertexBuffer=function(){
+			this._vertexBuffer2D.clear();
+			this._vertexBuffer2D.append(this._vertices);
+			var start=0;
+			if (this._firstNewElement < this._firstFreeElement){
+				start=this._firstNewElement *4 *this._floatCountPerVertex *4;
+				this._vertexBuffer2D.subUpload(start,start,start+(this._firstFreeElement-this._firstNewElement)*4 *this._floatCountPerVertex *4);
+				}else {
+				start=this._firstNewElement *4 *this._floatCountPerVertex *4;
+				this._vertexBuffer2D.subUpload(start,start,start+(this.settings.maxPartices-this._firstNewElement)*4 *this._floatCountPerVertex *4);
+				if (this._firstFreeElement > 0){
+					this._vertexBuffer2D.setNeedUpload();
+					this._vertexBuffer2D.subUpload(0,0,this._firstFreeElement *4 *this._floatCountPerVertex *4);
+				}
+			}
+			this._firstNewElement=this._firstFreeElement;
+		}
+
 		__proto.renderSubmit=function(){
 			if (this.texture&&this.texture.loaded){
 				this.update(Timer.delta);
@@ -1009,8 +1011,8 @@
 		}
 
 		__proto.dispose=function(){
-			this._vertexBuffer.dispose();
-			this._indexBuffer.dispose();
+			this._vertexBuffer2D.dispose();
+			this._indexBuffer2D.dispose();
 		}
 
 		ParticleTemplate2D.activeBlendType=-1;

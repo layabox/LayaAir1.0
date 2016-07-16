@@ -40,7 +40,7 @@ package
 
 			mX = mY = 0;
 			//创建地图，适当的时候调用destroy销毁地图
-			tiledMap.createMap("res/tiledMap/desert.json", new Rectangle(0, 0, Browser.width, Browser.height), new Handler(this, completeHandler));
+			tiledMap.createMap("../../../../res/tiledMap/desert.json", new Rectangle(0, 0, Browser.width, Browser.height), new Handler(this, completeHandler));
 		}
 
 		/**

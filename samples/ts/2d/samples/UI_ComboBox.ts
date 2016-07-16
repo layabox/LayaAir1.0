@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Stage = laya.display.Stage;
     import ComboBox = laya.ui.ComboBox;
@@ -6,7 +5,7 @@ module laya {
     import WebGL = laya.webgl.WebGL;
 
     export class UI_ComboBox {
-        private skin: string = "res/ui/combobox.png";
+        private skin: string = "../../res/ui/combobox.png";
 
         constructor() {
             // 不支持WebGL时自动切换至Canvas

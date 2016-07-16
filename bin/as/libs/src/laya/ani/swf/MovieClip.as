@@ -377,7 +377,7 @@ package laya.ani.swf {
 		}
 		
 		/**@private */
-		private function _onLoaded(data:*):void {
+		private function _onLoaded(data:*=null):void {
 			_initData(data);
 		}
 		

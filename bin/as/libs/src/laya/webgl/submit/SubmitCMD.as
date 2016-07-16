@@ -3,7 +3,7 @@ package laya.webgl.submit {
 	import laya.utils.Handler;
 	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.shader.d2.value.Value2D;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 
 	public class SubmitCMD implements ISubmit
 	{

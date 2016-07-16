@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module performanceTest {
     import Animation = laya.display.Animation;
     import Input = laya.display.Input;
@@ -27,20 +26,20 @@ module performanceTest {
         private initHandler(): void {
             // 资源加载
             for (var i: number = 1; i <= 6; i++) {
-                Laya.loader.load("res/legend/bitmap2/" + i + ".png");
+                Laya.loader.load("../../res/legend/bitmap2/" + i + ".png");
             }
             for (var j: number = 1; j <= 6; j++) {
-                Laya.loader.load("res/legend/bitmap3/" + j + ".png");
+                Laya.loader.load("../../res/legend/bitmap3/" + j + ".png");
             }
             for (var k: number = 1; k <= 6; k++) {
-                Laya.loader.load("res/legend/bitmap4/" + k + ".png");
+                Laya.loader.load("../../res/legend/bitmap4/" + k + ".png");
             }
 
             Laya.loader.once(Event.COMPLETE, this, this.loadPlayerRes);
 
             // 显示背景
             var background: Sprite = new Sprite();
-            background.loadImage("res/legend/map.jpg", 0, 0);
+            background.loadImage("../../res/legend/map.jpg", 0, 0);
             background.scale(this.width / 600, this.height / 600);
             Laya.stage.addChild(background);
         }
@@ -66,17 +65,17 @@ module performanceTest {
             var playerList: Array<any> = [];
             var player1: Array<string> = [];
             for (var i: number = 1; i <= 6; i++) {
-                player1.push("res/legend/bitmap2" + "/" + i + ".png");
+                player1.push("../../res/legend/bitmap2" + "/" + i + ".png");
             }
             playerList.push(player1);
             var player2: Array<string> = [];
             for (var i: number = 1; i <= 6; i++) {
-                player2.push("res/legend/bitmap3" + "/" + i + ".png");
+                player2.push("../../res/legend/bitmap3" + "/" + i + ".png");
             }
             playerList.push(player2);
             var player3: Array<string> = [];
             for (var i: number = 1; i <= 6; i++) {
-                player3.push("res/legend/bitmap4" + "/" + i + ".png");
+                player3.push("../../res/legend/bitmap4" + "/" + i + ".png");
             }
             playerList.push(player3);
             for (var j: number = 0; j < 500; j++) {

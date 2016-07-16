@@ -9,9 +9,9 @@ package
 	
 	public class UI_Clip
 	{
-		private var buttonSkin:String = "res/ui/button-7.png";
-		private var clipSkin:String = "res/ui/num0-9.png";
-		private var bgSkin:String = "res/ui/coutDown.png";
+		private var buttonSkin:String = "../../../../res/ui/button-7.png";
+		private var clipSkin:String = "../../../../res/ui/num0-9.png";
+		private var bgSkin:String = "../../../../res/ui/coutDown.png";
 		
 		private var counter:Clip;
 		private var currFrame:int;

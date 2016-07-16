@@ -2,6 +2,7 @@
 package laya.flash
 {
 	import flash.display3D.IndexBuffer3D;
+	import laya.webgl.utils.Buffer2D;
 	
 	import laya.webgl.utils.Buffer;
 	import laya.webgl.utils.IndexBuffer2D;
@@ -58,7 +59,7 @@ package laya.flash
 		
 		override public function clear():void
 		{
-			_length = 0;
+			_byteLength = 0;
 			_buffData.length = 0;
 			_upload = true;
 		}
@@ -69,15 +70,15 @@ package laya.flash
 			
 			if (data is Uint16Array)
 			{
-				if( this._length == 0 ){
+				if( this._byteLength == 0 ){
 					_vctBuff = (data as Uint16Array).getVecBuf();
-					this._length = _vctBuff.length;// * 2;
+					this._byteLength = _vctBuff.length;// * 2;
 				}else {
 					var tv : Vector.<uint> = (data as Uint16Array).getVecBuf();
 					for ( var i : int = 0, len :int = tv.length; i < len; i ++ ) {
 						_vctBuff.push( tv[i] );
 					}
-					this._length = _vctBuff.length;// * 2;
+					this._byteLength = _vctBuff.length;// * 2;
 				}
 			}
 		}
@@ -94,27 +95,27 @@ package laya.flash
 			return _buffData.length * _dataSize;
 		}
 		
-		override public function set length(value:int):void
+		override public function set byteLength(value:int):void
 		{
 			setLength(value);
 		}
 		
-		public override function get length() : int {
-			return this._length;
+		public override function get byteLength() : int {
+			return this._byteLength;
 		}
 		
 		public function setLength(value:int):void
 		{
-			if (_length === value)
+			if (_byteLength === value)
 				return;
-			_length = value;
-			memorySize = _length;
+			_byteLength = value;
+			memorySize = _byteLength;
 			value /= _dataSize;
 			_buffData.length = value;
 			_upload = true;
 		}
 		
-		override public function _resizeBuffer(nsz:int, copy:Boolean):Buffer //是否修改了长度
+		override public function _resizeBuffer(nsz:int, copy:Boolean):Buffer2D //是否修改了长度
 		{
 			setLength(nsz);
 			return this;

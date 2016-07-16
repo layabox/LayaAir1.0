@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Animation = laya.display.Animation;
     import Stage = laya.display.Stage;
@@ -58,7 +57,7 @@ module laya {
         private createAnimation(): Animation {
             var frames: Array<string> = [];
             for (var i: number = 1; i <= 25; ++i) {
-                frames.push("res/phoenix/phoenix" + this.preFixNumber(i, 4) + ".jpg");
+                frames.push("../../res/phoenix/phoenix" + this.preFixNumber(i, 4) + ".jpg");
             }
 
             var animation: Animation = new Animation();
@@ -102,7 +101,7 @@ module laya {
         private renderBg(): void {
             Laya.stage.graphics.clear();
             Laya.stage.graphics.drawRect(
-                0, (Laya.stage.height - this.phoenixHeight * Browser.pixelRatio) / 2,
+                0, 0,
                 this.phoenixWidth, this.phoenixHeight, this.getHexColorString());
         }
 

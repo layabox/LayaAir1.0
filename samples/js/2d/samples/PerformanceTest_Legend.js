@@ -25,22 +25,22 @@
 		// 资源加载
 		for (var i = 1; i <= 6; i++)
 		{
-			Laya.loader.load("res/legend/bitmap2/" + i + ".png");
+			Laya.loader.load("../../res/legend/bitmap2/" + i + ".png");
 		}
 		for (var j = 1; j <= 6; j++)
 		{
-			Laya.loader.load("res/legend/bitmap3/" + j + ".png");
+			Laya.loader.load("../../res/legend/bitmap3/" + j + ".png");
 		}
 		for (var k = 1; k <= 6; k++)
 		{
-			Laya.loader.load("res/legend/bitmap4/" + k + ".png");
+			Laya.loader.load("../../res/legend/bitmap4/" + k + ".png");
 		}
 
 		Laya.loader.once(Event.COMPLETE, this, loadPlayerRes);
 
 		// 显示背景
 		var background = new Sprite();
-		background.loadImage("res/legend/map.jpg", 0, 0);
+		background.loadImage("../../res/legend/map.jpg", 0, 0);
 		background.scale(width / 600, height / 600);
 		Laya.stage.addChild(background);
 	}
@@ -72,19 +72,19 @@
 		var player1 = [];
 		for (var i = 1; i <= 6; i++)
 		{
-			player1.push("res/legend/bitmap2" + "/" + i + ".png");
+			player1.push("../../res/legend/bitmap2" + "/" + i + ".png");
 		}
 		playerList.push(player1);
 		var player2 = [];
 		for (var i = 1; i <= 6; i++)
 		{
-			player2.push("res/legend/bitmap3" + "/" + i + ".png");
+			player2.push("../../res/legend/bitmap3" + "/" + i + ".png");
 		}
 		playerList.push(player2);
 		var player3 = [];
 		for (var i = 1; i <= 6; i++)
 		{
-			player3.push("res/legend/bitmap4" + "/" + i + ".png");
+			player3.push("../../res/legend/bitmap4" + "/" + i + ".png");
 		}
 		playerList.push(player3);
 		for (var j = 0; j < 500; j++)

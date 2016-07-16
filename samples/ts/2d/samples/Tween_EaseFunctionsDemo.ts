@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Input = laya.display.Input;
     import Sprite = laya.display.Sprite;
@@ -38,7 +37,7 @@ module laya {
 
         private createCharacter(): void {
             this.character = new Sprite();
-            this.character.loadImage("res/cartoonCharacters/1.png");
+            this.character.loadImage("../../res/cartoonCharacters/1.png");
             this.character.pos(100, 50);
             Laya.stage.addChild(this.character);
         }
@@ -117,8 +116,6 @@ module laya {
     }
 }
 
-import Box = laya.ui.Box;
-import Label = laya.ui.Label;
 class ListItemRender extends Box {
     private label: Label;
 

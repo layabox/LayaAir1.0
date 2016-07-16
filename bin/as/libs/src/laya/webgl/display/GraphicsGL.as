@@ -5,7 +5,7 @@ package laya.webgl.display
 	import laya.system.System;
 	import laya.utils.RunDriver;
 	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	
 	public class GraphicsGL extends Graphics
 	{
@@ -20,7 +20,7 @@ package laya.webgl.display
 			_saveToCmd(Render.context._setShader, [shader]);
 		}
 		
-		public function setIBVB(x:Number, y:Number, ib:Buffer, vb:Buffer, numElement:int, shader:Shader):void {
+		public function setIBVB(x:Number, y:Number, ib:Buffer2D, vb:Buffer2D, numElement:int, shader:Shader):void {
 			_saveToCmd(Render.context._setIBVB, [x,y,ib,vb,numElement,shader]);
 		}
 		

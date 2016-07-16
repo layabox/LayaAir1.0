@@ -18,12 +18,12 @@ package laya.media.webaudio {
 		/**
 		 * 是否支持web audio api
 		 */
-		public static var webAudioOK:Boolean = window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"];
+		public static var webAudioEnabled:Boolean = window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"];
 		
 		/**
 		 * 播放设备
 		 */
-		public static var ctx:* = webAudioOK ? new (window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"])() : undefined;
+		public static var ctx:* = webAudioEnabled ? new (window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"])() : undefined;
 		
 		/**
 		 * 当前要解码的声音文件列表

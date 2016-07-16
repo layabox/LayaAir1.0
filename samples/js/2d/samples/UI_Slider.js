@@ -18,8 +18,8 @@
 		Laya.stage.bgColor = "#232628";
 
 		var skins = [];
-		skins.push("res/ui/hslider.png", "res/ui/hslider$bar.png");
-		skins.push("res/ui/vslider.png", "res/ui/vslider$bar.png");
+		skins.push("../../res/ui/hslider.png", "../../res/ui/hslider$bar.png");
+		skins.push("../../res/ui/vslider.png", "../../res/ui/vslider$bar.png");
 		Laya.loader.load(skins, Handler.create(this, onLoadComplete));
 	})();
 
@@ -32,7 +32,7 @@
 	function placeHSlider()
 	{
 		var hs = new HSlider();
-		hs.skin = "res/ui/hslider.png";
+		hs.skin = "../../res/ui/hslider.png";
 
 		hs.width = 300;
 		hs.pos(50, 170);
@@ -49,7 +49,7 @@
 	{
 		var vs = new VSlider();
 
-		vs.skin = "res/ui/vslider.png";
+		vs.skin = "../../res/ui/vslider.png";
 
 		vs.height = 300;
 		vs.pos(400, 50);

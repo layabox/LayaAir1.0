@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Sprite = laya.display.Sprite;
     import Loader = laya.net.Loader;
@@ -22,7 +21,7 @@ module laya {
 
             Stat.show();
 
-            Laya.loader.load("res/cartoonCharacters/cartoonCharactors.json", Handler.create(this, this.createCharacters), null, Loader.ATLAS);
+            Laya.loader.load("../../res/cartoonCharacters/cartoonCharactors.json", Handler.create(this, this.createCharacters), null, Loader.ATLAS);
         }
 
         private createCharacters(): void {

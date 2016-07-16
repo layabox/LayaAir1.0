@@ -19,8 +19,8 @@
 	var ANI_COME_ON_STAGE = 6;
 	var ANI_ATTACK2 = 7;
 
-	var dataPath = "res/skeleton/SwordsMan/SwordsMan_1.sk";
-	var texturePath = "res/skeleton/SwordsMan/texture.png";
+	var dataPath = "../../res/skeleton/SwordsMan/SwordsMan_1.sk";
+	var texturePath = "../../res/skeleton/SwordsMan/texture.png";
 
 	var factory;
 

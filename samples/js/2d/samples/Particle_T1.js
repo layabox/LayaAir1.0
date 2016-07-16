@@ -24,6 +24,7 @@
 
 		Stat.show();
 
+		Laya.URL.basePath += "../../";
 		Laya.loader.load("res/particles/GravityMode.part", Handler.create(this, onAssetsLoaded), null, Loader.JSON);
 	})();
 

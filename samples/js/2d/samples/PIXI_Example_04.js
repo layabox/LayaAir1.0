@@ -29,7 +29,7 @@
 		for (var i = 0; i < starCount; i++)
 		{
 			var tempBall = new Sprite();
-			tempBall.loadImage("res/pixi/bubble_32x32.png");
+			tempBall.loadImage("../../res/pixi/bubble_32x32.png");
 
 			tempBall.x = (Math.random() * w) - slideX;
 			tempBall.y = (Math.random() * h) - slideY;

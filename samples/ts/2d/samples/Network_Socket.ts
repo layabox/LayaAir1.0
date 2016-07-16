@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Event = laya.events.Event;
 	import Socket = laya.net.Socket;

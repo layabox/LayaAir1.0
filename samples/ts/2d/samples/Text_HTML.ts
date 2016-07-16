@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Stage = laya.display.Stage;
 	import HTMLDivElement = laya.html.dom.HTMLDivElement;
@@ -43,7 +42,7 @@ module laya {
 		private showExternalHTML(): void {
 			var p: HTMLIframeElement = new HTMLIframeElement();
 			Laya.stage.addChild(p);
-			p.href = "res/html/test.html";
+			p.href = "../../res/html/test.html";
 			p.y = 200;
 		}
 	}

@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Skeleton = laya.ani.bone.Skeleton;
 	import Templet = laya.ani.bone.Templet;
@@ -20,8 +19,8 @@ module laya {
 		private ANI_COME_ON_STAGE: number = 6;
 		private ANI_ATTACK2: number = 7;
 
-		private dataPath: string = "res/skeleton/SwordsMan/SwordsMan_1.sk";
-		private texturePath: string = "res/skeleton/SwordsMan/texture.png";
+		private dataPath: string = "../../res/skeleton/SwordsMan/SwordsMan_1.sk";
+		private texturePath: string = "../../res/skeleton/SwordsMan/texture.png";
 
 		private factory: Templet;
 

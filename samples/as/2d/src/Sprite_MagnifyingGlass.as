@@ -22,23 +22,23 @@ package
 			Laya.stage.scaleMode = "showall";
 			Laya.stage.bgColor = "#232628";
 
-			Laya.loader.load("res/bg2.png", Handler.create(this, setup));
+			Laya.loader.load("../../../../res/bg2.png", Handler.create(this, setup));
 		}
 
 		private function setup(_e:*=null):void
 		{
 			var bg:Sprite = new Sprite();
-			bg.loadImage("res/bg2.png");
+			bg.loadImage("../../../../res/bg2.png");
 			Laya.stage.addChild(bg);
 
 			bg2 = new Sprite();
-			bg2.loadImage("res/bg2.png");
+			bg2.loadImage("../../../../res/bg2.png");
 			Laya.stage.addChild(bg2);
 			bg2.scale(3, 3);
 			
 			//创建mask
 			maskSp = new Sprite();
-			maskSp.loadImage("res/mask.png");
+			maskSp.loadImage("../../../../res/mask.png");
 			maskSp.pivot(50, 50);
 
 			//设置mask

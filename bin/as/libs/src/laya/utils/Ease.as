@@ -418,7 +418,7 @@ package laya.utils {
 		 * @param	d 指定运动的持续时间。
 		 * @return 指定时间的插补属性的值。
 		 */
-		public static function QuadIn(t:Number, b:Number, c:Number, d:Number):Number {
+		public static function quadIn(t:Number, b:Number, c:Number, d:Number):Number {
 			return c * (t /= d) * t + b;
 		}
 		
@@ -431,7 +431,7 @@ package laya.utils {
 		 * @param	d 指定运动的持续时间。
 		 * @return 指定时间的插补属性的值。
 		 */
-		public static function QuadInOut(t:Number, b:Number, c:Number, d:Number):Number {
+		public static function quadInOut(t:Number, b:Number, c:Number, d:Number):Number {
 			if ((t /= d * 0.5) < 1) return c * 0.5 * t * t + b;
 			return -c * 0.5 * ((--t) * (t - 2) - 1) + b;
 		}
@@ -445,7 +445,7 @@ package laya.utils {
 		 * @param	d 指定运动的持续时间。
 		 * @return 指定时间的插补属性的值。
 		 */
-		public static function QuadOut(t:Number, b:Number, c:Number, d:Number):Number {
+		public static function quadOut(t:Number, b:Number, c:Number, d:Number):Number {
 			return -c * (t /= d) * (t - 2) + b;
 		}
 		

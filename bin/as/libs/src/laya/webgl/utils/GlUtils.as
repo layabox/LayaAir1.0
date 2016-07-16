@@ -31,8 +31,8 @@ package laya.webgl.utils {
 			}
 			count = Math.floor(count);
 			//trace("fillIBQuadrangle:" + count);
-			buffer._resizeBuffer((count + 1) * 6 * Buffer.SHORT, false);
-			buffer.length = buffer.bufferLength;
+			buffer._resizeBuffer((count + 1) * 6 * Buffer2D.SHORT, false);
+			buffer.byteLength = buffer.bufferLength;
 			
 			var bufferData:Uint16Array = buffer.getUint16Array();
 			var idx:int = 0;
@@ -50,7 +50,7 @@ package laya.webgl.utils {
 		}
 		
 		public static function expandIBQuadrangle(buffer:IndexBuffer2D, count:int/*Quadrangle count*/):void {
-			buffer.bufferLength >= (count * 6 * Buffer.SHORT) || fillIBQuadrangle(buffer, count);
+			buffer.bufferLength >= (count * 6 * Buffer2D.SHORT) || fillIBQuadrangle(buffer, count);
 		}
 		
 		public static function mathCeilPowerOfTwo(value:int):int {
@@ -67,8 +67,8 @@ package laya.webgl.utils {
 		public static function fillQuadrangleImgVb(vb:VertexBuffer2D, x:Number, y:Number, point4:Array, uv:Array, m:Matrix, _x:Number, _y:Number):Boolean {
 			'use strict';
 			
-			var vpos:int = (vb._length >> 2)/*FLOAT32*/ + WebGLContext2D._RECTVBSIZE;
-			vb.length = (vpos << 2);
+			var vpos:int = (vb._byteLength >> 2)/*FLOAT32*/ + WebGLContext2D._RECTVBSIZE;
+			vb.byteLength = (vpos << 2);
 			
 			var vbdata:* = vb.getFloat32Array();
 			vpos -= WebGLContext2D._RECTVBSIZE;
@@ -117,8 +117,8 @@ package laya.webgl.utils {
 			'use strict';
 			//x |= 0; y |= 0;_x |= 0; _y |= 0;
 			
-			var vpos:int = (vb._length >> 2)/*FLOAT32*/ + points.length;///    Context._RECTVBSIZE;
-			vb.length = (vpos << 2);
+			var vpos:int = (vb._byteLength >> 2)/*FLOAT32*/ + points.length;///    Context._RECTVBSIZE;
+			vb.byteLength = (vpos << 2);
 			
 			var vbdata:* = vb.getFloat32Array();
 			//vpos>=vbdata.length && (vbdata=(vb.resizeBuffer(vbdata.length*4+points.length*4/* 2*Buffer.FLOAT32*/ + 256,true).getFloat32Array()));			
@@ -194,8 +194,8 @@ package laya.webgl.utils {
 			if (mType !== 1 && (toBx >= cEx || toBy >= cEy || toEx <= cBx || toEy <= cBy))
 				return false;
 			
-			var vpos:int = (vb._length >> 2)/*FLOAT32*/ + WebGLContext2D._RECTVBSIZE;
-			vb.length = (vpos << 2);
+			var vpos:int = (vb._byteLength >> 2)/*FLOAT32*/ + WebGLContext2D._RECTVBSIZE;
+			vb.byteLength = (vpos << 2);
 			
 			var vbdata:* = vb.getFloat32Array();
 			
@@ -334,8 +334,8 @@ package laya.webgl.utils {
 			perpx /= dist, perpy /= dist, perpx *= linew, perpy *= linew;
 			data[0] = fx - perpx, data[1] = fy - perpy, data[4] = fx + perpx, data[5] = fy + perpy, data[8] = tx + perpx, data[9] = ty + perpy, data[12] = tx - perpx, data[13] = ty - perpy;
 			mat && mat.transformPointArray(data, data);
-			var vpos:int = (vb._length >> 2)/*FLOAT32*/ + WebGLContext2D._RECTVBSIZE;
-			vb.length = (vpos << 2);
+			var vpos:int = (vb._byteLength >> 2)/*FLOAT32*/ + WebGLContext2D._RECTVBSIZE;
+			vb.byteLength = (vpos << 2);
 			vb.insertData(data, vpos - WebGLContext2D._RECTVBSIZE);
 			return true;
 		}

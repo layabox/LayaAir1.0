@@ -4,6 +4,7 @@ package laya.flash {
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.IndexBuffer2D;
 	import laya.webgl.utils.VertexBuffer2D;
 	
@@ -51,7 +52,7 @@ package laya.flash {
 		}
 		
 		override public function clear():void {
-			_length = 0;
+			_byteLength = 0;
 			_upload = true;
 		}
 		
@@ -65,15 +66,15 @@ package laya.flash {
 			_upload = true;
 			
 			if ( data is Float32Array ) {
-				if( this._length == 0 ){
+				if( this._byteLength == 0 ){
 					_vctBuff = (data as Float32Array).getVecBuf();
-					this._length = _vctBuff.length * 4;
+					this._byteLength = _vctBuff.length * 4;
 				}else {
 					var tv : Vector.<Number> = (data as Float32Array).getVecBuf();
 					for ( var i : int = 0, len : int = tv.length; i < len; i ++ ) {
 						_vctBuff.push( tv[i] );
 					}
-					this._length = _vctBuff.length * 4;
+					this._byteLength = _vctBuff.length * 4;
 				}
 			}			
 		}
@@ -88,24 +89,24 @@ package laya.flash {
 			return _vctBuff.length * FLOAT32;
 		}
 		
-		override public function set length(value:int):void {
+		override public function set byteLength(value:int):void {
 			setLength(value);
 		}
 		
 		public function setLength(value:int):void {
-			if (_length == value)
+			if (_byteLength == value)
 				return;
-			_length = value;
+			_byteLength = value;
 			value /= FLOAT32;
 			if (_maxBufLen < value) {
-				memorySize = _length;
+				memorySize = _byteLength;
 				_vctBuff.length = value;
 				_maxBufLen = value;
 				_upload = true;
 			}
 		}
 		
-		override public function _resizeBuffer(nsz:int, copy:Boolean):Buffer //是否修改了长度
+		override public function _resizeBuffer(nsz:int, copy:Boolean):Buffer2D //是否修改了长度
 		{
 			setLength(nsz);
 			return this;
@@ -132,7 +133,7 @@ package laya.flash {
 		}
 		
 		override public function bind_upload(ibBuffer:IndexBuffer2D):void {
-			if ( _length < 1 ) return;
+			if ( _byteLength < 1 ) return;
 			if (!_upload ) {
 				ibBuffer._bind();
 				this._bind();
@@ -141,8 +142,8 @@ package laya.flash {
 			
 			_upload = false;
 			
-			// River: 只所以不使用_lendth/FLOAT32是因为别的地方有可能修改_vctBuffer而修改_length的值			
-			var nsz:int = _vctBuff.length;// _length / FLOAT32;
+			// River: 只所以不使用_lendth/FLOAT32是因为别的地方有可能修改_vctBuffer而修改_byteLength的值			
+			var nsz:int = _vctBuff.length;// _byteLength / FLOAT32;
 			var count:int = nsz / _activeVStride;
 			
 			(ibBuffer as FlashIndexBuffer) .uploadByCount(count * 1.5 );
@@ -160,6 +161,8 @@ package laya.flash {
 		
 		override public function dispose():void 
 		{
+			if ( !_flashGLBuff ) return;
+			
 			super.dispose();
 			(_selfIB) && (_selfIB.dispose());
 		}

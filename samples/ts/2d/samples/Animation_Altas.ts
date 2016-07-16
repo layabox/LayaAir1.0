@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya 
 {
 	import Animation = laya.display.Animation;
@@ -10,7 +9,7 @@ module laya
 	import WebGL = laya.webgl.WebGL;
 
 	export class Animation_Altas {
-		private AniConfPath: string = "res/fighter/fighter.json";
+		private AniConfPath: string = "../../res/fighter/fighter.json";
 
 		constructor() {
 			// 不支持eWebGL时自动切换至Canvas

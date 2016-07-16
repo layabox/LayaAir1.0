@@ -20,7 +20,7 @@
 		Laya.stage.scaleMode = Stage.SCALE_NOBORDER;
 
 		// create a background texture
-		Laya.stage.loadImage("res/pixi/laserBG.jpg");
+		Laya.stage.loadImage("../../res/pixi/laserBG.jpg");
 
 		Laya.stage.frameLoop(1, this, animate);
 	})();
@@ -32,7 +32,7 @@
 			tick = 0;
 			// iterate through the dudes and update the positions
 			var laser = new Sprite();
-			laser.loadImage("res/pixi/laser0" + ((type % 5) + 1) + ".png");
+			laser.loadImage("../../res/pixi/laser0" + ((type % 5) + 1) + ".png");
 			type++;
 
 			laser.life = 0;

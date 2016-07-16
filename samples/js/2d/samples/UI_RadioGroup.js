@@ -22,7 +22,7 @@
 		Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
 		Laya.stage.bgColor = "#232628";
 
-		skins = ["res/ui/radioButton (1).png", "res/ui/radioButton (2).png", "res/ui/radioButton (3).png"];
+		skins = ["../../res/ui/radioButton (1).png", "../../res/ui/radioButton (2).png", "../../res/ui/radioButton (3).png"];
 		Laya.loader.load(skins, Handler.create(this, initRadioGroups));
 	})();
 

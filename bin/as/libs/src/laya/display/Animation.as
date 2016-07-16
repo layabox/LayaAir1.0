@@ -89,7 +89,8 @@ package laya.display {
 		/**全局缓存动画索引，存储全局Graphics动画数据，可以指定播放某个动画，比如ani.play(0 , true ,"hero_run"); */
 		public static var framesMap:Object = {};
 		/**@private */
-		protected var _frames:Array;		
+		protected var _frames:Array;
+		
 		/**
 		 * 创建一个新的 <code>Animation</code> 实例。
 		 */
@@ -104,7 +105,7 @@ package laya.display {
 			this._frames = null;
 			this._labels = null;
 		}
-			
+		
 		/**
 		 * 播放动画。
 		 * @param	start 开始播放的动画索引。
@@ -136,11 +137,11 @@ package laya.display {
 				super._frameLoop();
 			}
 		}
-				
-		override protected function _displayToIndex(value:int):void
-		{	
+		
+		override protected function _displayToIndex(value:int):void {
 			if (this._frames) this.graphics = this._frames[value];
 		}
+		
 		/**Graphics集合*/
 		public function get frames():Array {
 			return _frames;

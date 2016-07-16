@@ -4,6 +4,7 @@ package laya.d3.resource.tempelet {
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexParticle;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderDefines3D;
@@ -16,7 +17,7 @@ package laya.d3.resource.tempelet {
 	import laya.webgl.WebGLContext;
 	import laya.webgl.resource.WebGLImage;
 	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.ValusArray;
 	
 	/**
@@ -39,7 +40,7 @@ package laya.d3.resource.tempelet {
 			return 1;
 		}
 		
-		public function getBakedVertexs(index:int = 0):Float32Array {
+		public function getBakedVertexs(index:int , transform:Matrix4x4):Float32Array {
 			return null;
 		}
 		
@@ -74,7 +75,7 @@ package laya.d3.resource.tempelet {
 			if (settings.textureName)//预设纹理ShaderValue
 			{
 				texture = new Texture();
-				_shaderValue.pushValue(Buffer.DIFFUSETEXTURE, null, -1);
+				_shaderValue.pushValue(Buffer2D.DIFFUSETEXTURE, null, -1);
 				var _this:ParticleTemplet3D = this;
 				Laya.loader.load(settings.textureName, Handler.create(null, function(texture:Texture):void {
 					(texture.bitmap as WebGLImage).enableMerageInAtlas = false;
@@ -83,9 +84,9 @@ package laya.d3.resource.tempelet {
 				}));
 			}
 			
-			_shaderValue.pushValue(Buffer.DURATION, settings.duration, -1);
-			_shaderValue.pushValue(Buffer.GRAVITY, settings.gravity, -1);
-			_shaderValue.pushValue(Buffer.ENDVELOCITY, settings.endVelocity, -1);
+			_shaderValue.pushValue(Buffer2D.DURATION, settings.duration, -1);
+			_shaderValue.pushValue(Buffer2D.GRAVITY, settings.gravity, -1);
+			_shaderValue.pushValue(Buffer2D.ENDVELOCITY, settings.endVelocity, -1);
 		}
 		
 		public function addParticle(position:Vector3, velocity:Vector3):void {
@@ -149,17 +150,17 @@ package laya.d3.resource.tempelet {
 					_shaderValue.pushArray(state.shaderValue);
 					_shaderValue.pushArray(_vertexBuffer3D.vertexDeclaration.shaderValues);
 					
-					_shaderValue.pushValue(Buffer.MVPMATRIX, state.owner.transform.getWorldMatrix(2).elements, -1);
-					_shaderValue.pushValue(Buffer.MATRIX1, state.viewMatrix.elements, -1);
-					_shaderValue.pushValue(Buffer.MATRIX2, state.projectionMatrix.elements, -1);
+					_shaderValue.pushValue(Buffer2D.MVPMATRIX, state.owner.transform.getWorldMatrix(2).elements, -1);
+					_shaderValue.pushValue(Buffer2D.MATRIX1, state.viewMatrix.elements, -1);
+					_shaderValue.pushValue(Buffer2D.MATRIX2, state.projectionMatrix.elements, -1);
 					
 					//设置视口尺寸，被用于转换粒子尺寸到屏幕空间的尺寸
 					var aspectRadio:Number = state.viewport.width / state.viewport.height;
 					var viewportScale:Vector2 = new Vector2(0.5 / aspectRadio, -0.5);
-					_shaderValue.pushValue(Buffer.VIEWPORTSCALE, viewportScale.elements, -1);
+					_shaderValue.pushValue(Buffer2D.VIEWPORTSCALE, viewportScale.elements, -1);
 					
 					//设置粒子的时间参数，可通过此参数停止粒子动画
-					_shaderValue.pushValue(Buffer.CURRENTTIME, _currentTime, -1);
+					_shaderValue.pushValue(Buffer2D.CURRENTTIME, _currentTime, -1);
 					
 					_shaderValue.data[1][0] = texture.source;//可能为空
 					_shaderValue.data[1][1] = texture.bitmap.id;

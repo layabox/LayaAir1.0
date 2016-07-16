@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Sprite = laya.display.Sprite;
     import Stage = laya.display.Stage;
@@ -27,7 +26,7 @@ module laya {
             var gap: number = 300;
 
             this.sp1 = new Sprite();
-            this.sp1.loadImage("res/apes/monkey2.png", 0, 0);
+            this.sp1.loadImage("../../res/apes/monkey2.png", 0, 0);
 
             this.sp1.pos((Laya.stage.width - gap) / 2, Laya.stage.height / 2);
             //设置轴心点为中心
@@ -36,7 +35,7 @@ module laya {
 
             //不设置轴心点默认为左上角
             this.sp2 = new Sprite();
-            this.sp2.loadImage("res/apes/monkey2.png", 0, 0);
+            this.sp2.loadImage("../../res/apes/monkey2.png", 0, 0);
             this.sp2.pos((Laya.stage.width + gap) / 2, Laya.stage.height / 2);
             Laya.stage.addChild(this.sp2);
 

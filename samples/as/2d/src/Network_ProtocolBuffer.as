@@ -11,7 +11,7 @@ package
 		{
 			Laya.init(550, 400);
 			
-			Laya.loader.load("res/protobuf/user.proto", Handler.create(this, onAssetsLoaded));
+			Laya.loader.load("../../../../res/protobuf/user.proto", Handler.create(this, onAssetsLoaded));
 		}
 		
 		private function onAssetsLoaded(data:String):void

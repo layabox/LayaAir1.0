@@ -48,7 +48,7 @@ package
 				tpoint3[i] = points3[i];
 				
 				var tempBall:Sprite = new Sprite();
-				tempBall.loadImage('res/pixi/pixel.png');
+				tempBall.loadImage('../../../../res/pixi/pixel.png');
 				tempBall.pivot(3, 3);
 				tempBall.alpha = 0.5;
 				balls[i] = tempBall;

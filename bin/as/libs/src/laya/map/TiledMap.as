@@ -137,8 +137,16 @@ package laya.map {
 				_gridWidth = gridSize.x;
 				_gridHeight = gridSize.y;
 			}
-			_resPath = mapName.substr(0, mapName.lastIndexOf("/"));
-			_pathArray = _resPath.split("/");
+			var tIndex:int = mapName.lastIndexOf("/");
+			if (tIndex > -1)
+			{
+				_resPath = mapName.substr(0, tIndex);
+				_pathArray = _resPath.split("/");
+			}else {
+				_resPath = "";
+				_pathArray = [];
+			}
+			
 			_jsonLoader = new Loader();
 			_jsonLoader.once("complete", this, onJsonComplete);
 			_jsonLoader.load(mapName, Loader.JSON, false);
@@ -226,7 +234,13 @@ package laya.map {
 			}
 			if (tParentPathNum == 0)
 			{
-				tResultPath = resPath + "/" + relativePath;
+				if (_pathArray.length > 0)
+				{
+					tResultPath = resPath + "/" + relativePath;
+				}else {
+					tResultPath = relativePath;
+				}
+				
 				return tResultPath;
 			}
 			var tSrcNum:int = _pathArray.length - tParentPathNum;
@@ -495,6 +509,29 @@ package laya.map {
 			_viewPortWidth = width / _scale;
 			_viewPortHeight = height / _scale;
 			updateViewPort();
+		}
+		
+		/**
+		 * 在锚点的基础上计算，通过宽和高，重新计算视口
+		 * @param	width		新视口宽
+		 * @param	height		新视口高
+		 * @param	rect		返回的结果
+		 * @return
+		 */
+		public function changeViewPortBySize(width:Number, height:Number,rect:Rectangle = null):Rectangle
+		{
+			if (rect == null)
+			{
+				rect = new Rectangle();
+			}
+			_centerX = _rect.x + _rect.width * _pivotScaleX;
+			_centerY = _rect.y + _rect.height * _pivotScaleY;
+			rect.x = _centerX - width * _pivotScaleX;
+			rect.y = _centerY - height * _pivotScaleY;
+			rect.width = width;
+			rect.height = height;
+			changeViewPort(rect.x, rect.y, rect.width, rect.height);
+			return rect;
 		}
 		
 		/**
@@ -936,6 +973,11 @@ package laya.map {
 			_y = 0;
 			
 			_index = 0;
+			
+			_enableLinear = true;
+			//资源的相对路径
+			_resPath = null;
+			_pathArray = null;
 		}
 		
 		/****************************地图的基本数据***************************/

@@ -34,7 +34,7 @@ package
 		private function createMap():void
 		{
 			tiledMap = new TiledMap();
-			tiledMap.createMap("res/tiledMap/isometric_grass_and_water.json", new Rectangle(0, 0, Laya.stage.width, Laya.stage.height), Handler.create(this, mapLoaded), null, new Point(1600, 800));
+			tiledMap.createMap("../../../../res/tiledMap/isometric_grass_and_water.json", new Rectangle(0, 0, Laya.stage.width, Laya.stage.height), Handler.create(this, mapLoaded), null, new Point(1600, 800));
 		}
 		
 		private function onStageClick(e:*=null):void

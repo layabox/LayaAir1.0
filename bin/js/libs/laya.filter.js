@@ -103,6 +103,13 @@
 		__class(BlurFilter,'laya.filters.BlurFilter',_super);
 		var __proto=BlurFilter.prototype;
 		/**
+		*@private 通知微端
+		*/
+		__proto.callNative=function(sp){
+			sp.model &&sp.model.blurFilter&&sp.model.blurFilter(this.strength);
+		}
+
+		/**
 		*@private
 		*当前滤镜对应的操作器
 		*/
@@ -150,6 +157,13 @@
 		/**@private */
 		__proto.getColor=function(){
 			return this._color._color;
+		}
+
+		/**
+		*@private 通知微端
+		*/
+		__proto.callNative=function(sp){
+			sp.model &&sp.model.glowFilter&&sp.model.glowFilter(this._color.strColor,this._elements[4],this._elements[5],this._elements[6]);
 		}
 
 		/**

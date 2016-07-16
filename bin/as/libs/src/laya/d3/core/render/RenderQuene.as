@@ -140,10 +140,10 @@ package laya.d3.core.render {
 		
 		/**
 		 * @private
-		 * 更新渲染队列。
+		 * 准备渲染队列。
 		 * @param	state 渲染状态。
 		 */
-		public function _render(state:RenderState):void {
+		public function _preRender(state:RenderState):void {
 			_renderObjects.length = _length;
 			_renderObjects.sort(_sort);
 			
@@ -167,7 +167,7 @@ package laya.d3.core.render {
 						
 						var lastRenderObj:RenderObject = _renderObjects[i - 1];
 						
-						if (!curStaticBatch.addRenderObj(lastRenderObj.renderElement) || !curStaticBatch.addRenderObj(renderElement)) {
+						if (!curStaticBatch.addRenderObj(lastRenderObj) || !curStaticBatch.addRenderObj(renderObj)) {
 							lastCanMerage = false;
 							lastIsStatic = isStatic;
 							lastMaterial = renderObj.material;
@@ -184,7 +184,7 @@ package laya.d3.core.render {
 						_merageRenderObjects[_merageLength - 1] = batchObject;
 						currentRenderObjIndex++;
 					} else {
-						if (!curStaticBatch.addRenderObj(renderElement)) {
+						if (!curStaticBatch.addRenderObj(renderObj)) {
 							lastCanMerage = false;
 							lastIsStatic = isStatic;
 							lastMaterial = renderObj.material;
@@ -206,10 +206,17 @@ package laya.d3.core.render {
 			}
 			_staticBatchManager.garbageCollection();
 			_staticBatchManager._finsh();
-			
+		}
+		
+		/**
+		 * @private
+		 * 渲染队列。
+		 * @param	state 渲染状态。
+		 */
+		public function _render(state:RenderState):void {
 			var preShaderValue:int = state.shaderValue.length;
 			var renObj:RenderObject;
-			for (i = 0, n = _merageLength; i < n; i++) {
+			for (var i:int = 0, n:int = _merageLength; i < n; i++) {
 				renObj = _merageRenderObjects[i];
 				var preShadeDef:int;
 				if (renObj.type === 0) {

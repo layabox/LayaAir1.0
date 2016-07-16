@@ -1,18 +1,18 @@
 package laya.webgl.shader {
 	import laya.renders.Render;
 	import laya.resource.Resource;
-	import laya.utils.Browser;
 	import laya.resource.Texture;
+	import laya.system.System;
+	import laya.utils.Browser;
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	import laya.utils.StringKey;
-	import laya.webgl.utils.Buffer;
-	import laya.webgl.utils.GlUtils;
-	import laya.webgl.utils.ShaderCompile;
-	import laya.webgl.submit.Submit;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.system.System;
+	import laya.webgl.submit.Submit;
+	import laya.webgl.utils.Buffer2D;
+	import laya.webgl.utils.GlUtils;
+	import laya.webgl.utils.ShaderCompile;
 	
 	/**
 	 * ...
@@ -449,42 +449,86 @@ package laya.webgl.shader {
 			var result:Object = {};
 			var attributes:Array = [];
 			var uniforms:Array = [];
+			var definesInfo:Object = { };
+			var definesName:Array = [];
 			result.attributes = attributes;
 			result.uniforms = uniforms;
-			
+			result.defines = definesInfo;
 			var removeAnnotation:RegExp = new RegExp("(/\\*([^*]|[\\r\\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/)|(//.*)", "g");
-			var reg:RegExp = new RegExp("(\".*\")|('.*')|([\\w\\*-\\.+/()=<>{}\\\\]+)|([,;:\\\\])", "g");
+			var reg:RegExp = new RegExp("(\".*\")|('.*')|([#\\w\\*-\\.+/()=<>{}\\\\]+)|([,;:\\\\])", "g");
 			
 			var i:int, n:int, one:*;
 			for (var s:int = 0; s < 2; s++) {
 				text[s] = text[s].replace(removeAnnotation, "");
 				
 				var words:Array = text[s].match(reg);
-				var str:String = "";
-				var ofs:int;
+				var tempelse:String;
 				for (i = 0, n = words.length; i < n; i++) {
 					var word:String = words[i];
 					if (word != "attribute" && word != "uniform") {
-						str += word;
-						if (word != ";") str += " ";
+						//str += word;
+						if (word == "#define"){
+							word = words[++i];
+							definesName[word] = 1;
+							continue;
+						}
+						else if (word == "#ifdef"){
+							tempelse=words[++i]
+							var def:Array = definesInfo[tempelse]= definesInfo[tempelse]||[];
+							for (i++; i < n; i++)
+							{
+								word = words[i];
+								if (word != "attribute" && word != "uniform")
+								{
+									if (word == "#else")
+									{
+									  for (i++; i < n; i++ )
+									  {
+										word = words[i];
+										if (word != "attribute" && word != "uniform")
+										{
+											if (word == "#endif")
+											{
+												break;
+											}
+											continue;
+										}
+										i=parseOne(attributes, uniforms, words, i,word,!definesName[tempelse]);
+									  }
+									}
+									continue;
+								}
+								i=parseOne(attributes, uniforms, words, i,word,definesName[tempelse]);
+							}
+						}
+						//if (word != ";") str += " ";
 						continue;
 					}
-					one = {type: shaderParamsMap[words[i + 1]], name: words[i + 2], size: isNaN(parseInt(words[i + 3])) ? 1 : parseInt(words[i + 3])};
-					if (word == "attribute") {
-						attributes.push(one);
-					} else {
-						uniforms.push(one);
-					}
-					str += one.vartype + " " + one.type + " " + one.name + " ";
-					if (words[i + 3] == ':') {
-						one.type = words[i + 4];
-						i += 2;
-					}
-					i += 2;
+					i=parseOne(attributes, uniforms, words, i,word,true);
 				}
-				text[s] = str;
+				//text[s] = str;
 			}
 			return result;
+		}
+		
+		private function parseOne(attributes:Array,uniforms:Array,words:Array,i:int,word:String,b:Boolean):int
+		{
+			var one = { type: shaderParamsMap[words[i + 1]], name: words[i + 2], size: isNaN(parseInt(words[i + 3])) ? 1 : parseInt(words[i + 3]) };
+			if (b)
+			{
+				if (word == "attribute") {
+					attributes.push(one);
+				} else {
+					uniforms.push(one);
+				}
+			}
+			//str += one.vartype + " " + one.type + " " + one.name + " ";
+			if (words[i + 3] == ':') {
+				one.type = words[i + 4];
+				i += 2;
+			}
+			i += 2;
+			return i;
 		}
 		
 		override public function dispose():void {

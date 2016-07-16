@@ -1,9 +1,0 @@
-{
- "px": "~threeDimen/skyBox/px.jpg",
- "nx": "~threeDimen/skyBox/nx.jpg",
- "py": "~threeDimen/skyBox/py.jpg",
- "ny": "~threeDimen/skyBox/ny.jpg",
- "pz": "~threeDimen/skyBox/pz.jpg",
- "nz": "~threeDimen/skyBox/nz.jpg",
- "size": 1024
-}

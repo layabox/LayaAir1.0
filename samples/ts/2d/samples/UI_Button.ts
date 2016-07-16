@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Stage = laya.display.Stage;
     import Button = laya.ui.Button;
@@ -28,8 +27,8 @@ module laya {
             Laya.stage.bgColor = "#232628";
 
             this.skins = [
-                "res/ui/button-1.png", "res/ui/button-2.png", "res/ui/button-3.png",
-                "res/ui/button-4.png", "res/ui/button-5.png", "res/ui/button-6.png"
+                "../../res/ui/button-1.png", "../../res/ui/button-2.png", "../../res/ui/button-3.png",
+                "../../res/ui/button-4.png", "../../res/ui/button-5.png", "../../res/ui/button-6.png"
             ];
 
             // 计算将Button至于舞台中心的偏移量

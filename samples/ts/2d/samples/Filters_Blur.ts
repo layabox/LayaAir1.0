@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Sprite = laya.display.Sprite;
 	import Stage = laya.display.Stage;
@@ -8,7 +7,7 @@ module laya {
 	import WebGL = laya.webgl.WebGL;
 
 	export class Filters_Blur {
-		private apePath: string = "res/apes/monkey2.png";
+		private apePath: string = "../../res/apes/monkey2.png";
 
 		constructor() {
 			// 不支持WebGL时自动切换至Canvas

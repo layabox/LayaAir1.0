@@ -17,6 +17,7 @@ package laya.utils {
 		 * 滤镜动作集。
 		 */
 		public static var FILTER_ACTIONS:Array = [];
+		private static var pixelRatio:int =-1;
 		
 		/*[FILEINDEX:10000000]*/
 		private static var _charSizeTestDiv:*;
@@ -33,7 +34,7 @@ package laya.utils {
 			return canvas.getContext(webGLName, {stencil: true, alpha: false, antialias: Config.isAntialias, premultipliedAlpha: false});
 		}
 		
-		public static var getPixelRatio:Function = function(pixelRatio:Number):Number {
+		public static var getPixelRatio:Function = function():Number {
 			if (pixelRatio < 0) {
 				var ctx:* = Browser.context;
 				var backingStore:Number = ctx.backingStorePixelRatio || ctx.webkitBackingStorePixelRatio || ctx.mozBackingStorePixelRatio || ctx.msBackingStorePixelRatio || ctx.oBackingStorePixelRatio || ctx.backingStorePixelRatio || 1;

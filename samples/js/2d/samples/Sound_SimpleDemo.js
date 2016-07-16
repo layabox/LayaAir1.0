@@ -62,13 +62,13 @@
 	function onPlayMusic(e)
 	{
 		console.log("播放音乐");
-		SoundManager.playMusic("res/sounds/bgm.mp3", 1, new Handler(this, onComplete));
+		SoundManager.playMusic("../../res/sounds/bgm.mp3", 1, new Handler(this, onComplete));
 	}
 
 	function onPlaySound(e)
 	{
 		console.log("播放音效");
-		SoundManager.playSound("res/sounds/btn.mp3", 1, new Handler(this, onComplete));
+		SoundManager.playSound("../../res/sounds/btn.mp3", 1, new Handler(this, onComplete));
 	}
 
 	function onComplete()

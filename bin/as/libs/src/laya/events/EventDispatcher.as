@@ -38,7 +38,7 @@ package laya.events {
 				for (var i:int = 0, n:int = listeners.length; i < n; i++) {
 					var listener:Handler = listeners[i];
 					if (listener) {
-						data != null ? listener.runWith(data) : listener.run();
+						(data != null) ? listener.runWith(data) : listener.run();
 					}
 					if (!listener || listener.once) {
 						listeners.splice(i, 1);

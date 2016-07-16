@@ -39,16 +39,17 @@
 	import flash.utils.Endian;
 	import flash.utils.IDataInput;
 	import flash.utils.Timer;
+	import laya.events.Event;
 	
-	[Event(name="connectionFail",type="com.worlize.websocket.WebSocketErrorEvent")]
-	[Event(name="ioError",type="flash.events.IOErrorEvent")]
-	[Event(name="abnormalClose",type="com.worlize.websocket.WebSocketErrorEvent")]
-	[Event(name="message",type="com.worlize.websocket.WebSocketEvent")]
-	[Event(name="frame",type="com.worlize.websocket.WebSocketEvent")]
-	[Event(name="ping",type="com.worlize.websocket.WebSocketEvent")]
-	[Event(name="pong",type="com.worlize.websocket.WebSocketEvent")]
-	[Event(name="open",type="com.worlize.websocket.WebSocketEvent")]
-	[Event(name="closed",type="com.worlize.websocket.WebSocketEvent")]
+	[flash.events.Event(name="connectionFail",type="com.worlize.websocket.WebSocketErrorEvent")]
+	[flash.events.Event(name="ioError",type="flash.events.IOErrorEvent")]
+	[flash.events.Event(name="abnormalClose",type="com.worlize.websocket.WebSocketErrorEvent")]
+	[flash.events.Event(name="message",type="com.worlize.websocket.WebSocketEvent")]
+	[flash.events.Event(name="frame",type="com.worlize.websocket.WebSocketEvent")]
+	[flash.events.Event(name="ping",type="com.worlize.websocket.WebSocketEvent")]
+	[flash.events.Event(name="pong",type="com.worlize.websocket.WebSocketEvent")]
+	[flash.events.Event(name="open",type="com.worlize.websocket.WebSocketEvent")]
+	[flash.events.Event(name="closed",type="com.worlize.websocket.WebSocketEvent")]
 	public class FlashWebSocket extends EventDispatcher
 	{
 		private static const MODE_UTF8:int = 0;
@@ -100,7 +101,7 @@
 		
 		public var config:WebSocketConfig = new WebSocketConfig();
 		
-		public var debug:Boolean = false;
+		public var debug:Boolean = true;
 		
 		public static var logger:Function = function(text:String):void {
 			trace(text);
@@ -111,11 +112,11 @@
 		public function set onopen( _fun : Function ) : void {
 			if ( _fun == null ) {
 				if ( onopenF != null ) {					
-					this.removeEventListener( WebSocketEvent.OPEN, onopenF );
+					//this.removeEventListener( WebSocketEvent.OPEN, onopenF );
 					onopenF = null;
 				}
 			}else {
-				this.addEventListener(WebSocketEvent.OPEN, _fun );
+				//this.addEventListener(WebSocketEvent.OPEN, _fun );
 				onopenF = _fun;
 			}
 			
@@ -125,11 +126,11 @@
 			//this.addEventListener( WebSocketEvent.MESSAGE, _fun );
 			if ( _fun == null ) {
 				if ( onmessageF != null ) {					
-					this.removeEventListener( WebSocketEvent.MESSAGE, onmessageF );
+					//this.removeEventListener( WebSocketEvent.MESSAGE, onmessageF );
 					onmessageF = null;
 				}
 			}else {
-				this.addEventListener(WebSocketEvent.MESSAGE, _fun );
+				//this.addEventListener(WebSocketEvent.MESSAGE, _fun );
 				onmessageF = _fun;
 			}			
 		}
@@ -138,11 +139,11 @@
 			//this.addEventListener( WebSocketEvent.CLOSED, _fun );
 			if ( _fun == null ) {
 				if ( oncloseF != null ) {					
-					this.removeEventListener( WebSocketEvent.CLOSED, oncloseF );
+					//this.removeEventListener( WebSocketEvent.CLOSED, oncloseF );
 					oncloseF = null;
 				}
 			}else {
-				this.addEventListener(WebSocketEvent.CLOSED, _fun );
+				//this.addEventListener(WebSocketEvent.CLOSED, _fun );
 				oncloseF = _fun;
 			}						
 		}
@@ -217,11 +218,11 @@
 			}
 			
 			
-			rawSocket.addEventListener(Event.CONNECT, handleSocketConnect);
+			rawSocket.addEventListener(flash.events.Event.CONNECT, handleSocketConnect);
 			rawSocket.addEventListener(IOErrorEvent.IO_ERROR, handleSocketIOError);
 			rawSocket.addEventListener(SecurityErrorEvent.SECURITY_ERROR, handleSocketSecurityError);
 			
-			socket.addEventListener(Event.CLOSE, handleSocketClose);			
+			socket.addEventListener(flash.events.Event.CLOSE, handleSocketClose);			
 			socket.addEventListener(ProgressEvent.SOCKET_DATA, handleSocketData);
 			
 			_readyState = WebSocketState.INIT;
@@ -507,7 +508,7 @@
 			}
 		}
 		
-		private function handleSocketConnect(event:Event):void {
+		private function handleSocketConnect(event:flash.events.Event):void {
 			if (debug) {
 				logger("Socket Connected");
 			}
@@ -521,7 +522,7 @@
 			sendHandshake();
 		}
 		
-		private function handleSocketClose(event:Event):void {
+		private function handleSocketClose(event:flash.events.Event):void {
 			if (debug) {
 				logger("Socket Disconnected");
 			}
@@ -571,11 +572,17 @@
 					if (config.assembleFragments) {
 						if (frameQueue.length === 0) {
 							if (frame.fin) {
+								/** River: 兼容laya.events.Event.
 								event = new WebSocketEvent(WebSocketEvent.MESSAGE);
 								event.message = new WebSocketMessage();
 								event.message.type = WebSocketMessage.TYPE_BINARY;
 								event.message.binaryData = frame.binaryPayload;
 								dispatchEvent(event);
+								*/
+								var eve : laya.events.Event = new laya.events.Event();
+								eve.type = WebSocketEvent.MESSAGE;
+								eve.data = frame.binaryPayload;
+								if ( onmessageF != null ) onmessageF( eve );
 							}
 							else if (frameQueue.length === 0) {
 								// beginning of a fragmented message
@@ -594,12 +601,18 @@
 					if (config.assembleFragments) {
 						if (frameQueue.length === 0) {
 							if (frame.fin) {
+								/** River: 兼容laya.events.Event.
 								event = new WebSocketEvent(WebSocketEvent.MESSAGE);
 								event.message = new WebSocketMessage();
 								event.message.type = WebSocketMessage.TYPE_UTF8;
 								event.message.utf8Data = frame.binaryPayload.readMultiByte(frame.length, 'utf-8');
 								event.data = event.message.utf8Data;					
 								dispatchEvent(event);
+								*/
+								var eve1 : laya.events.Event = new laya.events.Event();
+								eve1.type = WebSocketEvent.MESSAGE;
+								eve1.data = frame.binaryPayload.readMultiByte(frame.length, 'utf-8');
+								if ( onmessageF != null ) onmessageF( eve1 );								
 							}
 							else {
 								// beginning of a fragmented message
@@ -736,7 +749,10 @@
 			if (debug) {
 				logger("IO Error: " + event);
 			}
-			dispatchEvent(event);
+			// 兼容laya.events.Event.
+			//dispatchEvent(event);
+			if ( onErrorF != null ) onErrorF( event );
+			
 			dispatchClosedEvent();
 		}
 		
@@ -800,8 +816,12 @@
 			errorEvent.text = message;
 			dispatchEvent(errorEvent);
 			
-			var event:WebSocketEvent = new WebSocketEvent(WebSocketEvent.CLOSED);
-			dispatchEvent(event);
+			// River: 兼容laya.event.Event
+			//var event:WebSocketEvent = new WebSocketEvent(WebSocketEvent.CLOSED);
+			//dispatchEvent(event);
+			var eve : laya.events.Event = new laya.events.Event();
+			eve.type = WebSocketEvent.CLOSED;
+			if ( oncloseF != null ) oncloseF( eve );
 		}
 		
 		private function failConnection(message:String):void {
@@ -814,8 +834,12 @@
 			errorEvent.text = message;
 			dispatchEvent(errorEvent);
 			
-			var event:WebSocketEvent = new WebSocketEvent(WebSocketEvent.CLOSED);
-			dispatchEvent(event);
+			// River: 兼容laya.events.Event.
+			//var event:WebSocketEvent = new WebSocketEvent(WebSocketEvent.CLOSED);
+			//dispatchEvent(event);
+			var eve : laya.events.Event = new laya.events.Event();
+			eve.type = WebSocketEvent.CLOSED;
+			if ( oncloseF != null ) oncloseF( eve );			
 		}
 		
 		private function drop(closeReason:uint = WebSocketCloseStatus.PROTOCOL_ERROR, reasonText:String = null):void {
@@ -980,7 +1004,11 @@
 			currentFrame = new WebSocketFrame();
 			frameQueue = new Vector.<WebSocketFrame>();
 			
-			dispatchEvent(new WebSocketEvent(WebSocketEvent.OPEN));
+			// River: 兼容LayaAir层的laya.events.Event.
+			//dispatchEvent(new WebSocketEvent(WebSocketEvent.OPEN));
+			var eve : laya.events.Event = new laya.events.Event();
+			eve.type = WebSocketEvent.OPEN;
+			if( onopenF != null ) onopenF( eve );
 			
 			// Start reading data
 			handleSocketData();
@@ -1019,8 +1047,13 @@
 			}
 			if (_readyState !== WebSocketState.CLOSED) {
 				_readyState = WebSocketState.CLOSED;
-				var event:WebSocketEvent = new WebSocketEvent(WebSocketEvent.CLOSED);
-				dispatchEvent(event);
+				
+				// River: 兼容laya.events.Event.
+				//var event:WebSocketEvent = new WebSocketEvent(WebSocketEvent.CLOSED);
+				//dispatchEvent(event);
+				var eve : laya.events.Event = new laya.events.Event();
+				eve.type = WebSocketEvent.CLOSED;
+				if ( oncloseF != null ) oncloseF( eve );				
 			}
 		}
 				

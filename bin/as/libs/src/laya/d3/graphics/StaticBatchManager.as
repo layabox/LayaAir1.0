@@ -3,8 +3,8 @@ package laya.d3.graphics {
 	import laya.utils.Stat;
 	
 	/**
-	 * ...
-	 * @author ...
+	 * @private
+	 * <code>StaticBatchManager</code> 类用于创建静态批处理管理员。
 	 */
 	public class StaticBatchManager {
 		private static var maxVertexDeclaration:int = 1000;//需在顶点定义类中加异常判断警告
@@ -59,8 +59,7 @@ package laya.d3.graphics {
 			}
 		}
 		
-		public function dispose():void
-		{
+		public function dispose():void {
 			_keys.length = 0;
 			_useFPS.length = 0;
 			_staticBatchs.length = 0;

@@ -28,7 +28,7 @@ package
 		private function loadFont():void
 		{
 			var bitmapFont:BitmapFont = new BitmapFont();
-			bitmapFont.loadFont("res/bitmapFont/test.fnt",new Handler(this,onFontLoaded, [bitmapFont]));
+			bitmapFont.loadFont("../../../../res/bitmapFont/test.fnt",new Handler(this,onFontLoaded, [bitmapFont]));
 		}
 
 		private function onFontLoaded(bitmapFont:BitmapFont):void

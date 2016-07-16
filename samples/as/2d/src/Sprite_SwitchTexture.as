@@ -9,8 +9,8 @@ package
 	
 	public class Sprite_SwitchTexture
 	{
-		private var texture1:String = "res/apes/monkey2.png";
-		private var texture2:String = "res/apes/monkey3.png";
+		private var texture1:String = "../../../../res/apes/monkey2.png";
+		private var texture2:String = "../../../../res/apes/monkey3.png";
 		private var flag:Boolean = false;
 		
 		private var ape:Sprite;

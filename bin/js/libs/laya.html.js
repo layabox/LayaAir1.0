@@ -4,8 +4,8 @@
 
 	var Browser=laya.utils.Browser,CSSStyle=laya.display.css.CSSStyle,ClassUtils=laya.utils.ClassUtils;
 	var Event=laya.events.Event,HTMLChar=laya.utils.HTMLChar,Loader=laya.net.Loader,Node=laya.display.Node,Rectangle=laya.maths.Rectangle;
-	var RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite,Sprite=laya.display.Sprite;
-	var Stat=laya.utils.Stat,Texture=laya.resource.Texture,URL=laya.net.URL,Utils=laya.utils.Utils;
+	var Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
+	var Sprite=laya.display.Sprite,Stat=laya.utils.Stat,Texture=laya.resource.Texture,URL=laya.net.URL,Utils=laya.utils.Utils;
 	/**
 	*@private
 	*/
@@ -112,7 +112,11 @@
 			if ((element._style._type & /*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200)===0)
 				return null;
 			element._style._type &=~ /*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200;
-			return Layout._multiLineLayout(element);
+			var arr=Layout._multiLineLayout(element);
+			if (Render.isConchApp&&element["layaoutCallNative"]){
+				(element).layaoutCallNative();
+			}
+			return arr;
 		}
 
 		Layout._multiLineLayout=function(element){
@@ -328,6 +332,20 @@
 
 		__class(HTMLElement,'laya.html.dom.HTMLElement',_super);
 		var __proto=HTMLElement.prototype;
+		/**
+		*@private
+		*/
+		__proto.layaoutCallNative=function(){
+			var n=0;
+			if (this._childs &&(n=this._childs.length)> 0){
+				for (var i=0;i < n;i++){
+					this._childs[i].layaoutCallNative && this._childs[i].layaoutCallNative();
+				}
+			};
+			var word=this._getWords();
+			word&&HTMLElement.fillWords(this,word,0,0,this.style.font,this.style.color);
+		}
+
 		__proto.appendChild=function(c){
 			return this.addChild(c);
 		}
@@ -491,6 +509,14 @@
 			/*__JS__ */eval("fn=function(event){"+value+";}");
 			this.on(/*laya.events.Event.CLICK*/"click",this,fn);
 		});
+
+		HTMLElement.fillWords=function(ele,words,x,y,font,color){
+			ele.graphics.clear();
+			for (var i=0,n=words.length;i < n;i++){
+				var a=words[i];
+				ele.graphics.fillText(a.char,a.x+x,a.y+y,font,color,'left');
+			}
+		}
 
 		HTMLElement._EMPTYTEXT={text:null,words:null};
 		return HTMLElement;
@@ -703,6 +729,14 @@
 				if (!style.heighted(_$this)&& _$this._height !=_$this._tex.height){
 					_$this.height=_$this._tex.height;
 					_$this.parent && (_$this.parent)._layoutLater();
+				}
+				if (Render.isConchApp){
+					_$this._renderArgs[0]=_$this._tex;
+					_$this._renderArgs[1]=_$this.x;
+					_$this._renderArgs[2]=_$this.y;
+					_$this._renderArgs[3]=_$this.width || _$this._tex.width;
+					_$this._renderArgs[4]=_$this.height || _$this._tex.height;
+					_$this.graphics.drawTexture(_$this._tex,0,0,_$this._renderArgs[3],_$this._renderArgs[4]);
 				}
 			}
 			tex.loaded?onloaded():tex.on(/*laya.events.Event.LOADED*/"loaded",null,onloaded);

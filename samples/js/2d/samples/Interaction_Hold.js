@@ -11,7 +11,7 @@
 	var WebGL = laya.webgl.WebGL;
 
 	const HOLD_TRIGGER_TIME = 1000;
-	const apePath = "res/apes/monkey2.png";
+	const apePath = "../../res/apes/monkey2.png";
 
 	//触发hold事件时间为1秒
 	var ape, isApeHold;

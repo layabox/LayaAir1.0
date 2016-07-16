@@ -26,7 +26,7 @@
 	function loadFont()
 	{
 		var bitmapFont = new BitmapFont();
-		bitmapFont.loadFont("res/bitmapFont/test.fnt", new Handler(this, onFontLoaded, [bitmapFont]));
+		bitmapFont.loadFont("../../res/bitmapFont/test.fnt", new Handler(this, onFontLoaded, [bitmapFont]));
 	}
 
 	function onFontLoaded(bitmapFont)

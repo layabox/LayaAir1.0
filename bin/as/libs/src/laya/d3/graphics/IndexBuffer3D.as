@@ -2,6 +2,7 @@ package laya.d3.graphics {
 	import laya.renders.Render;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * <code>IndexBuffer3D</code> 类用于创建索引缓冲。
@@ -28,6 +29,8 @@ package laya.d3.graphics {
 		/** @private */
 		private var _indexType:String;
 		/** @private */
+		private var _indexTypeByteCount:int;
+		/** @private */
 		private var _indexCount:int;
 		/** @private */
 		private var _canRead:Boolean;
@@ -38,6 +41,14 @@ package laya.d3.graphics {
 		 */
 		public function get indexType():String {
 			return _indexType;
+		}
+		
+		/**
+		 * 获取索引类型字节数量。
+		 *   @return	索引类型字节数量。
+		 */
+		public function get indexTypeByteCount():int {
+			return _indexTypeByteCount;
 		}
 		
 		/**
@@ -74,18 +85,22 @@ package laya.d3.graphics {
 			_bind();
 			var byteLength:int;
 			if (indexType == IndexBuffer3D.INDEXTYPE_USHORT)
-				byteLength = 2 * indexCount;
+				_indexTypeByteCount = 2;
 			else if (indexType == IndexBuffer3D.INDEXTYPE_UBYTE)
-				byteLength = indexCount;
+				_indexTypeByteCount = 1;
+			else
+				throw new Error("unidentification index type.");
 			
-			_length = byteLength;
+			byteLength = _indexTypeByteCount * indexCount;
+			
+			_byteLength = byteLength;
 			_gl.bufferData(_bufferType, byteLength, _bufferUsage);
 			
 			if (canRead) {
 				if (indexType == IndexBuffer3D.INDEXTYPE_USHORT)
-					_data = new Uint16Array(indexCount);
+					_buffer = new Uint16Array(indexCount);
 				else if (indexType == IndexBuffer3D.INDEXTYPE_UBYTE)
-					_data = new Uint8Array(indexCount);
+					_buffer = new Uint8Array(indexCount);
 			}
 		}
 		
@@ -113,13 +128,13 @@ package laya.d3.graphics {
 			
 			if (_canRead) {
 				if (bufferOffset !== 0 || dataStartIndex !== 0 || dataCount !== 4294967295/*uint.MAX_VALUE*/) {
-					var maxLength:int = _data.length - bufferOffset;
+					var maxLength:int = _buffer.length - bufferOffset;
 					if (dataCount > maxLength)
 						dataCount = maxLength;
 					for (var i:int = 0; i < dataCount; i++)
-						_data[bufferOffset + i] = data[i];
+						_buffer[bufferOffset + i] = data[i];
 				} else {
-					_data = data;
+					_buffer = data;
 				}
 			}
 		}
@@ -130,14 +145,14 @@ package laya.d3.graphics {
 		 */
 		public function getData():Uint16Array {
 			if (_canRead)
-				return _data;
+				return _buffer;
 			else
 				throw new Error("Can't read data from VertexBuffer with only write flag!");
 		}
 		
 		/** 彻底销毁索引缓冲。*/
 		override public function dispose():void {
-			_data = null;
+			_buffer = null;
 			super.dispose();
 		}
 	

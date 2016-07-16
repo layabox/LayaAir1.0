@@ -58,11 +58,11 @@
             <option>Network_XML</option>
             <option>Particle_T1</option>
             <option>Particle_T2</option>
+            <option>Particle_T3</option>
             <option>PIXI_Example_04</option>
             <option>PIXI_Example_05</option>
             <option>PIXI_Example_21</option>
             <option>PIXI_Example_23</option>
-            <option>Particle_T3</option>
             <option>PerformanceTest_Cartoon</option>
             <option>PerformanceTest_Cartoon2</option>
             <option>PerformanceTest_Legend</option>
@@ -144,7 +144,7 @@
     type = GetQueryString("type");
     type = type || "Animation_SWF";
     select.value = type;
-    jsCtrl.src = "samples/js/" + type + ".js";
+    jsCtrl.src = "js/" + type + ".js";
     document.onkeyup = function(e)
     {
     var keycode = e.which;

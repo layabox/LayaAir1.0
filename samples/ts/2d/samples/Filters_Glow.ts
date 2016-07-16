@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Sprite = laya.display.Sprite;
 	import Stage = laya.display.Stage;
@@ -9,7 +8,7 @@ module laya {
 	import WebGL = laya.webgl.WebGL;
 
 	export class Filters_Glow {
-		private apePath: string = "res/apes/monkey2.png";
+		private apePath: string = "../../res/apes/monkey2.png";
 
 		private ape: Sprite;
 

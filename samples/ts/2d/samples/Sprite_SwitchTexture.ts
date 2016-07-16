@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Sprite = laya.display.Sprite;
 	import Stage = laya.display.Stage;
@@ -8,8 +7,8 @@ module laya {
 	import WebGL = laya.webgl.WebGL;
 
 	export class Sprite_SwitchTexture {
-		private texture1: string = "res/apes/monkey2.png";
-		private texture2: string = "res/apes/monkey3.png";
+		private texture1: string = "../../res/apes/monkey2.png";
+		private texture2: string = "../../res/apes/monkey3.png";
 		private flag: boolean = false;
 
 		private ape: Sprite;

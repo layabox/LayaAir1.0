@@ -37,7 +37,7 @@ package laya.webgl {
 	import laya.webgl.submit.SubmitCMD;
 	import laya.webgl.submit.SubmitCMDScope;
 	import laya.webgl.text.DrawText;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.RenderSprite3D;
 	import laya.webgl.utils.RenderState2D;
 	
@@ -70,12 +70,12 @@ package laya.webgl {
 			var from:* = Context.prototype;
 			var to:* = __JS__("CanvasRenderingContext2D.prototype");
 			to.fillTrangles = from.fillTrangles;
-			Buffer.__int__(null);
+			Buffer2D.__int__(null);
 			to.setIBVB = function(x:Number, y:Number, ib:IndexBuffer2D, vb:VertexBuffer2D, numElement:int, mat:Matrix, shader:Shader, shaderValues:ShaderValue, startIndex:int = 0, offset:int = 0):void {
 				if (ib === null) {
 					this._ib = this._ib || IndexBuffer2D.QuadrangleIB;
 					ib = this._ib;
-					GlUtils.expandIBQuadrangle(ib, (vb.length / (4 * 16) + 8));
+					GlUtils.expandIBQuadrangle(ib, (vb.byteLength / (4 * 16) + 8));
 				}
 				this._setIBVB(x, y, ib, vb, numElement, mat, shader, shaderValues, startIndex, offset);
 			};
@@ -90,7 +90,7 @@ package laya.webgl {
 				var vb:VertexBuffer2D = this._vb;
 				var length:int = points.length >> 4;
 				GlUtils.fillTranglesVB(vb, x, y, points, m || this._curMat, 0, 0);
-				GlUtils.expandIBQuadrangle(this._ib, (vb.length / (4 * 16) + 8));
+				GlUtils.expandIBQuadrangle(this._ib, (vb.byteLength / (4 * 16) + 8));
 				var shaderValues:Value2D = new Value2D(0x01, 0);//     Value2D.create(0x01, 0);
 				shaderValues.textureHost = tex;
 				//var sd = RenderState2D.worldShaderDefines?shaderValues._withWorldShaderDefines():(Shader.sharders [shaderValues.mainID | shaderValues.defines._value] );
@@ -503,7 +503,7 @@ package laya.webgl {
 			WebGLContext2D.__init__();
 			Value2D.__init__();
 			Shader2D.__init__();
-			Buffer.__int__(gl);
+			Buffer2D.__int__(gl);
 			BlendMode._init_(gl);
 			if (Render.isConchApp) {
 				__JS__("conch.setOnInvalidGLRes(WebGL.onInvalidGLRes)");

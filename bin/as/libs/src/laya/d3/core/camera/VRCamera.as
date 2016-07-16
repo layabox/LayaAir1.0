@@ -212,10 +212,8 @@ package laya.d3.core.camera {
 		 * 计算左投影矩阵。
 		 */
 		protected function _calculateLeftProjectionMatrix():void {
-			
 			if (!_isOrthographicProjection) {
 				Matrix4x4.createPerspective(fieldOfView, leftAspectRatio, nearPlane, farPlane, _leftProjectionMatrix);
-				trace(fieldOfView, leftAspectRatio, nearPlane, farPlane, _leftProjectionMatrix);
 			}
 			_projectionMatrixModifyID += 0.01 / id;//TODO:可能第二次分屏无法更新
 		}
@@ -227,7 +225,6 @@ package laya.d3.core.camera {
 		protected function _calculateRightProjectionMatrix():void {
 			if (!_isOrthographicProjection) {
 				Matrix4x4.createPerspective(fieldOfView, rightAspectRatio, nearPlane, farPlane, _rightProjectionMatrix);
-				trace(fieldOfView, rightAspectRatio, nearPlane, farPlane, _rightProjectionMatrix);
 			}
 			_projectionMatrixModifyID += 0.01 / id;//TODO:可能第二次分屏无法更新
 		}

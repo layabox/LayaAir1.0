@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya
 {
 	import Utils = laya.utils.Utils;
@@ -15,9 +14,9 @@ module laya
 			var xmlValueContainsError:string = "<root><item>item a</item><item>item b</item>somethis...</root1>";
 			var xmlValue:string = "<root><item>item a</item><item>item b</item>somethings...</root>";
 
-			this.proessXML(Utils.parseXMLFromString(xmlValueContainsError));
+			this.proessXML(xmlValueContainsError);
 			console.log("\n");
-			this.proessXML(Utils.parseXMLFromString(xmlValue));
+			this.proessXML(xmlValue);
 		}
 		// 使用xml
 		private proessXML(source:string):void 

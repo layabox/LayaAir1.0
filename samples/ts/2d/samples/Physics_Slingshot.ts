@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Sprite = laya.display.Sprite;
 	import Stage = laya.display.Stage;
@@ -53,7 +52,7 @@ module laya {
 						{
 							width: 800,
 							height: 600,
-							background: 'res/physics/img/background.png',
+							background: '../../res/physics/img/background.png',
 							hasBounds: true
 						}
 					}
@@ -85,7 +84,7 @@ module laya {
 					{
 						sprite:
 						{
-							texture: 'res/physics/img/rock.png',
+							texture: '../../res/physics/img/rock.png',
 							xOffset: 23.5,
 							yOffset: 23.5
 						}
@@ -110,7 +109,7 @@ module laya {
 
 			var pyramid: any = this.Matter.Composites.pyramid(500, 300, 9, 10, 0, 0, function(x, y, column): any
 			{
-				var texture: any = column % 2 === 0 ? 'res/physics/img/block.png' : 'res/physics/img/block-2.png';
+				var texture: any = column % 2 === 0 ? '../../res/physics/img/block.png' : '../../res/physics/img/block-2.png';
 				return this.Matter.Bodies.rectangle(x, y, 25, 40,
 					{
 						render:
@@ -137,7 +136,7 @@ module laya {
 
 			var pyramid2: any = this.Matter.Composites.pyramid(550, 0, 5, 10, 0, 0, function(x, y, column): any
 			{
-				var texture: any = column % 2 === 0 ? 'res/physics/img/block.png' : 'res/physics/img/block-2.png';
+				var texture: any = column % 2 === 0 ? '../../res/physics/img/block.png' : '../../res/physics/img/block-2.png';
 				return this.Matter.Bodies.rectangle(x, y, 25, 40,
 					{
 						render:

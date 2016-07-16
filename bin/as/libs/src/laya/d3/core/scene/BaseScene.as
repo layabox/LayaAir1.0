@@ -18,7 +18,7 @@ package laya.d3.core.scene {
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.submit.ISubmit;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.RenderState2D;
 	import laya.webgl.utils.ValusArray;
 	
@@ -192,7 +192,7 @@ package laya.d3.core.scene {
 			
 			var shaderValue:ValusArray = state.worldShaderValue;
 			var loopCount:int = Stat.loopCount;
-			currentCamera && shaderValue.pushValue(Buffer.CAMERAPOS, currentCamera.transform.position.elements, loopCount);
+			currentCamera && shaderValue.pushValue(Buffer2D.CAMERAPOS, currentCamera.transform.position.elements, loopCount);
 			
 			if (_lights.length > 0)//灯光相关
 			{
@@ -208,9 +208,9 @@ package laya.d3.core.scene {
 			}
 			if (enableFog)//雾化
 			{
-				state.worldShaderValue.pushValue(Buffer.FOGSTART, fogStart, loopCount);
-				state.worldShaderValue.pushValue(Buffer.FOGRANGE, fogRange, loopCount);
-				state.worldShaderValue.pushValue(Buffer.FOGCOLOR, fogColor.elements, loopCount);
+				state.worldShaderValue.pushValue(Buffer2D.FOGSTART, fogStart, loopCount);
+				state.worldShaderValue.pushValue(Buffer2D.FOGRANGE, fogRange, loopCount);
+				state.worldShaderValue.pushValue(Buffer2D.FOGCOLOR, fogColor.elements, loopCount);
 			}
 		}
 		
@@ -228,6 +228,16 @@ package laya.d3.core.scene {
 			for (var i:int = 0, n:int = _childs.length; i < n; ++i) {
 				var child:Sprite3D = _childs[i];
 				child.active && child._update(state);
+			}
+		}
+			/**
+		 * @private
+		 */
+		protected function _preRenderScene(gl:WebGLContext, state:RenderState):void {
+			for (var i:int = 0; i < _quenes.length; i++) {
+				if (_quenes[i]) {
+					_quenes[i]._preRender(state);
+				}
 			}
 		}
 		

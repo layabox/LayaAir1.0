@@ -28,7 +28,7 @@ package
 			Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
 			Laya.stage.bgColor = "#232628";
 
-			skins = ["res/ui/checkbox (1).png", "res/ui/checkbox (2).png", "res/ui/checkbox (3).png", "res/ui/checkbox (4).png", "res/ui/checkbox (5).png", "res/ui/checkbox (6).png"];
+			skins = ["../../../../res/ui/checkbox (1).png", "../../../../res/ui/checkbox (2).png", "../../../../res/ui/checkbox (3).png", "../../../../res/ui/checkbox (4).png", "../../../../res/ui/checkbox (5).png", "../../../../res/ui/checkbox (6).png"];
 			
 			Laya.loader.load(skins, Handler.create(this,onCheckBoxSkinLoaded));
 		}

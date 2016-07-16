@@ -1,6 +1,6 @@
 package laya.webgl.shapes
 {
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 
 	public class Ellipse extends BasePoly
 	{

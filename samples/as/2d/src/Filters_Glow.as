@@ -10,7 +10,7 @@ package
 	
 	public class Filters_Glow 
 	{
-		private const apePath:String = "res/apes/monkey2.png";
+		private const apePath:String = "../../../../res/apes/monkey2.png";
 
 		private var ape:Sprite;
 

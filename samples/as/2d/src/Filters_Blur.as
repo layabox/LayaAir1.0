@@ -9,7 +9,7 @@ package
 	
 	public class Filters_Blur 
 	{
-		private const apePath:String = "res/apes/monkey2.png";
+		private const apePath:String = "../../../../res/apes/monkey2.png";
 		
 		public function Filters_Blur() 
 		{

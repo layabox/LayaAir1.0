@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Stage = laya.display.Stage;
     import Button = laya.ui.Button;
@@ -25,7 +24,7 @@ module laya {
             Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
             Laya.stage.bgColor = "#232628";
 
-            this.assets = ["res/ui/dialog (1).png", "res/ui/close.png"];
+            this.assets = ["../../res/ui/dialog (1).png", "../../res/ui/close.png"];
             Laya.loader.load(this.assets, Handler.create(this, this.onSkinLoadComplete));
         }
 

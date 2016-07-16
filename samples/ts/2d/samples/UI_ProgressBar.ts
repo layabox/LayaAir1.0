@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Stage = laya.display.Stage;
     import ProgressBar = laya.ui.ProgressBar;
@@ -18,11 +17,11 @@ module laya {
             Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
             Laya.stage.bgColor = "#232628";
 
-            Laya.loader.load(["res/ui/progressBar.png", "res/ui/progressBar$bar.png"], Handler.create(this, this.onLoadComplete));
+            Laya.loader.load(["../../res/ui/progressBar.png", "../../res/ui/progressBar$bar.png"], Handler.create(this, this.onLoadComplete));
         }
 
         private onLoadComplete(): void {
-            this.progressBar = new ProgressBar("res/ui/progressBar.png");
+            this.progressBar = new ProgressBar("../../res/ui/progressBar.png");
 
             this.progressBar.width = 400;
 

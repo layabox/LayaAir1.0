@@ -30,8 +30,8 @@ package
 			//显示两只猩猩
 			ape1 = new Sprite();
 			ape2 = new Sprite();
-			ape1.loadImage("res/apes/monkey2.png");
-			ape2.loadImage("res/apes/monkey2.png");
+			ape1.loadImage("../../../../res/apes/monkey2.png");
+			ape2.loadImage("../../../../res/apes/monkey2.png");
 			
 			ape1.pivot(55, 72);
 			ape2.pivot(55, 72);

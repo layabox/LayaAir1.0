@@ -7,8 +7,8 @@
 	var Handler = Laya.Handler;
 	var WebGL   = Laya.WebGL;
 
-	var texture1 = "res/apes/monkey2.png";
-	var texture2 = "res/apes/monkey3.png";
+	var texture1 = "../../res/apes/monkey2.png";
+	var texture2 = "../../res/apes/monkey3.png";
 	var flag = false;
 
 	var ape;

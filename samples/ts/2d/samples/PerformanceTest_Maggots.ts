@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya
 {
     import Sprite = laya.display.Sprite;
@@ -10,7 +9,7 @@ module laya
     
     export class PerformanceTest_Maggots
     {
-        private texturePath:string = "res/tinyMaggot.png";
+        private texturePath:string = "../../res/tinyMaggot.png";
         
         private padding:number = 100;
         private maggotAmount:number = 5000;

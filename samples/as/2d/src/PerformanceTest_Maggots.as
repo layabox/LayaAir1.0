@@ -9,7 +9,7 @@ package
 	
 	public class PerformanceTest_Maggots
 	{
-		private var texturePath:String = "res/tinyMaggot.png";
+		private var texturePath:String = "../../../../res/tinyMaggot.png";
 		
 		private var padding:int = 100;
 		private var maggotAmount:int = 5000;

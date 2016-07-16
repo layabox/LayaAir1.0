@@ -7,7 +7,7 @@ package
 	
 	public class Animation_SWF 
 	{
-		private const SWFPath:String = "res/swf/dragon.swf";
+		private const SWFPath:String = "../../../../res/swf/dragon.swf";
 		
 		private const MCWidth:int = 318;
 		private const MCHeight:int = 406;

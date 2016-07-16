@@ -1,9 +1,8 @@
 package laya.d3 {
 	import laya.d3.component.Component3D;
 	import laya.d3.core.Layer;
+	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.fileModel.Mesh;
-	import laya.d3.core.fileModel.SkyMesh;
 	import laya.d3.core.material.Material;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.shader.Shader3D;
@@ -63,8 +62,7 @@ package laya.d3 {
 		
 		private static function _regClassforJson():void {
 			ClassUtils.regClass("Sprite3D", Sprite3D);
-			ClassUtils.regClass("SkyMesh", SkyMesh);
-			ClassUtils.regClass("Mesh", Mesh);
+			ClassUtils.regClass("MeshSprite3D", MeshSprite3D);
 			ClassUtils.regClass("Material", Material);
 		}
 		

@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Stage = laya.display.Stage;
     import Loader = laya.net.Loader;
@@ -8,6 +7,7 @@ module laya {
     import Handler = laya.utils.Handler;
     import Stat = laya.utils.Stat;
     import WebGL = laya.webgl.WebGL;
+    import URL = laya.net.URL;
 
     export class Particle_T1 {
         private sp: Particle2D;
@@ -24,6 +24,7 @@ module laya {
 
             Stat.show();
 
+            URL.basePath += "../../";
             Laya.loader.load("res/particles/GravityMode.part", Handler.create(this, this.onAssetsLoaded), null, Loader.JSON);
         }
 

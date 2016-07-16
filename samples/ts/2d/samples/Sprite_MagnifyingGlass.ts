@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya
 {
 	import Sprite  = laya.display.Sprite;
@@ -23,23 +22,23 @@ module laya
 			Laya.stage.scaleMode = "showall";
 			Laya.stage.bgColor = "#232628";
 
-			Laya.loader.load("res/bg2.png", Handler.create(this, this.setup));
+			Laya.loader.load("../../res/bg2.png", Handler.create(this, this.setup));
 		}
 
 		private setup():void
 		{
 			var bg:Sprite = new Sprite();
-			bg.loadImage("res/bg2.png");
+			bg.loadImage("../../res/bg2.png");
 			Laya.stage.addChild(bg);
 
 			this.bg2 = new Sprite();
-			this.bg2.loadImage("res/bg2.png");
+			this.bg2.loadImage("../../res/bg2.png");
 			Laya.stage.addChild(this.bg2);
 			this.bg2.scale(3, 3);
 			
 			//创建mask
 			this.maskSp = new Sprite();
-			this.maskSp.loadImage("res/mask.png");
+			this.maskSp.loadImage("../../res/mask.png");
 			this.maskSp.pivot(50, 50);
 
 			//设置mask

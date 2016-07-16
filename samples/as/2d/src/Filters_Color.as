@@ -10,7 +10,7 @@ package
 	
 	public class Filters_Color
 	{
-		private const ApePath:String = "res/apes/monkey2.png";
+		private const ApePath:String = "../../../../res/apes/monkey2.png";
 
 		private var apeTexture:Texture;
 
@@ -91,7 +91,7 @@ package
 		private function createApe():Sprite
 		{
 			var ape:Sprite = new Sprite();
-			ape.loadImage("res/apes/monkey2.png");
+			ape.loadImage("../../../../res/apes/monkey2.png");
 			Laya.stage.addChild(ape);
 			
 			return ape;

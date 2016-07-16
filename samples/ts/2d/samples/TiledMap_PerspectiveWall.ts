@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Stage = laya.display.Stage;
 	import TiledMap = laya.map.TiledMap;
@@ -22,7 +21,7 @@ module laya {
 
 		private createMap(): void {
 			this.tiledMap = new TiledMap();
-			this.tiledMap.createMap("res/tiledMap/perspective_walls.json", new Rectangle(0, 0, Laya.stage.width, Laya.stage.height), null);
+			this.tiledMap.createMap("../../res/tiledMap/perspective_walls.json", new Rectangle(0, 0, Laya.stage.width, Laya.stage.height), null);
 		}
 	}
 }

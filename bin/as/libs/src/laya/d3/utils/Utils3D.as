@@ -1,4 +1,5 @@
 package laya.d3.utils {
+	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.Material;
 	import laya.d3.graphics.VertexDeclaration;
@@ -13,6 +14,7 @@ package laya.d3.utils {
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
+	import laya.d3.resource.models.Mesh;
 	import laya.net.URL;
 	import laya.resource.Texture;
 	import laya.utils.Handler;
@@ -192,7 +194,7 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function _parseHierarchy(node:Sprite3D, prop:String, value:Array):void {
+		public static function _parseHierarchyProp(node:Sprite3D, prop:String, value:Array):void {
 			switch (prop) {
 			case "translate": 
 				node.transform.localPosition = new Vector3(value[0], value[1], value[2]);
@@ -204,6 +206,14 @@ package laya.d3.utils {
 				node.transform.localScale = new Vector3(value[0], value[1], value[2]);
 				break;
 			}
+		}
+		
+		/** @private */
+		public static function _parseHierarchyNode(instanceParams:Object):Sprite3D {
+			if (instanceParams)
+				return new MeshSprite3D(Mesh.load(instanceParams.loadPath));
+			else
+				return new Sprite3D();
 		}
 		
 		/** @private */

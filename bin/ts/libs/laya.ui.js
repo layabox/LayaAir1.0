@@ -2,15 +2,15 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var ColorFilter=laya.filters.ColorFilter,Ease=laya.utils.Ease,Event=laya.events.Event,Font=laya.display.css.Font;
-	var FrameAnimation=laya.display.FrameAnimation,Graphics=laya.display.Graphics,Handler=laya.utils.Handler;
-	var Input=laya.display.Input,Loader=laya.net.Loader,Node=laya.display.Node,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle;
-	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Text=laya.display.Text,Texture=laya.resource.Texture;
-	var Tween=laya.utils.Tween,Utils=laya.utils.Utils;
-	Laya.interface('laya.ui.ISelect');
+	var Browser=laya.utils.Browser,ColorFilter=laya.filters.ColorFilter,Ease=laya.utils.Ease,Event=laya.events.Event;
+	var Font=laya.display.css.Font,FrameAnimation=laya.display.FrameAnimation,Graphics=laya.display.Graphics;
+	var Handler=laya.utils.Handler,Input=laya.display.Input,Loader=laya.net.Loader,Node=laya.display.Node,Point=laya.maths.Point;
+	var Rectangle=laya.maths.Rectangle,Sprite=laya.display.Sprite,Stage=laya.display.Stage,Text=laya.display.Text;
+	var Texture=laya.resource.Texture,Tween=laya.utils.Tween,Utils=laya.utils.Utils;
 	Laya.interface('laya.ui.IComponent');
-	Laya.interface('laya.ui.IItem');
 	Laya.interface('laya.ui.IRender');
+	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.ui.IItem');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
 	*<code>LayoutStyle</code> 是一个布局样式类。
@@ -301,6 +301,15 @@
 			AutoBitmap.cacheCount=0;
 			AutoBitmap.cmdCaches={};
 			AutoBitmap.textureCache={};
+		}
+
+		AutoBitmap.setCache=function(key,value){
+			AutoBitmap.cacheCount++;
+			AutoBitmap.textureCache[key]=value;
+		}
+
+		AutoBitmap.getCache=function(key){
+			return AutoBitmap.textureCache[key];
 		}
 
 		AutoBitmap.cmdCaches={};
@@ -751,6 +760,7 @@
 		});
 
 		/**
+		*@private
 		*<p>指定对象是否可使用布局。</p>
 		*<p>如果值为true,则此对象可以使用布局样式，否则不使用布局样式。</p>
 		*@param value 一个 Boolean 值，指定对象是否可使用布局。
@@ -758,7 +768,9 @@
 		__getset(0,__proto,'layOutEabled',null,function(value){
 			if (this._layout.enable !=value){
 				this._layout.enable=value;
-				if (!this.hasListener(/*laya.events.Event.ADDED*/"added")){
+				if (this.parent){
+					this.onAdded();
+					}else if (!this.hasListener(/*laya.events.Event.ADDED*/"added")){
 					this.on(/*laya.events.Event.ADDED*/"added",this,this.onAdded);
 					this.on(/*laya.events.Event.REMOVED*/"removed",this,this.onRemoved);
 				}
@@ -931,7 +943,6 @@
 			_super.prototype.destroy.call(this,destroyChild);
 			this._bitmap && this._bitmap.destroy();
 			this._text && this._text.destroy(destroyChild);
-			this._sources && (this._sources.length=0);
 			this._bitmap=null;
 			this._text=null;
 			this._clickHandler=null;
@@ -941,16 +952,24 @@
 		/**@inheritDoc */
 		__proto.createChildren=function(){
 			this.graphics=this._bitmap=new AutoBitmap();
-			this._text=new Text();
-			this._text.overflow=Text.HIDDEN;
-			this._text.align="center";
-			this._text.valign="middle";
+		}
+
+		/**@private */
+		__proto.createText=function(){
+			if (!this._text){
+				this._text=new Text();
+				this._text.overflow=Text.HIDDEN;
+				this._text.align="center";
+				this._text.valign="middle";
+			}
 		}
 
 		/**@inheritDoc */
 		__proto.initialize=function(){
-			this.on(/*laya.events.Event.MOUSE_OVER*/"mouseover",this,this.onMouse);
-			this.on(/*laya.events.Event.MOUSE_OUT*/"mouseout",this,this.onMouse);
+			if (Browser.onPC){
+				this.on(/*laya.events.Event.MOUSE_OVER*/"mouseover",this,this.onMouse);
+				this.on(/*laya.events.Event.MOUSE_OUT*/"mouseout",this,this.onMouse);
+			}
 			this.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onMouse);
 			this.on(/*laya.events.Event.MOUSE_UP*/"mouseup",this,this.onMouse);
 			this.on(/*laya.events.Event.CLICK*/"click",this,this.onMouse);
@@ -979,19 +998,32 @@
 			if (!img){
 				console.log("lose skin",this._skin);
 				return;
-			}
-			this._sources || (this._sources=[]);
-			this._sources.length=0;
+			};
 			var width=img.sourceWidth;
 			var height=img.sourceHeight / this._stateNum;
-			for (var i=0;i < this._stateNum;i++){
-				this._sources.push(Texture.createFromTexture(img,0,height *i,width,height));
+			var key=this._skin+this._stateNum;
+			var clips=AutoBitmap.getCache(key);
+			if (clips)this._sources=clips;
+			else {
+				this._sources=[];
+				if (this._stateNum===1){
+					this._sources.push(img);
+					}else {
+					for (var i=0;i < this._stateNum;i++){
+						this._sources.push(Texture.createFromTexture(img,0,height *i,width,height));
+					}
+				}
+				AutoBitmap.setCache(key,this._sources);
 			}
 			if (this._autoSize){
-				this._bitmap.width=this._text.width=this._width || width;
-				this._bitmap.height=this._text.height=this._height || height;
+				this._bitmap.width=this._width || width;
+				this._bitmap.height=this._height || height;
+				if (this._text){
+					this._text.width=this._bitmap.width;
+					this._text.height=this._bitmap.height;
+				}
 				}else {
-				this._text.x=width;
+				this._text && (this._text.x=width);
 			}
 		}
 
@@ -1024,8 +1056,10 @@
 		*@see laya.display.Text.strokeColor()
 		*/
 		__getset(0,__proto,'labelStrokeColor',function(){
+			this.createText();
 			return this._text.strokeColor;
 			},function(value){
+			this.createText();
 			this._text.strokeColor=value
 		});
 
@@ -1062,8 +1096,10 @@
 		*按钮的文本内容。
 		*/
 		__getset(0,__proto,'label',function(){
-			return this._text.text;
+			return this._text ? this._text.text :null;
 			},function(value){
+			if (!this._text && !value)return;
+			this.createText();
 			if (this._text.text !=value){
 				value && !this._text.displayedInStage && this.addChild(this._text);
 				this._text.text=value;
@@ -1111,8 +1147,10 @@
 		*@see laya.display.Text.stroke()
 		*/
 		__getset(0,__proto,'labelStroke',function(){
+			this.createText();
 			return this._text.stroke;
 			},function(value){
+			this.createText();
 			this._text.stroke=value
 		});
 
@@ -1131,7 +1169,7 @@
 			this.runCallLater(this.changeClips);
 			if (this._autoSize)return this._bitmap.width;
 			this.runCallLater(this.changeState);
-			return this._bitmap.width+this._text.width;
+			return this._bitmap.width+this._text ? this._text.width :0;
 		});
 
 		/**
@@ -1164,8 +1202,10 @@
 		*<p><b>格式：</b>"上边距,右边距,下边距,左边距"。</p>
 		*/
 		__getset(0,__proto,'labelPadding',function(){
+			this.createText();
 			return this._text.padding.join(",");
 			},function(value){
+			this.createText();
 			this._text.padding=UIUtils.fillArray(Styles.labelPadding,value,Number);
 		});
 
@@ -1174,8 +1214,10 @@
 		*@see laya.display.Text.fontSize()
 		*/
 		__getset(0,__proto,'labelSize',function(){
+			this.createText();
 			return this._text.fontSize;
 			},function(value){
+			this.createText();
 			this._text.fontSize=value
 		});
 
@@ -1184,15 +1226,19 @@
 		*@see laya.display.Text.bold()
 		*/
 		__getset(0,__proto,'labelBold',function(){
+			this.createText();
 			return this._text.bold;
 			},function(value){
+			this.createText();
 			this._text.bold=value;
 		});
 
 		/**标签对齐模式，默认为居中对齐。*/
 		__getset(0,__proto,'labelAlign',function(){
+			this.createText()
 			return this._text.align;
 			},function(value){
+			this.createText()
 			this._text.align=value;
 		});
 
@@ -1201,8 +1247,10 @@
 		*@see laya.display.Text.font()
 		*/
 		__getset(0,__proto,'labelFont',function(){
+			this.createText();
 			return this._text.font;
 			},function(value){
+			this.createText();
 			this._text.font=value;
 		});
 
@@ -1219,6 +1267,7 @@
 		*按钮文本标签 <code>Text</code> 控件。
 		*/
 		__getset(0,__proto,'text',function(){
+			this.createText();
 			return this._text;
 		});
 
@@ -1240,7 +1289,7 @@
 			_super.prototype._$set_width.call(this,value);
 			if (this._autoSize){
 				this._bitmap.width=value;
-				this._text.width=value;
+				this._text && (this._text.width=value);
 			}
 		});
 
@@ -1249,7 +1298,7 @@
 			_super.prototype._$set_height.call(this,value);
 			if (this._autoSize){
 				this._bitmap.height=value;
-				this._text.height=value;
+				this._text && (this._text.height=value);
 			}
 		});
 
@@ -1455,12 +1504,17 @@
 			if (url===this._skin && img){
 				this._clipWidth || (this._clipWidth=Math.ceil(img.sourceWidth / this._clipX));
 				this._clipHeight || (this._clipHeight=Math.ceil(img.sourceHeight / this._clipY));
-				this._sources || (this._sources=[]);
-				this._sources.length=0;
-				for (var i=0;i < this._clipY;i++){
-					for (var j=0;j < this._clipX;j++){
-						this._sources.push(Texture.createFromTexture(img,this._clipWidth *j,this._clipHeight *i,this._clipWidth,this._clipHeight));
+				var key=this._skin+this._clipWidth+this._clipHeight;
+				var clips=AutoBitmap.getCache(key);
+				if (clips)this._sources=clips;
+				else {
+					this._sources=[];
+					for (var i=0;i < this._clipY;i++){
+						for (var j=0;j < this._clipX;j++){
+							this._sources.push(Texture.createFromTexture(img,this._clipWidth *j,this._clipHeight *i,this._clipWidth,this._clipHeight));
+						}
 					}
+					AutoBitmap.setCache(key,this._sources);
 				}
 				this.index=this._index;
 				this.event(/*laya.events.Event.LOADED*/"loaded");
@@ -2468,7 +2522,10 @@
 		__getset(0,__proto,'labelColors',function(){
 			return this._button.labelColors;
 			},function(value){
-			this._button.labelColors=value;
+			if (this._button.labelColors !=value){
+				console.log(this,value,this._button.labelColors);
+				this._button.labelColors=value;
+			}
 		});
 
 		/**
@@ -4238,6 +4295,7 @@
 		/**@inheritDoc */
 		__proto.initialize=function(){
 			_super.prototype.initialize.call(this);
+			this.createText();
 			this._text.align="left";
 			this._text.valign="top";
 			this._text.width=0;
@@ -6146,6 +6204,7 @@
 		/**@inheritDoc */
 		__proto.initialize=function(){
 			_super.prototype.initialize.call(this);
+			this.createText();
 			this._text.align="left";
 			this._text.valign="top";
 			this._text.width=0;

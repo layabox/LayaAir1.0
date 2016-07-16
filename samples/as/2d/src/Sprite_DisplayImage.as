@@ -28,12 +28,12 @@ package
 			// 方法1：使用loadImage
 			var ape:Sprite = new Sprite();
 			Laya.stage.addChild(ape);
-			ape.loadImage("res/apes/monkey3.png");
+			ape.loadImage("../../../../res/apes/monkey3.png");
 			
 			// 方法2：使用drawTexture
-			Laya.loader.load("res/apes/monkey2.png", Handler.create(this, function():void
+			Laya.loader.load("../../../../res/apes/monkey2.png", Handler.create(this, function():void
 			{
-				var t:Texture = Laya.loader.getRes("res/apes/monkey2.png");
+				var t:Texture = Laya.loader.getRes("../../../../res/apes/monkey2.png");
 				var ape:Sprite = new Sprite();
 				ape.graphics.drawTexture(t,0,0);
 				Laya.stage.addChild(ape);

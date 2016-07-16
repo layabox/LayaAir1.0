@@ -16,7 +16,7 @@
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
     <class path="src" />
-    <class path="..\..\bin\as\libs" />
+    <class path="..\..\..\bin\as\libs\src" />
   </classpaths>
   <!-- Build options -->
   <build>
@@ -73,7 +73,7 @@
   </library>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
-    <compile path="src\PIXI_Example_05.as" />
+    <compile path="src\Particle_T2.as" />
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

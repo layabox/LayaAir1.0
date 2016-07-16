@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import BitmapFont = laya.display.BitmapFont;
 	import Stage = laya.display.Stage;
@@ -26,7 +25,7 @@ module laya {
 
 		private loadFont(): void {
 			var bitmapFont: BitmapFont = new BitmapFont();
-			bitmapFont.loadFont("res/bitmapFont/test.fnt", new Handler(this, this.onFontLoaded, [bitmapFont]));
+			bitmapFont.loadFont("../../res/bitmapFont/test.fnt", new Handler(this, this.onFontLoaded, [bitmapFont]));
 		}
 
 		private onFontLoaded(bitmapFont: BitmapFont): void {

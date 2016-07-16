@@ -297,7 +297,7 @@ package laya.display {
 		 * @param	...args 文本替换参数。
 		 */
 		public function lang(text:String, arg1:* = null, arg2:* = null, arg3:* = null, arg4:* = null, arg5:* = null, arg6:* = null, arg7:* = null, arg8:* = null, arg9:* = null, arg10:* = null):void {
-			text = langPacks&&langPacks[text] ? langPacks[text] : text;
+			text = langPacks && langPacks[text] ? langPacks[text] : text;
 			if (arguments.length < 2) {
 				this._text = text;
 			} else {
@@ -364,12 +364,14 @@ package laya.display {
 		}
 		
 		public function set color(value:String):void {
-			_getCSSStyle().color = value;
-			//如果仅仅更新颜色，无需重新排版
-			if (!_isChanged && this._graphics) {
-				this._graphics.replaceTextColor(color)
-			} else {
-				isChanged = true;
+			if (_getCSSStyle().color != value) {
+				_getCSSStyle().color = value;
+				//如果仅仅更新颜色，无需重新排版
+				if (!_isChanged && this._graphics) {
+					this._graphics.replaceTextColor(color)
+				} else {
+					isChanged = true;
+				}
 			}
 		}
 		
@@ -602,12 +604,17 @@ package laya.display {
 				}
 			}
 			
+			var password:Boolean = style.password;
+			// 输入框的prompt始终显示明文
+			if (("prompt" in this) && this['prompt'] == this._text)
+				password = false;
+
 			var x:Number = 0, y:Number = 0;
 			var end:int = Math.min(_lines.length, visibleLineCount + begin) || 1;
 			for (var i:int = begin; i < end; i++) {
 				var word:String = lines[i];
 				var _word:*;
-				if (style.password) {
+				if (password) {
 					var len:int = word.length;
 					word = "";
 					for (var j:int = len; j > 0; j--) {
@@ -716,7 +723,7 @@ package laya.display {
 			_textWidth = Math.max.apply(this, _lineWidths);
 			
 			//计算textHeight
-			if (_currBitmapFont) 
+			if (_currBitmapFont)
 				_textHeight = _lines.length * (_currBitmapFont.getMaxHeight() + leading) + padding[0] + padding[2];
 			else
 				_textHeight = _lines.length * (_charSize.height + leading) + padding[0] + padding[2];

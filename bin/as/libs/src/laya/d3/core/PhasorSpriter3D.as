@@ -7,7 +7,7 @@ package laya.d3.core {
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.IndexBuffer2D;
 	import laya.webgl.utils.VertexBuffer2D;
 	
@@ -362,8 +362,8 @@ package laya.d3.core {
 			
 			_renderState.shaderValue.pushValue(VertexElementUsage.POSITION0, _posShaderValue, -1);
 			_renderState.shaderValue.pushValue(VertexElementUsage.COLOR0, _colorShaderValue, -1);
-			_renderState.shaderValue.pushValue(Buffer.MVPMATRIX, _wvpMatrix.elements, -1);
-			_renderState.shaderValue.pushValue(Buffer.LUMINANCE, 1.0, -1);
+			_renderState.shaderValue.pushValue(Buffer2D.MVPMATRIX, _wvpMatrix.elements, -1);
+			_renderState.shaderValue.pushValue(Buffer2D.LUMINANCE, 1.0, -1);
 			
 			_shader.uploadArray(_renderState.shaderValue.data, _renderState.shaderValue.length, null);
 			

@@ -20,8 +20,8 @@ package
 			Laya.stage.bgColor = "#232628";
 				
 			var skins:Array = [];
-			skins.push("res/ui/hslider.png", "res/ui/hslider$bar.png");
-			skins.push("res/ui/vslider.png", "res/ui/vslider$bar.png");
+			skins.push("../../../../res/ui/hslider.png", "../../../../res/ui/hslider$bar.png");
+			skins.push("../../../../res/ui/vslider.png", "../../../../res/ui/vslider$bar.png");
 			Laya.loader.load(skins, Handler.create(this, onLoadComplete));
 		}
 		
@@ -34,7 +34,7 @@ package
 		private function placeHSlider():void 
 		{
 			var hs:HSlider = new HSlider();
-			hs.skin = "res/ui/hslider.png";
+			hs.skin = "../../../../res/ui/hslider.png";
 			
 			hs.width = 300;
 			hs.pos(50, 170);
@@ -51,7 +51,7 @@ package
 		{
 			var vs:VSlider = new VSlider();
 			
-			vs.skin = "res/ui/vslider.png";
+			vs.skin = "../../../../res/ui/vslider.png";
 			
 			vs.height = 300;
 			vs.pos(400, 50);

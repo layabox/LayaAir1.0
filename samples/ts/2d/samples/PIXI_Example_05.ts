@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Sprite = laya.display.Sprite;
 	import Stage = laya.display.Stage;
@@ -47,7 +46,7 @@ module laya {
 				this.tpoint3[i] = this.points3[i];
 				
 				var tempBall:Sprite = new Sprite();
-				tempBall.loadImage('res/pixi/pixel.png');
+				tempBall.loadImage('../../res/pixi/pixel.png');
 				tempBall.pivot(3, 3);
 				tempBall.alpha = 0.5;
 				this.balls[i] = tempBall;

@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Sprite = laya.display.Sprite;
     import Stage = laya.display.Stage;
@@ -10,7 +9,7 @@ module laya {
     import WebGL = laya.webgl.WebGL;
 
     export class Interaction_Drag {
-        private ApePath: string = "res/apes/monkey2.png";
+        private ApePath: string = "../../res/apes/monkey2.png";
 
         private ape: Sprite;
         private dragRegion: Rectangle;

@@ -95,9 +95,15 @@
 			if (gridSize){
 				this._gridWidth=gridSize.x;
 				this._gridHeight=gridSize.y;
+			};
+			var tIndex=mapName.lastIndexOf("/");
+			if (tIndex >-1){
+				this._resPath=mapName.substr(0,tIndex);
+				this._pathArray=this._resPath.split("/");
+				}else {
+				this._resPath="";
+				this._pathArray=[];
 			}
-			this._resPath=mapName.substr(0,mapName.lastIndexOf("/"));
-			this._pathArray=this._resPath.split("/");
 			this._jsonLoader=new Loader();
 			this._jsonLoader.once("complete",this,this.onJsonComplete);
 			this._jsonLoader.load(mapName,/*laya.net.Loader.JSON*/"json",false);
@@ -174,7 +180,11 @@
 				}
 			}
 			if (tParentPathNum==0){
-				tResultPath=resPath+"/"+relativePath;
+				if (this._pathArray.length > 0){
+					tResultPath=resPath+"/"+relativePath;
+					}else {
+					tResultPath=relativePath;
+				}
 				return tResultPath;
 			};
 			var tSrcNum=this._pathArray.length-tParentPathNum;
@@ -399,6 +409,27 @@
 			this._viewPortWidth=width / this._scale;
 			this._viewPortHeight=height / this._scale;
 			this.updateViewPort();
+		}
+
+		/**
+		*在锚点的基础上计算，通过宽和高，重新计算视口
+		*@param width 新视口宽
+		*@param height 新视口高
+		*@param rect 返回的结果
+		*@return
+		*/
+		__proto.changeViewPortBySize=function(width,height,rect){
+			if (rect==null){
+				rect=new Rectangle();
+			}
+			this._centerX=this._rect.x+this._rect.width *this._pivotScaleX;
+			this._centerY=this._rect.y+this._rect.height *this._pivotScaleY;
+			rect.x=this._centerX-width *this._pivotScaleX;
+			rect.y=this._centerY-height *this._pivotScaleY;
+			rect.width=width;
+			rect.height=height;
+			this.changeViewPort(rect.x,rect.y,rect.width,rect.height);
+			return rect;
 		}
 
 		/**
@@ -799,6 +830,9 @@
 			this._x=0;
 			this._y=0;
 			this._index=0;
+			this._enableLinear=true;
+			this._resPath=null;
+			this._pathArray=null;
 		}
 
 		/**

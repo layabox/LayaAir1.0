@@ -1,7 +1,6 @@
 package laya.webgl.shader.d2
 {
 	import laya.resource.Bitmap;
-	import laya.resource.HTMLImage;
 	import laya.webgl.canvas.DrawStyle;
 	import laya.webgl.shader.Shader;
 
@@ -10,7 +9,7 @@ package laya.webgl.shader.d2
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
 		public var ALPHA:Number=1;
-		public var glTexture:Bitmap=HTMLImage.create(null);//这是干嘛用的?
+		public var glTexture:Bitmap;
 		public var shader:Shader;
 		public var filters:Array;
 		public var defines:ShaderDefines2D = new ShaderDefines2D();

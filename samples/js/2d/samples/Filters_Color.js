@@ -8,7 +8,7 @@
 	var Handler     = laya.utils.Handler;
 	var WebGL       = laya.webgl.WebGL;
 
-	var ApePath = "res/apes/monkey2.png";
+	var ApePath = "../../res/apes/monkey2.png";
 
 	var apeTexture;
 
@@ -85,7 +85,7 @@
 	function createApe()
 	{
 		var ape = new Sprite();
-		ape.loadImage("res/apes/monkey2.png");
+		ape.loadImage("../../res/apes/monkey2.png");
 		Laya.stage.addChild(ape);
 
 		return ape;

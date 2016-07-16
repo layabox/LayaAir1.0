@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Stage = laya.display.Stage;
     import CheckBox = laya.ui.CheckBox;
@@ -26,7 +25,7 @@ module laya {
             Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
             Laya.stage.bgColor = "#232628";
 
-            this.skins = ["res/ui/checkbox (1).png", "res/ui/checkbox (2).png", "res/ui/checkbox (3).png", "res/ui/checkbox (4).png", "res/ui/checkbox (5).png", "res/ui/checkbox (6).png"];
+            this.skins = ["../../res/ui/checkbox (1).png", "../../res/ui/checkbox (2).png", "../../res/ui/checkbox (3).png", "../../res/ui/checkbox (4).png", "../../res/ui/checkbox (5).png", "../../res/ui/checkbox (6).png"];
 
             Laya.loader.load(this.skins, Handler.create(this, this.onCheckBoxSkinLoaded));
         }

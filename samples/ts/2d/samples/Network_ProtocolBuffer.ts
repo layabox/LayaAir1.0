@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya
 {
 	import Loader = laya.net.Loader;
@@ -13,7 +12,7 @@ module laya
 		{
 			Laya.init(550, 400);
 			
-			Laya.loader.load("res/protobuf/user.proto", Handler.create(this, this.onAssetsLoaded));
+			Laya.loader.load("../../res/protobuf/user.proto", Handler.create(this, this.onAssetsLoaded));
 		}
 		
 		private onAssetsLoaded(data:string):void

@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
 	import Stage = laya.display.Stage;
 	import TiledMap = laya.map.TiledMap;
@@ -35,7 +34,7 @@ module laya {
 
 			this.mX = this.mY = 0;
 			//创建地图，适当的时候调用destory销毁地图
-			this.tiledMap.createMap("res/tiledMap/desert.json", new Rectangle(0, 0, Browser.width, Browser.height), new Handler(this, this.completeHandler));
+			this.tiledMap.createMap("../../res/tiledMap/desert.json", new Rectangle(0, 0, Browser.width, Browser.height), new Handler(this, this.completeHandler));
 		}
 
 		/**

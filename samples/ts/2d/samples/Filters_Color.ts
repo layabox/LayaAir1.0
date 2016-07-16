@@ -1,4 +1,3 @@
-/// <reference path="../../../bin/ts/LayaAir.d.ts" />
 module laya {
     import Sprite = laya.display.Sprite;
     import Stage = laya.display.Stage;
@@ -9,7 +8,7 @@ module laya {
     import WebGL = laya.webgl.WebGL;
 
     export class Filters_Color {
-        private ApePath: string = "res/apes/monkey2.png";
+        private ApePath: string = "../../res/apes/monkey2.png";
 
         private apeTexture: Texture;
 
@@ -80,7 +79,7 @@ module laya {
 
         private createApe(): Sprite {
             var ape: Sprite = new Sprite();
-            ape.loadImage("res/apes/monkey2.png");
+            ape.loadImage("../../res/apes/monkey2.png");
             Laya.stage.addChild(ape);
 
             return ape;

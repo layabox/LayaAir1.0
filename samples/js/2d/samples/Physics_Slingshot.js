@@ -55,7 +55,7 @@
 				{
 					width: 800,
 					height: 600,
-					background: 'res/physics/img/background.png',
+					background: '../../res/physics/img/background.png',
 					hasBounds: true
 				}
 			}
@@ -89,7 +89,7 @@
 				{
 					sprite:
 					{
-						texture: 'res/physics/img/rock.png',
+						texture: '../../res/physics/img/rock.png',
 						xOffset: 23.5,
 						yOffset: 23.5
 					}
@@ -114,7 +114,7 @@
 
 		var pyramid = Matter.Composites.pyramid(500, 300, 9, 10, 0, 0, function(x, y, column)
 		{
-			var texture = column % 2 === 0 ? 'res/physics/img/block.png' : 'res/physics/img/block-2.png';
+			var texture = column % 2 === 0 ? '../../res/physics/img/block.png' : '../../res/physics/img/block-2.png';
 			return Matter.Bodies.rectangle(x, y, 25, 40,
 			{
 				render:
@@ -141,7 +141,7 @@
 
 		var pyramid2 = Matter.Composites.pyramid(550, 0, 5, 10, 0, 0, function(x, y, column)
 		{
-			var texture = column % 2 === 0 ? 'res/physics/img/block.png' : 'res/physics/img/block-2.png';
+			var texture = column % 2 === 0 ? '../../res/physics/img/block.png' : '../../res/physics/img/block-2.png';
 			return Matter.Bodies.rectangle(x, y, 25, 40,
 			{
 				render:
