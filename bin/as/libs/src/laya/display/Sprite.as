@@ -1248,7 +1248,12 @@ package laya.display {
 			}
 			if (!value) {
 				var fc:* = _$P._filterCache;
-				fc && (fc.destroy(), fc.recycle(), this._set$P('_filterCache', null));
+				//fc && (fc.destroy(), fc.recycle(), this._set$P('_filterCache', null));
+				if (fc) {
+					fc.destroy();
+					fc.recycle();
+					this._set$P('_filterCache', null);
+				}
 				_$P._isHaveGlowFilter && this._set$P('_isHaveGlowFilter', false);
 			}
 			super._setDisplay(value);

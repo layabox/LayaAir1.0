@@ -39,6 +39,7 @@ package laya.ui {
 		/**@inheritDoc */	
 		override protected function initialize():void {
 			super.initialize();
+			createText();
 			_text.align = "left";
 			_text.valign = "top";
 			_text.width = 0;

@@ -117,7 +117,7 @@ package laya.webgl.submit {
 			else shaderValue.upload();
 			_shaderSet = true;
 			
-			_isSameTexture = true;//暂时使用
+			//_isSameTexture = true;//暂时使用
 			if (_texs.length > 1 && !_isSameTexture)//如果不是同一个材质了，要拆开提交
 			{
 				var webGLImg:Bitmap = _tex.bitmap as Bitmap;

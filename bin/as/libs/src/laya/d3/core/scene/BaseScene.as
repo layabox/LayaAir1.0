@@ -5,7 +5,7 @@ package laya.d3.core.scene {
 	import laya.d3.core.light.LightSprite;
 	import laya.d3.core.render.RenderConfig;
 	import laya.d3.core.render.RenderObject;
-	import laya.d3.core.render.RenderQuene;
+	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Viewport;
@@ -44,7 +44,7 @@ package laya.d3.core.scene {
 		/** @private */
 		protected var _renderConfigs:Vector.<RenderConfig> = new Vector.<RenderConfig>();
 		/** @private */
-		protected var _quenes:Vector.<RenderQuene> = new Vector.<RenderQuene>();
+		protected var _quenes:Vector.<RenderQueue> = new Vector.<RenderQueue>();
 		/** @private */
 		protected var _customRenderQueneIndex:int = 11;
 		/** @private */
@@ -97,61 +97,61 @@ package laya.d3.core.scene {
 			fogRange = 1000;
 			fogColor = new Vector3(0.7, 0.7, 0.7);
 			
-			_renderConfigs[RenderQuene.NONEWRITEDEPTH] = new RenderConfig();
-			_renderConfigs[RenderQuene.NONEWRITEDEPTH].depthTest = false;
+			_renderConfigs[RenderQueue.NONEWRITEDEPTH] = new RenderConfig();
+			_renderConfigs[RenderQueue.NONEWRITEDEPTH].depthTest = false;
 			
-			_renderConfigs[RenderQuene.OPAQUE] = new RenderConfig();
+			_renderConfigs[RenderQueue.OPAQUE] = new RenderConfig();
 			
-			_renderConfigs[RenderQuene.OPAQUE_DOUBLEFACE] = new RenderConfig();
-			_renderConfigs[RenderQuene.OPAQUE_DOUBLEFACE].cullFace = false;
+			_renderConfigs[RenderQueue.OPAQUE_DOUBLEFACE] = new RenderConfig();
+			_renderConfigs[RenderQueue.OPAQUE_DOUBLEFACE].cullFace = false;
 			
-			_renderConfigs[RenderQuene.ALPHA_BLEND_DOUBLEFACE] = new RenderConfig();
-			_renderConfigs[RenderQuene.ALPHA_BLEND_DOUBLEFACE].cullFace = false;
-			_renderConfigs[RenderQuene.ALPHA_BLEND_DOUBLEFACE].blend = true;
-			_renderConfigs[RenderQuene.ALPHA_BLEND_DOUBLEFACE].sFactor = WebGLContext.SRC_ALPHA;
-			_renderConfigs[RenderQuene.ALPHA_BLEND_DOUBLEFACE].dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
+			_renderConfigs[RenderQueue.ALPHA_BLEND_DOUBLEFACE] = new RenderConfig();
+			_renderConfigs[RenderQueue.ALPHA_BLEND_DOUBLEFACE].cullFace = false;
+			_renderConfigs[RenderQueue.ALPHA_BLEND_DOUBLEFACE].blend = true;
+			_renderConfigs[RenderQueue.ALPHA_BLEND_DOUBLEFACE].sFactor = WebGLContext.SRC_ALPHA;
+			_renderConfigs[RenderQueue.ALPHA_BLEND_DOUBLEFACE].dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
 			
-			_renderConfigs[RenderQuene.ALPHA_ADDTIVE_BLEND_DOUBLEFACE] = new RenderConfig();
-			_renderConfigs[RenderQuene.ALPHA_ADDTIVE_BLEND_DOUBLEFACE].cullFace = false;
-			_renderConfigs[RenderQuene.ALPHA_ADDTIVE_BLEND_DOUBLEFACE].blend = true;
-			_renderConfigs[RenderQuene.ALPHA_ADDTIVE_BLEND_DOUBLEFACE].sFactor = WebGLContext.SRC_ALPHA;
-			_renderConfigs[RenderQuene.ALPHA_ADDTIVE_BLEND_DOUBLEFACE].dFactor = WebGLContext.ONE;
+			_renderConfigs[RenderQueue.ALPHA_ADDTIVE_BLEND_DOUBLEFACE] = new RenderConfig();
+			_renderConfigs[RenderQueue.ALPHA_ADDTIVE_BLEND_DOUBLEFACE].cullFace = false;
+			_renderConfigs[RenderQueue.ALPHA_ADDTIVE_BLEND_DOUBLEFACE].blend = true;
+			_renderConfigs[RenderQueue.ALPHA_ADDTIVE_BLEND_DOUBLEFACE].sFactor = WebGLContext.SRC_ALPHA;
+			_renderConfigs[RenderQueue.ALPHA_ADDTIVE_BLEND_DOUBLEFACE].dFactor = WebGLContext.ONE;
 			
-			_renderConfigs[RenderQuene.ALPHA_BLEND] = new RenderConfig();
-			_renderConfigs[RenderQuene.ALPHA_BLEND].blend = true;
-			_renderConfigs[RenderQuene.ALPHA_BLEND].sFactor = WebGLContext.SRC_ALPHA;
-			_renderConfigs[RenderQuene.ALPHA_BLEND].dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
+			_renderConfigs[RenderQueue.ALPHA_BLEND] = new RenderConfig();
+			_renderConfigs[RenderQueue.ALPHA_BLEND].blend = true;
+			_renderConfigs[RenderQueue.ALPHA_BLEND].sFactor = WebGLContext.SRC_ALPHA;
+			_renderConfigs[RenderQueue.ALPHA_BLEND].dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
 			
-			_renderConfigs[RenderQuene.ALPHA_ADDTIVE_BLEND] = new RenderConfig();
-			_renderConfigs[RenderQuene.ALPHA_ADDTIVE_BLEND].blend = true;
-			_renderConfigs[RenderQuene.ALPHA_ADDTIVE_BLEND].sFactor = WebGLContext.SRC_ALPHA;
-			_renderConfigs[RenderQuene.ALPHA_ADDTIVE_BLEND].dFactor = WebGLContext.ONE;
+			_renderConfigs[RenderQueue.ALPHA_ADDTIVE_BLEND] = new RenderConfig();
+			_renderConfigs[RenderQueue.ALPHA_ADDTIVE_BLEND].blend = true;
+			_renderConfigs[RenderQueue.ALPHA_ADDTIVE_BLEND].sFactor = WebGLContext.SRC_ALPHA;
+			_renderConfigs[RenderQueue.ALPHA_ADDTIVE_BLEND].dFactor = WebGLContext.ONE;
 			
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE] = new RenderConfig();
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE].cullFace = false;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE].blend = true;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE].depthMask = 0;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE].sFactor = WebGLContext.SRC_ALPHA;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE].dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE] = new RenderConfig();
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE].cullFace = false;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE].blend = true;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE].depthMask = 0;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE].sFactor = WebGLContext.SRC_ALPHA;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE].dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
 			
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE] = new RenderConfig();
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE].cullFace = false;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE].blend = true;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE].depthMask = 0;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE].sFactor = WebGLContext.SRC_ALPHA;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE].dFactor = WebGLContext.ONE;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE] = new RenderConfig();
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE].cullFace = false;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE].blend = true;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE].depthMask = 0;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE].sFactor = WebGLContext.SRC_ALPHA;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE].dFactor = WebGLContext.ONE;
 			
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_BLEND] = new RenderConfig();
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_BLEND].blend = true;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_BLEND].depthMask = 0;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_BLEND].sFactor = WebGLContext.SRC_ALPHA;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_BLEND].dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND] = new RenderConfig();
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND].blend = true;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND].depthMask = 0;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND].sFactor = WebGLContext.SRC_ALPHA;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND].dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
 			
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND] = new RenderConfig();
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND].blend = true;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND].depthMask = 0;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND].sFactor = WebGLContext.SRC_ALPHA;
-			_renderConfigs[RenderQuene.DEPTHREAD_ALPHA_ADDTIVE_BLEND].dFactor = WebGLContext.ONE;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND] = new RenderConfig();
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND].blend = true;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND].depthMask = 0;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND].sFactor = WebGLContext.SRC_ALPHA;
+			_renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND].dFactor = WebGLContext.ONE;
 		}
 		
 		/**
@@ -187,9 +187,6 @@ package laya.d3.core.scene {
 			state.scene = this;
 			state.camera = currentCamera;
 			
-			for (var i:int = 0; i < _quenes.length; i++)
-				_quenes[i] && (_quenes[i].reset());
-			
 			var shaderValue:ValusArray = state.worldShaderValue;
 			var loopCount:int = Stat.loopCount;
 			currentCamera && shaderValue.pushValue(Buffer2D.CAMERAPOS, currentCamera.transform.position.elements, loopCount);
@@ -197,7 +194,7 @@ package laya.d3.core.scene {
 			if (_lights.length > 0)//灯光相关
 			{
 				var lightCount:int = 0;
-				for (i = 0; i < _lights.length; i++) {
+				for (var i:int = 0; i < _lights.length; i++) {
 					var light:LightSprite = _lights[i];
 					if (!light.active) continue;
 					lightCount++;
@@ -227,7 +224,7 @@ package laya.d3.core.scene {
 		protected function _updateChilds(state:RenderState):void {
 			for (var i:int = 0, n:int = _childs.length; i < n; ++i) {
 				var child:Sprite3D = _childs[i];
-				child.active && child._update(state);
+				child._update(state);
 			}
 		}
 			/**
@@ -303,20 +300,30 @@ package laya.d3.core.scene {
 		}
 		
 		/**
+		 * 获得某个渲染队列。
+		 * @param index 渲染队列索引。
+		 * @return 渲染队列。
+		 */
+		public function getRenderQueue(index:int):RenderQueue {
+			return (_quenes[index] || (_quenes[index] = new RenderQueue(_renderConfigs[index])));
+		}
+		
+		/**
 		 * 获得某个渲染队列的渲染物体。
 		 * @param index 渲染队列索引。
 		 * @return 渲染物体。
 		 */
 		public function getRenderObject(index:int):RenderObject {
-			return (_quenes[index] || (_quenes[index] = new RenderQuene(_renderConfigs[index]))).get();
+			return (_quenes[index] || (_quenes[index] = new RenderQueue(_renderConfigs[index]))).getRenderObj();
 		}
+		
 		
 		/**
 		 * 添加渲染队列。
 		 * @param renderConfig 渲染队列配置文件。
 		 */
 		public function addRenderQuene(renderConfig:RenderConfig):void {
-			_quenes[_customRenderQueneIndex++] = new RenderQuene(renderConfig);
+			_quenes[_customRenderQueneIndex++] = new RenderQueue(renderConfig);
 		}
 		
 		/**

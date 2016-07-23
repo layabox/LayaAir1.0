@@ -235,7 +235,7 @@ package laya.utils {
 			tween.clear();
 		}
 		
-		/**同clearAll，废弃掉，尽量别用。*/
+		/**@private 同clearAll，废弃掉，尽量别用。*/
 		public static function clearTween(target:Object):void {
 			clearAll(target);
 		}

@@ -513,7 +513,7 @@ package laya.webgl.shader {
 		
 		private function parseOne(attributes:Array,uniforms:Array,words:Array,i:int,word:String,b:Boolean):int
 		{
-			var one = { type: shaderParamsMap[words[i + 1]], name: words[i + 2], size: isNaN(parseInt(words[i + 3])) ? 1 : parseInt(words[i + 3]) };
+			var one:* = { type: shaderParamsMap[words[i + 1]], name: words[i + 2], size: isNaN(parseInt(words[i + 3])) ? 1 : parseInt(words[i + 3]) };
 			if (b)
 			{
 				if (word == "attribute") {

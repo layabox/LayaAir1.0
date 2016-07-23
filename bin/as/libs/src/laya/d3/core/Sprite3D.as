@@ -1,8 +1,11 @@
 package laya.d3.core {
 	import laya.d3.component.Component3D;
+	import laya.d3.core.material.Material;
+	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.IUpdate;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
+	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.utils.Utils3D;
 	import laya.display.Node;
@@ -173,8 +176,19 @@ package laya.d3.core {
 			if (n === 0) return;
 			for (var i:int = 0; i < n; ++i) {
 				var child:Sprite3D = _childs[i];
-				child.active && child._update((state));
+				child._update((state));
 			}
+		}
+		
+		/**
+		 * 排序函数。
+		 * @param	state 渲染相关状态。
+		 */
+		public function _getSortID(renderElement:IRenderable, material:Material):int {
+			if (isStatic) {
+				return material.id * VertexDeclaration._maxVertexDeclarationBit + renderElement.getVertexBuffer().vertexDeclaration.id;
+			} else
+				return material.id;
 		}
 		
 		/**

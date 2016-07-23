@@ -33,7 +33,7 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.0.0Release";
+		public static var version:String = "1.0.3";
 		
 		/**
 		 * 初始化引擎。
@@ -65,7 +65,8 @@ package {
 			URL.rootPath = URL.basePath = URL.getPath(location.protocol == "file:" ? pathName : location.origin + pathName);
 
 			initAsyn();
-			render = new Render(width, height);
+			//render = new Render(width, height);
+			render = new Render(50, 50);
 			stage.size(width, height);
 			
 			RenderSprite.__init__();

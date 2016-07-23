@@ -286,7 +286,7 @@ package laya.display {
 		}
 		
 		public function set cacheAsBitmap(value:Boolean):void {
-			cacheAs = value ? (_$P["hasFilter"] ? "none":"normal") : "none";
+			cacheAs = value ? (_$P["hasFilter"] ? "none" : "normal") : "none";
 		}
 		
 		/**
@@ -327,7 +327,7 @@ package laya.display {
 				cacheCanvas.type = value;
 				cacheCanvas.reCache = true;
 				_renderType |= RenderSprite.CANVAS;
-				if(value=="bitmap")model && model.cacheAs(1);
+				if (value == "bitmap") model && model.cacheAs(1);
 				_set$P("cacheForFilters", false);
 			} else {
 				if (_$P["hasFilter"]) {
@@ -921,12 +921,10 @@ package laya.display {
 			value && value.length === 0 && (value = null);
 			if (_$P.filters == value) return;
 			_set$P("filters", value ? value.slice() : null);
-			if (Render.isConchApp)
-			{
-				if (_$P.filters && _$P.filters.length == 1 && (_$P.filters[0] is ColorFilter))
-				{
-					var t:Array=_$P.rgbg = _$P.filters[0].getRGBG();
-					model && model.filter(t[0], t[1], t[2], t[3]);
+			if (Render.isConchApp) {
+				model && model.removeType(0x10);
+				if (_$P.filters && _$P.filters.length == 1 /*&& (_$P.filters[0] is ColorFilter)*/) {
+					_$P.filters[0].callNative(this);
 				}
 			}
 			
@@ -939,7 +937,7 @@ package laya.display {
 			}
 			if (value && value.length > 0) {
 				if (cacheAs != "bitmap") {
-					if(!Render.isConchNode)cacheAs = "bitmap";
+					if (!Render.isConchNode) cacheAs = "bitmap";
 					_set$P("cacheForFilters", true);
 				}
 				_set$P("hasFilter", true);
@@ -1196,12 +1194,11 @@ package laya.display {
 		
 		public function set mask(value:Sprite):void {
 			if (value && mask && mask._$P.maskParent) return;
-			if (value)
-			{
+			if (value) {
 				cacheAs = "bitmap";
 				_set$P("_mask", value);
 				value._set$P("maskParent", this);
-			}else {
+			} else {
 				cacheAs = "none";
 				mask && mask._set$P("maskParent", null);
 				_set$P("_mask", value);
@@ -1249,9 +1246,14 @@ package laya.display {
 				Pool.recover("RenderContext", _$P.cacheCanvas.ctx);
 				_$P.cacheCanvas.ctx = null;
 			}
-			if (!value){
+			if (!value) {
 				var fc:* = _$P._filterCache;
-				fc && (fc.destroy(), fc.recycle(), this._set$P('_filterCache', null));
+				//fc && (fc.destroy(), fc.recycle(), this._set$P('_filterCache', null));
+				if (fc) {
+					fc.destroy();
+					fc.recycle();
+					this._set$P('_filterCache', null);
+				}
 				_$P._isHaveGlowFilter && this._set$P('_isHaveGlowFilter', false);
 			}
 			super._setDisplay(value);
@@ -1309,9 +1311,10 @@ package laya.display {
 		public function _addChildsToLayout(out:Vector.<ILayout>):Boolean {
 			var words:Vector.<HTMLChar> = _getWords();
 			if (words == null && _childs.length == 0) return false;
-			for (var i:int = 0, n:int = words.length; i < n; i++)
-			{
-				out.push(words[i]);
+			if (words) {
+				for (var i:int = 0, n:int = words.length; i < n; i++) {
+					out.push(words[i]);
+				}
 			}
 			_childs.forEach(function(o:Sprite):void {
 				o._style._enableLayout() && o._addToLayout(out);
@@ -1356,7 +1359,8 @@ package laya.display {
 				height = parseFloat(value);
 				break;
 			default: 
-				/*[IF-FLASH]*/if(this.hasOwnProperty(name))
+				/*[IF-FLASH]*/
+				if (this.hasOwnProperty(name))
 					this[name] = value;
 			}
 		}

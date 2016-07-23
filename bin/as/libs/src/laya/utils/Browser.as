@@ -37,6 +37,8 @@ package laya.utils {
 		public static var onQQBrowser:Boolean;
 		/** 表示是否在移动端 QQ 或 QQ 浏览器。*/
 		public static var onMQQBrowser:Boolean;
+		/** 表示是否在移动端 Safari。*/
+		public static var onSafari:Boolean;
 		/** 微信内*/
 		public static var onWeiXin:Boolean;
 		/** 表示是否在 PC 端。*/
@@ -85,6 +87,7 @@ package laya.utils {
 			onMQQBrowser = /*[STATIC SAFE]*/ u.indexOf("MQQBrowser") > -1;
 			onWeiXin = /*[STATIC SAFE]*/ u.indexOf('MicroMessenger') > -1;
 			onPC = /*[STATIC SAFE]*/ !onMobile;
+			onSafari = /*[STATIC SAFE]*/! !u.match(/Version\/\d\.\d\x20Mobile\/\S+\x20Safari/);
 			httpProtocol =/*[STATIC SAFE]*/ window.location.protocol == "http:";
 			
 			webAudioEnabled =/*[STATIC SAFE]*/ window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"] ? true : false;
@@ -139,13 +142,13 @@ package laya.utils {
 		/** 浏览器可视宽度。*/
 		public static function get clientWidth():Number {
 			__init__();
-			return document.body.clientWidth;
+			return window.innerWidth || document.body.clientWidth;
 		}
 		
 		/** 浏览器可视高度。*/
 		public static function get clientHeight():Number {
 			__init__();
-			return document.body.clientHeight || document.documentElement.clientHeight;
+			return window.innerHeight || document.body.clientHeight || document.documentElement.clientHeight;
 		}
 		
 		/** 浏览器物理宽度，。*/

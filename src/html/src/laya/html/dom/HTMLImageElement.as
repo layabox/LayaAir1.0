@@ -6,6 +6,7 @@ package laya.html.dom
 	import laya.events.Event;
 	import laya.html.utils.Layout;
 	import laya.net.Loader;
+	import laya.renders.Render;
 	import laya.renders.RenderContext;
 	import laya.renders.RenderSprite;
 	import laya.resource.Texture;
@@ -61,6 +62,16 @@ package laya.html.dom
 				{
 					height = _tex.height;
 					parent && (parent as Sprite)._layoutLater();
+				}
+				if (Render.isConchApp)
+				{
+					_renderArgs[0] = _tex;
+					_renderArgs[1] = x;
+					_renderArgs[2] = y;
+					_renderArgs[3] = width || _tex.width;
+					_renderArgs[4] = height || _tex.height;
+					graphics.drawTexture(_tex, 0, 0, _renderArgs[3], _renderArgs[4]);
+					//context.ctx.drawTexture2(0, 0, style.translateX, style.translateY, transform, style.alpha, style.blendMode, _renderArgs);
 				}
 			}
 			

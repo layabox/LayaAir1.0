@@ -1,13 +1,14 @@
 package laya.d3.component.animation {
 	import laya.ani.AnimationState;
-	import laya.d3.core.Sprite3D;
-	import laya.d3.core.fileModel.Mesh;
+	import laya.d3.core.MeshSprite3D;
+	import laya.d3.core.Sprite3D
 	import laya.d3.core.render.RenderState;
-	import laya.d3.resource.tempelet.SubMeshTemplet;
+	import laya.d3.resource.models.Mesh;
+	import laya.d3.resource.models.SubMesh;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * <code>SkinAnimations</code> 类用于创建蒙皮动画组件。
@@ -57,7 +58,7 @@ package laya.d3.component.animation {
 		protected var _lastFrameIndex:int = -1;
 		
 		/** @private */
-		protected var _ownerMesh:Mesh;
+		protected var _ownerMesh:MeshSprite3D;
 		/** @private */
 		protected var _curBonesDatas:Float32Array;
 		/** @private */
@@ -101,7 +102,7 @@ package laya.d3.component.animation {
 		 * @param	owner 所属精灵对象。
 		 */
 		override public function _load(owner:Sprite3D):void {
-			_ownerMesh = (owner as Mesh);
+			_ownerMesh = (owner as MeshSprite3D);
 			
 			player.on(Event.STOPPED, this, function():void {
 				_lastFrameIndex = -1;
@@ -125,7 +126,7 @@ package laya.d3.component.animation {
 				
 				var cacheData:Float32Array = _templet.getAnimationDataWithCache(_templet._animationDatasCache[0], animationClipIndex, frameIndex);
 				if (cacheData) {
-					trace("已缓存");
+					//trace("已缓存");
 					continue;
 				}
 				
@@ -144,9 +145,11 @@ package laya.d3.component.animation {
 				_templet.setAnimationDataWithCache(_templet._animationDatasCache[0], animationClipIndex, frameIndex, _curAnimationDatas);//缓存动画数据
 				_templet.setAnimationDataWithCache(_templet._animationDatasCache[1], animationClipIndex, frameIndex, _curBonesDatas);//缓存骨骼数据
 				
-				var  subMeshes:Vector.<SubMeshTemplet> = _ownerMesh.templet.subMeshes;
-				for (var j:int = 0; j < subMeshes.length; j++) {
-					var subMesh:SubMeshTemplet = subMeshes[j];
+				var mesh:Mesh = _ownerMesh.mesh as Mesh;
+				var subMeshCount:int = mesh.getSubMeshCount();
+				
+				for (var j:int = 0; j < subMeshCount; j++) {
+					var subMesh:SubMesh = mesh.getSubMesh(j);
 					_copyBoneAndCache(frameIndex, subMesh._boneIndex, _curAnimationDatas, subMesh._cacheBoneDatas);
 				}
 			}
@@ -183,7 +186,6 @@ package laya.d3.component.animation {
 					return;
 				}
 			}
-			
 			var bones:Vector.<Object> = _templet.getNodes(animationClipIndex);
 			var boneFloatCount:int = bones.length * 16;
 			if (isCache) {
@@ -222,14 +224,14 @@ package laya.d3.component.animation {
 		public override function _preRenderUpdate(state:RenderState):void {
 			if (_curAnimationDatas) {
 				state.shaderDefs.addInt(ShaderDefines3D.BONE);
-				var subMesh:SubMeshTemplet = _ownerMesh.templet.subMeshes[state.renderObj.renderElement.indexOfHost];
+				var subMesh:SubMesh = (_ownerMesh.mesh as Mesh).getSubMesh(state.renderObj.renderElement.indexOfHost);
 				
 				if (_tempIsCache) {
 					_copyBoneAndCache(_tempFrameIndex, subMesh._boneIndex, _curAnimationDatas, subMesh._cacheBoneDatas);
-					state.shaderValue.pushValue(Buffer.MATRIXARRAY0, subMesh._cacheBoneDatas[_tempFrameIndex], -1);
+					state.shaderValue.pushValue(Buffer2D.MATRIXARRAY0, subMesh._cacheBoneDatas[_tempFrameIndex], -1);
 				} else {
 					_copyBone(subMesh._boneIndex, _curAnimationDatas, subMesh._boneData);
-					state.shaderValue.pushValue(Buffer.MATRIXARRAY0, subMesh._boneData, -1);
+					state.shaderValue.pushValue(Buffer2D.MATRIXARRAY0, subMesh._boneData, -1);
 				}
 			}
 		}

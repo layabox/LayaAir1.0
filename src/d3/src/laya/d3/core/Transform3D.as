@@ -365,7 +365,7 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		protected function _onWorldTransform():void {
+		public function _onWorldTransform():void {
 			_worldTransformModifyID += 0.01 / _owner.id;
 		}
 	

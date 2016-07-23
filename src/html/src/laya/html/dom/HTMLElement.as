@@ -30,6 +30,23 @@ package laya.html.dom
 			this._getCSSStyle().valign = "middle";
 			mouseEnabled = true;
 		}
+		/**
+		 * @private
+		 */
+		public function layaoutCallNative():void
+		{
+			var n:int = 0;
+			if (_childs &&(n= _childs.length) > 0)
+			{
+				for (var i:int = 0; i < n; i++ )
+				{
+					_childs[i].layaoutCallNative && _childs[i].layaoutCallNative();
+				}
+			}
+			var word:Vector.<HTMLChar> = _getWords();
+			word&&fillWords(this, word, 0, 0, style.font, style.color);
+			
+		}
 		
 		public function set id(value:String):void
 		{
@@ -242,6 +259,16 @@ package laya.html.dom
 		public function set className(value:String):void
 		{
 			style.attrs(HTMLDocument.document.styleSheets['.' + value]);
+		}
+		
+		/*** @private */
+		public static function fillWords(ele:HTMLElement, words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String):void {
+			ele.graphics.clear();
+			for (var i:int = 0, n:int = words.length; i < n; i++) {
+				var a:* = words[i];
+				ele.graphics.fillText(a.char, a.x + x, a.y + y, font, color, 'left');
+			}
+			
 		}
 	}
 

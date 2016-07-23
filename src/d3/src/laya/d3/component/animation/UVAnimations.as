@@ -1,17 +1,17 @@
 package laya.d3.component.animation {
 	import laya.ani.AnimationState;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.fileModel.Mesh;
+	import laya.d3.core.fileModel.MeshSprite3D;
 	import laya.d3.core.material.Material;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.resource.tempelet.MeshTemplet;
+	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.tempelet.mesh.SubMeshTemplet;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.events.Event;
 	import laya.utils.Byte;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.VertexBuffer2D;
 	import laya.webgl.utils.VertexDeclaration;
 	
@@ -38,7 +38,7 @@ package laya.d3.component.animation {
 		/** @private */
 		private var _materials:Vector.<Material>;
 		/** @private */
-		private var _mesh:Mesh;
+		private var _mesh:MeshSprite3D;
 		/** @private */
 		private var _meshDataInited:Boolean;
 		/** @private */
@@ -63,8 +63,8 @@ package laya.d3.component.animation {
 		 * 初始化Mesh相关数据函数。
 		 */
 		private function _initMeshData():void {
-			_materials = _mesh.templet.materials;
-			_subMeshes = _mesh.templet.subMeshes;
+			_materials = _mesh.mesh.materials;
+			_subMeshes = _mesh.mesh.subMeshes;
 			_meshDataInited = true;
 		}
 		
@@ -131,29 +131,29 @@ package laya.d3.component.animation {
 		 * @param	owner 所属精灵对象。
 		 */
 		override public function _load(owner:Sprite3D):void {
-			if (owner is Mesh)
-				_mesh = owner as Mesh;
+			if (owner is MeshSprite3D)
+				_mesh = owner as MeshSprite3D;
 			else
 				throw new Error("该Sprite3D并非Mesh");
 			
-			owner.on(Event.LOADED, this, function(mesh:Mesh):void {
+			owner.on(Event.LOADED, this, function(mesh:MeshSprite3D):void {
 				(!_meshDataInited) && (_initMeshData());//初始化所需Mesh相关数据
 				(player.State == AnimationState.playing) && (_templet) && (_templet.loaded) && (_initAnimationData(currentAnimationClipIndex));
 			});
 			
 			on(Event.LOADED, this, function():void {
 				(!_meshDataInited) && (_initMeshData());//初始化所需Mesh相关数据
-				(player.State == AnimationState.playing) && (_mesh.templet) && (_mesh.templet.loaded) && (_initAnimationData(currentAnimationClipIndex));
+				(player.State == AnimationState.playing) && (_mesh.mesh) && (_mesh.mesh.loaded) && (_initAnimationData(currentAnimationClipIndex));
 			});
 			
 			player.on(Event.PLAYED, this, function():void {
-				(_templet) && (_templet.loaded) && (_mesh.templet) && (_mesh.templet.loaded) && (_initAnimationData(currentAnimationClipIndex));
+				(_templet) && (_templet.loaded) && (_mesh.mesh) && (_mesh.mesh.loaded) && (_initAnimationData(currentAnimationClipIndex));
 			});
 			
 			player.on(Event.STOPPED, this, function():void {
 				if (player.returnToZeroStopped) {
-					if (owner is Mesh) {
-						var templet:MeshTemplet = (owner as Mesh).templet;
+					if (owner is MeshSprite3D) {
+						var templet:Mesh = (owner as MeshSprite3D).mesh;
 						var materials:Vector.<Material> = templet.materials;
 						var subMeshs:Vector.<SubMeshTemplet> = templet.subMeshes;
 						for (var i:int = 0; i < subMeshs.length; i++)//待处理，同模板实例会受影响
@@ -223,8 +223,8 @@ package laya.d3.component.animation {
 			(player.State !== AnimationState.stopped) && (uvAniNodeIndex != null) && (state.shaderDefs.addInt(ShaderDefines3D.MIXUV));
 			var material:Material = subMesh.getMaterial(_materials);
 			if ((uvAniNodeIndex != null) && player.State !== AnimationState.stopped) {
-				state.shaderValue.pushValue(Buffer.FLOAT0, _keyframeAges[uvAniNodeIndex], -1);
-				state.shaderValue.pushValue(Buffer.UVAGEX, _ages[uvAniNodeIndex], -1);
+				state.shaderValue.pushValue(Buffer2D.FLOAT0, _keyframeAges[uvAniNodeIndex], -1);
+				state.shaderValue.pushValue(Buffer2D.UVAGEX, _ages[uvAniNodeIndex], -1);
 				
 				for (var c:int = 0; c < _uvDatasCount; c++) {
 					if (c === 0) {

@@ -1,6 +1,8 @@
 package laya.d3.core.material {
 	import laya.d3.core.TransformUV;
+	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
@@ -15,7 +17,8 @@ package laya.d3.core.material {
 	/**
 	 * <code>Material</code> 类用于创建材质。
 	 */
-	public class Material extends EventDispatcher{
+	public class Material extends EventDispatcher {
+		public static var maxMaterialCount:int = Math.floor(2147483647 / 1000);//需在材质中加异常判断警告
 		/** @private */
 		protected static var _uniqueIDCounter:int = 1;
 		/** @private */
@@ -57,6 +60,10 @@ package laya.d3.core.material {
 		/** @private */
 		private static const ALPHATESTVALUE:int = 7;
 		
+		/**材质唯一标识id。*/
+		private var _id:int;
+		/**所属渲染队列。*/
+		private var _renderQueue:int;
 		/** @private */
 		protected var _textures:Vector.<Texture> = new Vector.<Texture>();
 		/** @private */
@@ -92,6 +99,10 @@ package laya.d3.core.material {
 		protected var _transparentMode:int = 0;//0为AlphaTest,1为AlphaBlend,2为AlphaToCoverage
 		/** @private */
 		protected var _alphaTestValue:Number = 0.5;
+		/** @private */
+		protected var _cullFace:Boolean = true;
+		/** @private */
+		protected var _transparentAddtive:Boolean = false;//只适用于1为AlphaBlend模式
 		
 		/** @private */
 		protected var _luminance:Number = 1.0;
@@ -99,19 +110,13 @@ package laya.d3.core.material {
 		protected var _transformUV:TransformUV = null;
 		/** @private */
 		protected var _shaderDef:int = 0;
+		/** @private */
+		protected var _isSky:Boolean = false;
 		
-		/**材质唯一标识id。*/
-		private var _id:int;
-		/**材质名字*/
+		/**材质名字。*/
 		public var name:String;
-		/** 是否单面渲染。 */
-		public var cullFace:Boolean = true;
-		/**AlphaBlend模式下是否使用加色法。*/
-		public var transparentAddtive:Boolean = false;//只适用于1为AlphaBlend模式
-		/**是否天空。*/
-		public var  isSky:Boolean = false;
 		
-		/***/
+		/**是否已加载完成*/
 		public var loaded:Boolean = false;
 		
 		/**
@@ -120,6 +125,14 @@ package laya.d3.core.material {
 		 */
 		public function get id():int {
 			return _id;
+		}
+		
+		/**
+		 * 获取所属渲染队列。
+		 * @return 渲染队列。
+		 */
+		public function get renderQueue():int {
+			return _renderQueue;
 		}
 		
 		/**
@@ -143,9 +156,12 @@ package laya.d3.core.material {
 		 * @param value 是否透明。
 		 */
 		public function set transparent(value:Boolean):void {
-			_transparent = value;
-			alphaTestValue = _alphaTestValue;
-			_getShaderDefineValue();
+			if (_transparent !== value) {
+				_transparent = value;
+				alphaTestValue = _alphaTestValue;
+				_getShaderDefineValue();
+				_getRenderQueue();
+			}
 		}
 		
 		/**
@@ -161,9 +177,12 @@ package laya.d3.core.material {
 		 * @param value 透明模式。
 		 */
 		public function set transparentMode(value:int):void {
-			_transparentMode = value;
-			alphaTestValue = _alphaTestValue;
-			_getShaderDefineValue();
+			if (_transparentMode !== value) {
+				_transparentMode = value;
+				alphaTestValue = _alphaTestValue;
+				_getShaderDefineValue();
+				_getRenderQueue();
+			}
 		}
 		
 		/**
@@ -181,6 +200,63 @@ package laya.d3.core.material {
 		public function set alphaTestValue(value:Number):void {
 			_alphaTestValue = value;
 			_pushShaderValue(ALPHATESTVALUE, Buffer2D.ALPHATESTVALUE, _transparent && _transparentMode === 0 ? _alphaTestValue : null, _id);
+		}
+		
+		/**
+		 * 获取是否单面渲染。
+		 *@return 是否单面渲染。
+		 */
+		public function get cullFace():Boolean {
+			return _cullFace;
+		}
+		
+		/**
+		 * 设置是否单面渲染。
+		 *@param 是否单面渲染。
+		 */
+		public function set cullFace(value:Boolean):void {
+			if (_cullFace !== value) {
+				_cullFace = value;
+				_getRenderQueue();
+			}
+		}
+		
+		/**
+		 * 获取AlphaBlend模式下是否使用加色法。
+		 * @return AlphaBlend模式下是否使用加色法
+		 */
+		public function get transparentAddtive():Boolean {
+			return _transparentAddtive;
+		}
+		
+		/**
+		 * 设置AlphaBlend模式下是否使用加色法。
+		 * @param AlphaBlend模式下是否使用加色法
+		 */
+		public function set transparentAddtive(value:Boolean):void {
+			if (_transparentAddtive !== value) {
+				_transparentAddtive = value;
+				_getRenderQueue();
+			}
+		}
+		
+		/**
+		 * 获取是否天空。
+		 * @return 是否天空
+		 */
+		public function get isSky():Boolean {
+			return _isSky;
+		}
+		
+		/**
+		 * 设置是否天空。
+		 * @param 是否天空
+		 */
+		public function set isSky(value:Boolean):void {
+			if (_isSky !== value) {
+				_isSky = value;
+				_getRenderQueue();
+			}
 		}
 		
 		/**
@@ -373,16 +449,67 @@ package laya.d3.core.material {
 			_pushShaderValue(REFLECTCOLOR, Buffer2D.MATERIALREFLECT, _color[REFLECTCOLOR].elements, _id);
 			_pushShaderValue(LUMINANCE, Buffer2D.LUMINANCE, _luminance, _id);
 			
-			alphaTestValue = _alphaTestValue;
+			_getRenderQueue();
+		}
+		
+		private function _getRenderQueue():void {
+			if (_isSky) {//待考虑
+				_renderQueue = RenderQueue.NONEWRITEDEPTH;
+			} else {
+				if (!_transparent || (_transparent && _transparentMode === 0))
+					_renderQueue = _cullFace ? RenderQueue.OPAQUE : RenderQueue.OPAQUE_DOUBLEFACE;
+				else if (_transparent && _transparentMode === 1) {
+					if (_transparentAddtive)
+						_renderQueue = _cullFace ? RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND : RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE;
+					else
+						_renderQueue = _cullFace ? RenderQueue.DEPTHREAD_ALPHA_BLEND : RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE;
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _loadeCompleted():Boolean {
+			if (_texturesloaded)
+				return true;
+			
+			if (diffuseTexture && !diffuseTexture.loaded/*||_diffuseTexture.loaded&&!_diffuseTexture.source*/)
+				return false;
+			if (normalTexture && !normalTexture.loaded/*||_normalTexture &&_normalTexture.loaded&&!_normalTexture.source*/)
+				return false;
+			if (specularTexture && !specularTexture.loaded/*||_specularTexture &&_specularTexture.loaded&&!_specularTexture.source*/)
+				return false;
+			if (emissiveTexture && !emissiveTexture.loaded/*||_emissiveTexture &&_emissiveTexture.loaded&&!_emissiveTexture.source*/)
+				return false;
+			if (ambientTexture && !ambientTexture.loaded/*||_ambientTexture &&_ambientTexture.loaded&&!_ambientTexture.source*/)
+				return false;
+			if (reflectTexture && !reflectTexture.loaded/*||_reflectTexture &&_reflectTexture.loaded&&!_reflectTexture.source*/)
+				return false;
+			/*
+			   if (_extendTextures) {
+			   for (var i:int = 0, n:int = _extendTextures.length; i < n; i++)
+			   if (!_extendTextures[i].loaded/ *&&!_extendTextures[i].source* /)
+			   return false;
+			   }
+			 */
+			
+			(diffuseTexture) && _uploadTexture(DIFFUSETEXTURE, diffuseTexture);
+			(normalTexture) && (_uploadTexture(NORMALTEXTURE, normalTexture));
+			(specularTexture) && _uploadTexture(SPECULARTEXTURE, specularTexture);
+			(emissiveTexture) && (_uploadTexture(EMISSIVETEXTURE, emissiveTexture));
+			(ambientTexture) && (_uploadTexture(AMBIENTTEXTURE, ambientTexture));
+			(reflectTexture) && (_uploadTexture(REFLECTTEXTURE, reflectTexture));
+			return _texturesloaded = true;
 		}
 		
 		/**
 		 * @private
 		 * 获取材质的ShaderDefine。
-		 * @param shaderIndex 在ShaderValue队列中的索引
-		 * @param name 名称
-		 * @param value 值
-		 * @param id 优化id
+		 * @param shaderIndex 在ShaderValue队列中的索引。
+		 * @param name 名称。
+		 * @param value 值。
+		 * @param id 优化id。
 		 * @return 当前ShaderValue队列的索引。
 		 */
 		protected function _pushShaderValue(shaderIndex:int, name:String, value:*, id:Number):int {
@@ -436,42 +563,6 @@ package laya.d3.core.material {
 		/**
 		 * @private
 		 */
-		private function _loadeCompleted():Boolean {
-			if (_texturesloaded)
-				return true;
-			
-			if (diffuseTexture && !diffuseTexture.loaded/*||_diffuseTexture.loaded&&!_diffuseTexture.source*/)
-				return false;
-			if (normalTexture && !normalTexture.loaded/*||_normalTexture &&_normalTexture.loaded&&!_normalTexture.source*/)
-				return false;
-			if (specularTexture && !specularTexture.loaded/*||_specularTexture &&_specularTexture.loaded&&!_specularTexture.source*/)
-				return false;
-			if (emissiveTexture && !emissiveTexture.loaded/*||_emissiveTexture &&_emissiveTexture.loaded&&!_emissiveTexture.source*/)
-				return false;
-			if (ambientTexture && !ambientTexture.loaded/*||_ambientTexture &&_ambientTexture.loaded&&!_ambientTexture.source*/)
-				return false;
-			if (reflectTexture && !reflectTexture.loaded/*||_reflectTexture &&_reflectTexture.loaded&&!_reflectTexture.source*/)
-				return false;
-			/*
-			   if (_extendTextures) {
-			   for (var i:int = 0, n:int = _extendTextures.length; i < n; i++)
-			   if (!_extendTextures[i].loaded/ *&&!_extendTextures[i].source* /)
-			   return false;
-			   }
-			 */
-			
-			(diffuseTexture) && _uploadTexture(DIFFUSETEXTURE, diffuseTexture);
-			(normalTexture) && (_uploadTexture(NORMALTEXTURE, normalTexture));
-			(specularTexture) && _uploadTexture(SPECULARTEXTURE, specularTexture);
-			(emissiveTexture) && (_uploadTexture(EMISSIVETEXTURE, emissiveTexture));
-			(ambientTexture) && (_uploadTexture(AMBIENTTEXTURE, ambientTexture));
-			(reflectTexture) && (_uploadTexture(REFLECTTEXTURE, reflectTexture));
-			return _texturesloaded = true;
-		}
-		
-		/**
-		 * @private
-		 */
 		protected function _uploadTexture(shaderIndex:int, texture:Texture):void {
 			var shaderValue:ValusArray = _shaderValues;
 			var data:Array = shaderValue.data[_texturesSharderIndex[shaderIndex]];
@@ -513,7 +604,6 @@ package laya.d3.core.material {
 		 * @return  是否成功。
 		 */
 		public function upload(state:RenderState, bufferUsageShader:*, shader:Shader):Boolean {
-			
 			if (!_loadeCompleted()) return false;
 			
 			shader || (shader = getShader(state));

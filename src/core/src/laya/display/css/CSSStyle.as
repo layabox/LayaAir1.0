@@ -556,12 +556,14 @@ package laya.display.css {
 			}
 			_border || (_border = {size: 1, type: 'solid'});
 			_border.color = (value == null) ? null : Color.create(value);
+			_ower.model && _ower.model.border(_border.color.strColor);
 			_ower._renderType |= RenderSprite.STYLE;
 		}
 		
 		public function set backgroundColor(value:String):void {
 			if (value === 'none') _bgground = null;
-			else (_bgground || (_bgground = {}), _bgground.color = value);
+			else (_bgground || (_bgground = { } ), _bgground.color = value);
+			_ower.model && _ower.model.bgColor(value);
 			_ower._renderType |= RenderSprite.STYLE;
 		}
 		
@@ -579,6 +581,7 @@ package laya.display.css {
 			}
 			_bgground || (_bgground = {});
 			_bgground.color = value;
+			_ower.model && _ower.model.bgColor(value);
 			_type |= _BACKGROUND_SET;
 			_ower._renderType |= RenderSprite.STYLE;
 		}
@@ -587,6 +590,13 @@ package laya.display.css {
 		override public function render(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			var w:Number = sprite.width;
 			var h:Number = sprite.height;
+
+			if ('typeset' in sprite)
+			{
+				w += sprite['padding'][1] + sprite['padding'][3];
+				h += sprite['padding'][0] + sprite['padding'][2];
+			}
+			
 			x -= sprite.pivotX;
 			y -= sprite.pivotY;
 			_bgground && _bgground.color != null && context.ctx.fillRect(x, y, w, h, _bgground.color);

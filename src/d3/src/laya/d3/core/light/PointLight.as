@@ -3,7 +3,7 @@ package laya.d3.core.light {
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.utils.Stat;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.ValusArray;
 	
 	/**
@@ -80,12 +80,12 @@ package laya.d3.core.light {
 				var shaderValue:ValusArray = state.worldShaderValue;
 				var loopCount:int = Stat.loopCount;
 				state.shaderDefs.add(ShaderDefines3D.POINTLIGHT);
-				shaderValue.pushValue(Buffer.POINTLIGHTDIFFUSE, diffuseColor.elements, loopCount);
-				shaderValue.pushValue(Buffer.POINTLIGHTAMBIENT, ambientColor.elements, loopCount);
-				shaderValue.pushValue(Buffer.POINTLIGHTSPECULAR, specularColor.elements, loopCount);
-				shaderValue.pushValue(Buffer.POINTLIGHTPOS, transform.position.elements, loopCount);
-				shaderValue.pushValue(Buffer.POINTLIGHTRANGE, range, loopCount);
-				shaderValue.pushValue(Buffer.POINTLIGHTATTENUATION, attenuation.elements, loopCount);
+				shaderValue.pushValue(Buffer2D.POINTLIGHTDIFFUSE, diffuseColor.elements, loopCount);
+				shaderValue.pushValue(Buffer2D.POINTLIGHTAMBIENT, ambientColor.elements, loopCount);
+				shaderValue.pushValue(Buffer2D.POINTLIGHTSPECULAR, specularColor.elements, loopCount);
+				shaderValue.pushValue(Buffer2D.POINTLIGHTPOS, transform.position.elements, loopCount);
+				shaderValue.pushValue(Buffer2D.POINTLIGHTRANGE, range, loopCount);
+				shaderValue.pushValue(Buffer2D.POINTLIGHTATTENUATION, attenuation.elements, loopCount);
 			}
 		}
 	

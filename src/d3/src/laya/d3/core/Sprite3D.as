@@ -1,8 +1,11 @@
 package laya.d3.core {
 	import laya.d3.component.Component3D;
+	import laya.d3.core.material.Material;
+	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.IUpdate;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
+	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.utils.Utils3D;
 	import laya.display.Node;
@@ -173,8 +176,19 @@ package laya.d3.core {
 			if (n === 0) return;
 			for (var i:int = 0; i < n; ++i) {
 				var child:Sprite3D = _childs[i];
-				child.active && child._update((state));
+				child._update((state));
 			}
+		}
+		
+		/**
+		 * 排序函数。
+		 * @param	state 渲染相关状态。
+		 */
+		public function _getSortID(renderElement:IRenderable, material:Material):int {
+			if (isStatic) {
+				return material.id * VertexDeclaration._maxVertexDeclarationBit + renderElement.getVertexBuffer().vertexDeclaration.id;
+			} else
+				return material.id;
 		}
 		
 		/**
@@ -184,13 +198,12 @@ package laya.d3.core {
 		public function _update(state:RenderState):void {
 			state.owner = this;
 			var preTransformID:int = state.worldTransformModifyID;
+			
+			var canView:Boolean = state.renderClip.view(this);
+			(canView) && (_updateComponents(state));
 			state.worldTransformModifyID += transform._worldTransformModifyID;
 			transform.getWorldMatrix(state.worldTransformModifyID);
-			if (state.renderClip.view(this)) {
-				_updateComponents(state);
-				_lateUpdateComponents(state);
-			}
-			
+			(canView) && (_lateUpdateComponents(state));
 			_childs.length && _updateChilds(state);
 			state.worldTransformModifyID = preTransformID;
 		}
@@ -267,12 +280,12 @@ package laya.d3.core {
 			var onComp:Function = function(data:String):void {
 				var preBasePath:String = URL.basePath;
 				URL.basePath = URL.getPath(URL.formatURL(url));
-				addChild(ClassUtils.createByJson(data, null, _this, Handler.create(null, Utils3D._parseHierarchy, null, false)));
+				addChild(ClassUtils.createByJson(data, null, _this, Handler.create(null, Utils3D._parseHierarchyProp, null, false), Handler.create(null, Utils3D._parseHierarchyNode, null, false)));
 				URL.basePath = preBasePath;
 				event(Event.HIERARCHY_LOADED, _this);
 			}
 			loader.once(Event.COMPLETE, null, onComp);
 			loader.load(url, Loader.TEXT);
-		}	
+		}
 	}
 }

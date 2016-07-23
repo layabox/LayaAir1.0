@@ -449,12 +449,12 @@ package laya.utils {
 		public function writeUTFString(value:String):void {
 			var tPos:int;
 			tPos = pos;
-			writeInt16(1);
+			writeUint16(1);
 			writeUTFBytes(value);
 			var dPos:int;
 			dPos = pos - tPos - 2;
 			//trace("writeLen:",dPos,"pos:",tPos);
-			_d_.setInt16(tPos, dPos, _xd_);
+			_d_.setUint16(tPos, dPos, _xd_);
 		}
 		
 		/**
@@ -465,7 +465,7 @@ package laya.utils {
 			var tPos:int;
 			tPos = pos;
 			var len:int;
-			len = getInt16();
+			len = getUint16();
 			//trace("readLen:"+len,"pos,",tPos);
 			return readUTFBytes(len);
 		}

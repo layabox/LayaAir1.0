@@ -46,12 +46,15 @@ package laya.ui {
 		private var _sizeGrid:Array;
 		/**@private */
 		private var _isChanged:Boolean;
+		/**@private */
+		public var _offset:Array;
 		
 		/**@inheritDoc */
 		override public function destroy():void {
 			super.destroy();
 			_source = null;
 			_sizeGrid = null;
+			_offset = null;
 		}
 		
 		/**
@@ -167,7 +170,7 @@ package laya.ui {
 			//如果没有设置9宫格，或大小未改变，则直接用原图绘制
 			if (!sizeGrid || (sw === width && sh === height)) {
 				clear();
-				drawTexture(source, 0, 0, width, height);
+				drawTexture(source, _offset ? _offset[0] : 0, _offset ? _offset[1] : 0, width, height);
 			} else {
 				//从缓存中读取渲染命令
 				source.$_GID || (source.$_GID = Utils.getGID());
@@ -225,6 +228,17 @@ package laya.ui {
 			cacheCount = 0;
 			cmdCaches = {};
 			textureCache = {};
+		}
+		
+		/**@private 缓存资源*/
+		public static function setCache(key:String, value:*):void {
+			cacheCount++;
+			textureCache[key] = value;
+		}
+		
+		/**@private 获取资源*/
+		public static function getCache(key:String):* {
+			return textureCache[key];
 		}
 	}
 }

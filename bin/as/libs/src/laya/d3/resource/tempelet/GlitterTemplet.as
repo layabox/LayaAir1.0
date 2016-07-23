@@ -1,7 +1,7 @@
 package laya.d3.resource.tempelet {
 	import laya.d3.core.glitter.GlitterSettings;
 	import laya.d3.core.glitter.SplineCurvePositionVelocity;
-	import laya.d3.core.render.IRender;
+	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
@@ -24,7 +24,7 @@ package laya.d3.resource.tempelet {
 	 * @private
 	 * <code>GlitterTemplet</code> 类用于创建闪光数据模板。
 	 */
-	public class GlitterTemplet implements IRender {
+	public class GlitterTemplet implements IRenderable {
 		
 		private var _tempVector0:Vector3 = new Vector3();
 		private var _tempVector1:Vector3 = new Vector3();
@@ -127,6 +127,7 @@ package laya.d3.resource.tempelet {
 				Laya.loader.load(setting.texturePath, Handler.create(null, function(texture:Texture):void {
 					(texture.bitmap as WebGLImage).enableMerageInAtlas = false;
 					(texture.bitmap as WebGLImage).mipmap = true;
+					(texture.bitmap as WebGLImage).repeat = true;
 					_this.texture = texture;
 				}));
 			}

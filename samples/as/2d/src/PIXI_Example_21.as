@@ -46,14 +46,14 @@ package
 			canvasGraphics = graphicsCanvas.graphics;
 		}
 		
-		private function onMouseDown():void
+		private function onMouseDown(e:*=null):void
 		{
 			isDown = true;
 			color = colors[colorCount++ % colors.length];
 			path.length = 0;
 		}
 		
-		private function onMouseMove():void
+		private function onMouseMove(e:*=null):void
 		{
 			if (!isDown) return;
 			
@@ -61,7 +61,7 @@ package
 			path.push(Laya.stage.mouseY);
 		}
 		
-		private function onMouseUp():void
+		private function onMouseUp(e:*=null):void
 		{
 			isDown = false;
 			canvasGraphics.drawPoly(0, 0, path.concat() , color);

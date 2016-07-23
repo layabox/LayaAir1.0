@@ -1,5 +1,5 @@
 package laya.d3.resource.tempelet {
-	import laya.d3.core.render.IRender;
+	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
@@ -24,7 +24,7 @@ package laya.d3.resource.tempelet {
 	 * @private
 	 * <code>ParticleTemplet3D</code> 类用于创建3D粒子数据模板。
 	 */
-	public class ParticleTemplet3D extends ParticleTemplateWebGL implements IRender {
+	public class ParticleTemplet3D extends ParticleTemplateWebGL implements IRenderable {
 		private var _vertexBuffer3D:VertexBuffer3D;
 		private var _indexBuffer3D:IndexBuffer3D;
 		
@@ -80,6 +80,7 @@ package laya.d3.resource.tempelet {
 				Laya.loader.load(settings.textureName, Handler.create(null, function(texture:Texture):void {
 					(texture.bitmap as WebGLImage).enableMerageInAtlas = false;
 					(texture.bitmap as WebGLImage).mipmap = true;
+					(texture.bitmap as WebGLImage).repeat = true;
 					_this.texture = texture;
 				}));
 			}

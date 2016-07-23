@@ -9,7 +9,7 @@ package laya.webgl.utils
 	 * ...
 	 * @author laya
 	 */
-	public class VertexBuffer2D extends Buffer
+	public class VertexBuffer2D extends Buffer2D
 	{
 		public static var create:Function = function(vertexStride:int, bufferUsage:int = WebGLContext.DYNAMIC_DRAW):VertexBuffer2D
 		{
@@ -31,13 +31,13 @@ package laya.webgl.utils
 			_vertexStride = vertexStride;
 			_bufferUsage = bufferUsage;
 			_bufferType = WebGLContext.ARRAY_BUFFER;
-			Render.isFlash || (_data = new ArrayBuffer(8));
+			Render.isFlash || (_buffer = new ArrayBuffer(8));
 			getFloat32Array();
 		}
 		
 		public function getFloat32Array():*
 		{
-			return _floatArray32 || (_floatArray32 = new Float32Array(_data));
+			return _floatArray32 || (_floatArray32 = new Float32Array(_buffer));
 		}
 		
 		public function bind(ibBuffer:IndexBuffer2D):void
@@ -61,7 +61,7 @@ package laya.webgl.utils
 		
 		override protected function _checkArrayUse():void
 		{
-			_floatArray32 && (_floatArray32 = new Float32Array(_data));
+			_floatArray32 && (_floatArray32 = new Float32Array(_buffer));
 		}
 		
 		override protected function detoryResource():void

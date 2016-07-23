@@ -1,10 +1,7 @@
 package laya.d3.graphics {
-	import laya.renders.Render;
-	import laya.utils.Browser;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.utils.Buffer;
-	import laya.webgl.utils.ValusArray;
 	
 	/**
 	 * <code>VertexBuffer3D</code> 类用于创建顶点缓冲。
@@ -71,9 +68,9 @@ package laya.d3.graphics {
 			
 			_bind();
 			var byteLength:int = _vertexDeclaration.vertexStride * vertexCount;
-			_length = byteLength;
+			_byteLength = byteLength;
 			_gl.bufferData(_bufferType, byteLength, _bufferUsage);
-			canRead && (_data = new Float32Array(byteLength / 4));
+			canRead && (_buffer = new Float32Array(byteLength / 4));
 		}
 		
 		/**
@@ -92,7 +89,7 @@ package laya.d3.graphics {
 		 * @param	dataStartIndex 顶点数据的偏移。
 		 * @param	dataCount 顶点数据的数量。
 		 */
-		public function setData(data:Float32Array, bufferOffset:int = 0, dataStartIndex:int = 0, dataCount:int = 4294967295/*uint.MAX_VALUE*/):void {
+		public function setData(data:Float32Array, bufferOffset:int = 0, dataStartIndex:int = 0, dataCount:uint = 4294967295/*uint.MAX_VALUE*/):void {
 			if (dataStartIndex !== 0 || dataCount !== 4294967295/*uint.MAX_VALUE*/)
 				data = new Float32Array(data.buffer, dataStartIndex * 4, dataCount);
 			_bind();
@@ -100,13 +97,13 @@ package laya.d3.graphics {
 			
 			if (_canRead) {
 				if (bufferOffset !== 0 || dataStartIndex !== 0 || dataCount !== 4294967295/*uint.MAX_VALUE*/) {
-					var maxLength:int = _data.length - bufferOffset;
+					var maxLength:int = _buffer.length - bufferOffset;
 					if (dataCount > maxLength)
 						dataCount = maxLength;
 					for (var i:int = 0; i < dataCount; i++)
-						_data[bufferOffset + i] = data[i];
+						_buffer[bufferOffset + i] = data[i];
 				} else {
-					_data = data;
+					_buffer = data;
 				}
 			}
 		}
@@ -117,7 +114,7 @@ package laya.d3.graphics {
 		 */
 		public function getData():Float32Array {
 			if (_canRead)
-				return _data;
+				return _buffer;
 			else
 				throw new Error("Can't read data from VertexBuffer with only write flag!");
 		}
@@ -133,11 +130,13 @@ package laya.d3.graphics {
 		/** 彻底销毁顶点缓冲。*/
 		override public function dispose():void {
 			super.dispose();
-			_data = null;
+			_buffer = null;
 			_vertexDeclaration = null;
 		}
 	
 	}
 
 }
+
+
 

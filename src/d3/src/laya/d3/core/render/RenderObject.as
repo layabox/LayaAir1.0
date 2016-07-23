@@ -6,12 +6,14 @@ package laya.d3.core.render {
 	 * <code>RenderObject</code> 类用于实现渲染物体。
 	 */
 	public class RenderObject {
-		/**类型0为默认，1为StaticBatch*/
+		/**所属队列。*/
+		public var renderQneue:RenderQueue;
+		/**类型0为默认，1为StaticBatch。*/
 		public var type:int = 0;
 		/**所属Sprite3D精灵。*/
 		public var owner:Sprite3D;
 		/**渲染元素。*/
-		public var renderElement:IRender;
+		public var renderElement:IRenderable;
 		/**渲染所用材质。*/
 		public var material:Material;
 		/**属性。*/

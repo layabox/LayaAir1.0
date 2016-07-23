@@ -236,6 +236,7 @@ package laya.d3.utils {
 				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
 					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
 					(tex.bitmap as WebGLImage).mipmap = true;
+					(tex.bitmap as WebGLImage).repeat = true;
 					material.diffuseTexture = tex;
 				})));
 				break;
@@ -243,6 +244,7 @@ package laya.d3.utils {
 				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
 					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
 					(tex.bitmap as WebGLImage).mipmap = true;
+					(tex.bitmap as WebGLImage).repeat = true;
 					material.normalTexture = tex;
 				})));
 				break;
@@ -250,6 +252,7 @@ package laya.d3.utils {
 				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
 					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
 					(tex.bitmap as WebGLImage).mipmap = true;
+					(tex.bitmap as WebGLImage).repeat = true;
 					material.specularTexture = tex;
 				})));
 				break;
@@ -257,6 +260,7 @@ package laya.d3.utils {
 				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
 					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
 					(tex.bitmap as WebGLImage).mipmap = true;
+					(tex.bitmap as WebGLImage).repeat = true;
 					material.emissiveTexture = tex;
 				})));
 				break;
@@ -264,6 +268,7 @@ package laya.d3.utils {
 				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
 					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
 					(tex.bitmap as WebGLImage).mipmap = true;
+					(tex.bitmap as WebGLImage).repeat = true;
 					material.ambientTexture = tex;
 				})));
 				break;
@@ -271,6 +276,7 @@ package laya.d3.utils {
 				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
 					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
 					(tex.bitmap as WebGLImage).mipmap = true;
+					(tex.bitmap as WebGLImage).repeat = true;
 					material.reflectTexture = tex;
 				})));
 				break;

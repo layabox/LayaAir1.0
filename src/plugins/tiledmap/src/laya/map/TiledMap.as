@@ -105,6 +105,8 @@ package laya.map {
 		//资源的相对路径
 		private var _resPath:String;
 		private var _pathArray:Array;
+		//把地图限制在显示区域
+		private var _limitRange:Boolean = false;
 		
 		public function TiledMap() {
 		
@@ -118,9 +120,11 @@ package laya.map {
 		 * @param	viewRectPadding 视口扩充区域，把视口区域上、下、左、右扩充一下，防止视口移动时的穿帮
 		 * @param	gridSize 		grid大小
 		 * @param	enableLinear 	是否开启线性取样（为false时，可以解决地图黑线的问题，但画质会锐化）
+		 * @param	limitRange		把地图限制在显示区域
 		 */
-		public function createMap(mapName:String, viewRect:Rectangle, completeHandler:Handler, viewRectPadding:Rectangle = null, gridSize:Point = null, enableLinear:Boolean = true):void {
+		public function createMap(mapName:String, viewRect:Rectangle, completeHandler:Handler, viewRectPadding:Rectangle = null, gridSize:Point = null, enableLinear:Boolean = true, limitRange:Boolean = false):void {
 			_enableLinear = enableLinear;
+			_limitRange = limitRange;
 			_rect.x = viewRect.x;
 			_rect.y = viewRect.y;
 			_rect.width = viewRect.width;
@@ -137,8 +141,16 @@ package laya.map {
 				_gridWidth = gridSize.x;
 				_gridHeight = gridSize.y;
 			}
-			_resPath = mapName.substr(0, mapName.lastIndexOf("/"));
-			_pathArray = _resPath.split("/");
+			var tIndex:int = mapName.lastIndexOf("/");
+			if (tIndex > -1)
+			{
+				_resPath = mapName.substr(0, tIndex);
+				_pathArray = _resPath.split("/");
+			}else {
+				_resPath = "";
+				_pathArray = [];
+			}
+			
 			_jsonLoader = new Loader();
 			_jsonLoader.once("complete", this, onJsonComplete);
 			_jsonLoader.load(mapName, Loader.JSON, false);
@@ -226,7 +238,13 @@ package laya.map {
 			}
 			if (tParentPathNum == 0)
 			{
-				tResultPath = resPath + "/" + relativePath;
+				if (_pathArray.length > 0)
+				{
+					tResultPath = resPath + "/" + relativePath;
+				}else {
+					tResultPath = relativePath;
+				}
+				
 				return tResultPath;
 			}
 			var tSrcNum:int = _pathArray.length - tParentPathNum;
@@ -498,20 +516,63 @@ package laya.map {
 		}
 		
 		/**
+		 * 在锚点的基础上计算，通过宽和高，重新计算视口
+		 * @param	width		新视口宽
+		 * @param	height		新视口高
+		 * @param	rect		返回的结果
+		 * @return
+		 */
+		public function changeViewPortBySize(width:Number, height:Number,rect:Rectangle = null):Rectangle
+		{
+			if (rect == null)
+			{
+				rect = new Rectangle();
+			}
+			_centerX = _rect.x + _rect.width * _pivotScaleX;
+			_centerY = _rect.y + _rect.height * _pivotScaleY;
+			rect.x = _centerX - width * _pivotScaleX;
+			rect.y = _centerY - height * _pivotScaleY;
+			rect.width = width;
+			rect.height = height;
+			changeViewPort(rect.x, rect.y, rect.width, rect.height);
+			return rect;
+		}
+		
+		/**
 		 * 刷新视口
 		 */
 		private function updateViewPort():void {
 			//_rect.x和rect.y是内部坐标，会自动叠加缩放
 			_centerX = _rect.x + _rect.width * _pivotScaleX;
 			_centerY = _rect.y + _rect.height * _pivotScaleY;
-			_viewPortX = _rect.width * _pivotScaleX/ _scale - _centerX;
-			_viewPortY =_rect.height * _pivotScaleY/ _scale - _centerY;
-			
+			_viewPortX = _centerX - _rect.width * _pivotScaleX/ _scale;
+			_viewPortY = _centerY - _rect.height * _pivotScaleY / _scale;
+			if (_limitRange)
+			{
+				var tRight:Number = _viewPortX + _viewPortWidth;
+				if (tRight > _width)
+				{
+					_viewPortX = _width - _viewPortWidth;
+				}
+				var tBottom:Number = _viewPortY + _viewPortHeight;
+				if (tBottom > _height)
+				{
+					_viewPortY = _height - _viewPortHeight;
+				}
+				if (_viewPortX < 0)
+				{
+					_viewPortX = 0;
+				}
+				if (_viewPortY < 0)
+				{
+					_viewPortY = 0;
+				}
+			}
 			var tPaddingRect:Rectangle = _paddingRect;
-			_mapRect.top = Math.floor((_centerY - _rect.height*_pivotScaleY/_scale - tPaddingRect.y) / _gridHeight);
-			_mapRect.bottom = Math.floor((_centerY + _rect.height * (1-_pivotScaleY) /_scale + tPaddingRect.height + tPaddingRect.y) / _gridHeight);
-			_mapRect.left = Math.floor((_centerX - _rect.width * _pivotScaleX / _scale - tPaddingRect.x) / _gridWidth);
-			_mapRect.right = Math.floor((_centerX + _rect.width * (1 - _pivotScaleX) / _scale + tPaddingRect.width + tPaddingRect.x) / _gridWidth);
+			_mapRect.top = Math.floor((_viewPortY - tPaddingRect.y) / _gridHeight);
+			_mapRect.bottom = Math.floor((_viewPortY + _viewPortHeight + tPaddingRect.height + tPaddingRect.y) / _gridHeight);
+			_mapRect.left = Math.floor((_viewPortX - tPaddingRect.x) / _gridWidth);
+			_mapRect.right = Math.floor((_viewPortX + _viewPortWidth + tPaddingRect.width + tPaddingRect.x) / _gridWidth);
 			clipViewPort();
 			_mapLastRect.top = _mapRect.top;
 			_mapLastRect.bottom = _mapRect.bottom;
@@ -936,6 +997,11 @@ package laya.map {
 			_y = 0;
 			
 			_index = 0;
+			
+			_enableLinear = true;
+			//资源的相对路径
+			_resPath = null;
+			_pathArray = null;
 		}
 		
 		/****************************地图的基本数据***************************/
@@ -986,7 +1052,7 @@ package laya.map {
 		 * 视口x坐标
 		 */
 		public function get viewPortX():Number {
-			return _viewPortX;
+			return -_viewPortX;
 		}
 		
 		/**
@@ -994,7 +1060,7 @@ package laya.map {
 		 * 视口的y坐标
 		 */
 		public function get viewPortY():Number {
-			return _viewPortY;
+			return -_viewPortY;
 		}
 		
 		

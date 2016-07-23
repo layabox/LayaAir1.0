@@ -544,7 +544,7 @@ package laya.ui {
 		/**
 		 *  xml结构的数据源。
 		 */
-		public function set xml(value:*):void {
+		public function set xml(value:XmlDom):void {
 			var arr:Array = [];
 			parseXml(value.childNodes[0], arr, null, true);
 			
@@ -555,7 +555,7 @@ package laya.ui {
 		 * @private
 		 * 解析并处理XML类型的数据源。
 		 */
-		protected function parseXml(xml:*, source:Array, nodeParent:Object, isRoot:Boolean):void {
+		protected function parseXml(xml:XmlDom, source:Array, nodeParent:Object, isRoot:Boolean):void {
 			var obj:Object;
 			var list:Array = xml.childNodes;
 			var childCount:int = list.length;

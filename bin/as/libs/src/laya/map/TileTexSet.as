@@ -131,9 +131,6 @@ package laya.map {
 		 * 清理
 		 */
 		public function clearAll():void {
-			if (_spriteNum > 0) {
-				trace("error::" + showDebugInfo());
-			}
 			gid = -1;//唯一标识
 			if (texture) {
 				texture.destroy();

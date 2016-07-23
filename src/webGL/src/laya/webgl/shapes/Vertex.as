@@ -1,6 +1,6 @@
 package laya.webgl.shapes
 {
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 
 	public class Vertex implements IShape
 	{
@@ -18,7 +18,7 @@ package laya.webgl.shapes
 			}
 		}
 	
-		public function getData(ib:Buffer,vb:Buffer,start:int):void
+		public function getData(ib:Buffer2D,vb:Buffer2D,start:int):void
 		{
 			
 		}

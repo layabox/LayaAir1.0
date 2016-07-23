@@ -20,7 +20,16 @@ package laya.display {
 	 */
 	public class Graphics {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+		/**@private */
 		private static var _tempMatrix:Matrix = new Matrix();
+		/**@private */
+		private static var _initMatrix:Matrix = new Matrix();
+		/**@private */
+		private static var _tempPoints:Array = [];
+		/**@private */
+		private static var _tempMatrixArrays:Array = [];
+		/**@private */
+		private static var _tempCmds:Array = [];
 		/**@private */
 		public var _sp:Sprite;
 		/**@private */
@@ -41,7 +50,7 @@ package laya.display {
 		   {
 			   var from:*= Graphics.prototype;
 			   var to:*= __JS__("ConchGraphics.prototype");
-			   var list:Array = ["_addCmd","clear","destroy","alpha","rotate","transform","scale","translate","save","restore","clipRect","blendMode","fillText","fillBorderText","_fands","drawRect","drawCircle","drawPie","drawPoly","drawPath","drawImageM","drawLine","drawLines","_drawPs","drawCurves","replaceText","replaceTextColor"];
+			   var list:Array = ["clear","destroy","alpha","rotate","transform","scale","translate","save","restore","clipRect","blendMode","fillText","fillBorderText","_fands","drawRect","drawCircle","drawPie","drawPoly","drawPath","drawImageM","drawLine","drawLines","_drawPs","drawCurves","replaceText","replaceTextColor"];
 			   for (var i:int = 0,len:int=list.length;i <=len; i++)
 			   {
 				   var temp:String=list[i];
@@ -61,85 +70,6 @@ package laya.display {
 					y += tex.offsetY;			
 					var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
 					this.drawImageM(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x , y , width, height,m);
-				}
-				from._getCmdPoints = function():Array {
-						var rst:Array;
-						rst = this._temp || (this._temp = []);
-						rst.length = 0;
-						if (!this._cmds||this._cmds.length==0)
-							return [];
-						var matrixs:Array;
-						matrixs = [];
-						var tMatrix:Matrix = new Matrix();
-						var tempMatrix:Matrix = _tempMatrix;
-						var cmd:Object;
-						for (var i:int = 0, n:int = this._cmds.length; i < n; i++) {
-							cmd = this._cmds[i];	
-							switch(cmd[0])
-							{
-								case 3://case context._rotate: 
-									tempMatrix.identity();
-									tempMatrix.translate(-cmd[2], -cmd[3]);
-									tempMatrix.rotate(cmd[1]);
-									tempMatrix.translate(cmd[2], cmd[3]);
-									this._switchMatrix(tMatrix, tempMatrix);
-									break;
-								case 4://context._transform: 
-									tempMatrix.identity();
-									tempMatrix.translate(-cmd[2], -cmd[3]);
-									tempMatrix.concat(cmd[1]);
-									tempMatrix.translate(cmd[2], cmd[3]);
-									break;
-								case 5://scale
-									tempMatrix.identity();
-									tempMatrix.translate(-cmd[3], -cmd[4]);
-									tempMatrix.scale(cmd[1],cmd[2]);
-									tempMatrix.translate(cmd[3], cmd[4]);
-									this._switchMatrix(tMatrix, tempMatrix);
-									break;
-								case 6://translate		
-									tempMatrix.identity();
-									tempMatrix.translate(cmd[1], cmd[2]);
-								    this._switchMatrix(tMatrix, tempMatrix);
-									break;
-								case 7: //save
-									matrixs.push(tMatrix);
-									tMatrix = tMatrix.clone();
-									break;
-								case 8: //restore
-									tMatrix = matrixs.pop();
-									break;
-								case 13://case context._drawRect:
-									_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
-									break;
-								case 14://case context._drawCircle
-								    _addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - cmd[3], cmd[2] - cmd[3], cmd[3] + cmd[3], cmd[3] + cmd[3]), tMatrix);
-									break;
-								case 16://case context._drawTexture: 
-								    _addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
-									break;
-								case 17://case context._drawTextureTransform: 
-									tMatrix.copyTo(tempMatrix);
-									tempMatrix.concat(cmd[5]);
-									_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tempMatrix);
-									break;
-								case 15://drawPie
-									_addPointArrToRst(rst, this._getPiePoints(cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]), tMatrix);
-									break;
-								case 18://drawpoly
-									_addPointArrToRst(rst, cmd[3], tMatrix, cmd[1], cmd[2]);
-									break;
-								case 19://drawPath
-									_addPointArrToRst(rst, this._getPathPoints(cmd[3]), tMatrix, cmd[1], cmd[2]);
-									break;
-								case 20://drawLine
-									_addPointArrToRst(rst, [cmd[1], cmd[2], cmd[3], cmd[4]], tMatrix);
-									break;
-								case 22://		case context._drawCurves: 
-									_addPointArrToRst(rst, Bezier.I.getBezierPoints(cmd[3]), tMatrix, cmd[1], cmd[2]);
-							}
-						}
-						return rst;
 				}
 		   }
 		}
@@ -232,6 +162,13 @@ package laya.display {
 			return _rstBoundPoints = Utils.copyArray(_rstBoundPoints, _temp);
 		}
 		
+		private function _addCmd(a:Array):void
+		{
+			this._cmds=this._cmds||[];
+			a.callee=a.shift();
+			this._cmds.push(a);
+		}
+		
 		private function _getCmdPoints():Array {
 			var context:RenderContext = Render._context;
 			var cmds:Array = this._cmds;
@@ -240,27 +177,34 @@ package laya.display {
 			
 			rst.length = 0;
 			if (!cmds && _one != null) {
-				cmds = [_one];
+				_tempCmds.length = 0;
+				_tempCmds.push(_one);
+				cmds = _tempCmds;
 			}
 			if (!cmds)
-				return [];
+				return rst;
 			
 			var matrixs:Array;
-			matrixs = [];
-			var tMatrix:Matrix = new Matrix();
+			matrixs = _tempMatrixArrays;
+			matrixs.length=0;
+			var tMatrix:Matrix = _initMatrix;
+			tMatrix.identity();
 			var tempMatrix:Matrix = _tempMatrix;
 			var cmd:Object;
 			for (var i:int = 0, n:int = cmds.length; i < n; i++) {
 				cmd = cmds[i];
 				switch (cmd.callee) {
 				case context.save: 
+				case 7: //save
 					matrixs.push(tMatrix);
 					tMatrix = tMatrix.clone();
 					break;
 				case context.restore: 
+				case 8: //restore
 					tMatrix = matrixs.pop();
 					break;
 				case context._scale: 
+				case 5://scale
 					tempMatrix.identity();
 					tempMatrix.translate(-cmd[2], -cmd[3]);
 					tempMatrix.scale(cmd[0], cmd[1]);
@@ -269,6 +213,7 @@ package laya.display {
 					_switchMatrix(tMatrix, tempMatrix);
 					break;
 				case context._rotate: 
+				case 3://case context._rotate: 
 					tempMatrix.identity();
 					tempMatrix.translate(-cmd[1], -cmd[2]);
 					tempMatrix.rotate(cmd[0]);
@@ -277,12 +222,14 @@ package laya.display {
 					_switchMatrix(tMatrix, tempMatrix);
 					break;
 				case context._translate: 
+				case 6://translate
 					tempMatrix.identity();
 					tempMatrix.translate(cmd[0], cmd[1]);
 					
 					_switchMatrix(tMatrix, tempMatrix);
 					break;
 				case context._transform: 
+				case 4://context._transform:
 					tempMatrix.identity();
 					tempMatrix.translate(-cmd[1], -cmd[2]);
 					tempMatrix.concat(cmd[0]);
@@ -290,7 +237,15 @@ package laya.display {
 					
 					_switchMatrix(tMatrix, tempMatrix);
 					break;
-				case context._drawTexture: 
+				case 16://case context._drawTexture: 
+					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0], cmd[1], cmd[2], cmd[3]), tMatrix);
+					break;
+				case 17://case context._drawTextureTransform: 
+					tMatrix.copyTo(tempMatrix);
+					tempMatrix.concat(cmd[4]);
+					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0],cmd[1], cmd[2], cmd[3]), tempMatrix);
+					break;
+				case context._drawTexture:
 					if (cmd[3] && cmd[4]) {
 						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
 					} else {
@@ -298,7 +253,7 @@ package laya.display {
 						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), tMatrix);
 					}
 					break;
-				case context._drawTextureWithTransform: 
+				case context._drawTextureWithTransform:
 					tMatrix.copyTo(tempMatrix);
 					tempMatrix.concat(cmd[5]);
 					if (cmd[3] && cmd[4]) {
@@ -309,30 +264,38 @@ package laya.display {
 					}
 					break;
 				case context._drawRect: 
-				case context._fillRect: 
+				case 13://case context._drawRect:
 					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0], cmd[1], cmd[2], cmd[3]), tMatrix);
 					break;
 				case context._drawCircle: 
 				case context._fillCircle: 
+				case 14://case context._drawCircle
 					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0] - cmd[2], cmd[1] - cmd[2], cmd[2] + cmd[2], cmd[2] + cmd[2]), tMatrix);
 					break;
 				case context._drawLine: 
-					_addPointArrToRst(rst, [cmd[0], cmd[1], cmd[2], cmd[3]], tMatrix);
+				case 20://drawLine
+					_tempPoints.length = 0;
+					_tempPoints.push(cmd[0], cmd[1], cmd[2], cmd[3]);
+					_addPointArrToRst(rst,_tempPoints, tMatrix);
 					break;
 				case context._drawCurves: 
+				case 22://context._drawCurves: 
 					//addPointArrToRst(rst, [cmd[0], cmd[1]], tMatrix);
 					//addPointArrToRst(rst, cmd[2], tMatrix, cmd[0], cmd[1]);
 					_addPointArrToRst(rst, Bezier.I.getBezierPoints(cmd[2]), tMatrix, cmd[0], cmd[1]);
 					break;
 				case context._drawPoly: 
+				case 18://drawpoly
 					//addPointArrToRst(rst, [cmd[0], cmd[1]], tMatrix);
 					_addPointArrToRst(rst, cmd[2], tMatrix, cmd[0], cmd[1]);
 					break;
 				case context._drawPath: 
+				case 19://drawPath
 					//addPointArrToRst(rst, [cmd[0], cmd[1]], tMatrix);
 					_addPointArrToRst(rst, _getPathPoints(cmd[2]), tMatrix, cmd[0], cmd[1]);
 					break;
 				case context._drawPie: 
+				case 15://drawPie
 					_addPointArrToRst(rst, _getPiePoints(cmd[0], cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
 					break;
 					
@@ -752,8 +715,9 @@ package laya.display {
 		}
 		
 		private function _getPiePoints(x:Number, y:Number, radius:Number, startAngle:Number, endAngle:Number):Array {
-			var rst:Array;
-			rst = [x, y];
+			var rst:Array = _tempPoints;
+			_tempPoints.length = 0;
+			rst.push(x, y);
 			var dP:Number = Math.PI / 10;
 			var i:Number;
 			for (i = startAngle; i < endAngle; i += dP) {
@@ -782,7 +746,8 @@ package laya.display {
 		
 		private function _getPathPoints(paths:Array):Array {
 			var i:int, len:int;
-			var rst:Array = [];
+			var rst:Array = _tempPoints;
+			rst.length = 0;
 			len = paths.length;
 			var tCMD:Array;
 			for (i = 0; i < len; i++) {

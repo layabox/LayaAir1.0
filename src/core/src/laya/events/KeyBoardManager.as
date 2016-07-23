@@ -1,5 +1,4 @@
 package laya.events {
-	import laya.display.Input;
 	import laya.display.Node;
 	import laya.utils.Browser;
 	

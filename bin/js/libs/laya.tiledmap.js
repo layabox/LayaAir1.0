@@ -60,6 +60,7 @@
 			this._enableLinear=true;
 			this._resPath=null;
 			this._pathArray=null;
+			this._limitRange=false;
 			this._rect=new Rectangle();
 			this._paddingRect=new Rectangle();
 			this._mapRect=new GRect();
@@ -76,10 +77,13 @@
 		*@param viewRectPadding 视口扩充区域，把视口区域上、下、左、右扩充一下，防止视口移动时的穿帮
 		*@param gridSize grid大小
 		*@param enableLinear 是否开启线性取样（为false时，可以解决地图黑线的问题，但画质会锐化）
+		*@param limitRange 把地图限制在显示区域
 		*/
-		__proto.createMap=function(mapName,viewRect,completeHandler,viewRectPadding,gridSize,enableLinear){
+		__proto.createMap=function(mapName,viewRect,completeHandler,viewRectPadding,gridSize,enableLinear,limitRange){
 			(enableLinear===void 0)&& (enableLinear=true);
+			(limitRange===void 0)&& (limitRange=false);
 			this._enableLinear=enableLinear;
+			this._limitRange=limitRange;
 			this._rect.x=viewRect.x;
 			this._rect.y=viewRect.y;
 			this._rect.width=viewRect.width;
@@ -438,13 +442,29 @@
 		__proto.updateViewPort=function(){
 			this._centerX=this._rect.x+this._rect.width *this._pivotScaleX;
 			this._centerY=this._rect.y+this._rect.height *this._pivotScaleY;
-			this._viewPortX=this._rect.width *this._pivotScaleX/ this._scale-this._centerX;
-			this._viewPortY=this._rect.height *this._pivotScaleY/ this._scale-this._centerY;
+			this._viewPortX=this._centerX-this._rect.width *this._pivotScaleX/ this._scale;
+			this._viewPortY=this._centerY-this._rect.height *this._pivotScaleY / this._scale;
+			if (this._limitRange){
+				var tRight=this._viewPortX+this._viewPortWidth;
+				if (tRight > this._width){
+					this._viewPortX=this._width-this._viewPortWidth;
+				};
+				var tBottom=this._viewPortY+this._viewPortHeight;
+				if (tBottom > this._height){
+					this._viewPortY=this._height-this._viewPortHeight;
+				}
+				if (this._viewPortX < 0){
+					this._viewPortX=0;
+				}
+				if (this._viewPortY < 0){
+					this._viewPortY=0;
+				}
+			};
 			var tPaddingRect=this._paddingRect;
-			this._mapRect.top=Math.floor((this._centerY-this._rect.height*this._pivotScaleY/this._scale-tPaddingRect.y)/ this._gridHeight);
-			this._mapRect.bottom=Math.floor((this._centerY+this._rect.height *(1-this._pivotScaleY)/this._scale+tPaddingRect.height+tPaddingRect.y)/ this._gridHeight);
-			this._mapRect.left=Math.floor((this._centerX-this._rect.width *this._pivotScaleX / this._scale-tPaddingRect.x)/ this._gridWidth);
-			this._mapRect.right=Math.floor((this._centerX+this._rect.width *(1-this._pivotScaleX)/ this._scale+tPaddingRect.width+tPaddingRect.x)/ this._gridWidth);
+			this._mapRect.top=Math.floor((this._viewPortY-tPaddingRect.y)/ this._gridHeight);
+			this._mapRect.bottom=Math.floor((this._viewPortY+this._viewPortHeight+tPaddingRect.height+tPaddingRect.y)/ this._gridHeight);
+			this._mapRect.left=Math.floor((this._viewPortX-tPaddingRect.x)/ this._gridWidth);
+			this._mapRect.right=Math.floor((this._viewPortX+this._viewPortWidth+tPaddingRect.width+tPaddingRect.x)/ this._gridWidth);
 			this.clipViewPort();
 			this._mapLastRect.top=this._mapRect.top;
 			this._mapLastRect.bottom=this._mapRect.bottom;
@@ -943,7 +963,7 @@
 		*视口x坐标
 		*/
 		__getset(0,__proto,'viewPortX',function(){
-			return this._viewPortX;
+			return-this._viewPortX;
 		});
 
 		/**
@@ -951,7 +971,7 @@
 		*视口的y坐标
 		*/
 		__getset(0,__proto,'viewPortY',function(){
-			return this._viewPortY;
+			return-this._viewPortY;
 		});
 
 		/**
@@ -1217,9 +1237,6 @@
 		*清理
 		*/
 		__proto.clearAll=function(){
-			if (this._spriteNum > 0){
-				console.log("error::"+this.showDebugInfo());
-			}
 			this.gid=-1;
 			if (this.texture){
 				this.texture.destroy();

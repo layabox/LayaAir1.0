@@ -785,7 +785,7 @@ package laya.webgl.canvas {
 				}
 			}
 			
-			_vb.bind_upload(_ib);
+			//_vb.bind_upload(_ib);//重复绑定
 			
 			submitElement(0, _submits._length);
 			

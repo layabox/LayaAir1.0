@@ -3,6 +3,8 @@ package laya.html.utils {
 	import laya.display.Sprite;
 	import laya.display.css.CSSStyle;
 	import laya.html.dom.HTMLBrElement;
+	import laya.html.dom.HTMLElement;
+	import laya.renders.Render;
 	import laya.utils.HTMLChar;
 	
 	/**
@@ -54,7 +56,12 @@ package laya.html.utils {
 			   return _multiLineLayout(htmlElement);
 			   return _singleLineTextLayout(htmlElement, sz.width, sz.height);
 			   }*/
-			return _multiLineLayout(element);
+			var arr:Array = _multiLineLayout(element);
+			if (Render.isConchApp&&element["layaoutCallNative"])
+			{
+				(element as HTMLElement).layaoutCallNative();
+			}
+			return arr;
 		}
 		
 		/*

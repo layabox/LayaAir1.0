@@ -1,4 +1,5 @@
 package laya.filters {
+	import laya.display.Sprite;
 	import laya.renders.Render;
 	import laya.utils.Color;
 	import laya.utils.RunDriver;
@@ -78,6 +79,13 @@ package laya.filters {
 		/**@private */
 		public function set blur(value:Number):void {
 			_elements[4] = value;
+		}
+		/**
+		 * @private 通知微端
+		 */
+		public override function callNative(sp:Sprite):void
+		{
+			sp.model &&sp.model.glowFilter&&sp.model.glowFilter(_color.strColor, _elements[4], _elements[5], _elements[6]);
 		}
 	
 	}

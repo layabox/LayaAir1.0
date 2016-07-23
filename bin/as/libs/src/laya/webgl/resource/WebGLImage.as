@@ -91,7 +91,7 @@ package laya.webgl.resource {
 		
 		public function WebGLImage(src:String) {
 			super(src);
-			repeat = true;
+			repeat = false;
 			mipmap = false;
 			minFifter = -1;
 			magFifter = -1;

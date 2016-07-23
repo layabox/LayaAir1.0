@@ -318,7 +318,7 @@ package laya.display
 
 			if (Browser.onMobile)
 			{
-				style.padding = '7px 6px 7px 6px';
+				style.paddingLeft = '5px';
 				style.lineHeight = '29px';
 				style.fontFamily = 'Arial,Helvetica,sans-serif';
 				style.fontSize = '20px';
@@ -360,6 +360,8 @@ package laya.display
 				input._text = value;
 			else
 				input.__super.prototype._$set_text.call(input, value);
+				
+			input.event(Event.INPUT);
 		}
 		
 		/**@private */
@@ -587,7 +589,7 @@ package laya.display
 			else
 			{
 				cssStyle.height = inputContainer.style.height = inputHeight + "px";
-				cssStyle.width = Browser.window.innerWidth - confirmButton.offsetWidth+ 'px';
+				cssStyle.width = Browser.window.innerWidth - confirmButton.offsetWidth - /*padding*/10+ 'px';
 				inputContainer.style.width = Browser.window.innerWidth + 'px';
 			}
 		}
@@ -650,6 +652,8 @@ package laya.display
 		/**@inheritDoc */
 		override public function set text(value:String):void
 		{
+			super.color = _originColor;
+			
 			value += '';
 			
 			if (this._focus)

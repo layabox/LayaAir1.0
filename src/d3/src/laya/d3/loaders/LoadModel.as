@@ -14,8 +14,8 @@ package laya.d3.loaders {
 	import laya.d3.graphics.VertexPositionNormalTexture0Texture1;
 	import laya.d3.graphics.VertexPositionNormalTexture0Texture1Skin;
 	import laya.d3.graphics.VertexPositionNormalTextureSkin;
-	import laya.d3.resource.tempelet.MeshTemplet;
-	import laya.d3.resource.tempelet.SubMeshTemplet;
+	import laya.d3.resource.models.Mesh;
+	import laya.d3.resource.models.SubMesh;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.net.Loader;
@@ -36,13 +36,13 @@ package laya.d3.loaders {
 		/**@private */
 		private var _strings:Array = ['BLOCK', 'DATA', "STRINGS"];//字符串数组
 		/**@private */
-		private var _materials:Vector.<Material> = new Vector.<Material>;//字符串数组
+		private var _materials:Vector.<Material>;
 		/**@private */
 		private var _fileData:ArrayBuffer;
 		/**@private */
 		private var _readData:Byte;
 		/**@private */
-		private var _meshTemplet:MeshTemplet;
+		private var _mesh:Mesh;
 		/**@private */
 		private var _BLOCK:Object = {count: 0};
 		/**@private */
@@ -53,22 +53,23 @@ package laya.d3.loaders {
 		/**@private */
 		private var _shaderAttributes:Array;
 		
-		public function get mesh():MeshTemplet {
-			return _meshTemplet;
+		public function get mesh():Mesh {
+			return _mesh;
 		}
 		
 		/**
 		 * 创建一个 <code>LoadModel</code> 实例。
 		 */
-		public function LoadModel(data:ArrayBuffer, mesh:MeshTemplet, url:String) {
-			_meshTemplet = mesh;
+		public function LoadModel(data:ArrayBuffer, mesh:Mesh, materials:Vector.<Material>, url:String) {
+			_mesh = mesh;
+			_materials = materials;
 			_onLoaded(data, url);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _onLoaded(data:*, url:String):MeshTemplet {
+		private function _onLoaded(data:*, url:String):Mesh {
 			var preBasePath:String = URL.basePath;
 			URL.basePath = URL.getPath(URL.formatURL(url));//此处更换URL路径会影响模型寻找贴图的路径
 			
@@ -91,7 +92,7 @@ package laya.d3.loaders {
 			}
 			
 			URL.basePath = preBasePath;
-			return _meshTemplet;
+			return _mesh;
 		}
 		
 		public function onError():void {
@@ -123,7 +124,7 @@ package laya.d3.loaders {
 			_readData.pos = _STRINGS.offset + _DATA.offset;
 			for (var i:int = 0; i < _STRINGS.size; i++) {
 				_strings[i] = _readData.readUTFString();
-				//trace("string:" + i + "  " + _strings[i]);
+					//trace("string:" + i + "  " + _strings[i]);
 			}
 			_readData.pos = ofs;
 			return true;
@@ -140,20 +141,17 @@ package laya.d3.loaders {
 				materialPath = URL.formatURL(materialPath);
 				var m:Material = Loader.getRes(materialPath);
 				if (m) {
-					_materials[index] = m;//临时这么做
-					if (m.loaded) {
-						_meshTemplet.event(Event.LOADED, _meshTemplet);
-					} else {
+					_materials[index] = m;
+					if (!m.loaded) {
 						m.once(Event.LOADED, null, function():void {
 							m.loaded = true;
-							_meshTemplet.event(Event.LOADED, _meshTemplet);
 						});
 					}
 				} else {
 					_materials[index] = m = new Material();
 					m.setShaderName(shaderName);
-					//加载材质文件			
-					var loader:Loader = new Loader();
+					
+					var loader:Loader = new Loader();	//加载材质文件			
 					var onComp:Function = function(data:String):void {
 						var preBasePath:String = URL.basePath;
 						URL.basePath = URL.getPath(URL.formatURL(materialPath));
@@ -161,7 +159,6 @@ package laya.d3.loaders {
 						URL.basePath = preBasePath;
 						m.loaded = true;
 						m.event(Event.LOADED, m);
-						_meshTemplet.event(Event.LOADED, _meshTemplet);
 					}
 					loader.once(Event.COMPLETE, null, onComp);
 					loader.load(materialPath, Loader.TEXT, false);
@@ -169,7 +166,6 @@ package laya.d3.loaders {
 				}
 			} else {
 				_materials[index] = new Material();
-				_meshTemplet.event(Event.LOADED, _meshTemplet);
 			}
 			//trace("MATERIAL:" + index + " " + materialPath);
 			return true;
@@ -178,11 +174,6 @@ package laya.d3.loaders {
 		public function READ_MESH():Boolean {
 			var name:String = _readString();
 			//trace("READ_MESH:" + name);
-			
-			_meshTemplet || (_meshTemplet = new MeshTemplet());
-			
-			_meshTemplet.materials = _materials;
-			
 			return true;
 		}
 		
@@ -203,7 +194,7 @@ package laya.d3.loaders {
 			var boneDicsize:int = _readData.getUint32();
 			var arrayBuffer:ArrayBuffer = _readData.__getBuffer();
 			//trace("SUBMESH:ibofs=" + ibofs + "  ibsize=" + ibsize + "  vbofs=" + vbofs + " vbsize=" + vbsize + "  boneDicofs=" + boneDicofs + " boneDicsize=" + boneDicsize + " " + bufferAttribute);
-			var submesh:SubMeshTemplet = new SubMeshTemplet(_meshTemplet);
+			var submesh:SubMesh = new SubMesh(_mesh);
 			
 			//_mesh.vb || (_mesh.vb = new Buffer(WebGLContext.ARRAY_BUFFER));
 			//submesh.setVBOffset(_mesh.vb.length);
@@ -214,7 +205,7 @@ package laya.d3.loaders {
 			
 			var vertexDeclaration:VertexDeclaration = _getVertexDeclaration();
 			
-			var vb:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, vbsize / vertexDeclaration.vertexStride, WebGLContext.STATIC_DRAW,true);
+			var vb:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, vbsize / vertexDeclaration.vertexStride, WebGLContext.STATIC_DRAW, true);
 			var vbStart:int = vbofs + _DATA.offset;
 			var vbArrayBuffer:ArrayBuffer = arrayBuffer.slice(vbStart, vbStart + vbsize);
 			vb.setData(new Float32Array(vbArrayBuffer));
@@ -224,16 +215,16 @@ package laya.d3.loaders {
 			for (var i:int = 0; i < vertexElements.length; i++)
 				submesh._bufferUsage[(vertexElements[i] as VertexElement).elementUsage] = vb;
 			
-			var ib:IndexBuffer3D = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT,ibsize / 2, WebGLContext.STATIC_DRAW, true);
-			var ibStart:int =ibofs + _DATA.offset;
-			var ibArrayBuffer:ArrayBuffer= arrayBuffer.slice(ibStart, ibStart+ibsize);
+			var ib:IndexBuffer3D = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, ibsize / 2, WebGLContext.STATIC_DRAW, true);
+			var ibStart:int = ibofs + _DATA.offset;
+			var ibArrayBuffer:ArrayBuffer = arrayBuffer.slice(ibStart, ibStart + ibsize);
 			ib.setData(new Uint16Array(ibArrayBuffer));
 			submesh.setIB(ib, ibsize / 2);
 			
-			var boneDicArrayBuffer:ArrayBuffer= arrayBuffer.slice(boneDicofs + _DATA.offset, boneDicofs + _DATA.offset+boneDicsize);
+			var boneDicArrayBuffer:ArrayBuffer = arrayBuffer.slice(boneDicofs + _DATA.offset, boneDicofs + _DATA.offset + boneDicsize);
 			submesh._setBoneDic(new Uint8Array(boneDicArrayBuffer));
 			
-			_meshTemplet.add(submesh);
+			_mesh.add(submesh);
 			
 			return true;
 		}

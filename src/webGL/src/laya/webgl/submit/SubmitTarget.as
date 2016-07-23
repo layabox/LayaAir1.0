@@ -20,7 +20,6 @@ package laya.webgl.submit {
 		
 		public var shaderValue:Value2D;
 		public var blendType:int = 0;
-		public static var activeBlendType:int = -1;
 		public var proName:String;
 		
 		public var scope:SubmitCMDScope;
@@ -48,12 +47,12 @@ package laya.webgl.submit {
 		
 		public function blend():void
 		{
-			if (activeBlendType !== blendType)
+			if (BlendMode.activeBlendFunction !== BlendMode.fns[blendType])
 			{
 				var gl:WebGLContext= WebGL.mainContext;
 				gl.enable( WebGLContext.BLEND );
 				BlendMode.fns[blendType]( gl);
-				activeBlendType = blendType;
+				BlendMode.activeBlendFunction = BlendMode.fns[blendType];
 			}
 		}
 		

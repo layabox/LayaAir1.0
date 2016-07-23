@@ -51,11 +51,12 @@ package laya.display {
 		public var _$P:Object = PROP_EMPTY;
 		/**@private */
 		public var model:IConchNode;
+		
 		/**@private */
-		public function Node()
-		{
-			model = Render.isConchNode?__JS__("new ConchNode()"):null;
+		public function Node() {
+			model = Render.isConchNode ? __JS__("new ConchNode()") : null;
 		}
+		
 		/**
 		 * <p>销毁此对象。</p>
 		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
@@ -100,8 +101,7 @@ package laya.display {
 			if (node._parent === this) {
 				this._childs.splice(getChildIndex(node), 1);
 				this._childs.push(node);
-				if (model)
-				{
+				if (model) {
 					model.removeChild(node.model);
 					model.addChildAt(node.model, this._childs.length - 1);
 				}
@@ -110,7 +110,7 @@ package laya.display {
 				node.parent && node.parent.removeChild(node);
 				this._childs === ARRAY_EMPTY && (this._childs = []);
 				this._childs.push(node);
-				model&&model.addChildAt(node.model, this._childs.length - 1);
+				model && model.addChildAt(node.model, this._childs.length - 1);
 				node.parent = this;
 			}
 			return node;
@@ -140,17 +140,16 @@ package laya.display {
 				if (node._parent === this) {
 					this._childs.splice(getChildIndex(node), 1);
 					this._childs.splice(index, 0, node);
-					if (model)
-					{
+					if (model) {
 						model.removeChild(node.model);
-					    model.addChildAt(node.model, index);
+						model.addChildAt(node.model, index);
 					}
 					_childChanged();
 				} else {
 					node.parent && node.parent.removeChild(node);
 					this._childs === ARRAY_EMPTY && (this._childs = []);
 					this._childs.splice(index, 0, node);
-					model&&model.addChildAt(node.model, index);
+					model && model.addChildAt(node.model, index);
 					node.parent = this;
 				}
 				return node;
@@ -218,8 +217,7 @@ package laya.display {
 			var oldIndex:int = getChildIndex(node);
 			childs.splice(oldIndex, 1);
 			childs.splice(index, 0, node);
-			if (model)
-			{
+			if (model) {
 				model.removeChild(node.model);
 				model.addChildAt(node.model, index);
 			}
@@ -276,7 +274,7 @@ package laya.display {
 			var node:Node = getChildAt(index);
 			if (node) {
 				this._childs.splice(index, 1);
-				model&&model.removeChild(node.model);
+				model && model.removeChild(node.model);
 				node.parent = null;
 			}
 			return node;
@@ -316,8 +314,7 @@ package laya.display {
 			var index:int = this._childs.indexOf(oldNode);
 			if (index > -1) {
 				this._childs.splice(index, 1, newNode);
-				if (model)
-				{
+				if (model) {
 					model.removeChild(oldNode.model);
 					model.addChildAt(newNode.model, index);
 				}
@@ -385,7 +382,7 @@ package laya.display {
 				for (var i:int = childs.length - 1; i > -1; i--) {
 					var child:Node = childs[i];
 					child._setDisplay(display);
-					child.numChildren && _displayChild(child, display);
+					child._childs.length && _displayChild(child, display);
 				}
 			}
 		}

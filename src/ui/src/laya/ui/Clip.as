@@ -273,13 +273,19 @@ package laya.ui {
 				_clipWidth || (_clipWidth = Math.ceil(img.sourceWidth / _clipX));
 				_clipHeight || (_clipHeight = Math.ceil(img.sourceHeight / _clipY));
 				
-				_sources || (_sources = []);
-				_sources.length = 0;
-				for (var i:int = 0; i < _clipY; i++) {
-					for (var j:int = 0; j < _clipX; j++) {
-						_sources.push(Texture.createFromTexture(img, _clipWidth * j, _clipHeight * i, _clipWidth, _clipHeight));
+				var key:String = _skin + _clipWidth + _clipHeight;
+				var clips:Array = AutoBitmap.getCache(key);
+				if (clips) _sources = clips;
+				else {
+					_sources = [];
+					for (var i:int = 0; i < _clipY; i++) {
+						for (var j:int = 0; j < _clipX; j++) {
+							_sources.push(Texture.createFromTexture(img, _clipWidth * j, _clipHeight * i, _clipWidth, _clipHeight));
+						}
 					}
+					AutoBitmap.setCache(key, _sources);
 				}
+				
 				index = _index;
 				event(Event.LOADED);
 				onCompResize();

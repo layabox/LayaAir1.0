@@ -728,7 +728,7 @@ package laya.display {
 			else
 				_textHeight = _lines.length * (_charSize.height + leading) + padding[0] + padding[2];
 			
-			model && model.size(this._width || _textWidth, this._height || _textHeight);
+			model && model.size( _textWidth,  _textHeight);
 		}
 		
 		private function checkEnabledViewportOrNot():Boolean {

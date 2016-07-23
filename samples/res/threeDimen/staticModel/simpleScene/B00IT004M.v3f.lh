@@ -1,0 +1,29 @@
+{
+  "type": "MeshSprite3D",
+    "instanceParams":{
+	"loadPath":"B00IT004M-DEFAULT01.lm"
+	},
+  "props": {
+    "isStatic": false,
+    "name": "DEFAULT01"
+  },
+  "customProps": {
+    "translate": [
+      0.650169969,
+      0.00647,
+      0.15602
+    ],
+    "rotation": [
+      -1.49975976E-32,
+      -1.22464685E-16,
+      -1.22464685E-16,
+      1.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "child": []
+}

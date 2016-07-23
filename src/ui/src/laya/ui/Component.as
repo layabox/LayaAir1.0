@@ -346,6 +346,7 @@ package laya.ui {
 		}
 		
 		/**
+		 * @private
 		 * <p>指定对象是否可使用布局。</p>
 		 * <p>如果值为true,则此对象可以使用布局样式，否则不使用布局样式。</p>
 		 * @param value 一个 Boolean 值，指定对象是否可使用布局。
@@ -353,7 +354,9 @@ package laya.ui {
 		private function set layOutEabled(value:Boolean):void {
 			if (_layout.enable != value) {
 				_layout.enable = value;
-				if (!hasListener(Event.ADDED)) {
+				if (this.parent) {
+					onAdded();
+				}else if (!hasListener(Event.ADDED)) {
 					on(Event.ADDED, this, onAdded);
 					on(Event.REMOVED, this, onRemoved);
 				}

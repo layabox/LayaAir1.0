@@ -1,7 +1,7 @@
 package laya.d3.graphics {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.Material;
-	import laya.d3.core.render.IRender;
+	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderObject;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
@@ -17,7 +17,7 @@ package laya.d3.graphics {
 	 * @private
 	 * <code>StaticBatch</code> 类用于创建静态批处理。
 	 */
-	public class StaticBatch implements IRender {
+	public class StaticBatch implements IRenderable {
 		public static var maxVertexCount:int = 65535;
 		public static var maxIndexCount:int = 120000;
 		
@@ -34,8 +34,8 @@ package laya.d3.graphics {
 		private var _vertexBuffer:VertexBuffer3D;
 		private var _indexBuffer:IndexBuffer3D;
 		
-		private var _lastRenderObjects:Vector.<IRender>;
-		private var _renderObjects:Vector.<IRender>;
+		private var _lastRenderObjects:Vector.<IRenderable>;
+		private var _renderObjects:Vector.<IRenderable>;
 		private var _renderOwners:Vector.<Sprite3D>;
 		private var _needReMerage:Boolean;
 		
@@ -79,33 +79,44 @@ package laya.d3.graphics {
 			_vertexDeclaration = vertexDeclaration;
 			_material = material;
 			
-			_vertexDatas = new Float32Array(_vertexDeclaration.vertexStride / 4 * maxVertexCount);
-			_indexDatas = new Uint16Array(maxIndexCount);
-			_vertexBuffer = VertexBuffer3D.create(_vertexDeclaration, maxVertexCount, WebGLContext.DYNAMIC_DRAW);
-			_indexBuffer = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, maxIndexCount, WebGLContext.DYNAMIC_DRAW);
-			
-			_lastRenderObjects = new Vector.<IRender>();
-			_renderObjects = new Vector.<IRender>();
+			_lastRenderObjects = new Vector.<IRenderable>();
+			_renderObjects = new Vector.<IRenderable>();
 			_renderOwners = new Vector.<Sprite3D>();
 			_needReMerage = false;
+		}
+		
+		public function _reset():void {
+			_renderObjects.length = 0;
+			_renderOwners.length = 0;
+			_currentIndexCount = 0;
+			_currentVertexCount = 0;
 		}
 		
 		public function _finsh():void {
 			if (!_needReMerage && _lastRenderObjects.length != _renderObjects.length) {
 				_needReMerage = true;
 			}
-			_currentIndexCount = 0;
-			_currentVertexCount = 0;
 			
 			if (_needReMerage) {
 				_needReMerage = false;
-				
 				var curMerVerCount:int = 0;
 				var curMerIndCount:int = 0;
 				_elementCount = 0;
 				
+				_vertexDatas = new Float32Array(_vertexDeclaration.vertexStride / 4 * _currentVertexCount);
+				_indexDatas = new Uint16Array(_currentIndexCount);
+				if (!_vertexBuffer) {
+					_vertexBuffer = VertexBuffer3D.create(_vertexDeclaration, _currentVertexCount, WebGLContext.DYNAMIC_DRAW);
+					_indexBuffer = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, _currentIndexCount, WebGLContext.DYNAMIC_DRAW);
+				} else {
+					_vertexBuffer.dispose();
+					_indexBuffer.dispose();
+					_vertexBuffer = VertexBuffer3D.create(_vertexDeclaration, _currentVertexCount, WebGLContext.DYNAMIC_DRAW);
+					_indexBuffer = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, _currentIndexCount, WebGLContext.DYNAMIC_DRAW);
+				}
+				
 				for (var i:int = 0; i < _renderObjects.length; i++) {
-					var renderObj:IRender = _renderObjects[i];
+					var renderObj:IRenderable = _renderObjects[i];
 					var subVertexDatas:Float32Array = renderObj.getBakedVertexs(0, _renderOwners[i].transform.getWorldMatrix(-2));
 					var subIndexDatas:Uint16Array = renderObj.getBakedIndices();
 					
@@ -129,8 +140,7 @@ package laya.d3.graphics {
 			}
 			
 			_lastRenderObjects = _renderObjects.slice();
-			_renderObjects.length = 0;
-			_renderOwners.length = 0;
+		
 		}
 		
 		private function _getShader(state:RenderState, vertexBuffer:VertexBuffer3D, material:Material):Shader {
@@ -147,7 +157,7 @@ package laya.d3.graphics {
 		}
 		
 		public function addRenderObj(renderObj:RenderObject):Boolean {
-			var renderElement:IRender = renderObj.renderElement;
+			var renderElement:IRenderable = renderObj.renderElement;
 			var indexbuffer:IndexBuffer3D = renderElement.getIndexBuffer();
 			var indexCount:int = _currentIndexCount + indexbuffer.byteLength / indexbuffer.indexTypeByteCount;
 			var vertexCount:int = _currentVertexCount + renderElement.getVertexBuffer().byteLength / _vertexDeclaration.vertexStride;

@@ -101,7 +101,11 @@ package laya.d3.graphics {
 					_buffer = new Uint16Array(indexCount);
 				else if (indexType == IndexBuffer3D.INDEXTYPE_UBYTE)
 					_buffer = new Uint8Array(indexCount);
+				memorySize = byteLength * 2;//可读内存CPU、GPU各占一份
+			} else {
+				memorySize = byteLength;
 			}
+		
 		}
 		
 		/**
@@ -154,6 +158,7 @@ package laya.d3.graphics {
 		override public function dispose():void {
 			_buffer = null;
 			super.dispose();
+			memorySize = 0;//还有release没判断
 		}
 	
 	}

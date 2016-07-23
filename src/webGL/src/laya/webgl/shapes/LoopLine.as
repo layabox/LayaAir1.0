@@ -1,5 +1,5 @@
 package laya.webgl.shapes {
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * ...
@@ -38,7 +38,7 @@ package laya.webgl.shapes {
 			super(x, y, 0, 0, _points.length / 2, 0, width, color);
 		}
 		
-		override public function getData(ib:Buffer, vb:Buffer, start:int):void {
+		override public function getData(ib:Buffer2D, vb:Buffer2D, start:int):void {
 			if (borderWidth > 0) {
 				var color:uint = this.color;
 				var r:Number = ((color >> 16) & 0x0000ff) / 255, g:Number = ((color >> 8) & 0xff) / 255, b:Number = (color & 0x0000ff) / 255;

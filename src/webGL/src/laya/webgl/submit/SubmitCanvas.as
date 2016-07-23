@@ -10,7 +10,7 @@ package laya.webgl.submit {
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.CONST3D2D;
 	/**
 	 * ...

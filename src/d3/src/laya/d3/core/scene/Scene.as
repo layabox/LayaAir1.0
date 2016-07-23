@@ -30,6 +30,7 @@ package laya.d3.core.scene {
 			lateUpate(state);//更新之前
 			
 			beforeRender(state);//渲染之前
+			_preRenderScene(gl, state);
 			var camera:Camera = currentCamera as Camera;
 			state.viewMatrix = camera.viewMatrix;
 			state.projectionMatrix = camera.projectionMatrix;

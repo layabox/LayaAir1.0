@@ -71,21 +71,6 @@ package laya.particle {
 		}
 		
 		protected function loadContent():void {
-			var indexes:Uint16Array = new Uint16Array(settings.maxPartices * 6);
-			
-			for (var i:int = 0; i < settings.maxPartices; i++) {
-				indexes[i * 6 + 0] = (i * 4 + 0);
-				indexes[i * 6 + 1] = (i * 4 + 1);
-				indexes[i * 6 + 2] = (i * 4 + 2);
-				
-				indexes[i * 6 + 3] = (i * 4 + 0);
-				indexes[i * 6 + 4] = (i * 4 + 2);
-				indexes[i * 6 + 5] = (i * 4 + 3);
-			}
-			
-			_indexBuffer.clear();
-			_indexBuffer.append(indexes);
-			_indexBuffer.upload();
 		}
 		
 		public function update(elapsedTime:int):void {
@@ -134,25 +119,6 @@ package laya.particle {
 		}
 		
 		public function addNewParticlesToVertexBuffer():void {
-			_vertexBuffer.clear();
-			_vertexBuffer.append(_vertices);
-			
-			var start:int;
-			if (_firstNewElement < _firstFreeElement) {
-				// 如果新增加的粒子在Buffer中是连续的区域，只upload一次
-				start = _firstNewElement * 4 * _floatCountPerVertex * 4;
-				_vertexBuffer.subUpload(start, start, start + (_firstFreeElement - _firstNewElement) * 4 * _floatCountPerVertex * 4);
-			} else {
-				//如果新增粒子区域超过Buffer末尾则循环到开头，需upload两次
-				start = _firstNewElement * 4 * _floatCountPerVertex * 4;
-				_vertexBuffer.subUpload(start, start, start + (settings.maxPartices - _firstNewElement) * 4 * _floatCountPerVertex * 4);
-				
-				if (_firstFreeElement > 0) {
-					_vertexBuffer.setNeedUpload();
-					_vertexBuffer.subUpload(0, 0, _firstFreeElement * 4 * _floatCountPerVertex * 4);
-				}
-			}
-			_firstNewElement = _firstFreeElement;
 		}
 		
 		public override function addParticleArray(position:Float32Array, velocity:Float32Array):void//由于循环队列判断算法，当下一个freeParticle等于retiredParticle时不添加例子，意味循环队列中永远有一个空位。（由于此判断算法快速、简单，所以放弃了使循环队列饱和的复杂算法（需判断freeParticle在retiredParticle前、后两种情况并不同处理））

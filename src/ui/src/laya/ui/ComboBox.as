@@ -518,7 +518,9 @@ package laya.ui {
 		}
 		
 		public function set labelColors(value:String):void {
-			_button.labelColors = value;
+			if (_button.labelColors != value) {
+				_button.labelColors = value;
+			}
 		}
 		
 		/**

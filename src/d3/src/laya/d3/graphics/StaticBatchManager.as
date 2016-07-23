@@ -3,8 +3,8 @@ package laya.d3.graphics {
 	import laya.utils.Stat;
 	
 	/**
-	 * ...
-	 * @author ...
+	 * @private
+	 * <code>StaticBatchManager</code> 类用于创建静态批处理管理员。
 	 */
 	public class StaticBatchManager {
 		private static var maxVertexDeclaration:int = 1000;//需在顶点定义类中加异常判断警告
@@ -22,7 +22,7 @@ package laya.d3.graphics {
 		
 		public function getStaticBatchQneue(_vertexDeclaration:VertexDeclaration, material:Material):StaticBatch {
 			var staticBatch:StaticBatch;
-			var key:int = material.id * 1000 + _vertexDeclaration.id;
+			var key:int = material.id * VertexDeclaration._maxVertexDeclarationBit + _vertexDeclaration.id;
 			
 			if (_keys.indexOf(key) === -1) {
 				_keys.push(key);
@@ -41,7 +41,7 @@ package laya.d3.graphics {
 		}
 		
 		/** @private 通常应在所有getStaticBatchQneue函数相关操作结束后执行,不必逐帧执行。*/
-		public function garbageCollection():void {
+		public function _garbageCollection():void {
 			for (var i:int = 0; i < _keys.length; i++) {
 				if (_useFPS[i] < Stat.loopCount) {
 					_keys.splice(i, 1);
@@ -52,6 +52,13 @@ package laya.d3.graphics {
 			}
 		}
 		
+		/**重置*/
+		public function _reset():void {
+			for (var i:int = 0; i < _keys.length; i++) {
+				_staticBatchs[i]._reset();
+			}
+		}
+		
 		/**刷新*/
 		public function _finsh():void {
 			for (var i:int = 0; i < _keys.length; i++) {
@@ -59,8 +66,7 @@ package laya.d3.graphics {
 			}
 		}
 		
-		public function dispose():void
-		{
+		public function dispose():void {
 			_keys.length = 0;
 			_useFPS.length = 0;
 			_staticBatchs.length = 0;

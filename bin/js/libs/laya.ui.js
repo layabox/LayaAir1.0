@@ -7,10 +7,10 @@
 	var Handler=laya.utils.Handler,Input=laya.display.Input,Loader=laya.net.Loader,Node=laya.display.Node,Point=laya.maths.Point;
 	var Rectangle=laya.maths.Rectangle,Sprite=laya.display.Sprite,Stage=laya.display.Stage,Text=laya.display.Text;
 	var Texture=laya.resource.Texture,Tween=laya.utils.Tween,Utils=laya.utils.Utils;
-	Laya.interface('laya.ui.IComponent');
-	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IItem');
+	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
 	*<code>LayoutStyle</code> 是一个布局样式类。
@@ -141,6 +141,7 @@
 			this._source=null;
 			this._sizeGrid=null;
 			this._isChanged=false;
+			this._offset=null;
 			AutoBitmap.__super.call(this);
 		}
 
@@ -151,6 +152,7 @@
 			_super.prototype.destroy.call(this);
 			this._source=null;
 			this._sizeGrid=null;
+			this._offset=null;
 		}
 
 		/**@private */
@@ -177,7 +179,7 @@
 			var sh=source.sourceHeight;
 			if (!sizeGrid || (sw===width && sh===height)){
 				this.clear();
-				this.drawTexture(source,0,0,width,height);
+				this.drawTexture(source,this._offset ? this._offset[0] :0,this._offset ? this._offset[1] :0,width,height);
 				}else {
 				source.$_GID || (source.$_GID=Utils.getGID());
 				var key=source.$_GID+"."+width+"."+height+"."+sizeGrid.join(".");
@@ -1159,7 +1161,7 @@
 		*/
 		__getset(0,__proto,'measureHeight',function(){
 			this.runCallLater(this.changeClips);
-			return this._bitmap.height;
+			return this._text ? Math.max(this._bitmap.height,this._text.height):this._bitmap.height;
 		});
 
 		/**
@@ -1169,7 +1171,7 @@
 			this.runCallLater(this.changeClips);
 			if (this._autoSize)return this._bitmap.width;
 			this.runCallLater(this.changeState);
-			return this._bitmap.width+this._text ? this._text.width :0;
+			return this._bitmap.width+(this._text ? this._text.width :0);
 		});
 
 		/**
@@ -1307,6 +1309,14 @@
 			this._dataSource=value;
 			if ((typeof value=='number')|| (typeof value=='string'))this.label=value+"";
 			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		/**图标x,y偏移，格式：100,100*/
+		__getset(0,__proto,'iconOffset',function(){
+			return this._bitmap._offset ? null :this._bitmap._offset.join(",");
+			},function(value){
+			if (value)this._bitmap._offset=UIUtils.fillArray([1,1],value,Number);
+			else this._bitmap._offset=[];
 		});
 
 		__static(Button,
@@ -2523,7 +2533,6 @@
 			return this._button.labelColors;
 			},function(value){
 			if (this._button.labelColors !=value){
-				console.log(this,value,this._button.labelColors);
 				this._button.labelColors=value;
 			}
 		});
@@ -4346,9 +4355,7 @@
 					tAni=new FrameClip();
 					tAniO=animations[i];
 					tAni._setUp(this._idMap,tAniO);
-					if (this.hasOwnProperty(tAniO.name)){
-						this[tAniO.name]=tAni;
-					}
+					this[tAniO.name]=tAni;
 					tAni._setControlNode(this);
 					switch(tAniO.action){
 						case 1:

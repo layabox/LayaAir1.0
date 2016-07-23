@@ -200,6 +200,7 @@ package laya.webgl.atlas {
 				_atlaserArray[i].dispose();
 			}
 			_atlaserArray.length = 0;
+			_curAtlasIndex = 0;
 		}
 		
 		public  function  getAtlaserCount():int

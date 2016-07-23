@@ -378,7 +378,7 @@ package laya.ui {
 			runCallLater(changeClips);
 			if (_autoSize) return _bitmap.width;
 			runCallLater(changeState);
-			return _bitmap.width + _text ? _text.width : 0;
+			return _bitmap.width + (_text ? _text.width : 0);
 		}
 		
 		/**
@@ -386,7 +386,7 @@ package laya.ui {
 		 */
 		override protected function get measureHeight():Number {
 			runCallLater(changeClips);
-			return _bitmap.height;
+			return _text ? Math.max(_bitmap.height, _text.height) : _bitmap.height;
 		}
 		
 		/**
@@ -632,6 +632,16 @@ package laya.ui {
 			_dataSource = value;
 			if (value is Number || value is String) label = value + "";
 			else super.dataSource = value;
+		}
+		
+		/**图标x,y偏移，格式：100,100*/
+		public function get iconOffset():String {
+			return _bitmap._offset ? null : _bitmap._offset.join(",");
+		}
+		
+		public function set iconOffset(value:String):void {
+			if (value) _bitmap._offset = UIUtils.fillArray([1, 1], value, Number);
+			else _bitmap._offset = [];
 		}
 		
 		/**@private */

@@ -1263,112 +1263,6 @@ declare module laya.d3.core.camera {
         protected _calculateProjectionMatrix(): void;
     }
 }
-declare module laya.d3.core.fileModel {
-    /**
-     * <code>Mesh</code> 类用于创建网格。
-     */
-    class Mesh extends laya.d3.core.Sprite3D {
-        protected _url: string;
-        /**
-         * 获取子网格数据模板。
-         * @return  子网格数据模板。
-         */
-        templet: laya.d3.resource.tempelet.MeshTemplet;
-        /**
-         * 获取URL地址。
-         * @return URL地址。
-         */
-        url: string;
-        /**
-         * 获取材质列表。
-         * @return 材质列表。
-         */
-        /**
-         * 设置材质列表。
-         * @param value 材质列表。
-         */
-        materials: Array<any>;
-        /**
-         * 创建一个 <code>Mesh</code> 实例。
-         */
-        constructor();
-        protected _addToRenderQuene(state: laya.d3.core.render.RenderState, material: laya.d3.core.material.Material): laya.d3.core.render.RenderObject;
-        protected _praseSubMeshTemplet(subMeshTemplet: laya.d3.resource.tempelet.SubMeshTemplet): SubMesh;
-        /**
-         * @private
-         */
-        _update(state: laya.d3.core.render.RenderState): void;
-        /**
-         * 加载网格模板。
-         * @param url 模板地址。
-         */
-        load(url: string): void;
-    }
-}
-declare module laya.d3.core.fileModel {
-    /**
-     * <code>SkyMesh</code> 类用于创建网格天空。
-     */
-    class SkyMesh extends Mesh {
-        /**
-         * 创建一个 <code>SkyMesh</code> 实例。
-         */
-        constructor();
-        protected _addToRenderQuene(state: laya.d3.core.render.RenderState, material: laya.d3.core.material.Material): laya.d3.core.render.RenderObject;
-        protected _praseSubMeshTemplet(subMeshTemplet: laya.d3.resource.tempelet.SubMeshTemplet): SubMesh;
-    }
-}
-declare module laya.d3.core.fileModel {
-    /**
-     * <code>SkySubMesh</code> 类用于创建天空子网格。
-     */
-    class SkySubMesh extends SubMesh {
-        /**
-         * 创建一个 <code>SkySubMesh</code> 实例。
-         */
-        constructor(templet: laya.d3.resource.tempelet.SubMeshTemplet);
-        /**
-         * @private
-         * 渲染。
-         * @param	state 渲染状态。
-         */
-        _render(state: laya.d3.core.render.RenderState): boolean;
-    }
-}
-declare module laya.d3.core.fileModel {
-    /**
-     * <code>SubMesh</code> 类用于创建子网格。
-     */
-    class SubMesh implements laya.d3.core.render.IRender {
-        _indexOfHost: number;
-        mesh: Mesh;
-        /**
-         * 获取子网格数据模板。
-         * @return  子网格数据模板。
-         */
-        templet: laya.d3.resource.tempelet.SubMeshTemplet;
-        /**
-         * 获取在宿主中的序列。
-         * @return	序列。
-         */
-        indexOfHost: number;
-        VertexBufferCount: number;
-        getVertexBuffer(index?: number): laya.d3.graphics.VertexBuffer3D;
-        getIndexBuffer(): laya.d3.graphics.IndexBuffer3D;
-        getBakedVertexs(index?: number): Float32Array;
-        getBakedIndices(): any;
-        /**
-         * 创建一个 <code>SubMesh</code> 实例。
-         */
-        constructor(templet: laya.d3.resource.tempelet.SubMeshTemplet);
-        /**
-         * @private
-         * 渲染。
-         * @param	state 渲染状态。
-         */
-        _render(state: laya.d3.core.render.RenderState): boolean;
-    }
-}
 declare module laya.d3.core.glitter {
     /**
      * <code>Glitter</code> 类用于创建闪光。
@@ -1772,6 +1666,7 @@ declare module laya.d3.core.material {
      * <code>Material</code> 类用于创建材质。
      */
     class Material extends laya.events.EventDispatcher {
+        static maxMaterialCount: number;
         protected static _uniqueIDCounter: number;
         private static AMBIENTCOLORVALUE;
         private static DIFFUSECOLORVALUE;
@@ -1789,24 +1684,26 @@ declare module laya.d3.core.material {
         protected _transparent: boolean;
         protected _transparentMode: number;
         protected _alphaTestValue: number;
+        protected _cullFace: boolean;
+        protected _transparentAddtive: boolean;
         protected _luminance: number;
         protected _transformUV: laya.d3.core.TransformUV;
         protected _shaderDef: number;
-        /**材质名字*/
+        protected _isSky: boolean;
+        /**材质名字。*/
         name: string;
-        /** 是否单面渲染。 */
-        cullFace: boolean;
-        /**AlphaBlend模式下是否使用加色法。*/
-        transparentAddtive: boolean;
-        /**是否天空。*/
-        isSky: boolean;
-        /***/
+        /**是否已加载完成*/
         loaded: boolean;
         /**
          * 获取唯一标识ID(通常用于优化或识别)。
          * @return 唯一标识ID
          */
         id: number;
+        /**
+         * 获取所属渲染队列。
+         * @return 渲染队列。
+         */
+        renderQueue: number;
         /**
          * 获取材质的ShaderDef。
          * @return 材质的ShaderDef。
@@ -1839,6 +1736,33 @@ declare module laya.d3.core.material {
          * @param value 透明测试模式裁剪值。
          */
         alphaTestValue: number;
+        /**
+         * 获取是否单面渲染。
+         *@return 是否单面渲染。
+         */
+        /**
+         * 设置是否单面渲染。
+         *@param 是否单面渲染。
+         */
+        cullFace: boolean;
+        /**
+         * 获取AlphaBlend模式下是否使用加色法。
+         * @return AlphaBlend模式下是否使用加色法
+         */
+        /**
+         * 设置AlphaBlend模式下是否使用加色法。
+         * @param AlphaBlend模式下是否使用加色法
+         */
+        transparentAddtive: boolean;
+        /**
+         * 获取是否天空。
+         * @return 是否天空
+         */
+        /**
+         * 设置是否天空。
+         * @param 是否天空
+         */
+        isSky: boolean;
         /**
          * 获取漫反射贴图。
          * @return 漫反射贴图。
@@ -2015,6 +1939,7 @@ declare module laya.d3.core {
          * @param name 名字。
          */
         constructor(mesh: laya.d3.resource.models.BaseMesh, name?: string);
+        removeChildAt(index: number): laya.display.Node;
         /**
          * @private
          */
@@ -2183,6 +2108,7 @@ declare module laya.d3.core.particle {
          *  @param velocity 粒子速度。
          */
         addParticle(position: laya.d3.math.Vector3, velocity: laya.d3.math.Vector3): void;
+        removeChildAt(index: number): laya.display.Node;
         /**
          * 更新粒子。
          * @param state 渲染相关状态参数。
@@ -2212,7 +2138,7 @@ declare module laya.d3.core.render {
     /**
      * <code>IRender</code> 接口用于实现3D对象的渲染相关功能。
      */
-    interface IRender {
+    interface IRenderable {
     }
 }
 declare module laya.d3.core.render {
@@ -2268,12 +2194,14 @@ declare module laya.d3.core.render {
      * <code>RenderObject</code> 类用于实现渲染物体。
      */
     class RenderObject {
-        /**类型0为默认，1为StaticBatch*/
+        /**所属队列。*/
+        renderQneue: RenderQueue;
+        /**类型0为默认，1为StaticBatch。*/
         type: number;
         /**所属Sprite3D精灵。*/
         owner: laya.d3.core.Sprite3D;
         /**渲染元素。*/
-        renderElement: IRender;
+        renderElement: IRenderable;
         /**渲染所用材质。*/
         material: laya.d3.core.material.Material;
         /**属性。*/
@@ -2290,7 +2218,8 @@ declare module laya.d3.core.render {
     /**
      * <code>RenderQuene</code> 类用于实现渲染队列。
      */
-    class RenderQuene {
+    class RenderQueue {
+        private static _uniqueIDCounter;
         /** 定义只读渲染队列标记。*/
         static NONEWRITEDEPTH: number;
         /** 定义非透明渲染队列标记。*/
@@ -2314,10 +2243,9 @@ declare module laya.d3.core.render {
         /** 定义深度只读、透明加色混合、双面渲染队列标记。*/
         static DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE: number;
         /**
-         * 获取队列长度。
-         * @return 队列长度。
+         * 获取唯一标识ID(通常用于优化或识别)。
          */
-        length: number;
+        id: number;
         /**
          * 创建一个 <code>RenderQuene</code> 实例。
          * @param renderConfig 渲染配置。
@@ -2345,13 +2273,14 @@ declare module laya.d3.core.render {
         _render(state: RenderState): void;
         /**
          * 获取队列中的渲染物体。
-         * @param gl WebGL上下文。
+         * @return gl 渲染物体。
          */
-        get(): RenderObject;
+        getRenderObj(): RenderObject;
         /**
-         * 重置并清空队列。
+         * 删除渲染物体。
+         * @param renderObj 渲染物体。
          */
-        reset(): void;
+        deleteRenderObj(renderObj: RenderObject): void;
     }
 }
 declare module laya.d3.core.render {
@@ -2482,6 +2411,12 @@ declare module laya.d3.core.scene {
          * @private
          */
         _removeLight(light: laya.d3.core.light.LightSprite): void;
+        /**
+         * 获得某个渲染队列。
+         * @param index 渲染队列索引。
+         * @return 渲染队列。
+         */
+        getRenderQueue(index: number): laya.d3.core.render.RenderQueue;
         /**
          * 获得某个渲染队列的渲染物体。
          * @param index 渲染队列索引。
@@ -2633,6 +2568,11 @@ declare module laya.d3.core {
         protected _updateComponents(state: laya.d3.core.render.RenderState): void;
         protected _lateUpdateComponents(state: laya.d3.core.render.RenderState): void;
         protected _updateChilds(state: laya.d3.core.render.RenderState): void;
+        /**
+         * 排序函数。
+         * @param	state 渲染相关状态。
+         */
+        _getSortID(renderElement: laya.d3.core.render.IRenderable, material: laya.d3.core.material.Material): number;
         /**
          * 更新
          * @param	state 渲染相关状态
@@ -2947,7 +2887,7 @@ declare module laya.d3.graphics {
      * @private
      * <code>StaticBatch</code> 类用于创建静态批处理。
      */
-    class StaticBatch implements laya.d3.core.render.IRender {
+    class StaticBatch implements laya.d3.core.render.IRenderable {
         static maxVertexCount: number;
         static maxIndexCount: number;
         indexOfHost: number;
@@ -2959,6 +2899,7 @@ declare module laya.d3.graphics {
         getBakedVertexs(index: number, transform: laya.d3.math.Matrix4x4): Float32Array;
         getBakedIndices(): any;
         constructor(vertexDeclaration: VertexDeclaration, material: laya.d3.core.material.Material);
+        _reset(): void;
         _finsh(): void;
         addRenderObj(renderObj: laya.d3.core.render.RenderObject): boolean;
         _render(state: laya.d3.core.render.RenderState): boolean;
@@ -2975,7 +2916,9 @@ declare module laya.d3.graphics {
         constructor();
         getStaticBatchQneue(_vertexDeclaration: VertexDeclaration, material: laya.d3.core.material.Material): StaticBatch;
         staticBatch: StaticBatch;
-        garbageCollection(): void;
+        _garbageCollection(): void;
+        /**重置*/
+        _reset(): void;
         /**刷新*/
         _finsh(): void;
         dispose(): void;
@@ -3047,6 +2990,8 @@ declare module laya.d3.graphics {
      * @author ...
      */
     class VertexDeclaration {
+        static _maxVertexDeclarationBit: number;
+        static maxVertexDeclaration: number;
         private static _uniqueIDCounter;
         static getVertexStride(vertexElements: Array<any>): number;
         /**
@@ -3464,23 +3409,6 @@ declare module laya.d3.graphics {
         tangent: laya.d3.math.Vector3;
         vertexDeclaration: VertexDeclaration;
         constructor(position: laya.d3.math.Vector3, normal: laya.d3.math.Vector3, textureCoordinate: laya.d3.math.Vector2, tangent: laya.d3.math.Vector3);
-    }
-}
-declare module laya.d3 {
-    /**
-     * <code>Laya3D</code> 类用于初始化3D设置。
-     */
-    class Laya3D {
-        /**
-         * 创建一个 <code>Laya3D</code> 实例。
-         */
-        constructor();
-        /**
-         * 初始化Laya3D相关设置。
-         * @param	width  3D画布宽度。
-         * @param	height 3D画布高度。
-         */
-        static init(width: number, height: number): void;
     }
 }
 declare module laya.d3.loaders {
@@ -4350,6 +4278,17 @@ declare module laya.d3.resource.models {
          * 创建一个 <code>BaseMesh</code> 实例。
          */
         constructor();
+        /**
+         * 获取渲染单元,请重载此方法。
+         * @param	index 索引。
+         * @return 渲染单元。
+         */
+        getRenderElement(index: number): laya.d3.core.render.IRenderable;
+        /**
+         * 获取渲染单元数量,请重载此方法。
+         * @return 渲染单元数量。
+         */
+        getRenderElementsCount(): number;
         updateToRenderQneue(state: laya.d3.core.render.RenderState, materials: Array<any>): void;
         Render(): void;
         RenderSubMesh(subMeshIndex: number): void;
@@ -4408,6 +4347,8 @@ declare module laya.d3.resource.models {
          */
         clear(): Mesh;
         disableUseFullBone(): void;
+        getRenderElementsCount(): number;
+        getRenderElement(index: number): laya.d3.core.render.IRenderable;
         /**
          * @private
          */
@@ -4424,7 +4365,7 @@ declare module laya.d3.resource.models {
      * @private
      * <code>PrimitiveMesh</code> 类用于创建基本网格的父类。
      */
-    class PrimitiveMesh extends BaseMesh implements laya.d3.core.render.IRender {
+    class PrimitiveMesh extends BaseMesh implements laya.d3.core.render.IRenderable {
         protected _numberVertices: number;
         protected _numberIndices: number;
         protected _vertexBuffer: laya.d3.graphics.VertexBuffer3D;
@@ -4491,7 +4432,7 @@ declare module laya.d3.resource.models {
      * @private
      * <code>SubMesh</code> 类用于创建子网格数据模板。
      */
-    class SubMesh implements laya.d3.core.render.IRender, laya.resource.IDispose {
+    class SubMesh implements laya.d3.core.render.IRenderable, laya.resource.IDispose {
         protected _ib: laya.d3.graphics.IndexBuffer3D;
         protected _materialIndex: number;
         _numberIndices: number;
@@ -4665,7 +4606,7 @@ declare module laya.d3.resource.tempelet {
      * @private
      * <code>GlitterTemplet</code> 类用于创建闪光数据模板。
      */
-    class GlitterTemplet implements laya.d3.core.render.IRender {
+    class GlitterTemplet implements laya.d3.core.render.IRenderable {
         protected texture: laya.resource.Texture;
         protected _vertices: Float32Array;
         protected _vertexBuffer: laya.d3.graphics.VertexBuffer3D;
@@ -4743,7 +4684,7 @@ declare module laya.d3.resource.tempelet {
      * @private
      * <code>ParticleTemplet3D</code> 类用于创建3D粒子数据模板。
      */
-    class ParticleTemplet3D extends laya.particle.ParticleTemplateWebGL implements laya.d3.core.render.IRender {
+    class ParticleTemplet3D extends laya.particle.ParticleTemplateWebGL implements laya.d3.core.render.IRenderable {
         protected _shaderValue: laya.webgl.utils.ValusArray;
         protected _sharderNameID: number;
         protected _shader: laya.webgl.shader.Shader;
@@ -5544,7 +5485,7 @@ declare module laya.display.css {
         /**
          * 文本的粗细。
          */
-        weight: string;
+        weight: any;
         /**
          * 规定添加到文本的修饰。
          */
@@ -8345,8 +8286,9 @@ declare module laya.map {
          * @param	viewRectPadding 视口扩充区域，把视口区域上、下、左、右扩充一下，防止视口移动时的穿帮
          * @param	gridSize 		grid大小
          * @param	enableLinear 	是否开启线性取样（为false时，可以解决地图黑线的问题，但画质会锐化）
+         * @param	limitRange		把地图限制在显示区域
          */
-        createMap(mapName: string, viewRect: laya.maths.Rectangle, completeHandler: laya.utils.Handler, viewRectPadding?: laya.maths.Rectangle, gridSize?: laya.maths.Point, enableLinear?: boolean): void;
+        createMap(mapName: string, viewRect: laya.maths.Rectangle, completeHandler: laya.utils.Handler, viewRectPadding?: laya.maths.Rectangle, gridSize?: laya.maths.Point, enableLinear?: boolean, limitRange?: boolean): void;
         /**
          * 得到一块指定的地图纹理
          * @param	index 纹理的索引值，默认从1开始
@@ -11005,6 +10947,7 @@ declare module laya.ui {
         private static cacheCount;
         private static textureCache;
         autoCacheCmd: boolean;
+        _offset: Array<any>;
         /**@inheritDoc */
         destroy(): void;
         /**
@@ -11343,6 +11286,8 @@ declare module laya.ui {
         height: number;
         /**@inheritDoc */
         dataSource: any;
+        /**图标x,y偏移，格式：100,100*/
+        iconOffset: string;
         protected _setStateChanged(): void;
     }
 }
@@ -15165,6 +15110,8 @@ declare module laya.utils {
         static onQQBrowser: boolean;
         /** 表示是否在移动端 QQ 或 QQ 浏览器。*/
         static onMQQBrowser: boolean;
+        /** 表示是否在移动端 Safari。*/
+        static onSafari: boolean;
         /** 微信内*/
         static onWeiXin: boolean;
         /** 表示是否在 PC 端。*/
@@ -16592,7 +16539,6 @@ declare module laya.utils {
          * @param	tween 缓动对象。
          */
         static clear(tween: Tween): void;
-        /**同clearAll，废弃掉，尽量别用。*/
         static clearTween(target: any): void;
         /**
          * 停止并清理当前缓动。
@@ -17884,7 +17830,6 @@ declare module laya.webgl.submit {
         _numEle: number;
         shaderValue: laya.webgl.shader.d2.value.Value2D;
         blendType: number;
-        static activeBlendType: number;
         proName: string;
         scope: SubmitCMDScope;
         constructor();
@@ -17911,7 +17856,6 @@ declare module laya.webgl.submit {
         releaseRender(): void;
         addTexture(tex: laya.resource.Texture, vbpos: number): void;
         checkTexture(): void;
-        private static _shaderSet;
         renderSubmit(): number;
         static create(context: laya.webgl.canvas.WebGLContext2D, ib: laya.webgl.utils.IndexBuffer2D, vb: laya.webgl.utils.VertexBuffer2D, pos: number, sv: laya.webgl.shader.d2.value.Value2D): SubmitTexture;
     }
@@ -18847,7 +18791,7 @@ declare module Laya {
     }
     class RenderObject extends laya.d3.core.render.RenderObject {
     }
-    class RenderQuene extends laya.d3.core.render.RenderQuene {
+    class RenderQueue extends laya.d3.core.render.RenderQueue {
     }
     class RenderState extends laya.d3.core.render.RenderState {
     }
@@ -18922,8 +18866,6 @@ declare module Laya {
     class VertexPositionNormalTextureSkinTangent extends laya.d3.graphics.VertexPositionNormalTextureSkinTangent {
     }
     class VertexPositionNormalTextureTangent extends laya.d3.graphics.VertexPositionNormalTextureTangent {
-    }
-    class Laya3D extends laya.d3.Laya3D {
     }
     class LoadModel extends laya.d3.loaders.LoadModel {
     }
@@ -19192,8 +19134,6 @@ declare module Laya {
     class HScrollBar extends laya.ui.HScrollBar {
     }
     class HSlider extends laya.ui.HSlider {
-    }
-    class Image extends laya.ui.Image {
     }
     class Label extends laya.ui.Label {
     }

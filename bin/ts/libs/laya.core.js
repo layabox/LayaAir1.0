@@ -185,11 +185,11 @@ window.Laya=(function(window,document){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 	Laya.interface('laya.runtime.IConchNode');
 	Laya.interface('laya.resource.IDispose');
-	Laya.interface('laya.filters.IFilterAction');
-	Laya.interface('laya.filters.IFilter');
 	Laya.interface('laya.display.ILayout');
-	var sleep=Laya.sleep=function(value){
-		Asyn.sleep(value);
+	Laya.interface('laya.filters.IFilter');
+	Laya.interface('laya.filters.IFilterAction');
+	var load=Laya.load=function(url,type){
+		return Asyn.load(url,type);
 	}
 
 
@@ -200,13 +200,13 @@ window.Laya=(function(window,document){
 	}
 
 
-	var wait=Laya.wait=function(conditions){
-		return Asyn.wait(conditions);
+	var sleep=Laya.sleep=function(value){
+		Asyn.sleep(value);
 	}
 
 
-	var load=Laya.load=function(url,type){
-		return Asyn.load(url,type);
+	var wait=Laya.wait=function(conditions){
+		return Asyn.wait(conditions);
 	}
 
 
@@ -356,7 +356,7 @@ window.Laya=(function(window,document){
 			pathName=pathName.charAt(2)==':' ? pathName.substring(1):pathName;
 			URL.rootPath=URL.basePath=URL.getPath(location.protocol=="file:" ? pathName :location.origin+pathName);
 			Laya.initAsyn();
-			Laya.render=new Render(width,height);
+			Laya.render=new Render(50,50);
 			Laya.stage.size(width,height);
 			RenderSprite.__init__();
 			KeyBoardManager.__init__();
@@ -391,7 +391,7 @@ window.Laya=(function(window,document){
 		Laya.timer=null;
 		Laya.loader=null;
 		Laya.render=null
-		Laya.version="1.0.0Release";
+		Laya.version="1.0.3";
 		return Laya;
 	})()
 
@@ -4187,7 +4187,6 @@ window.Laya=(function(window,document){
 			if (url.charAt(0)=='~')return URL.rootPath+url.substring(1);
 			if (URL.isAbsolute(url))return url;
 			var retVal=(base || URL.basePath)+url;
-			return URL.formatRelativePath(retVal);
 			return retVal;
 		}
 
@@ -5555,13 +5554,13 @@ window.Laya=(function(window,document){
 		/**浏览器可视宽度。*/
 		__getset(1,Browser,'clientWidth',function(){
 			Browser.__init__();
-			return Browser.document.body.clientWidth;
+			return Browser.window.innerWidth || Browser.document.body.clientWidth;
 		});
 
 		/**浏览器可视高度。*/
 		__getset(1,Browser,'clientHeight',function(){
 			Browser.__init__();
-			return Browser.document.body.clientHeight || Browser.document.documentElement.clientHeight;
+			return Browser.window.innerHeight || Browser.document.body.clientHeight || Browser.document.documentElement.clientHeight;
 		});
 
 		/**浏览器原生 window 对象的引用。*/
@@ -5631,6 +5630,7 @@ window.Laya=(function(window,document){
 			Browser.onMQQBrowser=/*[SAFE]*/ Browser.u.indexOf("MQQBrowser")>-1;
 			Browser.onWeiXin=/*[SAFE]*/ Browser.u.indexOf('MicroMessenger')>-1;
 			Browser.onPC=/*[SAFE]*/ !Browser.onMobile;
+			Browser.onSafari=/*[SAFE]*/ ! !Browser.u.match(/Version\/\d\.\d\x20Mobile\/\S+\x20Safari/);
 			Browser.httpProtocol=/*[SAFE]*/ Browser.window.location.protocol=="http:";
 			Browser.webAudioEnabled=/*[SAFE]*/ Browser.window["AudioContext"] || Browser.window["webkitAudioContext"] || Browser.window["mozAudioContext"] ? true :false;
 			Browser.soundType=/*[SAFE]*/ Browser.webAudioEnabled ? "WEBAUDIOSOUND" :"AUDIOSOUND";
@@ -5675,6 +5675,7 @@ window.Laya=(function(window,document){
 		Browser.onWP=false;
 		Browser.onQQBrowser=false;
 		Browser.onMQQBrowser=false;
+		Browser.onSafari=false;
 		Browser.onWeiXin=false;
 		Browser.onPC=false;
 		Browser.httpProtocol=false;
@@ -6032,11 +6033,11 @@ window.Laya=(function(window,document){
 		__proto.writeUTFString=function(value){
 			var tPos=0;
 			tPos=this.pos;
-			this.writeInt16(1);
+			this.writeUint16(1);
 			this.writeUTFBytes(value);
 			var dPos=0;
 			dPos=this.pos-tPos-2;
-			this._d_.setInt16(tPos,dPos,this._xd_);
+			this._d_.setUint16(tPos,dPos,this._xd_);
 		}
 
 		/**
@@ -6047,7 +6048,7 @@ window.Laya=(function(window,document){
 			var tPos=0;
 			tPos=this.pos;
 			var len=0;
-			len=this.getInt16();
+			len=this.getUint16();
 			return this.readUTFBytes(len);
 		}
 
@@ -7947,7 +7948,7 @@ window.Laya=(function(window,document){
 			this._childs=Node.ARRAY_EMPTY;
 			this.timer=Laya.timer;
 			this._$P=Node.PROP_EMPTY;
-			this.model=Render.isConchNode?/*__JS__ */new ConchNode():null;
+			this.model=Render.isConchNode ? /*__JS__ */new ConchNode():null;
 		}
 
 		__class(Node,'laya.display.Node',_super);
@@ -7999,7 +8000,7 @@ window.Laya=(function(window,document){
 				node.parent && node.parent.removeChild(node);
 				this._childs===Node.ARRAY_EMPTY && (this._childs=[]);
 				this._childs.push(node);
-				this.model&&this.model.addChildAt(node.model,this._childs.length-1);
+				this.model && this.model.addChildAt(node.model,this._childs.length-1);
 				node.parent=this;
 			}
 			return node;
@@ -8038,7 +8039,7 @@ window.Laya=(function(window,document){
 					node.parent && node.parent.removeChild(node);
 					this._childs===Node.ARRAY_EMPTY && (this._childs=[]);
 					this._childs.splice(index,0,node);
-					this.model&&this.model.addChildAt(node.model,index);
+					this.model && this.model.addChildAt(node.model,index);
 					node.parent=this;
 				}
 				return node;
@@ -8159,7 +8160,7 @@ window.Laya=(function(window,document){
 			var node=this.getChildAt(index);
 			if (node){
 				this._childs.splice(index,1);
-				this.model&&this.model.removeChild(node.model);
+				this.model && this.model.removeChild(node.model);
 				node.parent=null;
 			}
 			return node;
@@ -8234,7 +8235,7 @@ window.Laya=(function(window,document){
 				for (var i=childs.length-1;i >-1;i--){
 					var child=childs[i];
 					child._setDisplay(display);
-					child.numChildren && this._displayChild(child,display);
+					child._childs.length && this._displayChild(child,display);
 				}
 			}
 		}
@@ -11868,7 +11869,11 @@ window.Laya=(function(window,document){
 			}
 			if (!value){
 				var fc=this._$P._filterCache;
-				fc && (fc.destroy(),fc.recycle(),this._set$P('_filterCache',null));
+				if (fc){
+					fc.destroy();
+					fc.recycle();
+					this._set$P('_filterCache',null);
+				}
 				this._$P._isHaveGlowFilter && this._set$P('_isHaveGlowFilter',false);
 			}
 			_super.prototype._setDisplay.call(this,value);
@@ -13146,7 +13151,7 @@ window.Laya=(function(window,document){
 				this._textHeight=this._lines.length *(this._currBitmapFont.getMaxHeight()+this.leading)+this.padding[0]+this.padding[2];
 			else
 			this._textHeight=this._lines.length *(this._charSize.height+this.leading)+this.padding[0]+this.padding[2];
-			this.model && this.model.size(this._width || this._textWidth,this._height || this._textHeight);
+			this.model && this.model.size(this._textWidth,this._textHeight);
 		}
 
 		__proto.checkEnabledViewportOrNot=function(){
@@ -13657,6 +13662,7 @@ window.Laya=(function(window,document){
 	var Stage=(function(_super){
 		function Stage(){
 			this.focus=null;
+			this._offset=null;
 			this.frameRate="fast";
 			this.desginWidth=0;
 			this.desginHeight=0;
@@ -13684,7 +13690,7 @@ window.Laya=(function(window,document){
 				_this.event(/*laya.events.Event.BLUR*/"blur");
 				if (_this._isInputting())Input["inputElement"].target.focus=false;
 			});
-			window.addEventListener("visibilitychange",function(){
+			window.document.addEventListener("visibilitychange",function(){
 				switch (Browser.document.visibilityState){
 					case "hidden":
 						_this.event(/*laya.events.Event.BLUR*/"blur");
@@ -13697,6 +13703,8 @@ window.Laya=(function(window,document){
 			});
 			window.addEventListener("resize",function(){
 				if (_this._isInputting())return;
+				if(Browser.onSafari)
+					Render.canvas.style.top=Browser.document.body.clientHeight-Browser.window.innerHeight+'px';
 				_this._resetCanvas();
 				Laya.timer.once(100,_this,_this._changeCanvasSize);
 			});
@@ -13820,6 +13828,12 @@ window.Laya=(function(window,document){
 			if (this._alignV==="top")this.offset.y=0;
 			else if (this._alignV==="bottom")this.offset.y=screenHeight-realHeight;
 			else this.offset.y=(screenHeight-realHeight)*0.5 / pixelRatio;
+			if (!this._offset){
+				this._offset=new Point(parseInt(canvasStyle.left)|| 0,parseInt(canvasStyle.top)|| 0);
+				canvasStyle.left=canvasStyle.top="0px";
+			}
+			this.offset.x+=this._offset.x;
+			this.offset.y+=this._offset.y;
 			mat.translate(this.offset.x,this.offset.y);
 			if (rotation){
 				if (this._screenMode==="horizontal"){
@@ -14925,7 +14939,7 @@ window.Laya=(function(window,document){
 			}
 			else{
 				cssStyle.height=Input.inputContainer.style.height=45+"px";
-				cssStyle.width=Browser.window.innerWidth-Input.confirmButton.offsetWidth+'px';
+				cssStyle.width=Browser.window.innerWidth-Input.confirmButton.offsetWidth-10+'px';
 				Input.inputContainer.style.width=Browser.window.innerWidth+'px';
 			}
 		}
@@ -15038,6 +15052,7 @@ window.Laya=(function(window,document){
 			else
 			return this._text || "";
 			},function(value){
+			_super.prototype._$set_color.call(this,this._originColor);
 			value+='';
 			if (this._focus){
 				this.nativeInput.value=value || '';
@@ -15158,7 +15173,7 @@ window.Laya=(function(window,document){
 			style.border='none';
 			style.outline='none';
 			if (Browser.onMobile){
-				style.padding='7px 6px 7px 6px';
+				style.paddingLeft='5px';
 				style.lineHeight='29px';
 				style.fontFamily='Arial,Helvetica,sans-serif';
 				style.fontSize='20px';
@@ -15185,6 +15200,7 @@ window.Laya=(function(window,document){
 				input._text=value;
 			else
 			input.__super.prototype._$set_text.call(input,value);
+			input.event(/*laya.events.Event.INPUT*/"input");
 		}
 
 		Input._stopEvent=function(e){

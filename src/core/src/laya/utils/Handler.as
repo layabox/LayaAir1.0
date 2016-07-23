@@ -56,26 +56,30 @@ package laya.utils {
 		/**
 		 * 执行处理器。
 		 */
-		public function run():void {
-			if (method == null) return;
+		public function run():* {
+			if (method == null) return null;
 			var id:int = _id;
-			method.apply(caller, args);
+			var result:* = method.apply(caller, args);
 			_id === id && once && recover();
+			return result;
 		}
 		
 		/**
 		 * 执行处理器，携带额外数据。
 		 * @param	data 附加的回调数据，可以是单数据或者Array(作为多参)。
 		 */
-		public function runWith(data:*):void {
-			if (method == null) return;
+		public function runWith(data:*):* {
+			if (method == null) return null;
 			var id:int = _id;
-			if (data == null) method.apply(caller, args);
-			/*[IF-FLASH]*/ else if (!args && !(data is Array)) method.call(caller, data);			
-			//[IF-JS] else if (!args && !data.unshift) method.call(caller, data);
-			else if (args) method.apply(caller, args ? args.concat(data) : data);
-			else method.apply(caller, data);
+			if (data == null)
+				var result:* = method.apply(caller, args);
+			/*[IF-FLASH]*/
+			else if (!args && !(data is Array)) result = method.call(caller, data);
+			//[IF-JS] else if (!args && !data.unshift) result= method.call(caller, data);
+			else if (args) result = method.apply(caller, args ? args.concat(data) : data);
+			else result = method.apply(caller, data);
 			_id === id && once && recover();
+			return result;
 		}
 		
 		/**

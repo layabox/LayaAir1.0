@@ -82,6 +82,8 @@ package laya.display {
 		public var focus:Node;
 		/**@private 相对浏览器左上角的偏移。*/
 		public var offset:Point = new Point();
+		/**@private 开发者自己设置的画布偏移*/
+		private var _offset:Point;
 		/**帧率类型，支持三种模式：fast-60帧(默认)，slow-30帧，mouse-30帧，但鼠标活动后会自动加速到60，鼠标不动2秒后降低为30帧，以节省消耗。*/
 		public var frameRate:String = "fast";
 		/**设计宽度（初始化时设置的宽度Laya.init(width,height)）*/
@@ -125,7 +127,7 @@ package laya.display {
 				_this.event(Event.BLUR);
 				if (_this._isInputting()) Input["inputElement"].target.focus = false;
 			});
-			window.addEventListener("visibilitychange", function():void {
+			window.document.addEventListener("visibilitychange", function():void {
 				switch (Browser.document.visibilityState) {
 				case "hidden": 
 					_this.event(Event.BLUR);
@@ -138,6 +140,10 @@ package laya.display {
 			});
 			window.addEventListener("resize", function():void {
 				if (_this._isInputting()) return;
+
+				// Safari横屏工具栏偏移
+				if(Browser.onSafari)
+					Render.canvas.style.top = Browser.document.body.clientHeight - Browser.window.innerHeight + 'px';
 				
 				_this._resetCanvas();
 				Laya.timer.once(100, _this, _this._changeCanvasSize);
@@ -278,6 +284,14 @@ package laya.display {
 			if (_alignV === ALIGN_TOP) offset.y = 0;
 			else if (_alignV === ALIGN_BOTTOM) offset.y = screenHeight - realHeight;
 			else offset.y = (screenHeight - realHeight) * 0.5 / pixelRatio;
+			
+			//处理用户自行设置的画布偏移
+			if (!_offset) {
+				_offset = new Point(parseInt(canvasStyle.left) || 0, parseInt(canvasStyle.top) || 0);
+				canvasStyle.left = canvasStyle.top = "0px";
+			}
+			offset.x += _offset.x;
+			offset.y += _offset.y;
 			mat.translate(offset.x, offset.y);
 			
 			//处理横竖屏

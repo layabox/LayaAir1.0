@@ -37,6 +37,8 @@ package laya.utils {
 		public static var onQQBrowser:Boolean;
 		/** 表示是否在移动端 QQ 或 QQ 浏览器。*/
 		public static var onMQQBrowser:Boolean;
+		/** 表示是否在移动端 Safari。*/
+		public static var onSafari:Boolean;
 		/** 微信内*/
 		public static var onWeiXin:Boolean;
 		/** 表示是否在 PC 端。*/
@@ -44,7 +46,7 @@ package laya.utils {
 		/** 表示是否是 HTTP 协议。*/
 		public static var httpProtocol:Boolean;		
 		/** @private */
-		public static var webAudioOK:Boolean;
+		public static var webAudioEnabled:Boolean;
 		/** @private */
 		public static var soundType:String;		
 		/** @private */
@@ -54,7 +56,7 @@ package laya.utils {
 		/** 全局画布上绘图的环境（非主画布）。 */
 		public static var context:Context;
 		/** @private */
-		private static var _pixelRatio:Number = -1;
+		//private static var _pixelRatio:Number = -1;
 		
 		/**@private */
 		public static function __init__():void {
@@ -85,13 +87,14 @@ package laya.utils {
 			onMQQBrowser = /*[STATIC SAFE]*/ u.indexOf("MQQBrowser") > -1;
 			onWeiXin = /*[STATIC SAFE]*/ u.indexOf('MicroMessenger') > -1;
 			onPC = /*[STATIC SAFE]*/ !onMobile;
+			onSafari = /*[STATIC SAFE]*/! !u.match(/Version\/\d\.\d\x20Mobile\/\S+\x20Safari/);
 			httpProtocol =/*[STATIC SAFE]*/ window.location.protocol == "http:";
 			
-			webAudioOK =/*[STATIC SAFE]*/ window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"] ? true : false;
-			soundType =/*[STATIC SAFE]*/ webAudioOK ? "WEBAUDIOSOUND" : "AUDIOSOUND";
+			webAudioEnabled =/*[STATIC SAFE]*/ window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"] ? true : false;
+			soundType =/*[STATIC SAFE]*/ webAudioEnabled ? "WEBAUDIOSOUND" : "AUDIOSOUND";
 			
-			__JS__("Sound = Browser.webAudioOK?WebAudioSound:AudioSound;");
-			__JS__("if (Browser.webAudioOK) WebAudioSound.initWebAudio();");			
+			__JS__("Sound = Browser.webAudioEnabled?WebAudioSound:AudioSound;");
+			__JS__("if (Browser.webAudioEnabled) WebAudioSound.initWebAudio();");			
 			__JS__("Browser.enableTouch=(('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch)");			
 			__JS__("window.focus()");
 			
@@ -139,13 +142,13 @@ package laya.utils {
 		/** 浏览器可视宽度。*/
 		public static function get clientWidth():Number {
 			__init__();
-			return document.body.clientWidth;
+			return window.innerWidth || document.body.clientWidth;
 		}
 		
 		/** 浏览器可视高度。*/
 		public static function get clientHeight():Number {
 			__init__();
-			return document.body.clientHeight || document.documentElement.clientHeight;
+			return window.innerHeight || document.body.clientHeight || document.documentElement.clientHeight;
 		}
 		
 		/** 浏览器物理宽度，。*/
@@ -163,7 +166,7 @@ package laya.utils {
 		/** 设备像素比。*/
 		public static function get pixelRatio():Number {
 			__init__();
-			return RunDriver.getPixelRatio(_pixelRatio);
+			return RunDriver.getPixelRatio();
 		}
 		
 		/**画布容器，用来盛放画布的容器。方便对画布进行控制*/
