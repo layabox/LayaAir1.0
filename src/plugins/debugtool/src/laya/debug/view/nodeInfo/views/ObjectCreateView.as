@@ -1,18 +1,15 @@
 package laya.debug.view.nodeInfo.views
 {
-	import laya.display.Sprite;
-	import laya.events.Event;
-	import laya.maths.MathUtil;
-	import laya.ui.List;
-	import laya.debug.tools.CountTool;
 	import laya.debug.DebugTool;
-	import laya.debug.tools.DisControlTool;
-	import laya.debug.tools.enginehook.ClassCreateHook;
+	import laya.debug.tools.CountTool;
+	import laya.debug.tools.MathTools;
 	import laya.debug.tools.RunProfile;
+	import laya.debug.tools.enginehook.ClassCreateHook;
 	import laya.debug.uicomps.ContextMenu;
 	import laya.debug.uicomps.ContextMenuItem;
-	import laya.debug.view.nodeInfo.menus.NodeMenu;
 	import laya.debug.view.nodeInfo.nodetree.ObjectCreate;
+	import laya.events.Event;
+	import laya.ui.List;
 	
 	/**
 	 * ...
@@ -152,7 +149,7 @@ package laya.debug.view.nodeInfo.views
 				preInfo[key] = dataO[key];
 				dataList.push(tData);
 			}
-			dataList.sort(MathUtil.SortByKey("rank", true, true));
+			dataList.sort(MathTools.sortByKey("rank", true, true));
 			view.itemList.array = dataList;
 		}
 	}

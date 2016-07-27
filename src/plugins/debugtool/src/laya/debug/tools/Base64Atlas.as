@@ -1,6 +1,5 @@
 package laya.debug.tools 
 {
-	import laya.maths.MathUtil;
 	import laya.net.Loader;
 	import laya.resource.Texture;
 	import laya.utils.Handler;

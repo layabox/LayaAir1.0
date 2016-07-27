@@ -1,8 +1,6 @@
 package laya.debug.tools
 {
-	import laya.maths.MathUtil;
-	import laya.utils.Color;
-	import laya.utils.Utils;
+	
 	
 	/**
 	 * ...
@@ -57,7 +55,7 @@ package laya.debug.tools
 		public static function rgb2hsb(rgbR:int, rgbG:int, rgbB:int):Array
 		{
 			var rgb:Array = [rgbR, rgbG, rgbB];
-			rgb.sort(MathUtil.SortNumSmallFirst);
+			rgb.sort(MathTools.sortNumSmallFirst);
 			var max:int = rgb[2];
 			var min:int = rgb[0];
 			

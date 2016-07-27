@@ -29,9 +29,9 @@ package laya.debug.tools.resizer
 			rTar = tar;
 			while (rTar&&rTar!=Laya.stage)
 			{
-				preScale.x * =rTar.scaleX;
-				preScale.y * =rTar.scaleY;
-				rTar = rTar.parent;
+				preScale.x *= rTar.scaleX;
+				preScale.y *= rTar.scaleY;
+				rTar = rTar.parent as Sprite;
 			}
 			//trace("scale:", preScale.x, preScale.y);
 			//preScale.setTo(2, 2);

@@ -69,7 +69,7 @@ package laya.debug
 				return Event.RIGHT_CLICK;
 			}
 		}
-		public static function init(cacheAnalyseEnable:Boolean=false,loaderAnalyseEnable:Boolean=true,createAnalyseEnable:Boolean=true,renderAnalyseEnable=true):void
+		public static function init(cacheAnalyseEnable:Boolean=true,loaderAnalyseEnable:Boolean=true,createAnalyseEnable:Boolean=true,renderAnalyseEnable=true):void
 		{
 			enableCacheAnalyse = cacheAnalyseEnable;
 			if (enableCacheAnalyse)
