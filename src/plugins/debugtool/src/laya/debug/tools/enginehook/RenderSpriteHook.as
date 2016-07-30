@@ -78,12 +78,13 @@ package laya.debug.tools.enginehook
 			return rst;
 		}
 		public function _canvas(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+			if (!SpriteRenderForVisibleAnalyse.allowRendering) return;
 			//trace("hooked canvas");
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var _cacheCanvas:* = sprite._$P.cacheCanvas;
 			var _next:RenderSprite = this._next;
-			if (!_cacheCanvas) {
-				_next._fun.call(_next, sprite, tx, x, y);
+			if (!_cacheCanvas||SpriteRenderForVisibleAnalyse.isVisibleTesting) {
+				_next._fun.call(_next, sprite, context, x, y);
 				return;
 			}
 			

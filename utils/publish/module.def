@@ -24,3 +24,9 @@ path:"../../src/d3/src"
 
 module:"laya.tiledmap"
 path:"../../src/plugins/tiledmap/src"
+
+module:"laya.debugtool"
+path:"../../src/plugins/debugtool/src"
+
+module:"laya.device"
+path:"../../src/plugins/device/src"

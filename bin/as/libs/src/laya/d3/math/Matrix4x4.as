@@ -221,7 +221,7 @@ package laya.d3.math {
 			
 			var x0:Number, x1:Number, x2:Number, y0:Number, y1:Number, y2:Number, z0:Number, z1:Number, z2:Number, len:Number, eyex:Number = ee[0], eyey:Number = ee[1], eyez:Number = ee[2], upx:Number = ue[0], upy:Number = ue[1], upz:Number = ue[2], centerx:Number = ce[0], centery:Number = ce[1], centerz:Number = ce[2];
 			
-			if (Math.abs(eyex - centerx) < MathUtils.zeroTolerance && Math.abs(eyey - centery) < MathUtils.zeroTolerance && Math.abs(eyez - centerz) < MathUtils.zeroTolerance) {
+			if (Math.abs(eyex - centerx) < MathUtils3D.zeroTolerance && Math.abs(eyey - centery) < MathUtils3D.zeroTolerance && Math.abs(eyez - centerz) < MathUtils3D.zeroTolerance) {
 				out.identity();
 				return;
 			}
@@ -318,14 +318,14 @@ package laya.d3.math {
 			var lr:Number = 1 / (left - right);
 			var bt:Number = 1 / (bottom - top);
 			var nf:Number = 1 / (near - far);
+			oe[1] = oe[2] = oe[3] = oe[4] = oe[6] = oe[7] = oe[8] = oe[9] = oe[11] = 0;
+			oe[15] = 1;
 			oe[0] = -2 * lr;
 			oe[5] = -2 * bt;
 			oe[10] = 2 * nf;
 			oe[12] = (left + right) * lr;
 			oe[13] = (top + bottom) * bt;
 			oe[14] = (far + near) * nf;
-			oe[1] = oe[2] = oe[3] = oe[4] = oe[6] = oe[7] = oe[8] = oe[9] = oe[11] = 0;
-			oe[15] = 1;
 		}
 		
 		/**矩阵元素数组*/
@@ -364,7 +364,7 @@ package laya.d3.math {
 			se[2] = Math.sqrt((me[8] * me[8]) + (me[9] * me[9]) + (me[10] * me[10]));
 			
 			//If any of the scaling factors are zero, than the rotation matrix can not exist. 
-			if (MathUtils.isZero(se[0]) || MathUtils.isZero(se[1]) || MathUtils.isZero(se[2])) {
+			if (MathUtils3D.isZero(se[0]) || MathUtils3D.isZero(se[1]) || MathUtils3D.isZero(se[2])) {
 				re[0] = re[1] = re[2] = 0;
 				re[3] = 1;
 				return false;

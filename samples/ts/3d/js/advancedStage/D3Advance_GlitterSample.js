@@ -3,7 +3,6 @@ var GlitterSample;
     var Vector3 = Laya.Vector3;
     var GlitterSample = (function () {
         function GlitterSample() {
-            var _this = this;
             this.sampler = new GlitterStripSampler();
             //是否抗锯齿
             //Config.isAntialias = true;
@@ -12,12 +11,9 @@ var GlitterSample;
             Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
             Laya.Stat.show();
             this.scene = Laya.stage.addChild(new Laya.Scene());
-            this.scene.currentCamera = (this.scene.addChild(new Laya.Camera(new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height), Math.PI / 3, 0, 1, 1000)));
+            this.scene.currentCamera = (this.scene.addChild(new Laya.Camera(0, 1, 1000)));
             this.scene.currentCamera.transform.translate(new Vector3(0, 5, 10));
             this.scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-            Laya.stage.on(Laya.Event.RESIZE, this, function () {
-                _this.scene.currentCamera.viewport = new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height);
-            });
             var setting = new Laya.GlitterSettings();
             setting.texturePath = "../../res/threeDimen/layabox.png";
             setting.lifeTime = 0.5;

@@ -8,7 +8,7 @@ package laya.debug.view.nodeInfo
 	import laya.debug.tools.debugUI.DButton;
 	import laya.debug.tools.debugUI.DInput;
 	import laya.debug.tools.resizer.DisResizer;
-	import laya.debug.tools.TipManager;
+	import laya.debug.tools.TipManagerForDebug;
 	import laya.debug.uicomps.ContextMenu;
 	import laya.debug.view.nodeInfo.nodetree.DebugPanel;
 	import laya.debug.view.nodeInfo.nodetree.NodeTree;
@@ -34,8 +34,8 @@ package laya.debug.view.nodeInfo
 			ContextMenu.init();
 			//createViews();
 			DisResizer.init();
-			var tipManager:TipManager;
-			tipManager = new TipManager();
+			var tipManager:TipManagerForDebug;
+			tipManager = new TipManagerForDebug();
 			//Laya.timer.once(1000, this, showToolBar);
 		}
 		private function showToolBar():void

@@ -129,7 +129,7 @@ package laya.webgl.canvas {
 			this._isMain = true;
 		}
 		
-		public function clearBG(r:int, g:int, b:int, a:int):void {
+		public function clearBG(r:Number, g:Number, b:Number, a:Number):void {
 			var gl:WebGLContext = WebGL.mainContext;
 			gl.clearColor(r, g, b, a);
 			gl.clear(WebGLContext.COLOR_BUFFER_BIT | WebGLContext.DEPTH_BUFFER_BIT);

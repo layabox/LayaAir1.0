@@ -16,14 +16,11 @@ var LightAndMaterialSample;
             Laya.Stat.show();
             this.loadUI();
             this.scene = Laya.stage.addChild(new Laya.Scene());
-            this.scene.currentCamera = (this.scene.addChild(new Laya.Camera(new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height), Math.PI / 3, 0, 0.1, 100)));
+            this.scene.currentCamera = (this.scene.addChild(new Laya.Camera(0, 0.1, 100)));
             this.scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.2));
             this.scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
             this.scene.currentCamera.clearColor = null;
             var _this = this;
-            Laya.stage.on(Laya.Event.RESIZE, null, function () {
-                _this.scene.currentCamera.viewport = new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height);
-            });
             this.directionLight = this.scene.addChild(new Laya.DirectionLight());
             this.directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
             this.directionLight.specularColor = new Vector3(1.0, 1.0, 0.9);

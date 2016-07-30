@@ -1,8 +1,7 @@
 package threeDimen.common {
 	import laya.d3.component.Script;
+	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.camera.BaseCamera;
-	import laya.d3.core.camera.Camera;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	

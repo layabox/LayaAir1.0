@@ -1,7 +1,7 @@
 package laya.d3.component.animation {
 	import laya.ani.AnimationState;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.camera.Camera;
+	import laya.d3.core.Camera;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;

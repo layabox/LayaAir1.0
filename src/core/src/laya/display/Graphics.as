@@ -353,15 +353,11 @@ package laya.display {
 			
 			var args:* = [tex, x, y, width, height, m];
 			args.callee = m ? Render._context._drawTextureWithTransform : Render._context._drawTexture;
-			if (m) {
-				_saveToCmd(args.callee, args);
-			} else if (_one == null) {
+			if (_one == null && !m) {
 				_one = args;
 				_render = _renderOneImg;
 			} else {
-				_render = _renderAll;
-				(_cmds || (_cmds = [])).length === 0 && _cmds.push(_one);
-				_cmds.push(args);
+				_saveToCmd(args.callee, args);
 			}			
 			_repaint();
 		}

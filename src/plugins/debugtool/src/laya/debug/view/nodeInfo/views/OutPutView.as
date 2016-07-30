@@ -29,6 +29,7 @@ package laya.debug.view.nodeInfo.views
 
 			view = new OutPut();		
 			DisControlTool.setDragingItem(view.txt, view);
+			DisControlTool.setDragingItem(view.bg, view);
 			//view.txt.editable = false;
 			StyleConsts.setViewScale(view);
 			view.txt.textField.overflow = Text.SCROLL;

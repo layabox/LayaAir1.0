@@ -38,8 +38,7 @@ package laya.ani.bone {
 		 * @param	slotData
 		 * @param	disIndex
 		 */
-		public function showSlotData(slotData:SlotData):void
-		{
+		public function showSlotData(slotData:SlotData):void {
 			currSlotData = slotData;
 			displayIndex = srcDisplayIndex;
 			currDisplayData = null;
@@ -50,17 +49,28 @@ package laya.ani.bone {
 		 * 指定显示对象
 		 * @param	index
 		 */
-		public function showDisplayByIndex(index:int):void
-		{
-			if (currSlotData && index > -1 && index < currSlotData.displayArr.length)
-			{
+		public function showDisplayByIndex(index:int):void {
+			if (currSlotData && index > -1 && index < currSlotData.displayArr.length) {
+				
 				displayIndex = index;
 				currDisplayData = currSlotData.displayArr[index];
-				if (currDisplayData)
-				{
+				if (currDisplayData) {
 					currTexture = templet.getTexture(currDisplayData.name);
+					if (currTexture) {
+						switch (currDisplayData.type) {
+						case 0: 
+							if (currDisplayData.uvs) {//这里的问题是什么时候销毁
+								currTexture = new Texture(currTexture.bitmap, currDisplayData.uvs);
+							}
+							break;
+						case 1: 
+							break;
+						case 2: 
+							break;
+						}
+					}
 				}
-			}else {
+			} else {
 				displayIndex = -1;
 				currDisplayData = null;
 				currTexture = null;
@@ -88,28 +98,34 @@ package laya.ani.bone {
 		 * @param	graphics
 		 * @param	noUseSave
 		 */
-		public function draw(graphics:Graphics,noUseSave:Boolean = false):void {
+		public function draw(graphics:Graphics, boneMatrixArray:Array, noUseSave:Boolean = false):void {
 			if ((_diyTexture == null && currTexture == null) || currDisplayData == null) return;
 			var tTexture:Texture = currTexture;
 			if (_diyTexture) tTexture = _diyTexture;
-			if (graphics) {
-				var tCurrentMatrix:Matrix = getDisplayMatrix();
-				if (_parentMatrix)
-				{
-					if (tCurrentMatrix) {
-						Matrix.mul(tCurrentMatrix, _parentMatrix, Matrix.TEMP);
-						var tResultMatrix:Matrix;
-						if (noUseSave)
-						{
-							if(_resultMatrix == null) _resultMatrix = new Matrix();
-							tResultMatrix = _resultMatrix;
-						}else {
-							tResultMatrix = new Matrix();
+			switch (currDisplayData.type) {
+			case 0: 
+				if (graphics) {
+					var tCurrentMatrix:Matrix = getDisplayMatrix();
+					if (_parentMatrix) {
+						if (tCurrentMatrix) {
+							Matrix.mul(tCurrentMatrix, _parentMatrix, Matrix.TEMP);
+							var tResultMatrix:Matrix;
+							if (noUseSave) {
+								if (_resultMatrix == null) _resultMatrix = new Matrix();
+								tResultMatrix = _resultMatrix;
+							} else {
+								tResultMatrix = new Matrix();
+							}
+							Matrix.TEMP.copyTo(tResultMatrix);
+							graphics.drawTexture(tTexture, -currDisplayData.width / 2, -currDisplayData.height / 2, currDisplayData.width, currDisplayData.height, tResultMatrix);
 						}
-						Matrix.TEMP.copyTo(tResultMatrix);
-						graphics.drawTexture(tTexture, -tTexture.sourceWidth / 2, -tTexture.sourceHeight / 2, tTexture.sourceWidth, tTexture.sourceHeight, tResultMatrix);
 					}
 				}
+				break;
+			case 1: 
+				break;
+			case 2: 
+				break;
 			}
 		}
 		
@@ -138,8 +154,7 @@ package laya.ani.bone {
 		 * 得到插糟的矩阵
 		 * @return
 		 */
-		public function getMatrix():Matrix
-		{
+		public function getMatrix():Matrix {
 			return _resultMatrix;
 		}
 		
@@ -147,8 +162,7 @@ package laya.ani.bone {
 		 * 用原始数据拷贝出一个
 		 * @return
 		 */
-		public function copy():BoneSlot
-		{
+		public function copy():BoneSlot {
 			var tBoneSlot:BoneSlot = new BoneSlot();
 			tBoneSlot.type = "copy";
 			tBoneSlot.name = name;

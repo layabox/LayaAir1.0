@@ -282,6 +282,7 @@ package laya.d3.core {
 		
 		/**
 		 * 创建一个 <code>Transform3D</code> 实例。
+		 * @param owner 所属精灵。
 		 */
 		public function Transform3D(owner:Sprite3D) {
 			_owner = owner;
@@ -290,7 +291,7 @@ package laya.d3.core {
 		/**
 		 * 平移变换。
 		 * @param 	translation 移动距离。
-		 *  @param 	isLocal 是否局部空间。
+		 * @param 	isLocal 是否局部空间。
 		 */
 		public function translate(translation:Vector3, isLocal:Boolean = true):void {
 			if (isLocal) {
@@ -308,7 +309,7 @@ package laya.d3.core {
 		 * 旋转变换。
 		 * @param 	rotations 旋转幅度。
 		 * @param 	isLocal 是否局部空间。
-		 *	@param 	isRadian 是否弧度制。
+		 * @param 	isRadian 是否弧度制。
 		 */
 		public function rotate(rotation:Vector3, isLocal:Boolean = true, isRadian:Boolean = true):void {
 			var rot:Vector3;

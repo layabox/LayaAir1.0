@@ -64,6 +64,19 @@
 				this.currDisplayData=this.currSlotData.displayArr[index];
 				if (this.currDisplayData){
 					this.currTexture=this.templet.getTexture(this.currDisplayData.name);
+					if (this.currTexture){
+						switch (this.currDisplayData.type){
+							case 0:
+								if (this.currDisplayData.uvs){
+									this.currTexture=new Texture(this.currTexture.bitmap,this.currDisplayData.uvs);
+								}
+								break ;
+							case 1:
+								break ;
+							case 2:
+								break ;
+							}
+					}
 				}
 				}else {
 				this.displayIndex=-1;
@@ -93,28 +106,36 @@
 		*@param graphics
 		*@param noUseSave
 		*/
-		__proto.draw=function(graphics,noUseSave){
+		__proto.draw=function(graphics,boneMatrixArray,noUseSave){
 			(noUseSave===void 0)&& (noUseSave=false);
 			if ((this._diyTexture==null && this.currTexture==null)|| this.currDisplayData==null)return;
 			var tTexture=this.currTexture;
 			if (this._diyTexture)tTexture=this._diyTexture;
-			if (graphics){
-				var tCurrentMatrix=this.getDisplayMatrix();
-				if (this._parentMatrix){
-					if (tCurrentMatrix){
-						Matrix.mul(tCurrentMatrix,this._parentMatrix,Matrix.TEMP);
-						var tResultMatrix;
-						if (noUseSave){
-							if(this._resultMatrix==null)this._resultMatrix=new Matrix();
-							tResultMatrix=this._resultMatrix;
-							}else {
-							tResultMatrix=new Matrix();
+			switch (this.currDisplayData.type){
+				case 0:
+					if (graphics){
+						var tCurrentMatrix=this.getDisplayMatrix();
+						if (this._parentMatrix){
+							if (tCurrentMatrix){
+								Matrix.mul(tCurrentMatrix,this._parentMatrix,Matrix.TEMP);
+								var tResultMatrix;
+								if (noUseSave){
+									if (this._resultMatrix==null)this._resultMatrix=new Matrix();
+									tResultMatrix=this._resultMatrix;
+									}else {
+									tResultMatrix=new Matrix();
+								}
+								Matrix.TEMP.copyTo(tResultMatrix);
+								graphics.drawTexture(tTexture,-this.currDisplayData.width / 2,-this.currDisplayData.height / 2,this.currDisplayData.width,this.currDisplayData.height,tResultMatrix);
+							}
 						}
-						Matrix.TEMP.copyTo(tResultMatrix);
-						graphics.drawTexture(tTexture,-tTexture.sourceWidth / 2,-tTexture.sourceHeight / 2,tTexture.sourceWidth,tTexture.sourceHeight,tResultMatrix);
 					}
+					break ;
+				case 1:
+					break ;
+				case 2:
+					break ;
 				}
-			}
 		}
 
 		/**
@@ -179,20 +200,6 @@
 		}
 
 		__class(SkinData,'laya.ani.bone.SkinData');
-		var __proto=SkinData.prototype;
-		__proto.initData=function(data){
-			this.name=data.name;
-			var tMySlotData;
-			var tSlotData;
-			var tSlotDataArr=data.slot;
-			for (var i=0;i < tSlotDataArr.length;i++){
-				tSlotData=tSlotDataArr[i];
-				tMySlotData=new SlotData();
-				tMySlotData.initData(tSlotData);
-				this.slotArr.push(tMySlotData);
-			}
-		}
-
 		return SkinData;
 	})()
 
@@ -204,19 +211,17 @@
 	var SkinSlotDisplayData=(function(){
 		function SkinSlotDisplayData(){
 			this.name=null;
-			this.type=null;
+			this.type=0;
 			this.transform=null;
+			this.width=NaN;
+			this.height=NaN;
+			this.bones=null;
+			this.uvs=null;
+			this.weights=null;
+			this.triangles=null;
 		}
 
 		__class(SkinSlotDisplayData,'laya.ani.bone.SkinSlotDisplayData');
-		var __proto=SkinSlotDisplayData.prototype;
-		__proto.initData=function(data){
-			this.name=data.name;
-			this.type=data.type;
-			this.transform=new Transform();
-			this.transform.initData(data.transform);
-		}
-
 		return SkinSlotDisplayData;
 	})()
 
@@ -232,20 +237,6 @@
 		}
 
 		__class(SlotData,'laya.ani.bone.SlotData');
-		var __proto=SlotData.prototype;
-		__proto.initData=function(data){
-			this.name=data.name;
-			var tMyDisplayData;
-			var tDisplayData;
-			var tDisplayDataArr=data.display;
-			for (var h=0;h < tDisplayDataArr.length;h++){
-				tDisplayData=tDisplayDataArr[h];
-				tMyDisplayData=new SkinSlotDisplayData();
-				tMyDisplayData.initData(tDisplayData);
-				this.displayArr.push(tMyDisplayData);
-			}
-		}
-
 		return SlotData;
 	})()
 
@@ -296,7 +287,6 @@
 				tMatrix=this.mMatrix=new Matrix();
 			}
 			tMatrix.a=Math.cos(this.skY);
-			tMatrix
 			if (this.skX !=0 || this.skY !=0){
 				var tAngle=this.skX *Math.PI / 180;
 				var cos=Math.cos(tAngle),sin=Math.sin(tAngle);
@@ -395,16 +385,26 @@
 				return;
 			}
 			time+=this._currentTime;
-			while (time >=currentAniClipDuration){
+			if (currentAniClipDuration > 0){
+				while (time >=currentAniClipDuration){
+					if (this._stopWhenCircleFinish){
+						this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
+						this._stopWhenCircleFinish=false;
+						this.event(/*laya.events.Event.STOPPED*/"stopped");
+						return;
+					}
+					time-=currentAniClipDuration;
+				}
+				this.currentTime=time;
+				}else {
 				if (this._stopWhenCircleFinish){
 					this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
 					this._stopWhenCircleFinish=false;
 					this.event(/*laya.events.Event.STOPPED*/"stopped");
 					return;
 				}
-				time-=currentAniClipDuration;
+				this._currentTime=this._currentFrameTime=this._currentKeyframeIndex=0;
 			}
-			this.currentTime=time;
 		}
 
 		/**
@@ -524,6 +524,7 @@
 			//this.unfixedKeyframes=null;
 			this.unfixedLastAniIndex=-1;
 			this._loaded=false;
+			//this._aniVersion=null;
 			this._animationDatasCache=[];
 			KeyframesAniTemplet.__super.call(this);
 			this._anis=new Array;
@@ -534,7 +535,7 @@
 		__proto.parse=function(data,playbackRate){
 			var i=0,j=0,k=0,n=0,l=0;
 			var read=new Byte(data);
-			var head=read.readUTFString();
+			this._aniVersion=read.readUTFString();
 			var aniClassName=read.readUTFString();
 			var strList=read.readUTFString().split("\n");
 			var aniCount=read.getUint8();
@@ -797,7 +798,7 @@
 
 		KeyframesAniTemplet._uniqueIDCounter=1;
 		KeyframesAniTemplet.interpolation=[KeyframesAniTemplet._LinearInterpolation_0,KeyframesAniTemplet._QuaternionInterpolation_1,KeyframesAniTemplet._AngleInterpolation_2,KeyframesAniTemplet._RadiansInterpolation_3,KeyframesAniTemplet._Matrix4x4Interpolation_4,KeyframesAniTemplet._NoInterpolation_5];
-		KeyframesAniTemplet.LAYA_ANIMATION_VISION="LAYAANIMATION:1.0.0";
+		KeyframesAniTemplet.LAYA_ANIMATION_VISION="LAYAANIMATION:1.0.1";
 		return KeyframesAniTemplet;
 	})(EventDispatcher)
 
@@ -820,6 +821,7 @@
 			this.subTextureDic={};
 			this.isParseFail=false;
 			this.url=null;
+			this.yReverseMatrix=null;
 			this._rate=60;
 			Templet.__super.call(this);
 		}
@@ -873,7 +875,7 @@
 		*解析自定义数据
 		*/
 		__proto._parsePublicExtData=function(){
-			var i=0,j=0,k=0,n=0;
+			var i=0,j=0,k=0,l=0,n=0;
 			for (i=0,n=this.getAnimationCount();i < n;i++){
 				this._graphicsCache.push([]);
 			};
@@ -884,8 +886,13 @@
 			var tTextureLen=tByte.getUint8();
 			var tTextureName=tByte.readUTFString();
 			var tTextureNameArr=tTextureName.split("\n");
+			var tTexture;
 			for (i=0;i < tTextureLen;i++){
-				tTextureName=tTextureNameArr[i];
+				if (this._aniVersion=="LAYAANIMATION:1.0.0"){
+					tTextureName=tTextureNameArr[i];
+					}else if (this._aniVersion=="LAYAANIMATION:1.0.1"){
+					tTextureName=tTextureNameArr[i *2+1];
+				}
 				tX=tByte.getFloat32();
 				tY=tByte.getFloat32();
 				tWidth=tByte.getFloat32();
@@ -931,25 +938,25 @@
 				}
 				tDBBoneSlotArr.push(tDBBoneSlot);
 				this.boneSlotArray.push(tDBBoneSlot);
-			}
-			for (i=0;i < this.boneSlotArray.length;i++){
-				tDBBoneSlot=this.boneSlotArray[i];
 			};
 			var tNameString=tByte.readUTFString();
 			var tNameArray=tNameString.split("\n");
 			var tNameStartIndex=0;
 			var tSkinDataLen=tByte.getUint8();
+			var tSkinData,tSlotData,tDisplayData;
+			var tSlotDataLen=0,tDisplayDataLen=0;
+			var tBoneLen=0,tUvLen=0,tWeightLen=0,tTriangleLen=0;
 			for (i=0;i < tSkinDataLen;i++){
-				var tSkinData=new SkinData();
+				tSkinData=new SkinData();
 				tSkinData.name=tNameArray[tNameStartIndex++];
-				var tSlotDataLen=tByte.getUint8();
+				tSlotDataLen=tByte.getUint8();
 				for (j=0;j < tSlotDataLen;j++){
-					var tSlotData=new SlotData();
+					tSlotData=new SlotData();
 					tSlotData.name=tNameArray[tNameStartIndex++];
 					tDBBoneSlot=this.boneSlotDic[tSlotData.name];
-					var tDisplayDataLen=tByte.getUint8();
+					tDisplayDataLen=tByte.getUint8();
 					for (k=0;k < tDisplayDataLen;k++){
-						var tDisplayData=new SkinSlotDisplayData();
+						tDisplayData=new SkinSlotDisplayData();
 						tDisplayData.name=tNameArray[tNameStartIndex++];
 						tDisplayData.transform=new Transform();
 						tDisplayData.transform.scX=tByte.getFloat32();
@@ -959,8 +966,84 @@
 						tDisplayData.transform.x=tByte.getFloat32();
 						tDisplayData.transform.y=tByte.getFloat32();
 						tSlotData.displayArr.push(tDisplayData);
+						if(this._aniVersion=="LAYAANIMATION:1.0.0"){
+							tTexture=this.getTexture(tDisplayData.name);
+							if (tTexture){
+								tDisplayData.width=tTexture.sourceWidth;
+								tDisplayData.height=tTexture.sourceHeight;
+								}else {
+								tDisplayData.width=0;
+								tDisplayData.height=0;
+							}
+							}else if (this._aniVersion=="LAYAANIMATION:1.0.1"){
+							tDisplayData.width=tByte.getFloat32();
+							tDisplayData.height=tByte.getFloat32();
+							tDisplayData.type=tByte.getUint8();
+							switch (tDisplayData.type){
+								case 1:
+									break ;
+								case 0:
+									tBoneLen=tByte.getUint16();
+									if (tBoneLen > 0){
+										tDisplayData.bones=[];
+										for (l=0;l < tBoneLen;l++){
+											tDisplayData.bones.push(tByte.getUint16());
+										}
+									}
+									tUvLen=tByte.getUint16();
+									if (tUvLen > 0){
+										tDisplayData.uvs=[];
+										for (l=0;l < tUvLen;l++){
+											tDisplayData.uvs.push(tByte.getFloat32());
+										}
+									}
+									tWeightLen=tByte.getUint16();
+									if (tWeightLen > 0){
+										tDisplayData.weights=[];
+										for (l=0;l < tWeightLen;l++){
+											tDisplayData.weights.push(tByte.getFloat32());
+										}
+									}
+									tTriangleLen=tByte.getUint16();
+									if (tTriangleLen > 0){
+										tDisplayData.triangles=[];
+										for (l=0;l < tTriangleLen;l++){
+											tDisplayData.triangles.push(tByte.getUint16());
+										}
+									}
+									break ;
+								case 2:
+									tBoneLen=tByte.getUint16();
+									tDisplayData.bones=[];
+									tDisplayData.uvs=[];
+									tDisplayData.weights=[];
+									tDisplayData.triangles=[];
+									for (l=0;l < tBoneLen;l++){
+										tDisplayData.bones.push(tByte.getUint16());
+									}
+									tUvLen=tByte.getUint16();
+									for (l=0;l < tUvLen;l++){
+										tDisplayData.uvs.push(tByte.getFloat32());
+									}
+									tWeightLen=tByte.getUint16();
+									for (l=0;l < tWeightLen;l++){
+										tDisplayData.weights.push(tByte.getFloat32());
+									}
+									tTriangleLen=tByte.getUint16();
+									for (l=0;l < tTriangleLen;l++){
+										tDisplayData.triangles.push(tByte.getUint16());
+									}
+									break ;
+								}
+						}
 					}
 					tSkinData.slotArr.push(tSlotData);
+				}
+				if (this._aniVersion=="LAYAANIMATION:1.0.1"){
+					var tReverse=tByte.getUint8();
+					if (tReverse==1){
+						this.yReverseMatrix=new Matrix(1,0,0,-1,0,0);
+					}
 				}
 				this.skinDic[tSkinData.name]=tSkinData;
 				this.skinDataArray.push(tSkinData);
@@ -1053,7 +1136,7 @@
 		/**
 		*预留
 		*/
-		__proto.destory=function(){
+		__proto.destroy=function(){
 			if (this.url){
 				delete Templet.TEMPLET_DICTIONARY[this.url];
 			}
@@ -1107,6 +1190,7 @@
 			this._texturePath=null;
 			this._complete=null;
 			this._loadAniMode=0;
+			this._yReverseMatrix=null;
 			Skeleton.__super.call(this);
 			this._tempTransform=new Transform();
 			(aniMode===void 0)&& (aniMode=0);
@@ -1131,6 +1215,7 @@
 					this._graphicsCache.push([]);
 				}
 			}
+			this._yReverseMatrix=templet.yReverseMatrix;
 			this._aniMode=aniMode;
 			this._templet=templet;
 			this._player=new AnimationPlayer(templet.rate);
@@ -1319,7 +1404,11 @@
 					tParentMatrix=this._boneMatrixArray[tBone.parentIndex];
 					Matrix.mul(tTempMatrix,tParentMatrix,tResultMatrix);
 					}else {
-					tTempMatrix.copyTo(tResultMatrix);
+					if (this._yReverseMatrix){
+						Matrix.mul(tTempMatrix,this._yReverseMatrix,tResultMatrix);
+						}else {
+						tTempMatrix.copyTo(tResultMatrix);
+					}
 				}
 				tDBBoneSlotArr=this._bindBoneBoneSlotDic[tBone.name];
 				if (tDBBoneSlotArr){
@@ -1333,8 +1422,9 @@
 			};
 			var tSlotDic={};
 			var tSlotAlphaDic={};
+			var tBoneData;
 			for (;i < bones.length;i++){
-				var tBoneData=bones[i];
+				tBoneData=bones[i];
 				tSlotDic[tBoneData.name]=this._curOriginalData[tStartIndex++];
 				tSlotAlphaDic[tBoneData.name]=this._curOriginalData[tStartIndex++];
 				this._curOriginalData[tStartIndex++];
@@ -1362,7 +1452,7 @@
 				if (!isNaN(tSlotData2)){
 					tDBBoneSlot.showDisplayByIndex(tSlotData2);
 				}
-				tDBBoneSlot.draw(tGraphics,this._aniMode==2);
+				tDBBoneSlot.draw(tGraphics,this._boneMatrixArray,this._aniMode==2);
 				if (!isNaN(tSlotData3)){
 					tGraphics.restore();
 				}
@@ -1574,7 +1664,9 @@
 		/**
 		*销毁当前动画
 		*/
-		__proto.destory=function(){
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
 			this._templet=null;
 			this._player.offAll();
 			this._player=null;
@@ -1627,7 +1719,7 @@
 		*/
 		__getset(0,__proto,'total',function(){
 			if (this._templet && this._player){
-				this._total=Math.floor(this._templet.getAniDuration(this._player.currentAnimationClipIndex)/ 1000 *60);
+				this._total=Math.floor(this._templet.getAniDuration(this._player.currentAnimationClipIndex)/ 1000 *this._player.cacheFrameRate);
 				}else {
 				this._total=-1;
 			}
@@ -1697,7 +1789,7 @@
 			var i=0,len=0;
 			len=this._movieClipList.length;
 			for (i=0;i < len;i++){
-				this._movieClipList[i]._update();
+				this._movieClipList[i]&&this._movieClipList[i]._update();
 			}
 		}
 
@@ -1791,9 +1883,9 @@
 			(index===void 0)&& (index=0);
 			(loop===void 0)&& (loop=true);
 			this.loop=loop;
+			this._playing=true;
 			if (this._data)
 				this._displayFrame(index);
-			this._playing=true;
 		}
 
 		/**@private */
@@ -1822,7 +1914,10 @@
 			_data.pos=this._Pos;
 			this._ended=false;
 			this._playIndex=frameIndex;
-			if (this._curIndex > frameIndex)this._curIndex=-1;
+			if (this._curIndex > frameIndex){
+				this._curIndex=-1;
+				_data.pos=this._Pos=this._start;
+			}
 			while ((this._curIndex <=frameIndex)&& (!this._ended)){
 				type=_data.getUint16();
 				switch (type){
@@ -1950,7 +2045,8 @@
 			this._ended=false;
 			var preState=this._playing;
 			this._playing=false;
-			while (!this._ended)this._parse(++this._playIndex);
+			this._curIndex=0;
+			while (!this._ended)this._parse(++this._curIndex);
 			this._playing=preState;
 		}
 

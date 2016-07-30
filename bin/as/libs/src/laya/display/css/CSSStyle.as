@@ -590,12 +590,6 @@ package laya.display.css {
 		override public function render(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			var w:Number = sprite.width;
 			var h:Number = sprite.height;
-
-			if ('typeset' in sprite)
-			{
-				w += sprite['padding'][1] + sprite['padding'][3];
-				h += sprite['padding'][0] + sprite['padding'][2];
-			}
 			
 			x -= sprite.pivotX;
 			y -= sprite.pivotY;

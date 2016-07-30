@@ -1,6 +1,5 @@
 package laya.display {
 	import laya.events.Event;
-	import laya.events.EventDispatcher;
 	
 	/**
 	 * 动画播放完毕后调度。
@@ -44,22 +43,25 @@ package laya.display {
 			this.index = start;
 			this.loop = loop;
 			if (this.interval > 0) {
-				_index++;
 				timerLoop(this.interval, this, _frameLoop, null, true);
 			}
 		}
 		
 		/**@private */
 		protected function _frameLoop():void {
-			this.index = _index, _index++;
+			this._index++;
 			if (this._index >= this._count) {
-				if (loop) this._index = 0;
-				else {
-					_index--;
+				if (loop) {
+					this._index = 0;
+					event(Event.COMPLETE);
+				} else {
+					this._index--;
 					stop();
+					event(Event.COMPLETE);
+					return;
 				}
-				event(Event.COMPLETE);
 			}
+			this.index = this._index;
 		}
 		
 		/**@private */
@@ -72,7 +74,7 @@ package laya.display {
 			if (node) {
 				node.on(Event.DISPLAY, this, _onDisplay);
 				node.on(Event.UNDISPLAY, this, _onDisplay);
-			}		
+			}
 		}
 		
 		/**@private */
@@ -107,7 +109,7 @@ package laya.display {
 		 */
 		public function removeLabel(label:String):void {
 			if (!label) _labels = null;
-			else if (!_labels) {
+			else if (_labels) {
 				for (var name:String in _labels) {
 					if (_labels[name] === label) {
 						delete _labels[name];

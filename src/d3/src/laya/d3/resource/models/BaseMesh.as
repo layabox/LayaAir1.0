@@ -54,6 +54,8 @@ package laya.d3.resource.models {
 		 * 创建一个 <code>BaseMesh</code> 实例。
 		 */
 		public function BaseMesh() {
+			_boundingBox = new BoundBox(new Vector3(),new Vector3());
+			_boundingSphere = new BoundSphere(new Vector3(),0);
 		}
 		
 		/**

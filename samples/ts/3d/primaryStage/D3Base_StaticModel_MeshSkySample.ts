@@ -13,13 +13,10 @@ class StaticModel_MeshSkySample {
 
         var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
-        this.camera = new Laya.Camera(new Laya.Viewport(0, 0, Laya.RenderState.clientWidth, Laya.RenderState.clientHeight), Math.PI / 3, 0, 0.1, 100);
+        this.camera = new Laya.Camera(0, 0.1, 100);
         scene.currentCamera = (scene.addChild(this.camera)) as Laya.Camera;
         scene.currentCamera.transform.translate(new Laya.Vector3(0.3, 0.3, 0.6));
         scene.currentCamera.transform.rotate(new Laya.Vector3(-12, 0, 0), true, false);
-        Laya.stage.on(Laya.Event.RESIZE, null, () => {
-            (scene.currentCamera as Laya.Camera).viewport = new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height);
-        });
 
 
         scene.currentCamera.addComponent(CameraMoveScript);
@@ -31,13 +28,13 @@ class StaticModel_MeshSkySample {
 
         //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
         this.skySprite3D.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT006M.v3f.lh");
-        this.skySprite3D.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite: Laya.Sprite3D): void {
+        this.skySprite3D.once(Laya.Event.HIERARCHY_LOADED, null, (sprite) => {
             var meshSprite = sprite.getChildAt(0) as Laya.MeshSprite3D;
             var mesh = meshSprite.mesh;
-            mesh.once(Laya.Event.LOADED, null, function (templet: Laya.BaseMesh): void {
+            mesh.once(Laya.Event.LOADED, null, (templet) => {
                 for (var i = 0; i < meshSprite.materials.length; i++) {
                     var material = meshSprite.materials[i];
-                    material.once(Laya.Event.LOADED, null, function (mat: Laya.Material): void {
+                    material.once(Laya.Event.LOADED, null, (mat) => {
                         mat.isSky = true;
                         mat.luminance = 3.5;
                     });

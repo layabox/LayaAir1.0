@@ -86,6 +86,12 @@ package laya.d3.component.animation {
 		 */
 		override public function set url(value:String):void {
 			_curOriginalData = _extenData = null;//替换文件_extenData不清空会产生BUG，用了旧文件的_extenData
+			
+			var mesh:Mesh = _ownerMesh.mesh as Mesh;
+			var subMeshCount:int = mesh.getSubMeshCount();
+			for (var j:int = 0; j < subMeshCount; j++) {
+				mesh.getSubMesh(j)._cacheBoneDatas.length = 0;
+			}
 			super.url = value;
 		}
 		
@@ -106,7 +112,6 @@ package laya.d3.component.animation {
 			
 			player.on(Event.STOPPED, this, function():void {
 				_lastFrameIndex = -1;
-				//_curOriginalData = _extenData = null;//替换文件_extenData不清空会产生BUG，用了旧文件的_extenData;
 				if (player.returnToZeroStopped)
 					_curBonesDatas = _curAnimationDatas = null;
 			});

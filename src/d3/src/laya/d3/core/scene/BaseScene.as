@@ -1,7 +1,8 @@
 package laya.d3.core.scene {
 	import laya.d3.core.Layer;
+	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.camera.BaseCamera;
+	import laya.d3.core.BaseCamera;
 	import laya.d3.core.light.LightSprite;
 	import laya.d3.core.render.RenderConfig;
 	import laya.d3.core.render.RenderObject;
@@ -11,12 +12,15 @@ package laya.d3.core.scene {
 	import laya.d3.math.Viewport;
 	import laya.d3.resource.RenderTarget;
 	import laya.d3.shader.ShaderDefines3D;
+	import laya.display.Node;
 	import laya.display.Sprite;
+	import laya.renders.Render;
 	import laya.renders.RenderContext;
 	import laya.renders.RenderSprite;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
+	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.submit.ISubmit;
 	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.RenderState2D;
@@ -227,7 +231,8 @@ package laya.d3.core.scene {
 				child._update(state);
 			}
 		}
-			/**
+		
+		/**
 		 * @private
 		 */
 		protected function _preRenderScene(gl:WebGLContext, state:RenderState):void {
@@ -299,6 +304,18 @@ package laya.d3.core.scene {
 			index >= 0 && (_lights.splice(index, 1));
 		}
 		
+		override public function removeChildAt(index:int):Node {
+			var node:Node = getChildAt(index);
+			if (node) {
+				this._childs.splice(index, 1);
+				model && model.removeChild(node.model);
+				node.parent = null;
+				
+				(node as Sprite3D)._clearRenderObjects();
+			}
+			return node;
+		}
+		
 		/**
 		 * 获得某个渲染队列。
 		 * @param index 渲染队列索引。
@@ -316,7 +333,6 @@ package laya.d3.core.scene {
 		public function getRenderObject(index:int):RenderObject {
 			return (_quenes[index] || (_quenes[index] = new RenderQueue(_renderConfigs[index]))).getRenderObj();
 		}
-		
 		
 		/**
 		 * 添加渲染队列。
@@ -358,6 +374,7 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		public override function render(context:RenderContext, x:Number, y:Number):void {
+			(Render._context.ctx as WebGLContext2D)._shader2D.glTexture = null;//TODO:临时清空2D合并，不然影响图层合并。
 			_childs.length > 0 && context.addRenderObject(this);
 			_renderType &= ~RenderSprite.CHILDS;
 			super.render(context, x, y);

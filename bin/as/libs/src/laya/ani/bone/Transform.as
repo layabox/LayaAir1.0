@@ -43,7 +43,6 @@ package laya.ani.bone {
 				tMatrix = mMatrix = new Matrix();
 			}
 			tMatrix.a = Math.cos(skY);
-			tMatrix
 			if (skX != 0 || skY != 0) {
 				var tAngle:Number = skX * Math.PI / 180;
 				var cos:Number = Math.cos(tAngle), sin:Number = Math.sin(tAngle);

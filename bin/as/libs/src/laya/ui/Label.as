@@ -123,6 +123,10 @@ package laya.ui {
 	public class Label extends Component {
 		/**
 		 * @private
+		 */
+		private static var _textReg:RegExp = new RegExp("\\\\n", "g");
+		/**
+		 * @private
 		 * 文本 <code>Text</code> 实例。
 		 */
 		protected var _tf:Text;
@@ -157,6 +161,8 @@ package laya.ui {
 		
 		public function set text(value:String):void {
 			if (_tf.text != value) {
+				if(value)
+				value=(value+"").replace(_textReg,"\n");
 				_tf.text = value;
 				event(Event.CHANGE);
 			}

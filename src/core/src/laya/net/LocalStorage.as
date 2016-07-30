@@ -16,7 +16,7 @@ package laya.net {
 		__JS__("if (window.localStorage) {LocalStorage.items = window.localStorage;try {localStorage.setItem('laya', '1');localStorage.removeItem('laya');LocalStorage.support = true;} catch (e) {}}if (!LocalStorage.support) console.log('LocalStorage is not supprot or browser is private mode.')");
 		
 		/**
-		 * 存储指定键名和它的字符床型值。
+		 * 存储指定键名和键值，字符串类型。
 		 * @param key 键名。
 		 * @param value 键值。
 		 */

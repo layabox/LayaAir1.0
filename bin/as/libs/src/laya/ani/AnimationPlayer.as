@@ -205,24 +205,32 @@ package laya.ani {
 			(_startPlayLoopCount !== Stat.loopCount) && (time = elapsedTime * playbackRate, _elapsedPlaybackTime += time);//elapsedTime为距离上一帧时间,首帧播放如果_startPlayLoopCount===Stat.loopCount，则不累加时间
 			
 			var currentAniClipDuration:Number = _templet.getAniDuration(_currentAnimationClipIndex);
-			
 			if ((_duration !== 0 && _elapsedPlaybackTime >= _duration) || (_duration === 0 && _elapsedPlaybackTime >= currentAniClipDuration)) {
 				_currentAnimationClipIndex = _currentKeyframeIndex = -1;// 动画结束
 				this.event(Event.STOPPED);
 				return;
 			}
 			time += _currentTime;
-			
-			while (time >= currentAniClipDuration) {
+			if (currentAniClipDuration > 0) {
+				while (time >= currentAniClipDuration) {
+					if (_stopWhenCircleFinish) {
+						_currentAnimationClipIndex = _currentKeyframeIndex = -1;
+						_stopWhenCircleFinish = false;
+						this.event(Event.STOPPED);
+						return;
+					}
+					time -= currentAniClipDuration;
+				}
+				currentTime = time;
+			} else {
 				if (_stopWhenCircleFinish) {
 					_currentAnimationClipIndex = _currentKeyframeIndex = -1;
 					_stopWhenCircleFinish = false;
 					this.event(Event.STOPPED);
 					return;
 				}
-				time -= currentAniClipDuration;
+				_currentTime = _currentFrameTime = _currentKeyframeIndex = 0;
 			}
-			currentTime = time;
 		}
 	}
 }

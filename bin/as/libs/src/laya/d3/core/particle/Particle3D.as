@@ -26,7 +26,7 @@ package laya.d3.core.particle {
 			templet = new ParticleTemplet3D(settings);
 		}
 		
-		private function _clearRenderObjects():void {
+		override public function _clearRenderObjects():void {
 			_renderObject.renderQneue.deleteRenderObj(_renderObject);
 		}
 		

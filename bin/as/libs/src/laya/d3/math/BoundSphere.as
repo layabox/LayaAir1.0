@@ -4,6 +4,8 @@ package laya.d3.math {
 	 * <code>BoundSphere</code> 类用于创建包围球。
 	 */
 	public class BoundSphere {
+		private  static var  _tempVector3:Vector3 = new Vector3();
+		
 		/**包围球的中心。*/
 		public var center:Vector3;
 		/**包围球的半径。*/
@@ -44,7 +46,10 @@ package laya.d3.math {
 			var upperEnd:int = start + count;
 			
 			//Find the center of all points. 
-			var center:Vector3 = Vector3.ZERO;
+			var center:Vector3 = _tempVector3;
+			center.elements[0] = 0;
+			center.elements[1] = 0;
+			center.elements[2] = 0;
 			for (var i:int = start; i < upperEnd; ++i) {
 				Vector3.add(points[i], center, center);
 			}

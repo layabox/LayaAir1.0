@@ -35,6 +35,23 @@ package laya.debug.tools
 				walkTarget(tChild,fun,tChild);
 			}
 		}
+		public static function walkTargetEX(target:Node,fun:Function,_this:*=null,filterFun:Function=null):void
+		{			
+			if (filterFun != null && !filterFun(target)) return;
+			fun.apply(_this,[target]);
+			var i:int;
+			var len:int;
+			var tChild:Node;
+			var childs:Array;
+			childs = target._childs;
+			len=childs.length;
+			for(i=0;i<len;i++)
+			{
+				tChild=childs[i];
+//				fun.apply(_this,[tChild]);
+				walkTarget(tChild,fun,tChild);
+			}
+		}
 		public static function walkChildren(target:Node,fun:Function,_this:*=null):void
 		{
 		     if(!target||target.numChildren<1) return;

@@ -2,8 +2,7 @@ package threeDimen.advancedStage {
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.TransformUV;
-	import laya.d3.core.camera.Camera;
-	import laya.d3.core.camera.VRCamera;
+	import laya.d3.core.VRCamera;
 	import laya.d3.core.material.Material;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
@@ -39,13 +38,9 @@ package threeDimen.advancedStage {
 			var leftViewport:Viewport = new Viewport(0, 0, RenderState.clientWidth / 2, RenderState.clientHeight);
 			var rightViewport:Viewport = new Viewport(RenderState.clientWidth / 2, 0, RenderState.clientWidth / 2, RenderState.clientHeight);
 			
-			var camera:VRCamera = new VRCamera(leftViewport, rightViewport, 0.03, Math.PI / 3.0, 0, 0, 0.1, 100);
+			var camera:VRCamera = new VRCamera(0.03, 0, 0, 0.1, 100);
 			scene.currentCamera = (scene.addChild(camera)) as VRCamera;
-			Laya.stage.on(Event.RESIZE, null, function():void {
-				var vrCamera:VRCamera = scene.currentCamera as VRCamera;
-				vrCamera.leftViewport = new Viewport(0, 0, RenderState.clientWidth / 2, RenderState.clientHeight);
-				vrCamera.rightViewport = new Viewport(RenderState.clientWidth / 2, 0, RenderState.clientWidth / 2, RenderState.clientHeight);
-			});
+
 			
 			scene.currentCamera.addComponent(VRCameraMoveScript);
 			loadScene(scene, camera);

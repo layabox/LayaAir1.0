@@ -1,7 +1,7 @@
 package threeDimen.primaryStage {
+	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.camera.Camera;
 	import laya.d3.core.material.Material;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
@@ -22,7 +22,6 @@ package threeDimen.primaryStage {
 	 * @author ...
 	 */
 	public class D3Base_StaticModel_MeshSkySample {
-		
 		private var skySprite3D:Sprite3D;
 		private var camera:Camera;
 		
@@ -35,14 +34,11 @@ package threeDimen.primaryStage {
 			Stat.show();
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
+			camera = new Camera( 0, 0.1, 100);
 			
-			camera = new Camera(new Viewport(0, 0, RenderState.clientWidth, RenderState.clientHeight), Math.PI / 3, 0, 0.1, 100);
 			scene.currentCamera = scene.addChild(camera) as Camera;
 			scene.currentCamera.transform.translate(new Vector3(0.3, 0.3, 0.6));
 			scene.currentCamera.transform.rotate(new Vector3(-12, 0, 0), true, false);
-			Laya.stage.on(Event.RESIZE, null, function():void {
-				(scene.currentCamera as Camera).viewport = new Viewport(0, 0, RenderState.clientWidth, RenderState.clientHeight);
-			});
 			
 			scene.currentCamera.addComponent(CameraMoveScript);
 			

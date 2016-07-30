@@ -14,19 +14,10 @@ module SimpleSceneVRSample {
 
             var scene: Laya.VRScene = Laya.stage.addChild(new Laya.VRScene()) as Laya.VRScene;
 
-            var leftViewport = new Laya.Viewport(0, 0, Laya.stage.width / 2, Laya.stage.height);
-            var rightViewport = new Laya.Viewport(Laya.stage.width / 2, 0, Laya.stage.width / 2, Laya.stage.height);
-
-            var camera = new Laya.VRCamera(leftViewport, rightViewport, 0.03, Math.PI / 3.0, 0, 0, 0.1, 100);
+            var camera = new Laya.VRCamera(0.03, 0, 0, 0.1, 100);
             scene.currentCamera = scene.addChild(camera) as Laya.VRCamera;
             scene.currentCamera.transform.translate(new Vector3(0.3, 0.3, 0.6));
             scene.currentCamera.transform.rotate(new Vector3(-12, 0, 0), true, false);
-
-            Laya.stage.on(Laya.Event.RESIZE, null, () => {
-                var vrCamera = scene.currentCamera as Laya.VRCamera;
-                vrCamera.leftViewport = new Laya.Viewport(0, 0, Laya.stage.width / 2, Laya.stage.height);
-                vrCamera.rightViewport = new Laya.Viewport(Laya.stage.width / 2, 0, Laya.stage.width / 2, Laya.stage.height);
-            });
 
             scene.currentCamera.addComponent(VRCameraMoveScript);
 

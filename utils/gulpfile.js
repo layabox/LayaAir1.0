@@ -25,6 +25,12 @@ gulp.task('copyas', function() {
 	gulp.src('../src/plugins/tiledmap/src/**')
     .pipe(gulp.dest('../bin/as/libs/src'));
 	
+	gulp.src('../src/plugins/debugtool/src/**')
+    .pipe(gulp.dest('../bin/as/libs/src'));
+	
+	gulp.src('../src/plugins/device/src/**')
+    .pipe(gulp.dest('../bin/as/libs/src'));
+	
 	gulp.src('../src/ui/src/**')
     .pipe(gulp.dest('../bin/as/libs/src'));
 	

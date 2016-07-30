@@ -140,7 +140,7 @@ package laya.flash
 		public function uploadByCount(count:int):void
 		{
 			// River: 加入另外的条件，确保Polygon Draw不用每次上传顶点.
-			if ( _uploadIbSize == count )
+			if ( (_uploadIbSize == count)&&(_uploadIbSize >= _vctBuff.length) )
 			{
 				_bind();
 				return;

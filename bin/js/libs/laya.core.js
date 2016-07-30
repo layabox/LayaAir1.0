@@ -183,33 +183,11 @@ window.Laya=(function(window,document){
 
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
-	Laya.interface('laya.runtime.IConchNode');
 	Laya.interface('laya.resource.IDispose');
 	Laya.interface('laya.display.ILayout');
-	Laya.interface('laya.filters.IFilter');
+	Laya.interface('laya.runtime.IConchNode');
 	Laya.interface('laya.filters.IFilterAction');
-	var load=Laya.load=function(url,type){
-		return Asyn.load(url,type);
-	}
-
-
-	var await=Laya.await=function(caller,fn,nextLine){
-		Asyn._caller_=caller;
-		Asyn._callback_=fn;
-		Asyn._nextLine_=nextLine;
-	}
-
-
-	var sleep=Laya.sleep=function(value){
-		Asyn.sleep(value);
-	}
-
-
-	var wait=Laya.wait=function(conditions){
-		return Asyn.wait(conditions);
-	}
-
-
+	Laya.interface('laya.filters.IFilter');
 	/**
 	*@private
 	*/
@@ -355,7 +333,6 @@ window.Laya=(function(window,document){
 			var pathName=location.pathname;
 			pathName=pathName.charAt(2)==':' ? pathName.substring(1):pathName;
 			URL.rootPath=URL.basePath=URL.getPath(location.protocol=="file:" ? pathName :location.origin+pathName);
-			Laya.initAsyn();
 			Laya.render=new Render(50,50);
 			Laya.stage.size(width,height);
 			RenderSprite.__init__();
@@ -365,33 +342,11 @@ window.Laya=(function(window,document){
 			return Render.canvas;
 		}
 
-		Laya.initAsyn=function(){
-			Asyn.loadDo=function (url,type,d){
-				var l=new Loader();
-				if (d){
-					l.once(/*laya.events.Event.COMPLETE*/"complete",null,function(data){
-						d.callback(data);
-					});
-					l.once(/*laya.events.Event.ERROR*/"error",null,function(err){
-					});
-				}
-				l.load(url,type);
-				return d;
-			}
-			Asyn.onceTimer=function (delay,d){
-				Laya.timer.once(delay,d,d.callback);
-			}
-			Asyn.onceEvent=function (type,listener){
-				Laya.stage.once(type,null,listener);
-			}
-			Laya.timer.frameLoop(1,null,Asyn._loop_);
-		}
-
 		Laya.stage=null;
 		Laya.timer=null;
 		Laya.loader=null;
 		Laya.render=null
-		Laya.version="1.0.3";
+		Laya.version="1.0.4";
 		return Laya;
 	})()
 
@@ -411,161 +366,6 @@ window.Laya=(function(window,document){
 		Config.animationInterval=30;
 		Config.isAntialias=false;
 		return Config;
-	})()
-
-
-	/**
-	*<code>Asyn</code> 用于函数异步处理。
-	*/
-	//class laya.asyn.Asyn
-	var Asyn=(function(){
-		function Asyn(){};
-		__class(Asyn,'laya.asyn.Asyn');
-		Asyn.wait=function(conditions){
-			var d=new Deferred();
-			if (conditions.indexOf("event:")==0){
-				Asyn.onceEvent(conditions.substr(8),function(){
-					d.callback();
-				});
-				return null;
-			}
-			d.loopIndex=Asyn._loopCount;
-			return Asyn._Deferreds[conditions]=d;
-		}
-
-		Asyn.callLater=function(d){
-			Asyn._callLater.push(d);
-		}
-
-		Asyn.notify=function(conditions,value){
-			var o=Asyn._Deferreds[conditions];
-			if (o){
-				Asyn._Deferreds[conditions]=null;
-				o.callback(value);
-			}
-		}
-
-		Asyn.load=function(url,type){
-			return Asyn.loadDo(url,type,new Deferred());
-		}
-
-		Asyn.sleep=function(delay){
-			if (delay < 1){
-				if (Asyn._loopsCount >=Asyn.loops[Asyn._loopsIndex].length){
-					Asyn._loopsCount++;
-					Asyn.loops[Asyn._loopsIndex].push(new Deferred());
-					}else {
-					var d=Asyn.loops[Asyn._loopsIndex][Asyn._loopsCount];
-					d._reset();
-					Asyn._loopsCount++;
-				}
-				return;
-			}
-			Asyn.onceTimer(delay,new Deferred());
-		}
-
-		Asyn._loop_=function(){
-			Deferred._TIMECOUNT_++;
-			Asyn._loopCount++;
-			var sz=0;
-			if ((sz=Asyn._loopsCount)> 0){
-				var _loops=Asyn.loops[Asyn._loopsIndex];
-				Asyn._loopsCount=0;
-				Asyn._loopsIndex=(Asyn._loopsIndex+1)% 2;
-				for (var i=0;i < sz;i++)
-				_loops[i].callback();
-			}
-			if ((sz=Asyn._callLater.length)> 0){
-				var accept=Asyn._callLater;
-				Asyn._callLater=[];
-				for (i=0,sz=accept.length;i < sz;i++){
-					var d=accept[i];
-					d.callback();
-				}
-			}
-		}
-
-		Asyn._Deferreds={};
-		Asyn.loops=[[],[]];
-		Asyn._loopsIndex=0;
-		Asyn._loopCount=0;
-		Asyn._loopsCount=0;
-		Asyn._callLater=[];
-		Asyn._waitFunctionId=0;
-		Asyn.loadDo=null
-		Asyn.onceEvent=null
-		Asyn.onceTimer=null
-		Asyn._caller_=null
-		Asyn._callback_=null
-		Asyn._nextLine_=0;
-		return Asyn;
-	})()
-
-
-	/**
-	*<code>Deferred</code> 用于延迟处理函数。
-	*/
-	//class laya.asyn.Deferred
-	var Deferred=(function(){
-		function Deferred(){
-			this._caller=null;
-			this._callback=null;
-			this._nextLine=0;
-			this._value=null;
-			this._createTime=0;
-			this._reset();
-		}
-
-		__class(Deferred,'laya.asyn.Deferred');
-		var __proto=Deferred.prototype;
-		/**
-		*设置回调参数。
-		*@param v 回调参数。
-		*/
-		__proto.setValue=function(v){
-			this._value=v;
-		}
-
-		/**
-		*获取回调参数。
-		*@return 回调参数。
-		*/
-		__proto.getValue=function(){
-			return this._value;
-		}
-
-		/**
-		*@private
-		*/
-		__proto._reset=function(){
-			this._caller=Asyn._caller_;
-			this._callback=Asyn._callback_;
-			this._nextLine=Asyn._nextLine_;
-			this._createTime=Deferred._TIMECOUNT_;
-		}
-
-		/**
-		*回调此对象存储的函数并传递参数 value。
-		*@param value 回调数据。
-		*/
-		__proto.callback=function(value){
-			(arguments.length > 0)&& (this._value=value);
-			if (this._createTime==Deferred._TIMECOUNT_)
-				Asyn.callLater(this);
-			else this._callback && this._callback.call(this._caller,this._nextLine);
-		}
-
-		/**
-		*失败回调。
-		*@param value 回调数据。
-		*/
-		__proto.errback=function(value){
-			(arguments.length > 0)&& (this._value=value);
-			this._callback && this._callback.call(this._caller,this._nextLine);
-		}
-
-		Deferred._TIMECOUNT_=0;
-		return Deferred;
 	})()
 
 
@@ -1632,15 +1432,11 @@ window.Laya=(function(window,document){
 			this._sp && (this._sp._renderType |=/*laya.renders.RenderSprite.GRAPHICS*/0x100);
 			var args=[tex,x,y,width,height,m];
 			args.callee=m ? Render._context._drawTextureWithTransform :Render._context._drawTexture;
-			if (m){
-				this._saveToCmd(args.callee,args);
-				}else if (this._one==null){
+			if (this._one==null && !m){
 				this._one=args;
 				this._render=this._renderOneImg;
 				}else {
-				this._render=this._renderAll;
-				(this._cmds || (this._cmds=[])).length===0 && this._cmds.push(this._one);
-				this._cmds.push(args);
+				this._saveToCmd(args.callee,args);
 			}
 			this._repaint();
 		}
@@ -2468,6 +2264,7 @@ window.Laya=(function(window,document){
 			}
 			canvas.addEventListener('mousedown',function(e){
 				if (MouseManager.enabled){
+					e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime=Browser.now();
 				}
@@ -2481,6 +2278,7 @@ window.Laya=(function(window,document){
 			},true);
 			canvas.addEventListener('mousemove',function(e){
 				if (MouseManager.enabled){
+					e.preventDefault();
 					var now=Browser.now();
 					if (now-_this._lastMoveTimer < 10)return;
 					_this._lastMoveTimer=now;
@@ -2495,13 +2293,14 @@ window.Laya=(function(window,document){
 			})
 			canvas.addEventListener("touchstart",function(e){
 				if (MouseManager.enabled){
+					e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime=Browser.now();
 				}
 			});
 			canvas.addEventListener("touchend",function(e){
 				if (MouseManager.enabled){
-					if(!Input.isInputting)e.preventDefault();
+					e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime=-Browser.now();
 				}
@@ -3178,38 +2977,38 @@ window.Laya=(function(window,document){
 			return Math.atan2(x1-x0,y1-y0)/ Math.PI *180;
 		}
 
-		MathUtil.SortBigFirst=function(a,b){
+		MathUtil.sortBigFirst=function(a,b){
 			if (a==b)
 				return 0;
 			return b > a ? 1 :-1;
 		}
 
-		MathUtil.SortSmallFirst=function(a,b){
+		MathUtil.sortSmallFirst=function(a,b){
 			if (a==b)
 				return 0;
 			return b > a ?-1 :1;
 		}
 
-		MathUtil.SortNumBigFirst=function(a,b){
+		MathUtil.sortNumBigFirst=function(a,b){
 			return parseFloat(b)-parseFloat(a);
 		}
 
-		MathUtil.SortNumSmallFirst=function(a,b){
+		MathUtil.sortNumSmallFirst=function(a,b){
 			return parseFloat(a)-parseFloat(b);
 		}
 
-		MathUtil.SortByKey=function(key,bigFirst,forceNum){
+		MathUtil.sortByKey=function(key,bigFirst,forceNum){
 			(bigFirst===void 0)&& (bigFirst=false);
 			(forceNum===void 0)&& (forceNum=true);
 			var _sortFun;
 			if (bigFirst){
-				_sortFun=forceNum ? MathUtil.SortNumBigFirst :MathUtil.SortBigFirst;
+				_sortFun=forceNum ? MathUtil.sortNumBigFirst :MathUtil.sortBigFirst;
 				}else {
-				_sortFun=forceNum ? MathUtil.SortNumSmallFirst :MathUtil.SortSmallFirst;
+				_sortFun=forceNum ? MathUtil.sortNumSmallFirst :MathUtil.sortSmallFirst;
 			}
 			return function (a,b){
 				return _sortFun(a[key],b[key]);
-			};
+			}
 		}
 
 		return MathUtil;
@@ -5161,13 +4960,16 @@ window.Laya=(function(window,document){
 		/***@private */
 		__proto.drawTexture2=function(x,y,pivotX,pivotY,m,alpha,blendMode,args2){
 			'use strict';
+			var tex=args2[0];
+			if (!(tex.loaded && tex.bitmap && tex.source)){
+				return;
+			}
 			Stat.drawCall++;
 			var alphaChanged=alpha!==1;
 			if (alphaChanged){
 				var temp=this.globalAlpha;
 				this.globalAlpha *=alpha;
 			};
-			var tex=args2[0];
 			var uv=tex.uv,w=tex.bitmap.width,h=tex.bitmap.height;
 			if (m){
 				this.save();
@@ -5621,7 +5423,7 @@ window.Laya=(function(window,document){
 			Browser.userAgent=/*[SAFE]*/ Browser.window.navigator.userAgent;
 			Browser.u=/*[SAFE]*/ Browser.userAgent;
 			Browser.onIOS=/*[SAFE]*/ !!Browser.u.match(/\(i[^;]+;(U;)? CPU.+Mac OS X/);
-			Browser.onMobile=/*[SAFE]*/ !!Browser.u.match(/AppleWebKit.*Mobile.*/);
+			Browser.onMobile=/*[SAFE]*/ Browser.u.indexOf("Mobile")>-1;
 			Browser.onIPhone=/*[SAFE]*/ Browser.u.indexOf("iPhone")>-1;
 			Browser.onIPad=/*[SAFE]*/ Browser.u.indexOf("iPad")>-1;
 			Browser.onAndriod=/*[SAFE]*/ Browser.u.indexOf('Android')>-1 || Browser.u.indexOf('Adr')>-1;
@@ -6100,10 +5902,12 @@ window.Laya=(function(window,document){
 		}
 
 		/**
-		*获取此对象引用的 ArrayBuffer 。
+		*获取此对象的 ArrayBuffer数据,数据只包含有效数据部分 。
 		*/
 		__getset(0,__proto,'buffer',function(){
-			return this._u8d_.buffer;
+			var rstBuffer=this._d_.buffer;
+			if (rstBuffer.byteLength==this.length)return rstBuffer;
+			return rstBuffer.slice(0,this.length);
 		});
 
 		/**
@@ -6970,6 +6774,55 @@ window.Laya=(function(window,document){
 
 
 	/**
+	*<code>Mouse</code> 类用于控制鼠标光标。
+	*/
+	//class laya.utils.Mouse
+	var Mouse=(function(){
+		function Mouse(){}
+		__class(Mouse,'laya.utils.Mouse');
+		/**
+		*设置鼠标样式
+		*@param cursorStr
+		*例如auto move no-drop col-resize
+		*all-scroll pointer not-allowed row-resize
+		*crosshair progress e-resize ne-resize
+		*default text n-resize nw-resize
+		*help vertical-text s-resize se-resize
+		*inherit wait w-resize sw-resize
+		*
+		*/
+		__getset(1,Mouse,'cursor',function(){
+			return Mouse._style.cursor;
+			},function(cursorStr){
+			Mouse._style.cursor=cursorStr;
+		});
+
+		Mouse.hide=function(){
+			if (Mouse.cursor !="none"){
+				Mouse._preCursor=Mouse.cursor;
+				Mouse.cursor="none";
+			}
+		}
+
+		Mouse.show=function(){
+			if (Mouse.cursor=="none"){
+				if (Mouse._preCursor){
+					Mouse.cursor=Mouse._preCursor;
+					}else{
+					Mouse.cursor="auto";
+				}
+			}
+		}
+
+		Mouse._preCursor=null
+		__static(Mouse,
+		['_style',function(){return this._style=Browser.document.body.style;}
+		]);
+		return Mouse;
+	})()
+
+
+	/**
 	*<code>Pool</code> 是对象池类，用于对象的存贮、重复使用。
 	*/
 	//class laya.utils.Pool
@@ -6978,6 +6831,10 @@ window.Laya=(function(window,document){
 		__class(Pool,'laya.utils.Pool');
 		Pool.getPoolBySign=function(sign){
 			return Pool._poolDic[sign] || (Pool._poolDic[sign]=[]);
+		}
+
+		Pool.clearBySign=function(sign){
+			if (Pool._poolDic[sign])Pool._poolDic[sign].length=0;
 		}
 
 		Pool.recover=function(sign,item){
@@ -7539,14 +7396,15 @@ window.Laya=(function(window,document){
 		__proto._create=function(target,props,duration,ease,complete,delay,coverBefore,isTo,usePool,runNow){
 			if (!target)throw new Error("Tween:target is null");
 			this._target=target;
-			this._duration=duration;
-			this._ease=ease || Tween.easeNone;
-			this._complete=complete;
+			this._duration=duration||props.duration||0;
+			this._ease=ease || props.ease || Tween.easeNone;
+			this._complete=complete || props.complete;
 			this._delay=delay;
 			this._props=[];
 			this._usedTimer=0;
 			this._startTimer=Browser.now();
 			this._usedPool=usePool;
+			this.update=props.update;
 			var gid=(target.$_GID || (target.$_GID=Utils.getGID()));
 			if (!Tween.tweenMap[gid]){
 				Tween.tweenMap[gid]=[this];
@@ -8491,10 +8349,6 @@ window.Laya=(function(window,document){
 		__proto.render=function(sprite,context,x,y){
 			var w=sprite.width;
 			var h=sprite.height;
-			if ('typeset' in sprite){
-				w+=sprite['padding'][1]+sprite['padding'][3];
-				h+=sprite['padding'][0]+sprite['padding'][2];
-			}
 			x-=sprite.pivotX;
 			y-=sprite.pivotY;
 			this._bgground && this._bgground.color !=null && context.ctx.fillRect(x,y,w,h,this._bgground.color);
@@ -10804,7 +10658,7 @@ window.Laya=(function(window,document){
 		*/
 		__proto.to=function(target,props,duration,ease,offset){
 			(offset===void 0)&& (offset=0);
-			this._create(target,props,duration,ease,offset,true);
+			return this._create(target,props,duration,ease,offset,true);
 		}
 
 		/**
@@ -10817,7 +10671,7 @@ window.Laya=(function(window,document){
 		*/
 		__proto.from=function(target,props,duration,ease,offset){
 			(offset===void 0)&& (offset=0);
-			this._create(target,props,duration,ease,offset,false);
+			return this._create(target,props,duration,ease,offset,false);
 		}
 
 		/**@private */
@@ -10835,6 +10689,7 @@ window.Laya=(function(window,document){
 			this._tweenDataList.push(tTweenData);
 			this._startTimeSort=true;
 			this._endTimeSort=true;
+			return this;
 		}
 
 		/**
@@ -10850,6 +10705,7 @@ window.Laya=(function(window,document){
 			this._labelDic || (this._labelDic={});
 			this._labelDic[label]=tTweenData;
 			this._tweenDataList.push(tTweenData);
+			return this;
 		}
 
 		/**
@@ -11140,6 +10996,16 @@ window.Laya=(function(window,document){
 			this._total=Math.floor(this._startTime / 1000 *this._frameRate);
 			return this._total;
 		});
+
+		TimeLine.to=function(target,props,duration,ease,offset){
+			(offset===void 0)&& (offset=0);
+			return (new TimeLine()).to(target,props,duration,ease,offset);
+		}
+
+		TimeLine.from=function(target,props,duration,ease,offset){
+			(offset===void 0)&& (offset=0);
+			return (new TimeLine()).from(target,props,duration,ease,offset);
+		}
 
 		TimeLine.__init$=function(){
 			//class tweenData
@@ -12703,22 +12569,25 @@ window.Laya=(function(window,document){
 			this.index=start;
 			this.loop=loop;
 			if (this.interval > 0){
-				this._index++;
 				this.timerLoop(this.interval,this,this._frameLoop,null,true);
 			}
 		}
 
 		/**@private */
 		__proto._frameLoop=function(){
-			this.index=this._index,this._index++;
+			this._index++;
 			if (this._index >=this._count){
-				if (this.loop)this._index=0;
-				else {
+				if (this.loop){
+					this._index=0;
+					this.event(/*laya.events.Event.COMPLETE*/"complete");
+					}else {
 					this._index--;
 					this.stop();
+					this.event(/*laya.events.Event.COMPLETE*/"complete");
+					return;
 				}
-				this.event(/*laya.events.Event.COMPLETE*/"complete");
 			}
+			this.index=this._index;
 		}
 
 		/**@private */
@@ -12766,7 +12635,7 @@ window.Laya=(function(window,document){
 		*/
 		__proto.removeLabel=function(label){
 			if (!label)this._labels=null;
-			else if (!this._labels){
+			else if (this._labels){
 				for (var name in this._labels){
 					if (this._labels[name]===label){
 						delete this._labels[name];
@@ -13675,6 +13544,7 @@ window.Laya=(function(window,document){
 			this._bgColor="black";
 			this._mouseMoveTime=0;
 			this._renderCount=0;
+			this._safariOffsetY=0;
 			Stage.__super.call(this);
 			this.offset=new Point();
 			this._canvasTransform=new Matrix();
@@ -13690,28 +13560,39 @@ window.Laya=(function(window,document){
 				_this.event(/*laya.events.Event.BLUR*/"blur");
 				if (_this._isInputting())Input["inputElement"].target.focus=false;
 			});
-			window.document.addEventListener("visibilitychange",function(){
-				switch (Browser.document.visibilityState){
-					case "hidden":
-						_this.event(/*laya.events.Event.BLUR*/"blur");
-						if (_this._isInputting())Input["inputElement"].target.focus=false;
-						break ;
-					case "visible":
-						_this.event(/*laya.events.Event.FOCUS*/"focus");
-						break ;
-					}
-			});
+			var hidden="hidden",state="visibilityState",visibilityChange="visibilitychange";
+			var document=window.document;
+			if (typeof document.hidden!=="undefined"){
+				visibilityChange="visibilitychange";
+				state="visibilityState";
+				}else if (typeof document.mozHidden!=="undefined"){
+				visibilityChange="mozvisibilitychange";
+				state="mozVisibilityState";
+				}else if (typeof document.msHidden!=="undefined"){
+				visibilityChange="msvisibilitychange";
+				state="msVisibilityState";
+				}else if (typeof document.webkitHidden!=="undefined"){
+				visibilityChange="webkitvisibilitychange";
+				state="webkitVisibilityState";
+			}
+			window.document.addEventListener(visibilityChange,visibleChangeFun);
+			function visibleChangeFun (){
+				if (Browser.document[state]=="hidden"){
+					_this.event(/*laya.events.Event.BLUR*/"blur");
+					if (_this._isInputting())Input["inputElement"].target.focus=false;
+					}else {
+					_this.event(/*laya.events.Event.FOCUS*/"focus");
+				}
+			}
 			window.addEventListener("resize",function(){
 				if (_this._isInputting())return;
-				if(Browser.onSafari)
-					Render.canvas.style.top=Browser.document.body.clientHeight-Browser.window.innerHeight+'px';
+				if (Browser.onSafari)
+					_this._safariOffsetY=(Browser.document.body.clientHeight || Browser.document.documentElement.clientHeight)-Browser.window.innerHeight;
 				_this._resetCanvas();
-				Laya.timer.once(100,_this,_this._changeCanvasSize);
 			});
 			window.addEventListener("orientationchange",function(e){
 				if (_this._isInputting())Input["inputElement"].target.focus=false;
 				_this._resetCanvas();
-				Laya.timer.once(100,_this,_this._changeCanvasSize);
 			});
 			this.on(/*laya.events.Event.MOUSE_MOVE*/"mousemove",this,this._onmouseMove);
 		}
@@ -13745,6 +13626,7 @@ window.Laya=(function(window,document){
 			canvas.size(1,1);
 			canvasStyle.transform=canvasStyle.webkitTransform=canvasStyle.msTransform=canvasStyle.mozTransform=canvasStyle.oTransform="";
 			this.renderingEnabled=false;
+			Laya.timer.once(100,this,this._changeCanvasSize);
 		}
 
 		/**
@@ -13834,6 +13716,7 @@ window.Laya=(function(window,document){
 			}
 			this.offset.x+=this._offset.x;
 			this.offset.y+=this._offset.y;
+			canvasStyle.top=this._safariOffsetY+"px";
 			mat.translate(this.offset.x,this.offset.y);
 			if (rotation){
 				if (this._screenMode==="horizontal"){
@@ -14359,7 +14242,6 @@ window.Laya=(function(window,document){
 			this.index=start;
 			this.loop=loop;
 			if (this._frames && this._frames.length > 1 && this.interval > 0){
-				this._index++;
 				this.timerLoop(this.interval,this,this._frameLoop,null,true);
 			}
 		}
@@ -14480,7 +14362,7 @@ window.Laya=(function(window,document){
 			this._animationData=null;
 			FrameAnimation.__super.call(this);
 			if(FrameAnimation._sortIndexFun==null){
-				FrameAnimation._sortIndexFun=MathUtil.SortByKey("index",false,true);
+				FrameAnimation._sortIndexFun=MathUtil.sortByKey("index",false,true);
 			}
 		}
 
@@ -15120,7 +15002,7 @@ window.Laya=(function(window,document){
 		Input.__init__=function(){
 			Input._createInputElement();
 			if (Browser.onMobile){
-				Render.canvas.addEventListener("click",Input._popupInputMethod);
+				Browser.document.addEventListener("touchend",Input._popupInputMethod);
 			}
 		}
 

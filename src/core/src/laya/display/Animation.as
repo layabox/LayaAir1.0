@@ -1,5 +1,4 @@
 package laya.display {
-	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.utils.Handler;
 	
@@ -118,7 +117,6 @@ package laya.display {
 			this.index = start;
 			this.loop = loop;
 			if (this._frames && this._frames.length > 1 && this.interval > 0) {
-				_index++;
 				timerLoop(this.interval, this, _frameLoop, null, true);
 			}
 		}

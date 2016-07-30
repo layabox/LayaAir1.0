@@ -1,6 +1,4 @@
 package {
-	import laya.asyn.Asyn;
-	import laya.asyn.Deferred;
 	import laya.display.Graphics;
 	import laya.display.Input;
 	import laya.display.css.Font;
@@ -33,7 +31,7 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.0.3";
+		public static var version:String = "1.0.4";
 		
 		/**
 		 * 初始化引擎。
@@ -64,7 +62,6 @@ package {
 			pathName = pathName.charAt(2) == ':' ? pathName.substring(1) : pathName;
 			URL.rootPath = URL.basePath = URL.getPath(location.protocol == "file:" ? pathName : location.origin + pathName);
 
-			initAsyn();
 			//render = new Render(width, height);
 			render = new Render(50, 50);
 			stage.size(width, height);
@@ -76,29 +73,7 @@ package {
 			return Render.canvas;
 		}
 		
-		/**@private 初始化异步函数调用。 */
-		protected static function initAsyn():void {
-			Asyn.loadDo = function(url:String, type:String, d:Deferred):Deferred {
-				var l:Loader = new Loader();
-				if (d) {
-					l.once(Event.COMPLETE, null, function(data:*):void {
-						d.callback(data);
-					});
-					l.once(Event.ERROR, null, function(err:String):void {
-					});
-				}
-				l.load(url, type);
-				return d;
-			}
-			
-			Asyn.onceTimer = function(delay:int, d:Deferred):void {
-				Laya.timer.once(delay, d, d.callback);
-			}
-			Asyn.onceEvent = function(type:String, listener:*):void {
-				Laya.stage.once(type, null, listener);
-			}
-			Laya.timer.frameLoop(1, null, Asyn._loop_);
-		}
+		
 		
 		/**
 		 * 表示是否捕获全局错误并弹出提示。

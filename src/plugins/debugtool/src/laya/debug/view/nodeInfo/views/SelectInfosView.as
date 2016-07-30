@@ -8,6 +8,7 @@ package laya.debug.view.nodeInfo.views
 	import laya.debug.tools.DisControlTool;
 	import laya.debug.view.nodeInfo.menus.NodeMenu;
 	import laya.debug.view.nodeInfo.nodetree.SelectInfos;
+	import laya.ui.TextInput;
 	/**
 	 * ...
 	 * @author ww
@@ -27,6 +28,7 @@ package laya.debug.view.nodeInfo.views
 			if (!_I) _I = new SelectInfosView();
 			return _I;
 		}
+		public var showKeys:Array = [];
 		public var view:SelectInfos;
 		override public function createPanel():void
 		{
@@ -40,6 +42,29 @@ package laya.debug.view.nodeInfo.views
 			view.selectList.scrollBar.hide = true;
 			dis = null;
 			view.findBtn.on(Event.CLICK, this, onFindBtn);
+			fliterTxt = view.fliterTxt;
+			view.fliterTxt.on(Event.ENTER, this, onFliterTxtChange);
+			view.fliterTxt.on(Event.BLUR, this, onFliterTxtChange);
+		}
+		public var fliterTxt:TextInput;
+		private function onFliterTxtChange(e:Event):void {
+	
+			var key:String;
+			key = fliterTxt.text;
+			if (key == "")
+			{
+				if (showKeys.length != 0)
+				{
+					showKeys.length = 0;
+					fresh();
+				}
+				
+			}else
+			if (key != showKeys.join(","))
+			{
+				showKeys = key.split(",");
+				fresh();
+			}
 		}
 		private function onFindBtn():void
 		{
@@ -69,8 +94,17 @@ package laya.debug.view.nodeInfo.views
 			if (!node) return;
 			setSelectList([node]);
 		}
+		private var itemList:Array;
 		public function setSelectList(list:Array):void
 		{
+			itemList = list;
+			fresh();
+			//show();
+		}
+		public function fresh():void
+		{
+			var list:Array;
+			list = itemList;
 			if (!list || list.length < 1)
 			{
 				view.selectList.array = [];
@@ -86,12 +120,23 @@ package laya.debug.view.nodeInfo.views
 			{
 				tDis = list[i];
 				tData = { };
-				tData.label = ClassTool.getNodeClassAndName(tDis);
+				tData.label = getLabelTxt(tDis);
 				tData.path = tDis;
 				disList.push(tData);
 			}
 			view.selectList.array = disList;
-			//show();
+		}
+		public function getLabelTxt(item:Object):String
+		{
+			var rst:String;
+			rst = ClassTool.getNodeClassAndName(item);
+			var i:int, len:int;
+			len = showKeys.length;
+			for (i = 0; i < len; i++)
+			{
+				rst += "," + ObjectInfoView.getNodeValue(item,showKeys[i]);
+			}
+			return rst;
 		}
 	}
 

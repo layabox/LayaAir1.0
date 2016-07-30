@@ -49,7 +49,7 @@ package laya.ani {
 			return 1;
 		}
 		/**@private */
-		public static var LAYA_ANIMATION_VISION:String = "LAYAANIMATION:1.0.0";
+		public static var LAYA_ANIMATION_VISION:String = "LAYAANIMATION:1.0.1";
 		protected var _anis:Vector.<AnimationContent> = new Vector.<AnimationContent>;
 		protected var _aniMap:* = {};
 		protected var _publicExtData:ArrayBuffer;//公共扩展数据
@@ -59,6 +59,7 @@ package laya.ani {
 		protected var unfixedKeyframes:Vector.<KeyFramesContent>;
 		protected var unfixedLastAniIndex:int = -1;
 		protected var _loaded:Boolean = false;
+		protected var _aniVersion:String;
 		
 		public var _animationDatasCache:Array = [];
 		
@@ -73,10 +74,10 @@ package laya.ani {
 			var i:int, j:int, k:int, n:int, l:int;
 			var read:Byte = new Byte(data);
 			
-			var head:String = read.readUTFString();//LAYAANIMATION:1.0.0
+			_aniVersion = read.readUTFString();//LAYAANIMATION:1.0.0
 			//if (head != KeyframesAniTemplet.LAYA_ANIMATION_VISION)
 			//{
-			//trace("[Error] Version " + head + " The engine is inconsistent, update to the version " + KeyframesAniTemplet.LAYA_ANIMATION_VISION + " please.");
+			//trace("[Error] Version " + _aniVersion + " The engine is inconsistent, update to the version " + KeyframesAniTemplet.LAYA_ANIMATION_VISION + " please.");
 			//return;
 			//}
 			var aniClassName:String = read.readUTFString();//字符串(动画播放器类名，缺省为ANI)

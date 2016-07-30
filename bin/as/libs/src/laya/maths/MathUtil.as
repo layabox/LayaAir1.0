@@ -94,7 +94,7 @@ package laya.maths {
 		 * @param	b 待比较数字。
 		 * @return 如果a等于b 则值为0；如果b>a则值为1；如果b<则值为-1。
 		 */
-		public static function SortBigFirst(a:Number, b:Number):Number {
+		public static function sortBigFirst(a:Number, b:Number):Number {
 			if (a == b)
 				return 0;
 			return b > a ? 1 : -1;
@@ -106,7 +106,7 @@ package laya.maths {
 		 * @param	b 待比较数字。
 		 * @return 如果a等于b 则值为0；如果b>a则值为-1；如果b<则值为1。 
 		 */
-		public static function SortSmallFirst(a:Number, b:Number):Number {
+		public static function sortSmallFirst(a:Number, b:Number):Number {
 			if (a == b)
 				return 0;
 			return b > a ? -1 : 1;
@@ -118,7 +118,7 @@ package laya.maths {
 		 * @param	b 待比较元素。
 		 * @return b、a转化成数字的差值 (b-a)。
 		 */
-		public static function SortNumBigFirst(a:*, b:*):Number {
+		public static function sortNumBigFirst(a:*, b:*):Number {
 			return parseFloat(b) - parseFloat(a);
 		}
 		/**
@@ -127,7 +127,7 @@ package laya.maths {
 		 * @param	b 待比较元素。
 		 * @return a、b转化成数字的差值 (a-b)。
 		 */
-		public static function SortNumSmallFirst(a:*, b:*):Number {
+		public static function sortNumSmallFirst(a:*, b:*):Number {
 			return parseFloat(a) - parseFloat(b);
 		}
 		/**
@@ -137,17 +137,16 @@ package laya.maths {
 		 * @param	forceNum 如果值为true，则将排序的元素转为数字进行比较。
 		 * @return 排序函数。
 		 */
-		public static function SortByKey(key:String, bigFirst:Boolean = false, forceNum:Boolean = true):Function {
+		public static function sortByKey(key:String, bigFirst:Boolean = false, forceNum:Boolean = true):Function {
 			var _sortFun:Function;
 			if (bigFirst) {
-				_sortFun = forceNum ? SortNumBigFirst : SortBigFirst;
+				_sortFun = forceNum ? sortNumBigFirst : sortBigFirst;
 			} else {
-				_sortFun = forceNum ? SortNumSmallFirst : SortSmallFirst;
+				_sortFun = forceNum ? sortNumSmallFirst : sortSmallFirst;
 			}
 			return function(a:Object, b:Object):Number {
 				return _sortFun(a[key], b[key]);
-			};
-		
+			}		
 		}
 	}
 

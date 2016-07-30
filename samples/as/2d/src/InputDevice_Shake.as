@@ -1,11 +1,11 @@
 package 
 {
+	import laya.device.Shake;
 	import laya.display.Sprite;
 	import laya.display.Stage;
 	import laya.display.Text;
-	import laya.inputDevice.Shake;
+	import laya.events.Event;
 	import laya.utils.Browser;
-	import laya.utils.Handler;
 	/**
 	 * ...
 	 * @author Survivor
@@ -52,17 +52,13 @@ package
 		
 		private function startShake():void 
 		{
-			if (Shake.supported() == false)
-			{
-				alert("当前设备或浏览器不支持该功能");
-				return;
-			}
+			Shake.instance.start(5, 500);
+			Shake.instance.on(Event.CHANGE, this, onShake);
 			
-			Shake.start(5, 500, new Handler(this, callback));
 			console.text = '开始接收设备摇动\n';
 		}
 		
-		private function callback():void
+		private function onShake():void
 		{
 			shakeCount++;
 			
@@ -70,7 +66,7 @@ package
 			
 			if (shakeCount >= 3)
 			{
-				Shake.stop();
+				Shake.instance.stop();
 				
 				console.text += "停止接收设备摇动";
 			}

@@ -49,8 +49,30 @@ package laya.utils {
 		 * @param	ease		缓动类型
 		 * @param	offset		相对于上一个对象，偏移多长时间（单位：毫秒）。
 		 */
-		public function to(target:*, props:Object, duration:Number, ease:Function = null, offset:Number = 0):void {
-			_create(target, props, duration, ease, offset, true);
+		public static function to(target:*, props:Object, duration:Number, ease:Function = null, offset:Number = 0):TimeLine {
+			return (new TimeLine()).to(target, props, duration, ease, offset);
+		}
+		/**
+		 * 从 props 属性，缓动到当前状态。
+		 * @param	target		target 目标对象(即将更改属性值的对象)
+		 * @param	props		要控制对象的属性
+		 * @param	duration	对象TWEEN的时间
+		 * @param	ease		缓动类型
+		 * @param	offset		相对于上一个对象，偏移多长时间（单位：毫秒）
+		 */
+		public static function from(target:*, props:Object, duration:Number, ease:Function = null, offset:Number = 0):TimeLine {
+			return (new TimeLine()).from(target, props, duration, ease, offset);
+		}
+		/**
+		 * 控制一个对象，从当前点移动到目标点。
+		 * @param	target		要控制的对象。
+		 * @param	props		要控制对象的属性。
+		 * @param	duration	对象TWEEN的时间。
+		 * @param	ease		缓动类型
+		 * @param	offset		相对于上一个对象，偏移多长时间（单位：毫秒）。
+		 */
+		public function to(target:*, props:Object, duration:Number, ease:Function = null, offset:Number = 0):TimeLine {
+			return _create(target, props, duration, ease, offset, true);
 		}
 		
 		/**
@@ -61,12 +83,12 @@ package laya.utils {
 		 * @param	ease		缓动类型
 		 * @param	offset		相对于上一个对象，偏移多长时间（单位：毫秒）
 		 */
-		public function from(target:*, props:Object, duration:Number, ease:Function = null, offset:Number = 0):void {
-			_create(target, props, duration, ease, offset, false);
+		public function from(target:*, props:Object, duration:Number, ease:Function = null, offset:Number = 0):TimeLine {
+			return _create(target, props, duration, ease, offset, false);
 		}
 		
 		/** @private */
-		private function _create(target:*, props:Object, duration:Number, ease:Function, offset:Number, isTo:Boolean):void {
+		private function _create(target:*, props:Object, duration:Number, ease:Function, offset:Number, isTo:Boolean):TimeLine {
 			var tTweenData:tweenData = new tweenData();
 			tTweenData.isTo = isTo;
 			tTweenData.type = 0;
@@ -80,6 +102,7 @@ package laya.utils {
 			_tweenDataList.push(tTweenData);
 			_startTimeSort = true;
 			_endTimeSort = true;
+			return this;
 		}
 		
 		/**
@@ -87,7 +110,7 @@ package laya.utils {
 		 * @param	label	标签名称。
 		 * @param	offset	标签相对于上个动画的偏移时间(单位：毫秒)。
 		 */
-		public function addLabel(label:String, offset:Number):void {
+		public function addLabel(label:String, offset:Number):TimeLine {
 			var tTweenData:tweenData = new tweenData();
 			tTweenData.type = 1;
 			tTweenData.data = label;
@@ -95,6 +118,7 @@ package laya.utils {
 			_labelDic || (_labelDic = {});
 			_labelDic[label] = tTweenData;
 			_tweenDataList.push(tTweenData);
+			return this;
 		}
 		
 		/**
@@ -399,9 +423,7 @@ package laya.utils {
 			_tweenDataList = null;
 			_firstTweenDic = null;
 		}
-	
 	}
-
 }
 
 class tweenData {

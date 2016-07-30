@@ -7,6 +7,7 @@ package laya.ani.bone {
 	import laya.ani.bone.Transform;
 	import laya.display.Graphics;
 	import laya.events.Event;
+	import laya.maths.Matrix;
 	import laya.resource.Texture;
 	import laya.utils.Byte;
 	
@@ -47,8 +48,11 @@ package laya.ani.bone {
 		public var isParseFail:Boolean = false;
 		/** 数据对应的URL，用来释放资源用 */
 		public var url:String;
+		/** 反转矩阵，有些骨骼动画要反转才能显示 */
+		public var yReverseMatrix:Matrix;
 		
 		private var _rate:int = 60;
+		
 		/**
 		 * 解析骨骼动画数据
 		 * @param	texture			骨骼动画用到的纹理
@@ -81,6 +85,11 @@ package laya.ani.bone {
 		 */
 		override public function parse(data:ArrayBuffer, playbackRate:int):void {
 			super.parse(data, playbackRate);
+			/*if (this._aniVersion != KeyframesAniTemplet.LAYA_ANIMATION_VISION)
+			{
+				trace("[Error] Version " + _aniVersion + " The engine is inconsistent, update to the version " + KeyframesAniTemplet.LAYA_ANIMATION_VISION + " please.");
+				_loaded = false;
+			}*/
 			//解析公共数据
 			if (_loaded) {
 				_parsePublicExtData();
@@ -95,7 +104,7 @@ package laya.ani.bone {
 		 * 解析自定义数据
 		 */
 		private function _parsePublicExtData():void {
-			var i:int = 0, j:int = 0, k:int = 0, n:int = 0;
+			var i:int = 0, j:int = 0, k:int = 0, l:int = 0, n:int = 0;
 			for (i = 0, n = getAnimationCount(); i < n; i++) {
 				_graphicsCache.push([]);
 			}
@@ -106,8 +115,18 @@ package laya.ani.bone {
 			var tTextureLen:int = tByte.getUint8();
 			var tTextureName:String = tByte.readUTFString();
 			var tTextureNameArr:Array = tTextureName.split("\n");
+			var tTexture:Texture;
+			//var tSrcTexturePath:String;
 			for (i = 0; i < tTextureLen; i++) {
-				tTextureName = tTextureNameArr[i];
+				if (this._aniVersion == "LAYAANIMATION:1.0.0")
+				{
+					tTextureName = tTextureNameArr[i];
+				}else if (this._aniVersion == "LAYAANIMATION:1.0.1")
+				{
+					//tSrcTexturePath = tTextureNameArr[i * 2];
+					tTextureName = tTextureNameArr[i * 2 + 1];
+				}
+				
 				tX = tByte.getFloat32();
 				tY = tByte.getFloat32();
 				tWidth = tByte.getFloat32();
@@ -160,27 +179,26 @@ package laya.ani.bone {
 				tDBBoneSlotArr.push(tDBBoneSlot);
 				boneSlotArray.push(tDBBoneSlot);
 			}
-			for (i = 0; i < boneSlotArray.length; i++) {
-				tDBBoneSlot = boneSlotArray[i];
-			}
 			
 			var tNameString:String = tByte.readUTFString();
 			var tNameArray:Array = tNameString.split("\n");
 			var tNameStartIndex:int = 0;
 			
 			var tSkinDataLen:int = tByte.getUint8();
+			var tSkinData:SkinData, tSlotData:SlotData, tDisplayData:SkinSlotDisplayData;
+			var tSlotDataLen:int, tDisplayDataLen:int;
+			var tBoneLen:uint, tUvLen:uint, tWeightLen:uint, tTriangleLen:uint;
 			for (i = 0; i < tSkinDataLen; i++) {
-				var tSkinData:SkinData = new SkinData();
+				tSkinData = new SkinData();
 				tSkinData.name = tNameArray[tNameStartIndex++];
-				var tSlotDataLen:int = tByte.getUint8();
-				
+				tSlotDataLen = tByte.getUint8();
 				for (j = 0; j < tSlotDataLen; j++) {
-					var tSlotData:SlotData = new SlotData();
+					tSlotData = new SlotData();
 					tSlotData.name = tNameArray[tNameStartIndex++];
 					tDBBoneSlot = boneSlotDic[tSlotData.name];
-					var tDisplayDataLen:int = tByte.getUint8();
+					tDisplayDataLen = tByte.getUint8();
 					for (k = 0; k < tDisplayDataLen; k++) {
-						var tDisplayData:SkinSlotDisplayData = new SkinSlotDisplayData();
+						tDisplayData = new SkinSlotDisplayData();
 						tDisplayData.name = tNameArray[tNameStartIndex++];
 						tDisplayData.transform = new Transform();
 						tDisplayData.transform.scX = tByte.getFloat32();
@@ -190,8 +208,89 @@ package laya.ani.bone {
 						tDisplayData.transform.x = tByte.getFloat32();
 						tDisplayData.transform.y = tByte.getFloat32();
 						tSlotData.displayArr.push(tDisplayData);
+						if(this._aniVersion== "LAYAANIMATION:1.0.0")
+						{
+							tTexture = getTexture(tDisplayData.name);
+							if (tTexture)
+							{
+								tDisplayData.width = tTexture.sourceWidth;
+								tDisplayData.height = tTexture.sourceHeight;
+							}else {
+								tDisplayData.width = 0;
+								tDisplayData.height = 0;
+							}
+						}else if (this._aniVersion == "LAYAANIMATION:1.0.1")
+						{
+							tDisplayData.width = tByte.getFloat32();
+							tDisplayData.height = tByte.getFloat32();
+							tDisplayData.type = tByte.getUint8();
+							switch (tDisplayData.type) {
+							case 1: 
+								break;
+							case 0: 
+								tBoneLen = tByte.getUint16();
+								if (tBoneLen > 0) {
+									tDisplayData.bones = [];
+									for (l = 0; l < tBoneLen; l++) {
+										tDisplayData.bones.push(tByte.getUint16());
+									}
+								}
+								tUvLen = tByte.getUint16();
+								if (tUvLen > 0) {
+									tDisplayData.uvs = [];
+									for (l = 0; l < tUvLen; l++) {
+										tDisplayData.uvs.push(tByte.getFloat32());
+									}
+								}
+								tWeightLen = tByte.getUint16();
+								if (tWeightLen > 0) {
+									tDisplayData.weights = [];
+									for (l = 0; l < tWeightLen; l++) {
+										tDisplayData.weights.push(tByte.getFloat32());
+									}
+								}
+								tTriangleLen = tByte.getUint16();
+								if (tTriangleLen > 0) {
+									tDisplayData.triangles = [];
+									for (l = 0; l < tTriangleLen; l++) {
+										tDisplayData.triangles.push(tByte.getUint16());
+									}
+								}
+								break;
+							case 2: 
+								tBoneLen = tByte.getUint16();
+								tDisplayData.bones = [];
+								tDisplayData.uvs = [];
+								tDisplayData.weights = [];
+								tDisplayData.triangles = [];
+								for (l = 0; l < tBoneLen; l++) {
+									tDisplayData.bones.push(tByte.getUint16());
+								}
+								tUvLen = tByte.getUint16();
+								for (l = 0; l < tUvLen; l++) {
+									tDisplayData.uvs.push(tByte.getFloat32());
+								}
+								tWeightLen = tByte.getUint16();
+								for (l = 0; l < tWeightLen; l++) {
+									tDisplayData.weights.push(tByte.getFloat32());
+								}
+								tTriangleLen = tByte.getUint16();
+								for (l = 0; l < tTriangleLen; l++) {
+									tDisplayData.triangles.push(tByte.getUint16());
+								}
+								break;
+							}
+						}
 					}
 					tSkinData.slotArr.push(tSlotData);
+				}
+				if (this._aniVersion == "LAYAANIMATION:1.0.1")
+				{
+					var tReverse:uint = tByte.getUint8();
+					if (tReverse == 1)
+					{
+						yReverseMatrix = new Matrix(1, 0, 0, -1, 0, 0);
+					}
 				}
 				skinDic[tSkinData.name] = tSkinData;
 				skinDataArray.push(tSkinData);
@@ -215,7 +314,6 @@ package laya.ani.bone {
 		 * @param	skinIndex	皮肤的索引
 		 */
 		public function showSkinByIndex(boneSlotDic:Object, skinIndex:int):void {
-			
 			if (skinIndex < 0 && skinIndex >= skinDataArray.length) return;
 			var i:int, n:int;
 			var tBoneSlot:BoneSlot;
@@ -285,7 +383,7 @@ package laya.ani.bone {
 		/**
 		 * 预留
 		 */
-		public function destory():void {
+		public function destroy():void {
 			if (url) {
 				delete TEMPLET_DICTIONARY[url];
 			}

@@ -1,11 +1,10 @@
 package threeDimen.primaryStage {
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.component.animation.UVAnimations;
+	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.PhasorSpriter3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.camera.BaseCamera;
-	import laya.d3.core.camera.Camera;
 	import laya.d3.core.light.DirectionLight;
 	import laya.d3.core.light.LightSprite;
 	import laya.d3.core.light.PointLight;
@@ -61,14 +60,11 @@ package threeDimen.primaryStage {
 			
 			scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			scene.currentCamera = (scene.addChild(new Camera(new Viewport(0, 0, RenderState.clientWidth, RenderState.clientHeight), Math.PI / 3, 0, 0.1, 100))) as Camera;
+			scene.currentCamera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
 			scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.2));
 			scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			scene.currentCamera.clearColor = null;
 			var _this:D3Base_LightAndMaterialSample = this;
-			Laya.stage.on(Event.RESIZE, null, function():void {
-				(_this.scene.currentCamera as Camera).viewport = new Viewport(0, 0, RenderState.clientWidth, RenderState.clientHeight);
-			});
 			
 			directionLight = scene.addChild(new DirectionLight()) as DirectionLight;
 			directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);

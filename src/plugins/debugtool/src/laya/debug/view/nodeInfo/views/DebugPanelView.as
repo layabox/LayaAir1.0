@@ -50,6 +50,8 @@ package laya.debug.view.nodeInfo.views
 			view.minBtn.maxHandler = this.maxHandler;
 			view.minBtn.tar = view;
 			DisControlTool.setDragingItem(view.bg, view);
+			DisControlTool.setDragingItem(view.tab, view);
+			DisControlTool.setDragingItem(view.clearBtn, view);
 			clickSelectChange();
 			view.selectWhenClick.on(Event.CHANGE, this, clickSelectChange);
 			Notice.listen(DisplayHook.ITEM_CLICKED, this, itemClicked);

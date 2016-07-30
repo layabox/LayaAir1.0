@@ -25,7 +25,7 @@ package laya.d3.core {
 		protected static var _nameNumberCounter:int = 0;
 		
 		/**唯一标识ID。*/
-		protected var _id:int;
+		private var _id:int;
 		/**是否启用。*/
 		protected var _enable:Boolean;
 		/**图层蒙版。*/
@@ -144,6 +144,15 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * 更新组件update函数,重写此函数。
+		 */
+		public function _clearRenderObjects():void {
+		 throw new Error("未Override,请重载该属性！");
+		}
+		
+			
+		
+		/**
 		 * 更新组件update函数。
 		 * @param	state 渲染相关状态。
 		 */
@@ -206,6 +215,18 @@ package laya.d3.core {
 			(canView) && (_lateUpdateComponents(state));
 			_childs.length && _updateChilds(state);
 			state.worldTransformModifyID = preTransformID;
+		}
+		
+		override public function removeChildAt(index:int):Node {
+			var node:Node = getChildAt(index);
+			if (node) {
+				this._childs.splice(index, 1);
+				model && model.removeChild(node.model);
+				node.parent = null;
+				
+				(node as Sprite3D)._clearRenderObjects();
+			}
+			return node;
 		}
 		
 		/**
@@ -287,5 +308,6 @@ package laya.d3.core {
 			loader.once(Event.COMPLETE, null, onComp);
 			loader.load(url, Loader.TEXT);
 		}
+	
 	}
 }

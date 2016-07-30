@@ -24,7 +24,7 @@ package laya.d3.core.glitter {
 			return _templet;
 		}
 		
-		private function _clearRenderObjects():void {
+		override public  function _clearRenderObjects():void {
 			_renderObject.renderQneue.deleteRenderObj(_renderObject);
 		}
 		

@@ -17,12 +17,9 @@ module Material_NormalMap {
             var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
             scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
 
-            scene.currentCamera = (scene.addChild(new Laya.Camera(new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height), Math.PI / 3, 0, 0.1, 100))) as Laya.Camera;
+            scene.currentCamera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
             scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.6));
             scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-            Laya.stage.on(Laya.Event.RESIZE, null, function (): void {
-                (scene.currentCamera as Laya.Camera).viewport = new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height);
-            });
 
             scene.currentCamera.addComponent(CameraMoveScript);
 
@@ -39,7 +36,7 @@ module Material_NormalMap {
             this.loadModel("../../res/threeDimen/staticModel/lizard/lizard-eye_geo.lm", "../../res/threeDimen/staticModel/lizard/lizardeye_norm.png");
             this.loadModel("../../res/threeDimen/staticModel/lizard/lizard-rock_geo.lm", "../../res/threeDimen/staticModel/lizard/rock_norm.png");
 
-            Laya.timer.frameLoop(1, this, function (): void {
+            Laya.timer.frameLoop(1, this, () => {
                 this.root.transform.rotate(this.rotation, true);
             });
         }
@@ -52,14 +49,14 @@ module Material_NormalMap {
             var meshSprite: Laya.MeshSprite3D = this.root.addChild(new Laya.MeshSprite3D(mesh)) as Laya.MeshSprite3D;
 
             //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-            mesh.once(Laya.Event.LOADED, null, function (): void {
-                meshSprite.materials[0].once(Laya.Event.LOADED, null, function (): void {
+            mesh.once(Laya.Event.LOADED, null, () => {
+                meshSprite.materials[0].once(Laya.Event.LOADED, null, () => {
                     material = meshSprite.materials[0];
                     (material && normalTexture) && (material.normalTexture = normalTexture);
                 });
             });
 
-            Laya.loader.load(normalMapPath, Laya.Handler.create(null, function (texture: Laya.Texture): void {
+            Laya.loader.load(normalMapPath, Laya.Handler.create(null, (texture) => {
                 normalTexture = texture;
                 (material && normalTexture) && (material.normalTexture = normalTexture);
             }));

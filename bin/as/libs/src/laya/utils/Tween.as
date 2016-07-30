@@ -99,14 +99,15 @@ package laya.utils {
 		public function _create(target:*, props:Object, duration:int, ease:Function, complete:Handler, delay:int, coverBefore:Boolean, isTo:Boolean, usePool:Boolean, runNow:Boolean):Tween {
 			if (!target) throw new Error("Tween:target is null");
 			this._target = target;
-			this._duration = duration;
-			this._ease = ease || easeNone;
-			this._complete = complete;
+			this._duration = duration||props.duration||0;
+			this._ease = ease || props.ease || easeNone;
+			this._complete = complete || props.complete;
 			this._delay = delay;
 			this._props = [];
 			this._usedTimer = 0;
 			this._startTimer = Browser.now();
 			this._usedPool = usePool;
+			this.update = props.update;
 			
 			//判断是否覆盖			
 			//[IF-JS]var gid:int = (target.$_GID || (target.$_GID = Utils.getGID()));

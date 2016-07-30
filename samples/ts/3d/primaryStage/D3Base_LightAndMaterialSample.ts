@@ -35,15 +35,11 @@ module LightAndMaterialSample {
 
 			this.scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
-			this.scene.currentCamera = (this.scene.addChild(new Laya.Camera(new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height), Math.PI / 3, 0, 0.1, 100))) as Laya.Camera;
+			this.scene.currentCamera = (this.scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
 			this.scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.2));
 			this.scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			this.scene.currentCamera.clearColor = null;
             var _this = this;
-			Laya.stage.on(Laya.Event.RESIZE, null, () => {
-				(_this.scene.currentCamera as Laya.Camera).viewport = new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height);
-			});
-
 			this.directionLight = this.scene.addChild(new Laya.DirectionLight()) as Laya.DirectionLight;
 			this.directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
 			this.directionLight.specularColor = new Vector3(1.0, 1.0, 0.9);
@@ -74,13 +70,13 @@ module LightAndMaterialSample {
 
 			var grid = this.scene.addChild(new Laya.Sprite3D()) as Laya.Sprite3D;
 			//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-			grid.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite: Laya.Sprite3D): void {
+			grid.once(Laya.Event.HIERARCHY_LOADED, null, (sprite) => {
 				var meshSprite = sprite.getChildAt(0) as Laya.MeshSprite3D;
 				var mesh = meshSprite.mesh;
-				mesh.once(Laya.Event.LOADED, null, function (templet: Laya.BaseMesh): void {
+				mesh.once(Laya.Event.LOADED, null, (templet) => {
 					for (var i = 0; i < meshSprite.materials.length; i++) {
 						var material = meshSprite.materials[i];
-						material.once(Laya.Event.LOADED, null, function (): void {
+						material.once(Laya.Event.LOADED, null, () => {
 							material.diffuseColor = new Vector3(0.7, 0.7, 0.7);
 							material.specularColor = new Laya.Vector4(0.2, 0.2, 0.2, 32);
 						});

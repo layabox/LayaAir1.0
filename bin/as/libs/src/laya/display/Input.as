@@ -241,7 +241,7 @@ package laya.display
 			// 移动端通过画布的touchend调用focus
 			if (Browser.onMobile)
 			{
-				Render.canvas.addEventListener("click", _popupInputMethod);
+				Browser.document.addEventListener("touchend", _popupInputMethod);
 			}
 		}
 		

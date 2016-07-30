@@ -1,8 +1,8 @@
 package threeDimen.primaryStage {
 	import laya.d3.component.animation.SkinAnimations;
+	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.camera.Camera;
 	import laya.d3.core.material.Material;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
@@ -35,12 +35,9 @@ package threeDimen.primaryStage {
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			scene.shadingMode = BaseScene.PIXEL_SHADING;
 			
-			scene.currentCamera = (scene.addChild(new Camera(new Viewport(0, 0,RenderState.clientWidth, RenderState.clientHeight), Math.PI / 3, 0, 0.1, 100))) as Camera;
+			scene.currentCamera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
 			scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.5));
 			scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-			Laya.stage.on(Event.RESIZE, null, function():void {
-				(scene.currentCamera as Camera).viewport = new Viewport(0, 0, RenderState.clientWidth, RenderState.clientHeight);
-			});
 			
 			var sprit:Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;
 			

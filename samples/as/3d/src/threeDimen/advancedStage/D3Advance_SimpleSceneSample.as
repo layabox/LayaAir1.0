@@ -1,8 +1,8 @@
 package threeDimen.advancedStage {
+	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.TransformUV;
-	import laya.d3.core.camera.Camera;
 	import laya.d3.core.material.Material;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector2;
@@ -33,13 +33,11 @@ package threeDimen.advancedStage {
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			var camera:Camera = new Camera(new Viewport(0, 0, RenderState2D.width, RenderState2D.height), Math.PI / 3, 0, 0.1, 100);
+			var camera:Camera = new Camera(0, 0.1, 100);
+			
 			scene.currentCamera = (scene.addChild(camera)) as Camera;
 			scene.currentCamera.transform.translate(new Vector3(0.3, 0.3, 0.6));
 			scene.currentCamera.transform.rotate(new Vector3(-12, 0, 0), true, false);
-			Laya.stage.on(Event.RESIZE, null, function():void {
-				(scene.currentCamera as Camera).viewport = new Viewport(0, 0, RenderState2D.width, RenderState2D.height);
-			});
 			
 			scene.currentCamera.addComponent(CameraMoveScript);
 			

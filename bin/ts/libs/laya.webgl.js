@@ -11,11 +11,11 @@
 	var RunDriver=laya.utils.RunDriver,Sprite=laya.display.Sprite,Stat=laya.utils.Stat,StringKey=laya.utils.StringKey;
 	var Style=laya.display.css.Style,System=laya.system.System,Texture=laya.resource.Texture,Utils=laya.utils.Utils;
 	var WordText=laya.utils.WordText;
+	Laya.interface('laya.webgl.submit.ISubmit');
+	Laya.interface('laya.webgl.text.ICharSegment');
 	Laya.interface('laya.webgl.shapes.IShape');
 	Laya.interface('laya.webgl.canvas.save.ISaveData');
-	Laya.interface('laya.webgl.submit.ISubmit');
 	Laya.interface('laya.webgl.resource.IMergeAtlasBitmap');
-	Laya.interface('laya.webgl.text.ICharSegment');
 	Laya.interface('laya.filters.IFilterActionGL','laya.filters.IFilterAction');
 	//class laya.filters.webgl.FilterActionGL
 	var FilterActionGL=(function(){

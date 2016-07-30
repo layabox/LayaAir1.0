@@ -69,7 +69,7 @@ package laya.ani.swf {
 		public var interval:int = 30;
 		/**是否循环播放 */
 		public var loop:Boolean;
-		
+
 		/**
 		 * 创建一个 <code>MovieClip</code> 实例。
 		 */
@@ -107,7 +107,7 @@ package laya.ani.swf {
 			var i:int, len:int;
 			len = _movieClipList.length;
 			for (i = 0; i < len; i++) {
-				_movieClipList[i]._update();
+				_movieClipList[i]&&_movieClipList[i]._update();
 			}
 		}
 		
@@ -218,9 +218,9 @@ package laya.ani.swf {
 		 */
 		public function play(index:int = 0, loop:Boolean = true):void {
 			this.loop = loop;
-			if (_data)
-				_displayFrame(index);
 			_playing = true;
+			if (_data)
+				_displayFrame(index);		
 		}
 		
 		/**@private */
@@ -247,7 +247,11 @@ package laya.ani.swf {
 			_data.pos = _Pos;
 			_ended = false;
 			_playIndex = frameIndex;
-			if (_curIndex > frameIndex) _curIndex = -1;
+			if (_curIndex > frameIndex)
+			{
+				_curIndex = -1;
+				_data.pos = _Pos=_start;
+			} 
 			while ((_curIndex <= frameIndex) && (!_ended)) {
 				type = _data.getUint16();
 				switch (type) {
@@ -338,6 +342,7 @@ package laya.ani.swf {
 						event(Event.END);
 						event(Event.COMPLETE);
 					}
+					
 					_reset(false);
 					break;
 				}
@@ -387,7 +392,8 @@ package laya.ani.swf {
 			_ended = false;
 			var preState:Boolean = _playing;
 			_playing = false;
-			while (!_ended) _parse(++_playIndex);
+			_curIndex = 0;
+			while (!_ended) _parse(++_curIndex);
 			_playing = preState;
 		}
 		
@@ -398,7 +404,7 @@ package laya.ani.swf {
 			for (i = 0; i < len; i++) _ids[_data.getInt16()] = _data.getInt32();
 			interval = 1000 / _data.getUint16();
 			_setData(_data, _ids[32767]);
-			_initState();
+			_initState();	
 			play(0);
 			event(Event.LOADED);
 			if (!_parentMovieClip) Laya.timer.loop(this.interval, this, updates, null, true);

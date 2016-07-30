@@ -12,7 +12,6 @@ package laya.ani.bone {
 	import laya.utils.Browser;
 	import laya.utils.Handler;
 	
-	
 	/**动画开始播放调度。
 	 * @eventType Event.PLAYED
 	 * */
@@ -60,6 +59,9 @@ package laya.ani.bone {
 		private var _texturePath:String;
 		private var _complete:Handler;
 		private var _loadAniMode:int;
+		
+		private var _yReverseMatrix:Matrix;
+		
 		/**
 		 * 创建一个Skeleton对象
 		 * 0,使用模板缓冲的数据，模板缓冲的数据，不允许修改					（内存开销小，计算开销小，不支持换装）
@@ -88,6 +90,7 @@ package laya.ani.bone {
 					_graphicsCache.push([]);
 				}
 			}
+			_yReverseMatrix = templet.yReverseMatrix;
 			_aniMode = aniMode;
 			_templet = templet;
 			_player = new AnimationPlayer(templet.rate);
@@ -103,8 +106,7 @@ package laya.ani.bone {
 		/**
 		 * 得到资源的URL
 		 */
-		public function get url():String
-		{
+		public function get url():String {
 			return _aniPath;
 		}
 		
@@ -121,8 +123,7 @@ package laya.ani.bone {
 		 * @param	complete	加载完成的回调函数
 		 * @param	aniMode		 0,使用模板缓冲的数据，模板缓冲的数据，不允许修改（内存开销小，计算开销小，不支持换装） 1,使用动画自己的缓冲区，每个动画都会有自己的缓冲区，相当耗费内存	（内存开销大，计算开销小，支持换装）2,使用动态方式，去实时去画（内存开销小，计算开销大，支持换装,不建议使用）
 		 */
-		public function load(path:String,complete:Handler=null,aniMode:int = 0):void
-		{
+		public function load(path:String, complete:Handler = null, aniMode:int = 0):void {
 			_aniPath = path;
 			_complete = complete;
 			_loadAniMode = aniMode;
@@ -137,16 +138,14 @@ package laya.ani.bone {
 			var tTexture:Texture = Loader.getRes(_texturePath);
 			var arraybuffer:ArrayBuffer = Loader.getRes(_aniPath);
 			if (tTexture == null || arraybuffer == null) return;
-			if (Templet.TEMPLET_DICTIONARY == null)
-			{
-				Templet.TEMPLET_DICTIONARY = { };
+			if (Templet.TEMPLET_DICTIONARY == null) {
+				Templet.TEMPLET_DICTIONARY = {};
 			}
 			var tFactory:Templet;
 			tFactory = Templet.TEMPLET_DICTIONARY[_aniPath];
-			if (tFactory)
-			{
-				tFactory.isParseFail ? _parseFail():_parseComplete();
-			}else {
+			if (tFactory) {
+				tFactory.isParseFail ? _parseFail() : _parseComplete();
+			} else {
 				tFactory = new Templet();
 				tFactory.url = _aniPath;
 				Templet.TEMPLET_DICTIONARY[_aniPath] = tFactory;
@@ -159,11 +158,9 @@ package laya.ani.bone {
 		/**
 		 * 解析完成
 		 */
-		private function _parseComplete():void
-		{
+		private function _parseComplete():void {
 			var tTemple:Templet = Templet.TEMPLET_DICTIONARY[_aniPath];
-			if (tTemple)
-			{
+			if (tTemple) {
 				init(tTemple, _loadAniMode);
 				play(0, true);
 			}
@@ -173,9 +170,8 @@ package laya.ani.bone {
 		/**
 		 * 解析失败
 		 */
-		private function _parseFail():void
-		{
-			trace("[Error]:"+_aniPath + "解析失败");
+		private function _parseFail():void {
+			trace("[Error]:" + _aniPath + "解析失败");
 		}
 		
 		/**
@@ -238,13 +234,11 @@ package laya.ani.bone {
 		 */
 		private function _update(autoKey:Boolean = true):void {
 			if (_pause) return;
-			if (autoKey && _indexControl)
-			{
+			if (autoKey && _indexControl) {
 				return;
 			}
 			var tCurrTime:Number = Laya.timer.currTimer;
-			if (autoKey)
-			{
+			if (autoKey) {
 				_player.update(tCurrTime - _lastTime);
 			}
 			_lastTime = tCurrTime;
@@ -279,7 +273,6 @@ package laya.ani.bone {
 			var tParentMatrix:Matrix;//父骨骼矩阵的引用
 			var tResultMatrix:Matrix;//保证骨骼计算的最终结果
 			var tStartIndex:int = 0;
-			
 			var i:int = 0, j:int = 0, k:int = 0, n:int = 0;
 			var tDBBoneSlot:BoneSlot;
 			var tDBBoneSlotArr:Array;
@@ -303,8 +296,14 @@ package laya.ani.bone {
 					tParentMatrix = _boneMatrixArray[tBone.parentIndex];
 					Matrix.mul(tTempMatrix, tParentMatrix, tResultMatrix);
 				} else {
-					tTempMatrix.copyTo(tResultMatrix);
+					if (_yReverseMatrix)
+					{
+						Matrix.mul(tTempMatrix, _yReverseMatrix, tResultMatrix);
+					}else {
+						tTempMatrix.copyTo(tResultMatrix);
+					}
 				}
+				
 				tDBBoneSlotArr = _bindBoneBoneSlotDic[tBone.name];
 				if (tDBBoneSlotArr) {
 					for (j = 0, n = tDBBoneSlotArr.length; j < n; j++) {
@@ -319,8 +318,9 @@ package laya.ani.bone {
 			//对插槽进行插值计算
 			var tSlotDic:Object = {};
 			var tSlotAlphaDic:Object = {};
+			var tBoneData:*;
 			for (; i < bones.length; i++) {
-				var tBoneData:* = bones[i];
+				tBoneData = bones[i];
 				tSlotDic[tBoneData.name] = _curOriginalData[tStartIndex++];
 				tSlotAlphaDic[tBoneData.name] = _curOriginalData[tStartIndex++];
 				//预留
@@ -339,6 +339,7 @@ package laya.ani.bone {
 			tGraphics = this.graphics;
 			var tSlotData2:Number;
 			var tSlotData3:Number;
+			
 			//把动画按插槽顺序画出来
 			for (i = 0, n = _boneSlotArray.length; i < n; i++) {
 				tDBBoneSlot = _boneSlotArray[i];
@@ -351,7 +352,7 @@ package laya.ani.bone {
 				if (!isNaN(tSlotData2)) {
 					tDBBoneSlot.showDisplayByIndex(tSlotData2);
 				}
-				tDBBoneSlot.draw(tGraphics, _aniMode == 2);
+				tDBBoneSlot.draw(tGraphics, _boneMatrixArray, _aniMode == 2);
 				if (!isNaN(tSlotData3)) {
 					tGraphics.restore();
 						//tGraphics.alpha(1 / tSlotData3);
@@ -565,7 +566,8 @@ package laya.ani.bone {
 		/**
 		 * 销毁当前动画
 		 */
-		public function destory():void {
+		override public function destroy(destroyChild:Boolean = true):void {
+			super.destroy(destroyChild);
 			_templet = null;//动画解析器
 			_player.offAll();
 			_player = null;// 播放器
@@ -588,8 +590,7 @@ package laya.ani.bone {
 		 * 设置帧索引
 		 */
 		public function set index(value:int):void {
-			if (player)
-			{
+			if (player) {
 				_index = value;
 				_player.currentTime = _index * 1000 / _player.cacheFrameRate;
 				_indexControl = true;
@@ -601,10 +602,9 @@ package laya.ani.bone {
 		 * 得到总帧数据
 		 */
 		public function get total():int {
-			if (_templet && _player)
-			{
-				_total = Math.floor(_templet.getAniDuration(_player.currentAnimationClipIndex) / 1000 * 60);
-			}else {
+			if (_templet && _player) {
+				_total = Math.floor(_templet.getAniDuration(_player.currentAnimationClipIndex) / 1000 * _player.cacheFrameRate);
+			} else {
 				_total = -1;
 			}
 			return _total;
@@ -613,8 +613,7 @@ package laya.ani.bone {
 		/**
 		 * 得到播放器的引用
 		 */
-		public function get player():AnimationPlayer
-		{
+		public function get player():AnimationPlayer {
 			return _player;
 		}
 	}

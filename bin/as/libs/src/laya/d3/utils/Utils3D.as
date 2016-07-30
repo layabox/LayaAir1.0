@@ -2,6 +2,7 @@ package laya.d3.utils {
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.Material;
+	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexPositionNormalColorSkinTangent;
@@ -480,6 +481,19 @@ package laya.d3.utils {
 			result[resultOffset + 0] = vectorElem[0] * vectorElem[3];
 			result[resultOffset + 1] = vectorElem[1] * vectorElem[3];
 			result[resultOffset + 2] = vectorElem[2] * vectorElem[3];
+		}
+		
+		/**
+		 * 转换3D坐标系统到2D坐标系统，以像素为单位,通常用于正交投影下的3D坐标（（0，0）在屏幕中心）到2D屏幕坐标（（0，0）在屏幕左上角）的转换。
+		 * @param	source 源坐标。
+		 * @param	out 输出坐标。
+		 */
+		public static function convert3DCoordTo2DScreenCoord(source:Vector3, out:Vector3):void {
+		  var se:Array = source.elements;
+		  var oe:Array = out.elements;
+		  oe[0] = -RenderState.clientWidth/2+se[0];
+		  oe[1] = RenderState.clientHeight/2-se[1];
+		  oe[2] = se[2];
 		}
 	
 	}

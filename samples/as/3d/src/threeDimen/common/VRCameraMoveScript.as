@@ -3,9 +3,7 @@ package threeDimen.common {
 	import laya.d3.component.Component3D;
 	import laya.d3.component.animation.CameraAnimations;
 	import laya.d3.component.Script;
-	import laya.d3.core.camera.BaseCamera;
-	import laya.d3.core.camera.Camera;
-	import laya.d3.core.camera.VRCamera;
+	import laya.d3.core.VRCamera;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.core.Sprite3D;

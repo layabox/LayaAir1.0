@@ -78,7 +78,7 @@ package laya.utils {
 			userAgent = /*[STATIC SAFE]*/ window.navigator.userAgent;
 			u = /*[STATIC SAFE]*/ userAgent;
 			onIOS = /*[STATIC SAFE]*/ !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/);
-			onMobile = /*[STATIC SAFE]*/ !!u.match(/AppleWebKit.*Mobile.*/);
+			onMobile = /*[STATIC SAFE]*/ u.indexOf("Mobile") > -1;
 			onIPhone = /*[STATIC SAFE]*/ u.indexOf("iPhone") > -1;
 			onIPad = /*[STATIC SAFE]*/ u.indexOf("iPad") > -1;
 			onAndriod = /*[STATIC SAFE]*/ u.indexOf('Android') > -1 || u.indexOf('Adr') > -1;

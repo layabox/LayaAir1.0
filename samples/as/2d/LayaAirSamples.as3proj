@@ -16,7 +16,12 @@
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
     <class path="src" />
-    <class path="..\..\..\bin\as\libs\src" />
+    <class path="R:\Repository\Lib-LayaAir\core\src" />
+    <class path="..\..\..\..\..\plugins\device\src" />
+    <class path="R:\Repository\Lib-LayaAir\core\jsc" />
+    <class path="..\..\..\..\..\ui\src" />
+    <class path="..\..\..\..\..\plugins\flash\src" />
+    <class path="..\..\..\..\..\webGL\src" />
   </classpaths>
   <!-- Build options -->
   <build>
@@ -73,7 +78,7 @@
   </library>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
-    <compile path="src\Particle_T2.as" />
+    <compile path="src\Filters_Color.as" />
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

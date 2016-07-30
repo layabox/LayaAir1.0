@@ -9,6 +9,11 @@ package laya.d3.utils {
 	 * <code>Picker</code> 类用于创建拾取。
 	 */
 	public class Picker {
+		private static var _tempVector30:Vector3 = new Vector3();
+		private static var _tempVector31:Vector3 = new Vector3();
+		private static var _tempVector32:Vector3 = new Vector3();
+		private static var _tempVector33:Vector3 = new Vector3();
+		private static var _tempVector34:Vector3 = new Vector3();
 		
 		/**
 		 * 创建一个 <code>Picker</code> 实例。
@@ -23,43 +28,88 @@ package laya.d3.utils {
 		 * @param	projectionMatrix 透视投影矩阵。
 		 * @param	viewMatrix 视图矩阵。
 		 * @param	world 世界偏移矩阵。
-		 * @return    生成射线。
+		 * @return  out  输出射线。
 		 */
-		public static function CalculateCursorRay(point:Vector2, viewPort:Viewport, projectionMatrix:Matrix4x4, viewMatrix:Matrix4x4, world:Matrix4x4):Ray {
+		public static function calculateCursorRay(point:Vector2, viewPort:Viewport, projectionMatrix:Matrix4x4, viewMatrix:Matrix4x4, world:Matrix4x4, out:Ray):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var x:Number = point.elements[0];
 			var y:Number = point.elements[1];
-			var nearSource:Vector3 = new Vector3(x, y, viewPort.minDepth);
-			var farSource:Vector3 = new Vector3(x, y, viewPort.maxDepth);
 			
-			var nearPoint:Vector3 = viewPort.unprojectFromWVP(nearSource, projectionMatrix, viewMatrix, world);
-			var farPoint:Vector3 = viewPort.unprojectFromWVP(farSource, projectionMatrix, viewMatrix, world);
+			var nearSource:Vector3 = _tempVector30;
+			var nerSourceE:Float32Array = nearSource.elements;
+			nerSourceE[0] = x;
+			nerSourceE[1] = y;
+			nerSourceE[2] = viewPort.minDepth;
 			
-			var direction:Vector3 = new Vector3(farPoint.x - nearPoint.x, farPoint.y - nearPoint.y, farPoint.z - nearPoint.z);
-			Vector3.normalize(direction, direction);
+			var farSource:Vector3 = _tempVector31;
+			var farSourceE:Vector3 = farSource.elements;
+			farSourceE[0] = x;
+			farSourceE[1] = y;
+			farSourceE[2] = viewPort.maxDepth;
 			
-			return new Ray(nearPoint, direction);
+			var nearPoint:Vector3 = out.origin;
+			var farPoint:Vector3 = _tempVector32;
+			
+			viewPort.unprojectFromWVP(nearSource, projectionMatrix, viewMatrix, world, nearPoint);
+			viewPort.unprojectFromWVP(farSource, projectionMatrix, viewMatrix, world, farPoint);
+			
+			var outDire:Float32Array = out.direction.elements;
+			outDire[0] = farPoint.x - nearPoint.x;
+			outDire[1] = farPoint.y - nearPoint.y;
+			outDire[2] = farPoint.z - nearPoint.z;
+			Vector3.normalize(out.direction, out.direction);
 		}
 		
 		/**
-		 * 计算射线和三角形碰撞。
+		 * 计算射线和三角形碰撞并返回碰撞三角形和碰撞距离。
+		 * @param	ray 射线。
+		 * @param	positions 顶点数据。
+		 * @param	indices 索引数据。
+		 * @param	outVertex0 输出三角形顶点0。
+		 * @param	outVertex1 输出三角形顶点1。
+		 * @param	outVertex2 输出三角形顶点2。
+		 * @return   射线距离三角形的距离，返回Number.NaN则不相交。
+		 */
+		public static function rayIntersectsPositionsAndIndices(ray:Ray, positions:Vector.<Vector3>, indices:Uint16Array, outVertex0:Vector3, outVertex1:Vector3, outVertex2:Vector3):Number {
+			
+			var closestIntersection:Number = Number.MAX_VALUE;
+			for (var j:int = 0; j < indices.length; j += 3) {
+				var vertex1:Vector3 = positions[indices[j + 0]];
+				var vertex2:Vector3 = positions[indices[j + 1]];
+				var vertex3:Vector3 = positions[indices[j + 2]];
+				
+				var intersection:Number = Picker.rayIntersectsTriangle(ray, vertex1, vertex2, vertex3);
+				
+				if (!isNaN(intersection) && intersection < closestIntersection) {
+					closestIntersection = intersection;
+					vertex1.cloneTo(outVertex0);
+					vertex2.cloneTo(outVertex1);
+					vertex3.cloneTo(outVertex2);
+					
+				}
+			}
+			return closestIntersection;
+		}
+		
+		/**
+		 * 计算射线和三角形碰撞并返回碰撞距离。
 		 * @param	ray 射线。
 		 * @param	vertex1 顶点1。
 		 * @param	vertex2 顶点2。
 		 * @param	vertex3 顶点3。
 		 * @return   射线距离三角形的距离，返回Number.NaN则不相交。
 		 */
-		public static function RayIntersectsTriangle(ray:Ray, vertex1:Vector3, vertex2:Vector3, vertex3:Vector3):Number {
+		public static function rayIntersectsTriangle(ray:Ray, vertex1:Vector3, vertex2:Vector3, vertex3:Vector3):Number {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var result:Number;
 			// Compute vectors along two edges of the triangle.
-			var edge1:Vector3 = new Vector3(), edge2:Vector3 = new Vector3();
+			var edge1:Vector3 = _tempVector30, edge2:Vector3 = _tempVector31;
 			
 			Vector3.subtract(vertex2, vertex1, edge1);
 			Vector3.subtract(vertex3, vertex1, edge2);
 			
 			// Compute the determinant.
-			var directionCrossEdge2:Vector3 = new Vector3();
+			var directionCrossEdge2:Vector3 = _tempVector32;
 			Vector3.cross(ray.direction, edge2, directionCrossEdge2);
 			
 			var determinant:Number;
@@ -74,7 +124,7 @@ package laya.d3.utils {
 			var inverseDeterminant:Number = 1.0 / determinant;
 			
 			// Calculate the U parameter of the intersection point.
-			var distanceVector:Vector3 = new Vector3();
+			var distanceVector:Vector3 = _tempVector33;
 			Vector3.subtract(ray.origin, vertex1, distanceVector);
 			
 			var triangleU:Number;
@@ -88,7 +138,7 @@ package laya.d3.utils {
 			}
 			
 			// Calculate the V parameter of the intersection point.
-			var distanceCrossEdge1:Vector3 = new Vector3();
+			var distanceCrossEdge1:Vector3 = _tempVector34;
 			Vector3.cross(distanceVector, edge1, distanceCrossEdge1);
 			
 			var triangleV:Number;

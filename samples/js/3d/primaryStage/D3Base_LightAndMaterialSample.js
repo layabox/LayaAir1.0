@@ -29,13 +29,10 @@ loadUI();
 
 scene = Laya.stage.addChild(new Laya.Scene());
 
-scene.currentCamera = scene.addChild(new Laya.Camera(new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height), Math.PI / 3, 0, 0.1, 100));
+scene.currentCamera = scene.addChild(new Laya.Camera(0, 0.1, 100));
 scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.2));
 scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 scene.currentCamera.clearColor = null;
-Laya.stage.on(Laya.Event.RESIZE, null, function () {
-    scene.currentCamera.viewport = new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height);
-});
 
 directionLight = scene.addChild(new Laya.DirectionLight());
 directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);

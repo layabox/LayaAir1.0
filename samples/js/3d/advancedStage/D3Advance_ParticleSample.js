@@ -30,13 +30,10 @@ loadUI();
 
 var scene = Laya.stage.addChild(new Laya.Scene());
 
-scene.currentCamera = (scene.addChild(new Laya.Camera(new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height), Math.PI / 3, 0, 0.1, 100)));
+scene.currentCamera = (scene.addChild(new Laya.Camera( 0, 0.1, 100)));
 scene.currentCamera.transform.translate(new Vector3(0, 1, 2.6));
 scene.currentCamera.transform.rotate(new Vector3(-20, 0, 0), false, false);
 scene.currentCamera.clearColor = null;
-Laya.stage.on(Laya.Event.RESIZE, null, function () {
-    scene.currentCamera.viewport = new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height);
-});
 
 scene.currentCamera.addComponent(CameraMoveScript);
 

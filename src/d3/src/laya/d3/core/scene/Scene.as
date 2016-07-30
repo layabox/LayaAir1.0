@@ -1,5 +1,5 @@
 package laya.d3.core.scene {
-	import laya.d3.core.camera.Camera;
+	import laya.d3.core.Camera;
 	import laya.d3.core.render.RenderState;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;

@@ -146,7 +146,11 @@ package laya.flash {
 			var nsz:int = _vctBuff.length;// _byteLength / FLOAT32;
 			var count:int = nsz / _activeVStride;
 			
-			(ibBuffer as FlashIndexBuffer) .uploadByCount(count * 1.5 );
+			// River: 以下代码处理TriangleFan类的数据组织.
+			var idxCount : int = count * 1.5;
+			idxCount = idxCount - (idxCount % 3);
+			
+			(ibBuffer as FlashIndexBuffer) .uploadByCount( idxCount );
 			
 			_bind();
 			

@@ -14,11 +14,11 @@ package laya.debug.tools.resizer
 		{
 			
 		}
-		public static function setResizeAble(clickItem:Sprite, tar:Sprite):void
+		public static function setResizeAble(clickItem:Sprite, tar:Sprite,minWidth:int=150,minHeight:int=150):void
 		{
-			clickItem.on(Event.MOUSE_DOWN, null, onMouseDown,[tar]);
+			clickItem.on(Event.MOUSE_DOWN, null, onMouseDown,[tar,minWidth,minHeight]);
 		}
-		private static function onMouseDown(tar:Sprite,e:Event):void
+		private static function onMouseDown(tar:Sprite,minWidth:int,minHeight:int,e:Event):void
 		{
 			clearEvents();
 			if (!tar) return;
@@ -37,15 +37,17 @@ package laya.debug.tools.resizer
 			//preScale.setTo(2, 2);
 			//Laya.stage.on(Event.MOUSE_MOVE, null, onMouseMoving,[tar]);
 			Laya.stage.on(Event.MOUSE_UP, null, onMouseMoveEnd);
-			Laya.timer.loop(100, null, onMouseMoving, [tar]);
+			Laya.timer.loop(100, null, onMouseMoving, [tar,minWidth,minHeight]);
 		}
 		private static var preMousePoint:Point = new Point();
 		private static var preTarSize:Point = new Point();
 		private static var preScale:Point = new Point();
-		private static function onMouseMoving(tar:Sprite,e:Event):void
+		private static function onMouseMoving(tar:Sprite,minWidth:int,minHeight:int,e:Event):void
 		{
-			tar.width = (Laya.stage.mouseX - preMousePoint.x)/preScale.x + preTarSize.x;
-			tar.height = (Laya.stage.mouseY - preMousePoint.y)/preScale.y + preTarSize.y;
+			var tWidth:int = (Laya.stage.mouseX - preMousePoint.x) / preScale.x + preTarSize.x;
+			var tHeight:int=(Laya.stage.mouseY - preMousePoint.y)/preScale.y + preTarSize.y;
+			tar.width = tWidth > minWidth?tWidth:minWidth;
+			tar.height = tHeight>minHeight?tHeight:minHeight;
 		}
 		private static function onMouseMoveEnd(e:Event):void
 		{

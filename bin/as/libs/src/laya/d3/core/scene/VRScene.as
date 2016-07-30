@@ -1,5 +1,5 @@
 package laya.d3.core.scene {
-	import laya.d3.core.camera.VRCamera;
+	import laya.d3.core.VRCamera;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.webgl.WebGL;

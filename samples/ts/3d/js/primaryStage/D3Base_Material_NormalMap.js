@@ -3,6 +3,7 @@ var Material_NormalMap;
     var Vector3 = Laya.Vector3;
     var Material_NormalMap = (function () {
         function Material_NormalMap() {
+            var _this = this;
             this.rotation = new Vector3(0, 0.01, 0);
             //是否抗锯齿
             //Config.isAntialias = true;
@@ -12,12 +13,9 @@ var Material_NormalMap;
             Laya.Stat.show();
             var scene = Laya.stage.addChild(new Laya.Scene());
             scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
-            scene.currentCamera = (scene.addChild(new Laya.Camera(new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height), Math.PI / 3, 0, 0.1, 100)));
+            scene.currentCamera = (scene.addChild(new Laya.Camera(0, 0.1, 100)));
             scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.6));
             scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-            Laya.stage.on(Laya.Event.RESIZE, null, function () {
-                scene.currentCamera.viewport = new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height);
-            });
             scene.currentCamera.addComponent(CameraMoveScript);
             var directionLight = scene.addChild(new Laya.DirectionLight());
             directionLight.direction = new Vector3(0, -0.8, -1);
@@ -30,7 +28,7 @@ var Material_NormalMap;
             this.loadModel("../../res/threeDimen/staticModel/lizard/lizard-eye_geo.lm", "../../res/threeDimen/staticModel/lizard/lizardeye_norm.png");
             this.loadModel("../../res/threeDimen/staticModel/lizard/lizard-rock_geo.lm", "../../res/threeDimen/staticModel/lizard/rock_norm.png");
             Laya.timer.frameLoop(1, this, function () {
-                this.root.transform.rotate(this.rotation, true);
+                _this.root.transform.rotate(_this.rotation, true);
             });
         }
         Material_NormalMap.prototype.loadModel = function (meshPath, normalMapPath) {

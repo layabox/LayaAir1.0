@@ -1,4 +1,6 @@
 package laya.d3.resource {
+	import laya.d3.math.Vector2;
+	import laya.d3.utils.Size;
 	import laya.resource.IDispose;
 	import laya.resource.Texture;
 	import laya.webgl.WebGL;
@@ -32,6 +34,9 @@ package laya.d3.resource {
 		private var _minFifter:int;
 		/** @private */
 		private var _magFifter:int;
+		/** @private */
+		private var _size:Size;
+		
 		
 		/**
 		 * 获取表面格式。
@@ -77,6 +82,10 @@ package laya.d3.resource {
 			return _magFifter;
 		}
 		
+		public function get size():Size {
+			return _size;
+		}
+		
 		/**
 		 * 获取RenderTarget数据源。
 		 * @return RenderTarget数据源。
@@ -107,6 +116,7 @@ package laya.d3.resource {
 			_repeat = repeat;
 			_minFifter = minFifter;
 			_magFifter = magFifter;
+			_size = new Size(width, height);
 			
 			_createWebGLRenderTarget();
 			bitmap.lock = true;

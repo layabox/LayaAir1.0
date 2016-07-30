@@ -19,7 +19,13 @@ package laya.utils {
 		private static function getPoolBySign(sign:String):Array {
 			return _poolDic[sign] || (_poolDic[sign] = []);
 		}
-		
+		/**
+		 * 清除对象池的对象。
+		 * @param sign 对象类型标识字符。
+		 */
+		public static function clearBySign(sign:String):void {
+			if (_poolDic[sign]) _poolDic[sign].length = 0;	
+		}
 		/**
 		 * 将对象放到对应类型标识的对象池中。
 		 * @param sign 对象类型标识字符。

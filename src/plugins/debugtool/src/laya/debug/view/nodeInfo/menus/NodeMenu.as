@@ -1,5 +1,6 @@
 package laya.debug.view.nodeInfo.menus
 {
+	import laya.debug.tools.VisibleAnalyser;
 	import laya.display.Sprite;
 	import laya.events.Event;
 	import laya.ui.List;
@@ -46,6 +47,7 @@ package laya.debug.view.nodeInfo.menus
 		"Enable链", 
 		"Size链", 
 		"节点工具", 
+		"可见分析",
 		"输出到控制台"];
 		private var _menuItems:Array = ["隐藏节点"];
 		private var _menuHide:ContextMenu;
@@ -182,6 +184,13 @@ package laya.debug.view.nodeInfo.menus
 					case "隐藏节点": 
 						_tar.visible = false;
 						break;
+					case "可见分析": 
+						if (_tar)
+						{
+							VisibleAnalyser.analyseTarget(_tar as Sprite);
+						}
+						break;
+						
 				
 				}
 			}

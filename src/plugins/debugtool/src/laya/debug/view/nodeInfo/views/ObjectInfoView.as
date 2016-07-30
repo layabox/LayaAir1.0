@@ -60,6 +60,11 @@ package laya.debug.view.nodeInfo.views
 		{
 			NodeTreeSettingView.I.showSetting(showKeys, _closeSettingHandler, _tar);
 		}
+		
+		public function reset():void
+		{
+			showKeys=["x", "y", "width", "height", "renderCost"];
+		}
 		public var showKeys:Array = ["x", "y", "width", "height", "renderCost"];
 		private var _closeSettingHandler:Handler;
 		
@@ -198,6 +203,7 @@ package laya.debug.view.nodeInfo.views
 		{
 			var infoView:ObjectInfoView;
 			infoView = Pool.getItemByClass("ObjectInfoView", ObjectInfoView);
+			infoView.reset();
 			infoView.showObjectInfo(obj);
 		}
 	}

@@ -60,7 +60,8 @@ package laya.d3.math {
 				Vector3.max(max, points[i], max);
 			}
 			
-			out = new BoundBox(min, max);
+			out.min = min;
+			out.max = max;
 		}
 	
 	}

@@ -68,10 +68,12 @@ package laya.utils {
 		}
 		
 		/**
-		 * 获取此对象引用的 ArrayBuffer 。
+		 * 获取此对象的 ArrayBuffer数据,数据只包含有效数据部分 。
 		 */
-		public function get buffer():* {
-			return _u8d_.buffer;
+		public function get buffer():ArrayBuffer {
+			var rstBuffer:ArrayBuffer= this._d_.buffer;
+			if (rstBuffer.byteLength == this.length) return  rstBuffer;
+			return rstBuffer.slice(0, this.length);
 		}
 		
 		/**

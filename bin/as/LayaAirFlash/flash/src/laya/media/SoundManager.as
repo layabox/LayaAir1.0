@@ -1,6 +1,7 @@
 /*[IF-FLASH]*/package laya.media {
 	import laya.events.Event;
 	import laya.net.Loader;
+	import laya.net.URL;
 	import laya.utils.Handler;
 	
 	/**
@@ -153,7 +154,7 @@
 			if (!soundClass) soundClass = Sound;
 			if (!tSound) {
 				tSound = new soundClass();
-				tSound.load(url);
+				tSound.load( URL.formatURL(url) );
 				Loader.cacheRes(url, tSound);
 			}
 			var channel:SoundChannel;

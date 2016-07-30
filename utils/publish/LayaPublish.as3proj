@@ -26,6 +26,8 @@
     <class path="..\..\src\ui\src" />
     <class path="..\..\src\webGL\src" />
     <class path="..\..\src\d3\src" />
+    <class path="..\..\src\plugins\debugtool\src" />
+    <class path="..\..\src\plugins\device\src" />
   </classpaths>
   <!-- Build options -->
   <build>

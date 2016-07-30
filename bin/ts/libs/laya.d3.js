@@ -7,15 +7,16 @@
 	var EmitterBase=laya.particle.emitter.EmitterBase,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher;
 	var Handler=laya.utils.Handler,IndexBuffer2D=laya.webgl.utils.IndexBuffer2D,KeyframesAniTemplet=laya.ani.KeyframesAniTemplet;
 	var Loader=laya.net.Loader,Node=laya.display.Node,ParticleSettings=laya.particle.ParticleSettings,ParticleShader=laya.particle.shader.ParticleShader;
-	var ParticleTemplateWebGL=laya.particle.ParticleTemplateWebGL,Render=laya.renders.Render,RenderContext=laya.renders.RenderContext;
-	var RenderSprite=laya.renders.RenderSprite,RenderState2D=laya.webgl.utils.RenderState2D,Resource=laya.resource.Resource;
-	var RunDriver=laya.utils.RunDriver,Shader=laya.webgl.shader.Shader,ShaderDefines=laya.webgl.shader.ShaderDefines;
+	var ParticleTemplateWebGL=laya.particle.ParticleTemplateWebGL,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render;
+	var RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite,RenderState2D=laya.webgl.utils.RenderState2D;
+	var Resource=laya.resource.Resource,RunDriver=laya.utils.RunDriver,Shader=laya.webgl.shader.Shader,ShaderDefines=laya.webgl.shader.ShaderDefines;
 	var Sprite=laya.display.Sprite,Stat=laya.utils.Stat,Texture=laya.resource.Texture,URL=laya.net.URL,ValusArray=laya.webgl.utils.ValusArray;
 	var VertexBuffer2D=laya.webgl.utils.VertexBuffer2D,WebGL=laya.webgl.WebGL,WebGLContext=laya.webgl.WebGLContext;
-	var WebGLImage=laya.webgl.resource.WebGLImage,WebGLImageCube=laya.webgl.resource.WebGLImageCube,WebGLRenderTarget=laya.webgl.resource.WebGLRenderTarget;
-	Laya.interface('laya.d3.graphics.IVertex');
+	var WebGLContext2D=laya.webgl.canvas.WebGLContext2D,WebGLImage=laya.webgl.resource.WebGLImage,WebGLImageCube=laya.webgl.resource.WebGLImageCube;
+	var WebGLRenderTarget=laya.webgl.resource.WebGLRenderTarget;
 	Laya.interface('laya.d3.core.render.IRenderable');
 	Laya.interface('laya.d3.core.render.IUpdate');
+	Laya.interface('laya.d3.graphics.IVertex');
 	/**
 	*<code>Glitter</code> 类用于创建闪光配置信息。
 	*/
@@ -91,6 +92,147 @@
 		}
 
 		return SplineCurvePositionVelocity;
+	})()
+
+
+	/**
+	*<code>HeightMap</code> 类用于实现高度图数据。
+	*/
+	//class laya.d3.core.HeightMap
+	var HeightMap=(function(){
+		function HeightMap(width,height,maxHeight){
+			this._datas=null;
+			this._w=0;
+			this._h=0;
+			this._maxHeight=NaN;
+			this._datas=[];
+			this._w=width;
+			this._h=height;
+			this._maxHeight=maxHeight;
+		}
+
+		__class(HeightMap,'laya.d3.core.HeightMap');
+		var __proto=HeightMap.prototype;
+		/**@private */
+		__proto._inBounds=function(row,col){
+			return row >=0 && row < this._h && col >=0 && col < this._w;
+		}
+
+		/**
+		*获取高度。
+		*@param row 列数。
+		*@param col 行数。
+		*@return 高度。
+		*/
+		__proto.getHeight=function(row,col){
+			if (this._inBounds(row,col))
+				return this._datas[row *this._w+col];
+			else
+			return 0;
+		}
+
+		/**
+		*获取宽度。
+		*@return value 宽度。
+		*/
+		__getset(0,__proto,'width',function(){
+			return this._w;
+		});
+
+		/**
+		*获取高度。
+		*@return value 高度。
+		*/
+		__getset(0,__proto,'height',function(){
+			return this._h;
+		});
+
+		/**
+		*最大高度。
+		*@return value 最大高度。
+		*/
+		__getset(0,__proto,'maxHeight',function(){
+			return this._maxHeight;
+		});
+
+		HeightMap.creatFromMesh=function(meshSprite,width,height,outCellSize){
+			var vertices=[];
+			var indexs=[];
+			var mesh=meshSprite.mesh;
+			var submesheCount=mesh.getSubMeshCount();
+			var worldMat=meshSprite.transform.worldMatrix;
+			for (var i=0;i < submesheCount;i++){
+				var subMesh=mesh.getSubMesh(i);
+				var vertexBuffer=subMesh.getVertexBuffer();
+				var verts=vertexBuffer.getData();
+				var subMeshVertices=[];
+				for (var j=0;j < verts.length;j+=vertexBuffer.vertexDeclaration.vertexStride / 4){
+					var position=new Vector3(verts[j+0],verts[j+1],verts[j+2]);
+					Vector3.transformCoordinate(position,worldMat,position);
+					subMeshVertices.push(position);
+				}
+				vertices.push(subMeshVertices);
+				var ib=subMesh.getIndexBuffer();
+				indexs.push(ib.getData());
+			};
+			var boundingBox=mesh.boundingBox;
+			var minX=boundingBox.min.x;
+			var minZ=boundingBox.min.z;
+			var maxX=boundingBox.max.x;
+			var maxZ=boundingBox.max.z;
+			var maxY=boundingBox.max.y;
+			var widthSize=maxX-minX;
+			var heightSize=maxZ-minZ;
+			var cellWidth=outCellSize.elements[0]=widthSize / width;
+			var cellHeight=outCellSize.elements[1]=heightSize / height;
+			var halfCellWidth=cellWidth / 2;
+			var halfCellHeight=cellHeight / 2;
+			var heightMap=new HeightMap(width,height,maxY);
+			var ray=HeightMap._tempRay;
+			var rayDirE=ray.direction.elements;
+			rayDirE[0]=0;
+			rayDirE[1]=-1;
+			rayDirE[2]=0;
+			var heightOffset=0.1;
+			var rayY=maxY+heightOffset;
+			ray.origin.elements[1]=rayY;
+			for (var w=0;w < width;w++){
+				var posZ=minZ+w *cellHeight+halfCellHeight;
+				heightMap._datas[w]=[];
+				for (var h=0;h < height;h++){
+					var posX=minX+h *cellWidth+halfCellWidth;
+					var rayOriE=ray.origin.elements;
+					rayOriE[0]=posX;
+					rayOriE[2]=posZ;
+					var closestIntersection=HeightMap._getPosition(ray,vertices,indexs);
+					heightMap._datas[w][h]=(closestIntersection===Number.MAX_VALUE)? NaN :rayY-closestIntersection;
+				}
+			}
+			return heightMap;
+		}
+
+		HeightMap._getPosition=function(ray,vertices,indexs){
+			var closestIntersection=Number.MAX_VALUE;
+			for (var i=0;i < vertices.length;i++){
+				var subMeshVertices=vertices[i];
+				var subMeshIndexes=indexs[i];
+				for (var j=0;j < subMeshIndexes.length;j+=3){
+					var vertex1=subMeshVertices[subMeshIndexes[j+0]];
+					var vertex2=subMeshVertices[subMeshIndexes[j+1]];
+					var vertex3=subMeshVertices[subMeshIndexes[j+2]];
+					var intersection=Picker.rayIntersectsTriangle(ray,vertex1,vertex2,vertex3);
+					if (!isNaN(intersection)&& intersection < closestIntersection){
+						closestIntersection=intersection;
+					}
+				}
+			}
+			return closestIntersection;
+		}
+
+		__static(HeightMap,
+		['_tempRay',function(){return this._tempRay=new Ray(new Vector3(),new Vector3());}
+		]);
+		return HeightMap;
 	})()
 
 
@@ -3386,7 +3528,8 @@
 				Vector3.min(min,points[i],min);
 				Vector3.max(max,points[i],max);
 			}
-			out=new BoundBox(min,max);
+			out.min=min;
+			out.max=max;
 		}
 
 		return BoundBox;
@@ -3417,7 +3560,10 @@
 				throw new Error("count"+count+"Must be in the range <= "+points.length+"}");
 			};
 			var upperEnd=start+count;
-			var center=Vector3.ZERO;
+			var center=BoundSphere._tempVector3;
+			center.elements[0]=0;
+			center.elements[1]=0;
+			center.elements[2]=0;
 			for (var i=start;i < upperEnd;++i){
 				Vector3.add(points[i],center,center);
 			}
@@ -3440,6 +3586,9 @@
 			BoundSphere.fromSubPoints(points,0,points.length,out);
 		}
 
+		__static(BoundSphere,
+		['_tempVector3',function(){return this._tempVector3=new Vector3();}
+		]);
 		return BoundSphere;
 	})()
 
@@ -3447,21 +3596,21 @@
 	/**
 	*<code>MathUtils</code> 类用于创建数学工具。
 	*/
-	//class laya.d3.math.MathUtils
-	var MathUtils=(function(){
+	//class laya.d3.math.MathUtils3D
+	var MathUtils3D=(function(){
 		/**
 		*创建一个 <code>MathUtils</code> 实例。
 		*/
-		function MathUtils(){}
-		__class(MathUtils,'laya.d3.math.MathUtils');
-		MathUtils.isZero=function(v){
-			return Math.abs(v)< MathUtils.zeroTolerance;
+		function MathUtils3D(){}
+		__class(MathUtils3D,'laya.d3.math.MathUtils3D');
+		MathUtils3D.isZero=function(v){
+			return Math.abs(v)< MathUtils3D.zeroTolerance;
 		}
 
-		__static(MathUtils,
+		__static(MathUtils3D,
 		['zeroTolerance',function(){return this.zeroTolerance=1e-6;}
 		]);
-		return MathUtils;
+		return MathUtils3D;
 	})()
 
 
@@ -3796,7 +3945,7 @@
 			se[0]=Math.sqrt((me[0] *me[0])+(me[1] *me[1])+(me[2] *me[2]));
 			se[1]=Math.sqrt((me[4] *me[4])+(me[5] *me[5])+(me[6] *me[6]));
 			se[2]=Math.sqrt((me[8] *me[8])+(me[9] *me[9])+(me[10] *me[10]));
-			if (MathUtils.isZero(se[0])|| MathUtils.isZero(se[1])|| MathUtils.isZero(se[2])){
+			if (MathUtils3D.isZero(se[0])|| MathUtils3D.isZero(se[1])|| MathUtils3D.isZero(se[2])){
 				re[0]=re[1]=re[2]=0;
 				re[3]=1;
 				return false;
@@ -4086,7 +4235,7 @@
 			var ue=up.elements;
 			var oe=out.elements;
 			var x0,x1,x2,y0,y1,y2,z0,z1,z2,len,eyex=ee[0],eyey=ee[1],eyez=ee[2],upx=ue[0],upy=ue[1],upz=ue[2],centerx=ce[0],centery=ce[1],centerz=ce[2];
-			if (Math.abs(eyex-centerx)< MathUtils.zeroTolerance && Math.abs(eyey-centery)< MathUtils.zeroTolerance && Math.abs(eyez-centerz)< MathUtils.zeroTolerance){
+			if (Math.abs(eyex-centerx)< MathUtils3D.zeroTolerance && Math.abs(eyey-centery)< MathUtils3D.zeroTolerance && Math.abs(eyez-centerz)< MathUtils3D.zeroTolerance){
 				out.identity();
 				return;
 			}
@@ -4155,14 +4304,14 @@
 			var lr=1 / (left-right);
 			var bt=1 / (bottom-top);
 			var nf=1 / (near-far);
+			oe[1]=oe[2]=oe[3]=oe[4]=oe[6]=oe[7]=oe[8]=oe[9]=oe[11]=0;
+			oe[15]=1;
 			oe[0]=-2 *lr;
 			oe[5]=-2 *bt;
 			oe[10]=2 *nf;
 			oe[12]=(left+right)*lr;
 			oe[13]=(top+bottom)*bt;
 			oe[14]=(far+near)*nf;
-			oe[1]=oe[2]=oe[3]=oe[4]=oe[6]=oe[7]=oe[8]=oe[9]=oe[11]=0;
-			oe[15]=1;
 		}
 
 		Matrix4x4.TEMP=new Matrix4x4();
@@ -4634,10 +4783,10 @@
 	//class laya.d3.math.Ray
 	var Ray=(function(){
 		function Ray(origin,direction){
-			this.origin=Vector3.ZERO;
-			this.direction=Vector3.ONE;
-			origin=origin;
-			direction=direction;
+			this.origin=null;
+			this.direction=null;
+			this.origin=origin;
+			this.direction=direction;
 		}
 
 		__class(Ray,'laya.d3.math.Ray');
@@ -5049,6 +5198,8 @@
 			//this.y=NaN;
 			//this.width=NaN;
 			//this.height=NaN;
+			//this.minDepth=NaN;
+			//this.maxDepth=NaN;
 			this.minDepth=-1.0;
 			this.maxDepth=1.0;
 			this.x=x;
@@ -5065,20 +5216,20 @@
 		*@param matrix 变换矩阵。
 		*@param vector 输出三维向量。
 		*/
-		__proto.project=function(source,matrix,vector){
-			Vector3.transformV3ToV3(source,matrix,vector);
+		__proto.project=function(source,matrix,out){
+			Vector3.transformV3ToV3(source,matrix,out);
 			var sourceEleme=source.elements;
 			var matrixEleme=matrix.elements;
-			var vectorEleme=vector.elements;
+			var outEleme=out.elements;
 			var a=(((sourceEleme[0] *matrixEleme[3])+(sourceEleme[1] *matrixEleme[7]))+(sourceEleme[2] *matrixEleme[11]))+matrixEleme[15];
 			if (a!==1.0){
-				vectorEleme[0]=vectorEleme[0] / a;
-				vectorEleme[1]=vectorEleme[1] / a;
-				vectorEleme[2]=vectorEleme[2] / a;
+				outEleme[0]=outEleme[0] / a;
+				outEleme[1]=outEleme[1] / a;
+				outEleme[2]=outEleme[2] / a;
 			}
-			vectorEleme[0]=(((vectorEleme[0]+1.0)*0.5)*this.width)+this.x;
-			vectorEleme[1]=(((-vectorEleme[1]+1.0)*0.5)*this.height)+this.y;
-			vectorEleme[2]=(vectorEleme[2] *(this.maxDepth-this.minDepth))+this.minDepth;
+			outEleme[0]=(((outEleme[0]+1.0)*0.5)*this.width)+this.x;
+			outEleme[1]=(((-outEleme[1]+1.0)*0.5)*this.height)+this.y;
+			outEleme[2]=(outEleme[2] *(this.maxDepth-this.minDepth))+this.minDepth;
 		}
 
 		/**
@@ -5087,20 +5238,20 @@
 		*@param matrix 变换矩阵。
 		*@param vector 输出三维向量。
 		*/
-		__proto.unprojectFromMat=function(source,matrix,vector){
+		__proto.unprojectFromMat=function(source,matrix,out){
 			var sourceEleme=source.elements;
 			var matrixEleme=matrix.elements;
-			var vectorEleme=vector.elements;
-			vectorEleme[0]=(((sourceEleme[0]-this.x)/ (this.width))*2.0)-1.0;
-			vectorEleme[1]=-((((sourceEleme[1]-this.y)/ (this.height))*2.0)-1.0);
+			var outEleme=out.elements;
+			outEleme[0]=(((sourceEleme[0]-this.x)/ (this.width))*2.0)-1.0;
+			outEleme[1]=-((((sourceEleme[1]-this.y)/ (this.height))*2.0)-1.0);
 			var halfDepth=(this.maxDepth-this.minDepth)/ 2;
-			vectorEleme[2]=(sourceEleme[2]-this.minDepth-halfDepth)/ halfDepth;
-			var a=(((vectorEleme[0] *matrixEleme[3])+(vectorEleme[1] *matrixEleme[7]))+(vectorEleme[2] *matrixEleme[11]))+matrixEleme[15];
-			Vector3.transformV3ToV3(vector,matrix,vector);
+			outEleme[2]=(sourceEleme[2]-this.minDepth-halfDepth)/ halfDepth;
+			var a=(((outEleme[0] *matrixEleme[3])+(outEleme[1] *matrixEleme[7]))+(outEleme[2] *matrixEleme[11]))+matrixEleme[15];
+			Vector3.transformV3ToV3(out,matrix,out);
 			if (a!==1.0){
-				vectorEleme[0]=vectorEleme[0] / a;
-				vectorEleme[1]=vectorEleme[1] / a;
-				vectorEleme[2]=vectorEleme[2] / a;
+				outEleme[0]=outEleme[0] / a;
+				outEleme[1]=outEleme[1] / a;
+				outEleme[2]=outEleme[2] / a;
 			}
 		}
 
@@ -5109,19 +5260,19 @@
 		*@param source 源三维向量。
 		*@param projection 透视投影矩阵。
 		*@param view 视图矩阵。
-		*@param world 世界矩阵。
-		*@return 输出向量。
+		*@param world 世界矩阵,可设置为null。
+		*@param out 输出向量。
 		*/
-		__proto.unprojectFromWVP=function(source,projection,view,world){
-			var matrix=new Matrix4x4();
-			Matrix4x4.multiply(projection,view,matrix);
-			Matrix4x4.multiply(matrix,world,matrix);
-			matrix.invert(matrix);
-			var vector=new Vector3();
-			this.unprojectFromMat(source,matrix,vector);
-			return vector;
+		__proto.unprojectFromWVP=function(source,projection,view,world,out){
+			Matrix4x4.multiply(projection,view,Viewport._tempMatrix4x4);
+			(world)&& (Matrix4x4.multiply(Viewport._tempMatrix4x4,world,Viewport._tempMatrix4x4));
+			Viewport._tempMatrix4x4.invert(Viewport._tempMatrix4x4);
+			this.unprojectFromMat(source,Viewport._tempMatrix4x4,out);
 		}
 
+		__static(Viewport,
+		['_tempMatrix4x4',function(){return this._tempMatrix4x4=new Matrix4x4();}
+		]);
 		return Viewport;
 	})()
 
@@ -5682,111 +5833,6 @@
 
 
 	/**
-	*<code>SubMesh</code> 类用于创建子网格数据模板。
-	*/
-	//class laya.d3.resource.tempelet.SubMeshTemplet
-	var SubMeshTemplet=(function(){
-		function SubMeshTemplet(templet){
-			this._ib=null;
-			this._materialIndex=-1;
-			this._elementCount=0;
-			this._vbOffet=0;
-			this._vb=null;
-			this._meshTemplet=null;
-			this._boneIndex=null;
-			this._cacheBoneDatas=null;
-			this._boneData=null;
-			this._bufferUsage={};
-			this._finalBufferUsageDic=null;
-			this.verticesIndices=null;
-			this._meshTemplet=templet;
-		}
-
-		__class(SubMeshTemplet,'laya.d3.resource.tempelet.SubMeshTemplet');
-		var __proto=SubMeshTemplet.prototype;
-		/**
-		*@private
-		*/
-		__proto._mergeRendering=function(state,shader,uploadBones){}
-		/**
-		*@private
-		*/
-		__proto._setVBOffset=function(offset){
-			this._vbOffet=offset;
-		}
-
-		/**
-		*@private
-		*/
-		__proto._setBoneDic=function(boneDic){
-			this._boneIndex=boneDic;
-			this._meshTemplet.disableUseFullBone();
-			this._cacheBoneDatas=[];
-			this._boneData=new Float32Array(this._boneIndex.length *16);
-		}
-
-		/**
-		*获取材质。
-		*@param 材质队列。
-		*@return 材质。
-		*/
-		__proto.getMaterial=function(materials){
-			return this._materialIndex >=0 ? materials[this._materialIndex] :null;
-		}
-
-		/**
-		*设置索引缓冲。
-		*@param value 索引缓冲。
-		*@param elementCount 索引的个数。
-		*/
-		__proto.setIB=function(value,elementCount){
-			this._ib=value;
-			this._elementCount=elementCount;
-		}
-
-		/**
-		*获取索引缓冲。
-		*@return 索引缓冲。
-		*/
-		__proto.getIB=function(){
-			return this._ib;
-		}
-
-		/**
-		*设置顶点缓冲。
-		*@param vb 顶点缓冲。
-		*/
-		__proto.setVB=function(vb){
-			this._vb=vb;
-		}
-
-		/**
-		*获取顶点缓冲。
-		*@return 顶点缓冲。
-		*/
-		__proto.getVB=function(){
-			return this._vb;
-		}
-
-		/**
-		*设置材质
-		*@param value 材质ID。
-		*/
-		/**
-		*获取材质
-		*@return 材质ID。
-		*/
-		__getset(0,__proto,'material',function(){
-			return this._materialIndex;
-			},function(value){
-			this._materialIndex=value;
-		});
-
-		return SubMeshTemplet;
-	})()
-
-
-	/**
 	*@private
 	*<code>Shader3D</code> 类用于创建3Dshader相关。
 	*/
@@ -5988,24 +6034,53 @@
 		*/
 		function Picker(){}
 		__class(Picker,'laya.d3.utils.Picker');
-		Picker.CalculateCursorRay=function(point,viewPort,projectionMatrix,viewMatrix,world){
+		Picker.calculateCursorRay=function(point,viewPort,projectionMatrix,viewMatrix,world,out){
 			var x=point.elements[0];
 			var y=point.elements[1];
-			var nearSource=new Vector3(x,y,viewPort.minDepth);
-			var farSource=new Vector3(x,y,viewPort.maxDepth);
-			var nearPoint=viewPort.unprojectFromWVP(nearSource,projectionMatrix,viewMatrix,world);
-			var farPoint=viewPort.unprojectFromWVP(farSource,projectionMatrix,viewMatrix,world);
-			var direction=new Vector3(farPoint.x-nearPoint.x,farPoint.y-nearPoint.y,farPoint.z-nearPoint.z);
-			Vector3.normalize(direction,direction);
-			return new Ray(nearPoint,direction);
+			var nearSource=Picker._tempVector30;
+			var nerSourceE=nearSource.elements;
+			nerSourceE[0]=x;
+			nerSourceE[1]=y;
+			nerSourceE[2]=viewPort.minDepth;
+			var farSource=Picker._tempVector31;
+			var farSourceE=farSource.elements;
+			farSourceE[0]=x;
+			farSourceE[1]=y;
+			farSourceE[2]=viewPort.maxDepth;
+			var nearPoint=out.origin;
+			var farPoint=Picker._tempVector32;
+			viewPort.unprojectFromWVP(nearSource,projectionMatrix,viewMatrix,world,nearPoint);
+			viewPort.unprojectFromWVP(farSource,projectionMatrix,viewMatrix,world,farPoint);
+			var outDire=out.direction.elements;
+			outDire[0]=farPoint.x-nearPoint.x;
+			outDire[1]=farPoint.y-nearPoint.y;
+			outDire[2]=farPoint.z-nearPoint.z;
+			Vector3.normalize(out.direction,out.direction);
 		}
 
-		Picker.RayIntersectsTriangle=function(ray,vertex1,vertex2,vertex3){
+		Picker.rayIntersectsPositionsAndIndices=function(ray,positions,indices,outVertex0,outVertex1,outVertex2){
+			var closestIntersection=Number.MAX_VALUE;
+			for (var j=0;j < indices.length;j+=3){
+				var vertex1=positions[indices[j+0]];
+				var vertex2=positions[indices[j+1]];
+				var vertex3=positions[indices[j+2]];
+				var intersection=laya.d3.utils.Picker.rayIntersectsTriangle(ray,vertex1,vertex2,vertex3);
+				if (!isNaN(intersection)&& intersection < closestIntersection){
+					closestIntersection=intersection;
+					vertex1.cloneTo(outVertex0);
+					vertex2.cloneTo(outVertex1);
+					vertex3.cloneTo(outVertex2);
+				}
+			}
+			return closestIntersection;
+		}
+
+		Picker.rayIntersectsTriangle=function(ray,vertex1,vertex2,vertex3){
 			var result;
-			var edge1=new Vector3(),edge2=new Vector3();
+			var edge1=Picker._tempVector30,edge2=Picker._tempVector31;
 			Vector3.subtract(vertex2,vertex1,edge1);
 			Vector3.subtract(vertex3,vertex1,edge2);
-			var directionCrossEdge2=new Vector3();
+			var directionCrossEdge2=Picker._tempVector32;
 			Vector3.cross(ray.direction,edge2,directionCrossEdge2);
 			var determinant;
 			determinant=Vector3.dot(edge1,directionCrossEdge2);
@@ -6014,7 +6089,7 @@
 				return result;
 			};
 			var inverseDeterminant=1.0 / determinant;
-			var distanceVector=new Vector3();
+			var distanceVector=Picker._tempVector33;
 			Vector3.subtract(ray.origin,vertex1,distanceVector);
 			var triangleU;
 			triangleU=Vector3.dot(distanceVector,directionCrossEdge2);
@@ -6023,7 +6098,7 @@
 				result=Number.NaN;
 				return result;
 			};
-			var distanceCrossEdge1=new Vector3();
+			var distanceCrossEdge1=Picker._tempVector34;
 			Vector3.cross(distanceVector,edge1,distanceCrossEdge1);
 			var triangleV;
 			triangleV=Vector3.dot(ray.direction,distanceCrossEdge1);
@@ -6043,7 +6118,41 @@
 			return result;
 		}
 
+		__static(Picker,
+		['_tempVector30',function(){return this._tempVector30=new Vector3();},'_tempVector31',function(){return this._tempVector31=new Vector3();},'_tempVector32',function(){return this._tempVector32=new Vector3();},'_tempVector33',function(){return this._tempVector33=new Vector3();},'_tempVector34',function(){return this._tempVector34=new Vector3();}
+		]);
 		return Picker;
+	})()
+
+
+	//class laya.d3.utils.Size
+	var Size=(function(){
+		function Size(width,height){
+			this._width=0;
+			this._height=0;
+			this._width=width;
+			this._height=height;
+		}
+
+		__class(Size,'laya.d3.utils.Size');
+		var __proto=Size.prototype;
+		__getset(0,__proto,'width',function(){
+			if (this._width===-1)
+				return RenderState.clientWidth;
+			return this._width;
+		});
+
+		__getset(0,__proto,'height',function(){
+			if (this._height===-1)
+				return RenderState.clientHeight;
+			return this._height;
+		});
+
+		__getset(1,Size,'fullScreen',function(){
+			return new Size(-1,-1);
+		});
+
+		return Size;
 	})()
 
 
@@ -6376,6 +6485,14 @@
 			result[resultOffset+0]=vectorElem[0] *vectorElem[3];
 			result[resultOffset+1]=vectorElem[1] *vectorElem[3];
 			result[resultOffset+2]=vectorElem[2] *vectorElem[3];
+		}
+
+		Utils3D.convert3DCoordTo2DScreenCoord=function(source,out){
+			var se=source.elements;
+			var oe=out.elements;
+			oe[0]=-RenderState.clientWidth/2+se[0];
+			oe[1]=RenderState.clientHeight/2-se[1];
+			oe[2]=se[2];
 		}
 
 		Utils3D._tempVector3_0=new Vector3();
@@ -7729,6 +7846,13 @@
 		var __proto=Sprite3D.prototype;
 		Laya.imps(__proto,{"laya.d3.core.render.IUpdate":true})
 		/**
+		*更新组件update函数,重写此函数。
+		*/
+		__proto._clearRenderObjects=function(){
+			throw new Error("未Override,请重载该属性！");
+		}
+
+		/**
 		*更新组件update函数。
 		*@param state 渲染相关状态。
 		*/
@@ -7790,6 +7914,17 @@
 			(canView)&& (this._lateUpdateComponents(state));
 			this._childs.length && this._updateChilds(state);
 			state.worldTransformModifyID=preTransformID;
+		}
+
+		__proto.removeChildAt=function(index){
+			var node=this.getChildAt(index);
+			if (node){
+				this._childs.splice(index,1);
+				this.model && this.model.removeChild(node.model);
+				node.parent=null;
+				(node)._clearRenderObjects();
+			}
+			return node;
 		}
 
 		/**
@@ -7964,6 +8099,8 @@
 			this._boundingBox=null;
 			this._boundingSphere=null;
 			BaseMesh.__super.call(this);
+			this._boundingBox=new BoundBox(new Vector3(),new Vector3());
+			this._boundingSphere=new BoundSphere(new Vector3(),0);
 		}
 
 		__class(BaseMesh,'laya.d3.resource.models.BaseMesh',_super);
@@ -8036,51 +8173,6 @@
 	})(Resource)
 
 
-	/**抽象类。*/
-	//class laya.d3.resource.tempelet.BaseMeshTemplet extends laya.resource.Resource
-	var BaseMeshTemplet=(function(_super){
-		function BaseMeshTemplet(){
-			this._subMeshCount=0;
-			this._boundingBox=null;
-			this._boundingSphere=null;
-			BaseMeshTemplet.__super.call(this);
-		}
-
-		__class(BaseMeshTemplet,'laya.d3.resource.tempelet.BaseMeshTemplet',_super);
-		var __proto=BaseMeshTemplet.prototype;
-		/**请重载此方法。*/
-		__proto.Render=function(){
-			throw new Error("未Override,请重载该方法！");
-		}
-
-		/**请重载此方法。*/
-		__proto.RenderSubMesh=function(subMeshIndex){
-			throw new Error("未Override,请重载该方法！");
-		}
-
-		__getset(0,__proto,'subMeshCount',function(){
-			return this._subMeshCount;
-		});
-
-		/**通常禁止修改其属性*/
-		__getset(0,__proto,'boundingBox',function(){
-			return this._boundingBox;
-		});
-
-		/**通常禁止修改其属性*/
-		__getset(0,__proto,'boundingSphere',function(){
-			return this._boundingSphere;
-		});
-
-		/**请重载此方法。*/
-		__getset(0,__proto,'positions',function(){
-			throw new Error("未Override,请重载该属性！");
-		});
-
-		return BaseMeshTemplet;
-	})(Resource)
-
-
 	/**
 	*<code>RenderTarget</code> 类用于创建渲染目标。
 	*/
@@ -8096,6 +8188,7 @@
 			this._repeat=false;
 			this._minFifter=0;
 			this._magFifter=0;
+			this._size=null;
 			RenderTarget.__super.call(this);
 			(surfaceFormat===void 0)&& (surfaceFormat=/*laya.webgl.WebGLContext.RGBA*/0x1908);
 			(surfaceType===void 0)&& (surfaceType=/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401);
@@ -8113,6 +8206,7 @@
 			this._repeat=repeat;
 			this._minFifter=minFifter;
 			this._magFifter=magFifter;
+			this._size=new Size(width,height);
 			this._createWebGLRenderTarget();
 			this.bitmap.lock=true;
 		}
@@ -8202,6 +8296,10 @@
 		__proto.dispose=function(){
 			this.bitmap.dispose();
 		}
+
+		__getset(0,__proto,'size',function(){
+			return this._size;
+		});
 
 		/**
 		*获取表面格式。
@@ -8826,6 +8924,17 @@
 			index >=0 && (this._lights.splice(index,1));
 		}
 
+		__proto.removeChildAt=function(index){
+			var node=this.getChildAt(index);
+			if (node){
+				this._childs.splice(index,1);
+				this.model && this.model.removeChild(node.model);
+				node.parent=null;
+				(node)._clearRenderObjects();
+			}
+			return node;
+		}
+
 		/**
 		*获得某个渲染队列。
 		*@param index 渲染队列索引。
@@ -8876,6 +8985,7 @@
 		*@private
 		*/
 		__proto.render=function(context,x,y){
+			(Render._context.ctx)._shader2D.glTexture=null;
 			this._childs.length > 0 && context.addRenderObject(this);
 			this._renderType &=~ /*laya.renders.RenderSprite.CHILDS*/0x800;
 			_super.prototype.render.call(this,context,x,y);
@@ -8931,67 +9041,58 @@
 	/**
 	*<code>BaseCamera</code> 类用于创建摄像机的父类。
 	*/
-	//class laya.d3.core.camera.BaseCamera extends laya.d3.core.Sprite3D
+	//class laya.d3.core.BaseCamera extends laya.d3.core.Sprite3D
 	var BaseCamera=(function(_super){
-		function BaseCamera(fieldOfView,nearPlane,farPlane){
+		function BaseCamera(nearPlane,farPlane){
+			//this._tempVector3=null;
+			//this._position=null;
+			//this._up=null;
+			//this._forward=null;
+			//this._right=null;
+			//this._masterCamera=null;
+			//this._slavesCameras=null;
+			//this._renderTarget=null;
+			//this._renderingOrder=0;
+			//this._renderTargetSize=null;
 			//this._nearPlane=NaN;
 			//this._farPlane=NaN;
 			//this._fieldOfView=NaN;
-			this._isOrthographicProjection=false;
+			//this._orthographic=false;
+			//this._orthographicVerticalSize=NaN;
+			//this._useUserProjectionMatrix=false;
+			//this._viewportExpressedInClipSpace=false;
 			this._projectionMatrixModifyID=0;
-			//this.cullingMask=0;
+			//this._partialRenderTarget=null;
 			//this.clearColor=null;
+			//this.cullingMask=0;
 			BaseCamera.__super.call(this);
+			(nearPlane===void 0)&& (nearPlane=0.1);
+			(farPlane===void 0)&& (farPlane=1000);
 			this._tempVector3=new Vector3();
 			this._up=new Vector3();
 			this._forward=new Vector3();
 			this._right=new Vector3();
-			(fieldOfView===void 0)&& (fieldOfView=Math.PI/3);
-			(nearPlane===void 0)&& (nearPlane=0.1);
-			(farPlane===void 0)&& (farPlane=1000);
-			this._fieldOfView=fieldOfView;
+			this._fieldOfView=60;
+			this._useUserProjectionMatrix=false;
+			this._orthographic=false;
+			this._viewportExpressedInClipSpace=true;
+			this._slavesCameras=[];
+			this._renderTargetSize=Size.fullScreen;
+			this._orthographicVerticalSize=10;
+			this.renderingOrder=0;
 			this._nearPlane=nearPlane;
 			this._farPlane=farPlane;
 			this.cullingMask=2147483647;
 			this.clearColor=new Vector4(100.0 / 255.0,149.0 / 255.0,237.0 / 255.0,255.0 / 255.0);
 			this._calculateProjectionMatrix();
+			Laya.stage.on(/*laya.events.Event.RESIZE*/"resize",this,this._onScreenSizeChanged);
 		}
 
-		__class(BaseCamera,'laya.d3.core.camera.BaseCamera',_super);
+		__class(BaseCamera,'laya.d3.core.BaseCamera',_super);
 		var __proto=BaseCamera.prototype;
-		/**
-		*@private
-		*计算投影矩阵，可重写此函数。
-		*/
 		__proto._calculateProjectionMatrix=function(){}
-		/**
-		*向前移动。
-		*@param distance 移动距离。
-		*/
-		__proto.moveForward=function(distance){
-			this._tempVector3.elements[0]=this._tempVector3.elements[1]=0;
-			this._tempVector3.elements[2]=distance;
-			this.transform.translate(this._tempVector3);
-		}
-
-		/**
-		*向右移动。
-		*@param distance 移动距离。
-		*/
-		__proto.moveRight=function(distance){
-			this._tempVector3.elements[1]=this._tempVector3.elements[2]=0;
-			this._tempVector3.elements[0]=distance;
-			this.transform.translate(this._tempVector3);
-		}
-
-		/**
-		*向上移动。
-		*@param distance 移动距离。
-		*/
-		__proto.moveVertical=function(distance){
-			this._tempVector3.elements[0]=this._tempVector3.elements[2]=0;
-			this._tempVector3.elements[1]=distance;
-			this.transform.translate(this._tempVector3,false);
+		__proto._onScreenSizeChanged=function(){
+			this._calculateProjectionMatrix();
 		}
 
 		/**
@@ -9028,6 +9129,92 @@
 			this.cullingMask=0 | Layer.getLayerByNumber(29).mask | Layer.getLayerByNumber(30).mask;
 		}
 
+		__proto.ResetProjectionMatrix=function(){
+			this._useUserProjectionMatrix=false;
+			this._calculateProjectionMatrix();
+		}
+
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			this.masterCamera=null;
+			this.renderTarget=null;
+			Laya.stage.off(/*laya.events.Event.RESIZE*/"resize",this,this._onScreenSizeChanged);
+			laya.display.Node.prototype.destroy.call(this,destroyChild);
+		}
+
+		/**
+		*向前移动。
+		*@param distance 移动距离。
+		*/
+		__proto.moveForward=function(distance){
+			this._tempVector3.elements[0]=this._tempVector3.elements[1]=0;
+			this._tempVector3.elements[2]=distance;
+			this.transform.translate(this._tempVector3);
+		}
+
+		/**
+		*向右移动。
+		*@param distance 移动距离。
+		*/
+		__proto.moveRight=function(distance){
+			this._tempVector3.elements[1]=this._tempVector3.elements[2]=0;
+			this._tempVector3.elements[0]=distance;
+			this.transform.translate(this._tempVector3);
+		}
+
+		/**
+		*向上移动。
+		*@param distance 移动距离。
+		*/
+		__proto.moveVertical=function(distance){
+			this._tempVector3.elements[0]=this._tempVector3.elements[2]=0;
+			this._tempVector3.elements[1]=distance;
+			this.transform.translate(this._tempVector3,false);
+		}
+
+		/**获取位置。*/
+		__getset(0,__proto,'position',function(){
+			var worldMatrixe=this.transform.worldMatrix.elements;
+			var positione=this._position.elements;
+			positione[0]=worldMatrixe[12];
+			positione[1]=worldMatrixe[13];
+			positione[2]=worldMatrixe[14];
+			return this._position;
+		});
+
+		/**
+		*设置渲染目标的尺寸
+		*@param value 渲染目标的尺寸。
+		*/
+		/**
+		*获取渲染目标的尺寸
+		*@return 渲染目标的尺寸。
+		*/
+		__getset(0,__proto,'renderTargetSize',function(){
+			if (this._masterCamera !=null)
+				return this._masterCamera.renderTargetSize;
+			return this._renderTargetSize;
+			},function(value){
+			if (this._masterCamera !=null)
+				return;
+			if (this.renderTarget !=null && this._renderTargetSize !=value){}
+				this._renderTargetSize=value;
+			this._calculateProjectionMatrix();
+		});
+
+		/**
+		*获取上向量。
+		*@return 上向量。
+		*/
+		__getset(0,__proto,'up',function(){
+			var worldMatrixe=this.transform.worldMatrix.elements;
+			var upe=this._up.elements;
+			upe[0]=worldMatrixe[4];
+			upe[1]=worldMatrixe[5];
+			upe[2]=worldMatrixe[6];
+			return this._up;
+		});
+
 		/**
 		*设置视野。
 		*@param value 视野。
@@ -9054,6 +9241,71 @@
 			forwarde[1]=-worldMatrixe[9];
 			forwarde[2]=-worldMatrixe[10];
 			return this._forward;
+		});
+
+		/**
+		*获取右向量。
+		*@return 右向量。
+		*/
+		__getset(0,__proto,'right',function(){
+			var worldMatrixe=this.transform.worldMatrix.elements;
+			var righte=this._right.elements;
+			righte[0]=worldMatrixe[0];
+			righte[1]=worldMatrixe[1];
+			righte[2]=worldMatrixe[2];
+			return this._right;
+		});
+
+		/**
+		*设置主人摄像机，渲染类型、清除颜色和渲染目标值均来自主人摄像机。
+		*@param 主人摄像机。
+		*/
+		/**
+		*获取主人摄像机，渲染类型、清除颜色和渲染目标值均来自主人摄像机。
+		*@return 主人摄像机。
+		*/
+		__getset(0,__proto,'masterCamera',function(){
+			return this._masterCamera;
+			},function(value){
+			if (this._slavesCameras.length !=0 || (value !=null && value.masterCamera !=null))
+				throw new Error("BaseCamera: A camera can't be master and slave simultaneity.");
+			if (this.masterCamera !=null){
+				var slavesCameras=this.masterCamera._slavesCameras;
+				slavesCameras.splice(slavesCameras.indexOf(this),1);
+			}
+			this.masterCamera=value;
+			if (value !=null){
+				value._slavesCameras.push(this);
+				for (var i=0;i < value._slavesCameras.length;i++){
+					var count=value._slavesCameras.length;
+					if (value._slavesCameras[i].renderingOrder > value._slavesCameras[count-1].renderingOrder){
+						var temp=value._slavesCameras[count-1];
+						value._slavesCameras[count-1]=value._slavesCameras[i];
+						value._slavesCameras[i]=temp;
+					}
+				}
+				this._renderTarget=null;
+			}
+		});
+
+		/**
+		*设置渲染场景的渲染目标，渲染目标同时存储主人相机和奴隶相机的结果。
+		*@param value 渲染场景的渲染目标。
+		*/
+		/**
+		*获取渲染场景的渲染目标，渲染目标同时存储主人相机和奴隶相机的结果。
+		*@return 渲染场景的渲染目标。
+		*/
+		__getset(0,__proto,'renderTarget',function(){
+			if (this._masterCamera !=null)
+				return this._masterCamera.renderTarget;
+			return this._renderTarget;
+			},function(value){
+			if (this._masterCamera !=null)
+				return;
+			this._renderTarget=value;
+			if (value !=null)
+				this._renderTargetSize=value.size;
 		});
 
 		/**
@@ -9086,40 +9338,70 @@
 			this._calculateProjectionMatrix();
 		});
 
-		/**
-		*获取是否正交投影模式。
-		*@return 是否正交投影模式。
-		*/
-		__getset(0,__proto,'isOrthographicProjection',function(){
-			return this._isOrthographicProjection;
+		__getset(0,__proto,'renderingOrder',function(){
+			return this._renderingOrder;
+			},function(value){
+			this._renderingOrder=value;
 		});
 
 		/**
-		*获取右向量。
-		*@return 右向量。
+		*设置是否正交投影矩阵。
+		*@param 是否正交投影矩阵。
 		*/
-		__getset(0,__proto,'right',function(){
-			var worldMatrixe=this.transform.worldMatrix.elements;
-			var righte=this._right.elements;
-			righte[0]=worldMatrixe[0];
-			righte[1]=worldMatrixe[1];
-			righte[2]=worldMatrixe[2];
-			return this._right;
+		/**
+		*获取是否正交投影矩阵。
+		*@return 是否正交投影矩阵。
+		*/
+		__getset(0,__proto,'orthographicProjection',function(){
+			return this._orthographic;
+			},function(vaule){
+			this._orthographic=vaule;
+			this._calculateProjectionMatrix();
 		});
 
 		/**
-		*获取上向量。
-		*@return 上向量。
+		*设置正交投影垂直矩阵尺寸。
+		*@param 正交投影垂直矩阵尺寸。
 		*/
-		__getset(0,__proto,'up',function(){
-			var worldMatrixe=this.transform.worldMatrix.elements;
-			var upe=this._up.elements;
-			upe[0]=worldMatrixe[4];
-			upe[1]=worldMatrixe[5];
-			upe[2]=worldMatrixe[6];
-			return this._up;
+		/**
+		*获取正交投影垂直矩阵尺寸。
+		*@return 正交投影垂直矩阵尺寸。
+		*/
+		__getset(0,__proto,'orthographicVerticalSize',function(){
+			return this._orthographicVerticalSize;
+			},function(vaule){
+			this._orthographicVerticalSize=vaule;
+			this._calculateProjectionMatrix();
 		});
 
+		/**
+		*获取主摄像机，确保已经使用RenderingOrder排序。
+		*@return 主摄像机。
+		*/
+		__getset(1,BaseCamera,'mainCamera',function(){
+			for (var i=BaseCamera._cameraPool.length-1;i >=0;i--){
+				if (BaseCamera._cameraPool[i].masterCamera==null && BaseCamera._cameraPool[i].enable)
+					return BaseCamera._cameraPool[i];
+			}
+			return null;
+		},laya.d3.core.Sprite3D._$SET_mainCamera);
+
+		BaseCamera._sortCamerasByRenderingOrder=function(){
+			var n=BaseCamera._cameraPool.length-1;
+			for (var i=0;i < n;i++){
+				if (BaseCamera._cameraPool[i].renderingOrder > BaseCamera._cameraPool[n].renderingOrder){
+					var tempCamera=BaseCamera._cameraPool[i];
+					BaseCamera._cameraPool[i]=BaseCamera._cameraPool[n];
+					BaseCamera._cameraPool[n]=tempCamera;
+				}
+			}
+		}
+
+		BaseCamera.RENDERINGTYPE_DEFERREDLIGHTING="DEFERREDLIGHTING";
+		BaseCamera.RENDERINGTYPE_FORWARDRENDERING="FORWARDRENDERING";
+		__static(BaseCamera,
+		['_cameraPool',function(){return this._cameraPool=__newvec(2,null);}
+		]);
 		return BaseCamera;
 	})(Sprite3D)
 
@@ -9144,7 +9426,7 @@
 
 		__proto.removeChildAt=function(index){
 			this._clearRenderObjects();
-			return laya.display.Node.prototype.removeChildAt.call(this,index);
+			return _super.prototype.removeChildAt.call(this,index);
 		}
 
 		/**
@@ -9240,6 +9522,7 @@
 			this.scene._addLight(this);
 		}
 
+		__proto._clearRenderObjects=function(){}
 		/**
 		*更新灯光相关渲染状态参数。
 		*@param state 渲染状态参数。
@@ -9340,11 +9623,6 @@
 				renderObj.renderQneue.deleteRenderObj(renderObj);
 			}
 			this._renderObjects.length=0;
-		}
-
-		__proto.removeChildAt=function(index){
-			this._clearRenderObjects();
-			return laya.display.Node.prototype.removeChildAt.call(this,index);
 		}
 
 		/**
@@ -9467,7 +9745,7 @@
 
 		__proto.removeChildAt=function(index){
 			this._clearRenderObjects();
-			return laya.display.Node.prototype.removeChildAt.call(this,index);
+			return _super.prototype.removeChildAt.call(this,index);
 		}
 
 		/**
@@ -9794,14 +10072,24 @@
 			this._useFullBone=true;
 			this._url=null;
 			this._loaded=false;
+			Mesh.__super.call(this);
 			this._subMeshes=[];
 			this._materials=[];
 			this._url=url;
-			Mesh.__super.call(this);
+			if (this._loaded)
+				this._generateBoundingObject();
+			else
+			this.once(/*laya.events.Event.LOADED*/"loaded",this,this._generateBoundingObject);
 		}
 
 		__class(Mesh,'laya.d3.resource.models.Mesh',_super);
 		var __proto=Mesh.prototype;
+		__proto._generateBoundingObject=function(){
+			var pos=this.positions;
+			BoundBox.fromPoints(pos,this._boundingBox);
+			BoundSphere.fromPoints(pos,this._boundingSphere);
+		}
+
 		/**
 		*添加子网格（开发者禁止修改）。
 		*@param subMesh 子网格。
@@ -9917,6 +10205,36 @@
 			this._subMeshes=null;
 			this._subMeshCount=0;
 		}
+
+		/**
+		*获取网格顶点,请重载此方法。
+		*@return 网格顶点。
+		*/
+		__getset(0,__proto,'positions',function(){
+			var vertices=[];
+			var submesheCount=this._subMeshes.length;
+			for (var i=0;i < submesheCount;i++){
+				var subMesh=this._subMeshes[i];
+				var vertexBuffer=subMesh.getVertexBuffer();
+				var positionElement;
+				var vertexElements=vertexBuffer.vertexDeclaration.getVertexElements();
+				var j=0;
+				for (j=0;i < vertexElements.length;i++){
+					var vertexElement=vertexElements[i];
+					if (vertexElement.elementFormat===/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3" && vertexElement.elementUsage===/*laya.d3.graphics.VertexElementUsage.POSITION0*/"POSITION"){
+						positionElement=vertexElement;
+						break ;
+					}
+				};
+				var verticesData=vertexBuffer.getData();
+				for (j=0;j < verticesData.length;j+=vertexBuffer.vertexDeclaration.vertexStride / 4){
+					var ofset=j+positionElement.offset / 4;
+					var position=new Vector3(verticesData[ofset+0],verticesData[ofset+1],verticesData[ofset+2]);
+					vertices.push(position);
+				}
+			}
+			return vertices;
+		});
 
 		/**
 		*获取材质队列。
@@ -10112,119 +10430,6 @@
 
 
 	/**
-	*@private
-	*<code>MeshTemplet</code> 类用于创建网格数据模板。
-	*/
-	//class laya.d3.resource.tempelet.MeshTemplet extends laya.d3.resource.tempelet.BaseMeshTemplet
-	var MeshTemplet=(function(_super){
-		function MeshTemplet(__args){
-			this._vb=null;
-			this._saveToMergeRendering=false;
-			this._mergeRenderingList=null;
-			this._useFullBone=true;
-			this._materialsMap=null;
-			this._url=null;
-			this._loaded=false;
-			MeshTemplet.__super.call(this);
-			this._materials=new Array;
-			this._subMeshes=[];
-			var _$this=this;
-			var args=arguments;
-			this._mergeRenderingList=[];
-			this._mergeRenderingList._length=0;
-			for (var i=0,n=args.length;i < n;i++)this.add(args[i]);
-			this.on(/*laya.events.Event.LOADED*/"loaded",this,function(templet){
-				_$this._loaded=true;
-			});
-		}
-
-		__class(MeshTemplet,'laya.d3.resource.tempelet.MeshTemplet',_super);
-		var __proto=MeshTemplet.prototype;
-		__proto.add=function(oneSubMesh){
-			this._subMeshes.push(oneSubMesh);
-			return this;
-		}
-
-		__proto.regMaterials=function(name,materials){
-			this._materialsMap || (this._materialsMap={});
-			this._materialsMap[name]=materials;
-		}
-
-		__proto.cloneActiveMaterials=function(materials){
-			materials || (materials=[]);
-			materials.length=this._materials.length;
-			for (var i=0,n=this._materials.length;i < n;i++){
-				materials[i] || (materials[i]=new Material());
-				this._materials[i].copy(materials[i]);
-			}
-			return materials;
-		}
-
-		__proto.disableUseFullBone=function(){
-			this._useFullBone=false;
-		}
-
-		__proto.getSubMesh=function(index){
-			return this._subMeshes[index];
-		}
-
-		__proto.setShaderByName=function(name){
-			this._materials && this._materials.forEach(function(o){
-				o.setShaderName(name);
-			});
-		}
-
-		__proto.disableLight=function(){
-			this._materials && this._materials.forEach(function(o){
-				o.disableLight();
-			});
-		}
-
-		__proto.remove=function(oneSubMesh){
-			var index=this._subMeshes.indexOf(oneSubMesh);
-			if (index < 0)return false;
-			this._subMeshes.splice(index,1);
-			return true;
-		}
-
-		__proto.clear=function(){
-			this._subMeshes.length=0;
-			return this;
-		}
-
-		__proto.dispose=function(){
-			this._resourceManager.removeResource(this);
-			laya.resource.Resource.prototype.dispose.call(this);
-			this._materials=null;
-			this._subMeshes=null;
-			this._vb=null;
-		}
-
-		__getset(0,__proto,'loaded',function(){
-			return this._loaded;
-		});
-
-		__getset(0,__proto,'subMeshes',function(){
-			return this._subMeshes;
-		});
-
-		__getset(0,__proto,'materials',function(){
-			return this._materials;
-			},function(value){
-			this._materials=value;
-		});
-
-		__getset(0,__proto,'vb',function(){
-			return this._vb;
-			},function(value){
-			this._vb=value;
-		});
-
-		return MeshTemplet;
-	})(BaseMeshTemplet)
-
-
-	/**
 	*<code>CameraAnimations</code> 类用于创建摄像机动画组件。
 	*/
 	//class laya.d3.component.animation.CameraAnimations extends laya.d3.component.animation.KeyframeAnimations
@@ -10278,7 +10483,7 @@
 		*/
 		__proto._load=function(owner){
 			var _$this=this;
-			if ((owner instanceof laya.d3.core.camera.Camera ))
+			if ((owner instanceof laya.d3.core.Camera ))
 				this._camera=owner;
 			else
 			throw new Error("该Sprite3D并非Camera");
@@ -10524,6 +10729,11 @@
 		*/
 		__getset(0,__proto,'url',_super.prototype._$get_url,function(value){
 			this._curOriginalData=this._extenData=null;
+			var mesh=this._ownerMesh.mesh;
+			var subMeshCount=mesh.getSubMeshCount();
+			for (var j=0;j < subMeshCount;j++){
+				mesh.getSubMesh(j)._cacheBoneDatas.length=0;
+			}
 			_super.prototype._$set_url.call(this,value);
 		});
 
@@ -10560,7 +10770,6 @@
 		function UVAnimations(){
 			this._nodes=null;
 			this._lasstInitIndex=-1;
-			this._subMeshes=null;
 			this._materials=null;
 			this._mesh=null;
 			this._meshDataInited=false;
@@ -10584,8 +10793,7 @@
 		*初始化Mesh相关数据函数。
 		*/
 		__proto._initMeshData=function(){
-			this._materials=this._mesh.mesh.materials;
-			this._subMeshes=this._mesh.mesh.subMeshes;
+			this._materials=this._mesh.materials;
 			this._meshDataInited=true;
 		}
 
@@ -10593,94 +10801,24 @@
 		*@private
 		*初始化UV动画相关数据函数。
 		*/
-		__proto._initAnimationData=function(animationIndex){
-			if (this._lasstInitIndex!==animationIndex){
-				this._nodes=this._templet.getNodes(animationIndex);
-				for (var i=0;i < this._nodes.length;i++){
-					var node=this._nodes[i];
-					var extenData=node.extenData;
-					var extenDaraReader=new Byte(extenData);
-					var belongSubMeshIndex=extenDaraReader.getInt32();
-					this._uvDatasCount=extenDaraReader.getInt32();
-					var subMesh=this._subMeshes[belongSubMeshIndex];
-					this._subMeshIndexToNodeIndex[belongSubMeshIndex]=i;
-					if (!this._bufferUsages[i]){
-						this._bufferUsages[i]={}
-						for (var key in subMesh._bufferUsage)
-						this._bufferUsages[i][key]=subMesh._bufferUsage[key];
-					}
-					this._originalShaderAttributes[i]=[];
-					for (var c=0;c < this._uvDatasCount;c++){
-						if (c===0)
-							this._originalShaderAttributes[i][c]=subMesh.getMaterial(subMesh._meshTemplet.materials).getShaderAttribute("UV");
-						else
-						this._originalShaderAttributes[i][c]=subMesh.getMaterial(subMesh._meshTemplet.materials).getShaderAttribute("UV"+c.toString());
-					};
-					var bufferUsage=this._bufferUsages[i];
-					this._uvAnimationBuffers[i]=new Array;
-					for (c=0;c < this._uvDatasCount;c++){
-						var subKeyframeWidth=node.keyframeWidth / this._uvDatasCount;
-						var animationDatas=new Float32Array(node.keyFrame.length *subKeyframeWidth);
-						var currentLength=0;
-						for (var j=0;j < node.keyFrame.length;j++){
-							animationDatas.set(node.keyFrame[j].data.subarray(c *subKeyframeWidth,(c+1)*subKeyframeWidth),currentLength);
-							currentLength+=subKeyframeWidth;
-						}
-						this._uvAnimationBuffers[i][c]=VertexBuffer3D.create(new laya.webgl.utils.VertexDeclaration(-1),/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
-						if (c===0)
-							bufferUsage["UV"]=bufferUsage["NEXTUV"]=this._uvAnimationBuffers[i][c];
-						else
-						bufferUsage["UV"+c.toString()]=bufferUsage["NEXTUV"+c.toString()]=this._uvAnimationBuffers[i][c];
-						this._uvAnimationBuffers[i][c].clear();
-						this._uvAnimationBuffers[i][c].append(animationDatas);
-						this._uvAnimationBuffers[i][c].upload();
-					}
-				}
-				this._lasstInitIndex=animationIndex;
-			}
-		}
-
+		__proto._initAnimationData=function(animationIndex){}
 		/**
 		*@private
 		*初始化载入UV动画组件。
 		*@param owner 所属精灵对象。
 		*/
 		__proto._load=function(owner){
-			var _$this=this;
-			if (Laya.__typeof(owner,laya.d3.core.fileModel.MeshSprite3D))
+			if ((owner instanceof laya.d3.core.MeshSprite3D ))
 				this._mesh=owner;
 			else
 			throw new Error("该Sprite3D并非Mesh");
 			owner.on(/*laya.events.Event.LOADED*/"loaded",this,function(mesh){
-				(!_$this._meshDataInited)&& (_$this._initMeshData());
-				(_$this.player.State==/*laya.ani.AnimationState.playing*/2)&& (_$this._templet)&& (_$this._templet.loaded)&& (_$this._initAnimationData(_$this.currentAnimationClipIndex));
 			});
 			this.on(/*laya.events.Event.LOADED*/"loaded",this,function(){
-				(!_$this._meshDataInited)&& (_$this._initMeshData());
-				(_$this.player.State==/*laya.ani.AnimationState.playing*/2)&& (_$this._mesh.mesh)&& (_$this._mesh.mesh.loaded)&& (_$this._initAnimationData(_$this.currentAnimationClipIndex));
 			});
 			this.player.on(/*laya.events.Event.PLAYED*/"played",this,function(){
-				(_$this._templet)&& (_$this._templet.loaded)&& (_$this._mesh.mesh)&& (_$this._mesh.mesh.loaded)&& (_$this._initAnimationData(_$this.currentAnimationClipIndex));
 			});
 			this.player.on(/*laya.events.Event.STOPPED*/"stopped",this,function(){
-				if (_$this.player.returnToZeroStopped){
-					if (Laya.__typeof(owner,laya.d3.core.fileModel.MeshSprite3D)){
-						var templet=(owner).mesh;
-						var materials=templet.materials;
-						var subMeshs=templet.subMeshes;
-						for (var i=0;i < subMeshs.length;i++){
-							var uvAniNodeIndex=_$this._subMeshIndexToNodeIndex[i];
-							if (uvAniNodeIndex !=null){
-								for (var c=0;c < _$this._uvDatasCount;c++){
-									if (c===0)
-										_$this._originalShaderAttributes[uvAniNodeIndex] && (materials[subMeshs[i].material].addOrUpdateShaderAttribute("UV",_$this._originalShaderAttributes[uvAniNodeIndex][c],-1));
-									else
-									_$this._originalShaderAttributes[uvAniNodeIndex] && (materials[subMeshs[i].material].addOrUpdateShaderAttribute("UV"+c.toString(),_$this._originalShaderAttributes[uvAniNodeIndex][c],-1));
-								}
-							}
-						}
-					}
-				}
 			});
 		}
 
@@ -10717,30 +10855,7 @@
 		*在渲染前更新UV动画组件渲染参数。
 		*@param state 渲染状态参数。
 		*/
-		__proto._preRenderUpdate=function(state){
-			if (!this._templet || !this._templet.loaded || this.player.State!==/*laya.ani.AnimationState.playing*/2)
-				return;
-			var subMeshIndex=state.renderObj.renderElement.indexOfHost;
-			var subMesh=this._subMeshes[subMeshIndex];
-			var uvAniNodeIndex=this._subMeshIndexToNodeIndex[subMeshIndex];
-			(this.player.State!==/*laya.ani.AnimationState.stopped*/0)&& (uvAniNodeIndex !=null)&& (state.shaderDefs.addInt(/*laya.d3.shader.ShaderDefines3D.MIXUV*/0x10000));
-			var material=subMesh.getMaterial(this._materials);
-			if ((uvAniNodeIndex !=null)&& this.player.State!==/*laya.ani.AnimationState.stopped*/0){
-				state.shaderValue.pushValue(/*laya.webgl.utils.Buffer2D.FLOAT0*/"FLOAT0",this._keyframeAges[uvAniNodeIndex],-1);
-				state.shaderValue.pushValue(/*laya.webgl.utils.Buffer2D.UVAGEX*/"UVAGEX",this._ages[uvAniNodeIndex],-1);
-				for (var c=0;c < this._uvDatasCount;c++){
-					if (c===0){
-						material.addOrUpdateShaderAttribute("UV",this._uvShaderValues[uvAniNodeIndex][c],-1);
-						material.addOrUpdateShaderAttribute("NEXTUV",this._uvNextShaderValues[uvAniNodeIndex][c],-1);
-						}else {
-						material.addOrUpdateShaderAttribute("UV"+c.toString(),this._uvShaderValues[uvAniNodeIndex][c],-1);
-						material.addOrUpdateShaderAttribute("NEXTUV"+c.toString(),this._uvNextShaderValues[uvAniNodeIndex][c],-1);
-					}
-				}
-				subMesh._finalBufferUsageDic=this._bufferUsages[uvAniNodeIndex];
-			}
-		}
-
+		__proto._preRenderUpdate=function(state){}
 		return UVAnimations;
 	})(KeyframeAnimations)
 
@@ -10843,33 +10958,68 @@
 	/**
 	*<code>Camera</code> 类用于创建普通摄像机。
 	*/
-	//class laya.d3.core.camera.Camera extends laya.d3.core.camera.BaseCamera
+	//class laya.d3.core.Camera extends laya.d3.core.BaseCamera
 	var Camera=(function(_super){
-		function Camera(viewport,fieldOfView,aspectRatio,nearPlane,farPlane){
+		function Camera(aspectRatio,nearPlane,farPlane){
 			//this._aspectRatio=NaN;
-			this._viewport=new Viewport(0,0,0,0);
-			this._viewMatrix=new Matrix4x4();
-			this._projectionMatrix=new Matrix4x4();
-			this._projectionViewMatrix=new Matrix4x4();
-			(fieldOfView===void 0)&& (fieldOfView=Math.PI/3);
+			//this._viewport=null;
+			//this._normalizedViewport=null;
+			//this._viewMatrix=null;
+			//this._projectionMatrix=null;
+			//this._projectionViewMatrix=null;
 			(aspectRatio===void 0)&& (aspectRatio=0);
 			(nearPlane===void 0)&& (nearPlane=0.1);
 			(farPlane===void 0)&& (farPlane=1000);
-			this._viewport=viewport;
+			this._viewMatrix=new Matrix4x4();
+			this._projectionMatrix=new Matrix4x4();
+			this._projectionViewMatrix=new Matrix4x4();
+			this._viewport=new Viewport(0,0,0,0);
+			this._normalizedViewport=new Viewport(0,0,1,1);
 			this._aspectRatio=aspectRatio;
-			Camera.__super.call(this,fieldOfView,nearPlane,farPlane);
+			Camera.__super.call(this,nearPlane,farPlane);
 		}
 
-		__class(Camera,'laya.d3.core.camera.Camera',_super);
+		__class(Camera,'laya.d3.core.Camera',_super);
 		var __proto=Camera.prototype;
 		/**
 		*@private
 		*计算投影矩阵。
 		*/
 		__proto._calculateProjectionMatrix=function(){
-			if (!this._isOrthographicProjection)
-				Matrix4x4.createPerspective(this.fieldOfView,this.aspectRatio,this.nearPlane,this.farPlane,this._projectionMatrix);
+			if (!this._useUserProjectionMatrix){
+				if (this.orthographicProjection){
+					var halfWidth=this.orthographicVerticalSize *this.aspectRatio *0.5;
+					var halfHeight=this.orthographicVerticalSize *0.5;
+					Matrix4x4.createOrthogonal(-halfWidth,halfWidth,-halfHeight,halfHeight,this.nearPlane,this.farPlane,this._projectionMatrix);
+					}else {
+					Matrix4x4.createPerspective(3.1416 *this.fieldOfView / 180.0,this.aspectRatio,this.nearPlane,this.farPlane,this._projectionMatrix);
+				}
+			}
 			this._projectionMatrixModifyID+=0.01 / this.id;
+		}
+
+		/**
+		*计算从屏幕空间生成的射线。
+		*@param point 屏幕空间的位置位置。
+		*@return out 输出射线。
+		*/
+		__proto.viewportPointToRay=function(point,out){
+			Picker.calculateCursorRay(point,this.viewport,this._projectionMatrix,this.viewMatrix,null,out);
+		}
+
+		/**
+		*计算从裁切空间生成的射线。
+		*@param point 裁切空间的位置。。
+		*@return out 输出射线。
+		*/
+		__proto.normalizedViewportPointToRay=function(point,out){
+			var finalPoint=Camera._tempVector2;
+			var vp=this.viewport;
+			var nVpPosE=point.elements;
+			var vpPosE=finalPoint.elements;
+			vpPosE[0]=nVpPosE[0] *vp.width;
+			vpPosE[1]=nVpPosE[1] *vp.height;
+			Picker.calculateCursorRay(finalPoint,this.viewport,this._projectionMatrix,this.viewMatrix,null,out);
 		}
 
 		/**
@@ -10882,29 +11032,76 @@
 		*/
 		__getset(0,__proto,'aspectRatio',function(){
 			if (this._aspectRatio===0){
-				return this._viewport.width / this._viewport.height;
+				var vp=this.viewport;
+				return vp.width / vp.height;
 			}
 			return this._aspectRatio;
 			},function(value){
-			if (this.aspectRatio < 0)
-				throw new Error("横纵比必须是正值得Number！");
+			if (value < 0)
+				throw new Error("Camera: the aspect ratio has to be a positive real number.");
 			this._aspectRatio=value;
 			this._calculateProjectionMatrix();
 		});
 
 		/**
-		*设置视口。
-		*@param value 视口。
+		*设置裁剪空间的视口。
+		*@return 裁剪空间的视口。
 		*/
 		/**
-		*获取视口。
-		*@return 视口。
+		*获取裁剪空间的视口。
+		*@return 裁剪空间的视口。
+		*/
+		__getset(0,__proto,'normalizedViewport',function(){
+			if (!this._viewportExpressedInClipSpace){
+				var vp=this._viewport;
+				var size=this.renderTargetSize;
+				var sizeW=size.width;
+				var sizeH=size.height;
+				this._normalizedViewport.x=vp.x / sizeW;
+				this._normalizedViewport.y=vp.y / sizeH;
+				this._normalizedViewport.width=vp.width / sizeW;
+				this._normalizedViewport.height=vp.height / sizeH;
+			}
+			return this._normalizedViewport;
+			},function(value){
+			if (value.x < 0 || value.y < 0 || (value.x+value.width)> 1 || (value.x+value.height)> 1)
+				throw new Error("Camera: viewport size invalid.","value");
+			this._viewportExpressedInClipSpace=true;
+			this._normalizedViewport=value;
+			this._calculateProjectionMatrix();
+		});
+
+		/**
+		*设置屏幕空间的视口。
+		*@param 屏幕空间的视口。
+		*/
+		/**
+		*获取屏幕空间的视口。
+		*@return 屏幕空间的视口。
 		*/
 		__getset(0,__proto,'viewport',function(){
+			if (this._viewportExpressedInClipSpace){
+				var nVp=this._normalizedViewport;
+				var size=this.renderTargetSize;
+				var sizeW=size.width;
+				var sizeH=size.height;
+				this._viewport.x=nVp.x *sizeW;
+				this._viewport.y=nVp.y *sizeH;
+				this._viewport.width=nVp.width *sizeW;
+				this._viewport.height=nVp.height *sizeH;
+			}
 			return this._viewport;
-			},function(vaule){
-			this._viewport=vaule;
+			},function(value){
+			if (this.renderTarget !=null && (value.x < 0 || value.y < 0 || value.width==0 || value.height==0))
+				throw new Error("Camera: viewport size invalid.","value");
+			this._viewportExpressedInClipSpace=false;
+			this._viewport=value;
 			this._calculateProjectionMatrix();
+		});
+
+		__getset(0,__proto,'needViewport',function(){
+			var nVp=this.normalizedViewport;
+			return nVp.x===0 && nVp.y===0 && nVp.width===1 && nVp.height===1;
 		});
 
 		/**
@@ -10916,12 +11113,13 @@
 			return this._viewMatrix;
 		});
 
-		/**
-		*获取投影矩阵。
-		*@return 投影矩阵。
-		*/
+		/**设置投影矩阵。*/
+		/**获取投影矩阵。*/
 		__getset(0,__proto,'projectionMatrix',function(){
 			return this._projectionMatrix;
+			},function(value){
+			this._projectionMatrix=value;
+			this._useUserProjectionMatrix=true;
 		});
 
 		/**
@@ -10933,223 +11131,10 @@
 			return this._projectionViewMatrix;
 		});
 
+		__static(Camera,
+		['_tempVector2',function(){return this._tempVector2=new Vector2();}
+		]);
 		return Camera;
-	})(BaseCamera)
-
-
-	/**
-	*<code>Camera</code> 类用于创建VR摄像机。
-	*/
-	//class laya.d3.core.camera.VRCamera extends laya.d3.core.camera.BaseCamera
-	var VRCamera=(function(_super){
-		function VRCamera(leftViewport,rightViewport,pupilDistande,fieldOfView,leftAspectRatio,rightAspectRatio,nearPlane,farPlane){
-			//this._leftAspectRatio=NaN;
-			//this._rightAspectRatio=NaN;
-			//this._pupilDistande=0;
-			this._tempMatrix=new Matrix4x4();
-			this._leftViewport=new Viewport(0,0,0,0);
-			this._leftViewMatrix=new Matrix4x4();
-			this._leftProjectionMatrix=new Matrix4x4();
-			this._leftProjectionViewMatrix=new Matrix4x4();
-			this._rightViewport=new Viewport(0,0,0,0);
-			this._rightViewMatrix=new Matrix4x4();
-			this._rightProjectionMatrix=new Matrix4x4();
-			this._rightProjectionViewMatrix=new Matrix4x4();
-			(pupilDistande===void 0)&& (pupilDistande=8);
-			(fieldOfView===void 0)&& (fieldOfView=Math.PI/3);
-			(leftAspectRatio===void 0)&& (leftAspectRatio=0);
-			(rightAspectRatio===void 0)&& (rightAspectRatio=0);
-			(nearPlane===void 0)&& (nearPlane=0.1);
-			(farPlane===void 0)&& (farPlane=1000);
-			this._leftViewport=leftViewport;
-			this._rightViewport=rightViewport;
-			this._pupilDistande=pupilDistande;
-			this._leftAspectRatio=leftAspectRatio;
-			this._rightAspectRatio=rightAspectRatio;
-			VRCamera.__super.call(this,fieldOfView,nearPlane,farPlane);
-		}
-
-		__class(VRCamera,'laya.d3.core.camera.VRCamera',_super);
-		var __proto=VRCamera.prototype;
-		/**
-		*@private
-		*计算瞳距。
-		*/
-		__proto._calculatePupilOffset=function(){
-			var offset=this._tempVector3;
-			Vector3.scale(this.right,this._pupilDistande / 2,offset);
-			return offset.elements;
-		}
-
-		/**
-		*@private
-		*计算左投影矩阵。
-		*/
-		__proto._calculateLeftProjectionMatrix=function(){
-			if (!this._isOrthographicProjection){
-				Matrix4x4.createPerspective(this.fieldOfView,this.leftAspectRatio,this.nearPlane,this.farPlane,this._leftProjectionMatrix);
-			}
-			this._projectionMatrixModifyID+=0.01 / this.id;
-		}
-
-		/**
-		*@private
-		*计算右投影矩阵。
-		*/
-		__proto._calculateRightProjectionMatrix=function(){
-			if (!this._isOrthographicProjection){
-				Matrix4x4.createPerspective(this.fieldOfView,this.rightAspectRatio,this.nearPlane,this.farPlane,this._rightProjectionMatrix);
-			}
-			this._projectionMatrixModifyID+=0.01 / this.id;
-		}
-
-		/**
-		*@private
-		*计算投影矩阵。
-		*/
-		__proto._calculateProjectionMatrix=function(){
-			if (!this._isOrthographicProjection){
-				Matrix4x4.createPerspective(this.fieldOfView,this.leftAspectRatio,this.nearPlane,this.farPlane,this._leftProjectionMatrix);
-				Matrix4x4.createPerspective(this.fieldOfView,this.rightAspectRatio,this.nearPlane,this.farPlane,this._rightProjectionMatrix);
-			}
-			this._projectionMatrixModifyID+=0.01 / this.id;
-		}
-
-		/**
-		*设置左横纵比。
-		*@param value 左横纵比。
-		*/
-		/**
-		*获取左横纵比。
-		*@return 左横纵比。
-		*/
-		__getset(0,__proto,'leftAspectRatio',function(){
-			if (this._leftAspectRatio===0)
-				return this._leftViewport.width / this._leftViewport.height;
-			return this._leftAspectRatio;
-			},function(value){
-			if (this.leftAspectRatio < 0)
-				throw new Error("横纵比必须是正值得Number！");
-			this._leftAspectRatio=value;
-			this._calculateLeftProjectionMatrix();
-		});
-
-		/**
-		*设置左视图。
-		*@param value 左视图。
-		*/
-		/**
-		*获取左视图。
-		*@return 左视图。
-		*/
-		__getset(0,__proto,'leftViewport',function(){
-			return this._leftViewport;
-			},function(vaule){
-			this._leftViewport=vaule;
-			this._calculateLeftProjectionMatrix();
-		});
-
-		/**
-		*设置右横纵比。
-		*@param value 右横纵比。
-		*/
-		/**
-		*获取右横纵比。
-		*@return 右横纵比。
-		*/
-		__getset(0,__proto,'rightAspectRatio',function(){
-			if (this._rightAspectRatio===0)
-				return this._rightViewport.width / this._rightViewport.height;
-			return this._rightAspectRatio;
-			},function(value){
-			if (this.rightAspectRatio < 0)
-				throw new Error("横纵比必须是正值得Number！");
-			this._rightAspectRatio=value;
-			this._calculateRightProjectionMatrix();
-		});
-
-		/**
-		*获取右投影矩阵。
-		*@return 右投影矩阵。
-		*/
-		__getset(0,__proto,'rightProjectionMatrix',function(){
-			return this._rightProjectionMatrix;
-		});
-
-		/**
-		*获取左投影视图矩阵。
-		*@return 左投影视图矩阵。
-		*/
-		__getset(0,__proto,'leftProjectionViewMatrix',function(){
-			Matrix4x4.multiply(this.leftProjectionMatrix,this.leftViewMatrix,this._leftProjectionViewMatrix);
-			return this._leftProjectionViewMatrix;
-		});
-
-		/**
-		*设置右视图。
-		*@param value 右视图。
-		*/
-		/**
-		*获取右视图。
-		*@return 右视图。
-		*/
-		__getset(0,__proto,'rightViewport',function(){
-			return this._rightViewport;
-			},function(vaule){
-			this._rightViewport=vaule;
-			this._calculateRightProjectionMatrix();
-		});
-
-		/**
-		*获取左投影矩阵。
-		*@return 左投影矩阵。
-		*/
-		__getset(0,__proto,'leftProjectionMatrix',function(){
-			return this._leftProjectionMatrix;
-		});
-
-		/**
-		*获取左视图矩阵。
-		*@return 左视图矩阵。
-		*/
-		__getset(0,__proto,'leftViewMatrix',function(){
-			var offsetE=this._calculatePupilOffset();
-			var tempWorldMat=this._tempMatrix;
-			this.transform.worldMatrix.cloneTo(tempWorldMat);
-			var worldMatE=tempWorldMat.elements;
-			worldMatE[12]-=offsetE[0];
-			worldMatE[13]-=offsetE[1];
-			worldMatE[14]-=offsetE[2];
-			tempWorldMat.invert(this._leftViewMatrix);
-			return this._leftViewMatrix;
-		});
-
-		/**
-		*获取右视图矩阵。
-		*@return 右视图矩阵。
-		*/
-		__getset(0,__proto,'rightViewMatrix',function(){
-			var offsetE=this._calculatePupilOffset();
-			var tempWorldMat=this._tempMatrix;
-			this.transform.worldMatrix.cloneTo(tempWorldMat);
-			var worldMatE=tempWorldMat.elements;
-			worldMatE[12]+=offsetE[0];
-			worldMatE[13]+=offsetE[1];
-			worldMatE[14]+=offsetE[2];
-			tempWorldMat.invert(this._rightViewMatrix);
-			return this._rightViewMatrix;
-		});
-
-		/**
-		*获取右投影视图矩阵。
-		*@return 右投影视图矩阵。
-		*/
-		__getset(0,__proto,'rightProjectionViewMatrix',function(){
-			Matrix4x4.multiply(this.rightProjectionMatrix,this.rightViewMatrix,this._rightProjectionViewMatrix);
-			return this._rightProjectionViewMatrix;
-		});
-
-		return VRCamera;
 	})(BaseCamera)
 
 
@@ -11400,6 +11385,329 @@
 
 		return SpotLight;
 	})(LightSprite)
+
+
+	/**
+	*<code>Camera</code> 类用于创建VR摄像机。
+	*/
+	//class laya.d3.core.VRCamera extends laya.d3.core.BaseCamera
+	var VRCamera=(function(_super){
+		function VRCamera(pupilDistande,leftAspectRatio,rightAspectRatio,nearPlane,farPlane){
+			//this._tempMatrix=null;
+			//this._leftAspectRatio=NaN;
+			//this._leftViewport=null;
+			//this._leftNormalizedViewport=null;
+			//this._leftViewMatrix=null;
+			//this._leftProjectionMatrix=null;
+			//this._leftProjectionViewMatrix=null;
+			//this._rightAspectRatio=NaN;
+			//this._rightViewport=null;
+			//this._rightNormalizedViewport=null;
+			//this._rightViewMatrix=null;
+			//this._rightProjectionMatrix=null;
+			//this._rightProjectionViewMatrix=null;
+			//this._pupilDistande=0;
+			(pupilDistande===void 0)&& (pupilDistande=0.1);
+			(leftAspectRatio===void 0)&& (leftAspectRatio=0);
+			(rightAspectRatio===void 0)&& (rightAspectRatio=0);
+			(nearPlane===void 0)&& (nearPlane=0.1);
+			(farPlane===void 0)&& (farPlane=1000);
+			this._tempMatrix=new Matrix4x4();
+			this._leftViewMatrix=new Matrix4x4();
+			this._leftProjectionMatrix=new Matrix4x4();
+			this._leftProjectionViewMatrix=new Matrix4x4();
+			this._leftViewport=new Viewport(0,0,0,0);
+			this._leftNormalizedViewport=new Viewport(0,0,0.5,1);
+			this._leftAspectRatio=leftAspectRatio;
+			this._rightViewMatrix=new Matrix4x4();
+			this._rightProjectionMatrix=new Matrix4x4();
+			this._rightProjectionViewMatrix=new Matrix4x4();
+			this._rightViewport=new Viewport(0,0,0,0);
+			this._rightNormalizedViewport=new Viewport(0.5,0,0.5,1);
+			this._rightAspectRatio=rightAspectRatio;
+			this._pupilDistande=pupilDistande;
+			VRCamera.__super.call(this,nearPlane,farPlane);
+		}
+
+		__class(VRCamera,'laya.d3.core.VRCamera',_super);
+		var __proto=VRCamera.prototype;
+		/**
+		*@private
+		*计算瞳距。
+		*/
+		__proto._calculatePupilOffset=function(){
+			var offset=this._tempVector3;
+			Vector3.scale(this.right,this._pupilDistande / 2,offset);
+			return offset.elements;
+		}
+
+		/**
+		*@private
+		*计算左投影矩阵。
+		*/
+		__proto._calculateLeftProjectionMatrix=function(){
+			if (!this._useUserProjectionMatrix){
+				if (this.orthographicProjection){
+					var leftHalfWidth=this.orthographicVerticalSize *this.leftAspectRatio *0.5;
+					var leftHalfHeight=this.orthographicVerticalSize *0.5;
+					Matrix4x4.createOrthogonal(-leftHalfWidth,leftHalfWidth,-leftHalfHeight,leftHalfHeight,this.nearPlane,this.farPlane,this._leftProjectionMatrix);
+					}else {
+					Matrix4x4.createPerspective(3.1416 *this.fieldOfView / 180.0,this.leftAspectRatio,this.nearPlane,this.farPlane,this._rightProjectionMatrix);
+				}
+			}
+			this._projectionMatrixModifyID+=0.01 / this.id;
+		}
+
+		/**
+		*@private
+		*计算右投影矩阵。
+		*/
+		__proto._calculateRightProjectionMatrix=function(){
+			if (!this._useUserProjectionMatrix){
+				if (this.orthographicProjection){
+					var rightHalfWidth=this.orthographicVerticalSize *this.rightAspectRatio *0.5;
+					var rightHalfHeight=this.orthographicVerticalSize *0.5;
+					Matrix4x4.createOrthogonal(-rightHalfWidth,rightHalfWidth,rightHalfHeight,rightHalfHeight,this.nearPlane,this.farPlane,this._rightProjectionMatrix);
+					}else {
+					Matrix4x4.createPerspective(3.1416 *this.fieldOfView / 180.0,this.rightAspectRatio,this.nearPlane,this.farPlane,this._rightProjectionMatrix);
+				}
+			}
+			this._projectionMatrixModifyID+=0.01 / this.id;
+		}
+
+		/**
+		*@private
+		*计算投影矩阵。
+		*/
+		__proto._calculateProjectionMatrix=function(){
+			if (!this._useUserProjectionMatrix){
+				if (this.orthographicProjection){
+					var leftHalfWidth=this.orthographicVerticalSize *this.leftAspectRatio *0.5;
+					var leftHalfHeight=this.orthographicVerticalSize *0.5;
+					var rightHalfWidth=this.orthographicVerticalSize *this.rightAspectRatio *0.5;
+					var rightHalfHeight=this.orthographicVerticalSize *0.5;
+					Matrix4x4.createOrthogonal(-leftHalfWidth,leftHalfWidth,-leftHalfHeight,leftHalfHeight,this.nearPlane,this.farPlane,this._leftProjectionMatrix);
+					Matrix4x4.createOrthogonal(-rightHalfWidth,rightHalfWidth,rightHalfHeight,rightHalfHeight,this.nearPlane,this.farPlane,this._rightProjectionMatrix);
+					}else {
+					Matrix4x4.createPerspective(3.1416 *this.fieldOfView / 180.0,this.leftAspectRatio,this.nearPlane,this.farPlane,this._leftProjectionMatrix);
+					Matrix4x4.createPerspective(3.1416 *this.fieldOfView / 180.0,this.rightAspectRatio,this.nearPlane,this.farPlane,this._rightProjectionMatrix);
+				}
+			}
+			this._projectionMatrixModifyID+=0.01 / this.id;
+		}
+
+		/**
+		*设置横纵比。
+		*@param value 横纵比。
+		*/
+		__getset(0,__proto,'aspectRatio',null,function(value){
+			if (value < 0)
+				throw new Error("VRCamera: the aspect ratio has to be a positive real number.");
+			this._leftAspectRatio=value;
+			this._rightAspectRatio=value;
+			this._calculateRightProjectionMatrix();
+		});
+
+		/**
+		*设置裁剪空间的视口。
+		*@return 裁剪空间的视口。
+		*/
+		__getset(0,__proto,'normalizedViewport',null,function(value){
+			if (value.x < 0 || value.y < 0 || (value.x+value.width)> 1 || (value.x+value.height)> 1)
+				throw new Error("VRCamera: viewport size invalid.","value");
+			this._viewportExpressedInClipSpace=true;
+			this._leftNormalizedViewport=new Viewport(0,0,value.width / 2,value.height);
+			this._rightNormalizedViewport=new Viewport(value.width / 2,0,value.width / 2,value.height);
+			this._calculateProjectionMatrix();
+		});
+
+		/**
+		*获取左横纵比。
+		*@return 左横纵比。
+		*/
+		__getset(0,__proto,'leftAspectRatio',function(){
+			if (this._leftAspectRatio===0){
+				var lVp=this.leftViewport;
+				return lVp.width / lVp.height;
+			}
+			return this._leftAspectRatio;
+		});
+
+		/**
+		*获取右投影视图矩阵。
+		*@return 右投影视图矩阵。
+		*/
+		__getset(0,__proto,'rightProjectionViewMatrix',function(){
+			Matrix4x4.multiply(this.rightProjectionMatrix,this.rightViewMatrix,this._rightProjectionViewMatrix);
+			return this._rightProjectionViewMatrix;
+		});
+
+		/**
+		*设置屏幕空间的视口。
+		*@param 屏幕空间的视口。
+		*/
+		__getset(0,__proto,'viewport',null,function(value){
+			if (this.renderTarget !=null && (value.x < 0 || value.y < 0 || value.width==0 || value.height==0))
+				throw new Error("VRCamera: viewport size invalid.","value");
+			this._viewportExpressedInClipSpace=false;
+			this._leftViewport=new Viewport(0,0,value.width / 2,value.height);
+			this._rightViewport=new Viewport(value.width / 2,0,value.width / 2,value.height);
+			this._calculateProjectionMatrix();
+		});
+
+		/**
+		*获取屏幕空间的左视口。
+		*@return 屏幕空间的左视口。
+		*/
+		__getset(0,__proto,'leftViewport',function(){
+			if (this._viewportExpressedInClipSpace){
+				var nVp=this._leftNormalizedViewport;
+				var size=this.renderTargetSize;
+				var sizeW=size.width;
+				var sizeH=size.height;
+				this._leftViewport.x=nVp.x *sizeW;
+				this._leftViewport.y=nVp.y *sizeH;
+				this._leftViewport.width=nVp.width *sizeW;
+				this._leftViewport.height=nVp.height *sizeH;
+			}
+			return this._leftViewport;
+		});
+
+		/**
+		*获取裁剪空间的右视口。
+		*@return 裁剪空间的右视口。
+		*/
+		__getset(0,__proto,'rightNormalizedViewport',function(){
+			if (!this._viewportExpressedInClipSpace){
+				var vp=this._rightViewport;
+				var size=this.renderTargetSize;
+				var sizeW=size.width;
+				var sizeH=size.height;
+				this._rightNormalizedViewport.x=vp.x / sizeW;
+				this._rightNormalizedViewport.y=vp.y / sizeH;
+				this._rightNormalizedViewport.width=vp.width / sizeW;
+				this._rightNormalizedViewport.height=vp.height / sizeH;
+			}
+			return this._rightNormalizedViewport;
+		});
+
+		/**
+		*获取右横纵比。
+		*@return 右横纵比。
+		*/
+		__getset(0,__proto,'rightAspectRatio',function(){
+			if (this._rightAspectRatio===0){
+				var rVp=this.rightViewport;
+				return rVp.width / rVp.height;
+			}
+			return this._rightAspectRatio;
+		});
+
+		/**
+		*获取屏幕空间的右视口。
+		*@return 屏幕空间的右视口。
+		*/
+		__getset(0,__proto,'rightViewport',function(){
+			if (this._viewportExpressedInClipSpace){
+				var nVp=this._rightNormalizedViewport;
+				var size=this.renderTargetSize;
+				var sizeW=size.width;
+				var sizeH=size.height;
+				this._rightViewport.x=nVp.x *sizeW;
+				this._rightViewport.y=nVp.y *sizeH;
+				this._rightViewport.width=nVp.width *sizeW;
+				this._rightViewport.height=nVp.height *sizeH;
+			}
+			return this._rightViewport;
+		});
+
+		/**
+		*获取裁剪空间的左视口。
+		*@return 裁剪空间的左视口。
+		*/
+		__getset(0,__proto,'leftNormalizedViewport',function(){
+			if (!this._viewportExpressedInClipSpace){
+				var vp=this._leftViewport;
+				var size=this.renderTargetSize;
+				var sizeW=size.width;
+				var sizeH=size.height;
+				this._leftNormalizedViewport.x=vp.x / sizeW;
+				this._leftNormalizedViewport.y=vp.y / sizeH;
+				this._leftNormalizedViewport.width=vp.width / sizeW;
+				this._leftNormalizedViewport.height=vp.height / sizeH;
+			}
+			return this._leftNormalizedViewport;
+		});
+
+		__getset(0,__proto,'needLeftViewport',function(){
+			var nVp=this.leftNormalizedViewport;
+			return nVp.x===0 && nVp.y===0 && nVp.width===1 && nVp.height===1;
+		});
+
+		__getset(0,__proto,'needRightViewport',function(){
+			var nVp=this.rightNormalizedViewport;
+			return nVp.x===0 && nVp.y===0 && nVp.width===1 && nVp.height===1;
+		});
+
+		/**
+		*获取左视图矩阵。
+		*@return 左视图矩阵。
+		*/
+		__getset(0,__proto,'leftViewMatrix',function(){
+			var offsetE=this._calculatePupilOffset();
+			var tempWorldMat=this._tempMatrix;
+			this.transform.worldMatrix.cloneTo(tempWorldMat);
+			var worldMatE=tempWorldMat.elements;
+			worldMatE[12]-=offsetE[0];
+			worldMatE[13]-=offsetE[1];
+			worldMatE[14]-=offsetE[2];
+			tempWorldMat.invert(this._leftViewMatrix);
+			return this._leftViewMatrix;
+		});
+
+		/**
+		*获取右视图矩阵。
+		*@return 右视图矩阵。
+		*/
+		__getset(0,__proto,'rightViewMatrix',function(){
+			var offsetE=this._calculatePupilOffset();
+			var tempWorldMat=this._tempMatrix;
+			this.transform.worldMatrix.cloneTo(tempWorldMat);
+			var worldMatE=tempWorldMat.elements;
+			worldMatE[12]+=offsetE[0];
+			worldMatE[13]+=offsetE[1];
+			worldMatE[14]+=offsetE[2];
+			tempWorldMat.invert(this._rightViewMatrix);
+			return this._rightViewMatrix;
+		});
+
+		/**
+		*获取左投影矩阵。
+		*@return 左投影矩阵。
+		*/
+		__getset(0,__proto,'leftProjectionMatrix',function(){
+			return this._leftProjectionMatrix;
+		});
+
+		/**
+		*获取右投影矩阵。
+		*@return 右投影矩阵。
+		*/
+		__getset(0,__proto,'rightProjectionMatrix',function(){
+			return this._rightProjectionMatrix;
+		});
+
+		/**
+		*获取左投影视图矩阵。
+		*@return 左投影视图矩阵。
+		*/
+		__getset(0,__proto,'leftProjectionViewMatrix',function(){
+			Matrix4x4.multiply(this.leftProjectionMatrix,this.leftViewMatrix,this._leftProjectionViewMatrix);
+			return this._leftProjectionViewMatrix;
+		});
+
+		return VRCamera;
+	})(BaseCamera)
 
 
 	/**

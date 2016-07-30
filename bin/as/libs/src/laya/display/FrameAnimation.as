@@ -25,7 +25,7 @@ package laya.display
 		{
 			if(_sortIndexFun==null)
 			{
-				_sortIndexFun=MathUtil.SortByKey("index",false,true);	
+				_sortIndexFun=MathUtil.sortByKey("index",false,true);	
 			}
 		}
 		/**@private */

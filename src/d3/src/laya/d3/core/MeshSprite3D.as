@@ -1,19 +1,11 @@
 package laya.d3.core {
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.Material;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderObject;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.loaders.LoadModel;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
-	import laya.d3.resource.models.SubMesh;
-	import laya.display.Node;
-	import laya.events.Event;
-	import laya.net.Loader;
-	import laya.net.URL;
-	import laya.resource.Resource;
 	import laya.utils.Stat;
 	
 	/**
@@ -83,17 +75,12 @@ package laya.d3.core {
 			super(name);
 		}
 		
-		private function _clearRenderObjects():void {
+		override public function _clearRenderObjects():void {
 			for (var i:int = 0, n:int = _renderObjects.length; i < n; i++) {
 				var renderObj:RenderObject = _renderObjects[i];
 				renderObj.renderQneue.deleteRenderObj(renderObj);
 			}
 			_renderObjects.length = 0;
-		}
-		
-		override public function removeChildAt(index:int):Node {
-			_clearRenderObjects();
-			return super.removeChildAt(index);
 		}
 		
 		/**
@@ -117,10 +104,10 @@ package laya.d3.core {
 						var renderQueue:RenderQueue = state.scene.getRenderQueue(material.renderQueue);
 						if (obj.renderQneue != renderQueue) {
 							obj.renderQneue.deleteRenderObj(obj);
-							obj=_addRenderObject(state, i, material);
+							obj = _addRenderObject(state, i, material);
 						}
 					} else {
-						obj=_addRenderObject(state, i, _materials[i]);
+						obj = _addRenderObject(state, i, _materials[i]);
 					}
 					obj.tag.worldTransformModifyID = state.worldTransformModifyID;
 				}

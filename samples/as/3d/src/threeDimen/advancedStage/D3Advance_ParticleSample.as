@@ -1,6 +1,6 @@
 package threeDimen.advancedStage {
+	import laya.d3.core.Camera;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.camera.Camera;
 	import laya.d3.core.particle.Particle3D;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
@@ -51,13 +51,10 @@ package threeDimen.advancedStage {
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			scene.currentCamera = (scene.addChild(new Camera(new Viewport(0, 0, RenderState.clientWidth, RenderState.clientHeight), Math.PI / 3, 0, 0.1, 100))) as Camera;
+			scene.currentCamera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
 			scene.currentCamera.transform.translate(new Vector3(0, 1, 2.6));
 			scene.currentCamera.transform.rotate(new Vector3(-20, 0, 0), false, false);
 			scene.currentCamera.clearColor = null;
-			Laya.stage.on(Event.RESIZE, null, function():void {
-				(scene.currentCamera as Camera).viewport = new Viewport(0, 0, RenderState.clientWidth, RenderState.clientHeight);
-			});
 			
 			scene.currentCamera.addComponent(CameraMoveScript);
 			

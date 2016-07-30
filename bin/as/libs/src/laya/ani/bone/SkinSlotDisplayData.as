@@ -7,14 +7,14 @@ package laya.ani.bone {
 	public class SkinSlotDisplayData {
 		
 		public var name:String;
-		public var type:String;
+		public var type:int;
 		public var transform:Transform;
+		public var width:Number;
+		public var height:Number;
 		
-		public function initData(data:*):void {
-			name = data.name;
-			type = data.type;
-			transform = new Transform();
-			transform.initData(data.transform);
-		}
+		public var bones:Array;
+		public var uvs:Array;
+		public var weights:Array;
+		public var triangles:Array;
 	}
 }

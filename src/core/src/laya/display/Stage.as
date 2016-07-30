@@ -36,15 +36,15 @@ package laya.display {
 	 * 可以通过 Laya.stage 访问。
 	 */
 	public class Stage extends Sprite {
-		/**应用保持设计宽高不变，不缩放不变性，stage的宽高等于设计宽高。*/
+		/**应用保持设计宽高不变，不缩放不变型，stage的宽高等于设计宽高。*/
 		public static const SCALE_NOSCALE:String = "noscale";
-		/**应用根据屏幕大小铺满全屏，非等比缩放会变形，stage的宽高等于设计宽高。*/
+		/**应用根据屏幕大小铺满全屏，非等比缩放会变型，stage的宽高等于设计宽高。*/
 		public static const SCALE_EXACTFIT:String = "exactfit";
-		/**应用显示全部内容，按照最小比率缩放，等比缩放不变性，一边可能会留空白，stage的宽高等于设计宽高。*/
+		/**应用显示全部内容，按照最小比率缩放，等比缩放不变型，一边可能会留空白，stage的宽高等于设计宽高。*/
 		public static const SCALE_SHOWALL:String = "showall";
-		/**应用按照最大比率缩放显示，宽或高方向会显示一部分，等比缩放不变性，stage的宽高等于设计宽高。*/
+		/**应用按照最大比率缩放显示，宽或高方向会显示一部分，等比缩放不变型，stage的宽高等于设计宽高。*/
 		public static const SCALE_NOBORDER:String = "noborder";
-		/**应用保持设计宽高不变，不缩放不变性，stage的宽高等于屏幕宽高。*/
+		/**应用保持设计宽高不变，不缩放不变型，stage的宽高等于屏幕宽高。*/
 		public static const SCALE_FULL:String = "full";
 		/**应用保持设计宽度不变，高度根据屏幕比缩放，stage的宽度等于设计宽度，高度根据屏幕比率大小而变化*/
 		public static const SCALE_FIXED_WIDTH:String = "fixedwidth";
@@ -111,6 +111,8 @@ package laya.display {
 		private var _mouseMoveTime:Number = 0;
 		/** @private */
 		private var _renderCount:int = 0;
+		/** @private */
+		private var _safariOffsetY:Number = 0;
 		
 		public function Stage() {
 			this.mouseEnabled = true;
@@ -127,26 +129,41 @@ package laya.display {
 				_this.event(Event.BLUR);
 				if (_this._isInputting()) Input["inputElement"].target.focus = false;
 			});
-			window.document.addEventListener("visibilitychange", function():void {
-				switch (Browser.document.visibilityState) {
-				case "hidden": 
+			// 各种浏览器兼容
+			var hidden:String = "hidden", state:String = "visibilityState", visibilityChange:String = "visibilitychange";
+			var document:* = window.document;
+			if (typeof document.hidden !== "undefined") {
+				visibilityChange = "visibilitychange";
+				state = "visibilityState";
+				
+			} else if (typeof document.mozHidden !== "undefined") {
+				visibilityChange = "mozvisibilitychange";
+				state = "mozVisibilityState";
+			} else if (typeof document.msHidden !== "undefined") {
+				visibilityChange = "msvisibilitychange";
+				state = "msVisibilityState";
+			} else if (typeof document.webkitHidden !== "undefined") {
+				visibilityChange = "webkitvisibilitychange";
+				state = "webkitVisibilityState";
+			}
+			
+			window.document.addEventListener(visibilityChange, visibleChangeFun);
+			function visibleChangeFun():void {
+				if (Browser.document[state] == "hidden") {
 					_this.event(Event.BLUR);
 					if (_this._isInputting()) Input["inputElement"].target.focus = false;
-					break;
-				case "visible": 
+				} else {
 					_this.event(Event.FOCUS);
-					break;
 				}
-			});
+			}
 			window.addEventListener("resize", function():void {
 				if (_this._isInputting()) return;
-
+				
 				// Safari横屏工具栏偏移
-				if(Browser.onSafari)
-					Render.canvas.style.top = Browser.document.body.clientHeight - Browser.window.innerHeight + 'px';
+				if (Browser.onSafari)
+					_this._safariOffsetY = (Browser.document.body.clientHeight || Browser.document.documentElement.clientHeight) - Browser.window.innerHeight;
 				
 				_this._resetCanvas();
-				Laya.timer.once(100, _this, _this._changeCanvasSize);
 			});
 			window.addEventListener("orientationchange", function(e:*):void {
 				// 转屏后收回输入法。以免resize后的canvas尺寸缩小。
@@ -154,7 +171,6 @@ package laya.display {
 				if (_this._isInputting()) Input["inputElement"].target.focus = false;
 				
 				_this._resetCanvas();
-				Laya.timer.once(100, _this, _this._changeCanvasSize);
 			});
 			
 			on(Event.MOUSE_MOVE, this, _onmouseMove);
@@ -187,6 +203,7 @@ package laya.display {
 			canvas.size(1, 1);
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "";
 			this.renderingEnabled = false;
+			Laya.timer.once(100, this, this._changeCanvasSize);
 		}
 		
 		/**
@@ -292,6 +309,7 @@ package laya.display {
 			}
 			offset.x += _offset.x;
 			offset.y += _offset.y;
+			canvasStyle.top = _safariOffsetY+"px";
 			mat.translate(offset.x, offset.y);
 			
 			//处理横竖屏

@@ -12,13 +12,10 @@ Laya.Stat.show();
 
 var scene = Laya.stage.addChild(new Laya.Scene());
 
-var camera = new Laya.Camera(new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height), Math.PI / 3, 0, 0.1, 100);
+var camera = new Laya.Camera(0, 0.1, 100);
 scene.currentCamera = scene.addChild(camera);
 scene.currentCamera.transform.translate(new Vector3(0.3, 0.3, 0.6));
 scene.currentCamera.transform.rotate(new Vector3(-12, 0, 0), true, false);
-Laya.stage.on(Laya.Event.RESIZE, null, function () {
-				scene.currentCamera.viewport = new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height);
-});
 
 scene.currentCamera.addComponent(CameraMoveScript);
 

@@ -7,13 +7,10 @@ var ScriptAndCameraSample = (function () {
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
         Laya.Stat.show();
         var scene = Laya.stage.addChild(new Laya.Scene());
-        scene.currentCamera = (scene.addChild(new Laya.Camera(new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height), Math.PI / 3, 0, 0.1, 100)));
+        scene.currentCamera = (scene.addChild(new Laya.Camera(0, 0.1, 100)));
         scene.currentCamera.transform.translate(new Laya.Vector3(0, 0.8, 1.0));
         scene.currentCamera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
         scene.currentCamera.clearColor = null;
-        Laya.stage.on(Laya.Event.RESIZE, null, function () {
-            scene.currentCamera.viewport = new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height);
-        });
         scene.currentCamera.addComponent(CameraMoveScript);
         var pointLight = scene.addChild(new Laya.PointLight());
         pointLight.transform.position = new Laya.Vector3(0, 0.6, 0.3);

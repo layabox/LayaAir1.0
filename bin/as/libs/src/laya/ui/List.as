@@ -903,13 +903,15 @@ package laya.ui {
 		 * <p>缓动滚动列表，以设定的数据索引对应的单元格为当前可视列表的第一项。</p>
 		 * @param index 单元格在数据列表中的索引。
 		 * @param time	缓动时间。
+		 * @param complete	缓动结束回掉
 		 */
-		public function tweenTo(index:int, time:int = 200):void {
+		public function tweenTo(index:int, time:int = 200,complete:Handler=null):void {
 			if (_scrollBar) {
 				var numX:int = _isVertical ? repeatX : repeatY;
-				Tween.to(_scrollBar, {value: Math.floor(index / numX) * _cellSize}, time, null, null, 0, true);
+				Tween.to(_scrollBar, {value: Math.floor(index / numX) * _cellSize}, time, null, complete, 0, true);
 			} else {
 				startIndex = index;
+				if (complete) complete.run();
 			}
 		}
 		

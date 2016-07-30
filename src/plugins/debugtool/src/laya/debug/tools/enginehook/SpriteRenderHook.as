@@ -21,6 +21,10 @@ package laya.debug.tools.enginehook
 		public static function init():void
 		{
 			I = new SpriteRenderHook();
+			setRenderHook();
+		}
+		public static function setRenderHook():void
+		{
 			Sprite["prototype"]["render"]=I.render;
 		}
 		/** @private */

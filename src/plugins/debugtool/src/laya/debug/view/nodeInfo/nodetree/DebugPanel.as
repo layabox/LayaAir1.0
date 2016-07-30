@@ -45,6 +45,11 @@ package laya.debug.view.nodeInfo.nodetree
                this.width = 245;
 			   //return;
 			}
+			if (this.height < 100)
+			{
+               this.height = 200;
+			   //return;
+			}
 			super.changeSize();
 			msRec.setTo(0,0,this.width,this.height);
 			this.scrollRect=msRec;

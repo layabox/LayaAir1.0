@@ -257,6 +257,11 @@ package laya.resource {
 		/*** @private */
 		public function drawTexture2(x:Number, y:Number, pivotX:Number, pivotY:Number, m:Matrix, alpha:Number, blendMode:String, args2:Array):void {
 			'use strict';
+			var tex:Texture = args2[0];
+			if (!(tex.loaded && tex.bitmap && tex.source))//source内调用tex.active();
+			{
+				return;
+			}
 			Stat.drawCall++;
 			//TODO:blendMode
 			var alphaChanged:Boolean = alpha !== 1;
@@ -265,7 +270,7 @@ package laya.resource {
 				this.globalAlpha *= alpha;
 			}
 			
-			var tex:Texture = args2[0];
+
 			var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
 			if (m) {
 				this.save();

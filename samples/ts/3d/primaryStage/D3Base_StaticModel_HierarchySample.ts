@@ -12,22 +12,19 @@ class StaticModel_HierarchySample {
 
         var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
-        scene.currentCamera = (scene.addChild(new Laya.Camera(new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height), Math.PI / 3, 0, 0.1, 100))) as Laya.Camera;
+        scene.currentCamera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
         scene.currentCamera.transform.translate(new Laya.Vector3(0, 0.8, 1.5));
         scene.currentCamera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
-        Laya.stage.on(Laya.Event.RESIZE, null, () => {
-            (scene.currentCamera as Laya.Camera).viewport = new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height);
-        });
 
         //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
         var staticMesh = scene.addChild(new Laya.Sprite3D()) as Laya.Sprite3D;
-        staticMesh.once(Laya.Event.HIERARCHY_LOADED, this, function (sprite: Laya.Sprite3D): void {
+        staticMesh.once(Laya.Event.HIERARCHY_LOADED, this, (sprite) => {
             var meshSprite = sprite.getChildAt(0) as Laya.MeshSprite3D;
             var mesh = meshSprite.mesh;
-            mesh.once(Laya.Event.LOADED, this, function (mesh: Laya.BaseMesh): void {
+            mesh.once(Laya.Event.LOADED, this, (mesh) => {
                 for (var i = 0; i < meshSprite.materials.length; i++) {
                     var material = meshSprite.materials[i];
-                    material.once(Laya.Event.LOADED, this, function (mat: Laya.Material): void {
+                    material.once(Laya.Event.LOADED, this, (mat) => {
                         mat.luminance = 3.5;
                     });
                 }

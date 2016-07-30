@@ -13,13 +13,10 @@ Laya.Stat.show();
 
 scene = Laya.stage.addChild(new Laya.Scene());
 
-scene.currentCamera = scene.addChild(new Laya.Camera(new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height), Math.PI / 3, 0, 1, 1000));
+scene.currentCamera = scene.addChild(new Laya.Camera(0, 1, 1000));
 scene.currentCamera.transform.translate(new Vector3(0, 5, 10));
 scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 
-Laya.stage.on(Laya.Event.RESIZE, null, function () {
-				scene.currentCamera.viewport = new Laya.Viewport(0, 0, Laya.stage.width, Laya.stage.height);
-});
 
 var setting = new Laya.GlitterSettings();
 setting.texturePath = "../../res/threeDimen/layabox.png";

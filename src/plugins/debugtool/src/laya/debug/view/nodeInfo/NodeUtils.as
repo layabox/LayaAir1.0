@@ -215,7 +215,15 @@ package laya.debug.view.nodeInfo
 			
 			return rst;
 		}
-		
+		public static function getGVisible(node:Sprite):Boolean
+		{
+			while (node)
+			{
+				if (!node.visible) return false;
+				node = node.parent as Sprite;
+			}
+			return true;
+		}
 		public static function getGAlpha(node:Sprite):Number
 		{
 			var rst:Number;
@@ -241,7 +249,19 @@ package laya.debug.view.nodeInfo
 			_disBoundRec = Rectangle._getWrapRec(pointList, _disBoundRec);
 			return _disBoundRec;
 		}
-		
+		public static function getGGraphicRec(node:Sprite):Rectangle
+		{
+			var pointList:Array;
+			pointList = node.getGraphicBounds()._getBoundPoints;
+			if (!pointList || pointList.length < 1)
+				return Rectangle.TEMP.setTo(0,0,0,0);
+			pointList = GrahamScan.pListToPointList(pointList, true);
+			WalkTools.walkArr(pointList, node.localToGlobal, node);
+			pointList = GrahamScan.pointListToPlist(pointList);
+			var _disBoundRec:Rectangle;
+			_disBoundRec = Rectangle._getWrapRec(pointList, _disBoundRec);
+			return _disBoundRec;
+		}
 		public static function getNodeCmdCount(node:Sprite):int
 		{
 			var rst:int;

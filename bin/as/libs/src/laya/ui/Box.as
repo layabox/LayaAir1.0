@@ -13,7 +13,6 @@ package laya.ui {
 				if (comp) comp.dataSource = value[name];
 				else if (hasOwnProperty(name)) this[name] = value[name];
 			}
-		}
-	
+		}	
 	}
 }

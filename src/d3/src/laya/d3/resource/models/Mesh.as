@@ -6,9 +6,13 @@ package laya.d3.resource.models {
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.VertexBuffer3D;
+	import laya.d3.graphics.VertexElement;
+	import laya.d3.graphics.VertexElementFormat;
+	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.loaders.LoadModel;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Vector3;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.net.Loader;
@@ -53,6 +57,38 @@ package laya.d3.resource.models {
 		private var _loaded:Boolean = false;
 		
 		/**
+		 * 获取网格顶点,请重载此方法。
+		 * @return 网格顶点。
+		 */
+		override public function get positions():Vector.<Vector3> {
+			var vertices:Vector.<Vector3> = new Vector.<Vector3>();
+			var submesheCount:int = _subMeshes.length;
+			for (var i:int = 0; i < submesheCount; i++) {
+				var subMesh:SubMesh = _subMeshes[i];
+				var vertexBuffer:VertexBuffer3D = subMesh.getVertexBuffer();
+				
+				var positionElement:VertexElement;
+				var vertexElements:Array = vertexBuffer.vertexDeclaration.getVertexElements();
+				var j:int;
+				for (j = 0; i < vertexElements.length; i++) {
+					var vertexElement:VertexElement = vertexElements[i];
+					if (vertexElement.elementFormat === VertexElementFormat.Vector3 && vertexElement.elementUsage === VertexElementUsage.POSITION0) {
+						positionElement = vertexElement;
+						break;
+					}
+				}
+				
+				var verticesData:Float32Array = vertexBuffer.getData();
+				for (j = 0; j < verticesData.length; j += vertexBuffer.vertexDeclaration.vertexStride / 4) {
+					var ofset:int = j + positionElement.offset / 4;
+					var position:Vector3 = new Vector3(verticesData[ofset + 0], verticesData[ofset + 1], verticesData[ofset + 2]);
+					vertices.push(position);
+				}
+			}
+			return vertices;
+		}
+		
+		/**
 		 * 获取材质队列。
 		 * @return  材质队列。
 		 */
@@ -73,10 +109,21 @@ package laya.d3.resource.models {
 		 * @param url 文件地址。
 		 */
 		public function Mesh(url:String) {
+			super();
 			_subMeshes = new Vector.<SubMesh>();
 			_materials = new Vector.<Material>();
 			_url = url;
-			super();
+			
+			if (_loaded)
+				_generateBoundingObject();
+			else
+				once(Event.LOADED, this, _generateBoundingObject);
+		}
+		
+		private function _generateBoundingObject():void {
+			var pos:Vector.<Vector3> = positions;
+			BoundBox.fromPoints(pos, _boundingBox);
+			BoundSphere.fromPoints(pos, _boundingSphere);
 		}
 		
 		/**
@@ -219,3 +266,4 @@ package laya.d3.resource.models {
 		//}
 	}
 }
+

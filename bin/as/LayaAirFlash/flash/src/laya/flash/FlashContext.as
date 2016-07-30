@@ -21,6 +21,7 @@
 	{
 		private static var _textField:TextField = new TextField();
 		private static var _dfontStr : String = "";
+		private static var _thisPtr : FlashContext = null;
 		private var _bitmapdata:BitmapData;
 		private var _rectangle:Rectangle = new Rectangle();
 		private var _flashCanvas:FlashCanvas;
@@ -56,6 +57,8 @@
 			for ( var ti :int = 0; ti < 12; ti ++ ) {
 				_vecStateSave[ti] = new contextContent();
 			}
+			
+			_thisPtr = this;
 		}
 		
 		public function size(w:Number, h:Number):void
@@ -140,22 +143,17 @@
 		
 		/*** @private */
 		public override function set font(str:String):void {
+			if ( str == _dfontStr ) return;			
 			_dfontStr = str;
-		}
-		
-		
-		public static function __measureText(txt:String, font:String):* {
-			if ( font == "" )
-				font = _dfontStr;
-				
-			var textFormat:TextFormat = _textFormatMap[font];
+			
+			var textFormat:TextFormat = _textFormatMap[str];
 			if (!textFormat)
 			{
 				//textFormat = _textFormatMap[font] = new TextFormat(font);
 				
 				// var ctxFont:String = (italic ? "italic " : "") + (bold ? "bold " : "") + fontSize + "px " + font;
 				// 总共有4种格式需要处理:
-				var ta : Array = font.split( "px " );
+				var ta : Array = str.split( "px " );
 				var size : int = 14;
 				var fname : String = "Verdana";
 				var bbold : Boolean = false;
@@ -180,10 +178,19 @@
 					}
 				}
 				
-				textFormat = _textFormatMap[font] = new TextFormat(fname,size,null,bbold,italic );
+				textFormat = _textFormatMap[str] = new TextFormat(fname,size,null,bbold,italic );
 			}
 			_textField.defaultTextFormat = textFormat;
-			_textField.setTextFormat(textFormat);			
+			_textField.setTextFormat(textFormat);					
+		}
+		
+		
+		public static function __measureText(txt:String, _font:String):* {
+			if ( _font == "" )
+				_font = _dfontStr;
+			_thisPtr.font = _font;
+			
+	
 			_textField.text = txt;
 			//trace( "The font name & text:" + textFormat.font + "," + txt + "," + textFormat.size );
 			var rect : Rectangle = _textField.getCharBoundaries( 0 );	
@@ -206,6 +213,7 @@
 		/*** @private */
 		private static var _textFormatMap:Dictionary = new Dictionary();
 		private var _drawMatrix : Matrix = new Matrix( 1, 0, 0, 1 );
+		//private static var xoff : int = 600;
 		public override function fillText(text:*, x:Number, y:Number, font:String, color:String, textAlign:String):void {
 			Stat.drawCall++;
 			var txtColor:uint = _fillColor;
@@ -232,11 +240,14 @@
 			_bitmapdata.draw( _textField, _drawMatrix );	
 			
 			/* River: 以下为测试文字的代码:
-			var spi : Sprite = new Sprite();
-			spi.addChild( new Bitmap( _bitmapdata ) );
-			FlashMain.sta.addChild( spi );
-			spi.x = 500;
-			spi.y = 100;
+			if( text == "级" ){
+				var spi : Sprite = new Sprite();
+				spi.addChild( new Bitmap( _bitmapdata ) );
+				FlashMain.sta.addChild( spi );
+				spi.x = xoff;
+				spi.y = 50;
+				xoff += 50;
+			}
 			*/
 		}
 		

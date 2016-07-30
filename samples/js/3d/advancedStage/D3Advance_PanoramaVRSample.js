@@ -8,16 +8,10 @@ Laya.Stat.show();
 
 var scene = Laya.stage.addChild(new Laya.VRScene());
 
-var leftViewport = new Laya.Viewport(0, 0, Laya.RenderState.clientWidth / 2, Laya.RenderState.clientHeight);
-var rightViewport = new Laya.Viewport(Laya.RenderState.clientWidth / 2, 0, Laya.RenderState.clientWidth / 2, Laya.RenderState.clientHeight);
 
-var camera = new Laya.VRCamera(leftViewport, rightViewport, 0.03, Math.PI / 3.0, 0, 0, 0.1, 100);
+
+var camera = new Laya.VRCamera( 0.03, 0, 0, 0.1, 100);
 scene.currentCamera = scene.addChild(camera);
-Laya.stage.on(Laya.Event.RESIZE, null, function () {
-				var vrCamera = scene.currentCamera;
-				vrCamera.leftViewport = new Laya.Viewport(0, 0, Laya.RenderState.clientWidth / 2, Laya.RenderState.clientHeight);
-				vrCamera.rightViewport = new Laya.Viewport(Laya.RenderState.clientWidth / 2, 0, Laya.RenderState.clientWidth / 2, Laya.RenderState.clientHeight);
-});
 
 scene.currentCamera.addComponent(VRCameraMoveScript);
 loadScene(scene, camera);
