@@ -30,8 +30,6 @@ package
 			Laya.stage.alignV = Stage.ALIGN_MIDDLE;
 			
 			Laya.loader.load(compassImgPath, Handler.create(this, init));
-			
-			Gyroscope.instance.on(Event.CHANGE, this, onOrientationChange);
 		}
 		
 		private function init():void
@@ -44,6 +42,8 @@ package
 			drawUI();
 			// 创建显示角度的文本
 			createDegreesText();
+
+			Gyroscope.instance.on(Event.CHANGE, this, onOrientationChange);
 		}
 		
 		private function createCompass():void
