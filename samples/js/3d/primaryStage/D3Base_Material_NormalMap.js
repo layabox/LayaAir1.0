@@ -44,8 +44,8 @@ function loadModel(meshPath, normalMapPath) {
 
     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
     mesh.once(Laya.Event.LOADED, null, function () {
-        meshSprite.materials[0].once(Laya.Event.LOADED, null, function () {
-            material = meshSprite.materials[0];
+        meshSprite.shadredMaterials[0].once(Laya.Event.LOADED, null, function () {
+            material = meshSprite.shadredMaterials[0];
             (material && normalTexture) && (material.normalTexture = normalTexture);
         });
     });

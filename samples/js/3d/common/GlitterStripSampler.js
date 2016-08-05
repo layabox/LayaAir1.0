@@ -1,8 +1,8 @@
 var Vector3 = Laya.Vector3;
 
 function GlitterStripSampler() {
-    this.pos1 = new Vector3(0, 0, 0);
-    this.pos2 = new Vector3(0, 0.6, 0);
+    this.pos1 = new Laya.Vector3(0, 0, 0);
+    this.pos2 = new Laya.Vector3(0, 0.6, 0);
     this.nCount = 0;
     this.direction = true;
 

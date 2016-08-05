@@ -32,8 +32,8 @@ class StaticModel_MeshSkySample {
             var meshSprite = sprite.getChildAt(0) as Laya.MeshSprite3D;
             var mesh = meshSprite.mesh;
             mesh.once(Laya.Event.LOADED, null, (templet) => {
-                for (var i = 0; i < meshSprite.materials.length; i++) {
-                    var material = meshSprite.materials[i];
+                for (var i = 0; i < meshSprite.shadredMaterials.length; i++) {
+                    var material = meshSprite.shadredMaterials[i];
                     material.once(Laya.Event.LOADED, null, (mat) => {
                         mat.isSky = true;
                         mat.luminance = 3.5;

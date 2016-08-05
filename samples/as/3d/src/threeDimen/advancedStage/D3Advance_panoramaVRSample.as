@@ -52,7 +52,7 @@ package threeDimen.advancedStage {
 			
 			var material:Material = new Material();
 			material.cullFace = false;
-			mesh.material = material;
+			mesh.shadredMaterial = material;
 			
 			Laya.loader.load("../../../../res/threeDimen/panorama/panorama.jpg", Handler.create(null, function(texture:Texture):void {
 				(texture.bitmap as WebGLImage).mipmap = true;

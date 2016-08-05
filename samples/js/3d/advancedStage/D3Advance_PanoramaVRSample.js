@@ -23,7 +23,7 @@ function loadScene(scene, camera) {
 
     var material = new Laya.Material();
     material.cullFace = false;
-    mesh.material = material;
+    mesh.shadredMaterial = material;
 
     Laya.loader.load("../../res/threeDimen/panorama/panorama.jpg", Laya.Handler.create(null, function (texture) {
         texture.bitmap.mipmap = true;

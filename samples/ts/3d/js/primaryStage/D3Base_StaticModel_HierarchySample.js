@@ -17,8 +17,8 @@ var StaticModel_HierarchySample = (function () {
             var meshSprite = sprite.getChildAt(0);
             var mesh = meshSprite.mesh;
             mesh.once(Laya.Event.LOADED, _this, function (mesh) {
-                for (var i = 0; i < meshSprite.materials.length; i++) {
-                    var material = meshSprite.materials[i];
+                for (var i = 0; i < meshSprite.shadredMaterials.length; i++) {
+                    var material = meshSprite.shadredMaterials[i];
                     material.once(Laya.Event.LOADED, _this, function (mat) {
                         mat.luminance = 3.5;
                     });

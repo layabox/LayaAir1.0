@@ -53,8 +53,8 @@ package threeDimen.primaryStage {
 				var meshSprite:MeshSprite3D = sprite.getChildAt(0) as MeshSprite3D;
 				var mesh:BaseMesh = meshSprite.mesh;
 				mesh.once(Event.LOADED, null, function(templet:BaseMesh):void {
-					for (var i:int = 0; i < meshSprite.materials.length; i++) {
-						var material:Material = meshSprite.materials[i];
+					for (var i:int = 0; i < meshSprite.shadredMaterials.length; i++) {
+						var material:Material = meshSprite.shadredMaterials[i];
 						material.once(Event.LOADED, null, function(mat:Material):void {
 							mat.isSky = true;
 							mat.luminance = 3.5;

@@ -104,8 +104,8 @@ var SimpleSceneSample;
                 if (mesh != null) {
                     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
                     mesh.once(Laya.Event.LOADED, this, function (mesh) {
-                        for (var i = 0; i < meshSprite.materials.length; i++) {
-                            var material = meshSprite.materials[i];
+                        for (var i = 0; i < meshSprite.shadredMaterials.length; i++) {
+                            var material = meshSprite.shadredMaterials[i];
                             material.once(Laya.Event.LOADED, null, function (mat) {
                                 var transformUV = new Laya.TransformUV();
                                 transformUV.tiling = uvScale;

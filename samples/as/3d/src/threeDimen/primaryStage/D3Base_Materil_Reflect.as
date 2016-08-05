@@ -45,8 +45,8 @@ package threeDimen.primaryStage {
 			var mesh:Mesh = Mesh.load("../../../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
 			meshSprite = sprit.addChild(new MeshSprite3D(mesh)) as MeshSprite3D;
 			mesh.once(Event.LOADED, null, function():void {
-				meshSprite.materials[0].once(Event.LOADED, null, function():void {
-					material = meshSprite.materials[0];
+				meshSprite.shadredMaterials[0].once(Event.LOADED, null, function():void {
+					material = meshSprite.shadredMaterials[0];
 					material.luminance = 0;
 					material.cullFace = false;
 					(material && reflectTexture) && (material.reflectTexture = reflectTexture);
@@ -60,7 +60,7 @@ package threeDimen.primaryStage {
 			var webGLImageCube:WebGLImageCube = new WebGLImageCube(["../../../../res/threeDimen/skyBox/px.jpg", "../../../../res/threeDimen/skyBox/nx.jpg", "../../../../res/threeDimen/skyBox/py.jpg", "../../../../res/threeDimen/skyBox/ny.jpg", "../../../../res/threeDimen/skyBox/pz.jpg", "../../../../res/threeDimen/skyBox/nz.jpg"], 1024);
 			webGLImageCube.once(Event.LOADED, null, function(imgCube:WebGLImageCube):void {
 				reflectTexture = new Texture(imgCube);
-				(material && reflectTexture) && (meshSprite.materials[0].reflectTexture = reflectTexture);
+				(material && reflectTexture) && (meshSprite.shadredMaterials[0].reflectTexture = reflectTexture);
 			});
 			
 			Laya.timer.frameLoop(1, null, function():void {

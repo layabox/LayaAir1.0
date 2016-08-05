@@ -31,8 +31,8 @@ skySprite3D.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
 	var meshSprite = sprite.getChildAt(0);
 	var mesh = meshSprite.mesh;
     mesh.once(Laya.Event.LOADED, null, function (templet) {
-		for (var i = 0; i < meshSprite.materials.length; i++) {
-			var material = meshSprite.materials[i];
+		for (var i = 0; i < meshSprite.shadredMaterials.length; i++) {
+			var material = meshSprite.shadredMaterials[i];
 			material.once(Laya.Event.LOADED, null, function (mat) {
 				mat.isSky = true;
 				mat.luminance = 3.5;

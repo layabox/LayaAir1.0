@@ -3,6 +3,7 @@ package threeDimen.primaryStage {
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
+	import laya.d3.core.MeshTerrainSprite3D;
 	import laya.d3.core.light.DirectionLight;
 	import laya.d3.core.material.Material;
 	import laya.d3.core.render.RenderState;
@@ -68,8 +69,8 @@ package threeDimen.primaryStage {
 			
 			 //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 			mesh.once(Event.LOADED, null, function():void {
-				meshSprite.materials[0].once(Event.LOADED, null, function():void {
-					material = meshSprite.materials[0];
+				meshSprite.shadredMaterials[0].once(Event.LOADED, null, function():void {
+					material = meshSprite.shadredMaterials[0];
 					(material && normalTexture) && (material.normalTexture = normalTexture);
 				});
 			});

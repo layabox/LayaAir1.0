@@ -24,8 +24,8 @@ var sprit = scene.addChild(new Laya.Sprite3D());
 var mesh = Laya.Mesh.load("../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
 meshSprite = sprit.addChild(new Laya.MeshSprite3D(mesh));
 mesh.once(Laya.Event.LOADED, null, function () {
-				meshSprite.materials[0].once(Laya.Event.LOADED, null, function () {
-		material = meshSprite.materials[0];
+				meshSprite.shadredMaterials[0].once(Laya.Event.LOADED, null, function () {
+		material = meshSprite.shadredMaterials[0];
 		material.luminance = 0;
 		material.cullFace = false;
 		(material && reflectTexture) && (material.reflectTexture = reflectTexture);
@@ -40,7 +40,7 @@ var webGLImageCube = new Laya.WebGLImageCube(["../../res/threeDimen/skyBox/px.jp
 webGLImageCube.once(Laya.Event.LOADED, null, function (imgCube) {
 				reflectTexture = new Laya.Texture(imgCube);
 				imgCube.mipmap = true;
-				(material && reflectTexture) && (meshSprite.materials[0].reflectTexture = reflectTexture);
+				(material && reflectTexture) && (meshSprite.shadredMaterials[0].reflectTexture = reflectTexture);
 });
 
 Laya.timer.frameLoop(1, null, function () {

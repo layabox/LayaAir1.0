@@ -27,7 +27,7 @@ module PanoramaVRSample {
 
             var material = new Laya.Material();
             material.cullFace = false;
-            mesh.material = material;
+            mesh.shadredMaterial = material;
 
             Laya.loader.load("../../res/threeDimen/panorama/panorama.jpg", Laya.Handler.create(null, function (texture: Laya.Texture): void {
                 (texture.bitmap as Laya.WebGLImage).mipmap = true;
