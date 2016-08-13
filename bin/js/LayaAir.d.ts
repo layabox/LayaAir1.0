@@ -68,10 +68,10 @@ declare module laya.ani {
         State: number;
         constructor(cacheFrameRate?: number);
         /**
-         * 播放动画
-         * @param	name 动画名字
-         * @param	playbackRate 播放速率
-         * @param	duration 播放时长（Number.MAX_VALUE为循环播放，0为1次）
+         * 播放动画。
+         * @param	name 动画名字。
+         * @param	playbackRate 播放速率。
+         * @param	duration 播放时长,单位为毫秒。（Number.MAX_VALUE为循环播放，0为1次）
          */
         play(index?: number, playbackRate?: number, duration?: number): void;
         /**
@@ -103,6 +103,8 @@ declare module laya.ani.bone {
         name: string;
         /** 插槽绑定的骨骼名称 */
         parent: string;
+        /** 插糟显示数据数据的名称 */
+        attachmentName: string;
         /** 原始数据的索引 */
         srcDisplayIndex: number;
         /** 判断对象是否是原对象 */
@@ -124,6 +126,11 @@ declare module laya.ani.bone {
          */
         showSlotData(slotData: SlotData): void;
         /**
+         * 通过名字显示指定对象
+         * @param	name
+         */
+        showDisplayByName(name: string): void;
+        /**
          * 指定显示对象
          * @param	index
          */
@@ -143,7 +150,7 @@ declare module laya.ani.bone {
          * @param	graphics
          * @param	noUseSave
          */
-        draw(graphics: laya.display.Graphics, boneMatrixArray: Array<any>, noUseSave?: boolean): void;
+        draw(graphics: laya.display.Graphics, boneMatrixArray: Array<any>, sprite: laya.display.Sprite, noUseSave?: boolean): void;
         /**
          * 画骨骼的起始点，方便调试
          * @param	graphics
@@ -159,6 +166,26 @@ declare module laya.ani.bone {
          * @return
          */
         copy(): BoneSlot;
+    }
+}
+declare module laya.ani.bone.shader {
+    /**
+     * ...
+     * @author wk
+     */
+    class aniShaderValue extends laya.webgl.shader.d2.value.Value2D {
+        texcoord: any;
+        constructor();
+    }
+}
+declare module laya.ani.bone.shader {
+    /**
+     * ...
+     * @author ...
+     */
+    class SkinAniShader extends laya.webgl.shader.Shader {
+        static shader: SkinAniShader;
+        constructor();
     }
 }
 declare module laya.ani.bone {
@@ -298,6 +325,7 @@ declare module laya.ani.bone {
      */
     class SkinSlotDisplayData {
         name: string;
+        attachmentName: string;
         type: number;
         transform: Transform;
         width: number;
@@ -306,6 +334,18 @@ declare module laya.ani.bone {
         uvs: Array<any>;
         weights: Array<any>;
         triangles: Array<any>;
+        vertices: Array<any>;
+    }
+}
+declare module laya.ani.bone {
+    /**
+     * ...
+     * @author ...
+     */
+    class SkinSprite extends laya.display.Sprite {
+        constructor();
+        init(texture: laya.resource.Texture, vs: Array<any>, ps: Array<any>): void;
+        customRender(context: laya.renders.RenderContext, x: number, y: number): void;
     }
 }
 declare module laya.ani.bone {
@@ -315,6 +355,7 @@ declare module laya.ani.bone {
     class SlotData {
         name: string;
         displayArr: Array<any>;
+        getDisplayByName(name: string): number;
     }
 }
 declare module laya.ani.bone {
@@ -343,6 +384,8 @@ declare module laya.ani.bone {
         url: string;
         /** 反转矩阵，有些骨骼动画要反转才能显示 */
         yReverseMatrix: laya.maths.Matrix;
+        textureDic: any;
+        loadAni(url: string): void;
         /**
          * 解析骨骼动画数据
          * @param	texture			骨骼动画用到的纹理
@@ -461,7 +504,7 @@ declare module laya.ani {
         getTotalkeyframesLength(aniIndex: number): number;
         getPublicExtData(): ArrayBuffer;
         getAnimationDataWithCache(cacheDatas: Array<any>, aniIndex: number, frameIndex: number): Float32Array;
-        setAnimationDataWithCache(cacheDatas: Array<any>, aniIndex: number, frameIndex: number, data: Float32Array): void;
+        setAnimationDataWithCache(cacheDatas: Array<any>, aniIndex: number, frameIndex: number, data: any): void;
         getOriginalData(aniIndex: number, originalData: Float32Array, frameIndex: number, playCurTime: number): void;
         getNodesCurrentFrameIndex(aniIndex: number, playCurTime: number): Uint32Array;
         getOriginalDataUnfixedRate(aniIndex: number, originalData: Float32Array, playCurTime: number): void;
@@ -505,6 +548,7 @@ declare module laya.ani.swf {
         protected _Pos: number;
         protected _data: laya.utils.Byte;
         protected _curIndex: number;
+        protected _preIndex: number;
         protected _playIndex: number;
         protected _playing: boolean;
         protected _ended: boolean;
@@ -522,6 +566,7 @@ declare module laya.ani.swf {
         loop: boolean;
         /**
          * 创建一个 <code>MovieClip</code> 实例。
+         * @param parentMovieClip 父MovieClip,自己创建时不需要传该参数
          */
         constructor(parentMovieClip?: MovieClip);
         /** @inheritDoc */
@@ -545,6 +590,10 @@ declare module laya.ani.swf {
          */
         count: number;
         /**
+         * 是否在播放中
+         */
+        playing: boolean;
+        /**
          * 停止播放动画。
          */
         stop(): void;
@@ -553,10 +602,6 @@ declare module laya.ani.swf {
          * @param frame 要跳到的帧
          */
         gotoAndStop(index: number): void;
-        /**
-         * 清理。
-         */
-        clear(): void;
         /**
          * 播放动画。
          * @param	index 帧索引。
@@ -680,16 +725,18 @@ declare module laya.d3.component.animation {
     class SkinAnimations extends KeyframeAnimations {
         protected static _copyBoneAndCache(frameIndex: number, index: Uint8Array, bonesData: Float32Array, out: Array<any>): void;
         protected static _copyBone(index: Uint8Array, bonesData: Float32Array, out: Float32Array): void;
-        protected _tempCurBonesData: Float32Array;
-        protected _tempCurAnimationData: Float32Array;
         protected _tempFrameIndex: number;
         protected _tempIsCache: boolean;
+        protected _tempCurBonesData: Float32Array;
+        protected _tempCurAnimationData: Float32Array;
         protected _curOriginalData: Float32Array;
         protected _extenData: Float32Array;
         protected _lastFrameIndex: number;
-        protected _ownerMesh: laya.d3.core.MeshSprite3D;
         protected _curBonesDatas: Float32Array;
         protected _curAnimationDatas: Float32Array;
+        protected _ownerMesh: laya.d3.core.MeshSprite3D;
+        _subAnimationCacheDatas: Array<any>;
+        _subAnimationDatas: Array<any>;
         /**
          * 获取骨骼数据。
          * @return 骨骼数据。
@@ -774,9 +821,9 @@ declare module laya.d3.component {
         protected _data: Float32Array;
         protected _extenData: Float32Array;
         /**挂点骨骼的名称。*/
-        attachBone: string;
+        attachBones: Array<any>;
         /**挂点骨骼的变换矩阵。*/
-        matrix: laya.d3.math.Matrix4x4;
+        matrixs: Array<any>;
         /**
          * 创建一个新的 <code>AttachPoint</code> 实例。
          */
@@ -1153,13 +1200,12 @@ declare module laya.d3.core.glitter {
          * @return 闪光模板。
          */
         templet: laya.d3.resource.tempelet.GlitterTemplet;
-        _clearRenderObjects(): void;
+        _clearSelfRenderObjects(): void;
         /**
          * 创建一个 <code>Glitter</code> 实例。
          *  @param	settings 配置信息。
          */
         constructor(settings: GlitterSettings);
-        removeChildAt(index: number): laya.display.Node;
         /**
          * @private
          * 更新闪光。
@@ -1256,7 +1302,7 @@ declare module laya.d3.core {
          * @param width	高度图宽度。
          * @param height 高度图高度。
          */
-        static creatFromMesh(meshSprite: MeshSprite3D, width: number, height: number, outCellSize: laya.d3.math.Vector2): HeightMap;
+        static creatFromMesh(mesh: laya.d3.resource.models.Mesh, width: number, height: number, outCellSize: laya.d3.math.Vector2): HeightMap;
         /**
          * 获取宽度。
          * @return value 宽度。
@@ -1484,7 +1530,6 @@ declare module laya.d3.core.light {
          * @return 灯光的类型。
          */
         lightType: number;
-        _clearRenderObjects(): void;
         /**
          * 更新灯光相关渲染状态参数。
          * @param state 渲染状态参数。
@@ -1836,7 +1881,25 @@ declare module laya.d3.core {
     /**
      * <code>MeshSprite3D</code> 类用于创建网格。
      */
-    class MeshSprite3D extends laya.d3.core.Sprite3D {
+    class MeshSprite3D extends Sprite3D {
+        /**
+         * 返回第一个实例材质,注意会拷贝对象。
+         * @return 第一个实例材质。
+         */
+        /**
+         * 设置第一个实例材质。
+         * @param value 第一个实例材质。
+         */
+        material: laya.d3.core.material.Material;
+        /**
+         * 获取实例材质列表,注意会拷贝对象。
+         * @return 实例材质列表。
+         */
+        /**
+         * 设置实例材质列表。
+         * @param value 实例材质列表。
+         */
+        materials: Array<any>;
         /**
          * 返回第一个材质。
          * @return 第一个材质。
@@ -1845,7 +1908,7 @@ declare module laya.d3.core {
          * 设置第一个材质。
          * @param value 第一个材质。
          */
-        material: laya.d3.core.material.Material;
+        shadredMaterial: laya.d3.core.material.Material;
         /**
          * 获取材质列表。
          * @return 材质列表。
@@ -1854,10 +1917,14 @@ declare module laya.d3.core {
          * 设置材质列表。
          * @param value 材质列表。
          */
-        materials: Array<any>;
+        shadredMaterials: Array<any>;
         /**
          * 获取子网格数据模板。
          * @return  子网格数据模板。
+         */
+        /**
+         * 设置子网格数据模板。
+         * @param value 子网格数据模板。
          */
         mesh: laya.d3.resource.models.BaseMesh;
         /**
@@ -1866,11 +1933,56 @@ declare module laya.d3.core {
          * @param name 名字。
          */
         constructor(mesh: laya.d3.resource.models.BaseMesh, name?: string);
-        _clearRenderObjects(): void;
+        _clearSelfRenderObjects(): void;
         /**
          * @private
          */
         _update(state: laya.d3.core.render.RenderState): void;
+    }
+}
+declare module laya.d3.core {
+    /**
+     * <code>TerrainMeshSprite3D</code> 类用于创建网格。
+     */
+    class MeshTerrainSprite3D extends MeshSprite3D {
+        private static _tempVector3;
+        private static _tempMatrix4x4;
+        /**
+         * 获取地形X轴最小位置。
+         * @return  地形X轴最小位置。
+         */
+        minX: number;
+        /**
+         * 获取地形Z轴最小位置。
+         * @return  地形X轴最小位置。
+         */
+        minZ: number;
+        /**
+         * 获取地形X轴长度。
+         * @return  地形X轴长度。
+         */
+        width: number;
+        /**
+         * 获取地形Z轴长度。
+         * @return  地形Z轴长度。
+         */
+        depth: number;
+        /**
+         * 创建一个 <code>TerrainMeshSprite3D</code> 实例。
+         * @param mesh 网格。
+         * @param name 名字。
+         */
+        constructor(mesh: laya.d3.resource.models.Mesh, heightMapWidth: number, heightMapHeight: number, name?: string);
+        /**
+         * @private
+         */
+        _update(state: laya.d3.core.render.RenderState): void;
+        /**
+         * 获取地形高度。
+         * @param x X轴坐标。
+         * @param z Z轴坐标。
+         */
+        getHeight(x: number, z: number): number;
     }
 }
 declare module laya.d3.core.particle {
@@ -2029,14 +2141,13 @@ declare module laya.d3.core.particle {
          * @param settings value 粒子配置。
          */
         constructor(settings: laya.particle.ParticleSettings);
-        _clearRenderObjects(): void;
+        _clearSelfRenderObjects(): void;
         /**
          * 添加粒子。
          * @param position 粒子位置。
          *  @param velocity 粒子速度。
          */
         addParticle(position: laya.d3.math.Vector3, velocity: laya.d3.math.Vector3): void;
-        removeChildAt(index: number): laya.display.Node;
         /**
          * 更新粒子。
          * @param state 渲染相关状态参数。
@@ -2135,7 +2246,9 @@ declare module laya.d3.core.render {
         /**属性。*/
         tag: any;
         /**排序ID。*/
-        sortID: number;
+        mainSortID: number;
+        /**三角形个数。*/
+        triangleCount: number;
         /**
          * 创建一个 <code>RenderObject</code> 实例。
          */
@@ -2494,9 +2607,13 @@ declare module laya.d3.core {
          */
         constructor(name?: string);
         /**
-         * 更新组件update函数,重写此函数。
+         * 清理自身渲染物体。
          */
-        _clearRenderObjects(): void;
+        _clearSelfRenderObjects(): void;
+        /**
+         * 清理自身和子节点渲染物体,重写此函数。
+         */
+        _clearSelfAndChildrenRenderObjects(): void;
         protected _updateComponents(state: laya.d3.core.render.RenderState): void;
         protected _lateUpdateComponents(state: laya.d3.core.render.RenderState): void;
         protected _updateChilds(state: laya.d3.core.render.RenderState): void;
@@ -2923,6 +3040,7 @@ declare module laya.d3.graphics {
         static maxIndexCount: number;
         indexOfHost: number;
         VertexBufferCount: number;
+        triangleCount: number;
         getVertexBuffer(index?: number): VertexBuffer3D;
         currentVertexCount: number;
         currentIndexCount: number;
@@ -3526,11 +3644,165 @@ declare module laya.d3.math {
 }
 declare module laya.d3.math {
     /**
+     * <code>Collision</code> 类用于检测碰撞。
+     */
+    class Collision {
+        private static _tempV30;
+        private static _tempV31;
+        private static _tempV32;
+        private static _tempV33;
+        private static _tempV34;
+        /**
+         * 创建一个 <code>Collision</code> 实例。
+         */
+        constructor();
+        /**
+         * 空间中点到平面的距离
+         * @param	plane 平面
+         * @param	point 点
+         */
+        static distancePlaneToPoint(plane: Plane, point: Vector3): number;
+        /**
+         * 空间中点到包围盒的距离
+         * @param	box 包围盒
+         * @param	point 点
+         */
+        static distanceBoxToPoint(box: BoundBox, point: Vector3): number;
+        /**
+         * 空间中包围盒到包围盒的距离
+         * @param	box1 包围盒1
+         * @param	box2 包围盒2
+         */
+        static distanceBoxToBox(box1: BoundBox, box2: BoundBox): number;
+        /**
+         * 空间中点到包围球的距离
+         * @param	sphere 包围球
+         * @param	point  点
+         */
+        static distanceSphereToPoint(sphere: BoundSphere, point: Vector3): number;
+        /**
+         * 空间中包围球到包围球的距离
+         * @param	sphere1 包围球1
+         * @param	sphere2 包围球2
+         */
+        static distanceSphereToSphere(sphere1: BoundSphere, sphere2: BoundSphere): number;
+        /**
+         * 空间中射线和点是否相交
+         * @param	sphere1 包围球1
+         * @param	sphere2 包围球2
+         */
+        static intersectsRayAndPoint(ray: Ray, point: Vector3): boolean;
+        /**
+         * 空间中射线和射线是否相交
+         * @param	ray1 射线1
+         * @param	ray2 射线2
+         * @param	out 相交点
+         */
+        static intersectsRayAndRay(ray1: Ray, ray2: Ray, out: Vector3): boolean;
+        /**
+         * 空间中射线和平面是否相交
+         * @param	ray   射线
+         * @param	plane 平面
+         * @param	out 相交距离,如果为0,不相交
+         */
+        static intersectsRayAndPlaneRD(ray: Ray, plane: Plane, out: number): boolean;
+        /**
+         * 空间中射线和平面是否相交
+         * @param	ray   射线
+         * @param	plane 平面
+         * @param	out 相交点
+         */
+        static intersectsRayAndPlaneRP(ray: Ray, plane: Plane, out: Vector3): boolean;
+        /**
+         * 空间中射线和包围盒是否相交
+         * @param	ray 射线
+         * @param	box	包围盒
+         * @param	out 相交距离,如果为0,不相交
+         */
+        static intersectsRayAndBoxRD(ray: Ray, box: BoundBox, out: number): boolean;
+        /**
+         * 空间中射线和包围盒是否相交
+         * @param	ray 射线
+         * @param	box	包围盒
+         * @param	out 相交点
+         */
+        static intersectsRayAndBoxRP(ray: Ray, box: BoundBox, out: Vector3): boolean;
+        /**
+         * 空间中射线和包围球是否相交
+         * @param	ray    射线
+         * @param	sphere 包围球
+         * @param	out    相交距离,如果为0,不相交
+         */
+        static intersectsRayAndSphereRD(ray: Ray, sphere: BoundSphere, out: number): boolean;
+        /**
+         * 空间中射线和包围球是否相交
+         * @param	ray    射线
+         * @param	sphere 包围球
+         * @param	out    相交点
+         */
+        static intersectsRayAndSphereRP(ray: Ray, sphere: BoundSphere, out: Vector3): boolean;
+        /**
+         * 空间中点和平面是否相交
+         * @param	plane  平面
+         * @param	point  点
+         */
+        static intersectsPlaneAndPoint(plane: Plane, point: Vector3): number;
+        /**
+         * 空间中平面和平面是否相交
+         * @param	plane1 平面1
+         * @param	plane2 平面2
+         */
+        static intersectsPlaneAndPlane(plane1: Plane, plane2: Plane): boolean;
+        /**
+         * 空间中平面和平面是否相交
+         * @param	plane1 平面1
+         * @param	plane2 平面2
+         * @param	line   相交线
+         */
+        static intersectsPlaneAndPlaneRL(plane1: Plane, plane2: Plane, line: Ray): boolean;
+        /**
+         * 空间中平面和包围盒是否相交
+         * @param	plane 平面
+         * @param   box  包围盒
+         */
+        static intersectsPlaneAndBox(plane: Plane, box: BoundBox): number;
+        /**
+         * 空间中平面和包围球是否相交
+         * @param	plane 平面
+         * @param   sphere 包围球
+         */
+        static intersectsPlaneAndSphere(plane: Plane, sphere: BoundSphere): number;
+        /**
+         * 空间中包围盒和包围盒是否相交
+         * @param	box1 包围盒1
+         * @param   box2 包围盒2
+         */
+        static intersectsBoxAndBox(box1: BoundBox, box2: BoundBox): boolean;
+        /**
+         * 空间中包围盒和包围球是否相交
+         * @param	box 包围盒
+         * @param   sphere 包围球
+         */
+        static intersectsBoxAndSphere(box: BoundBox, sphere: BoundSphere): boolean;
+        /**
+         * 空间中包围球和包围球是否相交
+         * @param	sphere1 包围球1
+         * @param   sphere2 包围球2
+         */
+        static intersectsSphereAndSphere(sphere1: BoundSphere, sphere2: BoundSphere): boolean;
+    }
+}
+declare module laya.d3.math {
+    /**
      * <code>MathUtils</code> 类用于创建数学工具。
      */
     class MathUtils3D {
         /**单精度浮点(float)零的容差*/
         static zeroTolerance: number;
+        /**浮点数默认最大值*/
+        static MaxValue: number;
+        /**浮点数默认最小值*/
+        static MinValue: number;
         /**
          * 创建一个 <code>MathUtils</code> 实例。
          */
@@ -3541,6 +3813,12 @@ declare module laya.d3.math {
          * @return  是否近似于0
          */
         static isZero(v: number): boolean;
+        /**
+         * 两个值是否在容差的范围内近似相等
+         * @param  判断值
+         * @return  是否近似于0
+         */
+        static nearEqual(n1: number, n2: number): boolean;
     }
 }
 declare module laya.d3.math {
@@ -3766,6 +4044,35 @@ declare module laya.d3.math {
          * @param	sou 源Float32Array数组
          */
         copyFromArray(sou: Float32Array): void;
+    }
+}
+declare module laya.d3.math {
+    /**
+     * <code>Plane</code> 类用于创建平面。
+     */
+    class Plane {
+        private static _TEMPVec3;
+        /**平面的向量*/
+        normal: Vector3;
+        /**平面到坐标系原点的距离*/
+        distance: number;
+        /**平面与其他几何体相交类型*/
+        static PlaneIntersectionType_Back: number;
+        static PlaneIntersectionType_Front: number;
+        static PlaneIntersectionType_Intersecting: number;
+        /**
+         * 创建一个 <code>Plane</code> 实例。
+         * @param	v3 平面的向量
+         * @param	d  平面到原点的距离
+         */
+        constructor(v3: Vector3, d: number);
+        /**
+         * 创建一个 <code>Plane</code> 实例。
+         * @param	point1 第一点
+         * @param	point2 第二点
+         * @param	point3 第三点
+         */
+        static createPlaneBy3P(point1: Vector3, point2: Vector3, point3: Vector3): any;
     }
 }
 declare module laya.d3.math {
@@ -4096,6 +4403,14 @@ declare module laya.d3.math {
          */
         static transformCoordinate(coordinate: Vector3, transform: Matrix4x4, result: Vector3): void;
         /**
+         * 求一个指定范围的向量
+         * @param	value clamp向量
+         * @param	min  最小
+         * @param	max  最大
+         * @param   out 输出向量
+         */
+        static Clamp(value: Vector3, min: Vector3, max: Vector3, out: Vector3): void;
+        /**
          * 求两个三维向量的和。
          * @param	a left三维向量。
          * @param	b right三维向量。
@@ -4322,7 +4637,6 @@ declare module laya.d3.resource.models {
          * @return 渲染单元数量。
          */
         getRenderElementsCount(): number;
-        updateToRenderQneue(state: laya.d3.core.render.RenderState, materials: Array<any>): void;
         Render(): void;
         RenderSubMesh(subMeshIndex: number): void;
     }
@@ -4338,7 +4652,7 @@ declare module laya.d3.resource.models {
          */
         static load(url: string): Mesh;
         /**
-         * 获取网格顶点,请重载此方法。
+         * 获取网格顶点
          * @return 网格顶点。
          */
         positions: Array<any>;
@@ -4388,10 +4702,6 @@ declare module laya.d3.resource.models {
         getRenderElementsCount(): number;
         getRenderElement(index: number): laya.d3.core.render.IRenderable;
         /**
-         * @private
-         */
-        updateToRenderQneue(state: laya.d3.core.render.RenderState, materials: Array<any>): void;
-        /**
          * <p>彻底清理资源。</p>
          * <p><b>注意：</b>会强制解锁清理。</p>
          */
@@ -4411,15 +4721,20 @@ declare module laya.d3.resource.models {
         _indexOfHost: number;
         indexOfHost: number;
         VertexBufferCount: number;
+        triangleCount: number;
         getVertexBuffer(index?: number): laya.d3.graphics.VertexBuffer3D;
         getIndexBuffer(): laya.d3.graphics.IndexBuffer3D;
+        /**
+         * 获取网格顶点
+         * @return 网格顶点。
+         */
+        positions: Array<any>;
         constructor();
         protected _addToRenderQuene(state: laya.d3.core.render.RenderState, material: laya.d3.core.material.Material): laya.d3.core.render.RenderObject;
         getRenderElement(index: number): laya.d3.core.render.IRenderable;
         getRenderElementsCount(): number;
         protected detoryResource(): void;
         _render(state: laya.d3.core.render.RenderState): boolean;
-        updateToRenderQneue(state: laya.d3.core.render.RenderState, materials: Array<any>): void;
         getBakedVertexs(index: number, transform: laya.d3.math.Matrix4x4): Float32Array;
         getBakedIndices(): any;
     }
@@ -4478,8 +4793,6 @@ declare module laya.d3.resource.models {
         protected _vb: laya.d3.graphics.VertexBuffer3D;
         _mesh: laya.d3.resource.models.Mesh;
         _boneIndex: Uint8Array;
-        _cacheBoneDatas: Array<any>;
-        _boneData: Float32Array;
         _bufferUsage: any;
         _finalBufferUsageDic: any;
         _indexOfHost: number;
@@ -4500,6 +4813,7 @@ declare module laya.d3.resource.models {
          */
         indexOfHost: number;
         VertexBufferCount: number;
+        triangleCount: number;
         getVertexBuffer(index?: number): laya.d3.graphics.VertexBuffer3D;
         getIndexBuffer(): laya.d3.graphics.IndexBuffer3D;
         /**
@@ -4657,6 +4971,7 @@ declare module laya.d3.resource.tempelet {
         setting: laya.d3.core.glitter.GlitterSettings;
         indexOfHost: number;
         VertexBufferCount: number;
+        triangleCount: number;
         getBakedVertexs(index: number, transform: laya.d3.math.Matrix4x4): Float32Array;
         getBakedIndices(): any;
         getVertexBuffer(index?: number): laya.d3.graphics.VertexBuffer3D;
@@ -4690,6 +5005,7 @@ declare module laya.d3.resource.tempelet {
         protected _shader: laya.webgl.shader.Shader;
         indexOfHost: number;
         VertexBufferCount: number;
+        triangleCount: number;
         getBakedVertexs(index: number, transform: laya.d3.math.Matrix4x4): Float32Array;
         getBakedIndices(): any;
         getVertexBuffer(index?: number): laya.d3.graphics.VertexBuffer3D;
@@ -4832,6 +5148,7 @@ declare module laya.d3.utils {
         static _parseHierarchyNode(instanceParams: any): laya.d3.core.Sprite3D;
         static _parseMaterial(material: laya.d3.core.material.Material, prop: string, value: Array<any>): void;
         static _computeSkinAnimationData(bones: any, curData: Float32Array, exData: Float32Array, bonesDatas: Float32Array, animationDatas: Float32Array): void;
+        static _computeRootAnimationData(bones: any, curData: Float32Array, animationDatas: Float32Array): void;
         /**
          *通过数组数据计算矩阵乘法。
          * @param leftArray left矩阵数组。
@@ -4883,2672 +5200,6 @@ declare module laya.d3.utils {
          * @param	out 输出坐标。
          */
         static convert3DCoordTo2DScreenCoord(source: laya.d3.math.Vector3, out: laya.d3.math.Vector3): void;
-    }
-}
-declare module laya.debug.data {
-    class Base64AtlasManager {
-        static dataO: any;
-        static base64: laya.debug.tools.Base64Atlas;
-        constructor();
-        static replaceRes(uiO: any): void;
-    }
-}
-declare module laya.debug {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-9-24 下午3:00:38
-     */
-    class DebugTool {
-        constructor();
-        static enableCacheAnalyse: boolean;
-        static enableNodeCreateAnalyse: boolean;
-        static getMenuShowEvent(): string;
-        static init(cacheAnalyseEnable?: boolean, loaderAnalyseEnable?: boolean, createAnalyseEnable?: boolean, renderAnalyseEnable?: boolean): void;
-        private static _traceFun;
-        /**
-         * 在输出ui中输出
-         * @param str
-         */
-        static dTrace(str: string): void;
-        static dealCMDKey(key: string): void;
-        static switchNodeTree(): void;
-        static analyseMouseHit(): void;
-        static selectNodeUnderMouse(): void;
-        static showToolPanel(): void;
-        static showToolFilter(): void;
-        static showNodeInfo(): void;
-        static switchDisController(): void;
-        static isThisShow: boolean;
-        static showParent(sprite?: laya.display.Sprite): any;
-        static showChild(sprite?: laya.display.Sprite): any;
-        static showAllChild(sprite?: laya.display.Sprite): any;
-        static showAllUnderMosue(): any;
-        static showParentChain(sprite?: laya.display.Sprite): any;
-        static showAllBrother(sprite?: laya.display.Sprite): any;
-        static showBrother(sprite: laya.display.Sprite, dID?: number): any;
-        private static text;
-        /**
-         * 设置是否显示帧率信息
-         * @param value 是否显示true|false
-         */
-        static showStatu: boolean;
-        static clearDebugLayer(): void;
-        /**
-         * debug层
-         */
-        static debugLayer: laya.display.Sprite;
-        /**
-         * 最后点击的对象
-         */
-        static _target: laya.display.Sprite;
-        static target: laya.display.Sprite;
-        /**
-         * 最后被选中的节点列表
-         */
-        static selectedNodes: Array<any>;
-        /**
-         * 是否自动显示选中节点列表
-         */
-        static autoShowSelected: boolean;
-        /**
-         * 显示选中的节点列表
-         */
-        static showSelected(): void;
-        /**
-         * 获取类对象的创建信息
-         * @param className
-         * @return
-         */
-        static getClassCreateInfo(className: string): any;
-        private static _showBound;
-        /**
-         * 是否自动显示点击对象的边框
-         * @param value
-         */
-        static showBound: boolean;
-        /**
-         * 执行默认操作
-         */
-        static autoWork(): void;
-        static traceDisMouseEnable(tar?: laya.display.Sprite): any;
-        static traceDisSizeChain(tar?: laya.display.Sprite): any;
-        private static _disBoundRec;
-        /**
-         * 显示对象的边框
-         * @param sprite 对象
-         * @param clearPre 是否清楚原先的边框图
-         */
-        static showDisBound(sprite?: laya.display.Sprite, clearPre?: boolean, color?: string): any;
-        static autoTraceEnable: boolean;
-        static autoTraceBounds: boolean;
-        static autoTraceSize: boolean;
-        static autoTraceTree: boolean;
-        /**
-         * 是否自动显示节点自身的CMD
-         */
-        static autoTraceCMD: boolean;
-        /**
-         *  是否自动显示节点自身已经子对象的CMD
-         */
-        static autoTraceCMDR: boolean;
-        /**
-         * 是否自动显示节点信息
-         */
-        static autoTraceSpriteInfo: boolean;
-        /**
-         *  显示节点统计信息
-         * @return
-         */
-        static getNodeInfo(): any;
-        private static _classList;
-        private static _tFindClass;
-        static findByClass(className: string): Array<any>;
-        private static cmdToTypeO;
-        private static _rSpList;
-        /**
-         * 显示Sprite 指令信息
-         * @param sprite
-         * @return
-         */
-        static traceCMD(sprite?: laya.display.Sprite): any;
-        private static counter;
-        /**
-         * 显示Sprite以及其子对象的指令信息
-         * @param sprite
-         * @return
-         */
-        static traceCMDR(sprite?: laya.display.Sprite): any;
-        /**
-         * 根据过滤器返回显示对象
-         * @param filter
-         * @return
-         */
-        static find(filter: any, ifShowSelected?: boolean): Array<any>;
-        private static nameFilter;
-        /**
-         * 根据名字获取显示对象
-         * @param name
-         * @return
-         */
-        static findByName(name: string): Array<any>;
-        /**
-         * 获取名字以某个字符串开头的显示对象
-         * @param startStr
-         * @return
-         */
-        static findNameStartWith(startStr: string): Array<any>;
-        /**
-         * 获取名字包含某个字符串的显示对象
-         * @param hasStr
-         * @return
-         */
-        static findNameHas(hasStr: string, showSelected?: boolean): Array<any>;
-        static findTarget(target: laya.display.Sprite, filter: any): Array<any>;
-        static findClassHas(target: laya.display.Sprite, str: string): Array<any>;
-        static _logFun: Function;
-        static log(...args: any[]): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * ...
-     * @author ww
-     */
-    class Base64Atlas {
-        data: any;
-        replaceO: any;
-        idKey: string;
-        constructor(data: any, idKey?: string);
-        getAdptUrl(url: string): string;
-        preLoad(completeHandler?: laya.utils.Handler): void;
-        replaceRes(uiObj: any): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * ...
-     * @author ww
-     */
-    class Base64ImageTool {
-        constructor();
-        static getCanvasPic(img: laya.resource.Texture): any;
-        static getBase64Pic(img: laya.resource.Texture): string;
-        static getPreloads(base64Data: any): Array<any>;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * base64编码解码类
-     * @author ww
-     */
-    class Base64Tool {
-        constructor();
-        static chars: any;
-        static lookup: Uint8Array;
-        static init(): void;
-        /**
-         * 编码ArrayBuffer
-         * @param arraybuffer
-         * @return
-         *
-         */
-        static encode(arraybuffer: ArrayBuffer): string;
-        /**
-         * 编码字符串
-         * @param str
-         * @return
-         *
-         */
-        static encodeStr(str: string): string;
-        /**
-         * 编码Byte
-         * @param byte
-         * @param start
-         * @param end
-         * @return
-         *
-         */
-        static encodeByte(byte: laya.utils.Byte, start?: number, end?: number): string;
-        /**
-         * 解码成Byte
-         * @param base64
-         * @return
-         *
-         */
-        static decodeToByte(base64: string): laya.utils.Byte;
-        /**
-         * 解码成ArrayBuffer
-         * @param base64
-         * @return
-         *
-         */
-        static decode(base64: string): ArrayBuffer;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * ...
-     * @author ww
-     */
-    class CacheAnalyser {
-        constructor();
-        static counter: ObjTimeCountTool;
-        static I: CacheAnalyser;
-        private static _nodeInfoDic;
-        static getNodeInfoByNode(node: laya.display.Sprite): laya.debug.view.nodeInfo.recinfos.ReCacheRecInfo;
-        renderCanvas(sprite: laya.display.Sprite, time?: number): void;
-        reCacheCanvas(sprite: laya.display.Sprite, time?: number): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * ...
-     * @author ww
-     */
-    class CanvasTools {
-        constructor();
-        static createCanvas(width: number, height: number): laya.resource.HTMLCanvas;
-        static renderSpriteToCanvas(sprite: laya.display.Sprite, canvas: laya.resource.HTMLCanvas, offsetX: number, offsetY: number): void;
-        static getImageDataFromCanvas(canvas: laya.resource.HTMLCanvas, x?: number, y?: number, width?: number, height?: number): any;
-        static getImageDataFromCanvasByRec(canvas: laya.resource.HTMLCanvas, rec: laya.maths.Rectangle): any;
-        static getDifferCount(imageData1: any, imageData2: any): number;
-        static getDifferRate(imageData1: any, imageData2: any): number;
-        static getCanvasDisRec(canvas: laya.resource.HTMLCanvas): laya.maths.Rectangle;
-        static fillCanvasRec(canvas: laya.resource.HTMLCanvas, rec: laya.maths.Rectangle, color: string): void;
-        static isEmptyPoint(data: Array<any>, pos: number): boolean;
-        static isPoinSame(pos: number, data1: Array<any>, data2: Array<any>): boolean;
-        static walkImageData(imgdata: any, walkFun: Function): void;
-        static getSpriteByCanvas(canvas: laya.resource.HTMLCanvas): laya.display.Sprite;
-        static renderSpritesToCanvas(canvas: laya.resource.HTMLCanvas, sprites: Array<any>, offx?: number, offy?: number, startIndex?: number): void;
-        static clearCanvas(canvas: laya.resource.HTMLCanvas): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-10-23 下午2:24:04
-     */
-    class ClassTool {
-        constructor();
-        static defineProperty(obj: any, name: string, des: any): void;
-        static getOwnPropertyDescriptor(obj: any, name: string): any;
-        static getOwnPropertyNames(obj: any): Array<any>;
-        static getClassName(tar: any): string;
-        static getNodeClassAndName(tar: any): string;
-        static getClassNameByClz(clz: any): string;
-        static getClassByName(className: string): any;
-        static createObjByName(className: string): any;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * 颜色选取类
-     * @author ww
-     */
-    class ColorSelector extends laya.display.Sprite {
-        constructor();
-        static COLOR_CHANGED: string;
-        static COLOR_CLEARED: string;
-        static RecWidth: number;
-        isChanging: boolean;
-        setColorByRGBStr(rgbStr: string): void;
-        setColor(red: number, green: number, blue: number, notice?: boolean): void;
-        setColorByHSB(h: number, s: number, b: number, notice?: boolean): void;
-        tColor: Array<any>;
-        tH: number;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * ...
-     * @author ww
-     */
-    class ColorTool {
-        constructor();
-        red: number;
-        green: number;
-        blue: number;
-        static toHexColor(color: number): string;
-        static getRGBByRGBStr(str: string): Array<any>;
-        static getColorBit(value: number): string;
-        static getRGBStr(rgb: Array<any>): string;
-        static traseHSB(hsb: Array<any>): void;
-        static rgb2hsb(rgbR: number, rgbG: number, rgbB: number): Array<any>;
-        static hsb2rgb(h: number, s: number, v: number): Array<any>;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-9-29 下午12:53:31
-     */
-    class CommonTools {
-        constructor();
-        static bind(fun: Function, scope: any): Function;
-        private static count;
-        static insertP(tar: laya.display.Sprite, x: number, y: number, scaleX: number, scaleY: number, rotation: number): void;
-        static insertChild(tar: laya.display.Sprite, x: number, y: number, scaleX: number, scaleY: number, rotation: number, color?: string): laya.display.Sprite;
-    }
-}
-declare module laya.debug.tools.comps {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-12-30 下午1:59:34
-     */
-    class Arrow extends laya.display.Sprite {
-        constructor();
-        drawMe(): void;
-    }
-}
-declare module laya.debug.tools.comps {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-12-30 下午2:03:32
-     */
-    class ArrowLine extends laya.display.Sprite {
-        constructor(sign?: string);
-        lineLen: number;
-        arrowLen: number;
-        lenControl: Rect;
-        rotationControl: Rect;
-        sign: string;
-        drawMe(): void;
-        _targetChanger: laya.debug.tools.ValueChanger;
-        targetChanger: laya.debug.tools.ValueChanger;
-    }
-}
-declare module laya.debug.tools.comps {
-    /**
-     * ...
-     * @author ww
-     */
-    class AutoSizeRec extends laya.display.Sprite {
-        type: number;
-        constructor(type: string);
-        height: number;
-        width: number;
-        setColor(color: string): void;
-        protected changeSize(): void;
-        preX: number;
-        preY: number;
-        record(): void;
-        getDx(): number;
-        getDy(): number;
-    }
-}
-declare module laya.debug.tools.comps {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-12-30 下午2:37:05
-     */
-    class Axis extends laya.display.Sprite {
-        constructor();
-        xAxis: ArrowLine;
-        yAxis: ArrowLine;
-        controlBox: Rect;
-        _target: laya.display.Sprite;
-        target: laya.display.Sprite;
-        type: number;
-        switchType(): void;
-        initMe(): void;
-    }
-}
-declare module laya.debug.tools.comps {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-12-30 下午3:23:06
-     */
-    class Rect extends laya.display.Sprite {
-        constructor();
-        recWidth: number;
-        drawMe(): void;
-        posTo(x: number, y: number): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-9-24 下午6:37:56
-     */
-    class CountTool {
-        constructor();
-        data: any;
-        preO: any;
-        changeO: any;
-        count: number;
-        reset(): void;
-        add(name: string, num?: number): void;
-        getKeyCount(key: string): number;
-        getKeyChange(key: string): number;
-        record(): void;
-        getCount(dataO: any): number;
-        traceSelf(dataO?: any): string;
-        traceSelfR(dataO?: any): string;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-10-31 下午3:35:16
-     */
-    class DebugExport {
-        constructor();
-        private static _exportsDic;
-        static export(): void;
-    }
-}
-declare module laya.debug.tools.debugUI {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-9-29 上午11:17:35
-     */
-    class DButton extends laya.display.Text {
-        constructor();
-    }
-}
-declare module laya.debug.tools.debugUI {
-    /**
-     * ...
-     * @author ww
-     */
-    class DInput extends laya.display.Input {
-        constructor();
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * 本类用于显示对象值变化过程
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-10-23 上午10:41:50
-     */
-    class DifferTool {
-        constructor(sign?: string, autoTrace?: boolean);
-        autoTrace: boolean;
-        sign: string;
-        obj: any;
-        update(data: any, msg?: string): any;
-        private static _differO;
-        static differ(sign: string, data: any, msg?: string): any;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2016-1-14 下午4:32:47
-     */
-    class DisController {
-        constructor();
-        private static _container;
-        target: laya.display.Sprite;
-        type: number;
-        switchType(): void;
-        static I: DisController;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-9-25 下午7:19:44
-     */
-    class DisControlTool {
-        constructor();
-        private static tempP;
-        static getObjectsUnderPoint(sprite: laya.display.Sprite, x: number, y: number, rst?: Array<any>, filterFun?: Function): Array<any>;
-        static getObjectsUnderGlobalPoint(sprite: laya.display.Sprite, filterFun?: Function): Array<any>;
-        static findFirstObjectsUnderGlobalPoint(): laya.display.Sprite;
-        static visibleAndEnableObjFun(tar: laya.display.Sprite): boolean;
-        static visibleObjFun(tar: laya.display.Sprite): boolean;
-        static getMousePoint(sprite: laya.display.Sprite): laya.maths.Point;
-        static isChildE(parent: laya.display.Node, child: laya.display.Node): boolean;
-        static isInTree(pNode: laya.display.Node, child: laya.display.Node): boolean;
-        static setTop(tar: laya.display.Node): void;
-        /**
-         * 清除对象上的相对布局数据
-         * @param items
-         *
-         */
-        static clearItemRelativeInfo(item: any): void;
-        static swap(tarA: laya.display.Node, tarB: laya.display.Node): void;
-        static insertToTarParent(tarA: laya.display.Node, tars: Array<any>, after?: boolean): void;
-        static insertToParent(parent: laya.display.Node, tars: Array<any>, index?: number): void;
-        static transParent(tar: laya.display.Sprite, newParent: laya.display.Sprite): void;
-        static transPoint(nowParent: laya.display.Sprite, tarParent: laya.display.Sprite, point: laya.maths.Point): laya.maths.Point;
-        static removeItems(itemList: Array<any>): void;
-        static addItems(itemList: Array<any>, parent: laya.display.Node): void;
-        static getAllChild(tar: laya.display.Node): Array<any>;
-        static upDis(child: laya.display.Node): void;
-        static downDis(child: laya.display.Node): void;
-        static setResizeAbleEx(node: laya.display.Sprite): void;
-        static setResizeAble(node: laya.display.Sprite): void;
-        static resizeHandler(tar: laya.display.Sprite): void;
-        static setDragingItem(dragBar: laya.display.Sprite, tar: laya.display.Sprite): void;
-        static dragingHandler(tar: laya.display.Sprite): void;
-        static dragingEnd(tar: laya.display.Sprite): void;
-        static showToStage(dis: laya.display.Sprite, offX?: number, offY?: number): void;
-        static intFyDisPos(dis: laya.display.Sprite): void;
-        static showOnly(disList: Array<any>, showItem: laya.display.Sprite): void;
-        static showOnlyByIndex(disList: Array<any>, index: number): void;
-        static addOnly(disList: Array<any>, showItem: laya.display.Sprite, parent: laya.display.Sprite): void;
-        static addOnlyByIndex(disList: Array<any>, index: number, parent: laya.display.Sprite): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-12-24 下午4:20:25
-     */
-    class DisEditor {
-        constructor();
-        rec: laya.display.Sprite;
-        rootContainer: laya.display.Sprite;
-        tar: laya.display.Sprite;
-        setTarget(target: laya.display.Sprite): void;
-        createSameDisChain(): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * 调试拾取显示对象类
-     * @author ww
-     */
-    class DisplayHook {
-        constructor();
-        static ITEM_CLICKED: string;
-        static instance: DisplayHook;
-        mouseX: number;
-        mouseY: number;
-        static initMe(): void;
-        init(canvas: any): void;
-        selectDisUnderMouse(): void;
-        getDisUnderMouse(): laya.display.Sprite;
-        static isFirst: boolean;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * 简单的显示对象对象池
-     * 从父容器上移除时即被视为可被重用
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-11-13 下午8:05:13
-     */
-    class DisPool {
-        constructor();
-        private static _objDic;
-        static getDis(clz: any): any;
-    }
-}
-declare module laya.debug.tools {
-    class DragBox extends laya.display.Sprite {
-        private static BLOCK_WIDTH;
-        constructor(type: number);
-        protected onMouseUp(e: laya.events.Event): void;
-        protected onMouseMove(e: laya.events.Event): void;
-        /**设置对象*/
-        setTarget(target: laya.display.Sprite): void;
-        refresh(): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-9-28 上午10:39:47
-     */
-    class DTrace {
-        constructor();
-        static getArgArr(arg: Array<any>): Array<any>;
-        static dTrace(...arg: any[]): void;
-        /**
-         * 开始计时
-         * @param sign
-         */
-        static timeStart(sign: string): void;
-        /**
-         * 结束计时
-         * @param sign
-         */
-        static timeEnd(sign: string): void;
-        static traceTable(data: Array<any>): void;
-    }
-}
-declare module laya.debug.tools.enginehook {
-    /**
-     * ...
-     * @author ww
-     */
-    class ClassCreateHook {
-        static I: ClassCreateHook;
-        constructor();
-        hookClass(clz: any): void;
-        createInfo: any;
-        classCreated(clz: any, oClass: any): void;
-        getClassCreateInfo(clz: any): any;
-    }
-}
-declare module laya.debug.tools.enginehook {
-    /**
-     * ...
-     * @author ww
-     */
-    class FunctionTimeHook {
-        static HookID: number;
-        constructor();
-        static hookFun(obj: any, funName: string): void;
-        static counter: laya.debug.tools.CountTool;
-        static funPre: any;
-        static funBegin(funKey: string): void;
-        static funEnd(funKey: string): void;
-        static TotalSign: string;
-        static fresh(): void;
-    }
-}
-declare module laya.debug.tools.enginehook {
-    /**
-     * ...
-     * @author ww
-     */
-    class LoaderHook extends laya.net.LoaderManager {
-        constructor();
-        private static preFails;
-        private static nowFails;
-        static enableFailDebugger: boolean;
-        static FailSign: string;
-        static init(): void;
-        static resetFails(): void;
-        checkUrls(url: any): void;
-        chekUrlList(urls: Array<any>): void;
-        load(url: any, complete?: laya.utils.Handler, progress?: laya.utils.Handler, type?: string, priority?: number, cache?: boolean): laya.net.LoaderManager;
-    }
-}
-declare module laya.debug.tools.enginehook {
-    /**
-     * ...
-     * @author ww
-     */
-    class RenderSpriteHook {
-        static IMAGE: number;
-        static FILTERS: number;
-        static ALPHA: number;
-        static TRANSFORM: number;
-        static CANVAS: number;
-        static BLEND: number;
-        static CLIP: number;
-        static STYLE: number;
-        static GRAPHICS: number;
-        static CUSTOM: number;
-        static ENABLERENDERMERGE: number;
-        static CHILDS: number;
-        static INIT: number;
-        static renders: Array<any>;
-        _next: laya.renders.RenderSprite;
-        _fun: Function;
-        _oldCanvas: Function;
-        constructor();
-        static I: RenderSpriteHook;
-        static init(): void;
-        createRenderSprite(type: number, next: laya.renders.RenderSprite): laya.renders.RenderSprite;
-        _canvas(sprite: laya.display.Sprite, context: laya.renders.RenderContext, x: number, y: number): void;
-    }
-}
-declare module laya.debug.tools.enginehook {
-    /**
-     * ...
-     * @author ww
-     */
-    class SpriteRenderForVisibleAnalyse {
-        constructor();
-        static I: SpriteRenderForVisibleAnalyse;
-        setRenderHook(): void;
-        protected _repaint: number;
-        _renderType: number;
-        _x: number;
-        _y: number;
-        /**
-         * 更新、呈现显示对象。
-         * @param	context 渲染的上下文引用。
-         * @param	x X轴坐标。
-         * @param	y Y轴坐标。
-         */
-        render(context: laya.renders.RenderContext, x: number, y: number): void;
-        target: laya.display.Sprite;
-        isTargetRenderd: boolean;
-        static tarCanvas: laya.resource.HTMLCanvas;
-        static mainCanvas: laya.resource.HTMLCanvas;
-        static preImageData: any;
-        static tImageData: any;
-        static tarImageData: any;
-        static tarRec: laya.maths.Rectangle;
-        static isTarRecOK: boolean;
-        static isVisibleTesting: boolean;
-        static allowRendering: boolean;
-        static coverRate: number;
-        analyseNode(node: laya.display.Sprite): void;
-        pgraphic: Function;
-        pimage: Function;
-        pimage2: Function;
-        inits(): void;
-        m_graphics(sprite: laya.display.Sprite, context: laya.renders.RenderContext, x: number, y: number): void;
-        m_image(sprite: laya.display.Sprite, context: laya.renders.RenderContext, x: number, y: number): void;
-        m_image2(sprite: laya.display.Sprite, context: laya.renders.RenderContext, x: number, y: number): void;
-    }
-}
-declare module laya.debug.tools.enginehook {
-    /**
-     * ...
-     * @author ww
-     */
-    class SpriteRenderHook {
-        constructor();
-        static I: SpriteRenderHook;
-        static init(): void;
-        static setRenderHook(): void;
-        protected _repaint: number;
-        _renderType: number;
-        _x: number;
-        _y: number;
-        /**
-         * 更新、呈现显示对象。
-         * @param	context 渲染的上下文引用。
-         * @param	x X轴坐标。
-         * @param	y Y轴坐标。
-         */
-        render(context: laya.renders.RenderContext, x: number, y: number): void;
-    }
-}
-declare module laya.debug.tools.exp {
-    /**
-     * 本类调用原生observe接口，仅支持部分浏览器，chrome有效
-     * 变化输出为异步方式,所以无法跟踪到是什么函数导致变化
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-10-26 上午9:35:45
-     */
-    class Observer {
-        constructor();
-        static observe(obj: any, callBack: Function): void;
-        static unobserve(obj: any, callBack: Function): void;
-        static observeDiffer(obj: any, sign: string, msg?: string): void;
-    }
-}
-declare module laya.debug.tools.exp {
-    /**
-     * 本类调用原生watch接口，仅火狐有效
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-10-26 上午9:48:18
-     */
-    class Watch {
-        constructor();
-        static watch(obj: any, name: string, callBack: Function): void;
-        static unwatch(obj: any, name: string, callBack: Function): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-10-30 下午1:06:56
-     */
-    class FilterTool {
-        constructor();
-        static getArrByFilter(arr: Array<any>, filterFun: Function): Array<any>;
-        static getArr(arr: Array<any>, sign: string, value: any): Array<any>;
-    }
-}
-declare module laya.debug.tools.hook {
-    /**
-     * 本类用于在对象的函数上挂钩子
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-10-23 下午1:13:13
-     */
-    class FunHook {
-        constructor();
-        static hook(obj: any, funName: string, preFun?: Function, aftFun?: Function): void;
-        static special: any;
-        static hookAllFun(obj: any): void;
-        static hookFuns(obj: any, funName: string, funList: Array<any>, rstI?: number): void;
-        static removeHook(obj: any, funName: string): void;
-        static debugHere(): void;
-        static traceLoc(level?: number, msg?: string): void;
-        static getLocFun(level?: number, msg?: string): Function;
-    }
-}
-declare module laya.debug.tools.hook {
-    /**
-     * 本类用于监控对象 set get 函数的调用
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-10-23 下午2:52:48
-     */
-    class VarHook {
-        constructor();
-        static hookVar(obj: any, name: string, setHook?: Array<any>, getHook?: Array<any>): void;
-        static getLocFun(msg?: string, level?: number): Function;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-10-29 上午9:45:33
-     */
-    class IDTools {
-        constructor();
-        tID: number;
-        getID(): number;
-        static _ID: IDTools;
-        static getAID(): number;
-        private static _idDic;
-        static idObjE(obj: any, sign?: string): any;
-        static setObjID(obj: any, id: number): any;
-        static idSign: string;
-        static idObj(obj: any): any;
-        static getObjID(obj: any): number;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-11-27 上午9:58:59
-     */
-    class JsonTool {
-        constructor();
-        static singleLineKey: any;
-        static getJsonString(obj: any, singleLine?: boolean, split?: string, depth?: number, Width?: number): string;
-        static emptyDic: any;
-        static getEmptyStr(width: number): string;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * 本类用于操作html对象
-     * @author ww
-     */
-    class JSTools {
-        constructor();
-        /**
-         * 将html对象添加到body上
-         * @param el
-         * @param x
-         * @param y
-         *
-         */
-        static showToBody(el: any, x?: number, y?: number): void;
-        /**
-         * 将html对象添加到显示列表上的某个对象的上方
-         * @param el
-         * @param sprite
-         * @param dx
-         * @param dy
-         *
-         */
-        static showAboveSprite(el: any, sprite: laya.display.Sprite, dx?: number, dy?: number): void;
-        /**
-         * 移除html对象
-         * @param el
-         *
-         */
-        static removeElement(el: any): void;
-        static getImageSpriteByFile(file: any, width?: number, height?: number): laya.display.Sprite;
-        private static _pixelRatio;
-        static getPixelRatio(): number;
-    }
-}
-declare module laya.debug.tools.layout {
-    /**
-     * 布局工具类,目前只支持水平方向布局
-     * @author ww
-     */
-    class Layouter {
-        constructor();
-        /**
-         * 布局用的数据，与布局方法有关
-         */
-        data: any;
-        /**
-         * 布局涉及的对象
-         */
-        _items: Array<any>;
-        /**
-         * 布局用的函数
-         */
-        layoutFun: Function;
-        items: Array<any>;
-        x: number;
-        width: number;
-        /**
-         * 重新布局
-         *
-         */
-        changed(): void;
-        /**
-         * 根据当前的对象状态计算位置大小
-         *
-         */
-        calSize(): void;
-    }
-}
-declare module laya.debug.tools.layout {
-    /**
-     * ...
-     * @author ww
-     */
-    class LayoutFuns {
-        constructor();
-        /**
-         * 水平等宽布局
-         * @param totalWidth
-         * @param items
-         * @param data
-         * @param sX
-         *
-         */
-        static sameWidth(totalWidth: number, items: Array<any>, data?: any, sX?: number): void;
-        static getSameWidthLayout(items: Array<any>, dWidth: number): Layouter;
-        static getLayouter(items: Array<any>, data: any, fun: Function): Layouter;
-        /**
-         * 水平等间距布局
-         * @param totalWidth
-         * @param items
-         * @param data
-         * @param sX
-         *
-         */
-        static sameDis(totalWidth: number, items: Array<any>, data?: any, sX?: number): void;
-        static getSameDisLayout(items: Array<any>, rateSame?: boolean): Layouter;
-        /**
-         * 水平铺满布局
-         * @param totalWidth
-         * @param items
-         * @param data
-         * @param sX
-         *
-         */
-        static fullFill(totalWidth: number, items: Array<any>, data?: any, sX?: number): void;
-        static getFullFillLayout(items: Array<any>, dL?: number, dR?: number): Layouter;
-        /**
-         * 水平固定x绝对值或者比例布局, 并用最后一个元素铺满布局宽
-         * @param totalWidth
-         * @param items
-         * @param data
-         * @param sX
-         *
-         */
-        static fixPos(totalWidth: number, items: Array<any>, data?: any, sX?: number): void;
-        static getFixPos(items: Array<any>, dLen?: number, isRate?: boolean, poss?: Array<any>): Layouter;
-        /**
-         * 清除对象上的相对布局数据
-         * @param items
-         *
-         */
-        static clearItemsRelativeInfo(items: Array<any>): void;
-        /**
-         * 清除对象上的相对布局数据
-         * @param items
-         *
-         */
-        static clearItemRelativeInfo(item: any): void;
-        static RateSign: string;
-        static prepareForLayoutWidth(totalWidth: number, items: Array<any>): void;
-        static getSumWidth(items: Array<any>): number;
-        static prepareItemForLayoutWidth(totalWidth: number, item: any): void;
-        static setItemRate(item: any, rate: number): void;
-        static getItemRate(item: any): number;
-        static FreeSizeSign: string;
-        static setItemFreeSize(item: any, free?: boolean): void;
-        static isItemFreeSize(item: any): boolean;
-        /**
-         * 锁定间距布局，需要有一个对象为freeSize，表示通过调整该对象大小来铺满宽
-         * @param totalWidth
-         * @param items
-         * @param data
-         * @param sX
-         *
-         */
-        static lockedDis(totalWidth: number, items: Array<any>, data?: any, sX?: number): void;
-        static getFreeItem(items: Array<any>): laya.display.Sprite;
-        static getLockedDis(items: Array<any>): Layouter;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-11-9 下午3:26:01
-     */
-    class LayoutTools {
-        constructor();
-        static layoutToXCount(items: Array<any>, xCount?: number, dx?: number, dY?: number, sx?: number, sy?: number): void;
-        static layoutToWidth(items: Array<any>, width: number, dX: number, dY: number, sx: number, sy: number): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * ...
-     * @author ww
-     */
-    class MathTools {
-        constructor();
-        /**
-         * 一个用来确定数组元素排序顺序的比较函数。
-         * @param	a 待比较数字。
-         * @param	b 待比较数字。
-         * @return 如果a等于b 则值为0；如果b>a则值为1；如果b<则值为-1。
-         */
-        static sortBigFirst(a: number, b: number): number;
-        /**
-         * 一个用来确定数组元素排序顺序的比较函数。
-         * @param	a 待比较数字。
-         * @param	b 待比较数字。
-         * @return 如果a等于b 则值为0；如果b>a则值为-1；如果b<则值为1。
-         */
-        static sortSmallFirst(a: number, b: number): number;
-        /**
-         * 将指定的元素转为数字进行比较。
-         * @param	a 待比较元素。
-         * @param	b 待比较元素。
-         * @return b、a转化成数字的差值 (b-a)。
-         */
-        static sortNumBigFirst(a: any, b: any): number;
-        /**
-         * 将指定的元素转为数字进行比较。
-         * @param	a 待比较元素。
-         * @param	b 待比较元素。
-         * @return a、b转化成数字的差值 (a-b)。
-         */
-        static sortNumSmallFirst(a: any, b: any): number;
-        /**
-         * 返回根据对象指定的属性进行排序的比较函数。
-         * @param	key 排序要依据的元素属性名。
-         * @param	bigFirst 如果值为true，则按照由大到小的顺序进行排序，否则按照由小到大的顺序进行排序。
-         * @param	forceNum 如果值为true，则将排序的元素转为数字进行比较。
-         * @return 排序函数。
-         */
-        static sortByKey(key: string, bigFirst?: boolean, forceNum?: boolean): Function;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * ...
-     * @author ww
-     */
-    class MouseEventAnalyser {
-        constructor();
-        static infoO: any;
-        static nodeO: any;
-        static hitO: any;
-        static analyseNode(node: laya.display.Sprite): void;
-        private static _matrix;
-        private static _point;
-        private static _rect;
-        static check(sp: laya.display.Sprite, mouseX: number, mouseY: number, callBack: Function): boolean;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * 本类用于模块间消息传递
-     * @author ww
-     */
-    class Notice extends laya.events.EventDispatcher {
-        constructor();
-        static I: Notice;
-        /**
-         * 发送一个消息
-         * @param type
-         * @param data
-         *
-         */
-        static notify(type: string, data?: any): void;
-        /**
-         * 监听一个消息
-         * @param type
-         * @param _scope
-         * @param fun
-         * @param args
-         *
-         */
-        static listen(type: string, _scope: any, fun: Function, args?: Array<any>, cancelBefore?: boolean): void;
-        /**
-         * 取消监听消息
-         * @param type
-         * @param _scope
-         * @param fun
-         *
-         */
-        static cancel(type: string, _scope: any, fun: Function): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * 本类提供obj相关的一些操作
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-10-21 下午2:03:36
-     */
-    class ObjectTools {
-        constructor();
-        static sign: string;
-        static getFlatKey(tKey: string, aKey: string): string;
-        static flatObj(obj: any, rst?: any, tKey?: string): any;
-        static recoverObj(obj: any): any;
-        static differ(objA: any, objB: any): any;
-        static traceDifferObj(obj: any): void;
-        static setKeyValue(obj: any, flatKey: string, value: any): void;
-        static clearObj(obj: any): void;
-        static copyObj(obj: any): any;
-        static copyArr(arr: Array<any>): Array<any>;
-        static concatArr(src: Array<any>, a: Array<any>): Array<any>;
-        static clearArr(arr: Array<any>): Array<any>;
-        static setValueArr(src: Array<any>, v: Array<any>): Array<any>;
-        static getFrom(rst: Array<any>, src: Array<any>, count: number): Array<any>;
-        static getFromR(rst: Array<any>, src: Array<any>, count: number): Array<any>;
-        static enableDisplayTree(dis: laya.display.Sprite): void;
-        static getJsonString(obj: any): string;
-        static getObj(jsonStr: string): any;
-        static getKeyArr(obj: any): Array<any>;
-        static hasKeys(obj: any, keys: Array<any>): boolean;
-        static copyValueByArr(tar: any, src: any, keys: Array<any>): void;
-        static insertValue(tar: any, src: any): void;
-        static replaceValue(obj: any, replaceO: any): void;
-        static setKeyValues(items: Array<any>, key: string, value: any): void;
-        static findItemPos(items: Array<any>, sign: string, value: any): number;
-        static setObjValue(obj: any, key: string, value: any): any;
-        static setAutoTypeValue(obj: any, key: string, value: any): any;
-        static getAutoValue(value: any): any;
-        static isNumber(value: any): boolean;
-        static isNaN(value: any): boolean;
-        static getStrTypedValue(value: string): any;
-        static createKeyValueDic(dataList: Array<any>, keySign: string): any;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * ...
-     * @author ww
-     */
-    class ObjTimeCountTool {
-        constructor();
-        timeDic: any;
-        resultDic: any;
-        countDic: any;
-        resultCountDic: any;
-        nodeDic: any;
-        resultNodeDic: any;
-        addTime(sprite: laya.display.Sprite, time: number): void;
-        getTime(sprite: laya.display.Sprite): number;
-        getCount(sprite: laya.display.Sprite): number;
-        reset(): void;
-        updates(): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-12-23 下午12:00:48
-     */
-    class RecInfo {
-        constructor();
-        oX: number;
-        oY: number;
-        hX: number;
-        hY: number;
-        vX: number;
-        vY: number;
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-        rotation: number;
-        rotationRad: number;
-        rotationV: number;
-        rotationRadV: number;
-        initByPoints(oPoint: laya.maths.Point, ePoint: laya.maths.Point, vPoint: laya.maths.Point): void;
-        static createByPoints(oPoint: laya.maths.Point, ePoint: laya.maths.Point, vPoint: laya.maths.Point): RecInfo;
-        static getGlobalPoints(sprite: laya.display.Sprite, x: number, y: number): laya.maths.Point;
-        static getGlobalRecInfo(sprite: laya.display.Sprite, x0?: number, y0?: number, x1?: number, y1?: number, x2?: number, y2?: number): RecInfo;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * ...
-     * @author ww
-     */
-    class RenderAnalyser {
-        constructor();
-        static I: RenderAnalyser;
-        render(sprite: laya.display.Sprite, time: number): void;
-        timeDic: any;
-        resultDic: any;
-        countDic: any;
-        resultCountDic: any;
-        nodeDic: any;
-        addTime(sprite: laya.display.Sprite, time: number): void;
-        getTime(sprite: laya.display.Sprite): number;
-        getCount(sprite: laya.display.Sprite): number;
-        reset(): void;
-        isWorking: boolean;
-        updates(): void;
-        working: boolean;
-    }
-}
-declare module laya.debug.tools.resizer {
-    /**
-     * 自动根据大小填充自己全部区域的显示对象
-     * @author ww
-     */
-    class AutoFillRec extends laya.ui.Component {
-        type: number;
-        constructor(type: string);
-        protected changeSize(): void;
-        preX: number;
-        preY: number;
-        record(): void;
-        getDx(): number;
-        getDy(): number;
-    }
-}
-declare module laya.debug.tools.resizer {
-    /**
-     * 本类用于调整对象的宽高以及坐标
-     * @author ww
-     */
-    class DisResizer {
-        /**
-         * 最边缘的拖动条
-         */
-        static Side: number;
-        /**
-         * 垂直方向的拖动条
-         */
-        static Vertical: number;
-        /**
-         * 水平方向的拖动条
-         */
-        static Horizon: number;
-        constructor();
-        private static _up;
-        private static _down;
-        private static _left;
-        private static _right;
-        private static _barList;
-        private static _tar;
-        static barWidth: number;
-        static useGetBounds: boolean;
-        static init(): void;
-        static clear(): void;
-        private static tBar;
-        static setUp(dis: laya.display.Sprite, force?: boolean): void;
-        static updates(): void;
-    }
-}
-declare module laya.debug.tools.resizer {
-    /**
-     * ...
-     * @author ww
-     */
-    class SimpleResizer {
-        constructor();
-        static setResizeAble(clickItem: laya.display.Sprite, tar: laya.display.Sprite, minWidth?: number, minHeight?: number): void;
-        private static preMousePoint;
-        private static preTarSize;
-        private static preScale;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * 类实例创建分析工具
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-9-25 下午3:31:46
-     */
-    class RunProfile {
-        constructor();
-        private static infoDic;
-        static run(funName: string, callLen?: number): void;
-        private static _runShowDic;
-        static showClassCreate(funName: string): void;
-        static hideClassCreate(funName: string): void;
-        static getRunInfo(funName: string): CountTool;
-        static runTest(fun: Function, count: number, sign?: string): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2016-6-24 下午6:07:30
-     */
-    class SingleTool {
-        constructor();
-        static I: SingleTool;
-        getArr(sign: string): Array<any>;
-        getObject(sign: string): any;
-        getByClass(sign: string, clzSign: string, clz: any): any;
-        getTypeDic(type: string): any;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * 一些字符串操作函数
-     * @author ww
-     *
-     */
-    class StringTool {
-        constructor();
-        /**
-         * 返回全大写
-         * @param str
-         * @return
-         */
-        static toUpCase(str: string): string;
-        /**
-         * 返回全小写
-         * @param str
-         * @return
-         */
-        static toLowCase(str: string): string;
-        /**
-         * 返回首字母大写
-         * @param str
-         * @return
-         */
-        static toUpHead(str: string): string;
-        /**
-         * 返回首字母小写
-         * @param str
-         * @return
-         */
-        static toLowHead(str: string): string;
-        /**
-         * 包名转路径名
-         * @param packageName
-         * @return
-         */
-        static packageToFolderPath(packageName: string): string;
-        static insert(str: string, iStr: string, index: number): string;
-        static insertAfter(str: string, iStr: string, tarStr: string, isLast?: boolean): string;
-        static insertBefore(str: string, iStr: string, tarStr: string, isLast?: boolean): string;
-        static insertParamToFun(funStr: string, params: Array<any>): string;
-        /**
-         * 去除空格和换行符
-         * @param str
-         * @return
-         */
-        static trim(str: string, vList?: Array<any>): string;
-        static emptyStrDic: any;
-        static isEmpty(str: string): boolean;
-        static trimLeft(str: string): string;
-        static trimRight(str: string): string;
-        static trimSide(str: string): string;
-        static specialChars: any;
-        static isOkFileName(fileName: string): boolean;
-        static trimButEmpty(str: string): string;
-        static removeEmptyStr(strArr: Array<any>): Array<any>;
-        static ifNoAddToTail(str: string, sign: string): string;
-        static trimEmptyLine(str: string): string;
-        static isEmptyLine(str: string): boolean;
-        static removeCommentLine(lines: Array<any>): Array<any>;
-        static addIfNotEmpty(arr: Array<any>, str: string): void;
-        static trimExt(str: string, vars: Array<any>): string;
-        static getBetween(str: string, left: string, right: string, ifMax?: boolean): string;
-        static getSplitLine(line: string, split?: string): Array<any>;
-        static getLeft(str: string, sign: string): string;
-        static getRight(str: string, sign: string): string;
-        static delelteItem(arr: Array<any>): void;
-        static getWords(line: string): Array<any>;
-        static getLinesI(startLine: number, endLine: number, lines: Array<any>): Array<any>;
-        static structfy(str: string, inWidth?: number, removeEmpty?: boolean): string;
-        static emptyDic: any;
-        static getEmptyStr(width: number): string;
-        static getPariCount(str: string, inChar?: string, outChar?: string): number;
-        static readInt(str: string, startI?: number): number;
-        /**
-         * 替换文本
-         * @param str
-         * @param oStr
-         * @param nStr
-         * @return
-         */
-        static getReplace(str: string, oStr: string, nStr: string): string;
-        static getWordCount(str: string, findWord: string): number;
-        static getResolvePath(path: string, basePath: string): string;
-        static isAbsPath(path: string): boolean;
-        static removeLastSign(str: string, sign: string): string;
-        static getParamArr(str: string): Array<any>;
-        static copyStr(str: string): string;
-        /**
-         * 将Array转成字符串
-         * @param arr
-         * @return
-         */
-        static ArrayToString(arr: Array<any>): string;
-        static getArrayItems(arr: Array<any>): string;
-        static parseItem(item: any): string;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * 全局时间速率控制类
-     * @author ww
-     */
-    class TimerControlTool {
-        constructor();
-        /**
-         * 获取浏览器当前时间
-         */
-        static now(): number;
-        static getRatedNow(): number;
-        static getNow(): number;
-        private static _startTime;
-        private static _timeRate;
-        static _browerNow: Function;
-        static setTimeRate(rate: number): void;
-        static recoverRate(): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * ...
-     * @author ww
-     */
-    class TimeTool {
-        constructor();
-        private static timeDic;
-        static getTime(sign: string, update?: boolean): number;
-    }
-}
-declare module laya.debug.tools {
-    /**鼠标提示管理类*/
-    class TipManagerForDebug extends laya.ui.Component {
-        static offsetX: number;
-        static offsetY: number;
-        static tipTextColor: string;
-        static tipBackColor: string;
-        static tipDelay: number;
-        constructor();
-        showToStage(dis: laya.display.Sprite, offX?: number, offY?: number): void;
-        /**关闭所有鼠标提示*/
-        closeAll(): void;
-        showDisTip(tip: laya.display.Sprite): void;
-        /**默认鼠标提示函数*/
-        defaultTipHandler: Function;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-9-25 上午10:48:54
-     */
-    class TraceTool {
-        constructor();
-        static closeAllLog(): void;
-        static emptyLog(): void;
-        static tempArr: Array<any>;
-        /**
-         * 打印obj
-         * @param obj
-         */
-        static traceObj(obj: any): string;
-        static traceObjR(obj: any): string;
-        static traceSize(tar: laya.display.Sprite): void;
-        static traceSplit(msg: string): void;
-        static group(gName: any): void;
-        static groupEnd(): void;
-        /**
-         *  在js中可打印调用堆栈
-         * @param life 打印堆栈的深度
-         */
-        static getCallStack(life?: number, s?: number): string;
-        static Erroer: any;
-        static getCallLoc(index?: number): string;
-        static traceCallStack(): string;
-        private static holderDic;
-        static getPlaceHolder(len: number): string;
-        static traceTree(tar: laya.display.Node, depth?: number, isFirst?: boolean): void;
-        static getClassName(tar: any): string;
-        static traceSpriteInfo(tar: laya.display.Sprite, showBounds?: boolean, showSize?: boolean, showTree?: boolean): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * ...
-     * @author ww
-     */
-    class UVTools {
-        constructor();
-        /**
-         * 矩形区域转UV
-         * @param x
-         * @param y
-         * @param width
-         * @param height
-         * @return
-         */
-        static getUVByRec(x: number, y: number, width: number, height: number): Array<any>;
-        /**
-         * uv转矩形区域
-         * @param uv
-         * @return
-         */
-        static getRecFromUV(uv: Array<any>): laya.maths.Rectangle;
-        /**
-         * 验证uv数据是否正确
-         * @param uv
-         * @return
-         */
-        static isUVRight(uv: Array<any>): boolean;
-        /**
-         * 获取Texture的裁剪矩形
-         * @param texture
-         * @return
-         */
-        static getTextureRec(texture: laya.resource.Texture): laya.maths.Rectangle;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-12-30 下午5:12:53
-     */
-    class ValueChanger {
-        constructor();
-        target: any;
-        key: string;
-        value: number;
-        dValue: number;
-        scaleValue: number;
-        preValue: number;
-        record(): void;
-        showValueByAdd(addValue: number): void;
-        showValueByScale(scale: number): void;
-        recover(): void;
-        dispose(): void;
-        static create(target: any, key: string): ValueChanger;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * ...
-     * @author ww
-     */
-    class VisibleAnalyser {
-        constructor();
-        static analyseTarget(node: laya.display.Sprite): void;
-        static isCoverByBrother(node: laya.display.Sprite): void;
-        static isNodeWalked: boolean;
-        static _analyseTarget: laya.display.Sprite;
-        static tarRec: laya.maths.Rectangle;
-        static isTarRecOK: boolean;
-        static mainCanvas: laya.resource.HTMLCanvas;
-        static preImageData: any;
-        static tImageData: any;
-        static tarImageData: any;
-        static coverRate: number;
-        static tColor: number;
-        static anlyseRecVisible(node: laya.display.Sprite): void;
-        private static interRec;
-        static getRecArea(rec: laya.maths.Rectangle): number;
-        private static _coverList;
-        static addCoverNode(node: laya.display.Sprite, coverRate: number): void;
-        static resetCoverList(): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-9-24 下午6:15:01
-     */
-    class WalkTools {
-        constructor();
-        static walkTarget(target: laya.display.Node, fun: Function, _this?: any): void;
-        static walkTargetEX(target: laya.display.Node, fun: Function, _this?: any, filterFun?: Function): void;
-        static walkChildren(target: laya.display.Node, fun: Function, _this?: any): void;
-        static walkArr(arr: Array<any>, fun: Function, _this?: any): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * 本类用于监控对象值变化
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-10-23 下午4:18:27
-     */
-    class Watcher {
-        constructor();
-        static watch(obj: any, name: string, funs: Array<any>): void;
-        static debugChange(obj: any, name: string): void;
-        static differChange(obj: any, name: string, sign: string, msg?: string): void;
-        static getDifferFun(obj: any, name: string, sign: string, msg?: string): Function;
-        static traceValue(value: any): void;
-        static getTraceValueFun(name: string): Function;
-        static traceChange(obj: any, name: string, sign?: string): void;
-    }
-}
-declare module laya.debug.tools {
-    /**
-     * XML转Object类
-     * @author ww
-     *
-     */
-    class XML2Object {
-        private static _arrays;
-        static parse(node: any, isFirst?: boolean): any;
-        static getArr(v: any): Array<any>;
-        static arrays: Array<any>;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class CodeUsedResUI extends laya.ui.View {
-        tab: laya.ui.Tab;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui.comps {
-    class ListItemUI extends laya.ui.View {
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui.comps {
-    class RankListItemUI extends laya.ui.View {
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class DebugPanelUI extends laya.ui.View {
-        bg: laya.ui.Image;
-        minBtn: laya.debug.view.nodeInfo.nodetree.MinBtnComp;
-        treePanel: laya.debug.view.nodeInfo.views.NodeTreeView;
-        selectWhenClick: laya.ui.CheckBox;
-        profilePanel: laya.debug.view.nodeInfo.nodetree.Profile;
-        resizeBtn: laya.ui.Button;
-        mouseAnalyseBtn: laya.ui.Clip;
-        dragIcon: laya.ui.Clip;
-        clearBtn: laya.ui.Button;
-        selectPanel: laya.debug.view.nodeInfo.views.SelectInfosView;
-        tab: laya.ui.Tab;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class FindNodeSmallUI extends laya.ui.View {
-        bg: laya.ui.Image;
-        closeBtn: laya.ui.Button;
-        title: laya.ui.Label;
-        typeSelect: laya.ui.ComboBox;
-        findTxt: laya.ui.TextInput;
-        findBtn: laya.ui.Button;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class FindNodeUI extends laya.ui.View {
-        bg: laya.ui.Image;
-        closeBtn: laya.ui.Button;
-        title: laya.ui.Label;
-        typeSelect: laya.ui.ComboBox;
-        findTxt: laya.ui.TextInput;
-        result: laya.ui.List;
-        findBtn: laya.ui.Button;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class MinBtnCompUI extends laya.ui.View {
-        minBtn: laya.ui.Button;
-        maxUI: laya.ui.Box;
-        bg: laya.ui.Image;
-        maxBtn: laya.ui.Button;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class NodeListPanelUI extends laya.ui.View {
-        bg: laya.ui.Image;
-        closeBtn: laya.ui.Button;
-        title: laya.ui.Label;
-        itemList: laya.ui.List;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class NodeToolUI extends laya.ui.View {
-        bg: laya.ui.Image;
-        closeBtn: laya.ui.Button;
-        tarTxt: laya.ui.Label;
-        freshBtn: laya.ui.Button;
-        mouseAnalyseBtn: laya.ui.Clip;
-        dragIcon: laya.ui.Clip;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class NodeTreeSettingUI extends laya.ui.View {
-        bg: laya.ui.Image;
-        showTxt: laya.ui.TextInput;
-        okBtn: laya.ui.Button;
-        closeBtn: laya.ui.Button;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class NodeTreeUI extends laya.ui.View {
-        nodeTree: laya.ui.Tree;
-        controlBar: laya.ui.Box;
-        settingBtn: laya.ui.Button;
-        freshBtn: laya.ui.Button;
-        fliterTxt: laya.ui.TextInput;
-        closeBtn: laya.ui.Button;
-        ifShowProps: laya.ui.CheckBox;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class ObjectCreateUI extends laya.ui.View {
-        bg: laya.ui.Image;
-        closeBtn: laya.ui.Button;
-        itemList: laya.ui.List;
-        freshBtn: laya.ui.Button;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class ObjectInfoUI extends laya.ui.View {
-        bg: laya.ui.Image;
-        title: laya.ui.Label;
-        showTxt: laya.ui.TextArea;
-        closeBtn: laya.ui.Button;
-        autoUpdate: laya.ui.CheckBox;
-        settingBtn: laya.ui.Button;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class OutPutUI extends laya.ui.View {
-        bg: laya.ui.Image;
-        txt: laya.ui.Label;
-        closeBtn: laya.ui.Button;
-        clearBtn: laya.ui.Button;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class ProfileUI extends laya.ui.View {
-        renderPanel: laya.debug.view.nodeInfo.views.RenderCostRankView;
-        createPanel: any;
-        cachePanel: laya.debug.view.nodeInfo.views.CacheRankView;
-        tab: laya.ui.Tab;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class RankUI extends laya.ui.View {
-        bg: laya.ui.Image;
-        closeBtn: laya.ui.Button;
-        title: laya.ui.Label;
-        itemList: laya.ui.List;
-        autoUpdate: laya.ui.CheckBox;
-        freshBtn: laya.ui.Button;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class SelectInfosUI extends laya.ui.View {
-        bg: laya.ui.Image;
-        closeBtn: laya.ui.Button;
-        selectList: laya.ui.List;
-        findBtn: laya.ui.Clip;
-        fliterTxt: laya.ui.TextInput;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.ui.debugui {
-    class ToolBarUI extends laya.ui.View {
-        bg: laya.ui.Image;
-        treeBtn: laya.ui.Button;
-        findBtn: laya.ui.Button;
-        minBtn: laya.debug.view.nodeInfo.nodetree.MinBtnComp;
-        selectWhenClick: laya.ui.CheckBox;
-        clearBtn: laya.ui.Button;
-        rankBtn: laya.ui.Button;
-        nodeRankBtn: laya.ui.Button;
-        cacheBtn: laya.ui.Button;
-        static uiView: any;
-        constructor();
-        protected createChildren(): void;
-        protected viewMapRegists(): void;
-    }
-}
-declare module laya.debug.uicomps {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2015-10-24 下午2:58:37
-     */
-    class ContextMenu extends laya.ui.Box {
-        constructor();
-        static init(): void;
-        private static _menuList;
-        static cleanMenu(e?: laya.events.Event): void;
-        static showMenu(menu: ContextMenu, posX?: number, posY?: number): void;
-        /**创建菜单*/
-        static createMenu(...args: any[]): ContextMenu;
-        /**创建菜单*/
-        static createMenuByArray(args: Array<any>): ContextMenu;
-        static adptMenu(menu: ContextMenu): void;
-        addItem(item: ContextMenuItem): void;
-        show(posX?: number, posY?: number): void;
-    }
-}
-declare module laya.debug.uicomps {
-    /**
-     * ...
-     * @author ww
-     */
-    class ContextMenuItem extends laya.ui.Button {
-        data: any;
-        constructor(txt: string, isSeparator: boolean);
-        width: number;
-    }
-}
-declare module laya.debug.uicomps {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2016-7-6 上午9:42:46
-     */
-    class ListBase extends laya.ui.List {
-        constructor();
-        selectedIndex: number;
-    }
-}
-declare module laya.debug.uicomps {
-    /**
-     * ...
-     * @author ww
-     */
-    class RankListItem extends laya.debug.ui.debugui.comps.RankListItemUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.uicomps {
-    /**
-     *
-     * @author ww
-     * @version 1.0
-     *
-     * @created  2016-7-6 上午9:49:47
-     */
-    class TreeBase extends laya.ui.Tree {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.uicomps {
-    /**
-     * ...
-     * @author ww
-     */
-    class TreeListItem extends laya.debug.ui.debugui.comps.ListItemUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo {
-    /**
-     * ...
-     * @author ww
-     */
-    class DebugInfoLayer extends laya.display.Sprite {
-        static I: DebugInfoLayer;
-        nodeRecInfoLayer: laya.display.Sprite;
-        lineLayer: laya.display.Sprite;
-        txtLayer: laya.display.Sprite;
-        popLayer: laya.display.Sprite;
-        graphicLayer: laya.display.Sprite;
-        constructor();
-        setTop(): void;
-        isDebugItem(sprite: laya.display.Sprite): boolean;
-    }
-}
-declare module laya.debug.view.nodeInfo.menus {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeMenu {
-        constructor();
-        private static _I;
-        static I: NodeMenu;
-        showNodeMenu(node: laya.display.Sprite): void;
-        nodeDoubleClick(node: laya.display.Sprite): void;
-        setNodeListDoubleClickAction(list: laya.ui.List): void;
-        setNodeListAction(list: laya.ui.List): void;
-        objRightClick(obj: any): void;
-        showObjectMenu(obj: any): void;
-    }
-}
-declare module laya.debug.view.nodeInfo {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeConsts {
-        constructor();
-        static defaultFitlerStr: string;
-        static RenderCostMaxTime: number;
-    }
-}
-declare module laya.debug.view.nodeInfo {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeInfoPanel extends laya.display.Sprite {
-        static I: NodeInfoPanel;
-        static init(): void;
-        constructor();
-        isWorkState: boolean;
-        showDisInfo(node: laya.display.Sprite): void;
-        showOnly(node: laya.display.Sprite): void;
-        recoverNodes(): void;
-        hideOtherChain(node: laya.display.Sprite): void;
-        hideChilds(node: laya.display.Sprite): void;
-        hideBrothers(node: laya.display.Sprite): void;
-        saveNodeInfo(node: laya.display.Sprite): void;
-        recoverNodeInfo(node: laya.display.Sprite): void;
-    }
-}
-declare module laya.debug.view.nodeInfo {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeInfosItem extends laya.display.Sprite {
-        static NodeInfoContainer: DebugInfoLayer;
-        static init(): void;
-        constructor();
-        static showValues: Array<any>;
-        private static _nodeInfoDic;
-        static getNodeInfoByNode(node: laya.display.Sprite): NodeInfosItem;
-        static hideAllInfos(): void;
-        removeSelf(): laya.display.Node;
-        showToUI(): void;
-        randomAPos(r: number): void;
-        findOkPos(): void;
-        isPosOk(): boolean;
-        private static _disBoundRec;
-        static showNodeInfo(node: laya.display.Sprite): void;
-        static showDisInfos(node: laya.display.Sprite): void;
-        static apdtTxtInfoPoss(node: laya.display.Sprite): void;
-        static updateRelations(): void;
-        private static _txts;
-        private static _nodePoint;
-        static getNodeValue(node: laya.display.Sprite, key: string): string;
-        showInfo(node: laya.display.Sprite): void;
-        fresh(): void;
-        clearMe(): void;
-        recover(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class DebugPanel extends laya.debug.ui.debugui.DebugPanelUI {
-        constructor();
-        protected createChildren(): void;
-        protected changeSize(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class FindNode extends laya.debug.ui.debugui.FindNodeUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class MinBtnComp extends laya.debug.ui.debugui.MinBtnCompUI {
-        constructor();
-        protected createChildren(): void;
-        tar: laya.display.Sprite;
-        minHandler: laya.utils.Handler;
-        maxHandler: laya.utils.Handler;
-        minState: boolean;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeListPanel extends laya.debug.ui.debugui.NodeListPanelUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeTool extends laya.debug.ui.debugui.NodeToolUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeTree extends laya.debug.ui.debugui.NodeTreeUI {
-        constructor();
-        static I: NodeTree;
-        protected createChildren(): void;
-        closeSetting(newKeys: Array<any>): void;
-        selecteByFile(key: string): void;
-        showSelectInStage(node: laya.display.Sprite): void;
-        selectByNode(node: laya.display.Sprite): void;
-        showNodeList(nodeList: Array<any>): void;
-        static showKeys: Array<any>;
-        static emptyShowKey: Array<any>;
-        setDis(sprite: laya.display.Sprite): void;
-        fresh(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class ObjectCreate extends laya.debug.ui.debugui.ObjectCreateUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class ObjectInfo extends laya.debug.ui.debugui.ObjectInfoUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class OutPut extends laya.debug.ui.debugui.OutPutUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class Profile extends laya.debug.ui.debugui.ProfileUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class Rank extends laya.debug.ui.debugui.RankUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class SelectInfos extends laya.debug.ui.debugui.SelectInfosUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.nodetree {
-    /**
-     * ...
-     * @author ww
-     */
-    class ToolBar extends laya.debug.ui.debugui.ToolBarUI {
-        constructor();
-        protected createChildren(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeUtils {
-        constructor();
-        static defaultKeys: Array<any>;
-        static getFilterdTree(sprite: laya.display.Sprite, keys: Array<any>): any;
-        static getPropertyDesO(tValue: any, keys: Array<any>): any;
-        static adptShowKeys(keys: Array<any>): Array<any>;
-        static getNodeTreeData(sprite: laya.display.Sprite, keys: Array<any>): Array<any>;
-        static getTreeArr(treeO: any, arr: Array<any>, add?: boolean): void;
-        static traceStage(): void;
-        static getNodeCount(node: laya.display.Sprite): number;
-        static getGVisible(node: laya.display.Sprite): boolean;
-        static getGAlpha(node: laya.display.Sprite): number;
-        static getGRec(node: laya.display.Sprite): laya.maths.Rectangle;
-        static getGGraphicRec(node: laya.display.Sprite): laya.maths.Rectangle;
-        static getNodeCmdCount(node: laya.display.Sprite): number;
-        static getNodeCmdTotalCount(node: laya.display.Sprite): number;
-        static getRenderNodeCount(node: laya.display.Sprite): number;
-        static getReFreshRenderNodeCount(node: laya.display.Sprite): number;
-        private static g;
-        static showCachedSpriteRecs(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.recinfos {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeRecInfo extends laya.display.Sprite {
-        txt: laya.display.Text;
-        constructor();
-        setInfo(str: string): void;
-        protected _tar: laya.display.Sprite;
-        recColor: string;
-        setTarget(tar: laya.display.Sprite): void;
-        private static _disBoundRec;
-        showInfo(node: laya.display.Sprite): void;
-        fresh(): void;
-        clearMe(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.recinfos {
-    /**
-     * ...
-     * @author ww
-     */
-    class ReCacheRecInfo extends NodeRecInfo {
-        constructor();
-        addCount(time?: number): void;
-        isWorking: boolean;
-        count: number;
-        mTime: number;
-        static showTime: number;
-        updates(): void;
-        working: boolean;
-    }
-}
-declare module laya.debug.view.nodeInfo {
-    /**
-     * ...
-     * @author ww
-     */
-    class ToolPanel extends laya.display.Sprite {
-        constructor();
-        static I: ToolPanel;
-        static init(): void;
-        static viewDic: any;
-        static Find: string;
-        static Filter: string;
-        static TxtInfo: string;
-        static Tree: string;
-        static typeClassDic: any;
-        switchShow(type: string): void;
-        getView(type: string): laya.debug.view.nodeInfo.views.UIViewBase;
-        showTxtInfo(txt: string): void;
-        showNodeTree(node: laya.display.Sprite): void;
-        showSelectInStage(node: laya.display.Sprite): void;
-        showSelectItems(selectList: Array<any>): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class CacheRankView extends UIViewBase {
-        constructor();
-        private static _I;
-        static I: CacheRankView;
-        view: laya.debug.view.nodeInfo.nodetree.Rank;
-        static filterDebugNodes: boolean;
-        createPanel(): void;
-        fresh(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class DebugPanelView extends UIViewBase {
-        constructor();
-        private static _I;
-        static I: DebugPanelView;
-        view: laya.debug.view.nodeInfo.nodetree.DebugPanel;
-        createPanel(): void;
-        private static tempPos;
-        switchToTree(): void;
-        swichToSelect(): void;
-        static ignoreDebugTool: boolean;
-        static isClickSelectState: boolean;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class FilterView extends UIViewBase {
-        constructor();
-        createPanel(): void;
-        show(): void;
-        close(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class FindSmallView extends UIViewBase {
-        constructor();
-        private static _I;
-        static I: FindSmallView;
-        view: laya.debug.view.nodeInfo.nodetree.FindNodeSmall;
-        createPanel(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class FindView extends UIViewBase {
-        constructor();
-        private static _I;
-        static I: FindView;
-        view: laya.debug.view.nodeInfo.nodetree.FindNode;
-        createPanel(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeListPanelView extends UIViewBase {
-        constructor();
-        private static _I;
-        static I: NodeListPanelView;
-        view: laya.debug.view.nodeInfo.nodetree.NodeListPanel;
-        static filterDebugNodes: boolean;
-        createPanel(): void;
-        showList(list: Array<any>): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeToolView extends UIViewBase {
-        constructor();
-        private static _I;
-        static I: NodeToolView;
-        show(): void;
-        view: laya.debug.view.nodeInfo.nodetree.NodeTool;
-        createPanel(): void;
-        private static tempPos;
-        showByNode(node?: laya.display.Sprite): void;
-        target: laya.display.Sprite;
-        fresh(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeTreeSettingView extends UIViewBase {
-        private static _I;
-        static I: NodeTreeSettingView;
-        constructor();
-        createPanel(): void;
-        show(): void;
-        showSetting(filters: Array<any>, callBack: laya.utils.Handler, tar?: any): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class NodeTreeView extends UIViewBase {
-        constructor();
-        show(): void;
-        showByNode(node?: laya.display.Sprite): void;
-        createPanel(): void;
-        showSelectInStage(node: laya.display.Sprite): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class ObjectCreateView extends UIViewBase {
-        constructor();
-        private static _I;
-        static I: ObjectCreateView;
-        view: laya.debug.view.nodeInfo.nodetree.ObjectCreate;
-        createPanel(): void;
-        show(): void;
-        preInfo: any;
-        fresh(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class ObjectInfoView extends UIViewBase {
-        view: any;
-        constructor();
-        createPanel(): void;
-        reset(): void;
-        showKeys: Array<any>;
-        closeSetting(newKeys: Array<any>): void;
-        showObjectInfo(obj: any): void;
-        fresh(): void;
-        private static _txts;
-        static getObjValueStr(obj: any, keys: Array<any>, withTitle?: boolean): string;
-        static getNodeValue(node: any, key: string): string;
-        close(): void;
-        show(): void;
-        static showObject(obj: any): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class OutPutView extends UIViewBase {
-        constructor();
-        private static _I;
-        static I: OutPutView;
-        view: laya.debug.view.nodeInfo.nodetree.OutPut;
-        createPanel(): void;
-        showTxt(str: string): void;
-        clearText(): void;
-        dTrace(...arg: any[]): void;
-        addStr(str: string): void;
-        static log(str: string): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class RenderCostRankView extends UIViewBase {
-        constructor();
-        private static _I;
-        static I: RenderCostRankView;
-        view: laya.debug.view.nodeInfo.nodetree.Rank;
-        static filterDebugNodes: boolean;
-        createPanel(): void;
-        fresh(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class SelectInfosView extends UIViewBase {
-        constructor();
-        private static _I;
-        static I: SelectInfosView;
-        showKeys: Array<any>;
-        view: laya.debug.view.nodeInfo.nodetree.SelectInfos;
-        createPanel(): void;
-        fliterTxt: laya.ui.TextInput;
-        setSelectTarget(node: laya.display.Sprite): void;
-        setSelectList(list: Array<any>): void;
-        fresh(): void;
-        getLabelTxt(item: any): string;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class ToolBarView extends UIViewBase {
-        constructor();
-        private static _I;
-        static I: ToolBarView;
-        view: laya.debug.view.nodeInfo.nodetree.ToolBar;
-        createPanel(): void;
-        static ignoreDebugTool: boolean;
-        static isClickSelectState: boolean;
-        firstShowFun(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class TxtInfoView extends UIViewBase {
-        constructor();
-        createPanel(): void;
-        showInfo(txt: string): void;
-        show(): void;
-    }
-}
-declare module laya.debug.view.nodeInfo.views {
-    /**
-     * ...
-     * @author ww
-     */
-    class UIViewBase extends laya.ui.Component {
-        constructor();
-        minHandler: laya.utils.Handler;
-        maxHandler: laya.utils.Handler;
-        isFirstShow: boolean;
-        dis: laya.display.Sprite;
-        show(): void;
-        firstShowFun(): void;
-        switchShow(): void;
-        close(): void;
-        createPanel(): void;
-        getInput(): laya.debug.tools.debugUI.DInput;
-        getButton(): laya.debug.tools.debugUI.DButton;
-    }
-}
-declare module laya.debug.view {
-    /**
-     * ...
-     * @author ww
-     */
-    class StyleConsts {
-        constructor();
-        static PanelScale: number;
-        static setViewScale(view: laya.display.Sprite): void;
     }
 }
 declare module laya.device.geolocation {
@@ -7663,7 +5314,7 @@ declare module laya.device.media {
      * 在PC端可以在任何时机调用<code>play()</code>因此，可以在程序开始运行时就使Video开始播放。但是在移动端，只有在用户第一次触碰屏幕后才可以调用play()，所以移动端不可能在程序开始运行时就自动开始播放Video。
      * </p>
      *
-     * <p>MDN <Video>链接： <i>https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video</i></p>
+     * <p>MDN Video链接： <i>https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video</i></p>
      */
     class Video extends laya.display.Sprite {
         static MP4: number;
@@ -7776,7 +5427,7 @@ declare module laya.device.media {
          * <li>auto	指示一旦页面加载，则开始加载视频。</li>
          * <li>metadata	指示当页面加载后仅加载音频/视频的元数据。</li>
          * <li>none	指示页面加载后不应加载音频/视频。</li>
-         * </ur>
+         * </ul>
          * @return
          *
          */
@@ -7840,10 +5491,10 @@ declare module laya.device.motion {
      * <p>
      * listen()的回调处理器接受四个参数：
      * <ol>
-     * <li><b>acceleration</b>: 表示用户给予设备的加速度。
-     * <li><b>accelerationIncludingGravity</b>: 设备受到的总加速度（包含重力）。
-     * <li><b>rotationRate</b>: 设备的自转速率。
-     * <li><b>interval</b>: 加速度获取的时间间隔（毫秒）。
+     * <li><b>acceleration</b>: 表示用户给予设备的加速度。</li>
+     * <li><b>accelerationIncludingGravity</b>: 设备受到的总加速度（包含重力）。</li>
+     * <li><b>rotationRate</b>: 设备的自转速率。</li>
+     * <li><b>interval</b>: 加速度获取的时间间隔（毫秒）。</li>
      * </ol>
      * </p>
      * <p>
@@ -7876,6 +5527,12 @@ declare module laya.device.motion {
          * @param	handle	侦听加速器所用处理器。
          */
         off(type: string, caller: any, listener: Function, onceOnly?: boolean): laya.events.EventDispatcher;
+        /**
+         * 把加速度值转换为视觉上正确的加速度值。依赖于Browser.window.orientation，可能在部分低端机无效。
+         * @param	acceleration
+         * @return
+         */
+        static getTransformedAcceleration(acceleration: AccelerationInfo): Accelerator;
     }
 }
 declare module laya.device.motion {
@@ -8052,11 +5709,12 @@ declare module laya.display {
         destroy(destroyChild?: boolean): void;
         /**
          * 播放动画。
-         * @param	start 开始播放的动画索引。
+         * @param	start 开始播放的动画索引或label。
          * @param	loop 是否循环。
          * @param	name 如果name为空(可选)，则播放当前动画，如果不为空，则播放全局缓存动画（如果有）
          */
-        play(start?: number, loop?: boolean, name?: string): void;
+        play(start?: any, loop?: boolean, name?: string): void;
+        protected _setFramesFromCache(name: string): boolean;
         protected _frameLoop(): void;
         protected _displayToIndex(value: number): void;
         /**Graphics集合*/
@@ -8092,8 +5750,6 @@ declare module laya.display {
      *  动画播放控制器
      */
     class AnimationPlayerBase extends Sprite {
-        /** 播放间隔(单位：毫秒)。*/
-        interval: number;
         /**是否循环播放 */
         loop: boolean;
         protected _index: number;
@@ -8102,11 +5758,15 @@ declare module laya.display {
         protected _labels: any;
         /**
          * 播放动画。
-         * @param	start 开始播放的动画索引。
+         * @param	start 开始播放的动画索引或label。
          * @param	loop 是否循环。
          * @param	name 如果name为空(可选)，则播放当前动画，如果不为空，则播放全局缓存动画（如果有）
          */
-        play(start?: number, loop?: boolean, name?: string): void;
+        play(start?: any, loop?: boolean, name?: string): void;
+        /** 播放间隔(单位：毫秒)。*/
+        /** 播放间隔(单位：毫秒)。*/
+        interval: number;
+        protected _getFrameByLabel(label: string): number;
         protected _frameLoop(): void;
         _setControlNode(node: Sprite): void;
         /**
@@ -8126,9 +5786,9 @@ declare module laya.display {
         removeLabel(label: string): void;
         /**
          * 切换到某帧并停止
-         * @param	index 帧索引
+         * @param	position 帧索引或label
          */
-        gotoAndStop(index: number): void;
+        gotoAndStop(position: any): void;
         /**当前播放索引。*/
         index: number;
         protected _displayToIndex(value: number): void;
@@ -8689,6 +6349,18 @@ declare module laya.display {
          */
         drawTexture(tex: laya.resource.Texture, x: number, y: number, width?: number, height?: number, m?: laya.maths.Matrix): void;
         /**
+         * 用texture填充
+         * @param	tex 纹理。
+         * @param	x X 轴偏移量。
+         * @param	y Y 轴偏移量。
+         * @param	width 宽度。
+         * @param	height 高度。
+         * @param 	type 填充类型 repeat|repeat-x|repeat-y|no-repeat
+         * @param	offset 贴图纹理偏移
+         *
+         */
+        fillTexture(tex: laya.resource.Texture, x: number, y: number, width?: number, height?: number, type?: string, offset?: laya.maths.Point): void;
+        /**
          * @private
          * 保存到命令流。
          */
@@ -9070,6 +6742,7 @@ declare module laya.display {
         inputElementXAdjuster: number;
         /**原生输入框 Y 轴调整值，用来调整输入框坐标。*/
         inputElementYAdjuster: number;
+        static IOS_QQ_IFRAME: boolean;
         /**表示是否处于输入状态。*/
         static isInputting: boolean;
         /**创建一个新的 <code>Input</code> 类实例。*/
@@ -9836,12 +7509,15 @@ declare module laya.display {
         desginHeight: number;
         /**画布是否发生翻转。*/
         canvasRotation: boolean;
-        /**设置是否渲染，设置为true，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟*/
+        /**画布旋转角度。*/
+        canvasDegree: number;
+        /**设置是否渲染，设置为false，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟*/
         renderingEnabled: boolean;
         _canvasTransform: laya.maths.Matrix;
         constructor();
-        /**设置场景设计宽高*/
-        size(width: number, height: number): Sprite;
+        width: number;
+        height: number;
+        protected _resetCanvas(): void;
         /**
          * 设置屏幕大小，场景会根据屏幕大小进行适配。
          * @param	screenWidth		屏幕宽度。
@@ -10718,7 +8394,7 @@ declare module laya.events {
          * @private
          * 初始化。
          */
-        __init__(): void;
+        __init__(stage: laya.display.Stage, canvas: any): void;
         /**
          * 执行事件处理。
          */
@@ -10767,7 +8443,6 @@ declare module laya.filters {
          * @param	mat 4 x 5 矩阵。
          */
         constructor(mat?: Array<any>);
-        getRGBG(): Array<any>;
         type: number;
         action: IFilterAction;
         static DEFAULT: ColorFilter;
@@ -12214,6 +9889,7 @@ declare module laya.media {
          * 停止。
          */
         stop(): void;
+        protected __runComplete(handler: laya.utils.Handler): void;
     }
 }
 declare module laya.media {
@@ -12233,6 +9909,7 @@ declare module laya.media {
         private static _channels;
         private static _autoStopMusic;
         private static _blurPaused;
+        static _soundClass: any;
         /**
          * 添加播放的声音实例。
          * @param channel <code>SoundChannel</code> 对象。
@@ -12553,7 +10230,7 @@ declare module laya.net {
         constructor();
         /**
          * 加载资源。
-         * @param	url 地址，或者资源对象数组。
+         * @param	url 地址，或者资源对象数组(简单数组：["a.png","b.png"]，复杂数组[
          * @param	complete 结束回调，如果加载失败，则返回 null 。
          * @param	progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
          * @param	type 资源类型。
@@ -12579,8 +10256,18 @@ declare module laya.net {
          * @param	data 要缓存的内容。
          */
         static cacheRes(url: string, data: any): void;
-        /** 清理当前未完成的加载。*/
+        /** 清理当前未完成的加载，所有未加载的内容全部停止加载。*/
         clearUnLoaded(): void;
+        /**
+         * 根据地址集合清理掉未加载的内容
+         * @param	urls 资源地址集合
+         */
+        cancelLoadByUrls(urls: Array<any>): void;
+        /**
+         * 根据地址清理掉未加载的内容
+         * @param	url 资源地址
+         */
+        cancelLoadByUrl(url: string): void;
     }
     class ResInfo extends laya.events.EventDispatcher {
         url: string;
@@ -13326,6 +11013,7 @@ declare module laya.renders {
         constructor(width: number, height: number, canvas?: laya.resource.HTMLCanvas);
         drawTexture(tex: laya.resource.Texture, x: number, y: number, width: number, height: number): void;
         _drawTexture: Function;
+        _fillTexture: Function;
         drawTextureWithTransform(tex: laya.resource.Texture, x: number, y: number, width: number, height: number, m: laya.maths.Matrix): void;
         _drawTextureWithTransform: Function;
         fillQuadrangle(tex: any, x: number, y: number, point4: Array<any>, m: laya.maths.Matrix): void;
@@ -13661,6 +11349,7 @@ declare module laya.resource {
     class Resource extends laya.events.EventDispatcher implements IDispose {
         static animationCache: any;
         static meshCache: any;
+        static materialCache: any;
         private static _uniqueIDCounter;
         private static _loadedResources;
         private static _isLoadedResourcesSorted;
@@ -13908,7 +11597,7 @@ declare module laya.resource {
          */
         static create(source: any, x: number, y: number, width: number, height: number, offsetX?: number, offsetY?: number, sourceWidth?: number, sourceHeight?: number): Texture;
         /**
-         * 截取Texture的一部分区域，生成新的Texture
+         * 截取Texture的一部分区域，生成新的Texture，如果两个区域没有相交，则返回null
          * @param	texture 目标Texture
          * @param	x 相对于目标Texture的x位置
          * @param	y 相对于目标Texture的y位置
@@ -13944,6 +11633,13 @@ declare module laya.resource {
          * 设置线性采样的状态（目前只能第一次绘制前设置false生效,来关闭线性采样）
          */
         isLinearSampling: boolean;
+        /**
+         * 获取当前纹理是否启用了纹理平铺
+         */
+        /**
+         * 通过外部设置是否启用纹理平铺(后面要改成在着色器里计算)
+         */
+        repeat: boolean;
         /**
          * 加载指定地址的图片。
          * @param	url 图片地址。
@@ -16858,12 +14554,15 @@ declare module laya.ui {
         elasticDistance: number;
         /**橡皮筋回弹时间，单位为毫秒。*/
         elasticBackTime: number;
+        /**上按钮 */
+        upButton: Button;
+        /**下按钮 */
+        downButton: Button;
+        /**滑条 */
+        slider: Slider;
         protected _showButtons: boolean;
         protected _scrollSize: number;
         protected _skin: string;
-        protected _upButton: Button;
-        protected _downButton: Button;
-        protected _slider: Slider;
         protected _thumbPercent: number;
         protected _target: laya.display.Sprite;
         protected _lastPoint: laya.maths.Point;
@@ -18426,6 +16125,10 @@ declare module laya.utils {
          */
         writeByte(value: number): void;
         /**
+         * 在字节流中读一个字节。
+         */
+        readByte(): number;
+        /**
          * 指定该字节流的长度。
          * @param	lengthToEnsure 指定的长度。
          */
@@ -18437,6 +16140,50 @@ declare module laya.utils {
          * @param	length 长度（以字节为单位）
          */
         writeArrayBuffer(arraybuffer: any, offset?: number, length?: number): void;
+    }
+}
+declare module laya.utils {
+    /**
+     * 对象缓存统一管理类
+     */
+    class CacheManger {
+        /**
+         * 单次清理检测允许执行的时间，单位ms
+         */
+        static loopTimeLimit: number;
+        private static _cacheList;
+        private static _index;
+        constructor();
+        /**
+         * 注册cache管理函数
+         * @param disposeFunction 释放函数 fun(force:Boolean)
+         * @param getCacheListFunction 获取cache列表函数fun():Array
+         *
+         */
+        static regCacheByFunction(disposeFunction: Function, getCacheListFunction: Function): void;
+        /**
+         * 移除cache管理函数
+         * @param disposeFunction 释放函数 fun(force:Boolean)
+         * @param getCacheListFunction 获取cache列表函数fun():Array
+         *
+         */
+        static unRegCacheByFunction(disposeFunction: Function, getCacheListFunction: Function): void;
+        /**
+         * 强制清理所有管理器
+         *
+         */
+        static forceDispose(): void;
+        /**
+         * 开始检测循环
+         * @param waitTime 检测间隔时间
+         *
+         */
+        static beginCheck(waitTime?: number): void;
+        /**
+         * 停止检测循环
+         *
+         */
+        static stopCheck(): void;
     }
 }
 declare module laya.utils {
@@ -19173,6 +16920,12 @@ declare module laya.utils {
      */
     class Pool {
         /**
+         * 根据对象类型标识字符，获取对象池。
+         * @param sign 对象类型标识字符。
+         * @return 对象池。
+         */
+        static getPoolBySign(sign: string): Array<any>;
+        /**
          * 清除对象池的对象。
          * @param sign 对象类型标识字符。
          */
@@ -19205,6 +16958,42 @@ declare module laya.utils {
          * @return 对象池中此类型的一个对象，如果对象池中无此类型的对象，则返回 null 。
          */
         static getItem(sign: string): any;
+    }
+}
+declare module laya.utils {
+    /**
+     * 基于个数的对象缓存管理器
+     * @author ww
+     */
+    class PoolCache {
+        constructor();
+        /**
+         * 对象在Pool中的标识
+         */
+        sign: string;
+        /**
+         * 允许缓存的最大数量
+         */
+        maxCount: number;
+        /**
+         * 获取缓存的对象列表
+         * @return
+         *
+         */
+        getCacheList(): Array<any>;
+        /**
+         * 尝试清理缓存
+         * @param force 是否强制清理
+         *
+         */
+        tryDispose(force: boolean): void;
+        /**
+         * 添加对象缓存管理
+         * @param sign 对象在Pool中的标识
+         * @param maxCount 允许缓存的最大数量
+         *
+         */
+        static addPoolCacheManager(sign: string, maxCount?: number): void;
     }
 }
 declare module laya.utils {
@@ -19632,6 +17421,8 @@ declare module laya.utils {
         from(target: any, props: any, duration: number, ease?: Function, complete?: Handler, delay?: number, coverBefore?: boolean): Tween;
         _create(target: any, props: any, duration: number, ease: Function, complete: Handler, delay: number, coverBefore: boolean, isTo: boolean, usePool: boolean, runNow: boolean): Tween;
         _updateEase(time: number): void;
+        /**设置当前执行比例**/
+        progress: number;
         /**
          * 立即结束缓动并到终点。
          */
@@ -19787,6 +17578,60 @@ declare module laya.utils {
          * @return	返回解析后的数字
          */
         static parseInt(str: string, radix?: number): number;
+    }
+}
+declare module laya.utils {
+    /**
+     * ...
+     * @author
+     */
+    class VectorGraphManager {
+        static instance: VectorGraphManager;
+        useDic: any;
+        shapeDic: any;
+        shapeLineDic: any;
+        constructor();
+        static getInstance(): VectorGraphManager;
+        /**
+         * 得到个空闲的ID
+         * @return
+         */
+        getId(): number;
+        /**
+         * 添加一个图形到列表中
+         * @param	id
+         * @param	shape
+         */
+        addShape(id: number, shape: any): void;
+        /**
+         * 添加一个线图形到列表中
+         * @param	id
+         * @param	Line
+         */
+        addLine(id: number, Line: any): void;
+        /**
+         * 检测一个对象是否在使用中
+         * @param	id
+         */
+        getShape(id: number): void;
+        /**
+         * 删除一个图形对象
+         * @param	id
+         */
+        deleteShape(id: number): void;
+        /**
+         * 得到缓存列表
+         * @return
+         */
+        getCacheList(): Array<any>;
+        /**
+         * 开始清理状态，准备销毁
+         */
+        startDispose(): void;
+        /**
+         * 确认销毁
+         */
+        endDispose(): void;
     }
 }
 declare module laya.utils {
@@ -19976,8 +17821,9 @@ declare module laya.webgl.canvas {
         addPoint(pointX: number, pointY: number): void;
         getEndPointX(): number;
         getEndPointY(): number;
-        polygon(x: number, y: number, points: Array<any>, color: number, borderWidth: number, borderColor: any): void;
-        drawLine(x: number, y: number, points: Array<any>, width: number, color: number): void;
+        polygon(x: number, y: number, points: Array<any>, color: number, borderWidth: number, borderColor: any): laya.webgl.shapes.IShape;
+        setGeomtry(shape: laya.webgl.shapes.IShape): void;
+        drawLine(x: number, y: number, points: Array<any>, width: number, color: number): laya.webgl.shapes.IShape;
         update(): void;
         reset(): void;
     }
@@ -20161,7 +18007,8 @@ declare module laya.webgl.canvas {
         submitElement(start: number, end: number): void;
         finish(): void;
         flush(): number;
-        /*******************************************start矢量绘制***************************************************/
+        setPathId(id: number): void;
+        movePath(x: number, y: number): void;
         beginPath(): void;
         closePath(): void;
         fill(isConvexPolygon?: boolean): void;
@@ -20608,6 +18455,7 @@ declare module laya.webgl.shader.d2.value {
         colorAdd: Array<any>;
         glTexture: laya.resource.Bitmap;
         u_mmat2: Array<any>;
+        u_pos: Array<any>;
         constructor(mainID: number, subID: number);
         setValue(value: laya.webgl.shader.d2.Shader2D): void;
         refresh(): laya.webgl.shader.ShaderValue;
@@ -21828,11 +19676,17 @@ declare module Laya {
     }
     class BoneSlot extends laya.ani.bone.BoneSlot {
     }
+    class aniShaderValue extends laya.ani.bone.shader.aniShaderValue {
+    }
+    class SkinAniShader extends laya.ani.bone.shader.SkinAniShader {
+    }
     class Skeleton extends laya.ani.bone.Skeleton {
     }
     class SkinData extends laya.ani.bone.SkinData {
     }
     class SkinSlotDisplayData extends laya.ani.bone.SkinSlotDisplayData {
+    }
+    class SkinSprite extends laya.ani.bone.SkinSprite {
     }
     class SlotData extends laya.ani.bone.SlotData {
     }
@@ -21885,6 +19739,8 @@ declare module Laya {
     class Material extends laya.d3.core.material.Material {
     }
     class MeshSprite3D extends laya.d3.core.MeshSprite3D {
+    }
+    class MeshTerrainSprite3D extends laya.d3.core.MeshTerrainSprite3D {
     }
     class EmitterBox extends laya.d3.core.particle.EmitterBox {
     }
@@ -21994,11 +19850,15 @@ declare module Laya {
     }
     class BoundSphere extends laya.d3.math.BoundSphere {
     }
+    class Collision extends laya.d3.math.Collision {
+    }
     class MathUtils3D extends laya.d3.math.MathUtils3D {
     }
     class Matrix3x3 extends laya.d3.math.Matrix3x3 {
     }
     class Matrix4x4 extends laya.d3.math.Matrix4x4 {
+    }
+    class Plane extends laya.d3.math.Plane {
     }
     class Quaternion extends laya.d3.math.Quaternion {
     }
@@ -22037,274 +19897,6 @@ declare module Laya {
     class Size extends laya.d3.utils.Size {
     }
     class Utils3D extends laya.d3.utils.Utils3D {
-    }
-    class Base64AtlasManager extends laya.debug.data.Base64AtlasManager {
-    }
-    class DebugTool extends laya.debug.DebugTool {
-    }
-    class Base64Atlas extends laya.debug.tools.Base64Atlas {
-    }
-    class Base64ImageTool extends laya.debug.tools.Base64ImageTool {
-    }
-    class Base64Tool extends laya.debug.tools.Base64Tool {
-    }
-    class CacheAnalyser extends laya.debug.tools.CacheAnalyser {
-    }
-    class CanvasTools extends laya.debug.tools.CanvasTools {
-    }
-    class ClassTool extends laya.debug.tools.ClassTool {
-    }
-    class ColorSelector extends laya.debug.tools.ColorSelector {
-    }
-    class ColorTool extends laya.debug.tools.ColorTool {
-    }
-    class CommonTools extends laya.debug.tools.CommonTools {
-    }
-    class Arrow extends laya.debug.tools.comps.Arrow {
-    }
-    class ArrowLine extends laya.debug.tools.comps.ArrowLine {
-    }
-    class AutoSizeRec extends laya.debug.tools.comps.AutoSizeRec {
-    }
-    class Axis extends laya.debug.tools.comps.Axis {
-    }
-    class Rect extends laya.debug.tools.comps.Rect {
-    }
-    class CountTool extends laya.debug.tools.CountTool {
-    }
-    class DebugExport extends laya.debug.tools.DebugExport {
-    }
-    class DButton extends laya.debug.tools.debugUI.DButton {
-    }
-    class DInput extends laya.debug.tools.debugUI.DInput {
-    }
-    class DifferTool extends laya.debug.tools.DifferTool {
-    }
-    class DisController extends laya.debug.tools.DisController {
-    }
-    class DisControlTool extends laya.debug.tools.DisControlTool {
-    }
-    class DisEditor extends laya.debug.tools.DisEditor {
-    }
-    class DisplayHook extends laya.debug.tools.DisplayHook {
-    }
-    class DisPool extends laya.debug.tools.DisPool {
-    }
-    class DragBox extends laya.debug.tools.DragBox {
-    }
-    class DTrace extends laya.debug.tools.DTrace {
-    }
-    class ClassCreateHook extends laya.debug.tools.enginehook.ClassCreateHook {
-    }
-    class FunctionTimeHook extends laya.debug.tools.enginehook.FunctionTimeHook {
-    }
-    class LoaderHook extends laya.debug.tools.enginehook.LoaderHook {
-    }
-    class RenderSpriteHook extends laya.debug.tools.enginehook.RenderSpriteHook {
-    }
-    class SpriteRenderForVisibleAnalyse extends laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse {
-    }
-    class SpriteRenderHook extends laya.debug.tools.enginehook.SpriteRenderHook {
-    }
-    class Observer extends laya.debug.tools.exp.Observer {
-    }
-    class Watch extends laya.debug.tools.exp.Watch {
-    }
-    class FilterTool extends laya.debug.tools.FilterTool {
-    }
-    class FunHook extends laya.debug.tools.hook.FunHook {
-    }
-    class VarHook extends laya.debug.tools.hook.VarHook {
-    }
-    class IDTools extends laya.debug.tools.IDTools {
-    }
-    class JsonTool extends laya.debug.tools.JsonTool {
-    }
-    class JSTools extends laya.debug.tools.JSTools {
-    }
-    class Layouter extends laya.debug.tools.layout.Layouter {
-    }
-    class LayoutFuns extends laya.debug.tools.layout.LayoutFuns {
-    }
-    class LayoutTools extends laya.debug.tools.LayoutTools {
-    }
-    class MathTools extends laya.debug.tools.MathTools {
-    }
-    class MouseEventAnalyser extends laya.debug.tools.MouseEventAnalyser {
-    }
-    class Notice extends laya.debug.tools.Notice {
-    }
-    class ObjectTools extends laya.debug.tools.ObjectTools {
-    }
-    class ObjTimeCountTool extends laya.debug.tools.ObjTimeCountTool {
-    }
-    class RecInfo extends laya.debug.tools.RecInfo {
-    }
-    class RenderAnalyser extends laya.debug.tools.RenderAnalyser {
-    }
-    class AutoFillRec extends laya.debug.tools.resizer.AutoFillRec {
-    }
-    class DisResizer extends laya.debug.tools.resizer.DisResizer {
-    }
-    class SimpleResizer extends laya.debug.tools.resizer.SimpleResizer {
-    }
-    class RunProfile extends laya.debug.tools.RunProfile {
-    }
-    class SingleTool extends laya.debug.tools.SingleTool {
-    }
-    class StringTool extends laya.debug.tools.StringTool {
-    }
-    class TimerControlTool extends laya.debug.tools.TimerControlTool {
-    }
-    class TimeTool extends laya.debug.tools.TimeTool {
-    }
-    class TipManagerForDebug extends laya.debug.tools.TipManagerForDebug {
-    }
-    class TraceTool extends laya.debug.tools.TraceTool {
-    }
-    class UVTools extends laya.debug.tools.UVTools {
-    }
-    class ValueChanger extends laya.debug.tools.ValueChanger {
-    }
-    class VisibleAnalyser extends laya.debug.tools.VisibleAnalyser {
-    }
-    class WalkTools extends laya.debug.tools.WalkTools {
-    }
-    class Watcher extends laya.debug.tools.Watcher {
-    }
-    class XML2Object extends laya.debug.tools.XML2Object {
-    }
-    class CodeUsedResUI extends laya.debug.ui.debugui.CodeUsedResUI {
-    }
-    class ListItemUI extends laya.debug.ui.debugui.comps.ListItemUI {
-    }
-    class RankListItemUI extends laya.debug.ui.debugui.comps.RankListItemUI {
-    }
-    class DebugPanelUI extends laya.debug.ui.debugui.DebugPanelUI {
-    }
-    class FindNodeSmallUI extends laya.debug.ui.debugui.FindNodeSmallUI {
-    }
-    class FindNodeUI extends laya.debug.ui.debugui.FindNodeUI {
-    }
-    class MinBtnCompUI extends laya.debug.ui.debugui.MinBtnCompUI {
-    }
-    class NodeListPanelUI extends laya.debug.ui.debugui.NodeListPanelUI {
-    }
-    class NodeToolUI extends laya.debug.ui.debugui.NodeToolUI {
-    }
-    class NodeTreeSettingUI extends laya.debug.ui.debugui.NodeTreeSettingUI {
-    }
-    class NodeTreeUI extends laya.debug.ui.debugui.NodeTreeUI {
-    }
-    class ObjectCreateUI extends laya.debug.ui.debugui.ObjectCreateUI {
-    }
-    class ObjectInfoUI extends laya.debug.ui.debugui.ObjectInfoUI {
-    }
-    class OutPutUI extends laya.debug.ui.debugui.OutPutUI {
-    }
-    class ProfileUI extends laya.debug.ui.debugui.ProfileUI {
-    }
-    class RankUI extends laya.debug.ui.debugui.RankUI {
-    }
-    class SelectInfosUI extends laya.debug.ui.debugui.SelectInfosUI {
-    }
-    class ToolBarUI extends laya.debug.ui.debugui.ToolBarUI {
-    }
-    class ContextMenu extends laya.debug.uicomps.ContextMenu {
-    }
-    class ContextMenuItem extends laya.debug.uicomps.ContextMenuItem {
-    }
-    class ListBase extends laya.debug.uicomps.ListBase {
-    }
-    class RankListItem extends laya.debug.uicomps.RankListItem {
-    }
-    class TreeBase extends laya.debug.uicomps.TreeBase {
-    }
-    class TreeListItem extends laya.debug.uicomps.TreeListItem {
-    }
-    class DebugInfoLayer extends laya.debug.view.nodeInfo.DebugInfoLayer {
-    }
-    class NodeMenu extends laya.debug.view.nodeInfo.menus.NodeMenu {
-    }
-    class NodeConsts extends laya.debug.view.nodeInfo.NodeConsts {
-    }
-    class NodeInfoPanel extends laya.debug.view.nodeInfo.NodeInfoPanel {
-    }
-    class NodeInfosItem extends laya.debug.view.nodeInfo.NodeInfosItem {
-    }
-    class DebugPanel extends laya.debug.view.nodeInfo.nodetree.DebugPanel {
-    }
-    class FindNode extends laya.debug.view.nodeInfo.nodetree.FindNode {
-    }
-    class FindNodeSmall extends laya.debug.view.nodeInfo.nodetree.FindNodeSmall {
-    }
-    class MinBtnComp extends laya.debug.view.nodeInfo.nodetree.MinBtnComp {
-    }
-    class NodeListPanel extends laya.debug.view.nodeInfo.nodetree.NodeListPanel {
-    }
-    class NodeTool extends laya.debug.view.nodeInfo.nodetree.NodeTool {
-    }
-    class NodeTree extends laya.debug.view.nodeInfo.nodetree.NodeTree {
-    }
-    class NodeTreeSetting extends laya.debug.view.nodeInfo.nodetree.NodeTreeSetting {
-    }
-    class ObjectCreate extends laya.debug.view.nodeInfo.nodetree.ObjectCreate {
-    }
-    class ObjectInfo extends laya.debug.view.nodeInfo.nodetree.ObjectInfo {
-    }
-    class OutPut extends laya.debug.view.nodeInfo.nodetree.OutPut {
-    }
-    class Profile extends laya.debug.view.nodeInfo.nodetree.Profile {
-    }
-    class Rank extends laya.debug.view.nodeInfo.nodetree.Rank {
-    }
-    class SelectInfos extends laya.debug.view.nodeInfo.nodetree.SelectInfos {
-    }
-    class ToolBar extends laya.debug.view.nodeInfo.nodetree.ToolBar {
-    }
-    class NodeUtils extends laya.debug.view.nodeInfo.NodeUtils {
-    }
-    class NodeRecInfo extends laya.debug.view.nodeInfo.recinfos.NodeRecInfo {
-    }
-    class ReCacheRecInfo extends laya.debug.view.nodeInfo.recinfos.ReCacheRecInfo {
-    }
-    class ToolPanel extends laya.debug.view.nodeInfo.ToolPanel {
-    }
-    class CacheRankView extends laya.debug.view.nodeInfo.views.CacheRankView {
-    }
-    class DebugPanelView extends laya.debug.view.nodeInfo.views.DebugPanelView {
-    }
-    class FilterView extends laya.debug.view.nodeInfo.views.FilterView {
-    }
-    class FindSmallView extends laya.debug.view.nodeInfo.views.FindSmallView {
-    }
-    class FindView extends laya.debug.view.nodeInfo.views.FindView {
-    }
-    class NodeListPanelView extends laya.debug.view.nodeInfo.views.NodeListPanelView {
-    }
-    class NodeToolView extends laya.debug.view.nodeInfo.views.NodeToolView {
-    }
-    class NodeTreeSettingView extends laya.debug.view.nodeInfo.views.NodeTreeSettingView {
-    }
-    class NodeTreeView extends laya.debug.view.nodeInfo.views.NodeTreeView {
-    }
-    class ObjectCreateView extends laya.debug.view.nodeInfo.views.ObjectCreateView {
-    }
-    class ObjectInfoView extends laya.debug.view.nodeInfo.views.ObjectInfoView {
-    }
-    class OutPutView extends laya.debug.view.nodeInfo.views.OutPutView {
-    }
-    class RenderCostRankView extends laya.debug.view.nodeInfo.views.RenderCostRankView {
-    }
-    class SelectInfosView extends laya.debug.view.nodeInfo.views.SelectInfosView {
-    }
-    class ToolBarView extends laya.debug.view.nodeInfo.views.ToolBarView {
-    }
-    class TxtInfoView extends laya.debug.view.nodeInfo.views.TxtInfoView {
-    }
-    class UIViewBase extends laya.debug.view.nodeInfo.views.UIViewBase {
-    }
-    class StyleConsts extends laya.debug.view.StyleConsts {
     }
     class Geolocation extends laya.device.geolocation.Geolocation {
     }
@@ -22616,6 +20208,8 @@ declare module Laya {
     }
     class Byte extends laya.utils.Byte {
     }
+    class CacheManger extends laya.utils.CacheManger {
+    }
     class ClassUtils extends laya.utils.ClassUtils {
     }
     class Color extends laya.utils.Color {
@@ -22636,6 +20230,8 @@ declare module Laya {
     }
     class Pool extends laya.utils.Pool {
     }
+    class PoolCache extends laya.utils.PoolCache {
+    }
     class RunDriver extends laya.utils.RunDriver {
     }
     class Stat extends laya.utils.Stat {
@@ -22649,6 +20245,8 @@ declare module Laya {
     class Tween extends laya.utils.Tween {
     }
     class Utils extends laya.utils.Utils {
+    }
+    class VectorGraphManager extends laya.utils.VectorGraphManager {
     }
     class WordText extends laya.utils.WordText {
     }
@@ -22795,6 +20393,18 @@ declare module Laya {
     class WebGL extends laya.webgl.WebGL {
     }
     class WebGLContext extends laya.webgl.WebGLContext {
+    }
+}
+declare module laya.debug {
+    /**
+     *
+     * @author ww
+     * @version 1.0
+     *
+     * @created  2015-9-24 下午3:00:38
+     */
+    class DebugTool {
+        static init(cacheAnalyseEnable?:boolean, loaderAnalyseEnable?:boolean, createAnalyseEnable?:boolean, renderAnalyseEnable?:boolean):void;
     }
 }
 /**

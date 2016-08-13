@@ -248,6 +248,7 @@ package laya.media.webaudio {
 		
 		public function dispose():void {
 			delete _dataCache[url];
+			delete __loadingSound[url];
 		}
 	}
 

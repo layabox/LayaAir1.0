@@ -490,14 +490,19 @@ package laya.ui {
 		 */
 		public function initItems():void {
 			if (!_itemRender) {
+				repeatX = 1;
+				var count:int;
+				count = 0;
 				for (var i:int = 0; i < 10000; i++) {
 					var cell:Box = getChildByName("item" + i) as Box;
 					if (cell) {
 						addCell(cell);
+						count++;
 						continue;
 					}
 					break;
 				}
+				repeatY = count;
 			}
 		}
 		

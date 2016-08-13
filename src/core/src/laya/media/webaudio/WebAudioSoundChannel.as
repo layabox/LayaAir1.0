@@ -89,7 +89,7 @@ package laya.media.webaudio {
 			if (this.loops == 1) {
 				
 				if (completeHandler) {
-					completeHandler.run();
+					Laya.timer.once(10, this, __runComplete, [completeHandler], false);
 					completeHandler = null;
 				}
 				this.stop();

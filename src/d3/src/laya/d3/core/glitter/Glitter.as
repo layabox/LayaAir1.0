@@ -24,7 +24,7 @@ package laya.d3.core.glitter {
 			return _templet;
 		}
 		
-		override public  function _clearRenderObjects():void {
+		override public function _clearSelfRenderObjects():void {
 			_renderObject.renderQneue.deleteRenderObj(_renderObject);
 		}
 		
@@ -34,11 +34,6 @@ package laya.d3.core.glitter {
 		 */
 		public function Glitter(settings:GlitterSettings) {
 			_templet = new GlitterTemplet(settings);
-		}
-		
-		override public function removeChildAt(index:int):Node {
-			_clearRenderObjects();
-			return super.removeChildAt(index);
 		}
 		
 		/**
@@ -64,14 +59,14 @@ package laya.d3.core.glitter {
 					var renderQueue:RenderQueue = state.scene.getRenderQueue(renderQueueIndex);
 					if (_renderObject.renderQneue != renderQueue) {
 						_renderObject.renderQneue.deleteRenderObj(_renderObject);
-						_renderObject=_addRenderObject(state, renderQueueIndex);
+						_renderObject = _addRenderObject(state, renderQueueIndex);
 					}
 				} else {
-					_renderObject=_addRenderObject(state, renderQueueIndex);
+					_renderObject = _addRenderObject(state, renderQueueIndex);
 				}
 				_renderObject.tag.worldTransformModifyID = state.worldTransformModifyID;
 			} else {
-				_clearRenderObjects();
+				_clearSelfRenderObjects();
 			}
 			
 			state.worldTransformModifyID = preWorldTransformModifyID;
@@ -84,7 +79,8 @@ package laya.d3.core.glitter {
 			_renderObject = renderObj;
 			
 			var renderElement:IRenderable = templet;
-			renderObj.sortID = 0;//根据MeshID排序，处理同材质合并处理。
+			renderObj.mainSortID = 0;//根据MeshID排序，处理同材质合并处理。
+			renderObj.triangleCount = renderElement.triangleCount;
 			renderObj.owner = state.owner;
 			
 			renderObj.renderElement = renderElement;

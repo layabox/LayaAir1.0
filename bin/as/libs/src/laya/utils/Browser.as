@@ -1,6 +1,7 @@
 package laya.utils {
 	//[IF-JS]import laya.media.h5audio.AudioSound;
 	//[IF-JS]import laya.media.webaudio.WebAudioSound;
+	import laya.media.SoundManager;
 	import laya.renders.Render;
 	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
@@ -97,7 +98,8 @@ package laya.utils {
 			__JS__("if (Browser.webAudioEnabled) WebAudioSound.initWebAudio();");			
 			__JS__("Browser.enableTouch=(('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch)");			
 			__JS__("window.focus()");
-			
+			__JS__("SoundManager._soundClass=Sound;");
+					
 			Render._mainCanvas =Render._mainCanvas||HTMLCanvas.create('2D');
 			if (canvas) return;
 			canvas = HTMLCanvas.create('2D');

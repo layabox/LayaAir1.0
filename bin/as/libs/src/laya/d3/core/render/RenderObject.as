@@ -19,7 +19,9 @@ package laya.d3.core.render {
 		/**属性。*/
 		public var tag:Object;
 		/**排序ID。*/
-		public var sortID:int;
+		public var mainSortID:int;
+		/**三角形个数。*/
+		public var triangleCount:int;
 		
 		/**
 		 * 创建一个 <code>RenderObject</code> 实例。

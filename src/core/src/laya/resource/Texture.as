@@ -148,7 +148,7 @@ package laya.resource {
 		}
 		
 		/**
-		 * 截取Texture的一部分区域，生成新的Texture
+		 * 截取Texture的一部分区域，生成新的Texture，如果两个区域没有相交，则返回null
 		 * @param	texture 目标Texture
 		 * @param	x 相对于目标Texture的x位置
 		 * @param	y 相对于目标Texture的y位置
@@ -159,8 +159,10 @@ package laya.resource {
 		public static function createFromTexture(texture:Texture, x:Number, y:Number, width:Number, height:Number):Texture {
 			var rect:Rectangle = Rectangle.TEMP.setTo(x - texture.offsetX, y - texture.offsetY, width, height);
 			var result:Rectangle = rect.intersection(_rect1.setTo(0, 0, texture.width, texture.height), _rect2);
-			if (result) return create(texture, result.x, result.y, result.width, result.height, result.x - rect.x, result.y - rect.y, width, height);
-			else return new Texture(HTMLImage.create(null));
+			if (result) var tex:Texture = create(texture, result.x, result.y, result.width, result.height, result.x - rect.x, result.y - rect.y, width, height);
+			else return null;
+			tex.bitmap.useNum--;
+			return tex;
 		}
 		
 		/**
@@ -253,6 +255,36 @@ package laya.resource {
 		}
 		
 		/**
+		 * 获取当前纹理是否启用了纹理平铺
+		 */
+		public function get repeat():Boolean
+		{
+			if (Render.isWebGL && bitmap)
+			{
+				return bitmap.repeat;
+			}
+			return true;
+		}
+		
+		/**
+		 * 通过外部设置是否启用纹理平铺(后面要改成在着色器里计算)
+		 */
+		public function set repeat(value:Boolean):void
+		{
+			if (value)
+			{
+				if (Render.isWebGL && bitmap)
+				{
+					bitmap.repeat = value;
+					if (value)
+					{
+						bitmap.enableMerageInAtlas = false;
+					}
+				}
+			}
+		}
+		
+		/**
 		 * 加载指定地址的图片。
 		 * @param	url 图片地址。
 		 */
@@ -273,7 +305,7 @@ package laya.resource {
 			};
 		}
 		
-		public function addTextureToAtlas(e:*=null):void {
+		public function addTextureToAtlas(e:* = null):void {
 			RunDriver.addTextureToAtlas(this);
 		}
 	

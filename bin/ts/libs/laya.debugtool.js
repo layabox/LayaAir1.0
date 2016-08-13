@@ -2308,7 +2308,7 @@
 			var preTime;
 			preTime=Browser.now();
 			var tx=_cacheCanvas.ctx;
-			var _repaint=sprite._needRepaint()|| (!tx)|| tx.ctx._repaint;
+			var _repaint=sprite._needRepaint()|| (!tx);
 			this._oldCanvas(sprite,context,x,y);
 			if (_repaint){
 				CacheAnalyser.I.reCacheCanvas(sprite,Browser.now()-preTime);
@@ -2355,6 +2355,7 @@
 			this.target=null;
 			this.isTargetRenderd=false;
 			this.preFun=null;
+			this._next=null;
 			this.pgraphic=RenderSprite["prototype"]["_graphics"];
 			this.pimage=RenderSprite["prototype"]["_image"];
 			this.pimage2=RenderSprite["prototype"]["_image2"];
@@ -2373,14 +2374,16 @@
 		*@param y Y轴坐标。
 		*/
 		__proto.render=function(context,x,y){
-			if (DebugInfoLayer.I.isDebugItem(this))return false;
-			if (this==laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.I.target){
+			var me;
+			me=this;
+			if (DebugInfoLayer.I.isDebugItem(me))return;
+			if (me==laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.I.target){
 				laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.allowRendering=true;
 				laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.I.isTargetRenderd=true;
 				CanvasTools.clearCanvas(SpriteRenderForVisibleAnalyse.mainCanvas);
 			}
 			RenderSprite.renders[this._renderType]._fun(this,context,x+this._x,y+this._y);
-			if (this==laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.I.target){
+			if (me==laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.I.target){
 				SpriteRenderForVisibleAnalyse.tarRec=CanvasTools.getCanvasDisRec(laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse.mainCanvas);
 				console.log("rec",SpriteRenderForVisibleAnalyse.tarRec.toString());
 				if (SpriteRenderForVisibleAnalyse.tarRec.width >0&& SpriteRenderForVisibleAnalyse.tarRec.height > 0){
@@ -2397,7 +2400,7 @@
 					dRate=CanvasTools.getDifferRate(SpriteRenderForVisibleAnalyse.preImageData,SpriteRenderForVisibleAnalyse.tImageData);
 					SpriteRenderForVisibleAnalyse.preImageData=SpriteRenderForVisibleAnalyse.tImageData;
 					if (dRate > 0){
-						VisibleAnalyser.addCoverNode(this,dRate);
+						VisibleAnalyser.addCoverNode(me,dRate);
 					}
 				}
 			}
@@ -3036,6 +3039,60 @@
 			style.left=x+"px";
 		}
 
+		JSTools.showToParent=function(el,x,y,parent){
+			(x===void 0)&& (x=0);
+			(y===void 0)&& (y=0);
+			parent.appendChild(el);
+			var style;
+			style=el.style;
+			style.position="absolute";
+			style.top=y+"px";
+			style.left=x+"px";
+		}
+
+		JSTools.addToBody=function(el){
+			Browser.document.body.appendChild(el);
+		}
+
+		JSTools.setPos=function(el,x,y){
+			var style;
+			style=el.style;
+			style.top=y+"px";
+			style.left=x+"px";
+		}
+
+		JSTools.setSize=function(el,width,height){
+			var style;
+			style=el.style;
+			style.width=width+"px";
+			style.height=height+"px";
+		}
+
+		JSTools.setTransform=function(el,mat){
+			var style;
+			style=el.style;
+			style.transformOrigin=style.webkitTransformOrigin=style.msTransformOrigin=style.mozTransformOrigin=style.oTransformOrigin="0px 0px 0px";
+			style.transform=style.webkitTransform=style.msTransform=style.mozTransform=style.oTransform="matrix("+mat.toString()+")";
+		}
+
+		JSTools.noMouseEvent=function(el){
+			var style;
+			style=el.style;
+			style["pointer-events"]="none";
+		}
+
+		JSTools.setMouseEnable=function(el,enable){
+			var style;
+			style=el.style;
+			style["pointer-events"]=enable?"auto":"none";
+		}
+
+		JSTools.setZIndex=function(el,zIndex){
+			var style;
+			style=el.style;
+			style["z-index"]=zIndex;
+		}
+
 		JSTools.showAboveSprite=function(el,sprite,dx,dy){
 			(dx===void 0)&& (dx=0);
 			(dy===void 0)&& (dy=0);
@@ -3053,6 +3110,10 @@
 			Browser.removeElement(el);
 		}
 
+		JSTools.isElementInDom=function(el){
+			return el && el.parentNode;
+		}
+
 		JSTools.getImageSpriteByFile=function(file,width,height){
 			(width===void 0)&& (width=0);
 			(height===void 0)&& (height=0);
@@ -3064,7 +3125,7 @@
 			reader.onload=function (e){
 				var txt;
 				txt=new Texture();
-				txt.load(this.result);
+				txt.load(reader.result);
 				sprite.graphics.drawTexture(txt,0,0,width,height);
 			}
 			return sprite;
@@ -6317,6 +6378,13 @@
 			return rst;
 		}
 
+		NodeUtils.getGPos=function(node){
+			var point;
+			point=new Point();
+			node.localToGlobal(point);
+			return point;
+		}
+
 		NodeUtils.getGRec=function(node){
 			var pointList;
 			pointList=node._getBoundPointsM(true);
@@ -6332,7 +6400,7 @@
 
 		NodeUtils.getGGraphicRec=function(node){
 			var pointList;
-			pointList=node.getGraphicBounds()._getBoundPoints;
+			pointList=node.getGraphicBounds()._getBoundPoints();
 			if (!pointList || pointList.length < 1)
 				return Rectangle.TEMP.setTo(0,0,0,0);
 			pointList=GrahamScan.pListToPointList(pointList,true);
@@ -7790,7 +7858,6 @@
 		var __proto=ToolPanel.prototype;
 		//Laya.timer.once(1000,this,showToolBar);
 		__proto.showToolBar=function(){
-			console.log("showDebugPanel");
 			DebugPanelView.I.show();
 		}
 
@@ -8484,6 +8551,7 @@
 		__proto.mouseAnalyserDragEnd=function(){
 			this.dragIcon.removeSelf();
 			this.selectTarget(DisplayHook.instance.getDisUnderMouse());
+			NodeToolView.I.showByNode(DisplayHook.instance.getDisUnderMouse(),false);
 		}
 
 		//}
@@ -8504,6 +8572,7 @@
 				return;
 			}
 			ToolPanel.I.showSelectInStage(tar);
+			NodeToolView.I.showByNode(tar,false);
 			this.view.selectWhenClick.selected=false;
 			DebugTool.showDisBound(tar);
 			this.clickSelectChange();
@@ -8883,9 +8952,11 @@
 				}
 		}
 
-		__proto.showByNode=function(node){
+		__proto.showByNode=function(node,ifShow){
+			(ifShow===void 0)&& (ifShow=true);
 			if (!node)node=Laya.stage;
-			_super.prototype.show.call(this);
+			if(ifShow)
+				_super.prototype.show.call(this);
 			this._tar=node;
 			this.fresh();
 		}
@@ -10534,26 +10605,6 @@
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.NodeTree extends laya.debug.ui.debugui.NodeTreeUI
 	var NodeTree=(function(_super){
 		function NodeTree(){
@@ -10791,6 +10842,26 @@
 		]);
 		return NodeTree;
 	})(NodeTreeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
 
 
 	/**

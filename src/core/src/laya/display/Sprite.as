@@ -722,7 +722,7 @@ package laya.display {
 		}
 		
 		public function set alpha(value:Number):void {
-			if (_style.alpha !== value) {
+			if (_style && _style.alpha !== value) {
 				value = value < 0 ? 0 : (value > 1 ? 1 : value);
 				getStyle().alpha = value;
 				model && model.alpha(value);
@@ -738,7 +738,7 @@ package laya.display {
 		}
 		
 		public function set visible(value:Boolean):void {
-			if (_style.visible !== value) {
+			if (_style && _style.visible !== value) {
 				getStyle().visible = value;
 				model && model.visible(value);
 				parentRepaint();
@@ -1147,6 +1147,9 @@ package laya.display {
 		/**cacheAs后，设置自己和父对象缓存失效。*/
 		public function repaint():void {
 			(_repaint === 0) && (_repaint = 1, parentRepaint());
+			if (this._$P && this._$P.maskParent) {
+				_$P.maskParent.repaint();
+			}
 		}
 		
 		/**

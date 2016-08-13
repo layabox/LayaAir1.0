@@ -264,7 +264,40 @@
 			return Accelerator._instance;
 		},laya.events.EventDispatcher._$SET_instance);
 
+		Accelerator.getTransformedAcceleration=function(acceleration){Accelerator.transformedAcceleration=Accelerator.transformedAcceleration|| new AccelerationInfo();
+			Accelerator.transformedAcceleration.z=acceleration.z;
+			if (Browser.window.orientation==90){
+				Accelerator.transformedAcceleration.x=acceleration.y;
+				Accelerator.transformedAcceleration.y=-acceleration.x;
+			}
+			else if (Browser.window.orientation==-90){
+				Accelerator.transformedAcceleration.x=-acceleration.y;
+				Accelerator.transformedAcceleration.y=acceleration.x;
+			}
+			else if (!Browser.window.orientation){
+				Accelerator.transformedAcceleration.x=acceleration.x;
+				Accelerator.transformedAcceleration.y=acceleration.y;
+			}
+			else if (Browser.window.orientation==180){
+				Accelerator.transformedAcceleration.x=-acceleration.x;
+				Accelerator.transformedAcceleration.y=-acceleration.y;
+			};
+			var tx=NaN;
+			if (Laya.stage.canvasDegree==-90){
+				tx=Accelerator.transformedAcceleration.x;
+				Accelerator.transformedAcceleration.x=-Accelerator.transformedAcceleration.y;
+				Accelerator.transformedAcceleration.y=tx;
+			}
+			else if (Laya.stage.canvasDegree==90){
+				tx=Accelerator.transformedAcceleration.x;
+				Accelerator.transformedAcceleration.x=Accelerator.transformedAcceleration.y;
+				Accelerator.transformedAcceleration.y=-tx;
+			}
+			return Accelerator.transformedAcceleration;
+		}
+
 		Accelerator._instance=null
+		Accelerator.transformedAcceleration=null
 		__static(Accelerator,
 		['acceleration',function(){return this.acceleration=new AccelerationInfo();},'accelerationIncludingGravity',function(){return this.accelerationIncludingGravity=new AccelerationInfo();},'rotationRate',function(){return this.rotationRate=new RotationInfo();},'onChrome',function(){return this.onChrome=(Browser.userAgent.indexOf("Chrome")>-1);}
 		]);

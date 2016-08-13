@@ -40,25 +40,6 @@ package laya.filters {
 			_action = RunDriver.createFilterAction(COLOR);
 			_action.data = this;
 		}
-		/** @private */
-		public function getRGBG():Array
-		{
-			var mat:Float32Array = _mat;
-			var tRed:Number = mat[0] + mat[1] + mat[2] + mat[3] + _alpha[0] * 0.25;
-			var tGreed:Number = mat[4] + mat[5] + mat[6] + mat[7] + _alpha[1] * 0.25;
-			var tBlue:Number = mat[8] + mat[9] + mat[10] + mat[11] + _alpha[2] * 0.25;
-			var tAlph:Number = mat[12] + mat[13] + mat[14] + mat[15] + _alpha[3] * 0.25;
-			var tSrcMin:Number = Math.min(tRed, tGreed, tBlue);
-			var tSrcMax:Number = Math.max(tRed, tGreed, tBlue);
-			var tSrcLen:Number = tSrcMax - tSrcMin;
-			var tSrcCen:Number = tSrcLen / 2 + tSrcMin;
-			
-			var tResultRed:int = tRed * tRed / tSrcCen * 0.55;
-			var tResultGreed:int = tGreed * tGreed / tSrcCen * 0.55;
-			var tResultBlue:int = tBlue * tBlue / tSrcCen * 0.55;
-			var tGray:Number = 1.0 - (tSrcLen / 1.05);
-			return [tResultRed, tResultGreed, tResultBlue, tGray];
-		}
 		
 		/**@private */
 		override public function get type():int {
@@ -89,8 +70,8 @@ package laya.filters {
 		 */
 		public override function callNative(sp:Sprite):void
 		{
-			var t:Array=sp._$P.rgbg =getRGBG();
-			sp.model && sp.model.filter(t[0], t[1], t[2], t[3]);
+			var t:ColorFilter = sp._$P.cf = this;
+			sp.model && sp.model.setFilterMatrix&&sp.model.setFilterMatrix(_mat, _alpha);
 		}
 	}
 }

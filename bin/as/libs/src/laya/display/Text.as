@@ -469,7 +469,6 @@ package laya.display {
 		
 		public function set bgColor(value:String):void {
 			_getCSSStyle().backgroundColor = value;
-			model && model.bgColor(value);
 			isChanged = true;
 		}
 		
@@ -482,7 +481,6 @@ package laya.display {
 		
 		public function set borderColor(value:String):void {
 			_getCSSStyle().borderColor = value;
-			model && model.border(value);
 			isChanged = true;
 		}
 		
@@ -720,15 +718,21 @@ package laya.display {
 		}
 		
 		private function evalTextSize():void {
-			_textWidth = Math.max.apply(this, _lineWidths);
+			var nw:Number, nh:Number;
+			nw = Math.max.apply(this, _lineWidths);
 			
 			//计算textHeight
 			if (_currBitmapFont)
-				_textHeight = _lines.length * (_currBitmapFont.getMaxHeight() + leading) + padding[0] + padding[2];
+				nh = _lines.length * (_currBitmapFont.getMaxHeight() + leading) + padding[0] + padding[2];
 			else
-				_textHeight = _lines.length * (_charSize.height + leading) + padding[0] + padding[2];
-			
-			model && model.size( _textWidth,  _textHeight);
+				nh = _lines.length * (_charSize.height + leading) + padding[0] + padding[2];
+			if (nw != _textWidth || nh != _textHeight)
+			{
+				_textWidth = nw;
+				_textHeight = nh;
+				if(!_width||!_height)
+				 model&&model.size(_width||_textWidth, _height||_textHeight);
+			}
 		}
 		
 		private function checkEnabledViewportOrNot():Boolean {

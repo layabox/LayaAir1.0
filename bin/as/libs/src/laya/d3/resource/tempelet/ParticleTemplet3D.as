@@ -40,6 +40,10 @@ package laya.d3.resource.tempelet {
 			return 1;
 		}
 		
+		public function get triangleCount():int {
+			return _indexBuffer3D.indexCount/3;
+		}
+		
 		public function getBakedVertexs(index:int , transform:Matrix4x4):Float32Array {
 			return null;
 		}

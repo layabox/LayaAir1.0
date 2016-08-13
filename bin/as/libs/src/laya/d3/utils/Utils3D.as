@@ -294,7 +294,6 @@ package laya.d3.utils {
 			var i:int;
 			var parentOffset:int;
 			var boneLength:int = bones.length;
-			
 			for (i = 0; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++) {
 				//将旋转平移缩放合成矩阵...........................................
 				Utils3D.rotationTransformScale(curData[offset + 7], curData[offset + 8], curData[offset + 9], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 0], curData[offset + 1], curData[offset + 2], bonesDatas, matOffset);
@@ -308,6 +307,27 @@ package laya.d3.utils {
 			for (i = 0; i < len; i += 16) {
 				//将绝对矩阵乘以反置矩阵................................................
 				Utils3D.mulMatrixByArrayFast(bonesDatas, i, exData, len + i, animationDatas, i);
+			}
+		}
+		
+		/** @private */
+		public static function _computeRootAnimationData(bones:*, curData:Float32Array, animationDatas:Float32Array):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var offset:int = 0;
+			var matOffset:int = 0;
+			
+			var i:int;
+			var parentOffset:int;
+			var boneLength:int = bones.length;
+			
+			for (i = 0; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++) {
+				//将旋转平移缩放合成矩阵...........................................
+				Utils3D.rotationTransformScale(curData[offset + 7], curData[offset + 8], curData[offset + 9], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 0], curData[offset + 1], curData[offset + 2], animationDatas, matOffset);
+				
+				if (i != 0) {
+					parentOffset = bones[i].parentIndex * 16;
+					Utils3D.mulMatrixByArray(animationDatas, parentOffset, animationDatas, matOffset, animationDatas, matOffset);
+				}
 			}
 		}
 		

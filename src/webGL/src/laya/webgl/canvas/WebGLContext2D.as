@@ -12,7 +12,9 @@ package laya.webgl.canvas {
 	import laya.utils.Color;
 	import laya.utils.HTMLChar;
 	import laya.utils.RunDriver;
+	import laya.webgl.shapes.IShape;
 	import laya.webgl.submit.SubmitTexture;
+	import laya.utils.VectorGraphManager;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.atlas.AtlasResourceManager;
@@ -797,10 +799,43 @@ package laya.webgl.canvas {
 		}
 		
 		/*******************************************start矢量绘制***************************************************/
+		private var mId:int = -1;
+		private var mHaveKey:Boolean = false;
+		private var mHaveLineKey:Boolean = false;
+		private var mX:Number = 0;
+		private var mY:Number = 0;
+		private var mOutPoint:Point
+		
+		public function setPathId(id:int):void
+		{
+			mId = id;
+			if (mId != -1)
+			{
+				mHaveKey = false;
+				var tVGM:VectorGraphManager = VectorGraphManager.getInstance();
+				if (tVGM.shapeDic[mId])
+				{
+					mHaveKey = true;
+				}
+				mHaveLineKey = false;
+				if (tVGM.shapeLineDic[mId])
+				{
+					mHaveLineKey = true;
+				}
+			}
+		}
+		
+		public function movePath(x:Number, y:Number):void {
+			mX += x;
+			mY += y;
+		}
+		
 		override public function beginPath():void {
 			var tPath:Path = _getPath();
 			tPath.tempArray.length = 0;
 			tPath.closePath = false;
+			mX = 0;
+			mY = 0;
 		}
 		
 		public function closePath():void {
@@ -815,11 +850,26 @@ package laya.webgl.canvas {
 		override public function stroke():void {
 			var tPath:Path = _getPath();
 			if (lineWidth > 0) {
-				tPath.drawLine(0, 0, tPath.tempArray, lineWidth, this.strokeStyle._color.numColor);
+				if (mId == -1)
+				{
+					tPath.drawLine(0, 0, tPath.tempArray, lineWidth, this.strokeStyle._color.numColor);
+				}else {
+					if (mHaveLineKey) {
+						var tShapeLine:IShape = VectorGraphManager.getInstance().shapeLineDic[mId];
+						tPath.setGeomtry(tShapeLine);
+					}else {
+						VectorGraphManager.getInstance().addLine(mId, tPath.drawLine(0, 0, tPath.tempArray, lineWidth, this.strokeStyle._color.numColor));
+					}
+				}
+				
 				tPath.update();
+				var tArray:Array = RenderState2D.getMatrArray();
+				RenderState2D.mat2MatArray(_curMat, tArray);
+				var tPosArray:Array = [mX, mY];
 				var tempSubmit:Submit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-				tempSubmit.shaderValue.u_mmat2 = RenderState2D.mat2MatArray(_curMat, RenderState2D.getMatrArray());
+				tempSubmit.shaderValue.u_pos = tPosArray;
+				tempSubmit.shaderValue.u_mmat2 = tArray;
 				_submits[_submits._length++] = tempSubmit;
 			}
 		}
@@ -853,6 +903,12 @@ package laya.webgl.canvas {
 		}
 		
 		override public function arcTo(x1:Number, y1:Number, x2:Number, y2:Number, r:Number):void {
+			if (mId != -1)
+			{
+				if (mHaveKey) {	
+					return;
+				}
+			}
 			var tPath:Path = _getPath();
 			var x0:Number = tPath.getEndPointX();
 			var y0:Number = tPath.getEndPointY();
@@ -899,6 +955,14 @@ package laya.webgl.canvas {
 		}
 		
 		public function arc(cx:Number, cy:Number, r:Number, startAngle:Number, endAngle:Number, counterclockwise:Boolean = false):void {
+			if (mId != -1)
+			{
+				if (mHaveKey) {
+					return;
+				}
+				cx = 0;
+				cy = 0;
+			}
 			var a:Number = 0, da:Number = 0, hda:Number = 0, kappa:Number = 0;
 			var dx:Number = 0, dy:Number = 0, x:Number = 0, y:Number = 0, tanx:Number = 0, tany:Number = 0;
 			var px:Number = 0, py:Number = 0, ptanx:Number = 0, ptany:Number = 0;
@@ -992,8 +1056,21 @@ package laya.webgl.canvas {
 		 */
 		public function drawPoly(x:Number, y:Number, points:Array, color:uint, lineWidth:Number, boderColor:uint, isConvexPolygon:Boolean = false):void {
 			_shader2D.glTexture = null;//置空下，打断纹理相同合并
-			_getPath().polygon(x, y, points, color, lineWidth ? lineWidth : 1, boderColor);
-			_path.update();
+			var tPath:Path = _getPath();
+			if (mId == -1)
+			{
+				tPath.polygon(x, y, points, color, lineWidth ? lineWidth : 1, boderColor)
+			}else {
+				if (mHaveKey) {
+					var tShape:IShape = VectorGraphManager.getInstance().shapeDic[mId];
+					tPath.setGeomtry(tShape);
+				}else {
+					VectorGraphManager.getInstance().addShape(mId, tPath.polygon(x, y, points, color, lineWidth ? lineWidth : 1, boderColor));
+				}
+			}
+			
+			tPath.update();
+			var tPosArray:Array = [mX, mY];
 			var tArray:Array = RenderState2D.getMatrArray();
 			RenderState2D.mat2MatArray(_curMat, tArray);
 			var tempSubmit:Submit;
@@ -1002,16 +1079,18 @@ package laya.webgl.canvas {
 				//开启模板缓冲，填充模板数据
 				var submit:SubmitStencil = SubmitStencil.create(4);
 				addRenderObject(submit);
-				tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
+				tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
+				tempSubmit.shaderValue.u_pos = tPosArray;
 				tempSubmit.shaderValue.u_mmat2 = tArray;
 				_submits[_submits._length++] = tempSubmit;
 				submit = SubmitStencil.create(5);
 				addRenderObject(submit);
 			}
 			//通过模板数据来开始真实的绘制
-			tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
+			tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 			tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
+			tempSubmit.shaderValue.u_pos = tPosArray;
 			tempSubmit.shaderValue.u_mmat2 = tArray;
 			_submits[_submits._length++] = tempSubmit;
 			if (!isConvexPolygon) {
@@ -1020,9 +1099,14 @@ package laya.webgl.canvas {
 			}
 			//画闭合线
 			if (lineWidth > 0) {
-				_path.drawLine(x, y, points, lineWidth, boderColor);
-				_path.update();
-				tempSubmit = Submit.createShape(this, _path.ib, _path.vb, _path.count, _path.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
+				if (mHaveLineKey) {
+					var tShapeLine:IShape = VectorGraphManager.getInstance().shapeLineDic[mId];
+					tPath.setGeomtry(tShapeLine);
+				}else {
+					VectorGraphManager.getInstance().addShape(mId, tPath.drawLine(x, y, points, lineWidth, boderColor));
+				}
+				tPath.update();
+				tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
 				tempSubmit.shaderValue.u_mmat2 = tArray;
 				_submits[_submits._length++] = tempSubmit;

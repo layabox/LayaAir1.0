@@ -903,6 +903,44 @@
 	/**
 	*@private
 	*/
+	//class laya.particle.shader.value.ParticleShaderValue extends laya.webgl.shader.d2.value.Value2D
+	var ParticleShaderValue=(function(_super){
+		function ParticleShaderValue(){
+			this.a_CornerTextureCoordinate=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,0];
+			this.a_Position=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,16];
+			this.a_Velocity=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,28];
+			this.a_StartColor=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,40];
+			this.a_EndColor=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,56];
+			this.a_SizeRotation=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,72];
+			this.a_Radius=[2,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,84];
+			this.a_Radian=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,92];
+			this.a_AgeAddScale=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,108];
+			this.a_Time=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,112];
+			this.u_CurrentTime=NaN;
+			this.u_Duration=NaN;
+			this.u_Gravity=null;
+			this.u_EndVelocity=NaN;
+			this.u_texture=null;
+			ParticleShaderValue.__super.call(this,0,0);
+		}
+
+		__class(ParticleShaderValue,'laya.particle.shader.value.ParticleShaderValue',_super);
+		var __proto=ParticleShaderValue.prototype;
+		__proto.upload=function(){
+			this.refresh();
+			ParticleShaderValue.pShader.upload(this);
+		}
+
+		__static(ParticleShaderValue,
+		['pShader',function(){return this.pShader=new ParticleShader();}
+		]);
+		return ParticleShaderValue;
+	})(Value2D)
+
+
+	/**
+	*@private
+	*/
 	//class laya.particle.ParticleTemplate2D extends laya.particle.ParticleTemplateWebGL
 	var ParticleTemplate2D=(function(_super){
 		function ParticleTemplate2D(parSetting){
@@ -1018,44 +1056,6 @@
 		ParticleTemplate2D.activeBlendType=-1;
 		return ParticleTemplate2D;
 	})(ParticleTemplateWebGL)
-
-
-	/**
-	*@private
-	*/
-	//class laya.particle.shader.value.ParticleShaderValue extends laya.webgl.shader.d2.value.Value2D
-	var ParticleShaderValue=(function(_super){
-		function ParticleShaderValue(){
-			this.a_CornerTextureCoordinate=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,0];
-			this.a_Position=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,16];
-			this.a_Velocity=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,28];
-			this.a_StartColor=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,40];
-			this.a_EndColor=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,56];
-			this.a_SizeRotation=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,72];
-			this.a_Radius=[2,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,84];
-			this.a_Radian=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,92];
-			this.a_AgeAddScale=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,108];
-			this.a_Time=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,112];
-			this.u_CurrentTime=NaN;
-			this.u_Duration=NaN;
-			this.u_Gravity=null;
-			this.u_EndVelocity=NaN;
-			this.u_texture=null;
-			ParticleShaderValue.__super.call(this,0,0);
-		}
-
-		__class(ParticleShaderValue,'laya.particle.shader.value.ParticleShaderValue',_super);
-		var __proto=ParticleShaderValue.prototype;
-		__proto.upload=function(){
-			this.refresh();
-			ParticleShaderValue.pShader.upload(this);
-		}
-
-		__static(ParticleShaderValue,
-		['pShader',function(){return this.pShader=new ParticleShader();}
-		]);
-		return ParticleShaderValue;
-	})(Value2D)
 
 
 	/**

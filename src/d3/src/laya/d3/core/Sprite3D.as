@@ -144,13 +144,20 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 更新组件update函数,重写此函数。
+		 * 清理自身渲染物体。
 		 */
-		public function _clearRenderObjects():void {
-		 throw new Error("未Override,请重载该属性！");
+		public function _clearSelfRenderObjects():void {
 		}
 		
-			
+		/**
+		 * 清理自身和子节点渲染物体,重写此函数。
+		 */
+		public function _clearSelfAndChildrenRenderObjects():void {
+			_clearSelfRenderObjects();
+			for (var i:int = 0; i < _childs.length; i++)
+				(_childs[i] as Sprite3D)._clearSelfAndChildrenRenderObjects();
+		
+		}
 		
 		/**
 		 * 更新组件update函数。
@@ -194,10 +201,7 @@ package laya.d3.core {
 		 * @param	state 渲染相关状态。
 		 */
 		public function _getSortID(renderElement:IRenderable, material:Material):int {
-			if (isStatic) {
-				return material.id * VertexDeclaration._maxVertexDeclarationBit + renderElement.getVertexBuffer().vertexDeclaration.id;
-			} else
-				return material.id;
+			return material.id * VertexDeclaration._maxVertexDeclarationBit + renderElement.getVertexBuffer().vertexDeclaration.id;
 		}
 		
 		/**
@@ -224,7 +228,7 @@ package laya.d3.core {
 				model && model.removeChild(node.model);
 				node.parent = null;
 				
-				(node as Sprite3D)._clearRenderObjects();
+				(node as Sprite3D)._clearSelfAndChildrenRenderObjects();
 			}
 			return node;
 		}

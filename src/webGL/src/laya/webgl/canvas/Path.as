@@ -55,14 +55,20 @@ package laya.webgl.canvas {
 			return tempArray[tempArray.length - 1];
 		}
 		
-		public function polygon(x:Number, y:Number, points:Array, color:uint, borderWidth:int, borderColor:*):void {
+		public function polygon(x:Number, y:Number, points:Array, color:uint, borderWidth:int, borderColor:*):IShape {
 			var geo:BasePoly;
 			geomatrys.push(_curGeomatry = geo = new Polygon(x, y, points, color, borderWidth, borderColor));
 			if (!color) geo.fill = false;
 			if (borderColor == undefined) geo.borderWidth = 0;
+			return geo;
 		}
 		
-		public function drawLine(x:Number, y:Number, points:Array, width:Number, color:uint):void {
+		public function setGeomtry(shape:IShape):void
+		{
+			geomatrys.push(_curGeomatry = shape);
+		}
+		
+		public function drawLine(x:Number, y:Number, points:Array, width:Number, color:uint):IShape {
 			var geo:BasePoly;
 			if (closePath) {
 				geomatrys.push(_curGeomatry = geo = new LoopLine(x, y, points, width, color));
@@ -70,6 +76,7 @@ package laya.webgl.canvas {
 				geomatrys.push(_curGeomatry = geo = new Line(x, y, points, width, color));
 			}
 			geo.fill = false;
+			return geo;
 		}
 		
 		public function update():void {

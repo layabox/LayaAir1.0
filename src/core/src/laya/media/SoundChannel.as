@@ -58,6 +58,16 @@ package laya.media {
 		public function stop():void {
 		
 		}
+		/**
+		 * private
+		 */
+		protected function __runComplete(handler:Handler):void
+		{
+			if (handler)
+			{
+				handler.run();
+			}
+		}
 	}
 
 }

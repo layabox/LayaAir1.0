@@ -1,5 +1,6 @@
 package laya.ui {
 	import laya.display.Graphics;
+	import laya.renders.Render;
 	import laya.resource.Texture;
 	import laya.utils.Utils;
 	
@@ -159,7 +160,7 @@ package laya.ui {
 			if (cacheCount++ > 50) clearCache();
 			_isChanged = false;
 			var source:Texture = this._source;
-			if (!source) return;
+			if (!source || !source.bitmap) return;
 			
 			var width:Number = this.width;
 			var height:Number = this.height;
@@ -204,7 +205,7 @@ package laya.ui {
 				drawTexture(getTexture(source, left, top, sw - left - right, sh - top - bottom), left, top, width - left - right, height - top - bottom);
 				
 				//缓存命令
-				if (autoCacheCmd) cmdCaches[key] = this.cmds;
+				if (autoCacheCmd && !Render.isConchApp) cmdCaches[key] = this.cmds;
 			}
 			_repaint();
 		}

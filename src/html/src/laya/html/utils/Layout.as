@@ -232,8 +232,14 @@ package laya.html.utils {
 				//valign === CSSStyle.VALIGN_MIDDLE && (dy = (height - y) / 2);
 				//valign === CSSStyle.VALIGN_BOTTOM && (dy = (height - y));
 				var tY:Number = 0;
+				var tWidth:Number = width;
+				if (widthAuto && element.width > 0)
+				{
+					//如果使用单行，这里一定要根据单行的实际宽（element.width）来排版
+					tWidth = element.width;
+				}
 				for (i = 0, n = lines.length; i < n; i++) {
-					lines[i].updatePos(0, width, i, tY, align, valign, lineHeight);
+					lines[i].updatePos(0, tWidth, i, tY, align, valign, lineHeight);
 					tY += Math.max(lineHeight, lines[i].h);
 				}
 				y = tY;

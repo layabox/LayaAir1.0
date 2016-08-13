@@ -2,106 +2,159 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Browser=laya.utils.Browser,Geolocation=laya.device.geolocation.Geolocation,GeolocationInfo=laya.device.geolocation.GeolocationInfo;
-	var Handler=laya.utils.Handler,Stage=laya.display.Stage,Text=laya.display.Text;
+	var AccelerationInfo=laya.device.motion.AccelerationInfo,Accelerator=laya.device.motion.Accelerator;
+	var Browser=laya.utils.Browser,Event=laya.events.Event,Point=laya.maths.Point,Sprite=laya.display.Sprite;
+	var Stage=laya.display.Stage,WebGL=laya.webgl.WebGL;
 	/**
 	*...
 	*@author Survivor
 	*/
-	//class InputDevice_Map
-	var InputDevice_Map=(function(){
-		function InputDevice_Map(){
-			this.map=null;
-			this.marker=null;
-			this.mapDiv=null;
-			this.infoText=null;
-			this.BMap=Browser.window.BMap;
-			this.convertor=new this.BMap.Convertor();
-			Laya.init(Browser.width,255);
-			Laya.stage.scaleMode="noscale";
-			this.createDom();
-			this.initMap();
-			this.createInfoText();
-			var successHandler=new Handler(this,this.updatePosition);
-			var errorHandler=new Handler(this,this.onError);
-			Geolocation.enableHighAccuracy=true;
-			Geolocation.watchPosition(successHandler,errorHandler);
-			this.convertToBaiduCoord=this.convertToBaiduCoord.bind(this);
+	//class InputDevice_GluttonousSnake
+	var InputDevice_GluttonousSnake=(function(){
+		var Segment;
+		function InputDevice_GluttonousSnake(){
+			this.seg=null;
+			this.segments=[];
+			this.foods=[];
+			this.initialSegmentsAmount=5;
+			this.vx=0
+			this.vy=0;
+			this.targetPosition=null;
+			Laya.init(Browser.width,Browser.height,WebGL);
+			Laya.stage.screenMode="horizontal";
+			this.initSnake();
+			Accelerator.instance.on("change",this,this.monitorAccelerator);
+			Laya.timer.frameLoop(1,this,this.animate);
+			Laya.timer.loop(3000,this,this.produceFood);
+			this.produceFood();
 		}
 
-		__class(InputDevice_Map,'InputDevice_Map');
-		var __proto=InputDevice_Map.prototype;
-		__proto.createDom=function(){
-			this.mapDiv=Browser.createElement("div");
-			var style=this.mapDiv.style;
-			style.position="absolute";
-			style.top=Laya.stage.height / Browser.pixelRatio+"px";
-			style.left="0px";
-			style.width=Browser.width / Browser.pixelRatio+"px";
-			style.height=(Browser.height-Laya.stage.height)/ Browser.pixelRatio+"px";
-			Browser.document.body.appendChild(this.mapDiv);
-		}
-
-		__proto.initMap=function(){
-			this.map=new this.BMap.Map(this.mapDiv);
-			this.map.disableKeyboard();
-			this.map.disableScrollWheelZoom();
-			this.map.disableDoubleClickZoom();
-			this.map.disablePinchToZoom();
-			this.map.centerAndZoom(new this.BMap.Point(116.32715863448607,39.990912172420714),15);
-			this.marker=new this.BMap.Marker(new this.BMap.Point(0,0));
-			this.map.addOverlay(this.marker);
-			var label=new this.BMap.Label("当前位置",{offset:new this.BMap.Size(-15,30)});
-			this.marker.setLabel(label);
-		}
-
-		__proto.createInfoText=function(){
-			this.infoText=new Text();
-			Laya.stage.addChild(this.infoText);
-			this.infoText.fontSize=50;
-			this.infoText.color="#FFFFFF";
-			this.infoText.size(Laya.stage.width,Laya.stage.height);
-		}
-
-		// 更新设备位置
-		__proto.updatePosition=function(p){
-			var point=new this.BMap.Point(p.longitude,p.latitude);
-			this.convertor.translate([point],3,5,this.convertToBaiduCoord);
-			this.infoText.text=
-			"经度："+p.longitude+
-			"\t纬度："+p.latitude+
-			"\t精度："+p.accuracy+
-			"\n海拔："+p.altitude+
-			"\t海拔精度："+p.altitudeAccuracy+
-			"\n头："+p.heading+
-			"\n速度："+p.speed+
-			"\n时间戳："+p.timestamp;
-		}
-
-		// 将原始坐标转换为百度坐标
-		__proto.convertToBaiduCoord=function(data){
-			if (data.status==0){
-				var position=data.points[0];
-				this.marker.setPosition(position);
-				this.map.panTo(position);
-				this.map.setZoom(17);
+		__class(InputDevice_GluttonousSnake,'InputDevice_GluttonousSnake');
+		var __proto=InputDevice_GluttonousSnake.prototype;
+		__proto.initSnake=function(){
+			for (var i=0;i < this.initialSegmentsAmount;i++){
+				this.addSegment();
+				if (i==0){
+					var header=this.segments[0];
+					header.rotation=180;
+					this.targetPosition=new Point();
+					this.targetPosition.x=Laya.stage.width / 2;
+					this.targetPosition.y=Laya.stage.height / 2;
+					header.pos(this.targetPosition.x+header.width,this.targetPosition.y);
+					header.graphics.drawCircle(header.width,5,3,"#000000");
+					header.graphics.drawCircle(header.width,-5,3,"#000000");
+				}
 			}
 		}
 
-		__proto.onError=function(e){
-			if (e.code==3)
-				alert("获取位置超时");
-			else if (e.code==2)
-			alert("位置不可用");
-			else if (e.code==1)
-			alert("无权限");
+		__proto.monitorAccelerator=function(acceleration,accelerationIncludingGravity,rotationRate,interval){
+			accelerationIncludingGravity=Accelerator.getTransformedAcceleration(accelerationIncludingGravity);
+			this.vx=accelerationIncludingGravity.x;
+			this.vy=accelerationIncludingGravity.y;
 		}
 
-		return InputDevice_Map;
+		__proto.addSegment=function(){
+			var seg=new Segment(40,30);
+			Laya.stage.addChildAt(seg,0);
+			if (this.segments.length > 0){
+				var prevSeg=this.segments[this.segments.length-1];
+				seg.rotation=prevSeg.rotation;
+				var point=seg.getPinPosition();
+				seg.x=prevSeg.x-point.x;
+				seg.y=prevSeg.y-point.y;
+			}
+			this.segments.push(seg);
+		}
+
+		__proto.animate=function(){
+			var seg=this.segments[0];
+			this.targetPosition.x+=this.vx;
+			this.targetPosition.y+=this.vy;
+			this.limitMoveRange();
+			this.checkEatFood();
+			var targetX=this.targetPosition.x;
+			var targetY=this.targetPosition.y;
+			for (var i=0,len=this.segments.length;i < len;i++){
+				seg=this.segments[i];
+				var dx=targetX-seg.x;
+				var dy=targetY-seg.y;
+				var radian=Math.atan2(dy,dx);
+				seg.rotation=radian *180 / Math.PI;
+				var pinPosition=seg.getPinPosition();
+				var w=pinPosition.x-seg.x;
+				var h=pinPosition.y-seg.y;
+				seg.x=targetX-w;
+				seg.y=targetY-h;
+				targetX=seg.x;
+				targetY=seg.y;
+			}
+		}
+
+		__proto.limitMoveRange=function(){
+			if (this.targetPosition.x < 0)
+				this.targetPosition.x=0;
+			else if (this.targetPosition.x > Laya.stage.width)
+			this.targetPosition.x=Laya.stage.width;
+			if (this.targetPosition.y < 0)
+				this.targetPosition.y=0;
+			else if (this.targetPosition.y > Laya.stage.height)
+			this.targetPosition.y=Laya.stage.height;
+		}
+
+		__proto.checkEatFood=function(){
+			var food;
+			for (var i=this.foods.length-1;i >=0;i--){
+				food=this.foods[i];
+				if (food.hitTestPoint(this.targetPosition.x,this.targetPosition.y)){
+					this.addSegment();
+					Laya.stage.removeChild(food);
+					this.foods.splice(i,1);
+				}
+			}
+		}
+
+		__proto.produceFood=function(){
+			if (this.foods.length==5)
+				return;
+			var food=new Sprite();
+			Laya.stage.addChild(food);
+			this.foods.push(food);
+			var foodSize=40;
+			food.size(foodSize,foodSize);
+			food.graphics.drawRect(0,0,foodSize,foodSize,"#00BFFF");
+			food.x=Math.random()*Laya.stage.width;
+			food.y=Math.random()*Laya.stage.height;
+		}
+
+		InputDevice_GluttonousSnake.__init$=function(){
+			//class Segment extends laya.display.Sprite
+			Segment=(function(_super){
+				function Segment(width,height){
+					Segment.__super.call(this);
+					this.size(width,height);
+					this.init();
+				}
+				__class(Segment,'',_super);
+				var __proto=Segment.prototype;
+				__proto.init=function(){
+					this.graphics.drawRect(-this.height / 2,-this.height / 2,this.width+this.height,this.height,"#FF7F50");
+				}
+				// 获取关节另一头位置
+				__proto.getPinPosition=function(){
+					var radian=this.rotation *Math.PI / 180;
+					var tx=this.x+Math.cos(radian)*this.width;
+					var ty=this.y+Math.sin(radian)*this.width;
+					return new Point(tx,ty);
+				}
+				return Segment;
+			})(Sprite)
+		}
+
+		return InputDevice_GluttonousSnake;
 	})()
 
 
-
-	new InputDevice_Map();
+	Laya.__init([InputDevice_GluttonousSnake]);
+	new InputDevice_GluttonousSnake();
 
 })(window,document,Laya);

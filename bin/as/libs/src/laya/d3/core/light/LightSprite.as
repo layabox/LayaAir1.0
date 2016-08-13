@@ -127,10 +127,6 @@ package laya.d3.core.light {
 			return -1;
 		}
 		
-		override public function _clearRenderObjects():void 
-		{
-		}
-		
 		/**
 		 * 更新灯光相关渲染状态参数。
 		 * @param state 渲染状态参数。

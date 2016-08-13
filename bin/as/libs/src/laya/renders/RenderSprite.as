@@ -263,7 +263,7 @@ package laya.renders {
 				return;
 			}
 			var tx:RenderContext = _cacheCanvas.ctx;
-			var _repaint:Boolean = sprite._needRepaint() || (!tx) || tx.ctx._repaint;
+			var _repaint:Boolean = sprite._needRepaint() || (!tx);
 			var canvas:HTMLCanvas;
 			var left:Number;
 			var top:Number;
@@ -277,7 +277,9 @@ package laya.renders {
 				var w:Number, h:Number;
 				tRec = sprite.getSelfBounds();
 				if (Render.isWebGL && _cacheCanvas.type === 'bitmap' && (tRec.width > 2048 || tRec.height > 2048)) {
-					throw new Error("cache bitmap size larger than 2048");
+					trace("cache bitmap size larger than 2048,cache ignored");
+					_next._fun.call(_next, sprite, tx, x, y);
+					return;
 				}
 				tRec.x -= sprite.pivotX;
 				tRec.y -= sprite.pivotY;
@@ -325,7 +327,7 @@ package laya.renders {
 				canvas.clear();
 				(canvas.width != w || canvas.height != h) && canvas.size(w, h);
 				
-				var t:Array;
+				var t:*;
 				//TODO:测试webgl下是否有缓存模糊问题
 				if (scaleX!=1||scaleY!=1) {
 					var ctx:* = RenderContext(tx).ctx;
@@ -333,8 +335,8 @@ package laya.renders {
 					ctx.scale(scaleX, scaleY);
 					if (!Render.isConchWebGL&&Render.isConchApp)
 					{
-						t = sprite._$P.rgbg;
-						t&&ctx.setFilter(t[0],t[1],t[2],t[3]);
+						t = sprite._$P.cf;
+						t&&ctx.setFilterMatrix&&ctx.setFilterMatrix(t._mat,t._alpha);
 					}
 					_next._fun.call(_next, sprite, tx, -left, -top);
 					ctx.restore();
@@ -343,8 +345,8 @@ package laya.renders {
 					ctx = RenderContext(tx).ctx;
 					if (!Render.isConchWebGL&&Render.isConchApp)
 					{
-						t = sprite._$P.rgbg;
-						t&&ctx.setFilter(t[0],t[1],t[2],t[3]);
+						t = sprite._$P.cf;
+						t&&ctx.setFilterMatrix&&ctx.setFilterMatrix(t._mat,t._alpha);
 					}
 					_next._fun.call(_next, sprite, tx, -left, -top);
 					if(!Render.isConchApp||Render.isConchWebGL)sprite._applyFilters();

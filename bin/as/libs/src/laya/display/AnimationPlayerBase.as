@@ -18,7 +18,7 @@ package laya.display {
 	 */
 	public class AnimationPlayerBase extends Sprite {
 		/** 播放间隔(单位：毫秒)。*/
-		public var interval:int = Config.animationInterval;
+		private var _interval:int = Config.animationInterval;
 		/**是否循环播放 */
 		public var loop:Boolean;
 		/**@private */
@@ -34,17 +34,43 @@ package laya.display {
 		
 		/**
 		 * 播放动画。
-		 * @param	start 开始播放的动画索引。
+		 * @param	start 开始播放的动画索引或label。
 		 * @param	loop 是否循环。
 		 * @param	name 如果name为空(可选)，则播放当前动画，如果不为空，则播放全局缓存动画（如果有）
 		 */
-		public function play(start:int = 0, loop:Boolean = true, name:String = ""):void {
+		public function play(start:* = 0, loop:Boolean = true, name:String = ""):void {
 			this._isPlaying = true;
-			this.index = start;
+			this.index = (start is String)?_getFrameByLabel(start):start;
 			this.loop = loop;
 			if (this.interval > 0) {
 				timerLoop(this.interval, this, _frameLoop, null, true);
 			}
+		}
+		
+		/** 播放间隔(单位：毫秒)。*/
+		public function set interval(v:int):void
+		{
+			_interval = v;
+			if (_isPlaying && v > 0 )
+			{
+				timerLoop(v, this, _frameLoop, null, true);
+			}
+		}
+		
+		/** 播放间隔(单位：毫秒)。*/
+		public function get interval():int
+		{
+			return _interval;
+		}
+		/**@private */
+		protected function _getFrameByLabel(label:String):int
+		{
+			var i:int;
+			for (i = 0; i < _count; i++)
+			{
+				if (_labels[i]) return _labels[i];
+			}
+			return 0;
 		}
 		
 		/**@private */
@@ -121,10 +147,10 @@ package laya.display {
 		
 		/**
 		 * 切换到某帧并停止
-		 * @param	index 帧索引
+		 * @param	position 帧索引或label
 		 */
-		public function gotoAndStop(index:int):void {
-			this.index = index;
+		public function gotoAndStop(position:*):void {
+			this.index = (position is String)?_getFrameByLabel(position):position;
 			this.stop();
 		}
 		

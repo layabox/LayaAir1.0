@@ -47,6 +47,10 @@ package laya.d3.graphics {
 			return 1;
 		}
 		
+		public function get triangleCount():int {
+			return _indexBuffer.indexCount/3;
+		}
+		
 		public function getVertexBuffer(index:int = 0):VertexBuffer3D {
 			if (index === 0)
 				return _vertexBuffer;
@@ -161,7 +165,6 @@ package laya.d3.graphics {
 			var indexbuffer:IndexBuffer3D = renderElement.getIndexBuffer();
 			var indexCount:int = _currentIndexCount + indexbuffer.byteLength / indexbuffer.indexTypeByteCount;
 			var vertexCount:int = _currentVertexCount + renderElement.getVertexBuffer().byteLength / _vertexDeclaration.vertexStride;
-			
 			if (vertexCount > maxVertexCount || indexCount > maxIndexCount)
 				return false;
 			

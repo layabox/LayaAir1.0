@@ -3,6 +3,7 @@ package laya.media.h5audio {
 	import laya.media.SoundChannel;
 	import laya.media.SoundManager;
 	import laya.utils.Browser;
+	import laya.utils.Handler;
 	import laya.utils.Pool;
 	import laya.utils.Utils;
 	
@@ -30,7 +31,7 @@ package laya.media.h5audio {
 		private function __onEnd():void {
 			if (this.loops == 1) {
 				if (completeHandler) {
-					completeHandler.run();
+					Laya.timer.once(10, this, __runComplete, [completeHandler], false);
 					completeHandler = null;
 				}
 				this.stop();

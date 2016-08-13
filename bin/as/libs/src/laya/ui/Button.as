@@ -5,7 +5,6 @@ package laya.ui {
 	import laya.resource.Texture;
 	import laya.ui.AutoBitmap;
 	import laya.ui.UIUtils;
-	import laya.utils.Browser;
 	import laya.utils.Handler;
 	
 	/**
@@ -266,10 +265,8 @@ package laya.ui {
 		
 		/**@inheritDoc */
 		override protected function initialize():void {
-			if (Browser.onPC) {
-				on(Event.MOUSE_OVER, this, onMouse);
-				on(Event.MOUSE_OUT, this, onMouse);
-			}
+			on(Event.MOUSE_OVER, this, onMouse);
+			on(Event.MOUSE_OUT, this, onMouse);
 			on(Event.MOUSE_DOWN, this, onMouse);
 			on(Event.MOUSE_UP, this, onMouse);
 			on(Event.CLICK, this, onMouse);

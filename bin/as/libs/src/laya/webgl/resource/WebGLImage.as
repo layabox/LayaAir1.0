@@ -65,7 +65,6 @@ package laya.webgl.resource {
 			_enableMerageInAtlas = value;
 		}
 		
-		
 		/***
 		 * 设置onload函数
 		 * @param value onload函数
@@ -98,12 +97,11 @@ package laya.webgl.resource {
 			_src = src;
 			_image = new Browser.window.Image();
 			_image.crossOrigin = "";
-			(src)&&(_image.src = src);WebGLImageCube
+			(src) && (_image.src = src);
 			_enableMerageInAtlas = true;
 		}
 		
-		override protected function _init_(src:String):void 
-		{
+		override protected function _init_(src:String):void {
 		}
 		
 		private function _createWebGlTexture():void {
@@ -160,7 +158,6 @@ package laya.webgl.resource {
 		override protected function recreateResource():void {
 			if (_src == null || _src === "")
 				return;
-			
 			_needReleaseAgain = false;
 			if (!_image) {
 				_recreateLock = true;
@@ -176,6 +173,7 @@ package laya.webgl.resource {
 						_this._image = null;
 						return;
 					}
+					
 					(!(_this._allowMerageInAtlas && _this._enableMerageInAtlas)) ? (_this._createWebGlTexture()) : (memorySize = 0, _recreateLock = false);
 					_this.compoleteCreate();//处理创建完成后相关操作
 				};

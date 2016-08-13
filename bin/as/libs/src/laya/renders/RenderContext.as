@@ -1,4 +1,5 @@
 package laya.renders {
+	
 	import laya.maths.Matrix;
 	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
@@ -49,23 +50,60 @@ package laya.renders {
 		}
 		
 		public function drawTexture(tex:Texture, x:Number, y:Number, width:Number, height:Number):void {
-			tex.loaded ? this.ctx.drawTexture(tex, x, y, width, height, this.x, this.y) : (this.ctx._repaint = true);
+			if (tex.loaded) this.ctx.drawTexture(tex, x, y, width, height, this.x, this.y);
 		}
-		public var _drawTexture:Function=function(x:Number, y:Number, args:Array):void {
-			args[0].loaded ? this.ctx.drawTexture(args[0], args[1], args[2], args[3], args[4], x, y) : (this.ctx._repaint = true);
+		public var _drawTexture:Function = function(x:Number, y:Number, args:Array):void {
+			if (args[0].loaded) this.ctx.drawTexture(args[0], args[1], args[2], args[3], args[4], x, y);
+		}
+		public var _fillTexture:Function = function(x:Number, y:Number, args:Array):void {
+			if (args[0].loaded) {
+				var texture:Texture = args[0];
+				var ctxi:* = this.ctx;
+				var pat:*;
+				if (!Render.isConchApp) {
+					if (texture.uv != Texture.DEF_UV) {
+						var canvas:HTMLCanvas = new HTMLCanvas("2D");
+						canvas.getContext('2d');
+						canvas.size(texture.width, texture.height);
+						canvas.context.drawTexture(texture, 0, 0, texture.width, texture.height, 0, 0);
+						args[0] = texture = new Texture(canvas);
+					}
+					pat = args[7] ? args[7] : args[7] = ctxi.createPattern(texture.bitmap.source, args[5]);
+				} else {
+					if (texture.uv != Texture.DEF_UV) {
+						var w:Number = texture.bitmap.width, h:Number = texture.bitmap.height, uv:Array = texture.uv;
+						pat = args[7] ? args[7] : args[7] = ctxi.createPattern(texture.bitmap.source, args[5], uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h);
+					} else {
+						pat = args[7] ? args[7] : args[7] = ctxi.createPattern(texture.bitmap.source, args[5]);
+					}
+				}
+				var oX:Number = x + args[1], oY:Number = y + args[2];
+				var sX:Number = 0, sY:Number = 0;
+				if (args[6]) {
+					oX += args[6].x % texture.width;
+					oY += args[6].y % texture.height;
+					sX -= args[6].x % texture.width;
+					sY -= args[6].y % texture.height;
+				}
+				ctxi.translate(oX, oY);
+				ctxi.fillStyle = pat;
+				ctxi.fillRect(sX, sY, args[3], args[4]);
+				ctxi.translate(-oX, -oY);
+			} else {
+			}
 		}
 		
 		public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, m:Matrix):void {
-			tex.loaded ? this.ctx.drawTextureWithTransform(tex, x, y, width, height, m, this.x, this.y) : (ctx._repaint = true);
+			if (tex.loaded) this.ctx.drawTextureWithTransform(tex, x, y, width, height, m, this.x, this.y);
 		}
-		public var _drawTextureWithTransform:Function=function(x:Number, y:Number, args:Array):void {
-			args[0].loaded ? this.ctx.drawTextureWithTransform(args[0], args[1], args[2], args[3], args[4], args[5], x, y) : (this.ctx._repaint = true);
+		public var _drawTextureWithTransform:Function = function(x:Number, y:Number, args:Array):void {
+			if (args[0].loaded) this.ctx.drawTextureWithTransform(args[0], args[1], args[2], args[3], args[4], args[5], x, y);
 		}
 		
 		public function fillQuadrangle(tex:*, x:Number, y:Number, point4:Array, m:Matrix):void {
 			this.ctx.fillQuadrangle(tex, x, y, point4, m);
 		}
-		public var _fillQuadrangle:Function=function(x:Number, y:Number, args:Array):void {
+		public var _fillQuadrangle:Function = function(x:Number, y:Number, args:Array):void {
 			//this.ctx.fillQuadrangle(args[0], args[1], args[2], args[3],args[4],x,y);
 			this.ctx.fillQuadrangle(args[0], args[1], args[2], args[3], args[4]);
 		}
@@ -73,20 +111,20 @@ package laya.renders {
 		public function drawCanvas(canvas:HTMLCanvas, x:Number, y:Number, width:Number, height:Number):void {
 			this.ctx.drawCanvas(canvas, x + this.x, y + this.y, width, height);
 		}
-
+		
 		public function drawRect(x:Number, y:Number, width:Number, height:Number, color:String, lineWidth:Number = 1):void {
 			var ctx:* = this.ctx;
 			ctx.strokeStyle = color;
 			ctx.lineWidth = lineWidth;
 			ctx.strokeRect(x + this.x, y + this.y, width, height, lineWidth);
 		}
-		public var _drawRect:Function=function(x:Number, y:Number, args:Array):void {
+		public var _drawRect:Function = function(x:Number, y:Number, args:Array):void {
 			var ctx:* = this.ctx;
 			
 			//填充矩形
 			if (args[4] != null) {
 				ctx.fillStyle = args[4];
-				ctx.fillRect(x + args[0], y + args[1], args[2], args[3],null);
+				ctx.fillRect(x + args[0], y + args[1], args[2], args[3], null);
 			}
 			
 			//绘制矩形边框
@@ -102,16 +140,15 @@ package laya.renders {
 			var ctx:* = this.ctx;
 			if (fillColor != null) {
 				ctx.fillStyle = fillColor;
-				if (Render.isWebGL)
-				{
+				if (Render.isWebGL) {
 					ctx.fill(isConvexPolygon);
-				}else {
+				} else {
 					ctx.fill();
 				}
 			}
 			
 			//绘制边框
-			if (strokeColor != null && lineWidth>0) {
+			if (strokeColor != null && lineWidth > 0) {
 				ctx.strokeStyle = strokeColor;
 				ctx.lineWidth = lineWidth;
 				ctx.stroke();
@@ -119,17 +156,23 @@ package laya.renders {
 		}
 		
 		//矢量方法		
-		public var _drawPie:Function=function(x:Number, y:Number, args:Array):void {
+		public var _drawPie:Function = function(x:Number, y:Number, args:Array):void {
 			var ctx:* = this.ctx;
+			Render.isWebGL && ctx.setPathId(args[8]);
 			//移动中心点
 			//ctx.translate(x + args[0], y + args[1]);
 			//形成路径
 			ctx.beginPath();
-			ctx.moveTo(x + args[0],  y + args[1]);
+			if (Render.isWebGL) {
+				ctx.movePath(args[0] + x, args[1] + y);
+				ctx.moveTo(0, 0);
+			} else {
+				ctx.moveTo(x + args[0], y + args[1]);
+			}
 			ctx.arc(x + args[0], y + args[1], args[2], args[3], args[4]);
 			ctx.closePath();
 			//绘制
-			this._fillAndStroke(args[5], args[6], args[7],true);
+			this._fillAndStroke(args[5], args[6], args[7], true);
 			//恢复中心点
 			//ctx.translate(-x - args[0], -y - args[1]);
 		}
@@ -137,7 +180,7 @@ package laya.renders {
 		public function clipRect(x:Number, y:Number, width:Number, height:Number):void {
 			ctx.clipRect(x + this.x, y + this.y, width, height);
 		}
-		public var _clipRect:Function=function(x:Number, y:Number, args:Array):void {
+		public var _clipRect:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.clipRect(x + args[0], y + args[1], args[2], args[3]);
 		}
 		
@@ -145,7 +188,7 @@ package laya.renders {
 			//this.ctx.fillStyle = color;
 			this.ctx.fillRect(x + this.x, y + this.y, width, height, fillStyle);
 		}
-		public var _fillRect:Function=function(x:Number, y:Number, args:Array):void {
+		public var _fillRect:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.fillRect(x + args[0], y + args[1], args[2], args[3], args[4]);
 		}
 		
@@ -160,13 +203,15 @@ package laya.renders {
 		}
 		
 		public var _drawCircle:Function = function(x:Number, y:Number, args:Array):void {
-			Stat.drawCall++;
 			var ctx:* = this.ctx;
+			Render.isWebGL && ctx.setPathId(args[6]);
+			Stat.drawCall++;
 			ctx.beginPath();
+			Render.isWebGL && ctx.movePath(args[0] + x, args[1] + y);
 			ctx.arc(args[0] + x, args[1] + y, args[2], 0, PI2);
 			ctx.closePath();
 			//绘制
-			this._fillAndStroke(args[3], args[4], args[5],true);
+			this._fillAndStroke(args[3], args[4], args[5], true);
 		}
 		
 		public function fillCircle(x:Number, y:Number, radius:Number, color:String):void {
@@ -177,7 +222,7 @@ package laya.renders {
 			ctx.arc(x + this.x, y + this.y, radius, 0, PI2);
 			ctx.fill();
 		}
-		public var _fillCircle:Function=function(x:Number, y:Number, args:Array):void {
+		public var _fillCircle:Function = function(x:Number, y:Number, args:Array):void {
 			Stat.drawCall++;
 			var ctx:* = this.ctx;
 			ctx.beginPath();
@@ -189,7 +234,7 @@ package laya.renders {
 		public function setShader(shader:*):void {
 			this.ctx.setShader(shader);
 		}
-		public var _setShader:Function=function(x:Number, y:Number, args:Array):void {
+		public var _setShader:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.setShader(args[0]);
 		}
 		
@@ -202,40 +247,55 @@ package laya.renders {
 			ctx.lineTo(this.x + toX, this.y + toY);
 			ctx.stroke();
 		}
-		public var _drawLine:Function=function(x:Number, y:Number, args:Array):void {
+		public var _drawLine:Function = function(x:Number, y:Number, args:Array):void {
 			var ctx:* = this.ctx;
+			Render.isWebGL && ctx.setPathId(args[6]);
 			ctx.beginPath();
 			ctx.strokeStyle = args[4];
 			ctx.lineWidth = args[5];
-			ctx.moveTo(x + args[0], y + args[1]);
-			ctx.lineTo(x + args[2], y + args[3]);
-			ctx.stroke();
-		}
-		
-		public var _drawLines:Function=function(x:Number, y:Number, args:Array):void {
-			var ctx:* = this.ctx;
-			ctx.beginPath();
-			ctx.strokeStyle = args[3];
-			ctx.lineWidth = args[4];
-			
-			var points:Array = args[2];
-			x += args[0], y += args[1];
-			ctx.moveTo(x + points[0], y + points[1]);
-			
-			var i:int = 2, n:int = points.length;
-			while (i < n) {
-				ctx.lineTo(x + points[i++], y + points[i++]);
+			if (Render.isWebGL) {
+				ctx.movePath(x, y);
+				ctx.moveTo(args[0], args[1]);
+				ctx.lineTo(args[2], args[3]);
+			} else {
+				ctx.moveTo(x + args[0], y + args[1]);
+				ctx.lineTo(x + args[2], y + args[3]);
 			}
 			ctx.stroke();
 		}
 		
-		public var _drawLinesWebGL:Function=function(x:Number, y:Number, args:Array):void {
+		public var _drawLines:Function = function(x:Number, y:Number, args:Array):void {
+			var ctx:* = this.ctx;
+			Render.isWebGL && ctx.setPathId(args[5]);
+			ctx.beginPath();
+			x += args[0], y += args[1];
+			Render.isWebGL && ctx.movePath(x, y);
+			ctx.strokeStyle = args[3];
+			ctx.lineWidth = args[4];
+			var points:Array = args[2];
+			var i:int = 2, n:int = points.length;
+			if (Render.isWebGL) {
+				ctx.moveTo(points[0], points[1]);
+				while (i < n) {
+					ctx.lineTo(points[i++], points[i++]);
+				}
+			} else {
+				ctx.moveTo(x + points[0], y + points[1]);
+				while (i < n) {
+					ctx.lineTo(x + points[i++], y + points[i++]);
+				}
+			}
+			ctx.stroke();
+		}
+		
+		public var _drawLinesWebGL:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.drawLines(x + this.x + args[0], y + this.y + args[1], args[2], args[3], args[4]);
 		}
 		
 		//x:Number, y:Number, points:Array, lineColor:String, lineWidth:Number = 1
-		public var _drawCurves:Function=function(x:Number, y:Number, args:Array):void {
+		public var _drawCurves:Function = function(x:Number, y:Number, args:Array):void {
 			var ctx:* = this.ctx;
+			Render.isWebGL && ctx.setPathId(-1);
 			ctx.beginPath();
 			ctx.strokeStyle = args[3];
 			ctx.lineWidth = args[4];
@@ -251,7 +311,7 @@ package laya.renders {
 			ctx.stroke();
 		}
 		
-		public var _draw:Function=function(x:Number, y:Number, args:Array):void {
+		public var _draw:Function = function(x:Number, y:Number, args:Array):void {
 			args[0].call(null, this, x, y);
 		}
 		
@@ -263,7 +323,7 @@ package laya.renders {
 			
 			this.ctx.transformByMatrix(value);
 		}
-		public var _transformByMatrix:Function=function(x:Number, y:Number, args:Array):void {
+		public var _transformByMatrix:Function = function(x:Number, y:Number, args:Array):void {
 			
 			this.ctx.transformByMatrix(args[0]);
 		}
@@ -271,42 +331,42 @@ package laya.renders {
 		public function setTransform(a:Number, b:Number, c:Number, d:Number, tx:Number, ty:Number):void {
 			this.ctx.setTransform(a, b, c, d, tx, ty);
 		}
-		public var _setTransform:Function=function(x:Number, y:Number, args:Array):void {
+		public var _setTransform:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.setTransform(args[0], args[1], args[2], args[3], args[4], args[5]);
 		}
 		
 		public function setTransformByMatrix(value:Matrix):void {
 			this.ctx.setTransformByMatrix(value);
 		}
-		public var _setTransformByMatrix:Function=function(x:Number, y:Number, args:Array):void {
+		public var _setTransformByMatrix:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.setTransformByMatrix(args[0]);
 		}
 		
 		public function save():void {
 			this.ctx.save();
 		}
-		public var _save:Function=function(x:Number, y:Number, args:Array):void {
+		public var _save:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.save();
 		}
 		
 		public function restore():void {
 			this.ctx.restore();
 		}
-		public var _restore:Function=function(x:Number, y:Number, args:Array):void {
+		public var _restore:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.restore();
 		}
 		
 		public function translate(x:Number, y:Number):void {
 			this.ctx.translate(x, y);
 		}
-		public var _translate:Function=function(x:Number, y:Number, args:Array):void {
+		public var _translate:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.translate(args[0], args[1]);
 		}
 		
 		public function transform(a:Number, b:Number, c:Number, d:Number, tx:Number, ty:Number):void {
 			this.ctx.transform(a, b, c, d, tx, ty);
 		}
-		public var _transform:Function=function(x:Number, y:Number, args:Array):void {
+		public var _transform:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.translate(args[1] + x, args[2] + y);
 			var mat:Matrix = args[0];
 			this.ctx.transform(mat.a, mat.b, mat.c, mat.d, mat.tx, mat.ty);
@@ -316,17 +376,16 @@ package laya.renders {
 		public function rotate(angle:Number):void {
 			this.ctx.rotate(angle);
 		}
-		public var _rotate:Function=function(x:Number, y:Number, args:Array):void {
+		public var _rotate:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.translate(args[1] + x, args[2] + y);
 			this.ctx.rotate(args[0]);
 			this.ctx.translate(-x - args[1], -y - args[2]);
 		}
 		
-		
 		public function scale(scaleX:Number, scaleY:Number):void {
 			this.ctx.scale(scaleX, scaleY);
 		}
-		public var _scale:Function=function(x:Number, y:Number, args:Array):void {
+		public var _scale:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.translate(args[2] + x, args[3] + y);
 			this.ctx.scale(args[0], args[1]);
 			this.ctx.translate(-x - args[2], -y - args[3]);
@@ -334,15 +393,15 @@ package laya.renders {
 		
 		public function alpha(value:Number):void {
 			this.ctx.globalAlpha *= value;
-		}		
-		public var _alpha:Function=function(x:Number, y:Number, args:Array):void {
+		}
+		public var _alpha:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.globalAlpha *= args[0];
 		}
 		
 		public function setAlpha(value:Number):void {
 			this.ctx.globalAlpha = value;
-		}		
-		public var _setAlpha:Function=function(x:Number, y:Number, args:Array):void {
+		}
+		public var _setAlpha:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.globalAlpha = args[0];
 		}
 		
@@ -353,25 +412,25 @@ package laya.renders {
 		public function fillText(text:String, x:Number, y:Number, font:String, color:String, textAlign:String):void {
 			this.ctx.fillText(text, x + this.x, y + this.y, font, color, textAlign);
 		}
-		public var _fillText:Function=function(x:Number, y:Number, args:Array):void {
+		public var _fillText:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.fillText(args[0], args[1] + x, args[2] + y, args[3], args[4], args[5]);
 		}
 		
 		public function strokeText(text:String, x:Number, y:Number, font:String, color:String, lineWidth:Number, textAlign:String):void {
 			ctx.strokeText(text, x + this.x, y + this.y, font, color, lineWidth, textAlign);
 		}
-		public var _strokeText:Function=function(x:Number, y:Number, args:Array):void {
+		public var _strokeText:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.strokeText(args[0], args[1] + x, args[2] + y, args[3], args[4], args[5], args[6]);
 		}
 		
-		public var _fillBorderText:Function=function(x:Number, y:Number, args:Array):void {
+		public var _fillBorderText:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.fillBorderText(args[0], args[1] + x, args[2] + y, args[3], args[4], args[5], args[6], args[7]);
 		}
 		
 		public function blendMode(type:String):void {
 			this.ctx.globalCompositeOperation = type;
 		}
-		public var _blendMode:Function=function(x:Number, y:Number, args:Array):void {
+		public var _blendMode:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.globalCompositeOperation = args[0];
 		}
 		
@@ -386,7 +445,7 @@ package laya.renders {
 		public function beginClip(x:Number, y:Number, w:Number, h:Number):void {
 			this.ctx.beginClip && this.ctx.beginClip(x, y, w, h);
 		}
-		public var _beginClip:Function=function(x:Number, y:Number, args:Array):void {
+		public var _beginClip:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.beginClip && this.ctx.beginClip(x + args[0], y + args[1], args[2], args[3]);
 		}
 		
@@ -394,27 +453,28 @@ package laya.renders {
 			this.ctx.endClip && this.ctx.endClip();
 		}
 		
-		public var _setIBVB:Function=function(x:Number, y:Number, args:Array):void {
+		public var _setIBVB:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.setIBVB(args[0] + x, args[1] + y, args[2], args[3], args[4], args[5], args[6], args[7]);
 		}
 		
 		public function fillTrangles(x:Number, y:Number, args:Array):void {
 			this.ctx.fillTrangles(args[0], args[1], args[2], args[3], args.length > 4 ? args[4] : null);
 		}
-		public var _fillTrangles:Function=function(x:Number, y:Number, args:Array):void {
+		public var _fillTrangles:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.fillTrangles(args[0], args[1] + x, args[2] + y, args[3], args[4]);
 		}
 		
 		//x:Number, y:Number, paths:Array, brush:Object = null, pen:Object = null
-		public var _drawPath:Function=function(x:Number, y:Number, args:Array):void {
+		public var _drawPath:Function = function(x:Number, y:Number, args:Array):void {
 			//形成路径
 			var ctx:* = this.ctx;
+			Render.isWebGL && ctx.setPathId(-1);
 			ctx.beginPath();
 			x += args[0], y += args[1];
 			
 			var paths:Array = args[2];
 			for (var i:int = 0, n:int = paths.length; i < n; i++) {
-			
+				
 				var path:Array = paths[i];
 				switch (path[0]) {
 				case "moveTo": 
@@ -451,28 +511,37 @@ package laya.renders {
 		
 		//这个和_drawPoly的区别？
 		//		polygon(x:Number,y:Number,r:Number,edges:Number,color:uint,borderWidth:int=2,borderColor:uint=0)
-		public var drawPoly:Function=function(x:Number, y:Number, args:Array):void {
+		public var drawPoly:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.drawPoly(x + this.x + args[0], y + this.y + args[1], args[2], args[3], args[4], args[5], args[6]);
 		}
 		//x:Number, y:Number, points:Array, fillColor:String, lineColor:String = null, lineWidth:Number = 1
-		public var _drawPoly:Function=function(x:Number, y:Number, args:Array):void {
+		public var _drawPoly:Function = function(x:Number, y:Number, args:Array):void {
 			var ctx:* = this.ctx;
-			ctx.beginPath();
-			
 			var points:Array = args[2];
-			x += args[0], y += args[1];
-			ctx.moveTo(x + points[0], y + points[1]);
-			
 			var i:int = 2, n:int = points.length;
-			while (i < n) {
-				ctx.lineTo(x + points[i++], y + points[i++]);
+			if (Render.isWebGL) {
+				ctx.setPathId(args[6]);
+				ctx.beginPath();
+				x += args[0], y += args[1];
+				ctx.movePath(x, y);
+				ctx.moveTo(points[0], points[1]);
+				while (i < n) {
+					ctx.lineTo(points[i++], points[i++]);
+				}
+			} else {
+				ctx.beginPath();
+				x += args[0], y += args[1];
+				ctx.moveTo(x + points[0], y + points[1]);
+				while (i < n) {
+					ctx.lineTo(x + points[i++], y + points[i++]);
+				}
+				
 			}
 			ctx.closePath();
-			
-			this._fillAndStroke(args[3], args[4], args[5]);
+			this._fillAndStroke(args[3], args[4], args[5], args[7]);
 		}
 		
-		public var _drawParticle:Function=function(x:Number, y:Number, args:Array):void {
+		public var _drawParticle:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.drawParticle(x + this.x, y + this.y, args[0]);
 		}
 	}

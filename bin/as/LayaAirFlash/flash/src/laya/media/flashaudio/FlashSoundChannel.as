@@ -1,41 +1,23 @@
 /*[IF-FLASH]*/
-package laya.media
+package laya.media.flashaudio
 {
 	import flash.events.Event;
 	import flash.media.SoundChannel;
 	import flash.media.SoundTransform;
 	import laya.events.EventDispatcher;
+	import laya.media.SoundManager;
 	import laya.utils.Handler;
 	
 	/**
 	 * <code>SoundChannel</code> 用来控制程序中的声音。
 	 */
-	public class SoundChannel extends EventDispatcher
+	public class FlashSoundChannel extends laya.media.SoundChannel
 	{
-		/**
-		 * 声音地址。
-		 */
-		public var url:String;
-		/**
-		 * 循环次数。
-		 */
-		public var loops:int;
-		/**
-		 * 开始时间。
-		 */
-		public var startTime:Number;
-		/**
-		 * 表示声音是否已暂停。
-		 */
-		public var isStopped:Boolean = false;
-		/**
-		 * 播放完成处理器。
-		 */
-		public var completeHandler:Handler;
 		
-		private var _channel:flash.media.SoundChannel;
 		
-		public function set volume(v:Number):void
+		private var _channel:SoundChannel;
+		
+		override public function set volume(v:Number):void
 		{
 			if (!_channel) return;
 			var st:SoundTransform = new SoundTransform();
@@ -46,7 +28,7 @@ package laya.media
 		/**
 		 * 音量。
 		 */
-		public function get volume():Number
+		override public function get volume():Number
 		{
 			if (!_channel) return 0;
 			return _channel.soundTransform.volume;
@@ -55,7 +37,7 @@ package laya.media
 		/**
 		 * 获取当前播放时间。
 		 */
-		public function get position():Number
+		override public function get position():Number
 		{
 			if (!_channel) return 0;
 			return _channel.position;
@@ -79,7 +61,7 @@ package laya.media
 		/**
 		 * 播放。
 		 */
-		public function play():void
+		override public function play():void
 		{
 		
 		}
@@ -87,7 +69,7 @@ package laya.media
 		/**
 		 * 停止。
 		 */
-		public function stop():void
+		override public function stop():void
 		{
 			if (completeHandler)
 			{

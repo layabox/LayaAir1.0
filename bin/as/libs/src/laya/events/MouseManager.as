@@ -4,8 +4,8 @@ package laya.events {
 	import laya.maths.Matrix;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
-	import laya.renders.Render;
 	import laya.utils.Browser;
+	import laya.display.Input;
 	
 	/**
 	 * <code>MouseManager</code> 是鼠标、触摸交互管理器。
@@ -45,18 +45,18 @@ package laya.events {
 		 * @private
 		 * 初始化。
 		 */
-		public function __init__():void {
-			this._stage = Laya.stage;
+		public function __init__(stage:Stage, canvas:*):void {
+			this._stage = stage;
 			var _this:MouseManager = this;
-			var canvas:* = Render.canvas;
+			//var canvas:* = Render.canvas;
 			var list:Array = _eventList;
 			
-			Browser.document.oncontextmenu = function(e:*):* {
+			canvas.oncontextmenu = function(e:*):* {
 				if (enabled) return false;
 			}
 			canvas.addEventListener('mousedown', function(e:*):void {
 				if (enabled) {
-					e.preventDefault();
+					if(!Input.IOS_QQ_IFRAME) e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = Browser.now();
 				}
@@ -85,14 +85,14 @@ package laya.events {
 			})
 			canvas.addEventListener("touchstart", function(e:*):void {
 				if (enabled) {
-					e.preventDefault();
+					if(!Input.IOS_QQ_IFRAME) e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = Browser.now();
 				}
 			});
 			canvas.addEventListener("touchend", function(e:*):void {
 				if (enabled) {
-					e.preventDefault();
+					if(!Input.IOS_QQ_IFRAME) e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = -Browser.now();
 				}
@@ -112,7 +112,7 @@ package laya.events {
 		}
 		
 		private function initEvent(e:*, nativeEvent:* = null):void {
-			var _this:MouseManager = MouseManager.instance;
+			var _this:MouseManager = this;
 			
 			_this._event._stoped = false;
 			_this._event.nativeEvent = nativeEvent || e;

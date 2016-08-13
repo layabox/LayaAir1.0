@@ -478,6 +478,7 @@ package laya.utils {
 		 * @return 读取的字符串。
 		 */
 		public function readUTFBytes(len:int = -1):String {
+			if(len==0) return "";
 			len = len > 0 ? len : bytesAvailable;
 			return rUTF(len);
 		}
@@ -490,6 +491,12 @@ package laya.utils {
 			ensureWrite(this._pos_ + 1);
 			_d_.setInt8(this._pos_, value);
 			this._pos_ += 1;
+		}
+		/**
+		 * 在字节流中读一个字节。
+		 */
+		public function readByte():int {
+			return _d_.getInt8(_pos_++);
 		}
 		
 		/**

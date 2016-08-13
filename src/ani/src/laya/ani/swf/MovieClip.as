@@ -46,6 +46,8 @@ package laya.ani.swf {
 		/**@private */
 		protected var _curIndex:int;
 		/**@private */
+		protected var _preIndex:int;
+		/**@private */
 		protected var _playIndex:int;
 		/**@private */
 		protected var _playing:Boolean;
@@ -72,6 +74,7 @@ package laya.ani.swf {
 
 		/**
 		 * 创建一个 <code>MovieClip</code> 实例。
+		 * @param parentMovieClip 父MovieClip,自己创建时不需要传该参数
 		 */
 		public function MovieClip(parentMovieClip:MovieClip = null) {
 			_ids = {};
@@ -91,7 +94,7 @@ package laya.ani.swf {
 		
 		/** @inheritDoc */
 		override public function destroy(destroyChild:Boolean = true):void {
-			clear();
+			_clear();
 			super.destroy(destroyChild);
 		}
 		
@@ -157,6 +160,13 @@ package laya.ani.swf {
 		}
 		
 		/**
+		 * 是否在播放中
+		 */
+		public function get playing():Boolean
+		{
+			return _playing;
+		}
+		/**
 		 * @private
 		 * 动画的帧更新处理函数。
 		 */
@@ -193,9 +203,11 @@ package laya.ani.swf {
 		}
 		
 		/**
+		 * @private
 		 * 清理。
 		 */
-		public function clear():void {
+		private function _clear():void {
+			stop();
 			_idOfSprite.length = 0;
 			if (!_parentMovieClip) {
 				Laya.timer.clear(this, updates);
@@ -234,7 +246,7 @@ package laya.ani.swf {
 		/**@private */
 		private function _reset(rm:Boolean = true):void {
 			if (rm && _curIndex != 1) this.removeChildren();
-			_curIndex = -1;
+			_preIndex=_curIndex = -1;
 			_Pos = _start;
 		}
 		
@@ -247,10 +259,10 @@ package laya.ani.swf {
 			_data.pos = _Pos;
 			_ended = false;
 			_playIndex = frameIndex;
-			if (_curIndex > frameIndex)
+			if (_curIndex > frameIndex&&frameIndex<_preIndex)
 			{
-				_curIndex = -1;
-				_data.pos = _Pos=_start;
+				_reset(true);
+				_data.pos = _Pos;
 			} 
 			while ((_curIndex <= frameIndex) && (!_ended)) {
 				type = _data.getUint16();
@@ -332,7 +344,6 @@ package laya.ani.swf {
 				case 99: //FrameBegin				
 					_curIndex = _data.getUint16();
 					ifAdd && this.updateZOrder();
-					_playing && _curIndex > _playIndex && event(Event.FRAME);
 					break;
 				case 100: //cmdEnd
 					_count = _curIndex + 1;
@@ -347,6 +358,7 @@ package laya.ani.swf {
 					break;
 				}
 			}
+			if (_playing&&!_ended) event(Event.FRAME);
 			_Pos = _data.pos;
 		}
 		
@@ -371,7 +383,7 @@ package laya.ani.swf {
 			url = URL.formatURL(url);
 			basePath = url.split(".swf")[0] + "/image/";
 			stop();
-			clear();
+			_clear();
 			_movieClipList = [this];
 			var data:* = Loader.getRes(url);
 			if (data) {

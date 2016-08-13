@@ -9,6 +9,7 @@ package laya.display {
 	import laya.utils.Browser;
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
+	import laya.utils.VectorGraphManager;
 	
 	/**
 	 * stage大小经过重新调整时进行调度。
@@ -92,7 +93,9 @@ package laya.display {
 		public var desginHeight:Number = 0;
 		/**画布是否发生翻转。*/
 		public var canvasRotation:Boolean = false;
-		/**设置是否渲染，设置为true，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟*/
+		/**画布旋转角度。*/
+		public var canvasDegree:int = 0;
+		/**设置是否渲染，设置为false，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟*/
 		public var renderingEnabled:Boolean = true;
 		
 		/** @private */
@@ -135,7 +138,6 @@ package laya.display {
 			if (typeof document.hidden !== "undefined") {
 				visibilityChange = "visibilitychange";
 				state = "visibilityState";
-				
 			} else if (typeof document.mozHidden !== "undefined") {
 				visibilityChange = "mozvisibilitychange";
 				state = "mozVisibilityState";
@@ -183,12 +185,16 @@ package laya.display {
 			return (Browser.onMobile && Input.isInputting);
 		}
 		
-		/**设置场景设计宽高*/
-		override public function size(width:Number, height:Number):Sprite {
-			this.desginWidth = this.width = width;
-			this.desginHeight = this.height = height;
+		override public function set width(value:Number):void {
+			this.desginWidth = value;
+			super.width = value;
 			Laya.timer.callLater(this, _changeCanvasSize);
-			return this;
+		}
+		
+		override public function set height(value:Number):void {
+			this.desginHeight = value;
+			super.height = value;
+			Laya.timer.callLater(this, _changeCanvasSize);
 		}
 		
 		/** @private */
@@ -197,7 +203,7 @@ package laya.display {
 		}
 		
 		/** @private */
-		private function _resetCanvas():void {
+		protected function _resetCanvas():void {
 			var canvas:HTMLCanvas = Render._mainCanvas;
 			var canvasStyle:* = canvas.source.style;
 			canvas.size(1, 1);
@@ -309,17 +315,22 @@ package laya.display {
 			}
 			offset.x += _offset.x;
 			offset.y += _offset.y;
-			canvasStyle.top = _safariOffsetY+"px";
+			offset.x = Math.round(offset.x);
+			offset.y = Math.round(offset.y);
+			canvasStyle.top = _safariOffsetY + "px";
 			mat.translate(offset.x, offset.y);
 			
 			//处理横竖屏
+			canvasDegree = 0;
 			if (rotation) {
 				if (_screenMode === SCREEN_HORIZONTAL) {
 					mat.rotate(Math.PI / 2);
 					mat.translate(screenHeight / pixelRatio, 0);
+					canvasDegree = 90;
 				} else {
 					mat.rotate(-Math.PI / 2);
 					mat.translate(0, screenWidth / pixelRatio);
+					canvasDegree = -90;
 				}
 			}
 			
@@ -472,7 +483,7 @@ package laya.display {
 			var frameMode:String = frameRate === FRAME_MOUSE ? (((Browser.now() - _mouseMoveTime) < 2000) ? FRAME_FAST : FRAME_SLOW) : frameRate;
 			var isFastMode:Boolean = (frameMode !== FRAME_SLOW);
 			var isDoubleLoop:Boolean = (_renderCount % 2 === 0);
-			var ctx:* = Render.context;
+			var ctx:* = context;
 			
 			Stat.renderSlow = !isFastMode;
 			
@@ -499,6 +510,7 @@ package laya.display {
 				context.flush();
 				RunDriver.endFinish();
 			}
+			VectorGraphManager.instance && VectorGraphManager.getInstance().endDispose();
 		}
 		
 		/**是否开启全屏，用户点击后进入全屏*/

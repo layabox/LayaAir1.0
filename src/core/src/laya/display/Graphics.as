@@ -13,6 +13,7 @@ package laya.display {
 	import laya.resource.Texture;
 	import laya.utils.Handler;
 	import laya.utils.Utils;
+	import laya.utils.VectorGraphManager;
 	
 	/**
 	 * <code>Graphics</code> 类用于创建绘图显示对象。
@@ -45,33 +46,58 @@ package laya.display {
 		/**@private */
 		private var _rstBoundPoints:Array;
 		/**@private */
+		private var _vectorgraphArray:Array;
+		
+		/**@private */
 		public static function __init__():void {
-		   if (Render.isConchNode)
-		   {
-			   var from:*= Graphics.prototype;
-			   var to:*= __JS__("ConchGraphics.prototype");
-			   var list:Array = ["clear","destroy","alpha","rotate","transform","scale","translate","save","restore","clipRect","blendMode","fillText","fillBorderText","_fands","drawRect","drawCircle","drawPie","drawPoly","drawPath","drawImageM","drawLine","drawLines","_drawPs","drawCurves","replaceText","replaceTextColor"];
-			   for (var i:int = 0,len:int=list.length;i <=len; i++)
-			   {
-				   var temp:String=list[i];
-				   from[temp] = to[temp];
-			   }
-			   from._saveToCmd = null;
-			   from.drawTexture= function(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, m:Matrix = null):void {
+			if (Render.isConchNode) {
+				var from:* = Graphics.prototype;
+				var to:* = __JS__("ConchGraphics.prototype");
+				var list:Array = ["clear", "destroy", "alpha", "rotate", "transform", "scale", "translate", "save", "restore", "clipRect", "blendMode", "fillText", "fillBorderText", "_fands", "drawRect", "drawCircle", "drawPie", "drawPoly", "drawPath", "drawImageM", "drawLine", "drawLines", "_drawPs", "drawCurves", "replaceText", "replaceTextColor", "_fillImage", "fillTexture"];
+				for (var i:int = 0, len:int = list.length; i <= len; i++) {
+					var temp:String = list[i];
+					from[temp] = to[temp];
+				}
+				from._saveToCmd = null;
+				from.drawTexture = function(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null):void {
+					if (!(tex.loaded && tex.bitmap && tex.source))//source内调用tex.active();
+					{
+						return;
+					}
 					if (!width) width = tex.sourceWidth;
 					if (!height) height = tex.sourceHeight;
 					
 					width = width - tex.sourceWidth + tex.width;
 					height = height - tex.sourceHeight + tex.height;
-					if (width <= 0 || height <= 0)  return;
+					if (width <= 0 || height <= 0) return;
 					
 					//处理透明区域裁剪
 					x += tex.offsetX;
-					y += tex.offsetY;			
+					y += tex.offsetY;
 					var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
-					this.drawImageM(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x , y , width, height,m);
+					this.drawImageM(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x, y, width, height, m);
 				}
-		   }
+				from.fillTexture = function(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, type:String = "repeat", offset:Point = null):void {
+					if (tex.loaded) {
+						var ctxi:* = Render._context.ctx;
+						var w:Number = tex.bitmap.width, h:Number = tex.bitmap.height, uv:Array = tex.uv;
+						var pat:*;
+						if (tex.uv != Texture.DEF_UV) {
+							pat = ctxi.createPattern(tex.bitmap.source, type, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h);
+						} else {
+							pat = ctxi.createPattern(tex.bitmap.source, type);
+						}
+						var sX:Number = 0, sY:Number = 0;
+						if (offset) {
+							x += offset.x % tex.width;
+							y += offset.y % tex.height;
+							sX -= offset.x % tex.width;
+							sY -= offset.y % tex.height;
+						}
+						this._fillImage(pat, x, y, sX, sY, width, height);
+					}
+				}
+			}
 		}
 		
 		/**
@@ -79,10 +105,9 @@ package laya.display {
 		 */
 		public function Graphics() {
 			_render = _renderEmpty;
-			if (Render.isConchNode)
-			{
-			 __JS__("this._nativeObj=new _conchGraphics();");
-			 __JS__("this.id=this._nativeObj.conchID;");
+			if (Render.isConchNode) {
+				__JS__("this._nativeObj=new _conchGraphics();");
+				__JS__("this.id=this._nativeObj.conchID;");
 			}
 		}
 		
@@ -109,6 +134,13 @@ package laya.display {
 			_sp && (_sp._renderType &= ~RenderSprite.IMAGE);
 			_sp && (_sp._renderType &= ~RenderSprite.GRAPHICS);
 			_repaint();
+			if (_vectorgraphArray) {
+				for (var i:int = 0, n:int = _vectorgraphArray.length; i < n; i++) {
+					VectorGraphManager.getInstance().deleteShape(_vectorgraphArray[i]);
+				}
+				_vectorgraphArray.length = 0;
+			}
+		
 		}
 		
 		/**
@@ -162,10 +194,9 @@ package laya.display {
 			return _rstBoundPoints = Utils.copyArray(_rstBoundPoints, _temp);
 		}
 		
-		private function _addCmd(a:Array):void
-		{
-			this._cmds=this._cmds||[];
-			a.callee=a.shift();
+		private function _addCmd(a:Array):void {
+			this._cmds = this._cmds || [];
+			a.callee = a.shift();
 			this._cmds.push(a);
 		}
 		
@@ -186,7 +217,7 @@ package laya.display {
 			
 			var matrixs:Array;
 			matrixs = _tempMatrixArrays;
-			matrixs.length=0;
+			matrixs.length = 0;
 			var tMatrix:Matrix = _initMatrix;
 			tMatrix.identity();
 			var tempMatrix:Matrix = _tempMatrix;
@@ -238,14 +269,16 @@ package laya.display {
 					_switchMatrix(tMatrix, tempMatrix);
 					break;
 				case 16://case context._drawTexture: 
+				case 24://case context._fillTexture
 					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0], cmd[1], cmd[2], cmd[3]), tMatrix);
 					break;
 				case 17://case context._drawTextureTransform: 
 					tMatrix.copyTo(tempMatrix);
 					tempMatrix.concat(cmd[4]);
-					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0],cmd[1], cmd[2], cmd[3]), tempMatrix);
+					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0], cmd[1], cmd[2], cmd[3]), tempMatrix);
 					break;
-				case context._drawTexture:
+				case context._drawTexture: 
+				case context._fillTexture: 
 					if (cmd[3] && cmd[4]) {
 						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
 					} else {
@@ -253,7 +286,7 @@ package laya.display {
 						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), tMatrix);
 					}
 					break;
-				case context._drawTextureWithTransform:
+				case context._drawTextureWithTransform: 
 					tMatrix.copyTo(tempMatrix);
 					tempMatrix.concat(cmd[5]);
 					if (cmd[3] && cmd[4]) {
@@ -275,8 +308,17 @@ package laya.display {
 				case context._drawLine: 
 				case 20://drawLine
 					_tempPoints.length = 0;
-					_tempPoints.push(cmd[0], cmd[1], cmd[2], cmd[3]);
-					_addPointArrToRst(rst,_tempPoints, tMatrix);
+					var lineWidth:Number;
+					lineWidth = cmd[5] * 0.5;
+					if (cmd[0] == cmd[2]) {
+						_tempPoints.push(cmd[0] + lineWidth, cmd[1], cmd[2] + lineWidth, cmd[3], cmd[0] - lineWidth, cmd[1], cmd[2] - lineWidth, cmd[3]);
+					} else if (cmd[1] == cmd[3]) {
+						_tempPoints.push(cmd[0], cmd[1] + lineWidth, cmd[2], cmd[3] + lineWidth, cmd[0], cmd[1] - lineWidth, cmd[2], cmd[3] - lineWidth);
+					} else {
+						_tempPoints.push(cmd[0], cmd[1], cmd[2], cmd[3]);
+					}
+					
+					_addPointArrToRst(rst, _tempPoints, tMatrix);
 					break;
 				case context._drawCurves: 
 				case 22://context._drawCurves: 
@@ -338,12 +380,13 @@ package laya.display {
 		 * @param	m 矩阵信息。
 		 */
 		public function drawTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, m:Matrix = null):void {
+			if (!tex) return;
 			if (!width) width = tex.sourceWidth;
 			if (!height) height = tex.sourceHeight;
 			
 			width = width - tex.sourceWidth + tex.width;
 			height = height - tex.sourceHeight + tex.height;
-			if (width <= 0 || height <= 0) return;
+			if (tex.loaded && (width <= 0 || height <= 0)) return;
 			
 			//处理透明区域裁剪
 			x += tex.offsetX;
@@ -358,14 +401,36 @@ package laya.display {
 				_render = _renderOneImg;
 			} else {
 				_saveToCmd(args.callee, args);
-			}			
+			}
+			if (!tex.loaded) {
+				tex.once(Event.LOADED, this, _textureLoaded, [tex, args]);
+			}
 			_repaint();
 		}
 		
+		/**
+		 * 用texture填充
+		 * @param	tex 纹理。
+		 * @param	x X 轴偏移量。
+		 * @param	y Y 轴偏移量。
+		 * @param	width 宽度。
+		 * @param	height 高度。
+		 * @param 	type 填充类型 repeat|repeat-x|repeat-y|no-repeat
+		 * @param	offset 贴图纹理偏移
+		 *
+		 */
+		public function fillTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, type:String = "repeat", offset:Point = null):void {
+			if (!tex) return;
+			var args:* = [tex, x, y, width, height, type, offset];
+			if (!tex.loaded) {
+				tex.once(Event.LOADED, this, _textureLoaded, [tex, args]);
+			}
+			_saveToCmd(Render._context._fillTexture, args);
+		}
+		
 		private function _textureLoaded(tex:Texture, param:Array):void {
-			tex.off(Event.LOADED, this, _textureLoaded);
-			param[3] = tex.width;
-			param[4] = tex.height;
+			param[3] = param[3] || tex.width;
+			param[4] = param[4] || tex.height;
 			_repaint();
 		}
 		
@@ -401,7 +466,7 @@ package laya.display {
 		 * @param	height 高度。
 		 */
 		public function clipRect(x:Number, y:Number, width:Number, height:Number):void {
-			_saveToCmd(Render._context._clipRect, [x,y,width,height]);
+			_saveToCmd(Render._context._clipRect, [x, y, width, height]);
 		}
 		
 		/**
@@ -523,9 +588,9 @@ package laya.display {
 					else _one[0].setText(text);
 					return true;
 				}
-			}else {
+			} else {
 				for (var i:int = cmds.length - 1; i > -1; i--) {
-				if (_isTextCmd(cmds[i].callee)) {
+					if (_isTextCmd(cmds[i].callee)) {
 						if (cmds[i][0].toUpperCase) cmds[i][0] = text;
 						else cmds[i][0].setText(text);
 						return true;
@@ -630,7 +695,10 @@ package laya.display {
 		 * @param	lineWidth 线条宽度。
 		 */
 		public function drawLine(fromX:Number, fromY:Number, toX:Number, toY:Number, lineColor:String, lineWidth:Number = 1):void {
-			var arr:Array = [fromX + 0.5, fromY + 0.5, toX + 0.5, toY + 0.5, lineColor, lineWidth];
+			var tId:uint = VectorGraphManager.getInstance().getId();
+			if (_vectorgraphArray == null) _vectorgraphArray = [];
+			_vectorgraphArray.push(tId);
+			var arr:Array = [fromX + 0.5, fromY + 0.5, toX + 0.5, toY + 0.5, lineColor, lineWidth, tId];
 			_saveToCmd(Render._context._drawLine, arr);
 		}
 		
@@ -643,7 +711,10 @@ package laya.display {
 		 * @param	lineWidth 线段宽度。
 		 */
 		public function drawLines(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):void {
-			var arr:Array = [x + 0.5, y + 0.5, points, lineColor, lineWidth];
+			var tId:uint = VectorGraphManager.getInstance().getId();
+			if (_vectorgraphArray == null) _vectorgraphArray = [];
+			_vectorgraphArray.push(tId);
+			var arr:Array = [x + 0.5, y + 0.5, points, lineColor, lineWidth, tId];
 			_saveToCmd(Render._context._drawLines, arr);
 		}
 		
@@ -687,7 +758,10 @@ package laya.display {
 		 */
 		public function drawCircle(x:Number, y:Number, radius:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? 0.5 : 0;
-			var arr:Array = [x + offset, y + offset, radius, fillColor, lineColor, lineWidth];
+			var tId:uint = VectorGraphManager.getInstance().getId();
+			if (_vectorgraphArray == null) _vectorgraphArray = [];
+			_vectorgraphArray.push(tId);
+			var arr:Array = [x + offset, y + offset, radius, fillColor, lineColor, lineWidth, tId];
 			_saveToCmd(Render._context._drawCircle, arr);
 		}
 		
@@ -704,7 +778,10 @@ package laya.display {
 		 */
 		public function drawPie(x:Number, y:Number, radius:Number, startAngle:Number, endAngle:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? 0.5 : 0;
-			var arr:Array = [x + offset, y + offset, radius, startAngle, endAngle, fillColor, lineColor, lineWidth];
+			var tId:uint = VectorGraphManager.getInstance().getId();
+			if (_vectorgraphArray == null) _vectorgraphArray = [];
+			_vectorgraphArray.push(tId);
+			var arr:Array = [x + offset, y + offset, radius, startAngle, endAngle, fillColor, lineColor, lineWidth, tId];
 			arr[3] = Utils.toRadian(startAngle);
 			arr[4] = Utils.toRadian(endAngle);
 			_saveToCmd(Render._context._drawPie, arr);
@@ -736,7 +813,19 @@ package laya.display {
 		 */
 		public function drawPoly(x:Number, y:Number, points:Array, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? 0.5 : 0;
-			var arr:Array = [x + offset, y + offset, points, fillColor, lineColor, lineWidth];
+			var tId:uint = VectorGraphManager.getInstance().getId();
+			if (_vectorgraphArray == null) _vectorgraphArray = [];
+			_vectorgraphArray.push(tId);
+			if (Render.isWebGL) {
+				var tIsConvexPolygon:Boolean = false;
+				//这里加入多加形是否是凸边形
+				if (points.length > 6) {
+					tIsConvexPolygon = false;
+				} else {
+					tIsConvexPolygon = true;
+				}
+			}
+			var arr:Array = [x + offset, y + offset, points, fillColor, lineColor, lineWidth, tId, tIsConvexPolygon];
 			_saveToCmd(Render._context._drawPoly, arr);
 		}
 		

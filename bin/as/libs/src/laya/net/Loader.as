@@ -2,6 +2,7 @@ package laya.net {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.media.Sound;
+	import laya.media.SoundManager;
 	import laya.resource.HTMLImage;
 	import laya.resource.Texture;
 	import laya.utils.Browser;
@@ -161,7 +162,7 @@ package laya.net {
 		 * @param	url 资源地址。
 		 */
 		protected function _loadSound(url:String):void {
-			var sound:Sound = new Sound();
+			var sound:Sound = (new SoundManager._soundClass()) as Sound;
 			var _this:Loader = this;
 			
 			sound.on(Event.COMPLETE, this, soundOnload);

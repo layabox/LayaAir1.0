@@ -227,8 +227,12 @@
 			y=curLine.y+curLine.h;
 			if (endAdjust){
 				var tY=0;
+				var tWidth=width;
+				if (widthAuto && element.width > 0){
+					tWidth=element.width;
+				}
 				for (i=0,n=lines.length;i < n;i++){
-					lines[i].updatePos(0,width,i,tY,align,valign,lineHeight);
+					lines[i].updatePos(0,tWidth,i,tY,align,valign,lineHeight);
 					tY+=Math.max(lineHeight,lines[i].h);
 				}
 				y=tY;

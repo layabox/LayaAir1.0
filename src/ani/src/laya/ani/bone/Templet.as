@@ -8,8 +8,10 @@ package laya.ani.bone {
 	import laya.display.Graphics;
 	import laya.events.Event;
 	import laya.maths.Matrix;
+	import laya.net.Loader;
 	import laya.resource.Texture;
 	import laya.utils.Byte;
+	import laya.utils.Handler;
 	
 	/**数据解析完成后的调度。
 	 * @eventType Event.COMPLETE
@@ -53,6 +55,25 @@ package laya.ani.bone {
 		
 		private var _rate:int = 60;
 		
+		public var textureDic:Object = { };
+		
+		private var _skBufferUrl:String;
+		private var _textureDic:Object = { };
+		private var _loadList:Array;
+		private var _path:String;
+		
+		public function loadAni(url:String):void
+		{
+			_skBufferUrl = url;
+			Laya.loader.load(url, Handler.create(this, onComplete), null, Loader.BUFFER);
+		}
+		
+		private function onComplete():void
+		{
+			var tSkBuffer:ArrayBuffer = Loader.getRes(_skBufferUrl);
+			_path = _skBufferUrl.slice(0,_skBufferUrl.lastIndexOf("/")) + "/";
+			parseData(null, tSkBuffer);
+		}
 		/**
 		 * 解析骨骼动画数据
 		 * @param	texture			骨骼动画用到的纹理
@@ -92,12 +113,76 @@ package laya.ani.bone {
 			}*/
 			//解析公共数据
 			if (_loaded) {
-				_parsePublicExtData();
-				this.event(Event.COMPLETE, this);
+				//这里后面要改成一个状态，直接确认是不是要不要加载外部图片
+				if (_mainTexture)
+				{
+					_parsePublicExtData();
+				}else {
+					_parseTexturePath();
+				}
 			} else {
 				this.event(Event.ERROR, this);
 				isParseFail = true;
 			}
+		}
+		
+		
+		private function _parseTexturePath():void
+		{
+			var i:int = 0;
+			_loadList = [];
+			var tByte:Byte = new Byte(getPublicExtData());
+			var tX:Number = 0, tY:Number = 0, tWidth:Number = 0, tHeight:Number = 0;
+			var tFrameX:Number = 0, tFrameY:Number = 0, tFrameWidth:Number = 0, tFrameHeight:Number = 0;
+			var tTempleData:Number = 0;
+			var tTextureLen:int = tByte.getUint8();
+			var tTextureName:String = tByte.readUTFString();
+			var tTextureNameArr:Array = tTextureName.split("\n");
+			var tTexture:Texture;
+			var tSrcTexturePath:String;
+			for (i = 0; i < tTextureLen; i++) {
+				if (this._aniVersion == "LAYAANIMATION:1.0.0")
+				{
+					tTextureName = tTextureNameArr[i];
+				}else if (this._aniVersion == "LAYAANIMATION:1.0.1")
+				{
+					tSrcTexturePath = _path + tTextureNameArr[i * 2];
+					tTextureName = tTextureNameArr[i * 2 + 1];
+				}
+				tX = tByte.getFloat32();
+				tY = tByte.getFloat32();
+				tWidth = tByte.getFloat32();
+				tHeight = tByte.getFloat32();
+				
+				tTempleData = tByte.getFloat32();
+				tFrameX = isNaN(tTempleData) ? 0 : tTempleData;
+				tTempleData = tByte.getFloat32();
+				tFrameY = isNaN(tTempleData) ? 0 : tTempleData;
+				tTempleData = tByte.getFloat32();
+				tFrameWidth = isNaN(tTempleData) ? tWidth : tTempleData;
+				tTempleData = tByte.getFloat32();
+				tFrameHeight = isNaN(tTempleData) ? tHeight : tTempleData;
+				if (_loadList.indexOf(tSrcTexturePath) == -1)
+				{
+					_loadList.push(tSrcTexturePath);
+				}
+			}
+			Laya.loader.load(_loadList, Handler.create(this, _textureComplete));
+		}
+		
+		/**
+		 * 纹理加载完成
+		 */
+		private function _textureComplete():void
+		{
+			var tTexture:Texture;
+			var tTextureName:String;
+			for (var i:int = 0, n:int = _loadList.length; i < n; i++)
+			{
+				tTextureName = _loadList[i];
+				_textureDic[tTextureName] = Loader.getRes(tTextureName);
+			}
+			_parsePublicExtData();
 		}
 		
 		/**
@@ -116,17 +201,21 @@ package laya.ani.bone {
 			var tTextureName:String = tByte.readUTFString();
 			var tTextureNameArr:Array = tTextureName.split("\n");
 			var tTexture:Texture;
-			//var tSrcTexturePath:String;
+			var tSrcTexturePath:String;
 			for (i = 0; i < tTextureLen; i++) {
+				tTexture = _mainTexture;
 				if (this._aniVersion == "LAYAANIMATION:1.0.0")
 				{
 					tTextureName = tTextureNameArr[i];
 				}else if (this._aniVersion == "LAYAANIMATION:1.0.1")
 				{
-					//tSrcTexturePath = tTextureNameArr[i * 2];
+					tSrcTexturePath = _path + tTextureNameArr[i * 2];
 					tTextureName = tTextureNameArr[i * 2 + 1];
+					if (_mainTexture == null)
+					{
+						tTexture = _textureDic[tSrcTexturePath];
+					}
 				}
-				
 				tX = tByte.getFloat32();
 				tY = tByte.getFloat32();
 				tWidth = tByte.getFloat32();
@@ -140,7 +229,7 @@ package laya.ani.bone {
 				tFrameWidth = isNaN(tTempleData) ? tWidth : tTempleData;
 				tTempleData = tByte.getFloat32();
 				tFrameHeight = isNaN(tTempleData) ? tHeight : tTempleData;
-				subTextureDic[tTextureName] = Texture.create(_mainTexture, tX, tY, tWidth, tHeight, -tFrameX, -tFrameY, tFrameWidth, tFrameHeight);
+				subTextureDic[tTextureName] = Texture.create(tTexture, tX, tY, tWidth, tHeight, -tFrameX, -tFrameY, tFrameWidth, tFrameHeight);
 			}
 			
 			var tMatrixDataLen:int = tByte.getUint16();
@@ -168,6 +257,10 @@ package laya.ani.bone {
 				tDBBoneSlot = new BoneSlot();
 				tDBBoneSlot.name = tByte.readUTFString();
 				tDBBoneSlot.parent = tByte.readUTFString();
+				if (this._aniVersion == "LAYAANIMATION:1.0.1")//8.12
+				{
+					tDBBoneSlot.attachmentName = tByte.readUTFString();
+				}
 				tDBBoneSlot.srcDisplayIndex = tDBBoneSlot.displayIndex = tByte.getInt16();
 				tDBBoneSlot.templet = this;
 				boneSlotDic[tDBBoneSlot.name] = tDBBoneSlot;
@@ -187,7 +280,7 @@ package laya.ani.bone {
 			var tSkinDataLen:int = tByte.getUint8();
 			var tSkinData:SkinData, tSlotData:SlotData, tDisplayData:SkinSlotDisplayData;
 			var tSlotDataLen:int, tDisplayDataLen:int;
-			var tBoneLen:uint, tUvLen:uint, tWeightLen:uint, tTriangleLen:uint;
+			var tBoneLen:uint, tUvLen:uint, tWeightLen:uint, tTriangleLen:uint, tVerticeLen:uint;
 			for (i = 0; i < tSkinDataLen; i++) {
 				tSkinData = new SkinData();
 				tSkinData.name = tNameArray[tNameStartIndex++];
@@ -200,6 +293,10 @@ package laya.ani.bone {
 					for (k = 0; k < tDisplayDataLen; k++) {
 						tDisplayData = new SkinSlotDisplayData();
 						tDisplayData.name = tNameArray[tNameStartIndex++];
+						if (this._aniVersion == "LAYAANIMATION:1.0.1")//8.12
+						{
+							tDisplayData.attachmentName = tNameArray[tNameStartIndex++];
+						}
 						tDisplayData.transform = new Transform();
 						tDisplayData.transform.scX = tByte.getFloat32();
 						tDisplayData.transform.skX = tByte.getFloat32();
@@ -225,77 +322,66 @@ package laya.ani.bone {
 							tDisplayData.height = tByte.getFloat32();
 							tDisplayData.type = tByte.getUint8();
 							switch (tDisplayData.type) {
-							case 1: 
-								break;
-							case 0: 
-								tBoneLen = tByte.getUint16();
-								if (tBoneLen > 0) {
-									tDisplayData.bones = [];
-									for (l = 0; l < tBoneLen; l++) {
-										tDisplayData.bones.push(tByte.getUint16());
+								case 0:
+								case 1:
+								case 2:
+									tBoneLen = tByte.getUint16();
+									if (tBoneLen > 0) {
+										tDisplayData.bones = [];
+										for (l = 0; l < tBoneLen; l++) {
+											var tBoneId:uint = tByte.getUint16();
+											tDisplayData.bones.push(tBoneId);
+										}
 									}
-								}
-								tUvLen = tByte.getUint16();
-								if (tUvLen > 0) {
-									tDisplayData.uvs = [];
-									for (l = 0; l < tUvLen; l++) {
-										tDisplayData.uvs.push(tByte.getFloat32());
+									tUvLen = tByte.getUint16();
+									if (tUvLen > 0) {
+										tDisplayData.uvs = [];
+										for (l = 0; l < tUvLen; l++) {
+											tDisplayData.uvs.push(tByte.getFloat32());
+										}
 									}
-								}
-								tWeightLen = tByte.getUint16();
-								if (tWeightLen > 0) {
-									tDisplayData.weights = [];
-									for (l = 0; l < tWeightLen; l++) {
-										tDisplayData.weights.push(tByte.getFloat32());
+									tWeightLen = tByte.getUint16();
+									if (tWeightLen > 0) {
+										tDisplayData.weights = [];
+										for (l = 0; l < tWeightLen; l++) {
+											tDisplayData.weights.push(tByte.getFloat32());
+										}
 									}
-								}
-								tTriangleLen = tByte.getUint16();
-								if (tTriangleLen > 0) {
-									tDisplayData.triangles = [];
-									for (l = 0; l < tTriangleLen; l++) {
-										tDisplayData.triangles.push(tByte.getUint16());
+									tTriangleLen = tByte.getUint16();
+									if (tTriangleLen > 0) {
+										tDisplayData.triangles = [];
+										for (l = 0; l < tTriangleLen; l++) {
+											tDisplayData.triangles.push(tByte.getUint16());
+										}
 									}
-								}
-								break;
-							case 2: 
-								tBoneLen = tByte.getUint16();
-								tDisplayData.bones = [];
-								tDisplayData.uvs = [];
-								tDisplayData.weights = [];
-								tDisplayData.triangles = [];
-								for (l = 0; l < tBoneLen; l++) {
-									tDisplayData.bones.push(tByte.getUint16());
-								}
-								tUvLen = tByte.getUint16();
-								for (l = 0; l < tUvLen; l++) {
-									tDisplayData.uvs.push(tByte.getFloat32());
-								}
-								tWeightLen = tByte.getUint16();
-								for (l = 0; l < tWeightLen; l++) {
-									tDisplayData.weights.push(tByte.getFloat32());
-								}
-								tTriangleLen = tByte.getUint16();
-								for (l = 0; l < tTriangleLen; l++) {
-									tDisplayData.triangles.push(tByte.getUint16());
-								}
-								break;
+									tVerticeLen = tByte.getUint16();
+									if (tVerticeLen > 0)
+									{
+										tDisplayData.vertices = [];
+										for (l = 0; l < tVerticeLen; l++)
+										{
+											tDisplayData.vertices.push(tByte.getFloat32());
+										}
+									}
+									break;
 							}
 						}
 					}
 					tSkinData.slotArr.push(tSlotData);
 				}
-				if (this._aniVersion == "LAYAANIMATION:1.0.1")
-				{
-					var tReverse:uint = tByte.getUint8();
-					if (tReverse == 1)
-					{
-						yReverseMatrix = new Matrix(1, 0, 0, -1, 0, 0);
-					}
-				}
 				skinDic[tSkinData.name] = tSkinData;
 				skinDataArray.push(tSkinData);
 			}
+			if (this._aniVersion == "LAYAANIMATION:1.0.1")
+			{
+				var tReverse:uint = tByte.getUint8();
+				if (tReverse == 1)
+				{
+					yReverseMatrix = new Matrix(1, 0, 0, -1, 0, 0);
+				}
+			}
 			showSkinByIndex(boneSlotDic, 0);
+			this.event(Event.COMPLETE, this);
 		}
 		
 		/**
@@ -326,7 +412,12 @@ package laya.ani.bone {
 						tBoneSlot = boneSlotDic[tSlotData.name];
 						if (tBoneSlot) {
 							tBoneSlot.showSlotData(tSlotData);
-							tBoneSlot.showDisplayByIndex(tBoneSlot.displayIndex);
+							if (tBoneSlot.attachmentName != "null")
+							{
+								tBoneSlot.showDisplayByName(tBoneSlot.attachmentName);
+							}else {
+								tBoneSlot.showDisplayByIndex(tBoneSlot.displayIndex);
+							}
 						}
 					}
 				}
@@ -351,7 +442,12 @@ package laya.ani.bone {
 						tBoneSlot = boneSlotDic[tSlotData.name];
 						if (tBoneSlot) {
 							tBoneSlot.showSlotData(tSlotData);
-							tBoneSlot.showDisplayByIndex(tBoneSlot.displayIndex);
+							if (tBoneSlot.attachmentName != "null")
+							{
+								tBoneSlot.showDisplayByName(tBoneSlot.attachmentName);
+							}else {
+								tBoneSlot.showDisplayByIndex(tBoneSlot.displayIndex);
+							}
 						}
 					}
 				}

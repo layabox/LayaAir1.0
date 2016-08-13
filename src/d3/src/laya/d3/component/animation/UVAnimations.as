@@ -63,7 +63,7 @@ package laya.d3.component.animation {
 		 * 初始化Mesh相关数据函数。
 		 */
 		private function _initMeshData():void {
-			_materials = _mesh.materials;
+			_materials = _mesh.shadredMaterials;
 			//_subMeshes = _mesh.mesh.subMeshes;
 			_meshDataInited = true;
 		}

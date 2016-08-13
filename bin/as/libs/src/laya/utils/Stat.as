@@ -50,6 +50,11 @@ package laya.utils {
 		 * @param	y Y轴显示位置。
 		 */
 		public static function show(x:Number = 0, y:Number = 0):void {
+			if (Render.isConchApp)
+			{
+				__JS__("conch.showFPS&&conch.showFPS(x,y)");
+				return;
+			}
 			var pixel:Number = Browser.pixelRatio;
 			_width = pixel * 120;
 			_vx = pixel * 70;

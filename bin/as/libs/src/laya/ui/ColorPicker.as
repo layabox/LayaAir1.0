@@ -265,7 +265,7 @@ package laya.ui {
 			var py:Number = p.y + _colorButton.height;
 			py = py + _colorPanel.height <= Laya.stage.height ? py : p.y - _colorPanel.height;
 			_colorPanel.pos(px, py);
-			Laya.stage.addChild(_colorPanel);
+			Laya.stageBox.addChild(_colorPanel);
 			Laya.stage.on(Event.MOUSE_DOWN, this, removeColorBox);
 		}
 		

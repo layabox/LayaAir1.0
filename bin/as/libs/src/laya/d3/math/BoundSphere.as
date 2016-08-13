@@ -4,7 +4,7 @@ package laya.d3.math {
 	 * <code>BoundSphere</code> 类用于创建包围球。
 	 */
 	public class BoundSphere {
-		private  static var  _tempVector3:Vector3 = new Vector3();
+		private static var _tempVector3:Vector3 = new Vector3();
 		
 		/**包围球的中心。*/
 		public var center:Vector3;

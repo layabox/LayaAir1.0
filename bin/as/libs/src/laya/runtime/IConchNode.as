@@ -38,7 +38,7 @@ package laya.runtime
 		/**@private */
 		function alpha(a:Number):void;
 		/**@private */
-		function filter(r:Number, g:Number, b:Number, gray:Number):void;
+		function setFilterMatrix(mat:Float32Array, alpha:Float32Array):void;
 		/**@private */
 		function visible(b:Boolean):void;
 		/**@private */

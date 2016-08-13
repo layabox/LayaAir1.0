@@ -215,6 +215,7 @@ package laya.display
 		private var _content:String = '';
 		
 		/**@private */
+		public static const IOS_QQ_IFRAME:Boolean = (Browser.onQQBrowser && Browser.onIOS && Browser.window.top != Browser.window.self);
 		private static const inputHeight:int = 45;
 		
 		/**表示是否处于输入状态。*/
@@ -241,7 +242,7 @@ package laya.display
 			// 移动端通过画布的touchend调用focus
 			if (Browser.onMobile)
 			{
-				Browser.document.addEventListener("touchend", _popupInputMethod);
+				Render.canvas.addEventListener(IOS_QQ_IFRAME ? "click" : "touchend", _popupInputMethod);
 			}
 		}
 		

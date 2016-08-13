@@ -29,7 +29,8 @@ package laya.media {
 		private static var _autoStopMusic:Boolean;
 		/**@private */
 		private static var _blurPaused:Boolean = false;
-		
+		/**@private */
+		public static var _soundClass:Class;
 		/**
 		 * 添加播放的声音实例。
 		 * @param channel <code>SoundChannel</code> 对象。
@@ -150,7 +151,7 @@ package laya.media {
 				if (_soundMuted) return null;
 			}
 			var tSound:Sound = Laya.loader.getRes(url);
-			if (!soundClass) soundClass = Sound;
+			if (!soundClass) soundClass = _soundClass;
 			if (!tSound) {
 				tSound = new soundClass();
 				tSound.load(url);

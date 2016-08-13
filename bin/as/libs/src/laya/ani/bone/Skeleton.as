@@ -352,7 +352,7 @@ package laya.ani.bone {
 				if (!isNaN(tSlotData2)) {
 					tDBBoneSlot.showDisplayByIndex(tSlotData2);
 				}
-				tDBBoneSlot.draw(tGraphics, _boneMatrixArray, _aniMode == 2);
+				tDBBoneSlot.draw(tGraphics, _boneMatrixArray, this, _aniMode == 2);
 				if (!isNaN(tSlotData3)) {
 					tGraphics.restore();
 						//tGraphics.alpha(1 / tSlotData3);

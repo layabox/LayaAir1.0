@@ -1,6 +1,7 @@
 package laya.utils {
-	import laya.display.Node;
 	/*[IF-FLASH]*/import flash.utils.Dictionary;
+	
+	import laya.display.Node;
 	/**
 	 * <code>Tween</code>  是一个缓动类。使用实现目标对象属性的渐变。
 	 */
@@ -172,6 +173,13 @@ package laya.utils {
 				target[prop[0]] = prop[1] + (ratio * prop[2]);
 			}
 			if (update) update.run();
+		}
+		
+		/**设置当前执行比例**/
+		public function set progress(v:Number):void
+		{
+			var uTime:Number=v*_duration;
+			this._startTimer=Browser.now()-this._delay-uTime;
 		}
 		
 		/**

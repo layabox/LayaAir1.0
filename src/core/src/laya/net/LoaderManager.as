@@ -52,7 +52,7 @@ package laya.net {
 		
 		/**
 		 * 加载资源。
-		 * @param	url 地址，或者资源对象数组。
+		 * @param	url 地址，或者资源对象数组(简单数组：["a.png","b.png"]，复杂数组[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}])。
 		 * @param	complete 结束回调，如果加载失败，则返回 null 。
 		 * @param	progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
 		 * @param	type 资源类型。
@@ -61,7 +61,7 @@ package laya.net {
 		 * @return 此 LoaderManager 对象。
 		 */
 		public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true):LoaderManager {
-			if (url is Array) return _loadAssets(url as Array, complete, progress, cache);
+			if (url is Array) return _loadAssets(url as Array, complete, progress, priority, cache);
 			url = URL.formatURL(url);
 			var content:* = Loader.getRes(url);
 			if (content != null) {
@@ -93,7 +93,10 @@ package laya.net {
 			if (this._loaderCount >= this.maxLoader) return;
 			for (var i:int = 0; i < this._maxPriority; i++) {
 				var infos:Array = this._resInfos[i];
-				if (infos.length > 0) return _doLoad(infos.shift())
+				if (infos.length > 0) {
+					var info:ResInfo = infos.shift();
+					if (info) return _doLoad(info);
+				}
 			}
 			_loaderCount || event(Event.COMPLETE);
 		}
@@ -110,7 +113,7 @@ package laya.net {
 			});
 			
 			var _this:LoaderManager = this;
-			function onLoaded(data:*=null):void {
+			function onLoaded(data:* = null):void {
 				loader.offAll();
 				loader._data = null;
 				_this._loaders.push(loader);
@@ -167,25 +170,67 @@ package laya.net {
 			Loader.cacheRes(url, data);
 		}
 		
-		/** 清理当前未完成的加载。*/
+		/** 清理当前未完成的加载，所有未加载的内容全部停止加载。*/
 		public function clearUnLoaded():void {
-			this._resInfos.length = 0;
+			//回收Handler
+			for (var i:int = 0; i < this._maxPriority; i++) {
+				var infos:Array = this._resInfos[i];
+				for (var j:int = infos.length - 1; j > -1; j--) {
+					var info:ResInfo = infos[j];
+					if (info) {
+						info.offAll();
+						_infoPool.push(info);
+					}
+				}
+				infos.length = 0;
+			}
 			this._loaderCount = 0;
 			this._resMap = {};
 		}
 		
 		/**
+		 * 根据地址集合清理掉未加载的内容
+		 * @param	urls 资源地址集合
+		 */
+		public function cancelLoadByUrls(urls:Array):void {
+			if (!urls) return;
+			for (var i:int = 0, n:int = urls.length; i < n; i++) {
+				cancelLoadByUrl(urls[i]);
+			}
+		}
+		
+		/**
+		 * 根据地址清理掉未加载的内容
+		 * @param	url 资源地址
+		 */
+		public function cancelLoadByUrl(url:String):void {
+			url = URL.formatURL(url);
+			for (var i:int = 0; i < this._maxPriority; i++) {
+				var infos:Array = this._resInfos[i];
+				for (var j:int = infos.length - 1; j > -1; j--) {
+					var info:ResInfo = infos[j];
+					if (info && info.url === url) {
+						infos[j] = null;
+						info.offAll();
+						_infoPool.push(info);
+					}
+				}
+			}
+			if (this._resMap[url]) delete this._resMap[url];
+		}
+		
+		/**
 		 * @private
 		 * 加载数组里面的资源。
-		 * @param arr 简单：["a.png","b.png"]，复杂[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSOn,size:50,priority:1}]*/
-		private function _loadAssets(arr:Array, complete:Handler = null, progress:Handler = null, cache:Boolean = true):LoaderManager {
+		 * @param arr 简单：["a.png","b.png"]，复杂[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}]*/
+		private function _loadAssets(arr:Array, complete:Handler = null, progress:Handler = null, priority:int = 1, cache:Boolean = true):LoaderManager {
 			var itemCount:int = arr.length;
 			var loadedSize:int = 0;
 			var totalSize:int = 0;
 			var items:Array = [];
 			for (var i:int = 0; i < itemCount; i++) {
 				var item:Object = arr[i];
-				if (item is String) item = {url: item, type: Loader.IMAGE, size: 1, priority: 1};
+				if (item is String) item = {url: item, type: Loader.IMAGE, size: 1, priority: priority};
 				if (!item.size) item.size = 1;
 				item.progress = 0;
 				totalSize += item.size;
@@ -194,7 +239,7 @@ package laya.net {
 				load(item.url, Handler.create(item, loadComplete, [item]), progressHandler, item.type, item.priority || 1, cache);
 			}
 			
-			function loadComplete(item:Object, content:*= null):void {
+			function loadComplete(item:Object, content:* = null):void {
 				loadedSize++;
 				item.progress = 1;
 				if (loadedSize === itemCount && complete) {

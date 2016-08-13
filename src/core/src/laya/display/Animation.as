@@ -107,21 +107,21 @@ package laya.display {
 		
 		/**
 		 * 播放动画。
-		 * @param	start 开始播放的动画索引。
+		 * @param	start 开始播放的动画索引或label。
 		 * @param	loop 是否循环。
 		 * @param	name 如果name为空(可选)，则播放当前动画，如果不为空，则播放全局缓存动画（如果有）
 		 */
-		override public function play(start:int = 0, loop:Boolean = true, name:String = ""):void {
+		override public function play(start:* = 0, loop:Boolean = true, name:String = ""):void {
 			_setFramesFromCache(name);
 			this._isPlaying = true;
-			this.index = start;
+			this.index = (start is String)?_getFrameByLabel(start):start;
 			this.loop = loop;
 			if (this._frames && this._frames.length > 1 && this.interval > 0) {
 				timerLoop(this.interval, this, _frameLoop, null, true);
 			}
 		}
 		
-		private function _setFramesFromCache(name:String):Boolean {
+		protected function _setFramesFromCache(name:String):Boolean {
 			if (name && framesMap[name]) {
 				this._frames = framesMap[name];
 				this._count = _frames.length;

@@ -33,7 +33,7 @@ package {
 		/**
 		 * 设置是否抗锯齿，只对2D(WebGL)、3D有效。
 		 */
-		public static var isAntialias:Boolean = false;
+		public static var isAntialias:Boolean = true;
 		
 	}
 }

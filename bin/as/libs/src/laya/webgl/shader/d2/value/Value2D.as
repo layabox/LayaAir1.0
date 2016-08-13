@@ -64,6 +64,7 @@ package laya.webgl.shader.d2.value {
 		public var colorAdd:Array;
 		public var glTexture:Bitmap;
 		public var u_mmat2:Array;
+		public var u_pos:Array = [0,0];
 		
 		private var _inClassCache:Array;
 		private var _cacheID:int = 0;
@@ -203,6 +204,8 @@ package laya.webgl.shader.d2.value {
 		public function release():void
 		{
 			_inClassCache[_inClassCache._length++] = this;
+			this.fillStyle = null;
+			this.strokeStyle = null;
 			this.clear();
 		}
 		

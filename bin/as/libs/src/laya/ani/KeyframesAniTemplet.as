@@ -22,7 +22,8 @@ package laya.ani {
 		
 		//四元素插值函数
 		private static function _QuaternionInterpolation_1(bone:*, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array):int {
-			MathUtil.slerpQuaternionArray(data, index, nextData, index, dt / duration, out, outOfs);//(dt/duration)为amount比例
+			var amount:Number = duration === 0 ? 0 : dt / duration;
+			MathUtil.slerpQuaternionArray(data, index, nextData, index, amount, out, outOfs);//(dt/duration)为amount比例
 			return 4;
 		}
 		
@@ -252,11 +253,10 @@ package laya.ani {
 			return cache ? cache[frameIndex] : null;
 		}
 		
-		public function setAnimationDataWithCache(cacheDatas:Array, aniIndex:int, frameIndex:Number, data:Float32Array):void {
+		public function setAnimationDataWithCache(cacheDatas:Array, aniIndex:int, frameIndex:Number, data:*):void {
 			var cache:* = cacheDatas[aniIndex];
-			cache || (cache = cacheDatas[aniIndex] = [], cache.length = 30);
-			cache[frameIndex] || (cache[frameIndex] = new Float32Array(data.length));
-			cache[frameIndex].set(data, 0);
+			cache || (cache = cacheDatas[aniIndex] = []);
+			cache[frameIndex] = data;
 		}
 		
 		public function getOriginalData(aniIndex:int, originalData:Float32Array, frameIndex:int, playCurTime:Number):void {

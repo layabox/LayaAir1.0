@@ -376,7 +376,6 @@ package laya.display {
 		 * @param	display 是否可见。
 		 */
 		private function _displayChild(node:Node, display:Boolean):void {
-			node._setDisplay(display);
 			var childs:Array = node._childs;
 			if (childs) {
 				for (var i:int = childs.length - 1; i > -1; i--) {
@@ -385,6 +384,7 @@ package laya.display {
 					child._childs.length && _displayChild(child, display);
 				}
 			}
+			node._setDisplay(display);
 		}
 		
 		/**

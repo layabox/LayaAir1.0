@@ -227,6 +227,54 @@ package laya.d3.math {
 			resultElem[2] = vectorElem[2] * vectorElem[3];
 		}
 		
+		
+		/**
+		 * 求两个三维向量的和。
+		 * @param	a left三维向量。
+		 * @param	b right三维向量。
+		 * @param	out 输出向量。
+		 */
+		
+		/**
+		 * 求一个指定范围的向量
+		 * @param	value clamp向量
+		 * @param	min  最小
+		 * @param	max  最大
+		 * @param   out 输出向量
+		 */
+		public static function Clamp(value:Vector3, min:Vector3, max:Vector3, out:Vector3):void{
+			
+			var valuee:Float32Array = value.elements;
+			var x:Number = valuee[0];
+			var y:Number = valuee[1];
+			var z:Number = valuee[2];
+			
+			var mine:Float32Array = min.elements;
+			var mineX:Number = mine[0];
+			var mineY:Number = mine[1];
+			var mineZ:Number = mine[2];
+			
+			var maxe:Float32Array = max.elements;
+			var maxeX:Number = maxe[0];
+			var maxeY:Number = maxe[1];
+			var maxeZ:Number = maxe[2];
+			
+			var oute:Float32Array = out.elements;
+			
+			x = (x > maxeX) ? maxeX : x;
+            x = (x < mineX) ? mineX : x;
+			
+			y = (y > maxeY) ? maxeY : y;
+            y = (y < mineY) ? mineY : y;
+			
+			z = (z > maxeZ) ? maxeZ : z;
+            z = (z < mineZ) ? mineZ : z;
+			
+			oute[0] = x;
+			oute[1] = y;
+			oute[2] = z;
+		}
+		
 		/**
 		 * 求两个三维向量的和。
 		 * @param	a left三维向量。
@@ -285,6 +333,8 @@ package laya.d3.math {
 			var r:Number = (ae[0] * be[0]) + (ae[1] * be[1]) + (ae[2] * be[2]);
 			return r;
 		}
+		
+		
 		
 		/**三维向量元素数组*/
 		public var elements:* = new Float32Array(3);

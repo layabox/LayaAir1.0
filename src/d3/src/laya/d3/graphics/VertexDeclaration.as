@@ -85,6 +85,9 @@ package laya.d3.graphics {
 		
 		public function VertexDeclaration(vertexStride:int, vertexElements:Array) {
 			_id = ++_uniqueIDCounter;
+			if (_id > maxVertexDeclaration)
+				throw new Error("VertexDeclaration: VertexDeclaration count should not large than ", maxVertexDeclaration);
+				
 			_shaderAttribute = {};
 			_shaderValues = new ValusArray();
 			_vertexStride = vertexStride;

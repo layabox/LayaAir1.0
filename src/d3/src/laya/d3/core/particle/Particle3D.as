@@ -26,7 +26,7 @@ package laya.d3.core.particle {
 			templet = new ParticleTemplet3D(settings);
 		}
 		
-		override public function _clearRenderObjects():void {
+		override public function _clearSelfRenderObjects():void {
 			_renderObject.renderQneue.deleteRenderObj(_renderObject);
 		}
 		
@@ -38,11 +38,6 @@ package laya.d3.core.particle {
 		public function addParticle(position:Vector3, velocity:Vector3):void {
 			Vector3.add(transform.localPosition, position, position);
 			templet.addParticle(position, velocity);
-		}
-		
-		override public function removeChildAt(index:int):Node {
-			_clearRenderObjects();
-			return super.removeChildAt(index);
 		}
 		
 		/**
@@ -78,7 +73,7 @@ package laya.d3.core.particle {
 				}
 				_renderObject.tag.worldTransformModifyID = state.worldTransformModifyID;
 			} else {
-				_clearRenderObjects();
+				_clearSelfRenderObjects();
 			}
 			
 			state.worldTransformModifyID = preWorldTransformModifyID;
@@ -90,7 +85,8 @@ package laya.d3.core.particle {
 			_renderObject = renderObj;
 			
 			var renderElement:IRenderable = templet;
-			renderObj.sortID = 0;//根据MeshID排序，处理同材质合并处理。
+			renderObj.mainSortID = 0;//根据MeshID排序，处理同材质合并处理。
+			renderObj.triangleCount = renderElement.triangleCount;
 			renderObj.owner = state.owner;
 			
 			renderObj.renderElement = renderElement;

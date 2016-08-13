@@ -42,6 +42,12 @@ package laya.ui {
 		public var elasticDistance:Number = 0;
 		/**橡皮筋回弹时间，单位为毫秒。*/
 		public var elasticBackTime:Number = 500;
+		/**上按钮 */
+		public var upButton:Button;
+		/**下按钮 */
+		public var downButton:Button;
+		/**滑条 */
+		public var slider:Slider;
 		
 		/**@private */
 		protected var _showButtons:Boolean = UIConfig.showButtons;
@@ -49,12 +55,6 @@ package laya.ui {
 		protected var _scrollSize:Number = 1;
 		/**@private */
 		protected var _skin:String;
-		/**@private */
-		protected var _upButton:Button;
-		/**@private */
-		protected var _downButton:Button;
-		/**@private */
-		protected var _slider:Slider;
 		/**@private */
 		protected var _thumbPercent:Number = 1;
 		/**@private */
@@ -92,30 +92,30 @@ package laya.ui {
 		/**@inheritDoc */
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
-			_upButton && _upButton.destroy(destroyChild);
-			_downButton && _downButton.destroy(destroyChild);
-			_slider && _slider.destroy(destroyChild);
-			_upButton = _downButton = null;
-			_slider = null;
+			upButton && upButton.destroy(destroyChild);
+			downButton && downButton.destroy(destroyChild);
+			slider && slider.destroy(destroyChild);
+			upButton = downButton = null;
+			slider = null;
 			changeHandler = null;
 			_offsets = null;
 		}
 		
 		/**@inheritDoc */
 		override protected function createChildren():void {
-			addChild(_slider = new Slider());
+			addChild(slider = new Slider());
 			//TODO:
-			addChild(_upButton = new Button());
-			addChild(_downButton = new Button());
+			addChild(upButton = new Button());
+			addChild(downButton = new Button());
 		}
 		
 		/**@inheritDoc */
 		override protected function initialize():void {
-			_slider.showLabel = false;
-			_slider.on(Event.CHANGE, this, onSliderChange);
-			_slider.setSlider(0, 0, 0);
-			_upButton.on(Event.MOUSE_DOWN, this, onButtonMouseDown);
-			_downButton.on(Event.MOUSE_DOWN, this, onButtonMouseDown);
+			slider.showLabel = false;
+			slider.on(Event.CHANGE, this, onSliderChange);
+			slider.setSlider(0, 0, 0);
+			upButton.on(Event.MOUSE_DOWN, this, onButtonMouseDown);
+			downButton.on(Event.MOUSE_DOWN, this, onButtonMouseDown);
 		}
 		
 		/**
@@ -123,7 +123,7 @@ package laya.ui {
 		 * 滑块位置发生改变的处理函数。
 		 */
 		protected function onSliderChange():void {
-			value = _slider.value;
+			value = slider.value;
 		}
 		
 		/**
@@ -131,7 +131,7 @@ package laya.ui {
 		 * 向上和向下按钮的 <code>Event.MOUSE_DOWN</code> 事件侦听处理函数。
 		 */
 		protected function onButtonMouseDown(e:Event):void {
-			var isUp:Boolean = e.currentTarget === _upButton;
+			var isUp:Boolean = e.currentTarget === upButton;
 			slide(isUp);
 			Laya.timer.once(Styles.scrollBarDelayTime, this, startLoop, [isUp]);
 			Laya.stage.once(Event.MOUSE_UP, this, onStageMouseUp);
@@ -167,7 +167,7 @@ package laya.ui {
 		public function set skin(value:String):void {
 			if (_skin != value) {
 				_skin = value;
-				_slider.skin = _skin;
+				slider.skin = _skin;
 				callLater(changeScrollBar);
 			}
 		}
@@ -177,14 +177,14 @@ package laya.ui {
 		 * 更改对象的皮肤及位置。
 		 */
 		protected function changeScrollBar():void {
-			_upButton.visible = _showButtons;
-			_downButton.visible = _showButtons;
+			upButton.visible = _showButtons;
+			downButton.visible = _showButtons;
 			if (_showButtons) {
-				_upButton.skin = _skin.replace(".png", "$up.png");
-				_downButton.skin = _skin.replace(".png", "$down.png");
+				upButton.skin = _skin.replace(".png", "$up.png");
+				downButton.skin = _skin.replace(".png", "$down.png");
 			}
-			if (_slider.isVertical) _slider.y = _showButtons ? _upButton.height : 0;
-			else _slider.x = _showButtons ? _upButton.width : 0;
+			if (slider.isVertical) slider.y = _showButtons ? upButton.height : 0;
+			else slider.x = _showButtons ? upButton.width : 0;
 			resetPositions();
 		}
 		
@@ -198,28 +198,28 @@ package laya.ui {
 		
 		/**@private */
 		private function resetPositions():void {
-			if (_slider.isVertical) _slider.height = height - (_showButtons ? (_upButton.height + _downButton.height) : 0);
-			else _slider.width = width - (_showButtons ? (_upButton.width + _downButton.width) : 0);
+			if (slider.isVertical) slider.height = height - (_showButtons ? (upButton.height + downButton.height) : 0);
+			else slider.width = width - (_showButtons ? (upButton.width + downButton.width) : 0);
 			resetButtonPosition();
 		
 		}
 		
 		/**@private */
 		protected function resetButtonPosition():void {
-			if (_slider.isVertical) _downButton.y = _slider.y + _slider.height;
-			else _downButton.x = _slider.x + _slider.width;
+			if (slider.isVertical) downButton.y = slider.y + slider.height;
+			else downButton.x = slider.x + slider.width;
 		}
 		
 		/**@inheritDoc */
 		override protected function get measureWidth():Number {
-			if (_slider.isVertical) return _slider.width;
+			if (slider.isVertical) return slider.width;
 			return 100;
 		}
 		
 		/**@inheritDoc */
 		override protected function get measureHeight():Number {
-			if (_slider.isVertical) return 100;
-			return _slider.height;
+			if (slider.isVertical) return 100;
+			return slider.height;
 		}
 		
 		/**
@@ -230,10 +230,10 @@ package laya.ui {
 		 */
 		public function setScroll(min:Number, max:Number, value:Number):void {
 			runCallLater(changeSize);
-			_slider.setSlider(min, max, value);
+			slider.setSlider(min, max, value);
 			//_upButton.disabled = max <= 0;
 			//_downButton.disabled = max <= 0;
-			_slider.bar.visible = max > 0;
+			slider.bar.visible = max > 0;
 			if (!_hide && autoHide) visible = false;
 		}
 		
@@ -241,22 +241,22 @@ package laya.ui {
 		 * 获取或设置表示最高滚动位置的数字。
 		 */
 		public function get max():Number {
-			return _slider.max;
+			return slider.max;
 		}
 		
 		public function set max(value:Number):void {
-			_slider.max = value;
+			slider.max = value;
 		}
 		
 		/**
 		 * 获取或设置表示最低滚动位置的数字。
 		 */
 		public function get min():Number {
-			return _slider.min;
+			return slider.min;
 		}
 		
 		public function set min(value:Number):void {
-			_slider.min = value;
+			slider.min = value;
 		}
 		
 		/**
@@ -270,8 +270,8 @@ package laya.ui {
 			if (v !== _value) {
 				if (_isElastic) _value = v;
 				else {
-					_slider.value = v;
-					_value = _slider.value;
+					slider.value = v;
+					_value = slider.value;
 				}
 				event(Event.CHANGE);
 				changeHandler && changeHandler.runWith(value);
@@ -283,11 +283,11 @@ package laya.ui {
 		 * <p>默认值为：true。</p>
 		 */
 		public function get isVertical():Boolean {
-			return _slider.isVertical;
+			return slider.isVertical;
 		}
 		
 		public function set isVertical(value:Boolean):void {
-			_slider.isVertical = value;
+			slider.isVertical = value;
 		}
 		
 		/**
@@ -297,11 +297,11 @@ package laya.ui {
 		 * @see laya.ui.AutoBitmap.sizeGrid
 		 */
 		public function get sizeGrid():String {
-			return _slider.sizeGrid;
+			return slider.sizeGrid;
 		}
 		
 		public function set sizeGrid(value:String):void {
-			_slider.sizeGrid = value;
+			slider.sizeGrid = value;
 		}
 		
 		/**获取或设置一个值，该值表示按下滚动条轨道时页面滚动的增量。 */
@@ -331,8 +331,8 @@ package laya.ui {
 			value = value >= 1 ? 0.99 : value;
 			_thumbPercent = value;
 			if (scaleBar) {
-				if (_slider.isVertical) _slider.bar.height = Math.max(_slider.height * value, Styles.scrollBarMinNum);
-				else _slider.bar.width = Math.max(_slider.width * value, Styles.scrollBarMinNum);
+				if (slider.isVertical) slider.bar.height = Math.max(slider.height * value, Styles.scrollBarMinNum);
+				else slider.bar.width = Math.max(slider.width * value, Styles.scrollBarMinNum);
 			}
 		}
 		

@@ -20,6 +20,7 @@ package laya.d3.loaders {
 	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.net.URL;
+	import laya.resource.Resource;
 	import laya.utils.Byte;
 	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
@@ -135,34 +136,35 @@ package laya.d3.loaders {
 			var index:int = _readData.getUint16();
 			
 			var shaderName:String = _readString();
-			var materialPath:String = _readString();
+			var url:String = _readString();
 			
-			if (materialPath !== "null") {
-				materialPath = URL.formatURL(materialPath);
-				var m:Material = Loader.getRes(materialPath);
-				if (m) {
-					_materials[index] = m;
-					if (!m.loaded) {
-						m.once(Event.LOADED, null, function():void {
-							m.loaded = true;
-						});
-					}
+			if (url !== "null") {
+				url = URL.formatURL(url);
+				
+				var material:Material = Resource.materialCache[url];
+				
+				if (material) {
+					_materials[index] = material;
+						//if (!material.loaded) {
+						//material.once(Event.LOADED, null, function():void {
+						//material.loaded = true;
+						//});
+						//}
 				} else {
-					_materials[index] = m = new Material();
-					m.setShaderName(shaderName);
+					material = _materials[index] = Resource.materialCache[url] = new Material();
+					material.setShaderName(shaderName);
 					
-					var loader:Loader = new Loader();	//加载材质文件			
+					var loader:Loader = new Loader();			
 					var onComp:Function = function(data:String):void {
 						var preBasePath:String = URL.basePath;
-						URL.basePath = URL.getPath(URL.formatURL(materialPath));
-						ClassUtils.createByJson(data, m, null, Handler.create(null, Utils3D._parseMaterial, null, false));
+						URL.basePath = URL.getPath(URL.formatURL(url));
+						ClassUtils.createByJson(data, material, null, Handler.create(null, Utils3D._parseMaterial, null, false));
 						URL.basePath = preBasePath;
-						m.loaded = true;
-						m.event(Event.LOADED, m);
+						material.loaded = true;
+						material.event(Event.LOADED, material);
 					}
 					loader.once(Event.COMPLETE, null, onComp);
-					loader.load(materialPath, Loader.TEXT, false);
-					Loader.cacheRes(materialPath, m);
+					loader.load(url, Loader.JSON);
 				}
 			} else {
 				_materials[index] = new Material();

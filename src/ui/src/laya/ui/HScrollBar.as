@@ -82,7 +82,7 @@ package laya.ui {
 		/**@inheritDoc */
 		override protected function initialize():void {
 			super.initialize();
-			_slider.isVertical = false;
+			slider.isVertical = false;
 		}
 	}
 }

@@ -1,6 +1,3 @@
-// 本文件演示如何使用LayaAir渲染matter.js引擎。
-// 在项目中，为了追求最高效率，可以参照本文件写出游戏专属的渲染器。
-
 var Browser = laya.utils.Browser;
 
 var Composite = Matter.Composite;
@@ -16,7 +13,7 @@ var SAT = Matter.SAT;
 var Contact = Matter.Contact;
 var Pair = Matter.Pair;
 var Detector = Matter.Detector;
-var Grid = Matter.Grid; 
+var Grid = Matter.Grid;
 
 var LayaRender = {};
 

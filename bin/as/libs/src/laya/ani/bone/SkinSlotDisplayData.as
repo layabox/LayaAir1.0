@@ -7,6 +7,7 @@ package laya.ani.bone {
 	public class SkinSlotDisplayData {
 		
 		public var name:String;
+		public var attachmentName:String;
 		public var type:int;
 		public var transform:Transform;
 		public var width:Number;
@@ -16,5 +17,6 @@ package laya.ani.bone {
 		public var uvs:Array;
 		public var weights:Array;
 		public var triangles:Array;
+		public var vertices:Array;
 	}
 }

@@ -16,7 +16,7 @@ package laya.utils {
 		 * @param sign 对象类型标识字符。
 		 * @return 对象池。
 		 */
-		private static function getPoolBySign(sign:String):Array {
+		public static function getPoolBySign(sign:String):Array {
 			return _poolDic[sign] || (_poolDic[sign] = []);
 		}
 		/**

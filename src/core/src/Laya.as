@@ -1,12 +1,14 @@
 package {
 	import laya.display.Graphics;
 	import laya.display.Input;
+	import laya.display.Sprite;
 	import laya.display.css.Font;
 	import laya.display.css.Style;
 	import laya.display.Stage;
 	import laya.events.Event;
 	import laya.events.KeyBoardManager;
 	import laya.events.MouseManager;
+	import laya.media.SoundManager;
 	import laya.net.Loader;
 	import laya.net.LoaderManager;
 	import laya.net.URL;
@@ -31,7 +33,9 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.0.4";
+		public static var version:String = "1.1.0";
+		/**@private */
+		public static var stageBox:Sprite;
 		
 		/**
 		 * 初始化引擎。
@@ -54,7 +58,7 @@ package {
 			Font.__init__();
 			Style.__init__();
 			ResourceManager.__init__();
-			stage = new Stage();
+			stageBox = stage = new Stage();
 			stage.model&&stage.model.setRootNode();
 			var location:* = Browser.window.location;
 			var pathName:String = location.pathname;
@@ -68,12 +72,11 @@ package {
 			
 			RenderSprite.__init__();
 			KeyBoardManager.__init__();
-			MouseManager.instance.__init__();
-			Input.__init__();
+			MouseManager.instance.__init__(stage,Render.canvas);
+			Input.__init__();		
+			SoundManager.autoStopMusic = true;
 			return Render.canvas;
 		}
-		
-		
 		
 		/**
 		 * 表示是否捕获全局错误并弹出提示。

@@ -3,10 +3,12 @@ package laya.d3.core.material {
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
+	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.shader.ShaderDefines3D;
+	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.resource.Texture;
 	import laya.utils.Stat;
@@ -18,7 +20,7 @@ package laya.d3.core.material {
 	 * <code>Material</code> 类用于创建材质。
 	 */
 	public class Material extends EventDispatcher {
-		public static var maxMaterialCount:int = Math.floor(2147483647 / 1000);//需在材质中加异常判断警告
+		public static var maxMaterialCount:int = Math.floor(2147483647 / VertexDeclaration._maxVertexDeclarationBit);//需在材质中加异常判断警告
 		/** @private */
 		protected static var _uniqueIDCounter:int = 1;
 		/** @private */
@@ -438,6 +440,9 @@ package laya.d3.core.material {
 		 */
 		public function Material() {
 			_id = ++_uniqueIDCounter;
+			if (_id > maxMaterialCount)
+				throw new Error("Material: Material count should not large than ", maxMaterialCount);
+			
 			_color[AMBIENTCOLOR] = AMBIENTCOLORVALUE;
 			_color[DIFFUSECOLOR] = DIFFUSECOLORVALUE;
 			_color[SPECULARCOLOR] = SPECULARCOLORVALUE;
@@ -651,6 +656,7 @@ package laya.d3.core.material {
 		 * @param dec 目标材质
 		 */
 		public function copy(dec:Material):Material {
+			dec._renderQueue = _renderQueue;
 			dec._sharderNameID = _sharderNameID;
 			dec._shader = _shader;
 			dec._texturesloaded = _texturesloaded;
@@ -665,9 +671,15 @@ package laya.d3.core.material {
 			dec.transparentAddtive = transparentAddtive;
 			dec.cullFace = cullFace;
 			dec._transformUV = _transformUV;
+			dec._luminance = _luminance;
+			dec._shaderDef = _shaderDef;
+			dec._isSky = _isSky;
+			dec.name = name;
+			dec.loaded = loaded;
 			
 			_shaderValues.copyTo(dec._shaderValues);
 			return dec;
+			;
 		}
 	
 	/*

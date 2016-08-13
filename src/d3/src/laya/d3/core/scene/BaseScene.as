@@ -311,7 +311,7 @@ package laya.d3.core.scene {
 				model && model.removeChild(node.model);
 				node.parent = null;
 				
-				(node as Sprite3D)._clearRenderObjects();
+				(node as Sprite3D)._clearSelfAndChildrenRenderObjects();
 			}
 			return node;
 		}

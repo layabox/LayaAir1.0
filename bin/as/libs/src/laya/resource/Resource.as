@@ -33,6 +33,7 @@ package laya.resource {
 	public class Resource extends EventDispatcher implements IDispose {
 		public static var animationCache:* = {};//临时，待修改
 		public static var meshCache:* = {};//临时，待修改
+		public static var materialCache:* = {};//临时，待修改
 		
 		/**唯一标识ID计数器*/
 		private static var _uniqueIDCounter:int = 0/*int.MIN_VALUE*/;

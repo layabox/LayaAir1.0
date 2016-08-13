@@ -6,7 +6,7 @@ package laya.device.motion
 	
 	/**
 	 * Accelerator.instance获取唯一的Accelerator引用，请勿调用构造函数。
-	 * 
+	 *
 	 * <p>
 	 * listen()的回调处理器接受四个参数：
 	 * <ol>
@@ -34,6 +34,7 @@ package laya.device.motion
 		 * Accelerator的唯一引用。
 		 */
 		private static var _instance:Accelerator;
+		
 		public static function get instance():Accelerator
 		{
 			_instance ||= new Accelerator(0)
@@ -44,7 +45,7 @@ package laya.device.motion
 		private static var accelerationIncludingGravity:AccelerationInfo = new AccelerationInfo();
 		private static var rotationRate:RotationInfo = new RotationInfo();
 		
-		private static var onChrome:Boolean = (Browser.userAgent.indexOf("Chrome") >-1);
+		private static var onChrome:Boolean = (Browser.userAgent.indexOf("Chrome") > -1);
 		
 		public function Accelerator(singleton:int)
 		{
@@ -52,10 +53,10 @@ package laya.device.motion
 		}
 		
 		/**
-		 * 侦听加速器运动。 
+		 * 侦听加速器运动。
 		 * @param observer	回调函数接受4个参数，见类说明。
 		 */
-		override public function on(type:String, caller:*, listener:Function, args:Array = null):EventDispatcher 
+		override public function on(type:String, caller:*, listener:Function, args:Array = null):EventDispatcher
 		{
 			super.on(type, caller, listener, args);
 			Browser.window.addEventListener('devicemotion', onDeviceOrientationChange);
@@ -66,11 +67,11 @@ package laya.device.motion
 		 * 取消侦听加速器。
 		 * @param	handle	侦听加速器所用处理器。
 		 */
-		override public function off(type:String, caller:*, listener:Function, onceOnly:Boolean = false):EventDispatcher 
+		override public function off(type:String, caller:*, listener:Function, onceOnly:Boolean = false):EventDispatcher
 		{
 			if (!hasListener(type))
 				Browser.window.removeEventListener('devicemotion', onDeviceOrientationChange)
-				
+			
 			return super.off(type, caller, listener, onceOnly);
 		}
 		
@@ -114,6 +115,54 @@ package laya.device.motion
 			}
 			
 			event(Event.CHANGE, [acceleration, accelerationIncludingGravity, rotationRate, interval]);
+		}
+		
+		private var transformedAcceleration:AccelerationInfo;
+		/**
+		 * 把加速度值转换为视觉上正确的加速度值。依赖于Browser.window.orientation，可能在部分低端机无效。
+		 * @param	acceleration
+		 * @return
+		 */
+		public static function getTransformedAcceleration(acceleration:AccelerationInfo):Accelerator
+		{
+			transformedAcceleration ||= new AccelerationInfo();
+			transformedAcceleration.z = acceleration.z;
+			
+			if (Browser.window.orientation == 90)
+			{
+				transformedAcceleration.x = acceleration.y;
+				transformedAcceleration.y = -acceleration.x;
+			}
+			else if (Browser.window.orientation == -90)
+			{
+				transformedAcceleration.x = -acceleration.y;
+				transformedAcceleration.y = acceleration.x;
+			}
+			else if (!Browser.window.orientation)
+			{
+				transformedAcceleration.x = acceleration.x;
+				transformedAcceleration.y = acceleration.y;
+			}
+			else if (Browser.window.orientation == 180)
+			{
+				transformedAcceleration.x = -acceleration.x;
+				transformedAcceleration.y = -acceleration.y;
+			}
+			
+			if (Laya.stage.canvasDegree == -90)
+			{
+				var tx = transformedAcceleration.x;
+				transformedAcceleration.x = -transformedAcceleration.y;
+				transformedAcceleration.y = tx;
+			}
+			else if (Laya.stage.canvasDegree == 90)
+			{
+				var tx = transformedAcceleration.x;
+				transformedAcceleration.x = transformedAcceleration.y;
+				transformedAcceleration.y = -tx;
+			}
+			
+			return transformedAcceleration;
 		}
 	}
 }
