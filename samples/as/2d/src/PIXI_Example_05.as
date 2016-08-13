@@ -10,7 +10,7 @@ package
 
 	public class PIXI_Example_05
 	{
-		private var n:int = 5000;
+		private var n:int = 2000;
 		private var d:int = 1;
 		private var current:int = 0;
 		private var objs:int = 17;

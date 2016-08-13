@@ -7,7 +7,7 @@
 	var Stat = Laya.Stat;
 	var WebGL = Laya.WebGL;
 
-	var n = 5000;
+	var n = 2000;
 	var d = 1;
 	var current = 0;
 	var objs = 17;

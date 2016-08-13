@@ -84,6 +84,7 @@
 	{
 		// 转换为百度地图坐标
 		var point = new BMap.Point(p.longitude, p.latitude);
+		// 把原始坐标转换为百度坐标，部分设备可能获取到的是谷歌坐标，这时第三个参数改为3才是正确的。
 		convertor.translate([point], 1, 5, convertToBaiduCoord);
 		
 		// 更新当前获取到的地理信息

@@ -8,7 +8,7 @@ module laya {
 	
 	export class PIXI_Example_05
 	{
-		private n:number = 5000;
+		private n:number = 2000;
 		private d:number = 1;
 		private current:number = 0;
 		private objs:number = 17;

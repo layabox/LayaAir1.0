@@ -22,6 +22,8 @@
     <class path="..\..\..\..\..\ui\src" />
     <class path="..\..\..\..\..\plugins\flash\src" />
     <class path="..\..\..\..\..\webGL\src" />
+    <class path="..\..\..\..\..\plugins\tiledmap\src" />
+    <class path="..\..\..\..\..\particle\src\laya" />
   </classpaths>
   <!-- Build options -->
   <build>
@@ -78,7 +80,7 @@
   </library>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
-    <compile path="src\Filters_Color.as" />
+    <compile path="src\InputDevice_Map.as" />
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

@@ -59,7 +59,6 @@ module AttchPointSample {
             settings.blendState = 1;
             this.fire = new Laya.Particle3D(settings);
             scene.addChild(this.fire);
-            this.fire.transform.localRotationEuler = this.rotation;//同步人物旋转
 
             Laya.timer.frameLoop(1, this, this.loop);
         }

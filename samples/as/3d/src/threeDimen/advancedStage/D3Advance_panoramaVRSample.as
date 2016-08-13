@@ -56,6 +56,7 @@ package threeDimen.advancedStage {
 			
 			Laya.loader.load("../../../../res/threeDimen/panorama/panorama.jpg", Handler.create(null, function(texture:Texture):void {
 				(texture.bitmap as WebGLImage).mipmap = true;
+				(texture.bitmap as WebGLImage).enableMerageInAtlas = false;
 				material.diffuseTexture = texture;
 			}));
 		}

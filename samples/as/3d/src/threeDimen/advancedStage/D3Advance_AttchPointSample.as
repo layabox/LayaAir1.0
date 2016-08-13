@@ -77,7 +77,6 @@ package threeDimen.advancedStage {
 			settings.blendState = 1;
 			fire = new Particle3D(settings);
 			scene.addChild(fire);
-			fire.transform.localRotationEuler = rotation;//同步人物旋转
 			
 			Laya.timer.frameLoop(1, this, loop);
 		}

@@ -18,7 +18,6 @@ loadScene(scene, camera);
 
 
 function loadScene(scene, camera) {
-
     var mesh = scene.addChild(new Laya.MeshSprite3D(new Laya.Sphere(1, 20, 20)));
 
     var material = new Laya.Material();
@@ -27,6 +26,7 @@ function loadScene(scene, camera) {
 
     Laya.loader.load("../../res/threeDimen/panorama/panorama.jpg", Laya.Handler.create(null, function (texture) {
         texture.bitmap.mipmap = true;
+        texture.bitmap.enableMerageInAtlas = false;
         material.diffuseTexture = texture;
     }));
 }
