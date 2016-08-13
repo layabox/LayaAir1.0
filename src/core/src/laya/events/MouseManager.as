@@ -1,4 +1,5 @@
 package laya.events {
+	import laya.display.Input;
 	import laya.display.Sprite;
 	import laya.display.Stage;
 	import laya.maths.Matrix;
