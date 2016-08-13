@@ -238,7 +238,7 @@ package laya.display
 		public static function __init__():void
 		{
 			_createInputElement();
-			 
+			
 			// 移动端通过画布的touchend调用focus
 			if (Browser.onMobile)
 			{
@@ -247,7 +247,7 @@ package laya.display
 		}
 		
 		// 移动平台在单击事件触发后弹出输入法
-		private static function _popupInputMethod(e:*):void
+		private static function _popupInputMethod():void
 		{
 			if (!Input.isInputting) return;
 			
@@ -257,6 +257,7 @@ package laya.display
 			input.selectionStart = input.selectionEnd = input.value.length;
 			// 弹出输入法。
 			input.focus();
+			
 			// 安卓微信（不适用QQ内核）输入框会被输入法挡住，将其移至上方
 			if (Browser.onAndriod && Browser.onWeiXin && !Browser.onMQQBrowser)
 			{
