@@ -175,7 +175,7 @@ package laya.webgl {
 			}
 			AtlasResourceManager._enable();
 			
-			RunDriver.benginFlush = function():void {
+			RunDriver.beginFlush = function():void {
 				var atlasResourceManager:AtlasResourceManager = AtlasResourceManager.instance;
 				var count:int = atlasResourceManager.getAtlaserCount();
 				for (var i:int = 0; i < count; i++) {

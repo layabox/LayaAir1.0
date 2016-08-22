@@ -3112,7 +3112,7 @@
 				}
 			}
 			AtlasResourceManager._enable();
-			RunDriver.benginFlush=function (){
+			RunDriver.beginFlush=function (){
 				var atlasResourceManager=AtlasResourceManager.instance;
 				var count=atlasResourceManager.getAtlaserCount();
 				for (var i=0;i < count;i++){

@@ -244,7 +244,7 @@ window.Laya=(function(window,document){
 			return {width:RunDriver._charSizeTestDiv.offsetWidth,height:RunDriver._charSizeTestDiv.offsetHeight};
 		}
 
-		RunDriver.benginFlush=function(){
+		RunDriver.beginFlush=function(){
 		};
 
 		RunDriver.endFinish=function(){
@@ -14312,7 +14312,7 @@ window.Laya=(function(window,document){
 			if (Render.isConchNode)return;
 			if (this.renderingEnabled && (isFastMode || !isDoubleLoop)){
 				Render.isWebGL && RunDriver.clear(this._bgColor);
-				RunDriver.benginFlush();
+				RunDriver.beginFlush();
 				context.flush();
 				RunDriver.endFinish();
 			}
