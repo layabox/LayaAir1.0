@@ -71,7 +71,7 @@ package laya.utils {
 		/**
 		 * 开始函数。
 		 */
-		public static var benginFlush:Function = function():void {
+		public static var beginFlush:Function = function():void {
 		};
 		
 		public static var endFinish:Function = function():void {
