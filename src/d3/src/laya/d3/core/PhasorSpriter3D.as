@@ -404,11 +404,11 @@ package laya.d3.core {
 		}
 		
 		private function drawLinesException():void {
-			throw new Error("您必须确保在此之前已调用bengin()且使用“LINES”基元！");
+			throw new Error("您必须确保在此之前已调用begin()且使用“LINES”基元！");
 		}
 		
 		private function drawTrianglesException():void {
-			throw new Error("您必须确保在此之前已调用bengin()且使用“TRIANGLES”基元！");
+			throw new Error("您必须确保在此之前已调用begin()且使用“TRIANGLES”基元！");
 		}
 	
 	}

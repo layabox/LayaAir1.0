@@ -19228,7 +19228,7 @@ declare module laya.utils {
         /**
          * 开始函数。
          */
-        static benginFlush: Function;
+        static beginFlush: Function;
         static endFinish: Function;
         /**
          * 添加至图集的处理函数。
