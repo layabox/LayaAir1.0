@@ -1,8 +1,6 @@
 var StaticModel_MeshSkySample = (function () {
     function StaticModel_MeshSkySample() {
-        //是否抗锯齿
-        //Config.isAntialias = true;
-        Laya3D.init(0, 0);
+        Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
         Laya.Stat.show();
@@ -20,13 +18,13 @@ var StaticModel_MeshSkySample = (function () {
         this.skySprite3D.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT006M.v3f.lh");
         this.skySprite3D.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
             var meshSprite = sprite.getChildAt(0);
-            var mesh = meshSprite.mesh;
+            var mesh = meshSprite.meshFilter.sharedMesh;
             mesh.once(Laya.Event.LOADED, null, function (templet) {
-                for (var i = 0; i < meshSprite.shadredMaterials.length; i++) {
-                    var material = meshSprite.shadredMaterials[i];
+                for (var i = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
+                    var material = meshSprite.meshRender.shadredMaterials[i];
                     material.once(Laya.Event.LOADED, null, function (mat) {
-                        mat.isSky = true;
-                        mat.luminance = 3.5;
+                        mat.albedo = new Laya.Vector4(3.5, 3.5, 3.5, 1.0);
+                        mat.renderMode = Laya.Material.RENDERMODE_SKY;
                     });
                 }
             });

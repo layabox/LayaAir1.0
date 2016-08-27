@@ -1,4 +1,5 @@
 package laya.webgl.shader.d2.value {
+	import laya.webgl.utils.MatirxArray;
 	import laya.resource.Bitmap;
 	import laya.resource.Texture;
 	import laya.webgl.WebGLContext;
@@ -24,6 +25,8 @@ package laya.webgl.shader.d2.value {
 		
 		protected static var _cache:Array=[];
 		protected static var _typeClass:Object = [];
+		
+		public static var TEMPMAT4_ARRAY:Array=/*[STATIC SAFE]*/ [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
 		private static function _initone(type:int, classT:*):void
 		{
@@ -64,7 +67,8 @@ package laya.webgl.shader.d2.value {
 		public var colorAdd:Array;
 		public var glTexture:Bitmap;
 		public var u_mmat2:Array;
-		public var u_pos:Array = [0,0];
+		public var u_pos:Array = [0, 0];
+		/*[IF-FLASH]*/public var mul_mmat:Array;//存储两个矩阵相乘的值，mmat*ummat2
 		
 		private var _inClassCache:Array;
 		private var _cacheID:int = 0;
@@ -83,6 +87,7 @@ package laya.webgl.shader.d2.value {
 			this.colorAdd = null;
 			this.glTexture = null;
 			this.u_mmat2 = null;
+			/*[IF-FLASH]*/this.mul_mmat = null;
 			
 			_cacheID = mainID|subID;
 			_inClassCache = _cache[_cacheID];
@@ -151,7 +156,9 @@ package laya.webgl.shader.d2.value {
 			var params:Array;
 			 
 			this.size[0]  = renderstate2d.width, this.size[1] = renderstate2d.height;
-			mmat = renderstate2d.worldMatrix4;
+			mmat = renderstate2d.worldMatrix4;			
+			/*[IF-FLASH]*/MatirxArray.ArrayMul(mmat, this.u_mmat2, TEMPMAT4_ARRAY);
+			/*[IF-FLASH]*/mul_mmat = TEMPMAT4_ARRAY;
 			
 			if (Shader.activeShader!==sd)
 			{

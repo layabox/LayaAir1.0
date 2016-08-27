@@ -21,6 +21,11 @@ package laya.d3.math {
 			this.radius = radius;
 		}
 		
+		public function toDefault():void {
+			center.toDefault();
+			radius = 0;
+		}
+		
 		/**
 		 * 从顶点的子队列生成包围球。
 		 * @param	points 顶点的队列。
@@ -28,7 +33,7 @@ package laya.d3.math {
 		 * @param	count 顶点子队列的顶点数。
 		 * @param	result 生成的包围球。
 		 */
-		public static function fromSubPoints(points:Vector.<Vector3>, start:int, count:int, out:BoundSphere):void {
+		public static function createFromSubPoints(points:Vector.<Vector3>, start:int, count:int, out:BoundSphere):void {
 			if (points == null) {
 				throw new Error("points");
 			}
@@ -54,26 +59,23 @@ package laya.d3.math {
 				Vector3.add(points[i], center, center);
 			}
 			
+			var outCenter:Vector3 = out.center;
 			//This is the center of our sphere. 
-			Vector3.scale(center, 1 / count, center);
+			Vector3.scale(center, 1 / count, outCenter);
 			
 			//Find the radius of the sphere 
 			var radius:Number = 0.0;
 			for (i = start; i < upperEnd; ++i) {
 				//We are doing a relative distance comparison to find the maximum distance 
 				//from the center of our sphere. 
-				var distance:Number = Vector3.distanceSquared(center, points[i]);
+				var distance:Number = Vector3.distanceSquared(outCenter, points[i]);
 				
 				if (distance > radius)
 					radius = distance;
 			}
 			
 			//Find the real distance from the DistanceSquared. 
-			radius = Math.sqrt(radius);
-			
-			//Construct the sphere. 
-			out.center = center;
-			out.radius = radius;
+			out.radius = Math.sqrt(radius);
 		}
 		
 		/**
@@ -81,12 +83,12 @@ package laya.d3.math {
 		 * @param	points 顶点的队列。
 		 * @param	result 生成的包围球。
 		 */
-		public static function fromPoints(points:Vector.<Vector3>, out:BoundSphere):void {
+		public static function createfromPoints(points:Vector.<Vector3>, out:BoundSphere):void {
 			if (points == null) {
 				throw new Error("points");
 			}
 			
-			fromSubPoints(points, 0, points.length, out);
+			createFromSubPoints(points, 0, points.length, out);
 		}
 	
 	}

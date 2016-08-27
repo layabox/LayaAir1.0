@@ -4,9 +4,7 @@ var AttchPointSample;
     var AttchPointSample = (function () {
         function AttchPointSample() {
             this.rotation = new Vector3(0, 3.14, 0);
-            //是否抗锯齿
-            //Config.isAntialias = true;
-            Laya3D.init(0, 0);
+            Laya3D.init(0, 0, true);
             Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
             Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
             Laya.Stat.show();
@@ -29,7 +27,8 @@ var AttchPointSample;
             this.skinAni.url = "../../res/threeDimen/skinModel/dude/dude.ani";
             this.skinAni.play();
             this.attacthPoint = this.skinMesh.addComponent(Laya.AttachPoint);
-            this.attacthPoint.attachBone = "L_Middle1";
+            this.attacthPoint.attachBones.push("L_Middle1");
+            this.attacthPoint.attachBones.push("R_Middle1");
             var settings = new Laya.ParticleSettings();
             settings.textureName = "../../res/threeDimen/particle/fire.png";
             settings.maxPartices = 200;
@@ -49,14 +48,15 @@ var AttchPointSample;
             settings.blendState = 1;
             this.fire = new Laya.Particle3D(settings);
             scene.addChild(this.fire);
-            this.fire.transform.localRotationEuler = this.rotation; //同步人物旋转
             Laya.timer.frameLoop(1, this, this.loop);
         }
         AttchPointSample.prototype.loop = function () {
-            if (this.attacthPoint.matrix) {
-                var e = this.attacthPoint.matrix.elements;
-                for (var i = 0; i < 10; i++) {
-                    this.fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0)); //矩阵的12、13、14分别为Position的X、Y、Z
+            for (var j = 0; j < this.attacthPoint.attachBones.length; j++) {
+                if (this.attacthPoint.matrixs[j]) {
+                    var e = this.attacthPoint.matrixs[j].elements;
+                    for (var i = 0; i < 10; i++) {
+                        this.fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0)); //矩阵的12、13、14分别为Position的X、Y、Z
+                    }
                 }
             }
         };

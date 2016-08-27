@@ -12,11 +12,22 @@ package laya.d3.resource.models {
 	 */
 	public class BaseMesh extends Resource {
 		/** @private */
+		protected var _loaded:Boolean;
+		/** @private */
 		protected var _subMeshCount:int;
 		/** @private */
-		protected var _boundingBox:BoundBox;
+		public var _boundingBox:BoundBox;
 		/** @private */
-		protected var _boundingSphere:BoundSphere;
+		public var _boundingSphere:BoundSphere;
+		
+		
+		/**
+		 * 获取是否已载入。
+		 * @return  是否已载入。
+		 */
+		public function get loaded():Boolean {
+			return _loaded;
+		}
 		
 		/**
 		 * 获取SubMesh的个数。
@@ -24,22 +35,6 @@ package laya.d3.resource.models {
 		 */
 		public function get subMeshCount():int {
 			return _subMeshCount;
-		}
-		
-		/**
-		 * 获取包围盒。
-		 * @return 包围盒。
-		 */
-		public function get boundingBox():BoundBox {
-			return _boundingBox;
-		}
-		
-		/**
-		 * 获取包围球。
-		 * @return 包围球。
-		 */
-		public function get boundingSphere():BoundSphere {
-			return _boundingSphere;
 		}
 		
 		/**
@@ -54,17 +49,9 @@ package laya.d3.resource.models {
 		 * 创建一个 <code>BaseMesh</code> 实例。
 		 */
 		public function BaseMesh() {
-			_boundingBox = new BoundBox(new Vector3(),new Vector3());
-			_boundingSphere = new BoundSphere(new Vector3(),0);
-		}
-		
-		/**
-		 * 获取渲染单元,请重载此方法。
-		 * @param	index 索引。
-		 * @return 渲染单元。
-		 */
-		public function getRenderElement(index:int):IRenderable {
-			throw new Error("未Override,请重载该属性！");
+			_loaded = false;
+			_boundingBox = new BoundBox(new Vector3(), new Vector3());
+			_boundingSphere = new BoundSphere(new Vector3(), 0);
 		}
 		
 		/**
@@ -75,7 +62,14 @@ package laya.d3.resource.models {
 			throw new Error("未Override,请重载该属性！");
 		}
 		
-		
+		/**
+		 * 获取渲染单元,请重载此方法。
+		 * @param	index 索引。
+		 * @return 渲染单元。
+		 */
+		public function getRenderElement(index:int):IRenderable {
+			throw new Error("未Override,请重载该属性！");
+		}
 		
 		/** @private 待开放。*/
 		public function Render():void {

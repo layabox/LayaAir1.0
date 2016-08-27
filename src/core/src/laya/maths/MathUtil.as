@@ -85,7 +85,7 @@ package laya.maths {
 		 * @return 弧度值。
 		 */
 		public static function getRotation(x0:Number, y0:Number, x1:Number, y1:Number):Number {
-			return Math.atan2(x1 - x0, y1 - y0) / Math.PI * 180;
+			return Math.atan2(y1 - y0,x1 - x0) / Math.PI * 180;
 		}
 		
 		/**

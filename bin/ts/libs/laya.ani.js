@@ -2,13 +2,10 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Browser=laya.utils.Browser,Byte=laya.utils.Byte,CONST3D2D=laya.webgl.utils.CONST3D2D,Event=laya.events.Event;
-	var EventDispatcher=laya.events.EventDispatcher,Graphics=laya.display.Graphics,Handler=laya.utils.Handler;
-	var IndexBuffer2D=laya.webgl.utils.IndexBuffer2D,Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil,Matrix=laya.maths.Matrix;
-	var Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
-	var Shader=laya.webgl.shader.Shader,Sprite=laya.display.Sprite,Stat=laya.utils.Stat,Texture=laya.resource.Texture;
-	var URL=laya.net.URL,Value2D=laya.webgl.shader.d2.value.Value2D,VertexBuffer2D=laya.webgl.utils.VertexBuffer2D;
-	var WebGLContext=laya.webgl.WebGLContext;
+	var Browser=laya.utils.Browser,Byte=laya.utils.Byte,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher;
+	var Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil;
+	var Matrix=laya.maths.Matrix,Render=laya.renders.Render,RunDriver=laya.utils.RunDriver,Sprite=laya.display.Sprite;
+	var Stat=laya.utils.Stat,Texture=laya.resource.Texture,URL=laya.net.URL;
 	/**
 	*@private
 	*/
@@ -20,6 +17,93 @@
 		AnimationState.paused=1;
 		AnimationState.playing=2;
 		return AnimationState;
+	})()
+
+
+	/**
+	*...
+	*@author
+	*/
+	//class laya.ani.bone.Bone
+	var Bone=(function(){
+		function Bone(){
+			this.name=null;
+			this._parent=null;
+			this.length=10;
+			this.transform=null;
+			this.sprite=null;
+			this._children=[];
+			this.resultTransform=new Transform();
+			this.resultMatrix=new Matrix();
+		}
+
+		__class(Bone,'laya.ani.bone.Bone');
+		var __proto=Bone.prototype;
+		__proto.update=function(pMatrix){
+			var tResultMatrix;
+			if (pMatrix){
+				tResultMatrix=this.resultTransform.getMatrix();
+				Matrix.mul(tResultMatrix,pMatrix,this.resultMatrix);
+				}else {
+				if (this._parent){
+					tResultMatrix=this.resultTransform.getMatrix();
+					Matrix.mul(tResultMatrix,this._parent.resultMatrix,this.resultMatrix);
+					}else {
+					tResultMatrix=this.resultTransform.getMatrix();
+					tResultMatrix.copyTo(this.resultMatrix);
+				}
+			};
+			var i=0,n=0;
+			var tBone;
+			for (i=0,n=this._children.length;i < n;i++){
+				tBone=this._children[i];
+				tBone.update();
+			}
+		}
+
+		__proto.updateDraw=function(x,y){
+			if (this.sprite){
+				this.sprite.x=x+this.resultMatrix.tx;
+				this.sprite.y=y+this.resultMatrix.ty;
+				}else {
+				this.sprite=new Sprite();
+				this.sprite.graphics.drawCircle(0,0,5,"#ff0000");
+				Laya.stage.addChild(this.sprite);
+				this.sprite.x=x+this.resultMatrix.tx;
+				this.sprite.y=y+this.resultMatrix.ty;
+			};
+			var i=0,n=0;
+			var tBone;
+			for (i=0,n=this._children.length;i < n;i++){
+				tBone=this._children[i];
+				tBone.updateDraw(x,y);
+			}
+		}
+
+		__proto.addChild=function(bone){
+			this._children.push(bone);
+			bone._parent=this;
+		}
+
+		__proto.findBone=function(boneName){
+			if (this.name==boneName){
+				return this;
+				}else {
+				var i=0,n=0;
+				var tBone;
+				var tResult;
+				for (i=0,n=this._children.length;i < n;i++){
+					tBone=this._children[i];
+					tResult=tBone.findBone(boneName);
+					if (tResult){
+						return tResult;
+					}
+				}
+			}
+			return null;
+		}
+
+		return Bone;
 	})()
 
 
@@ -42,7 +126,6 @@
 			this._diyTexture=null;
 			this._parentMatrix=null;
 			this._resultMatrix=null;
-			this._spineSprite=null;
 		}
 
 		__class(BoneSlot,'laya.ani.bone.BoneSlot');
@@ -78,20 +161,8 @@
 				if (this.currDisplayData){
 					var tName=this.currDisplayData.name;
 					this.currTexture=this.templet.getTexture(tName);
-					if (this.currTexture){
-						switch (this.currDisplayData.type){
-							case 0:
-								if (this.currDisplayData.uvs){
-									this.currTexture=new Texture(this.currTexture.bitmap,this.currDisplayData.uvs);
-								}
-								break ;
-							case 1:
-							case 2:
-								if (this._spineSprite==null){
-									this._spineSprite=new SkinSprite();
-								}
-								break ;
-							}
+					if (this.currTexture && Render.isWebGL && this.currDisplayData.type==0 && this.currDisplayData.uvs){
+						this.currTexture=new Texture(this.currTexture.bitmap,this.currDisplayData.uvs);
 					}
 				}
 				}else {
@@ -124,14 +195,20 @@
 		*/
 		__proto.draw=function(graphics,boneMatrixArray,sprite,noUseSave){
 			(noUseSave===void 0)&& (noUseSave=false);
-			if ((this._diyTexture==null && this.currTexture==null)|| this.currDisplayData==null)return;
+			if ((this._diyTexture==null && this.currTexture==null)|| this.currDisplayData==null){
+				if (!(this.currDisplayData && this.currDisplayData.type==3)){
+					return;
+				}
+			};
 			var tTexture=this.currTexture;
 			if (this._diyTexture)tTexture=this._diyTexture;
+			var tSkinSprite;
 			switch (this.currDisplayData.type){
 				case 0:
 					if (graphics){
 						var tCurrentMatrix=this.getDisplayMatrix();
 						if (this._parentMatrix){
+							var tRotateKey=false;
 							if (tCurrentMatrix){
 								Matrix.mul(tCurrentMatrix,this._parentMatrix,Matrix.TEMP);
 								var tResultMatrix;
@@ -141,115 +218,199 @@
 									}else {
 									tResultMatrix=new Matrix();
 								}
-								Matrix.TEMP.copyTo(tResultMatrix);
-								graphics.drawTexture(tTexture,-this.currDisplayData.width / 2,-this.currDisplayData.height / 2,this.currDisplayData.width,this.currDisplayData.height,tResultMatrix);
+								if (!Render.isWebGL && this.currDisplayData.uvs){
+									var tTestMatrix=new Matrix(1,0,0,1);
+									if (this.currDisplayData.uvs[1] > this.currDisplayData.uvs[5]){
+										tTestMatrix.d=-1;
+									}
+									if (this.currDisplayData.uvs[0] > this.currDisplayData.uvs[4]
+										&& this.currDisplayData.uvs[1] > this.currDisplayData.uvs[5]){
+										tRotateKey=true;
+										tTestMatrix.rotate(-Math.PI/2);
+									}
+									Matrix.mul(tTestMatrix,Matrix.TEMP,tResultMatrix);
+									}else {
+									Matrix.TEMP.copyTo(tResultMatrix);
+								}
+								if (tRotateKey){
+									graphics.drawTexture(tTexture,-this.currDisplayData.height / 2,-this.currDisplayData.width / 2,this.currDisplayData.height,this.currDisplayData.width,tResultMatrix);
+									}else {
+									graphics.drawTexture(tTexture,-this.currDisplayData.width / 2,-this.currDisplayData.height / 2,this.currDisplayData.width,this.currDisplayData.height,tResultMatrix);
+								}
 							}
 						}
 					}
 					break ;
 				case 1:
-					if (this._spineSprite){
-						if (this._spineSprite.parent==null){
-							sprite.addChild(this._spineSprite);
+					tSkinSprite=RunDriver.skinAniSprite();
+					if (tSkinSprite==null){
+						return;
+					}
+					graphics.drawSkin(tSkinSprite);
+					var tVBArray=[];
+					var tIBArray=[];
+					var tRed=1;
+					var tGreed=1;
+					var tBlue=1;
+					var tAlpha=1;
+					if (this.currDisplayData.bones==null){
+						for (var i=0,ii=0;i < this.currDisplayData.weights.length && ii< this.currDisplayData.uvs.length;){
+							var tX=this.currDisplayData.weights[i++];
+							var tY=this.currDisplayData.weights[i++];
+							tVBArray.push(tX,tY,this.currDisplayData.uvs[ii++],this.currDisplayData.uvs[ii++],tRed,tGreed,tBlue,tAlpha);
 						};
-						var tVBArray=[];
-						var tIBArray=[];
-						var tRed=1;
-						var tGreed=1;
-						var tBlue=1;
-						var tAlpha=1;
-						if (this.currDisplayData.bones==null){
-							for (var i=0,ii=0;i < this.currDisplayData.weights.length && ii< this.currDisplayData.uvs.length;){
-								var tX=this.currDisplayData.weights[i++];
-								var tY=this.currDisplayData.weights[i++];
-								tVBArray.push(tX,tY,this.currDisplayData.uvs[ii++],this.currDisplayData.uvs[ii++],tRed,tGreed,tBlue,tAlpha);
-							};
-							var tTriangleNum=this.currDisplayData.triangles.length / 3;
-							for (i=0;i < tTriangleNum;i++){
-								tIBArray.push(this.currDisplayData.triangles[i *3]);
-								tIBArray.push(this.currDisplayData.triangles[i *3+1]);
-								tIBArray.push(this.currDisplayData.triangles[i *3+2]);
-							}
-							this._spineSprite.init(this.currTexture,tVBArray,tIBArray);
-							var tCurrentMatrix2=this.getDisplayMatrix();
-							if (this._parentMatrix){
-								if (tCurrentMatrix2){
-									Matrix.mul(tCurrentMatrix2,this._parentMatrix,Matrix.TEMP);
-									var tResultMatrix2;
-									if (noUseSave){
-										if (this._resultMatrix==null)this._resultMatrix=new Matrix();
-										tResultMatrix2=this._resultMatrix;
-										}else {
-										tResultMatrix2=new Matrix();
-									}
-									Matrix.TEMP.copyTo(tResultMatrix2);
-									this._spineSprite.transform=tResultMatrix2;
-								}
-							}
-							}else {
-							this.skinMesh(boneMatrixArray);
+						var tTriangleNum=this.currDisplayData.triangles.length / 3;
+						for (i=0;i < tTriangleNum;i++){
+							tIBArray.push(this.currDisplayData.triangles[i *3]);
+							tIBArray.push(this.currDisplayData.triangles[i *3+1]);
+							tIBArray.push(this.currDisplayData.triangles[i *3+2]);
 						}
+						tSkinSprite.init(this.currTexture,tVBArray,tIBArray);
+						var tCurrentMatrix2=this.getDisplayMatrix();
+						if (this._parentMatrix){
+							if (tCurrentMatrix2){
+								Matrix.mul(tCurrentMatrix2,this._parentMatrix,Matrix.TEMP);
+								var tResultMatrix2;
+								if (noUseSave){
+									if (this._resultMatrix==null)this._resultMatrix=new Matrix();
+									tResultMatrix2=this._resultMatrix;
+									}else {
+									tResultMatrix2=new Matrix();
+								}
+								Matrix.TEMP.copyTo(tResultMatrix2);
+								tSkinSprite.transform=tResultMatrix2;
+							}
+						}
+						}else {
+						this.skinMesh(boneMatrixArray,tSkinSprite);
 					}
 					break ;
 				case 2:
-					if (this._spineSprite.parent==null){
-						sprite.addChild(this._spineSprite);
+					tSkinSprite=RunDriver.skinAniSprite();
+					if (tSkinSprite==null){
+						return;
 					}
-					this.skinMesh(boneMatrixArray);
+					graphics.drawSkin(tSkinSprite);
+					this.skinMesh(boneMatrixArray,tSkinSprite);
+					break ;
+				case 3:
 					break ;
 				}
+		}
+
+		/**
+		*画路径
+		*@param boneMatrixArray
+		*@param graphics
+		*/
+		__proto.drawPath=function(boneMatrixArray,graphics){
+			var tBones=this.currDisplayData.bones;
+			var tWeights=this.currDisplayData.weights;
+			var tTriangles=this.currDisplayData.triangles;
+			var tVBArray=[];
+			var tIBArray=[];
+			var tRx=0;
+			var tRy=0;
+			var nn=0;
+			var tMatrix;
+			var tX=NaN;
+			var tY=NaN;
+			var tB=0;
+			var tWeight=0;
+			var tVertices=[];
+			var i=0,j=0,n=0;
+			var tRed=1;
+			var tGreed=1;
+			var tBlue=1;
+			var tAlpha=1;
+			for (i=0,n=tBones.length;i < n;){
+				nn=tBones[i++]+i;
+				tRx=0,tRy=0;
+				for (;i < nn;i++){
+					tMatrix=boneMatrixArray[tBones[i]]
+					tX=tWeights[tB];
+					tY=tWeights[tB+1];
+					tWeight=tWeights[tB+2];
+					tRx+=(tX *tMatrix.a+tY *tMatrix.c+tMatrix.tx)*tWeight;
+					tRy+=(tX *tMatrix.b+tY *tMatrix.d+tMatrix.ty)*tWeight;
+					tB+=3;
+				}
+				tVertices.push(tRx,tRy);
+			}
+			for (i=0;i < tVertices.length;){
+				tRx=tVertices[i++];
+				tRy=tVertices[i++];
+				graphics.drawCircle(tRx,tRy,2.5,"#ff0000");
+				tVBArray.push(tRx,tRy);
+			};
+			var tNum=10;
+			var tOut=[];
+			for (var i=0;i < tNum;i++){
+				this.addCurvePosition(i / tNum,tVertices[0],tVertices[1],tVertices[2],tVertices[3],tVertices[4],tVertices[5],tVertices[6],tVertices[7],tOut,i *3,true);
+			}
+			for (i=0;i < tNum;i++){
+				graphics.drawCircle(tOut[i *3],tOut[i*3+1],2.5,"#00ff00");
+			}
+		}
+
+		__proto.addCurvePosition=function(p,x1,y1,cx1,cy1,cx2,cy2,x2,y2,out,o,tangents){
+			if (p==0)p=0.0001;
+			var tt=p *p,ttt=tt *p,u=1-p,uu=u *u,uuu=uu *u;
+			var ut=u *p,ut3=ut *3,uut3=u *ut3,utt3=ut3 *p;
+			var x=x1 *uuu+cx1 *uut3+cx2 *utt3+x2 *ttt,y=y1 *uuu+cy1 *uut3+cy2 *utt3+y2 *ttt;
+			out[o]=x;
+			out[o+1]=y;
+			if (tangents)out[o+2]=Math.atan2(y-(y1 *uu+cy1 *ut *2+cy2 *tt),x-(x1 *uu+cx1 *ut *2+cx2 *tt));
 		}
 
 		/**
 		*显示蒙皮动画
 		*@param boneMatrixArray 当前帧的骨骼矩阵
 		*/
-		__proto.skinMesh=function(boneMatrixArray){
-			if (this._spineSprite){
-				var tBones=this.currDisplayData.bones;
-				var tUvs=this.currDisplayData.uvs;
-				var tWeights=this.currDisplayData.weights;
-				var tTriangles=this.currDisplayData.triangles;
-				var tVBArray=[];
-				var tIBArray=[];
-				var tRx=0;
-				var tRy=0;
-				var nn=0;
-				var tMatrix;
-				var tX=NaN;
-				var tY=NaN;
-				var tB=0;
-				var tWeight=0;
-				var tVertices=[];
-				var i=0,j=0,n=0;
-				var tRed=1;
-				var tGreed=1;
-				var tBlue=1;
-				var tAlpha=1;
-				for (i=0,n=tBones.length;i < n;){
-					nn=tBones[i++]+i;
-					tRx=0,tRy=0;
-					for (;i < nn;i++){
-						tMatrix=boneMatrixArray[tBones[i]]
-						tX=tWeights[tB];
-						tY=tWeights[tB+1];
-						tWeight=tWeights[tB+2];
-						tRx+=(tX *tMatrix.a+tY *tMatrix.c+tMatrix.tx)*tWeight;
-						tRy+=(tX *tMatrix.b+tY *tMatrix.d+tMatrix.ty)*tWeight;
-						tB+=3;
-					}
-					tVertices.push(tRx,tRy);
+		__proto.skinMesh=function(boneMatrixArray,skinSprite){
+			var tBones=this.currDisplayData.bones;
+			var tUvs=this.currDisplayData.uvs;
+			var tWeights=this.currDisplayData.weights;
+			var tTriangles=this.currDisplayData.triangles;
+			var tVBArray=[];
+			var tIBArray=[];
+			var tRx=0;
+			var tRy=0;
+			var nn=0;
+			var tMatrix;
+			var tX=NaN;
+			var tY=NaN;
+			var tB=0;
+			var tWeight=0;
+			var tVertices=[];
+			var i=0,j=0,n=0;
+			var tRed=1;
+			var tGreed=1;
+			var tBlue=1;
+			var tAlpha=1;
+			for (i=0,n=tBones.length;i < n;){
+				nn=tBones[i++]+i;
+				tRx=0,tRy=0;
+				for (;i < nn;i++){
+					tMatrix=boneMatrixArray[tBones[i]]
+					tX=tWeights[tB];
+					tY=tWeights[tB+1];
+					tWeight=tWeights[tB+2];
+					tRx+=(tX *tMatrix.a+tY *tMatrix.c+tMatrix.tx)*tWeight;
+					tRy+=(tX *tMatrix.b+tY *tMatrix.d+tMatrix.ty)*tWeight;
+					tB+=3;
 				}
-				for (i=0,j=0;i < tVertices.length && j < tUvs.length;){
-					tRx=tVertices[i++];
-					tRy=tVertices[i++];
-					tVBArray.push(tRx,tRy,tUvs[j++],tUvs[j++],tRed,tGreed,tBlue,tAlpha);
-				}
-				for (i=0,n=tTriangles.length;i < n;i++){
-					tIBArray.push(tTriangles[i]);
-				}
-				this._spineSprite.init(this.currTexture,tVBArray,tIBArray);
+				tVertices.push(tRx,tRy);
 			}
+			for (i=0,j=0;i < tVertices.length && j < tUvs.length;){
+				tRx=tVertices[i++];
+				tRy=tVertices[i++];
+				tVBArray.push(tRx,tRy,tUvs[j++],tUvs[j++],tRed,tGreed,tBlue,tAlpha);
+			}
+			for (i=0,n=tTriangles.length;i < n;i++){
+				tIBArray.push(tTriangles[i]);
+			}
+			skinSprite.init(this.currTexture,tVBArray,tIBArray);
 		}
 
 		/**
@@ -301,6 +462,27 @@
 		}
 
 		return BoneSlot;
+	})()
+
+
+	/**
+	*...
+	*@author
+	*/
+	//class laya.ani.bone.IkConstraintData
+	var IkConstraintData=(function(){
+		function IkConstraintData(){
+			this.name=null;
+			this.targetBoneName=null;
+			this.bendDirection=1;
+			this.mix=1;
+			this.targetBoneIndex=-1;
+			this.boneNames=[];
+			this.boneIndexs=[];
+		}
+
+		__class(IkConstraintData,'laya.ani.bone.IkConstraintData');
+		return IkConstraintData;
 	})()
 
 
@@ -431,7 +613,7 @@
 
 
 	/**
-	*@private
+	*<code>AnimationPlayer</code> 类用于动画播放器。
 	*/
 	//class laya.ani.AnimationPlayer extends laya.events.EventDispatcher
 	var AnimationPlayer=(function(_super){
@@ -439,7 +621,10 @@
 			this._templet=null;
 			this._currentTime=NaN;
 			this._currentFrameTime=NaN;
-			this._duration=NaN;
+			this._playStart=NaN;
+			this._playEnd=NaN;
+			this._playDuration=NaN;
+			this._overallDuration=NaN;
 			this._stopWhenCircleFinish=false;
 			this._elapsedPlaybackTime=NaN;
 			this._startPlayLoopCount=NaN;
@@ -456,7 +641,7 @@
 			this._currentAnimationClipIndex=-1;
 			this._currentKeyframeIndex=-1;
 			this._currentTime=0.0;
-			this._duration=Number.MAX_VALUE;
+			this._overallDuration=Number.MAX_VALUE;
 			this._stopWhenCircleFinish=false;
 			this._elapsedPlaybackTime=0;
 			this._startPlayLoopCount=-1;
@@ -467,24 +652,73 @@
 		__class(AnimationPlayer,'laya.ani.AnimationPlayer',_super);
 		var __proto=AnimationPlayer.prototype;
 		/**
-		*播放动画。
-		*@param name 动画名字。
-		*@param playbackRate 播放速率。
-		*@param duration 播放时长,单位为毫秒。（Number.MAX_VALUE为循环播放，0为1次）
+		*@private
 		*/
-		__proto.play=function(index,playbackRate,duration){
+		__proto._calculatePlayDuration=function(){
+			if (this.state!==/*laya.ani.AnimationState.stopped*/0){
+				var oriDuration=this._templet.getAniDuration(this._currentAnimationClipIndex);
+				(this._playEnd===0)&& (this._playEnd=oriDuration);
+				if (Math.floor(this._playEnd)> oriDuration)
+					throw new Error("AnimationPlayer:playEnd must less than original Duration.");
+				this._playDuration=this._playEnd-this._playStart;
+			}
+		}
+
+		/**
+		*播放动画。
+		*@param index 动画索引。
+		*@param playbackRate 播放速率。
+		*@param duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
+		*@param playStart 播放的起始时间位置。
+		*@param playEnd 播放的结束时间位置。（0为动画一次循环的最长结束时间位置）。
+		*/
+		__proto.play=function(index,playbackRate,overallDuration,playStart,playEnd){
 			(index===void 0)&& (index=0);
 			(playbackRate===void 0)&& (playbackRate=1.0);
-			(duration===void 0)&& (duration=1.7976931348623157e+308);
+			(overallDuration===void 0)&& (overallDuration=Number.MAX_VALUE);
+			(playStart===void 0)&& (playStart=0);
+			(playEnd===void 0)&& (playEnd=0);
+			if (!this._templet)
+				throw new Error("AnimationPlayer:templet must not be null,maybe you need to set url.");
+			if (overallDuration < 0 || playStart < 0 || playEnd < 0)
+				throw new Error("AnimationPlayer:overallDuration,playStart and playEnd must large than zero.");
+			if ((playEnd!==0)&&(playStart > playEnd))
+				throw new Error("AnimationPlayer:start must less than end.");
 			this._currentTime=0;
+			this._currentFrameTime=0;
 			this._elapsedPlaybackTime=0;
 			this.playbackRate=playbackRate;
-			this._duration=duration;
+			this._overallDuration=overallDuration;
+			this._playStart=playStart;
+			this._playEnd=playEnd;
 			this._paused=false;
 			this._currentAnimationClipIndex=index;
 			this._currentKeyframeIndex=0;
 			this._startPlayLoopCount=Stat.loopCount;
 			this.event(/*laya.events.Event.PLAYED*/"played");
+			if (this._templet.loaded)
+				this._calculatePlayDuration();
+			else
+			this._templet.once(/*laya.events.Event.LOADED*/"loaded",this,this._calculatePlayDuration);
+		}
+
+		/**
+		*播放动画。
+		*@param index 动画索引。
+		*@param playbackRate 播放速率。
+		*@param duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
+		*@param playStartFrame 播放的原始起始帧率位置。
+		*@param playEndFrame 播放的原始结束帧率位置。（0为动画一次循环的最长结束时间位置）。
+		*/
+		__proto.playByFrame=function(index,playbackRate,overallDuration,playStartFrame,playEndFrame,fpsIn3DBuilder){
+			(index===void 0)&& (index=0);
+			(playbackRate===void 0)&& (playbackRate=1.0);
+			(overallDuration===void 0)&& (overallDuration=Number.MAX_VALUE);
+			(playStartFrame===void 0)&& (playStartFrame=0);
+			(playEndFrame===void 0)&& (playEndFrame=0);
+			(fpsIn3DBuilder===void 0)&& (fpsIn3DBuilder=30);
+			var interval=1000.0 / fpsIn3DBuilder;
+			this.play(index,playbackRate,overallDuration,playStartFrame *interval,playEndFrame *interval);
 		}
 
 		/**
@@ -507,24 +741,26 @@
 				return;
 			var time=0;
 			(this._startPlayLoopCount!==Stat.loopCount)&& (time=elapsedTime *this.playbackRate,this._elapsedPlaybackTime+=time);
-			var currentAniClipDuration=this._templet.getAniDuration(this._currentAnimationClipIndex);
-			if ((this._duration!==0 && this._elapsedPlaybackTime >=this._duration)|| (this._duration===0 && this._elapsedPlaybackTime >=currentAniClipDuration)){
+			var currentAniClipPlayDuration=this.playDuration;
+			if ((this._overallDuration!==0 && this._elapsedPlaybackTime >=this._overallDuration)|| (this._overallDuration===0 && this._elapsedPlaybackTime >=currentAniClipPlayDuration)){
 				this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
 				this.event(/*laya.events.Event.STOPPED*/"stopped");
 				return;
 			}
 			time+=this._currentTime;
-			if (currentAniClipDuration > 0){
-				while (time >=currentAniClipDuration){
+			if (currentAniClipPlayDuration > 0){
+				while (time >=currentAniClipPlayDuration){
 					if (this._stopWhenCircleFinish){
 						this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
 						this._stopWhenCircleFinish=false;
 						this.event(/*laya.events.Event.STOPPED*/"stopped");
 						return;
 					}
-					time-=currentAniClipDuration;
+					time-=currentAniClipPlayDuration;
 				}
-				this.currentTime=time;
+				this._currentTime=time;
+				this._currentKeyframeIndex=Math.floor((this.currentPlayTime)/ this._cacheFrameRateInterval);
+				this._currentFrameTime=this._currentKeyframeIndex *this._cacheFrameRateInterval;
 				}else {
 				if (this._stopWhenCircleFinish){
 					this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
@@ -555,17 +791,49 @@
 		__getset(0,__proto,'templet',function(){
 			return this._templet;
 			},function(value){
-			if (!this.State===/*laya.ani.AnimationState.stopped*/0)
+			if (!this.state===/*laya.ani.AnimationState.stopped*/0)
 				this.stop(true);
 			this._templet=value;
 		});
 
 		/**
+		*获取当前精确时间，不包括重播时间
+		*@return value 当前时间
+		*/
+		__getset(0,__proto,'currentPlayTime',function(){
+			return this._currentTime+this._playStart;
+		});
+
+		/**
+		*动画播放的起始时间位置。
+		*@return 起始时间位置。
+		*/
+		__getset(0,__proto,'playStart',function(){
+			return this._playStart;
+		});
+
+		/**
+		*动画播放的结束时间位置。
+		*@return 结束时间位置。
+		*/
+		__getset(0,__proto,'playEnd',function(){
+			return this._playEnd;
+		});
+
+		/**
 		*获取当前帧数
-		*@return value 当前帧数
+		*@return 当前帧数
 		*/
 		__getset(0,__proto,'currentKeyframeIndex',function(){
 			return this._currentKeyframeIndex;
+		});
+
+		/**
+		*获取动画播放一次的总时间
+		*@return 动画播放一次的总时间
+		*/
+		__getset(0,__proto,'playDuration',function(){
+			return this._playDuration;
 		});
 
 		/**
@@ -588,36 +856,22 @@
 		*设置当前播放位置
 		*@param value 当前时间
 		*/
-		/**
-		*获取当前精确时间，不包括重播时间
-		*@return value 当前时间
-		*/
-		__getset(0,__proto,'currentTime',function(){
-			return this._currentTime;
-			},function(value){
+		__getset(0,__proto,'currentTime',null,function(value){
+			if (this._currentAnimationClipIndex===-1 || !this._templet || !this._templet.loaded)
+				return;
+			if (value < this._playStart || value > this._playEnd)
+				throw new Error("AnimationPlayer:value must large than playStartTime,small than playEndTime.");
 			this._currentTime=value;
-			this._currentKeyframeIndex=Math.floor((this._currentTime % (this._templet.getAniDuration(this._currentAnimationClipIndex)))/ this._cacheFrameRateInterval);
+			this._currentKeyframeIndex=Math.floor(this.currentPlayTime / this._cacheFrameRateInterval);
 			this._currentFrameTime=this._currentKeyframeIndex *this._cacheFrameRateInterval;
 		});
 
 		/**
-		*获取当前播放状态
-		*@return 当前播放状态
+		*获取动画播放的总总时间
+		*@return 动画播放的总时间
 		*/
-		__getset(0,__proto,'State',function(){
-			if (this._currentAnimationClipIndex===-1)
-				return /*laya.ani.AnimationState.stopped*/0;
-			if (this._paused)
-				return /*laya.ani.AnimationState.paused*/1;
-			return /*laya.ani.AnimationState.playing*/2;
-		});
-
-		/**
-		*获取缓存帧率间隔时间
-		*@return 缓存帧率间隔时间
-		*/
-		__getset(0,__proto,'cacheFrameRateInterval',function(){
-			return this._cacheFrameRateInterval;
+		__getset(0,__proto,'overallDuration',function(){
+			return this._overallDuration;
 		});
 
 		/**
@@ -633,6 +887,26 @@
 			},function(value){
 			this._paused=value;
 			value && this.event(/*laya.events.Event.PAUSED*/"paused");
+		});
+
+		/**
+		*获取缓存帧率间隔时间
+		*@return 缓存帧率间隔时间
+		*/
+		__getset(0,__proto,'cacheFrameRateInterval',function(){
+			return this._cacheFrameRateInterval;
+		});
+
+		/**
+		*获取当前播放状态
+		*@return 当前播放状态
+		*/
+		__getset(0,__proto,'state',function(){
+			if (this._currentAnimationClipIndex===-1)
+				return /*laya.ani.AnimationState.stopped*/0;
+			if (this._paused)
+				return /*laya.ani.AnimationState.paused*/1;
+			return /*laya.ani.AnimationState.playing*/2;
 		});
 
 		return AnimationPlayer;
@@ -927,9 +1201,35 @@
 
 		KeyframesAniTemplet._uniqueIDCounter=1;
 		KeyframesAniTemplet.interpolation=[KeyframesAniTemplet._LinearInterpolation_0,KeyframesAniTemplet._QuaternionInterpolation_1,KeyframesAniTemplet._AngleInterpolation_2,KeyframesAniTemplet._RadiansInterpolation_3,KeyframesAniTemplet._Matrix4x4Interpolation_4,KeyframesAniTemplet._NoInterpolation_5];
-		KeyframesAniTemplet.LAYA_ANIMATION_VISION="LAYAANIMATION:1.0.1";
+		KeyframesAniTemplet.LAYA_ANIMATION_VISION="LAYAANIMATION:1.0.2";
 		return KeyframesAniTemplet;
 	})(EventDispatcher)
+
+
+	/**
+	*...
+	*@author
+	*/
+	//class laya.ani.GraphicsAni extends laya.display.Graphics
+	var GraphicsAni=(function(_super){
+		function GraphicsAni(){
+			GraphicsAni.__super.call(this);
+		}
+
+		__class(GraphicsAni,'laya.ani.GraphicsAni',_super);
+		var __proto=GraphicsAni.prototype;
+		/**
+		*@private
+		*画自定义蒙皮动画
+		*@param skin
+		*/
+		__proto.drawSkin=function(skin){
+			var arr=[skin];
+			this._saveToCmd(Render._context._drawSkin,arr);
+		}
+
+		return GraphicsAni;
+	})(Graphics)
 
 
 	/**
@@ -942,6 +1242,7 @@
 			this._textureJson=null;
 			this._graphicsCache=[];
 			this.srcBoneMatrixArr=[];
+			this.ikArr=[];
 			this.boneSlotDic={};
 			this.bindBoneBoneSlotDic={};
 			this.boneSlotArray=[];
@@ -952,12 +1253,15 @@
 			this.url=null;
 			this.yReverseMatrix=null;
 			this._rate=60;
+			this.aniSectionDic={};
 			this.textureDic={};
 			this._skBufferUrl=null;
 			this._textureDic={};
 			this._loadList=null;
 			this._path=null;
+			this.mRootBone=null;
 			Templet.__super.call(this);
+			this.mBoneArr=[];
 		}
 
 		__class(Templet,'laya.ani.bone.Templet',_super);
@@ -1007,6 +1311,10 @@
 		*/
 		__proto.parse=function(data,playbackRate){
 			_super.prototype.parse.call(this,data,playbackRate);
+			if (this._aniVersion !=KeyframesAniTemplet.LAYA_ANIMATION_VISION){
+				console.log("[Error] 版本不一致，请使用IDE版本（1.2.0）重新导出");
+				this._loaded=false;
+			}
 			if (this._loaded){
 				if (this._mainTexture){
 					this._parsePublicExtData();
@@ -1032,12 +1340,8 @@
 			var tTexture;
 			var tSrcTexturePath;
 			for (i=0;i < tTextureLen;i++){
-				if (this._aniVersion=="LAYAANIMATION:1.0.0"){
-					tTextureName=tTextureNameArr[i];
-					}else if (this._aniVersion=="LAYAANIMATION:1.0.1"){
-					tSrcTexturePath=this._path+tTextureNameArr[i *2];
-					tTextureName=tTextureNameArr[i *2+1];
-				}
+				tSrcTexturePath=this._path+tTextureNameArr[i *2];
+				tTextureName=tTextureNameArr[i *2+1];
 				tX=tByte.getFloat32();
 				tY=tByte.getFloat32();
 				tWidth=tByte.getFloat32();
@@ -1065,7 +1369,7 @@
 			var tTextureName;
 			for (var i=0,n=this._loadList.length;i < n;i++){
 				tTextureName=this._loadList[i];
-				this._textureDic[tTextureName]=Loader.getRes(tTextureName);
+				tTexture=this._textureDic[tTextureName]=Loader.getRes(tTextureName);
 			}
 			this._parsePublicExtData();
 		}
@@ -1089,14 +1393,10 @@
 			var tSrcTexturePath;
 			for (i=0;i < tTextureLen;i++){
 				tTexture=this._mainTexture;
-				if (this._aniVersion=="LAYAANIMATION:1.0.0"){
-					tTextureName=tTextureNameArr[i];
-					}else if (this._aniVersion=="LAYAANIMATION:1.0.1"){
-					tSrcTexturePath=this._path+tTextureNameArr[i *2];
-					tTextureName=tTextureNameArr[i *2+1];
-					if (this._mainTexture==null){
-						tTexture=this._textureDic[tSrcTexturePath];
-					}
+				tSrcTexturePath=this._path+tTextureNameArr[i *2];
+				tTextureName=tTextureNameArr[i *2+1];
+				if (this._mainTexture==null){
+					tTexture=this._textureDic[tSrcTexturePath];
 				}
 				tX=tByte.getFloat32();
 				tY=tByte.getFloat32();
@@ -1112,13 +1412,46 @@
 				tFrameHeight=isNaN(tTempleData)? tHeight :tTempleData;
 				this.subTextureDic[tTextureName]=Texture.create(tTexture,tX,tY,tWidth,tHeight,-tFrameX,-tFrameY,tFrameWidth,tFrameHeight);
 			};
+			var tAniCount=tByte.getUint16();
+			var tSectionArr;
+			for (i=0;i < tAniCount;i++){
+				tSectionArr=[];
+				tSectionArr.push(tByte.getUint16());
+				tSectionArr.push(tByte.getUint16());
+				tSectionArr.push(tByte.getUint16());
+				this.aniSectionDic[i]=tSectionArr;
+			};
+			var tBone;
+			var tParentBone;
+			var tName;
+			var tParentName;
+			var tBoneLen=tByte.getInt16();
+			var tBoneDic={};
+			for (i=0;i < tBoneLen;i++){
+				tBone=new Bone();
+				tName=tByte.readUTFString();
+				tParentName=tByte.readUTFString();
+				tBone.length=tByte.getFloat32();
+				tBone.name=tName;
+				if (tParentName){
+					tParentBone=tBoneDic[tParentName];
+					if (tParentBone){
+						tParentBone.addChild(tBone);
+						}else {
+						this.mRootBone=tBone;
+					}
+				}
+				tBoneDic[tName]=tBone;
+				this.mBoneArr.push(tBone);
+			};
 			var tMatrixDataLen=tByte.getUint16();
 			var tLen=tByte.getUint16();
 			var parentIndex=0;
 			var boneLength=Math.floor(tLen / tMatrixDataLen);
+			var tResultTransform;
 			var tMatrixArray=this.srcBoneMatrixArr;
 			for (i=0;i < boneLength;i++){
-				var tResultTransform=new Transform();
+				tResultTransform=new Transform();
 				tResultTransform.scX=tByte.getFloat32();
 				tResultTransform.skX=tByte.getFloat32();
 				tResultTransform.skY=tByte.getFloat32();
@@ -1126,6 +1459,25 @@
 				tResultTransform.x=tByte.getFloat32();
 				tResultTransform.y=tByte.getFloat32();
 				tMatrixArray.push(tResultTransform);
+				tBone=this.mBoneArr[i];
+				tBone.transform=tResultTransform;
+			};
+			var tIkConstraintData;
+			var tIkLen=tByte.getUint16();
+			var tIkBoneLen=0;
+			for (i=0;i < tIkLen;i++){
+				tIkConstraintData=new IkConstraintData();
+				tIkBoneLen=tByte.getUint16();
+				for (j=0;j < tIkBoneLen;j++){
+					tIkConstraintData.boneNames.push(tByte.readUTFString());
+					tIkConstraintData.boneIndexs.push(tByte.getInt16());
+				}
+				tIkConstraintData.name=tByte.readUTFString();
+				tIkConstraintData.targetBoneName=tByte.readUTFString();
+				tIkConstraintData.targetBoneIndex=tByte.getInt16();
+				tIkConstraintData.bendDirection=tByte.getFloat32();
+				tIkConstraintData.mix=tByte.getFloat32();
+				this.ikArr.push(tIkConstraintData);
 			};
 			var tBoneSlotLen=tByte.getInt16();
 			var tDBBoneSlot;
@@ -1134,9 +1486,7 @@
 				tDBBoneSlot=new BoneSlot();
 				tDBBoneSlot.name=tByte.readUTFString();
 				tDBBoneSlot.parent=tByte.readUTFString();
-				if (this._aniVersion=="LAYAANIMATION:1.0.1"){
-					tDBBoneSlot.attachmentName=tByte.readUTFString();
-				}
+				tDBBoneSlot.attachmentName=tByte.readUTFString();
 				tDBBoneSlot.srcDisplayIndex=tDBBoneSlot.displayIndex=tByte.getInt16();
 				tDBBoneSlot.templet=this;
 				this.boneSlotDic[tDBBoneSlot.name]=tDBBoneSlot;
@@ -1153,7 +1503,7 @@
 			var tSkinDataLen=tByte.getUint8();
 			var tSkinData,tSlotData,tDisplayData;
 			var tSlotDataLen=0,tDisplayDataLen=0;
-			var tBoneLen=0,tUvLen=0,tWeightLen=0,tTriangleLen=0,tVerticeLen=0;
+			var tUvLen=0,tWeightLen=0,tTriangleLen=0,tVerticeLen=0;
 			for (i=0;i < tSkinDataLen;i++){
 				tSkinData=new SkinData();
 				tSkinData.name=tNameArray[tNameStartIndex++];
@@ -1166,9 +1516,7 @@
 					for (k=0;k < tDisplayDataLen;k++){
 						tDisplayData=new SkinSlotDisplayData();
 						tDisplayData.name=tNameArray[tNameStartIndex++];
-						if (this._aniVersion=="LAYAANIMATION:1.0.1"){
-							tDisplayData.attachmentName=tNameArray[tNameStartIndex++];
-						}
+						tDisplayData.attachmentName=tNameArray[tNameStartIndex++];
 						tDisplayData.transform=new Transform();
 						tDisplayData.transform.scX=tByte.getFloat32();
 						tDisplayData.transform.skX=tByte.getFloat32();
@@ -1177,73 +1525,54 @@
 						tDisplayData.transform.x=tByte.getFloat32();
 						tDisplayData.transform.y=tByte.getFloat32();
 						tSlotData.displayArr.push(tDisplayData);
-						if(this._aniVersion=="LAYAANIMATION:1.0.0"){
-							tTexture=this.getTexture(tDisplayData.name);
-							if (tTexture){
-								tDisplayData.width=tTexture.sourceWidth;
-								tDisplayData.height=tTexture.sourceHeight;
-								}else {
-								tDisplayData.width=0;
-								tDisplayData.height=0;
+						tDisplayData.width=tByte.getFloat32();
+						tDisplayData.height=tByte.getFloat32();
+						tDisplayData.type=tByte.getUint8();
+						tBoneLen=tByte.getUint16();
+						if (tBoneLen > 0){
+							tDisplayData.bones=[];
+							for (l=0;l < tBoneLen;l++){
+								var tBoneId=tByte.getUint16();
+								tDisplayData.bones.push(tBoneId);
 							}
-							}else if (this._aniVersion=="LAYAANIMATION:1.0.1"){
-							tDisplayData.width=tByte.getFloat32();
-							tDisplayData.height=tByte.getFloat32();
-							tDisplayData.type=tByte.getUint8();
-							switch (tDisplayData.type){
-								case 0:
-								case 1:
-								case 2:
-									tBoneLen=tByte.getUint16();
-									if (tBoneLen > 0){
-										tDisplayData.bones=[];
-										for (l=0;l < tBoneLen;l++){
-											var tBoneId=tByte.getUint16();
-											tDisplayData.bones.push(tBoneId);
-										}
-									}
-									tUvLen=tByte.getUint16();
-									if (tUvLen > 0){
-										tDisplayData.uvs=[];
-										for (l=0;l < tUvLen;l++){
-											tDisplayData.uvs.push(tByte.getFloat32());
-										}
-									}
-									tWeightLen=tByte.getUint16();
-									if (tWeightLen > 0){
-										tDisplayData.weights=[];
-										for (l=0;l < tWeightLen;l++){
-											tDisplayData.weights.push(tByte.getFloat32());
-										}
-									}
-									tTriangleLen=tByte.getUint16();
-									if (tTriangleLen > 0){
-										tDisplayData.triangles=[];
-										for (l=0;l < tTriangleLen;l++){
-											tDisplayData.triangles.push(tByte.getUint16());
-										}
-									}
-									tVerticeLen=tByte.getUint16();
-									if (tVerticeLen > 0){
-										tDisplayData.vertices=[];
-										for (l=0;l < tVerticeLen;l++){
-											tDisplayData.vertices.push(tByte.getFloat32());
-										}
-									}
-									break ;
-								}
+						}
+						tUvLen=tByte.getUint16();
+						if (tUvLen > 0){
+							tDisplayData.uvs=[];
+							for (l=0;l < tUvLen;l++){
+								tDisplayData.uvs.push(tByte.getFloat32());
+							}
+						}
+						tWeightLen=tByte.getUint16();
+						if (tWeightLen > 0){
+							tDisplayData.weights=[];
+							for (l=0;l < tWeightLen;l++){
+								tDisplayData.weights.push(tByte.getFloat32());
+							}
+						}
+						tTriangleLen=tByte.getUint16();
+						if (tTriangleLen > 0){
+							tDisplayData.triangles=[];
+							for (l=0;l < tTriangleLen;l++){
+								tDisplayData.triangles.push(tByte.getUint16());
+							}
+						}
+						tVerticeLen=tByte.getUint16();
+						if (tVerticeLen > 0){
+							tDisplayData.vertices=[];
+							for (l=0;l < tVerticeLen;l++){
+								tDisplayData.vertices.push(tByte.getFloat32());
+							}
 						}
 					}
 					tSkinData.slotArr.push(tSlotData);
 				}
 				this.skinDic[tSkinData.name]=tSkinData;
 				this.skinDataArray.push(tSkinData);
-			}
-			if (this._aniVersion=="LAYAANIMATION:1.0.1"){
-				var tReverse=tByte.getUint8();
-				if (tReverse==1){
-					this.yReverseMatrix=new Matrix(1,0,0,-1,0,0);
-				}
+			};
+			var tReverse=tByte.getUint8();
+			if (tReverse==1){
+				this.yReverseMatrix=new Matrix(1,0,0,-1,0,0);
 			}
 			this.showSkinByIndex(this.boneSlotDic,0);
 			this.event(/*laya.events.Event.COMPLETE*/"complete",this);
@@ -1289,32 +1618,19 @@
 		}
 
 		/**
-		*@private
-		*显示指定的皮肤
-		*@param boneSlotDic 插糟字典的引用
-		*@param skinName 皮肤的名字
+		*通过皮肤名字得到皮肤索引
+		*@param skinName 皮肤名称
+		*@return
 		*/
-		__proto.showSkinByName=function(boneSlotDic,skinName){
-			var i=0,n=0;
-			var tBoneSlot;
-			var tSlotData;
-			var tSkinData=this.skinDic[skinName];
-			if (tSkinData){
-				for (i=0,n=tSkinData.slotArr.length;i < n;i++){
-					tSlotData=tSkinData.slotArr[i];
-					if (tSlotData){
-						tBoneSlot=boneSlotDic[tSlotData.name];
-						if (tBoneSlot){
-							tBoneSlot.showSlotData(tSlotData);
-							if (tBoneSlot.attachmentName !="null"){
-								tBoneSlot.showDisplayByName(tBoneSlot.attachmentName);
-								}else {
-								tBoneSlot.showDisplayByIndex(tBoneSlot.displayIndex);
-							}
-						}
-					}
+		__proto.getSkinIndexByName=function(skinName){
+			var tSkinData;
+			for (var i=0,n=this.skinDataArray.length;i < n;i++){
+				tSkinData=this.skinDataArray[i];
+				if (tSkinData.name==skinName){
+					return i;
 				}
 			}
+			return-1;
 		}
 
 		/**
@@ -1369,26 +1685,6 @@
 
 
 	/**
-	*...
-	*@author wk
-	*/
-	//class laya.ani.bone.shader.aniShaderValue extends laya.webgl.shader.d2.value.Value2D
-	var aniShaderValue=(function(_super){
-		function aniShaderValue(){
-			this.texcoord=null;
-			aniShaderValue.__super.call(this,0,0);
-			var _vlen=8 *CONST3D2D.BYTES_PE;
-			this.position=[2,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,_vlen,0];
-			this.texcoord=[2,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,_vlen,2 *CONST3D2D.BYTES_PE];
-			this.color=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,_vlen,4 *CONST3D2D.BYTES_PE];
-		}
-
-		__class(aniShaderValue,'laya.ani.bone.shader.aniShaderValue',_super);
-		return aniShaderValue;
-	})(Value2D)
-
-
-	/**
 	*骨骼动画由Templet,AnimationPlayer,Skeleton三部分组成
 	*/
 	//class laya.ani.bone.Skeleton extends laya.display.Sprite
@@ -1404,6 +1700,7 @@
 			this._pause=true;
 			this._aniClipIndex=-1;
 			this._clipIndex=-1;
+			this._skinIndex=0;
 			this._aniMode=0;
 			this._graphicsCache=null;
 			this._boneSlotDic=null;
@@ -1417,8 +1714,11 @@
 			this._complete=null;
 			this._loadAniMode=0;
 			this._yReverseMatrix=null;
+			this._ikArr=null;
+			this._rootBone=null;
+			this._boneList=null;
+			this._aniSectionDic=null;
 			Skeleton.__super.call(this);
-			this._tempTransform=new Transform();
 			(aniMode===void 0)&& (aniMode=0);
 			if (templet)this.init(templet,aniMode);
 		}
@@ -1448,6 +1748,10 @@
 			this._player.templet=templet;
 			this._player.play();
 			this._parseSrcBoneMatrix();
+			this._ikArr=templet.ikArr;
+			this._boneList=templet.mBoneArr;
+			this._rootBone=templet.mRootBone;
+			this._aniSectionDic=templet.aniSectionDic;
 			this._player.on(/*laya.events.Event.PLAYED*/"played",this,this._onPlay);
 			this._player.on(/*laya.events.Event.STOPPED*/"stopped",this,this._onStop);
 			this._player.on(/*laya.events.Event.PAUSED*/"paused",this,this._onPause);
@@ -1533,7 +1837,7 @@
 		}
 
 		/**
-		*创建骨骼的矩阵，保证每次计算的最终结果
+		*创建骨骼的矩阵，保存每次计算的最终结果
 		*/
 		__proto._parseSrcBoneMatrix=function(){
 			var i=0,n=0;
@@ -1577,7 +1881,7 @@
 			};
 			var tCurrTime=Laya.timer.currTimer;
 			if (autoKey){
-				this._player.update(tCurrTime-this._lastTime);
+				this._player.update(tCurrTime-this._lastTime)
 			}
 			this._lastTime=tCurrTime;
 			this._aniClipIndex=this._player.currentAnimationClipIndex;
@@ -1606,50 +1910,31 @@
 		__proto._createGraphics=function(){
 			var bones=this._templet.getNodes(this._aniClipIndex);
 			this._templet.getOriginalData(this._aniClipIndex,this._curOriginalData,this._clipIndex,this._player.currentFrameTime);
+			var tSectionArr=this._aniSectionDic[this._aniClipIndex];
 			var tParentMatrix;
 			var tResultMatrix;
 			var tStartIndex=0;
 			var i=0,j=0,k=0,n=0;
 			var tDBBoneSlot;
 			var tDBBoneSlotArr;
-			var tTempMatrix;
 			var tParentTransform;
+			var tSrcBone;
 			var boneCount=this._templet.srcBoneMatrixArr.length;
-			for (i=0;i < boneCount;i++){
+			for (i=0,n=tSectionArr[0];i < boneCount;i++){
+				tSrcBone=this._boneList[i];
 				tResultMatrix=this._boneMatrixArray[i];
 				tParentTransform=this._templet.srcBoneMatrixArr[i];
-				this._tempTransform.scX=tParentTransform.scX *this._curOriginalData[tStartIndex++];
-				this._tempTransform.skX=tParentTransform.skX+this._curOriginalData[tStartIndex++];
-				this._tempTransform.skY=tParentTransform.skY+this._curOriginalData[tStartIndex++];
-				this._tempTransform.scY=tParentTransform.scY *this._curOriginalData[tStartIndex++];
-				this._tempTransform.x=tParentTransform.x+this._curOriginalData[tStartIndex++];
-				this._tempTransform.y=tParentTransform.y+this._curOriginalData[tStartIndex++];
-				tTempMatrix=this._tempTransform.getMatrix();
-				var tBone=bones[i];
-				if (tBone.parentIndex !=-1){
-					tParentMatrix=this._boneMatrixArray[tBone.parentIndex];
-					Matrix.mul(tTempMatrix,tParentMatrix,tResultMatrix);
-					}else {
-					if (this._yReverseMatrix){
-						Matrix.mul(tTempMatrix,this._yReverseMatrix,tResultMatrix);
-						}else {
-						tTempMatrix.copyTo(tResultMatrix);
-					}
-				}
-				tDBBoneSlotArr=this._bindBoneBoneSlotDic[tBone.name];
-				if (tDBBoneSlotArr){
-					for (j=0,n=tDBBoneSlotArr.length;j < n;j++){
-						tDBBoneSlot=tDBBoneSlotArr[j];
-						if (tDBBoneSlot){
-							tDBBoneSlot.setParentMatrix(tResultMatrix);
-						}
-					}
-				}
+				tSrcBone.resultTransform.scX=tParentTransform.scX *this._curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.skX=tParentTransform.skX+this._curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.skY=tParentTransform.skY+this._curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.scY=tParentTransform.scY *this._curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.x=tParentTransform.x+this._curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.y=tParentTransform.y+this._curOriginalData[tStartIndex++];
 			};
 			var tSlotDic={};
 			var tSlotAlphaDic={};
 			var tBoneData;
-			for (;i < bones.length;i++){
+			for (n+=tSectionArr[1];i < n;i++){
 				tBoneData=bones[i];
 				tSlotDic[tBoneData.name]=this._curOriginalData[tStartIndex++];
 				tSlotAlphaDic[tBoneData.name]=this._curOriginalData[tStartIndex++];
@@ -1658,11 +1943,66 @@
 				this._curOriginalData[tStartIndex++];
 				this._curOriginalData[tStartIndex++];
 			};
+			var tBendDirectionDic={};
+			var tMixDic={};
+			for (n+=tSectionArr[2];i < n;i++){
+				tBoneData=bones[i];
+				tBendDirectionDic[tBoneData.name]=this._curOriginalData[tStartIndex++];
+				tMixDic[tBoneData.name]=this._curOriginalData[tStartIndex++];
+				this._curOriginalData[tStartIndex++];
+				this._curOriginalData[tStartIndex++];
+				this._curOriginalData[tStartIndex++];
+			}
+			if (this._yReverseMatrix){
+				this._rootBone.update(this._yReverseMatrix);
+				}else {
+				this._rootBone.update(Matrix.TEMP.identity());
+			};
+			var tIkConstraintData;
+			var tTargetBone;
+			var tParentBone;
+			var tChildBone;
+			for (i=0,n=this._ikArr.length;i < n;i++){
+				tIkConstraintData=this._ikArr[i];
+				tTargetBone=this._boneList[tIkConstraintData.targetBoneIndex];
+				switch(tIkConstraintData.boneIndexs.length){
+					case 1:
+						tChildBone=this._boneList[tIkConstraintData.boneIndexs[0]];
+						this._applyIk1(tChildBone,tTargetBone.resultMatrix.tx,tTargetBone.resultMatrix.ty,tIkConstraintData.mix);
+						break ;
+					case 2:
+						tParentBone=this._boneList[tIkConstraintData.boneIndexs[0]];
+						tChildBone=this._boneList[tIkConstraintData.boneIndexs[1]];
+						if (tBendDirectionDic[tIkConstraintData.name]){
+							this._applyIk2(tParentBone,tChildBone,tTargetBone.resultMatrix.tx,tTargetBone.resultMatrix.ty,tBendDirectionDic[tIkConstraintData.name],tMixDic[tIkConstraintData.name]);
+							}else {
+							this._applyIk2(tParentBone,tChildBone,tTargetBone.resultMatrix.tx,tTargetBone.resultMatrix.ty,tIkConstraintData.bendDirection,tIkConstraintData.mix);
+						}
+						break ;
+					}
+			}
+			for (i=0,k=this._boneList.length;i < k;i++){
+				tSrcBone=this._boneList[i];
+				tDBBoneSlotArr=this._bindBoneBoneSlotDic[tSrcBone.name];
+				tSrcBone.resultMatrix.copyTo(this._boneMatrixArray[i]);
+				if (tDBBoneSlotArr){
+					for (j=0,n=tDBBoneSlotArr.length;j < n;j++){
+						tDBBoneSlot=tDBBoneSlotArr[j];
+						if (tDBBoneSlot){
+							tDBBoneSlot.setParentMatrix(tSrcBone.resultMatrix);
+						}
+					}
+				}
+			};
 			var tGraphics;
 			if (this._aniMode==0 || this._aniMode==1){
-				this.graphics=new Graphics();
+				this.graphics=new GraphicsAni();
 				}else {
-				this.graphics.clear();
+				if ((this.graphics instanceof laya.ani.GraphicsAni )){
+					this.graphics.clear();
+					}else {
+					this.graphics=new GraphicsAni();
+				}
 			}
 			tGraphics=this.graphics;
 			var tSlotData2=NaN;
@@ -1688,6 +2028,167 @@
 				}else if (this._aniMode==1){
 				this._setGrahicsDataWithCache(this._aniClipIndex,this._clipIndex,tGraphics);
 			}
+		}
+
+		__proto._applyIk1=function(bone,targetX,targetY,alpha){
+			var pp=bone._parent;
+			var id=1 / (pp.resultMatrix.a *pp.resultMatrix.d-pp.resultMatrix.b *pp.resultMatrix.c);
+			var x=targetX-pp.resultMatrix.tx;
+			var y=targetY-pp.resultMatrix.ty;
+			var tx=(x *pp.resultMatrix.d-y *pp.resultMatrix.b)*id-bone.transform.x;
+			var ty=(y *pp.resultMatrix.a-x *pp.resultMatrix.c)*id-bone.transform.y;
+			var rotationIK=Math.atan2(ty,tx)*Skeleton.radDeg-0-bone.transform.skX;
+			if (bone.transform.scX < 0)rotationIK+=180;
+			if (rotationIK > 180)
+				rotationIK-=360;
+			else if (rotationIK <-180)rotationIK+=360;
+			bone.transform.skX=bone.transform.skY=bone.transform.skX+rotationIK *alpha;
+			bone.update();
+		}
+
+		__proto._applyIk2=function(parent,child,targetX,targetY,bendDir,alpha){
+			if (alpha==0){
+				return;
+			};
+			var px=parent.resultTransform.x,py=parent.resultTransform.y;
+			var psx=parent.resultTransform.scX,psy=parent.resultTransform.scY;
+			var csx=child.resultTransform.scX;
+			var os1=0,os2=0,s2=0;
+			if (psx < 0){
+				psx=-psx;
+				os1=180;
+				s2=-1;
+				}else {
+				os1=0;
+				s2=1;
+			}
+			if (psy < 0){
+				psy=-psy;
+				s2=-s2;
+			}
+			if (csx < 0){
+				csx=-csx;
+				os2=180;
+				}else {
+				os2=0
+			};
+			var cx=child.resultTransform.x,cy=NaN,cwx=NaN,cwy=NaN;
+			var a=parent.resultMatrix.a,b=parent.resultMatrix.b;
+			var c=parent.resultMatrix.c,d=parent.resultMatrix.d;
+			var u=Math.abs(psx-psy)<=0.0001;
+			if (!u){
+				cy=0;
+				cwx=a *cx+parent.resultMatrix.tx;
+				cwy=c *cx+parent.resultMatrix.ty;
+				}else {
+				cy=child.resultTransform.y;
+				cwx=a *cx+b *cy+parent.resultMatrix.tx;
+				cwy=c *cx+d *cy+parent.resultMatrix.ty;
+			};
+			var pp=parent._parent;
+			a=pp.resultMatrix.a;
+			b=pp.resultMatrix.b;
+			c=pp.resultMatrix.c;
+			d=pp.resultMatrix.d;
+			var id=1 / (a *d-b *c);
+			var x=targetX-pp.resultMatrix.tx,y=targetY-pp.resultMatrix.ty;
+			var tx=(x *d-y *b)*id-px;
+			var ty=(y *a-x *c)*id-py;
+			x=cwx-pp.resultMatrix.tx;
+			y=cwy-pp.resultMatrix.ty;
+			var dx=(x *d-y *b)*id-px;
+			var dy=(y *a-x *c)*id-py;
+			var l1=Math.sqrt(dx *dx+dy *dy);
+			var l2=child.length *csx;
+			var a1=NaN,a2=NaN;
+			if (u){
+				l2 *=psx;
+				var cos=(tx *tx+ty *ty-l1 *l1-l2 *l2)/ (2 *l1 *l2);
+				if (cos <-1)
+					cos=-1;
+				else if (cos > 1)cos=1;
+				a2=Math.acos(cos)*bendDir;
+				a=l1+l2 *cos;
+				b=l2 *Math.sin(a2);
+				a1=Math.atan2(ty *a-tx *b,tx *a+ty *b);
+				}else {
+				a=psx *l2;
+				b=psy *l2;
+				var aa=a *a,bb=b *b,dd=tx *tx+ty *ty,ta=Math.atan2(ty,tx);
+				c=bb *l1 *l1+aa *dd-aa *bb;
+				var c1=-2 *bb *l1,c2=bb-aa;
+				d=c1 *c1-4 *c2 *c;
+				if (d > 0){
+					var q=Math.sqrt(d);
+					if (c1 < 0)q=-q;
+					q=-(c1+q)/ 2;
+					var r0=q / c2,r1=c / q;
+					var r=Math.abs(r0)< Math.abs(r1)?r0:r1;
+					if (r *r <=dd){
+						y=Math.sqrt(dd-r *r)*bendDir;
+						a1=ta-Math.atan2(y,r);
+						a2=Math.atan2(y / psy,(r-l1)/ psx);
+					}
+				};
+				var minAngle=0,minDist=Number.MAX_VALUE,minX=0,minY=0;
+				var maxAngle=0,maxDist=0,maxX=0,maxY=0;
+				x=l1+a;
+				d=x *x;
+				if (d > maxDist){
+					maxAngle=0;
+					maxDist=d;
+					maxX=x;
+				}
+				x=l1-a;
+				d=x *x;
+				if (d < minDist){
+					minAngle=Math.PI;
+					minDist=d;
+					minX=x;
+				};
+				var angle=Math.acos(-a *l1 / (aa-bb));
+				x=a *Math.cos(angle)+l1;
+				y=b *Math.sin(angle);
+				d=x *x+y *y;
+				if (d < minDist){
+					minAngle=angle;
+					minDist=d;
+					minX=x;
+					minY=y;
+				}
+				if (d > maxDist){
+					maxAngle=angle;
+					maxDist=d;
+					maxX=x;
+					maxY=y;
+				}
+				if (dd <=(minDist+maxDist)/ 2){
+					a1=ta-Math.atan2(minY *bendDir,minX);
+					a2=minAngle *bendDir;
+					}else {
+					a1=ta-Math.atan2(maxY *bendDir,maxX);
+					a2=maxAngle *bendDir;
+				}
+			};
+			var os=Math.atan2(cy,cx)*s2;
+			var rotation=parent.transform.skX;
+			a1=(a1-os)*Skeleton.radDeg+os1-rotation;
+			if (a1 > 180)
+				a1-=360;
+			else if (a1 <-180)a1+=360;
+			parent.resultTransform.x=px;
+			parent.resultTransform.y=py;
+			parent.resultTransform.skX=parent.resultTransform.skY=rotation+a1 *alpha;
+			rotation=child.transform.skX;
+			rotation=rotation % 360;
+			a2=((a2+os)*Skeleton.radDeg-0)*s2+os2-rotation;
+			if (a2 > 180)
+				a2-=360;
+			else if (a2 <-180)a2+=360;
+			child.resultTransform.x=cx;
+			child.resultTransform.y=cy;
+			child.resultTransform.skX=child.resultTransform.skY=child.resultTransform.skY+a2 *alpha;
+			parent.update();
 		}
 
 		/**
@@ -1720,8 +2221,8 @@
 		*@param name 皮肤的名字
 		*/
 		__proto.showSkinByName=function(name){
-			this._templet.showSkinByName(this._boneSlotDic,name);
-			this._clearCache();
+			this._skinIndex=this._templet.getSkinIndexByName(name);
+			this.showSkinByIndex(this._skinIndex);
 		}
 
 		/**
@@ -1729,6 +2230,7 @@
 		*@param skinIndex 皮肤索引
 		*/
 		__proto.showSkinByIndex=function(skinIndex){
+			this._skinIndex=skinIndex;
 			this._templet.showSkinByIndex(this._boneSlotDic,skinIndex);
 			this._clearCache();
 		}
@@ -1803,8 +2305,8 @@
 				if (force || this._pause || this._currAniIndex !=index){
 					this._currAniIndex=index;
 					this._curOriginalData=new Float32Array(this._templet.getTotalkeyframesLength(index));
-					this._player.play(index,1,duration);
-					this._templet.showSkinByIndex(this._boneSlotDic,0);
+					this._player.play(index,this._player.playbackRate,duration);
+					this._templet.showSkinByIndex(this._boneSlotDic,this._skinIndex);
 					if (this._pause){
 						this._pause=false;
 						this._lastTime=Browser.now();
@@ -1952,72 +2454,10 @@
 			return this._total;
 		});
 
+		__static(Skeleton,
+		['radDeg',function(){return this.radDeg=180 / Math.PI;},'degRad',function(){return this.degRad=Math.PI / 180;}
+		]);
 		return Skeleton;
-	})(Sprite)
-
-
-	/**
-	*...
-	*@author ...
-	*/
-	//class laya.ani.bone.SkinSprite extends laya.display.Sprite
-	var SkinSprite=(function(_super){
-		function SkinSprite(){
-			this.mVBBuffer=null;
-			this.mIBBuffer=null;
-			this.mVBData=null;
-			this.mIBData=null;
-			this.mEleNum=0;
-			this.mShaderValue=null;
-			SkinSprite.__super.call(this);
-		}
-
-		__class(SkinSprite,'laya.ani.bone.SkinSprite',_super);
-		var __proto=SkinSprite.prototype;
-		__proto.init=function(texture,vs,ps){
-			this.mVBBuffer=VertexBuffer2D.create();
-			this.mIBBuffer=IndexBuffer2D.create();
-			this.mIBData=new Uint16Array();
-			var tVBArray;
-			var tIBArray;
-			if (vs){
-				tVBArray=vs;
-				}else {
-				tVBArray=[];
-				var tWidth=texture.width;
-				var tHeight=texture.height;
-				var tRed=1;
-				var tGreed=0.1;
-				var tBlue=0.1;
-				var tAlpha=1;
-				tVBArray.push(0,0,0,0,tRed,tGreed,tBlue,tAlpha);
-				tVBArray.push(tWidth,0,1,0,tRed,tGreed,tBlue,tAlpha);
-				tVBArray.push(tWidth,tHeight,1,1,tRed,tGreed,tBlue,tAlpha);
-				tVBArray.push(0,tHeight,0,1,tRed,tGreed,tBlue,tAlpha);
-			}
-			if (ps){
-				tIBArray=ps;
-				}else {
-				tIBArray=[];
-				tIBArray.push(0,1,3,3,1,2);
-			}
-			this.mEleNum=tIBArray.length;
-			this.mVBData=new Float32Array(tVBArray);
-			this.mIBData=new Uint16Array(tIBArray);
-			this.mVBBuffer.append(this.mVBData);
-			this.mIBBuffer.append(this.mIBData);
-			this.mShaderValue=new aniShaderValue();
-			this.mShaderValue.textureHost=texture;
-			this._renderType |=/*laya.renders.RenderSprite.CUSTOM*/0x200;
-		}
-
-		__proto.customRender=function(context,x,y){
-			if (Render.isWebGL){
-				(context.ctx).setIBVB(x,y,this.mIBBuffer,this.mVBBuffer,this.mEleNum,null,SkinAniShader.shader,this.mShaderValue,0,0);
-			}
-		}
-
-		return SkinSprite;
 	})(Sprite)
 
 
@@ -2037,6 +2477,7 @@
 			this._ended=true;
 			this._count=0;
 			this._ids=null;
+			this._loadedImage={};
 			this._idOfSprite=null;
 			this._parentMovieClip=null;
 			this._movieClipList=null;
@@ -2062,7 +2503,10 @@
 
 		__class(MovieClip,'laya.ani.swf.MovieClip',_super);
 		var __proto=MovieClip.prototype;
-		/**@inheritDoc */
+		/**
+		*<p>销毁此对象。以及销毁引用的Texture</p>
+		*@param destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
+		*/
 		__proto.destroy=function(destroyChild){
 			(destroyChild===void 0)&& (destroyChild=true);
 			this._clear();
@@ -2160,9 +2604,16 @@
 				len=this._movieClipList.length;
 				for (i=0;i < len;i++){
 					if (this._movieClipList[i] !=this)
-						this._movieClipList[i].clear();
+						this._movieClipList[i]._clear();
 				}
 				this._movieClipList.length=0;
+			};
+			var key;
+			for (key in this._loadedImage){
+				if (this._loadedImage[key]){
+					Loader.clearRes(key);
+					this._loadedImage[key]=false;
+				}
 			}
 			this.removeChildren();
 			this.graphics=null;
@@ -2227,6 +2678,7 @@
 								sp=_idOfSprite[key]=new Sprite();
 								var spp=new Sprite();
 								spp.loadImage(this.basePath+pid+".png");
+								this._loadedImage[this.basePath+pid+".png"]=true;
 								sp.addChild(spp);
 								spp.size(_data.getFloat32(),_data.getFloat32());
 								var mat=_data._getMatrix();
@@ -2330,6 +2782,7 @@
 
 		/**@private */
 		__proto._onLoaded=function(data){
+			if (!data)return;
 			this._initData(data);
 		}
 
@@ -2391,26 +2844,6 @@
 		MovieClip._ValueList=["x","y","width","height","scaleX","scaleY","rotation","alpha"];
 		return MovieClip;
 	})(Sprite)
-
-
-	/**
-	*...
-	*@author ...
-	*/
-	//class laya.ani.bone.shader.SkinAniShader extends laya.webgl.shader.Shader
-	var SkinAniShader=(function(_super){
-		function SkinAniShader(){
-			var vs="attribute vec2 position;\nattribute vec2 texcoord;\nattribute vec4 color;\nuniform vec2 size;\nuniform mat4 mmat;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\nvoid main() {\n  vec4 pos=mmat*vec4(position.x,position.y,0,1 );\n  gl_Position = vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  v_color = color;\n  v_texcoord = texcoord;  \n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/ani/src/laya/ani/bone/shader/anishader.vs*/;
-			var ps="precision mediump float;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\nuniform sampler2D texture;\nvoid main() {\n	vec4 t_color = texture2D(texture, v_texcoord);\n	gl_FragColor = t_color.rgba * v_color.rgba;\n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/ani/src/laya/ani/bone/shader/anishader.ps*/;
-			SkinAniShader.__super.call(this,vs,ps,"SpineShader");
-		}
-
-		__class(SkinAniShader,'laya.ani.bone.shader.SkinAniShader',_super);
-		__static(SkinAniShader,
-		['shader',function(){return this.shader=new SkinAniShader();}
-		]);
-		return SkinAniShader;
-	})(Shader)
 
 
 

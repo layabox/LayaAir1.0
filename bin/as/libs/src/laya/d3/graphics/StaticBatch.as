@@ -121,7 +121,7 @@ package laya.d3.graphics {
 				
 				for (var i:int = 0; i < _renderObjects.length; i++) {
 					var renderObj:IRenderable = _renderObjects[i];
-					var subVertexDatas:Float32Array = renderObj.getBakedVertexs(0, _renderOwners[i].transform.getWorldMatrix(-2));
+					var subVertexDatas:Float32Array = renderObj.getBakedVertexs(0, _renderOwners[i].transform.worldMatrix);
 					var subIndexDatas:Uint16Array = renderObj.getBakedIndices();
 					
 					var indexOffset:int = curMerVerCount / (_vertexDeclaration.vertexStride / 4);
@@ -188,7 +188,7 @@ package laya.d3.graphics {
 			if (material.normalTexture && !vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TANGENT0]) {
 				//是否放到事件触发。
 				var vertexDatas:Float32Array = vb.getData();
-				var newVertexDatas:Float32Array = Utils3D.GenerateTangent(vertexDatas, vb.vertexDeclaration.vertexStride / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TEXTURECOORDINATE0][4] / 4, ib.getData());
+				var newVertexDatas:Float32Array = Utils3D.generateTangent(vertexDatas, vb.vertexDeclaration.vertexStride / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TEXTURECOORDINATE0][4] / 4, ib.getData());
 				var vertexDeclaration:VertexDeclaration = Utils3D.getVertexTangentDeclaration(vb.vertexDeclaration.getVertexElements());
 				
 				var newVB:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, WebGLContext.STATIC_DRAW);
@@ -207,7 +207,7 @@ package laya.d3.graphics {
 				state.shaderValue.pushArray(vb.vertexDeclaration.shaderValues);
 				
 				state.shaderValue.pushValue(Buffer2D.MATRIX1, Matrix4x4.DEFAULT.elements, -1);//待优化
-				state.shaderValue.pushValue(Buffer2D.MVPMATRIX, state.projectionViewMatrix.elements, state.camera.transform._worldTransformModifyID + state.camera._projectionMatrixModifyID);
+				state.shaderValue.pushValue(Buffer2D.MVPMATRIX, state.projectionViewMatrix.elements, /*state.camera.transform._worldTransformModifyID + state.camera._projectionMatrixModifyID,从结构上应该从Mesh更新*/-1);
 				if (!material.upload(state, null, shader)) {
 					state.shaderValue.length = presz;
 					return false;

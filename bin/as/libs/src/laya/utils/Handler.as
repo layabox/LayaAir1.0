@@ -111,7 +111,6 @@ package laya.utils {
 		 * @return  返回创建的handler实例。
 		 */
 		public static function create(caller:*, method:Function, args:Array = null, once:Boolean = true):Handler {
-			//TODO:是否增加检测机制？误用
 			if (_pool.length) return _pool.pop().setTo(caller, method, args, once);
 			return new Handler(caller, method, args, once);
 		}

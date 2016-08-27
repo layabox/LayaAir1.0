@@ -9,6 +9,7 @@ package laya.d3.math {
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Matrix4x4 =/*[STATIC SAFE]*/ new Matrix4x4();
 		
+		
 		/**
 		 * 绕X轴旋转
 		 * @param	rad  旋转角度
@@ -333,10 +334,57 @@ package laya.d3.math {
 		
 		/**
 		 * 创建一个 <code>Matrix4x4</code> 实例。
+		 * @param	4x4矩阵的各元素
 		 */
-		public function Matrix4x4() {
-			var e:Float32Array = this.elements = new Float32Array(16);// [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-			e[0] = e[5] = e[10] = e[15] = 1;
+		public function Matrix4x4(m11:Number = 1, m12:Number = 0, m13:Number = 0, m14:Number = 0,
+								  m21:Number = 0, m22:Number = 1, m23:Number = 0, m24:Number = 0,
+								  m31:Number = 0, m32:Number = 0, m33:Number = 1, m34:Number = 0,
+								  m41:Number = 0, m42:Number = 0, m43:Number = 0, m44:Number = 1) {
+			
+			var e:Float32Array = this.elements = new Float32Array(16);
+			e[0]  = m11;
+			e[1]  = m12;
+			e[2]  = m13;
+			e[3]  = m14;
+			e[4]  = m21;
+			e[5]  = m22;
+			e[6]  = m23;
+			e[7]  = m24;
+			e[8]  = m31;
+			e[9]  = m32;
+			e[10] = m33;
+			e[11] = m34;
+			e[12] = m41;
+			e[13] = m42;
+			e[14] = m43;
+			e[15] = m44;
+		}
+		
+		/**
+		 * 判断两个4x4矩阵的值是否相等。
+		 * @param	other 4x4矩阵
+		 */
+		public function equalsOtherMatrix(other:Matrix4x4):Boolean{
+			
+			var e:Float32Array = this.elements;
+			var oe:Float32Array = other.elements;
+			
+			return (MathUtils3D.nearEqual(e[0],  oe[0]) &&
+				    MathUtils3D.nearEqual(e[1],  oe[1]) &&
+				    MathUtils3D.nearEqual(e[2],  oe[2]) &&
+				    MathUtils3D.nearEqual(e[3],  oe[3]) &&
+				    MathUtils3D.nearEqual(e[4],  oe[4]) &&
+				    MathUtils3D.nearEqual(e[5],  oe[5]) &&
+				    MathUtils3D.nearEqual(e[6],  oe[6]) &&
+				    MathUtils3D.nearEqual(e[7],  oe[7]) &&
+				    MathUtils3D.nearEqual(e[8],  oe[8]) &&
+				    MathUtils3D.nearEqual(e[9],  oe[9]) &&
+				    MathUtils3D.nearEqual(e[10], oe[10]) &&
+				    MathUtils3D.nearEqual(e[11], oe[11]) &&
+				    MathUtils3D.nearEqual(e[12], oe[12]) &&
+				    MathUtils3D.nearEqual(e[13], oe[13]) &&
+				    MathUtils3D.nearEqual(e[14], oe[14]) &&
+				    MathUtils3D.nearEqual(e[15], oe[15]));
 		}
 		
 		/**

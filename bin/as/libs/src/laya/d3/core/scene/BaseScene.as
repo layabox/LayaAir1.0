@@ -180,7 +180,6 @@ package laya.d3.core.scene {
 			Layer._currentCameraCullingMask = currentCamera.cullingMask;
 			
 			state.context = WebGL.mainContext;
-			state.worldTransformModifyID = 1;
 			
 			state.elapsedTime = _lastCurrentTime ? timer.currTimer - _lastCurrentTime : 0;
 			_lastCurrentTime = timer.currTimer;
@@ -302,6 +301,24 @@ package laya.d3.core.scene {
 		public function _removeLight(light:LightSprite):void {
 			var index:int = _lights.indexOf(light);
 			index >= 0 && (_lights.splice(index, 1));
+		}
+		
+		override public function addChildAt(node:Node, index:int):Node {
+			if (!(node is Sprite3D))
+				throw new Error("Sprite3D:Node type must Sprite3D.");
+			
+			var returnNode:Node = super.addChildAt(node, index);
+			(node !== this) && ((node as Sprite3D)._addSelfAndChildrenRenderObjects());
+			return returnNode;
+		}
+		
+		override public function addChild(node:Node):Node {
+			if (!(node is Sprite3D))
+				throw new Error("Sprite3D:Node type must Sprite3D.");
+			
+			var returnNode:Node = super.addChild(node);
+			(node !== this) && ((node as Sprite3D)._addSelfAndChildrenRenderObjects());
+			return returnNode;
 		}
 		
 		override public function removeChildAt(index:int):Node {

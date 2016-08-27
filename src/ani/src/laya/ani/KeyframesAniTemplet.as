@@ -50,7 +50,7 @@ package laya.ani {
 			return 1;
 		}
 		/**@private */
-		public static var LAYA_ANIMATION_VISION:String = "LAYAANIMATION:1.0.1";
+		public static var LAYA_ANIMATION_VISION:String = "LAYAANIMATION:1.0.2";
 		protected var _anis:Vector.<AnimationContent> = new Vector.<AnimationContent>;
 		protected var _aniMap:* = {};
 		protected var _publicExtData:ArrayBuffer;//公共扩展数据

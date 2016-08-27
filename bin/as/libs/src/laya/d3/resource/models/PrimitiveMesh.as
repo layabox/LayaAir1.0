@@ -114,22 +114,6 @@ package laya.d3.resource.models {
 			return shader;
 		}
 		
-		/**
-		 * @private
-		 */
-		protected function _addToRenderQuene(state:RenderState, material:Material):RenderObject {
-			var o:RenderObject;
-			if (!material.transparent || (material.transparent && material.transparentMode === 0))
-				o = material.cullFace ? state.scene.getRenderObject(RenderQueue.OPAQUE) : state.scene.getRenderObject(RenderQueue.OPAQUE_DOUBLEFACE);
-			else if (material.transparent && material.transparentMode === 1) {
-				if (material.transparentAddtive)
-					o = material.cullFace ? state.scene.getRenderObject(RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND) : state.scene.getRenderObject(RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE);
-				else
-					o = material.cullFace ? state.scene.getRenderObject(RenderQueue.DEPTHREAD_ALPHA_BLEND) : state.scene.getRenderObject(RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE);
-			}
-			return o;
-		}
-		
 		override public function getRenderElement(index:int):IRenderable {
 			return this;
 		}
@@ -157,11 +141,10 @@ package laya.d3.resource.models {
 				state.shaderValue.pushArray(_vertexBuffer.vertexDeclaration.shaderValues);
 				
 				var meshSprite:MeshSprite3D = state.owner as MeshSprite3D;
-				var worldMat:Matrix4x4 = meshSprite.transform.getWorldMatrix(-2);
-				var worldTransformModifyID:Number = state.renderObj.tag.worldTransformModifyID;
-				state.shaderValue.pushValue(Buffer2D.MATRIX1, worldMat.elements, worldTransformModifyID);
+				var worldMat:Matrix4x4 = meshSprite.transform.worldMatrix;
+				state.shaderValue.pushValue(Buffer2D.MATRIX1, worldMat.elements, -1/*worldTransformModifyID*/);
 				Matrix4x4.multiply(state.projectionViewMatrix, worldMat, state.owner.wvpMatrix);
-				state.shaderValue.pushValue(Buffer2D.MVPMATRIX, meshSprite.wvpMatrix.elements, state.camera.transform._worldTransformModifyID + worldTransformModifyID + state.camera._projectionMatrixModifyID);
+				state.shaderValue.pushValue(Buffer2D.MVPMATRIX, meshSprite.wvpMatrix.elements, -1/*state.camera.transform._worldTransformModifyID + worldTransformModifyID + state.camera._projectionMatrixModifyID*/);
 				
 				if (!material.upload(state, null, shader)) {
 					state.shaderValue.length = presz;

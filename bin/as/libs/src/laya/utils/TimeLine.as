@@ -129,7 +129,7 @@ package laya.utils {
 			if (_labelDic && _labelDic[label]) {
 				var tTweenData:tweenData = _labelDic[label];
 				if (tTweenData) {
-					var tIndex:int = _tweenDataList.indexOf(label);
+					var tIndex:int = _tweenDataList.indexOf(tTweenData);
 					if (tIndex > -1) {
 						_tweenDataList.splice(tIndex, 1);
 					}

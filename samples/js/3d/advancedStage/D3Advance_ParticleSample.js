@@ -1,32 +1,15 @@
-var Vector3 = Laya.Vector3;
-var ParticleSettings = Laya.ParticleSettings;
-var Particle3D = Laya.Particle3D;
-var Browser = Laya.Browser;
-var Sprite3D = Laya.Sprite3D;
-
-var pos = new Vector3();
-var Vel = new Vector3();
-var lastTime = Laya.Browser.now();
-
-var currentState = 0;
-var simple;
-var smoke;
-var fire;
-var projectileTrail;
-var explosionSmoke;
-var explosion;
-
-var timeToNextProjectile = 0;
-var projectiles = [];
-
-//是否抗锯齿
-//Config.isAntialias = true;
-Laya3D.init(0, 0);
+Laya3D.init(0, 0,true);
 Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
 Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
 Laya.Stat.show();
 
-loadUI();
+var ParticleSettings = Laya.ParticleSettings;
+var Particle3D = Laya.Particle3D;
+var Sprite3D = Laya.Sprite3D;
+var timeToNextProjectile = 0;
+var projectiles = [];
+var currentState = 0;
+var Vector3 = Laya.Vector3;
 
 var scene = Laya.stage.addChild(new Laya.Scene());
 
@@ -73,7 +56,7 @@ settings.maxHorizontalEndRadian = 3.14 * 2;
 settings.minVerticalEndRadian = -3.14 * 2;
 settings.maxVerticalEndRadian = 3.14 * 2;
 
-simple = new Particle3D(settings);
+var simple = new Particle3D(settings);
 simple.transform.localPosition = new Vector3(0, 0.5, 0);
 scene.addChild(simple);
 
@@ -93,7 +76,7 @@ settings.minStartSize = 0.04;
 settings.maxStartSize = 0.07;
 settings.minEndSize = 0.35;
 settings.maxEndSize = 1.4;
-smoke = new Particle3D(settings);
+var smoke = new Particle3D(settings);
 scene.addChild(smoke);
 
 settings = new ParticleSettings();
@@ -115,7 +98,7 @@ settings.maxStartSize = 0.1;
 settings.minEndSize = 0.1;
 settings.maxEndSize = 0.4;
 settings.blendState = 1;
-fire = new Particle3D(settings);
+var fire = new Particle3D(settings);
 scene.addChild(fire);
 
 //...............................
@@ -140,7 +123,7 @@ settings.maxStartSize = 0.03;
 settings.minEndSize = 0.04;
 settings.maxEndSize = 0.11;
 settings.blendState = 0;
-projectileTrail = new Particle3D(settings);
+var projectileTrail = new Particle3D(settings);
 scene.addChild(projectileTrail);
 
 settings = new ParticleSettings();
@@ -164,7 +147,7 @@ settings.maxStartSize = 0.07;
 settings.minEndSize = 0.7;
 settings.maxEndSize = 1.4;
 settings.blendState = 1;
-explosion = new Particle3D(settings);
+var explosion = new Particle3D(settings);
 scene.addChild(explosion);
 
 settings = new ParticleSettings();
@@ -188,10 +171,15 @@ settings.maxStartSize = 0.07;
 settings.minEndSize = 0.7;
 settings.maxEndSize = 1.4;
 settings.blendState = 0;
-explosionSmoke = new Particle3D(settings);
+var explosionSmoke = new Particle3D(settings);
 scene.addChild(explosionSmoke);
 
 Laya.timer.frameLoop(1, this, updateParticle);
+
+var Browser = Laya.Browser;
+var pos = new Vector3();
+var Vel = new Vector3();
+var lastTime = Laya.Browser.now();
 
 function updateParticle() {
     var currentTime = Browser.now();
@@ -274,7 +262,7 @@ function randomPointOnCircle() {
     return pos;
 }
 
-function loadUI() {
+(function loadUI() {
     Laya.loader.load(["../../res/threeDimen/ui/button.png"], Laya.Handler.create(null, function () {
         var btn = new Laya.Button();
         btn.skin = "../../res/threeDimen/ui/button.png";
@@ -293,7 +281,7 @@ function loadUI() {
             btn.pos(Laya.stage.width / 2 - btn.width * Browser.pixelRatio / 2, Laya.stage.height - 50 * Browser.pixelRatio);
         });
     }));
-}
+})();
 
 function onclick() {
     currentState++;

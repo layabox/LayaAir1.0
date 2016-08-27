@@ -4,6 +4,7 @@ package laya.resource {
 	import laya.maths.Rectangle;
 	import laya.net.URL;
 	import laya.renders.Render;
+	import laya.utils.Browser;
 	import laya.utils.RunDriver;
 	
 	/**
@@ -159,7 +160,8 @@ package laya.resource {
 		public static function createFromTexture(texture:Texture, x:Number, y:Number, width:Number, height:Number):Texture {
 			var rect:Rectangle = Rectangle.TEMP.setTo(x - texture.offsetX, y - texture.offsetY, width, height);
 			var result:Rectangle = rect.intersection(_rect1.setTo(0, 0, texture.width, texture.height), _rect2);
-			if (result) var tex:Texture = create(texture, result.x, result.y, result.width, result.height, result.x - rect.x, result.y - rect.y, width, height);
+			if (result)
+				var tex:Texture = create(texture, result.x, result.y, result.width, result.height, result.x - rect.x, result.y - rect.y, width, height);
 			else return null;
 			tex.bitmap.useNum--;
 			return tex;
@@ -257,10 +259,8 @@ package laya.resource {
 		/**
 		 * 获取当前纹理是否启用了纹理平铺
 		 */
-		public function get repeat():Boolean
-		{
-			if (Render.isWebGL && bitmap)
-			{
+		public function get repeat():Boolean {
+			if (Render.isWebGL && bitmap) {
 				return bitmap.repeat;
 			}
 			return true;
@@ -269,15 +269,11 @@ package laya.resource {
 		/**
 		 * 通过外部设置是否启用纹理平铺(后面要改成在着色器里计算)
 		 */
-		public function set repeat(value:Boolean):void
-		{
-			if (value)
-			{
-				if (Render.isWebGL && bitmap)
-				{
+		public function set repeat(value:Boolean):void {
+			if (value) {
+				if (Render.isWebGL && bitmap) {
 					bitmap.repeat = value;
-					if (value)
-					{
+					if (value) {
 						bitmap.enableMerageInAtlas = false;
 					}
 				}
@@ -305,9 +301,31 @@ package laya.resource {
 			};
 		}
 		
+		/**@private */
 		public function addTextureToAtlas(e:* = null):void {
 			RunDriver.addTextureToAtlas(this);
 		}
-	
+		
+		/**
+		 * 获取Texture上的某个区域的像素点
+		 * @param	x
+		 * @param	y
+		 * @param	width
+		 * @param	height
+		 * @return  返回像素点集合
+		 */
+		public function getPixels(x:Number, y:Number, width:Number, height:Number):Array {
+			if (Render.isWebGL)
+			{
+				return RunDriver.getTexturePixels(this, x, y, width, height);
+			}else {
+				Browser.canvas.size(x+width, y+height);
+				Browser.context.drawImage(bitmap.source, 0, 0);
+				Browser.document.body.appendChild(Browser.canvas.source);
+				var info:* = Browser.context.getImageData(x, y, width, height);
+			}
+			
+			return info.data;
+		}
 	}
 }

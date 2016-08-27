@@ -145,26 +145,10 @@ package laya.d3.loaders {
 				
 				if (material) {
 					_materials[index] = material;
-						//if (!material.loaded) {
-						//material.once(Event.LOADED, null, function():void {
-						//material.loaded = true;
-						//});
-						//}
 				} else {
 					material = _materials[index] = Resource.materialCache[url] = new Material();
 					material.setShaderName(shaderName);
-					
-					var loader:Loader = new Loader();			
-					var onComp:Function = function(data:String):void {
-						var preBasePath:String = URL.basePath;
-						URL.basePath = URL.getPath(URL.formatURL(url));
-						ClassUtils.createByJson(data, material, null, Handler.create(null, Utils3D._parseMaterial, null, false));
-						URL.basePath = preBasePath;
-						material.loaded = true;
-						material.event(Event.LOADED, material);
-					}
-					loader.once(Event.COMPLETE, null, onComp);
-					loader.load(url, Loader.JSON);
+					Material.createFromFile(url, material);
 				}
 			} else {
 				_materials[index] = new Material();

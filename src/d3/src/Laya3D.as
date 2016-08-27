@@ -36,7 +36,7 @@ package  {
 		 * @param	width  3D画布宽度。
 		 * @param	height 3D画布高度。
 		 */
-		public static function init(width:Number, height:Number):void {
+		public static function init(width:Number, height:Number,antialias:Boolean=false):void {
 			if (!WebGL.enable()) {
 				alert("Laya3D init err,must support webGL!");
 				return;
@@ -51,6 +51,7 @@ package  {
 				RenderState.clientWidth = width;
 				RenderState.clientHeight = height;
 			}
+			Config.isAntialias = antialias;
 			Render.is3DMode = true;
 			Laya.init(width, height);
 			Layer.__init__();

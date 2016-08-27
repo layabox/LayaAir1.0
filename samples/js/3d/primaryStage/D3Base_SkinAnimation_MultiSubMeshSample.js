@@ -1,9 +1,4 @@
-var skinMesh;
-var skinAni;
-
-//是否抗锯齿
-//Config.isAntialias = true;
-Laya3D.init(0, 0);
+Laya3D.init(0, 0,true);
 Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
 Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
 Laya.Stat.show();
@@ -22,8 +17,8 @@ directionLight.specularColor = new Laya.Vector3(2.0, 2.0, 1.6);
 directionLight.diffuseColor = new Laya.Vector3(1, 1, 1);
 scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
 
-skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm")));
+var skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm")));
 skinMesh.transform.localRotationEuler = new Laya.Vector3(0, 3.14, 0);
-skinAni = skinMesh.addComponent(Laya.SkinAnimations);
+var skinAni = skinMesh.addComponent(Laya.SkinAnimations);
 skinAni.url = "../../res/threeDimen/skinModel/dude/dude.ani";
 skinAni.play();

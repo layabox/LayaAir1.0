@@ -114,7 +114,7 @@ package laya.display {
 		override public function play(start:* = 0, loop:Boolean = true, name:String = ""):void {
 			_setFramesFromCache(name);
 			this._isPlaying = true;
-			this.index = (start is String)?_getFrameByLabel(start):start;
+			this.index = (start is String) ? _getFrameByLabel(start) : start;
 			this.loop = loop;
 			if (this._frames && this._frames.length > 1 && this.interval > 0) {
 				timerLoop(this.interval, this, _frameLoop, null, true);
@@ -152,6 +152,22 @@ package laya.display {
 				if (_isPlaying) play(_index, loop);
 				else index = _index;
 			}
+		}
+		
+		/**图集地址或者图片集合*/
+		public function set source(value:String):void {
+			if (value.indexOf(",") < 0) {
+				loadAtlas(value);
+			} else {
+				var arr:Array = value.split(",");
+				loadImages(arr);
+			}
+		}
+		
+		/**是否自动播放*/
+		public function set autoPlay(value:Boolean):void {
+			if (value) play();
+			else stop();
 		}
 		
 		/**清理。方便对象复用。*/

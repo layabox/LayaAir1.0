@@ -128,10 +128,10 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		private function _init():void {;
-			_heightMap = HeightMap.creatFromMesh(mesh as Mesh, _heightMapWidth, _heightMapHeight, _cellSize);
+		private function _init():void {
+			_heightMap = HeightMap.creatFromMesh(meshFilter.sharedMesh as Mesh, _heightMapWidth, _heightMapHeight, _cellSize);
 			
-			var boundingBox:BoundBox = mesh.boundingBox;
+			var boundingBox:BoundBox = meshFilter.sharedMesh._boundingBox;
 			var min:Vector3 = boundingBox.min;
 			var max:Vector3 = boundingBox.max;
 			_minX = min.x;
@@ -183,17 +183,22 @@ package laya.d3.core {
 			
 			var h01:Number = _heightMap.getHeight(row, col + 1);
 			var h10:Number = _heightMap.getHeight((row + 1), col);
-			h01 = isNaN(h01) ? 0 : h01;
-			h10 = isNaN(h10) ? 0 : h10;
+			if (isNaN(h01) || isNaN(h10))
+				return NaN;
+			
 			if (s + t <= 1.0) {
 				var h00:Number = _heightMap.getHeight(row, col);
-				h00 = isNaN(h00) ? 0 : h00;
+				if (isNaN(h00))
+					return NaN;
+					
 				uy = h01 - h00;
 				vy = h10 - h00;
 				return (h00 + s * uy + t * vy) * scaleY + translateY;
 			} else {
 				var h11:Number = _heightMap.getHeight((row + 1), col + 1);
-				h11 = isNaN(h11) ? 0 : h11;
+				if (isNaN(h11))
+					return NaN;
+					
 				uy = h10 - h11;
 				vy = h01 - h11;
 				return (h11 + (1.0 - s) * uy + (1.0 - t) * vy) * scaleY + translateY;

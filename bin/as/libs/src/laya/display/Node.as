@@ -3,7 +3,6 @@ package laya.display {
 	import laya.events.EventDispatcher;
 	import laya.renders.Render;
 	import laya.runtime.IConchNode;
-	import laya.utils.RunDriver;
 	import laya.utils.Timer;
 	
 	/**
@@ -138,7 +137,8 @@ package laya.display {
 			
 			if (index >= 0 && index <= this._childs.length) {
 				if (node._parent === this) {
-					this._childs.splice(getChildIndex(node), 1);
+					var oldIndex:int = getChildIndex(node);
+					this._childs.splice(oldIndex, 1);
 					this._childs.splice(index, 0, node);
 					if (model) {
 						model.removeChild(node.model);
@@ -215,6 +215,7 @@ package laya.display {
 			}
 			
 			var oldIndex:int = getChildIndex(node);
+			if (oldIndex < 0) throw new Error("setChildIndex:node is must child of this object.");
 			childs.splice(oldIndex, 1);
 			childs.splice(index, 0, node);
 			if (model) {

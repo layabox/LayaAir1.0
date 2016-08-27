@@ -19,9 +19,7 @@ package threeDimen.primaryStage {
 		private var skinAni:SkinAnimations;
 		
 		public function D3Base_SkinAnimation_MultiSubMeshSample() {
-			//是否抗锯齿
-			//Config.isAntialias = true;
-			Laya3D.init(0, 0);
+			Laya3D.init(0, 0,true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
@@ -45,6 +43,8 @@ package threeDimen.primaryStage {
 			skinAni = skinMesh.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni.url = "../../../../res/threeDimen/skinModel/dude/dude.ani";
 			skinAni.play();
+			
+			
 		
 		}
 	}

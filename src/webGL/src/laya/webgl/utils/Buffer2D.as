@@ -31,7 +31,7 @@ package laya.webgl.utils {
 		public static const UVAGEX:String = "UVAGEX";
 		
 		public static const CAMERAPOS:String = "CAMERAPOS";
-		public static const LUMINANCE:String = "LUMINANCE";
+		public static const ALBEDO:String = "ALBEDO";
 		public static const ALPHATESTVALUE:String = "ALPHATESTVALUE";
 		
 		public static const FOGCOLOR:String = "FOGCOLOR";

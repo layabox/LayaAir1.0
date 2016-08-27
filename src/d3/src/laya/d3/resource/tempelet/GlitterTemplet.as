@@ -8,6 +8,7 @@ package laya.d3.resource.tempelet {
 	import laya.d3.graphics.VertexGlitter;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
+	import laya.d3.math.Vector4;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.resource.Texture;
 	import laya.utils.Handler;
@@ -26,10 +27,14 @@ package laya.d3.resource.tempelet {
 	 */
 	public class GlitterTemplet implements IRenderable {
 		
+		
+		
 		private var _tempVector0:Vector3 = new Vector3();
 		private var _tempVector1:Vector3 = new Vector3();
 		private var _tempVector2:Vector3 = new Vector3();
 		private var _tempVector3:Vector3 = new Vector3();
+		
+		private var _albedo:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);
 		
 		protected var texture:Texture;
 		protected var _vertices:Float32Array;
@@ -184,7 +189,7 @@ package laya.d3.resource.tempelet {
 					_shaderValue.pushValue(Buffer2D.UNICOLOR, setting.color.elements, -1);
 					_shaderValue.pushValue(Buffer2D.MVPMATRIX, state.projectionViewMatrix.elements, -1);
 					_shaderValue.pushValue(Buffer2D.DURATION, setting.lifeTime, -1);
-					_shaderValue.pushValue(Buffer2D.LUMINANCE, 1.0, -1);
+					_shaderValue.pushValue(Buffer2D.ALBEDO, _albedo.elements, -1);
 					
 					//设置粒子的时间参数，可通过此参数停止粒子动画
 					_shaderValue.pushValue(Buffer2D.CURRENTTIME, _currentTime, -1);

@@ -31,6 +31,9 @@ gulp.task('copyas', function() {
 	gulp.src('../src/plugins/device/src/**')
     .pipe(gulp.dest('../bin/as/libs/src'));
 	
+	gulp.src('../src/plugins/pathfinding/src/**')
+    .pipe(gulp.dest('../bin/as/libs/src'));
+	
 	gulp.src('../src/ui/src/**')
     .pipe(gulp.dest('../bin/as/libs/src'));
 	
@@ -38,6 +41,9 @@ gulp.task('copyas', function() {
     .pipe(gulp.dest('../bin/as/libs/src'));
 	
 	gulp.src('../src/d3/src/**')
+    .pipe(gulp.dest('../bin/as/libs/src'));
+	
+	gulp.src('../src/d3Plugin/src/**')
     .pipe(gulp.dest('../bin/as/libs/src'));
 });
 

@@ -21,9 +21,7 @@ package threeDimen.advancedStage {
 		private var scene:Scene;
 		
 		public function D3Advance_GlitterSample() {
-			//是否抗锯齿
-			//Config.isAntialias = true;
-			Laya3D.init(0, 0);
+			Laya3D.init(0, 0,true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();

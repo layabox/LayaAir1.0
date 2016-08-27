@@ -213,7 +213,7 @@
 	//class laya.filters.webgl.BlurFilterActionGL extends laya.filters.webgl.FilterActionGL
 	var BlurFilterActionGL=(function(_super){
 		function BlurFilterActionGL(){
-			this.data
+			this.data=null;
 			BlurFilterActionGL.__super.call(this);
 		}
 

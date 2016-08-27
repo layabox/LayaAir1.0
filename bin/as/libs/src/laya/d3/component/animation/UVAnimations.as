@@ -63,7 +63,7 @@ package laya.d3.component.animation {
 		 * 初始化Mesh相关数据函数。
 		 */
 		private function _initMeshData():void {
-			_materials = _mesh.shadredMaterials;
+			_materials = _mesh.meshRender.shadredMaterials;
 			//_subMeshes = _mesh.mesh.subMeshes;
 			_meshDataInited = true;
 		}
@@ -182,16 +182,16 @@ package laya.d3.component.animation {
 		public override function _update(state:RenderState):void {
 			player.update(state.elapsedTime);//需最先执行（如不则内部可能触发Stop事件等，如事件中加载新动画，可能_templet未加载完成，导致BUG）
 			
-			if (!_templet || !_templet.loaded || player.State !== AnimationState.playing)
+			if (!_templet || !_templet.loaded || player.state !== AnimationState.playing)
 				return;
 			
 			var animationClipIndex:int = currentAnimationClipIndex;
-			var unfixedIndexes:Uint32Array = _templet.getNodesCurrentFrameIndex(animationClipIndex, player.currentTime);
+			var unfixedIndexes:Uint32Array = _templet.getNodesCurrentFrameIndex(animationClipIndex, player.currentPlayTime);
 			
 			for (var i:int = 0; i < _nodes.length; i++) {
 				var index:int = unfixedIndexes[i];
-				_keyframeAges[i] = (player.currentTime - _nodes[i].keyFrame[index].startTime) / _nodes[i].keyFrame[index].duration;
-				_ages[i] = player.currentTime / _nodes[i].playTime;
+				_keyframeAges[i] = (player.currentPlayTime - _nodes[i].keyFrame[index].startTime) / _nodes[i].keyFrame[index].duration;
+				_ages[i] = player.currentPlayTime / _nodes[i].playTime;
 				var subkeyframeWidth:int = _nodes[i].keyframeWidth / _uvDatasCount;
 				
 				(_uvShaderValues[i]) || (_uvShaderValues[i] = new Vector.<Array>());

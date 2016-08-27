@@ -101,8 +101,8 @@ package laya.d3.component {
 		 * owner蒙版变化事件处理。
 		 * @param	mask 蒙版值。
 		 */
-		protected function _onLayerChanged(mask:uint):void {
-			_cachedOwnerLayerMask = mask;
+		protected function _onLayerChanged(layer:Layer):void {
+			_cachedOwnerLayerMask = layer.mask;
 		}
 		
 		/**

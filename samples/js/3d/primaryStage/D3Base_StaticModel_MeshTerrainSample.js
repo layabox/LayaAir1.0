@@ -1,48 +1,39 @@
-var forward = new Laya.Vector3(0, 0, -0.01);
-var back = new Laya.Vector3(0, 0, 0.01);
-var left = new Laya.Vector3(-0.01, 0, 0);
-var right = new Laya.Vector3(0.01, 0, 0);
-var skinMesh;
-var skinAni;
-var scene;
-var terrain;
-var terrainSprite;
-var sphere;
-var sphereSprite;
-var pathFingding;
-
-
-//是否抗锯齿
-//Config.isAntialias = true;
-Laya3D.init(0, 0);
+Laya3D.init(0, 0,true);
 Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
 Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
 Laya.Stat.show();
 
-scene = Laya.stage.addChild(new Laya.Scene());
+var scene = Laya.stage.addChild(new Laya.Scene());
+var Vector4 = Laya.Vector4;
+var Vector3 = Laya.Vector3;
+var Vector2 = Laya.Vector2;
+var forward = new Laya.Vector3(0, 0, -0.01);
+var back = new Laya.Vector3(0, 0, 0.01);
+var left = new Laya.Vector3(-0.01, 0, 0);
+var right = new Laya.Vector3(0.01, 0, 0);
 
 scene.currentCamera = scene.addChild(new Laya.Camera(0, 0.1, 100));
 scene.currentCamera.transform.translate(new Laya.Vector3(0, 4.2, 2.6));
 scene.currentCamera.transform.rotate(new Laya.Vector3(-45, 0, 0), true, false);
 
-terrain = Laya.Mesh.load("../../res/threeDimen/staticModel/simpleScene/B00MP001M-DEFAULT01.lm");
-terrainSprite = scene.addChild(new Laya.MeshTerrainSprite3D(terrain, 129, 129));
+var terrain = Laya.Mesh.load("../../res/threeDimen/staticModel/simpleScene/B00MP001M-DEFAULT01.lm");
+var terrainSprite = scene.addChild(new Laya.MeshTerrainSprite3D(terrain, 129, 129));
 terrainSprite.transform.localScale = new Laya.Vector3(10, 10, 10);
 terrainSprite.transform.position = new Laya.Vector3(0, 2.6, 1.5);
 terrainSprite.transform.rotationEuler = new Laya.Vector3(0, 0.3, 0.4);
-setMeshParams(terrainSprite, false, false, 3.5, new Laya.Vector3(0.6823, 0.6549, 0.6352), new Laya.Vector2(25.0, 25.0), "TERRAIN");
+setMeshParams(terrainSprite, Laya.Material.RENDERMODE_OPAQUE, new Vector4(3.5,3.5,3.5,1.0), new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
 
-pathFingding = terrainSprite.addComponent(Laya.PathFind);
-pathFingding.setting = { allowDiagonal: true, dontCrossCorners: false, heuristic: PathFinding.core.Heuristic.manhattan, weight: 1 };
+var pathFingding = terrainSprite.addComponent(Laya.PathFind);
+pathFingding.setting = {allowDiagonal: true, dontCrossCorners: false, heuristic: PathFinding.core.Heuristic.manhattan, weight: 1};
 pathFingding.grid = new PathFinding.core.Grid(64, 36);
 
-sphere = Laya.Mesh.load("../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm");
-sphereSprite = scene.addChild(new Laya.MeshSprite3D(sphere));
+var sphere = Laya.Mesh.load("../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm");
+var sphereSprite = scene.addChild(new Laya.MeshSprite3D(sphere));
 sphereSprite.transform.localScale = new Laya.Vector3(0.1, 0.1, 0.1);
 
 //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 terrain.once(Laya.Event.LOADED, this, function () {
-				Laya.timer.frameLoop(1, this, _update);
+	Laya.timer.frameLoop(1, this, _update);
 });
 
 
@@ -61,29 +52,26 @@ function _update() {
 	sphereSprite.transform.position = position;
 
 	var array = pathFingding.findPath(0, 0, position.x, position.z);
-	console.log("start:", 0, 0, " end:", position.x, position.z, "path:", array.toString());
+	// console.log("start:", 0, 0, " end:", position.x, position.z, "path:", array.toString());
 }
 
-function setMeshParams(spirit3D, doubleFace, alpha, luminance, ambientColor, uvScale, shaderName = null, transparentMode = 0.0, isSky = false) {
+function setMeshParams(spirit3D, renderMode, albedo, ambientColor, uvScale, shaderName) {
 	if (spirit3D instanceof Laya.MeshSprite3D) {
 		var meshSprite = spirit3D;
-		var mesh = meshSprite.mesh;
-		if (mesh != null) {
+		var mesh = meshSprite.meshFilter.sharedMesh;
+		if (mesh) {
 			//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 			mesh.once(Laya.Event.LOADED, this, function (mesh) {
-				for (var i = 0; i < meshSprite.shadredMaterials.length; i++) {
-					var material = meshSprite.shadredMaterials[i];
-					material.once(Laya.Event.LOADED, this, function (mat) {
+				for (var i = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
+					var material = meshSprite.meshRender.shadredMaterials[i];
+					material.once(Laya.Event.LOADED, null, function (mat) {
 						var transformUV = new Laya.TransformUV();
 						transformUV.tiling = uvScale;
 						(shaderName) && (mat.setShaderName(shaderName));
 						mat.transformUV = transformUV;
 						mat.ambientColor = ambientColor;
-						mat.luminance = luminance;
-						doubleFace && (mat.cullFace = false);
-						alpha && (mat.transparent = true);
-						isSky && (mat.isSky = true);
-						mat.transparentMode = transparentMode;
+						mat.albedo = albedo;
+						mat.renderMode = renderMode;
 					});
 
 				}
@@ -91,6 +79,6 @@ function setMeshParams(spirit3D, doubleFace, alpha, luminance, ambientColor, uvS
 		}
 	}
 	for (var i = 0; i < spirit3D._childs.length; i++)
-		setMeshParams(spirit3D._childs[i], doubleFace, alpha, luminance, ambientColor, uvScale, shaderName, transparentMode, isSky);
+		setMeshParams(spirit3D._childs[i], renderMode, albedo, ambientColor, uvScale, shaderName);
 }
 

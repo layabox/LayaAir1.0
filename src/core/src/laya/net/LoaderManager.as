@@ -235,7 +235,7 @@ package laya.net {
 				item.progress = 0;
 				totalSize += item.size;
 				items.push(item);
-				var progressHandler:* = progress ? Handler.create(this, loadProgress, [item]) : null;
+				var progressHandler:* = progress ? Handler.create(this, loadProgress, [item], false) : null;
 				load(item.url, Handler.create(item, loadComplete, [item]), progressHandler, item.type, item.priority || 1, cache);
 			}
 			
@@ -251,7 +251,8 @@ package laya.net {
 				if (progress != null) {
 					item.progress = value;
 					var num:Number = 0;
-					for (var j:int = 0; j < itemCount; j++) {
+					var count:Number = items.length;
+					for (var j:int = 0; j < count; j++) {
 						var item1:Object = items[j];
 						num += item1.size * item1.progress;
 					}

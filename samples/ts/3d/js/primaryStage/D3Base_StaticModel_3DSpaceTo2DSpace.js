@@ -5,9 +5,7 @@ var StaticModel_3DSpaceTo2DSpace = (function () {
         this.offset1 = new Laya.Vector3(-0.01, 0, 0);
         this.totalOffset = 0;
         this.b = true;
-        //是否抗锯齿
-        //Config.isAntialias = true;
-        Laya3D.init(0, 0);
+        Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
         Laya.Stat.show();

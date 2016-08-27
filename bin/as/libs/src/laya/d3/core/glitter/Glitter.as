@@ -45,13 +45,7 @@ package laya.d3.core.glitter {
 			
 			state.owner = this;
 			
-			var preWorldTransformModifyID:int = state.worldTransformModifyID;
-			var canView:Boolean = state.renderClip.view(this) && active;
-			
-			state.worldTransformModifyID += transform._worldTransformModifyID;
-			transform.getWorldMatrix(state.worldTransformModifyID);
-			
-			if (canView) {
+			if (active) {
 				if (_renderObject) {
 					var renderQueueIndex:int;
 					renderQueueIndex = RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE;
@@ -64,12 +58,9 @@ package laya.d3.core.glitter {
 				} else {
 					_renderObject = _addRenderObject(state, renderQueueIndex);
 				}
-				_renderObject.tag.worldTransformModifyID = state.worldTransformModifyID;
 			} else {
 				_clearSelfRenderObjects();
 			}
-			
-			state.worldTransformModifyID = preWorldTransformModifyID;
 			
 			_childs.length && _updateChilds(state);
 		}
@@ -85,8 +76,6 @@ package laya.d3.core.glitter {
 			
 			renderObj.renderElement = renderElement;
 			renderObj.material = null;
-			renderObj.tag || (renderObj.tag = new Object());
-			renderObj.tag.worldTransformModifyID = state.worldTransformModifyID;
 			return renderObj;
 		}
 	}

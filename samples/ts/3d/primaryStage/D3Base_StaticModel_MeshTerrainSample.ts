@@ -13,9 +13,8 @@ class StaticModel_MeshTerrainSample {
     private pathFingding: Laya.PathFind;
 
     constructor() {
-        //是否抗锯齿
-        //Config.isAntialias = true;
-        Laya3D.init(0, 0);
+
+        Laya3D.init(0, 0,true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
         Laya.Stat.show();
@@ -31,7 +30,7 @@ class StaticModel_MeshTerrainSample {
         this.terrainSprite.transform.localScale = new Laya.Vector3(10, 10, 10);
         this.terrainSprite.transform.position = new Laya.Vector3(0, 2.6, 1.5);
         this.terrainSprite.transform.rotationEuler = new Laya.Vector3(0, 0.3, 0.4);
-        this.setMeshParams(this.terrainSprite, false, false, 3.5, new Laya.Vector3(0.6823, 0.6549, 0.6352), new Laya.Vector2(25.0, 25.0), "TERRAIN");
+        this.setMeshParams(this.terrainSprite, Laya.Material.RENDERMODE_OPAQUE, new Laya.Vector4(3.5,3.5,3.5,1.0), new Laya.Vector3(0.6823, 0.6549, 0.6352), new Laya.Vector2(25.0, 25.0), "TERRAIN");
 
         this.pathFingding = this.terrainSprite.addComponent(Laya.PathFind) as Laya.PathFind;
         this.pathFingding.setting = { allowDiagonal: true, dontCrossCorners: false, heuristic: PathFinding.core.Heuristic.manhattan, weight: 1 };
@@ -62,29 +61,27 @@ class StaticModel_MeshTerrainSample {
         this.sphereSprite.transform.position = position;
 
         var array = this.pathFingding.findPath(0, 0, position.x, position.z);
-        console.log("start:", 0, 0, " end:", position.x, position.z, "path:", array.toString());
+        // console.log("start:", 0, 0, " end:", position.x, position.z, "path:", array.toString());
     }
 
-    private setMeshParams(spirit3D: Laya.Sprite3D, doubleFace: Boolean, alpha: Boolean, luminance: number, ambientColor: Laya.Vector3, uvScale: Laya.Vector2, shaderName: string = null, transparentMode: number = 0.0, isSky: Boolean = false): void {
+
+    private  setMeshParams(spirit3D:Laya.Sprite3D, renderMode:number, albedo:Laya.Vector4, ambientColor:Laya.Vector3, uvScale:Laya.Vector2, shaderName:String = null):void {
         if (spirit3D instanceof Laya.MeshSprite3D) {
             var meshSprite = spirit3D as Laya.MeshSprite3D;
-            var mesh = meshSprite.mesh;
+            var mesh = meshSprite.meshFilter.sharedMesh;
             if (mesh != null) {
                 //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-                mesh.once(Laya.Event.LOADED, this, function (mesh: Laya.BaseMesh): void {
-                    for (var i = 0; i < meshSprite.shadredMaterials.length; i++) {
-                        var material: Laya.Material = meshSprite.shadredMaterials[i];
-                        material.once(Laya.Event.LOADED, this, (mat)=> {
-                            var transformUV: Laya.TransformUV = new Laya.TransformUV();
+                mesh.once(Laya.Event.LOADED, this, function (mesh:Laya.BaseMesh):void {
+                    for (var i = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
+                        var material:Laya.Material = meshSprite.meshRender.shadredMaterials[i];
+                        material.once(Laya.Event.LOADED, null, function (mat:Laya.Material):void {
+                            var transformUV:Laya.TransformUV = new Laya.TransformUV();
                             transformUV.tiling = uvScale;
                             (shaderName) && (mat.setShaderName(shaderName));
                             mat.transformUV = transformUV;
                             mat.ambientColor = ambientColor;
-                            mat.luminance = luminance;
-                            doubleFace && (mat.cullFace = false);
-                            alpha && (mat.transparent = true);
-                            isSky && (mat.isSky = true);
-                            mat.transparentMode = transparentMode;
+                            mat.albedo = albedo;
+                            mat.renderMode = renderMode;
                         });
 
                     }
@@ -92,7 +89,7 @@ class StaticModel_MeshTerrainSample {
             }
         }
         for (var i = 0; i < spirit3D._childs.length; i++)
-            this.setMeshParams(spirit3D._childs[i], doubleFace, alpha, luminance, ambientColor, uvScale, shaderName, transparentMode, isSky);
+            this.setMeshParams(spirit3D._childs[i], renderMode, albedo, ambientColor, uvScale, shaderName);
     }
 }
 new StaticModel_MeshTerrainSample();

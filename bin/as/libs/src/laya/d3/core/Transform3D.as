@@ -2,11 +2,21 @@ package laya.d3.core {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
+	import laya.events.Event;
+	import laya.events.EventDispatcher;
+	import laya.utils.Stat;
 	
 	/**
 	 * <code>Transform3D</code> 类用于实现3D变换。
 	 */
-	public class Transform3D {
+	public class Transform3D extends EventDispatcher{
+		/** @private */
+		protected var _tempMatrix0:Matrix4x4 = new Matrix4x4();
+		/** @private */
+		protected var _tempQuaternion0:Quaternion = new Quaternion();
+		/** @private */
+		protected var _tempVector30:Vector3 = new Vector3();
+		
 		/** @private */
 		protected var _localPosition:Vector3 = new Vector3();
 		/** @private */
@@ -41,16 +51,17 @@ package laya.d3.core {
 		/** @private */
 		protected var _localUpdate:Boolean = false;
 		/** @private */
-		protected var _tempMatrix0:Matrix4x4 = new Matrix4x4();
-		/** @private */
-		protected var _tempQuaternion0:Quaternion = new Quaternion();
-		/** @private */
-		protected var _tempVector30:Vector3 = new Vector3();
-		
-		/** @private */
-		public var _worldTransformModifyID:Number = 0;
+		protected var _worldUpdate:Boolean = true;
 		/** @private */
 		public var _parent:Transform3D;
+		
+		/**
+		 * 获取世界矩阵是否需要更新。
+		 * @return	世界矩阵是否需要更新。
+		 */
+		public function get worldNeedUpdate():Boolean {
+			return _worldUpdate;
+		}
 		
 		/**
 		 * 获取局部矩阵。
@@ -80,7 +91,15 @@ package laya.d3.core {
 		 * @return	世界矩阵。
 		 */
 		public function get worldMatrix():Matrix4x4 {
-			getWorldMatrix(-1);
+			if (!_worldUpdate)
+				return _worldMatrix;
+			
+			if (_parent != null)
+				Matrix4x4.multiply(_parent.worldMatrix, localMatrix, _worldMatrix);
+			else
+				localMatrix.cloneTo(_worldMatrix);
+			
+			_worldUpdate = false;
 			return _worldMatrix;
 		}
 		
@@ -289,6 +308,33 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * @private
+		 */
+		protected function _updateLocalMatrix():void {
+			Matrix4x4.createAffineTransformation(_localPosition, _localRotation, _localScale, _localMatrix);
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _onLocalTransform():void {
+			_localUpdate = true;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _onWorldTransform():void {
+			if (!_worldUpdate) {
+				_worldUpdate = true;
+				event(Event.WORLDMATRIX_NEEDCHANGE);
+				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
+					(_owner._childs[i] as Sprite3D).transform._onWorldTransform();
+			}
+		   
+		}
+		
+		/**
 		 * 平移变换。
 		 * @param 	translation 移动距离。
 		 * @param 	isLocal 是否局部空间。
@@ -322,53 +368,32 @@ package laya.d3.core {
 			
 			Quaternion.createFromYawPitchRoll(rot.y, rot.x, rot.z, _tempQuaternion0);
 			if (isLocal) {
-				Quaternion.multiply(localRotation,_tempQuaternion0, _localRotation);
+				Quaternion.multiply(_localRotation, _tempQuaternion0, _localRotation);
 				localRotation = _localRotation;
 			} else {
 				Quaternion.multiply(_tempQuaternion0, this.rotation, _rotation);
 				this.rotation = _rotation;
 			}
 		}
-		
-		/**
-		 * 获得世界变换矩阵。
-		 * @param 	transformModifyID 变换标识id。
-		 *  @return 	世界变换矩阵。
-		 */
-		public function getWorldMatrix(transformModifyID:Number):Matrix4x4 {
-			if (transformModifyID === -2 || (transformModifyID >= 0 && _preWorldTransformModifyID === transformModifyID)) {
-				return _worldMatrix;
-			}
-			
-			if (_parent != null)
-				Matrix4x4.multiply(_parent.getWorldMatrix(transformModifyID === -1 ? -1 : -2), localMatrix, _worldMatrix);
-			else
-				localMatrix.cloneTo(_worldMatrix);
-			
-			transformModifyID >= 0 && (_preWorldTransformModifyID = transformModifyID);
-			return _worldMatrix;
-		}
-		
-		/**
-		 * @private
-		 */
-		protected function _updateLocalMatrix():void {
-			Matrix4x4.createAffineTransformation(_localPosition, _localRotation, _localScale, _localMatrix);
-		}
-		
-		/**
-		 * @private
-		 */
-		protected function _onLocalTransform():void {
-			_localUpdate = true;
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _onWorldTransform():void {
-			_worldTransformModifyID += 0.01 / _owner.id;
-		}
+	
+		///**
+		//* 获得世界变换矩阵。
+		//* @param 	transformModifyID 变换标识id。
+		//* @return 	世界变换矩阵。
+		//*/
+		//public function _getWorldMatrix(transformModifyID:Number):Matrix4x4 {
+		//if (transformModifyID === -2 || (transformModifyID >= 0 && _preWorldTransformModifyID === transformModifyID)) {
+		//return _worldMatrix;
+		//}
+		//
+		//if (_parent != null)
+		//Matrix4x4.multiply(_parent._getWorldMatrix(transformModifyID === -1 ? -1 : -2), localMatrix, _worldMatrix);
+		//else
+		//localMatrix.cloneTo(_worldMatrix);
+		//
+		//transformModifyID >= 0 && (_preWorldTransformModifyID = transformModifyID);
+		//return _worldMatrix;
+		//}
 	
 	}
 

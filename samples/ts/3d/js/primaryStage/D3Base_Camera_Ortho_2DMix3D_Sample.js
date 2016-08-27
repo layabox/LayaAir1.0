@@ -28,9 +28,7 @@ var Camera_Ortho_2DMix3D_Sample = (function () {
         this.translate = new Laya.Vector3(200, 100, 0); //理解为屏幕坐标，左上角为（0，0）
         this.convertTranslate = new Laya.Vector3(0, 0, 0);
         this.skin = "../../res/ui/button-1.png";
-        //是否抗锯齿
-        //Config.isAntialias = true;
-        Laya3D.init(0, 0);
+        Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
         Laya.Stat.show();

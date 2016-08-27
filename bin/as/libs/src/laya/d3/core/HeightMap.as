@@ -44,7 +44,7 @@ package laya.d3.core {
 				indexs.push(ib.getData());
 			}
 			
-			var boundingBox:BoundBox = mesh.boundingBox;
+			var boundingBox:BoundBox = mesh._boundingBox;
 			var minX:Number = boundingBox.min.x;
 			var minZ:Number = boundingBox.min.z;
 			var maxX:Number = boundingBox.max.x;
@@ -171,7 +171,7 @@ package laya.d3.core {
 			if (_inBounds(row, col))
 				return _datas[row][col];
 			else
-				return 0;
+				return NaN;
 		}
 	
 	}

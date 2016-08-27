@@ -1,20 +1,10 @@
-var Vector3 = Laya.Vector3;
-
-var skinMesh;
-var skinAni;
-var fire;
-var attacthPoint;
-var rotation = new Vector3(0, 3.14, 0);
-
-//是否抗锯齿
-//Config.isAntialias = true;
-Laya3D.init(0, 0);
+Laya3D.init(0, 0,true);
 Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
 Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
 Laya.Stat.show();
 
+var Vector3 = Laya.Vector3;
 var scene = Laya.stage.addChild(new Laya.Scene());
-
 scene.currentCamera = scene.addChild(new Laya.Camera(0, 0.1, 100));
 scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.0));
 scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
@@ -29,14 +19,17 @@ pointLight.specularColor = new Vector3(2.0, 2.0, 2.0);
 pointLight.diffuseColor = new Vector3(1, 1, 1);
 scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
 
-skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm")));
-skinMesh.transform.localRotationEuler = rotation;
-skinAni = skinMesh.addComponent(Laya.SkinAnimations);
+var skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm")));
+skinMesh.transform.localRotationEuler = new Vector3(0, 3.14, 0);
+
+var skinAni = skinMesh.addComponent(Laya.SkinAnimations);
 skinAni.url = "../../res/threeDimen/skinModel/dude/dude.ani";
 skinAni.play();
 
-attacthPoint = skinMesh.addComponent(Laya.AttachPoint);
-attacthPoint.attachBone = "L_Middle1";
+var attacthPoint = skinMesh.addComponent(Laya.AttachPoint);
+attacthPoint.attachBones.push("L_Middle1");
+attacthPoint.attachBones.push("R_Middle1");
+
 var settings = new Laya.ParticleSettings();
 settings.textureName = "../../res/threeDimen/particle/fire.png";
 settings.maxPartices = 200;
@@ -54,17 +47,21 @@ settings.maxStartSize = 0.05;
 settings.minEndSize = 0.05;
 settings.maxEndSize = 0.2;
 settings.blendState = 1;
-fire = new Laya.Particle3D(settings);
+
+var fire = new Laya.Particle3D(settings);
 scene.addChild(fire);
 
 Laya.timer.frameLoop(1, this, loop);
 
-
 function loop() {
-    if (attacthPoint.matrix) {
-        var e = attacthPoint.matrix.elements;
-        for (var i = 0; i < 10; i++) {
-            fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0));//矩阵的12、13、14分别为Position的X、Y、Z
+
+    for(var j = 0; j < attacthPoint.attachBones.length; j++){
+        if (attacthPoint.matrixs[j]) {
+            var e = attacthPoint.matrixs[j].elements;
+            for (var i = 0; i < 10; i++) {
+                fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0));//矩阵的12、13、14分别为Position的X、Y、Z
+            }
         }
     }
+
 }

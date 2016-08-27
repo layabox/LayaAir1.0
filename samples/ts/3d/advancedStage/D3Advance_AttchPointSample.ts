@@ -2,6 +2,7 @@ module AttchPointSample {
     import Vector3 = Laya.Vector3;
 
     export class AttchPointSample {
+
         private skinMesh: Laya.MeshSprite3D;
         private skinAni: Laya.SkinAnimations;
         private fire: Laya.Particle3D;
@@ -9,9 +10,8 @@ module AttchPointSample {
         private rotation: Vector3 = new Vector3(0, 3.14, 0);
 
         constructor() {
-            //是否抗锯齿
-            //Config.isAntialias = true;
-            Laya3D.init(0, 0);
+
+            Laya3D.init(0, 0,true);
             Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
             Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
             Laya.Stat.show();
@@ -39,7 +39,8 @@ module AttchPointSample {
             this.skinAni.play();
 
             this.attacthPoint = this.skinMesh.addComponent(Laya.AttachPoint) as Laya.AttachPoint;
-            this.attacthPoint.attachBone = "L_Middle1";
+            this.attacthPoint.attachBones.push("L_Middle1");
+            this.attacthPoint.attachBones.push("R_Middle1");
             var settings: Laya.ParticleSettings = new Laya.ParticleSettings();
             settings.textureName = "../../res/threeDimen/particle/fire.png";
             settings.maxPartices = 200;
@@ -64,10 +65,13 @@ module AttchPointSample {
         }
 
         private loop(): void {
-            if (this.attacthPoint.matrix) {
-                var e: Float32Array = this.attacthPoint.matrix.elements;
-                for (var i = 0; i < 10; i++) {
-                    this.fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0));//矩阵的12、13、14分别为Position的X、Y、Z
+
+            for(var j = 0; j < this.attacthPoint.attachBones.length; j++){
+                if (this.attacthPoint.matrixs[j]) {
+                    var e:Float32Array = this.attacthPoint.matrixs[j].elements;
+                    for (var i = 0; i < 10; i++) {
+                        this.fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0));//矩阵的12、13、14分别为Position的X、Y、Z
+                    }
                 }
             }
         }

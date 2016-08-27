@@ -153,7 +153,9 @@ package laya.d3.core.render {
 		 * @param	state 渲染状态。
 		 */
 		public function _preRender(state:RenderState):void {
+
 			if (_changed) {
+	
 				_changed = false;
 				
 				_reset();

@@ -53,8 +53,7 @@ package laya.d3.resource.models {
 		private var _useFullBone:Boolean = true;
 		/** @private */
 		private var _url:String;
-		/** @private */
-		private var _loaded:Boolean = false;
+		
 		
 		/**
 		 * 获取网格顶点
@@ -89,20 +88,14 @@ package laya.d3.resource.models {
 		}
 		
 		/**
-		 * 获取材质队列。
-		 * @return  材质队列。
+		 * 获取材质队列的浅拷贝。
+		 * @return  材质队列的浅拷贝。
 		 */
 		public function get materials():Vector.<Material> {
-			return _materials;
+			return _materials.slice();
 		}
 		
-		/**
-		 * 获取是否已载入。
-		 * @return  是否已载入。
-		 */
-		public function get loaded():Boolean {
-			return _loaded;
-		}
+		
 		
 		/**
 		 * 创建一个 <code>Mesh</code> 实例。
@@ -122,8 +115,8 @@ package laya.d3.resource.models {
 		
 		private function _generateBoundingObject():void {
 			var pos:Vector.<Vector3> = positions;
-			BoundBox.fromPoints(pos, _boundingBox);
-			BoundSphere.fromPoints(pos, _boundingSphere);
+			BoundBox.createfromPoints(pos, _boundingBox);
+			BoundSphere.createfromPoints(pos, _boundingSphere);
 		}
 		
 		/**
@@ -180,26 +173,6 @@ package laya.d3.resource.models {
 		/** @private */
 		public function disableUseFullBone():void {
 			_useFullBone = false;
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _addToRenderQuene(state:RenderState, material:Material):RenderObject {
-			var o:RenderObject;
-			if (material.isSky) {//待考虑
-				o = state.scene.getRenderObject(RenderQueue.NONEWRITEDEPTH);
-			} else {
-				if (!material.transparent || (material.transparent && material.transparentMode === 0))
-					o = material.cullFace ? state.scene.getRenderObject(RenderQueue.OPAQUE) : state.scene.getRenderObject(RenderQueue.OPAQUE_DOUBLEFACE);
-				else if (material.transparent && material.transparentMode === 1) {
-					if (material.transparentAddtive)
-						o = material.cullFace ? state.scene.getRenderObject(RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND) : state.scene.getRenderObject(RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE);
-					else
-						o = material.cullFace ? state.scene.getRenderObject(RenderQueue.DEPTHREAD_ALPHA_BLEND) : state.scene.getRenderObject(RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE);
-				}
-			}
-			return o;
 		}
 		
 		override public function getRenderElementsCount():int {

@@ -36,7 +36,7 @@ package
 			Laya.init(Browser.width, Browser.height, WebGL);
 			Stat.show();
 			
-			mTexturePath = "../../../../res/skeleton/" + fileName + "/texture.png";
+			mTexturePath = "../../../../res/skeleton/" + fileName + "/" + fileName + ".png";
 			mAniPath = "../../../../res/skeleton/" + fileName + "/" + fileName + ".sk";
 			Laya.loader.load([{url:mTexturePath, type: Loader.IMAGE}, {url:mAniPath, type: Loader.BUFFER}], Handler.create(this, onAssetsLoaded));
 		}

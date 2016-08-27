@@ -4,9 +4,8 @@ class StaticModel_MeshSkySample {
     private camera: Laya.Camera;
 
     constructor() {
-        //是否抗锯齿
-        //Config.isAntialias = true;
-        Laya3D.init(0, 0);
+
+        Laya3D.init(0, 0,true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
         Laya.Stat.show();
@@ -30,13 +29,13 @@ class StaticModel_MeshSkySample {
         this.skySprite3D.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT006M.v3f.lh");
         this.skySprite3D.once(Laya.Event.HIERARCHY_LOADED, null, (sprite) => {
             var meshSprite = sprite.getChildAt(0) as Laya.MeshSprite3D;
-            var mesh = meshSprite.mesh;
+            var mesh = meshSprite.meshFilter.sharedMesh;
             mesh.once(Laya.Event.LOADED, null, (templet) => {
-                for (var i = 0; i < meshSprite.shadredMaterials.length; i++) {
-                    var material = meshSprite.shadredMaterials[i];
+                for (var i = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
+                    var material = meshSprite.meshRender.shadredMaterials[i];
                     material.once(Laya.Event.LOADED, null, (mat) => {
-                        mat.isSky = true;
-                        mat.luminance = 3.5;
+                        mat.albedo = new  Laya.Vector4(3.5,3.5,3.5,1.0);
+                        mat.renderMode = Laya.Material.RENDERMODE_SKY;
                     });
                 }
             });

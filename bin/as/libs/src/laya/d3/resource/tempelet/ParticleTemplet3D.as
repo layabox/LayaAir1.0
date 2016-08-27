@@ -155,7 +155,7 @@ package laya.d3.resource.tempelet {
 					_shaderValue.pushArray(state.shaderValue);
 					_shaderValue.pushArray(_vertexBuffer3D.vertexDeclaration.shaderValues);
 					
-					_shaderValue.pushValue(Buffer2D.MVPMATRIX, state.owner.transform.getWorldMatrix(2).elements, -1);
+					_shaderValue.pushValue(Buffer2D.MVPMATRIX, state.owner.transform.worldMatrix.elements, -1);
 					_shaderValue.pushValue(Buffer2D.MATRIX1, state.viewMatrix.elements, -1);
 					_shaderValue.pushValue(Buffer2D.MATRIX2, state.projectionMatrix.elements, -1);
 					

@@ -154,7 +154,7 @@ package laya.d3.component.animation {
 				_templet.setAnimationDataWithCache(_templet._animationDatasCache[0], animationClipIndex, frameIndex, _curAnimationDatas);//缓存动画数据
 				_templet.setAnimationDataWithCache(_templet._animationDatasCache[1], animationClipIndex, frameIndex, _curBonesDatas);//缓存骨骼数据
 				
-				var mesh:Mesh = _ownerMesh.mesh as Mesh;
+				var mesh:Mesh = _ownerMesh.meshFilter.sharedMesh as Mesh;
 				var subMeshCount:int = mesh.getSubMeshCount();
 				
 				for (var j:int = 0; j < subMeshCount; j++) {
@@ -174,7 +174,7 @@ package laya.d3.component.animation {
 		public override function _update(state:RenderState):void {
 			player.update(state.elapsedTime);//需最先执行（如不则内部可能触发Stop事件等，如事件中加载新动画，可能_templet未加载完成，导致BUG）
 			
-			if (player.State !== AnimationState.playing || !_templet || !_templet.loaded)
+			if (player.state !== AnimationState.playing || !_templet || !_templet.loaded)
 				return;
 			
 			var rate:Number = player.playbackRate * state.scene.timer.scale;
@@ -212,7 +212,7 @@ package laya.d3.component.animation {
 			if (isCache)
 				_templet.getOriginalData(animationClipIndex, _curOriginalData, frameIndex, player.currentFrameTime);
 			else//慢动作或者不缓存时
-				_templet.getOriginalDataUnfixedRate(animationClipIndex, _curOriginalData, player.currentTime);
+				_templet.getOriginalDataUnfixedRate(animationClipIndex, _curOriginalData, player.currentPlayTime);
 			
 			_extenData || (_extenData = new Float32Array(_templet.getPublicExtData()));
 			
@@ -235,7 +235,7 @@ package laya.d3.component.animation {
 			if (_curAnimationDatas) {
 				state.shaderDefs.addInt(ShaderDefines3D.BONE);
 				var subMeshIndex:int = state.renderObj.renderElement.indexOfHost;
-				var subMesh:SubMesh = (_ownerMesh.mesh as Mesh).getSubMesh(subMeshIndex);
+				var subMesh:SubMesh = (_ownerMesh.meshFilter.sharedMesh as Mesh).getSubMesh(subMeshIndex);
 				
 				if (_tempIsCache) {
 					var subAnimationCacheData:Vector.<Float32Array> = _subAnimationCacheDatas[subMeshIndex];

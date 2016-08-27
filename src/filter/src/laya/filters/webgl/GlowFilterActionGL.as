@@ -18,7 +18,7 @@ package laya.filters.webgl{
 	 * @private
 	 */
 	public class GlowFilterActionGL extends FilterActionGL implements IFilterActionGL{
-		private var data:GlowFilter;
+		public var data:GlowFilter;
 		private var _initKey:Boolean = false;
 		private var _textureWidth:int = 0;
 		private var _textureHeight:int = 0;

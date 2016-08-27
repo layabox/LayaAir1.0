@@ -12,13 +12,14 @@ package laya.d3.core {
 	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.net.URL;
+	import laya.resource.IDispose;
 	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
 	
 	/**
 	 * <code>Sprite3D</code> 类用于实现3D精灵。
 	 */
-	public class Sprite3D extends Node implements IUpdate {
+	public class Sprite3D extends Node implements IUpdate, IDispose {
 		/**唯一标识ID计数器。*/
 		protected static var _uniqueIDCounter:int = 1/*int.MIN_VALUE*/;
 		/**名字计数器。*/
@@ -97,7 +98,7 @@ package laya.d3.core {
 		 */
 		public function set layer(value:Layer):void {
 			_layerMask = value.mask;
-			this.event(Event.LAYER_CHANGED, _layerMask);
+			this.event(Event.LAYER_CHANGED, value);
 		}
 		
 		/**
@@ -105,7 +106,7 @@ package laya.d3.core {
 		 * @return	场景。
 		 */
 		public function get scene():BaseScene {
-			return (parent as Object).scene;
+			return parent ? (parent as Object).scene : null;
 		}
 		
 		/**
@@ -150,6 +151,12 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * 添加自身渲染物体。
+		 */
+		public function _addSelfRenderObjects():void {
+		}
+		
+		/**
 		 * 清理自身和子节点渲染物体,重写此函数。
 		 */
 		public function _clearSelfAndChildrenRenderObjects():void {
@@ -157,6 +164,15 @@ package laya.d3.core {
 			for (var i:int = 0; i < _childs.length; i++)
 				(_childs[i] as Sprite3D)._clearSelfAndChildrenRenderObjects();
 		
+		}
+		
+		/**
+		 * 添加自身和子节点渲染物体,重写此函数。
+		 */
+		public function _addSelfAndChildrenRenderObjects():void {
+			_addSelfRenderObjects();
+			for (var i:int = 0; i < _childs.length; i++)
+				(_childs[i] as Sprite3D)._addSelfAndChildrenRenderObjects();
 		}
 		
 		/**
@@ -210,15 +226,28 @@ package laya.d3.core {
 		 */
 		public function _update(state:RenderState):void {
 			state.owner = this;
-			var preTransformID:int = state.worldTransformModifyID;
-			
 			var canView:Boolean = state.renderClip.view(this);
 			(canView) && (_updateComponents(state));
-			state.worldTransformModifyID += transform._worldTransformModifyID;
-			transform.getWorldMatrix(state.worldTransformModifyID);
 			(canView) && (_lateUpdateComponents(state));
 			_childs.length && _updateChilds(state);
-			state.worldTransformModifyID = preTransformID;
+		}
+		
+		override public function addChildAt(node:Node, index:int):Node {
+			if (!(node is Sprite3D))
+				throw new Error("Sprite3D:Node type must Sprite3D.");
+			
+			var returnNode:Node = super.addChildAt(node, index);
+			(node !== this) && ((node as Sprite3D)._addSelfAndChildrenRenderObjects());
+			return returnNode;
+		}
+		
+		override public function addChild(node:Node):Node {
+			if (!(node is Sprite3D))
+				throw new Error("Sprite3D:Node type must Sprite3D.");
+			
+			var returnNode:Node = super.addChild(node);
+			(node !== this) && ((node as Sprite3D)._addSelfAndChildrenRenderObjects());
+			return returnNode;
 		}
 		
 		override public function removeChildAt(index:int):Node {
@@ -300,17 +329,22 @@ package laya.d3.core {
 			if (url === null) return;
 			
 			var loader:Loader = new Loader();
-			var _this:* = this;
 			url = URL.formatURL(url);
+			var _this:Sprite3D = this;
 			var onComp:Function = function(data:String):void {
 				var preBasePath:String = URL.basePath;
 				URL.basePath = URL.getPath(URL.formatURL(url));
-				addChild(ClassUtils.createByJson(data, null, _this, Handler.create(null, Utils3D._parseHierarchyProp, null, false), Handler.create(null, Utils3D._parseHierarchyNode, null, false)));
+				var sprite:Sprite3D = ClassUtils.createByJson(data, null, _this, Handler.create(null, Utils3D._parseHierarchyProp, null, false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
+				addChild(sprite);
 				URL.basePath = preBasePath;
-				event(Event.HIERARCHY_LOADED, _this);
+				event(Event.HIERARCHY_LOADED, [_this, sprite]);
 			}
 			loader.once(Event.COMPLETE, null, onComp);
 			loader.load(url, Loader.TEXT);
+		}
+		
+		public function dispose():void {
+		
 		}
 	
 	}

@@ -69,7 +69,7 @@ package laya.d3.resource.models {
 		}
 		
 		/**
-		 * 摄制一个球体模型
+		 * 创建一个球体模型
 		 * @param radius 半径
 		 * @param stacks 水平层数
 		 * @param slices 垂直层数
@@ -80,10 +80,11 @@ package laya.d3.resource.models {
 			_stacks = stacks;
 			_slices = slices;
 			recreateResource();
+			_loaded = true;
 			
 			var pos:Vector.<Vector3> = positions;
-			BoundBox.fromPoints(pos, _boundingBox);
-			BoundSphere.fromPoints(pos, _boundingSphere);
+			BoundBox.createfromPoints(pos, _boundingBox);
+			BoundSphere.createfromPoints(pos, _boundingSphere);
 		}
 		
 		override protected function recreateResource():void {

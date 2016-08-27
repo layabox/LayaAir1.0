@@ -435,6 +435,13 @@ package laya.d3.math {
 			oe[1] = s[1];
 			oe[2] = s[2];
 		}
+		
+
+		public function toDefault():void {
+			elements[0] = 0;
+			elements[1] = 0;
+			elements[2] = 0;
+		}
 	
 	}
 }

@@ -117,13 +117,13 @@ package laya.device.motion
 			event(Event.CHANGE, [acceleration, accelerationIncludingGravity, rotationRate, interval]);
 		}
 		
-		private var transformedAcceleration:AccelerationInfo;
+		private static var transformedAcceleration:AccelerationInfo;
 		/**
 		 * 把加速度值转换为视觉上正确的加速度值。依赖于Browser.window.orientation，可能在部分低端机无效。
 		 * @param	acceleration
 		 * @return
 		 */
-		public static function getTransformedAcceleration(acceleration:AccelerationInfo):Accelerator
+		public static function getTransformedAcceleration(acceleration:AccelerationInfo):AccelerationInfo
 		{
 			transformedAcceleration ||= new AccelerationInfo();
 			transformedAcceleration.z = acceleration.z;
@@ -149,15 +149,16 @@ package laya.device.motion
 				transformedAcceleration.y = -acceleration.y;
 			}
 			
+			var tx:Number;
 			if (Laya.stage.canvasDegree == -90)
 			{
-				var tx = transformedAcceleration.x;
+				tx = transformedAcceleration.x;
 				transformedAcceleration.x = -transformedAcceleration.y;
 				transformedAcceleration.y = tx;
 			}
 			else if (Laya.stage.canvasDegree == 90)
 			{
-				var tx = transformedAcceleration.x;
+				tx = transformedAcceleration.x;
 				transformedAcceleration.x = transformedAcceleration.y;
 				transformedAcceleration.y = -tx;
 			}

@@ -68,7 +68,7 @@ package laya.display {
 			var i:int;
 			for (i = 0; i < _count; i++)
 			{
-				if (_labels[i]) return _labels[i];
+				if (_labels[i]==label) return i;
 			}
 			return 0;
 		}

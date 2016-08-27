@@ -13,7 +13,7 @@ package laya.filters.webgl {
 	 * @private
 	 */
 	public class BlurFilterActionGL extends FilterActionGL {
-		private var data:BlurFilter
+		public var data:BlurFilter;
 		
 		public function BlurFilterActionGL() {
 			super();

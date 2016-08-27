@@ -63,7 +63,7 @@ package threeDimen.common {
 		}
 		
 		protected function mouseDown(e:Event):void {
-			if (!mainCameraAnimation || (mainCameraAnimation && mainCameraAnimation.player.State === AnimationState.stopped)) {
+			if (!mainCameraAnimation || (mainCameraAnimation && mainCameraAnimation.player.state === AnimationState.stopped)) {
 				owner.scene.currentCamera.transform.localRotation.getYawPitchRoll(yawPitchRoll);
 				
 				lastMouseX = Laya.stage.mouseX;
@@ -73,17 +73,17 @@ package threeDimen.common {
 		}
 		
 		protected function mouseUp(e:Event):void {
-			if (!mainCameraAnimation || (mainCameraAnimation && mainCameraAnimation.player.State === AnimationState.stopped))
+			if (!mainCameraAnimation || (mainCameraAnimation && mainCameraAnimation.player.state === AnimationState.stopped))
 				isMouseDown = false;
 		}
 		
 		protected function mouseOut(e:Event):void {
-			if (!mainCameraAnimation || (mainCameraAnimation && mainCameraAnimation.player.State === AnimationState.stopped))
+			if (!mainCameraAnimation || (mainCameraAnimation && mainCameraAnimation.player.state === AnimationState.stopped))
 				isMouseDown = false;
 		}
 		
 		protected function updateCamera(elapsedTime:Number):void {
-			if (!isNaN(lastMouseX) && !isNaN(lastMouseY) && (!mainCameraAnimation || (mainCameraAnimation && mainCameraAnimation.player.State === AnimationState.stopped))) {
+			if (!isNaN(lastMouseX) && !isNaN(lastMouseY) && (!mainCameraAnimation || (mainCameraAnimation && mainCameraAnimation.player.state === AnimationState.stopped))) {
 				var scene:BaseScene = owner.scene;
 				KeyBoardManager.hasKeyDown(87) && scene.currentCamera.moveForward(-0.002 * elapsedTime);//W
 				KeyBoardManager.hasKeyDown(83) && scene.currentCamera.moveForward(0.002 * elapsedTime);//S

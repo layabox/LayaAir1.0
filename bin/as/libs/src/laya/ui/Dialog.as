@@ -289,14 +289,16 @@ import laya.ui.Dialog;
 class DialogManager extends Sprite {
 	public var dialogLayer:Sprite = new Sprite();
 	public var modalLayer:Sprite = new Sprite();
+	public var maskLayer:Sprite = new Sprite();
 	private var _stage:Stage;
 	
 	/**
 	 * 创建一个新的 <code>DialogManager</code> 类实例。
 	 */
 	public function DialogManager() {
-		this.mouseEnabled = dialogLayer.mouseEnabled = modalLayer.mouseEnabled = true;
+		this.mouseEnabled = dialogLayer.mouseEnabled = modalLayer.mouseEnabled = maskLayer.mouseEnabled = true;
 		addChild(dialogLayer);
+		addChild(modalLayer);
 		
 		_stage = Laya.stage;
 		_stage.addChild(this);
@@ -309,14 +311,13 @@ class DialogManager extends Sprite {
 	 * 舞台的 <code>Event.RESIZE</code> 事件侦听处理函数。
 	 * @param e
 	 */
-	private function onResize(e:Event=null):void {
-		var width:Number = modalLayer.width = _stage.width;
-		var height:Number = modalLayer.height = _stage.height;
+	private function onResize(e:Event = null):void {
+		var width:Number = maskLayer.width = _stage.width;
+		var height:Number = maskLayer.height = _stage.height;
 		
-		modalLayer.graphics.clear();
-		modalLayer.graphics.alpha(UIConfig.popupBgAlpha);
-		modalLayer.graphics.drawRect(0, 0, width, height, UIConfig.popupBgColor);
-		modalLayer.graphics.alpha(1 / UIConfig.popupBgAlpha);
+		maskLayer.graphics.clear();
+		maskLayer.graphics.drawRect(0, 0, width, height, UIConfig.popupBgColor);
+		maskLayer.alpha = UIConfig.popupBgAlpha;
 		
 		for (var i:int = dialogLayer.numChildren - 1; i > -1; i--) {
 			var item:Dialog = dialogLayer.getChildAt(i) as Dialog;
@@ -355,8 +356,8 @@ class DialogManager extends Sprite {
 	public function popup(dialog:Dialog, closeOther:Boolean = false):void {
 		if (closeOther) modalLayer.removeChildren();
 		if (dialog.popupCenter) _centerDialog(dialog);
+		modalLayer.addChild(maskLayer);
 		modalLayer.addChild(dialog);
-		addChild(modalLayer);
 		event(Event.OPEN);
 	}
 	
@@ -366,21 +367,12 @@ class DialogManager extends Sprite {
 	 */
 	public function close(dialog:Dialog):void {
 		dialog.removeSelf();
-		if (modalLayer.numChildren === 0) {
-			modalLayer.removeSelf();
+		if (modalLayer.numChildren < 2) {
+			maskLayer.removeSelf();
 		} else {
-			showFirst();
+			modalLayer.setChildIndex(maskLayer, modalLayer.numChildren - 2);
 		}
 		event(Event.CLOSE);
-	}
-	
-	/**
-	 * @private
-	 */
-	private function showFirst():void {
-		for (var i:int = 0, n:int = modalLayer.numChildren - 1; i <= n; i++) {
-			(modalLayer.getChildAt(i) as Sprite).visible = i === n;
-		}
 	}
 	
 	/**
@@ -389,7 +381,7 @@ class DialogManager extends Sprite {
 	public function closeAll():void {
 		dialogLayer.removeChildren();
 		modalLayer.removeChildren();
-		modalLayer.removeSelf();
+		maskLayer.removeSelf();
 		event(Event.CLOSE);
 	}
 }

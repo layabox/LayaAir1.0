@@ -30,6 +30,12 @@ package laya.media {
 		/**@private */
 		private static var _blurPaused:Boolean = false;
 		/**@private */
+		private static var _musicLoops:int = 0;
+		/**@private */
+		private static var _musicPosition:Number = 0;
+		/**@private */
+		private static var _musicCompleteHandler:Handler = null;
+		/**@private */
 		public static var _soundClass:Class;
 		/**
 		 * 添加播放的声音实例。
@@ -80,6 +86,9 @@ package laya.media {
 			if (_musicChannel) {
 				if (!_musicChannel.isStopped) {
 					_blurPaused = true;
+					_musicLoops = _musicChannel.loops;
+					_musicCompleteHandler = _musicChannel.completeHandler;
+					_musicPosition=_musicChannel.position;
 					_musicChannel.stop();
 				}
 				
@@ -88,7 +97,7 @@ package laya.media {
 		
 		private static function _stageOnFocus():void {
 			if (_blurPaused) {
-				playMusic(_tMusic);
+				playMusic(_tMusic,_musicLoops,_musicCompleteHandler,_musicPosition);
 				_blurPaused = false;
 			}
 		}
@@ -140,9 +149,10 @@ package laya.media {
 		 * @param url 声音文件地址。
 		 * @param loops 循环次数,0表示无限循环。
 		 * @param complete 声音播放完成回调  Handler对象。
+		 * @param startTime  声音播放起始时间。
 		 * @return SoundChannel对象。
 		 */
-		public static function playSound(url:String, loops:int = 1, complete:Handler = null, soundClass:Class = null):SoundChannel {
+		public static function playSound(url:String, loops:int = 1, complete:Handler = null, soundClass:Class = null,startTime:Number=0):SoundChannel {
 			if (_muted)
 				return null;
 			if (url == _tMusic) {
@@ -158,7 +168,7 @@ package laya.media {
 				Loader.cacheRes(url, tSound);
 			}
 			var channel:SoundChannel;
-			channel = tSound.play(0, loops);
+			channel = tSound.play(startTime, loops);
 			channel.url = url;
 			channel.volume = (url == _tMusic) ? musicVolume : soundVolume;
 			channel.completeHandler = complete;
@@ -182,13 +192,14 @@ package laya.media {
 		 * @param url 声音文件地址。
 		 * @param loops 循环次数,0表示无限循环。
 		 * @param complete  声音播放完成回调。
+		 * @param startTime  声音播放起始时间。
 		 * @return audio对象。
 		 */
-		public static function playMusic(url:String, loops:int = 0, complete:Handler = null):SoundChannel {
+		public static function playMusic(url:String, loops:int = 0, complete:Handler = null,startTime:Number=0):SoundChannel {
 			_tMusic = url;
 			if (_musicChannel)
 				_musicChannel.stop();
-			return _musicChannel = playSound(url, loops, complete, null);
+			return _musicChannel = playSound(url, loops, complete, null,startTime);
 		}
 		
 		/**

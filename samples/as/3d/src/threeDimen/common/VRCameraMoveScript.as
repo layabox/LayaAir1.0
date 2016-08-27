@@ -71,7 +71,7 @@ package threeDimen.common {
 		}
 		
 		protected function updateCamera(elapsedTime:Number):void {
-			if ((!mainCameraAnimation || (mainCameraAnimation && mainCameraAnimation.player.State === AnimationState.stopped))) {
+			if ((!mainCameraAnimation || (mainCameraAnimation && mainCameraAnimation.player.state === AnimationState.stopped))) {
 				KeyBoardManager.hasKeyDown(87) && camera.moveForward(-0.002 * elapsedTime);//W
 				KeyBoardManager.hasKeyDown(83) && camera.moveForward(0.002 * elapsedTime);//S
 				KeyBoardManager.hasKeyDown(65) && camera.moveRight(-0.002 * elapsedTime);//A

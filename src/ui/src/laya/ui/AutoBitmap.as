@@ -186,6 +186,7 @@ package laya.ui {
 				var right:Number = sizeGrid[1];
 				var bottom:Number = sizeGrid[2];
 				var left:Number = sizeGrid[3];
+				var repeat:Boolean = sizeGrid[4];
 				if (left + right > width) {
 					right = 0;
 				}
@@ -196,18 +197,23 @@ package laya.ui {
 				left && bottom && drawTexture(getTexture(source, 0, sh - bottom, left, bottom), 0, height - bottom, left, bottom);
 				right && bottom && drawTexture(getTexture(source, sw - right, sh - bottom, right, bottom), width - right, height - bottom, right, bottom);
 				//绘制上下两个边
-				top && drawTexture(getTexture(source, left, 0, sw - left - right, top), left, 0, width - left - right, top);
-				bottom && drawTexture(getTexture(source, left, sh - bottom, sw - left - right, bottom), left, height - bottom, width - left - right, bottom);
+				top && drawBitmap(repeat, getTexture(source, left, 0, sw - left - right, top), left, 0, width - left - right, top);
+				bottom && drawBitmap(repeat, getTexture(source, left, sh - bottom, sw - left - right, bottom), left, height - bottom, width - left - right, bottom);
 				//绘制左右两边
-				left && drawTexture(getTexture(source, 0, top, left, sh - top - bottom), 0, top, left, height - top - bottom);
-				right && drawTexture(getTexture(source, sw - right, top, right, sh - top - bottom), width - right, top, right, height - top - bottom);
+				left && drawBitmap(repeat, getTexture(source, 0, top, left, sh - top - bottom), 0, top, left, height - top - bottom);
+				right && drawBitmap(repeat, getTexture(source, sw - right, top, right, sh - top - bottom), width - right, top, right, height - top - bottom);
 				//绘制中间
-				drawTexture(getTexture(source, left, top, sw - left - right, sh - top - bottom), left, top, width - left - right, height - top - bottom);
+				drawBitmap(repeat, getTexture(source, left, top, sw - left - right, sh - top - bottom), left, top, width - left - right, height - top - bottom);
 				
 				//缓存命令
 				if (autoCacheCmd && !Render.isConchApp) cmdCaches[key] = this.cmds;
 			}
 			_repaint();
+		}
+		
+		private function drawBitmap(repeat:Boolean, tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0):void {
+			if (repeat) fillTexture(tex, x, y, width, height);
+			else drawTexture(tex, x, y, width, height);
 		}
 		
 		private static function getTexture(tex:Texture, x:Number, y:Number, width:Number, height:Number):Texture {

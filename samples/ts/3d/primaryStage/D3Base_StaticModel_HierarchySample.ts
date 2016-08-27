@@ -3,9 +3,8 @@ class StaticModel_HierarchySample {
     private skinAni: Laya.SkinAnimations;
 
     constructor() {
-        //是否抗锯齿
-        //Config.isAntialias = true;
-        Laya3D.init(0, 0);
+
+        Laya3D.init(0, 0,true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
         Laya.Stat.show();
@@ -20,12 +19,12 @@ class StaticModel_HierarchySample {
         var staticMesh = scene.addChild(new Laya.Sprite3D()) as Laya.Sprite3D;
         staticMesh.once(Laya.Event.HIERARCHY_LOADED, this, (sprite) => {
             var meshSprite = sprite.getChildAt(0) as Laya.MeshSprite3D;
-            var mesh = meshSprite.mesh;
+            var mesh = meshSprite.meshFilter.sharedMesh;
             mesh.once(Laya.Event.LOADED, this, (mesh) => {
-                for (var i = 0; i < meshSprite.shadredMaterials.length; i++) {
-                    var material = meshSprite.shadredMaterials[i];
+                for (var i = 0; i <  meshSprite.meshRender.shadredMaterials.length; i++) {
+                    var material =  meshSprite.meshRender.shadredMaterials[i];
                     material.once(Laya.Event.LOADED, this, (mat) => {
-                        mat.luminance = 3.5;
+                        mat.albedo = new  Laya.Vector4(3.5,3.5,3.5,1.0);
                     });
                 }
             });

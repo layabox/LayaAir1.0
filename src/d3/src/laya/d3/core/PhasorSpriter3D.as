@@ -2,6 +2,7 @@ package laya.d3.core {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector4;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
@@ -30,6 +31,8 @@ package laya.d3.core {
 		private var _tempNumver1:Number;
 		private var _tempNumver2:Number;
 		private var _tempNumver3:Number;
+		
+		private var _albedo:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);
 		
 		private const _floatSizePerVer:int = 7;//顶点结构为Position(3个float)+Color(4个float)
 		private const _defaultBufferSize:int = 600 * _floatSizePerVer;
@@ -363,7 +366,7 @@ package laya.d3.core {
 			_renderState.shaderValue.pushValue(VertexElementUsage.POSITION0, _posShaderValue, -1);
 			_renderState.shaderValue.pushValue(VertexElementUsage.COLOR0, _colorShaderValue, -1);
 			_renderState.shaderValue.pushValue(Buffer2D.MVPMATRIX, _wvpMatrix.elements, -1);
-			_renderState.shaderValue.pushValue(Buffer2D.LUMINANCE, 1.0, -1);
+			_renderState.shaderValue.pushValue(Buffer2D.ALBEDO, _albedo.elements, -1);
 			
 			_shader.uploadArray(_renderState.shaderValue.data, _renderState.shaderValue.length, null);
 			
@@ -404,11 +407,11 @@ package laya.d3.core {
 		}
 		
 		private function drawLinesException():void {
-			throw new Error("您必须确保在此之前已调用bengin()且使用“LINES”基元！");
+			throw new Error("您必须确保在此之前已调用begin()且使用“LINES”基元！");
 		}
 		
 		private function drawTrianglesException():void {
-			throw new Error("您必须确保在此之前已调用bengin()且使用“TRIANGLES”基元！");
+			throw new Error("您必须确保在此之前已调用begin()且使用“TRIANGLES”基元！");
 		}
 	
 	}

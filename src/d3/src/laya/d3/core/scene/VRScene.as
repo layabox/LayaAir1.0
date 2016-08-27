@@ -46,10 +46,10 @@ package laya.d3.core.scene {
 			state.projectionMatrix = cameraVR.rightProjectionMatrix;
 			state.projectionViewMatrix = cameraVR.rightProjectionViewMatrix;
 			state.viewport = cameraVR.rightViewport;
-			var preTransformID:int = cameraVR.transform._worldTransformModifyID;
-		    cameraVR.transform._worldTransformModifyID = cameraVR.transform._worldTransformModifyID * 2;//临时
+			//var preTransformID:int = cameraVR.transform._worldTransformModifyID;
+		    //cameraVR.transform._worldTransformModifyID = cameraVR.transform._worldTransformModifyID * 2;//临时
 			_renderScene(gl, state);
-			cameraVR.transform._worldTransformModifyID = preTransformID;
+			//cameraVR.transform._worldTransformModifyID = preTransformID;
 			
 			lateRender(state);//渲染之后
 			

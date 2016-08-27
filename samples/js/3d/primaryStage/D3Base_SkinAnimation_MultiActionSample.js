@@ -1,17 +1,9 @@
-var currentState = 0;
-var skinAni0;
-var skinAni1;
-var skinAni2;
-var skinAni3;
-
-//是否抗锯齿
-//Config.isAntialias = true;
-Laya3D.init(0, 0);
+Laya3D.init(0, 0,true);
 Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
 Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
 Laya.Stat.show();
 
-loadUI();
+var currentState = 0;
 var scene = Laya.stage.addChild(new Laya.Scene());
 
 scene.currentCamera = scene.addChild(new Laya.Camera(0, 0.1, 100));
@@ -32,20 +24,20 @@ var skinMesh1 = rootSkinMesh.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../.
 var skinMesh2 = rootSkinMesh.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/nvXia/A02P1V1F001AX01@yequangongjinv-DEFAULT2.lm")));
 var skinMesh3 = rootSkinMesh.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/nvXia/A02P1V1F001AX01@yequangongjinv-DEFAULT3.lm")));
 
-skinAni0 = skinMesh0.addComponent(Laya.SkinAnimations);
+var skinAni0 = skinMesh0.addComponent(Laya.SkinAnimations);
 skinAni0.url = "../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
 skinAni0.play(0, 0.6);
-skinAni1 = skinMesh1.addComponent(Laya.SkinAnimations);
+var skinAni1 = skinMesh1.addComponent(Laya.SkinAnimations);
 skinAni1.url = "../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
 skinAni1.play(0, 0.6);
-skinAni2 = skinMesh2.addComponent(Laya.SkinAnimations);
+var skinAni2 = skinMesh2.addComponent(Laya.SkinAnimations);
 skinAni2.url = "../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
 skinAni2.play(0, 0.6);
-skinAni3 = skinMesh3.addComponent(Laya.SkinAnimations);
+var skinAni3 = skinMesh3.addComponent(Laya.SkinAnimations);
 skinAni3.url = "../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
 skinAni3.play(0, 0.6);
 
-function loadUI() {
+(function loadUI() {
     Laya.loader.load(["../../res/threeDimen/ui/button.png"], Laya.Handler.create(null, function () {
         var btn = new Laya.Button();
         btn.skin = "../../res/threeDimen/ui/button.png";
@@ -64,7 +56,7 @@ function loadUI() {
             btn.pos(Laya.stage.width / 2 - btn.width * Laya.Browser.pixelRatio / 2, Laya.stage.height - 50 * Laya.Browser.pixelRatio);
         });
     }));
-}
+})();
 
 function onclick() {
     switch (currentState) {

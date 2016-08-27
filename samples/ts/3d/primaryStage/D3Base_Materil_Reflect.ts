@@ -1,5 +1,6 @@
 module Materil_Reflect {
     import Vector3 = Laya.Vector3;
+    import Vector4 = Laya.Vector4;
 
     export class Materil_Reflect {
        	private meshSprite: Laya.MeshSprite3D;
@@ -7,9 +8,8 @@ module Materil_Reflect {
         private material: Laya.Material;
 
         constructor() {
-            //是否抗锯齿
-            //Config.isAntialias = true;
-            Laya3D.init(0, 0);
+
+            Laya3D.init(0, 0,true);
             Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
             Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
             Laya.Stat.show();
@@ -27,10 +27,10 @@ module Materil_Reflect {
             var mesh: Laya.Mesh = Laya.Mesh.load("../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
             this.meshSprite = sprit.addChild(new Laya.MeshSprite3D(mesh)) as Laya.MeshSprite3D;
             mesh.once(Laya.Event.LOADED, this, () => {
-                this.meshSprite.shadredMaterials[0].once(Laya.Event.LOADED, this, () => {
-                    this.material = this.meshSprite.shadredMaterials[0];
-                    this.material.luminance = 0;
-                    this.material.cullFace = false;
+                this.meshSprite.meshRender.shadredMaterials[0].once(Laya.Event.LOADED, this, () => {
+                    this.material = this.meshSprite.meshRender.shadredMaterials[0];
+                    this.material.albedo = new Vector4(0.0,0.0,0.0,0.0);
+                    this.material.renderMode = Laya.Material.RENDERMODE_OPAQUEDOUBLEFACE;
                     (this.material && this.reflectTexture) && (this.material.reflectTexture = this.reflectTexture);
                 });
             });
@@ -43,7 +43,7 @@ module Materil_Reflect {
             webGLImageCube.on(Laya.Event.LOADED, this, (imgCube) => {
                 this.reflectTexture = new Laya.Texture(imgCube);
                 imgCube.mipmap = true;
-                (this.material && this.reflectTexture) && (this.meshSprite.shadredMaterials[0].reflectTexture = this.reflectTexture);
+                (this.material && this.reflectTexture) && (this.meshSprite.meshRender.shadredMaterials[0].reflectTexture = this.reflectTexture);
             });
 
             Laya.timer.frameLoop(1, this, () => {

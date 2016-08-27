@@ -151,7 +151,7 @@ package laya.utils {
 		 * @return 绑定后的函数。
 		 */
 		public static function bind(fun:Function, scope:*):Function {
-			var rst:Function;
+			var rst:Function=fun;
 			__JS__("rst=fun.bind(scope);");
 			return rst;
 		}

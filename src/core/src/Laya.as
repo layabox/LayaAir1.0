@@ -16,7 +16,9 @@ package {
 	import laya.renders.RenderSprite;
 	import laya.resource.Context;
 	import laya.resource.ResourceManager;
+	import laya.runtime.IMarket;
 	import laya.utils.Browser;
+	import laya.utils.CacheManger;
 	import laya.utils.Timer;
 	
 	/**
@@ -33,9 +35,11 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.1.0";
+		public static var version:String = "1.2.0";
 		/**@private */
 		public static var stageBox:Sprite;
+		/**Market对象 只有加速器模式下才有值*/
+		public static var conchMarket:IMarket = __JS__("window.conch?conchMarket:null");
 		
 		/**
 		 * 初始化引擎。
@@ -58,6 +62,7 @@ package {
 			Font.__init__();
 			Style.__init__();
 			ResourceManager.__init__();
+			CacheManger.beginCheck();
 			stageBox = stage = new Stage();
 			stage.model&&stage.model.setRootNode();
 			var location:* = Browser.window.location;

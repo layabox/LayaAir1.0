@@ -1,8 +1,6 @@
 var SkinAnimation_MultiMeshSample = (function () {
     function SkinAnimation_MultiMeshSample() {
-        //是否抗锯齿
-        //Config.isAntialias = true;
-        Laya3D.init(0, 0);
+        Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
         Laya.Stat.show();

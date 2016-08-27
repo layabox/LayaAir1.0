@@ -15,6 +15,8 @@ package laya.events {
 		
 		/**是否开启键盘事件，默认为true*/
 		public static var enabled:Boolean = true;
+		/** @private */
+		public static var _event:Event = new Event();
 		
 		/** @private */
 		public static function __init__():void {
@@ -31,16 +33,18 @@ package laya.events {
 		
 		private static function _dispatch(e:Object, type:String):void {
 			if (!enabled) return;
-			e.keyCode = e.keyCode || e.which || e.charCode;
-			
+			_event._stoped = false;
+			_event.nativeEvent = e;
+			_event.keyCode = e.keyCode || e.which || e.charCode;
 			//判断同时按下的键
-			if (type === "keydown") _pressKeys[e.keyCode] = true;
-			else if (type === "keyup") _pressKeys[e.keyCode] = null;
+			if (type === "keydown") _pressKeys[_event.keyCode] = true;
+			else if (type === "keyup") _pressKeys[_event.keyCode] = null;
 			
-			var tar:Node = (Laya.stage.focus && (Laya.stage.focus.event != null)) ? Laya.stage.focus : Laya.stage;
-			while (tar) {
-				tar.event(type, e);
-				tar = tar.parent;
+			var target:* = (Laya.stage.focus && (Laya.stage.focus.event != null)) ? Laya.stage.focus : Laya.stage;
+			var ct:* = target;
+			while (ct) {
+				ct.event(type, _event.setTo(type, ct, target));
+				ct = ct.parent;
 			}
 		}
 		

@@ -104,37 +104,37 @@ package laya.d3.math {
 			var box2MaxeZ:Number = box2Maxe[2];
 			
 			var distance:Number = 0;
-			
+			var delta:Number;
 			if (box1MineX > box2MaxeX){
 				
-				var delta:Number = box1MineX - box2MaxeX;
+			    delta = box1MineX - box2MaxeX;
 				distance += delta * delta;
 			}
 			else if(box2MineX > box1MaxeX){
 				
-				var delta:Number = box2MineX - box1MaxeX;
+			    delta = box2MineX - box1MaxeX;
 				distance += delta * delta;
 			}
 			
 			if (box1MineY > box2MaxeY){
 				
-				var delta:Number = box1MineY - box2MaxeY;
+				delta = box1MineY - box2MaxeY;
 				distance += delta * delta;
 			}
 			else if(box2MineY > box1MaxeY){
 				
-				var delta:Number = box2MineY - box1MaxeY;
+				delta = box2MineY - box1MaxeY;
 				distance += delta * delta;
 			}
 			
 			if (box1MineZ > box2MaxeZ){
 				
-				var delta:Number = box1MineZ - box2MaxeZ;
+				delta = box1MineZ - box2MaxeZ;
 				distance += delta * delta;
 			}
 			else if(box2MineZ > box1MaxeZ){
 				
-				var delta:Number = box2MineZ - box1MaxeZ;
+				delta = box2MineZ - box1MaxeZ;
 				distance += delta * delta;
 			}
 			
@@ -391,19 +391,19 @@ package laya.d3.math {
 				}
 			}else{
 				
-				var inverse:Number = 1 / raydeY;
-				var t1:Number = (boxMineY - rayoeY) * inverse;
-				var t2:Number = (boxMaxeY - rayoeY) * inverse;
+				var inverse1:Number = 1 / raydeY;
+				var t3:Number = (boxMineY - rayoeY) * inverse1;
+				var t4:Number = (boxMaxeY - rayoeY) * inverse1;
 				
-				if (t1 > t2){
+				if (t3 > t4){
 				
-					var temp:Number = t1;
-					t1 = t2;
-					t2 = temp;
+					var temp1:Number = t3;
+					t3 = t4;
+					t4 = temp1;
 				}
 				
-				out = Math.max(t1, out);
-				tmax = Math.min(t2, tmax);
+				out = Math.max(t3, out);
+				tmax = Math.min(t4, tmax);
 				
 				if (out > tmax){
 					
@@ -421,19 +421,19 @@ package laya.d3.math {
 				}
 			}else{
 				
-				var inverse:Number = 1 / raydeZ;
-				var t1:Number = (boxMineZ - rayoeZ) * inverse;
-				var t2:Number = (boxMaxeZ - rayoeZ) * inverse;
+				var inverse2:Number = 1 / raydeZ;
+				var t5:Number = (boxMineZ - rayoeZ) * inverse2;
+				var t6:Number = (boxMaxeZ - rayoeZ) * inverse2;
 				
-				if (t1 > t2){
+				if (t5 > t6){
 				
-					var temp:Number = t1;
-					t1 = t2;
-					t2 = temp;
+					var temp2:Number = t5;
+					t5 = t6;
+					t6 = temp2;
 				}
 				
-				out = Math.max(t1, out);
-				tmax = Math.min(t2, tmax);
+				out = Math.max(t5, out);
+				tmax = Math.min(t6, tmax);
 				
 				if (out > tmax){
 					

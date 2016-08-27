@@ -38,7 +38,7 @@ package laya.d3.component.animation {
 		 * @param value 地址。
 		 */
 		public function set url(value:String):void {
-			if (player.State !== AnimationState.stopped)
+			if (player.state !== AnimationState.stopped)
 				player.stop(true);
 			
 			_url = URL.formatURL(value);
@@ -133,10 +133,12 @@ package laya.d3.component.animation {
 		 * 播放动画。
 		 * @param	index 动画索引。
 		 * @param	playbackRate 播放速率。
-		 * @param	duration 播放时长（Number.MAX_VALUE为循环播放，0为1次）。
+		 * @param	duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
+		 * @param	playStart 播放的起始时间位置。
+		 * @param	playEnd 播放的结束时间位置。（0为动画一次循环的最长结束时间位置）。
 		 */
-		public function play(index:int = 0, playbackRate:Number = 1.0, duration:Number = Number.MAX_VALUE):void {
-			player.play(index, playbackRate, duration);
+		public function play(index:int = 0, playbackRate:Number = 1.0, overallDuration:Number = Number.MAX_VALUE, playStart:Number = 0, playEnd:Number =0):void {
+			player.play(index, playbackRate, overallDuration,playStart,playEnd);
 		}
 		
 		/**

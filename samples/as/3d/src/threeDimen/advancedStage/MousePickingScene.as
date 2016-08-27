@@ -71,13 +71,13 @@ package threeDimen.advancedStage {
 		private function getMeshData(spirit3D:Node):void {
 			if (spirit3D is MeshSprite3D) {
 				var meshSprite3D:MeshSprite3D = spirit3D as MeshSprite3D;
-				var mesh:Mesh = meshSprite3D.mesh as Mesh;
+				var mesh:Mesh = meshSprite3D.meshFilter.sharedMesh as Mesh;
 				if (mesh != null) {
 					
 					mesh.once(Event.LOADED, null, function():void {
 						meshLoaded(mesh);
 						for (var i:int = 0; i < mesh.materials.length; i++)
-							mesh.materials[i].luminance = 3.0;
+							mesh.materials[i].albedo = new Vector4(3.0,3.0,3.0,1.0);
 					});
 					worldMats.push(meshSprite3D.transform.worldMatrix);
 				}

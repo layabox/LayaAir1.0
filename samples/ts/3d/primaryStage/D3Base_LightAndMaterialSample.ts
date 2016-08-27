@@ -24,9 +24,8 @@ module LightAndMaterialSample {
 			this.tempVector3 = new Vector3();
 			this.currentShadingMode = Laya.BaseScene.PIXEL_SHADING;
 			this.currentLightState = 0;
-			//是否抗锯齿
-			//Config.isAntialias = true;
-			Laya3D.init(0, 0);
+
+			Laya3D.init(0, 0,true);
 			Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
 			Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
 			Laya.Stat.show();
@@ -72,14 +71,14 @@ module LightAndMaterialSample {
 			//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 			grid.once(Laya.Event.HIERARCHY_LOADED, null, (sprite) => {
 				var meshSprite = sprite.getChildAt(0) as Laya.MeshSprite3D;
-				var mesh = meshSprite.mesh;
-				mesh.once(Laya.Event.LOADED, null, (templet) => {
-					for (var i = 0; i < meshSprite.shadredMaterials.length; i++) {
-						var material = meshSprite.shadredMaterials[i];
-						material.once(Laya.Event.LOADED, null, () => {
+				var mesh = meshSprite.meshFilter.sharedMesh;
+				mesh.once(Laya.Event.LOADED, null, function (templet) {
+					for (var i = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
+						var material = meshSprite.meshRender.shadredMaterials[i];
+						material.once(Laya.Event.LOADED, null, function () {
 							material.diffuseColor = new Vector3(0.7, 0.7, 0.7);
 							material.specularColor = new Laya.Vector4(0.2, 0.2, 0.2, 32);
-						});
+						})
 					}
 				});
 			});

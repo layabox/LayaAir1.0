@@ -439,7 +439,7 @@ package laya.ui {
 					py = py + _listHeight <= Laya.stage.height ? py : p.y - _listHeight;
 					
 					_list.pos(p.x, py);
-					Laya.stageBox.addChild(_list);
+					Laya.stageBox.addChildAt(_list, 0);
 					Laya.stage.once(Event.MOUSE_DOWN, this, removeList);
 					_list.selectedIndex = _selectedIndex;
 				} else {

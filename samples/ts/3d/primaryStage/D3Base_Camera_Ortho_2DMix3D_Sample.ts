@@ -32,9 +32,7 @@ class Camera_Ortho_2DMix3D_Sample {
     private skin: string = "../../res/ui/button-1.png";
 
     constructor() {
-        //是否抗锯齿
-        //Config.isAntialias = true;
-        Laya3D.init(0, 0);
+        Laya3D.init(0, 0,true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
         Laya.Stat.show();
@@ -58,7 +56,7 @@ class Camera_Ortho_2DMix3D_Sample {
         mesh.transform.localPosition = this.convertTranslate;
         mesh.transform.localScale = new Laya.Vector3(100, 100, 100);//球的直径在三维空间中为1米（放大100倍，此时为100米），当正交投影矩阵的宽高等同于像素宽高时，一米可认为一个像素，所以球等于200个像素,可与2D直接混合。
         //窗口尺寸变化相关属性重置。
-        Laya.stage.on(Laya.Event.RESIZE, this, function (): void {
+        Laya.stage.on(Laya.Event.RESIZE, this,  ()=> {
             scene.currentCamera.orthographicVerticalSize = Laya.RenderState.clientHeight;
             Laya.Utils3D.convert3DCoordTo2DScreenCoord(this.translate, this.convertTranslate);
             mesh.transform.localPosition = this.convertTranslate;

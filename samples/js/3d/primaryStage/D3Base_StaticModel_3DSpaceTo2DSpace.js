@@ -1,21 +1,14 @@
-var skinMesh;
-var skinAni;
-var outPos;
-var projectViewMat;
-var offset0 = new Laya.Vector3(0.01, 0, 0);
-var offset1 = new Laya.Vector3(-0.01, 0, 0);
-var totalOffset = 0;
-var b = true;
-
-//是否抗锯齿
-//Config.isAntialias = true;
-Laya3D.init(0, 0);
+Laya3D.init(0, 0,true);
 Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
 Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
 Laya.Stat.show();
 
-outPos = new Laya.Vector3();
-projectViewMat = new Laya.Matrix4x4();
+var offset0 = new Laya.Vector3(0.01, 0, 0);
+var offset1 = new Laya.Vector3(-0.01, 0, 0);
+var totalOffset = 0;
+var b = true;
+var outPos = new Laya.Vector3();
+var projectViewMat = new Laya.Matrix4x4();
 
 var scene = Laya.stage.addChild(new Laya.Scene());
 

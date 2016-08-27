@@ -28,8 +28,10 @@ package laya.webgl {
 	import laya.webgl.resource.IMergeAtlasBitmap;
 	import laya.webgl.resource.RenderTarget2D;
 	import laya.webgl.resource.WebGLImage;
+	import laya.webgl.shader.d2.fillTexture.FillTextureSprite;
 	import laya.webgl.shader.d2.Shader2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
+	import laya.webgl.shader.d2.skinAnishader.SkinMesh;
 	import laya.webgl.shader.d2.value.Value2D;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.shader.ShaderValue;
@@ -175,7 +177,7 @@ package laya.webgl {
 			}
 			AtlasResourceManager._enable();
 			
-			RunDriver.benginFlush = function():void {
+			RunDriver.beginFlush = function():void {
 				var atlasResourceManager:AtlasResourceManager = AtlasResourceManager.instance;
 				var count:int = atlasResourceManager.getAtlaserCount();
 				for (var i:int = 0; i < count; i++) {
@@ -210,6 +212,46 @@ package laya.webgl {
 				texture._uvID++;
 				AtlasResourceManager._atlasRestore++;
 				((texture.bitmap as IMergeAtlasBitmap).enableMerageInAtlas) && (AtlasResourceManager.instance.addToAtlas(texture));//资源恢复时重新加入大图集
+			}
+			
+			RunDriver.getTexturePixels = function(value:Texture, x:Number, y:Number, width:Number, height:Number):Array {
+				var tSprite:Sprite = new Sprite();
+				tSprite.x = -x;
+				tSprite.y = -y;
+				tSprite.graphics.drawTexture(value, 0, 0, value.sourceWidth, value.sourceHeight);
+				//启用RenderTarget2D，把精灵上的内容画上去
+				var tRenderTarget:RenderTarget2D = RenderTarget2D.create(width, height);
+				tRenderTarget.start();
+				tRenderTarget.clear(0, 0, 0, 0);
+				tSprite.render(Render.context, 0, 0);
+				(Render.context.ctx as WebGLContext2D).flush();
+				tRenderTarget.end();
+				var tUint8Array:Uint8Array = tRenderTarget.getData(0, 0, width, height);
+				
+				var tArray:Array = [];
+				var tIndex:int = 0;
+				for (var i:int = height-1; i >= 0; i--)
+				{
+					for (var j:int = 0; j < width; j++)
+					{
+						tIndex = (i * width + j) * 4;
+						tArray.push(tUint8Array[tIndex]);
+						tArray.push(tUint8Array[tIndex + 1]);
+						tArray.push(tUint8Array[tIndex + 2]);
+						tArray.push(tUint8Array[tIndex + 3]);
+					}
+				}
+				return tArray;
+			}
+			
+			RunDriver.fillTextureShader = function(value:Texture, x:Number, y:Number, width:Number, height:Number):* {
+				var tFillTetureSprite:FillTextureSprite = new FillTextureSprite();
+				return tFillTetureSprite;
+			}
+			
+			RunDriver.skinAniSprite = function():*{
+				var tSkinSprite:SkinMesh = new SkinMesh()
+				return tSkinSprite;
 			}
 			
 			Filter._filterStart = function(scope:SubmitCMDScope, sprite:*, context:RenderContext, x:Number, y:Number):void {

@@ -12,6 +12,7 @@ package laya.display {
 	import laya.renders.RenderSprite;
 	import laya.resource.Texture;
 	import laya.utils.Handler;
+	import laya.utils.RunDriver;
 	import laya.utils.Utils;
 	import laya.utils.VectorGraphManager;
 	
@@ -327,6 +328,7 @@ package laya.display {
 					_addPointArrToRst(rst, Bezier.I.getBezierPoints(cmd[2]), tMatrix, cmd[0], cmd[1]);
 					break;
 				case context._drawPoly: 
+				case context._drawLines: 
 				case 18://drawpoly
 					//addPointArrToRst(rst, [cmd[0], cmd[1]], tMatrix);
 					_addPointArrToRst(rst, cmd[2], tMatrix, cmd[0], cmd[1]);
@@ -425,6 +427,11 @@ package laya.display {
 			if (!tex.loaded) {
 				tex.once(Event.LOADED, this, _textureLoaded, [tex, args]);
 			}
+			if (Render.isWebGL)
+			{
+				var tFillTextureSprite:* = RunDriver.fillTextureShader(tex, x, y, width, height);
+				args.push(tFillTextureSprite);
+			}
 			_saveToCmd(Render._context._fillTexture, args);
 		}
 		
@@ -433,9 +440,6 @@ package laya.display {
 			param[4] = param[4] || tex.height;
 			_repaint();
 		}
-		
-		/*public function fillImage(img:Texture, x:Number, y:Number, width:Number, height:Number, repeat:Boolean = true):void {
-		   }*/
 		
 		/**
 		 * @private
@@ -695,9 +699,12 @@ package laya.display {
 		 * @param	lineWidth 线条宽度。
 		 */
 		public function drawLine(fromX:Number, fromY:Number, toX:Number, toY:Number, lineColor:String, lineWidth:Number = 1):void {
-			var tId:uint = VectorGraphManager.getInstance().getId();
-			if (_vectorgraphArray == null) _vectorgraphArray = [];
-			_vectorgraphArray.push(tId);
+			var tId:uint = 0;
+			if (Render.isWebGL) {
+				tId = VectorGraphManager.getInstance().getId();
+				if (_vectorgraphArray == null) _vectorgraphArray = [];
+				_vectorgraphArray.push(tId);
+			}
 			var arr:Array = [fromX + 0.5, fromY + 0.5, toX + 0.5, toY + 0.5, lineColor, lineWidth, tId];
 			_saveToCmd(Render._context._drawLine, arr);
 		}
@@ -711,9 +718,12 @@ package laya.display {
 		 * @param	lineWidth 线段宽度。
 		 */
 		public function drawLines(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):void {
-			var tId:uint = VectorGraphManager.getInstance().getId();
-			if (_vectorgraphArray == null) _vectorgraphArray = [];
-			_vectorgraphArray.push(tId);
+			var tId:uint = 0;
+			if (Render.isWebGL) {
+				tId = VectorGraphManager.getInstance().getId();
+				if (_vectorgraphArray == null) _vectorgraphArray = [];
+				_vectorgraphArray.push(tId);
+			}
 			var arr:Array = [x + 0.5, y + 0.5, points, lineColor, lineWidth, tId];
 			_saveToCmd(Render._context._drawLines, arr);
 		}
@@ -758,9 +768,12 @@ package laya.display {
 		 */
 		public function drawCircle(x:Number, y:Number, radius:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? 0.5 : 0;
-			var tId:uint = VectorGraphManager.getInstance().getId();
-			if (_vectorgraphArray == null) _vectorgraphArray = [];
-			_vectorgraphArray.push(tId);
+			var tId:uint = 0;
+			if (Render.isWebGL) {
+				tId = VectorGraphManager.getInstance().getId();
+				if (_vectorgraphArray == null) _vectorgraphArray = [];
+				_vectorgraphArray.push(tId);
+			}
 			var arr:Array = [x + offset, y + offset, radius, fillColor, lineColor, lineWidth, tId];
 			_saveToCmd(Render._context._drawCircle, arr);
 		}
@@ -778,9 +791,12 @@ package laya.display {
 		 */
 		public function drawPie(x:Number, y:Number, radius:Number, startAngle:Number, endAngle:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? 0.5 : 0;
-			var tId:uint = VectorGraphManager.getInstance().getId();
-			if (_vectorgraphArray == null) _vectorgraphArray = [];
-			_vectorgraphArray.push(tId);
+			var tId:uint = 0;
+			if (Render.isWebGL) {
+				tId = VectorGraphManager.getInstance().getId();
+				if (_vectorgraphArray == null) _vectorgraphArray = [];
+				_vectorgraphArray.push(tId);
+			}
 			var arr:Array = [x + offset, y + offset, radius, startAngle, endAngle, fillColor, lineColor, lineWidth, tId];
 			arr[3] = Utils.toRadian(startAngle);
 			arr[4] = Utils.toRadian(endAngle);
@@ -813,10 +829,11 @@ package laya.display {
 		 */
 		public function drawPoly(x:Number, y:Number, points:Array, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? 0.5 : 0;
-			var tId:uint = VectorGraphManager.getInstance().getId();
-			if (_vectorgraphArray == null) _vectorgraphArray = [];
-			_vectorgraphArray.push(tId);
+			var tId:uint = 0;
 			if (Render.isWebGL) {
+				tId = VectorGraphManager.getInstance().getId();
+				if (_vectorgraphArray == null) _vectorgraphArray = [];
+				_vectorgraphArray.push(tId);
 				var tIsConvexPolygon:Boolean = false;
 				//这里加入多加形是否是凸边形
 				if (points.length > 6) {

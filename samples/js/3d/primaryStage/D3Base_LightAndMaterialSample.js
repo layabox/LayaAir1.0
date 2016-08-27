@@ -1,47 +1,33 @@
-var Browser = Laya.Browser;
-var Vector3 = Laya.Vector3;
-
-var currentShadingMode;
-var currentLightState = 0;
-var currentLight;
-var scene;
-
-var buttonLight;
-var shadingLight;
-var skinMesh;
-var skinAni;
-var directionLight;
-var pointLight;
-var spotLight;
-var tempQuaternion = new Laya.Quaternion();
-var tempVector3 = new Vector3();
-
-currentShadingMode = Laya.BaseScene.PIXEL_SHADING;
-
-//是否抗锯齿
-//Config.isAntialias = true;
-Laya3D.init(0, 0);
+Laya3D.init(0, 0, true);
 Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
 Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
 Laya.Stat.show();
 
-loadUI();
+var Browser = Laya.Browser;
+var Vector3 = Laya.Vector3;
+var tempVector3 = new Vector3();
+var tempQuaternion = new Laya.Quaternion();
+var currentShadingMode = Laya.BaseScene.PIXEL_SHADING;
+var currentLightState = 0;
+var buttonLight;
+var shadingLight;
 
-scene = Laya.stage.addChild(new Laya.Scene());
+
+var scene = Laya.stage.addChild(new Laya.Scene());
 
 scene.currentCamera = scene.addChild(new Laya.Camera(0, 0.1, 100));
 scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.2));
 scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 scene.currentCamera.clearColor = null;
 
-directionLight = scene.addChild(new Laya.DirectionLight());
+var directionLight = scene.addChild(new Laya.DirectionLight());
 directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
 directionLight.specularColor = new Vector3(1.0, 1.0, 0.9);
 directionLight.diffuseColor = new Vector3(1, 1, 1);
 directionLight.direction = new Vector3(0, -1.0, -1.0);
-currentLight = directionLight;
+var currentLight = directionLight;
 
-pointLight = new Laya.PointLight();
+var pointLight = new Laya.PointLight();
 pointLight.ambientColor = new Vector3(0.8, 0.5, 0.5);
 pointLight.specularColor = new Vector3(1.0, 1.0, 0.9);
 pointLight.diffuseColor = new Vector3(1, 1, 1);
@@ -49,7 +35,7 @@ pointLight.transform.position = new Vector3(0.4, 0.4, 0.0);
 pointLight.attenuation = new Vector3(0.0, 0.0, 3.0);
 pointLight.range = 3.0;
 
-spotLight = new Laya.SpotLight();
+var spotLight = new Laya.SpotLight();
 spotLight.ambientColor = new Vector3(1.0, 1.0, 0.8);
 spotLight.specularColor = new Vector3(1.0, 1.0, 0.8);
 spotLight.diffuseColor = new Vector3(1, 1, 1);
@@ -65,10 +51,10 @@ var grid = scene.addChild(new Laya.Sprite3D());
 //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 grid.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
     var meshSprite = sprite.getChildAt(0);
-    var mesh = meshSprite.mesh;
+    var mesh = meshSprite.meshFilter.sharedMesh;
     mesh.once(Laya.Event.LOADED, null, function (templet) {
-        for (var i = 0; i < meshSprite.shadredMaterials.length; i++) {
-            var material = meshSprite.shadredMaterials[i];
+        for (var i = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
+            var material = meshSprite.meshRender.shadredMaterials[i];
             material.once(Laya.Event.LOADED, null, function () {
                 material.diffuseColor = new Vector3(0.7, 0.7, 0.7);
                 material.specularColor = new Laya.Vector4(0.2, 0.2, 0.2, 32);
@@ -83,7 +69,7 @@ sphere.loadHierarchy("../../res/threeDimen/staticModel/sphere/sphere.lh");
 sphere.transform.localScale = new Vector3(0.2, 0.2, 0.2);
 sphere.transform.localPosition = new Vector3(0.0, 0.0, 0.2);
 
-skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm")));
+var skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm")));
 
 Laya.stage.timer.frameLoop(1, null, function () {
     switch (currentLightState) {
@@ -108,7 +94,7 @@ Laya.stage.timer.frameLoop(1, null, function () {
 
 
 
-function loadUI() {
+(function loadUI() {
     Laya.loader.load(["../../res/threeDimen/ui/button.png"], Laya.Handler.create(null, function () {
         buttonLight = new Laya.Button();
         buttonLight.skin = "../../res/threeDimen/ui/button.png";
@@ -140,7 +126,7 @@ function loadUI() {
         });
 
     }));
-}
+})();
 
 function onclickButtonShading() {
     currentShadingMode++;

@@ -26,9 +26,7 @@ package threeDimen.primaryStage {
 		private var b:Boolean = true;
 		
 		public function D3Base_StaticModel_3DSpaceTo2DSpace() {
-			//是否抗锯齿
-			//Config.isAntialias = true;
-			Laya3D.init(0, 0);
+			Laya3D.init(0, 0,true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();

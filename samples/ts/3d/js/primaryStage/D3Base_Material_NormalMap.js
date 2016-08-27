@@ -5,9 +5,7 @@ var Material_NormalMap;
         function Material_NormalMap() {
             var _this = this;
             this.rotation = new Vector3(0, 0.01, 0);
-            //是否抗锯齿
-            //Config.isAntialias = true;
-            Laya3D.init(0, 0);
+            Laya3D.init(0, 0, true);
             Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
             Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
             Laya.Stat.show();
@@ -38,8 +36,8 @@ var Material_NormalMap;
             var meshSprite = this.root.addChild(new Laya.MeshSprite3D(mesh));
             //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
             mesh.once(Laya.Event.LOADED, null, function () {
-                meshSprite.shadredMaterials[0].once(Laya.Event.LOADED, null, function () {
-                    material = meshSprite.shadredMaterials[0];
+                meshSprite.meshRender.shadredMaterials[0].once(Laya.Event.LOADED, null, function () {
+                    material = meshSprite.meshRender.shadredMaterials[0];
                     (material && normalTexture) && (material.normalTexture = normalTexture);
                 });
             });

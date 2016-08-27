@@ -25,11 +25,11 @@ package laya.net {
 	 */
 	public class HttpRequest extends EventDispatcher {
 		/**@private */
-		protected  var _http:* = new Browser.window.XMLHttpRequest();
+		protected var _http:* = new Browser.window.XMLHttpRequest();
 		/**@private */
-		protected  var _responseType:String;
+		protected var _responseType:String;
 		/**@private */
-		protected  var _data:*;
+		protected var _data:*;
 		
 		/**
 		 * 发送请求。
@@ -128,14 +128,18 @@ package laya.net {
 		 */
 		protected function complete():void {
 			clear();
-			if (_responseType === "json") {
-				this._data = JSON.parse(_http.responseText);
-			} else if (_responseType === "xml") {
-				this._data = Utils.parseXMLFromString(_http.responseText);
-			} else {
-				this._data = _http.response || _http.responseText;
+			try {
+				if (_responseType === "json") {
+					this._data = JSON.parse(_http.responseText);
+				} else if (_responseType === "xml") {
+					this._data = Utils.parseXMLFromString(_http.responseText);
+				} else {
+					this._data = _http.response || _http.responseText;
+				}
+				event(Event.COMPLETE, this._data is Array ? [this._data] : this._data);
+			} catch (e:*) {
+				error(e.message);
 			}
-			event(Event.COMPLETE, this._data is Array ? [this._data] : this._data);
 		}
 		
 		/**

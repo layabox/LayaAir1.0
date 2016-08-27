@@ -69,6 +69,8 @@ package laya.ui {
 		protected var _ty:Number;
 		/**@private */
 		protected var _maxMove:Number;
+		/**@private */
+		protected var _globalSacle:Point;
 		
 		/**
 		 * 创建一个新的 <code>Slider</code> 类示例。
@@ -109,6 +111,9 @@ package laya.ui {
 		 * @param e
 		 */
 		protected function onBarMouseDown(e:Event):void {
+			_globalSacle || (_globalSacle = new Point());
+			_globalSacle.setTo(globalScaleX, globalScaleY);
+			
 			_maxMove = isVertical ? (height - _bar.height) : (width - _bar.width);
 			_tx = Laya.stage.mouseX;
 			_ty = Laya.stage.mouseY;
@@ -163,12 +168,12 @@ package laya.ui {
 		private function mouseMove(e:Event):void {
 			var oldValue:Number = _value;
 			if (isVertical) {
-				_bar.y += Laya.stage.mouseY - _ty;
+				_bar.y += (Laya.stage.mouseY - _ty) / _globalSacle.y;
 				if (_bar.y > _maxMove) _bar.y = _maxMove;
 				else if (_bar.y < 0) _bar.y = 0;
 				_value = _bar.y / _maxMove * (_max - _min) + _min;
 			} else {
-				_bar.x += Laya.stage.mouseX - _tx;
+				_bar.x += (Laya.stage.mouseX - _tx) / _globalSacle.x;
 				if (_bar.x > _maxMove) _bar.x = _maxMove;
 				else if (_bar.x < 0) _bar.x = 0;
 				_value = _bar.x / _maxMove * (_max - _min) + _min;

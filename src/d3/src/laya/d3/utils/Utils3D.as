@@ -63,8 +63,217 @@ package laya.d3.utils {
 			return path = URL.formatURL(path);
 		}
 		
+		/**
+		 *通过数平移、旋转、缩放值计算到结果矩阵数组,骨骼动画专用。
+		 * @param tx left矩阵数组。
+		 * @param ty left矩阵数组的偏移。
+		 * @param tz right矩阵数组。
+		 * @param qx right矩阵数组的偏移。
+		 * @param qy 输出矩阵数组。
+		 * @param qz 输出矩阵数组的偏移。
+		 * @param qw 输出矩阵数组的偏移。
+		 * @param sx 输出矩阵数组的偏移。
+		 * @param sy 输出矩阵数组的偏移。
+		 * @param sz 输出矩阵数组的偏移。
+		 * @param outArray 结果矩阵数组。
+		 * @param outOffset 结果矩阵数组的偏移。
+		 */
+		private static function _rotationTransformScaleSkinAnimation(tx:Number, ty:Number, tz:Number, qx:Number, qy:Number, qz:Number, qw:Number, sx:Number, sy:Number, sz:Number, outArray:Float32Array, outOffset:int):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var re:Float32Array = _tempArray16_0;
+			var se:Float32Array = _tempArray16_1;
+			var tse:Float32Array = _tempArray16_2;
+			
+			//平移
+			
+			//旋转
+			var x2:Number = qx + qx;
+			var y2:Number = qy + qy;
+			var z2:Number = qz + qz;
+			
+			var xx:Number = qx * x2;
+			var yx:Number = qy * x2;
+			var yy:Number = qy * y2;
+			var zx:Number = qz * x2;
+			var zy:Number = qz * y2;
+			var zz:Number = qz * z2;
+			var wx:Number = qw * x2;
+			var wy:Number = qw * y2;
+			var wz:Number = qw * z2;
+			
+			//re[3] = re[7] = re[11] = re[12] = re[13] = re[14] = 0;
+			re[15] = 1;
+			re[0] = 1 - yy - zz;
+			re[1] = yx + wz;
+			re[2] = zx - wy;
+			
+			re[4] = yx - wz;
+			re[5] = 1 - xx - zz;
+			re[6] = zy + wx;
+			
+			re[8] = zx + wy;
+			re[9] = zy - wx;
+			re[10] = 1 - xx - yy;
+			
+			//缩放
+			//se[4] = se[8] = se[12] = se[1] = se[9] = se[13] = se[2] = se[6] = se[14] = se[3] = se[7] = se[11] = 0;
+			se[15] = 1;
+			se[0] = sx;
+			se[5] = sy;
+			se[10] = sz;
+			
+			var i:int, a:Float32Array, b:Float32Array, e:Float32Array, ai0:Number, ai1:Number, ai2:Number, ai3:Number;
+			
+			//mul(rMat, tMat, tsMat)......................................
+			for (i = 0; i < 4; i++) {
+				ai0 = re[i];
+				ai1 = re[i + 4];
+				ai2 = re[i + 8];
+				ai3 = re[i + 12];
+				tse[i] = ai0;
+				tse[i + 4] = ai1;
+				tse[i + 8] = ai2;
+				tse[i + 12] = ai0 * tx + ai1 * ty + ai2 * tz + ai3;
+			}
+			
+			//mul(tsMat, sMat, out)..............................................
+			for (i = 0; i < 4; i++) {
+				ai0 = tse[i];
+				ai1 = tse[i + 4];
+				ai2 = tse[i + 8];
+				ai3 = tse[i + 12];
+				outArray[i + outOffset] = ai0 * se[0] + ai1 * se[1] + ai2 * se[2] + ai3 * se[3];
+				outArray[i + outOffset + 4] = ai0 * se[4] + ai1 * se[5] + ai2 * se[6] + ai3 * se[7];
+				outArray[i + outOffset + 8] = ai0 * se[8] + ai1 * se[9] + ai2 * se[10] + ai3 * se[11];
+				outArray[i + outOffset + 12] = ai0 * se[12] + ai1 * se[13] + ai2 * se[14] + ai3 * se[15];
+			}
+		}
+		
 		/** @private */
-		public static function GenerateTangent(vertexDatas:Float32Array, vertexStride:int, positionOffset:int, uvOffset:int, indices:Uint16Array/*还有UNIT8类型*/):Float32Array {
+		public static function _parseHierarchyProp(node:Sprite3D, prop:String, value:Array):void {
+			switch (prop) {
+			case "translate": 
+				node.transform.localPosition = new Vector3(value[0], value[1], value[2]);
+				break;
+			case "rotation": 
+				node.transform.localRotation = new Quaternion(value[0], value[1], value[2], value[3]);
+				break;
+			case "scale": 
+				node.transform.localScale = new Vector3(value[0], value[1], value[2]);
+				break;
+			}
+		}
+		
+		/** @private */
+		public static function _parseHierarchyNode(instanceParams:Object):Sprite3D {
+			if (instanceParams)
+				return new MeshSprite3D(Mesh.load(instanceParams.loadPath));
+			else
+				return new Sprite3D();
+		}
+		
+		/** @private */
+		public static function _parseMaterial(material:Material, prop:String, value:Array):void {
+			switch (prop) {
+			case "ambientColor": 
+				material.ambientColor = new Vector3(value[0], value[1], value[2]);
+				break;
+			case "diffuseColor": 
+				material.diffuseColor = new Vector3(value[0], value[1], value[2]);
+				break;
+			case "specularColor": 
+				material.specularColor = new Vector4(value[0], value[1], value[2], value[3]);
+				break;
+			case "reflectColor": 
+				material.reflectColor = new Vector3(value[0], value[1], value[2]);
+				break;
+			
+			case "diffuseTexture": 
+				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
+					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
+					(tex.bitmap as WebGLImage).mipmap = true;
+					(tex.bitmap as WebGLImage).repeat = true;
+					material.diffuseTexture = tex;
+				})));
+				break;
+			case "normalTexture": 
+				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
+					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
+					(tex.bitmap as WebGLImage).mipmap = true;
+					(tex.bitmap as WebGLImage).repeat = true;
+					material.normalTexture = tex;
+				})));
+				break;
+			case "specularTexture": 
+				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
+					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
+					(tex.bitmap as WebGLImage).mipmap = true;
+					(tex.bitmap as WebGLImage).repeat = true;
+					material.specularTexture = tex;
+				})));
+				break;
+			case "emissiveTexture": 
+				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
+					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
+					(tex.bitmap as WebGLImage).mipmap = true;
+					(tex.bitmap as WebGLImage).repeat = true;
+					material.emissiveTexture = tex;
+				})));
+				break;
+			case "ambientTexture": 
+				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
+					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
+					(tex.bitmap as WebGLImage).mipmap = true;
+					(tex.bitmap as WebGLImage).repeat = true;
+					material.ambientTexture = tex;
+				})));
+				break;
+			case "reflectTexture": 
+				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
+					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
+					(tex.bitmap as WebGLImage).mipmap = true;
+					(tex.bitmap as WebGLImage).repeat = true;
+					material.reflectTexture = tex;
+				})));
+				break;
+			}
+		}
+		
+		/** @private */
+		public static function _computeSkinAnimationData(bones:*, curData:Float32Array, exData:Float32Array, bonesDatas:Float32Array, animationDatas:Float32Array):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var offset:int = 0;
+			var matOffset:int = 0;
+			
+			var len:int = exData.length / 2;
+			var i:int;
+			var parentOffset:int;
+			var boneLength:int = bones.length;
+			for (i = 0; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++) {
+				//将旋转平移缩放合成矩阵...........................................
+				Utils3D._rotationTransformScaleSkinAnimation(curData[offset + 7], curData[offset + 8], curData[offset + 9], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 0], curData[offset + 1], curData[offset + 2], bonesDatas, matOffset);
+				
+				if (i != 0) {
+					parentOffset = bones[i].parentIndex * 16;
+					Utils3D.mulMatrixByArray(bonesDatas, parentOffset, bonesDatas, matOffset, bonesDatas, matOffset);
+				}
+			}
+			
+			for (i = 0; i < len; i += 16) {
+				//将绝对矩阵乘以反置矩阵................................................
+				Utils3D.mulMatrixByArrayFast(bonesDatas, i, exData, len + i, animationDatas, i);
+			}
+		}
+		
+		/** @private */
+		public static function _computeRootAnimationData(bones:*, curData:Float32Array, animationDatas:Float32Array):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			for (var i:int = 0,offset:int = 0,matOffset:int = 0, boneLength:int = bones.length; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++)
+				Utils3D.createAffineTransformationArray(curData[offset + 0], curData[offset + 1], curData[offset + 2], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 7], curData[offset + 8], curData[offset + 9], animationDatas, matOffset);
+		}
+		
+		/** @private */
+		public static function generateTangent(vertexDatas:Float32Array, vertexStride:int, positionOffset:int, uvOffset:int, indices:Uint16Array/*还有UNIT8类型*/):Float32Array {
 			const tangentElementCount:int = 3;
 			var newVertexStride:int = vertexStride + tangentElementCount;
 			var tangentVertexDatas:Float32Array = new Float32Array(newVertexStride * (vertexDatas.length / vertexStride));
@@ -194,143 +403,6 @@ package laya.d3.utils {
 			return vertexDeclaration;
 		}
 		
-		/** @private */
-		public static function _parseHierarchyProp(node:Sprite3D, prop:String, value:Array):void {
-			switch (prop) {
-			case "translate": 
-				node.transform.localPosition = new Vector3(value[0], value[1], value[2]);
-				break;
-			case "rotation": 
-				node.transform.localRotation = new Quaternion(value[0], value[1], value[2], value[3]);
-				break;
-			case "scale": 
-				node.transform.localScale = new Vector3(value[0], value[1], value[2]);
-				break;
-			}
-		}
-		
-		/** @private */
-		public static function _parseHierarchyNode(instanceParams:Object):Sprite3D {
-			if (instanceParams)
-				return new MeshSprite3D(Mesh.load(instanceParams.loadPath));
-			else
-				return new Sprite3D();
-		}
-		
-		/** @private */
-		public static function _parseMaterial(material:Material, prop:String, value:Array):void {
-			switch (prop) {
-			case "ambientColor": 
-				material.ambientColor = new Vector3(value[0], value[1], value[2]);
-				break;
-			case "diffuseColor": 
-				material.diffuseColor = new Vector3(value[0], value[1], value[2]);
-				break;
-			case "specularColor": 
-				material.specularColor = new Vector4(value[0], value[1], value[2], value[3]);
-				break;
-			case "reflectColor": 
-				material.reflectColor = new Vector3(value[0], value[1], value[2]);
-				break;
-			
-			case "diffuseTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
-					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(tex.bitmap as WebGLImage).mipmap = true;
-					(tex.bitmap as WebGLImage).repeat = true;
-					material.diffuseTexture = tex;
-				})));
-				break;
-			case "normalTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
-					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(tex.bitmap as WebGLImage).mipmap = true;
-					(tex.bitmap as WebGLImage).repeat = true;
-					material.normalTexture = tex;
-				})));
-				break;
-			case "specularTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
-					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(tex.bitmap as WebGLImage).mipmap = true;
-					(tex.bitmap as WebGLImage).repeat = true;
-					material.specularTexture = tex;
-				})));
-				break;
-			case "emissiveTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
-					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(tex.bitmap as WebGLImage).mipmap = true;
-					(tex.bitmap as WebGLImage).repeat = true;
-					material.emissiveTexture = tex;
-				})));
-				break;
-			case "ambientTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
-					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(tex.bitmap as WebGLImage).mipmap = true;
-					(tex.bitmap as WebGLImage).repeat = true;
-					material.ambientTexture = tex;
-				})));
-				break;
-			case "reflectTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
-					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(tex.bitmap as WebGLImage).mipmap = true;
-					(tex.bitmap as WebGLImage).repeat = true;
-					material.reflectTexture = tex;
-				})));
-				break;
-			}
-		}
-		
-		/** @private */
-		public static function _computeSkinAnimationData(bones:*, curData:Float32Array, exData:Float32Array, bonesDatas:Float32Array, animationDatas:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var offset:int = 0;
-			var matOffset:int = 0;
-			
-			var len:int = exData.length / 2;
-			var i:int;
-			var parentOffset:int;
-			var boneLength:int = bones.length;
-			for (i = 0; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++) {
-				//将旋转平移缩放合成矩阵...........................................
-				Utils3D.rotationTransformScale(curData[offset + 7], curData[offset + 8], curData[offset + 9], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 0], curData[offset + 1], curData[offset + 2], bonesDatas, matOffset);
-				
-				if (i != 0) {
-					parentOffset = bones[i].parentIndex * 16;
-					Utils3D.mulMatrixByArray(bonesDatas, parentOffset, bonesDatas, matOffset, bonesDatas, matOffset);
-				}
-			}
-			
-			for (i = 0; i < len; i += 16) {
-				//将绝对矩阵乘以反置矩阵................................................
-				Utils3D.mulMatrixByArrayFast(bonesDatas, i, exData, len + i, animationDatas, i);
-			}
-		}
-		
-		/** @private */
-		public static function _computeRootAnimationData(bones:*, curData:Float32Array, animationDatas:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var offset:int = 0;
-			var matOffset:int = 0;
-			
-			var i:int;
-			var parentOffset:int;
-			var boneLength:int = bones.length;
-			
-			for (i = 0; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++) {
-				//将旋转平移缩放合成矩阵...........................................
-				Utils3D.rotationTransformScale(curData[offset + 7], curData[offset + 8], curData[offset + 9], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 0], curData[offset + 1], curData[offset + 2], animationDatas, matOffset);
-				
-				if (i != 0) {
-					parentOffset = bones[i].parentIndex * 16;
-					Utils3D.mulMatrixByArray(animationDatas, parentOffset, animationDatas, matOffset, animationDatas, matOffset);
-				}
-			}
-		}
-		
 		/**
 		 *通过数组数据计算矩阵乘法。
 		 * @param leftArray left矩阵数组。
@@ -390,88 +462,41 @@ package laya.d3.utils {
 		
 		/**
 		 *通过数平移、旋转、缩放值计算到结果矩阵数组。
-		 * @param tx left矩阵数组。
-		 * @param ty left矩阵数组的偏移。
-		 * @param tz right矩阵数组。
-		 * @param qx right矩阵数组的偏移。
-		 * @param qy 输出矩阵数组。
-		 * @param qz 输出矩阵数组的偏移。
-		 * @param qw 输出矩阵数组的偏移。
-		 * @param sx 输出矩阵数组的偏移。
-		 * @param sy 输出矩阵数组的偏移。
-		 * @param sz 输出矩阵数组的偏移。
+		 * @param tX left矩阵数组。
+		 * @param tY left矩阵数组的偏移。
+		 * @param tZ right矩阵数组。
+		 * @param qX right矩阵数组的偏移。
+		 * @param qY 输出矩阵数组。
+		 * @param qZ 输出矩阵数组的偏移。
+		 * @param qW 输出矩阵数组的偏移。
+		 * @param sX 输出矩阵数组的偏移。
+		 * @param sY 输出矩阵数组的偏移。
+		 * @param sZ 输出矩阵数组的偏移。
 		 * @param outArray 结果矩阵数组。
 		 * @param outOffset 结果矩阵数组的偏移。
 		 */
-		public static function rotationTransformScale(tx:Number, ty:Number, tz:Number, qx:Number, qy:Number, qz:Number, qw:Number, sx:Number, sy:Number, sz:Number, outArray:Float32Array, outOffset:int):void {
+		public static function createAffineTransformationArray(tX:Number, tY:Number, tZ:Number, rX:Number, rY:Number, rZ:Number, rW:Number, sX:Number, sY:Number, sZ:Number, outArray:Float32Array, outOffset:int):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var re:Float32Array = _tempArray16_0;
-			var se:Float32Array = _tempArray16_1;
-			var tse:Float32Array = _tempArray16_2;
+			var x2:Number = rX + rX, y2:Number = rY + rY, z2:Number = rZ + rZ;
+			var xx:Number = rX * x2, xy:Number = rX * y2, xz:Number = rX * z2, yy:Number = rY * y2, yz:Number = rY * z2, zz:Number = rZ * z2;
+			var wx:Number = rW * x2, wy:Number = rW * y2, wz:Number = rW * z2;
 			
-			//平移
-			
-			//旋转
-			var x2:Number = qx + qx;
-			var y2:Number = qy + qy;
-			var z2:Number = qz + qz;
-			
-			var xx:Number = qx * x2;
-			var yx:Number = qy * x2;
-			var yy:Number = qy * y2;
-			var zx:Number = qz * x2;
-			var zy:Number = qz * y2;
-			var zz:Number = qz * z2;
-			var wx:Number = qw * x2;
-			var wy:Number = qw * y2;
-			var wz:Number = qw * z2;
-			
-			//re[3] = re[7] = re[11] = re[12] = re[13] = re[14] = 0;
-			re[15] = 1;
-			re[0] = 1 - yy - zz;
-			re[1] = yx + wz;
-			re[2] = zx - wy;
-			
-			re[4] = yx - wz;
-			re[5] = 1 - xx - zz;
-			re[6] = zy + wx;
-			
-			re[8] = zx + wy;
-			re[9] = zy - wx;
-			re[10] = 1 - xx - yy;
-			
-			//缩放
-			//se[4] = se[8] = se[12] = se[1] = se[9] = se[13] = se[2] = se[6] = se[14] = se[3] = se[7] = se[11] = 0;
-			se[15] = 1;
-			se[0] = sx;
-			se[5] = sy;
-			se[10] = sz;
-			
-			var i:int, a:Float32Array, b:Float32Array, e:Float32Array, ai0:Number, ai1:Number, ai2:Number, ai3:Number;
-			
-			//mul(rMat, tMat, tsMat)......................................
-			for (i = 0; i < 4; i++) {
-				ai0 = re[i];
-				ai1 = re[i + 4];
-				ai2 = re[i + 8];
-				ai3 = re[i + 12];
-				tse[i] = ai0;
-				tse[i + 4] = ai1;
-				tse[i + 8] = ai2;
-				tse[i + 12] = ai0 * tx + ai1 * ty + ai2 * tz + ai3;
-			}
-			
-			//mul(tsMat, sMat, out)..............................................
-			for (i = 0; i < 4; i++) {
-				ai0 = tse[i];
-				ai1 = tse[i + 4];
-				ai2 = tse[i + 8];
-				ai3 = tse[i + 12];
-				outArray[i + outOffset] = ai0 * se[0] + ai1 * se[1] + ai2 * se[2] + ai3 * se[3];
-				outArray[i + outOffset + 4] = ai0 * se[4] + ai1 * se[5] + ai2 * se[6] + ai3 * se[7];
-				outArray[i + outOffset + 8] = ai0 * se[8] + ai1 * se[9] + ai2 * se[10] + ai3 * se[11];
-				outArray[i + outOffset + 12] = ai0 * se[12] + ai1 * se[13] + ai2 * se[14] + ai3 * se[15];
-			}
+			outArray[outOffset + 0] = (1 - (yy + zz)) * sX;
+			outArray[outOffset + 1] = (xy + wz) * sX;
+			outArray[outOffset + 2] = (xz - wy) * sX;
+			outArray[outOffset + 3] = 0;
+			outArray[outOffset + 4] = (xy - wz) * sY;
+			outArray[outOffset + 5] = (1 - (xx + zz)) * sY;
+			outArray[outOffset + 6] = (yz + wx) * sY;
+			outArray[outOffset + 7] = 0;
+			outArray[outOffset + 8] = (xz + wy) * sZ;
+			outArray[outOffset + 9] = (yz - wx) * sZ;
+			outArray[outOffset + 10] = (1 - (xx + yy)) * sZ;
+			outArray[outOffset + 11] = 0;
+			outArray[outOffset + 12] = tX;
+			outArray[outOffset + 13] = tY;
+			outArray[outOffset + 14] = tZ;
+			outArray[outOffset + 15] = 1;
 		}
 		
 		/**
@@ -509,11 +534,11 @@ package laya.d3.utils {
 		 * @param	out 输出坐标。
 		 */
 		public static function convert3DCoordTo2DScreenCoord(source:Vector3, out:Vector3):void {
-		  var se:Array = source.elements;
-		  var oe:Array = out.elements;
-		  oe[0] = -RenderState.clientWidth/2+se[0];
-		  oe[1] = RenderState.clientHeight/2-se[1];
-		  oe[2] = se[2];
+			var se:Array = source.elements;
+			var oe:Array = out.elements;
+			oe[0] = -RenderState.clientWidth / 2 + se[0];
+			oe[1] = RenderState.clientHeight / 2 - se[1];
+			oe[2] = se[2];
 		}
 	
 	}

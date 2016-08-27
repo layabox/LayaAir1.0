@@ -1,4 +1,5 @@
 package laya.d3.core {
+	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector2;
@@ -13,6 +14,11 @@ package laya.d3.core {
 	public class Camera extends BaseCamera {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		private static var _tempVector2:Vector2 = new Vector2();
+		
+		/** @private */
+		private var _updateBoundingFrustum:Boolean;
+		/** @private */
+		private var _boundingFrustum:BoundFrustum;
 		
 		/** @private 横纵比。*/
 		private var _aspectRatio:Number;
@@ -145,6 +151,10 @@ package laya.d3.core {
 			return _projectionViewMatrix;
 		}
 		
+		public function get boundingFrustum():BoundFrustum {
+			return _boundingFrustum;
+		}
+		
 		/**
 		 * 创建一个 <code>Camera</code> 实例。
 		 * @param	viewport 视口。
@@ -154,6 +164,8 @@ package laya.d3.core {
 		 * @param	farPlane 远裁面。
 		 */
 		public function Camera(aspectRatio:Number = 0, nearPlane:Number = 0.1, farPlane:Number = 1000) {
+			_updateBoundingFrustum = false;
+			_boundingFrustum = new BoundFrustum(new Matrix4x4());
 			_viewMatrix = new Matrix4x4();
 			_projectionMatrix = new Matrix4x4();
 			_projectionViewMatrix = new Matrix4x4();

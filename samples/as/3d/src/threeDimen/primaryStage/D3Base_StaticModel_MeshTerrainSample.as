@@ -14,6 +14,7 @@ package threeDimen.primaryStage {
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
+	import laya.d3.math.Vector4;
 	import laya.d3.math.Viewport;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
@@ -38,9 +39,7 @@ package threeDimen.primaryStage {
 		private var pathFingding:PathFind;
 		
 		public function D3Base_StaticModel_MeshTerrainSample() {
-			//是否抗锯齿
-			//Config.isAntialias = true;
-			Laya3D.init(0, 0);
+			Laya3D.init(0, 0,true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
@@ -56,7 +55,7 @@ package threeDimen.primaryStage {
 			terrainSprite.transform.localScale = new Vector3(10, 10, 10);
 			terrainSprite.transform.position = new Vector3(0, 2.6, 1.5);
 			terrainSprite.transform.rotationEuler = new Vector3(0, 0.3, 0.4);
-			setMeshParams(terrainSprite, false, false, 3.5, new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
+			setMeshParams(terrainSprite, Material.RENDERMODE_OPAQUE, new Vector4(3.5,3.5,3.5,1.0), new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
 			
 			pathFingding = terrainSprite.addComponent(PathFind) as PathFind;
 			pathFingding.setting = {allowDiagonal: true, dontCrossCorners: false, heuristic: Heuristic.manhattan, weight: 1};
@@ -78,7 +77,7 @@ package threeDimen.primaryStage {
 			KeyBoardManager.hasKeyDown(83) && sphereSprite.transform.translate(back, false);//S
 			KeyBoardManager.hasKeyDown(65) && sphereSprite.transform.translate(left, false);//A
 			KeyBoardManager.hasKeyDown(68) && sphereSprite.transform.translate(right, false);//D
-			var position:Vector3 = sphereSprite.transform.position;
+			var position:Vector3 = sphereSprite.transform.position; 
 			var height:Number = terrainSprite.getHeight(position.x, position.z);
 			isNaN(height) && (height = 0);
 			
@@ -91,26 +90,23 @@ package threeDimen.primaryStage {
 			trace("start:", 0, 0, " end:", position.x, position.z, "path:", array.toString());
 		}
 		
-		private function setMeshParams(spirit3D:Sprite3D, doubleFace:Boolean, alpha:Boolean, luminance:Number, ambientColor:Vector3, uvScale:Vector2, shaderName:String = null, transparentMode:int = 0.0, isSky:Boolean = false):void {
+		private function setMeshParams(spirit3D:Sprite3D, renderMode:int, albedo:Vector4, ambientColor:Vector3, uvScale:Vector2, shaderName:String = null):void {
 			if (spirit3D is MeshSprite3D) {
 				var meshSprite:MeshSprite3D = spirit3D as MeshSprite3D;
-				var mesh:BaseMesh = meshSprite.mesh;
+				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
 				if (mesh != null) {
 					//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 					mesh.once(Event.LOADED, this, function(mesh:BaseMesh):void {
-						for (var i:int = 0; i < meshSprite.shadredMaterials.length; i++) {
-							var material:Material = meshSprite.shadredMaterials[i];
+						for (var i:int = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
+							var material:Material = meshSprite.meshRender.shadredMaterials[i];
 							material.once(Event.LOADED, null, function(mat:Material):void {
 								var transformUV:TransformUV = new TransformUV();
 								transformUV.tiling = uvScale;
 								(shaderName) && (mat.setShaderName(shaderName));
 								mat.transformUV = transformUV;
 								mat.ambientColor = ambientColor;
-								mat.luminance = luminance;
-								doubleFace && (mat.cullFace = false);
-								alpha && (mat.transparent = true);
-								isSky && (mat.isSky = true);
-								mat.transparentMode = transparentMode;
+								mat.albedo = albedo;
+								mat.renderMode = renderMode;
 							});
 							
 						}
@@ -118,7 +114,7 @@ package threeDimen.primaryStage {
 				}
 			}
 			for (var i:int = 0; i < spirit3D._childs.length; i++)
-				setMeshParams(spirit3D._childs[i], doubleFace, alpha, luminance, ambientColor, uvScale, shaderName, transparentMode, isSky);
+				setMeshParams(spirit3D._childs[i], renderMode, albedo, ambientColor, uvScale, shaderName);
 		}
 	}
 }

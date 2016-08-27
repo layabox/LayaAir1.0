@@ -200,7 +200,6 @@ package laya.display {
 		 * @inheritDoc
 		 */
 		override public function _getBoundPointsM(ifRotate:Boolean = false):Array {
-			// TODO Auto Generated method stub
 			var rec:Rectangle = Rectangle.TEMP;
 			rec.setTo(0, 0, width, height);
 			return rec._getBoundPoints();

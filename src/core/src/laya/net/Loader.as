@@ -217,8 +217,11 @@ package laya.net {
 							var split:String = _url.indexOf("/") >= 0 ? "/" : "\\";
 							var idx:int = _url.lastIndexOf(split);
 							var folderPath:String = idx >= 0 ? _url.substr(0, idx + 1) : "";
+							idx = _url.indexOf("?");
+							var ver:String;
+							ver = idx >= 0 ? _url.substr(idx) : "";
 							for (var i:int = 0, len:int = toloadPics.length; i < len; i++) {
-								toloadPics[i] = folderPath + toloadPics[i];
+								toloadPics[i] = folderPath + toloadPics[i] + ver;
 							}
 						} else {
 							//不带图片信息
@@ -298,7 +301,7 @@ package laya.net {
 				_loaders[_startIndex].endLoad();
 				_startIndex++;
 				if (Browser.now() - startTimer > maxTimeOut) {
-					trace("loader callback cost a long time:" + (Browser.now() - startTimer) + ")" + " url=" + _loaders[_startIndex - 1].url);
+					trace("loader callback cost a long time:" + (Browser.now() - startTimer) + " url=" + _loaders[_startIndex - 1].url);
 					Laya.timer.frameOnce(1, null, checkNext);
 					return;
 				}
@@ -315,7 +318,8 @@ package laya.net {
 		 */
 		public function endLoad(content:* = null):void {
 			content && (this._data = content);
-			/*[IF-FLASH]*/if(this._data.hasOwnProperty("atomicCompareAndSwapIntAt")) this._data = new ArrayBuffer( this._data );
+			/*[IF-FLASH]*/
+			if (this._data.hasOwnProperty("atomicCompareAndSwapIntAt")) this._data = new ArrayBuffer(this._data);
 			if (this._cache) loadedMap[this._url] = this._data;
 			event(Event.PROGRESS, 1);
 			event(Event.COMPLETE, data is Array ? [data] : data);
@@ -363,8 +367,8 @@ package laya.net {
 				var res:* = loadedMap[url];
 				if (res is Texture && res.bitmap) {
 					Texture(res).destroy();
+					delete loadedMap[url];
 				}
-				delete loadedMap[url];
 			}
 		}
 		

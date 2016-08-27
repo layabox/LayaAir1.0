@@ -115,7 +115,7 @@ package laya.utils {
 		/**
 		 * 开始清理状态，准备销毁
 		 */
-		public function startDispose():void {
+		public function startDispose(key:Boolean):void {
 			var str:*;
 			for (str in useDic) {
 				useDic[str] = false;

@@ -4,7 +4,7 @@ precision highp float;
 precision mediump float;
 #endif
 
-uniform float u_Luminance;
+uniform vec4 u_Albedo;
 uniform vec3 u_Ambient;
 
 #ifdef FOG
@@ -38,7 +38,8 @@ void main()
   texColor = mix(texColor, c1, blend.r);
   texColor = mix(texColor, c2, blend.g);
   texColor = mix(texColor, c3, blend.b);
-  gl_FragColor=vec4(texColor.rgb*u_Ambient.rgb*blend.a*u_Luminance,1.0);
+  gl_FragColor=vec4(texColor.rgb*u_Ambient.rgb*blend.a,1.0);
+  gl_FragColor=gl_FragColor*u_Albedo;
   #endif 
   
   #ifdef FOG

@@ -51,9 +51,7 @@ package threeDimen.primaryStage {
 		private var skin:String = "../../../../res/ui/button-1.png";
 		
 		public function D3Base_Camera_Ortho_2DMix3D_Sample() {
-			//是否抗锯齿
-			//Config.isAntialias = true;
-			Laya3D.init(0, 0);
+			Laya3D.init(0, 0,true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();

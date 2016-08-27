@@ -6,6 +6,7 @@ package threeDimen.primaryStage {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector3;
+	import laya.d3.math.Vector4;
 	import laya.d3.math.Viewport;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
@@ -26,9 +27,7 @@ package threeDimen.primaryStage {
 		private var camera:Camera;
 		
 		public function D3Base_StaticModel_MeshSkySample() {
-			//是否抗锯齿
-			//Config.isAntialias = true;
-			Laya3D.init(0, 0);
+			Laya3D.init(0, 0,true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
@@ -51,13 +50,13 @@ package threeDimen.primaryStage {
 			skySprite3D.loadHierarchy("../../../../res/threeDimen/staticModel/simpleScene/B00IT006M.v3f.lh");
 			skySprite3D.once(Event.HIERARCHY_LOADED, null, function(sprite:Sprite3D):void {
 				var meshSprite:MeshSprite3D = sprite.getChildAt(0) as MeshSprite3D;
-				var mesh:BaseMesh = meshSprite.mesh;
+				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
 				mesh.once(Event.LOADED, null, function(templet:BaseMesh):void {
-					for (var i:int = 0; i < meshSprite.shadredMaterials.length; i++) {
-						var material:Material = meshSprite.shadredMaterials[i];
+					for (var i:int = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
+						var material:Material = meshSprite.meshRender.shadredMaterials[i];
 						material.once(Event.LOADED, null, function(mat:Material):void {
-							mat.isSky = true;
-							mat.luminance = 3.5;
+							mat.albedo = new Vector4(3.5, 3.5, 3.5, 1.0);
+							mat.renderMode = Material.RENDERMODE_SKY;
 						});
 					}
 				});

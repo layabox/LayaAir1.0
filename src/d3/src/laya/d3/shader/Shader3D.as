@@ -53,7 +53,7 @@ package laya.d3.shader
 				'u_FogStart':Buffer2D.FOGSTART,
                 'u_FogRange':Buffer2D.FOGRANGE,
                 'u_FogColor':Buffer2D.FOGCOLOR,
-				'u_Luminance':Buffer2D.LUMINANCE,
+				'u_Albedo':Buffer2D.ALBEDO,
 				'u_AlphaTestValue':Buffer2D.ALPHATESTVALUE,
 				'u_UVMatrix':Buffer2D.MATRIX2,
 				'u_UVAge':Buffer2D.FLOAT0,
@@ -103,7 +103,7 @@ package laya.d3.shader
 				'u_LayerTexture2':Buffer2D.EMISSIVETEXTURE,
 				'u_LayerTexture3':Buffer2D.AMBIENTTEXTURE,
 				'u_MvpMatrix':Buffer2D.MVPMATRIX,
-				'u_Luminance':Buffer2D.LUMINANCE, 
+				'u_Albedo':Buffer2D.ALBEDO, 
 				'u_Ambient':Buffer2D.MATERIALAMBIENT,
 				'u_UVMatrix':Buffer2D.MATRIX2
 			};
@@ -173,7 +173,7 @@ package laya.d3.shader
 				'a_Time':Buffer2D.TIME, 
 			    'u_Texture':Buffer2D.DIFFUSETEXTURE,
 				'u_MvpMatrix':Buffer2D.MVPMATRIX,
-				'u_Luminance':Buffer2D.LUMINANCE,
+				'u_Albedo':Buffer2D.ALBEDO,
 				'u_CurrentTime':Buffer2D.CURRENTTIME,
                 'u_Color':Buffer2D.UNICOLOR ,
 				'u_Duration':Buffer2D.DURATION
@@ -198,7 +198,7 @@ package laya.d3.shader
 				'u_FogStart':Buffer2D.FOGSTART,
                 'u_FogRange':Buffer2D.FOGRANGE,
                 'u_FogColor':Buffer2D.FOGCOLOR,
-				'u_Luminance':Buffer2D.LUMINANCE,
+				'u_Albedo':Buffer2D.ALBEDO,
 				'u_UVAge':Buffer2D.FLOAT0,
 				'u_UVAniAge':Buffer2D.UVAGEX
 			};

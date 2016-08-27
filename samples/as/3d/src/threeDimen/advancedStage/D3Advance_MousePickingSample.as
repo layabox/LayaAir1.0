@@ -17,7 +17,8 @@ package threeDimen.advancedStage {
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
 			Laya.stage.addChild(new MousePickingScene());
+		
+		}
 	
 	}
-
 }

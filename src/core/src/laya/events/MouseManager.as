@@ -1,11 +1,12 @@
 package laya.events {
+	import laya.display.Input;
 	import laya.display.Sprite;
 	import laya.display.Stage;
 	import laya.maths.Matrix;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
 	import laya.utils.Browser;
-	import laya.display.Input;
+	import laya.utils.HitArea;
 	
 	/**
 	 * <code>MouseManager</code> 是鼠标、触摸交互管理器。
@@ -27,6 +28,7 @@ package laya.events {
 		/** 鼠标按下的时间。单位为毫秒。*/
 		public var mouseDownTime:Number = 0;
 		/** @private */
+		private static var _isTouchRespond:Boolean;
 		public var _event:Event = new Event();
 		private var _stage:Stage;
 		private var _matrix:Matrix = new Matrix();
@@ -56,7 +58,7 @@ package laya.events {
 			}
 			canvas.addEventListener('mousedown', function(e:*):void {
 				if (enabled) {
-					if(!Input.IOS_QQ_IFRAME) e.preventDefault();
+					e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = Browser.now();
 				}
@@ -85,14 +87,14 @@ package laya.events {
 			})
 			canvas.addEventListener("touchstart", function(e:*):void {
 				if (enabled) {
-					if(!Input.IOS_QQ_IFRAME) e.preventDefault();
+					if(!Input.IOS_IFRAME) e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = Browser.now();
 				}
 			});
 			canvas.addEventListener("touchend", function(e:*):void {
 				if (enabled) {
-					if(!Input.IOS_QQ_IFRAME) e.preventDefault();
+					if(!Input.IOS_IFRAME) e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = -Browser.now();
 				}
@@ -274,6 +276,10 @@ package laya.events {
 		
 		private function hitTest(sp:Sprite, mouseX:Number, mouseY:Number):Boolean {
 			var isHit:Boolean = false;
+			if (sp.hitArea is HitArea)
+			{
+				return sp.hitArea.isHit(mouseX, mouseY);
+			}
 			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough || sp.hitArea) {
 				//判断是否在矩形区域内
 				var hitRect:Rectangle = this._rect;
@@ -302,18 +308,23 @@ package laya.events {
 				var evt:* = _eventList[i];
 				switch (evt.type) {
 				case 'mousedown': 
-					_this._isLeftMouse = evt.button === 0;
-					_this.initEvent(evt);
-					_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseDown);
+					if (!_isTouchRespond)
+					{
+						_this._isLeftMouse = evt.button === 0;
+						_this.initEvent(evt);
+						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseDown);
+					}
+					else
+						_isTouchRespond = false;
 					break;
 				case 'mouseup': 
-					_this._isLeftMouse = evt.button === 0;
-					var now:Number = Browser.now();
-					_this._isDoubleClick = (now - _this._lastClickTimer) < 300;
-					_this._lastClickTimer = now;
-					
-					_this.initEvent(evt);
-					_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseUp);
+						_this._isLeftMouse = evt.button === 0;
+						var now:Number = Browser.now();
+						_this._isDoubleClick = (now - _this._lastClickTimer) < 300;
+						_this._lastClickTimer = now;
+						
+						_this.initEvent(evt);
+						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseUp);
 					break;
 				case 'mousemove': 
 					_this.initEvent(evt);
@@ -321,6 +332,7 @@ package laya.events {
 					_this.checkMouseOut();
 					break;
 				case "touchstart": 
+					_isTouchRespond = true;
 					_this._isLeftMouse = true;
 					var touches:Array = evt.changedTouches;
 					for (var j:int = 0, n:int = touches.length; j < n; j++) {
@@ -329,6 +341,7 @@ package laya.events {
 					}
 					break;
 				case "touchend": 
+					_isTouchRespond = true;
 					_this._isLeftMouse = true;
 					now = Browser.now();
 					_this._isDoubleClick = (now - _this._lastClickTimer) < 300;

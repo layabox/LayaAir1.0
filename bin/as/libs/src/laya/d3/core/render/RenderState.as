@@ -2,6 +2,7 @@ package laya.d3.core.render {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.scene.BaseScene;
+	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Viewport;
 	import laya.d3.shader.ShaderDefines3D;
@@ -48,10 +49,10 @@ package laya.d3.core.render {
 		public var projectionMatrix:Matrix4x4;
 		/**当前投影视图矩阵。*/
 		public var projectionViewMatrix:Matrix4x4;
+	
+		public var cameraBoundingFrustum:BoundFrustum;
 		/**当前视口。*/
 		public var viewport:Viewport;
-		/**当前矩阵世界变换ID。*/
-		public var worldTransformModifyID:Number;
 		/**当前世界ShaderValue。*/
 		public var worldShaderValue:ValusArray = new ValusArray;
 		/**当前ShaderValue。*/

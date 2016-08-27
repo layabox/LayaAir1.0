@@ -4,7 +4,7 @@ precision highp float;
 precision mediump float;
 #endif
 
-uniform float u_Luminance;
+uniform vec4 u_Albedo;
 
 #ifdef ALPHATEST
 uniform float u_AlphaTestValue;
@@ -86,7 +86,7 @@ void main()
  gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_Texcoord1).rgb);
  #endif 
  
- gl_FragColor.rgb=gl_FragColor.rgb*u_Luminance;
+ gl_FragColor=gl_FragColor*u_Albedo;
   
  #ifdef ALPHATEST
    if(gl_FragColor.a-u_AlphaTestValue<0.0)

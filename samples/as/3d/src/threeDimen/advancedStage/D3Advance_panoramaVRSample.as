@@ -51,8 +51,8 @@ package threeDimen.advancedStage {
 			var mesh:MeshSprite3D = scene.addChild(new MeshSprite3D(new Sphere(1, 20, 20))) as MeshSprite3D;
 			
 			var material:Material = new Material();
-			material.cullFace = false;
-			mesh.shadredMaterial = material;
+			material.renderMode =Material.RENDERMODE_OPAQUEDOUBLEFACE;
+			mesh.meshRender.shadredMaterial = material;
 			
 			Laya.loader.load("../../../../res/threeDimen/panorama/panorama.jpg", Handler.create(null, function(texture:Texture):void {
 				(texture.bitmap as WebGLImage).mipmap = true;

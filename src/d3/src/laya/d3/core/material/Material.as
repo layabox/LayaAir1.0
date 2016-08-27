@@ -8,9 +8,14 @@ package laya.d3.core.material {
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
+	import laya.net.Loader;
+	import laya.net.URL;
 	import laya.resource.Texture;
+	import laya.utils.ClassUtils;
+	import laya.utils.Handler;
 	import laya.utils.Stat;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer2D;
@@ -56,16 +61,56 @@ package laya.d3.core.material {
 		/** @private */
 		private static const TRANSPARENT:int = 4;
 		/** @private */
-		private static const LUMINANCE:int = 5;
+		private static const ALBEDO:int = 5;
 		/** @private */
 		private static const TRANSFORMUV:int = 6;
 		/** @private */
 		private static const ALPHATESTVALUE:int = 7;
 		
+		/**渲染状态_天空。*/
+		public static const RENDERMODE_SKY:int = 0;
+		/**渲染状态_不透明。*/
+		public static const RENDERMODE_OPAQUE:int = 1;
+		/**渲染状态_不透明_双面。*/
+		public static const RENDERMODE_OPAQUEDOUBLEFACE:int = 2;
+		/**渲染状态_透明测试。*/
+		public static const RENDERMODE_CUTOUT:int = 3;
+		/**渲染状态_透明测试_双面。*/
+		public static const RENDERMODE_CUTOUTDOUBLEFACE:int = 4;
+		/**渲染状态_透明混合。*/
+		public static const RENDERMODE_TRANSPARENT:int = 5;
+		/**渲染状态_透明混合_双面。*/
+		public static const RENDERMODE_TRANSPARENTDOUBLEFACE:int = 6;
+		/**渲染状态_加色法混合。*/
+		public static const RENDERMODE_ADDTIVE:int = 7;
+		/**渲染状态_加色法混合_双面。*/
+		public static const RENDERMODE_ADDTIVEDOUBLEFACE:int = 8;
+		
+		public static function createFromFile(url:String, out:Material):void {
+			out._loaded = false;
+			var loader:Loader = new Loader();
+			var onComp:Function = function(data:String):void {
+				var preBasePath:String = URL.basePath;
+				
+				URL.basePath = URL.getPath(URL.formatURL(url));
+				ClassUtils.createByJson(data, out, null, Handler.create(null, Utils3D._parseMaterial, null, false));
+				
+				URL.basePath = preBasePath;
+				out._eventLoaded();
+			
+			}
+			loader.once(Event.COMPLETE, null, onComp);
+			loader.load(url, Loader.JSON);
+		}
+		
 		/**材质唯一标识id。*/
 		private var _id:int;
+		/**是否已加载完成*/
+		private var _loaded:Boolean = true;
 		/**所属渲染队列。*/
 		private var _renderQueue:int;
+		/**渲染模式。*/
+		private var _renderMode:int;
 		/** @private */
 		protected var _textures:Vector.<Texture> = new Vector.<Texture>();
 		/** @private */
@@ -96,30 +141,17 @@ package laya.d3.core.material {
 		protected var _color:Array = [];
 		
 		/** @private */
-		protected var _transparent:Boolean = false;
+		protected var _alphaTestValue:Number;
 		/** @private */
-		protected var _transparentMode:int = 0;//0为AlphaTest,1为AlphaBlend,2为AlphaToCoverage
-		/** @private */
-		protected var _alphaTestValue:Number = 0.5;
-		/** @private */
-		protected var _cullFace:Boolean = true;
-		/** @private */
-		protected var _transparentAddtive:Boolean = false;//只适用于1为AlphaBlend模式
-		
-		/** @private */
-		protected var _luminance:Number = 1.0;
+		protected var _albedo:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);
 		/** @private */
 		protected var _transformUV:TransformUV = null;
 		/** @private */
 		protected var _shaderDef:int = 0;
 		/** @private */
-		protected var _isSky:Boolean = false;
-		
+		public var _isInstance:Boolean = false;
 		/**材质名字。*/
 		public var name:String;
-		
-		/**是否已加载完成*/
-		public var loaded:Boolean = false;
 		
 		/**
 		 * 获取唯一标识ID(通常用于优化或识别)。
@@ -127,6 +159,14 @@ package laya.d3.core.material {
 		 */
 		public function get id():int {
 			return _id;
+		}
+		
+		/**
+		 * 获取是否已加载完成。
+		 * @return 是否已加载完成
+		 */
+		public function get loaded():Boolean {
+			return _loaded;
 		}
 		
 		/**
@@ -138,53 +178,70 @@ package laya.d3.core.material {
 		}
 		
 		/**
+		 * 获取渲染状态。
+		 * @return 渲染状态。
+		 */
+		public function get renderMode():int {
+			return _renderMode;
+		}
+		
+		/**
+		 * 设置渲染模式。
+		 * @return 渲染模式。
+		 */
+		public function set renderMode(value:int):void {
+			_renderMode = value;
+			
+			switch (value) {
+			case RENDERMODE_SKY: 
+				_renderQueue = RenderQueue.NONEWRITEDEPTH;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_OPAQUE: 
+				_renderQueue = RenderQueue.OPAQUE;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_OPAQUEDOUBLEFACE: 
+				_renderQueue = RenderQueue.OPAQUE_DOUBLEFACE;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_CUTOUT: 
+				_renderQueue = RenderQueue.OPAQUE;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_CUTOUTDOUBLEFACE: 
+				_renderQueue = RenderQueue.OPAQUE_DOUBLEFACE;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_TRANSPARENT: 
+				_renderQueue = RenderQueue.DEPTHREAD_ALPHA_BLEND;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_TRANSPARENTDOUBLEFACE: 
+				_renderQueue = RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_ADDTIVE: 
+				_renderQueue = RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_ADDTIVEDOUBLEFACE: 
+				_renderQueue = RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			default: 
+				throw new Error("Material:renderMode value error.");
+				break;
+			}
+			_getShaderDefineValue();
+		}
+		
+		/**
 		 * 获取材质的ShaderDef。
 		 * @return 材质的ShaderDef。
 		 */
 		public function get shaderDef():int {
 			return _shaderDef;
-		}
-		
-		/**
-		 * 获取是否透明。
-		 * @return 是否透明。
-		 */
-		public function get transparent():Boolean {
-			return _transparent;
-		}
-		
-		/**
-		 * 设置是否透明。
-		 * @param value 是否透明。
-		 */
-		public function set transparent(value:Boolean):void {
-			if (_transparent !== value) {
-				_transparent = value;
-				alphaTestValue = _alphaTestValue;
-				_getShaderDefineValue();
-				_getRenderQueue();
-			}
-		}
-		
-		/**
-		 * 获取透明模式。
-		 * @return 透明模式。
-		 */
-		public function get transparentMode():int {
-			return _transparentMode;
-		}
-		
-		/**
-		 * 设置透明模式。
-		 * @param value 透明模式。
-		 */
-		public function set transparentMode(value:int):void {
-			if (_transparentMode !== value) {
-				_transparentMode = value;
-				alphaTestValue = _alphaTestValue;
-				_getShaderDefineValue();
-				_getRenderQueue();
-			}
 		}
 		
 		/**
@@ -201,64 +258,7 @@ package laya.d3.core.material {
 		 */
 		public function set alphaTestValue(value:Number):void {
 			_alphaTestValue = value;
-			_pushShaderValue(ALPHATESTVALUE, Buffer2D.ALPHATESTVALUE, _transparent && _transparentMode === 0 ? _alphaTestValue : null, _id);
-		}
-		
-		/**
-		 * 获取是否单面渲染。
-		 *@return 是否单面渲染。
-		 */
-		public function get cullFace():Boolean {
-			return _cullFace;
-		}
-		
-		/**
-		 * 设置是否单面渲染。
-		 *@param 是否单面渲染。
-		 */
-		public function set cullFace(value:Boolean):void {
-			if (_cullFace !== value) {
-				_cullFace = value;
-				_getRenderQueue();
-			}
-		}
-		
-		/**
-		 * 获取AlphaBlend模式下是否使用加色法。
-		 * @return AlphaBlend模式下是否使用加色法
-		 */
-		public function get transparentAddtive():Boolean {
-			return _transparentAddtive;
-		}
-		
-		/**
-		 * 设置AlphaBlend模式下是否使用加色法。
-		 * @param AlphaBlend模式下是否使用加色法
-		 */
-		public function set transparentAddtive(value:Boolean):void {
-			if (_transparentAddtive !== value) {
-				_transparentAddtive = value;
-				_getRenderQueue();
-			}
-		}
-		
-		/**
-		 * 获取是否天空。
-		 * @return 是否天空
-		 */
-		public function get isSky():Boolean {
-			return _isSky;
-		}
-		
-		/**
-		 * 设置是否天空。
-		 * @param 是否天空
-		 */
-		public function set isSky(value:Boolean):void {
-			if (_isSky !== value) {
-				_isSky = value;
-				_getRenderQueue();
-			}
+			_pushShaderValue(ALPHATESTVALUE, Buffer2D.ALPHATESTVALUE, value, _id);
 		}
 		
 		/**
@@ -408,12 +408,12 @@ package laya.d3.core.material {
 		}
 		
 		/**
-		 * 设置亮度。
-		 * @param value 亮度。
+		 * 设置反射率。
+		 * @param value 反射率。
 		 */
-		public function set luminance(value:Number):void {
-			_luminance = value;
-			_pushShaderValue(LUMINANCE, Buffer2D.LUMINANCE, _luminance, _id);
+		public function set albedo(value:Vector4):void {
+			_albedo = value;
+			_pushShaderValue(ALBEDO, Buffer2D.ALBEDO, _albedo.elements, _id);
 		}
 		
 		/**
@@ -452,24 +452,18 @@ package laya.d3.core.material {
 			_pushShaderValue(DIFFUSECOLOR, Buffer2D.MATERIALDIFFUSE, _color[DIFFUSECOLOR].elements, _id);
 			_pushShaderValue(SPECULARCOLOR, Buffer2D.MATERIALSPECULAR, _color[SPECULARCOLOR].elements, _id);
 			_pushShaderValue(REFLECTCOLOR, Buffer2D.MATERIALREFLECT, _color[REFLECTCOLOR].elements, _id);
-			_pushShaderValue(LUMINANCE, Buffer2D.LUMINANCE, _luminance, _id);
+			_pushShaderValue(ALBEDO, Buffer2D.ALBEDO, _albedo.elements, _id);
 			
-			_getRenderQueue();
+			renderMode = RENDERMODE_OPAQUE;
+			alphaTestValue = 0.5;
 		}
 		
-		private function _getRenderQueue():void {
-			if (_isSky) {//待考虑
-				_renderQueue = RenderQueue.NONEWRITEDEPTH;
-			} else {
-				if (!_transparent || (_transparent && _transparentMode === 0))
-					_renderQueue = _cullFace ? RenderQueue.OPAQUE : RenderQueue.OPAQUE_DOUBLEFACE;
-				else if (_transparent && _transparentMode === 1) {
-					if (_transparentAddtive)
-						_renderQueue = _cullFace ? RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND : RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE;
-					else
-						_renderQueue = _cullFace ? RenderQueue.DEPTHREAD_ALPHA_BLEND : RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE;
-				}
-			}
+		/**
+		 * @private
+		 */
+		private function _eventLoaded():void {
+			_loaded = true;
+			event(Event.LOADED, this);
 		}
 		
 		/**
@@ -545,7 +539,7 @@ package laya.d3.core.material {
 			reflectTexture && (_shaderDef |= ShaderDefines3D.REFLECTMAP);
 			
 			_transformUV && (_shaderDef |= ShaderDefines3D.UVTRANSFORM);
-			(_transparent && _transparentMode === 0) && (_shaderDef |= ShaderDefines3D.ALPHATEST);
+			(_renderMode === RENDERMODE_CUTOUT || _renderMode === RENDERMODE_CUTOUTDOUBLEFACE) && (_shaderDef |= ShaderDefines3D.ALPHATEST);
 			
 			return _shaderDef;
 		}
@@ -651,31 +645,30 @@ package laya.d3.core.material {
 			_sharderNameID = Shader.nameKey.get(name);
 		}
 		
+		
+		
 		/**
 		 * 复制材质
 		 * @param dec 目标材质
 		 */
 		public function copy(dec:Material):Material {
+			dec._loaded = _loaded;
 			dec._renderQueue = _renderQueue;
-			dec._sharderNameID = _sharderNameID;
-			dec._shader = _shader;
-			dec._texturesloaded = _texturesloaded;
+			dec._renderMode = _renderMode;
 			dec._textures = _textures;
 			dec._texturesSharderIndex = _texturesSharderIndex;
 			dec._otherSharderIndex = _otherSharderIndex;
+			dec._texturesloaded = _texturesloaded;
+			dec._shader = _shader;
+			dec._sharderNameID = _sharderNameID;
 			dec._disableDefine = _disableDefine;
 			dec._color = _color;
-			dec._transparent = _transparent;
-			dec._transparentMode = _transparentMode;
 			dec._alphaTestValue = _alphaTestValue;
-			dec.transparentAddtive = transparentAddtive;
-			dec.cullFace = cullFace;
+			
 			dec._transformUV = _transformUV;
-			dec._luminance = _luminance;
+			dec._albedo = _albedo;
 			dec._shaderDef = _shaderDef;
-			dec._isSky = _isSky;
 			dec.name = name;
-			dec.loaded = loaded;
 			
 			_shaderValues.copyTo(dec._shaderValues);
 			return dec;

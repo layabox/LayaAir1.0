@@ -48,7 +48,7 @@ package laya.d3.component {
 		public override function _update(state:RenderState):void {
 			var player:AnimationPlayer = _attachSkeleton.player;
 			var skeletonTemplet:KeyframesAniTemplet = _attachSkeleton._templet;
-			if (!_attachSkeleton || player.State !== AnimationState.playing || !skeletonTemplet || !skeletonTemplet.loaded)
+			if (!_attachSkeleton || player.state !== AnimationState.playing || !skeletonTemplet || !skeletonTemplet.loaded)
 				return;
 			
 			matrixs.length = attachBones.length;

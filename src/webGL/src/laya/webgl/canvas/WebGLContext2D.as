@@ -987,9 +987,9 @@ package laya.webgl.canvas {
 					}
 				}
 			}
-			if (r < 100) {
+			if (r < 101) {
 				ndivs = Math.max(10, da * r / 5);
-			} else if (r < 200) {
+			} else if (r < 201) {
 				ndivs = Math.max(10, da * r / 20);
 			} else {
 				ndivs = Math.max(10, da * r / 40);

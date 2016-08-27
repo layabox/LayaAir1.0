@@ -71,7 +71,7 @@ package laya.utils {
 		/**
 		 * 开始函数。
 		 */
-		public static var benginFlush:Function = function():void {
+		public static var beginFlush:Function = function():void {
 		};
 		
 		public static var endFinish:Function = function():void {
@@ -151,6 +151,21 @@ package laya.utils {
 		/** @private */
 		public static var addTextureToAtlas:Function = function(value:Texture):void {
 		};
+		
+		/** @private */
+		public static var getTexturePixels:Function = function(value:Texture, x:Number, y:Number, width:Number, height:Number):Array {
+			return null;
+		};
+		
+		/** @private */
+		public static var fillTextureShader:Function = function(value:Texture, x:Number, y:Number, width:Number, height:Number):* {
+			return null;
+		}
+		
+		/** @private */
+		public static var skinAniSprite:Function = function():*{
+			return null;
+		}
 	
 	}
 

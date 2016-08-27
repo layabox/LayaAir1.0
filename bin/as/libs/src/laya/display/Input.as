@@ -215,7 +215,7 @@ package laya.display
 		private var _content:String = '';
 		
 		/**@private */
-		public static const IOS_QQ_IFRAME:Boolean = (Browser.onQQBrowser && Browser.onIOS && Browser.window.top != Browser.window.self);
+		public static const IOS_IFRAME:Boolean = (Browser.onIOS && Browser.window.top != Browser.window.self);
 		private static const inputHeight:int = 45;
 		
 		/**表示是否处于输入状态。*/
@@ -238,11 +238,10 @@ package laya.display
 		public static function __init__():void
 		{
 			_createInputElement();
-			
 			// 移动端通过画布的touchend调用focus
 			if (Browser.onMobile)
 			{
-				Render.canvas.addEventListener(IOS_QQ_IFRAME ? "click" : "touchend", _popupInputMethod);
+				Render.canvas.addEventListener(IOS_IFRAME ? "click" : "touchend", _popupInputMethod);
 			}
 		}
 		
@@ -250,19 +249,16 @@ package laya.display
 		private static function _popupInputMethod():void
 		{
 			if (!Input.isInputting) return;
-			
 			var input:* = Input.inputElement;
 			
 			// 设置光标位置至末尾。
 			input.selectionStart = input.selectionEnd = input.value.length;
 			// 弹出输入法。
 			input.focus();
-			
-			// 安卓微信（不适用QQ内核）输入框会被输入法挡住，将其移至上方
-			if (Browser.onAndriod && Browser.onWeiXin && !Browser.onMQQBrowser)
+			Laya.timer.once(300, null, function():void
 			{
-				Input.inputContainer.style.top = '40px';
-			}
+				input.scrollIntoView();
+			});
 		}
 		
 		/**@private */
@@ -272,36 +268,10 @@ package laya.display
 			_initInput(input = Browser.createElement("input"));
 			
 			inputContainer = Browser.createElement("div");
+			inputContainer.style.position = "absolute";
 			inputContainer.appendChild(input);
 			inputContainer.appendChild(area);
 			//[IF-SCRIPT] inputContainer.setPos = function(x:int, y:int):void { inputContainer.style.left = x + 'px'; inputContainer.style.top = y + 'px'; };
-			
-			if (Browser.onMobile)
-			{
-				var style:* = inputContainer.style;
-				style.position = 'fixed';
-				style.bottom = '0px';
-				style.boxSizing = 'border-box';
-				style.border = "1px solid gray";
-				style.backgroundColor = "white";
-				
-				// 确定按钮
-				confirmButton = Browser.createElement("button");
-				inputContainer.appendChild(confirmButton);
-				confirmButton.innerText = "确定";
-				style = confirmButton.style;
-				style.float = 'right';
-				style.width = '50px';
-				style.top = '1px';
-				style.height = inputHeight - 2 + 'px';
-				style.border = 'none';
-				style.background = "rgb(221,221,221)";
-				confirmButton.onclick = function():void{ Input.inputElement.target.focus = false; }
-			}
-			else
-			{
-				inputContainer.style.position = "absolute";
-			}
 		}
 		
 		/**
@@ -316,24 +286,14 @@ package laya.display
 			style.backgroundColor = 'transparent';
 			style.border = 'none';
 			style.outline = 'none';
-
-			if (Browser.onMobile)
-			{
-				style.paddingLeft = '5px';
-				style.lineHeight = '29px';
-				style.fontFamily = 'Arial,Helvetica,sans-serif';
-				style.fontSize = '20px';
-				style.background = 'transparent';
-				style.border = 'none';
-			}
 			
 			input.addEventListener('input', _processInputting);
-			
-			//input.addEventListener('mousemove', _stopEvent);
-			//input.addEventListener('mousedown', _stopEvent);
-			//input.addEventListener('touchmove', _stopEvent);
 		
-			/*[IF-SCRIPT-BEGIN]
+			input.addEventListener('mousemove', _stopEvent);
+			input.addEventListener('mousedown', _stopEvent);
+			input.addEventListener('touchmove', _stopEvent);
+		
+		/*[IF-SCRIPT-BEGIN]
 		   if(!Render.isConchApp)
 		   {
 		   input.setColor = function(color:String):void { input.style.color = color; };
@@ -347,27 +307,28 @@ package laya.display
 		private static function _processInputting(e:*):void
 		{
 			var input:* = Input.inputElement.target;
-				
+			
 			var value:String = Input.inputElement.value;
 			
 			// 对输入字符进行限制
 			if (input._restrictPattern)
 			{
 				value = value.replace(input._restrictPattern, "");
+				
+				var prevIndex:int = laya.display.Input.inputElement.selectionStart;
 				Input.inputElement.value = value;
+				Input.inputElement.selectionStart = Input.inputElement.selectionEnd = prevIndex;
 			}
 			
-			if(Browser.onPC)
-				input._text = value;
-			else
-				input.__super.prototype._$set_text.call(input, value);
-				
+			input._text = value;
 			input.event(Event.INPUT);
 		}
 		
 		/**@private */
 		private static function _stopEvent(e:*):void
 		{
+			if(e.type == 'touchmove')
+				e.preventDefault();
 			e.stopPropagation && e.stopPropagation();
 		}
 		
@@ -431,8 +392,8 @@ package laya.display
 			rec = Utils.getGlobalPosAndScale(this);
 			
 			var a:Number = stage._canvasTransform.a, d:Number = stage._canvasTransform.d;
-			var x:Number = (rec.x + padding[3] + inputElementXAdjuster) * stage.clientScaleX * a + stage.offset.x;
-			var y:Number = (rec.y + padding[0] + inputElementYAdjuster) * stage.clientScaleY * d + stage.offset.y;
+			var x:Number = (rec.x + padding[3] + inputElementXAdjuster) * stage.clientScaleX * a + Math.max(0, stage.offset.x);
+			var y:Number = (rec.y + padding[0] + inputElementYAdjuster) * stage.clientScaleY * d + Math.max(0, stage.offset.y);
 			inputContainer.setPos(x, y);
 			
 			var inputWid:int = _width - padding[1] - padding[3];
@@ -537,7 +498,8 @@ package laya.display
 		private function _focusIn():void
 		{
 			var input:* = nativeInput;
-			/*[IF-FLASH]*/ input.setRestrict(_restrictPattern);
+			/*[IF-FLASH]*/
+			input.setRestrict(_restrictPattern);
 			
 			this._focus = true;
 			
@@ -559,40 +521,32 @@ package laya.display
 			Laya.stage.focus = this;
 			event(Event.FOCUS);
 			
-			if (Browser.onPC)
+			// PC端直接调用focus进入焦点。
+			if (Browser.onPC) input.focus();
+			
+			// PC浏览器隐藏文字
+			var temp:String = _text;
+			this._text = null;
+			typeset();
+			
+			// PC同步输入框外观。
+			input.setColor(_originColor);
+			input.setFontSize(fontSize);
+			input.setFontFace(font);
+			if (Render.isConchApp)
 			{
-				// PC端直接调用focus进入焦点。
-				input.focus();
-				
-				// PC浏览器隐藏文字
-				var temp:String = _text;
-				this._text = null;
-				typeset();
-				
-				// PC同步输入框外观。
-				input.setColor(_originColor);
-				input.setFontSize(fontSize);
-				input.setFontFace(font);
-				if (Render.isConchApp)
-				{
-					input.setMultiAble&&input.setMultiAble(_multiline);
-				}
-				cssStyle.lineHeight = (leading + fontSize) + "px";
-				cssStyle.fontStyle = (italic ? "italic" : "normal");
-				cssStyle.fontWeight = (bold ? "bold" : "normal");
-				cssStyle.textAlign = align;
-				
-				// 输入框重定位。
-				_syncInputTransform();
-				if (!Render.isConchApp)
-					Laya.timer.frameLoop(1, this, _syncInputTransform);
+				input.setMultiAble && input.setMultiAble(_multiline);
 			}
-			else
-			{
-				cssStyle.height = inputContainer.style.height = inputHeight + "px";
-				cssStyle.width = Browser.window.innerWidth - confirmButton.offsetWidth - /*padding*/10+ 'px';
-				inputContainer.style.width = Browser.window.innerWidth + 'px';
-			}
+			cssStyle.lineHeight = (leading + fontSize) + "px";
+			cssStyle.fontStyle = (italic ? "italic" : "normal");
+			cssStyle.fontWeight = (bold ? "bold" : "normal");
+			cssStyle.textAlign = align;
+			cssStyle.padding = "0 0";
+			
+			// 输入框重定位。
+			_syncInputTransform();
+			if (!Render.isConchApp && Browser.onPC)
+				Laya.timer.frameLoop(1, this, _syncInputTransform);
 		}
 		
 		// 设置DOM输入框提示符颜色。
@@ -645,7 +599,7 @@ package laya.display
 				// 移动平台单行输入状态下点击回车收回输入法。 
 				if (Browser.onMobile && !this._multiline)
 					this.focus = false;
-					
+				
 				event(Event.ENTER);
 			}
 		}
@@ -670,7 +624,13 @@ package laya.display
 				
 				_content = value;
 				
-				super.text = value || _prompt;
+				if(value)
+					super.text = value;
+				else
+				{
+					super.text = _prompt;
+					super.color = promptColor;
+				}
 			}
 		}
 		
@@ -770,7 +730,12 @@ package laya.display
 				super.color = _promptColor;
 			
 			this.promptColor = _promptColor;
-			super.text = _text || value;
+			
+			if(_text)
+				super.text = (_text == _prompt) ? value : _text;
+			else
+				super.text = value;
+			
 			_prompt = value;
 		}
 		

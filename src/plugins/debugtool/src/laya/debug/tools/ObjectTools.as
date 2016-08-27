@@ -239,6 +239,18 @@ package laya.debug.tools
 			}
 			return rst;
 		}
+		public static function getObjValues(dataList:Array,key:String):Array
+		{
+			var rst:Array;
+			var i:int,len:int;
+			len=dataList.length;
+			rst=[];
+			for(i=0;i<len;i++)
+			{
+				rst.push(dataList[i][key]);
+			}
+			return rst;
+		}
 		public static function hasKeys(obj:Object,keys:Array):Boolean
 		{
 			var i:int,len:int;

@@ -57,6 +57,8 @@ package laya.ani.swf {
 		protected var _count:int;
 		/**@private id_data起始位置表*/
 		public var _ids:Object;
+		/**@private */
+		protected var _loadedImage:Object = { };
 		/**@private id_实例表*/
 		public var _idOfSprite:Array;
 		/**@private 父mc*/
@@ -67,6 +69,7 @@ package laya.ani.swf {
 		protected var _labels:Object;
 		/**资源根目录。*/
 		public var basePath:String;
+		
 		/** 播放间隔(单位：毫秒)。*/
 		public var interval:int = 30;
 		/**是否循环播放 */
@@ -92,7 +95,10 @@ package laya.ani.swf {
 			}
 		}
 		
-		/** @inheritDoc */
+		/**
+		 * <p>销毁此对象。以及销毁引用的Texture</p>
+		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
+		 */
 		override public function destroy(destroyChild:Boolean = true):void {
 			_clear();
 			super.destroy(destroyChild);
@@ -215,10 +221,19 @@ package laya.ani.swf {
 				len = _movieClipList.length;
 				for (i = 0; i < len; i++) {
 					if (_movieClipList[i] != this)
-						_movieClipList[i].clear();
+						_movieClipList[i]._clear();
 				}
 				_movieClipList.length = 0;
-			}		
+			}	
+			var key:String;
+			for (key in _loadedImage)
+			{
+				if (_loadedImage[key])
+				{
+					Loader.clearRes(key);
+					_loadedImage[key] = false;
+				}
+			}
 			removeChildren();
 			graphics = null;
 			_parentMovieClip = null;
@@ -284,6 +299,7 @@ package laya.ani.swf {
 							
 							var spp:Sprite = new Sprite();
 							spp.loadImage(basePath + pid + ".png");
+							_loadedImage[basePath + pid + ".png"] = true;
 							sp.addChild(spp);
 							spp.size(_data.getFloat32(), _data.getFloat32());
 							var mat:Matrix = _data._getMatrix();
@@ -394,7 +410,8 @@ package laya.ani.swf {
 		}
 		
 		/**@private */
-		private function _onLoaded(data:*=null):void {
+		private function _onLoaded(data:*= null):void {
+			if (!data) return;
 			_initData(data);
 		}
 		

@@ -506,7 +506,7 @@ package laya.display {
 			if (Render.isConchNode) return;
 			if (renderingEnabled && (isFastMode || !isDoubleLoop)) {
 				Render.isWebGL && RunDriver.clear(_bgColor);
-				RunDriver.benginFlush();
+				RunDriver.beginFlush();
 				context.flush();
 				RunDriver.endFinish();
 			}

@@ -49,9 +49,7 @@ package threeDimen.primaryStage {
 			currentShadingMode = BaseScene.PIXEL_SHADING;
 			currentLightState = 0;
 			
-			//是否抗锯齿
-			//Config.isAntialias = true;
-			Laya3D.init(0, 0);
+			Laya3D.init(0, 0,true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
@@ -98,10 +96,10 @@ package threeDimen.primaryStage {
 			 //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 			grid.on(Event.HIERARCHY_LOADED, null, function(sprite:Sprite3D):void {
 				var meshSprite:MeshSprite3D = sprite.getChildAt(0) as MeshSprite3D;
-				var mesh:BaseMesh = meshSprite.mesh;
+				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
 				mesh.once(Event.LOADED, null, function(templet:BaseMesh):void {
-					for (var i:int = 0; i < meshSprite.shadredMaterials.length; i++) {
-						var material:Material = meshSprite.shadredMaterials[i];
+					for (var i:int = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
+						var material:Material = meshSprite.meshRender.shadredMaterials[i];
 						material.once(Event.LOADED, null, function():void {
 							material.diffuseColor = new Vector3(0.7, 0.7, 0.7);
 							material.specularColor = new Vector4(0.2, 0.2, 0.2, 32);

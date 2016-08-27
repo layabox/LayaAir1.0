@@ -60,6 +60,22 @@ package laya.renders {
 				var texture:Texture = args[0];
 				var ctxi:* = this.ctx;
 				var pat:*;
+				if (Render.isWebGL)
+				{
+					var tSprite:* = args[7];
+					if (tSprite)
+					{
+						if (args[6])
+						{
+							tSprite.initTexture(texture, args[1], args[2], args[3], args[4], args[6].x, args[6].y);
+						}else {
+							tSprite.initTexture(texture, args[1], args[2], args[3], args[4], 0, 0);
+						}
+						var ctx:* = this.ctx;
+						tSprite.render(ctx, x, y);
+					}
+					return;
+				}
 				if (!Render.isConchApp) {
 					if (texture.uv != Texture.DEF_UV) {
 						var canvas:HTMLCanvas = new HTMLCanvas("2D");
@@ -534,11 +550,19 @@ package laya.renders {
 				ctx.moveTo(x + points[0], y + points[1]);
 				while (i < n) {
 					ctx.lineTo(x + points[i++], y + points[i++]);
-				}
-				
+				}				
 			}
 			ctx.closePath();
 			this._fillAndStroke(args[3], args[4], args[5], args[7]);
+		}
+		
+		public var _drawSkin:Function = function(x:Number, y:Number, args:Array):void {
+			var tSprite:* = args[0];
+			if (tSprite)
+			{
+				var ctx:* = this.ctx;
+				tSprite.render(ctx,x,y);
+			}
 		}
 		
 		public var _drawParticle:Function = function(x:Number, y:Number, args:Array):void {

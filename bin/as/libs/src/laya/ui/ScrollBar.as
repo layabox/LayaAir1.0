@@ -511,13 +511,14 @@ package laya.ui {
 			if (!hide && autoHide) {
 				Tween.to(this, {alpha: 0}, 500);
 			}
+			event(Event.END);
 		}
 		
 		/**@private */
 		protected function tweenMove():void {
 			_lastOffset *= 0.95;
 			value -= _lastOffset;
-			if (Math.abs(_lastOffset) < 1) {
+			if (Math.abs(_lastOffset) < 1 || value== max || value == min) {
 				Laya.timer.clear(this, tweenMove);
 				event(Event.END);
 				if (!hide && autoHide) {

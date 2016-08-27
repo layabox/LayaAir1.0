@@ -9,6 +9,7 @@ package threeDimen.advancedStage {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.core.scene.Scene;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Viewport;
 	import laya.d3.resource.models.Mesh;
@@ -26,10 +27,7 @@ package threeDimen.advancedStage {
 		private var rotation:Vector3 = new Vector3(0, 3.14, 0);
 		
 		public function D3Advance_AttchPointSample() {
-			
-			//是否抗锯齿
-			//Config.isAntialias = true;
-			Laya3D.init(0, 0);
+			Laya3D.init(0, 0,true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
@@ -52,12 +50,13 @@ package threeDimen.advancedStage {
 			
 			skinMesh = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
 			skinMesh.transform.localRotationEuler = rotation;
-			skinAni = skinMesh.addComponent(SkinAnimations)  as SkinAnimations;
+			skinAni = skinMesh.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni.url = "../../../../res/threeDimen/skinModel/dude/dude.ani";
 			skinAni.play();
 			
 			attacthPoint = skinMesh.addComponent(AttachPoint) as AttachPoint;
-			attacthPoint.attachBone = "L_Middle1";
+			attacthPoint.attachBones.push("L_Middle1");
+			attacthPoint.attachBones.push("R_Middle1");
 			var settings:ParticleSettings = new ParticleSettings();
 			settings.textureName = "../../../../res/threeDimen/particle/fire.png";
 			settings.maxPartices = 200;
@@ -82,9 +81,20 @@ package threeDimen.advancedStage {
 		}
 		
 		private function loop():void {
-			if (attacthPoint.matrix) {
-				var e:Float32Array = attacthPoint.matrix.elements;
-				for (var i:int = 0; i < 10; i++) {
+			var matrix0:Matrix4x4 = attacthPoint.matrixs[0];
+			var e:Float32Array;
+			var i:int;
+			if (matrix0) {
+				e = matrix0.elements;
+				for (i = 0; i < 10; i++) {
+					fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0));//矩阵的12、13、14分别为Position的X、Y、Z
+				}
+			}
+			
+			var matrix1:Matrix4x4 = attacthPoint.matrixs[1];
+			if (matrix1) {
+				e = matrix1.elements;
+				for (i = 0; i < 10; i++) {
 					fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0));//矩阵的12、13、14分别为Position的X、Y、Z
 				}
 			}

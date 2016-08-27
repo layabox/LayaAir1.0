@@ -1,8 +1,10 @@
 package laya.ani.bone {
 	import laya.ani.AnimationPlayer;
+	import laya.ani.AnimationState;
 	import laya.ani.bone.BoneSlot;
 	import laya.ani.bone.Templet;
 	import laya.ani.bone.Transform;
+	import laya.ani.GraphicsAni;
 	import laya.display.Graphics;
 	import laya.display.Sprite;
 	import laya.events.Event;
@@ -11,6 +13,7 @@ package laya.ani.bone {
 	import laya.resource.Texture;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
+	import laya.ani.bone.IkConstraintData;
 	
 	/**动画开始播放调度。
 	 * @eventType Event.PLAYED
@@ -34,12 +37,12 @@ package laya.ani.bone {
 		private var _curOriginalData:Float32Array;//当前骨骼的偏移数据
 		private var _boneMatrixArray:Array = [];//当前骨骼动画的最终结果数据
 		private var _lastTime:Number = 0;//上次的帧时间
-		private var _tempTransform:Transform = new Transform();
 		private var _currAniName:String = null;
 		private var _currAniIndex:int = -1;
 		private var _pause:Boolean = true;
 		private var _aniClipIndex:int = -1;
 		private var _clipIndex:int = -1;
+		private var _skinIndex:int = 0;
 		//0,使用模板缓冲的数据，模板缓冲的数据，不允许修改					（内存开销小，计算开销小，不支持换装）
 		//1,使用动画自己的缓冲区，每个动画都会有自己的缓冲区，相当耗费内存	（内存开销大，计算开销小，支持换装）
 		//2,使用动态方式，去实时去画										（内存开销小，计算开销大，支持换装,不建议使用）
@@ -62,6 +65,10 @@ package laya.ani.bone {
 		
 		private var _yReverseMatrix:Matrix;
 		
+		private var _ikArr:Array;
+		private var _rootBone:Bone;
+		private var _boneList:Vector.<Bone>;
+		private var _aniSectionDic:Object;
 		/**
 		 * 创建一个Skeleton对象
 		 * 0,使用模板缓冲的数据，模板缓冲的数据，不允许修改					（内存开销小，计算开销小，不支持换装）
@@ -97,6 +104,11 @@ package laya.ani.bone {
 			_player.templet = templet;
 			_player.play();
 			_parseSrcBoneMatrix();
+			//ik跟骨骼数据
+			_ikArr = templet.ikArr;
+			_boneList = templet.mBoneArr;
+			_rootBone = templet.mRootBone;
+			_aniSectionDic = templet.aniSectionDic;
 			
 			_player.on(Event.PLAYED, this, _onPlay);
 			_player.on(Event.STOPPED, this, _onStop);
@@ -196,7 +208,7 @@ package laya.ani.bone {
 		}
 		
 		/**
-		 * 创建骨骼的矩阵，保证每次计算的最终结果
+		 * 创建骨骼的矩阵，保存每次计算的最终结果
 		 */
 		private function _parseSrcBoneMatrix():void {
 			var i:int = 0, n:int = 0;
@@ -239,7 +251,7 @@ package laya.ani.bone {
 			}
 			var tCurrTime:Number = Laya.timer.currTimer;
 			if (autoKey) {
-				_player.update(tCurrTime - _lastTime);
+				_player.update(tCurrTime - _lastTime)
 			}
 			_lastTime = tCurrTime;
 			_aniClipIndex = _player.currentAnimationClipIndex;
@@ -267,76 +279,114 @@ package laya.ani.bone {
 		 */
 		private function _createGraphics():void {
 			var bones:Vector.<*> = _templet.getNodes(_aniClipIndex);
-			//_curOriginalData || (_curOriginalData = new Float32Array(_templet.getTotalkeyframesLength(0)));
 			_templet.getOriginalData(_aniClipIndex, _curOriginalData, _clipIndex, _player.currentFrameTime);
-			//_templet.getOriginalDataUnfixedRate(_aniClipIndex, _curOriginalData, _player.currentTime);
+			
+			var tSectionArr:Array = _aniSectionDic[_aniClipIndex];
 			var tParentMatrix:Matrix;//父骨骼矩阵的引用
 			var tResultMatrix:Matrix;//保证骨骼计算的最终结果
 			var tStartIndex:int = 0;
 			var i:int = 0, j:int = 0, k:int = 0, n:int = 0;
 			var tDBBoneSlot:BoneSlot;
 			var tDBBoneSlotArr:Array;
-			var tTempMatrix:Matrix;
 			var tParentTransform:Transform;
+			var tSrcBone:Bone;
 			//对骨骼数据进行计算
 			var boneCount:int = _templet.srcBoneMatrixArr.length;
-			for (i = 0; i < boneCount; i++) {
+			for (i = 0,n = tSectionArr[0]; i < boneCount; i++) {
+				tSrcBone = _boneList[i];
 				tResultMatrix = _boneMatrixArray[i];
 				tParentTransform = _templet.srcBoneMatrixArr[i];
-				_tempTransform.scX = tParentTransform.scX * _curOriginalData[tStartIndex++];
-				_tempTransform.skX = tParentTransform.skX + _curOriginalData[tStartIndex++];
-				_tempTransform.skY = tParentTransform.skY + _curOriginalData[tStartIndex++];
-				_tempTransform.scY = tParentTransform.scY * _curOriginalData[tStartIndex++];
-				_tempTransform.x = tParentTransform.x + _curOriginalData[tStartIndex++];
-				_tempTransform.y = tParentTransform.y + _curOriginalData[tStartIndex++];
-				tTempMatrix = _tempTransform.getMatrix();
-				//骨骼数据乘以父矩阵，求出最终矩阵
-				var tBone:* = bones[i];
-				if (tBone.parentIndex != -1) {
-					tParentMatrix = _boneMatrixArray[tBone.parentIndex];
-					Matrix.mul(tTempMatrix, tParentMatrix, tResultMatrix);
-				} else {
-					if (_yReverseMatrix)
-					{
-						Matrix.mul(tTempMatrix, _yReverseMatrix, tResultMatrix);
-					}else {
-						tTempMatrix.copyTo(tResultMatrix);
-					}
-				}
-				
-				tDBBoneSlotArr = _bindBoneBoneSlotDic[tBone.name];
-				if (tDBBoneSlotArr) {
-					for (j = 0, n = tDBBoneSlotArr.length; j < n; j++) {
-						tDBBoneSlot = tDBBoneSlotArr[j];
-						if (tDBBoneSlot) {
-							tDBBoneSlot.setParentMatrix(tResultMatrix);
-						}
-					}
-				}
+				tSrcBone.resultTransform.scX = tParentTransform.scX * _curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.skX = tParentTransform.skX + _curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.skY = tParentTransform.skY + _curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.scY = tParentTransform.scY * _curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.x = tParentTransform.x + _curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.y = tParentTransform.y + _curOriginalData[tStartIndex++];
 			}
 			
 			//对插槽进行插值计算
 			var tSlotDic:Object = {};
 			var tSlotAlphaDic:Object = {};
 			var tBoneData:*;
-			for (; i < bones.length; i++) {
+			for (n += tSectionArr[1]; i < n; i++) {
 				tBoneData = bones[i];
 				tSlotDic[tBoneData.name] = _curOriginalData[tStartIndex++];
 				tSlotAlphaDic[tBoneData.name] = _curOriginalData[tStartIndex++];
 				//预留
 				_curOriginalData[tStartIndex++];
-				
 				_curOriginalData[tStartIndex++];
 				_curOriginalData[tStartIndex++];
 				_curOriginalData[tStartIndex++];
 			}
-			var tGraphics:Graphics;
+			
+			var tBendDirectionDic:Object = { };
+			var tMixDic:Object = { };
+			for (n += tSectionArr[2]; i < n; i++) {
+				tBoneData = bones[i];
+				tBendDirectionDic[tBoneData.name] = _curOriginalData[tStartIndex++];
+				tMixDic[tBoneData.name] = _curOriginalData[tStartIndex++];
+				//预留
+				_curOriginalData[tStartIndex++];
+				_curOriginalData[tStartIndex++];
+				_curOriginalData[tStartIndex++];
+			}
+			if (_yReverseMatrix)
+			{
+				_rootBone.update(_yReverseMatrix);
+			}else {
+				_rootBone.update(Matrix.TEMP.identity());
+			}
+			var tIkConstraintData:IkConstraintData;
+			var tTargetBone:Bone;
+			var tParentBone:Bone;
+			var tChildBone:Bone;
+			for (i = 0, n = _ikArr.length; i < n; i++)
+			{
+				tIkConstraintData = _ikArr[i];
+				tTargetBone = _boneList[tIkConstraintData.targetBoneIndex];
+				switch(tIkConstraintData.boneIndexs.length)
+				{
+					case 1:
+						tChildBone = _boneList[tIkConstraintData.boneIndexs[0]];
+						_applyIk1(tChildBone,tTargetBone.resultMatrix.tx,tTargetBone.resultMatrix.ty,tIkConstraintData.mix);
+						break;
+					case 2:
+						tParentBone = _boneList[tIkConstraintData.boneIndexs[0]];
+						tChildBone = _boneList[tIkConstraintData.boneIndexs[1]];
+						if (tBendDirectionDic[tIkConstraintData.name])
+						{
+							_applyIk2(tParentBone, tChildBone, tTargetBone.resultMatrix.tx, tTargetBone.resultMatrix.ty, tBendDirectionDic[tIkConstraintData.name], tMixDic[tIkConstraintData.name]);
+						}else {
+							_applyIk2(tParentBone, tChildBone, tTargetBone.resultMatrix.tx, tTargetBone.resultMatrix.ty, tIkConstraintData.bendDirection, tIkConstraintData.mix);
+						}
+						break;
+				}
+			}
+			for (i = 0, k = _boneList.length; i < k; i++)
+			{
+				tSrcBone = _boneList[i];
+				tDBBoneSlotArr = _bindBoneBoneSlotDic[tSrcBone.name];
+				tSrcBone.resultMatrix.copyTo(_boneMatrixArray[i]);
+				if (tDBBoneSlotArr) {
+					for (j = 0, n = tDBBoneSlotArr.length; j < n; j++) {
+						tDBBoneSlot = tDBBoneSlotArr[j];
+						if (tDBBoneSlot) {
+							tDBBoneSlot.setParentMatrix(tSrcBone.resultMatrix);
+						}
+					}
+				}
+			}
+			var tGraphics:GraphicsAni;
 			if (_aniMode == 0 || _aniMode == 1) {
-				this.graphics = new Graphics();
+				this.graphics = new GraphicsAni();
 			} else {
-				this.graphics.clear();
+				if (this.graphics is GraphicsAni) {
+					this.graphics.clear();
+				}else {
+					this.graphics = new GraphicsAni();
+				}
 			}
-			tGraphics = this.graphics;
+			tGraphics = this.graphics as GraphicsAni;
 			var tSlotData2:Number;
 			var tSlotData3:Number;
 			
@@ -355,7 +405,6 @@ package laya.ani.bone {
 				tDBBoneSlot.draw(tGraphics, _boneMatrixArray, this, _aniMode == 2);
 				if (!isNaN(tSlotData3)) {
 					tGraphics.restore();
-						//tGraphics.alpha(1 / tSlotData3);
 				}
 			}
 			if (_aniMode == 0) {
@@ -364,6 +413,185 @@ package laya.ani.bone {
 				_setGrahicsDataWithCache(_aniClipIndex, _clipIndex, tGraphics);
 			}
 		}
+		
+		private function _applyIk1(bone:Bone,targetX:Number,targetY:Number,alpha:Number):void
+		{
+			var pp:Bone = bone._parent;
+			var id:Number = 1 / (pp.resultMatrix.a * pp.resultMatrix.d - pp.resultMatrix.b * pp.resultMatrix.c);
+			var x:Number = targetX - pp.resultMatrix.tx;
+			var y:Number = targetY - pp.resultMatrix.ty;
+			var tx:Number = (x * pp.resultMatrix.d - y * pp.resultMatrix.b) * id - bone.transform.x;
+			var ty:Number = (y * pp.resultMatrix.a - x * pp.resultMatrix.c) * id - bone.transform.y;
+			var rotationIK:Number = Math.atan2(ty, tx) * radDeg - 0 - bone.transform.skX;
+			if (bone.transform.scX < 0) rotationIK += 180;
+			if (rotationIK > 180)
+				rotationIK -= 360;
+			else if (rotationIK < -180) rotationIK += 360;
+			bone.transform.skX = bone.transform.skY = bone.transform.skX + rotationIK * alpha;
+			bone.update();
+		}
+		
+		private function _applyIk2(parent:Bone,child:Bone,targetX:Number,targetY:Number,bendDir:int,alpha:Number):void
+		{
+			if (alpha == 0) {
+				return;
+			}
+			var px:Number = parent.resultTransform.x, py:Number = parent.resultTransform.y;
+			var psx:Number = parent.resultTransform.scX, psy:Number = parent.resultTransform.scY;
+			var csx:Number = child.resultTransform.scX;
+			var os1:int, os2:int, s2:int;
+			if (psx < 0) {	
+				psx = -psx;
+				os1 = 180;
+				s2 = -1;
+			}else {
+				os1 = 0;
+				s2 = 1;
+			}
+			if (psy < 0) {	
+				psy = -psy;
+				s2 = -s2;
+			}
+			if (csx < 0) {	
+				csx = -csx;
+				os2 = 180;
+			}else {
+				os2 = 0
+			}
+			var cx:Number = child.resultTransform.x, cy:Number, cwx:Number, cwy:Number;
+			var a:Number = parent.resultMatrix.a, b:Number = parent.resultMatrix.b;
+			var c:Number = parent.resultMatrix.c, d:Number = parent.resultMatrix.d;
+			var u:Boolean = Math.abs(psx - psy) <= 0.0001;
+			//求子骨骼的世界坐标点
+			if (!u) {
+				cy = 0;
+				cwx = a * cx + parent.resultMatrix.tx;
+				cwy = c * cx + parent.resultMatrix.ty;
+			}else {
+				cy = child.resultTransform.y;
+				cwx = a * cx + b * cy + parent.resultMatrix.tx;
+				cwy = c * cx + d * cy + parent.resultMatrix.ty;
+			}
+			var pp:Bone = parent._parent;
+			a = pp.resultMatrix.a;
+			b = pp.resultMatrix.b;
+			c = pp.resultMatrix.c;
+			d = pp.resultMatrix.d;
+			//逆因子
+			var id:Number = 1 / (a * d - b * c);
+			//求得IK中的子骨骼角度向量
+			var x:Number = targetX - pp.resultMatrix.tx, y:Number = targetY - pp.resultMatrix.ty;
+			var tx:Number = (x * d - y * b) * id - px;
+			var ty:Number = (y * a - x * c) * id - py;
+			//求得子骨骼的角度向量
+			x = cwx - pp.resultMatrix.tx;
+			y = cwy - pp.resultMatrix.ty;
+			var dx:Number = (x * d - y * b) * id - px;
+			var dy:Number = (y * a - x * c) * id - py;
+			//子骨骼的实际长度
+			var l1:Number = Math.sqrt(dx * dx + dy * dy);
+			//子骨骼的长度
+			var l2:Number = child.length * csx;
+			var a1:Number, a2:Number;
+			if (u)
+			{
+				l2 *= psx;
+				//求IK的角度
+				var cos:Number = (tx * tx + ty * ty - l1 * l1 - l2 * l2) / (2 * l1 * l2);
+				if (cos < -1)
+					cos = -1;
+				else if (cos > 1) cos = 1;
+				a2 = Math.acos(cos) * bendDir;
+				a = l1 + l2 * cos;
+				b = l2 * Math.sin(a2);
+				a1 = Math.atan2(ty * a - tx * b, tx * a + ty * b);
+			}else {
+				a = psx * l2;
+				b = psy * l2;
+				var aa:Number = a * a, bb:Number = b * b, dd:Number = tx * tx + ty * ty, ta:Number = Math.atan2(ty, tx);
+				c = bb * l1 * l1 + aa * dd - aa * bb;
+				var c1:Number = -2 * bb * l1, c2:Number = bb -aa;
+				d = c1 * c1 - 4 * c2 * c;
+				if (d > 0)
+				{
+					var q:Number = Math.sqrt(d);
+					if (c1 < 0) q = -q;
+					q = -(c1 + q) / 2;
+					var r0:Number = q / c2, r1:Number = c / q;
+					var r:Number = Math.abs(r0) < Math.abs(r1)?r0:r1;
+					if (r * r <= dd)
+					{
+						y = Math.sqrt(dd - r * r) * bendDir;
+						a1 = ta - Math.atan2(y, r);
+						a2 = Math.atan2(y / psy, (r - l1) / psx);
+					}
+				}
+				var minAngle:Number = 0, minDist:Number = Number.MAX_VALUE, minX:Number = 0, minY:Number = 0;
+				var maxAngle:Number = 0, maxDist:Number = 0, maxX:Number = 0, maxY:Number = 0;
+				x = l1 + a;
+				d = x * x;
+				if (d > maxDist)
+				{
+					maxAngle = 0;
+					maxDist = d;
+					maxX = x;
+				}
+				x = l1 - a;
+				d = x * x;
+				if (d < minDist)
+				{
+					minAngle = Math.PI;
+					minDist = d;
+					minX = x;
+				}
+				var angle:Number = Math.acos( -a * l1 / (aa - bb));
+				x = a * Math.cos(angle) + l1;
+				y = b * Math.sin(angle);
+				d = x * x + y * y;
+				if (d < minDist)
+				{
+					minAngle = angle;
+					minDist = d;
+					minX = x;
+					minY = y;
+				}
+				if (d > maxDist)
+				{
+					maxAngle = angle;
+					maxDist = d;
+					maxX = x;
+					maxY = y;
+				}
+				if (dd <= (minDist + maxDist) / 2) {
+					a1 = ta - Math.atan2(minY * bendDir, minX);
+					a2 = minAngle * bendDir;
+				}else {
+					a1 = ta - Math.atan2(maxY * bendDir, maxX);
+					a2 = maxAngle * bendDir;
+				}
+			}
+			var os:Number = Math.atan2(cy, cx) * s2;
+			var rotation:Number = parent.transform.skX;
+			a1 = (a1 - os) * radDeg + os1 - rotation;
+			if (a1 > 180)
+				a1 -= 360;
+			else if (a1 < -180) a1 += 360;
+			parent.resultTransform.x = px;
+			parent.resultTransform.y = py;
+			parent.resultTransform.skX = parent.resultTransform.skY = rotation + a1 * alpha;
+			rotation = child.transform.skX;
+			rotation = rotation % 360;
+			a2 = ((a2 + os) * radDeg - 0) * s2 + os2 - rotation;
+			if (a2 > 180)
+				a2 -= 360;
+			else if (a2 < -180) a2 += 360;
+			child.resultTransform.x = cx;
+			child.resultTransform.y = cy;
+			child.resultTransform.skX = child.resultTransform.skY = child.resultTransform.skY + a2 * alpha;
+			parent.update();
+		}
+		static public var radDeg:Number = 180 / Math.PI;
+		static public var degRad:Number = Math.PI / 180;
 		
 		/*******************************************定义接口*************************************************/
 		/**
@@ -396,8 +624,8 @@ package laya.ani.bone {
 		 * @param	name	皮肤的名字
 		 */
 		public function showSkinByName(name:String):void {
-			_templet.showSkinByName(_boneSlotDic, name);
-			_clearCache();
+			_skinIndex = _templet.getSkinIndexByName(name);
+			showSkinByIndex(_skinIndex);
 		}
 		
 		/**
@@ -405,6 +633,7 @@ package laya.ani.bone {
 		 * @param	skinIndex	皮肤索引
 		 */
 		public function showSkinByIndex(skinIndex:int):void {
+			_skinIndex = skinIndex;
 			_templet.showSkinByIndex(_boneSlotDic, skinIndex);
 			_clearCache();
 		}
@@ -478,8 +707,8 @@ package laya.ani.bone {
 				if (force || _pause || _currAniIndex != index) {
 					_currAniIndex = index;
 					_curOriginalData = new Float32Array(_templet.getTotalkeyframesLength(index));
-					_player.play(index, 1, duration);
-					this._templet.showSkinByIndex(_boneSlotDic, 0);
+					_player.play(index, _player.playbackRate, duration);
+					this._templet.showSkinByIndex(_boneSlotDic, _skinIndex);
 					if (_pause) {
 						_pause = false;
 						_lastTime = Browser.now();

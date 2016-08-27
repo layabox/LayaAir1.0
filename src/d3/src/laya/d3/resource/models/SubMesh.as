@@ -121,12 +121,11 @@ package laya.d3.resource.models {
 		 */
 		public function _render(state:RenderState):Boolean {
 			var mesh:Mesh = _mesh, vb:VertexBuffer3D = _vb, ib:IndexBuffer3D = _ib;
-			var material:Material = getMaterial((state.owner as MeshSprite3D).shadredMaterials);
-			
+			var material:Material = getMaterial((state.owner as MeshSprite3D).meshRender.shadredMaterials);
 			if (material.normalTexture && !vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TANGENT0]) {
 				//是否放到事件触发。
 				var vertexDatas:Float32Array = vb.getData();
-				var newVertexDatas:Float32Array = Utils3D.GenerateTangent(vertexDatas, vb.vertexDeclaration.vertexStride / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TEXTURECOORDINATE0][4] / 4, ib.getData());
+				var newVertexDatas:Float32Array = Utils3D.generateTangent(vertexDatas, vb.vertexDeclaration.vertexStride / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TEXTURECOORDINATE0][4] / 4, ib.getData());
 				var vertexDeclaration:VertexDeclaration = Utils3D.getVertexTangentDeclaration(vb.vertexDeclaration.getVertexElements());
 				
 				var newVB:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, WebGLContext.STATIC_DRAW);
@@ -148,17 +147,16 @@ package laya.d3.resource.models {
 				state.shaderValue.pushArray(vb.vertexDeclaration.shaderValues);
 				
 				var meshSprite:MeshSprite3D = state.owner as MeshSprite3D;
-				var worldMat:Matrix4x4 = meshSprite.transform.getWorldMatrix(-2);
-				var worldTransformModifyID:Number = state.renderObj.tag.worldTransformModifyID;
+				var worldMat:Matrix4x4 = meshSprite.transform.worldMatrix;
 				
 				//if ((state.owner as Mesh).isStatic && _isVertexbaked === true) {
 				//state.shaderValue.pushValue(Buffer.MATRIX1, Matrix4x4.DEFAULT.elements, worldTransformModifyID);//Stat.loopCount + state.ower._ID有BUG,例：6+6=7+5,用worldTransformModifyID代替
 				//state.shaderValue.pushValue(Buffer.MVPMATRIX, state.projectionViewMatrix.elements, state.camera.transform._worldTransformModifyID + worldTransformModifyID + state.camera._projectionMatrixModifyID);
 				//} else {
-				state.shaderValue.pushValue(Buffer2D.MATRIX1, worldMat.elements, worldTransformModifyID);//Stat.loopCount + state.ower._ID有BUG,例：6+6=7+5,用worldTransformModifyID代替
+				state.shaderValue.pushValue(Buffer2D.MATRIX1, worldMat.elements, /*worldTransformModifyID,从结构上应该在Mesh中更新*/-1);//Stat.loopCount + state.ower._ID有BUG,例：6+6=7+5,用worldTransformModifyID代替
 				Matrix4x4.multiply(state.projectionViewMatrix, worldMat, state.owner.wvpMatrix);
 				
-				state.shaderValue.pushValue(Buffer2D.MVPMATRIX, meshSprite.wvpMatrix.elements, state.camera.transform._worldTransformModifyID + worldTransformModifyID + state.camera._projectionMatrixModifyID);
+				state.shaderValue.pushValue(Buffer2D.MVPMATRIX, meshSprite.wvpMatrix.elements, /*state.camera.transform._worldTransformModifyID + worldTransformModifyID + state.camera._projectionMatrixModifyID,从结构上应该在Mesh中更新*/-1);
 				//}
 				
 				if (!material.upload(state, _finalBufferUsageDic, shader)) {

@@ -1,4 +1,6 @@
 package laya.ui {
+	import laya.display.Graphics;
+	import laya.display.Sprite;
 	import laya.ui.Box;
 	import laya.ui.Button;
 	import laya.ui.CheckBox;
@@ -11,6 +13,7 @@ package laya.ui {
 	import laya.ui.Radio;
 	import laya.ui.RadioGroup;
 	import laya.ui.Tab;
+	import laya.utils.ClassUtils;
 	
 	/**
 	 * <code>View</code> 是一个视图类。
@@ -31,6 +34,19 @@ package laya.ui {
 		 * UI视图类映射。
 		 */
 		protected static var viewClassMap:Object = { };
+		_regs()
+		/**
+		 * @private
+		 * 向ClassUtils注册ui类
+		 */
+		private static function _regs():void
+		{
+			var key:String;
+			for (key in uiClassMap)
+			{
+				ClassUtils.regClass(key, uiClassMap[key]);
+			}
+		}
 		
 		public function View() {
 			if (_width > 0 && !mouseThrough) hitTestPrior = true;
@@ -110,9 +126,27 @@ package laya.ui {
 					var node:Object = child[i];
 					if (comp.hasOwnProperty("itemRender") && node.props.name == "render") {
 						IRender(comp).itemRender = node;
-					} else {
-						comp.addChild(createComp(node, null, view));
-					}
+					} else 
+					if (node.type == "Graphic")
+						{
+							ClassUtils.addGraphicsToSprite(node, comp);
+						}else
+						if (ClassUtils.isDrawType(node.type))
+						{
+							ClassUtils.addGraphicToSprite(node, comp,true);
+						}else
+						{
+							var tChild:Sprite = createComp(node, null, view);
+							if (tChild.name == "mask")
+							{
+								comp.mask = tChild;
+							}else
+							{
+								comp.addChild(tChild);
+							}
+							
+						}
+						
 				}
 			}
 			
@@ -172,6 +206,7 @@ package laya.ui {
 		 */
 		public static function regComponent(key:String, compClass:Class):void {
 			uiClassMap[key] = compClass;
+			ClassUtils.regClass(key, compClass);
 		}
 		
 		/**

@@ -24,6 +24,7 @@
     <class path="..\..\..\..\..\webGL\src" />
     <class path="..\..\..\..\..\plugins\tiledmap\src" />
     <class path="..\..\..\..\..\particle\src\laya" />
+    <class path="..\..\..\..\..\ani\src" />
   </classpaths>
   <!-- Build options -->
   <build>
@@ -80,7 +81,7 @@
   </library>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
-    <compile path="src\InputDevice_GluttonousSnake.as" />
+    <compile path="src\PerformanceTest_Skeleton.as" />
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

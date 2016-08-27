@@ -128,6 +128,14 @@ package laya.events {
 		public static const FULL_SCREEN_CHANGE:String = "fullscreenchange";
 		/**显卡设备丢失时触发*/
 		public static const DEVICE_LOST:String = "devicelost";
+		/**模型更换时触发*/
+		public static const MESH_CHANGED:String = "meshchanged";
+		/**材质更换时触发*/
+		public static const MATERIAL_CHANGED:String = "materialchanged";
+		/**渲染队列更换时触发*/
+		public static const RENDERQUEUE_CHANGED:String = "renderqueuechanged";
+		/**世界矩阵更新时触发。*/
+		public static const WORLDMATRIX_NEEDCHANGE:String = "worldmatrixneedchanged";
 		
 		/** 事件类型。*/
 		public var type:String;
@@ -204,5 +212,21 @@ package laya.events {
 		public function get shiftKey():Boolean {
 			return this.nativeEvent.shiftKey;
 		}
+		
+		/**
+		 * 包含按下或释放的键的字符代码值。字符代码值为英文键盘值。
+		 */
+		public function get charCode():Boolean {
+			return this.nativeEvent.charCode;
+		}
+		
+		/**
+		 * 表示键在键盘上的位置。这对于区分在键盘上多次出现的键非常有用。<br>
+		 * 例如，您可以根据此属性的值来区分左 Shift 键和右 Shift 键：左 Shift 键的值为 KeyLocation.LEFT，右 Shift 键的值为 KeyLocation.RIGHT。另一个示例是区分标准键盘 (KeyLocation.STANDARD) 与数字键盘 (KeyLocation.NUM_PAD) 上按下的数字键。
+		 */
+		public function get keyLocation():Boolean {
+			return this.nativeEvent.keyLocation;
+		}
+	
 	}
 }

@@ -107,7 +107,7 @@ package laya.d3.component.animation {
 		{
 			player.update(state.elapsedTime);//需最先执行（如不则内部可能触发Stop事件等，如事件中加载新动画，可能_templet未加载完成，导致BUG）
 			
-			if (!_templet || !_templet.loaded || player.State !== AnimationState.playing)
+			if (!_templet || !_templet.loaded || player.state !== AnimationState.playing)
 				return;
 			
 			var rate:Number = player.playbackRate * state.scene.timer.scale;
@@ -144,9 +144,9 @@ package laya.d3.component.animation {
 			}
 			
 			if (player.isCache && rate >= 1.0)
-				_templet.getOriginalData(animationClipIndex, _currentAnimationData, frameIndex, player.currentTime);
+				_templet.getOriginalData(animationClipIndex, _currentAnimationData, frameIndex, player.currentPlayTime);
 			else//慢动作或者不缓存时
-				_templet.getOriginalDataUnfixedRate(animationClipIndex, _currentAnimationData, player.currentTime);
+				_templet.getOriginalDataUnfixedRate(animationClipIndex, _currentAnimationData, player.currentPlayTime);
 			
 			if (player.isCache && rate >= 1.0) {
 				_templet.setAnimationDataWithCache(_templet._animationDatasCache, animationClipIndex, frameIndex, _currentAnimationData);//缓存动画数据
@@ -157,22 +157,22 @@ package laya.d3.component.animation {
 			_effect();//动画作用模块（待优化，需剥离）
 		}
 		
-		/**
-		 * 播放动画。
-		 * @param	index 动画索引。
-		 * @param	playbackRate 播放速率。
-		 * @param	duration 播放时长（Number.MAX_VALUE为循环播放，0为1次）。
-		 */
-		public override function play(index:int = 0, playbackRate:Number = 1.0, duration:Number = Number.MAX_VALUE):void {
-			if (player.State === AnimationState.stopped) {
-				(_originalAnimationTransform) || (_originalAnimationTransform = new Matrix4x4());
-				localMode ? owner.transform.localMatrix.cloneTo(_originalAnimationTransform) : owner.transform.worldMatrix.cloneTo(_originalAnimationTransform);
-			}
-			
-			_originalFov = _camera.fieldOfView;
-			
-			super.play(index, playbackRate, duration);
-		}
+		///**
+		 //* 播放动画。
+		 //* @param	index 动画索引。
+		 //* @param	playbackRate 播放速率。
+		 //* @param	duration 播放时长（Number.MAX_VALUE为循环播放，0为1次）。
+		 //*/
+		//public override function play(index:int = 0, playbackRate:Number = 1.0, duration:Number = Number.MAX_VALUE):void {
+			//if (player.state === AnimationState.stopped) {
+				//(_originalAnimationTransform) || (_originalAnimationTransform = new Matrix4x4());
+				//localMode ? owner.transform.localMatrix.cloneTo(_originalAnimationTransform) : owner.transform.worldMatrix.cloneTo(_originalAnimationTransform);
+			//}
+			//
+			//_originalFov = _camera.fieldOfView;
+			//
+			//super.play(index, playbackRate, duration);
+		//}
 	
 	}
 }

@@ -15,8 +15,9 @@ package laya.display {
 	import laya.resource.HTMLCanvas;
 	import laya.resource.Texture;
 	import laya.utils.Dragging;
-	import laya.utils.Handler;
 	import laya.utils.HTMLChar;
+	import laya.utils.Handler;
+	import laya.utils.HitArea;
 	import laya.utils.Pool;
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
@@ -244,7 +245,7 @@ package laya.display {
 		 * 对于已知大小的容器（特别是根容器），设置此值为true，能减少节点碰撞，提高性能。默认为false
 		 */
 		public var hitTestPrior:Boolean = false;
-		
+		/** @private */
 		private var _optimizeScrollRect:Boolean = false;
 		
 		public function get optimizeScrollRect():Boolean {
@@ -270,7 +271,6 @@ package laya.display {
 			this._transform = null;
 			this._style = null;
 			this._graphics = null;
-			//TODO:OTHER
 		}
 		
 		/**根据zOrder进行重新排序。*/
@@ -935,12 +935,15 @@ package laya.display {
 					_renderType &= ~RenderSprite.FILTERS;
 				}
 			}
+			
 			if (value && value.length > 0) {
-				if (cacheAs != "bitmap") {
-					if (!Render.isConchNode) cacheAs = "bitmap";
-					_set$P("cacheForFilters", true);
+				if (!(Render.isWebGL && value.length == 1 && (value[0] is ColorFilter))) {
+					if (cacheAs != "bitmap") {
+						if (!Render.isConchNode) cacheAs = "bitmap";
+						_set$P("cacheForFilters", true);
+					}
+					_set$P("hasFilter", true);
 				}
-				_set$P("hasFilter", true);
 			} else {
 				_set$P("hasFilter", false);
 				if (_$P["cacheForFilters"] && cacheAs == "bitmap") {
@@ -1146,6 +1149,7 @@ package laya.display {
 		
 		/**cacheAs后，设置自己和父对象缓存失效。*/
 		public function repaint():void {
+			this.model&&this.model.repaint&&this.model.repaint();
 			(_repaint === 0) && (_repaint = 1, parentRepaint());
 			if (this._$P && this._$P.maskParent) {
 				_$P.maskParent.repaint();
@@ -1181,12 +1185,12 @@ package laya.display {
 			return Laya.stage;
 		}
 		
-		/** 手动设置的可点击区域。*/
-		public function get hitArea():Rectangle {
+		/** 手动设置的可点击区域，或者一个HitArea区域。*/
+		public function get hitArea():* {
 			return _$P.hitArea;
 		}
 		
-		public function set hitArea(value:Rectangle):void {
+		public function set hitArea(value:*):void {
 			_set$P("hitArea", value);
 		}
 		
@@ -1277,6 +1281,34 @@ package laya.display {
 		/**获得相对于本对象上的鼠标坐标信息。*/
 		public function getMousePoint():Point {
 			return this.globalToLocal(Point.TEMP.setTo(Laya.stage.mouseX, Laya.stage.mouseY));
+		}
+		
+		/**
+		 * 获得全局X轴缩放值
+		 */
+		public function get globalScaleX():Number {
+			var scale:Number = 1;
+			var ele:Sprite = this;
+			while (ele) {
+				if (ele === Laya.stage) break;
+				scale *= ele.scaleX;
+				ele = ele.parent as Sprite;
+			}
+			return scale;
+		}
+		
+		/**
+		 * 获得全局Y轴缩放值
+		 */
+		public function get globalScaleY():Number {
+			var scale:Number = 1;
+			var ele:Sprite = this;
+			while (ele) {
+				if (ele === Laya.stage) break;
+				scale *= ele.scaleX;
+				ele = ele.parent as Sprite;
+			}
+			return scale;
 		}
 		
 		/**

@@ -1,12 +1,11 @@
 var Materil_Reflect;
 (function (Materil_Reflect_1) {
     var Vector3 = Laya.Vector3;
+    var Vector4 = Laya.Vector4;
     var Materil_Reflect = (function () {
         function Materil_Reflect() {
             var _this = this;
-            //是否抗锯齿
-            //Config.isAntialias = true;
-            Laya3D.init(0, 0);
+            Laya3D.init(0, 0, true);
             Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
             Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
             Laya.Stat.show();
@@ -20,10 +19,10 @@ var Materil_Reflect;
             var mesh = Laya.Mesh.load("../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
             this.meshSprite = sprit.addChild(new Laya.MeshSprite3D(mesh));
             mesh.once(Laya.Event.LOADED, this, function () {
-                _this.meshSprite.shadredMaterials[0].once(Laya.Event.LOADED, _this, function () {
-                    _this.material = _this.meshSprite.shadredMaterials[0];
-                    _this.material.luminance = 0;
-                    _this.material.cullFace = false;
+                _this.meshSprite.meshRender.shadredMaterials[0].once(Laya.Event.LOADED, _this, function () {
+                    _this.material = _this.meshSprite.meshRender.shadredMaterials[0];
+                    _this.material.albedo = new Vector4(0.0, 0.0, 0.0, 0.0);
+                    _this.material.renderMode = Laya.Material.RENDERMODE_OPAQUEDOUBLEFACE;
                     (_this.material && _this.reflectTexture) && (_this.material.reflectTexture = _this.reflectTexture);
                 });
             });
@@ -35,7 +34,7 @@ var Materil_Reflect;
             webGLImageCube.on(Laya.Event.LOADED, this, function (imgCube) {
                 _this.reflectTexture = new Laya.Texture(imgCube);
                 imgCube.mipmap = true;
-                (_this.material && _this.reflectTexture) && (_this.meshSprite.shadredMaterials[0].reflectTexture = _this.reflectTexture);
+                (_this.material && _this.reflectTexture) && (_this.meshSprite.meshRender.shadredMaterials[0].reflectTexture = _this.reflectTexture);
             });
             Laya.timer.frameLoop(1, this, function () {
                 _this.meshSprite.transform.rotate(new Vector3(0, 0.01, 0), false);

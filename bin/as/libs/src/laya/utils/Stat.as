@@ -50,8 +50,7 @@ package laya.utils {
 		 * @param	y Y轴显示位置。
 		 */
 		public static function show(x:Number = 0, y:Number = 0):void {
-			if (Render.isConchApp)
-			{
+			if (Render.isConchApp) {
 				__JS__("conch.showFPS&&conch.showFPS(x,y)");
 				return;
 			}
@@ -145,7 +144,7 @@ package laya.utils {
 			if (_canvas) {
 				//计算平均值
 				trianglesFaces = Math.round(trianglesFaces / count);
-				drawCall = Math.round(drawCall / count);
+				drawCall = Math.round(drawCall / count) - 2;
 				shaderCall = Math.round(shaderCall / count);
 				spriteCount = Math.round(spriteCount / count) - 1;
 				canvasNormal = Math.round(canvasNormal / count);

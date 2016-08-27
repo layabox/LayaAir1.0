@@ -5,9 +5,7 @@ module PanoramaVRSample {
     export class PanoramaVRSample {
 
         constructor() {
-            //是否抗锯齿
-            //Config.isAntialias = true;
-            Laya3D.init(0, 0);
+            Laya3D.init(0, 0,true);
             Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
             Laya.stage.screenMode = Laya.Stage.SCREEN_HORIZONTAL;
             Laya.Stat.show();
@@ -26,8 +24,8 @@ module PanoramaVRSample {
             var mesh = scene.addChild(new Laya.MeshSprite3D(new Laya.Sphere(1, 20, 20))) as Laya.MeshSprite3D;
 
             var material = new Laya.Material();
-            material.cullFace = false;
-            mesh.shadredMaterial = material;
+            material.renderMode = Laya.Material.RENDERMODE_OPAQUEDOUBLEFACE;
+            mesh.meshRender.shadredMaterial = material;
 
             Laya.loader.load("../../res/threeDimen/panorama/panorama.jpg", Laya.Handler.create(null, function (texture: Laya.Texture): void {
                 (texture.bitmap as Laya.WebGLImage).mipmap = true;

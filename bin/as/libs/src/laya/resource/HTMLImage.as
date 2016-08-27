@@ -19,7 +19,6 @@ package laya.resource {
 		/**异步加载完成后是否需要释放（有可能在恢复过程中,再次被释放，用此变量做标记）*/
 		protected var _needReleaseAgain:Boolean = false;
 		
-		
 		/**
 		 * @inheritDoc
 		 */
@@ -52,8 +51,8 @@ package laya.resource {
 		protected function _init_(src:String):void {
 			_src = src;
 			_source = new Browser.window.Image();
-			_source.crossOrigin = "";
-		    (src) && (_source.src = src);
+			if (src.indexOf("data:image") != 0) _source.crossOrigin = "";
+			(src) && (_source.src = src);
 		}
 		
 		/**
@@ -62,7 +61,7 @@ package laya.resource {
 		override protected function recreateResource():void {
 			if (_src === "")
 				throw new Error("src no null！");
-	
+			
 			_needReleaseAgain = false;
 			if (!_source) {
 				_recreateLock = true;

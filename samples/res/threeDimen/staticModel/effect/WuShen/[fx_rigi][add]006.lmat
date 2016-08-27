@@ -1,0 +1,60 @@
+{
+    "type": "Material",
+    "props":
+    {
+        "name": "[fx_rigi][add]006",
+        "renderMode": 8
+    },
+    "customProps":
+    {
+        "ambientColor":
+        [
+            0.588,
+            0.588,
+            0.588
+        ],
+        "diffuseColor":
+        [
+            0.588,
+            0.588,
+            0.588
+        ],
+        "specularColor":
+        [
+            0.9,
+            0.9,
+            0.9,
+            1
+        ],
+        "reflectColor":
+        [
+            0,
+            0,
+            0
+        ],
+        "diffuseTexture":
+        {
+            "texture2D": "222.png"
+        },
+        "normalTexture":
+        {
+            "texture2D": ""
+        },
+        "specularTexture":
+        {
+            "texture2D": ""
+        },
+        "emissiveTexture":
+        {
+            "texture2D": ""
+        },
+        "ambientTexture":
+        {
+            "texture2D": ""
+        },
+        "reflectTexture":
+        {
+            "texture2D": ""
+        }
+    }
+}
