@@ -246,7 +246,7 @@ var Laya=window.Laya=(function(window,document){
 			return {width:RunDriver._charSizeTestDiv.offsetWidth,height:RunDriver._charSizeTestDiv.offsetHeight};
 		}
 
-		RunDriver.benginFlush=function(){
+		RunDriver.beginFlush=function(){
 		};
 
 		RunDriver.endFinish=function(){
@@ -10680,7 +10680,7 @@ var Laya=window.Laya=(function(window,document){
 				}
 			}
 			AtlasResourceManager._enable();
-			RunDriver.benginFlush=function (){
+			RunDriver.beginFlush=function (){
 				var atlasResourceManager=AtlasResourceManager.instance;
 				var count=atlasResourceManager.getAtlaserCount();
 				for (var i=0;i < count;i++){
@@ -19151,7 +19151,7 @@ var Laya=window.Laya=(function(window,document){
 			if (Render.isConchNode)return;
 			if (this.renderingEnabled && (isFastMode || !isDoubleLoop)){
 				Render.isWebGL && RunDriver.clear(this._bgColor);
-				RunDriver.benginFlush();
+				RunDriver.beginFlush();
 				context.flush();
 				RunDriver.endFinish();
 			}
