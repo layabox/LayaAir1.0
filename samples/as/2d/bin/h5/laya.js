@@ -180,14 +180,16 @@ var Laya=window.Laya=(function(window,document){
 
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
-	Laya.interface('laya.filters.IFilterAction');
-	Laya.interface('laya.webgl.resource.IMergeAtlasBitmap');
-	Laya.interface('laya.runtime.IConchNode');
-	Laya.interface('laya.webgl.shapes.IShape');
-	Laya.interface('laya.webgl.submit.ISubmit');
 	Laya.interface('laya.webgl.canvas.save.ISaveData');
 	Laya.interface('laya.webgl.text.ICharSegment');
+	Laya.interface('laya.webgl.resource.IMergeAtlasBitmap');
+	Laya.interface('laya.filters.IFilter');
+	Laya.interface('laya.filters.IFilterAction');
+	Laya.interface('laya.webgl.submit.ISubmit');
+	Laya.interface('laya.runtime.IMarket');
+	Laya.interface('laya.runtime.IConchNode');
 	Laya.interface('laya.resource.IDispose');
+	Laya.interface('laya.webgl.shapes.IShape');
 	Laya.interface('laya.display.ILayout');
 	Laya.interface('laya.filters.IFilterActionGL','laya.filters.IFilterAction');
 	/**
@@ -291,6 +293,18 @@ var Laya=window.Laya=(function(window,document){
 		RunDriver.addTextureToAtlas=function(value){
 		};
 
+		RunDriver.getTexturePixels=function(value,x,y,width,height){
+			return null;
+		}
+
+		RunDriver.fillTextureShader=function(value,x,y,width,height){
+			return null;
+		}
+
+		RunDriver.skinAniSprite=function(){
+			return null;
+		}
+
 		return RunDriver;
 	})()
 
@@ -311,8 +325,7 @@ var Laya=window.Laya=(function(window,document){
 					if (erralert++< 5 && detail)
 						alert("出错啦，请把此信息截图给研发商\n"+msg+"\n"+detail.stack);
 				}
-			}
-			else{
+				}else {
 				Browser.window.onerror=null;
 			}
 		});
@@ -324,15 +337,15 @@ var Laya=window.Laya=(function(window,document){
 			Graphics.__init__();
 			Laya.timer=new Timer();
 			Laya.loader=new LoaderManager();
-			height=Browser.clientHeight;
 			for (var i=0,n=plugins.length;i < n;i++){
 				if (plugins[i].enable)plugins[i].enable();
 			}
 			Font.__init__();
 			Style.__init__();
 			ResourceManager.__init__();
+			CacheManger.beginCheck();
 			Laya.stageBox=Laya.stage=new Stage();
-			Laya.stage.model && Laya.stage.model.setRootNode();
+			Laya.stage.model&&Laya.stage.model.setRootNode();
 			var location=Browser.window.location;
 			var pathName=location.pathname;
 			pathName=pathName.charAt(2)==':' ? pathName.substring(1):pathName;
@@ -347,16 +360,15 @@ var Laya=window.Laya=(function(window,document){
 			return Render.canvas;
 		}
 
-		Laya.class1=function(functionRef,fullQulifiedName,superClass,miniName){}
-		Laya.interface1=function(name,superClass){}
-		Laya.imps=function(prototypeChain,superInterfaces){}
-		Laya.getset=function(isStatic,target,name,getter,setter){}
 		Laya.stage=null;
 		Laya.timer=null;
 		Laya.loader=null;
 		Laya.render=null
-		Laya.version="1.1.0";
+		Laya.version="1.2.0";
 		Laya.stageBox=null
+		__static(Laya,
+		['conchMarket',function(){return this.conchMarket=window.conch?conchMarket:null;}
+		]);
 		return Laya;
 	})()
 
@@ -1412,6 +1424,7 @@ var Laya=window.Laya=(function(window,document){
 						Graphics._addPointArrToRst(rst,Bezier.I.getBezierPoints(cmd[2]),tMatrix,cmd[0],cmd[1]);
 						break ;
 					case context._drawPoly:
+					case context._drawLines:
 					case 18:
 						Graphics._addPointArrToRst(rst,cmd[2],tMatrix,cmd[0],cmd[1]);
 						break ;
@@ -1491,6 +1504,10 @@ var Laya=window.Laya=(function(window,document){
 			var args=[tex,x,y,width,height,type,offset];
 			if (!tex.loaded){
 				tex.once("loaded",this,this._textureLoaded,[tex,args]);
+			}
+			if (Render.isWebGL){
+				var tFillTextureSprite=RunDriver.fillTextureShader(tex,x,y,width,height);
+				args.push(tFillTextureSprite);
 			}
 			this._saveToCmd(Render._context._fillTexture,args);
 		}
@@ -1766,9 +1783,12 @@ var Laya=window.Laya=(function(window,document){
 		*/
 		__proto.drawLine=function(fromX,fromY,toX,toY,lineColor,lineWidth){
 			(lineWidth===void 0)&& (lineWidth=1);
-			var tId=VectorGraphManager.getInstance().getId();
-			if (this._vectorgraphArray==null)this._vectorgraphArray=[];
-			this._vectorgraphArray.push(tId);
+			var tId=0;
+			if (Render.isWebGL){
+				tId=VectorGraphManager.getInstance().getId();
+				if (this._vectorgraphArray==null)this._vectorgraphArray=[];
+				this._vectorgraphArray.push(tId);
+			};
 			var arr=[fromX+0.5,fromY+0.5,toX+0.5,toY+0.5,lineColor,lineWidth,tId];
 			this._saveToCmd(Render._context._drawLine,arr);
 		}
@@ -1783,9 +1803,12 @@ var Laya=window.Laya=(function(window,document){
 		*/
 		__proto.drawLines=function(x,y,points,lineColor,lineWidth){
 			(lineWidth===void 0)&& (lineWidth=1);
-			var tId=VectorGraphManager.getInstance().getId();
-			if (this._vectorgraphArray==null)this._vectorgraphArray=[];
-			this._vectorgraphArray.push(tId);
+			var tId=0;
+			if (Render.isWebGL){
+				tId=VectorGraphManager.getInstance().getId();
+				if (this._vectorgraphArray==null)this._vectorgraphArray=[];
+				this._vectorgraphArray.push(tId);
+			};
 			var arr=[x+0.5,y+0.5,points,lineColor,lineWidth,tId];
 			this._saveToCmd(Render._context._drawLines,arr);
 		}
@@ -1833,9 +1856,12 @@ var Laya=window.Laya=(function(window,document){
 		__proto.drawCircle=function(x,y,radius,fillColor,lineColor,lineWidth){
 			(lineWidth===void 0)&& (lineWidth=1);
 			var offset=lineColor ? 0.5 :0;
-			var tId=VectorGraphManager.getInstance().getId();
-			if (this._vectorgraphArray==null)this._vectorgraphArray=[];
-			this._vectorgraphArray.push(tId);
+			var tId=0;
+			if (Render.isWebGL){
+				tId=VectorGraphManager.getInstance().getId();
+				if (this._vectorgraphArray==null)this._vectorgraphArray=[];
+				this._vectorgraphArray.push(tId);
+			};
 			var arr=[x+offset,y+offset,radius,fillColor,lineColor,lineWidth,tId];
 			this._saveToCmd(Render._context._drawCircle,arr);
 		}
@@ -1854,9 +1880,12 @@ var Laya=window.Laya=(function(window,document){
 		__proto.drawPie=function(x,y,radius,startAngle,endAngle,fillColor,lineColor,lineWidth){
 			(lineWidth===void 0)&& (lineWidth=1);
 			var offset=lineColor ? 0.5 :0;
-			var tId=VectorGraphManager.getInstance().getId();
-			if (this._vectorgraphArray==null)this._vectorgraphArray=[];
-			this._vectorgraphArray.push(tId);
+			var tId=0;
+			if (Render.isWebGL){
+				tId=VectorGraphManager.getInstance().getId();
+				if (this._vectorgraphArray==null)this._vectorgraphArray=[];
+				this._vectorgraphArray.push(tId);
+			};
 			var arr=[x+offset,y+offset,radius,startAngle,endAngle,fillColor,lineColor,lineWidth,tId];
 			arr[3]=Utils.toRadian(startAngle);
 			arr[4]=Utils.toRadian(endAngle);
@@ -1890,10 +1919,11 @@ var Laya=window.Laya=(function(window,document){
 		__proto.drawPoly=function(x,y,points,fillColor,lineColor,lineWidth){
 			(lineWidth===void 0)&& (lineWidth=1);
 			var offset=lineColor ? 0.5 :0;
-			var tId=VectorGraphManager.getInstance().getId();
-			if (this._vectorgraphArray==null)this._vectorgraphArray=[];
-			this._vectorgraphArray.push(tId);
+			var tId=0;
 			if (Render.isWebGL){
+				tId=VectorGraphManager.getInstance().getId();
+				if (this._vectorgraphArray==null)this._vectorgraphArray=[];
+				this._vectorgraphArray.push(tId);
 				var tIsConvexPolygon=false;
 				if (points.length > 6){
 					tIsConvexPolygon=false;
@@ -2070,6 +2100,13 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		/**
+		*包含按下或释放的键的字符代码值。字符代码值为英文键盘值。
+		*/
+		__getset(0,__proto,'charCode',function(){
+			return this.nativeEvent.charCode;
+		});
+
+		/**
 		*触摸点列表。
 		*/
 		__getset(0,__proto,'touches',function(){
@@ -2085,6 +2122,14 @@ var Laya=window.Laya=(function(window,document){
 				}
 			}
 			return arr;
+		});
+
+		/**
+		*表示键在键盘上的位置。这对于区分在键盘上多次出现的键非常有用。<br>
+		*例如，您可以根据此属性的值来区分左 Shift 键和右 Shift 键：左 Shift 键的值为 KeyLocation.LEFT，右 Shift 键的值为 KeyLocation.RIGHT。另一个示例是区分标准键盘 (KeyLocation.STANDARD)与数字键盘 (KeyLocation.NUM_PAD)上按下的数字键。
+		*/
+		__getset(0,__proto,'keyLocation',function(){
+			return this.nativeEvent.keyLocation;
 		});
 
 		/**
@@ -2167,6 +2212,10 @@ var Laya=window.Laya=(function(window,document){
 		Event.LABEL="label";
 		Event.FULL_SCREEN_CHANGE="fullscreenchange";
 		Event.DEVICE_LOST="devicelost";
+		Event.MESH_CHANGED="meshchanged";
+		Event.MATERIAL_CHANGED="materialchanged";
+		Event.RENDERQUEUE_CHANGED="renderqueuechanged";
+		Event.WORLDMATRIX_NEEDCHANGE="worldmatrixneedchanged";
 		return Event;
 	})()
 
@@ -2197,13 +2246,16 @@ var Laya=window.Laya=(function(window,document){
 
 		KeyBoardManager._dispatch=function(e,type){
 			if (!KeyBoardManager.enabled)return;
-			e.keyCode=e.keyCode || e.which || e.charCode;
-			if (type==="keydown")KeyBoardManager._pressKeys[e.keyCode]=true;
-			else if (type==="keyup")KeyBoardManager._pressKeys[e.keyCode]=null;
-			var tar=(Laya.stage.focus && (Laya.stage.focus.event !=null))? Laya.stage.focus :Laya.stage;
-			while (tar){
-				tar.event(type,e);
-				tar=tar.parent;
+			KeyBoardManager._event._stoped=false;
+			KeyBoardManager._event.nativeEvent=e;
+			KeyBoardManager._event.keyCode=e.keyCode || e.which || e.charCode;
+			if (type==="keydown")KeyBoardManager._pressKeys[KeyBoardManager._event.keyCode]=true;
+			else if (type==="keyup")KeyBoardManager._pressKeys[KeyBoardManager._event.keyCode]=null;
+			var target=(Laya.stage.focus && (Laya.stage.focus.event !=null))? Laya.stage.focus :Laya.stage;
+			var ct=target;
+			while (ct){
+				ct.event(type,KeyBoardManager._event.setTo(type,ct,target));
+				ct=ct.parent;
 			}
 		}
 
@@ -2213,6 +2265,9 @@ var Laya=window.Laya=(function(window,document){
 
 		KeyBoardManager._pressKeys={};
 		KeyBoardManager.enabled=true;
+		__static(KeyBoardManager,
+		['_event',function(){return this._event=new Event();}
+		]);
 		return KeyBoardManager;
 	})()
 
@@ -2249,6 +2304,7 @@ var Laya=window.Laya=(function(window,document){
 		*初始化。
 		*/
 		__proto.__init__=function(stage,canvas){
+			var _$this=this;
 			this._stage=stage;
 			var _this=this;
 			var list=this._eventList;
@@ -2257,7 +2313,7 @@ var Laya=window.Laya=(function(window,document){
 			}
 			canvas.addEventListener('mousedown',function(e){
 				if (MouseManager.enabled){
-					if(!Input.IOS_QQ_IFRAME)e.preventDefault();
+					e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime=Browser.now();
 				}
@@ -2286,14 +2342,15 @@ var Laya=window.Laya=(function(window,document){
 			})
 			canvas.addEventListener("touchstart",function(e){
 				if (MouseManager.enabled){
-					if(!Input.IOS_QQ_IFRAME)e.preventDefault();
 					list.push(e);
+					_$this.runEvent();
+					if(!Input.isInputting)e.preventDefault();
 					_this.mouseDownTime=Browser.now();
 				}
 			});
 			canvas.addEventListener("touchend",function(e){
 				if (MouseManager.enabled){
-					if(!Input.IOS_QQ_IFRAME)e.preventDefault();
+					if(!Input.isInputting)e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime=-Browser.now();
 				}
@@ -2456,6 +2513,9 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.hitTest=function(sp,mouseX,mouseY){
 			var isHit=false;
+			if ((sp.hitArea instanceof laya.utils.HitArea )){
+				return sp.hitArea.isHit(mouseX,mouseY);
+			}
 			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough || sp.hitArea){
 				var hitRect=this._rect;
 				if (!sp.mouseThrough){
@@ -2481,9 +2541,13 @@ var Laya=window.Laya=(function(window,document){
 				var evt=this._eventList[i];
 				switch (evt.type){
 					case 'mousedown':
-						_this._isLeftMouse=evt.button===0;
-						_this.initEvent(evt);
-						_this.check(_this._stage,_this.mouseX,_this.mouseY,_this.onMouseDown);
+						if (!MouseManager._isTouchRespond){
+							_this._isLeftMouse=evt.button===0;
+							_this.initEvent(evt);
+							_this.check(_this._stage,_this.mouseX,_this.mouseY,_this.onMouseDown);
+						}
+						else
+						MouseManager._isTouchRespond=false;
 						break ;
 					case 'mouseup':
 						_this._isLeftMouse=evt.button===0;
@@ -2499,6 +2563,7 @@ var Laya=window.Laya=(function(window,document){
 						_this.checkMouseOut();
 						break ;
 					case "touchstart":
+						MouseManager._isTouchRespond=true;
 						_this._isLeftMouse=true;
 						var touches=evt.changedTouches;
 						for (var j=0,n=touches.length;j < n;j++){
@@ -2507,6 +2572,7 @@ var Laya=window.Laya=(function(window,document){
 						}
 						break ;
 					case "touchend":
+						MouseManager._isTouchRespond=true;
 						_this._isLeftMouse=true;
 						now=Browser.now();
 						_this._isDoubleClick=(now-_this._lastClickTimer)< 300;
@@ -2543,6 +2609,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		MouseManager.enabled=true;
+		MouseManager._isTouchRespond=false;
 		__static(MouseManager,
 		['instance',function(){return this.instance=new MouseManager();}
 		]);
@@ -2897,6 +2964,114 @@ var Laya=window.Laya=(function(window,document){
 		GrahamScan._temPList=[];
 		GrahamScan._temArr=[];
 		return GrahamScan;
+	})()
+
+
+	/**
+	*@private
+	*<code>MathUtil</code> 是一个数据处理工具类。
+	*/
+	//class laya.maths.MathUtil
+	var MathUtil=(function(){
+		function MathUtil(){};
+		__class(MathUtil,'laya.maths.MathUtil');
+		MathUtil.subtractVector3=function(l,r,o){
+			o[0]=l[0]-r[0];
+			o[1]=l[1]-r[1];
+			o[2]=l[2]-r[2];
+		}
+
+		MathUtil.lerp=function(left,right,amount){
+			return left *(1-amount)+right *amount;
+		}
+
+		MathUtil.scaleVector3=function(f,b,e){
+			e[0]=f[0] *b;
+			e[1]=f[1] *b;
+			e[2]=f[2] *b;
+		}
+
+		MathUtil.lerpVector3=function(l,r,t,o){
+			var ax=l[0],ay=l[1],az=l[2];
+			o[0]=ax+t *(r[0]-ax);
+			o[1]=ay+t *(r[1]-ay);
+			o[2]=az+t *(r[2]-az);
+		}
+
+		MathUtil.lerpVector4=function(l,r,t,o){
+			var ax=l[0],ay=l[1],az=l[2],aw=l[3];
+			o[0]=ax+t *(r[0]-ax);
+			o[1]=ay+t *(r[1]-ay);
+			o[2]=az+t *(r[2]-az);
+			o[3]=aw+t *(r[3]-aw);
+		}
+
+		MathUtil.slerpQuaternionArray=function(a,Offset1,b,Offset2,t,out,Offset3){
+			var ax=a[Offset1+0],ay=a[Offset1+1],az=a[Offset1+2],aw=a[Offset1+3],bx=b[Offset2+0],by=b[Offset2+1],bz=b[Offset2+2],bw=b[Offset2+3];
+			var omega,cosom,sinom,scale0,scale1;
+			cosom=ax *bx+ay *by+az *bz+aw *bw;
+			if (cosom < 0.0){
+				cosom=-cosom;
+				bx=-bx;
+				by=-by;
+				bz=-bz;
+				bw=-bw;
+			}
+			if ((1.0-cosom)> 0.000001){
+				omega=Math.acos(cosom);
+				sinom=Math.sin(omega);
+				scale0=Math.sin((1.0-t)*omega)/ sinom;
+				scale1=Math.sin(t *omega)/ sinom;
+				}else {
+				scale0=1.0-t;
+				scale1=t;
+			}
+			out[Offset3+0]=scale0 *ax+scale1 *bx;
+			out[Offset3+1]=scale0 *ay+scale1 *by;
+			out[Offset3+2]=scale0 *az+scale1 *bz;
+			out[Offset3+3]=scale0 *aw+scale1 *bw;
+			return out;
+		}
+
+		MathUtil.getRotation=function(x0,y0,x1,y1){
+			return Math.atan2(y1-y0,x1-x0)/ Math.PI *180;
+		}
+
+		MathUtil.sortBigFirst=function(a,b){
+			if (a==b)
+				return 0;
+			return b > a ? 1 :-1;
+		}
+
+		MathUtil.sortSmallFirst=function(a,b){
+			if (a==b)
+				return 0;
+			return b > a ?-1 :1;
+		}
+
+		MathUtil.sortNumBigFirst=function(a,b){
+			return parseFloat(b)-parseFloat(a);
+		}
+
+		MathUtil.sortNumSmallFirst=function(a,b){
+			return parseFloat(a)-parseFloat(b);
+		}
+
+		MathUtil.sortByKey=function(key,bigFirst,forceNum){
+			(bigFirst===void 0)&& (bigFirst=false);
+			(forceNum===void 0)&& (forceNum=true);
+			var _sortFun;
+			if (bigFirst){
+				_sortFun=forceNum ? MathUtil.sortNumBigFirst :MathUtil.sortBigFirst;
+				}else {
+				_sortFun=forceNum ? MathUtil.sortNumSmallFirst :MathUtil.sortSmallFirst;
+			}
+			return function (a,b){
+				return _sortFun(a[key],b[key]);
+			}
+		}
+
+		return MathUtil;
 	})()
 
 
@@ -3671,9 +3846,14 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		SoundManager._stageOnBlur=function(){
+			if (Browser.onIOS && (Browser.onQQBrowser || Browser.onMQQBrowser)&& (Browser.window.top !=Browser.window.self)&& (Laya.__typeof(Browser.document.activeElement,Browser.window.HTMLInputElement)))
+				return;
 			if (SoundManager._musicChannel){
 				if (!SoundManager._musicChannel.isStopped){
 					SoundManager._blurPaused=true;
+					SoundManager._musicLoops=SoundManager._musicChannel.loops;
+					SoundManager._musicCompleteHandler=SoundManager._musicChannel.completeHandler;
+					SoundManager._musicPosition=SoundManager._musicChannel.position;
 					SoundManager._musicChannel.stop();
 				}
 			}
@@ -3681,13 +3861,14 @@ var Laya=window.Laya=(function(window,document){
 
 		SoundManager._stageOnFocus=function(){
 			if (SoundManager._blurPaused){
-				SoundManager.playMusic(SoundManager._tMusic);
+				SoundManager.playMusic(SoundManager._tMusic,SoundManager._musicLoops,SoundManager._musicCompleteHandler,SoundManager._musicPosition);
 				SoundManager._blurPaused=false;
 			}
 		}
 
-		SoundManager.playSound=function(url,loops,complete,soundClass){
+		SoundManager.playSound=function(url,loops,complete,soundClass,startTime){
 			(loops===void 0)&& (loops=1);
+			(startTime===void 0)&& (startTime=0);
 			if (SoundManager._muted)
 				return null;
 			if (url==SoundManager._tMusic){
@@ -3703,7 +3884,7 @@ var Laya=window.Laya=(function(window,document){
 				Loader.cacheRes(url,tSound);
 			};
 			var channel;
-			channel=tSound.play(0,loops);
+			channel=tSound.play(startTime,loops);
 			channel.url=url;
 			channel.volume=(url==SoundManager._tMusic)? SoundManager.musicVolume :SoundManager.soundVolume;
 			channel.completeHandler=complete;
@@ -3718,39 +3899,18 @@ var Laya=window.Laya=(function(window,document){
 			}
 		}
 
-		SoundManager.playMusic=function(url,loops,complete){
+		SoundManager.playMusic=function(url,loops,complete,startTime){
 			(loops===void 0)&& (loops=0);
+			(startTime===void 0)&& (startTime=0);
 			SoundManager._tMusic=url;
 			if (SoundManager._musicChannel)
 				SoundManager._musicChannel.stop();
-			return SoundManager._musicChannel=SoundManager.playSound(url,loops,complete,null);
+			return SoundManager._musicChannel=SoundManager.playSound(url,loops,complete,null,startTime);
 		}
 
-		SoundManager.stopSound=function(url){
-			var i=0;
-			var channel;
-			for (i=SoundManager._channels.length-1;i >=0;i--){
-				channel=SoundManager._channels[i];
-				if (channel.url==url){
-					channel.stop();
-				}
-			}
-		}
-
-		SoundManager.stopAll=function(){
-			var i=0;
-			var channel;
-			for (i=SoundManager._channels.length-1;i >=0;i--){
-				channel=SoundManager._channels[i];
-				channel.stop();
-			}
-		}
-
-		SoundManager.stopMusic=function(){
-			if (SoundManager._musicChannel)
-				SoundManager._musicChannel.stop();
-		}
-
+		SoundManager.stopSound=function(url){}
+		SoundManager.stopAll=function(){}
+		SoundManager.stopMusic=function(){}
 		SoundManager.setSoundVolume=function(volume,url){
 			if (url){
 				SoundManager._setVolume(url,volume);
@@ -3785,6 +3945,9 @@ var Laya=window.Laya=(function(window,document){
 		SoundManager._channels=[];
 		SoundManager._autoStopMusic=false;
 		SoundManager._blurPaused=false;
+		SoundManager._musicLoops=0;
+		SoundManager._musicPosition=0;
+		SoundManager._musicCompleteHandler=null;
 		SoundManager._soundClass=null
 		return SoundManager;
 	})()
@@ -3976,6 +4139,19 @@ var Laya=window.Laya=(function(window,document){
 					var texture=args[0];
 					var ctxi=this.ctx;
 					var pat;
+					if (Render.isWebGL){
+						var tSprite=args[7];
+						if (tSprite){
+							if (args[6]){
+								tSprite.initTexture(texture,args[1],args[2],args[3],args[4],args[6].x,args[6].y);
+								}else {
+								tSprite.initTexture(texture,args[1],args[2],args[3],args[4],0,0);
+							};
+							var ctx=this.ctx;
+							tSprite.render(ctx,x,y);
+						}
+						return;
+					}
 					if (!Render.isConchApp){
 						if (texture.uv !=Texture.DEF_UV){
 							var canvas=new HTMLCanvas("2D");
@@ -4251,6 +4427,13 @@ var Laya=window.Laya=(function(window,document){
 				}
 				ctx.closePath();
 				this._fillAndStroke(args[3],args[4],args[5],args[7]);
+			}
+			this._drawSkin=function(x,y,args){
+				var tSprite=args[0];
+				if (tSprite){
+					var ctx=this.ctx;
+					tSprite.render(ctx,x,y);
+				}
 			}
 			this._drawParticle=function(x,y,args){
 				this.ctx.drawParticle(x+this.x,y+this.y,args[0]);
@@ -5352,7 +5535,6 @@ var Laya=window.Laya=(function(window,document){
 			Sound=Browser.webAudioEnabled?WebAudioSound:AudioSound;;
 			if (Browser.webAudioEnabled)WebAudioSound.initWebAudio();;
 			Browser.enableTouch=(('ontouchstart' in window)|| window.DocumentTouch && document instanceof DocumentTouch);
-			window.focus();
 			SoundManager._soundClass=Sound;;
 			Render._mainCanvas=Render._mainCanvas||HTMLCanvas.create('2D');
 			if (Browser.canvas)return;
@@ -6455,6 +6637,126 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*鼠标点击区域类
+	*/
+	//class laya.utils.HitArea
+	var HitArea=(function(){
+		function HitArea(){
+			this.hit=null;
+			this.unHit=null;
+		}
+
+		__class(HitArea,'laya.utils.HitArea');
+		var __proto=HitArea.prototype;
+		/**
+		*是否包含某个点
+		*@param x
+		*@param y
+		*@return
+		*
+		*/
+		__proto.isHit=function(x,y){
+			if (!HitArea.isHitGraphic(x,y,this.hit))return false;
+			return !HitArea.isHitGraphic(x,y,this.unHit);
+		}
+
+		HitArea.isHitGraphic=function(x,y,graphic){
+			if (!graphic)return false;
+			var cmds;
+			cmds=graphic.cmds;
+			if (!cmds&&graphic._one){
+				cmds=HitArea._tCmds;
+				cmds.length=1;
+				cmds[0]=graphic._one;
+			}
+			if (!cmds)return false;
+			var i=0,len=0;
+			len=cmds.length;
+			var cmd;
+			for (i=0;i < len;i++){
+				cmd=cmds[i];
+				if (!cmd)continue ;
+				var context=Render._context;
+				switch (cmd.callee){
+					case context._translate:
+					case 6:
+						x-=cmd[0];
+						y-=cmd[1];
+					default :
+					}
+				if (HitArea.isHitCmd(x,y,cmd))return true;
+			}
+			return false;
+		}
+
+		HitArea.isHitCmd=function(x,y,cmd){
+			if (!cmd)return false;
+			var context=Render._context;
+			switch (cmd.callee){
+				case context._drawRect:
+				case 13:
+					HitArea._rec.setTo(cmd[0],cmd[1],cmd[2],cmd[3]);
+					return HitArea._rec.contains(x,y);
+					break ;
+				case context._drawCircle:
+				case context._fillCircle:
+				case 14:;
+					var d=NaN;
+					x-=cmd[0];
+					y-=cmd[1];
+					d=x *x+y *y;
+					return d < cmd[2] *cmd[2];
+					break ;
+				case context._drawPoly:
+				case 18:
+					x-=cmd[0];
+					y-=cmd[1];
+					return HitArea.ptInPolygon(x,y,cmd[2]);
+					break ;
+				default :
+					return false;
+				}
+			return false;
+		}
+
+		HitArea.ptInPolygon=function(x,y,areaPoints){
+			var p;
+			p=HitArea._ptPoint;
+			p.setTo(x,y);
+			var nCross=0;
+			var p1x=NaN,p1y=NaN,p2x=NaN,p2y=NaN;
+			var len=0;
+			len=areaPoints.length;
+			for (var i=0;i < len;i+=2){
+				p1x=areaPoints[i];
+				p1y=areaPoints[i+1];
+				p2x=areaPoints[(i+2)% len];
+				p2y=areaPoints[(i+3)% len];
+				var p1=areaPoints[i];
+				var p2=areaPoints[(i+1)% areaPoints.length];
+				if (p1y==p2y)
+					continue ;
+				if (p.y < Math.min(p1y,p2y))
+					continue ;
+				if (p.y >=Math.max(p1y,p2y))
+					continue ;
+				var x=(p.y-p1y)*(p2x-p1x)/ (p2y-p1y)+p1x;
+				if (x > p.x){
+					nCross++;
+				}
+			}
+			return (nCross % 2==1);
+		}
+
+		HitArea._tCmds=[];
+		__static(HitArea,
+		['_rec',function(){return this._rec=new Rectangle();},'_ptPoint',function(){return this._ptPoint=new Point();}
+		]);
+		return HitArea;
+	})()
+
+
+	/**
 	*<code>HTMLChar</code> 是一个 HTML 字符类。
 	*/
 	//class laya.utils.HTMLChar
@@ -6689,7 +6991,7 @@ var Laya=window.Laya=(function(window,document){
 			Stat.FPS=Math.round((count *1000)/ (timer-Stat._timer));
 			if (Stat._canvas){
 				Stat.trianglesFaces=Math.round(Stat.trianglesFaces / count);
-				Stat.drawCall=Math.round(Stat.drawCall / count);
+				Stat.drawCall=Math.round(Stat.drawCall / count)-2;
 				Stat.shaderCall=Math.round(Stat.shaderCall / count);
 				Stat.spriteCount=Math.round(Stat.spriteCount / count)-1;
 				Stat.canvasNormal=Math.round(Stat.canvasNormal / count);
@@ -7416,7 +7718,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		Utils.bind=function(fun,scope){
-			var rst;
+			var rst=fun;
 			rst=fun.bind(scope);;
 			return rst;
 		}
@@ -7600,7 +7902,7 @@ var Laya=window.Laya=(function(window,document){
 		/**
 		*开始清理状态，准备销毁
 		*/
-		__proto.startDispose=function(){
+		__proto.startDispose=function(key){
 			var str;
 			for (str in this.useDic){
 				this.useDic[str]=false;
@@ -7673,40 +7975,118 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*加速度x/y/z的单位均为m/s²。
-	*在硬件（陀螺仪）不支持的情况下，alpha、beta和gamma值为null。
-	*
-	*@author Survivor
+	*<code>LayoutStyle</code> 是一个布局样式类。
 	*/
-	//class laya.device.motion.AccelerationInfo
-	var AccelerationInfo=(function(){
-		function AccelerationInfo(){
-			this.x=NaN;
-			this.y=NaN;
-			this.z=NaN;
+	//class laya.ui.LayoutStyle
+	var LayoutStyle=(function(){
+		function LayoutStyle(){
+			this.enable=false;
+			this.top=NaN;
+			this.bottom=NaN;
+			this.left=NaN;
+			this.right=NaN;
+			this.centerX=NaN;
+			this.centerY=NaN;
+			this.anchorX=NaN;
+			this.anchorY=NaN;
 		}
 
-		__class(AccelerationInfo,'laya.device.motion.AccelerationInfo');
-		return AccelerationInfo;
+		__class(LayoutStyle,'laya.ui.LayoutStyle');
+		__static(LayoutStyle,
+		['EMPTY',function(){return this.EMPTY=new LayoutStyle();}
+		]);
+		return LayoutStyle;
 	})()
 
 
 	/**
-	*保存旋转信息的类。请勿修改本类的属性。
-	*@author Survivor
+	*<code>Styles</code> 定义了组件常用的样式属性。
 	*/
-	//class laya.device.motion.RotationInfo
-	var RotationInfo=(function(){
-		function RotationInfo(){
-			this.absolute=false;
-			this.alpha=NaN;
-			this.beta=NaN;
-			this.gamma=NaN;
-			this.compassAccuracy=NaN;
+	//class laya.ui.Styles
+	var Styles=(function(){
+		function Styles(){};
+		__class(Styles,'laya.ui.Styles');
+		Styles.labelColor="#000000";
+		Styles.buttonStateNum=3;
+		Styles.scrollBarMinNum=15;
+		Styles.scrollBarDelayTime=500;
+		__static(Styles,
+		['defaultSizeGrid',function(){return this.defaultSizeGrid=[4,4,4,4,0];},'labelPadding',function(){return this.labelPadding=[2,2,2,2];},'inputLabelPadding',function(){return this.inputLabelPadding=[1,1,1,3];},'buttonLabelColors',function(){return this.buttonLabelColors=["#32556b","#32cc6b","#ff0000","#C0C0C0"];},'comboBoxItemColors',function(){return this.comboBoxItemColors=["#5e95b6","#ffffff","#000000","#8fa4b1","#ffffff"];}
+		]);
+		return Styles;
+	})()
+
+
+	/**
+	*<code>UIUtils</code> 是文本工具集。
+	*/
+	//class laya.ui.UIUtils
+	var UIUtils=(function(){
+		function UIUtils(){};
+		__class(UIUtils,'laya.ui.UIUtils');
+		UIUtils.fillArray=function(arr,str,type){
+			var temp=arr.concat();
+			if (str){
+				var a=str.split(",");
+				for (var i=0,n=Math.min(temp.length,a.length);i < n;i++){
+					var value=a[i];
+					temp[i]=(value=="true" ? true :(value=="false" ? false :value));
+					if (type !=null)temp[i]=type(value);
+				}
+			}
+			return temp;
 		}
 
-		__class(RotationInfo,'laya.device.motion.RotationInfo');
-		return RotationInfo;
+		UIUtils.toColor=function(color){
+			var str=color.toString("16");
+			while (str.length < 6)str="0"+str;
+			return "#"+str;
+		}
+
+		UIUtils.gray=function(traget,isGray){
+			(isGray===void 0)&& (isGray=true);
+			if (isGray){
+				UIUtils.addFilter(traget,UIUtils.grayFilter);
+				}else {
+				UIUtils.clearFilter(traget,ColorFilter);
+			}
+		}
+
+		UIUtils.addFilter=function(target,filter){
+			var filters=target.filters || [];
+			filters.push(filter);
+			target.filters=filters;
+		}
+
+		UIUtils.clearFilter=function(target,filterType){
+			var filters=target.filters;
+			if (filters !=null && filters.length > 0){
+				for (var i=filters.length-1;i >-1;i--){
+					var filter=filters[i];
+					if (Laya.__typeof(filter,filterType))filters.splice(i,1);
+				}
+				target.filters=filters;
+			}
+		}
+
+		__static(UIUtils,
+		['grayFilter',function(){return this.grayFilter=new ColorFilter([0.3086,0.6094,0.082,0,0,0.3086,0.6094,0.082,0,0,0.3086,0.6094,0.082,0,0,0,0,0,1,0]);}
+		]);
+		return UIUtils;
+	})()
+
+
+	/**全局配置*/
+	//class UIConfig
+	var UIConfig=(function(){
+		function UIConfig(){};
+		__class(UIConfig,'UIConfig');
+		UIConfig.touchScrollEnable=true;
+		UIConfig.mouseWheelEnable=true;
+		UIConfig.showButtons=true;
+		UIConfig.popupBgColor="#000000";
+		UIConfig.popupBgAlpha=0.5;
+		return UIConfig;
 	})()
 
 
@@ -8694,6 +9074,98 @@ var Laya=window.Laya=(function(window,document){
 	})()
 
 
+	/**
+	*...
+	*@author laya
+	*/
+	//class laya.webgl.shader.ShaderValue
+	var ShaderValue=(function(){
+		function ShaderValue(){}
+		__class(ShaderValue,'laya.webgl.shader.ShaderValue');
+		return ShaderValue;
+	})()
+
+
+	/**
+	*...
+	*@author
+	*/
+	//class laya.webgl.shader.d2.fillTexture.FillTextureSprite
+	var FillTextureSprite=(function(){
+		function FillTextureSprite(){
+			this.mVBBuffer=null;
+			this.mIBBuffer=null;
+			this.mVBData=null;
+			this.mIBData=null;
+			this.mEleNum=0;
+			this.mShaderValue=null;
+			this.mTexture=null;
+			this.transform=null;
+		}
+
+		__class(FillTextureSprite,'laya.webgl.shader.d2.fillTexture.FillTextureSprite');
+		var __proto=FillTextureSprite.prototype;
+		__proto.initTexture=function(texture,x,y,width,height,offsetX,offsetY){
+			this.mTexture=texture;
+			if (this.mVBBuffer){
+				this.mVBBuffer.dispose();
+			}
+			if (this.mIBBuffer){
+				this.mIBBuffer.dispose();
+			}
+			this.mVBBuffer=VertexBuffer2D.create();
+			this.mIBBuffer=IndexBuffer2D.create();
+			this.mIBData=new Uint16Array();
+			var tVBArray;
+			var tIBArray;
+			tVBArray=[];
+			var w=texture.bitmap.width,h=texture.bitmap.height,uv=texture.uv;
+			var tTextureX=uv[0] *w;
+			var tTextureY=uv[1] *h;
+			var tTextureW=(uv[2]-uv[0])*w;
+			var tTextureH=(uv[5]-uv[3])*h;
+			var tU=width / tTextureW;
+			var tV=height / tTextureH;
+			var tWidth=width;
+			var tHeight=height;
+			var tRed=1;
+			var tGreed=1;
+			var tBlue=1;
+			var tAlpha=1;
+			tVBArray.push(x,y,0,0,tRed,tGreed,tBlue,tAlpha);
+			tVBArray.push(x+tWidth,y,tU,0,tRed,tGreed,tBlue,tAlpha);
+			tVBArray.push(x+tWidth,y+tHeight,tU,tV,tRed,tGreed,tBlue,tAlpha);
+			tVBArray.push(x,y+tHeight,0,tV,tRed,tGreed,tBlue,tAlpha);
+			tIBArray=[];
+			tIBArray.push(0,1,3,3,1,2);
+			this.mEleNum=tIBArray.length;
+			this.mVBData=new Float32Array(tVBArray);
+			this.mIBData=new Uint16Array(tIBArray);
+			this.mVBBuffer.append(this.mVBData);
+			this.mIBBuffer.append(this.mIBData);
+			this.mTexture=texture;
+			if (this.mShaderValue==null){
+				this.mShaderValue=new FillTextureShaderValue();
+			}
+			this.mShaderValue.u_offset[0]=-offsetX / tTextureW;
+			this.mShaderValue.u_offset[1]=-offsetY / tTextureH;
+			this.mShaderValue.u_texRange[0]=tTextureX / w;
+			this.mShaderValue.u_texRange[1]=tTextureW / w;
+			this.mShaderValue.u_texRange[2]=tTextureY / h;
+			this.mShaderValue.u_texRange[3]=tTextureH / h;
+		}
+
+		__proto.render=function(context,x,y){
+			if (Render.isWebGL){
+				this.mShaderValue.textureHost=this.mTexture;
+				context.setIBVB(x,y,this.mIBBuffer,this.mVBBuffer,this.mEleNum,this.transform,FillTextureShader.shader,this.mShaderValue,0,0);
+			}
+		}
+
+		return FillTextureSprite;
+	})()
+
+
 	//class laya.webgl.shader.d2.Shader2D
 	var Shader2D=(function(){
 		function Shader2D(){
@@ -8826,14 +9298,70 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*...
-	*@author laya
+	*这里销毁的问题，后面待确认
+	*@author ...
 	*/
-	//class laya.webgl.shader.ShaderValue
-	var ShaderValue=(function(){
-		function ShaderValue(){}
-		__class(ShaderValue,'laya.webgl.shader.ShaderValue');
-		return ShaderValue;
+	//class laya.webgl.shader.d2.skinAnishader.SkinMesh
+	var SkinMesh=(function(){
+		function SkinMesh(){
+			this.mVBBuffer=null;
+			this.mIBBuffer=null;
+			this.mVBData=null;
+			this.mIBData=null;
+			this.mEleNum=0;
+			this.mShaderValue=null;
+			this.mTexture=null;
+			this.transform=null;
+		}
+
+		__class(SkinMesh,'laya.webgl.shader.d2.skinAnishader.SkinMesh');
+		var __proto=SkinMesh.prototype;
+		__proto.init=function(texture,vs,ps){
+			this.mVBBuffer=VertexBuffer2D.create();
+			this.mIBBuffer=IndexBuffer2D.create();
+			this.mIBData=new Uint16Array();
+			var tVBArray;
+			var tIBArray;
+			if (vs){
+				tVBArray=vs;
+				}else {
+				tVBArray=[];
+				var tWidth=texture.width;
+				var tHeight=texture.height;
+				var tRed=1;
+				var tGreed=1;
+				var tBlue=1;
+				var tAlpha=1;
+				tVBArray.push(0,0,0,0,tRed,tGreed,tBlue,tAlpha);
+				tVBArray.push(tWidth,0,1,0,tRed,tGreed,tBlue,tAlpha);
+				tVBArray.push(tWidth,tHeight,1,1,tRed,tGreed,tBlue,tAlpha);
+				tVBArray.push(0,tHeight,0,1,tRed,tGreed,tBlue,tAlpha);
+			}
+			if (ps){
+				tIBArray=ps;
+				}else {
+				tIBArray=[];
+				tIBArray.push(0,1,3,3,1,2);
+			}
+			this.mEleNum=tIBArray.length;
+			this.mVBData=new Float32Array(tVBArray);
+			this.mIBData=new Uint16Array(tIBArray);
+			this.mVBBuffer.append(this.mVBData);
+			this.mIBBuffer.append(this.mIBData);
+			this.mTexture=texture;
+			if (this.mShaderValue==null){
+				this.mShaderValue=new aniShaderValue();
+			}
+		}
+
+		__proto.render=function(context,x,y){
+			if (Render.isWebGL){
+				this.mShaderValue.textureHost=this.mTexture;
+				(context).setIBVB(x,y,this.mIBBuffer,this.mVBBuffer,this.mEleNum,this.transform,SkinAniShader.shader,this.mShaderValue,0,0);
+			}
+		}
+
+		return SkinMesh;
 	})()
 
 
@@ -10378,6 +10906,48 @@ var Laya=window.Laya=(function(window,document){
 
 	/**
 	*...
+	*@author ...
+	*/
+	//class laya.webgl.utils.MatirxArray
+	var MatirxArray=(function(){
+		function MatirxArray(){}
+		__class(MatirxArray,'laya.webgl.utils.MatirxArray');
+		MatirxArray.ArrayMul=function(a,b,o){
+			if (!a){
+				MatirxArray.copyArray(b,o);
+				return;
+			}
+			if (!b){
+				MatirxArray.copyArray(a,o);
+				return;
+			};
+			var ai0=NaN,ai1=NaN,ai2=NaN,ai3=NaN;
+			for (var i=0;i < 4;i++){
+				ai0=a[i];
+				ai1=a[i+4];
+				ai2=a[i+8];
+				ai3=a[i+12];
+				o[i]=ai0 *b[0]+ai1 *b[1]+ai2 *b[2]+ai3 *b[3];
+				o[i+4]=ai0 *b[4]+ai1 *b[5]+ai2 *b[6]+ai3 *b[7];
+				o[i+8]=ai0 *b[8]+ai1 *b[9]+ai2 *b[10]+ai3 *b[11];
+				o[i+12]=ai0 *b[12]+ai1 *b[13]+ai2 *b[14]+ai3 *b[15];
+			}
+		}
+
+		MatirxArray.copyArray=function(f,t){
+			if (!f)return;
+			if (!t)return;
+			for (var i=0;i < f.length;i++){
+				t[i]=f[i];
+			}
+		}
+
+		return MatirxArray;
+	})()
+
+
+	/**
+	*...
 	*@author laya
 	*/
 	//class laya.webgl.utils.RenderState2D
@@ -10713,6 +11283,39 @@ var Laya=window.Laya=(function(window,document){
 				AtlasResourceManager._atlasRestore++;
 				((texture.bitmap).enableMerageInAtlas)&& (AtlasResourceManager.instance.addToAtlas(texture));
 			}
+			RunDriver.getTexturePixels=function (value,x,y,width,height){
+				var tSprite=new Sprite();
+				tSprite.x=-x;
+				tSprite.y=-y;
+				tSprite.graphics.drawTexture(value,0,0,value.sourceWidth,value.sourceHeight);
+				var tRenderTarget=RenderTarget2D.create(width,height);
+				tRenderTarget.start();
+				tRenderTarget.clear(0,0,0,0);
+				tSprite.render(Render.context,0,0);
+				(Render.context.ctx).flush();
+				tRenderTarget.end();
+				var tUint8Array=tRenderTarget.getData(0,0,width,height);
+				var tArray=[];
+				var tIndex=0;
+				for (var i=height-1;i >=0;i--){
+					for (var j=0;j < width;j++){
+						tIndex=(i *width+j)*4;
+						tArray.push(tUint8Array[tIndex]);
+						tArray.push(tUint8Array[tIndex+1]);
+						tArray.push(tUint8Array[tIndex+2]);
+						tArray.push(tUint8Array[tIndex+3]);
+					}
+				}
+				return tArray;
+			}
+			RunDriver.fillTextureShader=function (value,x,y,width,height){
+				var tFillTetureSprite=new FillTextureSprite();
+				return tFillTetureSprite;
+			}
+			RunDriver.skinAniSprite=function (){
+				var tSkinSprite=new SkinMesh()
+				return tSkinSprite;
+			}
 			Filter._filterStart=function (scope,sprite,context,x,y){
 				var b=scope.getValue("bounds");
 				var source=RenderTarget2D.create(b.width,b.height);
@@ -11046,6 +11649,612 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*@private
+	*/
+	//class laya.ani.AnimationState
+	var AnimationState=(function(){
+		function AnimationState(){}
+		__class(AnimationState,'laya.ani.AnimationState');
+		AnimationState.stopped=0;
+		AnimationState.paused=1;
+		AnimationState.playing=2;
+		return AnimationState;
+	})()
+
+
+	/**
+	*...
+	*@author
+	*/
+	//class laya.ani.bone.Bone
+	var Bone=(function(){
+		function Bone(){
+			this.name=null;
+			this._parent=null;
+			this.length=10;
+			this.transform=null;
+			this.sprite=null;
+			this._children=[];
+			this.resultTransform=new Transform();
+			this.resultMatrix=new Matrix();
+		}
+
+		__class(Bone,'laya.ani.bone.Bone');
+		var __proto=Bone.prototype;
+		__proto.update=function(pMatrix){
+			var tResultMatrix;
+			if (pMatrix){
+				tResultMatrix=this.resultTransform.getMatrix();
+				Matrix.mul(tResultMatrix,pMatrix,this.resultMatrix);
+				}else {
+				if (this._parent){
+					tResultMatrix=this.resultTransform.getMatrix();
+					Matrix.mul(tResultMatrix,this._parent.resultMatrix,this.resultMatrix);
+					}else {
+					tResultMatrix=this.resultTransform.getMatrix();
+					tResultMatrix.copyTo(this.resultMatrix);
+				}
+			};
+			var i=0,n=0;
+			var tBone;
+			for (i=0,n=this._children.length;i < n;i++){
+				tBone=this._children[i];
+				tBone.update();
+			}
+		}
+
+		__proto.updateDraw=function(x,y){
+			if (this.sprite){
+				this.sprite.x=x+this.resultMatrix.tx;
+				this.sprite.y=y+this.resultMatrix.ty;
+				}else {
+				this.sprite=new Sprite();
+				this.sprite.graphics.drawCircle(0,0,5,"#ff0000");
+				Laya.stage.addChild(this.sprite);
+				this.sprite.x=x+this.resultMatrix.tx;
+				this.sprite.y=y+this.resultMatrix.ty;
+			};
+			var i=0,n=0;
+			var tBone;
+			for (i=0,n=this._children.length;i < n;i++){
+				tBone=this._children[i];
+				tBone.updateDraw(x,y);
+			}
+		}
+
+		__proto.addChild=function(bone){
+			this._children.push(bone);
+			bone._parent=this;
+		}
+
+		__proto.findBone=function(boneName){
+			if (this.name==boneName){
+				return this;
+				}else {
+				var i=0,n=0;
+				var tBone;
+				var tResult;
+				for (i=0,n=this._children.length;i < n;i++){
+					tBone=this._children[i];
+					tResult=tBone.findBone(boneName);
+					if (tResult){
+						return tResult;
+					}
+				}
+			}
+			return null;
+		}
+
+		return Bone;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.ani.bone.BoneSlot
+	var BoneSlot=(function(){
+		function BoneSlot(){
+			this.name=null;
+			this.parent=null;
+			this.attachmentName=null;
+			this.srcDisplayIndex=-1;
+			this.type="src";
+			this.templet=null;
+			this.currSlotData=null;
+			this.currTexture=null;
+			this.currDisplayData=null;
+			this.displayIndex=-1;
+			this._diyTexture=null;
+			this._parentMatrix=null;
+			this._resultMatrix=null;
+		}
+
+		__class(BoneSlot,'laya.ani.bone.BoneSlot');
+		var __proto=BoneSlot.prototype;
+		/**
+		*设置要显示的插槽数据
+		*@param slotData
+		*@param disIndex
+		*/
+		__proto.showSlotData=function(slotData){
+			this.currSlotData=slotData;
+			this.displayIndex=this.srcDisplayIndex;
+			this.currDisplayData=null;
+			this.currTexture=null;
+		}
+
+		/**
+		*通过名字显示指定对象
+		*@param name
+		*/
+		__proto.showDisplayByName=function(name){
+			this.showDisplayByIndex(this.currSlotData.getDisplayByName(name));
+		}
+
+		/**
+		*指定显示对象
+		*@param index
+		*/
+		__proto.showDisplayByIndex=function(index){
+			if (this.currSlotData && index >-1 && index < this.currSlotData.displayArr.length){
+				this.displayIndex=index;
+				this.currDisplayData=this.currSlotData.displayArr[index];
+				if (this.currDisplayData){
+					var tName=this.currDisplayData.name;
+					this.currTexture=this.templet.getTexture(tName);
+					if (this.currTexture && Render.isWebGL && this.currDisplayData.type==0 && this.currDisplayData.uvs){
+						this.currTexture=new Texture(this.currTexture.bitmap,this.currDisplayData.uvs);
+					}
+				}
+				}else {
+				this.displayIndex=-1;
+				this.currDisplayData=null;
+				this.currTexture=null;
+			}
+		}
+
+		/**
+		*替换皮肤
+		*@param _texture
+		*/
+		__proto.replaceSkin=function(_texture){
+			this._diyTexture=_texture;
+		}
+
+		/**
+		*保存父矩阵的索引
+		*@param parentMatrix
+		*/
+		__proto.setParentMatrix=function(parentMatrix){
+			this._parentMatrix=parentMatrix;
+		}
+
+		/**
+		*把纹理画到Graphics上
+		*@param graphics
+		*@param noUseSave
+		*/
+		__proto.draw=function(graphics,boneMatrixArray,sprite,noUseSave){
+			(noUseSave===void 0)&& (noUseSave=false);
+			if ((this._diyTexture==null && this.currTexture==null)|| this.currDisplayData==null){
+				if (!(this.currDisplayData && this.currDisplayData.type==3)){
+					return;
+				}
+			};
+			var tTexture=this.currTexture;
+			if (this._diyTexture)tTexture=this._diyTexture;
+			var tSkinSprite;
+			switch (this.currDisplayData.type){
+				case 0:
+					if (graphics){
+						var tCurrentMatrix=this.getDisplayMatrix();
+						if (this._parentMatrix){
+							var tRotateKey=false;
+							if (tCurrentMatrix){
+								Matrix.mul(tCurrentMatrix,this._parentMatrix,Matrix.TEMP);
+								var tResultMatrix;
+								if (noUseSave){
+									if (this._resultMatrix==null)this._resultMatrix=new Matrix();
+									tResultMatrix=this._resultMatrix;
+									}else {
+									tResultMatrix=new Matrix();
+								}
+								if (!Render.isWebGL && this.currDisplayData.uvs){
+									var tTestMatrix=new Matrix(1,0,0,1);
+									if (this.currDisplayData.uvs[1] > this.currDisplayData.uvs[5]){
+										tTestMatrix.d=-1;
+									}
+									if (this.currDisplayData.uvs[0] > this.currDisplayData.uvs[4]
+										&& this.currDisplayData.uvs[1] > this.currDisplayData.uvs[5]){
+										tRotateKey=true;
+										tTestMatrix.rotate(-Math.PI/2);
+									}
+									Matrix.mul(tTestMatrix,Matrix.TEMP,tResultMatrix);
+									}else {
+									Matrix.TEMP.copyTo(tResultMatrix);
+								}
+								if (tRotateKey){
+									graphics.drawTexture(tTexture,-this.currDisplayData.height / 2,-this.currDisplayData.width / 2,this.currDisplayData.height,this.currDisplayData.width,tResultMatrix);
+									}else {
+									graphics.drawTexture(tTexture,-this.currDisplayData.width / 2,-this.currDisplayData.height / 2,this.currDisplayData.width,this.currDisplayData.height,tResultMatrix);
+								}
+							}
+						}
+					}
+					break ;
+				case 1:
+					tSkinSprite=RunDriver.skinAniSprite();
+					if (tSkinSprite==null){
+						return;
+					}
+					graphics.drawSkin(tSkinSprite);
+					var tVBArray=[];
+					var tIBArray=[];
+					var tRed=1;
+					var tGreed=1;
+					var tBlue=1;
+					var tAlpha=1;
+					if (this.currDisplayData.bones==null){
+						for (var i=0,ii=0;i < this.currDisplayData.weights.length && ii< this.currDisplayData.uvs.length;){
+							var tX=this.currDisplayData.weights[i++];
+							var tY=this.currDisplayData.weights[i++];
+							tVBArray.push(tX,tY,this.currDisplayData.uvs[ii++],this.currDisplayData.uvs[ii++],tRed,tGreed,tBlue,tAlpha);
+						};
+						var tTriangleNum=this.currDisplayData.triangles.length / 3;
+						for (i=0;i < tTriangleNum;i++){
+							tIBArray.push(this.currDisplayData.triangles[i *3]);
+							tIBArray.push(this.currDisplayData.triangles[i *3+1]);
+							tIBArray.push(this.currDisplayData.triangles[i *3+2]);
+						}
+						tSkinSprite.init(this.currTexture,tVBArray,tIBArray);
+						var tCurrentMatrix2=this.getDisplayMatrix();
+						if (this._parentMatrix){
+							if (tCurrentMatrix2){
+								Matrix.mul(tCurrentMatrix2,this._parentMatrix,Matrix.TEMP);
+								var tResultMatrix2;
+								if (noUseSave){
+									if (this._resultMatrix==null)this._resultMatrix=new Matrix();
+									tResultMatrix2=this._resultMatrix;
+									}else {
+									tResultMatrix2=new Matrix();
+								}
+								Matrix.TEMP.copyTo(tResultMatrix2);
+								tSkinSprite.transform=tResultMatrix2;
+							}
+						}
+						}else {
+						this.skinMesh(boneMatrixArray,tSkinSprite);
+					}
+					break ;
+				case 2:
+					tSkinSprite=RunDriver.skinAniSprite();
+					if (tSkinSprite==null){
+						return;
+					}
+					graphics.drawSkin(tSkinSprite);
+					this.skinMesh(boneMatrixArray,tSkinSprite);
+					break ;
+				case 3:
+					break ;
+				}
+		}
+
+		/**
+		*画路径
+		*@param boneMatrixArray
+		*@param graphics
+		*/
+		__proto.drawPath=function(boneMatrixArray,graphics){
+			var tBones=this.currDisplayData.bones;
+			var tWeights=this.currDisplayData.weights;
+			var tTriangles=this.currDisplayData.triangles;
+			var tVBArray=[];
+			var tIBArray=[];
+			var tRx=0;
+			var tRy=0;
+			var nn=0;
+			var tMatrix;
+			var tX=NaN;
+			var tY=NaN;
+			var tB=0;
+			var tWeight=0;
+			var tVertices=[];
+			var i=0,j=0,n=0;
+			var tRed=1;
+			var tGreed=1;
+			var tBlue=1;
+			var tAlpha=1;
+			for (i=0,n=tBones.length;i < n;){
+				nn=tBones[i++]+i;
+				tRx=0,tRy=0;
+				for (;i < nn;i++){
+					tMatrix=boneMatrixArray[tBones[i]]
+					tX=tWeights[tB];
+					tY=tWeights[tB+1];
+					tWeight=tWeights[tB+2];
+					tRx+=(tX *tMatrix.a+tY *tMatrix.c+tMatrix.tx)*tWeight;
+					tRy+=(tX *tMatrix.b+tY *tMatrix.d+tMatrix.ty)*tWeight;
+					tB+=3;
+				}
+				tVertices.push(tRx,tRy);
+			}
+			for (i=0;i < tVertices.length;){
+				tRx=tVertices[i++];
+				tRy=tVertices[i++];
+				graphics.drawCircle(tRx,tRy,2.5,"#ff0000");
+				tVBArray.push(tRx,tRy);
+			};
+			var tNum=10;
+			var tOut=[];
+			for (var i=0;i < tNum;i++){
+				this.addCurvePosition(i / tNum,tVertices[0],tVertices[1],tVertices[2],tVertices[3],tVertices[4],tVertices[5],tVertices[6],tVertices[7],tOut,i *3,true);
+			}
+			for (i=0;i < tNum;i++){
+				graphics.drawCircle(tOut[i *3],tOut[i*3+1],2.5,"#00ff00");
+			}
+		}
+
+		__proto.addCurvePosition=function(p,x1,y1,cx1,cy1,cx2,cy2,x2,y2,out,o,tangents){
+			if (p==0)p=0.0001;
+			var tt=p *p,ttt=tt *p,u=1-p,uu=u *u,uuu=uu *u;
+			var ut=u *p,ut3=ut *3,uut3=u *ut3,utt3=ut3 *p;
+			var x=x1 *uuu+cx1 *uut3+cx2 *utt3+x2 *ttt,y=y1 *uuu+cy1 *uut3+cy2 *utt3+y2 *ttt;
+			out[o]=x;
+			out[o+1]=y;
+			if (tangents)out[o+2]=Math.atan2(y-(y1 *uu+cy1 *ut *2+cy2 *tt),x-(x1 *uu+cx1 *ut *2+cx2 *tt));
+		}
+
+		/**
+		*显示蒙皮动画
+		*@param boneMatrixArray 当前帧的骨骼矩阵
+		*/
+		__proto.skinMesh=function(boneMatrixArray,skinSprite){
+			var tBones=this.currDisplayData.bones;
+			var tUvs=this.currDisplayData.uvs;
+			var tWeights=this.currDisplayData.weights;
+			var tTriangles=this.currDisplayData.triangles;
+			var tVBArray=[];
+			var tIBArray=[];
+			var tRx=0;
+			var tRy=0;
+			var nn=0;
+			var tMatrix;
+			var tX=NaN;
+			var tY=NaN;
+			var tB=0;
+			var tWeight=0;
+			var tVertices=[];
+			var i=0,j=0,n=0;
+			var tRed=1;
+			var tGreed=1;
+			var tBlue=1;
+			var tAlpha=1;
+			for (i=0,n=tBones.length;i < n;){
+				nn=tBones[i++]+i;
+				tRx=0,tRy=0;
+				for (;i < nn;i++){
+					tMatrix=boneMatrixArray[tBones[i]]
+					tX=tWeights[tB];
+					tY=tWeights[tB+1];
+					tWeight=tWeights[tB+2];
+					tRx+=(tX *tMatrix.a+tY *tMatrix.c+tMatrix.tx)*tWeight;
+					tRy+=(tX *tMatrix.b+tY *tMatrix.d+tMatrix.ty)*tWeight;
+					tB+=3;
+				}
+				tVertices.push(tRx,tRy);
+			}
+			for (i=0,j=0;i < tVertices.length && j < tUvs.length;){
+				tRx=tVertices[i++];
+				tRy=tVertices[i++];
+				tVBArray.push(tRx,tRy,tUvs[j++],tUvs[j++],tRed,tGreed,tBlue,tAlpha);
+			}
+			for (i=0,n=tTriangles.length;i < n;i++){
+				tIBArray.push(tTriangles[i]);
+			}
+			skinSprite.init(this.currTexture,tVBArray,tIBArray);
+		}
+
+		/**
+		*画骨骼的起始点，方便调试
+		*@param graphics
+		*/
+		__proto.drawBonePoint=function(graphics){
+			if (graphics && this._parentMatrix){
+				graphics.drawCircle(this._parentMatrix.tx,this._parentMatrix.ty,5,"#ff0000");
+			}
+		}
+
+		/**
+		*得到显示对象的矩阵
+		*@return
+		*/
+		__proto.getDisplayMatrix=function(){
+			if (this.currDisplayData){
+				return this.currDisplayData.transform.getMatrix();
+			}
+			return null;
+		}
+
+		/**
+		*得到插糟的矩阵
+		*@return
+		*/
+		__proto.getMatrix=function(){
+			return this._resultMatrix;
+		}
+
+		/**
+		*用原始数据拷贝出一个
+		*@return
+		*/
+		__proto.copy=function(){
+			var tBoneSlot=new BoneSlot();
+			tBoneSlot.type="copy";
+			tBoneSlot.name=this.name;
+			tBoneSlot.attachmentName=this.attachmentName;
+			tBoneSlot.srcDisplayIndex=this.srcDisplayIndex;
+			tBoneSlot.parent=this.parent;
+			tBoneSlot.displayIndex=this.displayIndex;
+			tBoneSlot.templet=this.templet;
+			tBoneSlot.currSlotData=this.currSlotData;
+			tBoneSlot.currTexture=this.currTexture;
+			tBoneSlot.currDisplayData=this.currDisplayData;
+			return tBoneSlot;
+		}
+
+		return BoneSlot;
+	})()
+
+
+	/**
+	*...
+	*@author
+	*/
+	//class laya.ani.bone.IkConstraintData
+	var IkConstraintData=(function(){
+		function IkConstraintData(){
+			this.name=null;
+			this.targetBoneName=null;
+			this.bendDirection=1;
+			this.mix=1;
+			this.targetBoneIndex=-1;
+			this.boneNames=[];
+			this.boneIndexs=[];
+		}
+
+		__class(IkConstraintData,'laya.ani.bone.IkConstraintData');
+		return IkConstraintData;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.ani.bone.SkinData
+	var SkinData=(function(){
+		function SkinData(){
+			this.name=null;
+			this.slotArr=[];
+		}
+
+		__class(SkinData,'laya.ani.bone.SkinData');
+		return SkinData;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.ani.bone.SkinSlotDisplayData
+	var SkinSlotDisplayData=(function(){
+		function SkinSlotDisplayData(){
+			this.name=null;
+			this.attachmentName=null;
+			this.type=0;
+			this.transform=null;
+			this.width=NaN;
+			this.height=NaN;
+			this.bones=null;
+			this.uvs=null;
+			this.weights=null;
+			this.triangles=null;
+			this.vertices=null;
+		}
+
+		__class(SkinSlotDisplayData,'laya.ani.bone.SkinSlotDisplayData');
+		return SkinSlotDisplayData;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.ani.bone.SlotData
+	var SlotData=(function(){
+		function SlotData(){
+			this.name=null;
+			this.displayArr=[];
+		}
+
+		__class(SlotData,'laya.ani.bone.SlotData');
+		var __proto=SlotData.prototype;
+		__proto.getDisplayByName=function(name){
+			var tDisplay;
+			for (var i=0,n=this.displayArr.length;i < n;i++){
+				tDisplay=this.displayArr[i];
+				if (tDisplay.attachmentName==name){
+					return i;
+				}
+			}
+			return-1;
+		}
+
+		return SlotData;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.ani.bone.Transform
+	var Transform=(function(){
+		function Transform(){
+			this.skX=0;
+			this.skY=0;
+			this.scX=1;
+			this.scY=1;
+			this.x=0;
+			this.y=0;
+			this.mMatrix=null;
+		}
+
+		__class(Transform,'laya.ani.bone.Transform');
+		var __proto=Transform.prototype;
+		__proto.initData=function(data){
+			if (data.x !=undefined){
+				this.x=data.x;
+			}
+			if (data.y !=undefined){
+				this.y=data.y;
+			}
+			if (data.skX !=undefined){
+				this.skX=data.skX;
+			}
+			if (data.skY !=undefined){
+				this.skY=data.skY;
+			}
+			if (data.scX !=undefined){
+				this.scX=data.scX;
+			}
+			if (data.scY !=undefined){
+				this.scY=data.scY;
+			}
+		}
+
+		__proto.getMatrix=function(){
+			var tMatrix;
+			if (this.mMatrix){
+				tMatrix=this.mMatrix;
+				}else {
+				tMatrix=this.mMatrix=new Matrix();
+			}
+			tMatrix.a=Math.cos(this.skY);
+			if (this.skX !=0 || this.skY !=0){
+				var tAngle=this.skX *Math.PI / 180;
+				var cos=Math.cos(tAngle),sin=Math.sin(tAngle);
+				tMatrix.setTo(this.scX *cos,this.scX *sin,this.scY *-sin,this.scY *cos,this.x,this.y);
+				}else {
+				tMatrix.setTo(this.scX,this.skX,this.skY,this.scY,this.x,this.y);
+			}
+			return tMatrix;
+		}
+
+		return Transform;
+	})()
+
+
+	/**
 	*<code>Node</code> 类用于创建节点对象，节点是最基本的元素。
 	*/
 	//class laya.display.Node extends laya.events.EventDispatcher
@@ -11140,7 +12349,8 @@ var Laya=window.Laya=(function(window,document){
 			if (node===this)return node;
 			if (index >=0 && index <=this._childs.length){
 				if (node._parent===this){
-					this._childs.splice(this.getChildIndex(node),1);
+					var oldIndex=this.getChildIndex(node);
+					this._childs.splice(oldIndex,1);
 					this._childs.splice(index,0,node);
 					if (this.model){
 						this.model.removeChild(node.model);
@@ -11216,6 +12426,7 @@ var Laya=window.Laya=(function(window,document){
 				throw new Error("setChildIndex:The index is out of bounds.");
 			};
 			var oldIndex=this.getChildIndex(node);
+			if (oldIndex < 0)throw new Error("setChildIndex:node is must child of this object.");
 			childs.splice(oldIndex,1);
 			childs.splice(index,0,node);
 			if (this.model){
@@ -11935,14 +13146,18 @@ var Laya=window.Laya=(function(window,document){
 		*/
 		__proto.complete=function(){
 			this.clear();
-			if (this._responseType==="json"){
-				this._data=JSON.parse(this._http.responseText);
-				}else if (this._responseType==="xml"){
-				this._data=Utils.parseXMLFromString(this._http.responseText);
-				}else {
-				this._data=this._http.response || this._http.responseText;
+			try {
+				if (this._responseType==="json"){
+					this._data=JSON.parse(this._http.responseText);
+					}else if (this._responseType==="xml"){
+					this._data=Utils.parseXMLFromString(this._http.responseText);
+					}else {
+					this._data=this._http.response || this._http.responseText;
+				}
+				this.event("complete",(this._data instanceof Array)? [this._data] :this._data);
+				}catch (e){
+				this.error(e.message);
 			}
-			this.event("complete",(this._data instanceof Array)? [this._data] :this._data);
 		}
 
 		/**
@@ -12118,8 +13333,11 @@ var Laya=window.Laya=(function(window,document){
 							var split=this._url.indexOf("/")>=0 ? "/" :"\\";
 							var idx=this._url.lastIndexOf(split);
 							var folderPath=idx >=0 ? this._url.substr(0,idx+1):"";
+							idx=this._url.indexOf("?");
+							var ver;
+							ver=idx >=0 ? this._url.substr(idx):"";
 							for (var i=0,len=toloadPics.length;i < len;i++){
-								toloadPics[i]=folderPath+toloadPics[i];
+								toloadPics[i]=folderPath+toloadPics[i]+ver;
 							}
 							}else {
 							toloadPics=[this._url.replace(".json",".png")];
@@ -12205,7 +13423,7 @@ var Laya=window.Laya=(function(window,document){
 				Loader._loaders[Loader._startIndex].endLoad();
 				Loader._startIndex++;
 				if (Browser.now()-startTimer > Loader.maxTimeOut){
-					console.log("loader callback cost a long time:"+(Browser.now()-startTimer)+")"+" url="+Loader._loaders[Loader._startIndex-1].url);
+					console.log("loader callback cost a long time:"+(Browser.now()-startTimer)+" url="+Loader._loaders[Loader._startIndex-1].url);
 					Laya.timer.frameOnce(1,null,Loader.checkNext);
 					return;
 				}
@@ -12232,8 +13450,8 @@ var Laya=window.Laya=(function(window,document){
 				var res=Loader.loadedMap[url];
 				if ((res instanceof laya.resource.Texture )&& res.bitmap){
 					(res).destroy();
+					delete Loader.loadedMap[url];
 				}
-				delete Loader.loadedMap[url];
 			}
 		}
 
@@ -12470,7 +13688,7 @@ var Laya=window.Laya=(function(window,document){
 				item.progress=0;
 				totalSize+=item.size;
 				items.push(item);
-				var progressHandler=progress ? Handler.create(this,loadProgress,[item]):null;
+				var progressHandler=progress ? Handler.create(this,loadProgress,[item],false):null;
 				this.load(item.url,Handler.create(item,loadComplete,[item]),progressHandler,item.type,item.priority || 1,cache);
 			}
 			function loadComplete (item,content){
@@ -12484,7 +13702,8 @@ var Laya=window.Laya=(function(window,document){
 				if (progress !=null){
 					item.progress=value;
 					var num=0;
-					for (var j=0;j < itemCount;j++){
+					var count=items.length;
+					for (var j=0;j < count;j++){
 						var item1=items[j];
 						num+=item1.size *item1.progress;
 					};
@@ -12845,8 +14064,29 @@ var Laya=window.Laya=(function(window,document){
 			};
 		}
 
+		/**@private */
 		__proto.addTextureToAtlas=function(e){
 			RunDriver.addTextureToAtlas(this);
+		}
+
+		/**
+		*获取Texture上的某个区域的像素点
+		*@param x
+		*@param y
+		*@param width
+		*@param height
+		*@return 返回像素点集合
+		*/
+		__proto.getPixels=function(x,y,width,height){
+			if (Render.isWebGL){
+				return RunDriver.getTexturePixels(this,x,y,width,height);
+				}else {
+				Browser.canvas.size(x+width,y+height);
+				Browser.context.drawImage(this.bitmap.source,0,0);
+				Browser.document.body.appendChild(Browser.canvas.source);
+				var info=Browser.context.getImageData(x,y,width,height);
+			}
+			return info.data;
 		}
 
 		/**激活并获取资源。*/
@@ -12966,7 +14206,8 @@ var Laya=window.Laya=(function(window,document){
 		Texture.createFromTexture=function(texture,x,y,width,height){
 			var rect=Rectangle.TEMP.setTo(x-texture.offsetX,y-texture.offsetY,width,height);
 			var result=rect.intersection(Texture._rect1.setTo(0,0,texture.width,texture.height),Texture._rect2);
-			if (result)var tex=Texture.create(texture,result.x,result.y,result.width,result.height,result.x-rect.x,result.y-rect.y,width,height);
+			if (result)
+				var tex=Texture.create(texture,result.x,result.y,result.width,result.height,result.x-rect.x,result.y-rect.y,width,height);
 			else return null;
 			tex.bitmap.useNum--;
 			return tex;
@@ -12977,135 +14218,6 @@ var Laya=window.Laya=(function(window,document){
 		Texture._rect1=new Rectangle();
 		Texture._rect2=new Rectangle();
 		return Texture;
-	})(EventDispatcher)
-
-
-	/**
-	*Accelerator.instance获取唯一的Accelerator引用，请勿调用构造函数。
-	*
-	*<p>
-	*listen()的回调处理器接受四个参数：
-	*<ol>
-	*<li><b>acceleration</b>:表示用户给予设备的加速度。</li>
-	*<li><b>accelerationIncludingGravity</b>:设备受到的总加速度（包含重力）。</li>
-	*<li><b>rotationRate</b>:设备的自转速率。</li>
-	*<li><b>interval</b>:加速度获取的时间间隔（毫秒）。</li>
-	*</ol>
-	*</p>
-	*<p>
-	*<b>NOTE</b><br/>
-	*如，rotationRate的alpha在apple和moz文档中都是z轴旋转角度，但是实测是x轴旋转角度。为了使各属性表示的值与文档所述相同，实际值与其他属性进行了对调。
-	*其中：
-	*<ul>
-	*<li>alpha使用gamma值。</li>
-	*<li>beta使用alpha值。</li>
-	*<li>gamma使用beta。</li>
-	*</ul>
-	*目前孰是孰非尚未可知，以此为注。
-	*</p>
-	*/
-	//class laya.device.motion.Accelerator extends laya.events.EventDispatcher
-	var Accelerator=(function(_super){
-		function Accelerator(singleton){
-			Accelerator.__super.call(this);
-			this.onDeviceOrientationChange=this.onDeviceOrientationChange.bind(this);
-		}
-
-		__class(Accelerator,'laya.device.motion.Accelerator',_super);
-		var __proto=Accelerator.prototype;
-		/**
-		*侦听加速器运动。
-		*@param observer 回调函数接受4个参数，见类说明。
-		*/
-		__proto.on=function(type,caller,listener,args){
-			_super.prototype.on.call(this,type,caller,listener,args);
-			Browser.window.addEventListener('devicemotion',this.onDeviceOrientationChange);
-			return this;
-		}
-
-		/**
-		*取消侦听加速器。
-		*@param handle 侦听加速器所用处理器。
-		*/
-		__proto.off=function(type,caller,listener,onceOnly){
-			(onceOnly===void 0)&& (onceOnly=false);
-			if (!this.hasListener(type))
-				Browser.window.removeEventListener('devicemotion',this.onDeviceOrientationChange)
-			return _super.prototype.off.call(this,type,caller,listener,onceOnly);
-		}
-
-		__proto.onDeviceOrientationChange=function(e){
-			var interval=e.interval;
-			Accelerator.acceleration.x=e.acceleration.x;
-			Accelerator.acceleration.y=e.acceleration.y;
-			Accelerator.acceleration.z=e.acceleration.z;
-			Accelerator.accelerationIncludingGravity.x=e.accelerationIncludingGravity.x;
-			Accelerator.accelerationIncludingGravity.y=e.accelerationIncludingGravity.y;
-			Accelerator.accelerationIncludingGravity.z=e.accelerationIncludingGravity.z;
-			Accelerator.rotationRate.alpha=e.rotationRate.gamma *-1;
-			Accelerator.rotationRate.beta=e.rotationRate.alpha *-1;
-			Accelerator.rotationRate.gamma=e.rotationRate.beta;
-			if (Browser.onAndriod){
-				if (Accelerator.onChrome){
-					Accelerator.rotationRate.alpha *=180 / Math.PI;
-					Accelerator.rotationRate.beta *=180 / Math.PI;
-					Accelerator.rotationRate.gamma *=180 / Math.PI;
-				}
-				Accelerator.acceleration.x *=-1;
-				Accelerator.accelerationIncludingGravity.x *=-1;
-			}
-			else if (Browser.onIOS){
-				Accelerator.acceleration.y *=-1;
-				Accelerator.acceleration.z *=-1;
-				Accelerator.accelerationIncludingGravity.y *=-1;
-				Accelerator.accelerationIncludingGravity.z *=-1;
-				interval *=1000;
-			}
-			this.event("change",[Accelerator.acceleration,Accelerator.accelerationIncludingGravity,Accelerator.rotationRate,interval]);
-		}
-
-		__getset(1,Accelerator,'instance',function(){Accelerator._instance=Accelerator._instance|| new Accelerator(0)
-			return Accelerator._instance;
-		},laya.events.EventDispatcher._$SET_instance);
-
-		Accelerator.getTransformedAcceleration=function(acceleration){Accelerator.transformedAcceleration=Accelerator.transformedAcceleration|| new AccelerationInfo();
-			Accelerator.transformedAcceleration.z=acceleration.z;
-			if (Browser.window.orientation==90){
-				Accelerator.transformedAcceleration.x=acceleration.y;
-				Accelerator.transformedAcceleration.y=-acceleration.x;
-			}
-			else if (Browser.window.orientation==-90){
-				Accelerator.transformedAcceleration.x=-acceleration.y;
-				Accelerator.transformedAcceleration.y=acceleration.x;
-			}
-			else if (!Browser.window.orientation){
-				Accelerator.transformedAcceleration.x=acceleration.x;
-				Accelerator.transformedAcceleration.y=acceleration.y;
-			}
-			else if (Browser.window.orientation==180){
-				Accelerator.transformedAcceleration.x=-acceleration.x;
-				Accelerator.transformedAcceleration.y=-acceleration.y;
-			};
-			var tx=NaN;
-			if (Laya.stage.canvasDegree==-90){
-				tx=Accelerator.transformedAcceleration.x;
-				Accelerator.transformedAcceleration.x=-Accelerator.transformedAcceleration.y;
-				Accelerator.transformedAcceleration.y=tx;
-			}
-			else if (Laya.stage.canvasDegree==90){
-				tx=Accelerator.transformedAcceleration.x;
-				Accelerator.transformedAcceleration.x=Accelerator.transformedAcceleration.y;
-				Accelerator.transformedAcceleration.y=-tx;
-			}
-			return Accelerator.transformedAcceleration;
-		}
-
-		Accelerator._instance=null
-		Accelerator.transformedAcceleration=null
-		__static(Accelerator,
-		['acceleration',function(){return this.acceleration=new AccelerationInfo();},'accelerationIncludingGravity',function(){return this.accelerationIncludingGravity=new AccelerationInfo();},'rotationRate',function(){return this.rotationRate=new RotationInfo();},'onChrome',function(){return this.onChrome=(Browser.userAgent.indexOf("Chrome")>-1);}
-		]);
-		return Accelerator;
 	})(EventDispatcher)
 
 
@@ -13858,6 +14970,816 @@ var Laya=window.Laya=(function(window,document){
 		ColorFilter._GRAY=null
 		return ColorFilter;
 	})(Filter)
+
+
+	/**
+	*<code>AutoBitmap</code> 类是用于表示位图图像或绘制图形的显示对象。
+	*<p>封装了位置，宽高及九宫格的处理，供UI组件使用。</p>
+	*/
+	//class laya.ui.AutoBitmap extends laya.display.Graphics
+	var AutoBitmap=(function(_super){
+		function AutoBitmap(){
+			this.autoCacheCmd=true;
+			this._width=0;
+			this._height=0;
+			this._source=null;
+			this._sizeGrid=null;
+			this._isChanged=false;
+			this._offset=null;
+			AutoBitmap.__super.call(this);
+		}
+
+		__class(AutoBitmap,'laya.ui.AutoBitmap',_super);
+		var __proto=AutoBitmap.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(){
+			_super.prototype.destroy.call(this);
+			this._source=null;
+			this._sizeGrid=null;
+			this._offset=null;
+		}
+
+		/**@private */
+		__proto._setChanged=function(){
+			if (!this._isChanged){
+				this._isChanged=true;
+				Laya.timer.callLater(this,this.changeSource);
+			}
+		}
+
+		/**
+		*@private
+		*修改纹理资源。
+		*/
+		__proto.changeSource=function(){
+			if (AutoBitmap.cacheCount++> 50)AutoBitmap.clearCache();
+			this._isChanged=false;
+			var source=this._source;
+			if (!source || !source.bitmap)return;
+			var width=this.width;
+			var height=this.height;
+			var sizeGrid=this._sizeGrid;
+			var sw=source.sourceWidth;
+			var sh=source.sourceHeight;
+			if (!sizeGrid || (sw===width && sh===height)){
+				this.clear();
+				this.drawTexture(source,this._offset ? this._offset[0] :0,this._offset ? this._offset[1] :0,width,height);
+				}else {
+				source.$_GID || (source.$_GID=Utils.getGID());
+				var key=source.$_GID+"."+width+"."+height+"."+sizeGrid.join(".");
+				if (AutoBitmap.cmdCaches[key]){
+					this.cmds=AutoBitmap.cmdCaches[key];
+					return;
+				}
+				this.clear();
+				var top=sizeGrid[0];
+				var right=sizeGrid[1];
+				var bottom=sizeGrid[2];
+				var left=sizeGrid[3];
+				var repeat=sizeGrid[4];
+				if (left+right > width){
+					right=0;
+				}
+				left && top && this.drawTexture(AutoBitmap.getTexture(source,0,0,left,top),0,0,left,top);
+				right && top && this.drawTexture(AutoBitmap.getTexture(source,sw-right,0,right,top),width-right,0,right,top);
+				left && bottom && this.drawTexture(AutoBitmap.getTexture(source,0,sh-bottom,left,bottom),0,height-bottom,left,bottom);
+				right && bottom && this.drawTexture(AutoBitmap.getTexture(source,sw-right,sh-bottom,right,bottom),width-right,height-bottom,right,bottom);
+				top && this.drawBitmap(repeat,AutoBitmap.getTexture(source,left,0,sw-left-right,top),left,0,width-left-right,top);
+				bottom && this.drawBitmap(repeat,AutoBitmap.getTexture(source,left,sh-bottom,sw-left-right,bottom),left,height-bottom,width-left-right,bottom);
+				left && this.drawBitmap(repeat,AutoBitmap.getTexture(source,0,top,left,sh-top-bottom),0,top,left,height-top-bottom);
+				right && this.drawBitmap(repeat,AutoBitmap.getTexture(source,sw-right,top,right,sh-top-bottom),width-right,top,right,height-top-bottom);
+				this.drawBitmap(repeat,AutoBitmap.getTexture(source,left,top,sw-left-right,sh-top-bottom),left,top,width-left-right,height-top-bottom);
+				if (this.autoCacheCmd && !Render.isConchApp)AutoBitmap.cmdCaches[key]=this.cmds;
+			}
+			this._repaint();
+		}
+
+		__proto.drawBitmap=function(repeat,tex,x,y,width,height){
+			(width===void 0)&& (width=0);
+			(height===void 0)&& (height=0);
+			if (repeat)this.fillTexture(tex,x,y,width,height);
+			else this.drawTexture(tex,x,y,width,height);
+		}
+
+		/**
+		*当前实例的有效缩放网格数据。
+		*<p>如果设置为null,则在应用任何缩放转换时，将正常缩放整个显示对象。</p>
+		*<p>数据格式：[上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)]。
+		*<ul><li>例如：[4,4,4,4,1]</li></ul></p>
+		*<p> <code>sizeGrid</code> 的值如下所示：
+		*<ol>
+		*<li>上边距</li>
+		*<li>右边距</li>
+		*<li>下边距</li>
+		*<li>左边距</li>
+		*<li>是否重复填充(值为0：不重复填充，1：重复填充)</li>
+		*</ol></p>
+		*<p>当定义 <code>sizeGrid</code> 属性时，该显示对象被分割到以 <code>sizeGrid</code> 数据中的"上边距,右边距,下边距,左边距" 组成的矩形为基础的具有九个区域的网格中，该矩形定义网格的中心区域。网格的其它八个区域如下所示：
+		*<ul>
+		*<li>矩形上方的区域</li>
+		*<li>矩形外的右上角</li>
+		*<li>矩形左侧的区域</li>
+		*<li>矩形右侧的区域</li>
+		*<li>矩形外的左下角</li>
+		*<li>矩形下方的区域</li>
+		*<li>矩形外的右下角</li>
+		*<li>矩形外的左上角</li>
+		*</ul>
+		*同时也支持3宫格，比如0,4,0,4,1为水平3宫格，4,0,4,0,1为垂直3宫格，3宫格性能比9宫格高。
+		*</p>
+		*/
+		__getset(0,__proto,'sizeGrid',function(){
+			return this._sizeGrid;
+			},function(value){
+			this._sizeGrid=value;
+			this._setChanged();
+		});
+
+		/**
+		*表示显示对象的宽度，以像素为单位。
+		*/
+		__getset(0,__proto,'width',function(){
+			if (this._width)return this._width;
+			if (this._source)return this._source.sourceWidth;
+			return 0;
+			},function(value){
+			if (this._width !=value){
+				this._width=value;
+				this._setChanged();
+			}
+		});
+
+		/**
+		*表示显示对象的高度，以像素为单位。
+		*/
+		__getset(0,__proto,'height',function(){
+			if (this._height)return this._height;
+			if (this._source)return this._source.sourceHeight;
+			return 0;
+			},function(value){
+			if (this._height !=value){
+				this._height=value;
+				this._setChanged();
+			}
+		});
+
+		/**
+		*对象的纹理资源。
+		*@see laya.resource.Texture
+		*/
+		__getset(0,__proto,'source',function(){
+			return this._source;
+			},function(value){
+			if (value){
+				this._source=value
+				this._setChanged();
+				}else {
+				this._source=null;
+				this.clear();
+			}
+		});
+
+		AutoBitmap.getTexture=function(tex,x,y,width,height){
+			if (width <=0)width=1;
+			if (height <=0)height=1;
+			tex.$_GID || (tex.$_GID=Utils.getGID())
+			var key=tex.$_GID+"."+x+"."+y+"."+width+"."+height;
+			var texture=AutoBitmap.textureCache[key];
+			if (!texture){
+				texture=AutoBitmap.textureCache[key]=Texture.createFromTexture(tex,x,y,width,height);
+			}
+			return texture;
+		}
+
+		AutoBitmap.clearCache=function(){
+			AutoBitmap.cacheCount=0;
+			AutoBitmap.cmdCaches={};
+			AutoBitmap.textureCache={};
+		}
+
+		AutoBitmap.setCache=function(key,value){
+			AutoBitmap.cacheCount++;
+			AutoBitmap.textureCache[key]=value;
+		}
+
+		AutoBitmap.getCache=function(key){
+			return AutoBitmap.textureCache[key];
+		}
+
+		AutoBitmap.cmdCaches={};
+		AutoBitmap.cacheCount=0;
+		AutoBitmap.textureCache={};
+		return AutoBitmap;
+	})(Graphics)
+
+
+	/**
+	*<code>AnimationPlayer</code> 类用于动画播放器。
+	*/
+	//class laya.ani.AnimationPlayer extends laya.events.EventDispatcher
+	var AnimationPlayer=(function(_super){
+		function AnimationPlayer(cacheFrameRate){
+			this._templet=null;
+			this._currentTime=NaN;
+			this._currentFrameTime=NaN;
+			this._playStart=NaN;
+			this._playEnd=NaN;
+			this._playDuration=NaN;
+			this._overallDuration=NaN;
+			this._stopWhenCircleFinish=false;
+			this._elapsedPlaybackTime=NaN;
+			this._startPlayLoopCount=NaN;
+			this._currentAnimationClipIndex=0;
+			this._currentKeyframeIndex=0;
+			this._paused=false;
+			this._cacheFrameRate=0;
+			this._cacheFrameRateInterval=NaN;
+			this.playbackRate=1.0;
+			this.isCache=true;
+			this.returnToZeroStopped=true;
+			AnimationPlayer.__super.call(this);
+			(cacheFrameRate===void 0)&& (cacheFrameRate=60);
+			this._currentAnimationClipIndex=-1;
+			this._currentKeyframeIndex=-1;
+			this._currentTime=0.0;
+			this._overallDuration=Number.MAX_VALUE;
+			this._stopWhenCircleFinish=false;
+			this._elapsedPlaybackTime=0;
+			this._startPlayLoopCount=-1;
+			this._cacheFrameRate=cacheFrameRate;
+			this._cacheFrameRateInterval=1000 / this._cacheFrameRate;
+		}
+
+		__class(AnimationPlayer,'laya.ani.AnimationPlayer',_super);
+		var __proto=AnimationPlayer.prototype;
+		/**
+		*@private
+		*/
+		__proto._calculatePlayDuration=function(){
+			if (this.state!==0){
+				var oriDuration=this._templet.getAniDuration(this._currentAnimationClipIndex);
+				(this._playEnd===0)&& (this._playEnd=oriDuration);
+				if (Math.floor(this._playEnd)> oriDuration)
+					throw new Error("AnimationPlayer:playEnd must less than original Duration.");
+				this._playDuration=this._playEnd-this._playStart;
+			}
+		}
+
+		/**
+		*播放动画。
+		*@param index 动画索引。
+		*@param playbackRate 播放速率。
+		*@param duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
+		*@param playStart 播放的起始时间位置。
+		*@param playEnd 播放的结束时间位置。（0为动画一次循环的最长结束时间位置）。
+		*/
+		__proto.play=function(index,playbackRate,overallDuration,playStart,playEnd){
+			(index===void 0)&& (index=0);
+			(playbackRate===void 0)&& (playbackRate=1.0);
+			(overallDuration===void 0)&& (overallDuration=Number.MAX_VALUE);
+			(playStart===void 0)&& (playStart=0);
+			(playEnd===void 0)&& (playEnd=0);
+			if (!this._templet)
+				throw new Error("AnimationPlayer:templet must not be null,maybe you need to set url.");
+			if (overallDuration < 0 || playStart < 0 || playEnd < 0)
+				throw new Error("AnimationPlayer:overallDuration,playStart and playEnd must large than zero.");
+			if ((playEnd!==0)&&(playStart > playEnd))
+				throw new Error("AnimationPlayer:start must less than end.");
+			this._currentTime=0;
+			this._currentFrameTime=0;
+			this._elapsedPlaybackTime=0;
+			this.playbackRate=playbackRate;
+			this._overallDuration=overallDuration;
+			this._playStart=playStart;
+			this._playEnd=playEnd;
+			this._paused=false;
+			this._currentAnimationClipIndex=index;
+			this._currentKeyframeIndex=0;
+			this._startPlayLoopCount=Stat.loopCount;
+			this.event("played");
+			if (this._templet.loaded)
+				this._calculatePlayDuration();
+			else
+			this._templet.once("loaded",this,this._calculatePlayDuration);
+		}
+
+		/**
+		*播放动画。
+		*@param index 动画索引。
+		*@param playbackRate 播放速率。
+		*@param duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
+		*@param playStartFrame 播放的原始起始帧率位置。
+		*@param playEndFrame 播放的原始结束帧率位置。（0为动画一次循环的最长结束时间位置）。
+		*/
+		__proto.playByFrame=function(index,playbackRate,overallDuration,playStartFrame,playEndFrame,fpsIn3DBuilder){
+			(index===void 0)&& (index=0);
+			(playbackRate===void 0)&& (playbackRate=1.0);
+			(overallDuration===void 0)&& (overallDuration=Number.MAX_VALUE);
+			(playStartFrame===void 0)&& (playStartFrame=0);
+			(playEndFrame===void 0)&& (playEndFrame=0);
+			(fpsIn3DBuilder===void 0)&& (fpsIn3DBuilder=30);
+			var interval=1000.0 / fpsIn3DBuilder;
+			this.play(index,playbackRate,overallDuration,playStartFrame *interval,playEndFrame *interval);
+		}
+
+		/**
+		*停止播放当前动画
+		*@param immediate 是否立即停止
+		*/
+		__proto.stop=function(immediate){
+			(immediate===void 0)&& (immediate=true);
+			if (immediate){
+				this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
+				this.event("stopped");
+				}else {
+				this._stopWhenCircleFinish=true;
+			}
+		}
+
+		/**更新动画播放器 */
+		__proto.update=function(elapsedTime){
+			if (this._currentAnimationClipIndex===-1 || this._paused || !this._templet || !this._templet.loaded)
+				return;
+			var time=0;
+			(this._startPlayLoopCount!==Stat.loopCount)&& (time=elapsedTime *this.playbackRate,this._elapsedPlaybackTime+=time);
+			var currentAniClipPlayDuration=this.playDuration;
+			if ((this._overallDuration!==0 && this._elapsedPlaybackTime >=this._overallDuration)|| (this._overallDuration===0 && this._elapsedPlaybackTime >=currentAniClipPlayDuration)){
+				this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
+				this.event("stopped");
+				return;
+			}
+			time+=this._currentTime;
+			if (currentAniClipPlayDuration > 0){
+				while (time >=currentAniClipPlayDuration){
+					if (this._stopWhenCircleFinish){
+						this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
+						this._stopWhenCircleFinish=false;
+						this.event("stopped");
+						return;
+					}
+					time-=currentAniClipPlayDuration;
+				}
+				this._currentTime=time;
+				this._currentKeyframeIndex=Math.floor((this.currentPlayTime)/ this._cacheFrameRateInterval);
+				this._currentFrameTime=this._currentKeyframeIndex *this._cacheFrameRateInterval;
+				}else {
+				if (this._stopWhenCircleFinish){
+					this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
+					this._stopWhenCircleFinish=false;
+					this.event("stopped");
+					return;
+				}
+				this._currentTime=this._currentFrameTime=this._currentKeyframeIndex=0;
+			}
+		}
+
+		/**
+		*动画播放的结束时间位置。
+		*@return 结束时间位置。
+		*/
+		__getset(0,__proto,'playEnd',function(){
+			return this._playEnd;
+		});
+
+		/**
+		*设置动画数据模板
+		*@param value 动画数据模板
+		*/
+		/**
+		*获取动画数据模板
+		*@param value 动画数据模板
+		*/
+		__getset(0,__proto,'templet',function(){
+			return this._templet;
+			},function(value){
+			if (!this.state===0)
+				this.stop(true);
+			this._templet=value;
+		});
+
+		/**
+		*动画播放的起始时间位置。
+		*@return 起始时间位置。
+		*/
+		__getset(0,__proto,'playStart',function(){
+			return this._playStart;
+		});
+
+		/**
+		*获取动画播放一次的总时间
+		*@return 动画播放一次的总时间
+		*/
+		__getset(0,__proto,'playDuration',function(){
+			return this._playDuration;
+		});
+
+		/**
+		*获取当前播放状态
+		*@return 当前播放状态
+		*/
+		__getset(0,__proto,'state',function(){
+			if (this._currentAnimationClipIndex===-1)
+				return 0;
+			if (this._paused)
+				return 1;
+			return 2;
+		});
+
+		/**
+		*获取当前帧数
+		*@return 当前帧数
+		*/
+		__getset(0,__proto,'currentKeyframeIndex',function(){
+			return this._currentKeyframeIndex;
+		});
+
+		/**
+		*获取动画播放的总总时间
+		*@return 动画播放的总时间
+		*/
+		__getset(0,__proto,'overallDuration',function(){
+			return this._overallDuration;
+		});
+
+		/**
+		*获取当前帧时间，不包括重播时间
+		*@return value 当前时间
+		*/
+		__getset(0,__proto,'currentFrameTime',function(){
+			return this._currentFrameTime;
+		});
+
+		/**
+		*获取当前动画索引
+		*@return value 当前动画索引
+		*/
+		__getset(0,__proto,'currentAnimationClipIndex',function(){
+			return this._currentAnimationClipIndex;
+		});
+
+		/**
+		*获取当前精确时间，不包括重播时间
+		*@return value 当前时间
+		*/
+		__getset(0,__proto,'currentPlayTime',function(){
+			return this._currentTime+this._playStart;
+		});
+
+		/**
+		*获取缓存帧率*
+		*@return value 缓存帧率
+		*/
+		__getset(0,__proto,'cacheFrameRate',function(){
+			return this._cacheFrameRate;
+		});
+
+		/**
+		*设置当前播放位置
+		*@param value 当前时间
+		*/
+		__getset(0,__proto,'currentTime',null,function(value){
+			if (this._currentAnimationClipIndex===-1 || !this._templet || !this._templet.loaded)
+				return;
+			if (value < this._playStart || value > this._playEnd)
+				throw new Error("AnimationPlayer:value must large than playStartTime,small than playEndTime.");
+			this._currentTime=value;
+			this._currentKeyframeIndex=Math.floor(this.currentPlayTime / this._cacheFrameRateInterval);
+			this._currentFrameTime=this._currentKeyframeIndex *this._cacheFrameRateInterval;
+		});
+
+		/**
+		*设置是否暂停
+		*@param value 是否暂停
+		*/
+		/**
+		*获取当前是否暂停
+		*@return 是否暂停
+		*/
+		__getset(0,__proto,'paused',function(){
+			return this._paused;
+			},function(value){
+			this._paused=value;
+			value && this.event("paused");
+		});
+
+		/**
+		*获取缓存帧率间隔时间
+		*@return 缓存帧率间隔时间
+		*/
+		__getset(0,__proto,'cacheFrameRateInterval',function(){
+			return this._cacheFrameRateInterval;
+		});
+
+		return AnimationPlayer;
+	})(EventDispatcher)
+
+
+	/**
+	*<code>UIEvent</code> 类用来定义UI组件类的事件类型。
+	*/
+	//class laya.ui.UIEvent extends laya.events.Event
+	var UIEvent=(function(_super){
+		function UIEvent(){UIEvent.__super.call(this);;
+		};
+
+		__class(UIEvent,'laya.ui.UIEvent',_super);
+		UIEvent.SHOW_TIP="showtip";
+		UIEvent.HIDE_TIP="hidetip";
+		return UIEvent;
+	})(Event)
+
+
+	/**
+	*@private
+	*/
+	//class laya.ani.KeyframesAniTemplet extends laya.events.EventDispatcher
+	var KeyframesAniTemplet=(function(_super){
+		function KeyframesAniTemplet(){
+			this._aniMap={};
+			//this._publicExtData=null;
+			//this._useParent=false;
+			//this.unfixedCurrentFrameIndexes=null;
+			//this.unfixedCurrentTimes=null;
+			//this.unfixedKeyframes=null;
+			this.unfixedLastAniIndex=-1;
+			this._loaded=false;
+			//this._aniVersion=null;
+			this._animationDatasCache=[];
+			KeyframesAniTemplet.__super.call(this);
+			this._anis=new Array;
+		}
+
+		__class(KeyframesAniTemplet,'laya.ani.KeyframesAniTemplet',_super);
+		var __proto=KeyframesAniTemplet.prototype;
+		__proto.parse=function(data,playbackRate){
+			var i=0,j=0,k=0,n=0,l=0;
+			var read=new Byte(data);
+			this._aniVersion=read.readUTFString();
+			var aniClassName=read.readUTFString();
+			var strList=read.readUTFString().split("\n");
+			var aniCount=read.getUint8();
+			var publicDataPos=read.getUint32();
+			var publicExtDataPos=read.getUint32();
+			var publicData;
+			if (publicDataPos > 0)
+				publicData=data.slice(publicDataPos,publicExtDataPos);
+			var publicRead=new Byte(publicData);
+			if (publicExtDataPos > 0)
+				this._publicExtData=data.slice(publicExtDataPos,data.byteLength);
+			this._useParent=!!read.getUint8();
+			this._anis.length=aniCount;
+			for (i=0;i < aniCount;i++){
+				var ani=this._anis[i]=
+				{};
+				ani.nodes=new Array;
+				var name=ani.name=strList[read.getUint16()];
+				this._aniMap[name]=i;
+				ani.bone3DMap={};
+				ani.playTime=read.getFloat32();
+				var boneCount=ani.nodes.length=read.getUint8();
+				ani.totalKeyframesLength=0;
+				for (j=0;j < boneCount;j++){
+					var node=ani.nodes[j]=
+					{};
+					node.childs=[];
+					var nameIndex=read.getInt16();
+					if (nameIndex >=0){
+						node.name=strList[nameIndex];
+						ani.bone3DMap[node.name]=j;
+					}
+					node.keyFrame=new Array;
+					node.parentIndex=read.getInt16();
+					node.parentIndex==-1 ? node.parent=null :node.parent=ani.nodes[node.parentIndex];
+					var isLerp=!!read.getUint8();
+					var keyframeParamsOffset=read.getUint32();
+					publicRead.pos=keyframeParamsOffset;
+					var keyframeDataCount=node.keyframeWidth=publicRead.getUint16();
+					ani.totalKeyframesLength+=keyframeDataCount;
+					if (isLerp){
+						node.interpolationMethod=[];
+						node.interpolationMethod.length=keyframeDataCount;
+						for (k=0;k < keyframeDataCount;k++)
+						node.interpolationMethod[k]=KeyframesAniTemplet.interpolation[publicRead.getUint8()];
+					}
+					if (node.parent !=null)
+						node.parent.childs.push(node);
+					var privateDataLen=read.getUint16();
+					if (privateDataLen > 0){
+						node.extenData=data.slice(read.pos,read.pos+privateDataLen);
+						read.pos+=privateDataLen;
+					};
+					var keyframeCount=read.getUint16();
+					node.keyFrame.length=keyframeCount;
+					var startTime=0;
+					for (k=0,n=keyframeCount;k < n;k++){
+						var keyFrame=node.keyFrame[k]=
+						{};
+						keyFrame.duration=read.getFloat32();
+						keyFrame.startTime=startTime;
+						keyFrame.data=new Float32Array(keyframeDataCount);
+						keyFrame.dData=new Float32Array(keyframeDataCount);
+						keyFrame.nextData=new Float32Array(keyframeDataCount);
+						for (l=0;l < keyframeDataCount;l++){
+							keyFrame.data[l]=read.getFloat32();
+							if (keyFrame.data[l] >-0.00000001 && keyFrame.data[l] < 0.00000001)keyFrame.data[l]=0;
+						}
+						startTime+=keyFrame.duration;
+					}
+					node.playTime=ani.playTime;
+					this._calculateKeyFrame(node,keyframeCount,keyframeDataCount);
+					this._calculateKeyFrameIndex(node,playbackRate);
+				}
+			}
+			this._loaded=true;
+			this.event("loaded",this);
+		}
+
+		__proto._calculateKeyFrame=function(node,keyframeCount,keyframeDataCount){
+			var keyFrames=node.keyFrame;
+			keyFrames[keyframeCount]=keyFrames[0];
+			for (var i=0;i < keyframeCount;i++){
+				var keyFrame=keyFrames[i];
+				for (var j=0;j < keyframeDataCount;j++){
+					keyFrame.dData[j]=(keyFrame.duration===0)? 0 :(keyFrames[i+1].data[j]-keyFrame.data[j])/ keyFrame.duration;
+					keyFrame.nextData[j]=keyFrames[i+1].data[j];
+				}
+			}
+			keyFrames.length--;
+		}
+
+		__proto._calculateKeyFrameIndex=function(node,playbackRate){
+			var frameInterval=1000 / playbackRate;
+			node.frameCount=Math.floor(node.playTime / frameInterval);
+			node.fullFrame=new Uint16Array(node.frameCount+1);
+			var lastFrameIndex=-1;
+			for (var i=0,n=node.keyFrame.length;i < n;i++){
+				var keyFrame=node.keyFrame[i];
+				var tm=keyFrame.startTime;
+				var endTm=tm+keyFrame.duration+frameInterval;
+				do {
+					var frameIndex=Math.floor(tm / frameInterval+0.5);
+					for (var k=lastFrameIndex+1;k < frameIndex;k++)
+					node.fullFrame[k]=i;
+					lastFrameIndex=frameIndex;
+					node.fullFrame[frameIndex]=i;
+					tm+=frameInterval;
+				}while (tm <=endTm);
+			}
+		}
+
+		__proto.getAnimationCount=function(){
+			return this._anis.length;
+		}
+
+		__proto.getAnimation=function(aniIndex){
+			return this._anis[aniIndex];
+		}
+
+		__proto.getAniDuration=function(aniIndex){
+			return this._anis[aniIndex].playTime;
+		}
+
+		__proto.getNodes=function(aniIndex){
+			return this._anis[aniIndex].nodes;
+		}
+
+		__proto.getNodeIndexWithName=function(aniIndex,name){
+			return this._anis[aniIndex].bone3DMap[name];
+		}
+
+		__proto.getNodeCount=function(aniIndex){
+			return this._anis[aniIndex].nodes.length;
+		}
+
+		__proto.getTotalkeyframesLength=function(aniIndex){
+			return this._anis[aniIndex].totalKeyframesLength;
+		}
+
+		__proto.getPublicExtData=function(){
+			return this._publicExtData;
+		}
+
+		__proto.getAnimationDataWithCache=function(cacheDatas,aniIndex,frameIndex){
+			var cache=cacheDatas[aniIndex];
+			return cache ? cache[frameIndex] :null;
+		}
+
+		__proto.setAnimationDataWithCache=function(cacheDatas,aniIndex,frameIndex,data){
+			var cache=cacheDatas[aniIndex];
+			cache || (cache=cacheDatas[aniIndex]=[]);
+			cache[frameIndex]=data;
+		}
+
+		__proto.getOriginalData=function(aniIndex,originalData,frameIndex,playCurTime){
+			var oneAni=this._anis[aniIndex];
+			var nodes=oneAni.nodes;
+			var j=0;
+			for (var i=0,n=nodes.length,outOfs=0;i < n;i++){
+				var node=nodes[i];
+				var key;
+				key=node.keyFrame[node.fullFrame[frameIndex]];
+				node.dataOffset=outOfs;
+				var dt=playCurTime-key.startTime;
+				for (j=0;j < node.keyframeWidth;){
+					j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
+				}
+				outOfs+=node.keyframeWidth;
+			}
+		}
+
+		__proto.getNodesCurrentFrameIndex=function(aniIndex,playCurTime){
+			var ani=this._anis[aniIndex];
+			var nodes=ani.nodes;
+			if (aniIndex!==this.unfixedLastAniIndex){
+				this.unfixedCurrentFrameIndexes=new Uint32Array(nodes.length);
+				this.unfixedCurrentTimes=new Float32Array(nodes.length);
+				this.unfixedLastAniIndex=aniIndex;
+			}
+			for (var i=0,n=nodes.length,outOfs=0;i < n;i++){
+				var node=nodes[i];
+				if (playCurTime < this.unfixedCurrentTimes[i])
+					this.unfixedCurrentFrameIndexes[i]=0;
+				this.unfixedCurrentTimes[i]=playCurTime;
+				while ((this.unfixedCurrentFrameIndexes[i] < node.keyFrame.length)){
+					if (node.keyFrame[this.unfixedCurrentFrameIndexes[i]].startTime > this.unfixedCurrentTimes[i])
+						break ;
+					this.unfixedCurrentFrameIndexes[i]++;
+				}
+				this.unfixedCurrentFrameIndexes[i]--;
+			}
+			return this.unfixedCurrentFrameIndexes;
+		}
+
+		__proto.getOriginalDataUnfixedRate=function(aniIndex,originalData,playCurTime){
+			var oneAni=this._anis[aniIndex];
+			var nodes=oneAni.nodes;
+			if (aniIndex!==this.unfixedLastAniIndex){
+				this.unfixedCurrentFrameIndexes=new Uint32Array(nodes.length);
+				this.unfixedCurrentTimes=new Float32Array(nodes.length);
+				this.unfixedKeyframes=__newvec(nodes.length);
+				this.unfixedLastAniIndex=aniIndex;
+			};
+			var j=0;
+			for (var i=0,n=nodes.length,outOfs=0;i < n;i++){
+				var node=nodes[i];
+				if (playCurTime < this.unfixedCurrentTimes[i])
+					this.unfixedCurrentFrameIndexes[i]=0;
+				this.unfixedCurrentTimes[i]=playCurTime;
+				while (this.unfixedCurrentFrameIndexes[i] < node.keyFrame.length){
+					if (node.keyFrame[this.unfixedCurrentFrameIndexes[i]].startTime > this.unfixedCurrentTimes[i])
+						break ;
+					this.unfixedKeyframes[i]=node.keyFrame[this.unfixedCurrentFrameIndexes[i]];
+					this.unfixedCurrentFrameIndexes[i]++;
+				};
+				var key=this.unfixedKeyframes[i];
+				node.dataOffset=outOfs;
+				var dt=playCurTime-key.startTime;
+				for (j=0;j < node.keyframeWidth;){
+					j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
+				}
+				outOfs+=node.keyframeWidth;
+			}
+		}
+
+		__getset(0,__proto,'loaded',function(){
+			return this._loaded;
+		});
+
+		KeyframesAniTemplet._LinearInterpolation_0=function(bone,index,out,outOfs,data,dt,dData,duration,nextData){
+			out[outOfs]=data[index]+dt *dData[index];
+			return 1;
+		}
+
+		KeyframesAniTemplet._QuaternionInterpolation_1=function(bone,index,out,outOfs,data,dt,dData,duration,nextData){
+			var amount=duration===0 ? 0 :dt / duration;
+			MathUtil.slerpQuaternionArray(data,index,nextData,index,amount,out,outOfs);
+			return 4;
+		}
+
+		KeyframesAniTemplet._AngleInterpolation_2=function(bone,index,out,outOfs,data,dt,dData,duration,nextData){
+			return 0;
+		}
+
+		KeyframesAniTemplet._RadiansInterpolation_3=function(bone,index,out,outOfs,data,dt,dData,duration,nextData){
+			return 0;
+		}
+
+		KeyframesAniTemplet._Matrix4x4Interpolation_4=function(bone,index,out,outOfs,data,dt,dData,duration,nextData){
+			for (var i=0;i < 16;i++,index++)
+			out[outOfs+i]=data[index]+dt *dData[index];
+			return 16;
+		}
+
+		KeyframesAniTemplet._NoInterpolation_5=function(bone,index,out,outOfs,data,dt,dData,duration,nextData){
+			out[outOfs]=data[index];
+			return 1;
+		}
+
+		KeyframesAniTemplet._uniqueIDCounter=1;
+		KeyframesAniTemplet.interpolation=[KeyframesAniTemplet._LinearInterpolation_0,KeyframesAniTemplet._QuaternionInterpolation_1,KeyframesAniTemplet._AngleInterpolation_2,KeyframesAniTemplet._RadiansInterpolation_3,KeyframesAniTemplet._Matrix4x4Interpolation_4,KeyframesAniTemplet._NoInterpolation_5];
+		KeyframesAniTemplet.LAYA_ANIMATION_VISION="LAYAANIMATION:1.0.2";
+		return KeyframesAniTemplet;
+	})(EventDispatcher)
 
 
 	//class laya.webgl.display.GraphicsGL extends laya.display.Graphics
@@ -14615,9 +16537,9 @@ var Laya=window.Laya=(function(window,document){
 					}
 				}
 			}
-			if (r < 100){
+			if (r < 101){
 				ndivs=Math.max(10,da *r / 5);
-				}else if (r < 200){
+				}else if (r < 201){
 				ndivs=Math.max(10,da *r / 20);
 				}else {
 				ndivs=Math.max(10,da *r / 40);
@@ -14962,6 +16884,32 @@ var Laya=window.Laya=(function(window,document){
 	})(RenderSprite)
 
 
+	/**
+	*...
+	*@author
+	*/
+	//class laya.ani.GraphicsAni extends laya.display.Graphics
+	var GraphicsAni=(function(_super){
+		function GraphicsAni(){
+			GraphicsAni.__super.call(this);
+		}
+
+		__class(GraphicsAni,'laya.ani.GraphicsAni',_super);
+		var __proto=GraphicsAni.prototype;
+		/**
+		*@private
+		*画自定义蒙皮动画
+		*@param skin
+		*/
+		__proto.drawSkin=function(skin){
+			var arr=[skin];
+			this._saveToCmd(Render._context._drawSkin,arr);
+		}
+
+		return GraphicsAni;
+	})(Graphics)
+
+
 	//class laya.filters.webgl.ColorFilterActionGL extends laya.filters.webgl.FilterActionGL
 	var ColorFilterActionGL=(function(_super){
 		function ColorFilterActionGL(){
@@ -15077,55 +17025,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return Atlaser;
 	})(AtlasGrid)
-
-
-	/**
-	*...
-	*@author laya
-	*/
-	//class laya.webgl.shader.d2.ShaderDefines2D extends laya.webgl.shader.ShaderDefines
-	var ShaderDefines2D=(function(_super){
-		function ShaderDefines2D(){
-			ShaderDefines2D.__super.call(this,ShaderDefines2D.__name2int,ShaderDefines2D.__int2name,ShaderDefines2D.__int2nameMap);
-		}
-
-		__class(ShaderDefines2D,'laya.webgl.shader.d2.ShaderDefines2D',_super);
-		ShaderDefines2D.__init__=function(){
-			ShaderDefines2D.reg("TEXTURE2D",0x01);
-			ShaderDefines2D.reg("COLOR2D",0x02);
-			ShaderDefines2D.reg("PRIMITIVE",0x04);
-			ShaderDefines2D.reg("GLOW_FILTER",0x08);
-			ShaderDefines2D.reg("BLUR_FILTER",0x10);
-			ShaderDefines2D.reg("COLOR_FILTER",0x20);
-			ShaderDefines2D.reg("COLOR_ADD",0x40);
-			ShaderDefines2D.reg("WORLDMAT",0x80);
-		}
-
-		ShaderDefines2D.reg=function(name,value){
-			ShaderDefines._reg(name,value,ShaderDefines2D.__name2int,ShaderDefines2D.__int2name);
-		}
-
-		ShaderDefines2D.toText=function(value,int2name,int2nameMap){
-			return ShaderDefines._toText(value,int2name,int2nameMap);
-		}
-
-		ShaderDefines2D.toInt=function(names){
-			return ShaderDefines._toInt(names,ShaderDefines2D.__name2int);
-		}
-
-		ShaderDefines2D.TEXTURE2D=0x01;
-		ShaderDefines2D.COLOR2D=0x02;
-		ShaderDefines2D.PRIMITIVE=0x04;
-		ShaderDefines2D.FILTERGLOW=0x08;
-		ShaderDefines2D.FILTERBLUR=0x10;
-		ShaderDefines2D.FILTERCOLOR=0x20;
-		ShaderDefines2D.COLORADD=0x40;
-		ShaderDefines2D.WORLDMAT=0x80;
-		ShaderDefines2D.__name2int={};
-		ShaderDefines2D.__int2name=[];
-		ShaderDefines2D.__int2nameMap=[];
-		return ShaderDefines2D;
-	})(ShaderDefines)
 
 
 	/**
@@ -15296,8 +17195,58 @@ var Laya=window.Laya=(function(window,document){
 		Value2D._TEXCOORD=null
 		Value2D._cache=[];
 		Value2D._typeClass=[];
+		Value2D.TEMPMAT4_ARRAY=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 		return Value2D;
 	})(ShaderValue)
+
+
+	/**
+	*...
+	*@author laya
+	*/
+	//class laya.webgl.shader.d2.ShaderDefines2D extends laya.webgl.shader.ShaderDefines
+	var ShaderDefines2D=(function(_super){
+		function ShaderDefines2D(){
+			ShaderDefines2D.__super.call(this,ShaderDefines2D.__name2int,ShaderDefines2D.__int2name,ShaderDefines2D.__int2nameMap);
+		}
+
+		__class(ShaderDefines2D,'laya.webgl.shader.d2.ShaderDefines2D',_super);
+		ShaderDefines2D.__init__=function(){
+			ShaderDefines2D.reg("TEXTURE2D",0x01);
+			ShaderDefines2D.reg("COLOR2D",0x02);
+			ShaderDefines2D.reg("PRIMITIVE",0x04);
+			ShaderDefines2D.reg("GLOW_FILTER",0x08);
+			ShaderDefines2D.reg("BLUR_FILTER",0x10);
+			ShaderDefines2D.reg("COLOR_FILTER",0x20);
+			ShaderDefines2D.reg("COLOR_ADD",0x40);
+			ShaderDefines2D.reg("WORLDMAT",0x80);
+		}
+
+		ShaderDefines2D.reg=function(name,value){
+			ShaderDefines._reg(name,value,ShaderDefines2D.__name2int,ShaderDefines2D.__int2name);
+		}
+
+		ShaderDefines2D.toText=function(value,int2name,int2nameMap){
+			return ShaderDefines._toText(value,int2name,int2nameMap);
+		}
+
+		ShaderDefines2D.toInt=function(names){
+			return ShaderDefines._toInt(names,ShaderDefines2D.__name2int);
+		}
+
+		ShaderDefines2D.TEXTURE2D=0x01;
+		ShaderDefines2D.COLOR2D=0x02;
+		ShaderDefines2D.PRIMITIVE=0x04;
+		ShaderDefines2D.FILTERGLOW=0x08;
+		ShaderDefines2D.FILTERBLUR=0x10;
+		ShaderDefines2D.FILTERCOLOR=0x20;
+		ShaderDefines2D.COLORADD=0x40;
+		ShaderDefines2D.WORLDMAT=0x80;
+		ShaderDefines2D.__name2int={};
+		ShaderDefines2D.__int2name=[];
+		ShaderDefines2D.__int2nameMap=[];
+		return ShaderDefines2D;
+	})(ShaderDefines)
 
 
 	//class laya.webgl.shapes.Line extends laya.webgl.shapes.BasePoly
@@ -16374,6 +18323,7 @@ var Laya=window.Laya=(function(window,document){
 
 		/**cacheAs后，设置自己和父对象缓存失效。*/
 		__proto.repaint=function(){
+			this.model&&this.model.repaint&&this.model.repaint();
 			(this._repaint===0)&& (this._repaint=1,this.parentRepaint());
 			if (this._$P && this._$P.maskParent){
 				this._$P.maskParent.repaint();
@@ -16647,7 +18597,21 @@ var Laya=window.Laya=(function(window,document){
 			this._x!==value && (this._x=value,this.model && this.model.pos(value,this._y),p && p._repaint===0 && (p._repaint=1,p.parentRepaint()),this._$P.maskParent && this._$P.maskParent._repaint===0 && (this._$P.maskParent._repaint=1,this._$P.maskParent.parentRepaint()));
 		});
 
-		/**手动设置的可点击区域。*/
+		/**
+		*获得全局Y轴缩放值
+		*/
+		__getset(0,__proto,'globalScaleY',function(){
+			var scale=1;
+			var ele=this;
+			while (ele){
+				if (ele===Laya.stage)break ;
+				scale *=ele.scaleX;
+				ele=ele.parent;
+			}
+			return scale;
+		});
+
+		/**手动设置的可点击区域，或者一个HitArea区域。*/
 		__getset(0,__proto,'hitArea',function(){
 			return this._$P.hitArea;
 			},function(value){
@@ -16878,11 +18842,13 @@ var Laya=window.Laya=(function(window,document){
 				}
 			}
 			if (value && value.length > 0){
-				if (this.cacheAs !="bitmap"){
-					if (!Render.isConchNode)this.cacheAs="bitmap";
-					this._set$P("cacheForFilters",true);
+				if (!(Render.isWebGL && value.length==1 && (((value[0])instanceof laya.filters.ColorFilter )))){
+					if (this.cacheAs !="bitmap"){
+						if (!Render.isConchNode)this.cacheAs="bitmap";
+						this._set$P("cacheForFilters",true);
+					}
+					this._set$P("hasFilter",true);
 				}
-				this._set$P("hasFilter",true);
 				}else {
 				this._set$P("hasFilter",false);
 				if (this._$P["cacheForFilters"] && this.cacheAs=="bitmap"){
@@ -16919,6 +18885,20 @@ var Laya=window.Laya=(function(window,document){
 			return this._mouseEnableState > 1;
 			},function(value){
 			this._mouseEnableState=value ? 2 :1;
+		});
+
+		/**
+		*获得全局X轴缩放值
+		*/
+		__getset(0,__proto,'globalScaleX',function(){
+			var scale=1;
+			var ele=this;
+			while (ele){
+				if (ele===Laya.stage)break ;
+				scale *=ele.scaleX;
+				ele=ele.parent;
+			}
+			return scale;
 		});
 
 		/**
@@ -17990,6 +19970,510 @@ var Laya=window.Laya=(function(window,document){
 	})(Resource)
 
 
+	/**
+	*动画模板类
+	*/
+	//class laya.ani.bone.Templet extends laya.ani.KeyframesAniTemplet
+	var Templet=(function(_super){
+		function Templet(){
+			this._mainTexture=null;
+			this._textureJson=null;
+			this._graphicsCache=[];
+			this.srcBoneMatrixArr=[];
+			this.ikArr=[];
+			this.boneSlotDic={};
+			this.bindBoneBoneSlotDic={};
+			this.boneSlotArray=[];
+			this.skinDataArray=[];
+			this.skinDic={};
+			this.subTextureDic={};
+			this.isParseFail=false;
+			this.url=null;
+			this.yReverseMatrix=null;
+			this._rate=60;
+			this.aniSectionDic={};
+			this.textureDic={};
+			this._skBufferUrl=null;
+			this._textureDic={};
+			this._loadList=null;
+			this._path=null;
+			this.mRootBone=null;
+			Templet.__super.call(this);
+			this.mBoneArr=[];
+		}
+
+		__class(Templet,'laya.ani.bone.Templet',_super);
+		var __proto=Templet.prototype;
+		__proto.loadAni=function(url){
+			this._skBufferUrl=url;
+			Laya.loader.load(url,Handler.create(this,this.onComplete),null,"arraybuffer");
+		}
+
+		__proto.onComplete=function(){
+			var tSkBuffer=Loader.getRes(this._skBufferUrl);
+			this._path=this._skBufferUrl.slice(0,this._skBufferUrl.lastIndexOf("/"))+"/";
+			this.parseData(null,tSkBuffer);
+		}
+
+		/**
+		*解析骨骼动画数据
+		*@param texture 骨骼动画用到的纹理
+		*@param skeletonData 骨骼动画信息及纹理分块信息
+		*@param playbackRate 缓冲的帧率数据（会根据帧率去分帧）
+		*/
+		__proto.parseData=function(texture,skeletonData,playbackRate){
+			(playbackRate===void 0)&& (playbackRate=60);
+			this._mainTexture=texture;
+			this._rate=playbackRate;
+			this.parse(skeletonData,playbackRate);
+		}
+
+		/**
+		*创建动画
+		*0,使用模板缓冲的数据，模板缓冲的数据，不允许修改 （内存开销小，计算开销小，不支持换装）
+		*1,使用动画自己的缓冲区，每个动画都会有自己的缓冲区，相当耗费内存 （内存开销大，计算开销小，支持换装）
+		*2,使用动态方式，去实时去画 （内存开销小，计算开销大，支持换装,不建议使用）
+		*@param aniMode 0 动画模式，0:不支持换装,1,2支持换装
+		*@return
+		*/
+		__proto.buildArmature=function(aniMode){
+			(aniMode===void 0)&& (aniMode=0);
+			return new Skeleton(this,aniMode);
+		}
+
+		/**
+		*@private
+		*解析动画
+		*@param data 解析的二进制数据
+		*@param playbackRate 帧率
+		*/
+		__proto.parse=function(data,playbackRate){
+			_super.prototype.parse.call(this,data,playbackRate);
+			if (this._aniVersion !=KeyframesAniTemplet.LAYA_ANIMATION_VISION){
+				console.log("[Error] 版本不一致，请使用IDE版本（1.2.0）重新导出");
+				this._loaded=false;
+			}
+			if (this._loaded){
+				if (this._mainTexture){
+					this._parsePublicExtData();
+					}else {
+					this._parseTexturePath();
+				}
+				}else {
+				this.event("error",this);
+				this.isParseFail=true;
+			}
+		}
+
+		__proto._parseTexturePath=function(){
+			var i=0;
+			this._loadList=[];
+			var tByte=new Byte(this.getPublicExtData());
+			var tX=0,tY=0,tWidth=0,tHeight=0;
+			var tFrameX=0,tFrameY=0,tFrameWidth=0,tFrameHeight=0;
+			var tTempleData=0;
+			var tTextureLen=tByte.getUint8();
+			var tTextureName=tByte.readUTFString();
+			var tTextureNameArr=tTextureName.split("\n");
+			var tTexture;
+			var tSrcTexturePath;
+			for (i=0;i < tTextureLen;i++){
+				tSrcTexturePath=this._path+tTextureNameArr[i *2];
+				tTextureName=tTextureNameArr[i *2+1];
+				tX=tByte.getFloat32();
+				tY=tByte.getFloat32();
+				tWidth=tByte.getFloat32();
+				tHeight=tByte.getFloat32();
+				tTempleData=tByte.getFloat32();
+				tFrameX=isNaN(tTempleData)? 0 :tTempleData;
+				tTempleData=tByte.getFloat32();
+				tFrameY=isNaN(tTempleData)? 0 :tTempleData;
+				tTempleData=tByte.getFloat32();
+				tFrameWidth=isNaN(tTempleData)? tWidth :tTempleData;
+				tTempleData=tByte.getFloat32();
+				tFrameHeight=isNaN(tTempleData)? tHeight :tTempleData;
+				if (this._loadList.indexOf(tSrcTexturePath)==-1){
+					this._loadList.push(tSrcTexturePath);
+				}
+			}
+			Laya.loader.load(this._loadList,Handler.create(this,this._textureComplete));
+		}
+
+		/**
+		*纹理加载完成
+		*/
+		__proto._textureComplete=function(){
+			var tTexture;
+			var tTextureName;
+			for (var i=0,n=this._loadList.length;i < n;i++){
+				tTextureName=this._loadList[i];
+				tTexture=this._textureDic[tTextureName]=Loader.getRes(tTextureName);
+			}
+			this._parsePublicExtData();
+		}
+
+		/**
+		*解析自定义数据
+		*/
+		__proto._parsePublicExtData=function(){
+			var i=0,j=0,k=0,l=0,n=0;
+			for (i=0,n=this.getAnimationCount();i < n;i++){
+				this._graphicsCache.push([]);
+			};
+			var tByte=new Byte(this.getPublicExtData());
+			var tX=0,tY=0,tWidth=0,tHeight=0;
+			var tFrameX=0,tFrameY=0,tFrameWidth=0,tFrameHeight=0;
+			var tTempleData=0;
+			var tTextureLen=tByte.getUint8();
+			var tTextureName=tByte.readUTFString();
+			var tTextureNameArr=tTextureName.split("\n");
+			var tTexture;
+			var tSrcTexturePath;
+			for (i=0;i < tTextureLen;i++){
+				tTexture=this._mainTexture;
+				tSrcTexturePath=this._path+tTextureNameArr[i *2];
+				tTextureName=tTextureNameArr[i *2+1];
+				if (this._mainTexture==null){
+					tTexture=this._textureDic[tSrcTexturePath];
+				}
+				tX=tByte.getFloat32();
+				tY=tByte.getFloat32();
+				tWidth=tByte.getFloat32();
+				tHeight=tByte.getFloat32();
+				tTempleData=tByte.getFloat32();
+				tFrameX=isNaN(tTempleData)? 0 :tTempleData;
+				tTempleData=tByte.getFloat32();
+				tFrameY=isNaN(tTempleData)? 0 :tTempleData;
+				tTempleData=tByte.getFloat32();
+				tFrameWidth=isNaN(tTempleData)? tWidth :tTempleData;
+				tTempleData=tByte.getFloat32();
+				tFrameHeight=isNaN(tTempleData)? tHeight :tTempleData;
+				this.subTextureDic[tTextureName]=Texture.create(tTexture,tX,tY,tWidth,tHeight,-tFrameX,-tFrameY,tFrameWidth,tFrameHeight);
+			};
+			var tAniCount=tByte.getUint16();
+			var tSectionArr;
+			for (i=0;i < tAniCount;i++){
+				tSectionArr=[];
+				tSectionArr.push(tByte.getUint16());
+				tSectionArr.push(tByte.getUint16());
+				tSectionArr.push(tByte.getUint16());
+				this.aniSectionDic[i]=tSectionArr;
+			};
+			var tBone;
+			var tParentBone;
+			var tName;
+			var tParentName;
+			var tBoneLen=tByte.getInt16();
+			var tBoneDic={};
+			for (i=0;i < tBoneLen;i++){
+				tBone=new Bone();
+				tName=tByte.readUTFString();
+				tParentName=tByte.readUTFString();
+				tBone.length=tByte.getFloat32();
+				tBone.name=tName;
+				if (tParentName){
+					tParentBone=tBoneDic[tParentName];
+					if (tParentBone){
+						tParentBone.addChild(tBone);
+						}else {
+						this.mRootBone=tBone;
+					}
+				}
+				tBoneDic[tName]=tBone;
+				this.mBoneArr.push(tBone);
+			};
+			var tMatrixDataLen=tByte.getUint16();
+			var tLen=tByte.getUint16();
+			var parentIndex=0;
+			var boneLength=Math.floor(tLen / tMatrixDataLen);
+			var tResultTransform;
+			var tMatrixArray=this.srcBoneMatrixArr;
+			for (i=0;i < boneLength;i++){
+				tResultTransform=new Transform();
+				tResultTransform.scX=tByte.getFloat32();
+				tResultTransform.skX=tByte.getFloat32();
+				tResultTransform.skY=tByte.getFloat32();
+				tResultTransform.scY=tByte.getFloat32();
+				tResultTransform.x=tByte.getFloat32();
+				tResultTransform.y=tByte.getFloat32();
+				tMatrixArray.push(tResultTransform);
+				tBone=this.mBoneArr[i];
+				tBone.transform=tResultTransform;
+			};
+			var tIkConstraintData;
+			var tIkLen=tByte.getUint16();
+			var tIkBoneLen=0;
+			for (i=0;i < tIkLen;i++){
+				tIkConstraintData=new IkConstraintData();
+				tIkBoneLen=tByte.getUint16();
+				for (j=0;j < tIkBoneLen;j++){
+					tIkConstraintData.boneNames.push(tByte.readUTFString());
+					tIkConstraintData.boneIndexs.push(tByte.getInt16());
+				}
+				tIkConstraintData.name=tByte.readUTFString();
+				tIkConstraintData.targetBoneName=tByte.readUTFString();
+				tIkConstraintData.targetBoneIndex=tByte.getInt16();
+				tIkConstraintData.bendDirection=tByte.getFloat32();
+				tIkConstraintData.mix=tByte.getFloat32();
+				this.ikArr.push(tIkConstraintData);
+			};
+			var tBoneSlotLen=tByte.getInt16();
+			var tDBBoneSlot;
+			var tDBBoneSlotArr;
+			for (i=0;i < tBoneSlotLen;i++){
+				tDBBoneSlot=new BoneSlot();
+				tDBBoneSlot.name=tByte.readUTFString();
+				tDBBoneSlot.parent=tByte.readUTFString();
+				tDBBoneSlot.attachmentName=tByte.readUTFString();
+				tDBBoneSlot.srcDisplayIndex=tDBBoneSlot.displayIndex=tByte.getInt16();
+				tDBBoneSlot.templet=this;
+				this.boneSlotDic[tDBBoneSlot.name]=tDBBoneSlot;
+				tDBBoneSlotArr=this.bindBoneBoneSlotDic[tDBBoneSlot.parent];
+				if (tDBBoneSlotArr==null){
+					this.bindBoneBoneSlotDic[tDBBoneSlot.parent]=tDBBoneSlotArr=[];
+				}
+				tDBBoneSlotArr.push(tDBBoneSlot);
+				this.boneSlotArray.push(tDBBoneSlot);
+			};
+			var tNameString=tByte.readUTFString();
+			var tNameArray=tNameString.split("\n");
+			var tNameStartIndex=0;
+			var tSkinDataLen=tByte.getUint8();
+			var tSkinData,tSlotData,tDisplayData;
+			var tSlotDataLen=0,tDisplayDataLen=0;
+			var tUvLen=0,tWeightLen=0,tTriangleLen=0,tVerticeLen=0;
+			for (i=0;i < tSkinDataLen;i++){
+				tSkinData=new SkinData();
+				tSkinData.name=tNameArray[tNameStartIndex++];
+				tSlotDataLen=tByte.getUint8();
+				for (j=0;j < tSlotDataLen;j++){
+					tSlotData=new SlotData();
+					tSlotData.name=tNameArray[tNameStartIndex++];
+					tDBBoneSlot=this.boneSlotDic[tSlotData.name];
+					tDisplayDataLen=tByte.getUint8();
+					for (k=0;k < tDisplayDataLen;k++){
+						tDisplayData=new SkinSlotDisplayData();
+						tDisplayData.name=tNameArray[tNameStartIndex++];
+						tDisplayData.attachmentName=tNameArray[tNameStartIndex++];
+						tDisplayData.transform=new Transform();
+						tDisplayData.transform.scX=tByte.getFloat32();
+						tDisplayData.transform.skX=tByte.getFloat32();
+						tDisplayData.transform.skY=tByte.getFloat32();
+						tDisplayData.transform.scY=tByte.getFloat32();
+						tDisplayData.transform.x=tByte.getFloat32();
+						tDisplayData.transform.y=tByte.getFloat32();
+						tSlotData.displayArr.push(tDisplayData);
+						tDisplayData.width=tByte.getFloat32();
+						tDisplayData.height=tByte.getFloat32();
+						tDisplayData.type=tByte.getUint8();
+						tBoneLen=tByte.getUint16();
+						if (tBoneLen > 0){
+							tDisplayData.bones=[];
+							for (l=0;l < tBoneLen;l++){
+								var tBoneId=tByte.getUint16();
+								tDisplayData.bones.push(tBoneId);
+							}
+						}
+						tUvLen=tByte.getUint16();
+						if (tUvLen > 0){
+							tDisplayData.uvs=[];
+							for (l=0;l < tUvLen;l++){
+								tDisplayData.uvs.push(tByte.getFloat32());
+							}
+						}
+						tWeightLen=tByte.getUint16();
+						if (tWeightLen > 0){
+							tDisplayData.weights=[];
+							for (l=0;l < tWeightLen;l++){
+								tDisplayData.weights.push(tByte.getFloat32());
+							}
+						}
+						tTriangleLen=tByte.getUint16();
+						if (tTriangleLen > 0){
+							tDisplayData.triangles=[];
+							for (l=0;l < tTriangleLen;l++){
+								tDisplayData.triangles.push(tByte.getUint16());
+							}
+						}
+						tVerticeLen=tByte.getUint16();
+						if (tVerticeLen > 0){
+							tDisplayData.vertices=[];
+							for (l=0;l < tVerticeLen;l++){
+								tDisplayData.vertices.push(tByte.getFloat32());
+							}
+						}
+					}
+					tSkinData.slotArr.push(tSlotData);
+				}
+				this.skinDic[tSkinData.name]=tSkinData;
+				this.skinDataArray.push(tSkinData);
+			};
+			var tReverse=tByte.getUint8();
+			if (tReverse==1){
+				this.yReverseMatrix=new Matrix(1,0,0,-1,0,0);
+			}
+			this.showSkinByIndex(this.boneSlotDic,0);
+			this.event("complete",this);
+		}
+
+		/**
+		*得到指定的纹理
+		*@param name 纹理的名字
+		*@return
+		*/
+		__proto.getTexture=function(name){
+			return this.subTextureDic[name];
+		}
+
+		/**
+		*@private
+		*显示指定的皮肤
+		*@param boneSlotDic 插糟字典的引用
+		*@param skinIndex 皮肤的索引
+		*/
+		__proto.showSkinByIndex=function(boneSlotDic,skinIndex){
+			if (skinIndex < 0 && skinIndex >=this.skinDataArray.length)return;
+			var i=0,n=0;
+			var tBoneSlot;
+			var tSlotData;
+			var tSkinData=this.skinDataArray[skinIndex];
+			if (tSkinData){
+				for (i=0,n=tSkinData.slotArr.length;i < n;i++){
+					tSlotData=tSkinData.slotArr[i];
+					if (tSlotData){
+						tBoneSlot=boneSlotDic[tSlotData.name];
+						if (tBoneSlot){
+							tBoneSlot.showSlotData(tSlotData);
+							if (tBoneSlot.attachmentName !="null"){
+								tBoneSlot.showDisplayByName(tBoneSlot.attachmentName);
+								}else {
+								tBoneSlot.showDisplayByIndex(tBoneSlot.displayIndex);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		/**
+		*通过皮肤名字得到皮肤索引
+		*@param skinName 皮肤名称
+		*@return
+		*/
+		__proto.getSkinIndexByName=function(skinName){
+			var tSkinData;
+			for (var i=0,n=this.skinDataArray.length;i < n;i++){
+				tSkinData=this.skinDataArray[i];
+				if (tSkinData.name==skinName){
+					return i;
+				}
+			}
+			return-1;
+		}
+
+		/**
+		*@private
+		*得到缓冲数据
+		*@param aniIndex 动画索引
+		*@param frameIndex 帧索引
+		*@return
+		*/
+		__proto.getGrahicsDataWithCache=function(aniIndex,frameIndex){
+			return this._graphicsCache[aniIndex][frameIndex];
+		}
+
+		/**
+		*@private
+		*保存缓冲grahpics
+		*@param aniIndex 动画索引
+		*@param frameIndex 帧索引
+		*@param graphics 要保存的数据
+		*/
+		__proto.setGrahicsDataWithCache=function(aniIndex,frameIndex,graphics){
+			this._graphicsCache[aniIndex][frameIndex]=graphics;
+		}
+
+		/**
+		*预留
+		*/
+		__proto.destroy=function(){
+			if (this.url){
+				delete Templet.TEMPLET_DICTIONARY[this.url];
+			}
+		}
+
+		/**
+		*通过索引得动画名称
+		*@param index
+		*@return
+		*/
+		__proto.getAniNameByIndex=function(index){
+			var tAni=this.getAnimation(index);
+			if (tAni)return tAni.name;
+			return null;
+		}
+
+		__getset(0,__proto,'rate',function(){
+			return this._rate;
+		});
+
+		Templet.TEMPLET_DICTIONARY=null
+		return Templet;
+	})(KeyframesAniTemplet)
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.webgl.shader.d2.fillTexture.FillTextureShaderValue extends laya.webgl.shader.d2.value.Value2D
+	var FillTextureShaderValue=(function(_super){
+		function FillTextureShaderValue(){
+			this.texcoord=null;
+			this.u_texRange=[0,1,0,1];
+			this.u_offset=[0.5,0.5];
+			FillTextureShaderValue.__super.call(this,0,0);
+			var _vlen=8 *CONST3D2D.BYTES_PE;
+			this.position=[2,0x1406,false,_vlen,0];
+			this.texcoord=[2,0x1406,false,_vlen,2 *CONST3D2D.BYTES_PE];
+			this.color=[4,0x1406,false,_vlen,4 *CONST3D2D.BYTES_PE];
+		}
+
+		__class(FillTextureShaderValue,'laya.webgl.shader.d2.fillTexture.FillTextureShaderValue',_super);
+		FillTextureShaderValue.instance=function(){
+			return FillTextureShaderValue._fillTextureShaderValue=FillTextureShaderValue._fillTextureShaderValue|| new FillTextureShaderValue();
+		}
+
+		FillTextureShaderValue._fillTextureShaderValue=null
+		return FillTextureShaderValue;
+	})(Value2D)
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.webgl.shader.d2.skinAnishader.aniShaderValue extends laya.webgl.shader.d2.value.Value2D
+	var aniShaderValue=(function(_super){
+		function aniShaderValue(){
+			this.texcoord=null;
+			aniShaderValue.__super.call(this,0,0);
+			var _vlen=8 *CONST3D2D.BYTES_PE;
+			this.position=[2,0x1406,false,_vlen,0];
+			this.texcoord=[2,0x1406,false,_vlen,2 *CONST3D2D.BYTES_PE];
+			this.color=[4,0x1406,false,_vlen,4 *CONST3D2D.BYTES_PE];
+		}
+
+		__class(aniShaderValue,'laya.webgl.shader.d2.skinAnishader.aniShaderValue',_super);
+		aniShaderValue.instance=function(){
+			return aniShaderValue._aniShaderValue=aniShaderValue._aniShaderValue|| new aniShaderValue();
+		}
+
+		aniShaderValue._aniShaderValue=null
+		return aniShaderValue;
+	})(Value2D)
+
+
 	//class laya.webgl.shader.d2.value.Color2dSV extends laya.webgl.shader.d2.value.Value2D
 	var Color2dSV=(function(_super){
 		function Color2dSV(args){
@@ -18049,6 +20533,484 @@ var Laya=window.Laya=(function(window,document){
 		__class(PrimitiveSV,'laya.webgl.shader.d2.value.PrimitiveSV',_super);
 		return PrimitiveSV;
 	})(Value2D)
+
+
+	/**
+	*<code>Component</code> 是ui控件类的基类。
+	*<p>生命周期：preinitialize > createChildren > initialize > 组件构造函数</p>
+	*/
+	//class laya.ui.Component extends laya.display.Sprite
+	var Component=(function(_super){
+		function Component(){
+			this._comXml=null;
+			this._dataSource=null;
+			this._toolTip=null;
+			this._tag=null;
+			this._disabled=false;
+			this._gray=false;
+			Component.__super.call(this);
+			this._layout=LayoutStyle.EMPTY;
+			this.preinitialize();
+			this.createChildren();
+			this.initialize();
+		}
+
+		__class(Component,'laya.ui.Component',_super);
+		var __proto=Component.prototype;
+		Laya.imps(__proto,{"laya.ui.IComponent":true})
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._dataSource=this._layout=null;
+			this._tag=null;
+			this._toolTip=null;
+		}
+
+		/**
+		*<p>预初始化。</p>
+		*@internal 子类可在此函数内设置、修改属性默认值
+		*/
+		__proto.preinitialize=function(){}
+		/**
+		*<p>创建并添加控件子节点。</p>
+		*@internal 子类可在此函数内创建并添加子节点。
+		*/
+		__proto.createChildren=function(){}
+		/**
+		*<p>控件初始化。</p>
+		*@internal 在此子对象已被创建，可以对子对象进行修改。
+		*/
+		__proto.initialize=function(){}
+		/**
+		*<p>延迟运行指定的函数。</p>
+		*<p>在控件被显示在屏幕之前调用，一般用于延迟计算数据。</p>
+		*@param method 要执行的函数的名称。例如，functionName。
+		*@param args 传递给 <code>method</code> 函数的可选参数列表。
+		*
+		*@see #runCallLater()
+		*/
+		__proto.callLater=function(method,args){
+			Laya.timer.callLater(this,method,args);
+		}
+
+		/**
+		*<p>如果有需要延迟调用的函数（通过 <code>callLater</code> 函数设置），则立即执行延迟调用函数。</p>
+		*@param method 要执行的函数名称。例如，functionName。
+		*@see #callLater()
+		*/
+		__proto.runCallLater=function(method){
+			Laya.timer.runCallLater(this,method);
+		}
+
+		/**
+		*<p>立即执行影响宽高度量的延迟调用函数。</p>
+		*@internal <p>使用 <code>runCallLater</code> 函数，立即执行影响宽高度量的延迟运行函数(使用 <code>callLater</code> 设置延迟执行函数)。</p>
+		*@see #callLater()
+		*@see #runCallLater()
+		*/
+		__proto.commitMeasure=function(){}
+		/**
+		*<p>重新调整对象的大小。</p>
+		*/
+		__proto.changeSize=function(){
+			this.event("resize");
+		}
+
+		/**
+		*@private
+		*<p>获取对象的布局样式。</p>
+		*/
+		__proto.getLayout=function(){
+			this._layout===LayoutStyle.EMPTY && (this._layout=new LayoutStyle());
+			return this._layout;
+		}
+
+		/**
+		*对象从显示列表移除的事件侦听处理函数。
+		*/
+		__proto.onRemoved=function(){
+			this.parent.off("resize",this,this.onCompResize);
+		}
+
+		/**
+		*对象被添加到显示列表的事件侦听处理函数。
+		*/
+		__proto.onAdded=function(){
+			this.parent.on("resize",this,this.onCompResize);
+			this.resetLayoutX();
+			this.resetLayoutY();
+		}
+
+		/**
+		*父容器的 <code>Event.RESIZE</code> 事件侦听处理函数。
+		*/
+		__proto.onCompResize=function(){
+			if (this._layout && this._layout.enable){
+				this.resetLayoutX();
+				this.resetLayoutY();
+			}
+		}
+
+		/**
+		*<p>重置对象的 <code>X</code> 轴（水平方向）布局。</p>
+		*/
+		__proto.resetLayoutX=function(){
+			var parent=this.parent;
+			if (parent){
+				var layout=this._layout;
+				if (!isNaN(layout.anchorX))this.pivotX=layout.anchorX *this.width;
+				if (!isNaN(layout.centerX)){
+					this.x=(parent.width-this.displayWidth)*0.5+layout.centerX;
+					}else if (!isNaN(layout.left)){
+					this.x=layout.left;
+					if (!isNaN(layout.right)){
+						this.width=(parent._width-layout.left-layout.right)/ this.scaleX;
+					}
+					}else if (!isNaN(layout.right)){
+					this.x=parent.width-this.displayWidth-layout.right;
+				}
+			}
+		}
+
+		/**
+		*<p>重置对象的 <code>Y</code> 轴（垂直方向）布局。</p>
+		*/
+		__proto.resetLayoutY=function(){
+			var parent=this.parent;
+			if (parent){
+				var layout=this._layout;
+				if (!isNaN(layout.anchorY))this.pivotY=layout.anchorY *this.height;
+				if (!isNaN(layout.centerY)){
+					this.y=(parent.height-this.displayHeight)*0.5+layout.centerY;
+					}else if (!isNaN(layout.top)){
+					this.y=layout.top;
+					if (!isNaN(layout.bottom)){
+						this.height=(parent._height-layout.top-layout.bottom)/ this.scaleY;
+					}
+					}else if (!isNaN(layout.bottom)){
+					this.y=parent.height-this.displayHeight-layout.bottom;
+				}
+			}
+		}
+
+		/**
+		*对象的 <code>Event.MOUSE_OVER</code> 事件侦听处理函数。
+		*/
+		__proto.onMouseOver=function(e){
+			Laya.stage.event("showtip",this._toolTip);
+		}
+
+		/**
+		*对象的 <code>Event.MOUSE_OUT</code> 事件侦听处理函数。
+		*/
+		__proto.onMouseOut=function(e){
+			Laya.stage.event("hidetip",this._toolTip);
+		}
+
+		/**
+		*<p>对象的显示宽度（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'displayWidth',function(){
+			return this.width *this.scaleX;
+		});
+
+		/**
+		*<p>表示显示对象的宽度，以像素为单位。</p>
+		*<p><b>注：</b>当值为0时，宽度为自适应大小。</p>
+		*/
+		__getset(0,__proto,'width',function(){
+			if (this._width)return this._width;
+			return this.measureWidth;
+			},function(value){
+			if (this._width !=value){
+				this._width=value;
+				this.model && this.model.size(this._width,this._height);
+				this.callLater(this.changeSize);
+				if (this._layout.enable && (!isNaN(this._layout.centerX)|| !isNaN(this._layout.right)|| !isNaN(this._layout.anchorX)))this.resetLayoutX();
+			}
+		});
+
+		/**
+		*<p>显示对象的实际显示区域宽度（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'measureWidth',function(){
+			var max=0;
+			this.commitMeasure();
+			for (var i=this.numChildren-1;i >-1;i--){
+				var comp=this.getChildAt(i);
+				if (comp.visible){
+					max=Math.max(comp.x+comp.width *comp.scaleX,max);
+				}
+			}
+			return max;
+		});
+
+		/**
+		*@private
+		*<p>指定对象是否可使用布局。</p>
+		*<p>如果值为true,则此对象可以使用布局样式，否则不使用布局样式。</p>
+		*@param value 一个 Boolean 值，指定对象是否可使用布局。
+		*/
+		__getset(0,__proto,'layOutEabled',null,function(value){
+			if (this._layout && this._layout.enable !=value){
+				this._layout.enable=value;
+				if (this.parent){
+					this.onAdded();
+					}else if (!this.hasListener("added")){
+					this.on("added",this,this.onAdded);
+					this.on("removed",this,this.onRemoved);
+				}
+			}
+		});
+
+		/**
+		*<p>对象的显示高度（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'displayHeight',function(){
+			return this.height *this.scaleY;
+		});
+
+		/**
+		*<p>表示显示对象的高度，以像素为单位。</p>
+		*<p><b>注：</b>当值为0时，高度为自适应大小。</p>
+		*@return
+		*/
+		__getset(0,__proto,'height',function(){
+			if (this._height)return this._height;
+			return this.measureHeight;
+			},function(value){
+			if (this._height !=value){
+				this._height=value;
+				this.model && this.model.size(this._width,this._height);
+				this.callLater(this.changeSize);
+				if (this._layout.enable && (!isNaN(this._layout.centerY)|| !isNaN(this._layout.bottom)|| !isNaN(this._layout.anchorY)))this.resetLayoutY();
+			}
+		});
+
+		/**
+		*<p>数据赋值，通过对UI赋值来控制UI显示逻辑。</p>
+		*<p>简单赋值会更改组件的默认属性，使用大括号可以指定组件的任意属性进行赋值。</p>
+		*@example 以下示例中， <code>label1、checkbox1</code> 分别为示例的name属性值。
+		<listing version="3.0">
+		//默认属性赋值
+		dataSource={label1:"改变了label",checkbox1:true};//(更改了label1的text属性值，更改checkbox1的selected属性)。
+		//任意属性赋值
+		dataSource={label2:{text:"改变了label",size:14},checkbox2:{selected:true,x:10}};
+		</listing>
+		*@return
+		*/
+		__getset(0,__proto,'dataSource',function(){
+			return this._dataSource;
+			},function(value){
+			this._dataSource=value;
+			for (var prop in this._dataSource){
+				if (this.hasOwnProperty(prop)){
+					this[prop]=this._dataSource[prop];
+				}
+			}
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'scaleY',_super.prototype._$get_scaleY,function(value){
+			if (_super.prototype._$get_scaleY.call(this)!=value){
+				_super.prototype._$set_scaleY.call(this,value);
+				this.callLater(this.changeSize);
+				this._layout.enable && this.resetLayoutY();
+			}
+		});
+
+		/**
+		*<p>显示对象的实际显示区域高度（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'measureHeight',function(){
+			var max=0;
+			this.commitMeasure();
+			for (var i=this.numChildren-1;i >-1;i--){
+				var comp=this.getChildAt(i);
+				if (comp.visible){
+					max=Math.max(comp.y+comp.height *comp.scaleY,max);
+				}
+			}
+			return max;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'scaleX',_super.prototype._$get_scaleX,function(value){
+			if (_super.prototype._$get_scaleX.call(this)!=value){
+				_super.prototype._$set_scaleX.call(this,value);
+				this.callLater(this.changeSize);
+				this._layout.enable && this.resetLayoutX();
+			}
+		});
+
+		/**
+		*<p>从组件顶边到其内容区域顶边之间的垂直距离（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'top',function(){
+			return this._layout.top;
+			},function(value){
+			this.getLayout().top=value;
+			this.layOutEabled=true;
+			this.resetLayoutY();
+		});
+
+		/**
+		*<p>从组件底边到其内容区域底边之间的垂直距离（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'bottom',function(){
+			return this._layout.bottom;
+			},function(value){
+			this.getLayout().bottom=value;
+			this.layOutEabled=true;
+			this.resetLayoutY();
+		});
+
+		/**
+		*<p>从组件左边到其内容区域左边之间的水平距离（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'left',function(){
+			return this._layout.left;
+			},function(value){
+			this.getLayout().left=value;
+			this.layOutEabled=true;
+			this.resetLayoutX();
+		});
+
+		/**
+		*<p>从组件右边到其内容区域右边之间的水平距离（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'right',function(){
+			return this._layout.right;
+			},function(value){
+			this.getLayout().right=value;
+			this.layOutEabled=true;
+			this.resetLayoutX();
+		});
+
+		/**
+		*<p>在父容器中，此对象的水平方向中轴线与父容器的水平方向中心线的距离（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'centerX',function(){
+			return this._layout.centerX;
+			},function(value){
+			this.getLayout().centerX=value;
+			this.layOutEabled=true;
+			this.resetLayoutX();
+		});
+
+		/**
+		*<p>在父容器中，此对象的垂直方向中轴线与父容器的垂直方向中心线的距离（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'centerY',function(){
+			return this._layout.centerY;
+			},function(value){
+			this.getLayout().centerY=value;
+			this.layOutEabled=true;
+			this.resetLayoutY();
+		});
+
+		/**X轴锚点，值为0-1*/
+		__getset(0,__proto,'anchorX',function(){
+			return this._layout.anchorX;
+			},function(value){
+			this.getLayout().anchorX=value;
+			this.layOutEabled=true;
+			this.resetLayoutX();
+		});
+
+		/**Y轴锚点，值为0-1*/
+		__getset(0,__proto,'anchorY',function(){
+			return this._layout.anchorY;
+			},function(value){
+			this.getLayout().anchorY=value;
+			this.layOutEabled=true;
+			this.resetLayoutY();
+		});
+
+		/**
+		*<p>对象的标签。</p>
+		*@internal 冗余字段，可以用来储存数据。
+		*/
+		__getset(0,__proto,'tag',function(){
+			return this._tag;
+			},function(value){
+			this._tag=value;
+		});
+
+		/**
+		*<p>鼠标悬停提示。</p>
+		*<p>可以赋值为文本 <code>String</code> 或函数 <code>Handler</code> ，用来实现自定义样式的鼠标提示和参数携带等。</p>
+		*@example 以下例子展示了三种鼠标提示：
+		<listing version="3.0">
+		private var _testTips:TestTipsUI=new TestTipsUI();
+		private function testTips():void {
+			//简单鼠标提示
+			btn2.toolTip="这里是鼠标提示&lt;b&gt;粗体&lt;/b&gt;&lt;br&gt;换行";
+			//自定义的鼠标提示
+			btn1.toolTip=showTips1;
+			//带参数的自定义鼠标提示
+			clip.toolTip=new Handler(this,showTips2,["clip"]);
+		}
+
+		private function showTips1():void {
+			_testTips.label.text="这里是按钮["+btn1.label+"]";
+			tip.addChild(_testTips);
+		}
+
+		private function showTips2(name:String):void {
+			_testTips.label.text="这里是"+name;
+			tip.addChild(_testTips);
+		}
+
+		</listing>
+		*/
+		__getset(0,__proto,'toolTip',function(){
+			return this._toolTip;
+			},function(value){
+			if (this._toolTip !=value){
+				this._toolTip=value;
+				if (value !=null){
+					this.on("mouseover",this,this.onMouseOver);
+					this.on("mouseout",this,this.onMouseOut);
+					}else {
+					this.off("mouseover",this,this.onMouseOver);
+					this.off("mouseout",this,this.onMouseOut);
+				}
+			}
+		});
+
+		/**
+		*XML 数据。
+		*/
+		__getset(0,__proto,'comXml',function(){
+			return this._comXml;
+			},function(value){
+			this._comXml=value;
+		});
+
+		/**是否变灰。*/
+		__getset(0,__proto,'gray',function(){
+			return this._disabled;
+			},function(value){
+			if (value!==this._gray){
+				this._gray=value;
+				UIUtils.gray(this,value);
+			}
+		});
+
+		/**是否禁用页面，设置为true后，会变灰并且禁用鼠标。*/
+		__getset(0,__proto,'disabled',function(){
+			return this._disabled;
+			},function(value){
+			if (value!==this._disabled){
+				this.gray=this._disabled=value;
+				this.mouseEnabled=!value;
+			}
+		});
+
+		return Component;
+	})(Sprite)
 
 
 	/**
@@ -19344,6 +22306,783 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*骨骼动画由Templet,AnimationPlayer,Skeleton三部分组成
+	*/
+	//class laya.ani.bone.Skeleton extends laya.display.Sprite
+	var Skeleton=(function(_super){
+		function Skeleton(templet,aniMode){
+			this._templet=null;
+			this._player=null;
+			this._curOriginalData=null;
+			this._boneMatrixArray=[];
+			this._lastTime=0;
+			this._currAniName=null;
+			this._currAniIndex=-1;
+			this._pause=true;
+			this._aniClipIndex=-1;
+			this._clipIndex=-1;
+			this._skinIndex=0;
+			this._aniMode=0;
+			this._graphicsCache=null;
+			this._boneSlotDic=null;
+			this._bindBoneBoneSlotDic=null;
+			this._boneSlotArray=null;
+			this._index=-1;
+			this._total=-1;
+			this._indexControl=false;
+			this._aniPath=null;
+			this._texturePath=null;
+			this._complete=null;
+			this._loadAniMode=0;
+			this._yReverseMatrix=null;
+			this._ikArr=null;
+			this._rootBone=null;
+			this._boneList=null;
+			this._aniSectionDic=null;
+			Skeleton.__super.call(this);
+			(aniMode===void 0)&& (aniMode=0);
+			if (templet)this.init(templet,aniMode);
+		}
+
+		__class(Skeleton,'laya.ani.bone.Skeleton',_super);
+		var __proto=Skeleton.prototype;
+		/**
+		*初始化动画
+		*0,使用模板缓冲的数据，模板缓冲的数据，不允许修改 （内存开销小，计算开销小，不支持换装）
+		*1,使用动画自己的缓冲区，每个动画都会有自己的缓冲区，相当耗费内存 （内存开销大，计算开销小，支持换装）
+		*2,使用动态方式，去实时去画 （内存开销小，计算开销大，支持换装,不建议使用）
+		*@param templet 模板
+		*@param aniMode 动画模式，0:不支持换装,1,2支持换装
+		*/
+		__proto.init=function(templet,aniMode){
+			(aniMode===void 0)&& (aniMode=0);
+			if (aniMode==1){
+				this._graphicsCache=[];
+				for (var i=0,n=templet.getAnimationCount();i < n;i++){
+					this._graphicsCache.push([]);
+				}
+			}
+			this._yReverseMatrix=templet.yReverseMatrix;
+			this._aniMode=aniMode;
+			this._templet=templet;
+			this._player=new AnimationPlayer(templet.rate);
+			this._player.templet=templet;
+			this._player.play();
+			this._parseSrcBoneMatrix();
+			this._ikArr=templet.ikArr;
+			this._boneList=templet.mBoneArr;
+			this._rootBone=templet.mRootBone;
+			this._aniSectionDic=templet.aniSectionDic;
+			this._player.on("played",this,this._onPlay);
+			this._player.on("stopped",this,this._onStop);
+			this._player.on("paused",this,this._onPause);
+		}
+
+		/**
+		*通过加载直接创建动画
+		*@param path 要加载的动画文件路径
+		*@param complete 加载完成的回调函数
+		*@param aniMode 0,使用模板缓冲的数据，模板缓冲的数据，不允许修改（内存开销小，计算开销小，不支持换装） 1,使用动画自己的缓冲区，每个动画都会有自己的缓冲区，相当耗费内存 （内存开销大，计算开销小，支持换装）2,使用动态方式，去实时去画（内存开销小，计算开销大，支持换装,不建议使用）
+		*/
+		__proto.load=function(path,complete,aniMode){
+			(aniMode===void 0)&& (aniMode=0);
+			this._aniPath=path;
+			this._complete=complete;
+			this._loadAniMode=aniMode;
+			this._texturePath=path.replace(".sk",".png").replace(".bin",".png");
+			Laya.loader.load([{url:path,type:"arraybuffer"},{url:this._texturePath,type:"image"}],Handler.create(this,this._onLoaded));
+		}
+
+		/**
+		*加载完成
+		*/
+		__proto._onLoaded=function(){
+			var tTexture=Loader.getRes(this._texturePath);
+			var arraybuffer=Loader.getRes(this._aniPath);
+			if (tTexture==null || arraybuffer==null)return;
+			if (Templet.TEMPLET_DICTIONARY==null){
+				Templet.TEMPLET_DICTIONARY={};
+			};
+			var tFactory;
+			tFactory=Templet.TEMPLET_DICTIONARY[this._aniPath];
+			if (tFactory){
+				tFactory.isParseFail ? this._parseFail():this._parseComplete();
+				}else {
+				tFactory=new Templet();
+				tFactory.url=this._aniPath;
+				Templet.TEMPLET_DICTIONARY[this._aniPath]=tFactory;
+				tFactory.on("complete",this,this._parseComplete);
+				tFactory.on("error",this,this._parseFail);
+				tFactory.parseData(tTexture,arraybuffer,60);
+			}
+		}
+
+		/**
+		*解析完成
+		*/
+		__proto._parseComplete=function(){
+			var tTemple=Templet.TEMPLET_DICTIONARY[this._aniPath];
+			if (tTemple){
+				this.init(tTemple,this._loadAniMode);
+				this.play(0,true);
+			}
+			this._complete && this._complete.runWith(this);
+		}
+
+		/**
+		*解析失败
+		*/
+		__proto._parseFail=function(){
+			console.log("[Error]:"+this._aniPath+"解析失败");
+		}
+
+		/**
+		*传递PLAY事件
+		*/
+		__proto._onPlay=function(){
+			this.event("played");
+		}
+
+		/**
+		*传递STOP事件
+		*/
+		__proto._onStop=function(){
+			this.event("stopped");
+		}
+
+		/**
+		*传递PAUSE事件
+		*/
+		__proto._onPause=function(){
+			this.event("paused");
+		}
+
+		/**
+		*创建骨骼的矩阵，保存每次计算的最终结果
+		*/
+		__proto._parseSrcBoneMatrix=function(){
+			var i=0,n=0;
+			n=this._templet.srcBoneMatrixArr.length;
+			for (i=0;i < n;i++){
+				this._boneMatrixArray.push(new Matrix());
+			}
+			if (this._aniMode==0){
+				this._boneSlotDic=this._templet.boneSlotDic;
+				this._bindBoneBoneSlotDic=this._templet.bindBoneBoneSlotDic;
+				this._boneSlotArray=this._templet.boneSlotArray;
+				}else {
+				if (this._boneSlotDic==null)this._boneSlotDic={};
+				if (this._bindBoneBoneSlotDic==null)this._bindBoneBoneSlotDic={};
+				if (this._boneSlotArray==null)this._boneSlotArray=[];
+				var tArr=this._templet.boneSlotArray;
+				var tBS;
+				var tBSArr;
+				for (i=0,n=tArr.length;i < n;i++){
+					tBS=tArr[i];
+					tBSArr=this._bindBoneBoneSlotDic[tBS.parent];
+					if (tBSArr==null){
+						this._bindBoneBoneSlotDic[tBS.parent]=tBSArr=[];
+					}
+					this._boneSlotDic[tBS.name]=tBS=tBS.copy();
+					tBSArr.push(tBS);
+					this._boneSlotArray.push(tBS);
+				}
+			}
+		}
+
+		/**
+		*更新动画
+		*@param autoKey true为正常更新，false为index手动更新
+		*/
+		__proto._update=function(autoKey){
+			(autoKey===void 0)&& (autoKey=true);
+			if (this._pause)return;
+			if (autoKey && this._indexControl){
+				return;
+			};
+			var tCurrTime=Laya.timer.currTimer;
+			if (autoKey){
+				this._player.update(tCurrTime-this._lastTime)
+			}
+			this._lastTime=tCurrTime;
+			this._aniClipIndex=this._player.currentAnimationClipIndex;
+			this._clipIndex=this._player.currentKeyframeIndex;
+			if (this._aniClipIndex==-1)return;
+			var tGraphics;
+			if (this._aniMode==0){
+				tGraphics=this._templet.getGrahicsDataWithCache(this._aniClipIndex,this._clipIndex);
+				if (tGraphics){
+					this.graphics=tGraphics;
+					return;
+				}
+				}else if (this._aniMode==1){
+				tGraphics=this._getGrahicsDataWithCache(this._aniClipIndex,this._clipIndex);
+				if (tGraphics){
+					this.graphics=tGraphics;
+					return;
+				}
+			}
+			this._createGraphics();
+		}
+
+		/**
+		*创建grahics图像
+		*/
+		__proto._createGraphics=function(){
+			var bones=this._templet.getNodes(this._aniClipIndex);
+			this._templet.getOriginalData(this._aniClipIndex,this._curOriginalData,this._clipIndex,this._player.currentFrameTime);
+			var tSectionArr=this._aniSectionDic[this._aniClipIndex];
+			var tParentMatrix;
+			var tResultMatrix;
+			var tStartIndex=0;
+			var i=0,j=0,k=0,n=0;
+			var tDBBoneSlot;
+			var tDBBoneSlotArr;
+			var tParentTransform;
+			var tSrcBone;
+			var boneCount=this._templet.srcBoneMatrixArr.length;
+			for (i=0,n=tSectionArr[0];i < boneCount;i++){
+				tSrcBone=this._boneList[i];
+				tResultMatrix=this._boneMatrixArray[i];
+				tParentTransform=this._templet.srcBoneMatrixArr[i];
+				tSrcBone.resultTransform.scX=tParentTransform.scX *this._curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.skX=tParentTransform.skX+this._curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.skY=tParentTransform.skY+this._curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.scY=tParentTransform.scY *this._curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.x=tParentTransform.x+this._curOriginalData[tStartIndex++];
+				tSrcBone.resultTransform.y=tParentTransform.y+this._curOriginalData[tStartIndex++];
+			};
+			var tSlotDic={};
+			var tSlotAlphaDic={};
+			var tBoneData;
+			for (n+=tSectionArr[1];i < n;i++){
+				tBoneData=bones[i];
+				tSlotDic[tBoneData.name]=this._curOriginalData[tStartIndex++];
+				tSlotAlphaDic[tBoneData.name]=this._curOriginalData[tStartIndex++];
+				this._curOriginalData[tStartIndex++];
+				this._curOriginalData[tStartIndex++];
+				this._curOriginalData[tStartIndex++];
+				this._curOriginalData[tStartIndex++];
+			};
+			var tBendDirectionDic={};
+			var tMixDic={};
+			for (n+=tSectionArr[2];i < n;i++){
+				tBoneData=bones[i];
+				tBendDirectionDic[tBoneData.name]=this._curOriginalData[tStartIndex++];
+				tMixDic[tBoneData.name]=this._curOriginalData[tStartIndex++];
+				this._curOriginalData[tStartIndex++];
+				this._curOriginalData[tStartIndex++];
+				this._curOriginalData[tStartIndex++];
+			}
+			if (this._yReverseMatrix){
+				this._rootBone.update(this._yReverseMatrix);
+				}else {
+				this._rootBone.update(Matrix.TEMP.identity());
+			};
+			var tIkConstraintData;
+			var tTargetBone;
+			var tParentBone;
+			var tChildBone;
+			for (i=0,n=this._ikArr.length;i < n;i++){
+				tIkConstraintData=this._ikArr[i];
+				tTargetBone=this._boneList[tIkConstraintData.targetBoneIndex];
+				switch(tIkConstraintData.boneIndexs.length){
+					case 1:
+						tChildBone=this._boneList[tIkConstraintData.boneIndexs[0]];
+						this._applyIk1(tChildBone,tTargetBone.resultMatrix.tx,tTargetBone.resultMatrix.ty,tIkConstraintData.mix);
+						break ;
+					case 2:
+						tParentBone=this._boneList[tIkConstraintData.boneIndexs[0]];
+						tChildBone=this._boneList[tIkConstraintData.boneIndexs[1]];
+						if (tBendDirectionDic[tIkConstraintData.name]){
+							this._applyIk2(tParentBone,tChildBone,tTargetBone.resultMatrix.tx,tTargetBone.resultMatrix.ty,tBendDirectionDic[tIkConstraintData.name],tMixDic[tIkConstraintData.name]);
+							}else {
+							this._applyIk2(tParentBone,tChildBone,tTargetBone.resultMatrix.tx,tTargetBone.resultMatrix.ty,tIkConstraintData.bendDirection,tIkConstraintData.mix);
+						}
+						break ;
+					}
+			}
+			for (i=0,k=this._boneList.length;i < k;i++){
+				tSrcBone=this._boneList[i];
+				tDBBoneSlotArr=this._bindBoneBoneSlotDic[tSrcBone.name];
+				tSrcBone.resultMatrix.copyTo(this._boneMatrixArray[i]);
+				if (tDBBoneSlotArr){
+					for (j=0,n=tDBBoneSlotArr.length;j < n;j++){
+						tDBBoneSlot=tDBBoneSlotArr[j];
+						if (tDBBoneSlot){
+							tDBBoneSlot.setParentMatrix(tSrcBone.resultMatrix);
+						}
+					}
+				}
+			};
+			var tGraphics;
+			if (this._aniMode==0 || this._aniMode==1){
+				this.graphics=new GraphicsAni();
+				}else {
+				if ((this.graphics instanceof laya.ani.GraphicsAni )){
+					this.graphics.clear();
+					}else {
+					this.graphics=new GraphicsAni();
+				}
+			}
+			tGraphics=this.graphics;
+			var tSlotData2=NaN;
+			var tSlotData3=NaN;
+			for (i=0,n=this._boneSlotArray.length;i < n;i++){
+				tDBBoneSlot=this._boneSlotArray[i];
+				tSlotData2=tSlotDic[tDBBoneSlot.name];
+				tSlotData3=tSlotAlphaDic[tDBBoneSlot.name];
+				if (!isNaN(tSlotData3)){
+					tGraphics.save();
+					tGraphics.alpha(tSlotData3);
+				}
+				if (!isNaN(tSlotData2)){
+					tDBBoneSlot.showDisplayByIndex(tSlotData2);
+				}
+				tDBBoneSlot.draw(tGraphics,this._boneMatrixArray,this,this._aniMode==2);
+				if (!isNaN(tSlotData3)){
+					tGraphics.restore();
+				}
+			}
+			if (this._aniMode==0){
+				this._templet.setGrahicsDataWithCache(this._aniClipIndex,this._clipIndex,tGraphics);
+				}else if (this._aniMode==1){
+				this._setGrahicsDataWithCache(this._aniClipIndex,this._clipIndex,tGraphics);
+			}
+		}
+
+		__proto._applyIk1=function(bone,targetX,targetY,alpha){
+			var pp=bone._parent;
+			var id=1 / (pp.resultMatrix.a *pp.resultMatrix.d-pp.resultMatrix.b *pp.resultMatrix.c);
+			var x=targetX-pp.resultMatrix.tx;
+			var y=targetY-pp.resultMatrix.ty;
+			var tx=(x *pp.resultMatrix.d-y *pp.resultMatrix.b)*id-bone.transform.x;
+			var ty=(y *pp.resultMatrix.a-x *pp.resultMatrix.c)*id-bone.transform.y;
+			var rotationIK=Math.atan2(ty,tx)*Skeleton.radDeg-0-bone.transform.skX;
+			if (bone.transform.scX < 0)rotationIK+=180;
+			if (rotationIK > 180)
+				rotationIK-=360;
+			else if (rotationIK <-180)rotationIK+=360;
+			bone.transform.skX=bone.transform.skY=bone.transform.skX+rotationIK *alpha;
+			bone.update();
+		}
+
+		__proto._applyIk2=function(parent,child,targetX,targetY,bendDir,alpha){
+			if (alpha==0){
+				return;
+			};
+			var px=parent.resultTransform.x,py=parent.resultTransform.y;
+			var psx=parent.resultTransform.scX,psy=parent.resultTransform.scY;
+			var csx=child.resultTransform.scX;
+			var os1=0,os2=0,s2=0;
+			if (psx < 0){
+				psx=-psx;
+				os1=180;
+				s2=-1;
+				}else {
+				os1=0;
+				s2=1;
+			}
+			if (psy < 0){
+				psy=-psy;
+				s2=-s2;
+			}
+			if (csx < 0){
+				csx=-csx;
+				os2=180;
+				}else {
+				os2=0
+			};
+			var cx=child.resultTransform.x,cy=NaN,cwx=NaN,cwy=NaN;
+			var a=parent.resultMatrix.a,b=parent.resultMatrix.b;
+			var c=parent.resultMatrix.c,d=parent.resultMatrix.d;
+			var u=Math.abs(psx-psy)<=0.0001;
+			if (!u){
+				cy=0;
+				cwx=a *cx+parent.resultMatrix.tx;
+				cwy=c *cx+parent.resultMatrix.ty;
+				}else {
+				cy=child.resultTransform.y;
+				cwx=a *cx+b *cy+parent.resultMatrix.tx;
+				cwy=c *cx+d *cy+parent.resultMatrix.ty;
+			};
+			var pp=parent._parent;
+			a=pp.resultMatrix.a;
+			b=pp.resultMatrix.b;
+			c=pp.resultMatrix.c;
+			d=pp.resultMatrix.d;
+			var id=1 / (a *d-b *c);
+			var x=targetX-pp.resultMatrix.tx,y=targetY-pp.resultMatrix.ty;
+			var tx=(x *d-y *b)*id-px;
+			var ty=(y *a-x *c)*id-py;
+			x=cwx-pp.resultMatrix.tx;
+			y=cwy-pp.resultMatrix.ty;
+			var dx=(x *d-y *b)*id-px;
+			var dy=(y *a-x *c)*id-py;
+			var l1=Math.sqrt(dx *dx+dy *dy);
+			var l2=child.length *csx;
+			var a1=NaN,a2=NaN;
+			if (u){
+				l2 *=psx;
+				var cos=(tx *tx+ty *ty-l1 *l1-l2 *l2)/ (2 *l1 *l2);
+				if (cos <-1)
+					cos=-1;
+				else if (cos > 1)cos=1;
+				a2=Math.acos(cos)*bendDir;
+				a=l1+l2 *cos;
+				b=l2 *Math.sin(a2);
+				a1=Math.atan2(ty *a-tx *b,tx *a+ty *b);
+				}else {
+				a=psx *l2;
+				b=psy *l2;
+				var aa=a *a,bb=b *b,dd=tx *tx+ty *ty,ta=Math.atan2(ty,tx);
+				c=bb *l1 *l1+aa *dd-aa *bb;
+				var c1=-2 *bb *l1,c2=bb-aa;
+				d=c1 *c1-4 *c2 *c;
+				if (d > 0){
+					var q=Math.sqrt(d);
+					if (c1 < 0)q=-q;
+					q=-(c1+q)/ 2;
+					var r0=q / c2,r1=c / q;
+					var r=Math.abs(r0)< Math.abs(r1)?r0:r1;
+					if (r *r <=dd){
+						y=Math.sqrt(dd-r *r)*bendDir;
+						a1=ta-Math.atan2(y,r);
+						a2=Math.atan2(y / psy,(r-l1)/ psx);
+					}
+				};
+				var minAngle=0,minDist=Number.MAX_VALUE,minX=0,minY=0;
+				var maxAngle=0,maxDist=0,maxX=0,maxY=0;
+				x=l1+a;
+				d=x *x;
+				if (d > maxDist){
+					maxAngle=0;
+					maxDist=d;
+					maxX=x;
+				}
+				x=l1-a;
+				d=x *x;
+				if (d < minDist){
+					minAngle=Math.PI;
+					minDist=d;
+					minX=x;
+				};
+				var angle=Math.acos(-a *l1 / (aa-bb));
+				x=a *Math.cos(angle)+l1;
+				y=b *Math.sin(angle);
+				d=x *x+y *y;
+				if (d < minDist){
+					minAngle=angle;
+					minDist=d;
+					minX=x;
+					minY=y;
+				}
+				if (d > maxDist){
+					maxAngle=angle;
+					maxDist=d;
+					maxX=x;
+					maxY=y;
+				}
+				if (dd <=(minDist+maxDist)/ 2){
+					a1=ta-Math.atan2(minY *bendDir,minX);
+					a2=minAngle *bendDir;
+					}else {
+					a1=ta-Math.atan2(maxY *bendDir,maxX);
+					a2=maxAngle *bendDir;
+				}
+			};
+			var os=Math.atan2(cy,cx)*s2;
+			var rotation=parent.transform.skX;
+			a1=(a1-os)*Skeleton.radDeg+os1-rotation;
+			if (a1 > 180)
+				a1-=360;
+			else if (a1 <-180)a1+=360;
+			parent.resultTransform.x=px;
+			parent.resultTransform.y=py;
+			parent.resultTransform.skX=parent.resultTransform.skY=rotation+a1 *alpha;
+			rotation=child.transform.skX;
+			rotation=rotation % 360;
+			a2=((a2+os)*Skeleton.radDeg-0)*s2+os2-rotation;
+			if (a2 > 180)
+				a2-=360;
+			else if (a2 <-180)a2+=360;
+			child.resultTransform.x=cx;
+			child.resultTransform.y=cy;
+			child.resultTransform.skX=child.resultTransform.skY=child.resultTransform.skY+a2 *alpha;
+			parent.update();
+		}
+
+		/**
+		*得到当前动画的数量
+		*@return
+		*/
+		__proto.getAnimNum=function(){
+			return this._templet.getAnimationCount();
+		}
+
+		/**
+		*得到指定动画的名字
+		*@param index 动画的索引
+		*/
+		__proto.getAniNameByIndex=function(index){
+			return this._templet.getAniNameByIndex(index);
+		}
+
+		/**
+		*通过名字得到插槽的引用
+		*@param name 动画的名字
+		*@return
+		*/
+		__proto.getSlotByName=function(name){
+			return this._boneSlotDic[name];
+		}
+
+		/**
+		*通过名字显示一套皮肤
+		*@param name 皮肤的名字
+		*/
+		__proto.showSkinByName=function(name){
+			this._skinIndex=this._templet.getSkinIndexByName(name);
+			this.showSkinByIndex(this._skinIndex);
+		}
+
+		/**
+		*通过索引显示一套皮肤
+		*@param skinIndex 皮肤索引
+		*/
+		__proto.showSkinByIndex=function(skinIndex){
+			this._skinIndex=skinIndex;
+			this._templet.showSkinByIndex(this._boneSlotDic,skinIndex);
+			this._clearCache();
+		}
+
+		/**
+		*设置某插槽的皮肤
+		*@param slotName 插槽名称
+		*@param index 插糟皮肤的索引
+		*/
+		__proto.showSlotSkinByIndex=function(slotName,index){
+			if (this._aniMode==0)return;
+			var tBoneSlot=this.getSlotByName(slotName);
+			if (tBoneSlot){
+				tBoneSlot.showDisplayByIndex(index);
+			}
+			this._clearCache();
+		}
+
+		/**
+		*设置自定义皮肤
+		*@param name 插糟的名字
+		*@param texture 自定义的纹理
+		*/
+		__proto.setSlotSkin=function(slotName,texture){
+			if (this._aniMode==0)return;
+			var tBoneSlot=this.getSlotByName(slotName);
+			if (tBoneSlot){
+				tBoneSlot.replaceSkin(texture);
+			}
+			this._clearCache();
+		}
+
+		/**
+		*换装的时候，需要清一下缓冲区
+		*/
+		__proto._clearCache=function(){
+			if (this._aniMode==1){
+				for (var i=0,n=this._graphicsCache.length;i < n;i++){
+					this._graphicsCache[i].length=0;
+				}
+			}
+		}
+
+		/**
+		*播放动画
+		*@param nameOrIndex 动画名字或者索引
+		*@param loop 是否循环播放
+		*@param force false,如果要播的动画跟上一个相同就不生效,true,强制生效
+		*/
+		__proto.play=function(nameOrIndex,loop,force){
+			(force===void 0)&& (force=true);
+			this._indexControl=false;
+			var index=-1;
+			var duration=NaN;
+			if (loop){
+				duration=Number.MAX_VALUE;
+				}else {
+				duration=0;
+			}
+			if ((typeof nameOrIndex=='string')){
+				for (var i=0,n=this._templet.getAnimationCount();i < n;i++){
+					var animation=this._templet.getAnimation(i);
+					if (animation && nameOrIndex==animation.name){
+						index=i;
+						break ;
+					}
+				}
+				}else {
+				index=nameOrIndex;
+			}
+			if (index >-1 && index < this.getAnimNum()){
+				if (force || this._pause || this._currAniIndex !=index){
+					this._currAniIndex=index;
+					this._curOriginalData=new Float32Array(this._templet.getTotalkeyframesLength(index));
+					this._player.play(index,this._player.playbackRate,duration);
+					this._templet.showSkinByIndex(this._boneSlotDic,this._skinIndex);
+					if (this._pause){
+						this._pause=false;
+						this._lastTime=Browser.now();
+						Laya.stage.frameLoop(1,this,this._update,null,true);
+					}
+				}
+			}
+		}
+
+		/**
+		*停止动画
+		*/
+		__proto.stop=function(){
+			if (!this._pause){
+				this._pause=true;
+				if (this._player){
+					this._player.stop(true);
+				}
+				Laya.timer.clear(this,this._update);
+			}
+		}
+
+		/**
+		*设置动画播放速率
+		*@param value 1为标准速率
+		*/
+		__proto.playbackRate=function(value){
+			if (this._player){
+				this._player.playbackRate=value;
+			}
+		}
+
+		/**
+		*暂停动画的播放
+		*/
+		__proto.paused=function(){
+			if (!this._pause){
+				this._pause=true;
+				if (this._player){
+					this._player.paused=true;
+				}
+				Laya.timer.clear(this,this._update);
+			}
+		}
+
+		/**
+		*恢复动画的播放
+		*/
+		__proto.resume=function(){
+			this._indexControl=false;
+			if (this._pause){
+				this._pause=false;
+				if (this._player){
+					this._player.paused=false;
+				}
+				this._lastTime=Browser.now();
+				Laya.stage.frameLoop(1,this,this._update,null,true);
+			}
+		}
+
+		/**
+		*@private
+		*得到缓冲数据
+		*@param aniIndex
+		*@param frameIndex
+		*@return
+		*/
+		__proto._getGrahicsDataWithCache=function(aniIndex,frameIndex){
+			return this._graphicsCache[aniIndex][frameIndex];
+		}
+
+		/**
+		*@private
+		*保存缓冲grahpics
+		*@param aniIndex
+		*@param frameIndex
+		*@param graphics
+		*/
+		__proto._setGrahicsDataWithCache=function(aniIndex,frameIndex,graphics){
+			this._graphicsCache[aniIndex][frameIndex]=graphics;
+		}
+
+		/**
+		*销毁当前动画
+		*/
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._templet=null;
+			this._player.offAll();
+			this._player=null;
+			this._curOriginalData=null;
+			this._boneMatrixArray.length=0;
+			this._lastTime=0;
+			Laya.timer.clear(this,this._update);
+		}
+
+		/**
+		*设置动画路径
+		*/
+		/**
+		*得到资源的URL
+		*/
+		__getset(0,__proto,'url',function(){
+			return this._aniPath;
+			},function(path){
+			this.load(path);
+		});
+
+		/**
+		*@private
+		*设置帧索引
+		*/
+		/**
+		*@private
+		*得到帧索引
+		*/
+		__getset(0,__proto,'index',function(){
+			return this._index;
+			},function(value){
+			if (this.player){
+				this._index=value;
+				this._player.currentTime=this._index *1000 / this._player.cacheFrameRate;
+				this._indexControl=true;
+				this._update(false);
+			}
+		});
+
+		/**
+		*得到总帧数据
+		*/
+		__getset(0,__proto,'total',function(){
+			if (this._templet && this._player){
+				this._total=Math.floor(this._templet.getAniDuration(this._player.currentAnimationClipIndex)/ 1000 *this._player.cacheFrameRate);
+				}else {
+				this._total=-1;
+			}
+			return this._total;
+		});
+
+		/**
+		*得到播放器的引用
+		*/
+		__getset(0,__proto,'player',function(){
+			return this._player;
+		});
+
+		__static(Skeleton,
+		['radDeg',function(){return this.radDeg=180 / Math.PI;},'degRad',function(){return this.degRad=Math.PI / 180;}
+		]);
+		return Skeleton;
+	})(Sprite)
+
+
+	/**
 	*@private
 	*<code>FileBitmap</code> 是图片文件资源类。
 	*/
@@ -19848,6 +23587,26 @@ var Laya=window.Laya=(function(window,document){
 
 	/**
 	*...
+	*@author ...
+	*/
+	//class laya.webgl.shader.d2.fillTexture.FillTextureShader extends laya.webgl.shader.Shader
+	var FillTextureShader=(function(_super){
+		function FillTextureShader(){
+			var vs="attribute vec2 position;\nattribute vec2 texcoord;\nattribute vec4 color;\nuniform vec2 size;\nuniform mat4 mmat;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\nvoid main() {\n  vec4 pos=mmat*vec4(position.x,position.y,0,1 );\n  gl_Position = vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  v_color = color;\n  v_texcoord = texcoord;  \n}";
+			var ps="precision mediump float;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\nuniform sampler2D texture;\nuniform vec4 u_texRange;\nuniform vec2 u_offset;\nvoid main() {\n	vec2 newTexCoord;\n	newTexCoord.x = mod(((u_offset.x + v_texcoord.x) * u_texRange.y),u_texRange.y) + u_texRange.x;\n	newTexCoord.y = mod(((u_offset.y + v_texcoord.y) * u_texRange.w),u_texRange.w) + u_texRange.z;\n	vec4 t_color = texture2D(texture, newTexCoord);\n	gl_FragColor = t_color.rgba;\n}";
+			FillTextureShader.__super.call(this,vs,ps,"fillTextureShader");
+		}
+
+		__class(FillTextureShader,'laya.webgl.shader.d2.fillTexture.FillTextureShader',_super);
+		__static(FillTextureShader,
+		['shader',function(){return this.shader=new FillTextureShader();}
+		]);
+		return FillTextureShader;
+	})(Shader)
+
+
+	/**
+	*...
 	*@author laya
 	*/
 	//class laya.webgl.shader.d2.Shader2X extends laya.webgl.shader.Shader
@@ -19909,6 +23668,26 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return Shader2X;
+	})(Shader)
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.webgl.shader.d2.skinAnishader.SkinAniShader extends laya.webgl.shader.Shader
+	var SkinAniShader=(function(_super){
+		function SkinAniShader(){
+			var vs="attribute vec2 position;\nattribute vec2 texcoord;\nattribute vec4 color;\nuniform vec2 size;\nuniform mat4 mmat;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\nvoid main() {\n  vec4 pos=mmat*vec4(position.x,position.y,0,1 );\n  gl_Position = vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  v_color = color;\n  v_texcoord = texcoord;  \n}";
+			var ps="precision mediump float;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\nuniform sampler2D texture;\nvoid main() {\n	vec4 t_color = texture2D(texture, v_texcoord);\n	gl_FragColor = t_color.rgba;\n}";
+			SkinAniShader.__super.call(this,vs,ps,"SpineShader");
+		}
+
+		__class(SkinAniShader,'laya.webgl.shader.d2.skinAnishader.SkinAniShader',_super);
+		__static(SkinAniShader,
+		['shader',function(){return this.shader=new SkinAniShader();}
+		]);
+		return SkinAniShader;
 	})(Shader)
 
 
@@ -20101,7 +23880,7 @@ var Laya=window.Laya=(function(window,document){
 		Buffer2D.FLOAT0="FLOAT0";
 		Buffer2D.UVAGEX="UVAGEX";
 		Buffer2D.CAMERAPOS="CAMERAPOS";
-		Buffer2D.LUMINANCE="LUMINANCE";
+		Buffer2D.ALBEDO="ALBEDO";
 		Buffer2D.ALPHATESTVALUE="ALPHATESTVALUE";
 		Buffer2D.FOGCOLOR="FOGCOLOR";
 		Buffer2D.FOGSTART="FOGSTART";
@@ -20325,6 +24104,7 @@ var Laya=window.Laya=(function(window,document){
 			this._multiline=false;
 			this._editable=true;
 			this._restrictPattern=null;
+			this.type="text";
 			this.inputElementXAdjuster=0;
 			this.inputElementYAdjuster=0;
 			this._prompt='';
@@ -20351,7 +24131,13 @@ var Laya=window.Laya=(function(window,document){
 		/**@private */
 		__proto._onMouseDown=function(e){
 			this.focus=true;
-			Browser.document.addEventListener(Browser.enableTouch ? "touchstart" :"mousedown",laya.display.Input._checkBlur);
+			Laya.stage.on("mousedown",this,this._checkBlur);
+		}
+
+		/**@private */
+		__proto._checkBlur=function(e){
+			if (e.nativeEvent.target !=laya.display.Input.input && e.nativeEvent.target !=laya.display.Input.area && e.target !=this)
+				laya.display.Input.inputElement.target.focus=false;
 		}
 
 		/**@inheritDoc*/
@@ -20367,27 +24153,21 @@ var Laya=window.Laya=(function(window,document){
 			var stage=Laya.stage;
 			var rec;
 			rec=Utils.getGlobalPosAndScale(this);
-			var a=stage._canvasTransform.a,d=stage._canvasTransform.d;
-			var x=(rec.x+this.padding[3]+this.inputElementXAdjuster)*stage.clientScaleX *a+Math.max(0,stage.offset.x);
-			var y=(rec.y+this.padding[0]+this.inputElementYAdjuster)*stage.clientScaleY *d+Math.max(0,stage.offset.y);
-			Input.inputContainer.setPos(x,y);
+			var m=stage._canvasTransform.clone();
+			var tm=stage._canvasTransform.clone();
+			tm.rotate(Math.PI / 180 *Laya.stage.canvasDegree);
+			var sx=tm.a;
+			var sy=tm.d;
+			var tx=m.tx+(Laya.stage.canvasDegree==0 ? rec.x :rec.y)*sx;
+			var ty=m.ty+(Laya.stage.canvasDegree==0 ? rec.y :-rec.x)*sy;
+			Input.inputContainer.style.transform="matrix("+m.a+","+m.b+","+m.c+","+m.d+","+tx+","+ty+")";
 			var inputWid=this._width-this.padding[1]-this.padding[3];
 			var inputHei=this._height-this.padding[0]-this.padding[2];
 			this.nativeInput.setSize(inputWid,inputHei);
-			if (Render.isConchApp){
-				this.nativeInput.setPos(x,y);
-			}
 			if (!this._getVisible())this.focus=false;
-			if (stage.transform || rec.width !=1 || rec.height !=1 || a !=1 || d !=1){
-				x=stage.clientScaleX *a *rec.width;
-				y=stage.clientScaleY *d *rec.height;
-				var ts="scale("+x+","+y+")";
-				if (ts !=style.transform){
-					style.transform=ts;
-					if (Render.isConchApp){
-						this.nativeInput.setScale(x,y);
-					}
-				}
+			if (Render.isConchApp){
+				this.nativeInput.setPos(tx,ty);
+				this.nativeInput.setScale(sx,sy);
 			}
 		}
 
@@ -20423,9 +24203,10 @@ var Laya=window.Laya=(function(window,document){
 			this._setPromptColor();
 			input.readOnly=!this._editable;
 			input.maxLength=this._maxChars;
+			input.setAttribute("type",this.type);
 			var padding=this.padding;
 			input.value=this._content;
-			input.type=this.asPassword ? "password" :"text";
+			input.type=this.asPassword ? "password" :(this.type=="number" ? "number" :"text");
 			input.placeholder=this._prompt;
 			Laya.stage.off("keydown",this,this._onKeyDown);
 			Laya.stage.on("keydown",this,this._onKeyDown);
@@ -20479,7 +24260,7 @@ var Laya=window.Laya=(function(window,document){
 			this.event("blur");
 			if (Render.isConchApp)this.nativeInput.blur();
 			Browser.onPC && Laya.timer.clear(this,this._syncInputTransform);
-			Browser.document.removeEventListener(Browser.enableTouch ? "touchstart" :"mousedown",laya.display.Input._checkBlur);
+			Laya.stage.off("mousedown",this,this._checkBlur);
 		}
 
 		/**@private */
@@ -20524,7 +24305,7 @@ var Laya=window.Laya=(function(window,document){
 			if (this._focus)
 				return this.nativeInput.value;
 			else
-			return this._text || "";
+			return this._content || "";
 			},function(value){
 			_super.prototype._$set_color.call(this,this._originColor);
 			value+='';
@@ -20536,7 +24317,12 @@ var Laya=window.Laya=(function(window,document){
 				if (!this._multiline)
 					value=value.replace(/\r?\n/g,'');
 				this._content=value;
-				_super.prototype._$set_text.call(this,value||this._prompt);
+				if (value)
+					_super.prototype._$set_text.call(this,value);
+				else{
+					_super.prototype._$set_text.call(this,this._prompt);
+					_super.prototype._$set_color.call(this,this.promptColor);
+				}
 			}
 		});
 
@@ -20556,7 +24342,10 @@ var Laya=window.Laya=(function(window,document){
 			if (!this._text && value)
 				_super.prototype._$set_color.call(this,this._promptColor);
 			this.promptColor=this._promptColor;
-			_super.prototype._$set_text.call(this,this._text||value);
+			if (this._text)
+				_super.prototype._$set_text.call(this,(this._text==this._prompt)?value:this._text);
+			else
+			_super.prototype._$set_text.call(this,value);
 			this._prompt=value;
 		});
 
@@ -20626,19 +24415,13 @@ var Laya=window.Laya=(function(window,document){
 
 		Input.__init__=function(){
 			Input._createInputElement();
-			if (Browser.onMobile){
-				Render.canvas.addEventListener(Input.IOS_QQ_IFRAME ? "click" :"touchend",Input._popupInputMethod);
-			}
 		}
 
-		Input._popupInputMethod=function(){
+		Input._popupInputMethod=function(e){
 			if (!laya.display.Input.isInputting)return;
 			var input=laya.display.Input.inputElement;
 			input.selectionStart=input.selectionEnd=input.value.length;
 			input.focus();
-			Laya.timer.once(300,null,function(){
-				input.scrollIntoView();
-			});
 		}
 
 		Input._createInputElement=function(){
@@ -20675,22 +24458,18 @@ var Laya=window.Laya=(function(window,document){
 			var value=laya.display.Input.inputElement.value;
 			if (input._restrictPattern){
 				value=value.replace(input._restrictPattern,"");
+				var prevIndex=Input.inputElement.selectionStart;
 				laya.display.Input.inputElement.value=value;
+				laya.display.Input.inputElement.selectionStart=laya.display.Input.inputElement.selectionEnd=prevIndex;
 			}
 			input._text=value;
 			input.event("input");
 		}
 
 		Input._stopEvent=function(e){
-			if(e.type=='touchmove')
+			if (e.type=='touchmove')
 				e.preventDefault();
 			e.stopPropagation && e.stopPropagation();
-		}
-
-		Input._checkBlur=function(e){
-			if (e.target !=laya.display.Input.input && e.target !=laya.display.Input.area && e.target !=Input.confirmButton){
-				laya.display.Input.inputElement.target.focus=false;
-			}
 		}
 
 		Input.input=null
@@ -20702,10 +24481,1868 @@ var Laya=window.Laya=(function(window,document){
 		Input.inputHeight=45;
 		Input.isInputting=false;
 		__static(Input,
-		['IOS_QQ_IFRAME',function(){return this.IOS_QQ_IFRAME=(Browser.onIOS && (Browser.onQQBrowser || Browser.onWeiXin)&& Browser.window.top !=Browser.window.self);}
+		['IOS_IFRAME',function(){return this.IOS_IFRAME=(Browser.onIOS && Browser.window.top !=Browser.window.self);}
 		]);
 		return Input;
 	})(Text)
+
+
+	/**
+	*<code>Button</code> 组件用来表示常用的多态按钮。 <code>Button</code> 组件可显示文本标签、图标或同时显示两者。 *
+	*<p>可以是单态，两态和三态，默认三态(up,over,down)。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>Button</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.Button;
+		*import laya.utils.Handler;
+		*public class Button_Example
+		*{
+			*public function Button_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load("resource/ui/button.png",Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*trace("资源加载完成！");
+				*var button:Button=new Button("resource/ui/button.png","label");//创建一个 Button 类的实例对象 button ,并传入它的皮肤。
+				*button.x=100;//设置 button 对象的属性 x 的值，用于控制 button 对象的显示位置。
+				*button.y=100;//设置 button 对象的属性 y 的值，用于控制 button 对象的显示位置。
+				*button.clickHandler=new Handler(this,onClickButton,[button]);//设置 button 的点击事件处理器。
+				*Laya.stage.addChild(button);//将此 button 对象添加到显示列表。
+				*}
+			*private function onClickButton(button:Button):void
+			*{
+				*trace("按钮button被点击了！");
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+	*Laya.loader.load("resource/ui/button.png",laya.utils.Handler.create(this,loadComplete));//加载资源
+	*function loadComplete()
+	*{
+		*console.log("资源加载完成！");
+		*var button=new laya.ui.Button("resource/ui/button.png","label");//创建一个 Button 类的实例对象 button ,传入它的皮肤skin和标签label。
+		*button.x=100;//设置 button 对象的属性 x 的值，用于控制 button 对象的显示位置。
+		*button.y=100;//设置 button 对象的属性 y 的值，用于控制 button 对象的显示位置。
+		*button.clickHandler=laya.utils.Handler.create(this,onClickButton,[button],false);//设置 button 的点击事件处理函数。
+		*Laya.stage.addChild(button);//将此 button 对象添加到显示列表。
+		*}
+	*function onClickButton(button)
+	*{
+		*console.log("按钮被点击了。",button);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import Button=laya.ui.Button;
+	*import Handler=laya.utils.Handler;
+	*class Button_Example{
+		*constructor()
+		*{
+			*Laya.init(640,800);
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load("resource/ui/button.png",laya.utils.Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete()
+		*{
+			*var button:Button=new Button("resource/ui/button.png","label");//创建一个 Button 类的实例对象 button ,并传入它的皮肤。
+			*button.x=100;//设置 button 对象的属性 x 的值，用于控制 button 对象的显示位置。
+			*button.y=100;//设置 button 对象的属性 y 的值，用于控制 button 对象的显示位置。
+			*button.clickHandler=new Handler(this,this.onClickButton,[button]);//设置 button 的点击事件处理器。
+			*Laya.stage.addChild(button);//将此 button 对象添加到显示列表。
+			*}
+		*private onClickButton(button:Button):void
+		*{
+			*console.log("按钮button被点击了！")
+			*}
+		*}
+	*</listing>
+	*/
+	//class laya.ui.Button extends laya.ui.Component
+	var Button=(function(_super){
+		function Button(skin,label){
+			this.toggle=false;
+			this._bitmap=null;
+			this._text=null;
+			this._strokeColors=null;
+			this._state=0;
+			this._selected=false;
+			this._skin=null;
+			this._autoSize=true;
+			this._sources=null;
+			this._clickHandler=null;
+			this._stateChanged=false;
+			Button.__super.call(this);
+			this._labelColors=Styles.buttonLabelColors;
+			this._stateNum=Styles.buttonStateNum;
+			(label===void 0)&& (label="");
+			this.skin=skin;
+			this.label=label;
+		}
+
+		__class(Button,'laya.ui.Button',_super);
+		var __proto=Button.prototype;
+		Laya.imps(__proto,{"laya.ui.ISelect":true})
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._bitmap && this._bitmap.destroy();
+			this._text && this._text.destroy(destroyChild);
+			this._bitmap=null;
+			this._text=null;
+			this._clickHandler=null;
+			this._labelColors=this._sources=this._strokeColors=null;
+		}
+
+		/**@inheritDoc */
+		__proto.createChildren=function(){
+			this.graphics=this._bitmap=new AutoBitmap();
+		}
+
+		/**@private */
+		__proto.createText=function(){
+			if (!this._text){
+				this._text=new Text();
+				this._text.overflow=Text.HIDDEN;
+				this._text.align="center";
+				this._text.valign="middle";
+			}
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			this.on("mouseover",this,this.onMouse);
+			this.on("mouseout",this,this.onMouse);
+			this.on("mousedown",this,this.onMouse);
+			this.on("mouseup",this,this.onMouse);
+			this.on("click",this,this.onMouse);
+		}
+
+		/**
+		*对象的 <code>Event.MOUSE_OVER、Event.MOUSE_OUT、Event.MOUSE_DOWN、Event.MOUSE_UP、Event.CLICK</code> 事件侦听处理函数。
+		*@param e Event 对象。
+		*/
+		__proto.onMouse=function(e){
+			if (this.toggle===false && this._selected)return;
+			if (e.type==="click"){
+				this.toggle && (this.selected=!this._selected);
+				this._clickHandler && this._clickHandler.run();
+				return;
+			}
+			!this._selected && (this.state=Button.stateMap[e.type]);
+		}
+
+		/**
+		*@private
+		*对象的资源切片发生改变。
+		*/
+		__proto.changeClips=function(){
+			var img=Loader.getRes(this._skin);
+			if (!img){
+				console.log("lose skin",this._skin);
+				return;
+			};
+			var width=img.sourceWidth;
+			var height=img.sourceHeight / this._stateNum;
+			var key=this._skin+this._stateNum;
+			var clips=AutoBitmap.getCache(key);
+			if (clips)this._sources=clips;
+			else {
+				this._sources=[];
+				if (this._stateNum===1){
+					this._sources.push(img);
+					}else {
+					for (var i=0;i < this._stateNum;i++){
+						this._sources.push(Texture.createFromTexture(img,0,height *i,width,height));
+					}
+				}
+				AutoBitmap.setCache(key,this._sources);
+			}
+			if (this._autoSize){
+				this._bitmap.width=this._width || width;
+				this._bitmap.height=this._height || height;
+				if (this._text){
+					this._text.width=this._bitmap.width;
+					this._text.height=this._bitmap.height;
+				}
+				}else {
+				this._text && (this._text.x=width);
+			}
+		}
+
+		/**
+		*@private
+		*改变对象的状态。
+		*/
+		__proto.changeState=function(){
+			this._stateChanged=false;
+			this.runCallLater(this.changeClips);
+			var index=this._state < this._stateNum ? this._state :this._stateNum-1;
+			this._sources && (this._bitmap.source=this._sources[index]);
+			if (this.label){
+				this._text.color=this._labelColors[index];
+				if (this._strokeColors)this._text.strokeColor=this._strokeColors[index];
+			}
+		}
+
+		/**@private */
+		__proto._setStateChanged=function(){
+			if (!this._stateChanged){
+				this._stateChanged=true;
+				this.callLater(this.changeState);
+			}
+		}
+
+		/**
+		*<p>描边颜色，以字符串表示。</p>
+		*默认值为 "#000000"（黑色）;
+		*@see laya.display.Text.strokeColor()
+		*/
+		__getset(0,__proto,'labelStrokeColor',function(){
+			this.createText();
+			return this._text.strokeColor;
+			},function(value){
+			this.createText();
+			this._text.strokeColor=value
+		});
+
+		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'measureHeight',function(){
+			this.runCallLater(this.changeClips);
+			return this._text ? Math.max(this._bitmap.height,this._text.height):this._bitmap.height;
+		});
+
+		/**
+		*<p>对象的皮肤资源地址。</p>
+		*支持单态，两态和三态，用 <code>stateNum</code> 属性设置
+		*<p>对象的皮肤地址，以字符串表示。</p>
+		*@see #stateNum
+		*/
+		__getset(0,__proto,'skin',function(){
+			return this._skin;
+			},function(value){
+			if (this._skin !=value){
+				this._skin=value;
+				this.callLater(this.changeClips);
+				this._setStateChanged();
+			}
+		});
+
+		/**
+		*对象的状态值。
+		*@see #stateMap
+		*/
+		__getset(0,__proto,'state',function(){
+			return this._state;
+			},function(value){
+			if (this._state !=value){
+				this._state=value;
+				this._setStateChanged();
+			}
+		});
+
+		/**
+		*按钮文本标签 <code>Text</code> 控件。
+		*/
+		__getset(0,__proto,'text',function(){
+			this.createText();
+			return this._text;
+		});
+
+		/**
+		*<p>指定对象的状态值，以数字表示。</p>
+		*<p>默认值为3。此值决定皮肤资源图片的切割方式。</p>
+		*<p><b>取值：</b>
+		*<li>1：单态。图片不做切割，按钮的皮肤状态只有一种。</li>
+		*<li>2：两态。图片将以竖直方向被等比切割为2部分，从上向下，依次为
+		*弹起状态皮肤、
+		*按下和经过及选中状态皮肤。</li>
+		*<li>3：三态。图片将以竖直方向被等比切割为2部分，从上向下，依次为
+		*弹起状态皮肤、
+		*经过状态皮肤、
+		*按下和选中状态皮肤</li>
+		*</p>
+		*/
+		__getset(0,__proto,'stateNum',function(){
+			return this._stateNum;
+			},function(value){
+			if (this._stateNum !=value){
+				this._stateNum=value < 1 ? 1 :value > 3 ? 3 :value;
+				this.callLater(this.changeClips);
+			}
+		});
+
+		/**
+		*表示按钮各个状态下的描边颜色。
+		*<p><b>格式:</b> "upColor,overColor,downColor,disableColor"。</p>
+		*/
+		__getset(0,__proto,'strokeColors',function(){
+			return this._strokeColors ? this._strokeColors.join(","):"";
+			},function(value){
+			this._strokeColors=UIUtils.fillArray(Styles.buttonLabelColors,value,String);
+			this._setStateChanged();
+		});
+
+		/**
+		*表示按钮各个状态下的文本颜色。
+		*<p><b>格式:</b> "upColor,overColor,downColor,disableColor"。</p>
+		*/
+		__getset(0,__proto,'labelColors',function(){
+			return this._labelColors.join(",");
+			},function(value){
+			this._labelColors=UIUtils.fillArray(Styles.buttonLabelColors,value,String);
+			this._setStateChanged();
+		});
+
+		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'measureWidth',function(){
+			this.runCallLater(this.changeClips);
+			if (this._autoSize)return this._bitmap.width;
+			this.runCallLater(this.changeState);
+			return this._bitmap.width+(this._text ? this._text.width :0);
+		});
+
+		/**
+		*按钮的文本内容。
+		*/
+		__getset(0,__proto,'label',function(){
+			return this._text ? this._text.text :null;
+			},function(value){
+			if (!this._text && !value)return;
+			this.createText();
+			if (this._text.text !=value){
+				value && !this._text.displayedInStage && this.addChild(this._text);
+				this._text.text=value;
+				this._setStateChanged();
+			}
+		});
+
+		/**
+		*表示按钮的选中状态。
+		*<p>如果值为true，表示该对象处于选中状态。否则该对象处于未选中状态。</p>
+		*/
+		__getset(0,__proto,'selected',function(){
+			return this._selected;
+			},function(value){
+			if (this._selected !=value){
+				this._selected=value;
+				this.state=this._selected ? 2 :0;
+				this.event("change");
+			}
+		});
+
+		/**
+		*表示按钮文本标签的边距。
+		*<p><b>格式：</b>"上边距,右边距,下边距,左边距"。</p>
+		*/
+		__getset(0,__proto,'labelPadding',function(){
+			this.createText();
+			return this._text.padding.join(",");
+			},function(value){
+			this.createText();
+			this._text.padding=UIUtils.fillArray(Styles.labelPadding,value,Number);
+		});
+
+		/**
+		*表示按钮文本标签的字体大小。
+		*@see laya.display.Text.fontSize()
+		*/
+		__getset(0,__proto,'labelSize',function(){
+			this.createText();
+			return this._text.fontSize;
+			},function(value){
+			this.createText();
+			this._text.fontSize=value
+		});
+
+		/**
+		*<p>描边宽度（以像素为单位）。</p>
+		*默认值0，表示不描边。
+		*@see laya.display.Text.stroke()
+		*/
+		__getset(0,__proto,'labelStroke',function(){
+			this.createText();
+			return this._text.stroke;
+			},function(value){
+			this.createText();
+			this._text.stroke=value
+		});
+
+		/**
+		*表示按钮文本标签是否为粗体字。
+		*@see laya.display.Text.bold()
+		*/
+		__getset(0,__proto,'labelBold',function(){
+			this.createText();
+			return this._text.bold;
+			},function(value){
+			this.createText();
+			this._text.bold=value;
+		});
+
+		/**
+		*表示按钮文本标签的字体名称，以字符串形式表示。
+		*@see laya.display.Text.font()
+		*/
+		__getset(0,__proto,'labelFont',function(){
+			this.createText();
+			return this._text.font;
+			},function(value){
+			this.createText();
+			this._text.font=value;
+		});
+
+		/**标签对齐模式，默认为居中对齐。*/
+		__getset(0,__proto,'labelAlign',function(){
+			this.createText()
+			return this._text.align;
+			},function(value){
+			this.createText()
+			this._text.align=value;
+		});
+
+		/**
+		*对象的点击事件处理器函数（无默认参数）。
+		*/
+		__getset(0,__proto,'clickHandler',function(){
+			return this._clickHandler;
+			},function(value){
+			this._clickHandler=value;
+		});
+
+		/**
+		*<p>当前实例的位图 <code>AutoImage</code> 实例的有效缩放网格数据。</p>
+		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
+		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
+		*@see laya.ui.AutoBitmap.sizeGrid
+		*/
+		__getset(0,__proto,'sizeGrid',function(){
+			if (this._bitmap.sizeGrid)return this._bitmap.sizeGrid.join(",");
+			return null;
+			},function(value){
+			this._bitmap.sizeGrid=UIUtils.fillArray(Styles.defaultSizeGrid,value,Number);
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
+			_super.prototype._$set_width.call(this,value);
+			if (this._autoSize){
+				this._bitmap.width=value;
+				this._text && (this._text.width=value);
+			}
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
+			_super.prototype._$set_height.call(this,value);
+			if (this._autoSize){
+				this._bitmap.height=value;
+				this._text && (this._text.height=value);
+			}
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if ((typeof value=='number')|| (typeof value=='string'))this.label=value+"";
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		/**图标x,y偏移，格式：100,100*/
+		__getset(0,__proto,'iconOffset',function(){
+			return this._bitmap._offset ? null :this._bitmap._offset.join(",");
+			},function(value){
+			if (value)this._bitmap._offset=UIUtils.fillArray([1,1],value,Number);
+			else this._bitmap._offset=[];
+		});
+
+		__static(Button,
+		['stateMap',function(){return this.stateMap={"mouseup":0,"mouseover":1,"mousedown":2,"mouseout":0};}
+		]);
+		return Button;
+	})(Component)
+
+
+	/**
+	*<code>ScrollBar</code> 组件是一个滚动条组件。
+	*<p>当数据太多以至于显示区域无法容纳时，最终用户可以使用 <code>ScrollBar</code> 组件控制所显示的数据部分。</p>
+	*<p> 滚动条由四部分组成：两个箭头按钮、一个轨道和一个滑块。 </p> *
+	*
+	*@see laya.ui.VScrollBar
+	*@see laya.ui.HScrollBar
+	*/
+	//class laya.ui.ScrollBar extends laya.ui.Component
+	var ScrollBar=(function(_super){
+		function ScrollBar(skin){
+			this.changeHandler=null;
+			this.scaleBar=true;
+			this.autoHide=false;
+			this.elasticDistance=0;
+			this.elasticBackTime=500;
+			this.upButton=null;
+			this.downButton=null;
+			this.slider=null;
+			this._scrollSize=1;
+			this._skin=null;
+			this._thumbPercent=1;
+			this._target=null;
+			this._lastPoint=null;
+			this._lastOffset=0;
+			this._checkElastic=false;
+			this._isElastic=false;
+			this._value=NaN;
+			this._hide=false;
+			this._clickOnly=true;
+			this._offsets=null;
+			ScrollBar.__super.call(this);
+			this._showButtons=UIConfig.showButtons;
+			this._touchScrollEnable=UIConfig.touchScrollEnable;
+			this._mouseWheelEnable=UIConfig.mouseWheelEnable;
+			this.skin=skin;
+			this.max=1;
+		}
+
+		__class(ScrollBar,'laya.ui.ScrollBar',_super);
+		var __proto=ScrollBar.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this.upButton && this.upButton.destroy(destroyChild);
+			this.downButton && this.downButton.destroy(destroyChild);
+			this.slider && this.slider.destroy(destroyChild);
+			this.upButton=this.downButton=null;
+			this.slider=null;
+			this.changeHandler=null;
+			this._offsets=null;
+		}
+
+		/**@inheritDoc */
+		__proto.createChildren=function(){
+			this.addChild(this.slider=new Slider());
+			this.addChild(this.upButton=new Button());
+			this.addChild(this.downButton=new Button());
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			this.slider.showLabel=false;
+			this.slider.on("change",this,this.onSliderChange);
+			this.slider.setSlider(0,0,0);
+			this.upButton.on("mousedown",this,this.onButtonMouseDown);
+			this.downButton.on("mousedown",this,this.onButtonMouseDown);
+		}
+
+		/**
+		*@private
+		*滑块位置发生改变的处理函数。
+		*/
+		__proto.onSliderChange=function(){
+			this.value=this.slider.value;
+		}
+
+		/**
+		*@private
+		*向上和向下按钮的 <code>Event.MOUSE_DOWN</code> 事件侦听处理函数。
+		*/
+		__proto.onButtonMouseDown=function(e){
+			var isUp=e.currentTarget===this.upButton;
+			this.slide(isUp);
+			Laya.timer.once(Styles.scrollBarDelayTime,this,this.startLoop,[isUp]);
+			Laya.stage.once("mouseup",this,this.onStageMouseUp);
+		}
+
+		/**@private */
+		__proto.startLoop=function(isUp){
+			Laya.timer.frameLoop(1,this,this.slide,[isUp]);
+		}
+
+		/**@private */
+		__proto.slide=function(isUp){
+			if (isUp)this.value-=this._scrollSize;
+			else this.value+=this._scrollSize;
+		}
+
+		/**
+		*@private
+		*舞台的 <code>Event.MOUSE_DOWN</code> 事件侦听处理函数。
+		*/
+		__proto.onStageMouseUp=function(e){
+			Laya.timer.clear(this,this.startLoop);
+			Laya.timer.clear(this,this.slide);
+		}
+
+		/**
+		*@private
+		*更改对象的皮肤及位置。
+		*/
+		__proto.changeScrollBar=function(){
+			this.upButton.visible=this._showButtons;
+			this.downButton.visible=this._showButtons;
+			if (this._showButtons){
+				this.upButton.skin=this._skin.replace(".png","$up.png");
+				this.downButton.skin=this._skin.replace(".png","$down.png");
+			}
+			if (this.slider.isVertical)this.slider.y=this._showButtons ? this.upButton.height :0;
+			else this.slider.x=this._showButtons ? this.upButton.width :0;
+			this.resetPositions();
+		}
+
+		/**@inheritDoc */
+		__proto.changeSize=function(){
+			_super.prototype.changeSize.call(this);
+			this.resetPositions();
+			this.event("change");
+			this.changeHandler && this.changeHandler.runWith(this.value);
+		}
+
+		/**@private */
+		__proto.resetPositions=function(){
+			if (this.slider.isVertical)this.slider.height=this.height-(this._showButtons ? (this.upButton.height+this.downButton.height):0);
+			else this.slider.width=this.width-(this._showButtons ? (this.upButton.width+this.downButton.width):0);
+			this.resetButtonPosition();
+		}
+
+		/**@private */
+		__proto.resetButtonPosition=function(){
+			if (this.slider.isVertical)this.downButton.y=this.slider.y+this.slider.height;
+			else this.downButton.x=this.slider.x+this.slider.width;
+		}
+
+		/**
+		*设置滚动条信息。
+		*@param min 滚动条最小位置值。
+		*@param max 滚动条最大位置值。
+		*@param value 滚动条当前位置值。
+		*/
+		__proto.setScroll=function(min,max,value){
+			this.runCallLater(this.changeSize);
+			this.slider.setSlider(min,max,value);
+			this.slider.bar.visible=max > 0;
+			if (!this._hide && this.autoHide)this.visible=false;
+		}
+
+		/**@private */
+		__proto.onTargetMouseWheel=function(e){
+			this.value-=e.delta *this._scrollSize;
+			this.target=this._target;
+		}
+
+		/**@private */
+		__proto.onTargetMouseDown=function(e){
+			this._clickOnly=true;
+			this._lastOffset=0;
+			this._checkElastic=false;
+			this._lastPoint || (this._lastPoint=new Point());
+			this._lastPoint.setTo(Laya.stage.mouseX,Laya.stage.mouseY);
+			Laya.timer.clear(this,this.tweenMove);
+			Tween.clearTween(this);
+			Laya.stage.once("mouseup",this,this.onStageMouseUp2);
+			Laya.stage.once("mouseout",this,this.onStageMouseUp2);
+			Laya.timer.frameLoop(1,this,this.loop);
+		}
+
+		/**@private */
+		__proto.loop=function(){
+			var mouseY=Laya.stage.mouseY;
+			var mouseX=Laya.stage.mouseX;
+			this._lastOffset=this.isVertical ? (mouseY-this._lastPoint.y):(mouseX-this._lastPoint.x);
+			if (this._clickOnly){
+				if (Math.abs(this._lastOffset *(this.isVertical ? Laya.stage._canvasTransform.getScaleY():Laya.stage._canvasTransform.getScaleX()))> 1){
+					this._clickOnly=false;
+					this._offsets || (this._offsets=[]);
+					this._offsets.length=0;
+					this._target.mouseEnabled=false;
+					if (!this.hide && this.autoHide){
+						this.alpha=1;
+						this.visible=true;
+					}
+					this.event("start");
+				}else return;
+			}
+			this._offsets.push(this._lastOffset);
+			this._lastPoint.x=mouseX;
+			this._lastPoint.y=mouseY;
+			if (this._lastOffset===0)return;
+			if (!this._checkElastic){
+				if (this.elasticDistance > 0){
+					if (!this._checkElastic && this._lastOffset !=0){
+						this._checkElastic=true;
+						if ((this._lastOffset > 0 && this._value <=this.min)|| (this._lastOffset < 0 && this._value >=this.max)){
+							this._isElastic=true;
+							}else {
+							this._isElastic=false;
+						}
+					}
+					}else {
+					this._checkElastic=true;
+				}
+			}
+			if (this._checkElastic){
+				if (this._isElastic){
+					if (this._value <=this.min){
+						this.value-=this._lastOffset *Math.max(0,(1-((this.min-this._value)/ this.elasticDistance)));
+						}else if (this._value >=this.max){
+						this.value-=this._lastOffset *Math.max(0,(1-((this._value-this.max)/ this.elasticDistance)));
+					}
+					}else {
+					this.value-=this._lastOffset;
+				}
+			}
+		}
+
+		/**@private */
+		__proto.onStageMouseUp2=function(e){
+			Laya.stage.off("mouseup",this,this.onStageMouseUp2);
+			Laya.stage.off("mouseout",this,this.onStageMouseUp2);
+			Laya.timer.clear(this,this.loop);
+			if (this._clickOnly)return;
+			this._target.mouseEnabled=true;
+			if (this._isElastic){
+				if (this._value < this.min){
+					Tween.to(this,{value:this.min},this.elasticBackTime,Ease.sineOut,Handler.create(this,this.elasticOver));
+					}else if (this._value > this.max){
+					Tween.to(this,{value:this.max},this.elasticBackTime,Ease.sineOut,Handler.create(this,this.elasticOver));
+				}
+				}else {
+				if (this._offsets.length < 1){
+					this._offsets[0]=this.isVertical ? Laya.stage.mouseY-this._lastPoint.y :Laya.stage.mouseX-this._lastPoint.x;
+				};
+				var offset=0;
+				var n=Math.min(this._offsets.length,3);
+				for (var i=0;i < n;i++){
+					offset+=this._offsets[this._offsets.length-1-i];
+				}
+				this._lastOffset=offset / n;
+				offset=Math.abs(this._lastOffset);
+				if (offset < 2){
+					this.event("end");
+					return;
+				}
+				if (offset > 60)this._lastOffset=this._lastOffset > 0 ? 60 :-60;
+				Laya.timer.frameLoop(1,this,this.tweenMove);
+			}
+		}
+
+		/**@private */
+		__proto.elasticOver=function(){
+			this._isElastic=false;
+			if (!this.hide && this.autoHide){
+				Tween.to(this,{alpha:0},500);
+			}
+			this.event("end");
+		}
+
+		/**@private */
+		__proto.tweenMove=function(){
+			this._lastOffset *=0.95;
+			this.value-=this._lastOffset;
+			if (Math.abs(this._lastOffset)< 1 || this.value==this.max || this.value==this.min){
+				Laya.timer.clear(this,this.tweenMove);
+				this.event("end");
+				if (!this.hide && this.autoHide){
+					Tween.to(this,{alpha:0},500);
+				}
+			}
+		}
+
+		/**
+		*停止滑动。
+		*/
+		__proto.stopScroll=function(){
+			this.onStageMouseUp2(null);
+			Laya.timer.clear(this,this.tweenMove);
+			Tween.clearTween(this);
+		}
+
+		/**@inheritDoc */
+		__getset(0,__proto,'measureHeight',function(){
+			if (this.slider.isVertical)return 100;
+			return this.slider.height;
+		});
+
+		/**
+		*@copy laya.ui.Image#skin
+		*/
+		__getset(0,__proto,'skin',function(){
+			return this._skin;
+			},function(value){
+			if (this._skin !=value){
+				this._skin=value;
+				this.slider.skin=this._skin;
+				this.callLater(this.changeScrollBar);
+			}
+		});
+
+		/**
+		*获取或设置表示最高滚动位置的数字。
+		*/
+		__getset(0,__proto,'max',function(){
+			return this.slider.max;
+			},function(value){
+			this.slider.max=value;
+		});
+
+		/**一个布尔值，指定是否显示向上、向下按钮，默认值为true。*/
+		__getset(0,__proto,'showButtons',function(){
+			return this._showButtons;
+			},function(value){
+			this._showButtons=value;
+			this.callLater(this.changeScrollBar);
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'measureWidth',function(){
+			if (this.slider.isVertical)return this.slider.width;
+			return 100;
+		});
+
+		/**
+		*获取或设置表示最低滚动位置的数字。
+		*/
+		__getset(0,__proto,'min',function(){
+			return this.slider.min;
+			},function(value){
+			this.slider.min=value;
+		});
+
+		/**
+		*获取或设置表示当前滚动位置的数字。
+		*/
+		__getset(0,__proto,'value',function(){
+			return this._value;
+			},function(v){
+			if (v!==this._value){
+				if (this._isElastic)this._value=v;
+				else {
+					this.slider.value=v;
+					this._value=this.slider.value;
+				}
+				this.event("change");
+				this.changeHandler && this.changeHandler.runWith(this.value);
+			}
+		});
+
+		/**
+		*一个布尔值，指示滚动条是否为垂直滚动。如果值为true，则为垂直滚动，否则为水平滚动。
+		*<p>默认值为：true。</p>
+		*/
+		__getset(0,__proto,'isVertical',function(){
+			return this.slider.isVertical;
+			},function(value){
+			this.slider.isVertical=value;
+		});
+
+		/**
+		*<p>当前实例的 <code>Slider</code> 实例的有效缩放网格数据。</p>
+		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
+		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
+		*@see laya.ui.AutoBitmap.sizeGrid
+		*/
+		__getset(0,__proto,'sizeGrid',function(){
+			return this.slider.sizeGrid;
+			},function(value){
+			this.slider.sizeGrid=value;
+		});
+
+		/**获取或设置一个值，该值表示按下滚动条轨道时页面滚动的增量。 */
+		__getset(0,__proto,'scrollSize',function(){
+			return this._scrollSize;
+			},function(value){
+			this._scrollSize=value;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if ((typeof value=='number')|| (typeof value=='string'))this.value=Number(value);
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		/**获取或设置一个值，该值表示滑条长度比例，值为：（0-1）。 */
+		__getset(0,__proto,'thumbPercent',function(){
+			return this._thumbPercent;
+			},function(value){
+			this.runCallLater(this.changeScrollBar);
+			this.runCallLater(this.changeSize);
+			value=value >=1 ? 0.99 :value;
+			this._thumbPercent=value;
+			if (this.scaleBar){
+				if (this.slider.isVertical)this.slider.bar.height=Math.max(this.slider.height *value,Styles.scrollBarMinNum);
+				else this.slider.bar.width=Math.max(this.slider.width *value,Styles.scrollBarMinNum);
+			}
+		});
+
+		/**
+		*设置滚动对象。
+		*@see laya.ui.TouchScroll#target
+		*/
+		__getset(0,__proto,'target',function(){
+			return this._target;
+			},function(value){
+			if (this._target){
+				this._target.off("mousewheel",this,this.onTargetMouseWheel);
+				this._target.off("mousedown",this,this.onTargetMouseDown);
+			}
+			this._target=value;
+			if (value){
+				this._mouseWheelEnable && this._target.on("mousewheel",this,this.onTargetMouseWheel);
+				this._touchScrollEnable && this._target.on("mousedown",this,this.onTargetMouseDown);
+			}
+		});
+
+		/**是否隐藏滚动条，不显示滚动条，但是可以正常滚动，默认为false。*/
+		__getset(0,__proto,'hide',function(){
+			return this._hide;
+			},function(value){
+			this._hide=value;
+			this.visible=!value;
+		});
+
+		/**一个布尔值，指定是否开启触摸，默认值为true。*/
+		__getset(0,__proto,'touchScrollEnable',function(){
+			return this._touchScrollEnable;
+			},function(value){
+			this._touchScrollEnable=value;
+			this.target=this._target;
+		});
+
+		/**一个布尔值，指定是否滑轮滚动，默认值为true。*/
+		__getset(0,__proto,'mouseWheelEnable',function(){
+			return this._mouseWheelEnable;
+			},function(value){
+			this._mouseWheelEnable=value;
+		});
+
+		return ScrollBar;
+	})(Component)
+
+
+	/**
+	*使用 <code>Slider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p>滑块的当前值由滑块端点（对应于滑块的最小值和最大值）之间滑块的相对位置确定。</p>
+	*<p>滑块允许最小值和最大值之间特定间隔内的值。滑块还可以使用数据提示显示其当前值。</p>
+	*
+	*@see laya.ui.HSlider
+	*@see laya.ui.VSlider
+	*/
+	//class laya.ui.Slider extends laya.ui.Component
+	var Slider=(function(_super){
+		function Slider(skin){
+			this.changeHandler=null;
+			this.isVertical=true;
+			this.showLabel=true;
+			this._allowClickBack=false;
+			this._max=100;
+			this._min=0;
+			this._tick=1;
+			this._value=0;
+			this._skin=null;
+			this._bg=null;
+			this._bar=null;
+			this._tx=NaN;
+			this._ty=NaN;
+			this._maxMove=NaN;
+			this._globalSacle=null;
+			Slider.__super.call(this);
+			this.skin=skin;
+		}
+
+		__class(Slider,'laya.ui.Slider',_super);
+		var __proto=Slider.prototype;
+		/**
+		*@inheritDoc
+		*/
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._bg && this._bg.destroy(destroyChild);
+			this._bar && this._bar.destroy(destroyChild);
+			this._bg=null;
+			this._bar=null;
+			this.changeHandler=null;
+		}
+
+		/**@inheritDoc */
+		__proto.createChildren=function(){
+			this.addChild(this._bg=new Image());
+			this.addChild(this._bar=new Button());
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			this._bar.on("mousedown",this,this.onBarMouseDown);
+			this._bg.sizeGrid=this._bar.sizeGrid="4,4,4,4,0";
+			this.allowClickBack=true;
+		}
+
+		/**
+		*@private
+		*滑块的的 <code>Event.MOUSE_DOWN</code> 事件侦听处理函数。
+		*@param e
+		*/
+		__proto.onBarMouseDown=function(e){
+			this._globalSacle || (this._globalSacle=new Point());
+			this._globalSacle.setTo(this.globalScaleX,this.globalScaleY);
+			this._maxMove=this.isVertical ? (this.height-this._bar.height):(this.width-this._bar.width);
+			this._tx=Laya.stage.mouseX;
+			this._ty=Laya.stage.mouseY;
+			Laya.stage.on("mousemove",this,this.mouseMove);
+			Laya.stage.once("mouseup",this,this.mouseUp);
+			this.showValueText();
+		}
+
+		/**
+		*@private
+		*显示标签。
+		*/
+		__proto.showValueText=function(){
+			if (this.showLabel){
+				var label=laya.ui.Slider.label;
+				this.addChild(label);
+				label.textField.changeText(this._value+"");
+				if (this.isVertical){
+					label.x=this._bar.x+20;
+					label.y=(this._bar.height-label.height)*0.5+this._bar.y;
+					}else {
+					label.y=this._bar.y-20;
+					label.x=(this._bar.width-label.width)*0.5+this._bar.x;
+				}
+			}
+		}
+
+		/**
+		*@private
+		*隐藏标签。
+		*/
+		__proto.hideValueText=function(){
+			laya.ui.Slider.label && laya.ui.Slider.label.removeSelf();
+		}
+
+		/**
+		*@private
+		*@param e
+		*/
+		__proto.mouseUp=function(e){
+			Laya.stage.off("mousemove",this,this.mouseMove);
+			this.sendChangeEvent("changed");
+			this.hideValueText();
+		}
+
+		/**
+		*@private
+		*@param e
+		*/
+		__proto.mouseMove=function(e){
+			var oldValue=this._value;
+			if (this.isVertical){
+				this._bar.y+=(Laya.stage.mouseY-this._ty)/ this._globalSacle.y;
+				if (this._bar.y > this._maxMove)this._bar.y=this._maxMove;
+				else if (this._bar.y < 0)this._bar.y=0;
+				this._value=this._bar.y / this._maxMove *(this._max-this._min)+this._min;
+				}else {
+				this._bar.x+=(Laya.stage.mouseX-this._tx)/ this._globalSacle.x;
+				if (this._bar.x > this._maxMove)this._bar.x=this._maxMove;
+				else if (this._bar.x < 0)this._bar.x=0;
+				this._value=this._bar.x / this._maxMove *(this._max-this._min)+this._min;
+			}
+			this._tx=Laya.stage.mouseX;
+			this._ty=Laya.stage.mouseY;
+			var pow=Math.pow(10,(this._tick+"").length-1);
+			this._value=Math.round(Math.round(this._value / this._tick)*this._tick *pow)/ pow;
+			if (this._value !=oldValue){
+				this.sendChangeEvent();
+			}
+			this.showValueText();
+		}
+
+		/**
+		*@private
+		*@param type
+		*/
+		__proto.sendChangeEvent=function(type){
+			(type===void 0)&& (type="change");
+			this.event(type);
+			this.changeHandler && this.changeHandler.runWith(this._value);
+		}
+
+		/**
+		*@private
+		*设置滑块的位置信息。
+		*/
+		__proto.setBarPoint=function(){
+			if (this.isVertical)this._bar.x=(this._bg.width-this._bar.width)*0.5;
+			else this._bar.y=(this._bg.height-this._bar.height)*0.5;
+		}
+
+		/**@inheritDoc */
+		__proto.changeSize=function(){
+			_super.prototype.changeSize.call(this);
+			if (this.isVertical)this._bg.height=this.height;
+			else this._bg.width=this.width;
+			this.setBarPoint();
+			this.changeValue();
+		}
+
+		/**
+		*设置滑动条的信息。
+		*@param min 滑块的最小值。
+		*@param max 滑块的最小值。
+		*@param value 滑块的当前值。
+		*/
+		__proto.setSlider=function(min,max,value){
+			this._value=-1;
+			this._min=min;
+			this._max=max > min ? max :min;
+			this.value=value < min ? min :value > max ? max :value;
+		}
+
+		/**
+		*@private
+		*改变滑块的位置值。
+		*/
+		__proto.changeValue=function(){
+			var pow=Math.pow(10,(this._tick+"").length-1);
+			this._value=Math.round(Math.round(this._value / this._tick)*this._tick *pow)/ pow;
+			this._value=this._value > this._max ? this._max :this._value < this._min ? this._min :this._value;
+			if (this.isVertical)this._bar.y=(this._value-this._min)/ (this._max-this._min)*(this.height-this._bar.height);
+			else this._bar.x=(this._value-this._min)/ (this._max-this._min)*(this.width-this._bar.width);
+		}
+
+		/**
+		*@private
+		*滑动条的 <code>Event.MOUSE_DOWN</code> 事件侦听处理函数。
+		*/
+		__proto.onBgMouseDown=function(e){
+			var point=this._bg.getMousePoint();
+			if (this.isVertical)this.value=point.y / (this.height-this._bar.height)*(this._max-this._min)+this._min;
+			else this.value=point.x / (this.width-this._bar.width)*(this._max-this._min)+this._min;
+		}
+
+		/**@inheritDoc */
+		__getset(0,__proto,'measureHeight',function(){
+			return Math.max(this._bg.height,this._bar.height);
+		});
+
+		/**
+		*@copy laya.ui.Image#skin
+		*@return
+		*/
+		__getset(0,__proto,'skin',function(){
+			return this._skin;
+			},function(value){
+			if (this._skin !=value){
+				this._skin=value;
+				this._bg.skin=this._skin;
+				this._bar.skin=this._skin.replace(".png","$bar.png");
+				this.setBarPoint();
+			}
+		});
+
+		/**
+		*一个布尔值，指定是否允许通过点击滑动条改变 <code>Slider</code> 的 <code>value</code> 属性值。
+		*/
+		__getset(0,__proto,'allowClickBack',function(){
+			return this._allowClickBack;
+			},function(value){
+			if (this._allowClickBack !=value){
+				this._allowClickBack=value;
+				if (value)this._bg.on("mousedown",this,this.onBgMouseDown);
+				else this._bg.off("mousedown",this,this.onBgMouseDown);
+			}
+		});
+
+		/**
+		*获取或设置表示最高位置的数字。 默认值为100。
+		*/
+		__getset(0,__proto,'max',function(){
+			return this._max;
+			},function(value){
+			if (this._max !=value){
+				this._max=value;
+				this.callLater(this.changeValue);
+			}
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'measureWidth',function(){
+			return Math.max(this._bg.width,this._bar.width);
+		});
+
+		/**
+		*表示当前的刻度值。默认值为1。
+		*@return
+		*/
+		__getset(0,__proto,'tick',function(){
+			return this._tick;
+			},function(value){
+			if (this._tick !=value){
+				this._tick=value;
+				this.callLater(this.changeValue);
+			}
+		});
+
+		/**
+		*<p>当前实例的背景图（ <code>Image</code> ）和滑块按钮（ <code>Button</code> ）实例的有效缩放网格数据。</p>
+		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
+		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
+		*@see laya.ui.AutoBitmap.sizeGrid
+		*@return
+		*/
+		__getset(0,__proto,'sizeGrid',function(){
+			return this._bg.sizeGrid;
+			},function(value){
+			this._bg.sizeGrid=value;
+			this._bar.sizeGrid=value;
+		});
+
+		/**
+		*获取或设置表示最低位置的数字。 默认值为0。
+		*/
+		__getset(0,__proto,'min',function(){
+			return this._min;
+			},function(value){
+			if (this._min !=value){
+				this._min=value;
+				this.callLater(this.changeValue);
+			}
+		});
+
+		/**
+		*获取或设置表示当前滑块位置的数字。
+		*/
+		__getset(0,__proto,'value',function(){
+			return this._value;
+			},function(num){
+			if (this._value !=num){
+				var oldValue=this._value;
+				this._value=num;
+				this.changeValue();
+				if (this._value !=oldValue){
+					this.sendChangeEvent();
+				}
+			}
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if ((typeof value=='number')|| (typeof value=='string'))this.value=Number(value);
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		/**
+		*表示滑块按钮的引用。
+		*/
+		__getset(0,__proto,'bar',function(){
+			return this._bar;
+		});
+
+		__static(Slider,
+		['label',function(){return this.label=new Label();}
+		]);
+		return Slider;
+	})(Component)
+
+
+	/**
+	*<code>Image</code> 类是用于表示位图图像或绘制图形的显示对象。
+	*@example 以下示例代码，创建了一个新的 <code>Image</code> 实例，设置了它的皮肤、位置信息，并添加到舞台上。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.Image;
+		*public class Image_Example
+		*{
+			*public function Image_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*onInit();
+				*}
+			*private function onInit():void
+			*{
+				*var bg:Image=new Image("resource/ui/bg.png");//创建一个 Image 类的实例对象 bg ,并传入它的皮肤。
+				*bg.x=100;//设置 bg 对象的属性 x 的值，用于控制 bg 对象的显示位置。
+				*bg.y=100;//设置 bg 对象的属性 y 的值，用于控制 bg 对象的显示位置。
+				*bg.sizeGrid="40,10,5,10";//设置 bg 对象的网格信息。
+				*bg.width=150;//设置 bg 对象的宽度。
+				*bg.height=250;//设置 bg 对象的高度。
+				*Laya.stage.addChild(bg);//将此 bg 对象添加到显示列表。
+				*var image:Image=new Image("resource/ui/image.png");//创建一个 Image 类的实例对象 image ,并传入它的皮肤。
+				*image.x=100;//设置 image 对象的属性 x 的值，用于控制 image 对象的显示位置。
+				*image.y=100;//设置 image 对象的属性 y 的值，用于控制 image 对象的显示位置。
+				*Laya.stage.addChild(image);//将此 image 对象添加到显示列表。
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*onInit();
+	*function onInit(){
+		*var bg=new laya.ui.Image("resource/ui/bg.png");//创建一个 Image 类的实例对象 bg ,并传入它的皮肤。
+		*bg.x=100;//设置 bg 对象的属性 x 的值，用于控制 bg 对象的显示位置。
+		*bg.y=100;//设置 bg 对象的属性 y 的值，用于控制 bg 对象的显示位置。
+		*bg.sizeGrid="40,10,5,10";//设置 bg 对象的网格信息。
+		*bg.width=150;//设置 bg 对象的宽度。
+		*bg.height=250;//设置 bg 对象的高度。
+		*Laya.stage.addChild(bg);//将此 bg 对象添加到显示列表。
+		*var image=new laya.ui.Image("resource/ui/image.png");//创建一个 Image 类的实例对象 image ,并传入它的皮肤。
+		*image.x=100;//设置 image 对象的属性 x 的值，用于控制 image 对象的显示位置。
+		*image.y=100;//设置 image 对象的属性 y 的值，用于控制 image 对象的显示位置。
+		*Laya.stage.addChild(image);//将此 image 对象添加到显示列表。
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*class Image_Example {
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*this.onInit();
+			*}
+		*private onInit():void {
+			*var bg:laya.ui.Image=new laya.ui.Image("resource/ui/bg.png");//创建一个 Image 类的实例对象 bg ,并传入它的皮肤。
+			*bg.x=100;//设置 bg 对象的属性 x 的值，用于控制 bg 对象的显示位置。
+			*bg.y=100;//设置 bg 对象的属性 y 的值，用于控制 bg 对象的显示位置。
+			*bg.sizeGrid="40,10,5,10";//设置 bg 对象的网格信息。
+			*bg.width=150;//设置 bg 对象的宽度。
+			*bg.height=250;//设置 bg 对象的高度。
+			*Laya.stage.addChild(bg);//将此 bg 对象添加到显示列表。
+			*var image:laya.ui.Image=new laya.ui.Image("resource/ui/image.png");//创建一个 Image 类的实例对象 image ,并传入它的皮肤。
+			*image.x=100;//设置 image 对象的属性 x 的值，用于控制 image 对象的显示位置。
+			*image.y=100;//设置 image 对象的属性 y 的值，用于控制 image 对象的显示位置。
+			*Laya.stage.addChild(image);//将此 image 对象添加到显示列表。
+			*}
+		*}
+	*</listing>
+	*@see laya.ui.AutoBitmap
+	*/
+	//class laya.ui.Image extends laya.ui.Component
+	var Image=(function(_super){
+		function Image(skin){
+			this._bitmap=null;
+			this._skin=null;
+			Image.__super.call(this);
+			this.skin=skin;
+		}
+
+		__class(Image,'laya.ui.Image',_super);
+		var __proto=Image.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,true);
+			this._bitmap && this._bitmap.destroy();
+			this._bitmap=null;
+		}
+
+		/**
+		*销毁对象并释放加载的皮肤资源。
+		*/
+		__proto.dispose=function(){
+			this.destroy(true);
+			Laya.loader.clearRes(this._skin);
+		}
+
+		/**@inheritDoc */
+		__proto.createChildren=function(){
+			this.graphics=this._bitmap=new AutoBitmap();
+			this._bitmap.autoCacheCmd=false;
+		}
+
+		/**
+		*@private
+		*设置皮肤资源。
+		*/
+		__proto.setSource=function(url,value){
+			url===this._skin && (this.source=value);
+			this.onCompResize();
+		}
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if ((typeof value=='string'))this.skin=value;
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'measureHeight',function(){
+			return this._bitmap.height;
+		});
+
+		/**
+		*@copy laya.ui.AutoBitmap#source
+		*/
+		__getset(0,__proto,'source',function(){
+			return this._bitmap.source;
+			},function(value){
+			if (!this._bitmap)return;
+			this._bitmap.source=value;
+			this.event("loaded");
+			this.repaint();
+		});
+
+		/**
+		*<p>对象的皮肤地址，以字符串表示。</p>
+		*<p>如果资源未加载，则先加载资源，加载完成后应用于此对象。</p>
+		*<b>注意：</b>资源加载完成后，会自动缓存至资源库中。
+		*/
+		__getset(0,__proto,'skin',function(){
+			return this._skin;
+			},function(value){
+			if (this._skin !=value){
+				this._skin=value;
+				if (value){
+					var source=Loader.getRes(value);
+					if (source){
+						this.source=source;
+						this.onCompResize();
+					}else Laya.loader.load(this._skin,Handler.create(this,this.setSource,[this._skin]),null,"image");
+					}else {
+					this.source=null;
+				}
+			}
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'measureWidth',function(){
+			return this._bitmap.width;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
+			_super.prototype._$set_width.call(this,value);
+			this._bitmap.width=value==0 ? 0.0000001 :value;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
+			_super.prototype._$set_height.call(this,value);
+			this._bitmap.height=value==0 ? 0.0000001 :value;
+		});
+
+		/**
+		*<p>当前实例的位图 <code>AutoImage</code> 实例的有效缩放网格数据。</p>
+		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
+		*<ul><li>例如："4,4,4,4,1"。</li></ul></p>
+		*@see laya.ui.AutoBitmap#sizeGrid
+		*/
+		__getset(0,__proto,'sizeGrid',function(){
+			if (this._bitmap.sizeGrid)return this._bitmap.sizeGrid.join(",");
+			return null;
+			},function(value){
+			this._bitmap.sizeGrid=UIUtils.fillArray(Styles.defaultSizeGrid,value,Number);
+		});
+
+		return Image;
+	})(Component)
+
+
+	/**
+	*<p> <code>Label</code> 类用于创建显示对象以显示文本。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>Label</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.Label;
+		*public class Label_Example
+		*{
+			*public function Label_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*onInit();
+				*}
+			*private function onInit():void
+			*{
+				*var label:Label=new Label();//创建一个 Label 类的实例对象 label 。
+				*label.font="Arial";//设置 label 的字体。
+				*label.bold=true;//设置 label 显示为粗体。
+				*label.leading=4;//设置 label 的行间距。
+				*label.wordWrap=true;//设置 label 自动换行。
+				*label.padding="10,10,10,10";//设置 label 的边距。
+				*label.color="#ff00ff";//设置 label 的颜色。
+				*label.text="Hello everyone,我是一个可爱的文本！";//设置 label 的文本内容。
+				*label.x=100;//设置 label 对象的属性 x 的值，用于控制 label 对象的显示位置。
+				*label.y=100;//设置 label 对象的属性 y 的值，用于控制 label 对象的显示位置。
+				*label.width=300;//设置 label 的宽度。
+				*label.height=200;//设置 label 的高度。
+				*Laya.stage.addChild(label);//将 label 添加到显示列表。
+				*var passwordLabel:Label=new Label("请原谅我，我不想被人看到我心里话。");//创建一个 Label 类的实例对象 passwordLabel 。
+				*passwordLabel.asPassword=true;//设置 passwordLabel 的显示反式为密码显示。
+				*passwordLabel.x=100;//设置 passwordLabel 对象的属性 x 的值，用于控制 passwordLabel 对象的显示位置。
+				*passwordLabel.y=350;//设置 passwordLabel 对象的属性 y 的值，用于控制 passwordLabel 对象的显示位置。
+				*passwordLabel.width=300;//设置 passwordLabel 的宽度。
+				*passwordLabel.color="#000000";//设置 passwordLabel 的文本颜色。
+				*passwordLabel.bgColor="#ccffff";//设置 passwordLabel 的背景颜色。
+				*passwordLabel.fontSize=20;//设置 passwordLabel 的文本字体大小。
+				*Laya.stage.addChild(passwordLabel);//将 passwordLabel 添加到显示列表。
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*onInit();
+	*function onInit(){
+		*var label=new laya.ui.Label();//创建一个 Label 类的实例对象 label 。
+		*label.font="Arial";//设置 label 的字体。
+		*label.bold=true;//设置 label 显示为粗体。
+		*label.leading=4;//设置 label 的行间距。
+		*label.wordWrap=true;//设置 label 自动换行。
+		*label.padding="10,10,10,10";//设置 label 的边距。
+		*label.color="#ff00ff";//设置 label 的颜色。
+		*label.text="Hello everyone,我是一个可爱的文本！";//设置 label 的文本内容。
+		*label.x=100;//设置 label 对象的属性 x 的值，用于控制 label 对象的显示位置。
+		*label.y=100;//设置 label 对象的属性 y 的值，用于控制 label 对象的显示位置。
+		*label.width=300;//设置 label 的宽度。
+		*label.height=200;//设置 label 的高度。
+		*Laya.stage.addChild(label);//将 label 添加到显示列表。
+		*var passwordLabel=new laya.ui.Label("请原谅我，我不想被人看到我心里话。");//创建一个 Label 类的实例对象 passwordLabel 。
+		*passwordLabel.asPassword=true;//设置 passwordLabel 的显示反式为密码显示。
+		*passwordLabel.x=100;//设置 passwordLabel 对象的属性 x 的值，用于控制 passwordLabel 对象的显示位置。
+		*passwordLabel.y=350;//设置 passwordLabel 对象的属性 y 的值，用于控制 passwordLabel 对象的显示位置。
+		*passwordLabel.width=300;//设置 passwordLabel 的宽度。
+		*passwordLabel.color="#000000";//设置 passwordLabel 的文本颜色。
+		*passwordLabel.bgColor="#ccffff";//设置 passwordLabel 的背景颜色。
+		*passwordLabel.fontSize=20;//设置 passwordLabel 的文本字体大小。
+		*Laya.stage.addChild(passwordLabel);//将 passwordLabel 添加到显示列表。
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import Label=laya.ui.Label;
+	*class Label_Example {
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*this.onInit();
+			*}
+		*private onInit():void {
+			*var label:Label=new Label();//创建一个 Label 类的实例对象 label 。
+			*label.font="Arial";//设置 label 的字体。
+			*label.bold=true;//设置 label 显示为粗体。
+			*label.leading=4;//设置 label 的行间距。
+			*label.wordWrap=true;//设置 label 自动换行。
+			*label.padding="10,10,10,10";//设置 label 的边距。
+			*label.color="#ff00ff";//设置 label 的颜色。
+			*label.text="Hello everyone,我是一个可爱的文本！";//设置 label 的文本内容。
+			*label.x=100;//设置 label 对象的属性 x 的值，用于控制 label 对象的显示位置。
+			*label.y=100;//设置 label 对象的属性 y 的值，用于控制 label 对象的显示位置。
+			*label.width=300;//设置 label 的宽度。
+			*label.height=200;//设置 label 的高度。
+			*Laya.stage.addChild(label);//将 label 添加到显示列表。
+			*var passwordLabel:Label=new Label("请原谅我，我不想被人看到我心里话。");//创建一个 Label 类的实例对象 passwordLabel 。
+			*passwordLabel.asPassword=true;//设置 passwordLabel 的显示反式为密码显示。
+			*passwordLabel.x=100;//设置 passwordLabel 对象的属性 x 的值，用于控制 passwordLabel 对象的显示位置。
+			*passwordLabel.y=350;//设置 passwordLabel 对象的属性 y 的值，用于控制 passwordLabel 对象的显示位置。
+			*passwordLabel.width=300;//设置 passwordLabel 的宽度。
+			*passwordLabel.color="#000000";//设置 passwordLabel 的文本颜色。
+			*passwordLabel.bgColor="#ccffff";//设置 passwordLabel 的背景颜色。
+			*passwordLabel.fontSize=20;//设置 passwordLabel 的文本字体大小。
+			*Laya.stage.addChild(passwordLabel);//将 passwordLabel 添加到显示列表。
+			*}
+		*}
+	*</listing>
+	*@see laya.display.Text
+	*/
+	//class laya.ui.Label extends laya.ui.Component
+	var Label=(function(_super){
+		function Label(text){
+			this._tf=null;
+			Label.__super.call(this);
+			(text===void 0)&& (text="");
+			Font.defaultColor=Styles.labelColor;
+			this.text=text;
+		}
+
+		__class(Label,'laya.ui.Label',_super);
+		var __proto=Label.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._tf=null;
+		}
+
+		/**@inheritDoc */
+		__proto.createChildren=function(){
+			this.addChild(this._tf=new Text());
+		}
+
+		/**@copy laya.display.Text#changeText()
+		**/
+		__proto.changeText=function(text){
+			this._tf.changeText(text);
+		}
+
+		/**
+		*<p>边距信息</p>
+		*<p>"上边距，右边距，下边距 , 左边距（边距以像素为单位）"</p>
+		*@see laya.display.Text.padding
+		*/
+		__getset(0,__proto,'padding',function(){
+			return this._tf.padding.join(",");
+			},function(value){
+			this._tf.padding=UIUtils.fillArray(Styles.labelPadding,value,Number);
+		});
+
+		/**
+		*@copy laya.display.Text#bold
+		*/
+		__getset(0,__proto,'bold',function(){
+			return this._tf.bold;
+			},function(value){
+			this._tf.bold=value;
+		});
+
+		/**
+		*@copy laya.display.Text#align
+		*/
+		__getset(0,__proto,'align',function(){
+			return this._tf.align;
+			},function(value){
+			this._tf.align=value;
+		});
+
+		/**
+		*当前文本内容字符串。
+		*@see laya.display.Text.text
+		*/
+		__getset(0,__proto,'text',function(){
+			return this._tf.text;
+			},function(value){
+			if (this._tf.text !=value){
+				if(value)
+					value=(value+"").replace(Label._textReg,"\n");
+				this._tf.text=value;
+				this.event("change");
+			}
+		});
+
+		/**
+		*@copy laya.display.Text#italic
+		*/
+		__getset(0,__proto,'italic',function(){
+			return this._tf.italic;
+			},function(value){
+			this._tf.italic=value;
+		});
+
+		/**
+		*@copy laya.display.Text#wordWrap
+		*/
+		/**
+		*@copy laya.display.Text#wordWrap
+		*/
+		__getset(0,__proto,'wordWrap',function(){
+			return this._tf.wordWrap;
+			},function(value){
+			this._tf.wordWrap=value;
+		});
+
+		/**
+		*@copy laya.display.Text#asPassword
+		*/
+		__getset(0,__proto,'asPassword',function(){
+			return this._tf.asPassword;
+			},function(value){
+			this._tf.asPassword=value;
+		});
+
+		/**
+		*@copy laya.display.Text#font
+		*/
+		__getset(0,__proto,'font',function(){
+			return this._tf.font;
+			},function(value){
+			this._tf.font=value;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if ((typeof value=='number')|| (typeof value=='string'))this.text=value+"";
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		/**
+		*@copy laya.display.Text#color
+		*/
+		__getset(0,__proto,'color',function(){
+			return this._tf.color;
+			},function(value){
+			this._tf.color=value;
+		});
+
+		/**
+		*@copy laya.display.Text#valign
+		*/
+		__getset(0,__proto,'valign',function(){
+			return this._tf.valign;
+			},function(value){
+			this._tf.valign=value;
+		});
+
+		/**
+		*@copy laya.display.Text#leading
+		*/
+		__getset(0,__proto,'leading',function(){
+			return this._tf.leading;
+			},function(value){
+			this._tf.leading=value;
+		});
+
+		/**
+		*@copy laya.display.Text#fontSize
+		*/
+		__getset(0,__proto,'fontSize',function(){
+			return this._tf.fontSize;
+			},function(value){
+			this._tf.fontSize=value;
+		});
+
+		/**
+		*@copy laya.display.Text#bgColor
+		*/
+		__getset(0,__proto,'bgColor',function(){
+			return this._tf.bgColor
+			},function(value){
+			this._tf.bgColor=value;
+		});
+
+		/**
+		*@copy laya.display.Text#borderColor
+		*/
+		__getset(0,__proto,'borderColor',function(){
+			return this._tf.borderColor
+			},function(value){
+			this._tf.borderColor=value;
+		});
+
+		/**
+		*@copy laya.display.Text#stroke
+		*/
+		__getset(0,__proto,'stroke',function(){
+			return this._tf.stroke;
+			},function(value){
+			this._tf.stroke=value;
+		});
+
+		/**
+		*@copy laya.display.Text#strokeColor
+		*/
+		__getset(0,__proto,'strokeColor',function(){
+			return this._tf.strokeColor;
+			},function(value){
+			this._tf.strokeColor=value;
+		});
+
+		/**
+		*文本控件实体 <code>Text</code> 实例。
+		*/
+		__getset(0,__proto,'textField',function(){
+			return this._tf;
+		});
+
+		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'measureWidth',function(){
+			return this._tf.width;
+		});
+
+		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'measureHeight',function(){
+			return this._tf.height;
+		});
+
+		/**
+		*@inheritDoc
+		*/
+		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'width',function(){
+			if (this._width || this._tf.text)return _super.prototype._$get_width.call(this);
+			return 0;
+			},function(value){
+			_super.prototype._$set_width.call(this,value);
+			this._tf.width=value;
+		});
+
+		/**
+		*@inheritDoc
+		*/
+		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'height',function(){
+			if (this._height || this._tf.text)return _super.prototype._$get_height.call(this);
+			return 0;
+			},function(value){
+			_super.prototype._$set_height.call(this,value);
+			this._tf.height=value;
+		});
+
+		/**
+		*@copy laya.display.Text#overflow
+		*/
+		/**
+		*@copy laya.display.Text#overflow
+		*/
+		__getset(0,__proto,'overflow',function(){
+			return this._tf.overflow;
+			},function(value){
+			this._tf.overflow=value;
+		});
+
+		/**
+		*@copy laya.display.Text#underline
+		*/
+		/**
+		*@copy laya.display.Text#underline
+		*/
+		__getset(0,__proto,'underline',function(){
+			return this._tf.underline;
+			},function(value){
+			this._tf.underline=value;
+		});
+
+		/**
+		*@copy laya.display.Text#underlineColor
+		*/
+		/**
+		*@copy laya.display.Text#underlineColor
+		*/
+		__getset(0,__proto,'underlineColor',function(){
+			return this._tf.underlineColor;
+			},function(value){
+			this._tf.underlineColor=value;
+		});
+
+		__static(Label,
+		['_textReg',function(){return this._textReg=new RegExp("\\\\n","g");}
+		]);
+		return Label;
+	})(Component)
 
 
 	/**
@@ -20725,7 +26362,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto._init_=function(src){
 			this._src=src;
 			this._source=new Browser.window.Image();
-			this._source.crossOrigin="";
+			if (src.indexOf("data:image")!=0)this._source.crossOrigin="";
 			(src)&& (this._source.src=src);
 		}
 
@@ -20913,6 +26550,472 @@ var Laya=window.Laya=(function(window,document){
 
 		return VertexBuffer2D;
 	})(Buffer2D)
+
+
+	/**
+	*使用 <code>HScrollBar</code> （水平 <code>ScrollBar</code> ）控件，可以在因数据太多而不能在显示区域完全显示时控制显示的数据部分。
+	*@example 以下示例代码，创建了一个 <code>HScrollBar</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.HScrollBar;
+		*import laya.utils.Handler;
+		*public class HScrollBar_Example
+		*{
+			*private var hScrollBar:HScrollBar;
+			*public function HScrollBar_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/hscroll.png","resource/ui/hscroll$bar.png","resource/ui/hscroll$down.png","resource/ui/hscroll$up.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*hScrollBar=new HScrollBar();//创建一个 HScrollBar 类的实例对象 hScrollBar 。
+				*hScrollBar.skin="resource/ui/hscroll.png";//设置 hScrollBar 的皮肤。
+				*hScrollBar.x=100;//设置 hScrollBar 对象的属性 x 的值，用于控制 hScrollBar 对象的显示位置。
+				*hScrollBar.y=100;//设置 hScrollBar 对象的属性 y 的值，用于控制 hScrollBar 对象的显示位置。
+				*hScrollBar.changeHandler=new Handler(this,onChange);//设置 hScrollBar 的滚动变化处理器。
+				*Laya.stage.addChild(hScrollBar);//将此 hScrollBar 对象添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滚动条的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var hScrollBar;
+	*var res=["resource/ui/hscroll.png","resource/ui/hscroll$bar.png","resource/ui/hscroll$down.png","resource/ui/hscroll$up.png"];
+	*Laya.loader.load(res,laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*console.log("资源加载完成！");
+		*hScrollBar=new laya.ui.HScrollBar();//创建一个 HScrollBar 类的实例对象 hScrollBar 。
+		*hScrollBar.skin="resource/ui/hscroll.png";//设置 hScrollBar 的皮肤。
+		*hScrollBar.x=100;//设置 hScrollBar 对象的属性 x 的值，用于控制 hScrollBar 对象的显示位置。
+		*hScrollBar.y=100;//设置 hScrollBar 对象的属性 y 的值，用于控制 hScrollBar 对象的显示位置。
+		*hScrollBar.changeHandler=new laya.utils.Handler(this,onChange);//设置 hScrollBar 的滚动变化处理器。
+		*Laya.stage.addChild(hScrollBar);//将此 hScrollBar 对象添加到显示列表。
+		*}
+	*function onChange(value)
+	*{
+		*console.log("滚动条的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import HScrollBar=laya.ui.HScrollBar;
+	*import Handler=laya.utils.Handler;
+	*class HScrollBar_Example {
+		*private hScrollBar:HScrollBar;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/hscroll.png","resource/ui/hscroll$bar.png","resource/ui/hscroll$down.png","resource/ui/hscroll$up.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.hScrollBar=new HScrollBar();//创建一个 HScrollBar 类的实例对象 hScrollBar 。
+			*this.hScrollBar.skin="resource/ui/hscroll.png";//设置 hScrollBar 的皮肤。
+			*this.hScrollBar.x=100;//设置 hScrollBar 对象的属性 x 的值，用于控制 hScrollBar 对象的显示位置。
+			*this.hScrollBar.y=100;//设置 hScrollBar 对象的属性 y 的值，用于控制 hScrollBar 对象的显示位置。
+			*this.hScrollBar.changeHandler=new Handler(this,this.onChange);//设置 hScrollBar 的滚动变化处理器。
+			*Laya.stage.addChild(this.hScrollBar);//将此 hScrollBar 对象添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滚动条的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*/
+	//class laya.ui.HScrollBar extends laya.ui.ScrollBar
+	var HScrollBar=(function(_super){
+		function HScrollBar(){HScrollBar.__super.call(this);;
+		};
+
+		__class(HScrollBar,'laya.ui.HScrollBar',_super);
+		var __proto=HScrollBar.prototype;
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			_super.prototype.initialize.call(this);
+			this.slider.isVertical=false;
+		}
+
+		return HScrollBar;
+	})(ScrollBar)
+
+
+	/**
+	*
+	*使用 <code>VScrollBar</code> （垂直 <code>ScrollBar</code> ）控件，可以在因数据太多而不能在显示区域完全显示时控制显示的数据部分。
+	*
+	*@example 以下示例代码，创建了一个 <code>VScrollBar</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.vScrollBar;
+		*import laya.ui.VScrollBar;
+		*import laya.utils.Handler;
+		*public class VScrollBar_Example
+		*{
+			*private var vScrollBar:VScrollBar;
+			*public function VScrollBar_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/vscroll.png","resource/ui/vscroll$bar.png","resource/ui/vscroll$down.png","resource/ui/vscroll$up.png"],Handler.create(this,onLoadComplete));
+				*}
+			*private function onLoadComplete():void
+			*{
+				*vScrollBar=new VScrollBar();//创建一个 vScrollBar 类的实例对象 hScrollBar 。
+				*vScrollBar.skin="resource/ui/vscroll.png";//设置 vScrollBar 的皮肤。
+				*vScrollBar.x=100;//设置 vScrollBar 对象的属性 x 的值，用于控制 vScrollBar 对象的显示位置。
+				*vScrollBar.y=100;//设置 vScrollBar 对象的属性 y 的值，用于控制 vScrollBar 对象的显示位置。
+				*vScrollBar.changeHandler=new Handler(this,onChange);//设置 vScrollBar 的滚动变化处理器。
+				*Laya.stage.addChild(vScrollBar);//将此 vScrollBar 对象添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滚动条的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var vScrollBar;
+	*var res=["resource/ui/vscroll.png","resource/ui/vscroll$bar.png","resource/ui/vscroll$down.png","resource/ui/vscroll$up.png"];
+	*Laya.loader.load(res,laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*vScrollBar=new laya.ui.VScrollBar();//创建一个 vScrollBar 类的实例对象 hScrollBar 。
+		*vScrollBar.skin="resource/ui/vscroll.png";//设置 vScrollBar 的皮肤。
+		*vScrollBar.x=100;//设置 vScrollBar 对象的属性 x 的值，用于控制 vScrollBar 对象的显示位置。
+		*vScrollBar.y=100;//设置 vScrollBar 对象的属性 y 的值，用于控制 vScrollBar 对象的显示位置。
+		*vScrollBar.changeHandler=new laya.utils.Handler(this,onChange);//设置 vScrollBar 的滚动变化处理器。
+		*Laya.stage.addChild(vScrollBar);//将此 vScrollBar 对象添加到显示列表。
+		*}
+	*function onChange(value){
+		*console.log("滚动条的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import VScrollBar=laya.ui.VScrollBar;
+	*import Handler=laya.utils.Handler;
+	*class VScrollBar_Example {
+		*private vScrollBar:VScrollBar;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/vscroll.png","resource/ui/vscroll$bar.png","resource/ui/vscroll$down.png","resource/ui/vscroll$up.png"],Handler.create(this,this.onLoadComplete));
+			*}
+		*private onLoadComplete():void {
+			*this.vScrollBar=new VScrollBar();//创建一个 vScrollBar 类的实例对象 hScrollBar 。
+			*this.vScrollBar.skin="resource/ui/vscroll.png";//设置 vScrollBar 的皮肤。
+			*this.vScrollBar.x=100;//设置 vScrollBar 对象的属性 x 的值，用于控制 vScrollBar 对象的显示位置。
+			*this.vScrollBar.y=100;//设置 vScrollBar 对象的属性 y 的值，用于控制 vScrollBar 对象的显示位置。
+			*this.vScrollBar.changeHandler=new Handler(this,this.onChange);//设置 vScrollBar 的滚动变化处理器。
+			*Laya.stage.addChild(this.vScrollBar);//将此 vScrollBar 对象添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滚动条的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*/
+	//class laya.ui.VScrollBar extends laya.ui.ScrollBar
+	var VScrollBar=(function(_super){
+		function VScrollBar(){VScrollBar.__super.call(this);;
+		};
+
+		__class(VScrollBar,'laya.ui.VScrollBar',_super);
+		return VScrollBar;
+	})(ScrollBar)
+
+
+	/**
+	*<code>TextInput</code> 类用于创建显示对象以显示和输入文本。
+	*
+	*@example 以下示例代码，创建了一个 <code>TextInput</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.display.Stage;
+		*import laya.ui.TextInput;
+		*import laya.utils.Handler;
+		*public class TextInput_Example
+		*{
+			*public function TextInput_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/input.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*var textInput:TextInput=new TextInput("这是一个TextInput实例。");//创建一个 TextInput 类的实例对象 textInput 。
+				*textInput.skin="resource/ui/input.png";//设置 textInput 的皮肤。
+				*textInput.sizeGrid="4,4,4,4";//设置 textInput 的网格信息。
+				*textInput.color="#008fff";//设置 textInput 的文本颜色。
+				*textInput.font="Arial";//设置 textInput 的文本字体。
+				*textInput.bold=true;//设置 textInput 的文本显示为粗体。
+				*textInput.fontSize=30;//设置 textInput 的字体大小。
+				*textInput.wordWrap=true;//设置 textInput 的文本自动换行。
+				*textInput.x=100;//设置 textInput 对象的属性 x 的值，用于控制 textInput 对象的显示位置。
+				*textInput.y=100;//设置 textInput 对象的属性 y 的值，用于控制 textInput 对象的显示位置。
+				*textInput.width=300;//设置 textInput 的宽度。
+				*textInput.height=200;//设置 textInput 的高度。
+				*Laya.stage.addChild(textInput);//将 textInput 添加到显示列表。
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*Laya.loader.load(["resource/ui/input.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*var textInput=new laya.ui.TextInput("这是一个TextInput实例。");//创建一个 TextInput 类的实例对象 textInput 。
+		*textInput.skin="resource/ui/input.png";//设置 textInput 的皮肤。
+		*textInput.sizeGrid="4,4,4,4";//设置 textInput 的网格信息。
+		*textInput.color="#008fff";//设置 textInput 的文本颜色。
+		*textInput.font="Arial";//设置 textInput 的文本字体。
+		*textInput.bold=true;//设置 textInput 的文本显示为粗体。
+		*textInput.fontSize=30;//设置 textInput 的字体大小。
+		*textInput.wordWrap=true;//设置 textInput 的文本自动换行。
+		*textInput.x=100;//设置 textInput 对象的属性 x 的值，用于控制 textInput 对象的显示位置。
+		*textInput.y=100;//设置 textInput 对象的属性 y 的值，用于控制 textInput 对象的显示位置。
+		*textInput.width=300;//设置 textInput 的宽度。
+		*textInput.height=200;//设置 textInput 的高度。
+		*Laya.stage.addChild(textInput);//将 textInput 添加到显示列表。
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import Stage=laya.display.Stage;
+	*import TextInput=laya.ui.TextInput;
+	*import Handler=laya.utils.Handler;
+	*class TextInput_Example {
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/input.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*var textInput:TextInput=new TextInput("这是一个TextInput实例。");//创建一个 TextInput 类的实例对象 textInput 。
+			*textInput.skin="resource/ui/input.png";//设置 textInput 的皮肤。
+			*textInput.sizeGrid="4,4,4,4";//设置 textInput 的网格信息。
+			*textInput.color="#008fff";//设置 textInput 的文本颜色。
+			*textInput.font="Arial";//设置 textInput 的文本字体。
+			*textInput.bold=true;//设置 textInput 的文本显示为粗体。
+			*textInput.fontSize=30;//设置 textInput 的字体大小。
+			*textInput.wordWrap=true;//设置 textInput 的文本自动换行。
+			*textInput.x=100;//设置 textInput 对象的属性 x 的值，用于控制 textInput 对象的显示位置。
+			*textInput.y=100;//设置 textInput 对象的属性 y 的值，用于控制 textInput 对象的显示位置。
+			*textInput.width=300;//设置 textInput 的宽度。
+			*textInput.height=200;//设置 textInput 的高度。
+			*Laya.stage.addChild(textInput);//将 textInput 添加到显示列表。
+			*}
+		*}
+	*</listing>
+	*/
+	//class laya.ui.TextInput extends laya.ui.Label
+	var TextInput=(function(_super){
+		function TextInput(text){
+			this._bg=null;
+			this._skin=null;
+			TextInput.__super.call(this);
+			(text===void 0)&& (text="");
+			this.text=text;
+			this.skin=this.skin;
+		}
+
+		__class(TextInput,'laya.ui.TextInput',_super);
+		var __proto=TextInput.prototype;
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			this.mouseEnabled=true;
+		}
+
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._bg && this._bg.destroy();
+			this._bg=null;
+		}
+
+		/**@inheritDoc */
+		__proto.createChildren=function(){
+			this.addChild(this._tf=new Input());
+			this._tf.padding=Styles.inputLabelPadding;
+			this._tf.on("input",this,this.onInput);
+			this._tf.on("enter",this,this.onEnter);
+			this._tf.on("blur",this,this.onBlur);
+			this._tf.on("focus",this,this.onFocus);
+		}
+
+		/**
+		*@private
+		*/
+		__proto.onFocus=function(e){
+			this.event("focus",this);
+		}
+
+		/**
+		*@private
+		*/
+		__proto.onBlur=function(e){
+			this.event("blur",this);
+		}
+
+		/**
+		*@private
+		*/
+		__proto.onInput=function(e){
+			this.event("input",this);
+		}
+
+		/**
+		*@private
+		*/
+		__proto.onEnter=function(e){
+			this.event("enter",this);
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			this.width=128;
+			this.height=22;
+		}
+
+		/**选中输入框内的文本。*/
+		__proto.select=function(){
+			(this._tf).select();
+		}
+
+		/**
+		*表示此对象包含的文本背景 <code>AutoBitmap</code> 组件实例。
+		*/
+		__getset(0,__proto,'bg',function(){
+			return this._bg;
+			},function(value){
+			this.graphics=this._bg=value;
+		});
+
+		/**
+		*<p>指示当前是否是文本域。</p>
+		*值为true表示当前是文本域，否则不是文本域。
+		*/
+		__getset(0,__proto,'multiline',function(){
+			return (this._tf).multiline;
+			},function(value){
+			(this._tf).multiline=value;
+		});
+
+		/**
+		*设置原生input输入框的y坐标偏移。
+		*/
+		__getset(0,__proto,'inputElementYAdjuster',function(){
+			return (this._tf).inputElementYAdjuster;
+			},function(value){
+			(this._tf).inputElementYAdjuster=value;
+		});
+
+		/**
+		*@copy laya.ui.Image#skin
+		*/
+		__getset(0,__proto,'skin',function(){
+			return this._skin;
+			},function(value){
+			if (this._skin !=value){
+				this._skin=value;
+				this._bg || (this.graphics=this._bg=new AutoBitmap());
+				this._bg.source=Loader.getRes(this._skin);
+				this._width && (this._bg.width=this._width);
+				this._height && (this._bg.height=this._height);
+			}
+		});
+
+		/**
+		*<p>当前实例的背景图（ <code>AutoBitmap</code> ）实例的有效缩放网格数据。</p>
+		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
+		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
+		*@see laya.ui.AutoBitmap.sizeGrid
+		*/
+		__getset(0,__proto,'sizeGrid',function(){
+			return this._bg && this._bg.sizeGrid ? this._bg.sizeGrid.join(","):null;
+			},function(value){
+			this._bg || (this.graphics=this._bg=new AutoBitmap());
+			this._bg.sizeGrid=UIUtils.fillArray(Styles.defaultSizeGrid,value,Number);
+		});
+
+		/**
+		*设置原生input输入框的x坐标偏移。
+		*/
+		__getset(0,__proto,'inputElementXAdjuster',function(){
+			return (this._tf).inputElementXAdjuster;
+			},function(value){
+			(this._tf).inputElementXAdjuster=value;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
+			_super.prototype._$set_width.call(this,value);
+			this._bg && (this._bg.width=value);
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
+			_super.prototype._$set_height.call(this,value);
+			this._bg && (this._bg.height=value);
+		});
+
+		/**
+		*设置可编辑状态。
+		*/
+		__getset(0,__proto,'editable',function(){
+			return (this._tf).editable;
+			},function(value){
+			(this._tf).editable=value;
+		});
+
+		/**限制输入的字符。*/
+		__getset(0,__proto,'restrict',function(){
+			return (this._tf).restrict;
+			},function(pattern){
+			(this._tf).restrict=pattern;
+		});
+
+		/**
+		*@copy laya.display.Input#prompt
+		*/
+		__getset(0,__proto,'prompt',function(){
+			return (this._tf).prompt;
+			},function(value){
+			(this._tf).prompt=value;
+		});
+
+		/**
+		*@copy laya.display.Input#maxChars
+		*/
+		__getset(0,__proto,'maxChars',function(){
+			return (this._tf).maxChars;
+			},function(value){
+			(this._tf).maxChars=value;
+		});
+
+		/**
+		*@copy laya.display.Input#focus
+		*/
+		__getset(0,__proto,'focus',function(){
+			return (this._tf).focus;
+			},function(value){
+			(this._tf).focus=value;
+		});
+
+		return TextInput;
+	})(Label)
 
 
 	/**
@@ -21106,6 +27209,232 @@ var Laya=window.Laya=(function(window,document){
 
 		return WebGLImage;
 	})(HTMLImage)
+
+
+	/**
+	*<code>TextArea</code> 类用于创建显示对象以显示和输入文本。
+	*@example 以下示例代码，创建了一个 <code>TextArea</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.TextArea;
+		*import laya.utils.Handler;
+		*public class TextArea_Example
+		*{
+			*public function TextArea_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/input.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*var textArea:TextArea=new TextArea("这个一个TextArea实例。");//创建一个 TextArea 类的实例对象 textArea 。
+				*textArea.skin="resource/ui/input.png";//设置 textArea 的皮肤。
+				*textArea.sizeGrid="4,4,4,4";//设置 textArea 的网格信息。
+				*textArea.color="#008fff";//设置 textArea 的文本颜色。
+				*textArea.font="Arial";//设置 textArea 的字体。
+				*textArea.bold=true;//设置 textArea 的文本显示为粗体。
+				*textArea.fontSize=20;//设置 textArea 的文本字体大小。
+				*textArea.wordWrap=true;//设置 textArea 的文本自动换行。
+				*textArea.x=100;//设置 textArea 对象的属性 x 的值，用于控制 textArea 对象的显示位置。
+				*textArea.y=100;//设置 textArea 对象的属性 y 的值，用于控制 textArea 对象的显示位置。
+				*textArea.width=300;//设置 textArea 的宽度。
+				*textArea.height=200;//设置 textArea 的高度。
+				*Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800);//设置游戏画布宽高、渲染模式
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*Laya.loader.load(["resource/ui/input.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*var textArea=new laya.ui.TextArea("这个一个TextArea实例。");//创建一个 TextArea 类的实例对象 textArea 。
+		*textArea.skin="resource/ui/input.png";//设置 textArea 的皮肤。
+		*textArea.sizeGrid="4,4,4,4";//设置 textArea 的网格信息。
+		*textArea.color="#008fff";//设置 textArea 的文本颜色。
+		*textArea.font="Arial";//设置 textArea 的字体。
+		*textArea.bold=true;//设置 textArea 的文本显示为粗体。
+		*textArea.fontSize=20;//设置 textArea 的文本字体大小。
+		*textArea.wordWrap=true;//设置 textArea 的文本自动换行。
+		*textArea.x=100;//设置 textArea 对象的属性 x 的值，用于控制 textArea 对象的显示位置。
+		*textArea.y=100;//设置 textArea 对象的属性 y 的值，用于控制 textArea 对象的显示位置。
+		*textArea.width=300;//设置 textArea 的宽度。
+		*textArea.height=200;//设置 textArea 的高度。
+		*Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import TextArea=laya.ui.TextArea;
+	*import Handler=laya.utils.Handler;
+	*class TextArea_Example {
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/input.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*var textArea:TextArea=new TextArea("这个一个TextArea实例。");//创建一个 TextArea 类的实例对象 textArea 。
+			*textArea.skin="resource/ui/input.png";//设置 textArea 的皮肤。
+			*textArea.sizeGrid="4,4,4,4";//设置 textArea 的网格信息。
+			*textArea.color="#008fff";//设置 textArea 的文本颜色。
+			*textArea.font="Arial";//设置 textArea 的字体。
+			*textArea.bold=true;//设置 textArea 的文本显示为粗体。
+			*textArea.fontSize=20;//设置 textArea 的文本字体大小。
+			*textArea.wordWrap=true;//设置 textArea 的文本自动换行。
+			*textArea.x=100;//设置 textArea 对象的属性 x 的值，用于控制 textArea 对象的显示位置。
+			*textArea.y=100;//设置 textArea 对象的属性 y 的值，用于控制 textArea 对象的显示位置。
+			*textArea.width=300;//设置 textArea 的宽度。
+			*textArea.height=200;//设置 textArea 的高度。
+			*Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
+			*}
+		*}
+	*</listing>
+	*/
+	//class laya.ui.TextArea extends laya.ui.TextInput
+	var TextArea=(function(_super){
+		function TextArea(text){
+			this._vScrollBar=null;
+			this._hScrollBar=null;
+			(text===void 0)&& (text="");
+			TextArea.__super.call(this,text);
+		}
+
+		__class(TextArea,'laya.ui.TextArea',_super);
+		var __proto=TextArea.prototype;
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._vScrollBar && this._vScrollBar.destroy();
+			this._hScrollBar && this._hScrollBar.destroy();
+			this._vScrollBar=null;
+			this._hScrollBar=null;
+		}
+
+		__proto.initialize=function(){
+			this.width=180;
+			this.height=150;
+			this._tf.wordWrap=true;
+			this.multiline=true;
+		}
+
+		__proto.onVBarChanged=function(e){
+			if (this._tf.scrollY !=this._vScrollBar.value){
+				this._tf.scrollY=this._vScrollBar.value;
+			}
+		}
+
+		__proto.onHBarChanged=function(e){
+			if (this._tf.scrollX !=this._hScrollBar.value){
+				this._tf.scrollX=this._hScrollBar.value;
+			}
+		}
+
+		__proto.changeScroll=function(){
+			var vShow=this._vScrollBar && this._tf.maxScrollY > 0;
+			var hShow=this._hScrollBar && this._tf.maxScrollX > 0;
+			var showWidth=vShow ? this._width-this._vScrollBar.width :this._width;
+			var showHeight=hShow ? this._height-this._hScrollBar.height :this._height;
+			var padding=this._tf.padding || Styles.labelPadding;
+			this._tf.width=showWidth-padding[0]-padding[2];
+			this._tf.height=showHeight-padding[1]-padding[3];
+			if (this._vScrollBar){
+				this._vScrollBar.x=this._width-this._vScrollBar.width-padding[2];
+				this._vScrollBar.y=padding[1];
+				this._vScrollBar.height=this._height-(hShow ? this._hScrollBar.height :0)-padding[1]-padding[3];
+				this._vScrollBar.scrollSize=1;
+				this._vScrollBar.thumbPercent=showHeight / Math.max(this._tf.textHeight,showHeight);
+				this._vScrollBar.setScroll(1,this._tf.maxScrollY,this._tf.scrollY);
+				this._vScrollBar.visible=vShow;
+			}
+			if (this._hScrollBar){
+				this._hScrollBar.x=padding[0];
+				this._hScrollBar.y=this._height-this._hScrollBar.height-padding[3];
+				this._hScrollBar.width=this._width-(vShow ? this._vScrollBar.width :0)-padding[0]-padding[2];
+				this._hScrollBar.scrollSize=Math.max(showWidth *0.033,1);
+				this._hScrollBar.thumbPercent=showWidth / Math.max(this._tf.textWidth,showWidth);
+				this._hScrollBar.setScroll(0,this.maxScrollX,this.scrollX);
+				this._hScrollBar.visible=hShow;
+			}
+		}
+
+		/**滚动到某个位置*/
+		__proto.scrollTo=function(y){
+			this.commitMeasure();
+			this._tf.scrollY=y;
+		}
+
+		/**垂直滚动值*/
+		__getset(0,__proto,'scrollY',function(){
+			return this._tf.scrollY;
+		});
+
+		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
+			_super.prototype._$set_width.call(this,value);
+			this.callLater(this.changeScroll);
+		});
+
+		/**水平滚动条实体*/
+		__getset(0,__proto,'hScrollBar',function(){
+			return this._hScrollBar;
+		});
+
+		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
+			_super.prototype._$set_height.call(this,value);
+			this.callLater(this.changeScroll);
+		});
+
+		/**水平滚动最大值*/
+		__getset(0,__proto,'maxScrollX',function(){
+			return this._tf.maxScrollX;
+		});
+
+		/**垂直滚动条皮肤*/
+		__getset(0,__proto,'vScrollBarSkin',function(){
+			return this._vScrollBar ? this._vScrollBar.skin :null;
+			},function(value){
+			if (this._vScrollBar==null){
+				this.addChild(this._vScrollBar=new VScrollBar());
+				this._vScrollBar.on("change",this,this.onVBarChanged);
+				this._vScrollBar.target=this._tf;
+				this.callLater(this.changeScroll);
+			}
+			this._vScrollBar.skin=value;
+		});
+
+		/**水平滚动条皮肤*/
+		__getset(0,__proto,'hScrollBarSkin',function(){
+			return this._hScrollBar ? this._hScrollBar.skin :null;
+			},function(value){
+			if (this._hScrollBar==null){
+				this.addChild(this._hScrollBar=new HScrollBar());
+				this._hScrollBar.on("change",this,this.onHBarChanged);
+				this._hScrollBar.mouseWheelEnable=false;
+				this._hScrollBar.target=this._tf;
+				this.callLater(this.changeScroll);
+			}
+			this._hScrollBar.skin=value;
+		});
+
+		/**垂直滚动条实体*/
+		__getset(0,__proto,'vScrollBar',function(){
+			return this._vScrollBar;
+		});
+
+		/**垂直滚动最大值*/
+		__getset(0,__proto,'maxScrollY',function(){
+			return this._tf.maxScrollY;
+		});
+
+		/**水平滚动值*/
+		__getset(0,__proto,'scrollX',function(){
+			return this._tf.scrollX;
+		});
+
+		return TextArea;
+	})(TextInput)
 
 
 	Laya.__init([EventDispatcher,Browser,DrawText,Render,Timer,LoaderManager,WebGLContext,AtlasGrid,WebGLContext2D,RenderTargetMAX,ShaderCompile]);

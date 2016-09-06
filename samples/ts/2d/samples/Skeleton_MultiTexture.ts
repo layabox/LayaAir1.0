@@ -39,7 +39,7 @@ module laya {
 		
 		private parseComplete():void {
 			//创建模式为1，可以启用换装
-			this.mArmature =this.mFactory.buildArmature(1);
+			this.mArmature =this.mFactory.buildArmature(0);
 			this.mArmature.x = this.mStartX;
 			this.mArmature.y = this.mStartY;
 			this.mArmature.scale(0.5, 0.5);

@@ -51,7 +51,7 @@ package threeDimen.primaryStage {
 			scene.currentCamera.transform.rotate(new Vector3(-45, 0, 0), true, false);
 			
 			terrain = Mesh.load("../../../../res/threeDimen/staticModel/simpleScene/B00MP001M-DEFAULT01.lm");
-			terrainSprite = scene.addChild(new MeshTerrainSprite3D(terrain, 129, 129)) as MeshTerrainSprite3D;
+			terrainSprite = scene.addChild(MeshTerrainSprite3D.createFromMesh(terrain, 129, 129)) as MeshTerrainSprite3D;
 			terrainSprite.transform.localScale = new Vector3(10, 10, 10);
 			terrainSprite.transform.position = new Vector3(0, 2.6, 1.5);
 			terrainSprite.transform.rotationEuler = new Vector3(0, 0.3, 0.4);
