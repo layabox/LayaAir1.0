@@ -1,6 +1,4 @@
 class StaticModel_MeshSample {
-	private skinMesh: Laya.MeshSprite3D;
-	private skinAni: Laya.SkinAnimations;
 
 	constructor() {
 		Laya3D.init(0, 0,true);

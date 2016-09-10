@@ -13,7 +13,7 @@ var StaticModel_MeshTerrainSample = (function () {
         this.scene.currentCamera.transform.translate(new Laya.Vector3(0, 4.2, 2.6));
         this.scene.currentCamera.transform.rotate(new Laya.Vector3(-45, 0, 0), true, false);
         this.terrain = Laya.Mesh.load("../../res/threeDimen/staticModel/simpleScene/B00MP001M-DEFAULT01.lm");
-        this.terrainSprite = this.scene.addChild(new Laya.MeshTerrainSprite3D(this.terrain, 129, 129));
+        this.terrainSprite = this.scene.addChild(Laya.MeshTerrainSprite3D.createFromMesh(this.terrain, 129, 129));
         this.terrainSprite.transform.localScale = new Laya.Vector3(10, 10, 10);
         this.terrainSprite.transform.position = new Laya.Vector3(0, 2.6, 1.5);
         this.terrainSprite.transform.rotationEuler = new Laya.Vector3(0, 0.3, 0.4);
@@ -42,7 +42,7 @@ var StaticModel_MeshTerrainSample = (function () {
         position.elements[2] = position.z;
         this.sphereSprite.transform.position = position;
         var array = this.pathFingding.findPath(0, 0, position.x, position.z);
-        console.log("start:", 0, 0, " end:", position.x, position.z, "path:", array.toString());
+        // console.log("start:", 0, 0, " end:", position.x, position.z, "path:", array.toString());
     };
     StaticModel_MeshTerrainSample.prototype.setMeshParams = function (spirit3D, renderMode, albedo, ambientColor, uvScale, shaderName) {
         if (shaderName === void 0) { shaderName = null; }

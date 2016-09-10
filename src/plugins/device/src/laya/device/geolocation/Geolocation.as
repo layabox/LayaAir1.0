@@ -40,7 +40,7 @@ package laya.device.geolocation
 		 * 表示允许设备获取位置的最长时间。默认为Infinity，意味着getCurentPosition()直到位置可用时才会返回信息。
 		 */
 		
-		public static var timeout:Number = Infinity;
+		public static var timeout:Number = 1E10;
 		/**
 		 * 表示可被返回的缓存位置信息的最大时限。
 		 * 如果设置为0，意味着设备不使用缓存位置，并且尝试获取实时位置。

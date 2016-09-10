@@ -240,7 +240,7 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function _computeSkinAnimationData(bones:*, curData:Float32Array, exData:Float32Array, bonesDatas:Float32Array, animationDatas:Float32Array):void {
+		public static function _computeBoneAndAnimationDatas(bones:*, curData:Float32Array, exData:Float32Array, outBonesDatas:Float32Array, outAnimationDatas:Float32Array):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var offset:int = 0;
 			var matOffset:int = 0;
@@ -251,24 +251,69 @@ package laya.d3.utils {
 			var boneLength:int = bones.length;
 			for (i = 0; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++) {
 				//将旋转平移缩放合成矩阵...........................................
-				Utils3D._rotationTransformScaleSkinAnimation(curData[offset + 7], curData[offset + 8], curData[offset + 9], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 0], curData[offset + 1], curData[offset + 2], bonesDatas, matOffset);
+				Utils3D._rotationTransformScaleSkinAnimation(curData[offset + 7], curData[offset + 8], curData[offset + 9], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 0], curData[offset + 1], curData[offset + 2], outBonesDatas, matOffset);
 				
 				if (i != 0) {
 					parentOffset = bones[i].parentIndex * 16;
-					Utils3D.mulMatrixByArray(bonesDatas, parentOffset, bonesDatas, matOffset, bonesDatas, matOffset);
+					Utils3D.mulMatrixByArray(outBonesDatas, parentOffset, outBonesDatas, matOffset, outBonesDatas, matOffset);
 				}
 			}
 			
-			for (i = 0; i < len; i += 16) {
-				//将绝对矩阵乘以反置矩阵................................................
-				Utils3D.mulMatrixByArrayFast(bonesDatas, i, exData, len + i, animationDatas, i);
+			for (i = 0; i < len; i += 16) {//将绝对矩阵乘以反置矩阵................................................
+				Utils3D.mulMatrixByArrayFast(outBonesDatas, i, exData, len + i, outAnimationDatas, i);
+			}
+		}
+		
+		/** @private */
+		public static function _computeAnimationDatas(exData:Float32Array, bonesDatas:Float32Array, outAnimationDatas:Float32Array):void {
+			var len:int = exData.length / 2;
+			for (var i:int = 0; i < len; i += 16) {//将绝对矩阵乘以反置矩阵................................................
+				Utils3D.mulMatrixByArrayFast(bonesDatas, i, exData, len + i, outAnimationDatas, i);
+			}
+		}
+		
+		
+		/** @private */
+		public static function _computeBoneAndAnimationDatasByBindPoseMatrxix(bones:*, curData:Float32Array, inverGlobalBindPose:Vector.<Matrix4x4>, outBonesDatas:Float32Array, outAnimationDatas:Float32Array):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var offset:int = 0;
+			var matOffset:int = 0;
+			
+			var i:int;
+			var parentOffset:int;
+			var boneLength:int = bones.length;
+			for (i = 0; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++) {
+				//将旋转平移缩放合成矩阵...........................................
+				Utils3D._rotationTransformScaleSkinAnimation(curData[offset + 7], curData[offset + 8], curData[offset + 9], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 0], curData[offset + 1], curData[offset + 2], outBonesDatas, matOffset);
+				
+				if (i != 0) {
+					parentOffset = bones[i].parentIndex * 16;
+					Utils3D.mulMatrixByArray(outBonesDatas, parentOffset, outBonesDatas, matOffset, outBonesDatas, matOffset);
+				}
+			}
+			
+			var n:int = inverGlobalBindPose.length;
+			for (i = 0; i < n; i++)//将绝对矩阵乘以反置矩阵................................................
+			{
+				var arrayOffset:Number = i * 16;
+				Utils3D.mulMatrixByArrayAndMatrixFast(outBonesDatas, arrayOffset, inverGlobalBindPose[i], outAnimationDatas, arrayOffset);
+			}
+		}
+		
+		/** @private */
+		public static function _computeAnimationDatasByArrayAndMatrixFast(inverGlobalBindPose:Vector.<Matrix4x4>, bonesDatas:Float32Array, outAnimationDatas:Float32Array):void {
+			var n:int = inverGlobalBindPose.length;
+			for (var i:int = 0; i < n; i++)//将绝对矩阵乘以反置矩阵................................................
+			{
+				var arrayOffset:Number = i * 16;
+				Utils3D.mulMatrixByArrayAndMatrixFast(bonesDatas, arrayOffset, inverGlobalBindPose[i], outAnimationDatas, arrayOffset);
 			}
 		}
 		
 		/** @private */
 		public static function _computeRootAnimationData(bones:*, curData:Float32Array, animationDatas:Float32Array):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			for (var i:int = 0,offset:int = 0,matOffset:int = 0, boneLength:int = bones.length; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++)
+			for (var i:int = 0, offset:int = 0, matOffset:int = 0, boneLength:int = bones.length; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++)
 				Utils3D.createAffineTransformationArray(curData[offset + 0], curData[offset + 1], curData[offset + 2], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 7], curData[offset + 8], curData[offset + 9], animationDatas, matOffset);
 		}
 		
@@ -342,7 +387,7 @@ package laya.d3.utils {
 				for (j = 0; j < tangentElementCount; j++)
 					tangentVertexDatas[newVertexStride * index3 + vertexStride + j] = +tangent.elements[j];
 				
-					//tangent = ((UV3.Y - UV1.Y) * (position2 - position1) - (UV2.Y - UV1.Y) * (position3 - position1))/ ((UV2.X - UV1.X) * (UV3.Y - UV1.Y) - (UV2.Y - UV1.Y) * (UV3.X - UV1.X));
+				//tangent = ((UV3.Y - UV1.Y) * (position2 - position1) - (UV2.Y - UV1.Y) * (position3 - position1))/ ((UV2.X - UV1.X) * (UV3.Y - UV1.Y) - (UV2.Y - UV1.Y) * (UV3.X - UV1.X));
 			}
 			
 			for (i = 0; i < tangentVertexDatas.length; i += newVertexStride) {
@@ -457,6 +502,43 @@ package laya.d3.utils {
 				outArray[outOffset + i + 4] = ai0 * rightArray[rightOffset + 4] + ai1 * rightArray[rightOffset + 5] + ai2 * rightArray[rightOffset + 6] + ai3 * rightArray[rightOffset + 7];
 				outArray[outOffset + i + 8] = ai0 * rightArray[rightOffset + 8] + ai1 * rightArray[rightOffset + 9] + ai2 * rightArray[rightOffset + 10] + ai3 * rightArray[rightOffset + 11];
 				outArray[outOffset + i + 12] = ai0 * rightArray[rightOffset + 12] + ai1 * rightArray[rightOffset + 13] + ai2 * rightArray[rightOffset + 14] + ai3 * rightArray[rightOffset + 15];
+			}
+		}
+		
+		/**
+		 *通过数组数据计算矩阵乘法,rightArray和outArray不能为同一数组引用。
+		 * @param leftArray left矩阵数组。
+		 * @param leftOffset left矩阵数组的偏移。
+		 * @param rightMatrix right矩阵。
+		 * @param outArray 结果矩阵数组。
+		 * @param outOffset 结果矩阵数组的偏移。
+		 */
+		public static function mulMatrixByArrayAndMatrixFast(leftArray:Float32Array, leftOffset:int, rightMatrix:Matrix4x4, outArray:Float32Array, outOffset:int):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var i:int, ai0:Number, ai1:Number, ai2:Number, ai3:Number;
+			var rightMatrixE:Float32Array = rightMatrix.elements;
+			var m11:Number = rightMatrixE[0], m12:Number = rightMatrixE[1], m13:Number = rightMatrixE[2], m14:Number = rightMatrixE[3];
+			var m21:Number = rightMatrixE[4], m22:Number = rightMatrixE[5], m23:Number = rightMatrixE[6], m24:Number = rightMatrixE[7];
+			var m31:Number = rightMatrixE[8], m32:Number = rightMatrixE[9], m33:Number = rightMatrixE[10], m34:Number = rightMatrixE[11];
+			var m41:Number = rightMatrixE[12], m42:Number = rightMatrixE[13], m43:Number = rightMatrixE[14], m44:Number = rightMatrixE[15];
+			var ai0LeftOffset:Number = leftOffset;
+			var ai1LeftOffset:Number = leftOffset + 4;
+			var ai2LeftOffset:Number = leftOffset + 8;
+			var ai3LeftOffset:Number = leftOffset + 12;
+			var ai0OutOffset:Number = outOffset;
+			var ai1OutOffset:Number = outOffset + 4;
+			var ai2OutOffset:Number = outOffset + 8;
+			var ai3OutOffset:Number = outOffset + 12;
+			
+			for (i = 0; i < 4; i++) {
+				ai0 = leftArray[ai0LeftOffset + i];
+				ai1 = leftArray[ai1LeftOffset + i];
+				ai2 = leftArray[ai2LeftOffset + i];
+				ai3 = leftArray[ai3LeftOffset + i];
+				outArray[ai0OutOffset + i] = ai0 * m11 + ai1 * m12 + ai2 * m13 + ai3 * m14;
+				outArray[ai1OutOffset + i] = ai0 * m21 + ai1 * m22 + ai2 * m23 + ai3 * m24;
+				outArray[ai2OutOffset + i] = ai0 * m31 + ai1 * m32 + ai2 * m33 + ai3 * m34;
+				outArray[ai3OutOffset + i] = ai0 * m41 + ai1 * m42 + ai2 * m43 + ai3 * m44;
 			}
 		}
 		

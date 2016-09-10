@@ -32,10 +32,6 @@ package threeDimen.advancedStage {
 			scene.currentCamera.transform.translate(new Vector3(0, 5, 10));
 			scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			
-			//Laya.stage.on(Event.RESIZE, null, function():void {
-				//(scene.currentCamera as Camera).viewport = new Viewport(0, 0, RenderState.clientWidth,RenderState.clientHeight);
-			//});
-			
 			var setting:GlitterSettings = new GlitterSettings();
 			setting.texturePath = "../../../../res/threeDimen/layabox.png";
 			setting.lifeTime = 0.5;
@@ -53,7 +49,7 @@ package threeDimen.advancedStage {
 		private function loop():void {
 			var projectViewMat:Matrix4x4 = (scene.currentCamera as Camera).projectionViewMatrix;
 			sampler.getSampleP4();
-			glitter.templet.addVertexPosition(sampler.pos1, sampler.pos2);
+			glitter.addGlitterByPositions(sampler.pos1, sampler.pos2);
 		}
 	
 	}

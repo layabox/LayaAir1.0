@@ -2,67 +2,62 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Browser=laya.utils.Browser,Event=laya.events.Event,Skeleton=laya.ani.bone.Skeleton,Stat=laya.utils.Stat;
-	var Templet=laya.ani.bone.Templet,WebGL=laya.webgl.WebGL;
-	//class Skeleton_MultiTexture
-	var Skeleton_MultiTexture=(function(){
-		function Skeleton_MultiTexture(){
-			this.mAniPath=null;
-			this.mStartX=400;
-			this.mStartY=500;
-			this.mFactory=null;
-			this.mActionIndex=0;
-			this.mCurrIndex=0;
-			this.mArmature=null;
-			this.mCurrSkinIndex=0;
-			WebGL.enable();
-			Laya.init(Browser.width,Browser.height);
-			Laya.stage.bgColor="#ffffff";
-			Stat.show();
-			this.startFun();
+	var Input=laya.display.Input,Stage=laya.display.Stage,Text=laya.display.Text,WebGL=laya.webgl.WebGL;
+	//class Text_Restrict
+	var Text_Restrict=(function(){
+		function Text_Restrict(){
+			Laya.init(550,300,WebGL);
+			Laya.stage.alignV="middle";
+			Laya.stage.alignH="center";
+			Laya.stage.scaleMode="showall";
+			Laya.stage.bgColor="#232628";
+			this.createTexts();
 		}
 
-		__class(Skeleton_MultiTexture,'Skeleton_MultiTexture');
-		var __proto=Skeleton_MultiTexture.prototype;
-		__proto.startFun=function(){
-			this.mAniPath="../../../../res/spine/spineRes1/dragon.sk";
-			this.mFactory=new Templet();
-			this.mFactory.on("complete",this,this.parseComplete);
-			this.mFactory.on("error",this,this.onError);
-			this.mFactory.loadAni(this.mAniPath);
+		__class(Text_Restrict,'Text_Restrict');
+		var __proto=Text_Restrict.prototype;
+		__proto.createTexts=function(){
+			this.createLabel("只允许输入数字：").pos(50,20);
+			var input=this.createInput();
+			input.pos(50,50);
+			input.restrict="0-9";
+			this.createLabel("只允许输入字母：").pos(50,100);
+			input=this.createInput();
+			input.pos(50,130);
+			input.restrict="a-zA-Z";
+			this.createLabel("只允许输入中文字符：").pos(50,180);
+			input=this.createInput();
+			input.pos(50,210);
+			input.restrict="\u4e00-\u9fa5";
 		}
 
-		__proto.onError=function(){
-			console.log("error");
+		__proto.createLabel=function(text){
+			var label=new Text();
+			label.text=text;
+			label.color="white";
+			label.fontSize=20;
+			Laya.stage.addChild(label);
+			return label;
 		}
 
-		__proto.parseComplete=function(){
-			this.mArmature=this.mFactory.buildArmature(0);
-			this.mArmature.x=this.mStartX;
-			this.mArmature.y=this.mStartY;
-			this.mArmature.scale(0.5,0.5);
-			Laya.stage.addChild(this.mArmature);
-			this.mArmature.on("stopped",this,this.completeHandler);
-			this.play();
+		__proto.createInput=function(){
+			var input=new Input();
+			input.size(200,30);
+			input.borderColor="#FFFF00";
+			input.bold=true;
+			input.fontSize=20;
+			input.color="#FFFFFF";
+			input.padding=[0,4,0,4];
+			input.inputElementYAdjuster=1;
+			Laya.stage.addChild(input);
+			return input;
 		}
 
-		__proto.completeHandler=function(){
-			this.play();
-		}
-
-		__proto.play=function(){
-			this.mCurrIndex++;
-			if (this.mCurrIndex >=this.mArmature.getAnimNum()){
-				this.mCurrIndex=0;
-			}
-			this.mArmature.play(this.mCurrIndex,false);
-		}
-
-		return Skeleton_MultiTexture;
+		return Text_Restrict;
 	})()
 
 
 
-	new Skeleton_MultiTexture();
+	new Text_Restrict();
 
 })(window,document,Laya);

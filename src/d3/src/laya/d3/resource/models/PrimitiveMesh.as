@@ -2,7 +2,7 @@ package laya.d3.resource.models {
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.material.Material;
 	import laya.d3.core.render.IRenderable;
-	import laya.d3.core.render.RenderObject;
+	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
@@ -32,12 +32,6 @@ package laya.d3.resource.models {
 		protected var _vertexBuffer:VertexBuffer3D;
 		protected var _indexBuffer:IndexBuffer3D;
 		
-		/** @private 烘焙后的顶点数据。*/
-		private var _bakedVertexes:Float32Array;
-		/** @private 烘焙后的索引数据。*/
-		private var _bakedIndices:*;
-		/** @private 是否烘焙*/
-		private var _isVertexbaked:Boolean;
 		/** @private */
 		public var _indexOfHost:int;
 		
@@ -158,38 +152,6 @@ package laya.d3.resource.models {
 			Stat.drawCall++;
 			Stat.trianglesFaces += _numberIndices / 3;
 			return true;
-		}
-		
-		public function getBakedVertexs(index:int, transform:Matrix4x4):Float32Array {
-			if (index === 0) {
-				if (_bakedVertexes)
-					return _bakedVertexes;
-				
-				const byteSizeInFloat:int = 4;
-				var vb:VertexBuffer3D = _vertexBuffer;
-				_bakedVertexes = (vb.getData().slice() as Float32Array);//在红米2S微信中发现不支持slice();
-				
-				var vertexDeclaration:VertexDeclaration = vb.vertexDeclaration;
-				var positionOffset:int = vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / byteSizeInFloat;
-				var normalOffset:int = vertexDeclaration.shaderAttribute[VertexElementUsage.NORMAL0][4] / byteSizeInFloat;
-				for (var i:int = 0; i < _bakedVertexes.length; i += vertexDeclaration.vertexStride / byteSizeInFloat) {
-					var posOffset:int = i + positionOffset;
-					var norOffset:int = i + normalOffset;
-					
-					Utils3D.transformVector3ArrayToVector3ArrayCoordinate(_bakedVertexes, posOffset, transform, _bakedVertexes, posOffset);
-					Utils3D.transformVector3ArrayToVector3ArrayCoordinate(_bakedVertexes, normalOffset, transform, _bakedVertexes, normalOffset);
-				}
-				_isVertexbaked = true;
-				return _bakedVertexes;
-			} else
-				return null;
-		}
-		
-		public function getBakedIndices():* {
-			if (_bakedIndices)
-				return _bakedIndices;
-			
-			return _bakedIndices = _indexBuffer.getData();
 		}
 	
 	}

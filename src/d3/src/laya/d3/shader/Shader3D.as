@@ -17,6 +17,7 @@ package laya.d3.shader
 		public static var U3DPARTICLE:int;
 		public static var GLITTER:int;
 		public static var SIMPLE_EFFECT:int;
+		public static var SKY:int;
 		
 		public static function __init__():void
 		{
@@ -26,6 +27,7 @@ package laya.d3.shader
 			U3DPARTICLE = Shader.nameKey.add("U3DPARTICLE");
 			GLITTER = Shader.nameKey.add("GLITTER");
 			SIMPLE_EFFECT = Shader.nameKey.add("SIMPLE_EFFECT");
+			SKY = Shader.nameKey.add("SKY");
 			
 			Shader.addInclude("LightHelper.glsl", __INCLUDESTR__("files/LightHelper.glsl"));
 			Shader.addInclude("VRHelper.glsl", __INCLUDESTR__("files/VRHelper.glsl"));
@@ -208,6 +210,22 @@ package laya.d3.shader
 			vs = __INCLUDESTR__("files/SimpleEffect.vs");
 			ps = __INCLUDESTR__("files/SimpleEffect.ps");
 			Shader.preCompile(SIMPLE_EFFECT, ShaderDefines3D.PIXELSHADERING, vs, ps, shaderNameMap);
+			
+			 shaderNameMap=
+			{
+				'a_Position':VertexElementUsage.POSITION0,
+				'u_MvpMatrix':Buffer2D.MVPMATRIX, 
+				'u_Intensity':Buffer2D.INTENSITY,
+				'u_AlphaBlending':Buffer2D.ALPHABLENDING,
+				'u_CubeTexture':Buffer2D.DIFFUSETEXTURE
+				
+			};
+			vs = __INCLUDESTR__("files/SkyBox.vs");
+			ps = __INCLUDESTR__("files/SkyBox.ps");
+			Shader.preCompile(SKY,ShaderDefines3D.VERTEXSHADERING , vs, ps, shaderNameMap);
+			vs = __INCLUDESTR__("files/SkyBox.vs");
+			ps = __INCLUDESTR__("files/SkyBox.ps");
+			Shader.preCompile(SKY, ShaderDefines3D.PIXELSHADERING, vs, ps, shaderNameMap);
 		}
 	}
 }

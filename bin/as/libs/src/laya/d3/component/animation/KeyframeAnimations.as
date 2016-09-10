@@ -61,6 +61,7 @@ package laya.d3.component.animation {
 				_templet = templet;
 				player.templet = templet
 			}
+			event(Event.ANIMATION_CHANGED,this);
 			
 			if (!templet.loaded)
 				templet.once(Event.LOADED, null, function(e:KeyframesAniTemplet):void { _this.event(Event.LOADED, _this)

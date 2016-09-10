@@ -2,9 +2,9 @@
 	import flash.net.SharedObject;
 	
 	/**
-	 * <p> <code>LocalStorage</code> 类用于没有时间限制的数据存储。</p>
+	 * <p> <code>FlashLocalStorage</code> 类用于没有时间限制的数据存储。</p>
 	 */
-	public class LocalStorage {
+	public class FlashLocalStorage {
 		
 		/**
 		 *  数据列表。
@@ -21,6 +21,7 @@
 		{
 			support = true;
 			_so = SharedObject.getLocal("LoacalStorage");
+			items = _so.data;
 		}
 		/**
 		 * 存储指定键名和它的字符床型值。

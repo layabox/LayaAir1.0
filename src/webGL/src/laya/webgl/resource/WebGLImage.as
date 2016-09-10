@@ -1,5 +1,6 @@
 package laya.webgl.resource {
 	import laya.maths.Arith;
+	import laya.renders.Render;
 	import laya.resource.Bitmap;
 	import laya.resource.HTMLImage;
 	import laya.utils.Browser;
@@ -98,7 +99,7 @@ package laya.webgl.resource {
 			_image = new Browser.window.Image();
 			_image.crossOrigin = "";
 			(src) && (_image.src = src);
-			_enableMerageInAtlas = true;
+			(!Render.is3DMode)&&(_enableMerageInAtlas = true);//TODO:2D,3D需要分开
 		}
 		
 		override protected function _init_(src:String):void {

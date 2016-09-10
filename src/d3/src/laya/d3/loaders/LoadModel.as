@@ -14,6 +14,7 @@ package laya.d3.loaders {
 	import laya.d3.graphics.VertexPositionNormalTexture0Texture1;
 	import laya.d3.graphics.VertexPositionNormalTexture0Texture1Skin;
 	import laya.d3.graphics.VertexPositionNormalTextureSkin;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
 	import laya.d3.utils.Utils3D;
@@ -35,6 +36,8 @@ package laya.d3.loaders {
 		private static var _attrReg:RegExp =/*[STATIC SAFE]*/ new RegExp("(\\w+)|([:,;])", "g");//切割字符串正则
 		
 		/**@private */
+		private var _version:String;
+		/**@private */
 		private var _strings:Array = ['BLOCK', 'DATA', "STRINGS"];//字符串数组
 		/**@private */
 		private var _materials:Vector.<Material>;
@@ -50,7 +53,6 @@ package laya.d3.loaders {
 		private var _DATA:Object = {offset: 0, size: 0};
 		/**@private */
 		private var _STRINGS:Object = {offset: 0, size: 0};
-		
 		/**@private */
 		private var _shaderAttributes:Array;
 		
@@ -79,7 +81,7 @@ package laya.d3.loaders {
 			_readData = new Byte(_fileData);
 			_readData.pos = 0;
 			
-			var version:String = _readData.readUTFString();
+			_version = _readData.readUTFString();
 			
 			READ_BLOCK();
 			
@@ -159,6 +161,35 @@ package laya.d3.loaders {
 		
 		public function READ_MESH():Boolean {
 			var name:String = _readString();
+			
+			switch (_version) {
+			case "LAYAMODEL:01": 
+				trace("Warning: The (.lm) file is converted by old fbxTools,please reConverted it use  lastest fbxTools version,later we will remove the  support of old version (.lm) support.");
+				break;
+			case "LAYASKINANI:01": 
+				var arrayBuffer:ArrayBuffer = _readData.__getBuffer();
+				var i:int, n:int;
+				var bindPoseStart:uint = _readData.getUint32();
+				var binPoseLength:uint = _readData.getUint32();
+				var bindPoseDatas:Float32Array = new Float32Array(arrayBuffer.slice(bindPoseStart + _DATA.offset, bindPoseStart + _DATA.offset + binPoseLength));
+				mesh._bindPoses = new Vector.<Matrix4x4>();
+				for (i = 0, n = bindPoseDatas.length; i < n; i += 16) {
+					var bindPose:Matrix4x4 = new Matrix4x4(bindPoseDatas[i + 0], bindPoseDatas[i + 1], bindPoseDatas[i + 2], bindPoseDatas[i + 3], bindPoseDatas[i + 4], bindPoseDatas[i + 5], bindPoseDatas[i + 6], bindPoseDatas[i + 7], bindPoseDatas[i + 8], bindPoseDatas[i + 9], bindPoseDatas[i + 10], bindPoseDatas[i + 11], bindPoseDatas[i + 12], bindPoseDatas[i + 13], bindPoseDatas[i + 14], bindPoseDatas[i + 15]);
+					mesh._bindPoses.push(bindPose);
+				}
+				var inverseGlobalBindPoseStart:uint = _readData.getUint32();
+				var inverseGlobalBinPoseLength:uint = _readData.getUint32();
+				var invGloBindPoseDatas:Float32Array = new Float32Array(arrayBuffer.slice(inverseGlobalBindPoseStart + _DATA.offset, inverseGlobalBindPoseStart + _DATA.offset + inverseGlobalBinPoseLength));
+				mesh._inverseBindPoses = new Vector.<Matrix4x4>();
+				for (i = 0, n = invGloBindPoseDatas.length; i < n; i += 16) {
+					var inverseGlobalBindPose:Matrix4x4 = new Matrix4x4(invGloBindPoseDatas[i + 0], invGloBindPoseDatas[i + 1], invGloBindPoseDatas[i + 2], invGloBindPoseDatas[i + 3], invGloBindPoseDatas[i + 4], invGloBindPoseDatas[i + 5], invGloBindPoseDatas[i + 6], invGloBindPoseDatas[i + 7], invGloBindPoseDatas[i + 8], invGloBindPoseDatas[i + 9], invGloBindPoseDatas[i + 10], invGloBindPoseDatas[i + 11], invGloBindPoseDatas[i + 12], invGloBindPoseDatas[i + 13], invGloBindPoseDatas[i + 14], invGloBindPoseDatas[i + 15]);
+					mesh._inverseBindPoses.push(inverseGlobalBindPose);
+				}
+				break;
+			default: 
+				throw new Error("LoadModel:unknown version.");
+			}
+			
 			//trace("READ_MESH:" + name);
 			return true;
 		}
@@ -210,7 +241,7 @@ package laya.d3.loaders {
 			var boneDicArrayBuffer:ArrayBuffer = arrayBuffer.slice(boneDicofs + _DATA.offset, boneDicofs + _DATA.offset + boneDicsize);
 			submesh._setBoneDic(new Uint8Array(boneDicArrayBuffer));
 			
-			_mesh.add(submesh);
+			_mesh._add(submesh);
 			
 			return true;
 		}

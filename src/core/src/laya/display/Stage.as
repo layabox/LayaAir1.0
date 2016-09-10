@@ -176,6 +176,7 @@ package laya.display {
 			});
 			
 			on(Event.MOUSE_MOVE, this, _onmouseMove);
+			if(Browser.onMobile) on(Event.MOUSE_DOWN, this, _onmouseMove);
 		}
 		
 		/**
@@ -223,7 +224,7 @@ package laya.display {
 			if (_screenMode !== SCREEN_NONE) {
 				var screenType:String = screenWidth / screenHeight < 1 ? SCREEN_VERTICAL : SCREEN_HORIZONTAL;
 				rotation = screenType !== _screenMode;
-				
+				/*[IF-FLASH]*/rotation = false;
 				if (rotation) {
 					//宽高互换
 					var temp:Number = screenHeight;

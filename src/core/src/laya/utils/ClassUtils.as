@@ -27,7 +27,7 @@ package laya.utils {
 				"Image":["drawTexture",
 					[["x",0],["y",0],["width",0],["height",0]]
 				],
-				"DrawTexture":["drawTexture",
+				"Texture":["drawTexture",
 		        [["skin", null], ["x", 0], ["y", 0], ["width", 0], ["height", 0]],
 				"_adptTextureData"
 				],
@@ -148,7 +148,7 @@ package laya.utils {
 			if (child) {
 				for (var i:int = 0, n:int = child.length; i < n; i++) {
 					var data:Object = child[i];
-					if (data.props.name === "render" && node["_$set_itemRender"]) node.itemRender = data;
+					if ((data.props.name === "render" ||data.props.renderType === "render") && node["_$set_itemRender"]) node.itemRender = data;
 					else 
 					{
 						if (data.type == "Graphic")
@@ -161,7 +161,7 @@ package laya.utils {
 						}else
 						{
 							var tChild:Sprite = createByJson(data, null, root, customHandler, instanceHandler)
-							if (tChild.name == "mask")
+							if (data.props.renderType == "mask")
 							{
 								node.mask = tChild;
 							}else
@@ -255,7 +255,7 @@ package laya.utils {
 			var g:Graphics;
 			if(!dataO||!dataO.props) return sprite.graphics;
 			var propsName:String;
-			propsName=dataO.props.name;
+			propsName=dataO.props.renderType;
 			switch(propsName)
 			{
 				case "hit":

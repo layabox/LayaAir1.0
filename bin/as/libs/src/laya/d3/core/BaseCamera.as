@@ -6,6 +6,7 @@ package laya.d3.core {
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.RenderTarget;
+	import laya.d3.resource.models.Sky;
 	import laya.d3.utils.Size;
 	import laya.events.Event;
 	import laya.maths.Rectangle;
@@ -99,6 +100,8 @@ package laya.d3.core {
 		public var clearColor:Vector4;
 		/** 可视遮罩图层。 */
 		public var cullingMask:int;
+		/**天空。*/
+		public var sky:Sky;
 		
 		/**获取位置。*/
 		public function get position():Vector3 {
@@ -334,13 +337,14 @@ package laya.d3.core {
 			//_sortCamerasByRenderingOrder();
 		}
 		
+		
+		
 		///**@private 后期处理。*/
 		//private var  _postProcess:PostProess;
 		
 		///**环境光。*/
 		//public var AmbientLight:AmbientLight
-		///**天空。*/
-		//public var Sky:Sky
+		
 		
 		///**获取摄像机的后期处理。*/
 		//public  function get postProcess():PostProess

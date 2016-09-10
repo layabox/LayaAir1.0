@@ -68,6 +68,7 @@ package laya.d3.graphics {
 			
 			_bind();
 			var byteLength:int = _vertexDeclaration.vertexStride * vertexCount;
+			memorySize = byteLength;
 			_byteLength = byteLength;
 			_gl.bufferData(_bufferType, byteLength, _bufferUsage);
 			canRead && (_buffer = new Float32Array(byteLength / 4));
@@ -132,6 +133,7 @@ package laya.d3.graphics {
 			super.dispose();
 			_buffer = null;
 			_vertexDeclaration = null;
+			memorySize = 0;
 		}
 	
 	}

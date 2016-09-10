@@ -11,11 +11,11 @@
 	var RunDriver=laya.utils.RunDriver,Sprite=laya.display.Sprite,Stat=laya.utils.Stat,StringKey=laya.utils.StringKey;
 	var Style=laya.display.css.Style,System=laya.system.System,Texture=laya.resource.Texture,Utils=laya.utils.Utils;
 	var VectorGraphManager=laya.utils.VectorGraphManager,WordText=laya.utils.WordText;
+	Laya.interface('laya.webgl.submit.ISubmit');
 	Laya.interface('laya.webgl.canvas.save.ISaveData');
 	Laya.interface('laya.webgl.resource.IMergeAtlasBitmap');
-	Laya.interface('laya.webgl.text.ICharSegment');
-	Laya.interface('laya.webgl.submit.ISubmit');
 	Laya.interface('laya.webgl.shapes.IShape');
+	Laya.interface('laya.webgl.text.ICharSegment');
 	Laya.interface('laya.filters.IFilterActionGL','laya.filters.IFilterAction');
 	//class laya.filters.webgl.FilterActionGL
 	var FilterActionGL=(function(){
@@ -1085,7 +1085,7 @@
 		__proto.render=function(context,x,y){
 			if (Render.isWebGL){
 				this.mShaderValue.textureHost=this.mTexture;
-				context.setIBVB(x,y,this.mIBBuffer,this.mVBBuffer,this.mEleNum,this.transform,FillTextureShader.shader,this.mShaderValue,0,0);
+				context.setIBVB(x,y,this.mIBBuffer,this.mVBBuffer,this.mEleNum,this.transform,FillTextureShader.getInstance(),this.mShaderValue,0,0);
 			}
 		}
 
@@ -1284,7 +1284,7 @@
 		__proto.render=function(context,x,y){
 			if (Render.isWebGL){
 				this.mShaderValue.textureHost=this.mTexture;
-				(context).setIBVB(x,y,this.mIBBuffer,this.mVBBuffer,this.mEleNum,this.transform,SkinAniShader.shader,this.mShaderValue,0,0);
+				(context).setIBVB(x,y,this.mIBBuffer,this.mVBBuffer,this.mEleNum,this.transform,SkinAniShader.getInstance(),this.mShaderValue,0,0);
 			}
 		}
 
@@ -3171,7 +3171,7 @@
 			for (var i=0,n=value.length;i < n;i++,len++){
 				data[len++]=inData[i++];
 				src=inData[i];
-				(dec=data[len])? (dec[0]=src[0],dec[1]=src[1]):(data[len]=[src[0],src[1]]);
+				(dec=data[len])?(dec[0]=src[0],dec[1]=src[1]):(data[len]=[src[0],src[1]]);
 			}
 			this._length=len;
 		}
@@ -3217,11 +3217,37 @@
 	var WebGL=(function(){
 		function WebGL(){};
 		__class(WebGL,'laya.webgl.WebGL');
-		WebGL.Float32ArraySlice=function(){
+		WebGL._float32ArraySlice=function(){
 			var _this=/*__JS__ */this;
 			var sz=_this.length;
 			var dec=new Float32Array(_this.length);
 			for (var i=0;i < sz;i++)dec[i]=_this[i];
+			return dec;
+		}
+
+		WebGL._uint16ArraySlice=function(__arg){
+			var arg=arguments;
+			var _this=/*__JS__ */this;
+			var sz=0;
+			var dec;
+			var i=0;
+			if (arg.length===0){
+				sz=_this.length;
+				dec=new Uint16Array(sz);
+				for (i=0;i < sz;i++)
+				dec[i]=_this[i];
+				}else if (arg.length===2){
+				var start=arg[0];
+				var end=arg[1];
+				if (end > start){
+					sz=end-start;
+					dec=new Uint16Array(sz);
+					for (i=start;i < end;i++)
+					dec[i-start]=_this[i];
+					}else {
+					dec=new Uint16Array(0);
+				}
+			}
 			return dec;
 		}
 
@@ -3550,7 +3576,8 @@
 					mat.destroy();
 				}
 			}
-			Float32Array.prototype.slice || (Float32Array.prototype.slice=WebGL.Float32ArraySlice);
+			Float32Array.prototype.slice || (Float32Array.prototype.slice=WebGL._float32ArraySlice);
+			Uint16Array.prototype.slice || (Uint16Array.prototype.slice=WebGL._uint16ArraySlice);
 			return true;
 		}
 
@@ -3669,6 +3696,10 @@
 			value!==WebGLContext._depthMask && (WebGLContext._depthMask=value,gl.depthMask(value));
 		}
 
+		WebGLContext.setDepthFunc=function(gl,value){
+			value!==WebGLContext._depthFunc && (WebGLContext._depthFunc=value,gl.depthFunc(value));
+		}
+
 		WebGLContext.setBlend=function(gl,value){
 			value!==WebGLContext._blend && (WebGLContext._blend=value,value?gl.enable(/*CLASS CONST:laya.webgl.WebGLContext.BLEND*/0x0BE2):gl.disable(/*CLASS CONST:laya.webgl.WebGLContext.BLEND*/0x0BE2));
 		}
@@ -3699,12 +3730,8 @@
 		WebGLContext.curBindTexTarget=null
 		WebGLContext.curBindTexValue=null
 		__static(WebGLContext,
-		['_depthFunc',function(){return this._depthFunc=/*CLASS CONST:laya.webgl.WebGLContext.LEQUAL*/0x0203;},'_sFactor',function(){return this._sFactor=/*CLASS CONST:laya.webgl.WebGLContext.ONE*/1;},'_dFactor',function(){return this._dFactor=/*CLASS CONST:laya.webgl.WebGLContext.ZERO*/0;},'_frontFace',function(){return this._frontFace=/*CLASS CONST:laya.webgl.WebGLContext.CCW*/0x0901;}
+		['_depthFunc',function(){return this._depthFunc=/*CLASS CONST:laya.webgl.WebGLContext.LESS*/0x0201;},'_sFactor',function(){return this._sFactor=/*CLASS CONST:laya.webgl.WebGLContext.ONE*/1;},'_dFactor',function(){return this._dFactor=/*CLASS CONST:laya.webgl.WebGLContext.ZERO*/0;},'_frontFace',function(){return this._frontFace=/*CLASS CONST:laya.webgl.WebGLContext.CCW*/0x0901;}
 		]);
-		WebGLContext.__init$=function(){
-			;
-		}
-
 		return WebGLContext;
 	})()
 
@@ -7283,9 +7310,11 @@
 		}
 
 		__class(FillTextureShader,'laya.webgl.shader.d2.fillTexture.FillTextureShader',_super);
-		__static(FillTextureShader,
-		['shader',function(){return this.shader=new FillTextureShader();}
-		]);
+		FillTextureShader.getInstance=function(){
+			return FillTextureShader._instance=FillTextureShader._instance|| new FillTextureShader();
+		}
+
+		FillTextureShader._instance=null
 		return FillTextureShader;
 	})(Shader)
 
@@ -7369,9 +7398,11 @@
 		}
 
 		__class(SkinAniShader,'laya.webgl.shader.d2.skinAnishader.SkinAniShader',_super);
-		__static(SkinAniShader,
-		['shader',function(){return this.shader=new SkinAniShader();}
-		]);
+		SkinAniShader.getInstance=function(){
+			return SkinAniShader._instance=SkinAniShader._instance|| new SkinAniShader();
+		}
+
+		SkinAniShader._instance=null
 		return SkinAniShader;
 	})(Shader)
 
@@ -7598,6 +7629,8 @@
 		Buffer2D.DURATION="DURATION";
 		Buffer2D.GRAVITY="GRAVITY";
 		Buffer2D.ENDVELOCITY="ENDVELOCITY";
+		Buffer2D.INTENSITY="INTENSITY";
+		Buffer2D.ALPHABLENDING="ALPHABLENDING";
 		Buffer2D.FLOAT32=4;
 		Buffer2D.SHORT=2;
 		return Buffer2D;
@@ -7785,12 +7818,13 @@
 			this._image=new Browser.window.Image();
 			this._image.crossOrigin="";
 			(src)&& (this._image.src=src);
-			this._enableMerageInAtlas=true;
+			(!Render.is3DMode)&&(this._enableMerageInAtlas=true);
 		}
 
 		__class(WebGLImage,'laya.webgl.resource.WebGLImage',_super);
 		var __proto=WebGLImage.prototype;
 		Laya.imps(__proto,{"laya.webgl.resource.IMergeAtlasBitmap":true})
+		//TODO:2D,3D需要分开
 		__proto._init_=function(src){}
 		__proto._createWebGlTexture=function(){
 			if (!this._image){
@@ -7955,5 +7989,5 @@
 	})(HTMLImage)
 
 
-	Laya.__init([DrawText,WebGLContext2D,ShaderCompile,WebGLContext,AtlasGrid,RenderTargetMAX]);
+	Laya.__init([DrawText,WebGLContext2D,ShaderCompile,AtlasGrid,RenderTargetMAX]);
 })(window,document,Laya);

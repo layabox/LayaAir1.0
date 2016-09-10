@@ -2,7 +2,7 @@ package laya.d3.resource.models {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.Material;
 	import laya.d3.core.render.IRenderable;
-	import laya.d3.core.render.RenderObject;
+	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.VertexBuffer3D;
@@ -12,6 +12,7 @@ package laya.d3.resource.models {
 	import laya.d3.loaders.LoadModel;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
@@ -48,12 +49,14 @@ package laya.d3.resource.models {
 		private var _materials:Vector.<Material>;
 		/** @private */
 		private var _subMeshes:Vector.<SubMesh>;
-		
 		/** @private */
 		private var _useFullBone:Boolean = true;
 		/** @private */
 		private var _url:String;
-		
+		/** @private */
+		public var _bindPoses:Vector.<Matrix4x4>;
+		/** @private */
+		public var _inverseBindPoses:Vector.<Matrix4x4>;
 		
 		/**
 		 * 获取网格顶点
@@ -95,10 +98,24 @@ package laya.d3.resource.models {
 			return _materials.slice();
 		}
 		
-		
+		/**
+		 * 获取网格的默认绑定动作矩阵。
+		 * @return  网格的默认绑定动作矩阵。
+		 */
+		public function get bindPoses():Vector.<Matrix4x4> {
+			return _bindPoses;
+		}
 		
 		/**
-		 * 创建一个 <code>Mesh</code> 实例。
+		 * 获取网格的全局默认绑定动作逆矩阵。
+		 * @return  网格的全局默认绑定动作逆矩阵。
+		 */
+		public function get InverseAbsoluteBindPoses():Vector.<Matrix4x4> {
+			return _inverseBindPoses;
+		}
+		
+		/**
+		 * 创建一个 <code>Mesh</code> 实例,禁止使用。
 		 * @param url 文件地址。
 		 */
 		public function Mesh(url:String) {
@@ -115,7 +132,9 @@ package laya.d3.resource.models {
 		
 		private function _generateBoundingObject():void {
 			var pos:Vector.<Vector3> = positions;
+			_boundingBox = new BoundBox(new Vector3(), new Vector3());
 			BoundBox.createfromPoints(pos, _boundingBox);
+			_boundingSphere = new BoundSphere(new Vector3(), 0);
 			BoundSphere.createfromPoints(pos, _boundingSphere);
 		}
 		
@@ -123,7 +142,7 @@ package laya.d3.resource.models {
 		 * 添加子网格（开发者禁止修改）。
 		 * @param subMesh 子网格。
 		 */
-		public function add(subMesh:SubMesh):void {
+		public function _add(subMesh:SubMesh):void {
 			//TODO：SubMesh为私有问题。
 			subMesh._indexOfHost = _subMeshes.length;
 			_subMeshes.push(subMesh);
@@ -131,11 +150,11 @@ package laya.d3.resource.models {
 		}
 		
 		/**
-		 * 移除子网格。
+		 * 移除子网格（开发者禁止修改）。
 		 * @param subMesh 子网格。
 		 * @return  是否成功。
 		 */
-		public function remove(subMesh:SubMesh):Boolean {
+		public function _remove(subMesh:SubMesh):Boolean {
 			var index:int = _subMeshes.indexOf(subMesh);
 			if (index < 0) return false;
 			_subMeshes.splice(index, 1);
@@ -198,21 +217,6 @@ package laya.d3.resource.models {
 			_subMeshCount = 0;
 			//_vb = null;
 		}
-	
-		//public function regMaterials(name:String, materials:Vector.<Material>):void {
-		//_materialsMap || (_materialsMap = {});
-		//_materialsMap[name] = materials;
-		//}
-	
-		//public function cloneActiveMaterials(materials:Vector.<Material>):Vector.<Material> {
-		//materials || (materials = new Vector.<Material>());
-		//materials.length = _materials.length;
-		//for (var i:int = 0, n:int = _materials.length; i < n; i++) {
-		//materials[i] || (materials[i] = new Material());
-		//_materials[i].copy(materials[i]);
-		//}
-		//return materials;
-		//}
 	}
 }
 

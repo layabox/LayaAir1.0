@@ -39,7 +39,7 @@
 	
 	function parseComplete() {
 		//创建模式为1，可以启用换装
-		mArmature = mFactory.buildArmature(0);
+		mArmature = mFactory.buildArmature(1);
 		mArmature.x = mStartX;
 		mArmature.y = mStartY;
 		mArmature.scale(0.5, 0.5);

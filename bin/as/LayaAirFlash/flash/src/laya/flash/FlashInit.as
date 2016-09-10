@@ -8,6 +8,8 @@
 	import flash.utils.getDefinitionByName;
 	import laya.media.flashaudio.FlashSound;
 	import laya.media.SoundManager;
+	import laya.net.FlashLocalStorage;
+	import laya.net.LocalStorage;
 	import laya.utils.ClassUtils;
 	import laya.utils.RunDriver;
 	import laya.utils.Utils;
@@ -35,6 +37,7 @@
 			RunDriver.measureText = FlashRunDriver.measureText;
 			RunDriver.flashFlushImage = FlashRunDriver.flashFlushImage;
 			SoundManager._soundClass = FlashSound;
+			LocalStorage._baseClass = FlashLocalStorage;
 
 			ClassUtils.getClass = function(className:String):Class
 			{

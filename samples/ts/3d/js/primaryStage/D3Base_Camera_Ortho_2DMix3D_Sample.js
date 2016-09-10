@@ -25,6 +25,7 @@
 /////////////////////////////////////////////////
 var Camera_Ortho_2DMix3D_Sample = (function () {
     function Camera_Ortho_2DMix3D_Sample() {
+        var _this = this;
         this.translate = new Laya.Vector3(200, 100, 0); //理解为屏幕坐标，左上角为（0，0）
         this.convertTranslate = new Laya.Vector3(0, 0, 0);
         this.skin = "../../res/ui/button-1.png";
@@ -50,8 +51,8 @@ var Camera_Ortho_2DMix3D_Sample = (function () {
         //窗口尺寸变化相关属性重置。
         Laya.stage.on(Laya.Event.RESIZE, this, function () {
             scene.currentCamera.orthographicVerticalSize = Laya.RenderState.clientHeight;
-            Laya.Utils3D.convert3DCoordTo2DScreenCoord(this.translate, this.convertTranslate);
-            mesh.transform.localPosition = this.convertTranslate;
+            Laya.Utils3D.convert3DCoordTo2DScreenCoord(_this.translate, _this.convertTranslate);
+            mesh.transform.localPosition = _this.convertTranslate;
         });
         //************************************************************
         //****************************2D UI***************************

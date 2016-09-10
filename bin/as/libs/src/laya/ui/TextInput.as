@@ -309,6 +309,19 @@ package laya.ui {
 		}
 		
 		/**
+		 * @copy laya.display.Input#promptColor
+		 */
+		public function get promptColor():String
+		{
+			return Input(_tf).promptColor;
+		}
+		
+		public function set promptColor(value:String):void
+		{
+			Input(_tf).promptColor = value;
+		}
+		
+		/**
 		 * @copy laya.display.Input#maxChars
 		 */
 		public function get maxChars():int {

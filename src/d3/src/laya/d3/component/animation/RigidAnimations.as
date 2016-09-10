@@ -48,8 +48,8 @@ package laya.d3.component.animation {
 			var pathStart:int = 0;
 			var extentDatas:Uint16Array = new Uint16Array(_templet.getPublicExtData());
 			for (var i:int = 0; i < nodeLength; i++) {
-				var hierarchys:Array = extentDatas.slice(pathStart + 1, extentDatas[pathStart] + 1);//父节点编号队列
-				pathStart += extentDatas[pathStart] + 1;
+				var hierarchys:Array = extentDatas.slice(pathStart + 1, pathStart + 1 + extentDatas[pathStart]);//父节点编号队列
+				pathStart += (extentDatas[pathStart] + 1);
 				for (var j:int = 1; j < hierarchys.length; j++) {//0为默认根节点
 					var childIndex:int = hierarchys[j];
 					curParentSprite = curParentSprite._childs[hierarchys[j]];
@@ -62,7 +62,7 @@ package laya.d3.component.animation {
 				var localMatrix:Matrix4x4 = _animationSpritesInitLocalMatrix[i];
 				(localMatrix) || (localMatrix = _animationSpritesInitLocalMatrix[i] = new Matrix4x4());
 				curSprite.transform.localMatrix.cloneTo(localMatrix);
-				
+				curParentSprite = _owner;
 			}
 		}
 		
@@ -84,12 +84,13 @@ package laya.d3.component.animation {
 		 * 摄像机动画作用函数。
 		 */
 		private function _effectAnimation(nodes:Vector.<Object>):void {
-			for (var nodeIndex:int = 0; nodeIndex < _animationSprites.length; nodeIndex++) {
+			for (var nodeIndex:int = 0, nodeLength:int = _animationSprites.length; nodeIndex < nodeLength; nodeIndex++) {
 				var sprite:Sprite3D = _animationSprites[nodeIndex];
 				
 				var matrix:Matrix4x4 = sprite.transform.localMatrix;
+				var matrixE:Float32Array = matrix.elements;
 				for (var i:int = 0; i < 16; i++)
-					matrix.elements[i] = _curAnimationDatas[nodeIndex * 16 + i];
+					matrixE[i] = _curAnimationDatas[nodeIndex * 16 + i];
 				
 				sprite.transform.localMatrix = matrix;
 			}

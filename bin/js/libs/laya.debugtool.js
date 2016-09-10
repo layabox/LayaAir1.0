@@ -2972,6 +2972,15 @@
 			return rst;
 		}
 
+		JsonTool.quote=function(string){
+			JsonTool.escapable.lastIndex=0;
+			return JsonTool.escapable.test(string)? '"'+string.replace(JsonTool.escapable,function(a){
+				var c=JsonTool.meta[a];
+				return typeof c==='string' ? c :
+				'\\u'+('0000'+a.charCodeAt(0).toString(16)).slice(-4);
+			})+'"' :'"'+string+'"';
+		}
+
 		JsonTool.getValueStr=function(tValue,singleLine,split,depth,Width){
 			(singleLine===void 0)&& (singleLine=true);
 			(split===void 0)&& (split="\n");
@@ -2979,7 +2988,7 @@
 			(Width===void 0)&& (Width=0);
 			var rst;
 			if((typeof tValue=='string')){
-				rst="\""+tValue+"\"";
+				rst=JsonTool.quote(tValue);
 				}else if(tValue==null){
 				rst="null";
 				}else if((typeof tValue=='number')|| ((typeof tValue=='number')&& Math.floor(tValue)==tValue)|| (typeof tValue=='boolean')){
@@ -3013,10 +3022,19 @@
 		__static(JsonTool,
 		['singleLineKey',function(){return this.singleLineKey={
 				"props":true
-		};}
+			};},'escapable',function(){return this.escapable=/[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;},'meta',function(){return this.meta = {   
+			'\b':'\\b',
+			'\t':'\\t',
+			'\n':'\\n',
+			'\f':'\\f',
+			'\r':'\\r',
+			'"' :'\\"',
+			'\\':'\\\\'
+	};}
 
-		]);
-		return JsonTool;
+
+	]);
+	return JsonTool;
 	})()
 
 
@@ -4017,6 +4035,17 @@
 			if (!arr)return arr;
 			arr.length=0;
 			return arr;
+		}
+
+		ObjectTools.removeFromArr=function(arr,item){
+			var i=0,len=0;
+			len=arr.length;
+			for(i=0;i<len;i++){
+				if(arr[i]==item){
+					arr[i].splice(i,1);
+					return;
+				}
+			}
 		}
 
 		ObjectTools.setValueArr=function(src,v){
@@ -6943,7 +6972,7 @@
 			this._color="#ffffff";
 			this.preX=NaN;
 			this.preY=NaN;
-			AutoSizeRec.__super.call(this,type);
+			AutoSizeRec.__super.call(this);
 		}
 
 		__class(AutoSizeRec,'laya.debug.tools.comps.AutoSizeRec',_super);
@@ -10616,6 +10645,26 @@
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.NodeTree extends laya.debug.ui.debugui.NodeTreeUI
 	var NodeTree=(function(_super){
 		function NodeTree(){
@@ -10853,26 +10902,6 @@
 		]);
 		return NodeTree;
 	})(NodeTreeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
 
 
 	/**

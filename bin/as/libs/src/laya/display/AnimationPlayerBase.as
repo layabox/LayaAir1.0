@@ -97,10 +97,17 @@ package laya.display {
 				_controlNode.off(Event.UNDISPLAY, this, _onDisplay);
 			}
 			_controlNode = node;
-			if (node) {
+			if (node&&node!=this) {
 				node.on(Event.DISPLAY, this, _onDisplay);
 				node.on(Event.UNDISPLAY, this, _onDisplay);
 			}
+		}
+		
+		/**@private */
+		override public function _setDisplay(value:Boolean):void 
+		{
+			super._setDisplay(value);
+			_onDisplay();
 		}
 		
 		/**@private */
@@ -117,6 +124,14 @@ package laya.display {
 		public function stop():void {
 			this._isPlaying = false;
 			clearTimer(this, _frameLoop);
+		}
+		
+		/**
+		 * 是否在播放中
+		 */
+		public function get isPlaying():Boolean
+		{
+			return _isPlaying;
 		}
 		
 		/**

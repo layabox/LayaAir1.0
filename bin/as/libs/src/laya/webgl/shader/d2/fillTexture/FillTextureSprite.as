@@ -92,7 +92,7 @@ package laya.webgl.shader.d2.fillTexture
 			if (Render.isWebGL)
 			{
 				mShaderValue.textureHost = mTexture;
-				context.setIBVB(x, y, mIBBuffer, mVBBuffer, mEleNum, transform, FillTextureShader.shader, mShaderValue, 0, 0);
+				context.setIBVB(x, y, mIBBuffer, mVBBuffer, mEleNum, transform, FillTextureShader.getInstance(), mShaderValue, 0, 0);
 			}
 			
 		}

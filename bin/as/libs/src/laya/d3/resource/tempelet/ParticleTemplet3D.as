@@ -1,4 +1,6 @@
 package laya.d3.resource.tempelet {
+	import laya.d3.core.material.Material;
+	import laya.d3.core.particle.Particle3D;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
@@ -25,6 +27,7 @@ package laya.d3.resource.tempelet {
 	 * <code>ParticleTemplet3D</code> 类用于创建3D粒子数据模板。
 	 */
 	public class ParticleTemplet3D extends ParticleTemplateWebGL implements IRenderable {
+		private var _owner:Particle3D;
 		private var _vertexBuffer3D:VertexBuffer3D;
 		private var _indexBuffer3D:IndexBuffer3D;
 		
@@ -41,15 +44,7 @@ package laya.d3.resource.tempelet {
 		}
 		
 		public function get triangleCount():int {
-			return _indexBuffer3D.indexCount/3;
-		}
-		
-		public function getBakedVertexs(index:int , transform:Matrix4x4):Float32Array {
-			return null;
-		}
-		
-		public function getBakedIndices():* {
-			return null;
+			return _indexBuffer3D.indexCount / 3;
 		}
 		
 		public function getVertexBuffer(index:int = 0):VertexBuffer3D {
@@ -63,13 +58,13 @@ package laya.d3.resource.tempelet {
 			return _indexBuffer3D;
 		}
 		
-		public function ParticleTemplet3D(parSetting:ParticleSettings) {
-			super(parSetting);
-			
+		public function ParticleTemplet3D(owner:Particle3D, setting:ParticleSettings) {
+			super(setting);
+			_owner = owner;
 			initialize();
 			loadShaderParams();
-			_vertexBuffer = _vertexBuffer3D = VertexBuffer3D.create(VertexParticle.vertexDeclaration, parSetting.maxPartices * 4, WebGLContext.DYNAMIC_DRAW);
-			_indexBuffer = _indexBuffer3D = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT,parSetting.maxPartices * 6, WebGLContext.STATIC_DRAW, true);
+			_vertexBuffer = _vertexBuffer3D = VertexBuffer3D.create(VertexParticle.vertexDeclaration, setting.maxPartices * 4, WebGLContext.DYNAMIC_DRAW);
+			_indexBuffer = _indexBuffer3D = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, setting.maxPartices * 6, WebGLContext.STATIC_DRAW, true);
 			loadContent();
 		}
 		
@@ -78,14 +73,14 @@ package laya.d3.resource.tempelet {
 			
 			if (settings.textureName)//预设纹理ShaderValue
 			{
-				texture = new Texture();
+				var material:Material = (_owner as Particle3D).particleRender.shadredMaterial;
 				_shaderValue.pushValue(Buffer2D.DIFFUSETEXTURE, null, -1);
 				var _this:ParticleTemplet3D = this;
 				Laya.loader.load(settings.textureName, Handler.create(null, function(texture:Texture):void {
 					(texture.bitmap as WebGLImage).enableMerageInAtlas = false;
 					(texture.bitmap as WebGLImage).mipmap = true;
 					(texture.bitmap as WebGLImage).repeat = true;
-					_this.texture = texture;
+					material.diffuseTexture /*=_this.texture*/ = texture;//TODO:移除父类纹理。
 				}));
 			}
 			
@@ -119,22 +114,24 @@ package laya.d3.resource.tempelet {
 			if (_firstNewElement < _firstFreeElement) {
 				// 如果新增加的粒子在Buffer中是连续的区域，只upload一次
 				start = _firstNewElement * 4 * _floatCountPerVertex;
-				_vertexBuffer3D.setData(_vertices, start, start,  (_firstFreeElement - _firstNewElement) * 4 * _floatCountPerVertex);
+				_vertexBuffer3D.setData(_vertices, start, start, (_firstFreeElement - _firstNewElement) * 4 * _floatCountPerVertex);
 				
 			} else {
 				//如果新增粒子区域超过Buffer末尾则循环到开头，需upload两次
-				start = _firstNewElement * 4 * _floatCountPerVertex ;
-				_vertexBuffer3D.setData(_vertices,start, start, (settings.maxPartices - _firstNewElement) * 4 * _floatCountPerVertex);
+				start = _firstNewElement * 4 * _floatCountPerVertex;
+				_vertexBuffer3D.setData(_vertices, start, start, (settings.maxPartices - _firstNewElement) * 4 * _floatCountPerVertex);
 				
 				if (_firstFreeElement > 0) {
-					_vertexBuffer3D.setData(_vertices,0, 0, _firstFreeElement * 4 * _floatCountPerVertex);
+					_vertexBuffer3D.setData(_vertices, 0, 0, _firstFreeElement * 4 * _floatCountPerVertex);
 				}
 			}
 			_firstNewElement = _firstFreeElement;
 		}
 		
 		public function _render(state:RenderState):Boolean {
-			if (texture && texture.loaded) {
+			var material:Material = (state.owner as Particle3D).particleRender.shadredMaterial;
+			var diffuseTexture:Texture = material.diffuseTexture;
+			if (diffuseTexture && diffuseTexture.loaded) {
 				//设备丢失时.............................................................
 				//  todo  setData  here!
 				//...................................................................................
@@ -167,8 +164,8 @@ package laya.d3.resource.tempelet {
 					//设置粒子的时间参数，可通过此参数停止粒子动画
 					_shaderValue.pushValue(Buffer2D.CURRENTTIME, _currentTime, -1);
 					
-					_shaderValue.data[1][0] = texture.source;//可能为空
-					_shaderValue.data[1][1] = texture.bitmap.id;
+					_shaderValue.data[1][0] = diffuseTexture.source;//可能为空
+					_shaderValue.data[1][1] = diffuseTexture.bitmap.id;
 					
 					_shader.uploadArray(_shaderValue.data, _shaderValue.length, null);
 					

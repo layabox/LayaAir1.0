@@ -396,7 +396,7 @@ package laya.display {
 		public function contains(node:Node):Boolean {
 			if (node === this) return true;
 			while (node) {
-				if (node.parent === parent) return true;
+				if (node.parent === this) return true;
 				node = node.parent;
 			}
 			return false;

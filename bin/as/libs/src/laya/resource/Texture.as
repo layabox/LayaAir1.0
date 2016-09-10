@@ -321,7 +321,6 @@ package laya.resource {
 			}else {
 				Browser.canvas.size(x+width, y+height);
 				Browser.context.drawImage(bitmap.source, 0, 0);
-				Browser.document.body.appendChild(Browser.canvas.source);
 				var info:* = Browser.context.getImageData(x, y, width, height);
 			}
 			

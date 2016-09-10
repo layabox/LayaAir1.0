@@ -2,10 +2,11 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Browser=laya.utils.Browser,Byte=laya.utils.Byte,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher;
-	var Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil;
-	var Matrix=laya.maths.Matrix,Render=laya.renders.Render,RunDriver=laya.utils.RunDriver,Sprite=laya.display.Sprite;
-	var Stat=laya.utils.Stat,Texture=laya.resource.Texture,URL=laya.net.URL;
+	var Bitmap=laya.resource.Bitmap,Browser=laya.utils.Browser,Byte=laya.utils.Byte,Event=laya.events.Event;
+	var EventDispatcher=laya.events.EventDispatcher,Graphics=laya.display.Graphics,Handler=laya.utils.Handler;
+	var Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil,Matrix=laya.maths.Matrix,Render=laya.renders.Render;
+	var RunDriver=laya.utils.RunDriver,Sprite=laya.display.Sprite,Stat=laya.utils.Stat,Texture=laya.resource.Texture;
+	var URL=laya.net.URL;
 	/**
 	*@private
 	*/
@@ -32,6 +33,10 @@
 			this.length=10;
 			this.transform=null;
 			this.sprite=null;
+			this.inheritScale=true;
+			this.inheritRotation=true;
+			this.rotation=NaN;
+			this.resultRotation=NaN;
 			this._children=[];
 			this.resultTransform=new Transform();
 			this.resultMatrix=new Matrix();
@@ -40,19 +45,74 @@
 		__class(Bone,'laya.ani.bone.Bone');
 		var __proto=Bone.prototype;
 		__proto.update=function(pMatrix){
+			this.rotation=this.transform.skX;
 			var tResultMatrix;
 			if (pMatrix){
 				tResultMatrix=this.resultTransform.getMatrix();
 				Matrix.mul(tResultMatrix,pMatrix,this.resultMatrix);
+				this.resultRotation=this.rotation;
 				}else {
+				this.resultRotation=this.rotation+this._parent.resultRotation;
 				if (this._parent){
-					tResultMatrix=this.resultTransform.getMatrix();
-					Matrix.mul(tResultMatrix,this._parent.resultMatrix,this.resultMatrix);
+					if (this.inheritRotation && this.inheritScale){
+						tResultMatrix=this.resultTransform.getMatrix();
+						Matrix.mul(tResultMatrix,this._parent.resultMatrix,this.resultMatrix);
+					}
+					else{
+						var la=this.transform.getMatrix().a;
+						var lb=this.transform.getMatrix().b;
+						var lc=this.transform.getMatrix().c;
+						var ld=this.transform.getMatrix().d;
+						var temp=0;
+						var parent=this._parent;
+						var tAngle=NaN;
+						var cos=NaN;
+						var sin=NaN;
+						var tParentMatrix=this._parent.resultMatrix;
+						var worldX=tParentMatrix.a *this.transform.x+tParentMatrix.b *this.transform.y+tParentMatrix.tx;
+						var worldY=tParentMatrix.c *this.transform.x+tParentMatrix.d *this.transform.y+tParentMatrix.ty;
+						var tTestMatrix=new Matrix();
+						if (this.inheritRotation){
+							tAngle=Math.atan2(parent.resultMatrix.c,parent.resultMatrix.a);
+							cos=Math.cos(tAngle),sin=Math.sin(tAngle);
+							tTestMatrix.setTo(cos,sin,-sin,cos,0,0);
+							var tTestYMatrix=new Matrix(1,0,0,-1);
+							Matrix.mul(tTestYMatrix,tTestMatrix,Matrix.TEMP);
+							Matrix.TEMP.copyTo(tTestMatrix);
+							tResultMatrix=this.resultTransform.getMatrix();
+							Matrix.mul(tResultMatrix,tTestMatrix,this.resultMatrix);
+							this.resultMatrix.tx=worldX;
+							this.resultMatrix.ty=worldY;
+							}else if (this.inheritScale){
+							tResultMatrix=this.resultTransform.getMatrix();
+							Matrix.TEMP.identity();
+							Matrix.TEMP.d=-1;
+							Matrix.mul(tResultMatrix,Matrix.TEMP,this.resultMatrix);
+							this.resultMatrix.tx=worldX;
+							this.resultMatrix.ty=worldY;
+							}else {
+							tResultMatrix=this.resultTransform.getMatrix();
+							Matrix.TEMP.identity();
+							Matrix.TEMP.d=-1;
+							Matrix.mul(tResultMatrix,Matrix.TEMP,this.resultMatrix);
+							this.resultMatrix.tx=worldX;
+							this.resultMatrix.ty=worldY;
+						}
+					}
 					}else {
 					tResultMatrix=this.resultTransform.getMatrix();
 					tResultMatrix.copyTo(this.resultMatrix);
 				}
 			};
+			var i=0,n=0;
+			var tBone;
+			for (i=0,n=this._children.length;i < n;i++){
+				tBone=this._children[i];
+				tBone.update();
+			}
+		}
+
+		__proto.updateChild=function(){
 			var i=0,n=0;
 			var tBone;
 			for (i=0,n=this._children.length;i < n;i++){
@@ -68,6 +128,7 @@
 				}else {
 				this.sprite=new Sprite();
 				this.sprite.graphics.drawCircle(0,0,5,"#ff0000");
+				this.sprite.graphics.fillText(this.name,0,0,"20px Arial","#00ff00","center");
 				Laya.stage.addChild(this.sprite);
 				this.sprite.x=x+this.resultMatrix.tx;
 				this.sprite.y=y+this.resultMatrix.ty;
@@ -101,6 +162,13 @@
 				}
 			}
 			return null;
+		}
+
+		__proto.localToWorld=function(local){
+			var localX=local[0];
+			var localY=local[1];
+			local[0]=localX *this.resultMatrix.a+localY *this.resultMatrix.c+this.resultMatrix.tx;
+			local[1]=localX *this.resultMatrix.b+localY *this.resultMatrix.d+this.resultMatrix.ty;
 		}
 
 		return Bone;
@@ -163,6 +231,7 @@
 					this.currTexture=this.templet.getTexture(tName);
 					if (this.currTexture && Render.isWebGL && this.currDisplayData.type==0 && this.currDisplayData.uvs){
 						this.currTexture=new Texture(this.currTexture.bitmap,this.currDisplayData.uvs);
+						(this.currTexture.bitmap).useNum--;
 					}
 				}
 				}else {
@@ -193,7 +262,7 @@
 		*@param graphics
 		*@param noUseSave
 		*/
-		__proto.draw=function(graphics,boneMatrixArray,sprite,noUseSave){
+		__proto.draw=function(graphics,boneMatrixArray,noUseSave){
 			(noUseSave===void 0)&& (noUseSave=false);
 			if ((this._diyTexture==null && this.currTexture==null)|| this.currDisplayData==null){
 				if (!(this.currDisplayData && this.currDisplayData.type==3)){
@@ -296,71 +365,6 @@
 				case 3:
 					break ;
 				}
-		}
-
-		/**
-		*画路径
-		*@param boneMatrixArray
-		*@param graphics
-		*/
-		__proto.drawPath=function(boneMatrixArray,graphics){
-			var tBones=this.currDisplayData.bones;
-			var tWeights=this.currDisplayData.weights;
-			var tTriangles=this.currDisplayData.triangles;
-			var tVBArray=[];
-			var tIBArray=[];
-			var tRx=0;
-			var tRy=0;
-			var nn=0;
-			var tMatrix;
-			var tX=NaN;
-			var tY=NaN;
-			var tB=0;
-			var tWeight=0;
-			var tVertices=[];
-			var i=0,j=0,n=0;
-			var tRed=1;
-			var tGreed=1;
-			var tBlue=1;
-			var tAlpha=1;
-			for (i=0,n=tBones.length;i < n;){
-				nn=tBones[i++]+i;
-				tRx=0,tRy=0;
-				for (;i < nn;i++){
-					tMatrix=boneMatrixArray[tBones[i]]
-					tX=tWeights[tB];
-					tY=tWeights[tB+1];
-					tWeight=tWeights[tB+2];
-					tRx+=(tX *tMatrix.a+tY *tMatrix.c+tMatrix.tx)*tWeight;
-					tRy+=(tX *tMatrix.b+tY *tMatrix.d+tMatrix.ty)*tWeight;
-					tB+=3;
-				}
-				tVertices.push(tRx,tRy);
-			}
-			for (i=0;i < tVertices.length;){
-				tRx=tVertices[i++];
-				tRy=tVertices[i++];
-				graphics.drawCircle(tRx,tRy,2.5,"#ff0000");
-				tVBArray.push(tRx,tRy);
-			};
-			var tNum=10;
-			var tOut=[];
-			for (var i=0;i < tNum;i++){
-				this.addCurvePosition(i / tNum,tVertices[0],tVertices[1],tVertices[2],tVertices[3],tVertices[4],tVertices[5],tVertices[6],tVertices[7],tOut,i *3,true);
-			}
-			for (i=0;i < tNum;i++){
-				graphics.drawCircle(tOut[i *3],tOut[i*3+1],2.5,"#00ff00");
-			}
-		}
-
-		__proto.addCurvePosition=function(p,x1,y1,cx1,cy1,cx2,cy2,x2,y2,out,o,tangents){
-			if (p==0)p=0.0001;
-			var tt=p *p,ttt=tt *p,u=1-p,uu=u *u,uuu=uu *u;
-			var ut=u *p,ut3=ut *3,uut3=u *ut3,utt3=ut3 *p;
-			var x=x1 *uuu+cx1 *uut3+cx2 *utt3+x2 *ttt,y=y1 *uuu+cy1 *uut3+cy2 *utt3+y2 *ttt;
-			out[o]=x;
-			out[o+1]=y;
-			if (tangents)out[o+2]=Math.atan2(y-(y1 *uu+cy1 *ut *2+cy2 *tt),x-(x1 *uu+cx1 *ut *2+cx2 *tt));
 		}
 
 		/**
@@ -469,6 +473,231 @@
 	*...
 	*@author
 	*/
+	//class laya.ani.bone.EventData
+	var EventData=(function(){
+		function EventData(){
+			this.name=null;
+			this.intValue=0;
+			this.floatValue=NaN;
+			this.stringValue=null;
+			this.time=NaN;
+		}
+
+		__class(EventData,'laya.ani.bone.EventData');
+		return EventData;
+	})()
+
+
+	/**
+	*...
+	*@author
+	*/
+	//class laya.ani.bone.IkConstraint
+	var IkConstraint=(function(){
+		function IkConstraint(data,bones){
+			this._targetBone=null;
+			this._bones=null;
+			this._data=null;
+			this.name=null;
+			this.mix=NaN;
+			this.bendDirection=NaN;
+			this._data=data;
+			this._targetBone=bones[data.targetBoneIndex];
+			if (this._bones==null)this._bones=[];
+			this._bones.length=0;
+			for (var i=0,n=data.boneIndexs.length;i < n;i++){
+				this._bones.push(bones[data.boneIndexs[i]]);
+			}
+			this.name=data.name;
+			this.mix=data.mix;
+			this.bendDirection=data.bendDirection;
+		}
+
+		__class(IkConstraint,'laya.ani.bone.IkConstraint');
+		var __proto=IkConstraint.prototype;
+		__proto.apply=function(){
+			switch(this._bones.length){
+				case 1:
+					this._applyIk1(this._bones[0],this._targetBone.resultMatrix.tx,this._targetBone.resultMatrix.ty,this.mix);
+					break ;
+				case 2:
+					this._applyIk2(this._bones[0],this._bones[1],this._targetBone.resultMatrix.tx,this._targetBone.resultMatrix.ty,this.bendDirection,this.mix);
+					break ;
+				}
+		}
+
+		__proto._applyIk1=function(bone,targetX,targetY,alpha){
+			var pp=bone._parent;
+			var id=1 / (pp.resultMatrix.a *pp.resultMatrix.d-pp.resultMatrix.b *pp.resultMatrix.c);
+			var x=targetX-pp.resultMatrix.tx;
+			var y=targetY-pp.resultMatrix.ty;
+			var tx=(x *pp.resultMatrix.d-y *pp.resultMatrix.b)*id-bone.transform.x;
+			var ty=(y *pp.resultMatrix.a-x *pp.resultMatrix.c)*id-bone.transform.y;
+			var rotationIK=Math.atan2(ty,tx)*IkConstraint.radDeg-0-bone.transform.skX;
+			if (bone.transform.scX < 0)rotationIK+=180;
+			if (rotationIK > 180)
+				rotationIK-=360;
+			else if (rotationIK <-180)rotationIK+=360;
+			bone.transform.skX=bone.transform.skY=bone.transform.skX+rotationIK *alpha;
+			bone.update();
+		}
+
+		__proto._applyIk2=function(parent,child,targetX,targetY,bendDir,alpha){
+			if (alpha==0){
+				return;
+			};
+			var px=parent.transform.x,py=parent.transform.y;
+			var psx=parent.transform.scX,psy=parent.transform.scY;
+			var csx=child.transform.scX;
+			var os1=0,os2=0,s2=0;
+			if (psx < 0){
+				psx=-psx;
+				os1=180;
+				s2=-1;
+				}else {
+				os1=0;
+				s2=1;
+			}
+			if (psy < 0){
+				psy=-psy;
+				s2=-s2;
+			}
+			if (csx < 0){
+				csx=-csx;
+				os2=180;
+				}else {
+				os2=0
+			};
+			var cx=child.transform.x,cy=NaN,cwx=NaN,cwy=NaN;
+			var a=parent.resultMatrix.a,b=parent.resultMatrix.b;
+			var c=parent.resultMatrix.c,d=parent.resultMatrix.d;
+			var u=Math.abs(psx-psy)<=0.0001;
+			if (!u){
+				cy=0;
+				cwx=a *cx+parent.resultMatrix.tx;
+				cwy=c *cx+parent.resultMatrix.ty;
+				}else {
+				cy=child.resultTransform.y;
+				cwx=a *cx+b *cy+parent.resultMatrix.tx;
+				cwy=c *cx+d *cy+parent.resultMatrix.ty;
+			};
+			var pp=parent._parent;
+			a=pp.resultMatrix.a;
+			b=pp.resultMatrix.b;
+			c=pp.resultMatrix.c;
+			d=pp.resultMatrix.d;
+			var id=1 / (a *d-b *c);
+			var x=targetX-pp.resultMatrix.tx,y=targetY-pp.resultMatrix.ty;
+			var tx=(x *d-y *b)*id-px;
+			var ty=(y *a-x *c)*id-py;
+			x=cwx-pp.resultMatrix.tx;
+			y=cwy-pp.resultMatrix.ty;
+			var dx=(x *d-y *b)*id-px;
+			var dy=(y *a-x *c)*id-py;
+			var l1=Math.sqrt(dx *dx+dy *dy);
+			var l2=child.length *csx;
+			var a1=NaN,a2=NaN;
+			if (u){
+				l2 *=psx;
+				var cos=(tx *tx+ty *ty-l1 *l1-l2 *l2)/ (2 *l1 *l2);
+				if (cos <-1)
+					cos=-1;
+				else if (cos > 1)cos=1;
+				a2=Math.acos(cos)*bendDir;
+				a=l1+l2 *cos;
+				b=l2 *Math.sin(a2);
+				a1=Math.atan2(ty *a-tx *b,tx *a+ty *b);
+				}else {
+				a=psx *l2;
+				b=psy *l2;
+				var aa=a *a,bb=b *b,dd=tx *tx+ty *ty,ta=Math.atan2(ty,tx);
+				c=bb *l1 *l1+aa *dd-aa *bb;
+				var c1=-2 *bb *l1,c2=bb-aa;
+				d=c1 *c1-4 *c2 *c;
+				if (d > 0){
+					var q=Math.sqrt(d);
+					if (c1 < 0)q=-q;
+					q=-(c1+q)/ 2;
+					var r0=q / c2,r1=c / q;
+					var r=Math.abs(r0)< Math.abs(r1)?r0:r1;
+					if (r *r <=dd){
+						y=Math.sqrt(dd-r *r)*bendDir;
+						a1=ta-Math.atan2(y,r);
+						a2=Math.atan2(y / psy,(r-l1)/ psx);
+					}
+				};
+				var minAngle=0,minDist=Number.MAX_VALUE,minX=0,minY=0;
+				var maxAngle=0,maxDist=0,maxX=0,maxY=0;
+				x=l1+a;
+				d=x *x;
+				if (d > maxDist){
+					maxAngle=0;
+					maxDist=d;
+					maxX=x;
+				}
+				x=l1-a;
+				d=x *x;
+				if (d < minDist){
+					minAngle=Math.PI;
+					minDist=d;
+					minX=x;
+				};
+				var angle=Math.acos(-a *l1 / (aa-bb));
+				x=a *Math.cos(angle)+l1;
+				y=b *Math.sin(angle);
+				d=x *x+y *y;
+				if (d < minDist){
+					minAngle=angle;
+					minDist=d;
+					minX=x;
+					minY=y;
+				}
+				if (d > maxDist){
+					maxAngle=angle;
+					maxDist=d;
+					maxX=x;
+					maxY=y;
+				}
+				if (dd <=(minDist+maxDist)/ 2){
+					a1=ta-Math.atan2(minY *bendDir,minX);
+					a2=minAngle *bendDir;
+					}else {
+					a1=ta-Math.atan2(maxY *bendDir,maxX);
+					a2=maxAngle *bendDir;
+				}
+			};
+			var os=Math.atan2(cy,cx)*s2;
+			var rotation=parent.transform.skX;
+			a1=(a1-os)*IkConstraint.radDeg+os1-rotation;
+			if (a1 > 180)
+				a1-=360;
+			else if (a1 <-180)a1+=360;
+			parent.resultTransform.x=px;
+			parent.resultTransform.y=py;
+			parent.resultTransform.skX=parent.resultTransform.skY=rotation+a1 *alpha;
+			rotation=child.transform.skX;
+			rotation=rotation % 360;
+			a2=((a2+os)*IkConstraint.radDeg-0)*s2+os2-rotation;
+			if (a2 > 180)
+				a2-=360;
+			else if (a2 <-180)a2+=360;
+			child.resultTransform.x=cx;
+			child.resultTransform.y=cy;
+			child.resultTransform.skX=child.resultTransform.skY=child.resultTransform.skY+a2 *alpha;
+			parent.update();
+		}
+
+		__static(IkConstraint,
+		['radDeg',function(){return this.radDeg=180 / Math.PI;},'degRad',function(){return this.degRad=Math.PI / 180;}
+		]);
+		return IkConstraint;
+	})()
+
+
+	/**
+	*...
+	*@author
+	*/
 	//class laya.ani.bone.IkConstraintData
 	var IkConstraintData=(function(){
 		function IkConstraintData(){
@@ -483,6 +712,496 @@
 
 		__class(IkConstraintData,'laya.ani.bone.IkConstraintData');
 		return IkConstraintData;
+	})()
+
+
+	/**
+	*路径作用器
+	*1，生成根据骨骼计算控制点
+	*2，根据控制点生成路径，并计算路径上的节点
+	*3，根据节点，重新调整骨骼位置
+	*@author
+	*/
+	//class laya.ani.bone.PathConstraint
+	var PathConstraint=(function(){
+		function PathConstraint(data,bones){
+			this.target=null;
+			this.data=null;
+			this.bones=null;
+			this.position=NaN;
+			this.spacing=NaN;
+			this.rotateMix=NaN;
+			this.translateMix=NaN;
+			this._debugKey=false;
+			this._spaces=null;
+			this._segments=[];
+			this._curves=[];
+			this.data=data;
+			this.position=data.position;
+			this.spacing=data.spacing;
+			this.rotateMix=data.rotateMix;
+			this.translateMix=data.translateMix;
+			this.bones=[];
+			var tBoneIds=this.data.bones;
+			for (var i=0,n=tBoneIds.length;i < n;i++){
+				this.bones.push(bones[tBoneIds[i]]);
+			}
+		}
+
+		__class(PathConstraint,'laya.ani.bone.PathConstraint');
+		var __proto=PathConstraint.prototype;
+		/**
+		*计算骨骼在路径上的节点
+		*@param boneSlot
+		*@param boneMatrixArray
+		*@param graphics
+		*/
+		__proto.apply=function(boneList,graphics){
+			var tTranslateMix=this.translateMix;
+			var tRotateMix=this.translateMix;
+			var tTranslate=tTranslateMix > 0;
+			var tRotate=tRotateMix > 0;
+			var tSpacingMode=this.data.spacingMode;
+			var tLengthSpacing=tSpacingMode=="length";
+			var tRotateMode=this.data.rotateMode;
+			var tTangents=tRotateMode=="tangent";
+			var tScale=tRotateMode=="chainScale";
+			var lengths=[];
+			var boneCount=this.bones.length;
+			var spacesCount=tTangents?boneCount:boneCount+1;
+			var spaces=[];
+			this._spaces=spaces;
+			spaces[0]=this.position;
+			var spacing=this.spacing;
+			if (tScale || tLengthSpacing){
+				for (var i=0,n=spacesCount-1;i < n;){
+					var bone=this.bones[i];
+					var length=bone.length;
+					var x=length *bone.transform.getMatrix().a;
+					var y=length *bone.transform.getMatrix().c;
+					length=Math.sqrt(x *x+y *y);
+					if (tScale)lengths[i]=length;
+					spaces[++i]=tLengthSpacing ? Math.max(0,length+spacing):spacing;
+				}
+				}else {
+				for (i=1;i < spacesCount;i++){
+					spaces[i]=spacing;
+				}
+			};
+			var positions=this.computeWorldPositions(this.target,boneList,graphics,spacesCount,tTangents,this.data.positionMode=="percent",tSpacingMode=="percent");
+			if (this._debugKey){
+				for (i=0;i < positions.length;i++){
+					graphics.drawCircle(positions[i++],positions[i++],5,"#00ff00");
+				};
+				var tLinePos=[];
+				for (i=0;i < positions.length;i++){
+					tLinePos.push(positions[i++],positions[i++]);
+				}
+				graphics.drawLines(0,0,tLinePos,"#ff0000");
+			};
+			var skeletonX=NaN;
+			var skeletonY=NaN;
+			var boneX=positions[0];
+			var boneY=positions[1];
+			var offsetRotation=this.data.offsetRotation;
+			var tip=tRotateMode=="chain" && offsetRotation==0;
+			var p=NaN;
+			for (i=0,p=3;i < boneCount;i++,p+=3){
+				bone=this.bones[i];
+				bone.resultMatrix.tx+=(boneX-bone.resultMatrix.tx)*tTranslateMix;
+				bone.resultMatrix.ty+=(boneY-bone.resultMatrix.ty)*tTranslateMix;
+				x=positions[p];y=positions[p+1];
+				var dx=x-boneX,dy=y-boneY;
+				if (tScale){
+					length=lengths[i];
+					if (length !=0){
+						var s=(Math.sqrt(dx *dx+dy *dy)/ length-1)*tRotateMix+1;
+						bone.resultMatrix.a *=s;
+						bone.resultMatrix.c *=s;
+					}
+				}
+				boneX=x;
+				boneY=y;
+				if (tRotate){
+					var a=bone.resultMatrix.a;
+					var b=bone.resultMatrix.b;
+					var c=bone.resultMatrix.c;
+					var d=bone.resultMatrix.d;
+					var r=NaN;
+					var cos=NaN;
+					var sin=NaN;
+					if (tTangents){
+						r=positions[p-1];
+						}else if(spaces[i+1]==0){
+						r=positions[p+2];
+						}else {
+						r=Math.atan2(dy,dx);
+					}
+					r-=Math.atan2(c,a)-offsetRotation / 180 *Math.PI;
+					if (tip){
+						cos=Math.cos(r);
+						sin=Math.sin(r);
+						length=bone.length;
+						boneX+=(length *(cos *a-sin *c)-dx)*tRotateMix;
+						boneY+=(length *(sin *a+cos *c)-dy)*tRotateMix;
+					}
+					if (r > Math.PI){
+						r-=(Math.PI *2);
+						}else if (r <-Math.PI){
+						r+=(Math.PI *2);
+					}
+					r *=tRotateMix;
+					cos=Math.cos(r);
+					sin=Math.sin(r);
+					bone.resultMatrix.a=cos *a-sin *c;
+					bone.resultMatrix.c=cos *b-sin *d;
+					bone.resultMatrix.b=sin *a+cos *c;
+					bone.resultMatrix.d=sin *b+cos *d;
+				}
+			}
+		}
+
+		/**
+		*计算顶点的世界坐标
+		*@param boneSlot
+		*@param boneList
+		*@param start
+		*@param count
+		*@param worldVertices
+		*@param offset
+		*/
+		__proto.computeWorldVertices2=function(boneSlot,boneList,start,count,worldVertices,offset){
+			var tBones=boneSlot.currDisplayData.bones;
+			var tWeights=boneSlot.currDisplayData.weights;
+			var tTriangles=boneSlot.currDisplayData.triangles;
+			var tMatrix;
+			var i=0;
+			var v=0;
+			var skip=0;
+			var n=0;
+			var w=0;
+			var b=0;
+			var wx=0;
+			var wy=0;
+			var vx=0;
+			var vy=0;
+			for (i=0;i < start;i+=2){
+				n=tBones[v];
+				v+=n+1;
+				skip+=n;
+			};
+			var skeletonBones=boneList;
+			for (w=offset,b=skip *3;w < count;w+=2){
+				wx=0,wy=0;
+				n=tBones[v++];
+				n+=v;
+				for (;v < n;v++,b+=3){
+					tMatrix=skeletonBones[tBones[v]].resultMatrix;
+					vx=tWeights[b];vy=tWeights[b+1];var weight=tWeights[b+2];
+					wx+=(vx *tMatrix.a+vy *tMatrix.c+tMatrix.tx)*weight;
+					wy+=(vx *tMatrix.b+vy *tMatrix.d+tMatrix.ty)*weight;
+				}
+				worldVertices[w]=wx;
+				worldVertices[w+1]=wy;
+			}
+		}
+
+		/**
+		*计算路径上的节点
+		*@param boneSlot
+		*@param boneList
+		*@param graphics
+		*@param spacesCount
+		*@param tangents
+		*@param percentPosition
+		*@param percentSpacing
+		*@return
+		*/
+		__proto.computeWorldPositions=function(boneSlot,boneList,graphics,spacesCount,tangents,percentPosition,percentSpacing){
+			var tBones=boneSlot.currDisplayData.bones;
+			var tWeights=boneSlot.currDisplayData.weights;
+			var tTriangles=boneSlot.currDisplayData.triangles;
+			var tRx=0;
+			var tRy=0;
+			var nn=0;
+			var tMatrix;
+			var tX=NaN;
+			var tY=NaN;
+			var tB=0;
+			var tWeight=0;
+			var tVertices=[];
+			var i=0,j=0,n=0;
+			var verticesLength=boneSlot.currDisplayData.verLen;
+			var target=boneSlot;
+			var position=this.position;
+			var spaces=this._spaces;
+			var world=[];
+			var out=[];
+			var closed=false;
+			var curveCount=verticesLength / 6;
+			var prevCurve=-1;
+			var pathLength=NaN;
+			var o=0,curve=0;
+			var p=NaN;
+			var space=NaN;
+			var prev=NaN;
+			var length=NaN;
+			if (!true){
+				var lengths=boneSlot.currDisplayData.lengths;
+				curveCount-=closed ? 1 :2;
+				pathLength=lengths[curveCount];
+				if (percentPosition)position *=pathLength;
+				if (percentSpacing){
+					for (i=0;i < spacesCount;i++)
+					spaces[i] *=pathLength;
+				}
+				world.length=8;
+				for (i=0,o=0,curve=0;i < spacesCount;i++,o+=3){
+					space=spaces[i];
+					position+=space;
+					p=position;
+					if (closed){
+						p %=pathLength;
+						if (p < 0)p+=pathLength;
+						curve=0;
+						}else if (p < 0){
+						if (prevCurve !=PathConstraint.BEFORE){
+							prevCurve=PathConstraint.BEFORE;
+							this.computeWorldVertices2(target,boneList,2,4,world,0);
+						}
+						this.addBeforePosition(p,world,0,out,o);
+						continue ;
+						}else if (p > pathLength){
+						if (prevCurve !=PathConstraint.AFTER){
+							prevCurve=PathConstraint.AFTER;
+							this.computeWorldVertices2(target,boneList,verticesLength-6,4,world,0);
+						}
+						this.addAfterPosition(p-pathLength,world,0,out,o);
+						continue ;
+					}
+					for (;;curve++){
+						length=lengths[curve];
+						if (p > length)continue ;
+						if (curve==0)
+							p /=length;
+						else {
+							prev=lengths[curve-1];
+							p=(p-prev)/ (length-prev);
+						}
+						break ;
+					}
+					if (curve !=prevCurve){
+						prevCurve=curve;
+						if (closed && curve==curveCount){
+							this.computeWorldVertices2(target,boneList,verticesLength-4,4,world,0);
+							this.computeWorldVertices2(target,boneList,0,4,world,4);
+						}else
+						this.computeWorldVertices2(target,boneList,curve *6+2,8,world,0);
+					}
+					this.addCurvePosition(p,world[0],world[1],world[2],world[3],world[4],world[5],world[6],world[7],out,o,
+					tangents || (i > 0 && space==0));
+				}
+				return out;
+			}
+			if (closed){
+				verticesLength+=2;
+				world[verticesLength-2]=world[0];
+				world[verticesLength-1]=world[1];
+				}else {
+				curveCount--;
+				verticesLength-=4;
+				this.computeWorldVertices2(boneSlot,boneList,2,verticesLength,tVertices,0);
+				if (this._debugKey){
+					for (i=0;i < tVertices.length;){
+						graphics.drawCircle(tVertices[i++],tVertices[i++],10,"#ff0000");
+					}
+				}
+				world=tVertices;
+			}
+			this._curves.length=curveCount;
+			var curves=this._curves;
+			pathLength=0;
+			var x1=world[0],y1=world[1],cx1=0,cy1=0,cx2=0,cy2=0,x2=0,y2=0;
+			var tmpx=NaN,tmpy=NaN,dddfx=NaN,dddfy=NaN,ddfx=NaN,ddfy=NaN,dfx=NaN,dfy=NaN;
+			var w=0;
+			for (i=0,w=2;i < curveCount;i++,w+=6){
+				cx1=world[w];
+				cy1=world[w+1];
+				cx2=world[w+2];
+				cy2=world[w+3];
+				x2=world[w+4];
+				y2=world[w+5];
+				tmpx=(x1-cx1 *2+cx2)*0.1875;
+				tmpy=(y1-cy1 *2+cy2)*0.1875;
+				dddfx=((cx1-cx2)*3-x1+x2)*0.09375;
+				dddfy=((cy1-cy2)*3-y1+y2)*0.09375;
+				ddfx=tmpx *2+dddfx;
+				ddfy=tmpy *2+dddfy;
+				dfx=(cx1-x1)*0.75+tmpx+dddfx *0.16666667;
+				dfy=(cy1-y1)*0.75+tmpy+dddfy *0.16666667;
+				pathLength+=Math.sqrt(dfx *dfx+dfy *dfy);
+				dfx+=ddfx;
+				dfy+=ddfy;
+				ddfx+=dddfx;
+				ddfy+=dddfy;
+				pathLength+=Math.sqrt(dfx *dfx+dfy *dfy);
+				dfx+=ddfx;
+				dfy+=ddfy;
+				pathLength+=Math.sqrt(dfx *dfx+dfy *dfy);
+				dfx+=ddfx+dddfx;
+				dfy+=ddfy+dddfy;
+				pathLength+=Math.sqrt(dfx *dfx+dfy *dfy);
+				curves[i]=pathLength;
+				x1=x2;
+				y1=y2;
+			}
+			if (percentPosition)position *=pathLength;
+			if (percentSpacing){
+				for (i=0;i < spacesCount;i++)
+				spaces[i] *=pathLength;
+			};
+			var segments=this._segments;
+			var curveLength=0;
+			var segment=0;
+			for (i=0,o=0,curve=0,segment=0;i < spacesCount;i++,o+=3){
+				space=spaces[i];
+				position+=space;
+				p=position;
+				if (closed){
+					p %=pathLength;
+					if (p < 0)p+=pathLength;
+					curve=0;
+					}else if (p < 0){
+					this.addBeforePosition(p,world,0,out,o);
+					continue ;
+					}else if (p > pathLength){
+					this.addAfterPosition(p-pathLength,world,verticesLength-4,out,o);
+					continue ;
+				}
+				for (;;curve++){
+					length=curves[curve];
+					if (p > length)continue ;
+					if (curve==0)
+						p /=length;
+					else {
+						prev=curves[curve-1];
+						p=(p-prev)/ (length-prev);
+					}
+					break ;
+				}
+				if (curve !=prevCurve){
+					prevCurve=curve;
+					var ii=curve *6;
+					x1=world[ii];
+					y1=world[ii+1];
+					cx1=world[ii+2];
+					cy1=world[ii+3];
+					cx2=world[ii+4];
+					cy2=world[ii+5];
+					x2=world[ii+6];
+					y2=world[ii+7];
+					tmpx=(x1-cx1 *2+cx2)*0.03;
+					tmpy=(y1-cy1 *2+cy2)*0.03;
+					dddfx=((cx1-cx2)*3-x1+x2)*0.006;
+					dddfy=((cy1-cy2)*3-y1+y2)*0.006;
+					ddfx=tmpx *2+dddfx;
+					ddfy=tmpy *2+dddfy;
+					dfx=(cx1-x1)*0.3+tmpx+dddfx *0.16666667;
+					dfy=(cy1-y1)*0.3+tmpy+dddfy *0.16666667;
+					curveLength=Math.sqrt(dfx *dfx+dfy *dfy);
+					segments[0]=curveLength;
+					for (ii=1;ii < 8;ii++){
+						dfx+=ddfx;
+						dfy+=ddfy;
+						ddfx+=dddfx;
+						ddfy+=dddfy;
+						curveLength+=Math.sqrt(dfx *dfx+dfy *dfy);
+						segments[ii]=curveLength;
+					}
+					dfx+=ddfx;
+					dfy+=ddfy;
+					curveLength+=Math.sqrt(dfx *dfx+dfy *dfy);
+					segments[8]=curveLength;
+					dfx+=ddfx+dddfx;
+					dfy+=ddfy+dddfy;
+					curveLength+=Math.sqrt(dfx *dfx+dfy *dfy);
+					segments[9]=curveLength;
+					segment=0;
+				}
+				p *=curveLength;
+				for (;;segment++){
+					length=segments[segment];
+					if (p > length)continue ;
+					if (segment==0)
+						p /=length;
+					else {
+						prev=segments[segment-1];
+						p=segment+(p-prev)/ (length-prev);
+					}
+					break ;
+				}
+				this.addCurvePosition(p *0.1,x1,y1,cx1,cy1,cx2,cy2,x2,y2,out,o,tangents || (i > 0 && space==0));
+			}
+			return out;
+		}
+
+		__proto.addBeforePosition=function(p,temp,i,out,o){
+			var x1=temp[i],y1=temp[i+1],dx=temp[i+2]-x1,dy=temp[i+3]-y1,r=Math.atan2(dy,dx);
+			out[o]=x1+p *Math.cos(r);
+			out[o+1]=y1+p *Math.sin(r);
+			out[o+2]=r;
+		}
+
+		__proto.addAfterPosition=function(p,temp,i,out,o){
+			var x1=temp[i+2],y1=temp[i+3],dx=x1-temp[i],dy=y1-temp[i+1],r=Math.atan2(dy,dx);
+			out[o]=x1+p *Math.cos(r);
+			out[o+1]=y1+p *Math.sin(r);
+			out[o+2]=r;
+		}
+
+		__proto.addCurvePosition=function(p,x1,y1,cx1,cy1,cx2,cy2,x2,y2,out,o,tangents){
+			if (p==0)p=0.0001;
+			var tt=p *p,ttt=tt *p,u=1-p,uu=u *u,uuu=uu *u;
+			var ut=u *p,ut3=ut *3,uut3=u *ut3,utt3=ut3 *p;
+			var x=x1 *uuu+cx1 *uut3+cx2 *utt3+x2 *ttt,y=y1 *uuu+cy1 *uut3+cy2 *utt3+y2 *ttt;
+			out[o]=x;
+			out[o+1]=y;
+			if (tangents){
+				out[o+2]=Math.atan2(y-(y1 *uu+cy1 *ut *2+cy2 *tt),x-(x1 *uu+cx1 *ut *2+cx2 *tt));
+				}else {
+				out[o+2]=0;
+			}
+		}
+
+		PathConstraint.NONE=-1;
+		PathConstraint.BEFORE=-2;
+		PathConstraint.AFTER=-3;
+		return PathConstraint;
+	})()
+
+
+	/**
+	*...
+	*@author
+	*/
+	//class laya.ani.bone.PathConstraintData
+	var PathConstraintData=(function(){
+		function PathConstraintData(){
+			this.name=null;
+			this.target=null;
+			this.positionMode=null;
+			this.spacingMode=null;
+			this.rotateMode=null;
+			this.offsetRotation=NaN;
+			this.position=NaN;
+			this.spacing=NaN;
+			this.rotateMix=NaN;
+			this.translateMix=NaN;
+			this.bones=[];
+		}
+
+		__class(PathConstraintData,'laya.ani.bone.PathConstraintData');
+		return PathConstraintData;
 	})()
 
 
@@ -518,6 +1237,8 @@
 			this.weights=null;
 			this.triangles=null;
 			this.vertices=null;
+			this.lengths=null;
+			this.verLen=0;
 		}
 
 		__class(SkinSlotDisplayData,'laya.ani.bone.SkinSlotDisplayData');
@@ -549,6 +1270,122 @@
 		}
 
 		return SlotData;
+	})()
+
+
+	/**
+	*...
+	*@author
+	*/
+	//class laya.ani.bone.TfConstraint
+	var TfConstraint=(function(){
+		function TfConstraint(data,bones){
+			this._data=null;
+			this._bones=null;
+			this.target=null;
+			this.rotateMix=NaN;
+			this.translateMix=NaN;
+			this.scaleMix=NaN;
+			this.shearMix=NaN;
+			this._temp=__newvec(2,0);
+			this._data=data;
+			if (this._bones==null){
+				this._bones=[];
+			}
+			this.target=bones[data.targetIndex];
+			var j=0,n=0;
+			for (j=0,n=data.boneIndexs.length;j < n;j++){
+				this._bones.push(bones[data.boneIndexs[j]]);
+			}
+			this.rotateMix=data.rotateMix;
+			this.translateMix=data.translateMix;
+			this.scaleMix=data.scaleMix;
+			this.shearMix=data.shearMix;
+		}
+
+		__class(TfConstraint,'laya.ani.bone.TfConstraint');
+		var __proto=TfConstraint.prototype;
+		__proto.apply=function(){
+			var tTfBone;
+			var ta=this.target.resultMatrix.a,tb=this.target.resultMatrix.b,tc=this.target.resultMatrix.c,td=this.target.resultMatrix.d;
+			for (var j=0,n=this._bones.length;j < n;j++){
+				tTfBone=this._bones[j];
+				if (this.rotateMix > 0){
+					var a=tTfBone.resultMatrix.a,b=tTfBone.resultMatrix.b,c=tTfBone.resultMatrix.c,d=tTfBone.resultMatrix.d;
+					var r=Math.atan2(tc,ta)-Math.atan2(c,a)+this._data.offsetRotation *Math.PI / 180;
+					if (r > Math.PI)
+						r-=Math.PI *2;
+					else if (r <-Math.PI)r+=Math.PI *2;
+					r *=this.rotateMix;
+					var cos=Math.cos(r),sin=Math.sin(r);
+					tTfBone.resultMatrix.a=cos *a-sin *c;
+					tTfBone.resultMatrix.b=cos *b-sin *d;
+					tTfBone.resultMatrix.c=sin *a+cos *c;
+					tTfBone.resultMatrix.d=sin *b+cos *d;
+				}
+				if (this.translateMix){
+					this._temp[0]=this._data.offsetX;
+					this._temp[1]=this._data.offsetY;
+					this.target.localToWorld(this._temp);
+					tTfBone.resultMatrix.tx+=(this._temp[0]-tTfBone.resultMatrix.tx)*this.translateMix;
+					tTfBone.resultMatrix.ty+=(this._temp[1]-tTfBone.resultMatrix.ty)*this.translateMix;
+					tTfBone.updateChild();
+				}
+				if (this.scaleMix > 0){
+					var bs=Math.sqrt(tTfBone.resultMatrix.a *tTfBone.resultMatrix.a+tTfBone.resultMatrix.c *tTfBone.resultMatrix.c);
+					var ts=Math.sqrt(ta *ta+tc *tc);
+					var s=bs > 0.00001 ? (bs+(ts-bs+this._data.offsetScaleX)*this.scaleMix)/ bs :0;
+					tTfBone.resultMatrix.a *=s;
+					tTfBone.resultMatrix.c *=s;
+					bs=Math.sqrt(tTfBone.resultMatrix.b *tTfBone.resultMatrix.b+tTfBone.resultMatrix.d *tTfBone.resultMatrix.d);
+					ts=Math.sqrt(tb *tb+td *td);
+					s=bs > 0.00001 ? (bs+(ts-bs+this._data.offsetScaleY)*this.scaleMix)/ bs :0;
+					tTfBone.resultMatrix.b *=s;
+					tTfBone.resultMatrix.d *=s;
+				}
+				if (this.shearMix > 0){
+					b=tTfBone.resultMatrix.b,d=tTfBone.resultMatrix.d;
+					var by=Math.atan2(d,b);
+					r=Math.atan2(td,tb)-Math.atan2(tc,ta)-(by-Math.atan2(tTfBone.resultMatrix.c,tTfBone.resultMatrix.a));
+					if (r > Math.PI)
+						r-=Math.PI *2;
+					else if (r <-Math.PI)r+=Math.PI *2;
+					r=by+(r+this._data.offsetShearY *Math.PI / 180)*this.shearMix;
+					s=Math.sqrt(b *b+d *d);
+					tTfBone.resultMatrix.b=Math.cos(r)*s;
+					tTfBone.resultMatrix.d=Math.sin(r)*s;
+				}
+			}
+		}
+
+		return TfConstraint;
+	})()
+
+
+	/**
+	*...
+	*@author
+	*/
+	//class laya.ani.bone.TfConstraintData
+	var TfConstraintData=(function(){
+		function TfConstraintData(){
+			this.name=null;
+			this.targetIndex=0;
+			this.rotateMix=NaN;
+			this.translateMix=NaN;
+			this.scaleMix=NaN;
+			this.shearMix=NaN;
+			this.offsetRotation=NaN;
+			this.offsetX=NaN;
+			this.offsetY=NaN;
+			this.offsetScaleX=NaN;
+			this.offsetScaleY=NaN;
+			this.offsetShearY=NaN;
+			this.boneIndexs=[];
+		}
+
+		__class(TfConstraintData,'laya.ani.bone.TfConstraintData');
+		return TfConstraintData;
 	})()
 
 
@@ -1201,7 +2038,7 @@
 
 		KeyframesAniTemplet._uniqueIDCounter=1;
 		KeyframesAniTemplet.interpolation=[KeyframesAniTemplet._LinearInterpolation_0,KeyframesAniTemplet._QuaternionInterpolation_1,KeyframesAniTemplet._AngleInterpolation_2,KeyframesAniTemplet._RadiansInterpolation_3,KeyframesAniTemplet._Matrix4x4Interpolation_4,KeyframesAniTemplet._NoInterpolation_5];
-		KeyframesAniTemplet.LAYA_ANIMATION_VISION="LAYAANIMATION:1.0.2";
+		KeyframesAniTemplet.LAYA_ANIMATION_VISION="LAYAANIMATION:1.0.3";
 		return KeyframesAniTemplet;
 	})(EventDispatcher)
 
@@ -1243,6 +2080,8 @@
 			this._graphicsCache=[];
 			this.srcBoneMatrixArr=[];
 			this.ikArr=[];
+			this.tfArr=[];
+			this.pathArr=[];
 			this.boneSlotDic={};
 			this.bindBoneBoneSlotDic={};
 			this.boneSlotArray=[];
@@ -1252,9 +2091,9 @@
 			this.isParseFail=false;
 			this.url=null;
 			this.yReverseMatrix=null;
+			this.eventAniArr=[];
 			this._rate=60;
 			this.aniSectionDic={};
-			this.textureDic={};
 			this._skBufferUrl=null;
 			this._textureDic={};
 			this._loadList=null;
@@ -1311,8 +2150,8 @@
 		*/
 		__proto.parse=function(data,playbackRate){
 			_super.prototype.parse.call(this,data,playbackRate);
-			if (this._aniVersion !=KeyframesAniTemplet.LAYA_ANIMATION_VISION){
-				console.log("[Error] 版本不一致，请使用IDE版本（1.2.0）重新导出");
+			if (!(this._aniVersion==KeyframesAniTemplet.LAYA_ANIMATION_VISION || this._aniVersion=="LAYAANIMATION:1.0.2")){
+				console.log("[Error] 版本不一致，请使用IDE版本（1.3.0）重新导出");
 				this._loaded=false;
 			}
 			if (this._loaded){
@@ -1411,6 +2250,9 @@
 				tTempleData=tByte.getFloat32();
 				tFrameHeight=isNaN(tTempleData)? tHeight :tTempleData;
 				this.subTextureDic[tTextureName]=Texture.create(tTexture,tX,tY,tWidth,tHeight,-tFrameX,-tFrameY,tFrameWidth,tFrameHeight);
+			}
+			if (this._aniVersion=="LAYAANIMATION:1.0.3"){
+				this._mainTexture=tTexture;
 			};
 			var tAniCount=tByte.getUint16();
 			var tSectionArr;
@@ -1419,6 +2261,9 @@
 				tSectionArr.push(tByte.getUint16());
 				tSectionArr.push(tByte.getUint16());
 				tSectionArr.push(tByte.getUint16());
+				if (this._aniVersion=="LAYAANIMATION:1.0.3"){
+					tSectionArr.push(tByte.getUint16());
+				}
 				this.aniSectionDic[i]=tSectionArr;
 			};
 			var tBone;
@@ -1432,6 +2277,14 @@
 				tName=tByte.readUTFString();
 				tParentName=tByte.readUTFString();
 				tBone.length=tByte.getFloat32();
+				if (this._aniVersion=="LAYAANIMATION:1.0.3"){
+					if (tByte.getByte()==1){
+						tBone.inheritRotation=false;
+					}
+					if (tByte.getByte()==1){
+						tBone.inheritScale=false;
+					}
+				}
 				tBone.name=tName;
 				if (tParentName){
 					tParentBone=tBoneDic[tParentName];
@@ -1478,6 +2331,70 @@
 				tIkConstraintData.bendDirection=tByte.getFloat32();
 				tIkConstraintData.mix=tByte.getFloat32();
 				this.ikArr.push(tIkConstraintData);
+			}
+			if (this._aniVersion=="LAYAANIMATION:1.0.3"){
+				var tTfConstraintData;
+				var tTfLen=tByte.getUint16();
+				var tTfBoneLen=0;
+				for (i=0;i < tTfLen;i++){
+					tTfConstraintData=new TfConstraintData();
+					tTfBoneLen=tByte.getUint16();
+					for (j=0;j < tTfBoneLen;j++){
+						tTfConstraintData.boneIndexs.push(tByte.getInt16());
+					}
+					tTfConstraintData.name=tByte.getUTFString();
+					tTfConstraintData.targetIndex=tByte.getInt16();
+					tTfConstraintData.rotateMix=tByte.getFloat32();
+					tTfConstraintData.translateMix=tByte.getFloat32();
+					tTfConstraintData.scaleMix=tByte.getFloat32();
+					tTfConstraintData.shearMix=tByte.getFloat32();
+					tTfConstraintData.offsetRotation=tByte.getFloat32();
+					tTfConstraintData.offsetX=tByte.getFloat32();
+					tTfConstraintData.offsetY=tByte.getFloat32();
+					tTfConstraintData.offsetScaleX=tByte.getFloat32();
+					tTfConstraintData.offsetScaleY=tByte.getFloat32();
+					tTfConstraintData.offsetShearY=tByte.getFloat32();
+					this.tfArr.push(tTfConstraintData);
+				};
+				var tPathConstraintData;
+				var tPathLen=tByte.getUint16();
+				var tPathBoneLen=0;
+				for (i=0;i < tPathLen;i++){
+					tPathConstraintData=new PathConstraintData();
+					tPathConstraintData.name=tByte.readUTFString();
+					tPathBoneLen=tByte.getUint16();
+					for (j=0;j < tPathBoneLen;j++){
+						tPathConstraintData.bones.push(tByte.getInt16());
+					}
+					tPathConstraintData.target=tByte.readUTFString();
+					tPathConstraintData.positionMode=tByte.readUTFString();
+					tPathConstraintData.spacingMode=tByte.readUTFString();
+					tPathConstraintData.rotateMode=tByte.readUTFString();
+					tPathConstraintData.offsetRotation=tByte.getFloat32();
+					tPathConstraintData.position=tByte.getFloat32();
+					tPathConstraintData.spacing=tByte.getFloat32();
+					tPathConstraintData.rotateMix=tByte.getFloat32();
+					tPathConstraintData.translateMix=tByte.getFloat32();
+					this.pathArr.push(tPathConstraintData);
+				};
+				var tEventArr;
+				var tEventAniLen=tByte.getInt16();
+				var tEventLen=0;
+				var tEventData;
+				for (i=0;i < tEventAniLen;i++){
+					tEventLen=tByte.getInt16();
+					tEventArr=[];
+					for (j=0;j < tEventLen;j++){
+						tEventData=new EventData();
+						tEventData.name=tByte.getUTFString();
+						tEventData.intValue=tByte.getInt32();
+						tEventData.floatValue=tByte.getFloat32();
+						tEventData.stringValue=tByte.getUTFString();
+						tEventData.time=tByte.getFloat32();
+						tEventArr.push(tEventData);
+					}
+					this.eventAniArr.push(tEventArr);
+				}
 			};
 			var tBoneSlotLen=tByte.getInt16();
 			var tDBBoneSlot;
@@ -1503,7 +2420,7 @@
 			var tSkinDataLen=tByte.getUint8();
 			var tSkinData,tSlotData,tDisplayData;
 			var tSlotDataLen=0,tDisplayDataLen=0;
-			var tUvLen=0,tWeightLen=0,tTriangleLen=0,tVerticeLen=0;
+			var tUvLen=0,tWeightLen=0,tTriangleLen=0,tVerticeLen=0,tLengthLen=0;
 			for (i=0;i < tSkinDataLen;i++){
 				tSkinData=new SkinData();
 				tSkinData.name=tNameArray[tNameStartIndex++];
@@ -1528,6 +2445,9 @@
 						tDisplayData.width=tByte.getFloat32();
 						tDisplayData.height=tByte.getFloat32();
 						tDisplayData.type=tByte.getUint8();
+						if (this._aniVersion=="LAYAANIMATION:1.0.3"){
+							tDisplayData.verLen=tByte.getUint16();
+						}
 						tBoneLen=tByte.getUint16();
 						if (tBoneLen > 0){
 							tDisplayData.bones=[];
@@ -1564,6 +2484,15 @@
 								tDisplayData.vertices.push(tByte.getFloat32());
 							}
 						}
+						if (this._aniVersion=="LAYAANIMATION:1.0.3"){
+							tLengthLen=tByte.getUint16();
+							if (tLengthLen > 0){
+								tDisplayData.lengths=[];
+								for (l=0;l < tLengthLen;l++){
+									tDisplayData.lengths.push(tByte.getFloat32());
+								}
+							}
+						}
 					}
 					tSkinData.slotArr.push(tSlotData);
 				}
@@ -1584,7 +2513,11 @@
 		*@return
 		*/
 		__proto.getTexture=function(name){
-			return this.subTextureDic[name];
+			var tTexture=this.subTextureDic[name];
+			if (tTexture==null){
+				return this._mainTexture;
+			}
+			return tTexture;
 		}
 
 		/**
@@ -1594,7 +2527,7 @@
 		*@param skinIndex 皮肤的索引
 		*/
 		__proto.showSkinByIndex=function(boneSlotDic,skinIndex){
-			if (skinIndex < 0 && skinIndex >=this.skinDataArray.length)return;
+			if (skinIndex < 0 && skinIndex >=this.skinDataArray.length)return false;
 			var i=0,n=0;
 			var tBoneSlot;
 			var tSlotData;
@@ -1614,7 +2547,9 @@
 						}
 					}
 				}
+				return true;
 			}
+			return false;
 		}
 
 		/**
@@ -1656,9 +2591,19 @@
 		}
 
 		/**
-		*预留
+		*释放纹理
 		*/
 		__proto.destroy=function(){
+			var tTexture;
+			/*for each*/for(var $each_tTexture in this.subTextureDic){
+				tTexture=this.subTextureDic[$each_tTexture];
+				tTexture.destroy();
+			}
+			var $each_tTexture;
+			/*for each*/for($each_tTexture in this._textureDic){
+				tTexture=this._textureDic[$each_tTexture];
+				tTexture.destroy();
+			}
 			if (this.url){
 				delete Templet.TEMPLET_DICTIONARY[this.url];
 			}
@@ -1715,9 +2660,12 @@
 			this._loadAniMode=0;
 			this._yReverseMatrix=null;
 			this._ikArr=null;
+			this._tfArr=null;
+			this._pathDic=null;
 			this._rootBone=null;
 			this._boneList=null;
 			this._aniSectionDic=null;
+			this._eventIndex=0;
 			Skeleton.__super.call(this);
 			(aniMode===void 0)&& (aniMode=0);
 			if (templet)this.init(templet,aniMode);
@@ -1735,9 +2683,10 @@
 		*/
 		__proto.init=function(templet,aniMode){
 			(aniMode===void 0)&& (aniMode=0);
+			var i=0,n=0;
 			if (aniMode==1){
 				this._graphicsCache=[];
-				for (var i=0,n=templet.getAnimationCount();i < n;i++){
+				for (i=0,n=templet.getAnimationCount();i < n;i++){
 					this._graphicsCache.push([]);
 				}
 			}
@@ -1748,10 +2697,37 @@
 			this._player.templet=templet;
 			this._player.play();
 			this._parseSrcBoneMatrix();
-			this._ikArr=templet.ikArr;
 			this._boneList=templet.mBoneArr;
 			this._rootBone=templet.mRootBone;
 			this._aniSectionDic=templet.aniSectionDic;
+			if (templet.ikArr.length > 0){
+				this._ikArr=[];
+				for (i=0,n=templet.ikArr.length;i < n;i++){
+					this._ikArr.push(new IkConstraint(templet.ikArr[i],this._boneList));
+				}
+			}
+			if (templet.pathArr.length > 0){
+				var tPathData;
+				var tPathConstraint;
+				if (this._pathDic==null)this._pathDic={};
+				var tBoneSlot;
+				for (i=0,n=templet.pathArr.length;i < n;i++){
+					tPathData=templet.pathArr[i];
+					tPathConstraint=new PathConstraint(tPathData,this._boneList);
+					tBoneSlot=this._boneSlotDic[tPathData.name];
+					if (tBoneSlot){
+						tPathConstraint=new PathConstraint(tPathData,this._boneList);
+						tPathConstraint.target=tBoneSlot;
+					}
+					this._pathDic[tPathData.name]=tPathConstraint;
+				}
+			}
+			if (templet.tfArr.length > 0){
+				this._tfArr=[];
+				for (i=0,n=templet.tfArr.length;i < n;i++){
+					this._tfArr.push(new TfConstraint(templet.tfArr[i],this._boneList));
+				}
+			}
 			this._player.on(/*laya.events.Event.PLAYED*/"played",this,this._onPlay);
 			this._player.on(/*laya.events.Event.STOPPED*/"stopped",this,this._onStop);
 			this._player.on(/*laya.events.Event.PAUSED*/"paused",this,this._onPause);
@@ -1827,6 +2803,16 @@
 		*/
 		__proto._onStop=function(){
 			this.event(/*laya.events.Event.STOPPED*/"stopped");
+			var tEventData;
+			var tEventAniArr=this._templet.eventAniArr;
+			var tEventArr=tEventAniArr[this._aniClipIndex];
+			if (tEventArr && this._eventIndex < tEventArr.length){
+				for (;this._eventIndex < tEventArr.length;this._eventIndex++){
+					tEventData=tEventArr[this._eventIndex];
+					this.event(/*laya.events.Event.LABEL*/"label",tEventData);
+				}
+			}
+			this._eventIndex=0;
 		}
 
 		/**
@@ -1886,6 +2872,16 @@
 			this._lastTime=tCurrTime;
 			this._aniClipIndex=this._player.currentAnimationClipIndex;
 			this._clipIndex=this._player.currentKeyframeIndex;
+			var tEventData;
+			var tEventAniArr=this._templet.eventAniArr;
+			var tEventArr=tEventAniArr[this._aniClipIndex];
+			if (tEventArr && this._eventIndex < tEventArr.length){
+				tEventData=tEventArr[this._eventIndex];
+				if (this._player.currentPlayTime > tEventData.time){
+					this.event(/*laya.events.Event.LABEL*/"label",tEventData);
+					this._eventIndex++;
+				}
+			}
 			if (this._aniClipIndex==-1)return;
 			var tGraphics;
 			if (this._aniMode==0){
@@ -1908,11 +2904,21 @@
 		*创建grahics图像
 		*/
 		__proto._createGraphics=function(){
+			var tGraphics;
+			if (this._aniMode==0 || this._aniMode==1){
+				this.graphics=new GraphicsAni();
+				}else {
+				if ((this.graphics instanceof laya.ani.GraphicsAni )){
+					this.graphics.clear();
+					}else {
+					this.graphics=new GraphicsAni();
+				}
+			}
+			tGraphics=this.graphics;
 			var bones=this._templet.getNodes(this._aniClipIndex);
 			this._templet.getOriginalData(this._aniClipIndex,this._curOriginalData,this._clipIndex,this._player.currentFrameTime);
 			var tSectionArr=this._aniSectionDic[this._aniClipIndex];
 			var tParentMatrix;
-			var tResultMatrix;
 			var tStartIndex=0;
 			var i=0,j=0,k=0,n=0;
 			var tDBBoneSlot;
@@ -1922,7 +2928,6 @@
 			var boneCount=this._templet.srcBoneMatrixArr.length;
 			for (i=0,n=tSectionArr[0];i < boneCount;i++){
 				tSrcBone=this._boneList[i];
-				tResultMatrix=this._boneMatrixArray[i];
 				tParentTransform=this._templet.srcBoneMatrixArr[i];
 				tSrcBone.resultTransform.scX=tParentTransform.scX *this._curOriginalData[tStartIndex++];
 				tSrcBone.resultTransform.skX=tParentTransform.skX+this._curOriginalData[tStartIndex++];
@@ -1953,33 +2958,58 @@
 				this._curOriginalData[tStartIndex++];
 				this._curOriginalData[tStartIndex++];
 			}
+			if (this._pathDic){
+				var tPathConstraint;
+				for (n+=tSectionArr[3];i < n;i++){
+					tBoneData=bones[i];
+					tPathConstraint=this._pathDic[tBoneData.name];
+					if (tPathConstraint){
+						var tByte=new Byte(tBoneData.extenData);
+						switch(tByte.getByte()){
+							case 1:
+								tPathConstraint.position=this._curOriginalData[tStartIndex++];
+								break ;
+							case 2:
+								tPathConstraint.spacing=this._curOriginalData[tStartIndex++];
+								break ;
+							case 3:
+								tPathConstraint.rotateMix=this._curOriginalData[tStartIndex++];
+								tPathConstraint.translateMix=this._curOriginalData[tStartIndex++];
+								break ;
+							}
+					}
+				}
+			}
 			if (this._yReverseMatrix){
 				this._rootBone.update(this._yReverseMatrix);
 				}else {
 				this._rootBone.update(Matrix.TEMP.identity());
-			};
-			var tIkConstraintData;
-			var tTargetBone;
-			var tParentBone;
-			var tChildBone;
-			for (i=0,n=this._ikArr.length;i < n;i++){
-				tIkConstraintData=this._ikArr[i];
-				tTargetBone=this._boneList[tIkConstraintData.targetBoneIndex];
-				switch(tIkConstraintData.boneIndexs.length){
-					case 1:
-						tChildBone=this._boneList[tIkConstraintData.boneIndexs[0]];
-						this._applyIk1(tChildBone,tTargetBone.resultMatrix.tx,tTargetBone.resultMatrix.ty,tIkConstraintData.mix);
-						break ;
-					case 2:
-						tParentBone=this._boneList[tIkConstraintData.boneIndexs[0]];
-						tChildBone=this._boneList[tIkConstraintData.boneIndexs[1]];
-						if (tBendDirectionDic[tIkConstraintData.name]){
-							this._applyIk2(tParentBone,tChildBone,tTargetBone.resultMatrix.tx,tTargetBone.resultMatrix.ty,tBendDirectionDic[tIkConstraintData.name],tMixDic[tIkConstraintData.name]);
-							}else {
-							this._applyIk2(tParentBone,tChildBone,tTargetBone.resultMatrix.tx,tTargetBone.resultMatrix.ty,tIkConstraintData.bendDirection,tIkConstraintData.mix);
-						}
-						break ;
+			}
+			if (this._ikArr){
+				var tIkConstraint;
+				for (i=0,n=this._ikArr.length;i < n;i++){
+					tIkConstraint=this._ikArr[i];
+					if (tBendDirectionDic.hasOwnProperty(tIkConstraint.name)){
+						tIkConstraint.bendDirection=tBendDirectionDic[tIkConstraint.name];
 					}
+					if (tMixDic.hasOwnProperty(tIkConstraint.name)){
+						tIkConstraint.mix=tMixDic[tIkConstraint.name]
+					}
+					tIkConstraint.apply();
+				}
+			}
+			if (this._pathDic){
+				for (var tPathStr in this._pathDic){
+					tPathConstraint=this._pathDic[tPathStr];
+					tPathConstraint.apply(this._boneList,tGraphics);
+				}
+			}
+			if (this._tfArr){
+				var tTfConstraint;
+				for (i=0,k=this._tfArr.length;i < k;i++){
+					tTfConstraint=this._tfArr[i];
+					tTfConstraint.apply();
+				}
 			}
 			for (i=0,k=this._boneList.length;i < k;i++){
 				tSrcBone=this._boneList[i];
@@ -1994,17 +3024,6 @@
 					}
 				}
 			};
-			var tGraphics;
-			if (this._aniMode==0 || this._aniMode==1){
-				this.graphics=new GraphicsAni();
-				}else {
-				if ((this.graphics instanceof laya.ani.GraphicsAni )){
-					this.graphics.clear();
-					}else {
-					this.graphics=new GraphicsAni();
-				}
-			}
-			tGraphics=this.graphics;
 			var tSlotData2=NaN;
 			var tSlotData3=NaN;
 			for (i=0,n=this._boneSlotArray.length;i < n;i++){
@@ -2018,7 +3037,7 @@
 				if (!isNaN(tSlotData2)){
 					tDBBoneSlot.showDisplayByIndex(tSlotData2);
 				}
-				tDBBoneSlot.draw(tGraphics,this._boneMatrixArray,this,this._aniMode==2);
+				tDBBoneSlot.draw(tGraphics,this._boneMatrixArray,this._aniMode==2);
 				if (!isNaN(tSlotData3)){
 					tGraphics.restore();
 				}
@@ -2028,167 +3047,6 @@
 				}else if (this._aniMode==1){
 				this._setGrahicsDataWithCache(this._aniClipIndex,this._clipIndex,tGraphics);
 			}
-		}
-
-		__proto._applyIk1=function(bone,targetX,targetY,alpha){
-			var pp=bone._parent;
-			var id=1 / (pp.resultMatrix.a *pp.resultMatrix.d-pp.resultMatrix.b *pp.resultMatrix.c);
-			var x=targetX-pp.resultMatrix.tx;
-			var y=targetY-pp.resultMatrix.ty;
-			var tx=(x *pp.resultMatrix.d-y *pp.resultMatrix.b)*id-bone.transform.x;
-			var ty=(y *pp.resultMatrix.a-x *pp.resultMatrix.c)*id-bone.transform.y;
-			var rotationIK=Math.atan2(ty,tx)*Skeleton.radDeg-0-bone.transform.skX;
-			if (bone.transform.scX < 0)rotationIK+=180;
-			if (rotationIK > 180)
-				rotationIK-=360;
-			else if (rotationIK <-180)rotationIK+=360;
-			bone.transform.skX=bone.transform.skY=bone.transform.skX+rotationIK *alpha;
-			bone.update();
-		}
-
-		__proto._applyIk2=function(parent,child,targetX,targetY,bendDir,alpha){
-			if (alpha==0){
-				return;
-			};
-			var px=parent.resultTransform.x,py=parent.resultTransform.y;
-			var psx=parent.resultTransform.scX,psy=parent.resultTransform.scY;
-			var csx=child.resultTransform.scX;
-			var os1=0,os2=0,s2=0;
-			if (psx < 0){
-				psx=-psx;
-				os1=180;
-				s2=-1;
-				}else {
-				os1=0;
-				s2=1;
-			}
-			if (psy < 0){
-				psy=-psy;
-				s2=-s2;
-			}
-			if (csx < 0){
-				csx=-csx;
-				os2=180;
-				}else {
-				os2=0
-			};
-			var cx=child.resultTransform.x,cy=NaN,cwx=NaN,cwy=NaN;
-			var a=parent.resultMatrix.a,b=parent.resultMatrix.b;
-			var c=parent.resultMatrix.c,d=parent.resultMatrix.d;
-			var u=Math.abs(psx-psy)<=0.0001;
-			if (!u){
-				cy=0;
-				cwx=a *cx+parent.resultMatrix.tx;
-				cwy=c *cx+parent.resultMatrix.ty;
-				}else {
-				cy=child.resultTransform.y;
-				cwx=a *cx+b *cy+parent.resultMatrix.tx;
-				cwy=c *cx+d *cy+parent.resultMatrix.ty;
-			};
-			var pp=parent._parent;
-			a=pp.resultMatrix.a;
-			b=pp.resultMatrix.b;
-			c=pp.resultMatrix.c;
-			d=pp.resultMatrix.d;
-			var id=1 / (a *d-b *c);
-			var x=targetX-pp.resultMatrix.tx,y=targetY-pp.resultMatrix.ty;
-			var tx=(x *d-y *b)*id-px;
-			var ty=(y *a-x *c)*id-py;
-			x=cwx-pp.resultMatrix.tx;
-			y=cwy-pp.resultMatrix.ty;
-			var dx=(x *d-y *b)*id-px;
-			var dy=(y *a-x *c)*id-py;
-			var l1=Math.sqrt(dx *dx+dy *dy);
-			var l2=child.length *csx;
-			var a1=NaN,a2=NaN;
-			if (u){
-				l2 *=psx;
-				var cos=(tx *tx+ty *ty-l1 *l1-l2 *l2)/ (2 *l1 *l2);
-				if (cos <-1)
-					cos=-1;
-				else if (cos > 1)cos=1;
-				a2=Math.acos(cos)*bendDir;
-				a=l1+l2 *cos;
-				b=l2 *Math.sin(a2);
-				a1=Math.atan2(ty *a-tx *b,tx *a+ty *b);
-				}else {
-				a=psx *l2;
-				b=psy *l2;
-				var aa=a *a,bb=b *b,dd=tx *tx+ty *ty,ta=Math.atan2(ty,tx);
-				c=bb *l1 *l1+aa *dd-aa *bb;
-				var c1=-2 *bb *l1,c2=bb-aa;
-				d=c1 *c1-4 *c2 *c;
-				if (d > 0){
-					var q=Math.sqrt(d);
-					if (c1 < 0)q=-q;
-					q=-(c1+q)/ 2;
-					var r0=q / c2,r1=c / q;
-					var r=Math.abs(r0)< Math.abs(r1)?r0:r1;
-					if (r *r <=dd){
-						y=Math.sqrt(dd-r *r)*bendDir;
-						a1=ta-Math.atan2(y,r);
-						a2=Math.atan2(y / psy,(r-l1)/ psx);
-					}
-				};
-				var minAngle=0,minDist=Number.MAX_VALUE,minX=0,minY=0;
-				var maxAngle=0,maxDist=0,maxX=0,maxY=0;
-				x=l1+a;
-				d=x *x;
-				if (d > maxDist){
-					maxAngle=0;
-					maxDist=d;
-					maxX=x;
-				}
-				x=l1-a;
-				d=x *x;
-				if (d < minDist){
-					minAngle=Math.PI;
-					minDist=d;
-					minX=x;
-				};
-				var angle=Math.acos(-a *l1 / (aa-bb));
-				x=a *Math.cos(angle)+l1;
-				y=b *Math.sin(angle);
-				d=x *x+y *y;
-				if (d < minDist){
-					minAngle=angle;
-					minDist=d;
-					minX=x;
-					minY=y;
-				}
-				if (d > maxDist){
-					maxAngle=angle;
-					maxDist=d;
-					maxX=x;
-					maxY=y;
-				}
-				if (dd <=(minDist+maxDist)/ 2){
-					a1=ta-Math.atan2(minY *bendDir,minX);
-					a2=minAngle *bendDir;
-					}else {
-					a1=ta-Math.atan2(maxY *bendDir,maxX);
-					a2=maxAngle *bendDir;
-				}
-			};
-			var os=Math.atan2(cy,cx)*s2;
-			var rotation=parent.transform.skX;
-			a1=(a1-os)*Skeleton.radDeg+os1-rotation;
-			if (a1 > 180)
-				a1-=360;
-			else if (a1 <-180)a1+=360;
-			parent.resultTransform.x=px;
-			parent.resultTransform.y=py;
-			parent.resultTransform.skX=parent.resultTransform.skY=rotation+a1 *alpha;
-			rotation=child.transform.skX;
-			rotation=rotation % 360;
-			a2=((a2+os)*Skeleton.radDeg-0)*s2+os2-rotation;
-			if (a2 > 180)
-				a2-=360;
-			else if (a2 <-180)a2+=360;
-			child.resultTransform.x=cx;
-			child.resultTransform.y=cy;
-			child.resultTransform.skX=child.resultTransform.skY=child.resultTransform.skY+a2 *alpha;
-			parent.update();
 		}
 
 		/**
@@ -2221,8 +3079,7 @@
 		*@param name 皮肤的名字
 		*/
 		__proto.showSkinByName=function(name){
-			this._skinIndex=this._templet.getSkinIndexByName(name);
-			this.showSkinByIndex(this._skinIndex);
+			this.showSkinByIndex(this._templet.getSkinIndexByName(name));
 		}
 
 		/**
@@ -2230,8 +3087,9 @@
 		*@param skinIndex 皮肤索引
 		*/
 		__proto.showSkinByIndex=function(skinIndex){
-			this._skinIndex=skinIndex;
-			this._templet.showSkinByIndex(this._boneSlotDic,skinIndex);
+			if (this._templet.showSkinByIndex(this._boneSlotDic,skinIndex)){
+				this._skinIndex=skinIndex;
+			}
 			this._clearCache();
 		}
 
@@ -2454,9 +3312,6 @@
 			return this._total;
 		});
 
-		__static(Skeleton,
-		['radDeg',function(){return this.radDeg=180 / Math.PI;},'degRad',function(){return this.degRad=Math.PI / 180;}
-		]);
 		return Skeleton;
 	})(Sprite)
 
@@ -2483,6 +3338,9 @@
 			this._movieClipList=null;
 			this._labels=null;
 			this.basePath=null;
+			this._atlasPath=null;
+			this._url=null;
+			this._isRoot=false;
 			this.interval=30;
 			this.loop=false;
 			MovieClip.__super.call(this);
@@ -2493,9 +3351,9 @@
 			this._parentMovieClip=parentMovieClip;
 			if (!parentMovieClip){
 				this._movieClipList=[this];
-				this.on(/*laya.events.Event.DISPLAY*/"display",this,this._$3__onDisplay);
-				this.on(/*laya.events.Event.UNDISPLAY*/"undisplay",this,this._$3__onDisplay);
+				this._isRoot=true;
 				}else {
+				this._isRoot=false;
 				this._movieClipList=parentMovieClip._movieClipList;
 				this._movieClipList.push(this);
 			}
@@ -2511,6 +3369,14 @@
 			(destroyChild===void 0)&& (destroyChild=true);
 			this._clear();
 			_super.prototype.destroy.call(this,destroyChild);
+		}
+
+		/**@private */
+		__proto._setDisplay=function(value){
+			_super.prototype._setDisplay.call(this,value);
+			if (this._isRoot){
+				this._$3__onDisplay();
+			}
 		}
 
 		/**@private */
@@ -2765,23 +3631,29 @@
 		/**
 		*加载资源。
 		*@param url swf 资源地址。
+		*@param atlas 是否使用图集资源
+		*@param atlasPath 图集路径，默认使用与swf同名的图集
 		*/
-		__proto.load=function(url){
-			url=URL.formatURL(url);
-			this.basePath=url.split(".swf")[0]+"/image/";
+		__proto.load=function(url,atlas,atlasPath){
+			(atlas===void 0)&& (atlas=false);
+			this._url=url=URL.formatURL(url);
+			if(atlas)this._atlasPath=atlasPath?atlasPath:url.split(".swf")[0]+".json";
 			this.stop();
 			this._clear();
 			this._movieClipList=[this];
-			var data=Loader.getRes(url);
-			if (data){
-				this._initData(data);
-				}else {
-				Laya.loader.load(url,Handler.create(this,this._onLoaded),null,/*laya.net.Loader.BUFFER*/"arraybuffer");
+			var urls;
+			urls=[ {url:url,type:/*laya.net.Loader.BUFFER*/"arraybuffer" }];
+			if (this._atlasPath){
+				urls.push({url:this._atlasPath,type:/*laya.net.Loader.ATLAS*/"atlas" });
 			}
+			Laya.loader.load(urls,Handler.create(this,this._onLoaded));
 		}
 
 		/**@private */
-		__proto._onLoaded=function(data){
+		__proto._onLoaded=function(){
+			this.basePath=this._atlasPath?Loader.getAtlas(this._atlasPath).dir:this._url.split(".swf")[0]+"/image/";
+			var data;
+			data=Loader.getRes(this._url);
 			if (!data)return;
 			this._initData(data);
 		}

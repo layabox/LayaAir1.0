@@ -17,7 +17,7 @@ scene.currentCamera.transform.translate(new Laya.Vector3(0, 4.2, 2.6));
 scene.currentCamera.transform.rotate(new Laya.Vector3(-45, 0, 0), true, false);
 
 var terrain = Laya.Mesh.load("../../res/threeDimen/staticModel/simpleScene/B00MP001M-DEFAULT01.lm");
-var terrainSprite = scene.addChild(new Laya.MeshTerrainSprite3D(terrain, 129, 129));
+var terrainSprite = scene.addChild(Laya.MeshTerrainSprite3D.createFromMesh(terrain, 129, 129));
 terrainSprite.transform.localScale = new Laya.Vector3(10, 10, 10);
 terrainSprite.transform.position = new Laya.Vector3(0, 2.6, 1.5);
 terrainSprite.transform.rotationEuler = new Laya.Vector3(0, 0.3, 0.4);

@@ -5,6 +5,7 @@ package laya.ani.bone {
 	import laya.display.Sprite;
 	import laya.maths.Matrix;
 	import laya.renders.Render;
+	import laya.resource.Bitmap;
 	import laya.resource.Texture;
 	import laya.utils.RunDriver;
 	
@@ -40,7 +41,6 @@ package laya.ani.bone {
 		private var _parentMatrix:Matrix;
 		private var _resultMatrix:Matrix;//只有不使用缓冲时才使用
 		
-
 		/**
 		 * 设置要显示的插槽数据
 		 * @param	slotData
@@ -77,6 +77,7 @@ package laya.ani.bone {
 					{
 						//这里的问题是什么时候销毁
 						currTexture = new Texture(currTexture.bitmap, currDisplayData.uvs);
+						(currTexture.bitmap as Bitmap).useNum --;
 					}
 				}
 			} else {
@@ -107,7 +108,7 @@ package laya.ani.bone {
 		 * @param	graphics
 		 * @param	noUseSave
 		 */
-		public function draw(graphics:GraphicsAni, boneMatrixArray:Array, sprite:Sprite, noUseSave:Boolean = false):void {
+		public function draw(graphics:GraphicsAni, boneMatrixArray:Array, noUseSave:Boolean = false):void {
 			if ((_diyTexture == null && currTexture == null) || currDisplayData == null) {
 				if (!(currDisplayData && currDisplayData.type == 3))
 				{
@@ -220,82 +221,8 @@ package laya.ani.bone {
 					skinMesh(boneMatrixArray,tSkinSprite);
 					break;
 				case 3:
-					//drawPath(boneMatrixArray, graphics);
 					break;
 			}
-		}
-		
-		/**
-		 * 画路径
-		 * @param	boneMatrixArray
-		 * @param	graphics
-		 */
-		private function drawPath(boneMatrixArray:Array,graphics:Graphics):void
-		{
-			var tBones:Array = currDisplayData.bones;
-			var tWeights:Array = currDisplayData.weights;
-			var tTriangles:Array = currDisplayData.triangles;
-			var tVBArray:Array = [];
-			var tIBArray:Array = [];
-			var tRx:Number = 0;
-			var tRy:Number = 0;
-			var nn:int = 0;
-			var tMatrix:Matrix;
-			var tX:Number;
-			var tY:Number;
-			var tB:Number = 0;
-			var tWeight:Number = 0;
-			var tVertices:Vector.<Number> = new Vector.<Number>();
-			var i:int = 0, j:int = 0, n:int = 0;
-			var tRed:Number = 1;
-			var tGreed:Number = 1;
-			var tBlue:Number = 1;
-			var tAlpha:Number = 1;
-			for (i = 0, n = tBones.length; i < n;)
-			{
-				nn = tBones[i++] + i;
-				tRx = 0, tRy = 0;
-				for (; i < nn; i++)
-				{
-					tMatrix = boneMatrixArray[tBones[i]]
-					tX = tWeights[tB];
-					tY = tWeights[tB + 1];
-					tWeight = tWeights[tB + 2];
-					tRx += (tX * tMatrix.a + tY * tMatrix.c + tMatrix.tx) * tWeight;
-					tRy += (tX * tMatrix.b + tY * tMatrix.d + tMatrix.ty) * tWeight;
-					tB += 3;
-				}
-				tVertices.push(tRx, tRy);
-			}
-			for (i = 0; i < tVertices.length; )
-			{
-				tRx = tVertices[i++];
-				tRy = tVertices[i++];
-				graphics.drawCircle(tRx,tRy,2.5,"#ff0000");
-				tVBArray.push(tRx, tRy);
-			}
-			
-			var tNum:int = 10;
-			var tOut:Vector.<Number> = new Vector.<Number>();
-			for (var i:int = 0; i < tNum; i++)
-			{
-				addCurvePosition(i / tNum, tVertices[0], tVertices[1], tVertices[2], tVertices[3], tVertices[4], tVertices[5], tVertices[6], tVertices[7], tOut, i * 3, true);
-			}
-			for (i = 0; i < tNum; i++)
-			{
-				graphics.drawCircle(tOut[i * 3],tOut[i*3+1],2.5,"#00ff00");
-			}
-		}
-		
-		private function addCurvePosition (p:Number, x1:Number, y1:Number, cx1:Number, cy1:Number, cx2:Number, cy2:Number, x2:Number, y2:Number,
-			out:Vector.<Number>, o:int, tangents:Boolean) : void {
-			if (p == 0) p = 0.0001;
-			var tt:Number = p * p, ttt:Number = tt * p, u:Number = 1 - p, uu:Number = u * u, uuu:Number = uu * u;
-			var ut:Number = u * p, ut3:Number = ut * 3, uut3:Number = u * ut3, utt3:Number = ut3 * p;
-			var x:Number = x1 * uuu + cx1 * uut3 + cx2 * utt3 + x2 * ttt, y:Number = y1 * uuu + cy1 * uut3 + cy2 * utt3 + y2 * ttt;
-			out[o] = x;
-			out[o + 1] = y;
-			if (tangents) out[o + 2] = Math.atan2(y - (y1 * uu + cy1 * ut * 2 + cy2 * tt), x - (x1 * uu + cx1 * ut * 2 + cx2 * tt));
 		}
 		
 		/**

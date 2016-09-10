@@ -291,14 +291,26 @@ package laya.d3.math {
 		 */
 		public static function createPerspective(fov:Number, aspect:Number, near:Number, far:Number, out:Matrix4x4):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			//var oe:Float32Array = out.elements;
+			//
+			//var f:Number = 1.0 / Math.tan(fov / 2), nf:Number = 1 / (near - far);
+			//oe[0] = f / aspect;
+			//oe[5] = f;
+			//oe[10] = (far + near) * nf;
+			//oe[11] = -1;
+			//oe[14] = (2 * far * near) * nf;
+			//oe[1] = oe[2] = oe[3] = oe[4] = oe[6] = oe[7] = oe[8] = oe[9] = oe[12] = oe[13] = oe[15] = 0;
+			
 			var oe:Float32Array = out.elements;
 			
-			var f:Number = 1.0 / Math.tan(fov / 2), nf:Number = 1 / (near - far);
-			oe[0] = f / aspect;
-			oe[5] = f;
-			oe[10] = (far + near) * nf;
-			oe[11] = -1;
-			oe[14] = (2 * far * near) * nf;
+            var yScale:Number = 1.0 / Math.tan(fov * 0.5);
+            var q:Number = far / (near - far);
+
+            oe[0] = yScale / aspect;
+            oe[5] = yScale;
+            oe[10] = q;
+            oe[11] = -1.0;
+            oe[14] = q * near;
 			oe[1] = oe[2] = oe[3] = oe[4] = oe[6] = oe[7] = oe[8] = oe[9] = oe[12] = oe[13] = oe[15] = 0;
 		}
 		

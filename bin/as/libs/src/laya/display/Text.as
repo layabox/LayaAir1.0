@@ -150,7 +150,7 @@ package laya.display {
 		/**
 		 * 下划线的颜色，为null则使用字体颜色。
 		 */
-		public var underlineColor:String = null;
+		private var _underlineColor:String = null;
 		
 		/**
 		 * 创建一个新的 <code>Text</code> 实例。
@@ -482,21 +482,7 @@ package laya.display {
 			_getCSSStyle().borderColor = value;
 			isChanged = true;
 		}
-		
-		/**
-		 * <p>指定文本字段是否是密码文本字段。</p>
-		 * <p>如果此属性的值为 true，则文本字段被视为密码文本字段，并使用星号而不是实际字符来隐藏输入的字符。如果为 false，则不会将文本字段视为密码文本字段。</p>
-		 * <p>默认值为false。</p>
-		 */
-		public function get asPassword():Boolean {
-			return _getCSSStyle().password;
-		}
-		
-		public function set asPassword(value:Boolean):void {
-			_getCSSStyle().password = value;
-			isChanged = true;
-		}
-		
+
 		/**
 		 * <p>描边宽度（以像素为单位）。</p>
 		 * 默认值0，表示不描边。
@@ -615,7 +601,7 @@ package laya.display {
 					var len:int = word.length;
 					word = "";
 					for (var j:int = len; j > 0; j--) {
-						word += "·";
+						word += "●";
 					}
 				}
 				x = startX - (_clipPoint ? _clipPoint.x : 0);
@@ -991,6 +977,18 @@ package laya.display {
 		
 		public function get lines():Array {
 			return _lines;
+		}
+		
+		public function get underlineColor():String 
+		{
+			return _underlineColor;
+		}
+		
+		public function set underlineColor(value:String):void 
+		{
+			_underlineColor = value;
+			_isChanged = true;
+			typeset();
 		}
 	}
 }

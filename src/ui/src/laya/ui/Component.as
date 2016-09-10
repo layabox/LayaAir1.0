@@ -358,7 +358,7 @@ package laya.ui {
 				_layout.enable = value;
 				if (this.parent) {
 					onAdded();
-				}else if (!hasListener(Event.ADDED)) {
+				}else {
 					on(Event.ADDED, this, onAdded);
 					on(Event.REMOVED, this, onRemoved);
 				}

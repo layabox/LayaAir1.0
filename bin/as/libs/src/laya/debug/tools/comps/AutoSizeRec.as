@@ -16,7 +16,7 @@ package laya.debug.tools.comps
 		public var type:int;
 		public function AutoSizeRec(type:String) 
 		{
-			super(type);
+			
 		}
 		
 		override public function set height(value:Number):void

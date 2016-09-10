@@ -12,9 +12,6 @@ package laya.d3.core.render {
 		function get triangleCount():int;
 		function get VertexBufferCount():int;
 		
-		function getBakedVertexs(index:int, transform:Matrix4x4):Float32Array;
-		function getBakedIndices():*;
-		
 		function getVertexBuffer(index:int = 0):VertexBuffer3D;
 		function getIndexBuffer():IndexBuffer3D;
 		function _render(state:RenderState):Boolean;

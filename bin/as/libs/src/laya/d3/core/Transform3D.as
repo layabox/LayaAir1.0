@@ -9,7 +9,7 @@ package laya.d3.core {
 	/**
 	 * <code>Transform3D</code> 类用于实现3D变换。
 	 */
-	public class Transform3D extends EventDispatcher{
+	public class Transform3D extends EventDispatcher {
 		/** @private */
 		protected var _tempMatrix0:Matrix4x4 = new Matrix4x4();
 		/** @private */
@@ -53,7 +53,7 @@ package laya.d3.core {
 		/** @private */
 		protected var _worldUpdate:Boolean = true;
 		/** @private */
-		public var _parent:Transform3D;
+		protected var _parent:Transform3D;
 		
 		/**
 		 * 获取世界矩阵是否需要更新。
@@ -300,6 +300,15 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * 设置父3D变换。
+		 * @param	value 父3D变换。
+		 */
+		public function set parent(value:Transform3D):void {
+			_parent = value;
+			_onWorldTransform();
+		}
+		
+		/**
 		 * 创建一个 <code>Transform3D</code> 实例。
 		 * @param owner 所属精灵。
 		 */
@@ -324,14 +333,14 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		public function _onWorldTransform():void {
+		protected function _onWorldTransform():void {
 			if (!_worldUpdate) {
 				_worldUpdate = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
 				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
 					(_owner._childs[i] as Sprite3D).transform._onWorldTransform();
 			}
-		   
+		
 		}
 		
 		/**
@@ -375,26 +384,6 @@ package laya.d3.core {
 				this.rotation = _rotation;
 			}
 		}
-	
-		///**
-		//* 获得世界变换矩阵。
-		//* @param 	transformModifyID 变换标识id。
-		//* @return 	世界变换矩阵。
-		//*/
-		//public function _getWorldMatrix(transformModifyID:Number):Matrix4x4 {
-		//if (transformModifyID === -2 || (transformModifyID >= 0 && _preWorldTransformModifyID === transformModifyID)) {
-		//return _worldMatrix;
-		//}
-		//
-		//if (_parent != null)
-		//Matrix4x4.multiply(_parent._getWorldMatrix(transformModifyID === -1 ? -1 : -2), localMatrix, _worldMatrix);
-		//else
-		//localMatrix.cloneTo(_worldMatrix);
-		//
-		//transformModifyID >= 0 && (_preWorldTransformModifyID = transformModifyID);
-		//return _worldMatrix;
-		//}
-	
 	}
 
 }

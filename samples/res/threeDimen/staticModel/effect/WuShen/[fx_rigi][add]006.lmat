@@ -3,7 +3,8 @@
     "props":
     {
         "name": "[fx_rigi][add]006",
-        "renderMode": 8
+        "transparent": true,
+        "cullFace": false
     },
     "customProps":
     {

@@ -16,9 +16,9 @@
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
     <class path="src" />
-    <class path="R:\Repository\Lib-LayaAir\core\src" />
+    <class path="..\..\..\..\..\core\src" />
     <class path="..\..\..\..\..\plugins\device\src" />
-    <class path="R:\Repository\Lib-LayaAir\core\jsc" />
+    <class path="..\..\..\..\..\core\jsc" />
     <class path="..\..\..\..\..\ui\src" />
     <class path="..\..\..\..\..\plugins\flash\src" />
     <class path="..\..\..\..\..\webGL\src" />
@@ -81,7 +81,7 @@
   </library>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
-    <compile path="src\Text_InputSingleline.as" />
+    <compile path="src\Text_Restrict.as" />
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

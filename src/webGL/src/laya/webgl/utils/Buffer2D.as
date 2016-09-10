@@ -73,6 +73,11 @@ package laya.webgl.utils {
 		public static const ENDVELOCITY:String = "ENDVELOCITY";
 		//.........................................................................................................................
 		
+		//.........................................................................................................................
+		public static const INTENSITY:String = "INTENSITY";
+		public static const ALPHABLENDING:String = "ALPHABLENDING";
+		//.........................................................................................................................
+		
 		public static const FLOAT32:int = 4;
 		public static const SHORT:int = 2;
 		

@@ -460,6 +460,7 @@ package laya.utils {
 		}
 		
 		/**
+		 * @private
 		 * 读取 UTF-8 字符串。
 		 * @return 读出的字符串。
 		 */
@@ -473,6 +474,15 @@ package laya.utils {
 		}
 		
 		/**
+		 * 读取 UTF-8 字符串。
+		 * @return 读出的字符串。
+		 */
+		public function getUTFString():String {
+			return readUTFString();
+		}
+		
+		/**
+		 * @private
 		 * 读字符串，必须是 writeUTFBytes 方法写入的字符串。
 		 * @param len 要读的buffer长度,默认将读取缓冲区全部数据。
 		 * @return 读取的字符串。
@@ -484,6 +494,15 @@ package laya.utils {
 		}
 		
 		/**
+		 * 读字符串，必须是 writeUTFBytes 方法写入的字符串。
+		 * @param len 要读的buffer长度,默认将读取缓冲区全部数据。
+		 * @return 读取的字符串。
+		 */
+		public function getUTFBytes(len:int = -1):String {
+			return readUTFBytes(len);
+		}
+		
+		/**
 		 * 在字节流中写入一个字节。
 		 * @param	value
 		 */
@@ -492,11 +511,20 @@ package laya.utils {
 			_d_.setInt8(this._pos_, value);
 			this._pos_ += 1;
 		}
+		
 		/**
+		 * @private
 		 * 在字节流中读一个字节。
 		 */
 		public function readByte():int {
 			return _d_.getInt8(_pos_++);
+		}
+		
+		/**
+		 * 在字节流中读一个字节。
+		 */
+		public function getByte():int {
+			return readByte();
 		}
 		
 		/**

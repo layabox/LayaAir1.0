@@ -136,6 +136,8 @@ package laya.events {
 		public static const RENDERQUEUE_CHANGED:String = "renderqueuechanged";
 		/**世界矩阵更新时触发。*/
 		public static const WORLDMATRIX_NEEDCHANGE:String = "worldmatrixneedchanged";
+		/**更换动作时触发。*/
+		public static const ANIMATION_CHANGED:String = "actionchanged";
 		
 		/** 事件类型。*/
 		public var type:String;

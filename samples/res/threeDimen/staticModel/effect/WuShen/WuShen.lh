@@ -2,7 +2,7 @@
     "type": "Sprite3D",
     "props":
     {
-        "name": "WuShen"
+        "name": "RootNode"
     },
     "customProps":
     {
@@ -29,193 +29,225 @@
     "child":
     [
         {
-            "type": "MeshSprite3D",
-            "instanceParams":
-            {
-                "loadPath": "WuShen-Plane03.lm"
-            },
+            "type": "Sprite3D",
             "props":
             {
-                "isStatic": false,
-                "name": "Plane03"
+                "name": "3_01"
             },
             "customProps":
             {
                 "translate":
                 [
-                    0.01707092,
-                    0.7213508,
-                    -0.06389999
+                    0.04336039,
+                    1.832231,
+                    -0.1623062
                 ],
                 "rotation":
                 [
-                    0.08719177,
-                    0.6026345,
-                    0.7752064,
-                    0.1681793
+                    -0.6330222,
+                    0.1116189,
+                    -0.1330222,
+                    0.7544065
                 ],
                 "scale":
                 [
-                    1.576325,
-                    1.576326,
-                    1.351448
+                    2.33453,
+                    2.334531,
+                    2.33453
                 ]
             },
             "child":
             [
-                
-            ]
-        },
-        {
-            "type": "MeshSprite3D",
-            "instanceParams":
-            {
-                "loadPath": "WuShen-Plane04.lm"
-            },
-            "props":
-            {
-                "isStatic": false,
-                "name": "Plane04"
-            },
-            "customProps":
-            {
-                "translate":
-                [
-                    -0.005638884,
-                    0.7065278,
-                    -0.008925024
-                ],
-                "rotation":
-                [
-                    0.4665872,
-                    0.4420688,
-                    0.6674168,
-                    -0.376067
-                ],
-                "scale":
-                [
-                    1.729581,
-                    1.729577,
-                    1.351449
-                ]
-            },
-            "child":
-            [
-                
-            ]
-        },
-        {
-            "type": "MeshSprite3D",
-            "instanceParams":
-            {
-                "loadPath": "WuShen-Plane05.lm"
-            },
-            "props":
-            {
-                "isStatic": false,
-                "name": "Plane05"
-            },
-            "customProps":
-            {
-                "translate":
-                [
-                    0.01707092,
-                    0.7213508,
-                    -0.06389999
-                ],
-                "rotation":
-                [
-                    -0.6412733,
-                    -0.04409692,
-                    -0.3107687,
-                    0.7001763
-                ],
-                "scale":
-                [
-                    1.535407,
-                    1.535408,
-                    1.351448
-                ]
-            },
-            "child":
-            [
-                
-            ]
-        },
-        {
-            "type": "MeshSprite3D",
-            "instanceParams":
-            {
-                "loadPath": "WuShen-Plane06.lm"
-            },
-            "props":
-            {
-                "isStatic": false,
-                "name": "Plane06"
-            },
-            "customProps":
-            {
-                "translate":
-                [
-                    0.01707092,
-                    0.7213508,
-                    -0.06389999
-                ],
-                "rotation":
-                [
-                    -0.5784675,
-                    -0.08653471,
-                    -0.3175242,
-                    0.7463682
-                ],
-                "scale":
-                [
-                    1.323543,
-                    1.32354,
-                    1.621737
-                ]
-            },
-            "child":
-            [
-                
-            ]
-        },
-        {
-            "type": "MeshSprite3D",
-            "instanceParams":
-            {
-                "loadPath": "WuShen-Plane07.lm"
-            },
-            "props":
-            {
-                "isStatic": false,
-                "name": "Plane07"
-            },
-            "customProps":
-            {
-                "translate":
-                [
-                    0.01707092,
-                    0.7213508,
-                    -0.06389999
-                ],
-                "rotation":
-                [
-                    -0.4929315,
-                    -0.2872351,
-                    -0.5173502,
-                    0.6378583
-                ],
-                "scale":
-                [
-                    1.535383,
-                    1.535432,
-                    1.351449
-                ]
-            },
-            "child":
-            [
-                
+                {
+                    "type": "MeshSprite3D",
+                    "instanceParams":
+                    {
+                        "loadPath": "wuShen-Plane04.lm"
+                    },
+                    "props":
+                    {
+                        "isStatic": false,
+                        "name": "Plane04"
+                    },
+                    "customProps":
+                    {
+                        "translate":
+                        [
+                            -0.01770261,
+                            -0.06300402,
+                            -0.0128606
+                        ],
+                        "rotation":
+                        [
+                            0.01936362,
+                            -0.01505258,
+                            -0.7853975,
+                            0.6185057
+                        ],
+                        "scale":
+                        [
+                            1.881806,
+                            1.881803,
+                            1.470394
+                        ]
+                    },
+                    "child":
+                    [
+                        
+                    ]
+                },
+                {
+                    "type": "MeshSprite3D",
+                    "instanceParams":
+                    {
+                        "loadPath": "wuShen-Plane05.lm"
+                    },
+                    "props":
+                    {
+                        "isStatic": false,
+                        "name": "Plane05"
+                    },
+                    "customProps":
+                    {
+                        "translate":
+                        [
+                            -2.980232e-08,
+                            -1.788139e-07,
+                            -4.768372e-07
+                        ],
+                        "rotation":
+                        [
+                            -6.558917e-09,
+                            3.838877e-08,
+                            -0.2407993,
+                            0.9705749
+                        ],
+                        "scale":
+                        [
+                            1.670543,
+                            1.670544,
+                            1.470394
+                        ]
+                    },
+                    "child":
+                    [
+                        
+                    ]
+                },
+                {
+                    "type": "MeshSprite3D",
+                    "instanceParams":
+                    {
+                        "loadPath": "wuShen-Plane06.lm"
+                    },
+                    "props":
+                    {
+                        "isStatic": false,
+                        "name": "Plane06"
+                    },
+                    "customProps":
+                    {
+                        "translate":
+                        [
+                            -2.980232e-08,
+                            -1.788139e-07,
+                            -4.768372e-07
+                        ],
+                        "rotation":
+                        [
+                            0.0830207,
+                            -0.02454036,
+                            -0.259605,
+                            0.9618267
+                        ],
+                        "scale":
+                        [
+                            1.440032,
+                            1.440029,
+                            1.764472
+                        ]
+                    },
+                    "child":
+                    [
+                        
+                    ]
+                },
+                {
+                    "type": "MeshSprite3D",
+                    "instanceParams":
+                    {
+                        "loadPath": "wuShen-Plane07.lm"
+                    },
+                    "props":
+                    {
+                        "isStatic": false,
+                        "name": "Plane07"
+                    },
+                    "customProps":
+                    {
+                        "translate":
+                        [
+                            -2.980232e-08,
+                            -1.788139e-07,
+                            -4.768372e-07
+                        ],
+                        "rotation":
+                        [
+                            0.1278624,
+                            -0.02596564,
+                            -0.5422895,
+                            0.8299994
+                        ],
+                        "scale":
+                        [
+                            1.670518,
+                            1.670571,
+                            1.470395
+                        ]
+                    },
+                    "child":
+                    [
+                        
+                    ]
+                },
+                {
+                    "type": "MeshSprite3D",
+                    "instanceParams":
+                    {
+                        "loadPath": "wuShen-Plane03.lm"
+                    },
+                    "props":
+                    {
+                        "isStatic": false,
+                        "name": "Plane03"
+                    },
+                    "customProps":
+                    {
+                        "translate":
+                        [
+                            -2.980232e-08,
+                            -1.788139e-07,
+                            -4.768372e-07
+                        ],
+                        "rotation":
+                        [
+                            0.0055477,
+                            -0.04326506,
+                            0.9984056,
+                            0.03582689
+                        ],
+                        "scale":
+                        [
+                            1.715062,
+                            1.715064,
+                            1.470394
+                        ]
+                    },
+                    "child":
+                    [
+                        
+                    ]
+                }
             ]
         }
     ]

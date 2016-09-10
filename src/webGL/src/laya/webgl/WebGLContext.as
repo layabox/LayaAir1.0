@@ -319,7 +319,7 @@ package laya.webgl
 		//潜在问题 WebGLContext为实例对象，以下渲染配置均属于实例对象，非静态
 		public static var _depthTest:Boolean = true;
 		public static var _depthMask:int = 1;
-		public static var _depthFunc:int = WebGLContext.LEQUAL; 
+		public static var _depthFunc:int = WebGLContext.LESS; 
 	
 		public static var _blend:Boolean = false;
 		public static var _sFactor:int =WebGLContext.ONE;//待确认
@@ -339,6 +339,11 @@ package laya.webgl
 		public static function setDepthMask(gl:WebGLContext, value:int):void
 		{
 			value !== _depthMask && (_depthMask=value, gl.depthMask(value));
+		}
+		
+		public static function setDepthFunc(gl:WebGLContext, value:int):void
+		{
+			value !== _depthFunc && (_depthFunc=value, gl.depthFunc(value));
 		}
 		
 		public static function setBlend(gl:WebGLContext, value:Boolean):void

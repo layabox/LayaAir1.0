@@ -39,8 +39,6 @@ package laya.d3.resource.models {
 		public var _bufferUsage:* = {};
 		/** @private */
 		public var _finalBufferUsageDic:*;
-		/** @private 是否烘焙*/
-		private var _isVertexbaked:Boolean;
 		/** @private */
 		public var _indexOfHost:int = 0;
 		
@@ -139,7 +137,6 @@ package laya.d3.resource.models {
 			if (ib === null) return false;
 			vb._bind();
 			ib._bind();
-			
 			if (material) {
 				var shader:Shader = _getShader(state, vb, material);
 				
@@ -223,32 +220,6 @@ package laya.d3.resource.models {
 			return _vb;
 		}
 		
-		public function getBakedVertexs(index:int, transform:Matrix4x4):Float32Array {
-			if (index === 0) {
-				
-				const byteSizeInFloat:int = 4;
-				var vb:VertexBuffer3D = _vb;
-				var bakedVertexes:Float32Array = vb.getData().slice() as Float32Array;//在红米2S微信中发现不支持slice();,好像能优化
-				
-				var vertexDeclaration:VertexDeclaration = vb.vertexDeclaration;
-				var positionOffset:int = vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / byteSizeInFloat;
-				var normalOffset:int = vertexDeclaration.shaderAttribute[VertexElementUsage.NORMAL0][4] / byteSizeInFloat;
-				for (var i:int = 0; i < bakedVertexes.length; i += vertexDeclaration.vertexStride / byteSizeInFloat) {
-					var posOffset:int = i + positionOffset;
-					var norOffset:int = i + normalOffset;
-					
-					Utils3D.transformVector3ArrayToVector3ArrayCoordinate(bakedVertexes, posOffset, transform, bakedVertexes, posOffset);
-					Utils3D.transformVector3ArrayToVector3ArrayCoordinate(bakedVertexes, normalOffset, transform, bakedVertexes, normalOffset);
-				}
-				_isVertexbaked = true;
-				return bakedVertexes;
-			} else
-				return null;
-		}
-		
-		public function getBakedIndices():* {
-			return _ib.getData();
-		}
 		
 		/**
 		 * <p>彻底清理资源。</p>

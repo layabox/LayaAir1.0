@@ -1,13 +1,15 @@
 package laya.d3.core {
 	import laya.d3.core.material.Material;
 	import laya.d3.core.render.IRenderable;
-	import laya.d3.core.render.RenderObject;
+	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.graphics.RenderCullingObject;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
+	import laya.display.Node;
 	import laya.events.Event;
 	import laya.utils.Stat;
 	
@@ -15,18 +17,10 @@ package laya.d3.core {
 	 * <code>MeshSprite3D</code> 类用于创建网格。
 	 */
 	public class MeshSprite3D extends Sprite3D {
-		/** @private */
-		private var _renderObjects:Vector.<RenderObject>;
-		
 		/** @private 网格数据模板。*/
 		private var _meshFilter:MeshFilter;
 		/** @private */
 		private var _meshRender:MeshRender;
-		
-		/** @private */
-		public var _iAsyncLodingMeshMaterial:Boolean;
-		/** @private */
-		public var _iAsyncLodingMeshMaterials:Boolean;
 		
 		/**
 		 * 获取网格过滤器。
@@ -51,59 +45,104 @@ package laya.d3.core {
 		 */
 		public function MeshSprite3D(mesh:BaseMesh, name:String = null) {
 			super(name);
-			_renderObjects = new Vector.<RenderObject>();
 			_meshFilter = new MeshFilter(this);
 			_meshRender = new MeshRender(this);
-		
+			
 			_meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
 			_meshRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
 			_meshFilter.sharedMesh = mesh;
-			
 			if (mesh is Mesh)//TODO:待考虑。
-				if (mesh.loaded) {
-					_iAsyncLodingMeshMaterial = _iAsyncLodingMeshMaterials = false;
+				if (mesh.loaded)
 					_meshRender.shadredMaterials = (mesh as Mesh).materials;
-				} else {
-					_iAsyncLodingMeshMaterial = _iAsyncLodingMeshMaterials = true;
-					mesh.once(Event.LOADED, this, _copyMaterials);
-				}
+				else
+					mesh.once(Event.LOADED, this, _applyMeshMaterials);
+		
+		}
+		
+		/** @private */
+		private function _applyMeshMaterials(mesh:Mesh):void {
+			var shaderMaterials:Vector.<Material> = _meshRender.shadredMaterials;
+			var meshMaterials:Vector.<Material> = mesh.materials;
+			for (var i:int = 0, n:int = meshMaterials.length; i < n; i++)
+				(shaderMaterials[i]) || (shaderMaterials[i] = meshMaterials[i]);
+			
+			_meshRender.shadredMaterials = shaderMaterials;
+		}
+		
+		/** @private */
+		private function _changeRenderObjectByMesh(index:int):RenderElement {
+			var renderObjects:Vector.<RenderElement> = _meshRender.renderCullingObject._renderElements;
+			
+			var renderElement:RenderElement = renderObjects[index];
+			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
+			
+			var material:Material = _meshRender.shadredMaterials[index];
+			(material) || (material = Material.defaultMaterial);//确保有材质,由默认材质代替。
+			
+			var element:IRenderable = _meshFilter.sharedMesh.getRenderElement(index);
+			renderElement.mainSortID = _getSortID(element, material);//根据MeshID排序，处理同材质合并处理。
+			renderElement.triangleCount = element.triangleCount;
+			renderElement.sprite3D = this;
+			
+			renderElement.element = element;
+			renderElement.material = material;
+			return renderElement;
+		}
+		
+		/** @private */
+		private function _changeRenderObjectByMaterial(material:Material):RenderElement {			
+			var index:int = _meshRender.shadredMaterials.indexOf(material);
+			
+			var renderElement:RenderElement = _meshRender.renderCullingObject._renderElements[index];
+
+			var element:IRenderable = _meshFilter.sharedMesh.getRenderElement(index);
+			renderElement.mainSortID = _getSortID(element, material);//根据MeshID排序，处理同材质合并处理。
+			renderElement.triangleCount = element.triangleCount;
+			renderElement.sprite3D = this;
+			
+			renderElement.element = element;
+			renderElement.material = material;
+			return renderElement;
+		}
+		
+		/** @private */
+		private function _changeRenderObjectsByMesh():void {
+			var renderElementsCount:int = _meshFilter.sharedMesh.getRenderElementsCount();
+			_meshRender.renderCullingObject._renderElements.length = renderElementsCount;
+			for (var i:int = 0; i < renderElementsCount; i++)
+				_changeRenderObjectByMesh(i);
 		}
 		
 		/** @private */
 		private function _onMeshChanged(meshFilter:MeshFilter):void {
-			
-		
+			var mesh:BaseMesh = meshFilter.sharedMesh;
+			if (mesh.loaded)
+				_changeRenderObjectsByMesh();
+			else
+				mesh.once(Event.LOADED, this, _onMeshLoaded);//假设Mesh未加载完成前无效。
 		}
 		
 		/** @private */
-		private function _onMaterialChanged(meshRender:MeshRender, materials:Array):void {
-			
+		private function _onMeshLoaded(sender:Mesh):void {
+			(sender === meshFilter.sharedMesh) && (_changeRenderObjectsByMesh());
 		}
 		
 		/** @private */
-		private function _copyMaterials(mesh:Mesh):void {
-			if (_iAsyncLodingMeshMaterials) {
-				if (_iAsyncLodingMeshMaterial)
-					_meshRender.shadredMaterials = mesh.materials;
-				else {
-					var meshMaterials:Vector.<Material> = mesh.materials;
-					if (meshMaterials.length > 0) {
-						meshMaterials[0] = _meshRender.shadredMaterial;
-						_meshRender.shadredMaterials = meshMaterials;
-					}
-				}
-			}
-			_iAsyncLodingMeshMaterial = _iAsyncLodingMeshMaterials = false;
+		private function _onMaterialChanged(meshRender:MeshRender, oldMaterials:Array, materials:Array):void {
+			var renderElementCount:int = _meshRender.renderCullingObject._renderElements.length;
+			for (var i:int = 0, n:int = materials.length; i < n; i++)
+				(i < renderElementCount) && _changeRenderObjectByMaterial(materials[i]);
 		}
 		
 		/** @private */
-		override public function _clearSelfRenderObjects():void {
-			for (var i:int = 0, n:int = _renderObjects.length; i < n; i++) {
-				var renderObj:RenderObject = _renderObjects[i];
-				renderObj.renderQneue.deleteRenderObj(renderObj);
-			}
-			_renderObjects.length = 0;
+		override protected function _clearSelfRenderObjects():void {
+			scene.removeFrustumCullingObject(_meshRender.renderCullingObject);
+		}
+		
+		/** @private */
+		override protected function _addSelfRenderObjects():void {
+			(scene) && (scene.addFrustumCullingObject(_meshRender.renderCullingObject));
 		}
 		
 		/**
@@ -112,43 +151,10 @@ package laya.d3.core {
 		public override function _update(state:RenderState):void {
 			state.owner = this;
 			_updateComponents(state);
-			if (active) {
-				var renderElementsCount:int = _meshFilter.sharedMesh.getRenderElementsCount();
-				for (var i:int = 0; i < renderElementsCount; i++) {
-					var obj:RenderObject = _renderObjects[i];
-					var materials:Vector.<Material> = _meshRender.shadredMaterials;
-					if (obj) {
-						var material:Material = materials[i];
-						var renderQueue:RenderQueue = state.scene.getRenderQueue(material.renderQueue);
-						if (obj.renderQneue != renderQueue) {
-							obj.renderQneue.deleteRenderObj(obj);
-							obj = _addRenderObject(state, i, material);
-						}
-					} else {
-						obj = _addRenderObject(state, i, materials[i]);
-					}
-				}
-				_lateUpdateComponents(state);
-			} else {
-				_clearSelfRenderObjects();
-			}
+			_lateUpdateComponents(state);
 			
 			Stat.spriteCount++;
 			_childs.length && _updateChilds(state);
-		}
-		
-		private function _addRenderObject(state:RenderState, index:int, material:Material):RenderObject {
-			var renderObj:RenderObject = state.scene.getRenderObject(material.renderQueue);
-			_renderObjects[index] = renderObj;
-			
-			var renderElement:IRenderable = _meshFilter.sharedMesh.getRenderElement(index);
-			renderObj.mainSortID = state.owner._getSortID(renderElement, material);//根据MeshID排序，处理同材质合并处理。
-			renderObj.triangleCount = renderElement.triangleCount;
-			renderObj.owner = state.owner;
-			
-			renderObj.renderElement = renderElement;
-			renderObj.material = material;
-			return renderObj;
 		}
 		
 		override public function dispose():void {

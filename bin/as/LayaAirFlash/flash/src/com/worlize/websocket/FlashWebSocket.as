@@ -382,10 +382,11 @@
 		 * @param	data
 		 */
 		public function send( data : * ) : void {
-			if ( data is String ) {
-				this.sendUTF( (data as String) );	
-				return;
-			}			
+			if (!(data is ByteArray)) {
+				this.sendUTF(data +"");	
+			}else{
+				this.sendBytes(data);
+			}
 		}
 		
 		public function sendBytes(data:ByteArray):void {
@@ -581,7 +582,7 @@
 								*/
 								var eve : laya.events.Event = new laya.events.Event();
 								eve.type = WebSocketEvent.MESSAGE;
-								eve.data = frame.binaryPayload;
+								eve.data = new ArrayBuffer(frame.binaryPayload);
 								if ( onmessageF != null ) onmessageF( eve );
 							}
 							else if (frameQueue.length === 0) {

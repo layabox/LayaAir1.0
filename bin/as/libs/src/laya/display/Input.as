@@ -1,6 +1,7 @@
 package laya.display
 {
 	import laya.events.Event;
+	import laya.maths.Matrix;
 	import laya.maths.Rectangle;
 	import laya.renders.Render;
 	import laya.renders.RenderContext;
@@ -203,6 +204,8 @@ package laya.display
 		/**@private */
 		protected var _maxChars:int = 1E5;
 		
+		private var _type:String = "text";
+		
 		/**原生输入框 X 轴调整值，用来调整输入框坐标。*/
 		public var inputElementXAdjuster:int = 0;
 		/**原生输入框 Y 轴调整值，用来调整输入框坐标。*/
@@ -238,27 +241,24 @@ package laya.display
 		public static function __init__():void
 		{
 			_createInputElement();
+			
 			// 移动端通过画布的touchend调用focus
 			if (Browser.onMobile)
-			{
 				Render.canvas.addEventListener(IOS_IFRAME ? "click" : "touchend", _popupInputMethod);
-			}
 		}
 		
 		// 移动平台在单击事件触发后弹出输入法
-		private static function _popupInputMethod():void
+		private static function _popupInputMethod(e:*):void
 		{
+			//e.preventDefault();
 			if (!Input.isInputting) return;
+			
 			var input:* = Input.inputElement;
 			
 			// 设置光标位置至末尾。
 			input.selectionStart = input.selectionEnd = input.value.length;
 			// 弹出输入法。
 			input.focus();
-			Laya.timer.once(300, null, function():void
-			{
-				input.scrollIntoView();
-			});
 		}
 		
 		/**@private */
@@ -269,6 +269,7 @@ package laya.display
 			
 			inputContainer = Browser.createElement("div");
 			inputContainer.style.position = "absolute";
+			inputContainer.style.zIndex = 101;
 			inputContainer.appendChild(input);
 			inputContainer.appendChild(area);
 			//[IF-SCRIPT] inputContainer.setPos = function(x:int, y:int):void { inputContainer.style.left = x + 'px'; inputContainer.style.top = y + 'px'; };
@@ -281,14 +282,14 @@ package laya.display
 		private static function _initInput(input:*):void
 		{
 			var style:* = input.style;
-			style.cssText = "position:absolute;overflow:hidden;resize:none;z-index:999;transform-origin:0 0;-webkit-transform-origin:0 0;-moz-transform-origin:0 0;-o-transform-origin:0 0;";
+			style.cssText = "position:absolute;overflow:hidden;resize:none;transform-origin:0 0;-webkit-transform-origin:0 0;-moz-transform-origin:0 0;-o-transform-origin:0 0;";
 			style.resize = 'none';
 			style.backgroundColor = 'transparent';
 			style.border = 'none';
 			style.outline = 'none';
 			
 			input.addEventListener('input', _processInputting);
-		
+			
 			input.addEventListener('mousemove', _stopEvent);
 			input.addEventListener('mousedown', _stopEvent);
 			input.addEventListener('touchmove', _stopEvent);
@@ -307,7 +308,6 @@ package laya.display
 		private static function _processInputting(e:*):void
 		{
 			var input:* = Input.inputElement.target;
-			
 			var value:String = Input.inputElement.value;
 			
 			// 对输入字符进行限制
@@ -315,9 +315,7 @@ package laya.display
 			{
 				value = value.replace(input._restrictPattern, "");
 				
-				var prevIndex:int = laya.display.Input.inputElement.selectionStart;
 				Input.inputElement.value = value;
-				Input.inputElement.selectionStart = Input.inputElement.selectionEnd = prevIndex;
 			}
 			
 			input._text = value;
@@ -327,9 +325,20 @@ package laya.display
 		/**@private */
 		private static function _stopEvent(e:*):void
 		{
-			if(e.type == 'touchmove')
+			if (e.type == 'touchmove')
 				e.preventDefault();
 			e.stopPropagation && e.stopPropagation();
+		}
+		
+		/**
+		 * 设置光标位置和选取字符。
+		 * @param	startIndex	光标起始位置。
+		 * @param	endIndex	光标结束位置。
+		 */
+		public function setSelection(startIndex:int, endIndex:int):void
+		{
+			Input.inputElement.selectionStart = startIndex;
+			Input.inputElement.selectionEnd = endIndex;
 		}
 		
 		/**表示是否是多行输入框。*/
@@ -362,17 +371,15 @@ package laya.display
 		private function _onMouseDown(e:Event):void
 		{
 			focus = true;
-			Browser.document.addEventListener(Browser.enableTouch ? "touchstart" : "mousedown", Input._checkBlur);
+			Laya.stage.on(Event.MOUSE_DOWN, this, _checkBlur);
 		}
 		
 		/**@private */
-		private static function _checkBlur(e:*):void
+		private function _checkBlur(e:*):void
 		{
 			// 点击输入框之外的地方会终止输入。
-			if (e.target != Input.input && e.target != Input.area && e.target != confirmButton)
-			{
+			if (e.nativeEvent.target != Input.input && e.nativeEvent.target != Input.area && e.target != this)
 				Input.inputElement.target.focus = false;
-			}
 		}
 		
 		/**@inheritDoc*/
@@ -391,36 +398,44 @@ package laya.display
 			var rec:Rectangle;
 			rec = Utils.getGlobalPosAndScale(this);
 			
-			var a:Number = stage._canvasTransform.a, d:Number = stage._canvasTransform.d;
-			var x:Number = (rec.x + padding[3] + inputElementXAdjuster) * stage.clientScaleX * a + Math.max(0, stage.offset.x);
-			var y:Number = (rec.y + padding[0] + inputElementYAdjuster) * stage.clientScaleY * d + Math.max(0, stage.offset.y);
-			inputContainer.setPos(x, y);
+			var m:Matrix = stage._canvasTransform.clone();
+			
+			var tm:Matrix = m.clone();
+			tm.scale(Laya.stage.clientScaleX, Laya.stage.clientScaleY);
+			tm.rotate(Math.PI / 180 * Laya.stage.canvasDegree);
+			var sx:Number = tm.a;
+			var sy:Number = tm.d;
+			tm.destroy();
+			
+			var tx:Number = (Laya.stage.canvasDegree == 0 ? rec.x : rec.y);
+			var ty:Number = (Laya.stage.canvasDegree == 0 ? rec.y : -rec.x);
+			tx += padding[3];
+			ty += padding[0];
+			tx *= sx;
+			ty *= sy;
+			tx += m.tx;
+			ty += m.ty;
+			
+			m.scale(sx * Browser.pixelRatio, sy * Browser.pixelRatio);
+			m.tx = tx;
+			m.ty = ty;
+			
+			/*[IF-FLASH]*/
+			inputContainer.setPos(tx, ty);
+			//[IF-SCRIPT]inputContainer.style.transform = "matrix(" + m.toString() + ")";
+			m.destroy();
 			
 			var inputWid:int = _width - padding[1] - padding[3];
 			var inputHei:int = _height - padding[0] - padding[2];
 			nativeInput.setSize(inputWid, inputHei);
 			
-			if (Render.isConchApp)
-			{
-				nativeInput.setPos(x, y);
-			}
-			
 			//不可见
 			if (!_getVisible()) focus = false;
 			
-			if (stage.transform || rec.width != 1 || rec.height != 1 || a != 1 || d != 1)
+			if (Render.isConchApp)
 			{
-				x = stage.clientScaleX * a * rec.width;
-				y = stage.clientScaleY * d * rec.height
-				var ts:String = "scale(" + x + "," + y + ")";
-				if (ts != style.transform)
-				{
-					style.transform = ts;
-					if (Render.isConchApp)
-					{
-						nativeInput.setScale(x, y);
-					}
-				}
+				nativeInput.setPos(tx, ty);
+				nativeInput.setScale(sx, sy);
 			}
 		}
 		
@@ -513,7 +528,7 @@ package laya.display
 			var padding:Array = this.padding;
 			
 			input.value = _content;
-			input.type = asPassword ? "password" : "text";
+			input.type = _getCSSStyle().password ? "password" : (type == "number" ? "number" : "text");
 			input.placeholder = _prompt;
 			
 			Laya.stage.off(Event.KEY_DOWN, this, _onKeyDown);
@@ -588,7 +603,7 @@ package laya.display
 			if (Render.isConchApp) this.nativeInput.blur();
 			// 只有PC会注册此事件。
 			Browser.onPC && Laya.timer.clear(this, _syncInputTransform);
-			Browser.document.removeEventListener(Browser.enableTouch ? "touchstart" : "mousedown", Input._checkBlur);
+			Laya.stage.off(Event.MOUSE_DOWN, this, _checkBlur);
 		}
 		
 		/**@private */
@@ -624,7 +639,7 @@ package laya.display
 				
 				_content = value;
 				
-				if(value)
+				if (value)
 					super.text = value;
 				else
 				{
@@ -639,7 +654,7 @@ package laya.display
 			if (this._focus)
 				return nativeInput.value;
 			else
-				return _text || "";
+				return _content || "";
 		}
 		
 		/**@inheritDoc */
@@ -652,7 +667,7 @@ package laya.display
 			_originColor = value;
 		}
 		
-		/**限制输入的字符。*/
+		/**限制输入的字符。在部分输入法下，使用中文IME会产生错误的行为。最好在输入完成后手动检测限制字符，而非使用restrict。*/
 		public function get restrict():String
 		{
 			if (_restrictPattern)
@@ -685,6 +700,23 @@ package laya.display
 			}
 			else
 				_restrictPattern = null;
+		}
+				
+		/**
+		 * <p>本API已弃用。使用type="password"替代设置asPassword, asPassword将在下次重大更新时删去。</p>
+		 * <p>指定文本字段是否是密码文本字段。</p>
+		 * <p>如果此属性的值为 true，则文本字段被视为密码文本字段，并使用星号而不是实际字符来隐藏输入的字符。如果为 false，则不会将文本字段视为密码文本字段。</p>
+		 * <p>默认值为false。</p>
+		 */
+		//[Deprecated(replacement="Input.type")]
+		public function get asPassword():Boolean {
+			return _getCSSStyle().password;
+		}
+		
+		public function set asPassword(value:Boolean):void {
+			_getCSSStyle().password = value;
+			console.warn("deprecated: 使用type=\"password\"替代设置asPassword, asPassword将在下次重大更新时删去");
+			isChanged = true;
 		}
 		
 		/**
@@ -731,7 +763,7 @@ package laya.display
 			
 			this.promptColor = _promptColor;
 			
-			if(_text)
+			if (_text)
 				super.text = (_text == _prompt) ? value : _text;
 			else
 				super.text = value;
@@ -751,6 +783,27 @@ package laya.display
 		{
 			_promptColor = value;
 			if (!_content) super.color = value;
+		}
+		
+		/**
+		 * 输入框类型：
+		 * <ol>
+		 * <li>text:普通文本输入框。</li>
+		 * <li>number:默认为数字键盘的输入框。</li>
+		 * <li>password:密码输入框。</li>
+		 * </ol>*/
+		public function get type():String 
+		{
+			return _type;
+		}
+		
+		public function set type(value:String):void 
+		{
+			if (value == "password")
+				_getCSSStyle().password = true;
+			else
+				_getCSSStyle().password = false;
+			_type = value;
 		}
 	}
 }

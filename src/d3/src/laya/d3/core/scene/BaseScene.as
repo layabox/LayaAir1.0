@@ -4,13 +4,20 @@ package laya.d3.core.scene {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.light.LightSprite;
+	import laya.d3.core.material.Material;
 	import laya.d3.core.render.RenderConfig;
-	import laya.d3.core.render.RenderObject;
+	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.graphics.FrustumCulling;
+	import laya.d3.graphics.RenderCullingObject;
+	import laya.d3.math.BoundFrustum;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Viewport;
 	import laya.d3.resource.RenderTarget;
+	import laya.d3.resource.models.Sky;
+	import laya.d3.resource.models.Sky;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.display.Node;
 	import laya.display.Sprite;
@@ -36,6 +43,8 @@ package laya.d3.core.scene {
 		public static const PIXEL_SHADING:int = 1;
 		
 		/** @private */
+		protected var _boundFrustum:BoundFrustum;
+		/** @private */
 		protected var _renderState:RenderState = new RenderState();
 		/** @private */
 		protected var _lights:Vector.<LightSprite> = new Vector.<LightSprite>;
@@ -47,8 +56,9 @@ package laya.d3.core.scene {
 		protected var _shadingMode:int = ShaderDefines3D.PIXELSHADERING;
 		/** @private */
 		protected var _renderConfigs:Vector.<RenderConfig> = new Vector.<RenderConfig>();
-		/** @private */
-		protected var _quenes:Vector.<RenderQueue> = new Vector.<RenderQueue>();
+		
+		
+		
 		/** @private */
 		protected var _customRenderQueneIndex:int = 11;
 		/** @private */
@@ -66,6 +76,13 @@ package laya.d3.core.scene {
 		public var enableLight:Boolean = true;
 		/** 当前摄像机。*/
 		public var currentCamera:BaseCamera;
+		
+		/** @private */
+		public var _frustumCullingObjectsNeedClear:Boolean = false;
+		/** @private */
+		public var _frustumCullingObjects:Vector.<RenderCullingObject> = new Vector.<RenderCullingObject>();
+		/** @private */
+		public var _quenes:Vector.<RenderQueue> = new Vector.<RenderQueue>();
 		
 		/**
 		 * 获取当前场景。
@@ -96,6 +113,7 @@ package laya.d3.core.scene {
 		 * 创建一个 <code>BaseScene</code> 实例。
 		 */
 		public function BaseScene() {
+			_boundFrustum = new BoundFrustum(Matrix4x4.DEFAULT);
 			enableFog = false;
 			fogStart = 300;
 			fogRange = 1000;
@@ -235,11 +253,11 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		protected function _preRenderScene(gl:WebGLContext, state:RenderState):void {
-			for (var i:int = 0; i < _quenes.length; i++) {
-				if (_quenes[i]) {
-					_quenes[i]._preRender(state);
-				}
-			}
+			_boundFrustum.matrix = state.projectionViewMatrix;
+			
+			FrustumCulling.RenderObjectCulling(_boundFrustum,this);
+			for (var i:int = 0, iNum:int = _quenes.length; i < iNum; i++)
+				(_quenes[i]) && (_quenes[i]._preRender(state));
 		}
 		
 		/**
@@ -248,10 +266,29 @@ package laya.d3.core.scene {
 		protected function _renderScene(gl:WebGLContext, state:RenderState):void {
 			var viewport:Viewport = state.viewport;
 			gl.viewport(viewport.x, RenderState.clientHeight - viewport.y - viewport.height, viewport.width, viewport.height);
-			for (var i:int = 0; i < _quenes.length; i++) {
+			var i:int, n:int;
+			var queue:RenderQueue;
+			for (i = 0; i < 3; i++) {//非透明队列
 				if (_quenes[i]) {
-					_quenes[i]._setState(gl);
-					_quenes[i]._render(state);
+					queue = _quenes[i];
+					queue._setState(gl);
+					queue._render(state);
+				}
+			}
+			
+			WebGLContext.setCullFace(gl, false);
+			WebGLContext.setDepthFunc(gl, WebGLContext.LEQUAL);
+			WebGLContext.setDepthMask(gl, 0);
+			var sky:Sky = state.camera.sky;
+			(sky) && (sky._render(state));
+			WebGLContext.setDepthFunc(gl, WebGLContext.LESS);
+			WebGLContext.setDepthMask(gl, 1);
+			
+			for (i = 3, n = _quenes.length; i < n; i++) {//透明队列
+				if (_quenes[i]) {
+					queue = _quenes[i];
+					queue._setState(gl);
+					queue._render(state);
 				}
 			}
 		}
@@ -307,30 +344,23 @@ package laya.d3.core.scene {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
 			
-			var returnNode:Node = super.addChildAt(node, index);
-			(node !== this) && ((node as Sprite3D)._addSelfAndChildrenRenderObjects());
-			return returnNode;
+			return super.addChildAt(node, index);
 		}
 		
 		override public function addChild(node:Node):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
 			
-			var returnNode:Node = super.addChild(node);
-			(node !== this) && ((node as Sprite3D)._addSelfAndChildrenRenderObjects());
-			return returnNode;
+			return super.addChild(node);
 		}
 		
-		override public function removeChildAt(index:int):Node {
-			var node:Node = getChildAt(index);
-			if (node) {
-				this._childs.splice(index, 1);
-				model && model.removeChild(node.model);
-				node.parent = null;
-				
-				(node as Sprite3D)._clearSelfAndChildrenRenderObjects();
-			}
-			return node;
+		public function addFrustumCullingObject(frustumCullingObject:RenderCullingObject):void {
+			_frustumCullingObjects.push(frustumCullingObject);
+		}
+		
+		public function removeFrustumCullingObject(frustumCullingObject:RenderCullingObject):void {
+			var index:int = _frustumCullingObjects.indexOf(frustumCullingObject);
+			(index !== -1) && (_frustumCullingObjects.splice(index, 1), _frustumCullingObjectsNeedClear = true);
 		}
 		
 		/**
@@ -340,15 +370,6 @@ package laya.d3.core.scene {
 		 */
 		public function getRenderQueue(index:int):RenderQueue {
 			return (_quenes[index] || (_quenes[index] = new RenderQueue(_renderConfigs[index])));
-		}
-		
-		/**
-		 * 获得某个渲染队列的渲染物体。
-		 * @param index 渲染队列索引。
-		 * @return 渲染物体。
-		 */
-		public function getRenderObject(index:int):RenderObject {
-			return (_quenes[index] || (_quenes[index] = new RenderQueue(_renderConfigs[index]))).getRenderObj();
 		}
 		
 		/**

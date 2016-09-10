@@ -16,9 +16,9 @@ package laya.d3.resource.models {
 		/** @private */
 		protected var _subMeshCount:int;
 		/** @private */
-		public var _boundingBox:BoundBox;
+		protected var _boundingBox:BoundBox;
 		/** @private */
-		public var _boundingSphere:BoundSphere;
+		protected var _boundingSphere:BoundSphere;
 		
 		
 		/**
@@ -38,6 +38,22 @@ package laya.d3.resource.models {
 		}
 		
 		/**
+		 * 获取AABB包围盒。
+		 * @return AABB包围盒。
+		 */
+		public function get boundingBox():BoundBox {
+			return _boundingBox;
+		}
+		
+		/**
+		 * 获取包围球。
+		 * @return 包围球。
+		 */
+		public function get boundingSphere():BoundSphere {
+			return _boundingSphere;
+		}
+		
+		/**
 		 * 获取网格顶点,请重载此方法。
 		 * @return 网格顶点。
 		 */
@@ -50,8 +66,6 @@ package laya.d3.resource.models {
 		 */
 		public function BaseMesh() {
 			_loaded = false;
-			_boundingBox = new BoundBox(new Vector3(), new Vector3());
-			_boundingSphere = new BoundSphere(new Vector3(), 0);
 		}
 		
 		/**

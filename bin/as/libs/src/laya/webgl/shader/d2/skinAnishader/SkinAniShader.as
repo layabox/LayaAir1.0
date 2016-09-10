@@ -8,7 +8,7 @@ package laya.webgl.shader.d2.skinAnishader
 	public class SkinAniShader extends Shader
 	{
 		
-		public static var shader:SkinAniShader = new SkinAniShader();
+		private static var _instance:SkinAniShader;
 		
 		public function SkinAniShader() 
 		{
@@ -17,6 +17,10 @@ package laya.webgl.shader.d2.skinAnishader
 			super(vs, ps, "SpineShader");
 		}
 		
+		public static function getInstance():SkinAniShader
+		{
+			return _instance ||= new SkinAniShader();
+		}
 	}
 
 }

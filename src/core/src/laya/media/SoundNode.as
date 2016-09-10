@@ -30,7 +30,7 @@ package laya.media
 		/**@private */
 		private function _onParentChange():void {
 			
-			target=parent;
+			target=parent as Sprite;
 		}
 		
 		/**

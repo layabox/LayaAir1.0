@@ -39,7 +39,7 @@ package laya.d3.core.render {
 		/**当前渲染3D精灵。*/
 		public var owner:Sprite3D;
 		/**当前渲染物体。*/
-		public var renderObj:RenderObject;
+		public var renderObj:RenderElement;
 		
 		/**当前摄像机。*/
 		public var camera:BaseCamera;

@@ -246,7 +246,7 @@ package laya.net {
 					var directory:String = (this._data.meta && this._data.meta.prefix) ? URL.basePath + this._data.meta.prefix : this._url.substring(0, this._url.lastIndexOf(".")) + "/"
 					var pics:Array = _data.pics;
 					var map:Array = atlasMap[this._url] || (atlasMap[this._url] = []);
-					
+					map.dir = directory;
 					//var needSub:Boolean = Config.atlasEnable && Render.isWebGL;
 					for (var name:String in frames) {
 						var obj:Object = frames[name];//取对应的图

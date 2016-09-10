@@ -28,7 +28,7 @@ package laya.d3.math {
 		 * @param	height 高度。
 		 */
 		public function Viewport(x:Number, y:Number, width:Number, height:Number) {
-			minDepth =-1.0;
+			minDepth =0.0;//TODO:待确认，-1。
 			maxDepth = 1.0;
 			
 			this.x = x;

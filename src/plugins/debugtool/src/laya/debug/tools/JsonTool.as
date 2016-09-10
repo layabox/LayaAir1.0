@@ -77,6 +77,7 @@ package laya.debug.tools
 				keyValueStrArr.push(keyPreStr+wrapValue(tKey)+":"+keyValues[tKey]);
 			}
 			rst="{"+split+keyValueStrArr.join(","+split)+split+preStr+"}";
+			//rst=rst.split("\\").join("\\\\");
 			return rst;
 		}
 		private static function wrapValue(value:String,wraper:String="\""):String
@@ -106,12 +107,40 @@ package laya.debug.tools
 			rst="["+split+preStr+valueStrArr.join(","+split+preStr)+"]";
 			return rst;
 		}
+		public static var escapable:RegExp = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+			
+			meta:Object = {    // table of character substitutions
+				'\b': '\\b',
+				'\t': '\\t',
+				'\n': '\\n',
+				'\f': '\\f',
+				'\r': '\\r',
+				'"' : '\\"',
+				'\\': '\\\\'
+			};
+		
+		
+		public static function quote(string:String):String {
+			
+			// If the string contains no control characters, no quote characters, and no
+			// backslash characters, then we can safely slap some quotes around it.
+			// Otherwise we must also replace the offending characters with safe escape
+			// sequences.
+			
+			escapable.lastIndex = 0;
+			return escapable.test(string) ? '"' + string.replace(escapable, function (a:String):String {
+				var c:String = meta[a];
+				return typeof c === 'string' ? c :
+				'\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+			}) + '"' : '"' + string + '"';
+		}
 		private static function getValueStr(tValue:*,singleLine:Boolean=true,split:String="\n",depth:int=0,Width:int=0):String
 		{
 			var rst:String;
 			if(tValue is String )
 			{
-				rst="\""+tValue+"\"";
+//				rst="\""+tValue+"\"";
+				rst=quote(tValue);
 			}else if(tValue ==null)
 			{
 				rst="null";

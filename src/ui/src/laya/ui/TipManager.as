@@ -36,7 +36,7 @@ package laya.ui {
 		/**
 		 * @private
 		 */
-		private function _onStageHideTip(e:UIEvent):void {
+		private function _onStageHideTip(e:*):void {
 			Laya.timer.clear(this, _showTip);
 			closeAll();
 			this.removeSelf();

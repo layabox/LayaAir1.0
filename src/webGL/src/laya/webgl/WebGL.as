@@ -60,11 +60,38 @@ package laya.webgl {
 		private static var _bg_null:Array =/*[STATIC SAFE]*/ [0, 0, 0, 0];
 		private static var _isExperimentalWebgl:Boolean = false;
 		
-		private static function Float32ArraySlice():Float32Array {
+		private static function _float32ArraySlice():Float32Array {
 			var _this:* = __JS__("this");
 			var sz:int = _this.length;
 			var dec:Float32Array = new Float32Array(_this.length);
 			for (var i:int = 0; i < sz; i++) dec[i] = _this[i];
+			return dec;
+		}
+		
+		private static function _uint16ArraySlice(... arg):Uint16Array {
+			var _this:* = __JS__("this");
+			var sz:int;
+			var dec:Uint16Array;
+			var i:int;
+			if (arg.length === 0) {
+				sz = _this.length;
+				dec = new Uint16Array(sz);
+				for (i = 0; i < sz; i++)
+					dec[i] = _this[i];
+				
+			} else if (arg.length === 2) {
+				var start:int = arg[0];
+				var end:int = arg[1];
+				
+				if (end > start) {
+					sz = end - start;
+					dec = new Uint16Array(sz);
+					for (i = start; i < end; i++)
+						dec[i - start] = _this[i];
+				} else {
+					dec = new Uint16Array(0);
+				}
+			}
 			return dec;
 		}
 		
@@ -230,10 +257,8 @@ package laya.webgl {
 				
 				var tArray:Array = [];
 				var tIndex:int = 0;
-				for (var i:int = height-1; i >= 0; i--)
-				{
-					for (var j:int = 0; j < width; j++)
-					{
+				for (var i:int = height - 1; i >= 0; i--) {
+					for (var j:int = 0; j < width; j++) {
 						tIndex = (i * width + j) * 4;
 						tArray.push(tUint8Array[tIndex]);
 						tArray.push(tUint8Array[tIndex + 1]);
@@ -249,7 +274,7 @@ package laya.webgl {
 				return tFillTetureSprite;
 			}
 			
-			RunDriver.skinAniSprite = function():*{
+			RunDriver.skinAniSprite = function():* {
 				var tSkinSprite:SkinMesh = new SkinMesh()
 				return tSkinSprite;
 			}
@@ -445,7 +470,8 @@ package laya.webgl {
 					mat.destroy();
 				}
 			}
-			Float32Array.prototype.slice || (Float32Array.prototype.slice = Float32ArraySlice);
+			Float32Array.prototype.slice || (Float32Array.prototype.slice = _float32ArraySlice);
+			Uint16Array.prototype.slice || (Uint16Array.prototype.slice = _uint16ArraySlice);
 			return true;
 		}
 		

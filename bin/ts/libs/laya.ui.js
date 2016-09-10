@@ -7,10 +7,10 @@
 	var Handler=laya.utils.Handler,Input=laya.display.Input,Loader=laya.net.Loader,Node=laya.display.Node,Point=laya.maths.Point;
 	var Rectangle=laya.maths.Rectangle,Render=laya.renders.Render,Sprite=laya.display.Sprite,Stage=laya.display.Stage;
 	var Text=laya.display.Text,Texture=laya.resource.Texture,Tween=laya.utils.Tween,Utils=laya.utils.Utils;
-	Laya.interface('laya.ui.ISelect');
-	Laya.interface('laya.ui.IItem');
-	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IRender');
+	Laya.interface('laya.ui.IItem');
+	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
 	*<code>LayoutStyle</code> 是一个布局样式类。
@@ -782,7 +782,7 @@
 				this._layout.enable=value;
 				if (this.parent){
 					this.onAdded();
-					}else if (!this.hasListener(/*laya.events.Event.ADDED*/"added")){
+					}else {
 					this.on(/*laya.events.Event.ADDED*/"added",this,this.onAdded);
 					this.on(/*laya.events.Event.REMOVED*/"removed",this,this.onRemoved);
 				}
@@ -3863,15 +3863,6 @@
 			return this._tf.stroke;
 			},function(value){
 			this._tf.stroke=value;
-		});
-
-		/**
-		*@copy laya.display.Text#asPassword
-		*/
-		__getset(0,__proto,'asPassword',function(){
-			return this._tf.asPassword;
-			},function(value){
-			this._tf.asPassword=value;
 		});
 
 		/**
@@ -7624,6 +7615,15 @@
 			return (this._tf).restrict;
 			},function(pattern){
 			(this._tf).restrict=pattern;
+		});
+
+		/**
+		*@copy laya.display.Input#promptColor
+		*/
+		__getset(0,__proto,'promptColor',function(){
+			return (this._tf).promptColor;
+			},function(value){
+			(this._tf).promptColor=value;
 		});
 
 		/**

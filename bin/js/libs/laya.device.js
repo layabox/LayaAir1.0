@@ -51,7 +51,7 @@
 		Geolocation.enableHighAccuracy=false;
 		Geolocation.maximumAge=0;
 		__static(Geolocation,
-		['navigator',function(){return this.navigator=Browser.window.navigator;},'position',function(){return this.position=new GeolocationInfo();},'supported',function(){return this.supported=!!Geolocation.navigator.geolocation;},'timeout',function(){return this.timeout=Infinity;}
+		['navigator',function(){return this.navigator=Browser.window.navigator;},'position',function(){return this.position=new GeolocationInfo();},'supported',function(){return this.supported=!!Geolocation.navigator.geolocation;},'timeout',function(){return this.timeout=1E10;}
 		]);
 		return Geolocation;
 	})()

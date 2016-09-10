@@ -26,6 +26,10 @@ package laya.d3.core.material {
 	 */
 	public class Material extends EventDispatcher {
 		public static var maxMaterialCount:int = Math.floor(2147483647 / VertexDeclaration._maxVertexDeclarationBit);//需在材质中加异常判断警告
+		
+		/** 默认材质，禁止修改*/
+		public static var defaultMaterial:Material = new Material();
+		
 		/** @private */
 		protected static var _uniqueIDCounter:int = 1;
 		/** @private */
@@ -442,7 +446,7 @@ package laya.d3.core.material {
 			_id = ++_uniqueIDCounter;
 			if (_id > maxMaterialCount)
 				throw new Error("Material: Material count should not large than ", maxMaterialCount);
-			
+			 
 			_color[AMBIENTCOLOR] = AMBIENTCOLORVALUE;
 			_color[DIFFUSECOLOR] = DIFFUSECOLORVALUE;
 			_color[SPECULARCOLOR] = SPECULARCOLORVALUE;
@@ -469,7 +473,7 @@ package laya.d3.core.material {
 		/**
 		 * @private
 		 */
-		private function _loadeCompleted():Boolean {
+		private function _textureLoadCompleted():Boolean {
 			if (_texturesloaded)
 				return true;
 			
@@ -603,7 +607,9 @@ package laya.d3.core.material {
 		 * @return  是否成功。
 		 */
 		public function upload(state:RenderState, bufferUsageShader:*, shader:Shader):Boolean {
-			if (!_loadeCompleted()) return false;
+			if (!_textureLoadCompleted()) return false;
+			
+			(_transformUV) && (_transformUV.matrix);//触发UV矩阵更新。
 			
 			shader || (shader = getShader(state));
 			
@@ -655,7 +661,7 @@ package laya.d3.core.material {
 			dec._loaded = _loaded;
 			dec._renderQueue = _renderQueue;
 			dec._renderMode = _renderMode;
-			dec._textures = _textures;
+			dec._textures = _textures.slice();
 			dec._texturesSharderIndex = _texturesSharderIndex;
 			dec._otherSharderIndex = _otherSharderIndex;
 			dec._texturesloaded = _texturesloaded;

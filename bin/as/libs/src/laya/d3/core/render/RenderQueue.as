@@ -6,6 +6,7 @@ package laya.d3.core.render {
 	import laya.d3.graphics.StaticBatchManager;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
+	import laya.utils.Stat;
 	import laya.webgl.WebGLContext;
 	
 	/**
@@ -42,9 +43,9 @@ package laya.d3.core.render {
 		/**
 		 *@private
 		 */
-		private static function _sort(a:RenderObject, b:RenderObject):* {
+		private static function _sortPrepareStaticBatch(a:RenderElement, b:RenderElement):* {
 			var id:int = a.mainSortID - b.mainSortID;
-			return (a.owner.isStatic && b.owner.isStatic && id === 0) ? a.triangleCount - b.triangleCount : id;
+			return (id === 0) ? a.triangleCount - b.triangleCount : id;
 		}
 		
 		/** @private */
@@ -54,19 +55,20 @@ package laya.d3.core.render {
 		/** @private */
 		private var _needSort:Boolean;
 		/** @private */
-		private var _renderObjects:Array;
+		private var _renderElements:Array;
 		/** @private */
-		private var _staticRenderObjects:Array;
-		/** @private */
-		private var _staticLength:int;
-		/** @private */
-		private var _mergeRenderObjects:Array;
-		/** @private */
-		private var _merageLength:int;
+		private var _renderableRenderObjects:Array;
 		/** @private */
 		private var _renderConfig:RenderConfig;
 		/** @private */
 		private var _staticBatchManager:StaticBatchManager;//TODO:释放问题。
+		
+		/** @private */
+		private var _prepareStaticBatchCombineElements:Array;
+		/** @private */
+		private var _staticBatchCombineRenderElements:Array;
+		/** @private */
+		private var _finalElements:Array;
 		
 		/**
 		 * 获取唯一标识ID(通常用于优化或识别)。
@@ -84,26 +86,12 @@ package laya.d3.core.render {
 			_changed = false;
 			_needSort = false;
 			_renderConfig = renderConfig;
-			_renderObjects = [];
-			_staticRenderObjects = [];
-			_staticLength = 0;
-			_mergeRenderObjects = [];
-			_merageLength = 0;
-			_staticBatchManager = new StaticBatchManager();
-		}
-		
-		private function _getStaticRenderObj():RenderObject {
-			var o:RenderObject = _staticRenderObjects[_staticLength++];
-			return o || (_staticRenderObjects[_staticLength - 1] = new RenderObject());
-		}
-		
-		/**
-		 * 重置并清空队列。
-		 */
-		private function _reset():void {
-			_staticLength = 0;
-			_merageLength = 0;
-			_staticBatchManager._reset();
+			_renderElements = [];
+			_renderableRenderObjects = [];
+			_staticBatchManager = new StaticBatchManager(this);
+			
+			_prepareStaticBatchCombineElements = [];
+			_staticBatchCombineRenderElements = [];
 		}
 		
 		/**
@@ -153,70 +141,12 @@ package laya.d3.core.render {
 		 * @param	state 渲染状态。
 		 */
 		public function _preRender(state:RenderState):void {
-
 			if (_changed) {
-	
 				_changed = false;
-				
-				_reset();
-				_needSort && (_renderObjects.sort(_sort));//排序函数如果改变，仍需重新排列。
-				var lastIsStatic:Boolean = false;
-				var lastMaterial:Material;
-				var lastVertexDeclaration:VertexDeclaration;
-				var lastCanMerage:Boolean;
-				var curStaticBatch:StaticBatch;
-				
-				var currentRenderObjIndex:int = 0;
-				var renderObj:RenderObject;
-				var renderElement:IRenderable;
-				var isStatic:Boolean;
-				var lastRenderObj:RenderObject;
-				var batchObject:RenderObject;
-				var vb:VertexBuffer3D;
-				
-				for (var i:int = 0, n:int = _renderObjects.length; i < n; i++) {
-					renderObj = _renderObjects[i];
-					renderElement = renderObj.renderElement;
-					isStatic = renderObj.owner.isStatic;
-					//isStatic = false;
-					
-					vb = renderElement.getVertexBuffer(0);
-					if ((lastMaterial === renderObj.material) && (lastVertexDeclaration === vb.vertexDeclaration) && lastIsStatic && isStatic && (renderElement.VertexBufferCount === 1) && renderObj.owner.visible) {
-						if (!lastCanMerage) {
-							curStaticBatch = _staticBatchManager.getStaticBatchQneue(lastVertexDeclaration, lastMaterial);
-							
-							lastRenderObj = _renderObjects[i - 1];
-							
-							if (!curStaticBatch.addRenderObj(lastRenderObj) || !curStaticBatch.addRenderObj(renderObj)) {
-								_mergeRenderObjects[_merageLength++] = _renderObjects[currentRenderObjIndex];
-								lastCanMerage = false;
-							} else {
-								batchObject = _getStaticRenderObj();
-								batchObject.renderElement = curStaticBatch;
-								batchObject.type = 1;
-								
-								_mergeRenderObjects[_merageLength - 1] = batchObject;
-								lastCanMerage = true;
-							}
-						} else {
-							if (!curStaticBatch.addRenderObj(renderObj)) {
-								_mergeRenderObjects[_merageLength++] = _renderObjects[currentRenderObjIndex];
-								lastCanMerage = false;
-							}
-						}
-					} else {
-						_mergeRenderObjects[_merageLength++] = _renderObjects[currentRenderObjIndex];
-						lastCanMerage = false;
-					}
-					currentRenderObjIndex++;
-					lastIsStatic = isStatic;
-					lastMaterial = renderObj.material;
-					lastVertexDeclaration = vb.vertexDeclaration;
-				}
-				
-				_staticBatchManager._garbageCollection();
-				
-				_staticBatchManager._finsh();
+				_staticBatchCombineRenderElements.length = 0;
+				_staticBatchManager._getRenderElements(_staticBatchCombineRenderElements);
+				_finalElements = _renderElements.concat(_staticBatchCombineRenderElements);
+				//_needSort && (_finalElements.sort(_sort)，_needSort=false);//排序函数如果改变，仍需重新排列。//TODO:不排序面变多
 			}
 		}
 		
@@ -227,24 +157,27 @@ package laya.d3.core.render {
 		 */
 		public function _render(state:RenderState):void {
 			var preShaderValue:int = state.shaderValue.length;
-			var renObj:RenderObject;
-			for (var i:int = 0, n:int = _merageLength; i < n; i++) {
-				renObj = _mergeRenderObjects[i];
+			var renElement:RenderElement;
+			for (var i:int = 0, n:int = _finalElements.length; i < n; i++) {
+				renElement = _finalElements[i];
 				var preShadeDef:int;
-				if (renObj.type === 0) {
-					var owner:Sprite3D = renObj.owner;
+				if (renElement.type === 0) {
+					var owner:Sprite3D = renElement.sprite3D;
 					state.owner = owner;
-					state.renderObj = renObj;
+					state.renderObj = renElement;
 					preShadeDef = state.shaderDefs.getValue();
 					_preRenderUpdateComponents(owner, state);
-					(owner.visible) && (renObj.renderElement._render(state));
+					renElement.element._render(state);
 					_postRenderUpdateComponents(owner, state);
 					state.shaderDefs.setValue(preShadeDef);
-				} else if (renObj.type === 1) {
+				} else if (renElement.type === 1) {
+					var staticBatch:StaticBatch = renElement.element as StaticBatch;
+					staticBatch._indexStart = renElement.staticBatchIndexStart;
+					staticBatch._indexEnd = renElement.staticBatchIndexEnd;
 					state.owner = null;
-					state.renderObj = renObj;
+					state.renderObj = renElement;
 					preShadeDef = state.shaderDefs.getValue();
-					(renObj.renderElement._render(state));
+					(renElement.element._render(state));
 					state.shaderDefs.setValue(preShadeDef);
 				}
 				
@@ -253,29 +186,102 @@ package laya.d3.core.render {
 		}
 		
 		/**
-		 * 获取队列中的渲染物体。
-		 * @return gl 渲染物体。
+		 * 添加渲染物体。
+		 * @param renderObj 渲染物体。
 		 */
-		public function getRenderObj():RenderObject {
+		public function _addRenderElement(renderElement:RenderElement):void {
+			if (renderElement.staticBatch && (renderElement.staticBatch === _staticBatchManager.getStaticBatchQneue(renderElement.element.getVertexBuffer().vertexDeclaration, renderElement.material))) {
+				renderElement.staticBatch._addRenderElement(renderElement);
+			} else {
+				_renderElements.push(renderElement);
+				renderElement.ownerRenderQneue = this;
+			}
+			
 			_changed = true;
 			_needSort = true;
-			var o:RenderObject = new RenderObject();
-			_renderObjects.push(o);
-			o.renderQneue = this;
-			return o;
 		}
 		
 		/**
 		 * 删除渲染物体。
 		 * @param renderObj 渲染物体。
 		 */
-		public function deleteRenderObj(renderObj:RenderObject):void {
-			_changed = true;
-			var index:int = _renderObjects.indexOf(renderObj);
-			if (index !== -1) {
-				_renderObjects.splice(index, 1);
-				renderObj.renderQneue = null;
+		public function _deleteRenderElement(renderElement:RenderElement):void {
+			if (renderElement.staticBatch && renderElement.isInStaticBatch) {
+				renderElement.staticBatch._deleteRenderElement(renderElement);
+			} else {
+				var index:int = _renderElements.indexOf(renderElement);
+				if (index !== -1) {
+					_renderElements.splice(index, 1);
+					renderElement.ownerRenderQneue = null;
+				}
 			}
+			
+			_changed = true;
+		}
+		
+		/**
+		 * 清空队列中的渲染物体。
+		 */
+		public function _clearRenderElements():void {
+			for (var i:int = 0, n:int = _renderElements.length; i < n; i++)
+				_renderElements[i].ownerRenderQneue = null;
+			_renderElements.length = 0;
+			
+			_staticBatchManager._clearRenderElements();
+		}
+		
+		/** @private */
+		public function _addPrepareRenderElementToStaticBatch(renderElement:RenderElement):void {
+			_prepareStaticBatchCombineElements.push(renderElement);
+		}
+		
+		/** @private */
+		public function _finishCombineStaticBatch():void {
+			_prepareStaticBatchCombineElements.sort(_sortPrepareStaticBatch);//排序函数如果改变，仍需重新排列。//TODO:不排序面变多,造成一个staticBatch调用多次
+			
+			var lastMaterial:Material;
+			var lastVertexDeclaration:VertexDeclaration;
+			var lastCanMerage:Boolean;
+			var curStaticBatch:StaticBatch;
+			
+			var renderObj:RenderElement;
+			var renderElement:IRenderable;
+			var lastRenderObj:RenderElement;
+			var vb:VertexBuffer3D;
+			
+			for (var i:int = 0, n:int = _prepareStaticBatchCombineElements.length; i < n; i++) {
+				renderObj = _prepareStaticBatchCombineElements[i];
+				renderElement = renderObj.element;
+				
+				vb = renderElement.getVertexBuffer(0);
+				if ((lastMaterial === renderObj.material) && (lastVertexDeclaration === vb.vertexDeclaration) && (renderElement.VertexBufferCount === 1)) {
+					if (!lastCanMerage) {
+						curStaticBatch = _staticBatchManager.getStaticBatchQneue(lastVertexDeclaration, lastMaterial);//TODO:一个材质满了之后没有new第二个批处理。
+						
+						lastRenderObj = _prepareStaticBatchCombineElements[i - 1];
+						
+						if (!curStaticBatch._addCombineRenderObjTest(lastRenderObj) || !curStaticBatch._addCombineRenderObjTest(renderObj)) {
+							lastCanMerage = false;
+						} else {
+							curStaticBatch._addCombineRenderObj(lastRenderObj);
+							curStaticBatch._addCombineRenderObj(renderObj);
+							lastCanMerage = true;
+						}
+					} else {
+						if (!curStaticBatch._addCombineRenderObjTest(renderObj))
+							lastCanMerage = false;
+						else
+							curStaticBatch._addCombineRenderObj(renderObj)
+					}
+				} else {
+					lastCanMerage = false;
+				}
+				lastMaterial = renderObj.material;
+				lastVertexDeclaration = vb.vertexDeclaration;
+			}
+			_staticBatchManager._garbageCollection();
+			_staticBatchManager._finshCombine();
+			_prepareStaticBatchCombineElements.length = 0;
 		}
 	
 	}

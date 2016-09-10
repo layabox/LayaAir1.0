@@ -136,24 +136,36 @@ package laya.d3.core {
 			_uniqueIDCounter++;
 			layer = Layer.currentCreationLayer;
 			transform = new Transform3D(this);
-			on(Event.ADDED, this, function():void {
-				transform._parent = (_parent as Sprite3D).transform;
-			});
-			on(Event.REMOVED, this, function():void {
-				transform._parent = null;
-			});
+			on(Event.ADDED, this, _onAdded);
+			on(Event.REMOVED, this, _onRemoveed);
 		}
 		
 		/**
-		 * 清理自身渲染物体。
+		 * @private
 		 */
-		public function _clearSelfRenderObjects():void {
+		private function _onAdded():void {
+			transform.parent = (_parent as Sprite3D).transform;
+			_addSelfAndChildrenRenderObjects();
 		}
 		
 		/**
-		 * 添加自身渲染物体。
+		 * @private
 		 */
-		public function _addSelfRenderObjects():void {
+		private function _onRemoveed():void {
+			transform.parent = null;
+			_clearSelfAndChildrenRenderObjects();
+		}
+		
+		/**
+		 * 清理自身渲染物体，请重载此函数。
+		 */
+		protected function _clearSelfRenderObjects():void {
+		}
+		
+		/**
+		 * 添加自身渲染物体，请重载此函数。
+		 */
+		protected function _addSelfRenderObjects():void {
 		}
 		
 		/**
@@ -235,31 +247,13 @@ package laya.d3.core {
 		override public function addChildAt(node:Node, index:int):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
-			
-			var returnNode:Node = super.addChildAt(node, index);
-			(node !== this) && ((node as Sprite3D)._addSelfAndChildrenRenderObjects());
-			return returnNode;
+			return super.addChildAt(node, index);
 		}
 		
 		override public function addChild(node:Node):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
-			
-			var returnNode:Node = super.addChild(node);
-			(node !== this) && ((node as Sprite3D)._addSelfAndChildrenRenderObjects());
-			return returnNode;
-		}
-		
-		override public function removeChildAt(index:int):Node {
-			var node:Node = getChildAt(index);
-			if (node) {
-				this._childs.splice(index, 1);
-				model && model.removeChild(node.model);
-				node.parent = null;
-				
-				(node as Sprite3D)._clearSelfAndChildrenRenderObjects();
-			}
-			return node;
+			return super.addChild(node);
 		}
 		
 		/**
@@ -268,7 +262,6 @@ package laya.d3.core {
 		 * @return	组件。
 		 */
 		public function addComponent(type:*):Component3D {
-			
 			if (!(_componentsMap[type] === undefined))
 				throw new Error("无法创建" + type + "组件" + "，" + type + "组件已存在！");
 			
@@ -344,7 +337,8 @@ package laya.d3.core {
 		}
 		
 		public function dispose():void {
-		
+			off(Event.ADDED, this, _onAdded);
+			off(Event.REMOVED, this, _onRemoveed);
 		}
 	
 	}

@@ -83,13 +83,15 @@ package laya.d3.resource.models {
 			_loaded = true;
 			
 			var pos:Vector.<Vector3> = positions;
+			_boundingBox = new BoundBox(new Vector3(), new Vector3());
 			BoundBox.createfromPoints(pos, _boundingBox);
+			_boundingSphere = new BoundSphere(new Vector3(), 0);
 			BoundSphere.createfromPoints(pos, _boundingSphere);
 		}
 		
 		override protected function recreateResource():void {
 			//(this._released) || (dispose());//如果已存在，则释放资源
-			
+			startCreate();
 			_numberVertices = (_stacks + 1) * (_slices + 1);
 			_numberIndices = (3 * _stacks * (_slices + 1)) * 2;
 			
@@ -102,7 +104,7 @@ package laya.d3.resource.models {
 			var sliceAngle:Number = (Math.PI * 2.0) / _slices;
 			
 			// Generate the group of Stacks for the sphere  
-			var wVertexIndex:int = 0;
+			var vertexIndex:int = 0;
 			var vertexCount:int = 0;
 			var indexCount:int = 0;
 			
@@ -127,14 +129,14 @@ package laya.d3.resource.models {
 					vertexCount += vertexFloatStride;
 					if (stack != (_stacks - 1)) {
 						// First Face
-						indices[indexCount++] = wVertexIndex + (_slices + 1);
-						indices[indexCount++] = wVertexIndex;
-						indices[indexCount++] = wVertexIndex + 1;
+						indices[indexCount++] = vertexIndex + (_slices + 1);
+						indices[indexCount++] = vertexIndex;
+						indices[indexCount++] = vertexIndex + 1;
 						// Second 
-						indices[indexCount++] = wVertexIndex + (_slices);
-						indices[indexCount++] = wVertexIndex;
-						indices[indexCount++] = wVertexIndex + (_slices + 1);
-						wVertexIndex++;
+						indices[indexCount++] = vertexIndex + (_slices);
+						indices[indexCount++] = vertexIndex;
+						indices[indexCount++] = vertexIndex + (_slices + 1);
+						vertexIndex++;
 					}
 				}
 			}
@@ -144,7 +146,7 @@ package laya.d3.resource.models {
 			_vertexBuffer.setData(vertices);
 			_indexBuffer.setData(indices);
 			memorySize = (_vertexBuffer.byteLength + _indexBuffer.byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
-			super.recreateResource();
+			compoleteCreate();
 		}
 	}
 }

@@ -592,6 +592,7 @@ package laya.d3.math {
 		 * 空间中平面和包围盒是否相交
 		 * @param	plane 平面
 		 * @param   box  包围盒
+		 * @return  碰撞状态
 		 */
 		public static function intersectsPlaneAndBox(plane:Plane, box:BoundBox):int{
 			

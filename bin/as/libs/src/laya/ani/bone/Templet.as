@@ -37,6 +37,10 @@ package laya.ani.bone {
 		public var srcBoneMatrixArr:Array = [];
 		/** IK数据 */
 		public var ikArr:Array = [];
+		/** transform数据 */
+		public var tfArr:Array = [];
+		/** path数据 */
+		public var pathArr:Array = [];
 		/** 存放插槽数据的字典 */
 		public var boneSlotDic:Object = {};
 		/** 绑定插槽数据的字典 */
@@ -56,10 +60,11 @@ package laya.ani.bone {
 		/** 反转矩阵，有些骨骼动画要反转才能显示 */
 		public var yReverseMatrix:Matrix;
 		
+		public var eventAniArr:Array = [];
+		
 		private var _rate:int = 60;
 		
 		public var aniSectionDic:Object = { };
-		public var textureDic:Object = { };
 		
 		private var _skBufferUrl:String;
 		private var _textureDic:Object = { };
@@ -113,10 +118,10 @@ package laya.ani.bone {
 		 */
 		override public function parse(data:ArrayBuffer, playbackRate:int):void {
 			super.parse(data, playbackRate);
-			if (this._aniVersion != KeyframesAniTemplet.LAYA_ANIMATION_VISION)
+			if (!(this._aniVersion == KeyframesAniTemplet.LAYA_ANIMATION_VISION || this._aniVersion == "LAYAANIMATION:1.0.2"))
 			{
 				//trace("[Error] Version " + _aniVersion + " The engine is inconsistent, update to the version " + KeyframesAniTemplet.LAYA_ANIMATION_VISION + " please.");
-				trace("[Error] 版本不一致，请使用IDE版本（1.2.0）重新导出");
+				trace("[Error] 版本不一致，请使用IDE版本（1.3.0）重新导出");
 				_loaded = false;
 			}
 			//解析公共数据
@@ -229,6 +234,9 @@ package laya.ani.bone {
 				tFrameHeight = isNaN(tTempleData) ? tHeight : tTempleData;
 				subTextureDic[tTextureName] = Texture.create(tTexture, tX, tY, tWidth, tHeight, -tFrameX, -tFrameY, tFrameWidth, tFrameHeight);
 			}
+			if (this._aniVersion == "LAYAANIMATION:1.0.3") {	
+				_mainTexture = tTexture;
+			}
 			
 			var tAniCount:int = tByte.getUint16();
 			var tSectionArr:Array;
@@ -238,6 +246,9 @@ package laya.ani.bone {
 				tSectionArr.push(tByte.getUint16());
 				tSectionArr.push(tByte.getUint16());
 				tSectionArr.push(tByte.getUint16());
+				if (this._aniVersion == "LAYAANIMATION:1.0.3") {	
+					tSectionArr.push(tByte.getUint16());
+				}
 				aniSectionDic[i] = tSectionArr;
 			}
 			
@@ -253,6 +264,14 @@ package laya.ani.bone {
 				tName = tByte.readUTFString();
 				tParentName = tByte.readUTFString();
 				tBone.length = tByte.getFloat32();
+				if (this._aniVersion == "LAYAANIMATION:1.0.3") {	
+					if (tByte.getByte() == 1) {	
+						tBone.inheritRotation = false;
+					}
+					if (tByte.getByte() == 1) {	
+						tBone.inheritScale = false;
+					}
+				}
 				tBone.name = tName;
 				if (tParentName)
 				{
@@ -307,6 +326,80 @@ package laya.ani.bone {
 				ikArr.push(tIkConstraintData);
 			}
 			
+			if (this._aniVersion == "LAYAANIMATION:1.0.3")
+			{
+				var tTfConstraintData:TfConstraintData;
+				var tTfLen:int = tByte.getUint16();
+				var tTfBoneLen:int;
+				for (i = 0; i < tTfLen; i++)
+				{
+					tTfConstraintData = new TfConstraintData();
+					tTfBoneLen = tByte.getUint16();
+					for (j = 0; j < tTfBoneLen; j++)
+					{
+						tTfConstraintData.boneIndexs.push(tByte.getInt16());
+					}
+					tTfConstraintData.name = tByte.getUTFString();
+					tTfConstraintData.targetIndex = tByte.getInt16();
+					tTfConstraintData.rotateMix = tByte.getFloat32();
+					tTfConstraintData.translateMix = tByte.getFloat32();
+					tTfConstraintData.scaleMix = tByte.getFloat32();
+					tTfConstraintData.shearMix = tByte.getFloat32();
+					tTfConstraintData.offsetRotation = tByte.getFloat32();
+					tTfConstraintData.offsetX = tByte.getFloat32();
+					tTfConstraintData.offsetY = tByte.getFloat32();
+					tTfConstraintData.offsetScaleX = tByte.getFloat32();
+					tTfConstraintData.offsetScaleY = tByte.getFloat32();
+					tTfConstraintData.offsetShearY = tByte.getFloat32();
+					tfArr.push(tTfConstraintData);
+				}
+				
+				var tPathConstraintData:PathConstraintData;
+				var tPathLen:int = tByte.getUint16();
+				var tPathBoneLen:int;
+				for (i = 0; i < tPathLen; i++)
+				{
+					tPathConstraintData = new PathConstraintData();
+					tPathConstraintData.name = tByte.readUTFString();
+					tPathBoneLen = tByte.getUint16();
+					for (j = 0; j < tPathBoneLen; j++)
+					{
+						tPathConstraintData.bones.push(tByte.getInt16());
+					}
+					tPathConstraintData.target = tByte.readUTFString();
+					tPathConstraintData.positionMode = tByte.readUTFString();
+					tPathConstraintData.spacingMode = tByte.readUTFString();
+					tPathConstraintData.rotateMode = tByte.readUTFString();
+					tPathConstraintData.offsetRotation = tByte.getFloat32();
+					tPathConstraintData.position = tByte.getFloat32();
+					tPathConstraintData.spacing = tByte.getFloat32();
+					tPathConstraintData.rotateMix = tByte.getFloat32();
+					tPathConstraintData.translateMix = tByte.getFloat32();
+					pathArr.push(tPathConstraintData);
+				}
+				
+				var tEventArr:Vector.<EventData>;
+				var tEventAniLen:int = tByte.getInt16();
+				var tEventLen:int;
+				var tEventData:EventData;
+				for (i = 0; i < tEventAniLen; i++)
+				{
+					tEventLen = tByte.getInt16();
+					tEventArr = new Vector.<EventData>();
+					for (j = 0; j < tEventLen; j++)
+					{
+						tEventData = new EventData();
+						tEventData.name = tByte.getUTFString();
+						tEventData.intValue = tByte.getInt32();
+						tEventData.floatValue = tByte.getFloat32();
+						tEventData.stringValue = tByte.getUTFString();
+						tEventData.time = tByte.getFloat32();
+						tEventArr.push(tEventData);
+					}
+					eventAniArr.push(tEventArr);
+				}
+			}
+			
 			//创建插槽并绑定到骨骼上
 			var tBoneSlotLen:int = tByte.getInt16();
 			var tDBBoneSlot:BoneSlot;
@@ -319,7 +412,6 @@ package laya.ani.bone {
 				tDBBoneSlot.srcDisplayIndex = tDBBoneSlot.displayIndex = tByte.getInt16();
 				tDBBoneSlot.templet = this;
 				boneSlotDic[tDBBoneSlot.name] = tDBBoneSlot;
-				
 				tDBBoneSlotArr = bindBoneBoneSlotDic[tDBBoneSlot.parent];
 				if (tDBBoneSlotArr == null) {
 					bindBoneBoneSlotDic[tDBBoneSlot.parent] = tDBBoneSlotArr = [];
@@ -335,7 +427,7 @@ package laya.ani.bone {
 			var tSkinDataLen:int = tByte.getUint8();
 			var tSkinData:SkinData, tSlotData:SlotData, tDisplayData:SkinSlotDisplayData;
 			var tSlotDataLen:int, tDisplayDataLen:int;
-			var tUvLen:uint, tWeightLen:uint, tTriangleLen:uint, tVerticeLen:uint;
+			var tUvLen:uint, tWeightLen:uint, tTriangleLen:uint, tVerticeLen:uint,tLengthLen:uint;
 			for (i = 0; i < tSkinDataLen; i++) {
 				tSkinData = new SkinData();
 				tSkinData.name = tNameArray[tNameStartIndex++];
@@ -360,6 +452,10 @@ package laya.ani.bone {
 						tDisplayData.width = tByte.getFloat32();
 						tDisplayData.height = tByte.getFloat32();
 						tDisplayData.type = tByte.getUint8();
+						if (this._aniVersion == "LAYAANIMATION:1.0.3")
+						{
+							tDisplayData.verLen = tByte.getUint16();
+						}
 						tBoneLen = tByte.getUint16();
 						if (tBoneLen > 0) {
 							tDisplayData.bones = [];
@@ -398,6 +494,18 @@ package laya.ani.bone {
 								tDisplayData.vertices.push(tByte.getFloat32());
 							}
 						}
+						if (this._aniVersion == "LAYAANIMATION:1.0.3")
+						{
+							tLengthLen = tByte.getUint16();
+							if (tLengthLen > 0)
+							{
+								tDisplayData.lengths = [];
+								for (l = 0; l < tLengthLen; l++)
+								{
+									tDisplayData.lengths.push(tByte.getFloat32());
+								}
+							}
+						}
 					}
 					tSkinData.slotArr.push(tSlotData);
 				}
@@ -419,7 +527,12 @@ package laya.ani.bone {
 		 * @return
 		 */
 		public function getTexture(name:String):Texture {
-			return subTextureDic[name];
+			var tTexture:Texture = subTextureDic[name];
+			if (tTexture == null)
+			{
+				return _mainTexture;
+			}
+			return tTexture;
 		}
 		
 		/**
@@ -428,8 +541,8 @@ package laya.ani.bone {
 		 * @param	boneSlotDic	插糟字典的引用
 		 * @param	skinIndex	皮肤的索引
 		 */
-		public function showSkinByIndex(boneSlotDic:Object, skinIndex:int):void {
-			if (skinIndex < 0 && skinIndex >= skinDataArray.length) return;
+		public function showSkinByIndex(boneSlotDic:Object, skinIndex:int):Boolean {
+			if (skinIndex < 0 && skinIndex >= skinDataArray.length) return false;
 			var i:int, n:int;
 			var tBoneSlot:BoneSlot;
 			var tSlotData:SlotData;
@@ -450,7 +563,9 @@ package laya.ani.bone {
 						}
 					}
 				}
+				return true;
 			}
+			return false;
 		}
 		
 		/**
@@ -495,9 +610,17 @@ package laya.ani.bone {
 		}
 		
 		/**
-		 * 预留
+		 * 释放纹理
 		 */
 		public function destroy():void {
+			for each(var tTexture:Texture in subTextureDic)
+			{
+				tTexture.destroy();
+			}
+			for each(tTexture in _textureDic)
+			{
+				tTexture.destroy();
+			}
 			if (url) {
 				delete TEMPLET_DICTIONARY[url];
 			}

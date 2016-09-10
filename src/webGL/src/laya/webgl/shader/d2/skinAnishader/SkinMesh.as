@@ -84,7 +84,7 @@ package laya.webgl.shader.d2.skinAnishader
 			if (Render.isWebGL)
 			{
 				mShaderValue.textureHost = mTexture;
-				(context as WebGLContext2D).setIBVB(x, y, mIBBuffer, mVBBuffer, mEleNum, transform, SkinAniShader.shader, mShaderValue, 0, 0);
+				(context as WebGLContext2D).setIBVB(x, y, mIBBuffer, mVBBuffer, mEleNum, transform, SkinAniShader.getInstance(), mShaderValue, 0, 0);
 			}
 			
 		}

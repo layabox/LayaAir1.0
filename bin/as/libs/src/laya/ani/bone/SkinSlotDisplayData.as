@@ -18,5 +18,7 @@ package laya.ani.bone {
 		public var weights:Array;
 		public var triangles:Array;
 		public var vertices:Array;
+		public var lengths:Array;
+		public var verLen:int;
 	}
 }

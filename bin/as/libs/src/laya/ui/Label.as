@@ -334,17 +334,6 @@ package laya.ui {
 		}
 		
 		/**
-		 * @copy laya.display.Text#asPassword
-		 */
-		public function get asPassword():Boolean {
-			return _tf.asPassword;
-		}
-		
-		public function set asPassword(value:Boolean):void {
-			_tf.asPassword = value;
-		}
-		
-		/**
 		 * 文本控件实体 <code>Text</code> 实例。
 		 */
 		public function get textField():Text {

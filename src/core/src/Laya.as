@@ -11,6 +11,7 @@ package {
 	import laya.media.SoundManager;
 	import laya.net.Loader;
 	import laya.net.LoaderManager;
+	import laya.net.LocalStorage;
 	import laya.net.URL;
 	import laya.renders.Render;
 	import laya.renders.RenderSprite;
@@ -35,7 +36,7 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.2.0";
+		public static var version:String = "1.3.0";
 		/**@private */
 		public static var stageBox:Sprite;
 		/**Market对象 只有加速器模式下才有值*/
@@ -80,6 +81,7 @@ package {
 			MouseManager.instance.__init__(stage,Render.canvas);
 			Input.__init__();		
 			SoundManager.autoStopMusic = true;
+			LocalStorage.__init__();
 			return Render.canvas;
 		}
 		

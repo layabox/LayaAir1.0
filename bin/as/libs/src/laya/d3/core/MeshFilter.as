@@ -31,8 +31,9 @@ package laya.d3.core {
 		 * @return  value 共享网格。
 		 */
 		public function set sharedMesh(value:BaseMesh):void {
+			var oldMesh:BaseMesh = _sharedMesh;
 			_sharedMesh = value;
-			event(Event.MESH_CHANGED,this);
+			event(Event.MESH_CHANGED, [this, oldMesh, value]);
 		}
 		
 		/**
@@ -40,8 +41,11 @@ package laya.d3.core {
 		 * @param mesh 网格数据。
 		 */
 		public function MeshFilter(owner:MeshSprite3D) {
+		
 			_owner = owner;
 		}
+		
+
 	
 	}
 

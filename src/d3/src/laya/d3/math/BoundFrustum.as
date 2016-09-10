@@ -342,7 +342,6 @@ package laya.d3.math {
 				}
 				
 				switch(planeResult){
-					
 					case Plane.PlaneIntersectionType_Back:
 						return ContainmentType.Disjoint;
 					case Plane.PlaneIntersectionType_Intersecting:
@@ -352,7 +351,6 @@ package laya.d3.math {
 			}
 			
 			switch(result){
-				
 				case Plane.PlaneIntersectionType_Intersecting:
 					return ContainmentType.Intersects;
 				default:
@@ -394,7 +392,6 @@ package laya.d3.math {
 			for (var i:int = 0; i < 6; i++){
 				
 				switch(i){
-					
 					case 0: 
 						planeResult = Collision.intersectsPlaneAndSphere(_near, sphere);
 						break;

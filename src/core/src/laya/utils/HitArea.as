@@ -104,12 +104,13 @@ package laya.utils
 		{
 			if (!cmd) return false;
 			var context:RenderContext = Render._context;
-			switch (cmd.callee) {
+			var rst:Boolean=false;
+			switch (cmd["callee"]) {
 				
 				case context._drawRect: 
 				case 13://case context._drawRect:
 					_rec.setTo(cmd[0], cmd[1], cmd[2], cmd[3]);
-					return _rec.contains(x, y);
+					rst= _rec.contains(x, y);
 					break;
 				case context._drawCircle: 
 				case context._fillCircle: 
@@ -118,20 +119,19 @@ package laya.utils
 					x -= cmd[0];
 					y -= cmd[1];
 					d = x * x + y * y;
-					return d < cmd[2] * cmd[2];
+					rst= d < cmd[2] * cmd[2];
 					break;
 				
 				case context._drawPoly: 
 				case 18://drawpoly
 					x -= cmd[0];
 					y -= cmd[1];
-					return ptInPolygon(x, y, cmd[2]);
+					rst= ptInPolygon(x, y, cmd[2]);
 					break;
 				default:
-					return false;
 					
 				}
-			return false;
+			return rst;
 		}
 		
 		/**
@@ -167,9 +167,9 @@ package laya.utils
 				if (p.y >= Math.max(p1y, p2y))
 					continue;
 				// 求交点的x坐标
-				var x:Number = (p.y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x;
+				var tx:Number = (p.y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x;
 				// 只统计p1p2与p向右射线的交点
-				if (x > p.x)
+				if (tx > p.x)
 				{
 					nCross++;
 				}

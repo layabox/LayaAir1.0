@@ -69,6 +69,12 @@ package laya.ani.swf {
 		protected var _labels:Object;
 		/**资源根目录。*/
 		public var basePath:String;
+		/**@private */
+		private var _atlasPath:String;
+		/**@private */
+		private var _url:String;
+		/**@private */
+		private var _isRoot:Boolean;
 		
 		/** 播放间隔(单位：毫秒)。*/
 		public var interval:int = 30;
@@ -87,9 +93,9 @@ package laya.ani.swf {
 			this._parentMovieClip = parentMovieClip;
 			if (!parentMovieClip) {
 				_movieClipList = [this];
-				on(Event.DISPLAY, this, _onDisplay);
-				on(Event.UNDISPLAY, this, _onDisplay);
+				_isRoot = true;
 			} else {
+				_isRoot = false;
 				_movieClipList = parentMovieClip._movieClipList;
 				_movieClipList.push(this);
 			}
@@ -104,6 +110,15 @@ package laya.ani.swf {
 			super.destroy(destroyChild);
 		}
 		
+		/**@private */
+		override public function _setDisplay(value:Boolean):void 
+		{
+			super._setDisplay(value);
+			if (_isRoot)
+			{
+				_onDisplay();
+			}
+		}
 		/**@private */
 		private function _onDisplay():void {			
 			if (_displayedInStage) Laya.timer.loop(this.interval, this, updates, null, true);
@@ -291,12 +306,7 @@ package laya.ani.swf {
 						var pid:int = _data.getUint16();
 						sp = _idOfSprite[key]
 						if (!sp) {
-							sp = _idOfSprite[key] = new Sprite();
-							//todo：优化方向
-							//sp.setSize(_data.getFloat32(),_data.getFloat32());
-							//var mat:Matrix=_data._getMatrix();
-							//sp.loadImage(basePath+pid+".png",mat);
-							
+							sp = _idOfSprite[key] = new Sprite();				
 							var spp:Sprite = new Sprite();
 							spp.loadImage(basePath + pid + ".png");
 							_loadedImage[basePath + pid + ".png"] = true;
@@ -394,23 +404,29 @@ package laya.ani.swf {
 		/**
 		 * 加载资源。
 		 * @param	url swf 资源地址。
+		 * @param   atlas  是否使用图集资源
+		 * @param   atlasPath  图集路径，默认使用与swf同名的图集
 		 */
-		public function load(url:String):void {
-			url = URL.formatURL(url);
-			basePath = url.split(".swf")[0] + "/image/";
+		public function load(url:String,atlas:Boolean=false,atlasPath:String=null):void {
+			_url = url = URL.formatURL(url);
+			if(atlas) _atlasPath=atlasPath?atlasPath:url.split(".swf")[0] + ".json";	
 			stop();
 			_clear();
 			_movieClipList = [this];
-			var data:* = Loader.getRes(url);
-			if (data) {
-				_initData(data);
-			} else {
-				Laya.loader.load(url, Handler.create(this, _onLoaded), null, Loader.BUFFER);
+			var urls:Array;
+			urls = [ { url:url, type:Loader.BUFFER } ];
+			if (_atlasPath)
+			{
+				urls.push({ url:_atlasPath, type:Loader.ATLAS });
 			}
+			Laya.loader.load(urls, Handler.create(this, _onLoaded));
 		}
 		
 		/**@private */
-		private function _onLoaded(data:*= null):void {
+		private function _onLoaded():void {
+			this.basePath =_atlasPath?Loader.getAtlas(_atlasPath).dir:_url.split(".swf")[0] + "/image/";
+			var data:*;
+			data=Loader.getRes(_url);
 			if (!data) return;
 			_initData(data);
 		}

@@ -87,14 +87,15 @@ package laya.events {
 			})
 			canvas.addEventListener("touchstart", function(e:*):void {
 				if (enabled) {
-					if(!Input.IOS_IFRAME) e.preventDefault();
 					list.push(e);
+					runEvent();
+					if(!Input.isInputting) e.preventDefault();
 					_this.mouseDownTime = Browser.now();
 				}
 			});
 			canvas.addEventListener("touchend", function(e:*):void {
 				if (enabled) {
-					if(!Input.IOS_IFRAME) e.preventDefault();
+					if(!Input.isInputting) e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = -Browser.now();
 				}

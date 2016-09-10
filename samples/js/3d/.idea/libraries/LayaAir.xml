@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="LayaAir" type="javaScript">
+    <properties>
+      <sourceFilesUrls>
+        <item url="file://$PROJECT_DIR$/../../../bin/js" />
+      </sourceFilesUrls>
+    </properties>
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../../../bin/js" />
+    </CLASSES>
+    <SOURCES />
+  </library>
+</component>

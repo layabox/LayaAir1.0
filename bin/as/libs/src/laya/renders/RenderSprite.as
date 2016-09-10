@@ -243,12 +243,12 @@ package laya.renders {
 			var childs:Array = sprite._childs, n:int = childs.length, ele:Sprite;
 			if (!sprite.optimizeScrollRect || sprite.scrollRect == null) {
 				for (var i:int = 0; i < n; ++i)
-					(ele = (childs[i] as Sprite))._style.visible && ele.render(context, x, y);
+					(ele = (childs[i] as Sprite)).visible && ele.render(context, x, y);
 			} else {
 				var rect:Rectangle = sprite.scrollRect;
 				for (i = 0; i < n; ++i) {
 					ele = childs[i] as Sprite;
-					if (ele._style.visible && rect.intersects(Rectangle.TEMP.setTo(ele.x, ele.y, ele.width, ele.height)))
+					if (ele.visible && rect.intersects(Rectangle.TEMP.setTo(ele.x, ele.y, ele.width, ele.height)))
 						ele.render(context, x, y);
 				}
 			}

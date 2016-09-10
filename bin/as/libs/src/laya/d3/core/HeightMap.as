@@ -9,6 +9,8 @@ package laya.d3.core {
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
 	import laya.d3.utils.Picker;
+	import laya.resource.Texture;
+	import laya.utils.Browser;
 	
 	/**
 	 * <code>HeightMap</code> 类用于实现高度图数据。
@@ -22,6 +24,7 @@ package laya.d3.core {
 		 * @param meshSprite 网格精灵。
 		 * @param width	高度图宽度。
 		 * @param height 高度图高度。
+		 * @param outCellSize 输出 单元尺寸。
 		 */
 		public static function creatFromMesh(mesh:Mesh, width:int, height:int, outCellSize:Vector2):HeightMap {
 			var vertices:Vector.<Vector.<Vector3>> = new Vector.<Vector.<Vector3>>();
@@ -44,11 +47,12 @@ package laya.d3.core {
 				indexs.push(ib.getData());
 			}
 			
-			var boundingBox:BoundBox = mesh._boundingBox;
+			var boundingBox:BoundBox = mesh.boundingBox;
 			var minX:Number = boundingBox.min.x;
 			var minZ:Number = boundingBox.min.z;
 			var maxX:Number = boundingBox.max.x;
 			var maxZ:Number = boundingBox.max.z;
+			var minY:Number = boundingBox.min.y;
 			var maxY:Number = boundingBox.max.y;
 			
 			var widthSize:Number = maxX - minX;
@@ -56,7 +60,7 @@ package laya.d3.core {
 			var cellWidth:Number = outCellSize.elements[0] = widthSize / (width - 1);
 			var cellHeight:Number = outCellSize.elements[1] = heightSize / (height - 1);
 			
-			var heightMap:HeightMap = new HeightMap(width, height, maxY);
+			var heightMap:HeightMap = new HeightMap(width, height, minY, maxY);
 			
 			var ray:Ray = _tempRay;
 			var rayDirE:Float32Array = ray.direction.elements;//Direction
@@ -83,6 +87,44 @@ package laya.d3.core {
 				}
 			}
 			
+			return heightMap;
+		}
+		
+		/**
+		 * 从图片生成高度图。
+		 * @param image 图片。
+		 * @param maxHeight 最小高度。
+		 * @param maxHeight 最大高度。
+		 */
+		public static function createFromImage(texture:Texture, minHeight:Number, maxHeight:Number):HeightMap {
+			
+			
+			var textureWidth:Number = texture.sourceWidth;
+			var textureHeight:Number = texture.sourceHeight;
+			var heightMap:HeightMap = new HeightMap(textureWidth, textureHeight, minHeight, maxHeight);
+			var compressionRatio:Number = (maxHeight - minHeight) / 254;
+			
+			Browser.canvas.size(textureWidth, textureHeight);
+			Browser.context.drawImage(texture.bitmap.image, 0, 0,textureWidth,textureHeight);
+			
+			var pixelsInfo:* = Browser.context.getImageData(0, 0, textureWidth, textureHeight).data;
+			
+			var index:int = 0;
+			for (var w:int = 0; w < textureWidth; w++) {
+				var colDatas:Array= heightMap._datas[w] = [];
+				for (var h:int = 0; h < textureHeight; h++) {
+					var r:Number = pixelsInfo[index++];
+					var g:Number = pixelsInfo[index++];
+					var b:Number = pixelsInfo[index++];
+					var a:Number = pixelsInfo[index++];
+					
+					if (r == 255 && g == 255 && b == 255 && a == 255)
+						colDatas[h] = NaN;
+					else {
+						colDatas[h] = (r + g + b) / 3 * compressionRatio + minHeight;
+					}
+				}
+			}
 			return heightMap;
 		}
 		
@@ -117,6 +159,8 @@ package laya.d3.core {
 		/** @private */
 		private var _h:int;
 		/** @private */
+		private var _minHeight:Number;
+		/** @private */
 		private var _maxHeight:Number;
 		
 		/**
@@ -144,15 +188,25 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * 最大高度。
+		 * @return value 最大高度。
+		 */
+		public function get minHeight():int {
+			return _minHeight;
+		}
+		
+		/**
 		 * 创建一个 <code>HeightMap</code> 实例。
 		 * @param width 宽度。
 		 * @param height 高度。
+		 * @param minHeight 最大高度。
 		 * @param maxHeight 最大高度。
 		 */
-		public function HeightMap(width:int, height:int, maxHeight:Number) {
+		public function HeightMap(width:int, height:int, minHeight:Number, maxHeight:Number) {
 			_datas = [];
 			_w = width;
 			_h = height;
+			_minHeight = minHeight;
 			_maxHeight = maxHeight;
 		}
 		

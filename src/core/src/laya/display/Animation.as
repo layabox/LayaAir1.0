@@ -156,12 +156,8 @@ package laya.display {
 		
 		/**图集地址或者图片集合*/
 		public function set source(value:String):void {
-			if (value.indexOf(",") < 0) {
-				loadAtlas(value);
-			} else {
-				var arr:Array = value.split(",");
-				loadImages(arr);
-			}
+			if (value.indexOf(".json") > -1 || value.indexOf("als") > -1) loadAtlas(value);
+			else loadImages(value.split(","));
 		}
 		
 		/**是否自动播放*/
