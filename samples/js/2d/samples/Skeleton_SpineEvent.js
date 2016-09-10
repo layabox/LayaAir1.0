@@ -28,7 +28,7 @@
 		mLabelSprite = new Sprite();
 		startFun();
 	})();
-	public function startFun():void
+	function startFun()
 	{
 		mAniPath = "../../res/spine/spineRes6/alien.sk";
 		mFactory = new Templet();
@@ -37,12 +37,12 @@
 		mFactory.loadAni(mAniPath);
 	}
 	
-	private function onError():void
+	function onError()
 	{
 		trace("error");
 	}
 	
-	private function parseComplete():void {
+	function parseComplete() {
 		//创建模式为1，可以启用换装
 		mArmature = mFactory.buildArmature(1);
 		mArmature.x = mStartX;
@@ -54,12 +54,12 @@
 		play();
 	}
 	
-	private function completeHandler():void
+	function completeHandler()
 	{
 		play();
 	}
 	
-	private function play():void
+	function play()
 	{
 		mCurrIndex++;
 		if (mCurrIndex >= mArmature.getAnimNum())
@@ -70,9 +70,9 @@
 		
 	}
 	
-	private function onEvent(e:*):void
+	function onEvent(e)
 	{
-		var tEventData:EventData = e as EventData;
+		var tEventData = e;
 		
 		Laya.stage.addChild(mLabelSprite);
 		mLabelSprite.x = mStartX;
@@ -82,7 +82,7 @@
 		Tween.to(mLabelSprite, { y:mStartY - 200 }, 1000, null,Handler.create(this,playEnd))
 	}
 	
-	private function playEnd():void
+	function playEnd()
 	{
 		mLabelSprite.removeSelf();
 	}

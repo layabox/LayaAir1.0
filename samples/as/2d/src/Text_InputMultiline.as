@@ -34,11 +34,10 @@ package
 			inputText.prompt = "Type some word...";
 			
 			//多行输入
-			//inputText.multiline = true;
+			inputText.multiline = true;
 			inputText.wordWrap = true;
 			
 			inputText.size(350, 100);
-			inputText.type = "number";
 			inputText.x = Laya.stage.width - inputText.width >> 1;
 			inputText.y = Laya.stage.height - inputText.height >> 1;
 			inputText.padding = [2,2,2,2];
