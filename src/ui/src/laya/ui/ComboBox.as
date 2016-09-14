@@ -241,8 +241,7 @@ package laya.ui {
 			_itemHeight = _itemSize + 6;
 			_list.itemRender = {type: "Box", child: [{type: "Label", props: {name: "label", x: 1, padding: "3,3,3,3", width: labelWidth, height: _itemHeight, fontSize: _itemSize, color: labelColor}}]};
 			_list.repeatY = _visibleNum;
-			if (_scrollBar)
-				_scrollBar.x = width - _scrollBar.width - 1;
+			if (_scrollBar) _scrollBar.x = width - _scrollBar.width - 1;
 			_list.refresh();
 		}
 		
@@ -320,8 +319,7 @@ package laya.ui {
 			runCallLater(changeList);
 			//显示边框
 			_listHeight = _labels.length > 0 ? Math.min(_visibleNum, _labels.length) * _itemHeight : _itemHeight;
-			if (_scrollBar)
-				_scrollBar.height = _listHeight - 2;
+			if (_scrollBar) _scrollBar.height = _listHeight - 2;
 			//填充背景
 			var g:Graphics = _list.graphics;
 			g.clear();
@@ -333,6 +331,11 @@ package laya.ui {
 				a.push({label: _labels[i]});
 			}
 			_list.array = a;
+			if (_visibleNum > a.length) {
+				_list.height = _listHeight;
+			} else {
+				_list.height = 0;
+			}
 		}
 		
 		/**
@@ -439,7 +442,7 @@ package laya.ui {
 					py = py + _listHeight <= Laya.stage.height ? py : p.y - _listHeight;
 					
 					_list.pos(p.x, py);
-					Laya.stageBox.addChildAt(_list, 0);
+					Laya.stageBox.addChild(_list);
 					Laya.stage.once(Event.MOUSE_DOWN, this, removeList);
 					_list.selectedIndex = _selectedIndex;
 				} else {
