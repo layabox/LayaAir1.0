@@ -7,10 +7,10 @@
 	var Handler=laya.utils.Handler,Input=laya.display.Input,Loader=laya.net.Loader,Node=laya.display.Node,Point=laya.maths.Point;
 	var Rectangle=laya.maths.Rectangle,Render=laya.renders.Render,Sprite=laya.display.Sprite,Stage=laya.display.Stage;
 	var Text=laya.display.Text,Texture=laya.resource.Texture,Tween=laya.utils.Tween,Utils=laya.utils.Utils;
-	Laya.interface('laya.ui.IRender');
-	Laya.interface('laya.ui.IItem');
 	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.IComponent');
+	Laya.interface('laya.ui.IItem');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
 	*<code>LayoutStyle</code> 是一个布局样式类。
@@ -2261,8 +2261,7 @@
 			this._itemHeight=this._itemSize+6;
 			this._list.itemRender={type:"Box",child:[{type:"Label",props:{name:"label",x:1,padding:"3,3,3,3",width:labelWidth,height:this._itemHeight,fontSize:this._itemSize,color:labelColor}}]};
 			this._list.repeatY=this._visibleNum;
-			if (this._scrollBar)
-				this._scrollBar.x=this.width-this._scrollBar.width-1;
+			if (this._scrollBar)this._scrollBar.x=this.width-this._scrollBar.width-1;
 			this._list.refresh();
 		}
 
@@ -2310,8 +2309,7 @@
 			this._itemChanged=false;
 			this.runCallLater(this.changeList);
 			this._listHeight=this._labels.length > 0 ? Math.min(this._visibleNum,this._labels.length)*this._itemHeight :this._itemHeight;
-			if (this._scrollBar)
-				this._scrollBar.height=this._listHeight-2;
+			if (this._scrollBar)this._scrollBar.height=this._listHeight-2;
 			var g=this._list.graphics;
 			g.clear();
 			g.drawRect(0,0,this.width-1,this._listHeight,this._itemColors[4],this._itemColors[3]);
@@ -2321,6 +2319,11 @@
 				a.push({label:this._labels[i]});
 			}
 			this._list.array=a;
+			if (this._visibleNum > a.length){
+				this._list.height=this._listHeight;
+				}else {
+				this._list.height=0;
+			}
 		}
 
 		__proto.changeSelected=function(){
@@ -2474,7 +2477,7 @@
 					var py=p.y+this._button.height;
 					py=py+this._listHeight <=Laya.stage.height ? py :p.y-this._listHeight;
 					this._list.pos(p.x,py);
-					Laya.stageBox.addChildAt(this._list,0);
+					Laya.stageBox.addChild(this._list);
 					Laya.stage.once(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.removeList);
 					this._list.selectedIndex=this._selectedIndex;
 					}else {
