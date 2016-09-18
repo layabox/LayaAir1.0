@@ -136,8 +136,8 @@ package threeDimen.advancedStage {
 				if (mesh != null) {
 					//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 					mesh.once(Event.LOADED, this, function(mesh:BaseMesh):void {
-						for (var i:int = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
-							var material:Material = meshSprite.meshRender.shadredMaterials[i];
+						for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+							var material:Material = meshSprite.meshRender.sharedMaterials[i];
 							material.once(Event.LOADED, null, function(mat:Material):void {
 								var transformUV:TransformUV = new TransformUV();
 								transformUV.tiling = uvScale;

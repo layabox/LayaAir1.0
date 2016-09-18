@@ -21,8 +21,8 @@ class StaticModel_HierarchySample {
             var meshSprite = sprite.getChildAt(0) as Laya.MeshSprite3D;
             var mesh = meshSprite.meshFilter.sharedMesh;
             mesh.once(Laya.Event.LOADED, this, (mesh) => {
-                for (var i = 0; i <  meshSprite.meshRender.shadredMaterials.length; i++) {
-                    var material =  meshSprite.meshRender.shadredMaterials[i];
+                for (var i = 0; i <  meshSprite.meshRender.sharedMaterials.length; i++) {
+                    var material =  meshSprite.meshRender.sharedMaterials[i];
                     material.once(Laya.Event.LOADED, this, (mat) => {
                         mat.albedo = new  Laya.Vector4(3.5,3.5,3.5,1.0);
                     });

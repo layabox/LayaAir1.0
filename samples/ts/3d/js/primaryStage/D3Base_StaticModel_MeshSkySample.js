@@ -20,8 +20,8 @@ var StaticModel_MeshSkySample = (function () {
             var meshSprite = sprite.getChildAt(0);
             var mesh = meshSprite.meshFilter.sharedMesh;
             mesh.once(Laya.Event.LOADED, null, function (templet) {
-                for (var i = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
-                    var material = meshSprite.meshRender.shadredMaterials[i];
+                for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+                    var material = meshSprite.meshRender.sharedMaterials[i];
                     material.once(Laya.Event.LOADED, null, function (mat) {
                         mat.albedo = new Laya.Vector4(3.5, 3.5, 3.5, 1.0);
                         mat.renderMode = Laya.Material.RENDERMODE_SKY;

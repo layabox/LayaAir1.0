@@ -39,8 +39,8 @@ module Materil_Reflect {
             var mesh: Laya.Mesh = Laya.Mesh.load("../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
             this.meshSprite = sprit.addChild(new Laya.MeshSprite3D(mesh)) as Laya.MeshSprite3D;
             mesh.once(Laya.Event.LOADED, this, () => {
-                this.meshSprite.meshRender.shadredMaterials[0].once(Laya.Event.LOADED, this, () => {
-                    this.material = this.meshSprite.meshRender.shadredMaterials[0];
+                this.meshSprite.meshRender.sharedMaterials[0].once(Laya.Event.LOADED, this, () => {
+                    this.material = this.meshSprite.meshRender.sharedMaterials[0];
                     this.material.albedo = new Vector4(0.0,0.0,0.0,0.0);
                     this.material.renderMode = Laya.Material.RENDERMODE_OPAQUEDOUBLEFACE;
                     (this.material && this.reflectTexture) && (this.material.reflectTexture = this.reflectTexture);
@@ -55,7 +55,7 @@ module Materil_Reflect {
             webGLImageCube.on(Laya.Event.LOADED, this, (imgCube) => {
                 this.reflectTexture = new Laya.Texture(imgCube);
                 imgCube.mipmap = true;
-                (this.material && this.reflectTexture) && (this.meshSprite.meshRender.shadredMaterials[0].reflectTexture = this.reflectTexture);
+                (this.material && this.reflectTexture) && (this.meshSprite.meshRender.sharedMaterials[0].reflectTexture = this.reflectTexture);
             });
 
             Laya.timer.frameLoop(1, this, () => {
