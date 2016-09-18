@@ -143,7 +143,7 @@ package laya.webgl.resource {
 			}
 			
 			char.borderSize = borderSize;
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		private function onresize(w:Number, h:Number):void {

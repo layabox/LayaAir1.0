@@ -12508,7 +12508,7 @@
 			this._vertexBuffer.setData(vertices);
 			this._indexBuffer.setData(indices);
 			this.memorySize=(this._vertexBuffer.byteLength+this._indexBuffer.byteLength)*2;
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		/**
@@ -14375,7 +14375,7 @@
 			this._vertexBuffer.setData(vertices);
 			this._indexBuffer.setData(indices);
 			this.memorySize=(this._vertexBuffer.byteLength+this._indexBuffer.byteLength)*2;
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		/**

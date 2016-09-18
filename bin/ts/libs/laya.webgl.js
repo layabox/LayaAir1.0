@@ -5651,7 +5651,7 @@
 		__proto.recreateResource=function(){
 			this.startCreate();
 			this._compile();
-			this.compoleteCreate();
+			this.completeCreate();
 			this.memorySize=0;
 		}
 
@@ -6332,7 +6332,7 @@
 		__proto.recreateResource=function(){
 			this.startCreate();
 			this._glBuffer || (this._glBuffer=Buffer._gl.createBuffer());
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		__proto.detoryResource=function(){
@@ -6505,7 +6505,7 @@
 			gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_T*/0x2803,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 			(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 			this.memorySize=this._w *this._h *4;
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		/***销毁资源*/
@@ -6647,7 +6647,7 @@
 	__proto.recreateResource=function(){
 		this.startCreate();
 		this.createWebGlTexture();
-		this.compoleteCreate();
+		this.completeCreate();
 	}
 
 
@@ -6811,7 +6811,7 @@
 				this._ctx.restore();
 			}
 			char.borderSize=this.borderSize;
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		__proto.onresize=function(w,h){
@@ -6982,7 +6982,7 @@
 						if (!_this._images[j].complete)
 							return;
 						_this._createWebGlTexture();
-						_this.compoleteCreate();
+						_this.completeCreate();
 					};
 					this._images[i].src=this._srcs[i];
 				}
@@ -6992,7 +6992,7 @@
 				}
 				this.startCreate();
 				this._createWebGlTexture();
-				this.compoleteCreate();
+				this.completeCreate();
 			}
 		}
 
@@ -7110,7 +7110,7 @@
 			(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 			gl.bindRenderbuffer(/*laya.webgl.WebGLContext.RENDERBUFFER*/0x8D41,null);
 			this.memorySize=this._w *this._h *4;
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		__proto.detoryResource=function(){
@@ -7196,7 +7196,7 @@
 		this.size(this._w,this._h);
 		this._ctx.drawImage(this.atlasImage,this.offsetX,this.offsetY,this._w,this._h,0,0,this._w,this._h);
 		(!(AtlasResourceManager.enabled && this._allowMerageInAtlas))&& (this.createWebGlTexture());
-		this.compoleteCreate();
+		this.completeCreate();
 	}
 
 
@@ -7889,7 +7889,7 @@
 						return;
 					}
 					(!(_this._allowMerageInAtlas && _this._enableMerageInAtlas))? (_this._createWebGlTexture()):(_$this.memorySize=0,_$this._recreateLock=false);
-					_this.compoleteCreate();
+					_this.completeCreate();
 				};
 				this._image.src=this._src;
 				}else {
@@ -7898,7 +7898,7 @@
 				}
 				this.startCreate();
 				(!(this._allowMerageInAtlas && this._enableMerageInAtlas))? (this._createWebGlTexture()):(this.memorySize=0,this._recreateLock=false);
-				this.compoleteCreate();
+				this.completeCreate();
 			}
 		}
 

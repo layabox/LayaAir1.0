@@ -12305,7 +12305,7 @@ declare module laya.resource {
          */
         dispose(): void;
         protected startCreate(): void;
-        protected compoleteCreate(): void;
+        protected completeCreate(): void;
     }
 }
 declare module laya.resource {

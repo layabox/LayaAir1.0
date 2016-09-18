@@ -176,7 +176,7 @@ package laya.webgl.resource {
 					}
 					
 					(!(_this._allowMerageInAtlas && _this._enableMerageInAtlas)) ? (_this._createWebGlTexture()) : (memorySize = 0, _recreateLock = false);
-					_this.compoleteCreate();//处理创建完成后相关操作
+					_this.completeCreate();//处理创建完成后相关操作
 				};
 				_image.src = _src;
 			} else {
@@ -185,7 +185,7 @@ package laya.webgl.resource {
 				}
 				startCreate();
 				(!(_allowMerageInAtlas && _enableMerageInAtlas)) ? (_createWebGlTexture()) : (memorySize = 0, _recreateLock = false);
-				compoleteCreate();//处理创建完成后相关操作
+				completeCreate();//处理创建完成后相关操作
 			}
 		}
 		

@@ -107,7 +107,7 @@ package laya.webgl.resource {
 			_ctx.drawImage(atlasImage, offsetX, offsetY, _w, _h, 0, 0, _w, _h);
 			//imageData = _ctx.getImageData(0, 0, _w, _h);
 			(!(AtlasResourceManager.enabled && _allowMerageInAtlas)) && (createWebGlTexture());
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		private function createWebGlTexture():void {

@@ -80,7 +80,7 @@ package laya.resource {
 					_this._source.onload = null;
 					_this.memorySize = _w * _h * 4;
 					_this._recreateLock = false;
-					_this.compoleteCreate();//处理创建完成后相关操作
+					_this.completeCreate();//处理创建完成后相关操作
 				};
 				_source.src = _src;
 			} else {
@@ -89,7 +89,7 @@ package laya.resource {
 				startCreate();
 				memorySize = _w * _h * 4;
 				_recreateLock = false;
-				compoleteCreate();//处理创建完成后相关操作
+				completeCreate();//处理创建完成后相关操作
 			}//资源恢复过程中会走此分支,_source中应为null（对应WebGLImage）,本类get source属性中处理
 		}
 		
