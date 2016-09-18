@@ -2572,7 +2572,7 @@ declare module laya.d3.core.render {
          * 设置第一个材质。
          * @param value 第一个材质。
          */
-        shadredMaterial: laya.d3.core.material.Material;
+        sharedMaterial: laya.d3.core.material.Material;
         /**
          * 获取浅拷贝材质列表。
          * @return 浅拷贝材质列表。
@@ -2581,7 +2581,7 @@ declare module laya.d3.core.render {
          * 设置材质列表。
          * @param value 材质列表。
          */
-        shadredMaterials: Array<any>;
+        sharedMaterials: Array<any>;
         /**
          * 获取包围球。
          * @return 包围球。

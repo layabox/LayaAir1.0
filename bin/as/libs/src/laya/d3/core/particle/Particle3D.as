@@ -49,7 +49,7 @@ package laya.d3.core.particle {
 			
 			
 			var material:Material = new Material();
-			_particleRender.shadredMaterial = material;
+			_particleRender.sharedMaterial = material;
 			_templet = new ParticleTemplet3D(this, settings);
 			if (settings.blendState === 0)
 				material.renderMode = Material.RENDERMODE_TRANSPARENT;
@@ -66,7 +66,7 @@ package laya.d3.core.particle {
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
 			
-			var material:Material = _particleRender.shadredMaterials[index];
+			var material:Material = _particleRender.sharedMaterials[index];
 			(material) || (material = Material.defaultMaterial);//确保有材质,由默认材质代替。
 			
 			var element:IRenderable = _templet;

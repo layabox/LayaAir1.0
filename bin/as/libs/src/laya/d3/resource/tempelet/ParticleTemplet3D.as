@@ -73,7 +73,7 @@ package laya.d3.resource.tempelet {
 			
 			if (settings.textureName)//预设纹理ShaderValue
 			{
-				var material:Material = (_owner as Particle3D).particleRender.shadredMaterial;
+				var material:Material = (_owner as Particle3D).particleRender.sharedMaterial;
 				_shaderValue.pushValue(Buffer2D.DIFFUSETEXTURE, null, -1);
 				var _this:ParticleTemplet3D = this;
 				Laya.loader.load(settings.textureName, Handler.create(null, function(texture:Texture):void {
@@ -129,7 +129,7 @@ package laya.d3.resource.tempelet {
 		}
 		
 		public function _render(state:RenderState):Boolean {
-			var material:Material = (state.owner as Particle3D).particleRender.shadredMaterial;
+			var material:Material = (state.owner as Particle3D).particleRender.sharedMaterial;
 			var diffuseTexture:Texture = material.diffuseTexture;
 			if (diffuseTexture && diffuseTexture.loaded) {
 				//设备丢失时.............................................................
