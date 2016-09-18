@@ -610,7 +610,7 @@
 			return this;
 		}
 
-		__proto.boudningBoxLine=function(minX,minY,minZ,maxX,maxY,maxZ,r,g,b,a){
+		__proto.boundingBoxLine=function(minX,minY,minZ,maxX,maxY,maxZ,r,g,b,a){
 			if (!this._hasBegun || this._primitiveType!==/*laya.webgl.WebGLContext.LINES*/0x0001)
 				this.drawLinesException();
 			if (this._posInVBData+8 *this._floatSizePerVer > this._vbData.length || this._posInIBData+48 > this._ibData.length)
