@@ -119,7 +119,7 @@ package laya.d3.resource.models {
 		 */
 		public function _render(state:RenderState):Boolean {
 			var mesh:Mesh = _mesh, vb:VertexBuffer3D = _vb, ib:IndexBuffer3D = _ib;
-			var material:Material = getMaterial((state.owner as MeshSprite3D).meshRender.shadredMaterials);
+			var material:Material = getMaterial((state.owner as MeshSprite3D).meshRender.sharedMaterials);
 			if (material.normalTexture && !vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TANGENT0]) {
 				//是否放到事件触发。
 				var vertexDatas:Float32Array = vb.getData();
