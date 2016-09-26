@@ -73,8 +73,8 @@ module LightAndMaterialSample {
 				var meshSprite = sprite.getChildAt(0) as Laya.MeshSprite3D;
 				var mesh = meshSprite.meshFilter.sharedMesh;
 				mesh.once(Laya.Event.LOADED, null, function (templet) {
-					for (var i = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
-						var material = meshSprite.meshRender.shadredMaterials[i];
+					for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+						var material = meshSprite.meshRender.sharedMaterials[i];
 						material.once(Laya.Event.LOADED, null, function () {
 							material.diffuseColor = new Vector3(0.7, 0.7, 0.7);
 							material.specularColor = new Laya.Vector4(0.2, 0.2, 0.2, 32);

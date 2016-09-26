@@ -173,7 +173,7 @@ package laya.webgl.resource {
 								return;
 						
 						_this._createWebGlTexture();
-						_this.compoleteCreate();//处理创建完成后相关操作
+						_this.completeCreate();//处理创建完成后相关操作
 					};
 					_images[i].src = _srcs[i];
 				}
@@ -183,7 +183,7 @@ package laya.webgl.resource {
 				}
 				startCreate();
 				_createWebGlTexture();
-				compoleteCreate();//处理创建完成后相关操作
+				completeCreate();//处理创建完成后相关操作
 			}
 		}
 		

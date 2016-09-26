@@ -121,7 +121,7 @@ package laya.d3.core.render {
 		 * 返回第一个材质。
 		 * @return 第一个材质。
 		 */
-		public function get shadredMaterial():Material {
+		public function get sharedMaterial():Material {
 			return _materials[0];
 		}
 		
@@ -129,7 +129,7 @@ package laya.d3.core.render {
 		 * 设置第一个材质。
 		 * @param value 第一个材质。
 		 */
-		public function set shadredMaterial(value:Material):void {
+		public function set sharedMaterial(value:Material):void {
 			var oldMaterial:Material = _materials[0];
 			_materials[0] = value;
 			event(Event.MATERIAL_CHANGED, [this, [oldMaterial], [value]]);
@@ -139,7 +139,7 @@ package laya.d3.core.render {
 		 * 获取浅拷贝材质列表。
 		 * @return 浅拷贝材质列表。
 		 */
-		public function get shadredMaterials():Vector.<Material> {
+		public function get sharedMaterials():Vector.<Material> {
 			var materials:Vector.<Material> = _materials.slice();
 			return materials;
 		}
@@ -148,9 +148,9 @@ package laya.d3.core.render {
 		 * 设置材质列表。
 		 * @param value 材质列表。
 		 */
-		public function set shadredMaterials(value:Vector.<Material>):void {
+		public function set sharedMaterials(value:Vector.<Material>):void {
 			if (!value)
-				throw new Error("MeshRender: shadredMaterials value can't be null.");
+				throw new Error("MeshRender: sharedMaterials value can't be null.");
 			
 			var oldMaterials:Vector.<Material> = _materials;
 			_materials = value;

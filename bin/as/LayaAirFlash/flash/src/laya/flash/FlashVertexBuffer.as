@@ -122,7 +122,7 @@ package laya.flash {
 		override protected function recreateResource():void {
 			startCreate();
 			_glBuffer = this;
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		override public function insertData(data:Array, pos:int):void {

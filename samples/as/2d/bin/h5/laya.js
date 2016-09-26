@@ -13014,10 +13014,10 @@ var Laya=window.Laya=(function(window,document){
 		__class(Resource,'laya.resource.Resource',_super);
 		var __proto=Resource.prototype;
 		Laya.imps(__proto,{"laya.resource.IDispose":true})
-		/**重新创建资源。override it，同时修改memorySize属性、处理startCreate()和compoleteCreate()方法。*/
+		/**重新创建资源。override it，同时修改memorySize属性、处理startCreate()和completeCreate()方法。*/
 		__proto.recreateResource=function(){
 			this.startCreate();
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		/**销毁资源，override it,同时修改memorySize属性。*/
@@ -13098,7 +13098,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		/**完成资源激活。*/
-		__proto.compoleteCreate=function(){
+		__proto.completeCreate=function(){
 			this._released=false;
 			this.event("recovered",this);
 		}
@@ -17904,7 +17904,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.recreateResource=function(){
 			this.startCreate();
 			this._compile();
-			this.compoleteCreate();
+			this.completeCreate();
 			this.memorySize=0;
 		}
 
@@ -18349,7 +18349,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.recreateResource=function(){
 			this.startCreate();
 			this._glBuffer || (this._glBuffer=Buffer._gl.createBuffer());
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		__proto.detoryResource=function(){
@@ -19966,7 +19966,7 @@ var Laya=window.Laya=(function(window,document){
 			gl.texParameteri(0x0DE1,0x2803,0x812F);
 			(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 			this.memorySize=this._w *this._h *4;
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		/***销毁资源*/
@@ -20126,7 +20126,7 @@ var Laya=window.Laya=(function(window,document){
 				this._ctx.restore();
 			}
 			char.borderSize=this.borderSize;
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		__proto.onresize=function(w,h){
@@ -20262,7 +20262,7 @@ var Laya=window.Laya=(function(window,document){
 			(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 			gl.bindRenderbuffer(0x8D41,null);
 			this.memorySize=this._w *this._h *4;
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		__proto.detoryResource=function(){
@@ -21286,7 +21286,7 @@ var Laya=window.Laya=(function(window,document){
 					_this._source.onload=null;
 					_this.memorySize=_$this._w *_$this._h *4;
 					_this._recreateLock=false;
-					_this.compoleteCreate();
+					_this.completeCreate();
 				};
 				this._source.src=this._src;
 				}else {
@@ -21295,7 +21295,7 @@ var Laya=window.Laya=(function(window,document){
 				this.startCreate();
 				this.memorySize=this._w *this._h *4;
 				this._recreateLock=false;
-				this.compoleteCreate();
+				this.completeCreate();
 			}
 		}
 
@@ -21542,7 +21542,7 @@ var Laya=window.Laya=(function(window,document){
 						return;
 					}
 					(!(_this._allowMerageInAtlas && _this._enableMerageInAtlas))? (_this._createWebGlTexture()):(_$this.memorySize=0,_$this._recreateLock=false);
-					_this.compoleteCreate();
+					_this.completeCreate();
 				};
 				this._image.src=this._src;
 				}else {
@@ -21551,7 +21551,7 @@ var Laya=window.Laya=(function(window,document){
 				}
 				this.startCreate();
 				(!(this._allowMerageInAtlas && this._enableMerageInAtlas))? (this._createWebGlTexture()):(this.memorySize=0,this._recreateLock=false);
-				this.compoleteCreate();
+				this.completeCreate();
 			}
 		}
 

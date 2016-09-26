@@ -66,8 +66,8 @@ package threeDimen.primaryStage {
 			
 			 //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 			mesh.once(Event.LOADED, null, function():void {
-				meshSprite.meshRender.shadredMaterials[0].once(Event.LOADED, null, function():void {
-					material = meshSprite.meshRender.shadredMaterials[0];
+				meshSprite.meshRender.sharedMaterials[0].once(Event.LOADED, null, function():void {
+					material = meshSprite.meshRender.sharedMaterials[0];
 					(material && normalTexture) && (material.normalTexture = normalTexture);
 				});
 			});

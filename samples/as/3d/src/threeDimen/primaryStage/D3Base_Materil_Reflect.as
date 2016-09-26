@@ -50,8 +50,8 @@ package threeDimen.primaryStage {
 			var mesh:Mesh = Mesh.load("../../../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
 			meshSprite = sprite.addChild(new MeshSprite3D(mesh)) as MeshSprite3D;
 			mesh.once(Event.LOADED, null, function():void {
-				meshSprite.meshRender.shadredMaterials[0].once(Event.LOADED, null, function():void {
-					material = meshSprite.meshRender.shadredMaterials[0];
+				meshSprite.meshRender.sharedMaterials[0].once(Event.LOADED, null, function():void {
+					material = meshSprite.meshRender.sharedMaterials[0];
 					material.albedo = new Vector4(0.0, 0.0, 0.0, 0.0);
 					material.renderMode = Material.RENDERMODE_OPAQUEDOUBLEFACE;
 					(material && cubeTexture) && (material.reflectTexture = cubeTexture);
@@ -65,7 +65,7 @@ package threeDimen.primaryStage {
 			var webGLImageCube:WebGLImageCube = new WebGLImageCube(["../../../../res/threeDimen/skyBox/px.jpg", "../../../../res/threeDimen/skyBox/nx.jpg", "../../../../res/threeDimen/skyBox/py.jpg", "../../../../res/threeDimen/skyBox/ny.jpg", "../../../../res/threeDimen/skyBox/pz.jpg", "../../../../res/threeDimen/skyBox/nz.jpg"], 1024);
 			webGLImageCube.once(Event.LOADED, null, function(imgCube:WebGLImageCube):void {
 				cubeTexture = new Texture(imgCube);
-				(material && cubeTexture) && (meshSprite.meshRender.shadredMaterials[0].reflectTexture = cubeTexture);
+				(material && cubeTexture) && (meshSprite.meshRender.sharedMaterials[0].reflectTexture = cubeTexture);
 				skyBox.textureCube = cubeTexture;
 			});
 			

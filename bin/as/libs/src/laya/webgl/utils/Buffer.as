@@ -44,7 +44,7 @@ package laya.webgl.utils {
 		override protected function recreateResource():void {
 			startCreate();
 			_glBuffer || (_glBuffer = _gl.createBuffer());
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		override protected function detoryResource():void {

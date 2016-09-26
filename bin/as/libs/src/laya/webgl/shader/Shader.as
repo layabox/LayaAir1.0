@@ -122,7 +122,7 @@ package laya.webgl.shader {
 		override protected function recreateResource():void {
 			startCreate();
 			_compile();
-			compoleteCreate();
+			completeCreate();
 			memorySize = 0;//忽略尺寸尺寸
 		}
 		

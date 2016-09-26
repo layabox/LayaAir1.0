@@ -16,8 +16,8 @@ staticMesh.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
   var meshSprite = sprite.getChildAt(0);
   var mesh = meshSprite.meshFilter.sharedMesh;
   mesh.once(Laya.Event.LOADED, null, function (mesh) {
-    for (var i = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
-        var material = meshSprite.meshRender.shadredMaterials[i];
+    for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+        var material = meshSprite.meshRender.sharedMaterials[i];
         material.once(Laya.Event.LOADED, null, function (mat) {
             mat.albedo = new  Vector4(3.5,3.5,3.5,1.0);
         });

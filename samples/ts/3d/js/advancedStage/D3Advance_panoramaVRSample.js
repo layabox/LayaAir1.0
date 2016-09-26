@@ -17,7 +17,7 @@ var PanoramaVRSample;
             var mesh = scene.addChild(new Laya.MeshSprite3D(new Laya.Sphere(1, 20, 20)));
             var material = new Laya.Material();
             material.renderMode = Laya.Material.RENDERMODE_OPAQUEDOUBLEFACE;
-            mesh.meshRender.shadredMaterial = material;
+            mesh.meshRender.sharedMaterial = material;
             Laya.loader.load("../../res/threeDimen/panorama/panorama.jpg", Laya.Handler.create(null, function (texture) {
                 texture.bitmap.mipmap = true;
                 texture.bitmap.enableMerageInAtlas = false;

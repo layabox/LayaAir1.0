@@ -54,7 +54,7 @@ package laya.d3.core {
 			_meshFilter.sharedMesh = mesh;
 			if (mesh is Mesh)//TODO:待考虑。
 				if (mesh.loaded)
-					_meshRender.shadredMaterials = (mesh as Mesh).materials;
+					_meshRender.sharedMaterials = (mesh as Mesh).materials;
 				else
 					mesh.once(Event.LOADED, this, _applyMeshMaterials);
 		
@@ -62,12 +62,12 @@ package laya.d3.core {
 		
 		/** @private */
 		private function _applyMeshMaterials(mesh:Mesh):void {
-			var shaderMaterials:Vector.<Material> = _meshRender.shadredMaterials;
+			var shaderMaterials:Vector.<Material> = _meshRender.sharedMaterials;
 			var meshMaterials:Vector.<Material> = mesh.materials;
 			for (var i:int = 0, n:int = meshMaterials.length; i < n; i++)
 				(shaderMaterials[i]) || (shaderMaterials[i] = meshMaterials[i]);
 			
-			_meshRender.shadredMaterials = shaderMaterials;
+			_meshRender.sharedMaterials = shaderMaterials;
 		}
 		
 		/** @private */
@@ -77,7 +77,7 @@ package laya.d3.core {
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
 			
-			var material:Material = _meshRender.shadredMaterials[index];
+			var material:Material = _meshRender.sharedMaterials[index];
 			(material) || (material = Material.defaultMaterial);//确保有材质,由默认材质代替。
 			
 			var element:IRenderable = _meshFilter.sharedMesh.getRenderElement(index);
@@ -92,7 +92,7 @@ package laya.d3.core {
 		
 		/** @private */
 		private function _changeRenderObjectByMaterial(material:Material):RenderElement {			
-			var index:int = _meshRender.shadredMaterials.indexOf(material);
+			var index:int = _meshRender.sharedMaterials.indexOf(material);
 			
 			var renderElement:RenderElement = _meshRender.renderCullingObject._renderElements[index];
 

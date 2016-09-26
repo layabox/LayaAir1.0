@@ -110,7 +110,7 @@ package laya.webgl.resource {
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			gl.bindRenderbuffer(WebGLContext.RENDERBUFFER, null);
 			memorySize = _w * _h * 4;
-			compoleteCreate();
+			completeCreate();
 		
 		}
 		

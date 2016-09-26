@@ -100,7 +100,7 @@ package laya.webgl.resource {
 		override protected function recreateResource():void {
 			startCreate();
 			createWebGlTexture();
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		override protected function detoryResource():void {

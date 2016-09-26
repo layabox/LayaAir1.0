@@ -46,7 +46,7 @@ package laya.d3.core.glitter {
 			_glitterRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
 			var material:Material = new Material();
-			_glitterRender.shadredMaterial = material;
+			_glitterRender.sharedMaterial = material;
 			_templet = new GlitterTemplet(this, settings);
 			
 			material.renderMode = Material.RENDERMODE_ADDTIVEDOUBLEFACE;
@@ -62,7 +62,7 @@ package laya.d3.core.glitter {
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
 			
-			var material:Material = _glitterRender.shadredMaterials[index];
+			var material:Material = _glitterRender.sharedMaterials[index];
 			(material) || (material = Material.defaultMaterial);//确保有材质,由默认材质代替。
 			
 			var element:IRenderable = _templet;

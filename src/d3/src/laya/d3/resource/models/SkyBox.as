@@ -224,7 +224,7 @@ package laya.d3.resource.models {
 			_vertexBuffer.setData(vertices);
 			_indexBuffer.setData(indices);
 			memorySize = (_vertexBuffer.byteLength + _indexBuffer.byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		/**

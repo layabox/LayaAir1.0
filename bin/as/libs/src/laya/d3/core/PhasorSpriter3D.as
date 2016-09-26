@@ -236,7 +236,7 @@ package laya.d3.core {
 			return this;
 		}
 		
-		public function boudningBoxLine(minX:Number, minY:Number, minZ:Number, maxX:Number, maxY:Number, maxZ:Number, r:Number, g:Number, b:Number, a:Number):PhasorSpriter3D {
+		public function boundingBoxLine(minX:Number, minY:Number, minZ:Number, maxX:Number, maxY:Number, maxZ:Number, r:Number, g:Number, b:Number, a:Number):PhasorSpriter3D {
 			if (!_hasBegun || _primitiveType !== WebGLContext.LINES)
 				drawLinesException();
 			

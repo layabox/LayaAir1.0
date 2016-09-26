@@ -156,7 +156,7 @@ package laya.d3.resource.tempelet {
 			
 			if (setting.texturePath)//预设纹理ShaderValue
 			{
-				var material:Material = (_owner as Glitter).glitterRender.shadredMaterial;
+				var material:Material = (_owner as Glitter).glitterRender.sharedMaterial;
 				_shaderValue.pushValue(Buffer2D.DIFFUSETEXTURE, null, -1);
 				var _this:GlitterTemplet = this;
 				Laya.loader.load(setting.texturePath, Handler.create(null, function(texture:Texture):void {
@@ -361,7 +361,7 @@ package laya.d3.resource.tempelet {
 		 * @param	state 相关渲染状态
 		 */
 		public function _render(state:RenderState):Boolean {
-			var material:Material = (state.owner as Glitter).glitterRender.shadredMaterial;
+			var material:Material = (state.owner as Glitter).glitterRender.sharedMaterial;
 			var diffuseTexture:Texture = material.diffuseTexture;
 			if (diffuseTexture && diffuseTexture.loaded) {
 				_update(state.elapsedTime);

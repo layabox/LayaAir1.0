@@ -610,7 +610,7 @@
 			return this;
 		}
 
-		__proto.boudningBoxLine=function(minX,minY,minZ,maxX,maxY,maxZ,r,g,b,a){
+		__proto.boundingBoxLine=function(minX,minY,minZ,maxX,maxY,maxZ,r,g,b,a){
 			if (!this._hasBegun || this._primitiveType!==/*laya.webgl.WebGLContext.LINES*/0x0001)
 				this.drawLinesException();
 			if (this._posInVBData+8 *this._floatSizePerVer > this._vbData.length || this._posInIBData+48 > this._ibData.length)
@@ -6295,7 +6295,7 @@
 		*/
 		__proto._render=function(state){
 			var mesh=this._mesh,vb=this._vb,ib=this._ib;
-			var material=this.getMaterial((state.owner).meshRender.shadredMaterials);
+			var material=this.getMaterial((state.owner).meshRender.sharedMaterials);
 			if (material.normalTexture && !vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.TANGENT0*/"TANGENT0"]){
 				var vertexDatas=vb.getData();
 				var newVertexDatas=Utils3D.generateTangent(vertexDatas,vb.vertexDeclaration.vertexStride / 4,vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.POSITION0*/"POSITION"][4] / 4,vb.vertexDeclaration.shaderAttribute[ /*laya.d3.graphics.VertexElementUsage.TEXTURECOORDINATE0*/"UV"][4] / 4,ib.getData());
@@ -7612,7 +7612,7 @@
 		*返回第一个材质。
 		*@return 第一个材质。
 		*/
-		__getset(0,__proto,'shadredMaterial',function(){
+		__getset(0,__proto,'sharedMaterial',function(){
 			return this._materials[0];
 			},function(value){
 			var oldMaterial=this._materials[0];
@@ -7628,12 +7628,12 @@
 		*获取浅拷贝材质列表。
 		*@return 浅拷贝材质列表。
 		*/
-		__getset(0,__proto,'shadredMaterials',function(){
+		__getset(0,__proto,'sharedMaterials',function(){
 			var materials=this._materials.slice();
 			return materials;
 			},function(value){
 			if (!value)
-				throw new Error("MeshRender: shadredMaterials value can't be null.");
+				throw new Error("MeshRender: sharedMaterials value can't be null.");
 			var oldMaterials=this._materials;
 			this._materials=value;
 			this.event(/*laya.events.Event.MATERIAL_CHANGED*/"materialchanged",[this,oldMaterials.slice(),value.slice()]);
@@ -8772,7 +8772,7 @@
 		__proto._loadShaderParams=function(){
 			this._sharderNameID=Shader.nameKey.get("GLITTER");
 			if (this.setting.texturePath){
-				var material=(this._owner).glitterRender.shadredMaterial;
+				var material=(this._owner).glitterRender.sharedMaterial;
 				this._shaderValue.pushValue(/*laya.webgl.utils.Buffer2D.DIFFUSETEXTURE*/"DIFFUSETEXTURE",null,-1);
 				var _this=this;
 				Laya.loader.load(this.setting.texturePath,Handler.create(null,function(texture){
@@ -8952,7 +8952,7 @@
 		*@param state 相关渲染状态
 		*/
 		__proto._render=function(state){
-			var material=(state.owner).glitterRender.shadredMaterial;
+			var material=(state.owner).glitterRender.sharedMaterial;
 			var diffuseTexture=material.diffuseTexture;
 			if (diffuseTexture && diffuseTexture.loaded){
 				this._update(state.elapsedTime);
@@ -10527,7 +10527,7 @@
 		__proto.loadShaderParams=function(){
 			this._sharderNameID=Shader.nameKey.get("PARTICLE");
 			if (this.settings.textureName){
-				var material=(this._owner).particleRender.shadredMaterial;
+				var material=(this._owner).particleRender.sharedMaterial;
 				this._shaderValue.pushValue(/*laya.webgl.utils.Buffer2D.DIFFUSETEXTURE*/"DIFFUSETEXTURE",null,-1);
 				var _this=this;
 				Laya.loader.load(this.settings.textureName,Handler.create(null,function(texture){
@@ -10575,7 +10575,7 @@
 		}
 
 		__proto._render=function(state){
-			var material=(state.owner).particleRender.shadredMaterial;
+			var material=(state.owner).particleRender.sharedMaterial;
 			var diffuseTexture=material.diffuseTexture;
 			if (diffuseTexture && diffuseTexture.loaded){
 				if (this._firstNewElement !=this._firstFreeElement){
@@ -11380,7 +11380,7 @@
 			this._glitterRender=new GlitterRender(this);
 			this._glitterRender.on(/*laya.events.Event.MATERIAL_CHANGED*/"materialchanged",this,this._onMaterialChanged);
 			var material=new Material();
-			this._glitterRender.shadredMaterial=material;
+			this._glitterRender.sharedMaterial=material;
 			this._templet=new GlitterTemplet(this,settings);
 			material.renderMode=/*laya.d3.core.material.Material.RENDERMODE_ADDTIVEDOUBLEFACE*/8;
 			this._changeRenderObject(0);
@@ -11393,7 +11393,7 @@
 			var renderObjects=this._glitterRender.renderCullingObject._renderElements;
 			var renderElement=renderObjects[index];
 			(renderElement)|| (renderElement=renderObjects[index]=new RenderElement());
-			var material=this._glitterRender.shadredMaterials[index];
+			var material=this._glitterRender.sharedMaterials[index];
 			(material)|| (material=Material.defaultMaterial);
 			var element=this._templet;
 			renderElement.mainSortID=0;
@@ -11607,7 +11607,7 @@
 			this._meshFilter.sharedMesh=mesh;
 			if ((mesh instanceof laya.d3.resource.models.Mesh ))
 				if (mesh.loaded)
-			this._meshRender.shadredMaterials=(mesh).materials;
+			this._meshRender.sharedMaterials=(mesh).materials;
 			else
 			mesh.once(/*laya.events.Event.LOADED*/"loaded",this,this._applyMeshMaterials);
 		}
@@ -11616,11 +11616,11 @@
 		var __proto=MeshSprite3D.prototype;
 		/**@private */
 		__proto._applyMeshMaterials=function(mesh){
-			var shaderMaterials=this._meshRender.shadredMaterials;
+			var shaderMaterials=this._meshRender.sharedMaterials;
 			var meshMaterials=mesh.materials;
 			for (var i=0,n=meshMaterials.length;i < n;i++)
 			(shaderMaterials[i])|| (shaderMaterials[i]=meshMaterials[i]);
-			this._meshRender.shadredMaterials=shaderMaterials;
+			this._meshRender.sharedMaterials=shaderMaterials;
 		}
 
 		/**@private */
@@ -11628,7 +11628,7 @@
 			var renderObjects=this._meshRender.renderCullingObject._renderElements;
 			var renderElement=renderObjects[index];
 			(renderElement)|| (renderElement=renderObjects[index]=new RenderElement());
-			var material=this._meshRender.shadredMaterials[index];
+			var material=this._meshRender.sharedMaterials[index];
 			(material)|| (material=Material.defaultMaterial);
 			var element=this._meshFilter.sharedMesh.getRenderElement(index);
 			renderElement.mainSortID=this._getSortID(element,material);
@@ -11641,7 +11641,7 @@
 
 		/**@private */
 		__proto._changeRenderObjectByMaterial=function(material){
-			var index=this._meshRender.shadredMaterials.indexOf(material);
+			var index=this._meshRender.sharedMaterials.indexOf(material);
 			var renderElement=this._meshRender.renderCullingObject._renderElements[index];
 			var element=this._meshFilter.sharedMesh.getRenderElement(index);
 			renderElement.mainSortID=this._getSortID(element,material);
@@ -11740,7 +11740,7 @@
 			this._particleRender=new ParticleRender(this);
 			this._particleRender.on(/*laya.events.Event.MATERIAL_CHANGED*/"materialchanged",this,this._onMaterialChanged);
 			var material=new Material();
-			this._particleRender.shadredMaterial=material;
+			this._particleRender.sharedMaterial=material;
 			this._templet=new ParticleTemplet3D(this,settings);
 			if (settings.blendState===0)
 				material.renderMode=/*laya.d3.core.material.Material.RENDERMODE_TRANSPARENT*/5;
@@ -11756,7 +11756,7 @@
 			var renderObjects=this._particleRender.renderCullingObject._renderElements;
 			var renderElement=renderObjects[index];
 			(renderElement)|| (renderElement=renderObjects[index]=new RenderElement());
-			var material=this._particleRender.shadredMaterials[index];
+			var material=this._particleRender.sharedMaterials[index];
 			(material)|| (material=Material.defaultMaterial);
 			var element=this._templet;
 			renderElement.mainSortID=0;
@@ -12508,7 +12508,7 @@
 			this._vertexBuffer.setData(vertices);
 			this._indexBuffer.setData(indices);
 			this.memorySize=(this._vertexBuffer.byteLength+this._indexBuffer.byteLength)*2;
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		/**
@@ -13161,7 +13161,7 @@
 		*初始化Mesh相关数据函数。
 		*/
 		__proto._initMeshData=function(){
-			this._materials=this._mesh.meshRender.shadredMaterials;
+			this._materials=this._mesh.meshRender.sharedMaterials;
 			this._meshDataInited=true;
 		}
 
@@ -14375,7 +14375,7 @@
 			this._vertexBuffer.setData(vertices);
 			this._indexBuffer.setData(indices);
 			this.memorySize=(this._vertexBuffer.byteLength+this._indexBuffer.byteLength)*2;
-			this.compoleteCreate();
+			this.completeCreate();
 		}
 
 		/**

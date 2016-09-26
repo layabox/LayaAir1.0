@@ -134,7 +134,7 @@ package laya.flash
 		{
 			startCreate();
 			_glBuffer = this;
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		public function uploadByCount(count:int):void

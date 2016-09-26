@@ -14,7 +14,7 @@ scene.currentCamera.addComponent(VRCameraMoveScript);
 
     var material = new Laya.Material();
     material.renderMode = Laya.Material.RENDERMODE_OPAQUEDOUBLEFACE;
-    mesh.meshRender.shadredMaterial = material;
+    mesh.meshRender.sharedMaterial = material;
 
     Laya.loader.load("../../res/threeDimen/panorama/panorama.jpg", Laya.Handler.create(null, function (texture) {
         texture.bitmap.mipmap = true;

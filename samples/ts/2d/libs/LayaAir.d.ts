@@ -2047,7 +2047,7 @@ declare module laya.d3.core {
          * 设置第一个材质。
          * @param value 第一个材质。
          */
-        shadredMaterial: laya.d3.core.material.Material;
+        sharedMaterial: laya.d3.core.material.Material;
         /**
          * 获取浅拷贝材质列表。
          * @return 浅拷贝材质列表。
@@ -2056,7 +2056,7 @@ declare module laya.d3.core {
          * 设置材质列表。
          * @param value 材质列表。
          */
-        shadredMaterials: Array<any>;
+        sharedMaterials: Array<any>;
         /**
          * 获取包围盒。
          * @return 包围盒。
@@ -2337,7 +2337,7 @@ declare module laya.d3.core {
         plane(positionX: number, positionY: number, positionZ: number, width: number, height: number, r: number, g: number, b: number, a: number): PhasorSpriter3D;
         box(positionX: number, positionY: number, positionZ: number, width: number, height: number, depth: number, r: number, g: number, b: number, a: number): PhasorSpriter3D;
         cone(radius: number, length: number, Slices: number, r: number, g: number, b: number, a: number): PhasorSpriter3D;
-        boudningBoxLine(minX: number, minY: number, minZ: number, maxX: number, maxY: number, maxZ: number, r: number, g: number, b: number, a: number): PhasorSpriter3D;
+        boundingBoxLine(minX: number, minY: number, minZ: number, maxX: number, maxY: number, maxZ: number, r: number, g: number, b: number, a: number): PhasorSpriter3D;
         begin(primitive: number, wvpMatrix: laya.d3.math.Matrix4x4, renState: laya.d3.core.render.RenderState): PhasorSpriter3D;
         end(): PhasorSpriter3D;
         protected getShader(state: laya.d3.core.render.RenderState): laya.webgl.shader.Shader;
@@ -11813,7 +11813,7 @@ declare module laya.resource {
          */
         dispose(): void;
         protected startCreate(): void;
-        protected compoleteCreate(): void;
+        protected completeCreate(): void;
     }
 }
 declare module laya.resource {
