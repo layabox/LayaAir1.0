@@ -543,6 +543,7 @@
 			this.boneSlot=null;
 			this.slotIndex=-1;
 			this.attachment=null;
+			this.deformData=null;
 			this.frameIndex=0;
 			this.timeList=[];
 			this.vectices=[];
@@ -571,9 +572,6 @@
 		// Can't happen.
 		__proto.apply=function(time,boneSlot,alpha){
 			(alpha===void 0)&& (alpha=1);
-			if (boneSlot.currDisplayData.attachmentName !=this.attachment){
-				return;
-			}
 			if (this.timeList.length < 2){
 				return;
 			};
@@ -585,11 +583,6 @@
 			};
 			var tVertexCount=this.vectices[0].length;
 			var tVertices=[];
-			if (boneSlot.currDisplayData && boneSlot.currDisplayData.vertices){
-				for (i=0,n=boneSlot.currDisplayData.vertices.length;i < n;i++){
-					tVertices.push(boneSlot.currDisplayData.vertices[i]);
-				}
-			};
 			var tFrameIndex=this.binarySearch1(this.timeList,time);
 			this.frameIndex=tFrameIndex;
 			if (time >=this.timeList[this.timeList.length-1]){
@@ -621,7 +614,7 @@
 					tVertices[i]=tPrev+(tNextVertices[i]-tPrev)*tPercent;
 				}
 			}
-			boneSlot.deformData=tVertices;
+			this.deformData=tVertices;
 		}
 
 		return DeformSlotDisplayData;
@@ -3393,6 +3386,7 @@
 					}
 				}
 			};
+			var tDeformDic={};
 			var tDeformAniArr=this._templet.deformAniArr;
 			var tDeformAniData;
 			var tDeformSlotData;
@@ -3412,6 +3406,10 @@
 						tDeformSlotDisplayData=tDeformSlotData.deformSlotDisplayList[j];
 						tDBBoneSlot=this._boneSlotArray[tDeformSlotDisplayData.slotIndex];
 						tDeformSlotDisplayData.apply(this._player.currentPlayTime,tDBBoneSlot);
+						if (isNaN(tDeformDic[tDeformSlotDisplayData.slotIndex])){
+							tDeformDic[tDeformSlotDisplayData.slotIndex]={};
+						}
+						tDeformDic[tDeformSlotDisplayData.slotIndex][tDeformSlotDisplayData.attachment]=tDeformSlotDisplayData.deformData;
 					}
 				}
 			};
@@ -3428,6 +3426,16 @@
 					}
 					if (!isNaN(tSlotData2)){
 						tDBBoneSlot.showDisplayByIndex(tSlotData2);
+					}
+					if (tDeformDic[this._drawOrder[i]]){
+						var tObject=tDeformDic[this._drawOrder[i]];
+						if (tDBBoneSlot.currDisplayData && tObject[tDBBoneSlot.currDisplayData.attachmentName]){
+							tDBBoneSlot.deformData=tObject[tDBBoneSlot.currDisplayData.attachmentName];
+							}else {
+							tDBBoneSlot.deformData=null;
+						}
+						}else {
+						tDBBoneSlot.deformData=null;
 					}
 					if (!isNaN(tSlotData3)){
 						tDBBoneSlot.draw(tGraphics,this._boneMatrixArray,this._aniMode==2,tSlotData3);
@@ -3449,6 +3457,16 @@
 					}
 					if (!isNaN(tSlotData2)){
 						tDBBoneSlot.showDisplayByIndex(tSlotData2);
+					}
+					if (tDeformDic[i]){
+						var tObject=tDeformDic[i];
+						if (tDBBoneSlot.currDisplayData && tObject[tDBBoneSlot.currDisplayData.attachmentName]){
+							tDBBoneSlot.deformData=tObject[tDBBoneSlot.currDisplayData.attachmentName];
+							}else {
+							tDBBoneSlot.deformData=null;
+						}
+						}else {
+						tDBBoneSlot.deformData=null;
 					}
 					if (!isNaN(tSlotData3)){
 						tDBBoneSlot.draw(tGraphics,this._boneMatrixArray,this._aniMode==2,tSlotData3);

@@ -525,6 +525,7 @@ package laya.ani.bone {
 					}
 				}
 			}
+			var tDeformDic:Object = { };
 			//变形动画作用器
 			var tDeformAniArr:Array = _templet.deformAniArr;
 			var tDeformAniData:DeformAniData;
@@ -550,6 +551,11 @@ package laya.ani.bone {
 						tDeformSlotDisplayData = tDeformSlotData.deformSlotDisplayList[j];
 						tDBBoneSlot = _boneSlotArray[tDeformSlotDisplayData.slotIndex];
 						tDeformSlotDisplayData.apply(_player.currentPlayTime, tDBBoneSlot);
+						if (isNaN(tDeformDic[tDeformSlotDisplayData.slotIndex]))
+						{
+							tDeformDic[tDeformSlotDisplayData.slotIndex] = { };
+						}
+						tDeformDic[tDeformSlotDisplayData.slotIndex][tDeformSlotDisplayData.attachment] = tDeformSlotDisplayData.deformData;
 					}
 				}
 			}
@@ -572,6 +578,18 @@ package laya.ani.bone {
 					if (!isNaN(tSlotData2)) {
 						tDBBoneSlot.showDisplayByIndex(tSlotData2);
 					}
+					if (tDeformDic[_drawOrder[i]])
+					{
+						var tObject:Object = tDeformDic[_drawOrder[i]];
+						if (tDBBoneSlot.currDisplayData && tObject[tDBBoneSlot.currDisplayData.attachmentName])
+						{
+							tDBBoneSlot.deformData = tObject[tDBBoneSlot.currDisplayData.attachmentName];
+						}else {
+							tDBBoneSlot.deformData = null;
+						}
+					}else {
+						tDBBoneSlot.deformData = null;
+					}
 					if (!isNaN(tSlotData3)) {
 						tDBBoneSlot.draw(tGraphics, _boneMatrixArray, _aniMode == 2,tSlotData3);
 					}else {
@@ -592,6 +610,18 @@ package laya.ani.bone {
 					}
 					if (!isNaN(tSlotData2)) {
 						tDBBoneSlot.showDisplayByIndex(tSlotData2);
+					}
+					if (tDeformDic[i])
+					{
+						var tObject:Object = tDeformDic[i];
+						if (tDBBoneSlot.currDisplayData && tObject[tDBBoneSlot.currDisplayData.attachmentName])
+						{
+							tDBBoneSlot.deformData = tObject[tDBBoneSlot.currDisplayData.attachmentName];
+						}else {
+							tDBBoneSlot.deformData = null;
+						}
+					}else {
+						tDBBoneSlot.deformData = null;
 					}
 					if (!isNaN(tSlotData3)) {
 						tDBBoneSlot.draw(tGraphics, _boneMatrixArray, _aniMode == 2,tSlotData3);
