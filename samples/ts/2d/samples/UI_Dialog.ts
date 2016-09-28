@@ -1,10 +1,10 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import Button = laya.ui.Button;
-    import Dialog = laya.ui.Dialog;
-    import Image = laya.ui.Image;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import Button = Laya.Button;
+    import Dialog = Laya.Dialog;
+    import Image = Laya.Image;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_Dialog {
         private DIALOG_WIDTH: number = 220;

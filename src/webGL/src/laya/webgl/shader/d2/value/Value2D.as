@@ -1,5 +1,4 @@
 package laya.webgl.shader.d2.value {
-	import laya.webgl.utils.MatirxArray;
 	import laya.resource.Bitmap;
 	import laya.resource.Texture;
 	import laya.webgl.WebGLContext;
@@ -10,12 +9,9 @@ package laya.webgl.shader.d2.value {
 	import laya.webgl.shader.d2.Shader2X;
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.utils.CONST3D2D;
+	import laya.webgl.utils.MatirxArray;
 	import laya.webgl.utils.RenderState2D;
 
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class Value2D  extends ShaderValue
 	{
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/

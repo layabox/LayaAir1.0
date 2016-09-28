@@ -19,6 +19,7 @@ package laya.d3.resource.models {
 	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.resource.Resource;
+	import laya.utils.Handler;
 	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
@@ -43,6 +44,12 @@ package laya.d3.resource.models {
 				loader.load(url, Loader.BUFFER);
 			}
 			return mesh;
+			
+			//var mesh:Mesh = new Mesh(url);
+			//Laya.loader.load(url, Handler.create(null,function():void{
+			//
+			//},[mesh]),null,"Mesh");
+			//return mesh;
 		}
 		
 		/** @private */

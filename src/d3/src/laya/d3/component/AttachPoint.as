@@ -47,14 +47,13 @@ package laya.d3.component {
 		 */
 		public override function _update(state:RenderState):void {
 			var player:AnimationPlayer = _attachSkeleton.player;
-			var skeletonTemplet:KeyframesAniTemplet = _attachSkeleton._templet;
-			if (!_attachSkeleton || player.state !== AnimationState.playing || !skeletonTemplet || !skeletonTemplet.loaded)
+			if (!_attachSkeleton || player.state !== AnimationState.playing || !_attachSkeleton.curBonesDatas)
 				return;
 			
 			matrixs.length = attachBones.length;
 			for (var i:int; i < attachBones.length; i++) {
 				
-				var index:int = skeletonTemplet.getNodeIndexWithName(player.currentAnimationClipIndex, attachBones[i]);
+				var index:int = _attachSkeleton._templet.getNodeIndexWithName(player.currentAnimationClipIndex, attachBones[i]);
 				_data = _attachSkeleton.curBonesDatas.subarray(index * 16, (index + 1) * 16);
 				var matrix:Matrix4x4 = matrixs[i];
 				

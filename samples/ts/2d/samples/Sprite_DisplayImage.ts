@@ -1,10 +1,10 @@
 module laya {
-	import Sprite = laya.display.Sprite;
-	import Stage = laya.display.Stage;
-	import Texture = laya.resource.Texture;
-	import Browser = laya.utils.Browser;
-	import Handler = laya.utils.Handler;
-	import WebGL = laya.webgl.WebGL;
+	import Sprite = Laya.Sprite;
+	import Stage = Laya.Stage;
+	import Texture = Laya.Texture;
+	import Browser = Laya.Browser;
+	import Handler = Laya.Handler;
+	import WebGL = Laya.WebGL;
 
 	export class Sprite_DisplayImage {
 		constructor() {

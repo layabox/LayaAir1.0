@@ -72,12 +72,12 @@ package laya.utils {
 		 * 开始函数。
 		 */
 		public static var beginFlush:Function = function():void {
-		};
+		}
 		
 		public static var endFinish:Function = function():void {
 			/*[IF-FLASH]*/
 			Render.context.ctx.finish();
-		};
+		}
 		
 		/**
 		 * 添加至图集的处理函数。

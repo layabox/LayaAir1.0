@@ -1,0 +1,224 @@
+package laya.display {
+	import laya.maths.Matrix;
+	import laya.net.Loader;
+	
+	/**
+	 * @private
+	 */
+	public class GraphicAnimation extends FrameAnimation {
+		
+		public var animationList:Array;
+		public var animationDic:Object;
+		/**
+		 * @private
+		 */
+		private var _nodeList:Array;
+		/**
+		 * @private
+		 */
+		private var _nodeDefaultProps:Object;
+		/**
+		 * @private
+		 */
+		private var _gList:Array;
+		/**
+		 * @private
+		 */
+		private var _nodeIDAniDic:Object = {};
+		
+		/**
+		 * @private
+		 */
+		private static const _drawTextureCmd:Array = [["skin", null], ["x", 0], ["y", 0], ["width", 0], ["height", 0], ["pivotX", 0], ["pivotY", 0], ["scaleX", 1], ["scaleY", 1], ["rotation", 0]];
+		/**
+		 * @private
+		 */
+		private static var _temParam:Array = [];
+		/**
+		 * @private
+		 */
+		private static var _I:GraphicAnimation;
+		
+		public function GraphicAnimation() {
+		
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _parseNodeList(uiView:Object):void {
+			if (!_nodeList) {
+				_nodeList = [];
+			}
+			_nodeDefaultProps[uiView.compId] = uiView.props;
+			if (uiView.compId)
+				_nodeList.push(uiView.compId);
+			var childs:Array = uiView.child;
+			if (childs) {
+				var i:int, len:int = childs.length;
+				for (i = 0; i < len; i++) {
+					_parseNodeList(childs[i]);
+					
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _calGraphicData(aniData:Object):void {
+			this._setUp(null, aniData);
+			_createGraphicData();
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _createGraphicData():void {
+			var gList:Array = [];
+			var i:int, len:int = count;
+			for (i = 0; i < len; i++) {
+				
+				gList.push(_createFrameGraphic(i));
+			}
+			_gList = gList;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _createFrameGraphic(frame:int):Graphics {
+			var g:Graphics = new Graphics();
+			var i:int, len:int = _nodeList.length;
+			var tNode:int;
+			for (i = 0; i < len; i++) {
+				tNode = _nodeList[i];
+				_addNodeGraphic(tNode, g, frame);
+			}
+			return g;
+		}
+		
+		/**
+		 * @private
+		 */
+		override protected function _calculateNodeKeyFrames(node:Object):void {
+			super._calculateNodeKeyFrames(node);
+			_nodeIDAniDic[node.target] = node;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function getNodeDataByID(nodeID:int):Object {
+			return _nodeIDAniDic[nodeID];
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _getParams(obj:Object, params:Array, frame:int, obj2:Object):Array {
+			var rst:Array = _temParam;
+			rst.length = params.length;
+			var i:int, len:int = params.length;
+			for (i = 0; i < len; i++) {
+				rst[i] = _getObjVar(obj, params[i][0], frame, params[i][1], obj2);
+			}
+			return rst;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _getObjVar(obj:Object, key:String, frame:int, noValue:*, obj2:Object):* {
+			if (obj.hasOwnProperty(key)) {
+				var vArr:Array = obj[key];
+				if (frame >= vArr.length)
+					frame = vArr.length - 1;
+				return obj[key][frame];
+			}
+			if (obj2.hasOwnProperty(key)) {
+				return obj2[key];
+			}
+			return noValue;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _addNodeGraphic(nodeID:int, g:Graphics, frame:int):void {
+			var node:Object = getNodeDataByID(nodeID);
+			if (!node)
+				return;
+			var frameData:Object = node.frames;
+			var params:Array = _getParams(frameData, _drawTextureCmd, frame, _nodeDefaultProps[nodeID]);
+			if (params[0] == "")
+				return;
+			params[0] = _getTextureByUrl(params[0]);
+			var m:Matrix;
+			var px:Number = params[5], py:Number = params[6];
+			if (px != 0 || py != 0) {
+				m = m || new Matrix();
+				m.translate(-px, -py);
+			}
+			
+			var sx:Number = params[7], sy:Number = params[8];
+			var rotate:Number = params[9];
+			
+			if (sx != 1 || sy != 1 || rotate != 0) {
+				m = m || new Matrix();
+				m.scale(sx, sy);
+				m.rotate(rotate * 0.0174532922222222);
+			}
+			
+			if (m) {
+				m.translate(params[1], params[2]);
+				params[1] = params[2] = 0;
+				
+			}
+			
+			g.drawTexture(params[0], params[1], params[2], params[3], params[4], m);
+		
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _getTextureByUrl(url:String):String {
+			return Loader.getRes(url);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function setAniData(uiView:Object):void {
+			if (uiView.animations) {
+				_nodeDefaultProps = {};
+				_parseNodeList(uiView);
+				var aniDic:Object = {};
+				var anilist:Array = [];
+				var animations:Array = uiView.animations;
+				var i:int, len:int = animations.length;
+				var tAniO:Object;
+				for (i = 0; i < len; i++) {
+					tAniO = animations[i];
+					_calGraphicData(tAniO);
+					anilist.push(_gList);
+					aniDic[tAniO.name] = _gList;
+				}
+				animationList = anilist;
+				animationDic = aniDic;
+			}
+		}
+		
+		public static function parseAnimationData(aniData:Object):Object {
+			if (!_I)
+				_I = new GraphicAnimation();
+			_I.setAniData(aniData);
+			var rst:Object;
+			rst = {};
+			rst.animationList = _I.animationList;
+			rst.animationDic = _I.animationDic;
+			return rst;
+		}	
+	}
+}

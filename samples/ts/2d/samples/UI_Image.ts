@@ -1,7 +1,7 @@
 module laya {
-	import Stage = laya.display.Stage;
-	import Image = laya.ui.Image;
-	import WebGL = laya.webgl.WebGL;
+	import Stage = Laya.Stage;
+	import Image = Laya.Image;
+	import WebGL = Laya.WebGL;
 
 	export class UI_Image {
 		constructor() {

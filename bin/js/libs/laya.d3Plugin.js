@@ -2,7 +2,7 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var AStarFinder=PathFinding.finders.AStarFinder,Component3D=laya.d3.component.Component3D,MeshTerrainSprite3D=laya.d3.core.MeshTerrainSprite3D;
+	var Component3D=laya.d3.component.Component3D,MeshTerrainSprite3D=laya.d3.core.MeshTerrainSprite3D;
 	var Sprite3D=laya.d3.core.Sprite3D;
 	/**
 	*<code>PathFinding</code> 类用于创建寻路。
@@ -90,7 +90,7 @@
 		__getset(0,__proto,'setting',function(){
 			return this._setting;
 			},function(value){
-			(value)&& (this._finder=new AStarFinder(value));
+			(value)&& (this._finder=new PathFinding.finders.AStarFinder(value));
 			this._setting=value;
 		});
 

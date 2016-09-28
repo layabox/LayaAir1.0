@@ -48,7 +48,7 @@ package laya.webgl.atlas {
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			memorySize = _w * _h * 4;
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		/***销毁资源*/

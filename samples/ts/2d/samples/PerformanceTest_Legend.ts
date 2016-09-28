@@ -1,14 +1,14 @@
 module performanceTest {
-    import Animation = laya.display.Animation;
-    import Input = laya.display.Input;
-    import Sprite = laya.display.Sprite;
-    import Event = laya.events.Event;
-    import Loader = laya.net.Loader;
-    import ComboBox = laya.ui.ComboBox;
-    import Browser = laya.utils.Browser;
-    import Handler = laya.utils.Handler;
-    import Stat = laya.utils.Stat;
-    import WebGL = laya.webgl.WebGL;
+    import Animation = Laya.Animation;
+    import Input = Laya.Input;
+    import Sprite = Laya.Sprite;
+    import Event = Laya.Event;
+    import Loader = Laya.Loader;
+    import ComboBox = Laya.ComboBox;
+    import Browser = Laya.Browser;
+    import Handler = Laya.Handler;
+    import Stat = Laya.Stat;
+    import WebGL = Laya.WebGL;
 
     export class PerformanceTest_Legend {
 

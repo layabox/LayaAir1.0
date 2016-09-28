@@ -20,11 +20,10 @@ class StaticModel_SkyBoxSample{
         scene.currentCamera.addComponent(CameraMoveScript);
 
         //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-        var webGLImageCube = new Laya.WebGLImageCube(["../../res/threeDimen/skyBox/px.jpg", "../../res/threeDimen/skyBox/nx.jpg", "../../res/threeDimen/skyBox/py.jpg", "../../res/threeDimen/skyBox/ny.jpg", "../../res/threeDimen/skyBox/pz.jpg", "../../res/threeDimen/skyBox/nz.jpg"], 1024);
-        webGLImageCube.once(Laya.Event.LOADED, null, function(imgCube):void {
-            var textureCube = new Laya.Texture(imgCube);
-            skyBox.textureCube = textureCube;
-        });
+        Laya.loader.load("../../res/threeDimen/skyBox/px.jpg,../../res/threeDimen/skyBox/nx.jpg,../../res/threeDimen/skyBox/py.jpg,../../res/threeDimen/skyBox/ny.jpg,../../res/threeDimen/skyBox/pz.jpg,../../res/threeDimen/skyBox/nz.jpg",
+            Laya.Handler.create(null,function(texture):void{
+                skyBox.textureCube = texture;
+            }), null, "TextureCube");
 
         var mesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm"))) as Laya.MeshSprite3D;
 

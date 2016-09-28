@@ -1,6 +1,6 @@
 module laya {
-	import Browser = laya.utils.Browser;
-	import Stat = laya.utils.Stat;
+	import Browser = Laya.Browser;
+	import Stat = Laya.Stat;
 
 	export class Debug_FPSStats {
 		constructor() {

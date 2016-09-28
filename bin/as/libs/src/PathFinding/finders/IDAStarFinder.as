@@ -246,7 +246,7 @@ package PathFinding.finders
 			}
 			
 			// This _should_ never to be reached.
-			return [];
+			//return [];
 		}
 	}
 

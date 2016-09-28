@@ -1,12 +1,12 @@
 module laya {
-    import Sprite = laya.display.Sprite;
-    import Stage = laya.display.Stage;
-    import Text = laya.display.Text;
-    import Event = laya.events.Event;
-    import SoundManager = laya.media.SoundManager;
-    import Browser = laya.utils.Browser;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Sprite = Laya.Sprite;
+    import Stage = Laya.Stage;
+    import Text = Laya.Text;
+    import Event = Laya.Event;
+    import SoundManager = Laya.SoundManager;
+    import Browser = Laya.Browser;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class Sound_SimpleDemo {
         //声明一个信息文本

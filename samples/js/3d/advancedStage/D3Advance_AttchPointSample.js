@@ -24,7 +24,7 @@ skinMesh.transform.localRotationEuler = new Vector3(0, 3.14, 0);
 
 var skinAni = skinMesh.addComponent(Laya.SkinAnimations);
 skinAni.url = "../../res/threeDimen/skinModel/dude/dude.ani";
-skinAni.play();
+skinAni.player.play();
 
 var attacthPoint = skinMesh.addComponent(Laya.AttachPoint);
 attacthPoint.attachBones.push("L_Middle1");

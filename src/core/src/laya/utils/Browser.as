@@ -5,6 +5,7 @@ package laya.utils {
 	import laya.renders.Render;
 	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
+	import laya.resource.WXCanvas;
 	
 	SoundManager;
 	
@@ -15,11 +16,11 @@ package laya.utils {
 		//[IF-JS]AudioSound;
 		//[IF-JS]WebAudioSound;		
 		/** @private */
-		private static var _window:*;	
+		private static var _window:*;
 		/** @private */
-		private static var _document:* ;
+		private static var _document:*;
 		/** @private */
-		private static var _container:*;		
+		private static var _container:*;
 		/** 浏览器代理信息。*/
 		public static var userAgent:String;
 		/** @private */
@@ -47,24 +48,26 @@ package laya.utils {
 		/** 表示是否在 PC 端。*/
 		public static var onPC:Boolean;
 		/** 表示是否是 HTTP 协议。*/
-		public static var httpProtocol:Boolean;		
+		public static var httpProtocol:Boolean;
 		/** @private */
 		public static var webAudioEnabled:Boolean;
 		/** @private */
-		public static var soundType:String;		
+		public static var soundType:String;
 		/** @private */
 		public static var enableTouch:Boolean;
 		/** 全局画布实例（非主画布）。*/
 		public static var canvas:HTMLCanvas;
 		/** 全局画布上绘图的环境（非主画布）。 */
 		public static var context:Context;
+		
 		/** @private */
 		//private static var _pixelRatio:Number = -1;
 		
 		/**@private */
 		public static function __init__():void {
+			SoundManager;
 			if (_window) return;
-			_window=RunDriver.getWindow();				
+			_window = RunDriver.getWindow();
 			_document = window.document;
 			
 			__JS__("Browser.document.__createElement=Browser.document.createElement");
@@ -90,19 +93,64 @@ package laya.utils {
 			onMQQBrowser = /*[STATIC SAFE]*/ u.indexOf("MQQBrowser") > -1;
 			onWeiXin = /*[STATIC SAFE]*/ u.indexOf('MicroMessenger') > -1;
 			onPC = /*[STATIC SAFE]*/ !onMobile;
-			onSafari = /*[STATIC SAFE]*/! !u.match(/Version\/\d\.\d\x20Mobile\/\S+\x20Safari/);
+			onSafari = /*[STATIC SAFE]*/ !!u.match(/Version\/\d\.\d\x20Mobile\/\S+\x20Safari/);
 			httpProtocol =/*[STATIC SAFE]*/ window.location.protocol == "http:";
 			
 			webAudioEnabled =/*[STATIC SAFE]*/ window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"] ? true : false;
 			soundType =/*[STATIC SAFE]*/ webAudioEnabled ? "WEBAUDIOSOUND" : "AUDIOSOUND";
 			
 			__JS__("Sound = Browser.webAudioEnabled?WebAudioSound:AudioSound;");
-			__JS__("if (Browser.webAudioEnabled) WebAudioSound.initWebAudio();");			
-			__JS__("Browser.enableTouch=(('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch)");			
+			__JS__("if (Browser.webAudioEnabled) WebAudioSound.initWebAudio();");
+			__JS__("Browser.enableTouch=(('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch)");
 			__JS__("window.focus()");
 			__JS__("SoundManager._soundClass=Sound;");
+			
+			var MainCanvas:* = null;
+			
+			if (window.MainCanvasID) {
+				//为了支持微信小应用
+				var _wx:* = __JS__("wx");
+				if (_wx && !_wx.createContext) _wx = null;
+				if ((WXCanvas.wx = _wx) != null) {
+					MainCanvas = new WXCanvas(window.MainCanvasID);
+					var from:* = Context.prototype;
+					from.flush = null;
 					
-			Render._mainCanvas =Render._mainCanvas||HTMLCanvas.create('2D');
+					window.Image = function():void {
+						this.setSrc = function(url:*):void {
+							this.__src = url;
+							var _this:* = this;
+							/*_wx.downloadFile({
+							   url: url,
+							   type: 'image',
+							   success:function(res:*):void
+							   {
+							   debugger;
+							   _this.success(res);
+							   }
+							   });*/
+							this.success();
+						}
+						
+						this.success = function(res:*):void {
+							this.width = 200;
+							this.height = 200;
+							this.tempFilePath = res ? res.tempFilePath : this.__src;
+							this.onload && this.onload();
+						}
+						
+						this.getSrc = function():String {
+							return this.__src;
+						}
+					
+						//[IF-SCRIPT]Object.defineProperty(this, "src", { get:this.getSrc,set:this.setSrc, enumerable:false } );
+					}
+				} else {
+					MainCanvas = document.getElementById(window.MainCanvasID);
+				}
+			}
+			
+			Render._mainCanvas = Render._mainCanvas || HTMLCanvas.create('2D', MainCanvas);
 			if (canvas) return;
 			canvas = HTMLCanvas.create('2D');
 			context = canvas.getContext('2d');
@@ -178,16 +226,16 @@ package laya.utils {
 			__init__();
 			/*[IF-FLASH-BEGIN]*/
 			return document.body;
-			/*[IF-FLASH-END]*/
-			/*[IF-SCRIPT-BEGIN]
-			if (!_container) {
-				_container = createElement("div");
-				_container.id = "layaContainer";
-				_container.style.cssText = "width:100%;height:100%";
-				document.body.appendChild(_container);
-			}
-			return _container;
-			[IF-SCRIPT-END]*/
+		/*[IF-FLASH-END]*/
+		/*[IF-SCRIPT-BEGIN]
+		   if (!_container) {
+		   _container = createElement("div");
+		   _container.id = "layaContainer";
+		   _container.style.cssText = "width:100%;height:100%";
+		   document.body.appendChild(_container);
+		   }
+		   return _container;
+		   [IF-SCRIPT-END]*/
 		}
 		
 		public static function set container(value:*):void {

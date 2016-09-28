@@ -1,11 +1,11 @@
 (function()
 {
-	var Skeleton = laya.ani.bone.Skeleton;
-	var Templet  = laya.ani.bone.Templet;
-	var Event    = laya.events.Event;
-	var Browser  = laya.utils.Browser;
-	var Stat     = laya.utils.Stat;
-	var WebGL    = laya.webgl.WebGL;
+	var Skeleton = Laya.Skeleton;
+	var Templet  = Laya.Templet;
+	var Event    = Laya.Event;
+	var Browser  = Laya.Browser;
+	var Stat     = Laya.Stat;
+	var WebGL    = Laya.WebGL;
 
 
 	var mAniPath;

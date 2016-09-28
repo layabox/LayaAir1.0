@@ -47,14 +47,13 @@ package laya.d3.core.particle {
 			_particleRender = new ParticleRender(this);
 			_particleRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
-			
 			var material:Material = new Material();
-			_particleRender.shadredMaterial = material;
+			_particleRender.sharedMaterial = material;
 			_templet = new ParticleTemplet3D(this, settings);
 			if (settings.blendState === 0)
-				material.renderMode = Material.RENDERMODE_TRANSPARENT;
+				material.renderMode = Material.RENDERMODE_DEPTHREAD_TRANSPARENT;
 			else if (settings.blendState === 1)
-				material.renderMode = Material.RENDERMODE_ADDTIVE;
+				material.renderMode = Material.RENDERMODE_DEPTHREAD_ADDTIVE;
 				
 			_changeRenderObject(0);
 		}
@@ -66,24 +65,22 @@ package laya.d3.core.particle {
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
 			
-			var material:Material = _particleRender.shadredMaterials[index];
+			var material:Material = _particleRender.sharedMaterials[index];
 			(material) || (material = Material.defaultMaterial);//确保有材质,由默认材质代替。
 			
 			var element:IRenderable = _templet;
-			renderElement.mainSortID = 0;
-			renderElement.triangleCount = element.triangleCount;
-			renderElement.sprite3D = this;
+			renderElement._mainSortID = 0;
+			renderElement._sprite3D = this;
 			
-			renderElement.element = element;
-			renderElement.material = material;
+			renderElement.renderObj = element;
+			renderElement._material = material;
 			return renderElement;
 		}
 		
 		/** @private */
-		private function _onMaterialChanged(_particleRender:ParticleRender, oldMaterials:Array, materials:Array):void {
+		private function _onMaterialChanged(_particleRender:ParticleRender,index:int,material:Material):void {
 			var renderElementCount:int = _particleRender.renderCullingObject._renderElements.length;
-			for (var i:int = 0, n:int = materials.length; i < n; i++)
-				(i < renderElementCount) && _changeRenderObject(i);
+				(index < renderElementCount) && _changeRenderObject(index);
 		}
 		
 		/** @private */

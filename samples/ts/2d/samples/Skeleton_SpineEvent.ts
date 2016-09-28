@@ -1,14 +1,14 @@
 module laya {
-	import EventData = laya.ani.bone.EventData;
-	import Skeleton  = laya.ani.bone.Skeleton;
-	import Templet   = laya.ani.bone.Templet;
-	import Sprite    = laya.display.Sprite;
-	import Event     = laya.events.Event;
-	import Browser   = laya.utils.Browser;
-	import Handler   = laya.utils.Handler;
-	import Stat      = laya.utils.Stat;
-	import Tween     = laya.utils.Tween;
-	import WebGL     = laya.webgl.WebGL;
+	import EventData = Laya.EventData;
+	import Skeleton  = Laya.Skeleton;
+	import Templet   = Laya.Templet;
+	import Sprite    = Laya.Sprite;
+	import Event     = Laya.Event;
+	import Browser   = Laya.Browser;
+	import Handler   = Laya.Handler;
+	import Stat      = Laya.Stat;
+	import Tween     = Laya.Tween;
+	import WebGL     = Laya.WebGL;
 
 	export class Skeleton_SpineEvent {
 		private mAniPath:string;

@@ -42,7 +42,7 @@ package threeDimen.primaryStage {
 			skinMesh.transform.localRotationEuler = new Vector3(0, 3.14, 0);
 			skinAni = skinMesh.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni.url = "../../../../res/threeDimen/skinModel/dude/dude.ani";
-			skinAni.play();
+			skinAni.player.play();
 			
 			
 		

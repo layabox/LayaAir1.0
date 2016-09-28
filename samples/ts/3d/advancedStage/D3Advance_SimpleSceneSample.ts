@@ -30,24 +30,14 @@ module SimpleSceneSample {
             var root:Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;
             root.transform.localScale = new Vector3(10, 10, 10);
 
-            var skySprite3D = scene.addChild(new Laya.Sprite3D()) as Laya.Sprite3D;
-            var skySampleScript = skySprite3D.addComponent(SkySampleScript) as SkySampleScript;
-            skySampleScript.skySprite = skySprite3D;
-            skySampleScript.cameraSprite = camera;
+            var skyBox = new Laya.SkyBox();
+            scene.currentCamera.sky = skyBox;
 
             //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-            var skySprite3d0:Sprite3D = skySprite3D.addChild(new Sprite3D()) as Sprite3D;
-            skySprite3d0.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT006M.v3f.lh");
-            skySprite3d0.once(Laya.Event.HIERARCHY_LOADED, this, (sprite) => {
-                this.setMeshParams(sprite, Laya.Material.RENDERMODE_SKY, new Vector4(3.5, 3.5, 3.5, 1.0), new Vector3(0.6, 0.6, 0.6), new Vector2(1.0, 1.0), null);
-            });
-
-            //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-            var skySprite3d1:Sprite3D = skySprite3D.addChild(new Sprite3D()) as Sprite3D;
-            skySprite3d1.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT007M.v3f.lh");
-            skySprite3d1.once(Laya.Event.HIERARCHY_LOADED, this, (sprite) => {
-                this.setMeshParams(sprite, Laya.Material.RENDERMODE_SKY, new Vector4(1.0, 1.0, 1.0, 1.0), new Vector3(0.6, 0.6, 0.6), new Vector2(1.0, 1.0), null);
-            });
+            Laya.loader.load("../../res/threeDimen/skyBox/px.jpg,../../res/threeDimen/skyBox/nx.jpg,../../res/threeDimen/skyBox/py.jpg,../../res/threeDimen/skyBox/ny.jpg,../../res/threeDimen/skyBox/pz.jpg,../../res/threeDimen/skyBox/nz.jpg",
+                Laya.Handler.create(null,function(texture):void{
+                    skyBox.textureCube = texture;
+                }), null, "TextureCube");
 
             //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
             var singleFaceTransparent0:Sprite3D = root.addChild(new Sprite3D()) as Sprite3D;
@@ -120,8 +110,8 @@ module SimpleSceneSample {
                 if (mesh != null) {
                     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
                     mesh.once(Event.LOADED, this, function (mesh:Laya.BaseMesh):void {
-                        for (var i = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
-                            var material:Laya.Material = meshSprite.meshRender.shadredMaterials[i];
+                        for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+                            var material:Laya.Material = meshSprite.meshRender.sharedMaterials[i];
                             material.once(Event.LOADED, null, function (mat:Laya.Material):void {
                                 var transformUV:Laya.TransformUV = new Laya.TransformUV();
                                 transformUV.tiling = uvScale;

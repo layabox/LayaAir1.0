@@ -1,10 +1,10 @@
 module laya {
-	import Stage = laya.display.Stage;
-	import Text = laya.display.Text;
-	import Event = laya.events.Event;
-	import HttpRequest = laya.net.HttpRequest;
-	import Browser = laya.utils.Browser;
-	import WebGL = laya.webgl.WebGL;
+	import Stage = Laya.Stage;
+	import Text = Laya.Text;
+	import Event = Laya.Event;
+	import HttpRequest = Laya.HttpRequest;
+	import Browser = Laya.Browser;
+	import WebGL = Laya.WebGL;
 
 	export class Network_POST {
 		private hr: HttpRequest;

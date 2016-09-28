@@ -1,13 +1,11 @@
 package laya.d3.graphics {
-	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Layer;
+	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.BoundFrustum;
-	import laya.d3.math.BoundSphere;
 	import laya.d3.math.ContainmentType;
-	import laya.utils.Stat;
 	
 	/**
 	 * ...
@@ -24,45 +22,35 @@ package laya.d3.graphics {
 			var renderElement:RenderElement;
 			var curRenderQueue:RenderQueue;
 			var queues:Vector.<RenderQueue> = scene._quenes;
+			var staticBatchMananger:StaticBatchManager = scene._staticBatchManager;
+			var dynamicBatchManager:DynamicBatchManager = scene._dynamicBatchManager;
 			var frustumCullingObjects:Vector.<RenderCullingObject> = scene._frustumCullingObjects;
-			if (scene._frustumCullingObjectsNeedClear) {
-				for (i = 0, iNum = queues.length; i < iNum; i++)
-					(queues[i]) && (queues[i]._clearRenderElements());
-				for (i = 0, iNum = frustumCullingObjects.length; i < iNum; i++) {
-					frustumCullingObject = frustumCullingObjects[i];
-					if (Layer.isVisible(frustumCullingObject._layerMask) && frustumCullingObject._ownerEnable && frustumCullingObject._enable && (boundFrustum.ContainsBoundSphere(frustumCullingObject._boundingSphere) !== ContainmentType.Disjoint)) {
-						for (j = 0, jNum = frustumCullingObject._renderElements.length; j < jNum; j++) {
-							renderElement = frustumCullingObject._renderElements[j];
-							curRenderQueue = scene.getRenderQueue(renderElement.material.renderQueue);
-							curRenderQueue._addRenderElement(renderElement);
+			for (i = 0, iNum = queues.length; i < iNum; i++)
+				(queues[i]) && (queues[i]._clearRenderElements());
+			staticBatchMananger._clearRenderElements();
+			dynamicBatchManager._clearRenderElements();
+			
+			for (i = 0, iNum = frustumCullingObjects.length; i < iNum; i++) {
+				frustumCullingObject = frustumCullingObjects[i];
+				if (Layer.isVisible(frustumCullingObject._layerMask) && frustumCullingObject._ownerEnable && frustumCullingObject._enable && (boundFrustum.ContainsBoundSphere(frustumCullingObject._boundingSphere) !== ContainmentType.Disjoint)) {
+					for (j = 0, jNum = frustumCullingObject._renderElements.length; j < jNum; j++) {
+						renderElement = frustumCullingObject._renderElements[j];
+						var staticBatch:StaticBatch = renderElement._staticBatch;//TODO:换vertexBuffer后应该取消合并,修改顶点数据后，从动态列表移除，暂时忽略，不允许直接修改Buffer。
+						if (staticBatch && /*(staticBatch._vertexDeclaration===renderElement.element.getVertexBuffer().vertexDeclaration)&&*/ (staticBatch._material === renderElement._material)) {
+							staticBatch._addRenderElement(renderElement);
+						} else {
+							var renderObj:IRenderable = renderElement.renderObj;
+							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj.VertexBufferCount === 1)&& (renderObj.getIndexBuffer()))//TODO:是否可兼容无IB渲染,例如闪光
+								dynamicBatchManager._addPrepareRenderElement(renderElement);
+							else
+								scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);
 						}
 					}
 				}
-				scene._frustumCullingObjectsNeedClear = false;
-			} else {
-				for (i = 0, iNum = frustumCullingObjects.length; i < iNum; i++) {
-					frustumCullingObject = frustumCullingObjects[i];
-					var lastRenderQuque:RenderQueue;
-					if (Layer.isVisible(frustumCullingObject._layerMask) && frustumCullingObject._ownerEnable && frustumCullingObject._enable && (boundFrustum.ContainsBoundSphere(frustumCullingObject._boundingSphere) !== ContainmentType.Disjoint)) {
-						for (j = 0, jNum = frustumCullingObject._renderElements.length; j < jNum; j++) {
-							renderElement = frustumCullingObject._renderElements[j];
-							curRenderQueue = scene.getRenderQueue(renderElement.material.renderQueue);
-							lastRenderQuque = renderElement.ownerRenderQneue;
-							if (curRenderQueue !== lastRenderQuque) {
-								(lastRenderQuque) && (lastRenderQuque._deleteRenderElement(renderElement));
-								curRenderQueue._addRenderElement(renderElement);
-							}
-						}
-					} else {
-						for (j = 0, jNum = frustumCullingObject._renderElements.length; j < jNum; j++) {
-							renderElement = frustumCullingObject._renderElements[j];
-							lastRenderQuque = renderElement.ownerRenderQneue;
-							(lastRenderQuque) && (lastRenderQuque._deleteRenderElement(renderElement));
-						}
-					}
-				}
-				
 			}
+			staticBatchMananger._addToRenderQueue(scene);
+			dynamicBatchManager._finishCombineDynamicBatch(scene);
+			dynamicBatchManager._addToRenderQueue(scene);
 		}
 	
 	}

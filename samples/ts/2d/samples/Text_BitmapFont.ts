@@ -1,10 +1,10 @@
 module laya {
-	import BitmapFont = laya.display.BitmapFont;
-	import Stage = laya.display.Stage;
-	import Text = laya.display.Text;
-	import Browser = laya.utils.Browser;
-	import Handler = laya.utils.Handler;
-	import WebGL = laya.webgl.WebGL;
+	import BitmapFont = Laya.BitmapFont;
+	import Stage = Laya.Stage;
+	import Text = Laya.Text;
+	import Browser = Laya.Browser;
+	import Handler = Laya.Handler;
+	import WebGL = Laya.WebGL;
 
 	export class Text_BitmapFont {
 		private fontName: string = "diyFont";

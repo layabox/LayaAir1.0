@@ -1,14 +1,14 @@
 (function()
 {
-	var Sprite       = laya.display.Sprite;
-	var Stage        = laya.display.Stage;
-	var Text         = laya.display.Text;
-	var Gyroscope    = laya.device.motion.Gyroscope;
-	var RotationInfo = laya.device.motion.RotationInfo;
-	var Browser      = laya.utils.Browser;
-	var Handler      = laya.utils.Handler;
-	var WebGL        = laya.webgl.WebGL;
-	var Event        = laya.events.Event;
+	var Sprite       = Laya.Sprite;
+	var Stage        = Laya.Stage;
+	var Text         = Laya.Text;
+	var Gyroscope    = Laya.Gyroscope;
+	var RotationInfo = Laya.RotationInfo;
+	var Browser      = Laya.Browser;
+	var Handler      = Laya.Handler;
+	var WebGL        = Laya.WebGL;
+	var Event        = Laya.Event;
 
 	var compassImgPath = "../../res/inputDevice/kd.png";
 	var compassImg;

@@ -18,11 +18,10 @@ var skyBox = new Laya.SkyBox();
 scene.currentCamera.sky = skyBox;
 scene.currentCamera.addComponent(CameraMoveScript);
 
-var webGLImageCube = new Laya.WebGLImageCube(["../../res/threeDimen/skyBox/px.jpg", "../../res/threeDimen/skyBox/nx.jpg", "../../res/threeDimen/skyBox/py.jpg", "../../res/threeDimen/skyBox/ny.jpg", "../../res/threeDimen/skyBox/pz.jpg", "../../res/threeDimen/skyBox/nz.jpg"], 1024);
-webGLImageCube.once(Laya.Event.LOADED,null,function(imgCube){
-	var textureCube = new Laya.Texture(imgCube);
-	skyBox.textureCube = textureCube;
-});
+Laya.loader.load("../../res/threeDimen/skyBox/px.jpg,../../res/threeDimen/skyBox/nx.jpg,../../res/threeDimen/skyBox/py.jpg,../../res/threeDimen/skyBox/ny.jpg,../../res/threeDimen/skyBox/pz.jpg,../../res/threeDimen/skyBox/nz.jpg",
+	Laya.Handler.create(null,function(texture){
+		skyBox.textureCube = texture;
+	}), null, "TextureCube");
 
 var sprit = scene.addChild(new Laya.Sprite3D());
 
@@ -30,8 +29,8 @@ var sprit = scene.addChild(new Laya.Sprite3D());
 var mesh = Laya.Mesh.load("../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
 meshSprite = sprit.addChild(new Laya.MeshSprite3D(mesh));
 mesh.once(Laya.Event.LOADED, null, function () {
-	meshSprite.meshRender.shadredMaterials[0].once(Laya.Event.LOADED, null, function () {
-		material = meshSprite.meshRender.shadredMaterials[0];
+	meshSprite.meshRender.sharedMaterials[0].once(Laya.Event.LOADED, null, function () {
+		material = meshSprite.meshRender.sharedMaterials[0];
 		material.albedo = new Vector4(0.0,0.0,0.0,0.0);
 		material.renderMode = Laya.Material.RENDERMODE_OPAQUEDOUBLEFACE;
 		(material && reflectTexture) && (material.reflectTexture = reflectTexture);
@@ -46,7 +45,7 @@ var webGLImageCube = new Laya.WebGLImageCube(["../../res/threeDimen/skyBox/px.jp
 webGLImageCube.once(Laya.Event.LOADED, null, function (imgCube) {
 	reflectTexture = new Laya.Texture(imgCube);
 	imgCube.mipmap = true;
-	(material && reflectTexture) && (meshSprite.meshRender.shadredMaterials[0].reflectTexture = reflectTexture);
+	(material && reflectTexture) && (meshSprite.meshRender.sharedMaterials[0].reflectTexture = reflectTexture);
 });
 
 Laya.timer.frameLoop(1, null, function () {

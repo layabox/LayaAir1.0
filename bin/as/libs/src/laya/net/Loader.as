@@ -79,7 +79,7 @@ package laya.net {
 		 * @param	cache 是否缓存数据。
 		 */
 		public function load(url:String, type:String = null, cache:Boolean = true):void {
-			url = URL.formatURL(url);
+			url = _parseURL(url);/*url = URL.formatURL(url);*/
 			this._url = url;
 			this._type = type || (type = getTypeFromUrl(url));
 			this._cache = cache;
@@ -132,27 +132,33 @@ package laya.net {
 		 * @param	url 资源地址。
 		 */
 		protected function _loadImage(url:String):void {
-			if (_type === "nativeimage") {
-				var image:* = new Browser.window.Image();
-				image.crossOrigin = "";
-				image.src = url;
-			} else {
-				image = new HTMLImage.create(url);
-			}
-			
 			var _this:Loader = this;
-			image.onload = function():void {
-				clear();
-				_this.onLoaded(image);
-			};
-			image.onerror = function():void {
-				clear();
-				_this.event(Event.ERROR, "Load image filed");
-			}
+			var image:*;
 			
 			function clear():void {
 				image.onload = null;
 				image.onerror = null;
+			}
+			
+			var onload:Function = function():void {
+				clear();
+				_this.onLoaded(image);
+			};
+			var onerror:Function = function():void {
+				clear();
+				_this.event(Event.ERROR, "Load image filed");
+			}
+			
+			if (_type === "nativeimage") {
+				image = new Browser.window.Image();
+				image.crossOrigin = "";
+				image.onload = onload;
+				image.onerror = onerror;
+				image.src = url;
+			} else {
+				new HTMLImage.create(url, {onload: onload, onerror: onerror, onCreate: function(img:*):void {
+					image = img;
+				}});
 			}
 		}
 		
@@ -346,6 +352,23 @@ package laya.net {
 		}
 		
 		/**
+		 * @private
+		 */
+		public static function _parseURL(url:String):String {
+			if (!url) return url;
+			if (url.indexOf("data:image") == 0) return url;
+			if (url.indexOf(",") < 0) {
+				url = URL.formatURL(url);
+			} else {
+				var arr:Array = url.split(",");
+				for (var i:int = arr.length - 1; i > -1; i--)
+					arr[i] = URL.formatURL(arr[i]);
+				url = arr.join(",");
+			}
+			return url
+		}
+		
+		/**
 		 * 清理指定资源地址的缓存。
 		 * @param	url 资源地址。
 		 */
@@ -365,8 +388,8 @@ package laya.net {
 				delete loadedMap[url];
 			} else {
 				var res:* = loadedMap[url];
-				if (res is Texture && res.bitmap) {
-					Texture(res).destroy();
+				if (res) {
+					if (res is Texture && res.bitmap) Texture(res).destroy();
 					delete loadedMap[url];
 				}
 			}
@@ -378,7 +401,7 @@ package laya.net {
 		 * @return	返回资源。
 		 */
 		public static function getRes(url:String):* {
-			return loadedMap[URL.formatURL(url)];
+			return loadedMap[_parseURL(url) /*URL.formatURL(url)*/];
 		}
 		
 		/**

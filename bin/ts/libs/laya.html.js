@@ -443,8 +443,12 @@
 
 		__proto.onLinkHandler=function(e){
 			switch(e.type){
-				case /*laya.events.Event.CLICK*/"click":
-					Laya.stage.event(/*laya.events.Event.LINK*/"link",[this.href]);
+				case /*laya.events.Event.CLICK*/"click":;
+					var target=this;
+					while (target){
+						target.event(/*laya.events.Event.LINK*/"link",[this.href]);
+						target=target.parent;
+					}
 					break ;
 				}
 		}
@@ -623,12 +627,12 @@
 		*设置标签内容
 		*/
 		__getset(0,__proto,'innerHTML',null,function(text){
-			this.removeChildren();
+			this.destroyChildren();
 			this.appendHTML(text);
 		});
 
 		/**
-		*如果对象的高度被设置过，返回设置的高度，如果没被设置过，则返回实际内容的高度
+		*获取对象的高
 		*/
 		__getset(0,__proto,'height',function(){
 			if (this._height)return this._height;
@@ -636,7 +640,7 @@
 		},_super.prototype._$set_height);
 
 		/**
-		*如果对象的宽度被设置过，返回设置的宽度，如果没被设置过，则返回实际内容的宽度
+		*获取对象的宽
 		*/
 		__getset(0,__proto,'width',function(){
 			if (this._width)return this._width;

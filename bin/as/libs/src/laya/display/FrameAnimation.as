@@ -132,7 +132,7 @@ package laya.display
 		 * @param node
 		 * 
 		 */
-		private function _calculateNodeKeyFrames(node:Object):void
+		protected function _calculateNodeKeyFrames(node:Object):void
 		{			
 			var keyFrames:Object=node.keyframes,key:String,tKeyFrames:Array,target:int=node.target;
 			if(!node.frames)

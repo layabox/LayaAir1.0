@@ -1,10 +1,10 @@
 (function()
 {
-	var Stage   = laya.display.Stage;
-	var Text    = laya.display.Text;
-	var Event   = laya.events.Event;
-	var Browser = laya.utils.Browser;
-	var WebGL   = laya.webgl.WebGL;
+	var Stage   = Laya.Stage;
+	var Text    = Laya.Text;
+	var Event   = Laya.Event;
+	var Browser = Laya.Browser;
+	var WebGL   = Laya.WebGL;
 
 	var logger, keyDownList;
 

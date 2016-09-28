@@ -1,24 +1,17 @@
 package laya.webgl.submit {
-	import laya.maths.Matrix;
 	import laya.resource.Bitmap;
 	import laya.resource.Texture;
-	import laya.webgl.submit.ISubmit;
 	import laya.utils.Stat;
-	import laya.webgl.utils.IndexBuffer2D;
-	import laya.webgl.utils.VertexBuffer2D;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.BlendMode;
 	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.shader.d2.value.Value2D;
-	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.CONST3D2D;
+	import laya.webgl.utils.IndexBuffer2D;
+	import laya.webgl.utils.VertexBuffer2D;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class SubmitTexture extends Submit {
 		private static var _cache:Array =/*[STATIC SAFE]*/ (_cache = [], _cache._length = 0, _cache);
 		
@@ -27,7 +20,7 @@ package laya.webgl.submit {
 		protected var _vbPos:Vector.<int> = new Vector.<int>;
 		public var _preIsSameTextureShader:Boolean = false;
 		public var _isSameTexture:Boolean = true;
-
+		
 		public function SubmitTexture(renderType:int = TYPE_2D) {
 			super(renderType);
 		}
@@ -60,7 +53,7 @@ package laya.webgl.submit {
 			var webGLImg:Bitmap = _tex.bitmap as Bitmap;
 			if (webGLImg === null) return;
 			
-			var vbdata: * = _vb.getFloat32Array();
+			var vbdata:* = _vb.getFloat32Array();
 			for (var i:int = 0, s:int = _texs.length; i < s; i++) {
 				var tex:Texture = _texs[i];
 				tex.active();
@@ -86,7 +79,8 @@ package laya.webgl.submit {
 			}
 		
 		}
-		private static var _shaderSet : Boolean = true;
+		private static var _shaderSet:Boolean = true;
+		
 		public override function renderSubmit():int {
 			if (_numEle === 0) return 1;
 			var _tex:Texture = shaderValue.textureHost;
@@ -112,7 +106,7 @@ package laya.webgl.submit {
 			Stat.drawCall++;
 			Stat.trianglesFaces += _numEle / 3;
 			
-			if (_preIsSameTextureShader && Shader.activeShader && _shaderSet )
+			if (_preIsSameTextureShader && Shader.activeShader && _shaderSet)
 				Shader.activeShader.uploadTexture2D(shaderValue.texture);
 			else shaderValue.upload();
 			_shaderSet = true;

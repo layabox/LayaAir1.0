@@ -1,9 +1,9 @@
 module laya {
-	import Stage = laya.display.Stage;
-	import TiledMap = laya.map.TiledMap;
-	import Rectangle = laya.maths.Rectangle;
-	import Browser = laya.utils.Browser;
-	import WebGL = laya.webgl.WebGL;
+	import Stage = Laya.Stage;
+	import TiledMap = Laya.TiledMap;
+	import Rectangle = Laya.Rectangle;
+	import Browser = Laya.Browser;
+	import WebGL = Laya.WebGL;
 
 	export class TiledMap_PerspectiveWall {
 		private tiledMap: TiledMap;

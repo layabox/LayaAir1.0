@@ -1,12 +1,12 @@
 module laya 
 {
-	import Animation = laya.display.Animation;
-	import Stage = laya.display.Stage;
-	import Rectangle = laya.maths.Rectangle;
-	import Loader = laya.net.Loader;
-	import Browser = laya.utils.Browser;
-	import Handler = laya.utils.Handler;
-	import WebGL = laya.webgl.WebGL;
+	import Animation = Laya.Animation;
+	import Stage = Laya.Stage;
+	import Rectangle = Laya.Rectangle;
+	import Loader = Laya.Loader;
+	import Browser = Laya.Browser;
+	import Handler = Laya.Handler;
+	import WebGL = Laya.WebGL;
 
 	export class Animation_Altas {
 		private AniConfPath: string = "../../res/fighter/fighter.json";

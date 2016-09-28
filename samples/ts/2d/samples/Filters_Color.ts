@@ -1,11 +1,11 @@
 module laya {
-    import Sprite = laya.display.Sprite;
-    import Stage = laya.display.Stage;
-    import ColorFilter = laya.filters.ColorFilter;
-    import Texture = laya.resource.Texture;
-    import Browser = laya.utils.Browser;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Sprite = Laya.Sprite;
+    import Stage = Laya.Stage;
+    import ColorFilter = Laya.ColorFilter;
+    import Texture = Laya.Texture;
+    import Browser = Laya.Browser;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class Filters_Color {
         private ApePath: string = "../../res/apes/monkey2.png";

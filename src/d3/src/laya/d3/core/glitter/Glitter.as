@@ -46,10 +46,10 @@ package laya.d3.core.glitter {
 			_glitterRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
 			var material:Material = new Material();
-			_glitterRender.shadredMaterial = material;
+			_glitterRender.sharedMaterial = material;
 			_templet = new GlitterTemplet(this, settings);
 			
-			material.renderMode = Material.RENDERMODE_ADDTIVEDOUBLEFACE;
+			material.renderMode = Material.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
 			
 			_changeRenderObject(0);
 		
@@ -62,24 +62,22 @@ package laya.d3.core.glitter {
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
 			
-			var material:Material = _glitterRender.shadredMaterials[index];
+			var material:Material = _glitterRender.sharedMaterials[index];
 			(material) || (material = Material.defaultMaterial);//确保有材质,由默认材质代替。
 			
 			var element:IRenderable = _templet;
-			renderElement.mainSortID = 0;
-			renderElement.triangleCount = element.triangleCount;
-			renderElement.sprite3D = this;
+			renderElement._mainSortID = 0;
+			renderElement._sprite3D = this;
 			
-			renderElement.element = element;
-			renderElement.material = material;
+			renderElement.renderObj = element;
+			renderElement._material = material;
 			return renderElement;
 		}
 		
 		/** @private */
-		private function _onMaterialChanged(_glitterRender:GlitterRender, oldMaterials:Array, materials:Array):void {
+		private function _onMaterialChanged(_glitterRender:GlitterRender,index:int, material:Material):void {
 			var renderElementCount:int = _glitterRender.renderCullingObject._renderElements.length;
-			for (var i:int = 0, n:int = materials.length; i < n; i++)
-				(i < renderElementCount) && _changeRenderObject(i);
+			(index < renderElementCount) && _changeRenderObject(index);
 		}
 		
 		/** @private */

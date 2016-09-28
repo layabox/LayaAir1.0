@@ -1,3 +1,77 @@
+##1.4.0##
+----------------------------------------
+####2D####
+增加Spine形变动画支持，增加切换渲染顺序的功能，优化骨骼动画性能
+
+Loader批量加载时，增加对type的使用（作为未自定type的默认type类型）
+
+Animation类增加loadAnimation接口，实现加载ide制作的动画效果
+
+Event增加stageX，stageY属性
+
+TextArea 增加设置滚动条
+
+增加Stage的鼠标滑轮事件支持
+
+修复焦点在输入框间切换（多行和单行间互相切换）时报错
+
+修改矢量图绘制发生错乱的BUG
+
+####3D####
+优化骨骼动画内存占用
+
+增加TextureCube类型Loader
+
+增加材质无深度测试混合模式
+
+增加骨骼动画缓存速率接口
+
+统一动画播放接口到AnimationPlayer
+
+修复修改材质混合模式后staticBatch失效问题
+
+增加动态合并机制,提升性能
+
+###LayaAirIDE###
+新功能：
+
+Graphics动画
+
+![Animation](http://layabox.com/git/ani.gif)
+
+	通过新建菜单，可以创建Graphics动画了，轻松制作高性能的动画效果，比如角色动画，UI动画，特效动画
+脚本扩展
+![Script](http://layabox.com/git/script1.gif)	
+
+![Script2](http://layabox.com/git/script2.gif)
+
+	如果觉得组件功能不够用，现在增加了新的扩展方式，创建一个扩展脚本（ide只是增加脚本配置信息，脚本逻辑可以用不同语言书写），
+
+	直接修改组件行为，甚至增加新的属性，比如按钮+扩展脚本=更个性化的按钮 Sprite+Role扩展脚本=Role类
+
+	同时还可以添加多个附加脚本来扩展。扩展脚本和附加脚本的区别：扩展脚本继承自组件本身，附加脚本只修改组件，不继承
+
+预设
+![perfab](http://layabox.com/git/perfab.gif)
+	如果你修改了某个组件的行为，想作为模板保存下来，拖入别的场景直接用，并且再次修改这个组件，全部使用的地方均能跟着变化
+
+	那么预设就是你想要的，比如创建了一个Sprite组件，拖入动画，设置一些属性，甚至附加Role脚本，然后保存为预设，以后就可以直接拖入场景使用
+增加更多右键快捷菜单，使用更方便
+
+![menu](http://layabox.com/git/menu.jpg)
+
+增加3D粒子模式
+
+改进IDE树节点操作体验
+
+Code模式增加文件Icon显示
+
+新增文件模板，用来快速创建类对象
+
+增加App打包管理器
+
+
+
 ##1.3.0##
 ----------------------------------------
 ###类库###
@@ -34,22 +108,24 @@ Input类增加setSelection接口，设置光标位置
 新增场景编辑功能（测试版）
 
 	1.IDE内拖动Sprite，Animation，Text到场景中
-	
+
 	2.IDE内拖动圆形，矩形，多边形等矢量图到任意精灵内
-	
+
 	3.IDE内拖动swf动画到场景中
-	
+
 	4.IDE内拖动声音设置播放控制
-	
+
 	5.IDE内拖动一个精灵对象作为遮罩体，实现遮罩功能
-	
+
 	6.IDE内拖动一个Graphics作为碰撞体，来设置某个对象的点击区域
-	
+
 	后续还会有更强的功能放出，敬请期待
-	
+
 改进IDE布局方式，布局更加合理
 
 IDE内集成社区浏览功能
+
+改进设计视图代码模式，增加高亮，更加好看易用
 
 改进了IDE更新流程
 
@@ -285,7 +361,7 @@ Byte类增加buffer属性，方便获取原始ArrayByffer数据
 
 修复删除资源后列表选择状态没有变化
 
-修复特定组建非打包时没正确打包的bug
+修复特定组件非打包时没正确打包的bug
 
 修复删除left right等属性时属性面板数值变成NAN的问题
 
@@ -547,13 +623,13 @@ clearRes时，如果是Texture，会自动调用销毁
 调整API:
 
 	调整movieClip动画相关API，增加label设置及事件触发
-	
+
 	调整时间轴动画API，增加label标签及label事件触发
-	
+
 	调整粒子相关API，使其更容易使用
-	
+
 	调整骨骼动画相关API，使其更容易使用，增加更多功能
-	
+​	
 
 UI库所有组件增加anchorX，anchorY属性，增加百分比的锚点设置
 
@@ -617,17 +693,17 @@ LayaAirIde实现自动IDE更新功能，无需再去网站重新下载
 
 调整API:
 	更改Browser.ctx为Browser.context
-	
+
 	更改Rectangle的equal为equals
-	
+
 	更改URL类的getName为getFileName
-	
+
 	更改Dictionary的elements为values
-	
+
 	更改Sprite的optimizeFloat为optimizeScrollRect
-	
+
 	更改骨骼动画相关API
-	
+
 	其他API更改
 
 增加45度交错地图及缩放功能

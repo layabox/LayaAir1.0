@@ -1,7 +1,9 @@
 package laya.d3.core.render {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.BaseCamera;
+	import laya.d3.core.material.Material;
 	import laya.d3.core.scene.BaseScene;
+	import laya.d3.graphics.StaticBatch;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Viewport;
@@ -39,7 +41,14 @@ package laya.d3.core.render {
 		/**当前渲染3D精灵。*/
 		public var owner:Sprite3D;
 		/**当前渲染物体。*/
-		public var renderObj:RenderElement;
+		public var renderElement:RenderElement;
+		
+		/** @private */
+		public var _staticBatch:StaticBatch;
+		/** @private */
+		public var _batchIndexStart:int;
+		/** @private */
+		public var _batchIndexEnd:int;
 		
 		/**当前摄像机。*/
 		public var camera:BaseCamera;
@@ -59,8 +68,6 @@ package laya.d3.core.render {
 		public var shaderValue:ValusArray = new ValusArray;
 		/**当前ShaderDefs。*/
 		public var shaderDefs:ShaderDefines3D = new ShaderDefines3D();
-		/**当前渲染裁剪。*/
-		public var renderClip:RenderClip = new RenderClip();
 		
 		/**
 		 * 创建一个 <code>RenderState</code> 实例。

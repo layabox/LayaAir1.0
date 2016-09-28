@@ -14,9 +14,9 @@ package laya.resource {
 		 * 根据指定的类型，创建一个 <code>HTMLCanvas</code> 实例。
 		 * @param	type 类型。2D、3D。
 		 */
-		public static var create:Function = function(type:String):HTMLCanvas
+		public static var create:Function = function(type:String,canvas:*=null):HTMLCanvas
 		{
-			return new HTMLCanvas(type);
+			return new HTMLCanvas(type,canvas);
 		}
 		
 		/** 2D 模式。*/
@@ -36,12 +36,11 @@ package laya.resource {
 		 * 根据指定的类型，创建一个 <code>HTMLCanvas</code> 实例。请不要直接使用 new HTMLCanvas！
 		 * @param	type 类型。2D、3D。
 		 */
-		public function HTMLCanvas(type:String) {
+		public function HTMLCanvas(type:String,canvas:*=null) {
 			_source = this;
-			
 			if (type === "2D" || (type === "AUTO" && !Render.isWebGL)) {
 				_is2D = true;
-				_source = Browser.createElement("canvas");
+				_source = canvas || Browser.createElement("canvas");
 				var o:HTMLCanvas = this;
 				o.getContext = function(contextID:String, other:*=null):Context {
 					if (_ctx) return _ctx;
@@ -54,7 +53,8 @@ package laya.resource {
 					//contextID === "2d" && Context._init(o, ctx);
 					return ctx;
 				}
-			} else _source = {};
+			} 
+			else _source = {};
 		}
 		
 		/**

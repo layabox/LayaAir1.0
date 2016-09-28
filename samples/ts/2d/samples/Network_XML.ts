@@ -1,6 +1,6 @@
 module laya
 {
-	import Utils = laya.utils.Utils;
+	import Utils = Laya.Utils;
 
 	export class Network_XML
 	{

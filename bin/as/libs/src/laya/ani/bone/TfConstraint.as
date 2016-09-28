@@ -1,11 +1,9 @@
-package laya.ani.bone 
-{
+package laya.ani.bone {
+	
 	/**
-	 * ...
-	 * @author 
+	 * @private
 	 */
-	public class TfConstraint 
-	{
+	public class TfConstraint {
 		
 		private var _data:TfConstraintData;
 		private var _bones:Vector.<Bone>;
@@ -16,17 +14,14 @@ package laya.ani.bone
 		public var shearMix:Number;
 		private var _temp:Vector.<Number> = new Vector.<Number>(2);
 		
-		public function TfConstraint(data:TfConstraintData,bones:Vector.<Bone>)
-		{
+		public function TfConstraint(data:TfConstraintData, bones:Vector.<Bone>) {
 			_data = data;
-			if (_bones == null)
-			{
+			if (_bones == null) {
 				_bones = new Vector.<Bone>();
 			}
 			target = bones[data.targetIndex];
 			var j:int, n:int;
-			for (j = 0, n = data.boneIndexs.length; j < n; j++)
-			{
+			for (j = 0, n = data.boneIndexs.length; j < n; j++) {
 				_bones.push(bones[data.boneIndexs[j]]);
 			}
 			rotateMix = data.rotateMix;
@@ -35,12 +30,10 @@ package laya.ani.bone
 			shearMix = data.shearMix;
 		}
 		
-		public function apply():void
-		{
+		public function apply():void {
 			var tTfBone:Bone;
 			var ta:Number = target.resultMatrix.a, tb:Number = target.resultMatrix.b, tc:Number = target.resultMatrix.c, td:Number = target.resultMatrix.d;
-			for (var j:int = 0, n:int = _bones.length; j < n; j++)
-			{
+			for (var j:int = 0, n:int = _bones.length; j < n; j++) {
 				tTfBone = _bones[j];
 				if (rotateMix > 0) {
 					var a:Number = tTfBone.resultMatrix.a, b:Number = tTfBone.resultMatrix.b, c:Number = tTfBone.resultMatrix.c, d:Number = tTfBone.resultMatrix.d;
@@ -55,8 +48,7 @@ package laya.ani.bone
 					tTfBone.resultMatrix.c = sin * a + cos * c;
 					tTfBone.resultMatrix.d = sin * b + cos * d;
 				}
-				if (translateMix)
-				{
+				if (translateMix) {
 					_temp[0] = _data.offsetX;
 					_temp[1] = _data.offsetY;
 					target.localToWorld(_temp);
@@ -76,7 +68,7 @@ package laya.ani.bone
 					tTfBone.resultMatrix.b *= s;
 					tTfBone.resultMatrix.d *= s;
 				}
-
+				
 				if (shearMix > 0) {
 					b = tTfBone.resultMatrix.b, d = tTfBone.resultMatrix.d;
 					var by:Number = Math.atan2(d, b);
@@ -91,7 +83,7 @@ package laya.ani.bone
 				}
 			}
 		}
-		
+	
 	}
 
 }

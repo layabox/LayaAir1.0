@@ -1,10 +1,10 @@
 (function()
 {
-	var Sprite  = laya.display.Sprite;
-	var Stage   = laya.display.Stage;
-	var Event   = laya.events.Event;
-	var Browser = laya.utils.Browser;
-	var WebGL   = laya.webgl.WebGL;
+	var Sprite  = Laya.Sprite;
+	var Stage   = Laya.Stage;
+	var Event   = Laya.Event;
+	var Browser = Laya.Browser;
+	var WebGL   = Laya.WebGL;
 
 	var sp;
 	var preRadian = 0;

@@ -1,11 +1,11 @@
 module laya
 {
-    import Sprite = laya.display.Sprite;
-    import Browser = laya.utils.Browser;
-    import Handler = laya.utils.Handler;
-    import Stat = laya.utils.Stat;
-    import Rectangle = laya.maths.Rectangle;
-    import WebGL = laya.webgl.WebGL;
+    import Sprite = Laya.Sprite;
+    import Browser = Laya.Browser;
+    import Handler = Laya.Handler;
+    import Stat = Laya.Stat;
+    import Rectangle = Laya.Rectangle;
+    import WebGL = Laya.WebGL;
     
     export class PerformanceTest_Maggots
     {

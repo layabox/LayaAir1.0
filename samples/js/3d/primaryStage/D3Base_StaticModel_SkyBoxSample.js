@@ -14,10 +14,9 @@ var skyBox = new Laya.SkyBox();
 scene.currentCamera.sky = skyBox;
 scene.currentCamera.addComponent(CameraMoveScript);
 
-var webGLImageCube = new Laya.WebGLImageCube(["../../res/threeDimen/skyBox/px.jpg", "../../res/threeDimen/skyBox/nx.jpg", "../../res/threeDimen/skyBox/py.jpg", "../../res/threeDimen/skyBox/ny.jpg", "../../res/threeDimen/skyBox/pz.jpg", "../../res/threeDimen/skyBox/nz.jpg"], 1024);
-webGLImageCube.once(Laya.Event.LOADED,null,function(imgCube){
-    var textureCube = new Laya.Texture(imgCube);
-    skyBox.textureCube = textureCube;
-});
+Laya.loader.load("../../res/threeDimen/skyBox/px.jpg,../../res/threeDimen/skyBox/nx.jpg,../../res/threeDimen/skyBox/py.jpg,../../res/threeDimen/skyBox/ny.jpg,../../res/threeDimen/skyBox/pz.jpg,../../res/threeDimen/skyBox/nz.jpg",
+    Laya.Handler.create(null,function(texture){
+        skyBox.textureCube = texture;
+    }), null, "TextureCube");
 
 var mesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm")));

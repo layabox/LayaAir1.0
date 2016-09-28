@@ -197,7 +197,7 @@ package laya.resource {
 		/** 重新创建资源。override it，同时修改memorySize属性、处理startCreate()和compoleteCreate() 方法。*/
 		protected function recreateResource():void {
 			startCreate();
-			compoleteCreate();//处理创建完成后相关操作
+			completeCreate();//处理创建完成后相关操作
 		}
 		
 		/** 销毁资源，override it,同时修改memorySize属性。*/
@@ -281,7 +281,7 @@ package laya.resource {
 		}
 		
 		/** 完成资源激活。*/
-		protected function compoleteCreate():void {
+		protected function completeCreate():void {
 			_released = false;
 			this.event(Event.RECOVERED, this);
 		}

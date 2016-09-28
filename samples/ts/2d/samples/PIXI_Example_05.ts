@@ -1,10 +1,10 @@
 module laya {
-	import Sprite = laya.display.Sprite;
-	import Stage = laya.display.Stage;
-	import Event = laya.events.Event;
-	import Browser = laya.utils.Browser;
-	import Stat = laya.utils.Stat;
-	import WebGL = laya.webgl.WebGL;
+	import Sprite = Laya.Sprite;
+	import Stage = Laya.Stage;
+	import Event = Laya.Event;
+	import Browser = Laya.Browser;
+	import Stat = Laya.Stat;
+	import WebGL = Laya.WebGL;
 	
 	export class PIXI_Example_05
 	{

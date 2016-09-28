@@ -2,17 +2,11 @@ package laya.webgl.resource {
 	import laya.events.Event;
 	import laya.maths.Arith;
 	import laya.resource.Bitmap;
-	import laya.resource.Resource;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
-	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class WebGLImageCube extends Bitmap {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		/**@private */
@@ -48,7 +42,7 @@ package laya.webgl.resource {
 		/**放大过滤器*/
 		public var magFifter:int;//动态默认值，判断是否可生成miplevel
 		
-		public function WebGLImageCube(srcs:Array, size:int) {
+		public function WebGLImageCube(srcs:Array, size:int=512) {//TODO:临时设置512
 			super();
 			
 			if (srcs.length < _texCount)
@@ -66,7 +60,7 @@ package laya.webgl.resource {
 			_images = [];
 			
 			for (var i:int = 0; i < _texCount; i++) {
-				Laya.loader.load(_srcs[i], Handler.create(this, _onSubCubeTextureLoaded, [i], true), null, "nativeimage",1,false);
+				Laya.loader.load(_srcs[i], Handler.create(this, _onSubCubeTextureLoaded, [i], true), null, "nativeimage", 1, false);
 			}
 		}
 		
@@ -109,7 +103,7 @@ package laya.webgl.resource {
 					(minFifter !== -1) || (minFifter = WebGLContext.LINEAR);
 				
 				(magFifter !== -1) || (magFifter = WebGLContext.LINEAR);
-			
+				
 				gl.texParameteri(WebGLContext.TEXTURE_CUBE_MAP, WebGLContext.TEXTURE_MIN_FILTER, minFifter);
 				gl.texParameteri(WebGLContext.TEXTURE_CUBE_MAP, WebGLContext.TEXTURE_MAG_FILTER, magFifter);
 				gl.texParameteri(WebGLContext.TEXTURE_CUBE_MAP, WebGLContext.TEXTURE_WRAP_S, repeat);
@@ -173,7 +167,7 @@ package laya.webgl.resource {
 								return;
 						
 						_this._createWebGlTexture();
-						_this.compoleteCreate();//处理创建完成后相关操作
+						_this.completeCreate();//处理创建完成后相关操作
 					};
 					_images[i].src = _srcs[i];
 				}
@@ -183,7 +177,7 @@ package laya.webgl.resource {
 				}
 				startCreate();
 				_createWebGlTexture();
-				compoleteCreate();//处理创建完成后相关操作
+				completeCreate();//处理创建完成后相关操作
 			}
 		}
 		

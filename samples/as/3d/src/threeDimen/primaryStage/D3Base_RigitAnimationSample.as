@@ -44,10 +44,10 @@ package threeDimen.primaryStage {
 			
 			effectSprite = scene.addChild(new Sprite3D()) as Sprite3D;
 			effectSprite.once(Event.HIERARCHY_LOADED, null, function(sender:Sprite3D, sprite3D:Sprite3D):void {
-				setMeshParams(effectSprite, Material.RENDERMODE_ADDTIVEDOUBLEFACE);
+				setMeshParams(effectSprite, Material.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
 				var rootAnimations:RigidAnimations = sprite3D.addComponent(RigidAnimations) as RigidAnimations;
 				rootAnimations.url = "../../../../res/threeDimen/staticModel/effect/WuShen/WuShen.lani";
-				rootAnimations.play(0);
+				rootAnimations.player.play(0);
 			});
 			effectSprite.loadHierarchy("../../../../res/threeDimen/staticModel/effect/WuShen/WuShen.lh");
 		}
@@ -59,8 +59,8 @@ package threeDimen.primaryStage {
 				if (mesh != null) {
 					//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 					mesh.once(Event.LOADED, this, function(mesh:BaseMesh):void {
-						for (var i:int = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
-							var material:Material = meshSprite.meshRender.shadredMaterials[i];
+						for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+							var material:Material = meshSprite.meshRender.sharedMaterials[i];
 							material.once(Event.LOADED, null, function(mat:Material):void {
 								mat.renderMode = renderMode;
 							});

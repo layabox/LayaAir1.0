@@ -1,12 +1,12 @@
 module laya {
-	import Sprite = laya.display.Sprite;
-	import Stage = laya.display.Stage;
-	import MapLayer = laya.map.MapLayer;
-	import TiledMap = laya.map.TiledMap;
-	import Point = laya.maths.Point;
-	import Rectangle = laya.maths.Rectangle;
-	import Handler = laya.utils.Handler;
-	import WebGL = laya.webgl.WebGL;
+	import Sprite = Laya.Sprite;
+	import Stage = Laya.Stage;
+	import MapLayer = Laya.MapLayer;
+	import TiledMap = Laya.TiledMap;
+	import Point = Laya.Point;
+	import Rectangle = Laya.Rectangle;
+	import Handler = Laya.Handler;
+	import WebGL = Laya.WebGL;
 
 	export class TiledMap_IsometricWorld {
 		private tiledMap: TiledMap;

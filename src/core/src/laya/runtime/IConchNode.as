@@ -1,13 +1,11 @@
-package laya.runtime 
-{
+package laya.runtime {
+	import laya.display.Graphics;
 	import laya.display.Graphics;
 	import laya.resource.Context;
 	/**
-	 * ...
-	 * @author hugao
+	 * @private
 	 */
-	public interface IConchNode 
-	{
+	public interface IConchNode {
 		/**@private */
 		function setRootNode():void;
 		/**@private */
@@ -27,7 +25,7 @@ package laya.runtime
 		/**@private */
 		function rotate(r:Number):void;
 		/**@private */
-		function  bgColor(bg:String):void;
+		function bgColor(bg:String):void;
 		/**@private */
 		function font(str:String):void;
 		/**@private */

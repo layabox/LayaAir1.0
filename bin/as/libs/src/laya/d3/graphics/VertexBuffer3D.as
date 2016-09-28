@@ -94,7 +94,7 @@ package laya.d3.graphics {
 			if (dataStartIndex !== 0 || dataCount !== 4294967295/*uint.MAX_VALUE*/)
 				data = new Float32Array(data.buffer, dataStartIndex * 4, dataCount);
 			_bind();
-			_gl.bufferSubData(_bufferType, bufferOffset * 4, data);//offset==0情况下，某些特殊设备或情况下直接bufferData速度是否优于bufferSubData
+			_gl.bufferSubData(_bufferType, bufferOffset * 4, data);
 			
 			if (_canRead) {
 				if (bufferOffset !== 0 || dataStartIndex !== 0 || dataCount !== 4294967295/*uint.MAX_VALUE*/) {

@@ -50,8 +50,8 @@ package threeDimen.primaryStage {
 			var mesh:Mesh = Mesh.load("../../../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
 			meshSprite = sprite.addChild(new MeshSprite3D(mesh)) as MeshSprite3D;
 			mesh.once(Event.LOADED, null, function():void {
-				meshSprite.meshRender.shadredMaterials[0].once(Event.LOADED, null, function():void {
-					material = meshSprite.meshRender.shadredMaterials[0];
+				meshSprite.meshRender.sharedMaterials[0].once(Event.LOADED, null, function():void {
+					material = meshSprite.meshRender.sharedMaterials[0];
 					material.albedo = new Vector4(0.0, 0.0, 0.0, 0.0);
 					material.renderMode = Material.RENDERMODE_OPAQUEDOUBLEFACE;
 					(material && cubeTexture) && (material.reflectTexture = cubeTexture);
@@ -61,13 +61,12 @@ package threeDimen.primaryStage {
 			meshSprite.transform.localScale = new Vector3(0.5, 0.5, 0.5);
 			meshSprite.transform.localRotation = new Quaternion(-0.7071068, 0.0, 0.0, 0.7071068);
 			
-			//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-			var webGLImageCube:WebGLImageCube = new WebGLImageCube(["../../../../res/threeDimen/skyBox/px.jpg", "../../../../res/threeDimen/skyBox/nx.jpg", "../../../../res/threeDimen/skyBox/py.jpg", "../../../../res/threeDimen/skyBox/ny.jpg", "../../../../res/threeDimen/skyBox/pz.jpg", "../../../../res/threeDimen/skyBox/nz.jpg"], 1024);
-			webGLImageCube.once(Event.LOADED, null, function(imgCube:WebGLImageCube):void {
-				cubeTexture = new Texture(imgCube);
-				(material && cubeTexture) && (meshSprite.meshRender.shadredMaterials[0].reflectTexture = cubeTexture);
-				skyBox.textureCube = cubeTexture;
-			});
+			////可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
+			Laya.loader.load("../../../../res/threeDimen/skyBox/px.jpg,../../../../res/threeDimen/skyBox/nx.jpg,../../../../res/threeDimen/skyBox/py.jpg,../../../../res/threeDimen/skyBox/ny.jpg,../../../../res/threeDimen/skyBox/pz.jpg,../../../../res/threeDimen/skyBox/nz.jpg", Handler.create(null, function(texture:Texture):void {
+				cubeTexture = texture;
+				(material && cubeTexture) && (meshSprite.meshRender.sharedMaterials[0].reflectTexture = texture);
+				skyBox.textureCube = texture;
+			}), null, "TextureCube");
 			
 			Laya.timer.frameLoop(1, null, function():void {
 				meshSprite.transform.rotate(new Vector3(0, 0.01, 0), false);

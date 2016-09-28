@@ -28,7 +28,7 @@ package
 			Laya.loader.load(apePath, Handler.create(this, setup));
 		}
 
-		private function setup():void
+		private function setup(tex:Texture):void
 		{
 			createApe();
 			applayFilter();

@@ -1,8 +1,8 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import TextInput = laya.ui.TextInput;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import TextInput = Laya.TextInput;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_Input {
         private SPACING: number = 100;
@@ -36,9 +36,6 @@ module laya {
 
         private createInput(skin: string): TextInput {
             var ti: TextInput = new TextInput();
-
-            ti.inputElementXAdjuster = 0;
-            ti.inputElementYAdjuster = 1;
 
             ti.skin = skin;
             ti.size(300, 50);

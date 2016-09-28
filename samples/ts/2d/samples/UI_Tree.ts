@@ -1,10 +1,10 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import Tree = laya.ui.Tree;
-    import Browser = laya.utils.Browser;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
-    import Utils = laya.utils.Utils;
+    import Stage = Laya.Stage;
+    import Tree = Laya.Tree;
+    import Browser = Laya.Browser;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
+    import Utils = Laya.Utils;
 
     export class UI_Tree {
         constructor() {
@@ -56,9 +56,9 @@ module laya {
     }
 }
 
-import Box = laya.ui.Box;
-import Clip = laya.ui.Clip;
-import Label = laya.ui.Label;
+import Box = Laya.Box;
+import Clip = Laya.Clip;
+import Label = Laya.Label;
 // 此类对应的json对象：
 // {"child": [{"type": "Clip", "props": {"x": "13", "y": "0", "left": "12", "height": "24", "name": "selectBox", "skin": "ui/clip_selectBox.png", "right": "0", "clipY": "2"}}, {"type": "Clip", "props": {"y": "4", "x": "14", "name": "folder", "clipX": "1", "skin": "ui/clip_tree_folder.png", "clipY": "3"}}, {"type": "Label", "props": {"y": "1", "text": "treeItem", "width": "150", "left": "33", "height": "22", "name": "label", "color": "#ffff00", "right": "0", "x": "33"}}, {"type": "Clip", "props": {"x": "0", "name": "arrow", "y": "5", "skin": "ui/clip_tree_arrow.png", "clipY": "2"}}], "type": "Box", "props": {"name": "render", "right": "0", "left": "0"}};
 class Item extends Box {

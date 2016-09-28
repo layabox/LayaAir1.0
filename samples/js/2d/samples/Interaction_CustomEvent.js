@@ -1,12 +1,12 @@
 (function()
 {
-	var Sprite  = laya.display.Sprite;
-	var Stage   = laya.display.Stage;
-	var Event   = laya.events.Event;
-	var Browser = laya.utils.Browser;
-	var Ease    = laya.utils.Ease;
-	var Tween   = laya.utils.Tween;
-	var WebGL   = laya.webgl.WebGL;
+	var Sprite  = Laya.Sprite;
+	var Stage   = Laya.Stage;
+	var Event   = Laya.Event;
+	var Browser = Laya.Browser;
+	var Ease    = Laya.Ease;
+	var Tween   = Laya.Tween;
+	var WebGL   = Laya.WebGL;
 
 	var ROTATE = "rotate";
 	var sp;

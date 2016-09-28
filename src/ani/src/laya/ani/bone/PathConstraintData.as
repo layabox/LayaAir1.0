@@ -1,11 +1,9 @@
-package laya.ani.bone 
-{
+package laya.ani.bone {
+	
 	/**
-	 * ...
-	 * @author 
+	 * @private
 	 */
-	public class PathConstraintData 
-	{
+	public class PathConstraintData {
 		
 		public var name:String;
 		public var bones:Vector.<int> = new Vector.<int>();
@@ -19,11 +17,8 @@ package laya.ani.bone
 		public var rotateMix:Number;
 		public var translateMix:Number;
 		
-		public function PathConstraintData() 
-		{
-			
-		}
+		public function PathConstraintData() {
 		
+		}	
 	}
-
 }

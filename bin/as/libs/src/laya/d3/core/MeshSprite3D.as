@@ -52,9 +52,10 @@ package laya.d3.core {
 			_meshRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
 			_meshFilter.sharedMesh = mesh;
+			
 			if (mesh is Mesh)//TODO:待考虑。
 				if (mesh.loaded)
-					_meshRender.shadredMaterials = (mesh as Mesh).materials;
+					_meshRender.sharedMaterials = (mesh as Mesh).materials;
 				else
 					mesh.once(Event.LOADED, this, _applyMeshMaterials);
 		
@@ -62,12 +63,12 @@ package laya.d3.core {
 		
 		/** @private */
 		private function _applyMeshMaterials(mesh:Mesh):void {
-			var shaderMaterials:Vector.<Material> = _meshRender.shadredMaterials;
+			var shaderMaterials:Vector.<Material> = _meshRender.sharedMaterials;
 			var meshMaterials:Vector.<Material> = mesh.materials;
 			for (var i:int = 0, n:int = meshMaterials.length; i < n; i++)
 				(shaderMaterials[i]) || (shaderMaterials[i] = meshMaterials[i]);
 			
-			_meshRender.shadredMaterials = shaderMaterials;
+			_meshRender.sharedMaterials = shaderMaterials;
 		}
 		
 		/** @private */
@@ -77,32 +78,28 @@ package laya.d3.core {
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
 			
-			var material:Material = _meshRender.shadredMaterials[index];
+			var material:Material = _meshRender.sharedMaterials[index];
 			(material) || (material = Material.defaultMaterial);//确保有材质,由默认材质代替。
 			
 			var element:IRenderable = _meshFilter.sharedMesh.getRenderElement(index);
-			renderElement.mainSortID = _getSortID(element, material);//根据MeshID排序，处理同材质合并处理。
-			renderElement.triangleCount = element.triangleCount;
-			renderElement.sprite3D = this;
+			renderElement._mainSortID = _getSortID(element, material);//根据MeshID排序，处理同材质合并处理。
+			renderElement._sprite3D = this;
 			
-			renderElement.element = element;
-			renderElement.material = material;
+			renderElement.renderObj = element;
+			renderElement._material = material;
 			return renderElement;
 		}
 		
 		/** @private */
-		private function _changeRenderObjectByMaterial(material:Material):RenderElement {			
-			var index:int = _meshRender.shadredMaterials.indexOf(material);
-			
+		private function _changeRenderObjectByMaterial(index:int, material:Material):RenderElement {
 			var renderElement:RenderElement = _meshRender.renderCullingObject._renderElements[index];
-
-			var element:IRenderable = _meshFilter.sharedMesh.getRenderElement(index);
-			renderElement.mainSortID = _getSortID(element, material);//根据MeshID排序，处理同材质合并处理。
-			renderElement.triangleCount = element.triangleCount;
-			renderElement.sprite3D = this;
 			
-			renderElement.element = element;
-			renderElement.material = material;
+			var element:IRenderable = _meshFilter.sharedMesh.getRenderElement(index);
+			renderElement._mainSortID = _getSortID(element, material);//根据MeshID排序，处理同材质合并处理。
+			renderElement._sprite3D = this;
+			
+			renderElement.renderObj = element;
+			renderElement._material = material;
 			return renderElement;
 		}
 		
@@ -129,10 +126,9 @@ package laya.d3.core {
 		}
 		
 		/** @private */
-		private function _onMaterialChanged(meshRender:MeshRender, oldMaterials:Array, materials:Array):void {
+		private function _onMaterialChanged(meshRender:MeshRender,index:int,material:Material):void {//TODO:
 			var renderElementCount:int = _meshRender.renderCullingObject._renderElements.length;
-			for (var i:int = 0, n:int = materials.length; i < n; i++)
-				(i < renderElementCount) && _changeRenderObjectByMaterial(materials[i]);
+			(index<renderElementCount)&&_changeRenderObjectByMaterial(index, material);
 		}
 		
 		/** @private */
@@ -150,8 +146,10 @@ package laya.d3.core {
 		 */
 		public override function _update(state:RenderState):void {
 			state.owner = this;
-			_updateComponents(state);
-			_lateUpdateComponents(state);
+			if (_enable) {
+				_updateComponents(state);
+				_lateUpdateComponents(state);
+			}
 			
 			Stat.spriteCount++;
 			_childs.length && _updateChilds(state);

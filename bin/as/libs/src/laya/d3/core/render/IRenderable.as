@@ -1,7 +1,6 @@
 package laya.d3.core.render {
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.math.Matrix4x4;
 	
 	/**
 	 * <code>IRender</code> 接口用于实现3D对象的渲染相关功能。

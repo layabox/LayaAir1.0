@@ -1,20 +1,16 @@
 package laya.webgl.submit {
 	import laya.resource.Texture;
-	import laya.webgl.submit.ISubmit;
 	import laya.utils.Stat;
-	import laya.webgl.utils.IndexBuffer2D;
-	import laya.webgl.utils.VertexBuffer2D;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.BlendMode;
 	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.shader.d2.value.Value2D;
+	import laya.webgl.submit.ISubmit;
 	import laya.webgl.utils.CONST3D2D;
+	import laya.webgl.utils.IndexBuffer2D;
+	import laya.webgl.utils.VertexBuffer2D;
 	
-	/**
-	 * ...
-	 * @author River
-	 */
 	public class Submit implements ISubmit {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		public static const TYPE_2D:int = 1;
@@ -72,7 +68,7 @@ package laya.webgl.submit {
 		public function renderSubmit():int {
 			if (_numEle === 0) return 1;//怎么会有_numEle是0的情况?
 			var _tex:Texture = shaderValue.textureHost;
-			if (_tex) {	
+			if (_tex) {
 				var source:* = _tex.source;
 				if (!_tex.bitmap || !source)
 					return 1;

@@ -122,7 +122,8 @@
 		 */
 		public function setTexSamplerState( idx : int ) : void {
 			if ( _uid == _lastSamplerID ) return;
-			_context3D.setSamplerStateAt( idx, _wrap, _filter, _mipfilter );
+			//_context3D.setSamplerStateAt( idx, _wrap, _filter, _mipfilter );
+			_context3D.setSamplerStateAt( idx, _wrap, _filter, Context3DMipFilter.MIPNONE );
 			_lastSamplerID = _uid;
 		}
 		

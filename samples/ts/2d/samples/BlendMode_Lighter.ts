@@ -1,10 +1,10 @@
 module laya {
-    import Animation = laya.display.Animation;
-    import Stage = laya.display.Stage;
-    import Browser = laya.utils.Browser;
-    import Handler = laya.utils.Handler;
-    import Tween = laya.utils.Tween;
-    import WebGL = laya.webgl.WebGL;
+    import Animation = Laya.Animation;
+    import Stage = Laya.Stage;
+    import Browser = Laya.Browser;
+    import Handler = Laya.Handler;
+    import Tween = Laya.Tween;
+    import WebGL = Laya.WebGL;
 
     export class BlendMode_Lighter {
         // 一只凤凰的分辨率是550 * 400

@@ -1,17 +1,11 @@
 package laya.webgl.resource {
 	import laya.maths.Arith;
-	import laya.renders.Render;
 	import laya.resource.Bitmap;
 	import laya.resource.Context;
-	import laya.utils.Browser;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.atlas.AtlasResourceManager;
 	
-	/**
-	 * ...
-	 * @author
-	 */
 	public class WebGLSubImage extends Bitmap implements IMergeAtlasBitmap {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		/**HTML Context*/
@@ -89,10 +83,10 @@ package laya.webgl.resource {
 		}
 		
 		/*override public function copyTo(dec:Bitmap):void {
-			var d:WebGLSubImage = dec as WebGLSubImage;
-			super.copyTo(dec);
-			d._ctx = _ctx;
-		}*/
+		   var d:WebGLSubImage = dec as WebGLSubImage;
+		   super.copyTo(dec);
+		   d._ctx = _ctx;
+		   }*/
 		
 		private function size(w:Number, h:Number):void {
 			_w = w;
@@ -107,7 +101,7 @@ package laya.webgl.resource {
 			_ctx.drawImage(atlasImage, offsetX, offsetY, _w, _h, 0, 0, _w, _h);
 			//imageData = _ctx.getImageData(0, 0, _w, _h);
 			(!(AtlasResourceManager.enabled && _allowMerageInAtlas)) && (createWebGlTexture());
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		private function createWebGlTexture():void {
@@ -117,9 +111,9 @@ package laya.webgl.resource {
 				throw "create GLTextur err:no data:" + canvas;
 			}
 			var glTex:* = _source = gl.createTexture();
-			var  preTarget:*= WebGLContext.curBindTexTarget;
-			var  preTexture:*=WebGLContext.curBindTexValue;
-			WebGLContext.bindTexture(gl,WebGLContext.TEXTURE_2D, glTex);
+			var preTarget:* = WebGLContext.curBindTexTarget;
+			var preTexture:* = WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTex);
 			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, canvas);
 			
 			var minFifter:int = this.minFifter;
@@ -148,7 +142,7 @@ package laya.webgl.resource {
 				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_S, WebGLContext.CLAMP_TO_EDGE);
 				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
 			}
-			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget, preTexture));
+			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			
 			canvas = null;
 			memorySize = _w * _h * 4;

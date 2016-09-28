@@ -1,11 +1,11 @@
 (function()
 {
-	var Stage       = laya.display.Stage;
-	var Text        = laya.display.Text;
-	var Geolocation = laya.device.geolocation.Geolocation;
-	var Position    = laya.device.geolocation.Position;
-	var Browser     = laya.utils.Browser;
-	var Handler     = laya.utils.Handler;
+	var Stage       = Laya.Stage;
+	var Text        = Laya.Text;
+	var Geolocation = Laya.Geolocation;
+	var Position    = Laya.Position;
+	var Browser     = Laya.Browser;
+	var Handler     = Laya.Handler;
 
 	// 百度地图
 	var map;

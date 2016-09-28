@@ -20,24 +20,12 @@ scene.currentCamera.addComponent(CameraMoveScript);
     var root = scene.addChild(new Sprite3D());
     root.transform.localScale = new Vector3(10, 10, 10);
 
-    var skySprite3D = scene.addChild(new Sprite3D());
-    var skySampleScript = skySprite3D.addComponent(SkySampleScript);
-    skySampleScript.skySprite = skySprite3D;
-    skySampleScript.cameraSprite = camera;
-
-    //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-    var skySprite3d0 = skySprite3D.addChild(new Sprite3D());
-    skySprite3d0.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT006M.v3f.lh");
-    skySprite3d0.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
-        setMeshParams(sprite, Laya.Material.RENDERMODE_SKY, new Vector4(3.5, 3.5, 3.5, 1.0), new Vector3(0.6, 0.6, 0.6), new Vector2(1.0, 1.0), null);
-    });
-
-    //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-    var skySprite3d1 = skySprite3D.addChild(new Sprite3D());
-    skySprite3d1.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT007M.v3f.lh");
-    skySprite3d1.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
-        setMeshParams(sprite, Laya.Material.RENDERMODE_SKY, new Vector4(1.0, 1.0, 1.0, 1.0), new Vector3(0.6, 0.6, 0.6), new Vector2(1.0, 1.0), null);
-    });
+    var skyBox = new Laya.SkyBox();
+    scene.currentCamera.sky = skyBox;
+    Laya.loader.load("../../res/threeDimen/skyBox/px.jpg,../../res/threeDimen/skyBox/nx.jpg,../../res/threeDimen/skyBox/py.jpg,../../res/threeDimen/skyBox/ny.jpg,../../res/threeDimen/skyBox/pz.jpg,../../res/threeDimen/skyBox/nz.jpg",
+        Laya.Handler.create(null,function(texture){
+            skyBox.textureCube = texture;
+        }), null, "TextureCube");
 
     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
     var singleFaceTransparent0 = root.addChild(new Sprite3D());
@@ -111,8 +99,8 @@ function setMeshParams(spirit3D, renderMode, albedo, ambientColor, uvScale, shad
         if (mesh) {
             //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
             mesh.once(Laya.Event.LOADED, this, function (mesh) {
-                for (var i = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
-                    var material = meshSprite.meshRender.shadredMaterials[i];
+                for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+                    var material = meshSprite.meshRender.sharedMaterials[i];
                     material.once(Laya.Event.LOADED, null, function (mat) {
                         var transformUV = new Laya.TransformUV();
                         transformUV.tiling = uvScale;

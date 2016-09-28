@@ -1,9 +1,9 @@
 module laya {
-    import Sprite = laya.display.Sprite;
-    import Stage = laya.display.Stage;
-    import Browser = laya.utils.Browser;
-    import Tween = laya.utils.Tween;
-    import WebGL = laya.webgl.WebGL;
+    import Sprite = Laya.Sprite;
+    import Stage = Laya.Stage;
+    import Browser = Laya.Browser;
+    import Tween = Laya.Tween;
+    import WebGL = Laya.WebGL;
 
     export class Tween_SimpleSample {
         constructor() {

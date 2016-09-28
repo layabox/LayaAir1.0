@@ -2,7 +2,6 @@ package laya.d3.core {
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.math.BoundBox;
-	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;

@@ -1,16 +1,9 @@
-package laya.ani 
-{
+package laya.ani {
 	import laya.display.Graphics;
 	import laya.renders.Render;
-	/**
-	 * ...
-	 * @author 
-	 */
-	public class GraphicsAni extends Graphics
-	{
+	public class GraphicsAni extends Graphics {
 		
-		public function GraphicsAni() 
-		{
+		public function GraphicsAni() {
 			super();
 		}
 		
@@ -19,12 +12,11 @@ package laya.ani
 		 * 画自定义蒙皮动画
 		 * @param	skin
 		 */
-		public function drawSkin(skin:*):void
-		{
+		public function drawSkin(skin:*):void {
 			var arr:Array = [skin];
 			_saveToCmd(Render._context._drawSkin, arr);
 		}
-		
+	
 	}
 
 }

@@ -144,8 +144,8 @@ package laya.webgl {
 			
 			if (Render.isWebGL) return true;
 			
-			HTMLImage.create = function(src:String):HTMLImage {
-				return new WebGLImage(src);
+			HTMLImage.create = function(src:String,def:*=null):HTMLImage {
+				return new WebGLImage(src,def);
 			}
 			
 			/*

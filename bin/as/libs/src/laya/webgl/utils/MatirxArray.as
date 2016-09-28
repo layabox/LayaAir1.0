@@ -1,17 +1,6 @@
-package laya.webgl.utils
-{
+package laya.webgl.utils {
 	
-	/**
-	 * ...
-	 * @author ...
-	 */
-	public class MatirxArray
-	{
-		
-		public function MatirxArray()
-		{
-		
-		}
+	public class MatirxArray {
 		
 		/**
 		 * 4*4矩阵数组相乘。
@@ -20,23 +9,19 @@ package laya.webgl.utils
 		 * @param	b 4*4矩阵数组。
 		 * @param	o 4*4矩阵数组。
 		 */
-		public static function ArrayMul(a:Array, b:Array, o:Array):void
-		{
-			if (!a)
-			{
+		public static function ArrayMul(a:Array, b:Array, o:Array):void {
+			if (!a) {
 				copyArray(b, o);
 				return;
 			}
 			
-			if (!b)
-			{
+			if (!b) {
 				copyArray(a, o);
 				return;
 			}
 			
 			var ai0:Number, ai1:Number, ai2:Number, ai3:Number;
-			for (var i:int = 0; i < 4; i++)
-			{
+			for (var i:int = 0; i < 4; i++) {
 				ai0 = a[i];
 				ai1 = a[i + 4];
 				ai2 = a[i + 8];
@@ -48,12 +33,10 @@ package laya.webgl.utils
 			}
 		}
 		
-		public static function copyArray(f:Array, t:Array):void
-		{
+		public static function copyArray(f:Array, t:Array):void {
 			if (!f) return;
 			if (!t) return;
-			for (var i:int = 0; i < f.length; i++)
-			{
+			for (var i:int = 0; i < f.length; i++) {
 				t[i] = f[i];
 			}
 		}

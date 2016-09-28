@@ -112,7 +112,7 @@ package laya.particle
 		{
 			if (texture&&texture.loaded)
 			{
-				update(Timer.delta);
+				update(Laya.timer.delta);
 				sv.u_CurrentTime=_currentTime;
 				if (_firstNewElement != _firstFreeElement)
 				{

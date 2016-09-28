@@ -1,9 +1,9 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import Text = laya.display.Text;
-    import Event = laya.events.Event;
-    import Browser = laya.utils.Browser;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import Text = Laya.Text;
+    import Event = Laya.Event;
+    import Browser = Laya.Browser;
+    import WebGL = Laya.WebGL;
 
     export class Text_Scroll {
         private txt: Text;

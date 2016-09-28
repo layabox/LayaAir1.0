@@ -7,8 +7,8 @@ package laya.d3.graphics {
 	 * @author ...
 	 */
 	public class VertexDeclaration {
-		public static const _maxVertexDeclarationBit:int = 1000;
-		public static const maxVertexDeclaration:int = 2147483647 - Math.floor(2147483647 / _maxVertexDeclarationBit) * _maxVertexDeclarationBit;//需在顶点定义类中加异常判断警告
+		public static const _maxVertexDeclarationBit:int = 1000;//TODO：可移除
+		public static const maxVertexDeclaration:int = 2147483647 - Math.floor(2147483647 / _maxVertexDeclarationBit) * _maxVertexDeclarationBit;//需在顶点定义类中加异常判断警告TODO：可移除
 		/**唯一标识ID计数器。*/
 		private static var _uniqueIDCounter:int = 1;
 		

@@ -1,10 +1,10 @@
 module laya {
-	import Sprite = laya.display.Sprite;
-	import Stage = laya.display.Stage;
-	import Event = laya.events.Event;
-	import Keyboard = laya.events.Keyboard;
-	import TimeLine = laya.utils.TimeLine;
-	import WebGL = laya.webgl.WebGL;
+	import Sprite = Laya.Sprite;
+	import Stage = Laya.Stage;
+	import Event = Laya.Event;
+	import Keyboard = Laya.Keyboard;
+	import TimeLine = Laya.TimeLine;
+	import WebGL = Laya.WebGL;
 
 	export class Tween_TimeLine {
 		private target:Sprite;

@@ -1,11 +1,11 @@
 (function()
 {
-	var Sprite  = laya.display.Sprite;
-	var Stage   = laya.display.Stage;
-	var Text    = laya.display.Text;
-	var Shake   = laya.device.Shake;
-	var Browser = laya.utils.Browser;
-	var Handler = laya.utils.Handler;
+	var Sprite  = Laya.Sprite;
+	var Stage   = Laya.Stage;
+	var Text    = Laya.Text;
+	var Shake   = Laya.Shake;
+	var Browser = Laya.Browser;
+	var Handler = Laya.Handler;
 
 	var picW = 824;
 	var picH = 484;

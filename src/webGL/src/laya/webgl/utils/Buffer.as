@@ -4,10 +4,6 @@ package laya.webgl.utils {
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
 	
-	/**
-	 * ...
-	 * @author ...
-	 */
 	public class Buffer extends Resource {
 		protected static var _gl:WebGLContext;
 		protected static var _bindActive:Object = {};
@@ -44,7 +40,7 @@ package laya.webgl.utils {
 		override protected function recreateResource():void {
 			startCreate();
 			_glBuffer || (_glBuffer = _gl.createBuffer());
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		override protected function detoryResource():void {

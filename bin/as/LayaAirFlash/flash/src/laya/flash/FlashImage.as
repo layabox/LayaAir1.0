@@ -5,6 +5,7 @@ package laya.flash {
 	import flash.display.Loader;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
+	import flash.events.IOErrorEvent;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flash.net.URLRequest;
@@ -71,6 +72,10 @@ package laya.flash {
 				_w = image.width;
 				_h = image.height;
 				onload && onload();
+			});
+			tl.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function error(_ev:IOErrorEvent):void{
+				trace("<资源加载失败>", _ev);
+				onerror && onerror();
 			});
 			tl.load(new URLRequest(value));
 		}

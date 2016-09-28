@@ -1,9 +1,9 @@
 module laya {
-	import Sprite = laya.display.Sprite;
-	import Stage = laya.display.Stage;
-	import Point = laya.maths.Point;
-	import Browser = laya.utils.Browser;
-	import WebGL = laya.webgl.WebGL;
+	import Sprite = Laya.Sprite;
+	import Stage = Laya.Stage;
+	import Point = Laya.Point;
+	import Browser = Laya.Browser;
+	import WebGL = Laya.WebGL;
 
 	export class PIXI_Example_23 {
 		private viewWidth: number = Browser.width;

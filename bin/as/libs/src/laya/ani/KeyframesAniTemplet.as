@@ -50,7 +50,7 @@ package laya.ani {
 			return 1;
 		}
 		/**@private */
-		public static var LAYA_ANIMATION_VISION:String = "LAYAANIMATION:1.0.3";
+		public static var LAYA_ANIMATION_VISION:String = "LAYAANIMATION:1.0.4";
 		protected var _anis:Vector.<AnimationContent> = new Vector.<AnimationContent>;
 		protected var _aniMap:* = {};
 		protected var _publicExtData:ArrayBuffer;//公共扩展数据
@@ -62,7 +62,7 @@ package laya.ani {
 		protected var _loaded:Boolean = false;
 		protected var _aniVersion:String;
 		
-		public var _animationDatasCache:Array = [];
+		public var _animationDatasCache:*;
 		
 		public function get loaded():Boolean {
 			return _loaded;
@@ -71,7 +71,7 @@ package laya.ani {
 		public function KeyframesAniTemplet() {
 		}
 		
-		public function parse(data:ArrayBuffer, playbackRate:int):void {
+		public function parse(data:ArrayBuffer):void {
 			var i:int, j:int, k:int, n:int, l:int;
 			var read:Byte = new Byte(data);
 			
@@ -172,7 +172,6 @@ package laya.ani {
 					node.playTime = ani.playTime;//节点总时间可能比总时长大，次处修正
 					_calculateKeyFrame(node, keyframeCount, keyframeDataCount);
 					
-					_calculateKeyFrameIndex(node, playbackRate);//计算全帧索引
 				}
 			}
 			_loaded = true;
@@ -190,30 +189,6 @@ package laya.ani {
 				}
 			}
 			keyFrames.length--;
-		}
-		
-		private function _calculateKeyFrameIndex(node:AnimationNodeContent, playbackRate:int):void {
-			var frameInterval:Number = 1000 / playbackRate;
-			node.frameCount = Math.floor(node.playTime / frameInterval);
-			node.fullFrame = new Uint16Array(node.frameCount + 1);//本骨骼对应的全帧关键帧编号
-			
-			var lastFrameIndex:int = -1;
-			
-			for (var i:int = 0, n:int = node.keyFrame.length; i < n; i++) {
-				var keyFrame:KeyFramesContent = node.keyFrame[i];
-				var tm:Number = keyFrame.startTime;
-				var endTm:Number = tm + keyFrame.duration + frameInterval;
-				do {
-					var frameIndex:int = Math.floor(tm / frameInterval + 0.5);
-					
-					for (var k:int = lastFrameIndex + 1; k < frameIndex; k++)
-						node.fullFrame[k] = i;
-					lastFrameIndex = frameIndex;
-					
-					node.fullFrame[frameIndex] = i;
-					tm += frameInterval;
-				} while (tm <= endTm);
-			}
 		}
 		
 		public function getAnimationCount():int {
@@ -248,18 +223,27 @@ package laya.ani {
 			return _publicExtData;
 		}
 		
-		public function getAnimationDataWithCache(cacheDatas:Array, aniIndex:int, frameIndex:int):Float32Array {
-			var cache:* = cacheDatas[aniIndex];
-			return cache ? cache[frameIndex] : null;
+		public function getAnimationDataWithCache(key:*, cacheDatas:*, aniIndex:int, frameIndex:int):Float32Array {
+			var aniDatas:Object = cacheDatas[aniIndex];
+			if (!aniDatas) {
+				return null;
+			} else {
+				var keyDatas:Array = aniDatas[key];
+				if (!keyDatas)
+					return null;
+				else {
+					return keyDatas[frameIndex];
+				}
+			}
 		}
 		
-		public function setAnimationDataWithCache(cacheDatas:Array, aniIndex:int, frameIndex:Number, data:*):void {
-			var cache:* = cacheDatas[aniIndex];
-			cache || (cache = cacheDatas[aniIndex] = []);
-			cache[frameIndex] = data;
+		public function setAnimationDataWithCache(key:*, cacheDatas:Array, aniIndex:int, frameIndex:Number, data:*):void {
+			var aniDatas:Object = (cacheDatas[aniIndex]) || (cacheDatas[aniIndex] = {});
+			var aniDatasCache:Array = (aniDatas[key]) || (aniDatas[key] = []);
+			aniDatasCache[frameIndex] = data;
 		}
 		
-		public function getOriginalData(aniIndex:int, originalData:Float32Array, frameIndex:int, playCurTime:Number):void {
+		public function getOriginalData(aniIndex:int, originalData:Float32Array, nodesFrameIndices:Array, frameIndex:int, playCurTime:Number):void {
 			var oneAni:AnimationContent = _anis[aniIndex];
 			
 			var nodes:Vector.<AnimationNodeContent> = oneAni.nodes;
@@ -269,7 +253,7 @@ package laya.ani {
 				var node:AnimationNodeContent = nodes[i];
 				
 				var key:KeyFramesContent;
-				key = node.keyFrame[node.fullFrame[frameIndex]];
+				key = node.keyFrame[nodesFrameIndices[i][frameIndex]];
 				
 				node.dataOffset = outOfs;
 				
@@ -371,9 +355,7 @@ class AnimationNodeContent {
 	public var interpolationMethod:Array;
 	public var childs:Array;
 	public var keyFrame:Vector.<KeyFramesContent>;// = new Vector.<KeyFramesContent>;
-	public var fullFrame:Uint16Array;
 	public var playTime:Number;
-	public var frameCount:int;
 	public var extenData:ArrayBuffer;
 	public var dataOffset:int;
 }

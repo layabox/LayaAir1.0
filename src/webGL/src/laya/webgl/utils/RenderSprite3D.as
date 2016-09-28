@@ -1,10 +1,9 @@
-package laya.webgl.utils 
-{
+package laya.webgl.utils {
+	import laya.display.Sprite;
 	import laya.display.Sprite;
 	import laya.display.css.Style;
 	import laya.maths.Matrix;
 	import laya.maths.Rectangle;
-	import laya.renders.Render;
 	import laya.renders.RenderContext;
 	import laya.renders.RenderSprite;
 	import laya.resource.Texture;
@@ -12,25 +11,17 @@ package laya.webgl.utils
 	import laya.webgl.resource.RenderTarget2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.shader.d2.value.Value2D;
-	import laya.webgl.submit.Submit;
 	import laya.webgl.submit.SubmitCMD;
 	import laya.webgl.submit.SubmitCMDScope;
 	import laya.webgl.submit.SubmitStencil;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
-	public class RenderSprite3D extends RenderSprite 
-	{
+	public class RenderSprite3D extends RenderSprite {
 		
-		public function RenderSprite3D(type:int, next:RenderSprite) 
-		{
+		public function RenderSprite3D(type:int, next:RenderSprite) {
 			super(type, next);
 		}
 		
-		protected override function onCreate(type:int):void
-		{
+		protected override function onCreate(type:int):void {
 			switch (type) {
 			case BLEND: 
 				_fun = this._blend;
@@ -38,27 +29,27 @@ package laya.webgl.utils
 			case TRANSFORM: 
 				_fun = this._transform;
 				return;
-//			case FILTERS: 
-//				_fun = _filter;
-//				return;
-			}			
+					//			case FILTERS: 
+					//				_fun = _filter;
+					//				return;
+			}
 		}
 		
 		public static function tmpTarget(scope:SubmitCMDScope, context:RenderContext):void {
 			var b:Rectangle = scope.getValue("bounds");
 			var tmpTarget:RenderTarget2D = RenderTarget2D.create(b.width, b.height);
 			tmpTarget.start();
-			tmpTarget.clear(0,0,0,0);
+			tmpTarget.clear(0, 0, 0, 0);
 			scope.addValue("tmpTarget", tmpTarget);
 		}
 		
 		public static function endTmpTarget(scope:SubmitCMDScope):void {
-			var tmpTarget:*= scope.getValue("tmpTarget");
+			var tmpTarget:* = scope.getValue("tmpTarget");
 			tmpTarget.end();
 		}
 		
-		public static function recycleTarget(scope:SubmitCMDScope):void{
-			var tmpTarget:*= scope.getValue("tmpTarget");
+		public static function recycleTarget(scope:SubmitCMDScope):void {
+			var tmpTarget:* = scope.getValue("tmpTarget");
 			tmpTarget.recycle();
 			scope.recycle();
 		}
@@ -74,8 +65,7 @@ package laya.webgl.utils
 				var preBlendMode:String = (context.ctx as WebGLContext2D).globalCompositeOperation;
 				var tRect:Rectangle = new Rectangle();
 				tRect.copyFrom(mask.getBounds());
-				if (tRect.width > 0 && tRect.height > 0)
-				{
+				if (tRect.width > 0 && tRect.height > 0) {
 					var scope:SubmitCMDScope = SubmitCMDScope.create();
 					scope.addValue("bounds", tRect);
 					submitCMD = SubmitCMD.create([scope, context], RenderSprite3D.tmpTarget);
@@ -102,13 +92,13 @@ package laya.webgl.utils
 					submitStencil.blendMode = preBlendMode;
 					context.addRenderObject(submitStencil);
 				}
-			}else {
+			} else {
 				context.ctx.globalCompositeOperation = style.blendMode;
 				next = this._next;
 				next._fun.call(next, sprite, context, x, y);
 			}
 			context.ctx.restore();
-			
+		
 		}
 		
 		override public function _transform(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {

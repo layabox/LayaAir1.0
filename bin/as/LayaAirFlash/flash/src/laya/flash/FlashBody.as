@@ -34,6 +34,7 @@
 		
 		public override function appendChild(e:*):void
 		{
+			e.parent = this;
 			(_displayObject as Stage).addChild( (e as FlashElement).getDisplayObject());
 		}
 		

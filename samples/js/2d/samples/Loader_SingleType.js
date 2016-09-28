@@ -1,8 +1,8 @@
 (function()
 {
-	var Loader  = laya.net.Loader;
-	var Texture = laya.resource.Texture;
-	var Handler = laya.utils.Handler;
+	var Loader  = Laya.Loader;
+	var Texture = Laya.Texture;
+	var Handler = Laya.Handler;
 
 	(function()
 	{

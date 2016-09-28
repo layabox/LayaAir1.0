@@ -41,7 +41,7 @@ package {
 			trace("error");
 		}
 		
-		private function parseComplete():void {
+		private function parseComplete(fac:Templet):void {
 			//创建模式为1，可以启用换装
 			mArmature = mFactory.buildArmature(1);
 			mArmature.x = mStartX;

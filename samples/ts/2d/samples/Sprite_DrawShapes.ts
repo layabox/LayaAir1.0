@@ -1,7 +1,7 @@
 module laya {
-    import Sprite = laya.display.Sprite;
-    import Stage = laya.display.Stage;
-    import WebGL = laya.webgl.WebGL;
+    import Sprite = Laya.Sprite;
+    import Stage = Laya.Stage;
+    import WebGL = Laya.WebGL;
 
     export class Sprite_DrawShapes {
         private sp: Sprite;

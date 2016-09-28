@@ -1,13 +1,13 @@
 module laya {
-	import Sprite       = laya.display.Sprite;
-	import Stage        = laya.display.Stage;
-	import Text         = laya.display.Text;
-	import Gyroscope    = laya.device.motion.Gyroscope;
-	import RotationInfo = laya.device.motion.RotationInfo;
-	import Browser      = laya.utils.Browser;
-	import Handler      = laya.utils.Handler;
-	import WebGL        = laya.webgl.WebGL;
-	import Event        = laya.events.Event;
+	import Sprite       = Laya.Sprite;
+	import Stage        = Laya.Stage;
+	import Text         = Laya.Text;
+	import Gyroscope    = Laya.Gyroscope;
+	import RotationInfo = Laya.RotationInfo;
+	import Browser      = Laya.Browser;
+	import Handler      = Laya.Handler;
+	import WebGL        = Laya.WebGL;
+	import Event        = Laya.Event;
 
 	export class InputDevice_Compasss {
 		private compassImgPath:string = "../../res/inputDevice/kd.png";

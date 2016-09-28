@@ -1,8 +1,8 @@
 module laya {
-	import Stage = laya.display.Stage;
-	import TiledMap = laya.map.TiledMap;
-	import Rectangle = laya.maths.Rectangle;
-	import WebGL = laya.webgl.WebGL;
+	import Stage = Laya.Stage;
+	import TiledMap = Laya.TiledMap;
+	import Rectangle = Laya.Rectangle;
+	import WebGL = Laya.WebGL;
 
 	export class TiledMap_AnimationTile {
 		private tiledMap: TiledMap;

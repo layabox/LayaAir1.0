@@ -1,8 +1,8 @@
 module laya {
-	import Stage = laya.display.Stage;
-	import Text = laya.display.Text;
-	import Browser = laya.utils.Browser;
-	import WebGL = laya.webgl.WebGL;
+	import Stage = Laya.Stage;
+	import Text = Laya.Text;
+	import Browser = Laya.Browser;
+	import WebGL = Laya.WebGL;
 
 	export class Text_Overflow {
 		constructor() {

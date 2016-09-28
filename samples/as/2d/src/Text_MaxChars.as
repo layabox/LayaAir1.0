@@ -30,9 +30,6 @@ package
 			inputText.x = Laya.stage.width - inputText.width >> 1;
 			inputText.y = Laya.stage.height - inputText.height >> 1;
 			
-			inputText.inputElementXAdjuster = -1;
-			inputText.inputElementYAdjuster = 1;
-			
 			// 设置字体样式
 			inputText.bold = true;
 			inputText.bgColor = "#666666";

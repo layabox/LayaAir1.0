@@ -25,8 +25,6 @@ package laya.d3.resource.models {
 		/** @private */
 		protected var _ib:IndexBuffer3D;
 		/** @private */
-		protected var _materialIndex:int = -1;
-		/** @private */
 		public var _numberIndices:int = 0;
 		/** @private */
 		protected var _vb:VertexBuffer3D;
@@ -41,25 +39,6 @@ package laya.d3.resource.models {
 		public var _finalBufferUsageDic:*;
 		/** @private */
 		public var _indexOfHost:int = 0;
-		
-		/**获取顶点索引，UV动画使用。*/
-		public var verticesIndices:Uint32Array;
-		
-		/**
-		 * 获取材质
-		 * @return	材质ID。
-		 */
-		public function get material():int {
-			return _materialIndex;
-		}
-		
-		/**
-		 * 设置材质
-		 * @param	value  材质ID。
-		 */
-		public function set material(value:int):void {
-			_materialIndex = value;
-		}
 		
 		/**
 		 * 获取在宿主中的序列。
@@ -119,7 +98,7 @@ package laya.d3.resource.models {
 		 */
 		public function _render(state:RenderState):Boolean {
 			var mesh:Mesh = _mesh, vb:VertexBuffer3D = _vb, ib:IndexBuffer3D = _ib;
-			var material:Material = getMaterial((state.owner as MeshSprite3D).meshRender.shadredMaterials);
+			var material:Material = state.renderElement._material;
 			if (material.normalTexture && !vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TANGENT0]) {
 				//是否放到事件触发。
 				var vertexDatas:Float32Array = vb.getData();
@@ -151,7 +130,7 @@ package laya.d3.resource.models {
 				//state.shaderValue.pushValue(Buffer.MVPMATRIX, state.projectionViewMatrix.elements, state.camera.transform._worldTransformModifyID + worldTransformModifyID + state.camera._projectionMatrixModifyID);
 				//} else {
 				state.shaderValue.pushValue(Buffer2D.MATRIX1, worldMat.elements, /*worldTransformModifyID,从结构上应该在Mesh中更新*/-1);//Stat.loopCount + state.ower._ID有BUG,例：6+6=7+5,用worldTransformModifyID代替
-				Matrix4x4.multiply(state.projectionViewMatrix, worldMat, state.owner.wvpMatrix);
+				Matrix4x4.multiply(state.projectionViewMatrix, worldMat,meshSprite.wvpMatrix);
 				
 				state.shaderValue.pushValue(Buffer2D.MVPMATRIX, meshSprite.wvpMatrix.elements, /*state.camera.transform._worldTransformModifyID + worldTransformModifyID + state.camera._projectionMatrixModifyID,从结构上应该在Mesh中更新*/-1);
 				//}
@@ -175,15 +154,6 @@ package laya.d3.resource.models {
 		public function _setBoneDic(boneDic:Uint8Array):void {
 			_boneIndex = boneDic;
 			_mesh.disableUseFullBone();
-		}
-		
-		/**
-		 * 获取材质。
-		 * @param 材质队列。
-		 * @return  材质。
-		 */
-		public function getMaterial(materials:Vector.<Material>):Material {
-			return _materialIndex >= 0 ? materials[_materialIndex] : null;
 		}
 		
 		/**

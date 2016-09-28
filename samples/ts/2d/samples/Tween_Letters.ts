@@ -1,10 +1,10 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import Text = laya.display.Text;
-    import Browser = laya.utils.Browser;
-    import Ease = laya.utils.Ease;
-    import Tween = laya.utils.Tween;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import Text = Laya.Text;
+    import Browser = Laya.Browser;
+    import Ease = Laya.Ease;
+    import Tween = Laya.Tween;
+    import WebGL = Laya.WebGL;
 
     export class Tween_Letters {
 

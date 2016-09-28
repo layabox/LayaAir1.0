@@ -1,8 +1,8 @@
 package threeDimen.common {
 	import laya.ani.AnimationState;
 	import laya.d3.component.Component3D;
-	import laya.d3.component.animation.CameraAnimations;
 	import laya.d3.component.Script;
+	import laya.d3.component.animation.CameraAnimations;
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.core.scene.Scene;

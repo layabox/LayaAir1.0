@@ -29,6 +29,8 @@ package laya.d3.component.animation {
 		private var _originalFov:Number = 0;
 		/** @private */
 		private var _camera:Camera;
+		/** @private */
+		protected var _cacheAnimationDatas:Array = [];
 		
 		/**
 		 * @private
@@ -86,8 +88,8 @@ package laya.d3.component.animation {
 			else
 				throw new Error("该Sprite3D并非Camera");
 			
-			player.on(Event.STOPPED, this, function():void {
-				if (player.returnToZeroStopped) {
+			_player.on(Event.STOPPED, this, function():void {
+				if (_player.returnToZeroStopped) {
 					if (localMode)
 						_originalAnimationTransform && (owner.transform.localMatrix = _originalAnimationTransform);
 					else
@@ -105,13 +107,13 @@ package laya.d3.component.animation {
 		 */
 		public override function _update(state:RenderState):void 
 		{
-			player.update(state.elapsedTime);//需最先执行（如不则内部可能触发Stop事件等，如事件中加载新动画，可能_templet未加载完成，导致BUG）
+			//player.update(state.elapsedTime);//需最先执行（如不则内部可能触发Stop事件等，如事件中加载新动画，可能_templet未加载完成，导致BUG）
 			
-			if (!_templet || !_templet.loaded || player.state !== AnimationState.playing)
+			if (!_templet || !_templet.loaded || _player.state !== AnimationState.playing)
 				return;
 			
-			var rate:Number = player.playbackRate * state.scene.timer.scale;
-			var frameIndex:int = (player.isCache && rate >= 1.0) ? currentFrameIndex : -1;//慢动作或者不缓存时frameIndex为-1
+			var rate:Number = _player.playbackRate * state.scene.timer.scale;
+			var frameIndex:int = (_player.isCache && rate >= 1.0) ? currentFrameIndex : -1;//慢动作或者不缓存时frameIndex为-1
 			var animationClipIndex:int = currentAnimationClipIndex;
 			
 			if (frameIndex !== -1 && _lastFrameIndex === frameIndex)//与上一次更新同帧则直接返回
@@ -120,8 +122,8 @@ package laya.d3.component.animation {
 				return;
 			}
 			
-			if (player.isCache && rate >= 1.0) {
-				var cache:Float32Array = _templet.getAnimationDataWithCache(_templet._animationDatasCache, animationClipIndex, frameIndex);
+			if (_player.isCache && rate >= 1.0) {
+				var cache:Float32Array = _templet.getAnimationDataWithCache(_player.cacheFrameRate,_cacheAnimationDatas, animationClipIndex, frameIndex);
 				
 				if (cache) {
 					_currentAnimationData = cache;
@@ -135,7 +137,7 @@ package laya.d3.component.animation {
 			
 			var nodes:Vector.<Object> = _templet.getNodes(animationClipIndex);
 			var nodeCount:int = nodes.length;
-			if (player.isCache && rate >= 1.0) {
+			if (_player.isCache && rate >= 1.0) {
 				_currentAnimationData = new Float32Array(nodeCount * 10);//eye、target、up、fov
 			} else//非缓存或慢动作用临时数组做计算,只new一次
 			{
@@ -143,13 +145,13 @@ package laya.d3.component.animation {
 				_currentAnimationData = _tempCurAnimationData;
 			}
 			
-			if (player.isCache && rate >= 1.0)
-				_templet.getOriginalData(animationClipIndex, _currentAnimationData, frameIndex, player.currentPlayTime);
+			if (_player.isCache && rate >= 1.0)
+				_templet.getOriginalData(animationClipIndex, _currentAnimationData, _player._fullFrames[animationClipIndex], frameIndex, _player.currentPlayTime);
 			else//慢动作或者不缓存时
-				_templet.getOriginalDataUnfixedRate(animationClipIndex, _currentAnimationData, player.currentPlayTime);
+				_templet.getOriginalDataUnfixedRate(animationClipIndex, _currentAnimationData, _player.currentPlayTime);
 			
-			if (player.isCache && rate >= 1.0) {
-				_templet.setAnimationDataWithCache(_templet._animationDatasCache, animationClipIndex, frameIndex, _currentAnimationData);//缓存动画数据
+			if (_player.isCache && rate >= 1.0) {
+				_templet.setAnimationDataWithCache(_player.cacheFrameRate,_cacheAnimationDatas, animationClipIndex, frameIndex, _currentAnimationData);//缓存动画数据
 			}
 			
 			_lastFrameIndex = frameIndex;

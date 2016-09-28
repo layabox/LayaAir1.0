@@ -1,10 +1,10 @@
 module laya {
-	import Skeleton = laya.ani.bone.Skeleton;
-	import Templet  = laya.ani.bone.Templet;
-	import Event    = laya.events.Event;
-	import Browser  = laya.utils.Browser;
-	import Stat     = laya.utils.Stat;
-	import WebGL    = laya.webgl.WebGL;
+	import Skeleton = Laya.Skeleton;
+	import Templet  = Laya.Templet;
+	import Event    = Laya.Event;
+	import Browser  = Laya.Browser;
+	import Stat     = Laya.Stat;
+	import WebGL    = Laya.WebGL;
 
 	export class ChangeSkin {
 		private mAniPath:string;

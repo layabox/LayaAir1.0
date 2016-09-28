@@ -26,22 +26,26 @@ package laya.ani {
 		/** 已播放时间，包括重播时间*/
 		private var _elapsedPlaybackTime:Number;
 		/** 播放时帧数*/
-		private var _startPlayLoopCount:Number;
+		private var _startUpdateLoopCount:Number;
 		/** 当前动画索引*/
 		private var _currentAnimationClipIndex:int;
 		/** 当前帧数*/
 		private var _currentKeyframeIndex:int;
 		/** 是否暂停*/
 		private var _paused:Boolean;
-		/** 缓存帧率,必须大于0*/
+		/** 默认帧率,必须大于0*/
 		private var _cacheFrameRate:int;
-		/** 缓存帧率间隔时间*/
+		/** 帧率间隔时间*/
 		private var _cacheFrameRateInterval:Number;
-		/** 播放速率*/
-		public var playbackRate:Number = 1.0;
+		/** 缓存播放速率*/
+		private var _cachePlayRate:Number;
+		
+		public var _fullFrames:Array;
+		
 		/**是否缓存*/
 		public var isCache:Boolean = true;
-		
+		/** 播放速率*/
+		public var playbackRate:Number = 1.0;
 		/** 停止时是否归零*/
 		public var returnToZeroStopped:Boolean = true;
 		
@@ -54,14 +58,20 @@ package laya.ani {
 		}
 		
 		/**
-		 * 设置动画数据模板
+		 * 设置动画数据模板,注意：修改此值会有计算开销。
 		 * @param	value 动画数据模板
 		 */
 		public function set templet(value:KeyframesAniTemplet):void {
 			if (!state === AnimationState.stopped)
 				stop(true);
-			_templet = value;
-		
+			
+			if (_templet !== value) {
+				_templet = value;
+				if (value.loaded)
+					_computeFullKeyframeIndices();
+				else
+					value.once(Event.LOADED, this, _onTempletLoadedComputeFullKeyframeIndices, [_cachePlayRate, _cacheFrameRate]);
+			}
 		}
 		
 		/**
@@ -129,21 +139,51 @@ package laya.ani {
 		}
 		
 		/**
-		 *  获取缓存帧率*
-		 * @return	value 缓存帧率
+		 *  获取缓存播放速率。*
+		 * @return	 缓存播放速率。
 		 */
-		public function get cacheFrameRate():Number {
+		public function get cachePlayRate():Number {
+			return _cachePlayRate;
+		}
+		
+		/**
+		 *  设置缓存播放速率,默认值为1.0,注意：修改此值会有计算开销。*
+		 * @return	value 缓存播放速率。
+		 */
+		public function set cachePlayRate(value:Number):void {
+			if (_cachePlayRate !== value) {
+				_cachePlayRate = value;
+				if (_templet)
+					if (_templet.loaded)
+						_computeFullKeyframeIndices();
+					else
+						_templet.once(Event.LOADED, this, _onTempletLoadedComputeFullKeyframeIndices, [value, _cacheFrameRate]);
+			}
+		}
+		
+		/**
+		 *  获取默认帧率*
+		 * @return	value 默认帧率
+		 */
+		public function get cacheFrameRate():int {
 			return _cacheFrameRate;
 		}
 		
-		///**
-		//*  设置缓存帧率*
-		//* @return	value 缓存帧率
-		//*/
-		//public function set cacheFrameRate(value:Number):void {
-		//_cacheFrameRate = value;
-		//_cacheFrameRateInterval = 1000 / _cacheFrameRate;
-		//}
+		/**
+		 *  设置默认帧率,每秒60帧,注意：修改此值会有计算开销。*
+		 * @return	value 缓存帧率
+		 */
+		public function set cacheFrameRate(value:int):void {
+			if (_cacheFrameRate !== value) {
+				_cacheFrameRate = value;
+				_cacheFrameRateInterval = 1000.0 / _cacheFrameRate;
+				if (_templet)
+					if (_templet.loaded)
+						_computeFullKeyframeIndices();
+					else
+						_templet.once(Event.LOADED, this, _onTempletLoadedComputeFullKeyframeIndices, [_cachePlayRate, value]);
+			}
+		}
 		
 		/**
 		 * 设置当前播放位置
@@ -155,10 +195,12 @@ package laya.ani {
 			
 			if (value < _playStart || value > _playEnd)
 				throw new Error("AnimationPlayer:value must large than playStartTime,small than playEndTime.");
-			
+				
+			_startUpdateLoopCount = Stat.loopCount;
+			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
 			_currentTime = value /*% playDuration*/;
-			_currentKeyframeIndex = Math.floor(currentPlayTime / _cacheFrameRateInterval);
-			_currentFrameTime = _currentKeyframeIndex * _cacheFrameRateInterval;
+			_currentKeyframeIndex = Math.floor(currentPlayTime / cacheFrameInterval);
+			_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
 		}
 		
 		/**
@@ -198,16 +240,67 @@ package laya.ani {
 			return AnimationState.playing;
 		}
 		
-		public function AnimationPlayer(cacheFrameRate:int = 60) {
+		public function AnimationPlayer() {
 			_currentAnimationClipIndex = -1;
 			_currentKeyframeIndex = -1;
 			_currentTime = 0.0;
 			_overallDuration = Number.MAX_VALUE;
 			_stopWhenCircleFinish = false;
 			_elapsedPlaybackTime = 0;
-			_startPlayLoopCount = -1;
-			_cacheFrameRate = cacheFrameRate;
-			_cacheFrameRateInterval = 1000 / _cacheFrameRate;
+			_startUpdateLoopCount = -1;
+			_cachePlayRate = 1.0;
+			cacheFrameRate = 60;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _onTempletLoadedComputeFullKeyframeIndices(cachePlayRate:Number, cacheFrameRate:Number, templet:KeyframesAniTemplet):void {
+			if (_templet === templet && _cachePlayRate === cachePlayRate && _cacheFrameRate === cacheFrameRate)
+				_computeFullKeyframeIndices();
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _computeFullKeyframeIndices():void {
+			var anifullFrames:Array = _fullFrames = [];
+			var templet:KeyframesAniTemplet = _templet;
+			
+			var cacheFrameInterval:Number = _cacheFrameRateInterval*_cachePlayRate;
+			
+			for (var i:int = 0, iNum:int = templet.getAnimationCount(); i < iNum; i++) {
+				var aniFullFrame:Array = [];
+				
+				for (var j:int = 0, jNum:int = templet.getAnimation(i).nodes.length; j < jNum; j++) {
+					var node:* = templet.getAnimation(i).nodes[j];
+					var frameCount:int = Math.floor(node.playTime / cacheFrameInterval);
+					var nodeFullFrames:Uint16Array = new Uint16Array(frameCount + 1);//本骨骼对应的全帧关键帧编号
+					
+					var lastFrameIndex:int = -1;
+					
+					for (var n:int = 0, nNum:int = node.keyFrame.length; n < nNum; n++) {
+						var keyFrame:* = node.keyFrame[n];//原始帧率
+						var tm:Number = keyFrame.startTime;
+						var endTm:Number = tm + keyFrame.duration + cacheFrameInterval;
+						do {
+							var frameIndex:int = Math.floor(tm / cacheFrameInterval + 0.5);
+							for (var k:int = lastFrameIndex + 1; k < frameIndex; k++)
+								nodeFullFrames[k] = n;
+							
+							lastFrameIndex = frameIndex;
+							
+							nodeFullFrames[frameIndex] = n;
+							tm += cacheFrameInterval;
+						} while (tm <= endTm);
+					}
+					
+					aniFullFrame.push(nodeFullFrames);
+				}
+
+				anifullFrames.push(aniFullFrame);
+			}
+			event(Event.CACHEFRAMEINDEX_CHANGED, this);
 		}
 		
 		/**
@@ -233,17 +326,16 @@ package laya.ani {
 		 * @param	playStart 播放的起始时间位置。
 		 * @param	playEnd 播放的结束时间位置。（0为动画一次循环的最长结束时间位置）。
 		 */
-		public function play(index:int = 0, playbackRate:Number = 1.0, overallDuration:Number = Number.MAX_VALUE, playStart:Number = 0, playEnd:Number = 0):void {
+		public function play(index:int = 0, playbackRate:Number = 1.0, overallDuration:Number = 3153600000000/*TODO:为什么不是1.79e+308*/, playStart:Number = 0, playEnd:Number = 0):void {
 			if (!_templet)
 				throw new Error("AnimationPlayer:templet must not be null,maybe you need to set url.");
 			
 			if (overallDuration < 0 || playStart < 0 || playEnd < 0)
 				throw new Error("AnimationPlayer:overallDuration,playStart and playEnd must large than zero.");
 			
-			if ((playEnd!==0)&&(playStart > playEnd))
+			if ((playEnd !== 0) && (playStart > playEnd))
 				throw new Error("AnimationPlayer:start must less than end.");
 			
-				
 			_currentTime = 0;
 			_currentFrameTime = 0;
 			_elapsedPlaybackTime = 0;
@@ -254,7 +346,7 @@ package laya.ani {
 			_paused = false;
 			_currentAnimationClipIndex = index;
 			_currentKeyframeIndex = 0;
-			_startPlayLoopCount = Stat.loopCount;
+			_startUpdateLoopCount = Stat.loopCount;
 			this.event(Event.PLAYED);
 			
 			if (_templet.loaded)
@@ -271,7 +363,7 @@ package laya.ani {
 		 * @param	playStartFrame 播放的原始起始帧率位置。
 		 * @param	playEndFrame 播放的原始结束帧率位置。（0为动画一次循环的最长结束时间位置）。
 		 */
-		public function playByFrame(index:int = 0, playbackRate:Number = 1.0, overallDuration:Number = Number.MAX_VALUE, playStartFrame:int = 0, playEndFrame:int = 0, fpsIn3DBuilder:int = 30):void {
+		public function playByFrame(index:int = 0, playbackRate:Number = 1.0, overallDuration:Number = 3153600000000/*TODO:为什么不是1.79e+308*/, playStartFrame:int = 0, playEndFrame:int = 0, fpsIn3DBuilder:int = 30):void {
 			var interval:Number = 1000.0 / fpsIn3DBuilder;
 			play(index, playbackRate, overallDuration, playStartFrame * interval, playEndFrame * interval);
 		}
@@ -294,8 +386,9 @@ package laya.ani {
 			if (_currentAnimationClipIndex === -1 || _paused || !_templet || !_templet.loaded)//动画停止或暂停，不更新
 				return;
 			
+			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
 			var time:Number = 0;
-			(_startPlayLoopCount !== Stat.loopCount) && (time = elapsedTime * playbackRate, _elapsedPlaybackTime += time);//elapsedTime为距离上一帧时间,首帧播放如果_startPlayLoopCount===Stat.loopCount，则不累加时间
+			(_startUpdateLoopCount !== Stat.loopCount) && (time = elapsedTime * playbackRate, _elapsedPlaybackTime += time);//elapsedTime为距离上一帧时间,首帧播放如果_startPlayLoopCount===Stat.loopCount，则不累加时间
 			
 			var currentAniClipPlayDuration:Number = playDuration;
 			if ((_overallDuration !== 0 && _elapsedPlaybackTime >= _overallDuration) || (_overallDuration === 0 && _elapsedPlaybackTime >= currentAniClipPlayDuration)) {
@@ -315,8 +408,8 @@ package laya.ani {
 					time -= currentAniClipPlayDuration;
 				}
 				_currentTime = time;
-				_currentKeyframeIndex = Math.floor((currentPlayTime) / _cacheFrameRateInterval);
-				_currentFrameTime = _currentKeyframeIndex * _cacheFrameRateInterval;
+				_currentKeyframeIndex = Math.floor((currentPlayTime) / cacheFrameInterval);
+				_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
 			} else {
 				if (_stopWhenCircleFinish) {
 					_currentAnimationClipIndex = _currentKeyframeIndex = -1;

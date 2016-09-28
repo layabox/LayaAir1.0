@@ -1,14 +1,8 @@
-package laya.webgl.canvas.save
-{
+package laya.webgl.canvas.save {
 	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.submit.Submit;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
-	public class SaveBase implements ISaveData
-	{
+	public class SaveBase implements ISaveData {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
 		/*[DISBALEOUTCONST-BEGIN]*/
@@ -31,31 +25,27 @@ package laya.webgl.canvas.save
 		public static const TYPE_FILTERS:int = 0x100000;
 		public static const TYPE_FILTERS_TYPE:int = 0x200000;
 		/*[DISBALEOUTCONST-END]*/
-		private static var _cache:* =/*[STATIC SAFE]*/SaveBase._createArray();
+		private static var _cache:* =/*[STATIC SAFE]*/ SaveBase._createArray();
 		private static var _namemap:* =/*[STATIC SAFE]*/ _init();
 		
-		public static function _createArray():Array
-		{
-			var value:*= [];
+		public static function _createArray():Array {
+			var value:* = [];
 			value._length = 0;
 			return value;
 		}
 		
-		public static function _init():*
-		{
-			var namemap:*= _namemap = { };
+		public static function _init():* {
+			var namemap:* = _namemap = {};
 			
 			namemap[TYPE_ALPHA] = "ALPHA";
 			namemap[TYPE_FILESTYLE] = "fillStyle";
 			namemap[TYPE_FONT] = "font";
 			namemap[TYPE_LINEWIDTH] = "lineWidth";
 			namemap[TYPE_STROKESTYLE] = "strokeStyle";
-
+			
 			namemap[TYPE_ENABLEMERGE] = "_mergeID";
 			
-			namemap[TYPE_MARK] = 
-			namemap[TYPE_TRANSFORM] = 
-			namemap[TYPE_TRANSLATE] = [];
+			namemap[TYPE_MARK] = namemap[TYPE_TRANSFORM] = namemap[TYPE_TRANSLATE] = [];
 			
 			namemap[TYPE_TEXTBASELINE] = "textBaseline";
 			namemap[TYPE_TEXTALIGN] = "textAlign";
@@ -71,27 +61,23 @@ package laya.webgl.canvas.save
 		private var _dataObj:*;
 		private var _newSubmit:Boolean;
 		
-		public function SaveBase()
-		{
+		public function SaveBase() {
 		}
 		
-		public function isSaveMark():Boolean{return false;}
+		public function isSaveMark():Boolean { return false; }
 		
-		public function restore(context:WebGLContext2D):void
-		{
+		public function restore(context:WebGLContext2D):void {
 			_dataObj[_valueName] = _value;
 			_cache[_cache._length++] = this;
 			_newSubmit && (context._curSubmit = Submit.RENDERBASE);
 		}
 		
-		public static function save(context:WebGLContext2D, type:int,dataObj:*,newSubmit:Boolean):void
-		{
-			if ((context._saveMark._saveuse & type) !== type)
-			{
+		public static function save(context:WebGLContext2D, type:int, dataObj:*, newSubmit:Boolean):void {
+			if ((context._saveMark._saveuse & type) !== type) {
 				context._saveMark._saveuse |= type;
 				var cache:* = _cache;
-				var o:* = cache._length > 0 ?cache[--cache._length] : (new SaveBase());
-				o._value = dataObj[ o._valueName = _namemap[type] ];
+				var o:* = cache._length > 0 ? cache[--cache._length] : (new SaveBase());
+				o._value = dataObj[o._valueName = _namemap[type]];
 				o._dataObj = dataObj;
 				o._newSubmit = newSubmit;
 				var _save:Array = context._save;

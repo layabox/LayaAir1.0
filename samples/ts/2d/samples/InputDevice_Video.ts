@@ -1,20 +1,20 @@
 module laya {
-	import Stage =  laya.display.Stage;
-	import Sprite =  laya.display.Sprite;
-	import Text =  laya.display.Text;
-	import Event =  laya.events.Event;
-	import Video =  laya.device.media.Video;
-	import Rectangle =  laya.maths.Rectangle;
-	import Loader =  laya.net.Loader;
-	import Render =  laya.renders.Render;
-	import Texture =  laya.resource.Texture;
-	import Button =  laya.ui.Button;
-	import HSlider =  laya.ui.HSlider;
-	import Slider =  laya.ui.Slider;
-	import TextInput =  laya.ui.TextInput;
-	import Browser =  laya.utils.Browser;
-	import Handler =  laya.utils.Handler;
-	import StringKey =  laya.utils.StringKey;
+	import Stage =  Laya.Stage;
+	import Sprite =  Laya.Sprite;
+	import Text =  Laya.Text;
+	import Event =  Laya.Event;
+	import Video =  Laya.Video;
+	import Rectangle =  Laya.Rectangle;
+	import Loader =  Laya.Loader;
+	import Render =  Laya.Render;
+	import Texture =  Laya.Texture;
+	import Button =  Laya.Button;
+	import HSlider =  Laya.HSlider;
+	import Slider =  Laya.Slider;
+	import TextInput =  Laya.TextInput;
+	import Browser =  Laya.Browser;
+	import Handler =  Laya.Handler;
+	import StringKey =  Laya.StringKey;
 
 	export class InputDevice_Video {
 		private BackgroundSkin:string = "../../res/inputDevice/videoPlayer/background.png";

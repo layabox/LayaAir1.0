@@ -1,9 +1,9 @@
 module laya {
-	import Stage = laya.display.Stage;
-	import HTMLDivElement = laya.html.dom.HTMLDivElement;
-	import HTMLIframeElement = laya.html.dom.HTMLIframeElement;
-	import Browser = laya.utils.Browser;
-	import WebGL = laya.webgl.WebGL;
+	import Stage = Laya.Stage;
+	import HTMLDivElement = Laya.HTMLDivElement;
+	import HTMLIframeElement = Laya.HTMLIframeElement;
+	import Browser = Laya.Browser;
+	import WebGL = Laya.WebGL;
 
 	export class Text_HTML {
 		constructor() {

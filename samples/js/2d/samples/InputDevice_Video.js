@@ -1,21 +1,21 @@
 (function()
 {
-	var Sprite =  laya.display.Sprite;
-	var Stage =  laya.display.Stage;
-	var Text =  laya.display.Text;
-	var Event =  laya.events.Event;
-	var Video =  laya.device.media.Video;
-	var Rectangle =  laya.maths.Rectangle;
-	var Loader =  laya.net.Loader;
-	var Render =  laya.renders.Render;
-	var Texture =  laya.resource.Texture;
-	var Button =  laya.ui.Button;
-	var HSlider =  laya.ui.HSlider;
-	var Slider =  laya.ui.Slider;
-	var TextInput =  laya.ui.TextInput;
-	var Browser =  laya.utils.Browser;
-	var Handler =  laya.utils.Handler;
-	var StringKey =  laya.utils.StringKey;
+	var Sprite =  Laya.Sprite;
+	var Stage =  Laya.Stage;
+	var Text =  Laya.Text;
+	var Event =  Laya.Event;
+	var Video =  Laya.Video;
+	var Rectangle =  Laya.Rectangle;
+	var Loader =  Laya.Loader;
+	var Render =  Laya.Render;
+	var Texture =  Laya.Texture;
+	var Button =  Laya.Button;
+	var HSlider =  Laya.HSlider;
+	var Slider =  Laya.Slider;
+	var TextInput =  Laya.TextInput;
+	var Browser =  Laya.Browser;
+	var Handler =  Laya.Handler;
+	var StringKey =  Laya.StringKey;
 
 	var BackgroundSkin = "../../res/inputDevice/videoPlayer/background.png";
 	var TimeLineBoxSkin = "../../res/inputDevice/videoPlayer/time line-box.png";

@@ -1,11 +1,11 @@
 package laya.d3.component.animation {
 	import laya.ani.AnimationState;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.Camera;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
+	import laya.d3.resource.models.Mesh;
 	import laya.d3.utils.Utils3D;
 	import laya.display.Node;
 	import laya.events.Event;
@@ -22,11 +22,23 @@ package laya.d3.component.animation {
 		/** @private */
 		private var _tempCurAnimationData:Float32Array;
 		/** @private */
-		protected var _curOriginalData:Float32Array;
+		private var _curOriginalData:Float32Array;
 		/** @private */
 		private var _lastFrameIndex:int = -1;
 		/** @private */
 		private var _curAnimationDatas:Float32Array;
+		
+		/**
+		 * 设置url地址。
+		 * @param value 地址。
+		 */
+		override public function set url(value:String):void {
+			super.url = value;
+			_curOriginalData = null;
+			_curAnimationDatas = null;
+			_tempCurAnimationData = null;
+			(_templet._animationDatasCache) || (_templet._animationDatasCache = []);
+		}
 		
 		/**
 		 * 创建一个新的 <code>RigidAnimations</code> 实例。
@@ -69,9 +81,19 @@ package laya.d3.component.animation {
 		/**
 		 * @private
 		 */
+		private function _animtionPlay():void {
+			if (_templet.loaded)
+				_init();
+			else
+				_templet.once(Event.LOADED, this, _init);
+		}
+		
+		/**
+		 * @private
+		 */
 		private function _animtionStop():void {
 			_lastFrameIndex = -1;
-			if (player.returnToZeroStopped) {
+			if (_player.returnToZeroStopped) {
 				_curAnimationDatas = null;
 				
 				for (var i:int = 0; i < _animationSprites.length; i++)
@@ -102,7 +124,9 @@ package laya.d3.component.animation {
 		 * @param	owner 所属精灵对象。
 		 */
 		override public function _load(owner:Sprite3D):void {
-			player.on(Event.STOPPED, this, _animtionStop);
+			super._load(owner);
+			_player.on(Event.STOPPED, this, _animtionStop);
+			_player.on(Event.PLAYED, this, _animtionPlay);
 		}
 		
 		/**
@@ -111,22 +135,21 @@ package laya.d3.component.animation {
 		 * @param	state 渲染状态。
 		 */
 		public override function _update(state:RenderState):void {
-			player.update(state.elapsedTime);//需最先执行（如不则内部可能触发Stop事件等，如事件中加载新动画，可能_templet未加载完成，导致BUG）
-			
-			if (player.state !== AnimationState.playing || !_templet || !_templet.loaded)
+			if (_player.state !== AnimationState.playing || !_templet || !_templet.loaded)
 				return;
 			
-			var rate:Number = player.playbackRate * state.scene.timer.scale;
-			var isCache:Boolean = player.isCache && rate >= 1.0;//是否可以缓存
+			var rate:Number = _player.playbackRate * state.scene.timer.scale;
+			var cachePlayRate:Number = _player.cachePlayRate;
+			var isCache:Boolean = _player.isCache && rate >= cachePlayRate;//是否可以缓存
 			var frameIndex:int = isCache ? currentFrameIndex : -1;//慢动作或者不缓存时frameIndex为-1
 			if (frameIndex !== -1 && _lastFrameIndex === frameIndex)//与上一次更新同帧则直接返回
 				return;
 			
 			var animationClipIndex:int = currentAnimationClipIndex;
 			var nodes:Vector.<Object> = _templet.getNodes(animationClipIndex);
-			
+			var animationDatasCache:Array = _templet._animationDatasCache;
 			if (isCache) {
-				var cacheData:Float32Array = _templet.getAnimationDataWithCache(_templet._animationDatasCache, animationClipIndex, frameIndex);
+				var cacheData:Float32Array = _templet.getAnimationDataWithCache(cachePlayRate, animationDatasCache, animationClipIndex, frameIndex);
 				if (cacheData) {
 					_curAnimationDatas = cacheData;
 					_lastFrameIndex = frameIndex;
@@ -148,14 +171,14 @@ package laya.d3.component.animation {
 			_curOriginalData || (_curOriginalData = new Float32Array(_templet.getTotalkeyframesLength(animationClipIndex)));
 			
 			if (isCache)
-				_templet.getOriginalData(animationClipIndex, _curOriginalData, frameIndex, player.currentFrameTime);
+				_templet.getOriginalData(animationClipIndex, _curOriginalData, _player._fullFrames[animationClipIndex], frameIndex, _player.currentFrameTime);
 			else//慢动作或者不缓存时
-				_templet.getOriginalDataUnfixedRate(animationClipIndex, _curOriginalData, player.currentPlayTime);
+				_templet.getOriginalDataUnfixedRate(animationClipIndex, _curOriginalData, _player.currentPlayTime);
 			
 			Utils3D._computeRootAnimationData(nodes, _curOriginalData, _curAnimationDatas);
 			
 			if (isCache) {
-				_templet.setAnimationDataWithCache(_templet._animationDatasCache, animationClipIndex, frameIndex, _curAnimationDatas);//缓存动画数据
+				_templet.setAnimationDataWithCache(cachePlayRate, animationDatasCache, animationClipIndex, frameIndex, _curAnimationDatas);//缓存动画数据
 			}
 			
 			_lastFrameIndex = frameIndex;
@@ -169,25 +192,9 @@ package laya.d3.component.animation {
 		 */
 		override public function _unload(owner:Sprite3D):void {
 			super._unload(owner);
-			player.off(Event.STOPPED, this, _animtionStop);
-		}
+			_player.off(Event.STOPPED, this, _animtionStop);
+			_player.off(Event.PLAYED, this, _animtionPlay);
 		
-		/**
-		 * 播放动画。
-		 * @param	index 动画索引。
-		 * @param	playbackRate 播放速率。
-		 * @param	duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
-		 * @param	playStart 播放的起始时间位置。
-		 * @param	playEnd 播放的结束时间位置。（0为动画一次循环的最长结束时间位置）。
-		 */
-		override public function play(index:int = 0, playbackRate:Number = 1.0, overallDuration:Number = Number.MAX_VALUE, playStart:Number = 0, playEnd:Number = 0):void {
-			super.play(index, playbackRate, overallDuration, playStart, playEnd);
-			
-			if (_templet.loaded)
-				_init();
-			else
-				_templet.once(Event.LOADED, this, _init);
 		}
-	
 	}
 }

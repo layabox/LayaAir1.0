@@ -1,23 +1,12 @@
 package laya.webgl.shader {
 	import laya.renders.Render;
 	import laya.resource.Resource;
-	import laya.resource.Texture;
-	import laya.system.System;
-	import laya.utils.Browser;
-	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	import laya.utils.StringKey;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.submit.Submit;
-	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.GlUtils;
 	import laya.webgl.utils.ShaderCompile;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class Shader extends Resource {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		private static var _TEXTURES:Array = /*[STATIC SAFE]*/ [WebGLContext.TEXTURE0, WebGLContext.TEXTURE1, WebGLContext.TEXTURE2, WebGLContext.TEXTURE3, WebGLContext.TEXTURE4, WebGLContext.TEXTURE5, WebGLContext.TEXTURE6,, WebGLContext.TEXTURE7, WebGLContext.TEXTURE8];
@@ -122,7 +111,7 @@ package laya.webgl.shader {
 		override protected function recreateResource():void {
 			startCreate();
 			_compile();
-			compoleteCreate();
+			completeCreate();
 			memorySize = 0;//忽略尺寸尺寸
 		}
 		

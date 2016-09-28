@@ -1,9 +1,9 @@
 module laya {
-	import Input = laya.display.Input;
-	import Stage = laya.display.Stage;
-	import Text = laya.display.Text;
-	import Browser = laya.utils.Browser;
-	import WebGL = laya.webgl.WebGL;
+	import Input = Laya.Input;
+	import Stage = Laya.Stage;
+	import Text = Laya.Text;
+	import Browser = Laya.Browser;
+	import WebGL = Laya.WebGL;
 
 	export class Text_Restrict {
 
@@ -56,7 +56,6 @@ module laya {
 			input.color = "#FFFFFF";
 			input.padding = [0, 4, 0, 4];
 
-			input.inputElementYAdjuster = 1;
 			Laya.stage.addChild(input);
 			return input;
 		}

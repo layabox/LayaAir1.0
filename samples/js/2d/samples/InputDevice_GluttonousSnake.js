@@ -1,12 +1,12 @@
 (function()
 {
-	var Sprite           = laya.display.Sprite;
-	var AccelerationInfo = laya.device.motion.AccelerationInfo;
-	var Accelerator      = laya.device.motion.Accelerator;
-	var Point            = laya.maths.Point;
-	var Browser          = laya.utils.Browser;
-	var Handler          = laya.utils.Handler;
-	var WebGL            = laya.webgl.WebGL;
+	var Sprite           = Laya.Sprite;
+	var AccelerationInfo = Laya.AccelerationInfo;
+	var Accelerator      = Laya.Accelerator;
+	var Point            = Laya.Point;
+	var Browser          = Laya.Browser;
+	var Handler          = Laya.Handler;
+	var WebGL            = Laya.WebGL;
 
 	function Segment(width, height)
 	{

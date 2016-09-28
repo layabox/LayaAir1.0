@@ -203,8 +203,8 @@ package laya.ui {
 			var showHeight:Number = hShow ? _height - _hScrollBar.height : _height;
 			var padding:Array = _tf.padding || Styles.labelPadding;
 			
-			_tf.width = showWidth - padding[0] - padding[2];
-			_tf.height = showHeight - padding[1] - padding[3];
+			_tf.width = showWidth;
+			_tf.height = showHeight;
 			
 			if (_vScrollBar) {
 				_vScrollBar.x = _width - _vScrollBar.width - padding[2];

@@ -1,8 +1,8 @@
 module laya {
-	import Event = laya.events.Event;
-	import Loader = laya.net.Loader;
-	import Texture = laya.resource.Texture;
-	import Handler = laya.utils.Handler;
+	import Event = Laya.Event;
+	import Loader = Laya.Loader;
+	import Texture = Laya.Texture;
+	import Handler = Laya.Handler;
 
 	export class Loader_ProgressAndErrorHandle {
 

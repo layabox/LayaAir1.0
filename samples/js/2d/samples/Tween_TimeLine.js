@@ -1,11 +1,11 @@
 (function ()
 {
-	var Sprite = laya.display.Sprite;
-	var Stage = laya.display.Stage;
-	var Event = laya.events.Event;
-	var Keyboard = laya.events.Keyboard;
-	var TimeLine = laya.utils.TimeLine;
-	var WebGL = laya.webgl.WebGL;
+	var Sprite = Laya.Sprite;
+	var Stage = Laya.Stage;
+	var Event = Laya.Event;
+	var Keyboard = Laya.Keyboard;
+	var TimeLine = Laya.TimeLine;
+	var WebGL = Laya.WebGL;
 
 
 	var target;

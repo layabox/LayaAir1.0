@@ -89,6 +89,8 @@ package laya.display {
 		public static var framesMap:Object = {};
 		/**@private */
 		protected var _frames:Array;
+		/***/
+		protected var _url:String;
 		
 		/**
 		 * 创建一个新的 <code>Animation</code> 实例。
@@ -112,7 +114,7 @@ package laya.display {
 		 * @param	name 如果name为空(可选)，则播放当前动画，如果不为空，则播放全局缓存动画（如果有）
 		 */
 		override public function play(start:* = 0, loop:Boolean = true, name:String = ""):void {
-			_setFramesFromCache(name);
+			if (name) _setFramesFromCache(_url + "#" + name);
 			this._isPlaying = true;
 			this.index = (start is String) ? _getFrameByLabel(start) : start;
 			this.loop = loop;
@@ -156,7 +158,8 @@ package laya.display {
 		
 		/**图集地址或者图片集合*/
 		public function set source(value:String):void {
-			if (value.indexOf(".json") > -1 || value.indexOf("als") > -1) loadAtlas(value);
+			if (value.indexOf(".ani") > -1) loadAnimation(value);
+			else if (value.indexOf(".json") > -1 || value.indexOf("als") > -1) loadAtlas(value);
 			else loadImages(value.split(","));
 		}
 		
@@ -181,8 +184,9 @@ package laya.display {
 		 * @return 	返回动画本身。
 		 */
 		public function loadImages(urls:Array, cacheName:String = ""):Animation {
+			this._url = "";
 			if (!_setFramesFromCache(cacheName)) {
-				this.frames = createFrames(urls, !framesMap[cacheName] ? cacheName : "");
+				this.frames = createFrames(urls, !framesMap["#" + cacheName] ? cacheName : "");
 			}
 			return this;
 		}
@@ -196,10 +200,11 @@ package laya.display {
 		 */
 		public function loadAtlas(url:String, loaded:Handler = null, cacheName:String = ""):Animation {
 			var _this:Animation = this;
+			this._url = url;
 			if (!_this._setFramesFromCache(cacheName)) {
 				function onLoaded(loadUrl:String):void {
 					if (url === loadUrl) {
-						_this.frames = createFrames(url, !framesMap[cacheName] ? cacheName : "");
+						_this.frames = createFrames(url, !framesMap[url + "#" + cacheName] ? cacheName : "");
 						if (loaded) loaded.run();
 					}
 				}
@@ -207,6 +212,48 @@ package laya.display {
 				else Laya.loader.load(url, Handler.create(null, onLoaded, [url]), null, Loader.ATLAS);
 			}
 			return this;
+		}
+		
+		/**
+		 * 加载并播放一个由IDE制作的动画。
+		 * @param	url 	动画地址。
+		 * @param	loaded	加载完毕回调
+		 * @return 	返回动画本身。
+		 */
+		public function loadAnimation(url:String, loaded:Handler = null):Animation {
+			var _this:Animation = this;
+			this._url = url;
+			if (!_this._setFramesFromCache(url)) {
+				function onLoaded(loadUrl:String):void {
+					if (url === loadUrl) {
+						var aniData:Object = _this._parseGraphicAnimation(Loader.getRes(url));
+						if (!aniData) return;
+						
+						
+						//缓存动画数据
+						var obj:Object = aniData.animationDic;
+						for (var name:String in obj) {
+							framesMap[url + "#" + name] = obj[name];
+						}
+						
+						//设置第一个为默认
+						framesMap[url] = _this.frames = aniData.animationList[0];
+						
+						if (loaded) loaded.run();
+					}
+				}
+				if (Loader.getRes(url)) onLoaded(url);
+				else Laya.loader.load(url, Handler.create(null, onLoaded, [url]), null, Loader.JSON);
+				
+				//清理掉配置
+				Loader.clearRes(url);
+			}
+			return this;
+		}
+		
+		/**@private */
+		protected function _parseGraphicAnimation(animationData:Object):Object {
+			return GraphicAnimation.parseAnimationData(animationData)
 		}
 		
 		/**

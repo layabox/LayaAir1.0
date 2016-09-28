@@ -5,7 +5,6 @@ package {
 	import laya.display.css.Font;
 	import laya.display.css.Style;
 	import laya.display.Stage;
-	import laya.events.Event;
 	import laya.events.KeyBoardManager;
 	import laya.events.MouseManager;
 	import laya.media.SoundManager;
@@ -17,6 +16,7 @@ package {
 	import laya.renders.RenderSprite;
 	import laya.resource.Context;
 	import laya.resource.ResourceManager;
+	import laya.runtime.ICPlatformClass;
 	import laya.runtime.IMarket;
 	import laya.utils.Browser;
 	import laya.utils.CacheManger;
@@ -36,11 +36,13 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.3.0";
+		public static var version:String = "1.4.0";
 		/**@private */
 		public static var stageBox:Sprite;
 		/**Market对象 只有加速器模式下才有值*/
 		public static var conchMarket:IMarket = __JS__("window.conch?conchMarket:null");
+		/**PlatformClass类，只有加速器模式下才有值 */
+		public static var PlatformClass:ICPlatformClass = __JS__("window.PlatformClass");
 		
 		/**
 		 * 初始化引擎。
@@ -55,7 +57,8 @@ package {
 			Graphics.__init__();
 			timer = new Timer();
 			loader = new LoaderManager();
-			/*[IF-FLASH]*/width = Browser.clientWidth; height = Browser.clientHeight;
+			/*[IF-FLASH]*/width = Browser.clientWidth; 
+			/*[IF-FLASH]*/height = Browser.clientHeight;
 			
 			for (var i:int = 0, n:int = plugins.length; i < n; i++) {
 				if (plugins[i].enable) plugins[i].enable();
@@ -70,7 +73,7 @@ package {
 			var pathName:String = location.pathname;
 			// 索引为2的字符如果是':'就是windows file协议
 			pathName = pathName.charAt(2) == ':' ? pathName.substring(1) : pathName;
-			URL.rootPath = URL.basePath = URL.getPath(location.protocol == "file:" ? pathName : location.origin + pathName);
+			URL.rootPath = URL.basePath = URL.getPath(location.protocol == "file:" ? pathName : location.href);
 
 			//render = new Render(width, height);
 			render = new Render(50, 50);

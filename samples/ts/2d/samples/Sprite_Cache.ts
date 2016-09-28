@@ -1,9 +1,9 @@
 module laya {
-	import Sprite = laya.display.Sprite;
-	import Stage = laya.display.Stage;
-	import Text = laya.display.Text;
-	import Stat = laya.utils.Stat;
-	import WebGL = laya.webgl.WebGL;
+	import Sprite = Laya.Sprite;
+	import Stage = Laya.Stage;
+	import Text = Laya.Text;
+	import Stat = Laya.Stat;
+	import WebGL = Laya.WebGL;
 
 	export class Sprite_Cache {
 		constructor() {

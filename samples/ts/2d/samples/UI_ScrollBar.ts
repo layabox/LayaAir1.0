@@ -1,9 +1,9 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import HScrollBar = laya.ui.HScrollBar;
-    import VScrollBar = laya.ui.VScrollBar;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import HScrollBar = Laya.HScrollBar;
+    import VScrollBar = Laya.VScrollBar;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_ScrollBar {
         constructor() {

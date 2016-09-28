@@ -1,15 +1,15 @@
 (function()
 {
-	var EventData = laya.ani.bone.EventData;
-	var Skeleton  = laya.ani.bone.Skeleton;
-	var Templet   = laya.ani.bone.Templet;
-	var Sprite    = laya.display.Sprite;
-	var Event     = laya.events.Event;
-	var Browser   = laya.utils.Browser;
-	var Handler   = laya.utils.Handler;
-	var Stat      = laya.utils.Stat;
-	var Tween     = laya.utils.Tween;
-	var WebGL     = laya.webgl.WebGL;
+	var EventData = Laya.EventData;
+	var Skeleton  = Laya.Skeleton;
+	var Templet   = Laya.Templet;
+	var Sprite    = Laya.Sprite;
+	var Event     = Laya.Event;
+	var Browser   = Laya.Browser;
+	var Handler   = Laya.Handler;
+	var Stat      = Laya.Stat;
+	var Tween     = Laya.Tween;
+	var WebGL     = Laya.WebGL;
 
 	var mAniPath;
 	var mStartX = 400;

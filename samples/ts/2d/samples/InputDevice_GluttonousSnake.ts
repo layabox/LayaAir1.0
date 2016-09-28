@@ -1,12 +1,12 @@
 module laya {
-	import Sprite           = laya.display.Sprite;
-	import AccelerationInfo = laya.device.motion.AccelerationInfo;
-	import Accelerator      = laya.device.motion.Accelerator;
-	import Point            = laya.maths.Point;
-	import Browser          = laya.utils.Browser;
-	import Handler          = laya.utils.Handler;
-	import WebGL            = laya.webgl.WebGL;
-	import Event            = laya.events.Event;
+	import Sprite           = Laya.Sprite;
+	import AccelerationInfo = Laya.AccelerationInfo;
+	import Accelerator      = Laya.Accelerator;
+	import Point            = Laya.Point;
+	import Browser          = Laya.Browser;
+	import Handler          = Laya.Handler;
+	import WebGL            = Laya.WebGL;
+	import Event            = Laya.Event;
 
 	export class InputDevice_GluttonousSnake {
 		private seg:Segment;

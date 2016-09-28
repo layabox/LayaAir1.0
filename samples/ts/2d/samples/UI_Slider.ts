@@ -1,9 +1,9 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import HSlider = laya.ui.HSlider;
-    import VSlider = laya.ui.VSlider;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import HSlider = Laya.HSlider;
+    import VSlider = Laya.VSlider;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_Slider {
         constructor(){

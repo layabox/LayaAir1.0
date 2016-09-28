@@ -23,10 +23,6 @@
 	{
 		var inputText = new Input();
 
-		// 输入期间输入框的位置偏移
-		inputText.inputElementXAdjuster = -2;
-		inputText.inputElementYAdjuster = -1;
-
 		// 移动端输入提示符
 		inputText.prompt = "Type some word...";
 

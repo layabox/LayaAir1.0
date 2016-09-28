@@ -28,9 +28,6 @@
         var ta = new TextArea("");
         ta.skin = skin;
 
-        ta.inputElementXAdjuster = -2;
-        ta.inputElementYAdjuster = -1;
-
         ta.font = "Arial";
         ta.fontSize = 18;
         ta.bold = true;

@@ -1,6 +1,7 @@
 // TestView.as
-package view {
+package  {
 	import game.ui.test.TestPageUI;
+	import laya.display.Text;
 	import laya.events.Event;
 	import laya.ui.Box;
 	import laya.ui.Label;

@@ -14,32 +14,10 @@ package laya.particle {
 		public var duration:Number = 1;
 		/**如果大于0，某些粒子的持续时间会小于其他粒子,并具有随机性(单位:无）*/
 		public var ageAddScale:Number = 0;
-		/**最小水平速度（单位：2D像素、3D坐标）*/
-		public var minHorizontalVelocity:Number = 0;
-		/**最大水平速度（单位：2D像素、3D坐标）*/
-		public var maxHorizontalVelocity:Number = 0;
-		/**最小垂直速度（单位：2D像素、3D坐标）*/
-		public var minVerticalVelocity:Number = 0;
-		/**最大垂直速度（单位：2D像素、3D坐标）*/
-		public var maxVerticalVelocity:Number = 0;
-		/**（单位：2D像素、3D坐标）*/
-		public var gravity:Float32Array = new Float32Array([0, 0, 0]);
-		/**等于1时粒子从出生到消亡保持一致的速度，等于0时粒子消亡时速度为0，大于1时粒子会保持加速（单位：无）*/
-		public var endVelocity:Number = 1;
-		/**false代表RGBA整体插值，true代表RGBA逐分量插值*/
-		public var colorComponentInter:Boolean = false;
-		/**最小开始颜色*/
-		public var minStartColor:Float32Array = new Float32Array([1, 1, 1, 1]);
-		/**最大开始颜色*/
-		public var maxStartColor:Float32Array = new Float32Array([1, 1, 1, 1]);
-		/**最小结束颜色*/
-		public var minEndColor:Float32Array = new Float32Array([1, 1, 1, 1]);
-		/**最大结束颜色*/
-		public var maxEndColor:Float32Array = new Float32Array([1, 1, 1, 1]);
-		/**最小旋转速度（单位：2D弧度/秒、3D弧度/秒）*/
-		public var minRotateSpeed:Number = 0;
-		/**最大旋转速度（单位：2D弧度/秒、3D弧度/秒）*/
-		public var maxRotateSpeed:Number = 0;
+		
+		/**粒子受发射器速度的敏感度（需在自定义发射器中编码设置）*/
+		public var emitterVelocitySensitivity:Number = 1;
+		
 		/**最小开始尺寸（单位：2D像素、3D坐标）*/
 		public var minStartSize:Number = 100;
 		/**最大开始尺寸（单位：2D像素、3D坐标）*/
@@ -49,8 +27,24 @@ package laya.particle {
 		/**最大结束尺寸（单位：2D像素、3D坐标）*/
 		public var maxEndSize:Number = 100;
 		
-		/**粒子受发射器速度的敏感度（需在自定义发射器中编码设置）*/
-		public var emitterVelocitySensitivity:Number = 1;
+		/**最小水平速度（单位：2D像素、3D坐标）*/
+		public var minHorizontalVelocity:Number = 0;
+		/**最大水平速度（单位：2D像素、3D坐标）*/
+		public var maxHorizontalVelocity:Number = 0;
+		/**最小垂直速度（单位：2D像素、3D坐标）*/
+		public var minVerticalVelocity:Number = 0;
+		/**最大垂直速度（单位：2D像素、3D坐标）*/
+		public var maxVerticalVelocity:Number = 0;
+		/**等于1时粒子从出生到消亡保持一致的速度，等于0时粒子消亡时速度为0，大于1时粒子会保持加速（单位：无）*/
+		public var endVelocity:Number = 1;
+		
+		/**（单位：2D像素、3D坐标）*/
+		public var gravity:Float32Array = new Float32Array([0, 0, 0]);
+		
+		/**最小旋转速度（单位：2D弧度/秒、3D弧度/秒）*/
+		public var minRotateSpeed:Number = 0;
+		/**最大旋转速度（单位：2D弧度/秒、3D弧度/秒）*/
+		public var maxRotateSpeed:Number = 0;
 		
 		/**最小开始半径（单位：2D像素、3D坐标）*/
 		public var minStartRadius:Number = 0;
@@ -72,7 +66,7 @@ package laya.particle {
 		
 		/**是否使用结束弧度,false为结束时与起始弧度保持一致,true为根据minHorizontalEndRadian、maxHorizontalEndRadian、minVerticalEndRadian、maxVerticalEndRadian计算结束弧度。*/
 		public var useEndRadian:Boolean = true;
-		
+		/**最小水平结束弧度（单位：2D弧度、3D弧度）*/
 		public var minHorizontalEndRadian:Number = 0;
 		/**最大水平结束弧度（单位：2D弧度、3D弧度）*/
 		public var maxHorizontalEndRadian:Number = 0;
@@ -81,6 +75,17 @@ package laya.particle {
 		/**最大垂直结束弧度（单位：2D弧度、3D弧度）*/
 		public var maxVerticalEndRadian:Number = 0;
 		
+		/**最小开始颜色*/
+		public var minStartColor:Float32Array = new Float32Array([1, 1, 1, 1]);
+		/**最大开始颜色*/
+		public var maxStartColor:Float32Array = new Float32Array([1, 1, 1, 1]);
+		/**最小结束颜色*/
+		public var minEndColor:Float32Array = new Float32Array([1, 1, 1, 1]);
+		/**最大结束颜色*/
+		public var maxEndColor:Float32Array = new Float32Array([1, 1, 1, 1]);
+		
+		/**false代表RGBA整体插值，true代表RGBA逐分量插值*/
+		public var colorComponentInter:Boolean = false;
 		/**混合模式，待调整，引擎中暂无BlendState抽象*/
 		public var blendState:int = 0;
 		
@@ -134,6 +139,7 @@ package laya.particle {
 		public var positionVariance:Float32Array = new Float32Array([0, 0, 0]);
 		
 		//.........................................................2D发射器参数.........................................................
+		
 		/**
 		 * 创建一个新的 <code>ParticleSettings</code> 类实例。
 		 *

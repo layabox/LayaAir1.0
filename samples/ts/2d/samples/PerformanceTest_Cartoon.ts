@@ -1,10 +1,10 @@
 module laya {
-    import Sprite = laya.display.Sprite;
-    import Loader = laya.net.Loader;
-    import Browser = laya.utils.Browser;
-    import Handler = laya.utils.Handler;
-    import Stat = laya.utils.Stat;
-    import WebGL = laya.webgl.WebGL;
+    import Sprite = Laya.Sprite;
+    import Loader = Laya.Loader;
+    import Browser = Laya.Browser;
+    import Handler = Laya.Handler;
+    import Stat = Laya.Stat;
+    import WebGL = Laya.WebGL;
 
     export class PerformanceTest_Cartoon {
         private colAmount = 100;

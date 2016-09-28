@@ -1,11 +1,9 @@
-package laya.ani.bone 
-{
+package laya.ani.bone {
+	
 	/**
-	 * ...
-	 * @author 
+	 * @private
 	 */
-	public class IkConstraintData 
-	{
+	public class IkConstraintData {
 		
 		public var name:String;
 		public var targetBoneName:String;
@@ -16,11 +14,10 @@ package laya.ani.bone
 		public var targetBoneIndex:int = -1;
 		public var boneIndexs:Vector.<int> = new Vector.<int>();
 		
-		public function IkConstraintData() 
-		{
-			
-		}
+		public function IkConstraintData() {
 		
+		}
+	
 	}
 
 }

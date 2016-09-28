@@ -16,20 +16,19 @@
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
     <class path="src" />
-    <class path="..\..\..\..\core\jsc" />
-    <class path="..\..\..\..\core\src" />
-    <class path="..\..\..\..\ani\src" />
-    <class path="..\..\..\..\filter\src" />
-    <class path="..\..\..\..\html\src" />
-    <class path="..\..\..\..\particle\src" />
-    <class path="..\..\..\..\plugins\tiledmap\src" />
-    <class path="..\..\..\..\ui\src" />
-    <class path="..\..\..\..\webGL\src" />
-    <class path="..\..\..\..\d3\src" />
-    <class path="..\..\..\..\plugins\debugtool\src" />
-    <class path="..\..\..\..\plugins\device\src" />
-    <class path="..\..\..\..\d3Plugin\src" />
-    <class path="..\..\..\..\plugins\pathfinding\src" />
+    <class path="..\..\src\core\jsc" />
+    <class path="..\..\src\core\src" />
+    <class path="..\..\src\ani\src" />
+    <class path="..\..\src\filter\src" />
+    <class path="..\..\src\html\src" />
+    <class path="..\..\src\particle\src" />
+    <class path="..\..\src\plugins\tiledmap\src" />
+    <class path="..\..\src\ui\src" />
+    <class path="..\..\src\webGL\src" />
+    <class path="..\..\src\d3\src" />
+    <class path="..\..\src\plugins\debugtool\src" />
+    <class path="..\..\src\plugins\device\src" />
+    <class path="..\..\src\d3Plugin\src" />
   </classpaths>
   <!-- Build options -->
   <build>

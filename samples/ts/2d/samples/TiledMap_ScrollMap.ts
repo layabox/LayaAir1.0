@@ -1,11 +1,11 @@
 module laya {
-	import Stage = laya.display.Stage;
-	import TiledMap = laya.map.TiledMap;
-	import Rectangle = laya.maths.Rectangle;
-	import Browser = laya.utils.Browser;
-	import Handler = laya.utils.Handler;
-	import Stat = laya.utils.Stat;
-	import WebGL = laya.webgl.WebGL;
+	import Stage = Laya.Stage;
+	import TiledMap = Laya.TiledMap;
+	import Rectangle = Laya.Rectangle;
+	import Browser = Laya.Browser;
+	import Handler = Laya.Handler;
+	import Stat = Laya.Stat;
+	import WebGL = Laya.WebGL;
 
 	export class TiledMap_SimpleDemo {
 		private tiledMap: TiledMap;
@@ -23,8 +23,8 @@ module laya {
 
 			this.createMap();
 
-			Laya.stage.on(laya.events.Event.MOUSE_DOWN, this, this.mouseDown);//注册鼠标事件
-			Laya.stage.on(laya.events.Event.MOUSE_UP, this, this.mouseUp);
+			Laya.stage.on(Laya.Event.MOUSE_DOWN, this, this.mouseDown);//注册鼠标事件
+			Laya.stage.on(Laya.Event.MOUSE_UP, this, this.mouseUp);
 		}
 
 		//创建地图
@@ -43,7 +43,7 @@ module laya {
 		private completeHandler(): void {
 			console.log("地图创建完成");
 			console.log("ClientW:" + Browser.clientWidth + " ClientH:" + Browser.clientHeight);
-			Laya.stage.on(laya.events.Event.RESIZE, this, this.resize);
+			Laya.stage.on(Laya.Event.RESIZE, this, this.resize);
 			this.resize();
 		}
 
@@ -51,7 +51,7 @@ module laya {
 		private mouseDown(): void {
 			this.mLastMouseX = Laya.stage.mouseX;
 			this.mLastMouseY = Laya.stage.mouseY;
-			Laya.stage.on(laya.events.Event.MOUSE_MOVE, this, this.mouseMove);
+			Laya.stage.on(Laya.Event.MOUSE_MOVE, this, this.mouseMove);
 		}
 
 		private mouseMove(): void {
@@ -62,7 +62,7 @@ module laya {
 		private mouseUp(): void {
 			this.mX = this.mX - (Laya.stage.mouseX - this.mLastMouseX);
 			this.mY = this.mY - (Laya.stage.mouseY - this.mLastMouseY);
-			Laya.stage.off(laya.events.Event.MOUSE_MOVE, this, this.mouseMove);
+			Laya.stage.off(Laya.Event.MOUSE_MOVE, this, this.mouseMove);
 		}
 
 		// 窗口大小改变，把地图的视口区域重设下

@@ -79,10 +79,13 @@ package laya.renders {
 			style.top = style.left = "0px";
 			style.background = "#000000";
 			
-			_mainCanvas.source.id = "layaCanvas";
+			_mainCanvas.source.id = _mainCanvas.source.id || "layaCanvas";
 			var isWebGl:Boolean = Render.isWebGL;
 			isWebGl && WebGL.init(_mainCanvas, width, height);
-			Browser.container.appendChild(_mainCanvas.source);
+			if (_mainCanvas.source.nodeName||Render.isConchApp)
+			{
+				Browser.container.appendChild(_mainCanvas.source);
+			}
 			_context = new RenderContext(width, height, isWebGl ? null : _mainCanvas);
 			_context.ctx.setIsMainContext();
 			

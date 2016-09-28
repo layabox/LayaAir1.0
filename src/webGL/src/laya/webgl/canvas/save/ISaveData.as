@@ -1,14 +1,7 @@
-package laya.webgl.canvas.save 
-{
+package laya.webgl.canvas.save {
 	import laya.webgl.canvas.WebGLContext2D;
-	/**
-	 * ...
-	 * @author laya
-	 */
-	public  interface  ISaveData 
-	{
+	public interface ISaveData {
 		function isSaveMark():Boolean;
-		function restore(context:WebGLContext2D):void;		
+		function restore(context:WebGLContext2D):void;
 	}
-
 }

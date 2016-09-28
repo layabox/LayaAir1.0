@@ -1,9 +1,9 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import TextArea = laya.ui.TextArea;
-    import Browser = laya.utils.Browser;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import TextArea = Laya.TextArea;
+    import Browser = Laya.Browser;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_TextArea {
         private skin: string = "../../res/ui/textarea.png";
@@ -25,9 +25,6 @@ module laya {
         private onLoadComplete(): void {
             var ta: TextArea = new TextArea("");
             ta.skin = this.skin;
-
-            ta.inputElementXAdjuster = -2;
-            ta.inputElementYAdjuster = -1;
 
             ta.font = "Arial";
             ta.fontSize = 18;

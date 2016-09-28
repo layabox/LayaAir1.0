@@ -15,6 +15,7 @@ package laya.d3.core {
 	import laya.resource.IDispose;
 	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
+	import laya.utils.Stat;
 	
 	/**
 	 * <code>Sprite3D</code> 类用于实现3D精灵。
@@ -25,6 +26,8 @@ package laya.d3.core {
 		/**名字计数器。*/
 		protected static var _nameNumberCounter:int = 0;
 		
+		/**是否启用。*/
+		protected var _isInStage:Boolean;
 		/**唯一标识ID。*/
 		private var _id:int;
 		/**是否启用。*/
@@ -60,12 +63,22 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * 获取是否在场景树。
+		 *   @return	是否在场景树。
+		 */
+		public function get isInStage():Boolean {
+			return _isInStage;
+		}
+		
+		/**
 		 * 设置是否启用。
 		 * @param	value 是否启动。
 		 */
 		public function set enable(value:Boolean):void {
-			_enable = value;
-			this.event(Event.ENABLED_CHANGED, _enable);
+			if (_enable !== value) {
+				_enable = value;
+				this.event(Event.ENABLED_CHANGED, _enable);
+			}
 		}
 		
 		/**
@@ -137,7 +150,19 @@ package laya.d3.core {
 			layer = Layer.currentCreationLayer;
 			transform = new Transform3D(this);
 			on(Event.ADDED, this, _onAdded);
-			on(Event.REMOVED, this, _onRemoveed);
+			on(Event.REMOVED, this, _onRemoved);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _changeSelfAndChildrenInStage(sprite3D:Sprite3D, isInStage:Boolean):void {
+			sprite3D._isInStage = isInStage;
+			sprite3D.event(Event.INSTAGE_CHANGED, isInStage);
+			
+			var children:Array = sprite3D._childs;
+			for (var i:int = 0, n:int = children.length; i < n; i++)
+				_changeSelfAndChildrenInStage(children[i], isInStage);
 		}
 		
 		/**
@@ -146,14 +171,19 @@ package laya.d3.core {
 		private function _onAdded():void {
 			transform.parent = (_parent as Sprite3D).transform;
 			_addSelfAndChildrenRenderObjects();
+			
+			var isInStage:Boolean = Laya.stage.contains(this);
+			(isInStage) && (_changeSelfAndChildrenInStage(this, isInStage));
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _onRemoveed():void {
+		private function _onRemoved():void {
 			transform.parent = null;
 			_clearSelfAndChildrenRenderObjects();
+			
+			_changeSelfAndChildrenInStage(this, false);
 		}
 		
 		/**
@@ -173,9 +203,8 @@ package laya.d3.core {
 		 */
 		public function _clearSelfAndChildrenRenderObjects():void {
 			_clearSelfRenderObjects();
-			for (var i:int = 0; i < _childs.length; i++)
+			for (var i:int = 0, n:int = _childs.length; i < n; i++)
 				(_childs[i] as Sprite3D)._clearSelfAndChildrenRenderObjects();
-		
 		}
 		
 		/**
@@ -183,7 +212,7 @@ package laya.d3.core {
 		 */
 		public function _addSelfAndChildrenRenderObjects():void {
 			_addSelfRenderObjects();
-			for (var i:int = 0; i < _childs.length; i++)
+			for (var i:int = 0, n:int = _childs.length; i < n; i++)
 				(_childs[i] as Sprite3D)._addSelfAndChildrenRenderObjects();
 		}
 		
@@ -192,7 +221,7 @@ package laya.d3.core {
 		 * @param	state 渲染相关状态。
 		 */
 		protected function _updateComponents(state:RenderState):void {
-			for (var i:int = 0; i < _components.length; i++) {
+			for (var i:int = 0, n:int = _components.length; i < n; i++) {
 				var component:Component3D = _components[i];
 				(!component.started) && (component._start(state), component.started = true);
 				(component.isActive) && (component._update(state));
@@ -229,7 +258,7 @@ package laya.d3.core {
 		 * @param	state 渲染相关状态。
 		 */
 		public function _getSortID(renderElement:IRenderable, material:Material):int {
-			return material.id * VertexDeclaration._maxVertexDeclarationBit + renderElement.getVertexBuffer().vertexDeclaration.id;
+			return  + renderElement.getVertexBuffer().vertexDeclaration.id+material.id * VertexDeclaration._maxVertexDeclarationBit;
 		}
 		
 		/**
@@ -238,9 +267,11 @@ package laya.d3.core {
 		 */
 		public function _update(state:RenderState):void {
 			state.owner = this;
-			var canView:Boolean = state.renderClip.view(this);
-			(canView) && (_updateComponents(state));
-			(canView) && (_lateUpdateComponents(state));
+			if (_enable) {
+				_updateComponents(state);
+				_lateUpdateComponents(state);
+			}
+			Stat.spriteCount++;
 			_childs.length && _updateChilds(state);
 		}
 		
@@ -338,7 +369,9 @@ package laya.d3.core {
 		
 		public function dispose():void {
 			off(Event.ADDED, this, _onAdded);
-			off(Event.REMOVED, this, _onRemoveed);
+			off(Event.REMOVED, this, _onRemoved);
+			for (var i:int, n:int = _components.length; i < n; i++)
+				_components[i]._uninitialize();
 		}
 	
 	}

@@ -12,9 +12,8 @@ package laya.webgl.canvas {
 	import laya.utils.Color;
 	import laya.utils.HTMLChar;
 	import laya.utils.RunDriver;
-	import laya.webgl.shapes.IShape;
-	import laya.webgl.submit.SubmitTexture;
 	import laya.utils.VectorGraphManager;
+	import laya.webgl.shader.d2.skinAnishader.SkinMeshBuffer;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.atlas.AtlasResourceManager;
@@ -31,6 +30,7 @@ package laya.webgl.canvas {
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.shader.d2.value.TextSV;
 	import laya.webgl.shader.d2.value.Value2D;
+	import laya.webgl.shapes.IShape;
 	import laya.webgl.submit.ISubmit;
 	import laya.webgl.submit.Submit;
 	import laya.webgl.submit.SubmitCanvas;
@@ -38,6 +38,7 @@ package laya.webgl.canvas {
 	import laya.webgl.submit.SubmitScissor;
 	import laya.webgl.submit.SubmitStencil;
 	import laya.webgl.submit.SubmitTarget;
+	import laya.webgl.submit.SubmitTexture;
 	import laya.webgl.text.DrawText;
 	import laya.webgl.text.FontInContext;
 	import laya.webgl.utils.Buffer2D;
@@ -46,10 +47,6 @@ package laya.webgl.canvas {
 	import laya.webgl.utils.RenderState2D;
 	import laya.webgl.utils.VertexBuffer2D;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class WebGLContext2D extends Context {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
@@ -328,7 +325,7 @@ package laya.webgl.canvas {
 				}
 				//shader.defines.add(ShaderDefines2D.COLORADD);
 				DrawText.drawText(this, txt, words, _curMat, font, textAlign || _other.textAlign, color, null, -1, x, y);
-				//shader.defines.setValue(preDef);
+					//shader.defines.setValue(preDef);
 			}
 		}
 		
@@ -363,7 +360,7 @@ package laya.webgl.canvas {
 				
 				//shader.defines.add(ShaderDefines2D.COLORADD);
 				DrawText.drawText(this, txt, null, _curMat, font, textAlign || _other.textAlign, null, color, lineWidth || 1, x, y);
-				//shader.defines.setValue(preDef);
+					//shader.defines.setValue(preDef);
 			}
 		}
 		
@@ -512,8 +509,8 @@ package laya.webgl.canvas {
 					submit = SubmitTexture.create(this, _ib, vb, vbSize, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
 				} else {
 					submit = SubmitTexture.create(this, _ib, vb, vbSize, TextSV.create());
-					//submit.shaderValue.colorAdd = shader.colorAdd;
-					//submit.shaderValue.defines.add(ShaderDefines2D.COLORADD);
+						//submit.shaderValue.colorAdd = shader.colorAdd;
+						//submit.shaderValue.defines.add(ShaderDefines2D.COLORADD);
 				}
 				
 				submit._preIsSameTextureShader = _curSubmit._renderType === Submit.TYPE_TEXTURE && shader.ALPHA === curShader.ALPHA;
@@ -712,7 +709,7 @@ package laya.webgl.canvas {
 			_curSubmit = Submit.RENDERBASE;
 		}
 		
-		public function setIBVB(x:Number, y:Number, ib:IndexBuffer2D, vb:VertexBuffer2D, numElement:int, mat:Matrix, shader:Shader, shaderValues:Value2D, startIndex:int = 0, offset:int = 0):void {
+		public function setIBVB(x:Number, y:Number, ib:IndexBuffer2D, vb:VertexBuffer2D, numElement:int, mat:Matrix, shader:Shader, shaderValues:Value2D, startIndex:int = 0, offset:int = 0,type:int = 0):void {
 			if (ib === null) {
 				if (!Render.isFlash) {
 					ib = _ib;
@@ -727,7 +724,7 @@ package laya.webgl.canvas {
 			
 			if (!shaderValues || !shader)
 				throw Error("setIBVB must input:shader shaderValues");
-			var submit:SubmitOtherIBVB = SubmitOtherIBVB.create(this, vb, ib, numElement, shader, shaderValues, startIndex, offset);
+			var submit:SubmitOtherIBVB = SubmitOtherIBVB.create(this, vb, ib, numElement, shader, shaderValues, startIndex, offset, type);
 			mat || (mat = Matrix.EMPTY);
 			mat.translate(x, y);
 			Matrix.mul(mat, _curMat, submit._mat);
@@ -792,6 +789,7 @@ package laya.webgl.canvas {
 			submitElement(0, _submits._length);
 			
 			_path && _path.reset();
+			SkinMeshBuffer.instance && SkinMeshBuffer.getInstance().reset();
 			
 			_curSubmit = Submit.RENDERBASE;
 			
@@ -806,20 +804,16 @@ package laya.webgl.canvas {
 		private var mY:Number = 0;
 		private var mOutPoint:Point
 		
-		public function setPathId(id:int):void
-		{
+		public function setPathId(id:int):void {
 			mId = id;
-			if (mId != -1)
-			{
+			if (mId != -1) {
 				mHaveKey = false;
 				var tVGM:VectorGraphManager = VectorGraphManager.getInstance();
-				if (tVGM.shapeDic[mId])
-				{
+				if (tVGM.shapeDic[mId]) {
 					mHaveKey = true;
 				}
 				mHaveLineKey = false;
-				if (tVGM.shapeLineDic[mId])
-				{
+				if (tVGM.shapeLineDic[mId]) {
 					mHaveLineKey = true;
 				}
 			}
@@ -850,14 +844,13 @@ package laya.webgl.canvas {
 		override public function stroke():void {
 			var tPath:Path = _getPath();
 			if (lineWidth > 0) {
-				if (mId == -1)
-				{
+				if (mId == -1) {
 					tPath.drawLine(0, 0, tPath.tempArray, lineWidth, this.strokeStyle._color.numColor);
-				}else {
+				} else {
 					if (mHaveLineKey) {
 						var tShapeLine:IShape = VectorGraphManager.getInstance().shapeLineDic[mId];
 						tPath.setGeomtry(tShapeLine);
-					}else {
+					} else {
 						VectorGraphManager.getInstance().addLine(mId, tPath.drawLine(0, 0, tPath.tempArray, lineWidth, this.strokeStyle._color.numColor));
 					}
 				}
@@ -903,9 +896,8 @@ package laya.webgl.canvas {
 		}
 		
 		override public function arcTo(x1:Number, y1:Number, x2:Number, y2:Number, r:Number):void {
-			if (mId != -1)
-			{
-				if (mHaveKey) {	
+			if (mId != -1) {
+				if (mHaveKey) {
 					return;
 				}
 			}
@@ -955,8 +947,7 @@ package laya.webgl.canvas {
 		}
 		
 		public function arc(cx:Number, cy:Number, r:Number, startAngle:Number, endAngle:Number, counterclockwise:Boolean = false):void {
-			if (mId != -1)
-			{
+			if (mId != -1) {
 				if (mHaveKey) {
 					return;
 				}
@@ -1057,14 +1048,13 @@ package laya.webgl.canvas {
 		public function drawPoly(x:Number, y:Number, points:Array, color:uint, lineWidth:Number, boderColor:uint, isConvexPolygon:Boolean = false):void {
 			_shader2D.glTexture = null;//置空下，打断纹理相同合并
 			var tPath:Path = _getPath();
-			if (mId == -1)
-			{
+			if (mId == -1) {
 				tPath.polygon(x, y, points, color, lineWidth ? lineWidth : 1, boderColor)
-			}else {
+			} else {
 				if (mHaveKey) {
 					var tShape:IShape = VectorGraphManager.getInstance().shapeDic[mId];
 					tPath.setGeomtry(tShape);
-				}else {
+				} else {
 					VectorGraphManager.getInstance().addShape(mId, tPath.polygon(x, y, points, color, lineWidth ? lineWidth : 1, boderColor));
 				}
 			}
@@ -1102,7 +1092,7 @@ package laya.webgl.canvas {
 				if (mHaveLineKey) {
 					var tShapeLine:IShape = VectorGraphManager.getInstance().shapeLineDic[mId];
 					tPath.setGeomtry(tShapeLine);
-				}else {
+				} else {
 					VectorGraphManager.getInstance().addShape(mId, tPath.drawLine(x, y, points, lineWidth, boderColor));
 				}
 				tPath.update();

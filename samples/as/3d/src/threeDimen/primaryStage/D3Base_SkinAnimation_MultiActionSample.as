@@ -59,16 +59,16 @@ package threeDimen.primaryStage {
 			
 			skinAni0 = skinMesh0.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni0.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-			skinAni0.play(0, 0.6);
+			skinAni0.player.play(0, 0.6);
 			skinAni1 = skinMesh1.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni1.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-			skinAni1.play(0, 0.6);
+			skinAni1.player.play(0, 0.6);
 			skinAni2 = skinMesh2.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni2.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-			skinAni2.play(0, 0.6);
+			skinAni2.player.play(0, 0.6);
 			skinAni3 = skinMesh3.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni3.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-			skinAni3.play(0, 0.6);
+			skinAni3.player.play(0, 0.6);
 		}
 		
 		private function loadUI():void {
@@ -97,23 +97,23 @@ package threeDimen.primaryStage {
 			switch (currentState) {
 			case 0: 
 				skinAni0.url = "../../../../res/threeDimen/skinModel/nvXia/yequanaidanv.ani";
-				skinAni0.play();
+				skinAni0.player.play();
 				skinAni1.url = "../../../../res/threeDimen/skinModel/nvXia/yequanaidanv.ani";
-				skinAni1.play();
+				skinAni1.player.play();
 				skinAni2.url = "../../../../res/threeDimen/skinModel/nvXia/yequanaidanv.ani";
-				skinAni2.play();
+				skinAni2.player.play();
 				skinAni3.url = "../../../../res/threeDimen/skinModel/nvXia/yequanaidanv.ani";
-				skinAni3.play();
+				skinAni3.player.play();
 				break;
 			case 1: 
 				skinAni0.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-				skinAni0.play(0, 0.6);
+				skinAni0.player.play(0, 0.6);
 				skinAni1.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-				skinAni1.play(0, 0.6);
+				skinAni1.player.play(0, 0.6);
 				skinAni2.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-				skinAni2.play(0, 0.6);
+				skinAni2.player.play(0, 0.6);
 				skinAni3.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-				skinAni3.play(0, 0.6);
+				skinAni3.player.play(0, 0.6);
 				break;
 			}
 			

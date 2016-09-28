@@ -1,11 +1,11 @@
 (function()
 {
-	var Animation = laya.display.Animation;
-	var Stage     = laya.display.Stage;
-	var Browser   = laya.utils.Browser;
-	var Handler   = laya.utils.Handler;
-	var Tween     = laya.utils.Tween;
-	var WebGL     = laya.webgl.WebGL;
+	var Animation = Laya.Animation;
+	var Stage     = Laya.Stage;
+	var Browser   = Laya.Browser;
+	var Handler   = Laya.Handler;
+	var Tween     = Laya.Tween;
+	var WebGL     = Laya.WebGL;
 
 	// 一只凤凰的分辨率是550 * 400
 	var phoenixWidth = 550;

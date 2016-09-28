@@ -36,7 +36,7 @@ module AttchPointSample {
             this.skinMesh.transform.localRotationEuler = this.rotation;
             this.skinAni = this.skinMesh.addComponent(Laya.SkinAnimations) as Laya.SkinAnimations;
             this.skinAni.url = "../../res/threeDimen/skinModel/dude/dude.ani";
-            this.skinAni.play();
+            this.skinAni.player.play();
 
             this.attacthPoint = this.skinMesh.addComponent(Laya.AttachPoint) as Laya.AttachPoint;
             this.attacthPoint.attachBones.push("L_Middle1");

@@ -27,11 +27,10 @@ module Materil_Reflect {
             scene.currentCamera.addComponent(CameraMoveScript);
 
             //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-            var webGLImageCube = new Laya.WebGLImageCube(["../../res/threeDimen/skyBox/px.jpg", "../../res/threeDimen/skyBox/nx.jpg", "../../res/threeDimen/skyBox/py.jpg", "../../res/threeDimen/skyBox/ny.jpg", "../../res/threeDimen/skyBox/pz.jpg", "../../res/threeDimen/skyBox/nz.jpg"], 1024);
-            webGLImageCube.once(Laya.Event.LOADED, null, function(imgCube):void {
-                var textureCube = new Laya.Texture(imgCube);
-                skyBox.textureCube = textureCube;
-            });
+            Laya.loader.load("../../res/threeDimen/skyBox/px.jpg,../../res/threeDimen/skyBox/nx.jpg,../../res/threeDimen/skyBox/py.jpg,../../res/threeDimen/skyBox/ny.jpg,../../res/threeDimen/skyBox/pz.jpg,../../res/threeDimen/skyBox/nz.jpg",
+                Laya.Handler.create(null,function(texture):void{
+                    skyBox.textureCube = texture;
+                }), null, "TextureCube");
 
             var sprit = scene.addChild(new Laya.Sprite3D()) as Laya.Sprite3D;
 
@@ -39,8 +38,8 @@ module Materil_Reflect {
             var mesh: Laya.Mesh = Laya.Mesh.load("../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
             this.meshSprite = sprit.addChild(new Laya.MeshSprite3D(mesh)) as Laya.MeshSprite3D;
             mesh.once(Laya.Event.LOADED, this, () => {
-                this.meshSprite.meshRender.shadredMaterials[0].once(Laya.Event.LOADED, this, () => {
-                    this.material = this.meshSprite.meshRender.shadredMaterials[0];
+                this.meshSprite.meshRender.sharedMaterials[0].once(Laya.Event.LOADED, this, () => {
+                    this.material = this.meshSprite.meshRender.sharedMaterials[0];
                     this.material.albedo = new Vector4(0.0,0.0,0.0,0.0);
                     this.material.renderMode = Laya.Material.RENDERMODE_OPAQUEDOUBLEFACE;
                     (this.material && this.reflectTexture) && (this.material.reflectTexture = this.reflectTexture);
@@ -55,7 +54,7 @@ module Materil_Reflect {
             webGLImageCube.on(Laya.Event.LOADED, this, (imgCube) => {
                 this.reflectTexture = new Laya.Texture(imgCube);
                 imgCube.mipmap = true;
-                (this.material && this.reflectTexture) && (this.meshSprite.meshRender.shadredMaterials[0].reflectTexture = this.reflectTexture);
+                (this.material && this.reflectTexture) && (this.meshSprite.meshRender.sharedMaterials[0].reflectTexture = this.reflectTexture);
             });
 
             Laya.timer.frameLoop(1, this, () => {

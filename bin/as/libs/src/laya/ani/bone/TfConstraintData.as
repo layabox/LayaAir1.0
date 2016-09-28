@@ -1,11 +1,9 @@
-package laya.ani.bone 
-{
+package laya.ani.bone {
+	
 	/**
-	 * ...
-	 * @author 
+	 * @private
 	 */
-	public class TfConstraintData 
-	{
+	public class TfConstraintData {
 		
 		public var name:String;
 		public var boneIndexs:Vector.<int> = new Vector.<int>();
@@ -20,11 +18,6 @@ package laya.ani.bone
 		public var offsetScaleX:Number;
 		public var offsetScaleY:Number;
 		public var offsetShearY:Number;
-		
-		public function TfConstraintData() 
-		{
-			
-		}
 		
 	}
 

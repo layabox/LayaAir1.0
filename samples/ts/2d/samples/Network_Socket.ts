@@ -1,7 +1,7 @@
 module laya {
-	import Event = laya.events.Event;
-	import Socket = laya.net.Socket;
-	import Byte = laya.utils.Byte;
+	import Event = Laya.Event;
+	import Socket = Laya.Socket;
+	import Byte = Laya.Byte;
 
 	export class NetWork_Socket {
 		private socket: Socket;

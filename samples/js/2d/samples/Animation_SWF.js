@@ -1,9 +1,9 @@
 (function()
 {
-	var MovieClip = laya.ani.swf.MovieClip;
-	var Stage     = laya.display.Stage;
-	var Browser   = laya.utils.Browser;
-	var WebGL     = laya.webgl.WebGL;
+	var MovieClip = Laya.MovieClip;
+	var Stage     = Laya.Stage;
+	var Browser   = Laya.Browser;
+	var WebGL     = Laya.WebGL;
 
 	var SWFPath = "../../res/swf/dragon.swf";
 

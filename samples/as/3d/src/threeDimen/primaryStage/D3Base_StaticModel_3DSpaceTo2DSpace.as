@@ -48,7 +48,6 @@ package threeDimen.primaryStage {
 			Laya.stage.addChild(monkey);
 			
 			Laya.timer.frameLoop(1, null, function():void {
-				
 				if (Math.abs(totalOffset) > 0.5)
 					b = !b;
 				
@@ -62,7 +61,8 @@ package threeDimen.primaryStage {
 				
 				Matrix4x4.multiply(camera.projectionMatrix, camera.viewMatrix, projectViewMat);
 				camera.viewport.project(mesh.transform.position, projectViewMat, outPos);
-				monkey.pos(outPos.x, outPos.y);
+				
+				monkey.pos(outPos.x/Laya.stage.clientScaleX, outPos.y/Laya.stage.clientScaleY);//TODO:后期会考虑stage缩放问题。
 			});
 		}
 	

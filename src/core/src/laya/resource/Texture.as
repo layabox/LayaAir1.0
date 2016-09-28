@@ -208,7 +208,7 @@ package laya.resource {
 					}
 				}
 				bitmap = null;
-				if (url) Laya.loader.clearRes(url);
+				if (url && this === Laya.loader.getRes(url)) Laya.loader.clearRes(url);
 				_loaded = false;
 			}
 			//uv = null;

@@ -1351,7 +1351,7 @@ package laya.display {
 					out.push(words[i]);
 				}
 			}
-			_childs.forEach(function(o:Sprite):void {
+			_childs.forEach(function (o:Sprite,index:int,array:Array):void {
 				o._style._enableLayout() && o._addToLayout(out);
 			});
 			return true;

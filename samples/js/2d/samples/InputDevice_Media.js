@@ -1,11 +1,11 @@
 (function()
 {
-	var Text = laya.display.Text;
-	var Media = laya.device.media.Media;
-	var Video = laya.device.media.Video;
-	var Render = laya.renders.Render;
-	var Browser = laya.utils.Browser;
-	var Handler = laya.utils.Handler;
+	var Text = Laya.Text;
+	var Media = Laya.Media;
+	var Video = Laya.Video;
+	var Render = Laya.Render;
+	var Browser = Laya.Browser;
+	var Handler = Laya.Handler;
 
 	var video;
 

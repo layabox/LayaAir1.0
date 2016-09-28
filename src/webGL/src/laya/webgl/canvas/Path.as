@@ -11,10 +11,6 @@ package laya.webgl.canvas {
 	import laya.webgl.utils.IndexBuffer2D;
 	import laya.webgl.utils.VertexBuffer2D;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class Path {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		public var _x:Number = 0;
@@ -63,8 +59,7 @@ package laya.webgl.canvas {
 			return geo;
 		}
 		
-		public function setGeomtry(shape:IShape):void
-		{
+		public function setGeomtry(shape:IShape):void {
 			geomatrys.push(_curGeomatry = shape);
 		}
 		
@@ -84,7 +79,7 @@ package laya.webgl.canvas {
 			var len:int = geomatrys.length;
 			this.offset = si;
 			for (var i:int = geoStart; i < len; i++) {
-				geomatrys[i].getData(ib, vb, vb.byteLength / (5 * 4));
+				geomatrys[i].getData(ib, vb, vb.byteLength / 20);
 			}
 			geoStart = len;//记录下一次 该从哪个位置开始计算几何图形的数据
 			this.count = (ib.byteLength - si) / CONST3D2D.BYTES_PIDX;

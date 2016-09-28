@@ -1,6 +1,6 @@
 (function()
 {
-	var Utils = laya.utils.Utils;
+	var Utils = Laya.Utils;
 
 	(function(){
 			Laya.init(550, 400);

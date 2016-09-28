@@ -3,6 +3,7 @@ package laya.resource {
 	
 	/**
 	 * <code>HTMLImage</code> 用于创建 HTML Image 元素。
+	 * @private
 	 */
 	public class HTMLImage extends FileBitmap {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
@@ -10,8 +11,8 @@ package laya.resource {
 		/**
 		 * 创建一个 <code>HTMLImage</code> 实例。请不要直接使用 new HTMLImage
 		 */
-		public static var create:Function = function(src:String):HTMLImage {
-			return new HTMLImage(src);
+		public static var create:Function = function(src:String, def:* = null):HTMLImage {
+			return new HTMLImage(src, def);
 		}
 		
 		/**异步加载锁*/
@@ -43,15 +44,21 @@ package laya.resource {
 		/**
 		 * 创建一个 <code>HTMLImage</code> 实例。请不要直接使用 new HTMLImage
 		 */
-		public function HTMLImage(src:String) {
+		public function HTMLImage(src:String, def:* = null) {
 			super();
-			_init_(src);
+			_init_(src, def);
 		}
 		
-		protected function _init_(src:String):void {
+		protected function _init_(src:String, def:*):void {
 			_src = src;
 			_source = new Browser.window.Image();
+			if (def) {
+				def.onload && (this.onload = def.onload);
+				def.onerror && (this.onerror = def.onerror);
+				def.onCreate && def.onCreate(this);
+			}
 			if (src.indexOf("data:image") != 0) _source.crossOrigin = "";
+			
 			(src) && (_source.src = src);
 		}
 		
@@ -80,7 +87,7 @@ package laya.resource {
 					_this._source.onload = null;
 					_this.memorySize = _w * _h * 4;
 					_this._recreateLock = false;
-					_this.compoleteCreate();//处理创建完成后相关操作
+					_this.completeCreate();//处理创建完成后相关操作
 				};
 				_source.src = _src;
 			} else {
@@ -89,7 +96,7 @@ package laya.resource {
 				startCreate();
 				memorySize = _w * _h * 4;
 				_recreateLock = false;
-				compoleteCreate();//处理创建完成后相关操作
+				completeCreate();//处理创建完成后相关操作
 			}//资源恢复过程中会走此分支,_source中应为null（对应WebGLImage）,本类get source属性中处理
 		}
 		

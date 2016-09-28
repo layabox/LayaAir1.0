@@ -49,16 +49,16 @@ package threeDimen.primaryStage {
 			
 			var skinAni0:SkinAnimations = skinMesh0.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni0.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-			skinAni0.play(0, 0.6);
+			skinAni0.player.play(0, 0.6);
 			var skinAni1:SkinAnimations = skinMesh1.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni1.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-			skinAni1.play(0, 0.6);
+			skinAni1.player.play(0, 0.6);
 			var skinAni2:SkinAnimations = skinMesh2.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni2.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-			skinAni2.play(0, 0.6);
+			skinAni2.player.play(0, 0.6);
 			var skinAni3:SkinAnimations = skinMesh3.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni3.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-			skinAni3.play(0, 0.6);
+			skinAni3.player.play(0, 0.6);
 		}
 	
 	}

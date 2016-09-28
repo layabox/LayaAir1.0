@@ -1,8 +1,8 @@
 module laya {
-	import Sprite = laya.display.Sprite;
-	import Stage = laya.display.Stage;
-	import Browser = laya.utils.Browser;
-	import WebGL = laya.webgl.WebGL;
+	import Sprite = Laya.Sprite;
+	import Stage = Laya.Stage;
+	import Browser = Laya.Browser;
+	import WebGL = Laya.WebGL;
 
 	export class Physics_Slingshot {
 		private stageWidth: number = 800;

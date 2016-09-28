@@ -1,10 +1,6 @@
 package laya.webgl.shapes {
 	import laya.webgl.utils.Buffer2D;
 	
-	/**
-	 * ...
-	 * @author ...
-	 */
 	public class LoopLine extends BasePoly {
 		
 		private var _points:Array = [];
@@ -16,12 +12,10 @@ package laya.webgl.shapes {
 			var tLastX:Number = -1;
 			var tLastY:Number = -1;
 			var tLen:int = points.length / 2 - 1;
-			for (var i:int = 0; i < tLen; i++)
-			{
+			for (var i:int = 0; i < tLen; i++) {
 				tCurrX = points[i * 2];
 				tCurrY = points[i * 2 + 1];
-				if (Math.abs(tLastX - tCurrX)> 0.01 || Math.abs(tLastY - tCurrY)>0.01)
-				{
+				if (Math.abs(tLastX - tCurrX) > 0.01 || Math.abs(tLastY - tCurrY) > 0.01) {
 					_points.push(tCurrX, tCurrY);
 				}
 				tLastX = tCurrX;
@@ -31,8 +25,7 @@ package laya.webgl.shapes {
 			tCurrY = points[tLen * 2 + 1];
 			tLastX = _points[0];
 			tLastY = _points[1];
-			if (Math.abs(tLastX - tCurrX)> 0.01 || Math.abs(tLastY - tCurrY)>0.01)
-			{
+			if (Math.abs(tLastX - tCurrX) > 0.01 || Math.abs(tLastY - tCurrY) > 0.01) {
 				_points.push(tCurrX, tCurrY);
 			}
 			super(x, y, 0, 0, _points.length / 2, 0, width, color);

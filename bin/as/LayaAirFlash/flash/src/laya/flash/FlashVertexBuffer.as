@@ -13,7 +13,7 @@ package laya.flash {
 	 * @author laya
 	 */
 	public class FlashVertexBuffer extends VertexBuffer2D {
-		public static var create:Function = function(vertexStride:int,bufferUsage:int = 0x88E8 /*WebGLContext.DYNAMIC_DRAW*/):VertexBuffer2D {
+		public static var create:Function = function(vertexStride:int=0,bufferUsage:int = 0x88E8 /*WebGLContext.DYNAMIC_DRAW*/):VertexBuffer2D {
 			return __new(vertexStride,bufferUsage);
 		}
 		
@@ -122,7 +122,7 @@ package laya.flash {
 		override protected function recreateResource():void {
 			startCreate();
 			_glBuffer = this;
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		override public function insertData(data:Array, pos:int):void {

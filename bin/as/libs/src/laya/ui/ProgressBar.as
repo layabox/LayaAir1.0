@@ -202,8 +202,8 @@ package laya.ui {
 		protected function changeValue():void {
 			if (sizeGrid) {
 				var grid:Array = sizeGrid.split(",");
-				var left:Number = Number(grid[0]);
-				var right:Number = Number(grid[2]);
+				var left:Number = Number(grid[3]);
+				var right:Number = Number(grid[1]);
 				var max:Number = width - left - right;
 				var sw:Number = max * _value;
 				_bar.width = left + right + sw;

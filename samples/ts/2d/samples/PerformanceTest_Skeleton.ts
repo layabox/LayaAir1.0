@@ -1,14 +1,14 @@
 module laya {
-    import Templet = laya.ani.bone.Templet;
-    import Skeleton = laya.ani.bone.Skeleton;
-    import Event = laya.events.Event;
-    import GlowFilter = laya.filters.GlowFilter;
-    import Loader = laya.net.Loader;
-    import Texture = laya.resource.Texture;
-    import Browser = laya.utils.Browser;
-    import Handler = laya.utils.Handler;
-    import Stat = laya.utils.Stat;
-    import WebGL = laya.webgl.WebGL;
+    import Templet = Laya.Templet;
+    import Skeleton = Laya.Skeleton;
+    import Event = Laya.Event;
+    import GlowFilter = Laya.GlowFilter;
+    import Loader = Laya.Loader;
+    import Texture = Laya.Texture;
+    import Browser = Laya.Browser;
+    import Handler = Laya.Handler;
+    import Stat = Laya.Stat;
+    import WebGL = Laya.WebGL;
 
     export class PerformanceTest_Skeleton {
         private mArmature: Skeleton;

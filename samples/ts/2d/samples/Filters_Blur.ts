@@ -1,10 +1,10 @@
 module laya {
-	import Sprite = laya.display.Sprite;
-	import Stage = laya.display.Stage;
-	import BlurFilter = laya.filters.BlurFilter;
-	import Browser = laya.utils.Browser;
-	import Handler = laya.utils.Handler;
-	import WebGL = laya.webgl.WebGL;
+	import Sprite = Laya.Sprite;
+	import Stage = Laya.Stage;
+	import BlurFilter = Laya.BlurFilter;
+	import Browser = Laya.Browser;
+	import Handler = Laya.Handler;
+	import WebGL = Laya.WebGL;
 
 	export class Filters_Blur {
 		private apePath: string = "../../res/apes/monkey2.png";

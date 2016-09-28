@@ -1,9 +1,5 @@
 package laya.webgl.resource {
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public interface IMergeAtlasBitmap {
 		function get atlasSource():*;
 		function get allowMerageInAtlas():Boolean;

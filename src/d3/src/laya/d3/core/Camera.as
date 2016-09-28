@@ -15,7 +15,6 @@ package laya.d3.core {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		private static var _tempVector2:Vector2 = new Vector2();
 		
-		
 		/** @private 横纵比。*/
 		private var _aspectRatio:Number;
 		/** @private 在屏幕空间中摄像机的视口。*/
@@ -200,11 +199,41 @@ package laya.d3.core {
 			var finalPoint:Vector2 = _tempVector2;
 			var vp:Viewport = viewport;
 			var nVpPosE:Float32Array = point.elements;
-			var vpPosE:Float32Array= finalPoint.elements;
+			var vpPosE:Float32Array = finalPoint.elements;
 			vpPosE[0] = nVpPosE[0] * vp.width;
 			vpPosE[1] = nVpPosE[1] * vp.height;
 			
 			Picker.calculateCursorRay(finalPoint, viewport, _projectionMatrix, viewMatrix, null, out);
+		}
+		
+		/**
+		 * 计算从世界空间准换三维坐标到屏幕空间。
+		 * @param	position 世界空间的位置。
+		 * @return  out  输出位置。
+		 */
+		public function worldToViewportPoint(position:Vector3, out:Vector3):void {
+			Matrix4x4.multiply(_projectionMatrix, _viewMatrix, _projectionViewMatrix);
+			viewport.project(position, _projectionViewMatrix, out);
+			if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
+			{
+				var outE:Float32Array = out.elements;
+				outE[0] = outE[1] =outE[2] =NaN;
+			}
+		}
+		
+		/**
+		 * 计算从世界空间准换三维坐标到裁切空间。
+		 * @param	position 世界空间的位置。
+		 * @return  out  输出位置。
+		 */
+		public function worldToNormalizedViewportPoint(position:Vector3, out:Vector3):void {
+			Matrix4x4.multiply(_projectionMatrix, _viewMatrix, _projectionViewMatrix);
+			normalizedViewport.project(position, _projectionViewMatrix, out);
+			if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
+			{
+				var outE:Float32Array = out.elements;
+				outE[0] = outE[1] =outE[2] =NaN;
+			}
 		}
 	}
 }

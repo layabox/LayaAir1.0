@@ -43,9 +43,6 @@ package
 		{
 			var ti:TextInput = new TextInput();
 			
-			ti.inputElementXAdjuster = 0;
-			ti.inputElementYAdjuster = 1;
-				
 			ti.skin = skin;
 			ti.size(300, 50);
 			ti.sizeGrid = "0,40,0,40";

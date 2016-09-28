@@ -39,7 +39,7 @@ package threeDimen.advancedStage {
 			setting.minInterpDistance = 0.6;//最大插值距离，超过则插值
 			setting.maxSlerpCount = 128;
 			setting.color = new Vector4(0.8, 0.6, 0.3, 0.8);
-			setting.maxSegments = 1000;
+			setting.maxSegments = 600;
 			
 			glitter = scene.addChild(new Glitter(setting)) as Glitter;
 			

@@ -1,6 +1,6 @@
 module laya {
-	import Sprite = laya.display.Sprite;
-	import Stage = laya.display.Stage;
+	import Sprite = Laya.Sprite;
+	import Stage = Laya.Stage;
 
 	export class SmartScale_Scale_NOBORDER {
 		private rect: Sprite;

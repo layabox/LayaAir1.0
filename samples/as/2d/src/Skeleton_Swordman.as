@@ -23,6 +23,8 @@ package
 
 		private var dataPath:String = "../../../../res/skeleton/SwordsMan/SwordsMan_1.sk";
 		private var texturePath:String = "../../../../res/skeleton/SwordsMan/texture.png";
+		//private var dataPath:String = "../../../../res/skeleton/newDragon/dragon.sk";
+		//private var texturePath:String = "../../../../res/skeleton/newDragon/dragon.png";
 
 		private var factory:Templet;
 

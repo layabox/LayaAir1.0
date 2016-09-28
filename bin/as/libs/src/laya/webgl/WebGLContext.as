@@ -1,10 +1,6 @@
 package laya.webgl
 {
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class WebGLContext
 	{
 		/*[DISBALEOUTCONST-BEGIN]*/

@@ -61,6 +61,7 @@ package laya.display {
 				}
 				from._saveToCmd = null;
 				from.drawTexture = function(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null):void {
+					if (!tex) return;
 					if (!(tex.loaded && tex.bitmap && tex.source))//source内调用tex.active();
 					{
 						return;
@@ -79,6 +80,7 @@ package laya.display {
 					this.drawImageM(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x, y, width, height, m);
 				}
 				from.fillTexture = function(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, type:String = "repeat", offset:Point = null):void {
+					if (!tex) return;
 					if (tex.loaded) {
 						var ctxi:* = Render._context.ctx;
 						var w:Number = tex.bitmap.width, h:Number = tex.bitmap.height, uv:Array = tex.uv;

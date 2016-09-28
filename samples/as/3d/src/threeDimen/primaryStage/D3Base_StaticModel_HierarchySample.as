@@ -37,8 +37,8 @@ package threeDimen.primaryStage {
 				var meshSprite:MeshSprite3D = sprite.getChildAt(0) as MeshSprite3D;
 				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
 				mesh.once(Event.LOADED, null, function(mesh:BaseMesh):void {
-					for (var i:int = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
-						var material:Material = meshSprite.meshRender.shadredMaterials[i];
+					for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+						var material:Material = meshSprite.meshRender.sharedMaterials[i];
 						material.once(Event.LOADED, null, function(mat:Material):void{
 								mat.albedo = new  Vector4(3.5,3.5,3.5,1.0);                              
 						});

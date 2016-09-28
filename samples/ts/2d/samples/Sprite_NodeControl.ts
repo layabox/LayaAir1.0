@@ -1,9 +1,9 @@
 module laya {
-    import Sprite = laya.display.Sprite;
-    import Stage = laya.display.Stage;
-    import Event = laya.events.Event;
-    import Browser = laya.utils.Browser;
-    import WebGL = laya.webgl.WebGL;
+    import Sprite = Laya.Sprite;
+    import Stage = Laya.Stage;
+    import Event = Laya.Event;
+    import Browser = Laya.Browser;
+    import WebGL = Laya.WebGL;
 
     export class Sprite_NodeControl {
         private ape1: Sprite;

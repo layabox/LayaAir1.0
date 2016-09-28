@@ -1,10 +1,10 @@
 module laya
 {
-	import Media = laya.device.media.Media;
-	import Video = laya.device.media.Video;
-	import Text = laya.display.Text;
-	import Browser = laya.utils.Browser;
-	import Handler = laya.utils.Handler;
+	import Media = Laya.Media;
+	import Video = Laya.Video;
+	import Text = Laya.Text;
+	import Browser = Laya.Browser;
+	import Handler = Laya.Handler;
 	
 	/**
 	 * ...

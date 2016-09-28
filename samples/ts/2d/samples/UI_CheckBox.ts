@@ -1,8 +1,8 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import CheckBox = laya.ui.CheckBox;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import CheckBox = Laya.CheckBox;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_CheckBox {
         private COL_AMOUNT: number = 2;

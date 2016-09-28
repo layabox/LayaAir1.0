@@ -2,10 +2,6 @@ package laya.webgl.utils {
 	import laya.renders.Render;
 	import laya.webgl.WebGLContext;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class IndexBuffer2D extends Buffer2D {
 		//! 全局的四边形索引缓冲区.
 		public static var QuadrangleIB:IndexBuffer2D;

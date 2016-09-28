@@ -62,7 +62,6 @@ package
 			input.color = "#FFFFFF";
 			input.padding = [0, 4, 0, 4];
 			
-			input.inputElementYAdjuster = 1;
 			Laya.stage.addChild(input);
 			return input;
 		}

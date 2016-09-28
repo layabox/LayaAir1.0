@@ -61,8 +61,8 @@ package laya.net {
 		 * @return 此 LoaderManager 对象。
 		 */
 		public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true):LoaderManager {
-			if (url is Array) return _loadAssets(url as Array, complete, progress, priority, cache);
-			url = URL.formatURL(url);
+			if (url is Array) return _loadAssets(url as Array, complete, progress, type, priority, cache);
+			url = Loader._parseURL(url);/*url = URL.formatURL(url);*/
 			var content:* = Loader.getRes(url);
 			if (content != null) {
 				complete && complete.runWith(content);
@@ -223,14 +223,15 @@ package laya.net {
 		 * @private
 		 * 加载数组里面的资源。
 		 * @param arr 简单：["a.png","b.png"]，复杂[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}]*/
-		private function _loadAssets(arr:Array, complete:Handler = null, progress:Handler = null, priority:int = 1, cache:Boolean = true):LoaderManager {
+		private function _loadAssets(arr:Array, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true):LoaderManager {
 			var itemCount:int = arr.length;
 			var loadedSize:int = 0;
 			var totalSize:int = 0;
 			var items:Array = [];
+			var defaultType:String = type || Loader.IMAGE;
 			for (var i:int = 0; i < itemCount; i++) {
 				var item:Object = arr[i];
-				if (item is String) item = {url: item, type: Loader.IMAGE, size: 1, priority: priority};
+				if (item is String) item = {url: item, type: defaultType, size: 1, priority: priority};
 				if (!item.size) item.size = 1;
 				item.progress = 0;
 				totalSize += item.size;

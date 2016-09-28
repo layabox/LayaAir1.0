@@ -5,10 +5,6 @@ package laya.webgl.text {
 	import laya.utils.WordText;
 	import laya.webgl.canvas.WebGLContext2D;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class DrawText {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		private static var _charsTemp:Vector.<DrawTextChar>;
@@ -26,7 +22,8 @@ package laya.webgl.text {
 		//private static var _charsCacheCount:int=0;
 		///**最大字符缓存数量*/
 		//public static var maxCacheCharsCount:int = 10;
-		private static var _charSeg : ICharSegment = null; 
+		private static var _charSeg:ICharSegment = null;
+		
 		public static function __init__():void {
 			_charsTemp = new Vector.<DrawTextChar>;
 			_drawValue = new CharValue();
@@ -37,7 +34,7 @@ package laya.webgl.text {
 		 * 项目层根据当前的语言特性，设置自己的分词器，如泰语需要特殊的处理
 		 * @param	charseg
 		 */
-		public static function customCharSeg( charseg: ICharSegment ) : void {
+		public static function customCharSeg(charseg:ICharSegment):void {
 			_charSeg = charseg;
 		}
 		
@@ -47,7 +44,7 @@ package laya.webgl.text {
 			//_charsCacheCount ++;
 			return _charsCache[id] = DrawTextChar.createOneChar(char, drawValue);
 		}
-				
+		
 		private static function _drawSlow(save:Array, ctx:WebGLContext2D, txt:String, words:Vector.<HTMLChar>, curMat:Matrix, font:FontInContext, textAlign:String, fillColor:String, borderColor:String, lineWidth:int, x:Number, y:Number, sx:Number, sy:Number):void {
 			//if (_charsCacheCount > maxCacheCharsCount) {
 			//_charsCacheCount = 0;
@@ -72,26 +69,26 @@ package laya.webgl.text {
 				}
 			} else {
 				// River: 使用新的分词模式来解决类似于泰文的问题
-				if ( txt is WordText )
-					_charSeg.textToSpit( (txt as WordText).toString() );
+				if (txt is WordText)
+					_charSeg.textToSpit((txt as WordText).toString());
 				else
-					_charSeg.textToSpit( txt );
+					_charSeg.textToSpit(txt);
 				
-				var len : int = _charSeg.length();
+				var len:int = _charSeg.length();
 				chars.length = len;
 				for (i = 0, n = len; i < n; i++) {
 					id = _charSeg.getCharCode(i) + drawValue.txtID;
 					chars[i] = oneChar = _charsCache[id] || getChar(_charSeg.getChar(i), id, drawValue);
 					oneChar.active();
 					width += oneChar.width;
-				}							
+				}
 			}
 			
 			var dx:Number = 0;
 			if (textAlign !== null && textAlign !== "left")
 				dx = -(textAlign == "center" ? (width / 2) : width);
 			
-			var uv:Array, bdSz:Number, texture:Texture, value:Array,saveLength:int = 0;
+			var uv:Array, bdSz:Number, texture:Texture, value:Array, saveLength:int = 0;
 			if (words) {
 				for (i = 0, n = chars.length; i < n; i++) {
 					oneChar = chars[i];
@@ -109,7 +106,7 @@ package laya.webgl.text {
 						bdSz = oneChar.borderSize;
 						texture = oneChar.texture;
 						ctx._drawText(texture, x + dx - bdSz, y - bdSz, texture.width, texture.height, curMat, 0, 0, 0, 0);
-						save && (value=save[saveLength++],value || (value=save[saveLength-1]=[]), value[0] = texture, value[1] = dx - bdSz, value[2] = -bdSz);
+						save && (value = save[saveLength++], value || (value = save[saveLength - 1] = []), value[0] = texture, value[1] = dx - bdSz, value[2] = -bdSz);
 					}
 					dx += oneChar.width;
 				}
@@ -151,16 +148,12 @@ package laya.webgl.text {
 			if (words) {
 				_drawSlow(null, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy);
 			} else {
-				if (txt.toUpperCase===null)
-				{
-					var idNum:Number = sx + sy*100000;
+				if (txt.toUpperCase === null) {
+					var idNum:Number = sx + sy * 100000;
 					var myCache:WordText = txt as WordText;
-					if (!myCache.changed && myCache.id === idNum)
-					{
+					if (!myCache.changed && myCache.id === idNum) {
 						_drawFast(myCache.save, ctx, curMat, x, y);
-					}
-					else
-					{
+					} else {
 						myCache.id = idNum;
 						myCache.changed = false;
 						_drawSlow(myCache.save, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy);
@@ -176,7 +169,7 @@ package laya.webgl.text {
 					_drawFast(cache, ctx, curMat, x, y);
 				} else {
 					_textsCache.__length || (_textsCache.__length = 0);
-					if (_textsCache.__length >Config.WebGLTextCacheCount) {
+					if (_textsCache.__length > Config.WebGLTextCacheCount) {
 						_textsCache = {};
 						_textsCache.__length = 0;
 						_curPoolIndex = 0;

@@ -3,6 +3,7 @@ package laya.d3.component.animation {
 	import laya.ani.AnimationState;
 	import laya.ani.KeyframesAniTemplet;
 	import laya.d3.component.Component3D;
+	import laya.d3.core.Sprite3D;
 	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.net.URL;
@@ -20,10 +21,10 @@ package laya.d3.component.animation {
 	public class KeyframeAnimations extends Component3D {
 		/** @private */
 		protected var _url:String;
+		/**动画播放器。*/
+		protected var _player:AnimationPlayer;
 		/** @private */
 		public var _templet:KeyframesAniTemplet;
-		/**动画播放器。*/
-		public var player:AnimationPlayer;
 		
 		/**
 		 * 获取url地址。
@@ -34,12 +35,20 @@ package laya.d3.component.animation {
 		}
 		
 		/**
+		 * 获取动画播放器。
+		 * @return 动画播放器。
+		 */
+		public function get player():AnimationPlayer {
+			return _player;
+		}
+		
+		/**
 		 * 设置url地址。
 		 * @param value 地址。
 		 */
 		public function set url(value:String):void {
-			if (player.state !== AnimationState.stopped)
-				player.stop(true);
+			if (_player.state !== AnimationState.stopped)
+				_player.stop(true);
 			
 			_url = URL.formatURL(value);
 			
@@ -49,25 +58,28 @@ package laya.d3.component.animation {
 			if (!templet) {
 				templet = Resource.animationCache[_url] = new KeyframesAniTemplet();
 				_templet = templet;
-				player.templet = templet;
+				_player.templet = templet;
 				var onComp:Function = function(data:ArrayBuffer):void {
 					var arraybuffer:ArrayBuffer = data;
-					templet.parse(arraybuffer, player.cacheFrameRate);
+					templet.parse(arraybuffer);
 				}
 				var loader:Loader = new Loader();
 				loader.once(Event.COMPLETE, null, onComp);
 				loader.load(_url, Loader.BUFFER);
 			} else {
 				_templet = templet;
-				player.templet = templet
+				_player.templet = templet
 			}
-			event(Event.ANIMATION_CHANGED,this);
+	
+			event(Event.ANIMATION_CHANGED, this);
 			
 			if (!templet.loaded)
-				templet.once(Event.LOADED, null, function(e:KeyframesAniTemplet):void { _this.event(Event.LOADED, _this)
+				templet.once(Event.LOADED, null, function(e:KeyframesAniTemplet):void {
+					_this.event(Event.LOADED, _this)
 				});
-			else
+			else {
 				this.event(Event.LOADED, this);
+			}
 		}
 		
 		/**
@@ -75,7 +87,7 @@ package laya.d3.component.animation {
 		 * @return 播放器帧率。
 		 */
 		public function get currentFrameIndex():int {
-			return player.currentKeyframeIndex;
+			return _player.currentKeyframeIndex;
 		}
 		
 		/**
@@ -83,43 +95,15 @@ package laya.d3.component.animation {
 		 * @return 动画索引。
 		 */
 		public function get currentAnimationClipIndex():int {
-			return player.currentAnimationClipIndex;
+			return _player.currentAnimationClipIndex;
 		}
-		
-		/**
-		 * 获取播放器是否暂停。
-		 * @return 是否暂停。
-		 */
-		public function get paused():Boolean {
-			return player.paused;
-		}
-		
-		/**
-		 * 设置播放器是否暂停。
-		 * @param value 是否暂停。
-		 */
-		public function set paused(value:Boolean):void {
-			player.paused = value;
-		}
-		
-		/**
-		 * 获取播放器的缓存帧率。
-		 * @return 缓存帧率。
-		 */
-		public function get cacheFrameRate():int {
-			return player.cacheFrameRate;
-		}
-		
-		//public function set cacheFrameRate(value:int):void {
-		//player.cacheFrameRate = value;
-		//}
 		
 		/**
 		 * 获取播放器当前动画的节点数量。
 		 * @return 节点数量。
 		 */
 		public function get NodeCount():int {
-			return _templet.getNodeCount(player.currentAnimationClipIndex);
+			return _templet.getNodeCount(_player.currentAnimationClipIndex);
 		}
 		
 		/**
@@ -127,19 +111,72 @@ package laya.d3.component.animation {
 		 */
 		public function KeyframeAnimations() {
 			super();
-			player = new AnimationPlayer();
+			_player = new AnimationPlayer();
 		}
 		
 		/**
-		 * 播放动画。
-		 * @param	index 动画索引。
-		 * @param	playbackRate 播放速率。
-		 * @param	duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
-		 * @param	playStart 播放的起始时间位置。
-		 * @param	playEnd 播放的结束时间位置。（0为动画一次循环的最长结束时间位置）。
+		 * @private
 		 */
-		public function play(index:int = 0, playbackRate:Number = 1.0, overallDuration:Number = Number.MAX_VALUE, playStart:Number = 0, playEnd:Number =0):void {
-			player.play(index, playbackRate, overallDuration,playStart,playEnd);
+		private function _updateAnimtionPlayer():void {
+			_player.update(Laya.timer.delta);//为避免事件破坏for循环问题,需最先执行（如不则内部可能触发Stop事件等，如事件中加载新动画，可能_templet未加载完成，导致BUG）
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _addUpdatePlayerToTimer():void {
+			Laya.timer.frameLoop(1, this, _updateAnimtionPlayer);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _removeUpdatePlayerToTimer():void {
+			Laya.timer.clear(this, _updateAnimtionPlayer);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _onOwnerEnableChanged(enable:Boolean):void {
+			if (_owner.isInStage) {
+				if (enable)
+					_addUpdatePlayerToTimer();
+				else
+					_removeUpdatePlayerToTimer();
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _onIsInStageChanged(isInStage:Boolean):void {
+			if (_owner.enable) {
+				if (isInStage)
+					_addUpdatePlayerToTimer();
+				else
+					_removeUpdatePlayerToTimer();
+			}
+		}
+		
+		/**
+		 * @private
+		 * 载入组件时执行
+		 */
+		override public function _load(owner:Sprite3D):void {
+			(_owner.isInStage && _owner.enable) && (_addUpdatePlayerToTimer());
+			_owner.on(Event.ENABLED_CHANGED, this, _onOwnerEnableChanged);
+			_owner.on(Event.INSTAGE_CHANGED, this, _onIsInStageChanged);
+		}
+		
+		/**
+		 * @private
+		 * 卸载组件时执行
+		 */
+		override public function _unload(owner:Sprite3D):void {
+			(_owner.isInStage && _owner.enable) && (_removeUpdatePlayerToTimer());
+			_owner.off(Event.ENABLED_CHANGED, this, _onOwnerEnableChanged);
+			_owner.off(Event.INSTAGE_CHANGED, this, _onIsInStageChanged);
 		}
 		
 		/**
@@ -147,7 +184,7 @@ package laya.d3.component.animation {
 		 * @param	immediate 是否立即停止
 		 */
 		public function stop(immediate:Boolean = true):void {
-			player.stop(immediate);
+			_player.stop(immediate);
 		}
 	
 	}

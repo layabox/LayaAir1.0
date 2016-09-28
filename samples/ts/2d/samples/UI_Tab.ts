@@ -1,8 +1,8 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import Tab = laya.ui.Tab;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import Tab = Laya.Tab;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_Tab {
         private skins: Array<string> = ["../../res/ui/tab1.png", "../../res/ui/tab2.png"];

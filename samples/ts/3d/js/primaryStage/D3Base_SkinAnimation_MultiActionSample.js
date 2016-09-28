@@ -24,16 +24,16 @@ var SkinAnimation_MultiActionSample = (function () {
         var skinMesh3 = rootSkinMesh.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/nvXia/A02P1V1F001AX01@yequangongjinv-DEFAULT3.lm")));
         this.skinAni0 = skinMesh0.addComponent(Laya.SkinAnimations);
         this.skinAni0.url = "../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-        this.skinAni0.play(0, 0.6);
+        this.skinAni0.player.play(0, 0.6);
         this.skinAni1 = skinMesh1.addComponent(Laya.SkinAnimations);
         this.skinAni1.url = "../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-        this.skinAni1.play(0, 0.6);
+        this.skinAni1.player.play(0, 0.6);
         this.skinAni2 = skinMesh2.addComponent(Laya.SkinAnimations);
         this.skinAni2.url = "../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-        this.skinAni2.play(0, 0.6);
+        this.skinAni2.player.play(0, 0.6);
         this.skinAni3 = skinMesh3.addComponent(Laya.SkinAnimations);
         this.skinAni3.url = "../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-        this.skinAni3.play(0, 0.6);
+        this.skinAni3.player.play(0, 0.6);
     }
     SkinAnimation_MultiActionSample.prototype.loadUI = function () {
         var _this = this;
@@ -59,23 +59,23 @@ var SkinAnimation_MultiActionSample = (function () {
         switch (this.currentState) {
             case 0:
                 this.skinAni0.url = "../../res/threeDimen/skinModel/nvXia/yequanaidanv.ani";
-                this.skinAni0.play();
+                this.skinAni0.player.play();
                 this.skinAni1.url = "../../res/threeDimen/skinModel/nvXia/yequanaidanv.ani";
-                this.skinAni1.play();
+                this.skinAni1.player.play();
                 this.skinAni2.url = "../../res/threeDimen/skinModel/nvXia/yequanaidanv.ani";
-                this.skinAni2.play();
+                this.skinAni2.player.play();
                 this.skinAni3.url = "../../res/threeDimen/skinModel/nvXia/yequanaidanv.ani";
-                this.skinAni3.play();
+                this.skinAni3.player.play();
                 break;
             case 1:
                 this.skinAni0.url = "../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-                this.skinAni0.play(0, 0.6);
+                this.skinAni0.player.play(0, 0.6);
                 this.skinAni1.url = "../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-                this.skinAni1.play(0, 0.6);
+                this.skinAni1.player.play(0, 0.6);
                 this.skinAni2.url = "../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-                this.skinAni2.play(0, 0.6);
+                this.skinAni2.player.play(0, 0.6);
                 this.skinAni3.url = "../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
-                this.skinAni3.play(0, 0.6);
+                this.skinAni3.player.play(0, 0.6);
                 break;
         }
         this.currentState++;

@@ -1,79 +1,132 @@
 package laya.d3.graphics {
+	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.Material;
+	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
+	import laya.d3.core.scene.BaseScene;
 	import laya.utils.Stat;
 	
 	/**
 	 * @private
-	 * <code>StaticBatchManager</code> 类用于创建静态批处理管理员。
+	 * <code>StaticBatchManager</code> 类用于管理静态批处理。
 	 */
 	public class StaticBatchManager {
-		private static var maxVertexDeclaration:int = 1000;//需在顶点定义类中加异常判断警告
-		private static var maxMaterialCount:int = Math.floor(2147483647 / 1000);//需在材质中加异常判断警告
-		
-		private var _renderQueue:RenderQueue;
-		private var _keys:Vector.<int>;
-		private var _staticBatchs:Vector.<StaticBatch>;
-		
-		public function StaticBatchManager(renderQueue:RenderQueue) {
-				_renderQueue = renderQueue;
-			_keys = new Vector.<int>();
-			_staticBatchs = new Vector.<StaticBatch>();
+		private static function _sortPrepareStaticBatch(a:RenderElement, b:RenderElement):* {
+			var id:int = a._mainSortID - b._mainSortID;
+			return (id === 0) ? (a.renderObj.triangleCount - b.renderObj.triangleCount) : id;//TODO:是否可以去掉
 		}
 		
-		public function getStaticBatchQneue(_vertexDeclaration:VertexDeclaration, material:Material):StaticBatch {
+		private var _staticBatches:*;
+		private var _prepareStaticBatchCombineElements:Array;
 		
+		public function StaticBatchManager() {
+			_staticBatches = {};
+			_prepareStaticBatchCombineElements = [];
+		}
+		
+		/**完成合并*/
+		private function _finshCombine():void {
+			for (var key:String in _staticBatches)
+				_staticBatches[key]._finshCombine();
+		}
+		
+		public function getStaticBatch(rootSprite:Sprite3D, _vertexDeclaration:VertexDeclaration, material:Material, number:int):StaticBatch {
 			var staticBatch:StaticBatch;
-			var key:int = material.id * VertexDeclaration._maxVertexDeclarationBit + _vertexDeclaration.id;
+			var key:String = rootSprite.id.toString() + material.id.toString() + _vertexDeclaration.id.toString() + number;
 			
-			if (_keys.indexOf(key) === -1) {
-				_keys.push(key);
-				
-				staticBatch = new StaticBatch(_renderQueue,_vertexDeclaration, material);
-				_staticBatchs.push(staticBatch);
+			if (!_staticBatches[key]) {
+				_staticBatches[key] = staticBatch = new StaticBatch(rootSprite, _vertexDeclaration, material);
 			} else {
-				var index:int = _keys.indexOf(key);
-				
-				staticBatch = _staticBatchs[index];
+				staticBatch = _staticBatches[key];
 			}
+			
 			return staticBatch;
 		}
 		
 		/** @private 通常应在所有getStaticBatchQneue函数相关操作结束后执行*/
 		public function _garbageCollection():void {
-			for (var i:int = 0, n:int = _keys.length; i < n; i++) {
-				if (_staticBatchs[i]._useFPS < Stat.loopCount) {
-					_keys.splice(i, 1);
-					_staticBatchs.splice(i, 1);
-					i--;
+			for (var key:String in _staticBatches)
+				if (_staticBatches[key].combineRenderElementsCount === 0)//没有子物体的时候删除
+					delete _staticBatches[key];
+		}
+		
+		/** @private */
+		public function _addPrepareRenderElement(renderElement:RenderElement):void {
+			_prepareStaticBatchCombineElements.push(renderElement);
+		}
+		
+		/** @private */
+		public function _finishCombineStaticBatch(rootSprite:Sprite3D):void {
+			_prepareStaticBatchCombineElements.sort(_sortPrepareStaticBatch);
+			
+			var lastMaterial:Material;
+			var lastVertexDeclaration:VertexDeclaration;
+			var lastCanMerage:Boolean=false;
+			var curStaticBatch:StaticBatch;
+			
+			var renderElement:RenderElement;
+			var lastRenderObj:RenderElement;
+			var vb:VertexBuffer3D;
+			var oldStaticBatch:StaticBatch;
+			
+			var batchNumber:int = 0;
+			for (var i:int = 0, n:int = _prepareStaticBatchCombineElements.length; i < n; i++) {
+				renderElement = _prepareStaticBatchCombineElements[i];
+				vb = renderElement.renderObj.getVertexBuffer(0);
+				if ((lastVertexDeclaration === vb.vertexDeclaration) && (lastMaterial === renderElement._material)) {
+					if (!lastCanMerage) {
+						lastRenderObj = _prepareStaticBatchCombineElements[i - 1];
+						var lastRenderElement:IRenderable = lastRenderObj.renderObj;
+						var curRenderElement:IRenderable = renderElement.renderObj;
+						if (((lastRenderElement.getVertexBuffer().vertexCount + curRenderElement.getVertexBuffer().vertexCount) > StaticBatch.maxVertexCount)) {
+							lastCanMerage = false;
+						} else {
+							curStaticBatch = getStaticBatch(rootSprite, lastVertexDeclaration, lastMaterial, batchNumber);
+							
+							oldStaticBatch = lastRenderObj._staticBatch;
+							(oldStaticBatch) && (oldStaticBatch !== curStaticBatch) && (oldStaticBatch._deleteCombineRenderObj(lastRenderObj));
+							curStaticBatch._addCombineRenderObj(lastRenderObj);
+							
+							oldStaticBatch = renderElement._staticBatch;
+							(oldStaticBatch) && (oldStaticBatch !== curStaticBatch) && (oldStaticBatch._deleteCombineRenderObj(renderElement));
+							curStaticBatch._addCombineRenderObj(renderElement);
+							lastCanMerage = true;
+						}
+					} else {
+						if (!curStaticBatch._addCombineRenderObjTest(renderElement)) {
+							lastCanMerage = false;
+							batchNumber++;//修改编号，区分批处理。
+						} else {
+							oldStaticBatch = renderElement._staticBatch;
+							(oldStaticBatch) && (oldStaticBatch !== curStaticBatch) && (oldStaticBatch._deleteCombineRenderObj(renderElement));
+							curStaticBatch._addCombineRenderObj(renderElement)
+						}
+					}
+				} else {
+					lastCanMerage = false;
+					batchNumber = 0;
 				}
+				lastMaterial = renderElement._material;
+				lastVertexDeclaration = vb.vertexDeclaration;
 			}
+			_garbageCollection();
+			_finshCombine();
+			_prepareStaticBatchCombineElements.length = 0;
 		}
 		
-		/**完成合并*/
-		public function _finshCombine():void {
-			for (var i:int = 0, n:int = _keys.length; i < n; i++) {
-				_staticBatchs[i]._finshCombine();
-			}
-		}
-		
-		/**完成合并*/
 		public function _clearRenderElements():void {
-			for (var i:int = 0, n:int = _keys.length; i < n; i++) {
-				_staticBatchs[i]._clearRenderElements();
-			}
+			for (var key:String in _staticBatches)
+				_staticBatches[key]._clearRenderElements();
 		}
 		
-		/**刷新*/
-		public function _getRenderElements(renderElements:Array):void {
-			for (var i:int = 0; i < _keys.length; i++) 
-				_staticBatchs[i]._getRenderElement(renderElements);
+		public function _addToRenderQueue(scene:BaseScene):void {
+			for (var key:String in _staticBatches)
+				_staticBatches[key]._addToRenderQueue(scene);
 		}
 		
 		public function dispose():void {
-			_keys.length = 0;
-			_staticBatchs.length = 0;
+			_staticBatches = null;
 		}
 	
 	}

@@ -1,11 +1,11 @@
 (function()
 {
-	var Sprite  = laya.display.Sprite;
-	var Stage   = laya.display.Stage;
-	var Event   = laya.events.Event;
-	var Browser = laya.utils.Browser;
-	var Tween   = laya.utils.Tween;
-	var WebGL   = laya.webgl.WebGL;
+	var Sprite  = Laya.Sprite;
+	var Stage   = Laya.Stage;
+	var Event   = Laya.Event;
+	var Browser = Laya.Browser;
+	var Tween   = Laya.Tween;
+	var WebGL   = Laya.WebGL;
 
 	//swipe滚动范围
 	var TrackLength = 200;

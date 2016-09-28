@@ -1,8 +1,8 @@
 module laya {
-    import Input = laya.display.Input;
-    import Stage = laya.display.Stage;
-    import Browser = laya.utils.Browser;
-    import WebGL = laya.webgl.WebGL;
+    import Input = Laya.Input;
+    import Stage = Laya.Stage;
+    import Browser = Laya.Browser;
+    import WebGL = Laya.WebGL;
 
     export class Text_InputMultiline {
 
@@ -21,10 +21,6 @@ module laya {
 
         private createInput(): void {
             var inputText: Input = new Input();
-
-            // 输入期间输入框的位置偏移
-            inputText.inputElementXAdjuster = -2;
-            inputText.inputElementYAdjuster = -1;
 
             // 移动端输入提示符
             inputText.prompt = "Type some word...";

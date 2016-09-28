@@ -19,7 +19,6 @@ package threeDimen.advancedStage {
 	import laya.utils.Handler;
 	import laya.utils.Stat;
 	import laya.webgl.resource.WebGLImage;
-	import threeDimen.common.SkySampleScript;
 	import threeDimen.common.VRCameraMoveScript;
 	
 	/** @private */
@@ -52,7 +51,7 @@ package threeDimen.advancedStage {
 			
 			var material:Material = new Material();
 			material.renderMode =Material.RENDERMODE_OPAQUEDOUBLEFACE;
-			mesh.meshRender.shadredMaterial = material;
+			mesh.meshRender.sharedMaterial = material;
 			
 			Laya.loader.load("../../../../res/threeDimen/panorama/panorama.jpg", Handler.create(null, function(texture:Texture):void {
 				(texture.bitmap as WebGLImage).mipmap = true;

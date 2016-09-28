@@ -52,7 +52,7 @@ package threeDimen.advancedStage {
 			skinMesh.transform.localRotationEuler = rotation;
 			skinAni = skinMesh.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni.url = "../../../../res/threeDimen/skinModel/dude/dude.ani";
-			skinAni.play();
+			skinAni.player.play();
 			
 			attacthPoint = skinMesh.addComponent(AttachPoint) as AttachPoint;
 			attacthPoint.attachBones.push("L_Middle1");

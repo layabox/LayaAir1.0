@@ -1,14 +1,9 @@
 package laya.webgl.resource {
 	import laya.maths.Arith;
 	import laya.resource.Bitmap;
-	import laya.resource.Texture;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class WebGLRenderTarget extends Bitmap {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		private var _frameBuffer:*;
@@ -110,7 +105,7 @@ package laya.webgl.resource {
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			gl.bindRenderbuffer(WebGLContext.RENDERBUFFER, null);
 			memorySize = _w * _h * 4;
-			compoleteCreate();
+			completeCreate();
 		
 		}
 		

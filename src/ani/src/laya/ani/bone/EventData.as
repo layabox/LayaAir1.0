@@ -1,11 +1,6 @@
-package laya.ani.bone 
-{
-	/**
-	 * ...
-	 * @author 
-	 */
-	public class EventData 
-	{
+package laya.ani.bone {
+	
+	public class EventData {
 		
 		public var name:String;
 		public var intValue:int;
@@ -13,11 +8,10 @@ package laya.ani.bone
 		public var stringValue:String;
 		public var time:Number;
 		
-		public function EventData() 
-		{
-			
-		}
+		public function EventData() {
 		
+		}
+	
 	}
 
 }

@@ -1,10 +1,10 @@
 module laya {
-	import Sprite = laya.display.Sprite;
-	import Stage = laya.display.Stage;
-	import Texture = laya.resource.Texture;
-	import Handler = laya.utils.Handler;
-	import Browser= laya.utils.Browser;
-	import WebGL = laya.webgl.WebGL;
+	import Sprite = Laya.Sprite;
+	import Stage = Laya.Stage;
+	import Texture = Laya.Texture;
+	import Handler = Laya.Handler;
+	import Browser= Laya.Browser;
+	import WebGL = Laya.WebGL;
 
 	export class Sprite_SwitchTexture {
 		private texture1: string = "../../res/apes/monkey2.png";

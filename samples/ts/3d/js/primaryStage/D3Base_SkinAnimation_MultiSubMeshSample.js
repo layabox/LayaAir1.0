@@ -19,7 +19,7 @@ var SkinAnimation_MultiSubMeshSample = (function () {
         this.skinMesh.transform.localRotationEuler = new Laya.Vector3(0, 3.14, 0);
         this.skinAni = this.skinMesh.addComponent(Laya.SkinAnimations);
         this.skinAni.url = "../../res/threeDimen/skinModel/dude/dude.ani";
-        this.skinAni.play();
+        this.skinAni.player.play();
     }
     return SkinAnimation_MultiSubMeshSample;
 }());

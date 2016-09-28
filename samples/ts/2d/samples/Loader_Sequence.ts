@@ -1,6 +1,6 @@
 module laya {
-	import Texture = laya.resource.Texture;
-	import Handler = laya.utils.Handler;
+	import Texture = Laya.Texture;
+	import Handler = Laya.Handler;
 
 	export class Loader_Sequence {
 		private numLoaded: number = 0;

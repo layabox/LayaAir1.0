@@ -1,8 +1,8 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import ProgressBar = laya.ui.ProgressBar;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import ProgressBar = Laya.ProgressBar;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_ProgressBar {
         private progressBar: ProgressBar;

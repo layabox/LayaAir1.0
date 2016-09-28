@@ -1,27 +1,8 @@
-///////////////////////////////////////////////////////////
-//  Scene2D.as
-//  Macromedia ActionScript Implementation of the Class Scene2D
-//  Created on:      2016-8-16 上午10:27:04
-//  Original author: ww
-///////////////////////////////////////////////////////////
-
-package laya.scene
-{
+package laya.scene {
 	import laya.display.Sprite;
 	import laya.utils.ClassUtils;
-	
-	
-	/**
-	 * 
-	 * @author ww
-	 * @version 1.0
-	 * 
-	 * @created  2016-8-16 上午10:27:04
-	 */
-	public class Scene2D extends Sprite
-	{
-		public function Scene2D()
-		{
+	public class Scene2D extends Sprite {
+		public function Scene2D() {
 			super();
 			createChildren();
 		}
@@ -33,9 +14,8 @@ package laya.scene
 		protected function createChildren():void {
 		}
 		
-		protected function createView(sceneData:Object):void
-		{
-			ClassUtils.createByJson(sceneData,this,this);
+		protected function createView(sceneData:Object):void {
+			ClassUtils.createByJson(sceneData, this, this);
 		}
 	}
 }

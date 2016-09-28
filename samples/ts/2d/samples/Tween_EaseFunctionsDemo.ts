@@ -1,15 +1,15 @@
 module laya {
-    import Input = laya.display.Input;
-    import Sprite = laya.display.Sprite;
-    import Stage = laya.display.Stage;
-    import Text = laya.display.Text;
-    import Event = laya.events.Event;
-    import List = laya.ui.List;
-    import Browser = laya.utils.Browser;
-    import Ease = laya.utils.Ease;
-    import Handler = laya.utils.Handler;
-    import Tween = laya.utils.Tween;
-    import WebGL = laya.webgl.WebGL;
+    import Input = Laya.Input;
+    import Sprite = Laya.Sprite;
+    import Stage = Laya.Stage;
+    import Text = Laya.Text;
+    import Event = Laya.Event;
+    import List = Laya.List;
+    import Browser = Laya.Browser;
+    import Ease = Laya.Ease;
+    import Handler = Laya.Handler;
+    import Tween = Laya.Tween;
+    import WebGL = Laya.WebGL;
 
     export class Tween_EaseFunctionsDemo {
         private character: Sprite;

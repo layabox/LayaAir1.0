@@ -30,10 +30,6 @@
 		// 移动端输入提示符
 		inputText.prompt = "Type some word...";
 
-		// 输入期间输入框的位置偏移
-		inputText.inputElementXAdjuster = 0;
-		inputText.inputElementYAdjuster = 1;
-
 		// 设置字体样式
 		inputText.bold = true;
 		inputText.bgColor = "#666666";

@@ -1,6 +1,6 @@
 module laya {
-	import Loader = laya.net.Loader;
-	import Handler = laya.utils.Handler;
+	import Loader = Laya.Loader;
+	import Handler = Laya.Handler;
 
 	export class Loader_MultipleType {
 		private ROBOT_DATA_PATH: string = "../../res/skeleton/robot/robot.bin";

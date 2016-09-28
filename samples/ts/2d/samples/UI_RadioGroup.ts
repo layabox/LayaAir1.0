@@ -1,8 +1,8 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import RadioGroup = laya.ui.RadioGroup;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import RadioGroup = Laya.RadioGroup;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_RadioGroup {
         private SPACING: number = 150;

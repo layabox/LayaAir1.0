@@ -127,7 +127,7 @@ package laya.d3.resource.models {
 			_indexBuffer._bind();
 			
 			//TODO::临时放在此处,后期调整易移除......................
-			var material:Material = state.renderObj.material;
+			var material:Material = state.renderElement._material;
 			if (material) {
 				var shader:Shader = _getShader(state, _vertexBuffer, material);
 				

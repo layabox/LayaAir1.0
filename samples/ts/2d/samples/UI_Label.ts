@@ -1,7 +1,7 @@
 module laya {
-	import Stage = laya.display.Stage;
-	import Label = laya.ui.Label;
-	import WebGL = laya.webgl.WebGL;
+	import Stage = Laya.Stage;
+	import Label = Laya.Label;
+	import WebGL = Laya.WebGL;
 
 	export class UI_Label {
 		constructor() {

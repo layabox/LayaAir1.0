@@ -1,7 +1,7 @@
 module laya {
-	import Stage = laya.display.Stage;
-	import Text = laya.display.Text;
-	import WebGL = laya.webgl.WebGL;
+	import Stage = Laya.Stage;
+	import Text = Laya.Text;
+	import WebGL = Laya.WebGL;
 	export class Text_Underline {
 		constructor() {
 			// 不支持WebGL时自动切换至Canvas

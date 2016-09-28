@@ -164,7 +164,7 @@ package laya.ui {
 		 * @private
 		 * 设置皮肤资源。
 		 */
-		protected function setSource(url:String, value:*):void {
+		protected function setSource(url:String, value:*=null):void {
 			url === _skin && (this.source = value);
 			onCompResize();
 		}

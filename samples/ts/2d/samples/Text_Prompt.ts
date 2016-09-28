@@ -1,7 +1,7 @@
 module laya {
-	import Input = laya.display.Input;
-	import Stage = laya.display.Stage;
-	import WebGL = laya.webgl.WebGL;
+	import Input = Laya.Input;
+	import Stage = Laya.Stage;
+	import WebGL = Laya.WebGL;
 	export class Text_Prompt{
 		constructor() {
 			// 不支持WebGL时自动切换至Canvas

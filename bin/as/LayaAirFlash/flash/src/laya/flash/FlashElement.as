@@ -11,7 +11,7 @@
 		public var style:FlashStyle;
 		public var scrollTop:int = 0;
 		public var id: * ;
-		protected var parent:*;
+		public var parent:*;
 		protected var _displayObject:DisplayObject;
 		
 		public function FlashElement() 
@@ -36,9 +36,9 @@
 			return _displayObject;
 		}
 		
-		public function contains(value:*):void
+		public function contains(value:FlashElement):Boolean
 		{
-			
+			return value.parent == this;
 		}
 		
 		public function removeChild(e:*):void
@@ -94,6 +94,8 @@
 		{
 			return style.height;
 		}
+		
+		
 	}
 
 }

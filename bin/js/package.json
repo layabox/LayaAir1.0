@@ -1,6 +1,6 @@
 {
   "name": "layaair-js",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "An open source HTML5 engine. Edition JavaScript.",
   "main": "index.js",
   "scripts": {
@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/layabox/layaair#readme",
   "readme": "ERROR: No README data found!",
-  "_id": "layaair-js@1.2.0",
+  "_id": "layaair-js@1.4.0",
   "_shasum": "e9967fd107d611e2a31e9fd103765c864702310a",
   "_from": "layaair-js@latest"
 }

@@ -18,11 +18,6 @@ package laya.d3.component {
 	public class Component3D extends EventDispatcher implements IUpdate {
 		/** @private 唯一标识ID计数器。*/
 		protected static var _uniqueIDCounter:int = 1;
-		
-		/** @private * 初始化Component3D相关静态设置。*/
-		public static function __init__():void {
-		}
-		
 		/** @private 唯一标识ID。*/
 		protected var _id:int;
 		/** @private 所属节点遮罩层。*/

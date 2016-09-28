@@ -1,10 +1,10 @@
 module laya {
-	import Sprite = laya.display.Sprite;
-	import Stage = laya.display.Stage;
-	import Text = laya.display.Text;
-	import Event = laya.events.Event;
-	import Image = laya.ui.Image;
-	import WebGL = laya.webgl.WebGL;
+	import Sprite = Laya.Sprite;
+	import Stage = Laya.Stage;
+	import Text = Laya.Text;
+	import Event = Laya.Event;
+	import Image = Laya.Image;
+	import WebGL = Laya.WebGL;
 
 	export class SmartScale_T {
 

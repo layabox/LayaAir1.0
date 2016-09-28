@@ -1,8 +1,8 @@
 module laya
 {
-	import Loader = laya.net.Loader;
-	import Browser = laya.utils.Browser;
-	import Handler = laya.utils.Handler;
+	import Loader = Laya.Loader;
+	import Browser = Laya.Browser;
+	import Handler = Laya.Handler;
 	
 	export class Network_ProtocolBuffer 
 	{

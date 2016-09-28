@@ -6,10 +6,6 @@ package laya.webgl.resource {
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.RenderState2D;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class RenderTarget2D extends Texture implements IDispose {
 		//TODO:临时...............................................
 		public static const TYPE2D:int = 1;
@@ -49,7 +45,7 @@ package laya.webgl.resource {
 		}
 		
 		//public function get repeat():Boolean {
-			//return _repeat;
+		//return _repeat;
 		//}
 		
 		public function get minFifter():int {
@@ -127,26 +123,17 @@ package laya.webgl.resource {
 			var t:RenderTarget2D = POOL.pop();
 			t || (t = new RenderTarget2D(w, h));
 			
-			if (!t.bitmap || 
-			t._w != w || 
-			t._h != h || 
-			t._surfaceFormat != surfaceFormat || 
-			t._surfaceType != surfaceType || 
-			t._depthStencilFormat != depthStencilFormat || 
-			t._mipMap != mipMap || 
-			t._repeat != repeat || 
-			t._minFifter != minFifter || 
-			t._magFifter != magFifter) {
-			    t._w = w;
-			    t._h = h;
-			    t._surfaceFormat = surfaceFormat;
-			    t._surfaceType = surfaceType;
-			    t._depthStencilFormat = depthStencilFormat;  
-			    t._mipMap = mipMap;  
-			    t._repeat = repeat;  
-			    t._minFifter = minFifter;  
-			    t._magFifter = magFifter;
-			
+			if (!t.bitmap || t._w != w || t._h != h || t._surfaceFormat != surfaceFormat || t._surfaceType != surfaceType || t._depthStencilFormat != depthStencilFormat || t._mipMap != mipMap || t._repeat != repeat || t._minFifter != minFifter || t._magFifter != magFifter) {
+				t._w = w;
+				t._h = h;
+				t._surfaceFormat = surfaceFormat;
+				t._surfaceType = surfaceType;
+				t._depthStencilFormat = depthStencilFormat;
+				t._mipMap = mipMap;
+				t._repeat = repeat;
+				t._minFifter = minFifter;
+				t._magFifter = magFifter;
+				
 				t.release();
 				t._createWebGLRenderTarget();
 			}

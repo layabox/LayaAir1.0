@@ -2,17 +2,17 @@
 /// <reference path="../../src/game/ui/LayaUISample.max.all.ts" />
 
 import test = game.ui.test.TestPageUI;
-import Label = laya.ui.Label;
-import Handler = laya.utils.Handler;
-import Loader = laya.net.Loader;
+import Label = Laya.Label;
+import Handler = Laya.Handler;
+import Loader = Laya.Loader;
 
 class TestUI extends game.ui.test.TestPageUI {
 
 	constructor() {
 		super();
 		//btn是编辑器界面设定的，代码里面能直接使用，并且有代码提示
-		this.btn.on(laya.events.Event.CLICK, this, this.onBtnClick);
-		this.btn2.on(laya.events.Event.CLICK, this, this.onBtn2Click);
+		this.btn.on(Laya.CLICK, this, this.onBtnClick);
+		this.btn2.on(Laya.CLICK, this, this.onBtn2Click);
 	}
 
 	private onBtnClick(): void {
@@ -44,7 +44,7 @@ class TestUI extends game.ui.test.TestPageUI {
 		//list.renderHandler = new Handler(this, onListRender);
 	}
 
-	private onListRender(item: laya.ui.Box, index: number): void {
+	private onListRender(item: Laya.Box, index: number): void {
 		//自定义list的渲染方式
 		var label: Label = item.getChildByName("label") as Label;
 		if (index % 2) {

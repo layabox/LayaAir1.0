@@ -1,12 +1,9 @@
-package laya.ani.bone 
-{
+package laya.ani.bone {
+	
 	/**
-	 * ...
-	 * @author 
+	 * @private
 	 */
-	public class IkConstraint 
-	{
-		
+	public class IkConstraint {
 		
 		private var _targetBone:Bone;
 		private var _bones:Vector.<Bone>;
@@ -17,14 +14,12 @@ package laya.ani.bone
 		static public var radDeg:Number = 180 / Math.PI;
 		static public var degRad:Number = Math.PI / 180;
 		
-		public function IkConstraint(data:IkConstraintData,bones:Vector.<Bone>)
-		{
+		public function IkConstraint(data:IkConstraintData, bones:Vector.<Bone>) {
 			_data = data;
 			_targetBone = bones[data.targetBoneIndex];
 			if (_bones == null) _bones = new Vector.<Bone>();
 			_bones.length = 0;
-			for (var i:int = 0,n:int = data.boneIndexs.length; i < n; i++)
-			{
+			for (var i:int = 0, n:int = data.boneIndexs.length; i < n; i++) {
 				_bones.push(bones[data.boneIndexs[i]]);
 			}
 			name = data.name;
@@ -32,21 +27,18 @@ package laya.ani.bone
 			bendDirection = data.bendDirection;
 		}
 		
-		public function apply():void
-		{
-			switch(_bones.length)
-			{
-				case 1:
-					_applyIk1(_bones[0], _targetBone.resultMatrix.tx, _targetBone.resultMatrix.ty, mix);
-					break;
-				case 2:
-					_applyIk2(_bones[0], _bones[1], _targetBone.resultMatrix.tx, _targetBone.resultMatrix.ty, bendDirection, mix);// tIkConstraintData.mix);
-					break;
+		public function apply():void {
+			switch (_bones.length) {
+			case 1: 
+				_applyIk1(_bones[0], _targetBone.resultMatrix.tx, _targetBone.resultMatrix.ty, mix);
+				break;
+			case 2: 
+				_applyIk2(_bones[0], _bones[1], _targetBone.resultMatrix.tx, _targetBone.resultMatrix.ty, bendDirection, mix);// tIkConstraintData.mix);
+				break;
 			}
 		}
 		
-		private function _applyIk1(bone:Bone,targetX:Number,targetY:Number,alpha:Number):void
-		{
+		private function _applyIk1(bone:Bone, targetX:Number, targetY:Number, alpha:Number):void {
 			var pp:Bone = bone._parent;
 			var id:Number = 1 / (pp.resultMatrix.a * pp.resultMatrix.d - pp.resultMatrix.b * pp.resultMatrix.c);
 			var x:Number = targetX - pp.resultMatrix.tx;
@@ -62,8 +54,7 @@ package laya.ani.bone
 			bone.update();
 		}
 		
-		private function _applyIk2(parent:Bone,child:Bone,targetX:Number,targetY:Number,bendDir:int,alpha:Number):void
-		{
+		private function _applyIk2(parent:Bone, child:Bone, targetX:Number, targetY:Number, bendDir:int, alpha:Number):void {
 			if (alpha == 0) {
 				return;
 			}
@@ -71,22 +62,22 @@ package laya.ani.bone
 			var psx:Number = parent.transform.scX, psy:Number = parent.transform.scY;
 			var csx:Number = child.transform.scX;
 			var os1:int, os2:int, s2:int;
-			if (psx < 0) {	
+			if (psx < 0) {
 				psx = -psx;
 				os1 = 180;
 				s2 = -1;
-			}else {
+			} else {
 				os1 = 0;
 				s2 = 1;
 			}
-			if (psy < 0) {	
+			if (psy < 0) {
 				psy = -psy;
 				s2 = -s2;
 			}
-			if (csx < 0) {	
+			if (csx < 0) {
 				csx = -csx;
 				os2 = 180;
-			}else {
+			} else {
 				os2 = 0
 			}
 			var cx:Number = child.transform.x, cy:Number, cwx:Number, cwy:Number;
@@ -98,7 +89,7 @@ package laya.ani.bone
 				cy = 0;
 				cwx = a * cx + parent.resultMatrix.tx;
 				cwy = c * cx + parent.resultMatrix.ty;
-			}else {
+			} else {
 				cy = child.resultTransform.y;
 				cwx = a * cx + b * cy + parent.resultMatrix.tx;
 				cwy = c * cx + d * cy + parent.resultMatrix.ty;
@@ -124,8 +115,7 @@ package laya.ani.bone
 			//子骨骼的长度
 			var l2:Number = child.length * csx;
 			var a1:Number, a2:Number;
-			if (u)
-			{
+			if (u) {
 				l2 *= psx;
 				//求IK的角度
 				var cos:Number = (tx * tx + ty * ty - l1 * l1 - l2 * l2) / (2 * l1 * l2);
@@ -136,22 +126,20 @@ package laya.ani.bone
 				a = l1 + l2 * cos;
 				b = l2 * Math.sin(a2);
 				a1 = Math.atan2(ty * a - tx * b, tx * a + ty * b);
-			}else {
+			} else {
 				a = psx * l2;
 				b = psy * l2;
 				var aa:Number = a * a, bb:Number = b * b, dd:Number = tx * tx + ty * ty, ta:Number = Math.atan2(ty, tx);
 				c = bb * l1 * l1 + aa * dd - aa * bb;
-				var c1:Number = -2 * bb * l1, c2:Number = bb -aa;
+				var c1:Number = -2 * bb * l1, c2:Number = bb - aa;
 				d = c1 * c1 - 4 * c2 * c;
-				if (d > 0)
-				{
+				if (d > 0) {
 					var q:Number = Math.sqrt(d);
 					if (c1 < 0) q = -q;
 					q = -(c1 + q) / 2;
 					var r0:Number = q / c2, r1:Number = c / q;
-					var r:Number = Math.abs(r0) < Math.abs(r1)?r0:r1;
-					if (r * r <= dd)
-					{
+					var r:Number = Math.abs(r0) < Math.abs(r1) ? r0 : r1;
+					if (r * r <= dd) {
 						y = Math.sqrt(dd - r * r) * bendDir;
 						a1 = ta - Math.atan2(y, r);
 						a2 = Math.atan2(y / psy, (r - l1) / psx);
@@ -161,33 +149,29 @@ package laya.ani.bone
 				var maxAngle:Number = 0, maxDist:Number = 0, maxX:Number = 0, maxY:Number = 0;
 				x = l1 + a;
 				d = x * x;
-				if (d > maxDist)
-				{
+				if (d > maxDist) {
 					maxAngle = 0;
 					maxDist = d;
 					maxX = x;
 				}
 				x = l1 - a;
 				d = x * x;
-				if (d < minDist)
-				{
+				if (d < minDist) {
 					minAngle = Math.PI;
 					minDist = d;
 					minX = x;
 				}
-				var angle:Number = Math.acos( -a * l1 / (aa - bb));
+				var angle:Number = Math.acos(-a * l1 / (aa - bb));
 				x = a * Math.cos(angle) + l1;
 				y = b * Math.sin(angle);
 				d = x * x + y * y;
-				if (d < minDist)
-				{
+				if (d < minDist) {
 					minAngle = angle;
 					minDist = d;
 					minX = x;
 					minY = y;
 				}
-				if (d > maxDist)
-				{
+				if (d > maxDist) {
 					maxAngle = angle;
 					maxDist = d;
 					maxX = x;
@@ -196,7 +180,7 @@ package laya.ani.bone
 				if (dd <= (minDist + maxDist) / 2) {
 					a1 = ta - Math.atan2(minY * bendDir, minX);
 					a2 = minAngle * bendDir;
-				}else {
+				} else {
 					a1 = ta - Math.atan2(maxY * bendDir, maxX);
 					a2 = maxAngle * bendDir;
 				}
@@ -221,7 +205,7 @@ package laya.ani.bone
 			child.resultTransform.skX = child.resultTransform.skY = child.resultTransform.skY + a2 * alpha;
 			parent.update();
 		}
-		
+	
 	}
 
 }

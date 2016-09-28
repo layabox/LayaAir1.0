@@ -1,11 +1,11 @@
 (function()
 {
-	var Sprite    = laya.display.Sprite;
-	var Browser   = laya.utils.Browser;
-	var Handler   = laya.utils.Handler;
-	var Stat      = laya.utils.Stat;
-	var Rectangle = laya.maths.Rectangle;
-	var WebGL     = laya.webgl.WebGL;
+	var Sprite    = Laya.Sprite;
+	var Browser   = Laya.Browser;
+	var Handler   = Laya.Handler;
+	var Stat      = Laya.Stat;
+	var Rectangle = Laya.Rectangle;
+	var WebGL     = Laya.WebGL;
 
 	var texturePath = "../../res/tinyMaggot.png";
 

@@ -1,14 +1,14 @@
 (function()
 {
-	var Skeleton = laya.ani.bone.Skeleton;
-	var Templet = laya.ani.bone.Templet;
-	var Stage = laya.display.Stage;
-	var Event = laya.events.Event;
-	var Keyboard = laya.events.Keyboard;
-	var Loader = laya.net.Loader;
-	var Texture = laya.resource.Texture;
-	var Handler = laya.utils.Handler;
-	var WebGL = laya.webgl.WebGL;
+	var Skeleton = Laya.Skeleton;
+	var Templet = Laya.Templet;
+	var Stage = Laya.Stage;
+	var Event = Laya.Event;
+	var Keyboard = Laya.Keyboard;
+	var Loader = Laya.Loader;
+	var Texture = Laya.Texture;
+	var Handler = Laya.Handler;
+	var WebGL = Laya.WebGL;
 
 	var ANI_STAND = 0;
 	var ANI_FLOAT = 1;

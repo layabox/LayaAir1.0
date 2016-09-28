@@ -21,4 +21,4 @@ var skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/th
 skinMesh.transform.localRotationEuler = new Laya.Vector3(0, 3.14, 0);
 var skinAni = skinMesh.addComponent(Laya.SkinAnimations);
 skinAni.url = "../../res/threeDimen/skinModel/dude/dude.ani";
-skinAni.play();
+skinAni.player.play();

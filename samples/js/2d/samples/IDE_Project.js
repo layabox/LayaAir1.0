@@ -1,6 +1,6 @@
-var Loader = laya.net.Loader;
-var Handler = laya.utils.Handler;
-var Event = laya.events.Event;
+var Loader = Laya.Loader;
+var Handler = Laya.Handler;
+var Event = Laya.Event;
 
 // 创建TestPageUI的子类
 function TestUI()

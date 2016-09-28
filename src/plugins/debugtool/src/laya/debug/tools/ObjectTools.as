@@ -359,9 +359,34 @@ package laya.debug.tools
 		{
 			return  (parseFloat(value)==value);
 		}
+		public static function isNaNS(value:*):Boolean
+		{
+			return ( value.toString()=="NaN");
+		}
 		public static function isNaN(value:*):Boolean
 		{
-			return value.toString()=="NaN";
+			if(typeof(value)=="number") return false;
+			if(typeof(value)=="string")
+			{
+				if(parseFloat(value).toString()!=NaN)
+				{
+					if(parseFloat(value)==value)
+					{
+						return false;
+					}
+				}
+			}
+			return true;
+//			if(value===undefined) return true;
+//			if(value ===null) return true;
+//			if( value.toString()=="NaN") return true;
+//			if(value===true) return false;
+//			if(value ===false) return false;
+//			if(value is String)
+//			{
+//				if(parseFloat(value)==value) return false;
+//			}
+//			return true;
 			//			return !isNumber(value);
 		}
 		public static function getStrTypedValue(value:String):*

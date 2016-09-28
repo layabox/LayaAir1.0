@@ -1,9 +1,5 @@
 package laya.webgl.utils {
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class CONST3D2D {
 		/*[IF-FLASH-BEGIN]*/
 		public static var BYTES_PE:uint =/*[STATIC SAFE]*/ 1;

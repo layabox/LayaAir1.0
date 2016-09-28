@@ -72,8 +72,8 @@ class StaticModel_MeshTerrainSample {
             if (mesh != null) {
                 //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
                 mesh.once(Laya.Event.LOADED, this, function (mesh:Laya.BaseMesh):void {
-                    for (var i = 0; i < meshSprite.meshRender.shadredMaterials.length; i++) {
-                        var material:Laya.Material = meshSprite.meshRender.shadredMaterials[i];
+                    for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+                        var material:Laya.Material = meshSprite.meshRender.sharedMaterials[i];
                         material.once(Laya.Event.LOADED, null, function (mat:Laya.Material):void {
                             var transformUV:Laya.TransformUV = new Laya.TransformUV();
                             transformUV.tiling = uvScale;

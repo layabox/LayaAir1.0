@@ -1,5 +1,5 @@
 module laya {
-	import Stage = laya.display.Stage;
+	import Stage = Laya.Stage;
 
 	export class SmartScale_Align_Contral {
 		constructor() {

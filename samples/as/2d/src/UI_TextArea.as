@@ -29,9 +29,6 @@ package
         {
             var ta:TextArea = new TextArea("");
             ta.skin = skin;
-			
-			ta.inputElementXAdjuster = -2;
-			ta.inputElementYAdjuster = -1;
             
             ta.font = "Arial";
             ta.fontSize = 18;

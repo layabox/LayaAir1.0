@@ -1,15 +1,18 @@
 package laya.utils {
-	/*[IF-FLASH]*/ import flash.utils.Dictionary;
+	/*[IF-FLASH]*/
+	import flash.utils.Dictionary;
+	
 	/**
 	 * <code>Timer</code> 是时钟管理类。它是一个单例，可以通过 Laya.timer 访问。
 	 */
 	public class Timer {
-		/** 两次时针直接的时间间隔。*/
-		public static var delta:int = 0;
+		
 		/**@private */
 		private static var _pool:Array = [];
 		
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+		/** 两帧之间的时间间隔,单位毫秒。*/
+		private var _delta:int = 0;
 		/** 时针缩放。*/
 		public var scale:Number = 1;
 		/** 当前时间。*/
@@ -21,16 +24,24 @@ package laya.utils {
 		/**@private */
 		private var _mid:int = 1;
 		/**@private */
-		/*[IF-FLASH]*/ private var _map:flash.utils.Dictionary = new flash.utils.Dictionary(true);
+		/*[IF-FLASH]*/
+		private var _map:flash.utils.Dictionary = new flash.utils.Dictionary(true);
 		//[IF-JS] private var _map:Array = [];
 		/**@private */
 		private var _laters:Array = [];
 		/**@private */
 		private var _handlers:Array = [];
 		/**@private */
-		private var _temp:Array = [];		
+		private var _temp:Array = [];
 		/**@private */
 		private var _count:int = 0;
+		
+		/**
+		 *两帧之间的时间间隔,单位毫秒。
+		 */
+		public function get delta():int {
+			return _delta;
+		}
 		
 		/**
 		 * 创建 <code>Timer</code> 类的一个实例。
@@ -50,8 +61,8 @@ package laya.utils {
 			}
 			var frame:int = this.currFrame = this.currFrame + scale;
 			var now:Number = Browser.now();
-			delta = now - _lastTimer;
-			var timer:Number = this.currTimer = this.currTimer + delta * scale;
+			_delta = (now - _lastTimer)* scale;
+			var timer:Number = this.currTimer = this.currTimer + _delta;
 			_lastTimer = now;
 			
 			//处理handler
@@ -108,7 +119,8 @@ package laya.utils {
 		
 		/** @private */
 		private function _recoverHandler(handler:TimerHandler):void {
-			/*[IF-FLASH]*/_map[handler.method] = null;
+			/*[IF-FLASH]*/
+			_map[handler.method] = null;
 			//[IF-SCRIPT]_map[handler.key] = null;
 			handler.clear();
 			_pool.push(handler);
@@ -156,7 +168,10 @@ package laya.utils {
 		
 		/** @private */
 		private function _indexHandler(handler:TimerHandler):void {
-			/*[IF-FLASH]*/ _map[handler.method] = handler; return;			
+			/*[IF-FLASH]*/
+			_map[handler.method] = handler;
+			/*[IF-FLASH]*/
+			return;
 			var caller:* = handler.caller;
 			var method:* = handler.method;
 			var cid:int = caller ? caller.$_GID || (caller.$_GID = Utils.getGID()) : 0;
@@ -227,7 +242,8 @@ package laya.utils {
 			var handler:TimerHandler = _getHandler(caller, method);
 			if (handler) {
 				//[IF-JS] _map[handler.key] = null;handler.key = 0;
-				/*[IF-FLASH]*/ _map[handler.method] = null;
+				/*[IF-FLASH]*/
+				_map[handler.method] = null;
 				handler.clear();
 			}
 		}
@@ -241,7 +257,8 @@ package laya.utils {
 				var handler:TimerHandler = _handlers[i];
 				if (handler.caller === caller) {
 					//[IF-JS] _map[handler.key] = null;handler.key = 0;
-					/*[IF-FLASH]*/ _map[handler.method] = null;
+					/*[IF-FLASH]*/
+					_map[handler.method] = null;
 					handler.clear();
 				}
 			}
@@ -249,7 +266,8 @@ package laya.utils {
 		
 		/** @private */
 		private function _getHandler(caller:*, method:*):TimerHandler {
-			/*[IF-FLASH]*/ return _map[method];
+			/*[IF-FLASH]*/
+			return _map[method];
 			var cid:int = caller ? caller.$_GID || (caller.$_GID = Utils.getGID()) : 0;
 			var mid:int = method.$_TID || (method.$_TID = (_mid++) * 100000);
 			return _map[cid + mid];
@@ -286,9 +304,10 @@ package laya.utils {
 		 */
 		public function runCallLater(caller:*, method:Function):void {
 			var handler:TimerHandler = _getHandler(caller, method);
-			if (handler && handler.method != null) {				
+			if (handler && handler.method != null) {
 				//[IF-JS] _map[handler.key] = null;
-				/*[IF-FLASH]*/ _map[handler.method] = null;
+				/*[IF-FLASH]*/
+				_map[handler.method] = null;
 				handler.run(true);
 			}
 		}
@@ -315,7 +334,10 @@ class TimerHandler {
 	
 	public function run(widthClear:Boolean):void {
 		var caller:* = this.caller;
-		/*[IF-FLASH]*/ if ((caller is Node) && caller.destroyed) return clear();
+		/*[IF-FLASH]*/
+		if ((caller is Node) && caller.destroyed) 
+		/*[IF-FLASH]*/
+		return clear();
 		//[IF-SCRIPT] if (caller && caller.destroyed) return clear();
 		var method:Function = this.method;
 		var args:Array = this.args;

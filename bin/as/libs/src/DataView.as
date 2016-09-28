@@ -61,6 +61,10 @@
 			_byteArr[pos] = val;
 		}
 		
+		public function getInt8(pos:int):int{
+			return _byteArr[pos];
+		}
+		
 		public function getUint8( pos : int ) : uint {
 			return _byteArr[pos];
 		}

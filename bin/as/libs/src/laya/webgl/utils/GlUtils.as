@@ -3,10 +3,6 @@ package laya.webgl.utils {
 	import laya.maths.Rectangle;
 	import laya.webgl.canvas.WebGLContext2D;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class GlUtils {
 		// 这个矩阵已经进行Y-flip处理，屏幕左上角为 0,0 坐标.
 		public static function make2DProjection(width:int, height:int, depth:int):* {
@@ -327,7 +323,7 @@ package laya.webgl.utils {
 			'use strict';
 			
 			var linew:Number = width * .5;
-
+			
 			var data:Array = _fillLineArray;
 			var perpx:Number = -(fy - ty), perpy:Number = fx - tx;
 			var dist:Number = Math.sqrt(perpx * perpx + perpy * perpy);

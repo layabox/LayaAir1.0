@@ -5,10 +5,6 @@ package laya.webgl.resource {
 	import laya.webgl.atlas.AtlasResourceManager;
 	import laya.webgl.text.DrawTextChar;
 	
-	/**
-	 * ...
-	 * @author
-	 */
 	public class WebGLCharImage extends Bitmap implements IMergeAtlasBitmap {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		private const borderSize:int = 12;
@@ -100,7 +96,7 @@ package laya.webgl.resource {
 				var nFontSize:int = char.fontSize;
 				if (xs != 1 || ys != 1) {
 					//TODO先凑合一下，回头再把scale信息传入到C++
-					nFontSize  = parseInt(nFontSize* ((xs>ys)?xs:ys)+"");
+					nFontSize = parseInt(nFontSize * ((xs > ys) ? xs : ys) + "");
 				}
 				var sFont:String = "normal 100 " + nFontSize + "px Arial";
 				if (char.borderColor) {
@@ -143,7 +139,7 @@ package laya.webgl.resource {
 			}
 			
 			char.borderSize = borderSize;
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		private function onresize(w:Number, h:Number):void {

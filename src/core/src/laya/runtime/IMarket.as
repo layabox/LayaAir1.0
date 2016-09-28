@@ -1,12 +1,9 @@
-package laya.runtime 
-{
+package laya.runtime {
 	
 	/**
-	 * ...
-	 * @author hugao
+	 * @private
 	 */
-	public interface IMarket 
-	{
+	public interface IMarket {
 		/**
 		 * 登录
 		 * @param	jsonParm
@@ -76,7 +73,7 @@ package laya.runtime
 		function sendMessageToPlatform(jsonParm:String, callback:Function):void;
 		/**
 		 * 获取用户信息
-		 * @param	jsonParm 
+		 * @param	jsonParm
 		 * @param	callback
 		 */
 		function getUserInfo(jsonParm:String, callback:Function):void;
@@ -93,13 +90,10 @@ package laya.runtime
 		 */
 		function getLoginType():int;
 		/**
-		 * 
+		 *
 		 */
 		function getChargeType():int;
-		
-		
-		
-		
-	}
 	
+	}
+
 }

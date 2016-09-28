@@ -1,10 +1,10 @@
 module laya {
-	import Sprite = laya.display.Sprite;
-	import Stage = laya.display.Stage;
-	import Text = laya.display.Text;
-	import Event = laya.events.Event;
-	import Browser = laya.utils.Browser;
-	import WebGL = laya.webgl.WebGL;
+	import Sprite = Laya.Sprite;
+	import Stage = Laya.Stage;
+	import Text = Laya.Text;
+	import Event = Laya.Event;
+	import Browser = Laya.Browser;
+	import WebGL = Laya.WebGL;
 
 	export class Interaction_FixInteractiveRegion {
 		private logger: Text;

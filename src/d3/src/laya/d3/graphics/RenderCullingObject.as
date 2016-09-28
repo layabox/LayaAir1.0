@@ -1,10 +1,7 @@
 package laya.d3.graphics {
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
-	import laya.d3.resource.models.BaseMesh;
-	import laya.d3.resource.models.Mesh;
 	
 	/**
 	 * ...

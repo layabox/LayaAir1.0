@@ -1,12 +1,12 @@
 (function()
 {
-	var Animation = laya.display.Animation;
-	var Stage     = laya.display.Stage;
-	var Rectangle = laya.maths.Rectangle;
-	var Loader    = laya.net.Loader;
-	var Browser   = laya.utils.Browser;
-	var Handler   = laya.utils.Handler;
-	var WebGL     = laya.webgl.WebGL;
+	var Animation = Laya.Animation;
+	var Stage     = Laya.Stage;
+	var Rectangle = Laya.Rectangle;
+	var Loader    = Laya.Loader;
+	var Browser   = Laya.Browser;
+	var Handler   = Laya.Handler;
+	var WebGL     = Laya.WebGL;
 
 	var AniConfPath = "../../res/fighter/fighter.json";
 

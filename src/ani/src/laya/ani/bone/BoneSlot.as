@@ -41,6 +41,11 @@ package laya.ani.bone {
 		private var _parentMatrix:Matrix;
 		private var _resultMatrix:Matrix;//只有不使用缓冲时才使用
 		
+		/** 实时模式下，复用使用 */
+		private var _skinSprite:*;
+		/** @private 变形动画数据 */
+		public var deformData:Array;
+		
 		/**
 		 * 设置要显示的插槽数据
 		 * @param	slotData
@@ -75,9 +80,7 @@ package laya.ani.bone {
 					currTexture = templet.getTexture(tName);
 					if (currTexture && Render.isWebGL && currDisplayData.type == 0 && currDisplayData.uvs)
 					{
-						//这里的问题是什么时候销毁
-						currTexture = new Texture(currTexture.bitmap, currDisplayData.uvs);
-						(currTexture.bitmap as Bitmap).useNum --;
+						currTexture = currDisplayData.createTexture(currTexture);
 					}
 				}
 			} else {
@@ -108,7 +111,7 @@ package laya.ani.bone {
 		 * @param	graphics
 		 * @param	noUseSave
 		 */
-		public function draw(graphics:GraphicsAni, boneMatrixArray:Array, noUseSave:Boolean = false):void {
+		public function draw(graphics:GraphicsAni, boneMatrixArray:Array, noUseSave:Boolean = false, alpha:Number = 1):void {
 			if ((_diyTexture == null && currTexture == null) || currDisplayData == null) {
 				if (!(currDisplayData && currDisplayData.type == 3))
 				{
@@ -163,7 +166,14 @@ package laya.ani.bone {
 					}
 					break;
 				case 1:
-					tSkinSprite = RunDriver.skinAniSprite();
+					if (noUseSave) {	
+						if (_skinSprite == null) {	
+							_skinSprite = RunDriver.skinAniSprite();
+						}
+						tSkinSprite = _skinSprite;
+					}else {
+						tSkinSprite = RunDriver.skinAniSprite();
+					}
 					if (tSkinSprite == null)
 					{
 						return;
@@ -178,10 +188,15 @@ package laya.ani.bone {
 					
 					if (currDisplayData.bones == null)
 					{
-						for (var i:int = 0,ii:int = 0; i < currDisplayData.weights.length && ii< currDisplayData.uvs.length;)
+						var tVertices:Array = currDisplayData.weights;
+						if (deformData)
 						{
-							var tX:Number = currDisplayData.weights[i++];
-							var tY:Number = currDisplayData.weights[i++];
+							tVertices = deformData;
+						}
+						for (var i:int = 0,ii:int = 0; i < tVertices.length && ii< currDisplayData.uvs.length;)
+						{
+							var tX:Number = tVertices[i++];
+							var tY:Number = tVertices[i++];
 							tVBArray.push(tX, tY, currDisplayData.uvs[ii++], currDisplayData.uvs[ii++], tRed, tGreed, tBlue, tAlpha);
 						}
 						var tTriangleNum:int = currDisplayData.triangles.length / 3;
@@ -208,17 +223,24 @@ package laya.ani.bone {
 							}
 						}
 					}else {
-						skinMesh(boneMatrixArray,tSkinSprite);
+						skinMesh(boneMatrixArray,tSkinSprite,alpha);
 					}
 					break;
 				case 2:
-					tSkinSprite = RunDriver.skinAniSprite();
+					if (noUseSave) {	
+						if (_skinSprite == null) {	
+							_skinSprite = RunDriver.skinAniSprite();
+						}
+						tSkinSprite = _skinSprite;
+					}else {
+						tSkinSprite = RunDriver.skinAniSprite();
+					}
 					if (tSkinSprite == null)
 					{
 						return;
 					}
 					graphics.drawSkin(tSkinSprite);
-					skinMesh(boneMatrixArray,tSkinSprite);
+					skinMesh(boneMatrixArray,tSkinSprite,alpha);
 					break;
 				case 3:
 					break;
@@ -229,7 +251,7 @@ package laya.ani.bone {
 		 * 显示蒙皮动画
 		 * @param	boneMatrixArray 当前帧的骨骼矩阵
 		 */
-		private function skinMesh(boneMatrixArray:Array,skinSprite:*):void
+		private function skinMesh(boneMatrixArray:Array,skinSprite:*,alpha:Number):void
 		{
 			var tBones:Array = currDisplayData.bones;
 			var tUvs:Array = currDisplayData.uvs;
@@ -250,22 +272,42 @@ package laya.ani.bone {
 			var tRed:Number = 1;
 			var tGreed:Number = 1;
 			var tBlue:Number = 1;
-			var tAlpha:Number = 1;
-			for (i = 0, n = tBones.length; i < n;)
-			{
-				nn = tBones[i++] + i;
-				tRx = 0, tRy = 0;
-				for (; i < nn; i++)
+			var tAlpha:Number = alpha
+			if (deformData && deformData.length > 0) {
+				var f:Number = 0;
+				for (i = 0, n = tBones.length; i < n;)
 				{
-					tMatrix = boneMatrixArray[tBones[i]]
-					tX = tWeights[tB];
-					tY = tWeights[tB + 1];
-					tWeight = tWeights[tB + 2];
-					tRx += (tX * tMatrix.a + tY * tMatrix.c + tMatrix.tx) * tWeight;
-					tRy += (tX * tMatrix.b + tY * tMatrix.d + tMatrix.ty) * tWeight;
-					tB += 3;
+					nn = tBones[i++] + i;
+					tRx = 0, tRy = 0;
+					for (; i < nn; i++)
+					{
+						tMatrix = boneMatrixArray[tBones[i]]
+						tX = tWeights[tB] + deformData[f++];
+						tY = tWeights[tB + 1] + deformData[f++];
+						tWeight = tWeights[tB + 2];
+						tRx += (tX * tMatrix.a + tY * tMatrix.c + tMatrix.tx) * tWeight;
+						tRy += (tX * tMatrix.b + tY * tMatrix.d + tMatrix.ty) * tWeight;
+						tB += 3;
+					}
+					tVertices.push(tRx, tRy);
 				}
-				tVertices.push(tRx, tRy);
+			}else {
+				for (i = 0, n = tBones.length; i < n;)
+				{
+					nn = tBones[i++] + i;
+					tRx = 0, tRy = 0;
+					for (; i < nn; i++)
+					{
+						tMatrix = boneMatrixArray[tBones[i]]
+						tX = tWeights[tB];
+						tY = tWeights[tB + 1];
+						tWeight = tWeights[tB + 2];
+						tRx += (tX * tMatrix.a + tY * tMatrix.c + tMatrix.tx) * tWeight;
+						tRy += (tX * tMatrix.b + tY * tMatrix.d + tMatrix.ty) * tWeight;
+						tB += 3;
+					}
+					tVertices.push(tRx, tRy);
+				}
 			}
 			for (i = 0, j = 0; i < tVertices.length && j < tUvs.length; )
 			{

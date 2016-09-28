@@ -1,10 +1,10 @@
 module laya {
-	import Stage       = laya.display.Stage;
-	import Text        = laya.display.Text;
-	import Geolocation = laya.device.geolocation.Geolocation;
-	import Position    = laya.device.geolocation.GeolocationInfo;
-	import Browser     = laya.utils.Browser;
-	import Handler     = laya.utils.Handler;
+	import Stage       = Laya.Stage;
+	import Text        = Laya.Text;
+	import Geolocation = Laya.Geolocation;
+	import Position    = Laya.GeolocationInfo;
+	import Browser     = Laya.Browser;
+	import Handler     = Laya.Handler;
 
 	export class InputDevice_Map {
 		// 百度地图

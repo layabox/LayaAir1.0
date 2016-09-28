@@ -1,12 +1,12 @@
 module laya {
-    import Sprite = laya.display.Sprite;
-    import Stage = laya.display.Stage;
-    import Event = laya.events.Event;
-    import Rectangle = laya.maths.Rectangle;
-    import Texture = laya.resource.Texture;
-    import Browser = laya.utils.Browser;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Sprite = Laya.Sprite;
+    import Stage = Laya.Stage;
+    import Event = Laya.Event;
+    import Rectangle = Laya.Rectangle;
+    import Texture = Laya.Texture;
+    import Browser = Laya.Browser;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class Interaction_Drag {
         private ApePath: string = "../../res/apes/monkey2.png";

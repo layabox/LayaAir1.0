@@ -1,9 +1,9 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import ColorPicker = laya.ui.ColorPicker;
-    import Browser = laya.utils.Browser;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import ColorPicker = Laya.ColorPicker;
+    import Browser = Laya.Browser;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_ColorPicker {
         private skin: string = "../../res/ui/colorPicker.png";

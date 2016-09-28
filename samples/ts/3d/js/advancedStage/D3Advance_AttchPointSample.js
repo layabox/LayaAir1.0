@@ -25,7 +25,7 @@ var AttchPointSample;
             this.skinMesh.transform.localRotationEuler = this.rotation;
             this.skinAni = this.skinMesh.addComponent(Laya.SkinAnimations);
             this.skinAni.url = "../../res/threeDimen/skinModel/dude/dude.ani";
-            this.skinAni.play();
+            this.skinAni.player.play();
             this.attacthPoint = this.skinMesh.addComponent(Laya.AttachPoint);
             this.attacthPoint.attachBones.push("L_Middle1");
             this.attacthPoint.attachBones.push("R_Middle1");

@@ -43,6 +43,17 @@ public static var GlowFilter_ps_logic:Class;
 public static var GlowFilter_ps_uniform:Class;
 
 
+[Embed(source = "../../files/fillTexture/fillTextureShader.ps", mimeType = "application/octet-stream")]
+public static var FillTextureShader_ps:Class;
+[Embed(source = "../../files/fillTexture/fillTextureShader.vs", mimeType = "application/octet-stream")]
+public static var FillTextureShader_vs:Class;
+
+[Embed(source = "../../files/skinAnishader/aniShader.ps", mimeType = "application/octet-stream")]
+public static var SkinAniShader_ps:Class;
+[Embed(source = "../../files/skinAnishader/aniShader.vs", mimeType = "application/octet-stream")]
+public static var SkinAniShader_vs:Class;
+
+
 		public static function add(path:String, _class:*):void
 		{
 			var byteDataTxt:ByteArray = new _class();
@@ -67,7 +78,12 @@ public static var GlowFilter_ps_uniform:Class;
 			add("files/parts/ColorFilter_ps_logic.glsl", ColorFilter_ps_logic);
 			add("files/parts/ColorFilter_ps_uniform.glsl", ColorFilter_ps_uniform);
 			add("files/parts/GlowFilter_ps_logic.glsl", GlowFilter_ps_logic);
-			add("files/parts/GlowFilter_ps_uniform.glsl", GlowFilter_ps_uniform);			
+			add("files/parts/GlowFilter_ps_uniform.glsl", GlowFilter_ps_uniform);
+			
+			add("fillTextureShader.ps", FillTextureShader_ps);
+			add("fillTextureShader.vs", FillTextureShader_vs);
+			add("aniShader.ps", SkinAniShader_ps);
+			add("aniShader.vs", SkinAniShader_vs);
 		}
 		
 		public static var   includeStr:Dictionary = new Dictionary();

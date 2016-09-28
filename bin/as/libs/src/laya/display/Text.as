@@ -690,15 +690,15 @@ package laya.display {
 			else
 				_clipPoint = null;
 			
-			var endLine:int = _lines.length;
+			var lineCount:int = _lines.length;
 			// overflow为scroll或visible时会截行
 			if (overflow != VISIBLE) {
 				var func:Function = overflow == HIDDEN ? Math.floor : Math.ceil;
-				endLine = Math.min(endLine, func((height - padding[0] - padding[2]) / (leading + _charSize.height)));
+				lineCount = Math.min(lineCount, func((height - padding[0] - padding[2]) / (leading + _charSize.height)));
 			}
 			
-			renderText(0, endLine);
-			
+			var startLine:int = scrollY / (_charSize.height + leading) | 0;
+			renderText(startLine, lineCount);
 			repaint();
 		}
 		

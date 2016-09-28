@@ -1,10 +1,10 @@
 (function()
 {
-	var Sprite = laya.display.Sprite;
-	var Stage = laya.display.Stage;
-	var Browser = laya.utils.Browser;
-	var Handler = laya.utils.Handler;
-	var WebGL = laya.webgl.WebGL;
+	var Sprite = Laya.Sprite;
+	var Stage = Laya.Stage;
+	var Browser = Laya.Browser;
+	var Handler = Laya.Handler;
+	var WebGL = Laya.WebGL;
 
 	var maskSp;
 	var bg2;

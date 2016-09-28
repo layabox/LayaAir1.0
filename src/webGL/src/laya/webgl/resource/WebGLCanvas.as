@@ -6,17 +6,12 @@ package laya.webgl.resource {
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	
-	/**
-	 * ...
-	 * @author
-	 */
 	public class WebGLCanvas extends Bitmap {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		public static var create:Function = function(type:String):*
-		{
+		public static var create:Function = function(type:String):* {
 			return new WebGLCanvas(type);
 		}
-			
+		
 		public static var _createContext:Function;
 		
 		private var _ctx:Context;
@@ -80,9 +75,9 @@ package laya.webgl.resource {
 		}
 		
 		/*override public function copyTo(dec:Bitmap):void {
-			super.copyTo(dec);
-			(dec as WebGLCanvas)._ctx = _ctx;
-		}*/
+		   super.copyTo(dec);
+		   (dec as WebGLCanvas)._ctx = _ctx;
+		   }*/
 		
 		public function size(w:Number, h:Number):void {
 			if (_w != w || _h != h) {
@@ -100,7 +95,7 @@ package laya.webgl.resource {
 		override protected function recreateResource():void {
 			startCreate();
 			createWebGlTexture();
-			compoleteCreate();
+			completeCreate();
 		}
 		
 		override protected function detoryResource():void {
@@ -118,9 +113,9 @@ package laya.webgl.resource {
 			}
 			var glTex:* = _source = gl.createTexture();
 			iscpuSource = false;
-			var  preTarget:*= WebGLContext.curBindTexTarget;
-			var  preTexture:*=WebGLContext.curBindTexValue;
-			WebGLContext.bindTexture(gl,WebGLContext.TEXTURE_2D, glTex);
+			var preTarget:* = WebGLContext.curBindTexTarget;
+			var preTexture:* = WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTex);
 			
 			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _w, _h, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, null);
 			
@@ -129,17 +124,17 @@ package laya.webgl.resource {
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_S, WebGLContext.CLAMP_TO_EDGE);
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
 			memorySize = _w * _h * 4;
-			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget, preTexture));
+			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			_canvas = null;
 		}
 		
 		public function texSubImage2D(webglCanvas:WebGLCanvas, xoffset:Number, yoffset:Number):void {
 			var gl:WebGLContext = WebGL.mainContext;
-			var  preTarget:*= WebGLContext.curBindTexTarget;
-			var  preTexture:*=WebGLContext.curBindTexValue;
-			WebGLContext.bindTexture(gl,WebGLContext.TEXTURE_2D, _source);
+			var preTarget:* = WebGLContext.curBindTexTarget;
+			var preTexture:* = WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, _source);
 			gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, webglCanvas._source);
-			(preTarget&&preTexture)&&(WebGLContext.bindTexture(gl,preTarget, preTexture));
+			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 		}
 	
 	}

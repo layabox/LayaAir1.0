@@ -1,17 +1,8 @@
 package laya.webgl.utils {
-	import laya.renders.Render;
-	import laya.resource.Resource;
-	import laya.utils.Byte;
 	import laya.utils.Stat;
-	import laya.webgl.shader.Shader;
-	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.submit.Submit;
+	import laya.webgl.shader.Shader;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class Buffer2D extends Buffer {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
@@ -91,8 +82,6 @@ package laya.webgl.utils {
 		public var _upload:Boolean = true;
 		protected var _uploadSize:int = 0;
 		
-		
-		
 		public function get bufferLength():int {
 			return _buffer.byteLength;
 		}
@@ -103,8 +92,6 @@ package laya.webgl.utils {
 			value <= _buffer.byteLength || (_resizeBuffer(value * 2 + 256, true));
 			_byteLength = value;
 		}
-		
-		
 		
 		public function Buffer2D() {
 			super();

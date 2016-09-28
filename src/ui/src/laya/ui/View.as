@@ -1,6 +1,8 @@
 package laya.ui {
+	import laya.display.Animation;
 	import laya.display.Graphics;
 	import laya.display.Sprite;
+	import laya.display.Text;
 	import laya.ui.Box;
 	import laya.ui.Button;
 	import laya.ui.CheckBox;
@@ -28,7 +30,7 @@ package laya.ui {
 		/**
 		 * UI类映射。
 		 */
-		public static var uiClassMap:Object = {"ViewStack": ViewStack, "LinkButton": Button, "TextArea": TextArea, "ColorPicker": ColorPicker, "Box": Box, "Button": Button, "CheckBox": CheckBox, "Clip": Clip, "ComboBox": ComboBox, "Component": Component, "HScrollBar": HScrollBar, "HSlider": HSlider, "Image": Image, "Label": Label, "List": List, "Panel": Panel, "ProgressBar": ProgressBar, "Radio": Radio, "RadioGroup": RadioGroup, "ScrollBar": ScrollBar, "Slider": Slider, "Tab": Tab, "TextInput": TextInput, "View": View, "VScrollBar": VScrollBar, "VSlider": VSlider, "Tree": Tree, "HBox": HBox, "VBox": VBox};
+		public static var uiClassMap:Object = {"ViewStack": ViewStack, "LinkButton": Button, "TextArea": TextArea, "ColorPicker": ColorPicker, "Box": Box, "Button": Button, "CheckBox": CheckBox, "Clip": Clip, "ComboBox": ComboBox, "Component": Component, "HScrollBar": HScrollBar, "HSlider": HSlider, "Image": Image, "Label": Label, "List": List, "Panel": Panel, "ProgressBar": ProgressBar, "Radio": Radio, "RadioGroup": RadioGroup, "ScrollBar": ScrollBar, "Slider": Slider, "Tab": Tab, "TextInput": TextInput, "View": View, "VScrollBar": VScrollBar, "VSlider": VSlider, "Tree": Tree, "HBox": HBox, "VBox": VBox, "Sprite": Sprite, "Animation": Animation, "Text": Text};
 		/**
 		 * @private
 		 * UI视图类映射。
@@ -124,7 +126,7 @@ package laya.ui {
 			if (child) {
 				for (var i:int = 0, n:int = child.length; i < n; i++) {
 					var node:Object = child[i];
-					if (comp.hasOwnProperty("itemRender") && node.props.name == "render") {
+					if (comp.hasOwnProperty("itemRender") && (node.props.name == "render"||node.props.renderType === "render")) {
 						IRender(comp).itemRender = node;
 					} else 
 					if (node.type == "Graphic")
@@ -136,8 +138,12 @@ package laya.ui {
 							ClassUtils.addGraphicToSprite(node, comp,true);
 						}else
 						{
-							var tChild:Sprite = createComp(node, null, view);
-							if (tChild.name == "mask")
+							var tChild:* = createComp(node, null, view);
+							if(node.type=="Script")
+							{
+								tChild["owner"]=comp;
+							}else
+							if (node.props.renderType == "mask"||node.props.name == "mask")
 							{
 								comp.mask = tChild;
 							}else
@@ -194,7 +200,9 @@ package laya.ui {
 		 */
 		protected static function getCompInstance(json:Object):Component {
 			var runtime:String = json.props ? json.props.runtime : "";
-			var compClass:Class = runtime ? (viewClassMap[runtime] || Laya["__classmap"][runtime]) : uiClassMap[json.type];
+			var compClass:Class;
+			//[IF-SCRIPT]compClass = runtime ? (viewClassMap[runtime] || Laya["__classmap"][runtime]) : uiClassMap[json.type];
+			/*[IF-FLASH]*/compClass = runtime ? viewClassMap[runtime] : uiClassMap[json.type];
 			return compClass ? new compClass() : null;
 		}
 		

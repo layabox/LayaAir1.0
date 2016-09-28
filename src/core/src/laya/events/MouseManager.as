@@ -89,13 +89,13 @@ package laya.events {
 				if (enabled) {
 					list.push(e);
 					runEvent();
-					if(!Input.isInputting) e.preventDefault();
+					if (!Input.isInputting) e.preventDefault();
 					_this.mouseDownTime = Browser.now();
 				}
 			});
 			canvas.addEventListener("touchend", function(e:*):void {
 				if (enabled) {
-					if(!Input.isInputting) e.preventDefault();
+					if (!Input.isInputting) e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = -Browser.now();
 				}
@@ -135,6 +135,7 @@ package laya.events {
 				var ele:* = _lastOvers[i];
 				ele.event(Event.MOUSE_WHEEL, _event.setTo(Event.MOUSE_WHEEL, ele, _target));
 			}
+			_stage.event(Event.MOUSE_WHEEL, _event.setTo(Event.MOUSE_WHEEL, _stage, _target));
 		}
 		
 		private function checkMouseOut():void {
@@ -277,8 +278,7 @@ package laya.events {
 		
 		private function hitTest(sp:Sprite, mouseX:Number, mouseY:Number):Boolean {
 			var isHit:Boolean = false;
-			if (sp.hitArea is HitArea)
-			{
+			if (sp.hitArea is HitArea) {
 				return sp.hitArea.isHit(mouseX, mouseY);
 			}
 			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough || sp.hitArea) {
@@ -309,23 +309,21 @@ package laya.events {
 				var evt:* = _eventList[i];
 				switch (evt.type) {
 				case 'mousedown': 
-					if (!_isTouchRespond)
-					{
+					if (!_isTouchRespond) {
 						_this._isLeftMouse = evt.button === 0;
 						_this.initEvent(evt);
 						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseDown);
-					}
-					else
+					} else
 						_isTouchRespond = false;
 					break;
 				case 'mouseup': 
-						_this._isLeftMouse = evt.button === 0;
-						var now:Number = Browser.now();
-						_this._isDoubleClick = (now - _this._lastClickTimer) < 300;
-						_this._lastClickTimer = now;
-						
-						_this.initEvent(evt);
-						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseUp);
+					_this._isLeftMouse = evt.button === 0;
+					var now:Number = Browser.now();
+					_this._isDoubleClick = (now - _this._lastClickTimer) < 300;
+					_this._lastClickTimer = now;
+					
+					_this.initEvent(evt);
+					_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseUp);
 					break;
 				case 'mousemove': 
 					_this.initEvent(evt);

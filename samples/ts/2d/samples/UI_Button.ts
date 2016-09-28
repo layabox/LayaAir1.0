@@ -1,8 +1,8 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import Button = laya.ui.Button;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import Button = Laya.Button;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_Button {
         private COLUMNS: number = 2;

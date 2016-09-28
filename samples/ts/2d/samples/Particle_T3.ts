@@ -1,13 +1,13 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import Loader = laya.net.Loader;
-    import Particle2D = laya.particle.Particle2D;
-    import ParticleSettings = laya.particle.ParticleSettings;
-    import Browser = laya.utils.Browser;
-    import Handler = laya.utils.Handler;
-    import Stat = laya.utils.Stat;
-    import WebGL = laya.webgl.WebGL;
-    import URL = laya.net.URL;
+    import Stage = Laya.Stage;
+    import Loader = Laya.Loader;
+    import Particle2D = Laya.Particle2D;
+    import ParticleSettings = Laya.ParticleSettings;
+    import Browser = Laya.Browser;
+    import Handler = Laya.Handler;
+    import Stat = Laya.Stat;
+    import WebGL = Laya.WebGL;
+    import URL = Laya.URL;
 
     export class Particle_T3 {
         private sp: Particle2D;

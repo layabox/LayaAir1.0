@@ -100,7 +100,7 @@ package laya.ui {
 				_width = value;
 				model && model.size(_width, _height);
 				callLater(changeSize);
-				if (_layout.enable && (!isNaN(_layout.centerX) || !isNaN(_layout.right)|| !isNaN(_layout.anchorX))) resetLayoutX();
+				if (_layout.enable && (!isNaN(_layout.centerX) || !isNaN(_layout.right) || !isNaN(_layout.anchorX))) resetLayoutX();
 			}
 		}
 		
@@ -150,7 +150,7 @@ package laya.ui {
 				_height = value;
 				model && model.size(_width, _height);
 				callLater(changeSize);
-				if (_layout.enable && (!isNaN(_layout.centerY) || !isNaN(_layout.bottom)|| !isNaN(_layout.anchorY))) resetLayoutY();
+				if (_layout.enable && (!isNaN(_layout.centerY) || !isNaN(_layout.bottom) || !isNaN(_layout.anchorY))) resetLayoutY();
 			}
 		}
 		
@@ -358,7 +358,7 @@ package laya.ui {
 				_layout.enable = value;
 				if (this.parent) {
 					onAdded();
-				}else {
+				} else {
 					on(Event.ADDED, this, onAdded);
 					on(Event.REMOVED, this, onRemoved);
 				}
@@ -400,15 +400,15 @@ package laya.ui {
 				var layout:LayoutStyle = _layout;
 				if (!isNaN(layout.anchorX)) this.pivotX = layout.anchorX * width;
 				if (!isNaN(layout.centerX)) {
-					x = (parent.width - displayWidth) * 0.5 + layout.centerX;
+					x = (parent.width - displayWidth) * 0.5 + layout.centerX + this.pivotX;
 				} else if (!isNaN(layout.left)) {
-					x = layout.left;
+					x = layout.left + this.pivotX;
 					if (!isNaN(layout.right)) {
 						//TODO:
 						width = (parent._width - layout.left - layout.right) / scaleX;
 					}
 				} else if (!isNaN(layout.right)) {
-					x = parent.width - displayWidth - layout.right;
+					x = parent.width - displayWidth - layout.right + this.pivotX;
 				}
 			}
 		}
@@ -422,15 +422,15 @@ package laya.ui {
 				var layout:LayoutStyle = _layout;
 				if (!isNaN(layout.anchorY)) this.pivotY = layout.anchorY * height;
 				if (!isNaN(layout.centerY)) {
-					y = (parent.height - displayHeight) * 0.5 + layout.centerY;
+					y = (parent.height - displayHeight) * 0.5 + layout.centerY + this.pivotY;
 				} else if (!isNaN(layout.top)) {
-					y = layout.top;
+					y = layout.top + this.pivotY;
 					if (!isNaN(layout.bottom)) {
 						//TODO:
 						height = (parent._height - layout.top - layout.bottom) / scaleY;
 					}
 				} else if (!isNaN(layout.bottom)) {
-					y = parent.height - displayHeight - layout.bottom;
+					y = parent.height - displayHeight - layout.bottom + this.pivotY;
 				}
 			}
 		}

@@ -4,8 +4,7 @@ package laya.utils {
 	import laya.utils.Utils;
 	
 	/**
-	 * ...
-	 * @author
+	 * @private
 	 */
 	public class VectorGraphManager {
 		
@@ -13,7 +12,7 @@ package laya.utils {
 		
 		public var useDic:Object = {};
 		public var shapeDic:Object = {};
-		public var shapeLineDic:Object = { };
+		public var shapeLineDic:Object = {};
 		
 		private var _id:uint = 0;
 		private var _checkKey:Boolean = false;
@@ -34,10 +33,9 @@ package laya.utils {
 		 * @return
 		 */
 		public function getId():uint {
-			if (_freeIdArray.length > 0)
-			{
-				return _freeIdArray.pop();
-			}
+			//if (_freeIdArray.length > 0) {
+				//return _freeIdArray.pop();
+			//}
 			return _id++;
 		}
 		
@@ -93,7 +91,7 @@ package laya.utils {
 			if (useDic[id] != null) {
 				delete useDic[id];
 			}
-			_freeIdArray.push(id);
+			//_freeIdArray.push(id);
 		}
 		
 		/**

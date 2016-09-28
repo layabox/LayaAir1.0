@@ -1,11 +1,11 @@
 module laya {
-	import Sprite  = laya.display.Sprite;
-	import Stage   = laya.display.Stage;
-	import Text    = laya.display.Text;
-	import Shake   = laya.device.Shake;
-	import Browser = laya.utils.Browser;
-	import Handler = laya.utils.Handler;
-	import Event   = laya.events.Event;
+	import Sprite  = Laya.Sprite;
+	import Stage   = Laya.Stage;
+	import Text    = Laya.Text;
+	import Shake   = Laya.Shake;
+	import Browser = Laya.Browser;
+	import Handler = Laya.Handler;
+	import Event   = Laya.Event;
 
 	 export class InputDevice_Shake {
 		private picW:number = 484;

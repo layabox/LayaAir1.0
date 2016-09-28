@@ -1,8 +1,8 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import ComboBox = laya.ui.ComboBox;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import ComboBox = Laya.ComboBox;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_ComboBox {
         private skin: string = "../../res/ui/combobox.png";

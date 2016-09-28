@@ -1,8 +1,8 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import List = laya.ui.List;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import List = Laya.List;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_List {
         constructor() {
@@ -59,8 +59,8 @@ module laya {
         }
     }
 
-    import Box = laya.ui.Box;
-    import Image = laya.ui.Image;
+    import Box = Laya.Box;
+    import Image = Laya.Image;
     class Item extends Box {
         public static WID: number = 373;
         public static HEI: number = 85;

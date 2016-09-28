@@ -1,10 +1,10 @@
 module laya {
-    import Stage = laya.display.Stage;
-    import Button = laya.ui.Button;
-    import Clip = laya.ui.Clip;
-    import Image = laya.ui.Image;
-    import Handler = laya.utils.Handler;
-    import WebGL = laya.webgl.WebGL;
+    import Stage = Laya.Stage;
+    import Button = Laya.Button;
+    import Clip = Laya.Clip;
+    import Image = Laya.Image;
+    import Handler = Laya.Handler;
+    import WebGL = Laya.WebGL;
 
     export class UI_Clip {
         private buttonSkin: string = "../../res/ui/button-7.png";
@@ -25,7 +25,7 @@ module laya {
             Laya.stage.scaleMode = Stage.SCALE_SHOWALL;
             Laya.stage.bgColor = "#232628";
 
-            Laya.loader.load([this.buttonSkin, this.clipSkin, this.bgSkin], laya.utils.Handler.create(this, this.onSkinLoaded));
+            Laya.loader.load([this.buttonSkin, this.clipSkin, this.bgSkin], Laya.Handler.create(this, this.onSkinLoaded));
         }
 
         private onSkinLoaded(): void {

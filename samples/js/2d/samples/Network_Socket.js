@@ -1,8 +1,8 @@
 (function()
 {
-	var Event  = laya.events.Event;
-	var Socket = laya.net.Socket;
-	var Byte   = laya.utils.Byte;
+	var Event  = Laya.Event;
+	var Socket = Laya.Socket;
+	var Byte   = Laya.Byte;
 
 	var socket;
 	var output;

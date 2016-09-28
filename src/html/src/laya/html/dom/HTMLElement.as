@@ -235,8 +235,12 @@ package laya.html.dom
 		{
 			switch(e.type)
 			{
-				case Event.CLICK:
-					Laya.stage.event(Event.LINK, [href]);
+				case Event.CLICK:					
+					var target:Sprite = this;
+					while (target){
+						target.event(Event.LINK, [href]);
+						target = target.parent as Sprite;
+					}
 					break;
 			}
 		}

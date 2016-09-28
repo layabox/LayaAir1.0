@@ -1,15 +1,15 @@
 (function()
 {
-	var Skeleton = laya.ani.bone.Skeleton;
-	var Templet = laya.ani.bone.Templet;
-	var Event = laya.events.Event;
-	var GlowFilter = laya.filters.GlowFilter;
-	var Loader = laya.net.Loader;
-	var Texture = laya.resource.Texture;
-	var Browser = laya.utils.Browser;
-	var Handler = laya.utils.Handler;
-	var Stat = laya.utils.Stat;
-	var WebGL = laya.webgl.WebGL;
+	var Skeleton = Laya.Skeleton;
+	var Templet = Laya.Templet;
+	var Event = Laya.Event;
+	var GlowFilter = Laya.GlowFilter;
+	var Loader = Laya.Loader;
+	var Texture = Laya.Texture;
+	var Browser = Laya.Browser;
+	var Handler = Laya.Handler;
+	var Stat = Laya.Stat;
+	var WebGL = Laya.WebGL;
 
 	var mArmature;
 	var fileName = "Dragon";

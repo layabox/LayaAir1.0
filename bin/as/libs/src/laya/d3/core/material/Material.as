@@ -17,6 +17,7 @@ package laya.d3.core.material {
 	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
+	import laya.webgl.resource.WebGLImage;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.ValusArray;
@@ -25,8 +26,6 @@ package laya.d3.core.material {
 	 * <code>Material</code> 类用于创建材质。
 	 */
 	public class Material extends EventDispatcher {
-		public static var maxMaterialCount:int = Math.floor(2147483647 / VertexDeclaration._maxVertexDeclarationBit);//需在材质中加异常判断警告
-		
 		/** 默认材质，禁止修改*/
 		public static var defaultMaterial:Material = new Material();
 		
@@ -71,8 +70,6 @@ package laya.d3.core.material {
 		/** @private */
 		private static const ALPHATESTVALUE:int = 7;
 		
-		/**渲染状态_天空。*/
-		public static const RENDERMODE_SKY:int = 0;
 		/**渲染状态_不透明。*/
 		public static const RENDERMODE_OPAQUE:int = 1;
 		/**渲染状态_不透明_双面。*/
@@ -81,14 +78,22 @@ package laya.d3.core.material {
 		public static const RENDERMODE_CUTOUT:int = 3;
 		/**渲染状态_透明测试_双面。*/
 		public static const RENDERMODE_CUTOUTDOUBLEFACE:int = 4;
-		/**渲染状态_透明混合。*/
-		public static const RENDERMODE_TRANSPARENT:int = 5;
-		/**渲染状态_透明混合_双面。*/
-		public static const RENDERMODE_TRANSPARENTDOUBLEFACE:int = 6;
-		/**渲染状态_加色法混合。*/
-		public static const RENDERMODE_ADDTIVE:int = 7;
-		/**渲染状态_加色法混合_双面。*/
-		public static const RENDERMODE_ADDTIVEDOUBLEFACE:int = 8;
+		/**渲染状态_只读深度_透明混合。*/
+		public static const RENDERMODE_DEPTHREAD_TRANSPARENT:int = 5;
+		/**渲染状态_只读深度_透明混合_双面。*/
+		public static const RENDERMODE_DEPTHREAD_TRANSPARENTDOUBLEFACE:int = 6;
+		/**渲染状态_只读深度_加色法混合。*/
+		public static const RENDERMODE_DEPTHREAD_ADDTIVE:int = 7;
+		/**渲染状态_只读深度_加色法混合_双面。*/
+		public static const RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE:int = 8;
+		/**渲染状态_无深度_透明混合。*/
+		public static const RENDERMODE_NONDEPTH_TRANSPARENT:int = 9;
+		/**渲染状态_无深度_透明混合_双面。*/
+		public static const RENDERMODE_NONDEPTH_TRANSPARENTDOUBLEFACE:int = 10;
+		/**渲染状态_无深度_加色法混合。*/
+		public static const RENDERMODE_NONDEPTH_ADDTIVE:int = 11;
+		/**渲染状态_无深度_加色法混合_双面。*/
+		public static const RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE:int = 12;
 		
 		public static function createFromFile(url:String, out:Material):void {
 			out._loaded = false;
@@ -197,10 +202,6 @@ package laya.d3.core.material {
 			_renderMode = value;
 			
 			switch (value) {
-			case RENDERMODE_SKY: 
-				_renderQueue = RenderQueue.NONEWRITEDEPTH;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
 			case RENDERMODE_OPAQUE: 
 				_renderQueue = RenderQueue.OPAQUE;
 				event(Event.RENDERQUEUE_CHANGED, this);
@@ -217,22 +218,39 @@ package laya.d3.core.material {
 				_renderQueue = RenderQueue.OPAQUE_DOUBLEFACE;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
-			case RENDERMODE_TRANSPARENT: 
+			case RENDERMODE_DEPTHREAD_TRANSPARENT: 
 				_renderQueue = RenderQueue.DEPTHREAD_ALPHA_BLEND;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
-			case RENDERMODE_TRANSPARENTDOUBLEFACE: 
+			case RENDERMODE_DEPTHREAD_TRANSPARENTDOUBLEFACE: 
 				_renderQueue = RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
-			case RENDERMODE_ADDTIVE: 
+			case RENDERMODE_DEPTHREAD_ADDTIVE: 
 				_renderQueue = RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
-			case RENDERMODE_ADDTIVEDOUBLEFACE: 
+			case RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE: 
 				_renderQueue = RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
+			case RENDERMODE_NONDEPTH_TRANSPARENT: 
+				_renderQueue = RenderQueue.NONDEPTH_ALPHA_BLEND;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_NONDEPTH_TRANSPARENTDOUBLEFACE: 
+				_renderQueue = RenderQueue.NONDEPTH_ALPHA_BLEND_DOUBLEFACE;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_NONDEPTH_ADDTIVE: 
+				_renderQueue = RenderQueue.NONDEPTH_ALPHA_ADDTIVE_BLEND;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE: 
+				_renderQueue = RenderQueue.NONDEPTH_ALPHA_ADDTIVE_BLEND_DOUBLEFACE;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			
 			default: 
 				throw new Error("Material:renderMode value error.");
 				break;
@@ -278,6 +296,7 @@ package laya.d3.core.material {
 		 * @param value 漫反射贴图。
 		 */
 		public function set diffuseTexture(value:Texture):void {
+			(value.bitmap as WebGLImage).enableMerageInAtlas = false;//TODO:临时
 			_setTexture(value, DIFFUSETEXTURE, Buffer2D.DIFFUSETEXTURE);
 			_getShaderDefineValue();
 		}
@@ -295,6 +314,7 @@ package laya.d3.core.material {
 		 * @param value 法线贴图。
 		 */
 		public function set normalTexture(value:Texture):void {
+			(value.bitmap as WebGLImage).enableMerageInAtlas = false;//TODO:临时
 			_setTexture(value, NORMALTEXTURE, Buffer2D.NORMALTEXTURE);
 			_getShaderDefineValue();
 		}
@@ -312,6 +332,7 @@ package laya.d3.core.material {
 		 * @param value  高光贴图。
 		 */
 		public function set specularTexture(value:Texture):void {
+			(value.bitmap as WebGLImage).enableMerageInAtlas = false;//TODO:临时
 			_setTexture(value, SPECULARTEXTURE, Buffer2D.SPECULARTEXTURE);
 			_getShaderDefineValue();
 		}
@@ -329,6 +350,7 @@ package laya.d3.core.material {
 		 * @param value 放射贴图。
 		 */
 		public function set emissiveTexture(value:Texture):void {
+			(value.bitmap as WebGLImage).enableMerageInAtlas = false;//TODO:临时
 			_setTexture(value, EMISSIVETEXTURE, Buffer2D.EMISSIVETEXTURE);
 			_getShaderDefineValue();
 		}
@@ -346,6 +368,7 @@ package laya.d3.core.material {
 		 * @param  value 环境贴图。
 		 */
 		public function set ambientTexture(value:Texture):void {
+			(value.bitmap as WebGLImage).enableMerageInAtlas = false;//TODO:临时
 			_setTexture(value, AMBIENTTEXTURE, Buffer2D.AMBIENTTEXTURE);
 			_getShaderDefineValue();
 		}
@@ -444,9 +467,7 @@ package laya.d3.core.material {
 		 */
 		public function Material() {
 			_id = ++_uniqueIDCounter;
-			if (_id > maxMaterialCount)
-				throw new Error("Material: Material count should not large than ", maxMaterialCount);
-			 
+			
 			_color[AMBIENTCOLOR] = AMBIENTCOLORVALUE;
 			_color[DIFFUSECOLOR] = DIFFUSECOLORVALUE;
 			_color[SPECULARCOLOR] = SPECULARCOLORVALUE;
@@ -650,8 +671,6 @@ package laya.d3.core.material {
 		public function setShaderName(name:String):void {
 			_sharderNameID = Shader.nameKey.get(name);
 		}
-		
-		
 		
 		/**
 		 * 复制材质

@@ -1,13 +1,13 @@
 (function()
 {
-	var Sprite = laya.display.Sprite;
-	var Stage = laya.display.Stage;
-	var Event = laya.events.Event;
-	var Rectangle = laya.maths.Rectangle;
-	var Texture = laya.resource.Texture;
-	var Browser = laya.utils.Browser;
-	var Handler = laya.utils.Handler;
-	var WebGL = laya.webgl.WebGL;
+	var Sprite = Laya.Sprite;
+	var Stage = Laya.Stage;
+	var Event = Laya.Event;
+	var Rectangle = Laya.Rectangle;
+	var Texture = Laya.Texture;
+	var Browser = Laya.Browser;
+	var Handler = Laya.Handler;
+	var WebGL = Laya.WebGL;
 
 	var ApePath = "../../res/apes/monkey2.png";
 

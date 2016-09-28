@@ -1,8 +1,8 @@
 module laya {
-	import Sprite= laya.display.Sprite;
-	import Text= laya.display.Text;
-	import Browser= laya.utils.Browser;
-	import WebGL= laya.webgl.WebGL;
+	import Sprite= Laya.Sprite;
+	import Text= Laya.Text;
+	import Browser= Laya.Browser;
+	import WebGL= Laya.WebGL;
 	
 	export class PIXI_Example_04
 	{

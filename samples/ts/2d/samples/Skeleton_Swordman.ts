@@ -1,13 +1,13 @@
 module laya {
-	import Skeleton = laya.ani.bone.Skeleton;
-	import Templet = laya.ani.bone.Templet;
-	import Stage = laya.display.Stage;
-	import Event = laya.events.Event;
-	import Keyboard = laya.events.Keyboard;
-	import Loader = laya.net.Loader;
-	import Texture = laya.resource.Texture;
-	import Handler = laya.utils.Handler;
-	import WebGL = laya.webgl.WebGL;
+	import Skeleton = Laya.Skeleton;
+	import Templet = Laya.Templet;
+	import Stage = Laya.Stage;
+	import Event = Laya.Event;
+	import Keyboard = Laya.Keyboard;
+	import Loader = Laya.Loader;
+	import Texture = Laya.Texture;
+	import Handler = Laya.Handler;
+	import WebGL = Laya.WebGL;
 
 	export class Skeleton_Swordman {
 		private ANI_STAND: number = 0;

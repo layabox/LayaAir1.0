@@ -9,5 +9,5 @@ void main() {
 	newTexCoord.x = mod(((u_offset.x + v_texcoord.x) * u_texRange.y),u_texRange.y) + u_texRange.x;
 	newTexCoord.y = mod(((u_offset.y + v_texcoord.y) * u_texRange.w),u_texRange.w) + u_texRange.z;
 	vec4 t_color = texture2D(texture, newTexCoord);
-	gl_FragColor = t_color.rgba;
+	gl_FragColor = t_color * v_color;
 }

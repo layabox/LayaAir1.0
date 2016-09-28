@@ -1,8 +1,8 @@
 module laya {
-	import Input = laya.display.Input;
-	import Stage = laya.display.Stage;
-	import Browser = laya.utils.Browser;
-	import WebGL = laya.webgl.WebGL;
+	import Input = Laya.Input;
+	import Stage = Laya.Stage;
+	import Browser = Laya.Browser;
+	import WebGL = Laya.WebGL;
 
 	export class Text_MaxChars {
 
@@ -25,9 +25,6 @@ module laya {
 			inputText.size(350, 100);
 			inputText.x = Laya.stage.width - inputText.width >> 1;
 			inputText.y = Laya.stage.height - inputText.height >> 1;
-
-			inputText.inputElementXAdjuster = -1;
-			inputText.inputElementYAdjuster = 1;
 
 			// 设置字体样式
 			inputText.bold = true;

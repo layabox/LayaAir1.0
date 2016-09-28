@@ -18,12 +18,10 @@ package laya.d3.graphics {
 	
 	/**
 	 * @private
-	 * <code>StaticBatch</code> 类用于创建静态批处理。
+	 * <code>StaticBatch</code> 类用于静态批处理。
 	 */
 	public class StaticBatch implements IRenderable {
-		private static var _IDCounter:int = 0;
 		public static var maxVertexCount:int = 65535;
-		public static var maxIndexCount:int = 120000;
 		
 		private static function _addToRenderQueueStaticBatch(scene:BaseScene, sprite3D:Sprite3D):void {
 			var i:int, n:int;
@@ -32,7 +30,8 @@ package laya.d3.graphics {
 				var renderElements:Vector.<RenderElement> = (sprite3D as MeshSprite3D).meshRender.renderCullingObject._renderElements;
 				for (i = 0, n = renderElements.length; i < n; i++) {
 					var renderElement:RenderElement = renderElements[i];
-					scene.getRenderQueue(renderElement.material.renderQueue)._addPrepareRenderElementToStaticBatch(renderElement);
+					if (renderElement.renderObj.VertexBufferCount === 1)//VertexBufferCount必须等于1
+						scene._staticBatchManager._addPrepareRenderElement(renderElement);
 				}
 			}
 			
@@ -50,20 +49,12 @@ package laya.d3.graphics {
 				throw new Error("BaseScene: staticBatchRoot is not a part of scene.");
 			
 			_addToRenderQueueStaticBatch(scene, staticBatchRoot);
-			var queues:Vector.<RenderQueue> = scene._quenes;
-			for (var i:int = 0, n:int = queues.length; i < n; i++) {
-				var queue:RenderQueue = queues[i];
-				(queue) && (queue._finishCombineStaticBatch());
-			}
+			scene._staticBatchManager._finishCombineStaticBatch(staticBatchRoot);
 		}
 		
-		private var _renderQueue:RenderQueue;
+		public var _vertexDeclaration:VertexDeclaration;
+		public var _material:Material;
 		
-		private var _vertexDeclaration:VertexDeclaration;
-		private var _material:Material;
-		
-		private var _vertexDatas:Float32Array;
-		private var _indexDatas:Uint16Array;
 		private var _vertexBuffer:VertexBuffer3D;
 		private var _indexBuffer:IndexBuffer3D;
 		private var _renderElements:Vector.<RenderElement>;
@@ -75,12 +66,9 @@ package laya.d3.graphics {
 		private var _currentCombineVertexCount:int;
 		private var _currentCombineIndexCount:int;
 		
-		public var _indexStart:int;
-		public var _indexEnd:int;
+		private var _needFinishCombine:Boolean;
 		
-		public var _useFPS:int;
-		
-		public var id:int;
+		public var _rootSprite:Sprite3D;
 		
 		public function get indexOfHost():int {
 			return 0;
@@ -101,37 +89,23 @@ package laya.d3.graphics {
 				return null;
 		}
 		
-		public function get currentVertexCount():int {
-			return _currentCombineVertexCount;
-		}
-		
-		public function get currentIndexCount():int {
-			return _currentCombineIndexCount;
-		}
-		
 		public function getIndexBuffer():IndexBuffer3D {
 			return _indexBuffer;
 		}
 		
-		public function StaticBatch(renderQueue:RenderQueue, vertexDeclaration:VertexDeclaration, material:Material) {
-			_renderQueue = renderQueue;
-			_useFPS = -1;
+		public function StaticBatch(rootSprite:Sprite3D, vertexDeclaration:VertexDeclaration, material:Material) {
 			_currentCombineVertexCount = 0;
 			_currentCombineIndexCount = 0;
-			id = _IDCounter++;
-			_vertexDeclaration = vertexDeclaration;
-			_material = material;
-			
+			_needFinishCombine = false;
 			_renderElements = new Vector.<RenderElement>();
 			_combineRenderElements = new Vector.<RenderElement>();
 			
 			_combineRenderElementPool = new Vector.<RenderElement>();
 			_combineRenderElementPoolIndex = 0;
-		}
-		
-		private function _getCombineRenderElementFromPool():RenderElement {
-			var renderElement:RenderElement = _combineRenderElementPool[_combineRenderElementPoolIndex++];
-			return renderElement || (_combineRenderElementPool[_combineRenderElementPoolIndex - 1] = new RenderElement());
+			
+			_rootSprite = rootSprite;
+			_vertexDeclaration = vertexDeclaration;
+			_material = material;
 		}
 		
 		private function _getShader(state:RenderState, vertexBuffer:VertexBuffer3D, material:Material):Shader {
@@ -147,142 +121,141 @@ package laya.d3.graphics {
 			return shader;
 		}
 		
+		private function _getCombineRenderElementFromPool():RenderElement {
+			var renderElement:RenderElement = _combineRenderElementPool[_combineRenderElementPoolIndex++];
+			return renderElement || (_combineRenderElementPool[_combineRenderElementPoolIndex - 1] = new RenderElement());
+		}
+		
 		public function _addCombineRenderObjTest(renderElement:RenderElement):Boolean {
-			var renderObj:IRenderable = renderElement.element;
-			var indexCount:int = _currentCombineIndexCount + renderObj.getIndexBuffer().indexCount;
+			var renderObj:IRenderable = renderElement.renderObj;
 			var vertexCount:int = _currentCombineVertexCount + renderObj.getVertexBuffer().vertexCount;
-			if (vertexCount > maxVertexCount || indexCount > maxIndexCount)
+			if (vertexCount > maxVertexCount) {
 				return false;
-			
+			}
 			return true;
 		}
 		
 		public function _addCombineRenderObj(renderElement:RenderElement):void {
-			var renderObj:IRenderable = renderElement.element;
-			
+			var renderObj:IRenderable = renderElement.renderObj;
 			_combineRenderElements.push(renderElement);
+			renderElement._staticBatch = this;
 			_currentCombineIndexCount = _currentCombineIndexCount + renderObj.getIndexBuffer().indexCount;
 			_currentCombineVertexCount = _currentCombineVertexCount + renderObj.getVertexBuffer().vertexCount;
-			_useFPS = Stat.loopCount;
+			_needFinishCombine = true;
+		}
+		
+		public function _deleteCombineRenderObj(renderElement:RenderElement):void {
+			var renderObj:IRenderable = renderElement.renderObj;
+			var index:int = _combineRenderElements.indexOf(renderElement);
+			if (index !== -1) {
+				_combineRenderElements.splice(index, 1);
+				renderElement._staticBatch = null;
+				_currentCombineIndexCount = _currentCombineIndexCount - renderObj.getIndexBuffer().indexCount;
+				_currentCombineVertexCount = _currentCombineVertexCount - renderObj.getVertexBuffer().vertexCount;
+				_needFinishCombine = true;
+			}
 		}
 		
 		public function _finshCombine():void {
-			var curMerVerCount:int = 0;
-			var curIndexCount:int = 0;
-			
-			_vertexDatas = new Float32Array(_vertexDeclaration.vertexStride / 4 * _currentCombineVertexCount);
-			_indexDatas = new Uint16Array(_currentCombineIndexCount);
-			
-			if (_vertexBuffer) {
-				_vertexBuffer.dispose();
-				_indexBuffer.dispose();
-			}
-			_vertexBuffer = VertexBuffer3D.create(_vertexDeclaration, _currentCombineVertexCount, WebGLContext.DYNAMIC_DRAW);
-			_indexBuffer = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, _currentCombineIndexCount, WebGLContext.DYNAMIC_DRAW);
-			
-			for (var i:int = 0, n:int = _combineRenderElements.length; i < n; i++) {
-				var rebderElement:RenderElement = _combineRenderElements[i];
+			if (_needFinishCombine) {//TODO:合并前应处理排序
+				var curMerVerCount:int = 0;
+				var curIndexCount:int = 0;
 				
-				var subVertexDatas:Float32Array = rebderElement.getBakedVertexs(0);
-				var subIndexDatas:Uint16Array = rebderElement.getBakedIndices();
+				var vertexDatas:Float32Array = new Float32Array(_vertexDeclaration.vertexStride / 4 * _currentCombineVertexCount);
+				var indexDatas:Uint16Array = new Uint16Array(_currentCombineIndexCount);
 				
-				var indexOffset:int = curMerVerCount / (_vertexDeclaration.vertexStride / 4);
-				var indexStart:int = curIndexCount;
-				var indexEnd:int = indexStart + subIndexDatas.length;
-				
-				rebderElement.staticBatch = this;
-				rebderElement.staticBatchIndexStart = indexStart;
-				rebderElement.staticBatchIndexEnd = indexEnd;
-				
-				_indexDatas.set(subIndexDatas, curIndexCount);
-				for (var k:int = indexStart; k < indexEnd; k++)
-					
-					_indexDatas[k] = indexOffset + _indexDatas[k];
-				
-				curIndexCount += subIndexDatas.length;
-				
-				_vertexDatas.set(subVertexDatas, curMerVerCount);
-				
-				curMerVerCount += subVertexDatas.length;
-			}
-			
-			_vertexBuffer.setData(_vertexDatas);
-			_indexBuffer.setData(_indexDatas);
-			
-			_combineRenderElements.length = 0;
-			_currentCombineIndexCount = 0;
-			_currentCombineVertexCount = 0;
-		}
-		
-		public function _addRenderElement(renderElement:RenderElement):void {
-			for (var i:int = 0, n:int = _renderElements.length; i < n; i++) {
-				if (_renderElements[i].staticBatchIndexStart > renderElement.staticBatchIndexStart) {
-					_renderElements.splice(i, 0, renderElement);
-					renderElement.isInStaticBatch = true;
-					renderElement.ownerRenderQneue = _renderQueue;
-					_useFPS = Stat.loopCount;
-					return;
+				if (_vertexBuffer) {
+					_vertexBuffer.dispose();
+					_indexBuffer.dispose();
 				}
-			}
-			
-			_renderElements.push(renderElement);
-			renderElement.isInStaticBatch = true;
-			renderElement.ownerRenderQneue = _renderQueue;
-		}
-		
-		public function _deleteRenderElement(renderElement:RenderElement):void {
-			var index:int = _renderElements.indexOf(renderElement);
-			if (index !== -1) {
-				_renderElements.splice(index, 1);
-				renderElement.isInStaticBatch = false;
-				renderElement.ownerRenderQneue = null;
+				_vertexBuffer = VertexBuffer3D.create(_vertexDeclaration, _currentCombineVertexCount, WebGLContext.STATIC_DRAW);
+				_indexBuffer = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, _currentCombineIndexCount, WebGLContext.STATIC_DRAW);
+				
+				for (var i:int = 0, n:int = _combineRenderElements.length; i < n; i++) {
+					var renderElement:RenderElement = _combineRenderElements[i];
+					var subVertexDatas:Float32Array = renderElement.getStaticBatchBakedVertexs(0);
+					var subIndexDatas:Uint16Array = renderElement.getBakedIndices();
+					
+					var indexOffset:int = curMerVerCount / (_vertexDeclaration.vertexStride / 4);
+					var indexStart:int = curIndexCount;
+					var indexEnd:int = indexStart + subIndexDatas.length;
+					
+					renderElement._batchIndexStart = indexStart;
+					renderElement._batchIndexEnd = indexEnd;
+					
+					indexDatas.set(subIndexDatas, curIndexCount);
+					for (var k:int = indexStart; k < indexEnd; k++)
+						indexDatas[k] = indexOffset + indexDatas[k];
+					curIndexCount += subIndexDatas.length;
+					
+					vertexDatas.set(subVertexDatas, curMerVerCount);
+					curMerVerCount += subVertexDatas.length;
+				}
+				
+				_vertexBuffer.setData(vertexDatas);
+				_indexBuffer.setData(indexDatas);
+				_needFinishCombine = false;
 			}
 		}
 		
 		public function _clearRenderElements():void {
-			for (var i:int = 0, n:int = _renderElements.length; i < n; i++) {
-				_renderElements[i].isInStaticBatch = false;
-				_renderElements[i].ownerRenderQneue = null;
-			}
 			_renderElements.length = 0;
+		}
+		
+		public function _addRenderElement(renderElement:RenderElement):void {
+			for (var i:int = 0, n:int = _renderElements.length; i < n; i++) {
+				if (_renderElements[i]._batchIndexStart > renderElement._batchIndexStart) {
+					_renderElements.splice(i, 0, renderElement);
+					return;
+				}
+			}
+			_renderElements.push(renderElement);
 		}
 		
 		public function _getRenderElement(mergeElements:Array):void {
 			_combineRenderElementPoolIndex = 0;//归零对象池
 			
 			var length:int = _renderElements.length;
-			if (length > 0) {
-				var merageElement:RenderElement = _getCombineRenderElementFromPool();
-				merageElement.type = 1;//代表StaticBatch
-				merageElement.staticBatch = null;
-				merageElement.element = this;
-				mergeElements.push(merageElement);
-				merageElement.staticBatchIndexStart = _renderElements[0].staticBatchIndexStart;
-				merageElement.staticBatchIndexEnd = _renderElements[0].staticBatchIndexEnd;
-				
-				if (length > 1) {
-					for (var i:int = 1; i < length; i++) {
-						var renderElement:RenderElement = _renderElements[i];
-						if (_renderElements[i - 1].staticBatchIndexEnd !== renderElement.staticBatchIndexStart) {
-							merageElement = _getCombineRenderElementFromPool();
-							merageElement.type = 1;//代表StaticBatch
-							merageElement.staticBatch = null;
-							merageElement.element = this;
-							mergeElements.push(merageElement);
-							merageElement.staticBatchIndexStart = renderElement.staticBatchIndexStart;
-							merageElement.staticBatchIndexEnd = renderElement.staticBatchIndexEnd;
-						} else {
-							merageElement.staticBatchIndexEnd = renderElement.staticBatchIndexEnd;
-						}
+			var merageElement:RenderElement = _getCombineRenderElementFromPool();
+			merageElement._type = 1;//代表StaticBatch
+			merageElement._staticBatch = null;
+			merageElement.renderObj = this;
+			
+			merageElement._batchIndexStart = _renderElements[0]._batchIndexStart;
+			merageElement._batchIndexEnd = _renderElements[0]._batchIndexEnd;
+			merageElement._material = _material;
+			merageElement._material = _material;
+			mergeElements.push(merageElement);
+			
+			if (length > 1) {
+				for (var i:int = 1; i < length; i++) {
+					var renderElement:RenderElement = _renderElements[i];
+					if (_renderElements[i - 1]._batchIndexEnd !== renderElement._batchIndexStart) {
+						merageElement = _getCombineRenderElementFromPool();
+						merageElement._type = 1;//代表StaticBatch
+						merageElement._staticBatch = null;
+						merageElement.renderObj = this;
+						
+						merageElement._batchIndexStart = renderElement._batchIndexStart;
+						merageElement._batchIndexEnd = renderElement._batchIndexEnd;
+						merageElement._material = _material;
+						mergeElements.push(merageElement);
+					} else {
+						merageElement._batchIndexEnd = renderElement._batchIndexEnd;
 					}
 				}
 			}
+		
+		}
+		
+		public function _addToRenderQueue(scene:BaseScene):void {
+			(_renderElements.length > 0) && (scene.getRenderQueue(_material.renderQueue)._addStaticBatch(this));//TODO:>0移到外层
 		}
 		
 		public function _render(state:RenderState):Boolean {
 			var vb:VertexBuffer3D = _vertexBuffer;
 			var ib:IndexBuffer3D = _indexBuffer;
-			var material:Material = _material;
+			var material:Material = state.renderElement._material;
 			
 			//if (material.normalTexture && !vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TANGENT0]) {
 			////是否放到事件触发。
@@ -301,20 +274,20 @@ package laya.d3.graphics {
 			
 			if (material) {
 				var shader:Shader = _getShader(state, vb, material);
-				
 				var presz:int = state.shaderValue.length;
 				state.shaderValue.pushArray(vb.vertexDeclaration.shaderValues);
-				
-				state.shaderValue.pushValue(Buffer2D.MATRIX1, Matrix4x4.DEFAULT.elements, -1);//待优化
-				state.shaderValue.pushValue(Buffer2D.MVPMATRIX, state.projectionViewMatrix.elements, /*state.camera.transform._worldTransformModifyID + state.camera._projectionMatrixModifyID,从结构上应该从Mesh更新*/ -1);
+				var worldMat:Matrix4x4 = _rootSprite.transform.worldMatrix;
+				state.shaderValue.pushValue(Buffer2D.MATRIX1, worldMat.elements, -1);
+				Matrix4x4.multiply(state.projectionViewMatrix, worldMat, _rootSprite.wvpMatrix);
+				state.shaderValue.pushValue(Buffer2D.MVPMATRIX, _rootSprite.wvpMatrix.elements, /*state.camera.transform._worldTransformModifyID + state.camera._projectionMatrixModifyID,从结构上应该从Mesh更新*/ -1);
 				if (!material.upload(state, null, shader)) {
 					state.shaderValue.length = presz;
 					return false;
 				}
 				state.shaderValue.length = presz;
 			}
-			var indexCount:int = _indexEnd - _indexStart;
-			state.context.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, _indexStart * 2);//2为字节数
+			var indexCount:int = state._batchIndexEnd - state._batchIndexStart;
+			state.context.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, state._batchIndexStart * 2);
 			Stat.drawCall++;
 			Stat.trianglesFaces += indexCount / 3;
 			return true;

@@ -8,10 +8,6 @@ package laya.webgl.resource {
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.utils.RenderState2D;
 	
-	/**
-	 * ...
-	 * @author laya
-	 */
 	public class RenderTargetMAX {
 		private static var _matrixDefault:Matrix = new Matrix();
 		
@@ -33,7 +29,6 @@ package laya.webgl.resource {
 			repaint = true;
 			_width = w;
 			_height = h;
-			
 			
 			if (!oneTargets)
 				oneTargets = new OneTarget(w, h);
@@ -121,7 +116,7 @@ import laya.webgl.resource.RenderTarget2D;
 class OneTarget {
 	/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 	public var x:Number;
-	public var y:Number;
+	import laya.webgl.resource.RenderTarget2D;
 	public var width:Number;
 	public var height:Number;
 	public var target:RenderTarget2D;

@@ -138,6 +138,10 @@ package laya.events {
 		public static const WORLDMATRIX_NEEDCHANGE:String = "worldmatrixneedchanged";
 		/**更换动作时触发。*/
 		public static const ANIMATION_CHANGED:String = "actionchanged";
+		/**是否在舞台发生变化时触发。*/
+		public static const INSTAGE_CHANGED:String = "instagechanged";
+		/**需重新缓存动画时触发，引擎内部使用。*/
+		public static const CACHEFRAMEINDEX_CHANGED:String = "cacheframeindexchanged";
 		
 		/** 事件类型。*/
 		public var type:String;
@@ -226,9 +230,18 @@ package laya.events {
 		 * 表示键在键盘上的位置。这对于区分在键盘上多次出现的键非常有用。<br>
 		 * 例如，您可以根据此属性的值来区分左 Shift 键和右 Shift 键：左 Shift 键的值为 KeyLocation.LEFT，右 Shift 键的值为 KeyLocation.RIGHT。另一个示例是区分标准键盘 (KeyLocation.STANDARD) 与数字键盘 (KeyLocation.NUM_PAD) 上按下的数字键。
 		 */
-		public function get keyLocation():Boolean {
+		public function get keyLocation():uint {
 			return this.nativeEvent.keyLocation;
 		}
-	
+		
+		/**鼠标在 Stage 上的 X 轴坐标*/
+		public function get stageX():Number {
+			return Laya.stage.mouseX;
+		}
+		
+		/**鼠标在 Stage 上的 Y 轴坐标*/
+		public function get stageY():Number {
+			return Laya.stage.mouseY;
+		}
 	}
 }

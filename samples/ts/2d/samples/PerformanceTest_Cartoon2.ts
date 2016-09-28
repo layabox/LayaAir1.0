@@ -1,10 +1,10 @@
 module laya {
-	import Stage = laya.display.Stage;
-	import Text = laya.display.Text;
-	import Stat = laya.utils.Stat;
-	import WebGL = laya.webgl.WebGL;
-	import Animation = laya.display.Animation;
-	import Sprite = laya.display.Sprite;
+	import Stage = Laya.Stage;
+	import Text = Laya.Text;
+	import Stat = Laya.Stat;
+	import WebGL = Laya.WebGL;
+	import Animation = Laya.Animation;
+	import Sprite = Laya.Sprite;
 
 	export class PerformanceTest_Cartoon2 {
 		private amount: number = 500;

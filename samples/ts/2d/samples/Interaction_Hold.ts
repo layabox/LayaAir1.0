@@ -1,13 +1,13 @@
 module laya {
-    import Sprite = laya.display.Sprite;
-    import Stage = laya.display.Stage;
-    import Event = laya.events.Event;
-    import Texture = laya.resource.Texture;
-    import Browser = laya.utils.Browser;
-    import Ease = laya.utils.Ease;
-    import Handler = laya.utils.Handler;
-    import Tween = laya.utils.Tween;
-    import WebGL = laya.webgl.WebGL;
+    import Sprite = Laya.Sprite;
+    import Stage = Laya.Stage;
+    import Event = Laya.Event;
+    import Texture = Laya.Texture;
+    import Browser = Laya.Browser;
+    import Ease = Laya.Ease;
+    import Handler = Laya.Handler;
+    import Tween = Laya.Tween;
+    import WebGL = Laya.WebGL;
 
     export class Interaction_Hold {
         private HOLD_TRIGGER_TIME: number = 1000;

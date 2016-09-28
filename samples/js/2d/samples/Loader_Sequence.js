@@ -1,7 +1,7 @@
 ﻿(function()
 {
-	var Texture = laya.resource.Texture;
-	var Handler = laya.utils.Handler;
+	var Texture = Laya.Texture;
+	var Handler = Laya.Handler;
 
 	var numLoaded = 0;
 	var resAmount = 3;

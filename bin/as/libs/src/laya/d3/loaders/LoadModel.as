@@ -17,14 +17,9 @@ package laya.d3.loaders {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
-	import laya.d3.utils.Utils3D;
-	import laya.events.Event;
-	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.resource.Resource;
 	import laya.utils.Byte;
-	import laya.utils.ClassUtils;
-	import laya.utils.Handler;
 	import laya.webgl.WebGLContext;
 	
 	/**
@@ -196,7 +191,7 @@ package laya.d3.loaders {
 		
 		public function READ_SUBMESH():Boolean {
 			var className:String = _readString();
-			var material:int = _readData.getUint8();
+			var material:int = _readData.getUint8();//TODO:可取消
 			
 			var bufferAttribute:String = _readString();
 			_shaderAttributes = bufferAttribute.match(_attrReg);
@@ -212,19 +207,14 @@ package laya.d3.loaders {
 			var arrayBuffer:ArrayBuffer = _readData.__getBuffer();
 			//trace("SUBMESH:ibofs=" + ibofs + "  ibsize=" + ibsize + "  vbofs=" + vbofs + " vbsize=" + vbsize + "  boneDicofs=" + boneDicofs + " boneDicsize=" + boneDicsize + " " + bufferAttribute);
 			var submesh:SubMesh = new SubMesh(_mesh);
-			
-			//_mesh.vb || (_mesh.vb = new Buffer(WebGLContext.ARRAY_BUFFER));
-			//submesh.setVBOffset(_mesh.vb.length);
-			//_mesh.vb.append(new Uint8Array(arrayBuffer, vbofs + _DATA.offset, vbsize));
-			
-			submesh.material = material;
-			submesh.verticesIndices = new Uint32Array(arrayBuffer.slice(vbIndicesofs + _DATA.offset, vbIndicesofs + _DATA.offset + vbIndicessize));
-			
+			//submesh.verticesIndices = new Uint32Array(arrayBuffer.slice(vbIndicesofs + _DATA.offset, vbIndicesofs + _DATA.offset + vbIndicessize));//TODO:可取消
 			var vertexDeclaration:VertexDeclaration = _getVertexDeclaration();
 			
 			var vb:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, vbsize / vertexDeclaration.vertexStride, WebGLContext.STATIC_DRAW, true);
 			var vbStart:int = vbofs + _DATA.offset;
+			
 			var vbArrayBuffer:ArrayBuffer = arrayBuffer.slice(vbStart, vbStart + vbsize);
+			
 			vb.setData(new Float32Array(vbArrayBuffer));
 			submesh.setVB(vb);
 			
