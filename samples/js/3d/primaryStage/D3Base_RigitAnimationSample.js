@@ -13,7 +13,7 @@ scene.currentCamera.clearColor = null;
 
 var effectSprite = scene.addChild(new Sprite3D());
 effectSprite.once(Laya.Event.HIERARCHY_LOADED, this, function(sender, sprite3D) {
-    //setMeshParams(effectSprite, Laya.Material.RENDERMODE_ADDTIVEDOUBLEFACE);
+    setMeshParams(effectSprite, Laya.Material.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
     var rootAnimations = sprite3D.addComponent(Laya.RigidAnimations);
     rootAnimations.url = "../../res/threeDimen/staticModel/effect/WuShen/WuShen.lani";
     rootAnimations.player.play(0);
@@ -26,10 +26,10 @@ function setMeshParams(spirit3D, renderMode) {
         var mesh = meshSprite.meshFilter.sharedMesh;
         if (mesh) {
             //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-            mesh.once(Event.LOADED, this, function(mesh) {
+            mesh.once(Laya.Event.LOADED, this, function(mesh) {
                 for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
                     var material = meshSprite.meshRender.sharedMaterials[i];
-                    material.once(Event.LOADED, null, function(mat) {
+                    material.once(Laya.Event.LOADED, null, function(mat) {
                         mat.renderMode = renderMode;
                     });
                 }
