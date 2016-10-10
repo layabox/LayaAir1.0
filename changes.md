@@ -37,13 +37,13 @@ TextArea 增加设置滚动条
 
 Graphics动画
 
-![Animation](http://layabox.com/git/ani.gif)
+![Animation](./imgs/ani.gif)
 
 	通过新建菜单，可以创建Graphics动画了，轻松制作高性能的动画效果，比如角色动画，UI动画，特效动画
 脚本扩展
-![Script](http://layabox.com/git/script1.gif)	
+![Script](./imgs/script1.gif)	
 
-![Script2](http://layabox.com/git/script2.gif)
+![Script2](./imgs/script2.gif)
 
 	如果觉得组件功能不够用，现在增加了新的扩展方式，创建一个扩展脚本（ide只是增加脚本配置信息，脚本逻辑可以用不同语言书写），
 
@@ -52,13 +52,13 @@ Graphics动画
 	同时还可以添加多个附加脚本来扩展。扩展脚本和附加脚本的区别：扩展脚本继承自组件本身，附加脚本只修改组件，不继承
 
 预设
-![perfab](http://layabox.com/git/perfab.gif)
+![perfab](./imgs/perfab.gif)
 	如果你修改了某个组件的行为，想作为模板保存下来，拖入别的场景直接用，并且再次修改这个组件，全部使用的地方均能跟着变化
 
 	那么预设就是你想要的，比如创建了一个Sprite组件，拖入动画，设置一些属性，甚至附加Role脚本，然后保存为预设，以后就可以直接拖入场景使用
 增加更多右键快捷菜单，使用更方便
 
-![menu](http://layabox.com/git/menu.jpg)
+![menu](./imgs/menu.jpg)
 
 增加3D粒子模式
 
