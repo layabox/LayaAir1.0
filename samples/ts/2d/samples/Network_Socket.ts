@@ -52,6 +52,7 @@ module laya {
 			else if (message instanceof ArrayBuffer) {
 				console.log(new Byte(message).readUTFBytes());
 			}
+			socket.input.clear();
 		}
 
 		private onConnectError(e: Event): void {

@@ -5,11 +5,11 @@ var ScriptAndCameraSample = (function () {
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
         Laya.Stat.show();
         var scene = Laya.stage.addChild(new Laya.Scene());
-        scene.currentCamera = (scene.addChild(new Laya.Camera(0, 0.1, 100)));
-        scene.currentCamera.transform.translate(new Laya.Vector3(0, 0.8, 1.0));
-        scene.currentCamera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
-        scene.currentCamera.clearColor = null;
-        scene.currentCamera.addComponent(CameraMoveScript);
+        var camera = (scene.addChild(new Laya.Camera(0, 0.1, 100)));
+        camera.transform.translate(new Laya.Vector3(0, 1.8, 2.0));
+        camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
+        camera.clearColor = null;
+        camera.addComponent(CameraMoveScript);
         var pointLight = scene.addChild(new Laya.PointLight());
         pointLight.transform.position = new Laya.Vector3(0, 0.6, 0.3);
         pointLight.range = 1.0;

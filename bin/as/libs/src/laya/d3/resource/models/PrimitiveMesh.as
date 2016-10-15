@@ -1,6 +1,6 @@
 package laya.d3.resource.models {
 	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
@@ -39,7 +39,7 @@ package laya.d3.resource.models {
 			return _indexOfHost;
 		}
 		
-		public function get VertexBufferCount():int {
+		public function get _vertexBufferCount():int {
 			return 1;
 		}
 		
@@ -47,14 +47,14 @@ package laya.d3.resource.models {
 			return _indexBuffer.indexCount / 3;
 		}
 		
-		public function getVertexBuffer(index:int = 0):VertexBuffer3D {
+		public function _getVertexBuffer(index:int = 0):VertexBuffer3D {
 			if (index === 0)
 				return _vertexBuffer;
 			else
 				return null;
 		}
 		
-		public function getIndexBuffer():IndexBuffer3D {
+		public function _getIndexBuffer():IndexBuffer3D {
 			return _indexBuffer;
 		}
 		
@@ -92,22 +92,6 @@ package laya.d3.resource.models {
 			_indexOfHost = 0;
 		}
 		
-		/**
-		 * @private
-		 */
-		private function _getShader(state:RenderState, vertexBuffer:VertexBuffer3D, material:Material):Shader {
-			if (!material)
-				return null;
-			var def:int = 0;
-			var shaderAttribute:* = vertexBuffer.vertexDeclaration.shaderAttribute;
-			(shaderAttribute.UV) && (def |= material.shaderDef);
-			(shaderAttribute.COLOR) && (def |= ShaderDefines3D.COLOR);
-			(state.scene.enableFog) && (def |= ShaderDefines3D.FOG);
-			def > 0 && state.shaderDefs.addInt(def);
-			var shader:Shader = material.getShader(state);
-			return shader;
-		}
-		
 		override public function getRenderElement(index:int):IRenderable {
 			return this;
 		}
@@ -122,36 +106,16 @@ package laya.d3.resource.models {
 			memorySize = 0;
 		}
 		
-		public function _render(state:RenderState):Boolean {
+		public function _beforeRender(state:RenderState):Boolean {
 			_vertexBuffer._bind();
 			_indexBuffer._bind();
-			
-			//TODO::临时放在此处,后期调整易移除......................
-			var material:Material = state.renderElement._material;
-			if (material) {
-				var shader:Shader = _getShader(state, _vertexBuffer, material);
-				
-				var presz:int = state.shaderValue.length;
-				state.shaderValue.pushArray(_vertexBuffer.vertexDeclaration.shaderValues);
-				
-				var meshSprite:MeshSprite3D = state.owner as MeshSprite3D;
-				var worldMat:Matrix4x4 = meshSprite.transform.worldMatrix;
-				state.shaderValue.pushValue(Buffer2D.MATRIX1, worldMat.elements, -1/*worldTransformModifyID*/);
-				Matrix4x4.multiply(state.projectionViewMatrix, worldMat, state.owner.wvpMatrix);
-				state.shaderValue.pushValue(Buffer2D.MVPMATRIX, meshSprite.wvpMatrix.elements, -1/*state.camera.transform._worldTransformModifyID + worldTransformModifyID + state.camera._projectionMatrixModifyID*/);
-				
-				if (!material.upload(state, null, shader)) {
-					state.shaderValue.length = presz;
-					return false;
-				}
-				state.shaderValue.length = presz;
-			}
-			//TODO::临时放在此处,后期调整易移除....................
-			
+			return  true;
+		}
+		
+		public function _render(state:RenderState):void {
 			state.context.drawElements(WebGLContext.TRIANGLES, _numberIndices, WebGLContext.UNSIGNED_SHORT, 0);
 			Stat.drawCall++;
 			Stat.trianglesFaces += _numberIndices / 3;
-			return true;
 		}
 	
 	}

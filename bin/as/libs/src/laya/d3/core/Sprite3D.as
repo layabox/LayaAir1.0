@@ -1,6 +1,6 @@
 package laya.d3.core {
 	import laya.d3.component.Component3D;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.IUpdate;
 	import laya.d3.core.render.RenderState;
@@ -26,7 +26,7 @@ package laya.d3.core {
 		/**名字计数器。*/
 		protected static var _nameNumberCounter:int = 0;
 		
-		/**是否启用。*/
+		/**是否在Stage中。*/
 		protected var _isInStage:Boolean;
 		/**唯一标识ID。*/
 		private var _id:int;
@@ -38,8 +38,6 @@ package laya.d3.core {
 		protected var _componentsMap:* = [];
 		/**组件列表。*/
 		protected var _components:Vector.<Component3D> = new Vector.<Component3D>();
-		/**WorldViewProjection矩阵。*/
-		protected var _wvpMatrix:Matrix4x4 = new Matrix4x4();
 		
 		/**矩阵变换相关。*/
 		public var transform:Transform3D;
@@ -131,14 +129,6 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 获得WorldViewProjection矩阵。
-		 * @return	矩阵。
-		 */
-		public function get wvpMatrix():Matrix4x4 {
-			return _wvpMatrix;
-		}
-		
-		/**
 		 * 创建一个 <code>Sprite3D</code> 实例。
 		 */
 		public function Sprite3D(name:String = null) {
@@ -156,24 +146,11 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		private function _changeSelfAndChildrenInStage(sprite3D:Sprite3D, isInStage:Boolean):void {
-			sprite3D._isInStage = isInStage;
-			sprite3D.event(Event.INSTAGE_CHANGED, isInStage);
-			
-			var children:Array = sprite3D._childs;
-			for (var i:int = 0, n:int = children.length; i < n; i++)
-				_changeSelfAndChildrenInStage(children[i], isInStage);
-		}
-		
-		/**
-		 * @private
-		 */
 		private function _onAdded():void {
 			transform.parent = (_parent as Sprite3D).transform;
-			_addSelfAndChildrenRenderObjects();
-			
 			var isInStage:Boolean = Laya.stage.contains(this);
-			(isInStage) && (_changeSelfAndChildrenInStage(this, isInStage));
+			(isInStage) && (_addSelfAndChildrenRenderObjects());
+			(isInStage) && (_changeSelfAndChildrenInStage(true));
 		}
 		
 		/**
@@ -181,9 +158,21 @@ package laya.d3.core {
 		 */
 		private function _onRemoved():void {
 			transform.parent = null;
-			_clearSelfAndChildrenRenderObjects();
+			var isInStage:Boolean = Laya.stage.contains(this);//触发时还在stage中
+			(isInStage) && (_clearSelfAndChildrenRenderObjects());
+			(isInStage) && (_changeSelfAndChildrenInStage(false));
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _changeSelfAndChildrenInStage(isInStage:Boolean):void {
+			_isInStage = isInStage;
+			event(Event.INSTAGE_CHANGED, isInStage);
 			
-			_changeSelfAndChildrenInStage(this, false);
+			var children:Array = _childs;
+			for (var i:int = 0, n:int = children.length; i < n; i++)
+				(_childs[i] as Sprite3D)._changeSelfAndChildrenInStage(isInStage);
 		}
 		
 		/**
@@ -257,8 +246,8 @@ package laya.d3.core {
 		 * 排序函数。
 		 * @param	state 渲染相关状态。
 		 */
-		public function _getSortID(renderElement:IRenderable, material:Material):int {
-			return  + renderElement.getVertexBuffer().vertexDeclaration.id+material.id * VertexDeclaration._maxVertexDeclarationBit;
+		public function _getSortID(renderElement:IRenderable, material:BaseMaterial):int {
+			return +renderElement._getVertexBuffer().vertexDeclaration.id + material.id * VertexDeclaration._maxVertexDeclarationBit;
 		}
 		
 		/**

@@ -6,10 +6,10 @@ Laya.Stat.show();
 var currentState = 0;
 var scene = Laya.stage.addChild(new Laya.Scene());
 
-scene.currentCamera = scene.addChild(new Laya.Camera(0, 0.1, 100));
-scene.currentCamera.transform.translate(new Laya.Vector3(0, 2.2, 3.0));
-scene.currentCamera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
-scene.currentCamera.clearColor = null;
+var camera = scene.addChild(new Laya.Camera(0, 0.1, 100));
+camera.transform.translate(new Laya.Vector3(0, 2.2, 3.0));
+camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
+camera.clearColor = null;
 
 var directionLight = scene.addChild(new Laya.DirectionLight());
 directionLight.direction = new Laya.Vector3(0, -0.8, -1);

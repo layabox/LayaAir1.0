@@ -1,19 +1,23 @@
 package laya.d3.core.render {
 	import laya.d3.component.Component3D;
 	import laya.d3.core.Sprite3D;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.graphics.DynamicBatch;
 	import laya.d3.graphics.StaticBatch;
+	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector3;
 	import laya.webgl.WebGLContext;
 	
 	/**
+	 * @private
 	 * <code>RenderQuene</code> 类用于实现渲染队列。
 	 */
 	public class RenderQueue {
 		/**唯一标识ID计数器*/
 		private static var _uniqueIDCounter:int = 0/*int.MIN_VALUE*/;
 		/** 定义非透明渲染队列标记。*/
-		public static const OPAQUE:int = 1;
+		public static const OPAQUE:int = 1;//TODO:从零开始
 		/** 定义非透明、双面渲染队列标记。*/
 		public static const OPAQUE_DOUBLEFACE:int = 2;
 		
@@ -44,6 +48,8 @@ package laya.d3.core.render {
 		/** 定义无深度测试、透明加色混合、双面渲染队列标记。*/
 		public static const NONDEPTH_ALPHA_ADDTIVE_BLEND_DOUBLEFACE:int = 14;
 		
+		/** @private */
+		private static var _cameraPosition:Vector3;
 		/** @private */
 		private var _id:int;
 		/** @private */
@@ -89,6 +95,34 @@ package laya.d3.core.render {
 			_staticBatches = [];
 		}
 		
+		private function _sortAlphaFunc(a:RenderElement, b:RenderElement):Number {
+			if (a._renderCullingObject && b._renderCullingObject)//TODO:临时
+				return Vector3.distance(b._renderCullingObject._boundingSphere.center, _cameraPosition) - Vector3.distance(a._renderCullingObject._boundingSphere.center, _cameraPosition);
+			else
+				return 0;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _begainRenderElement(state:RenderState, renderObj:IRenderable, material:BaseMaterial):Boolean {
+			if (renderObj._beforeRender(state)) {
+				state.shaderValue.pushArray(renderObj._getVertexBuffer(0).vertexDeclaration.shaderValues);
+				return true;
+			}
+			return false;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _endRenderElement(state:RenderState, renderObj:IRenderable, material:BaseMaterial):void {
+			if (!material._upload(state, renderObj._getVertexBuffer(0).vertexDeclaration, null)) {
+				return;
+			}
+			renderObj._render(state);
+		}
+		
 		/**
 		 * @private
 		 * 更新组件preRenderUpdate函数
@@ -115,19 +149,48 @@ package laya.d3.core.render {
 			}
 		}
 		
+		///**
+		//* @private
+		//*/
+		//public  function _sortAlpha(/*list:Vector.<RenderElement>, */cameraPosition:Vector3):void {
+		//var list:Array = _finalElements;
+		//for (var pass:int = 1; pass < list.length; pass++)
+		//for (var i:int = 0; i < list.length - 1; i++) {
+		//var objectDistance1:Number = Vector3.distance(list[i]._renderCullingObject._boundingSphere.center, cameraPosition);
+		//var objectDistance2:Number = Vector3.distance(list[i + 1]._renderCullingObject._boundingSphere.center, cameraPosition);
+		//if (objectDistance1 < objectDistance2) {
+		//var temp:RenderElement = list[i];// Swap
+		//list[i] = list[i + 1];
+		//list[i + 1] = temp;
+		//}
+		//}
+		//}
+		
+		/**
+		 * @private
+		 */
+		public function _sortAlpha(cameraPos:Vector3):void {
+			_cameraPosition = cameraPos;
+			_finalElements.sort(_sortAlphaFunc);
+		}
+		
 		/**
 		 * @private
 		 * 应用渲染状态到显卡。
 		 * @param gl WebGL上下文。
 		 */
-		public function _setState(gl:WebGLContext):void {
+		public function _setState(gl:WebGLContext, state:RenderState):void {
 			WebGLContext.setDepthTest(gl, _renderConfig.depthTest);
 			WebGLContext.setDepthMask(gl, _renderConfig.depthMask);
 			
 			WebGLContext.setBlend(gl, _renderConfig.blend);
 			WebGLContext.setBlendFunc(gl, _renderConfig.sFactor, _renderConfig.dFactor);
 			WebGLContext.setCullFace(gl, _renderConfig.cullFace);
-			WebGLContext.setFrontFaceCCW(gl, _renderConfig.frontFace);
+			
+			if (state.camera.renderTarget)
+				WebGLContext.setFrontFaceCCW(gl, _renderConfig.frontFace === WebGLContext.CW ? WebGLContext.CCW : WebGLContext.CW);
+			else
+				WebGLContext.setFrontFaceCCW(gl, _renderConfig.frontFace);
 		}
 		
 		/**
@@ -151,39 +214,45 @@ package laya.d3.core.render {
 		 */
 		public function _render(state:RenderState):void {
 			var preShaderValue:int = state.shaderValue.length;
-			var renderElement:RenderElement;
+			var preShadeDef:int = state.shaderDefs.getValue();
 			for (var i:int = 0, n:int = _finalElements.length; i < n; i++) {
-				renderElement = _finalElements[i];
-				var preShadeDef:int;
+				var renderElement:RenderElement = _finalElements[i];
+				var renderObj:IRenderable, material:BaseMaterial;
 				if (renderElement._type === 0) {
 					var owner:Sprite3D = renderElement._sprite3D;
 					state.owner = owner;
 					state.renderElement = renderElement;
-					preShadeDef = state.shaderDefs.getValue();
 					_preRenderUpdateComponents(owner, state);
-					renderElement.renderObj._render(state);
+					renderObj = renderElement.renderObj, material = renderElement._material;
+					if (_begainRenderElement(state, renderObj, material)) {
+						material._setLoopShaderParams(state, state.projectionViewMatrix, owner.transform.worldMatrix, renderElement.renderObj, material);
+						_endRenderElement(state, renderObj, material);
+					}
 					_postRenderUpdateComponents(owner, state);
-					state.shaderDefs.setValue(preShadeDef);
-				} else if (renderElement._type === 1) {
+				} else if (renderElement._type === 1) {//TODO:合并后组件渲染问题
 					var staticBatch:StaticBatch = renderElement.renderObj as StaticBatch;
 					state.owner = null;
 					state.renderElement = renderElement;
 					state._batchIndexStart = renderElement._batchIndexStart;
 					state._batchIndexEnd = renderElement._batchIndexEnd;
-					preShadeDef = state.shaderDefs.getValue();
-					renderElement.renderObj._render(state);
-					state.shaderDefs.setValue(preShadeDef);
-				} else if (renderElement._type === 2) {
+					renderObj = renderElement.renderObj, material = renderElement._material;
+					if (_begainRenderElement(state, renderObj, material)) {
+						renderElement._material._setLoopShaderParams(state, state.projectionViewMatrix, staticBatch._rootSprite.transform.worldMatrix, renderElement.renderObj, renderElement._material);
+						_endRenderElement(state, renderObj, material);
+					}
+				} else if (renderElement._type === 2) {//TODO:合并后组件渲染问题
 					var dynamicBatch:DynamicBatch = renderElement.renderObj as DynamicBatch;
 					state.owner = null;
 					state.renderElement = renderElement;
 					state._batchIndexStart = renderElement._batchIndexStart;
 					state._batchIndexEnd = renderElement._batchIndexEnd;
-					preShadeDef = state.shaderDefs.getValue();
-					renderElement.renderObj._render(state);
-					state.shaderDefs.setValue(preShadeDef);
+					renderObj = renderElement.renderObj, material = renderElement._material;
+					if (_begainRenderElement(state, renderObj, material)) {
+						renderElement._material._setLoopShaderParams(state, state.projectionViewMatrix, Matrix4x4.DEFAULT, renderElement.renderObj, renderElement._material);
+						_endRenderElement(state, renderObj, material);
+					}
 				}
-				
+				state.shaderDefs.setValue(preShadeDef);
 				state.shaderValue.length = preShaderValue;
 			}
 		}

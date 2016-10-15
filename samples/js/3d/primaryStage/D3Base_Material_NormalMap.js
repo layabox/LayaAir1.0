@@ -9,11 +9,10 @@ var rotation = new Vector3(0, 0.01, 0);
 var scene = Laya.stage.addChild(new Laya.Scene());
 scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
 
-scene.currentCamera = scene.addChild(new Laya.Camera( 0, 0.1, 100));
-scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.6));
-scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-
-scene.currentCamera.addComponent(Laya.CameraMoveScript);
+var camera = scene.addChild(new Laya.Camera( 0, 0.1, 100));
+camera.transform.translate(new Vector3(0, 0.8, 1.6));
+camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+camera.addComponent(Laya.CameraMoveScript);
 
 var directionLight = scene.addChild(new Laya.DirectionLight());
 directionLight.direction = new Vector3(0, -0.8, -1);

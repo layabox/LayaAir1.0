@@ -28,6 +28,7 @@ package laya.webgl.canvas {
 	import laya.webgl.shader.Shader;
 	import laya.webgl.shader.d2.Shader2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
+	import laya.webgl.shader.d2.value.PrimitiveSV;
 	import laya.webgl.shader.d2.value.TextSV;
 	import laya.webgl.shader.d2.value.Value2D;
 	import laya.webgl.shapes.IShape;
@@ -861,7 +862,7 @@ package laya.webgl.canvas {
 				var tPosArray:Array = [mX, mY];
 				var tempSubmit:Submit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-				tempSubmit.shaderValue.u_pos = tPosArray;
+				(tempSubmit.shaderValue as PrimitiveSV).u_pos = tPosArray;
 				tempSubmit.shaderValue.u_mmat2 = tArray;
 				_submits[_submits._length++] = tempSubmit;
 			}
@@ -1071,7 +1072,7 @@ package laya.webgl.canvas {
 				addRenderObject(submit);
 				tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-				tempSubmit.shaderValue.u_pos = tPosArray;
+				(tempSubmit.shaderValue as PrimitiveSV).u_pos = tPosArray;
 				tempSubmit.shaderValue.u_mmat2 = tArray;
 				_submits[_submits._length++] = tempSubmit;
 				submit = SubmitStencil.create(5);
@@ -1080,7 +1081,7 @@ package laya.webgl.canvas {
 			//通过模板数据来开始真实的绘制
 			tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 			tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-			tempSubmit.shaderValue.u_pos = tPosArray;
+			(tempSubmit.shaderValue as PrimitiveSV).u_pos = tPosArray;
 			tempSubmit.shaderValue.u_mmat2 = tArray;
 			_submits[_submits._length++] = tempSubmit;
 			if (!isConvexPolygon) {

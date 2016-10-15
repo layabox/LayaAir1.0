@@ -429,6 +429,11 @@ package laya.display {
 			return Math.round(MouseManager.instance.mouseY / clientScaleY);
 		}
 		
+		/**@inheritDoc */
+		override public function getMousePoint():Point {
+			return Point.TEMP.setTo(mouseX, mouseY);
+		}
+		
 		/**当前视窗由缩放模式导致的 X 轴缩放系数。*/
 		public function get clientScaleX():Number {
 			return _transform ? _transform.getScaleX() : 1;

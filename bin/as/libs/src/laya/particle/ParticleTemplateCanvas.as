@@ -72,7 +72,7 @@ package laya.particle
 		 */
 		private var canvasShader:CanvasShader = new CanvasShader();
 		
-		public function ParticleTemplateCanvas(particleSetting:ParticleSettings) 
+		public function ParticleTemplateCanvas(particleSetting:ParticleSetting) 
 		{
 		    super();
 			settings = particleSetting;
@@ -112,11 +112,18 @@ package laya.particle
 			activeParticles.length=0;
 		}
 		
-		public static function changeTexture(texture:*,rst:Array):Array
+		public static function changeTexture(texture:*,rst:Array,settings:ParticleSetting=null):Array
 		{
 			if(!rst) rst=[];
-			rst.length=0;		
-			Utils.copyArray(rst,PicTool.getRGBPic(texture));
+			rst.length = 0;
+			if (settings&&settings.colorComponentInter)
+			{
+				rst.push(texture, texture, texture);
+			}else
+			{
+				Utils.copyArray(rst,PicTool.getRGBPic(texture));
+			}
+			
 			return rst;
 		}
 
@@ -212,8 +219,15 @@ package laya.particle
 		{
 			if(!_ready) return;
 			if(activeParticles.length<1) return;
-			if(textureList.length<2) return;
-			canvasRender(context,x,y);
+			if (textureList.length < 2) return;
+			if (settings.colorComponentInter)
+			{
+				noColorRender(context,x,y);
+			}else
+			{
+				canvasRender(context,x,y);
+			}
+			
 		}
 		
 		

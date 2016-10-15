@@ -9,7 +9,8 @@ package threeDimen.primaryStage {
 	import laya.d3.core.MeshTerrainSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.TransformUV;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector2;
@@ -46,16 +47,16 @@ package threeDimen.primaryStage {
 			
 			scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			scene.currentCamera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
-			scene.currentCamera.transform.translate(new Vector3(0, 4.2, 2.6));
-			scene.currentCamera.transform.rotate(new Vector3(-45, 0, 0), true, false);
+			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
+			camera.transform.translate(new Vector3(0, 4.2, 2.6));
+			camera.transform.rotate(new Vector3(-45, 0, 0), true, false);
 			
 			terrain = Mesh.load("../../../../res/threeDimen/staticModel/simpleScene/B00MP001M-DEFAULT01.lm");
 			terrainSprite = scene.addChild(MeshTerrainSprite3D.createFromMesh(terrain, 129, 129)) as MeshTerrainSprite3D;
 			terrainSprite.transform.localScale = new Vector3(10, 10, 10);
 			terrainSprite.transform.position = new Vector3(0, 2.6, 1.5);
 			terrainSprite.transform.rotationEuler = new Vector3(0, 0.3, 0.4);
-			setMeshParams(terrainSprite, Material.RENDERMODE_OPAQUE, new Vector4(3.5,3.5,3.5,1.0), new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
+			setMeshParams(terrainSprite, BaseMaterial.RENDERMODE_OPAQUE, new Vector4(3.5,3.5,3.5,1.0), new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
 			
 			pathFingding = terrainSprite.addComponent(PathFind) as PathFind;
 			pathFingding.setting = {allowDiagonal: true, dontCrossCorners: false, heuristic: Heuristic.manhattan, weight: 1};
@@ -98,8 +99,8 @@ package threeDimen.primaryStage {
 					//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 					mesh.once(Event.LOADED, this, function(mesh:BaseMesh):void {
 						for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-							var material:Material = meshSprite.meshRender.sharedMaterials[i];
-							material.once(Event.LOADED, null, function(mat:Material):void {
+							var material:BaseMaterial = meshSprite.meshRender.sharedMaterials[i];
+							material.once(Event.LOADED, null, function(mat:StandardMaterial):void {
 								var transformUV:TransformUV = new TransformUV();
 								transformUV.tiling = uvScale;
 								(shaderName) && (mat.setShaderName(shaderName));

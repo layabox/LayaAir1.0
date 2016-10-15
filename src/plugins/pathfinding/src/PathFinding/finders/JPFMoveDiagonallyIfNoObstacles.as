@@ -1,6 +1,7 @@
 package PathFinding.finders
 {
 	import PathFinding.core.DiagonalMovement;
+	import PathFinding.core.Grid;
 	import PathFinding.core.Node;
 	
 	/**
@@ -129,12 +130,12 @@ package PathFinding.finders
 				// search horizontally/vertically
 				else
 				{
-					var isNextWalkable;
+					var isNextWalkable:Boolean;
 					if (dx !== 0)
 					{
 						isNextWalkable = grid.isWalkableAt(x + dx, y);
-						var isTopWalkable = grid.isWalkableAt(x, y + 1);
-						var isBottomWalkable = grid.isWalkableAt(x, y - 1);
+						var isTopWalkable:Boolean = grid.isWalkableAt(x, y + 1);
+						var isBottomWalkable:Boolean = grid.isWalkableAt(x, y - 1);
 						
 						if (isNextWalkable)
 						{
@@ -160,8 +161,8 @@ package PathFinding.finders
 					else if (dy !== 0)
 					{
 						isNextWalkable = grid.isWalkableAt(x, y + dy);
-						var isRightWalkable = grid.isWalkableAt(x + 1, y);
-						var isLeftWalkable = grid.isWalkableAt(x - 1, y);
+						var isRightWalkable:Boolean = grid.isWalkableAt(x + 1, y);
+						var isLeftWalkable:Boolean = grid.isWalkableAt(x - 1, y);
 						
 						if (isNextWalkable)
 						{

@@ -8,9 +8,9 @@ class StaticModel_MeshSample {
 
 		var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
-		scene.currentCamera = scene.addChild(new Laya.Camera(0, 0.1, 100)) as Laya.Camera;
-		scene.currentCamera.transform.translate(new Laya.Vector3(0, 0.8, 1.5));
-		scene.currentCamera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
+		var camera = scene.addChild(new Laya.Camera(0, 0.1, 100)) as Laya.Camera;
+		camera.transform.translate(new Laya.Vector3(0, 0.8, 1.5));
+		camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
 
 		var mesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm"))) as Laya.MeshSprite3D;
 		mesh.transform.localPosition = new Laya.Vector3(-0.3, 0.0, 0.0);

@@ -1,6 +1,5 @@
 package laya.ui {
 	import laya.display.Animation;
-	import laya.display.Graphics;
 	import laya.display.Sprite;
 	import laya.display.Text;
 	import laya.ui.Box;
@@ -35,17 +34,16 @@ package laya.ui {
 		 * @private
 		 * UI视图类映射。
 		 */
-		protected static var viewClassMap:Object = { };
+		protected static var viewClassMap:Object = {};
 		_regs()
+		
 		/**
 		 * @private
 		 * 向ClassUtils注册ui类
 		 */
-		private static function _regs():void
-		{
+		private static function _regs():void {
 			var key:String;
-			for (key in uiClassMap)
-			{
+			for (key in uiClassMap) {
 				ClassUtils.regClass(key, uiClassMap[key]);
 			}
 		}
@@ -58,49 +56,45 @@ package laya.ui {
 		public var _idMap:Object;
 		/**@private */
 		public var _aniList:Array;
+		
 		/**
 		 * @private
 		 * 通过视图数据创建视图。
 		 * @param uiView 视图数据信息。
 		 */
 		protected function createView(uiView:Object):void {
-			if (uiView.animations && !this._idMap) this._idMap = { };
+			if (uiView.animations && !this._idMap) this._idMap = {};
 			createComp(uiView, this, this);
 			
-			if (uiView.animations)
-			{
-				var anilist:Array=[];
-				var animations:Array= uiView.animations;
-				var i:int, len:int= animations.length;
+			if (uiView.animations) {
+				var anilist:Array = [];
+				var animations:Array = uiView.animations;
+				var i:int, len:int = animations.length;
 				var tAni:FrameClip;
 				var tAniO:Object;
-				for (i = 0; i < len; i++)
-				{
+				for (i = 0; i < len; i++) {
 					tAni = new FrameClip();
 					tAniO = animations[i];
-					tAni._setUp(_idMap, tAniO );
-			        /*[IF-FLASH-BEGIN]*/
-					if (this.hasOwnProperty(tAniO.name))
-					{
+					tAni._setUp(_idMap, tAniO);
+					/*[IF-FLASH-BEGIN]*/
+					if (this.hasOwnProperty(tAniO.name)) {
 						this[tAniO.name] = tAni;
-					}	
+					}
 					/*[IF-FLASH-END]*/
 					//[IF-JS]this[tAniO.name] = tAni;
 					tAni._setControlNode(this);
-					switch(tAniO.action)
-					{
-						case 1:
-							tAni.play(0, false);
-							break;
-						case 2:
-							tAni.play(0, true);
-							break;
+					switch (tAniO.action) {
+					case 1: 
+						tAni.play(0, false);
+						break;
+					case 2: 
+						tAni.play(0, true);
+						break;
 					}
 					anilist.push(tAni);
 				}
 				_aniList = anilist;
 			}
-			
 		}
 		
 		/**
@@ -120,39 +114,32 @@ package laya.ui {
 		 * @param view 组件所在的视图实例，用来注册var全局变量，如果值为空则不注册。
 		 * @return 一个 Component 对象。
 		 */
-		public static function createComp(uiView:Object, comp:Component = null, view:View = null):Component {
+		public static function createComp(uiView:Object, comp:* = null, view:View = null):* {
 			comp = comp || getCompInstance(uiView);
+			if (!comp) {
+				trace("can not create:" + uiView.type);
+				return null;
+			}
 			var child:Array = uiView.child;
 			if (child) {
 				for (var i:int = 0, n:int = child.length; i < n; i++) {
 					var node:Object = child[i];
-					if (comp.hasOwnProperty("itemRender") && (node.props.name == "render"||node.props.renderType === "render")) {
+					if (comp.hasOwnProperty("itemRender") && (node.props.name == "render" || node.props.renderType === "render")) {
 						IRender(comp).itemRender = node;
-					} else 
-					if (node.type == "Graphic")
-						{
-							ClassUtils.addGraphicsToSprite(node, comp);
-						}else
-						if (ClassUtils.isDrawType(node.type))
-						{
-							ClassUtils.addGraphicToSprite(node, comp,true);
-						}else
-						{
-							var tChild:* = createComp(node, null, view);
-							if(node.type=="Script")
-							{
-								tChild["owner"]=comp;
-							}else
-							if (node.props.renderType == "mask"||node.props.name == "mask")
-							{
-								comp.mask = tChild;
-							}else
-							{
-								comp.addChild(tChild);
-							}
-							
+					} else if (node.type == "Graphic") {
+						ClassUtils.addGraphicsToSprite(node, comp);
+					} else if (ClassUtils.isDrawType(node.type)) {
+						ClassUtils.addGraphicToSprite(node, comp, true);
+					} else {
+						var tChild:* = createComp(node, null, view);
+						if (node.type == "Script") {
+							tChild["owner"] = comp;
+						} else if (node.props.renderType == "mask" || node.props.name == "mask") {
+							comp.mask = tChild;
+						} else {
+							tChild is Sprite && comp.addChild(tChild);
 						}
-						
+					}
 				}
 			}
 			
@@ -163,8 +150,7 @@ package laya.ui {
 			}
 			
 			if (comp is IItem) IItem(comp).initItems();
-			if (uiView.compId&&view&&view._idMap)
-			{
+			if (uiView.compId && view && view._idMap) {
 				view._idMap[uiView.compId] = comp;
 			}
 			
@@ -179,16 +165,17 @@ package laya.ui {
 		 * @param value 属性值。
 		 * @param view 组件所在的视图实例，用来注册var全局变量，如果值为空则不注册。
 		 */
-		private static function setCompValue(comp:Component, prop:String, value:String, view:View = null):void {
+		private static function setCompValue(comp:*, prop:String, value:String, view:View = null):void {
 			if (prop === "var" && view) {
 				view[value] = comp;
-			}
+			} 
 			//[IF-SCRIPT]else if (prop==="x" || prop==="y" || prop==="width" || prop === "height" || comp[prop] is Number) {
 			//[IF-SCRIPT]	comp[prop] = parseFloat(value);
 			//[IF-SCRIPT]}
 			else {
-				/*[IF-FLASH]*/if (comp.hasOwnProperty(prop)) { comp[prop] = (value === "true" ? true : (value === "false" ? false : value)) };
-				//[IF-SCRIPT]comp[prop] = (value === "true" ? true : (value === "false" ? false : value));
+				/*[IF-FLASH]*/
+				if (comp.hasOwnProperty(prop))
+					comp[prop] = (value === "true" ? true : (value === "false" ? false : value))
 			}
 		}
 		
@@ -198,11 +185,12 @@ package laya.ui {
 		 * @param json UI数据。
 		 * @return Component 对象。
 		 */
-		protected static function getCompInstance(json:Object):Component {
+		protected static function getCompInstance(json:Object):* {
 			var runtime:String = json.props ? json.props.runtime : "";
 			var compClass:Class;
-			//[IF-SCRIPT]compClass = runtime ? (viewClassMap[runtime] || Laya["__classmap"][runtime]) : uiClassMap[json.type];
-			/*[IF-FLASH]*/compClass = runtime ? viewClassMap[runtime] : uiClassMap[json.type];
+			//[IF-SCRIPT]compClass = runtime ? (viewClassMap[runtime] || uiClassMap[runtime]|| Laya["__classmap"][runtime]) : uiClassMap[json.type];
+			/*[IF-FLASH]*/
+			compClass = runtime ? (viewClassMap[runtime] || uiClassMap[runtime]) : uiClassMap[json.type];
 			return compClass ? new compClass() : null;
 		}
 		

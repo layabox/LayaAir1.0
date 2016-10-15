@@ -6,14 +6,14 @@ Laya.Stat.show();
 var Vector3 = Laya.Vector3;
 var Sprite3D = Laya.Sprite3D;
 var scene = Laya.stage.addChild(new Laya.Scene());
-scene.currentCamera = (scene.addChild(new  Laya.Camera(0, 0.1, 1000)));
-scene.currentCamera.transform.translate(new Vector3(0, 16.8, 26.0));
-scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-scene.currentCamera.clearColor = null;
+var camera = (scene.addChild(new  Laya.Camera(0, 0.1, 1000)));
+camera.transform.translate(new Vector3(0, 16.8, 26.0));
+camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+camera.clearColor = null;
 
 var effectSprite = scene.addChild(new Sprite3D());
 effectSprite.once(Laya.Event.HIERARCHY_LOADED, this, function(sender, sprite3D) {
-    setMeshParams(effectSprite, Laya.Material.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
+    setMeshParams(effectSprite, Laya.BaseMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
     var rootAnimations = sprite3D.addComponent(Laya.RigidAnimations);
     rootAnimations.url = "../../res/threeDimen/staticModel/effect/WuShen/WuShen.lani";
     rootAnimations.player.play(0);

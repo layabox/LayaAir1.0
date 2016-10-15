@@ -2,13 +2,12 @@ package {
 	import laya.display.Graphics;
 	import laya.display.Input;
 	import laya.display.Sprite;
+	import laya.display.Stage;
 	import laya.display.css.Font;
 	import laya.display.css.Style;
-	import laya.display.Stage;
 	import laya.events.KeyBoardManager;
 	import laya.events.MouseManager;
 	import laya.media.SoundManager;
-	import laya.net.Loader;
 	import laya.net.LoaderManager;
 	import laya.net.LocalStorage;
 	import laya.net.URL;
@@ -36,7 +35,7 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.4.0";
+		public static var version:String = "1.5.0";
 		/**@private */
 		public static var stageBox:Sprite;
 		/**Market对象 只有加速器模式下才有值*/

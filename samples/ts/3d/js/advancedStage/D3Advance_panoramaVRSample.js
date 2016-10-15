@@ -9,14 +9,14 @@ var PanoramaVRSample;
             Laya.Stat.show();
             var scene = Laya.stage.addChild(new Laya.VRScene());
             var camera = new Laya.VRCamera(0.03, 0, 0, 0.1, 100);
-            scene.currentCamera = (scene.addChild(camera));
-            scene.currentCamera.addComponent(VRCameraMoveScript);
+            camera = (scene.addChild(camera));
+            camera.addComponent(VRCameraMoveScript);
             this.loadScene(scene, camera);
         }
         PanoramaVRSample.prototype.loadScene = function (scene, camera) {
-            var mesh = scene.addChild(new Laya.MeshSprite3D(new Laya.Sphere(1, 20, 20)));
-            var material = new Laya.Material();
-            material.renderMode = Laya.Material.RENDERMODE_OPAQUEDOUBLEFACE;
+            var mesh = scene.addChild(new Laya.MeshSprite3D(new Laya.SphereMesh(1, 20, 20)));
+            var material = new Laya.StandardMaterial();
+            material.renderMode = Laya.BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
             mesh.meshRender.sharedMaterial = material;
             Laya.loader.load("../../res/threeDimen/panorama/panorama.jpg", Laya.Handler.create(null, function (texture) {
                 texture.bitmap.mipmap = true;

@@ -28,7 +28,7 @@ package laya.resource {
 	[Event(name = "recovered", type = "laya.events.Event")]
 	
 	/**
-	 * <code>Resource</code> 是一个资源存取类。
+	 * <code>Resource</code> 资源存取类。
 	 */
 	public class Resource extends EventDispatcher implements IDispose {
 		public static var animationCache:* = {};//临时，待修改

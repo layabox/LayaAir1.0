@@ -13,11 +13,11 @@ package PathFinding.finders
 	 */
 	public class AStarFinder
 	{
-		private var allowDiagonal:Boolean;
-		private var dontCrossCorners:Boolean;
-		private var heuristic:Function;
-		private var weight:int;
-		private var diagonalMovement:int;
+		public var allowDiagonal:Boolean;
+		public var dontCrossCorners:Boolean;
+		public var heuristic:Function;
+		public var weight:int;
+		public var diagonalMovement:int;
 		
 		/**
 		 * A* path-finder. Based upon https://github.com/bgrins/javascript-astar

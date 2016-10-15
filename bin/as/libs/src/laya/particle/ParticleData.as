@@ -26,7 +26,7 @@ package laya.particle {
 			
 		}
 		
-		public static function Create(settings:ParticleSettings, position:Float32Array, velocity:Float32Array, time:Number):ParticleData {
+		public static function Create(settings:ParticleSetting, position:Float32Array, velocity:Float32Array, time:Number):ParticleData {
 			var particleData:ParticleData = new ParticleData();
 			particleData.position = position;
 			

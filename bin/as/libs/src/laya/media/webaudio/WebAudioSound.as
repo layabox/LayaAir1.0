@@ -181,10 +181,14 @@ package laya.media.webaudio {
 				buffs.push({"buffer": me.data, "url": me.url});
 				decode();
 			};
+			request.onerror = function(e:*):void {
+				me._err();
+			}
 			request.send();		
 		}
 		private function _err():void {
 			    _removeLoadEvents();
+				__loadingSound[url] = false;
 				this.event(Event.ERROR);
 		}
 		private function _loaded(audioBuffer:*):void {

@@ -1,15 +1,8 @@
 package laya.webgl.shader.d2.skinAnishader 
 {
-	import laya.maths.Rectangle;
-	import laya.webgl.shader.d2.fillTexture.FillTextureSprite;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.shapes.BasePoly;
-	import laya.webgl.shapes.IShape;
-	import laya.webgl.shapes.Line;
-	import laya.webgl.shapes.LoopLine;
-	import laya.webgl.shapes.Polygon;
-	import laya.webgl.utils.CONST3D2D;
+	import laya.webgl.shader.d2.fillTexture.FillTextureSprite;
 	import laya.webgl.utils.IndexBuffer2D;
 	import laya.webgl.utils.VertexBuffer2D;
 	

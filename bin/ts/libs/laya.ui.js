@@ -8,10 +8,10 @@
 	var Node=laya.display.Node,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render;
 	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Text=laya.display.Text,Texture=laya.resource.Texture;
 	var Tween=laya.utils.Tween,Utils=laya.utils.Utils;
-	Laya.interface('laya.ui.ISelect');
-	Laya.interface('laya.ui.IRender');
-	Laya.interface('laya.ui.IItem');
 	Laya.interface('laya.ui.IComponent');
+	Laya.interface('laya.ui.IRender');
+	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.ui.IItem');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
 	*<code>LayoutStyle</code> 是一个布局样式类。
@@ -1113,7 +1113,7 @@
 			this.createText();
 			if (this._text.text !=value){
 				value && !this._text.displayedInStage && this.addChild(this._text);
-				this._text.text=value;
+				this._text.text=(value+"").replace(/\\n/g,"\n");
 				this._setStateChanged();
 			}
 		});
@@ -1505,6 +1505,7 @@
 		*/
 		__proto.changeClip=function(){
 			this._clipChanged=false;
+			if (!this._skin)return;
 			var img=Loader.getRes(this._skin);
 			if (img){
 				this.loadComplete(this._skin,img);
@@ -1604,8 +1605,14 @@
 		__getset(0,__proto,'skin',function(){
 			return this._skin;
 			},function(value){
-			this._skin=value;
-			this._setClipChanged()
+			if (this._skin !=value){
+				this._skin=value;
+				if (value){
+					this._setClipChanged()
+					}else {
+					this._bitmap.source=null;
+				}
+			}
 		});
 
 		/**
@@ -4502,7 +4509,7 @@
 					tAni._setUp(this._idMap,tAniO);
 					this[tAniO.name]=tAni;
 					tAni._setControlNode(this);
-					switch(tAniO.action){
+					switch (tAniO.action){
 						case 1:
 							tAni.play(0,false);
 							break ;
@@ -4535,27 +4542,28 @@
 
 		View.createComp=function(uiView,comp,view){
 			comp=comp || View.getCompInstance(uiView);
+			if (!comp){
+				console.log("can not create:"+uiView.type);
+				return null;
+			};
 			var child=uiView.child;
 			if (child){
 				for (var i=0,n=child.length;i < n;i++){
 					var node=child[i];
-					if (comp.hasOwnProperty("itemRender")&& (node.props.name=="render"||node.props.renderType==="render")){
+					if (comp.hasOwnProperty("itemRender")&& (node.props.name=="render" || node.props.renderType==="render")){
 						(comp).itemRender=node;
-					}else
-					if (node.type=="Graphic"){
+						}else if (node.type=="Graphic"){
 						ClassUtils.addGraphicsToSprite(node,comp);
-					}else
-					if (ClassUtils.isDrawType(node.type)){
+						}else if (ClassUtils.isDrawType(node.type)){
 						ClassUtils.addGraphicToSprite(node,comp,true);
-						}else{
+						}else {
 						var tChild=View.createComp(node,null,view);
-						if(node.type=="Script"){
+						if (node.type=="Script"){
 							tChild["owner"]=comp;
-						}else
-						if (node.props.renderType=="mask"||node.props.name=="mask"){
+							}else if (node.props.renderType=="mask" || node.props.name=="mask"){
 							comp.mask=tChild;
-							}else{
-							comp.addChild(tChild);
+							}else {(
+							tChild instanceof laya.display.Sprite )&& comp.addChild(tChild);
 						}
 					}
 				}
@@ -4566,7 +4574,7 @@
 				View.setCompValue(comp,prop,value,view);
 			}
 			if (Laya.__typeof(comp,'laya.ui.IItem'))(comp).initItems();
-			if (uiView.compId&&view&&view._idMap){
+			if (uiView.compId && view && view._idMap){
 				view._idMap[uiView.compId]=comp;
 			}
 			return comp;
@@ -4580,14 +4588,14 @@
 				comp[prop]=parseFloat(value);
 			}
 			else {
-				comp[prop]=(value==="true" ? true :(value==="false" ? false :value));
+				comp[prop]=(value==="true" ? true :(value==="false" ? false :value))
 			}
 		}
 
 		View.getCompInstance=function(json){
 			var runtime=json.props ? json.props.runtime :"";
 			var compClass;
-			compClass=runtime ? (View.viewClassMap[runtime] || Laya["__classmap"][runtime]):View.uiClassMap[json.type];
+			compClass=runtime ? (View.viewClassMap[runtime] || View.uiClassMap[runtime]|| Laya["__classmap"][runtime]):View.uiClassMap[json.type];
 			return compClass ? new compClass():null;
 		}
 
@@ -5328,8 +5336,8 @@
 				this._cells.length=0;
 				this.scrollBar=this.getChildByName("scrollBar");
 				var cell=this.createItem();
-				var cellWidth=cell.width+this._spaceX;
-				var cellHeight=cell.height+this._spaceY;
+				var cellWidth=(cell.width+this._spaceX)|| 1;
+				var cellHeight=(cell.height+this._spaceY)|| 1;
 				if (this._width > 0)this._repeatX2=this._isVertical ? Math.round(this._width / cellWidth):Math.ceil(this._width / cellWidth);
 				if (this._height > 0)this._repeatY2=this._isVertical ? Math.ceil(this._height / cellHeight):Math.round(this._height / cellHeight);
 				var listWidth=this._width ? this._width :(cellWidth *this.repeatX-this._spaceX);
@@ -5398,7 +5406,7 @@
 		*初始化单元格信息。
 		*/
 		__proto.initItems=function(){
-			if (!this._itemRender){
+			if (!this._itemRender && this.getChildByName("item0")!=null){
 				this.repeatX=1;
 				var count=0;
 				count=0;
@@ -5427,7 +5435,7 @@
 			if (this._scrollBar){
 				this._content.scrollRect || (this._content.scrollRect=new Rectangle());
 				this._content.scrollRect.setTo(0,0,width,height);
-				this._content.model&&this._content.model.scrollRect(0,0,width,height);
+				this._content.model && this._content.model.scrollRect(0,0,width,height);
 				this.event(/*laya.events.Event.RESIZE*/"resize");
 			}
 		}
@@ -5524,11 +5532,10 @@
 			var r=this._content.scrollRect;
 			if (this._isVertical){
 				r.y=scrollValue;
-			}
-			else{
+				}else {
 				r.x=scrollValue;
 			}
-			this._content.model&&this._content.model.scrollRect(r.x,r.y,r.width,r.height);
+			this._content.model && this._content.model.scrollRect(r.x,r.y,r.width,r.height);
 			this.repaint();
 		}
 
@@ -7650,6 +7657,15 @@
 			return (this._tf).focus;
 			},function(value){
 			(this._tf).focus=value;
+		});
+
+		/**
+		*@copy laya.display.Input#type
+		*/
+		__getset(0,__proto,'type',function(){
+			return (this._tf).type;
+			},function(value){
+			(this._tf).type=value;
 		});
 
 		return TextInput;

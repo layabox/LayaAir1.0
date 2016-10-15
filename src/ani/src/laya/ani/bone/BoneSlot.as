@@ -2,10 +2,8 @@ package laya.ani.bone {
 	
 	import laya.ani.GraphicsAni;
 	import laya.display.Graphics;
-	import laya.display.Sprite;
 	import laya.maths.Matrix;
 	import laya.renders.Render;
-	import laya.resource.Bitmap;
 	import laya.resource.Texture;
 	import laya.utils.RunDriver;
 	

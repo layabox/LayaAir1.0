@@ -89,8 +89,10 @@ package laya.display {
 		public static var framesMap:Object = {};
 		/**@private */
 		protected var _frames:Array;
-		/***/
+		/**@private */
 		protected var _url:String;
+		/**@private */
+		protected var _actionName:String;
 		
 		/**
 		 * 创建一个新的 <code>Animation</code> 实例。
@@ -114,16 +116,18 @@ package laya.display {
 		 * @param	name 如果name为空(可选)，则播放当前动画，如果不为空，则播放全局缓存动画（如果有）
 		 */
 		override public function play(start:* = 0, loop:Boolean = true, name:String = ""):void {
-			if (name) _setFramesFromCache(_url + "#" + name);
+			if (name) _setFramesFromCache(name);
 			this._isPlaying = true;
 			this.index = (start is String) ? _getFrameByLabel(start) : start;
 			this.loop = loop;
+			this._actionName = name;
 			if (this._frames && this._frames.length > 1 && this.interval > 0) {
 				timerLoop(this.interval, this, _frameLoop, null, true);
 			}
 		}
 		
 		protected function _setFramesFromCache(name:String):Boolean {
+			if (_url) name = _url + "#" + name;
 			if (name && framesMap[name]) {
 				this._frames = framesMap[name];
 				this._count = _frames.length;
@@ -151,7 +155,7 @@ package laya.display {
 			this._frames = value;
 			if (value) {
 				this._count = value.length;
-				if (_isPlaying) play(_index, loop);
+				if (_isPlaying) play(_index, loop, _actionName);
 				else index = _index;
 			}
 		}
@@ -185,8 +189,8 @@ package laya.display {
 		 */
 		public function loadImages(urls:Array, cacheName:String = ""):Animation {
 			this._url = "";
-			if (!_setFramesFromCache(cacheName)) {
-				this.frames = createFrames(urls, !framesMap["#" + cacheName] ? cacheName : "");
+			if (!framesMap[cacheName]) {
+				this.frames = framesMap[cacheName] ? framesMap[cacheName] : createFrames(urls, cacheName);
 			}
 			return this;
 		}
@@ -199,12 +203,12 @@ package laya.display {
 		 * @return 	返回动画本身。
 		 */
 		public function loadAtlas(url:String, loaded:Handler = null, cacheName:String = ""):Animation {
+			this._url = "";
 			var _this:Animation = this;
-			this._url = url;
-			if (!_this._setFramesFromCache(cacheName)) {
+			if (!framesMap[cacheName]) {
 				function onLoaded(loadUrl:String):void {
 					if (url === loadUrl) {
-						_this.frames = createFrames(url, !framesMap[url + "#" + cacheName] ? cacheName : "");
+						_this.frames = framesMap[cacheName] ? framesMap[cacheName] : createFrames(url, cacheName);
 						if (loaded) loaded.run();
 					}
 				}
@@ -221,23 +225,33 @@ package laya.display {
 		 * @return 	返回动画本身。
 		 */
 		public function loadAnimation(url:String, loaded:Handler = null):Animation {
-			var _this:Animation = this;
 			this._url = url;
-			if (!_this._setFramesFromCache(url)) {
+			var _this:Animation = this;
+			if (!framesMap[url]) {
 				function onLoaded(loadUrl:String):void {
 					if (url === loadUrl) {
-						var aniData:Object = _this._parseGraphicAnimation(Loader.getRes(url));
-						if (!aniData) return;
-						
-						
-						//缓存动画数据
-						var obj:Object = aniData.animationDic;
-						for (var name:String in obj) {
-							framesMap[url + "#" + name] = obj[name];
+						if (!framesMap[url]) {
+							var aniData:Object = _this._parseGraphicAnimation(Loader.getRes(url));
+							if (!aniData) return;
+							
+							//缓存动画数据
+							var obj:Object = aniData.animationDic;
+							var flag:Boolean = true;
+							for (var name:String in obj) {
+								var arr:Array = obj[name];
+								if (arr.length) {
+									framesMap[url + "#" + name] = arr;
+								} else {
+									flag = false;
+								}
+							}
+							
+							//设置第一个为默认
+							_this.frames = aniData.animationList[0];
+							if (flag) framesMap[url] = _this.frames;
+						} else {
+							_this.frames = framesMap[url];
 						}
-						
-						//设置第一个为默认
-						framesMap[url] = _this.frames = aniData.animationList[0];
 						
 						if (loaded) loaded.run();
 					}
@@ -284,6 +298,21 @@ package laya.display {
 			}
 			if (name) framesMap[name] = arr;
 			return arr;
+		}
+		
+		/**
+		 * 清除动画缓存数据
+		 * @param url 动画路径或者动画名
+		 *
+		 */
+		public static function clearCache(url:String):void {
+			var cache:Object = framesMap;
+			var key:String;
+			for (key in cache) {
+				if (key === url || key.indexOf(url+"#") == 0) {
+					delete framesMap[key];
+				}
+			}
 		}
 	}
 }

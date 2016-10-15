@@ -171,7 +171,7 @@ package laya.d3.component.animation {
 				var i:int, n:int;
 				_curAnimationDatas = [];
 				for (i = 0, n = mesh.getSubMeshCount(); i < n; i++)
-					_curAnimationDatas[i] = new Float32Array(mesh.getSubMesh(i)._boneIndex.length * 16);
+					_curAnimationDatas[i] = new Float32Array(mesh.getSubMesh(i)._boneIndices.length * 16);
 				_curBonesDatas = new Float32Array(boneFloatCount);
 				
 				_curOriginalData || (_curOriginalData = new Float32Array(_templet.getTotalkeyframesLength(animationClipIndex)));
@@ -187,7 +187,7 @@ package laya.d3.component.animation {
 				
 				for (i = 0, n = mesh.getSubMeshCount(); i < n; i++) {
 					var subMesh:SubMesh = mesh.getSubMesh(i);
-					_computeSubMeshAniDatas(i, subMesh._boneIndex, _curMeshAnimationData, _curAnimationDatas);
+					_computeSubMeshAniDatas(i, subMesh._boneIndices, _curMeshAnimationData, _curAnimationDatas);
 				}
 				
 				_setAnimationDatasWithCache(cachePlayRate, mesh, animationDatasCache, animationClipIndex, frameIndex, _curAnimationDatas);//缓存动画数据
@@ -240,13 +240,13 @@ package laya.d3.component.animation {
 			if (isCache) {
 				_curAnimationDatas = [];
 				for (i = 0, n = mesh.getSubMeshCount(); i < n; i++)
-					_curAnimationDatas[i] = new Float32Array(mesh.getSubMesh(i)._boneIndex.length * 16);
+					_curAnimationDatas[i] = new Float32Array(mesh.getSubMesh(i)._boneIndices.length * 16);
 				(isCacheBonesDatas) || (_curBonesDatas = new Float32Array(boneFloatCount));
 			} else {//非缓存或慢动作用临时数组做计算,只new一次
 				if (!_tempCurAnimationData) {//使用临时数组，防止对已缓存数据造成破坏
 					_tempCurAnimationData = [];
 					for (i = 0, n = mesh.getSubMeshCount(); i < n; i++)
-						_tempCurAnimationData[i] = new Float32Array(mesh.getSubMesh(i)._boneIndex.length * 16);
+						_tempCurAnimationData[i] = new Float32Array(mesh.getSubMesh(i)._boneIndices.length * 16);
 				}
 				(_tempCurBonesData) || (_tempCurBonesData = new Float32Array(boneFloatCount));//使用临时数组，防止对已缓存数据造成破坏
 				_curAnimationDatas = _tempCurAnimationData;
@@ -276,7 +276,7 @@ package laya.d3.component.animation {
 			
 			for (i = 0, n = mesh.getSubMeshCount(); i < n; i++) {
 				var subMesh:SubMesh = mesh.getSubMesh(i);
-				_computeSubMeshAniDatas(i, subMesh._boneIndex, _curMeshAnimationData, _curAnimationDatas);
+				_computeSubMeshAniDatas(i, subMesh._boneIndices, _curMeshAnimationData, _curAnimationDatas);
 			}
 			
 			if (isCache) {
@@ -296,7 +296,7 @@ package laya.d3.component.animation {
 			if (_curAnimationDatas) {
 				state.shaderDefs.addInt(ShaderDefines3D.BONE);
 				var subMeshIndex:int = state.renderElement.renderObj.indexOfHost;
-				state.shaderValue.pushValue(Buffer2D.MATRIXARRAY0, _curAnimationDatas[subMeshIndex], -1);
+				state.shaderValue.pushValue(Buffer2D.MATRIXARRAY0, _curAnimationDatas[subMeshIndex]);
 			}
 		}
 		

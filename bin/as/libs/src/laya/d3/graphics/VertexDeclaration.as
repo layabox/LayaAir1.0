@@ -1,4 +1,5 @@
 package laya.d3.graphics {
+	import laya.d3.shader.ShaderDefines3D;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.utils.ValusArray;
 	
@@ -56,10 +57,12 @@ package laya.d3.graphics {
 		
 		private var _id:int;
 		private var _shaderValues:ValusArray;
-		private var _shaderAttribute:*;
+		private var _shaderDefine:int;
+		//private var _shaderAttribute:*;
 		
 		private var _vertexStride:int;
 		private var _vertexElements:Array;
+		private var _vertexElementsDic:Object;
 		
 		/**
 		 * 获取唯一标识ID(通常用于优化或识别)。
@@ -78,32 +81,45 @@ package laya.d3.graphics {
 			return _shaderValues;
 		}
 		
-		public function get shaderAttribute():ValusArray//TODO:临时这么做
+		public function get shaderDefine():int//TODO:临时这么做
 		{
-			return _shaderAttribute;
+			return _shaderDefine;
 		}
 		
 		public function VertexDeclaration(vertexStride:int, vertexElements:Array) {
 			_id = ++_uniqueIDCounter;
 			if (_id > maxVertexDeclaration)
 				throw new Error("VertexDeclaration: VertexDeclaration count should not large than ", maxVertexDeclaration);
-				
-			_shaderAttribute = {};
+			
 			_shaderValues = new ValusArray();
+			_vertexElementsDic = {};
 			_vertexStride = vertexStride;
 			_vertexElements = vertexElements;
 			
 			for (var i:int = 0; i < vertexElements.length; i++) {
 				var vertexElement:VertexElement = vertexElements[i];
-				var attributeName:String = vertexElement.elementUsage
+				var attributeName:String = vertexElement.elementUsage;
+				_vertexElementsDic[attributeName] = vertexElement;
 				var value:Array = [_getTypeSize(vertexElement.elementFormat) / 4, WebGLContext.FLOAT, false, _vertexStride, vertexElement.offset];
-				_shaderValues.pushValue(attributeName, value, -1);
-				_shaderAttribute[attributeName] = value;//临时
+				_shaderValues.pushValue(attributeName, value);
+				
+				switch (attributeName) {//TODO:临时
+				case VertexElementUsage.TEXTURECOORDINATE0: 
+					_shaderDefine |= ShaderDefines3D.UV;
+					break;
+				case VertexElementUsage.COLOR0: 
+					_shaderDefine |= ShaderDefines3D.COLOR;
+					break;
+				}
 			}
 		}
 		
 		public function getVertexElements():Array {
 			return _vertexElements.slice();
+		}
+		
+		public function getVertexElementByUsage(usage:String):VertexElement {
+			return _vertexElementsDic[usage];
 		}
 		
 		public function unBinding():void {

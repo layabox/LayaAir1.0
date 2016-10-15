@@ -110,7 +110,7 @@ package PathFinding.finders
 			var h:Function = function(a:Node, b:Node):Number
 			{
 				return this.heuristic(Math.abs(b.x - a.x), Math.abs(b.y - a.y));
-			}.bind(this);
+			}/*.bind(this);*/
 			
 			// Step cost from a to b:
 			var cost:Function = function(a:Node, b:Node):Number
@@ -130,7 +130,7 @@ package PathFinding.finders
 			 * @return {Object} either a number with the new optimal cut-off depth,
 			 * or a valid node instance, in which case a path was found.
 			 */
-			var search:Function = function(node:Node, g:int, cutoff:int, route:int, depth:int)
+			var search:Function = function(node:Node, g:int, cutoff:int, route:int, depth:int):*
 			{
 				nodesVisited++;
 				
@@ -141,7 +141,7 @@ package PathFinding.finders
 					return Infinity;
 				}
 				
-				var f = g + h(node, end) * this.weight;
+				var f:Number = g + h(node, end) * this.weight;
 				
 				// We've searched too deep for this iteration.
 				if (f > cutoff)
@@ -206,7 +206,7 @@ package PathFinding.finders
 				
 				return min;
 			
-			}.bind(this);
+			}/*.bind(this);*/
 			
 			// Node instance lookups:
 			var start:Node = grid.getNodeAt(startX, startY);
@@ -230,14 +230,17 @@ package PathFinding.finders
 				// Route not possible, or not found in time limit.
 				if (t == Infinity)
 				{
-					return [];
+					route = [];
+					break;
+					//return [];
 				}
 				
 				// If t is a node, it's also the end node. Route is now
 				// populated with a valid path to the end node.
 				if (t is Node)
 				{
-					return route;
+					break;
+					//return route;
 				}
 				
 				// Try again, this time with a deeper cut-off. The t score
@@ -246,7 +249,7 @@ package PathFinding.finders
 			}
 			
 			// This _should_ never to be reached.
-			//return [];
+			return route;
 		}
 	}
 

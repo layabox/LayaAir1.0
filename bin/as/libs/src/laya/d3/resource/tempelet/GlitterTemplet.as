@@ -1,8 +1,8 @@
 package laya.d3.resource.tempelet {
 	import laya.d3.core.glitter.Glitter;
-	import laya.d3.core.glitter.GlitterSettings;
+	import laya.d3.core.glitter.GlitterSetting;
 	import laya.d3.core.glitter.SplineCurvePositionVelocity;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
@@ -14,7 +14,6 @@ package laya.d3.resource.tempelet {
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
-	import laya.resource.Texture;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
@@ -38,7 +37,7 @@ package laya.d3.resource.tempelet {
 		private const _floatCountPerVertex:int = 6;//顶点结构为Position(3个float)+UV(2个float)+Time(1个float)
 		
 		private var _owner:Glitter;
-		private var _albedo:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);
+		public var _albedo:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);
 		private var _vertices:Float32Array;
 		private var _vertexBuffer:VertexBuffer3D;
 		
@@ -46,14 +45,8 @@ package laya.d3.resource.tempelet {
 		private var _firstNewElement:int;
 		private var _firstFreeElement:int;
 		private var _firstRetiredElement:int;
-		private var _currentTime:Number;
+		public var _currentTime:Number;
 		private var _drawCounter:int;
-		
-		private var _shaderValue:ValusArray = new ValusArray();
-		private var _sharderNameID:int;
-		private var _shader:Shader;
-		
-		
 		
 		private var scLeft:SplineCurvePositionVelocity;
 		private var scRight:SplineCurvePositionVelocity;
@@ -77,13 +70,13 @@ package laya.d3.resource.tempelet {
 		private var _lastPatchAddPos1:Vector3;
 		private var _lastPatchAddTime:Number;
 		
-		public var setting:GlitterSettings;
+		public var setting:GlitterSetting;
 		
 		public function get indexOfHost():int {
 			return 0;
 		}
 		
-		public function get VertexBufferCount():int {
+		public function get _vertexBufferCount():int {
 			return 1;
 		}
 		
@@ -98,18 +91,18 @@ package laya.d3.resource.tempelet {
 			return drawVertexCount;
 		}
 		
-		public function getVertexBuffer(index:int = 0):VertexBuffer3D {
+		public function _getVertexBuffer(index:int = 0):VertexBuffer3D {
 			if (index === 0)
 				return _vertexBuffer;
 			else
 				return null;
 		}
 		
-		public function getIndexBuffer():IndexBuffer3D {
+		public function _getIndexBuffer():IndexBuffer3D {
 			return null;
 		}
 		
-		public function GlitterTemplet(owner:Glitter, glitterSetting:GlitterSettings) {
+		public function GlitterTemplet(owner:Glitter, setting:GlitterSetting) {
 			_owner = owner;
 			_lastTime = 0
 			
@@ -127,9 +120,8 @@ package laya.d3.resource.tempelet {
 			
 			_needPatch = false;
 			
-			setting = glitterSetting;
+			this.setting = setting;
 			_initialize();
-			_loadShaderParams();
 			_loadContent();
 			_owner.on(Event.ENABLED_CHANGED, this, _onEnableChanged);
 		}
@@ -140,32 +132,11 @@ package laya.d3.resource.tempelet {
 		private function _initialize():void {
 			_vertices = new Float32Array(setting.maxSegments * _floatCountPerVertex * 2);
 		}
-		
 		/**
 		 * @private
 		 */
 		private function _loadContent():void {
 			_vertexBuffer = VertexBuffer3D.create(VertexGlitter.vertexDeclaration, setting.maxSegments * 2, WebGLContext.DYNAMIC_DRAW);
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _loadShaderParams():void {
-			_sharderNameID = Shader.nameKey.get("GLITTER");
-			
-			if (setting.texturePath)//预设纹理ShaderValue
-			{
-				var material:Material = (_owner as Glitter).glitterRender.sharedMaterial;
-				_shaderValue.pushValue(Buffer2D.DIFFUSETEXTURE, null, -1);
-				var _this:GlitterTemplet = this;
-				Laya.loader.load(setting.texturePath, Handler.create(null, function(texture:Texture):void {
-					(texture.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(texture.bitmap as WebGLImage).mipmap = true;
-					(texture.bitmap as WebGLImage).repeat = true;
-					material.diffuseTexture = texture;
-				}));
-			}
 		}
 		
 		public function _onEnableChanged(enable:Boolean):void {
@@ -260,18 +231,6 @@ package laya.d3.resource.tempelet {
 		/**
 		 * @private
 		 */
-		private function _getShader(state:RenderState):Shader {
-			var shaderDefs:ShaderDefines3D = state.shaderDefs;
-			var preDef:int = shaderDefs._value;
-			var nameID:Number = (shaderDefs._value | state.shadingMode) + _sharderNameID * Shader.SHADERNAME2ID;
-			_shader = Shader.withCompile(_sharderNameID, state.shadingMode, state.shaderDefs.toNameDic(), nameID, null);
-			shaderDefs._value = preDef;
-			return _shader;
-		}
-		
-		/**
-		 * @private
-		 */
 		private function _addNewGlitterSegementToVertexBuffer():void//通常只更新（_firstNewParticle - _firstActiveParticle）,但因为动态修改了UV数据所以更新（_firstFreeParticle - _firstActiveParticle）
 		{
 			var start:int;
@@ -355,74 +314,47 @@ package laya.d3.resource.tempelet {
 			_updateTextureCoordinates();//实时更新纹理坐标
 		}
 		
+		public function _beforeRender(state:RenderState):Boolean {
+			//设备丢失时,貌似WebGL不会丢失
+			//  todo  setData  here!
+			if (_firstNewElement != _firstFreeElement) {
+				_addNewGlitterSegementToVertexBuffer();
+			}
+			
+			_drawCounter++;
+			if (_firstActiveElement != _firstFreeElement) {
+				_vertexBuffer.bindWithIndexBuffer(null);
+				return true;
+			}
+			return false;
+		}
+		
 		/**
 		 * @private
 		 * 渲染闪光。
 		 * @param	state 相关渲染状态
 		 */
-		public function _render(state:RenderState):Boolean {
-			var material:Material = (state.owner as Glitter).glitterRender.sharedMaterial;
-			var diffuseTexture:Texture = material.diffuseTexture;
-			if (diffuseTexture && diffuseTexture.loaded) {
-				_update(state.elapsedTime);
-				
-				//设备丢失时,貌似WebGL不会丢失.............................................................
-				//  todo  setData  here!
-				//...................................................................................
-				
-				if (_firstNewElement != _firstFreeElement) {
-					_addNewGlitterSegementToVertexBuffer();
+		public function _render(state:RenderState):void {
+			var drawVertexCount:int;
+			var glContext:WebGLContext = WebGL.mainContext;
+			if (_firstActiveElement < _firstFreeElement) {
+				drawVertexCount = (_firstFreeElement - _firstActiveElement) * 2;
+				glContext.drawArrays(WebGLContext.TRIANGLE_STRIP, _firstActiveElement * 2, drawVertexCount);
+				Stat.trianglesFaces += drawVertexCount - 2;
+				Stat.drawCall++;
+			} else {
+				drawVertexCount = (setting.maxSegments - _firstActiveElement) * 2;
+				glContext.drawArrays(WebGLContext.TRIANGLE_STRIP, _firstActiveElement * 2, drawVertexCount);
+				Stat.trianglesFaces += drawVertexCount - 2;
+				Stat.drawCall++;
+				if (_firstFreeElement > 0) {
+					drawVertexCount = _firstFreeElement * 2;
+					glContext.drawArrays(WebGLContext.TRIANGLE_STRIP, 0, drawVertexCount);
+					Stat.trianglesFaces += drawVertexCount - 2;
+					Stat.drawCall++;
 				}
-				
-				if (_firstActiveElement != _firstFreeElement) {
-					var gl:WebGLContext = WebGL.mainContext;
-					_vertexBuffer.bindWithIndexBuffer(null);
-					
-					_shader = _getShader(state);
-					
-					var presz:int = _shaderValue.length;
-					
-					_shaderValue.pushArray(state.shaderValue);
-					_shaderValue.pushArray(_vertexBuffer.vertexDeclaration.shaderValues);
-					
-					_shaderValue.pushValue(Buffer2D.UNICOLOR, setting.color.elements, -1);
-					_shaderValue.pushValue(Buffer2D.MVPMATRIX, state.projectionViewMatrix.elements, -1);
-					_shaderValue.pushValue(Buffer2D.DURATION, setting.lifeTime, -1);
-					_shaderValue.pushValue(Buffer2D.ALBEDO, _albedo.elements, -1);
-					
-					_shaderValue.pushValue(Buffer2D.CURRENTTIME, _currentTime, -1);//设置粒子的时间参数，可通过此参数停止粒子动画
-					
-					_shaderValue.data[1][0] = diffuseTexture.source;
-					_shaderValue.data[1][1] = diffuseTexture.bitmap.id;
-					
-					_shader.uploadArray(_shaderValue.data, _shaderValue.length, null);
-					
-					_shaderValue.length = presz;
-					
-					var drawVertexCount:int;
-					if (_firstActiveElement < _firstFreeElement) {
-						drawVertexCount = (_firstFreeElement - _firstActiveElement) * 2;
-						WebGL.mainContext.drawArrays(WebGLContext.TRIANGLE_STRIP, _firstActiveElement * 2, drawVertexCount);
-						Stat.trianglesFaces += drawVertexCount - 2;
-						Stat.drawCall++;
-					} else {
-						drawVertexCount = (setting.maxSegments - _firstActiveElement) * 2;
-						WebGL.mainContext.drawArrays(WebGLContext.TRIANGLE_STRIP, _firstActiveElement * 2, drawVertexCount);
-						Stat.trianglesFaces += drawVertexCount - 2;
-						Stat.drawCall++;
-						if (_firstFreeElement > 0) {
-							drawVertexCount = _firstFreeElement * 2;
-							WebGL.mainContext.drawArrays(WebGLContext.TRIANGLE_STRIP, 0, drawVertexCount);
-							Stat.trianglesFaces += drawVertexCount - 2;
-							Stat.drawCall++;
-						}
-					}
-				}
-				
-				_drawCounter++;
 			}
 			
-			return true;
 		}
 		
 		/**

@@ -34,10 +34,10 @@ module LightAndMaterialSample {
 
 			this.scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
-			this.scene.currentCamera = (this.scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
-			this.scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.2));
-			this.scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-			this.scene.currentCamera.clearColor = null;
+			var camera = this.scene.addChild(new Laya.Camera(0, 0.1, 100)) as Laya.Camera;
+			camera.transform.translate(new Laya.Vector3(0, 1.8, 2.0));
+			camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
+			camera.clearColor = null;
             var _this = this;
 			this.directionLight = this.scene.addChild(new Laya.DirectionLight()) as Laya.DirectionLight;
 			this.directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);

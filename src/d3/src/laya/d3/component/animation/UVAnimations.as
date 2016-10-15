@@ -2,7 +2,7 @@ package laya.d3.component.animation {
 	import laya.ani.AnimationState;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -36,7 +36,7 @@ package laya.d3.component.animation {
 		/** @private */
 		//private var _subMeshes:Vector.<SubMesh>;
 		/** @private */
-		private var _materials:Vector.<Material>;
+		private var _materials:Vector.<BaseMaterial>;
 		/** @private */
 		private var _mesh:MeshSprite3D;
 		/** @private */

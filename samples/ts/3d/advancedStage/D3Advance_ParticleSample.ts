@@ -1,7 +1,7 @@
 
 module ParticleSample {
     import Vector3 = Laya.Vector3;
-    import ParticleSettings = Laya.ParticleSettings;
+    import ParticleSetting = Laya.ParticleSetting;
     import Particle3D = Laya.Particle3D;
     import Browser = Laya.Browser;
     import Sprite3D = Laya.Sprite3D;
@@ -36,17 +36,16 @@ module ParticleSample {
 
             var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
-            scene.currentCamera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
-            scene.currentCamera.transform.translate(new Vector3(0, 1, 2.6));
-            scene.currentCamera.transform.rotate(new Vector3(-20, 0, 0), false, false);
-            scene.currentCamera.clearColor = null;
-
-            scene.currentCamera.addComponent(CameraMoveScript);
+            var camera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
+            camera.transform.translate(new Vector3(0, 1, 2.6));
+            camera.transform.rotate(new Vector3(-20, 0, 0), false, false);
+            camera.clearColor = null;
+            camera.addComponent(CameraMoveScript);
 
             var grid: Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;
             grid.loadHierarchy("../../res/threeDimen/staticModel/grid/plane.lh");
 
-            var settings: ParticleSettings = new ParticleSettings();
+            var settings: ParticleSetting = new ParticleSetting();
             settings.textureName = "../../res/threeDimen/particle/texture.png";
             settings.maxPartices = 3600;
             settings.duration = 6.0;
@@ -88,7 +87,7 @@ module ParticleSample {
             this.simple.transform.localPosition = new Vector3(0, 0.5, 0);
             scene.addChild(this.simple);
 
-            settings = new ParticleSettings();
+            settings = new ParticleSetting();
             settings.textureName = "../../res/threeDimen/particle/smoke.png";
             settings.maxPartices = 600;
             settings.duration = 10;
@@ -107,7 +106,7 @@ module ParticleSample {
             this.smoke = new Particle3D(settings);
             scene.addChild(this.smoke);
 
-            settings = new ParticleSettings();
+            settings = new ParticleSetting();
             settings.textureName = "../../res/threeDimen/particle/fire.png";
             settings.maxPartices = 1200;
             settings.duration = 2;
@@ -130,7 +129,7 @@ module ParticleSample {
             scene.addChild(this.fire);
 
             //...............................
-            settings = new ParticleSettings();
+            settings = new ParticleSetting();
             settings.textureName = "../../res/threeDimen/particle/smoke.png";
             settings.maxPartices = 1000;
             settings.duration = 3;
@@ -154,7 +153,7 @@ module ParticleSample {
             this.projectileTrail = new Particle3D(settings);
             scene.addChild(this.projectileTrail);
 
-            settings = new ParticleSettings();
+            settings = new ParticleSetting();
             settings.textureName = "../../res/threeDimen/particle/explosion.png";
             settings.maxPartices = 100;
             settings.duration = 2;
@@ -178,7 +177,7 @@ module ParticleSample {
             this.explosion = new Particle3D(settings);
             scene.addChild(this.explosion);
 
-            settings = new ParticleSettings();
+            settings = new ParticleSetting();
             settings.textureName = "../../res/threeDimen/particle/smoke.png";
             settings.maxPartices = 200;
             settings.duration = 4;

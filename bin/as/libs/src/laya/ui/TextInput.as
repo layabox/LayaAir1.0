@@ -342,5 +342,18 @@ package laya.ui {
 		public function set focus(value:Boolean):void {
 			Input(_tf).focus = value;
 		}
+		
+		/**
+		 * @copy laya.display.Input#type
+		 */
+		public function get type():String
+		{
+			return Input(_tf).type;
+		}
+		
+		public function set type(value:String):void
+		{
+			Input(_tf).type = value;
+		}
 	}
 }

@@ -394,7 +394,7 @@ package laya.ui {
 		/**
 		 * <p>重置对象的 <code>X</code> 轴（水平方向）布局。</p>
 		 */
-		private function resetLayoutX():void {
+		protected function resetLayoutX():void {
 			var parent:Sprite = this.parent as Sprite;
 			if (parent) {
 				var layout:LayoutStyle = _layout;
@@ -416,7 +416,7 @@ package laya.ui {
 		/**
 		 * <p>重置对象的 <code>Y</code> 轴（垂直方向）布局。</p>
 		 */
-		private function resetLayoutY():void {
+		protected function resetLayoutY():void {
 			var parent:Sprite = this.parent as Sprite;
 			if (parent) {
 				var layout:LayoutStyle = _layout;

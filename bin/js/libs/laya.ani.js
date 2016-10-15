@@ -2,11 +2,10 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Bitmap=laya.resource.Bitmap,Browser=laya.utils.Browser,Byte=laya.utils.Byte,Event=laya.events.Event;
-	var EventDispatcher=laya.events.EventDispatcher,Graphics=laya.display.Graphics,Handler=laya.utils.Handler;
-	var Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil,Matrix=laya.maths.Matrix,Render=laya.renders.Render;
-	var RunDriver=laya.utils.RunDriver,Sprite=laya.display.Sprite,Stat=laya.utils.Stat,Texture=laya.resource.Texture;
-	var URL=laya.net.URL;
+	var Browser=laya.utils.Browser,Byte=laya.utils.Byte,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher;
+	var Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil;
+	var Matrix=laya.maths.Matrix,Render=laya.renders.Render,RunDriver=laya.utils.RunDriver,Sprite=laya.display.Sprite;
+	var Stat=laya.utils.Stat,Texture=laya.resource.Texture,URL=laya.net.URL;
 	/**
 	*@private
 	*/
@@ -28,21 +27,33 @@
 	var Bone=(function(){
 		function Bone(){
 			this.name=null;
-			this._parent=null;
+			this.root=null;
+			this.parentBone=null;
 			this.length=10;
 			this.transform=null;
-			this.sprite=null;
 			this.inheritScale=true;
 			this.inheritRotation=true;
 			this.rotation=NaN;
 			this.resultRotation=NaN;
-			this._children=[];
+			this._tempMatrix=null;
+			this._sprite=null;
 			this.resultTransform=new Transform();
 			this.resultMatrix=new Matrix();
+			this._children=[];
 		}
 
 		__class(Bone,'laya.ani.bone.Bone');
 		var __proto=Bone.prototype;
+		__proto.setTempMatrix=function(matrix){
+			this._tempMatrix=matrix;
+			var i=0,n=0;
+			var tBone;
+			for (i=0,n=this._children.length;i < n;i++){
+				tBone=this._children[i];
+				tBone.setTempMatrix(this._tempMatrix);
+			}
+		}
+
 		__proto.update=function(pMatrix){
 			this.rotation=this.transform.skX;
 			var tResultMatrix;
@@ -51,31 +62,26 @@
 				Matrix.mul(tResultMatrix,pMatrix,this.resultMatrix);
 				this.resultRotation=this.rotation;
 				}else {
-				this.resultRotation=this.rotation+this._parent.resultRotation;
-				if (this._parent){
+				this.resultRotation=this.rotation+this.parentBone.resultRotation;
+				if (this.parentBone){
 					if (this.inheritRotation && this.inheritScale){
 						tResultMatrix=this.resultTransform.getMatrix();
-						Matrix.mul(tResultMatrix,this._parent.resultMatrix,this.resultMatrix);
+						Matrix.mul(tResultMatrix,this.parentBone.resultMatrix,this.resultMatrix);
 						}else {
-						var la=this.transform.getMatrix().a;
-						var lb=this.transform.getMatrix().b;
-						var lc=this.transform.getMatrix().c;
-						var ld=this.transform.getMatrix().d;
 						var temp=0;
-						var parent=this._parent;
+						var parent=this.parentBone;
 						var tAngle=NaN;
 						var cos=NaN;
 						var sin=NaN;
-						var tParentMatrix=this._parent.resultMatrix;
-						var worldX=tParentMatrix.a *this.transform.x+tParentMatrix.b *this.transform.y+tParentMatrix.tx;
-						var worldY=tParentMatrix.c *this.transform.x+tParentMatrix.d *this.transform.y+tParentMatrix.ty;
+						var tParentMatrix=this.parentBone.resultMatrix;
+						var worldX=tParentMatrix.a *this.transform.x+tParentMatrix.c *this.transform.y+tParentMatrix.tx;
+						var worldY=tParentMatrix.b *this.transform.x+tParentMatrix.d *this.transform.y+tParentMatrix.ty;
 						var tTestMatrix=new Matrix();
 						if (this.inheritRotation){
-							tAngle=Math.atan2(parent.resultMatrix.c,parent.resultMatrix.a);
+							tAngle=Math.atan2(parent.resultMatrix.b,parent.resultMatrix.a);
 							cos=Math.cos(tAngle),sin=Math.sin(tAngle);
 							tTestMatrix.setTo(cos,sin,-sin,cos,0,0);
-							var tTestYMatrix=new Matrix(1,0,0,-1);
-							Matrix.mul(tTestYMatrix,tTestMatrix,Matrix.TEMP);
+							Matrix.mul(this._tempMatrix,tTestMatrix,Matrix.TEMP);
 							Matrix.TEMP.copyTo(tTestMatrix);
 							tResultMatrix=this.resultTransform.getMatrix();
 							Matrix.mul(tResultMatrix,tTestMatrix,this.resultMatrix);
@@ -120,16 +126,16 @@
 		}
 
 		__proto.updateDraw=function(x,y){
-			if (this.sprite){
-				this.sprite.x=x+this.resultMatrix.tx;
-				this.sprite.y=y+this.resultMatrix.ty;
+			if (this._sprite){
+				this._sprite.x=x+this.resultMatrix.tx;
+				this._sprite.y=y+this.resultMatrix.ty;
 				}else {
-				this.sprite=new Sprite();
-				this.sprite.graphics.drawCircle(0,0,5,"#ff0000");
-				this.sprite.graphics.fillText(this.name,0,0,"20px Arial","#00ff00","center");
-				Laya.stage.addChild(this.sprite);
-				this.sprite.x=x+this.resultMatrix.tx;
-				this.sprite.y=y+this.resultMatrix.ty;
+				this._sprite=new Sprite();
+				this._sprite.graphics.drawCircle(0,0,5,"#ff0000");
+				this._sprite.graphics.fillText(this.name,0,0,"20px Arial","#00ff00","center");
+				Laya.stage.addChild(this._sprite);
+				this._sprite.x=x+this.resultMatrix.tx;
+				this._sprite.y=y+this.resultMatrix.ty;
 			};
 			var i=0,n=0;
 			var tBone;
@@ -141,7 +147,7 @@
 
 		__proto.addChild=function(bone){
 			this._children.push(bone);
-			bone._parent=this;
+			bone.parentBone=this;
 		}
 
 		__proto.findBone=function(boneName){
@@ -690,12 +696,12 @@
 		}
 
 		__proto._applyIk1=function(bone,targetX,targetY,alpha){
-			var pp=bone._parent;
+			var pp=bone.parentBone;
 			var id=1 / (pp.resultMatrix.a *pp.resultMatrix.d-pp.resultMatrix.b *pp.resultMatrix.c);
 			var x=targetX-pp.resultMatrix.tx;
 			var y=targetY-pp.resultMatrix.ty;
-			var tx=(x *pp.resultMatrix.d-y *pp.resultMatrix.b)*id-bone.transform.x;
-			var ty=(y *pp.resultMatrix.a-x *pp.resultMatrix.c)*id-bone.transform.y;
+			var tx=(x *pp.resultMatrix.d-y *pp.resultMatrix.c)*id-bone.transform.x;
+			var ty=(y *pp.resultMatrix.a-x *pp.resultMatrix.b)*id-bone.transform.y;
 			var rotationIK=Math.atan2(ty,tx)*IkConstraint.radDeg-0-bone.transform.skX;
 			if (bone.transform.scX < 0)rotationIK+=180;
 			if (rotationIK > 180)
@@ -709,7 +715,7 @@
 			if (alpha==0){
 				return;
 			};
-			var px=parent.transform.x,py=parent.transform.y;
+			var px=parent.resultTransform.x,py=parent.resultTransform.y;
 			var psx=parent.transform.scX,psy=parent.transform.scY;
 			var csx=child.transform.scX;
 			var os1=0,os2=0,s2=0;
@@ -731,9 +737,9 @@
 				}else {
 				os2=0
 			};
-			var cx=child.transform.x,cy=NaN,cwx=NaN,cwy=NaN;
-			var a=parent.resultMatrix.a,b=parent.resultMatrix.b;
-			var c=parent.resultMatrix.c,d=parent.resultMatrix.d;
+			var cx=child.resultTransform.x,cy=NaN,cwx=NaN,cwy=NaN;
+			var a=parent.resultMatrix.a,b=parent.resultMatrix.c;
+			var c=parent.resultMatrix.b,d=parent.resultMatrix.d;
 			var u=Math.abs(psx-psy)<=0.0001;
 			if (!u){
 				cy=0;
@@ -744,10 +750,10 @@
 				cwx=a *cx+b *cy+parent.resultMatrix.tx;
 				cwy=c *cx+d *cy+parent.resultMatrix.ty;
 			};
-			var pp=parent._parent;
+			var pp=parent.parentBone;
 			a=pp.resultMatrix.a;
-			b=pp.resultMatrix.b;
-			c=pp.resultMatrix.c;
+			b=pp.resultMatrix.c;
+			c=pp.resultMatrix.b;
 			d=pp.resultMatrix.d;
 			var id=1 / (a *d-b *c);
 			var x=targetX-pp.resultMatrix.tx,y=targetY-pp.resultMatrix.ty;
@@ -830,7 +836,7 @@
 				}
 			};
 			var os=Math.atan2(cy,cx)*s2;
-			var rotation=parent.transform.skX;
+			var rotation=parent.resultTransform.skX;
 			a1=(a1-os)*IkConstraint.radDeg+os1-rotation;
 			if (a1 > 180)
 				a1-=360;
@@ -838,7 +844,7 @@
 			parent.resultTransform.x=px;
 			parent.resultTransform.y=py;
 			parent.resultTransform.skX=parent.resultTransform.skY=rotation+a1 *alpha;
-			rotation=child.transform.skX;
+			rotation=child.resultTransform.skX;
 			rotation=rotation % 360;
 			a2=((a2+os)*IkConstraint.radDeg-0)*s2+os2-rotation;
 			if (a2 > 180)
@@ -1744,7 +1750,7 @@
 		__proto.play=function(index,playbackRate,overallDuration,playStart,playEnd){
 			(index===void 0)&& (index=0);
 			(playbackRate===void 0)&& (playbackRate=1.0);
-			(overallDuration===void 0)&& (overallDuration=3153600000000);
+			(overallDuration===void 0)&& (overallDuration=2147483647);
 			(playStart===void 0)&& (playStart=0);
 			(playEnd===void 0)&& (playEnd=0);
 			if (!this._templet)
@@ -1769,6 +1775,7 @@
 				this._calculatePlayDuration();
 			else
 			this._templet.once(/*laya.events.Event.LOADED*/"loaded",this,this._calculatePlayDuration);
+			this.update(0);
 		}
 
 		/**
@@ -2543,8 +2550,14 @@
 			var tParentName;
 			var tBoneLen=tByte.getInt16();
 			var tBoneDic={};
+			var tRootBone;
 			for (i=0;i < tBoneLen;i++){
 				tBone=new Bone();
+				if (i==0){
+					tRootBone=tBone;
+					}else {
+					tBone.root=tRootBone;
+				}
 				tName=tByte.readUTFString();
 				tParentName=tByte.readUTFString();
 				tBone.length=tByte.getFloat32();
@@ -2834,6 +2847,13 @@
 			var tReverse=tByte.getUint8();
 			if (tReverse==1){
 				this.yReverseMatrix=new Matrix(1,0,0,-1,0,0);
+				if (tRootBone){
+					tRootBone.setTempMatrix(this.yReverseMatrix);
+				}
+				}else {
+				if (tRootBone){
+					tRootBone.setTempMatrix(new Matrix());
+				}
 			}
 			this.showSkinByIndex(this.boneSlotDic,0);
 			this.event(/*laya.events.Event.COMPLETE*/"complete",this);
@@ -3144,18 +3164,20 @@
 		*传递STOP事件
 		*/
 		__proto._onStop=function(){
-			this.event(/*laya.events.Event.STOPPED*/"stopped");
 			var tEventData;
 			var tEventAniArr=this._templet.eventAniArr;
 			var tEventArr=tEventAniArr[this._aniClipIndex];
 			if (tEventArr && this._eventIndex < tEventArr.length){
 				for (;this._eventIndex < tEventArr.length;this._eventIndex++){
 					tEventData=tEventArr[this._eventIndex];
-					this.event(/*laya.events.Event.LABEL*/"label",tEventData);
+					if (tEventData.time >=this._player.playStart && tEventData.time <=this._player.playEnd){
+						this.event(/*laya.events.Event.LABEL*/"label",tEventData);
+					}
 				}
 			}
 			this._eventIndex=0;
 			this._drawOrder=null;
+			this.event(/*laya.events.Event.STOPPED*/"stopped");
 		}
 
 		/**
@@ -3220,9 +3242,11 @@
 			var tEventArr=tEventAniArr[this._aniClipIndex];
 			if (tEventArr && this._eventIndex < tEventArr.length){
 				tEventData=tEventArr[this._eventIndex];
-				if (this._player.currentPlayTime > tEventData.time){
-					this.event(/*laya.events.Event.LABEL*/"label",tEventData);
-					this._eventIndex++;
+				if (tEventData.time >=this._player.playStart && tEventData.time <=this._player.playEnd){
+					if (this._player.currentPlayTime >=tEventData.time){
+						this.event(/*laya.events.Event.LABEL*/"label",tEventData);
+						this._eventIndex++;
+					}
 				}
 			}
 			if (this._aniClipIndex==-1)return;
@@ -3257,7 +3281,7 @@
 			if (tDrawOrderArr && tDrawOrderArr.length > 0){
 				this._drawOrderIndex=0;
 				tDrawOrderData=tDrawOrderArr[this._drawOrderIndex];
-				while (this._player.currentPlayTime > tDrawOrderData.time){
+				while (this._player.currentPlayTime >=tDrawOrderData.time){
 					this._drawOrder=tDrawOrderData.drawOrder;
 					this._drawOrderIndex++;
 					if (this._drawOrderIndex >=tDrawOrderArr.length){
@@ -3415,6 +3439,7 @@
 			};
 			var tSlotData2=NaN;
 			var tSlotData3=NaN;
+			var tObject;
 			if (this._drawOrder){
 				for (i=0,n=this._drawOrder.length;i < n;i++){
 					tDBBoneSlot=this._boneSlotArray[this._drawOrder[i]];
@@ -3428,7 +3453,7 @@
 						tDBBoneSlot.showDisplayByIndex(tSlotData2);
 					}
 					if (tDeformDic[this._drawOrder[i]]){
-						var tObject=tDeformDic[this._drawOrder[i]];
+						tObject=tDeformDic[this._drawOrder[i]];
 						if (tDBBoneSlot.currDisplayData && tObject[tDBBoneSlot.currDisplayData.attachmentName]){
 							tDBBoneSlot.deformData=tObject[tDBBoneSlot.currDisplayData.attachmentName];
 							}else {
@@ -3459,7 +3484,7 @@
 						tDBBoneSlot.showDisplayByIndex(tSlotData2);
 					}
 					if (tDeformDic[i]){
-						var tObject=tDeformDic[i];
+						tObject=tDeformDic[i];
 						if (tDBBoneSlot.currDisplayData && tObject[tDBBoneSlot.currDisplayData.attachmentName]){
 							tDBBoneSlot.deformData=tObject[tDBBoneSlot.currDisplayData.attachmentName];
 							}else {
@@ -3573,9 +3598,13 @@
 		*@param nameOrIndex 动画名字或者索引
 		*@param loop 是否循环播放
 		*@param force false,如果要播的动画跟上一个相同就不生效,true,强制生效
+		*@param start 起始时间
+		*@param end 结束时间
 		*/
-		__proto.play=function(nameOrIndex,loop,force){
+		__proto.play=function(nameOrIndex,loop,force,start,end){
 			(force===void 0)&& (force=true);
+			(start===void 0)&& (start=0);
+			(end===void 0)&& (end=0);
 			this._indexControl=false;
 			var index=-1;
 			var duration=NaN;
@@ -3600,7 +3629,7 @@
 					this._currAniIndex=index;
 					this._curOriginalData=new Float32Array(this._templet.getTotalkeyframesLength(index));
 					this._drawOrder=null;
-					this._player.play(index,this._player.playbackRate,duration);
+					this._player.play(index,this._player.playbackRate,duration,start,end);
 					this._templet.showSkinByIndex(this._boneSlotDic,this._skinIndex);
 					if (this._pause){
 						this._pause=false;

@@ -10,8 +10,9 @@ package laya.d3.resource.models {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
+	import laya.d3.resource.Texture2D;
+	import laya.d3.resource.TextureCube;
 	import laya.d3.shader.ShaderDefines3D;
-	import laya.resource.Texture;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
@@ -58,7 +59,7 @@ package laya.d3.resource.models {
 		private var _colorIntensity:Number = 1.0;
 		
 		/** @private 天空立方体纹理。 */
-		private var _textureCube:Texture;
+		private var _textureCube:TextureCube;
 		
 		/**
 		 * 获取透明混合度。
@@ -102,7 +103,7 @@ package laya.d3.resource.models {
 		 * 获取天空立方体纹理。
 		 * @return 天空立方体纹理。
 		 */
-		public function get textureCube():Texture {
+		public function get textureCube():TextureCube {
 			return _textureCube;
 		}
 		
@@ -110,7 +111,7 @@ package laya.d3.resource.models {
 		 * 设置天空立方体纹理。
 		 * @param value 天空立方体纹理。
 		 */
-		public function set textureCube(value:Texture):void {
+		public function set textureCube(value:TextureCube):void {
 			_textureCube = value;
 		}
 		
@@ -242,8 +243,8 @@ package laya.d3.resource.models {
 		 * @private
 		 */
 		protected function loadShaderParams():void {
-			_sharderNameID = Shader.nameKey.get("SKY");
-			_shaderValue.pushValue(Buffer2D.DIFFUSETEXTURE, null, -1);
+			_sharderNameID = Shader.nameKey.get("SkyBox");
+			_shaderValue.pushValue(Buffer2D.DIFFUSETEXTURE, null);
 		}
 		
 		override public function _render(state:RenderState):void {
@@ -263,12 +264,11 @@ package laya.d3.resource.models {
 				_tempMatrix4x40.transpose();
 				Matrix4x4.multiply(state.projectionMatrix, _tempMatrix4x40, _tempMatrix4x41);
 				
-				_shaderValue.pushValue(Buffer2D.MVPMATRIX, _tempMatrix4x41.elements, -1);
-				_shaderValue.pushValue(Buffer2D.INTENSITY, _colorIntensity, -1);
-				_shaderValue.pushValue(Buffer2D.ALPHABLENDING, alphaBlending, -1);
+				_shaderValue.pushValue(Buffer2D.MVPMATRIX, _tempMatrix4x41.elements);
+				_shaderValue.pushValue(Buffer2D.INTENSITY, _colorIntensity);
+				_shaderValue.pushValue(Buffer2D.ALPHABLENDING, alphaBlending);
 				
-				_shaderValue.data[1][0] = textureCube.source;
-				_shaderValue.data[1][1] = textureCube.bitmap.id;
+				_shaderValue.data[1] = textureCube.source;
 				
 				_shader.uploadArray(_shaderValue.data, _shaderValue.length, null);
 				_shaderValue.length = presz;

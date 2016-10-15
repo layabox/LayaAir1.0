@@ -18,10 +18,10 @@ module AttchPointSample {
 
             var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
-            scene.currentCamera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
-            scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.0));
-            scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-            scene.currentCamera.clearColor = null;
+            var camera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
+            camera.transform.translate(new Vector3(0, 0.8, 1.0));
+            camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+            camera.clearColor = null;
 
             var pointLight = scene.addChild(new Laya.PointLight()) as Laya.PointLight;
             pointLight.transform.position = new Vector3(0, 0.6, 0.3);
@@ -41,7 +41,7 @@ module AttchPointSample {
             this.attacthPoint = this.skinMesh.addComponent(Laya.AttachPoint) as Laya.AttachPoint;
             this.attacthPoint.attachBones.push("L_Middle1");
             this.attacthPoint.attachBones.push("R_Middle1");
-            var settings: Laya.ParticleSettings = new Laya.ParticleSettings();
+            var settings: Laya.ParticleSettings = new Laya.ParticleSetting();
             settings.textureName = "../../res/threeDimen/particle/fire.png";
             settings.maxPartices = 200;
             settings.duration = 0.3;

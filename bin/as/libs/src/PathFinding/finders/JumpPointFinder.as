@@ -16,25 +16,26 @@ package PathFinding.finders
 		 * @param {DiagonalMovement} opt.diagonalMovement Condition under which diagonal
 		 *      movement will be allowed.
 		 */
-		public function JumpPointFinder(opt:Object)
+		public function JumpPointFinder(opt:Object):void
 		{
-			opt = opt || {};
-			if (opt.diagonalMovement === DiagonalMovement.Never)
-			{
-				return new JPFNeverMoveDiagonally(opt);
-			}
-			else if (opt.diagonalMovement === DiagonalMovement.Always)
-			{
-				return new JPFAlwaysMoveDiagonally(opt);
-			}
-			else if (opt.diagonalMovement === DiagonalMovement.OnlyWhenNoObstacles)
-			{
-				return new JPFMoveDiagonallyIfNoObstacles(opt);
-			}
-			else
-			{
-				return new JPFMoveDiagonallyIfAtMostOneObstacle(opt);
-			}
+			//opt = opt || {};
+			//if (opt.diagonalMovement === DiagonalMovement.Never)
+			//{
+				//return new JPFNeverMoveDiagonally(opt);
+			//}
+			//else if (opt.diagonalMovement === DiagonalMovement.Always)
+			//{
+				//return new JPFAlwaysMoveDiagonally(opt);
+			//}
+			//else if (opt.diagonalMovement === DiagonalMovement.OnlyWhenNoObstacles)
+			//{
+				//return new JPFMoveDiagonallyIfNoObstacles(opt);
+			//}
+			//else
+			//{
+				//return new JPFMoveDiagonallyIfAtMostOneObstacle(opt);
+			//}
+			//return null;
 		}
 	
 	}

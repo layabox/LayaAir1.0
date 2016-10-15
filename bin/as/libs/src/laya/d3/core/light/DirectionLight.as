@@ -60,10 +60,10 @@ package laya.d3.core.light {
 				var shaderValue:ValusArray = state.worldShaderValue;
 				var loopCount:int = Stat.loopCount;
 				state.shaderDefs.add(ShaderDefines3D.DIRECTIONLIGHT);
-				shaderValue.pushValue(Buffer2D.LIGHTDIRDIFFUSE, diffuseColor.elements, loopCount);
-				shaderValue.pushValue(Buffer2D.LIGHTDIRAMBIENT, ambientColor.elements, loopCount);
-				shaderValue.pushValue(Buffer2D.LIGHTDIRSPECULAR, specularColor.elements, loopCount);
-				shaderValue.pushValue(Buffer2D.LIGHTDIRECTION, direction.elements, loopCount);
+				shaderValue.pushValue(Buffer2D.LIGHTDIRDIFFUSE, diffuseColor.elements);
+				shaderValue.pushValue(Buffer2D.LIGHTDIRAMBIENT, ambientColor.elements);
+				shaderValue.pushValue(Buffer2D.LIGHTDIRSPECULAR, specularColor.elements);
+				shaderValue.pushValue(Buffer2D.LIGHTDIRECTION, direction.elements);
 			}
 		}
 	}

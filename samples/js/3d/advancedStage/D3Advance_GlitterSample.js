@@ -5,11 +5,11 @@ Laya.Stat.show();
 
 var Vector3 = Laya.Vector3;
 var scene = Laya.stage.addChild(new Laya.Scene());
-scene.currentCamera = scene.addChild(new Laya.Camera(0, 1, 1000));
-scene.currentCamera.transform.translate(new Vector3(0, 5, 10));
-scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+var camera = scene.addChild(new Laya.Camera(0, 1, 1000));
+camera.transform.translate(new Vector3(0, 5, 10));
+camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 
-var setting = new Laya.GlitterSettings();
+var setting = new Laya.GlitterSetting();
 setting.texturePath = "../../res/threeDimen/layabox.png";
 setting.lifeTime = 0.5;
 setting.minSegmentDistance = 0.1;//最小距离，小于抛弃
@@ -23,7 +23,7 @@ var glitter = scene.addChild(new Laya.Glitter(setting));
 Laya.timer.frameLoop(1, null, loop);
 var sampler = new GlitterStripSampler();
 function loop() {
-   	var projectViewMat = scene.currentCamera.projectionViewMatrix;
+   	var projectViewMat = camera.projectionViewMatrix;
 	sampler.getSampleP4();
 	glitter.templet.addVertexPosition(sampler.pos1, sampler.pos2);
 }

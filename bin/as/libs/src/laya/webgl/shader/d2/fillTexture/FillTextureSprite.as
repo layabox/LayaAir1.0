@@ -3,7 +3,11 @@ package laya.webgl.shader.d2.fillTexture {
 	import laya.maths.Matrix;
 	import laya.renders.Render;
 	import laya.resource.Texture;
+	import laya.webgl.canvas.WebGLContext2D;
+	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.shader.d2.skinAnishader.SkinMeshBuffer;
+	import laya.webgl.shader.d2.value.Value2D;
+	import laya.webgl.submit.Submit;
 	import laya.webgl.utils.IndexBuffer2D;
 	import laya.webgl.utils.VertexBuffer2D;
 	public class FillTextureSprite {
@@ -13,7 +17,7 @@ package laya.webgl.shader.d2.fillTexture {
 		private var mVBData:Float32Array;
 		private var mIBData:Uint16Array;
 		private var mEleNum:int = 0;
-		private var mShaderValue:FillTextureShaderValue;
+		private var mShaderValue:FillTextureSV;
 		private var mTexture:Texture;
 		public var transform:Matrix;
 		
@@ -22,6 +26,9 @@ package laya.webgl.shader.d2.fillTexture {
 		private var _resultPs:Array;
 		private var _ps:Array;
 		private var _vb:Array;
+		
+		public var u_texRange:Array = [0, 1, 0, 1];
+		public var u_offset:Array = [0, 0];
 		
 		public function FillTextureSprite() {
 		
@@ -44,29 +51,24 @@ package laya.webgl.shader.d2.fillTexture {
 			var tGreed:Number = 1;
 			var tBlue:Number = 1;
 			var tAlpha:Number = 1;
+			
 			_vb.push(x, y, 0, 0, tRed, tGreed, tBlue, tAlpha);
 			_vb.push(x + tWidth, y, tU, 0, tRed, tGreed, tBlue, tAlpha);
 			_vb.push(x + tWidth, y + tHeight, tU, tV, tRed, tGreed, tBlue, tAlpha);
 			_vb.push(x, y + tHeight, 0, tV, tRed, tGreed, tBlue, tAlpha);
-			
 			if (_ps == null) _ps = [];
 			_ps.length = 0;
 			_ps.push(0, 1, 3, 3, 1, 2);
 			
-			mEleNum = _ps.length;
-			
+			mEleNum = _ps.length;	
 			mVBData = new Float32Array(_vb);
-			if (mShaderValue == null) {
-				mShaderValue = new FillTextureShaderValue();
-			}
-			mShaderValue.u_offset[0] = -offsetX / tTextureW;
-			mShaderValue.u_offset[1] = -offsetY / tTextureH;
-			mShaderValue.u_texRange[0] = tTextureX / w;
-			mShaderValue.u_texRange[1] = tTextureW / w;
-			mShaderValue.u_texRange[2] = tTextureY / h;
-			mShaderValue.u_texRange[3] = tTextureH / h;
+			u_offset[0] = -offsetX / tTextureW;
+			u_offset[1] = -offsetY / tTextureH;
+			u_texRange[0] = tTextureX / w;
+			u_texRange[1] = tTextureW / w;
+			u_texRange[2] = tTextureY / h;
+			u_texRange[3] = tTextureH / h;
 		}
-		
 		
 		public function getData(vb:VertexBuffer2D, ib:IndexBuffer2D, start:int):void {
 			mVBBuffer = vb;
@@ -86,8 +88,20 @@ package laya.webgl.shader.d2.fillTexture {
 		public function render(context:*, x:Number, y:Number):void {
 			if (Render.isWebGL) {
 				SkinMeshBuffer.getInstance().addFillTexture(this);
-				mShaderValue.textureHost = mTexture;
-				context.setIBVB(x, y, mIBBuffer, mVBBuffer, mEleNum, transform, FillTextureShader.getInstance(), mShaderValue, _indexStart, 0, 1);
+				if (mIBBuffer && mIBBuffer)
+				{
+					var tempSubmit:Submit = Submit.createShape(context, mIBBuffer, mVBBuffer, mEleNum, _indexStart, Value2D.create(ShaderDefines2D.FILLTEXTURE, 0));
+					var tShaderValue:FillTextureSV = tempSubmit.shaderValue as FillTextureSV;
+					tShaderValue.textureHost = mTexture;
+					tShaderValue.u_offset[0] = u_offset[0];
+					tShaderValue.u_offset[1] = u_offset[1];
+					tShaderValue.u_texRange[0] = u_texRange[0];
+					tShaderValue.u_texRange[1] = u_texRange[1];
+					tShaderValue.u_texRange[2] = u_texRange[2];
+					tShaderValue.u_texRange[3] = u_texRange[3];
+					tShaderValue.ALPHA = context._shader2D.ALPHA;
+					(context as WebGLContext2D)._submits[(context as WebGLContext2D)._submits._length++] = tempSubmit;
+				}
 			}
 		
 		}

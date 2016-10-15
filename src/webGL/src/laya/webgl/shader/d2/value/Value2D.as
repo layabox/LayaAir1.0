@@ -1,6 +1,8 @@
 package laya.webgl.shader.d2.value {
 	import laya.resource.Bitmap;
 	import laya.resource.Texture;
+	import laya.webgl.shader.d2.fillTexture.FillTextureSV;
+	import laya.webgl.shader.d2.skinAnishader.SkinSV;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.DrawStyle;
 	import laya.webgl.shader.Shader;
@@ -37,6 +39,8 @@ package laya.webgl.shader.d2.value {
 			_TEXCOORD = [2, WebGLContext.FLOAT, false, 4 * CONST3D2D.BYTES_PE, 2 * CONST3D2D.BYTES_PE];
 			_initone(ShaderDefines2D.COLOR2D, Color2dSV);
 			_initone(ShaderDefines2D.PRIMITIVE, PrimitiveSV);
+			_initone(ShaderDefines2D.FILLTEXTURE, FillTextureSV);
+			_initone(ShaderDefines2D.SKINMESH, SkinSV);
 			_initone(ShaderDefines2D.TEXTURE2D, TextureSV);
 			_initone(ShaderDefines2D.TEXTURE2D | ShaderDefines2D.COLORADD,TextSV);	
 			_initone(ShaderDefines2D.TEXTURE2D | ShaderDefines2D.FILTERGLOW, TextureSV);
@@ -62,9 +66,8 @@ package laya.webgl.shader.d2.value {
 		public var strokeStyle:DrawStyle;
 		public var colorAdd:Array;
 		public var glTexture:Bitmap;
-		public var u_mmat2:Array;
-		public var u_pos:Array = [0, 0];
 		/*[IF-FLASH]*/public var mul_mmat:Array;//存储两个矩阵相乘的值，mmat*ummat2
+		public var u_mmat2:Array;
 		
 		private var _inClassCache:Array;
 		private var _cacheID:int = 0;
@@ -112,7 +115,6 @@ package laya.webgl.shader.d2.value {
 		
 		private function _ShaderWithCompile():Shader2X
 		{
-			
 			return  Shader.withCompile(0, mainID, defines.toNameDic(), mainID | defines._value, Shader2X.create) as Shader2X;
 		}
 		
@@ -187,10 +189,10 @@ package laya.webgl.shader.d2.value {
 			if (!value) 
 				return;
 				
-			var n:int = value.length,f:*;
+			var n:int = value.length, f:*;
 			for (var i:int = 0; i < n; i++)
 			{
-				f= value[i]
+				f = value[i];
 				if (f)
 				{
 					defines.add(f.type);//搬到setValue中

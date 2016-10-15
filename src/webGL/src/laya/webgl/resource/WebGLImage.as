@@ -25,6 +25,7 @@ package laya.webgl.resource {
 		/**放大过滤器*/
 		public var magFifter:int;//动态默认值，判断是否可生成miplevel
 		
+		
 		/**
 		 * 返回HTML Image,as3无internal货friend，通常禁止开发者修改image内的任何属性
 		 * @param HTML Image

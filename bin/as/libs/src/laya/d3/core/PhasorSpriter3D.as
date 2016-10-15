@@ -363,10 +363,10 @@ package laya.d3.core {
 			
 			_shader = getShader(_renderState);
 			
-			_renderState.shaderValue.pushValue(VertexElementUsage.POSITION0, _posShaderValue, -1);
-			_renderState.shaderValue.pushValue(VertexElementUsage.COLOR0, _colorShaderValue, -1);
-			_renderState.shaderValue.pushValue(Buffer2D.MVPMATRIX, _wvpMatrix.elements, -1);
-			_renderState.shaderValue.pushValue(Buffer2D.ALBEDO, _albedo.elements, -1);
+			_renderState.shaderValue.pushValue(VertexElementUsage.POSITION0, _posShaderValue);
+			_renderState.shaderValue.pushValue(VertexElementUsage.COLOR0, _colorShaderValue);
+			_renderState.shaderValue.pushValue(Buffer2D.MVPMATRIX, _wvpMatrix.elements);
+			_renderState.shaderValue.pushValue(Buffer2D.ALBEDO, _albedo.elements);
 			
 			_shader.uploadArray(_renderState.shaderValue.data, _renderState.shaderValue.length, null);
 			

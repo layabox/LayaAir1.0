@@ -1,7 +1,7 @@
 package laya.d3.core.render {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.BaseCamera;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.graphics.StaticBatch;
 	import laya.d3.math.BoundFrustum;

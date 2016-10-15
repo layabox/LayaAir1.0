@@ -7,7 +7,7 @@ package threeDimen.primaryStage {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.TransformUV;
 	import laya.d3.core.light.DirectionLight;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
@@ -35,16 +35,16 @@ package threeDimen.primaryStage {
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			scene.currentCamera = (scene.addChild(new Camera(0, 0.1, 1000))) as Camera;
-			scene.currentCamera.transform.translate(new Vector3(0, 16.8, 26.0));
-			scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-			scene.currentCamera.clearColor = null;
+			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 1000))) as Camera;
+			camera.transform.translate(new Vector3(0, 16.8, 26.0));
+			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+			camera.clearColor = null;
 			
-			scene.currentCamera.addComponent(CameraMoveScript);
+			camera.addComponent(CameraMoveScript);
 			
 			effectSprite = scene.addChild(new Sprite3D()) as Sprite3D;
 			effectSprite.once(Event.HIERARCHY_LOADED, null, function(sender:Sprite3D, sprite3D:Sprite3D):void {
-				setMeshParams(effectSprite, Material.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
+				setMeshParams(effectSprite, BaseMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
 				var rootAnimations:RigidAnimations = sprite3D.addComponent(RigidAnimations) as RigidAnimations;
 				rootAnimations.url = "../../../../res/threeDimen/staticModel/effect/WuShen/WuShen.lani";
 				rootAnimations.player.play(0);
@@ -60,8 +60,8 @@ package threeDimen.primaryStage {
 					//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 					mesh.once(Event.LOADED, this, function(mesh:BaseMesh):void {
 						for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-							var material:Material = meshSprite.meshRender.sharedMaterials[i];
-							material.once(Event.LOADED, null, function(mat:Material):void {
+							var material:BaseMaterial = meshSprite.meshRender.sharedMaterials[i];
+							material.once(Event.LOADED, null, function(mat:BaseMaterial):void {
 								mat.renderMode = renderMode;
 							});
 							

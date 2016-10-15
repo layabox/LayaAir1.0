@@ -213,9 +213,9 @@
 	/**
 	*<code>ParticleSettings</code> 类是粒子配置数据类
 	*/
-	//class laya.particle.ParticleSettings
-	var ParticleSettings=(function(){
-		function ParticleSettings(){
+	//class laya.particle.ParticleSetting
+	var ParticleSetting=(function(){
+		function ParticleSetting(){
 			this.textureName=null;
 			this.textureCount=1;
 			this.maxPartices=100;
@@ -275,20 +275,20 @@
 			this.positionVariance=new Float32Array([0,0,0]);
 		}
 
-		__class(ParticleSettings,'laya.particle.ParticleSettings');
-		ParticleSettings.checkSetting=function(setting){
+		__class(ParticleSetting,'laya.particle.ParticleSetting');
+		ParticleSetting.checkSetting=function(setting){
 			var key;
-			for (key in ParticleSettings._defaultSetting){
+			for (key in ParticleSetting._defaultSetting){
 				if (!setting.hasOwnProperty(key)){
-					setting[key]=ParticleSettings._defaultSetting[key];
+					setting[key]=ParticleSetting._defaultSetting[key];
 				}
 			}
 		}
 
-		__static(ParticleSettings,
-		['_defaultSetting',function(){return this._defaultSetting=new ParticleSettings();}
+		__static(ParticleSetting,
+		['_defaultSetting',function(){return this._defaultSetting=new ParticleSetting();}
 		]);
-		return ParticleSettings;
+		return ParticleSetting;
 	})()
 
 
@@ -814,8 +814,12 @@
 		__proto.render=function(context,x,y){
 			if(!this._ready)return;
 			if(this.activeParticles.length<1)return;
-			if(this.textureList.length<2)return;
-			this.canvasRender(context,x,y);
+			if (this.textureList.length < 2)return;
+			if (this.settings.colorComponentInter){
+				this.noColorRender(context,x,y);
+				}else{
+				this.canvasRender(context,x,y);
+			}
 		}
 
 		__proto.noColorRender=function(context,x,y){
@@ -889,10 +893,14 @@
 			context.blendMode(preB);
 		}
 
-		ParticleTemplateCanvas.changeTexture=function(texture,rst){
+		ParticleTemplateCanvas.changeTexture=function(texture,rst,settings){
 			if(!rst)rst=[];
 			rst.length=0;
-			Utils.copyArray(rst,PicTool.getRGBPic(texture));
+			if (settings&&settings.colorComponentInter){
+				rst.push(texture,texture,texture);
+				}else{
+				Utils.copyArray(rst,PicTool.getRGBPic(texture));
+			}
 			return rst;
 		}
 
@@ -1090,7 +1098,7 @@
 		*/
 		__proto.setParticleSetting=function(setting){
 			if (!setting)return this.stop();
-			ParticleSettings.checkSetting(setting);
+			ParticleSetting.checkSetting(setting);
 			this.customRenderEnable=true;
 			if (Render.isWebGL){
 				this._particleTemplate=new ParticleTemplate2D(setting);

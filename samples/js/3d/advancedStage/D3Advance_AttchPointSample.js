@@ -5,10 +5,10 @@ Laya.Stat.show();
 
 var Vector3 = Laya.Vector3;
 var scene = Laya.stage.addChild(new Laya.Scene());
-scene.currentCamera = scene.addChild(new Laya.Camera(0, 0.1, 100));
-scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.0));
-scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-scene.currentCamera.clearColor = null;
+var camera = scene.addChild(new Laya.Camera(0, 0.1, 100));
+camera.transform.translate(new Vector3(0, 0.8, 1.0));
+camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+camera.clearColor = null;
 
 var pointLight = scene.addChild(new Laya.PointLight());
 pointLight.transform.position = new Vector3(0, 0.6, 0.3);
@@ -30,7 +30,7 @@ var attacthPoint = skinMesh.addComponent(Laya.AttachPoint);
 attacthPoint.attachBones.push("L_Middle1");
 attacthPoint.attachBones.push("R_Middle1");
 
-var settings = new Laya.ParticleSettings();
+var settings = new Laya.ParticleSetting();
 settings.textureName = "../../res/threeDimen/particle/fire.png";
 settings.maxPartices = 200;
 settings.duration = 0.3;

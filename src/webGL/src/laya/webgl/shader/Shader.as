@@ -13,7 +13,6 @@ package laya.webgl.shader {
 		private static var _includeFiles:* = {}; //shader里面inlcude的小文件
 		private static var _count:int = 0;
 		private static var _preCompileShader:* = {}; //存储预编译结果，可以通过名字获得内容,目前不支持#ifdef嵌套和条件
-		private static var _uploadArrayCount:int = 1;
 		
 		protected static var shaderParamsMap:Object = {"float": WebGLContext.FLOAT, "int": WebGLContext.INT, "bool": WebGLContext.BOOL, "vec2": WebGLContext.FLOAT_VEC2, "vec3": WebGLContext.FLOAT_VEC3, "vec4": WebGLContext.FLOAT_VEC4, "ivec2": WebGLContext.INT_VEC2, "ivec3": WebGLContext.INT_VEC3, "ivec4": WebGLContext.INT_VEC4, "bvec2": WebGLContext.BOOL_VEC2, "bvec3": WebGLContext.BOOL_VEC3, "bvec4": WebGLContext.BOOL_VEC4, "mat2": WebGLContext.FLOAT_MAT2, "mat3": WebGLContext.FLOAT_MAT3, "mat4": WebGLContext.FLOAT_MAT4, "sampler2D": WebGLContext.SAMPLER_2D, "samplerCube": WebGLContext.SAMPLER_CUBE};
 		
@@ -44,6 +43,7 @@ package laya.webgl.shader {
 		public static function withCompile(nameID:int, mainID:int, define:*, shaderName:*, createShader:Function):Shader {
 			if (shaderName && sharders[shaderName])
 				return sharders[shaderName];
+			
 			var pre:ShaderCompile = _preCompileShader[SHADERNAME2ID * nameID + mainID];
 			if (!pre)
 				throw new Error("withCompile shader err!" + nameID + " " + mainID);
@@ -74,7 +74,7 @@ package laya.webgl.shader {
 		private var _nameMap:*; //shader参数别名，语义
 		private var _vs:String
 		private var _ps:String;
-		private var _curActTexIndex:int=0;
+		private var _curActTexIndex:int = 0;
 		private var _reCompile:Boolean;
 		
 		//存储一些私有变量
@@ -96,7 +96,7 @@ package laya.webgl.shader {
 		 * @param	nameMap 帮助里要详细解释为什么需要nameMap
 		 */
 		public function Shader(vs:String, ps:String, saveName:* = null, nameMap:* = null) {
-			if ( (!vs) || (!ps) ) throw "Shader Error";
+			if ((!vs) || (!ps)) throw "Shader Error";
 			
 			if (Render.isConchApp || Render.isFlash) {
 				customCompile = true;
@@ -130,7 +130,7 @@ package laya.webgl.shader {
 			
 			if (!_vs || !_ps || _params)
 				return;
-				
+			
 			_reCompile = true;
 			_params = [];
 			
@@ -138,6 +138,7 @@ package laya.webgl.shader {
 			var result:Object;
 			if (customCompile)
 				result = _preGetParams(_vs, _ps);
+			
 			var gl:WebGLContext = WebGL.mainContext;
 			_program = gl.createProgram();
 			_vshader = _createShader(gl, text[0], WebGLContext.VERTEX_SHADER);
@@ -151,18 +152,18 @@ package laya.webgl.shader {
 			}
 			
 			var one:*, i:int, j:int, n:int, location:*;
-			var attribNum:int=customCompile?result.attributes.length:gl.getProgramParameter(_program, WebGLContext.ACTIVE_ATTRIBUTES); //得到attribute的个数
-
+			var attribNum:int = customCompile ? result.attributes.length : gl.getProgramParameter(_program, WebGLContext.ACTIVE_ATTRIBUTES); //得到attribute的个数
+			
 			for (i = 0; i < attribNum; i++) {
-				var attrib:*=customCompile?result.attributes[i]:gl.getActiveAttrib(_program, i); //attrib对象，{name,size,type}
+				var attrib:* = customCompile ? result.attributes[i] : gl.getActiveAttrib(_program, i); //attrib对象，{name,size,type}
 				location = gl.getAttribLocation(_program, attrib.name); //用名字来得到location	
 				one = {vartype: "attribute", ivartype: 0, attrib: attrib, location: location, name: attrib.name, type: attrib.type, isArray: false, isSame: false, preValue: null, indexOfParams: 0};
 				_params.push(one);
 			}
-			var nUniformNum:int=customCompile?result.uniforms.length:gl.getProgramParameter(_program, WebGLContext.ACTIVE_UNIFORMS); //个数
+			var nUniformNum:int = customCompile ? result.uniforms.length : gl.getProgramParameter(_program, WebGLContext.ACTIVE_UNIFORMS); //个数
 			
 			for (i = 0; i < nUniformNum; i++) {
-				var uniform:*=customCompile?result.uniforms[i]:gl.getActiveUniform(_program, i);//得到uniform对象，包括名字等信息 {name,type,size}
+				var uniform:* = customCompile ? result.uniforms[i] : gl.getActiveUniform(_program, i);//得到uniform对象，包括名字等信息 {name,type,size}
 				
 				location = gl.getUniformLocation(_program, uniform.name); //用名字来得到location
 				one = {vartype: "uniform", ivartype: 1, attrib: attrib, location: location, name: uniform.name, type: uniform.type, isArray: false, isSame: false, preValue: null, indexOfParams: 0};
@@ -172,7 +173,7 @@ package laya.webgl.shader {
 					one.location = gl.getUniformLocation(_program, one.name);
 				}
 				_params.push(one);
-			
+				
 			}
 			
 			for (i = 0, n = _params.length; i < n; i++) {
@@ -185,7 +186,7 @@ package laya.webgl.shader {
 				one.name = _nameMap[one.codename] ? _nameMap[one.codename] : one.codename;
 				_paramsMap[one.name] = one;
 				one._this = this;
-				one.saveValue = [];
+				one.uploadedValue = [];
 				if (one.vartype === "attribute") {
 					one.fun = _attribute;
 					continue;
@@ -231,7 +232,8 @@ package laya.webgl.shader {
 			var shader:* = gl.createShader(type);
 			gl.shaderSource(shader, str);
 			gl.compileShader(shader);
-			/*[IF-FLASH]*/ return shader;
+			/*[IF-FLASH]*/
+			return shader;
 			if (!gl.getShaderParameter(shader, WebGLContext.COMPILE_STATUS)) {
 				throw gl.getShaderInfoLog(shader);
 			}
@@ -254,94 +256,190 @@ package laya.webgl.shader {
 			return 2;
 		}
 		
-		private function _uniformMatrix4fv(one:*, value:*):int {
-			WebGL.mainContext.uniformMatrix4fv(one.location, false, value);
-			return 1;
-		}
-		
-		private function _uniform1i(one:*, value:*):int {
-			var saveValue:Array = one.saveValue;
-			if (saveValue[0] !== value) {
-				WebGL.mainContext.uniform1i(one.location, saveValue[0] = value);
-				return 1;
-			}
-			return 0;
-		}
-		
 		private function _uniform1f(one:*, value:*):int {
-			var saveValue:Array = one.saveValue;
-			if (saveValue[0] !== value) {
-				WebGL.mainContext.uniform1f(one.location, saveValue[0] = value);
+			var uploadedValue:Array = one.uploadedValue;
+			if (uploadedValue[0] !== value) {
+				WebGL.mainContext.uniform1f(one.location, uploadedValue[0] = value);
 				return 1;
 			}
 			return 0;
 		}
 		
 		private function _uniform1fv(one:*, value:*):int {
-			var saveValue:Array = one.saveValue;
-			if (saveValue[0] !== value) {
-				WebGL.mainContext.uniform1fv(one.location, saveValue[0] = value);
+			if (value.length < 4) {
+				var uploadedValue:Array = one.uploadedValue;
+				if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1] || uploadedValue[2] !== value[2] || uploadedValue[3] !== value[3]) {
+					WebGL.mainContext.uniform1fv(one.location, value);
+					uploadedValue[0] = value[0];
+					uploadedValue[1] = value[1];
+					uploadedValue[2] = value[2];
+					uploadedValue[3] = value[3];
+					return 1;
+				}
+				return 0;
+			} else {
+				WebGL.mainContext.uniform1fv(one.location, value);
 				return 1;
 			}
-			return 0;
 		}
 		
 		private function _uniform_vec2(one:*, value:*):int {
-			var saveValue:Array = one.saveValue;
-			if (saveValue[0] !== value[0] || saveValue[1] !== value[1]) {
-				WebGL.mainContext.uniform2f(one.location, saveValue[0] = value[0], saveValue[1] = value[1]);
+			var uploadedValue:Array = one.uploadedValue;
+			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1]) {
+				WebGL.mainContext.uniform2f(one.location, uploadedValue[0] = value[0], uploadedValue[1] = value[1]);
 				return 1;
 			}
 			return 0;
 		}
 		
+		private function _uniform_vec2v(one:*, value:*):int {
+			if (value.length < 2) {
+				var uploadedValue:Array = one.uploadedValue;
+				if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1] || uploadedValue[2] !== value[2] || uploadedValue[3] !== value[3]) {
+					WebGL.mainContext.uniform2fv(one.location, value);
+					uploadedValue[0] = value[0];
+					uploadedValue[1] = value[1];
+					uploadedValue[2] = value[2];
+					uploadedValue[3] = value[3];
+					return 1;
+				}
+				return 0;
+			} else {
+				WebGL.mainContext.uniform2fv(one.location, value);
+				return 1;
+			}
+		}
+		
 		private function _uniform_vec3(one:*, value:*):int {
-			WebGL.mainContext.uniform3f(one.location, value[0], value[1], value[2]);
+			var uploadedValue:Array = one.uploadedValue;
+			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1] || uploadedValue[2] !== value[2]) {
+				WebGL.mainContext.uniform3f(one.location, uploadedValue[0] = value[0], uploadedValue[1] = value[1], uploadedValue[2] = value[2]);
+				return 1;
+			}
+			return 0;
+		}
+		
+		private function _uniform_vec3v(one:*, value:*):int {
+			WebGL.mainContext.uniform3fv(one.location, value);
 			return 1;
 		}
 		
 		private function _uniform_vec4(one:*, value:*):int {
-			WebGL.mainContext.uniform4f(one.location, value[0], value[1], value[2], value[3]);
+			var uploadedValue:Array = one.uploadedValue;
+			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1] || uploadedValue[2] !== value[2] || uploadedValue[3] !== value[3]) {
+				WebGL.mainContext.uniform4f(one.location, uploadedValue[0] = value[0], uploadedValue[1] = value[1], uploadedValue[2] = value[2], uploadedValue[3] = value[3]);
+				return 1;
+			}
+			return 0;
+		}
+		
+		private function _uniform_vec4v(one:*, value:*):int {
+			WebGL.mainContext.uniform4fv(one.location, value);
 			return 1;
 		}
 		
-		private function _uniform_sampler2D(one:*, value:*):int {
-			var gl:WebGLContext = WebGL.mainContext;
-			var saveValue:Array = one.saveValue;
-			if (saveValue[0] == null)
-			{
-				saveValue[0] = _curActTexIndex;
-				gl.uniform1i(one.location, _curActTexIndex);
-				gl.activeTexture(_TEXTURES[_curActTexIndex]);
-			    WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
-				_curActTexIndex++;
+		private function _uniformMatrix2fv(one:*, value:*):int {
+			WebGL.mainContext.uniformMatrix2fv(one.location, false, value);
+			return 1;
+		}
+		
+		private function _uniformMatrix3fv(one:*, value:*):int {
+			WebGL.mainContext.uniformMatrix3fv(one.location, false, value);
+			return 1;
+		}
+		
+		private function _uniformMatrix4fv(one:*, value:*):int {
+			WebGL.mainContext.uniformMatrix4fv(one.location, false, value);
+			return 1;
+		}
+		
+		private function _uniform1i(one:*, value:*):int {
+			var uploadedValue:Array = one.uploadedValue;
+			if (uploadedValue[0] !== value) {
+				WebGL.mainContext.uniform1i(one.location, uploadedValue[0] = value);
 				return 1;
 			}
-			else
-			{
-			   gl.activeTexture(_TEXTURES[saveValue[0]]);
-			   WebGLContext.bindTexture(gl,WebGLContext.TEXTURE_2D, value);
-			   return 0;
+			return 0;
+		}
+		
+		private function _uniform1iv(one:*, value:*):int {
+			WebGL.mainContext.uniform1iv(one.location, value);
+			return 1;
+		}
+		
+		private function _uniform_ivec2(one:*, value:*):int {
+			var uploadedValue:Array = one.uploadedValue;
+			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1]) {
+				WebGL.mainContext.uniform2i(one.location, uploadedValue[0] = value[0], uploadedValue[1] = value[1]);
+				return 1;
+			}
+			return 0;
+		}
+		
+		private function _uniform_ivec2v(one:*, value:*):int {
+			WebGL.mainContext.uniform2iv(one.location, value);
+			return 1;
+		}
+		
+		private function _uniform_vec3i(one:*, value:*):int {
+			var uploadedValue:Array = one.uploadedValue;
+			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1] || uploadedValue[2] !== value[2]) {
+				WebGL.mainContext.uniform3i(one.location, uploadedValue[0] = value[0], uploadedValue[1] = value[1], uploadedValue[2] = value[2]);
+				return 1;
+			}
+			return 0;
+		}
+		
+		private function _uniform_vec3vi(one:*, value:*):int {
+			WebGL.mainContext.uniform3iv(one.location, value);
+			return 1;
+		}
+		
+		private function _uniform_vec4i(one:*, value:*):int {
+			var uploadedValue:Array = one.uploadedValue;
+			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1] || uploadedValue[2] !== value[2] || uploadedValue[3] !== value[3]) {
+				WebGL.mainContext.uniform4i(one.location, uploadedValue[0] = value[0], uploadedValue[1] = value[1], uploadedValue[2] = value[2], uploadedValue[3] = value[3]);
+				return 1;
+			}
+			return 0;
+		}
+		
+		private function _uniform_vec4vi(one:*, value:*):int {
+			WebGL.mainContext.uniform4iv(one.location, value);
+			return 1;
+		}
+		
+		private function _uniform_sampler2D(one:*, value:*):int {//TODO:TEXTURTE ARRAY
+			var gl:WebGLContext = WebGL.mainContext;
+			var uploadedValue:Array = one.uploadedValue;
+			if (uploadedValue[0] == null) {
+				uploadedValue[0] = _curActTexIndex;
+				gl.uniform1i(one.location, _curActTexIndex);
+				gl.activeTexture(_TEXTURES[_curActTexIndex]);
+				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
+				_curActTexIndex++;
+				return 1;
+			} else {
+				gl.activeTexture(_TEXTURES[uploadedValue[0]]);
+				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
+				return 0;
 			}
 		}
 		
-		private function _uniform_samplerCube(one:*, value:*):int {
+		private function _uniform_samplerCube(one:*, value:*):int {//TODO:TEXTURTECUBE ARRAY
 			var gl:WebGLContext = WebGL.mainContext;
-			var saveValue:Array = one.saveValue;
-			if (saveValue[0] == null)
-			{
-				saveValue[0] = _curActTexIndex;
+			var uploadedValue:Array = one.uploadedValue;
+			if (uploadedValue[0] == null) {
+				uploadedValue[0] = _curActTexIndex;
 				gl.uniform1i(one.location, _curActTexIndex);
 				gl.activeTexture(_TEXTURES[_curActTexIndex]);
-			    WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
+				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
 				_curActTexIndex++;
 				return 1;
-			}
-			else
-			{
-			   gl.activeTexture(_TEXTURES[saveValue[0]]);
-			   WebGLContext.bindTexture(gl,WebGLContext.TEXTURE_CUBE_MAP, value);
-			   return 0;
+			} else {
+				gl.activeTexture(_TEXTURES[uploadedValue[0]]);
+				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
+				return 0;
 			}
 		}
 		
@@ -357,9 +455,8 @@ package laya.webgl.shader {
 			one.fun.call(this, one, value);
 		}
 		
-		public function uploadTexture2D(value:*):void
-		{
-			Stat.shaderCall ++;
+		public function uploadTexture2D(value:*):void {
+			Stat.shaderCall++;
 			var gl:WebGLContext = WebGL.mainContext;
 			gl.activeTexture(WebGLContext.TEXTURE0);
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
@@ -373,7 +470,7 @@ package laya.webgl.shader {
 			activeShader = this;
 			activeResource();
 			WebGLContext.UseProgram(_program);
-
+			
 			if (_reCompile) {
 				params = _params;
 				_reCompile = false;
@@ -392,34 +489,23 @@ package laya.webgl.shader {
 		
 		/**
 		 * 按数组的定义提交
-		 * @param	shaderValue 数组格式[name,[value,id],...]
+		 * @param	shaderValue 数组格式[name,value,...]
 		 */
-		
-		 
 		public function uploadArray(shaderValue:Array, length:int, _bufferUsage:*):void {
 			activeShader = this;
 			activeResource();
-			var sameProgram:Boolean = !WebGLContext.UseProgram(_program);
+			WebGLContext.UseProgram(_program);
 			var params:* = _params, value:*;
-			var one:*, shaderCall:int = 0, uploadArrayCount:int = _uploadArrayCount++;
+			var one:*, shaderCall:int = 0;
 			for (var i:int = length - 2; i >= 0; i -= 2) {
 				one = _paramsMap[shaderValue[i]];
-				if (!one || one._uploadArrayCount === uploadArrayCount)
+				if (!one)
 					continue;
 				
-				one._uploadArrayCount = uploadArrayCount;
-				
-				var v:Array = shaderValue[i + 1];
-				var uid:Number = v[1];
-			
-				if (sameProgram && one.ivartype === 1 && uid > 0 && uid === one.__uploadid)
-					continue;
-					
-				value = v[0];
+				value = shaderValue[i + 1];
 				if (value != null) {
 					_bufferUsage && _bufferUsage[one.name] && _bufferUsage[one.name].bind();
 					shaderCall += one.fun.call(this, one, value);
-					one.__uploadid = uid;
 				}
 			}
 			Stat.shaderCall += shaderCall;
@@ -438,7 +524,7 @@ package laya.webgl.shader {
 			var result:Object = {};
 			var attributes:Array = [];
 			var uniforms:Array = [];
-			var definesInfo:Object = { };
+			var definesInfo:Object = {};
 			var definesName:Array = [];
 			result.attributes = attributes;
 			result.uniforms = uniforms;
@@ -456,55 +542,46 @@ package laya.webgl.shader {
 					var word:String = words[i];
 					if (word != "attribute" && word != "uniform") {
 						//str += word;
-						if (word == "#define"){
+						if (word == "#define") {
 							word = words[++i];
 							definesName[word] = 1;
 							continue;
-						}
-						else if (word == "#ifdef"){
-							tempelse=words[++i]
-							var def:Array = definesInfo[tempelse]= definesInfo[tempelse]||[];
-							for (i++; i < n; i++)
-							{
+						} else if (word == "#ifdef") {
+							tempelse = words[++i]
+							var def:Array = definesInfo[tempelse] = definesInfo[tempelse] || [];
+							for (i++; i < n; i++) {
 								word = words[i];
-								if (word != "attribute" && word != "uniform")
-								{
-									if (word == "#else")
-									{
-									  for (i++; i < n; i++ )
-									  {
-										word = words[i];
-										if (word != "attribute" && word != "uniform")
-										{
-											if (word == "#endif")
-											{
-												break;
+								if (word != "attribute" && word != "uniform") {
+									if (word == "#else") {
+										for (i++; i < n; i++) {
+											word = words[i];
+											if (word != "attribute" && word != "uniform") {
+												if (word == "#endif") {
+													break;
+												}
+												continue;
 											}
-											continue;
+											i = parseOne(attributes, uniforms, words, i, word, !definesName[tempelse]);
 										}
-										i=parseOne(attributes, uniforms, words, i,word,!definesName[tempelse]);
-									  }
 									}
 									continue;
 								}
-								i=parseOne(attributes, uniforms, words, i,word,definesName[tempelse]);
+								i = parseOne(attributes, uniforms, words, i, word, definesName[tempelse]);
 							}
 						}
 						//if (word != ";") str += " ";
 						continue;
 					}
-					i=parseOne(attributes, uniforms, words, i,word,true);
+					i = parseOne(attributes, uniforms, words, i, word, true);
 				}
-				//text[s] = str;
+					//text[s] = str;
 			}
 			return result;
 		}
 		
-		private function parseOne(attributes:Array,uniforms:Array,words:Array,i:int,word:String,b:Boolean):int
-		{
-			var one:* = { type: shaderParamsMap[words[i + 1]], name: words[i + 2], size: isNaN(parseInt(words[i + 3])) ? 1 : parseInt(words[i + 3]) };
-			if (b)
-			{
+		private function parseOne(attributes:Array, uniforms:Array, words:Array, i:int, word:String, b:Boolean):int {
+			var one:* = {type: shaderParamsMap[words[i + 1]], name: words[i + 2], size: isNaN(parseInt(words[i + 3])) ? 1 : parseInt(words[i + 3])};
+			if (b) {
 				if (word == "attribute") {
 					attributes.push(one);
 				} else {

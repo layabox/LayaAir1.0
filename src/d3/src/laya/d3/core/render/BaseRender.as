@@ -1,7 +1,7 @@
 package laya.d3.core.render {
 	import laya.d3.core.Layer;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.graphics.RenderCullingObject;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
@@ -21,7 +21,7 @@ package laya.d3.core.render {
 		/** @private */
 		private var _renderCullingObject:RenderCullingObject;
 		/** @private */
-		private var _materials:Vector.<Material>;
+		private var _materials:Vector.<BaseMaterial>;
 		/** @private */
 		protected var _boundingSphereNeedChange:Boolean;
 		/** @private */
@@ -50,8 +50,8 @@ package laya.d3.core.render {
 		}
 		
 		/**
-		 * 获取包围盒。
-		 * @return 包围盒。
+		 * 获取渲染物体。
+		 * @return 渲染物体。
 		 */
 		public function get renderCullingObject():RenderCullingObject {
 			return _renderCullingObject;
@@ -61,10 +61,10 @@ package laya.d3.core.render {
 		 * 返回第一个实例材质,第一次使用会拷贝实例对象。
 		 * @return 第一个实例材质。
 		 */
-		public function get material():Material {
-			var material:Material = _materials[0];
+		public function get material():BaseMaterial {
+			var material:BaseMaterial = _materials[0];
 			if (material && !material._isInstance) {
-				var instanceMaterial:Material = new Material();
+				var instanceMaterial:BaseMaterial =__JS__("new material.constructor()");
 				material.copy(instanceMaterial);//深拷贝
 				instanceMaterial.name = instanceMaterial.name + "(Instance)";
 				instanceMaterial._isInstance = true;
@@ -78,7 +78,7 @@ package laya.d3.core.render {
 		 * 设置第一个实例材质。
 		 * @param value 第一个实例材质。
 		 */
-		public function set material(value:Material):void {
+		public function set material(value:BaseMaterial):void {
 			_materials[0] = value;
 			event(Event.MATERIAL_CHANGED, [this,0, value]);
 		}
@@ -87,11 +87,11 @@ package laya.d3.core.render {
 		 * 获取潜拷贝实例材质列表,第一次使用会拷贝实例对象。
 		 * @return 浅拷贝实例材质列表。
 		 */
-		public function get materials():Vector.<Material> {
+		public function get materials():Vector.<BaseMaterial> {
 			for (var i:int = 0, n:int = _materials.length; i < n; i++) {
-				var material:Material = _materials[i];
+				var material:BaseMaterial = _materials[i];
 				if (!material._isInstance) {
-					var instanceMaterial:Material = new Material();
+					var instanceMaterial:BaseMaterial =__JS__("new material.constructor()");
 					material.copy(instanceMaterial);//深拷贝
 					instanceMaterial.name = instanceMaterial.name + "(Instance)";
 					instanceMaterial._isInstance = true;
@@ -106,7 +106,7 @@ package laya.d3.core.render {
 		 * 设置实例材质列表。
 		 * @param value 实例材质列表。
 		 */
-		public function set materials(value:Vector.<Material>):void {
+		public function set materials(value:Vector.<BaseMaterial>):void {
 			if (!value)
 				throw new Error("MeshRender: materials value can't be null.");
 			
@@ -119,7 +119,7 @@ package laya.d3.core.render {
 		 * 返回第一个材质。
 		 * @return 第一个材质。
 		 */
-		public function get sharedMaterial():Material {
+		public function get sharedMaterial():BaseMaterial {
 			return _materials[0];
 		}
 		
@@ -127,7 +127,7 @@ package laya.d3.core.render {
 		 * 设置第一个材质。
 		 * @param value 第一个材质。
 		 */
-		public function set sharedMaterial(value:Material):void {
+		public function set sharedMaterial(value:BaseMaterial):void {
 			_materials[0] = value;
 			event(Event.MATERIAL_CHANGED, [this,0, value]);
 		}
@@ -136,8 +136,8 @@ package laya.d3.core.render {
 		 * 获取浅拷贝材质列表。
 		 * @return 浅拷贝材质列表。
 		 */
-		public function get sharedMaterials():Vector.<Material> {
-			var materials:Vector.<Material> = _materials.slice();
+		public function get sharedMaterials():Vector.<BaseMaterial> {
+			var materials:Vector.<BaseMaterial> = _materials.slice();
 			return materials;
 		}
 		
@@ -145,7 +145,7 @@ package laya.d3.core.render {
 		 * 设置材质列表。
 		 * @param value 材质列表。
 		 */
-		public function set sharedMaterials(value:Vector.<Material>):void {
+		public function set sharedMaterials(value:Vector.<BaseMaterial>):void {
 			if (!value)
 				throw new Error("MeshRender: shadredMaterials value can't be null.");
 			
@@ -191,7 +191,7 @@ package laya.d3.core.render {
 			_renderCullingObject._layerMask = _owner.layer.mask;
 			_renderCullingObject._ownerEnable = _owner.enable;
 			_renderCullingObject._enable = _enable;
-			_materials = new Vector.<Material>();
+			_materials = new Vector.<BaseMaterial>();
 			
 			_owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);
 			_owner.on(Event.LAYER_CHANGED, this, _onOwnerLayerChanged);

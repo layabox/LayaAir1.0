@@ -12,7 +12,7 @@ package laya.particle
 		/**
 		 * 粒子配置数据 
 		 */
-		public var settings:ParticleSettings;
+		public var settings:ParticleSetting;
 		/**
 		 * 粒子贴图 
 		 */

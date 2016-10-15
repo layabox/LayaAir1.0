@@ -1,5 +1,6 @@
 package laya.d3.core {
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
@@ -63,8 +64,8 @@ package laya.d3.core {
 		
 		/** @private */
 		private function _applyMeshMaterials(mesh:Mesh):void {
-			var shaderMaterials:Vector.<Material> = _meshRender.sharedMaterials;
-			var meshMaterials:Vector.<Material> = mesh.materials;
+			var shaderMaterials:Vector.<BaseMaterial> = _meshRender.sharedMaterials;
+			var meshMaterials:Vector.<BaseMaterial> = mesh.materials;
 			for (var i:int = 0, n:int = meshMaterials.length; i < n; i++)
 				(shaderMaterials[i]) || (shaderMaterials[i] = meshMaterials[i]);
 			
@@ -77,9 +78,10 @@ package laya.d3.core {
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
+			renderElement._renderCullingObject = _meshRender.renderCullingObject;
 			
-			var material:Material = _meshRender.sharedMaterials[index];
-			(material) || (material = Material.defaultMaterial);//确保有材质,由默认材质代替。
+			var material:BaseMaterial = _meshRender.sharedMaterials[index];
+			(material) || (material = StandardMaterial.defaultMaterial);//确保有材质,由默认材质代替。
 			
 			var element:IRenderable = _meshFilter.sharedMesh.getRenderElement(index);
 			renderElement._mainSortID = _getSortID(element, material);//根据MeshID排序，处理同材质合并处理。
@@ -91,7 +93,7 @@ package laya.d3.core {
 		}
 		
 		/** @private */
-		private function _changeRenderObjectByMaterial(index:int, material:Material):RenderElement {
+		private function _changeRenderObjectByMaterial(index:int, material:BaseMaterial):RenderElement {
 			var renderElement:RenderElement = _meshRender.renderCullingObject._renderElements[index];
 			
 			var element:IRenderable = _meshFilter.sharedMesh.getRenderElement(index);
@@ -117,7 +119,7 @@ package laya.d3.core {
 			if (mesh.loaded)
 				_changeRenderObjectsByMesh();
 			else
-				mesh.once(Event.LOADED, this, _onMeshLoaded);//假设Mesh未加载完成前无效。
+				mesh.once(Event.LOADED, this, _onMeshLoaded);//TODO:假设Mesh未加载完成前无效。
 		}
 		
 		/** @private */
@@ -126,7 +128,7 @@ package laya.d3.core {
 		}
 		
 		/** @private */
-		private function _onMaterialChanged(meshRender:MeshRender,index:int,material:Material):void {//TODO:
+		private function _onMaterialChanged(meshRender:MeshRender,index:int,material:BaseMaterial):void {//TODO:
 			var renderElementCount:int = _meshRender.renderCullingObject._renderElements.length;
 			(index<renderElementCount)&&_changeRenderObjectByMaterial(index, material);
 		}
@@ -138,7 +140,7 @@ package laya.d3.core {
 		
 		/** @private */
 		override protected function _addSelfRenderObjects():void {
-			(scene) && (scene.addFrustumCullingObject(_meshRender.renderCullingObject));
+			scene.addFrustumCullingObject(_meshRender.renderCullingObject);
 		}
 		
 		/**

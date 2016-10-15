@@ -24,38 +24,18 @@
       <file leaf-file-name="D3Advance_SimpleSceneSample.ts" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_SimpleSceneSample.ts">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="522">
-              <caret line="113" column="94" selection-start-line="113" selection-start-column="94" selection-end-line="113" selection-end-column="94" />
+            <state relative-caret-position="234">
+              <caret line="40" column="49" selection-start-line="40" selection-start-column="26" selection-end-line="40" selection-end-column="49" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="D3Advance_SimpleSceneVRSample.ts" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_SimpleSceneVRSample.ts">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="540">
-              <caret line="30" column="0" selection-start-line="30" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="D3Advance_panoramaVRSample.ts" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_panoramaVRSample.ts">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="504">
-              <caret line="28" column="0" selection-start-line="28" selection-start-column="0" selection-end-line="28" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="D3Base_LightAndMaterialSample.ts" pinned="false" current-in-tab="true">
+      <file leaf-file-name="D3Base_LightAndMaterialSample.ts" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_LightAndMaterialSample.ts">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="234">
-              <caret line="74" column="71" selection-start-line="74" selection-start-column="71" selection-end-line="74" selection-end-column="71" />
+            <state relative-caret-position="455">
+              <caret line="33" column="0" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -64,18 +44,48 @@
       <file leaf-file-name="D3Base_Material_NormalMap.ts" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_Material_NormalMap.ts">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="455">
-              <caret line="43" column="44" selection-start-line="43" selection-start-column="44" selection-end-line="43" selection-end-column="44" />
+            <state relative-caret-position="504">
+              <caret line="28" column="0" selection-start-line="28" selection-start-column="0" selection-end-line="28" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="D3Base_Materil_Reflect.ts" pinned="false" current-in-tab="false">
+      <file leaf-file-name="D3Base_Camera_Ortho_2DMix3D_Sample.ts" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_Camera_Ortho_2DMix3D_Sample.ts">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="270">
+              <caret line="45" column="72" selection-start-line="45" selection-start-column="72" selection-end-line="45" selection-end-column="72" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="D3Base_Materil_Reflect.ts" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_Materil_Reflect.ts">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="378">
-              <caret line="36" column="44" selection-start-line="36" selection-start-column="44" selection-end-line="36" selection-end-column="44" />
+            <state relative-caret-position="369">
+              <caret line="32" column="94" selection-start-line="32" selection-start-column="94" selection-end-line="32" selection-end-column="94" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="D3Advance_ParticleSample.ts" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_ParticleSample.ts">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-1494">
+              <caret line="16" column="33" selection-start-line="16" selection-start-column="33" selection-end-line="16" selection-end-column="33" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="D3Base_StaticModel_3DSpaceTo2DSpace.ts" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_3DSpaceTo2DSpace.ts">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="468">
+              <caret line="26" column="0" selection-start-line="26" selection-start-column="0" selection-end-line="26" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -84,18 +94,8 @@
       <file leaf-file-name="D3Base_RigitAnimationSample.ts" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_RigitAnimationSample.ts">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="617">
-              <caret line="35" column="77" selection-start-line="35" selection-start-column="62" selection-end-line="35" selection-end-column="77" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="D3Base_StaticModel_HierarchySample.ts" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_HierarchySample.ts">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="432">
-              <caret line="24" column="73" selection-start-line="24" selection-start-column="73" selection-end-line="24" selection-end-column="73" />
+            <state relative-caret-position="288">
+              <caret line="16" column="14" selection-start-line="16" selection-start-column="14" selection-end-line="16" selection-end-column="14" />
               <folding />
             </state>
           </provider>
@@ -104,18 +104,18 @@
       <file leaf-file-name="D3Base_StaticModel_MeshTerrainSample.ts" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_MeshTerrainSample.ts">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="198">
-              <caret line="11" column="44" selection-start-line="11" selection-start-column="44" selection-end-line="11" selection-end-column="44" />
+            <state relative-caret-position="279">
+              <caret line="24" column="39" selection-start-line="24" selection-start-column="39" selection-end-line="24" selection-end-column="39" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="MousePickingScene.ts" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/advancedStage/MousePickingScene.ts">
+      <file leaf-file-name="D3Base_ScriptAndCameraSample.ts" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_ScriptAndCameraSample.ts">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="252">
-              <caret line="14" column="46" selection-start-line="14" selection-start-column="46" selection-end-line="14" selection-end-column="46" />
+            <state relative-caret-position="306">
+              <caret line="17" column="14" selection-start-line="17" selection-start-column="14" selection-end-line="17" selection-end-column="14" />
               <folding />
             </state>
           </provider>
@@ -133,32 +133,34 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/advancedStage/D3Advance_GlitterSample.ts" />
         <option value="$PROJECT_DIR$/advancedStage/D3Advance_MousePicking.ts" />
         <option value="$PROJECT_DIR$/js/advancedStage/MousePickingScene.js" />
-        <option value="$PROJECT_DIR$/advancedStage/D3Advance_ParticleSample.ts" />
-        <option value="$PROJECT_DIR$/primaryStage/D3Base_Camera_Ortho_2DMix3D_Sample.ts" />
-        <option value="$PROJECT_DIR$/primaryStage/D3Base_ScriptAndCameraSample.ts" />
-        <option value="$PROJECT_DIR$/primaryStage/D3Base_StaticModel_3DSpaceTo2DSpace.ts" />
         <option value="$PROJECT_DIR$/primaryStage/D3Base_StaticModel_MeshSkySample.ts" />
         <option value="$PROJECT_DIR$/js/advancedStage/D3Advance_panoramaVRSample.js" />
-        <option value="$PROJECT_DIR$/primaryStage/D3Base_StaticModel_MeshSample.ts" />
         <option value="$PROJECT_DIR$/primaryStage.html" />
+        <option value="$PROJECT_DIR$/advancedStage/D3Advance_AttchPointSample.ts" />
+        <option value="$PROJECT_DIR$/advancedStage/D3Advance_ParticleSample.ts" />
+        <option value="$PROJECT_DIR$/common/CameraMoveScript.ts" />
+        <option value="$PROJECT_DIR$/advancedStage/D3Advance_SimpleSceneSample.ts" />
+        <option value="$PROJECT_DIR$/advancedStage/D3Advance_GlitterSample.ts" />
+        <option value="$PROJECT_DIR$/common/VRCameraMoveScript.ts" />
+        <option value="$PROJECT_DIR$/advancedStage/D3Advance_SimpleSceneVRSample.ts" />
+        <option value="$PROJECT_DIR$/advancedStage/D3Advance_panoramaVRSample.ts" />
+        <option value="$PROJECT_DIR$/advancedStage/MousePickingScene.ts" />
+        <option value="$PROJECT_DIR$/primaryStage/D3Base_StaticModel_MeshSample.ts" />
         <option value="$PROJECT_DIR$/primaryStage/D3Base_StaticModel_SkyBoxSample.ts" />
+        <option value="$PROJECT_DIR$/primaryStage/D3Base_StaticModel_HierarchySample.ts" />
         <option value="$PROJECT_DIR$/primaryStage/D3Base_SkinAnimation_MultiActionSample.ts" />
         <option value="$PROJECT_DIR$/primaryStage/D3Base_SkinAnimation_MultiMeshSample.ts" />
         <option value="$PROJECT_DIR$/primaryStage/D3Base_SkinAnimation_MultiSubMeshSample.ts" />
-        <option value="$PROJECT_DIR$/advancedStage/D3Advance_AttchPointSample.ts" />
-        <option value="$PROJECT_DIR$/advancedStage/MousePickingScene.ts" />
-        <option value="$PROJECT_DIR$/advancedStage/D3Advance_SimpleSceneSample.ts" />
-        <option value="$PROJECT_DIR$/advancedStage/D3Advance_SimpleSceneVRSample.ts" />
-        <option value="$PROJECT_DIR$/advancedStage/D3Advance_panoramaVRSample.ts" />
+        <option value="$PROJECT_DIR$/primaryStage/D3Base_RigitAnimationSample.ts" />
+        <option value="$PROJECT_DIR$/primaryStage/D3Base_ScriptAndCameraSample.ts" />
         <option value="$PROJECT_DIR$/primaryStage/D3Base_LightAndMaterialSample.ts" />
         <option value="$PROJECT_DIR$/primaryStage/D3Base_Material_NormalMap.ts" />
-        <option value="$PROJECT_DIR$/primaryStage/D3Base_Materil_Reflect.ts" />
-        <option value="$PROJECT_DIR$/primaryStage/D3Base_RigitAnimationSample.ts" />
-        <option value="$PROJECT_DIR$/primaryStage/D3Base_StaticModel_HierarchySample.ts" />
+        <option value="$PROJECT_DIR$/primaryStage/D3Base_Camera_Ortho_2DMix3D_Sample.ts" />
+        <option value="$PROJECT_DIR$/primaryStage/D3Base_StaticModel_3DSpaceTo2DSpace.ts" />
         <option value="$PROJECT_DIR$/primaryStage/D3Base_StaticModel_MeshTerrainSample.ts" />
+        <option value="$PROJECT_DIR$/primaryStage/D3Base_Materil_Reflect.ts" />
       </list>
     </option>
   </component>
@@ -199,8 +201,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -243,12 +243,28 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+              <option name="myItemId" value="common" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="3d" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="3d" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
               <option name="myItemId" value="advancedStage" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scratches" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -331,18 +347,20 @@
       <workItem from="1473389372689" duration="97000" />
       <workItem from="1473433570335" duration="1130000" />
       <workItem from="1474634391770" duration="440000" />
-      <workItem from="1474962958725" duration="1149000" />
+      <workItem from="1474962958725" duration="2281000" />
+      <workItem from="1475056959226" duration="286000" />
+      <workItem from="1476511552592" duration="5872000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="11616000" />
+    <option name="totallyTimeSpent" value="18906000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1912" y="-8" width="1936" height="1096" extended-state="0" />
-    <editor active="true" />
+    <frame x="1912" y="-8" width="1936" height="1096" extended-state="6" />
+    <editor active="false" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.203125" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.190625" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="TypeScript Compiler" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3272543" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="true" content_ui="tabs" />
@@ -377,21 +395,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_MeshTerrainSample.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="162">
-          <caret line="9" column="52" selection-start-line="9" selection-start-column="52" selection-end-line="9" selection-end-column="52" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/js/advancedStage/D3Advance_panoramaVRSample.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_ScriptAndCameraSample.ts">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="144">
@@ -496,7 +499,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="162">
           <caret line="9" column="25" selection-start-line="9" selection-start-column="25" selection-end-line="9" selection-end-column="25" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -551,20 +553,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_ScriptAndCameraSample.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="144">
-          <caret line="8" column="25" selection-start-line="8" selection-start-column="25" selection-end-line="8" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_3DSpaceTo2DSpace.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="15" column="25" selection-start-line="15" selection-start-column="25" selection-end-line="15" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_MeshSkySample.ts" />
     <entry file="file://$PROJECT_DIR$/js/advancedStage/D3Advance_panoramaVRSample.js">
       <provider selected="true" editor-type-id="text-editor">
@@ -580,52 +568,27 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_MeshSample.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="18">
-          <caret line="1" column="0" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_SkinAnimation_MultiActionSample.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1440">
-          <caret line="92" column="50" selection-start-line="92" selection-start-column="50" selection-end-line="92" selection-end-column="50" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_SkinAnimation_MultiMeshSample.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="720">
-          <caret line="40" column="37" selection-start-line="40" selection-start-column="37" selection-end-line="40" selection-end-column="37" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_SkinAnimation_MultiSubMeshSample.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="522">
-          <caret line="29" column="28" selection-start-line="29" selection-start-column="28" selection-end-line="29" selection-end-column="28" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_Camera_Ortho_2DMix3D_Sample.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="324">
-          <caret line="42" column="36" selection-start-line="42" selection-start-column="36" selection-end-line="42" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_AttchPointSample.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
-          <caret line="38" column="32" selection-start-line="38" selection-start-column="32" selection-end-line="38" selection-end-column="32" />
+        <state relative-caret-position="311">
+          <caret line="34" column="34" selection-start-line="34" selection-start-column="34" selection-end-line="34" selection-end-column="34" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/common/CameraMoveScript.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="522">
+          <caret line="59" column="35" selection-start-line="59" selection-start-column="35" selection-end-line="59" selection-end-column="35" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_GlitterSample.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="378">
-          <caret line="21" column="0" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
+        <state relative-caret-position="270">
+          <caret line="15" column="0" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -637,54 +600,127 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_ParticleSample.ts">
+    <entry file="file://$PROJECT_DIR$/common/VRCameraMoveScript.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-882">
-          <caret line="17" column="44" selection-start-line="17" selection-start-column="44" selection-end-line="17" selection-end-column="44" />
+        <state relative-caret-position="185">
+          <caret line="28" column="0" selection-start-line="28" selection-start-column="0" selection-end-line="28" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_SkyBoxSample.ts">
+    <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_SimpleSceneVRSample.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="450">
-          <caret line="25" column="37" selection-start-line="25" selection-start-column="37" selection-end-line="25" selection-end-column="37" />
+        <state relative-caret-position="360">
+          <caret line="30" column="0" selection-start-line="30" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_panoramaVRSample.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="432">
+          <caret line="24" column="0" selection-start-line="24" selection-start-column="0" selection-end-line="24" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/advancedStage/MousePickingScene.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="252">
-          <caret line="14" column="46" selection-start-line="14" selection-start-column="46" selection-end-line="14" selection-end-column="46" />
+        <state relative-caret-position="306">
+          <caret line="17" column="39" selection-start-line="17" selection-start-column="39" selection-end-line="17" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_MeshSample.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="216">
+          <caret line="12" column="14" selection-start-line="12" selection-start-column="14" selection-end-line="12" selection-end-column="14" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_SkyBoxSample.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="306">
+          <caret line="17" column="28" selection-start-line="17" selection-start-column="28" selection-end-line="17" selection-end-column="28" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_HierarchySample.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="15" column="14" selection-start-line="15" selection-start-column="14" selection-end-line="15" selection-end-column="14" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_SkinAnimation_MultiActionSample.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="216">
+          <caret line="12" column="25" selection-start-line="12" selection-start-column="25" selection-end-line="12" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_SkinAnimation_MultiMeshSample.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="234">
+          <caret line="13" column="33" selection-start-line="10" selection-start-column="8" selection-end-line="13" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_SkinAnimation_MultiSubMeshSample.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="288">
+          <caret line="16" column="33" selection-start-line="16" selection-start-column="33" selection-end-line="16" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_RigitAnimationSample.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="288">
+          <caret line="16" column="14" selection-start-line="16" selection-start-column="14" selection-end-line="16" selection-end-column="14" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_ScriptAndCameraSample.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="306">
+          <caret line="17" column="14" selection-start-line="17" selection-start-column="14" selection-end-line="17" selection-end-column="14" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_LightAndMaterialSample.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="455">
+          <caret line="33" column="0" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_ParticleSample.ts">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1494">
+          <caret line="16" column="33" selection-start-line="16" selection-start-column="33" selection-end-line="16" selection-end-column="33" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_SimpleSceneSample.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="522">
-          <caret line="113" column="94" selection-start-line="113" selection-start-column="94" selection-end-line="113" selection-end-column="94" />
+        <state relative-caret-position="234">
+          <caret line="40" column="49" selection-start-line="40" selection-start-column="26" selection-end-line="40" selection-end-column="49" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_Material_NormalMap.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="455">
-          <caret line="43" column="44" selection-start-line="43" selection-start-column="44" selection-end-line="43" selection-end-column="44" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_Materil_Reflect.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="378">
-          <caret line="36" column="44" selection-start-line="36" selection-start-column="44" selection-end-line="36" selection-end-column="44" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_panoramaVRSample.ts">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="504">
           <caret line="28" column="0" selection-start-line="28" selection-start-column="0" selection-end-line="28" selection-end-column="0" />
@@ -692,42 +728,34 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_RigitAnimationSample.ts">
+    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_Camera_Ortho_2DMix3D_Sample.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="617">
-          <caret line="35" column="77" selection-start-line="35" selection-start-column="62" selection-end-line="35" selection-end-column="77" />
+        <state relative-caret-position="270">
+          <caret line="45" column="72" selection-start-line="45" selection-start-column="72" selection-end-line="45" selection-end-column="72" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_HierarchySample.ts">
+    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_3DSpaceTo2DSpace.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="432">
-          <caret line="24" column="73" selection-start-line="24" selection-start-column="73" selection-end-line="24" selection-end-column="73" />
+        <state relative-caret-position="468">
+          <caret line="26" column="0" selection-start-line="26" selection-start-column="0" selection-end-line="26" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_StaticModel_MeshTerrainSample.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="198">
-          <caret line="11" column="44" selection-start-line="11" selection-start-column="44" selection-end-line="11" selection-end-column="44" />
+        <state relative-caret-position="279">
+          <caret line="24" column="39" selection-start-line="24" selection-start-column="39" selection-end-line="24" selection-end-column="39" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/advancedStage/D3Advance_SimpleSceneVRSample.ts">
+    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_Materil_Reflect.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="540">
-          <caret line="30" column="0" selection-start-line="30" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/primaryStage/D3Base_LightAndMaterialSample.ts">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="234">
-          <caret line="74" column="71" selection-start-line="74" selection-start-column="71" selection-end-line="74" selection-end-column="71" />
+        <state relative-caret-position="369">
+          <caret line="32" column="94" selection-start-line="32" selection-start-column="94" selection-end-line="32" selection-end-column="94" />
           <folding />
         </state>
       </provider>

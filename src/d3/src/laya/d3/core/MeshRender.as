@@ -1,5 +1,5 @@
 package laya.d3.core {
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.graphics.RenderCullingObject;
 	import laya.d3.math.BoundBox;

@@ -1,7 +1,7 @@
 package laya.d3.core.particle {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Vector3;
-	import laya.particle.ParticleSettings;
+	import laya.particle.ParticleSetting;
 	import laya.particle.emitter.EmitterBase;
 	
 	/**
@@ -9,7 +9,7 @@ package laya.d3.core.particle {
 	 */
 	public class EmitterPoint extends EmitterBase {
 		/** @private */
-		protected var _settings:ParticleSettings;
+		protected var _settings:ParticleSetting;
 		/** @private */
 		protected var _particle3D:Particle3D;
 		/** @private */
@@ -32,7 +32,7 @@ package laya.d3.core.particle {
 		 */
 		public function EmitterPoint(particle3D:Particle3D) {
 			_particle3D = particle3D;
-			var setting:ParticleSettings = particle3D.templet.settings;
+			var setting:ParticleSetting = particle3D.templet.settings;
 			for (var i:int = 0; i < 3; i++) {
 				position.elements[i] = setting.pointEmitterPosition[i];
 				positionVariance.elements[i] = setting.pointEmitterPositionVariance[i];

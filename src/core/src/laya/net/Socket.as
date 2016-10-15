@@ -56,7 +56,10 @@ package laya.net {
 		 * 在写入或读取对象时，控制所使用的 AMF 的版本。
 		 */
 		public var objectEncoding:int;
-		
+		/**
+		 * 不使用socket提供的 input封装
+		 */
+		public var disableInput:Boolean=false;
 		/**
 		 * 用来发送接收数据的Byte类
 		 */
@@ -193,6 +196,13 @@ package laya.net {
 		 * @param msg 数据。
 		 */
 		protected function _onMessage(msg:*):void {
+			if (!msg || !msg.data) return;
+			var data:* = msg.data;
+			if(disableInput&&data)
+			{
+				event(Event.MESSAGE, data);
+				return;
+			}
 			if (_input.length > 0 && _input.bytesAvailable < 1) {
 				_input.clear();
 				_addInputPosition = 0;
@@ -200,8 +210,7 @@ package laya.net {
 			var pre:int = _input.pos;
 			!_addInputPosition && (_addInputPosition = 0);
 			_input.pos = _addInputPosition;
-			if (!msg || !msg.data) return;
-			var data:* = msg.data;
+			
 			if (data) {
 				if (data is String) {
 					_input.writeUTFBytes(data);

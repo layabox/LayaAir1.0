@@ -1,6 +1,6 @@
 package laya.d3.resource.models {
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
@@ -34,7 +34,7 @@ package laya.d3.resource.models {
 			url = URL.formatURL(url);
 			var mesh:Mesh = Resource.meshCache[url];
 			if (!mesh) {
-				mesh = Resource.meshCache[url] = new Mesh(url);
+				mesh = Resource.meshCache[url] = new Mesh();
 				var loader:Loader = new Loader();
 				loader.once(Event.COMPLETE, null, function(data:ArrayBuffer):void {
 					new LoadModel(data, mesh, mesh._materials, url);
@@ -44,7 +44,7 @@ package laya.d3.resource.models {
 				loader.load(url, Loader.BUFFER);
 			}
 			return mesh;
-			
+		
 			//var mesh:Mesh = new Mesh(url);
 			//Laya.loader.load(url, Handler.create(null,function():void{
 			//
@@ -53,13 +53,9 @@ package laya.d3.resource.models {
 		}
 		
 		/** @private */
-		private var _materials:Vector.<Material>;
+		private var _materials:Vector.<BaseMaterial>;
 		/** @private */
 		private var _subMeshes:Vector.<SubMesh>;
-		/** @private */
-		private var _useFullBone:Boolean = true;
-		/** @private */
-		private var _url:String;
 		/** @private */
 		public var _bindPoses:Vector.<Matrix4x4>;
 		/** @private */
@@ -74,7 +70,7 @@ package laya.d3.resource.models {
 			var submesheCount:int = _subMeshes.length;
 			for (var i:int = 0; i < submesheCount; i++) {
 				var subMesh:SubMesh = _subMeshes[i];
-				var vertexBuffer:VertexBuffer3D = subMesh.getVertexBuffer();
+				var vertexBuffer:VertexBuffer3D = subMesh._getVertexBuffer();
 				
 				var positionElement:VertexElement;
 				var vertexElements:Array = vertexBuffer.vertexDeclaration.getVertexElements();
@@ -101,7 +97,7 @@ package laya.d3.resource.models {
 		 * 获取材质队列的浅拷贝。
 		 * @return  材质队列的浅拷贝。
 		 */
-		public function get materials():Vector.<Material> {
+		public function get materials():Vector.<BaseMaterial> {
 			return _materials.slice();
 		}
 		
@@ -125,11 +121,10 @@ package laya.d3.resource.models {
 		 * 创建一个 <code>Mesh</code> 实例,禁止使用。
 		 * @param url 文件地址。
 		 */
-		public function Mesh(url:String) {
+		public function Mesh() {
 			super();
 			_subMeshes = new Vector.<SubMesh>();
-			_materials = new Vector.<Material>();
-			_url = url;
+			_materials = new Vector.<BaseMaterial>();
 			
 			if (_loaded)
 				_generateBoundingObject();
@@ -151,7 +146,7 @@ package laya.d3.resource.models {
 		 */
 		public function _add(subMesh:SubMesh):void {
 			//TODO：SubMesh为私有问题。
-			subMesh._indexOfHost = _subMeshes.length;
+			subMesh._indexInMesh = _subMeshes.length;
 			_subMeshes.push(subMesh);
 			_subMeshCount++;
 		}
@@ -196,11 +191,6 @@ package laya.d3.resource.models {
 			return this;
 		}
 		
-		/** @private */
-		public function disableUseFullBone():void {
-			_useFullBone = false;
-		}
-		
 		override public function getRenderElementsCount():int {
 			return _subMeshes.length;
 		}
@@ -222,7 +212,6 @@ package laya.d3.resource.models {
 			
 			_subMeshes = null;
 			_subMeshCount = 0;
-			//_vb = null;
 		}
 	}
 }

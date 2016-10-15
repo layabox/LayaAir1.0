@@ -27,10 +27,10 @@ package laya.particle {
 		protected var _firstFreeElement:int;
 		protected var _firstRetiredElement:int;
 		
-		protected var _currentTime:Number = 0;
+		public var _currentTime:Number = 0;
 		protected var _drawCounter:int;
 		
-		public function ParticleTemplateWebGL(parSetting:ParticleSettings) {
+		public function ParticleTemplateWebGL(parSetting:ParticleSetting) {
 			settings = parSetting;
 		}
 		
@@ -90,7 +90,6 @@ package laya.particle {
 			while (_firstActiveElement != _firstNewElement) {
 				var index:int = _firstActiveElement * _floatCountPerVertex * 4 + 28;//28为Time
 				var particleAge:Number = _currentTime - _vertices[index];
-				
 				if (particleAge < particleDuration)
 					break;
 				

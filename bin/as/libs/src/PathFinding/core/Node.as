@@ -17,6 +17,7 @@ package PathFinding.core
 		public var opened:* = null;
 		public var closed:* = null;
 		public var tested:* = null;
+		public var retainCount:* = null;
 		public var walkable:Boolean;
 		
 		public function Node(x:int, y:int, walkable:Boolean = true)

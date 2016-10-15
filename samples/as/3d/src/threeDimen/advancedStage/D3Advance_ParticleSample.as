@@ -8,7 +8,7 @@ package threeDimen.advancedStage {
 	import laya.d3.math.Viewport;
 	import laya.display.Stage;
 	import laya.events.Event;
-	import laya.particle.ParticleSettings;
+	import laya.particle.ParticleSetting;
 	import laya.ui.Button;
 	import laya.utils.Browser;
 	import laya.utils.ClassUtils;
@@ -40,8 +40,6 @@ package threeDimen.advancedStage {
 			Vel = new Vector3();
 			lastTime = Browser.now();
 			
-			//是否抗锯齿
-			//Config.isAntialias = true;
 			Laya3D.init(0, 0);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
@@ -51,17 +49,17 @@ package threeDimen.advancedStage {
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			scene.currentCamera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
-			scene.currentCamera.transform.translate(new Vector3(0, 1, 2.6));
-			scene.currentCamera.transform.rotate(new Vector3(-20, 0, 0), false, false);
-			scene.currentCamera.clearColor = null;
+			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
+			camera.transform.translate(new Vector3(0, 1, 2.6));
+			camera.transform.rotate(new Vector3(-20, 0, 0), false, false);
+			camera.clearColor = null;
 			
-			scene.currentCamera.addComponent(CameraMoveScript);
+			camera.addComponent(CameraMoveScript);
 			
 			var grid:Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;
 			grid.loadHierarchy("../../../../res/threeDimen/staticModel/grid/plane.lh");
 			
-			var settings:ParticleSettings = new ParticleSettings();
+			var settings:ParticleSetting = new ParticleSetting();
 			settings.textureName = "../../../../res/threeDimen/particle/texture.png";
 			settings.maxPartices = 3600;
 			settings.duration = 6.0;
@@ -103,7 +101,7 @@ package threeDimen.advancedStage {
 			simple.transform.localPosition = new Vector3(0, 0.5, 0);
 			scene.addChild(simple);
 			
-			settings = new ParticleSettings();
+			settings = new ParticleSetting();
 			settings.textureName = "../../../../res/threeDimen/particle/smoke.png";
 			settings.maxPartices = 600;
 			settings.duration = 10;
@@ -122,7 +120,7 @@ package threeDimen.advancedStage {
 			smoke = new Particle3D(settings);
 			scene.addChild(smoke);
 			
-			settings = new ParticleSettings();
+			settings = new ParticleSetting();
 			settings.textureName = "../../../../res/threeDimen/particle/fire.png";
 			settings.maxPartices = 1200;
 			settings.duration = 2;
@@ -145,7 +143,7 @@ package threeDimen.advancedStage {
 			scene.addChild(fire);
 			
 			//...............................
-			settings = new ParticleSettings();
+			settings = new ParticleSetting();
 			settings.textureName = "../../../../res/threeDimen/particle/smoke.png";
 			settings.maxPartices = 1000;
 			settings.duration = 3;
@@ -167,7 +165,7 @@ package threeDimen.advancedStage {
 			projectileTrail = new Particle3D(settings);
 			scene.addChild(projectileTrail);
 			
-			settings = new ParticleSettings();
+			settings = new ParticleSetting();
 			settings.textureName = "../../../../res/threeDimen/particle/explosion.png";
 			settings.maxPartices = 100;
 			settings.duration = 2;
@@ -189,7 +187,7 @@ package threeDimen.advancedStage {
 			explosion = new Particle3D(settings);
 			scene.addChild(explosion);
 			
-			settings = new ParticleSettings();
+			settings = new ParticleSetting();
 			settings.textureName = "../../../../res/threeDimen/particle/smoke.png";
 			settings.maxPartices = 200;
 			settings.duration = 4;

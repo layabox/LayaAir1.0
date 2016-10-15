@@ -398,7 +398,7 @@ package laya.ui {
 			createText();
 			if (_text.text != value) {
 				value && !_text.displayedInStage && addChild(_text);
-				_text.text = value;
+				_text.text = (value+"").replace(/\\n/g, "\n");
 				_setStateChanged();
 			}
 		}

@@ -65,10 +65,10 @@ package threeDimen.primaryStage {
 			
 			//****************************3D场景***************************
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
-			scene.currentCamera = (scene.addChild(new Camera(0, 0.1, 300))) as Camera;
-			scene.currentCamera.transform.translate(new Vector3(0, 0, 150));
-			scene.currentCamera.clearColor = null;
-			scene.currentCamera.orthographicProjection = true;
+			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 300))) as Camera;
+			camera.transform.translate(new Vector3(0, 0, 150));
+			camera.clearColor = null;
+			camera.orthographicProjection = true;
 			var mesh:MeshSprite3D = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm"))) as MeshSprite3D;
 			
 			Utils3D.convert3DCoordTo2DScreenCoord(translate, convertTranslate);
@@ -76,7 +76,7 @@ package threeDimen.primaryStage {
 			mesh.transform.localScale = new Vector3(100, 100, 100);//球的直径在三维空间中为1米（放大100倍，此时为100米），当正交投影矩阵的宽高等同于像素宽高时，一米可认为一个像素，所以球等于200个像素,可与2D直接混合。
 			//窗口尺寸变化相关属性重置。
 			Laya.stage.on(Event.RESIZE, null, function():void {
-				scene.currentCamera.orthographicVerticalSize = RenderState.clientHeight;
+				camera.orthographicVerticalSize = RenderState.clientHeight;
 				Utils3D.convert3DCoordTo2DScreenCoord(translate, convertTranslate);
 				mesh.transform.localPosition = convertTranslate;
 			});

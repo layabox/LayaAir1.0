@@ -13,18 +13,18 @@ module PanoramaVRSample {
             var scene = Laya.stage.addChild(new Laya.VRScene()) as Laya.VRScene;
 
             var camera = new Laya.VRCamera(0.03, 0, 0, 0.1, 100);
-            scene.currentCamera = (scene.addChild(camera)) as Laya.VRCamera;
+            camera = (scene.addChild(camera)) as Laya.VRCamera;
 
-            scene.currentCamera.addComponent(VRCameraMoveScript);
+            camera.addComponent(VRCameraMoveScript);
             this.loadScene(scene, camera);
         }
 
         private loadScene(scene: Laya.BaseScene, camera: Laya.VRCamera): void {
 
-            var mesh = scene.addChild(new Laya.MeshSprite3D(new Laya.Sphere(1, 20, 20))) as Laya.MeshSprite3D;
+            var mesh = scene.addChild(new Laya.MeshSprite3D(new Laya.SphereMesh(1, 20, 20))) as Laya.MeshSprite3D;
 
-            var material = new Laya.Material();
-            material.renderMode = Laya.Material.RENDERMODE_OPAQUEDOUBLEFACE;
+            var material = new Laya.StandardMaterial();
+            material.renderMode = Laya.BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
             mesh.meshRender.sharedMaterial = material;
 
             Laya.loader.load("../../res/threeDimen/panorama/panorama.jpg", Laya.Handler.create(null, function (texture: Laya.Texture): void {

@@ -1,6 +1,6 @@
 package laya.particle.emitter
 {
-	import laya.particle.ParticleSettings;
+	import laya.particle.ParticleSetting;
 	import laya.particle.ParticleTemplate2D;
 	import laya.particle.ParticleTemplateBase;
 	import laya.particle.ParticleTemplateCanvas;
@@ -11,7 +11,7 @@ package laya.particle.emitter
 	 */
 	public class Emitter2D extends EmitterBase
 	{
-		public var settiong:ParticleSettings;
+		public var settiong:ParticleSetting;
 		private var _posRange:Float32Array;
 		private var _canvasTemplate:ParticleTemplateBase;
 		private var _emitFun:Function;

@@ -15,7 +15,7 @@ package threeDimen.advancedStage {
 	import laya.d3.resource.models.Mesh;
 	import laya.display.Stage;
 	import laya.events.Event;
-	import laya.particle.ParticleSettings;
+	import laya.particle.ParticleSetting;
 	import laya.utils.Stat;
 	
 	/** @private */
@@ -34,10 +34,10 @@ package threeDimen.advancedStage {
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			scene.currentCamera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
-			scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.0));
-			scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-			scene.currentCamera.clearColor = null;
+			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
+			camera.transform.translate(new Vector3(0, 0.8, 1.0));
+			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+			camera.clearColor = null;
 			
 			var pointLight:PointLight = scene.addChild(new PointLight()) as PointLight;
 			pointLight.transform.position = new Vector3(0, 0.6, 0.3);
@@ -57,24 +57,24 @@ package threeDimen.advancedStage {
 			attacthPoint = skinMesh.addComponent(AttachPoint) as AttachPoint;
 			attacthPoint.attachBones.push("L_Middle1");
 			attacthPoint.attachBones.push("R_Middle1");
-			var settings:ParticleSettings = new ParticleSettings();
-			settings.textureName = "../../../../res/threeDimen/particle/fire.png";
-			settings.maxPartices = 200;
-			settings.duration = 0.3;
-			settings.ageAddScale = 1;
-			settings.minHorizontalVelocity = 0;
-			settings.maxHorizontalVelocity = 0;
-			settings.minVerticalVelocity = 0;
-			settings.maxVerticalVelocity = 0.1;
-			settings.gravity = new Float32Array([0, 0.05, 0]);
-			settings.minStartColor = new Float32Array([1.0, 1.0, 1.0, 0.039215]);
-			settings.maxStartColor = new Float32Array([1.0, 1.0, 1.0, 0.256862]);
-			settings.minStartSize = 0.02;
-			settings.maxStartSize = 0.05;
-			settings.minEndSize = 0.05;
-			settings.maxEndSize = 0.2;
-			settings.blendState = 1;
-			fire = new Particle3D(settings);
+			var setting:ParticleSetting = new ParticleSetting();
+			setting.textureName = "../../../../res/threeDimen/particle/fire.png";
+			setting.maxPartices = 200;
+			setting.duration = 0.3;
+			setting.ageAddScale = 1;
+			setting.minHorizontalVelocity = 0;
+			setting.maxHorizontalVelocity = 0;
+			setting.minVerticalVelocity = 0;
+			setting.maxVerticalVelocity = 0.1;
+			setting.gravity = new Float32Array([0, 0.05, 0]);
+			setting.minStartColor = new Float32Array([1.0, 1.0, 1.0, 0.039215]);
+			setting.maxStartColor = new Float32Array([1.0, 1.0, 1.0, 0.256862]);
+			setting.minStartSize = 0.02;
+			setting.maxStartSize = 0.05;
+			setting.minEndSize = 0.05;
+			setting.maxEndSize = 0.2;
+			setting.blendState = 1;
+			fire = new Particle3D(setting);
 			scene.addChild(fire);
 			
 			Laya.timer.frameLoop(1, this, loop);

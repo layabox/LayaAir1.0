@@ -151,9 +151,14 @@ package laya.display {
 				return;
 			var frameData:Object = node.frames;
 			var params:Array = _getParams(frameData, _drawTextureCmd, frame, _nodeDefaultProps[nodeID]);
-			if (params[0] == "")
+			var url:String = params[0]; 
+			if (!url)return;
+			params[0] = _getTextureByUrl(url);
+			if (!params[0]){
+				trace("lost:", url);
+				throw new Error("texture not loaded:"+url);
 				return;
-			params[0] = _getTextureByUrl(params[0]);
+			}
 			var m:Matrix;
 			var px:Number = params[5], py:Number = params[6];
 			if (px != 0 || py != 0) {
@@ -183,7 +188,7 @@ package laya.display {
 		/**
 		 * @private
 		 */
-		protected function _getTextureByUrl(url:String):String {
+		protected function _getTextureByUrl(url:String):* {
 			return Loader.getRes(url);
 		}
 		
@@ -192,7 +197,8 @@ package laya.display {
 		 */
 		public function setAniData(uiView:Object):void {
 			if (uiView.animations) {
-				_nodeDefaultProps = {};
+				_nodeDefaultProps = { };
+				if (_nodeList) _nodeList.length = 0;
 				_parseNodeList(uiView);
 				var aniDic:Object = {};
 				var anilist:Array = [];
@@ -201,15 +207,32 @@ package laya.display {
 				var tAniO:Object;
 				for (i = 0; i < len; i++) {
 					tAniO = animations[i];
-					_calGraphicData(tAniO);
+					try
+					{
+						_calGraphicData(tAniO);
+					}catch (e:*)
+					{
+						trace("parse animation fail:" + tAniO.name + ",empty animation created");
+						_gList = [];
+					}
 					anilist.push(_gList);
 					aniDic[tAniO.name] = _gList;
 				}
 				animationList = anilist;
 				animationDic = aniDic;
 			}
+			_temParam.length=0;
+			
 		}
-		
+		/**
+		 * @private
+		 */
+		private function _clear():void
+		{
+			animationList=null;
+			animationDic=null;
+			_gList=null;
+		}
 		public static function parseAnimationData(aniData:Object):Object {
 			if (!_I)
 				_I = new GraphicAnimation();
@@ -218,6 +241,7 @@ package laya.display {
 			rst = {};
 			rst.animationList = _I.animationList;
 			rst.animationDic = _I.animationDic;
+			_I._clear();
 			return rst;
 		}	
 	}

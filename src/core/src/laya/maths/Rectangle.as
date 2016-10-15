@@ -100,7 +100,7 @@ package laya.maths {
 		 * @return	如果传入的矩形对象与此对象相交，则返回 true 值，否则返回 false。
 		 */
 		public function intersects(rect:Rectangle):Boolean {
-			return !(rect.x > this.right || rect.right < this.x || rect.y > this.bottom || rect.bottom < this.y);
+			return !(rect.x > (x + width) || (rect.x + rect.width) < this.x || rect.y > (y + height) || (rect.y + rect.height) < this.y);
 		}
 		
 		/**
@@ -212,7 +212,7 @@ package laya.maths {
 		 */
 		public static function _getWrapRec(pointList:Array, rst:Rectangle = null):Rectangle {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			if (!pointList || pointList.length < 1) return rst ? rst.setTo(0, 0, 0, 0) : TEMP.setTo(0,0,0,0);
+			if (!pointList || pointList.length < 1) return rst ? rst.setTo(0, 0, 0, 0) : TEMP.setTo(0, 0, 0, 0);
 			rst = rst ? rst : new Rectangle();
 			var i:int, len:int = pointList.length, minX:Number, maxX:Number, minY:Number, maxY:Number, tPoint:Point = Point.TEMP;
 			minX = minY = 99999;

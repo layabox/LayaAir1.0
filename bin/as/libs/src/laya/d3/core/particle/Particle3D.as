@@ -1,17 +1,22 @@
 package laya.d3.core.particle {
 	import laya.d3.core.ParticleRender;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.ParticleMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Vector3;
+	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.tempelet.ParticleTemplet3D;
 	import laya.display.Node;
 	import laya.events.Event;
-	import laya.particle.ParticleSettings;
+	import laya.net.Loader;
+	import laya.particle.ParticleSetting;
+	import laya.utils.Handler;
 	import laya.utils.Stat;
+	import laya.webgl.resource.WebGLImage;
 	
 	/**
 	 * <code>Particle3D</code> 3D粒子。
@@ -43,18 +48,27 @@ package laya.d3.core.particle {
 		 * 创建一个 <code>Particle3D</code> 实例。
 		 * @param settings value 粒子配置。
 		 */
-		public function Particle3D(settings:ParticleSettings) {//暂不支持更换模板和初始化后修改混合状态。
+		public function Particle3D(setting:ParticleSetting) {//暂不支持更换模板和初始化后修改混合状态。
 			_particleRender = new ParticleRender(this);
 			_particleRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
-			var material:Material = new Material();
+			var material:ParticleMaterial = new ParticleMaterial();
+			material.setShaderName("PARTICLE");
+			
+			if (setting.textureName)//预设纹理ShaderValue
+			{
+				Laya.loader.load(setting.textureName, Handler.create(null, function(texture:Texture2D):void {
+					material.diffuseTexture = texture;
+				}), null, Loader.TEXTURE2D);
+			}
+			
 			_particleRender.sharedMaterial = material;
-			_templet = new ParticleTemplet3D(this, settings);
-			if (settings.blendState === 0)
-				material.renderMode = Material.RENDERMODE_DEPTHREAD_TRANSPARENT;
-			else if (settings.blendState === 1)
-				material.renderMode = Material.RENDERMODE_DEPTHREAD_ADDTIVE;
-				
+			_templet = new ParticleTemplet3D(this, setting);
+			if (setting.blendState === 0)
+				material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_TRANSPARENT;
+			else if (setting.blendState === 1)
+				material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_ADDTIVE;
+			
 			_changeRenderObject(0);
 		}
 		
@@ -64,9 +78,10 @@ package laya.d3.core.particle {
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
+			renderElement._renderCullingObject = _particleRender.renderCullingObject;
 			
-			var material:Material = _particleRender.sharedMaterials[index];
-			(material) || (material = Material.defaultMaterial);//确保有材质,由默认材质代替。
+			var material:BaseMaterial = _particleRender.sharedMaterials[index];
+			(material) || (material = ParticleMaterial.defaultMaterial);//确保有材质,由默认材质代替。
 			
 			var element:IRenderable = _templet;
 			renderElement._mainSortID = 0;
@@ -78,9 +93,9 @@ package laya.d3.core.particle {
 		}
 		
 		/** @private */
-		private function _onMaterialChanged(_particleRender:ParticleRender,index:int,material:Material):void {
+		private function _onMaterialChanged(_particleRender:ParticleRender, index:int, material:BaseMaterial):void {
 			var renderElementCount:int = _particleRender.renderCullingObject._renderElements.length;
-				(index < renderElementCount) && _changeRenderObject(index);
+			(index < renderElementCount) && _changeRenderObject(index);
 		}
 		
 		/** @private */
@@ -90,7 +105,7 @@ package laya.d3.core.particle {
 		
 		/** @private */
 		override protected function _addSelfRenderObjects():void {
-			(scene) && (scene.addFrustumCullingObject(_particleRender.renderCullingObject));
+			scene.addFrustumCullingObject(_particleRender.renderCullingObject);
 		}
 		
 		/**

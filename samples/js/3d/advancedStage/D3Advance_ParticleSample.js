@@ -3,7 +3,7 @@ Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
 Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
 Laya.Stat.show();
 
-var ParticleSettings = Laya.ParticleSettings;
+var ParticleSettings = Laya.ParticleSetting;
 var Particle3D = Laya.Particle3D;
 var Sprite3D = Laya.Sprite3D;
 var timeToNextProjectile = 0;
@@ -13,12 +13,11 @@ var Vector3 = Laya.Vector3;
 
 var scene = Laya.stage.addChild(new Laya.Scene());
 
-scene.currentCamera = (scene.addChild(new Laya.Camera( 0, 0.1, 100)));
-scene.currentCamera.transform.translate(new Vector3(0, 1, 2.6));
-scene.currentCamera.transform.rotate(new Vector3(-20, 0, 0), false, false);
-scene.currentCamera.clearColor = null;
-
-scene.currentCamera.addComponent(CameraMoveScript);
+var camera = scene.addChild(new Laya.Camera( 0, 0.1, 100));
+camera.transform.translate(new Vector3(0, 1, 2.6));
+camera.transform.rotate(new Vector3(-20, 0, 0), false, false);
+camera.clearColor = null;
+camera.addComponent(CameraMoveScript);
 
 var grid = scene.addChild(new Sprite3D());
 grid.loadHierarchy("../../res/threeDimen/staticModel/grid/plane.lh");

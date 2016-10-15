@@ -13,6 +13,7 @@ package laya.ani.bone
 		public var vectices:Vector.<Array> = new Vector.<Array>();
 		
 		
+		public var deformData:Array;
 		public var frameIndex:int = 0;
 		
 		public function DeformSlotDisplayData() 
@@ -41,10 +42,6 @@ package laya.ani.bone
 		
 		public function apply(time:Number,boneSlot:BoneSlot,alpha:Number=1):void
 		{
-			if (boneSlot.currDisplayData.attachmentName != attachment)
-			{
-				return;
-			}
 			if (timeList.length < 2)
 			{
 				return;
@@ -58,13 +55,13 @@ package laya.ani.bone
 			}
 			var tVertexCount:int = vectices[0].length;
 			var tVertices:Array = [];
-			if (boneSlot.currDisplayData && boneSlot.currDisplayData.vertices)
+			/*if (boneSlot.currDisplayData && boneSlot.currDisplayData.vertices)
 			{
 				for (i = 0, n = boneSlot.currDisplayData.vertices.length; i < n; i++)
 				{
 					tVertices.push(boneSlot.currDisplayData.vertices[i]);
 				}
-			}
+			}*/
 			var tFrameIndex:int = binarySearch1(timeList,time);
 			frameIndex = tFrameIndex;
 			
@@ -106,7 +103,7 @@ package laya.ani.bone
 					tVertices[i] = tPrev + (tNextVertices[i] - tPrev) * tPercent;
 				}
 			}
-			boneSlot.deformData = tVertices;
+			deformData = tVertices;
 		}
 		
 	}

@@ -9,7 +9,8 @@ package threeDimen.primaryStage {
 	import laya.d3.core.light.LightSprite;
 	import laya.d3.core.light.PointLight;
 	import laya.d3.core.light.SpotLight;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.core.scene.Scene;
@@ -58,10 +59,10 @@ package threeDimen.primaryStage {
 			
 			scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			scene.currentCamera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
-			scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.2));
-			scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-			scene.currentCamera.clearColor = null;
+			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
+			camera.transform.translate(new Vector3(0, 0.8, 1.2));
+			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+			camera.clearColor = null;
 			var _this:D3Base_LightAndMaterialSample = this;
 			
 			directionLight = scene.addChild(new DirectionLight()) as DirectionLight;
@@ -99,7 +100,7 @@ package threeDimen.primaryStage {
 				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
 				mesh.once(Event.LOADED, null, function(templet:BaseMesh):void {
 					for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-						var material:Material = meshSprite.meshRender.sharedMaterials[i];
+						var material:StandardMaterial = meshSprite.meshRender.sharedMaterials[i] as StandardMaterial;
 						material.once(Event.LOADED, null, function():void {
 							material.diffuseColor = new Vector3(0.7, 0.7, 0.7);
 							material.specularColor = new Vector4(0.2, 0.2, 0.2, 32);

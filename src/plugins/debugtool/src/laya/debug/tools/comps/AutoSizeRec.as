@@ -4,8 +4,6 @@ package laya.debug.tools.comps
 	
 	import laya.display.Graphics;
 	import laya.display.Sprite;
-	import laya.editor.comonents.DragBar;
-	import laya.ui.Box;
 
 	/**
 	 * ...

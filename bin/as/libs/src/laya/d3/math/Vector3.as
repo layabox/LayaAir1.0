@@ -40,6 +40,21 @@ package laya.d3.math {
 		}
 		
 		/**
+		 * 两个三维向量距离。
+		 * @param	value1 向量1。
+		 * @param	value2 向量2。
+		 * @return	距离。
+		 */
+		public static function distance(value1:Vector3, value2:Vector3):Number {
+			var value1e:Float32Array = value1.elements;
+			var value2e:Float32Array = value2.elements;
+			var x:Number = value1e[0] - value2e[0];
+			var y:Number = value1e[1] - value2e[1];
+			var z:Number = value1e[2] - value2e[2];
+			return Math.sqrt((x * x) + (y * y) + (z * z));
+		}
+		
+		/**
 		 * 分别取两个三维向量x、y、z的最小值计算新的三维向量。
 		 * @param	a。
 		 * @param	b。
@@ -201,6 +216,25 @@ package laya.d3.math {
 		}
 		
 		/**
+		 * 通过法线矩阵转换一个法线三维向量到另外一个三维向量。
+		 * @param	normal 源法线三维向量。
+		 * @param	transform  法线变换矩阵。
+		 * @param	result 输出法线三维向量。
+		 */
+		public static function TransformNormal(normal:Vector3, transform:Matrix4x4, result:Vector3):void {
+			var normalElem:Float32Array = normal.elements;
+			var normalX:Number = normalElem[0];
+			var normalY:Number = normalElem[1];
+			var normalZ:Number = normalElem[2];
+			
+			var transformElem:Float32Array = transform.elements;
+			var resultElem:Float32Array = result.elements;
+			resultElem[0] = (normalX * transformElem[0]) + (normalY * transformElem[4]) + (normalZ * transformElem[8]);
+			resultElem[1] = (normalX * transformElem[1]) + (normalY * transformElem[5]) + (normalZ * transformElem[9]);
+			resultElem[2] = (normalX * transformElem[2]) + (normalY * transformElem[6]) + (normalZ * transformElem[10]);
+		}
+		
+		/**
 		 * 通过矩阵转换一个三维向量到另外一个归一化的三维向量。
 		 * @param	vector 源三维向量。
 		 * @param	transform  变换矩阵。
@@ -227,7 +261,6 @@ package laya.d3.math {
 			resultElem[2] = vectorElem[2] * vectorElem[3];
 		}
 		
-		
 		/**
 		 * 求两个三维向量的和。
 		 * @param	a left三维向量。
@@ -242,7 +275,7 @@ package laya.d3.math {
 		 * @param	max  最大
 		 * @param   out 输出向量
 		 */
-		public static function Clamp(value:Vector3, min:Vector3, max:Vector3, out:Vector3):void{
+		public static function Clamp(value:Vector3, min:Vector3, max:Vector3, out:Vector3):void {
 			
 			var valuee:Float32Array = value.elements;
 			var x:Number = valuee[0];
@@ -262,13 +295,13 @@ package laya.d3.math {
 			var oute:Float32Array = out.elements;
 			
 			x = (x > maxeX) ? maxeX : x;
-            x = (x < mineX) ? mineX : x;
+			x = (x < mineX) ? mineX : x;
 			
 			y = (y > maxeY) ? maxeY : y;
-            y = (y < mineY) ? mineY : y;
+			y = (y < mineY) ? mineY : y;
 			
 			z = (z > maxeZ) ? maxeZ : z;
-            z = (z < mineZ) ? mineZ : z;
+			z = (z < mineZ) ? mineZ : z;
 			
 			oute[0] = x;
 			oute[1] = y;
@@ -334,7 +367,13 @@ package laya.d3.math {
 			return r;
 		}
 		
-		
+		public static function equals(a:Vector3, b:Vector3):Boolean {
+			var ae:Float32Array = a.elements;
+			var be:Float32Array = b.elements;
+			return  MathUtils3D.nearEqual(Math.abs(ae[0]), Math.abs(be[0])) 
+				 && MathUtils3D.nearEqual(Math.abs(ae[1]), Math.abs(be[1])) 
+				 && MathUtils3D.nearEqual(Math.abs(ae[2]), Math.abs(be[2]));
+		}
 		
 		/**三维向量元素数组*/
 		public var elements:* = new Float32Array(3);
@@ -436,7 +475,6 @@ package laya.d3.math {
 			oe[2] = s[2];
 		}
 		
-
 		public function toDefault():void {
 			elements[0] = 0;
 			elements[1] = 0;

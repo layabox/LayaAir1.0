@@ -2,6 +2,7 @@ package laya.utils {
 	import laya.display.Sprite;
 	import laya.events.Event;
 	import laya.events.MouseManager;
+	import laya.maths.Point;
 	import laya.maths.Rectangle;
 	
 	/**
@@ -38,6 +39,7 @@ package laya.utils {
 		private var _offsets:Array;
 		private var _disableMouseEvent:Boolean;
 		private var _tween:Tween;
+		private var _parent:Sprite;
 		
 		/**
 		 * 开始拖拽。
@@ -60,11 +62,17 @@ package laya.utils {
 			this.data = data;
 			this._disableMouseEvent = disableMouseEvent;
 			
+			if (target.globalScaleX != 1 || target.globalScaleY != 1) {
+				_parent = target.parent as Sprite;
+			} else {
+				_parent = Laya.stage;
+			}
+			
 			_clickOnly = true;
 			_dragging = true;
 			_elasticRateX = _elasticRateY = 1;
-			_lastX = Laya.stage.mouseX;
-			_lastY = Laya.stage.mouseY;
+			_lastX = _parent.mouseX;
+			_lastY = _parent.mouseY;
 			
 			Laya.stage.on(Event.MOUSE_UP, this, onStageMouseUp);
 			Laya.stage.on(Event.MOUSE_OUT, this, onStageMouseUp);
@@ -102,8 +110,9 @@ package laya.utils {
 		 * 拖拽的循环处理函数。
 		 */
 		private function loop():void {
-			var mouseX:Number = Laya.stage.mouseX;
-			var mouseY:Number = Laya.stage.mouseY;
+			var point:Point = _parent.getMousePoint();
+			var mouseX:Number = point.x;
+			var mouseY:Number = point.y;
 			var offsetX:Number = mouseX - _lastX;
 			var offsetY:Number = mouseY - _lastY;
 			
@@ -122,7 +131,7 @@ package laya.utils {
 			if (offsetX === 0 && offsetY === 0) return;
 			
 			_lastX = mouseX;
-			_lastY = mouseY;			
+			_lastY = mouseY;
 			target.x += offsetX * _elasticRateX;
 			target.y += offsetY * _elasticRateY;
 			
@@ -183,7 +192,7 @@ package laya.utils {
 			if (hasInertia) {
 				//计算平均值
 				if (_offsets.length < 1) {
-					_offsets.push(Laya.stage.mouseX - _lastX, Laya.stage.mouseY - _lastY);
+					_offsets.push(_parent.mouseX - _lastX, _parent.mouseY - _lastY);
 				}
 				
 				_offsetX = _offsetY = 0;
@@ -259,6 +268,7 @@ package laya.utils {
 				clearTimer();
 				var sp:Sprite = this.target;
 				this.target = null;
+				this._parent = null;
 				sp.event(Event.DRAG_END, data);
 			}
 		}

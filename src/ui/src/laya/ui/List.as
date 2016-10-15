@@ -411,8 +411,8 @@ package laya.ui {
 				//自适应宽高
 				var cell:Box = createItem();
 				
-				var cellWidth:Number = cell.width + _spaceX;
-				var cellHeight:Number = cell.height + _spaceY;
+				var cellWidth:Number = (cell.width + _spaceX) || 1;
+				var cellHeight:Number = (cell.height + _spaceY) || 1;
 				if (_width > 0) _repeatX2 = _isVertical ? Math.round(_width / cellWidth) : Math.ceil(_width / cellWidth);
 				if (_height > 0) _repeatY2 = _isVertical ? Math.ceil(_height / cellHeight) : Math.round(_height / cellHeight);
 				
@@ -489,7 +489,7 @@ package laya.ui {
 		 * 初始化单元格信息。
 		 */
 		public function initItems():void {
-			if (!_itemRender) {
+			if (!_itemRender && getChildByName("item0") != null) {
 				repeatX = 1;
 				var count:int;
 				count = 0;
@@ -518,7 +518,7 @@ package laya.ui {
 			if (_scrollBar) {
 				_content.scrollRect || (_content.scrollRect = new Rectangle());
 				_content.scrollRect.setTo(0, 0, width, height);
-				_content.model&&_content.model.scrollRect(0, 0, width, height);//通知微端
+				_content.model && _content.model.scrollRect(0, 0, width, height);//通知微端
 				event(Event.RESIZE);
 			}
 		}
@@ -560,7 +560,7 @@ package laya.ui {
 		/** @inheritDoc */
 		override protected function changeSize():void {
 			super.changeSize();
-			setContentSize(this.width,this.height);
+			setContentSize(this.width, this.height);
 			if (_scrollBar)
 				Laya.timer.once(10, this, onScrollBarChange);
 		}
@@ -569,7 +569,7 @@ package laya.ui {
 		 * @private
 		 * 滚动条的 <code>Event.CHANGE</code> 事件侦听处理函数。
 		 */
-		protected function onScrollBarChange(e:Event=null):void {
+		protected function onScrollBarChange(e:Event = null):void {
 			runCallLater(changeCells);
 			var scrollValue:Number = _scrollBar.value;
 			var lineX:int = (_isVertical ? this.repeatX : this.repeatY);
@@ -618,11 +618,10 @@ package laya.ui {
 			var r:Rectangle = _content.scrollRect;
 			if (_isVertical) {
 				r.y = scrollValue;
-			}
-			else{
+			} else {
 				r.x = scrollValue;
 			}
-			_content.model&&_content.model.scrollRect(r.x, r.y, r.width, r.height);
+			_content.model && _content.model.scrollRect(r.x, r.y, r.width, r.height);
 			repaint();
 		}
 		
@@ -648,12 +647,12 @@ package laya.ui {
 				event(Event.CHANGE);
 				selectHandler && selectHandler.runWith(value);
 			}
-			
+		
 			//if (selectEnable && _scrollBar) {
-				//var numX:int = _isVertical ? repeatX : repeatY;
-				//if (value < _startIndex || (value + numX > _startIndex + repeatX * repeatY)) {
-					//scrollTo(value);
-				//}
+			//var numX:int = _isVertical ? repeatX : repeatY;
+			//if (value < _startIndex || (value + numX > _startIndex + repeatX * repeatY)) {
+			//scrollTo(value);
+			//}
 			//}
 		}
 		
@@ -910,7 +909,7 @@ package laya.ui {
 		 * @param time	缓动时间。
 		 * @param complete	缓动结束回掉
 		 */
-		public function tweenTo(index:int, time:int = 200,complete:Handler=null):void {
+		public function tweenTo(index:int, time:int = 200, complete:Handler = null):void {
 			if (_scrollBar) {
 				var numX:int = _isVertical ? repeatX : repeatY;
 				Tween.to(_scrollBar, {value: Math.floor(index / numX) * _cellSize}, time, null, complete, 0, true);

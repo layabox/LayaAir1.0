@@ -13,11 +13,11 @@ package PathFinding.finders
 	 */
 	public class BiAStarFinder
 	{
-		private var allowDiagonal:Boolean;
-		private var dontCrossCorners:Boolean;
-		private var diagonalMovement:int;
-		private var heuristic:Function;
-		private var weight:int;
+		public var allowDiagonal:Boolean;
+		public var dontCrossCorners:Boolean;
+		public var diagonalMovement:int;
+		public var heuristic:Function;
+		public var weight:int;
 		
 		/**
 		 * A* path-finder.
@@ -106,7 +106,7 @@ package PathFinding.finders
 			{
 				
 				// pop the position of start node which has the minimum `f` value.
-				node = startOpenList.pop();
+				node = startOpenList.pop() as Node;
 				node.closed = true;
 				
 				// get neigbours of the current node
@@ -156,7 +156,7 @@ package PathFinding.finders
 				} // end for each neighbor
 				
 				// pop the position of end node which has the minimum `f` value.
-				node = endOpenList.pop();
+				node = endOpenList.pop() as Node;
 				node.closed = true;
 				
 				// get neigbours of the current node

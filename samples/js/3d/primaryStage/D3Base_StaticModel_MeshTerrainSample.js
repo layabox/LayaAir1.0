@@ -12,16 +12,16 @@ var back = new Laya.Vector3(0, 0, 0.01);
 var left = new Laya.Vector3(-0.01, 0, 0);
 var right = new Laya.Vector3(0.01, 0, 0);
 
-scene.currentCamera = scene.addChild(new Laya.Camera(0, 0.1, 100));
-scene.currentCamera.transform.translate(new Laya.Vector3(0, 4.2, 2.6));
-scene.currentCamera.transform.rotate(new Laya.Vector3(-45, 0, 0), true, false);
+var camera = scene.addChild(new Laya.Camera(0, 0.1, 100));
+camera.transform.translate(new Laya.Vector3(0, 4.2, 2.6));
+camera.transform.rotate(new Laya.Vector3(-45, 0, 0), true, false);
 
 var terrain = Laya.Mesh.load("../../res/threeDimen/staticModel/simpleScene/B00MP001M-DEFAULT01.lm");
 var terrainSprite = scene.addChild(Laya.MeshTerrainSprite3D.createFromMesh(terrain, 129, 129));
 terrainSprite.transform.localScale = new Laya.Vector3(10, 10, 10);
 terrainSprite.transform.position = new Laya.Vector3(0, 2.6, 1.5);
 terrainSprite.transform.rotationEuler = new Laya.Vector3(0, 0.3, 0.4);
-setMeshParams(terrainSprite, Laya.Material.RENDERMODE_OPAQUE, new Vector4(3.5,3.5,3.5,1.0), new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
+setMeshParams(terrainSprite, Laya.BaseMaterial.RENDERMODE_OPAQUE, new Vector4(3.5,3.5,3.5,1.0), new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
 
 var pathFingding = terrainSprite.addComponent(Laya.PathFind);
 pathFingding.setting = {allowDiagonal: true, dontCrossCorners: false, heuristic: PathFinding.core.Heuristic.manhattan, weight: 1};

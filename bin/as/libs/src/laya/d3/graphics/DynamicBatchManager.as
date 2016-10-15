@@ -1,5 +1,5 @@
 package laya.d3.graphics {
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.scene.BaseScene;
@@ -46,25 +46,25 @@ package laya.d3.graphics {
 		/** @private */
 		public function _finishCombineDynamicBatch(scene:BaseScene):void {
 			_prepareDynamicBatchCombineElements.sort(_sortPrepareDynamicBatch);
-			var lastMaterial:Material;
+			var lastMaterial:BaseMaterial;
 			var lastVertexDeclaration:VertexDeclaration;
 			var lastRenderElement:RenderElement;
 			var lastBatchNumber:int = -1;
 			var lastCanMerage:Boolean = true;
 			
-			var curMaterial:Material;
+			var curMaterial:BaseMaterial;
 			var curRenderElement:RenderElement;
 			var curDynamicBatch:DynamicBatch;
 			var curbatchNumber:int = 0;
 			
-			var laterAddMaterial:Material;
+			var laterAddMaterial:BaseMaterial;
 			var laterAddRenderElement:RenderElement;
 			var laterAddMatToElementOffset:int = -1;
 			
 			for (var i:int = 0, n:int = _prepareDynamicBatchCombineElements.length; i < n; i++) {
 				curRenderElement = _prepareDynamicBatchCombineElements[i];
 				
-				var curDeclaration:VertexDeclaration = curRenderElement.renderObj.getVertexBuffer(0).vertexDeclaration;
+				var curDeclaration:VertexDeclaration = curRenderElement.renderObj._getVertexBuffer(0).vertexDeclaration;
 				var declarationChanged:Boolean = (lastVertexDeclaration !== curDeclaration);
 				declarationChanged && (curbatchNumber = 0, lastVertexDeclaration = curDeclaration);
 				var batchNumbrChanged:Boolean = (curbatchNumber !== lastBatchNumber);
@@ -93,7 +93,7 @@ package laya.d3.graphics {
 							if (laterAddMaterial) {
 								var lastRenderObj:IRenderable = laterAddRenderElement.renderObj;
 								var curRenderObj:IRenderable = curRenderElement.renderObj;
-								if (((lastRenderObj.getVertexBuffer().vertexCount + curRenderObj.getVertexBuffer().vertexCount) > DynamicBatch.maxVertexCount) || ((lastRenderObj.getIndexBuffer().indexCount + curRenderObj.getIndexBuffer().indexCount) > DynamicBatch.maxIndexCount)) {
+								if (((lastRenderObj._getVertexBuffer().vertexCount + curRenderObj._getVertexBuffer().vertexCount) > DynamicBatch.maxVertexCount) || ((lastRenderObj._getIndexBuffer().indexCount + curRenderObj._getIndexBuffer().indexCount) > DynamicBatch.maxIndexCount)) {
 									scene.getRenderQueue(laterAddRenderElement._material.renderQueue)._addRenderElement(laterAddRenderElement);
 									
 									laterAddMaterial = curMaterial;

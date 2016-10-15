@@ -1,7 +1,8 @@
 package laya.d3.core.render {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.graphics.RenderCullingObject;
 	import laya.d3.graphics.StaticBatch;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -13,7 +14,7 @@ package laya.d3.core.render {
 	
 	/**
 	 * @private
-	 * <code>RenderObject</code> 类用于实现渲染物体。
+	 * <code>RenderElement</code> 类用于实现渲染物体。
 	 */
 	public class RenderElement {
 		/** @private */
@@ -31,10 +32,12 @@ package laya.d3.core.render {
 		public var _type:int = 0;
 		/** @private 排序ID。*/
 		public var _mainSortID:int;
+		/** @private */
+		public var _renderCullingObject:RenderCullingObject
 		/** @private 所属Sprite3D精灵。*/
 		public var _sprite3D:Sprite3D;
 		/** @private 渲染所用材质。*/
-		public var _material:Material;
+		public var _material:BaseMaterial;
 		/** @private 渲染元素。*/
 		private var _renderObj:IRenderable;
 				
@@ -56,7 +59,7 @@ package laya.d3.core.render {
 		}
 		
 		/**
-		 * 创建一个 <code>RenderObject</code> 实例。
+		 * 创建一个 <code>RenderElement</code> 实例。
 		 */
 		public function RenderElement() {
 		}
@@ -66,12 +69,12 @@ package laya.d3.core.render {
 		 */
 		public function getStaticBatchBakedVertexs(index:int):Float32Array {
 			const byteSizeInFloat:int = 4;
-			var vb:VertexBuffer3D = _renderObj.getVertexBuffer(index);
+			var vb:VertexBuffer3D = _renderObj._getVertexBuffer(index);
 			var bakedVertexes:Float32Array = vb.getData().slice() as Float32Array;
 			
 			var vertexDeclaration:VertexDeclaration = vb.vertexDeclaration;
-			var positionOffset:int = vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / byteSizeInFloat;
-			var normalOffset:int = vertexDeclaration.shaderAttribute[VertexElementUsage.NORMAL0][4] / byteSizeInFloat;
+			var positionOffset:int = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.POSITION0).offset / byteSizeInFloat;
+			var normalOffset:int = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.NORMAL0).offset / byteSizeInFloat;
 			
 			var rootTransform:Matrix4x4 = _staticBatch._rootSprite.transform.worldMatrix;
 			var transform:Matrix4x4 = _sprite3D.transform.worldMatrix;
@@ -99,12 +102,12 @@ package laya.d3.core.render {
 		 */
 		public function getDynamicBatchBakedVertexs(index:int):Float32Array {
 			const byteSizeInFloat:int = 4;
-			var vb:VertexBuffer3D = _renderObj.getVertexBuffer(index);
+			var vb:VertexBuffer3D = _renderObj._getVertexBuffer(index);
 			var bakedVertexes:Float32Array = vb.getData().slice() as Float32Array;
 			
 			var vertexDeclaration:VertexDeclaration = vb.vertexDeclaration;
-			var positionOffset:int = vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / byteSizeInFloat;
-			var normalOffset:int = vertexDeclaration.shaderAttribute[VertexElementUsage.NORMAL0][4] / byteSizeInFloat;
+			var positionOffset:int = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.POSITION0).offset / byteSizeInFloat;
+			var normalOffset:int = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.NORMAL0).offset / byteSizeInFloat;
 			
 			var transform:Transform3D = _sprite3D.transform;
 			var worldMatrix:Matrix4x4 = transform.worldMatrix;
@@ -124,7 +127,7 @@ package laya.d3.core.render {
 		 * @private
 		 */
 		public function getBakedIndices():* {
-			return _renderObj.getIndexBuffer().getData();
+			return _renderObj._getIndexBuffer().getData();
 		}
 	
 	}

@@ -220,7 +220,7 @@ package laya.display {
 		override public function get width():Number {
 			if (_width)
 				return _width;
-			return textWidth;
+			return textWidth + padding[1] + padding[3];
 		}
 		
 		override public function set width(value:Number):void {
@@ -243,7 +243,7 @@ package laya.display {
 		 */
 		override public function get height():Number {
 			if (_height) return _height;
-			return textHeight;
+			return textHeight + padding[0] + padding[2];
 		}
 		
 		override public function set height(value:Number):void {

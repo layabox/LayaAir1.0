@@ -37,9 +37,8 @@ package threeDimen.primaryStage {
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			
 			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
-			scene.currentCamera = camera;
-			scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.5));
-			scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+			camera.transform.translate(new Vector3(0, 0.8, 1.5));
+			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			
 			var mesh:MeshSprite3D = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm"))) as MeshSprite3D;
 			mesh.transform.localScale = new Vector3(0.5, 0.5, 0.5);

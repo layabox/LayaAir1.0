@@ -39,12 +39,12 @@ package laya.ani.bone {
 		}
 		
 		private function _applyIk1(bone:Bone, targetX:Number, targetY:Number, alpha:Number):void {
-			var pp:Bone = bone._parent;
+			var pp:Bone = bone.parentBone;
 			var id:Number = 1 / (pp.resultMatrix.a * pp.resultMatrix.d - pp.resultMatrix.b * pp.resultMatrix.c);
 			var x:Number = targetX - pp.resultMatrix.tx;
 			var y:Number = targetY - pp.resultMatrix.ty;
-			var tx:Number = (x * pp.resultMatrix.d - y * pp.resultMatrix.b) * id - bone.transform.x;
-			var ty:Number = (y * pp.resultMatrix.a - x * pp.resultMatrix.c) * id - bone.transform.y;
+			var tx:Number = (x * pp.resultMatrix.d - y * pp.resultMatrix.c) * id - bone.transform.x;
+			var ty:Number = (y * pp.resultMatrix.a - x * pp.resultMatrix.b) * id - bone.transform.y;
 			var rotationIK:Number = Math.atan2(ty, tx) * radDeg - 0 - bone.transform.skX;
 			if (bone.transform.scX < 0) rotationIK += 180;
 			if (rotationIK > 180)
@@ -58,7 +58,7 @@ package laya.ani.bone {
 			if (alpha == 0) {
 				return;
 			}
-			var px:Number = parent.transform.x, py:Number = parent.transform.y;
+			var px:Number = parent.resultTransform.x, py:Number = parent.resultTransform.y;
 			var psx:Number = parent.transform.scX, psy:Number = parent.transform.scY;
 			var csx:Number = child.transform.scX;
 			var os1:int, os2:int, s2:int;
@@ -80,9 +80,9 @@ package laya.ani.bone {
 			} else {
 				os2 = 0
 			}
-			var cx:Number = child.transform.x, cy:Number, cwx:Number, cwy:Number;
-			var a:Number = parent.resultMatrix.a, b:Number = parent.resultMatrix.b;
-			var c:Number = parent.resultMatrix.c, d:Number = parent.resultMatrix.d;
+			var cx:Number = child.resultTransform.x, cy:Number, cwx:Number, cwy:Number;
+			var a:Number = parent.resultMatrix.a, b:Number = parent.resultMatrix.c;
+			var c:Number = parent.resultMatrix.b, d:Number = parent.resultMatrix.d;
 			var u:Boolean = Math.abs(psx - psy) <= 0.0001;
 			//求子骨骼的世界坐标点
 			if (!u) {
@@ -94,10 +94,10 @@ package laya.ani.bone {
 				cwx = a * cx + b * cy + parent.resultMatrix.tx;
 				cwy = c * cx + d * cy + parent.resultMatrix.ty;
 			}
-			var pp:Bone = parent._parent;
+			var pp:Bone = parent.parentBone;
 			a = pp.resultMatrix.a;
-			b = pp.resultMatrix.b;
-			c = pp.resultMatrix.c;
+			b = pp.resultMatrix.c;
+			c = pp.resultMatrix.b;
 			d = pp.resultMatrix.d;
 			//逆因子
 			var id:Number = 1 / (a * d - b * c);
@@ -186,7 +186,7 @@ package laya.ani.bone {
 				}
 			}
 			var os:Number = Math.atan2(cy, cx) * s2;
-			var rotation:Number = parent.transform.skX;
+			var rotation:Number = parent.resultTransform.skX;
 			a1 = (a1 - os) * radDeg + os1 - rotation;
 			if (a1 > 180)
 				a1 -= 360;
@@ -194,7 +194,7 @@ package laya.ani.bone {
 			parent.resultTransform.x = px;
 			parent.resultTransform.y = py;
 			parent.resultTransform.skX = parent.resultTransform.skY = rotation + a1 * alpha;
-			rotation = child.transform.skX;
+			rotation = child.resultTransform.skX;
 			rotation = rotation % 360;
 			a2 = ((a2 + os) * radDeg - 0) * s2 + os2 - rotation;
 			if (a2 > 180)

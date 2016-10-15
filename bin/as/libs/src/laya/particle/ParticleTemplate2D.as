@@ -33,7 +33,7 @@ package laya.particle
 		
 
 		
-		public function ParticleTemplate2D(parSetting:ParticleSettings)
+		public function ParticleTemplate2D(parSetting:ParticleSetting)
 		{
 			super(parSetting);
 			var _this:ParticleTemplate2D = this;

@@ -15,7 +15,7 @@ class VRCameraMoveScript extends Laya.Script {
     public _initialize(owner: Laya.Sprite3D): void {
         super._initialize(owner);
 
-        this.camera = owner.scene.currentCamera as Laya.VRCamera;
+        this.camera = owner as Laya.VRCamera;
 
         this.camera.on(Laya.Event.COMPONENT_ADDED, this, function (component: Laya.Component3D): void {
             if (component instanceof Laya.CameraAnimations)
@@ -61,6 +61,6 @@ class VRCameraMoveScript extends Laya.Script {
     }
 
     protected updateRotation(): void {
-        this._owner.scene.currentCamera.transform.localRotation = this.camera.transform.localRotation;
+        this.camera.transform.localRotation = this.camera.transform.localRotation;
     }
 }

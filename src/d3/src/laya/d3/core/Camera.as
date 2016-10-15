@@ -9,7 +9,7 @@ package laya.d3.core {
 	import laya.d3.utils.Size;
 	
 	/**
-	 * <code>Camera</code> 类用于创建普通摄像机。
+	 * <code>Camera</code> 类用于创建摄像机。
 	 */
 	public class Camera extends BaseCamera {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/

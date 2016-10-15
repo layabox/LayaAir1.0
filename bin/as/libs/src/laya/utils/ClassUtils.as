@@ -1,6 +1,5 @@
 package laya.utils {
 	import laya.display.Graphics;
-	import laya.display.Graphics;
 	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.maths.Matrix;
@@ -280,7 +279,7 @@ package laya.utils {
 			var m:Matrix;
 			
 			var params:* = _getParams(propsO, drawConfig[1], drawConfig[2], drawConfig[3]);
-			m = params.m;
+			m = _tM;
 			if (m) {
 				g.save();
 				g.transform(m);
@@ -329,6 +328,10 @@ package laya.utils {
 		/**
 		 * @private
 		 */
+		private static var _tM:Matrix;
+		/**
+		 * @private
+		 */
 		private static function _getParams(obj:Object, params:Array, xPos:int = 0, adptFun:String = null):Array {
 			var rst:*;//Array
 			rst = _temParam;
@@ -346,10 +349,10 @@ package laya.utils {
 				
 				m.translate(rst[xPos], rst[xPos + 1]);
 				rst[xPos] = rst[xPos + 1] = 0;
-				rst.m = m;
+				_tM = m;
 				
 			} else {
-				rst.map = null;
+				_tM = null;
 			}
 			if (adptFun && ClassUtils[adptFun]) {
 				rst = ClassUtils[adptFun](rst);

@@ -15,11 +15,12 @@ package laya.d3.shader
 		public static const AMBIENTMAP:int = 0x10;
 		public static const REFLECTMAP:int = 0x40000;
 		public static const VR:int = 0x80000;
-		public static const FSHIGHPRECISION:int = 0x100000;//最大
+		public static const FSHIGHPRECISION:int = 0x100000;
 		public static const UVTRANSFORM:int = 0x4000;
 		public static const MIXUV:int = 0x10000;
 		public static const FOG:int = 0x20000;
 		
+		public static const UV:int =0x200000;//最大
 		public static const COLOR:int = 0x20;
 		public static const DIRECTIONLIGHT:int = 0x40;
 		public static const POINTLIGHT:int = 0x80;
@@ -52,6 +53,7 @@ package laya.d3.shader
 			reg("PARTICLE3D", PARTICLE3D);
 			
 			reg("COLOR", COLOR);
+			reg("UV", UV);
 			reg("VERTEXSHADERING", VERTEXSHADERING);
 			reg("PIXELSHADERING", PIXELSHADERING);
 			reg("SKINNED", SKINNED);

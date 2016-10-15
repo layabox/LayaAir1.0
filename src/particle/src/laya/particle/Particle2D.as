@@ -28,7 +28,7 @@ package laya.particle {
 		 * 创建一个新的 <code>Particle2D</code> 类实例。
 		 * @param setting 粒子配置数据
 		 */
-		public function Particle2D(setting:ParticleSettings) {
+		public function Particle2D(setting:ParticleSetting) {
 			if (setting) setParticleSetting(setting);
 		}
 		
@@ -52,9 +52,9 @@ package laya.particle {
 		 * 设置粒子配置数据
 		 * @param settings 粒子配置数据
 		 */
-		public function setParticleSetting(setting:ParticleSettings):void {
+		public function setParticleSetting(setting:ParticleSetting):void {
 			if (!setting) return stop();
-			ParticleSettings.checkSetting(setting);
+			ParticleSetting.checkSetting(setting);
 			//_renderType |= RenderSprite.CUSTOM;
 			customRenderEnable = true;//设置custom渲染
 			if (Render.isWebGL) {

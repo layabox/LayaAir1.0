@@ -200,8 +200,14 @@ package laya.ui {
 		}
 		
 		public function set skin(value:String):void {
-			_skin = value;
-			_setClipChanged()
+			if (_skin != value) {
+				_skin = value;
+				if (value) {
+					_setClipChanged()
+				} else {
+					_bitmap.source = null;
+				}
+			}
 		}
 		
 		/**X轴（横向）切片数量。*/
@@ -254,6 +260,7 @@ package laya.ui {
 		 */
 		protected function changeClip():void {
 			_clipChanged = false;
+			if (!_skin) return;
 			var img:* = Loader.getRes(_skin);
 			if (img) {
 				loadComplete(_skin, img);

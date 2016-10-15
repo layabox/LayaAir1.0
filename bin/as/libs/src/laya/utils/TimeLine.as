@@ -327,7 +327,7 @@ package laya.utils {
 					//创建TWEEN
 					if (tTweenData.type == 0) {
 						_gidIndex++;
-						tTween = new Tween();
+						tTween = Pool.getItemByClass("tween", Tween);
 						tTween._create(tTweenData.target, tTweenData.data, tTweenData.duration, tTweenData.ease, new Handler(this, _animComplete, [_gidIndex]), 0, false, tTweenData.isTo, true, false);
 						tTween.setStartTime(tCurrTime);
 						tTween.gid = _gidIndex;

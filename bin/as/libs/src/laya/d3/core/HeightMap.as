@@ -8,7 +8,6 @@ package laya.d3.core {
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
 	import laya.d3.utils.Picker;
-	import laya.resource.Texture;
 	import laya.utils.Browser;
 	
 	/**
@@ -32,7 +31,7 @@ package laya.d3.core {
 			var submesheCount:int = mesh.getSubMeshCount();
 			for (var i:int = 0; i < submesheCount; i++) {
 				var subMesh:SubMesh = mesh.getSubMesh(i);
-				var vertexBuffer:VertexBuffer3D = subMesh.getVertexBuffer();
+				var vertexBuffer:VertexBuffer3D = subMesh._getVertexBuffer();
 				var verts:Float32Array = vertexBuffer.getData();
 				var subMeshVertices:Vector.<Vector3> = new Vector.<Vector3>();
 				
@@ -42,7 +41,7 @@ package laya.d3.core {
 				}
 				vertices.push(subMeshVertices);
 				
-				var ib:IndexBuffer3D = subMesh.getIndexBuffer();
+				var ib:IndexBuffer3D = subMesh._getIndexBuffer();
 				indexs.push(ib.getData());
 			}
 			
@@ -95,17 +94,14 @@ package laya.d3.core {
 		 * @param maxHeight 最小高度。
 		 * @param maxHeight 最大高度。
 		 */
-		public static function createFromImage(texture:Texture, minHeight:Number, maxHeight:Number):HeightMap {
-			
-			
-			var textureWidth:Number = texture.sourceWidth;
-			var textureHeight:Number = texture.sourceHeight;
+		public static function createFromImage(texture:*, minHeight:Number, maxHeight:Number):HeightMap {//TODO:texture类型，临时修复
+			var textureWidth:Number = texture.width;
+			var textureHeight:Number = texture.height;
 			var heightMap:HeightMap = new HeightMap(textureWidth, textureHeight, minHeight, maxHeight);
 			var compressionRatio:Number = (maxHeight - minHeight) / 254;
 			
 			Browser.canvas.size(textureWidth, textureHeight);
-			Browser.context.drawImage(texture.bitmap.image, 0, 0,textureWidth,textureHeight);
-			
+			Browser.context.drawImage(texture._image, 0, 0,textureWidth,textureHeight);
 			var pixelsInfo:* = Browser.context.getImageData(0, 0, textureWidth, textureHeight).data;
 			
 			var index:int = 0;

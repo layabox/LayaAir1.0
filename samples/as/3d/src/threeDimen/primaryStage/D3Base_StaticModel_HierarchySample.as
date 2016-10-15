@@ -3,7 +3,8 @@ package threeDimen.primaryStage {
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector3;
@@ -27,9 +28,9 @@ package threeDimen.primaryStage {
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			scene.currentCamera = (scene.addChild(new Camera( 0, 0.1, 100))) as Camera;
-			scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.5));
-			scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+			var camera:Camera= (scene.addChild(new Camera( 0, 0.1, 100))) as Camera;
+			camera.transform.translate(new Vector3(0, 0.8, 1.5));
+			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			
             //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 			var staticMesh:Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;
@@ -38,8 +39,8 @@ package threeDimen.primaryStage {
 				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
 				mesh.once(Event.LOADED, null, function(mesh:BaseMesh):void {
 					for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-						var material:Material = meshSprite.meshRender.sharedMaterials[i];
-						material.once(Event.LOADED, null, function(mat:Material):void{
+						var material:StandardMaterial = meshSprite.meshRender.sharedMaterials[i]  as  StandardMaterial;
+						material.once(Event.LOADED, null, function(mat:StandardMaterial):void{
 								mat.albedo = new  Vector4(3.5,3.5,3.5,1.0);                              
 						});
 					}

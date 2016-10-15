@@ -245,7 +245,6 @@ package laya.ani.bone {
 		 * 传递STOP事件
 		 */
 		private function _onStop():void {
-			this.event(Event.STOPPED);
 			//把没播的事件播完
 			var tEventData:EventData;
 			var tEventAniArr:Array = _templet.eventAniArr;
@@ -255,11 +254,15 @@ package laya.ani.bone {
 				for (; _eventIndex < tEventArr.length; _eventIndex++)
 				{
 					tEventData = tEventArr[_eventIndex];
-					this.event(Event.LABEL,tEventData);
+					if (tEventData.time >= _player.playStart && tEventData.time <= _player.playEnd)
+					{
+						this.event(Event.LABEL,tEventData);
+					}
 				}
 			}
 			_eventIndex = 0;
 			_drawOrder = null;
+			this.event(Event.STOPPED);
 		}
 		
 		/**
@@ -324,10 +327,13 @@ package laya.ani.bone {
 			if (tEventArr && _eventIndex < tEventArr.length)
 			{
 				tEventData = tEventArr[_eventIndex];
-				if (_player.currentPlayTime > tEventData.time)
+				if (tEventData.time >= _player.playStart && tEventData.time <= _player.playEnd)
 				{
-					this.event(Event.LABEL,tEventData);
-					_eventIndex++;
+					if (_player.currentPlayTime >= tEventData.time)
+					{
+						this.event(Event.LABEL,tEventData);
+						_eventIndex++;
+					}
 				}
 			}
 			if (_aniClipIndex == -1) return;
@@ -366,7 +372,7 @@ package laya.ani.bone {
 			{
 				_drawOrderIndex = 0;
 				tDrawOrderData = tDrawOrderArr[_drawOrderIndex];
-				while ( _player.currentPlayTime > tDrawOrderData.time)
+				while ( _player.currentPlayTime >= tDrawOrderData.time)
 				{
 					_drawOrder = tDrawOrderData.drawOrder;
 					_drawOrderIndex++;
@@ -525,6 +531,7 @@ package laya.ani.bone {
 					}
 				}
 			}
+			var tDeformDic:Object = { };
 			//变形动画作用器
 			var tDeformAniArr:Array = _templet.deformAniArr;
 			var tDeformAniData:DeformAniData;
@@ -550,14 +557,19 @@ package laya.ani.bone {
 						tDeformSlotDisplayData = tDeformSlotData.deformSlotDisplayList[j];
 						tDBBoneSlot = _boneSlotArray[tDeformSlotDisplayData.slotIndex];
 						tDeformSlotDisplayData.apply(_player.currentPlayTime, tDBBoneSlot);
+						if (isNaN(tDeformDic[tDeformSlotDisplayData.slotIndex]))
+						{
+							tDeformDic[tDeformSlotDisplayData.slotIndex] = { };
+						}
+						tDeformDic[tDeformSlotDisplayData.slotIndex][tDeformSlotDisplayData.attachment] = tDeformSlotDisplayData.deformData;
 					}
 				}
 			}
 			
-			//_rootBone.updateDraw(300,800);
+			//_rootBone.updateDraw(this.x,this.y);
 			var tSlotData2:Number;
 			var tSlotData3:Number;
-			
+			var tObject:Object;
 			//把动画按插槽顺序画出来
 			if (_drawOrder)
 			{
@@ -571,6 +583,18 @@ package laya.ani.bone {
 					}
 					if (!isNaN(tSlotData2)) {
 						tDBBoneSlot.showDisplayByIndex(tSlotData2);
+					}
+					if (tDeformDic[_drawOrder[i]])
+					{
+						tObject = tDeformDic[_drawOrder[i]];
+						if (tDBBoneSlot.currDisplayData && tObject[tDBBoneSlot.currDisplayData.attachmentName])
+						{
+							tDBBoneSlot.deformData = tObject[tDBBoneSlot.currDisplayData.attachmentName];
+						}else {
+							tDBBoneSlot.deformData = null;
+						}
+					}else {
+						tDBBoneSlot.deformData = null;
 					}
 					if (!isNaN(tSlotData3)) {
 						tDBBoneSlot.draw(tGraphics, _boneMatrixArray, _aniMode == 2,tSlotData3);
@@ -592,6 +616,18 @@ package laya.ani.bone {
 					}
 					if (!isNaN(tSlotData2)) {
 						tDBBoneSlot.showDisplayByIndex(tSlotData2);
+					}
+					if (tDeformDic[i])
+					{
+						tObject = tDeformDic[i];
+						if (tDBBoneSlot.currDisplayData && tObject[tDBBoneSlot.currDisplayData.attachmentName])
+						{
+							tDBBoneSlot.deformData = tObject[tDBBoneSlot.currDisplayData.attachmentName];
+						}else {
+							tDBBoneSlot.deformData = null;
+						}
+					}else {
+						tDBBoneSlot.deformData = null;
 					}
 					if (!isNaN(tSlotData3)) {
 						tDBBoneSlot.draw(tGraphics, _boneMatrixArray, _aniMode == 2,tSlotData3);
@@ -700,8 +736,10 @@ package laya.ani.bone {
 		 * @param	nameOrIndex	动画名字或者索引
 		 * @param	loop		是否循环播放
 		 * @param	force		false,如果要播的动画跟上一个相同就不生效,true,强制生效
+		 * @param	start		起始时间
+		 * @param	end			结束时间
 		 */
-		public function play(nameOrIndex:*, loop:Boolean, force:Boolean = true):void {
+		public function play(nameOrIndex:*, loop:Boolean, force:Boolean = true, start:int = 0, end:int = 0):void {
 			_indexControl = false;
 			var index:int = -1;
 			var duration:Number;
@@ -726,7 +764,7 @@ package laya.ani.bone {
 					_currAniIndex = index;
 					_curOriginalData = new Float32Array(_templet.getTotalkeyframesLength(index));
 					_drawOrder = null;
-					_player.play(index, _player.playbackRate, duration);
+					_player.play(index, _player.playbackRate, duration, start, end);
 					this._templet.showSkinByIndex(_boneSlotDic, _skinIndex);
 					if (_pause) {
 						_pause = false;

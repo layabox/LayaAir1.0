@@ -1,16 +1,21 @@
 package laya.d3.core.glitter {
 	import laya.d3.core.GlitterRender;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.GlitterMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Vector3;
+	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.tempelet.GlitterTemplet;
 	import laya.display.Node;
 	import laya.events.Event;
+	import laya.net.Loader;
+	import laya.utils.Handler;
 	import laya.utils.Stat;
+	import laya.webgl.resource.WebGLImage;
 	
 	/**
 	 * <code>Glitter</code> 类用于创建闪光。
@@ -41,15 +46,24 @@ package laya.d3.core.glitter {
 		 * 创建一个 <code>Glitter</code> 实例。
 		 *  @param	settings 配置信息。
 		 */
-		public function Glitter(settings:GlitterSettings) {//暂不支持更换模板和初始化后修改混合状态。
+		public function Glitter(setting:GlitterSetting) {//暂不支持更换模板和初始化后修改混合状态。
 			_glitterRender = new GlitterRender(this);
 			_glitterRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
-			var material:Material = new Material();
-			_glitterRender.sharedMaterial = material;
-			_templet = new GlitterTemplet(this, settings);
+			var material:GlitterMaterial = new GlitterMaterial();
+			material.setShaderName("GLITTER");
 			
-			material.renderMode = Material.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
+			if (setting.texturePath)//预设纹理ShaderValue
+			{
+				Laya.loader.load(setting.texturePath, Handler.create(null, function(texture:Texture2D):void {
+					material.diffuseTexture = texture;
+				}), null, Loader.TEXTURE2D);
+			}
+			
+			_glitterRender.sharedMaterial = material;
+			_templet = new GlitterTemplet(this, setting);
+			
+			material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
 			
 			_changeRenderObject(0);
 		
@@ -61,9 +75,10 @@ package laya.d3.core.glitter {
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
+			renderElement._renderCullingObject = _glitterRender.renderCullingObject;
 			
-			var material:Material = _glitterRender.sharedMaterials[index];
-			(material) || (material = Material.defaultMaterial);//确保有材质,由默认材质代替。
+			var material:BaseMaterial = _glitterRender.sharedMaterials[index];
+			(material) || (material = GlitterMaterial.defaultMaterial);//确保有材质,由默认材质代替。
 			
 			var element:IRenderable = _templet;
 			renderElement._mainSortID = 0;
@@ -75,7 +90,7 @@ package laya.d3.core.glitter {
 		}
 		
 		/** @private */
-		private function _onMaterialChanged(_glitterRender:GlitterRender,index:int, material:Material):void {
+		private function _onMaterialChanged(_glitterRender:GlitterRender, index:int, material:BaseMaterial):void {
 			var renderElementCount:int = _glitterRender.renderCullingObject._renderElements.length;
 			(index < renderElementCount) && _changeRenderObject(index);
 		}
@@ -87,7 +102,7 @@ package laya.d3.core.glitter {
 		
 		/** @private */
 		override protected function _addSelfRenderObjects():void {
-			(scene) && (scene.addFrustumCullingObject(_glitterRender.renderCullingObject));
+			scene.addFrustumCullingObject(_glitterRender.renderCullingObject);
 		}
 		
 		/**
@@ -96,6 +111,7 @@ package laya.d3.core.glitter {
 		 * @param	state 渲染状态参数。
 		 */
 		public override function _update(state:RenderState):void {
+			_templet._update(state.elapsedTime);
 			state.owner = this;
 			
 			Stat.spriteCount++;

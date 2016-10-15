@@ -1,5 +1,5 @@
 package laya.d3.core {
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
@@ -9,10 +9,10 @@ package laya.d3.core {
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
+	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
 	import laya.events.Event;
-	import laya.resource.Texture;
 	import laya.utils.Stat;
 	
 	/**
@@ -47,7 +47,7 @@ package laya.d3.core {
 		 * @param image 高度图。
 		 * @param name 名字。
 		 */
-		public static function createFromMeshAndHeightMap(mesh:Mesh, texture:Texture, minHeight:Number, maxHeight:Number, name:String = null):MeshTerrainSprite3D {
+		public static function createFromMeshAndHeightMap(mesh:Mesh, texture:Texture2D, minHeight:Number, maxHeight:Number, name:String = null):MeshTerrainSprite3D {
 			var meshTerrainSprite3D:MeshTerrainSprite3D = new MeshTerrainSprite3D(mesh, null, name);
 			
 			if (mesh.loaded)
@@ -167,14 +167,14 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		private function _createFromMeshAndHeightMapMeshLoaded(sender:Mesh, texture:Texture, minHeight:Number, maxHeight:Number):void {
+		private function _createFromMeshAndHeightMapMeshLoaded(sender:Mesh, texture:Texture2D, minHeight:Number, maxHeight:Number):void {
 			_initCreateFromMeshHeightMap(texture, minHeight, maxHeight);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _initCreateFromMeshHeightMap(texture:Texture, minHeight:Number, maxHeight:Number):void {
+		private function _initCreateFromMeshHeightMap(texture:Texture2D, minHeight:Number, maxHeight:Number):void {
 			var boundingBox:BoundBox = meshFilter.sharedMesh.boundingBox;
 			
 			if (texture.loaded) {

@@ -2,7 +2,7 @@ package threeDimen.advancedStage {
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Camera;
 	import laya.d3.core.glitter.Glitter;
-	import laya.d3.core.glitter.GlitterSettings;
+	import laya.d3.core.glitter.GlitterSetting;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
@@ -19,6 +19,7 @@ package threeDimen.advancedStage {
 		private var glitter:Glitter;
 		private var sampler:GlitterStripSampler = new GlitterStripSampler();
 		private var scene:Scene;
+		private var camera:Camera;
 		
 		public function D3Advance_GlitterSample() {
 			Laya3D.init(0, 0,true);
@@ -28,11 +29,11 @@ package threeDimen.advancedStage {
 			
 			scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			scene.currentCamera = (scene.addChild(new Camera(0, 1, 1000))) as BaseCamera;
-			scene.currentCamera.transform.translate(new Vector3(0, 5, 10));
-			scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+			camera = scene.addChild(new Camera(0, 1, 1000)) as Camera;
+			camera.transform.translate(new Vector3(0, 5, 10));
+			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			
-			var setting:GlitterSettings = new GlitterSettings();
+			var setting:GlitterSetting = new GlitterSetting();
 			setting.texturePath = "../../../../res/threeDimen/layabox.png";
 			setting.lifeTime = 0.5;
 			setting.minSegmentDistance = 0.1;//最小距离，小于抛弃
@@ -47,7 +48,7 @@ package threeDimen.advancedStage {
 		}
 		
 		private function loop():void {
-			var projectViewMat:Matrix4x4 = (scene.currentCamera as Camera).projectionViewMatrix;
+			var projectViewMat:Matrix4x4 = camera.projectionViewMatrix;
 			sampler.getSampleP4();
 			glitter.addGlitterByPositions(sampler.pos1, sampler.pos2);
 		}

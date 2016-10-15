@@ -10,12 +10,12 @@ class ScriptAndCameraSample {
 
 		var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
-		scene.currentCamera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
-		scene.currentCamera.transform.translate(new Laya.Vector3(0, 0.8, 1.0));
-		scene.currentCamera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
-		scene.currentCamera.clearColor = null;
+		var camera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
+		camera.transform.translate(new Laya.Vector3(0, 1.8, 2.0));
+		camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
+		camera.clearColor = null;
 
-		scene.currentCamera.addComponent(CameraMoveScript);
+		camera.addComponent(CameraMoveScript);
 
 		var pointLight = scene.addChild(new Laya.PointLight()) as Laya.PointLight;
 		pointLight.transform.position = new Laya.Vector3(0, 0.6, 0.3);

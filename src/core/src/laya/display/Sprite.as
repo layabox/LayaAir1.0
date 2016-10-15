@@ -1194,7 +1194,8 @@ package laya.display {
 			_set$P("hitArea", value);
 		}
 		
-		/**遮罩，可以设置一个对象或者图片，根据对象形状进行遮罩显示。*/
+		/**遮罩，可以设置一个对象或者图片，根据对象形状进行遮罩显示。
+		 *【注意】遮罩对象坐标系是相对遮罩对象本身的，这个和flash机制不同*/
 		public function get mask():Sprite {
 			return this._$P._mask;
 		}

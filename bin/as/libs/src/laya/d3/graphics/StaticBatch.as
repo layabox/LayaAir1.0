@@ -1,7 +1,7 @@
 package laya.d3.graphics {
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
@@ -30,7 +30,7 @@ package laya.d3.graphics {
 				var renderElements:Vector.<RenderElement> = (sprite3D as MeshSprite3D).meshRender.renderCullingObject._renderElements;
 				for (i = 0, n = renderElements.length; i < n; i++) {
 					var renderElement:RenderElement = renderElements[i];
-					if (renderElement.renderObj.VertexBufferCount === 1)//VertexBufferCount必须等于1
+					if (renderElement.renderObj._vertexBufferCount === 1)//VertexBufferCount必须等于1
 						scene._staticBatchManager._addPrepareRenderElement(renderElement);
 				}
 			}
@@ -52,9 +52,6 @@ package laya.d3.graphics {
 			scene._staticBatchManager._finishCombineStaticBatch(staticBatchRoot);
 		}
 		
-		public var _vertexDeclaration:VertexDeclaration;
-		public var _material:Material;
-		
 		private var _vertexBuffer:VertexBuffer3D;
 		private var _indexBuffer:IndexBuffer3D;
 		private var _renderElements:Vector.<RenderElement>;
@@ -69,31 +66,22 @@ package laya.d3.graphics {
 		private var _needFinishCombine:Boolean;
 		
 		public var _rootSprite:Sprite3D;
+		public var _vertexDeclaration:VertexDeclaration;
+		public var _material:BaseMaterial;
+		
+		public function get _vertexBufferCount():int {
+			return 1;
+		}
 		
 		public function get indexOfHost():int {
 			return 0;
-		}
-		
-		public function get VertexBufferCount():int {
-			return 1;
 		}
 		
 		public function get triangleCount():int {
 			return _indexBuffer.indexCount / 3;
 		}
 		
-		public function getVertexBuffer(index:int = 0):VertexBuffer3D {
-			if (index === 0)
-				return _vertexBuffer;
-			else
-				return null;
-		}
-		
-		public function getIndexBuffer():IndexBuffer3D {
-			return _indexBuffer;
-		}
-		
-		public function StaticBatch(rootSprite:Sprite3D, vertexDeclaration:VertexDeclaration, material:Material) {
+		public function StaticBatch(rootSprite:Sprite3D, vertexDeclaration:VertexDeclaration, material:BaseMaterial) {
 			_currentCombineVertexCount = 0;
 			_currentCombineIndexCount = 0;
 			_needFinishCombine = false;
@@ -108,17 +96,32 @@ package laya.d3.graphics {
 			_material = material;
 		}
 		
-		private function _getShader(state:RenderState, vertexBuffer:VertexBuffer3D, material:Material):Shader {
-			if (!material)
+		private function _testTangent(state:RenderState):void {
+			//var vb:VertexBuffer3D = _vertexBuffer;
+			//var vertexDeclaration:VertexDeclaration = vb.vertexDeclaration;
+			//var material:BaseMaterial = state.renderElement._material;
+			//if (material.normalTexture && !vertexDeclaration.shaderAttribute[VertexElementUsage.TANGENT0]) {
+				////是否放到事件触发。
+				//var vertexDatas:Float32Array = vb.getData();
+				//var newVertexDatas:Float32Array = Utils3D.generateTangent(vertexDatas, vertexDeclaration.vertexStride / 4, vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / 4, vertexDeclaration.shaderAttribute[VertexElementUsage.TEXTURECOORDINATE0][4] / 4, _indexBuffer.getData());
+				//vertexDeclaration = Utils3D.getVertexTangentDeclaration(vertexDeclaration.getVertexElements());
+				//
+				//var newVB:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, WebGLContext.STATIC_DRAW);
+				//newVB.setData(newVertexDatas);
+				//vb.dispose();
+				//_vertexBuffer = newVB;
+			//}
+		}
+		
+		public function _getVertexBuffer(index:int = 0):VertexBuffer3D {
+			if (index === 0)
+				return _vertexBuffer;
+			else
 				return null;
-			var def:int = 0;
-			var shaderAttribute:* = vertexBuffer.vertexDeclaration.shaderAttribute;
-			(shaderAttribute.UV) && (def |= material.shaderDef);
-			(shaderAttribute.COLOR) && (def |= ShaderDefines3D.COLOR);
-			(state.scene.enableFog) && (def |= ShaderDefines3D.FOG);
-			def > 0 && state.shaderDefs.addInt(def);
-			var shader:Shader = material.getShader(state);
-			return shader;
+		}
+		
+		public function _getIndexBuffer():IndexBuffer3D {
+			return _indexBuffer;
 		}
 		
 		private function _getCombineRenderElementFromPool():RenderElement {
@@ -128,7 +131,7 @@ package laya.d3.graphics {
 		
 		public function _addCombineRenderObjTest(renderElement:RenderElement):Boolean {
 			var renderObj:IRenderable = renderElement.renderObj;
-			var vertexCount:int = _currentCombineVertexCount + renderObj.getVertexBuffer().vertexCount;
+			var vertexCount:int = _currentCombineVertexCount + renderObj._getVertexBuffer().vertexCount;
 			if (vertexCount > maxVertexCount) {
 				return false;
 			}
@@ -139,8 +142,8 @@ package laya.d3.graphics {
 			var renderObj:IRenderable = renderElement.renderObj;
 			_combineRenderElements.push(renderElement);
 			renderElement._staticBatch = this;
-			_currentCombineIndexCount = _currentCombineIndexCount + renderObj.getIndexBuffer().indexCount;
-			_currentCombineVertexCount = _currentCombineVertexCount + renderObj.getVertexBuffer().vertexCount;
+			_currentCombineIndexCount = _currentCombineIndexCount + renderObj._getIndexBuffer().indexCount;
+			_currentCombineVertexCount = _currentCombineVertexCount + renderObj._getVertexBuffer().vertexCount;
 			_needFinishCombine = true;
 		}
 		
@@ -150,8 +153,8 @@ package laya.d3.graphics {
 			if (index !== -1) {
 				_combineRenderElements.splice(index, 1);
 				renderElement._staticBatch = null;
-				_currentCombineIndexCount = _currentCombineIndexCount - renderObj.getIndexBuffer().indexCount;
-				_currentCombineVertexCount = _currentCombineVertexCount - renderObj.getVertexBuffer().vertexCount;
+				_currentCombineIndexCount = _currentCombineIndexCount - renderObj._getIndexBuffer().indexCount;
+				_currentCombineVertexCount = _currentCombineVertexCount - renderObj._getVertexBuffer().vertexCount;
 				_needFinishCombine = true;
 			}
 		}
@@ -252,45 +255,18 @@ package laya.d3.graphics {
 			(_renderElements.length > 0) && (scene.getRenderQueue(_material.renderQueue)._addStaticBatch(this));//TODO:>0移到外层
 		}
 		
-		public function _render(state:RenderState):Boolean {
-			var vb:VertexBuffer3D = _vertexBuffer;
-			var ib:IndexBuffer3D = _indexBuffer;
-			var material:Material = state.renderElement._material;
-			
-			//if (material.normalTexture && !vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TANGENT0]) {
-			////是否放到事件触发。
-			//var vertexDatas:Float32Array = vb.getData();
-			//var newVertexDatas:Float32Array = Utils3D.generateTangent(vertexDatas, vb.vertexDeclaration.vertexStride / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / 4, vb.vertexDeclaration.shaderAttribute[VertexElementUsage.TEXTURECOORDINATE0][4] / 4, ib.getData());
-			//var vertexDeclaration:VertexDeclaration = Utils3D.getVertexTangentDeclaration(vb.vertexDeclaration.getVertexElements());
-			//
-			//var newVB:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, WebGLContext.STATIC_DRAW);
-			//newVB.setData(newVertexDatas);
-			//vb.dispose();
-			//_vertexBuffer = vb = newVB;
-			//}
-			
-			vb._bind();
-			ib._bind();
-			
-			if (material) {
-				var shader:Shader = _getShader(state, vb, material);
-				var presz:int = state.shaderValue.length;
-				state.shaderValue.pushArray(vb.vertexDeclaration.shaderValues);
-				var worldMat:Matrix4x4 = _rootSprite.transform.worldMatrix;
-				state.shaderValue.pushValue(Buffer2D.MATRIX1, worldMat.elements, -1);
-				Matrix4x4.multiply(state.projectionViewMatrix, worldMat, _rootSprite.wvpMatrix);
-				state.shaderValue.pushValue(Buffer2D.MVPMATRIX, _rootSprite.wvpMatrix.elements, /*state.camera.transform._worldTransformModifyID + state.camera._projectionMatrixModifyID,从结构上应该从Mesh更新*/ -1);
-				if (!material.upload(state, null, shader)) {
-					state.shaderValue.length = presz;
-					return false;
-				}
-				state.shaderValue.length = presz;
-			}
+		public function _beforeRender(state:RenderState):Boolean {
+			//_testTangent(state);//TODO:临时
+			_vertexBuffer._bind();
+			_indexBuffer._bind();
+			return true;
+		}
+		
+		public function _render(state:RenderState):void {
 			var indexCount:int = state._batchIndexEnd - state._batchIndexStart;
 			state.context.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, state._batchIndexStart * 2);
 			Stat.drawCall++;
 			Stat.trianglesFaces += indexCount / 3;
-			return true;
 		}
 	}
 

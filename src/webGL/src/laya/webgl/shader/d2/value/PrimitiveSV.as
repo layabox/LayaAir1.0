@@ -7,7 +7,8 @@ package laya.webgl.shader.d2.value
 	public class PrimitiveSV extends Value2D
 	{	
 		public var a_color:Array;
-
+		
+		public var u_pos:Array = [0, 0];
 		public function PrimitiveSV(args:*)
 		{
 			super(ShaderDefines2D.PRIMITIVE,0);

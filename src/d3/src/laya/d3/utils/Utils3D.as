@@ -1,7 +1,8 @@
 package laya.d3.utils {
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.graphics.VertexElement;
@@ -15,9 +16,10 @@ package laya.d3.utils {
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
+	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.models.Mesh;
+	import laya.net.Loader;
 	import laya.net.URL;
-	import laya.resource.Texture;
 	import laya.utils.Handler;
 	import laya.webgl.resource.WebGLImage;
 	
@@ -173,7 +175,7 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function _parseMaterial(material:Material, prop:String, value:Array):void {
+		public static function _parseMaterial(material:StandardMaterial, prop:String, value:Array):void {
 			switch (prop) {
 			case "ambientColor": 
 				material.ambientColor = new Vector3(value[0], value[1], value[2]);
@@ -189,52 +191,34 @@ package laya.d3.utils {
 				break;
 			
 			case "diffuseTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
-					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(tex.bitmap as WebGLImage).mipmap = true;
-					(tex.bitmap as WebGLImage).repeat = true;
+				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture2D):void {
 					material.diffuseTexture = tex;
-				})));
+				}), null, Loader.TEXTURE2D));
 				break;
 			case "normalTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
-					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(tex.bitmap as WebGLImage).mipmap = true;
-					(tex.bitmap as WebGLImage).repeat = true;
+				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture2D):void {
 					material.normalTexture = tex;
-				})));
+				}), null, Loader.TEXTURE2D));
 				break;
 			case "specularTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
-					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(tex.bitmap as WebGLImage).mipmap = true;
-					(tex.bitmap as WebGLImage).repeat = true;
+				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture2D):void {
 					material.specularTexture = tex;
-				})));
+				}), null, Loader.TEXTURE2D));
 				break;
 			case "emissiveTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
-					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(tex.bitmap as WebGLImage).mipmap = true;
-					(tex.bitmap as WebGLImage).repeat = true;
+				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture2D):void {
 					material.emissiveTexture = tex;
-				})));
+				}), null, Loader.TEXTURE2D));
 				break;
 			case "ambientTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
-					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(tex.bitmap as WebGLImage).mipmap = true;
-					(tex.bitmap as WebGLImage).repeat = true;
+				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture2D):void {
 					material.ambientTexture = tex;
-				})));
+				}), null, Loader.TEXTURE2D));
 				break;
 			case "reflectTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture):void {
-					(tex.bitmap as WebGLImage).enableMerageInAtlas = false;
-					(tex.bitmap as WebGLImage).mipmap = true;
-					(tex.bitmap as WebGLImage).repeat = true;
+				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture2D):void {
 					material.reflectTexture = tex;
-				})));
+				}), null, Loader.TEXTURE2D));
 				break;
 			}
 		}
@@ -271,7 +255,6 @@ package laya.d3.utils {
 				Utils3D.mulMatrixByArrayFast(bonesDatas, i, exData, len + i, outAnimationDatas, i);
 			}
 		}
-		
 		
 		/** @private */
 		public static function _computeBoneAndAnimationDatasByBindPoseMatrxix(bones:*, curData:Float32Array, inverGlobalBindPose:Vector.<Matrix4x4>, outBonesDatas:Float32Array, outAnimationDatas:Float32Array):void {
@@ -387,7 +370,7 @@ package laya.d3.utils {
 				for (j = 0; j < tangentElementCount; j++)
 					tangentVertexDatas[newVertexStride * index3 + vertexStride + j] = +tangent.elements[j];
 				
-				//tangent = ((UV3.Y - UV1.Y) * (position2 - position1) - (UV2.Y - UV1.Y) * (position3 - position1))/ ((UV2.X - UV1.X) * (UV3.Y - UV1.Y) - (UV2.Y - UV1.Y) * (UV3.X - UV1.X));
+					//tangent = ((UV3.Y - UV1.Y) * (position2 - position1) - (UV2.Y - UV1.Y) * (position3 - position1))/ ((UV2.X - UV1.X) * (UV3.Y - UV1.Y) - (UV2.Y - UV1.Y) * (UV3.X - UV1.X));
 			}
 			
 			for (i = 0; i < tangentVertexDatas.length; i += newVertexStride) {
@@ -454,16 +437,16 @@ package laya.d3.utils {
 		 * @param	rotation 旋转四元数。
 		 * @param	out 输出三维向量。
 		 */
-		public static function transformVector3ArrayByQuat(sourceArray:Float32Array,sourceOffset:int, rotation:Quaternion, outArray:Float32Array,outOffset:int):void {
+		public static function transformVector3ArrayByQuat(sourceArray:Float32Array, sourceOffset:int, rotation:Quaternion, outArray:Float32Array, outOffset:int):void {
 			var re:Float32Array = rotation.elements;
 			
-			var x:Number = sourceArray[sourceOffset], y:Number = sourceArray[sourceOffset+1], z:Number = sourceArray[sourceOffset+2], qx:Number = re[0], qy:Number = re[1], qz:Number = re[2], qw:Number = re[3],
+			var x:Number = sourceArray[sourceOffset], y:Number = sourceArray[sourceOffset + 1], z:Number = sourceArray[sourceOffset + 2], qx:Number = re[0], qy:Number = re[1], qz:Number = re[2], qw:Number = re[3],
 			
 			ix:Number = qw * x + qy * z - qz * y, iy:Number = qw * y + qz * x - qx * z, iz:Number = qw * z + qx * y - qy * x, iw:Number = -qx * x - qy * y - qz * z;
 			
 			outArray[outOffset] = ix * qw + iw * -qx + iy * -qz - iz * -qy;
-			outArray[outOffset+1] = iy * qw + iw * -qy + iz * -qx - ix * -qz;
-			outArray[outOffset+2] = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+			outArray[outOffset + 1] = iy * qw + iw * -qy + iz * -qx - ix * -qz;
+			outArray[outOffset + 2] = iz * qw + iw * -qz + ix * -qy - iy * -qx;
 		}
 		
 		/**

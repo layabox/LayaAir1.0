@@ -248,7 +248,7 @@ package laya.renders {
 				var rect:Rectangle = sprite.scrollRect;
 				for (i = 0; i < n; ++i) {
 					ele = childs[i] as Sprite;
-					if (ele.visible && rect.intersects(Rectangle.TEMP.setTo(ele.x, ele.y, ele.width, ele.height)))
+					if (ele.visible && (!ele.width || rect.intersects(Rectangle.TEMP.setTo(ele.x, ele.y, ele.width, ele.height))))
 						ele.render(context, x, y);
 				}
 			}

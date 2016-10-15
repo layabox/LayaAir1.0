@@ -3,6 +3,7 @@ package threeDimen.advancedStage {
 	import laya.d3.core.HeightMap;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.light.DirectionLight;
+	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
@@ -11,7 +12,6 @@ package threeDimen.advancedStage {
 	import laya.d3.core.PhasorSpriter3D;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.Material;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Ray;
@@ -19,7 +19,9 @@ package threeDimen.advancedStage {
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.math.Viewport;
+	import laya.d3.utils.Physics;
 	import laya.d3.utils.Picker;
+	import laya.d3.utils.RaycastHit;
 	import laya.display.Node;
 	import laya.events.Event;
 	import laya.renders.RenderContext;
@@ -38,115 +40,77 @@ package threeDimen.advancedStage {
 		private var sprite3d:Sprite3D;
 		private var vertices:Vector.<Vector.<Vector3>> = new Vector.<Vector.<Vector3>>();
 		private var indexs:Vector.<Uint16Array> = new Vector.<Uint16Array>();
-		private var worldMats:Vector.<Matrix4x4> = new Vector.<Matrix4x4>();
 		private var ray:Ray;
-		
-		private var vertex1:Vector3 = new Vector3();
-		private var vertex2:Vector3 = new Vector3();
-		private var vertex3:Vector3 = new Vector3();
-		
-		private var closeVertex1:Vector3 = new Vector3();
-		private var closeVertex2:Vector3 = new Vector3();
-		private var closeVertex3:Vector3 = new Vector3();
 		private var point:Vector2 = new Vector2();
+		private var raycastHit:RaycastHit = new RaycastHit();
+		private var  camera:Camera;
 		
 		public function MousePickingScene() {
 			ray = new Ray(new Vector3(), new Vector3());
 			
 			phasorSpriter3D = new PhasorSpriter3D();
 			
-			currentCamera = (addChild(new Camera(0, 0.1, 100))) as Camera;
-			currentCamera.transform.translate(new Vector3(0, 0.8, 1.5));
-			currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+			 camera = (addChild(new Camera(0, 0.1, 100))) as Camera;
+			camera.transform.translate(new Vector3(0, 0.8, 1.5));
+			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			
-			var sprite3d:Sprite3D = addChild(new Sprite3D()) as Sprite3D;
+			sprite3d = addChild(new Sprite3D()) as Sprite3D;
 			sprite3d.once(Event.HIERARCHY_LOADED, null, function(spirit3D:Sprite3D):void {
-				getMeshData(spirit3D);
+				setMaterial(spirit3D);
 			});
 			sprite3d.loadHierarchy("../../../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh");
 			sprite3d.transform.localScale = new Vector3(10, 10, 10);
-		
 		}
 		
-		private function getMeshData(spirit3D:Node):void {
+		private function setMaterial(spirit3D:Node):void {
 			if (spirit3D is MeshSprite3D) {
 				var meshSprite3D:MeshSprite3D = spirit3D as MeshSprite3D;
 				var mesh:Mesh = meshSprite3D.meshFilter.sharedMesh as Mesh;
 				if (mesh != null) {
 					
 					mesh.once(Event.LOADED, null, function():void {
-						meshLoaded(mesh);
 						for (var i:int = 0; i < mesh.materials.length; i++)
-							mesh.materials[i].albedo = new Vector4(3.0,3.0,3.0,1.0);
+							(mesh.materials[i] as StandardMaterial).albedo = new Vector4(3.0, 3.0, 3.0, 1.0);
 					});
-					worldMats.push(meshSprite3D.transform.worldMatrix);
 				}
 			}
 			for (var i:int = 0; i < spirit3D.numChildren; i++)
-				getMeshData(spirit3D.getChildAt(i));
-		}
-		
-		
-		
-		private function meshLoaded(mesh:Mesh):void {
-			var submesheCount:int = mesh.getSubMeshCount();
-			
-			var worldMat:Matrix4x4 = worldMats[meshCount];
-			
-			var positions:Vector.<Vector3> = mesh.positions;
-			for (var i:int = 0; i < submesheCount; i++) {
-				var subMesh:SubMesh = mesh.getSubMesh(i);
-				
-				var vertexBuffer:VertexBuffer3D = subMesh.getVertexBuffer();
-				var verts:Float32Array = vertexBuffer.getData();
-				var subMeshVertices:Vector.<Vector3> = new Vector.<Vector3>();
-				
-				for (var j:int = 0; j < verts.length; j += vertexBuffer.vertexDeclaration.vertexStride / 4) {
-					var position:Vector3 = new Vector3(verts[j + 0], verts[j + 1], verts[j + 2]);
-					
-					Vector3.transformCoordinate(position, worldMat, position);
-					subMeshVertices.push(position);
-				}
-				vertices.push(subMeshVertices);
-				
-				var ib:IndexBuffer3D = subMesh.getIndexBuffer();
-				indexs.push(ib.getData());
-			}
-			meshCount++;
+				setMaterial(spirit3D.getChildAt(i));
 		}
 		
 		override public function lateRender(state:RenderState):void {
 			super.lateRender(state);
-			var camera:Camera = currentCamera as Camera;
-			
 			var projViewMat:Matrix4x4 = camera.projectionViewMatrix;
 			
 			point.elements[0] = Laya.stage.mouseX;
 			point.elements[1] = Laya.stage.mouseY;
 			
 			camera.viewportPointToRay(point, ray);
-			
-			var closestIntersection:Number = Number.MAX_VALUE;
-			for (var i:int = 0; i < vertices.length; i++) {
+			Physics.rayCast(ray, sprite3d, raycastHit);
+			if (raycastHit.distance !== Number.MAX_VALUE) {
+				var trianglePositions:Array = raycastHit.trianglePositions;
+				var vertex1:Vector3 = trianglePositions[0];
+				var vertex2:Vector3 = trianglePositions[1];
+				var vertex3:Vector3 = trianglePositions[2];
+				var v1X:Number = vertex1.x, v1Y:Number = vertex1.y, v1Z:Number = vertex1.z;
+				var v2X:Number = vertex2.x, v2Y:Number = vertex2.y, v2Z:Number = vertex2.z;
+				var v3X:Number = vertex3.x, v3Y:Number = vertex3.y, v3Z:Number = vertex3.z;
+				var position:Vector3 = raycastHit.position;
+				var pX:Number = position.x, pY:Number = position.y, pZ:Number = position.z;
 				
-				var intersection:Number = Picker.rayIntersectsPositionsAndIndices(ray, vertices[i], indexs[i], vertex1, vertex2, vertex3);
+				phasorSpriter3D.begin(WebGLContext.LINES, projViewMat, state);
+				var original:Vector3 = ray.origin;
+				phasorSpriter3D.line(original.x, original.y, original.z, 1.0, 0.0, 0.0, 1.0, 0, 0, 0, 1.0, 0.0, 0.0, 1.0);
+				phasorSpriter3D.line(v1X, v1Y, v1Z, 1.0, 0.0, 0.0, 1.0, v2X, v2Y, v2Z, 1.0, 0.0, 0.0, 1.0);
+				phasorSpriter3D.line(v2X, v2Y, v2Z, 1.0, 0.0, 0.0, 1.0, v3X, v3Y, v3Z, 1.0, 0.0, 0.0, 1.0);
+				phasorSpriter3D.line(v3X, v3Y, v3Z, 1.0, 0.0, 0.0, 1.0, v1X, v1Y, v1Z, 1.0, 0.0, 0.0, 1.0);
 				
-				if (!isNaN(intersection) && intersection < closestIntersection) {
-					closestIntersection = intersection;
-					vertex1.cloneTo(closeVertex1);
-					vertex2.cloneTo(closeVertex2);
-					vertex3.cloneTo(closeVertex3);
-					
-				}
+				phasorSpriter3D.line(pX, pY, pZ, 1.0, 0.0, 0.0, 1.0, v2X, v2Y, v2Z, 1.0, 0.0, 0.0, 1.0);
+				phasorSpriter3D.line(pX, pY, pZ, 1.0, 0.0, 0.0, 1.0, v3X, v3Y, v3Z, 1.0, 0.0, 0.0, 1.0);
+				phasorSpriter3D.line(pX, pY, pZ, 1.0, 0.0, 0.0, 1.0, v1X, v1Y, v1Z, 1.0, 0.0, 0.0, 1.0);
+				
+				phasorSpriter3D.end();
 			}
-			
-			phasorSpriter3D.begin(WebGLContext.LINES, projViewMat, state);
-			var original:Vector3 = ray.origin;
-			phasorSpriter3D.line(original.x, original.y, original.z, 1.0, 0.0, 0.0, 1.0, 0, 0, 0, 1.0, 0.0, 0.0, 1.0);
-			phasorSpriter3D.line(closeVertex1.elements[0], closeVertex1.elements[1], closeVertex1.elements[2], 1.0, 0.0, 0.0, 1.0, closeVertex2.elements[0], closeVertex2.elements[1], closeVertex2.elements[2], 1.0, 0.0, 0.0, 1.0);
-			phasorSpriter3D.line(closeVertex2.elements[0], closeVertex2.elements[1], closeVertex2.elements[2], 1.0, 0.0, 0.0, 1.0, closeVertex3.elements[0], closeVertex3.elements[1], closeVertex3.elements[2], 1.0, 0.0, 0.0, 1.0);
-			phasorSpriter3D.line(closeVertex3.elements[0], closeVertex3.elements[1], closeVertex3.elements[2], 1.0, 0.0, 0.0, 1.0, closeVertex1.elements[0], closeVertex1.elements[1], closeVertex1.elements[2], 1.0, 0.0, 0.0, 1.0);
-			phasorSpriter3D.end();
 		}
 	
 	}

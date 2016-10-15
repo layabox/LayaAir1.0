@@ -37,7 +37,7 @@ package threeDimen.common {
 		override public function _initialize(owner:Sprite3D):void {
 			super._initialize(owner);
 			
-			camera = owner.scene.currentCamera as VRCamera;
+			camera = owner as VRCamera;
 			
 			camera.on(Event.COMPONENT_ADDED, this, function(component:Component3D):void {
 				if (component is CameraAnimations)
@@ -83,7 +83,7 @@ package threeDimen.common {
 		}
 		
 		protected function updateRotation():void {
-			_owner.scene.currentCamera.transform.localRotation = camera.transform.localRotation;
+			camera.transform.localRotation = camera.transform.localRotation;
 		}
 	}
 }

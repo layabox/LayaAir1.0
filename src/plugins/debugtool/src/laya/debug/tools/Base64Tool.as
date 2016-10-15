@@ -1,7 +1,7 @@
 package laya.debug.tools
 {
 	import laya.utils.Byte;
-	
+
 	/**
 	 * base64编码解码类
 	 * @author ww
@@ -13,7 +13,7 @@ package laya.debug.tools
 		{
 		
 		}
-		public static var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+		public static var chars:String = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 		
 		// Use a lookup table to find the index.
 		public static var lookup:Uint8Array = null;

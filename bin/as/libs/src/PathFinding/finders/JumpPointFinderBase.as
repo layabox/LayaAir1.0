@@ -12,12 +12,12 @@ package PathFinding.finders
 	 */
 	public class JumpPointFinderBase
 	{
-		private var grid:Grid;
-		private var openList:Heap;
-		private var startNode:Node;
-		private var endNode:Node;
-		private var heuristic:Function;
-		private var trackJumpRecursion:Boolean;
+		public var grid:Grid;
+		public var openList:Heap;
+		public var startNode:Node;
+		public var endNode:Node;
+		public var heuristic:Function;
+		public var trackJumpRecursion:Boolean;
 		
 		/**
 		 * Base class for the Jump Point Search algorithm
@@ -37,7 +37,7 @@ package PathFinding.finders
 		 * @return {Array<Array<number>>} The path, including both start and
 		 *     end positions.
 		 */
-		public function findPath(startX:int, startY:int, endX:int, endY:int, grid:Grid)
+		public function findPath(startX:int, startY:int, endX:int, endY:int, grid:Grid):*
 		{
 			var openList:Heap = this.openList = new Heap(function(nodeA:Node, nodeB:Node):Number
 			{
@@ -58,7 +58,7 @@ package PathFinding.finders
 			while (!openList.empty())
 			{
 				// pop the position of node which has the minimum `f` value.
-				node = openList.pop();
+				node = openList.pop() as Node;
 				node.closed = true;
 				
 				if (node == endNode)
@@ -126,11 +126,11 @@ package PathFinding.finders
 		}
 		
 		public function _jump(x:int, y:int, px:int, py:int):Array{
-			
+			return [];
 		}
 		
 		public function _findNeighbors(node:Node):Array{
-			
+			return [];
 		}
 		
 	}

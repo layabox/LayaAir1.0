@@ -4,16 +4,17 @@ package laya.webgl.shader.d2.skinAnishader {
 	import laya.renders.Render;
 	import laya.resource.Texture;
 	import laya.webgl.canvas.WebGLContext2D;
-	import laya.webgl.shader.d2.skinAnishader.SkinAniShader;
-	import laya.webgl.shader.d2.skinAnishader.aniShaderValue;
+	import laya.webgl.shader.d2.ShaderDefines2D;
+	import laya.webgl.shader.d2.skinAnishader.SkinSV;
+	import laya.webgl.shader.d2.value.Value2D;
+	import laya.webgl.submit.Submit;
 	import laya.webgl.utils.IndexBuffer2D;
+	import laya.webgl.utils.RenderState2D;
 	import laya.webgl.utils.VertexBuffer2D;
 	/**
 	 * 这里销毁的问题，后面待确认
 	 */
 	public class SkinMesh {
-		
-		private var mShaderValue:aniShaderValue;
 		
 		private var mVBBuffer:VertexBuffer2D;
 		private var mIBBuffer:IndexBuffer2D;
@@ -58,9 +59,6 @@ package laya.webgl.shader.d2.skinAnishader {
 			mVBData = new Float32Array(_vs);
 			mEleNum = _ps.length;
 			mTexture = texture;
-			if (mShaderValue == null) {
-				mShaderValue = new aniShaderValue();
-			}
 		}
 		
 		public function getData(vb:VertexBuffer2D, ib:IndexBuffer2D, start:int):void {	
@@ -79,10 +77,25 @@ package laya.webgl.shader.d2.skinAnishader {
 		}
 		
 		public function render(context:*, x:Number, y:Number):void {
-			if (Render.isWebGL) {
-				mShaderValue.textureHost = mTexture;
+			if (Render.isWebGL && mTexture) {
 				SkinMeshBuffer.getInstance().addSkinMesh(this);
-				(context as WebGLContext2D).setIBVB(x, y, mIBBuffer, mVBBuffer, mEleNum, transform, SkinAniShader.getInstance(), mShaderValue, _indexStart, 0, 1);
+				var tempSubmit:Submit = Submit.createShape(context, mIBBuffer, mVBBuffer, mEleNum, _indexStart, Value2D.create(ShaderDefines2D.SKINMESH, 0));
+				transform || (transform = Matrix.EMPTY);
+				transform.translate(x, y);
+				var tResultMatrix:Matrix = new Matrix();
+				Matrix.mul(transform, context._curMat, tResultMatrix);
+				transform.translate( -x, -y);
+				var tArray:Array = RenderState2D.getMatrArray();
+				RenderState2D.mat2MatArray(tResultMatrix, tArray);
+				
+				var tShaderValue:SkinSV = tempSubmit.shaderValue as SkinSV;
+				tShaderValue.textureHost = mTexture;
+				tShaderValue.offsetX = 0;
+				tShaderValue.offsetY = 0;
+				tShaderValue.u_mmat2 = tArray;
+				tShaderValue.ALPHA = context._shader2D.ALPHA;
+				(context as WebGLContext2D)._submits[(context as WebGLContext2D)._submits._length++] = tempSubmit;
+					
 			}
 			
 		}

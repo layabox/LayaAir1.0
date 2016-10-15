@@ -15,10 +15,10 @@ var shadingLight;
 
 var scene = Laya.stage.addChild(new Laya.Scene());
 
-scene.currentCamera = scene.addChild(new Laya.Camera(0, 0.1, 100));
-scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.2));
-scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-scene.currentCamera.clearColor = null;
+var camera = scene.addChild(new Laya.Camera(0, 0.1, 100));
+camera.transform.translate(new Vector3(0, 0.8, 1.2));
+camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+camera.clearColor = null;
 
 var directionLight = scene.addChild(new Laya.DirectionLight());
 directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);

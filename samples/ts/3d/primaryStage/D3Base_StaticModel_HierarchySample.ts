@@ -11,9 +11,9 @@ class StaticModel_HierarchySample {
 
         var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
-        scene.currentCamera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
-        scene.currentCamera.transform.translate(new Laya.Vector3(0, 0.8, 1.5));
-        scene.currentCamera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
+        var camera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
+        camera.transform.translate(new Laya.Vector3(0, 0.8, 1.5));
+        camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
 
         //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
         var staticMesh = scene.addChild(new Laya.Sprite3D()) as Laya.Sprite3D;

@@ -4,13 +4,14 @@ package laya.webgl.shader.d2 {
 		public static const TEXTURE2D:int = 0x01;
 		public static const COLOR2D:int = 0x02;
 		public static const PRIMITIVE:int = 0x04;
-		
 		public static const FILTERGLOW:int = 0x08;
 		public static const FILTERBLUR:int = 0x10;
 		public static const FILTERCOLOR:int = 0x20;
 		public static const COLORADD:int = 0x40;
 		
 		public static const WORLDMAT:int = 0x80;
+		public static const FILLTEXTURE:int = 0x100;
+		public static const SKINMESH:int = 0x200;
 		
 		private static var __name2int:Object = {};
 		private static var __int2name:Array = [];

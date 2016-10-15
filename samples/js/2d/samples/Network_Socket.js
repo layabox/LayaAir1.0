@@ -60,6 +60,7 @@
 		{
 			console.log(new Byte(message).readUTFBytes());
 		}
+		socket.input.clear();
 	}
 
 	function onConnectError(e)

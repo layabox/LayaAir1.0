@@ -42,6 +42,11 @@ package laya.net {
 		public static const SOUND:String = "sound";
 		/** 图集类型，加载完成后返回图集json信息(并创建图集内小图Texture)。*/
 		public static const ATLAS:String = "atlas";
+		/** 三维素材，2D纹理。*/
+		public static const TEXTURE2D:String = "texture2d";
+		/** 三维素材，cube纹理。*/
+		public static const TEXTURECUBE:String = "texturecube";
+		
 		/** 文件后缀和类型对应表。*/
 		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json"};
 		/**资源解析函数对应表，用来扩展更多类型的资源加载解析*/
@@ -134,7 +139,6 @@ package laya.net {
 		protected function _loadImage(url:String):void {
 			var _this:Loader = this;
 			var image:*;
-			
 			function clear():void {
 				image.onload = null;
 				image.onerror = null;
@@ -189,13 +193,13 @@ package laya.net {
 		}
 		
 		/**@private */
-		private function onProgress(value:Number):void {
+		protected function onProgress(value:Number):void {
 			if (this._type === ATLAS) event(Event.PROGRESS, value * 0.3);
 			else event(Event.PROGRESS, value);
 		}
 		
 		/**@private */
-		private function onError(message:String):void {
+		protected function onError(message:String):void {
 			event(Event.ERROR, message);
 		}
 		

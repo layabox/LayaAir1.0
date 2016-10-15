@@ -1,11 +1,9 @@
 package laya.d3.graphics {
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.scene.BaseScene;
-	import laya.utils.Stat;
 	
 	/**
 	 * @private
@@ -31,7 +29,7 @@ package laya.d3.graphics {
 				_staticBatches[key]._finshCombine();
 		}
 		
-		public function getStaticBatch(rootSprite:Sprite3D, _vertexDeclaration:VertexDeclaration, material:Material, number:int):StaticBatch {
+		public function getStaticBatch(rootSprite:Sprite3D, _vertexDeclaration:VertexDeclaration, material:BaseMaterial, number:int):StaticBatch {
 			var staticBatch:StaticBatch;
 			var key:String = rootSprite.id.toString() + material.id.toString() + _vertexDeclaration.id.toString() + number;
 			
@@ -60,7 +58,7 @@ package laya.d3.graphics {
 		public function _finishCombineStaticBatch(rootSprite:Sprite3D):void {
 			_prepareStaticBatchCombineElements.sort(_sortPrepareStaticBatch);
 			
-			var lastMaterial:Material;
+			var lastMaterial:BaseMaterial;
 			var lastVertexDeclaration:VertexDeclaration;
 			var lastCanMerage:Boolean=false;
 			var curStaticBatch:StaticBatch;
@@ -73,13 +71,13 @@ package laya.d3.graphics {
 			var batchNumber:int = 0;
 			for (var i:int = 0, n:int = _prepareStaticBatchCombineElements.length; i < n; i++) {
 				renderElement = _prepareStaticBatchCombineElements[i];
-				vb = renderElement.renderObj.getVertexBuffer(0);
+				vb = renderElement.renderObj._getVertexBuffer(0);
 				if ((lastVertexDeclaration === vb.vertexDeclaration) && (lastMaterial === renderElement._material)) {
 					if (!lastCanMerage) {
 						lastRenderObj = _prepareStaticBatchCombineElements[i - 1];
 						var lastRenderElement:IRenderable = lastRenderObj.renderObj;
 						var curRenderElement:IRenderable = renderElement.renderObj;
-						if (((lastRenderElement.getVertexBuffer().vertexCount + curRenderElement.getVertexBuffer().vertexCount) > StaticBatch.maxVertexCount)) {
+						if (((lastRenderElement._getVertexBuffer().vertexCount + curRenderElement._getVertexBuffer().vertexCount) > StaticBatch.maxVertexCount)) {
 							lastCanMerage = false;
 						} else {
 							curStaticBatch = getStaticBatch(rootSprite, lastVertexDeclaration, lastMaterial, batchNumber);

@@ -16,11 +16,10 @@ module Material_NormalMap {
             var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
             scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
 
-            scene.currentCamera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
-            scene.currentCamera.transform.translate(new Vector3(0, 0.8, 1.6));
-            scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-
-            scene.currentCamera.addComponent(CameraMoveScript);
+            var camera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
+            camera.transform.translate(new Laya.Vector3(0, 1.8, 2.0));
+            camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
+            camera.addComponent(CameraMoveScript);
 
             var directionLight = scene.addChild(new Laya.DirectionLight()) as Laya.DirectionLight;
             directionLight.direction = new Vector3(0, -0.8, -1);

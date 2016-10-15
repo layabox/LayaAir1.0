@@ -183,14 +183,14 @@ window.Laya=(function(window,document){
 
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
-	Laya.interface('laya.runtime.IConchNode');
-	Laya.interface('laya.runtime.IPlatform');
 	Laya.interface('laya.runtime.ICPlatformClass');
 	Laya.interface('laya.filters.IFilterAction');
-	Laya.interface('laya.resource.IDispose');
 	Laya.interface('laya.filters.IFilter');
+	Laya.interface('laya.resource.IDispose');
 	Laya.interface('laya.display.ILayout');
+	Laya.interface('laya.runtime.IPlatform');
 	Laya.interface('laya.runtime.IMarket');
+	Laya.interface('laya.runtime.IConchNode');
 	Laya.interface('laya.runtime.IPlatformClass','laya.runtime.IPlatform');
 	/**
 	*@private
@@ -365,7 +365,7 @@ window.Laya=(function(window,document){
 		Laya.timer=null;
 		Laya.loader=null;
 		Laya.render=null
-		Laya.version="1.4.0";
+		Laya.version="1.5.0";
 		Laya.stageBox=null
 		__static(Laya,
 		['conchMarket',function(){return this.conchMarket=/*__JS__ */window.conch?conchMarket:null;},'PlatformClass',function(){return this.PlatformClass=/*__JS__ */window.PlatformClass;}
@@ -3769,7 +3769,7 @@ window.Laya=(function(window,document){
 		*@return 如果传入的矩形对象与此对象相交，则返回 true 值，否则返回 false。
 		*/
 		__proto.intersects=function(rect){
-			return !(rect.x > this.right || rect.right < this.x || rect.y > this.bottom || rect.bottom < this.y);
+			return !(rect.x > (this.x+this.width)|| (rect.x+rect.width)< this.x || rect.y > (this.y+this.height)|| (rect.y+rect.height)< this.y);
 		}
 
 		/**
@@ -5048,7 +5048,7 @@ window.Laya=(function(window,document){
 				var rect=sprite.scrollRect;
 				for (i=0;i < n;++i){
 					ele=childs [i];
-					if (ele.visible && rect.intersects(Rectangle.TEMP.setTo(ele.x,ele.y,ele.width,ele.height)))
+					if (ele.visible && (!ele.width || rect.intersects(Rectangle.TEMP.setTo(ele.x,ele.y,ele.width,ele.height))))
 						ele.render(context,x,y);
 				}
 			}
@@ -6684,7 +6684,7 @@ window.Laya=(function(window,document){
 			g=graphic;
 			var m;
 			var params=ClassUtils._getParams(propsO,drawConfig[1],drawConfig[2],drawConfig[3]);
-			m=params.m;
+			m=ClassUtils._tM;
 			if (m){
 				g.save();
 				g.transform(m);
@@ -6733,9 +6733,9 @@ window.Laya=(function(window,document){
 				if (!xPos)xPos=0;
 				m.translate(rst[xPos],rst[xPos+1]);
 				rst[xPos]=rst[xPos+1]=0;
-				rst.m=m;
+				ClassUtils._tM=m;
 				}else {
-				rst.map=null;
+				ClassUtils._tM=null;
 			}
 			if (adptFun && ClassUtils[adptFun]){
 				rst=ClassUtils[adptFun](rst);
@@ -6770,6 +6770,7 @@ window.Laya=(function(window,document){
 			return classObject;
 		}
 
+		ClassUtils._tM=null
 		__static(ClassUtils,
 		['DrawTypeDic',function(){return this.DrawTypeDic={"Rect":["drawRect",[["x",0],["y",0],["width",0],["height",0],["fillColor",null],["lineColor",null],["lineWidth",1]]],"Circle":["drawCircle",[["x",0],["y",0],["radius",0],["fillColor",null],["lineColor",null],["lineWidth",1]]],"Pie":["drawPie",[["x",0],["y",0],["radius",0],["startAngle",0],["endAngle",0],["fillColor",null],["lineColor",null],["lineWidth",1]]],"Image":["drawTexture",[["x",0],["y",0],["width",0],["height",0]]],"Texture":["drawTexture",[["skin",null],["x",0],["y",0],["width",0],["height",0]],1,"_adptTextureData"],"FillTexture":["fillTexture",[["skin",null],["x",0],["y",0],["width",0],["height",0],["repeat",null]],1,"_adptTextureData"],"FillText":["fillText",[["text",""],["x",0],["y",0],["font",null],["color",null],["textAlign",null]],1],"Line":["drawLine",[["x",0],["y",0],["toX",0],["toY",0],["lineColor",null],["lineWidth",0]],0,"_adptLineData"],"Lines":["drawLines",[["x",0],["y",0],["points",""],["lineColor",null],["lineWidth",0]],0,"_adptLinesData"],"Curves":["drawCurves",[["x",0],["y",0],["points",""],["lineColor",null],["lineWidth",0]],0,"_adptLinesData"],"Poly":["drawPoly",[["x",0],["y",0],["points",""],["fillColor",null],["lineColor",null],["lineWidth",1]],0,"_adptLinesData"]};}
 		]);
@@ -6949,6 +6950,7 @@ window.Laya=(function(window,document){
 			//this._offsets=null;
 			//this._disableMouseEvent=false;
 			//this._tween=null;
+			//this._parent=null;
 		}
 
 		__class(Dragging,'laya.utils.Dragging');
@@ -6972,11 +6974,16 @@ window.Laya=(function(window,document){
 			this.elasticBackTime=elasticBackTime;
 			this.data=data;
 			this._disableMouseEvent=disableMouseEvent;
+			if (target.globalScaleX !=1 || target.globalScaleY !=1){
+				this._parent=target.parent;
+				}else {
+				this._parent=Laya.stage;
+			}
 			this._clickOnly=true;
 			this._dragging=true;
 			this._elasticRateX=this._elasticRateY=1;
-			this._lastX=Laya.stage.mouseX;
-			this._lastY=Laya.stage.mouseY;
+			this._lastX=this._parent.mouseX;
+			this._lastY=this._parent.mouseY;
 			Laya.stage.on(/*laya.events.Event.MOUSE_UP*/"mouseup",this,this.onStageMouseUp);
 			Laya.stage.on(/*laya.events.Event.MOUSE_OUT*/"mouseout",this,this.onStageMouseUp);
 			Laya.timer.frameLoop(1,this,this.loop);
@@ -7012,8 +7019,9 @@ window.Laya=(function(window,document){
 		*拖拽的循环处理函数。
 		*/
 		__proto.loop=function(){
-			var mouseX=Laya.stage.mouseX;
-			var mouseY=Laya.stage.mouseY;
+			var point=this._parent.getMousePoint();
+			var mouseX=point.x;
+			var mouseY=point.y;
 			var offsetX=mouseX-this._lastX;
 			var offsetY=mouseY-this._lastY;
 			if (this._clickOnly){
@@ -7083,7 +7091,7 @@ window.Laya=(function(window,document){
 			if (this._clickOnly || !this.target)return;
 			if (this.hasInertia){
 				if (this._offsets.length < 1){
-					this._offsets.push(Laya.stage.mouseX-this._lastX,Laya.stage.mouseY-this._lastY);
+					this._offsets.push(this._parent.mouseX-this._lastX,this._parent.mouseY-this._lastY);
 				}
 				this._offsetX=this._offsetY=0;
 				var len=this._offsets.length;
@@ -7150,6 +7158,7 @@ window.Laya=(function(window,document){
 				this.clearTimer();
 				var sp=this.target;
 				this.target=null;
+				this._parent=null;
 				sp.event(/*laya.events.Event.DRAG_END*/"dragend",this.data);
 			}
 		}
@@ -10181,11 +10190,15 @@ window.Laya=(function(window,document){
 				WebAudioSound.buffs.push({"buffer":me.data,"url":me.url});
 				WebAudioSound.decode();
 			};
+			request.onerror=function (e){
+				me._err();
+			}
 			request.send();
 		}
 
 		__proto._err=function(){
 			this._removeLoadEvents();
+			WebAudioSound.__loadingSound[this.url]=false;
 			this.event(/*laya.events.Event.ERROR*/"error");
 		}
 
@@ -10309,74 +10322,6 @@ window.Laya=(function(window,document){
 		]);
 		return WebAudioSound;
 	})(EventDispatcher)
-
-
-	/**
-	*<p><code>ColorFilter</code> 是颜色滤镜。</p>
-	*/
-	//class laya.filters.ColorFilter extends laya.filters.Filter
-	var ColorFilter=(function(_super){
-		function ColorFilter(mat){
-			//this._mat=null;
-			//this._alpha=null;
-			ColorFilter.__super.call(this);
-			if (!mat){
-				mat=[0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0];
-			}
-			this._mat=new Float32Array(16);
-			this._alpha=new Float32Array(4);
-			var j=0;
-			var z=0;
-			for (var i=0;i < 20;i++){
-				if (i % 5 !=4){
-					this._mat[j++]=mat[i];
-					}else {
-					this._alpha[z++]=mat[i];
-				}
-			}
-			this._action=RunDriver.createFilterAction(0x20);
-			this._action.data=this;
-		}
-
-		__class(ColorFilter,'laya.filters.ColorFilter',_super);
-		var __proto=ColorFilter.prototype;
-		Laya.imps(__proto,{"laya.filters.IFilter":true})
-		/**
-		*@private 通知微端
-		*/
-		__proto.callNative=function(sp){
-			var t=sp._$P.cf=this;
-			sp.model && sp.model.setFilterMatrix&&sp.model.setFilterMatrix(this._mat,this._alpha);
-		}
-
-		/**@private */
-		__getset(0,__proto,'type',function(){
-			return 0x20;
-		});
-
-		/**@private */
-		__getset(0,__proto,'action',function(){
-			return this._action;
-		});
-
-		__getset(1,ColorFilter,'DEFAULT',function(){
-			if (!ColorFilter._DEFAULT){
-				ColorFilter._DEFAULT=new ColorFilter([1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]);
-			}
-			return ColorFilter._DEFAULT;
-		},laya.filters.Filter._$SET_DEFAULT);
-
-		__getset(1,ColorFilter,'GRAY',function(){
-			if (!ColorFilter._GRAY){
-				ColorFilter._GRAY=new ColorFilter([0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0]);
-			}
-			return ColorFilter._GRAY;
-		},laya.filters.Filter._$SET_GRAY);
-
-		ColorFilter._DEFAULT=null
-		ColorFilter._GRAY=null
-		return ColorFilter;
-	})(Filter)
 
 
 	/**
@@ -10526,6 +10471,74 @@ window.Laya=(function(window,document){
 
 		return HttpRequest;
 	})(EventDispatcher)
+
+
+	/**
+	*<p><code>ColorFilter</code> 是颜色滤镜。</p>
+	*/
+	//class laya.filters.ColorFilter extends laya.filters.Filter
+	var ColorFilter=(function(_super){
+		function ColorFilter(mat){
+			//this._mat=null;
+			//this._alpha=null;
+			ColorFilter.__super.call(this);
+			if (!mat){
+				mat=[0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0];
+			}
+			this._mat=new Float32Array(16);
+			this._alpha=new Float32Array(4);
+			var j=0;
+			var z=0;
+			for (var i=0;i < 20;i++){
+				if (i % 5 !=4){
+					this._mat[j++]=mat[i];
+					}else {
+					this._alpha[z++]=mat[i];
+				}
+			}
+			this._action=RunDriver.createFilterAction(0x20);
+			this._action.data=this;
+		}
+
+		__class(ColorFilter,'laya.filters.ColorFilter',_super);
+		var __proto=ColorFilter.prototype;
+		Laya.imps(__proto,{"laya.filters.IFilter":true})
+		/**
+		*@private 通知微端
+		*/
+		__proto.callNative=function(sp){
+			var t=sp._$P.cf=this;
+			sp.model && sp.model.setFilterMatrix&&sp.model.setFilterMatrix(this._mat,this._alpha);
+		}
+
+		/**@private */
+		__getset(0,__proto,'type',function(){
+			return 0x20;
+		});
+
+		/**@private */
+		__getset(0,__proto,'action',function(){
+			return this._action;
+		});
+
+		__getset(1,ColorFilter,'DEFAULT',function(){
+			if (!ColorFilter._DEFAULT){
+				ColorFilter._DEFAULT=new ColorFilter([1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]);
+			}
+			return ColorFilter._DEFAULT;
+		},laya.filters.Filter._$SET_DEFAULT);
+
+		__getset(1,ColorFilter,'GRAY',function(){
+			if (!ColorFilter._GRAY){
+				ColorFilter._GRAY=new ColorFilter([0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0]);
+			}
+			return ColorFilter._GRAY;
+		},laya.filters.Filter._$SET_GRAY);
+
+		ColorFilter._DEFAULT=null
+		ColorFilter._GRAY=null
+		return ColorFilter;
+	})(Filter)
 
 
 	/**
@@ -10839,6 +10852,8 @@ window.Laya=(function(window,document){
 		Loader.IMAGE="image";
 		Loader.SOUND="sound";
 		Loader.ATLAS="atlas";
+		Loader.TEXTURE2D="texture2d";
+		Loader.TEXTURECUBE="texturecube";
 		Loader.typeMap={"png":"image","jpg":"image","jpeg":"image","txt":"text","json":"json","xml":"xml","als":"atlas","mp3":"sound","ogg":"sound","wav":"sound","part":"json"};
 		Loader.parserMap={};
 		Loader.loadedMap={};
@@ -11117,6 +11132,7 @@ window.Laya=(function(window,document){
 			this._output=null;
 			this.timeout=0;
 			this.objectEncoding=0;
+			this.disableInput=false;
 			this._byteClass=null;
 			(port===void 0)&& (port=0);
 			Socket.__super.call(this);
@@ -11207,6 +11223,12 @@ window.Laya=(function(window,document){
 		*@param msg 数据。
 		*/
 		__proto._onMessage=function(msg){
+			if (!msg || !msg.data)return;
+			var data=msg.data;
+			if(this.disableInput&&data){
+				this.event(/*laya.events.Event.MESSAGE*/"message",data);
+				return;
+			}
 			if (this._input.length > 0 && this._input.bytesAvailable < 1){
 				this._input.clear();
 				this._addInputPosition=0;
@@ -11214,8 +11236,6 @@ window.Laya=(function(window,document){
 			var pre=this._input.pos;
 			!this._addInputPosition && (this._addInputPosition=0);
 			this._input.pos=this._addInputPosition;
-			if (!msg || !msg.data)return;
-			var data=msg.data;
 			if (data){
 				if ((typeof data=='string')){
 					this._input.writeUTFBytes(data);
@@ -11307,7 +11327,7 @@ window.Laya=(function(window,document){
 
 
 	/**
-	*<code>Resource</code> 是一个资源存取类。
+	*<code>Resource</code> 资源存取类。
 	*/
 	//class laya.resource.Resource extends laya.events.EventDispatcher
 	var Resource=(function(_super){
@@ -12074,7 +12094,7 @@ window.Laya=(function(window,document){
 					this._index++;
 					if (tTweenData.type==0){
 						this._gidIndex++;
-						tTween=new Tween();
+						tTween=Pool.getItemByClass("tween",Tween);
 						tTween._create(tTweenData.target,tTweenData.data,tTweenData.duration,tTweenData.ease,new Handler(this,this._animComplete,[this._gidIndex]),0,false,tTweenData.isTo,true,false);
 						tTween.setStartTime(tCurrTime);
 						tTween.gid=this._gidIndex;
@@ -13369,7 +13389,8 @@ window.Laya=(function(window,document){
 			this.repaint();
 		});
 
-		/**遮罩，可以设置一个对象或者图片，根据对象形状进行遮罩显示。*/
+		/**遮罩，可以设置一个对象或者图片，根据对象形状进行遮罩显示。
+		*【注意】遮罩对象坐标系是相对遮罩对象本身的，这个和flash机制不同*/
 		__getset(0,__proto,'mask',function(){
 			return this._$P._mask;
 			},function(value){
@@ -14443,7 +14464,7 @@ window.Laya=(function(window,document){
 		__getset(0,__proto,'width',function(){
 			if (this._width)
 				return this._width;
-			return this.textWidth;
+			return this.textWidth+this.padding[1]+this.padding[3];
 			},function(value){
 			if (value !=this._width){
 				_super.prototype._$set_width.call(this,value);
@@ -14475,7 +14496,7 @@ window.Laya=(function(window,document){
 		*/
 		__getset(0,__proto,'height',function(){
 			if (this._height)return this._height;
-			return this.textHeight;
+			return this.textHeight+this.padding[0]+this.padding[2];
 			},function(value){
 			if (value !=this._height){
 				_super.prototype._$set_height.call(this,value);
@@ -14973,6 +14994,11 @@ window.Laya=(function(window,document){
 			this.renderingEnabled=true;
 			this._repaint=1;
 			this.event(/*laya.events.Event.RESIZE*/"resize");
+		}
+
+		/**@inheritDoc */
+		__proto.getMousePoint=function(){
+			return Point.TEMP.setTo(this.mouseX,this.mouseY);
 		}
 
 		/**@inheritDoc */
@@ -15607,6 +15633,7 @@ window.Laya=(function(window,document){
 		function Animation(){
 			this._frames=null;
 			this._url=null;
+			this._actionName=null;
 			Animation.__super.call(this);
 			this._setControlNode(this);
 		}
@@ -15632,16 +15659,18 @@ window.Laya=(function(window,document){
 			(start===void 0)&& (start=0);
 			(loop===void 0)&& (loop=true);
 			(name===void 0)&& (name="");
-			if (name)this._setFramesFromCache(this._url+"#"+name);
+			if (name)this._setFramesFromCache(name);
 			this._isPlaying=true;
 			this.index=((typeof start=='string'))? this._getFrameByLabel(start):start;
 			this.loop=loop;
+			this._actionName=name;
 			if (this._frames && this._frames.length > 1 && this.interval > 0){
 				this.timerLoop(this.interval,this,this._frameLoop,null,true);
 			}
 		}
 
 		__proto._setFramesFromCache=function(name){
+			if (this._url)name=this._url+"#"+name;
 			if (name && Animation.framesMap[name]){
 				this._frames=Animation.framesMap[name];
 				this._count=this._frames.length;
@@ -15677,8 +15706,8 @@ window.Laya=(function(window,document){
 		__proto.loadImages=function(urls,cacheName){
 			(cacheName===void 0)&& (cacheName="");
 			this._url="";
-			if (!this._setFramesFromCache(cacheName)){
-				this.frames=Animation.createFrames(urls,!Animation.framesMap["#"+cacheName] ? cacheName :"");
+			if (!Animation.framesMap[cacheName]){
+				this.frames=Animation.framesMap[cacheName] ? Animation.framesMap[cacheName] :Animation.createFrames(urls,cacheName);
 			}
 			return this;
 		}
@@ -15692,12 +15721,12 @@ window.Laya=(function(window,document){
 		*/
 		__proto.loadAtlas=function(url,loaded,cacheName){
 			(cacheName===void 0)&& (cacheName="");
+			this._url="";
 			var _this=this;
-			this._url=url;
-			if (!_this._setFramesFromCache(cacheName)){
+			if (!Animation.framesMap[cacheName]){
 				function onLoaded (loadUrl){
 					if (url===loadUrl){
-						_this.frames=Animation.createFrames(url,!Animation.framesMap[url+"#"+cacheName] ? cacheName :"");
+						_this.frames=Animation.framesMap[cacheName] ? Animation.framesMap[cacheName] :Animation.createFrames(url,cacheName);
 						if (loaded)loaded.run();
 					}
 				}
@@ -15714,18 +15743,29 @@ window.Laya=(function(window,document){
 		*@return 返回动画本身。
 		*/
 		__proto.loadAnimation=function(url,loaded){
-			var _this=this;
 			this._url=url;
-			if (!_this._setFramesFromCache(url)){
+			var _this=this;
+			if (!Animation.framesMap[url]){
 				function onLoaded (loadUrl){
 					if (url===loadUrl){
-						var aniData=_this._parseGraphicAnimation(Loader.getRes(url));
-						if (!aniData)return;
-						var obj=aniData.animationDic;
-						for (var name in obj){
-							Animation.framesMap[url+"#"+name]=obj[name];
+						if (!Animation.framesMap[url]){
+							var aniData=_this._parseGraphicAnimation(Loader.getRes(url));
+							if (!aniData)return;
+							var obj=aniData.animationDic;
+							var flag=true;
+							for (var name in obj){
+								var arr=obj[name];
+								if (arr.length){
+									Animation.framesMap[url+"#"+name]=arr;
+									}else {
+									flag=false;
+								}
+							}
+							_this.frames=aniData.animationList[0];
+							if (flag)Animation.framesMap[url]=_this.frames;
+							}else {
+							_this.frames=Animation.framesMap[url];
 						}
-						Animation.framesMap[url]=_this.frames=aniData.animationList[0];
 						if (loaded)loaded.run();
 					}
 				}
@@ -15748,7 +15788,7 @@ window.Laya=(function(window,document){
 			this._frames=value;
 			if (value){
 				this._count=value.length;
-				if (this._isPlaying)this.play(this._index,this.loop);
+				if (this._isPlaying)this.play(this._index,this.loop,this._actionName);
 				else this.index=this._index;
 			}
 		});
@@ -15788,6 +15828,16 @@ window.Laya=(function(window,document){
 			}
 			if (name)Animation.framesMap[name]=arr;
 			return arr;
+		}
+
+		Animation.clearCache=function(url){
+			var cache=Animation.framesMap;
+			var key;
+			for (key in cache){
+				if (key===url || key.indexOf(url+"#")==0){
+					delete Animation.framesMap[key];
+				}
+			}
 		}
 
 		Animation.framesMap={};
@@ -16706,9 +16756,14 @@ window.Laya=(function(window,document){
 				return;
 			var frameData=node.frames;
 			var params=this._getParams(frameData,GraphicAnimation._drawTextureCmd,frame,this._nodeDefaultProps[nodeID]);
-			if (params[0]=="")
+			var url=params[0];
+			if (!url)return;
+			params[0]=this._getTextureByUrl(url);
+			if (!params[0]){
+				console.log("lost:",url);
+				throw new Error("texture not loaded:"+url);
 				return;
-			params[0]=this._getTextureByUrl(params[0]);
+			};
 			var m;
 			var px=params[5],py=params[6];
 			if (px !=0 || py !=0){
@@ -16742,6 +16797,7 @@ window.Laya=(function(window,document){
 		__proto.setAniData=function(uiView){
 			if (uiView.animations){
 				this._nodeDefaultProps={};
+				if (this._nodeList)this._nodeList.length=0;
 				this._parseNodeList(uiView);
 				var aniDic={};
 				var anilist=[];
@@ -16750,13 +16806,28 @@ window.Laya=(function(window,document){
 				var tAniO;
 				for (i=0;i < len;i++){
 					tAniO=animations[i];
-					this._calGraphicData(tAniO);
+					try{
+						this._calGraphicData(tAniO);
+						}catch (e){
+						console.log("parse animation fail:"+tAniO.name+",empty animation created");
+						this._gList=[];
+					}
 					anilist.push(this._gList);
 					aniDic[tAniO.name]=this._gList;
 				}
 				this.animationList=anilist;
 				this.animationDic=aniDic;
 			}
+			GraphicAnimation._temParam.length=0;
+		}
+
+		/**
+		*@private
+		*/
+		__proto._clear=function(){
+			this.animationList=null;
+			this.animationDic=null;
+			this._gList=null;
 		}
 
 		GraphicAnimation.parseAnimationData=function(aniData){
@@ -16767,6 +16838,7 @@ window.Laya=(function(window,document){
 			rst={};
 			rst.animationList=GraphicAnimation._I.animationList;
 			rst.animationDic=GraphicAnimation._I.animationDic;
+			GraphicAnimation._I._clear();
 			return rst;
 		}
 

@@ -40,17 +40,17 @@ var Camera_Ortho_2DMix3D_Sample = (function () {
         //**********************************************************
         //****************************3D场景***************************
         var scene = Laya.stage.addChild(new Laya.Scene());
-        scene.currentCamera = (scene.addChild(new Laya.Camera(0, 0.1, 300)));
-        scene.currentCamera.transform.translate(new Laya.Vector3(0, 0, 150));
-        scene.currentCamera.clearColor = null;
-        scene.currentCamera.orthographicProjection = true;
+        var camera = (scene.addChild(new Laya.Camera(0, 0.1, 300)));
+        camera.transform.translate(new Laya.Vector3(0, 0, 150));
+        camera.clearColor = null;
+        camera.orthographicProjection = true;
         var mesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm")));
         Laya.Utils3D.convert3DCoordTo2DScreenCoord(this.translate, this.convertTranslate);
         mesh.transform.localPosition = this.convertTranslate;
         mesh.transform.localScale = new Laya.Vector3(100, 100, 100); //球的直径在三维空间中为1米（放大100倍，此时为100米），当正交投影矩阵的宽高等同于像素宽高时，一米可认为一个像素，所以球等于200个像素,可与2D直接混合。
         //窗口尺寸变化相关属性重置。
         Laya.stage.on(Laya.Event.RESIZE, this, function () {
-            scene.currentCamera.orthographicVerticalSize = Laya.RenderState.clientHeight;
+            camera.orthographicVerticalSize = Laya.RenderState.clientHeight;
             Laya.Utils3D.convert3DCoordTo2DScreenCoord(_this.translate, _this.convertTranslate);
             mesh.transform.localPosition = _this.convertTranslate;
         });

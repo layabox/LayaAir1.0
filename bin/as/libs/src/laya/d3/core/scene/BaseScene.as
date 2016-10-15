@@ -1,10 +1,11 @@
 package laya.d3.core.scene {
+	import laya.d3.core.Camera;
 	import laya.d3.core.Layer;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.light.LightSprite;
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.RenderConfig;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
@@ -17,12 +18,13 @@ package laya.d3.core.scene {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Viewport;
-	import laya.d3.resource.RenderTarget;
+	import laya.d3.resource.RenderTexture;
 	import laya.d3.resource.models.Sky;
 	import laya.d3.resource.models.Sky;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.display.Node;
 	import laya.display.Sprite;
+	import laya.events.Event;
 	import laya.renders.Render;
 	import laya.renders.RenderContext;
 	import laya.renders.RenderSprite;
@@ -45,6 +47,14 @@ package laya.d3.core.scene {
 		public static const PIXEL_SHADING:int = 1;
 		
 		/** @private */
+		protected var _invertYProjectionMatrix:Matrix4x4;
+		/** @private */
+		protected var _invertYProjectionViewMatrix:Matrix4x4;
+		/** @private */
+		protected var _invertYScaleMatrix:Matrix4x4;
+		/**是否在Stage中。*/
+		protected var _isInStage:Boolean;
+		/** @private */
 		protected var _boundFrustum:BoundFrustum;
 		/** @private */
 		protected var _renderState:RenderState = new RenderState();
@@ -53,7 +63,7 @@ package laya.d3.core.scene {
 		/** @private */
 		protected var _enableLightCount:int = 3;
 		/** @private */
-		protected var _renderTargetTexture:RenderTarget;
+		protected var _renderTargetTexture:RenderTexture;
 		/** @private */
 		protected var _shadingMode:int = ShaderDefines3D.PIXELSHADERING;
 		/** @private */
@@ -63,6 +73,17 @@ package laya.d3.core.scene {
 		protected var _customRenderQueneIndex:int = 11;
 		/** @private */
 		protected var _lastCurrentTime:Number;
+		
+		/** @private */
+		public var _frustumCullingObjects:Vector.<RenderCullingObject> = new Vector.<RenderCullingObject>();
+		/** @private */
+		public var _staticBatchManager:StaticBatchManager;//TODO:释放问题。
+		/** @private */
+		public var _dynamicBatchManager:DynamicBatchManager;
+		/** @private */
+		public var _quenes:Vector.<RenderQueue> = new Vector.<RenderQueue>();
+		/**  @private 相机的对象池*/
+		public var _cameraPool:Vector.<BaseCamera> = new Vector.<BaseCamera>();
 		
 		/** 是否允许雾化。*/
 		public var enableFog:Boolean;
@@ -74,17 +95,6 @@ package laya.d3.core.scene {
 		public var fogColor:Vector3;
 		/** 是否启用灯光。*/
 		public var enableLight:Boolean = true;
-		/** 当前摄像机。*/
-		public var currentCamera:BaseCamera;
-		
-		/** @private */
-		public var _frustumCullingObjects:Vector.<RenderCullingObject> = new Vector.<RenderCullingObject>();
-		/** @private */
-		public var _staticBatchManager:StaticBatchManager;//TODO:释放问题。
-		/** @private */
-		public var _dynamicBatchManager:DynamicBatchManager;
-		/** @private */
-		public var _quenes:Vector.<RenderQueue> = new Vector.<RenderQueue>();
 		
 		/**
 		 * 获取当前场景。
@@ -92,6 +102,14 @@ package laya.d3.core.scene {
 		 */
 		public function get scene():BaseScene {
 			return this;
+		}
+		
+		/**
+		 * 获取是否在场景树。
+		 *   @return	是否在场景树。
+		 */
+		public function get isInStage():Boolean {
+			return _isInStage;
 		}
 		
 		/**
@@ -115,6 +133,10 @@ package laya.d3.core.scene {
 		 * 创建一个 <code>BaseScene</code> 实例。
 		 */
 		public function BaseScene() {
+			_invertYProjectionMatrix = new Matrix4x4();
+			_invertYProjectionViewMatrix = new Matrix4x4();
+			_invertYScaleMatrix = new Matrix4x4();
+			Matrix4x4.createScaling(new Vector3(1, -1, 1), _invertYScaleMatrix);
 			_staticBatchManager = new StaticBatchManager();
 			_dynamicBatchManager = new DynamicBatchManager();
 			_boundFrustum = new BoundFrustum(Matrix4x4.DEFAULT);
@@ -202,18 +224,55 @@ package laya.d3.core.scene {
 			renderConfig.depthTest = false;
 			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
 			renderConfig.dFactor = WebGLContext.ONE;
+			
+			on(Event.ADDED, this, _onAdded);
+			on(Event.REMOVED, this, _onRemoved);
 		}
 		
 		/**
 		 * @private
-		 * 清除背景色。
-		 * @param gl WebGL上下文。
 		 */
-		protected function _clearColor(gl:WebGLContext):void {
-			var clearColore:Float32Array = currentCamera.clearColor.elements;
-			gl.clearColor(clearColore[0], clearColore[1], clearColore[2], clearColore[3]);
-			gl.clear(WebGLContext.COLOR_BUFFER_BIT | WebGLContext.DEPTH_BUFFER_BIT);
+		private function _onAdded():void {
+			var isInStage:Boolean = Laya.stage.contains(this);
+			(isInStage) && (_addSelfAndChildrenRenderObjects());
+			(isInStage) && (_changeSelfAndChildrenInStage(true));
+		}
 		
+		/**
+		 * @private
+		 */
+		private function _onRemoved():void {
+			var isInStage:Boolean = Laya.stage.contains(this);//触发时还在stage中
+			(isInStage) && (_clearSelfAndChildrenRenderObjects());
+			(isInStage) && (_changeSelfAndChildrenInStage(false));
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _changeSelfAndChildrenInStage(isInStage:Boolean):void {
+			_isInStage = isInStage;
+			event(Event.INSTAGE_CHANGED, isInStage);
+			
+			var children:Array = _childs;
+			for (var i:int = 0, n:int = children.length; i < n; i++)
+				(_childs[i] as Sprite3D)._changeSelfAndChildrenInStage(isInStage);
+		}
+		
+		/**
+		 * 清理自身和子节点渲染物体,重写此函数。
+		 */
+		public function _clearSelfAndChildrenRenderObjects():void {
+			for (var i:int = 0, n:int = _childs.length; i < n; i++)
+				(_childs[i] as Sprite3D)._clearSelfAndChildrenRenderObjects();
+		}
+		
+		/**
+		 * 添加自身和子节点渲染物体,重写此函数。
+		 */
+		public function _addSelfAndChildrenRenderObjects():void {
+			for (var i:int = 0, n:int = _childs.length; i < n; i++)
+				(_childs[i] as Sprite3D)._addSelfAndChildrenRenderObjects();
 		}
 		
 		/**
@@ -222,8 +281,8 @@ package laya.d3.core.scene {
 		 * @param gl WebGL上下文。
 		 * @return state 渲染状态。
 		 */
-		protected function _prepareScene(gl:WebGLContext, state:RenderState):void {
-			Layer._currentCameraCullingMask = currentCamera.cullingMask;
+		protected function _prepareScene(gl:WebGLContext, camera:BaseCamera, state:RenderState):void {
+			Layer._currentCameraCullingMask = camera.cullingMask;
 			
 			state.context = WebGL.mainContext;
 			
@@ -234,11 +293,11 @@ package laya.d3.core.scene {
 			state.loopCount = Stat.loopCount;
 			state.shadingMode = _shadingMode;
 			state.scene = this;
-			state.camera = currentCamera;
+			state.camera = camera;
 			
-			var shaderValue:ValusArray = state.worldShaderValue;
+			var worldShaderValue:ValusArray = state.worldShaderValue;
 			var loopCount:int = Stat.loopCount;
-			currentCamera && shaderValue.pushValue(Buffer2D.CAMERAPOS, currentCamera.transform.position.elements, loopCount);
+			camera && worldShaderValue.pushValue(Buffer2D.CAMERAPOS, camera.transform.position.elements);
 			
 			if (_lights.length > 0)//灯光相关
 			{
@@ -254,10 +313,15 @@ package laya.d3.core.scene {
 			}
 			if (enableFog)//雾化
 			{
-				state.worldShaderValue.pushValue(Buffer2D.FOGSTART, fogStart, loopCount);
-				state.worldShaderValue.pushValue(Buffer2D.FOGRANGE, fogRange, loopCount);
-				state.worldShaderValue.pushValue(Buffer2D.FOGCOLOR, fogColor.elements, loopCount);
+				worldShaderValue.pushValue(Buffer2D.FOGSTART, fogStart);
+				worldShaderValue.pushValue(Buffer2D.FOGRANGE, fogRange);
+				worldShaderValue.pushValue(Buffer2D.FOGCOLOR, fogColor.elements);
 			}
+			
+			state.shaderValue.pushArray(worldShaderValue);
+			
+			var shaderDefs:ShaderDefines3D = state.shaderDefs;
+			(enableFog) && (shaderDefs._value = shaderDefs._value |= ShaderDefines3D.FOG);
 		}
 		
 		/**
@@ -288,34 +352,108 @@ package laya.d3.core.scene {
 				(_quenes[i]) && (_quenes[i]._preRender(state));
 		}
 		
+		protected function _clear(gl:WebGLContext, state:RenderState):void {
+			var viewport:Viewport = state.viewport;
+			var camera:BaseCamera = state.camera;
+			var renderTargetHeight:int = camera.renderTargetSize.height;
+			gl.viewport(viewport.x, renderTargetHeight - viewport.y - viewport.height, viewport.width, viewport.height);
+			
+			var clearFlag:int = 0;
+			switch (camera.clearFlag) {
+			case BaseCamera.CLEARFLAG_SOLIDCOLOR: 
+				if (camera.clearColor) {
+					gl.enable(WebGLContext.SCISSOR_TEST);
+					gl.scissor(viewport.x, renderTargetHeight - viewport.y - viewport.height, viewport.width, viewport.height);
+					var clearColorE:Float32Array = camera.clearColor.elements;
+					gl.clearColor(clearColorE[0], clearColorE[1], clearColorE[2], clearColorE[3]);
+					
+					clearFlag = WebGLContext.COLOR_BUFFER_BIT;
+					if (camera.renderTarget) {
+						switch (camera.renderTarget.depthStencilFormat) {
+						case WebGLContext.DEPTH_COMPONENT16: 
+							clearFlag |= WebGLContext.DEPTH_BUFFER_BIT;
+							break;
+						case WebGLContext.STENCIL_INDEX8: 
+							clearFlag |= WebGLContext.STENCIL_BUFFER_BIT;
+							break;
+						case WebGLContext.DEPTH_STENCIL: 
+							clearFlag |= WebGLContext.DEPTH_BUFFER_BIT;
+							clearFlag |= WebGLContext.STENCIL_BUFFER_BIT
+							break;
+						}
+					} else {
+						clearFlag |= WebGLContext.DEPTH_BUFFER_BIT;
+					}
+					
+					gl.clear(clearFlag);
+					//gl.clear(WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT | WebGLContext.COLOR_BUFFER_BIT);
+					gl.disable(WebGLContext.SCISSOR_TEST);
+				} else {
+					gl.clear(WebGLContext.DEPTH_BUFFER_BIT);
+					//gl.clear(WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT | WebGLContext.COLOR_BUFFER_BIT);
+				}
+				break;
+			case BaseCamera.CLEARFLAG_SKY: 
+			case BaseCamera.CLEARFLAG_DEPTHONLY: 
+				if (camera.renderTarget) {
+					switch (camera.renderTarget.depthStencilFormat) {
+					case WebGLContext.DEPTH_COMPONENT16: 
+						clearFlag |= WebGLContext.DEPTH_BUFFER_BIT;
+						break;
+					case WebGLContext.STENCIL_INDEX8: 
+						clearFlag |= WebGLContext.STENCIL_BUFFER_BIT;
+						break;
+					case WebGLContext.DEPTH_STENCIL: 
+						clearFlag |= WebGLContext.DEPTH_BUFFER_BIT;
+						clearFlag |= WebGLContext.STENCIL_BUFFER_BIT
+						break;
+					}
+				} else {
+					clearFlag |= WebGLContext.DEPTH_BUFFER_BIT;
+				}
+				
+				//gl.clear(clearFlag);
+				break;
+			case BaseCamera.CLEARFLAG_NONE: 
+				break;
+			default: 
+				throw new Error("BaseScene:camera clearFlag invalid.");
+			}
+		}
+		
 		/**
 		 * @private
 		 */
 		protected function _renderScene(gl:WebGLContext, state:RenderState):void {
-			var viewport:Viewport = state.viewport;
-			gl.viewport(viewport.x, RenderState.clientHeight - viewport.y - viewport.height, viewport.width, viewport.height);
+			var camera:BaseCamera = state.camera;
+			
 			var i:int, n:int;
 			var queue:RenderQueue;
 			for (i = 0; i < 3; i++) {//非透明队列
-				if (_quenes[i]) {
-					queue = _quenes[i];
-					queue._setState(gl);
+				queue = _quenes[i];
+				if (queue) {
+					queue._setState(gl, state);
 					queue._render(state);
 				}
 			}
 			
-			WebGLContext.setCullFace(gl, false);
-			WebGLContext.setDepthFunc(gl, WebGLContext.LEQUAL);
-			WebGLContext.setDepthMask(gl, 0);
-			var sky:Sky = state.camera.sky;
-			(sky) && (sky._render(state));
-			WebGLContext.setDepthFunc(gl, WebGLContext.LESS);
-			WebGLContext.setDepthMask(gl, 1);
+			if (camera.clearFlag === BaseCamera.CLEARFLAG_SKY) {
+				var sky:Sky = camera.sky;
+				if (sky) {
+					WebGLContext.setCullFace(gl, false);
+					WebGLContext.setDepthFunc(gl, WebGLContext.LEQUAL);
+					WebGLContext.setDepthMask(gl, 0);
+					sky._render(state);
+					WebGLContext.setDepthFunc(gl, WebGLContext.LESS);
+					WebGLContext.setDepthMask(gl, 1);
+				}
+			}
 			
 			for (i = 3, n = _quenes.length; i < n; i++) {//透明队列
-				if (_quenes[i]) {
-					queue = _quenes[i];
-					queue._setState(gl);
+				queue = _quenes[i];
+				if (queue) {
+					queue._sortAlpha(state.camera.transform.position);//TODO:加色法
+					queue._setState(gl, state);
 					queue._render(state);
 				}
 			}

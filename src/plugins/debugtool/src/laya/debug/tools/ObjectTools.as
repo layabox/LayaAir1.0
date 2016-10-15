@@ -368,7 +368,7 @@ package laya.debug.tools
 			if(typeof(value)=="number") return false;
 			if(typeof(value)=="string")
 			{
-				if(parseFloat(value).toString()!=NaN)
+				if(parseFloat(value).toString()!="NaN")
 				{
 					if(parseFloat(value)==value)
 					{

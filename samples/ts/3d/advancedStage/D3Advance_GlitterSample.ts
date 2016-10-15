@@ -16,11 +16,11 @@ module GlitterSample {
 
             this.scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
-            this.scene.currentCamera = (this.scene.addChild(new Laya.Camera(0, 1, 1000))) as Laya.BaseCamera;
-            this.scene.currentCamera.transform.translate(new Vector3(0, 5, 10));
-            this.scene.currentCamera.transform.rotate(new Vector3(-30, 0, 0), true, false);
+            this.camera = (this.scene.addChild(new Laya.Camera(0, 1, 1000))) as Laya.BaseCamera;
+            this.camera.transform.translate(new Vector3(0, 5, 10));
+            this.camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 
-            var setting = new Laya.GlitterSettings();
+            var setting = new Laya.GlitterSetting();
             setting.texturePath = "../../res/threeDimen/layabox.png";
             setting.lifeTime = 0.5;
             setting.minSegmentDistance = 0.1;//最小距离，小于抛弃
@@ -35,7 +35,7 @@ module GlitterSample {
         }
 
         private loop(): void {
-            var projectViewMat = (this.scene.currentCamera as Laya.Camera).projectionViewMatrix;
+            var projectViewMat = (this.camera as Laya.Camera).projectionViewMatrix;
             this.sampler.getSampleP4();
             this.glitter.templet.addVertexPosition(this.sampler.pos1, this.sampler.pos2);
         }

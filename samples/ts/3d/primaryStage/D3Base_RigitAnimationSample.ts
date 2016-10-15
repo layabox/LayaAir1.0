@@ -11,14 +11,14 @@ class D3Base_RigitAnimationSample {
 
         this.scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
-        this.scene.currentCamera = (this.scene.addChild(new  Laya.Camera(0, 0.1, 1000)));
-        this.scene.currentCamera.transform.translate(new Laya.Vector3(0, 16.8, 26.0));
-        this.scene.currentCamera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
-        this.scene.currentCamera.clearColor = null;
+        var camera = (this.scene.addChild(new  Laya.Camera(0, 0.1, 1000)));
+        camera.transform.translate(new Laya.Vector3(0, 16.8, 26.0));
+        camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
+        camera.clearColor = null;
 
         this.effectSprite = this.scene.addChild(new Laya.Sprite3D()) as Laya.Sprite3D;
         this.effectSprite.once(Laya.Event.HIERARCHY_LOADED, this, (sender, sprite3D)=> {
-            this.setMeshParams(this.effectSprite, Laya.Material.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
+            this.setMeshParams(this.effectSprite, Laya.BaseMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
             var rootAnimations = sprite3D.addComponent(Laya.RigidAnimations);
             rootAnimations.url = "../../res/threeDimen/staticModel/effect/WuShen/WuShen.lani";
             rootAnimations.player.play(0);

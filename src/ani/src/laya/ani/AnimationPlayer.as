@@ -326,7 +326,7 @@ package laya.ani {
 		 * @param	playStart 播放的起始时间位置。
 		 * @param	playEnd 播放的结束时间位置。（0为动画一次循环的最长结束时间位置）。
 		 */
-		public function play(index:int = 0, playbackRate:Number = 1.0, overallDuration:Number = 3153600000000/*TODO:为什么不是1.79e+308*/, playStart:Number = 0, playEnd:Number = 0):void {
+		public function play(index:int = 0, playbackRate:Number = 1.0, overallDuration:int = 2147483647, playStart:int = 0, playEnd:int = 0):void {
 			if (!_templet)
 				throw new Error("AnimationPlayer:templet must not be null,maybe you need to set url.");
 			
@@ -335,7 +335,7 @@ package laya.ani {
 			
 			if ((playEnd !== 0) && (playStart > playEnd))
 				throw new Error("AnimationPlayer:start must less than end.");
-			
+	         
 			_currentTime = 0;
 			_currentFrameTime = 0;
 			_elapsedPlaybackTime = 0;
@@ -353,6 +353,7 @@ package laya.ani {
 				_calculatePlayDuration();
 			else
 				_templet.once(Event.LOADED, this, _calculatePlayDuration);
+			update(0);
 		}
 		
 		/**

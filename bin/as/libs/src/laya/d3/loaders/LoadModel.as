@@ -1,5 +1,6 @@
 package laya.d3.loaders {
-	import laya.d3.core.material.Material;
+	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -35,7 +36,7 @@ package laya.d3.loaders {
 		/**@private */
 		private var _strings:Array = ['BLOCK', 'DATA', "STRINGS"];//字符串数组
 		/**@private */
-		private var _materials:Vector.<Material>;
+		private var _materials:Vector.<BaseMaterial>;
 		/**@private */
 		private var _fileData:ArrayBuffer;
 		/**@private */
@@ -58,7 +59,7 @@ package laya.d3.loaders {
 		/**
 		 * 创建一个 <code>LoadModel</code> 实例。
 		 */
-		public function LoadModel(data:ArrayBuffer, mesh:Mesh, materials:Vector.<Material>, url:String) {
+		public function LoadModel(data:ArrayBuffer, mesh:Mesh, materials:Vector.<BaseMaterial>, url:String) {
 			_mesh = mesh;
 			_materials = materials;
 			_onLoaded(data, url);
@@ -138,17 +139,17 @@ package laya.d3.loaders {
 			if (url !== "null") {
 				url = URL.formatURL(url);
 				
-				var material:Material = Resource.materialCache[url];
+				var material:BaseMaterial = Resource.materialCache[url];
 				
 				if (material) {
 					_materials[index] = material;
 				} else {
-					material = _materials[index] = Resource.materialCache[url] = new Material();
+					material = _materials[index] = Resource.materialCache[url] = new StandardMaterial();
 					material.setShaderName(shaderName);
-					Material.createFromFile(url, material);
+					BaseMaterial.createFromFile(url, material);
 				}
 			} else {
-				_materials[index] = new Material();
+				_materials[index] = new BaseMaterial();
 			}
 			//trace("MATERIAL:" + index + " " + materialPath);
 			return true;
@@ -206,7 +207,7 @@ package laya.d3.loaders {
 			var boneDicsize:int = _readData.getUint32();
 			var arrayBuffer:ArrayBuffer = _readData.__getBuffer();
 			//trace("SUBMESH:ibofs=" + ibofs + "  ibsize=" + ibsize + "  vbofs=" + vbofs + " vbsize=" + vbsize + "  boneDicofs=" + boneDicofs + " boneDicsize=" + boneDicsize + " " + bufferAttribute);
-			var submesh:SubMesh = new SubMesh(_mesh);
+			var submesh:SubMesh = new SubMesh();
 			//submesh.verticesIndices = new Uint32Array(arrayBuffer.slice(vbIndicesofs + _DATA.offset, vbIndicesofs + _DATA.offset + vbIndicessize));//TODO:可取消
 			var vertexDeclaration:VertexDeclaration = _getVertexDeclaration();
 			
@@ -216,7 +217,7 @@ package laya.d3.loaders {
 			var vbArrayBuffer:ArrayBuffer = arrayBuffer.slice(vbStart, vbStart + vbsize);
 			
 			vb.setData(new Float32Array(vbArrayBuffer));
-			submesh.setVB(vb);
+			submesh._vertexBuffer=vb;
 			
 			var vertexElements:Array = vb.vertexDeclaration.getVertexElements();
 			for (var i:int = 0; i < vertexElements.length; i++)
@@ -226,10 +227,10 @@ package laya.d3.loaders {
 			var ibStart:int = ibofs + _DATA.offset;
 			var ibArrayBuffer:ArrayBuffer = arrayBuffer.slice(ibStart, ibStart + ibsize);
 			ib.setData(new Uint16Array(ibArrayBuffer));
-			submesh.setIB(ib, ibsize / 2);
+			submesh._indexBuffer=ib;
 			
 			var boneDicArrayBuffer:ArrayBuffer = arrayBuffer.slice(boneDicofs + _DATA.offset, boneDicofs + _DATA.offset + boneDicsize);
-			submesh._setBoneDic(new Uint8Array(boneDicArrayBuffer));
+			submesh._boneIndices=new Uint8Array(boneDicArrayBuffer);
 			
 			_mesh._add(submesh);
 			

@@ -62,6 +62,7 @@ package
 			{
 				trace(new Byte(message).readUTFBytes());
 			}
+			socket.input.clear();
 		}
 
 		private function onConnectError(e:Event=null):void
