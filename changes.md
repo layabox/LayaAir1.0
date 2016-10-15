@@ -39,7 +39,7 @@ Input增加type属性，可以设置为password,email,number等
 
 下载地址：https://github.com/layabox/layaair-ide-ui
 
-增加LayaAirIDE内对ActionScript3语言代码提示的支持(测试版，需要java环境)
+
 
 优化导出代码效率，减少大型项目发布所花费的时间
 
@@ -51,7 +51,9 @@ Input增加type属性，可以设置为password,email,number等
 
 增加切断预设功能(右键)，增加预设颜色区分
 
-功能优化：
+
+
+###### 功能优化：
 
 改进控制台，问题，调试，终端等面板的布局，使其使用更加方便
 
@@ -78,6 +80,25 @@ Input增加type属性，可以设置为password,email,number等
 修复多级目录重命名不对的问题
 
 修复内置服务器端口冲突导致服务器开启失败
+
+
+
+###### AS3语言服务（测试版）
+
+使用NextGen ActionScript为AS提供语言服务。
+
+详细参见https://github.com/BowlerHatLLC/vscode-nextgenas
+
+- ActionScript文件的**语法高亮**。
+- **智能感应**提供自动完成的导入、类型和成员访问。
+- **签名帮助**显示调用函数时参数列表。
+- 实时检查输入时的**错误和警告**。
+- **经过**符号时显示更多诸如类型、命名空间等细节。
+- Ctrl+Click 符号用来**跳转至定义**。
+- 在项目内对符号**查找所有引用**。
+- **重命名**类成员和局部变量。
+
+
 
 ##1.4.0##
 ----------------------------------------
