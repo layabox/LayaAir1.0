@@ -22,6 +22,7 @@ package laya.webgl.shader.d2.skinAnishader {
 		private var mIBData:Uint16Array;
 		private var mEleNum:int = 0;
 		private var mTexture:Texture;
+		private var _tempMatrix:Matrix = new Matrix();
 		public var transform:Matrix;
 		
 		private var _vs:Array;
@@ -82,12 +83,10 @@ package laya.webgl.shader.d2.skinAnishader {
 				var tempSubmit:Submit = Submit.createShape(context, mIBBuffer, mVBBuffer, mEleNum, _indexStart, Value2D.create(ShaderDefines2D.SKINMESH, 0));
 				transform || (transform = Matrix.EMPTY);
 				transform.translate(x, y);
-				var tResultMatrix:Matrix = new Matrix();
-				Matrix.mul(transform, context._curMat, tResultMatrix);
+				Matrix.mul(transform, context._curMat, _tempMatrix);
 				transform.translate( -x, -y);
 				var tArray:Array = RenderState2D.getMatrArray();
-				RenderState2D.mat2MatArray(tResultMatrix, tArray);
-				
+				RenderState2D.mat2MatArray(_tempMatrix, tArray);
 				var tShaderValue:SkinSV = tempSubmit.shaderValue as SkinSV;
 				tShaderValue.textureHost = mTexture;
 				tShaderValue.offsetX = 0;

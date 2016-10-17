@@ -9,6 +9,7 @@ package laya.webgl.shader.d2.fillTexture {
 	import laya.webgl.shader.d2.value.Value2D;
 	import laya.webgl.submit.Submit;
 	import laya.webgl.utils.IndexBuffer2D;
+	import laya.webgl.utils.RenderState2D;
 	import laya.webgl.utils.VertexBuffer2D;
 	public class FillTextureSprite {
 		
@@ -19,6 +20,7 @@ package laya.webgl.shader.d2.fillTexture {
 		private var mEleNum:int = 0;
 		private var mShaderValue:FillTextureSV;
 		private var mTexture:Texture;
+		private var _tempMatrix:Matrix = new Matrix();
 		public var transform:Matrix;
 		
 		private var _start:int = -1;
@@ -29,6 +31,7 @@ package laya.webgl.shader.d2.fillTexture {
 		
 		public var u_texRange:Array = [0, 1, 0, 1];
 		public var u_offset:Array = [0, 0];
+		
 		
 		public function FillTextureSprite() {
 		
@@ -91,6 +94,14 @@ package laya.webgl.shader.d2.fillTexture {
 				if (mIBBuffer && mIBBuffer)
 				{
 					var tempSubmit:Submit = Submit.createShape(context, mIBBuffer, mVBBuffer, mEleNum, _indexStart, Value2D.create(ShaderDefines2D.FILLTEXTURE, 0));
+					Matrix.TEMP.identity();
+					transform || (transform = Matrix.EMPTY);
+					transform.translate(x, y);
+					Matrix.mul(transform, context._curMat, _tempMatrix);
+					transform.translate(-x, -y);
+					var tArray:Array = RenderState2D.getMatrArray();
+					RenderState2D.mat2MatArray(_tempMatrix, tArray);
+				
 					var tShaderValue:FillTextureSV = tempSubmit.shaderValue as FillTextureSV;
 					tShaderValue.textureHost = mTexture;
 					tShaderValue.u_offset[0] = u_offset[0];
@@ -100,6 +111,7 @@ package laya.webgl.shader.d2.fillTexture {
 					tShaderValue.u_texRange[2] = u_texRange[2];
 					tShaderValue.u_texRange[3] = u_texRange[3];
 					tShaderValue.ALPHA = context._shader2D.ALPHA;
+					tShaderValue.u_mmat2 = tArray;
 					(context as WebGLContext2D)._submits[(context as WebGLContext2D)._submits._length++] = tempSubmit;
 				}
 			}

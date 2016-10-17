@@ -992,6 +992,7 @@
 			this._vb=null;
 			this.u_texRange=[0,1,0,1];
 			this.u_offset=[0,0];
+			this._tempMatrix=new Matrix();
 		}
 
 		__class(FillTextureSprite,'laya.webgl.shader.d2.fillTexture.FillTextureSprite');
@@ -1050,6 +1051,13 @@
 				SkinMeshBuffer.getInstance().addFillTexture(this);
 				if (this.mIBBuffer && this.mIBBuffer){
 					var tempSubmit=Submit.createShape(context,this.mIBBuffer,this.mVBBuffer,this.mEleNum,this._indexStart,Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.FILLTEXTURE*/0x100,0));
+					Matrix.TEMP.identity();
+					this.transform || (this.transform=Matrix.EMPTY);
+					this.transform.translate(x,y);
+					Matrix.mul(this.transform,context._curMat,this._tempMatrix);
+					this.transform.translate(-x,-y);
+					var tArray=RenderState2D.getMatrArray();
+					RenderState2D.mat2MatArray(this._tempMatrix,tArray);
 					var tShaderValue=tempSubmit.shaderValue;
 					tShaderValue.textureHost=this.mTexture;
 					tShaderValue.u_offset[0]=this.u_offset[0];
@@ -1059,6 +1067,7 @@
 					tShaderValue.u_texRange[2]=this.u_texRange[2];
 					tShaderValue.u_texRange[3]=this.u_texRange[3];
 					tShaderValue.ALPHA=context._shader2D.ALPHA;
+					tShaderValue.u_mmat2=tArray;
 					(context)._submits[(context)._submits._length++]=tempSubmit;
 				}
 			}
@@ -1104,7 +1113,7 @@
 			vs="attribute vec4 position;\nattribute vec3 a_color;\nuniform mat4 mmat;\nuniform mat4 u_mmat2;\nuniform vec2 u_pos;\nuniform vec2 size;\nvarying vec3 color;\nvoid main(){\n  vec4 tPos = vec4(position.x + u_pos.x,position.y + u_pos.y,position.z,position.w);\n  vec4 pos=mmat*u_mmat2*tPos;\n  gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  color=a_color;\n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/webgl/src/laya/webgl/shader/d2/files/primitive.vs*/;
 			ps="precision mediump float;\n//precision mediump float;\nvarying vec3 color;\nuniform float alpha;\nvoid main(){\n	//vec4 a=vec4(color.r, color.g, color.b, 1);\n	//a.a*=alpha;\n    gl_FragColor=vec4(color.r, color.g, color.b, alpha);\n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/webgl/src/laya/webgl/shader/d2/files/primitive.ps*/;
 			Shader.preCompile(0,/*laya.webgl.shader.d2.ShaderDefines2D.PRIMITIVE*/0x04,vs,ps,null);
-			vs="attribute vec2 position;\nattribute vec2 texcoord;\nattribute vec4 color;\nuniform vec2 size;\nuniform mat4 mmat;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\nvoid main() {\n  vec4 pos=mmat*vec4(position.x,position.y,0,1 );\n  gl_Position = vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  v_color = color;\n  v_texcoord = texcoord;  \n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/webgl/src/laya/webgl/shader/d2/filltexture/filltextureshader.vs*/;
+			vs="attribute vec2 position;\nattribute vec2 texcoord;\nattribute vec4 color;\nuniform vec2 size;\nuniform mat4 mmat;\nuniform mat4 u_mmat2;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\nvoid main() {\n  vec4 pos=mmat*u_mmat2*vec4(position.x,position.y,0,1 );\n  gl_Position = vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  v_color = color;\n  v_texcoord = texcoord;  \n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/webgl/src/laya/webgl/shader/d2/filltexture/filltextureshader.vs*/;
 			ps="precision mediump float;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\nuniform sampler2D texture;\nuniform vec4 u_texRange;\nuniform vec2 u_offset;\nuniform float alpha;\nvoid main() {\n	vec2 newTexCoord;\n	newTexCoord.x = mod(((u_offset.x + v_texcoord.x) * u_texRange.y),u_texRange.y) + u_texRange.x;\n	newTexCoord.y = mod(((u_offset.y + v_texcoord.y) * u_texRange.w),u_texRange.w) + u_texRange.z;\n	vec4 t_color = texture2D(texture, newTexCoord);\n	gl_FragColor = t_color * v_color;\n	gl_FragColor.a = gl_FragColor.a * alpha;\n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/webgl/src/laya/webgl/shader/d2/filltexture/filltextureshader.ps*/;
 			Shader.preCompile(0,/*laya.webgl.shader.d2.ShaderDefines2D.FILLTEXTURE*/0x100,vs,ps,null);
 			vs="attribute vec2 position;\nattribute vec2 texcoord;\nattribute vec4 color;\nuniform vec2 size;\nuniform float offsetX;\nuniform float offsetY;\nuniform mat4 mmat;\nuniform mat4 u_mmat2;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\nvoid main() {\n  vec4 pos=mmat*u_mmat2*vec4(offsetX+position.x,offsetY+position.y,0,1 );\n  gl_Position = vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  v_color = color;\n  v_texcoord = texcoord;  \n}"/*__INCLUDESTR__e:/trank/libs/layaair/publish/layaairpublish/src/webgl/src/laya/webgl/shader/d2/skinanishader/skinshader.vs*/;
@@ -1219,6 +1228,7 @@
 			this._resultPs=null;
 			this._start=-1;
 			this._indexStart=-1;
+			this._tempMatrix=new Matrix();
 		}
 
 		__class(SkinMesh,'laya.webgl.shader.d2.skinAnishader.SkinMesh');
@@ -1271,11 +1281,10 @@
 				var tempSubmit=Submit.createShape(context,this.mIBBuffer,this.mVBBuffer,this.mEleNum,this._indexStart,Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.SKINMESH*/0x200,0));
 				this.transform || (this.transform=Matrix.EMPTY);
 				this.transform.translate(x,y);
-				var tResultMatrix=new Matrix();
-				Matrix.mul(this.transform,context._curMat,tResultMatrix);
+				Matrix.mul(this.transform,context._curMat,this._tempMatrix);
 				this.transform.translate(-x,-y);
 				var tArray=RenderState2D.getMatrArray();
-				RenderState2D.mat2MatArray(tResultMatrix,tArray);
+				RenderState2D.mat2MatArray(this._tempMatrix,tArray);
 				var tShaderValue=tempSubmit.shaderValue;
 				tShaderValue.textureHost=this.mTexture;
 				tShaderValue.offsetX=0;
