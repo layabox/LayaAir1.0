@@ -365,7 +365,7 @@ window.Laya=(function(window,document){
 		Laya.timer=null;
 		Laya.loader=null;
 		Laya.render=null
-		Laya.version="1.5.0";
+		Laya.version="1.5.1";
 		Laya.stageBox=null
 		__static(Laya,
 		['conchMarket',function(){return this.conchMarket=/*__JS__ */window.conch?conchMarket:null;},'PlatformClass',function(){return this.PlatformClass=/*__JS__ */window.PlatformClass;}
@@ -15706,7 +15706,7 @@ window.Laya=(function(window,document){
 		__proto.loadImages=function(urls,cacheName){
 			(cacheName===void 0)&& (cacheName="");
 			this._url="";
-			if (!Animation.framesMap[cacheName]){
+			if (!this._setFramesFromCache(cacheName)){
 				this.frames=Animation.framesMap[cacheName] ? Animation.framesMap[cacheName] :Animation.createFrames(urls,cacheName);
 			}
 			return this;
@@ -15723,7 +15723,7 @@ window.Laya=(function(window,document){
 			(cacheName===void 0)&& (cacheName="");
 			this._url="";
 			var _this=this;
-			if (!Animation.framesMap[cacheName]){
+			if (!_this._setFramesFromCache(cacheName)){
 				function onLoaded (loadUrl){
 					if (url===loadUrl){
 						_this.frames=Animation.framesMap[cacheName] ? Animation.framesMap[cacheName] :Animation.createFrames(url,cacheName);
@@ -15745,10 +15745,10 @@ window.Laya=(function(window,document){
 		__proto.loadAnimation=function(url,loaded){
 			this._url=url;
 			var _this=this;
-			if (!Animation.framesMap[url]){
+			if (!_this._setFramesFromCache()){
 				function onLoaded (loadUrl){
 					if (url===loadUrl){
-						if (!Animation.framesMap[url]){
+						if (!Animation.framesMap[url+"#"]){
 							var aniData=_this._parseGraphicAnimation(Loader.getRes(url));
 							if (!aniData)return;
 							var obj=aniData.animationDic;
@@ -15762,9 +15762,9 @@ window.Laya=(function(window,document){
 								}
 							}
 							_this.frames=aniData.animationList[0];
-							if (flag)Animation.framesMap[url]=_this.frames;
+							if (flag)Animation.framesMap[url+"#"]=_this.frames;
 							}else {
-							_this.frames=Animation.framesMap[url];
+							_this.frames=Animation.framesMap[url+"#"];
 						}
 						if (loaded)loaded.run();
 					}
@@ -15830,12 +15830,13 @@ window.Laya=(function(window,document){
 			return arr;
 		}
 
-		Animation.clearCache=function(url){
+		Animation.clearCache=function(key){
 			var cache=Animation.framesMap;
-			var key;
-			for (key in cache){
-				if (key===url || key.indexOf(url+"#")==0){
-					delete Animation.framesMap[key];
+			var val;
+			var key2=key+"#";
+			for (val in cache){
+				if (val===key || val.indexOf(key2)==0){
+					delete Animation.framesMap[val];
 				}
 			}
 		}

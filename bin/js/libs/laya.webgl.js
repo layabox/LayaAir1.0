@@ -1050,6 +1050,7 @@
 			if (Render.isWebGL){
 				SkinMeshBuffer.getInstance().addFillTexture(this);
 				if (this.mIBBuffer && this.mIBBuffer){
+					context._shader2D.glTexture=null;
 					var tempSubmit=Submit.createShape(context,this.mIBBuffer,this.mVBBuffer,this.mEleNum,this._indexStart,Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.FILLTEXTURE*/0x100,0));
 					Matrix.TEMP.identity();
 					this.transform || (this.transform=Matrix.EMPTY);
@@ -1277,6 +1278,7 @@
 
 		__proto.render=function(context,x,y){
 			if (Render.isWebGL && this.mTexture){
+				context._shader2D.glTexture=null;
 				SkinMeshBuffer.getInstance().addSkinMesh(this);
 				var tempSubmit=Submit.createShape(context,this.mIBBuffer,this.mVBBuffer,this.mEleNum,this._indexStart,Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.SKINMESH*/0x200,0));
 				this.transform || (this.transform=Matrix.EMPTY);
@@ -1291,7 +1293,7 @@
 				tShaderValue.offsetY=0;
 				tShaderValue.u_mmat2=tArray;
 				tShaderValue.ALPHA=context._shader2D.ALPHA;
-				(context)._submits[(context)._submits._length++]=tempSubmit;
+				context._submits[context._submits._length++]=tempSubmit;
 			}
 		}
 

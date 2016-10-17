@@ -823,12 +823,13 @@
 		Video.onTimeupdate=function(e){e.target.layaTarget.event("timeupdate")}
 		Video.onVolumechange=function(e){e.target.layaTarget.event("volumechange")}
 		Video.onWaiting=function(e){e.target.layaTarget.event("waiting")}
+		Video.MP4=1;
+		Video.OGG=2;
+		Video.CAMERA=4;
+		Video.WEBM=8;
 		Video.SUPPORT_PROBABLY="probably";
 		Video.SUPPORT_MAYBY="maybe";
 		Video.SUPPORT_NO="";
-		__static(Video,
-		['MP4',function(){return this.MP4=2 ^ 0;},'OGG',function(){return this.OGG=2 ^ 1;},'CAMERA',function(){return this.CAMERA=2 ^ 2;},'WEBM',function(){return this.WEBM=2 ^ 3;}
-		]);
 		return Video;
 	})(Sprite)
 

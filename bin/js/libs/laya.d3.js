@@ -3694,7 +3694,7 @@
 		}
 
 		__proto._getVertexDeclaration=function(){
-			var position=false,normal=false,color=false,texcoord0=false,texcoord1=false,blendWeight=false,blendIndex=false;
+			var position=false,normal=false,color=false,texcoord0=false,texcoord1=false,tangent=false,blendWeight=false,blendIndex=false;
 			for (var i=0;i < this._shaderAttributes.length;i+=8){
 				switch (this._shaderAttributes[i]){
 					case "POSITION":
@@ -3711,6 +3711,9 @@
 						break ;
 					case "UV1":
 						texcoord1=true;
+						break ;
+					case "TANGENT":
+						tangent=true;
 						break ;
 					case "BLENDWEIGHT":
 						blendWeight=true;
@@ -10799,6 +10802,13 @@
 		*/
 		__proto.disableLight=function(){
 			this._addDisableShaderDefine(/*laya.d3.shader.ShaderDefines3D.POINTLIGHT*/0x80 | /*laya.d3.shader.ShaderDefines3D.SPOTLIGHT*/0x100 | /*laya.d3.shader.ShaderDefines3D.DIRECTIONLIGHT*/0x40);
+		}
+
+		/**
+		*禁用雾化。
+		*/
+		__proto.disableFog=function(){
+			this._addDisableShaderDefine(/*laya.d3.shader.ShaderDefines3D.FOG*/0x20000);
 		}
 
 		__proto._setLoopShaderParams=function(state,projectionView,worldMatrix,mesh,material){

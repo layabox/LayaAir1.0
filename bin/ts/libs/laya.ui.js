@@ -7668,6 +7668,15 @@
 			(this._tf).type=value;
 		});
 
+		/**
+		*@copy laya.display.Input#asPassword
+		*/
+		__getset(0,__proto,'asPassword',function(){
+			return (this._tf).asPassword;
+			},function(value){
+			(this._tf).asPassword=value;
+		});
+
 		return TextInput;
 	})(Label)
 

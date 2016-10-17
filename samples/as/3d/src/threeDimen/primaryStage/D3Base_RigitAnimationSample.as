@@ -64,7 +64,6 @@ package threeDimen.primaryStage {
 							material.once(Event.LOADED, null, function(mat:BaseMaterial):void {
 								mat.renderMode = renderMode;
 							});
-							
 						}
 					});
 				}

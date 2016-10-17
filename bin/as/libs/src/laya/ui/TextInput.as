@@ -355,5 +355,18 @@ package laya.ui {
 		{
 			Input(_tf).type = value;
 		}
+		
+		/**
+		 * @copy laya.display.Input#asPassword
+		 */
+		public function get asPassword():String
+		{
+			return Input(_tf).asPassword;
+		}
+		
+		public function set asPassword(value:String):void
+		{
+			Input(_tf).asPassword = value;
+		}
 	}
 }

@@ -308,6 +308,12 @@ package laya.d3.core.material {
 		public function disableLight():void {
 			_addDisableShaderDefine(ShaderDefines3D.POINTLIGHT | ShaderDefines3D.SPOTLIGHT | ShaderDefines3D.DIRECTIONLIGHT);
 		}
+		/**
+		 * 禁用雾化。
+		 */
+		public function disableFog():void {
+			_addDisableShaderDefine(ShaderDefines3D.FOG);
+		}
 		
 		override public function _setLoopShaderParams(state:RenderState, projectionView:Matrix4x4, worldMatrix:Matrix4x4, mesh:IRenderable, material:BaseMaterial):void {
 			(_transformUV) && (_transformUV.matrix);//触发UV矩阵更新TODO:临时

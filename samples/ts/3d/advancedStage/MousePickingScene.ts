@@ -2,6 +2,10 @@ class MousePickingScene extends Laya.Scene {
     private phasorSpriter3D: Laya.PhasorSpriter3D;
     private ray: Laya.Ray;
     private point = new Laya.Vector2();
+    private camera:Laya.Camera;
+    private raycastHit:Laya.RaycastHit;
+    private sprite3d:Laya.Sprite3D;
+
 
     constructor() {
         super();

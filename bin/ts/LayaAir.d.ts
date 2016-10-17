@@ -11589,8 +11589,8 @@ declare module laya.net {
         static basePath: string;
         /**根路径。*/
         static rootPath: string;
-        /** 自定义url格式化。例如： customFormat=function(url:string,basePath:string):string
-         public static var customFormat:Function;
+        /** 自定义url格式化。例如： customFormat=function(url:string,basePath:string):string*/
+         public static  customFormat:Function;
          /**
          * 格式化指定的地址并	返回。
          * @param	url 地址。
@@ -12849,6 +12849,62 @@ declare module laya.runtime {
      * @private
      */
     interface IConchNode {
+        /**@private */
+        setRootNode(): void;
+        /**@private */
+        addChildAt(c: IConchNode, i: number): void;
+        /**@private */
+        removeChild(c: IConchNode): void;
+        /**@private */
+        size(w: number, h: number): void;
+        /**@private */
+        pos(x: number, y: number): void;
+        /**@private */
+        pivot(x: number, y: number): void;
+        /**@private */
+        scale(x: number, y: number): void;
+        /**@private */
+        skew(x: number, y: number): void;
+        /**@private */
+        rotate(r: number): void;
+        /**@private */
+        bgColor(bg: string): void;
+        /**@private */
+        font(str: string): void;
+        /**@private */
+        text(d: any): void;
+        /**@private */
+        transform(a: number, b: number, c: number, d: number, tx: number, ty: number): void;
+        /**@private */
+        alpha(a: number): void;
+        /**@private */
+        setFilterMatrix(mat: Float32Array, alpha: Float32Array): void;
+        /**@private */
+        visible(b: boolean): void;
+        /**@private */
+        blendMode(v: string): void;
+        /**@private */
+        scrollRect(x: number, y: number, w: number, h: number): void;
+        /**@private */
+        mask(node: IConchNode): void;
+        /**@private */
+        graphics(g: laya.display.Graphics): void;
+        /**@private */
+        custom(context: laya.resource.Context): void;
+        /**@private */
+        removeType(type: number): void;
+        /**@private */
+        cacheAs(type: number): void;
+        /**@private */
+        border(color: String): void;
+        /**@private */
+        optimizeScrollRect(b: Boolean): void;
+        /**@private */
+        blurFilter(strength: number): void;
+        /**@private */
+        glowFilter(color: string, blur: number, offX: number, offY: number): void;
+        /**@private*/
+        repaint(): void;
     }
 }
 declare module laya.runtime {
@@ -12857,6 +12913,12 @@ declare module laya.runtime {
      * @author hugao
      */
     interface ICPlatformClass {
+        /**
+         * 创建平台类
+         * @param	clsName  类全名
+         * @return 创建的类
+         */
+        createClass(clsName: string): IPlatformClass;
     }
 }
 declare module laya.runtime {
@@ -12864,6 +12926,94 @@ declare module laya.runtime {
      * @private
      */
     interface IMarket {
+        /**
+         * 登录
+         * @param	jsonParm
+         * @param	callback
+         */
+        login(jsonParm: string, callback: Function): void;
+        /**
+         * 登出
+         * @param	jsonParm
+         * @param	callback
+         */
+        logout(jsonParm: string, callback: Function): void;
+        /**
+         * 授权
+         * @param	jsonParm
+         * @param	callback
+         */
+        authorize(jsonParm: string, callback: Function): void;
+        /**
+         * 进入论坛
+         * @param	jsonParm
+         * @param	callback
+         */
+        enterBBS(jsonParm: string, callback: Function): void;
+        /**
+         * 刷新票据
+         * @param	jsonParm
+         * @param	callback
+         */
+        refreshToken(jsonParm: string, callback: Function): void;
+        /**
+         * 支付
+         * @param	jsonParm
+         * @param	callback
+         */
+        recharge(jsonParm: string, callback: Function): void;
+        /**
+         * 分享
+         * @param	jsonParm
+         * @param	callback
+         */
+        enterShareAndFeed(jsonParm: string, callback: Function): void;
+        /**
+         * 邀请
+         * @param	jsonParm
+         * @param	callback
+         */
+        enterInvite(jsonParm: string, callback: Function): void;
+        /**
+         * 获取游戏好友
+         * @param	jsonParm
+         * @param	callback
+         */
+        getGameFriends(jsonParm: string, callback: Function): void;
+        /**
+         * 发送到桌面
+         * @param	jsonParm
+         * @param	callback
+         */
+        sendToDesktop(jsonParm: string, callback: Function): void;
+        /**
+         * 发送自定义消息
+         * @param	jsonParm
+         * @param	callback
+         */
+        sendMessageToPlatform(jsonParm: string, callback: Function): void;
+        /**
+         * 获取用户信息
+         * @param	jsonParm
+         * @param	callback
+         */
+        getUserInfo(jsonParm: string, callback: Function): void;
+        /**
+         * 返回Market名称
+         */
+        getMarketName(): string;
+        /**
+         * 返回支付类型 自定义
+         */
+        getPayType(): number;
+        /**
+         * 返回登录类型 自定义
+         */
+        getLoginType(): number;
+        /**
+         *
+         */
+        getChargeType(): number;
     }
 }
 declare module laya.runtime {
@@ -12872,6 +13022,20 @@ declare module laya.runtime {
      * @author hugao
      */
     interface IPlatform {
+        /**
+         * 调用方法
+         * @param	methodName  方法名
+         * @param	...args     参数
+         * @return 返回值 目前只用android能直接返回
+         */
+        call(methodName: string, ...args: any[]): any;
+        /**
+         * 调用方法通过回调接收返回值
+         * @param	callback     回调方法 参数为返回值
+         * @param	methodName   方法名
+         * @param	...args     参数
+         */
+        callWithBack(callback: Function, methodName: string, ...args: any[]): void;
     }
 }
 declare module laya.runtime {
@@ -12880,6 +13044,12 @@ declare module laya.runtime {
      * @author hugao
      */
     interface IPlatformClass extends IPlatform {
+        /**
+         * 创建对象
+         * @param	...args  构造函数的参数
+         * @return  创建出来的对象
+         */
+        newObject(...args: any[]): IPlatform;
     }
 }
 declare module laya.scene {

@@ -1,0 +1,70 @@
+{
+    "type": "Sprite3D",
+    "props":
+    {
+        "name": "RootNode"
+    },
+    "customProps":
+    {
+        "translate":
+        [
+            0,
+            0,
+            0
+        ],
+        "rotation":
+        [
+            0,
+            0,
+            0,
+            1
+        ],
+        "scale":
+        [
+            1,
+            1,
+            1
+        ]
+    },
+    "child":
+    [
+        {
+            "type": "MeshSprite3D",
+            "instanceParams":
+            {
+                "loadPath": "quad-Plane001.lm"
+            },
+            "props":
+            {
+                "isStatic": false,
+                "name": "Plane001"
+            },
+            "customProps":
+            {
+                "translate":
+                [
+                    -4.353431,
+                    19.93305,
+                    1.966549
+                ],
+                "rotation":
+                [
+                    -5.760117e-08,
+                    0.7071067,
+                    5.760116e-08,
+                    0.7071068
+                ],
+                "scale":
+                [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "child":
+            [
+                
+            ]
+        }
+    ]
+}
