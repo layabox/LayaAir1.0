@@ -14,20 +14,15 @@ package threeDimen.primaryStage {
 	import laya.utils.Stat;
 	
 	public class D3Base_StaticModel_MeshSample {
-		private var skinMesh:MeshSprite3D;
-		private var skinAni:SkinAnimations;
-		
 		public function D3Base_StaticModel_MeshSample() {
-			Laya3D.init(0, 0,true);
+			Laya3D.init(0, 0, true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
 			
-			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
-			scene.shadingMode = BaseScene.VERTEX_SHADING;
 			
-			var camera:BaseCamera = new Camera( 0, 0.1, 100);
+			var camera:BaseCamera = new Camera(0, 0.1, 100);
 			(scene.addChild(camera)) as Camera;
 			camera.transform.translate(new Vector3(0, 0.8, 1.5));
 			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);

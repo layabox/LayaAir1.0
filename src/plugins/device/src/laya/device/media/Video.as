@@ -20,10 +20,10 @@ package laya.device.media
 	 */
 	public class Video extends Sprite
 	{
-		public static var MP4:int = 2 ^ 0;
-		public static var OGG:int = 2 ^ 1;
-		public static var CAMERA:int = 2 ^ 2;
-		public static var WEBM:int = 2 ^ 3;
+		public static var MP4:int = 1;
+		public static var OGG:int = 2;
+		public static var CAMERA:int = 4;
+		public static var WEBM:int = 8;
 		
 		/** 表示最有可能支持。 */
 		public static var SUPPORT_PROBABLY:String = "probably";

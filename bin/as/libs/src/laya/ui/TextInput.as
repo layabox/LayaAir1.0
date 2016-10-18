@@ -359,12 +359,12 @@ package laya.ui {
 		/**
 		 * @copy laya.display.Input#asPassword
 		 */
-		public function get asPassword():String
+		public function get asPassword():Boolean
 		{
 			return Input(_tf).asPassword;
 		}
 		
-		public function set asPassword(value:String):void
+		public function set asPassword(value:Boolean):void
 		{
 			Input(_tf).asPassword = value;
 		}

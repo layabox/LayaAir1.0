@@ -228,7 +228,7 @@ package laya.display {
 		public function loadAnimation(url:String, loaded:Handler = null):Animation {
 			this._url = url;
 			var _this:Animation = this;
-			if (!_this._setFramesFromCache()) {
+			if (!_this._setFramesFromCache("")) {
 				function onLoaded(loadUrl:String):void {
 					if (url === loadUrl) {
 						if (!framesMap[url + "#"]) {

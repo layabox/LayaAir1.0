@@ -37,7 +37,6 @@ package threeDimen.primaryStage {
 			Stat.show();
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
-			scene.shadingMode = BaseScene.PIXEL_SHADING;
 			
 			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
 			camera.transform.translate(new Vector3(0, 0.8, 1.5));

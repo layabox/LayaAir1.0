@@ -36,7 +36,6 @@ package threeDimen.primaryStage {
 			directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
 			directionLight.specularColor = new Vector3(2.0, 2.0, 1.6);
 			directionLight.diffuseColor = new Vector3(1, 1, 1);
-			scene.shadingMode = BaseScene.PIXEL_SHADING;
 			
 			skinMesh = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
 			skinMesh.transform.localRotationEuler = new Vector3(0, 3.14, 0);

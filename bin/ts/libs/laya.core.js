@@ -15745,7 +15745,7 @@ window.Laya=(function(window,document){
 		__proto.loadAnimation=function(url,loaded){
 			this._url=url;
 			var _this=this;
-			if (!_this._setFramesFromCache()){
+			if (!_this._setFramesFromCache("")){
 				function onLoaded (loadUrl){
 					if (url===loadUrl){
 						if (!Animation.framesMap[url+"#"]){

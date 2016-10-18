@@ -48,7 +48,6 @@ package threeDimen.primaryStage {
 			directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
 			directionLight.specularColor = new Vector3(2.0, 2.0, 1.6);
 			directionLight.diffuseColor = new Vector3(1, 1, 1);
-			scene.shadingMode = BaseScene.PIXEL_SHADING;
 			
 			var rootSkinMesh:Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;
 			

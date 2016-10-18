@@ -93,6 +93,7 @@ package laya.webgl.shader.d2.fillTexture {
 				SkinMeshBuffer.getInstance().addFillTexture(this);
 				if (mIBBuffer && mIBBuffer)
 				{
+					context._shader2D.glTexture = null;
 					var tempSubmit:Submit = Submit.createShape(context, mIBBuffer, mVBBuffer, mEleNum, _indexStart, Value2D.create(ShaderDefines2D.FILLTEXTURE, 0));
 					Matrix.TEMP.identity();
 					transform || (transform = Matrix.EMPTY);

@@ -31,7 +31,6 @@ package threeDimen.primaryStage {
 			Stat.show();
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
-			scene.shadingMode = BaseScene.VERTEX_SHADING;
 			
 			var camera1:Camera = new Camera( 0, 0.1, 100);
 			scene.addChild(camera1);

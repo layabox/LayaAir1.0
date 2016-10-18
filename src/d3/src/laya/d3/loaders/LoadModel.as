@@ -242,7 +242,7 @@ package laya.d3.loaders {
 		}
 		
 		private function _getVertexDeclaration():VertexDeclaration {
-			var position:Boolean, normal:Boolean, color:Boolean, texcoord0:Boolean, texcoord1:Boolean, blendWeight:Boolean, blendIndex:Boolean;
+			var position:Boolean, normal:Boolean, color:Boolean, texcoord0:Boolean, texcoord1:Boolean,tangent:Boolean, blendWeight:Boolean, blendIndex:Boolean;
 			for (var i:int = 0; i < _shaderAttributes.length; i += 8) {
 				switch (_shaderAttributes[i]) {
 				case "POSITION": 
@@ -259,6 +259,9 @@ package laya.d3.loaders {
 					break;
 				case "UV1": 
 					texcoord1 = true;
+					break;
+				case "TANGENT": 
+					tangent = true;
 					break;
 				case "BLENDWEIGHT": 
 					blendWeight = true;

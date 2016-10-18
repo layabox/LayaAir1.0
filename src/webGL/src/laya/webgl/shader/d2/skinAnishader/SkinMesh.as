@@ -79,6 +79,7 @@ package laya.webgl.shader.d2.skinAnishader {
 		
 		public function render(context:*, x:Number, y:Number):void {
 			if (Render.isWebGL && mTexture) {
+				context._shader2D.glTexture = null;
 				SkinMeshBuffer.getInstance().addSkinMesh(this);
 				var tempSubmit:Submit = Submit.createShape(context, mIBBuffer, mVBBuffer, mEleNum, _indexStart, Value2D.create(ShaderDefines2D.SKINMESH, 0));
 				transform || (transform = Matrix.EMPTY);
@@ -93,8 +94,7 @@ package laya.webgl.shader.d2.skinAnishader {
 				tShaderValue.offsetY = 0;
 				tShaderValue.u_mmat2 = tArray;
 				tShaderValue.ALPHA = context._shader2D.ALPHA;
-				(context as WebGLContext2D)._submits[(context as WebGLContext2D)._submits._length++] = tempSubmit;
-					
+				context._submits[context._submits._length++] = tempSubmit;
 			}
 			
 		}
