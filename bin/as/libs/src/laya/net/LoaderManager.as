@@ -58,10 +58,11 @@ package laya.net {
 		 * @param	type 资源类型。
 		 * @param	priority 优先级，0-4，五个优先级，0优先级最高，默认为1。
 		 * @param	cache 是否缓存加载结果。
+		 * @param	group 分组。
 		 * @return 此 LoaderManager 对象。
 		 */
-		public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true):LoaderManager {
-			if (url is Array) return _loadAssets(url as Array, complete, progress, type, priority, cache);
+		public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true,group:String=null):LoaderManager {
+			if (url is Array) return _loadAssets(url as Array, complete, progress, type, priority, cache,group);
 			url = Loader._parseURL(url);/*url = URL.formatURL(url);*/
 			var content:* = Loader.getRes(url);
 			if (content != null) {
@@ -75,6 +76,7 @@ package laya.net {
 					info.url = url;
 					info.type = type;
 					info.cache = cache;
+					info.group = group;
 					complete && info.on(Event.COMPLETE, complete.caller, complete.method, complete.args);
 					progress && info.on(Event.PROGRESS, progress.caller, progress.method, progress.args);
 					this._resMap[url] = info;
@@ -121,7 +123,7 @@ package laya.net {
 				_this._loaderCount--;
 				_this._next();
 			}
-			loader.load(resInfo.url, resInfo.type, resInfo.cache);
+			loader.load(resInfo.url, resInfo.type, resInfo.cache,resInfo.group);
 		}
 		
 		private function _endLoad(resInfo:ResInfo, content:*):void {
@@ -147,9 +149,10 @@ package laya.net {
 		/**
 		 * 清理指定资源地址缓存。
 		 * @param	url 资源地址。
+		 * @param	forceDispose 是否强制销毁，有些资源是采用引用计数方式销毁，如果forceDispose=true，则忽略引用计数，直接销毁，比如Texture，默认为false
 		 */
-		public function clearRes(url:String):void {
-			Loader.clearRes(url);
+		public function clearRes(url:String, forceDispose:Boolean = false):void {
+			Loader.clearRes(url, forceDispose);
 		}
 		
 		/**
@@ -223,7 +226,7 @@ package laya.net {
 		 * @private
 		 * 加载数组里面的资源。
 		 * @param arr 简单：["a.png","b.png"]，复杂[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}]*/
-		private function _loadAssets(arr:Array, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true):LoaderManager {
+		private function _loadAssets(arr:Array, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true,group:String=null):LoaderManager {
 			var itemCount:int = arr.length;
 			var loadedSize:int = 0;
 			var totalSize:int = 0;
@@ -237,7 +240,7 @@ package laya.net {
 				totalSize += item.size;
 				items.push(item);
 				var progressHandler:* = progress ? Handler.create(this, loadProgress, [item], false) : null;
-				load(item.url, Handler.create(item, loadComplete, [item]), progressHandler, item.type, item.priority || 1, cache);
+				load(item.url, Handler.create(item, loadComplete, [item]), progressHandler, item.type, item.priority || 1, cache,item.group||group);
 			}
 			
 			function loadComplete(item:Object, content:* = null):void {
@@ -271,4 +274,5 @@ class ResInfo extends EventDispatcher {
 	public var url:String;
 	public var type:String;
 	public var cache:Boolean;
+	public var group:String;
 }

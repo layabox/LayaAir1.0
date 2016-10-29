@@ -194,11 +194,11 @@ package laya.resource {
 		
 		/**
 		 * 销毁纹理（分直接销毁，跟计数销毁两种）
-		 * @param	foreDiposeTexture	true为强制销毁主纹理，false是通过计数销毁纹理
+		 * @param	forceDispose	true为强制销毁主纹理，false是通过计数销毁纹理
 		 */
-		public function destroy(foreDiposeTexture:Boolean = false):void {
+		public function destroy(forceDispose:Boolean = false):void {
 			if (bitmap && (bitmap as Bitmap).useNum > 0) {
-				if (foreDiposeTexture) {
+				if (forceDispose) {
 					bitmap.dispose();
 					(bitmap as Bitmap).useNum = 0;
 				} else {

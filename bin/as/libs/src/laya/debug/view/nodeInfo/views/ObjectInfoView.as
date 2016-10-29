@@ -163,6 +163,9 @@ package laya.debug.view.nodeInfo.views
 					case "nodeAll": 
 						rst = "" + NodeUtils.getNodeCount(tNode);
 						break;
+					case "nodeVisible": 
+						rst = "" + NodeUtils.getNodeCount(tNode,true);
+						break;
 					case "nodeRender": 
 						rst = "" + NodeUtils.getRenderNodeCount(tNode);
 						break;

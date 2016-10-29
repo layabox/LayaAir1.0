@@ -8,10 +8,10 @@
 	var Node=laya.display.Node,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render;
 	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Text=laya.display.Text,Texture=laya.resource.Texture;
 	var Tween=laya.utils.Tween,Utils=laya.utils.Utils;
-	Laya.interface('laya.ui.IComponent');
+	Laya.interface('laya.ui.IItem');
 	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.ISelect');
-	Laya.interface('laya.ui.IItem');
+	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
 	*<code>LayoutStyle</code> 是一个布局样式类。
@@ -253,22 +253,6 @@
 		});
 
 		/**
-		*对象的纹理资源。
-		*@see laya.resource.Texture
-		*/
-		__getset(0,__proto,'source',function(){
-			return this._source;
-			},function(value){
-			if (value){
-				this._source=value
-				this._setChanged();
-				}else {
-				this._source=null;
-				this.clear();
-			}
-		});
-
-		/**
 		*表示显示对象的宽度，以像素为单位。
 		*/
 		__getset(0,__proto,'width',function(){
@@ -293,6 +277,22 @@
 			if (this._height !=value){
 				this._height=value;
 				this._setChanged();
+			}
+		});
+
+		/**
+		*对象的纹理资源。
+		*@see laya.resource.Texture
+		*/
+		__getset(0,__proto,'source',function(){
+			return this._source;
+			},function(value){
+			if (value){
+				this._source=value
+				this._setChanged();
+				}else {
+				this._source=null;
+				this.clear();
 			}
 		});
 
@@ -519,6 +519,13 @@
 		}
 
 		/**
+		*<p>对象的显示宽度（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'displayWidth',function(){
+			return this.width *this.scaleX;
+		});
+
+		/**
 		*<p>表示显示对象的宽度，以像素为单位。</p>
 		*<p><b>注：</b>当值为0时，宽度为自适应大小。</p>
 		*/
@@ -532,46 +539,6 @@
 				this.callLater(this.changeSize);
 				if (this._layout.enable && (!isNaN(this._layout.centerX)|| !isNaN(this._layout.right)|| !isNaN(this._layout.anchorX)))this.resetLayoutX();
 			}
-		});
-
-		/**
-		*<p>对象的显示宽度（以像素为单位）。</p>
-		*/
-		__getset(0,__proto,'displayWidth',function(){
-			return this.width *this.scaleX;
-		});
-
-		/**
-		*<p>在父容器中，此对象的水平方向中轴线与父容器的水平方向中心线的距离（以像素为单位）。</p>
-		*/
-		__getset(0,__proto,'centerX',function(){
-			return this._layout.centerX;
-			},function(value){
-			this.getLayout().centerX=value;
-			this.layOutEabled=true;
-			this.resetLayoutX();
-		});
-
-		/**
-		*<p>对象的显示高度（以像素为单位）。</p>
-		*/
-		__getset(0,__proto,'displayHeight',function(){
-			return this.height *this.scaleY;
-		});
-
-		/**
-		*<p>显示对象的实际显示区域高度（以像素为单位）。</p>
-		*/
-		__getset(0,__proto,'measureHeight',function(){
-			var max=0;
-			this.commitMeasure();
-			for (var i=this.numChildren-1;i >-1;i--){
-				var comp=this.getChildAt(i);
-				if (comp.visible){
-					max=Math.max(comp.y+comp.height *comp.scaleY,max);
-				}
-			}
-			return max;
 		});
 
 		/**
@@ -590,6 +557,31 @@
 		});
 
 		/**
+		*@private
+		*<p>指定对象是否可使用布局。</p>
+		*<p>如果值为true,则此对象可以使用布局样式，否则不使用布局样式。</p>
+		*@param value 一个 Boolean 值，指定对象是否可使用布局。
+		*/
+		__getset(0,__proto,'layOutEabled',null,function(value){
+			if (this._layout && this._layout.enable !=value){
+				this._layout.enable=value;
+				if (this.parent){
+					this.onAdded();
+					}else {
+					this.on(/*laya.events.Event.ADDED*/"added",this,this.onAdded);
+					this.on(/*laya.events.Event.REMOVED*/"removed",this,this.onRemoved);
+				}
+			}
+		});
+
+		/**
+		*<p>对象的显示高度（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'displayHeight',function(){
+			return this.height *this.scaleY;
+		});
+
+		/**
 		*<p>表示显示对象的高度，以像素为单位。</p>
 		*<p><b>注：</b>当值为0时，高度为自适应大小。</p>
 		*@return
@@ -603,24 +595,6 @@
 				this.model && this.model.size(this._width,this._height);
 				this.callLater(this.changeSize);
 				if (this._layout.enable && (!isNaN(this._layout.centerY)|| !isNaN(this._layout.bottom)|| !isNaN(this._layout.anchorY)))this.resetLayoutY();
-			}
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'scaleX',_super.prototype._$get_scaleX,function(value){
-			if (_super.prototype._$get_scaleX.call(this)!=value){
-				_super.prototype._$set_scaleX.call(this,value);
-				this.callLater(this.changeSize);
-				this._layout.enable && this.resetLayoutX();
-			}
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'scaleY',_super.prototype._$get_scaleY,function(value){
-			if (_super.prototype._$get_scaleY.call(this)!=value){
-				_super.prototype._$set_scaleY.call(this,value);
-				this.callLater(this.changeSize);
-				this._layout.enable && this.resetLayoutY();
 			}
 		});
 
@@ -647,45 +621,36 @@
 			}
 		});
 
+		/**@inheritDoc */
+		__getset(0,__proto,'scaleY',_super.prototype._$get_scaleY,function(value){
+			if (_super.prototype._$get_scaleY.call(this)!=value){
+				_super.prototype._$set_scaleY.call(this,value);
+				this.callLater(this.changeSize);
+				this._layout.enable && this.resetLayoutY();
+			}
+		});
+
 		/**
-		*<p>鼠标悬停提示。</p>
-		*<p>可以赋值为文本 <code>String</code> 或函数 <code>Handler</code> ，用来实现自定义样式的鼠标提示和参数携带等。</p>
-		*@example 以下例子展示了三种鼠标提示：
-		<listing version="3.0">
-		private var _testTips:TestTipsUI=new TestTipsUI();
-		private function testTips():void {
-			//简单鼠标提示
-			btn2.toolTip="这里是鼠标提示&lt;b&gt;粗体&lt;/b&gt;&lt;br&gt;换行";
-			//自定义的鼠标提示
-			btn1.toolTip=showTips1;
-			//带参数的自定义鼠标提示
-			clip.toolTip=new Handler(this,showTips2,["clip"]);
-		}
-
-		private function showTips1():void {
-			_testTips.label.text="这里是按钮["+btn1.label+"]";
-			tip.addChild(_testTips);
-		}
-
-		private function showTips2(name:String):void {
-			_testTips.label.text="这里是"+name;
-			tip.addChild(_testTips);
-		}
-
-		</listing>
+		*<p>显示对象的实际显示区域高度（以像素为单位）。</p>
 		*/
-		__getset(0,__proto,'toolTip',function(){
-			return this._toolTip;
-			},function(value){
-			if (this._toolTip !=value){
-				this._toolTip=value;
-				if (value !=null){
-					this.on(/*laya.events.Event.MOUSE_OVER*/"mouseover",this,this.onMouseOver);
-					this.on(/*laya.events.Event.MOUSE_OUT*/"mouseout",this,this.onMouseOut);
-					}else {
-					this.off(/*laya.events.Event.MOUSE_OVER*/"mouseover",this,this.onMouseOver);
-					this.off(/*laya.events.Event.MOUSE_OUT*/"mouseout",this,this.onMouseOut);
+		__getset(0,__proto,'measureHeight',function(){
+			var max=0;
+			this.commitMeasure();
+			for (var i=this.numChildren-1;i >-1;i--){
+				var comp=this.getChildAt(i);
+				if (comp.visible){
+					max=Math.max(comp.y+comp.height *comp.scaleY,max);
 				}
+			}
+			return max;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'scaleX',_super.prototype._$get_scaleX,function(value){
+			if (_super.prototype._$get_scaleX.call(this)!=value){
+				_super.prototype._$set_scaleX.call(this,value);
+				this.callLater(this.changeSize);
+				this._layout.enable && this.resetLayoutX();
 			}
 		});
 
@@ -734,6 +699,17 @@
 		});
 
 		/**
+		*<p>在父容器中，此对象的水平方向中轴线与父容器的水平方向中心线的距离（以像素为单位）。</p>
+		*/
+		__getset(0,__proto,'centerX',function(){
+			return this._layout.centerX;
+			},function(value){
+			this.getLayout().centerX=value;
+			this.layOutEabled=true;
+			this.resetLayoutX();
+		});
+
+		/**
 		*<p>在父容器中，此对象的垂直方向中轴线与父容器的垂直方向中心线的距离（以像素为单位）。</p>
 		*/
 		__getset(0,__proto,'centerY',function(){
@@ -773,19 +749,43 @@
 		});
 
 		/**
-		*@private
-		*<p>指定对象是否可使用布局。</p>
-		*<p>如果值为true,则此对象可以使用布局样式，否则不使用布局样式。</p>
-		*@param value 一个 Boolean 值，指定对象是否可使用布局。
+		*<p>鼠标悬停提示。</p>
+		*<p>可以赋值为文本 <code>String</code> 或函数 <code>Handler</code> ，用来实现自定义样式的鼠标提示和参数携带等。</p>
+		*@example 以下例子展示了三种鼠标提示：
+		<listing version="3.0">
+		private var _testTips:TestTipsUI=new TestTipsUI();
+		private function testTips():void {
+			//简单鼠标提示
+			btn2.toolTip="这里是鼠标提示&lt;b&gt;粗体&lt;/b&gt;&lt;br&gt;换行";
+			//自定义的鼠标提示
+			btn1.toolTip=showTips1;
+			//带参数的自定义鼠标提示
+			clip.toolTip=new Handler(this,showTips2,["clip"]);
+		}
+
+		private function showTips1():void {
+			_testTips.label.text="这里是按钮["+btn1.label+"]";
+			tip.addChild(_testTips);
+		}
+
+		private function showTips2(name:String):void {
+			_testTips.label.text="这里是"+name;
+			tip.addChild(_testTips);
+		}
+
+		</listing>
 		*/
-		__getset(0,__proto,'layOutEabled',null,function(value){
-			if (this._layout && this._layout.enable !=value){
-				this._layout.enable=value;
-				if (this.parent){
-					this.onAdded();
+		__getset(0,__proto,'toolTip',function(){
+			return this._toolTip;
+			},function(value){
+			if (this._toolTip !=value){
+				this._toolTip=value;
+				if (value !=null){
+					this.on(/*laya.events.Event.MOUSE_OVER*/"mouseover",this,this.onMouseOver);
+					this.on(/*laya.events.Event.MOUSE_OUT*/"mouseout",this,this.onMouseOut);
 					}else {
-					this.on(/*laya.events.Event.ADDED*/"added",this,this.onAdded);
-					this.on(/*laya.events.Event.REMOVED*/"removed",this,this.onRemoved);
+					this.off(/*laya.events.Event.MOUSE_OVER*/"mouseover",this,this.onMouseOver);
+					this.off(/*laya.events.Event.MOUSE_OUT*/"mouseout",this,this.onMouseOut);
 				}
 			}
 		});
@@ -1075,6 +1075,14 @@
 		});
 
 		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'measureHeight',function(){
+			this.runCallLater(this.changeClips);
+			return this._text ? Math.max(this._bitmap.height,this._text.height):this._bitmap.height;
+		});
+
+		/**
 		*<p>对象的皮肤资源地址。</p>
 		*支持单态，两态和三态，用 <code>stateNum</code> 属性设置
 		*<p>对象的皮肤地址，以字符串表示。</p>
@@ -1104,18 +1112,11 @@
 		});
 
 		/**
-		*按钮的文本内容。
+		*按钮文本标签 <code>Text</code> 控件。
 		*/
-		__getset(0,__proto,'label',function(){
-			return this._text ? this._text.text :null;
-			},function(value){
-			if (!this._text && !value)return;
+		__getset(0,__proto,'text',function(){
 			this.createText();
-			if (this._text.text !=value){
-				value && !this._text.displayedInStage && this.addChild(this._text);
-				this._text.text=(value+"").replace(/\\n/g,"\n");
-				this._setStateChanged();
-			}
+			return this._text;
 		});
 
 		/**
@@ -1153,24 +1154,14 @@
 		});
 
 		/**
-		*<p>描边宽度（以像素为单位）。</p>
-		*默认值0，表示不描边。
-		*@see laya.display.Text.stroke()
+		*表示按钮各个状态下的文本颜色。
+		*<p><b>格式:</b> "upColor,overColor,downColor,disableColor"。</p>
 		*/
-		__getset(0,__proto,'labelStroke',function(){
-			this.createText();
-			return this._text.stroke;
+		__getset(0,__proto,'labelColors',function(){
+			return this._labelColors.join(",");
 			},function(value){
-			this.createText();
-			this._text.stroke=value
-		});
-
-		/**
-		*@inheritDoc
-		*/
-		__getset(0,__proto,'measureHeight',function(){
-			this.runCallLater(this.changeClips);
-			return this._text ? Math.max(this._bitmap.height,this._text.height):this._bitmap.height;
+			this._labelColors=UIUtils.fillArray(Styles.buttonLabelColors,value,String);
+			this._setStateChanged();
 		});
 
 		/**
@@ -1181,6 +1172,21 @@
 			if (this._autoSize)return this._bitmap.width;
 			this.runCallLater(this.changeState);
 			return this._bitmap.width+(this._text ? this._text.width :0);
+		});
+
+		/**
+		*按钮的文本内容。
+		*/
+		__getset(0,__proto,'label',function(){
+			return this._text ? this._text.text :null;
+			},function(value){
+			if (!this._text && !value)return;
+			this.createText();
+			if (this._text.text !=value){
+				value && !this._text.displayedInStage && this.addChild(this._text);
+				this._text.text=(value+"").replace(/\\n/g,"\n");
+				this._setStateChanged();
+			}
 		});
 
 		/**
@@ -1195,17 +1201,6 @@
 				this.state=this._selected ? 2 :0;
 				this.event(/*laya.events.Event.CHANGE*/"change");
 			}
-		});
-
-		/**
-		*表示按钮各个状态下的文本颜色。
-		*<p><b>格式:</b> "upColor,overColor,downColor,disableColor"。</p>
-		*/
-		__getset(0,__proto,'labelColors',function(){
-			return this._labelColors.join(",");
-			},function(value){
-			this._labelColors=UIUtils.fillArray(Styles.buttonLabelColors,value,String);
-			this._setStateChanged();
 		});
 
 		/**
@@ -1233,6 +1228,19 @@
 		});
 
 		/**
+		*<p>描边宽度（以像素为单位）。</p>
+		*默认值0，表示不描边。
+		*@see laya.display.Text.stroke()
+		*/
+		__getset(0,__proto,'labelStroke',function(){
+			this.createText();
+			return this._text.stroke;
+			},function(value){
+			this.createText();
+			this._text.stroke=value
+		});
+
+		/**
 		*表示按钮文本标签是否为粗体字。
 		*@see laya.display.Text.bold()
 		*/
@@ -1242,15 +1250,6 @@
 			},function(value){
 			this.createText();
 			this._text.bold=value;
-		});
-
-		/**标签对齐模式，默认为居中对齐。*/
-		__getset(0,__proto,'labelAlign',function(){
-			this.createText()
-			return this._text.align;
-			},function(value){
-			this.createText()
-			this._text.align=value;
 		});
 
 		/**
@@ -1265,6 +1264,15 @@
 			this._text.font=value;
 		});
 
+		/**标签对齐模式，默认为居中对齐。*/
+		__getset(0,__proto,'labelAlign',function(){
+			this.createText()
+			return this._text.align;
+			},function(value){
+			this.createText()
+			this._text.align=value;
+		});
+
 		/**
 		*对象的点击事件处理器函数（无默认参数）。
 		*/
@@ -1272,14 +1280,6 @@
 			return this._clickHandler;
 			},function(value){
 			this._clickHandler=value;
-		});
-
-		/**
-		*按钮文本标签 <code>Text</code> 控件。
-		*/
-		__getset(0,__proto,'text',function(){
-			this.createText();
-			return this._text;
 		});
 
 		/**
@@ -1451,6 +1451,7 @@
 			this._isPlaying=false;
 			this._index=0;
 			this._clipChanged=false;
+			this._group=null;
 			Clip.__super.call(this);
 			(clipX===void 0)&& (clipX=1);
 			(clipY===void 0)&& (clipY=1);
@@ -1579,24 +1580,15 @@
 		}
 
 		/**
-		*表示是否自动播放动画，若自动播放值为true,否则值为false;
-		*<p>可控制切片动画的播放、停止。</p>
+		*表示动画播放间隔时间(以毫秒为单位)。
 		*/
-		__getset(0,__proto,'autoPlay',function(){
-			return this._autoPlay;
+		__getset(0,__proto,'interval',function(){
+			return this._interval;
 			},function(value){
-			if (this._autoPlay !=value){
-				this._autoPlay=value;
-				value ? this.play():this.stop();
+			if (this._interval !=value){
+				this._interval=value;
+				if (this._isPlaying)this.play();
 			}
-		});
-
-		/**X轴（横向）切片数量。*/
-		__getset(0,__proto,'clipX',function(){
-			return this._clipX;
-			},function(value){
-			this._clipX=value;
-			this._setClipChanged()
 		});
 
 		/**
@@ -1626,37 +1618,19 @@
 			this.event(/*laya.events.Event.LOADED*/"loaded");
 		});
 
+		/**X轴（横向）切片数量。*/
+		__getset(0,__proto,'clipX',function(){
+			return this._clipX;
+			},function(value){
+			this._clipX=value;
+			this._setClipChanged()
+		});
+
 		/**Y轴(竖向)切片数量。*/
 		__getset(0,__proto,'clipY',function(){
 			return this._clipY;
 			},function(value){
 			this._clipY=value;
-			this._setClipChanged()
-		});
-
-		/**
-		*横向分割时每个切片的宽度，与 <code>clipX</code> 同时设置时优先级高于 <code>clipX</code> 。
-		*/
-		__getset(0,__proto,'clipWidth',function(){
-			return this._clipWidth;
-			},function(value){
-			this._clipWidth=value;
-			this._setClipChanged()
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'measureWidth',function(){
-			this.runCallLater(this.changeClip);
-			return this._bitmap.width;
-		});
-
-		/**
-		*竖向分割时每个切片的高度，与 <code>clipY</code> 同时设置时优先级高于 <code>clipY</code> 。
-		*/
-		__getset(0,__proto,'clipHeight',function(){
-			return this._clipHeight;
-			},function(value){
-			this._clipHeight=value;
 			this._setClipChanged()
 		});
 
@@ -1668,22 +1642,14 @@
 			return this._sources ? this._sources.length :0;
 		});
 
-		/**@inheritDoc */
-		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
-			_super.prototype._$set_width.call(this,value);
-			this._bitmap.width=value;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
-			_super.prototype._$set_height.call(this,value);
-			this._bitmap.height=value;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'measureHeight',function(){
-			this.runCallLater(this.changeClip);
-			return this._bitmap.height;
+		/**
+		*横向分割时每个切片的宽度，与 <code>clipX</code> 同时设置时优先级高于 <code>clipX</code> 。
+		*/
+		__getset(0,__proto,'clipWidth',function(){
+			return this._clipWidth;
+			},function(value){
+			this._clipWidth=value;
+			this._setClipChanged()
 		});
 
 		/**
@@ -1700,6 +1666,50 @@
 		});
 
 		/**
+		*资源分组。
+		*/
+		__getset(0,__proto,'group',function(){
+			return this._group;
+			},function(value){
+			if (value && this._skin)Loader.setGroup(this._skin,value);
+			this._group=value;
+		});
+
+		/**
+		*竖向分割时每个切片的高度，与 <code>clipY</code> 同时设置时优先级高于 <code>clipY</code> 。
+		*/
+		__getset(0,__proto,'clipHeight',function(){
+			return this._clipHeight;
+			},function(value){
+			this._clipHeight=value;
+			this._setClipChanged()
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
+			_super.prototype._$set_width.call(this,value);
+			this._bitmap.width=value;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
+			_super.prototype._$set_height.call(this,value);
+			this._bitmap.height=value;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'measureWidth',function(){
+			this.runCallLater(this.changeClip);
+			return this._bitmap.width;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'measureHeight',function(){
+			this.runCallLater(this.changeClip);
+			return this._bitmap.height;
+		});
+
+		/**
 		*当前帧索引。
 		*/
 		__getset(0,__proto,'index',function(){
@@ -1711,14 +1721,15 @@
 		});
 
 		/**
-		*表示动画播放间隔时间(以毫秒为单位)。
+		*表示是否自动播放动画，若自动播放值为true,否则值为false;
+		*<p>可控制切片动画的播放、停止。</p>
 		*/
-		__getset(0,__proto,'interval',function(){
-			return this._interval;
+		__getset(0,__proto,'autoPlay',function(){
+			return this._autoPlay;
 			},function(value){
-			if (this._interval !=value){
-				this._interval=value;
-				if (this._isPlaying)this.play();
+			if (this._autoPlay !=value){
+				this._autoPlay=value;
+				value ? this.play():this.stop();
 			}
 		});
 
@@ -2040,12 +2051,12 @@
 		}
 
 		/**
-		*表示颜色样本列表面板的边框颜色值。
+		*表示颜色输入框的背景颜色值。
 		*/
-		__getset(0,__proto,'borderColor',function(){
-			return this._borderColor;
+		__getset(0,__proto,'inputBgColor',function(){
+			return this._inputBgColor;
 			},function(value){
-			this._borderColor=value;
+			this._inputBgColor=value;
 			this._setPanelChanged();
 		});
 
@@ -2065,16 +2076,6 @@
 		});
 
 		/**
-		*表示颜色输入框的背景颜色值。
-		*/
-		__getset(0,__proto,'inputBgColor',function(){
-			return this._inputBgColor;
-			},function(value){
-			this._inputBgColor=value;
-			this._setPanelChanged();
-		});
-
-		/**
 		*@copy laya.ui.Button#skin
 		*/
 		__getset(0,__proto,'skin',function(){
@@ -2091,6 +2092,16 @@
 			return this._bgColor;
 			},function(value){
 			this._bgColor=value;
+			this._setPanelChanged();
+		});
+
+		/**
+		*表示颜色样本列表面板的边框颜色值。
+		*/
+		__getset(0,__proto,'borderColor',function(){
+			return this._borderColor;
+			},function(value){
+			this._borderColor=value;
 			this._setPanelChanged();
 		});
 
@@ -2346,49 +2357,6 @@
 		}
 
 		/**
-		*标签集合字符串。
-		*/
-		__getset(0,__proto,'labels',function(){
-			return this._labels.join(",");
-			},function(value){
-			if (this._labels.length > 0)this.selectedIndex=-1;
-			if (value)this._labels=value.split(",");
-			else this._labels.length=0;
-			this._itemChanged=true;
-		});
-
-		/**
-		*@copy laya.ui.Button#skin
-		*/
-		__getset(0,__proto,'skin',function(){
-			return this._button.skin;
-			},function(value){
-			if (this._button.skin !=value){
-				this._button.skin=value;
-				this._listChanged=true;
-			}
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'measureHeight',function(){
-			return this._button.height;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'measureWidth',function(){
-			return this._button.width;
-		});
-
-		/**
-		*表示选择的下拉列表项的的标签。
-		*/
-		__getset(0,__proto,'selectedLabel',function(){
-			return this._selectedIndex >-1 && this._selectedIndex < this._labels.length ? this._labels[this._selectedIndex] :null;
-			},function(value){
-			this.selectedIndex=this._labels.indexOf(value);
-		});
-
-		/**
 		*表示选择的下拉列表项的索引。
 		*/
 		__getset(0,__proto,'selectedIndex',function(){
@@ -2404,11 +2372,54 @@
 		});
 
 		/**@inheritDoc */
+		__getset(0,__proto,'measureHeight',function(){
+			return this._button.height;
+		});
+
+		/**
+		*@copy laya.ui.Button#skin
+		*/
+		__getset(0,__proto,'skin',function(){
+			return this._button.skin;
+			},function(value){
+			if (this._button.skin !=value){
+				this._button.skin=value;
+				this._listChanged=true;
+			}
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'measureWidth',function(){
+			return this._button.width;
+		});
+
+		/**@inheritDoc */
 		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
 			_super.prototype._$set_width.call(this,value);
 			this._button.width=this._width;
 			this._itemChanged=true;
 			this._listChanged=true;
+		});
+
+		/**
+		*表示选择的下拉列表项的的标签。
+		*/
+		__getset(0,__proto,'selectedLabel',function(){
+			return this._selectedIndex >-1 && this._selectedIndex < this._labels.length ? this._labels[this._selectedIndex] :null;
+			},function(value){
+			this.selectedIndex=this._labels.indexOf(value);
+		});
+
+		/**
+		*标签集合字符串。
+		*/
+		__getset(0,__proto,'labels',function(){
+			return this._labels.join(",");
+			},function(value){
+			if (this._labels.length > 0)this.selectedIndex=-1;
+			if (value)this._labels=value.split(",");
+			else this._labels.length=0;
+			this._itemChanged=true;
 		});
 
 		/**@inheritDoc */
@@ -2427,16 +2438,6 @@
 		});
 
 		/**
-		*表示按钮的状态值。
-		*@see laya.ui.Button#stateNum
-		*/
-		__getset(0,__proto,'stateNum',function(){
-			return this._button.stateNum;
-			},function(value){
-			this._button.stateNum=value
-		});
-
-		/**
 		*获取或设置没有滚动条的下拉列表中可显示的最大行数。
 		*/
 		__getset(0,__proto,'visibleNum',function(){
@@ -2444,6 +2445,16 @@
 			},function(value){
 			this._visibleNum=value;
 			this._listChanged=true;
+		});
+
+		/**
+		*表示按钮文本标签是否为粗体字。
+		*@see laya.display.Text#bold
+		*/
+		__getset(0,__proto,'labelBold',function(){
+			return this._button.text.bold;
+			},function(value){
+			this._button.text.bold=value
 		});
 
 		/**
@@ -2465,6 +2476,13 @@
 			},function(value){
 			this._itemSize=value;
 			this._listChanged=true;
+		});
+
+		/**
+		*获取对 <code>ComboBox</code> 组件所包含的 <code>VScrollBar</code> 滚动条组件的引用。
+		*/
+		__getset(0,__proto,'scrollBar',function(){
+			return this._scrollBar;
 		});
 
 		/**
@@ -2495,6 +2513,15 @@
 		});
 
 		/**
+		*滚动条皮肤。
+		*/
+		__getset(0,__proto,'scrollBarSkin',function(){
+			return this._scrollBarSkin;
+			},function(value){
+			this._scrollBarSkin=value;
+		});
+
+		/**
 		*<p>当前实例的位图 <code>AutoImage</code> 实例的有效缩放网格数据。</p>
 		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
 		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
@@ -2511,22 +2538,6 @@
 		*/
 		__getset(0,__proto,'button',function(){
 			return this._button;
-		});
-
-		/**
-		*滚动条皮肤。
-		*/
-		__getset(0,__proto,'scrollBarSkin',function(){
-			return this._scrollBarSkin;
-			},function(value){
-			this._scrollBarSkin=value;
-		});
-
-		/**
-		*获取对 <code>ComboBox</code> 组件所包含的 <code>VScrollBar</code> 滚动条组件的引用。
-		*/
-		__getset(0,__proto,'scrollBar',function(){
-			return this._scrollBar;
 		});
 
 		/**
@@ -2576,16 +2587,6 @@
 		});
 
 		/**
-		*表示按钮文本标签是否为粗体字。
-		*@see laya.display.Text#bold
-		*/
-		__getset(0,__proto,'labelBold',function(){
-			return this._button.text.bold;
-			},function(value){
-			this._button.text.bold=value
-		});
-
-		/**
 		*表示按钮文本标签的字体名称，以字符串形式表示。
 		*@see laya.display.Text#font
 		*/
@@ -2593,6 +2594,16 @@
 			return this._button.text.font;
 			},function(value){
 			this._button.text.font=value
+		});
+
+		/**
+		*表示按钮的状态值。
+		*@see laya.ui.Button#stateNum
+		*/
+		__getset(0,__proto,'stateNum',function(){
+			return this._button.stateNum;
+			},function(value){
+			this._button.stateNum=value
 		});
 
 		return ComboBox;
@@ -2891,14 +2902,10 @@
 			Tween.clearTween(this);
 		}
 
-		/**
-		*一个布尔值，指示滚动条是否为垂直滚动。如果值为true，则为垂直滚动，否则为水平滚动。
-		*<p>默认值为：true。</p>
-		*/
-		__getset(0,__proto,'isVertical',function(){
-			return this.slider.isVertical;
-			},function(value){
-			this.slider.isVertical=value;
+		/**@inheritDoc */
+		__getset(0,__proto,'measureHeight',function(){
+			if (this.slider.isVertical)return 100;
+			return this.slider.height;
 		});
 
 		/**
@@ -2923,35 +2930,18 @@
 			this.slider.max=value;
 		});
 
-		/**获取或设置一个值，该值表示按下滚动条轨道时页面滚动的增量。 */
-		__getset(0,__proto,'scrollSize',function(){
-			return this._scrollSize;
+		/**一个布尔值，指定是否显示向上、向下按钮，默认值为true。*/
+		__getset(0,__proto,'showButtons',function(){
+			return this._showButtons;
 			},function(value){
-			this._scrollSize=value;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'measureHeight',function(){
-			if (this.slider.isVertical)return 100;
-			return this.slider.height;
+			this._showButtons=value;
+			this.callLater(this.changeScrollBar);
 		});
 
 		/**@inheritDoc */
 		__getset(0,__proto,'measureWidth',function(){
 			if (this.slider.isVertical)return this.slider.width;
 			return 100;
-		});
-
-		/**
-		*<p>当前实例的 <code>Slider</code> 实例的有效缩放网格数据。</p>
-		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
-		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
-		*@see laya.ui.AutoBitmap.sizeGrid
-		*/
-		__getset(0,__proto,'sizeGrid',function(){
-			return this.slider.sizeGrid;
-			},function(value){
-			this.slider.sizeGrid=value;
 		});
 
 		/**
@@ -2978,6 +2968,35 @@
 				this.event(/*laya.events.Event.CHANGE*/"change");
 				this.changeHandler && this.changeHandler.runWith(this.value);
 			}
+		});
+
+		/**
+		*一个布尔值，指示滚动条是否为垂直滚动。如果值为true，则为垂直滚动，否则为水平滚动。
+		*<p>默认值为：true。</p>
+		*/
+		__getset(0,__proto,'isVertical',function(){
+			return this.slider.isVertical;
+			},function(value){
+			this.slider.isVertical=value;
+		});
+
+		/**
+		*<p>当前实例的 <code>Slider</code> 实例的有效缩放网格数据。</p>
+		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
+		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
+		*@see laya.ui.AutoBitmap.sizeGrid
+		*/
+		__getset(0,__proto,'sizeGrid',function(){
+			return this.slider.sizeGrid;
+			},function(value){
+			this.slider.sizeGrid=value;
+		});
+
+		/**获取或设置一个值，该值表示按下滚动条轨道时页面滚动的增量。 */
+		__getset(0,__proto,'scrollSize',function(){
+			return this._scrollSize;
+			},function(value){
+			this._scrollSize=value;
 		});
 
 		/**@inheritDoc */
@@ -3025,14 +3044,6 @@
 			},function(value){
 			this._hide=value;
 			this.visible=!value;
-		});
-
-		/**一个布尔值，指定是否显示向上、向下按钮，默认值为true。*/
-		__getset(0,__proto,'showButtons',function(){
-			return this._showButtons;
-			},function(value){
-			this._showButtons=value;
-			this.callLater(this.changeScrollBar);
 		});
 
 		/**一个布尔值，指定是否开启触摸，默认值为true。*/
@@ -3255,6 +3266,11 @@
 			else this.value=point.x / (this.width-this._bar.width)*(this._max-this._min)+this._min;
 		}
 
+		/**@inheritDoc */
+		__getset(0,__proto,'measureHeight',function(){
+			return Math.max(this._bg.height,this._bar.height);
+		});
+
 		/**
 		*@copy laya.ui.Image#skin
 		*@return
@@ -3271,6 +3287,19 @@
 		});
 
 		/**
+		*一个布尔值，指定是否允许通过点击滑动条改变 <code>Slider</code> 的 <code>value</code> 属性值。
+		*/
+		__getset(0,__proto,'allowClickBack',function(){
+			return this._allowClickBack;
+			},function(value){
+			if (this._allowClickBack !=value){
+				this._allowClickBack=value;
+				if (value)this._bg.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onBgMouseDown);
+				else this._bg.off(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onBgMouseDown);
+			}
+		});
+
+		/**
 		*获取或设置表示最高位置的数字。 默认值为100。
 		*/
 		__getset(0,__proto,'max',function(){
@@ -3282,21 +3311,22 @@
 			}
 		});
 
-		/**
-		*表示滑块按钮的引用。
-		*/
-		__getset(0,__proto,'bar',function(){
-			return this._bar;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'measureHeight',function(){
-			return Math.max(this._bg.height,this._bar.height);
-		});
-
 		/**@inheritDoc */
 		__getset(0,__proto,'measureWidth',function(){
 			return Math.max(this._bg.width,this._bar.width);
+		});
+
+		/**
+		*表示当前的刻度值。默认值为1。
+		*@return
+		*/
+		__getset(0,__proto,'tick',function(){
+			return this._tick;
+			},function(value){
+			if (this._tick !=value){
+				this._tick=value;
+				this.callLater(this.changeValue);
+			}
 		});
 
 		/**
@@ -3311,19 +3341,6 @@
 			},function(value){
 			this._bg.sizeGrid=value;
 			this._bar.sizeGrid=value;
-		});
-
-		/**
-		*表示当前的刻度值。默认值为1。
-		*@return
-		*/
-		__getset(0,__proto,'tick',function(){
-			return this._tick;
-			},function(value){
-			if (this._tick !=value){
-				this._tick=value;
-				this.callLater(this.changeValue);
-			}
 		});
 
 		/**
@@ -3354,24 +3371,18 @@
 			}
 		});
 
-		/**
-		*一个布尔值，指定是否允许通过点击滑动条改变 <code>Slider</code> 的 <code>value</code> 属性值。
-		*/
-		__getset(0,__proto,'allowClickBack',function(){
-			return this._allowClickBack;
-			},function(value){
-			if (this._allowClickBack !=value){
-				this._allowClickBack=value;
-				if (value)this._bg.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onBgMouseDown);
-				else this._bg.off(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onBgMouseDown);
-			}
-		});
-
 		/**@inheritDoc */
 		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
 			this._dataSource=value;
 			if ((typeof value=='number')|| (typeof value=='string'))this.value=Number(value);
 			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		/**
+		*表示滑块按钮的引用。
+		*/
+		__getset(0,__proto,'bar',function(){
+			return this._bar;
 		});
 
 		__static(Slider,
@@ -3460,6 +3471,7 @@
 		function Image(skin){
 			this._bitmap=null;
 			this._skin=null;
+			this._group=null;
 			Image.__super.call(this);
 			this.skin=skin;
 		}
@@ -3492,10 +3504,36 @@
 		*@private
 		*设置皮肤资源。
 		*/
-		__proto.setSource=function(url,value){
-			url===this._skin && (this.source=value);
-			this.onCompResize();
+		__proto.setSource=function(url,img){
+			if (url===this._skin && img){
+				this.source=img
+				this.onCompResize();
+			}
 		}
+
+		/**
+		*@copy laya.ui.AutoBitmap#source
+		*/
+		__getset(0,__proto,'source',function(){
+			return this._bitmap.source;
+			},function(value){
+			if (!this._bitmap)return;
+			this._bitmap.source=value;
+			this.event(/*laya.events.Event.LOADED*/"loaded");
+			this.repaint();
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if ((typeof value=='string'))this.skin=value;
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'measureHeight',function(){
+			return this._bitmap.height;
+		});
 
 		/**
 		*<p>对象的皮肤地址，以字符串表示。</p>
@@ -3512,7 +3550,7 @@
 					if (source){
 						this.source=source;
 						this.onCompResize();
-					}else Laya.loader.load(this._skin,Handler.create(this,this.setSource,[this._skin]),null,/*laya.net.Loader.IMAGE*/"image");
+					}else Laya.loader.load(this._skin,Handler.create(this,this.setSource,[this._skin]),null,/*laya.net.Loader.IMAGE*/"image",1,true,this._group);
 					}else {
 					this.source=null;
 				}
@@ -3520,31 +3558,13 @@
 		});
 
 		/**
-		*@copy laya.ui.AutoBitmap#source
+		*资源分组。
 		*/
-		__getset(0,__proto,'source',function(){
-			return this._bitmap.source;
+		__getset(0,__proto,'group',function(){
+			return this._group;
 			},function(value){
-			if (!this._bitmap)return;
-			this._bitmap.source=value;
-			this.event(/*laya.events.Event.LOADED*/"loaded");
-			this.repaint();
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
-			_super.prototype._$set_width.call(this,value);
-			this._bitmap.width=value==0 ? 0.0000001 :value;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'measureHeight',function(){
-			return this._bitmap.height;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'measureWidth',function(){
-			return this._bitmap.width;
+			if (value && this._skin)Loader.setGroup(this._skin,value);
+			this._group=value;
 		});
 
 		/**
@@ -3561,16 +3581,20 @@
 		});
 
 		/**@inheritDoc */
-		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
-			_super.prototype._$set_height.call(this,value);
-			this._bitmap.height=value==0 ? 0.0000001 :value;
+		__getset(0,__proto,'measureWidth',function(){
+			return this._bitmap.width;
 		});
 
 		/**@inheritDoc */
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			this._dataSource=value;
-			if ((typeof value=='string'))this.skin=value;
-			else _super.prototype._$set_dataSource.call(this,value);
+		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
+			_super.prototype._$set_width.call(this,value);
+			this._bitmap.width=value==0 ? 0.0000001 :value;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
+			_super.prototype._$set_height.call(this,value);
+			this._bitmap.height=value==0 ? 0.0000001 :value;
 		});
 
 		return Image;
@@ -3717,12 +3741,32 @@
 		}
 
 		/**
-		*@copy laya.display.Text#leading
+		*<p>边距信息</p>
+		*<p>"上边距，右边距，下边距 , 左边距（边距以像素为单位）"</p>
+		*@see laya.display.Text.padding
 		*/
-		__getset(0,__proto,'leading',function(){
-			return this._tf.leading;
+		__getset(0,__proto,'padding',function(){
+			return this._tf.padding.join(",");
 			},function(value){
-			this._tf.leading=value;
+			this._tf.padding=UIUtils.fillArray(Styles.labelPadding,value,Number);
+		});
+
+		/**
+		*@copy laya.display.Text#bold
+		*/
+		__getset(0,__proto,'bold',function(){
+			return this._tf.bold;
+			},function(value){
+			this._tf.bold=value;
+		});
+
+		/**
+		*@copy laya.display.Text#align
+		*/
+		__getset(0,__proto,'align',function(){
+			return this._tf.align;
+			},function(value){
+			this._tf.align=value;
 		});
 
 		/**
@@ -3741,21 +3785,12 @@
 		});
 
 		/**
-		*@copy laya.display.Text#color
+		*@copy laya.display.Text#italic
 		*/
-		__getset(0,__proto,'color',function(){
-			return this._tf.color;
+		__getset(0,__proto,'italic',function(){
+			return this._tf.italic;
 			},function(value){
-			this._tf.color=value;
-		});
-
-		/**
-		*@copy laya.display.Text#strokeColor
-		*/
-		__getset(0,__proto,'strokeColor',function(){
-			return this._tf.strokeColor;
-			},function(value){
-			this._tf.strokeColor=value;
+			this._tf.italic=value;
 		});
 
 		/**
@@ -3779,13 +3814,20 @@
 			this._tf.font=value;
 		});
 
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if ((typeof value=='number')|| (typeof value=='string'))this.text=value+"";
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
 		/**
-		*@copy laya.display.Text#italic
+		*@copy laya.display.Text#color
 		*/
-		__getset(0,__proto,'italic',function(){
-			return this._tf.italic;
+		__getset(0,__proto,'color',function(){
+			return this._tf.color;
 			},function(value){
-			this._tf.italic=value;
+			this._tf.color=value;
 		});
 
 		/**
@@ -3798,28 +3840,12 @@
 		});
 
 		/**
-		*@copy laya.display.Text#align
+		*@copy laya.display.Text#leading
 		*/
-		__getset(0,__proto,'align',function(){
-			return this._tf.align;
+		__getset(0,__proto,'leading',function(){
+			return this._tf.leading;
 			},function(value){
-			this._tf.align=value;
-		});
-
-		/**
-		*@copy laya.display.Text#bold
-		*/
-		__getset(0,__proto,'bold',function(){
-			return this._tf.bold;
-			},function(value){
-			this._tf.bold=value;
-		});
-
-		/**
-		*文本控件实体 <code>Text</code> 实例。
-		*/
-		__getset(0,__proto,'textField',function(){
-			return this._tf;
+			this._tf.leading=value;
 		});
 
 		/**
@@ -3832,30 +3858,12 @@
 		});
 
 		/**
-		*<p>边距信息</p>
-		*<p>"上边距，右边距，下边距 , 左边距（边距以像素为单位）"</p>
-		*@see laya.display.Text.padding
-		*/
-		__getset(0,__proto,'padding',function(){
-			return this._tf.padding.join(",");
-			},function(value){
-			this._tf.padding=UIUtils.fillArray(Styles.labelPadding,value,Number);
-		});
-
-		/**
 		*@copy laya.display.Text#bgColor
 		*/
 		__getset(0,__proto,'bgColor',function(){
 			return this._tf.bgColor
 			},function(value){
 			this._tf.bgColor=value;
-		});
-
-		/**
-		*@inheritDoc
-		*/
-		__getset(0,__proto,'measureWidth',function(){
-			return this._tf.width;
 		});
 
 		/**
@@ -3874,6 +3882,29 @@
 			return this._tf.stroke;
 			},function(value){
 			this._tf.stroke=value;
+		});
+
+		/**
+		*@copy laya.display.Text#strokeColor
+		*/
+		__getset(0,__proto,'strokeColor',function(){
+			return this._tf.strokeColor;
+			},function(value){
+			this._tf.strokeColor=value;
+		});
+
+		/**
+		*文本控件实体 <code>Text</code> 实例。
+		*/
+		__getset(0,__proto,'textField',function(){
+			return this._tf;
+		});
+
+		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'measureWidth',function(){
+			return this._tf.width;
 		});
 
 		/**
@@ -3909,13 +3940,6 @@
 			},function(value){
 			_super.prototype._$set_height.call(this,value);
 			this._tf.height=value;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			this._dataSource=value;
-			if ((typeof value=='number')|| (typeof value=='string'))this.text=value+"";
-			else _super.prototype._$set_dataSource.call(this,value);
 		});
 
 		/**
@@ -4112,6 +4136,11 @@
 			}
 		}
 
+		/**@inheritDoc */
+		__getset(0,__proto,'measureHeight',function(){
+			return this._bg.height;
+		});
+
 		/**
 		*@copy laya.ui.Image#skin
 		*/
@@ -4126,40 +4155,9 @@
 			}
 		});
 
-		/**
-		*获取进度条对象。
-		*/
-		__getset(0,__proto,'bar',function(){
-			return this._bar;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'measureHeight',function(){
-			return this._bg.height;
-		});
-
 		/**@inheritDoc */
 		__getset(0,__proto,'measureWidth',function(){
 			return this._bg.width;
-		});
-
-		/**
-		*<p>当前 <code>ProgressBar</code> 实例的进度条背景位图（ <code>Image</code> 实例）的有效缩放网格数据。</p>
-		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
-		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
-		*@see laya.ui.AutoBitmap.sizeGrid
-		*/
-		__getset(0,__proto,'sizeGrid',function(){
-			return this._bg.sizeGrid;
-			},function(value){
-			this._bg.sizeGrid=this._bar.sizeGrid=value;
-		});
-
-		/**
-		*获取背景条对象。
-		*/
-		__getset(0,__proto,'bg',function(){
-			return this._bg;
 		});
 
 		/**@inheritDoc */
@@ -4167,6 +4165,13 @@
 			_super.prototype._$set_height.call(this,value);
 			this._bg.height=this._height;
 			this._bar.height=this._height;
+		});
+
+		/**
+		*获取进度条对象。
+		*/
+		__getset(0,__proto,'bar',function(){
+			return this._bar;
 		});
 
 		/**
@@ -4183,6 +4188,25 @@
 				this.event(/*laya.events.Event.CHANGE*/"change");
 				this.changeHandler && this.changeHandler.runWith(num);
 			}
+		});
+
+		/**
+		*获取背景条对象。
+		*/
+		__getset(0,__proto,'bg',function(){
+			return this._bg;
+		});
+
+		/**
+		*<p>当前 <code>ProgressBar</code> 实例的进度条背景位图（ <code>Image</code> 实例）的有效缩放网格数据。</p>
+		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
+		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
+		*@see laya.ui.AutoBitmap.sizeGrid
+		*/
+		__getset(0,__proto,'sizeGrid',function(){
+			return this._bg.sizeGrid;
+			},function(value){
+			this._bg.sizeGrid=this._bar.sizeGrid=value;
 		});
 
 		/**@inheritDoc */
@@ -4822,21 +4846,6 @@
 		}
 
 		/**
-		*表示当前选择的项索引。默认值为-1。
-		*/
-		__getset(0,__proto,'selectedIndex',function(){
-			return this._selectedIndex;
-			},function(value){
-			if (this._selectedIndex !=value){
-				this.setSelect(this._selectedIndex,false);
-				this._selectedIndex=value;
-				this.setSelect(value,true);
-				this.event(/*laya.events.Event.CHANGE*/"change");
-				this.selectHandler && this.selectHandler.runWith(this._selectedIndex);
-			}
-		});
-
-		/**
 		*<p>描边颜色，以字符串表示。</p>
 		*默认值为 "#000000"（黑色）;
 		*@see laya.display.Text.strokeColor()
@@ -4863,6 +4872,21 @@
 		});
 
 		/**
+		*表示当前选择的项索引。默认值为-1。
+		*/
+		__getset(0,__proto,'selectedIndex',function(){
+			return this._selectedIndex;
+			},function(value){
+			if (this._selectedIndex !=value){
+				this.setSelect(this._selectedIndex,false);
+				this._selectedIndex=value;
+				this.setSelect(value,true);
+				this.event(/*laya.events.Event.CHANGE*/"change");
+				this.selectHandler && this.selectHandler.runWith(this._selectedIndex);
+			}
+		});
+
+		/**
 		*标签集合字符串。以逗号做分割，如"item0,item1,item2,item3,item4,item5"。
 		*/
 		__getset(0,__proto,'labels',function(){
@@ -4881,6 +4905,19 @@
 					}
 				}
 				this.initItems();
+			}
+		});
+
+		/**
+		*<p>表示各个状态下的描边颜色。</p>
+		*@see laya.display.Text.strokeColor()
+		*/
+		__getset(0,__proto,'strokeColors',function(){
+			return this._strokeColors;
+			},function(value){
+			if (this._strokeColors !=value){
+				this._strokeColors=value;
+				this._setLabelChanged();
 			}
 		});
 
@@ -4913,31 +4950,6 @@
 		/**
 		*表示按钮文本标签的字体大小。
 		*/
-		__getset(0,__proto,'stateNum',function(){
-			return this._stateNum;
-			},function(value){
-			if (this._stateNum !=value){
-				this._stateNum=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*<p>表示各个状态下的描边颜色。</p>
-		*@see laya.display.Text.strokeColor()
-		*/
-		__getset(0,__proto,'strokeColors',function(){
-			return this._strokeColors;
-			},function(value){
-			if (this._strokeColors !=value){
-				this._strokeColors=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*表示按钮文本标签的字体大小。
-		*/
 		__getset(0,__proto,'labelSize',function(){
 			return this._labelSize;
 			},function(value){
@@ -4948,13 +4960,15 @@
 		});
 
 		/**
-		*项对象们之间的间隔（以像素为单位）。
+		*表示按钮文本标签的字体大小。
 		*/
-		__getset(0,__proto,'space',function(){
-			return this._space;
+		__getset(0,__proto,'stateNum',function(){
+			return this._stateNum;
 			},function(value){
-			this._space=value;
-			this._setLabelChanged();
+			if (this._stateNum !=value){
+				this._stateNum=value;
+				this._setLabelChanged();
+			}
 		});
 
 		/**
@@ -4983,15 +4997,6 @@
 		});
 
 		/**
-		*获取或设置当前选择的项对象。
-		*/
-		__getset(0,__proto,'selection',function(){
-			return this._selectedIndex >-1 && this._selectedIndex < this._items.length ? this._items[this._selectedIndex] :null;
-			},function(value){
-			this.selectedIndex=this._items.indexOf(value);
-		});
-
-		/**
 		*布局方向。
 		*<p>默认值为"horizontal"。</p>
 		*<p><b>取值：</b>
@@ -5007,10 +5012,29 @@
 		});
 
 		/**
+		*项对象们之间的间隔（以像素为单位）。
+		*/
+		__getset(0,__proto,'space',function(){
+			return this._space;
+			},function(value){
+			this._space=value;
+			this._setLabelChanged();
+		});
+
+		/**
 		*项对象们的存放数组。
 		*/
 		__getset(0,__proto,'items',function(){
 			return this._items;
+		});
+
+		/**
+		*获取或设置当前选择的项对象。
+		*/
+		__getset(0,__proto,'selection',function(){
+			return this._selectedIndex >-1 && this._selectedIndex < this._items.length ? this._items[this._selectedIndex] :null;
+			},function(value){
+			this.selectedIndex=this._items.indexOf(value);
 		});
 
 		/**@inheritDoc */
@@ -5292,7 +5316,7 @@
 
 		__class(List,'laya.ui.List',_super);
 		var __proto=List.prototype;
-		Laya.imps(__proto,{"laya.ui.IItem":true,"laya.ui.IRender":true})
+		Laya.imps(__proto,{"laya.ui.IRender":true,"laya.ui.IItem":true})
 		/**@inheritDoc */
 		__proto.destroy=function(destroyChild){
 			(destroyChild===void 0)&& (destroyChild=true);
@@ -5727,25 +5751,24 @@
 			return this._content;
 		});
 
-		/**
-		*水平方向滚动条皮肤。
-		*/
-		__getset(0,__proto,'hScrollBarSkin',function(){
-			return this._scrollBar ? this._scrollBar.skin :null;
-			},function(value){
-			this.removeChildByName("scrollBar");
-			var scrollBar=new HScrollBar();
-			scrollBar.name="scrollBar";
-			scrollBar.bottom=0;
-			scrollBar.skin=value;
-			this.scrollBar=scrollBar;
-			this.addChild(scrollBar);
-			this._setCellChanged();
-		});
-
 		/**@inheritDoc */
 		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
 			_super.prototype._$set_height.call(this,value);
+			this._setCellChanged();
+		});
+
+		/**
+		*单元格渲染器。
+		*<p><b>取值：</b>
+		*<ol>
+		*<li>单元格类对象。</li>
+		*<li> UI 的 JSON 描述。</li>
+		*</ol></p>
+		*/
+		__getset(0,__proto,'itemRender',function(){
+			return this._itemRender;
+			},function(value){
+			this._itemRender=value;
 			this._setCellChanged();
 		});
 
@@ -5766,17 +5789,42 @@
 		});
 
 		/**
-		*单元格渲染器。
-		*<p><b>取值：</b>
-		*<ol>
-		*<li>单元格类对象。</li>
-		*<li> UI 的 JSON 描述。</li>
-		*</ol></p>
+		*列表的当前页码。
 		*/
-		__getset(0,__proto,'itemRender',function(){
-			return this._itemRender;
+		__getset(0,__proto,'page',function(){
+			return this._page;
 			},function(value){
-			this._itemRender=value;
+			this._page=value
+			if (this._array){
+				this._page=value > 0 ? value :0;
+				this._page=this._page < this.totalPage ? this._page :this.totalPage-1;
+				this.startIndex=this._page *this.repeatX *this.repeatY;
+			}
+		});
+
+		/**
+		*水平方向滚动条皮肤。
+		*/
+		__getset(0,__proto,'hScrollBarSkin',function(){
+			return this._scrollBar ? this._scrollBar.skin :null;
+			},function(value){
+			this.removeChildByName("scrollBar");
+			var scrollBar=new HScrollBar();
+			scrollBar.name="scrollBar";
+			scrollBar.bottom=0;
+			scrollBar.skin=value;
+			this.scrollBar=scrollBar;
+			this.addChild(scrollBar);
+			this._setCellChanged();
+		});
+
+		/**
+		*水平方向显示的单元格数量。
+		*/
+		__getset(0,__proto,'repeatX',function(){
+			return this._repeatX > 0 ? this._repeatX :this._repeatX2 > 0 ? this._repeatX2 :1;
+			},function(value){
+			this._repeatX=value;
 			this._setCellChanged();
 		});
 
@@ -5796,33 +5844,9 @@
 			}
 		});
 
-		/**
-		*表示当前选择的项索引。
-		*/
-		__getset(0,__proto,'selectedIndex',function(){
-			return this._selectedIndex;
-			},function(value){
-			if (this._selectedIndex !=value){
-				this._selectedIndex=value;
-				this.changeSelectStatus();
-				this.event(/*laya.events.Event.CHANGE*/"change");
-				this.selectHandler && this.selectHandler.runWith(value);
-			}
-		});
-
 		/**@inheritDoc */
 		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
 			_super.prototype._$set_width.call(this,value);
-			this._setCellChanged();
-		});
-
-		/**
-		*水平方向显示的单元格数量。
-		*/
-		__getset(0,__proto,'repeatX',function(){
-			return this._repeatX > 0 ? this._repeatX :this._repeatX2 > 0 ? this._repeatX2 :1;
-			},function(value){
-			this._repeatX=value;
 			this._setCellChanged();
 		});
 
@@ -5844,6 +5868,65 @@
 			},function(value){
 			this._spaceX=value;
 			this._setCellChanged();
+		});
+
+		/**
+		*垂直方向显示的单元格之间的间距（以像素为单位）。
+		*/
+		__getset(0,__proto,'spaceY',function(){
+			return this._spaceY;
+			},function(value){
+			this._spaceY=value;
+			this._setCellChanged();
+		});
+
+		/**
+		*表示当前选择的项索引。
+		*/
+		__getset(0,__proto,'selectedIndex',function(){
+			return this._selectedIndex;
+			},function(value){
+			if (this._selectedIndex !=value){
+				this._selectedIndex=value;
+				this.changeSelectStatus();
+				this.event(/*laya.events.Event.CHANGE*/"change");
+				this.selectHandler && this.selectHandler.runWith(value);
+			}
+		});
+
+		/**
+		*当前选中的单元格数据源。
+		*/
+		__getset(0,__proto,'selectedItem',function(){
+			return this._selectedIndex !=-1 ? this._array[this._selectedIndex] :null;
+			},function(value){
+			this.selectedIndex=this._array.indexOf(value);
+		});
+
+		/**
+		*列表的数据总个数。
+		*/
+		__getset(0,__proto,'length',function(){
+			return this._array.length;
+		});
+
+		/**
+		*获取或设置当前选择的单元格对象。
+		*/
+		__getset(0,__proto,'selection',function(){
+			return this.getCell(this._selectedIndex);
+			},function(value){
+			this.selectedIndex=this._startIndex+this._cells.indexOf(value);
+		});
+
+		/**
+		*当前显示的单元格列表的开始索引。
+		*/
+		__getset(0,__proto,'startIndex',function(){
+			return this._startIndex;
+			},function(value){
+			this._startIndex=value > 0 ? value :0;
+			this.callLater(this.renderItems);
 		});
 
 		/**
@@ -5873,65 +5956,6 @@
 					this._scrollBar.target=this._content;
 				}
 			}
-		});
-
-		/**
-		*垂直方向显示的单元格之间的间距（以像素为单位）。
-		*/
-		__getset(0,__proto,'spaceY',function(){
-			return this._spaceY;
-			},function(value){
-			this._spaceY=value;
-			this._setCellChanged();
-		});
-
-		/**
-		*当前选中的单元格数据源。
-		*/
-		__getset(0,__proto,'selectedItem',function(){
-			return this._selectedIndex !=-1 ? this._array[this._selectedIndex] :null;
-			},function(value){
-			this.selectedIndex=this._array.indexOf(value);
-		});
-
-		/**
-		*获取或设置当前选择的单元格对象。
-		*/
-		__getset(0,__proto,'selection',function(){
-			return this.getCell(this._selectedIndex);
-			},function(value){
-			this.selectedIndex=this._startIndex+this._cells.indexOf(value);
-		});
-
-		/**
-		*当前显示的单元格列表的开始索引。
-		*/
-		__getset(0,__proto,'startIndex',function(){
-			return this._startIndex;
-			},function(value){
-			this._startIndex=value > 0 ? value :0;
-			this.callLater(this.renderItems);
-		});
-
-		/**
-		*列表的当前页码。
-		*/
-		__getset(0,__proto,'page',function(){
-			return this._page;
-			},function(value){
-			this._page=value
-			if (this._array){
-				this._page=value > 0 ? value :0;
-				this._page=this._page < this.totalPage ? this._page :this.totalPage-1;
-				this.startIndex=this._page *this.repeatX *this.repeatY;
-			}
-		});
-
-		/**
-		*列表的数据总个数。
-		*/
-		__getset(0,__proto,'length',function(){
-			return this._array.length;
 		});
 
 		/**@inheritDoc */
@@ -6164,6 +6188,21 @@
 		});
 
 		/**
+		*水平方向滚动条皮肤。
+		*/
+		__getset(0,__proto,'hScrollBarSkin',function(){
+			return this._hScrollBar ? this._hScrollBar.skin :null;
+			},function(value){
+			if (this._hScrollBar==null){
+				laya.display.Node.prototype.addChild.call(this,this._hScrollBar=new HScrollBar());
+				this._hScrollBar.on(/*laya.events.Event.CHANGE*/"change",this,this.onScrollBarChange,[this._hScrollBar]);
+				this._hScrollBar.target=this._content;
+				this._setScrollChanged();
+			}
+			this._hScrollBar.skin=value;
+		});
+
+		/**
 		*@private
 		*获取内容宽度（以像素为单位）。
 		*/
@@ -6190,13 +6229,6 @@
 		});
 
 		/**
-		*垂直方向滚动条对象。
-		*/
-		__getset(0,__proto,'vScrollBar',function(){
-			return this._vScrollBar;
-		});
-
-		/**
 		*@inheritDoc
 		*/
 		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
@@ -6205,18 +6237,17 @@
 		});
 
 		/**
-		*水平方向滚动条皮肤。
+		*水平方向滚动条对象。
 		*/
-		__getset(0,__proto,'hScrollBarSkin',function(){
-			return this._hScrollBar ? this._hScrollBar.skin :null;
-			},function(value){
-			if (this._hScrollBar==null){
-				laya.display.Node.prototype.addChild.call(this,this._hScrollBar=new HScrollBar());
-				this._hScrollBar.on(/*laya.events.Event.CHANGE*/"change",this,this.onScrollBarChange,[this._hScrollBar]);
-				this._hScrollBar.target=this._content;
-				this._setScrollChanged();
-			}
-			this._hScrollBar.skin=value;
+		__getset(0,__proto,'hScrollBar',function(){
+			return this._hScrollBar;
+		});
+
+		/**
+		*获取内容容器对象。
+		*/
+		__getset(0,__proto,'content',function(){
+			return this._content;
 		});
 
 		/**@inheritDoc */
@@ -6241,17 +6272,10 @@
 		});
 
 		/**
-		*水平方向滚动条对象。
+		*垂直方向滚动条对象。
 		*/
-		__getset(0,__proto,'hScrollBar',function(){
-			return this._hScrollBar;
-		});
-
-		/**
-		*获取内容容器对象。
-		*/
-		__getset(0,__proto,'content',function(){
-			return this._content;
+		__getset(0,__proto,'vScrollBar',function(){
+			return this._vScrollBar;
 		});
 
 		/**@inheritDoc */
@@ -6980,6 +7004,15 @@
 		}
 
 		/**
+		*每一项之间的间隔距离（以像素为单位）。
+		*/
+		__getset(0,__proto,'spaceBottom',function(){
+			return this._list.spaceY;
+			},function(value){
+			this._list.spaceY=value;
+		});
+
+		/**
 		*数据源发生变化后，是否保持之前打开状态，默认为true。
 		*<p><b>取值：</b>
 		*<li>true：保持之前打开状态。</li>
@@ -6990,6 +7023,61 @@
 			return this._keepStatus;
 			},function(value){
 			this._keepStatus=value;
+		});
+
+		/**
+		*此对象包含的<code>List</code>实例的单元格渲染器。
+		*<p><b>取值：</b>
+		*<ol>
+		*<li>单元格类对象。</li>
+		*<li> UI 的 JSON 描述。</li>
+		*</ol></p>
+		*/
+		__getset(0,__proto,'itemRender',function(){
+			return this._list.itemRender;
+			},function(value){
+			this._list.itemRender=value;
+		});
+
+		/**
+		*列表数据源，只包含当前可视节点数据。
+		*/
+		__getset(0,__proto,'array',function(){
+			return this._list.array;
+			},function(value){
+			if (this._keepStatus && this._list.array && value){
+				this.parseOpenStatus(this._list.array,value);
+			}
+			this._source=value;
+			this._list.array=this.getArray();
+		});
+
+		/**
+		*单元格鼠标事件处理器。
+		*<p>默认返回参数（e:Event,index:int）。</p>
+		*/
+		__getset(0,__proto,'mouseHandler',function(){
+			return this._list.mouseHandler;
+			},function(value){
+			this._list.mouseHandler=value;
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			_super.prototype._$set_dataSource.call(this,value);
+		});
+
+		/**
+		*数据源，全部节点数据。
+		*/
+		__getset(0,__proto,'source',function(){
+			return this._source;
+		});
+
+		/**滚动条*/
+		__getset(0,__proto,'scrollBar',function(){
+			return this._list.scrollBar;
 		});
 
 		/**
@@ -7009,70 +7097,21 @@
 		});
 
 		/**
-		*列表数据源，只包含当前可视节点数据。
-		*/
-		__getset(0,__proto,'array',function(){
-			return this._list.array;
-			},function(value){
-			if (this._keepStatus && this._list.array && value){
-				this.parseOpenStatus(this._list.array,value);
-			}
-			this._source=value;
-			this._list.array=this.getArray();
-		});
-
-		/**
-		*当前选中的项对象的数据源。
-		*/
-		__getset(0,__proto,'selectedItem',function(){
-			return this._list.selectedItem;
-			},function(value){
-			this._list.selectedItem=value;
-		});
-
-		/**
-		*数据源，全部节点数据。
-		*/
-		__getset(0,__proto,'source',function(){
-			return this._source;
-		});
-
-		/**
-		*此对象包含的<code>List</code>实例的单元格渲染器。
-		*<p><b>取值：</b>
-		*<ol>
-		*<li>单元格类对象。</li>
-		*<li> UI 的 JSON 描述。</li>
-		*</ol></p>
-		*/
-		__getset(0,__proto,'itemRender',function(){
-			return this._list.itemRender;
-			},function(value){
-			this._list.itemRender=value;
-		});
-
-		/**滚动条*/
-		__getset(0,__proto,'scrollBar',function(){
-			return this._list.scrollBar;
-		});
-
-		/**
-		*单元格鼠标事件处理器。
-		*<p>默认返回参数（e:Event,index:int）。</p>
-		*/
-		__getset(0,__proto,'mouseHandler',function(){
-			return this._list.mouseHandler;
-			},function(value){
-			this._list.mouseHandler=value;
-		});
-
-		/**
 		*<code>Tree</code> 实例的渲染处理器。
 		*/
 		__getset(0,__proto,'renderHandler',function(){
 			return this._renderHandler;
 			},function(value){
 			this._renderHandler=value;
+		});
+
+		/**
+		*表示当前选择的项索引。
+		*/
+		__getset(0,__proto,'selectedIndex',function(){
+			return this._list.selectedIndex;
+			},function(value){
+			this._list.selectedIndex=value;
 		});
 
 		/**
@@ -7085,21 +7124,12 @@
 		});
 
 		/**
-		*每一项之间的间隔距离（以像素为单位）。
+		*当前选中的项对象的数据源。
 		*/
-		__getset(0,__proto,'spaceBottom',function(){
-			return this._list.spaceY;
+		__getset(0,__proto,'selectedItem',function(){
+			return this._list.selectedItem;
 			},function(value){
-			this._list.spaceY=value;
-		});
-
-		/**
-		*表示当前选择的项索引。
-		*/
-		__getset(0,__proto,'selectedIndex',function(){
-			return this._list.selectedIndex;
-			},function(value){
-			this._list.selectedIndex=value;
+			this._list.selectedItem=value;
 		});
 
 		/**
@@ -7114,12 +7144,6 @@
 		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
 			_super.prototype._$set_height.call(this,value);
 			this._list.height=value;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			this._dataSource=value;
-			_super.prototype._$set_dataSource.call(this,value);
 		});
 
 		/**
@@ -7225,6 +7249,20 @@
 			this.selectedIndex=index;
 		}
 
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if (((typeof value=='number')&& Math.floor(value)==value)|| (typeof value=='string')){
+				this.selectedIndex=parseInt(value);
+				}else {
+				for (var prop in this._dataSource){
+					if (this.hasOwnProperty(prop)){
+						this[prop]=this._dataSource[prop];
+					}
+				}
+			}
+		});
+
 		/**
 		*表示当前视图索引。
 		*/
@@ -7248,6 +7286,13 @@
 		});
 
 		/**
+		*视图集合数组。
+		*/
+		__getset(0,__proto,'items',function(){
+			return this._items;
+		});
+
+		/**
 		*索引设置处理器。
 		*<p>默认回调参数：index:int</p>
 		*/
@@ -7255,27 +7300,6 @@
 			return this._setIndexHandler;
 			},function(value){
 			this._setIndexHandler=value;
-		});
-
-		/**
-		*视图集合数组。
-		*/
-		__getset(0,__proto,'items',function(){
-			return this._items;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			this._dataSource=value;
-			if (((typeof value=='number')&& Math.floor(value)==value)|| (typeof value=='string')){
-				this.selectedIndex=parseInt(value);
-				}else {
-				for (var prop in this._dataSource){
-					if (this.hasOwnProperty(prop)){
-						this[prop]=this._dataSource[prop];
-					}
-				}
-			}
 		});
 
 		return ViewStack;
@@ -7485,38 +7509,17 @@
 		__proto.createChildren=function(){
 			this.addChild(this._tf=new Input());
 			this._tf.padding=Styles.inputLabelPadding;
-			this._tf.on(/*laya.events.Event.INPUT*/"input",this,this.onInput);
-			this._tf.on(/*laya.events.Event.ENTER*/"enter",this,this.onEnter);
-			this._tf.on(/*laya.events.Event.BLUR*/"blur",this,this.onBlur);
-			this._tf.on(/*laya.events.Event.FOCUS*/"focus",this,this.onFocus);
+			this._tf.on(/*laya.events.Event.INPUT*/"input",this,this._onEvents);
+			this._tf.on(/*laya.events.Event.ENTER*/"enter",this,this._onEvents);
+			this._tf.on(/*laya.events.Event.BLUR*/"blur",this,this._onEvents);
+			this._tf.on(/*laya.events.Event.FOCUS*/"focus",this,this._onEvents);
 		}
 
 		/**
 		*@private
 		*/
-		__proto.onFocus=function(e){
-			this.event(/*laya.events.Event.FOCUS*/"focus",this);
-		}
-
-		/**
-		*@private
-		*/
-		__proto.onBlur=function(e){
-			this.event(/*laya.events.Event.BLUR*/"blur",this);
-		}
-
-		/**
-		*@private
-		*/
-		__proto.onInput=function(e){
-			this.event(/*laya.events.Event.INPUT*/"input",this);
-		}
-
-		/**
-		*@private
-		*/
-		__proto.onEnter=function(e){
-			this.event(/*laya.events.Event.ENTER*/"enter",this);
+		__proto._onEvents=function(e){
+			this.event(e.type,this);
 		}
 
 		/**@inheritDoc */
@@ -7530,6 +7533,10 @@
 			(this._tf).select();
 		}
 
+		__proto.setSelection=function(startIndex,endIndex){
+			(this._tf).setSelection(startIndex,endIndex);
+		}
+
 		/**
 		*表示此对象包含的文本背景 <code>AutoBitmap</code> 组件实例。
 		*/
@@ -7540,12 +7547,13 @@
 		});
 
 		/**
-		*设置可编辑状态。
+		*<p>指示当前是否是文本域。</p>
+		*值为true表示当前是文本域，否则不是文本域。
 		*/
-		__getset(0,__proto,'editable',function(){
-			return (this._tf).editable;
+		__getset(0,__proto,'multiline',function(){
+			return (this._tf).multiline;
 			},function(value){
-			(this._tf).editable=value;
+			(this._tf).multiline=value;
 		});
 
 		/**
@@ -7555,12 +7563,6 @@
 			return (this._tf).inputElementYAdjuster;
 			},function(value){
 			(this._tf).inputElementYAdjuster=value;
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
-			_super.prototype._$set_height.call(this,value);
-			this._bg && (this._bg.height=value);
 		});
 
 		/**
@@ -7591,12 +7593,6 @@
 			this._bg.sizeGrid=UIUtils.fillArray(Styles.defaultSizeGrid,value,Number);
 		});
 
-		/**@inheritDoc */
-		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
-			_super.prototype._$set_width.call(this,value);
-			this._bg && (this._bg.width=value);
-		});
-
 		/**
 		*设置原生input输入框的x坐标偏移。
 		*/
@@ -7606,14 +7602,32 @@
 			(this._tf).inputElementXAdjuster=value;
 		});
 
+		/**@inheritDoc */
+		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
+			_super.prototype._$set_width.call(this,value);
+			this._bg && (this._bg.width=value);
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
+			_super.prototype._$set_height.call(this,value);
+			this._bg && (this._bg.height=value);
+		});
+
 		/**
-		*<p>指示当前是否是文本域。</p>
-		*值为true表示当前是文本域，否则不是文本域。
+		*设置可编辑状态。
 		*/
-		__getset(0,__proto,'multiline',function(){
-			return (this._tf).multiline;
+		__getset(0,__proto,'editable',function(){
+			return (this._tf).editable;
 			},function(value){
-			(this._tf).multiline=value;
+			(this._tf).editable=value;
+		});
+
+		/**限制输入的字符。*/
+		__getset(0,__proto,'restrict',function(){
+			return (this._tf).restrict;
+			},function(pattern){
+			(this._tf).restrict=pattern;
 		});
 
 		/**
@@ -7623,13 +7637,6 @@
 			return (this._tf).prompt;
 			},function(value){
 			(this._tf).prompt=value;
-		});
-
-		/**限制输入的字符。*/
-		__getset(0,__proto,'restrict',function(){
-			return (this._tf).restrict;
-			},function(pattern){
-			(this._tf).restrict=pattern;
 		});
 
 		/**
@@ -8148,12 +8155,8 @@
 	*/
 	//class laya.ui.HBox extends laya.ui.LayoutBox
 	var HBox=(function(_super){
-		/**
-		*创建一个新的 <code>HBox</code> 类实例。
-		*/
-		function HBox(){
-			HBox.__super.call(this);
-		}
+		function HBox(){HBox.__super.call(this);;
+		};
 
 		__class(HBox,'laya.ui.HBox',_super);
 		var __proto=HBox.prototype;
@@ -8177,9 +8180,8 @@
 			}
 			this.sortItem(items);
 			var left=0;
-			var $each_item;
-			/*for each*/for($each_item in items){
-				item=items[$each_item];
+			for (i=0,n=this.numChildren;i < n;i++){
+				item=items[i];
 				item.x=left;
 				left+=item.displayWidth+this._space;
 				if (this._align=="top"){
@@ -8395,12 +8397,8 @@
 	*/
 	//class laya.ui.VBox extends laya.ui.LayoutBox
 	var VBox=(function(_super){
-		/**
-		*创建一个新的 <code>VBox</code> 类实例。
-		*/
-		function VBox(){
-			VBox.__super.call(this);
-		}
+		function VBox(){VBox.__super.call(this);;
+		};
 
 		__class(VBox,'laya.ui.VBox',_super);
 		var __proto=VBox.prototype;
@@ -8418,9 +8416,8 @@
 			}
 			this.sortItem(items);
 			var top=0;
-			var $each_item;
-			/*for each*/for($each_item in items){
-				item=items[$each_item];
+			for (i=0,n=this.numChildren;i < n;i++){
+				item=items[i];
 				item.y=top;
 				top+=item.displayHeight+this._space;
 				if (this._align=="left"){
@@ -8597,9 +8594,9 @@
 			this._tf.scrollY=y;
 		}
 
-		/**垂直滚动条实体*/
-		__getset(0,__proto,'vScrollBar',function(){
-			return this._vScrollBar;
+		/**垂直滚动值*/
+		__getset(0,__proto,'scrollY',function(){
+			return this._tf.scrollY;
 		});
 
 		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
@@ -8607,23 +8604,9 @@
 			this.callLater(this.changeScroll);
 		});
 
-		/**水平滚动条皮肤*/
-		__getset(0,__proto,'hScrollBarSkin',function(){
-			return this._hScrollBar ? this._hScrollBar.skin :null;
-			},function(value){
-			if (this._hScrollBar==null){
-				this.addChild(this._hScrollBar=new HScrollBar());
-				this._hScrollBar.on(/*laya.events.Event.CHANGE*/"change",this,this.onHBarChanged);
-				this._hScrollBar.mouseWheelEnable=false;
-				this._hScrollBar.target=this._tf;
-				this.callLater(this.changeScroll);
-			}
-			this._hScrollBar.skin=value;
-		});
-
-		/**垂直滚动最大值*/
-		__getset(0,__proto,'maxScrollY',function(){
-			return this._tf.maxScrollY;
+		/**水平滚动条实体*/
+		__getset(0,__proto,'hScrollBar',function(){
+			return this._hScrollBar;
 		});
 
 		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
@@ -8649,14 +8632,28 @@
 			this._vScrollBar.skin=value;
 		});
 
-		/**水平滚动条实体*/
-		__getset(0,__proto,'hScrollBar',function(){
-			return this._hScrollBar;
+		/**水平滚动条皮肤*/
+		__getset(0,__proto,'hScrollBarSkin',function(){
+			return this._hScrollBar ? this._hScrollBar.skin :null;
+			},function(value){
+			if (this._hScrollBar==null){
+				this.addChild(this._hScrollBar=new HScrollBar());
+				this._hScrollBar.on(/*laya.events.Event.CHANGE*/"change",this,this.onHBarChanged);
+				this._hScrollBar.mouseWheelEnable=false;
+				this._hScrollBar.target=this._tf;
+				this.callLater(this.changeScroll);
+			}
+			this._hScrollBar.skin=value;
 		});
 
-		/**垂直滚动值*/
-		__getset(0,__proto,'scrollY',function(){
-			return this._tf.scrollY;
+		/**垂直滚动条实体*/
+		__getset(0,__proto,'vScrollBar',function(){
+			return this._vScrollBar;
+		});
+
+		/**垂直滚动最大值*/
+		__getset(0,__proto,'maxScrollY',function(){
+			return this._tf.maxScrollY;
 		});
 
 		/**水平滚动值*/
@@ -8668,5 +8665,5 @@
 	})(TextInput)
 
 
-	Laya.__init([View,Dialog]);
+	Laya.__init([Dialog,View]);
 })(window,document,Laya);

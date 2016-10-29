@@ -1,26 +1,19 @@
 package threeDimen.primaryStage {
 	import laya.d3.component.animation.SkinAnimations;
-	import laya.d3.component.animation.UVAnimations;
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.PhasorSpriter3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.light.DirectionLight;
 	import laya.d3.core.light.LightSprite;
 	import laya.d3.core.light.PointLight;
 	import laya.d3.core.light.SpotLight;
-	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
-	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.math.Viewport;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
-	import laya.d3.utils.Picker;
 	import laya.display.Stage;
 	import laya.events.Event;
 	import laya.ui.Button;
@@ -29,7 +22,7 @@ package threeDimen.primaryStage {
 	import laya.utils.Stat;
 	
 	public class D3Base_LightAndMaterialSample {
-		private var currentShadingMode:int;
+		//private var currentShadingMode:int;
 		private var currentLightState:int;
 		private var currentLight:LightSprite;
 		private var scene:Scene;
@@ -47,7 +40,7 @@ package threeDimen.primaryStage {
 		public function D3Base_LightAndMaterialSample() {
 			tempQuaternion = new Quaternion();
 			tempVector3 = new Vector3();
-			currentShadingMode = BaseScene.PIXEL_SHADING;
+			//currentShadingMode = BaseScene.PIXEL_SHADING;
 			currentLightState = 0;
 			
 			Laya3D.init(0, 0,true);
@@ -89,8 +82,6 @@ package threeDimen.primaryStage {
 			spotLight.attenuation = new Vector3(0.0, 0.0, 0.8);
 			spotLight.range = 3.0;
 			spotLight.spot = 32;
-			
-			scene.shadingMode = currentShadingMode;
 			
 			var grid:Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;
 			
@@ -153,17 +144,17 @@ package threeDimen.primaryStage {
 				_this.buttonLight.on(Event.CLICK, _this, _this.onclickButtonLight);
 				Laya.stage.addChild(_this.buttonLight);
 				
-				_this.shadingLight = new Button();
-				_this.shadingLight.skin = "../../../../res/threeDimen/ui/button.png";
-				_this.shadingLight.label = "像素着色";
-				_this.shadingLight.labelBold = true;
-				_this.shadingLight.labelSize = 20;
-				_this.shadingLight.sizeGrid = "4,4,4,4";
-				_this.shadingLight.size(120, 30);
-				_this.shadingLight.scale(Browser.pixelRatio, Browser.pixelRatio);
-				_this.shadingLight.pos(Laya.stage.width / 2 - _this.shadingLight.width * Browser.pixelRatio / 2, Laya.stage.height - 50 * Browser.pixelRatio);
-				_this.shadingLight.on(Event.CLICK, _this, _this.onclickButtonShading);
-				Laya.stage.addChild(_this.shadingLight);
+				//_this.shadingLight = new Button();
+				//_this.shadingLight.skin = "../../../../res/threeDimen/ui/button.png";
+				//_this.shadingLight.label = "像素着色";
+				//_this.shadingLight.labelBold = true;
+				//_this.shadingLight.labelSize = 20;
+				//_this.shadingLight.sizeGrid = "4,4,4,4";
+				//_this.shadingLight.size(120, 30);
+				//_this.shadingLight.scale(Browser.pixelRatio, Browser.pixelRatio);
+				//_this.shadingLight.pos(Laya.stage.width / 2 - _this.shadingLight.width * Browser.pixelRatio / 2, Laya.stage.height - 50 * Browser.pixelRatio);
+				//_this.shadingLight.on(Event.CLICK, _this, _this.onclickButtonShading);
+				//Laya.stage.addChild(_this.shadingLight);
 				
 				Laya.stage.on(Event.RESIZE, null, function():void {
 					_this.buttonLight.pos(Laya.stage.width / 2 - _this.buttonLight.width * Browser.pixelRatio / 2, Laya.stage.height - 100 * Browser.pixelRatio);
@@ -174,16 +165,16 @@ package threeDimen.primaryStage {
 		
 		}
 		
-		private function onclickButtonShading():void {
-			currentShadingMode++;
-			(currentShadingMode > BaseScene.PIXEL_SHADING) && (currentShadingMode = BaseScene.VERTEX_SHADING);
-			if (currentShadingMode == BaseScene.VERTEX_SHADING) {
-				shadingLight.label = "顶点着色";
-			} else {
-				shadingLight.label = "像素着色";
-			}
-			scene.shadingMode = currentShadingMode;
-		}
+		//private function onclickButtonShading():void {
+			//currentShadingMode++;
+			//(currentShadingMode > BaseScene.PIXEL_SHADING) && (currentShadingMode = BaseScene.VERTEX_SHADING);
+			//if (currentShadingMode == BaseScene.VERTEX_SHADING) {
+				//shadingLight.label = "顶点着色";
+			//} else {
+				//shadingLight.label = "像素着色";
+			//}
+			//scene.shadingMode = currentShadingMode;
+		//}
 		
 		private function onclickButtonLight():void {
 			currentLightState++;

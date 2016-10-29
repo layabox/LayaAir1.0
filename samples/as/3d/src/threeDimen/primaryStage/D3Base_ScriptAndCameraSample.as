@@ -2,15 +2,10 @@ package threeDimen.primaryStage {
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.light.PointLight;
-	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Viewport;
 	import laya.d3.resource.models.Mesh;
 	import laya.display.Stage;
-	import laya.events.Event;
-	import laya.utils.ClassUtils;
 	import laya.utils.Stat;
 	
 	import threeDimen.common.CameraMoveScript;
@@ -44,7 +39,6 @@ package threeDimen.primaryStage {
 			pointLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
 			pointLight.specularColor = new Vector3(2.0, 2.0, 1.6);
 			pointLight.diffuseColor = new Vector3(1, 1, 1);
-			scene.shadingMode = BaseScene.PIXEL_SHADING;
 			
 			skinMesh = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
 		}

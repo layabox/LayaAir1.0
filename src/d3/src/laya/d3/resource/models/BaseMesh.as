@@ -85,14 +85,14 @@ package laya.d3.resource.models {
 			throw new Error("未Override,请重载该属性！");
 		}
 		
-		/** @private 待开放。*/
-		public function Render():void {
-			throw new Error("未Override,请重载该方法！");
-		}
-		
-		/** @private 待开放。*/
-		public function RenderSubMesh(subMeshIndex:int):void {
-			throw new Error("未Override,请重载该方法！");
-		}
+		///** @private 待开放。*/
+		//public function Render():void {
+			//throw new Error("未Override,请重载该方法！");
+		//}
+		//
+		///** @private 待开放。*/
+		//public function RenderSubMesh(subMeshIndex:int):void {
+			//throw new Error("未Override,请重载该方法！");
+		//}
 	}
 }

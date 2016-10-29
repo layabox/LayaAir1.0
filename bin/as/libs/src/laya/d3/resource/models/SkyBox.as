@@ -6,19 +6,14 @@ package laya.d3.resource.models {
 	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexElementFormat;
 	import laya.d3.graphics.VertexElementUsage;
-	import laya.d3.graphics.VertexPositionNormalTexture;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
-	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.TextureCube;
 	import laya.d3.shader.ShaderDefines3D;
-	import laya.utils.Handler;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer;
 	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.ValusArray;
 	
@@ -132,8 +127,8 @@ package laya.d3.resource.models {
 		protected function _getShader(state:RenderState):Shader {
 			var shaderDefs:ShaderDefines3D = state.shaderDefs;
 			var preDef:int = shaderDefs._value;
-			var nameID:Number = (shaderDefs._value | state.shadingMode) + _sharderNameID * Shader.SHADERNAME2ID;
-			_shader = Shader.withCompile(_sharderNameID, state.shadingMode, state.shaderDefs.toNameDic(), nameID, null);
+			var nameID:Number = shaderDefs._value + _sharderNameID * Shader.SHADERNAME2ID;
+			_shader = Shader.withCompile(_sharderNameID, state.shaderDefs.toNameDic(), nameID, null);
 			shaderDefs._value = preDef;
 			return _shader;
 		}

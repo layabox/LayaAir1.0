@@ -1,7 +1,8 @@
 package laya.utils {
 	/*[IF-FLASH]*/import flash.utils.Dictionary;
-	
 	import laya.display.Node;
+	
+	
 	/**
 	 * <code>Tween</code>  是一个缓动类。使用实现目标对象属性的渐变。
 	 */
@@ -37,7 +38,7 @@ package laya.utils {
 		/**
 		 * 缓动对象的props属性到目标值。
 		 * @param	target 目标对象(即将更改属性值的对象)。
-		 * @param	props 变化的属性列表，比如{x:100,y:20}。
+		 * @param	props 变化的属性列表，比如{x:100,y:20,ease:Ease.backOut,complete:Handler.create(this,onComplete),update:new Handler(this,onComplete)}。
 		 * @param	duration 花费的时间，单位毫秒。
 		 * @param	ease 缓动类型，默认为匀速运动。
 		 * @param	complete 结束回调函数。
@@ -53,7 +54,7 @@ package laya.utils {
 		/**
 		 * 从props属性，缓动到当前状态。
 		 * @param	target 目标对象(即将更改属性值的对象)。
-		 * @param	props 变化的属性列表，比如{x:100,y:20}。
+		 * @param	props 变化的属性列表，比如{x:100,y:20,ease:Ease.backOut,complete:Handler.create(this,onComplete),update:new Handler(this,onComplete)}。
 		 * @param	duration 花费的时间，单位毫秒。
 		 * @param	ease 缓动类型，默认为匀速运动。
 		 * @param	complete 结束回调函数。
@@ -69,7 +70,7 @@ package laya.utils {
 		/**
 		 * 缓动对象的props属性到目标值。
 		 * @param	target 目标对象(即将更改属性值的对象)。
-		 * @param	props 变化的属性列表，比如{x:100,y:20}。
+		 * @param	props 变化的属性列表，比如{x:100,y:20,ease:Ease.backOut,complete:Handler.create(this,onComplete),update:new Handler(this,onComplete)}。
 		 * @param	duration 花费的时间，单位毫秒。
 		 * @param	ease 缓动类型，默认为匀速运动。
 		 * @param	complete 结束回调函数。
@@ -84,7 +85,7 @@ package laya.utils {
 		/**
 		 * 从props属性，缓动到当前状态。
 		 * @param	target 目标对象(即将更改属性值的对象)。
-		 * @param	props 变化的属性列表，比如{x:100,y:20}。
+		 * @param	props 变化的属性列表，比如{x:100,y:20,ease:Ease.backOut,complete:Handler.create(this,onComplete),update:new Handler(this,onComplete)}。
 		 * @param	duration 花费的时间，单位毫秒。
 		 * @param	ease 缓动类型，默认为匀速运动。
 		 * @param	complete 结束回调函数。
@@ -100,7 +101,7 @@ package laya.utils {
 		public function _create(target:*, props:Object, duration:int, ease:Function, complete:Handler, delay:int, coverBefore:Boolean, isTo:Boolean, usePool:Boolean, runNow:Boolean):Tween {
 			if (!target) throw new Error("Tween:target is null");
 			this._target = target;
-			this._duration = duration||props.duration||0;
+			this._duration = duration;
 			this._ease = ease || props.ease || easeNone;
 			this._complete = complete || props.complete;
 			this._delay = delay;
@@ -176,10 +177,9 @@ package laya.utils {
 		}
 		
 		/**设置当前执行比例**/
-		public function set progress(v:Number):void
-		{
-			var uTime:Number=v*_duration;
-			this._startTimer=Browser.now()-this._delay-uTime;
+		public function set progress(v:Number):void {
+			var uTime:Number = v * _duration;
+			this._startTimer = Browser.now() - this._delay - uTime;
 		}
 		
 		/**
@@ -190,7 +190,7 @@ package laya.utils {
 			//缓存当前属性
 			var target:* = this._target;
 			var props:* = this._props;
-			var handler:Handler = this._complete;			
+			var handler:Handler = this._complete;
 			//设置终点属性
 			for (var i:int, n:int = props.length; i < n; i++) {
 				var prop:Array = props[i];

@@ -53,7 +53,7 @@ package laya.d3.core.particle {
 			_particleRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
 			var material:ParticleMaterial = new ParticleMaterial();
-			material.setShaderName("PARTICLE");
+			material.setShaderName("PARTICLE");//TODO:放到构造函数内
 			
 			if (setting.textureName)//预设纹理ShaderValue
 			{
@@ -78,7 +78,7 @@ package laya.d3.core.particle {
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderCullingObject = _particleRender.renderCullingObject;
+			renderElement._renderObject = _particleRender.renderCullingObject;
 			
 			var material:BaseMaterial = _particleRender.sharedMaterials[index];
 			(material) || (material = ParticleMaterial.defaultMaterial);//确保有材质,由默认材质代替。

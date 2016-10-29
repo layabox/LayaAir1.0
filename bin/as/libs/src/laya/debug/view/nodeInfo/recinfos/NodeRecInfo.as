@@ -26,7 +26,7 @@ package laya.debug.view.nodeInfo.recinfos
 			txt.text = str;
 		}
 		protected var _tar:Sprite;
-		public var recColor:String = "#00ffff";
+		public var recColor:String = "#00ff00";
 		public function setTarget(tar:Sprite):void
 		{
 			_tar = tar;

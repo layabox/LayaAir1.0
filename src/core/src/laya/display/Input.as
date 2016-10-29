@@ -308,13 +308,23 @@ package laya.display {
 				ty = m.ty - ty;
 			}
 			
-			sx *= (perpendicular ? rec.height : rec.width);
-			sy *= (perpendicular ? rec.width : rec.height);
+			// 当前渲染节点的全局旋转弧度。
+			const quarter:Number = 0.785;
+			var r:Number = Math.atan2(rec.height, rec.width) - quarter;
+			// 反向旋转。
+			var sin:Number = Math.sin(r), cos:Number = Math.cos(r);
+			// 计算节点缩放。
+			var tsx:Number = cos * rec.width + sin * rec.height;
+			var tsy:Number = cos * rec.height - sin * rec.width;
+			sx *= (perpendicular ? tsy : tsx);
+			sy *= (perpendicular ? tsx : tsy);
 			
 			m.tx = 0;
 			m.ty = 0;
 			
-			//[IF-SCRIPT]inputContainer.style.transform = "scale(" + sx + "," + sy + ") rotate(" + Laya.stage.canvasDegree + "deg)";
+			r *= 180 / 3.1415;
+			//[IF-SCRIPT]inputContainer.style.transform = "scale(" + sx + "," + sy + ") rotate(" + (Laya.stage.canvasDegree + r) + "deg)";
+			//[IF-SCRIPT]inputContainer.style.webkitTransform = "scale(" + sx + "," + sy + ") rotate(" + (Laya.stage.canvasDegree + r) + "deg)";
 			inputContainer.setPos(tx, ty);
 			m.destroy();
 			

@@ -1,4 +1,4 @@
-/**Created by the LayaEditor,do not modify.*/
+/**Created by the LayaAirIDE,do not modify.*/
 package laya.debug.ui.debugui.comps {
 	import laya.ui.*;                     
 

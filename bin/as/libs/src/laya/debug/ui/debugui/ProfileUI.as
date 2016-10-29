@@ -1,17 +1,19 @@
-/**Created by the LayaEditor,do not modify.*/
+/**Created by the LayaAirIDE,do not modify.*/
 package laya.debug.ui.debugui {
 	import laya.ui.*;                     
 	import laya.debug.view.nodeInfo.views.RenderCostRankView;
 	import laya.debug.view.nodeInfo.views.ObjectCreateView;
 	import laya.debug.view.nodeInfo.views.CacheRankView;
+	import laya.debug.view.nodeInfo.views.ResRankView;
 
 	public class ProfileUI extends View {
 		public var renderPanel:RenderCostRankView;
 		public var createPanel:ObjectCreateView;
 		public var cachePanel:CacheRankView;
 		public var tab:Tab;
+		public var resPanel:ResRankView;
 
-		public static var uiView:Object ={"type":"View","props":{"base64pic":true,"width":260,"height":329},"child":[{"props":{"y":0,"skin":"view/bg_tool.png","left":0,"right":0},"type":"Image"},{"type":"Rank","props":{"name":"渲染用时","left":0,"right":0,"top":29,"bottom":0,"runtime":"laya.debug.view.nodeInfo.views.RenderCostRankView","var":"renderPanel"}},{"type":"ObjectCreate","props":{"name":"对象创建统计","runtime":"laya.debug.view.nodeInfo.views.ObjectCreateView","top":29,"left":0,"right":0,"bottom":0,"var":"createPanel"}},{"type":"Rank","props":{"name":"cache用时","left":0,"right":0,"top":29,"bottom":0,"runtime":"laya.debug.view.nodeInfo.views.CacheRankView","var":"cachePanel","x":10}},{"type":"Tab","child":[{"props":{"skin":"view/create.png","label":"  对象创建","width":70,"height":17,"name":"item0","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff"},"type":"CheckBox"},{"props":{"x":77,"skin":"view/rendertime.png","label":" 渲染用时","width":70,"height":19,"name":"item1","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff","y":0},"type":"CheckBox"},{"props":{"x":154,"skin":"view/cache.png","label":" Cache","width":70,"height":16,"name":"item2","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff","y":0},"type":"CheckBox"}],"props":{"x":7,"y":9,"selectedIndex":0,"var":"tab","width":191,"height":19}}]};
+		public static var uiView:Object ={"type":"View","props":{"width":260,"height":329,"base64pic":true},"child":[{"type":"Image","props":{"y":0,"skin":"view/bg_tool.png","right":0,"left":0}},{"type":"Rank","props":{"var":"renderPanel","top":29,"runtime":"laya.debug.view.nodeInfo.views.RenderCostRankView","right":0,"name":"渲染用时","left":0,"bottom":0}},{"type":"ObjectCreate","props":{"var":"createPanel","top":29,"runtime":"laya.debug.view.nodeInfo.views.ObjectCreateView","right":0,"name":"对象创建统计","left":0,"bottom":0}},{"type":"Rank","props":{"x":10,"var":"cachePanel","top":29,"runtime":"laya.debug.view.nodeInfo.views.CacheRankView","right":0,"name":"cache用时","left":0,"bottom":0}},{"type":"Tab","props":{"y":9,"x":7,"width":191,"var":"tab","selectedIndex":0,"height":19},"child":[{"type":"CheckBox","props":{"y":0,"x":0,"width":50,"skin":"view/create.png","name":"item0","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff","label":"  对象","height":17}},{"type":"CheckBox","props":{"y":0,"x":55,"width":50,"skin":"view/rendertime.png","name":"item1","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff","label":" 渲染","height":19}},{"type":"CheckBox","props":{"y":0,"x":110,"width":50,"skin":"view/cache.png","name":"item2","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff","label":" 重绘","height":16}},{"type":"CheckBox","props":{"y":0,"x":165,"width":50,"skin":"view/cache.png","name":"item3","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff","label":" 资源","height":16}}]},{"type":"Rank","props":{"y":40,"x":50,"var":"resPanel","top":29,"runtime":"laya.debug.view.nodeInfo.views.ResRankView","right":0,"name":"资源缓存","left":0,"bottom":0}}]};
 		public function ProfileUI(){}
 		override protected function createChildren():void {
 		  viewMapRegists();
@@ -20,9 +22,10 @@ package laya.debug.ui.debugui {
 		}
 		protected function viewMapRegists():void
 		{
-			View.viewClassMap["laya.debug.view.nodeInfo.views.RenderCostRankView"] = RenderCostRankView;
-			View.viewClassMap["laya.debug.view.nodeInfo.views.ObjectCreateView"] = ObjectCreateView;
-			View.viewClassMap["laya.debug.view.nodeInfo.views.CacheRankView"] = CacheRankView;
+			View.regComponent("laya.debug.view.nodeInfo.views.RenderCostRankView",RenderCostRankView);
+			View.regComponent("laya.debug.view.nodeInfo.views.ObjectCreateView",ObjectCreateView);
+			View.regComponent("laya.debug.view.nodeInfo.views.CacheRankView",CacheRankView);
+			View.regComponent("laya.debug.view.nodeInfo.views.ResRankView",ResRankView);
 
 		}
 	}

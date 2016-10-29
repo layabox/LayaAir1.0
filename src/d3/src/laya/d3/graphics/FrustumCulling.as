@@ -18,13 +18,13 @@ package laya.d3.graphics {
 		
 		public static function RenderObjectCulling(boundFrustum:BoundFrustum, scene:BaseScene):void {
 			var i:int, iNum:int, j:int, jNum:int;
-			var frustumCullingObject:RenderCullingObject;
+			var frustumCullingObject:RenderObject;
 			var renderElement:RenderElement;
 			var curRenderQueue:RenderQueue;
 			var queues:Vector.<RenderQueue> = scene._quenes;
 			var staticBatchMananger:StaticBatchManager = scene._staticBatchManager;
 			var dynamicBatchManager:DynamicBatchManager = scene._dynamicBatchManager;
-			var frustumCullingObjects:Vector.<RenderCullingObject> = scene._frustumCullingObjects;
+			var frustumCullingObjects:Vector.<RenderObject> = scene._frustumCullingObjects;
 			for (i = 0, iNum = queues.length; i < iNum; i++)
 				(queues[i]) && (queues[i]._clearRenderElements());
 			staticBatchMananger._clearRenderElements();

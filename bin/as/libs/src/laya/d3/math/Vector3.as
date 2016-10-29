@@ -116,6 +116,17 @@ package laya.d3.math {
 		}
 		
 		/**
+		 * 计算标量长度。
+		 * @param	a 源三维向量。
+		 * @return 标量长度的平方。
+		 */
+		public static function scalarLengthSquared(a:Vector3):Number {
+			var f:Float32Array = a.elements;
+			var x:Number = f[0], y:Number = f[1], z:Number = f[2];
+			return x * x + y * y + z * z;
+		}
+		
+		/**
 		 * 归一化三维向量。
 		 * @param	s 源三维向量。
 		 * @param	out 输出三维向量。

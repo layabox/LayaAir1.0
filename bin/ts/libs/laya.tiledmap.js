@@ -892,10 +892,18 @@
 		}
 
 		/**
-		*tile渲染顺序
+		*当前地图类型
 		*/
-		__getset(0,__proto,'renderOrder',function(){
-			return this._renderOrder;
+		__getset(0,__proto,'orientation',function(){
+			return this._orientation;
+		});
+
+		/**
+		*@private
+		*视口x坐标
+		*/
+		__getset(0,__proto,'viewPortX',function(){
+			return-this._viewPortX;
 		});
 
 		/**
@@ -917,17 +925,25 @@
 		});
 
 		/**
+		*格子的宽度
+		*/
+		__getset(0,__proto,'tileWidth',function(){
+			return this._mapTileW;
+		});
+
+		/**
+		*@private
+		*视口的y坐标
+		*/
+		__getset(0,__proto,'viewPortY',function(){
+			return-this._viewPortY;
+		});
+
+		/**
 		*格子的高度
 		*/
 		__getset(0,__proto,'tileHeight',function(){
 			return this._mapTileH;
-		});
-
-		/**
-		*地图的坚向块数
-		*/
-		__getset(0,__proto,'numRowsGrid',function(){
-			return this._gridH;
 		});
 
 		/**
@@ -945,10 +961,10 @@
 		});
 
 		/**
-		*格子的宽度
+		*地图横向的格子数
 		*/
-		__getset(0,__proto,'tileWidth',function(){
-			return this._mapTileW;
+		__getset(0,__proto,'numColumnsTile',function(){
+			return this._mapW;
 		});
 
 		/**
@@ -956,29 +972,6 @@
 		*/
 		__getset(0,__proto,'height',function(){
 			return this._height;
-		});
-
-		/**
-		*@private
-		*视口x坐标
-		*/
-		__getset(0,__proto,'viewPortX',function(){
-			return-this._viewPortX;
-		});
-
-		/**
-		*@private
-		*视口的y坐标
-		*/
-		__getset(0,__proto,'viewPortY',function(){
-			return-this._viewPortY;
-		});
-
-		/**
-		*地图横向的格子数
-		*/
-		__getset(0,__proto,'numColumnsTile',function(){
-			return this._mapW;
 		});
 
 		/**
@@ -1033,10 +1026,17 @@
 		});
 
 		/**
-		*当前地图类型
+		*地图的坚向块数
 		*/
-		__getset(0,__proto,'orientation',function(){
-			return this._orientation;
+		__getset(0,__proto,'numRowsGrid',function(){
+			return this._gridH;
+		});
+
+		/**
+		*tile渲染顺序
+		*/
+		__getset(0,__proto,'renderOrder',function(){
+			return this._renderOrder;
 		});
 
 		TiledMap.ORIENTATION_ORTHOGONAL="orthogonal";

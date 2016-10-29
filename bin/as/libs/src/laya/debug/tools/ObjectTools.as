@@ -137,6 +137,13 @@ package laya.debug.tools
 				delete obj[key];
 			}
 		}
+		public static function copyObjFast(obj:Object):Object
+		{
+			var jsStr:String;
+			jsStr=ObjectTools.getJsonString(obj);
+			return ObjectTools.getObj(jsStr);
+			
+		}
 		public static function copyObj(obj:Object):Object
 		{
 			if(obj is Array) return copyArr(obj as Array);

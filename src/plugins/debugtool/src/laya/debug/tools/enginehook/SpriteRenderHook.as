@@ -1,11 +1,14 @@
 package laya.debug.tools.enginehook 
 {
+	import laya.debug.tools.CacheAnalyser;
+	import laya.debug.tools.RenderAnalyser;
 	import laya.display.Sprite;
+	import laya.display.Stage;
 	import laya.renders.RenderContext;
 	import laya.renders.RenderSprite;
 	import laya.utils.Browser;
 	import laya.utils.Stat;
-	import laya.debug.tools.RenderAnalyser;
+
 	/**
 	 * ...
 	 * @author ww
@@ -39,6 +42,10 @@ package laya.debug.tools.enginehook
 		 * @param	y Y轴坐标。
 		 */
 		public function render(context:RenderContext, x:Number, y:Number):void {
+			if ((this as Stage) == Laya.stage)
+			{
+				CacheAnalyser.renderLoopBegin();
+			}
 			var preTime:int;
 			preTime = Browser.now();
 			Stat.spriteCount++;

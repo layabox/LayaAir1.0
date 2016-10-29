@@ -5,7 +5,7 @@ package laya.d3.core {
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.graphics.RenderCullingObject;
+	import laya.d3.graphics.RenderObject;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.resource.models.BaseMesh;
@@ -78,7 +78,7 @@ package laya.d3.core {
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderCullingObject = _meshRender.renderCullingObject;
+			renderElement._renderObject = _meshRender.renderCullingObject;
 			
 			var material:BaseMaterial = _meshRender.sharedMaterials[index];
 			(material) || (material = StandardMaterial.defaultMaterial);//确保有材质,由默认材质代替。

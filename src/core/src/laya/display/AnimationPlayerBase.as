@@ -32,6 +32,11 @@ package laya.display {
 		/**@private */
 		private var _controlNode:Sprite;
 		
+		/**播放类型：0为正序播放，1为倒序播放，2为pingpong播放*/
+		public var wrapMode:int = 0;
+		/**是否是逆序播放*/
+		protected var _isReverse:Boolean=false;
+		
 		/**
 		 * 播放动画。
 		 * @param	start 开始播放的动画索引或label。
@@ -42,6 +47,7 @@ package laya.display {
 			this._isPlaying = true;
 			this.index = (start is String)?_getFrameByLabel(start):start;
 			this.loop = loop;
+			_isReverse = wrapMode == 1;
 			if (this.interval > 0) {
 				timerLoop(this.interval, this, _frameLoop, null, true);
 			}
@@ -75,16 +81,51 @@ package laya.display {
 		
 		/**@private */
 		protected function _frameLoop():void {
-			this._index++;
-			if (this._index >= this._count) {
-				if (loop) {
-					this._index = 0;
-					event(Event.COMPLETE);
-				} else {
-					this._index--;
-					stop();
-					event(Event.COMPLETE);
-					return;
+			if (_isReverse)
+			{
+				this._index--;
+				if (this._index < 0){
+					if(loop){
+						if(wrapMode==2)
+						{
+							this._index = this._count > 0?1:0;	
+							_isReverse = false;
+						}else
+						{
+							this._index = this._count - 1;						
+						}		
+						event(Event.COMPLETE);
+					}else
+					{
+						this._index = 0;
+						stop();
+						event(Event.COMPLETE);
+						return;
+					}				
+				}
+			}else
+			{
+				this._index++;
+				if (this._index >= this._count) {
+					
+					if(loop)
+					{
+						if(wrapMode==2)
+						{
+							this._index = this._count - 2 >= 0?this._count - 2:0;	
+							_isReverse=true;
+						}else
+						{
+							this._index = 0;	
+						}
+						event(Event.COMPLETE);
+					}else
+					{
+						this._index--;
+						stop();
+						event(Event.COMPLETE);
+						return;
+					}			
 				}
 			}
 			this.index = this._index;

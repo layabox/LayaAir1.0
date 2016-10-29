@@ -64,6 +64,8 @@ package laya.ani.bone {
 		public var drawOrderAniArr:Array = [];
 		/** 事件动画数据 */
 		public var eventAniArr:Array = [];
+		/** @private 索引对应的名称 */
+		public var attachmentNames:Array = null;
 		/** 顶点动画数据 */
 		public var deformAniArr:Array = [];
 		/** 实际显示对象列表，用于销毁用 */
@@ -128,7 +130,7 @@ package laya.ani.bone {
 		 */
 		override public function parse(data:ArrayBuffer):void {
 			super.parse(data);
-			if (!(this._aniVersion == KeyframesAniTemplet.LAYA_ANIMATION_VISION || this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.2")) {
+			if (!(this._aniVersion == KeyframesAniTemplet.LAYA_ANIMATION_VISION || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.2")) {
 				//trace("[Error] Version " + _aniVersion + " The engine is inconsistent, update to the version " + KeyframesAniTemplet.LAYA_ANIMATION_VISION + " please.");
 				trace("[Error] 版本不一致，请使用IDE版本（1.3.0）重新导出");
 				_loaded = false;
@@ -192,7 +194,7 @@ package laya.ani.bone {
 			for (var i:int = 0, n:int = _loadList.length; i < n; i++) {
 				tTextureName = _loadList[i];
 				tTexture = _textureDic[tTextureName] = Loader.getRes(tTextureName);
-				if (Render.isWebGL && tTexture.bitmap) {
+				if (Render.isWebGL && tTexture && tTexture.bitmap) {
 					tTexture.bitmap.enableMerageInAtlas = false;
 				}
 			}
@@ -239,7 +241,7 @@ package laya.ani.bone {
 				subTextureDic[tTextureName] = Texture.create(tTexture, tX, tY, tWidth, tHeight, -tFrameX, -tFrameY, tFrameWidth, tFrameHeight);
 			}
 			
-			if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4") {
+			if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
 				_mainTexture = tTexture;
 			}
 			
@@ -250,7 +252,7 @@ package laya.ani.bone {
 				tSectionArr.push(tByte.getUint16());
 				tSectionArr.push(tByte.getUint16());
 				tSectionArr.push(tByte.getUint16());
-				if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4") {
+				if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
 					tSectionArr.push(tByte.getUint16());
 				}
 				aniSectionDic[i] = tSectionArr;
@@ -273,7 +275,7 @@ package laya.ani.bone {
 				tName = tByte.readUTFString();
 				tParentName = tByte.readUTFString();
 				tBone.length = tByte.getFloat32();
-				if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4") {
+				if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
 					if (tByte.getByte() == 1) {
 						tBone.inheritRotation = false;
 					}
@@ -331,7 +333,7 @@ package laya.ani.bone {
 				ikArr.push(tIkConstraintData);
 			}
 			
-			if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4") {
+			if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
 				var tTfConstraintData:TfConstraintData;
 				var tTfLen:int = tByte.getUint16();
 				var tTfBoneLen:int;
@@ -378,7 +380,7 @@ package laya.ani.bone {
 					pathArr.push(tPathConstraintData);
 				}
 				
-				if (this._aniVersion == "LAYAANIMATION:1.0.4") {
+				if (this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
 					var tDeformSlotLen:int;
 					var tDeformSlotDisplayLen:int;
 					var tDSlotIndex:int;
@@ -460,7 +462,15 @@ package laya.ani.bone {
 					eventAniArr.push(tEventArr);
 				}
 			}
-			
+			if (this._aniVersion == "LAYAANIMATION:1.0.5")
+			{
+				attachmentNames = [];
+				var tAttachmentLen:int = tByte.getInt16();
+				for (i = 0; i < tAttachmentLen; i++)
+				{
+					attachmentNames.push(tByte.getUTFString());
+				}
+			}
 			//创建插槽并绑定到骨骼上
 			var tBoneSlotLen:int = tByte.getInt16();
 			var tDBBoneSlot:BoneSlot;
@@ -514,7 +524,7 @@ package laya.ani.bone {
 						tDisplayData.width = tByte.getFloat32();
 						tDisplayData.height = tByte.getFloat32();
 						tDisplayData.type = tByte.getUint8();
-						if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4") {
+						if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
 							tDisplayData.verLen = tByte.getUint16();
 						}
 						tBoneLen = tByte.getUint16();
@@ -553,7 +563,7 @@ package laya.ani.bone {
 								tDisplayData.vertices.push(tByte.getFloat32());
 							}
 						}
-						if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4") {
+						if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
 							tLengthLen = tByte.getUint16();
 							if (tLengthLen > 0) {
 								tDisplayData.lengths = [];

@@ -5,7 +5,6 @@ package laya.particle
 	import laya.resource.Texture;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
-	import laya.utils.Timer;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.BlendMode;

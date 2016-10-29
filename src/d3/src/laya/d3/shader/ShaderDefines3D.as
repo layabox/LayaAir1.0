@@ -33,9 +33,6 @@ package laya.d3.shader
 		
 		public static const PARTICLE3D:int = 0x8000;
 		
-		public static const VERTEXSHADERING:int = 0x1000;
-		public static const PIXELSHADERING:int = 0x2000;
-		
 		private static var _name2int:Object = {};
 		private static var _int2name:Array = [];
 		private static var _int2nameMap:Array = [];
@@ -54,8 +51,6 @@ package laya.d3.shader
 			
 			reg("COLOR", COLOR);
 			reg("UV", UV);
-			reg("VERTEXSHADERING", VERTEXSHADERING);
-			reg("PIXELSHADERING", PIXELSHADERING);
 			reg("SKINNED", SKINNED);
 			reg("DIRECTIONLIGHT", DIRECTIONLIGHT);
 			reg("POINTLIGHT", POINTLIGHT);

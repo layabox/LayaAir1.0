@@ -158,7 +158,8 @@ package laya.debug.tools
 		public static var isFirst:Boolean=false;
 		private function check(sp:Sprite, mouseX:Number, mouseY:Number, callBack:Function, hitTest:Boolean, mouseEnable:Boolean):Boolean {
 //			trace("check:"+sp.name);
-			if(sp==DebugTool.debugLayer) return false;
+			if (sp == DebugTool.debugLayer) return false;
+			if (sp == DebugInfoLayer.I) return false;
 //			if(sp==DebugTool._mainPain) return false;
 			//if (sp is TraceOutUI) return false;
 			//if(sp=DebugInfoLayer.I) return false;

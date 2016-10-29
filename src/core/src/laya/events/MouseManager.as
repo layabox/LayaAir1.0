@@ -27,6 +27,8 @@ package laya.events {
 		public var disableMouseEvent:Boolean = false;
 		/** 鼠标按下的时间。单位为毫秒。*/
 		public var mouseDownTime:Number = 0;
+		/** 鼠标移动精度。*/
+		public var mouseMoveAccuracy:Number = 2;
 		/** @private */
 		private static var _isTouchRespond:Boolean;
 		public var _event:Event = new Event();
@@ -42,6 +44,7 @@ package laya.events {
 		private var _isDoubleClick:Boolean = false;
 		private var _isLeftMouse:Boolean;
 		private var _eventList:Array = [];
+		private var _prePoint:Point = new Point();
 		
 		/**
 		 * @private
@@ -165,7 +168,7 @@ package laya.events {
 		}
 		
 		private function sendMouseOver(ele:*):void {
-			if (ele.parent) {
+			if (ele.parent || ele === _stage) {
 				if (!ele._get$P("$_MOUSEOVER")) {
 					ele._set$P("$_MOUSEOVER", true);
 					ele.event(Event.MOUSE_OVER, _event.setTo(Event.MOUSE_OVER, ele, _target));
@@ -176,6 +179,13 @@ package laya.events {
 		}
 		
 		private function onMouseDown(ele:*):void {
+			if (Input.isInputting && Laya.stage.focus && Laya.stage.focus["focus"] && !Laya.stage.focus.contains(_target)) {
+				Laya.stage.focus["focus"] = false;
+			}
+			_onMouseDown(ele);
+		}
+		
+		private function _onMouseDown(ele:*):void {
 			if (_isLeftMouse) {
 				ele._set$P("$_MOUSEDOWN", true);
 				ele.event(Event.MOUSE_DOWN, _event.setTo(Event.MOUSE_DOWN, ele, _target));
@@ -307,6 +317,9 @@ package laya.events {
 			var i:int = 0;
 			while (i < len) {
 				var evt:* = _eventList[i];
+				
+				if (evt.type !== 'mousemove') _prePoint.x = _prePoint.y = -1000000;
+				
 				switch (evt.type) {
 				case 'mousedown': 
 					if (!_isTouchRespond) {
@@ -326,9 +339,13 @@ package laya.events {
 					_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseUp);
 					break;
 				case 'mousemove': 
-					_this.initEvent(evt);
-					_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseMove);
-					_this.checkMouseOut();
+					if ((Math.abs(_prePoint.x - evt.clientX) + Math.abs(_prePoint.y - evt.clientY)) >= mouseMoveAccuracy) {
+						_prePoint.x = evt.clientX;
+						_prePoint.y = evt.clientY;
+						_this.initEvent(evt);
+						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseMove);
+						_this.checkMouseOut();
+					}
 					break;
 				case "touchstart": 
 					_isTouchRespond = true;

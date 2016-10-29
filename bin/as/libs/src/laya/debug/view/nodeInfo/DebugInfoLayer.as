@@ -16,6 +16,7 @@ package laya.debug.view.nodeInfo
 		public var txtLayer:Sprite;
 		public var popLayer:Sprite;
 		public var graphicLayer:Sprite;
+		public var cacheViewLayer:Sprite;
 		
 		public function DebugInfoLayer() 
 		{
@@ -24,18 +25,22 @@ package laya.debug.view.nodeInfo
 			txtLayer = new Sprite();
 			popLayer = new Sprite();
 			graphicLayer = new Sprite();
+			cacheViewLayer = new Sprite();
 			
 			nodeRecInfoLayer.name = "nodeRecInfoLayer";
 			lineLayer.name = "lineLayer";
 			txtLayer.name = "txtLayer";
 			popLayer.name = "popLayer";
 			graphicLayer.name = "graphicLayer";
+			cacheViewLayer.name = "cacheViewLayer";
 			
 			addChild(lineLayer);
+			addChild(cacheViewLayer);
 			addChild(nodeRecInfoLayer);
 			addChild(txtLayer);
 			addChild(popLayer);
 			addChild(graphicLayer);
+			
 			I = this;
 			//if (Browser.onMobile) this.scale(2, 2);
 			Laya.stage.on(Event.DOUBLE_CLICK, this, setTop);

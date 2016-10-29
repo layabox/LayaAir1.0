@@ -99,7 +99,7 @@ package laya.webgl.resource {
 				def.onerror && (this.onerror = def.onerror);
 				def.onCreate && def.onCreate(this);
 			}
-			_image.crossOrigin = "";
+			_image.crossOrigin = (src && (src.indexOf("data:") == 0)) ? null : "";
 			(src) && (_image.src = src);
 			_enableMerageInAtlas = true;
 		}
@@ -167,7 +167,7 @@ package laya.webgl.resource {
 				startCreate();
 				var _this:WebGLImage = this;
 				_image = new Browser.window.Image();
-				_image.crossOrigin = "";
+				_image.crossOrigin = _src.indexOf("data:") == 0 ? null : "";
 				_image.onload = function():void {
 					if (_this._needReleaseAgain)//异步处理，加载完后可能，如果强制释放资源存在已被释放的风险
 					{

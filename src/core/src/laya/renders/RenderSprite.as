@@ -241,15 +241,23 @@ package laya.renders {
 			words && context.fillWords(words, x, y, (style as CSSStyle).font, (style as CSSStyle).color);
 			
 			var childs:Array = sprite._childs, n:int = childs.length, ele:Sprite;
-			if (!sprite.optimizeScrollRect || sprite.scrollRect == null) {
+			if (!sprite.viewport || !sprite.optimizeScrollRect) {
 				for (var i:int = 0; i < n; ++i)
-					(ele = (childs[i] as Sprite)).visible && ele.render(context, x, y);
+					(ele = (childs[i] as Sprite))._style.visible && ele.render(context, x, y);
 			} else {
-				var rect:Rectangle = sprite.scrollRect;
+				var rect:Rectangle = sprite.viewport;
+				
+				var left:Number = rect.x;
+				var top:Number = rect.y;
+				var right:Number = rect.right;
+				var bottom:Number = rect.bottom;
+				var _x:Number=0, _y:Number=0;
+				
 				for (i = 0; i < n; ++i) {
-					ele = childs[i] as Sprite;
-					if (ele.visible && (!ele.width || rect.intersects(Rectangle.TEMP.setTo(ele.x, ele.y, ele.width, ele.height))))
+					if ( (ele = childs[i] as Sprite)._style.visible && ( (_x=ele.x) < right && (_x + ele.width) > left && (_y=ele.y) < bottom && (_y + ele.height) > top))
+					{
 						ele.render(context, x, y);
+					}
 				}
 			}
 		}

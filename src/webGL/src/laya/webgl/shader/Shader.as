@@ -40,7 +40,25 @@ package laya.webgl.shader {
 		 * @param	define 宏定义，格式:{name:value...}
 		 * @return
 		 */
-		public static function withCompile(nameID:int, mainID:int, define:*, shaderName:*, createShader:Function):Shader {
+		public static function withCompile(nameID:int, define:*, shaderName:*, createShader:Function):Shader {
+			if (shaderName && sharders[shaderName])
+				return sharders[shaderName];
+			
+			var pre:ShaderCompile = _preCompileShader[SHADERNAME2ID * nameID];
+			if (!pre)
+				throw new Error("withCompile shader err!" + nameID);
+			return pre.createShader(define, shaderName, createShader);
+		}
+		
+		/**
+		 * 根据宏动态生成shader文件，支持#include?COLOR_FILTER "parts/ColorFilter_ps_logic.glsl";条件嵌入文件
+		 * @param	name
+		 * @param	vs
+		 * @param	ps
+		 * @param	define 宏定义，格式:{name:value...}
+		 * @return
+		 */
+		public static function withCompile2D(nameID:int, mainID:int, define:*, shaderName:*, createShader:Function):Shader {
 			if (shaderName && sharders[shaderName])
 				return sharders[shaderName];
 			
@@ -64,7 +82,18 @@ package laya.webgl.shader {
 		 * @param	vs
 		 * @param	ps
 		 */
-		public static function preCompile(nameID:int, mainID:int, vs:String, ps:String, nameMap:*):void {
+		public static function preCompile(nameID:int, vs:String, ps:String, nameMap:*):void {
+			var id:Number = SHADERNAME2ID * nameID;
+			_preCompileShader[id] = new ShaderCompile(id, vs, ps, nameMap, _includeFiles);
+		}
+		
+		/**
+		 * 预编译shader文件，主要是处理宏定义
+		 * @param	nameID,一般是特殊宏+shaderNameID*0.0002组成的一个浮点数当做唯一标识
+		 * @param	vs
+		 * @param	ps
+		 */
+		public static function preCompile2D(nameID:int, mainID:int, vs:String, ps:String, nameMap:*):void {
 			var id:Number = SHADERNAME2ID * nameID + mainID;
 			_preCompileShader[id] = new ShaderCompile(id, vs, ps, nameMap, _includeFiles);
 		}

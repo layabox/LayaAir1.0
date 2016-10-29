@@ -7,7 +7,7 @@ package laya.d3.graphics {
 	 * ...
 	 * @author ...
 	 */
-	public class RenderCullingObject {
+	public class RenderObject {
 		public var _render:BaseRender;
 		public var _renderElements:Vector.<RenderElement>;
 		public var _layerMask:int;
@@ -18,7 +18,7 @@ package laya.d3.graphics {
 			return _render.boundingSphere;
 		}
 		
-		public function RenderCullingObject() {
+		public function RenderObject() {
 			_renderElements = new Vector.<RenderElement>();
 		}
 	

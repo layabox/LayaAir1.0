@@ -92,6 +92,8 @@ package laya.ui {
 		public var _bitmap:AutoBitmap;
 		/**@private */
 		protected var _skin:String;
+		/**@private */
+		protected var _group:String;
 		
 		/**
 		 * 创建一个 <code>Image</code> 实例。
@@ -139,7 +141,7 @@ package laya.ui {
 					if (source) {
 						this.source = source;
 						onCompResize();
-					} else Laya.loader.load(_skin, Handler.create(this, setSource, [_skin]), null, Loader.IMAGE);
+					} else Laya.loader.load(_skin, Handler.create(this, setSource, [_skin]), null, Loader.IMAGE,1,true,_group);
 				} else {
 					this.source = null;
 				}
@@ -161,12 +163,27 @@ package laya.ui {
 		}
 		
 		/**
+		 * 资源分组。
+		 */
+		public function get group():String
+		{
+			return _group;
+		}
+		
+		public function set group(value:String):void
+		{
+			if (value && _skin) Loader.setGroup(_skin, value);
+			_group = value;
+		}
+		/**
 		 * @private
 		 * 设置皮肤资源。
 		 */
-		protected function setSource(url:String, value:*=null):void {
-			url === _skin && (this.source = value);
-			onCompResize();
+		protected function setSource(url:String, img:*=null):void {
+			if (url === _skin && img) {
+				this.source = img
+				onCompResize();
+			}
 		}
 		
 		/**@inheritDoc */

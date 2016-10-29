@@ -7,9 +7,14 @@ uniform vec2 u_offset;
 uniform float alpha;
 void main() {
 	vec2 newTexCoord;
-	newTexCoord.x = mod(((u_offset.x + v_texcoord.x) * u_texRange.y),u_texRange.y) + u_texRange.x;
-	newTexCoord.y = mod(((u_offset.y + v_texcoord.y) * u_texRange.w),u_texRange.w) + u_texRange.z;
+	float tx = (u_offset.x + v_texcoord.x) * u_texRange.y;
+	tx = floor(tx/u_texRange.y)*u_texRange.y;
+	newTexCoord.x = tx + u_texRange.x;
+	tx = ((u_offset.y + v_texcoord.y) * u_texRange.w);
+	tx = floor(tx/u_texRange.w)*u_texRange.w;
+	newTexCoord.y = tx + u_texRange.z;
 	vec4 t_color = texture2D(texture, newTexCoord);
-	gl_FragColor = t_color * v_color;
-	gl_FragColor.a = gl_FragColor.a * alpha;
+	vec4 t1_color = vec4(v_color.x,v_color.y,v_color.z,v_color.w * alpha);
+	t1_color.w = t1_color.w;
+	gl_FragColor = t_color * t1_color;
 }

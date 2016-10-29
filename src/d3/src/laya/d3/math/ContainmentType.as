@@ -7,7 +7,7 @@ package laya.d3.math {
 		
 		/*不相交*/
 		public static const Disjoint:int = 0;
-		/*包涵*/
+		/*包含*/
 		public static const Contains:int = 1;
 		/*相交*/
 		public static const Intersects:int = 2;

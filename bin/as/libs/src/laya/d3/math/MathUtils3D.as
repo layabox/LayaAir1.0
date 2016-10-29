@@ -37,6 +37,7 @@ package laya.d3.math {
 				return true;
 			return false;
 		}
+		
 	}
 
 }

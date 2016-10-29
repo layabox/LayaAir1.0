@@ -93,8 +93,6 @@ package laya.d3.core.material {
 		private var _shaderValues:ValusArray;
 		
 		/** @private */
-		private var _texturesloaded:Boolean = false;
-		/** @private */
 		private var _textures:Vector.<BaseTexture>;
 		/** @private */
 		private var _colors:Vector.<*>;
@@ -263,29 +261,14 @@ package laya.d3.core.material {
 		/**
 		 * @private
 		 */
-		private function _textureLoadCompleted():Boolean {
-			//if (_texturesloaded)//TODO:临时屏蔽，否则renderTarget第一次null后第二次不上传
-			//return true;
-			
-			var i:int, n:int;
-			var texture:BaseTexture;
-			for (i = 0, n = _textures.length; i < n; i++) {
-				texture = _textures[i];
-				if (texture && !texture.loaded)
-					return false;
-			}
-			
-			for (i = 0, n = _textures.length; i < n; i++) {
-				texture = _textures[i];
+		private function _uploadTextures():void {//TODO:使用的时候检测
+			for (var i:int = 0, n:int = _textures.length; i < n; i++) {
+				var texture:BaseTexture = _textures[i];
 				if (texture) {
-					if (texture.source)
-						_uploadTexture(i, texture);
-					else
-						_uploadTexture(i, SolidColorTexture2D.pickTexture);
+					var source:* = texture.source;
+					(source) ? _uploadTexture(i, source) : _uploadTexture(i, SolidColorTexture2D.pickTexture.source);
 				}
 			}
-			
-			return _texturesloaded = true;
 		}
 		
 		/**
@@ -299,16 +282,15 @@ package laya.d3.core.material {
 			shaderDefsValue |= vertexDeclaration.shaderDefine | _shaderDefine;
 			_disableShaderDefine && (shaderDefsValue = shaderDefsValue & (~_disableShaderDefine));
 			shaderDefs._value = shaderDefsValue;
-			var nameID:Number = (shaderDefs._value | state.shadingMode) + _sharderNameID * Shader.SHADERNAME2ID;
-			shader = Shader.withCompile(_sharderNameID, state.shadingMode, shaderDefs.toNameDic(), nameID, null);
+			var nameID:Number = shaderDefs._value + _sharderNameID * Shader.SHADERNAME2ID;
+			shader = Shader.withCompile(_sharderNameID, shaderDefs.toNameDic(), nameID, null);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _uploadTexture(shaderIndex:int, texture:BaseTexture):void {
-			var shaderValue:ValusArray = _shaderValues;
-			shaderValue.data[_textureSharderIndices[shaderIndex]] = texture.source;
+		private function _uploadTexture(shaderIndex:int, textureSource:BaseTexture):void {
+			_shaderValues.data[_textureSharderIndices[shaderIndex]] = textureSource;
 		}
 		
 		/**
@@ -403,7 +385,6 @@ package laya.d3.core.material {
 			}
 			
 			_textures[textureIndex] = texture;
-			(texture) && (_texturesloaded = false);
 		}
 		
 		/**
@@ -420,14 +401,13 @@ package laya.d3.core.material {
 		 * @param shader 着色器。
 		 * @return  是否成功。
 		 */
-		public function _upload(state:RenderState, vertexDeclaration:VertexDeclaration, bufferUsageShader:*):Boolean {
-			if (!_textureLoadCompleted()) return false;
+		public function _upload(state:RenderState, vertexDeclaration:VertexDeclaration, bufferUsageShader:*):void {
+			_uploadTextures();
 			
 			_getShader(state, vertexDeclaration);
 			var shaderValue:ValusArray = state.shaderValue;
 			shaderValue.pushArray(_shaderValues);
 			shader.uploadArray(shaderValue.data, shaderValue.length, bufferUsageShader);
-			return true;
 		}
 		
 		/**
@@ -457,8 +437,6 @@ package laya.d3.core.material {
 			dec._textureSharderIndices = _textureSharderIndices.slice();
 			dec._colorSharderIndices = _colorSharderIndices.slice();
 			dec._numberSharderIndices = _numberSharderIndices.slice();
-			dec._matrix4x4SharderIndices = _matrix4x4SharderIndices.slice();
-			dec._texturesloaded = _texturesloaded;
 			dec.shader = shader;
 			dec._sharderNameID = _sharderNameID;
 			dec._disableShaderDefine = _disableShaderDefine;

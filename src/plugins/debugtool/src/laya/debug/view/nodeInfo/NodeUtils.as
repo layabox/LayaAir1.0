@@ -200,8 +200,12 @@ package laya.debug.view.nodeInfo
 			trace("treeArr:", getNodeTreeData(Laya.stage, null));
 		}
 		
-		public static function getNodeCount(node:Sprite):int
+		public static function getNodeCount(node:Sprite,visibleRequire:Boolean=false):int
 		{
+			if (visibleRequire)
+			{
+				if (!node.visible) return 0;
+			}
 			var rst:int;
 			rst = 1;
 			var i:int, len:int;
@@ -210,7 +214,7 @@ package laya.debug.view.nodeInfo
 			len = cList.length;
 			for (i = 0; i < len; i++)
 			{
-				rst += getNodeCount(cList[i]);
+				rst += getNodeCount(cList[i],visibleRequire);
 			}
 			
 			return rst;

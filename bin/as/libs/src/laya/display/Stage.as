@@ -116,6 +116,9 @@ package laya.display {
 		private var _renderCount:int = 0;
 		/** @private */
 		private var _safariOffsetY:Number = 0;
+		/**@private */
+		private var _frameStartTime:Number;
+		private var _previousOrientation:int;
 		
 		public function Stage() {
 			this.mouseEnabled = true;
@@ -159,6 +162,15 @@ package laya.display {
 				}
 			}
 			window.addEventListener("resize", function():void {
+				// 处理屏幕旋转。旋转后收起输入法。
+				var orientation:* = Browser.window.orientation;
+				if (orientation != null && orientation != _previousOrientation && _this._isInputting())
+				{
+					Input["inputElement"].target.focus = false;
+				}
+				_previousOrientation = orientation;
+					
+				// 弹出输入法不应对画布进行resize。
 				if (_this._isInputting()) return;
 				
 				// Safari横屏工具栏偏移
@@ -167,16 +179,14 @@ package laya.display {
 				
 				_this._resetCanvas();
 			});
+			
+			// 微信的iframe不触发orientationchange。
 			window.addEventListener("orientationchange", function(e:*):void {
-				// 转屏后收回输入法。以免resize后的canvas尺寸缩小。
-				// 仅移动端如此。
-				if (_this._isInputting()) Input["inputElement"].target.focus = false;
-				
 				_this._resetCanvas();
 			});
 			
 			on(Event.MOUSE_MOVE, this, _onmouseMove);
-			if(Browser.onMobile) on(Event.MOUSE_DOWN, this, _onmouseMove);
+			if (Browser.onMobile) on(Event.MOUSE_DOWN, this, _onmouseMove);
 		}
 		
 		/**
@@ -209,7 +219,7 @@ package laya.display {
 			var canvasStyle:* = canvas.source.style;
 			canvas.size(1, 1);
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "";
-			this.renderingEnabled = false;
+			_style.visible = false;
 			Laya.timer.once(100, this, this._changeCanvasSize);
 		}
 		
@@ -224,8 +234,10 @@ package laya.display {
 			if (_screenMode !== SCREEN_NONE) {
 				var screenType:String = screenWidth / screenHeight < 1 ? SCREEN_VERTICAL : SCREEN_HORIZONTAL;
 				rotation = screenType !== _screenMode;
-				/*[IF-FLASH]*/rotation = false;
-				if (rotation) {
+				/*[IF-FLASH]*/
+				rotation = false;
+				if (rotation)
+				{
 					//宽高互换
 					var temp:Number = screenHeight;
 					screenHeight = screenWidth;
@@ -340,7 +352,7 @@ package laya.display {
 			if (mat.ty < 0.00000000000001) mat.ty = 0;
 			canvasStyle.transformOrigin = canvasStyle.webkitTransformOrigin = canvasStyle.msTransformOrigin = canvasStyle.mozTransformOrigin = canvasStyle.oTransformOrigin = "0px 0px 0px";
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "matrix(" + mat.toString() + ")";
-			this.renderingEnabled = true;
+			_style.visible = true;
 			_repaint = 1;
 			event(Event.RESIZE);
 		}
@@ -480,13 +492,20 @@ package laya.display {
 			_mouseMoveTime = Browser.now();
 		}
 		
+		/**获得距当前帧开始后，过了多少时间，单位为毫秒
+		 * 可以用来判断函数内时间消耗，控制每帧函数处理消耗的时间过长，导致帧率下降*/
+		public function getTimeFromFrameStart():Number {
+			return Browser.now() - _frameStartTime;
+		}
+		
 		/**@inheritDoc */
 		override public function render(context:RenderContext, x:Number, y:Number):void {
+			_frameStartTime = Browser.now();
 			Render.isFlash && repaint();
 			
 			_renderCount++;
 			
-			var frameMode:String = frameRate === FRAME_MOUSE ? (((Browser.now() - _mouseMoveTime) < 2000) ? FRAME_FAST : FRAME_SLOW) : frameRate;
+			var frameMode:String = frameRate === FRAME_MOUSE ? (((_frameStartTime - _mouseMoveTime) < 2000) ? FRAME_FAST : FRAME_SLOW) : frameRate;
 			var isFastMode:Boolean = (frameMode !== FRAME_SLOW);
 			var isDoubleLoop:Boolean = (_renderCount % 2 === 0);
 			var ctx:* = context;
@@ -504,13 +523,13 @@ package laya.display {
 					}
 					return;
 				}
-				if (renderingEnabled) {
+				if (renderingEnabled && _style.visible) {
 					Render.isWebGL ? ctx.clear() : RunDriver.clear(_bgColor);
 					super.render(context, x, y);
 				}
 			}
 			if (Render.isConchNode) return;
-			if (renderingEnabled && (isFastMode || !isDoubleLoop)) {
+			if (renderingEnabled && _style.visible && (isFastMode || !isDoubleLoop)) {
 				Render.isWebGL && RunDriver.clear(_bgColor);
 				RunDriver.beginFlush();
 				context.flush();

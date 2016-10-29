@@ -1,20 +1,15 @@
 package threeDimen.advancedStage {
 	import laya.d3.component.AttachPoint;
-	import laya.d3.component.Component3D;
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.light.PointLight;
 	import laya.d3.core.particle.Particle3D;
-	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Viewport;
 	import laya.d3.resource.models.Mesh;
 	import laya.display.Stage;
-	import laya.events.Event;
 	import laya.particle.ParticleSetting;
 	import laya.utils.Stat;
 	

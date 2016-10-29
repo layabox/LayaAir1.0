@@ -587,6 +587,7 @@ declare module laya.ani.bone {
         drawOrderAniArr: Array<any>;
         /** 事件动画数据 */
         eventAniArr: Array<any>;
+        attachmentNames: Array<any>;
         /** 顶点动画数据 */
         deformAniArr: Array<any>;
         /** 实际显示对象列表，用于销毁用 */
@@ -2089,7 +2090,7 @@ declare module laya.d3.core.material {
          * @param shader 着色器。
          * @return  是否成功。
          */
-        _upload(state: laya.d3.core.render.RenderState, vertexDeclaration: laya.d3.graphics.VertexDeclaration, bufferUsageShader: any): boolean;
+        _upload(state: laya.d3.core.render.RenderState, vertexDeclaration: laya.d3.graphics.VertexDeclaration, bufferUsageShader: any): void;
         /**
          * 设置使用Shader名字。
          * @param name 名称。
@@ -2262,6 +2263,10 @@ declare module laya.d3.core.material {
          * 禁用灯光。
          */
         disableLight(): void;
+        /**
+         * 禁用雾化。
+         */
+        disableFog(): void;
         _setLoopShaderParams(state: laya.d3.core.render.RenderState, projectionView: laya.d3.math.Matrix4x4, worldMatrix: laya.d3.math.Matrix4x4, mesh: laya.d3.core.render.IRenderable, material: BaseMaterial): void;
         copy(dec: BaseMaterial): BaseMaterial;
     }
@@ -2632,7 +2637,7 @@ declare module laya.d3.core.render {
          * 获取渲染物体。
          * @return 渲染物体。
          */
-        renderCullingObject: laya.d3.graphics.RenderCullingObject;
+        renderCullingObject: laya.d3.graphics.RenderObject;
         /**
          * 返回第一个实例材质,第一次使用会拷贝实例对象。
          * @return 第一个实例材质。
@@ -2740,7 +2745,7 @@ declare module laya.d3.core.render {
         private static _tempMatrix4x41;
         _type: number;
         _mainSortID: number;
-        _renderCullingObject: laya.d3.graphics.RenderCullingObject;
+        _renderObject: laya.d3.graphics.RenderObject;
         _sprite3D: laya.d3.core.Sprite3D;
         _material: laya.d3.core.material.BaseMaterial;
         _staticBatch: laya.d3.graphics.StaticBatch;
@@ -2909,15 +2914,6 @@ declare module laya.d3.core.render {
          * 重置。
          */
         reset(): void;
-        /**
-         * 获取着色模式。
-         * @return 着色模式
-         */
-        /**
-         * 设置着色模式。
-         * @param value 着色模式
-         */
-        shadingMode: number;
     }
 }
 declare module laya.d3.core.scene {
@@ -2925,10 +2921,6 @@ declare module laya.d3.core.scene {
      * <code>BaseScene</code> 类用于实现场景的父类。
      */
     class BaseScene extends laya.display.Sprite implements laya.webgl.submit.ISubmit {
-        /** 定义顶点着色模式的标记。*/
-        static VERTEX_SHADING: number;
-        /** 定义像素着色模式的标记。*/
-        static PIXEL_SHADING: number;
         protected _invertYProjectionMatrix: laya.d3.math.Matrix4x4;
         protected _invertYProjectionViewMatrix: laya.d3.math.Matrix4x4;
         protected _invertYScaleMatrix: laya.d3.math.Matrix4x4;
@@ -2938,7 +2930,6 @@ declare module laya.d3.core.scene {
         protected _lights: Array<any>;
         protected _enableLightCount: number;
         protected _renderTargetTexture: laya.d3.resource.RenderTexture;
-        protected _shadingMode: number;
         protected _renderConfigs: Array<any>;
         protected _customRenderQueneIndex: number;
         protected _lastCurrentTime: number;
@@ -2967,15 +2958,6 @@ declare module laya.d3.core.scene {
          *   @return	是否在场景树。
          */
         isInStage: boolean;
-        /**
-         * 获取着色模式。
-         * @return  着色模式。
-         */
-        /**
-         * 设置着色模式。
-         * @param value 着色模式。
-         */
-        shadingMode: number;
         /**
          * 创建一个 <code>BaseScene</code> 实例。
          */
@@ -3010,8 +2992,8 @@ declare module laya.d3.core.scene {
         _removeLight(light: laya.d3.core.light.LightSprite): void;
         addChildAt(node: laya.display.Node, index: number): laya.display.Node;
         addChild(node: laya.display.Node): laya.display.Node;
-        addFrustumCullingObject(frustumCullingObject: laya.d3.graphics.RenderCullingObject): void;
-        removeFrustumCullingObject(frustumCullingObject: laya.d3.graphics.RenderCullingObject): void;
+        addFrustumCullingObject(frustumCullingObject: laya.d3.graphics.RenderObject): void;
+        removeFrustumCullingObject(frustumCullingObject: laya.d3.graphics.RenderObject): void;
         /**
          * 获得某个渲染队列。
          * @param index 渲染队列索引。
@@ -3653,7 +3635,7 @@ declare module laya.d3.graphics {
      * ...
      * @author ...
      */
-    class RenderCullingObject {
+    class RenderObject {
         _render: laya.d3.core.render.BaseRender;
         _renderElements: Array<any>;
         _layerMask: number;
@@ -4402,6 +4384,8 @@ declare module laya.d3.math {
         private static _tempV32;
         private static _tempV33;
         private static _tempV34;
+        private static _tempV35;
+        private static _tempV36;
         /**
          * 创建一个 <code>Collision</code> 实例。
          */
@@ -4437,6 +4421,26 @@ declare module laya.d3.math {
          */
         static distanceSphereToSphere(sphere1: BoundSphere, sphere2: BoundSphere): number;
         /**
+         * 空间中射线和三角面是否相交,输出距离
+         * @param	ray 射线
+         * @param	vertex1 三角面顶点1
+         * @param	vertex2	三角面顶点2
+         * @param	vertex3 三角面顶点3
+         * @param	out 点和三角面的距离
+         * @return  是否相交
+         */
+        static intersectsRayAndTriangleRD(ray: Ray, vertex1: Vector3, vertex2: Vector3, vertex3: Vector3, out: number): boolean;
+        /**
+         * 空间中射线和三角面是否相交,输出相交点
+         * @param	ray 射线
+         * @param	vertex1 三角面顶点1
+         * @param	vertex2	三角面顶点2
+         * @param	vertex3 三角面顶点3
+         * @param	out 相交点
+         * @return  是否相交
+         */
+        static intersectsRayAndTriangleRP(ray: Ray, vertex1: Vector3, vertex2: Vector3, vertex3: Vector3, out: Vector3): boolean;
+        /**
          * 空间中射线和点是否相交
          * @param	sphere1 包围球1
          * @param	sphere2 包围球2
@@ -4449,6 +4453,15 @@ declare module laya.d3.math {
          * @param	out 相交点
          */
         static intersectsRayAndRay(ray1: Ray, ray2: Ray, out: Vector3): boolean;
+        /**
+         * 空间中平面和三角面是否相交
+         * @param	plane 平面
+         * @param	vertex1 三角面顶点1
+         * @param	vertex2 三角面顶点2
+         * @param	vertex3 三角面顶点3
+         * @return  返回空间位置关系
+         */
+        static intersectsPlaneAndTriangle(plane: Plane, vertex1: Vector3, vertex2: Vector3, vertex3: Vector3): number;
         /**
          * 空间中射线和平面是否相交
          * @param	ray   射线
@@ -4492,15 +4505,26 @@ declare module laya.d3.math {
          */
         static intersectsRayAndSphereRP(ray: Ray, sphere: BoundSphere, out: Vector3): boolean;
         /**
+         * 空间中包围球和三角面是否相交
+         * @param	sphere 包围球
+         * @param	vertex1 三角面顶点1
+         * @param	vertex2 三角面顶点2
+         * @param	vertex3 三角面顶点3
+         * @return  返回是否相交
+         */
+        static intersectsSphereAndTriangle(sphere: BoundSphere, vertex1: Vector3, vertex2: Vector3, vertex3: Vector3): boolean;
+        /**
          * 空间中点和平面是否相交
          * @param	plane  平面
          * @param	point  点
+         * @return  碰撞状态
          */
         static intersectsPlaneAndPoint(plane: Plane, point: Vector3): number;
         /**
          * 空间中平面和平面是否相交
          * @param	plane1 平面1
          * @param	plane2 平面2
+         * @return  是否相交
          */
         static intersectsPlaneAndPlane(plane1: Plane, plane2: Plane): boolean;
         /**
@@ -4508,6 +4532,7 @@ declare module laya.d3.math {
          * @param	plane1 平面1
          * @param	plane2 平面2
          * @param	line   相交线
+         * @return  是否相交
          */
         static intersectsPlaneAndPlaneRL(plane1: Plane, plane2: Plane, line: Ray): boolean;
         /**
@@ -4521,26 +4546,118 @@ declare module laya.d3.math {
          * 空间中平面和包围球是否相交
          * @param	plane 平面
          * @param   sphere 包围球
+         * @return  碰撞状态
          */
         static intersectsPlaneAndSphere(plane: Plane, sphere: BoundSphere): number;
         /**
          * 空间中包围盒和包围盒是否相交
          * @param	box1 包围盒1
          * @param   box2 包围盒2
+         * @return  是否相交
          */
         static intersectsBoxAndBox(box1: BoundBox, box2: BoundBox): boolean;
         /**
          * 空间中包围盒和包围球是否相交
          * @param	box 包围盒
          * @param   sphere 包围球
+         * @return  是否相交
          */
         static intersectsBoxAndSphere(box: BoundBox, sphere: BoundSphere): boolean;
         /**
          * 空间中包围球和包围球是否相交
          * @param	sphere1 包围球1
          * @param   sphere2 包围球2
+         * @return  是否相交
          */
         static intersectsSphereAndSphere(sphere1: BoundSphere, sphere2: BoundSphere): boolean;
+        /**
+         * 空间中包围盒是否包含另一个点
+         * @param	box 包围盒
+         * @param   point 点
+         * @return  位置关系:0 不想交,1 包含, 2 相交
+         */
+        static boxContainsPoint(box: BoundBox, point: Vector3): number;
+        /**
+         * 空间中包围盒是否包含另一个包围盒
+         * @param	box1 包围盒1
+         * @param   box2 包围盒2
+         * @return  位置关系:0 不想交,1 包含, 2 相交
+         */
+        static boxContainsBox(box1: BoundBox, box2: BoundBox): number;
+        /**
+         * 空间中包围盒是否包含另一个包围球
+         * @param	box 包围盒
+         * @param   sphere 包围球
+         * @return  位置关系:0 不想交,1 包含, 2 相交
+         */
+        static boxContainsSphere(box: BoundBox, sphere: BoundSphere): number;
+        /**
+         * 空间中包围球是否包含另一个点
+         * @param	sphere 包围球
+         * @param   point 点
+         * @return  位置关系:0 不想交,1 包含, 2 相交
+         */
+        static sphereContainsPoint(sphere: BoundSphere, point: Vector3): number;
+        /**
+         * 空间中包围球是否包含另一个三角面
+         * @param	sphere
+         * @param	vertex1 三角面顶点1
+         * @param	vertex2 三角面顶点2
+         * @param	vertex3 三角面顶点3
+         * @return  返回空间位置关系
+         */
+        static sphereContainsTriangle(sphere: BoundSphere, vertex1: Vector3, vertex2: Vector3, vertex3: Vector3): number;
+        /**
+         * 空间中包围球是否包含另一包围盒
+         * @param	sphere 包围球
+         * @param   box 包围盒
+         * @return  位置关系:0 不想交,1 包含, 2 相交
+         */
+        static sphereContainsBox(sphere: BoundSphere, box: BoundBox): number;
+        /**
+         * 空间中包围球是否包含另一包围球
+         * @param	sphere1 包围球
+         * @param   sphere2 包围球
+         * @return  位置关系:0 不想交,1 包含, 2 相交
+         */
+        static sphereContainsSphere(sphere1: BoundSphere, sphere2: BoundSphere): number;
+        /**
+         * 空间中点与三角面的最近点
+         * @param	point 点
+         * @param	vertex1 三角面顶点1
+         * @param	vertex2	三角面顶点2
+         * @param	vertex3 三角面顶点3
+         * @param	out 最近点
+         */
+        static closestPointPointTriangle(point: Vector3, vertex1: Vector3, vertex2: Vector3, vertex3: Vector3, out: Vector3): void;
+        /**
+         * 空间中平面与一点的最近点
+         * @param	plane 平面
+         * @param	point 点
+         * @param	out 最近点
+         */
+        static closestPointPlanePoint(plane: Plane, point: Vector3, out: Vector3): void;
+        /**
+         * 空间中包围盒与一点的最近点
+         * @param	box 包围盒
+         * @param	point 点
+         * @param	out 最近点
+         */
+        static closestPointBoxPoint(box: BoundBox, point: Vector3, out: Vector3): void;
+        /**
+         * 空间中包围球与一点的最近点
+         * @param	sphere 包围球
+         * @param	point 点
+         * @param	out 最近点
+         */
+        static closestPointSpherePoint(sphere: BoundSphere, point: Vector3, out: Vector3): void;
+        /**
+         * 空间中包围球与包围球的最近点
+         * @param	sphere1 包围球1
+         * @param	sphere2 包围球2
+         * @param	out 最近点
+         */
+        static closestPointSphereSphere(sphere1: BoundSphere, sphere2: BoundSphere, out: Vector3): void;
     }
 }
 declare module laya.d3.math {
@@ -4771,7 +4888,7 @@ declare module laya.d3.math {
          * 创建一个 <code>Matrix4x4</code> 实例。
          * @param	4x4矩阵的各元素
          */
-        constructor(m11?: number, m11s2?: number, m12223?: number, m1444f?: number, m101?: number, m1112s?: number, m12a3?: number, m144ae4?: number, m10a01?: number, m11a12?: number, m1223?: number, m414?: number, m1001?: number, m111aae2?: number, m1ae23?: number, m14aee44?: number);
+        constructor(m11?: number, m12?: number, m13?: number, m14?: number, m21?: number, m22?: number, m23?: number, m24?: number, m31?: number, m32?: number, m33?: number, m34?: number, m41?: number, m42?: number, m43?: number, m44?: number);
         /**
          * 判断两个4x4矩阵的值是否相等。
          * @param	other 4x4矩阵
@@ -5132,6 +5249,12 @@ declare module laya.d3.math {
          */
         static scalarLength(a: Vector3): number;
         /**
+         * 计算标量长度。
+         * @param	a 源三维向量。
+         * @return 标量长度的平方。
+         */
+        static scalarLengthSquared(a: Vector3): number;
+        /**
          * 归一化三维向量。
          * @param	s 源三维向量。
          * @param	out 输出三维向量。
@@ -5486,8 +5609,6 @@ declare module laya.d3.resource.models {
          * @return 渲染单元。
          */
         getRenderElement(index: number): laya.d3.core.render.IRenderable;
-        Render(): void;
-        RenderSubMesh(subMeshIndex: number): void;
     }
 }
 declare module laya.d3.resource.models {
@@ -5633,11 +5754,6 @@ declare module laya.d3.resource.models {
          * @return  子网格数量。
          */
         getSubMeshCount(): number;
-        /**
-         * 清除子网格。
-         * @return  子网格。
-         */
-        clear(): Mesh;
         getRenderElementsCount(): number;
         getRenderElement(index: number): laya.d3.core.render.IRenderable;
         /**
@@ -6075,8 +6191,6 @@ declare module laya.d3.shader {
         static SKINNED: number;
         static ALPHATEST: number;
         static PARTICLE3D: number;
-        static VERTEXSHADERING: number;
-        static PIXELSHADERING: number;
         private static _name2int;
         private static _int2name;
         private static _int2nameMap;
@@ -6828,10 +6942,9 @@ declare module laya.display {
         static createFrames(url: any, name: string): Array<any>;
         /**
          * 清除动画缓存数据
-         * @param url 动画路径或者动画名
-         *
+         * @param key 动画名称或路径
          */
-        static clearCache(url: string): void;
+        static clearCache(key: string): void;
     }
 }
 declare module laya.display {
@@ -6845,6 +6958,9 @@ declare module laya.display {
         protected _count: number;
         protected _isPlaying: boolean;
         protected _labels: any;
+        /**播放类型：0为正序播放，1为倒序播放，2为pingpong播放*/
+        wrapMode: number;
+        protected _isReverse: boolean;
         /**
          * 播放动画。
          * @param	start 开始播放的动画索引或label。
@@ -7461,7 +7577,13 @@ declare module laya.display {
          * @param	height 高度。
          * @param	m 矩阵信息。
          */
-        drawTexture(tex: laya.resource.Texture, x: number, y: number, width?: number, height?: number, m?: laya.maths.Matrix): void;
+        drawTexture(tex: laya.resource.Texture, x: number, y: number, width?: number, height?: number, m?: laya.maths.Matrix, alpha?: number): void;
+        /**
+         * 批量绘制同样纹理。
+         * @param	tex 纹理。
+         * @param	pos 绘制次数和坐标。
+         */
+        drawTextures(tex: laya.resource.Texture, pos: Array<any>): void;
         /**
          * 用texture填充
          * @param	tex 纹理。
@@ -7997,7 +8119,7 @@ declare module laya.display {
      * 			sprite.pivotY = 0;//设置 sprite 对象的垂直方法轴心点坐标。
      * 			Laya.stage.addChild(sprite);//将此 sprite 对象添加到显示列表。
      * 			sprite.on(Event.CLICK, this, onClickSprite);//给 sprite 对象添加点击事件侦听。
-
+    
      * 			shape = new Sprite();//创建一个 Sprite 类的实例对象 sprite 。
      * 			shape.graphics.drawRect(0, 0, 100, 100, "#ccff00", "#ff0000", 2);//绘制一个有边框的填充矩形。
      * 			shape.x = 400;//设置 shape 对象相对于父容器的水平方向坐标值。
@@ -8042,7 +8164,7 @@ declare module laya.display {
      *     sprite.pivotY = 0;//设置 sprite 对象的垂直方法轴心点坐标。
      *     Laya.stage.addChild(sprite);//将此 sprite 对象添加到显示列表。
      *     sprite.on(Event.CLICK, this, onClickSprite);//给 sprite 对象添加点击事件侦听。
-
+    
      *     shape = new laya.display.Sprite();//创建一个 Sprite 类的实例对象 sprite 。
      *     shape.graphics.drawRect(0, 0, 100, 100, "#ccff00", "#ff0000", 2);//绘制一个有边框的填充矩形。
      *     shape.x = 400;//设置 shape 对象相对于父容器的水平方向坐标值。
@@ -8084,7 +8206,7 @@ declare module laya.display {
      *         this.sprite.pivotY = 0;//设置 sprite 对象的垂直方法轴心点坐标。
      *         Laya.stage.addChild(this.sprite);//将此 sprite 对象添加到显示列表。
      *         this.sprite.on(laya.events.Event.CLICK, this, this.onClickSprite);//给 sprite 对象添加点击事件侦听。
-
+    
      *         this.shape = new Sprite();//创建一个 Sprite 类的实例对象 sprite 。
      *         this.shape.graphics.drawRect(0, 0, 100, 100, "#ccff00", "#ff0000", 2);//绘制一个有边框的填充矩形。
      *         this.shape.x = 400;//设置 shape 对象相对于父容器的水平方向坐标值。
@@ -8136,6 +8258,7 @@ declare module laya.display {
          * 对于已知大小的容器（特别是根容器），设置此值为true，能减少节点碰撞，提高性能。默认为false
          */
         hitTestPrior: boolean;
+        viewport: laya.maths.Rectangle;
         /**
          * <p>指定是否对使用了 scrollRect 的显示对象进行优化处理。</p>
          * <p>默认为false(不优化)。</p>
@@ -8602,6 +8725,9 @@ declare module laya.display {
         /**@inheritDoc */
         parentRepaint(): void;
         _loop(): boolean;
+        /**获得距当前帧开始后，过了多少时间，单位为毫秒
+         * 可以用来判断函数内时间消耗，控制每帧函数处理消耗的时间过长，导致帧率下降*/
+        getTimeFromFrameStart(): number;
         /**@inheritDoc */
         render(context: laya.renders.RenderContext, x: number, y: number): void;
         /**是否开启全屏，用户点击后进入全屏*/
@@ -9454,6 +9580,8 @@ declare module laya.events {
         disableMouseEvent: boolean;
         /** 鼠标按下的时间。单位为毫秒。*/
         mouseDownTime: number;
+        /** 鼠标移动精度。*/
+        mouseMoveAccuracy: number;
         private static _isTouchRespond;
         _event: Event;
         /**
@@ -11266,6 +11394,8 @@ declare module laya.net {
         static parserMap: any;
         /** 已加载的资源池。*/
         static loadedMap: any;
+        /** 资源分组。*/
+        static groupMap: any;
         /** 每帧回调最大超时时间，如果超时，则下帧再处理。*/
         static maxTimeOut: number;
         protected static _loaders: Array<any>;
@@ -11282,8 +11412,9 @@ declare module laya.net {
          * @param	url 地址
          * @param	type 类型，如果为null，则根据文件后缀，自动分析类型。
          * @param	cache 是否缓存数据。
+         * @param	group 分组。
          */
-        load(url: string, type?: string, cache?: boolean): void;
+        load(url: string, type?: string, cache?: boolean, group?: string): void;
         protected getTypeFromUrl(url: string): string;
         protected _loadImage(url: string): void;
         protected _loadSound(url: string): void;
@@ -11311,8 +11442,9 @@ declare module laya.net {
         /**
          * 清理指定资源地址的缓存。
          * @param	url 资源地址。
+         * @param	forceDispose 是否强制销毁，有些资源是采用引用计数方式销毁，如果forceDispose=true，则忽略引用计数，直接销毁，比如Texture，默认为false
          */
-        static clearRes(url: string): void;
+        static clearRes(url: string, forceDispose?: boolean): void;
         /**
          * 获取指定资源地址的资源。
          * @param	url 资源地址。
@@ -11331,6 +11463,17 @@ declare module laya.net {
          * @param	data 要缓存的内容。
          */
         static cacheRes(url: string, data: any): void;
+        /**
+         * 设置资源分组。
+         * @param url 资源地址。
+         * @param group 分组名
+         */
+        static setGroup(url: string, group: string): void;
+        /**
+         * 根据分组清理资源
+         * @param group 分组名
+         */
+        static clearResByGroup(group: string): void;
     }
 }
 declare module laya.net {
@@ -11357,14 +11500,16 @@ declare module laya.net {
          * @param	type 资源类型。
          * @param	priority 优先级，0-4，五个优先级，0优先级最高，默认为1。
          * @param	cache 是否缓存加载结果。
+         * @param	group 分组。
          * @return 此 LoaderManager 对象。
          */
-        load(url: any, complete?: laya.utils.Handler, progress?: laya.utils.Handler, type?: string, priority?: number, cache?: boolean): LoaderManager;
+        load(url: any, complete?: laya.utils.Handler, progress?: laya.utils.Handler, type?: string, priority?: number, cache?: boolean, group?: string): LoaderManager;
         /**
          * 清理指定资源地址缓存。
          * @param	url 资源地址。
+         * @param	forceDispose 是否强制销毁，有些资源是采用引用计数方式销毁，如果forceDispose=true，则忽略引用计数，直接销毁，比如Texture，默认为false
          */
-        clearRes(url: string): void;
+        clearRes(url: string, forceDispose?: boolean): void;
         /**
          * 获取指定资源地址的资源。
          * @param	url 资源地址。
@@ -11394,6 +11539,7 @@ declare module laya.net {
         url: string;
         type: string;
         cache: boolean;
+        group: string;
     }
 }
 declare module laya.net {
@@ -11585,13 +11731,13 @@ declare module laya.net {
         url: string;
         /**地址的路径。*/
         path: string;
-        /**基础路径。*/
-        static basePath: string;
-        /**根路径。*/
-        static rootPath: string;
-        /** 自定义url格式化。例如： customFormat=function(url:string,basePath:string):string*/
-         public static  customFormat:Function;
-         /**
+      /**基础路径。*/
+		 static  basePath:string;
+		/**根路径。*/
+		 static  rootPath:string;
+		/** 自定义url格式化。例如： customFormat = function(url:String,basePath:String):String{} */
+		 static  customFormat:Function;
+        /**
          * 格式化指定的地址并	返回。
          * @param	url 地址。
          * @param	base 路径。
@@ -12185,8 +12331,9 @@ declare module laya.renders {
         constructor(width: number, height: number, canvas?: laya.resource.HTMLCanvas);
         drawTexture(tex: laya.resource.Texture, x: number, y: number, width: number, height: number): void;
         _drawTexture: Function;
+        _drawTextures(x: number, y: number, args: Array<any>): void;
         _fillTexture: Function;
-        drawTextureWithTransform(tex: laya.resource.Texture, x: number, y: number, width: number, height: number, m: laya.maths.Matrix): void;
+        drawTextureWithTransform(tex: laya.resource.Texture, x: number, y: number, width: number, height: number, m: laya.maths.Matrix, alpha: number): void;
         _drawTextureWithTransform: Function;
         fillQuadrangle(tex: any, x: number, y: number, point4: Array<any>, m: laya.maths.Matrix): void;
         _fillQuadrangle: Function;
@@ -12363,6 +12510,7 @@ declare module laya.resource {
         miterLimit: string;
         globalAlpha: number;
         clearRect(x: number, y: number, width: number, height: number): void;
+        drawTextures(tex: Texture, pos: Array<any>, tx: number, ty: number): void;
         drawCanvas(canvas: HTMLCanvas, x: number, y: number, width: number, height: number): void;
         fillRect(x: number, y: number, width: number, height: number, style: any): void;
         fillText(text: any, x: number, y: number, font: string, color: string, textAlign: string): void;
@@ -12372,7 +12520,7 @@ declare module laya.resource {
         setTransformByMatrix(value: laya.maths.Matrix): void;
         clipRect(x: number, y: number, width: number, height: number): void;
         drawTexture(tex: Texture, x: number, y: number, width: number, height: number, tx: number, ty: number): void;
-        drawTextureWithTransform(tex: Texture, x: number, y: number, width: number, height: number, m: laya.maths.Matrix, tx: number, ty: number): void;
+        drawTextureWithTransform(tex: Texture, x: number, y: number, width: number, height: number, m: laya.maths.Matrix, tx: number, ty: number, alpha: number): void;
         drawTexture2(x: number, y: number, pivotX: number, pivotY: number, m: laya.maths.Matrix, alpha: number, blendMode: string, args2: Array<any>): void;
         flush(): number;
         fillWords(words: Array<any>, x: number, y: number, font: string, color: string): void;
@@ -12793,9 +12941,9 @@ declare module laya.resource {
         source: any;
         /**
          * 销毁纹理（分直接销毁，跟计数销毁两种）
-         * @param	foreDiposeTexture	true为强制销毁主纹理，false是通过计数销毁纹理
+         * @param	forceDispose	true为强制销毁主纹理，false是通过计数销毁纹理
          */
-        destroy(foreDiposeTexture?: boolean): void;
+        destroy(forceDispose?: boolean): void;
         /** 实际宽度。*/
         width: number;
         /** 实际高度。*/
@@ -12849,62 +12997,63 @@ declare module laya.runtime {
      * @private
      */
     interface IConchNode {
-        /**@private */
-        setRootNode(): void;
-        /**@private */
-        addChildAt(c: IConchNode, i: number): void;
-        /**@private */
-        removeChild(c: IConchNode): void;
-        /**@private */
-        size(w: number, h: number): void;
-        /**@private */
-        pos(x: number, y: number): void;
-        /**@private */
-        pivot(x: number, y: number): void;
-        /**@private */
-        scale(x: number, y: number): void;
-        /**@private */
-        skew(x: number, y: number): void;
-        /**@private */
-        rotate(r: number): void;
-        /**@private */
-        bgColor(bg: string): void;
-        /**@private */
-        font(str: string): void;
-        /**@private */
-        text(d: any): void;
-        /**@private */
-        transform(a: number, b: number, c: number, d: number, tx: number, ty: number): void;
-        /**@private */
-        alpha(a: number): void;
-        /**@private */
-        setFilterMatrix(mat: Float32Array, alpha: Float32Array): void;
-        /**@private */
-        visible(b: boolean): void;
-        /**@private */
-        blendMode(v: string): void;
-        /**@private */
-        scrollRect(x: number, y: number, w: number, h: number): void;
-        /**@private */
-        mask(node: IConchNode): void;
-        /**@private */
-        graphics(g: laya.display.Graphics): void;
-        /**@private */
-        custom(context: laya.resource.Context): void;
-        /**@private */
-        removeType(type: number): void;
-        /**@private */
-        cacheAs(type: number): void;
-        /**@private */
-        border(color: String): void;
-        /**@private */
-        optimizeScrollRect(b: Boolean): void;
-        /**@private */
-        blurFilter(strength: number): void;
-        /**@private */
-        glowFilter(color: string, blur: number, offX: number, offY: number): void;
-        /**@private*/
-        repaint(): void;
+        		/**@private */
+		 setRootNode():void;
+		/**@private */
+		 addChildAt(c:IConchNode, i:number):void;
+		/**@private */
+		 removeChild(c:IConchNode):void;
+		/**@private */
+		 size(w:number, h:number):void;
+		/**@private */
+		 pos(x:number, y:number):void;
+		/**@private */
+		 pivot(x:number, y:number):void;
+		/**@private */
+		 scale(x:number, y:number):void;
+		/**@private */
+		 skew(x:number, y:number):void;
+		/**@private */
+		 rotate(r:number):void;
+		/**@private */
+		 bgColor(bg:string):void;
+		/**@private */
+		 font(str:string):void;
+		/**@private */
+		 text(d:any):void;
+		/**@private */
+		 transform(a:number, b:number, c:number, d:number, tx:number, ty:number):void;
+		/*function setTransform(a:Number,b:Number,c:Number,d:Number,tx:Number,ty:Number):void*/
+		/**@private */
+		 alpha(a:number):void;
+		/**@private */
+		 setFilterMatrix(mat:Float32Array, alpha:Float32Array):void;
+		/**@private */
+		 visible(b:boolean):void;
+		/**@private */
+		 blendMode(v:string):void;
+		/**@private */
+		 scrollRect(x:number, y:number, w:number, h:number):void;
+		/**@private */
+		 mask(node:IConchNode):void;
+		/**@private */
+		 graphics(g:Laya.Graphics):void;
+		/**@private */
+		 custom(context:Laya.Context):void;
+		/**@private */
+		 removeType(type:number):void
+		/**@private */
+		 cacheAs(type:number):void;
+		/**@private */
+		 border(color:string):void;
+		/**@private */
+		 optimizeScrollRect(b:boolean):void;
+		/**@private */
+		 blurFilter(strength:number):void;
+		/**@private */
+		 glowFilter(color:string, blur:number, offX:number, offY:number):void;
+		/**@private*/
+		 repaint():void;
     }
 }
 declare module laya.runtime {
@@ -12914,11 +13063,11 @@ declare module laya.runtime {
      */
     interface ICPlatformClass {
         /**
-         * 创建平台类
-         * @param	clsName  类全名
-         * @return 创建的类
-         */
-        createClass(clsName: string): IPlatformClass;
+		 * 创建平台类
+		 * @param	clsName  类全名
+		 * @return 创建的类
+		 */
+		 createClass(clsName:string):IPlatformClass;
     }
 }
 declare module laya.runtime {
@@ -12926,94 +13075,88 @@ declare module laya.runtime {
      * @private
      */
     interface IMarket {
-        /**
-         * 登录
-         * @param	jsonParm
-         * @param	callback
-         */
-        login(jsonParm: string, callback: Function): void;
-        /**
-         * 登出
-         * @param	jsonParm
-         * @param	callback
-         */
-        logout(jsonParm: string, callback: Function): void;
-        /**
-         * 授权
-         * @param	jsonParm
-         * @param	callback
-         */
-        authorize(jsonParm: string, callback: Function): void;
-        /**
-         * 进入论坛
-         * @param	jsonParm
-         * @param	callback
-         */
-        enterBBS(jsonParm: string, callback: Function): void;
-        /**
-         * 刷新票据
-         * @param	jsonParm
-         * @param	callback
-         */
-        refreshToken(jsonParm: string, callback: Function): void;
-        /**
-         * 支付
-         * @param	jsonParm
-         * @param	callback
-         */
-        recharge(jsonParm: string, callback: Function): void;
-        /**
-         * 分享
-         * @param	jsonParm
-         * @param	callback
-         */
-        enterShareAndFeed(jsonParm: string, callback: Function): void;
-        /**
-         * 邀请
-         * @param	jsonParm
-         * @param	callback
-         */
-        enterInvite(jsonParm: string, callback: Function): void;
-        /**
-         * 获取游戏好友
-         * @param	jsonParm
-         * @param	callback
-         */
-        getGameFriends(jsonParm: string, callback: Function): void;
-        /**
-         * 发送到桌面
-         * @param	jsonParm
-         * @param	callback
-         */
-        sendToDesktop(jsonParm: string, callback: Function): void;
-        /**
-         * 发送自定义消息
-         * @param	jsonParm
-         * @param	callback
-         */
-        sendMessageToPlatform(jsonParm: string, callback: Function): void;
-        /**
-         * 获取用户信息
-         * @param	jsonParm
-         * @param	callback
-         */
-        getUserInfo(jsonParm: string, callback: Function): void;
-        /**
-         * 返回Market名称
-         */
-        getMarketName(): string;
-        /**
-         * 返回支付类型 自定义
-         */
-        getPayType(): number;
-        /**
-         * 返回登录类型 自定义
-         */
-        getLoginType(): number;
-        /**
-         *
-         */
-        getChargeType(): number;
+        		/**
+		 * 登录
+		 * @param	jsonParm
+		 * @param	callback
+		 */
+		 login(jsonParm:string, callback:Function):void;
+		
+		/**
+		 * 登出
+		 * @param	jsonParm
+		 * @param	callback
+		 */
+		 logout(jsonParm:string, callback:Function):void;
+		/**
+		 * 授权
+		 * @param	jsonParm
+		 * @param	callback
+		 */
+		 authorize(jsonParm:string, callback:Function):void;
+		/**
+		 * 进入论坛
+		 * @param	jsonParm
+		 * @param	callback
+		 */
+		 enterBBS(jsonParm:string, callback:Function):void;
+		/**
+		 * 刷新票据
+		 * @param	jsonParm
+		 * @param	callback
+		 */
+		 refreshToken(jsonParm:string, callback:Function):void;
+		/**
+		 * 支付
+		 * @param	jsonParm
+		 * @param	callback
+		 */
+		 recharge(jsonParm:string, callback:Function):void;
+		/**
+		 * 分享
+		 * @param	jsonParm
+		 * @param	callback
+		 */
+		 enterShareAndFeed(jsonParm:string, callback:Function):void;
+		/**
+		 * 邀请
+		 * @param	jsonParm
+		 * @param	callback
+		 */
+		 enterInvite(jsonParm:string, callback:Function):void;
+		/**
+		 * 获取游戏好友
+		 * @param	jsonParm
+		 * @param	callback
+		 */
+		 getGameFriends(jsonParm:string, callback:Function):void;
+		/**
+		 * 发送到桌面
+		 * @param	jsonParm
+		 * @param	callback
+		 */
+		 sendToDesktop(jsonParm:string, callback:Function):void;
+		/**
+		 * 发送自定义消息
+		 * @param	jsonParm
+		 * @param	callback
+		 */
+		 sendMessageToPlatform(jsonParm:string, callback:Function):void;
+		/**
+		 * 获取用户信息
+		 * @param	jsonParm
+		 * @param	callback
+		 */
+		 getUserInfo(jsonParm:string, callback:Function):void;
+		/**
+		 * 返回Market名称
+		 */
+		 getMarketName():string;
+		/**
+		 * 返回支付类型 自定义
+		 */
+		 getPayType():number
+	
     }
 }
 declare module laya.runtime {
@@ -13022,20 +13165,20 @@ declare module laya.runtime {
      * @author hugao
      */
     interface IPlatform {
-        /**
-         * 调用方法
-         * @param	methodName  方法名
-         * @param	...args     参数
-         * @return 返回值 目前只用android能直接返回
-         */
-        call(methodName: string, ...args: any[]): any;
-        /**
-         * 调用方法通过回调接收返回值
-         * @param	callback     回调方法 参数为返回值
-         * @param	methodName   方法名
-         * @param	...args     参数
-         */
-        callWithBack(callback: Function, methodName: string, ...args: any[]): void;
+        	/**
+		 * 调用方法
+		 * @param	methodName  方法名
+		 * @param	...args     参数
+		 * @return 返回值 目前只用android能直接返回
+		 */
+		 call(methodName:string, ...args):any;
+		/**
+		 * 调用方法通过回调接收返回值
+		 * @param	callback     回调方法 参数为返回值
+		 * @param	methodName   方法名
+		 * @param	...args     参数
+		 */
+		 callWithBack(callback: Function,methodName: string,...args): void;
     }
 }
 declare module laya.runtime {
@@ -13045,11 +13188,11 @@ declare module laya.runtime {
      */
     interface IPlatformClass extends IPlatform {
         /**
-         * 创建对象
-         * @param	...args  构造函数的参数
-         * @return  创建出来的对象
-         */
-        newObject(...args: any[]): IPlatform;
+		 * 创建对象
+		 * @param	...args  构造函数的参数
+		 * @return  创建出来的对象
+		 */
+		 newObject(...args):IPlatform;
     }
 }
 declare module laya.scene {
@@ -13638,6 +13781,7 @@ declare module laya.ui {
         protected _isPlaying: boolean;
         protected _index: number;
         protected _clipChanged: boolean;
+        protected _group: string;
         /**
          * 创建一个新的 <code>Clip</code> 示例。
          * @param url 资源类库名或者地址
@@ -13676,6 +13820,10 @@ declare module laya.ui {
          * 源数据。
          */
         sources: Array<any>;
+        /**
+         * 资源分组。
+         */
+        group: string;
         /**@inheritDoc */
         width: number;
         /**@inheritDoc */
@@ -14138,12 +14286,12 @@ declare module laya.ui {
          * <p>数据赋值，通过对UI赋值来控制UI显示逻辑。</p>
          * <p>简单赋值会更改组件的默认属性，使用大括号可以指定组件的任意属性进行赋值。</p>
          * @example 以下示例中， <code>label1、checkbox1</code> 分别为示例的name属性值。
-         <listing version="3.0">
-         //默认属性赋值
-         dataSource =
-         //任意属性赋值
-         dataSource =
-         </listing>
+           <listing version="3.0">
+           //默认属性赋值
+           dataSource =
+           //任意属性赋值
+           dataSource =
+           </listing>
          * @return
          */
         dataSource: any;
@@ -14187,9 +14335,9 @@ declare module laya.ui {
          * <p>鼠标悬停提示。</p>
          * <p>可以赋值为文本 <code>String</code> 或函数 <code>Handler</code> ，用来实现自定义样式的鼠标提示和参数携带等。</p>
          * @example 以下例子展示了三种鼠标提示：
-         <listing version="3.0">
-         private var _testTips:TestTipsUI = new TestTipsUI();
-         private function testTips():void {
+           <listing version="3.0">
+           private var _testTips:TestTipsUI = new TestTipsUI();
+           private function testTips():void {
            //简单鼠标提示
            btn2.toolTip = "这里是鼠标提示&lt;b&gt;粗体&lt;/b&gt;&lt;br&gt;换行";
            //自定义的鼠标提示
@@ -14197,15 +14345,15 @@ declare module laya.ui {
            //带参数的自定义鼠标提示
            clip.toolTip = new Handler(this,showTips2, ["clip"]);
            }
-         private function showTips1():void {
+           private function showTips1():void {
            _testTips.label.text = "这里是按钮[" + btn1.label + "]";
            tip.addChild(_testTips);
            }
-         private function showTips2(name:String):void {
+           private function showTips2(name:String):void {
            _testTips.label.text = "这里是" + name;
            tip.addChild(_testTips);
            }
-         </listing>
+           </listing>
          */
         toolTip: any;
         /**
@@ -14608,10 +14756,6 @@ declare module laya.ui {
          * 居底部对齐。
          */
         static BOTTOM: string;
-        /**
-         * 创建一个新的 <code>HBox</code> 类实例。
-         */
-        constructor();
         protected sortItem(items: Array<any>): void;
         protected changeItems(): void;
     }
@@ -14895,6 +15039,7 @@ declare module laya.ui {
     class Image extends laya.ui.Component {
         _bitmap: laya.ui.AutoBitmap;
         protected _skin: string;
+        protected _group: string;
         /**
          * 创建一个 <code>Image</code> 实例。
          * @param skin 皮肤资源地址。
@@ -14917,7 +15062,11 @@ declare module laya.ui {
          * @copy laya.ui.AutoBitmap#source
          */
         source: laya.resource.Texture;
-        protected setSource(url: string, value?: any): void;
+        /**
+         * 资源分组。
+         */
+        group: string;
+        protected setSource(url: string, img?: any): void;
         protected measureWidth: number;
         protected measureHeight: number;
         /**@inheritDoc */
@@ -15192,10 +15341,6 @@ declare module laya.ui {
         protected _space: number;
         protected _align: string;
         protected _itemChanged: boolean;
-        /**
-         * 创建一个新的 <code>LayoutBox</code> 类实例。
-         */
-        constructor();
         /** @inheritDoc	*/
         addChild(child: laya.display.Node): laya.display.Node;
         /** @inheritDoc	*/
@@ -15312,18 +15457,18 @@ declare module laya.ui {
      *     };
      *     Laya.class(Item,"mypackage.listExample.Item",_super);//注册类 Item 。
      * })(laya.ui.Box);
-
+    
      * Laya.init(640, 800);//设置游戏画布宽高、渲染模式。
      * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色。
      * var res = ["resource/ui/vscroll.png", "resource/ui/vscroll$bar.png", "resource/ui/vscroll$down.png", "resource/ui/vscroll$up.png"];
      * Laya.loader.load(res, new laya.utils.Handler(this, onLoadComplete));//加载资源。
-
+    
      * function onLoadComplete() {
      *     var arr = [];//创建一个数组，用于存贮列表的数据信息。
      *     for (var i = 0; i &lt; 20; i++) {
      *         arr.push({label: "item" + i});
      *     }
-
+    
      *     var list = new laya.ui.List();//创建一个 List 类的实例对象 list 。
      *     list.itemRender = mypackage.listExample.Item;//设置 list 的单元格渲染器。
      *     list.repeatX = 1;//设置 list 的水平方向单元格数量。
@@ -15335,7 +15480,7 @@ declare module laya.ui {
      *     list.selectHandler = new laya.utils.Handler(this, onSelect);//设置 list 改变选择项执行的处理器。
      *     Laya.stage.addChild(list);//将 list 添加到显示列表。
      * }
-
+    
      * function onSelect(index)
      * {
      *     console.log("当前选择的项目索引： index= ", index);
@@ -16364,7 +16509,7 @@ declare module laya.ui {
      *         Laya.stage.bgColor = "#efefef";//设置画布的背景颜色。
      *         Laya.loader.load(["resource/ui/input.png"], Handler.create(this, this.onLoadComplete));//加载资源。
      *     }
-
+    
      *     private onLoadComplete(): void {
      *         var textArea: TextArea = new TextArea("这个一个TextArea实例。");//创建一个 TextArea 类的实例对象 textArea 。
      *         textArea.skin = "resource/ui/input.png";//设置 textArea 的皮肤。
@@ -16576,6 +16721,11 @@ declare module laya.ui {
          * @copy laya.display.Input#type
          */
         type: string;
+        /**
+         * @copy laya.display.Input#asPassword
+         */
+        asPassword: boolean;
+        setSelection(startIndex: number, endIndex: number): void;
     }
 }
 declare module laya.ui {
@@ -16608,24 +16758,24 @@ declare module laya.ui {
      *		import laya.ui.Tree;
      *		import laya.utils.Browser;
      *		import laya.utils.Handler;
-
+    
      *		public class Tree_Example
      *		{
-
+    
      *			public function Tree_Example()
      *			{
      *				Laya.init(640, 800);
      *				Laya.stage.bgColor = "#efefef";//设置画布的背景颜色。
      *				Laya.loader.load(["resource/ui/vscroll.png", "resource/ui/vscroll$bar.png", "resource/ui/vscroll$down.png", "resource/ui/vscroll$up.png", "resource/ui/clip_selectBox.png", "resource/ui/clip_tree_folder.png", "resource/ui/clip_tree_arrow.png"], Handler.create(this, onLoadComplete));
      *			}
-
+    
      *			private function onLoadComplete():void
      *			{
      *				var xmlString:String;//创建一个xml字符串，用于存储树结构数据。
      *				xmlString = "&lt;root&gt;&lt;item label='box1'&gt;&lt;abc label='child1'/&gt;&lt;abc label='child2'/&gt;&lt;abc label='child3'/&gt;&lt;abc label='child4'/&gt;&lt;abc label='child5'/&gt;&lt;/item&gt;&lt;item label='box2'&gt;&lt;abc label='child1'/&gt;&lt;abc label='child2'/&gt;&lt;abc label='child3'/&gt;&lt;abc label='child4'/&gt;&lt;/item&gt;&lt;/root&gt;";
      *				var domParser:* = new Browser.window.DOMParser();//创建一个DOMParser实例domParser。
      *				var xml:* = domParser.parseFromString(xmlString, "text/xml");//解析xml字符。
-
+    
      *				var tree:Tree = new Tree();//创建一个 Tree 类的实例对象 tree 。
      *				tree.scrollBarSkin = "resource/ui/vscroll.png";//设置 tree 的皮肤。
      *				tree.itemRender = Item;//设置 tree 的项渲染器。
@@ -16638,7 +16788,7 @@ declare module laya.ui {
      *			}
      *		}
      *	}
-
+    
      * import laya.ui.Box;
      * import laya.ui.Clip;
      * import laya.ui.Label;
@@ -16649,7 +16799,7 @@ declare module laya.ui {
      *			this.name = "render";
      *			this.right = 0;
      *			this.left = 0;
-
+    
      *			var selectBox:Clip = new Clip("resource/ui/clip_selectBox.png", 1, 2);
      *			selectBox.name = "selectBox";
      *			selectBox.height = 24;
@@ -16657,13 +16807,13 @@ declare module laya.ui {
      *			selectBox.y = 0;
      *			selectBox.left = 12;
      *			addChild(selectBox);
-
+    
      *			var folder:Clip = new Clip("resource/ui/clip_tree_folder.png", 1, 3);
      *			folder.name = "folder";
      *			folder.x = 14;
      *			folder.y = 4;
      *			addChild(folder);
-
+    
      *			var label:Label = new Label("treeItem");
      *			label.name = "label";
      *			label.color = "#ffff00";
@@ -16674,7 +16824,7 @@ declare module laya.ui {
      *			label.left = 33;
      *			label.right = 0;
      *			addChild(label);
-
+    
      *			var arrow:Clip = new Clip("resource/ui/clip_tree_arrow.png", 1, 2);
      *			arrow.name = "arrow";
      *			arrow.x = 0;
@@ -16693,7 +16843,7 @@ declare module laya.ui {
      *     xmlString = "&lt;root&gt;&lt;item label='box1'&gt;&lt;abc label='child1'/&gt;&lt;abc label='child2'/&gt;&lt;abc label='child3'/&gt;&lt;abc label='child4'/&gt;&lt;abc label='child5'/&gt;&lt;/item&gt;&lt;item label='box2'&gt;&lt;abc label='child1'/&gt;&lt;abc label='child2'/&gt;&lt;abc label='child3'/&gt;&lt;abc label='child4'/&gt;&lt;/item&gt;&lt;/root&gt;";
      *     var domParser = new laya.utils.Browser.window.DOMParser();//创建一个DOMParser实例domParser。
      *     var xml = domParser.parseFromString(xmlString, "text/xml");//解析xml字符。
-
+    
      *     var tree = new laya.ui.Tree();//创建一个 Tree 类的实例对象 tree 。
      *     tree.scrollBarSkin = "resource/ui/vscroll.png";//设置 tree 的皮肤。
      *     tree.itemRender = mypackage.treeExample.Item;//设置 tree 的项渲染器。
@@ -16709,7 +16859,7 @@ declare module laya.ui {
      *         Item.__super.call(this);//初始化父类。
      *         this.right = 0;
      *         this.left = 0;
-
+    
      *         var selectBox = new laya.ui.Clip("resource/ui/clip_selectBox.png", 1, 2);
      *         selectBox.name = "selectBox";//设置 selectBox 的name 为“selectBox”时，将被识别为树结构的项的背景。2帧：悬停时背景、选中时背景。
      *         selectBox.height = 24;
@@ -16717,13 +16867,13 @@ declare module laya.ui {
      *         selectBox.y = 0;
      *         selectBox.left = 12;
      *         this.addChild(selectBox);//需要使用this.访问父类的属性或方法。
-
+    
      *         var folder = new laya.ui.Clip("resource/ui/clip_tree_folder.png", 1, 3);
      *         folder.name = "folder";//设置 folder 的name 为“folder”时，将被识别为树结构的文件夹开启状态图表。2帧：折叠状态、打开状态。
      *         folder.x = 14;
      *         folder.y = 4;
      *         this.addChild(folder);
-
+    
      *         var label = new laya.ui.Label("treeItem");
      *         label.name = "label";//设置 label 的name 为“label”时，此值将用于树结构数据赋值。
      *         label.color = "#ffff00";
@@ -16734,7 +16884,7 @@ declare module laya.ui {
      *         label.left = 33;
      *         label.right = 0;
      *         this.addChild(label);
-
+    
      *         var arrow = new laya.ui.Clip("resource/ui/clip_tree_arrow.png", 1, 2);
      *         arrow.name = "arrow";//设置 arrow 的name 为“arrow”时，将被识别为树结构的文件夹开启状态图表。2帧：折叠状态、打开状态。
      *         arrow.x = 0;
@@ -16749,7 +16899,7 @@ declare module laya.ui {
      * import Browser = laya.utils.Browser;
      * import Handler = laya.utils.Handler;
      * class Tree_Example {
-
+    
      *     constructor() {
      *         Laya.init(640, 800);
      *         Laya.stage.bgColor = "#efefef";//设置画布的背景颜色。
@@ -16760,7 +16910,7 @@ declare module laya.ui {
      *         xmlString = "&lt;root&gt;&lt;item label='box1'&gt;&lt;abc label='child1'/&gt;&lt;abc label='child2'/&gt;&lt;abc label='child3'/&gt;&lt;abc label='child4'/&gt;&lt;abc label='child5'/&gt;&lt;/item&gt;&lt;item label='box2'&gt;&lt;abc  * label='child1'/&gt;&lt;abc label='child2'/&gt;&lt;abc label='child3'/&gt;&lt;abc label='child4'/&gt;&lt;/item&gt;&lt;/root&gt;";
      *         var domParser: any = new Browser.window.DOMParser();//创建一个DOMParser实例domParser。
      *         var xml: any = domParser.parseFromString(xmlString, "text/xml");//解析xml字符。
-
+    
      *         var tree: Tree = new Tree();//创建一个 Tree 类的实例对象 tree 。
      *         tree.scrollBarSkin = "resource/ui/vscroll.png";//设置 tree 的皮肤。
      *         tree.itemRender = Item;//设置 tree 的项渲染器。
@@ -16788,13 +16938,13 @@ declare module laya.ui {
      *         selectBox.y = 0;
      *         selectBox.left = 12;
      *         this.addChild(selectBox);
-
+    
      *         var folder: Clip = new Clip("resource/ui/clip_tree_folder.png", 1, 3);
      *         folder.name = "folder";
      *         folder.x = 14;
      *         folder.y = 4;
      *         this.addChild(folder);
-
+    
      *         var label: Label = new Label("treeItem");
      *         label.name = "label";
      *         label.color = "#ffff00";
@@ -16805,7 +16955,7 @@ declare module laya.ui {
      *         label.left = 33;
      *         label.right = 0;
      *         this.addChild(label);
-
+    
      *         var arrow: Clip = new Clip("resource/ui/clip_tree_arrow.png", 1, 2);
      *         arrow.name = "arrow";
      *         arrow.x = 0;
@@ -17006,10 +17156,6 @@ declare module laya.ui {
          * 右对齐。
          */
         static RIGHT: string;
-        /**
-         * 创建一个新的 <code>VBox</code> 类实例。
-         */
-        constructor();
         protected changeItems(): void;
     }
 }
@@ -17436,11 +17582,13 @@ declare module laya.utils {
          * @return Float32 值。
          */
         getFloat32(): number;
+        getFloat64(): number;
         /**
          * 在当前字节偏移量位置处写入 Float32 值。
          * @param	value 需要写入的 Float32 值。
          */
         writeFloat32(value: number): void;
+        writeFloat64(value: number): void;
         /**
          * 在当前字节偏移量位置处读取 Int32 值。
          * @return Int32 值。
@@ -18283,56 +18431,42 @@ declare module laya.utils {
 }
 declare module laya.utils {
     /**
-     * 鼠标点击区域类
+     * 鼠标点击区域，可以设置绘制一系列矢量图作为点击区域和非点击区域（目前只支持圆形，矩形，多边形）
      */
     class HitArea {
-        /**
-         * 可点击区域
-         */
-        hit: laya.display.Graphics;
-        /**
-         * 不可点击区域
-         */
-        unHit: laya.display.Graphics;
-        private static _tCmds;
+        private static _cmds;
         private static _rec;
         private static _ptPoint;
-        constructor();
         /**
          * 是否包含某个点
-         * @param x
-         * @param y
-         * @return
-         *
+         * @param x x坐标
+         * @param y y坐标
+         * @return 是否点击到
          */
         isHit(x: number, y: number): boolean;
         /**
+         * @private
          * 是否击中Graphic
-         * @param x
-         * @param y
-         * @param graphic
-         * @return
-         *
          */
         static isHitGraphic(x: number, y: number, graphic: laya.display.Graphics): boolean;
         /**
+         *  @private
          * 是否击中绘图指令
-         * @param x
-         * @param y
-         * @param cmd
-         * @return
-         *
          */
         static isHitCmd(x: number, y: number, cmd: Array<any>): boolean;
         /**
+         * @private
          * 坐标是否在多边形内
-         * @param x
-         * @param y
-         * @param areaPoints 多边形顶点列表[x0,y0,x1,y1...]
-         * @return
-         *
          */
         static ptInPolygon(x: number, y: number, areaPoints: Array<any>): boolean;
+        /**
+         * 可点击区域，可以设置绘制一系列矢量图作为点击区域（目前只支持圆形，矩形，多边形）
+         */
+        hit: laya.display.Graphics;
+        /**
+         * 不可点击区域，可以设置绘制一系列矢量图作为非点击区域（目前只支持圆形，矩形，多边形）
+         */
+        unHit: laya.display.Graphics;
     }
 }
 declare module laya.utils {
@@ -19096,10 +19230,10 @@ declare module laya.utils {
         /**
          * @private
          * 对传入的数组列表，根据子项的属性 Z 值进行重新排序。返回是否已重新排序的 Boolean 值。
-         * @param	childs 子对象数组。
-         * @return Boolean 值，表示是否已重新排序。
+         * @param	array 子对象数组。
+         * @return	Boolean 值，表示是否已重新排序。
          */
-        static updateOrder(childs: Array<any>): boolean;
+        static updateOrder(array: Array<any>): boolean;
         /**
          * @private
          * 批量移动点坐标。
@@ -19488,8 +19622,9 @@ declare module laya.webgl.canvas {
         setShader(shader: laya.webgl.shader.Shader): void;
         setFilters(value: Array<any>): void;
         drawTexture(tex: laya.resource.Texture, x: number, y: number, width: number, height: number, tx: number, ty: number): void;
+        drawTextures(tex: laya.resource.Texture, pos: Array<any>, tx: number, ty: number): void;
         _drawText(tex: laya.resource.Texture, x: number, y: number, width: number, height: number, m: laya.maths.Matrix, tx: number, ty: number, dx: number, dy: number): void;
-        drawTextureWithTransform(tex: laya.resource.Texture, x: number, y: number, width: number, height: number, transform: laya.maths.Matrix, tx: number, ty: number): void;
+        drawTextureWithTransform(tex: laya.resource.Texture, x: number, y: number, width: number, height: number, transform: laya.maths.Matrix, tx: number, ty: number, alpha: number): void;
         fillQuadrangle(tex: laya.resource.Texture, x: number, y: number, point4: Array<any>, m: laya.maths.Matrix): void;
         drawTexture2(x: number, y: number, pivotX: number, pivotY: number, transform: laya.maths.Matrix, alpha: number, blendMode: string, args: Array<any>): void;
         drawCanvas(canvas: laya.resource.HTMLCanvas, x: number, y: number, width: number, height: number): void;
@@ -19558,6 +19693,7 @@ declare module laya.webgl.resource {
     class RenderTarget2D extends laya.resource.Texture implements laya.resource.IDispose {
         static TYPE2D: number;
         static TYPE3D: number;
+        private static POOL;
         surfaceFormat: number;
         surfaceType: number;
         depthStencilFormat: number;
@@ -19762,29 +19898,22 @@ declare module laya.webgl.resource {
     }
 }
 declare module laya.webgl.shader.d2.fillTexture {
-    class FillTextureShader extends laya.webgl.shader.Shader {
-        static _instance: FillTextureShader;
-        constructor();
-        static getInstance(): FillTextureShader;
-    }
-}
-declare module laya.webgl.shader.d2.fillTexture {
-    class FillTextureShaderValue extends laya.webgl.shader.d2.value.Value2D {
-        texcoord: any;
-        u_texRange: Array<any>;
-        u_offset: Array<any>;
-        private static _fillTextureShaderValue;
-        constructor();
-        static instance(): FillTextureShaderValue;
-    }
-}
-declare module laya.webgl.shader.d2.fillTexture {
     class FillTextureSprite {
         transform: laya.maths.Matrix;
+        u_texRange: Array<any>;
+        u_offset: Array<any>;
         constructor();
         initTexture(texture: laya.resource.Texture, x: number, y: number, width: number, height: number, offsetX: number, offsetY: number): void;
         getData(vb: laya.webgl.utils.VertexBuffer2D, ib: laya.webgl.utils.IndexBuffer2D, start: number): void;
         render(context: any, x: number, y: number): void;
+    }
+}
+declare module laya.webgl.shader.d2.fillTexture {
+    class FillTextureSV extends laya.webgl.shader.d2.value.Value2D {
+        texcoord: any;
+        u_texRange: Array<any>;
+        u_offset: Array<any>;
+        constructor(type: any);
     }
 }
 declare module laya.webgl.shader.d2 {
@@ -19826,6 +19955,8 @@ declare module laya.webgl.shader.d2 {
         static FILTERCOLOR: number;
         static COLORADD: number;
         static WORLDMAT: number;
+        static FILLTEXTURE: number;
+        static SKINMESH: number;
         private static __name2int;
         private static __int2name;
         private static __int2nameMap;
@@ -19834,21 +19965,6 @@ declare module laya.webgl.shader.d2 {
         static reg(name: string, value: number): void;
         static toText(value: number, int2name: Array<any>, int2nameMap: any): any;
         static toInt(names: string): number;
-    }
-}
-declare module laya.webgl.shader.d2.skinAnishader {
-    class aniShaderValue extends laya.webgl.shader.d2.value.Value2D {
-        texcoord: any;
-        private static _aniShaderValue;
-        constructor();
-        static instance(): aniShaderValue;
-    }
-}
-declare module laya.webgl.shader.d2.skinAnishader {
-    class SkinAniShader extends laya.webgl.shader.Shader {
-        private static _instance;
-        constructor();
-        static getInstance(): SkinAniShader;
     }
 }
 declare module laya.webgl.shader.d2.skinAnishader {
@@ -19875,6 +19991,14 @@ declare module laya.webgl.shader.d2.skinAnishader {
         reset(): void;
     }
 }
+declare module laya.webgl.shader.d2.skinAnishader {
+    class SkinSV extends laya.webgl.shader.d2.value.Value2D {
+        texcoord: any;
+        offsetX: number;
+        offsetY: number;
+        constructor(type: any);
+    }
+}
 declare module laya.webgl.shader.d2.value {
     class Color2dSV extends Value2D {
         constructor(args: any);
@@ -19897,6 +20021,7 @@ declare module laya.webgl.shader.d2.value {
 declare module laya.webgl.shader.d2.value {
     class PrimitiveSV extends Value2D {
         a_color: Array<any>;
+        u_pos: Array<any>;
         constructor(args: any);
     }
 }
@@ -19947,9 +20072,8 @@ declare module laya.webgl.shader.d2.value {
         strokeStyle: laya.webgl.canvas.DrawStyle;
         colorAdd: Array<any>;
         glTexture: laya.resource.Bitmap;
-        u_mmat2: Array<any>;
-        u_pos: Array<any>;
         mul_mmat: Array<any>;
+        u_mmat2: Array<any>;
         constructor(mainID: number, subID: number);
         setValue(value: laya.webgl.shader.d2.Shader2D): void;
         refresh(): laya.webgl.shader.ShaderValue;
@@ -19981,7 +20105,16 @@ declare module laya.webgl.shader {
          * @param	define 宏定义，格式:
          * @return
          */
-        static withCompile(nameID: number, mainID: number, define: any, shaderName: any, createShader: Function): Shader;
+        static withCompile(nameID: number, define: any, shaderName: any, createShader: Function): Shader;
+        /**
+         * 根据宏动态生成shader文件，支持#include?COLOR_FILTER "parts/ColorFilter_ps_logic.glsl";条件嵌入文件
+         * @param	name
+         * @param	vs
+         * @param	ps
+         * @param	define 宏定义，格式:
+         * @return
+         */
+        static withCompile2D(nameID: number, mainID: number, define: any, shaderName: any, createShader: Function): Shader;
         static addInclude(fileName: string, txt: string): void;
         /**
          * 预编译shader文件，主要是处理宏定义
@@ -19989,7 +20122,14 @@ declare module laya.webgl.shader {
          * @param	vs
          * @param	ps
          */
-        static preCompile(nameID: number, mainID: number, vs: string, ps: string, nameMap: any): void;
+        static preCompile(nameID: number, vs: string, ps: string, nameMap: any): void;
+        /**
+         * 预编译shader文件，主要是处理宏定义
+         * @param	nameID,一般是特殊宏+shaderNameID*0.0002组成的一个浮点数当做唯一标识
+         * @param	vs
+         * @param	ps
+         */
+        static preCompile2D(nameID: number, mainID: number, vs: string, ps: string, nameMap: any): void;
         tag: any;
         _vshader: any;
         _pshader: any;
@@ -20164,12 +20304,12 @@ declare module laya.webgl.submit {
         releaseRender(): void;
         getRenderType(): number;
         renderSubmit(): number;
-        static create(context: laya.webgl.canvas.WebGLContext2D, ib: laya.webgl.utils.IndexBuffer2D, vb: laya.webgl.utils.VertexBuffer2D, pos: number, sv: laya.webgl.shader.d2.value.Value2D): Submit;
         static createShape(ctx: laya.webgl.canvas.WebGLContext2D, ib: laya.webgl.utils.IndexBuffer2D, vb: laya.webgl.utils.VertexBuffer2D, numEle: number, offset: number, sv: laya.webgl.shader.d2.value.Value2D): Submit;
     }
 }
 declare module laya.webgl.submit {
     class SubmitCanvas extends Submit {
+        static create(ctx_src: laya.webgl.canvas.WebGLContext2D, alpha: number, filters: Array<any>): SubmitCanvas;
         _matrix: laya.maths.Matrix;
         _ctx_src: laya.webgl.canvas.WebGLContext2D;
         _matrix4: Array<any>;
@@ -20281,6 +20421,7 @@ declare module laya.webgl.submit {
         releaseRender(): void;
         addTexture(tex: laya.resource.Texture, vbpos: number): void;
         checkTexture(): void;
+        private static _shaderSet;
         renderSubmit(): number;
         static create(context: laya.webgl.canvas.WebGLContext2D, ib: laya.webgl.utils.IndexBuffer2D, vb: laya.webgl.utils.VertexBuffer2D, pos: number, sv: laya.webgl.shader.d2.value.Value2D): SubmitTexture;
     }
@@ -20494,6 +20635,7 @@ declare module laya.webgl.utils {
         static mathCeilPowerOfTwo(value: number): number;
         static fillQuadrangleImgVb(vb: VertexBuffer2D, x: number, y: number, point4: Array<any>, uv: Array<any>, m: laya.maths.Matrix, _x: number, _y: number): boolean;
         static fillTranglesVB(vb: VertexBuffer2D, x: number, y: number, points: Array<any>, m: laya.maths.Matrix, _x: number, _y: number): boolean;
+        static copyPreImgVb(vb: VertexBuffer2D, dx: number, dy: number): void;
         static fillRectImgVb(vb: VertexBuffer2D, clip: laya.maths.Rectangle, x: number, y: number, width: number, height: number, uv: Array<any>, m: laya.maths.Matrix, _x: number, _y: number, dx: number, dy: number, round?: boolean): boolean;
         static fillLineVb(vb: VertexBuffer2D, clip: laya.maths.Rectangle, fx: number, fy: number, tx: number, ty: number, width: number, mat: laya.maths.Matrix): boolean;
     }
@@ -21249,7 +21391,7 @@ declare module Laya {
     }
     interface IVertex extends laya.d3.graphics.IVertex {
     }
-    class RenderCullingObject extends laya.d3.graphics.RenderCullingObject {
+    class RenderObject extends laya.d3.graphics.RenderObject {
     }
     class StaticBatch extends laya.d3.graphics.StaticBatch {
     }
@@ -21807,11 +21949,9 @@ declare module Laya {
     }
     class WebGLSubImage extends laya.webgl.resource.WebGLSubImage {
     }
-    class FillTextureShader extends laya.webgl.shader.d2.fillTexture.FillTextureShader {
-    }
-    class FillTextureShaderValue extends laya.webgl.shader.d2.fillTexture.FillTextureShaderValue {
-    }
     class FillTextureSprite extends laya.webgl.shader.d2.fillTexture.FillTextureSprite {
+    }
+    class FillTextureSV extends laya.webgl.shader.d2.fillTexture.FillTextureSV {
     }
     class Shader2D extends laya.webgl.shader.d2.Shader2D {
     }
@@ -21819,13 +21959,11 @@ declare module Laya {
     }
     class ShaderDefines2D extends laya.webgl.shader.d2.ShaderDefines2D {
     }
-    class aniShaderValue extends laya.webgl.shader.d2.skinAnishader.aniShaderValue {
-    }
-    class SkinAniShader extends laya.webgl.shader.d2.skinAnishader.SkinAniShader {
-    }
     class SkinMesh extends laya.webgl.shader.d2.skinAnishader.SkinMesh {
     }
     class SkinMeshBuffer extends laya.webgl.shader.d2.skinAnishader.SkinMeshBuffer {
+    }
+    class SkinSV extends laya.webgl.shader.d2.skinAnishader.SkinSV {
     }
     class Color2dSV extends laya.webgl.shader.d2.value.Color2dSV {
     }

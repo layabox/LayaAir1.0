@@ -14,12 +14,6 @@ package laya.ui {
 		/**@private */
 		protected var _itemChanged:Boolean = false;
 		
-		/**
-		 * 创建一个新的 <code>LayoutBox</code> 类实例。
-		 */
-		public function LayoutBox() {
-		}
-		
 		/** @inheritDoc	*/
 		override public function addChild(child:Node):Node {
 			child.on(Event.RESIZE, this, onResize);

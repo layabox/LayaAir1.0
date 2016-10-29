@@ -96,7 +96,7 @@ package laya.display {
 		 * @return	返回添加的节点
 		 */
 		public function addChild(node:Node):Node {
-			if (node === this) return node;
+			if (destroyed || node === this) return node;
 			if (node._parent === this) {
 				this._childs.splice(getChildIndex(node), 1);
 				this._childs.push(node);
@@ -133,7 +133,7 @@ package laya.display {
 		 * @return	返回添加的节点。
 		 */
 		public function addChildAt(node:Node, index:int):Node {
-			if (node === this) return node;
+			if (destroyed || node === this) return node;
 			
 			if (index >= 0 && index <= this._childs.length) {
 				if (node._parent === this) {
@@ -288,7 +288,7 @@ package laya.display {
 		 * @return 当前节点对象。
 		 */
 		public function removeChildren(beginIndex:int = 0, endIndex:int = 0x7fffffff):Node {
-			if (_childs.length > 0) {
+			if (_childs && _childs.length > 0) {
 				var childs:Array = this._childs;
 				if (beginIndex === 0 && endIndex >= n) {
 					var arr:Array = childs;

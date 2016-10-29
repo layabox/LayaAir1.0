@@ -174,6 +174,12 @@ package laya.utils {
 			return v;
 		}
 		
+		public function getFloat64():Number {
+			var v:Number = _d_.getFloat64(_pos_, _xd_);
+			_pos_ += 8;
+			return v;
+		}
+		
 		/**
 		 * 在当前字节偏移量位置处写入 Float32 值。
 		 * @param	value 需要写入的 Float32 值。
@@ -182,6 +188,12 @@ package laya.utils {
 			ensureWrite(this._pos_ + 4);
 			_d_.setFloat32(_pos_, value, _xd_);
 			_pos_ += 4;
+		}
+		
+		public function writeFloat64(value:Number):void {
+			ensureWrite(this._pos_ + 8);
+			_d_.setFloat64(_pos_, value, _xd_);
+			_pos_ += 8;
 		}
 		
 		/**

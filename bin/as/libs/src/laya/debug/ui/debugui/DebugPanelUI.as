@@ -1,4 +1,4 @@
-/**Created by the LayaEditor,do not modify.*/
+/**Created by the LayaAirIDE,do not modify.*/
 package laya.debug.ui.debugui {
 	import laya.ui.*;                     
 	import laya.debug.view.nodeInfo.nodetree.MinBtnComp;
@@ -28,10 +28,10 @@ package laya.debug.ui.debugui {
 		}
 		protected function viewMapRegists():void
 		{
-			View.viewClassMap["laya.debug.view.nodeInfo.nodetree.MinBtnComp"] = MinBtnComp;
-			View.viewClassMap["laya.debug.view.nodeInfo.views.NodeTreeView"] = NodeTreeView;
-			View.viewClassMap["laya.debug.view.nodeInfo.nodetree.Profile"] = Profile;
-			View.viewClassMap["laya.debug.view.nodeInfo.views.SelectInfosView"] = SelectInfosView;
+			View.regComponent("laya.debug.view.nodeInfo.nodetree.MinBtnComp",MinBtnComp);
+			View.regComponent("laya.debug.view.nodeInfo.views.NodeTreeView",NodeTreeView);
+			View.regComponent("laya.debug.view.nodeInfo.nodetree.Profile",Profile);
+			View.regComponent("laya.debug.view.nodeInfo.views.SelectInfosView",SelectInfosView);
 
 		}
 	}

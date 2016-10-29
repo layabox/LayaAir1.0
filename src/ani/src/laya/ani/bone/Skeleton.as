@@ -567,8 +567,8 @@ package laya.ani.bone {
 			}
 			
 			//_rootBone.updateDraw(this.x,this.y);
-			var tSlotData2:Number;
-			var tSlotData3:Number;
+			var tSlotData2:*;
+			var tSlotData3:*;
 			var tObject:Object;
 			//把动画按插槽顺序画出来
 			if (_drawOrder)
@@ -582,7 +582,11 @@ package laya.ani.bone {
 						tGraphics.alpha(tSlotData3);
 					}
 					if (!isNaN(tSlotData2)) {
-						tDBBoneSlot.showDisplayByIndex(tSlotData2);
+						if (_templet.attachmentNames) {	
+							tDBBoneSlot.showDisplayByName(_templet.attachmentNames[tSlotData2]);
+						}else {
+							tDBBoneSlot.showDisplayByIndex(tSlotData2);
+						}
 					}
 					if (tDeformDic[_drawOrder[i]])
 					{
@@ -615,7 +619,11 @@ package laya.ani.bone {
 						tGraphics.alpha(tSlotData3);
 					}
 					if (!isNaN(tSlotData2)) {
-						tDBBoneSlot.showDisplayByIndex(tSlotData2);
+						if (_templet.attachmentNames) {	
+							tDBBoneSlot.showDisplayByName(_templet.attachmentNames[tSlotData2]);
+						}else {
+							tDBBoneSlot.showDisplayByIndex(tSlotData2);
+						}
 					}
 					if (tDeformDic[i])
 					{
@@ -685,6 +693,10 @@ package laya.ani.bone {
 		 * @param	skinIndex	皮肤索引
 		 */
 		public function showSkinByIndex(skinIndex:int):void {
+			for (var i:int = 0; i < _boneSlotArray.length; i++)
+			{
+				(_boneSlotArray[i] as BoneSlot).showDisplayByIndex( -1);
+			}
 			if (_templet.showSkinByIndex(_boneSlotDic, skinIndex))
 			{
 				_skinIndex = skinIndex;
@@ -744,7 +756,7 @@ package laya.ani.bone {
 			var index:int = -1;
 			var duration:Number;
 			if (loop) {
-				duration = Number.MAX_VALUE;
+				duration = 2147483647;//int.MAX_VALUE;
 			} else {
 				duration = 0;
 			}

@@ -222,7 +222,7 @@ package laya.display {
 		
 		/** @private 鼠标状态，0:auto,1:mouseEnabled=false,2:mouseEnabled=true。*/
 		protected var _mouseEnableState:int = 0;
-		/** @private Z排序，设置后，可手动调用updateOrder更新排序。*/
+		/** @private Z排序，数值越大越靠前。*/
 		public var _zOrder:Number = 0;
 		
 		//以下变量为系统调用，请不要直接使用
@@ -247,6 +247,8 @@ package laya.display {
 		public var hitTestPrior:Boolean = false;
 		/** @private */
 		private var _optimizeScrollRect:Boolean = false;
+		/**@private 视口大小，视口外的东西，将不被渲染*/
+		public var viewport:Rectangle;
 		
 		public function get optimizeScrollRect():Boolean {
 			return _optimizeScrollRect;
@@ -787,6 +789,7 @@ package laya.display {
 		
 		public function set scrollRect(value:Rectangle):void {
 			getStyle().scrollRect = value;
+			viewport = value;
 			repaint();
 			if (value) {
 				_renderType |= RenderSprite.CLIP;

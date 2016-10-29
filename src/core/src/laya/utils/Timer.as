@@ -61,7 +61,7 @@ package laya.utils {
 			}
 			var frame:int = this.currFrame = this.currFrame + scale;
 			var now:Number = Browser.now();
-			_delta = (now - _lastTimer)* scale;
+			_delta = (now - _lastTimer) * scale;
 			var timer:Number = this.currTimer = this.currTimer + _delta;
 			_lastTimer = now;
 			
@@ -335,7 +335,7 @@ class TimerHandler {
 	public function run(widthClear:Boolean):void {
 		var caller:* = this.caller;
 		/*[IF-FLASH]*/
-		if ((caller is Node) && caller.destroyed) 
+		if ((caller is Node) && caller.destroyed)
 		/*[IF-FLASH]*/
 		return clear();
 		//[IF-SCRIPT] if (caller && caller.destroyed) return clear();

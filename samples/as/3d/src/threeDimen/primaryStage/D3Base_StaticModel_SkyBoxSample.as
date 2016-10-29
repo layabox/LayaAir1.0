@@ -3,20 +3,16 @@ package threeDimen.primaryStage {
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Viewport;
 	import laya.d3.resource.TextureCube;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SkyBox;
 	import laya.display.Stage;
-	import laya.events.Event;
 	import laya.net.Loader;
-	import laya.resource.Texture;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
+	
 	import threeDimen.common.CameraMoveScript;
 	
 	public class D3Base_StaticModel_SkyBoxSample {

@@ -121,6 +121,7 @@ package laya.display {
 			this.index = (start is String) ? _getFrameByLabel(start) : start;
 			this.loop = loop;
 			this._actionName = name;
+			_isReverse = wrapMode == 1;
 			if (this._frames && this._frames.length > 1 && this.interval > 0) {
 				timerLoop(this.interval, this, _frameLoop, null, true);
 			}

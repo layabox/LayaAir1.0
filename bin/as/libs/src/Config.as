@@ -29,7 +29,7 @@ package {
 		/**
 		 * 动画 Animation 的默认播放时间间隔，单位为毫秒。
 		 */
-		public static var animationInterval:int = 30;
+		public static var animationInterval:int = 50;
 		/**
 		 * 设置是否抗锯齿，只对2D(WebGL)、3D有效。
 		 */

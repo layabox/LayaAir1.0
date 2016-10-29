@@ -35,8 +35,7 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.5.1";
-		/**@private */
+		public static var version:String = "1.5.2";
 		public static var stageBox:Sprite;
 		/**Market对象 只有加速器模式下才有值*/
 		public static var conchMarket:IMarket = __JS__("window.conch?conchMarket:null");
@@ -72,10 +71,11 @@ package {
 			var pathName:String = location.pathname;
 			// 索引为2的字符如果是':'就是windows file协议
 			pathName = pathName.charAt(2) == ':' ? pathName.substring(1) : pathName;
-			URL.rootPath = URL.basePath = URL.getPath(location.protocol == "file:" ? pathName : location.href);
+			URL.rootPath = URL.basePath = URL.getPath(location.protocol == "file:" ? pathName : location.protocol + "//" + location.host + location.pathname);
 
-			//render = new Render(width, height);
+			/*[IF-FLASH]*/
 			render = new Render(50, 50);
+			//[IF-JS]render = new Render(0, 0);
 			stage.size(width, height);
 			
 			RenderSprite.__init__();

@@ -96,8 +96,8 @@ package laya.d3.core.render {
 		}
 		
 		private function _sortAlphaFunc(a:RenderElement, b:RenderElement):Number {
-			if (a._renderCullingObject && b._renderCullingObject)//TODO:临时
-				return Vector3.distance(b._renderCullingObject._boundingSphere.center, _cameraPosition) - Vector3.distance(a._renderCullingObject._boundingSphere.center, _cameraPosition);
+			if (a._renderObject && b._renderObject)//TODO:临时
+				return Vector3.distance(b._renderObject._boundingSphere.center, _cameraPosition) - Vector3.distance(a._renderObject._boundingSphere.center, _cameraPosition);
 			else
 				return 0;
 		}
@@ -117,9 +117,7 @@ package laya.d3.core.render {
 		 * @private
 		 */
 		private function _endRenderElement(state:RenderState, renderObj:IRenderable, material:BaseMaterial):void {
-			if (!material._upload(state, renderObj._getVertexBuffer(0).vertexDeclaration, null)) {
-				return;
-			}
+			material._upload(state, renderObj._getVertexBuffer(0).vertexDeclaration, null);
 			renderObj._render(state);
 		}
 		

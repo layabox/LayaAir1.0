@@ -62,7 +62,9 @@ package laya.ani.bone {
 		 */
 		public function showDisplayByName(name:String):void
 		{
-			showDisplayByIndex(currSlotData.getDisplayByName(name));
+			if (currSlotData) {	
+				showDisplayByIndex(currSlotData.getDisplayByName(name));
+			}
 		}
 		
 		/**
@@ -116,6 +118,7 @@ package laya.ani.bone {
 					return;
 				}
 			}
+			
 			var tTexture:Texture = currTexture;
 			if (_diyTexture) tTexture = _diyTexture;
 			var tSkinSprite:*;
@@ -134,7 +137,7 @@ package laya.ani.bone {
 								} else {
 									tResultMatrix = new Matrix();
 								}
-								if (!Render.isWebGL && currDisplayData.uvs)
+								if ((!Render.isWebGL && currDisplayData.uvs) || (Render.isWebGL && _diyTexture))
 								{
 									var tTestMatrix:Matrix = new Matrix(1, 0, 0, 1);
 									//判断是否反转
@@ -176,7 +179,6 @@ package laya.ani.bone {
 					{
 						return;
 					}
-					graphics.drawSkin(tSkinSprite);
 					var tVBArray:Array = [];
 					var tIBArray:Array = [];
 					var tRed:Number = 1;
@@ -223,6 +225,7 @@ package laya.ani.bone {
 					}else {
 						skinMesh(boneMatrixArray,tSkinSprite,alpha);
 					}
+					graphics.drawSkin(tSkinSprite);
 					break;
 				case 2:
 					if (noUseSave) {	
@@ -237,8 +240,8 @@ package laya.ani.bone {
 					{
 						return;
 					}
+					skinMesh(boneMatrixArray, tSkinSprite, alpha);
 					graphics.drawSkin(tSkinSprite);
-					skinMesh(boneMatrixArray,tSkinSprite,alpha);
 					break;
 				case 3:
 					break;
@@ -270,7 +273,7 @@ package laya.ani.bone {
 			var tRed:Number = 1;
 			var tGreed:Number = 1;
 			var tBlue:Number = 1;
-			var tAlpha:Number = alpha
+			var tAlpha:Number = alpha;
 			if (deformData && deformData.length > 0) {
 				var f:Number = 0;
 				for (i = 0, n = tBones.length; i < n;)

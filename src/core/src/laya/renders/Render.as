@@ -1,4 +1,5 @@
 package laya.renders {
+	import laya.events.Event;
 	import laya.resource.HTMLCanvas;
 	import laya.utils.Browser;
 	
@@ -82,8 +83,7 @@ package laya.renders {
 			_mainCanvas.source.id = _mainCanvas.source.id || "layaCanvas";
 			var isWebGl:Boolean = Render.isWebGL;
 			isWebGl && WebGL.init(_mainCanvas, width, height);
-			if (_mainCanvas.source.nodeName||Render.isConchApp)
-			{
+			if (_mainCanvas.source.nodeName || Render.isConchApp) {
 				Browser.container.appendChild(_mainCanvas.source);
 			}
 			_context = new RenderContext(width, height, isWebGl ? null : _mainCanvas);
@@ -95,7 +95,22 @@ package laya.renders {
 				Laya.stage._loop();
 				Browser.window.requestAnimationFrame(loop);
 			}
-			/*[IF-FLASH]*/Browser.window.stageIn.addEventListener("enterFrame", _enterFrame);
+			/*[IF-FLASH]*/
+			Browser.window.stageIn.addEventListener("enterFrame", _enterFrame);
+			Laya.stage.on(Event.BLUR, this, _onBlur);
+			Laya.stage.on(Event.FOCUS, this, _onFocus);
+		}
+		
+		/**@private */
+		private function _onFocus():void {
+			Browser.window.clearInterval(_timeId);
+		}
+		/**@private */
+		private var _timeId:int = 0;
+		
+		/**@private */
+		private function _onBlur():void {
+			_timeId = Browser.window.setInterval(this._enterFrame, 1000);
 		}
 		
 		/**@private */

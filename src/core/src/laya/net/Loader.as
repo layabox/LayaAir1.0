@@ -52,7 +52,9 @@ package laya.net {
 		/**资源解析函数对应表，用来扩展更多类型的资源加载解析*/
 		public static var parserMap:Object = /*[STATIC SAFE]*/ {};
 		/** 已加载的资源池。*/
-		public static const loadedMap:Object = {};
+		public static const loadedMap:Object = { };
+		/** 资源分组。*/
+		public static const groupMap:Object = {};
 		/** 每帧回调最大超时时间，如果超时，则下帧再处理。*/
 		public static var maxTimeOut:int = 100;
 		/**@private 已加载的图集资源池。*/
@@ -82,8 +84,9 @@ package laya.net {
 		 * @param	url 地址
 		 * @param	type 类型，如果为null，则根据文件后缀，自动分析类型。
 		 * @param	cache 是否缓存数据。
+		 * @param	group 分组。
 		 */
-		public function load(url:String, type:String = null, cache:Boolean = true):void {
+		public function load(url:String, type:String = null, cache:Boolean = true,group:String=null):void {
 			url = _parseURL(url);/*url = URL.formatURL(url);*/
 			this._url = url;
 			this._type = type || (type = getTypeFromUrl(url));
@@ -95,7 +98,7 @@ package laya.net {
 				event(Event.COMPLETE, this._data);
 				return;
 			}
-			
+			if (group) setGroup(url, group);
 			//如果自定义了解析器，则自己解析
 			if (parserMap[type] != null) {
 				if (parserMap[type] is Handler) parserMap[type].runWith(this);
@@ -375,8 +378,9 @@ package laya.net {
 		/**
 		 * 清理指定资源地址的缓存。
 		 * @param	url 资源地址。
+		 * @param	forceDispose 是否强制销毁，有些资源是采用引用计数方式销毁，如果forceDispose=true，则忽略引用计数，直接销毁，比如Texture，默认为false
 		 */
-		public static function clearRes(url:String):void {
+		public static function clearRes(url:String, forceDispose:Boolean=false):void {
 			url = URL.formatURL(url);
 			//删除图集
 			var arr:Array = atlasMap[url];
@@ -384,7 +388,7 @@ package laya.net {
 				for (var i:int = 0, n:int = arr.length; i < n; i++) {
 					var resUrl:String = arr[i];
 					var tex:Texture = getRes(resUrl);
-					if (tex) tex.destroy();
+					if (tex) tex.destroy(forceDispose);
 					delete loadedMap[resUrl];
 				}
 				arr.length = 0;
@@ -393,7 +397,7 @@ package laya.net {
 			} else {
 				var res:* = loadedMap[url];
 				if (res) {
-					if (res is Texture && res.bitmap) Texture(res).destroy();
+					if (res is Texture && res.bitmap) Texture(res).destroy(forceDispose);
 					delete loadedMap[url];
 				}
 			}
@@ -424,6 +428,29 @@ package laya.net {
 		 */
 		public static function cacheRes(url:String, data:*):void {
 			loadedMap[URL.formatURL(url)] = data;
+		}
+		
+		/**
+		 * 设置资源分组。 
+		 * @param url 资源地址。
+		 * @param group 分组名
+		 */
+		public static function setGroup(url:String, group:String):void {
+			if (!groupMap[group]) groupMap[group] = [];
+			groupMap[group].push(url);
+		}
+		
+		/**
+		 * 根据分组清理资源
+		 * @param group 分组名
+		 */		
+		public static function clearResByGroup(group:String):void {
+			if (!groupMap[group]) return;
+			var arr:Array=groupMap[group],i:int, len:int= arr.length ;
+			for (i = 0; i < len; i++){
+				clearRes(arr[i]);
+			}
+			arr.length = 0;
 		}
 	}
 }

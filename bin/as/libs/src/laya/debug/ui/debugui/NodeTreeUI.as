@@ -1,4 +1,4 @@
-/**Created by the LayaEditor,do not modify.*/
+/**Created by the LayaAirIDE,do not modify.*/
 package laya.debug.ui.debugui {
 	import laya.ui.*;                     
 	import laya.debug.uicomps.TreeListItem;
@@ -21,7 +21,7 @@ package laya.debug.ui.debugui {
 		}
 		protected function viewMapRegists():void
 		{
-			View.viewClassMap["laya.debug.uicomps.TreeListItem"] = TreeListItem;
+			View.regComponent("laya.debug.uicomps.TreeListItem",TreeListItem);
 
 		}
 	}

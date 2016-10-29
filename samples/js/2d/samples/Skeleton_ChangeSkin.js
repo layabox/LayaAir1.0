@@ -27,7 +27,7 @@
 	})();
     function startFun()
 	{
-		mAniPath = "../../res/spine/spineRes2/goblins-mesh.sk";
+		mAniPath = "../../res/spine/spineRes2/goblins.sk";
 		mFactory = new Templet();
 		mFactory.on(Event.COMPLETE, this, parseComplete);
 		mFactory.on(Event.ERROR, this, onError);

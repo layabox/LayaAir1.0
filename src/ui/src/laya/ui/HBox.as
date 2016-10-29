@@ -21,12 +21,6 @@ package laya.ui {
 		 */
 		public static const BOTTOM:String = "bottom";
 		
-		/**
-		 * 创建一个新的 <code>HBox</code> 类实例。
-		 */
-		public function HBox() {
-		}
-		
 		/** @inheritDoc	*/
 		override protected function sortItem(items:Array):void {
 			if (items) items.sort(function(a:*, b:*):Number { return a.x > b.x ? 1 : -1
@@ -46,10 +40,10 @@ package laya.ui {
 				}
 			}
 			
-			//items.sortOn(["x"], Array.NUMERIC);
 			sortItem(items);
 			var left:Number = 0;
-			for each (item in items) {
+			for (i = 0, n = numChildren; i < n; i++) {
+				item = items[i];
 				item.x = left;
 				left += item.displayWidth + _space;
 				if (_align == TOP) {

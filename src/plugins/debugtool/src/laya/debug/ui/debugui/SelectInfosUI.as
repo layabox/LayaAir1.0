@@ -1,4 +1,4 @@
-/**Created by the LayaEditor,do not modify.*/
+/**Created by the LayaAirIDE,do not modify.*/
 package laya.debug.ui.debugui {
 	import laya.ui.*;                     
 	import laya.debug.uicomps.RankListItem;
@@ -19,7 +19,7 @@ package laya.debug.ui.debugui {
 		}
 		protected function viewMapRegists():void
 		{
-			View.viewClassMap["laya.debug.uicomps.RankListItem"] = RankListItem;
+			View.regComponent("laya.debug.uicomps.RankListItem",RankListItem);
 
 		}
 	}

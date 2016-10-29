@@ -385,9 +385,9 @@ package laya.d3.core {
 			state.shaderDefs._value = preDef & (~(ShaderDefines3D.POINTLIGHT | ShaderDefines3D.SPOTLIGHT | ShaderDefines3D.DIRECTIONLIGHT));//无法线，去掉Shader光照宏定义
 			state.shaderDefs.add(ShaderDefines3D.COLOR);
 			
-			var nameID:Number = state.shaderDefs.getValue() | state.shadingMode + _sharderNameID * Shader.SHADERNAME2ID;
+			var nameID:Number = state.shaderDefs.getValue() + _sharderNameID * Shader.SHADERNAME2ID;
 			var shader:Shader = _shader ? _shader : Shader.getShader(nameID);
-			return shader || (shader = Shader.withCompile(_sharderNameID, state.shadingMode, state.shaderDefs.toNameDic(), nameID, null));
+			return shader || (shader = Shader.withCompile(_sharderNameID, state.shaderDefs.toNameDic(), nameID, null));
 		}
 		
 		private function addVertexIndexException():void {

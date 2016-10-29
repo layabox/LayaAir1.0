@@ -26,7 +26,7 @@ module laya {
 		}
 		public startFun():void
 		{
-			this.mAniPath = "../../res/spine/spineRes2/goblins-mesh.sk";
+			this.mAniPath = "../../res/spine/spineRes2/goblins.sk";
 			this.mFactory = new Templet();
 			this.mFactory.on(Event.COMPLETE, this, this.parseComplete);
 			this.mFactory.on(Event.ERROR, this, this.onError);

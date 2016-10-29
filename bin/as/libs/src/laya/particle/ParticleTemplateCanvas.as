@@ -256,7 +256,7 @@ package laya.particle
 				if (!tParam) continue;
 				if ( (tAlpha = tParam[1]) <= 0.01) continue;			
 				context.setAlpha(preAlpha*tAlpha);
-				context.drawTextureWithTransform(texture,px,py,pw,ph,tParam[2]);			
+				context.drawTextureWithTransform(texture,px,py,pw,ph,tParam[2],1);			
 			}
 			context.setAlpha(preAlpha);
 			context.translate(-x, -y);

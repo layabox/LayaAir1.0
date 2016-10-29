@@ -89,10 +89,10 @@ class Storage {
 	/**
 	 * 表示是否支持  <code>LocalStorage</code>。
 	 */
-	public static var support:Boolean = false;
+	public static var support:Boolean = true;
 	
 	public static function init():void {
-		__JS__("if (window.localStorage) {Storage.items = window.localStorage;try {Storage.setItem('laya', '1');Storage.removeItem('laya');Storage.support = true;} catch (e) {}}if (!Storage.support) console.log('LocalStorage is not supprot or browser is private mode.')");
+		__JS__("try{Storage.items=window.localStorage;Storage.setItem('laya', '1');Storage.removeItem('laya');Storage.support = true;} catch(e){}if(!Storage.support)console.log('LocalStorage is not supprot or browser is private mode.')");
 	}
 	
 	/**

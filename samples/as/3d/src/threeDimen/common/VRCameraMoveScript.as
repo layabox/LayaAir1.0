@@ -1,16 +1,13 @@
 package threeDimen.common {
 	import laya.ani.AnimationState;
 	import laya.d3.component.Component3D;
-	import laya.d3.component.animation.CameraAnimations;
 	import laya.d3.component.Script;
-	import laya.d3.core.VRCamera;
-	import laya.d3.core.scene.BaseScene;
-	import laya.d3.core.scene.Scene;
+	import laya.d3.component.animation.CameraAnimations;
 	import laya.d3.core.Sprite3D;
+	import laya.d3.core.VRCamera;
+	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Viewport;
-	import laya.d3.core.render.RenderState;
 	import laya.display.Stage;
 	import laya.events.Event;
 	import laya.events.KeyBoardManager;

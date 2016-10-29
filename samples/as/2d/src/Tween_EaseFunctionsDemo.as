@@ -120,7 +120,6 @@ package
 			input.color = "#FFFFFF";
 			input.borderColor = "#FFFFFF";
 			input.pos(text.x + text.width + 10, text.y - 3);
-			input.inputElementYAdjuster = 1;
 			
 			return input
 		}

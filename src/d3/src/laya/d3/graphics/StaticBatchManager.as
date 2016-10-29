@@ -80,7 +80,7 @@ package laya.d3.graphics {
 						if (((lastRenderElement._getVertexBuffer().vertexCount + curRenderElement._getVertexBuffer().vertexCount) > StaticBatch.maxVertexCount)) {
 							lastCanMerage = false;
 						} else {
-							curStaticBatch = getStaticBatch(rootSprite, lastVertexDeclaration, lastMaterial, batchNumber);
+							curStaticBatch = getStaticBatch(rootSprite, lastVertexDeclaration, lastMaterial, batchNumber);//TODO:不以材质区分？
 							
 							oldStaticBatch = lastRenderObj._staticBatch;
 							(oldStaticBatch) && (oldStaticBatch !== curStaticBatch) && (oldStaticBatch._deleteCombineRenderObj(lastRenderObj));

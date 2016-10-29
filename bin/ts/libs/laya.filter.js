@@ -181,18 +181,18 @@
 
 		/**@private */
 		/**@private */
-		__getset(0,__proto,'offX',function(){
-			return this._elements[5];
-			},function(value){
-			this._elements[5]=value;
-		});
-
-		/**@private */
-		/**@private */
 		__getset(0,__proto,'offY',function(){
 			return this._elements[6];
 			},function(value){
 			this._elements[6]=value;
+		});
+
+		/**@private */
+		/**@private */
+		__getset(0,__proto,'offX',function(){
+			return this._elements[5];
+			},function(value){
+			this._elements[5]=value;
 		});
 
 		/**@private */

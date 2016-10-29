@@ -1,33 +1,21 @@
 package threeDimen.advancedStage {
 	import laya.d3.core.Camera;
-	import laya.d3.core.HeightMap;
 	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.light.DirectionLight;
+	import laya.d3.core.PhasorSpriter3D;
+	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.graphics.IndexBuffer3D;
-	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.resource.models.Mesh;
-	import laya.d3.resource.models.SubMesh;
-	import laya.d3.core.PhasorSpriter3D;
 	import laya.d3.core.scene.Scene;
-	import laya.d3.core.Sprite3D;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.math.Quaternion;
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.math.Viewport;
+	import laya.d3.resource.models.Mesh;
 	import laya.d3.utils.Physics;
-	import laya.d3.utils.Picker;
 	import laya.d3.utils.RaycastHit;
 	import laya.display.Node;
 	import laya.events.Event;
-	import laya.renders.RenderContext;
-	import laya.utils.Handler;
-	import laya.webgl.utils.Buffer;
-	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	
 	/**

@@ -12,8 +12,10 @@ package laya.webgl.canvas {
 	import laya.utils.Color;
 	import laya.utils.HTMLChar;
 	import laya.utils.RunDriver;
+	import laya.utils.Stat;
 	import laya.utils.VectorGraphManager;
 	import laya.webgl.shader.d2.skinAnishader.SkinMeshBuffer;
+	import laya.webgl.utils.Buffer;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.atlas.AtlasResourceManager;
@@ -104,7 +106,7 @@ package laya.webgl.canvas {
 		
 		public function WebGLContext2D(c:HTMLCanvas) {
 			
-			__JS__('this.drawTexture = this._drawTextureM');
+			//__JS__('this.drawTexture = this._drawTextureM');
 			
 			_canvas = c;
 			
@@ -418,10 +420,11 @@ package laya.webgl.canvas {
 		}
 		
 		public override function drawTexture(tex:Texture, x:Number, y:Number, width:Number, height:Number, tx:Number, ty:Number):void {
-			_drawTextureM(tex, x, y, width, height, tx, ty, null);
+			_drawTextureM(tex, x, y, width, height, tx, ty, null,1);
 		}
 		
-		private function _drawTextureM(tex:Texture, x:Number, y:Number, width:Number, height:Number, tx:Number, ty:Number, m:Matrix):void {
+		public override function drawTextures(tex:Texture, pos:Array, tx:Number, ty:Number):void
+		{
 			if (!(tex.loaded && tex.bitmap && tex.source))//source内调用tex.active();
 			{
 				if (sprite) {
@@ -430,10 +433,48 @@ package laya.webgl.canvas {
 				return;
 			}
 			
+			var pre:Rectangle = _clipRect;
+			_clipRect = MAXCLIPRECT;
+			if (!_drawTextureM(tex, pos[0], pos[1], tex.width, tex.height, tx, ty, null,1)) 
+			{
+				alert("drawTextures err");
+				return;
+			}
+			
+			_clipRect = pre;
+			
+			Stat.drawCall += pos.length / 2;
+			
+			if (pos.length < 4) return;
+			
+			var finalVB:VertexBuffer2D = _curSubmit._vb || _vb;
+			var sx:Number = _curMat.a, sy:Number = _curMat.d;
+			for (var i:int = 2, sz:int = pos.length; i < sz; i += 2)
+			{
+				GlUtils.copyPreImgVb(finalVB, (pos[i]-pos[i-2])*sx, (pos[i+1]-pos[i-1])*sy);
+				_curSubmit._numEle += 6;
+			}
+			_maxNumEle = Math.max(_maxNumEle, _curSubmit._numEle);
+		}
+		
+		private function _drawTextureM(tex:Texture, x:Number, y:Number, width:Number, height:Number, tx:Number, ty:Number, m:Matrix,alpha:Number):Boolean {
+			if (!(tex.loaded && tex.bitmap && tex.source))//source内调用tex.active();
+			{
+				if (sprite) {
+					Laya.timer.callLater(this, _repaintSprite);
+				}
+				return false;
+			}
 			var webGLImg:Bitmap = tex.bitmap as Bitmap;
 			var shader:Shader2D = _shader2D;
+			var preAlpha:Number = shader.ALPHA;
 			var curShader:Value2D = _curSubmit.shaderValue;
+			var finalVB:VertexBuffer2D = _curSubmit._vb || _vb;
 			_drawCount++;
+			
+			x += tx;
+			y += ty;
+			shader.ALPHA *= alpha;
 			
 			if (_curSubmit._renderType !== Submit.TYPE_TEXTURE || shader.glTexture !== webGLImg || shader.ALPHA !== curShader.ALPHA) {
 				shader.glTexture = webGLImg;
@@ -446,16 +487,19 @@ package laya.webgl.canvas {
 				submit._renderType = Submit.TYPE_TEXTURE;
 				submit._preIsSameTextureShader = _curSubmit._renderType === Submit.TYPE_TEXTURE && shader.ALPHA === curShader.ALPHA;
 				_curSubmit = submit;
+				finalVB = _curSubmit._vb || _vb;
 			}
 			
-			var finalVB:VertexBuffer2D = _curSubmit._vb || _vb;
-			if (GlUtils.fillRectImgVb(finalVB, _clipRect, x + tx, y + ty, width || tex.width, height || tex.height, tex.uv, m || _curMat, _x, _y, 0, 0)) {
+			shader.ALPHA =preAlpha;
+			
+			if (GlUtils.fillRectImgVb(finalVB, _clipRect, x, y, width || tex.width, height || tex.height, tex.uv, m || _curMat, _x, _y, 0, 0)) {
 				if (AtlasResourceManager.enabled && !this._isMain)//而且不是主画布
 					(_curSubmit as SubmitTexture).addTexture(tex, (finalVB._byteLength >> 2) - WebGLContext2D._RECTVBSIZE);
-				
 				_curSubmit._numEle += 6;
 				_maxNumEle = Math.max(_maxNumEle, _curSubmit._numEle);
+				return true;
 			}
+			return false;
 		}
 		
 		private function _repaintSprite():void {
@@ -497,7 +541,7 @@ package laya.webgl.canvas {
 			var shader:Shader2D = _shader2D;
 			var curShader:Value2D = _curSubmit.shaderValue;
 			_drawCount++;
-			
+
 			if (_curSubmit._renderType !== Submit.TYPE_TEXTURE || shader.glTexture !== webGLImg || shader.ALPHA !== curShader.ALPHA) {
 				shader.glTexture = webGLImg;
 				
@@ -534,7 +578,7 @@ package laya.webgl.canvas {
 			}
 		}
 		
-		override public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, transform:Matrix, tx:Number, ty:Number):void {
+		override public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, transform:Matrix, tx:Number, ty:Number,alpha:Number):void {
 			var curMat:Matrix = _curMat;
 			
 			(tx !== 0 || ty !== 0) && (_x = tx * curMat.a + ty * curMat.c, _y = ty * curMat.d + tx * curMat.b);
@@ -547,7 +591,7 @@ package laya.webgl.canvas {
 				_x += curMat.tx;
 				_y += curMat.ty;
 			}
-			_drawTextureM(tex, x, y, width, height, 0, 0, transform);
+			_drawTextureM(tex, x, y, width, height, 0, 0, transform,alpha);
 			_x = _y = 0;
 		}
 		
@@ -596,13 +640,13 @@ package laya.webgl.canvas {
 			
 			if (alpha === 1 && !blendMode)
 				//tx:Texture, x:Number, y:Number, width:Number, height:Number
-				_drawTextureM(args[0], args[1] - pivotX, args[2] - pivotY, args[3], args[4], 0, 0, transform);
+				_drawTextureM(args[0], args[1] - pivotX, args[2] - pivotY, args[3], args[4], 0, 0, transform,1);
 			else {
 				var preAlpha:Number = _shader2D.ALPHA;
 				var preblendType:int = _nBlendType;
 				_shader2D.ALPHA = alpha;
 				blendMode && (_nBlendType = BlendMode.TOINT(blendMode));
-				_drawTextureM(args[0], args[1] - pivotX, args[2] - pivotY, args[3], args[4], 0, 0, transform);
+				_drawTextureM(args[0], args[1] - pivotX, args[2] - pivotY, args[3], args[4], 0, 0, transform,1);
 				_shader2D.ALPHA = preAlpha;
 				_nBlendType = preblendType;
 			}

@@ -75,7 +75,7 @@ package laya.d3.core.glitter {
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderCullingObject = _glitterRender.renderCullingObject;
+			renderElement._renderObject = _glitterRender.renderCullingObject;
 			
 			var material:BaseMaterial = _glitterRender.sharedMaterials[index];
 			(material) || (material = GlitterMaterial.defaultMaterial);//确保有材质,由默认材质代替。

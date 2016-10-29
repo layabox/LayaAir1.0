@@ -1,29 +1,26 @@
 package threeDimen.primaryStage {
 	import PathFinding.core.Grid;
 	import PathFinding.core.Heuristic;
+	
 	import laya.d3.component.PathFind;
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.Camera;
-	import laya.d3.core.HeightMap;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.MeshTerrainSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.TransformUV;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.math.Viewport;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
 	import laya.display.Stage;
 	import laya.events.Event;
 	import laya.events.KeyBoardManager;
 	import laya.utils.Stat;
-	import threeDimen.common.CameraMoveScript;
 	
 	public class D3Base_StaticModel_MeshTerrainSample {
 		private var forward:Vector3 = new Vector3(0, 0, -0.01);

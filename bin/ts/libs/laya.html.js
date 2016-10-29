@@ -457,14 +457,6 @@
 			return URL.formatURL(url,this.URI ? this.URI.path :null);
 		}
 
-		__getset(0,__proto,'color',null,function(value){
-			this.style.color=value;
-		});
-
-		__getset(0,__proto,'id',null,function(value){
-			HTMLDocument.document.setElementById(value,this);
-		});
-
 		__getset(0,__proto,'href',function(){
 			return this._href;
 			},function(url){
@@ -474,17 +466,28 @@
 			}
 		});
 
-		__getset(0,__proto,'parent',_super.prototype._$get_parent,function(value){
-			if ((value instanceof laya.html.dom.HTMLElement )){
-				var p=value;
-				this.URI || (this.URI=p.URI);
-				this.style.inherit(p.style);
-			}
-			_super.prototype._$set_parent.call(this,value);
+		__getset(0,__proto,'color',null,function(value){
+			this.style.color=value;
 		});
 
-		__getset(0,__proto,'className',null,function(value){
-			this.style.attrs(HTMLDocument.document.styleSheets['.'+value]);
+		__getset(0,__proto,'onClick',null,function(value){
+			var fn;
+			/*__JS__ */eval("fn=function(event){"+value+";}");
+			this.on(/*laya.events.Event.CLICK*/"click",this,fn);
+		});
+
+		__getset(0,__proto,'id',null,function(value){
+			HTMLDocument.document.setElementById(value,this);
+		});
+
+		__getset(0,__proto,'innerTEXT',function(){
+			return this._text.text;
+			},function(value){
+			this.text=value;
+		});
+
+		__getset(0,__proto,'style',function(){
+			return this._style;
 		});
 
 		__getset(0,__proto,'text',function(){
@@ -502,20 +505,17 @@
 			this.updateHref();
 		});
 
-		__getset(0,__proto,'innerTEXT',function(){
-			return this._text.text;
-			},function(value){
-			this.text=value;
+		__getset(0,__proto,'parent',_super.prototype._$get_parent,function(value){
+			if ((value instanceof laya.html.dom.HTMLElement )){
+				var p=value;
+				this.URI || (this.URI=p.URI);
+				this.style.inherit(p.style);
+			}
+			_super.prototype._$set_parent.call(this,value);
 		});
 
-		__getset(0,__proto,'style',function(){
-			return this._style;
-		});
-
-		__getset(0,__proto,'onClick',null,function(value){
-			var fn;
-			/*__JS__ */eval("fn=function(event){"+value+";}");
-			this.on(/*laya.events.Event.CLICK*/"click",this,fn);
+		__getset(0,__proto,'className',null,function(value){
+			this.style.attrs(HTMLDocument.document.styleSheets['.'+value]);
 		});
 
 		HTMLElement.fillWords=function(ele,words,x,y,font,color){
@@ -624,20 +624,20 @@
 		}
 
 		/**
-		*设置标签内容
-		*/
-		__getset(0,__proto,'innerHTML',null,function(text){
-			this.destroyChildren();
-			this.appendHTML(text);
-		});
-
-		/**
 		*获取对象的高
 		*/
 		__getset(0,__proto,'height',function(){
 			if (this._height)return this._height;
 			return this.contextHeight;
 		},_super.prototype._$set_height);
+
+		/**
+		*设置标签内容
+		*/
+		__getset(0,__proto,'innerHTML',null,function(text){
+			this.destroyChildren();
+			this.appendHTML(text);
+		});
 
 		/**
 		*获取对象的宽

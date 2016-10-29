@@ -8,6 +8,7 @@
 package laya.debug
 {
 	
+	import laya.debug.tools.CacheAnalyser;
 	import laya.debug.tools.ClassTool;
 	import laya.debug.tools.CountTool;
 	import laya.debug.tools.DTrace;
@@ -69,7 +70,7 @@ package laya.debug
 				return Event.RIGHT_CLICK;
 			}
 		}
-		public static function init(cacheAnalyseEnable:Boolean=true,loaderAnalyseEnable:Boolean=true,createAnalyseEnable:Boolean=true,renderAnalyseEnable:Boolean=true):void
+		public static function init(cacheAnalyseEnable:Boolean=true,loaderAnalyseEnable:Boolean=true,createAnalyseEnable:Boolean=true,renderAnalyseEnable:Boolean=true,showCacheRec:Boolean=false):void
 		{
 			enableCacheAnalyse = cacheAnalyseEnable;
 			if (enableCacheAnalyse)
@@ -89,7 +90,7 @@ package laya.debug
 			{
 				LoaderHook.init();
 			}
-			
+			CacheAnalyser.showCacheSprite = showCacheRec;
 			DisplayHook.initMe();
 			NodeInfoPanel.init();
 			if (!debugLayer)
@@ -646,6 +647,19 @@ package laya.debug
 			debugLayer.graphics.drawRect(_disBoundRec.x, _disBoundRec.y, _disBoundRec.width, _disBoundRec.height, null, color);
 		
 			DebugInfoLayer.I.setTop();
+		}
+		public static function showDisBoundToSprite(sprite:Sprite = null,graphicSprite:Sprite=null,color:String = "#ff0000",lineWidth:int=1):*
+		{
+			var pointList:Array;
+//			pointList=target.getSelfBounds().getBoundPoints();
+			pointList = sprite._getBoundPointsM(true);
+			if (!pointList || pointList.length < 1)
+				return;
+			pointList = GrahamScan.pListToPointList(pointList, true);
+			WalkTools.walkArr(pointList, sprite.localToGlobal, sprite);
+			pointList = GrahamScan.pointListToPlist(pointList);
+			_disBoundRec = Rectangle._getWrapRec(pointList, _disBoundRec);
+			graphicSprite.graphics.drawRect(_disBoundRec.x, _disBoundRec.y, _disBoundRec.width, _disBoundRec.height, null, color,lineWidth);
 		}
 		public static var autoTraceEnable:Boolean = false;
 		public static var autoTraceBounds:Boolean = false;

@@ -142,6 +142,8 @@ package laya.ui {
 		protected var _index:int = 0;
 		/**@private */
 		protected var _clipChanged:Boolean;
+		/**@private */
+		protected var _group:String;
 		
 		/**
 		 * 创建一个新的 <code>Clip</code> 示例。
@@ -310,6 +312,18 @@ package laya.ui {
 			_sources = value;
 			index = _index;
 			event(Event.LOADED);
+		}
+		
+		/**
+		 * 资源分组。
+		 */
+		public function get group():String {
+			return _group;
+		}
+		
+		public function set group(value:String):void {
+			if (value && _skin) Loader.setGroup(_skin, value);
+			_group = value;
 		}
 		
 		/**@inheritDoc */

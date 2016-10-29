@@ -55,6 +55,12 @@ package laya.renders {
 		public var _drawTexture:Function = function(x:Number, y:Number, args:Array):void {
 			if (args[0].loaded) this.ctx.drawTexture(args[0], args[1], args[2], args[3], args[4], x, y);
 		}
+		
+		public function _drawTextures(x:Number, y:Number, args:Array):void
+		{
+			if (args[0].loaded) this.ctx.drawTextures(args[0], args[1], x+this.x, y+this.y);
+		}
+		
 		public var _fillTexture:Function = function(x:Number, y:Number, args:Array):void {
 			if (args[0].loaded) {
 				var texture:Texture = args[0];
@@ -109,11 +115,11 @@ package laya.renders {
 			}
 		}
 		
-		public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, m:Matrix):void {
-			if (tex.loaded) this.ctx.drawTextureWithTransform(tex, x, y, width, height, m, this.x, this.y);
+		public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, m:Matrix, alpha:Number):void {
+			if (tex.loaded) this.ctx.drawTextureWithTransform(tex, x, y, width, height, m, this.x, this.y,alpha);
 		}
 		public var _drawTextureWithTransform:Function = function(x:Number, y:Number, args:Array):void {
-			if (args[0].loaded) this.ctx.drawTextureWithTransform(args[0], args[1], args[2], args[3], args[4], args[5], x, y);
+			if (args[0].loaded) this.ctx.drawTextureWithTransform(args[0], args[1], args[2], args[3], args[4], args[5], x, y,args[6]);
 		}
 		
 		public function fillQuadrangle(tex:*, x:Number, y:Number, point4:Array, m:Matrix):void {

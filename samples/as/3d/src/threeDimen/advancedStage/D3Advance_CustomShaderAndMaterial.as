@@ -2,15 +2,12 @@ package threeDimen.advancedStage {
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.scene.BaseScene;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.models.Mesh;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.display.Stage;
-	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
@@ -54,15 +51,16 @@ package threeDimen.advancedStage {
 			var vs:String, ps:String;
 			var shaderNameMap:* = {
 				'a_Position': VertexElementUsage.POSITION0, 
+				'a_Normal':VertexElementUsage.NORMAL0,
 				'a_Texcoord': VertexElementUsage.TEXTURECOORDINATE0, 
 				'u_MvpMatrix': Buffer2D.MVPMATRIX, 
-				'u_texture': Buffer2D.DIFFUSETEXTURE
-			
+				'u_texture': Buffer2D.DIFFUSETEXTURE,
+				'u_WorldMat':Buffer2D.MATRIX1
 			};
 			var customShader:int = Shader.nameKey.add("CustomShader");
 			vs = __INCLUDESTR__("shader/customShader.vs");
 			ps = __INCLUDESTR__("shader/customShader.ps");
-			Shader.preCompile(customShader, ShaderDefines3D.PIXELSHADERING, vs, ps, shaderNameMap);
+			Shader.preCompile(customShader, vs, ps, shaderNameMap);
 		}
 	
 	}

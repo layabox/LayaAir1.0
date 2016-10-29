@@ -39,23 +39,23 @@ package laya.webgl.shader.d2
 			
 			vs = __INCLUDESTR__("files/texture.vs");
 			ps = __INCLUDESTR__("files/texture.ps");
-			Shader.preCompile(0,ShaderDefines2D.TEXTURE2D, vs, ps, null);
+			Shader.preCompile2D(0,ShaderDefines2D.TEXTURE2D, vs, ps, null);
 			
 			vs = __INCLUDESTR__("files/line.vs");
 			ps = __INCLUDESTR__("files/line.ps");
-			Shader.preCompile(0,ShaderDefines2D.COLOR2D, vs, ps, null);
+			Shader.preCompile2D(0,ShaderDefines2D.COLOR2D, vs, ps, null);
 
 			vs = __INCLUDESTR__("files/primitive.vs");
 			ps = __INCLUDESTR__("files/primitive.ps");
-			Shader.preCompile(0, ShaderDefines2D.PRIMITIVE, vs, ps, null);
+			Shader.preCompile2D(0, ShaderDefines2D.PRIMITIVE, vs, ps, null);
 			
 			vs = __INCLUDESTR__("fillTexture/fillTextureShader.vs");
 			ps = __INCLUDESTR__("fillTexture/fillTextureShader.ps");
-			Shader.preCompile(0, ShaderDefines2D.FILLTEXTURE, vs, ps, null);
+			Shader.preCompile2D(0, ShaderDefines2D.FILLTEXTURE, vs, ps, null);
 			
 			vs = __INCLUDESTR__("skinAnishader/skinShader.vs");
 			ps = __INCLUDESTR__("skinAnishader/skinShader.ps");
-			Shader.preCompile(0,ShaderDefines2D.SKINMESH,vs,ps,null);
+			Shader.preCompile2D(0,ShaderDefines2D.SKINMESH,vs,ps,null);
 		}		
 	}
 }

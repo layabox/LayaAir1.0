@@ -1,5 +1,6 @@
 package laya.debug.tools 
 {
+	import laya.debug.DebugTool;
 	import laya.display.Sprite;
 	import laya.debug.view.nodeInfo.DebugInfoLayer;
 	import laya.debug.view.nodeInfo.recinfos.ReCacheRecInfo;
@@ -14,9 +15,14 @@ package laya.debug.tools
 		{
 			
 		}
+		public static function renderLoopBegin():void
+		{
+			DebugInfoLayer.I.cacheViewLayer.graphics.clear();
+		}
 		public static var counter:ObjTimeCountTool = new ObjTimeCountTool();
 		public static var I:CacheAnalyser = new CacheAnalyser();
 		private static var _nodeInfoDic:Object = { };
+		public static var showCacheSprite:Boolean = false;
 		public static function getNodeInfoByNode(node:Sprite):ReCacheRecInfo
 		{
 			IDTools.idObj(node);
@@ -31,7 +37,9 @@ package laya.debug.tools
 		}
 		public function renderCanvas(sprite:Sprite,time:int=0):void
 		{
-			
+			if (!showCacheSprite) return;
+			if (DebugInfoLayer.I.isDebugItem(sprite)) return;
+			DebugTool.showDisBoundToSprite(sprite, DebugInfoLayer.I.cacheViewLayer, "#ff0000", 2);
 		}
 		public function reCacheCanvas(sprite:Sprite,time:int=0):void
 		{

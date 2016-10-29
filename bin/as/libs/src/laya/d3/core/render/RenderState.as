@@ -17,9 +17,6 @@ package laya.d3.core.render {
 	 * <code>RenderState</code> 类用于实现渲染状态。
 	 */
 	public class RenderState {
-		/**@private */
-		private var _shadingMode:int = 0;
-		
 		/** 定义顶点渲染模式标记。*/
 		public static const VERTEXSHADERING:int = 0x04;
 		/** 定义像素渲染模式标记。*/
@@ -84,24 +81,6 @@ package laya.d3.core.render {
 			shaderValue.length = 0;
 			shaderDefs.setValue(0);
 			(WebGL.frameShaderHighPrecision) && (shaderDefs.setValue(ShaderDefines3D.FSHIGHPRECISION));
-		}
-		
-		/**
-		 * 设置着色模式。
-		 * @param value 着色模式
-		 */
-		public function set shadingMode(value:int):void {
-			shaderDefs.remove(value == VERTEXSHADERING ? PIXELSHADERING : VERTEXSHADERING);
-			shaderDefs.add(value);
-			_shadingMode = value;
-		}
-		
-		/**
-		 * 获取着色模式。
-		 * @return 着色模式
-		 */
-		public function get shadingMode():int {
-			return _shadingMode;
 		}
 	
 	}

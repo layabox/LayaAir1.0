@@ -21,12 +21,6 @@ package laya.ui {
 		 */
 		public static const RIGHT:String = "right";
 		
-		/**
-		 * 创建一个新的 <code>VBox</code> 类实例。
-		 */
-		public function VBox() {
-		}
-		
 		/** @inheritDoc	*/
 		override protected function changeItems():void {
 			_itemChanged = false;
@@ -40,9 +34,10 @@ package laya.ui {
 				}
 			}
 			
-			sortItem(items);//	items.sortOn(["y"], Array.NUMERIC);
+			sortItem(items);
 			var top:Number = 0;
-			for each (item in items) {
+			for (i = 0, n = numChildren; i < n; i++) {
+				item = items[i];
 				item.y = top;
 				top += item.displayHeight + _space;
 				if (_align == LEFT) {

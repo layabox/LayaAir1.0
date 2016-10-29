@@ -6,23 +6,20 @@ package threeDimen.advancedStage {
 	import laya.d3.core.VRCamera;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.core.scene.VRScene;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.math.Viewport;
 	import laya.d3.resource.TextureCube;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.SkyBox;
 	import laya.display.Stage;
 	import laya.events.Event;
 	import laya.net.Loader;
-	import laya.resource.Texture;
-	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
+	
 	import threeDimen.common.VRCameraMoveScript;
 	
 	/** @private */

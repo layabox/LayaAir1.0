@@ -5,13 +5,11 @@ package threeDimen.primaryStage {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Viewport;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.utils.Utils3D;
 	import laya.display.Stage;
 	import laya.events.Event;
 	import laya.ui.Button;
-	import laya.ui.ComboBox;
 	import laya.ui.Image;
 	import laya.utils.Handler;
 	import laya.utils.Stat;

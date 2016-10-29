@@ -10,22 +10,16 @@ package threeDimen.advancedStage {
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.math.Viewport;
 	import laya.d3.resource.TextureCube;
 	import laya.d3.resource.models.BaseMesh;
-	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SkyBox;
 	import laya.display.Stage;
 	import laya.events.Event;
 	import laya.net.Loader;
-	import laya.resource.Texture;
-	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
-	import laya.webgl.utils.RenderState2D;
 	
 	import threeDimen.common.CameraMoveScript;
-	import threeDimen.primaryStage.D3Base_ScriptAndCameraSample;
 	
 	/** @private */
 	public class D3Advance_SimpleSceneSample {

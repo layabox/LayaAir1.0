@@ -2,16 +2,11 @@ package threeDimen.primaryStage {
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Viewport;
 	import laya.d3.resource.models.Mesh;
-	import laya.display.Node;
 	import laya.display.Stage;
-	import laya.events.Event;
-	import laya.maths.Matrix;
 	import laya.ui.Image;
 	import laya.utils.Stat;
 	

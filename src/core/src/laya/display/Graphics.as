@@ -383,7 +383,7 @@ package laya.display {
 		 * @param	height 高度。
 		 * @param	m 矩阵信息。
 		 */
-		public function drawTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, m:Matrix = null):void {
+		public function drawTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, m:Matrix = null,alpha:Number=1):void {
 			if (!tex) return;
 			if (!width) width = tex.sourceWidth;
 			if (!height) height = tex.sourceHeight;
@@ -398,9 +398,9 @@ package laya.display {
 			
 			_sp && (_sp._renderType |= RenderSprite.GRAPHICS);
 			
-			var args:* = [tex, x, y, width, height, m];
-			args.callee = m ? Render._context._drawTextureWithTransform : Render._context._drawTexture;
-			if (_one == null && !m) {
+			var args:* = [tex, x, y, width, height, m,alpha];
+			args.callee = (m || alpha!=1) ? Render._context._drawTextureWithTransform : Render._context._drawTexture;
+			if (_one == null && !m && alpha==1) {
 				_one = args;
 				_render = _renderOneImg;
 			} else {
@@ -410,6 +410,17 @@ package laya.display {
 				tex.once(Event.LOADED, this, _textureLoaded, [tex, args]);
 			}
 			_repaint();
+		}
+		
+		/**
+		 * 批量绘制同样纹理。
+		 * @param	tex 纹理。
+		 * @param	pos 绘制次数和坐标。
+		 */
+		public function drawTextures(tex:Texture, pos:Array):void
+		{
+			if (!tex) return;
+			_saveToCmd(Render._context._drawTextures, [tex,pos]);
 		}
 		
 		/**

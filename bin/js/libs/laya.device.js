@@ -71,16 +71,16 @@
 			this.coords=pos.coords;
 		}
 
-		__getset(0,__proto,'accuracy',function(){
-			return this.coords.accuracy;
+		__getset(0,__proto,'heading',function(){
+			return this.coords.heading;
 		});
 
 		__getset(0,__proto,'latitude',function(){
 			return this.coords.latitude;
 		});
 
-		__getset(0,__proto,'timestamp',function(){
-			return this.pos.timestamp;
+		__getset(0,__proto,'altitudeAccuracy',function(){
+			return this.coords.altitudeAccuracy;
 		});
 
 		__getset(0,__proto,'longitude',function(){
@@ -91,16 +91,16 @@
 			return this.coords.altitude;
 		});
 
+		__getset(0,__proto,'accuracy',function(){
+			return this.coords.accuracy;
+		});
+
 		__getset(0,__proto,'speed',function(){
 			return this.coords.speed;
 		});
 
-		__getset(0,__proto,'altitudeAccuracy',function(){
-			return this.coords.altitudeAccuracy;
-		});
-
-		__getset(0,__proto,'heading',function(){
-			return this.coords.heading;
+		__getset(0,__proto,'timestamp',function(){
+			return this.pos.timestamp;
 		});
 
 		return GeolocationInfo;
@@ -139,7 +139,7 @@
 
 
 	/**
-	*加速度x/y/z的单位均为m/s2。
+	*加速度x/y/z的单位均为m/s²。
 	*在硬件（陀螺仪）不支持的情况下，alpha、beta和gamma值为null。
 	*
 	*@author Survivor
@@ -645,14 +645,10 @@
 		});
 
 		/**
-		*返回音频/视频的播放是否已结束
+		*获取视频源尺寸。ready事件触发后可用。
 		*/
-		__getset(0,__proto,'ended',function(){
-			return this.videoElement.ended;
-		});
-
-		__getset(0,__proto,'videoHeight',function(){
-			return this.videoElement.videoHeight;
+		__getset(0,__proto,'videoWidth',function(){
+			return this.videoElement.videoWidth;
 		});
 
 		/**
@@ -660,29 +656,6 @@
 		*/
 		__getset(0,__proto,'currentSrc',function(){
 			return this.videoElement.currentSrc;
-		});
-
-		/**
-		*preload 属性设置或返回是否在页面加载后立即加载视频。可赋值如下：
-		*<ul>
-		*<li>auto 指示一旦页面加载，则开始加载视频。</li>
-		*<li>metadata 指示当页面加载后仅加载音频/视频的元数据。</li>
-		*<li>none 指示页面加载后不应加载音频/视频。</li>
-		*</ul>
-		*@return
-		*
-		*/
-		__getset(0,__proto,'preload',function(){
-			return this.videoElement.preload;
-			},function(value){
-			this.videoElement.preload=value;
-		});
-
-		/**
-		*获取视频长度（秒）。ready事件触发后可用。
-		*/
-		__getset(0,__proto,'duration',function(){
-			return this.videoElement.duration;
 		});
 
 		/**
@@ -696,12 +669,23 @@
 		});
 
 		/**
+		*返回音频/视频的播放是否已结束
+		*/
+		__getset(0,__proto,'ended',function(){
+			return this.videoElement.ended;
+		});
+
+		/**
 		*设置和获取当前音量。
 		*/
 		__getset(0,__proto,'volume',function(){
 			return this.videoElement.volume;
 			},function(value){
 			this.videoElement.volume=value;
+		});
+
+		__getset(0,__proto,'videoHeight',function(){
+			return this.videoElement.videoHeight;
 		});
 
 		/**
@@ -719,10 +703,10 @@
 		});
 
 		/**
-		*获取视频源尺寸。ready事件触发后可用。
+		*获取视频长度（秒）。ready事件触发后可用。
 		*/
-		__getset(0,__proto,'videoWidth',function(){
-			return this.videoElement.videoWidth;
+		__getset(0,__proto,'duration',function(){
+			return this.videoElement.duration;
 		});
 
 		/**
@@ -772,6 +756,22 @@
 		*/
 		__getset(0,__proto,'paused',function(){
 			return this.videoElement.paused;
+		});
+
+		/**
+		*preload 属性设置或返回是否在页面加载后立即加载视频。可赋值如下：
+		*<ul>
+		*<li>auto 指示一旦页面加载，则开始加载视频。</li>
+		*<li>metadata 指示当页面加载后仅加载音频/视频的元数据。</li>
+		*<li>none 指示页面加载后不应加载音频/视频。</li>
+		*</ul>
+		*@return
+		*
+		*/
+		__getset(0,__proto,'preload',function(){
+			return this.videoElement.preload;
+			},function(value){
+			this.videoElement.preload=value;
 		});
 
 		/**

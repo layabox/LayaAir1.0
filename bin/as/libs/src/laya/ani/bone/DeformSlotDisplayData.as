@@ -42,7 +42,7 @@ package laya.ani.bone
 		
 		public function apply(time:Number,boneSlot:BoneSlot,alpha:Number=1):void
 		{
-			if (timeList.length < 2)
+			if (timeList.length <= 0)
 			{
 				return;
 			}
@@ -55,13 +55,6 @@ package laya.ani.bone
 			}
 			var tVertexCount:int = vectices[0].length;
 			var tVertices:Array = [];
-			/*if (boneSlot.currDisplayData && boneSlot.currDisplayData.vertices)
-			{
-				for (i = 0, n = boneSlot.currDisplayData.vertices.length; i < n; i++)
-				{
-					tVertices.push(boneSlot.currDisplayData.vertices[i]);
-				}
-			}*/
 			var tFrameIndex:int = binarySearch1(timeList,time);
 			frameIndex = tFrameIndex;
 			
@@ -80,6 +73,7 @@ package laya.ani.bone
 						tVertices[i] = lastVertices[i];
 					}
 				}
+				deformData = tVertices;
 				return;
 			}
 			

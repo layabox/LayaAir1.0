@@ -24,7 +24,7 @@ package laya.resource {
 			to.__fillText = to.fillText;
 			to.__fillRect = to.fillRect;
 			to.__strokeText = to.strokeText;
-			var funs:Array = ['fillWords','setIsMainContext','fillRect', 'strokeText', 'fillText', 'transformByMatrix', 'setTransformByMatrix', 'clipRect', 'drawTexture', 'drawTexture2', 'drawTextureWithTransform', 'flush', 'clear', 'destroy', 'drawCanvas', 'fillBorderText'];
+			var funs:Array = ['drawTextures','fillWords','setIsMainContext','fillRect', 'strokeText', 'fillText', 'transformByMatrix', 'setTransformByMatrix', 'clipRect', 'drawTexture', 'drawTexture2', 'drawTextureWithTransform', 'flush', 'clear', 'destroy', 'drawCanvas', 'fillBorderText'];
 			funs.forEach(function(i:String):void {
 				to[i] = from[i] || to[i];
 			});
@@ -162,6 +162,17 @@ package laya.resource {
 		
 		/*[IF-FLASH-END]*/
 		
+		public function drawTextures(tex:Texture, pos:Array, tx:Number, ty:Number):void
+		{
+			Stat.drawCall += pos.length / 2;
+			var w:Number = tex.bitmap.width;
+			var h:Number = tex.bitmap.height;		
+			for (var i:int = 0, sz:int = pos.length; i < sz; i += 2)
+			{
+				drawTexture(tex, pos[i], pos[i + 1], w, h, tx, ty);
+			}
+		}
+		
 		/*** @private */
 		public function drawCanvas(canvas:HTMLCanvas, x:Number, y:Number, width:Number, height:Number):void {
 			Stat.drawCall++;
@@ -244,12 +255,17 @@ package laya.resource {
 		}
 		
 		/*** @private */
-		public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, m:Matrix, tx:Number, ty:Number):void {
+		public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, m:Matrix, tx:Number, ty:Number,alpha:Number):void {
 			Stat.drawCall++;
 			var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
 			this.save();
-			this.transform(m.a, m.b, m.c, m.d, m.tx + tx, m.ty + ty);
-			this.drawImage(tex.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x , y, width, height);
+			alpha != 1 && (this.globalAlpha *= alpha);
+			if (m) {
+				this.transform(m.a, m.b, m.c, m.d, m.tx + tx, m.ty + ty);
+				this.drawImage(tex.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x , y, width, height);
+			}else {
+				this.drawImage(tex.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x+tx , y+ty, width, height);
+			}			
 			this.restore();
 		}
 		

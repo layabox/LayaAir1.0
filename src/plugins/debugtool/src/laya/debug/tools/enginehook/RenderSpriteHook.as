@@ -93,7 +93,10 @@ package laya.debug.tools.enginehook
 			var tx:RenderContext = _cacheCanvas.ctx;
 			var _repaint:Boolean = sprite._needRepaint() || (!tx);
 			_oldCanvas(sprite, context, x, y);
-			
+			if (Config.showCanvasMark) 
+			{
+				
+			}
 			if (_repaint)
 			{
 				CacheAnalyser.I.reCacheCanvas(sprite,Browser.now()-preTime);

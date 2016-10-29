@@ -1,17 +1,14 @@
 package threeDimen.advancedStage {
-	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Camera;
 	import laya.d3.core.glitter.Glitter;
 	import laya.d3.core.glitter.GlitterSetting;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.math.Viewport;
 	import laya.display.Stage;
-	import laya.events.Event;
 	import laya.utils.Stat;
+	
 	import threeDimen.common.GlitterStripSampler;
 	
 	/** @private */

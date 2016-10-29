@@ -2,7 +2,7 @@ package laya.d3.core.render {
 	import laya.d3.core.Layer;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.graphics.RenderCullingObject;
+	import laya.d3.graphics.RenderObject;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Vector3;
@@ -19,7 +19,7 @@ package laya.d3.core.render {
 		/** @private */
 		private var _enable:Boolean;
 		/** @private */
-		private var _renderCullingObject:RenderCullingObject;
+		private var _renderObject:RenderObject;
 		/** @private */
 		private var _materials:Vector.<BaseMaterial>;
 		/** @private */
@@ -53,8 +53,8 @@ package laya.d3.core.render {
 		 * 获取渲染物体。
 		 * @return 渲染物体。
 		 */
-		public function get renderCullingObject():RenderCullingObject {
-			return _renderCullingObject;
+		public function get renderCullingObject():RenderObject {
+			return _renderObject;
 		}
 		
 		/**
@@ -186,11 +186,11 @@ package laya.d3.core.render {
 			_boundingSphere = new BoundSphere(new Vector3(), 0);
 			_boundingSphereNeedChange = true;
 			_boundingBoxNeedChange = true;
-			_renderCullingObject = new RenderCullingObject();
-			_renderCullingObject._render = this;
-			_renderCullingObject._layerMask = _owner.layer.mask;
-			_renderCullingObject._ownerEnable = _owner.enable;
-			_renderCullingObject._enable = _enable;
+			_renderObject = new RenderObject();
+			_renderObject._render = this;
+			_renderObject._layerMask = _owner.layer.mask;
+			_renderObject._ownerEnable = _owner.enable;
+			_renderObject._enable = _enable;
 			_materials = new Vector.<BaseMaterial>();
 			
 			_owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);
@@ -212,21 +212,21 @@ package laya.d3.core.render {
 		 * @private
 		 */
 		private function _onOwnerLayerChanged(layer:Layer):void {
-			_renderCullingObject._layerMask = layer.mask;
+			_renderObject._layerMask = layer.mask;
 		}
 		
 		/**
 		 * @private
 		 */
 		private function _onOwnerEnableChanged(enable:Boolean):void {
-			_renderCullingObject._ownerEnable = enable;
+			_renderObject._ownerEnable = enable;
 		}
 		
 		/**
 		 * @private
 		 */
 		private function _onEnableChanged(sender:BaseRender, enable:Boolean):void {
-			_renderCullingObject._enable = enable;
+			_renderObject._enable = enable;
 		}
 		
 		/**

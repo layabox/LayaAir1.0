@@ -12,7 +12,7 @@ package laya.d3.core.scene {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.DynamicBatchManager;
 	import laya.d3.graphics.FrustumCulling;
-	import laya.d3.graphics.RenderCullingObject;
+	import laya.d3.graphics.RenderObject;
 	import laya.d3.graphics.StaticBatchManager;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
@@ -40,12 +40,7 @@ package laya.d3.core.scene {
 	/**
 	 * <code>BaseScene</code> 类用于实现场景的父类。
 	 */
-	public class BaseScene extends Sprite implements ISubmit {
-		/** 定义顶点着色模式的标记。*/
-		public static const VERTEX_SHADING:int = 0;
-		/** 定义像素着色模式的标记。*/
-		public static const PIXEL_SHADING:int = 1;
-		
+	public class BaseScene extends Sprite implements ISubmit {		
 		/** @private */
 		protected var _invertYProjectionMatrix:Matrix4x4;
 		/** @private */
@@ -65,8 +60,6 @@ package laya.d3.core.scene {
 		/** @private */
 		protected var _renderTargetTexture:RenderTexture;
 		/** @private */
-		protected var _shadingMode:int = ShaderDefines3D.PIXELSHADERING;
-		/** @private */
 		protected var _renderConfigs:Vector.<RenderConfig> = new Vector.<RenderConfig>();
 		
 		/** @private */
@@ -75,7 +68,7 @@ package laya.d3.core.scene {
 		protected var _lastCurrentTime:Number;
 		
 		/** @private */
-		public var _frustumCullingObjects:Vector.<RenderCullingObject> = new Vector.<RenderCullingObject>();
+		public var _frustumCullingObjects:Vector.<RenderObject> = new Vector.<RenderObject>();
 		/** @private */
 		public var _staticBatchManager:StaticBatchManager;//TODO:释放问题。
 		/** @private */
@@ -110,23 +103,6 @@ package laya.d3.core.scene {
 		 */
 		public function get isInStage():Boolean {
 			return _isInStage;
-		}
-		
-		/**
-		 * 获取着色模式。
-		 * @return  着色模式。
-		 */
-		public function get shadingMode():int {
-			return _shadingMode == ShaderDefines3D.VERTEXSHADERING ? BaseScene.VERTEX_SHADING : ShaderDefines3D.PIXELSHADERING;
-		}
-		
-		/**
-		 * 设置着色模式。
-		 * @param value 着色模式。
-		 */
-		public function set shadingMode(value:int):void {
-			if (value !== BaseScene.VERTEX_SHADING && value !== BaseScene.PIXEL_SHADING) throw Error("Scene set shadingMode,must:0 or 1,value=" + value);
-			_shadingMode = value === BaseScene.VERTEX_SHADING ? ShaderDefines3D.VERTEXSHADERING : ShaderDefines3D.PIXELSHADERING;
 		}
 		
 		/**
@@ -291,7 +267,6 @@ package laya.d3.core.scene {
 			
 			state.reset();
 			state.loopCount = Stat.loopCount;
-			state.shadingMode = _shadingMode;
 			state.scene = this;
 			state.camera = camera;
 			
@@ -520,11 +495,11 @@ package laya.d3.core.scene {
 			return super.addChild(node);
 		}
 		
-		public function addFrustumCullingObject(frustumCullingObject:RenderCullingObject):void {
+		public function addFrustumCullingObject(frustumCullingObject:RenderObject):void {
 			_frustumCullingObjects.push(frustumCullingObject);
 		}
 		
-		public function removeFrustumCullingObject(frustumCullingObject:RenderCullingObject):void {
+		public function removeFrustumCullingObject(frustumCullingObject:RenderObject):void {
 			var index:int = _frustumCullingObjects.indexOf(frustumCullingObject);
 			(index !== -1) && (_frustumCullingObjects.splice(index, 1));
 		}

@@ -2,7 +2,7 @@ package laya.d3.core.render {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.graphics.RenderCullingObject;
+	import laya.d3.graphics.RenderObject;
 	import laya.d3.graphics.StaticBatch;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -33,7 +33,7 @@ package laya.d3.core.render {
 		/** @private 排序ID。*/
 		public var _mainSortID:int;
 		/** @private */
-		public var _renderCullingObject:RenderCullingObject
+		public var _renderObject:RenderObject
 		/** @private 所属Sprite3D精灵。*/
 		public var _sprite3D:Sprite3D;
 		/** @private 渲染所用材质。*/

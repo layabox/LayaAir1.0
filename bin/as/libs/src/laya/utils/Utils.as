@@ -1,5 +1,4 @@
 package laya.utils {
-	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
@@ -59,8 +58,7 @@ package laya.utils {
 			var rst:*;
 			value = value.replace(/>\s+</g, '><');
 			__JS__("rst=(new DOMParser()).parseFromString(value,'text/xml')");
-			if (rst.firstChild.textContent.indexOf("This page contains the following errors") > -1)
-			{
+			if (rst.firstChild.textContent.indexOf("This page contains the following errors") > -1) {
 				throw new Error(rst.firstChild.firstChild.textContent);
 			}
 			return rst;
@@ -103,13 +101,13 @@ package laya.utils {
 		 * @param	array 新的数组值。
 		 * @return 	复制后的数据 source 。
 		 */
-		public static function copyArray(source:Array, array:Array):Array {		
+		public static function copyArray(source:Array, array:Array):Array {
 			source || (source = []);
 			if (!array) return source;
 			source.length = array.length;
 			var i:int, len:int = array.length;
 			for (i = 0; i < len; i++) {
-				source[i]=array[i];
+				source[i] = array[i];
 			}
 			return source;
 		}
@@ -151,7 +149,7 @@ package laya.utils {
 		 * @return 绑定后的函数。
 		 */
 		public static function bind(fun:Function, scope:*):Function {
-			var rst:Function=fun;
+			var rst:Function = fun;
 			__JS__("rst=fun.bind(scope);");
 			return rst;
 		}
@@ -169,50 +167,24 @@ package laya.utils {
 		/**
 		 * @private
 		 * 对传入的数组列表，根据子项的属性 Z 值进行重新排序。返回是否已重新排序的 Boolean 值。
-		 * @param	childs 子对象数组。
-		 * @return Boolean 值，表示是否已重新排序。
+		 * @param	array 子对象数组。
+		 * @return	Boolean 值，表示是否已重新排序。
 		 */
-		public static function updateOrder(childs:Array):Boolean {
-			if ( (!childs) || childs.length < 2) return false;
-			
-			var c:Sprite = childs[0];
-			var i:int = 1, sz:int = childs.length;
-			var z:Number = c._zOrder, low:Number, high:Number, mid:Number, zz:Number;
-			var repaint:Boolean = false;
-			
-			for (i = 1; i < sz; i++) {
-				c = childs[i] as Sprite;
-				if (!c) continue;
-				if ((z = c._zOrder) < 0) z = c._zOrder;
-				if (z < childs[i - 1]._zOrder)//如果z小于前面，找到z>=的位置插入
-				{
-					mid = low = 0;
-					high = i - 1;
-					while (low <= high) {
-						mid = (low + high) >>> 1;
-						if (!childs[mid]) break;//这里有问题
-						zz = childs[mid]._zOrder;
-						if (zz < 0) zz = childs[mid]._zOrder;
-						
-						if (zz < z)
-							low = mid + 1;
-						else if (zz > z)
-							high = mid - 1;
-						else break;
-					}
-					if (z > childs[mid]._zOrder) mid++;
-					var f:Node = c.parent;
-					childs.splice(i, 1);
-					childs.splice(mid, 0, c);
-					if (f && f.model)
-					{
-						f.model&&f.model.removeChild(c.model);
-						f.model && f.model.addChildAt(c.model, mid);
-					}
-					repaint = true;
+		public static function updateOrder(array:Array):Boolean {
+			if (!array || array.length < 2) return false;
+			var i:int = 1, j:int, len:int = array.length, key:Number, c:Sprite;
+			while (i < len) {
+				j = i;
+				c = array[j];
+				key = array[j]._zOrder;
+				while (--j > -1) {
+					if (array[j]._zOrder > key) array[j + 1] = array[j];
+					else break;
 				}
+				array[j + 1] = c;
+				i++;
 			}
-			return repaint;
+			return true;
 		}
 		
 		/**
@@ -236,7 +208,7 @@ package laya.utils {
 		 * @param	radix 表示要解析的数字的基数。该值介于 2 ~ 36 之间。如果它以 “0x” 或 “0X” 开头，将以 16 为基数。如果该参数小于 2 或者大于 36，则 parseInt() 将返回 NaN。
 		 * @return	返回解析后的数字
 		 */
-		public static function parseInt(str:String, radix:int=0):int {
+		public static function parseInt(str:String, radix:int = 0):int {
 			var result:* = Browser.window.parseInt(str, radix);
 			if (isNaN(result)) return 0;
 			return result;

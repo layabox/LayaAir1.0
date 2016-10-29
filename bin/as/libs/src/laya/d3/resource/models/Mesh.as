@@ -181,16 +181,6 @@ package laya.d3.resource.models {
 			return _subMeshes.length;
 		}
 		
-		/**
-		 * 清除子网格。
-		 * @return  子网格。
-		 */
-		public function clear():Mesh {
-			_subMeshes.length = 0;
-			_subMeshCount = 0;
-			return this;
-		}
-		
 		override public function getRenderElementsCount():int {
 			return _subMeshes.length;
 		}

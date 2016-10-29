@@ -9,6 +9,7 @@ package laya.d3.component.animation {
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
+	import laya.utils.Stat;
 	import laya.webgl.utils.Buffer2D;
 	
 	/**

@@ -18,7 +18,7 @@ package laya.debug.view.nodeInfo.nodetree
 			super();
 			Base64AtlasManager.replaceRes(ProfileUI.uiView);
 			createView(ProfileUI.uiView);
-			views = [createPanel, renderPanel,cachePanel];
+			views = [createPanel, renderPanel,cachePanel,resPanel];
 			tab.selectedIndex = 0;
 			tabChange();
 			tab.on(Event.CHANGE, this, tabChange);

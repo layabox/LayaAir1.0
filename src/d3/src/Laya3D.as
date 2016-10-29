@@ -86,12 +86,14 @@ package {
 				'u_SpotLight.Specular':Buffer2D.SPOTLIGHTSPECULAR
 			};
 			var SIMPLE:int = Shader.nameKey.add("SIMPLE");
-			vs = __INCLUDESTR__("laya/d3/shader/files/VertexSimpleTextureSkinnedMesh.vs");
-			ps = __INCLUDESTR__("laya/d3/shader/files/VertexSimpleTextureSkinnedMesh.ps");
-			Shader.preCompile(SIMPLE,ShaderDefines3D.VERTEXSHADERING , vs, ps, shaderNameMap);
 			vs = __INCLUDESTR__("laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.ps");
-			Shader.preCompile(SIMPLE, ShaderDefines3D.PIXELSHADERING, vs, ps, shaderNameMap);
+			Shader.preCompile(SIMPLE , vs, ps, shaderNameMap);
+			
+			var SIMPLEVEXTEX:int = Shader.nameKey.add("SIMPLEVEXTEX");
+			vs = __INCLUDESTR__("laya/d3/shader/files/VertexSimpleTextureSkinnedMesh.vs");
+			ps = __INCLUDESTR__("laya/d3/shader/files/VertexSimpleTextureSkinnedMesh.ps");
+			Shader.preCompile(SIMPLEVEXTEX, vs, ps, shaderNameMap);
 			
 			shaderNameMap =
 			{
@@ -115,8 +117,7 @@ package {
 			var TERRAIN:int = Shader.nameKey.add("TERRAIN");
 			vs = __INCLUDESTR__("laya/d3/shader/files/modelTerrain.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/modelTerrain.ps");
-			Shader.preCompile(TERRAIN, ShaderDefines3D.VERTEXSHADERING , vs, ps, shaderNameMap);
-			Shader.preCompile(TERRAIN, ShaderDefines3D.PIXELSHADERING, vs, ps, shaderNameMap);
+			Shader.preCompile(TERRAIN, vs, ps, shaderNameMap);
 			
 			shaderNameMap =
 			{
@@ -142,8 +143,7 @@ package {
 				'u_texture':Buffer2D.DIFFUSETEXTURE
 			};
 			var PARTICLE:int = Shader.nameKey.add("PARTICLE");
-			Shader.preCompile(PARTICLE, ShaderDefines3D.VERTEXSHADERING ,ParticleShader.vs, ParticleShader.ps, shaderNameMap);
-			Shader.preCompile(PARTICLE, ShaderDefines3D.PIXELSHADERING, ParticleShader.vs, ParticleShader.ps, shaderNameMap);			
+			Shader.preCompile(PARTICLE,ParticleShader.vs, ParticleShader.ps, shaderNameMap);		
 			
 			shaderNameMap =
 			{
@@ -170,8 +170,7 @@ package {
 			};
 			
 			var U3DPARTICLE:int = Shader.nameKey.add("U3DPARTICLE");
-			Shader.preCompile(U3DPARTICLE, ShaderDefines3D.VERTEXSHADERING ,ParticleShader.vs, ParticleShader.ps, shaderNameMap);
-			Shader.preCompile(U3DPARTICLE, ShaderDefines3D.PIXELSHADERING, ParticleShader.vs, ParticleShader.ps, shaderNameMap);
+			Shader.preCompile(U3DPARTICLE,ParticleShader.vs, ParticleShader.ps, shaderNameMap);
 			
 			shaderNameMap =
 			{
@@ -189,8 +188,7 @@ package {
 			var GLITTER:int = Shader.nameKey.add("GLITTER");
 			vs = __INCLUDESTR__("laya/d3/shader/files/Glitter.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/Glitter.ps");
-			Shader.preCompile(GLITTER, ShaderDefines3D.VERTEXSHADERING ,vs, ps, shaderNameMap);
-			Shader.preCompile(GLITTER, ShaderDefines3D.PIXELSHADERING, vs, ps, shaderNameMap);	
+			Shader.preCompile(GLITTER,vs, ps, shaderNameMap);
 			
 			
 			 shaderNameMap=
@@ -215,10 +213,7 @@ package {
 			var SIMPLE_EFFECT:int = Shader.nameKey.add("SIMPLE_EFFECT");
 			vs = __INCLUDESTR__("laya/d3/shader/files/SimpleEffect.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/SimpleEffect.ps");
-			Shader.preCompile(SIMPLE_EFFECT,ShaderDefines3D.VERTEXSHADERING , vs, ps, shaderNameMap);
-			vs = __INCLUDESTR__("laya/d3/shader/files/SimpleEffect.vs");
-			ps = __INCLUDESTR__("laya/d3/shader/files/SimpleEffect.ps");
-			Shader.preCompile(SIMPLE_EFFECT, ShaderDefines3D.PIXELSHADERING, vs, ps, shaderNameMap);
+			Shader.preCompile(SIMPLE_EFFECT , vs, ps, shaderNameMap);
 			
 			 shaderNameMap=
 			{
@@ -232,12 +227,9 @@ package {
 			var skyBox:int = Shader.nameKey.add("SkyBox");
 			vs = __INCLUDESTR__("laya/d3/shader/files/SkyBox.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/SkyBox.ps");
-			Shader.preCompile(skyBox,ShaderDefines3D.VERTEXSHADERING , vs, ps, shaderNameMap);
-			vs = __INCLUDESTR__("laya/d3/shader/files/SkyBox.vs");
-			ps = __INCLUDESTR__("laya/d3/shader/files/SkyBox.ps");
-			Shader.preCompile(skyBox, ShaderDefines3D.PIXELSHADERING, vs, ps, shaderNameMap);
+			Shader.preCompile(skyBox , vs, ps, shaderNameMap);
 			
-			//天空穹庐
+			
 			shaderNameMap=
 			{
 				'a_Position':VertexElementUsage.POSITION0,
@@ -251,10 +243,7 @@ package {
 			var skyDome:int = Shader.nameKey.add("SkyDome");
 			vs = __INCLUDESTR__("laya/d3/shader/files/SkyDome.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/SkyDome.ps");
-			Shader.preCompile(skyDome,ShaderDefines3D.VERTEXSHADERING , vs, ps, shaderNameMap);
-			vs = __INCLUDESTR__("laya/d3/shader/files/SkyDome.vs");
-			ps = __INCLUDESTR__("laya/d3/shader/files/SkyDome.ps");
-			Shader.preCompile(skyDome, ShaderDefines3D.PIXELSHADERING, vs, ps, shaderNameMap);
+			Shader.preCompile(skyDome, vs, ps, shaderNameMap);
 		}
 		
 		private static function _regClassforJson():void {

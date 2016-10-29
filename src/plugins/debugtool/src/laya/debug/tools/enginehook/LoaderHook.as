@@ -1,10 +1,10 @@
 package laya.debug.tools.enginehook 
 {
+	import laya.debug.view.nodeInfo.views.OutPutView;
 	import laya.events.Event;
 	import laya.net.LoaderManager;
 	import laya.net.LocalStorage;
 	import laya.utils.Handler;
-	import laya.debug.view.nodeInfo.views.OutPutView;
 	/**
 	 * ...
 	 * @author ww
@@ -68,7 +68,7 @@ package laya.debug.tools.enginehook
 				checkUrls(urls[i]);
 			}
 		}
-		override public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true):LoaderManager 
+		override public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true,group:String=null):LoaderManager 
 		{
 			if (url is Array)
 			{

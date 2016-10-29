@@ -3,15 +3,16 @@
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
 	var Box=laya.ui.Box,Browser=laya.utils.Browser,Button=laya.ui.Button,Byte=laya.utils.Byte,CSSStyle=laya.display.css.CSSStyle;
-	var Component=laya.ui.Component,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher,Filter=laya.filters.Filter;
-	var GrahamScan=laya.maths.GrahamScan,Graphics=laya.display.Graphics,HTMLCanvas=laya.resource.HTMLCanvas,Handler=laya.utils.Handler;
-	var Image=laya.ui.Image,Input=laya.display.Input,Label=laya.ui.Label,List=laya.ui.List,Loader=laya.net.Loader;
-	var LoaderManager=laya.net.LoaderManager,LocalStorage=laya.net.LocalStorage,MathUtil=laya.maths.MathUtil;
+	var Component=laya.ui.Component,Config=Laya.Config,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher;
+	var Filter=laya.filters.Filter,GrahamScan=laya.maths.GrahamScan,Graphics=laya.display.Graphics,HTMLCanvas=laya.resource.HTMLCanvas;
+	var Handler=laya.utils.Handler,Image=laya.ui.Image,Input=laya.display.Input,Label=laya.ui.Label,List=laya.ui.List;
+	var Loader=laya.net.Loader,LoaderManager=laya.net.LoaderManager,LocalStorage=laya.net.LocalStorage,MathUtil=laya.maths.MathUtil;
 	var Matrix=laya.maths.Matrix,Node=laya.display.Node,Point=laya.maths.Point,Pool=laya.utils.Pool,Rectangle=laya.maths.Rectangle;
 	var Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
-	var RunDriver=laya.utils.RunDriver,Sprite=laya.display.Sprite,Stage=laya.display.Stage,Stat=laya.utils.Stat;
-	var Style=laya.display.css.Style,Text=laya.display.Text,TextInput=laya.ui.TextInput,Texture=laya.resource.Texture;
-	var Tree=laya.ui.Tree,UIEvent=laya.ui.UIEvent,Utils=laya.utils.Utils,View=laya.ui.View;
+	var Resource=laya.resource.Resource,ResourceManager=laya.resource.ResourceManager,RunDriver=laya.utils.RunDriver;
+	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Stat=laya.utils.Stat,Style=laya.display.css.Style;
+	var Text=laya.display.Text,TextInput=laya.ui.TextInput,Texture=laya.resource.Texture,Tree=laya.ui.Tree,UIEvent=laya.ui.UIEvent;
+	var URL=laya.net.URL,Utils=laya.utils.Utils,View=laya.ui.View;
 	//class laya.debug.data.Base64AtlasManager
 	var Base64AtlasManager=(function(){
 		function Base64AtlasManager(){}
@@ -38,14 +39,14 @@
 	var DebugTool=(function(){
 		function DebugTool(){}
 		__class(DebugTool,'laya.debug.DebugTool');
-		__getset(1,DebugTool,'isThisShow',function(){
-			return false;
-		});
-
 		__getset(1,DebugTool,'target',function(){
 			return DebugTool._target;
 			},function(v){
 			DebugTool._target=v;
+		});
+
+		__getset(1,DebugTool,'isThisShow',function(){
+			return false;
 		});
 
 		/**
@@ -83,11 +84,12 @@
 			}
 		}
 
-		DebugTool.init=function(cacheAnalyseEnable,loaderAnalyseEnable,createAnalyseEnable,renderAnalyseEnable){
+		DebugTool.init=function(cacheAnalyseEnable,loaderAnalyseEnable,createAnalyseEnable,renderAnalyseEnable,showCacheRec){
 			(cacheAnalyseEnable===void 0)&& (cacheAnalyseEnable=true);
 			(loaderAnalyseEnable===void 0)&& (loaderAnalyseEnable=true);
 			(createAnalyseEnable===void 0)&& (createAnalyseEnable=true);
 			(renderAnalyseEnable===void 0)&& (renderAnalyseEnable=true);
+			(showCacheRec===void 0)&& (showCacheRec=false);
 			DebugTool.enableCacheAnalyse=cacheAnalyseEnable;
 			if (DebugTool.enableCacheAnalyse){
 				RenderSpriteHook.init();
@@ -102,6 +104,7 @@
 			if (loaderAnalyseEnable){
 				LoaderHook.init();
 			}
+			CacheAnalyser.showCacheSprite=showCacheRec;
 			DisplayHook.initMe();
 			NodeInfoPanel.init();
 			if (!DebugTool.debugLayer){
@@ -476,6 +479,20 @@
 			DebugTool._disBoundRec=Rectangle._getWrapRec(pointList,DebugTool._disBoundRec);
 			DebugTool.debugLayer.graphics.drawRect(DebugTool._disBoundRec.x,DebugTool._disBoundRec.y,DebugTool._disBoundRec.width,DebugTool._disBoundRec.height,null,color);
 			DebugInfoLayer.I.setTop();
+		}
+
+		DebugTool.showDisBoundToSprite=function(sprite,graphicSprite,color,lineWidth){
+			(color===void 0)&& (color="#ff0000");
+			(lineWidth===void 0)&& (lineWidth=1);
+			var pointList;
+			pointList=sprite._getBoundPointsM(true);
+			if (!pointList || pointList.length < 1)
+				return;
+			pointList=GrahamScan.pListToPointList(pointList,true);
+			WalkTools.walkArr(pointList,sprite.localToGlobal,sprite);
+			pointList=GrahamScan.pointListToPlist(pointList);
+			DebugTool._disBoundRec=Rectangle._getWrapRec(pointList,DebugTool._disBoundRec);
+			graphicSprite.graphics.drawRect(DebugTool._disBoundRec.x,DebugTool._disBoundRec.y,DebugTool._disBoundRec.width,DebugTool._disBoundRec.height,null,color,lineWidth);
 		}
 
 		DebugTool.getNodeInfo=function(){
@@ -898,6 +915,9 @@
 		var __proto=CacheAnalyser.prototype;
 		__proto.renderCanvas=function(sprite,time){
 			(time===void 0)&& (time=0);
+			if (!CacheAnalyser.showCacheSprite)return;
+			if (DebugInfoLayer.I.isDebugItem(sprite))return;
+			DebugTool.showDisBoundToSprite(sprite,DebugInfoLayer.I.cacheViewLayer,"#ff0000",2);
 		}
 
 		__proto.reCacheCanvas=function(sprite,time){
@@ -912,6 +932,10 @@
 			}
 		}
 
+		CacheAnalyser.renderLoopBegin=function(){
+			DebugInfoLayer.I.cacheViewLayer.graphics.clear();
+		}
+
 		CacheAnalyser.getNodeInfoByNode=function(node){
 			IDTools.idObj(node);
 			var key=0;
@@ -924,6 +948,7 @@
 		}
 
 		CacheAnalyser._nodeInfoDic={};
+		CacheAnalyser.showCacheSprite=false;
 		__static(CacheAnalyser,
 		['counter',function(){return this.counter=new ObjTimeCountTool();},'I',function(){return this.I=new CacheAnalyser();}
 		]);
@@ -2038,7 +2063,8 @@
 		}
 
 		__proto.check=function(sp,mouseX,mouseY,callBack,hitTest,mouseEnable){
-			if(sp==DebugTool.debugLayer)return false;
+			if (sp==DebugTool.debugLayer)return false;
+			if (sp==DebugInfoLayer.I)return false;
 			if (this.isGetting && sp==DebugInfoLayer.I)return false;
 			if (!sp.visible || sp.getSelfBounds().width<=0)return false;
 			var isHit=false;
@@ -2310,6 +2336,8 @@
 			var tx=_cacheCanvas.ctx;
 			var _repaint=sprite._needRepaint()|| (!tx);
 			this._oldCanvas(sprite,context,x,y);
+			if (Config.showCanvasMark){
+			}
 			if (_repaint){
 				CacheAnalyser.I.reCacheCanvas(sprite,Browser.now()-preTime);
 				}else{
@@ -2519,6 +2547,9 @@
 		*@param y Y轴坐标。
 		*/
 		__proto.render=function(context,x,y){
+			if ((this)==Laya.stage){
+				CacheAnalyser.renderLoopBegin();
+			};
 			var preTime=0;
 			preTime=Browser.now();
 			Stat.spriteCount++;
@@ -3222,11 +3253,11 @@
 			this._width=maxX-this._sX;
 		}
 
-		__getset(0,__proto,'items',function(){
-			return this._items;
-			},function(arr){
-			this._items=arr;
-			this.calSize();
+		__getset(0,__proto,'width',function(){
+			return this._width;
+			},function(v){
+			this._width=v;
+			this.changed();
 		});
 
 		__getset(0,__proto,'x',function(){
@@ -3236,11 +3267,11 @@
 			this.changed();
 		});
 
-		__getset(0,__proto,'width',function(){
-			return this._width;
-			},function(v){
-			this._width=v;
-			this.changed();
+		__getset(0,__proto,'items',function(){
+			return this._items;
+			},function(arr){
+			this._items=arr;
+			this.calSize();
 		});
 
 		return Layouter;
@@ -3992,6 +4023,12 @@
 			}
 		}
 
+		ObjectTools.copyObjFast=function(obj){
+			var jsStr;
+			jsStr=laya.debug.tools.ObjectTools.getJsonString(obj);
+			return laya.debug.tools.ObjectTools.getObj(jsStr);
+		}
+
 		ObjectTools.copyObj=function(obj){
 			if((obj instanceof Array))return ObjectTools.copyArr(obj);
 			var rst={};
@@ -4343,18 +4380,16 @@
 			this.vY=vPoint.y;
 		}
 
-		__getset(0,__proto,'rotationRad',function(){
-			var dx=this.hX-this.oX;
-			var dy=this.hY-this.oY;
-			return Math.atan2(dy,dx);
+		__getset(0,__proto,'rotation',function(){
+			return this.rotationRad/Math.PI*180;
+		});
+
+		__getset(0,__proto,'width',function(){
+			return Math.sqrt((this.hX-this.oX)*(this.hX-this.oX)+(this.hY-this.oY)*(this.hY-this.oY));
 		});
 
 		__getset(0,__proto,'x',function(){
 			return this.oX;
-		});
-
-		__getset(0,__proto,'y',function(){
-			return this.oY;
 		});
 
 		__getset(0,__proto,'rotationRadV',function(){
@@ -4363,16 +4398,18 @@
 			return Math.atan2(dy,dx);
 		});
 
-		__getset(0,__proto,'width',function(){
-			return Math.sqrt((this.hX-this.oX)*(this.hX-this.oX)+(this.hY-this.oY)*(this.hY-this.oY));
+		__getset(0,__proto,'y',function(){
+			return this.oY;
+		});
+
+		__getset(0,__proto,'rotationRad',function(){
+			var dx=this.hX-this.oX;
+			var dy=this.hY-this.oY;
+			return Math.atan2(dy,dx);
 		});
 
 		__getset(0,__proto,'height',function(){
 			return Math.sqrt((this.vX-this.oX)*(this.vX-this.oX)+(this.vY-this.oY)*(this.vY-this.oY));
-		});
-
-		__getset(0,__proto,'rotation',function(){
-			return this.rotationRad/Math.PI*180;
 		});
 
 		__getset(0,__proto,'rotationV',function(){
@@ -4720,6 +4757,78 @@
 		['preMousePoint',function(){return this.preMousePoint=new Point();},'preTarSize',function(){return this.preTarSize=new Point();},'preScale',function(){return this.preScale=new Point();}
 		]);
 		return SimpleResizer;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.tools.ResTools
+	var ResTools=(function(){
+		function ResTools(){}
+		__class(ResTools,'laya.debug.tools.ResTools');
+		ResTools.getCachedResList=function(){
+			if (Render.isWebGL){
+				return ResTools.getWebGlResList();
+				}else{
+				return ResTools.getCanvasResList();
+			}
+		}
+
+		ResTools.getWebGlResList=function(){
+			var rst;
+			rst=[];
+			var tResource;
+			var _resources;
+			_resources=ResourceManager.currentResourceManager["_resources"];
+			for(var i=0;i <_resources.length;i++){
+				tResource=_resources[i];
+				if(ClassTool.getClassName(tResource)=="WebGLImage"){
+					var url=tResource["src"];
+					if(url&&url.indexOf("data:image/png;base64")<0)
+						rst.push(url);
+				}
+			}
+			return rst;
+		}
+
+		ResTools.getCanvasResList=function(){
+			var picDic;
+			picDic={};
+			var dataO;
+			dataO=Loader.loadedMap;
+			ResTools.collectPics(dataO,picDic);
+			return ResTools.getArrFromDic(picDic);
+		}
+
+		ResTools.getArrFromDic=function(dic){
+			var key;
+			var rst;
+			rst=[];
+			for (key in dic){
+				rst.push(key);
+			}
+			return rst;
+		}
+
+		ResTools.collectPics=function(dataO,picDic){
+			if (!dataO)return;
+			var key;
+			var tTexture;
+			for (key in dataO){
+				tTexture=dataO[key];
+				if (tTexture){
+					if (tTexture.bitmap&&tTexture.bitmap.src){
+						var url=tTexture.bitmap.src;
+						if(url.indexOf("data:image/png;base64")<0)
+							picDic[tTexture.bitmap.src]=true;
+					}
+				}
+			}
+		}
+
+		return ResTools;
 	})()
 
 
@@ -6399,7 +6508,11 @@
 			console.log("treeArr:",NodeUtils.getNodeTreeData(Laya.stage,null));
 		}
 
-		NodeUtils.getNodeCount=function(node){
+		NodeUtils.getNodeCount=function(node,visibleRequire){
+			(visibleRequire===void 0)&& (visibleRequire=false);
+			if (visibleRequire){
+				if (!node.visible)return 0;
+			};
 			var rst=0;
 			rst=1;
 			var i=0,len=0;
@@ -6407,7 +6520,7 @@
 			cList=node._childs;
 			len=cList.length;
 			for (i=0;i < len;i++){
-				rst+=NodeUtils.getNodeCount(cList[i]);
+				rst+=NodeUtils.getNodeCount(cList[i],visibleRequire);
 			}
 			return rst;
 		}
@@ -6631,7 +6744,7 @@
 			}
 		}
 
-		__proto.load=function(url,complete,progress,type,priority,cache){
+		__proto.load=function(url,complete,progress,type,priority,cache,group){
 			(priority===void 0)&& (priority=1);
 			(cache===void 0)&& (cache=true);
 			if ((url instanceof Array)){
@@ -7429,18 +7542,22 @@
 			this.txtLayer=null;
 			this.popLayer=null;
 			this.graphicLayer=null;
+			this.cacheViewLayer=null;
 			DebugInfoLayer.__super.call(this);
 			this.nodeRecInfoLayer=new Sprite();
 			this.lineLayer=new Sprite();
 			this.txtLayer=new Sprite();
 			this.popLayer=new Sprite();
 			this.graphicLayer=new Sprite();
+			this.cacheViewLayer=new Sprite();
 			this.nodeRecInfoLayer.name="nodeRecInfoLayer";
 			this.lineLayer.name="lineLayer";
 			this.txtLayer.name="txtLayer";
 			this.popLayer.name="popLayer";
 			this.graphicLayer.name="graphicLayer";
+			this.cacheViewLayer.name="cacheViewLayer";
 			this.addChild(this.lineLayer);
+			this.addChild(this.cacheViewLayer);
 			this.addChild(this.nodeRecInfoLayer);
 			this.addChild(this.txtLayer);
 			this.addChild(this.popLayer);
@@ -7841,7 +7958,7 @@
 		function NodeRecInfo(){
 			this.txt=null;
 			this._tar=null;
-			this.recColor="#00ffff";
+			this.recColor="#00ff00";
 			NodeRecInfo.__super.call(this);
 			this.txt=new Text();
 			this.txt.color="#ff0000";
@@ -9394,6 +9511,9 @@
 					case "nodeAll":
 						rst=""+NodeUtils.getNodeCount(tNode);
 						break ;
+					case "nodeVisible":
+						rst=""+NodeUtils.getNodeCount(tNode,true);
+						break ;
 					case "nodeRender":
 						rst=""+NodeUtils.getRenderNodeCount(tNode);
 						break ;
@@ -9596,6 +9716,89 @@
 		RenderCostRankView._I=null
 		RenderCostRankView.filterDebugNodes=true;
 		return RenderCostRankView;
+	})(UIViewBase)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.views.ResRankView extends laya.debug.view.nodeInfo.views.UIViewBase
+	var ResRankView=(function(_super){
+		function ResRankView(){
+			this.view=null;
+			ResRankView.__super.call(this);
+		}
+
+		__class(ResRankView,'laya.debug.view.nodeInfo.views.ResRankView',_super);
+		var __proto=ResRankView.prototype;
+		__proto.createPanel=function(){
+			this.view=new Rank();
+			this.view.top=this.view.bottom=this.view.left=this.view.right=0;
+			this.addChild(this.view);
+			this.view.closeBtn.on(/*laya.events.Event.CLICK*/"click",this,this.close);
+			this.view.freshBtn.on(/*laya.events.Event.CLICK*/"click",this,this.fresh);
+			this.view.itemList.scrollBar.hide=true;
+			this.view.autoUpdate.on(/*laya.events.Event.CHANGE*/"change",this,this.onAutoUpdateChange);
+			this.dis=this;
+			this.view.itemList.array=[];
+			this.view.itemList.on(/*laya.events.Event.RIGHT_CLICK*/"rightclick",this,this.onRightClick);
+			this.onAutoUpdateChange();
+			this.fresh();
+		}
+
+		__proto.onRightClick=function(){
+			var list;
+			list=this.view.itemList;
+			if (list.selectedItem){
+				console.log(list.selectedItem["url"]);
+			}
+		}
+
+		__proto.onAutoUpdateChange=function(){
+			this.autoUpdate=this.view.autoUpdate.selected;
+		}
+
+		__proto.fresh=function(){
+			this.view.title.text="图片缓存列表";
+			var resList;
+			resList=ResTools.getCachedResList();
+			var key;
+			var tNode;
+			var tData;
+			var dataList;
+			dataList=[];
+			var i=0,len=0;
+			len=resList.length;
+			for (i=0;i < len;i++){
+				tData={};
+				var tUrl;
+				tUrl=resList[i];
+				tUrl=tUrl.replace(URL.rootPath,"")
+				tData.label=tUrl;
+				tData.url=tUrl;
+				dataList.push(tData);
+			}
+			this.view.itemList.array=dataList;
+		}
+
+		__getset(0,__proto,'autoUpdate',null,function(v){
+			Laya.timer.clear(this,this.fresh);
+			if (v){
+				this.fresh();
+				Laya.timer.loop(NodeConsts.RenderCostMaxTime,this,this.fresh);
+			}
+		});
+
+		__getset(1,ResRankView,'I',function(){
+			if (!ResRankView._I)
+				ResRankView._I=new ResRankView();
+			return ResRankView._I;
+		},laya.debug.view.nodeInfo.views.UIViewBase._$SET_I);
+
+		ResRankView._I=null
+		ResRankView.filterDebugNodes=true;
+		return ResRankView;
 	})(UIViewBase)
 
 
@@ -9939,10 +10142,10 @@
 		}
 
 		__proto.viewMapRegists=function(){
-			View.viewClassMap["laya.debug.view.nodeInfo.nodetree.MinBtnComp"]=MinBtnComp;
-			View.viewClassMap["laya.debug.view.nodeInfo.views.NodeTreeView"]=NodeTreeView;
-			View.viewClassMap["laya.debug.view.nodeInfo.nodetree.Profile"]=Profile;
-			View.viewClassMap["laya.debug.view.nodeInfo.views.SelectInfosView"]=SelectInfosView;
+			View.regComponent("laya.debug.view.nodeInfo.nodetree.MinBtnComp",MinBtnComp);
+			View.regComponent("laya.debug.view.nodeInfo.views.NodeTreeView",NodeTreeView);
+			View.regComponent("laya.debug.view.nodeInfo.nodetree.Profile",Profile);
+			View.regComponent("laya.debug.view.nodeInfo.views.SelectInfosView",SelectInfosView);
 		}
 
 		__static(DebugPanelUI,
@@ -10002,7 +10205,7 @@
 		}
 
 		__proto.viewMapRegists=function(){
-			View.viewClassMap["laya.debug.uicomps.RankListItem"]=RankListItem;
+			View.regComponent("laya.debug.uicomps.RankListItem",RankListItem);
 		}
 
 		__static(FindNodeUI,
@@ -10057,7 +10260,7 @@
 		}
 
 		__proto.viewMapRegists=function(){
-			View.viewClassMap["laya.debug.uicomps.RankListItem"]=RankListItem;
+			View.regComponent("laya.debug.uicomps.RankListItem",RankListItem);
 		}
 
 		__static(NodeListPanelUI,
@@ -10143,7 +10346,7 @@
 		}
 
 		__proto.viewMapRegists=function(){
-			View.viewClassMap["laya.debug.uicomps.TreeListItem"]=TreeListItem;
+			View.regComponent("laya.debug.uicomps.TreeListItem",TreeListItem);
 		}
 
 		__static(NodeTreeUI,
@@ -10172,7 +10375,7 @@
 		}
 
 		__proto.viewMapRegists=function(){
-			View.viewClassMap["laya.debug.uicomps.RankListItem"]=RankListItem;
+			View.regComponent("laya.debug.uicomps.RankListItem",RankListItem);
 		}
 
 		__static(ObjectCreateUI,
@@ -10243,6 +10446,7 @@
 			this.createPanel=null;
 			this.cachePanel=null;
 			this.tab=null;
+			this.resPanel=null;
 			ProfileUI.__super.call(this);
 		}
 
@@ -10255,13 +10459,14 @@
 		}
 
 		__proto.viewMapRegists=function(){
-			View.viewClassMap["laya.debug.view.nodeInfo.views.RenderCostRankView"]=RenderCostRankView;
-			View.viewClassMap["laya.debug.view.nodeInfo.views.ObjectCreateView"]=ObjectCreateView;
-			View.viewClassMap["laya.debug.view.nodeInfo.views.CacheRankView"]=CacheRankView;
+			View.regComponent("laya.debug.view.nodeInfo.views.RenderCostRankView",RenderCostRankView);
+			View.regComponent("laya.debug.view.nodeInfo.views.ObjectCreateView",ObjectCreateView);
+			View.regComponent("laya.debug.view.nodeInfo.views.CacheRankView",CacheRankView);
+			View.regComponent("laya.debug.view.nodeInfo.views.ResRankView",ResRankView);
 		}
 
 		__static(ProfileUI,
-		['uiView',function(){return this.uiView={"type":"View","props":{"base64pic":true,"width":260,"height":329},"child":[{"props":{"y":0,"skin":"view/bg_tool.png","left":0,"right":0},"type":"Image"},{"type":"Rank","props":{"name":"渲染用时","left":0,"right":0,"top":29,"bottom":0,"runtime":"laya.debug.view.nodeInfo.views.RenderCostRankView","var":"renderPanel"}},{"type":"ObjectCreate","props":{"name":"对象创建统计","runtime":"laya.debug.view.nodeInfo.views.ObjectCreateView","top":29,"left":0,"right":0,"bottom":0,"var":"createPanel"}},{"type":"Rank","props":{"name":"cache用时","left":0,"right":0,"top":29,"bottom":0,"runtime":"laya.debug.view.nodeInfo.views.CacheRankView","var":"cachePanel","x":10}},{"type":"Tab","child":[{"props":{"skin":"view/create.png","label":"  对象创建","width":70,"height":17,"name":"item0","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff"},"type":"CheckBox"},{"props":{"x":77,"skin":"view/rendertime.png","label":" 渲染用时","width":70,"height":19,"name":"item1","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff","y":0},"type":"CheckBox"},{"props":{"x":154,"skin":"view/cache.png","label":" Cache","width":70,"height":16,"name":"item2","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff","y":0},"type":"CheckBox"}],"props":{"x":7,"y":9,"selectedIndex":0,"var":"tab","width":191,"height":19}}]};}
+		['uiView',function(){return this.uiView={"type":"View","props":{"width":260,"height":329,"base64pic":true},"child":[{"type":"Image","props":{"y":0,"skin":"view/bg_tool.png","right":0,"left":0}},{"type":"Rank","props":{"var":"renderPanel","top":29,"runtime":"laya.debug.view.nodeInfo.views.RenderCostRankView","right":0,"name":"渲染用时","left":0,"bottom":0}},{"type":"ObjectCreate","props":{"var":"createPanel","top":29,"runtime":"laya.debug.view.nodeInfo.views.ObjectCreateView","right":0,"name":"对象创建统计","left":0,"bottom":0}},{"type":"Rank","props":{"x":10,"var":"cachePanel","top":29,"runtime":"laya.debug.view.nodeInfo.views.CacheRankView","right":0,"name":"cache用时","left":0,"bottom":0}},{"type":"Tab","props":{"y":9,"x":7,"width":191,"var":"tab","selectedIndex":0,"height":19},"child":[{"type":"CheckBox","props":{"y":0,"x":0,"width":50,"skin":"view/create.png","name":"item0","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff","label":"  对象","height":17}},{"type":"CheckBox","props":{"y":0,"x":55,"width":50,"skin":"view/rendertime.png","name":"item1","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff","label":" 渲染","height":19}},{"type":"CheckBox","props":{"y":0,"x":110,"width":50,"skin":"view/cache.png","name":"item2","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff","label":" 重绘","height":16}},{"type":"CheckBox","props":{"y":0,"x":165,"width":50,"skin":"view/cache.png","name":"item3","labelColors":"#a0a0a0,#ffffff,#ffffff,#ffffff","label":" 资源","height":16}}]},{"type":"Rank","props":{"y":40,"x":50,"var":"resPanel","top":29,"runtime":"laya.debug.view.nodeInfo.views.ResRankView","right":0,"name":"资源缓存","left":0,"bottom":0}}]};}
 		]);
 		return ProfileUI;
 	})(View)
@@ -10288,7 +10493,7 @@
 		}
 
 		__proto.viewMapRegists=function(){
-			View.viewClassMap["laya.debug.uicomps.RankListItem"]=RankListItem;
+			View.regComponent("laya.debug.uicomps.RankListItem",RankListItem);
 		}
 
 		__static(RankUI,
@@ -10318,7 +10523,7 @@
 		}
 
 		__proto.viewMapRegists=function(){
-			View.viewClassMap["laya.debug.uicomps.RankListItem"]=RankListItem;
+			View.regComponent("laya.debug.uicomps.RankListItem",RankListItem);
 		}
 
 		__static(SelectInfosUI,
@@ -10352,7 +10557,7 @@
 		}
 
 		__proto.viewMapRegists=function(){
-			View.viewClassMap["laya.debug.view.nodeInfo.nodetree.MinBtnComp"]=MinBtnComp;
+			View.regComponent("laya.debug.view.nodeInfo.nodetree.MinBtnComp",MinBtnComp);
 		}
 
 		__static(ToolBarUI,
@@ -10987,7 +11192,7 @@
 			Profile.__super.call(this);
 			Base64AtlasManager.replaceRes(ProfileUI.uiView);
 			this.createView(ProfileUI.uiView);
-			this.views=[this.createPanel,this.renderPanel,this.cachePanel];
+			this.views=[this.createPanel,this.renderPanel,this.cachePanel,this.resPanel];
 			this.tab.selectedIndex=0;
 			this.tabChange();
 			this.tab.on(/*laya.events.Event.CHANGE*/"change",this,this.tabChange);

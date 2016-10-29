@@ -115,7 +115,7 @@ package laya.webgl.shader.d2.value {
 		
 		private function _ShaderWithCompile():Shader2X
 		{
-			return  Shader.withCompile(0, mainID, defines.toNameDic(), mainID | defines._value, Shader2X.create) as Shader2X;
+			return  Shader.withCompile2D(0, mainID, defines.toNameDic(), mainID | defines._value, Shader2X.create) as Shader2X;
 		}
 		
 		private function _withWorldShaderDefines():Shader2X
@@ -129,7 +129,7 @@ package laya.webgl.shader.d2.value {
 				var name:String;
 				 dic = defines.toNameDic(); for (name in dic) def[name] = "";
 				 dic = defs.toNameDic(); for (name in dic) def[name] = "";
-				sd=Shader.withCompile(0, mainID, def, mainID | defines._value| defs.getValue(), Shader2X.create) as Shader2X;
+				sd=Shader.withCompile2D(0, mainID, def, mainID | defines._value| defs.getValue(), Shader2X.create) as Shader2X;
 			}
 			var worldFilters:Array = RenderState2D.worldFilters; 
 			if (!worldFilters) return sd;

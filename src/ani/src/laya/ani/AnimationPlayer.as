@@ -326,7 +326,7 @@ package laya.ani {
 		 * @param	playStart 播放的起始时间位置。
 		 * @param	playEnd 播放的结束时间位置。（0为动画一次循环的最长结束时间位置）。
 		 */
-		public function play(index:int = 0, playbackRate:Number = 1.0, overallDuration:int = 2147483647, playStart:int = 0, playEnd:int = 0):void {
+		public function play(index:int = 0, playbackRate:Number = 1.0, overallDuration:int = /*int.MAX_VALUE*/2147483647, playStart:int = 0, playEnd:int = 0):void {
 			if (!_templet)
 				throw new Error("AnimationPlayer:templet must not be null,maybe you need to set url.");
 			
@@ -335,7 +335,7 @@ package laya.ani {
 			
 			if ((playEnd !== 0) && (playStart > playEnd))
 				throw new Error("AnimationPlayer:start must less than end.");
-	         
+	        
 			_currentTime = 0;
 			_currentFrameTime = 0;
 			_elapsedPlaybackTime = 0;
@@ -353,7 +353,8 @@ package laya.ani {
 				_calculatePlayDuration();
 			else
 				_templet.once(Event.LOADED, this, _calculatePlayDuration);
-			update(0);
+			
+			update(0);//如果分段播放,可修正帧率
 		}
 		
 		/**
@@ -364,7 +365,7 @@ package laya.ani {
 		 * @param	playStartFrame 播放的原始起始帧率位置。
 		 * @param	playEndFrame 播放的原始结束帧率位置。（0为动画一次循环的最长结束时间位置）。
 		 */
-		public function playByFrame(index:int = 0, playbackRate:Number = 1.0, overallDuration:Number = 3153600000000/*TODO:为什么不是1.79e+308*/, playStartFrame:int = 0, playEndFrame:int = 0, fpsIn3DBuilder:int = 30):void {
+		public function playByFrame(index:int = 0, playbackRate:Number = 1.0, overallDuration:Number = /*Number.MAX_SAFE_INTEGER*/9007199254740991, playStartFrame:int = 0, playEndFrame:int = 0, fpsIn3DBuilder:int = 30):void {
 			var interval:Number = 1000.0 / fpsIn3DBuilder;
 			play(index, playbackRate, overallDuration, playStartFrame * interval, playEndFrame * interval);
 		}
@@ -407,6 +408,7 @@ package laya.ani {
 						return;
 					}
 					time -= currentAniClipPlayDuration;
+					this.event(Event.COMPLETE);
 				}
 				_currentTime = time;
 				_currentKeyframeIndex = Math.floor((currentPlayTime) / cacheFrameInterval);
@@ -415,11 +417,11 @@ package laya.ani {
 				if (_stopWhenCircleFinish) {
 					_currentAnimationClipIndex = _currentKeyframeIndex = -1;
 					_stopWhenCircleFinish = false;
-					
 					this.event(Event.STOPPED);
 					return;
 				}
 				_currentTime = _currentFrameTime = _currentKeyframeIndex = 0;
+				this.event(Event.COMPLETE);
 			}
 		}
 	}
