@@ -5672,11 +5672,11 @@
 			if(!((tar instanceof laya.display.Sprite ))){
 				console.log("not Sprite");
 				return;
-			};
+			}
 			if(!tar){
 				console.log("null Sprite");
 				return;
-			};
+			}
 			TraceTool.traceSplit("traceSpriteInfo");
 			DebugTool.dTrace(laya.debug.tools.TraceTool.getClassName(tar)+":"+tar.name);
 			if(showTree){

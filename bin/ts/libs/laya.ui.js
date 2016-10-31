@@ -7509,17 +7509,38 @@
 		__proto.createChildren=function(){
 			this.addChild(this._tf=new Input());
 			this._tf.padding=Styles.inputLabelPadding;
-			this._tf.on(/*laya.events.Event.INPUT*/"input",this,this._onEvents);
-			this._tf.on(/*laya.events.Event.ENTER*/"enter",this,this._onEvents);
-			this._tf.on(/*laya.events.Event.BLUR*/"blur",this,this._onEvents);
-			this._tf.on(/*laya.events.Event.FOCUS*/"focus",this,this._onEvents);
+			this._tf.on(/*laya.events.Event.INPUT*/"input",this,this._onInput);
+			this._tf.on(/*laya.events.Event.ENTER*/"enter",this,this._onEnter);
+			this._tf.on(/*laya.events.Event.BLUR*/"blur",this,this._onBlur);
+			this._tf.on(/*laya.events.Event.FOCUS*/"focus",this,this._onFocus);
 		}
 
 		/**
 		*@private
 		*/
-		__proto._onEvents=function(e){
-			this.event(e.type,this);
+		__proto._onFocus=function(){
+			this.event(/*laya.events.Event.FOCUS*/"focus",this);
+		}
+
+		/**
+		*@private
+		*/
+		__proto._onBlur=function(){
+			this.event(/*laya.events.Event.BLUR*/"blur",this);
+		}
+
+		/**
+		*@private
+		*/
+		__proto._onInput=function(){
+			this.event(/*laya.events.Event.INPUT*/"input",this);
+		}
+
+		/**
+		*@private
+		*/
+		__proto._onEnter=function(){
+			this.event(/*laya.events.Event.ENTER*/"enter",this);
 		}
 
 		/**@inheritDoc */

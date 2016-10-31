@@ -9,8 +9,8 @@ class CameraMoveScript extends Laya.Script {
     protected isMouseDown: Boolean;
     protected rotaionSpeed: number = 0.00006;
 
-    protected mainCameraAnimation: Laya.CameraAnimations;
     protected scene: Laya.Scene;
+    protected camera: Laya.Camera;
 
     constructor() {
         super();
@@ -23,7 +23,7 @@ class CameraMoveScript extends Laya.Script {
         Laya.stage.on(Laya.Event.MOUSE_UP, this, this.mouseUp);
         Laya.stage.on(Laya.Event.MOUSE_OUT, this, this.mouseOut);
 
-        this.camera = owner;
+        this.camera = owner as Laya.Camera;
     }
 
     public _update(state: Laya.RenderState): void {

@@ -143,17 +143,38 @@ package laya.ui {
 		override protected function createChildren():void {
 			addChild(_tf = new Input());
 			_tf.padding = Styles.inputLabelPadding;
-			_tf.on(Event.INPUT, this, _onEvents);
-			_tf.on(Event.ENTER, this, _onEvents);
-			_tf.on(Event.BLUR, this, _onEvents);
-			_tf.on(Event.FOCUS, this, _onEvents);
+			_tf.on(Event.INPUT, this, _onInput);
+			_tf.on(Event.ENTER, this, _onEnter);
+			_tf.on(Event.BLUR, this, _onBlur);
+			_tf.on(Event.FOCUS, this, _onFocus);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _onEvents(e:Event = null):void {
-			event(e.type, this);
+		private function _onFocus():void {
+			event(Event.FOCUS, this);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _onBlur():void {
+			event(Event.BLUR, this);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _onInput():void {
+			event(Event.INPUT, this);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _onEnter():void {
+			event(Event.ENTER, this);
 		}
 		
 		/**@inheritDoc */
@@ -290,11 +311,13 @@ package laya.ui {
 		/**
 		 * @copy laya.display.Input#promptColor
 		 */
-		public function get promptColor():String {
+		public function get promptColor():String
+		{
 			return Input(_tf).promptColor;
 		}
 		
-		public function set promptColor(value:String):void {
+		public function set promptColor(value:String):void
+		{
 			Input(_tf).promptColor = value;
 		}
 		
@@ -323,26 +346,31 @@ package laya.ui {
 		/**
 		 * @copy laya.display.Input#type
 		 */
-		public function get type():String {
+		public function get type():String
+		{
 			return Input(_tf).type;
 		}
 		
-		public function set type(value:String):void {
+		public function set type(value:String):void
+		{
 			Input(_tf).type = value;
 		}
 		
 		/**
 		 * @copy laya.display.Input#asPassword
 		 */
-		public function get asPassword():Boolean {
+		public function get asPassword():Boolean
+		{
 			return Input(_tf).asPassword;
 		}
 		
-		public function set asPassword(value:Boolean):void {
+		public function set asPassword(value:Boolean):void
+		{
 			Input(_tf).asPassword = value;
 		}
 		
-		public function setSelection(startIndex:int, endIndex:int):void {
+		public function setSelection(startIndex:int, endIndex:int):void
+		{
 			Input(_tf).setSelection(startIndex, endIndex);
 		}
 	}

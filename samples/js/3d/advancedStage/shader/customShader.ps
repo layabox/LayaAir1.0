@@ -1,0 +1,32 @@
+#ifdef FSHIGHPRECISION
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+varying vec2 v_Texcoord;
+uniform sampler2D u_texture;
+
+varying vec3 v_Normal;
+
+void main()
+{	
+  gl_FragColor=texture2D(u_texture, v_Texcoord);
+  
+  vec3 lightDir=normalize(vec3(0,-1,0));//该法线要从外面传入，如果传入值不能保证归一化，需要在此处归一化
+  vec3 normal = normalize(v_Normal);
+  float intensity=dot(-lightDir,normal);
+  
+  vec4 color;
+  if(intensity>0.95)
+  color=vec4(1.0,0.5,0.5,1.0);
+  else if(intensity>0.5)
+  color=vec4(0.6,0.3,0.3,1.0);
+  else if(intensity>0.25)
+  color=vec4(0.4,0.2,0.2,1.0);
+  else
+  color=vec4(0.2,0.1,0.1,1.0);
+  
+  gl_FragColor=gl_FragColor*color;
+}
+

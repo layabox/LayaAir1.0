@@ -193,12 +193,12 @@ package laya.debug.tools
 			{
 				trace("not Sprite");
 				return;
-			};
+			}
 			if(!tar) 
 			{
 				trace("null Sprite");
 				return;
-			};
+			}
 			traceSplit("traceSpriteInfo");
 //			trace("Sprite:"+tar.name);
 			DebugTool.dTrace(TraceTool.getClassName(tar)+":"+tar.name);
@@ -219,8 +219,6 @@ package laya.debug.tools
 			{
 				trace("bounds:"+tar.getBounds());
 			}
-			
-			
 		}
 	}
 }
