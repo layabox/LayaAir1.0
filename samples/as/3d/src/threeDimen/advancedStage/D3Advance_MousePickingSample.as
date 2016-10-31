@@ -1,6 +1,7 @@
 package threeDimen.advancedStage {
 	import laya.display.Stage;
 	import laya.utils.Stat;
+	import threeDimen.advancedStage.custom.MousePickingScene;
 	
 	/*[COMPI2LER OPTIONS:showdebug]*/
 	

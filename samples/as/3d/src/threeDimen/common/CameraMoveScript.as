@@ -65,12 +65,12 @@ package threeDimen.common {
 		protected function updateCamera(elapsedTime:Number):void {
 			if (!isNaN(lastMouseX) && !isNaN(lastMouseY)) {
 				var scene:BaseScene = owner.scene;
-				KeyBoardManager.hasKeyDown(87) && camera.moveForward(-0.002 * elapsedTime);//W
-				KeyBoardManager.hasKeyDown(83) && camera.moveForward(0.002 * elapsedTime);//S
-				KeyBoardManager.hasKeyDown(65) && camera.moveRight(-0.002 * elapsedTime);//A
-				KeyBoardManager.hasKeyDown(68) && camera.moveRight(0.002 * elapsedTime);//D
-				KeyBoardManager.hasKeyDown(81) && camera.moveVertical(0.002 * elapsedTime);//Q
-				KeyBoardManager.hasKeyDown(69) && camera.moveVertical(-0.002 * elapsedTime);//E
+				KeyBoardManager.hasKeyDown(87) && camera.moveForward(-0.02 * elapsedTime);//W
+				KeyBoardManager.hasKeyDown(83) && camera.moveForward(0.02 * elapsedTime);//S
+				KeyBoardManager.hasKeyDown(65) && camera.moveRight(-0.02 * elapsedTime);//A
+				KeyBoardManager.hasKeyDown(68) && camera.moveRight(0.02 * elapsedTime);//D
+				KeyBoardManager.hasKeyDown(81) && camera.moveVertical(0.02 * elapsedTime);//Q
+				KeyBoardManager.hasKeyDown(69) && camera.moveVertical(-0.02 * elapsedTime);//E
 				
 				if (isMouseDown) {
 					var offsetX:Number = Laya.stage.mouseX - lastMouseX;

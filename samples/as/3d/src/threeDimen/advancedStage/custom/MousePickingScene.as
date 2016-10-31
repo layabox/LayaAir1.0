@@ -1,4 +1,4 @@
-package threeDimen.advancedStage {
+package threeDimen.advancedStage.custom {
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.PhasorSpriter3D;
@@ -31,14 +31,14 @@ package threeDimen.advancedStage {
 		private var ray:Ray;
 		private var point:Vector2 = new Vector2();
 		private var raycastHit:RaycastHit = new RaycastHit();
-		private var  camera:Camera;
+		private var camera:Camera;
 		
 		public function MousePickingScene() {
 			ray = new Ray(new Vector3(), new Vector3());
 			
 			phasorSpriter3D = new PhasorSpriter3D();
 			
-			 camera = (addChild(new Camera(0, 0.1, 100))) as Camera;
+			camera = (addChild(new Camera(0, 0.1, 100))) as Camera;
 			camera.transform.translate(new Vector3(0, 0.8, 1.5));
 			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			

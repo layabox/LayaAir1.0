@@ -13,6 +13,7 @@ package threeDimen.advancedStage {
 	import laya.utils.Stat;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer2D;
+	import threeDimen.advancedStage.custom.CustomMaterial;
 	
 	/**
 	 * ...

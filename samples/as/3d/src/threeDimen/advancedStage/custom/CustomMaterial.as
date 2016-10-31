@@ -1,4 +1,4 @@
-package threeDimen.advancedStage {
+package threeDimen.advancedStage.custom {
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderState;
