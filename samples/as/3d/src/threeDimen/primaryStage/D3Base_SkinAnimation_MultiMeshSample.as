@@ -1,4 +1,5 @@
 package threeDimen.primaryStage {
+	import laya.ani.AnimationTemplet;
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
@@ -16,14 +17,14 @@ package threeDimen.primaryStage {
 	 */
 	public class D3Base_SkinAnimation_MultiMeshSample {
 		public function D3Base_SkinAnimation_MultiMeshSample() {
-			Laya3D.init(0, 0,true);
+			Laya3D.init(0, 0, true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			var camera:Camera = (scene.addChild(new Camera( 0, 0.1, 100))) as Camera;
+			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
 			camera.transform.translate(new Vector3(0, 1.8, 2.0));
 			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			camera.clearColor = null;
@@ -42,16 +43,16 @@ package threeDimen.primaryStage {
 			var skinMesh3:MeshSprite3D = rootSkinMesh.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/nvXia/A02P1V1F001AX01@yequangongjinv-DEFAULT3.lm"))) as MeshSprite3D;
 			
 			var skinAni0:SkinAnimations = skinMesh0.addComponent(SkinAnimations) as SkinAnimations;
-			skinAni0.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
+			skinAni0.templet = AnimationTemplet.load("../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani");
 			skinAni0.player.play(0, 0.6);
 			var skinAni1:SkinAnimations = skinMesh1.addComponent(SkinAnimations) as SkinAnimations;
-			skinAni1.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
+			skinAni1.templet = AnimationTemplet.load("../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani")
 			skinAni1.player.play(0, 0.6);
 			var skinAni2:SkinAnimations = skinMesh2.addComponent(SkinAnimations) as SkinAnimations;
-			skinAni2.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
+			skinAni2.templet = AnimationTemplet.load("../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani");
 			skinAni2.player.play(0, 0.6);
 			var skinAni3:SkinAnimations = skinMesh3.addComponent(SkinAnimations) as SkinAnimations;
-			skinAni3.url = "../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani";
+			skinAni3.templet = AnimationTemplet.load("../../../../res/threeDimen/skinModel/nvXia/yequangongjinv.ani");
 			skinAni3.player.play(0, 0.6);
 		}
 	

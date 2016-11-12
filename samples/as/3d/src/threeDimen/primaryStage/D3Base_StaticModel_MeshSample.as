@@ -6,6 +6,7 @@ package threeDimen.primaryStage {
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.Mesh;
 	import laya.display.Stage;
+	import laya.net.Loader;
 	import laya.utils.Stat;
 	
 	public class D3Base_StaticModel_MeshSample {
@@ -22,9 +23,10 @@ package threeDimen.primaryStage {
 			camera.transform.translate(new Vector3(0, 0.8, 1.5));
 			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			
-			var mesh:MeshSprite3D = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm"))) as MeshSprite3D;
-			mesh.transform.localPosition = new Vector3(-0.3, 0.0, 0.0);
-			mesh.transform.localScale = new Vector3(0.5, 0.5, 0.5);
+			var mesh:Mesh=Mesh.load("../../../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm");
+			var meshSprite:MeshSprite3D = scene.addChild(new MeshSprite3D(mesh)) as MeshSprite3D;
+			meshSprite.transform.localPosition = new Vector3(-0.3, 0.0, 0.0);
+			meshSprite.transform.localScale = new Vector3(0.5, 0.5, 0.5);
 		}
 	}
 }

@@ -156,7 +156,6 @@ package laya.webgl.shader {
 		}
 		
 		private function _compile():void {
-			
 			if (!_vs || !_ps || _params)
 				return;
 			
@@ -167,7 +166,6 @@ package laya.webgl.shader {
 			var result:Object;
 			if (customCompile)
 				result = _preGetParams(_vs, _ps);
-			
 			var gl:WebGLContext = WebGL.mainContext;
 			_program = gl.createProgram();
 			_vshader = _createShader(gl, text[0], WebGLContext.VERTEX_SHADER);
@@ -193,7 +191,6 @@ package laya.webgl.shader {
 			
 			for (i = 0; i < nUniformNum; i++) {
 				var uniform:* = customCompile ? result.uniforms[i] : gl.getActiveUniform(_program, i);//得到uniform对象，包括名字等信息 {name,type,size}
-				
 				location = gl.getUniformLocation(_program, uniform.name); //用名字来得到location
 				one = {vartype: "uniform", ivartype: 1, attrib: attrib, location: location, name: uniform.name, type: uniform.type, isArray: false, isSame: false, preValue: null, indexOfParams: 0};
 				if (one.name.indexOf('[0]') > 0) {
@@ -207,7 +204,6 @@ package laya.webgl.shader {
 			
 			for (i = 0, n = _params.length; i < n; i++) {
 				one = _params[i];
-				
 				one.indexOfParams = i;
 				one.index = 1;
 				one.value = [one.location, null];
@@ -222,17 +218,20 @@ package laya.webgl.shader {
 				}
 				
 				switch (one.type) {
+				case WebGLContext.INT: 
+					one.fun = one.isArray ? this._uniform1iv : this._uniform1i;
+					break;
 				case WebGLContext.FLOAT: 
 					one.fun = one.isArray ? this._uniform1fv : this._uniform1f;
 					break;
 				case WebGLContext.FLOAT_VEC2: 
-					one.fun = this._uniform_vec2;
+					one.fun =one.isArray ? this._uniform_vec2v:this._uniform_vec2;
 					break;
 				case WebGLContext.FLOAT_VEC3: 
-					one.fun = this._uniform_vec3;
+					one.fun =one.isArray ?  this._uniform_vec3v:this._uniform_vec3;
 					break;
 				case WebGLContext.FLOAT_VEC4: 
-					one.fun = this._uniform_vec4;
+					one.fun =one.isArray ?  this._uniform_vec4v:this._uniform_vec4;
 					break;
 				case WebGLContext.SAMPLER_2D: 
 					one.fun = this._uniform_sampler2D;

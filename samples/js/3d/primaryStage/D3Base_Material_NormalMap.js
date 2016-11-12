@@ -21,11 +21,11 @@ directionLight.specularColor = new Vector3(1.0, 1.0, 0.8);
 directionLight.diffuseColor = new Vector3(1, 1, 1);
 
 var root = scene.addChild(new Laya.Sprite3D());
-root.transform.localScale = new Vector3(0.2, 0.2, 0.2);
+root.transform.localScale = new Vector3(0.002, 0.002, 0.002);
 
-loadModel("../../res/threeDimen/staticModel/lizard/lizard-lizard_geo.lm", "../../res/threeDimen/staticModel/lizard/lizard_norm.png");
-loadModel("../../res/threeDimen/staticModel/lizard/lizard-eye_geo.lm", "../../res/threeDimen/staticModel/lizard/lizardeye_norm.png");
-loadModel("../../res/threeDimen/staticModel/lizard/lizard-rock_geo.lm", "../../res/threeDimen/staticModel/lizard/rock_norm.png");
+loadModel("../../res/threeDimen/staticModel/lizardCal/lizardCaclute-lizard_geo.lm", "../../res/threeDimen/staticModel/lizardCal/lizard_norm.png");
+loadModel("../../res/threeDimen/staticModel/lizardCal/lizardCaclute-eye_geo.lm", "../../res/threeDimen/staticModel/lizardCal/lizardeye_norm.png");
+loadModel("../../res/threeDimen/staticModel/lizardCal/lizardCaclute-rock_geo.lm", "../../res/threeDimen/staticModel/lizardCal/rock_norm.png");
 Laya.timer.frameLoop(1, null, function () {
     root.transform.rotate(rotation, true);
 });

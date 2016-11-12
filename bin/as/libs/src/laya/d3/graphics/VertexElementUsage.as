@@ -27,13 +27,20 @@ package laya.d3.graphics {
 		public static const CORNERTEXTURECOORDINATE0:String = "CORNERTEXTURECOORDINATE";
 		public static const VELOCITY0:String = "VELOCITY";
 		public static const STARTCOLOR0:String = "STARTCOLOR";
+		public static const STARTSIZE:String = "STARTSIZE";
+		public static const AGEADDSCALE0:String = "AGEADDSCALE0";
+		public static const STARTROTATION:String = "STARTROTATION";
 		public static const ENDCOLOR0:String = "ENDCOLOR";
+		
+		
 		public static const SIZEROTATION0:String = "SIZEROTATION";
 		public static const RADIUS0:String = "RADIUS";
 		public static const RADIAN0:String = "RADIAN";
-		public static const AGEADDSCALE0:String = "AGEADDSCALE";
+		public static const STARTLIFETIME:String = "STARTLIFETIME";
+		public static const STARTSPEED:String = "STARTSPEED";
+		public static const DIRECTION:String = "DIRECTION";
 		public static const TIME0:String = "TIME";
-		
+		public static const RANDOM:String = "RANDOM";
 		
 	}
 }

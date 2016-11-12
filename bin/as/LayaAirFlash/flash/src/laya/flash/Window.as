@@ -44,7 +44,7 @@
 			//setTimeout(call, 1000/60);
 		}
 		
-		public function addEventListener(type:String, listener:Function):void
+		public function addEventListener(type:String, listener:Function,useCapture:Boolean=false):void
 		{
 			stage.addEventListener(type, listener);
 		}

@@ -20,6 +20,7 @@ package laya.webgl.canvas.save {
 			_cache[_cache._length++] = this;
 			_submitScissor.submitLength = context._submits._length - _submitScissor.submitIndex;
 			context._curSubmit = Submit.RENDERBASE;
+			context._renderKey = 0;
 		}
 		
 		public static function save(context:WebGLContext2D, submitScissor:SubmitScissor):void {

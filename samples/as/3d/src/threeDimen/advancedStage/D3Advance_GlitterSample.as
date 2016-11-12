@@ -19,7 +19,7 @@ package threeDimen.advancedStage {
 		private var camera:Camera;
 		
 		public function D3Advance_GlitterSample() {
-			Laya3D.init(0, 0,true);
+			Laya3D.init(0, 0, true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();

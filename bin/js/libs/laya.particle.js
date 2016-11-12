@@ -1097,13 +1097,33 @@
 		*@param settings 粒子配置数据
 		*/
 		__proto.setParticleSetting=function(setting){
+			var _$this=this;
 			if (!setting)return this.stop();
 			ParticleSetting.checkSetting(setting);
-			this.customRenderEnable=true;
+			if(/*__JS__ */!window.ConchParticleTemplate2D||Render.isWebGL)this.customRenderEnable=true;
 			if (Render.isWebGL){
 				this._particleTemplate=new ParticleTemplate2D(setting);
 				this.graphics._saveToCmd(Render.context._drawParticle,[this._particleTemplate]);
-				}else {
+			}
+			else if (Render.isConchApp&&/*__JS__ */window.ConchParticleTemplate2D){
+				this._particleTemplate=/*__JS__ */new ConchParticleTemplate2D();
+				var _this=this;
+				Laya.loader.load(setting.textureName,Handler.create(null,function(texture){
+					/*__JS__ */_this._particleTemplate.texture=texture;
+					_this._particleTemplate.settings=setting;
+					if (Render.isConchNode){
+						/*__JS__ */_this.graphics.drawParticle(_this._particleTemplate);
+					}
+					else{
+						_this.graphics._saveToCmd(Render.context._drawParticle,[_$this._particleTemplate]);
+					}
+				}));
+				this._emitter={start:function (){}};
+				/*__JS__ */this.play=this._particleTemplate.play.bind(this._particleTemplate);
+				/*__JS__ */this.stop=this._particleTemplate.stop.bind(this._particleTemplate);
+				return;
+			}
+			else {
 				this._particleTemplate=this._canvasTemplate=new ParticleTemplateCanvas(setting);
 			}
 			if (!this._emitter){

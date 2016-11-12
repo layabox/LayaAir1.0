@@ -925,7 +925,6 @@
 				}
 				cutOff=t;
 			}
-			return [];
 		}
 
 		return IDAStarFinder;

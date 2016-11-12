@@ -1,5 +1,6 @@
 package laya.d3.core.light {
 	import laya.d3.core.render.RenderState;
+	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.utils.Stat;
@@ -80,12 +81,12 @@ package laya.d3.core.light {
 				var shaderValue:ValusArray = state.worldShaderValue;
 				var loopCount:int = Stat.loopCount;
 				state.shaderDefs.add(ShaderDefines3D.POINTLIGHT);
-				shaderValue.pushValue(Buffer2D.POINTLIGHTDIFFUSE, diffuseColor.elements);
-				shaderValue.pushValue(Buffer2D.POINTLIGHTAMBIENT, ambientColor.elements);
-				shaderValue.pushValue(Buffer2D.POINTLIGHTSPECULAR, specularColor.elements);
-				shaderValue.pushValue(Buffer2D.POINTLIGHTPOS, transform.position.elements);
-				shaderValue.pushValue(Buffer2D.POINTLIGHTRANGE, range);
-				shaderValue.pushValue(Buffer2D.POINTLIGHTATTENUATION, attenuation.elements);
+				shaderValue.pushValue(BaseScene.POINTLIGHTDIFFUSE, diffuseColor.elements);
+				shaderValue.pushValue(BaseScene.POINTLIGHTAMBIENT, ambientColor.elements);
+				shaderValue.pushValue(BaseScene.POINTLIGHTSPECULAR, specularColor.elements);
+				shaderValue.pushValue(BaseScene.POINTLIGHTPOS, transform.position.elements);
+				shaderValue.pushValue(BaseScene.POINTLIGHTRANGE, range);
+				shaderValue.pushValue(BaseScene.POINTLIGHTATTENUATION, attenuation.elements);
 			}
 		}
 	

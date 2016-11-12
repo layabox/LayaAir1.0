@@ -9,11 +9,10 @@ function MousePickingScene() {
     this.camera.transform.translate(new Laya.Vector3(0, 0.8, 1.5));
     this.camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
 
-    this.sprite3d = this.addChild(new Laya.Sprite3D());
+    this.sprite3d = this.addChild(new Laya.Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh"));
     this.sprite3d.once(Laya.Event.HIERARCHY_LOADED, this, function (spirit3D) {
         this.setMaterial(spirit3D);
     });
-    this.sprite3d.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh");
     this.sprite3d.transform.localScale = new Laya.Vector3(10, 10, 10);
 
 }

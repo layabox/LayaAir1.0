@@ -9,7 +9,7 @@ package laya.d3.math {
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Matrix4x4 =/*[STATIC SAFE]*/ new Matrix4x4();
 		
-		
+		private static var _translationVector:Vector3 = new Vector3();
 		/**
 		 * 绕X轴旋转
 		 * @param	rad  旋转角度
@@ -592,6 +592,38 @@ package laya.d3.math {
 			for (i = 0; i < 16; ++i) {
 				d[i] = sou[i];
 			}
+		}
+		
+		public static function translation(v3:Vector3, out:Matrix4x4):void{
+			
+			var ve:Float32Array = v3.elements;
+			var oe:Float32Array = out.elements;
+			oe[0] = oe[5] = oe[10] = oe[15] = 1;
+			oe[12] = ve[0];
+			oe[13] = ve[1];
+			oe[14] = ve[2];
+		}
+		
+		public function get translationVector():Vector3{
+			
+			var me:Float32Array = this.elements;
+			var oe:Float32Array = _translationVector.elements;
+			
+			oe[0] = me[12];
+			oe[1] = me[13];
+			oe[2] = me[14];
+			
+			return _translationVector;
+		}
+		
+		public function set translationVector(v3:Vector3):void{
+			
+			var me:Float32Array = this.elements;
+			var ve:Float32Array = v3.elements;
+			
+			me[12] = ve[0];
+			me[13] = ve[1];
+			me[14] = ve[2];
 		}
 	
 	}

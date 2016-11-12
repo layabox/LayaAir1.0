@@ -299,6 +299,7 @@ package laya.d3.core {
 		public function BaseCamera(nearPlane:Number = 0.1, farPlane:Number = 1000) {
 			_tempVector3 = new Vector3();
 			
+			_position = new Vector3();
 			_up = new Vector3();
 			_forward = new Vector3();
 			_right = new Vector3();

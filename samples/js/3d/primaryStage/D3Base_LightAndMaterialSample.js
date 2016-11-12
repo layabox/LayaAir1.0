@@ -47,7 +47,7 @@ spotLight.spot = 32;
 
 scene.shadingMode = currentShadingMode;
 
-var grid = scene.addChild(new Laya.Sprite3D());
+var grid = scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/grid/plane.lh"));
 //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 grid.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
     var meshSprite = sprite.getChildAt(0);
@@ -62,10 +62,8 @@ grid.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
         }
     });
 });
-grid.loadHierarchy("../../res/threeDimen/staticModel/grid/plane.lh");
 
-var sphere = scene.addChild(new Laya.Sprite3D());
-sphere.loadHierarchy("../../res/threeDimen/staticModel/sphere/sphere.lh");
+var sphere = scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/sphere/sphere.lh"));
 sphere.transform.localScale = new Vector3(0.2, 0.2, 0.2);
 sphere.transform.localPosition = new Vector3(0.0, 0.0, 0.2);
 

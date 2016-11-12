@@ -10,7 +10,7 @@ var StaticModel_HierarchySample = (function () {
         camera.transform.translate(new Laya.Vector3(0, 0.8, 1.5));
         camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
         //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-        var staticMesh = scene.addChild(new Laya.Sprite3D());
+        var staticMesh = scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh"));
         staticMesh.once(Laya.Event.HIERARCHY_LOADED, this, function (sprite) {
             var meshSprite = sprite.getChildAt(0);
             var mesh = meshSprite.meshFilter.sharedMesh;
@@ -23,7 +23,6 @@ var StaticModel_HierarchySample = (function () {
                 }
             });
         });
-        staticMesh.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh");
         staticMesh.transform.localScale = new Laya.Vector3(10, 10, 10);
     }
     return StaticModel_HierarchySample;

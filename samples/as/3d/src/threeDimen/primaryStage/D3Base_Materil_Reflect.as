@@ -22,7 +22,6 @@ package threeDimen.primaryStage {
 	
 	public class D3Base_Materil_Reflect {
 		private var meshSprite:MeshSprite3D;
-		private var cubeTexture:TextureCube;
 		private var material:StandardMaterial;
 		
 		public function D3Base_Materil_Reflect() {
@@ -43,6 +42,7 @@ package threeDimen.primaryStage {
 			camera.addComponent(CameraMoveScript);
 			
 			var sprite:Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;
+			var textureCube:TextureCube = TextureCube.load("../../../../res/threeDimen/skyBox/skyCube.ltc");
 			
 			//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 			var mesh:Mesh = Mesh.load("../../../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
@@ -52,19 +52,15 @@ package threeDimen.primaryStage {
 					material = meshSprite.meshRender.sharedMaterials[0] as  StandardMaterial;
 					material.albedo = new Vector4(0.0, 0.0, 0.0, 0.0);
 					material.renderMode = BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
-					(material && cubeTexture) && (material.reflectTexture = cubeTexture);
+					material.reflectTexture = textureCube;
 				});
 			});
 			meshSprite.transform.localPosition = new Vector3(-0.3, 0.0, 0.0);
 			meshSprite.transform.localScale = new Vector3(0.5, 0.5, 0.5);
 			meshSprite.transform.localRotation = new Quaternion(-0.7071068, 0.0, 0.0, 0.7071068);
 			
-			////可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-			Laya.loader.load("../../../../res/threeDimen/skyBox/px.jpg,../../../../res/threeDimen/skyBox/nx.jpg,../../../../res/threeDimen/skyBox/py.jpg,../../../../res/threeDimen/skyBox/ny.jpg,../../../../res/threeDimen/skyBox/pz.jpg,../../../../res/threeDimen/skyBox/nz.jpg", Handler.create(null, function(texture:TextureCube):void {
-				cubeTexture = texture;
-				(material && cubeTexture) && ((meshSprite.meshRender.sharedMaterials[0] as  StandardMaterial).reflectTexture = texture);
-				skyBox.textureCube = texture;
-			}), null, Loader.TEXTURECUBE);
+		   skyBox.textureCube = textureCube;
+
 			
 			Laya.timer.frameLoop(1, null, function():void {
 				meshSprite.transform.rotate(new Vector3(0, 0.01, 0), false);

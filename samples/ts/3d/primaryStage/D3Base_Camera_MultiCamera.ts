@@ -8,7 +8,7 @@ class Camera_MultiCamera{
         Laya.Stat.show();
 
         var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
-        scene.shadingMode = Laya.BaseScene.VERTEX_SHADING;
+
 
         var camera1 = new Laya.Camera(0,0.1,100);
         scene.addChild(camera1);

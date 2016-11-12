@@ -67,6 +67,7 @@ package laya.media.h5audio {
 				return;
 			}
 			Browser.container.appendChild(_audio);
+			if(_audio.play)
 			_audio.play();
 		}
 		
@@ -92,6 +93,7 @@ package laya.media.h5audio {
 			completeHandler = null;
 			if (!_audio)
 				return;
+			if(_audio.pause)
 			_audio.pause();
 			_audio.removeEventListener("ended", _onEnd);
 			_audio.removeEventListener("canplay", _resumePlay);

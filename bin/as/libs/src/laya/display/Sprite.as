@@ -17,7 +17,6 @@ package laya.display {
 	import laya.utils.Dragging;
 	import laya.utils.HTMLChar;
 	import laya.utils.Handler;
-	import laya.utils.HitArea;
 	import laya.utils.Pool;
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
@@ -202,6 +201,10 @@ package laya.display {
 	 */
 	public class Sprite extends Node implements ILayout {
 		/** @private */
+		protected static const CHG_VIEW:int = 0x10;
+		protected static const CHG_SCALE:int = 0x100;
+		protected static const CHG_TEXTURE:int = 0x1000;
+		/** @private */
 		public static var CustomList:Array = [];
 		/**指定当mouseEnabled=true时，是否可穿透。默认值为false，如果设置为true，则点击空白区域可以穿透过去。*/
 		public var mouseThrough:Boolean = false;
@@ -219,6 +222,8 @@ package laya.display {
 		public var _height:Number = 0;
 		/** @private */
 		protected var _repaint:int = 1;
+		/** @private */
+		protected var _changeType:int = 0;
 		
 		/** @private 鼠标状态，0:auto,1:mouseEnabled=false,2:mouseEnabled=true。*/
 		protected var _mouseEnableState:int = 0;
@@ -245,10 +250,12 @@ package laya.display {
 		 * 对于已知大小的容器（特别是根容器），设置此值为true，能减少节点碰撞，提高性能。默认为false
 		 */
 		public var hitTestPrior:Boolean = false;
-		/** @private */
-		private var _optimizeScrollRect:Boolean = false;
 		/**@private 视口大小，视口外的东西，将不被渲染*/
 		public var viewport:Rectangle;
+		/** @private */
+		private var _optimizeScrollRect:Boolean = false;
+		/**@private */
+		private var _texture:Texture = null;
 		
 		public function get optimizeScrollRect():Boolean {
 			return _optimizeScrollRect;
@@ -368,9 +375,14 @@ package laya.display {
 		}
 		
 		public function set x(value:Number):void {
-			if (this.destroyed) return;
-			var p:Sprite = _parent as Sprite;
-			this._x !== value && (this._x = value, model && model.pos(value, this._y), p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint()), this._$P.maskParent && _$P.maskParent._repaint === 0 && (_$P.maskParent._repaint = 1, _$P.maskParent.parentRepaint()));
+			if (this._x !== value) {
+				if (this.destroyed) return;
+				this._x = value;
+				model && model.pos(value, this._y);
+				var p:Sprite = _parent as Sprite;
+				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
+				this._$P.maskParent && _$P.maskParent._repaint === 0 && (_$P.maskParent._repaint = 1, _$P.maskParent.parentRepaint());
+			}
 		}
 		
 		/**表示显示对象相对于父容器的垂直方向坐标值。*/
@@ -379,9 +391,14 @@ package laya.display {
 		}
 		
 		public function set y(value:Number):void {
-			if (this.destroyed) return;
-			var p:Sprite = _parent as Sprite;
-			this._y !== value && (this._y = value, model && model.pos(this._x, value), p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint()), this._$P.maskParent && _$P.maskParent._repaint === 0 && (_$P.maskParent._repaint = 1, _$P.maskParent.parentRepaint()));
+			if (this._y !== value) {
+				if (this.destroyed) return;
+				this._y = value;
+				model && model.pos(this._x, value);
+				var p:Sprite = _parent as Sprite;
+				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
+				this._$P.maskParent && _$P.maskParent._repaint === 0 && (_$P.maskParent._repaint = 1, _$P.maskParent.parentRepaint());
+			}
 		}
 		
 		/**
@@ -557,6 +574,7 @@ package laya.display {
 			var style:Style = getStyle();
 			if (style._tf.scaleX !== value) {
 				style.setScaleX(value);
+				_changeType |= CHG_VIEW;
 				_tfChanged = true;
 				model && model.scale(value, style._tf.scaleY);
 				_renderType |= RenderSprite.TRANSFORM;
@@ -574,6 +592,7 @@ package laya.display {
 			var style:Style = getStyle();
 			if (style._tf.scaleY !== value) {
 				style.setScaleY(value);
+				_changeType |= CHG_VIEW;
 				_tfChanged = true;
 				model && model.scale(style._tf.scaleX, value);
 				_renderType |= RenderSprite.TRANSFORM;
@@ -590,6 +609,7 @@ package laya.display {
 		public function set rotation(value:Number):void {
 			var style:Style = getStyle();
 			if (style._tf.rotate !== value) {
+				_changeType |= CHG_VIEW;
 				style.setRotate(value);
 				_tfChanged = true;
 				model && model.rotate(value);
@@ -703,6 +723,7 @@ package laya.display {
 		
 		public function set pivotX(value:Number):void {
 			getStyle().setTranslateX(value);
+			_changeType |= CHG_VIEW;
 			model && model.pivot(value, this._style._tf.translateY);
 			repaint();
 		}
@@ -714,6 +735,7 @@ package laya.display {
 		
 		public function set pivotY(value:Number):void {
 			getStyle().setTranslateY(value);
+			_changeType |= CHG_VIEW;
 			model && model.pivot(this._style._tf.translateX, value);
 			repaint();
 		}
@@ -1152,7 +1174,7 @@ package laya.display {
 		
 		/**cacheAs后，设置自己和父对象缓存失效。*/
 		public function repaint():void {
-			this.model&&this.model.repaint&&this.model.repaint();
+			this.model && this.model.repaint && this.model.repaint();
 			(_repaint === 0) && (_repaint = 1, parentRepaint());
 			if (this._$P && this._$P.maskParent) {
 				_$P.maskParent.repaint();
@@ -1341,6 +1363,18 @@ package laya.display {
 			}
 		}
 		
+		/**@private 清理graphics，只显示此texture图片，等同于graphics.clear();graphics.drawTexture()*/
+		public function get texture():Texture {
+			return _texture;
+		}
+		
+		public function set texture(value:Texture):void {
+			if (_texture != value) {
+				_texture = value;
+				graphics.cleanByTexture(value,0,0);
+			}
+		}
+		
 		/**@private */
 		public function _getWords():Vector.<HTMLChar> {
 			return null;
@@ -1355,7 +1389,7 @@ package laya.display {
 					out.push(words[i]);
 				}
 			}
-			_childs.forEach(function (o:Sprite,index:int,array:Array):void {
+			_childs.forEach(function(o:Sprite, index:int, array:Array):void {
 				o._style._enableLayout() && o._addToLayout(out);
 			});
 			return true;

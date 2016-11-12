@@ -239,7 +239,7 @@ package laya.d3.resource.models {
 		 */
 		protected function loadShaderParams():void {
 			_sharderNameID = Shader.nameKey.get("SkyBox");
-			_shaderValue.pushValue(Buffer2D.DIFFUSETEXTURE, null);
+			_shaderValue.pushValue(Sky.DIFFUSETEXTURE, null);
 		}
 		
 		override public function _render(state:RenderState):void {
@@ -259,9 +259,9 @@ package laya.d3.resource.models {
 				_tempMatrix4x40.transpose();
 				Matrix4x4.multiply(state.projectionMatrix, _tempMatrix4x40, _tempMatrix4x41);
 				
-				_shaderValue.pushValue(Buffer2D.MVPMATRIX, _tempMatrix4x41.elements);
-				_shaderValue.pushValue(Buffer2D.INTENSITY, _colorIntensity);
-				_shaderValue.pushValue(Buffer2D.ALPHABLENDING, alphaBlending);
+				_shaderValue.pushValue(Sky.MVPMATRIX, _tempMatrix4x41.elements);
+				_shaderValue.pushValue(Sky.INTENSITY, _colorIntensity);
+				_shaderValue.pushValue(Sky.ALPHABLENDING, alphaBlending);
 				
 				_shaderValue.data[1] = textureCube.source;
 				

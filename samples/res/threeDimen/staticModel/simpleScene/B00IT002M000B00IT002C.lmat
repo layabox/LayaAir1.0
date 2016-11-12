@@ -28,7 +28,7 @@
       1.0
     ],
     "diffuseTexture": {
-      "texture2D": "map\\01Jokul\\Texture\\B00IT002C.dds"
+      "texture2D": "map//01Jokul//Texture//B00IT002C.dds"
     },
     "normalTexture": {
       "texture2D": ""

@@ -5,7 +5,6 @@ var Camera_MultiCamera = (function () {
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
         Laya.Stat.show();
         var scene = Laya.stage.addChild(new Laya.Scene());
-        scene.shadingMode = Laya.BaseScene.VERTEX_SHADING;
         var camera1 = new Laya.Camera(0, 0.1, 100);
         scene.addChild(camera1);
         camera1.transform.translate(new Laya.Vector3(0, 0.8, 1.5));

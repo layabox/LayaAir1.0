@@ -1,7 +1,7 @@
 package laya.d3.component {
 	import laya.ani.AnimationPlayer;
 	import laya.ani.AnimationState;
-	import laya.ani.KeyframesAniTemplet;
+	import laya.ani.AnimationTemplet;
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.RenderState;
@@ -53,7 +53,7 @@ package laya.d3.component {
 			matrixs.length = attachBones.length;
 			for (var i:int; i < attachBones.length; i++) {
 				
-				var index:int = _attachSkeleton._templet.getNodeIndexWithName(player.currentAnimationClipIndex, attachBones[i]);
+				var index:int = _attachSkeleton.templet.getNodeIndexWithName(player.currentAnimationClipIndex, attachBones[i]);
 				_data = _attachSkeleton.curBonesDatas.subarray(index * 16, (index + 1) * 16);
 				var matrix:Matrix4x4 = matrixs[i];
 				

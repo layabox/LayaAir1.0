@@ -128,6 +128,7 @@ package laya.net {
 		 */
 		protected function complete():void {
 			clear();
+			var flag:Boolean = true;
 			try {
 				if (_responseType === "json") {
 					this._data = JSON.parse(_http.responseText);
@@ -136,10 +137,11 @@ package laya.net {
 				} else {
 					this._data = _http.response || _http.responseText;
 				}
-				event(Event.COMPLETE, this._data is Array ? [this._data] : this._data);
 			} catch (e:*) {
+				flag = false;
 				error(e.message);
 			}
+			flag && event(Event.COMPLETE, this._data is Array ? [this._data] : this._data);
 		}
 		
 		/**

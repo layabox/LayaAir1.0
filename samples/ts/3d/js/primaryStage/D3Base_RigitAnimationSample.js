@@ -10,14 +10,13 @@ var D3Base_RigitAnimationSample = (function () {
         camera.transform.translate(new Laya.Vector3(0, 16.8, 26.0));
         camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
         camera.clearColor = null;
-        this.effectSprite = this.scene.addChild(new Laya.Sprite3D());
+        this.effectSprite = this.scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/effect/WuShen/WuShen.lh"));
         this.effectSprite.once(Laya.Event.HIERARCHY_LOADED, this, function (sender, sprite3D) {
             _this.setMeshParams(_this.effectSprite, Laya.BaseMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
             var rootAnimations = sprite3D.addComponent(Laya.RigidAnimations);
             rootAnimations.url = "../../res/threeDimen/staticModel/effect/WuShen/WuShen.lani";
             rootAnimations.player.play(0);
         });
-        this.effectSprite.loadHierarchy("../../res/threeDimen/staticModel/effect/WuShen/WuShen.lh");
     }
     D3Base_RigitAnimationSample.prototype.setMeshParams = function (spirit3D, renderMode) {
         if (spirit3D instanceof Laya.MeshSprite3D) {

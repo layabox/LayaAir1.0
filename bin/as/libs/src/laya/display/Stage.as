@@ -81,10 +81,10 @@ package laya.display {
 		
 		/**当前焦点对象，此对象会影响当前键盘事件的派发主体。*/
 		public var focus:Node;
-		/**@private 相对浏览器左上角的偏移。*/
+		/**@private 相对浏览器左上角的偏移，弃用，请使用_canvasTransform。*/
 		public var offset:Point = new Point();
-		/**@private 开发者自己设置的画布偏移*/
-		private var _offset:Point;
+		///**@private 开发者自己设置的画布偏移*/
+		//private var _offset:Point;
 		/**帧率类型，支持三种模式：fast-60帧(默认)，slow-30帧，mouse-30帧，但鼠标活动后会自动加速到60，鼠标不动2秒后降低为30帧，以节省消耗。*/
 		public var frameRate:String = "fast";
 		/**设计宽度（初始化时设置的宽度Laya.init(width,height)）*/
@@ -118,9 +118,13 @@ package laya.display {
 		private var _safariOffsetY:Number = 0;
 		/**@private */
 		private var _frameStartTime:Number;
+		/**@private */
 		private var _previousOrientation:int;
+		/**@private 3D场景*/
+		public var _scenes:Array;
 		
 		public function Stage() {
+			_scenes = [];
 			this.mouseEnabled = true;
 			this.hitTestPrior = true;
 			this._displayedInStage = true;
@@ -164,18 +168,17 @@ package laya.display {
 			window.addEventListener("resize", function():void {
 				// 处理屏幕旋转。旋转后收起输入法。
 				var orientation:* = Browser.window.orientation;
-				if (orientation != null && orientation != _previousOrientation && _this._isInputting())
-				{
+				if (orientation != null && orientation != _previousOrientation && _this._isInputting()) {
 					Input["inputElement"].target.focus = false;
 				}
 				_previousOrientation = orientation;
-					
+				
 				// 弹出输入法不应对画布进行resize。
 				if (_this._isInputting()) return;
 				
 				// Safari横屏工具栏偏移
 				if (Browser.onSafari)
-					_this._safariOffsetY = (Browser.document.body.clientHeight || Browser.document.documentElement.clientHeight) - Browser.window.innerHeight;
+					_this._safariOffsetY = (Browser.window.__innerHeight || Browser.document.body.clientHeight || Browser.document.documentElement.clientHeight) - Browser.window.innerHeight;
 				
 				_this._resetCanvas();
 			});
@@ -236,8 +239,7 @@ package laya.display {
 				rotation = screenType !== _screenMode;
 				/*[IF-FLASH]*/
 				rotation = false;
-				if (rotation)
-				{
+				if (rotation) {
 					//宽高互换
 					var temp:Number = screenHeight;
 					screenHeight = screenWidth;
@@ -321,17 +323,17 @@ package laya.display {
 			else if (_alignV === ALIGN_BOTTOM) offset.y = screenHeight - realHeight;
 			else offset.y = (screenHeight - realHeight) * 0.5 / pixelRatio;
 			
-			//处理用户自行设置的画布偏移
-			if (!_offset) {
-				_offset = new Point(parseInt(canvasStyle.left) || 0, parseInt(canvasStyle.top) || 0);
-				canvasStyle.left = canvasStyle.top = "0px";
-			}
-			offset.x += _offset.x;
-			offset.y += _offset.y;
+			////处理用户自行设置的画布偏移
+			//if (!_offset) {
+			//_offset = new Point(parseInt(canvasStyle.left) || 0, parseInt(canvasStyle.top) || 0);
+			//canvasStyle.left = canvasStyle.top = "0px";
+			//}
+			//offset.x += _offset.x;
+			//offset.y += _offset.y;
 			offset.x = Math.round(offset.x);
 			offset.y = Math.round(offset.y);
-			canvasStyle.top = _safariOffsetY + "px";
 			mat.translate(offset.x, offset.y);
+			if (_safariOffsetY && parseInt(canvasStyle.top) === 0) canvasStyle.top = _safariOffsetY + "px";
 			
 			//处理横竖屏
 			canvasDegree = 0;
@@ -352,6 +354,9 @@ package laya.display {
 			if (mat.ty < 0.00000000000001) mat.ty = 0;
 			canvasStyle.transformOrigin = canvasStyle.webkitTransformOrigin = canvasStyle.msTransformOrigin = canvasStyle.mozTransformOrigin = canvasStyle.oTransformOrigin = "0px 0px 0px";
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "matrix(" + mat.toString() + ")";
+			//修正用户自行设置的偏移
+			//var rect:* = canvas.source.getBoundingClientRect();
+			mat.translate(parseInt(canvasStyle.left) || 0,parseInt(canvasStyle.top) || 0);
 			_style.visible = true;
 			_repaint = 1;
 			event(Event.RESIZE);
@@ -502,13 +507,10 @@ package laya.display {
 		override public function render(context:RenderContext, x:Number, y:Number):void {
 			_frameStartTime = Browser.now();
 			Render.isFlash && repaint();
-			
 			_renderCount++;
-			
 			var frameMode:String = frameRate === FRAME_MOUSE ? (((_frameStartTime - _mouseMoveTime) < 2000) ? FRAME_FAST : FRAME_SLOW) : frameRate;
 			var isFastMode:Boolean = (frameMode !== FRAME_SLOW);
 			var isDoubleLoop:Boolean = (_renderCount % 2 === 0);
-			var ctx:* = context;
 			
 			Stat.renderSlow = !isFastMode;
 			
@@ -516,24 +518,37 @@ package laya.display {
 				Stat.loopCount++;
 				MouseManager.instance.runEvent();
 				Laya.timer._update();
-				if (Render.isConchNode) {
+				
+				var i:int, n:int;
+				for (i = 0, n = _scenes.length; i < n; i++) {
+					var scene:* = _scenes[i];
+					(scene) && (scene._updateScene());
+				}
+				
+				if (Render.isConchNode) {//NATIVE
 					var customList:Array = Sprite.CustomList;
-					for (var i:Number = 0, n:Number = customList.length; i < n; i++) {
-						customList[i].customRender(customList[i].customContext, 0, 0);
+					for (i = 0, n = customList.length; i < n; i++) {
+						var customItem:* = customList[i];
+						customItem.customRender(customItem.customContext, 0, 0);
 					}
 					return;
 				}
-				if (renderingEnabled && _style.visible) {
-					Render.isWebGL ? ctx.clear() : RunDriver.clear(_bgColor);
+				if (Render.isWebGL && renderingEnabled && _style.visible) {
+					context.clear();
 					super.render(context, x, y);
 				}
 			}
-			if (Render.isConchNode) return;
+			if (Render.isConchNode) return;//NATIVE
 			if (renderingEnabled && _style.visible && (isFastMode || !isDoubleLoop)) {
-				Render.isWebGL && RunDriver.clear(_bgColor);
-				RunDriver.beginFlush();
-				context.flush();
-				RunDriver.endFinish();
+				if (Render.isWebGL) {
+					RunDriver.clear(_bgColor);
+					RunDriver.beginFlush();
+					context.flush();
+					RunDriver.endFinish();
+				}else {
+					RunDriver.clear(_bgColor);
+					super.render(context, x, y);
+				}
 			}
 			VectorGraphManager.instance && VectorGraphManager.getInstance().endDispose();
 		}

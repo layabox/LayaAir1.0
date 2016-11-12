@@ -1,5 +1,6 @@
 package laya.d3.core.light {
 	import laya.d3.core.render.RenderState;
+	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.utils.Stat;
@@ -119,14 +120,14 @@ package laya.d3.core.light {
 				var shaderValue:ValusArray = state.worldShaderValue;
 				var loopCount:int = Stat.loopCount;
 				state.shaderDefs.add(ShaderDefines3D.SPOTLIGHT);
-				shaderValue.pushValue(Buffer2D.SPOTLIGHTDIFFUSE, diffuseColor.elements);
-				shaderValue.pushValue(Buffer2D.SPOTLIGHTAMBIENT, ambientColor.elements);
-				shaderValue.pushValue(Buffer2D.SPOTLIGHTSPECULAR, specularColor.elements);
-				shaderValue.pushValue(Buffer2D.SPOTLIGHTPOS, transform.position.elements);
-				shaderValue.pushValue(Buffer2D.SPOTLIGHTDIRECTION, direction.elements);
-				shaderValue.pushValue(Buffer2D.SPOTLIGHTRANGE, range);
-				shaderValue.pushValue(Buffer2D.SPOTLIGHTSPOT, spot);
-				shaderValue.pushValue(Buffer2D.SPOTLIGHTATTENUATION, attenuation.elements);
+				shaderValue.pushValue(BaseScene.SPOTLIGHTDIFFUSE, diffuseColor.elements);
+				shaderValue.pushValue(BaseScene.SPOTLIGHTAMBIENT, ambientColor.elements);
+				shaderValue.pushValue(BaseScene.SPOTLIGHTSPECULAR, specularColor.elements);
+				shaderValue.pushValue(BaseScene.SPOTLIGHTPOS, transform.position.elements);
+				shaderValue.pushValue(BaseScene.SPOTLIGHTDIRECTION, direction.elements);
+				shaderValue.pushValue(BaseScene.SPOTLIGHTRANGE, range);
+				shaderValue.pushValue(BaseScene.SPOTLIGHTSPOT, spot);
+				shaderValue.pushValue(BaseScene.SPOTLIGHTATTENUATION, attenuation.elements);
 			}
 		}
 	}

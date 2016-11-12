@@ -280,12 +280,15 @@ package laya.utils {
 			
 			var params:* = _getParams(propsO, drawConfig[1], drawConfig[2], drawConfig[3]);
 			m = _tM;
-			if (m) {
+			if (m||_alpha!=1) {
 				g.save();
+				if(m)
 				g.transform(m);
+				if (_alpha != 1)
+				g.alpha(_alpha);
 			}
 			g[drawConfig[0]].apply(g, params);
-			if (m) {
+			if (m||_alpha!=1) {
 				g.restore();
 			}
 		
@@ -329,6 +332,7 @@ package laya.utils {
 		 * @private
 		 */
 		private static var _tM:Matrix;
+		private static var _alpha:Number;
 		/**
 		 * @private
 		 */
@@ -342,6 +346,7 @@ package laya.utils {
 				
 				rst[i] = _getObjVar(obj, params[i][0], params[i][1]);
 			}
+			_alpha = _getObjVar(obj, "alpha", 1);
 			var m:Matrix;
 			m = _getTransformData(obj);
 			if (m) {

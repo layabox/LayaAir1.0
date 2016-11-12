@@ -8,7 +8,7 @@ package laya.ani {
 	 */
 	public class AnimationPlayer extends EventDispatcher {
 		/** 数据模板*/
-		private var _templet:KeyframesAniTemplet;
+		private var _templet:AnimationTemplet;
 		/** 当前精确时间，不包括重播时间*/
 		private var _currentTime:Number;
 		/** 当前帧时间，不包括重播时间*/
@@ -53,7 +53,7 @@ package laya.ani {
 		 * 获取动画数据模板
 		 * @param	value 动画数据模板
 		 */
-		public function get templet():KeyframesAniTemplet {
+		public function get templet():AnimationTemplet {
 			return _templet;
 		}
 		
@@ -61,7 +61,7 @@ package laya.ani {
 		 * 设置动画数据模板,注意：修改此值会有计算开销。
 		 * @param	value 动画数据模板
 		 */
-		public function set templet(value:KeyframesAniTemplet):void {
+		public function set templet(value:AnimationTemplet):void {
 			if (!state === AnimationState.stopped)
 				stop(true);
 			
@@ -255,7 +255,7 @@ package laya.ani {
 		/**
 		 * @private
 		 */
-		public function _onTempletLoadedComputeFullKeyframeIndices(cachePlayRate:Number, cacheFrameRate:Number, templet:KeyframesAniTemplet):void {
+		public function _onTempletLoadedComputeFullKeyframeIndices(cachePlayRate:Number, cacheFrameRate:Number, templet:AnimationTemplet):void {
 			if (_templet === templet && _cachePlayRate === cachePlayRate && _cacheFrameRate === cacheFrameRate)
 				_computeFullKeyframeIndices();
 		}
@@ -265,7 +265,7 @@ package laya.ani {
 		 */
 		private function _computeFullKeyframeIndices():void {
 			var anifullFrames:Array = _fullFrames = [];
-			var templet:KeyframesAniTemplet = _templet;
+			var templet:AnimationTemplet = _templet;
 			
 			var cacheFrameInterval:Number = _cacheFrameRateInterval*_cachePlayRate;
 			
@@ -312,7 +312,8 @@ package laya.ani {
 				(_playEnd === 0) && (_playEnd = oriDuration);
 				
 				if (Math.floor(_playEnd) > oriDuration)//以毫秒为最小时间单位,取整。
-					throw new Error("AnimationPlayer:playEnd must less than original Duration.");
+					//throw new Error("AnimationPlayer:playEnd must less than original Duration.");
+					_playEnd = oriDuration;
 				
 				_playDuration = _playEnd - _playStart;
 			}

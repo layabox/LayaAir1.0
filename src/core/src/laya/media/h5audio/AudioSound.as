@@ -77,7 +77,12 @@ package laya.media.h5audio {
 			}
 			
 			this.audio = ad;
-			ad.load();
+			if (ad.load) {
+				ad.load();
+			}else {
+				onErr();
+			}
+			
 		}
 		
 		/**

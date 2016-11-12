@@ -42,11 +42,10 @@ package threeDimen.advancedStage.custom {
 			camera.transform.translate(new Vector3(0, 0.8, 1.5));
 			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			
-			sprite3d = addChild(new Sprite3D()) as Sprite3D;
+			sprite3d = addChild(Sprite3D.load("../../../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh")) as Sprite3D;
 			sprite3d.once(Event.HIERARCHY_LOADED, null, function(spirit3D:Sprite3D):void {
 				setMaterial(spirit3D);
 			});
-			sprite3d.loadHierarchy("../../../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh");
 			sprite3d.transform.localScale = new Vector3(10, 10, 10);
 		}
 		

@@ -19,8 +19,7 @@ camera.transform.rotate(new Vector3(-20, 0, 0), false, false);
 camera.clearColor = null;
 camera.addComponent(CameraMoveScript);
 
-var grid = scene.addChild(new Sprite3D());
-grid.loadHierarchy("../../res/threeDimen/staticModel/grid/plane.lh");
+var grid = scene.addChild(Sprite3D.load("../../res/threeDimen/staticModel/grid/plane.lh"));
 
 var settings = new ParticleSettings();
 settings.textureName = "../../res/threeDimen/particle/texture.png";

@@ -51,13 +51,9 @@ package laya.d3.core.glitter {
 			_glitterRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
 			var material:GlitterMaterial = new GlitterMaterial();
-			material.setShaderName("GLITTER");
 			
-			if (setting.texturePath)//预设纹理ShaderValue
-			{
-				Laya.loader.load(setting.texturePath, Handler.create(null, function(texture:Texture2D):void {
-					material.diffuseTexture = texture;
-				}), null, Loader.TEXTURE2D);
+			if (setting.texturePath) {
+				material.diffuseTexture = Texture2D.load(setting.texturePath);
 			}
 			
 			_glitterRender.sharedMaterial = material;

@@ -56,8 +56,7 @@ package threeDimen.advancedStage {
 			
 			camera.addComponent(CameraMoveScript);
 			
-			var grid:Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;
-			grid.loadHierarchy("../../../../res/threeDimen/staticModel/grid/plane.lh");
+			var grid:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/staticModel/grid/plane.lh")) as Sprite3D;
 			
 			var settings:ParticleSetting = new ParticleSetting();
 			settings.textureName = "../../../../res/threeDimen/particle/texture.png";

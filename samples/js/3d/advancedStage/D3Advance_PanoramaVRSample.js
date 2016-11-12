@@ -18,10 +18,6 @@ camera.addComponent(VRCameraMoveScript);
     material.renderMode = Laya.BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
     mesh.meshRender.sharedMaterial = material;
 
-    Laya.loader.load("../../res/threeDimen/panorama/panorama.jpg", Laya.Handler.create(null, function (texture) {
-        texture.bitmap.mipmap = true;
-        texture.bitmap.enableMerageInAtlas = false;
-        material.diffuseTexture = texture;
-    }));
+    material.diffuseTexture = Laya.Texture2D.load("../../res/threeDimen/panorama/panorama.jpg");
 })();
 

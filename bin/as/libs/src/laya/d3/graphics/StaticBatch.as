@@ -96,22 +96,6 @@ package laya.d3.graphics {
 			_material = material;
 		}
 		
-		private function _testTangent(state:RenderState):void {
-			//var vb:VertexBuffer3D = _vertexBuffer;
-			//var vertexDeclaration:VertexDeclaration = vb.vertexDeclaration;
-			//var material:BaseMaterial = state.renderElement._material;
-			//if (material.normalTexture && !vertexDeclaration.shaderAttribute[VertexElementUsage.TANGENT0]) {
-				////是否放到事件触发。
-				//var vertexDatas:Float32Array = vb.getData();
-				//var newVertexDatas:Float32Array = Utils3D.generateTangent(vertexDatas, vertexDeclaration.vertexStride / 4, vertexDeclaration.shaderAttribute[VertexElementUsage.POSITION0][4] / 4, vertexDeclaration.shaderAttribute[VertexElementUsage.TEXTURECOORDINATE0][4] / 4, _indexBuffer.getData());
-				//vertexDeclaration = Utils3D.getVertexTangentDeclaration(vertexDeclaration.getVertexElements());
-				//
-				//var newVB:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, WebGLContext.STATIC_DRAW);
-				//newVB.setData(newVertexDatas);
-				//vb.dispose();
-				//_vertexBuffer = newVB;
-			//}
-		}
 		
 		public function _getVertexBuffer(index:int = 0):VertexBuffer3D {
 			if (index === 0)
@@ -256,7 +240,6 @@ package laya.d3.graphics {
 		}
 		
 		public function _beforeRender(state:RenderState):Boolean {
-			//_testTangent(state);//TODO:临时
 			_vertexBuffer._bind();
 			_indexBuffer._bind();
 			return true;

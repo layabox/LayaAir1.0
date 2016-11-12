@@ -69,7 +69,7 @@ package laya.webgl.canvas.save {
 		public function restore(context:WebGLContext2D):void {
 			_dataObj[_valueName] = _value;
 			_cache[_cache._length++] = this;
-			_newSubmit && (context._curSubmit = Submit.RENDERBASE);
+			_newSubmit && (context._curSubmit = Submit.RENDERBASE, context._renderKey = 0);
 		}
 		
 		public static function save(context:WebGLContext2D, type:int, dataObj:*, newSubmit:Boolean):void {

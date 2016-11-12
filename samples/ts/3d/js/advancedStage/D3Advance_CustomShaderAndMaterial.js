@@ -14,20 +14,18 @@ var laya;
             var mesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm")));
             mesh.transform.localPosition = new Laya.Vector3(-0.3, 0.0, 0.0);
             mesh.transform.localScale = new Laya.Vector3(0.5, 0.5, 0.5);
-            Laya.loader.load("../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg", Laya.Handler.create(null, function (texture) {
-                var customMaterial = new CustomMaterial();
-                customMaterial.setDiffuseTexture(texture);
-                mesh.meshRender.sharedMaterial = customMaterial;
-            }), null, Laya.Loader.TEXTURE2D);
+            var customMaterial = new CustomMaterial();
+            customMaterial.setDiffuseTexture(Laya.Texture2D.load("../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg"));
+            mesh.meshRender.sharedMaterial = customMaterial;
         }
         CustomShaderAndMaterial.prototype.initShader = function () {
             var shaderNameMap = {
                 'a_Position': Laya.VertexElementUsage.POSITION0,
                 'a_Normal': Laya.VertexElementUsage.NORMAL0,
                 'a_Texcoord': Laya.VertexElementUsage.TEXTURECOORDINATE0,
-                'u_MvpMatrix': Laya.Buffer2D.MVPMATRIX,
-                'u_texture': Laya.Buffer2D.DIFFUSETEXTURE,
-                'u_WorldMat': Laya.Buffer2D.MATRIX1
+                'u_MvpMatrix': CustomMaterial.MVPMATRIX,
+                'u_texture': CustomMaterial.DIFFUSETEXTURE,
+                'u_WorldMat': CustomMaterial.WORLDMATRIX
             };
             var customShader = Laya.Shader.nameKey.add("CustomShader");
             var vs = "attribute vec4 a_Position;\nattribute vec2 a_Texcoord;\n\nuniform mat4 u_MvpMatrix;\nuniform mat4 u_WorldMat;\n\nvarying vec2 v_Texcoord;\n\nattribute vec3 a_Normal;\nvarying vec3 v_Normal;\n\nvoid main()\n{\n  gl_Position = u_MvpMatrix * a_Position;\n  v_Texcoord=a_Texcoord;\n  \n mat3 worldMat=mat3(u_WorldMat);\n v_Normal=worldMat*a_Normal;\n}";

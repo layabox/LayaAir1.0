@@ -13,21 +13,21 @@ package laya.webgl.submit {
 	
 	public class Submit implements ISubmit {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		public static const TYPE_2D:int = 1;
-		public static const TYPE_CANVAS:int = 3;
-		public static const TYPE_CMDSETRT:int = 4;
-		public static const TYPE_CUSTOM:int = 5;
-		public static const TYPE_BLURRT:int = 6;
-		public static const TYPE_CMDDESTORYPRERT:int = 7;
-		public static const TYPE_DISABLESTENCIL:int = 8;
-		public static const TYPE_OTHERIBVB:int = 9;
-		public static const TYPE_PRIMITIVE:int = 10;
-		public static const TYPE_RT:int = 11;
-		public static const TYPE_BLUR_RT:int = 12;
-		public static const TYPE_TARGET:int = 13;
-		public static const TYPE_CHANGE_VALUE:int = 14;
-		public static const TYPE_SHAPE:int = 15;
-		public static const TYPE_TEXTURE:int = 16;
+		public static const TYPE_2D:int = 10000;
+		public static const TYPE_CANVAS:int = 10003;
+		public static const TYPE_CMDSETRT:int = 10004;
+		public static const TYPE_CUSTOM:int = 10005;
+		public static const TYPE_BLURRT:int = 10006;
+		public static const TYPE_CMDDESTORYPRERT:int = 10007;
+		public static const TYPE_DISABLESTENCIL:int = 10008;
+		public static const TYPE_OTHERIBVB:int = 10009;
+		public static const TYPE_PRIMITIVE:int = 10010;
+		public static const TYPE_RT:int = 10011;
+		public static const TYPE_BLUR_RT:int = 10012;
+		public static const TYPE_TARGET:int = 10013;
+		public static const TYPE_CHANGE_VALUE:int = 10014;
+		public static const TYPE_SHAPE:int = 10015;
+		public static const TYPE_TEXTURE:int = 10016;
 		
 		public static var RENDERBASE:Submit;
 		

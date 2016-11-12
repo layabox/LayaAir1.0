@@ -13,6 +13,8 @@ package laya.utils {
 		private static var _pi:Number = /*[STATIC SAFE]*/ 180 / Math.PI;
 		/**@private */
 		private static var _pi2:Number = /*[STATIC SAFE]*/ Math.PI / 180;
+		/**@private */
+		protected static var _extReg:RegExp =/*[STATIC SAFE]*/ /\.(\w+)\??/g;
 		
 		/**
 		 * 角度转弧度。
@@ -184,6 +186,17 @@ package laya.utils {
 				array[j + 1] = c;
 				i++;
 			}
+			if (c && c.parent && c.parent.model)
+			{
+				for (i=0; i < len;i++)
+				{
+					c.parent.model.removeChild(array[i].model);
+				}
+				for (i=0; i < len;i++)
+				{
+					c.parent.model.addChildAt(array[i].model, i);
+				}
+			}
 			return true;
 		}
 		
@@ -212,6 +225,16 @@ package laya.utils {
 			var result:* = Browser.window.parseInt(str, radix);
 			if (isNaN(result)) return 0;
 			return result;
+		}
+		
+		/**@private */
+		public static function getFileExtension(path:String):String{
+			_extReg.lastIndex = path.lastIndexOf(".");
+			var result:Array = _extReg.exec(path);
+			if (result && result.length > 1) {
+				return result[1].toLowerCase();
+			}
+			return null;
 		}
 	}
 }

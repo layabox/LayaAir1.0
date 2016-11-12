@@ -15,7 +15,11 @@ package laya.d3.resource {
 	 * <code>SolidColorTexture2D</code> 二维纯色纹理。
 	 */
 	public class SolidColorTexture2D extends BaseTexture {
-		public static var pickTexture:SolidColorTexture2D = new SolidColorTexture2D(new Vector4(1.0, 0.0, 1.0, 1.0));
+		/**洋红色纯色纹理。*/
+		public static var magentaTexture:SolidColorTexture2D = new SolidColorTexture2D(new Vector4(1.0, 0.0, 1.0, 1.0));
+		/**灰色纯色纹理。*/
+		public static var grayTexture:SolidColorTexture2D = new SolidColorTexture2D(new Vector4(0.5, 0.5, 0.5, 1.0));
+		
 		private var _color:Vector4;
 		private var _pixels:Uint8Array;
 		

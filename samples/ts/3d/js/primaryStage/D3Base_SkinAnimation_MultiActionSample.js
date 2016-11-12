@@ -16,7 +16,6 @@ var SkinAnimation_MultiActionSample = (function () {
         directionLight.ambientColor = new Laya.Vector3(0.7, 0.6, 0.6);
         directionLight.specularColor = new Laya.Vector3(2.0, 2.0, 1.6);
         directionLight.diffuseColor = new Laya.Vector3(1, 1, 1);
-        scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
         var rootSkinMesh = scene.addChild(new Laya.Sprite3D());
         var skinMesh0 = rootSkinMesh.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/nvXia/A02P1V1F001AX01@yequangongjinv-DEFAULT0.lm")));
         var skinMesh1 = rootSkinMesh.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/nvXia/A02P1V1F001AX01@yequangongjinv-DEFAULT1.lm")));

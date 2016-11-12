@@ -69,6 +69,11 @@ package laya.flash
 			Window.stage.focus = (_displayObject as TextField);
 		}
 		
+		public function blur():void{
+			(_displayObject as TextField).mouseEnabled = false;
+			Window.stage.focus = null;
+		}
+		
 		public function setColor(value:String):void
 		{
 			_style.color = parseInt("0x" + value.substring(1));

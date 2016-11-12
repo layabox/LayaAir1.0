@@ -113,7 +113,10 @@ package laya.display.css {
 			return (_type & _WIDTH_SET) != 0;
 		}
 		
-		private function _calculation(type:String, value:String):Boolean {
+		/**
+		 * @private
+		 */
+		public function _calculation(type:String, value:String):Boolean {
 			if (value.indexOf('%') < 0) return false;
 			var ower:Sprite = _ower;
 			var parent:Sprite = ower.parent as Sprite;
@@ -685,7 +688,7 @@ package laya.display.css {
 		 * @param	y Y 轴平移量。
 		 */
 		public function translate(x:Number, y:Number):void {
-			_tf === _TF_EMPTY && (_tf = _createTransform());
+			_tf === _TF_EMPTY && (_tf = new TransformInfo());
 			_tf.translateX = x;
 			_tf.translateY = y;
 		}
@@ -696,7 +699,7 @@ package laya.display.css {
 		 * @param	y Y 轴缩放值。
 		 */
 		public function scale(x:Number, y:Number):void {
-			_tf === _TF_EMPTY && (_tf = _createTransform());
+			_tf === _TF_EMPTY && (_tf = new TransformInfo());
 			_tf.scaleX = x;
 			_tf.scaleY = y;
 		}

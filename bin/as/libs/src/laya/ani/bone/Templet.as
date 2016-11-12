@@ -1,5 +1,5 @@
 package laya.ani.bone {
-	import laya.ani.KeyframesAniTemplet;
+	import laya.ani.AnimationTemplet;
 	import laya.ani.bone.BoneSlot;
 	import laya.ani.bone.SkinData;
 	import laya.ani.bone.SkinSlotDisplayData;
@@ -26,7 +26,7 @@ package laya.ani.bone {
 	/**
 	 * 动画模板类
 	 */
-	public class Templet extends KeyframesAniTemplet {
+	public class Templet extends AnimationTemplet {
 		
 		public static var TEMPLET_DICTIONARY:Object;
 		
@@ -130,9 +130,10 @@ package laya.ani.bone {
 		 */
 		override public function parse(data:ArrayBuffer):void {
 			super.parse(data);
-			if (!(this._aniVersion == KeyframesAniTemplet.LAYA_ANIMATION_VISION || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.2")) {
+			_endLoaded();
+			if (this._aniVersion != AnimationTemplet.LAYA_ANIMATION_VISION) {
 				//trace("[Error] Version " + _aniVersion + " The engine is inconsistent, update to the version " + KeyframesAniTemplet.LAYA_ANIMATION_VISION + " please.");
-				trace("[Error] 版本不一致，请使用IDE版本（1.3.0）重新导出");
+				trace("[Error] 版本不一致，请使用IDE版本（1.5.3）重新导出");
 				_loaded = false;
 			}
 			//解析公共数据
@@ -240,10 +241,7 @@ package laya.ani.bone {
 				tFrameHeight = isNaN(tTempleData) ? tHeight : tTempleData;
 				subTextureDic[tTextureName] = Texture.create(tTexture, tX, tY, tWidth, tHeight, -tFrameX, -tFrameY, tFrameWidth, tFrameHeight);
 			}
-			
-			if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
-				_mainTexture = tTexture;
-			}
+			_mainTexture = tTexture;
 			
 			var tAniCount:int = tByte.getUint16();
 			var tSectionArr:Array;
@@ -252,9 +250,7 @@ package laya.ani.bone {
 				tSectionArr.push(tByte.getUint16());
 				tSectionArr.push(tByte.getUint16());
 				tSectionArr.push(tByte.getUint16());
-				if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
-					tSectionArr.push(tByte.getUint16());
-				}
+				tSectionArr.push(tByte.getUint16());
 				aniSectionDic[i] = tSectionArr;
 			}
 			
@@ -275,13 +271,11 @@ package laya.ani.bone {
 				tName = tByte.readUTFString();
 				tParentName = tByte.readUTFString();
 				tBone.length = tByte.getFloat32();
-				if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
-					if (tByte.getByte() == 1) {
-						tBone.inheritRotation = false;
-					}
-					if (tByte.getByte() == 1) {
-						tBone.inheritScale = false;
-					}
+				if (tByte.getByte() == 1) {
+					tBone.inheritRotation = false;
+				}
+				if (tByte.getByte() == 1) {
+					tBone.inheritScale = false;
 				}
 				tBone.name = tName;
 				if (tParentName) {
@@ -333,144 +327,153 @@ package laya.ani.bone {
 				ikArr.push(tIkConstraintData);
 			}
 			
-			if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
-				var tTfConstraintData:TfConstraintData;
-				var tTfLen:int = tByte.getUint16();
-				var tTfBoneLen:int;
-				for (i = 0; i < tTfLen; i++) {
-					tTfConstraintData = new TfConstraintData();
-					tTfBoneLen = tByte.getUint16();
-					for (j = 0; j < tTfBoneLen; j++) {
-						tTfConstraintData.boneIndexs.push(tByte.getInt16());
-					}
-					tTfConstraintData.name = tByte.getUTFString();
-					tTfConstraintData.targetIndex = tByte.getInt16();
-					tTfConstraintData.rotateMix = tByte.getFloat32();
-					tTfConstraintData.translateMix = tByte.getFloat32();
-					tTfConstraintData.scaleMix = tByte.getFloat32();
-					tTfConstraintData.shearMix = tByte.getFloat32();
-					tTfConstraintData.offsetRotation = tByte.getFloat32();
-					tTfConstraintData.offsetX = tByte.getFloat32();
-					tTfConstraintData.offsetY = tByte.getFloat32();
-					tTfConstraintData.offsetScaleX = tByte.getFloat32();
-					tTfConstraintData.offsetScaleY = tByte.getFloat32();
-					tTfConstraintData.offsetShearY = tByte.getFloat32();
-					tfArr.push(tTfConstraintData);
+			var tTfConstraintData:TfConstraintData;
+			var tTfLen:int = tByte.getUint16();
+			var tTfBoneLen:int;
+			for (i = 0; i < tTfLen; i++) {
+				tTfConstraintData = new TfConstraintData();
+				tTfBoneLen = tByte.getUint16();
+				for (j = 0; j < tTfBoneLen; j++) {
+					tTfConstraintData.boneIndexs.push(tByte.getInt16());
 				}
-				
-				var tPathConstraintData:PathConstraintData;
-				var tPathLen:int = tByte.getUint16();
-				var tPathBoneLen:int;
-				for (i = 0; i < tPathLen; i++) {
-					tPathConstraintData = new PathConstraintData();
-					tPathConstraintData.name = tByte.readUTFString();
-					tPathBoneLen = tByte.getUint16();
-					for (j = 0; j < tPathBoneLen; j++) {
-						tPathConstraintData.bones.push(tByte.getInt16());
-					}
-					tPathConstraintData.target = tByte.readUTFString();
-					tPathConstraintData.positionMode = tByte.readUTFString();
-					tPathConstraintData.spacingMode = tByte.readUTFString();
-					tPathConstraintData.rotateMode = tByte.readUTFString();
-					tPathConstraintData.offsetRotation = tByte.getFloat32();
-					tPathConstraintData.position = tByte.getFloat32();
-					tPathConstraintData.spacing = tByte.getFloat32();
-					tPathConstraintData.rotateMix = tByte.getFloat32();
-					tPathConstraintData.translateMix = tByte.getFloat32();
-					pathArr.push(tPathConstraintData);
+				tTfConstraintData.name = tByte.getUTFString();
+				tTfConstraintData.targetIndex = tByte.getInt16();
+				tTfConstraintData.rotateMix = tByte.getFloat32();
+				tTfConstraintData.translateMix = tByte.getFloat32();
+				tTfConstraintData.scaleMix = tByte.getFloat32();
+				tTfConstraintData.shearMix = tByte.getFloat32();
+				tTfConstraintData.offsetRotation = tByte.getFloat32();
+				tTfConstraintData.offsetX = tByte.getFloat32();
+				tTfConstraintData.offsetY = tByte.getFloat32();
+				tTfConstraintData.offsetScaleX = tByte.getFloat32();
+				tTfConstraintData.offsetScaleY = tByte.getFloat32();
+				tTfConstraintData.offsetShearY = tByte.getFloat32();
+				tfArr.push(tTfConstraintData);
+			}
+			
+			var tPathConstraintData:PathConstraintData;
+			var tPathLen:int = tByte.getUint16();
+			var tPathBoneLen:int;
+			for (i = 0; i < tPathLen; i++) {
+				tPathConstraintData = new PathConstraintData();
+				tPathConstraintData.name = tByte.readUTFString();
+				tPathBoneLen = tByte.getUint16();
+				for (j = 0; j < tPathBoneLen; j++) {
+					tPathConstraintData.bones.push(tByte.getInt16());
 				}
-				
-				if (this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
-					var tDeformSlotLen:int;
-					var tDeformSlotDisplayLen:int;
-					var tDSlotIndex:int;
-					var tDAttachment:String;
-					var tDeformTimeLen:int;
-					var tDTime:Number;
-					var tDeformVecticesLen:int;
-					var tDeformAniData:DeformAniData;
-					var tDeformSlotData:DeformSlotData;
-					var tDeformSlotDisplayData:DeformSlotDisplayData;
-					var tDeformVectices:Array;
-					var tDeformAniLen:int = tByte.getInt16();
-					for (i = 0; i < tDeformAniLen; i++) {
-						tDeformAniData = new DeformAniData();
-						deformAniArr.push(tDeformAniData);
-						tDeformSlotLen = tByte.getInt16();
-						for (j = 0; j < tDeformSlotLen; j++) {
-							tDeformSlotData = new DeformSlotData();
-							tDeformAniData.deformSlotDataList.push(tDeformSlotData);
-							
-							tDeformSlotDisplayLen = tByte.getInt16();
-							for (k = 0; k < tDeformSlotDisplayLen; k++) {
-								tDeformSlotDisplayData = new DeformSlotDisplayData();
-								tDeformSlotData.deformSlotDisplayList.push(tDeformSlotDisplayData);
-								tDeformSlotDisplayData.slotIndex = tDSlotIndex = tByte.getInt16();
-								tDeformSlotDisplayData.attachment = tDAttachment = tByte.getUTFString();
-								tDeformTimeLen = tByte.getInt16();
-								for (l = 0; l < tDeformTimeLen; l++) {
-									tDTime = tByte.getFloat32();
-									tDeformSlotDisplayData.timeList.push(tDTime);
-									tDeformVectices = [];
-									tDeformSlotDisplayData.vectices.push(tDeformVectices);
-									tDeformVecticesLen = tByte.getInt16();
-									for (n = 0; n < tDeformVecticesLen; n++) {
-										tDeformVectices.push(tByte.getFloat32());
-									}
+				tPathConstraintData.target = tByte.readUTFString();
+				tPathConstraintData.positionMode = tByte.readUTFString();
+				tPathConstraintData.spacingMode = tByte.readUTFString();
+				tPathConstraintData.rotateMode = tByte.readUTFString();
+				tPathConstraintData.offsetRotation = tByte.getFloat32();
+				tPathConstraintData.position = tByte.getFloat32();
+				tPathConstraintData.spacing = tByte.getFloat32();
+				tPathConstraintData.rotateMix = tByte.getFloat32();
+				tPathConstraintData.translateMix = tByte.getFloat32();
+				pathArr.push(tPathConstraintData);
+			}
+			
+			var tDeformSlotLen:int;
+			var tDeformSlotDisplayLen:int;
+			var tDSlotIndex:int;
+			var tDAttachment:String;
+			var tDeformTimeLen:int;
+			var tDTime:Number;
+			var tDeformVecticesLen:int;
+			var tDeformAniData:DeformAniData;
+			var tDeformSlotData:DeformSlotData;
+			var tDeformSlotDisplayData:DeformSlotDisplayData;
+			var tDeformVectices:Array;
+			var tDeformAniLen:int = tByte.getInt16();
+			for (i = 0; i < tDeformAniLen; i++) {
+				var tDeformSkinLen:int = tByte.getUint8();
+				var tSkinDic:Object = { };
+				deformAniArr.push(tSkinDic);
+				for (var f:int = 0; f < tDeformSkinLen; f++)
+				{
+					tDeformAniData = new DeformAniData();
+					tDeformAniData.skinName = tByte.getUTFString();
+					tSkinDic[tDeformAniData.skinName] = tDeformAniData;
+					tDeformSlotLen = tByte.getInt16();
+					for (j = 0; j < tDeformSlotLen; j++) {
+						tDeformSlotData = new DeformSlotData();
+						tDeformAniData.deformSlotDataList.push(tDeformSlotData);
+						
+						tDeformSlotDisplayLen = tByte.getInt16();
+						for (k = 0; k < tDeformSlotDisplayLen; k++) {
+							tDeformSlotDisplayData = new DeformSlotDisplayData();
+							tDeformSlotData.deformSlotDisplayList.push(tDeformSlotDisplayData);
+							tDeformSlotDisplayData.slotIndex = tDSlotIndex = tByte.getInt16();
+							tDeformSlotDisplayData.attachment = tDAttachment = tByte.getUTFString();
+							tDeformTimeLen = tByte.getInt16();
+							for (l = 0; l < tDeformTimeLen; l++) {
+								if (tByte.getByte() == 1)
+								{
+									tDeformSlotDisplayData.tweenKeyList.push(true);
+								}else {
+									tDeformSlotDisplayData.tweenKeyList.push(false);
+								}
+								tDTime = tByte.getFloat32();
+								tDeformSlotDisplayData.timeList.push(tDTime);
+								tDeformVectices = [];
+								tDeformSlotDisplayData.vectices.push(tDeformVectices);
+								tDeformVecticesLen = tByte.getInt16();
+								for (n = 0; n < tDeformVecticesLen; n++) {
+									tDeformVectices.push(tByte.getFloat32());
 								}
 							}
 						}
 					}
-					
-					var tDrawOrderArr:Vector.<DrawOrderData>;
-					var tDrawOrderAniLen:int = tByte.getInt16();
-					var tDrawOrderLen:int;
-					var tDrawOrderData:DrawOrderData;
-					var tDoLen:int;
-					for (i = 0; i < tDrawOrderAniLen; i++) {
-						tDrawOrderLen = tByte.getInt16();
-						tDrawOrderArr = new Vector.<DrawOrderData>();
-						for (j = 0; j < tDrawOrderLen; j++) {
-							tDrawOrderData = new DrawOrderData();
-							tDrawOrderData.time = tByte.getFloat32();
-							tDoLen = tByte.getInt16();
-							for (k = 0; k < tDoLen; k++) {
-								tDrawOrderData.drawOrder.push(tByte.getInt16());
-							}
-							tDrawOrderArr.push(tDrawOrderData);
-						}
-						drawOrderAniArr.push(tDrawOrderArr);
-					}
-				}
-				
-				var tEventArr:Vector.<EventData>;
-				var tEventAniLen:int = tByte.getInt16();
-				var tEventLen:int;
-				var tEventData:EventData;
-				for (i = 0; i < tEventAniLen; i++) {
-					tEventLen = tByte.getInt16();
-					tEventArr = new Vector.<EventData>();
-					for (j = 0; j < tEventLen; j++) {
-						tEventData = new EventData();
-						tEventData.name = tByte.getUTFString();
-						tEventData.intValue = tByte.getInt32();
-						tEventData.floatValue = tByte.getFloat32();
-						tEventData.stringValue = tByte.getUTFString();
-						tEventData.time = tByte.getFloat32();
-						tEventArr.push(tEventData);
-					}
-					eventAniArr.push(tEventArr);
 				}
 			}
-			if (this._aniVersion == "LAYAANIMATION:1.0.5")
-			{
+			
+			var tDrawOrderArr:Vector.<DrawOrderData>;
+			var tDrawOrderAniLen:int = tByte.getInt16();
+			var tDrawOrderLen:int;
+			var tDrawOrderData:DrawOrderData;
+			var tDoLen:int;
+			for (i = 0; i < tDrawOrderAniLen; i++) {
+				tDrawOrderLen = tByte.getInt16();
+				tDrawOrderArr = new Vector.<DrawOrderData>();
+				for (j = 0; j < tDrawOrderLen; j++) {
+					tDrawOrderData = new DrawOrderData();
+					tDrawOrderData.time = tByte.getFloat32();
+					tDoLen = tByte.getInt16();
+					for (k = 0; k < tDoLen; k++) {
+						tDrawOrderData.drawOrder.push(tByte.getInt16());
+					}
+					tDrawOrderArr.push(tDrawOrderData);
+				}
+				drawOrderAniArr.push(tDrawOrderArr);
+			}
+			
+			var tEventArr:Vector.<EventData>;
+			var tEventAniLen:int = tByte.getInt16();
+			var tEventLen:int;
+			var tEventData:EventData;
+			for (i = 0; i < tEventAniLen; i++) {
+				tEventLen = tByte.getInt16();
+				tEventArr = new Vector.<EventData>();
+				for (j = 0; j < tEventLen; j++) {
+					tEventData = new EventData();
+					tEventData.name = tByte.getUTFString();
+					tEventData.intValue = tByte.getInt32();
+					tEventData.floatValue = tByte.getFloat32();
+					tEventData.stringValue = tByte.getUTFString();
+					tEventData.time = tByte.getFloat32();
+					tEventArr.push(tEventData);
+				}
+				eventAniArr.push(tEventArr);
+			}
+			
+			var tAttachmentLen:int = tByte.getInt16();
+			if (tAttachmentLen > 0) {	
 				attachmentNames = [];
-				var tAttachmentLen:int = tByte.getInt16();
-				for (i = 0; i < tAttachmentLen; i++)
-				{
+				for (i = 0; i < tAttachmentLen; i++) {	
 					attachmentNames.push(tByte.getUTFString());
 				}
 			}
+			
 			//创建插槽并绑定到骨骼上
 			var tBoneSlotLen:int = tByte.getInt16();
 			var tDBBoneSlot:BoneSlot;
@@ -520,13 +523,13 @@ package laya.ani.bone {
 						tDisplayData.transform.scY = tByte.getFloat32();
 						tDisplayData.transform.x = tByte.getFloat32();
 						tDisplayData.transform.y = tByte.getFloat32();
+						
 						tSlotData.displayArr.push(tDisplayData);
 						tDisplayData.width = tByte.getFloat32();
 						tDisplayData.height = tByte.getFloat32();
 						tDisplayData.type = tByte.getUint8();
-						if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
-							tDisplayData.verLen = tByte.getUint16();
-						}
+						tDisplayData.verLen = tByte.getUint16();
+						
 						tBoneLen = tByte.getUint16();
 						if (tBoneLen > 0) {
 							tDisplayData.bones = [];
@@ -563,13 +566,12 @@ package laya.ani.bone {
 								tDisplayData.vertices.push(tByte.getFloat32());
 							}
 						}
-						if (this._aniVersion == "LAYAANIMATION:1.0.3" || this._aniVersion == "LAYAANIMATION:1.0.4" || this._aniVersion == "LAYAANIMATION:1.0.5") {
-							tLengthLen = tByte.getUint16();
-							if (tLengthLen > 0) {
-								tDisplayData.lengths = [];
-								for (l = 0; l < tLengthLen; l++) {
-									tDisplayData.lengths.push(tByte.getFloat32());
-								}
+							
+						tLengthLen = tByte.getUint16();
+						if (tLengthLen > 0) {
+							tDisplayData.lengths = [];
+							for (l = 0; l < tLengthLen; l++) {
+								tDisplayData.lengths.push(tByte.getFloat32());
 							}
 						}
 					}
@@ -625,7 +627,7 @@ package laya.ani.bone {
 						tBoneSlot = boneSlotDic[tSlotData.name];
 						if (tBoneSlot) {
 							tBoneSlot.showSlotData(tSlotData);
-							if (tBoneSlot.attachmentName != "null") {
+							if (tBoneSlot.attachmentName != "undefined" && tBoneSlot.attachmentName != "null") {
 								tBoneSlot.showDisplayByName(tBoneSlot.attachmentName);
 							} else {
 								tBoneSlot.showDisplayByIndex(tBoneSlot.displayIndex);

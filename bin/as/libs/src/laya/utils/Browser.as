@@ -70,6 +70,10 @@ package laya.utils {
 			_window = RunDriver.getWindow();
 			_document = window.document;
 			
+			_window.addEventListener('message', function(e:*):void{
+				Browser._onMessage(e);
+			}, false);
+			
 			__JS__("Browser.document.__createElement=Browser.document.createElement");
 			//TODO:优化
 			__JS__("window.requestAnimationFrame=(function(){return window.requestAnimationFrame || window.webkitRequestAnimationFrame ||window.mozRequestAnimationFrame || window.oRequestAnimationFrame ||function (c){return window.setTimeout(c, 1000 / 60);};})()");
@@ -93,7 +97,7 @@ package laya.utils {
 			onMQQBrowser = /*[STATIC SAFE]*/ u.indexOf("MQQBrowser") > -1;
 			onWeiXin = /*[STATIC SAFE]*/ u.indexOf('MicroMessenger') > -1;
 			onPC = /*[STATIC SAFE]*/ !onMobile;
-			onSafari = /*[STATIC SAFE]*/ !!u.match(/Version\/\d\.\d\x20Mobile\/\S+\x20Safari/);
+			onSafari = /*[STATIC SAFE]*/ !!u.match(/Version\/\d+\.\d\x20Mobile\/\S+\x20Safari/);
 			httpProtocol =/*[STATIC SAFE]*/ window.location.protocol == "http:";
 			
 			webAudioEnabled =/*[STATIC SAFE]*/ window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"] ? true : false;
@@ -154,6 +158,25 @@ package laya.utils {
 			if (canvas) return;
 			canvas = HTMLCanvas.create('2D');
 			context = canvas.getContext('2d');
+		}
+		
+		//接收到其他网页发送的消息
+		private static function _onMessage(e:*):void{
+			if (!e.data) return;
+			if (e.data.name=="size")
+			{
+				window.innerWidth = e.data.width;
+				window.innerHeight = e.data.height;
+				window.__innerHeight = e.data.clientHeight;
+				if (!document.createEvent){
+					trace("no document.createEvent");
+					return;
+				}
+				var evt:* = document.createEvent("HTMLEvents");
+				evt.initEvent("resize", false, false);
+				window.dispatchEvent(evt);
+				return;
+			}
 		}
 		
 		/**

@@ -66,16 +66,20 @@ package laya.flash {
 			_upload = true;
 			
 			if ( data is Float32Array ) {
-				if( this._byteLength == 0 ){
-					_vctBuff = (data as Float32Array).getVecBuf();
-					this._byteLength = _vctBuff.length * 4;
-				}else {
+				
+				if (this._byteLength == 0){
+					this._vctBuff = new Vector.<Number>();
+				}
+				//if( this._byteLength == 0 ){
+					//_vctBuff = (data as Float32Array).getVecBuf();
+					//this._byteLength = _vctBuff.length * 4;
+				//}else {
 					var tv : Vector.<Number> = (data as Float32Array).getVecBuf();
 					for ( var i : int = 0, len : int = tv.length; i < len; i ++ ) {
 						_vctBuff.push( tv[i] );
 					}
 					this._byteLength = _vctBuff.length * 4;
-				}
+				//}
 			}			
 		}
 		

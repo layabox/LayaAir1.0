@@ -179,8 +179,7 @@
 			var sw=source.sourceWidth;
 			var sh=source.sourceHeight;
 			if (!sizeGrid || (sw===width && sh===height)){
-				this.clear();
-				this.drawTexture(source,this._offset ? this._offset[0] :0,this._offset ? this._offset[1] :0,width,height);
+				this.cleanByTexture(source,this._offset ? this._offset[0] :0,this._offset ? this._offset[1] :0,width,height);
 				}else {
 				source.$_GID || (source.$_GID=Utils.getGID());
 				var key=source.$_GID+"."+width+"."+height+"."+sizeGrid.join(".");
@@ -466,19 +465,19 @@
 		*<p>重置对象的 <code>X</code> 轴（水平方向）布局。</p>
 		*/
 		__proto.resetLayoutX=function(){
+			var layout=this._layout;
+			if (!isNaN(layout.anchorX))this.pivotX=layout.anchorX *this.width;
 			var parent=this.parent;
 			if (parent){
-				var layout=this._layout;
-				if (!isNaN(layout.anchorX))this.pivotX=layout.anchorX *this.width;
 				if (!isNaN(layout.centerX)){
-					this.x=(parent.width-this.displayWidth)*0.5+layout.centerX+this.pivotX;
+					this.x=(parent.width-this.displayWidth)*0.5+layout.centerX+this.pivotX *this.scaleX;
 					}else if (!isNaN(layout.left)){
-					this.x=layout.left+this.pivotX;
+					this.x=layout.left+this.pivotX *this.scaleX;
 					if (!isNaN(layout.right)){
 						this.width=(parent._width-layout.left-layout.right)/ this.scaleX;
 					}
 					}else if (!isNaN(layout.right)){
-					this.x=parent.width-this.displayWidth-layout.right+this.pivotX;
+					this.x=parent.width-this.displayWidth-layout.right+this.pivotX *this.scaleX;
 				}
 			}
 		}
@@ -487,19 +486,19 @@
 		*<p>重置对象的 <code>Y</code> 轴（垂直方向）布局。</p>
 		*/
 		__proto.resetLayoutY=function(){
+			var layout=this._layout;
+			if (!isNaN(layout.anchorY))this.pivotY=layout.anchorY *this.height;
 			var parent=this.parent;
 			if (parent){
-				var layout=this._layout;
-				if (!isNaN(layout.anchorY))this.pivotY=layout.anchorY *this.height;
 				if (!isNaN(layout.centerY)){
-					this.y=(parent.height-this.displayHeight)*0.5+layout.centerY+this.pivotY;
+					this.y=(parent.height-this.displayHeight)*0.5+layout.centerY+this.pivotY *this.scaleY;
 					}else if (!isNaN(layout.top)){
-					this.y=layout.top+this.pivotY;
+					this.y=layout.top+this.pivotY *this.scaleY;
 					if (!isNaN(layout.bottom)){
 						this.height=(parent._height-layout.top-layout.bottom)/ this.scaleY;
 					}
 					}else if (!isNaN(layout.bottom)){
-					this.y=parent.height-this.displayHeight-layout.bottom+this.pivotY;
+					this.y=parent.height-this.displayHeight-layout.bottom+this.pivotY *this.scaleY;
 				}
 			}
 		}
@@ -725,7 +724,6 @@
 			return this._layout.anchorX;
 			},function(value){
 			this.getLayout().anchorX=value;
-			this.layOutEabled=true;
 			this.resetLayoutX();
 		});
 
@@ -734,7 +732,6 @@
 			return this._layout.anchorY;
 			},function(value){
 			this.getLayout().anchorY=value;
-			this.layOutEabled=true;
 			this.resetLayoutY();
 		});
 
@@ -2621,6 +2618,7 @@
 	//class laya.ui.ScrollBar extends laya.ui.Component
 	var ScrollBar=(function(_super){
 		function ScrollBar(skin){
+			this.rollRatio=0.95;
 			this.changeHandler=null;
 			this.scaleBar=true;
 			this.autoHide=false;
@@ -2882,7 +2880,7 @@
 
 		/**@private */
 		__proto.tweenMove=function(){
-			this._lastOffset *=0.95;
+			this._lastOffset *=this.rollRatio;
 			this.value-=this._lastOffset;
 			if (Math.abs(this._lastOffset)< 1 || this.value==this.max || this.value==this.min){
 				Laya.timer.clear(this,this.tweenMove);
@@ -5606,12 +5604,12 @@
 				if (!this.cacheContent){
 					this.posCell(cell,index);
 				}
+				if (this.hasListener(/*laya.events.Event.RENDER*/"render"))this.event(/*laya.events.Event.RENDER*/"render",[cell,index]);
+				if (this.renderHandler)this.renderHandler.runWith([cell,index]);
 				}else {
 				cell.visible=false;
 				cell.dataSource=null;
 			}
-			if (this.hasListener(/*laya.events.Event.RENDER*/"render"))this.event(/*laya.events.Event.RENDER*/"render",[cell,index]);
-			if (this.renderHandler)this.renderHandler.runWith([cell,index]);
 		}
 
 		/**

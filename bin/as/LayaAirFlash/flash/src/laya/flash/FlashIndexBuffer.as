@@ -70,16 +70,19 @@ package laya.flash
 			
 			if (data is Uint16Array)
 			{
-				if( this._byteLength == 0 ){
-					_vctBuff = (data as Uint16Array).getVecBuf();
-					this._byteLength = _vctBuff.length;// * 2;
-				}else {
+				if (this._byteLength == 0){
+					this._vctBuff = new Vector.<uint>();
+				}
+				//if( this._byteLength == 0 ){
+					//_vctBuff = (data as Uint16Array).getVecBuf();
+					//this._byteLength = _vctBuff.length;// * 2;
+				//}else {
 					var tv : Vector.<uint> = (data as Uint16Array).getVecBuf();
 					for ( var i : int = 0, len :int = tv.length; i < len; i ++ ) {
 						_vctBuff.push( tv[i] );
 					}
 					this._byteLength = _vctBuff.length;// * 2;
-				}
+				//}
 			}
 		}
 		

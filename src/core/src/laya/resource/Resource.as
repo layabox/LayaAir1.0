@@ -4,9 +4,9 @@ package laya.resource {
 	import laya.utils.Stat;
 	
 	///**
-	 //* 当设置内存尺寸时调度。回调参数为内存变化量。
-	 //* @eventType Event.MEMORY_CHANGED
-	 //*/
+	//* 当设置内存尺寸时调度。回调参数为内存变化量。
+	//* @eventType Event.MEMORY_CHANGED
+	//*/
 	//[Event(name = "memorychanged", type = "laya.events.Event")]
 	
 	/**
@@ -30,11 +30,7 @@ package laya.resource {
 	/**
 	 * <code>Resource</code> 资源存取类。
 	 */
-	public class Resource extends EventDispatcher implements IDispose {
-		public static var animationCache:* = {};//临时，待修改
-		public static var meshCache:* = {};//临时，待修改
-		public static var materialCache:* = {};//临时，待修改
-		
+	public class Resource extends EventDispatcher implements ICreateResource,IDispose{
 		/**唯一标识ID计数器*/
 		private static var _uniqueIDCounter:int = 0/*int.MIN_VALUE*/;
 		/**此类型已载入资源*/
@@ -104,15 +100,17 @@ package laya.resource {
 			}
 		}
 		
-		/**唯一标识ID(通常用于优化或识别)*/
+		/**唯一标识ID(通常用于优化或识别)。*/
 		private var _id:int;
-		/**上次使用帧数*/
+		/**上次使用帧数。*/
 		private var _lastUseFrameCount:int;
-		/**占用内存尺寸*/
+		/**占用内存尺寸。*/
 		private var _memorySize:int;
-		/**名字*/
+		/**名字。*/
 		private var _name:String;
-		/**是否已释放*/
+		/**是否已加载,限于首次加载。*/
+		protected var _loaded:Boolean = false;
+		/**是否已释放。*/
 		private var _released:Boolean;
 		/** @private
 		 * 所属资源管理器，通常禁止修改，如果为null则不受资源管理器，可能受大图合集资源管理。
@@ -171,6 +169,10 @@ package laya.resource {
 		 */
 		public function get released():Boolean {
 			return _released;
+		}
+		
+		public function get loaded():Boolean {
+			return _loaded;
 		}
 		
 		public function set memorySize(value:int):void {
@@ -256,6 +258,13 @@ package laya.resource {
 			{
 				setUniqueName(newName.concat("-copy"));
 			}
+		}
+		
+		/**
+		 *@private
+		 */
+		public function onAsynLoaded(url:String, data:*):void {
+			throw new Error("Resource: must override this function!");
 		}
 		
 		/**

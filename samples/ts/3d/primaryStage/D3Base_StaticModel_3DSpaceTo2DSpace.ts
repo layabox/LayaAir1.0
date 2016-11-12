@@ -22,7 +22,7 @@ class StaticModel_3DSpaceTo2DSpace {
 		var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
 		var camera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
-		camera.transform.translate(new Laya.Vector3(0, 1.8, 1.5));
+		camera.transform.translate(new Laya.Vector3(0, 0.8, 1.5));
 		camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
 
 		var mesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm"))) as Laya.MeshSprite3D;

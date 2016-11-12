@@ -6,6 +6,7 @@ package laya.particle {
 	import laya.renders.Render;
 	import laya.renders.RenderContext;
 	import laya.renders.RenderSprite;
+	import laya.resource.Texture;
 	import laya.utils.Handler;
 	
 	/**
@@ -56,11 +57,31 @@ package laya.particle {
 			if (!setting) return stop();
 			ParticleSetting.checkSetting(setting);
 			//_renderType |= RenderSprite.CUSTOM;
-			customRenderEnable = true;//设置custom渲染
+			if(__JS__("!window.ConchParticleTemplate2D")||Render.isWebGL)customRenderEnable = true;//设置custom渲染
 			if (Render.isWebGL) {
 				_particleTemplate = new ParticleTemplate2D(setting);
 				this.graphics._saveToCmd(Render.context._drawParticle, [_particleTemplate]);
-			} else {
+			}
+			else if (Render.isConchApp&&__JS__("window.ConchParticleTemplate2D")) {
+				_particleTemplate = __JS__("new ConchParticleTemplate2D()");
+				var _this:Particle2D = this;
+				Laya.loader.load(setting.textureName, Handler.create(null, function(texture:Texture):void{
+						__JS__("_this._particleTemplate.texture = texture");
+						_this._particleTemplate.settings = setting;
+						if (Render.isConchNode){
+							__JS__("_this.graphics.drawParticle(_this._particleTemplate)");
+						}
+						else{
+							_this.graphics._saveToCmd(Render.context._drawParticle, [_particleTemplate]);
+						}
+					})
+				);
+				_emitter = { start:function():void{ }} as EmitterBase;
+				__JS__("this.play =this._particleTemplate.play.bind(this._particleTemplate)");
+				__JS__("this.stop =this._particleTemplate.stop.bind(this._particleTemplate)");
+				return;
+			}
+			else {
 				_particleTemplate = _canvasTemplate = new ParticleTemplateCanvas(setting);
 			}
 			if (!_emitter) {

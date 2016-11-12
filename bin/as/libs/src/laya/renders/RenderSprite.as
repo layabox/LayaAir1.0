@@ -234,28 +234,29 @@ package laya.renders {
 		
 		public function _childs(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			//'use strict';
-			var style:Style = sprite._style;
+			var style:* = sprite._style;
 			x += -style._tf.translateX + style.paddingLeft;
 			y += -style._tf.translateY + style.paddingTop;
-			var words:Vector.<HTMLChar> = sprite._getWords();
-			words && context.fillWords(words, x, y, (style as CSSStyle).font, (style as CSSStyle).color);
+			/*[IF-FLASH]*/if (style.hasOwnProperty("_calculation")) {
+			//[IF-JS]if (style._calculation) {
+				var words:Vector.<HTMLChar> = sprite._getWords();
+				words && context.fillWords(words, x, y, (style as CSSStyle).font, (style as CSSStyle).color);
+			}
 			
-			var childs:Array = sprite._childs, n:int = childs.length, ele:Sprite;
+			var childs:Array = sprite._childs, n:int = childs.length, ele:*;
 			if (!sprite.viewport || !sprite.optimizeScrollRect) {
 				for (var i:int = 0; i < n; ++i)
 					(ele = (childs[i] as Sprite))._style.visible && ele.render(context, x, y);
 			} else {
-				var rect:Rectangle = sprite.viewport;
-				
+				var rect:Rectangle = sprite.viewport;				
 				var left:Number = rect.x;
 				var top:Number = rect.y;
 				var right:Number = rect.right;
 				var bottom:Number = rect.bottom;
-				var _x:Number=0, _y:Number=0;
+				var _x:Number, _y:Number;
 				
 				for (i = 0; i < n; ++i) {
-					if ( (ele = childs[i] as Sprite)._style.visible && ( (_x=ele.x) < right && (_x + ele.width) > left && (_y=ele.y) < bottom && (_y + ele.height) > top))
-					{
+					if ((ele = childs[i] as Sprite)._style.visible && ((_x = ele._x) < right && (_x + ele.width) > left && (_y = ele._y) < bottom && (_y + ele.height) > top)) {
 						ele.render(context, x, y);
 					}
 				}
@@ -301,21 +302,19 @@ package laya.renders {
 				tRec.height = Math.floor(tRec.height);
 				_cacheCanvas._cacheRec.copyFrom(tRec);
 				tRec = _cacheCanvas._cacheRec;
-				var scaleX:Number = Render.isWebGL?1:Browser.pixelRatio * Laya.stage.clientScaleX;
-				var scaleY:Number = Render.isWebGL?1:Browser.pixelRatio * Laya.stage.clientScaleY;
+				var scaleX:Number = Render.isWebGL ? 1 : Browser.pixelRatio * Laya.stage.clientScaleX;
+				var scaleY:Number = Render.isWebGL ? 1 : Browser.pixelRatio * Laya.stage.clientScaleY;
 				
-				if (!Render.isWebGL)
-				{
+				if (!Render.isWebGL) {
 					var chainScaleX:Number = 1;
 					var chainScaleY:Number = 1;
 					var tar:Sprite;
-				    tar = sprite;
-				    while (tar && tar != Laya.stage)
-				    {
-					   chainScaleX *= tar.scaleX;
-					   chainScaleY *= tar.scaleY;
-					   tar = tar.parent as Sprite;
-				    }
+					tar = sprite;
+					while (tar && tar != Laya.stage) {
+						chainScaleX *= tar.scaleX;
+						chainScaleY *= tar.scaleY;
+						tar = tar.parent as Sprite;
+					}
 					if (chainScaleX > 1) scaleX *= chainScaleX;
 					if (chainScaleY > 1) scaleY *= chainScaleY;
 				}
@@ -325,7 +324,7 @@ package laya.renders {
 				left = tRec.x;
 				top = tRec.y;
 				if (!tx) {
-					tx = _cacheCanvas.ctx = Pool.getItem("RenderContext")||new RenderContext(w, h, HTMLCanvas.create(HTMLCanvas.TYPEAUTO));
+					tx = _cacheCanvas.ctx = Pool.getItem("RenderContext") || new RenderContext(w, h, HTMLCanvas.create(HTMLCanvas.TYPEAUTO));
 					tx.ctx.sprite = sprite;
 				}
 				
@@ -337,27 +336,25 @@ package laya.renders {
 				
 				var t:*;
 				//TODO:测试webgl下是否有缓存模糊问题
-				if (scaleX!=1||scaleY!=1) {
+				if (scaleX != 1 || scaleY != 1) {
 					var ctx:* = RenderContext(tx).ctx;
 					ctx.save();
 					ctx.scale(scaleX, scaleY);
-					if (!Render.isConchWebGL&&Render.isConchApp)
-					{
+					if (!Render.isConchWebGL && Render.isConchApp) {
 						t = sprite._$P.cf;
-						t&&ctx.setFilterMatrix&&ctx.setFilterMatrix(t._mat,t._alpha);
+						t && ctx.setFilterMatrix && ctx.setFilterMatrix(t._mat, t._alpha);
 					}
 					_next._fun.call(_next, sprite, tx, -left, -top);
 					ctx.restore();
-					if(!Render.isConchApp||Render.isConchWebGL)sprite._applyFilters();
+					if (!Render.isConchApp || Render.isConchWebGL) sprite._applyFilters();
 				} else {
 					ctx = RenderContext(tx).ctx;
-					if (!Render.isConchWebGL&&Render.isConchApp)
-					{
+					if (!Render.isConchWebGL && Render.isConchApp) {
 						t = sprite._$P.cf;
-						t&&ctx.setFilterMatrix&&ctx.setFilterMatrix(t._mat,t._alpha);
+						t && ctx.setFilterMatrix && ctx.setFilterMatrix(t._mat, t._alpha);
 					}
 					_next._fun.call(_next, sprite, tx, -left, -top);
-					if(!Render.isConchApp||Render.isConchWebGL)sprite._applyFilters();
+					if (!Render.isConchApp || Render.isConchWebGL) sprite._applyFilters();
 				}
 				
 				if (sprite._$P.staticCache) _cacheCanvas.reCache = false;

@@ -11,14 +11,13 @@ camera.transform.translate(new Vector3(0, 16.8, 26.0));
 camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 camera.clearColor = null;
 
-var effectSprite = scene.addChild(new Sprite3D());
+var effectSprite = scene.addChild(Sprite3D.load("../../res/threeDimen/staticModel/effect/WuShen/WuShen.lh"));
 effectSprite.once(Laya.Event.HIERARCHY_LOADED, this, function(sender, sprite3D) {
     setMeshParams(effectSprite, Laya.BaseMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
     var rootAnimations = sprite3D.addComponent(Laya.RigidAnimations);
     rootAnimations.url = "../../res/threeDimen/staticModel/effect/WuShen/WuShen.lani";
     rootAnimations.player.play(0);
 });
-effectSprite.loadHierarchy("../../res/threeDimen/staticModel/effect/WuShen/WuShen.lh");
 
 function setMeshParams(spirit3D, renderMode) {
     if (spirit3D instanceof Laya.MeshSprite3D) {

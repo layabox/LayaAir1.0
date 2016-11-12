@@ -40,7 +40,7 @@ package laya.d3.graphics {
 							staticBatch._addRenderElement(renderElement);
 						} else {
 							var renderObj:IRenderable = renderElement.renderObj;
-							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1)&& (renderObj._getIndexBuffer())&&(renderElement._material.renderQueue<3))//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并
+							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1)&& (renderObj._getIndexBuffer())&&(renderElement._material.renderQueue<3)&&renderElement._canDynamicBatch)//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并
 								dynamicBatchManager._addPrepareRenderElement(renderElement);
 							else
 								scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);

@@ -14,6 +14,7 @@ package laya.d3.core.material {
 	import laya.net.URL;
 	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
+	import laya.utils.Stat;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.ValusArray;
 	
@@ -57,27 +58,10 @@ package laya.d3.core.material {
 		/**渲染状态_无深度_加色法混合_双面。*/
 		public static const RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE:int = 12;
 		
-		public static function createFromFile(url:String, out:BaseMaterial):void {
-			out._loaded = false;
-			var loader:Loader = new Loader();
-			var onComp:Function = function(data:String):void {
-				var preBasePath:String = URL.basePath;
-				
-				URL.basePath = URL.getPath(URL.formatURL(url));
-				ClassUtils.createByJson(data, out, null, Handler.create(null, Utils3D._parseMaterial, null, false));
-				
-				URL.basePath = preBasePath;
-				out._eventLoaded();
-			
-			}
-			loader.once(Event.COMPLETE, null, onComp);
-			loader.load(url, Loader.JSON);
-		}
-		
 		/**@private 材质唯一标识id。*/
 		private var _id:int;
 		/**@private 是否已加载完成*/
-		private var _loaded:Boolean = true;
+		private var _loaded:Boolean;
 		/**@private 所属渲染队列。*/
 		private var _renderQueue:int;
 		/**@private 渲染模式。*/
@@ -110,7 +94,7 @@ package laya.d3.core.material {
 		private var _matrix4x4SharderIndices:Vector.<int>;
 		
 		/** @private */
-		public var _isInstance:Boolean = false;
+		public var _isInstance:Boolean;
 		/**材质名字。*/
 		public var name:String;
 		/** @private */
@@ -236,6 +220,8 @@ package laya.d3.core.material {
 		 */
 		public function BaseMaterial() {
 			_id = ++_uniqueIDCounter;
+			_loaded = true;
+			_isInstance = false;
 			_shaderDefine = 0;
 			_disableShaderDefine = 0;
 			_shaderValues = new ValusArray();
@@ -253,20 +239,12 @@ package laya.d3.core.material {
 		/**
 		 * @private
 		 */
-		private function _eventLoaded():void {
-			_loaded = true;
-			event(Event.LOADED, this);
-		}
-		
-		/**
-		 * @private
-		 */
 		private function _uploadTextures():void {//TODO:使用的时候检测
 			for (var i:int = 0, n:int = _textures.length; i < n; i++) {
 				var texture:BaseTexture = _textures[i];
 				if (texture) {
 					var source:* = texture.source;
-					(source) ? _uploadTexture(i, source) : _uploadTexture(i, SolidColorTexture2D.pickTexture.source);
+					(source) ? _uploadTexture(i, source) : _uploadTexture(i, SolidColorTexture2D.grayTexture.source);
 				}
 			}
 		}
@@ -410,16 +388,30 @@ package laya.d3.core.material {
 			shader.uploadArray(shaderValue.data, shaderValue.length, bufferUsageShader);
 		}
 		
+		public function _setLoopShaderParams(state:RenderState, projectionView:Matrix4x4, worldMatrix:Matrix4x4, mesh:IRenderable, material:BaseMaterial):void {
+			throw new Error("Marterial:must override it.");
+		}
+		
+		/**
+		 *@private
+		 */
+		public function onAsynLoaded(url:String, materialData:Object):void {
+			var preBasePath:String = URL.basePath;
+			URL.basePath = URL.getPath(URL.formatURL(url));
+			var customHandler:Handler = Handler.create(null, Utils3D._parseMaterial, null, false);
+			ClassUtils.createByJson(materialData, this, null, customHandler);
+			customHandler.recover();
+			URL.basePath = preBasePath;
+			//_loaded = true;
+			event(Event.LOADED, this);
+		}
+		
 		/**
 		 * 设置使用Shader名字。
 		 * @param name 名称。
 		 */
 		public function setShaderName(name:String):void {
 			_sharderNameID = Shader.nameKey.get(name);
-		}
-		
-		public function _setLoopShaderParams(state:RenderState, projectionView:Matrix4x4, worldMatrix:Matrix4x4, mesh:IRenderable, material:BaseMaterial):void {
-			throw new Error("Marterial:must override it.");
 		}
 		
 		/**

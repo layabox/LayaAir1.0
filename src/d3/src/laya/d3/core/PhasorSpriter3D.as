@@ -1,4 +1,5 @@
 package laya.d3.core {
+	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.math.Matrix4x4;
@@ -60,7 +61,7 @@ package laya.d3.core {
 		
 		public function PhasorSpriter3D() {
 			super();
-			_vb = new VertexBuffer2D(-1,WebGLContext.DYNAMIC_DRAW);
+			_vb = new VertexBuffer2D(-1, WebGLContext.DYNAMIC_DRAW);
 			_ib = new IndexBuffer2D();
 			_sharderNameID = Shader.nameKey.get("SIMPLE");
 		}
@@ -348,15 +349,13 @@ package laya.d3.core {
 		private function flush():void {
 			if (_posInVBData === 0)
 				return;
-				
+			
 			_ib.clear();
 			_ib.append(_ibData);//TODO:待调整
 			_vb.clear();
 			_vb.append(_vbData);//TODO:待调整
 			
 			_vb.bind_upload(_ib);
-			
-			
 			
 			var presz:int = _renderState.shaderValue.length;
 			var predef:int = _renderState.shaderDefs.getValue();
@@ -365,8 +364,9 @@ package laya.d3.core {
 			
 			_renderState.shaderValue.pushValue(VertexElementUsage.POSITION0, _posShaderValue);
 			_renderState.shaderValue.pushValue(VertexElementUsage.COLOR0, _colorShaderValue);
-			_renderState.shaderValue.pushValue(Buffer2D.MVPMATRIX, _wvpMatrix.elements);
-			_renderState.shaderValue.pushValue(Buffer2D.ALBEDO, _albedo.elements);
+			
+			_renderState.shaderValue.pushValue(StandardMaterial.MVPMATRIX, _wvpMatrix.elements);
+			_renderState.shaderValue.pushValue(StandardMaterial.ALBEDO, _albedo.elements);
 			
 			_shader.uploadArray(_renderState.shaderValue.data, _renderState.shaderValue.length, null);
 			

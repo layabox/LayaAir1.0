@@ -44,9 +44,7 @@ package threeDimen.advancedStage {
 			material.renderMode = BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
 			mesh.meshRender.sharedMaterial = material;
 			
-			Laya.loader.load("../../../../res/threeDimen/panorama/panorama.jpg", Handler.create(null, function(texture:Texture2D):void {
-				material.diffuseTexture = texture;
-			}), null, Loader.TEXTURE2D);
+			material.diffuseTexture = Texture2D.load("../../../../res/threeDimen/panorama/panorama.jpg");
 		}
 	}
 }

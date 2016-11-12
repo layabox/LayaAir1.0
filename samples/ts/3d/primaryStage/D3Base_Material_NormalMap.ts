@@ -14,10 +14,9 @@ module Material_NormalMap {
             Laya.Stat.show();
 
             var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
-            scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
 
             var camera = (scene.addChild(new Laya.Camera(0, 0.1, 100))) as Laya.Camera;
-            camera.transform.translate(new Laya.Vector3(0, 1.8, 2.0));
+            camera.transform.translate(new Laya.Vector3(0, 0.8, 1.6));
             camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
             camera.addComponent(CameraMoveScript);
 
@@ -28,11 +27,11 @@ module Material_NormalMap {
             directionLight.diffuseColor = new Vector3(1, 1, 1);
 
             this.root = scene.addChild(new Laya.Sprite3D()) as Laya.Sprite3D;
-            this.root.transform.localScale = new Vector3(0.2, 0.2, 0.2);
+            this.root.transform.localScale = new Vector3(0.002, 0.002, 0.002);
 
-            this.loadModel("../../res/threeDimen/staticModel/lizard/lizard-lizard_geo.lm", "../../res/threeDimen/staticModel/lizard/lizard_norm.png");
-            this.loadModel("../../res/threeDimen/staticModel/lizard/lizard-eye_geo.lm", "../../res/threeDimen/staticModel/lizard/lizardeye_norm.png");
-            this.loadModel("../../res/threeDimen/staticModel/lizard/lizard-rock_geo.lm", "../../res/threeDimen/staticModel/lizard/rock_norm.png");
+            this.loadModel("../../res/threeDimen/staticModel/lizardCal/lizardCaclute-lizard_geo.lm", "../../res/threeDimen/staticModel/lizardCal/lizard_norm.png");
+            this.loadModel("../../res/threeDimen/staticModel/lizardCal/lizardCaclute-eye_geo.lm", "../../res/threeDimen/staticModel/lizardCal/lizardeye_norm.png");
+            this.loadModel("../../res/threeDimen/staticModel/lizardCal/lizardCaclute-rock_geo.lm", "../../res/threeDimen/staticModel/lizardCal/rock_norm.png");
 
             Laya.timer.frameLoop(1, this, () => {
                 this.root.transform.rotate(this.rotation, true);
@@ -41,7 +40,7 @@ module Material_NormalMap {
 
         public loadModel(meshPath: string, normalMapPath: string): void {
             var normalTexture: Laya.Texture;
-            var material: Laya.Material;
+            var material: Laya.StandardMaterial;
 
             var mesh: Laya.Mesh = Laya.Mesh.load(meshPath);
             var meshSprite: Laya.MeshSprite3D = this.root.addChild(new Laya.MeshSprite3D(mesh)) as Laya.MeshSprite3D;
@@ -49,7 +48,7 @@ module Material_NormalMap {
             //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
             mesh.once(Laya.Event.LOADED, null, () => {
                 meshSprite.meshRender.sharedMaterials[0].once(Laya.Event.LOADED, null, () => {
-                    material = meshSprite.meshRender.sharedMaterials[0];
+                    material = meshSprite.meshRender.sharedMaterials[0] as Laya.StandardMaterial;
                     (material && normalTexture) && (material.normalTexture = normalTexture);
                 });
             });

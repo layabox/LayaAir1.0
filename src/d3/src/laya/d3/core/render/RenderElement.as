@@ -47,6 +47,8 @@ package laya.d3.core.render {
 		public var _batchIndexStart:int;
 		/** @private */
 		public var _batchIndexEnd:int;
+		/** @private */
+		public var _canDynamicBatch:Boolean;
 		
 		public function set renderObj(value:IRenderable):void {
 			if (_renderObj !== value) {
@@ -62,6 +64,7 @@ package laya.d3.core.render {
 		 * 创建一个 <code>RenderElement</code> 实例。
 		 */
 		public function RenderElement() {
+			_canDynamicBatch = true;
 		}
 		
 		/**

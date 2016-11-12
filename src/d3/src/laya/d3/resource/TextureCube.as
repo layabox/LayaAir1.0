@@ -1,6 +1,8 @@
 package laya.d3.resource {
+	import laya.d3.utils.Size;
 	import laya.events.Event;
 	import laya.maths.Arith;
+	import laya.net.Loader;
 	import laya.resource.Bitmap;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
@@ -8,18 +10,23 @@ package laya.d3.resource {
 	import laya.webgl.WebGLContext;
 	
 	public class TextureCube extends BaseTexture {
+		/**
+		 * 加载TextureCube。
+		 * @param url TextureCube地址。
+		 */
+		public static function load(url:String):TextureCube {
+			return Laya.loader.create(url, null, null, TextureCube);
+		}
+		
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		/**@private */
 		private const _texCount:int = 6;
-		
-		/**@private */
-		private var _loadedImgCount:int;
 		
 		/**HTML Image*/
 		private var _images:Array;
 		
 		/**@private 文件路径全名。*/
-		protected var _srcs:Array;
+		protected var _srcs:String;
 		
 		/**异步加载锁*/
 		protected var _recreateLock:Boolean = false;
@@ -29,35 +36,32 @@ package laya.d3.resource {
 		/**
 		 * 文件路径全名。
 		 */
-		public function get srcs():Array {
+		public function get srcs():String {
 			return _srcs;
 		}
 		
-		public function TextureCube(srcs:Array, size:int = 512) {//TODO:临时设置512
+		public function TextureCube() {
 			super();
-			
-			if (srcs.length < _texCount)
-				throw new Error("srcs路径数组长度小于6！");
-			
-			_loadedImgCount = 0;
-			
-			_srcs = srcs;
-			_width = size;
-			_height = size;
-			_images = [];
-			
-			for (var i:int = 0; i < _texCount; i++) {
-				Laya.loader.load(_srcs[i], Handler.create(this, _onSubCubeTextureLoaded, [i], true), null, "nativeimage", 1, false);
-			}
 		}
 		
-		private function _onSubCubeTextureLoaded(index:int, img:*):void {
-			_images[index] = img;
-			_loadedImgCount++;
-			if (_loadedImgCount == _texCount) {
-				_loaded = true;
-				event(Event.LOADED, this);
+		/**
+		 * @private
+		 */
+			
+		private function _onTextureLoaded(images:Array):void {
+			_images = images;
+			var minWidth:int = 2147483647/*int.MAX_VALUE*/;
+			var minHeight:int = 2147483647/*int.MAX_VALUE*/;
+			
+			for (var i:int = 0; i < 6; i++) {
+				var image:* = images[i];
+				minWidth = Math.min(minWidth, image.width);
+				minHeight = Math.min(minHeight, image.height);
 			}
+			
+			_width = minWidth;
+			_height = minHeight;
+			_size = new Size(minWidth, minHeight);
 		}
 		
 		private function _createWebGlTexture():void {
@@ -71,7 +75,6 @@ package laya.d3.resource {
 			var glTex:* = _source = gl.createTexture();
 			var w:int = _width;
 			var h:int = _height;
-			
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, glTex);
@@ -170,6 +173,16 @@ package laya.d3.resource {
 				_createWebGlTexture();
 				completeCreate();//处理创建完成后相关操作
 			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function onAsynLoaded(url:String, images:Array):void {
+			_srcs = url;
+			_onTextureLoaded(images);
+			_loaded = true;
+			event(Event.LOADED, this);
 		}
 		
 		override protected function detoryResource():void {

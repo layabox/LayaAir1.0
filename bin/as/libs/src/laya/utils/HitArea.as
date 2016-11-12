@@ -123,8 +123,8 @@ package laya.utils {
 				p1y = areaPoints[i + 1];
 				p2x = areaPoints[(i + 2) % len];
 				p2y = areaPoints[(i + 3) % len];
-				var p1:Point = areaPoints[i];
-				var p2:Point = areaPoints[(i + 1) % areaPoints.length]; // 最后一个点与第一个点连线
+				//var p1:Point = areaPoints[i];
+				//var p2:Point = areaPoints[(i + 1) % areaPoints.length]; // 最后一个点与第一个点连线
 				if (p1y == p2y)
 					continue;
 				if (p.y < Math.min(p1y, p2y))

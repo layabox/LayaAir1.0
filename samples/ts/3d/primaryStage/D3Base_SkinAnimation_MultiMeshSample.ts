@@ -18,7 +18,6 @@ class SkinAnimation_MultiMeshSample {
         directionLight.ambientColor = new Laya.Vector3(0.7, 0.6, 0.6);
         directionLight.specularColor = new Laya.Vector3(2.0, 2.0, 1.6);
         directionLight.diffuseColor = new Laya.Vector3(1, 1, 1);
-        scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
 
         var rootSkinMesh = scene.addChild(new Laya.Sprite3D()) as Laya.Sprite3D;
 

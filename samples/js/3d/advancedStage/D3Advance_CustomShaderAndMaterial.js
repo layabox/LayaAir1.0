@@ -10,9 +10,9 @@ Laya.Stat.show();
         'a_Position': Laya.VertexElementUsage.POSITION0,
         'a_Normal':Laya.VertexElementUsage.NORMAL0,
         'a_Texcoord': Laya.VertexElementUsage.TEXTURECOORDINATE0,
-        'u_MvpMatrix': Laya.Buffer2D.MVPMATRIX,
-        'u_texture': Laya.Buffer2D.DIFFUSETEXTURE,
-        'u_WorldMat':Laya.Buffer2D.MATRIX1
+        'u_MvpMatrix': CustomMaterial.MVPMATRIX,
+        'u_texture': CustomMaterial.DIFFUSETEXTURE,
+        'u_WorldMat': CustomMaterial.WORLDMATRIX
     };
     var customShader = Laya.Shader.nameKey.add("CustomShader");
     Laya.Shader.preCompile(customShader, vs, ps, shaderNameMap);
@@ -28,9 +28,7 @@ var mesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeD
 mesh.transform.localPosition = new Laya.Vector3(-0.3, 0.0, 0.0);
 mesh.transform.localScale = new Laya.Vector3(0.5, 0.5, 0.5);
 
-Laya.loader.load("../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg", Laya.Handler.create(null,function(texture){
-    var customMaterial = new CustomMaterial();
-    customMaterial.setDiffuseTexture(texture);
-    mesh.meshRender.sharedMaterial = customMaterial;
-}), null, Laya.Loader.TEXTURE2D);
+var customMaterial = new CustomMaterial();
+customMaterial.setDiffuseTexture(Laya.Texture2D.load("../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg"));
+mesh.meshRender.sharedMaterial = customMaterial;
 

@@ -90,13 +90,15 @@ package laya.media {
 					_musicCompleteHandler = _musicChannel.completeHandler;
 					_musicPosition=_musicChannel.position;
 					_musicChannel.stop();
+					Laya.stage.once(Event.MOUSE_DOWN, null, _stageOnFocus);
 				}
 				
 			}
 		}
 		
 		private static function _stageOnFocus():void {
-			if (_blurPaused) {
+			Laya.stage.off(Event.MOUSE_DOWN, null, _stageOnFocus);
+			if (_blurPaused) {			
 				playMusic(_tMusic,_musicLoops,_musicCompleteHandler,_musicPosition);
 				_blurPaused = false;
 			}

@@ -29,7 +29,7 @@ package threeDimen.primaryStage {
 			
 			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
 			camera.transform.translate(new Vector3(0, 0.8, 1.5));
-			camera.transform.rotate(new Vector3( -30, 0, 0), true, false);
+			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			camera.clearFlag = BaseCamera.CLEARFLAG_SKY;
 			
 			camera.addComponent(CameraMoveScript);
@@ -37,9 +37,7 @@ package threeDimen.primaryStage {
 			var skyBox:SkyBox = new SkyBox();
 			camera.sky = skyBox;
 			//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-			Laya.loader.load("../../../../res/threeDimen/skyBox/px.jpg,../../../../res/threeDimen/skyBox/nx.jpg,../../../../res/threeDimen/skyBox/py.jpg,../../../../res/threeDimen/skyBox/ny.jpg,../../../../res/threeDimen/skyBox/pz.jpg,../../../../res/threeDimen/skyBox/nz.jpg", Handler.create(null, function(texture:TextureCube):void {
-				skyBox.textureCube = texture;
-			}), null, Loader.TEXTURECUBE);
+			skyBox.textureCube = TextureCube.load("../../../../res/threeDimen/skyBox/skyCube.ltc");
 			
 			var mesh:MeshSprite3D = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm"))) as MeshSprite3D;
 		}

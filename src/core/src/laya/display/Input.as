@@ -161,6 +161,7 @@ package laya.display {
 			style.backgroundColor = 'transparent';
 			style.border = 'none';
 			style.outline = 'none';
+			style.zIndex = 1;
 			
 			input.addEventListener('input', _processInputting);
 			
@@ -332,23 +333,10 @@ package laya.display {
 			var inputHei:int = _height - padding[0] - padding[2];
 			nativeInput.setSize(inputWid, inputHei);
 			
-			//不可见
-			if (!_getVisible()) focus = false;
-			
 			if (Render.isConchApp) {
 				nativeInput.setPos(tx, ty);
 				nativeInput.setScale(sx, sy);
 			}
-		}
-		
-		/**@private */
-		private function _getVisible():Boolean {
-			var target:* = this;
-			while (target) {
-				if (target.visible === false) return false;
-				target = target.parent;
-			}
-			return true;
 		}
 		
 		/**选中所有文本。*/
@@ -378,8 +366,8 @@ package laya.display {
 					_focusIn();
 				} else {
 					input.target = null;
-					
 					_focusOut();
+					input.blur();
 					
 					if (Render.isConchApp) {
 						input.setPos(-10000, -10000);

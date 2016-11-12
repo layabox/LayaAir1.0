@@ -7,6 +7,7 @@ package laya.net {
 	import laya.resource.Texture;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
+	import laya.utils.Utils;
 	
 	/**
 	 * 加载进度发生改变时调度。
@@ -42,17 +43,13 @@ package laya.net {
 		public static const SOUND:String = "sound";
 		/** 图集类型，加载完成后返回图集json信息(并创建图集内小图Texture)。*/
 		public static const ATLAS:String = "atlas";
-		/** 三维素材，2D纹理。*/
-		public static const TEXTURE2D:String = "texture2d";
-		/** 三维素材，cube纹理。*/
-		public static const TEXTURECUBE:String = "texturecube";
 		
 		/** 文件后缀和类型对应表。*/
 		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json"};
 		/**资源解析函数对应表，用来扩展更多类型的资源加载解析*/
 		public static var parserMap:Object = /*[STATIC SAFE]*/ {};
 		/** 已加载的资源池。*/
-		public static const loadedMap:Object = { };
+		public static const loadedMap:Object = {};
 		/** 资源分组。*/
 		public static const groupMap:Object = {};
 		/** 每帧回调最大超时时间，如果超时，则下帧再处理。*/
@@ -76,8 +73,6 @@ package laya.net {
 		protected var _cache:Boolean;
 		/**@private */
 		protected var _http:HttpRequest;
-		/**@private */
-		protected static var _extReg:RegExp =/*[STATIC SAFE]*/ /\.(\w+)\??/g;
 		
 		/**
 		 * 加载资源。
@@ -85,14 +80,16 @@ package laya.net {
 		 * @param	type 类型，如果为null，则根据文件后缀，自动分析类型。
 		 * @param	cache 是否缓存数据。
 		 * @param	group 分组。
+		 * @param	ignoreCache 是否忽略缓存，强制重新加载
 		 */
-		public function load(url:String, type:String = null, cache:Boolean = true,group:String=null):void {
-			url = _parseURL(url);/*url = URL.formatURL(url);*/
+		public function load(url:String, type:String = null, cache:Boolean = true, group:String = null ,ignoreCache:Boolean=false):void {
+			if (url.indexOf("data:image") === 0) this._type = IMAGE;
+			url = URL.formatURL(url);
 			this._url = url;
 			this._type = type || (type = getTypeFromUrl(url));
 			this._cache = cache;
 			this._data = null;
-			if (loadedMap[url]) {
+			if (!ignoreCache && loadedMap[url]) {
 				this._data = loadedMap[url];
 				event(Event.PROGRESS, 1);
 				event(Event.COMPLETE, this._data);
@@ -125,11 +122,8 @@ package laya.net {
 		 * @return 数据类型。
 		 */
 		protected function getTypeFromUrl(url:String):String {
-			_extReg.lastIndex = url.lastIndexOf(".");
-			var result:Array = _extReg.exec(url);
-			if (result && result.length > 1) {
-				return typeMap[result[1].toLowerCase()];
-			}
+			var type:String = Utils.getFileExtension(url);
+			if (type) return typeMap[type];
 			trace("Not recognize the resources suffix", url);
 			return "text";
 		}
@@ -256,7 +250,8 @@ package laya.net {
 						return _loadImage(URL.formatURL(_data.toLoads.pop()));
 					}
 					var frames:Object = this._data.frames;
-					var directory:String = (this._data.meta && this._data.meta.prefix) ? URL.basePath + this._data.meta.prefix : this._url.substring(0, this._url.lastIndexOf(".")) + "/"
+					var cleanUrl:String = this._url.split("?")[0];
+					var directory:String = (this._data.meta && this._data.meta.prefix) ? URL.basePath + this._data.meta.prefix : cleanUrl.substring(0, cleanUrl.lastIndexOf(".")) + "/";
 					var pics:Array = _data.pics;
 					var map:Array = atlasMap[this._url] || (atlasMap[this._url] = []);
 					map.dir = directory;
@@ -359,28 +354,11 @@ package laya.net {
 		}
 		
 		/**
-		 * @private
-		 */
-		public static function _parseURL(url:String):String {
-			if (!url) return url;
-			if (url.indexOf("data:image") == 0) return url;
-			if (url.indexOf(",") < 0) {
-				url = URL.formatURL(url);
-			} else {
-				var arr:Array = url.split(",");
-				for (var i:int = arr.length - 1; i > -1; i--)
-					arr[i] = URL.formatURL(arr[i]);
-				url = arr.join(",");
-			}
-			return url
-		}
-		
-		/**
 		 * 清理指定资源地址的缓存。
 		 * @param	url 资源地址。
 		 * @param	forceDispose 是否强制销毁，有些资源是采用引用计数方式销毁，如果forceDispose=true，则忽略引用计数，直接销毁，比如Texture，默认为false
 		 */
-		public static function clearRes(url:String, forceDispose:Boolean=false):void {
+		public static function clearRes(url:String, forceDispose:Boolean = false):void {
 			url = URL.formatURL(url);
 			//删除图集
 			var arr:Array = atlasMap[url];
@@ -409,7 +387,7 @@ package laya.net {
 		 * @return	返回资源。
 		 */
 		public static function getRes(url:String):* {
-			return loadedMap[_parseURL(url) /*URL.formatURL(url)*/];
+			return loadedMap[URL.formatURL(url)];
 		}
 		
 		/**
@@ -431,7 +409,7 @@ package laya.net {
 		}
 		
 		/**
-		 * 设置资源分组。 
+		 * 设置资源分组。
 		 * @param url 资源地址。
 		 * @param group 分组名
 		 */
@@ -443,11 +421,11 @@ package laya.net {
 		/**
 		 * 根据分组清理资源
 		 * @param group 分组名
-		 */		
+		 */
 		public static function clearResByGroup(group:String):void {
 			if (!groupMap[group]) return;
-			var arr:Array=groupMap[group],i:int, len:int= arr.length ;
-			for (i = 0; i < len; i++){
+			var arr:Array = groupMap[group], i:int, len:int = arr.length;
+			for (i = 0; i < len; i++) {
 				clearRes(arr[i]);
 			}
 			arr.length = 0;

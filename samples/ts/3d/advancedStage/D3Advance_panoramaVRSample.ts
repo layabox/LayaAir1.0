@@ -27,11 +27,7 @@ module PanoramaVRSample {
             material.renderMode = Laya.BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
             mesh.meshRender.sharedMaterial = material;
 
-            Laya.loader.load("../../res/threeDimen/panorama/panorama.jpg", Laya.Handler.create(null, function (texture: Laya.Texture): void {
-                (texture.bitmap as Laya.WebGLImage).mipmap = true;
-                 (texture.bitmap as Laya.WebGLImage).enableMerageInAtlas = false;
-                material.diffuseTexture = texture;
-            }));
+            material.diffuseTexture = Laya.Texture2D.load("../../res/threeDimen/panorama/panorama.jpg");
         }
     }
 }

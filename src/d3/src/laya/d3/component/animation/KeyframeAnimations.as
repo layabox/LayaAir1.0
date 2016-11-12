@@ -1,7 +1,7 @@
 package laya.d3.component.animation {
 	import laya.ani.AnimationPlayer;
 	import laya.ani.AnimationState;
-	import laya.ani.KeyframesAniTemplet;
+	import laya.ani.AnimationTemplet;
 	import laya.d3.component.Component3D;
 	import laya.d3.core.Sprite3D;
 	import laya.events.Event;
@@ -19,19 +19,37 @@ package laya.d3.component.animation {
 	 * <code>KeyframeAnimation</code> 类用于帧动画组件的父类。
 	 */
 	public class KeyframeAnimations extends Component3D {
-		/** @private */
-		protected var _url:String;
 		/**动画播放器。*/
 		protected var _player:AnimationPlayer;
 		/** @private */
-		public var _templet:KeyframesAniTemplet;
+		protected var _templet:AnimationTemplet;
 		
 		/**
-		 * 获取url地址。
-		 * @return 地址。
+		 * 设置url地址。
+		 * @param value 地址。
 		 */
-		public function get url():String {
-			return _url;
+		public function set url(value:String):void {
+			trace("Warning: discard property,please use templet property instead.");
+			if (_player.state !== AnimationState.stopped)
+				_player.stop(true);
+			
+			var templet:AnimationTemplet = Laya.loader.create(value, null, null, AnimationTemplet);
+			_templet = templet;
+			_player.templet = templet;
+			event(Event.ANIMATION_CHANGED, this);
+		}
+		
+		public function get templet():AnimationTemplet {
+			return _templet;
+		}
+		
+		public function set templet(value:AnimationTemplet):void {
+			if (_player.state !== AnimationState.stopped)
+				_player.stop(true);
+			
+			_templet = value;
+			_player.templet = value;
+			event(Event.ANIMATION_CHANGED, this);
 		}
 		
 		/**
@@ -40,46 +58,6 @@ package laya.d3.component.animation {
 		 */
 		public function get player():AnimationPlayer {
 			return _player;
-		}
-		
-		/**
-		 * 设置url地址。
-		 * @param value 地址。
-		 */
-		public function set url(value:String):void {
-			if (_player.state !== AnimationState.stopped)
-				_player.stop(true);
-			
-			_url = URL.formatURL(value);
-			
-			var templet:KeyframesAniTemplet = Resource.animationCache[_url];
-			
-			var _this:KeyframeAnimations = this;
-			if (!templet) {
-				templet = Resource.animationCache[_url] = new KeyframesAniTemplet();
-				_templet = templet;
-				_player.templet = templet;
-				var onComp:Function = function(data:ArrayBuffer):void {
-					var arraybuffer:ArrayBuffer = data;
-					templet.parse(arraybuffer);
-				}
-				var loader:Loader = new Loader();
-				loader.once(Event.COMPLETE, null, onComp);
-				loader.load(_url, Loader.BUFFER);
-			} else {
-				_templet = templet;
-				_player.templet = templet
-			}
-	
-			event(Event.ANIMATION_CHANGED, this);
-			
-			if (!templet.loaded)
-				templet.once(Event.LOADED, null, function(e:KeyframesAniTemplet):void {
-					_this.event(Event.LOADED, _this)
-				});
-			else {
-				this.event(Event.LOADED, this);
-			}
 		}
 		
 		/**

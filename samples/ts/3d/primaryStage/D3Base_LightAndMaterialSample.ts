@@ -22,7 +22,6 @@ module LightAndMaterialSample {
 		constructor() {
 			this.tempQuaternion = new Laya.Quaternion();
 			this.tempVector3 = new Vector3();
-			this.currentShadingMode = Laya.BaseScene.PIXEL_SHADING;
 			this.currentLightState = 0;
 
 			Laya3D.init(0, 0,true);
@@ -35,7 +34,7 @@ module LightAndMaterialSample {
 			this.scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
 			var camera = this.scene.addChild(new Laya.Camera(0, 0.1, 100)) as Laya.Camera;
-			camera.transform.translate(new Laya.Vector3(0, 1.8, 2.0));
+			camera.transform.translate(new Laya.Vector3(0, 0.8, 1.0));
 			camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
 			camera.clearColor = null;
             var _this = this;
@@ -67,7 +66,7 @@ module LightAndMaterialSample {
 			this.scene.shadingMode = this.currentShadingMode;
 
 
-			var grid = this.scene.addChild(new Laya.Sprite3D()) as Laya.Sprite3D;
+			var grid = this.scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/grid/plane.lh")) as Laya.Sprite3D;
 			//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 			grid.once(Laya.Event.HIERARCHY_LOADED, null, (sprite) => {
 				var meshSprite = sprite.getChildAt(0) as Laya.MeshSprite3D;
@@ -82,10 +81,8 @@ module LightAndMaterialSample {
 					}
 				});
 			});
-			grid.loadHierarchy("../../res/threeDimen/staticModel/grid/plane.lh");
 
-			var sphere = this.scene.addChild(new Laya.Sprite3D()) as Laya.Sprite3D;
-			sphere.loadHierarchy("../../res/threeDimen/staticModel/sphere/sphere.lh");
+			var sphere = this.scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/sphere/sphere.lh")) as Laya.Sprite3D;
 			sphere.transform.localScale = new Vector3(0.2, 0.2, 0.2);
 			sphere.transform.localPosition = new Vector3(0.0, 0.0, 0.2);
 

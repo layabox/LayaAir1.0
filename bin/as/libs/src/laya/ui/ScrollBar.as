@@ -31,7 +31,8 @@ package laya.ui {
 	 * @see laya.ui.HScrollBar
 	 */
 	public class ScrollBar extends Component {
-		
+		/**滚动衰减系数*/
+		public var rollRatio:Number = 0.95
 		/**滚动变化时回调，回传value参数。*/
 		public var changeHandler:Handler;
 		/**是否缩放滑动条，默认值为true。 */
@@ -516,7 +517,7 @@ package laya.ui {
 		
 		/**@private */
 		protected function tweenMove():void {
-			_lastOffset *= 0.95;
+			_lastOffset *= rollRatio;
 			value -= _lastOffset;
 			if (Math.abs(_lastOffset) < 1 || value== max || value == min) {
 				Laya.timer.clear(this, tweenMove);

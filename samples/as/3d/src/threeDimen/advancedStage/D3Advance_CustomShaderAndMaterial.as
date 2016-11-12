@@ -41,23 +41,21 @@ package threeDimen.advancedStage {
 			meshSprite3D.transform.localPosition = new Vector3(-0.3, 0.0, 0.0);
 			meshSprite3D.transform.localScale = new Vector3(0.5, 0.5, 0.5);
 			
-			Laya.loader.load("../../../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg", Handler.create(null,function(texture:Texture2D):void{
-				var customMaterial:CustomMaterial = new CustomMaterial();
-				customMaterial.diffuseTexture = texture;
-			    meshSprite3D.meshRender.sharedMaterial = customMaterial;
-			}), null, Loader.TEXTURE2D);
+			var customMaterial:CustomMaterial = new CustomMaterial();
+			customMaterial.diffuseTexture = Texture2D.load("../../../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg");
+			meshSprite3D.meshRender.sharedMaterial = customMaterial;
+		
 		}
 		
 		private function initShader():void {
 			var vs:String, ps:String;
 			var shaderNameMap:* = {
 				'a_Position': VertexElementUsage.POSITION0, 
-				'a_Normal':VertexElementUsage.NORMAL0,
+				'a_Normal': VertexElementUsage.NORMAL0, 
 				'a_Texcoord': VertexElementUsage.TEXTURECOORDINATE0, 
-				'u_MvpMatrix': Buffer2D.MVPMATRIX, 
-				'u_texture': Buffer2D.DIFFUSETEXTURE,
-				'u_WorldMat':Buffer2D.MATRIX1
-			};
+				'u_MvpMatrix': CustomMaterial.MVPMATRIX, 
+				'u_texture': CustomMaterial.DIFFUSETEXTURE, 
+				'u_WorldMat': CustomMaterial.WORLDMATRIX};
 			var customShader:int = Shader.nameKey.add("CustomShader");
 			vs = __INCLUDESTR__("shader/customShader.vs");
 			ps = __INCLUDESTR__("shader/customShader.ps");

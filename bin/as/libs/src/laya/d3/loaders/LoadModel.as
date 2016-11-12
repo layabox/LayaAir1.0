@@ -7,17 +7,28 @@ package laya.d3.loaders {
 	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexPositionNormalColor;
 	import laya.d3.graphics.VertexPositionNormalColorSkin;
+	import laya.d3.graphics.VertexPositionNormalColorSkinTangent;
+	import laya.d3.graphics.VertexPositionNormalColorTangent;
 	import laya.d3.graphics.VertexPositionNormalColorTexture;
 	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1;
 	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1Skin;
+	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1SkinTangent;
+	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1Tangent;
 	import laya.d3.graphics.VertexPositionNormalColorTextureSkin;
+	import laya.d3.graphics.VertexPositionNormalColorTextureSkinTangent;
+	import laya.d3.graphics.VertexPositionNormalColorTextureTangent;
 	import laya.d3.graphics.VertexPositionNormalTexture;
 	import laya.d3.graphics.VertexPositionNormalTexture0Texture1;
 	import laya.d3.graphics.VertexPositionNormalTexture0Texture1Skin;
+	import laya.d3.graphics.VertexPositionNormalTexture0Texture1SkinTangent;
+	import laya.d3.graphics.VertexPositionNormalTexture0Texture1Tangent;
 	import laya.d3.graphics.VertexPositionNormalTextureSkin;
+	import laya.d3.graphics.VertexPositionNormalTextureSkinTangent;
+	import laya.d3.graphics.VertexPositionNormalTextureTangent;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
+	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.resource.Resource;
 	import laya.utils.Byte;
@@ -69,9 +80,6 @@ package laya.d3.loaders {
 		 * @private
 		 */
 		private function _onLoaded(data:*, url:String):Mesh {
-			var preBasePath:String = URL.basePath;
-			URL.basePath = URL.getPath(URL.formatURL(url));//此处更换URL路径会影响模型寻找贴图的路径
-			
 			_fileData = data;
 			
 			_readData = new Byte(_fileData);
@@ -89,8 +97,6 @@ package laya.d3.loaders {
 				//trace("--------------call:" + "READ_" + blockName);
 				if (!fn.call(this)) break;
 			}
-			
-			URL.basePath = preBasePath;
 			return _mesh;
 		}
 		
@@ -135,19 +141,9 @@ package laya.d3.loaders {
 			
 			var shaderName:String = _readString();
 			var url:String = _readString();
-			
 			if (url !== "null") {
 				url = URL.formatURL(url);
-				
-				var material:BaseMaterial = Resource.materialCache[url];
-				
-				if (material) {
-					_materials[index] = material;
-				} else {
-					material = _materials[index] = Resource.materialCache[url] = new StandardMaterial();
-					material.setShaderName(shaderName);
-					BaseMaterial.createFromFile(url, material);
-				}
+				_materials[index] = Laya.loader.create(url,null, null, StandardMaterial);
 			} else {
 				_materials[index] = new BaseMaterial();
 			}
@@ -217,7 +213,7 @@ package laya.d3.loaders {
 			var vbArrayBuffer:ArrayBuffer = arrayBuffer.slice(vbStart, vbStart + vbsize);
 			
 			vb.setData(new Float32Array(vbArrayBuffer));
-			submesh._vertexBuffer=vb;
+			submesh._vertexBuffer = vb;
 			
 			var vertexElements:Array = vb.vertexDeclaration.getVertexElements();
 			for (var i:int = 0; i < vertexElements.length; i++)
@@ -227,10 +223,10 @@ package laya.d3.loaders {
 			var ibStart:int = ibofs + _DATA.offset;
 			var ibArrayBuffer:ArrayBuffer = arrayBuffer.slice(ibStart, ibStart + ibsize);
 			ib.setData(new Uint16Array(ibArrayBuffer));
-			submesh._indexBuffer=ib;
+			submesh._indexBuffer = ib;
 			
 			var boneDicArrayBuffer:ArrayBuffer = arrayBuffer.slice(boneDicofs + _DATA.offset, boneDicofs + _DATA.offset + boneDicsize);
-			submesh._boneIndices=new Uint8Array(boneDicArrayBuffer);
+			submesh._boneIndices = new Uint8Array(boneDicArrayBuffer);
 			
 			_mesh._add(submesh);
 			
@@ -242,7 +238,7 @@ package laya.d3.loaders {
 		}
 		
 		private function _getVertexDeclaration():VertexDeclaration {
-			var position:Boolean, normal:Boolean, color:Boolean, texcoord0:Boolean, texcoord1:Boolean,tangent:Boolean, blendWeight:Boolean, blendIndex:Boolean;
+			var position:Boolean, normal:Boolean, color:Boolean, texcoord0:Boolean, texcoord1:Boolean, tangent:Boolean, blendWeight:Boolean, blendIndex:Boolean;
 			for (var i:int = 0; i < _shaderAttributes.length; i += 8) {
 				switch (_shaderAttributes[i]) {
 				case "POSITION": 
@@ -260,37 +256,57 @@ package laya.d3.loaders {
 				case "UV1": 
 					texcoord1 = true;
 					break;
-				case "TANGENT": 
-					tangent = true;
-					break;
 				case "BLENDWEIGHT": 
 					blendWeight = true;
 					break;
 				case "BLENDINDICES": 
 					blendIndex = true;
 					break;
+				case "TANGENT": 
+					tangent = true;
+					break;
 				}
 			}
 			var vertexDeclaration:VertexDeclaration;
 			
-			if (position && normal && color && texcoord0 && texcoord1 && blendWeight && blendIndex)
+			if (position && normal && color && texcoord0 && texcoord1 && blendWeight && blendIndex && tangent)
+				vertexDeclaration = VertexPositionNormalColorTexture0Texture1SkinTangent.vertexDeclaration;
+			else if (position && normal && color && texcoord0 && texcoord1 && blendWeight && blendIndex)
 				vertexDeclaration = VertexPositionNormalColorTexture0Texture1Skin.vertexDeclaration;
+			else if (position && normal && texcoord0 && texcoord1 && blendWeight && blendIndex && tangent)
+				vertexDeclaration = VertexPositionNormalTexture0Texture1SkinTangent.vertexDeclaration;
 			else if (position && normal && texcoord0 && texcoord1 && blendWeight && blendIndex)
 				vertexDeclaration = VertexPositionNormalTexture0Texture1Skin.vertexDeclaration;
+			else if (position && normal && color && texcoord0 && blendWeight && blendIndex && tangent)
+				vertexDeclaration = VertexPositionNormalColorTextureSkinTangent.vertexDeclaration;
 			else if (position && normal && color && texcoord0 && blendWeight && blendIndex)
 				vertexDeclaration = VertexPositionNormalColorTextureSkin.vertexDeclaration;
+			else if (position && normal && texcoord0 && blendWeight && blendIndex && tangent)
+				vertexDeclaration = VertexPositionNormalTextureSkinTangent.vertexDeclaration;
 			else if (position && normal && texcoord0 && blendWeight && blendIndex)
 				vertexDeclaration = VertexPositionNormalTextureSkin.vertexDeclaration;
+			else if (position && normal && color && blendWeight && blendIndex && tangent)
+				vertexDeclaration = VertexPositionNormalColorSkinTangent.vertexDeclaration;
 			else if (position && normal && color && blendWeight && blendIndex)
 				vertexDeclaration = VertexPositionNormalColorSkin.vertexDeclaration;
+			else if (position && normal && color && texcoord0 && texcoord1 && tangent)
+				vertexDeclaration = VertexPositionNormalColorTexture0Texture1Tangent.vertexDeclaration;
 			else if (position && normal && color && texcoord0 && texcoord1)
 				vertexDeclaration = VertexPositionNormalColorTexture0Texture1.vertexDeclaration;
+			else if (position && normal && texcoord0 && texcoord1 && tangent)
+				vertexDeclaration = VertexPositionNormalTexture0Texture1Tangent.vertexDeclaration;
 			else if (position && normal && texcoord0 && texcoord1)
 				vertexDeclaration = VertexPositionNormalTexture0Texture1.vertexDeclaration;
+			else if (position && normal && color && texcoord0 && tangent)
+				vertexDeclaration = VertexPositionNormalColorTextureTangent.vertexDeclaration;
 			else if (position && normal && color && texcoord0)
 				vertexDeclaration = VertexPositionNormalColorTexture.vertexDeclaration;
+			else if (position && normal && texcoord0 && tangent)
+				vertexDeclaration = VertexPositionNormalTextureTangent.vertexDeclaration;
 			else if (position && normal && texcoord0)
 				vertexDeclaration = VertexPositionNormalTexture.vertexDeclaration;
+			else if (position && normal && color && tangent)
+				vertexDeclaration = VertexPositionNormalColorTangent.vertexDeclaration;
 			else if (position && normal && color)
 				vertexDeclaration = VertexPositionNormalColor.vertexDeclaration;
 			

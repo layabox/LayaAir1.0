@@ -3,6 +3,7 @@ package laya.d3.resource.models {
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.IRenderable;
+	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
@@ -65,27 +66,6 @@ package laya.d3.resource.models {
 		/**
 		 * @private
 		 */
-		private function _testTangent(state:RenderState):void {
-			var vb:VertexBuffer3D = _vertexBuffer;
-			var vertexDeclaration:VertexDeclaration = vb.vertexDeclaration;
-			var material:StandardMaterial = state.renderElement._material as StandardMaterial;//TODO待调整
-			if (material.normalTexture && !vertexDeclaration.getVertexElementByUsage(VertexElementUsage.TANGENT0)) {
-				var vertexDatas:Float32Array = vb.getData();
-				var newVertexDatas:Float32Array = Utils3D.generateTangent(vertexDatas, vertexDeclaration.vertexStride / 4, vertexDeclaration.getVertexElementByUsage(VertexElementUsage.POSITION0).offset / 4, vertexDeclaration.getVertexElementByUsage(VertexElementUsage.TEXTURECOORDINATE0).offset / 4, _indexBuffer.getData());
-				vertexDeclaration = Utils3D.getVertexTangentDeclaration(vertexDeclaration.getVertexElements());
-				
-				var newVB:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, WebGLContext.STATIC_DRAW);
-				newVB.setData(newVertexDatas);
-				vb.dispose();
-				_vertexBuffer = newVB;
-				
-				_bufferUsage[VertexElementUsage.TANGENT0] = newVB;
-			}
-		}
-		
-		/**
-		 * @private
-		 */
 		public function _getVertexBuffer(index:int = 0):VertexBuffer3D {
 			if (index === 0)
 				return _vertexBuffer;
@@ -104,7 +84,6 @@ package laya.d3.resource.models {
 		 * @private
 		 */
 		public function _beforeRender(state:RenderState):Boolean {
-			_testTangent(state);//TODO:临时
 			_vertexBuffer._bind();
 			_indexBuffer._bind();
 			return true;

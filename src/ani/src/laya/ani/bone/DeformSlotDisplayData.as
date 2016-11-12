@@ -11,7 +11,7 @@ package laya.ani.bone
 		public var attachment:String;
 		public var timeList:Vector.<Number> = new Vector.<Number>();
 		public var vectices:Vector.<Array> = new Vector.<Array>();
-		
+		public var tweenKeyList:Vector.<Boolean> = new Vector.<Boolean>();
 		
 		public var deformData:Array;
 		public var frameIndex:int = 0;
@@ -53,14 +53,15 @@ package laya.ani.bone
 			{
 				return;
 			}
+			
 			var tVertexCount:int = vectices[0].length;
 			var tVertices:Array = [];
 			var tFrameIndex:int = binarySearch1(timeList,time);
 			frameIndex = tFrameIndex;
-			
 			if (time >= timeList[timeList.length - 1])
 			{
 				var lastVertices:Array = vectices[vectices.length - 1];
+				
 				if (alpha < 1)
 				{
 					for (i = 0; i < tVertexCount; i++)
@@ -77,25 +78,22 @@ package laya.ani.bone
 				return;
 			}
 			
+			var tTweenKey:Boolean = tweenKeyList[frameIndex];
 			var tPrevVertices:Array = vectices[frameIndex - 1];
 			var tNextVertices:Array = vectices[frameIndex];
+			var tPreFrameTime:Number = timeList[frameIndex - 1];
 			var tFrameTime:Number = timeList[frameIndex];
 			
-			var tPercent:Number = 1 - (time - tFrameTime) / (timeList[frameIndex - 1] - tFrameTime);
-			
+			if (tweenKeyList[tFrameIndex - 1])
+			{
+				alpha = (time - tPreFrameTime) / (tFrameTime - tPreFrameTime);
+			}
+
 			var tPrev:Number;
-			if (alpha < 1) {
-				for (i = 0; i < tVertexCount; i++)
-				{
-					tPrev = tPrevVertices[i];
-					tVertices[i] += (tPrev + (tNextVertices[i] - tPrev) * tPercent - tVertices[i]) * alpha;
-				}
-			}else {
-				for (i = 0; i < tVertexCount; i++)
-				{
-					tPrev = tPrevVertices[i];
-					tVertices[i] = tPrev + (tNextVertices[i] - tPrev) * tPercent;
-				}
+			for (i = 0; i < tVertexCount; i++)
+			{
+				tPrev = tPrevVertices[i];
+				tVertices[i] = tPrev + (tNextVertices[i] - tPrev) * alpha;
 			}
 			deformData = tVertices;
 		}

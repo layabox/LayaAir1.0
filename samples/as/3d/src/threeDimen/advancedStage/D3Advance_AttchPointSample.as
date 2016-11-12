@@ -1,4 +1,5 @@
 package threeDimen.advancedStage {
+	import laya.ani.AnimationTemplet;
 	import laya.d3.component.AttachPoint;
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.Camera;
@@ -22,7 +23,7 @@ package threeDimen.advancedStage {
 		private var rotation:Vector3 = new Vector3(0, 3.14, 0);
 		
 		public function D3Advance_AttchPointSample() {
-			Laya3D.init(0, 0,true);
+			Laya3D.init(0, 0, true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
@@ -45,7 +46,7 @@ package threeDimen.advancedStage {
 			skinMesh = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
 			skinMesh.transform.localRotationEuler = rotation;
 			skinAni = skinMesh.addComponent(SkinAnimations) as SkinAnimations;
-			skinAni.url = "../../../../res/threeDimen/skinModel/dude/dude.ani";
+			skinAni.templet =AnimationTemplet.load("../../../../res/threeDimen/skinModel/dude/dude.ani");
 			skinAni.player.play();
 			
 			attacthPoint = skinMesh.addComponent(AttachPoint) as AttachPoint;

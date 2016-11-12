@@ -724,12 +724,12 @@ package laya.ui {
 					//TODO:
 					posCell(cell, index);
 				}
+				if (hasListener(Event.RENDER)) event(Event.RENDER, [cell, index]);
+				if (renderHandler) renderHandler.runWith([cell, index]);
 			} else {
 				cell.visible = false;
 				cell.dataSource = null;
 			}
-			if (hasListener(Event.RENDER)) event(Event.RENDER, [cell, index]);
-			if (renderHandler) renderHandler.runWith([cell, index]);
 		}
 		
 		/**

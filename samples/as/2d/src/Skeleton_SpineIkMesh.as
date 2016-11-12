@@ -34,14 +34,14 @@ package {
 			mFactory.loadAni(mAniPath);
 		}
 		
-		private function onError():void
+		private function onError(e:*):void
 		{
 			trace("error");
 		}
 		
 		private function parseComplete(fac:Templet):void {
 			//创建模式为1，可以启用换装
-			mArmature = mFactory.buildArmature(0);
+			mArmature = mFactory.buildArmature(1);
 			mArmature.x = mStartX;
 			mArmature.y = mStartY;
 			mArmature.scale(0.5, 0.5);

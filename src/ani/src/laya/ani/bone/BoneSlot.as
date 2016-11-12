@@ -137,7 +137,7 @@ package laya.ani.bone {
 								} else {
 									tResultMatrix = new Matrix();
 								}
-								if ((!Render.isWebGL && currDisplayData.uvs) || (Render.isWebGL && _diyTexture))
+								if ((!Render.isWebGL && currDisplayData.uvs) || (Render.isWebGL && _diyTexture && currDisplayData.uvs))
 								{
 									var tTestMatrix:Matrix = new Matrix(1, 0, 0, 1);
 									//判断是否反转

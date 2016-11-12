@@ -17,7 +17,7 @@ package laya.d3.graphics {
 		new VertexElement(72, VertexElementFormat.Vector3, VertexElementUsage.SIZEROTATION0), 
 		new VertexElement(84, VertexElementFormat.Vector2, VertexElementUsage.RADIUS0), 
 		new VertexElement(92, VertexElementFormat.Vector4, VertexElementUsage.RADIAN0), 
-		new VertexElement(108, VertexElementFormat.Single, VertexElementUsage.AGEADDSCALE0), 
+		new VertexElement(108, VertexElementFormat.Single, VertexElementUsage.STARTLIFETIME), //TODO待确认。。
 		new VertexElement(112, VertexElementFormat.Single, VertexElementUsage.TIME0)]);
 		
 		public static function get vertexDeclaration():VertexDeclaration {

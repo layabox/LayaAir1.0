@@ -170,8 +170,7 @@ package laya.ui {
 			
 			//如果没有设置9宫格，或大小未改变，则直接用原图绘制
 			if (!sizeGrid || (sw === width && sh === height)) {
-				clear();
-				drawTexture(source, _offset ? _offset[0] : 0, _offset ? _offset[1] : 0, width, height);
+				cleanByTexture(source, _offset ? _offset[0] : 0, _offset ? _offset[1] : 0, width, height);
 			} else {
 				//从缓存中读取渲染命令
 				source.$_GID || (source.$_GID = Utils.getGID());

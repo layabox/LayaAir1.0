@@ -28,9 +28,7 @@ package laya.d3.resource.models {
 		/** @private */
 		private static var _nameNumber:int = 1;
 		
-		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(20, [
-					new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.POSITION0),
-					new VertexElement(12, VertexElementFormat.Vector2, VertexElementUsage.TEXTURECOORDINATE0)] );
+		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(20, [new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.POSITION0), new VertexElement(12, VertexElementFormat.Vector2, VertexElementUsage.TEXTURECOORDINATE0)]);
 		
 		/** @private */
 		protected var _shaderValue:ValusArray = new ValusArray();
@@ -62,6 +60,7 @@ package laya.d3.resource.models {
 		private var _slices:int = 16;
 		
 		private var _radius:Number = 1;
+		
 		/**
 		 * 获取透明混合度。
 		 * @return 透明混合度。
@@ -153,7 +152,6 @@ package laya.d3.resource.models {
 			var vertexFloatStride:int = _vertexDeclaration.vertexStride / 4;
 			var vertices:Float32Array = new Float32Array(_numberVertices * vertexFloatStride);
 			
-			
 			var stackAngle:Number = Math.PI / _stacks;
 			var sliceAngle:Number = (Math.PI * 2.0) / _slices;
 			
@@ -199,13 +197,12 @@ package laya.d3.resource.models {
 			completeCreate();
 		}
 		
-		
 		/**
 		 * @private
 		 */
 		protected function loadShaderParams():void {
 			_sharderNameID = Shader.nameKey.get("SkyDome");
-			_shaderValue.pushValue(Buffer2D.DIFFUSETEXTURE,null);
+			_shaderValue.pushValue(Sky.DIFFUSETEXTURE, null);
 		}
 		
 		override public function _render(state:RenderState):void {
@@ -225,16 +222,16 @@ package laya.d3.resource.models {
 				_tempMatrix4x40.transpose();
 				Matrix4x4.multiply(state.projectionMatrix, _tempMatrix4x40, _tempMatrix4x41);
 				
-				_shaderValue.pushValue(Buffer2D.MVPMATRIX, _tempMatrix4x41.elements);
-				_shaderValue.pushValue(Buffer2D.INTENSITY, _colorIntensity);
-				_shaderValue.pushValue(Buffer2D.ALPHABLENDING, alphaBlending);
+				_shaderValue.pushValue(Sky.MVPMATRIX, _tempMatrix4x41.elements);
+				_shaderValue.pushValue(Sky.INTENSITY, _colorIntensity);
+				_shaderValue.pushValue(Sky.ALPHABLENDING, alphaBlending);
 				
 				_shaderValue.data[1] = texture.source;
 				
 				_shader.uploadArray(_shaderValue.data, _shaderValue.length, null);
 				_shaderValue.length = presz;
 				WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, _indexBuffer.indexCount, WebGLContext.UNSIGNED_SHORT, 0);
-				Stat.trianglesFaces += _numberIndices/3;
+				Stat.trianglesFaces += _numberIndices / 3;
 				Stat.drawCall++;
 			}
 		}

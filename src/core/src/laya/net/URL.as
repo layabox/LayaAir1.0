@@ -49,8 +49,7 @@ package laya.net {
 			if (isAbsolute(url)) return url;
 			
 			var retVal:String = (base || basePath) + url;
-			/*[IF-FLASH]*/return formatRelativePath(retVal);
-			return retVal;
+			return formatRelativePath(retVal);
 		}
 		
 		/**

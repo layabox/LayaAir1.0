@@ -1,9 +1,13 @@
 package laya.d3.component.animation {
 	import laya.ani.AnimationState;
+	import laya.ani.AnimationTemplet;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
+	import laya.d3.core.material.StandardMaterial;
+	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
 	import laya.d3.shader.ShaderDefines3D;
@@ -87,6 +91,15 @@ package laya.d3.component.animation {
 			(_templet._animationDatasCache) || (_templet._animationDatasCache = [[], []]);
 		}
 		
+		override public function set templet(value:AnimationTemplet):void {
+			super.templet = value;
+			_curOriginalData = _extenData = null;//替换文件_extenData不清空会产生BUG，用了旧文件的_extenData
+			_curMeshAnimationData = null;
+			_tempCurBonesData = null;
+			_tempCurAnimationData = null;
+			(_templet._animationDatasCache) || (_templet._animationDatasCache = [[], []]);
+		}
+		
 		/**
 		 * 创建一个新的 <code>SkinAnimations</code> 实例。
 		 */
@@ -123,12 +136,32 @@ package laya.d3.component.animation {
 		}
 		
 		/** @private */
+		private function _onAnimationPlayMeshLoaded():void {
+			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender.renderCullingObject._renderElements;//播放骨骼动画时禁止动态合并
+			for (var i:int = 0, n:int = renderElements.length; i < n; i++)
+				renderElements[i]._canDynamicBatch = false;
+		}
+		
+		/** @private */
+		private function _onAnimationPlay():void {
+			var mesh:BaseMesh = _ownerMesh.meshFilter.sharedMesh;
+			if (mesh.loaded)
+				_onAnimationPlayMeshLoaded();
+			else
+				mesh.on(Event.LOADED, this, _onAnimationPlayMeshLoaded);
+		}
+		
+		/** @private */
 		private function _onAnimationStop():void {
 			_lastFrameIndex = -1;
 			if (_player.returnToZeroStopped) {
 				_curBonesDatas = null;
 				_curAnimationDatas = null;
 			}
+			
+			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender.renderCullingObject._renderElements;
+			for (var i:int = 0, n:int = renderElements.length; i < n; i++)
+				renderElements[i]._canDynamicBatch = true;
 		}
 		
 		/**
@@ -140,6 +173,7 @@ package laya.d3.component.animation {
 			super._load(owner);
 			_ownerMesh = (owner as MeshSprite3D);
 			
+			_player.on(Event.PLAYED, this, _onAnimationPlay);
 			_player.on(Event.STOPPED, this, _onAnimationStop);
 		}
 		
@@ -151,7 +185,7 @@ package laya.d3.component.animation {
 		public function preComputeKeyFrames(animationClipIndex:int):void {
 			if (!_templet.loaded || !_ownerMesh.meshFilter.sharedMesh.loaded)
 				throw new Error("SkinAnimations: must to be sure animation templet and mesh templet has loaded.");
-				
+			
 			var cachePlayRate:Number = _player.cachePlayRate;
 			var cacheFrameRateInterval:Number = _player.cacheFrameRateInterval * cachePlayRate;
 			var maxKeyFrame:int = Math.floor(_templet.getAniDuration(animationClipIndex) / cacheFrameRateInterval);
@@ -297,7 +331,7 @@ package laya.d3.component.animation {
 			if (_curAnimationDatas) {
 				state.shaderDefs.addInt(ShaderDefines3D.BONE);
 				var subMeshIndex:int = state.renderElement.renderObj.indexOfHost;
-				state.shaderValue.pushValue(Buffer2D.MATRIXARRAY0, _curAnimationDatas[subMeshIndex]);
+				state.shaderValue.pushValue(StandardMaterial.Bones, _curAnimationDatas[subMeshIndex]);
 			}
 		}
 		

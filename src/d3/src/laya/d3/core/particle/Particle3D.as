@@ -53,13 +53,9 @@ package laya.d3.core.particle {
 			_particleRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
 			var material:ParticleMaterial = new ParticleMaterial();
-			material.setShaderName("PARTICLE");//TODO:放到构造函数内
 			
-			if (setting.textureName)//预设纹理ShaderValue
-			{
-				Laya.loader.load(setting.textureName, Handler.create(null, function(texture:Texture2D):void {
-					material.diffuseTexture = texture;
-				}), null, Loader.TEXTURE2D);
+			if (setting.textureName) {
+				material.diffuseTexture = Texture2D.load(setting.textureName);
 			}
 			
 			_particleRender.sharedMaterial = material;

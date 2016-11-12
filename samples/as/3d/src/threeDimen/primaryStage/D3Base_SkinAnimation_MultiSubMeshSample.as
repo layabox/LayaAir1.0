@@ -1,4 +1,5 @@
 package threeDimen.primaryStage {
+	import laya.ani.AnimationTemplet;
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
@@ -35,11 +36,8 @@ package threeDimen.primaryStage {
 			skinMesh = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
 			skinMesh.transform.localRotationEuler = new Vector3(0, 3.14, 0);
 			skinAni = skinMesh.addComponent(SkinAnimations) as SkinAnimations;
-			skinAni.url = "../../../../res/threeDimen/skinModel/dude/dude.ani";
+			skinAni.templet =AnimationTemplet.load("../../../../res/threeDimen/skinModel/dude/dude.ani");
 			skinAni.player.play();
-			
-			
-		
 		}
 	}
 }

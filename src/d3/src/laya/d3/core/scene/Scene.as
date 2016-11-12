@@ -20,10 +20,7 @@ package laya.d3.core.scene {
 		}
 		
 		private function renderCamera(gl:WebGLContext, state:RenderState, camera:Camera):void {
-			_prepareScene(gl, camera, state);
-			beforeUpate(state);//更新之前
-			_updateScene(state);
-			lateUpate(state);//更新之前
+			_prepareRenderToRenderState(camera, state);
 			
 			beforeRender(state);//渲染之前
 			var renderTarget:RenderTexture = camera.renderTarget;

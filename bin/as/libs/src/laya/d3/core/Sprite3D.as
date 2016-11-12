@@ -26,6 +26,14 @@ package laya.d3.core {
 		/**名字计数器。*/
 		protected static var _nameNumberCounter:int = 0;
 		
+		/**
+		 * 加载网格模板。
+		 * @param url 模板地址。
+		 */
+		public static function load(url:String):Sprite3D {
+			return Laya.loader.create(url, null,null,Sprite3D);
+		}
+		
 		/**是否在Stage中。*/
 		protected var _isInStage:Boolean;
 		/**唯一标识ID。*/
@@ -148,9 +156,10 @@ package laya.d3.core {
 		 */
 		private function _onAdded():void {
 			transform.parent = (_parent as Sprite3D).transform;
-			var isInStage:Boolean = Laya.stage.contains(this);
-			(isInStage) && (_addSelfAndChildrenRenderObjects());
-			(isInStage) && (_changeSelfAndChildrenInStage(true));
+			if (Laya.stage.contains(this)) {
+				_addSelfAndChildrenRenderObjects();
+				_changeSelfAndChildrenInStage(true);
+			}
 		}
 		
 		/**
@@ -158,9 +167,11 @@ package laya.d3.core {
 		 */
 		private function _onRemoved():void {
 			transform.parent = null;
-			var isInStage:Boolean = Laya.stage.contains(this);//触发时还在stage中
-			(isInStage) && (_clearSelfAndChildrenRenderObjects());
-			(isInStage) && (_changeSelfAndChildrenInStage(false));
+			if (Laya.stage.contains(this)) {//触发时还在stage中
+				_clearSelfAndChildrenRenderObjects();
+				_changeSelfAndChildrenInStage(false);
+			}
+		
 		}
 		
 		/**
@@ -335,25 +346,15 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 加载场景文件。
-		 * @param	url 地址。
+		 *@private
 		 */
-		public function loadHierarchy(url:String):void {
-			if (url === null) return;
-			
-			var loader:Loader = new Loader();
-			url = URL.formatURL(url);
-			var _this:Sprite3D = this;
-			var onComp:Function = function(data:String):void {
-				var preBasePath:String = URL.basePath;
-				URL.basePath = URL.getPath(URL.formatURL(url));
-				var sprite:Sprite3D = ClassUtils.createByJson(data, null, _this, Handler.create(null, Utils3D._parseHierarchyProp, null, false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
-				addChild(sprite);
-				URL.basePath = preBasePath;
-				event(Event.HIERARCHY_LOADED, [_this, sprite]);
-			}
-			loader.once(Event.COMPLETE, null, onComp);
-			loader.load(url, Loader.TEXT);
+		public function onAsynLoaded(url:String, hierarchyData:String):void {
+			var preBasePath:String = URL.basePath;
+			URL.basePath = URL.getPath(URL.formatURL(url));
+			var sprite:Sprite3D = ClassUtils.createByJson(hierarchyData, null, this, Handler.create(null, Utils3D._parseHierarchyProp, null, false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
+			addChild(sprite);
+			URL.basePath = preBasePath;
+			event(Event.HIERARCHY_LOADED, [this, sprite]);
 		}
 		
 		public function dispose():void {

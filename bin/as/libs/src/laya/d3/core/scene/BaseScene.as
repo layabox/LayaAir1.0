@@ -40,7 +40,33 @@ package laya.d3.core.scene {
 	/**
 	 * <code>BaseScene</code> 类用于实现场景的父类。
 	 */
-	public class BaseScene extends Sprite implements ISubmit {		
+	public class BaseScene extends Sprite implements ISubmit {
+		public static const FOGCOLOR:String = "FOGCOLOR";
+		public static const FOGSTART:String = "FOGSTART";
+		public static const FOGRANGE:String = "FOGRANGE";
+		public static const CAMERAPOS:String = "CAMERAPOS";
+		
+		public static const LIGHTDIRECTION:String = "LIGHTDIRECTION";
+		public static const LIGHTDIRDIFFUSE:String = "LIGHTDIRDIFFUSE";
+		public static const LIGHTDIRAMBIENT:String = "LIGHTDIRAMBIENT";
+		public static const LIGHTDIRSPECULAR:String = "LIGHTDIRSPECULAR";
+		
+		public static const POINTLIGHTPOS:String = "POINTLIGHTPOS";
+		public static const POINTLIGHTRANGE:String = "POINTLIGHTRANGE";
+		public static const POINTLIGHTATTENUATION:String = "POINTLIGHTATTENUATION";
+		public static const POINTLIGHTDIFFUSE:String = "POINTLIGHTDIFFUSE";
+		public static const POINTLIGHTAMBIENT:String = "POINTLIGHTAMBIENT";
+		public static const POINTLIGHTSPECULAR:String = "POINTLIGHTSPECULAR";
+		
+		public static const SPOTLIGHTPOS:String = "SPOTLIGHTPOS";
+		public static const SPOTLIGHTDIRECTION:String = "SPOTLIGHTDIRECTION";
+		public static const SPOTLIGHTSPOT:String = "SPOTLIGHTSPOT";
+		public static const SPOTLIGHTRANGE:String = "SPOTLIGHTRANGE";
+		public static const SPOTLIGHTATTENUATION:String = "SPOTLIGHTATTENUATION";
+		public static const SPOTLIGHTDIFFUSE:String = "SPOTLIGHTDIFFUSE";
+		public static const SPOTLIGHTAMBIENT:String = "SPOTLIGHTAMBIENT";
+		public static const SPOTLIGHTSPECULAR:String = "SPOTLIGHTSPECULAR";
+		
 		/** @private */
 		protected var _invertYProjectionMatrix:Matrix4x4;
 		/** @private */
@@ -209,18 +235,26 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		private function _onAdded():void {
-			var isInStage:Boolean = Laya.stage.contains(this);
-			(isInStage) && (_addSelfAndChildrenRenderObjects());
-			(isInStage) && (_changeSelfAndChildrenInStage(true));
+			if (Laya.stage.contains(this)) {
+				_addSelfAndChildrenRenderObjects();
+				_changeSelfAndChildrenInStage(true);
+				
+				var index:int = _parent._childs.indexOf(this);
+				Laya.stage._scenes[index]=this;
+			}
 		}
 		
 		/**
 		 * @private
 		 */
 		private function _onRemoved():void {
-			var isInStage:Boolean = Laya.stage.contains(this);//触发时还在stage中
-			(isInStage) && (_clearSelfAndChildrenRenderObjects());
-			(isInStage) && (_changeSelfAndChildrenInStage(false));
+			if (Laya.stage.contains(this)) {//触发时还在stage中
+				_clearSelfAndChildrenRenderObjects();
+				_changeSelfAndChildrenInStage(false);
+				
+				var scenes:Array = Laya.stage._scenes;
+				scenes.splice(scenes.indexOf(this), 1);
+			}
 		}
 		
 		/**
@@ -257,22 +291,27 @@ package laya.d3.core.scene {
 		 * @param gl WebGL上下文。
 		 * @return state 渲染状态。
 		 */
-		protected function _prepareScene(gl:WebGLContext, camera:BaseCamera, state:RenderState):void {
-			Layer._currentCameraCullingMask = camera.cullingMask;
-			
+		protected function _prepareUpdateToRenderState(gl:WebGLContext, state:RenderState):void {
+			state.reset();
 			state.context = WebGL.mainContext;
-			
 			state.elapsedTime = _lastCurrentTime ? timer.currTimer - _lastCurrentTime : 0;
 			_lastCurrentTime = timer.currTimer;
-			
-			state.reset();
 			state.loopCount = Stat.loopCount;
 			state.scene = this;
+		}
+		
+		/**
+		 * @private
+		 * 场景相关渲染准备设置。
+		 * @param gl WebGL上下文。
+		 * @return state 渲染状态。
+		 */
+		protected function _prepareRenderToRenderState(camera:BaseCamera, state:RenderState):void {
+			Layer._currentCameraCullingMask = camera.cullingMask;
 			state.camera = camera;
 			
 			var worldShaderValue:ValusArray = state.worldShaderValue;
-			var loopCount:int = Stat.loopCount;
-			camera && worldShaderValue.pushValue(Buffer2D.CAMERAPOS, camera.transform.position.elements);
+			camera && worldShaderValue.pushValue(BaseScene.CAMERAPOS, camera.transform.position.elements);
 			
 			if (_lights.length > 0)//灯光相关
 			{
@@ -288,22 +327,26 @@ package laya.d3.core.scene {
 			}
 			if (enableFog)//雾化
 			{
-				worldShaderValue.pushValue(Buffer2D.FOGSTART, fogStart);
-				worldShaderValue.pushValue(Buffer2D.FOGRANGE, fogRange);
-				worldShaderValue.pushValue(Buffer2D.FOGCOLOR, fogColor.elements);
+				worldShaderValue.pushValue(BaseScene.FOGSTART, fogStart);
+				worldShaderValue.pushValue(BaseScene.FOGRANGE, fogRange);
+				worldShaderValue.pushValue(BaseScene.FOGCOLOR, fogColor.elements);
 			}
 			
 			state.shaderValue.pushArray(worldShaderValue);
 			
 			var shaderDefs:ShaderDefines3D = state.shaderDefs;
-			(enableFog) && (shaderDefs._value = shaderDefs._value |= ShaderDefines3D.FOG);
+			(enableFog) && (shaderDefs._value |= ShaderDefines3D.FOG);
 		}
 		
 		/**
 		 * @private
 		 */
-		protected function _updateScene(state:RenderState):void {
-			_updateChilds(state);
+		public function _updateScene():void {
+			var renderState:RenderState = _renderState;
+			_prepareUpdateToRenderState(WebGL.mainContext, renderState);
+			beforeUpate(renderState);//更新之前
+			_updateChilds(renderState);
+			lateUpate(renderState);//更新之后
 		}
 		
 		/**
@@ -365,7 +408,7 @@ package laya.d3.core.scene {
 					gl.disable(WebGLContext.SCISSOR_TEST);
 				} else {
 					gl.clear(WebGLContext.DEPTH_BUFFER_BIT);
-					//gl.clear(WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT | WebGLContext.COLOR_BUFFER_BIT);
+						//gl.clear(WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT | WebGLContext.COLOR_BUFFER_BIT);
 				}
 				break;
 			case BaseCamera.CLEARFLAG_SKY: 

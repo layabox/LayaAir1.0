@@ -14,8 +14,6 @@ package threeDimen.primaryStage {
 		private var skinMesh:MeshSprite3D;
 		private var skinAni:SkinAnimations;
 		
-		private var x:Number=0;
-		private var y:Number=0;
 		public function D3Base_Camera_MultiCamera() {
 			Laya3D.init(0, 0,true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;

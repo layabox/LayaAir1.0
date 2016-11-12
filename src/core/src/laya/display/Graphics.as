@@ -54,12 +54,24 @@ package laya.display {
 			if (Render.isConchNode) {
 				var from:* = Graphics.prototype;
 				var to:* = __JS__("ConchGraphics.prototype");
-				var list:Array = ["clear", "destroy", "alpha", "rotate", "transform", "scale", "translate", "save", "restore", "clipRect", "blendMode", "fillText", "fillBorderText", "_fands", "drawRect", "drawCircle", "drawPie", "drawPoly", "drawPath", "drawImageM", "drawLine", "drawLines", "_drawPs", "drawCurves", "replaceText", "replaceTextColor", "_fillImage", "fillTexture"];
+				var list:Array = ["clear", "destroy", "alpha", "rotate", "transform", "scale", "translate", "save", "restore", "clipRect", "blendMode", "fillText", "fillBorderText", "_fands", "drawRect", "drawCircle", "drawPie", "drawPoly", "drawPath", "drawImageM", "drawLine", "drawLines", "_drawPs", "drawCurves", "replaceText", "replaceTextColor", "_fillImage", "fillTexture", "setSkinMesh", "drawParticle", "drawImageS"];
 				for (var i:int = 0, len:int = list.length; i <= len; i++) {
 					var temp:String = list[i];
 					from[temp] = to[temp];
 				}
 				from._saveToCmd = null;
+				if (to.drawImageS) {
+					from.drawTextures = function(tex:Texture, pos:Array):void {
+						if (!tex) return;
+						if (!(tex.loaded && tex.bitmap && tex.source))//source内调用tex.active();
+						{
+							return;
+						}
+						//处理透明区域裁剪
+						var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
+						this.drawImageS(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, tex.offsetX, tex.offsetY, tex.width, tex.height, pos);
+					}
+				}
 				from.drawTexture = function(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null):void {
 					if (!tex) return;
 					if (!(tex.loaded && tex.bitmap && tex.source))//source内调用tex.active();
@@ -383,7 +395,7 @@ package laya.display {
 		 * @param	height 高度。
 		 * @param	m 矩阵信息。
 		 */
-		public function drawTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, m:Matrix = null,alpha:Number=1):void {
+		public function drawTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, m:Matrix = null, alpha:Number = 1):void {
 			if (!tex) return;
 			if (!width) width = tex.sourceWidth;
 			if (!height) height = tex.sourceHeight;
@@ -398,9 +410,9 @@ package laya.display {
 			
 			_sp && (_sp._renderType |= RenderSprite.GRAPHICS);
 			
-			var args:* = [tex, x, y, width, height, m,alpha];
-			args.callee = (m || alpha!=1) ? Render._context._drawTextureWithTransform : Render._context._drawTexture;
-			if (_one == null && !m && alpha==1) {
+			var args:* = [tex, x, y, width, height, m, alpha];
+			args.callee = (m || alpha != 1) ? Render._context._drawTextureWithTransform : Render._context._drawTexture;
+			if (_one == null && !m && alpha == 1) {
 				_one = args;
 				_render = _renderOneImg;
 			} else {
@@ -413,14 +425,39 @@ package laya.display {
 		}
 		
 		/**
+		 * @private 清理贴图并替换为最新的
+		 * @param	tex
+		 */
+		public function cleanByTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0):void {
+			if (!tex) return clear();
+			if (_one && _render === _renderOneImg) {
+				if (!width) width = tex.sourceWidth;
+				if (!height) height = tex.sourceHeight;
+				width = width - tex.sourceWidth + tex.width;
+				height = height - tex.sourceHeight + tex.height;
+				
+				x += tex.offsetX;
+				y += tex.offsetY;
+				
+				_one[0] = tex;
+				_one[1] = x;
+				_one[2] = y;
+				_one[3] = width;
+				_one[4] = height;
+			} else {
+				clear();
+				tex && drawTexture(tex, x, y, width, height);
+			}
+		}
+		
+		/**
 		 * 批量绘制同样纹理。
 		 * @param	tex 纹理。
 		 * @param	pos 绘制次数和坐标。
 		 */
-		public function drawTextures(tex:Texture, pos:Array):void
-		{
+		public function drawTextures(tex:Texture, pos:Array):void {
 			if (!tex) return;
-			_saveToCmd(Render._context._drawTextures, [tex,pos]);
+			_saveToCmd(Render._context._drawTextures, [tex, pos]);
 		}
 		
 		/**
@@ -440,8 +477,7 @@ package laya.display {
 			if (!tex.loaded) {
 				tex.once(Event.LOADED, this, _textureLoaded, [tex, args]);
 			}
-			if (Render.isWebGL)
-			{
+			if (Render.isWebGL) {
 				var tFillTextureSprite:* = RunDriver.fillTextureShader(tex, x, y, width, height);
 				args.push(tFillTextureSprite);
 			}

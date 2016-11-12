@@ -23,74 +23,61 @@ function loadScene(scene, camera) {
 
     var skyBox = new Laya.SkyBox();
     camera.sky = skyBox;
-    Laya.loader.load("../../res/threeDimen/skyBox/px.jpg,../../res/threeDimen/skyBox/nx.jpg,../../res/threeDimen/skyBox/py.jpg,../../res/threeDimen/skyBox/ny.jpg,../../res/threeDimen/skyBox/pz.jpg,../../res/threeDimen/skyBox/nz.jpg",
-        Laya.Handler.create(null,function(texture){
-            skyBox.textureCube = texture;
-        }), null, Laya.Loader.TEXTURECUBE);
+    skyBox.textureCube = Laya.TextureCube.load("../../res/threeDimen/skyBox/skyCube.ltc");
 
     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-    var singleFaceTransparent0 = root.addChild(new Sprite3D());
+    var singleFaceTransparent0 = root.addChild(Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT004M.v3f.lh"));
     singleFaceTransparent0.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
         setMeshParams(sprite, Laya.BaseMaterial.RENDERMODE_CUTOUT, new Vector4(3.5, 3.5, 3.5, 1.0), new Vector3(0.6, 0.6, 0.6), new Vector2(1.0, 1.0));
     });
-    singleFaceTransparent0.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT004M.v3f.lh");
-
 
     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-    var singleFaceTransparent1 = root.addChild(new Sprite3D());
+    var singleFaceTransparent1 = root.addChild(Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT003M000.v3f.lh"));
     singleFaceTransparent1.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
         setMeshParams(sprite, Laya.BaseMaterial.RENDERMODE_CUTOUT, new Vector4(3.5, 3.5, 3.5, 1.0), new Vector3(0.6, 0.6, 0.6), new Vector2(1.0, 1.0));
     });
-    singleFaceTransparent1.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT003M000.v3f.lh");
 
     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-    var meshSprite3d0 = root.addChild(new Sprite3D());
+    var meshSprite3d0 = root.addChild(Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh"));
     meshSprite3d0.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
         setMeshParams(sprite, Laya.BaseMaterial.RENDERMODE_OPAQUE, new Vector4(3.5, 3.5, 3.5, 1.0), new Vector3(0.6, 0.6, 0.6), new Vector2(1.0, 1.0));
     });
-    meshSprite3d0.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh");
 
     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-    var meshSprite3d1 = root.addChild(new Sprite3D());
+    var meshSprite3d1 = root.addChild(Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT002M000.v3f.lh"));
     meshSprite3d1.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
         setMeshParams(sprite, Laya.BaseMaterial.RENDERMODE_OPAQUE, new Vector4(3.5, 3.5, 3.5, 1.0), new Vector3(0.6, 0.6, 0.6), new Vector2(1.0, 1.0));
     });
-    meshSprite3d1.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT002M000.v3f.lh");
 
     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-    var meshSprite3d2 = root.addChild(new Sprite3D());
+    var meshSprite3d2 = root.addChild(Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT008M.v3f.lh"));
     meshSprite3d2.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
         setMeshParams(sprite, Laya.BaseMaterial.RENDERMODE_OPAQUE, new Vector4(3.5, 3.5, 3.5, 1.0), new Vector3(0.6, 0.6, 0.6), new Vector2(1.0, 1.0));
     });
-    meshSprite3d2.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT008M.v3f.lh");
 
     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-    var meshSprite3d3 = root.addChild(new Sprite3D());
+    var meshSprite3d3 = root.addChild(Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00MP003M.v3f.lh"));
     meshSprite3d3.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
         setMeshParams(sprite, Laya.BaseMaterial.RENDERMODE_OPAQUE, new Vector4(3.5, 3.5, 3.5, 1.0), new Vector3(0.6, 0.6, 0.6), new Vector2(1.0, 1.0));
     });
-    meshSprite3d3.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00MP003M.v3f.lh");
 
     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-    var doubleFaceTransparent = root.addChild(new Sprite3D());
+    var doubleFaceTransparent = root.addChild(Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT005M.v3f.lh"));
     doubleFaceTransparent.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
         setMeshParams(sprite, Laya.BaseMaterial.RENDERMODE_CUTOUTDOUBLEFACE, new Vector4(3.5, 3.5, 3.5, 1.0), new Vector3(0.6, 0.6, 0.6), new Vector2(1.0, 1.0));
     });
-    doubleFaceTransparent.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00IT005M.v3f.lh");
 
     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-    var terrainSpirit0 = root.addChild(new Sprite3D());
+    var terrainSpirit0 = root.addChild(Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00MP001M.v3f.lh"));
     terrainSpirit0.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
         setMeshParams(sprite, Laya.BaseMaterial.RENDERMODE_OPAQUE, new Vector4(3.5, 3.5, 3.5, 1.0),  new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
     });
-    terrainSpirit0.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00MP001M.v3f.lh");
 
     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-    var terrainSpirit1 = root.addChild(new Sprite3D());
+    var terrainSpirit1 = root.addChild(Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00MP002M.v3f.lh"));
     terrainSpirit1.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
         setMeshParams(sprite, Laya.BaseMaterial.RENDERMODE_OPAQUE, new Vector4(3.5, 3.5, 3.5, 1.0),  new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
     });
-    terrainSpirit1.loadHierarchy("../../res/threeDimen/staticModel/simpleScene/B00MP002M.v3f.lh");
 }
 
 function setMeshParams(spirit3D, renderMode, albedo, ambientColor, uvScale, shaderName) {

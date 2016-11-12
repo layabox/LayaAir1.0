@@ -48,6 +48,7 @@ package laya.ani.bone {
 		private var _aniClipIndex:int = -1;
 		private var _clipIndex:int = -1;
 		private var _skinIndex:int = 0;
+		private var _skinName:String = "default";
 		//0,使用模板缓冲的数据，模板缓冲的数据，不允许修改					（内存开销小，计算开销小，不支持换装）
 		//1,使用动画自己的缓冲区，每个动画都会有自己的缓冲区，相当耗费内存	（内存开销大，计算开销小，支持换装）
 		//2,使用动态方式，去实时去画										（内存开销小，计算开销大，支持换装,不建议使用）
@@ -101,8 +102,7 @@ package laya.ani.bone {
 		 * @param	aniMode		动画模式，0:不支持换装,1,2支持换装
 		 */
 		public function init(templet:Templet, aniMode:int = 0):void {
-			var i:int, n:int;
-			/*[IF-FLASH]*/aniMode = 2;
+			var i:int, n:int;			
 			if (aniMode == 1)//使用动画自己的缓冲区
 			{
 				_graphicsCache = [];
@@ -157,6 +157,11 @@ package laya.ani.bone {
 				{
 					_tfArr.push(new TfConstraint(templet.tfArr[i], _boneList));
 				}
+			}
+			if (templet.skinDataArray.length > 0)
+			{
+				var tSkinData:SkinData = _templet.skinDataArray[_skinIndex];
+				_skinName = tSkinData.name;
 			}
 			_player.on(Event.PLAYED, this, _onPlay);
 			_player.on(Event.STOPPED, this, _onStop);
@@ -334,6 +339,8 @@ package laya.ani.bone {
 						this.event(Event.LABEL,tEventData);
 						_eventIndex++;
 					}
+				}else {
+					_eventIndex++;
 				}
 			}
 			if (_aniClipIndex == -1) return;
@@ -537,31 +544,43 @@ package laya.ani.bone {
 			var tDeformAniData:DeformAniData;
 			var tDeformSlotData:DeformSlotData;
 			var tDeformSlotDisplayData:DeformSlotDisplayData;
-			if (tDeformAniArr && tDeformAniArr.length > 0)
-			{
-				if (_lastAniClipIndex != _aniClipIndex)
-				{
+			if (tDeformAniArr && tDeformAniArr.length > 0) {	
+				if (_lastAniClipIndex != _aniClipIndex) {	
 					_lastAniClipIndex = _aniClipIndex;
-					for (i = 0, n = _boneSlotArray.length; i < n; i++)
-					{
+					for (i = 0, n = _boneSlotArray.length; i < n; i++) {	
 						tDBBoneSlot = _boneSlotArray[i];
 						tDBBoneSlot.deformData = null;
 					}
 				}
-				tDeformAniData = tDeformAniArr[_aniClipIndex] as DeformAniData;
-				for (i = 0, n = tDeformAniData.deformSlotDataList.length; i < n; i++)
-				{
-					tDeformSlotData = tDeformAniData.deformSlotDataList[i];
-					for (j = 0; j < tDeformSlotData.deformSlotDisplayList.length; j++)
-					{
-						tDeformSlotDisplayData = tDeformSlotData.deformSlotDisplayList[j];
-						tDBBoneSlot = _boneSlotArray[tDeformSlotDisplayData.slotIndex];
-						tDeformSlotDisplayData.apply(_player.currentPlayTime, tDBBoneSlot);
-						if (isNaN(tDeformDic[tDeformSlotDisplayData.slotIndex]))
-						{
-							tDeformDic[tDeformSlotDisplayData.slotIndex] = { };
+				var tSkinDeformAni:Object = tDeformAniArr[_aniClipIndex];
+					tDeformAniData = tSkinDeformAni["default"] as DeformAniData;
+				if (tDeformAniData) {	
+					for (i = 0, n = tDeformAniData.deformSlotDataList.length; i < n; i++) {	
+						tDeformSlotData = tDeformAniData.deformSlotDataList[i];
+						for (j = 0; j < tDeformSlotData.deformSlotDisplayList.length; j++) {	
+							tDeformSlotDisplayData = tDeformSlotData.deformSlotDisplayList[j];
+							tDBBoneSlot = _boneSlotArray[tDeformSlotDisplayData.slotIndex];
+							tDeformSlotDisplayData.apply(_player.currentPlayTime, tDBBoneSlot);
+							if (!tDeformDic[tDeformSlotDisplayData.slotIndex]) {	
+								tDeformDic[tDeformSlotDisplayData.slotIndex] = { };
+							}
+							tDeformDic[tDeformSlotDisplayData.slotIndex][tDeformSlotDisplayData.attachment] = tDeformSlotDisplayData.deformData;
 						}
-						tDeformDic[tDeformSlotDisplayData.slotIndex][tDeformSlotDisplayData.attachment] = tDeformSlotDisplayData.deformData;
+					}
+				}
+				tDeformAniData = tSkinDeformAni[_skinName] as DeformAniData;
+				if (tDeformAniData) {
+					for (i = 0, n = tDeformAniData.deformSlotDataList.length; i < n; i++) {	
+						tDeformSlotData = tDeformAniData.deformSlotDataList[i];
+						for (j = 0; j < tDeformSlotData.deformSlotDisplayList.length; j++) {	
+							tDeformSlotDisplayData = tDeformSlotData.deformSlotDisplayList[j];
+							tDBBoneSlot = _boneSlotArray[tDeformSlotDisplayData.slotIndex];
+							tDeformSlotDisplayData.apply(_player.currentPlayTime, tDBBoneSlot);
+							if (!tDeformDic[tDeformSlotDisplayData.slotIndex]) {	
+								tDeformDic[tDeformSlotDisplayData.slotIndex] = { };
+							}
+							tDeformDic[tDeformSlotDisplayData.slotIndex][tDeformSlotDisplayData.attachment] = tDeformSlotDisplayData.deformData;
+						}
 					}
 				}
 			}
@@ -695,11 +714,13 @@ package laya.ani.bone {
 		public function showSkinByIndex(skinIndex:int):void {
 			for (var i:int = 0; i < _boneSlotArray.length; i++)
 			{
-				(_boneSlotArray[i] as BoneSlot).showDisplayByIndex( -1);
+				(_boneSlotArray[i] as BoneSlot).showSlotData(null);
 			}
 			if (_templet.showSkinByIndex(_boneSlotDic, skinIndex))
 			{
+				var tSkinData:SkinData = _templet.skinDataArray[skinIndex];
 				_skinIndex = skinIndex;
+				_skinName = tSkinData.name;
 			}
 			_clearCache();
 		}
@@ -776,6 +797,7 @@ package laya.ani.bone {
 					_currAniIndex = index;
 					_curOriginalData = new Float32Array(_templet.getTotalkeyframesLength(index));
 					_drawOrder = null;
+					_eventIndex = 0;
 					_player.play(index, _player.playbackRate, duration, start, end);
 					this._templet.showSkinByIndex(_boneSlotDic, _skinIndex);
 					if (_pause) {

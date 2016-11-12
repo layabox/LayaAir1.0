@@ -36,7 +36,7 @@ package {
 			mFactory.loadAni(mAniPath);
 		}
 		
-		private function onError():void
+		private function onError(e:*):void
 		{
 			trace("error");
 		}

@@ -8,6 +8,8 @@ package laya.d3.core.material {
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.shader.ShaderDefines3D;
+	import laya.net.Loader;
+	import laya.net.URL;
 	import laya.utils.Stat;
 	import laya.webgl.resource.WebGLImage;
 	import laya.webgl.utils.Buffer2D;
@@ -18,6 +20,27 @@ package laya.d3.core.material {
 	 * @author ...
 	 */
 	public class StandardMaterial extends BaseMaterial {
+		public static const WORLDMATRIX:String = "MATRIX1";
+		public static const MVPMATRIX:String = "MVPMATRIX";
+		public static const DIFFUSETEXTURE:String = "DIFFUSETEXTURE";
+		public static const NORMALTEXTURE:String = "NORMALTEXTURE";
+		public static const SPECULARTEXTURE:String = "SPECULARTEXTURE";
+		public static const EMISSIVETEXTURE:String = "EMISSIVETEXTURE";
+		public static const AMBIENTTEXTURE:String = "AMBIENTTEXTURE";
+		public static const REFLECTTEXTURE:String = "REFLECTTEXTURE";
+		public static const Bones:String = "MATRIXARRAY0";
+		public static const ALBEDO:String = "ALBEDO";
+		public static const ALPHATESTVALUE:String = "ALPHATESTVALUE";
+		public static const UVANIAGE:String = "UVAGEX";
+		
+		public static const MATERIALAMBIENT:String = "MATERIALAMBIENT";
+		public static const MATERIALDIFFUSE:String = "MATERIALDIFFUSE";
+		public static const MATERIALSPECULAR:String = "MATERIALSPECULAR";
+		public static const MATERIALREFLECT:String = "MATERIALREFLECT";
+		
+		public static const UVMATRIX:String = "MATRIX2";
+		public static const UVAGE:String = "FLOAT0";
+		
 		/** @private */
 		private static var _tempMatrix4x40:Matrix4x4 = new Matrix4x4();
 		
@@ -33,7 +56,7 @@ package laya.d3.core.material {
 		/** @private */
 		private static var REFLECTCOLORVALUE:Vector3 = new Vector3(1.0, 1.0, 1.0);
 		/** @private */
-		private static var ALBEDO:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);
+		private static var ALBEDOVALUE:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);
 		
 		/** @private */
 		private static const _ambientColorIndex:int = 0;
@@ -65,19 +88,31 @@ package laya.d3.core.material {
 		/** @private */
 		private static const TRANSFORMUV:int = 0;
 		
+		/**
+		 * 加载标准材质。
+		 * @param url 标准材质地址。
+		 */
+		public static function load(url:String):StandardMaterial {
+			return Laya.loader.create(url, null, null, StandardMaterial);
+		}
+		
 		/** @private */
 		protected var _transformUV:TransformUV = null;
+		
+		public function get ambientColor():Vector3 {
+			return _getColor(_ambientColorIndex);
+		}
 		
 		/**
 		 * 设置环境光颜色。
 		 * @param value 环境光颜色。
 		 */
 		public function set ambientColor(value:Vector3):void {
-			_setColor(_ambientColorIndex, Buffer2D.MATERIALAMBIENT, value);
+			_setColor(_ambientColorIndex, MATERIALAMBIENT, value);
 		}
 		
-		public function get ambientColor():* {
-			_getColor(_ambientColorIndex);
+		public function get diffuseColor():Vector3 {
+			return _getColor(_diffuseColorIndex);
 		}
 		
 		/**
@@ -85,11 +120,11 @@ package laya.d3.core.material {
 		 * @param value 漫反射光颜色。
 		 */
 		public function set diffuseColor(value:Vector3):void {
-			_setColor(_diffuseColorIndex, Buffer2D.MATERIALDIFFUSE, value);
+			_setColor(_diffuseColorIndex, MATERIALDIFFUSE, value);
 		}
 		
-		public function get diffuseColor():* {
-			_getColor(_diffuseColorIndex);
+		public function get specularColor():Vector4 {
+			return _getColor(_speclarColorIndex);
 		}
 		
 		/**
@@ -97,11 +132,11 @@ package laya.d3.core.material {
 		 * @param value 高光颜色。
 		 */
 		public function set specularColor(value:Vector4):void {
-			_setColor(_speclarColorIndex, Buffer2D.MATERIALSPECULAR, value);
+			_setColor(_speclarColorIndex, MATERIALSPECULAR, value);
 		}
 		
-		public function get specularColor():* {
-			_getColor(_speclarColorIndex);
+		public function get reflectColor():Vector3 {
+			return _getColor(_reflectColorIndex);
 		}
 		
 		/**
@@ -109,11 +144,11 @@ package laya.d3.core.material {
 		 * @param value 反射颜色。
 		 */
 		public function set reflectColor(value:Vector3):void {
-			_setColor(_reflectColorIndex, Buffer2D.MATERIALREFLECT, value);
+			_setColor(_reflectColorIndex, MATERIALREFLECT, value);
 		}
 		
-		public function get reflectColor():* {
-			_getColor(_reflectColorIndex);
+		public function get albedo():Vector4 {
+			return _getColor(_albedoColorIndex);
 		}
 		
 		/**
@@ -121,11 +156,7 @@ package laya.d3.core.material {
 		 * @param value 反射率。
 		 */
 		public function set albedo(value:Vector4):void {
-			_setColor(_albedoColorIndex, Buffer2D.ALBEDO, value);
-		}
-		
-		public function get albedo():* {
-			_getColor(_albedoColorIndex);
+			_setColor(_albedoColorIndex, ALBEDO, value);
 		}
 		
 		/**
@@ -141,7 +172,7 @@ package laya.d3.core.material {
 		 * @param value 透明测试模式裁剪值。
 		 */
 		public function set alphaTestValue(value:Number):void {
-			_setNumber(_alphaTestValueIndex, Buffer2D.ALPHATESTVALUE, value);
+			_setNumber(_alphaTestValueIndex, ALPHATESTVALUE, value);
 		}
 		
 		/**
@@ -162,7 +193,7 @@ package laya.d3.core.material {
 			} else {
 				_removeShaderDefine(ShaderDefines3D.DIFFUSEMAP);
 			}
-			_setTexture(value, _diffuseTextureIndex, Buffer2D.DIFFUSETEXTURE);
+			_setTexture(value, _diffuseTextureIndex, DIFFUSETEXTURE);
 		}
 		
 		/**
@@ -183,7 +214,7 @@ package laya.d3.core.material {
 			} else {
 				_removeShaderDefine(ShaderDefines3D.NORMALMAP);
 			}
-			_setTexture(value, _normalTextureIndex, Buffer2D.NORMALTEXTURE);
+			_setTexture(value, _normalTextureIndex, NORMALTEXTURE);
 		}
 		
 		/**
@@ -205,7 +236,7 @@ package laya.d3.core.material {
 				_removeShaderDefine(ShaderDefines3D.SPECULARMAP);
 			}
 			
-			_setTexture(value, _specularTextureIndex, Buffer2D.SPECULARTEXTURE);
+			_setTexture(value, _specularTextureIndex, SPECULARTEXTURE);
 		}
 		
 		/**
@@ -226,7 +257,7 @@ package laya.d3.core.material {
 			} else {
 				_removeShaderDefine(ShaderDefines3D.EMISSIVEMAP);
 			}
-			_setTexture(value, _emissiveTextureIndex, Buffer2D.EMISSIVETEXTURE);
+			_setTexture(value, _emissiveTextureIndex, EMISSIVETEXTURE);
 		}
 		
 		/**
@@ -247,7 +278,7 @@ package laya.d3.core.material {
 			} else {
 				_removeShaderDefine(ShaderDefines3D.AMBIENTMAP);
 			}
-			_setTexture(value, _ambientTextureIndex, Buffer2D.AMBIENTTEXTURE);
+			_setTexture(value, _ambientTextureIndex, AMBIENTTEXTURE);
 		}
 		
 		/**
@@ -268,7 +299,7 @@ package laya.d3.core.material {
 			} else {
 				_removeShaderDefine(ShaderDefines3D.REFLECTMAP);
 			}
-			_setTexture(value, _reflectTextureIndex, Buffer2D.REFLECTTEXTURE);
+			_setTexture(value, _reflectTextureIndex, REFLECTTEXTURE);
 		}
 		
 		/**
@@ -285,7 +316,7 @@ package laya.d3.core.material {
 		 */
 		public function set transformUV(value:TransformUV):void {
 			_transformUV = value;
-			_setMatrix4x4(TRANSFORMUV, Buffer2D.MATRIX2, value.matrix);
+			_setMatrix4x4(TRANSFORMUV, UVMATRIX, value.matrix);
 			if (value)
 				_addShaderDefine(ShaderDefines3D.UVTRANSFORM);
 			else
@@ -294,12 +325,13 @@ package laya.d3.core.material {
 		
 		public function StandardMaterial() {
 			super();
-			_setColor(_ambientColorIndex, Buffer2D.MATERIALAMBIENT, AMBIENTCOLORVALUE);
-			_setColor(_diffuseColorIndex, Buffer2D.MATERIALDIFFUSE, DIFFUSECOLORVALUE);
-			_setColor(_speclarColorIndex, Buffer2D.MATERIALSPECULAR, SPECULARCOLORVALUE);
-			_setColor(_reflectColorIndex, Buffer2D.MATERIALREFLECT, REFLECTCOLORVALUE);
-			_setColor(_albedoColorIndex, Buffer2D.ALBEDO, ALBEDO);
-			_setNumber(_alphaTestValueIndex, Buffer2D.ALPHATESTVALUE, 0.5);
+			_setColor(_ambientColorIndex, MATERIALAMBIENT, AMBIENTCOLORVALUE);
+			_setColor(_diffuseColorIndex, MATERIALDIFFUSE, DIFFUSECOLORVALUE);
+			_setColor(_speclarColorIndex, MATERIALSPECULAR, SPECULARCOLORVALUE);
+			_setColor(_reflectColorIndex, MATERIALREFLECT, REFLECTCOLORVALUE);
+			_setColor(_albedoColorIndex, ALBEDO, ALBEDOVALUE);
+			_setNumber(_alphaTestValueIndex, ALPHATESTVALUE, 0.5);
+			setShaderName("SIMPLE");
 		}
 		
 		/**
@@ -308,6 +340,7 @@ package laya.d3.core.material {
 		public function disableLight():void {
 			_addDisableShaderDefine(ShaderDefines3D.POINTLIGHT | ShaderDefines3D.SPOTLIGHT | ShaderDefines3D.DIRECTIONLIGHT);
 		}
+		
 		/**
 		 * 禁用雾化。
 		 */
@@ -325,8 +358,8 @@ package laya.d3.core.material {
 				Matrix4x4.multiply(projectionView, worldMatrix, pvw);
 			}
 			//(_transformUV) && (_setMatrix4x4(TRANSFORMUV, Buffer2D.MATRIX2, _transformUV.matrix, id));
-			state.shaderValue.pushValue(Buffer2D.MATRIX1, worldMatrix.elements/*worldTransformModifyID,从结构上应该在Mesh中更新*/);//Stat.loopCount + state.ower._ID有BUG,例：6+6=7+5,用worldTransformModifyID代替
-			state.shaderValue.pushValue(Buffer2D.MVPMATRIX, pvw.elements /*state.camera.transform._worldTransformModifyID + worldTransformModifyID + state.camera._projectionMatrixModifyID,从结构上应该在Mesh中更新*/);
+			state.shaderValue.pushValue(WORLDMATRIX, worldMatrix.elements/*worldTransformModifyID,从结构上应该在Mesh中更新*/);//Stat.loopCount + state.ower._ID有BUG,例：6+6=7+5,用worldTransformModifyID代替
+			state.shaderValue.pushValue(MVPMATRIX, pvw.elements /*state.camera.transform._worldTransformModifyID + worldTransformModifyID + state.camera._projectionMatrixModifyID,从结构上应该在Mesh中更新*/);
 		}
 		
 		override public function copy(dec:BaseMaterial):BaseMaterial {

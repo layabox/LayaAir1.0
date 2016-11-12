@@ -28,7 +28,7 @@ package threeDimen.primaryStage {
 		private var scene:Scene;
 		
 		private var buttonLight:Button;
-		private var shadingLight:Button;
+		//private var shadingLight:Button;
 		private var skinMesh:MeshSprite3D;
 		private var skinAni:SkinAnimations;
 		private var directionLight:DirectionLight;
@@ -43,7 +43,7 @@ package threeDimen.primaryStage {
 			//currentShadingMode = BaseScene.PIXEL_SHADING;
 			currentLightState = 0;
 			
-			Laya3D.init(0, 0,true);
+			Laya3D.init(0, 0, true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
@@ -83,9 +83,9 @@ package threeDimen.primaryStage {
 			spotLight.range = 3.0;
 			spotLight.spot = 32;
 			
-			var grid:Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;
+			var grid:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/staticModel/grid/plane.lh")) as Sprite3D;
 			
-			 //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
+			//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 			grid.on(Event.HIERARCHY_LOADED, null, function(sprite:Sprite3D):void {
 				var meshSprite:MeshSprite3D = sprite.getChildAt(0) as MeshSprite3D;
 				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
@@ -99,10 +99,8 @@ package threeDimen.primaryStage {
 					}
 				});
 			});
-			grid.loadHierarchy("../../../../res/threeDimen/staticModel/grid/plane.lh");
 			
-			var sphere:Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;
-			sphere.loadHierarchy("../../../../res/threeDimen/staticModel/sphere/sphere.lh");
+			var sphere:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/staticModel/sphere/sphere.lh")) as Sprite3D;
 			sphere.transform.localScale = new Vector3(0.2, 0.2, 0.2);
 			sphere.transform.localPosition = new Vector3(0.0, 0.0, 0.2);
 			
@@ -158,7 +156,7 @@ package threeDimen.primaryStage {
 				
 				Laya.stage.on(Event.RESIZE, null, function():void {
 					_this.buttonLight.pos(Laya.stage.width / 2 - _this.buttonLight.width * Browser.pixelRatio / 2, Laya.stage.height - 100 * Browser.pixelRatio);
-					_this.shadingLight.pos(Laya.stage.width / 2 - _this.shadingLight.width * Browser.pixelRatio / 2, Laya.stage.height - 50 * Browser.pixelRatio);
+					//_this.shadingLight.pos(Laya.stage.width / 2 - _this.shadingLight.width * Browser.pixelRatio / 2, Laya.stage.height - 50 * Browser.pixelRatio);
 				});
 			
 			}));
@@ -166,14 +164,14 @@ package threeDimen.primaryStage {
 		}
 		
 		//private function onclickButtonShading():void {
-			//currentShadingMode++;
-			//(currentShadingMode > BaseScene.PIXEL_SHADING) && (currentShadingMode = BaseScene.VERTEX_SHADING);
-			//if (currentShadingMode == BaseScene.VERTEX_SHADING) {
-				//shadingLight.label = "顶点着色";
-			//} else {
-				//shadingLight.label = "像素着色";
-			//}
-			//scene.shadingMode = currentShadingMode;
+		//currentShadingMode++;
+		//(currentShadingMode > BaseScene.PIXEL_SHADING) && (currentShadingMode = BaseScene.VERTEX_SHADING);
+		//if (currentShadingMode == BaseScene.VERTEX_SHADING) {
+		//shadingLight.label = "顶点着色";
+		//} else {
+		//shadingLight.label = "像素着色";
+		//}
+		//scene.shadingMode = currentShadingMode;
 		//}
 		
 		private function onclickButtonLight():void {

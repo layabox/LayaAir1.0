@@ -3,17 +3,47 @@ package laya.d3.utils {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
+	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
+	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
+	import laya.d3.core.particleShuriKen.ShurikenParticleRender;
+	import laya.d3.core.particleShuriKen.ShurikenParticleSystem;
+	import laya.d3.core.particleShuriKen.emitter.Burst;
+	import laya.d3.core.particleShuriKen.emitter.ParticleBaseEmitter;
+	import laya.d3.core.particleShuriKen.emitter.ParticleBoxEmitter;
+	import laya.d3.core.particleShuriKen.emitter.ParticleHemisphereEmitter;
+	import laya.d3.core.particleShuriKen.emitter.ParticleSphereEmitter;
+	import laya.d3.core.particleShuriKen.module.ColorOverLifetime;
+	import laya.d3.core.particleShuriKen.module.FrameOverTime;
+	import laya.d3.core.particleShuriKen.module.GradientAngularVelocity;
+	import laya.d3.core.particleShuriKen.module.GradientColor;
+	import laya.d3.core.particleShuriKen.module.GradientDataColor;
+	import laya.d3.core.particleShuriKen.module.GradientDataInt;
+	import laya.d3.core.particleShuriKen.module.GradientDataNumber;
+	import laya.d3.core.particleShuriKen.module.GradientSize;
+	import laya.d3.core.particleShuriKen.module.RotationOverLifetime;
+	import laya.d3.core.particleShuriKen.module.SizeOverLifetime;
+	import laya.d3.core.particleShuriKen.module.StartFrame;
+	import laya.d3.core.particleShuriKen.module.TextureSheetAnimation;
+	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.graphics.IndexBuffer3D;
+	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.graphics.VertexElement;
+	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.graphics.VertexPositionNormalColorSkinTangent;
 	import laya.d3.graphics.VertexPositionNormalColorTangent;
+	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1SkinTangent;
+	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1Tangent;
 	import laya.d3.graphics.VertexPositionNormalColorTextureSkinTangent;
 	import laya.d3.graphics.VertexPositionNormalColorTextureTangent;
+	import laya.d3.graphics.VertexPositionNormalTexture0Texture1SkinTangent;
+	import laya.d3.graphics.VertexPositionNormalTexture0Texture1Tangent;
 	import laya.d3.graphics.VertexPositionNormalTextureSkinTangent;
 	import laya.d3.graphics.VertexPositionNormalTextureTangent;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
+	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.Texture2D;
@@ -21,6 +51,7 @@ package laya.d3.utils {
 	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.utils.Handler;
+	import laya.webgl.WebGLContext;
 	import laya.webgl.resource.WebGLImage;
 	
 	/**
@@ -168,10 +199,58 @@ package laya.d3.utils {
 		
 		/** @private */
 		public static function _parseHierarchyNode(instanceParams:Object):Sprite3D {
-			if (instanceParams)
-				return new MeshSprite3D(Mesh.load(instanceParams.loadPath));
-			else
+			if (instanceParams) {
+				var loadPath:String = URL.formatURL(instanceParams.loadPath);
+				return new MeshSprite3D(Mesh.load(loadPath));
+			} else
 				return new Sprite3D();
+		}
+		
+		private static function _initParticleColor(gradientColorData:Object):GradientDataColor {
+			var gradientColor:GradientDataColor = new GradientDataColor();
+			var alphasData:Array = gradientColorData.alphas;
+			var i:int, n:int;
+			for (i = 0, n = alphasData.length; i < n; i++) {
+				var alphaData:Object = alphasData[i];
+				gradientColor.addAlpha(alphaData.key, alphaData.value);
+			}
+			var rgbsData:Array = gradientColorData.rgbs;
+			for (i = 0, n = rgbsData.length; i < n; i++) {
+				var rgbData:Object = rgbsData[i];
+				var rgbValue:Array = rgbData.value;
+				gradientColor.addRGB(rgbData.key, new Vector3(rgbValue[0], rgbValue[1], rgbValue[2]));
+			}
+			return gradientColor;
+		}
+		
+		private static function _initParticleSize(gradientSizeData:Object):GradientDataNumber {
+			var gradientSize:GradientDataNumber = new GradientDataNumber();
+			var sizesData:Array = gradientSizeData.sizes;
+			for (var i:int = 0, n:int = sizesData.length; i < n; i++) {
+				var valueData:Object = sizesData[i];
+				gradientSize.add(valueData.key, valueData.value);
+			}
+			return gradientSize;
+		}
+		
+		private static function _initParticleRotation(gradientData:Object):GradientDataNumber {
+			var gradient:GradientDataNumber = new GradientDataNumber();
+			var angularVelocitysData:Array = gradientData.angularVelocitys;
+			for (var i:int = 0, n:int = angularVelocitysData.length; i < n; i++) {
+				var valueData:Object = angularVelocitysData[i];
+				gradient.add(valueData.key, valueData.value / 180.0 * Math.PI);
+			}
+			return gradient;
+		}
+		
+		private static function _initParticleFrame(overTimeFramesData:Object):GradientDataInt {
+			var overTimeFrame:GradientDataInt = new GradientDataInt();
+			var framesData:Array = overTimeFramesData.frames;
+			for (var i:int = 0, n:int = framesData.length; i < n; i++) {
+				var frameData:Object = framesData[i];
+				overTimeFrame.add(frameData.key, frameData.value);
+			}
+			return overTimeFrame;
 		}
 		
 		/** @private */
@@ -189,38 +268,282 @@ package laya.d3.utils {
 			case "reflectColor": 
 				material.reflectColor = new Vector3(value[0], value[1], value[2]);
 				break;
-			
 			case "diffuseTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture2D):void {
-					material.diffuseTexture = tex;
-				}), null, Loader.TEXTURE2D));
+				(value.texture2D) && (material.diffuseTexture = Laya.loader.create(_getTexturePath(value.texture2D),null, null, Texture2D));
 				break;
 			case "normalTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture2D):void {
-					material.normalTexture = tex;
-				}), null, Loader.TEXTURE2D));
+				(value.texture2D) && (material.normalTexture = Laya.loader.create(_getTexturePath(value.texture2D),null, null, Texture2D));
 				break;
 			case "specularTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture2D):void {
-					material.specularTexture = tex;
-				}), null, Loader.TEXTURE2D));
+				(value.texture2D) && (material.specularTexture = Laya.loader.create(_getTexturePath(value.texture2D),null, null, Texture2D));
 				break;
 			case "emissiveTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture2D):void {
-					material.emissiveTexture = tex;
-				}), null, Loader.TEXTURE2D));
+				(value.texture2D) && (material.emissiveTexture = Laya.loader.create(_getTexturePath(value.texture2D),null, null, Texture2D));
 				break;
 			case "ambientTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture2D):void {
-					material.ambientTexture = tex;
-				}), null, Loader.TEXTURE2D));
+				(value.texture2D) && (material.ambientTexture = Laya.loader.create(_getTexturePath(value.texture2D),null, null, Texture2D));
 				break;
 			case "reflectTexture": 
-				(value.texture2D) && (Laya.loader.load(_getTexturePath(value.texture2D), Handler.create(null, function(tex:Texture2D):void {
-					material.reflectTexture = tex;
-				}), null, Loader.TEXTURE2D));
+				(value.texture2D) && (material.reflectTexture = Laya.loader.create(_getTexturePath(value.texture2D),null, null, Texture2D));
 				break;
 			}
+		}
+		
+		public static function loadParticle(settting:Object):ShuriKenParticle3D {
+			//Shape、Emitter
+			var shapeEmitter:ParticleBaseEmitter;
+			var i:int, n:int;
+			var brust:Object;
+			switch (settting.shapeType) {
+			case 0: 
+				var sphereEmitter:ParticleSphereEmitter;
+				shapeEmitter = sphereEmitter = new ParticleSphereEmitter();
+				sphereEmitter.emissionRate = settting.emissionRate;
+				for (i = 0, n = settting.bursts.length; i < n; i++) {
+					brust = settting.bursts[i];
+					sphereEmitter.addBurst(new Burst(brust.time, brust.min, brust.max));
+				}
+				sphereEmitter.radius = settting.sphereRadius;
+				sphereEmitter.emitFromShell = settting.sphereEmitFromShell;
+				sphereEmitter.randomDirection = settting.sphereRandomDirection;
+				break;
+			case 0: 
+				var hemiSphereEmitter:ParticleHemisphereEmitter;
+				shapeEmitter = hemiSphereEmitter = new ParticleHemisphereEmitter();
+				hemiSphereEmitter.emissionRate = settting.emissionRate;
+				for (i = 0, n = settting.bursts.length; i < n; i++) {
+					brust = settting.bursts[i];
+					hemiSphereEmitter.addBurst(new Burst(brust.time, brust.min, brust.max));
+				}
+				hemiSphereEmitter.radius = settting.hemiSphereRadius;
+				hemiSphereEmitter.emitFromShell = settting.hemiSphereEmitFromShell;
+				hemiSphereEmitter.randomDirection = settting.hemiSphereRandomDirection;
+				break;
+			case 3: 
+				var boxEmitter:ParticleBoxEmitter;
+				shapeEmitter = boxEmitter = new ParticleBoxEmitter();
+				boxEmitter.emissionRate = settting.emissionRate;
+				for (i = 0, n = settting.bursts.length; i < n; i++) {
+					brust = settting.bursts[i];
+					boxEmitter.addBurst(new Burst(brust.time, brust.min, brust.max));
+				}
+				boxEmitter.x = settting.boxX;
+				boxEmitter.y = settting.boxY;
+				boxEmitter.z = settting.boxZ;
+				boxEmitter.randomDirection = settting.boxRandomDirection;
+				break;
+			}
+			
+			//Material
+			var material:ShurikenParticleMaterial = new ShurikenParticleMaterial();
+			material.diffuseTexture = Texture2D.load(settting.texturePath);
+			material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
+			
+			var particle:ShuriKenParticle3D = new ShuriKenParticle3D(shapeEmitter, material);
+			
+			//particleSystem
+			var particleSystem:ShurikenParticleSystem = particle.particleSystem;
+			particleSystem.duration = settting.duration;
+			particleSystem.looping = settting.looping;
+			particleSystem.prewarm = settting.prewarm;
+			
+			particleSystem.startDelay = settting.startDelay;
+			
+			particleSystem.startLifeTimeType = settting.startLifeTimeType;
+			particleSystem.constantStartLifeTime = settting.constantStartLifeTime;
+			particleSystem.constantMinStartLifeTime = settting.constantMinStartLifeTime;
+			particleSystem.constantMaxStartLifeTime = settting.constantMaxStartLifeTime;
+			
+			particleSystem.startSpeedType = settting.startSpeedType;
+			particleSystem.constantStartSpeed = settting.constantStartSpeed;
+			particleSystem.constantMinStartSpeed = settting.constantMinStartSpeed;
+			particleSystem.constantMaxStartSpeed = settting.constantMaxStartSpeed;
+			
+			particleSystem.threeDStartSize = settting.threeDStartSize;
+			particleSystem.startSizeType = settting.startSizeType;
+			particleSystem.constantStartSize = settting.constantStartSize;
+			particleSystem.constantMinStartSize = settting.constantMinStartSize;
+			particleSystem.constantMaxStartSize = settting.constantMaxStartSize;
+			
+			particleSystem.threeDStartRotation = settting.threeDStartRotation;
+			particleSystem.startRotationType = settting.startRotationType;
+			particleSystem.constantStartRotation = settting.constantStartRotation / 180 * Math.PI;
+			particleSystem.constantMinStartRotation = settting.constantMinStartRotation / 180 * Math.PI;
+			particleSystem.constantMaxStartRotation = settting.constantMaxStartRotation / 180 * Math.PI;
+			
+			particleSystem.randomizeRotationDirection = settting.randomizeRotationDirection;
+			
+			particleSystem.startColorType = settting.startColorType;
+			var constantStartColorArray:Array = settting.constantStartColor;
+			particleSystem.constantStartColor = new Vector4(constantStartColorArray[0], constantStartColorArray[1], constantStartColorArray[2], constantStartColorArray[3]);
+			var constantMinStartColorArray:Array = settting.constantMinStartColor;
+			particleSystem.constantMinStartColor = new Vector4(constantMinStartColorArray[0], constantMinStartColorArray[1], constantMinStartColorArray[2], constantMinStartColorArray[3]);
+			var constantMaxStartColorArray:Array = settting.constantMaxStartColor;
+			particleSystem.constantMaxStartColor = new Vector4(constantMaxStartColorArray[0], constantMaxStartColorArray[1], constantMaxStartColorArray[2], constantMaxStartColorArray[3]);
+			
+			var gravityArray:Array = settting.gravity;
+			var gravityE:Float32Array = particleSystem.gravity.elements;
+			gravityE[0] = gravityArray[0];
+			gravityE[1] = gravityArray[1];
+			gravityE[2] = gravityArray[2];
+			
+			particleSystem.gravityModifier = settting.gravityModifier;
+			
+			particleSystem.simulationSpace = settting.simulationSpace;
+			
+			particleSystem.scaleMode = settting.scaleMode;
+			
+			particleSystem.playOnAwake = settting.playOnAwake;
+			particleSystem.maxPartices = settting.maxPartices;
+			
+			//ColorOverLifetime
+			var colorOverLifetimeData:Object = settting.colorOverLifetime;
+			if (colorOverLifetimeData) {
+				var colorData:Object = colorOverLifetimeData.color;
+				var color:GradientColor;
+				switch (colorData.type) {
+				case 0: 
+					var constColorData:Array = colorData.constantColor;
+					color = GradientColor.createByConstantColor(new Vector4(constColorData[0], constColorData[1], constColorData[2], constColorData[3]));
+					break;
+				case 1: 
+					color = GradientColor.createByGradientColor(_initParticleColor(colorData.gradientColor));
+					break;
+				case 2: 
+					var minConstColorData:Array = colorData.minConstantColor;
+					var maxConstColorData:Array = colorData.maxConstantColor;
+					color = GradientColor.createByRandomTwoConstantColor(new Vector4(minConstColorData[0], minConstColorData[1], minConstColorData[2], minConstColorData[3]), new Vector4(maxConstColorData[0], maxConstColorData[1], maxConstColorData[2], maxConstColorData[3]));
+					break;
+				case 3: 
+					color = GradientColor.createByRandomTwoGradientColor(_initParticleColor(colorData.minGradientColor), _initParticleColor(colorData.maxGradientColor));
+					break;
+				}
+				var colorOverLifetime:ColorOverLifetime = new ColorOverLifetime(color);
+				colorOverLifetime.enbale = colorOverLifetimeData.enable;
+				particleSystem.colorOverLifetime = colorOverLifetime;
+			}
+			
+			//SizeOverLifetime
+			var sizeOverLifetimeData:Object = settting.sizeOverLifetime;
+			if (sizeOverLifetimeData) {
+				var sizeData:Object = sizeOverLifetimeData.size;
+				var size:GradientSize;
+				switch (sizeData.type) {
+				case 0: 
+					if (sizeData.separateAxes) {
+						size = GradientSize.createByGradientSizeSeparate(_initParticleSize(sizeData.gradientSizeX), _initParticleSize(sizeData.gradientSizeY), _initParticleSize(sizeData.gradientSizeZ));
+					} else {
+						size = GradientSize.createByGradientSize(_initParticleSize(sizeData.gradientSize));
+					}
+					break;
+				case 1: 
+					if (sizeData.separateAxes) {
+						var constantMinSeparateData:Array = sizeData.constantMinSeparate;
+						var constantMaxSeparateData:Array = sizeData.constantMaxSeparate;
+						size = GradientSize.createByRandomTwoConstantSeparate(new Vector3(constantMinSeparateData[0], constantMinSeparateData[1], constantMinSeparateData[2]), new Vector3(constantMaxSeparateData[0], constantMaxSeparateData[1], constantMaxSeparateData[2]));
+					} else {
+						size = GradientSize.createByRandomTwoConstant(sizeData.constantMin, sizeData.constantMax);
+					}
+					break;
+				case 2: 
+					if (sizeData.separateAxes) {
+						size = GradientSize.createByRandomTwoGradientSizeSeparate(_initParticleSize(sizeData.gradientSizeXMin), _initParticleSize(sizeData.gradientSizeYMin), _initParticleSize(sizeData.gradientSizeZMin), _initParticleSize(sizeData.gradientSizeXMax), _initParticleSize(sizeData.gradientSizeYMax), _initParticleSize(sizeData.gradientSizeZMax));
+					} else {
+						size = GradientSize.createByRandomTwoGradientSize(_initParticleSize(sizeData.gradientSizeMin), _initParticleSize(sizeData.gradientSizeMax));
+					}
+					break;
+				}
+				var sizeOverLifetime:SizeOverLifetime = new SizeOverLifetime(size);
+				sizeOverLifetime.enbale = sizeOverLifetimeData.enable;
+				particleSystem.sizeOverLifetime = sizeOverLifetime;
+			}
+			
+			//RotationOverLifetime
+			var rotationOverLifetimeData:Object = settting.rotationOverLifetime;
+			if (rotationOverLifetimeData) {
+				var angularVelocityData:Object = rotationOverLifetimeData.angularVelocity;
+				var angularVelocity:GradientAngularVelocity;
+				switch (angularVelocityData.type) {
+				case 0: 
+					if (angularVelocityData.separateAxes) {
+						//TODO:待补充
+					} else {
+						angularVelocity = GradientAngularVelocity.createByConstant(angularVelocityData.constant / 180.0 * Math.PI);
+					}
+					break;
+				case 1: 
+					if (angularVelocityData.separateAxes) {
+						//TODO:待补充
+					} else {
+						angularVelocity = GradientAngularVelocity.createByGradientRotation(_initParticleRotation(angularVelocityData.gradient));
+					}
+					break;
+				case 2: 
+					if (angularVelocityData.separateAxes) {
+						//TODO:待补充
+					} else {
+						angularVelocity = GradientAngularVelocity.createByRandomTwoConstant(angularVelocityData.constantMin / 180.0 * Math.PI, angularVelocityData.constantMax / 180.0 * Math.PI);
+					}
+					break;
+				case 3: 
+					if (angularVelocityData.separateAxes) {
+						//TODO:待补充
+					} else {
+						angularVelocity = GradientAngularVelocity.createByRandomTwoGradientRotation(_initParticleRotation(angularVelocityData.gradientMin), _initParticleRotation(angularVelocityData.gradientMax));
+					}
+					break;
+				}
+				var rotationOverLifetime:RotationOverLifetime = new RotationOverLifetime(angularVelocity);
+				rotationOverLifetime.enbale = rotationOverLifetimeData.enable;
+				particleSystem.rotationOverLifetime = rotationOverLifetime;
+			}
+			
+			//TextureSheetAnimation
+			var textureSheetAnimationData:Object = settting.textureSheetAnimation;
+			if (textureSheetAnimationData) {
+				var frameData:Object = textureSheetAnimationData.frame;
+				var frameOverTime:FrameOverTime;
+				switch (frameData.type) {
+				case 0: 
+					frameOverTime = FrameOverTime.createByConstant(frameData.constant);
+					break;
+				case 1: 
+					frameOverTime = FrameOverTime.createByOverTime(_initParticleFrame(frameData.overTime));
+					break;
+				case 2: 
+					frameOverTime = FrameOverTime.createByRandomTwoConstant(frameData.constantMin, frameData.constantMax);
+					break;
+				case 3: 
+					frameOverTime = FrameOverTime.createByRandomTwoOverTime(_initParticleFrame(frameData.overTimeMin), _initParticleFrame(frameData.overTimeMax));
+					break;
+				}
+				var startFrameData:Object = textureSheetAnimationData.startFrame;
+				var startFrame:StartFrame;
+				switch (startFrameData.type) {
+				case 0: 
+					startFrame = StartFrame.createByConstant(startFrameData.constant);
+					break;
+				case 1: 
+					startFrame = StartFrame.createByRandomTwoConstant(startFrameData.constantMin, startFrameData.constantMax);
+					break;
+				}
+				var textureSheetAnimation:TextureSheetAnimation = new TextureSheetAnimation(frameOverTime, startFrame);
+				textureSheetAnimation.enbale = textureSheetAnimationData.enable;
+				var titleData:Array = textureSheetAnimationData.title;
+				textureSheetAnimation.title = new Vector2(titleData[0], titleData[1]);
+				textureSheetAnimation.type = textureSheetAnimationData.type;
+				textureSheetAnimation.randomRow = textureSheetAnimationData.randomRow;
+				textureSheetAnimation.cycles = textureSheetAnimationData.cycles;
+				particleSystem.textureSheetAnimation = textureSheetAnimation;
+			}
+			
+			//Render
+			var particleRender:ShurikenParticleRender = particle.particleRender;
+			particleRender.renderMode = settting.renderMode;
+			particleRender.stretchedBillboardCameraSpeedScale = settting.stretchedBillboardCameraSpeedScale;
+			particleRender.stretchedBillboardSpeedScale = settting.stretchedBillboardSpeedScale;
+			particleRender.stretchedBillboardLengthScale = settting.stretchedBillboardLengthScale;
+			return particle;
 		}
 		
 		/** @private */
@@ -298,6 +621,27 @@ package laya.d3.utils {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			for (var i:int = 0, offset:int = 0, matOffset:int = 0, boneLength:int = bones.length; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++)
 				Utils3D.createAffineTransformationArray(curData[offset + 0], curData[offset + 1], curData[offset + 2], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 7], curData[offset + 8], curData[offset + 9], animationDatas, matOffset);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function testTangent(renderElement:RenderElement,vertexBuffer:VertexBuffer3D,indeBuffer:IndexBuffer3D,bufferUsage:Object):VertexBuffer3D {
+			var vertexDeclaration:VertexDeclaration = vertexBuffer.vertexDeclaration;
+			var material:StandardMaterial = renderElement._material as StandardMaterial;//TODO待调整
+			if (material.normalTexture && !vertexDeclaration.getVertexElementByUsage(VertexElementUsage.TANGENT0)) {
+				var vertexDatas:Float32Array = vertexBuffer.getData();
+				var newVertexDatas:Float32Array = Utils3D.generateTangent(vertexDatas, vertexDeclaration.vertexStride / 4, vertexDeclaration.getVertexElementByUsage(VertexElementUsage.POSITION0).offset / 4, vertexDeclaration.getVertexElementByUsage(VertexElementUsage.TEXTURECOORDINATE0).offset / 4, indeBuffer.getData());
+				vertexDeclaration = Utils3D.getVertexTangentDeclaration(vertexDeclaration.getVertexElements());
+				
+				var newVB:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, WebGLContext.STATIC_DRAW);
+				newVB.setData(newVertexDatas);
+				vertexBuffer.dispose();
+				
+				bufferUsage[VertexElementUsage.TANGENT0] = newVB;
+				return newVB;
+			}
+			return vertexBuffer;
 		}
 		
 		/** @private */
@@ -390,7 +734,7 @@ package laya.d3.utils {
 		}
 		
 		public static function getVertexTangentDeclaration(vertexElements:Array):VertexDeclaration {
-			var position:Boolean, normal:Boolean, color:Boolean, texcoord:Boolean, blendWeight:Boolean, blendIndex:Boolean;
+			var position:Boolean, normal:Boolean, color:Boolean, texcoord0:Boolean, texcoord1:Boolean, blendWeight:Boolean, blendIndex:Boolean;
 			for (var i:int = 0; i < vertexElements.length; i++) {
 				switch ((vertexElements[i] as VertexElement).elementUsage) {
 				case "POSITION": 
@@ -403,7 +747,10 @@ package laya.d3.utils {
 					color = true;
 					break;
 				case "UV": 
-					texcoord = true;
+					texcoord0 = true;
+					break;
+				case "UV1": 
+					texcoord1 = true;
 					break;
 				case "BLENDWEIGHT": 
 					blendWeight = true;
@@ -415,15 +762,23 @@ package laya.d3.utils {
 			}
 			var vertexDeclaration:VertexDeclaration;
 			
-			if (position && normal && color && texcoord && blendWeight && blendIndex)
+			if (position && normal && color && texcoord0&& texcoord1 && blendWeight && blendIndex)
+				vertexDeclaration = VertexPositionNormalColorTexture0Texture1SkinTangent.vertexDeclaration;
+			if (position && normal && color && texcoord0 && blendWeight && blendIndex)
 				vertexDeclaration = VertexPositionNormalColorTextureSkinTangent.vertexDeclaration;
-			else if (position && normal && texcoord && blendWeight && blendIndex)
+			else if (position && normal && texcoord0&& texcoord1 && blendWeight && blendIndex)
+				vertexDeclaration = VertexPositionNormalTexture0Texture1SkinTangent.vertexDeclaration;
+			else if (position && normal && texcoord0 && blendWeight && blendIndex)
 				vertexDeclaration = VertexPositionNormalTextureSkinTangent.vertexDeclaration;
 			else if (position && normal && color && blendWeight && blendIndex)
 				vertexDeclaration = VertexPositionNormalColorSkinTangent.vertexDeclaration;
-			else if (position && normal && color && texcoord)
+			else if (position && normal && color && texcoord0 && texcoord1)
+				vertexDeclaration = VertexPositionNormalColorTexture0Texture1Tangent.vertexDeclaration;
+			else if (position && normal && color && texcoord0)
 				vertexDeclaration = VertexPositionNormalColorTextureTangent.vertexDeclaration;
-			else if (position && normal && texcoord)
+			else if (position && normal && texcoord0&& texcoord1)
+				vertexDeclaration = VertexPositionNormalTexture0Texture1Tangent.vertexDeclaration;
+			else if (position && normal && texcoord0)
 				vertexDeclaration = VertexPositionNormalTextureTangent.vertexDeclaration;
 			else if (position && normal && color)
 				vertexDeclaration = VertexPositionNormalColorTangent.vertexDeclaration;

@@ -9,6 +9,7 @@ package laya.d3.core.material {
 	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.tempelet.ParticleTemplet3D;
 	import laya.d3.shader.ShaderDefines3D;
+	import laya.net.Loader;
 	import laya.particle.ParticleSetting;
 	import laya.webgl.resource.WebGLImage;
 	import laya.webgl.shader.Shader;
@@ -19,11 +20,30 @@ package laya.d3.core.material {
 	 * @author ...
 	 */
 	public class ParticleMaterial extends BaseMaterial {
+		public static const WORLDMATRIX:String = "MVPMATRIX";
+		public static const VIEWMATRIX:String = "MATRIX1";
+		public static const PROJECTIONMATRIX:String = "MATRIX2";
+		public static const VIEWPORTSCALE:String = "VIEWPORTSCALE";
+		public static const CURRENTTIME:String = "CURRENTTIME";
+		public static const DURATION:String = "DURATION";
+		public static const GRAVITY:String = "GRAVITY";
+		public static const ENDVELOCITY:String = "ENDVELOCITY";
+		public static const DIFFUSETEXTURE:String = "DIFFUSETEXTURE";
+		
 		/** @private */
 		private static const _diffuseTextureIndex:int = 0;
 		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:ParticleMaterial = new ParticleMaterial();
+		
+		
+		/**
+		 * 加载粒子材质。
+		 * @param url 粒子材质地址。
+		 */
+		public static function load(url:String):ParticleMaterial {
+			return Laya.loader.create(url,null, null, ParticleMaterial);
+		}
 		
 		/**
 		 * 获取漫反射贴图。
@@ -43,12 +63,13 @@ package laya.d3.core.material {
 			} else {
 				_removeShaderDefine(ShaderDefines3D.DIFFUSEMAP);
 			}
-			_setTexture(value, _diffuseTextureIndex, Buffer2D.DIFFUSETEXTURE);
+			_setTexture(value, _diffuseTextureIndex, DIFFUSETEXTURE);
 		}
 		
 		public function ParticleMaterial() {
 			super();
 			_addShaderDefine(ShaderDefines3D.PARTICLE3D);
+			setShaderName("PARTICLE");
 		}
 		
 		override public function _setLoopShaderParams(state:RenderState, projectionView:Matrix4x4, worldMatrix:Matrix4x4, mesh:IRenderable, material:BaseMaterial):void {
@@ -56,21 +77,21 @@ package laya.d3.core.material {
 			var templet:ParticleTemplet3D = particle.templet;
 			var setting:ParticleSetting = templet.settings;
 			
-			state.shaderValue.pushValue(Buffer2D.DURATION, setting.duration);
-			state.shaderValue.pushValue(Buffer2D.GRAVITY, setting.gravity);
-			state.shaderValue.pushValue(Buffer2D.ENDVELOCITY, setting.endVelocity);
+			state.shaderValue.pushValue(DURATION, setting.duration);
+			state.shaderValue.pushValue(GRAVITY, setting.gravity);
+			state.shaderValue.pushValue(ENDVELOCITY, setting.endVelocity);
 			
-			state.shaderValue.pushValue(Buffer2D.MVPMATRIX, worldMatrix.elements);
-			state.shaderValue.pushValue(Buffer2D.MATRIX1, state.viewMatrix.elements);
-			state.shaderValue.pushValue(Buffer2D.MATRIX2, state.projectionMatrix.elements);
+			state.shaderValue.pushValue(WORLDMATRIX, worldMatrix.elements);
+			state.shaderValue.pushValue(VIEWMATRIX, state.viewMatrix.elements);
+			state.shaderValue.pushValue(PROJECTIONMATRIX, state.projectionMatrix.elements);
 			
 			//设置视口尺寸，被用于转换粒子尺寸到屏幕空间的尺寸
 			var aspectRadio:Number = state.viewport.width / state.viewport.height;
 			var viewportScale:Vector2 = new Vector2(0.5 / aspectRadio, -0.5);
-			state.shaderValue.pushValue(Buffer2D.VIEWPORTSCALE, viewportScale.elements);
+			state.shaderValue.pushValue(VIEWPORTSCALE, viewportScale.elements);
 			
 			//设置粒子的时间参数，可通过此参数停止粒子动画
-			state.shaderValue.pushValue(Buffer2D.CURRENTTIME, templet._currentTime);
+			state.shaderValue.pushValue(CURRENTTIME, templet._currentTime);
 		}
 	
 	}

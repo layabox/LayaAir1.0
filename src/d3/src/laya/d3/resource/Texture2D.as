@@ -14,6 +14,14 @@ package laya.d3.resource {
 	 * <code>Texture2D</code> 二维纹理。
 	 */
 	public class Texture2D extends BaseTexture {
+		/**
+		 * 加载Texture2D。
+		 * @param url Texture2D地址。
+		 */
+		public static function load(url:String):Texture2D {
+			return Laya.loader.create(url,null, null,Texture2D);
+		}
+		
 		/**@private 文件路径全名。*/
 		private var _src:String;
 		/**@private HTML Image*/
@@ -33,14 +41,8 @@ package laya.d3.resource {
 		/**
 		 * 创建一个 <code>Texture2D</code> 实例。
 		 */
-		public function Texture2D(src:String) {
+		public function Texture2D() {
 			super();
-			_src = src;
-			_image = new Browser.window.Image();
-			_image.crossOrigin = "";
-			var loader:Loader = new Loader();
-			loader.once(Event.COMPLETE, this, _onTextureLoaded);
-			loader.load(src, "nativeimage", false);
 		}
 		
 		/**
@@ -53,8 +55,6 @@ package laya.d3.resource {
 			_width = w;
 			_height = h;
 			_size = new Size(w, h);
-			_loaded = true;
-			event(Event.LOADED, this);
 		}
 		
 		/**
@@ -113,11 +113,22 @@ package laya.d3.resource {
 		}
 		
 		/**
+		 *@private
+		 */
+		public function onAsynLoaded(url:String, textureData:*):void {
+			_src = url;
+			_onTextureLoaded(textureData);
+			_loaded = true;
+			event(Event.LOADED, this);
+		}
+		
+		/**
 		 * 重新创建资源，如果异步创建中被强制释放再创建，则需等待释放完成后再重新加载创建。
 		 */
 		override protected function recreateResource():void {
 			if (_src == null || _src === "")
 				return;
+			
 			_needReleaseAgain = false;
 			if (!_image) {
 				_recreateLock = true;

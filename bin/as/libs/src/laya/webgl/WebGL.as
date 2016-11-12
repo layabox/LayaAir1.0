@@ -136,6 +136,10 @@ package laya.webgl {
 		public static function enable():Boolean {
 			if (Render.isConchApp) {
 				if (!Render.isConchWebGL) {
+					RunDriver.skinAniSprite = function():* {
+						var tSkinSprite:SkinMesh = new SkinMesh()
+						return tSkinSprite;
+					}
 					expandContext();
 					return false;
 				}
@@ -242,10 +246,10 @@ package laya.webgl {
 			}
 			
 			RunDriver.getTexturePixels = function(value:Texture, x:Number, y:Number, width:Number, height:Number):Array {
+				(Render.context.ctx as WebGLContext2D).clear();
 				var tSprite:Sprite = new Sprite();
-				tSprite.x = -x;
-				tSprite.y = -y;
-				tSprite.graphics.drawTexture(value, 0, 0, value.sourceWidth, value.sourceHeight);
+				tSprite.graphics.drawTexture(value, -x, -y);
+				
 				//启用RenderTarget2D，把精灵上的内容画上去
 				var tRenderTarget:RenderTarget2D = RenderTarget2D.create(width, height);
 				tRenderTarget.start();
@@ -409,6 +413,7 @@ package laya.webgl {
 						scope.addValue("bounds", b);
 						var submit:SubmitCMD = SubmitCMD.create([scope, sprite, context, 0, 0], Filter._filterStart);
 						context.addRenderObject(submit);
+						(context.ctx as WebGLContext2D)._renderKey = 0;
 						(context.ctx as WebGLContext2D)._shader2D.glTexture = null;//绘制前置空下，保证不会被打包进上一个序列
 						var tX:Number = sprite.x - tSX + tHalfPadding;
 						var tY:Number = sprite.y - tSY + tHalfPadding;

@@ -5,13 +5,16 @@ package threeDimen.advancedStage.custom {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.BaseTexture;
 	import laya.webgl.utils.Buffer2D;
-
 	
 	/**
 	 * ...
 	 * @author ...
 	 */
 	public class CustomMaterial extends BaseMaterial {
+		public static const MVPMATRIX:String = "MVPMATRIX";
+		public static const DIFFUSETEXTURE:String = "DIFFUSETEXTURE";
+		public static const WORLDMATRIX:String = "MATRIX1";
+		
 		/** @private */
 		private static var _tempMatrix4x40:Matrix4x4 = new Matrix4x4();
 		/** @private */
@@ -30,7 +33,7 @@ package threeDimen.advancedStage.custom {
 		 * @param value 漫反射贴图。
 		 */
 		public function set diffuseTexture(value:BaseTexture):void {
-			_setTexture(value, _diffuseTextureIndex, Buffer2D.DIFFUSETEXTURE);
+			_setTexture(value, _diffuseTextureIndex, DIFFUSETEXTURE);
 		}
 		
 		public function CustomMaterial() {
@@ -42,8 +45,8 @@ package threeDimen.advancedStage.custom {
 			var pvw:Matrix4x4 = _tempMatrix4x40;
 			Matrix4x4.multiply(projectionView, worldMatrix, pvw);
 			
-			state.shaderValue.pushValue(Buffer2D.MVPMATRIX, pvw.elements);
-			state.shaderValue.pushValue(Buffer2D.MATRIX1, worldMatrix.elements);
+			state.shaderValue.pushValue(MVPMATRIX, pvw.elements);
+			state.shaderValue.pushValue(WORLDMATRIX, worldMatrix.elements);
 		}
 	
 	}

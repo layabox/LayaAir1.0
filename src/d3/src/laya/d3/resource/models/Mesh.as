@@ -31,25 +31,7 @@ package laya.d3.resource.models {
 		 * @param url 模板地址。
 		 */
 		public static function load(url:String):Mesh {
-			url = URL.formatURL(url);
-			var mesh:Mesh = Resource.meshCache[url];
-			if (!mesh) {
-				mesh = Resource.meshCache[url] = new Mesh();
-				var loader:Loader = new Loader();
-				loader.once(Event.COMPLETE, null, function(data:ArrayBuffer):void {
-					new LoadModel(data, mesh, mesh._materials, url);
-					mesh._loaded = true;
-					mesh.event(Event.LOADED, mesh);
-				});
-				loader.load(url, Loader.BUFFER);
-			}
-			return mesh;
-		
-			//var mesh:Mesh = new Mesh(url);
-			//Laya.loader.load(url, Handler.create(null,function():void{
-			//
-			//},[mesh]),null,"Mesh");
-			//return mesh;
+			return Laya.loader.create(url,null, null, Mesh);
 		}
 		
 		/** @private */
@@ -162,6 +144,18 @@ package laya.d3.resource.models {
 			_subMeshes.splice(index, 1);
 			_subMeshCount--;
 			return true;
+		}
+		
+		/**
+		 *@private
+		 */
+		public function onAsynLoaded(url:String, meshData:ArrayBuffer):void {
+			var preBasePath:String = URL.basePath;
+			URL.basePath = URL.getPath(URL.formatURL(url));
+			new LoadModel(meshData, this, _materials, url);
+			URL.basePath = preBasePath;;
+			_loaded = true;
+			event(Event.LOADED, this);
 		}
 		
 		/**

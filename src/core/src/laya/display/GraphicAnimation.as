@@ -12,28 +12,28 @@ package laya.display {
 		/**
 		 * @private
 		 */
-		private var _nodeList:Array;
+		protected var _nodeList:Array;
 		/**
 		 * @private
 		 */
-		private var _nodeDefaultProps:Object;
+		protected var _nodeDefaultProps:Object;
 		/**
 		 * @private
 		 */
-		private var _gList:Array;
+		protected var _gList:Array;
 		/**
 		 * @private
 		 */
-		private var _nodeIDAniDic:Object = {};
+		protected var _nodeIDAniDic:Object = {};
 		
 		/**
 		 * @private
 		 */
-		private static const _drawTextureCmd:Array = [["skin", null], ["x", 0], ["y", 0], ["width", 0], ["height", 0], ["pivotX", 0], ["pivotY", 0], ["scaleX", 1], ["scaleY", 1], ["rotation", 0]];
+		protected static const _drawTextureCmd:Array = [["skin", null], ["x", 0], ["y", 0], ["width", 0], ["height", 0], ["pivotX", 0], ["pivotY", 0], ["scaleX", 1], ["scaleY", 1], ["rotation", 0], ["alpha", 1]];
 		/**
 		 * @private
 		 */
-		private static var _temParam:Array = [];
+		protected static var _temParam:Array = [];
 		/**
 		 * @private
 		 */
@@ -87,7 +87,7 @@ package laya.display {
 		/**
 		 * @private
 		 */
-		private function _createFrameGraphic(frame:int):Graphics {
+		protected function _createFrameGraphic(frame:int):* {
 			var g:Graphics = new Graphics();
 			var i:int, len:int = _nodeList.length;
 			var tNode:int;
@@ -109,14 +109,14 @@ package laya.display {
 		/**
 		 * @private
 		 */
-		private function getNodeDataByID(nodeID:int):Object {
+		protected function getNodeDataByID(nodeID:int):Object {
 			return _nodeIDAniDic[nodeID];
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _getParams(obj:Object, params:Array, frame:int, obj2:Object):Array {
+		protected function _getParams(obj:Object, params:Array, frame:int, obj2:Object):Array {
 			var rst:Array = _temParam;
 			rst.length = params.length;
 			var i:int, len:int = params.length;
@@ -145,7 +145,7 @@ package laya.display {
 		/**
 		 * @private
 		 */
-		private function _addNodeGraphic(nodeID:int, g:Graphics, frame:int):void {
+		protected function _addNodeGraphic(nodeID:int, g:*, frame:int):void {
 			var node:Object = getNodeDataByID(nodeID);
 			if (!node)
 				return;
@@ -181,7 +181,7 @@ package laya.display {
 				
 			}
 			
-			g.drawTexture(params[0], params[1], params[2], params[3], params[4], m);
+			g.drawTexture(params[0], params[1], params[2], params[3], params[4], m,params[10]);
 		
 		}
 		
@@ -207,6 +207,7 @@ package laya.display {
 				var tAniO:Object;
 				for (i = 0; i < len; i++) {
 					tAniO = animations[i];
+					if (!tAniO) continue;
 					try
 					{
 						_calGraphicData(tAniO);
@@ -215,8 +216,11 @@ package laya.display {
 						trace("parse animation fail:" + tAniO.name + ",empty animation created");
 						_gList = [];
 					}
-					anilist.push(_gList);
-					aniDic[tAniO.name] = _gList;
+					var frameO:Object = { };
+					frameO.interval = 1000 / tAniO["frameRate"];
+					frameO.frames = _gList;
+					anilist.push(frameO);
+					aniDic[tAniO.name] = frameO;
 				}
 				animationList = anilist;
 				animationDic = aniDic;
@@ -227,7 +231,7 @@ package laya.display {
 		/**
 		 * @private
 		 */
-		private function _clear():void
+		protected function _clear():void
 		{
 			animationList=null;
 			animationDic=null;

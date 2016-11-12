@@ -468,7 +468,7 @@
 		function Video(width,height){
 			this.htmlVideo=null;
 			this.videoElement=null;
-			this.texture=null;
+			this._$3_texture=null;
 			(width===void 0)&& (width=320);
 			(height===void 0)&& (height=240);
 			Video.__super.call(this);
@@ -478,7 +478,7 @@
 			this.htmlVideo=new HtmlVideo();
 			this.videoElement=this.htmlVideo.getVideo();
 			this.videoElement.layaTarget=this;
-			this.texture=new Texture(this.htmlVideo);
+			this._$3_texture=new Texture(this.htmlVideo);
 			this.videoElement.addEventListener("abort",Video.onAbort);
 			this.videoElement.addEventListener("canplay",Video.onCanplay);
 			this.videoElement.addEventListener("canplaythrough",Video.onCanplaythrough);
@@ -576,7 +576,7 @@
 			if (Render.isWebGL)
 				this.htmlVideo['updateTexture']();
 			this.graphics.clear();
-			this.graphics.drawTexture(this.texture,0,0,this.width,this.height);
+			this.graphics.drawTexture(this._$3_texture,0,0,this.width,this.height);
 		}
 
 		__proto.onDocumentClick=function(){

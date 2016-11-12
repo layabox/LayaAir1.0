@@ -1,5 +1,6 @@
 package laya.d3.component.animation {
 	import laya.ani.AnimationState;
+	import laya.ani.AnimationTemplet;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
@@ -34,6 +35,14 @@ package laya.d3.component.animation {
 		 */
 		override public function set url(value:String):void {
 			super.url = value;
+			_curOriginalData = null;
+			_curAnimationDatas = null;
+			_tempCurAnimationData = null;
+			(_templet._animationDatasCache) || (_templet._animationDatasCache = []);
+		}
+		
+		override public function set templet(value:AnimationTemplet):void {
+			super.templet = value;
 			_curOriginalData = null;
 			_curAnimationDatas = null;
 			_tempCurAnimationData = null;

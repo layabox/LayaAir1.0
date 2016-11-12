@@ -54,7 +54,15 @@ package laya.display
 			this._targetDic=targetDic;
 			this._animationData = animationData;
 			interval = 1000 / animationData.frameRate;
-			_calculateDatas();
+			if (animationData.parsed) 
+			{ 
+				this._count = animationData.count;
+			}else
+			{
+				_calculateDatas();
+			}		
+			animationData.parsed = true;
+			animationData.count = _count;
 		}
 		/**@inheritDoc */
 		override public function clear():void
