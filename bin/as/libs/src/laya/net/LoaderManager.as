@@ -46,7 +46,7 @@ package laya.net {
 		/**@private */
 		private var _failRes:Object = {};
 		/**@private */
-		public var createMap:Object = {};
+		public var createMap:Object = {atlas: [null, Loader.ATLAS]};
 		
 		/**
 		 * 创建一个新的 <code>LoaderManager</code> 实例。
@@ -75,7 +75,7 @@ package laya.net {
 				}
 				for (var i:int = 0; i < itemCount; i++) {
 					var item:* = items[i];
-					if (item is String) item =items[i] = {url:item};
+					if (item is String) item = items[i] = {url: item};
 					item.progress = 0;
 					var progressHandler:Handler = progress ? Handler.create(null, onProgress, [item], false) : null;
 					var completeHandler:Handler = (progress || complete) ? Handler.create(null, onComplete, [item]) : null;
@@ -103,7 +103,7 @@ package laya.net {
 			} else return _create(url, complete, progress, clas, priority, cache);
 		}
 		
-		private function _create(url:String, complete:Handler = null, progress:Handler = null, clas:Class=null, priority:int = 1, cache:Boolean = true):* {
+		private function _create(url:String, complete:Handler = null, progress:Handler = null, clas:Class = null, priority:int = 1, cache:Boolean = true):* {
 			var item:ICreateResource = getRes(url);
 			if (!item) {
 				var extension:String = Utils.getFileExtension(url);
@@ -111,14 +111,17 @@ package laya.net {
 				if (!clas) clas = creatItem[0];
 				var type:String = creatItem[1];
 				
-				if (clas is Texture) type = "htmlimage";
-				item = new clas();
+				if (clas === Texture) type = "htmlimage";
+				item = clas ? new clas() : null;
 				load(url, Handler.create(null, onLoaded), progress, type, priority, false, null, true);
 				function onLoaded(data:*):void {
-					item.onAsynLoaded.call(item, url, data);
+					item && item.onAsynLoaded.call(item, url, data);
 					if (complete) complete.run();
 				}
 				if (cache) cacheRes(url, item);
+			} else {
+				progress && progress.runWith(1);
+				complete && complete.run();
 			}
 			return item;
 		}
@@ -140,6 +143,7 @@ package laya.net {
 			url = URL.formatURL(url);
 			var content:* = Loader.getRes(url);
 			if (content != null) {
+				progress && progress.runWith(1);
 				complete && complete.runWith(content);
 				//判断是否全部加载，如果是则抛出complete事件
 				_loaderCount || event(Event.COMPLETE);
@@ -159,8 +163,8 @@ package laya.net {
 					this._resInfos[priority].push(info);
 					_next();
 				} else {
-					complete && info.on(Event.COMPLETE, complete.caller, complete.method, complete.args);
-					progress && info.on(Event.PROGRESS, progress.caller, progress.method, progress.args);
+					complete && info._createListener(Event.COMPLETE, complete.caller, complete.method, complete.args, false, false);
+					progress && info._createListener(Event.PROGRESS, progress.caller, progress.method, progress.args, false, false);
 				}
 			}
 			return this;

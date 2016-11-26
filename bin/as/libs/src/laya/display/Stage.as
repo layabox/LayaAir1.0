@@ -356,7 +356,7 @@ package laya.display {
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "matrix(" + mat.toString() + ")";
 			//修正用户自行设置的偏移
 			//var rect:* = canvas.source.getBoundingClientRect();
-			mat.translate(parseInt(canvasStyle.left) || 0,parseInt(canvasStyle.top) || 0);
+			mat.translate(parseInt(canvasStyle.left) || 0, parseInt(canvasStyle.top) || 0);
 			_style.visible = true;
 			_repaint = 1;
 			event(Event.RESIZE);
@@ -503,11 +503,28 @@ package laya.display {
 			return Browser.now() - _frameStartTime;
 		}
 		
+		public override function set visible(value:Boolean):void {
+			if (this.visible !== value) {
+				super.visible = value;
+				var style:* = Render._mainCanvas.source.style;
+				style.visibility = value ? "visible" : "hidden";
+			}
+		}
+		
 		/**@inheritDoc */
 		override public function render(context:RenderContext, x:Number, y:Number):void {
-			_frameStartTime = Browser.now();
 			Render.isFlash && repaint();
 			_renderCount++;
+			
+			if (!visible) {
+				if (_renderCount % 5 === 0) {
+					Stat.loopCount++;
+					MouseManager.instance.runEvent();
+					Laya.timer._update();
+				}
+				return;
+			}
+			_frameStartTime = Browser.now();
 			var frameMode:String = frameRate === FRAME_MOUSE ? (((_frameStartTime - _mouseMoveTime) < 2000) ? FRAME_FAST : FRAME_SLOW) : frameRate;
 			var isFastMode:Boolean = (frameMode !== FRAME_SLOW);
 			var isDoubleLoop:Boolean = (_renderCount % 2 === 0);
@@ -533,19 +550,19 @@ package laya.display {
 					}
 					return;
 				}
-				if (Render.isWebGL && renderingEnabled && _style.visible) {
+				if (Render.isWebGL && renderingEnabled) {
 					context.clear();
 					super.render(context, x, y);
 				}
 			}
 			if (Render.isConchNode) return;//NATIVE
-			if (renderingEnabled && _style.visible && (isFastMode || !isDoubleLoop)) {
+			if (renderingEnabled && (isFastMode || !isDoubleLoop)) {
 				if (Render.isWebGL) {
 					RunDriver.clear(_bgColor);
 					RunDriver.beginFlush();
 					context.flush();
 					RunDriver.endFinish();
-				}else {
+				} else {
 					RunDriver.clear(_bgColor);
 					super.render(context, x, y);
 				}

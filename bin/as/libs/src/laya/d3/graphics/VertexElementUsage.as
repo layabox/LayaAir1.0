@@ -40,7 +40,7 @@ package laya.d3.graphics {
 		public static const STARTSPEED:String = "STARTSPEED";
 		public static const DIRECTION:String = "DIRECTION";
 		public static const TIME0:String = "TIME";
-		public static const RANDOM:String = "RANDOM";
-		
+		public static const RANDOM0:String = "RANDOM0";
+		public static const RANDOM1:String = "RANDOM1";
 	}
 }

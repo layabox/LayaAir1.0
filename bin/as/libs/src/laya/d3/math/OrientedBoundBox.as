@@ -49,11 +49,11 @@ package laya.d3.math {
 		 * @param	max 包围盒的最大顶点。
 		 */
 		//public static function createByMinAndMaxVertex(min:Vector3, max:Vector3) {
-			
+		
 		//	Vector3.subtract(max, min, _tempV30);
 		//	Vector3.scale(_tempV30, 0.5, _tempV30);
 		//	Vector3.add(min, _tempV30, _tempV31);
-			
+		
 		//	Vector3.subtract(max, _tempV31, extents);
 		//	Matrix4x4.translation(_tempV31, transformation);
 		//}
@@ -283,7 +283,7 @@ package laya.d3.math {
 			return ContainmentType.Intersects;
 		}
 		
-		private static function _getRows(mat:Matrix4x4, out:Vector.<Vector3>):void{
+		private static function _getRows(mat:Matrix4x4, out:Vector.<Vector3>):void {
 			out.length = 3;
 			
 			var mate:Float32Array = mat.elements;
@@ -304,16 +304,16 @@ package laya.d3.math {
 			row2e[2] = mate[10];
 		}
 	
-		/**
-		 * 该包围盒是否包含空间中另一OBB包围盒
-		 * @param	sphere 包围球
-		 * @return  返回位置关系
-		 */
-		//public function containsSphere(obb:OrientedBoundBox):int {
-			
-			//to do
-		//}
-		
+	/**
+	 * 该包围盒是否包含空间中另一OBB包围盒
+	 * @param	sphere 包围球
+	 * @return  返回位置关系
+	 */
+		 //public function containsSphere(obb:OrientedBoundBox):int {
+	
+		 //to do
+		 //}
+	
 	}
 
 }

@@ -28,9 +28,7 @@ package laya.d3.loaders {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
-	import laya.net.Loader;
 	import laya.net.URL;
-	import laya.resource.Resource;
 	import laya.utils.Byte;
 	import laya.webgl.WebGLContext;
 	

@@ -61,8 +61,12 @@ package laya.runtime {
 		function blurFilter(strength:Number):void;
 		/**@private */
 		function glowFilter(color:String, blur:Number, offX:Number, offY:Number):void;
-		/**@private*/
+		/**@private */
 		function repaint():void;
+		/**@private */
+		function setZOrder(z:Number):void;
+		/**@private */
+		function updateZOrder():void;
 	}
 
 }

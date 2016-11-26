@@ -8,12 +8,13 @@ package laya.d3.core.render {
 	import laya.d3.math.Vector3;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
+	import laya.resource.IDestroy;
 	import laya.resource.IDispose;
 	
 	/**
 	 * <code>Render</code> 类用于渲染器的父类，抽象类不允许示例。
 	 */
-	public class BaseRender extends EventDispatcher implements IDispose {
+	public class BaseRender extends EventDispatcher implements IDestroy {
 		/** @private */
 		private var _owner:Sprite3D;
 		/** @private */
@@ -53,7 +54,7 @@ package laya.d3.core.render {
 		 * 获取渲染物体。
 		 * @return 渲染物体。
 		 */
-		public function get renderCullingObject():RenderObject {
+		public function get renderObject():RenderObject {
 			return _renderObject;
 		}
 		
@@ -65,7 +66,7 @@ package laya.d3.core.render {
 			var material:BaseMaterial = _materials[0];
 			if (material && !material._isInstance) {
 				var instanceMaterial:BaseMaterial =__JS__("new material.constructor()");
-				material.copy(instanceMaterial);//深拷贝
+				material.cloneTo(instanceMaterial);//深拷贝
 				instanceMaterial.name = instanceMaterial.name + "(Instance)";
 				instanceMaterial._isInstance = true;
 				_materials[0] = instanceMaterial;
@@ -92,7 +93,7 @@ package laya.d3.core.render {
 				var material:BaseMaterial = _materials[i];
 				if (!material._isInstance) {
 					var instanceMaterial:BaseMaterial =__JS__("new material.constructor()");
-					material.copy(instanceMaterial);//深拷贝
+					material.cloneTo(instanceMaterial);//深拷贝
 					instanceMaterial.name = instanceMaterial.name + "(Instance)";
 					instanceMaterial._isInstance = true;
 					_materials[i] = instanceMaterial;
@@ -246,11 +247,13 @@ package laya.d3.core.render {
 		/**
 		 * 彻底清理资源。
 		 */
-		public function dispose():void {
-			_owner.transform.off(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);
-			_owner.off(Event.LAYER_CHANGED, this, _onOwnerLayerChanged);
-			_owner.off(Event.ENABLED_CHANGED, this, _onOwnerEnableChanged);
-			off(Event.ENABLED_CHANGED, this, _onEnableChanged);
+		public function destroy():void {
+			offAll();//移除所有事件监听
+			_owner = null;
+			_renderObject = null;
+			_materials = null;
+			_boundingBox = null;
+			_boundingSphere = null;
 		}
 	
 	}

@@ -39,10 +39,18 @@ package laya.d3.component.animation {
 			event(Event.ANIMATION_CHANGED, this);
 		}
 		
+		/**
+		 * 获取动画模板。
+		 * @return value 动画模板。
+		 */
 		public function get templet():AnimationTemplet {
 			return _templet;
 		}
 		
+		/**
+		 * 设置动画模板。
+		 * @param value 设置动画模板。
+		 */
 		public function set templet(value:AnimationTemplet):void {
 			if (_player.state !== AnimationState.stopped)
 				_player.stop(true);
@@ -61,8 +69,8 @@ package laya.d3.component.animation {
 		}
 		
 		/**
-		 * 获取播放器帧率。
-		 * @return 播放器帧率。
+		 * 获取播放器帧数。
+		 * @return 播放器帧数。
 		 */
 		public function get currentFrameIndex():int {
 			return _player.currentKeyframeIndex;
@@ -117,7 +125,7 @@ package laya.d3.component.animation {
 		 * @private
 		 */
 		private function _onOwnerEnableChanged(enable:Boolean):void {
-			if (_owner.isInStage) {
+			if (_owner.displayedInStage) {
 				if (enable)
 					_addUpdatePlayerToTimer();
 				else
@@ -128,13 +136,15 @@ package laya.d3.component.animation {
 		/**
 		 * @private
 		 */
-		private function _onIsInStageChanged(isInStage:Boolean):void {
-			if (_owner.enable) {
-				if (isInStage)
-					_addUpdatePlayerToTimer();
-				else
-					_removeUpdatePlayerToTimer();
-			}
+		private function _onDisplayInStage():void {
+			(_owner.enable) && (_addUpdatePlayerToTimer());
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _onUnDisplayInStage():void {
+			(_owner.enable) && (_removeUpdatePlayerToTimer());
 		}
 		
 		/**
@@ -142,9 +152,10 @@ package laya.d3.component.animation {
 		 * 载入组件时执行
 		 */
 		override public function _load(owner:Sprite3D):void {
-			(_owner.isInStage && _owner.enable) && (_addUpdatePlayerToTimer());
+			(_owner.displayedInStage && _owner.enable) && (_addUpdatePlayerToTimer());
 			_owner.on(Event.ENABLED_CHANGED, this, _onOwnerEnableChanged);
-			_owner.on(Event.INSTAGE_CHANGED, this, _onIsInStageChanged);
+			_owner.on(Event.DISPLAY, this, _onDisplayInStage);
+			_owner.on(Event.UNDISPLAY, this, _onUnDisplayInStage);
 		}
 		
 		/**
@@ -152,9 +163,10 @@ package laya.d3.component.animation {
 		 * 卸载组件时执行
 		 */
 		override public function _unload(owner:Sprite3D):void {
-			(_owner.isInStage && _owner.enable) && (_removeUpdatePlayerToTimer());
+			(_owner.displayedInStage && _owner.enable) && (_removeUpdatePlayerToTimer());
 			_owner.off(Event.ENABLED_CHANGED, this, _onOwnerEnableChanged);
-			_owner.off(Event.INSTAGE_CHANGED, this, _onIsInStageChanged);
+			_owner.off(Event.DISPLAY, this, _onDisplayInStage);
+			_owner.off(Event.UNDISPLAY, this, _onUnDisplayInStage);
 		}
 		
 		/**

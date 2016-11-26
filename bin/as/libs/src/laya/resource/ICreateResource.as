@@ -7,5 +7,4 @@ package laya.resource {
 	public interface ICreateResource {
 		function onAsynLoaded(url:String, data:*):void;
 	}
-
 }

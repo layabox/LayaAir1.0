@@ -1,4 +1,5 @@
 package laya.d3.core.material {
+	import laya.d3.core.IClone;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
@@ -12,6 +13,7 @@ package laya.d3.core.material {
 	import laya.events.EventDispatcher;
 	import laya.net.Loader;
 	import laya.net.URL;
+	import laya.resource.Resource;
 	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
@@ -21,10 +23,7 @@ package laya.d3.core.material {
 	/**
 	 * <code>BaseMaterial</code> 类用于创建材质,抽象类,不允许实例。
 	 */
-	public class BaseMaterial extends EventDispatcher {
-		/** @private */
-		private static var _uniqueIDCounter:int = 0;
-		
+	public class BaseMaterial extends Resource implements IClone {
 		/**渲染状态_不透明。*/
 		public static const RENDERMODE_OPAQUE:int = 1;
 		/**渲染状态_不透明_双面。*/
@@ -58,10 +57,6 @@ package laya.d3.core.material {
 		/**渲染状态_无深度_加色法混合_双面。*/
 		public static const RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE:int = 12;
 		
-		/**@private 材质唯一标识id。*/
-		private var _id:int;
-		/**@private 是否已加载完成*/
-		private var _loaded:Boolean;
 		/**@private 所属渲染队列。*/
 		private var _renderQueue:int;
 		/**@private 渲染模式。*/
@@ -95,26 +90,8 @@ package laya.d3.core.material {
 		
 		/** @private */
 		public var _isInstance:Boolean;
-		/**材质名字。*/
-		public var name:String;
 		/** @private */
 		public var shader:Shader;
-		
-		/**
-		 * 获取唯一标识ID(通常用于优化或识别)。
-		 * @return 唯一标识ID
-		 */
-		public function get id():int {
-			return _id;
-		}
-		
-		/**
-		 * 获取是否已加载完成。
-		 * @return 是否已加载完成
-		 */
-		public function get loaded():Boolean {
-			return _loaded;
-		}
 		
 		/**
 		 * 获取所属渲染队列。
@@ -219,7 +196,7 @@ package laya.d3.core.material {
 		 * 创建一个 <code>BaseMaterial</code> 实例。
 		 */
 		public function BaseMaterial() {
-			_id = ++_uniqueIDCounter;
+			super();
 			_loaded = true;
 			_isInstance = false;
 			_shaderDefine = 0;
@@ -395,11 +372,11 @@ package laya.d3.core.material {
 		/**
 		 *@private
 		 */
-		public function onAsynLoaded(url:String, materialData:Object):void {
+		override public function onAsynLoaded(url:String, data:*):void {
 			var preBasePath:String = URL.basePath;
 			URL.basePath = URL.getPath(URL.formatURL(url));
 			var customHandler:Handler = Handler.create(null, Utils3D._parseMaterial, null, false);
-			ClassUtils.createByJson(materialData, this, null, customHandler);
+			ClassUtils.createByJson(data as Object, this, null, customHandler);
 			customHandler.recover();
 			URL.basePath = preBasePath;
 			//_loaded = true;
@@ -415,29 +392,44 @@ package laya.d3.core.material {
 		}
 		
 		/**
-		 * 复制材质
-		 * @param dec 目标材质
+		 * 克隆。
+		 * @param	destObject 克隆源。
 		 */
-		public function copy(dec:BaseMaterial):BaseMaterial {
-			dec._loaded = _loaded;
-			dec._renderQueue = _renderQueue;
-			dec._renderMode = _renderMode;
-			dec._textures = _textures.slice();
-			dec._colors = _colors.slice();
-			dec._numbers = _numbers.slice();
-			dec._matrix4x4s = _matrix4x4s.slice();
-			dec._textureSharderIndices = _textureSharderIndices.slice();
-			dec._colorSharderIndices = _colorSharderIndices.slice();
-			dec._numberSharderIndices = _numberSharderIndices.slice();
-			dec.shader = shader;
-			dec._sharderNameID = _sharderNameID;
-			dec._disableShaderDefine = _disableShaderDefine;
+		public function cloneTo(destObject:*):void {
+			var destBaseMaterial:BaseMaterial = destObject as BaseMaterial;
+			destBaseMaterial._loaded = _loaded;
+			destBaseMaterial._renderQueue = _renderQueue;
+			destBaseMaterial._renderMode = _renderMode;
+			destBaseMaterial._textures = _textures.slice();
+			destBaseMaterial._colors = _colors.slice();
+			destBaseMaterial._numbers = _numbers.slice();
+			destBaseMaterial._matrix4x4s = _matrix4x4s.slice();
+			destBaseMaterial._textureSharderIndices = _textureSharderIndices.slice();
+			destBaseMaterial._colorSharderIndices = _colorSharderIndices.slice();
+			destBaseMaterial._numberSharderIndices = _numberSharderIndices.slice();
+			destBaseMaterial.shader = shader;
+			destBaseMaterial._sharderNameID = _sharderNameID;
+			destBaseMaterial._disableShaderDefine = _disableShaderDefine;
 			
-			dec._shaderDefine = _shaderDefine;
-			dec.name = name;
+			destBaseMaterial._shaderDefine = _shaderDefine;
+			destBaseMaterial.name = name;
 			
-			_shaderValues.copyTo(dec._shaderValues);
-			return dec;
+			_shaderValues.copyTo(destBaseMaterial._shaderValues);
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var destBaseMaterial:BaseMaterial = __JS__("new this.constructor()");
+			cloneTo(destBaseMaterial);
+			return destBaseMaterial;
+		}
+		
+		override public function dispose():void {
+			resourceManager.removeResource(this);
+			super.dispose();
 		}
 	}
 

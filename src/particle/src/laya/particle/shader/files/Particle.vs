@@ -12,7 +12,7 @@ attribute float a_Time;
 varying vec4 v_Color;
 varying vec2 v_TextureCoordinate;
 
-uniform  float u_CurrentTime;
+uniform float u_CurrentTime;
 uniform float u_Duration;
 uniform float u_EndVelocity;
 uniform vec3 u_Gravity;

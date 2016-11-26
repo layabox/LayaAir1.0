@@ -46,6 +46,13 @@ package laya.media {
 		}
 		
 		/**
+		 * 获取总时间。
+		 */
+		public function get duration():Number {
+			return 0;
+		}
+		
+		/**
 		 * 播放。
 		 */
 		public function play():void {

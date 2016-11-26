@@ -2,6 +2,7 @@ package laya.d3.core {
 	import laya.d3.resource.models.BaseMesh;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
+	import laya.resource.IDestroy;
 	
 	/**更换sharedMesh时触发。
 	 * @eventType Event.MESH_CHANGED
@@ -11,10 +12,9 @@ package laya.d3.core {
 	/**
 	 * <code>MeshFilter</code> 类用于创建网格过滤器。
 	 */
-	public class MeshFilter extends EventDispatcher {
+	public class MeshFilter extends EventDispatcher implements IDestroy {
 		/** @private */
 		private var _owner:MeshSprite3D;
-		
 		/** @private */
 		private var _sharedMesh:BaseMesh;
 		
@@ -38,14 +38,17 @@ package laya.d3.core {
 		
 		/**
 		 * 创建一个新的 <code>MeshFilter</code> 实例。
-		 * @param mesh 网格数据。
+		 * @param owner 所属网格精灵。
 		 */
 		public function MeshFilter(owner:MeshSprite3D) {
-		
 			_owner = owner;
 		}
 		
-
+		public function destroy():void {
+			offAll();//移除所有事件监听
+			_owner = null;
+			_sharedMesh = null;
+		}
 	
 	}
 

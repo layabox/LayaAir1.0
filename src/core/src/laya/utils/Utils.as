@@ -2,6 +2,7 @@ package laya.utils {
 	import laya.display.Sprite;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
+	import laya.runtime.IConchNode;
 	
 	/**
 	 * <code>Utils</code> 是工具类。
@@ -186,15 +187,23 @@ package laya.utils {
 				array[j + 1] = c;
 				i++;
 			}
-			if (c && c.parent && c.parent.model)
+		    var model:IConchNode = c.parent.model;
+			if (model)
 			{
-				for (i=0; i < len;i++)
+				if (model.updateZOrder)
 				{
-					c.parent.model.removeChild(array[i].model);
+					model.updateZOrder();
 				}
-				for (i=0; i < len;i++)
+				else
 				{
-					c.parent.model.addChildAt(array[i].model, i);
+					for (i=0; i < len;i++)
+					{
+						model.removeChild(array[i].model);
+					}
+					for (i=0; i < len;i++)
+					{
+						model.addChildAt(array[i].model, i);
+					}
 				}
 			}
 			return true;

@@ -111,6 +111,15 @@ package laya.media.webaudio {
 			}
 			return 0;
 		}
+		
+		override public function get duration():Number 
+		{
+			if (this.audioBuffer) {
+				return this.audioBuffer.duration;
+			}
+			return 0;
+		}
+		
 		private function _clearBufferSource():void
 		{
 			if (this.bufferSource) {

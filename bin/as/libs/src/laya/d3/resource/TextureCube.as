@@ -47,7 +47,7 @@ package laya.d3.resource {
 		/**
 		 * @private
 		 */
-			
+		
 		private function _onTextureLoaded(images:Array):void {
 			_images = images;
 			var minWidth:int = 2147483647/*int.MAX_VALUE*/;
@@ -178,9 +178,10 @@ package laya.d3.resource {
 		/**
 		 * @private
 		 */
-		public function onAsynLoaded(url:String, images:Array):void {
+		override public function onAsynLoaded(url:String, data:*):void {
 			_srcs = url;
-			_onTextureLoaded(images);
+			_onTextureLoaded(data as Array); 
+			activeResource();
 			_loaded = true;
 			event(Event.LOADED, this);
 		}

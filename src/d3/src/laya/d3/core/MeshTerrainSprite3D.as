@@ -161,7 +161,7 @@ package laya.d3.core {
 			var min:Vector3 = boundingBox.min;
 			var max:Vector3 = boundingBox.max;
 			_minX = min.x;
-			_minZ = min.z;	
+			_minZ = min.z;
 		}
 		
 		/**

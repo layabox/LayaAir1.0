@@ -50,17 +50,19 @@ package laya.utils {
 		 * @param	elasticBackTime 橡皮筋回弹时间，单位为毫秒。
 		 * @param	data 事件携带数据。
 		 * @param	disableMouseEvent 鼠标事件是否有效。
+		 * @param	ratio 惯性阻尼系数
 		 */
-		public function start(target:Sprite, area:Rectangle, hasInertia:Boolean, elasticDistance:Number, elasticBackTime:int, data:*, disableMouseEvent:Boolean):void {
+		public function start(target:Sprite, area:Rectangle, hasInertia:Boolean, elasticDistance:Number, elasticBackTime:int, data:*, disableMouseEvent:Boolean, ratio:Number = 0.92):void {
 			clearTimer();
 			
 			this.target = target;
 			this.area = area;
 			this.hasInertia = hasInertia;
-			this.elasticDistance = elasticDistance;
+			this.elasticDistance = area ? elasticDistance : 0;
 			this.elasticBackTime = elasticBackTime;
 			this.data = data;
 			this._disableMouseEvent = disableMouseEvent;
+			this.ratio = ratio;
 			
 			if (target.globalScaleX != 1 || target.globalScaleY != 1) {
 				_parent = target.parent as Sprite;

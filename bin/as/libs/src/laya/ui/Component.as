@@ -320,7 +320,7 @@ package laya.ui {
 		
 		public function set anchorX(value:Number):void {
 			getLayout().anchorX = value;
-			//layOutEabled = true;
+			layOutEabled = true;
 			resetLayoutX();
 		}
 		
@@ -331,7 +331,7 @@ package laya.ui {
 		
 		public function set anchorY(value:Number):void {
 			getLayout().anchorY = value;
-			//layOutEabled = true;
+			layOutEabled = true;
 			resetLayoutY();
 		}
 		
@@ -503,7 +503,7 @@ package laya.ui {
 		
 		/** 是否变灰。*/
 		public function get gray():Boolean {
-			return _disabled;
+			return _gray;
 		}
 		
 		public function set gray(value:Boolean):void {

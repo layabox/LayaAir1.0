@@ -1,18 +1,19 @@
 package laya.d3.core.particleShuriKen.module {
+	import laya.d3.core.IClone;
 	import laya.d3.math.Vector4;
 	
 	/**
 	 * <code>GradientColor</code> 类用于创建渐变颜色。
 	 */
-	public class GradientColor {
+	public class GradientColor implements IClone {
 		/**
 		 * 通过固定颜色创建一个 <code>GradientColor</code> 实例。
 		 * @param constant 固定颜色。
 		 */
-		public static function createByConstantColor(constant:Vector4):GradientColor {
+		public static function createByConstant(constant:Vector4):GradientColor {
 			var gradientColor:GradientColor = new GradientColor();
 			gradientColor._type = 0;
-			gradientColor._constantColor = constant;
+			gradientColor._constant = constant;
 			return gradientColor;
 		}
 		
@@ -20,10 +21,10 @@ package laya.d3.core.particleShuriKen.module {
 		 * 通过渐变颜色创建一个 <code>GradientColor</code> 实例。
 		 * @param gradient 渐变色。
 		 */
-		public static function createByGradientColor(gradient:GradientDataColor):GradientColor {
+		public static function createByGradient(gradient:GradientDataColor):GradientColor {
 			var gradientColor:GradientColor = new GradientColor();
 			gradientColor._type = 1;
-			gradientColor._gradientColor = gradient;
+			gradientColor._gradient = gradient;
 			return gradientColor;
 		}
 		
@@ -32,11 +33,11 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param minConstant 最小固定颜色。
 		 * @param maxConstant 最大固定颜色。
 		 */
-		public static function createByRandomTwoConstantColor(minConstant:Vector4, maxConstant:Vector4):GradientColor {
+		public static function createByRandomTwoConstant(minConstant:Vector4, maxConstant:Vector4):GradientColor {
 			var gradientColor:GradientColor = new GradientColor();
 			gradientColor._type = 2;
-			gradientColor._minConstantColor = minConstant;
-			gradientColor._maxConstantColor = maxConstant;
+			gradientColor._constantMin = minConstant;
+			gradientColor._constantMax = maxConstant;
 			return gradientColor;
 		}
 		
@@ -45,11 +46,11 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param minGradient 最小渐变颜色。
 		 * @param maxGradient 最大渐变颜色。
 		 */
-		public static function createByRandomTwoGradientColor(minGradient:GradientDataColor, maxGradient:GradientDataColor):GradientColor {
+		public static function createByRandomTwoGradient(minGradient:GradientDataColor, maxGradient:GradientDataColor):GradientColor {
 			var gradientColor:GradientColor = new GradientColor();
 			gradientColor._type = 3;
-			gradientColor._minGradientColor = minGradient;
-			gradientColor._maxGradientColor = maxGradient;
+			gradientColor._gradientMin = minGradient;
+			gradientColor._gradientMax = maxGradient;
 			return gradientColor;
 		}
 		
@@ -57,17 +58,17 @@ package laya.d3.core.particleShuriKen.module {
 		private var _type:int;
 		
 		/**@private */
-		private var _constantColor:Vector4;
+		private var _constant:Vector4;
 		/**@private */
-		private var _minConstantColor:Vector4;
+		private var _constantMin:Vector4;
 		/**@private */
-		private var _maxConstantColor:Vector4;
+		private var _constantMax:Vector4;
 		/**@private */
-		private var _gradientColor:GradientDataColor;
+		private var _gradient:GradientDataColor;
 		/**@private */
-		private var _minGradientColor:GradientDataColor;
+		private var _gradientMin:GradientDataColor;
 		/**@private */
-		private var _maxGradientColor:GradientDataColor;
+		private var _gradientMax:GradientDataColor;
 		
 		/**
 		 *生命周期颜色类型,0为固定颜色模式,1渐变模式,2为随机双固定颜色模式,3随机双渐变模式。
@@ -79,49 +80,74 @@ package laya.d3.core.particleShuriKen.module {
 		/**
 		 * 固定颜色。
 		 */
-		public function get constantColor():Vector4 {
-			return _constantColor;
+		public function get constant():Vector4 {
+			return _constant;
 		}
 		
 		/**
 		 * 最小固定颜色。
 		 */
-		public function get minConstantColor():Vector4 {
-			return _minConstantColor;
+		public function get constantMin():Vector4 {
+			return _constantMin;
 		}
 		
 		/**
 		 * 最大固定颜色。
 		 */
-		public function get maxConstantColor():Vector4 {
-			return _maxConstantColor;
+		public function get constantMax():Vector4 {
+			return _constantMax;
 		}
 		
 		/**
 		 * 渐变颜色。
 		 */
-		public function get gradientColor():GradientDataColor {
-			return _gradientColor;
+		public function get gradient():GradientDataColor {
+			return _gradient;
 		}
 		
 		/**
 		 * 最小渐变颜色。
 		 */
-		public function get minGradientColor():GradientDataColor {
-			return _minGradientColor;
+		public function get gradientMin():GradientDataColor {
+			return _gradientMin;
 		}
 		
 		/**
 		 * 最大渐变颜色。
 		 */
-		public function get maxGradientColor():GradientDataColor {
-			return _maxGradientColor;
+		public function get gradientMax():GradientDataColor {
+			return _gradientMax;
 		}
 		
 		/**
 		 * 创建一个 <code>GradientColor,不允许new，请使用静态创建函数。</code> 实例。
 		 */
 		public function GradientColor() {
+		}
+		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		public function cloneTo(destObject:*):void {
+			var destGradientColor:GradientColor = destObject as GradientColor;
+			destGradientColor._type = _type;
+			destGradientColor._constant.copyFrom(_constant);
+			destGradientColor._constantMin.copyFrom(_constantMin);
+			destGradientColor._constantMax.copyFrom(_constantMax);
+			_gradient.cloneTo(destGradientColor._gradient);
+			_gradientMin.cloneTo(destGradientColor._gradientMin);
+			_gradientMax.cloneTo(destGradientColor._gradientMax);
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var destGradientColor:GradientColor = __JS__("new this.constructor()");
+			cloneTo(destGradientColor);
+			return destGradientColor;
 		}
 	
 	}

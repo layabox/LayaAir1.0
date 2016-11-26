@@ -14,11 +14,18 @@ grid.transform.localScale = new Laya.Vector3(100, 100, 100);
 
 var settingPath = "../../res/threeDimen/particle/shurikenParticle0.json";
 Laya.loader.load(settingPath, Laya.Handler.create(null, function(setting) {
+    var sprite3D = new Laya.Sprite3D();
+	sprite3D.transform.localScale = new  Laya.Vector3(1,1,1);
+	scene.addChild(sprite3D);
+
     var preBasePath = Laya.URL.basePath;
 	Laya.URL.basePath = Laya.URL.getPath(Laya.URL.formatURL(settingPath));
     var particle = Laya.Utils3D.loadParticle(setting);
     Laya.URL.basePath = preBasePath;
+    particle.transform.rotate(new Vector3(0,0, 0), true, false);
+    particle.transform.localScale = new Vector3(1, 1, 1);
+    
 
-    scene.addChild(particle);
+    sprite3D.addChild(particle);
 //particle.transform.localScale = new Vector3(10, 10, 10);
 }), null, Laya.Loader.JSON);

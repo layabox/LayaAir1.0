@@ -91,8 +91,6 @@ package laya.display {
 		protected var _frames:Array;
 		/**@private */
 		protected var _url:String;
-		/**@private */
-		protected var _actionName:String;
 		
 		/**
 		 * 创建一个新的 <code>Animation</code> 实例。
@@ -133,7 +131,7 @@ package laya.display {
 				this._frames = framesMap[name];
 				this._count = _frames.length;
 				//如果是读取动的画配置信息，帧率按照动画设置的帧率播放
-				if (!_frameRateChanged && _frames["interval"]) _interval = _frames["interval"];
+				if (!_frameRateChanged && framesMap[name+"$len"]) _interval = framesMap[name+"$len"];
 				return true;
 			}
 			return false;
@@ -158,8 +156,6 @@ package laya.display {
 			this._frames = value;
 			if (value) {
 				this._count = value.length;
-				//如果是读取动的画配置信息，帧率按照动画设置的帧率播放
-				if (!_frameRateChanged && value["interval"]) _interval = value["interval"];
 				if (_isPlaying) play(_index, loop, _actionName);
 				else index = _index;
 			}
@@ -246,16 +242,22 @@ package laya.display {
 								var info:Object = obj[name];
 								if (info.frames.length) {
 									framesMap[url + "#" + name] = info.frames;
+									framesMap[url + "#" + name+"$len"] = info.interval;
 								} else {
 									flag = false;
 								}
 							}
 							
 							//设置第一个为默认
-							_this.frames = aniData.animationList[0].frames;
-							if (flag) framesMap[url + "#"] = _this.frames;
+							if(!_this._frameRateChanged) _this._interval=aniData.animationList[0].interval;
+							_this.frames = aniData.animationList[0].frames;							
+							if (flag) {							
+								framesMap[url + "#$len"] = aniData.animationList[0].interval;
+								framesMap[url + "#"] = _this.frames;
+							}
 						} else {
-							_this.frames = framesMap[url + "#"];
+							if(!_this._frameRateChanged) _this._interval=framesMap[url + "#$len"];
+							_this.frames = framesMap[url + "#"];							
 						}
 						
 						if (loaded) loaded.run();

@@ -127,7 +127,7 @@ vec3 NormalSampleToWorldSpace(vec3 normalMapSample, vec3 unitNormal, vec3 tangen
 
 	// Build orthonormal basis.
 	vec3 N = normalize(unitNormal);
-	vec3 T = normalize( tangent- dot(tangent, N)*N);
+	vec3 T = normalize(tangent- dot(tangent, N)*N);
 	vec3 B = cross(T, N);
 
 	mat3 TBN = mat3(T, B, N);

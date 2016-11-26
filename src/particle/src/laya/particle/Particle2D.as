@@ -79,6 +79,7 @@ package laya.particle {
 				_emitter = { start:function():void{ }} as EmitterBase;
 				__JS__("this.play =this._particleTemplate.play.bind(this._particleTemplate)");
 				__JS__("this.stop =this._particleTemplate.stop.bind(this._particleTemplate)");
+				if (autoPlay) play();
 				return;
 			}
 			else {

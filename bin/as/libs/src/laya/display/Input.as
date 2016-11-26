@@ -182,6 +182,8 @@ package laya.display {
 		
 		private static function _processInputting(e:*):void {
 			var input:Input = Input.inputElement.target;
+			if (!input) return;
+			
 			var value:String = Input.inputElement.value;
 			
 			// 对输入字符进行限制

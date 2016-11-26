@@ -22,8 +22,6 @@ package laya.d3.resource {
 		protected var _magFifter:int;
 		/** @private */
 		protected var _source:*;
-		/**@private */
-		protected var _loaded:Boolean;
 		
 		/**
 		 * 获取宽度。
@@ -83,13 +81,6 @@ package laya.d3.resource {
 		}
 		
 		/**
-		 * 表示是否加载成功，只能表示初次载入成功（通常包含下载和载入）,并不能完全表示资源是否可立即使用（资源管理机制释放影响等）。
-		 */
-		public function get loaded():Boolean {
-			return _loaded;
-		}
-		
-		/**
 		 * 创建一个 <code>BaseTexture</code> 实例。
 		 */
 		public function BaseTexture() {
@@ -97,6 +88,12 @@ package laya.d3.resource {
 			_mipmap = true;
 			_minFifter = -1;
 			_magFifter = -1;
+		}
+		
+		override public function dispose():void 
+		{
+			resourceManager.removeResource(this);
+			super.dispose();
 		}
 	
 	}

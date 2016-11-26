@@ -36,7 +36,7 @@ package threeDimen.primaryStage {
 			skinMesh = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
 			skinMesh.transform.localRotationEuler = new Vector3(0, 3.14, 0);
 			skinAni = skinMesh.addComponent(SkinAnimations) as SkinAnimations;
-			skinAni.templet =AnimationTemplet.load("../../../../res/threeDimen/skinModel/dude/dude.ani");
+			skinAni.templet = AnimationTemplet.load("../../../../res/threeDimen/skinModel/dude/dude.ani");
 			skinAni.player.play();
 		}
 	}

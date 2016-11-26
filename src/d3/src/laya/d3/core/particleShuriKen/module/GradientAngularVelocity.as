@@ -1,21 +1,22 @@
 package laya.d3.core.particleShuriKen.module {
+	import laya.d3.core.IClone;
 	import laya.d3.math.Vector3;
 	
 	/**
 	 * <code>GradientRotation</code> 类用于创建渐变角速度。
 	 */
-	public class GradientAngularVelocity {
+	public class GradientAngularVelocity implements IClone {
 		/**
 		 * 通过固定角速度创建一个 <code>GradientAngularVelocity</code> 实例。
 		 * @param	constant 固定角速度。
 		 * @return 渐变角速度。
 		 */
 		public static function createByConstant(constant:Number):GradientAngularVelocity {
-			var rotationOverLifetime:GradientAngularVelocity = new GradientAngularVelocity();
-			rotationOverLifetime._type = 0;
-			rotationOverLifetime._separateAxes = false;
-			rotationOverLifetime._constant = constant;
-			return rotationOverLifetime;
+			var gradientAngularVelocity:GradientAngularVelocity = new GradientAngularVelocity();
+			gradientAngularVelocity._type = 0;
+			gradientAngularVelocity._separateAxes = false;
+			gradientAngularVelocity._constant = constant;
+			return gradientAngularVelocity;
 		}
 		
 		/**
@@ -24,11 +25,11 @@ package laya.d3.core.particleShuriKen.module {
 		 * @return 渐变角速度。
 		 */
 		public static function createByConstantSeparate(separateConstant:Vector3):GradientAngularVelocity {
-			var rotationOverLifetime:GradientAngularVelocity = new GradientAngularVelocity();
-			rotationOverLifetime._type = 0;
-			rotationOverLifetime._separateAxes = true;
-			rotationOverLifetime._constantSeparate = separateConstant;
-			return rotationOverLifetime;
+			var gradientAngularVelocity:GradientAngularVelocity = new GradientAngularVelocity();
+			gradientAngularVelocity._type = 0;
+			gradientAngularVelocity._separateAxes = true;
+			gradientAngularVelocity._constantSeparate = separateConstant;
+			return gradientAngularVelocity;
 		}
 		
 		/**
@@ -36,12 +37,12 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param	gradient 渐变角速度。
 		 * @return 渐变角速度。
 		 */
-		public static function createByGradientRotation(gradient:GradientDataNumber):GradientAngularVelocity {
-			var rotationOverLifetime:GradientAngularVelocity = new GradientAngularVelocity();
-			rotationOverLifetime._type = 1;
-			rotationOverLifetime._separateAxes = false;
-			rotationOverLifetime._gradient = gradient;
-			return rotationOverLifetime;
+		public static function createByGradient(gradient:GradientDataNumber):GradientAngularVelocity {
+			var gradientAngularVelocity:GradientAngularVelocity = new GradientAngularVelocity();
+			gradientAngularVelocity._type = 1;
+			gradientAngularVelocity._separateAxes = false;
+			gradientAngularVelocity._gradient = gradient;
+			return gradientAngularVelocity;
 		}
 		
 		/**
@@ -51,14 +52,14 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param	gradientZ Z轴渐变角速度。
 		 * @return  渐变角速度。
 		 */
-		public static function createByGradientRotationSeparate(gradientX:GradientDataNumber, gradientY:GradientDataNumber, gradientZ:GradientDataNumber):GradientAngularVelocity {
-			var rotationOverLifetime:GradientAngularVelocity = new GradientAngularVelocity();
-			rotationOverLifetime._type = 1;
-			rotationOverLifetime._separateAxes = true;
-			rotationOverLifetime._gradientX = gradientX;
-			rotationOverLifetime._gradientY = gradientY;
-			rotationOverLifetime._gradientZ = gradientZ;
-			return rotationOverLifetime;
+		public static function createByGradientSeparate(gradientX:GradientDataNumber, gradientY:GradientDataNumber, gradientZ:GradientDataNumber):GradientAngularVelocity {
+			var gradientAngularVelocity:GradientAngularVelocity = new GradientAngularVelocity();
+			gradientAngularVelocity._type = 1;
+			gradientAngularVelocity._separateAxes = true;
+			gradientAngularVelocity._gradientX = gradientX;
+			gradientAngularVelocity._gradientY = gradientY;
+			gradientAngularVelocity._gradientZ = gradientZ;
+			return gradientAngularVelocity;
 		}
 		
 		/**
@@ -68,12 +69,12 @@ package laya.d3.core.particleShuriKen.module {
 		 * @return 渐变角速度。
 		 */
 		public static function createByRandomTwoConstant(constantMin:Number, constantMax:Number):GradientAngularVelocity {
-			var rotationOverLifetime:GradientAngularVelocity = new GradientAngularVelocity();
-			rotationOverLifetime._type = 2;
-			rotationOverLifetime._separateAxes = false;
-			rotationOverLifetime._constantMin = constantMin;
-			rotationOverLifetime._constantMax = constantMax;
-			return rotationOverLifetime;
+			var gradientAngularVelocity:GradientAngularVelocity = new GradientAngularVelocity();
+			gradientAngularVelocity._type = 2;
+			gradientAngularVelocity._separateAxes = false;
+			gradientAngularVelocity._constantMin = constantMin;
+			gradientAngularVelocity._constantMax = constantMax;
+			return gradientAngularVelocity;
 		}
 		
 		/**
@@ -83,12 +84,12 @@ package laya.d3.core.particleShuriKen.module {
 		 * @return  渐变角速度。
 		 */
 		public static function createByRandomTwoConstantSeparate(separateConstantMin:Vector3, separateConstantMax:Vector3):GradientAngularVelocity {
-			var rotationOverLifetime:GradientAngularVelocity = new GradientAngularVelocity();
-			rotationOverLifetime._type = 2;
-			rotationOverLifetime._separateAxes = true;
-			rotationOverLifetime._constantMinSeparate = separateConstantMin;
-			rotationOverLifetime._constantMaxSeparate = separateConstantMax;
-			return rotationOverLifetime;
+			var gradientAngularVelocity:GradientAngularVelocity = new GradientAngularVelocity();
+			gradientAngularVelocity._type = 2;
+			gradientAngularVelocity._separateAxes = true;
+			gradientAngularVelocity._constantMinSeparate = separateConstantMin;
+			gradientAngularVelocity._constantMaxSeparate = separateConstantMax;
+			return gradientAngularVelocity;
 		}
 		
 		/**
@@ -97,13 +98,13 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param	gradientMax 最大渐变角速度。
 		 * @return  渐变角速度。
 		 */
-		public static function createByRandomTwoGradientRotation(gradientMin:GradientDataNumber, gradientMax:GradientDataNumber):GradientAngularVelocity {
-			var rotationOverLifetime:GradientAngularVelocity = new GradientAngularVelocity();
-			rotationOverLifetime._type = 3;
-			rotationOverLifetime._separateAxes = false;
-			rotationOverLifetime._gradientMin = gradientMin;
-			rotationOverLifetime._gradientMax = gradientMax;
-			return rotationOverLifetime;
+		public static function createByRandomTwoGradient(gradientMin:GradientDataNumber, gradientMax:GradientDataNumber):GradientAngularVelocity {
+			var gradientAngularVelocity:GradientAngularVelocity = new GradientAngularVelocity();
+			gradientAngularVelocity._type = 3;
+			gradientAngularVelocity._separateAxes = false;
+			gradientAngularVelocity._gradientMin = gradientMin;
+			gradientAngularVelocity._gradientMax = gradientMax;
+			return gradientAngularVelocity;
 		}
 		
 		/**
@@ -116,17 +117,17 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param	gradientZMax  最大Z轴渐变角速度。
 		 * @return  渐变角速度。
 		 */
-		public static function createByRandomTwoGradientRotationSeparate(gradientXMin:GradientDataNumber, gradientXMax:GradientDataNumber, gradientYMin:GradientDataNumber, gradientYMax:GradientDataNumber, gradientZMin:GradientDataNumber, gradientZMax:GradientDataNumber):GradientAngularVelocity {
-			var rotationOverLifetime:GradientAngularVelocity = new GradientAngularVelocity();
-			rotationOverLifetime._type = 3;
-			rotationOverLifetime._separateAxes = true;
-			rotationOverLifetime._gradientXMin = gradientXMin;
-			rotationOverLifetime._gradientXMax = gradientXMax;
-			rotationOverLifetime._gradientYMin = gradientYMin;
-			rotationOverLifetime._gradientYMax = gradientYMax;
-			rotationOverLifetime._gradientZMin = gradientZMin;
-			rotationOverLifetime._gradientZMax = gradientZMax;
-			return rotationOverLifetime;
+		public static function createByRandomTwoGradientSeparate(gradientXMin:GradientDataNumber, gradientXMax:GradientDataNumber, gradientYMin:GradientDataNumber, gradientYMax:GradientDataNumber, gradientZMin:GradientDataNumber, gradientZMax:GradientDataNumber):GradientAngularVelocity {
+			var gradientAngularVelocity:GradientAngularVelocity = new GradientAngularVelocity();
+			gradientAngularVelocity._type = 3;
+			gradientAngularVelocity._separateAxes = true;
+			gradientAngularVelocity._gradientXMin = gradientXMin;
+			gradientAngularVelocity._gradientXMax = gradientXMax;
+			gradientAngularVelocity._gradientYMin = gradientYMin;
+			gradientAngularVelocity._gradientYMax = gradientYMax;
+			gradientAngularVelocity._gradientZMin = gradientZMin;
+			gradientAngularVelocity._gradientZMax = gradientZMax;
+			return gradientAngularVelocity;
 		}
 		
 		/**@private */
@@ -319,6 +320,44 @@ package laya.d3.core.particleShuriKen.module {
 		 */
 		public function GradientAngularVelocity() {
 		
+		}
+		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		public function cloneTo(destObject:*):void {
+			var destGradientAngularVelocity:GradientAngularVelocity = destObject as GradientAngularVelocity;
+			destGradientAngularVelocity._type = _type;
+			destGradientAngularVelocity._separateAxes = _separateAxes;
+			destGradientAngularVelocity._constant = _constant;
+			destGradientAngularVelocity._constantSeparate.copyFrom(_constantSeparate);
+			_gradient.cloneTo(destGradientAngularVelocity._gradient);
+			_gradientX.cloneTo(destGradientAngularVelocity._gradientX);
+			_gradientY.cloneTo(destGradientAngularVelocity._gradientY);
+			_gradientZ.cloneTo(destGradientAngularVelocity._gradientZ);
+			destGradientAngularVelocity._constantMin = _constantMin;
+			destGradientAngularVelocity._constantMax = _constantMax;
+			destGradientAngularVelocity._constantMinSeparate.copyFrom(_constantMinSeparate);
+			destGradientAngularVelocity._constantMaxSeparate.copyFrom(_constantMaxSeparate);
+			_gradientMin.cloneTo(destGradientAngularVelocity._gradientMin);
+			_gradientMax.cloneTo(destGradientAngularVelocity._gradientMax);
+			_gradientXMin.cloneTo(destGradientAngularVelocity._gradientXMin);
+			_gradientXMax.cloneTo(destGradientAngularVelocity._gradientXMax);
+			_gradientYMin.cloneTo(destGradientAngularVelocity._gradientYMin);
+			_gradientYMax.cloneTo(destGradientAngularVelocity._gradientYMax);
+			_gradientZMin.cloneTo(destGradientAngularVelocity._gradientZMin);
+			_gradientZMax.cloneTo(destGradientAngularVelocity._gradientZMax);
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var destGradientAngularVelocity:GradientAngularVelocity = __JS__("new this.constructor()");
+			cloneTo(destGradientAngularVelocity);
+			return destGradientAngularVelocity;
 		}
 	
 	}

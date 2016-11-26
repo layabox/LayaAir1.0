@@ -34,15 +34,14 @@ package laya.d3.shader {
 		public static const STRETCHEDBILLBOARD:int = 0x100000;
 		public static const HORIZONTALBILLBOARD:int = 0x200000;
 		public static const VERTICALBILLBOARD:int = 0x400000;
+		
 		public static const COLOROVERLIFETIME:int = 0x800000;
 		public static const RANDOMCOLOROVERLIFETIME:int = 0x1000000;
-		public static const SIZEOVERLIFETIME:int = 0x2000000;
-		public static const SIZEOVERLIFETIMESEPARATE:int = 0x4000000;
-		public static const RANDOMSIZEOVERLIFETIME:int = 0x8000000;
-		public static const RANDOMSIZEOVERLIFETIMESEPARATE:int = 0x10000000;
 		
-		public static const ROTATIONOVERLIFETIME:int = 0x20000000;
-		public static const TEXTURESHEETANIMATION:int = 0x40000000;
+		public static const SIZEOVERLIFETIME:int = 0x2000000;
+		public static const ROTATIONOVERLIFETIME:int = 0x4000000;
+		public static const TEXTURESHEETANIMATION:int = 0x8000000;
+		public static const VELOCITYOVERLIFETIME:int = 0x10000000;
 		
 		private static var _name2int:Object = {};
 		private static var _int2name:Array = [];
@@ -80,13 +79,10 @@ package laya.d3.shader {
 			reg("RANDOMCOLOROVERLIFETIME", RANDOMCOLOROVERLIFETIME);
 			
 			reg("SIZEOVERLIFETIME", SIZEOVERLIFETIME);
-			reg("SIZEOVERLIFETIMESEPARATE", SIZEOVERLIFETIMESEPARATE);
-			reg("RANDOMSIZEOVERLIFETIME", RANDOMSIZEOVERLIFETIME);
-			reg("RANDOMSIZEOVERLIFETIMESEPARATE", RANDOMSIZEOVERLIFETIMESEPARATE);
 			
 			reg("ROTATIONOVERLIFETIME", ROTATIONOVERLIFETIME);
-			
 			reg("TEXTURESHEETANIMATION", TEXTURESHEETANIMATION);
+			reg("VELOCITYOVERLIFETIME", VELOCITYOVERLIFETIME);
 		}
 		
 		public function ShaderDefines3D() {

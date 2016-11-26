@@ -8,7 +8,7 @@ package laya.d3.graphics {
 	 */
 	public class VertexParticleShuriken implements IVertex {
 		
-		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(108, 
+		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(124, 
 		[new VertexElement(0, VertexElementFormat.Vector4, VertexElementUsage.CORNERTEXTURECOORDINATE0), 
 		new VertexElement(16, VertexElementFormat.Vector3, VertexElementUsage.POSITION0), 
 		new VertexElement(28, VertexElementFormat.Vector3, VertexElementUsage.DIRECTION), 
@@ -18,7 +18,8 @@ package laya.d3.graphics {
 		new VertexElement(80, VertexElementFormat.Single, VertexElementUsage.STARTLIFETIME), 
 		new VertexElement(84, VertexElementFormat.Single, VertexElementUsage.TIME0),
 		new VertexElement(88, VertexElementFormat.Single, VertexElementUsage.STARTSPEED),
-		new VertexElement(92, VertexElementFormat.Vector4, VertexElementUsage.RANDOM)]);
+		new VertexElement(92, VertexElementFormat.Vector4, VertexElementUsage.RANDOM0),
+		new VertexElement(108, VertexElementFormat.Vector4, VertexElementUsage.RANDOM1)]);
 		
 		public static function get vertexDeclaration():VertexDeclaration {
 			return _vertexDeclaration;
@@ -33,7 +34,8 @@ package laya.d3.graphics {
 		private var _startLifeTime:Number;
 		private var _time:Number;
 		private var _startSpeed:Number;
-		private var _randoms:Vector4;
+		private var _randoms0:Vector4;
+		private var _randoms1:Vector4;
 		
 		public function get cornerTextureCoordinate():Vector4 {
 			return _cornerTextureCoordinate;
@@ -72,15 +74,19 @@ package laya.d3.graphics {
 			return _startSpeed;
 		}
 		
-		public function get random():Vector4 {
-			return _randoms;
+		public function get random0():Vector4 {
+			return _randoms0;
+		}
+		
+		public function get random1():Vector4 {
+			return _randoms1;
 		}
 		
 		public function get vertexDeclaration():VertexDeclaration {
 			return _vertexDeclaration;
 		}
 		
-		public function VertexParticleShuriken(cornerTextureCoordinate:Vector4, position:Vector3, velocity:Vector3, startColor:Vector4, startSize:Vector3,startRotation:Vector3, ageAddScale:Number, time:Number, startSpeed:Number, randoms:Vector4) {
+		public function VertexParticleShuriken(cornerTextureCoordinate:Vector4, position:Vector3, velocity:Vector3, startColor:Vector4, startSize:Vector3,startRotation:Vector3, ageAddScale:Number, time:Number, startSpeed:Number, randoms0:Vector4, randoms1:Vector4) {
 			_cornerTextureCoordinate = cornerTextureCoordinate;
 			_position = position;
 			_velocity = velocity;
@@ -90,7 +96,8 @@ package laya.d3.graphics {
 			_startLifeTime = ageAddScale;
 			_time = time;
 			_startSpeed = startSpeed;
-			_randoms = randoms;
+			_randoms0 = random0;
+			_randoms1 = random1;
 		}
 	
 	}

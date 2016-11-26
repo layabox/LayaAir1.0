@@ -27,7 +27,7 @@ package laya.d3.graphics {
 			var i:int, n:int;
 			if ((sprite3D is MeshSprite3D) && (sprite3D.isStatic))//TODO:可能会移除,目前只针对MeshSprite3D
 			{
-				var renderElements:Vector.<RenderElement> = (sprite3D as MeshSprite3D).meshRender.renderCullingObject._renderElements;
+				var renderElements:Vector.<RenderElement> = (sprite3D as MeshSprite3D).meshRender.renderObject._renderElements;
 				for (i = 0, n = renderElements.length; i < n; i++) {
 					var renderElement:RenderElement = renderElements[i];
 					if (renderElement.renderObj._vertexBufferCount === 1)//VertexBufferCount必须等于1

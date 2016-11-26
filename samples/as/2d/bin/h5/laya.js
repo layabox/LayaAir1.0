@@ -349,6 +349,8 @@ var Laya=window.Laya=(function(window,document){
 
 		Laya.init=function(width,height,__plugins){
 			var plugins=[];for(var i=2,sz=arguments.length;i<sz;i++)plugins.push(arguments[i]);
+			if (Laya._isinit)return;
+			Laya._isinit=true;
 			Browser.__init__();
 			Context.__init__();
 			Graphics.__init__();
@@ -382,8 +384,9 @@ var Laya=window.Laya=(function(window,document){
 		Laya.timer=null;
 		Laya.loader=null;
 		Laya.render=null
-		Laya.version="1.5.3";
+		Laya.version="1.5.4Beta";
 		Laya.stageBox=null
+		Laya._isinit=false;
 		__static(Laya,
 		['conchMarket',function(){return this.conchMarket=window.conch?conchMarket:null;},'PlatformClass',function(){return this.PlatformClass=window.PlatformClass;}
 		]);
@@ -467,8 +470,10 @@ var Laya=window.Laya=(function(window,document){
 			return this._createListener(type,caller,listener,args,true);
 		}
 
-		__proto._createListener=function(type,caller,listener,args,once){
-			this.off(type,caller,listener,once);
+		/**@private */
+		__proto._createListener=function(type,caller,listener,args,once,offBefore){
+			(offBefore===void 0)&& (offBefore=true);
+			offBefore && this.off(type,caller,listener,once);
 			var handler=EventHandler.create(caller || this,listener,args,once);
 			this._events || (this._events={});
 			var events=this._events;
@@ -535,7 +540,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto._recoverHandlers=function(arr){
-			if(!arr)return;
+			if (!arr)return;
 			if (arr.run){
 				arr.recover();
 				}else {
@@ -1420,14 +1425,20 @@ var Laya=window.Laya=(function(window,document){
 							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],tex.width,tex.height),tMatrix);
 						}
 						break ;
-					case context._drawTextureWithTransform:
-						tMatrix.copyTo(tempMatrix);
-						tempMatrix.concat(cmd[5]);
+					case context._drawTextureWithTransform:;
+						var drawMatrix;
+						if (cmd[5]){
+							tMatrix.copyTo(tempMatrix);
+							tempMatrix.concat(cmd[5]);
+							drawMatrix=tempMatrix;
+							}else{
+							drawMatrix=tMatrix;
+						}
 						if (cmd[3] && cmd[4]){
-							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],cmd[3],cmd[4]),tempMatrix);
+							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],cmd[3],cmd[4]),drawMatrix);
 							}else {
 							tex=cmd[0];
-							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],tex.width,tex.height),tempMatrix);
+							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],tex.width,tex.height),drawMatrix);
 						}
 						break ;
 					case context._drawRect:
@@ -1494,6 +1505,8 @@ var Laya=window.Laya=(function(window,document){
 		*@param m 矩阵信息。
 		*/
 		__proto.drawTexture=function(tex,x,y,width,height,m,alpha){
+			(x===void 0)&& (x=0);
+			(y===void 0)&& (y=0);
 			(width===void 0)&& (width=0);
 			(height===void 0)&& (height=0);
 			(alpha===void 0)&& (alpha=1);
@@ -2200,11 +2213,13 @@ var Laya=window.Laya=(function(window,document){
 		__getset(0,__proto,'touches',function(){
 			var arr=this.nativeEvent.touches;
 			if (arr){
+				var stage=Laya.stage;
 				for (var i=0,n=arr.length;i < n;i++){
 					var e=arr[i];
 					var point=Point.TEMP;
 					point.setTo(e.clientX,e.clientY);
-					Laya.stage._canvasTransform.invertTransformPoint(point);
+					stage._canvasTransform.invertTransformPoint(point);
+					stage.transform.invertTransformPoint(point);
 					e.stageX=point.x;
 					e.stageY=point.y;
 				}
@@ -2310,7 +2325,6 @@ var Laya=window.Laya=(function(window,document){
 		Event.RENDERQUEUE_CHANGED="renderqueuechanged";
 		Event.WORLDMATRIX_NEEDCHANGE="worldmatrixneedchanged";
 		Event.ANIMATION_CHANGED="actionchanged";
-		Event.INSTAGE_CHANGED="instagechanged";
 		Event.CACHEFRAMEINDEX_CHANGED="cacheframeindexchanged";
 		return Event;
 	})()
@@ -5036,7 +5050,7 @@ var Laya=window.Laya=(function(window,document){
 				var bottom=rect.bottom;
 				var _x=NaN,_y=NaN;
 				for (i=0;i < n;++i){
-					if ((ele=childs [i])._style.visible && ((_x=ele._x)< right && (_x+ele.width)> left && (_y=ele._y)< bottom && (_y+ele.height)> top)){
+					if ((ele=childs [i]).visible && ((_x=ele._x)< right && (_x+ele.width)> left && (_y=ele._y)< bottom && (_y+ele.height)> top)){
 						ele.render(context,x,y);
 					}
 				}
@@ -5062,11 +5076,6 @@ var Laya=window.Laya=(function(window,document){
 					_cacheCanvas._cacheRec=new Rectangle();
 				var w,h;
 				tRec=sprite.getSelfBounds();
-				if (Render.isWebGL && _cacheCanvas.type==='bitmap' && (tRec.width > 2048 || tRec.height > 2048)){
-					console.log("cache bitmap size larger than 2048,cache ignored");
-					_next._fun.call(_next,sprite,tx,x,y);
-					return;
-				}
 				tRec.x-=sprite.pivotX;
 				tRec.y-=sprite.pivotY;
 				tRec.x-=10;
@@ -5081,7 +5090,7 @@ var Laya=window.Laya=(function(window,document){
 				tRec=_cacheCanvas._cacheRec;
 				var scaleX=Render.isWebGL ? 1 :Browser.pixelRatio *Laya.stage.clientScaleX;
 				var scaleY=Render.isWebGL ? 1 :Browser.pixelRatio *Laya.stage.clientScaleY;
-				if (!Render.isWebGL){
+				if (!Render.isWebGL||_cacheCanvas.type==='bitmap'){
 					var chainScaleX=1;
 					var chainScaleY=1;
 					var tar;
@@ -5091,13 +5100,27 @@ var Laya=window.Laya=(function(window,document){
 						chainScaleY *=tar.scaleY;
 						tar=tar.parent;
 					}
-					if (chainScaleX > 1)scaleX *=chainScaleX;
-					if (chainScaleY > 1)scaleY *=chainScaleY;
+					if(Render.isWebGL){
+						if (chainScaleX < 1)scaleX *=chainScaleX;
+						if (chainScaleY < 1)scaleY *=chainScaleY;
+						}else{
+						if (chainScaleX > 1)scaleX *=chainScaleX;
+						if (chainScaleY > 1)scaleY *=chainScaleY;
+					}
 				}
 				w=tRec.width *scaleX;
 				h=tRec.height *scaleY;
 				left=tRec.x;
 				top=tRec.y;
+				if (Render.isWebGL && _cacheCanvas.type==='bitmap' && (w > 2048 || h > 2048)){
+					console.log("cache bitmap size larger than 2048,cache ignored");
+					if(_cacheCanvas.ctx){
+						Pool.recover("RenderContext",_cacheCanvas.ctx);
+						_cacheCanvas.ctx=null;
+					}
+					_next._fun.call(_next,sprite,context,x,y);
+					return;
+				}
 				if (!tx){
 					tx=_cacheCanvas.ctx=Pool.getItem("RenderContext")|| new RenderContext(w,h,HTMLCanvas.create("AUTO"));
 					tx.ctx.sprite=sprite;
@@ -6059,7 +6082,7 @@ var Laya=window.Laya=(function(window,document){
 				json=JSON.parse(json);
 			var props=json.props;
 			if (!node){
-				node=instanceHandler ? instanceHandler.runWith(json.instanceParams):ClassUtils.getInstance(props.runtime || json.type);
+				node=instanceHandler ? instanceHandler.runWith(json):ClassUtils.getInstance(props.runtime || json.type);
 				if (!node)
 					return null;
 			};
@@ -6098,13 +6121,9 @@ var Laya=window.Laya=(function(window,document){
 						node[prop]=value;
 					}
 				}
-			};
-			var customProps=json.customProps;
-			if (customHandler && customProps){
-				for (prop in customProps){
-					value=customProps[prop];
-					customHandler.runWith([node,prop,value]);
-				}
+			}
+			if (customHandler && json.customProps){
+				customHandler.runWith([node,json]);
 			}
 			if (node["created"])
 				node.created();
@@ -6202,15 +6221,15 @@ var Laya=window.Laya=(function(window,document){
 			var m;
 			var params=ClassUtils._getParams(propsO,drawConfig[1],drawConfig[2],drawConfig[3]);
 			m=ClassUtils._tM;
-			if (m||ClassUtils._alpha!=1){
+			if (m || ClassUtils._alpha !=1){
 				g.save();
-				if(m)
+				if (m)
 					g.transform(m);
 				if (ClassUtils._alpha !=1)
 					g.alpha(ClassUtils._alpha);
 			}
 			g[drawConfig[0]].apply(g,params);
-			if (m||ClassUtils._alpha!=1){
+			if (m || ClassUtils._alpha !=1){
 				g.restore();
 			}
 		}
@@ -6396,16 +6415,19 @@ var Laya=window.Laya=(function(window,document){
 		*@param elasticBackTime 橡皮筋回弹时间，单位为毫秒。
 		*@param data 事件携带数据。
 		*@param disableMouseEvent 鼠标事件是否有效。
+		*@param ratio 惯性阻尼系数
 		*/
-		__proto.start=function(target,area,hasInertia,elasticDistance,elasticBackTime,data,disableMouseEvent){
+		__proto.start=function(target,area,hasInertia,elasticDistance,elasticBackTime,data,disableMouseEvent,ratio){
+			(ratio===void 0)&& (ratio=0.92);
 			this.clearTimer();
 			this.target=target;
 			this.area=area;
 			this.hasInertia=hasInertia;
-			this.elasticDistance=elasticDistance;
+			this.elasticDistance=area ? elasticDistance :0;
 			this.elasticBackTime=elasticBackTime;
 			this.data=data;
 			this._disableMouseEvent=disableMouseEvent;
+			this.ratio=ratio;
 			if (target.globalScaleX !=1 || target.globalScaleY !=1){
 				this._parent=target.parent;
 				}else {
@@ -7937,13 +7959,19 @@ var Laya=window.Laya=(function(window,document){
 				}
 				array[j+1]=c;
 				i++;
-			}
-			if (c && c.parent && c.parent.model){
-				for (i=0;i < len;i++){
-					c.parent.model.removeChild(array[i].model);
+			};
+			var model=c.parent.model;
+			if (model){
+				if (model.updateZOrder){
+					model.updateZOrder();
 				}
-				for (i=0;i < len;i++){
-					c.parent.model.addChildAt(array[i].model,i);
+				else{
+					for (i=0;i < len;i++){
+						model.removeChild(array[i].model);
+					}
+					for (i=0;i < len;i++){
+						model.addChildAt(array[i].model,i);
+					}
 				}
 			}
 			return true;
@@ -8719,12 +8747,12 @@ var Laya=window.Laya=(function(window,document){
 		function BlendMode(){};
 		__class(BlendMode,'laya.webgl.canvas.BlendMode');
 		BlendMode._init_=function(gl){
-			BlendMode.fns=[BlendMode.BlendNormal,BlendMode.BlendAdd,BlendMode.BlendMultiply,BlendMode.BlendScreen,BlendMode.BlendOverlay,BlendMode.BlendLight,BlendMode.BlendMask];
-			BlendMode.targetFns=[BlendMode.BlendNormalTarget,BlendMode.BlendAddTarget,BlendMode.BlendMultiplyTarget,BlendMode.BlendScreenTarget,BlendMode.BlendOverlayTarget,BlendMode.BlendLightTarget,BlendMode.BlendMask];
+			BlendMode.fns=[BlendMode.BlendNormal,BlendMode.BlendAdd,BlendMode.BlendMultiply,BlendMode.BlendScreen,BlendMode.BlendOverlay,BlendMode.BlendLight,BlendMode.BlendMask,BlendMode.BlendDestinationOut];
+			BlendMode.targetFns=[BlendMode.BlendNormalTarget,BlendMode.BlendAddTarget,BlendMode.BlendMultiplyTarget,BlendMode.BlendScreenTarget,BlendMode.BlendOverlayTarget,BlendMode.BlendLightTarget,BlendMode.BlendMask,BlendMode.BlendDestinationOut];
 		}
 
 		BlendMode.BlendNormal=function(gl){
-			gl.blendFunc(0x0302,0x0303);
+			gl.blendFuncSeparate(0x0302,0x0303,1,1);
 		}
 
 		BlendMode.BlendAdd=function(gl){
@@ -8775,15 +8803,20 @@ var Laya=window.Laya=(function(window,document){
 			gl.blendFunc(0,0x0302);
 		}
 
+		BlendMode.BlendDestinationOut=function(gl){
+			gl.blendFunc(0,0);
+		}
+
 		BlendMode.activeBlendFunction=null;
-		BlendMode.NAMES=["normal","add","multiply","screen","overlay","light","mask"];
-		BlendMode.TOINT={"normal":0,"add":1,"multiply":2,"screen":3 ,"lighter":1,"overlay":4,"light":5,"mask":6};
+		BlendMode.NAMES=["normal","add","multiply","screen","overlay","light","mask","destination-out"];
+		BlendMode.TOINT={"normal":0,"add":1,"multiply":2,"screen":3 ,"lighter":1,"overlay":4,"light":5,"mask":6,"destination-out":7};
 		BlendMode.NORMAL="normal";
 		BlendMode.ADD="add";
 		BlendMode.MULTIPLY="multiply";
 		BlendMode.SCREEN="screen";
 		BlendMode.LIGHT="light";
 		BlendMode.OVERLAY="overlay";
+		BlendMode.DESTINATIONOUT="destination-out";
 		BlendMode.fns=[];
 		BlendMode.targetFns=[];
 		return BlendMode;
@@ -11484,10 +11517,9 @@ var Laya=window.Laya=(function(window,document){
 				((texture.bitmap).enableMerageInAtlas)&& (AtlasResourceManager.instance.addToAtlas(texture));
 			}
 			RunDriver.getTexturePixels=function (value,x,y,width,height){
+				(Render.context.ctx).clear();
 				var tSprite=new Sprite();
-				tSprite.x=-x;
-				tSprite.y=-y;
-				tSprite.graphics.drawTexture(value,0,0,width,height);
+				tSprite.graphics.drawTexture(value,-x,-y);
 				var tRenderTarget=RenderTarget2D.create(width,height);
 				tRenderTarget.start();
 				tRenderTarget.clear(0,0,0,0);
@@ -11915,6 +11947,7 @@ var Laya=window.Laya=(function(window,document){
 				this._childs.push(node);
 				this.model && this.model.addChildAt(node.model,this._childs.length-1);
 				node.parent=this;
+				this._childChanged();
 			}
 			return node;
 		}
@@ -12361,6 +12394,17 @@ var Laya=window.Laya=(function(window,document){
 			return channel;
 		}
 
+		/**
+		*获取总时间。
+		*/
+		__getset(0,__proto,'duration',function(){
+			var ad;
+			ad=AudioSound._audioCache[this.url];
+			if (!ad)
+				return 0;
+			return ad.duration;
+		});
+
 		AudioSound._audioCache={};
 		return AudioSound;
 	})(EventDispatcher)
@@ -12414,6 +12458,13 @@ var Laya=window.Laya=(function(window,document){
 			return 0;
 		});
 
+		/**
+		*获取总时间。
+		*/
+		__getset(0,__proto,'duration',function(){
+			return 0;
+		});
+
 		return SoundChannel;
 	})(EventDispatcher)
 
@@ -12452,6 +12503,13 @@ var Laya=window.Laya=(function(window,document){
 		*
 		*/
 		__proto.dispose=function(){}
+		/**
+		*获取总时间。
+		*/
+		__getset(0,__proto,'duration',function(){
+			return 0;
+		});
+
 		return Sound;
 	})(EventDispatcher)
 
@@ -12573,6 +12631,13 @@ var Laya=window.Laya=(function(window,document){
 			delete WebAudioSound._dataCache[this.url];
 			delete WebAudioSound.__loadingSound[this.url];
 		}
+
+		__getset(0,__proto,'duration',function(){
+			if (this.audioBuffer){
+				return this.audioBuffer.duration;
+			}
+			return 0;
+		});
 
 		WebAudioSound.decode=function(){
 			if (WebAudioSound.buffs.length <=0 || WebAudioSound.isDecoding){
@@ -12776,6 +12841,11 @@ var Laya=window.Laya=(function(window,document){
 			return this._http.responseURL;
 		});
 
+		/**原生XMLHttpRequest引用*/
+		__getset(0,__proto,'http',function(){
+			return this._http;
+		});
+
 		/**返回的数据。*/
 		__getset(0,__proto,'data',function(){
 			return this._data;
@@ -12837,8 +12907,19 @@ var Laya=window.Laya=(function(window,document){
 				this._http.on("progress",this,this.onProgress);
 				this._http.on("error",this,this.onError);
 				this._http.on("complete",this,this.onLoaded);
-			}
-			this._http.send(url,null,"get",type!=="atlas" ? type :"json");
+			};
+			var contentType;
+			switch(type){
+				case "atlas":
+					contentType="json";
+					break ;
+				case "font":
+					contentType="xml";
+					break ;
+				default :
+					contentType=type;
+				}
+			this._http.send(url,null,"get",contentType);
 		}
 
 		/**
@@ -12979,6 +13060,21 @@ var Laya=window.Laya=(function(window,document){
 					}
 					this.complete(this._data);
 				}
+				}else if (type=="font"){
+				if (!data.src){
+					this._data=data;
+					this.event("progress",0.5);
+					return this._loadImage(URL.formatURL(this._url.replace(".fnt",".png")));
+					}else {
+					var bFont;
+					bFont=new BitmapFont();
+					bFont.parseFont(this._data,data);
+					var tArr=this._url.split(".fnt")[0].split("/");
+					var fontName=tArr[tArr.length-1];
+					Text.registerBitmapFont(fontName,bFont);
+					this._data=bFont;
+					this.complete(this._data);
+				}
 				}else {
 				this.complete(data);
 			}
@@ -13100,6 +13196,7 @@ var Laya=window.Laya=(function(window,document){
 		Loader.IMAGE="image";
 		Loader.SOUND="sound";
 		Loader.ATLAS="atlas";
+		Loader.FONT="font";
 		Loader.typeMap={"png":"image","jpg":"image","jpeg":"image","txt":"text","json":"json","xml":"xml","als":"atlas","mp3":"sound","ogg":"sound","wav":"sound","part":"json"};
 		Loader.parserMap={};
 		Loader.loadedMap={};
@@ -13132,7 +13229,7 @@ var Laya=window.Laya=(function(window,document){
 			this._infoPool=[];
 			this._maxPriority=5;
 			this._failRes={};
-			this.createMap={};
+			this.createMap={atlas:[null,"atlas"]};
 			LoaderManager.__super.call(this);
 			for (var i=0;i < this._maxPriority;i++)this._resInfos[i]=[];
 		}
@@ -13197,14 +13294,17 @@ var Laya=window.Laya=(function(window,document){
 				var creatItem=this.createMap[extension];
 				if (!clas)clas=creatItem[0];
 				var type=creatItem[1];
-				if ((clas instanceof laya.resource.Texture ))type="htmlimage";
-				item=new clas();
+				if (clas===Texture)type="htmlimage";
+				item=clas ? new clas():null;
 				this.load(url,Handler.create(null,onLoaded),progress,type,priority,false,null,true);
 				function onLoaded (data){
-					item.onAsynLoaded.call(item,url,data);
+					item && item.onAsynLoaded.call(item,url,data);
 					if (complete)complete.run();
 				}
 				if (cache)LoaderManager.cacheRes(url,item);
+				}else {
+				progress && progress.runWith(1);
+				complete && complete.run();
 			}
 			return item;
 		}
@@ -13229,6 +13329,7 @@ var Laya=window.Laya=(function(window,document){
 			url=URL.formatURL(url);
 			var content=Loader.getRes(url);
 			if (content !=null){
+				progress && progress.runWith(1);
 				complete && complete.runWith(content);
 				this._loaderCount || this.event("complete");
 				}else {
@@ -13247,8 +13348,8 @@ var Laya=window.Laya=(function(window,document){
 					this._resInfos[priority].push(info);
 					this._next();
 					}else {
-					complete && info.on("complete",complete.caller,complete.method,complete.args);
-					progress && info.on("progress",progress.caller,progress.method,progress.args);
+					complete && info._createListener("complete",complete.caller,complete.method,complete.args,false,false);
+					progress && info._createListener("progress",progress.caller,progress.method,progress.args,false,false);
 				}
 			}
 			return this;
@@ -13796,14 +13897,15 @@ var Laya=window.Laya=(function(window,document){
 				return RunDriver.getTexturePixels(this,x,y,width,height);
 				}else {
 				Browser.canvas.size(width,height);
-				Browser.context.drawTexture(this,0,0,width,height,0,0);
+				Browser.canvas.clear();
+				Browser.context.drawTexture(this,-x,-y,this.width,this.height,0,0);
 				var info=Browser.context.getImageData(0,0,width,height);
 			}
 			return info.data;
 		}
 
 		/**@private */
-		__proto.onAsynLoaded=function(bitmap){
+		__proto.onAsynLoaded=function(url,bitmap){
 			if (bitmap)bitmap.useNum++;
 			this.setTo(bitmap,this.uv);
 		}
@@ -15273,6 +15375,7 @@ var Laya=window.Laya=(function(window,document){
 				this._renderKey=rid;
 				var curShader=this._curSubmit.shaderValue;
 				var shader=this._shader2D;
+				var alphaBack=shader.ALPHA;
 				shader.ALPHA *=alpha;
 				shader.glTexture=webGLImg;
 				var vb=this._vb;
@@ -15285,7 +15388,7 @@ var Laya=window.Laya=(function(window,document){
 				submit._preIsSameTextureShader=this._curSubmit._renderType===10016 && shader.ALPHA===curShader.ALPHA;
 				this._curSubmit=submit;
 				finalVB=this._curSubmit._vb || this._vb;
-				shader.ALPHA /=alpha;
+				shader.ALPHA=alphaBack;
 			}
 			if (GlUtils.fillRectImgVb(finalVB,this._clipRect,x,y,width || tex.width,height || tex.height,tex.uv,m || this._curMat,this._x,this._y,0,0)){
 				if (AtlasResourceManager.enabled && !this._isMain)
@@ -17573,14 +17676,16 @@ var Laya=window.Laya=(function(window,document){
 		*@param elasticBackTime 橡皮筋回弹时间，单位为毫秒，默认为300毫秒，可选。
 		*@param data 拖动事件携带的数据，可选。
 		*@param disableMouseEvent 禁用其他对象的鼠标检测，默认为false，设置为true能提高性能
+		*@param ratio 惯性阻尼系数
 		*/
-		__proto.startDrag=function(area,hasInertia,elasticDistance,elasticBackTime,data,disableMouseEvent){
+		__proto.startDrag=function(area,hasInertia,elasticDistance,elasticBackTime,data,disableMouseEvent,ratio){
 			(hasInertia===void 0)&& (hasInertia=false);
 			(elasticDistance===void 0)&& (elasticDistance=0);
 			(elasticBackTime===void 0)&& (elasticBackTime=300);
 			(disableMouseEvent===void 0)&& (disableMouseEvent=false);
+			(ratio===void 0)&& (ratio=0.92);
 			this._$P.dragging || (this._set$P("dragging",new Dragging()));
-			this._$P.dragging.start(this,area,hasInertia,elasticDistance,elasticBackTime,data,disableMouseEvent);
+			this._$P.dragging.start(this,area,hasInertia,elasticDistance,elasticBackTime,data,disableMouseEvent,ratio);
 		}
 
 		/**停止拖动此对象。*/
@@ -17771,6 +17876,7 @@ var Laya=window.Laya=(function(window,document){
 			},function(value){
 			if (this._zOrder !=value){
 				this._zOrder=value;
+				this.model && this.model.setZOrder && this.model.setZOrder(value);
 				this._parent && Laya.timer.callLater(this._parent,this.updateZOrder);
 			}
 		});
@@ -18202,8 +18308,8 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.__resumePlay=function(){
+			if(this._audio)this._audio.removeEventListener("canplay",this._resumePlay);
 			try {
-				this._audio.removeEventListener("canplay",this._resumePlay);
 				this._audio.currentTime=this.startTime;
 				Browser.container.appendChild(this._audio);
 				this._audio.play();
@@ -18255,6 +18361,15 @@ var Laya=window.Laya=(function(window,document){
 			if (!this._audio)
 				return 0;
 			return this._audio.currentTime;
+		});
+
+		/**
+		*获取总时间。
+		*/
+		__getset(0,__proto,'duration',function(){
+			if (!this._audio)
+				return 0;
+			return this._audio.duration;
 		});
 
 		/**
@@ -18384,6 +18499,13 @@ var Laya=window.Laya=(function(window,document){
 		__getset(0,__proto,'position',function(){
 			if (this.bufferSource){
 				return (Browser.now()-this._startTime)/ 1000+this.startTime;
+			}
+			return 0;
+		});
+
+		__getset(0,__proto,'duration',function(){
+			if (this.audioBuffer){
+				return this.audioBuffer.duration;
 			}
 			return 0;
 		});
@@ -19780,6 +19902,7 @@ var Laya=window.Laya=(function(window,document){
 			return this._layout.anchorX;
 			},function(value){
 			this.getLayout().anchorX=value;
+			this.layOutEabled=true;
 			this.resetLayoutX();
 		});
 
@@ -19788,6 +19911,7 @@ var Laya=window.Laya=(function(window,document){
 			return this._layout.anchorY;
 			},function(value){
 			this.getLayout().anchorY=value;
+			this.layOutEabled=true;
 			this.resetLayoutY();
 		});
 
@@ -19854,7 +19978,7 @@ var Laya=window.Laya=(function(window,document){
 
 		/**是否变灰。*/
 		__getset(0,__proto,'gray',function(){
-			return this._disabled;
+			return this._gray;
 			},function(value){
 			if (value!==this._gray){
 				this._gray=value;
@@ -19891,6 +20015,7 @@ var Laya=window.Laya=(function(window,document){
 			this._isReverse=false;
 			this._frameRateChanged=false;
 			this._controlNode=null;
+			this._actionName=null;
 			AnimationPlayerBase.__super.call(this);
 			this._interval=Config.animationInterval;
 		}
@@ -19910,6 +20035,7 @@ var Laya=window.Laya=(function(window,document){
 			this._isPlaying=true;
 			this.index=((typeof start=='string'))? this._getFrameByLabel(start):start;
 			this.loop=loop;
+			this._actionName=name;
 			this._isReverse=this.wrapMode==1;
 			if (this.interval > 0){
 				this.timerLoop(this.interval,this,this._frameLoop,null,true);
@@ -19989,7 +20115,7 @@ var Laya=window.Laya=(function(window,document){
 		/**@private */
 		__proto._$3__onDisplay=function(){
 			if (this._isPlaying){
-				if (this._controlNode.displayedInStage)this.play(this._index,this.loop);
+				if (this._controlNode.displayedInStage)this.play(this._index,this.loop,this._actionName);
 				else this.clearTimer(this,this._frameLoop);
 			}
 		}
@@ -21175,9 +21301,17 @@ var Laya=window.Laya=(function(window,document){
 
 		/**@inheritDoc */
 		__proto.render=function(context,x,y){
-			this._frameStartTime=Browser.now();
 			Render.isFlash && this.repaint();
 			this._renderCount++;
+			if (!this.visible){
+				if (this._renderCount % 5===0){
+					Stat.loopCount++;
+					MouseManager.instance.runEvent();
+					Laya.timer._update();
+				}
+				return;
+			}
+			this._frameStartTime=Browser.now();
 			var frameMode=this.frameRate==="mouse" ? (((this._frameStartTime-this._mouseMoveTime)< 2000)? "fast" :"slow"):this.frameRate;
 			var isFastMode=(frameMode!=="slow");
 			var isDoubleLoop=(this._renderCount % 2===0);
@@ -21199,13 +21333,13 @@ var Laya=window.Laya=(function(window,document){
 					}
 					return;
 				}
-				if (Render.isWebGL && this.renderingEnabled && this._style.visible){
+				if (Render.isWebGL && this.renderingEnabled){
 					context.clear();
 					_super.prototype.render.call(this,context,x,y);
 				}
 			}
 			if (Render.isConchNode)return;
-			if (this.renderingEnabled && this._style.visible && (isFastMode || !isDoubleLoop)){
+			if (this.renderingEnabled && (isFastMode || !isDoubleLoop)){
 				if (Render.isWebGL){
 					RunDriver.clear(this._bgColor);
 					RunDriver.beginFlush();
@@ -21358,6 +21492,14 @@ var Laya=window.Laya=(function(window,document){
 			return this._screenMode;
 			},function(value){
 			this._screenMode=value;
+		});
+
+		__getset(0,__proto,'visible',_super.prototype._$get_visible,function(value){
+			if (this.visible!==value){
+				_super.prototype._$set_visible.call(this,value);
+				var style=Render._mainCanvas.source.style;
+				style.visibility=value ? "visible" :"hidden";
+			}
 		});
 
 		/**是否开启全屏，用户点击后进入全屏*/
@@ -22268,7 +22410,6 @@ var Laya=window.Laya=(function(window,document){
 		function Animation(){
 			this._frames=null;
 			this._url=null;
-			this._actionName=null;
 			Animation.__super.call(this);
 			this._setControlNode(this);
 		}
@@ -22310,7 +22451,7 @@ var Laya=window.Laya=(function(window,document){
 			if (name && Animation.framesMap[name]){
 				this._frames=Animation.framesMap[name];
 				this._count=this._frames.length;
-				if (!this._frameRateChanged && this._frames["interval"])this._interval=this._frames["interval"];
+				if (!this._frameRateChanged && Animation.framesMap[name+"$len"])this._interval=Animation.framesMap[name+"$len"];
 				return true;
 			}
 			return false;
@@ -22394,13 +22535,19 @@ var Laya=window.Laya=(function(window,document){
 								var info=obj[name];
 								if (info.frames.length){
 									Animation.framesMap[url+"#"+name]=info.frames;
+									Animation.framesMap[url+"#"+name+"$len"]=info.interval;
 									}else {
 									flag=false;
 								}
 							}
+							if(!_this._frameRateChanged)_this._interval=aniData.animationList[0].interval;
 							_this.frames=aniData.animationList[0].frames;
-							if (flag)Animation.framesMap[url+"#"]=_this.frames;
+							if (flag){
+								Animation.framesMap[url+"#$len"]=aniData.animationList[0].interval;
+								Animation.framesMap[url+"#"]=_this.frames;
+							}
 							}else {
+							if(!_this._frameRateChanged)_this._interval=Animation.framesMap[url+"#$len"];
 							_this.frames=Animation.framesMap[url+"#"];
 						}
 						if (loaded)loaded.run();
@@ -22425,7 +22572,6 @@ var Laya=window.Laya=(function(window,document){
 			this._frames=value;
 			if (value){
 				this._count=value.length;
-				if (!this._frameRateChanged && value["interval"])this._interval=value["interval"];
 				if (this._isPlaying)this.play(this._index,this.loop,this._actionName);
 				else this.index=this._index;
 			}
@@ -23120,6 +23266,7 @@ var Laya=window.Laya=(function(window,document){
 
 		Input._processInputting=function(e){
 			var input=laya.display.Input.inputElement.target;
+			if (!input)return;
 			var value=laya.display.Input.inputElement.value;
 			if (input._restrictPattern){
 				value=value.replace(/\u2006|\x27/g,"");
@@ -25537,8 +25684,8 @@ var Laya=window.Laya=(function(window,document){
 		*设置滑块的位置信息。
 		*/
 		__proto.setBarPoint=function(){
-			if (this.isVertical)this._bar.x=(this._bg.width-this._bar.width)*0.5;
-			else this._bar.y=(this._bg.height-this._bar.height)*0.5;
+			if (this.isVertical)this._bar.x=Math.round((this._bg.width-this._bar.width)*0.5);
+			else this._bar.y=Math.round((this._bg.height-this._bar.height)*0.5);
 		}
 
 		/**@inheritDoc */
@@ -27121,410 +27268,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<code>Group</code> 是一个可以自动布局的项集合控件。
-	*<p> <code>Group</code> 的默认项对象为 <code>Button</code> 类实例。
-	*<code>Group</code> 是 <code>Tab</code> 和 <code>RadioGroup</code> 的基类。</p>
-	*/
-	//class laya.ui.Group extends laya.ui.Box
-	var Group=(function(_super){
-		function Group(labels,skin){
-			this.selectHandler=null;
-			this._items=null;
-			this._selectedIndex=-1;
-			this._skin=null;
-			this._direction="horizontal";
-			this._space=0;
-			this._labels=null;
-			this._labelColors=null;
-			this._labelStrokeColor=null;
-			this._strokeColors=null;
-			this._labelStroke=NaN;
-			this._labelSize=0;
-			this._labelBold=false;
-			this._labelPadding=null;
-			this._labelAlign=null;
-			this._stateNum=0;
-			this._labelChanged=false;
-			Group.__super.call(this);
-			this.skin=skin;
-			this.labels=labels;
-		}
-
-		__class(Group,'laya.ui.Group',_super);
-		var __proto=Group.prototype;
-		Laya.imps(__proto,{"laya.ui.IItem":true})
-		/**@inheritDoc */
-		__proto.preinitialize=function(){
-			this.mouseEnabled=true;
-		}
-
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			laya.ui.Component.prototype.destroy.call(this,destroyChild);
-			this._items && (this._items.length=0);
-			this._items=null;
-			this.selectHandler=null;
-		}
-
-		/**
-		*添加一个项对象，返回此项对象的索引id。
-		*
-		*@param item 需要添加的项对象。
-		*@param autoLayOut 是否自动布局，如果为true，会根据 <code>direction</code> 和 <code>space</code> 属性计算item的位置。
-		*@return
-		*/
-		__proto.addItem=function(item,autoLayOut){
-			(autoLayOut===void 0)&& (autoLayOut=true);
-			var display=item;
-			var index=this._items.length;
-			display.name="item"+index;
-			this.addChild(display);
-			this.initItems();
-			if (autoLayOut && index > 0){
-				var preItem=this._items [index-1];
-				if (this._direction=="horizontal"){
-					display.x=preItem.x+preItem.width+this._space;
-					}else {
-					display.y=preItem.y+preItem.height+this._space;
-				}
-				}else {
-				if (autoLayOut){
-					display.x=0;
-					display.y=0;
-				}
-			}
-			return index;
-		}
-
-		/**
-		*删除一个项对象。
-		*@param item 需要删除的项对象。
-		*@param autoLayOut 是否自动布局，如果为true，会根据 <code>direction</code> 和 <code>space</code> 属性计算item的位置。
-		*/
-		__proto.delItem=function(item,autoLayOut){
-			(autoLayOut===void 0)&& (autoLayOut=true);
-			var index=this._items.indexOf(item);
-			if (index !=-1){
-				var display=item;
-				this.removeChild(display);
-				for (var i=index+1,n=this._items.length;i < n;i++){
-					var child=this._items [i];
-					child.name="item"+(i-1);
-					if (autoLayOut){
-						if (this._direction=="horizontal"){
-							child.x-=display.width+this._space;
-							}else {
-							child.y-=display.height+this._space;
-						}
-					}
-				}
-				this.initItems();
-				if (this._selectedIndex >-1){
-					var newIndex=0;
-					newIndex=this._selectedIndex < this._items.length ? this._selectedIndex :(this._selectedIndex-1);
-					this._selectedIndex=-1;
-					this.selectedIndex=newIndex;
-				}
-			}
-		}
-
-		/**
-		*初始化项对象们。
-		*/
-		__proto.initItems=function(){
-			this._items || (this._items=[]);
-			this._items.length=0;
-			for (var i=0;i < 10000;i++){
-				var item=this.getChildByName("item"+i);
-				if (item==null)break ;
-				this._items.push(item);
-				item.selected=(i===this._selectedIndex);
-				item.clickHandler=Handler.create(this,this.itemClick,[i],false);
-			}
-		}
-
-		/**
-		*@private
-		*项对象的点击事件侦听处理函数。
-		*@param index 项索引。
-		*/
-		__proto.itemClick=function(index){
-			this.selectedIndex=index;
-		}
-
-		/**
-		*@private
-		*通过对象的索引设置项对象的 <code>selected</code> 属性值。
-		*@param index 需要设置的项对象的索引。
-		*@param selected 表示项对象的选中状态。
-		*/
-		__proto.setSelect=function(index,selected){
-			if (this._items && index >-1 && index < this._items.length)this._items[index].selected=selected;
-		}
-
-		/**
-		*@private
-		*创建一个项显示对象。
-		*@param skin 项对象的皮肤。
-		*@param label 项对象标签。
-		*/
-		__proto.createItem=function(skin,label){
-			return null;
-		}
-
-		/**
-		*@private
-		*更改项对象的属性值。
-		*/
-		__proto.changeLabels=function(){
-			this._labelChanged=false;
-			if (this._items){
-				var left=0
-				for (var i=0,n=this._items.length;i < n;i++){
-					var btn=this._items [i];
-					this._skin && (btn.skin=this._skin);
-					this._labelColors && (btn.labelColors=this._labelColors);
-					this._labelSize && (btn.labelSize=this._labelSize);
-					this._labelStroke && (btn.labelStroke=this._labelStroke);
-					this._labelStrokeColor && (btn.labelStrokeColor=this._labelStrokeColor);
-					this._strokeColors && (btn.strokeColors=this._strokeColors);
-					this._labelBold && (btn.labelBold=this._labelBold);
-					this._labelPadding && (btn.labelPadding=this._labelPadding);
-					this._labelAlign && (btn.labelAlign=this._labelAlign);
-					this._stateNum && (btn.stateNum=this._stateNum);
-					if (this._direction==="horizontal"){
-						btn.y=0;
-						btn.x=left;
-						left+=btn.width+this._space;
-						}else {
-						btn.x=0;
-						btn.y=left;
-						left+=btn.height+this._space;
-					}
-				}
-			}
-			this.changeSize();
-		}
-
-		/**@inheritDoc */
-		__proto.commitMeasure=function(){
-			this.runCallLater(this.changeLabels);
-		}
-
-		/**@private */
-		__proto._setLabelChanged=function(){
-			if (!this._labelChanged){
-				this._labelChanged=true;
-				this.callLater(this.changeLabels);
-			}
-		}
-
-		/**
-		*<p>描边颜色，以字符串表示。</p>
-		*默认值为 "#000000"（黑色）;
-		*@see laya.display.Text.strokeColor()
-		*/
-		__getset(0,__proto,'labelStrokeColor',function(){
-			return this._labelStrokeColor;
-			},function(value){
-			if (this._labelStrokeColor !=value){
-				this._labelStrokeColor=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*@copy laya.ui.Image#skin
-		*/
-		__getset(0,__proto,'skin',function(){
-			return this._skin;
-			},function(value){
-			if (this._skin !=value){
-				this._skin=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*表示当前选择的项索引。默认值为-1。
-		*/
-		__getset(0,__proto,'selectedIndex',function(){
-			return this._selectedIndex;
-			},function(value){
-			if (this._selectedIndex !=value){
-				this.setSelect(this._selectedIndex,false);
-				this._selectedIndex=value;
-				this.setSelect(value,true);
-				this.event("change");
-				this.selectHandler && this.selectHandler.runWith(this._selectedIndex);
-			}
-		});
-
-		/**
-		*标签集合字符串。以逗号做分割，如"item0,item1,item2,item3,item4,item5"。
-		*/
-		__getset(0,__proto,'labels',function(){
-			return this._labels;
-			},function(value){
-			if (this._labels !=value){
-				this._labels=value;
-				this.removeChildren();
-				this._setLabelChanged();
-				if (this._labels){
-					var a=this._labels.split(",");
-					for (var i=0,n=a.length;i < n;i++){
-						var item=this.createItem(this._skin,a[i]);
-						item.name="item"+i;
-						this.addChild(item);
-					}
-				}
-				this.initItems();
-			}
-		});
-
-		/**
-		*<p>表示各个状态下的描边颜色。</p>
-		*@see laya.display.Text.strokeColor()
-		*/
-		__getset(0,__proto,'strokeColors',function(){
-			return this._strokeColors;
-			},function(value){
-			if (this._strokeColors !=value){
-				this._strokeColors=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*@copy laya.ui.Button#labelColors()
-		*/
-		__getset(0,__proto,'labelColors',function(){
-			return this._labelColors;
-			},function(value){
-			if (this._labelColors !=value){
-				this._labelColors=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*<p>描边宽度（以像素为单位）。</p>
-		*默认值0，表示不描边。
-		*@see laya.display.Text.stroke()
-		*/
-		__getset(0,__proto,'labelStroke',function(){
-			return this._labelStroke;
-			},function(value){
-			if (this._labelStroke !=value){
-				this._labelStroke=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*表示按钮文本标签的字体大小。
-		*/
-		__getset(0,__proto,'labelSize',function(){
-			return this._labelSize;
-			},function(value){
-			if (this._labelSize !=value){
-				this._labelSize=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*表示按钮文本标签的字体大小。
-		*/
-		__getset(0,__proto,'stateNum',function(){
-			return this._stateNum;
-			},function(value){
-			if (this._stateNum !=value){
-				this._stateNum=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*表示按钮文本标签是否为粗体字。
-		*/
-		__getset(0,__proto,'labelBold',function(){
-			return this._labelBold;
-			},function(value){
-			if (this._labelBold !=value){
-				this._labelBold=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*表示按钮文本标签的边距。
-		*<p><b>格式：</b>"上边距,右边距,下边距,左边距"。</p>
-		*/
-		__getset(0,__proto,'labelPadding',function(){
-			return this._labelPadding;
-			},function(value){
-			if (this._labelPadding !=value){
-				this._labelPadding=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*布局方向。
-		*<p>默认值为"horizontal"。</p>
-		*<p><b>取值：</b>
-		*<li>"horizontal"：表示水平布局。</li>
-		*<li>"vertical"：表示垂直布局。</li>
-		*</p>
-		*/
-		__getset(0,__proto,'direction',function(){
-			return this._direction;
-			},function(value){
-			this._direction=value;
-			this._setLabelChanged();
-		});
-
-		/**
-		*项对象们之间的间隔（以像素为单位）。
-		*/
-		__getset(0,__proto,'space',function(){
-			return this._space;
-			},function(value){
-			this._space=value;
-			this._setLabelChanged();
-		});
-
-		/**
-		*项对象们的存放数组。
-		*/
-		__getset(0,__proto,'items',function(){
-			return this._items;
-		});
-
-		/**
-		*获取或设置当前选择的项对象。
-		*/
-		__getset(0,__proto,'selection',function(){
-			return this._selectedIndex >-1 && this._selectedIndex < this._items.length ? this._items[this._selectedIndex] :null;
-			},function(value){
-			this.selectedIndex=this._items.indexOf(value);
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			this._dataSource=value;
-			if (((typeof value=='number')&& Math.floor(value)==value)|| (typeof value=='string'))this.selectedIndex=parseInt(value);
-			else if ((value instanceof Array))this.labels=(value).join(",");
-			else _super.prototype._$set_dataSource.call(this,value);
-		});
-
-		return Group;
-	})(Box)
-
-
-	/**
 	*<code>LayoutBox</code> 是一个布局容器类。
 	*/
 	//class laya.ui.LayoutBox extends laya.ui.Box
@@ -28767,6 +28510,410 @@ var Laya=window.Laya=(function(window,document){
 		});
 
 		return Panel;
+	})(Box)
+
+
+	/**
+	*<code>Group</code> 是一个可以自动布局的项集合控件。
+	*<p> <code>Group</code> 的默认项对象为 <code>Button</code> 类实例。
+	*<code>Group</code> 是 <code>Tab</code> 和 <code>RadioGroup</code> 的基类。</p>
+	*/
+	//class laya.ui.UIGroup extends laya.ui.Box
+	var UIGroup=(function(_super){
+		function UIGroup(labels,skin){
+			this.selectHandler=null;
+			this._items=null;
+			this._selectedIndex=-1;
+			this._skin=null;
+			this._direction="horizontal";
+			this._space=0;
+			this._labels=null;
+			this._labelColors=null;
+			this._labelStrokeColor=null;
+			this._strokeColors=null;
+			this._labelStroke=NaN;
+			this._labelSize=0;
+			this._labelBold=false;
+			this._labelPadding=null;
+			this._labelAlign=null;
+			this._stateNum=0;
+			this._labelChanged=false;
+			UIGroup.__super.call(this);
+			this.skin=skin;
+			this.labels=labels;
+		}
+
+		__class(UIGroup,'laya.ui.UIGroup',_super);
+		var __proto=UIGroup.prototype;
+		Laya.imps(__proto,{"laya.ui.IItem":true})
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			this.mouseEnabled=true;
+		}
+
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			laya.ui.Component.prototype.destroy.call(this,destroyChild);
+			this._items && (this._items.length=0);
+			this._items=null;
+			this.selectHandler=null;
+		}
+
+		/**
+		*添加一个项对象，返回此项对象的索引id。
+		*
+		*@param item 需要添加的项对象。
+		*@param autoLayOut 是否自动布局，如果为true，会根据 <code>direction</code> 和 <code>space</code> 属性计算item的位置。
+		*@return
+		*/
+		__proto.addItem=function(item,autoLayOut){
+			(autoLayOut===void 0)&& (autoLayOut=true);
+			var display=item;
+			var index=this._items.length;
+			display.name="item"+index;
+			this.addChild(display);
+			this.initItems();
+			if (autoLayOut && index > 0){
+				var preItem=this._items [index-1];
+				if (this._direction=="horizontal"){
+					display.x=preItem.x+preItem.width+this._space;
+					}else {
+					display.y=preItem.y+preItem.height+this._space;
+				}
+				}else {
+				if (autoLayOut){
+					display.x=0;
+					display.y=0;
+				}
+			}
+			return index;
+		}
+
+		/**
+		*删除一个项对象。
+		*@param item 需要删除的项对象。
+		*@param autoLayOut 是否自动布局，如果为true，会根据 <code>direction</code> 和 <code>space</code> 属性计算item的位置。
+		*/
+		__proto.delItem=function(item,autoLayOut){
+			(autoLayOut===void 0)&& (autoLayOut=true);
+			var index=this._items.indexOf(item);
+			if (index !=-1){
+				var display=item;
+				this.removeChild(display);
+				for (var i=index+1,n=this._items.length;i < n;i++){
+					var child=this._items [i];
+					child.name="item"+(i-1);
+					if (autoLayOut){
+						if (this._direction=="horizontal"){
+							child.x-=display.width+this._space;
+							}else {
+							child.y-=display.height+this._space;
+						}
+					}
+				}
+				this.initItems();
+				if (this._selectedIndex >-1){
+					var newIndex=0;
+					newIndex=this._selectedIndex < this._items.length ? this._selectedIndex :(this._selectedIndex-1);
+					this._selectedIndex=-1;
+					this.selectedIndex=newIndex;
+				}
+			}
+		}
+
+		/**
+		*初始化项对象们。
+		*/
+		__proto.initItems=function(){
+			this._items || (this._items=[]);
+			this._items.length=0;
+			for (var i=0;i < 10000;i++){
+				var item=this.getChildByName("item"+i);
+				if (item==null)break ;
+				this._items.push(item);
+				item.selected=(i===this._selectedIndex);
+				item.clickHandler=Handler.create(this,this.itemClick,[i],false);
+			}
+		}
+
+		/**
+		*@private
+		*项对象的点击事件侦听处理函数。
+		*@param index 项索引。
+		*/
+		__proto.itemClick=function(index){
+			this.selectedIndex=index;
+		}
+
+		/**
+		*@private
+		*通过对象的索引设置项对象的 <code>selected</code> 属性值。
+		*@param index 需要设置的项对象的索引。
+		*@param selected 表示项对象的选中状态。
+		*/
+		__proto.setSelect=function(index,selected){
+			if (this._items && index >-1 && index < this._items.length)this._items[index].selected=selected;
+		}
+
+		/**
+		*@private
+		*创建一个项显示对象。
+		*@param skin 项对象的皮肤。
+		*@param label 项对象标签。
+		*/
+		__proto.createItem=function(skin,label){
+			return null;
+		}
+
+		/**
+		*@private
+		*更改项对象的属性值。
+		*/
+		__proto.changeLabels=function(){
+			this._labelChanged=false;
+			if (this._items){
+				var left=0
+				for (var i=0,n=this._items.length;i < n;i++){
+					var btn=this._items [i];
+					this._skin && (btn.skin=this._skin);
+					this._labelColors && (btn.labelColors=this._labelColors);
+					this._labelSize && (btn.labelSize=this._labelSize);
+					this._labelStroke && (btn.labelStroke=this._labelStroke);
+					this._labelStrokeColor && (btn.labelStrokeColor=this._labelStrokeColor);
+					this._strokeColors && (btn.strokeColors=this._strokeColors);
+					this._labelBold && (btn.labelBold=this._labelBold);
+					this._labelPadding && (btn.labelPadding=this._labelPadding);
+					this._labelAlign && (btn.labelAlign=this._labelAlign);
+					this._stateNum && (btn.stateNum=this._stateNum);
+					if (this._direction==="horizontal"){
+						btn.y=0;
+						btn.x=left;
+						left+=btn.width+this._space;
+						}else {
+						btn.x=0;
+						btn.y=left;
+						left+=btn.height+this._space;
+					}
+				}
+			}
+			this.changeSize();
+		}
+
+		/**@inheritDoc */
+		__proto.commitMeasure=function(){
+			this.runCallLater(this.changeLabels);
+		}
+
+		/**@private */
+		__proto._setLabelChanged=function(){
+			if (!this._labelChanged){
+				this._labelChanged=true;
+				this.callLater(this.changeLabels);
+			}
+		}
+
+		/**
+		*<p>描边颜色，以字符串表示。</p>
+		*默认值为 "#000000"（黑色）;
+		*@see laya.display.Text.strokeColor()
+		*/
+		__getset(0,__proto,'labelStrokeColor',function(){
+			return this._labelStrokeColor;
+			},function(value){
+			if (this._labelStrokeColor !=value){
+				this._labelStrokeColor=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*@copy laya.ui.Image#skin
+		*/
+		__getset(0,__proto,'skin',function(){
+			return this._skin;
+			},function(value){
+			if (this._skin !=value){
+				this._skin=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*表示当前选择的项索引。默认值为-1。
+		*/
+		__getset(0,__proto,'selectedIndex',function(){
+			return this._selectedIndex;
+			},function(value){
+			if (this._selectedIndex !=value){
+				this.setSelect(this._selectedIndex,false);
+				this._selectedIndex=value;
+				this.setSelect(value,true);
+				this.event("change");
+				this.selectHandler && this.selectHandler.runWith(this._selectedIndex);
+			}
+		});
+
+		/**
+		*标签集合字符串。以逗号做分割，如"item0,item1,item2,item3,item4,item5"。
+		*/
+		__getset(0,__proto,'labels',function(){
+			return this._labels;
+			},function(value){
+			if (this._labels !=value){
+				this._labels=value;
+				this.removeChildren();
+				this._setLabelChanged();
+				if (this._labels){
+					var a=this._labels.split(",");
+					for (var i=0,n=a.length;i < n;i++){
+						var item=this.createItem(this._skin,a[i]);
+						item.name="item"+i;
+						this.addChild(item);
+					}
+				}
+				this.initItems();
+			}
+		});
+
+		/**
+		*<p>表示各个状态下的描边颜色。</p>
+		*@see laya.display.Text.strokeColor()
+		*/
+		__getset(0,__proto,'strokeColors',function(){
+			return this._strokeColors;
+			},function(value){
+			if (this._strokeColors !=value){
+				this._strokeColors=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*@copy laya.ui.Button#labelColors()
+		*/
+		__getset(0,__proto,'labelColors',function(){
+			return this._labelColors;
+			},function(value){
+			if (this._labelColors !=value){
+				this._labelColors=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*<p>描边宽度（以像素为单位）。</p>
+		*默认值0，表示不描边。
+		*@see laya.display.Text.stroke()
+		*/
+		__getset(0,__proto,'labelStroke',function(){
+			return this._labelStroke;
+			},function(value){
+			if (this._labelStroke !=value){
+				this._labelStroke=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*表示按钮文本标签的字体大小。
+		*/
+		__getset(0,__proto,'labelSize',function(){
+			return this._labelSize;
+			},function(value){
+			if (this._labelSize !=value){
+				this._labelSize=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*表示按钮文本标签的字体大小。
+		*/
+		__getset(0,__proto,'stateNum',function(){
+			return this._stateNum;
+			},function(value){
+			if (this._stateNum !=value){
+				this._stateNum=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*表示按钮文本标签是否为粗体字。
+		*/
+		__getset(0,__proto,'labelBold',function(){
+			return this._labelBold;
+			},function(value){
+			if (this._labelBold !=value){
+				this._labelBold=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*表示按钮文本标签的边距。
+		*<p><b>格式：</b>"上边距,右边距,下边距,左边距"。</p>
+		*/
+		__getset(0,__proto,'labelPadding',function(){
+			return this._labelPadding;
+			},function(value){
+			if (this._labelPadding !=value){
+				this._labelPadding=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*布局方向。
+		*<p>默认值为"horizontal"。</p>
+		*<p><b>取值：</b>
+		*<li>"horizontal"：表示水平布局。</li>
+		*<li>"vertical"：表示垂直布局。</li>
+		*</p>
+		*/
+		__getset(0,__proto,'direction',function(){
+			return this._direction;
+			},function(value){
+			this._direction=value;
+			this._setLabelChanged();
+		});
+
+		/**
+		*项对象们之间的间隔（以像素为单位）。
+		*/
+		__getset(0,__proto,'space',function(){
+			return this._space;
+			},function(value){
+			this._space=value;
+			this._setLabelChanged();
+		});
+
+		/**
+		*项对象们的存放数组。
+		*/
+		__getset(0,__proto,'items',function(){
+			return this._items;
+		});
+
+		/**
+		*获取或设置当前选择的项对象。
+		*/
+		__getset(0,__proto,'selection',function(){
+			return this._selectedIndex >-1 && this._selectedIndex < this._items.length ? this._items[this._selectedIndex] :null;
+			},function(value){
+			this.selectedIndex=this._items.indexOf(value);
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if (((typeof value=='number')&& Math.floor(value)==value)|| (typeof value=='string'))this.selectedIndex=parseInt(value);
+			else if ((value instanceof Array))this.labels=(value).join(",");
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		return UIGroup;
 	})(Box)
 
 
@@ -30769,14 +30916,14 @@ var Laya=window.Laya=(function(window,document){
 				this.dragArea=dragTarget.x+","+dragTarget.y+","+dragTarget.width+","+dragTarget.height;
 				dragTarget.removeSelf();
 			}
-			this.on("click",this,this.onClick);
+			this.on("click",this,this._onClick);
 		}
 
 		/**
 		*@private (protected)
 		*对象的 <code>Event.CLICK</code> 点击事件侦听处理函数。
 		*/
-		__proto.onClick=function(e){
+		__proto._onClick=function(e){
 			var btn=e.target;
 			if (btn){
 				switch (btn.name){
@@ -30822,7 +30969,7 @@ var Laya=window.Laya=(function(window,document){
 		/**
 		*@private
 		*/
-		__proto.onMouseDown=function(e){
+		__proto._onMouseDown=function(e){
 			var point=this.getMousePoint();
 			if (this._dragArea.contains(point.x,point.y))this.startDrag();
 			else this.stopDrag();
@@ -30844,10 +30991,10 @@ var Laya=window.Laya=(function(window,document){
 			if (value){
 				var a=UIUtils.fillArray([0,0,0,0],value,Number);
 				this._dragArea=new Rectangle(a[0],a[1],a[2],a[3]);
-				this.on("mousedown",this,this.onMouseDown);
+				this.on("mousedown",this,this._onMouseDown);
 				}else {
 				this._dragArea=null;
-				this.off("mousedown",this,this.onMouseDown);
+				this.off("mousedown",this,this._onMouseDown);
 			}
 		});
 
@@ -31032,6 +31179,53 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*<code>VBox</code> 是一个垂直布局容器类。
+	*/
+	//class laya.ui.VBox extends laya.ui.LayoutBox
+	var VBox=(function(_super){
+		function VBox(){VBox.__super.call(this);;
+		};
+
+		__class(VBox,'laya.ui.VBox',_super);
+		var __proto=VBox.prototype;
+		/**@inheritDoc */
+		__proto.changeItems=function(){
+			this._itemChanged=false;
+			var items=[];
+			var maxWidth=0;
+			for (var i=0,n=this.numChildren;i < n;i++){
+				var item=this.getChildAt(i);
+				if (item){
+					items.push(item);
+					maxWidth=Math.max(maxWidth,item.displayWidth);
+				}
+			}
+			this.sortItem(items);
+			var top=0;
+			for (i=0,n=this.numChildren;i < n;i++){
+				item=items[i];
+				item.y=top;
+				top+=item.displayHeight+this._space;
+				if (this._align=="left"){
+					item.x=0;
+					}else if (this._align=="center"){
+					item.x=(maxWidth-item.displayWidth)*0.5;
+					}else if (this._align=="right"){
+					item.x=maxWidth-item.displayWidth;
+				}
+			}
+			this.changeSize();
+		}
+
+		VBox.NONE="none";
+		VBox.LEFT="left";
+		VBox.CENTER="center";
+		VBox.RIGHT="right";
+		return VBox;
+	})(LayoutBox)
+
+
+	/**
 	*<code>RadioGroup</code> 控件定义一组 <code>Radio</code> 控件，这些控件相互排斥；
 	*因此，用户每次只能选择一个 <code>Radio</code> 控件。
 	*
@@ -31109,7 +31303,7 @@ var Laya=window.Laya=(function(window,document){
 		*}
 	*</listing>
 	*/
-	//class laya.ui.RadioGroup extends laya.ui.Group
+	//class laya.ui.RadioGroup extends laya.ui.UIGroup
 	var RadioGroup=(function(_super){
 		function RadioGroup(){RadioGroup.__super.call(this);;
 		};
@@ -31122,7 +31316,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return RadioGroup;
-	})(Group)
+	})(UIGroup)
 
 
 	/**
@@ -31201,7 +31395,7 @@ var Laya=window.Laya=(function(window,document){
 		*}
 	*</listing>
 	*/
-	//class laya.ui.Tab extends laya.ui.Group
+	//class laya.ui.Tab extends laya.ui.UIGroup
 	var Tab=(function(_super){
 		function Tab(){Tab.__super.call(this);;
 		};
@@ -31217,54 +31411,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return Tab;
-	})(Group)
-
-
-	/**
-	*<code>VBox</code> 是一个垂直布局容器类。
-	*/
-	//class laya.ui.VBox extends laya.ui.LayoutBox
-	var VBox=(function(_super){
-		function VBox(){VBox.__super.call(this);;
-		};
-
-		__class(VBox,'laya.ui.VBox',_super);
-		var __proto=VBox.prototype;
-		/**@inheritDoc */
-		__proto.changeItems=function(){
-			this._itemChanged=false;
-			var items=[];
-			var maxWidth=0;
-			for (var i=0,n=this.numChildren;i < n;i++){
-				var item=this.getChildAt(i);
-				if (item){
-					items.push(item);
-					maxWidth=Math.max(maxWidth,item.displayWidth);
-				}
-			}
-			this.sortItem(items);
-			var top=0;
-			for (i=0,n=this.numChildren;i < n;i++){
-				item=items[i];
-				item.y=top;
-				top+=item.displayHeight+this._space;
-				if (this._align=="left"){
-					item.x=0;
-					}else if (this._align=="center"){
-					item.x=(maxWidth-item.displayWidth)*0.5;
-					}else if (this._align=="right"){
-					item.x=maxWidth-item.displayWidth;
-				}
-			}
-			this.changeSize();
-		}
-
-		VBox.NONE="none";
-		VBox.LEFT="left";
-		VBox.CENTER="center";
-		VBox.RIGHT="right";
-		return VBox;
-	})(LayoutBox)
+	})(UIGroup)
 
 
 	/**

@@ -76,9 +76,10 @@ package laya.events {
 			return _createListener(type, caller, listener, args, true);
 		}
 		
-		private function _createListener(type:String, caller:*, listener:Function, args:Array, once:Boolean):EventDispatcher {
+		/**@private */
+		public function _createListener(type:String, caller:*, listener:Function, args:Array, once:Boolean, offBefore:Boolean = true):EventDispatcher {
 			//移除之前相同的监听
-			off(type, caller, listener, once);
+			offBefore && off(type, caller, listener, once);
 			
 			//使用对象池进行创建回收
 			var handler:Handler = EventHandler.create(caller || this, listener, args, once);
@@ -151,7 +152,7 @@ package laya.events {
 		}
 		
 		private function _recoverHandlers(arr:*):void {
-			if(!arr) return;
+			if (!arr) return;
 			if (arr.run) {
 				arr.recover();
 			} else {

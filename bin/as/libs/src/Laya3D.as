@@ -8,6 +8,7 @@ package {
 	import laya.d3.core.material.ParticleMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
+	import laya.d3.core.particleShuriKen.ShurikenParticleSystem;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.graphics.VertexElementUsage;
@@ -15,11 +16,9 @@ package {
 	import laya.d3.resource.TextureCube;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.Sky;
-	import laya.d3.resource.models.SkyBox;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.events.Event;
 	import laya.net.Loader;
-	import laya.net.LoaderManager;
 	import laya.net.URL;
 	import laya.particle.shader.ParticleShader;
 	import laya.renders.Render;
@@ -28,7 +27,6 @@ package {
 	import laya.utils.RunDriver;
 	import laya.webgl.WebGL;
 	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * <code>Laya3D</code> 类用于初始化3D设置。
@@ -164,9 +162,14 @@ package {
 				'a_StartLifeTime': VertexElementUsage.STARTLIFETIME, 
 				'a_StartSpeed': VertexElementUsage.STARTSPEED,
 				'a_Time': VertexElementUsage.TIME0, 
-				'a_Random': VertexElementUsage.RANDOM, 
-				'u_WorldMat': ShurikenParticleMaterial.WORLDMATRIX, 
-				'u_Scale': ShurikenParticleMaterial.SCALE,
+				'a_Random0': VertexElementUsage.RANDOM0, 
+				'a_Random1': VertexElementUsage.RANDOM1, 
+				'u_WorldPosition': ShurikenParticleMaterial.WORLDPOSITION, 
+				'u_WorldRotationMat': ShurikenParticleMaterial.WORLDROTATIONMATRIX, 
+				'u_ThreeDStartRotation':ShurikenParticleMaterial.THREEDSTARTROTATION,
+				'u_ScalingMode': ShurikenParticleMaterial.SCALINGMODE,
+				'u_PositionScale': ShurikenParticleMaterial.POSITIONSCALE,
+				'u_SizeScale': ShurikenParticleMaterial.SIZESCALE,
 				'u_View': ShurikenParticleMaterial.VIEWMATRIX, 
 				'u_Projection': ShurikenParticleMaterial.PROJECTIONMATRIX, 
 				'u_CurrentTime': ShurikenParticleMaterial.CURRENTTIME, 
@@ -180,14 +183,26 @@ package {
 				'u_ColorOverLifeGradientColors': ShurikenParticleMaterial.COLOROVERLIFEGRADIENTCOLORS, 
 				'u_MaxColorOverLifeGradientAlphas': ShurikenParticleMaterial.MAXCOLOROVERLIFEGRADIENTALPHAS,
 				'u_MaxColorOverLifeGradientColors': ShurikenParticleMaterial.MAXCOLOROVERLIFEGRADIENTCOLORS,
-				'u_SizeOverLifeGradientSizes': ShurikenParticleMaterial.SIZEOVERLIFEGRADIENTSIZES, 
-				'u_SizeOverLifeGradientSizesX': ShurikenParticleMaterial.SIZEOVERLIFEGRADIENTSIZESX, 
-				'u_SizeOverLifeGradientSizesY': ShurikenParticleMaterial.SIZEOVERLIFEGRADIENTSIZESY, 
-				'u_SizeOverLifeGradientSizesZ': ShurikenParticleMaterial.SIZEOVERLIFEGRADIENTSIZESZ, 
-				'u_MaxSizeOverLifeGradientSizes': ShurikenParticleMaterial.MAXSIZEOVERLIFEGRADIENTSIZES, 
-				'u_MaxSizeOverLifeGradientSizesX': ShurikenParticleMaterial.MAXSIZEOVERLIFEGRADIENTSIZESX,
-				'u_MaxSizeOverLifeGradientSizesY': ShurikenParticleMaterial.MAXSIZEOVERLIFEGRADIENTSIZESY,
-				'u_MaxSizeOverLifeGradientSizesZ': ShurikenParticleMaterial.MAXSIZEOVERLIFEGRADIENTSIZESZ, 
+				'u_VOLType': ShurikenParticleMaterial.VOLTYPE, 
+				'u_VOLVelocityConst': ShurikenParticleMaterial.VOLVELOCITYCONST, 
+				'u_VOLVelocityGradientX': ShurikenParticleMaterial.VOLVELOCITYGRADIENTX, 
+				'u_VOLVelocityGradientY': ShurikenParticleMaterial.VOLVELOCITYGRADIENTY, 
+				'u_VOLVelocityGradientZ': ShurikenParticleMaterial.VOLVELOCITYGRADIENTZ, 
+				'u_VOLVelocityConstMax': ShurikenParticleMaterial.VOLVELOCITYCONSTMAX, 
+				'u_VOLVelocityGradientMaxX': ShurikenParticleMaterial.VOLVELOCITYGRADIENTXMAX, 
+				'u_VOLVelocityGradientMaxY': ShurikenParticleMaterial.VOLVELOCITYGRADIENTYMAX, 
+				'u_VOLVelocityGradientMaxZ': ShurikenParticleMaterial.VOLVELOCITYGRADIENTZMAX, 
+				'u_VOLSpaceType': ShurikenParticleMaterial.VOLSPACETYPE, 
+				'u_SOLType': ShurikenParticleMaterial.SOLTYPE, 
+				'u_SOLSeprarate': ShurikenParticleMaterial.SOLSEPRARATE, 
+				'u_SOLSizeGradient': ShurikenParticleMaterial.SOLSIZEGRADIENT, 
+				'u_SOLSizeGradientX': ShurikenParticleMaterial.SOLSIZEGRADIENTX, 
+				'u_SOLSizeGradientY': ShurikenParticleMaterial.SOLSIZEGRADIENTY, 
+				'u_SOLSizeGradientZ': ShurikenParticleMaterial.SOLSizeGradientZ, 
+				'u_SOLSizeGradientMax': ShurikenParticleMaterial.SOLSizeGradientMax, 
+				'u_SOLSizeGradientMaxX': ShurikenParticleMaterial.SOLSIZEGRADIENTXMAX,
+				'u_SOLSizeGradientMaxY': ShurikenParticleMaterial.SOLSIZEGRADIENTYMAX,
+				'u_SOLSizeGradientMaxZ': ShurikenParticleMaterial.SOLSizeGradientZMAX, 
 				'u_ROLType': ShurikenParticleMaterial.ROLTYPE, 
 				'u_ROLSeprarate': ShurikenParticleMaterial.ROLSEPRARATE, 
 				'u_ROLAngularVelocityConst': ShurikenParticleMaterial.ROLANGULARVELOCITYCONST, 
@@ -199,9 +214,9 @@ package {
 				'u_ROLAngularVelocityConstMax': ShurikenParticleMaterial.ROLANGULARVELOCITYCONSTMAX, 
 				'u_ROLAngularVelocityConstMaxSeprarate': ShurikenParticleMaterial.ROLANGULARVELOCITYCONSTMAXSEPRARATE, 
 				'u_ROLAngularVelocityGradientMax': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTMAX, 
-				'u_ROLAngularVelocityGradientMaxX': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTMAXX, 
-				'u_ROLAngularVelocityGradientMaxY': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTMAXY,
-				'u_ROLAngularVelocityGradientMaxZ': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTMAXZ,
+				'u_ROLAngularVelocityGradientMaxX': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTXMAX, 
+				'u_ROLAngularVelocityGradientMaxY': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTYMAX,
+				'u_ROLAngularVelocityGradientMaxZ': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTZMAX,
 				'u_TSAType': ShurikenParticleMaterial.TEXTURESHEETANIMATIONTYPE,
 				'u_TSACycles': ShurikenParticleMaterial.TEXTURESHEETANIMATIONCYCLES,
 				'u_TSASubUVLength': ShurikenParticleMaterial.TEXTURESHEETANIMATIONSUBUVLENGTH,
@@ -253,9 +268,9 @@ package {
 		}
 		
 		private static function _regClassforJson():void {
-			ClassUtils.regClass("Sprite3D", Sprite3D);
-			ClassUtils.regClass("MeshSprite3D", MeshSprite3D);
-			ClassUtils.regClass("Material", BaseMaterial);
+			//ClassUtils.regClass("Sprite3D", Sprite3D);
+			//ClassUtils.regClass("MeshSprite3D", MeshSprite3D);
+			//ClassUtils.regClass("Material", BaseMaterial);
 			
 			var createMap:Object = Laya.loader.createMap;
 			createMap["lh"] = [Sprite3D, Loader.TEXT];
@@ -265,9 +280,12 @@ package {
 			createMap["jpeg"] = [Texture2D,"nativeimage"];
 			createMap["png"] = [Texture2D, "nativeimage"];
 			createMap["ltc"] = [TextureCube,Laya3D.TEXTURECUBE];
+			createMap["lsani"] = [AnimationTemplet, Loader.BUFFER];
+			createMap["lrani"] = [AnimationTemplet, Loader.BUFFER];
+			createMap["lp"] = [ShurikenParticleSystem, Loader.JSON];
+			
 			createMap["ani"] = [AnimationTemplet, Loader.BUFFER];//兼容接口
-			createMap["lani"] = [AnimationTemplet, Loader.BUFFER];
-			createMap["sani"] = [AnimationTemplet,Loader.BUFFER];
+			createMap["lani"] = [AnimationTemplet, Loader.BUFFER];//兼容接口
 		}
 		
 		private static function _loadTextureCube(loader:Loader):void {

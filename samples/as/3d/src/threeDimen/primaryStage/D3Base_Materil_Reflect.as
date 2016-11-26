@@ -38,7 +38,6 @@ package threeDimen.primaryStage {
 			camera.clearFlag = BaseCamera.CLEARFLAG_SKY;
 			var skyBox:SkyBox = new SkyBox();
 			camera.sky = skyBox;
-			
 			camera.addComponent(CameraMoveScript);
 			
 			var sprite:Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;

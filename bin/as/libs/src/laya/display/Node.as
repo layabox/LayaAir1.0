@@ -111,6 +111,7 @@ package laya.display {
 				this._childs.push(node);
 				model && model.addChildAt(node.model, this._childs.length - 1);
 				node.parent = this;
+				_childChanged();
 			}
 			return node;
 		}

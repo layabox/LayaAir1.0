@@ -1261,10 +1261,11 @@ package laya.display {
 		 * @param	elasticBackTime 橡皮筋回弹时间，单位为毫秒，默认为300毫秒，可选。
 		 * @param	data 拖动事件携带的数据，可选。
 		 * @param	disableMouseEvent 禁用其他对象的鼠标检测，默认为false，设置为true能提高性能
+		 * @param	ratio 惯性阻尼系数
 		 */
-		public function startDrag(area:Rectangle = null, hasInertia:Boolean = false, elasticDistance:Number = 0, elasticBackTime:int = 300, data:* = null, disableMouseEvent:Boolean = false):void {
+		public function startDrag(area:Rectangle = null, hasInertia:Boolean = false, elasticDistance:Number = 0, elasticBackTime:int = 300, data:* = null, disableMouseEvent:Boolean = false,ratio:Number=0.92):void {
 			_$P.dragging || (_set$P("dragging", new Dragging()));
-			_$P.dragging.start(this, area, hasInertia, elasticDistance, elasticBackTime, data, disableMouseEvent);
+			_$P.dragging.start(this, area, hasInertia, elasticDistance, elasticBackTime, data, disableMouseEvent, ratio);
 		}
 		
 		/**停止拖动此对象。*/
@@ -1359,6 +1360,7 @@ package laya.display {
 		public function set zOrder(value:Number):void {
 			if (_zOrder != value) {
 				_zOrder = value;
+			     model && model.setZOrder && model.setZOrder(value);
 				_parent && Laya.timer.callLater(_parent, updateZOrder);
 			}
 		}

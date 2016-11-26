@@ -221,8 +221,8 @@ package laya.ui {
 		 * 设置滑块的位置信息。
 		 */
 		protected function setBarPoint():void {
-			if (isVertical) _bar.x = (_bg.width - _bar.width) * 0.5;
-			else _bar.y = (_bg.height - _bar.height) * 0.5;
+			if (isVertical) _bar.x = Math.round((_bg.width - _bar.width) * 0.5);
+			else _bar.y = Math.round((_bg.height - _bar.height) * 0.5);
 		}
 		
 		/**@inheritDoc */

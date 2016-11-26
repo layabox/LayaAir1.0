@@ -1,10 +1,11 @@
 package laya.d3.core.particleShuriKen.module {
+	import laya.d3.core.IClone;
 	import laya.d3.math.Vector3;
 	
 	/**
 	 * <code>GradientDataColor</code> 类用于创建颜色渐变。
 	 */
-	public class GradientDataColor {
+	public class GradientDataColor implements IClone {
 		/**@private */
 		private var _alphaCurrentLength:int;
 		/**@private */
@@ -60,6 +61,37 @@ package laya.d3.core.particleShuriKen.module {
 			} else {
 				throw new Error("GradientDataColor:RGB count must less than 4.");
 			}
+		}
+		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		public function cloneTo(destObject:*):void {
+			var destGradientDataColor:GradientDataColor = destObject as GradientDataColor;
+			var i:int, n:int;
+			destGradientDataColor._alphaCurrentLength = _alphaCurrentLength;
+			var destAlphaElements:Float32Array = destGradientDataColor._alphaElements;
+			destAlphaElements.length = _alphaElements.length;
+			for (i = 0, n = _alphaElements.length; i < n; i++)
+				destAlphaElements[i] = _alphaElements[i];
+			
+			destGradientDataColor._rgbCurrentLength = _rgbCurrentLength;
+			var destRGBElements:Float32Array = destGradientDataColor._rgbElements;
+			destRGBElements.length = _rgbElements.length;
+			for (i = 0, n = _rgbElements.length; i < n; i++)
+				destRGBElements[i] = _rgbElements[i];
+		
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var destGradientDataColor:GradientDataColor = __JS__("new this.constructor()");
+			cloneTo(destGradientDataColor);
+			return destGradientDataColor;
 		}
 	
 	}

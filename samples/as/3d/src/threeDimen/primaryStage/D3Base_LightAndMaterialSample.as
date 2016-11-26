@@ -101,8 +101,10 @@ package threeDimen.primaryStage {
 			});
 			
 			var sphere:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/staticModel/sphere/sphere.lh")) as Sprite3D;
-			sphere.transform.localScale = new Vector3(0.2, 0.2, 0.2);
-			sphere.transform.localPosition = new Vector3(0.0, 0.0, 0.2);
+			sphere.once(Event.HIERARCHY_LOADED, null, function():void {
+				sphere.transform.localScale = new Vector3(0.2, 0.2, 0.2);
+				sphere.transform.localPosition = new Vector3(0.0, 0.0, 0.2);
+			});
 			
 			skinMesh = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
 			

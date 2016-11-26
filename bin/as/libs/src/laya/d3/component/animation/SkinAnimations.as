@@ -137,7 +137,7 @@ package laya.d3.component.animation {
 		
 		/** @private */
 		private function _onAnimationPlayMeshLoaded():void {
-			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender.renderCullingObject._renderElements;//播放骨骼动画时禁止动态合并
+			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender.renderObject._renderElements;//播放骨骼动画时禁止动态合并
 			for (var i:int = 0, n:int = renderElements.length; i < n; i++)
 				renderElements[i]._canDynamicBatch = false;
 		}
@@ -159,7 +159,7 @@ package laya.d3.component.animation {
 				_curAnimationDatas = null;
 			}
 			
-			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender.renderCullingObject._renderElements;
+			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender.renderObject._renderElements;
 			for (var i:int = 0, n:int = renderElements.length; i < n; i++)
 				renderElements[i]._canDynamicBatch = true;
 		}

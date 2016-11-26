@@ -3,7 +3,6 @@ package laya.media.h5audio {
 	import laya.media.SoundChannel;
 	import laya.media.SoundManager;
 	import laya.utils.Browser;
-	import laya.utils.Handler;
 	import laya.utils.Pool;
 	import laya.utils.Utils;
 	
@@ -45,8 +44,8 @@ package laya.media.h5audio {
 		}
 		
 		private function __resumePlay():void {		
+			if(_audio) _audio.removeEventListener("canplay", _resumePlay);
 			try {
-				_audio.removeEventListener("canplay", _resumePlay);
 				_audio.currentTime = this.startTime;
 				Browser.container.appendChild(_audio);
 				_audio.play();
@@ -67,7 +66,7 @@ package laya.media.h5audio {
 				return;
 			}
 			Browser.container.appendChild(_audio);
-			if(_audio.play)
+			if("play" in _audio)
 			_audio.play();
 		}
 		
@@ -83,6 +82,16 @@ package laya.media.h5audio {
 		}
 		
 		/**
+		 * 获取总时间。
+		 */
+		override public function get duration():Number 
+		{
+			if (!_audio)
+				return 0;
+			return _audio.duration;
+		}
+		
+		/**
 		 * 停止播放
 		 *
 		 */
@@ -93,7 +102,7 @@ package laya.media.h5audio {
 			completeHandler = null;
 			if (!_audio)
 				return;
-			if(_audio.pause)
+			if("pause" in _audio)
 			_audio.pause();
 			_audio.removeEventListener("ended", _onEnd);
 			_audio.removeEventListener("canplay", _resumePlay);

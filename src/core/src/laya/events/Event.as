@@ -1,6 +1,7 @@
 package laya.events {
 	
 	import laya.display.Sprite;
+	import laya.display.Stage;
 	import laya.maths.Point;
 	
 	/**
@@ -138,8 +139,6 @@ package laya.events {
 		public static const WORLDMATRIX_NEEDCHANGE:String = "worldmatrixneedchanged";
 		/**更换动作时触发。*/
 		public static const ANIMATION_CHANGED:String = "actionchanged";
-		/**是否在舞台发生变化时触发。*/
-		public static const INSTAGE_CHANGED:String = "instagechanged";
 		/**需重新缓存动画时触发，引擎内部使用。*/
 		public static const CACHEFRAMEINDEX_CHANGED:String = "cacheframeindexchanged";
 		
@@ -185,11 +184,13 @@ package laya.events {
 		public function get touches():Array {
 			var arr:Array = this.nativeEvent.touches;
 			if (arr) {
+				var stage:Stage = Laya.stage;
 				for (var i:int = 0, n:int = arr.length; i < n; i++) {
 					var e:* = arr[i];
 					var point:Point = Point.TEMP;
 					point.setTo(e.clientX, e.clientY);
-					Laya.stage._canvasTransform.invertTransformPoint(point);
+					stage._canvasTransform.invertTransformPoint(point);
+					stage.transform.invertTransformPoint(point);
 					
 					e.stageX = point.x;
 					e.stageY = point.y;

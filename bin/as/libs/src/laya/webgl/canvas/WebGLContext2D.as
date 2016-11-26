@@ -614,6 +614,7 @@ package laya.webgl.canvas
 				
 				var curShader:Value2D = _curSubmit.shaderValue;
 				var shader:Shader2D = _shader2D;
+				var alphaBack:Number = shader.ALPHA;
 				shader.ALPHA *= alpha;
 				
 				shader.glTexture = webGLImg;
@@ -628,7 +629,7 @@ package laya.webgl.canvas
 				_curSubmit = submit;
 				finalVB = _curSubmit._vb || _vb;
 				
-				shader.ALPHA /= alpha;
+				shader.ALPHA = alphaBack;
 			}
 			
 			

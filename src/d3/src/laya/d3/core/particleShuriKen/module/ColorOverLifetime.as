@@ -1,5 +1,4 @@
 package laya.d3.core.particleShuriKen.module {
-	import laya.d3.math.Vector4;
 	
 	/**
 	 * <code>ColorOverLifetime</code> 类用于粒子的生命周期颜色。
@@ -23,6 +22,26 @@ package laya.d3.core.particleShuriKen.module {
 		 */
 		public function ColorOverLifetime(color:GradientColor) {
 			_color = color;
+		}
+		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		public function cloneTo(destObject:*):void {
+			var destColorOverLifetime:ColorOverLifetime = destObject as ColorOverLifetime;
+			_color.cloneTo(destColorOverLifetime._color);
+			destColorOverLifetime.enbale = enbale;
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var destColorOverLifetime:ColorOverLifetime = __JS__("new this.constructor()");
+			cloneTo(destColorOverLifetime);
+			return destColorOverLifetime;
 		}
 	
 	}

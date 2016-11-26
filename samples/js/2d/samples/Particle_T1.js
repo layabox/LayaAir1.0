@@ -3,7 +3,6 @@
 	var Stage            = Laya.Stage;
 	var Loader           = Laya.Loader;
 	var Particle2D       = Laya.Particle2D;
-	var ParticleSettings = Laya.ParticleSettings;
 	var Browser          = Laya.Browser;
 	var Handler          = Laya.Handler;
 	var Stat             = Laya.Stat;

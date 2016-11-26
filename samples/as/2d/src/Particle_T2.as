@@ -4,7 +4,6 @@ package
 	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.particle.Particle2D;
-	import laya.particle.ParticleSettings;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import laya.utils.Stat;

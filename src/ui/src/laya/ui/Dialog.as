@@ -181,14 +181,14 @@ package laya.ui {
 				dragArea = dragTarget.x + "," + dragTarget.y + "," + dragTarget.width + "," + dragTarget.height;
 				dragTarget.removeSelf();
 			}
-			on(Event.CLICK, this, onClick);
+			on(Event.CLICK, this, _onClick);
 		}
 		
 		/**
 		 * @private (protected)
 		 * 对象的 <code>Event.CLICK</code> 点击事件侦听处理函数。
 		 */
-		protected function onClick(e:Event):void {
+		protected function _onClick(e:Event):void {
 			var btn:Button = e.target as Button;
 			if (btn) {
 				switch (btn.name) {
@@ -252,17 +252,17 @@ package laya.ui {
 			if (value) {
 				var a:Array = UIUtils.fillArray([0, 0, 0, 0], value, Number);
 				_dragArea = new Rectangle(a[0], a[1], a[2], a[3]);
-				on(Event.MOUSE_DOWN, this, onMouseDown);
+				on(Event.MOUSE_DOWN, this, _onMouseDown);
 			} else {
 				_dragArea = null;
-				off(Event.MOUSE_DOWN, this, onMouseDown);
+				off(Event.MOUSE_DOWN, this, _onMouseDown);
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		private function onMouseDown(e:Event):void {
+		private function _onMouseDown(e:Event):void {
 			var point:Point = this.getMousePoint();
 			if (_dragArea.contains(point.x, point.y)) this.startDrag();
 			else this.stopDrag();

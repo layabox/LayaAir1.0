@@ -29,6 +29,7 @@ package laya.resource {
 		/**@private */
 		private static var _rect2:Rectangle =/*[STATIC SAFE]*/ new Rectangle();
 		
+		
 		/** 图片或者canvas 。*/
 		public var bitmap:*;
 		/** UV信息。*/
@@ -324,7 +325,7 @@ package laya.resource {
 		}
 		
 		/**@private */
-		public function onAsynLoaded(bitmap:Bitmap):void {
+		public function onAsynLoaded(url:String, bitmap:Bitmap):void {
 			if (bitmap) bitmap.useNum++;
 			setTo(bitmap, uv);
 		}

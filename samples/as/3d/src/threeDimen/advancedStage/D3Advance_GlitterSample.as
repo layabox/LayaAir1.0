@@ -1,11 +1,13 @@
 package threeDimen.advancedStage {
 	import laya.d3.core.Camera;
 	import laya.d3.core.glitter.Glitter;
-	import laya.d3.core.glitter.GlitterSetting;
+	import laya.d3.core.material.GlitterMaterial;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
+	import laya.d3.resource.Texture2D;
+	import laya.d3.resource.tempelet.GlitterTemplet;
 	import laya.display.Stage;
 	import laya.utils.Stat;
 	
@@ -30,16 +32,17 @@ package threeDimen.advancedStage {
 			camera.transform.translate(new Vector3(0, 5, 10));
 			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			
-			var setting:GlitterSetting = new GlitterSetting();
-			setting.texturePath = "../../../../res/threeDimen/layabox.png";
-			setting.lifeTime = 0.5;
-			setting.minSegmentDistance = 0.1;//最小距离，小于抛弃
-			setting.minInterpDistance = 0.6;//最大插值距离，超过则插值
-			setting.maxSlerpCount = 128;
-			setting.color = new Vector4(0.8, 0.6, 0.3, 0.8);
-			setting.maxSegments = 600;
 			
-			glitter = scene.addChild(new Glitter(setting)) as Glitter;
+			
+			glitter = scene.addChild(new Glitter()) as Glitter;
+			var glitterTemplet:GlitterTemplet = glitter.templet;
+			(glitter.glitterRender.sharedMaterial as GlitterMaterial).diffuseTexture =Texture2D.load("../../../../res/threeDimen/layabox.png");
+			glitterTemplet.lifeTime = 0.5;
+			glitterTemplet.minSegmentDistance = 0.1;//最小距离，小于抛弃
+			glitterTemplet.minInterpDistance = 0.6;//最大插值距离，超过则插值
+			glitterTemplet.maxSlerpCount = 128;
+			glitterTemplet.color = new Vector4(0.8, 0.6, 0.3, 0.8);
+			glitterTemplet.maxSegments = 600;
 			
 			Laya.timer.frameLoop(1, this, loop);
 		}

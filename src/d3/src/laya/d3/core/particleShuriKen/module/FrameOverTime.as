@@ -1,10 +1,11 @@
 package laya.d3.core.particleShuriKen.module {
+	import laya.d3.core.IClone;
 	import laya.d3.math.Vector3;
 	
 	/**
 	 * <code>FrameOverTime</code> 类用于创建时间帧。
 	 */
-	public class FrameOverTime {
+	public class FrameOverTime implements IClone {
 		/**
 		 * 通过固定帧创建一个 <code>FrameOverTime</code> 实例。
 		 * @param	constant 固定帧。
@@ -130,6 +131,31 @@ package laya.d3.core.particleShuriKen.module {
 		 */
 		public function FrameOverTime() {
 		
+		}
+		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		public function cloneTo(destObject:*):void {
+			var destFrameOverTime:FrameOverTime = destObject as FrameOverTime;
+			destFrameOverTime._type = _type;
+			destFrameOverTime._constant = _constant;
+			_overTime.cloneTo(destFrameOverTime._overTime);
+			destFrameOverTime._constantMin = _constantMin;
+			destFrameOverTime._constantMax = _constantMax;
+			_overTimeMin.cloneTo(destFrameOverTime._overTimeMin);
+			_overTimeMax.cloneTo(destFrameOverTime._overTimeMax);
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var destFrameOverTime:FrameOverTime = __JS__("new this.constructor()");
+			cloneTo(destFrameOverTime);
+			return destFrameOverTime;
 		}
 	
 	}

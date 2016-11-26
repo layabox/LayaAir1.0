@@ -80,7 +80,7 @@ package laya.ui {
 	 * }
 	 * </listing>
 	 */
-	public class RadioGroup extends Group {
+	public class RadioGroup extends UIGroup {
 		/**@inheritDoc */
 		override protected function createItem(skin:String, label:String):Sprite {
 			return new Radio(skin, label);

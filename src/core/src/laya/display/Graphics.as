@@ -302,13 +302,19 @@ package laya.display {
 					}
 					break;
 				case context._drawTextureWithTransform: 
-					tMatrix.copyTo(tempMatrix);
-					tempMatrix.concat(cmd[5]);
+					var drawMatrix:Matrix;
+					if (cmd[5]){
+						tMatrix.copyTo(tempMatrix);
+					    tempMatrix.concat(cmd[5]);
+						drawMatrix = tempMatrix;
+					}else{
+						drawMatrix = tMatrix;
+					}				
 					if (cmd[3] && cmd[4]) {
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tempMatrix);
+						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), drawMatrix);
 					} else {
 						tex = cmd[0];
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), tempMatrix);
+						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), drawMatrix);
 					}
 					break;
 				case context._drawRect: 
@@ -395,7 +401,7 @@ package laya.display {
 		 * @param	height 高度。
 		 * @param	m 矩阵信息。
 		 */
-		public function drawTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, m:Matrix = null, alpha:Number = 1):void {
+		public function drawTexture(tex:Texture, x:Number=0, y:Number=0, width:Number = 0, height:Number = 0, m:Matrix = null, alpha:Number = 1):void {
 			if (!tex) return;
 			if (!width) width = tex.sourceWidth;
 			if (!height) height = tex.sourceHeight;

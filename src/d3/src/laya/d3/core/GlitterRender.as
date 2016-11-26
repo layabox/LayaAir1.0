@@ -6,7 +6,7 @@ package laya.d3.core {
 	 * ...
 	 * @author ...
 	 */
-	public class GlitterRender extends BaseRender{
+	public class GlitterRender extends BaseRender {
 		
 		public function GlitterRender(owner:Glitter) {
 			super(owner);

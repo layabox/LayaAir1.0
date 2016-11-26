@@ -4,6 +4,7 @@ package laya.utils {
 	import laya.display.Sprite;
 	import laya.maths.Matrix;
 	import laya.net.Loader;
+	
 	/**
 	 * <code>ClassUtils</code> 是一个类工具类。
 	 */
@@ -101,7 +102,7 @@ package laya.utils {
 			var props:Object = json.props;
 			
 			if (!node) {
-				node = instanceHandler ? instanceHandler.runWith(json.instanceParams) : getInstance(props.runtime || json.type);
+				node = instanceHandler ? instanceHandler.runWith(json) : getInstance(props.runtime || json.type);
 				if (!node)
 					return null;
 			}
@@ -144,12 +145,8 @@ package laya.utils {
 				}
 			}
 			
-			var customProps:Object = json.customProps;
-			if (customHandler && customProps) {
-				for (prop in customProps) {
-					value = customProps[prop];
-					customHandler.runWith([node, prop, value]);
-				}
+			if (customHandler && json.customProps) {
+				customHandler.runWith([node, json]);
 			}
 			
 			if (node["created"])
@@ -264,7 +261,6 @@ package laya.utils {
 		 * @private
 		 */
 		private static function _addGraphicToGraphics(graphicO:Object, graphic:Graphics):void {
-			
 			var propsO:Object;
 			propsO = graphicO.props;
 			if (!propsO)
@@ -280,15 +276,15 @@ package laya.utils {
 			
 			var params:* = _getParams(propsO, drawConfig[1], drawConfig[2], drawConfig[3]);
 			m = _tM;
-			if (m||_alpha!=1) {
+			if (m || _alpha != 1) {
 				g.save();
-				if(m)
-				g.transform(m);
+				if (m)
+					g.transform(m);
 				if (_alpha != 1)
-				g.alpha(_alpha);
+					g.alpha(_alpha);
 			}
 			g[drawConfig[0]].apply(g, params);
-			if (m||_alpha!=1) {
+			if (m || _alpha != 1) {
 				g.restore();
 			}
 		
@@ -333,6 +329,7 @@ package laya.utils {
 		 */
 		private static var _tM:Matrix;
 		private static var _alpha:Number;
+		
 		/**
 		 * @private
 		 */

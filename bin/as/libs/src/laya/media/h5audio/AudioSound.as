@@ -109,6 +109,18 @@ package laya.media.h5audio {
 			SoundManager.addChannel(channel);
 			return channel;
 		}
+		
+		/**
+		 * 获取总时间。
+		 */
+		override public function get duration():Number 
+		{
+			var ad:Audio;
+			ad = _audioCache[url];
+			if (!ad)
+				return 0;
+			return ad.duration;
+		}
 	
 	}
 

@@ -34,7 +34,7 @@ package laya.device.media
 		
 		private var htmlVideo:HtmlVideo;
 		private var videoElement:*;
-		private var texture:Texture;
+		private var internalTexture:Texture;
 		
 		public function Video(width:int = 320, height:int = 240)
 		{
@@ -48,7 +48,7 @@ package laya.device.media
 			videoElement = htmlVideo.getVideo();
 			videoElement.layaTarget = this;
 			
-			texture = new Texture(htmlVideo);
+			internalTexture = new Texture(htmlVideo);
 			
 			videoElement.addEventListener("abort", onAbort);
 			videoElement.addEventListener("canplay", onCanplay);
@@ -201,7 +201,7 @@ package laya.device.media
 				htmlVideo['updateTexture']();
 			
 			this.graphics.clear();
-			this.graphics.drawTexture(texture, 0, 0, this.width, this.height);
+			this.graphics.drawTexture(internalTexture, 0, 0, this.width, this.height);
 		}
 		
 		private function onDocumentClick():void

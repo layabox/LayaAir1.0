@@ -1,14 +1,12 @@
 package laya.d3.core.render {
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.BaseCamera;
-	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.Sprite3D;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.graphics.StaticBatch;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Viewport;
 	import laya.d3.shader.ShaderDefines3D;
-	import laya.maths.Rectangle;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.utils.ValusArray;

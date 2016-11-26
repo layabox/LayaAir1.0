@@ -12,6 +12,8 @@ package laya.d3.math {
 		/**一向量，禁止修改*/
 		public static const ONE:Vector3 = new Vector3(1.0, 1.0, 1.0);
 		/**X轴单位向量，禁止修改*/
+		public static const NegativeUnitX:Vector3 = new Vector3(-1, 0, 0);
+		/**X轴单位向量，禁止修改*/
 		public static const UnitX:Vector3 = new Vector3(1, 0, 0);
 		/**Y轴单位向量，禁止修改*/
 		public static const UnitY:Vector3 = new Vector3(0, 1, 0);
@@ -387,7 +389,7 @@ package laya.d3.math {
 		}
 		
 		/**三维向量元素数组*/
-		public var elements:* = new Float32Array(3);
+		public var elements:Float32Array = new Float32Array(3);
 		
 		/**
 		 * 获取X轴坐标。

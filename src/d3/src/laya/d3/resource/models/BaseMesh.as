@@ -12,22 +12,12 @@ package laya.d3.resource.models {
 	 */
 	public class BaseMesh extends Resource {
 		/** @private */
-		protected var _loaded:Boolean;
-		/** @private */
 		protected var _subMeshCount:int;
 		/** @private */
 		protected var _boundingBox:BoundBox;
 		/** @private */
 		protected var _boundingSphere:BoundSphere;
-		
-		
-		/**
-		 * 获取是否已载入。
-		 * @return  是否已载入。
-		 */
-		public function get loaded():Boolean {
-			return _loaded;
-		}
+
 		
 		/**
 		 * 获取SubMesh的个数。

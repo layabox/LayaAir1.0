@@ -362,10 +362,14 @@ package laya.d3.core.material {
 			state.shaderValue.pushValue(MVPMATRIX, pvw.elements /*state.camera.transform._worldTransformModifyID + worldTransformModifyID + state.camera._projectionMatrixModifyID,从结构上应该在Mesh中更新*/);
 		}
 		
-		override public function copy(dec:BaseMaterial):BaseMaterial {
-			var standMat:StandardMaterial = dec as StandardMaterial;
-			standMat._transformUV = _transformUV;
-			return super.copy(standMat);
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		override public function cloneTo(destObject:*):void {
+			var destStandardMaterial:StandardMaterial = destObject as StandardMaterial;
+			destStandardMaterial._transformUV = _transformUV;
+			super.cloneTo(destStandardMaterial);
 		}
 	}
 

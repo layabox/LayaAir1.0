@@ -1,30 +1,24 @@
 package laya.d3.core.particleShuriKen {
-	import laya.d3.core.ParticleRender;
+	import laya.d3.core.Transform3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
-	import laya.d3.core.particleShuriKen.ShurikenParticleSystem;
 	import laya.d3.core.particleShuriKen.module.ColorOverLifetime;
 	import laya.d3.core.particleShuriKen.module.FrameOverTime;
+	import laya.d3.core.particleShuriKen.module.GradientAngularVelocity;
 	import laya.d3.core.particleShuriKen.module.GradientColor;
 	import laya.d3.core.particleShuriKen.module.GradientDataColor;
-	import laya.d3.core.particleShuriKen.module.GradientAngularVelocity;
 	import laya.d3.core.particleShuriKen.module.GradientSize;
+	import laya.d3.core.particleShuriKen.module.GradientVelocity;
 	import laya.d3.core.particleShuriKen.module.RotationOverLifetime;
 	import laya.d3.core.particleShuriKen.module.SizeOverLifetime;
 	import laya.d3.core.particleShuriKen.module.TextureSheetAnimation;
+	import laya.d3.core.particleShuriKen.module.VelocityOverLifetime;
 	import laya.d3.core.render.IRenderable;
-	import laya.d3.graphics.VertexDeclaration;
-	import laya.d3.math.Matrix4x4;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.BaseTexture;
-	import laya.d3.resource.Texture2D;
 	import laya.d3.shader.ShaderDefines3D;
-	import laya.net.Loader;
-	import laya.utils.Stat;
-	import laya.webgl.resource.WebGLImage;
-	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.ValusArray;
 	
 	/**
@@ -32,8 +26,13 @@ package laya.d3.core.particleShuriKen {
 	 * @author ...
 	 */
 	public class ShurikenParticleMaterial extends BaseMaterial {
-		public static const WORLDMATRIX:String = "WORLDMATRIX";
-		public static const SCALE:String = "SCALE";
+		public static const WORLDPOSITION:String = "WORLDPOSITION";
+		public static const WORLDROTATIONMATRIX:String = "WORLDROTATIONMATRIX";
+		
+		public static const THREEDSTARTROTATION:String = "THREEDSTARTROTATION";
+		public static const SCALINGMODE:String = "SCALINGMODE";
+		public static const POSITIONSCALE:String = "POSITIONSCALE";
+		public static const SIZESCALE:String = "SIZESCALE";
 		public static const VIEWMATRIX:String = "MATRIX1";
 		public static const PROJECTIONMATRIX:String = "MATRIX2";
 		public static const CURRENTTIME:String = "CURRENTTIME";
@@ -44,6 +43,18 @@ package laya.d3.core.particleShuriKen {
 		public static const STRETCHEDBILLBOARDLENGTHSCALE:String = "STRETCHEDBILLBOARDLENGTHSCALE";
 		public static const STRETCHEDBILLBOARDSPEEDSCALE:String = "STRETCHEDBILLBOARDSPEEDSCALE";
 		
+		//VelocityOverLifetime
+		public static const VOLTYPE:String = "VOLTYPE";
+		public static const VOLVELOCITYCONST:String = "VOLVELOCITYCONST";
+		public static const VOLVELOCITYGRADIENTX:String = "VOLVELOCITYGRADIENTX";
+		public static const VOLVELOCITYGRADIENTY:String = "VOLVELOCITYGRADIENTY";
+		public static const VOLVELOCITYGRADIENTZ:String = "VOLVELOCITYGRADIENTZ";
+		public static const VOLVELOCITYCONSTMAX:String = "VOLVELOCITYCONSTMAX";
+		public static const VOLVELOCITYGRADIENTXMAX:String = "VOLVELOCITYGRADIENTXMAX";
+		public static const VOLVELOCITYGRADIENTYMAX:String = "VOLVELOCITYGRADIENTYMAX";
+		public static const VOLVELOCITYGRADIENTZMAX:String = "VOLVELOCITYGRADIENTZMAX";
+		public static const VOLSPACETYPE:String = "VOLSPACETYPE";
+		
 		//ColorOverLifetime
 		public static const COLOROVERLIFEGRADIENTALPHAS:String = "COLOROVERLIFEGRADIENTALPHAS";
 		public static const COLOROVERLIFEGRADIENTCOLORS:String = "COLOROVERLIFEGRADIENTCOLORS";
@@ -51,14 +62,16 @@ package laya.d3.core.particleShuriKen {
 		public static const MAXCOLOROVERLIFEGRADIENTCOLORS:String = "MAXCOLOROVERLIFEGRADIENTCOLORS";
 		
 		//SizeOverLifetime
-		public static const SIZEOVERLIFEGRADIENTSIZES:String = "SIZEOVERLIFEGRADIENTSIZES";
-		public static const SIZEOVERLIFEGRADIENTSIZESX:String = "SIZEOVERLIFEGRADIENTSIZESX";
-		public static const SIZEOVERLIFEGRADIENTSIZESY:String = "SIZEOVERLIFEGRADIENTSIZESY";
-		public static const SIZEOVERLIFEGRADIENTSIZESZ:String = "SIZEOVERLIFEGRADIENTSIZESZ";
-		public static const MAXSIZEOVERLIFEGRADIENTSIZES:String = "MAXSIZEOVERLIFEGRADIENTSIZES";
-		public static const MAXSIZEOVERLIFEGRADIENTSIZESX:String = "MAXSIZEOVERLIFEGRADIENTSIZESX";
-		public static const MAXSIZEOVERLIFEGRADIENTSIZESY:String = "MAXSIZEOVERLIFEGRADIENTSIZESY";
-		public static const MAXSIZEOVERLIFEGRADIENTSIZESZ:String = "MAXSIZEOVERLIFEGRADIENTSIZESZ";
+		public static const SOLTYPE:String = "SOLTYPE";
+		public static const SOLSEPRARATE:String = "SOLSEPRARATE";
+		public static const SOLSIZEGRADIENT:String = "SOLSIZEGRADIENT";
+		public static const SOLSIZEGRADIENTX:String = "SOLSIZEGRADIENTX";
+		public static const SOLSIZEGRADIENTY:String = "SOLSIZEGRADIENTY";
+		public static const SOLSizeGradientZ:String = "SOLSizeGradientZ";
+		public static const SOLSizeGradientMax:String = "SOLSizeGradientMax";
+		public static const SOLSIZEGRADIENTXMAX:String = "SOLSIZEGRADIENTXMAX";
+		public static const SOLSIZEGRADIENTYMAX:String = "SOLSIZEGRADIENTYMAX";
+		public static const SOLSizeGradientZMAX:String = "SOLSizeGradientZMAX";
 		
 		//RotationOverLifetime
 		public static const ROLTYPE:String = "ROLTYPE";
@@ -72,9 +85,9 @@ package laya.d3.core.particleShuriKen {
 		public static const ROLANGULARVELOCITYCONSTMAX:String = "ROLANGULARVELOCITYCONSTMAX";
 		public static const ROLANGULARVELOCITYCONSTMAXSEPRARATE:String = "ROLANGULARVELOCITYCONSTMAXSEPRARATE";
 		public static const ROLANGULARVELOCITYGRADIENTMAX:String = "ROLANGULARVELOCITYGRADIENTMAX";
-		public static const ROLANGULARVELOCITYGRADIENTMAXX:String = "ROLANGULARVELOCITYGRADIENTMAXX";
-		public static const ROLANGULARVELOCITYGRADIENTMAXY:String = "ROLANGULARVELOCITYGRADIENTMAXY";
-		public static const ROLANGULARVELOCITYGRADIENTMAXZ:String = "ROLANGULARVELOCITYGRADIENTMAXZ";
+		public static const ROLANGULARVELOCITYGRADIENTXMAX:String = "ROLANGULARVELOCITYGRADIENTXMAX";
+		public static const ROLANGULARVELOCITYGRADIENTYMAX:String = "ROLANGULARVELOCITYGRADIENTYMAX";
+		public static const ROLANGULARVELOCITYGRADIENTZMAX:String = "ROLANGULARVELOCITYGRADIENTZMAX";
 		
 		//TextureSheetAnimation
 		public static const TEXTURESHEETANIMATIONTYPE:String = "TEXTURESHEETANIMATIONTYPE";
@@ -85,8 +98,9 @@ package laya.d3.core.particleShuriKen {
 		
 		/** @private */
 		private static var _tempGravity:Vector3 = new Vector3();
+		
 		/** @private */
-		private static var _tempMatrix4x40:Matrix4x4 = new Matrix4x4();
+		private var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
 		
 		/** @private */
 		private static const _diffuseTextureIndex:int = 0;
@@ -99,7 +113,7 @@ package laya.d3.core.particleShuriKen {
 		 * @param url 手里剑粒子材质地址。
 		 */
 		public static function load(url:String):ShurikenParticleMaterial {
-			return Laya.loader.create(url,null, null, ShurikenParticleMaterial);
+			return Laya.loader.create(url, null, null, ShurikenParticleMaterial);
 		}
 		
 		/** @private */
@@ -135,6 +149,7 @@ package laya.d3.core.particleShuriKen {
 			var particle:ShuriKenParticle3D = state.owner as ShuriKenParticle3D;
 			var particleSystem:ShurikenParticleSystem = particle.particleSystem;
 			var particleRender:ShurikenParticleRender = particle.particleRender;
+			var transform:Transform3D = particle.transform;
 			
 			var finalGravityE:Float32Array = _tempGravity.elements;
 			var gravityE:Float32Array = particleSystem.gravity.elements;
@@ -146,37 +161,42 @@ package laya.d3.core.particleShuriKen {
 			var shaderValues:ValusArray = state.shaderValue;
 			shaderValues.pushValue(GRAVITY, finalGravityE);
 			
-			//var pvw:Matrix4x4;
-			//if (worldMatrix === Matrix4x4.DEFAULT) {
-			//pvw = projectionView;//TODO:WORLD可以不传
-			//} else {
-			//pvw = _tempMatrix4x40;
-			//Matrix4x4.multiply(projectionView, worldMatrix, pvw);
-			//}
+			switch (particleSystem.simulationSpace) {
+			case 0: //World
+				shaderValues.pushValue(WORLDPOSITION, Vector3.ONE.elements);
+				break;
+			case 1: //Local
+				shaderValues.pushValue(WORLDPOSITION, transform.position.elements);
+				break;
+			default: 
+				throw new Error("ShurikenParticleMaterial: SimulationSpace value is invalid.");
+			}
 			
-			
-			var scale:Vector3;
+			Matrix4x4.createFromQuaternion(transform.rotation, _tempRotationMatrix);
+			shaderValues.pushValue(WORLDROTATIONMATRIX, _tempRotationMatrix.elements);
+		
+			shaderValues.pushValue(THREEDSTARTROTATION, particleSystem.threeDStartRotation);
+			shaderValues.pushValue(SCALINGMODE, particleSystem.scaleMode);
 			switch (particleSystem.scaleMode) {
 			case 0: 
-				shaderValues.pushValue(WORLDMATRIX, worldMatrix.elements);
-				scale = state.owner.transform.scale;
+				shaderValues.pushValue(POSITIONSCALE, transform.scale.elements);
+				shaderValues.pushValue(SIZESCALE, transform.scale.elements);
 				break;
 			case 1: 
-				shaderValues.pushValue(WORLDMATRIX, particle.transform.localMatrix.elements);
-				scale = state.owner.transform.localScale;
+				shaderValues.pushValue(POSITIONSCALE, transform.localScale.elements);
+				shaderValues.pushValue(SIZESCALE, transform.localScale.elements);
 				break;
 			case 2: 
-				shaderValues.pushValue(WORLDMATRIX, Matrix4x4.DEFAULT.elements);
-				scale = Vector3.ONE;
+				shaderValues.pushValue(POSITIONSCALE, transform.scale.elements);
+				shaderValues.pushValue(SIZESCALE, Vector3.ONE.elements);
 				break;
 			}
-			shaderValues.pushValue(SCALE, scale.elements);
 			
 			shaderValues.pushValue(CAMERADIRECTION, state.camera.forward.elements);
 			shaderValues.pushValue(CAMERAUP, state.camera.up.elements);
 			
-			shaderValues.pushValue(VIEWMATRIX, state.viewMatrix.elements);
-			shaderValues.pushValue(PROJECTIONMATRIX, state.projectionMatrix.elements);
+			shaderValues.pushValue(VIEWMATRIX, state.viewMatrix.elements);//TODO:或许可以合并
+			shaderValues.pushValue(PROJECTIONMATRIX, state.projectionMatrix.elements);//TODO:或许可以合并
 			
 			shaderValues.pushValue(STRETCHEDBILLBOARDLENGTHSCALE, particleRender.stretchedBillboardLengthScale);
 			shaderValues.pushValue(STRETCHEDBILLBOARDSPEEDSCALE, particleRender.stretchedBillboardSpeedScale);
@@ -199,6 +219,39 @@ package laya.d3.core.particleShuriKen {
 				break;
 			}
 			
+			//velocityOverLifetime
+			var velocityOverLifetime:VelocityOverLifetime = particleSystem.velocityOverLifetime;
+			if (velocityOverLifetime && velocityOverLifetime.enbale) {
+				state.shaderDefs.add(ShaderDefines3D.VELOCITYOVERLIFETIME);
+				var velocity:GradientVelocity = velocityOverLifetime.velocity;
+				var velocityType:int = velocity.type;
+				shaderValues.pushValue(VOLTYPE, velocityType);
+				switch (velocityType) {
+				case 0: 
+					shaderValues.pushValue(VOLVELOCITYCONST, velocity.constant.elements);
+					break;
+				case 1: 
+					shaderValues.pushValue(VOLVELOCITYGRADIENTX, velocity.gradientX._elements);
+					shaderValues.pushValue(VOLVELOCITYGRADIENTY, velocity.gradientY._elements);
+					shaderValues.pushValue(VOLVELOCITYGRADIENTZ, velocity.gradientZ._elements);
+					break;
+				case 2: 
+					shaderValues.pushValue(VOLVELOCITYCONST, velocity.constantMin.elements);
+					shaderValues.pushValue(VOLVELOCITYCONSTMAX, velocity.constantMax.elements);
+					break;
+				case 3: 
+					shaderValues.pushValue(VOLVELOCITYGRADIENTX, velocity.gradientXMin._elements);
+					shaderValues.pushValue(VOLVELOCITYGRADIENTXMAX, velocity.gradientXMax._elements);
+					shaderValues.pushValue(VOLVELOCITYGRADIENTY, velocity.gradientYMin._elements);
+					shaderValues.pushValue(VOLVELOCITYGRADIENTYMAX, velocity.gradientYMax._elements);
+					shaderValues.pushValue(VOLVELOCITYGRADIENTZ, velocity.gradientZMin._elements);
+					shaderValues.pushValue(VOLVELOCITYGRADIENTZMAX, velocity.gradientZMax._elements);
+					break;
+				}
+				var spaceType:int = velocityOverLifetime.space;
+				shaderValues.pushValue(VOLSPACETYPE, spaceType);
+			}
+			
 			//ColorOverLifetime
 			var colorOverLifetime:ColorOverLifetime = particleSystem.colorOverLifetime;
 			if (colorOverLifetime && colorOverLifetime.enbale) {
@@ -206,14 +259,14 @@ package laya.d3.core.particleShuriKen {
 				switch (color.type) {
 				case 1: 
 					state.shaderDefs.add(ShaderDefines3D.COLOROVERLIFETIME);
-					var gradientColor:GradientDataColor = color.gradientColor;
+					var gradientColor:GradientDataColor = color.gradient;
 					shaderValues.pushValue(COLOROVERLIFEGRADIENTALPHAS, gradientColor._alphaElements);
 					shaderValues.pushValue(COLOROVERLIFEGRADIENTCOLORS, gradientColor._rgbElements);
 					break;
 				case 3: 
 					state.shaderDefs.add(ShaderDefines3D.RANDOMCOLOROVERLIFETIME);
-					var minGradientColor:GradientDataColor = color.minGradientColor;
-					var maxGradientColor:GradientDataColor = color.maxGradientColor;
+					var minGradientColor:GradientDataColor = color.gradientMin;
+					var maxGradientColor:GradientDataColor = color.gradientMax;
 					shaderValues.pushValue(COLOROVERLIFEGRADIENTALPHAS, minGradientColor._alphaElements);
 					shaderValues.pushValue(COLOROVERLIFEGRADIENTCOLORS, minGradientColor._rgbElements);
 					shaderValues.pushValue(MAXCOLOROVERLIFEGRADIENTALPHAS, maxGradientColor._alphaElements);
@@ -226,31 +279,37 @@ package laya.d3.core.particleShuriKen {
 			var sizeOverLifetime:SizeOverLifetime = particleSystem.sizeOverLifetime;
 			if (sizeOverLifetime && sizeOverLifetime.enbale) {
 				var size:GradientSize = sizeOverLifetime.size;
-				switch (size.type) {
+				var sizeType:int = size.type;
+				var sizeSeparate:Boolean;
+				switch (sizeType) {
 				case 0: 
-					if (size.separateAxes) {
-						state.shaderDefs.add(ShaderDefines3D.SIZEOVERLIFETIMESEPARATE);
-						shaderValues.pushValue(SIZEOVERLIFEGRADIENTSIZESX, size.gradientSizeX._elements);
-						shaderValues.pushValue(SIZEOVERLIFEGRADIENTSIZESY, size.gradientSizeY._elements);
-						shaderValues.pushValue(SIZEOVERLIFEGRADIENTSIZESZ, size.gradientSizeZ._elements);
+					sizeSeparate = size.separateAxes;
+					state.shaderDefs.add(ShaderDefines3D.SIZEOVERLIFETIME);
+					shaderValues.pushValue(SOLTYPE, sizeType);
+					shaderValues.pushValue(SOLSEPRARATE, sizeSeparate);
+					if (sizeSeparate) {
+						shaderValues.pushValue(SOLSIZEGRADIENTX, size.gradientSizeX._elements);
+						shaderValues.pushValue(SOLSIZEGRADIENTY, size.gradientSizeY._elements);
+						shaderValues.pushValue(SOLSizeGradientZ, size.gradientSizeZ._elements);
 					} else {
-						state.shaderDefs.add(ShaderDefines3D.SIZEOVERLIFETIME);
-						shaderValues.pushValue(SIZEOVERLIFEGRADIENTSIZES, size.gradientSize._elements);
+						shaderValues.pushValue(SOLSIZEGRADIENT, size.gradientSize._elements);
 					}
 					break;
 				case 2: 
-					if (size.separateAxes) {
-						state.shaderDefs.add(ShaderDefines3D.RANDOMSIZEOVERLIFETIMESEPARATE);
-						shaderValues.pushValue(SIZEOVERLIFEGRADIENTSIZESX, size.gradientSizeXMin._elements);
-						shaderValues.pushValue(MAXSIZEOVERLIFEGRADIENTSIZESX, size.gradientSizeXMax._elements);
-						shaderValues.pushValue(SIZEOVERLIFEGRADIENTSIZESY, size.gradientSizeYMin._elements);
-						shaderValues.pushValue(MAXSIZEOVERLIFEGRADIENTSIZESY, size.gradientSizeYMax._elements);
-						shaderValues.pushValue(SIZEOVERLIFEGRADIENTSIZESZ, size.gradientSizeZMin._elements);
-						shaderValues.pushValue(MAXSIZEOVERLIFEGRADIENTSIZESZ, size.gradientSizeZMax._elements);
+					sizeSeparate = size.separateAxes;
+					state.shaderDefs.add(ShaderDefines3D.SIZEOVERLIFETIME);
+					shaderValues.pushValue(SOLTYPE, sizeType);
+					shaderValues.pushValue(SOLSEPRARATE, sizeSeparate);
+					if (sizeSeparate) {
+						shaderValues.pushValue(SOLSIZEGRADIENTX, size.gradientXMin._elements);
+						shaderValues.pushValue(SOLSIZEGRADIENTXMAX, size.gradientXMax._elements);
+						shaderValues.pushValue(SOLSIZEGRADIENTY, size.gradientYMin._elements);
+						shaderValues.pushValue(SOLSIZEGRADIENTYMAX, size.gradientYMax._elements);
+						shaderValues.pushValue(SOLSizeGradientZ, size.gradientZMin._elements);
+						shaderValues.pushValue(SOLSizeGradientZMAX, size.gradientZMax._elements);
 					} else {
-						state.shaderDefs.add(ShaderDefines3D.RANDOMSIZEOVERLIFETIME);
-						shaderValues.pushValue(SIZEOVERLIFEGRADIENTSIZES, size.gradientSizeMin._elements);
-						shaderValues.pushValue(MAXSIZEOVERLIFEGRADIENTSIZES, size.gradientSizeMax._elements);
+						shaderValues.pushValue(SOLSIZEGRADIENT, size.gradientMin._elements);
+						shaderValues.pushValue(SOLSizeGradientMax, size.gradientMax._elements);
 					}
 					break;
 				}
@@ -262,18 +321,19 @@ package laya.d3.core.particleShuriKen {
 				state.shaderDefs.add(ShaderDefines3D.ROTATIONOVERLIFETIME);
 				var rotation:GradientAngularVelocity = rotationOverLifetime.angularVelocity;
 				var rotationType:int = rotation.type;
+				var rotationSeparate:Boolean = rotation.separateAxes;
 				shaderValues.pushValue(ROLTYPE, rotationType);
-				shaderValues.pushValue(ROLSEPRARATE, rotation.separateAxes);
+				shaderValues.pushValue(ROLSEPRARATE, rotationSeparate);
 				switch (rotationType) {
 				case 0: 
-					if (rotation.separateAxes) {
+					if (rotationSeparate) {
 						shaderValues.pushValue(ROLANGULARVELOCITYCONSTSEPRARATE, rotation.constantSeparate.elements);
 					} else {
 						shaderValues.pushValue(ROLANGULARVELOCITYCONST, rotation.constant);
 					}
 					break;
 				case 1: 
-					if (rotation.separateAxes) {
+					if (rotationSeparate) {
 						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTX, rotation.gradientX._elements);
 						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTY, rotation.gradientY._elements);
 						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTZ, rotation.gradientZ._elements);
@@ -282,7 +342,7 @@ package laya.d3.core.particleShuriKen {
 					}
 					break;
 				case 2: 
-					if (rotation.separateAxes) {
+					if (rotationSeparate) {
 						shaderValues.pushValue(ROLANGULARVELOCITYCONSTSEPRARATE, rotation.constantMinSeparate.elements);
 						shaderValues.pushValue(ROLANGULARVELOCITYCONSTMAXSEPRARATE, rotation.constantMaxSeparate.elements);
 					} else {
@@ -291,13 +351,13 @@ package laya.d3.core.particleShuriKen {
 					}
 					break;
 				case 3: 
-					if (rotation.separateAxes) {
+					if (rotationSeparate) {
 						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTX, rotation.gradientXMin._elements);
-						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTMAXX, rotation.gradientXMax._elements);
+						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTXMAX, rotation.gradientXMax._elements);
 						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTY, rotation.gradientYMin._elements);
-						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTMAXY, rotation.gradientYMax._elements);
+						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTYMAX, rotation.gradientYMax._elements);
 						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTZ, rotation.gradientZMin._elements);
-						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTMAXZ, rotation.gradientZMax._elements);
+						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTZMAX, rotation.gradientZMax._elements);
 					} else {
 						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENT, rotation.gradientMin._elements);
 						shaderValues.pushValue(ROLANGULARVELOCITYGRADIENTMAX, rotation.gradientMax._elements);
@@ -315,7 +375,7 @@ package laya.d3.core.particleShuriKen {
 					state.shaderDefs.add(ShaderDefines3D.TEXTURESHEETANIMATION);
 					shaderValues.pushValue(TEXTURESHEETANIMATIONTYPE, textureAniType);
 					shaderValues.pushValue(TEXTURESHEETANIMATIONCYCLES, textureSheetAnimation.cycles);
-					var title:Vector2 = textureSheetAnimation.title;
+					var title:Vector2 = textureSheetAnimation.tiles;
 					var _uvLengthE:Float32Array = _uvLength.elements;
 					_uvLengthE[0] = 1.0 / title.x;
 					_uvLengthE[1] = 1.0 / title.y;

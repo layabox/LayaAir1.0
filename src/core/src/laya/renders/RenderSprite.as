@@ -256,7 +256,7 @@ package laya.renders {
 				var _x:Number, _y:Number;
 				
 				for (i = 0; i < n; ++i) {
-					if ((ele = childs[i] as Sprite)._style.visible && ((_x = ele._x) < right && (_x + ele.width) > left && (_y = ele._y) < bottom && (_y + ele.height) > top)) {
+					if ((ele = childs[i] as Sprite).visible && ((_x = ele._x) < right && (_x + ele.width) > left && (_y = ele._y) < bottom && (_y + ele.height) > top)) {
 						ele.render(context, x, y);
 					}
 				}
@@ -285,11 +285,16 @@ package laya.renders {
 					_cacheCanvas._cacheRec = new Rectangle();
 				var w:Number, h:Number;
 				tRec = sprite.getSelfBounds();
-				if (Render.isWebGL && _cacheCanvas.type === 'bitmap' && (tRec.width > 2048 || tRec.height > 2048)) {
-					trace("cache bitmap size larger than 2048,cache ignored");
-					_next._fun.call(_next, sprite, tx, x, y);
-					return;
-				}
+//				if (Render.isWebGL && _cacheCanvas.type === 'bitmap' && (tRec.width > 2048 || tRec.height > 2048)) {
+//					trace("cache bitmap size larger than 2048,cache ignored");
+//					if(_cacheCanvas.ctx)
+//					{
+//						Pool.recover("RenderContext",_cacheCanvas.ctx);
+//						_cacheCanvas.ctx=null;
+//				    }			
+//					_next._fun.call(_next, sprite, context, x, y);
+//					return;
+//				}
 				tRec.x -= sprite.pivotX;
 				tRec.y -= sprite.pivotY;
 				tRec.x -= 10;
@@ -305,7 +310,7 @@ package laya.renders {
 				var scaleX:Number = Render.isWebGL ? 1 : Browser.pixelRatio * Laya.stage.clientScaleX;
 				var scaleY:Number = Render.isWebGL ? 1 : Browser.pixelRatio * Laya.stage.clientScaleY;
 				
-				if (!Render.isWebGL) {
+				if (!Render.isWebGL||_cacheCanvas.type === 'bitmap') {
 					var chainScaleX:Number = 1;
 					var chainScaleY:Number = 1;
 					var tar:Sprite;
@@ -315,14 +320,32 @@ package laya.renders {
 						chainScaleY *= tar.scaleY;
 						tar = tar.parent as Sprite;
 					}
-					if (chainScaleX > 1) scaleX *= chainScaleX;
-					if (chainScaleY > 1) scaleY *= chainScaleY;
+					if(Render.isWebGL )
+					{
+						if (chainScaleX < 1) scaleX *= chainScaleX;
+						if (chainScaleY < 1) scaleY *= chainScaleY;
+					}else
+					{
+						if (chainScaleX > 1) scaleX *= chainScaleX;
+						if (chainScaleY > 1) scaleY *= chainScaleY;
+					}
+					
 				}
-				
 				w = tRec.width * scaleX;
 				h = tRec.height * scaleY;
 				left = tRec.x;
 				top = tRec.y;
+				
+				if (Render.isWebGL && _cacheCanvas.type === 'bitmap' && (w > 2048 || h > 2048)) {
+					trace("cache bitmap size larger than 2048,cache ignored");
+					if(_cacheCanvas.ctx)
+					{
+						Pool.recover("RenderContext",_cacheCanvas.ctx);
+						_cacheCanvas.ctx=null;
+					}			
+					_next._fun.call(_next, sprite, context, x, y);
+					return;
+				}
 				if (!tx) {
 					tx = _cacheCanvas.ctx = Pool.getItem("RenderContext") || new RenderContext(w, h, HTMLCanvas.create(HTMLCanvas.TYPEAUTO));
 					tx.ctx.sprite = sprite;

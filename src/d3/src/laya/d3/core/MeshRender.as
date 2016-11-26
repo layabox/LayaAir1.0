@@ -88,13 +88,10 @@ package laya.d3.core {
 			}
 		}
 		
-		/**
-		 * @private
-		 * <p>彻底清理资源。</p>
-		 * <p><b>注意：</b>会强制解锁清理。</p>
-		 */
-		override public function dispose():void {
-			_meshSprite3DOwner.meshFilter.off(Event.MESH_CHANGED, this, _onMeshChanged);
+		override public function destroy():void {
+			super.destroy();
+			_meshSprite3DOwner = null;
+		
 		}
 	
 	}

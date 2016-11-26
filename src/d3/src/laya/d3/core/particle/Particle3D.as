@@ -22,8 +22,11 @@ package laya.d3.core.particle {
 	 * <code>Particle3D</code> 3D粒子。
 	 */
 	public class Particle3D extends Sprite3D {
+		/**@private */
+		private var _setting:ParticleSetting;
+		
 		/**@private 粒子模板。*/
-		private var _templet:ParticleTemplet3D
+		private var _templet:ParticleTemplet3D;
 		
 		/** @private */
 		private var _particleRender:ParticleRender;
@@ -49,6 +52,7 @@ package laya.d3.core.particle {
 		 * @param settings value 粒子配置。
 		 */
 		public function Particle3D(setting:ParticleSetting) {//暂不支持更换模板和初始化后修改混合状态。
+			_setting = setting;//TODO:临时
 			_particleRender = new ParticleRender(this);
 			_particleRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
@@ -70,11 +74,11 @@ package laya.d3.core.particle {
 		
 		/** @private */
 		private function _changeRenderObject(index:int):RenderElement {
-			var renderObjects:Vector.<RenderElement> = _particleRender.renderCullingObject._renderElements;
+			var renderObjects:Vector.<RenderElement> = _particleRender.renderObject._renderElements;
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderObject = _particleRender.renderCullingObject;
+			renderElement._renderObject = _particleRender.renderObject;
 			
 			var material:BaseMaterial = _particleRender.sharedMaterials[index];
 			(material) || (material = ParticleMaterial.defaultMaterial);//确保有材质,由默认材质代替。
@@ -90,18 +94,18 @@ package laya.d3.core.particle {
 		
 		/** @private */
 		private function _onMaterialChanged(_particleRender:ParticleRender, index:int, material:BaseMaterial):void {
-			var renderElementCount:int = _particleRender.renderCullingObject._renderElements.length;
+			var renderElementCount:int = _particleRender.renderObject._renderElements.length;
 			(index < renderElementCount) && _changeRenderObject(index);
 		}
 		
 		/** @private */
 		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_particleRender.renderCullingObject);
+			scene.removeFrustumCullingObject(_particleRender.renderObject);
 		}
 		
 		/** @private */
 		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_particleRender.renderCullingObject);
+			scene.addFrustumCullingObject(_particleRender.renderObject);
 		}
 		
 		/**
@@ -126,11 +130,24 @@ package laya.d3.core.particle {
 			_templet.addParticle(position, velocity);
 		}
 		
-		override public function dispose():void {
-			super.dispose();
-			_particleRender.off(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
+		override public function cloneTo(destObject:*):void {
+			super.cloneTo(destObject);
+			var destParticle3D:Particle3D = destObject as Particle3D;
+			destParticle3D._templet = _templet;//TODO:待确认是否复用
+			var destParticleRender:ParticleRender = destParticle3D._particleRender;
+			destParticleRender.sharedMaterials = _particleRender.sharedMaterials;
+			destParticleRender.enable = _particleRender.enable;
 		}
-	
+		
+		/**
+		 * <p>销毁此对象。</p>
+		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
+		 */
+		override public function destroy(destroyChild:Boolean = true):void {
+			super.destroy(destroyChild);
+			_particleRender.destroy();
+			_templet = null;
+		}
 	}
 
 }

@@ -7,6 +7,7 @@
 	import laya.media.SoundChannel;
 	import laya.media.SoundManager;
 	import laya.net.Loader;
+	import laya.net.URL;
 	
 	/**
 	 * <code>Sound</code> 类是用来播放控制声音的类。
@@ -26,7 +27,7 @@
 		 */
 		override public function load(url:String):void {
 			_url = url;
-		    _sound.load(new URLRequest(Loader._parseURL(url)));
+		    _sound.load(new URLRequest(URL.formatURL(url)));
 			_sound.addEventListener(Event.COMPLETE, completeHandler);
             _sound.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
 		}

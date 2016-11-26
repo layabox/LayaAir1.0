@@ -348,10 +348,7 @@ package laya.d3.math {
 		 * 创建一个 <code>Matrix4x4</code> 实例。
 		 * @param	4x4矩阵的各元素
 		 */
-		public function Matrix4x4(m11:Number = 1, m12:Number = 0, m13:Number = 0, m14:Number = 0,
-								  m21:Number = 0, m22:Number = 1, m23:Number = 0, m24:Number = 0,
-								  m31:Number = 0, m32:Number = 0, m33:Number = 1, m34:Number = 0,
-								  m41:Number = 0, m42:Number = 0, m43:Number = 0, m44:Number = 1) {
+		public function Matrix4x4(m11:Number = 1, m12:Number = 0, m13:Number = 0, m14:Number = 0, m21:Number = 0, m22:Number = 1, m23:Number = 0, m24:Number = 0,m31:Number = 0, m32:Number = 0, m33:Number = 1, m34:Number = 0,m41:Number = 0, m42:Number = 0, m43:Number = 0, m44:Number = 1) {
 			
 			var e:Float32Array = this.elements = new Float32Array(16);
 			e[0]  = m11;

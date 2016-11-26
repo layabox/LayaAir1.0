@@ -1,4 +1,6 @@
 package laya.net {
+	import laya.display.BitmapFont;
+	import laya.display.Text;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.media.Sound;
@@ -43,6 +45,8 @@ package laya.net {
 		public static const SOUND:String = "sound";
 		/** 图集类型，加载完成后返回图集json信息(并创建图集内小图Texture)。*/
 		public static const ATLAS:String = "atlas";
+		/** 位图字体类型，加载完成后返回BitmapFont。*/
+		public static const FONT:String = "font";
 		
 		/** 文件后缀和类型对应表。*/
 		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json"};
@@ -113,7 +117,19 @@ package laya.net {
 				_http.on(Event.ERROR, this, onError);
 				_http.on(Event.COMPLETE, this, onLoaded);
 			}
-			_http.send(url, null, "get", type !== ATLAS ? type : "json");
+			var contentType:String;
+			switch(type)
+			{
+				case ATLAS:
+					contentType = JSON;
+					break;
+				case FONT:
+					contentType = XML;
+					break;
+				default:
+					contentType = type;
+			}
+			_http.send(url, null, "get", contentType);
 		}
 		
 		/**
@@ -282,6 +298,22 @@ package laya.net {
 					//if (needSub)
 					//for (i = 0; i < pics.length; i++)
 					//pics[i].dispose();//Sub后可直接释放
+					complete(this._data);
+				}
+			}else if (type == FONT) {
+				//处理位图字体
+				if (!data.src) {
+					_data=data;
+					event(Event.PROGRESS, 0.5);
+					return _loadImage(URL.formatURL(_url.replace(".fnt", ".png")));
+				} else {
+					var bFont:BitmapFont;
+					bFont=new BitmapFont();				
+					bFont.parseFont(_data, data);
+					var tArr:Array=this._url.split(".fnt")[0].split("/");
+					var fontName:String=tArr[tArr.length-1];
+					Text.registerBitmapFont(fontName,bFont);
+					_data=bFont;
 					complete(this._data);
 				}
 			} else {

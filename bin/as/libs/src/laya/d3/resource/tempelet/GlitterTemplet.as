@@ -1,6 +1,5 @@
 package laya.d3.resource.tempelet {
 	import laya.d3.core.glitter.Glitter;
-	import laya.d3.core.glitter.GlitterSetting;
 	import laya.d3.core.glitter.SplineCurvePositionVelocity;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
@@ -37,7 +36,7 @@ package laya.d3.resource.tempelet {
 		private const _floatCountPerVertex:int = 6;//顶点结构为Position(3个float)+UV(2个float)+Time(1个float)
 		
 		private var _owner:Glitter;
-		public var _albedo:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);
+		public var _albedo:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);//TODO:
 		private var _vertices:Float32Array;
 		private var _vertexBuffer:VertexBuffer3D;
 		
@@ -70,7 +69,35 @@ package laya.d3.resource.tempelet {
 		private var _lastPatchAddPos1:Vector3;
 		private var _lastPatchAddTime:Number;
 		
-		public var setting:GlitterSetting;
+		/** 声明周期。 */
+		public var lifeTime:Number;
+		/** 最小分段距离。 */
+		public var minSegmentDistance:Number;
+		/** 最小插值距离。 */
+		public var minInterpDistance:Number;
+		/** 最大插值数量。 */
+		public var maxSlerpCount:int;
+		/** 颜色。 */
+		public var color:Vector4;
+		/** 最大段数。 */
+		public var _maxSegments:int;
+		
+		/**获取最大分段数。*/
+		public function get maxSegments():int {
+			return _maxSegments - 1;
+		}
+		
+		/**设置最大分段数,注意:谨慎修改此属性，有性能损耗。*/
+		public function set maxSegments(value:int):void {//TODO:是否要重置其它参数
+			var newMaxSegments:int = value + 1;
+			if (newMaxSegments !== _maxSegments) {
+				_maxSegments = newMaxSegments;
+				if (_vertexBuffer) {
+					_vertexBuffer.dispose();
+				}
+				_initialize();
+			}
+		}
 		
 		public function get indexOfHost():int {
 			return 0;
@@ -85,7 +112,7 @@ package laya.d3.resource.tempelet {
 			if (_firstActiveElement < _firstFreeElement) {
 				drawVertexCount = (_firstFreeElement - _firstActiveElement) * 2 - 2;
 			} else {
-				drawVertexCount = (setting.maxSegments - _firstActiveElement) * 2 - 2;
+				drawVertexCount = (maxSegments - _firstActiveElement) * 2 - 2;
 				drawVertexCount += _firstFreeElement * 2 - 2;
 			}
 			return drawVertexCount;
@@ -102,15 +129,9 @@ package laya.d3.resource.tempelet {
 			return null;
 		}
 		
-		public function GlitterTemplet(owner:Glitter, setting:GlitterSetting) {
+		public function GlitterTemplet(owner:Glitter) {
 			_owner = owner;
 			_lastTime = 0
-			
-			_lastPatchAddPos0 = new Vector3();
-			_lastPatchAddPos1 = new Vector3();
-			scLeft = new SplineCurvePositionVelocity();//插值器
-			scRight = new SplineCurvePositionVelocity();//插值器
-			
 			_firstActiveElement = 0;
 			_firstNewElement = 0;
 			_firstFreeElement = 0;
@@ -120,9 +141,18 @@ package laya.d3.resource.tempelet {
 			
 			_needPatch = false;
 			
-			this.setting = setting;
-			_initialize();
-			_loadContent();
+			_lastPatchAddPos0 = new Vector3();
+			_lastPatchAddPos1 = new Vector3();
+			scLeft = new SplineCurvePositionVelocity();//插值器
+			scRight = new SplineCurvePositionVelocity();//插值器
+			
+			lifeTime = 0.5;
+			minSegmentDistance = 0.1;
+			minInterpDistance = 0.6;
+			maxSlerpCount = 128;
+			color = new Vector4(1.0, 1.0, 1.0, 1.0);
+			_maxSegments = 200;
+			
 			_owner.on(Event.ENABLED_CHANGED, this, _onEnableChanged);
 		}
 		
@@ -130,13 +160,8 @@ package laya.d3.resource.tempelet {
 		 * @private
 		 */
 		private function _initialize():void {
-			_vertices = new Float32Array(setting.maxSegments * _floatCountPerVertex * 2);
-		}
-		/**
-		 * @private
-		 */
-		private function _loadContent():void {
-			_vertexBuffer = VertexBuffer3D.create(VertexGlitter.vertexDeclaration, setting.maxSegments * 2, WebGLContext.DYNAMIC_DRAW);
+			_vertexBuffer = VertexBuffer3D.create(VertexGlitter.vertexDeclaration, maxSegments * 2, WebGLContext.DYNAMIC_DRAW);
+			_vertices = new Float32Array(maxSegments * _floatCountPerVertex * 2);
 		}
 		
 		public function _onEnableChanged(enable:Boolean):void {
@@ -160,7 +185,7 @@ package laya.d3.resource.tempelet {
 			if (_firstActiveElement < _firstFreeElement) {
 				_updateSubTextureCoordinates(_firstActiveElement, (_firstFreeElement - _firstActiveElement) * 2);
 			} else {
-				_updateSubTextureCoordinates(_firstActiveElement, (setting.maxSegments - _firstActiveElement) * 2);
+				_updateSubTextureCoordinates(_firstActiveElement, (maxSegments - _firstActiveElement) * 2);
 				if (_firstFreeElement > 0)
 					_updateSubTextureCoordinates(0, _firstFreeElement * 2);
 			}
@@ -175,7 +200,7 @@ package laya.d3.resource.tempelet {
 				var vertexOffset:int = startOffset + i;
 				var upVertexOffset:int = vertexOffset * _floatCountPerVertex;
 				var downVertexOffset:int = (vertexOffset + 1) * _floatCountPerVertex;
-				_vertices[upVertexOffset + 3] = _vertices[downVertexOffset + 3] = (_vertices[upVertexOffset + 5] - _currentTime) / setting.lifeTime;//更新uv.x
+				_vertices[upVertexOffset + 3] = _vertices[downVertexOffset + 3] = (_vertices[upVertexOffset + 5] - _currentTime) / lifeTime;//更新uv.x
 			}
 		}
 		
@@ -183,7 +208,7 @@ package laya.d3.resource.tempelet {
 		 * @private
 		 */
 		private function _retireActiveGlitter():void {
-			var particleDuration:Number = setting.lifeTime;
+			var particleDuration:Number = lifeTime;
 			
 			var _floatCountOneSegement:int = _floatCountPerVertex * 2;
 			while (_firstActiveElement != _firstNewElement) {
@@ -197,7 +222,7 @@ package laya.d3.resource.tempelet {
 				
 				_firstActiveElement++;
 				
-				if (_firstActiveElement >= setting.maxSegments)
+				if (_firstActiveElement >= maxSegments)
 					_firstActiveElement = 0;
 			}
 		}
@@ -215,7 +240,7 @@ package laya.d3.resource.tempelet {
 				
 				_firstRetiredElement++;
 				
-				if (_firstRetiredElement >= setting.maxSegments)
+				if (_firstRetiredElement >= maxSegments)
 					_firstRetiredElement = 0;
 			}
 		}
@@ -240,7 +265,7 @@ package laya.d3.resource.tempelet {
 			} else {	//如果新增粒子区域超过Buffer末尾则循环到开头，需upload两次
 				
 				start = _firstActiveElement * 2 * _floatCountPerVertex;
-				_vertexBuffer.setData(_vertices, start, start, (setting.maxSegments - _firstActiveElement) * 2 * _floatCountPerVertex);
+				_vertexBuffer.setData(_vertices, start, start, (maxSegments - _firstActiveElement) * 2 * _floatCountPerVertex);
 				if (_firstFreeElement > 0) {
 					_vertexBuffer.setData(_vertices, 0, 0, _firstFreeElement * 2 * _floatCountPerVertex);
 				}
@@ -251,8 +276,7 @@ package laya.d3.resource.tempelet {
 		/**
 		 * @private
 		 */
-		private function _addGlitter(position0:Vector3, position1:Vector3, time:Number):void//由于循环队列判断算法，当下一个freeParticle等于retiredParticle时不添加例子，意味循环队列中永远有一个空位。（由于此判断算法快速、简单，所以放弃了使循环队列饱和的复杂算法（需判断freeParticle在retiredParticle前、后两种情况并不同处理））
-		{
+		private function _addGlitter(position0:Vector3, position1:Vector3, time:Number):void {
 			if (_needPatch)//由于绘制基元TRIANGLE_STRIP,不能中断，所以如果超出Buffer上限，从零绘制需要补上次的顶点，通常TRIANGLE则不需要
 			{
 				_needPatch = false;
@@ -260,7 +284,7 @@ package laya.d3.resource.tempelet {
 			}
 			
 			var nextFreeParticle:int = _firstFreeElement + 1;
-			if (nextFreeParticle >= setting.maxSegments) {
+			if (nextFreeParticle >= maxSegments) {
 				nextFreeParticle = 0;
 				position0.cloneTo(_lastPatchAddPos0);
 				position1.cloneTo(_lastPatchAddPos1);
@@ -343,7 +367,7 @@ package laya.d3.resource.tempelet {
 				Stat.trianglesFaces += drawVertexCount - 2;
 				Stat.drawCall++;
 			} else {
-				drawVertexCount = (setting.maxSegments - _firstActiveElement) * 2;
+				drawVertexCount = (maxSegments - _firstActiveElement) * 2;
 				glContext.drawArrays(WebGLContext.TRIANGLE_STRIP, _firstActiveElement * 2, drawVertexCount);
 				Stat.trianglesFaces += drawVertexCount - 2;
 				Stat.drawCall++;
@@ -354,7 +378,7 @@ package laya.d3.resource.tempelet {
 					Stat.drawCall++;
 				}
 			}
-			
+		
 		}
 		
 		/**
@@ -408,15 +432,15 @@ package laya.d3.resource.tempelet {
 					var distance1:Number = Vector3.scalarLength(d);
 					
 					var slerpCount:int = 0;
-					var minSegmentDistance:Number = setting.minSegmentDistance;
+					var minSegmentDistance:Number = minSegmentDistance;
 					if (distance0 < minSegmentDistance && distance1 < minSegmentDistance)
 						return;
-					slerpCount = 1 + Math.floor(Math.max(distance0, distance1) / setting.minInterpDistance);
+					slerpCount = 1 + Math.floor(Math.max(distance0, distance1) / minInterpDistance);
 					
 					if (slerpCount === 1) {
 						_addGlitter(position0, position1, _currentTime);
 					} else {
-						slerpCount = Math.min(slerpCount, setting.maxSlerpCount);//最大插值,可取消
+						slerpCount = Math.min(slerpCount, maxSlerpCount);//最大插值,可取消
 						
 						scLeft.Init(_posVelModePosition0, _posVelModeVelocity0, position0, velocity0);
 						scRight.Init(_posVelModePosition1, _posVelModeVelocity1, position1, velocity1);

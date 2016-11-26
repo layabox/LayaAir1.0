@@ -31,7 +31,7 @@ package laya.d3.resource.models {
 		 * @param url 模板地址。
 		 */
 		public static function load(url:String):Mesh {
-			return Laya.loader.create(url,null, null, Mesh);
+			return Laya.loader.create(url, null, null, Mesh);
 		}
 		
 		/** @private */
@@ -149,11 +149,11 @@ package laya.d3.resource.models {
 		/**
 		 *@private
 		 */
-		public function onAsynLoaded(url:String, meshData:ArrayBuffer):void {
+		override public function onAsynLoaded(url:String, data:*):void {
 			var preBasePath:String = URL.basePath;
 			URL.basePath = URL.getPath(URL.formatURL(url));
-			new LoadModel(meshData, this, _materials, url);
-			URL.basePath = preBasePath;;
+			new LoadModel(data as ArrayBuffer, this, _materials, url);
+			URL.basePath = preBasePath;
 			_loaded = true;
 			event(Event.LOADED, this);
 		}

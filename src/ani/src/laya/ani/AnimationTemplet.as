@@ -1,17 +1,13 @@
 package laya.ani {
 	import laya.events.Event;
-	import laya.events.EventDispatcher;
 	import laya.maths.MathUtil;
-	import laya.net.Loader;
+	import laya.resource.Resource;
 	import laya.utils.Byte;
 	
 	/**
-	 * @private
+	 * <code>AnimationTemplet</code> 类用于动画模板资源。
 	 */
-	public class AnimationTemplet extends EventDispatcher// extends Resource
-	{
-		/**唯一标识ID计数器。*/
-		private static var _uniqueIDCounter:int = 1;
+	public class AnimationTemplet extends Resource {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		public static var interpolation:Array = /*[STATIC SAFE]*/ [_LinearInterpolation_0, _QuaternionInterpolation_1, _AngleInterpolation_2, _RadiansInterpolation_3, _Matrix4x4Interpolation_4, _NoInterpolation_5];
 		
@@ -69,24 +65,12 @@ package laya.ani {
 		protected var unfixedCurrentTimes:Float32Array;
 		protected var unfixedKeyframes:Vector.<KeyFramesContent>;
 		protected var unfixedLastAniIndex:int = -1;
-		protected var _loaded:Boolean = false;
+		
 		protected var _aniVersion:String;
 		
 		public var _animationDatasCache:*;
 		
-		public function get loaded():Boolean {
-			return _loaded;
-		}
-		
 		public function AnimationTemplet() {
-		}
-		
-		/**
-		 *@private
-		 */
-		public function onAsynLoaded(url:String, animationData:ArrayBuffer):void {
-			parse(animationData);
-			_endLoaded();
 		}
 		
 		public function _endLoaded():void {
@@ -210,6 +194,14 @@ package laya.ani {
 				}
 			}
 			keyFrames.length--;
+		}
+		
+		/**
+		 *@private
+		 */
+		override public function onAsynLoaded(url:String, data:*):void {
+			parse(data as ArrayBuffer);
+			_endLoaded();
 		}
 		
 		public function getAnimationCount():int {
@@ -352,6 +344,12 @@ package laya.ani {
 				}
 				outOfs += node.keyframeWidth;
 			}
+		}
+		
+		override public function dispose():void 
+		{
+			resourceManager.removeResource(this);
+			super.dispose();
 		}
 	
 	}

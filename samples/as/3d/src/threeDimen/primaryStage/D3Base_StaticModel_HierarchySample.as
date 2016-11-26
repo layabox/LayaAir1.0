@@ -31,6 +31,7 @@ package threeDimen.primaryStage {
 			//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 			var staticMesh:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh")) as Sprite3D;
 			staticMesh.once(Event.HIERARCHY_LOADED, null, function(sprite:Sprite3D):void {
+				staticMesh.transform.localScale = new Vector3(10, 10, 10);
 				var meshSprite:MeshSprite3D = sprite.getChildAt(0) as MeshSprite3D;
 				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
 				mesh.once(Event.LOADED, null, function(mesh:BaseMesh):void {
@@ -41,8 +42,9 @@ package threeDimen.primaryStage {
 						});
 					}
 				});
+			
 			});
-			staticMesh.transform.localScale = new Vector3(10, 10, 10);
+		
 		}
 	}
 }

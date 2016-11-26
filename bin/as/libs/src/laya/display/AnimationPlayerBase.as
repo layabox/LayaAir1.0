@@ -16,7 +16,7 @@ package laya.display {
 	/**
 	 *  动画播放控制器
 	 */
-	public class AnimationPlayerBase extends Sprite {		
+	public class AnimationPlayerBase extends Sprite {
 		/**是否循环播放 */
 		public var loop:Boolean;
 		/**播放类型：0为正序播放，1为倒序播放，2为pingpong播放*/
@@ -37,6 +37,8 @@ package laya.display {
 		protected var _frameRateChanged:Boolean = false;
 		/**@private */
 		private var _controlNode:Sprite;
+		/**@private */
+		protected var _actionName:String;
 		
 		/**
 		 * 播放动画。
@@ -48,6 +50,7 @@ package laya.display {
 			this._isPlaying = true;
 			this.index = (start is String) ? _getFrameByLabel(start) : start;
 			this.loop = loop;
+			this._actionName = name;
 			_isReverse = wrapMode == 1;
 			if (this.interval > 0) {
 				timerLoop(this.interval, this, _frameLoop, null, true);
@@ -101,7 +104,7 @@ package laya.display {
 				}
 			} else {
 				this._index++;
-				if (this._index >= this._count) {					
+				if (this._index >= this._count) {
 					if (loop) {
 						if (wrapMode == 2) {
 							this._index = this._count - 2 >= 0 ? this._count - 2 : 0;
@@ -143,7 +146,7 @@ package laya.display {
 		/**@private */
 		private function _onDisplay():void {
 			if (_isPlaying) {
-				if (_controlNode.displayedInStage) play(_index, loop);
+				if (_controlNode.displayedInStage) play(_index, loop, _actionName);
 				else clearTimer(this, _frameLoop);
 			}
 		}

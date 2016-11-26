@@ -46,18 +46,14 @@ package laya.d3.core.glitter {
 		 * 创建一个 <code>Glitter</code> 实例。
 		 *  @param	settings 配置信息。
 		 */
-		public function Glitter(setting:GlitterSetting) {//暂不支持更换模板和初始化后修改混合状态。
+		public function Glitter() {
 			_glitterRender = new GlitterRender(this);
 			_glitterRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
 			var material:GlitterMaterial = new GlitterMaterial();
 			
-			if (setting.texturePath) {
-				material.diffuseTexture = Texture2D.load(setting.texturePath);
-			}
-			
 			_glitterRender.sharedMaterial = material;
-			_templet = new GlitterTemplet(this, setting);
+			_templet = new GlitterTemplet(this);
 			
 			material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
 			
@@ -67,11 +63,11 @@ package laya.d3.core.glitter {
 		
 		/** @private */
 		private function _changeRenderObject(index:int):RenderElement {
-			var renderObjects:Vector.<RenderElement> = _glitterRender.renderCullingObject._renderElements;
+			var renderObjects:Vector.<RenderElement> = _glitterRender.renderObject._renderElements;
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderObject = _glitterRender.renderCullingObject;
+			renderElement._renderObject = _glitterRender.renderObject;
 			
 			var material:BaseMaterial = _glitterRender.sharedMaterials[index];
 			(material) || (material = GlitterMaterial.defaultMaterial);//确保有材质,由默认材质代替。
@@ -87,18 +83,18 @@ package laya.d3.core.glitter {
 		
 		/** @private */
 		private function _onMaterialChanged(_glitterRender:GlitterRender, index:int, material:BaseMaterial):void {
-			var renderElementCount:int = _glitterRender.renderCullingObject._renderElements.length;
+			var renderElementCount:int = _glitterRender.renderObject._renderElements.length;
 			(index < renderElementCount) && _changeRenderObject(index);
 		}
 		
 		/** @private */
 		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_glitterRender.renderCullingObject);
+			scene.removeFrustumCullingObject(_glitterRender.renderObject);
 		}
 		
 		/** @private */
 		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_glitterRender.renderCullingObject);
+			scene.addFrustumCullingObject(_glitterRender.renderObject);
 		}
 		
 		/**
@@ -134,11 +130,30 @@ package laya.d3.core.glitter {
 			_templet.addVertexPositionVelocity(position0, velocity0, position1, velocity1);
 		}
 		
-		override public function dispose():void {
-			super.dispose();
-			_glitterRender.off(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
-			_templet.dispose();
+		override public function cloneTo(destObject:*):void {
+			super.cloneTo(destObject);
+			
+			var destGlitter:Glitter = destObject as Glitter;
+			var destTemplet:GlitterTemplet = destGlitter.templet;
+			destTemplet.lifeTime = _templet.lifeTime;
+			destTemplet.minSegmentDistance = _templet.minSegmentDistance;
+			destTemplet.minInterpDistance = _templet.minInterpDistance;
+			destTemplet.maxSlerpCount = _templet.maxSlerpCount;
+			destTemplet.color.copyFrom(_templet.color);
+			destTemplet._maxSegments = _templet._maxSegments;
+			var destGlitterRender:GlitterRender = destGlitter._glitterRender;
+			destGlitterRender.sharedMaterials = _glitterRender.sharedMaterials;
+			destGlitterRender.enable = _glitterRender.enable;
+		}
 		
+		/**
+		 * <p>销毁此对象。</p>
+		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
+		 */
+		override public function destroy(destroyChild:Boolean = true):void {
+			super.destroy(destroyChild);
+			_glitterRender.destroy();
+			_templet = null;
 		}
 	
 	}

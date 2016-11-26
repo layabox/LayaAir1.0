@@ -2,7 +2,7 @@ module laya {
     import Stage = Laya.Stage;
     import Loader = Laya.Loader;
     import Particle2D = Laya.Particle2D;
-    import ParticleSettings = Laya.ParticleSettings;
+    import ParticleSetting = Laya.ParticleSetting;
     import Browser = Laya.Browser;
     import Handler = Laya.Handler;
     import Stat = Laya.Stat;
@@ -28,7 +28,7 @@ module laya {
             Laya.loader.load("res/particles/RadiusMode.part", Handler.create(this, this.onAssetsLoaded), null, Loader.JSON);
         }
 
-        public onAssetsLoaded(settings: ParticleSettings): void {
+        public onAssetsLoaded(settings: ParticleSetting): void {
             this.sp = new Particle2D(settings);
             this.sp.emitter.start();
             this.sp.play();

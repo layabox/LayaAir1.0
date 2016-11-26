@@ -1,7 +1,7 @@
 package laya.ui {
 	import laya.display.Sprite;
 	import laya.ui.Button;
-	import laya.ui.Group;
+	import laya.ui.UIGroup;
 	
 	/**
 	 * <code>Tab</code> 组件用来定义选项卡按钮组。	 *
@@ -79,7 +79,7 @@ package laya.ui {
 	 * }
 	 * </listing>
 	 */
-	public class Tab extends Group {
+	public class Tab extends UIGroup {
 		
 		/**
 		 * @private

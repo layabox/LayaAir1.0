@@ -131,8 +131,6 @@ package laya.d3.component {
 		 */
 		public function _uninitialize():void {
 			_unload(owner);
-			_owner.off(Event.LAYER_CHANGED, this, _onLayerChanged);
-			_owner.off(Event.ENABLED_CHANGED, this, _onEnableChanged);
 			_owner = null;
 		}
 		

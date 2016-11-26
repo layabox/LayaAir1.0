@@ -44,7 +44,7 @@ package laya.d3.core {
 		 * @param mesh 网格,同时会加载网格所用默认材质。
 		 * @param name 名字。
 		 */
-		public function MeshSprite3D(mesh:BaseMesh, name:String = null) {
+		public function MeshSprite3D(mesh:BaseMesh = null, name:String = null) {
 			super(name);
 			_meshFilter = new MeshFilter(this);
 			_meshRender = new MeshRender(this);
@@ -52,33 +52,24 @@ package laya.d3.core {
 			_meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
 			_meshRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
-			_meshFilter.sharedMesh = mesh;
-			
-			if (mesh is Mesh)//TODO:待考虑。
-				if (mesh.loaded)
-					_meshRender.sharedMaterials = (mesh as Mesh).materials;
-				else
-					mesh.once(Event.LOADED, this, _applyMeshMaterials);
-		
-		}
-		
-		/** @private */
-		private function _applyMeshMaterials(mesh:Mesh):void {
-			var shaderMaterials:Vector.<BaseMaterial> = _meshRender.sharedMaterials;
-			var meshMaterials:Vector.<BaseMaterial> = mesh.materials;
-			for (var i:int = 0, n:int = meshMaterials.length; i < n; i++)
-				(shaderMaterials[i]) || (shaderMaterials[i] = meshMaterials[i]);
-			
-			_meshRender.sharedMaterials = shaderMaterials;
+			if (mesh) {
+				_meshFilter.sharedMesh = mesh;
+				
+				if (mesh is Mesh)//TODO:待考虑。
+					if (mesh.loaded)
+						_meshRender.sharedMaterials = (mesh as Mesh).materials;
+					else
+						mesh.once(Event.LOADED, this, _applyMeshMaterials);
+			}
 		}
 		
 		/** @private */
 		private function _changeRenderObjectByMesh(index:int):RenderElement {
-			var renderObjects:Vector.<RenderElement> = _meshRender.renderCullingObject._renderElements;
+			var renderObjects:Vector.<RenderElement> = _meshRender.renderObject._renderElements;
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderObject = _meshRender.renderCullingObject;
+			renderElement._renderObject = _meshRender.renderObject;
 			
 			var material:BaseMaterial = _meshRender.sharedMaterials[index];
 			(material) || (material = StandardMaterial.defaultMaterial);//确保有材质,由默认材质代替。
@@ -94,7 +85,7 @@ package laya.d3.core {
 		
 		/** @private */
 		private function _changeRenderObjectByMaterial(index:int, material:BaseMaterial):RenderElement {
-			var renderElement:RenderElement = _meshRender.renderCullingObject._renderElements[index];
+			var renderElement:RenderElement = _meshRender.renderObject._renderElements[index];
 			
 			var element:IRenderable = _meshFilter.sharedMesh.getRenderElement(index);
 			renderElement._mainSortID = _getSortID(element, material);//根据MeshID排序，处理同材质合并处理。
@@ -108,7 +99,7 @@ package laya.d3.core {
 		/** @private */
 		private function _changeRenderObjectsByMesh():void {
 			var renderElementsCount:int = _meshFilter.sharedMesh.getRenderElementsCount();
-			_meshRender.renderCullingObject._renderElements.length = renderElementsCount;
+			_meshRender.renderObject._renderElements.length = renderElementsCount;
 			for (var i:int = 0; i < renderElementsCount; i++)
 				_changeRenderObjectByMesh(i);
 		}
@@ -128,19 +119,29 @@ package laya.d3.core {
 		}
 		
 		/** @private */
-		private function _onMaterialChanged(meshRender:MeshRender,index:int,material:BaseMaterial):void {//TODO:
-			var renderElementCount:int = _meshRender.renderCullingObject._renderElements.length;
-			(index<renderElementCount)&&_changeRenderObjectByMaterial(index, material);
+		private function _onMaterialChanged(meshRender:MeshRender, index:int, material:BaseMaterial):void {//TODO:
+			var renderElementCount:int = _meshRender.renderObject._renderElements.length;
+			(index < renderElementCount) && _changeRenderObjectByMaterial(index, material);
 		}
 		
 		/** @private */
 		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_meshRender.renderCullingObject);
+			scene.removeFrustumCullingObject(_meshRender.renderObject);
 		}
 		
 		/** @private */
 		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_meshRender.renderCullingObject);
+			scene.addFrustumCullingObject(_meshRender.renderObject);
+		}
+		
+		/** @private */
+		public function _applyMeshMaterials(mesh:Mesh):void {
+			var shaderMaterials:Vector.<BaseMaterial> = _meshRender.sharedMaterials;
+			var meshMaterials:Vector.<BaseMaterial> = mesh.materials;
+			for (var i:int = 0, n:int = meshMaterials.length; i < n; i++)
+				(shaderMaterials[i]) || (shaderMaterials[i] = meshMaterials[i]);
+			
+			_meshRender.sharedMaterials = shaderMaterials;
 		}
 		
 		/**
@@ -157,10 +158,22 @@ package laya.d3.core {
 			_childs.length && _updateChilds(state);
 		}
 		
-		override public function dispose():void {
-			super.dispose();
-			_meshFilter.off(Event.MESH_CHANGED, this, _onMeshChanged);
-			_meshRender.off(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
+		override public function cloneTo(destObject:*):void {
+			super.cloneTo(destObject);
+			var meshSprite3D:MeshSprite3D = destObject as MeshSprite3D;
+			meshSprite3D._meshFilter.sharedMesh = _meshFilter.sharedMesh;
+			var destMeshRender:MeshRender = meshSprite3D._meshRender;
+			destMeshRender.enable = _meshRender.enable;
+			destMeshRender.sharedMaterials = _meshRender.sharedMaterials;
+			destMeshRender.castShadow = _meshRender.castShadow;
+			destMeshRender.receiveShadow = _meshRender.receiveShadow;
+		
+		}
+		
+		override public function destroy(destroyChild:Boolean = true):void {
+			super.destroy(destroyChild);
+			_meshFilter.destroy();
+			_meshRender.destroy();
 		}
 	
 	}

@@ -19,7 +19,7 @@ package laya.d3.resource {
 		 * @param url Texture2D地址。
 		 */
 		public static function load(url:String):Texture2D {
-			return Laya.loader.create(url,null, null,Texture2D);
+			return Laya.loader.create(url, null, null, Texture2D);
 		}
 		
 		/**@private 文件路径全名。*/
@@ -103,23 +103,13 @@ package laya.d3.resource {
 			}
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			_image.onload = null;
-			_image = null;
+			_image = null;//TODO:临时
 			
 			if (isPot)
 				memorySize = w * h * 4 * (1 + 1 / 3);//使用mipmap则在原来的基础上增加1/3
 			else
 				memorySize = w * h * 4;
 			_recreateLock = false;
-		}
-		
-		/**
-		 *@private
-		 */
-		public function onAsynLoaded(url:String, textureData:*):void {
-			_src = url;
-			_onTextureLoaded(textureData);
-			_loaded = true;
-			event(Event.LOADED, this);
 		}
 		
 		/**
@@ -158,6 +148,32 @@ package laya.d3.resource {
 				completeCreate();//处理创建完成后相关操作
 			}
 		}
+		
+		/**
+		 *@private
+		 */
+		override public function onAsynLoaded(url:String, data:*):void {
+			_src = url;
+			_onTextureLoaded(data);
+			activeResource();
+			_loaded = true;
+			event(Event.LOADED, this);
+		}
+		
+		///**
+		 //* 返回图片像素。
+		 //* @return 图片像素。
+		 //*/
+		//public function getPixels():Float32Array
+		//{
+			//var pixeles:Float32Array = new Float32Array(_width * _height);
+			//
+			//var rendertexture:RenderTexture = new RenderTexture(_width, _height);
+			//rendertexture.start();
+			//rendertexture.end();
+			//
+			//return  pixeles;
+		//}
 		
 		/**
 		 * 销毁资源。

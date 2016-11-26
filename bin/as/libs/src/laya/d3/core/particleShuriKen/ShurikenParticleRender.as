@@ -1,7 +1,6 @@
 package laya.d3.core.particleShuriKen {
 	import laya.d3.core.particle.Particle3D;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
-	import laya.d3.core.particleShuriKen.emitter.ParticleBaseEmitter;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.shader.ShaderDefines3D;
 	

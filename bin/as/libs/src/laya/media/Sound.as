@@ -27,6 +27,13 @@ package laya.media {
 		}
 		
 		/**
+		 * 获取总时间。
+		 */
+		public function get duration():Number {
+			return 0;
+		}
+		
+		/**
 		 * 释放声音资源。
 		 *
 		 */

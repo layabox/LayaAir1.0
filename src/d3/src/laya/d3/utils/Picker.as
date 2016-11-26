@@ -48,7 +48,7 @@ package laya.d3.utils {
 			nerSourceE[2] = viewPort.minDepth;
 			
 			var farSource:Vector3 = _tempVector31;
-			var farSourceE:Vector3 = farSource.elements;
+			var farSourceE:Float32Array = farSource.elements;
 			farSourceE[0] = x;
 			farSourceE[1] = y;
 			farSourceE[2] = viewPort.maxDepth;

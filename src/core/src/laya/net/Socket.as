@@ -253,13 +253,15 @@ package laya.net {
 		 */
 		public function flush():void {
 			if (_output && _output.length > 0) {
+				var evt:*;
 				try {
-					this._socket && this._socket.send(this._output.__getBuffer().slice(0, this._output.length));
-					_output.endian = endian;
-					_output.clear();
+					this._socket && this._socket.send(this._output.__getBuffer().slice(0, this._output.length));		
 				} catch (e:*) {
-                     event(Event.ERROR,e);
+					evt = e;          
 				}
+				_output.endian = endian;
+				_output.clear();
+				if(evt) event(Event.ERROR,evt);
 			}
 		}
 	}

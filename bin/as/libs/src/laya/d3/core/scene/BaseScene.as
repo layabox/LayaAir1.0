@@ -1,13 +1,9 @@
 package laya.d3.core.scene {
-	import laya.d3.core.Camera;
-	import laya.d3.core.Layer;
-	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.BaseCamera;
+	import laya.d3.core.Layer;
+	import laya.d3.core.Sprite3D;
 	import laya.d3.core.light.LightSprite;
-	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.RenderConfig;
-	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.DynamicBatchManager;
@@ -19,7 +15,6 @@ package laya.d3.core.scene {
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Viewport;
 	import laya.d3.resource.RenderTexture;
-	import laya.d3.resource.models.Sky;
 	import laya.d3.resource.models.Sky;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.display.Node;
@@ -33,7 +28,6 @@ package laya.d3.core.scene {
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.submit.ISubmit;
-	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.RenderState2D;
 	import laya.webgl.utils.ValusArray;
 	
@@ -237,7 +231,6 @@ package laya.d3.core.scene {
 		private function _onAdded():void {
 			if (Laya.stage.contains(this)) {
 				_addSelfAndChildrenRenderObjects();
-				_changeSelfAndChildrenInStage(true);
 				
 				var index:int = _parent._childs.indexOf(this);
 				Laya.stage._scenes[index]=this;
@@ -250,24 +243,12 @@ package laya.d3.core.scene {
 		private function _onRemoved():void {
 			if (Laya.stage.contains(this)) {//触发时还在stage中
 				_clearSelfAndChildrenRenderObjects();
-				_changeSelfAndChildrenInStage(false);
 				
 				var scenes:Array = Laya.stage._scenes;
 				scenes.splice(scenes.indexOf(this), 1);
 			}
 		}
 		
-		/**
-		 * @private
-		 */
-		public function _changeSelfAndChildrenInStage(isInStage:Boolean):void {
-			_isInStage = isInStage;
-			event(Event.INSTAGE_CHANGED, isInStage);
-			
-			var children:Array = _childs;
-			for (var i:int = 0, n:int = children.length; i < n; i++)
-				(_childs[i] as Sprite3D)._changeSelfAndChildrenInStage(isInStage);
-		}
 		
 		/**
 		 * 清理自身和子节点渲染物体,重写此函数。
@@ -408,7 +389,7 @@ package laya.d3.core.scene {
 					gl.disable(WebGLContext.SCISSOR_TEST);
 				} else {
 					gl.clear(WebGLContext.DEPTH_BUFFER_BIT);
-						//gl.clear(WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT | WebGLContext.COLOR_BUFFER_BIT);
+					//gl.clear(WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT | WebGLContext.COLOR_BUFFER_BIT);
 				}
 				break;
 			case BaseCamera.CLEARFLAG_SKY: 

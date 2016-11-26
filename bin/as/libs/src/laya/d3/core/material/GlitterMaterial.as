@@ -1,6 +1,5 @@
 package laya.d3.core.material {
 	import laya.d3.core.glitter.Glitter;
-	import laya.d3.core.glitter.GlitterSetting;
 	import laya.d3.core.particle.Particle3D;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.math.Matrix4x4;
@@ -69,11 +68,10 @@ package laya.d3.core.material {
 		override public function _setLoopShaderParams(state:RenderState, projectionView:Matrix4x4, worldMatrix:Matrix4x4, mesh:IRenderable, material:BaseMaterial):void {
 			var glitter:Glitter = state.owner as Glitter;
 			var templet:GlitterTemplet = glitter.templet;
-			var setting:GlitterSetting = templet.setting;
 			
-			state.shaderValue.pushValue(UNICOLOR, setting.color.elements);
+			state.shaderValue.pushValue(UNICOLOR, templet.color.elements);
 			state.shaderValue.pushValue(MVPMATRIX, state.projectionViewMatrix.elements);
-			state.shaderValue.pushValue(DURATION, setting.lifeTime);
+			state.shaderValue.pushValue(DURATION, templet.lifeTime);
 			state.shaderValue.pushValue(ALBEDO, templet._albedo.elements);
 			state.shaderValue.pushValue(CURRENTTIME, templet._currentTime);//设置粒子的时间参数，可通过此参数停止粒子动画
 		}

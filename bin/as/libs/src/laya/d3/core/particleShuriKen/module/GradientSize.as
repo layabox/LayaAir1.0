@@ -1,21 +1,22 @@
 package laya.d3.core.particleShuriKen.module {
+	import laya.d3.core.IClone;
 	import laya.d3.math.Vector3;
 	
 	/**
 	 * <code>GradientSize</code> 类用于创建渐变尺寸。
 	 */
-	public class GradientSize {
+	public class GradientSize implements IClone{
 		/**
 		 * 通过渐变尺寸创建一个 <code>GradientSize</code> 实例。
 		 * @param	gradient 渐变尺寸。
 		 * @return  渐变尺寸。
 		 */
-		public static function createByGradientSize(gradient:GradientDataNumber):GradientSize {
-			var sizeOverLifetime:GradientSize = new GradientSize();
-			sizeOverLifetime._type = 0;
-			sizeOverLifetime._separateAxes = false;
-			sizeOverLifetime._gradientSize = gradient;
-			return sizeOverLifetime;
+		public static function createByGradient(gradient:GradientDataNumber):GradientSize {
+			var gradientSize:GradientSize = new GradientSize();
+			gradientSize._type = 0;
+			gradientSize._separateAxes = false;
+			gradientSize._gradient = gradient;
+			return gradientSize;
 		}
 		
 		/**
@@ -25,14 +26,14 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param	gradientZ 渐变尺寸Z。
 		 * @return  渐变尺寸。
 		 */
-		public static function createByGradientSizeSeparate(gradientX:GradientDataNumber, gradientY:GradientDataNumber, gradientZ:GradientDataNumber):GradientSize {
-			var sizeOverLifetime:GradientSize = new GradientSize();
-			sizeOverLifetime._type = 0;
-			sizeOverLifetime._separateAxes = true;
-			sizeOverLifetime._gradientSizeX = gradientX;
-			sizeOverLifetime._gradientSizeY = gradientY;
-			sizeOverLifetime._gradientSizeZ = gradientZ;
-			return sizeOverLifetime;
+		public static function createByGradientSeparate(gradientX:GradientDataNumber, gradientY:GradientDataNumber, gradientZ:GradientDataNumber):GradientSize {
+			var gradientSize:GradientSize = new GradientSize();
+			gradientSize._type = 0;
+			gradientSize._separateAxes = true;
+			gradientSize._gradientX = gradientX;
+			gradientSize._gradientY = gradientY;
+			gradientSize._gradientZ = gradientZ;
+			return gradientSize;
 		}
 		
 		/**
@@ -42,12 +43,12 @@ package laya.d3.core.particleShuriKen.module {
 		 * @return 渐变尺寸。
 		 */
 		public static function createByRandomTwoConstant(constantMin:Number, constantMax:Number):GradientSize {
-			var sizeOverLifetime:GradientSize = new GradientSize();
-			sizeOverLifetime._type = 1;
-			sizeOverLifetime._separateAxes = false;
-			sizeOverLifetime._constantMin = constantMin;
-			sizeOverLifetime._constantMax = constantMax;
-			return sizeOverLifetime;
+			var gradientSize:GradientSize = new GradientSize();
+			gradientSize._type = 1;
+			gradientSize._separateAxes = false;
+			gradientSize._constantMin = constantMin;
+			gradientSize._constantMax = constantMax;
+			return gradientSize;
 		}
 		
 		/**
@@ -57,12 +58,12 @@ package laya.d3.core.particleShuriKen.module {
 		 * @return   渐变尺寸。
 		 */
 		public static function createByRandomTwoConstantSeparate(constantMinSeparate:Vector3, constantMaxSeparate:Vector3):GradientSize {
-			var sizeOverLifetime:GradientSize = new GradientSize();
-			sizeOverLifetime._type = 1;
-			sizeOverLifetime._separateAxes = true;
-			sizeOverLifetime._constantMinSeparate = constantMinSeparate;
-			sizeOverLifetime._constantMaxSeparate = constantMaxSeparate;
-			return sizeOverLifetime;
+			var gradientSize:GradientSize = new GradientSize();
+			gradientSize._type = 1;
+			gradientSize._separateAxes = true;
+			gradientSize._constantMinSeparate = constantMinSeparate;
+			gradientSize._constantMaxSeparate = constantMaxSeparate;
+			return gradientSize;
 		}
 		
 		/**
@@ -71,13 +72,13 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param	gradientMax 最大渐变尺寸。
 		 * @return 渐变尺寸。
 		 */
-		public static function createByRandomTwoGradientSize(gradientMin:GradientDataNumber, gradientMax:GradientDataNumber):GradientSize {
-			var sizeOverLifetime:GradientSize = new GradientSize();
-			sizeOverLifetime._type = 2;
-			sizeOverLifetime._separateAxes = false;
-			sizeOverLifetime._gradientSizeMin = gradientMin;
-			sizeOverLifetime._gradientSizeMax = gradientMax;
-			return sizeOverLifetime;
+		public static function createByRandomTwoGradient(gradientMin:GradientDataNumber, gradientMax:GradientDataNumber):GradientSize {
+			var gradientSize:GradientSize = new GradientSize();
+			gradientSize._type = 2;
+			gradientSize._separateAxes = false;
+			gradientSize._gradientMin = gradientMin;
+			gradientSize._gradientMax = gradientMax;
+			return gradientSize;
 		}
 		
 		/**
@@ -90,17 +91,17 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param	gradientZMax Z轴最大渐变尺寸。
 		 * @return  渐变尺寸。
 		 */
-		public static function createByRandomTwoGradientSizeSeparate(gradientXMin:GradientDataNumber, gradientXMax:GradientDataNumber, gradientYMin:GradientDataNumber, gradientYMax:GradientDataNumber, gradientZMin:GradientDataNumber, gradientZMax:GradientDataNumber):GradientSize {
-			var sizeOverLifetime:GradientSize = new GradientSize();
-			sizeOverLifetime._type = 2;
-			sizeOverLifetime._separateAxes = true;
-			sizeOverLifetime._gradientSizeXMin = gradientXMin;
-			sizeOverLifetime._gradientSizeXMax = gradientXMax;
-			sizeOverLifetime._gradientSizeYMin = gradientYMin;
-			sizeOverLifetime._gradientSizeYMax = gradientYMax;
-			sizeOverLifetime._gradientSizeZMin = gradientZMin;
-			sizeOverLifetime._gradientSizeZMax = gradientZMax;
-			return sizeOverLifetime;
+		public static function createByRandomTwoGradientSeparate(gradientXMin:GradientDataNumber, gradientXMax:GradientDataNumber, gradientYMin:GradientDataNumber, gradientYMax:GradientDataNumber, gradientZMin:GradientDataNumber, gradientZMax:GradientDataNumber):GradientSize {
+			var gradientSize:GradientSize = new GradientSize();
+			gradientSize._type = 2;
+			gradientSize._separateAxes = true;
+			gradientSize._gradientXMin = gradientXMin;
+			gradientSize._gradientXMax = gradientXMax;
+			gradientSize._gradientYMin = gradientYMin;
+			gradientSize._gradientYMax = gradientYMax;
+			gradientSize._gradientZMin = gradientZMin;
+			gradientSize._gradientZMax = gradientZMax;
+			return gradientSize;
 		}
 		
 		/**@private */
@@ -109,13 +110,13 @@ package laya.d3.core.particleShuriKen.module {
 		private var _separateAxes:Boolean;
 		
 		/**@private */
-		private var _gradientSize:GradientDataNumber;
+		private var _gradient:GradientDataNumber;
 		/**@private */
-		private var _gradientSizeX:GradientDataNumber;
+		private var _gradientX:GradientDataNumber;
 		/**@private */
-		private var _gradientSizeY:GradientDataNumber;
+		private var _gradientY:GradientDataNumber;
 		/**@private */
-		private var _gradientSizeZ:GradientDataNumber;
+		private var _gradientZ:GradientDataNumber;
 		
 		/**@private */
 		private var _constantMin:Number;
@@ -127,21 +128,21 @@ package laya.d3.core.particleShuriKen.module {
 		private var _constantMaxSeparate:Vector3;
 		
 		/**@private */
-		private var _gradientSizeMin:GradientDataNumber;
+		private var _gradientMin:GradientDataNumber;
 		/**@private */
-		private var _gradientSizeMax:GradientDataNumber;
+		private var _gradientMax:GradientDataNumber;
 		/**@private */
-		private var _gradientSizeXMin:GradientDataNumber;
+		private var _gradientXMin:GradientDataNumber;
 		/**@private */
-		private var _gradientSizeXMax:GradientDataNumber;
+		private var _gradientXMax:GradientDataNumber;
 		/**@private */
-		private var _gradientSizeYMin:GradientDataNumber;
+		private var _gradientYMin:GradientDataNumber;
 		/**@private */
-		private var _gradientSizeYMax:GradientDataNumber;
+		private var _gradientYMax:GradientDataNumber;
 		/**@private */
-		private var _gradientSizeZMin:GradientDataNumber;
+		private var _gradientZMin:GradientDataNumber;
 		/**@private */
-		private var _gradientSizeZMax:GradientDataNumber;
+		private var _gradientZMax:GradientDataNumber;
 		
 		/**
 		 *生命周期尺寸类型，0曲线模式，1随机双常量模式，2随机双曲线模式。
@@ -161,28 +162,28 @@ package laya.d3.core.particleShuriKen.module {
 		 * 渐变尺寸。
 		 */
 		public function get gradientSize():GradientDataNumber {
-			return _gradientSize;
+			return _gradient;
 		}
 		
 		/**
 		 * 渐变尺寸X。
 		 */
 		public function get gradientSizeX():GradientDataNumber {
-			return _gradientSizeX;
+			return _gradientX;
 		}
 		
 		/**
 		 * 渐变尺寸Y。
 		 */
 		public function get gradientSizeY():GradientDataNumber {
-			return _gradientSizeY;
+			return _gradientY;
 		}
 		
 		/**
 		 *渐变尺寸Z。
 		 */
 		public function get gradientSizeZ():GradientDataNumber {
-			return _gradientSizeZ;
+			return _gradientZ;
 		}
 		
 		/**
@@ -216,57 +217,57 @@ package laya.d3.core.particleShuriKen.module {
 		/**
 		 *渐变最小尺寸。
 		 */
-		public function get gradientSizeMin():GradientDataNumber {
-			return _gradientSizeMin;
+		public function get gradientMin():GradientDataNumber {
+			return _gradientMin;
 		}
 		
 		/**
 		 * 渐变最大尺寸。
 		 */
-		public function get gradientSizeMax():GradientDataNumber {
-			return _gradientSizeMax;
+		public function get gradientMax():GradientDataNumber {
+			return _gradientMax;
 		}
 		
 		/**
 		 * 渐变最小尺寸X。
 		 */
-		public function get gradientSizeXMin():GradientDataNumber {
-			return _gradientSizeXMin;
+		public function get gradientXMin():GradientDataNumber {
+			return _gradientXMin;
 		}
 		
 		/**
 		 * 渐变最大尺寸X。
 		 */
-		public function get gradientSizeXMax():GradientDataNumber {
-			return _gradientSizeXMax;
+		public function get gradientXMax():GradientDataNumber {
+			return _gradientXMax;
 		}
 		
 		/**
 		 * 渐变最小尺寸Y。
 		 */
-		public function get gradientSizeYMin():GradientDataNumber {
-			return _gradientSizeYMin;
+		public function get gradientYMin():GradientDataNumber {
+			return _gradientYMin;
 		}
 		
 		/**
 		 *渐变最大尺寸Y。
 		 */
-		public function get gradientSizeYMax():GradientDataNumber {
-			return _gradientSizeYMax;
+		public function get gradientYMax():GradientDataNumber {
+			return _gradientYMax;
 		}
 		
 		/**
 		 * 渐变最小尺寸Z。
 		 */
-		public function get gradientSizeZMin():GradientDataNumber {
-			return _gradientSizeZMin;
+		public function get gradientZMin():GradientDataNumber {
+			return _gradientZMin;
 		}
 		
 		/**
 		 * 渐变最大尺寸Z。
 		 */
-		public function get gradientSizeZMax():GradientDataNumber {
-			return _gradientSizeZMax;
+		public function get gradientZMax():GradientDataNumber {
+			return _gradientZMax;
 		}
 		
 		/**
@@ -274,6 +275,42 @@ package laya.d3.core.particleShuriKen.module {
 		 */
 		public function GradientSize() {
 		
+		}
+		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		public function cloneTo(destObject:*):void {
+			var destGradientSize:GradientSize = destObject as GradientSize;
+			destGradientSize._type = _type;
+			destGradientSize._separateAxes = _separateAxes;
+			_gradient.cloneTo(destGradientSize._gradient);
+			_gradientX.cloneTo(destGradientSize._gradientX);
+			_gradientY.cloneTo(destGradientSize._gradientY);
+			_gradientZ.cloneTo(destGradientSize._gradientZ);
+			destGradientSize._constantMin = _constantMin;
+			destGradientSize._constantMax = _constantMax;
+			destGradientSize._constantMinSeparate.copyFrom(_constantMinSeparate);
+			destGradientSize._constantMaxSeparate.copyFrom(_constantMaxSeparate);
+			_gradientMin.cloneTo(destGradientSize._gradientMin);
+			_gradientMax.cloneTo(destGradientSize._gradientMax);
+			_gradientXMin.cloneTo(destGradientSize._gradientXMin);
+			_gradientXMax.cloneTo(destGradientSize._gradientXMax);
+			_gradientYMin.cloneTo(destGradientSize._gradientYMin);
+			_gradientYMax.cloneTo(destGradientSize._gradientYMax);
+			_gradientZMin.cloneTo(destGradientSize._gradientZMin);
+			_gradientZMax.cloneTo(destGradientSize._gradientZMax);
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var destGradientSize:GradientSize = __JS__("new this.constructor()");
+			cloneTo(destGradientSize);
+			return destGradientSize;
 		}
 	
 	}

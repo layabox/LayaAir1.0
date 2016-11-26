@@ -327,7 +327,7 @@ package laya.d3.core {
 		 * 通过RenderingOrder属性对摄像机机型排序。
 		 */
 		public function _sortCamerasByRenderingOrder():void {
-			if (isInStage) {
+			if (_displayedInStage) {
 				var cameraPool:Vector.<BaseCamera> = scene._cameraPool;//TODO:可优化，从队列中移除再加入
 				var n:int = cameraPool.length - 1;
 				for (var i:int = 0; i < n; i++) {

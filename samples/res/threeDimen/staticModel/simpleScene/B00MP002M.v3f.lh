@@ -1,4 +1,28 @@
 {
+	"type":"Sprite3D",
+	"props":{
+		"name":"temp"
+	},
+	"customProps":{
+		"translate":[
+			0,
+			0,
+			0
+		],
+		"rotation":[
+			0,
+			0,
+			0,
+			-1
+		],
+		"scale":[
+			1,
+			1,
+			1
+		]
+	},
+	"child":[
+{
   "type": "MeshSprite3D",
        "instanceParams":{
 	"loadPath": "B00MP002M-DEFAULT01.lm"
@@ -26,4 +50,4 @@
     ]
   },
   "child": []
-}
+}]}

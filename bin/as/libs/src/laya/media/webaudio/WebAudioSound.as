@@ -250,6 +250,14 @@ package laya.media.webaudio {
 			return channel;
 		}
 		
+		override public function get duration():Number 
+		{
+			if (this.audioBuffer) {
+				return this.audioBuffer.duration;
+			}
+			return 0;
+		}
+		
 		public function dispose():void {
 			delete _dataCache[url];
 			delete __loadingSound[url];

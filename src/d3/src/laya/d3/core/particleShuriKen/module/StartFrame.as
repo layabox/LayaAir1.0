@@ -1,9 +1,10 @@
 package laya.d3.core.particleShuriKen.module {
+	import laya.d3.core.IClone;
 	
 	/**
 	 * <code>StartFrame</code> 类用于创建开始帧。
 	 */
-	public class StartFrame {
+	public class StartFrame implements IClone {
 		/**
 		 * 通过随机常量旋转创建一个 <code>StartFrame</code> 实例。
 		 * @param	constant  固定帧。
@@ -74,6 +75,28 @@ package laya.d3.core.particleShuriKen.module {
 		 */
 		public function StartFrame() {
 		
+		}
+		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		public function cloneTo(destObject:*):void {
+			var destStartFrame:StartFrame = destObject as StartFrame;
+			destStartFrame._type = _type;
+			destStartFrame._constant = _constant;
+			destStartFrame._constantMin = _constantMin;
+			destStartFrame._constantMax = _constantMax;
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var destStartFrame:StartFrame = __JS__("new this.constructor()");
+			cloneTo(destStartFrame);
+			return destStartFrame;
 		}
 	
 	}

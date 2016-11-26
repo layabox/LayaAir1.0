@@ -40,6 +40,19 @@ package laya.d3.math {
 		}
 		
 		/**
+		 * 缩放二维向量。
+		 * @param	a 源二维向量。
+		 * @param	b 缩放值。
+		 * @param	out 输出二维向量。
+		 */
+		public static function scale(a:Vector2, b:Number, out:Vector2):void {
+			var e:Float32Array = out.elements;
+			var f:Float32Array = a.elements;
+			e[0] = f[0] * b;
+			e[1] = f[1] * b;
+		}
+		
+		/**
 		 * 从一个克隆二维向量克隆。
 		 * @param	v 源二维向量。
 		 */

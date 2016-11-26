@@ -44,7 +44,7 @@ package laya.d3.utils {
 				Vector3.TransformNormal(rayDirection, invertWorldMatrix, rayDirection);
 				Vector3.normalize(rayDirection,rayDirection);//TODO:方向不是单位向量，计算出具体有问题，为矢量长度分之一。
 				
-				var renderElements:Vector.<RenderElement> = meshSprite3D.meshRender.renderCullingObject._renderElements;
+				var renderElements:Vector.<RenderElement> = meshSprite3D.meshRender.renderObject._renderElements;
 				for (var i:int = 0, iNum:int = renderElements.length; i < iNum; i++) {
 					
 					var renderObj:IRenderable = renderElements[i].renderObj;

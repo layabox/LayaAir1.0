@@ -34,9 +34,9 @@ package threeDimen.primaryStage {
 			camera.addComponent(CameraMoveScript);
 			
 			effectSprite = scene.addChild(Sprite3D.load("../../../../res/threeDimen/staticModel/effect/WuShen/WuShen.lh")) as Sprite3D;
-			effectSprite.once(Event.HIERARCHY_LOADED, null, function(sender:Sprite3D, sprite3D:Sprite3D):void {
+			effectSprite.once(Event.HIERARCHY_LOADED, null, function(sender:Sprite3D):void {
 				setMeshParams(effectSprite, BaseMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
-				var rootAnimations:RigidAnimations = sprite3D.addComponent(RigidAnimations) as RigidAnimations;
+				var rootAnimations:RigidAnimations = sender.addComponent(RigidAnimations) as RigidAnimations;
 				rootAnimations.url = "../../../../res/threeDimen/staticModel/effect/WuShen/WuShen.lani";
 				rootAnimations.player.play(0);
 			});

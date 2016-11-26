@@ -9,8 +9,8 @@
 	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Text=laya.display.Text,Texture=laya.resource.Texture;
 	var Tween=laya.utils.Tween,Utils=laya.utils.Utils;
 	Laya.interface('laya.ui.IItem');
-	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
@@ -724,6 +724,7 @@
 			return this._layout.anchorX;
 			},function(value){
 			this.getLayout().anchorX=value;
+			this.layOutEabled=true;
 			this.resetLayoutX();
 		});
 
@@ -732,6 +733,7 @@
 			return this._layout.anchorY;
 			},function(value){
 			this.getLayout().anchorY=value;
+			this.layOutEabled=true;
 			this.resetLayoutY();
 		});
 
@@ -798,7 +800,7 @@
 
 		/**是否变灰。*/
 		__getset(0,__proto,'gray',function(){
-			return this._disabled;
+			return this._gray;
 			},function(value){
 			if (value!==this._gray){
 				this._gray=value;
@@ -3216,8 +3218,8 @@
 		*设置滑块的位置信息。
 		*/
 		__proto.setBarPoint=function(){
-			if (this.isVertical)this._bar.x=(this._bg.width-this._bar.width)*0.5;
-			else this._bar.y=(this._bg.height-this._bar.height)*0.5;
+			if (this.isVertical)this._bar.x=Math.round((this._bg.width-this._bar.width)*0.5);
+			else this._bar.y=Math.round((this._bg.height-this._bar.height)*0.5);
 		}
 
 		/**@inheritDoc */
@@ -4644,410 +4646,6 @@
 
 
 	/**
-	*<code>Group</code> 是一个可以自动布局的项集合控件。
-	*<p> <code>Group</code> 的默认项对象为 <code>Button</code> 类实例。
-	*<code>Group</code> 是 <code>Tab</code> 和 <code>RadioGroup</code> 的基类。</p>
-	*/
-	//class laya.ui.Group extends laya.ui.Box
-	var Group=(function(_super){
-		function Group(labels,skin){
-			this.selectHandler=null;
-			this._items=null;
-			this._selectedIndex=-1;
-			this._skin=null;
-			this._direction="horizontal";
-			this._space=0;
-			this._labels=null;
-			this._labelColors=null;
-			this._labelStrokeColor=null;
-			this._strokeColors=null;
-			this._labelStroke=NaN;
-			this._labelSize=0;
-			this._labelBold=false;
-			this._labelPadding=null;
-			this._labelAlign=null;
-			this._stateNum=0;
-			this._labelChanged=false;
-			Group.__super.call(this);
-			this.skin=skin;
-			this.labels=labels;
-		}
-
-		__class(Group,'laya.ui.Group',_super);
-		var __proto=Group.prototype;
-		Laya.imps(__proto,{"laya.ui.IItem":true})
-		/**@inheritDoc */
-		__proto.preinitialize=function(){
-			this.mouseEnabled=true;
-		}
-
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			laya.ui.Component.prototype.destroy.call(this,destroyChild);
-			this._items && (this._items.length=0);
-			this._items=null;
-			this.selectHandler=null;
-		}
-
-		/**
-		*添加一个项对象，返回此项对象的索引id。
-		*
-		*@param item 需要添加的项对象。
-		*@param autoLayOut 是否自动布局，如果为true，会根据 <code>direction</code> 和 <code>space</code> 属性计算item的位置。
-		*@return
-		*/
-		__proto.addItem=function(item,autoLayOut){
-			(autoLayOut===void 0)&& (autoLayOut=true);
-			var display=item;
-			var index=this._items.length;
-			display.name="item"+index;
-			this.addChild(display);
-			this.initItems();
-			if (autoLayOut && index > 0){
-				var preItem=this._items [index-1];
-				if (this._direction=="horizontal"){
-					display.x=preItem.x+preItem.width+this._space;
-					}else {
-					display.y=preItem.y+preItem.height+this._space;
-				}
-				}else {
-				if (autoLayOut){
-					display.x=0;
-					display.y=0;
-				}
-			}
-			return index;
-		}
-
-		/**
-		*删除一个项对象。
-		*@param item 需要删除的项对象。
-		*@param autoLayOut 是否自动布局，如果为true，会根据 <code>direction</code> 和 <code>space</code> 属性计算item的位置。
-		*/
-		__proto.delItem=function(item,autoLayOut){
-			(autoLayOut===void 0)&& (autoLayOut=true);
-			var index=this._items.indexOf(item);
-			if (index !=-1){
-				var display=item;
-				this.removeChild(display);
-				for (var i=index+1,n=this._items.length;i < n;i++){
-					var child=this._items [i];
-					child.name="item"+(i-1);
-					if (autoLayOut){
-						if (this._direction=="horizontal"){
-							child.x-=display.width+this._space;
-							}else {
-							child.y-=display.height+this._space;
-						}
-					}
-				}
-				this.initItems();
-				if (this._selectedIndex >-1){
-					var newIndex=0;
-					newIndex=this._selectedIndex < this._items.length ? this._selectedIndex :(this._selectedIndex-1);
-					this._selectedIndex=-1;
-					this.selectedIndex=newIndex;
-				}
-			}
-		}
-
-		/**
-		*初始化项对象们。
-		*/
-		__proto.initItems=function(){
-			this._items || (this._items=[]);
-			this._items.length=0;
-			for (var i=0;i < 10000;i++){
-				var item=this.getChildByName("item"+i);
-				if (item==null)break ;
-				this._items.push(item);
-				item.selected=(i===this._selectedIndex);
-				item.clickHandler=Handler.create(this,this.itemClick,[i],false);
-			}
-		}
-
-		/**
-		*@private
-		*项对象的点击事件侦听处理函数。
-		*@param index 项索引。
-		*/
-		__proto.itemClick=function(index){
-			this.selectedIndex=index;
-		}
-
-		/**
-		*@private
-		*通过对象的索引设置项对象的 <code>selected</code> 属性值。
-		*@param index 需要设置的项对象的索引。
-		*@param selected 表示项对象的选中状态。
-		*/
-		__proto.setSelect=function(index,selected){
-			if (this._items && index >-1 && index < this._items.length)this._items[index].selected=selected;
-		}
-
-		/**
-		*@private
-		*创建一个项显示对象。
-		*@param skin 项对象的皮肤。
-		*@param label 项对象标签。
-		*/
-		__proto.createItem=function(skin,label){
-			return null;
-		}
-
-		/**
-		*@private
-		*更改项对象的属性值。
-		*/
-		__proto.changeLabels=function(){
-			this._labelChanged=false;
-			if (this._items){
-				var left=0
-				for (var i=0,n=this._items.length;i < n;i++){
-					var btn=this._items [i];
-					this._skin && (btn.skin=this._skin);
-					this._labelColors && (btn.labelColors=this._labelColors);
-					this._labelSize && (btn.labelSize=this._labelSize);
-					this._labelStroke && (btn.labelStroke=this._labelStroke);
-					this._labelStrokeColor && (btn.labelStrokeColor=this._labelStrokeColor);
-					this._strokeColors && (btn.strokeColors=this._strokeColors);
-					this._labelBold && (btn.labelBold=this._labelBold);
-					this._labelPadding && (btn.labelPadding=this._labelPadding);
-					this._labelAlign && (btn.labelAlign=this._labelAlign);
-					this._stateNum && (btn.stateNum=this._stateNum);
-					if (this._direction==="horizontal"){
-						btn.y=0;
-						btn.x=left;
-						left+=btn.width+this._space;
-						}else {
-						btn.x=0;
-						btn.y=left;
-						left+=btn.height+this._space;
-					}
-				}
-			}
-			this.changeSize();
-		}
-
-		/**@inheritDoc */
-		__proto.commitMeasure=function(){
-			this.runCallLater(this.changeLabels);
-		}
-
-		/**@private */
-		__proto._setLabelChanged=function(){
-			if (!this._labelChanged){
-				this._labelChanged=true;
-				this.callLater(this.changeLabels);
-			}
-		}
-
-		/**
-		*<p>描边颜色，以字符串表示。</p>
-		*默认值为 "#000000"（黑色）;
-		*@see laya.display.Text.strokeColor()
-		*/
-		__getset(0,__proto,'labelStrokeColor',function(){
-			return this._labelStrokeColor;
-			},function(value){
-			if (this._labelStrokeColor !=value){
-				this._labelStrokeColor=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*@copy laya.ui.Image#skin
-		*/
-		__getset(0,__proto,'skin',function(){
-			return this._skin;
-			},function(value){
-			if (this._skin !=value){
-				this._skin=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*表示当前选择的项索引。默认值为-1。
-		*/
-		__getset(0,__proto,'selectedIndex',function(){
-			return this._selectedIndex;
-			},function(value){
-			if (this._selectedIndex !=value){
-				this.setSelect(this._selectedIndex,false);
-				this._selectedIndex=value;
-				this.setSelect(value,true);
-				this.event(/*laya.events.Event.CHANGE*/"change");
-				this.selectHandler && this.selectHandler.runWith(this._selectedIndex);
-			}
-		});
-
-		/**
-		*标签集合字符串。以逗号做分割，如"item0,item1,item2,item3,item4,item5"。
-		*/
-		__getset(0,__proto,'labels',function(){
-			return this._labels;
-			},function(value){
-			if (this._labels !=value){
-				this._labels=value;
-				this.removeChildren();
-				this._setLabelChanged();
-				if (this._labels){
-					var a=this._labels.split(",");
-					for (var i=0,n=a.length;i < n;i++){
-						var item=this.createItem(this._skin,a[i]);
-						item.name="item"+i;
-						this.addChild(item);
-					}
-				}
-				this.initItems();
-			}
-		});
-
-		/**
-		*<p>表示各个状态下的描边颜色。</p>
-		*@see laya.display.Text.strokeColor()
-		*/
-		__getset(0,__proto,'strokeColors',function(){
-			return this._strokeColors;
-			},function(value){
-			if (this._strokeColors !=value){
-				this._strokeColors=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*@copy laya.ui.Button#labelColors()
-		*/
-		__getset(0,__proto,'labelColors',function(){
-			return this._labelColors;
-			},function(value){
-			if (this._labelColors !=value){
-				this._labelColors=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*<p>描边宽度（以像素为单位）。</p>
-		*默认值0，表示不描边。
-		*@see laya.display.Text.stroke()
-		*/
-		__getset(0,__proto,'labelStroke',function(){
-			return this._labelStroke;
-			},function(value){
-			if (this._labelStroke !=value){
-				this._labelStroke=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*表示按钮文本标签的字体大小。
-		*/
-		__getset(0,__proto,'labelSize',function(){
-			return this._labelSize;
-			},function(value){
-			if (this._labelSize !=value){
-				this._labelSize=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*表示按钮文本标签的字体大小。
-		*/
-		__getset(0,__proto,'stateNum',function(){
-			return this._stateNum;
-			},function(value){
-			if (this._stateNum !=value){
-				this._stateNum=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*表示按钮文本标签是否为粗体字。
-		*/
-		__getset(0,__proto,'labelBold',function(){
-			return this._labelBold;
-			},function(value){
-			if (this._labelBold !=value){
-				this._labelBold=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*表示按钮文本标签的边距。
-		*<p><b>格式：</b>"上边距,右边距,下边距,左边距"。</p>
-		*/
-		__getset(0,__proto,'labelPadding',function(){
-			return this._labelPadding;
-			},function(value){
-			if (this._labelPadding !=value){
-				this._labelPadding=value;
-				this._setLabelChanged();
-			}
-		});
-
-		/**
-		*布局方向。
-		*<p>默认值为"horizontal"。</p>
-		*<p><b>取值：</b>
-		*<li>"horizontal"：表示水平布局。</li>
-		*<li>"vertical"：表示垂直布局。</li>
-		*</p>
-		*/
-		__getset(0,__proto,'direction',function(){
-			return this._direction;
-			},function(value){
-			this._direction=value;
-			this._setLabelChanged();
-		});
-
-		/**
-		*项对象们之间的间隔（以像素为单位）。
-		*/
-		__getset(0,__proto,'space',function(){
-			return this._space;
-			},function(value){
-			this._space=value;
-			this._setLabelChanged();
-		});
-
-		/**
-		*项对象们的存放数组。
-		*/
-		__getset(0,__proto,'items',function(){
-			return this._items;
-		});
-
-		/**
-		*获取或设置当前选择的项对象。
-		*/
-		__getset(0,__proto,'selection',function(){
-			return this._selectedIndex >-1 && this._selectedIndex < this._items.length ? this._items[this._selectedIndex] :null;
-			},function(value){
-			this.selectedIndex=this._items.indexOf(value);
-		});
-
-		/**@inheritDoc */
-		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
-			this._dataSource=value;
-			if (((typeof value=='number')&& Math.floor(value)==value)|| (typeof value=='string'))this.selectedIndex=parseInt(value);
-			else if ((value instanceof Array))this.labels=(value).join(",");
-			else _super.prototype._$set_dataSource.call(this,value);
-		});
-
-		return Group;
-	})(Box)
-
-
-	/**
 	*<code>LayoutBox</code> 是一个布局容器类。
 	*/
 	//class laya.ui.LayoutBox extends laya.ui.Box
@@ -6385,6 +5983,410 @@
 
 		return HScrollBar;
 	})(ScrollBar)
+
+
+	/**
+	*<code>Group</code> 是一个可以自动布局的项集合控件。
+	*<p> <code>Group</code> 的默认项对象为 <code>Button</code> 类实例。
+	*<code>Group</code> 是 <code>Tab</code> 和 <code>RadioGroup</code> 的基类。</p>
+	*/
+	//class laya.ui.UIGroup extends laya.ui.Box
+	var UIGroup=(function(_super){
+		function UIGroup(labels,skin){
+			this.selectHandler=null;
+			this._items=null;
+			this._selectedIndex=-1;
+			this._skin=null;
+			this._direction="horizontal";
+			this._space=0;
+			this._labels=null;
+			this._labelColors=null;
+			this._labelStrokeColor=null;
+			this._strokeColors=null;
+			this._labelStroke=NaN;
+			this._labelSize=0;
+			this._labelBold=false;
+			this._labelPadding=null;
+			this._labelAlign=null;
+			this._stateNum=0;
+			this._labelChanged=false;
+			UIGroup.__super.call(this);
+			this.skin=skin;
+			this.labels=labels;
+		}
+
+		__class(UIGroup,'laya.ui.UIGroup',_super);
+		var __proto=UIGroup.prototype;
+		Laya.imps(__proto,{"laya.ui.IItem":true})
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			this.mouseEnabled=true;
+		}
+
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			laya.ui.Component.prototype.destroy.call(this,destroyChild);
+			this._items && (this._items.length=0);
+			this._items=null;
+			this.selectHandler=null;
+		}
+
+		/**
+		*添加一个项对象，返回此项对象的索引id。
+		*
+		*@param item 需要添加的项对象。
+		*@param autoLayOut 是否自动布局，如果为true，会根据 <code>direction</code> 和 <code>space</code> 属性计算item的位置。
+		*@return
+		*/
+		__proto.addItem=function(item,autoLayOut){
+			(autoLayOut===void 0)&& (autoLayOut=true);
+			var display=item;
+			var index=this._items.length;
+			display.name="item"+index;
+			this.addChild(display);
+			this.initItems();
+			if (autoLayOut && index > 0){
+				var preItem=this._items [index-1];
+				if (this._direction=="horizontal"){
+					display.x=preItem.x+preItem.width+this._space;
+					}else {
+					display.y=preItem.y+preItem.height+this._space;
+				}
+				}else {
+				if (autoLayOut){
+					display.x=0;
+					display.y=0;
+				}
+			}
+			return index;
+		}
+
+		/**
+		*删除一个项对象。
+		*@param item 需要删除的项对象。
+		*@param autoLayOut 是否自动布局，如果为true，会根据 <code>direction</code> 和 <code>space</code> 属性计算item的位置。
+		*/
+		__proto.delItem=function(item,autoLayOut){
+			(autoLayOut===void 0)&& (autoLayOut=true);
+			var index=this._items.indexOf(item);
+			if (index !=-1){
+				var display=item;
+				this.removeChild(display);
+				for (var i=index+1,n=this._items.length;i < n;i++){
+					var child=this._items [i];
+					child.name="item"+(i-1);
+					if (autoLayOut){
+						if (this._direction=="horizontal"){
+							child.x-=display.width+this._space;
+							}else {
+							child.y-=display.height+this._space;
+						}
+					}
+				}
+				this.initItems();
+				if (this._selectedIndex >-1){
+					var newIndex=0;
+					newIndex=this._selectedIndex < this._items.length ? this._selectedIndex :(this._selectedIndex-1);
+					this._selectedIndex=-1;
+					this.selectedIndex=newIndex;
+				}
+			}
+		}
+
+		/**
+		*初始化项对象们。
+		*/
+		__proto.initItems=function(){
+			this._items || (this._items=[]);
+			this._items.length=0;
+			for (var i=0;i < 10000;i++){
+				var item=this.getChildByName("item"+i);
+				if (item==null)break ;
+				this._items.push(item);
+				item.selected=(i===this._selectedIndex);
+				item.clickHandler=Handler.create(this,this.itemClick,[i],false);
+			}
+		}
+
+		/**
+		*@private
+		*项对象的点击事件侦听处理函数。
+		*@param index 项索引。
+		*/
+		__proto.itemClick=function(index){
+			this.selectedIndex=index;
+		}
+
+		/**
+		*@private
+		*通过对象的索引设置项对象的 <code>selected</code> 属性值。
+		*@param index 需要设置的项对象的索引。
+		*@param selected 表示项对象的选中状态。
+		*/
+		__proto.setSelect=function(index,selected){
+			if (this._items && index >-1 && index < this._items.length)this._items[index].selected=selected;
+		}
+
+		/**
+		*@private
+		*创建一个项显示对象。
+		*@param skin 项对象的皮肤。
+		*@param label 项对象标签。
+		*/
+		__proto.createItem=function(skin,label){
+			return null;
+		}
+
+		/**
+		*@private
+		*更改项对象的属性值。
+		*/
+		__proto.changeLabels=function(){
+			this._labelChanged=false;
+			if (this._items){
+				var left=0
+				for (var i=0,n=this._items.length;i < n;i++){
+					var btn=this._items [i];
+					this._skin && (btn.skin=this._skin);
+					this._labelColors && (btn.labelColors=this._labelColors);
+					this._labelSize && (btn.labelSize=this._labelSize);
+					this._labelStroke && (btn.labelStroke=this._labelStroke);
+					this._labelStrokeColor && (btn.labelStrokeColor=this._labelStrokeColor);
+					this._strokeColors && (btn.strokeColors=this._strokeColors);
+					this._labelBold && (btn.labelBold=this._labelBold);
+					this._labelPadding && (btn.labelPadding=this._labelPadding);
+					this._labelAlign && (btn.labelAlign=this._labelAlign);
+					this._stateNum && (btn.stateNum=this._stateNum);
+					if (this._direction==="horizontal"){
+						btn.y=0;
+						btn.x=left;
+						left+=btn.width+this._space;
+						}else {
+						btn.x=0;
+						btn.y=left;
+						left+=btn.height+this._space;
+					}
+				}
+			}
+			this.changeSize();
+		}
+
+		/**@inheritDoc */
+		__proto.commitMeasure=function(){
+			this.runCallLater(this.changeLabels);
+		}
+
+		/**@private */
+		__proto._setLabelChanged=function(){
+			if (!this._labelChanged){
+				this._labelChanged=true;
+				this.callLater(this.changeLabels);
+			}
+		}
+
+		/**
+		*<p>描边颜色，以字符串表示。</p>
+		*默认值为 "#000000"（黑色）;
+		*@see laya.display.Text.strokeColor()
+		*/
+		__getset(0,__proto,'labelStrokeColor',function(){
+			return this._labelStrokeColor;
+			},function(value){
+			if (this._labelStrokeColor !=value){
+				this._labelStrokeColor=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*@copy laya.ui.Image#skin
+		*/
+		__getset(0,__proto,'skin',function(){
+			return this._skin;
+			},function(value){
+			if (this._skin !=value){
+				this._skin=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*表示当前选择的项索引。默认值为-1。
+		*/
+		__getset(0,__proto,'selectedIndex',function(){
+			return this._selectedIndex;
+			},function(value){
+			if (this._selectedIndex !=value){
+				this.setSelect(this._selectedIndex,false);
+				this._selectedIndex=value;
+				this.setSelect(value,true);
+				this.event(/*laya.events.Event.CHANGE*/"change");
+				this.selectHandler && this.selectHandler.runWith(this._selectedIndex);
+			}
+		});
+
+		/**
+		*标签集合字符串。以逗号做分割，如"item0,item1,item2,item3,item4,item5"。
+		*/
+		__getset(0,__proto,'labels',function(){
+			return this._labels;
+			},function(value){
+			if (this._labels !=value){
+				this._labels=value;
+				this.removeChildren();
+				this._setLabelChanged();
+				if (this._labels){
+					var a=this._labels.split(",");
+					for (var i=0,n=a.length;i < n;i++){
+						var item=this.createItem(this._skin,a[i]);
+						item.name="item"+i;
+						this.addChild(item);
+					}
+				}
+				this.initItems();
+			}
+		});
+
+		/**
+		*<p>表示各个状态下的描边颜色。</p>
+		*@see laya.display.Text.strokeColor()
+		*/
+		__getset(0,__proto,'strokeColors',function(){
+			return this._strokeColors;
+			},function(value){
+			if (this._strokeColors !=value){
+				this._strokeColors=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*@copy laya.ui.Button#labelColors()
+		*/
+		__getset(0,__proto,'labelColors',function(){
+			return this._labelColors;
+			},function(value){
+			if (this._labelColors !=value){
+				this._labelColors=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*<p>描边宽度（以像素为单位）。</p>
+		*默认值0，表示不描边。
+		*@see laya.display.Text.stroke()
+		*/
+		__getset(0,__proto,'labelStroke',function(){
+			return this._labelStroke;
+			},function(value){
+			if (this._labelStroke !=value){
+				this._labelStroke=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*表示按钮文本标签的字体大小。
+		*/
+		__getset(0,__proto,'labelSize',function(){
+			return this._labelSize;
+			},function(value){
+			if (this._labelSize !=value){
+				this._labelSize=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*表示按钮文本标签的字体大小。
+		*/
+		__getset(0,__proto,'stateNum',function(){
+			return this._stateNum;
+			},function(value){
+			if (this._stateNum !=value){
+				this._stateNum=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*表示按钮文本标签是否为粗体字。
+		*/
+		__getset(0,__proto,'labelBold',function(){
+			return this._labelBold;
+			},function(value){
+			if (this._labelBold !=value){
+				this._labelBold=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*表示按钮文本标签的边距。
+		*<p><b>格式：</b>"上边距,右边距,下边距,左边距"。</p>
+		*/
+		__getset(0,__proto,'labelPadding',function(){
+			return this._labelPadding;
+			},function(value){
+			if (this._labelPadding !=value){
+				this._labelPadding=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*布局方向。
+		*<p>默认值为"horizontal"。</p>
+		*<p><b>取值：</b>
+		*<li>"horizontal"：表示水平布局。</li>
+		*<li>"vertical"：表示垂直布局。</li>
+		*</p>
+		*/
+		__getset(0,__proto,'direction',function(){
+			return this._direction;
+			},function(value){
+			this._direction=value;
+			this._setLabelChanged();
+		});
+
+		/**
+		*项对象们之间的间隔（以像素为单位）。
+		*/
+		__getset(0,__proto,'space',function(){
+			return this._space;
+			},function(value){
+			this._space=value;
+			this._setLabelChanged();
+		});
+
+		/**
+		*项对象们的存放数组。
+		*/
+		__getset(0,__proto,'items',function(){
+			return this._items;
+		});
+
+		/**
+		*获取或设置当前选择的项对象。
+		*/
+		__getset(0,__proto,'selection',function(){
+			return this._selectedIndex >-1 && this._selectedIndex < this._items.length ? this._items[this._selectedIndex] :null;
+			},function(value){
+			this.selectedIndex=this._items.indexOf(value);
+		});
+
+		/**@inheritDoc */
+		__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
+			this._dataSource=value;
+			if (((typeof value=='number')&& Math.floor(value)==value)|| (typeof value=='string'))this.selectedIndex=parseInt(value);
+			else if ((value instanceof Array))this.labels=(value).join(",");
+			else _super.prototype._$set_dataSource.call(this,value);
+		});
+
+		return UIGroup;
+	})(Box)
 
 
 	/**
@@ -7960,14 +7962,14 @@
 				this.dragArea=dragTarget.x+","+dragTarget.y+","+dragTarget.width+","+dragTarget.height;
 				dragTarget.removeSelf();
 			}
-			this.on(/*laya.events.Event.CLICK*/"click",this,this.onClick);
+			this.on(/*laya.events.Event.CLICK*/"click",this,this._onClick);
 		}
 
 		/**
 		*@private (protected)
 		*对象的 <code>Event.CLICK</code> 点击事件侦听处理函数。
 		*/
-		__proto.onClick=function(e){
+		__proto._onClick=function(e){
 			var btn=e.target;
 			if (btn){
 				switch (btn.name){
@@ -8013,7 +8015,7 @@
 		/**
 		*@private
 		*/
-		__proto.onMouseDown=function(e){
+		__proto._onMouseDown=function(e){
 			var point=this.getMousePoint();
 			if (this._dragArea.contains(point.x,point.y))this.startDrag();
 			else this.stopDrag();
@@ -8035,10 +8037,10 @@
 			if (value){
 				var a=UIUtils.fillArray([0,0,0,0],value,Number);
 				this._dragArea=new Rectangle(a[0],a[1],a[2],a[3]);
-				this.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onMouseDown);
+				this.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this._onMouseDown);
 				}else {
 				this._dragArea=null;
-				this.off(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onMouseDown);
+				this.off(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this._onMouseDown);
 			}
 		});
 
@@ -8223,6 +8225,53 @@
 
 
 	/**
+	*<code>VBox</code> 是一个垂直布局容器类。
+	*/
+	//class laya.ui.VBox extends laya.ui.LayoutBox
+	var VBox=(function(_super){
+		function VBox(){VBox.__super.call(this);;
+		};
+
+		__class(VBox,'laya.ui.VBox',_super);
+		var __proto=VBox.prototype;
+		/**@inheritDoc */
+		__proto.changeItems=function(){
+			this._itemChanged=false;
+			var items=[];
+			var maxWidth=0;
+			for (var i=0,n=this.numChildren;i < n;i++){
+				var item=this.getChildAt(i);
+				if (item){
+					items.push(item);
+					maxWidth=Math.max(maxWidth,item.displayWidth);
+				}
+			}
+			this.sortItem(items);
+			var top=0;
+			for (i=0,n=this.numChildren;i < n;i++){
+				item=items[i];
+				item.y=top;
+				top+=item.displayHeight+this._space;
+				if (this._align=="left"){
+					item.x=0;
+					}else if (this._align=="center"){
+					item.x=(maxWidth-item.displayWidth)*0.5;
+					}else if (this._align=="right"){
+					item.x=maxWidth-item.displayWidth;
+				}
+			}
+			this.changeSize();
+		}
+
+		VBox.NONE="none";
+		VBox.LEFT="left";
+		VBox.CENTER="center";
+		VBox.RIGHT="right";
+		return VBox;
+	})(LayoutBox)
+
+
+	/**
 	*<code>RadioGroup</code> 控件定义一组 <code>Radio</code> 控件，这些控件相互排斥；
 	*因此，用户每次只能选择一个 <code>Radio</code> 控件。
 	*
@@ -8300,7 +8349,7 @@
 		*}
 	*</listing>
 	*/
-	//class laya.ui.RadioGroup extends laya.ui.Group
+	//class laya.ui.RadioGroup extends laya.ui.UIGroup
 	var RadioGroup=(function(_super){
 		function RadioGroup(){RadioGroup.__super.call(this);;
 		};
@@ -8313,7 +8362,7 @@
 		}
 
 		return RadioGroup;
-	})(Group)
+	})(UIGroup)
 
 
 	/**
@@ -8392,7 +8441,7 @@
 		*}
 	*</listing>
 	*/
-	//class laya.ui.Tab extends laya.ui.Group
+	//class laya.ui.Tab extends laya.ui.UIGroup
 	var Tab=(function(_super){
 		function Tab(){Tab.__super.call(this);;
 		};
@@ -8408,54 +8457,7 @@
 		}
 
 		return Tab;
-	})(Group)
-
-
-	/**
-	*<code>VBox</code> 是一个垂直布局容器类。
-	*/
-	//class laya.ui.VBox extends laya.ui.LayoutBox
-	var VBox=(function(_super){
-		function VBox(){VBox.__super.call(this);;
-		};
-
-		__class(VBox,'laya.ui.VBox',_super);
-		var __proto=VBox.prototype;
-		/**@inheritDoc */
-		__proto.changeItems=function(){
-			this._itemChanged=false;
-			var items=[];
-			var maxWidth=0;
-			for (var i=0,n=this.numChildren;i < n;i++){
-				var item=this.getChildAt(i);
-				if (item){
-					items.push(item);
-					maxWidth=Math.max(maxWidth,item.displayWidth);
-				}
-			}
-			this.sortItem(items);
-			var top=0;
-			for (i=0,n=this.numChildren;i < n;i++){
-				item=items[i];
-				item.y=top;
-				top+=item.displayHeight+this._space;
-				if (this._align=="left"){
-					item.x=0;
-					}else if (this._align=="center"){
-					item.x=(maxWidth-item.displayWidth)*0.5;
-					}else if (this._align=="right"){
-					item.x=maxWidth-item.displayWidth;
-				}
-			}
-			this.changeSize();
-		}
-
-		VBox.NONE="none";
-		VBox.LEFT="left";
-		VBox.CENTER="center";
-		VBox.RIGHT="right";
-		return VBox;
-	})(LayoutBox)
+	})(UIGroup)
 
 
 	/**

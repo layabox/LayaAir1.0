@@ -162,5 +162,10 @@ package laya.net {
 		public function get data():* {
 			return _data;
 		}
+		
+		/**原生XMLHttpRequest引用*/
+		public function get http():* {
+			return _http;
+		}
 	}
 }
