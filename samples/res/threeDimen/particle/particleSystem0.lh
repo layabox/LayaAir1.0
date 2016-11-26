@@ -104,8 +104,11 @@
     "threeDStartRotation":false,"threeDStartRotationTip":"暂不支持",
     "startRotationType":0,"startRotationTypeTip":"暂不支持1、3模式",
     "startRotationConstant":0,
+	"startRotationConstantSeparate":[90.0,90.0,90.0],
     "startRotationConstantMin":90,
     "startRotationConstantMax":90,
+	 "startRotationConstantMinSeparate":[0.0,0.0,0.0],
+    "startRotationConstantMaxSeparate":[90.0,90.0,90.0],
 
     "randomizeRotationDirection":0,
 
@@ -129,17 +132,26 @@
         "bursts":[{"time":0.0,"min":15,"max":15}]
 	},
 
-	"shape":{"enable":true,"shapeType":0,"shapeTypeTip":"目前支持0、1、3",
+	"shape":{"enable":true,"shapeType":0,"shapeTypeTip":"目前支持0、1、2、3",
 	    "sphereRadius":30,
 	    "sphereEmitFromShell": true,
 	    "sphereRandomDirection":false,
         "hemiSphereRadius":30,
 	    "hemiSphereEmitFromShell": true,
 	    "hemiSphereRandomDirection":false,
+        "coneAngle": 25.0,
+        "coneRadius": 30.0,
+        "coneLength": 5.0,
+        "coneEmitType": 0,
+        "coneRandomDirection":true,
         "boxX": 1,
 	    "boxY": 1,
         "boxZ": 1,
-	    "boxRandomDirection":false
+	    "boxRandomDirection":false,
+        "CircleRadius":30,
+        "CircleArc":30,
+	    "CircleEmitFromEdge": true,
+	    "CircleRandomDirection":true
 	},
 
     "velocityOverLifetime":{"enable":false,"space":0,"velocity":{

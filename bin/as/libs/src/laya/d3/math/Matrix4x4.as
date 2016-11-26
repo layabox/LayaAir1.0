@@ -5,11 +5,14 @@ package laya.d3.math {
 	 */
 	public class Matrix4x4 {
 		/**@private */
-		private static var TEMP:Matrix4x4 = /*[STATIC SAFE]*/ new Matrix4x4();
+		private static var _tempMatrix4x4:Matrix4x4 = /*[STATIC SAFE]*/ new Matrix4x4();
+		/**@private */
+		private static var _tempQuaternion:Quaternion =new Quaternion();
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Matrix4x4 =/*[STATIC SAFE]*/ new Matrix4x4();
 		
 		private static var _translationVector:Vector3 = new Vector3();
+		
 		/**
 		 * 绕X轴旋转
 		 * @param	rad  旋转角度
@@ -59,6 +62,54 @@ package laya.d3.math {
 			oe[0] = oe[5] = c;
 			oe[1] = s;
 			oe[4] = -s;
+		}
+		
+		/**
+		 * 通过yaw pitch roll旋转创建旋转矩阵。
+		 * @param	yaw
+		 * @param	pitch
+		 * @param	roll
+		 * @param	result
+		 */
+		public static function createRotationYawPitchRoll(yaw:Number, pitch:Number, roll:Number, result:Matrix4x4):void {
+			Quaternion.createFromYawPitchRoll(yaw, pitch, roll, _tempQuaternion);
+			createRotationQuaternion(_tempQuaternion, result);
+		}
+		
+		/**
+		 * 通过四元数创建旋转矩阵。
+		 * @param	rotation 旋转四元数。
+		 * @param	result 输出旋转矩阵
+		 */
+		public static function createRotationQuaternion(rotation:Quaternion, result:Matrix4x4):void {
+			var rotationE:Float32Array = rotation.elements;
+			var resultE:Float32Array = result.elements;
+			var rotationX:Number = rotationE[0];
+			var rotationY:Number = rotationE[1];
+			var rotationZ:Number = rotationE[2];
+			var rotationW:Number = rotationE[3];
+			
+			var xx:Number = rotationX * rotationX;
+			var yy:Number = rotationY * rotationY;
+			var zz:Number = rotationZ * rotationZ;
+			var xy:Number = rotationX * rotationY;
+			var zw:Number = rotationZ * rotationW;
+			var zx:Number = rotationZ * rotationX;
+			var yw:Number = rotationY * rotationW;
+			var yz:Number = rotationY * rotationZ;
+			var xw:Number = rotationX * rotationW;
+			
+			resultE[3] = resultE[7] = resultE[11] = resultE[12] = resultE[13] = resultE[14] = 0;
+			resultE[15] = 1.0;
+			resultE[0] = 1.0 - (2.0 * (yy + zz));
+			resultE[1] = 2.0 * (xy + zw);
+			resultE[2] = 2.0 * (zx - yw);
+			resultE[4] = 2.0 * (xy - zw);
+			resultE[5] = 1.0 - (2.0 * (zz + xx));
+			resultE[6] = 2.0 * (yz + xw);
+			resultE[8] = 2.0 * (zx + yw);
+			resultE[9] = 2.0 * (yz - xw);
+			resultE[10] = 1.0 - (2.0 * (yy + xx));
 		}
 		
 		/**
@@ -303,14 +354,14 @@ package laya.d3.math {
 			
 			var oe:Float32Array = out.elements;
 			
-            var yScale:Number = 1.0 / Math.tan(fov * 0.5);
-            var q:Number = far / (near - far);
-
-            oe[0] = yScale / aspect;
-            oe[5] = yScale;
-            oe[10] = q;
-            oe[11] = -1.0;
-            oe[14] = q * near;
+			var yScale:Number = 1.0 / Math.tan(fov * 0.5);
+			var q:Number = far / (near - far);
+			
+			oe[0] = yScale / aspect;
+			oe[5] = yScale;
+			oe[10] = q;
+			oe[11] = -1.0;
+			oe[14] = q * near;
 			oe[1] = oe[2] = oe[3] = oe[4] = oe[6] = oe[7] = oe[8] = oe[9] = oe[12] = oe[13] = oe[15] = 0;
 		}
 		
@@ -348,19 +399,18 @@ package laya.d3.math {
 		 * 创建一个 <code>Matrix4x4</code> 实例。
 		 * @param	4x4矩阵的各元素
 		 */
-		public function Matrix4x4(m11:Number = 1, m12:Number = 0, m13:Number = 0, m14:Number = 0, m21:Number = 0, m22:Number = 1, m23:Number = 0, m24:Number = 0,m31:Number = 0, m32:Number = 0, m33:Number = 1, m34:Number = 0,m41:Number = 0, m42:Number = 0, m43:Number = 0, m44:Number = 1) {
-			
+		public function Matrix4x4(m11:Number = 1, m12:Number = 0, m13:Number = 0, m14:Number = 0, m21:Number = 0, m22:Number = 1, m23:Number = 0, m24:Number = 0, m31:Number = 0, m32:Number = 0, m33:Number = 1, m34:Number = 0, m41:Number = 0, m42:Number = 0, m43:Number = 0, m44:Number = 1) {
 			var e:Float32Array = this.elements = new Float32Array(16);
-			e[0]  = m11;
-			e[1]  = m12;
-			e[2]  = m13;
-			e[3]  = m14;
-			e[4]  = m21;
-			e[5]  = m22;
-			e[6]  = m23;
-			e[7]  = m24;
-			e[8]  = m31;
-			e[9]  = m32;
+			e[0] = m11;
+			e[1] = m12;
+			e[2] = m13;
+			e[3] = m14;
+			e[4] = m21;
+			e[5] = m22;
+			e[6] = m23;
+			e[7] = m24;
+			e[8] = m31;
+			e[9] = m32;
 			e[10] = m33;
 			e[11] = m34;
 			e[12] = m41;
@@ -373,27 +423,12 @@ package laya.d3.math {
 		 * 判断两个4x4矩阵的值是否相等。
 		 * @param	other 4x4矩阵
 		 */
-		public function equalsOtherMatrix(other:Matrix4x4):Boolean{
+		public function equalsOtherMatrix(other:Matrix4x4):Boolean {
 			
 			var e:Float32Array = this.elements;
 			var oe:Float32Array = other.elements;
 			
-			return (MathUtils3D.nearEqual(e[0],  oe[0]) &&
-				    MathUtils3D.nearEqual(e[1],  oe[1]) &&
-				    MathUtils3D.nearEqual(e[2],  oe[2]) &&
-				    MathUtils3D.nearEqual(e[3],  oe[3]) &&
-				    MathUtils3D.nearEqual(e[4],  oe[4]) &&
-				    MathUtils3D.nearEqual(e[5],  oe[5]) &&
-				    MathUtils3D.nearEqual(e[6],  oe[6]) &&
-				    MathUtils3D.nearEqual(e[7],  oe[7]) &&
-				    MathUtils3D.nearEqual(e[8],  oe[8]) &&
-				    MathUtils3D.nearEqual(e[9],  oe[9]) &&
-				    MathUtils3D.nearEqual(e[10], oe[10]) &&
-				    MathUtils3D.nearEqual(e[11], oe[11]) &&
-				    MathUtils3D.nearEqual(e[12], oe[12]) &&
-				    MathUtils3D.nearEqual(e[13], oe[13]) &&
-				    MathUtils3D.nearEqual(e[14], oe[14]) &&
-				    MathUtils3D.nearEqual(e[15], oe[15]));
+			return (MathUtils3D.nearEqual(e[0], oe[0]) && MathUtils3D.nearEqual(e[1], oe[1]) && MathUtils3D.nearEqual(e[2], oe[2]) && MathUtils3D.nearEqual(e[3], oe[3]) && MathUtils3D.nearEqual(e[4], oe[4]) && MathUtils3D.nearEqual(e[5], oe[5]) && MathUtils3D.nearEqual(e[6], oe[6]) && MathUtils3D.nearEqual(e[7], oe[7]) && MathUtils3D.nearEqual(e[8], oe[8]) && MathUtils3D.nearEqual(e[9], oe[9]) && MathUtils3D.nearEqual(e[10], oe[10]) && MathUtils3D.nearEqual(e[11], oe[11]) && MathUtils3D.nearEqual(e[12], oe[12]) && MathUtils3D.nearEqual(e[13], oe[13]) && MathUtils3D.nearEqual(e[14], oe[14]) && MathUtils3D.nearEqual(e[15], oe[15]));
 		}
 		
 		/**
@@ -591,7 +626,7 @@ package laya.d3.math {
 			}
 		}
 		
-		public static function translation(v3:Vector3, out:Matrix4x4):void{
+		public static function translation(v3:Vector3, out:Matrix4x4):void {
 			
 			var ve:Float32Array = v3.elements;
 			var oe:Float32Array = out.elements;
@@ -601,7 +636,7 @@ package laya.d3.math {
 			oe[14] = ve[2];
 		}
 		
-		public function get translationVector():Vector3{
+		public function get translationVector():Vector3 {
 			
 			var me:Float32Array = this.elements;
 			var oe:Float32Array = _translationVector.elements;
@@ -613,7 +648,7 @@ package laya.d3.math {
 			return _translationVector;
 		}
 		
-		public function set translationVector(v3:Vector3):void{
+		public function set translationVector(v3:Vector3):void {
 			
 			var me:Float32Array = this.elements;
 			var ve:Float32Array = v3.elements;

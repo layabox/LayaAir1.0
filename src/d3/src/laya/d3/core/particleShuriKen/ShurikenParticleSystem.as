@@ -250,7 +250,7 @@ package laya.d3.core.particleShuriKen {
 		public function ShurikenParticleSystem(owner:ShuriKenParticle3D) {
 			_owner = owner;
 			_currentTime = 0;
-			_floatCountPerVertex = 31;//0~3为CornerTextureCoordinate,4~6为Position,7~9Direction,10到13为StartColor,14到16位StartSize,17到19位StartRptation，20为StartLifeTime,21为Time,22为startSpeed,23到26为random0,,27到30为random1
+			_floatCountPerVertex = 37;//0~3为CornerTextureCoordinate,4~6为Position,7~9Direction,10到13为StartColor,14到16为StartSize,17到19为3DStartRotationForward(或17为2DStartRotation),20到22为3DStartRotationRight,23到25为3DStartRotationUp，26为StartLifeTime,27为Time,28为startSpeed,29到32为random0,,33到36为random1
 			
 			_maxParticles = 1000;
 			duration = 5.0;
@@ -297,9 +297,9 @@ package laya.d3.core.particleShuriKen {
 		private function _retireActiveParticles():void {
 			while (_firstActiveElement != _firstNewElement) {
 				var index:int = _firstActiveElement * _floatCountPerVertex * 4;
-				var timeIndex:int = index + 21;//21为Time
+				var timeIndex:int = index + 27;//27为Time
 				var particleAge:Number = _currentTime - _vertices[timeIndex];
-				if (particleAge < _vertices[index + 20]/*_maxLifeTime*/)//20为真实lifeTime
+				if (particleAge < _vertices[index + 26]/*_maxLifeTime*/)//26为真实lifeTime
 					break;
 				
 				_vertices[timeIndex] = _drawCounter;
@@ -312,7 +312,7 @@ package laya.d3.core.particleShuriKen {
 		
 		private function _freeRetiredParticles():void {
 			while (_firstRetiredElement != _firstActiveElement) {
-				var age:int = _drawCounter - _vertices[_firstRetiredElement * _floatCountPerVertex * 4 + 21];//21为Time
+				var age:int = _drawCounter - _vertices[_firstRetiredElement * _floatCountPerVertex * 4 + 27];//27为Time
 				if (age < 3)//GPU从不滞后于CPU两帧，出于显卡驱动BUG等安全因素考虑滞后三帧
 					break;
 				
@@ -443,7 +443,7 @@ package laya.d3.core.particleShuriKen {
 			if (nextFreeParticle === _firstRetiredElement)
 				return;
 			
-			var particleData:ShurikenParticleData = ShurikenParticleData.create(this, positionE, directionE, _currentTime);
+			var particleData:ShurikenParticleData = ShurikenParticleData.create(this,_owner.particleRender, positionE, directionE, _currentTime);
 			
 			var startIndex:int = _firstFreeElement * _floatCountPerVertex * 4;
 			
@@ -479,22 +479,28 @@ package laya.d3.core.particleShuriKen {
 					_vertices[vertexStart + offset + j] = particleData.startSize[j];
 				
 				for (j = 0, offset = 17; j < 3; j++)
-					_vertices[vertexStart + offset + j] = particleData.startRotation[j];
+					_vertices[vertexStart + offset + j] = particleData.startRotation0[j];
 				
-				_vertices[vertexStart + 20] = particleData.startLifeTime;
+				for (j = 0, offset = 20; j < 3; j++)
+					_vertices[vertexStart + offset + j] = particleData.startRotation1[j];
 				
-				_vertices[vertexStart + 21] = particleData.time;
+				for (j = 0, offset = 23; j < 3; j++)
+					_vertices[vertexStart + offset + j] = particleData.startRotation2[j];
 				
-				_vertices[vertexStart + 22] = particleData.startSpeed;
+				_vertices[vertexStart + 26] = particleData.startLifeTime;
 				
-				_vertices[vertexStart + 23] = randomX0;
-				_vertices[vertexStart + 24] = randomY0;
-				_vertices[vertexStart + 25] = randomZ0;
-				_vertices[vertexStart + 26] = randomW0;
-				_vertices[vertexStart + 27] = randomX1;
-				_vertices[vertexStart + 28] = randomY1;
-				_vertices[vertexStart + 29] = randomZ1;
-				_vertices[vertexStart + 30] = randomW1;
+				_vertices[vertexStart + 27] = particleData.time;
+				
+				_vertices[vertexStart + 28] = particleData.startSpeed;
+				
+				_vertices[vertexStart + 29] = randomX0;
+				_vertices[vertexStart + 30] = randomY0;
+				_vertices[vertexStart + 31] = randomZ0;
+				_vertices[vertexStart + 32] = randomW0;
+				_vertices[vertexStart + 33] = randomX1;
+				_vertices[vertexStart + 34] = randomY1;
+				_vertices[vertexStart + 35] = randomZ1;
+				_vertices[vertexStart + 36] = randomW1;
 			}
 			
 			_firstFreeElement = nextFreeParticle;

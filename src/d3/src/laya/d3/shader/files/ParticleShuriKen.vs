@@ -3,7 +3,9 @@ attribute vec3 a_Position;
 attribute vec3 a_Direction;
 attribute vec4 a_StartColor;
 attribute vec3 a_StartSize;
-attribute vec3 a_StartRotation;
+attribute vec3 a_StartRotation0;
+attribute vec3 a_StartRotation1;
+attribute vec3 a_StartRotation2;
 attribute float a_StartLifeTime;
 attribute float a_Time;
 attribute float a_StartSpeed;
@@ -334,7 +336,7 @@ vec2 computeParticleSize(in vec2 size,in float normalizedAge)
 	return size;
 }
 
-mat2 computeParticleRotation(in vec3 rotation,in float age,in float normalizedAge)//TODO:不分轴是否无需计算XY，Billboard模式下好像是,待确认。拉伸模式旋转无效。
+mat2 computeParticleRotation(in vec3 rotation,in float age,in float normalizedAge)//TODO:不分轴是否无需计算XY，Billboard模式下好像是,待确认。
 { 
 	#ifdef ROTATIONOVERLIFETIME
 	   if(u_ROLType==0){
@@ -425,17 +427,14 @@ void main()
         vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));
         vec3 upVector = normalize(cross(sideVector,u_CameraDirection));
 	    corner*=computeParticleSize(a_StartSize.xy,normalizedAge);
-		//if(u_ThreeDStartRotation){
-		  //mat2 rotation = computeParticleRotation(a_StartRotation, age,normalizedAge);
-		  //corner=rotation*corner;
-		  //center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);
-		  //mat3 TBN = mat3(T, B, N);
-		//}
-		//else{
-		  mat2 rotation = computeParticleRotation(a_StartRotation, age,normalizedAge);
+		if(u_ThreeDStartRotation){
+		  center += u_SizeScale.xzy*(mat3(a_StartRotation0,a_StartRotation1,a_StartRotation2)*(corner.x*sideVector+corner.y*upVector));
+		}
+		else{
+		  mat2 rotation = computeParticleRotation(a_StartRotation0, age,normalizedAge);
 		  corner=rotation*corner;
 		  center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);
-		//}
+		}
        
    #endif
    
@@ -462,21 +461,19 @@ void main()
    #ifdef HORIZONTALBILLBOARD
         const vec3 cameraUpVector =vec3(0.0,0.0,-1.0);
 	    const vec3 sideVector = vec3(1.0,0.0,0.0);
-        vec3 upVector=cameraUpVector;
 		corner*=computeParticleSize(a_StartSize.xy,normalizedAge);
-		mat2 rotation = computeParticleRotation(a_StartRotation, age,normalizedAge);
+		mat2 rotation = computeParticleRotation(a_StartRotation0, age,normalizedAge);
 	    corner=rotation*corner;
-        center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*upVector);
+        center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*cameraUpVector);
    #endif
    
    #ifdef VERTICALBILLBOARD
         const vec3 cameraUpVector =vec3(0.0,1.0,0.0);
         vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));
-        vec3 upVector=cameraUpVector;
 		corner*=computeParticleSize(a_StartSize.xy,normalizedAge);
-		mat2 rotation = computeParticleRotation(a_StartRotation, age,normalizedAge);
-	    corner=rotation*corner;
-        center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*upVector);
+		mat2 rotation = computeParticleRotation(a_StartRotation0, age,normalizedAge);
+	    corner=rotation*corner*cos(0.78539816339744830961566084581988);//TODO:临时缩小cos45,不确定U3D原因
+        center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*cameraUpVector);
    #endif
    
       gl_Position=u_Projection*u_View*vec4(center,1.0);

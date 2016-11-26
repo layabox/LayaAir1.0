@@ -5218,7 +5218,7 @@ var Laya=window.Laya=(function(window,document){
 				tRec=_cacheCanvas._cacheRec;
 				var scaleX=Render.isWebGL ? 1 :Browser.pixelRatio *Laya.stage.clientScaleX;
 				var scaleY=Render.isWebGL ? 1 :Browser.pixelRatio *Laya.stage.clientScaleY;
-				if (!Render.isWebGL||_cacheCanvas.type==='bitmap'){
+				if (!Render.isWebGL){
 					var chainScaleX=1;
 					var chainScaleY=1;
 					var tar;
@@ -10732,6 +10732,74 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*<p><code>ColorFilter</code> 是颜色滤镜。</p>
+	*/
+	//class laya.filters.ColorFilter extends laya.filters.Filter
+	var ColorFilter=(function(_super){
+		function ColorFilter(mat){
+			//this._mat=null;
+			//this._alpha=null;
+			ColorFilter.__super.call(this);
+			if (!mat){
+				mat=[0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0];
+			}
+			this._mat=new Float32Array(16);
+			this._alpha=new Float32Array(4);
+			var j=0;
+			var z=0;
+			for (var i=0;i < 20;i++){
+				if (i % 5 !=4){
+					this._mat[j++]=mat[i];
+					}else {
+					this._alpha[z++]=mat[i];
+				}
+			}
+			this._action=RunDriver.createFilterAction(0x20);
+			this._action.data=this;
+		}
+
+		__class(ColorFilter,'laya.filters.ColorFilter',_super);
+		var __proto=ColorFilter.prototype;
+		Laya.imps(__proto,{"laya.filters.IFilter":true})
+		/**
+		*@private 通知微端
+		*/
+		__proto.callNative=function(sp){
+			var t=sp._$P.cf=this;
+			sp.model && sp.model.setFilterMatrix&&sp.model.setFilterMatrix(this._mat,this._alpha);
+		}
+
+		/**@private */
+		__getset(0,__proto,'type',function(){
+			return 0x20;
+		});
+
+		/**@private */
+		__getset(0,__proto,'action',function(){
+			return this._action;
+		});
+
+		__getset(1,ColorFilter,'DEFAULT',function(){
+			if (!ColorFilter._DEFAULT){
+				ColorFilter._DEFAULT=new ColorFilter([1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]);
+			}
+			return ColorFilter._DEFAULT;
+		},laya.filters.Filter._$SET_DEFAULT);
+
+		__getset(1,ColorFilter,'GRAY',function(){
+			if (!ColorFilter._GRAY){
+				ColorFilter._GRAY=new ColorFilter([0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0]);
+			}
+			return ColorFilter._GRAY;
+		},laya.filters.Filter._$SET_GRAY);
+
+		ColorFilter._DEFAULT=null
+		ColorFilter._GRAY=null
+		return ColorFilter;
+	})(Filter)
+
+
+	/**
 	*<code>Loader</code> 类可用来加载文本、JSON、XML、二进制、图像等资源。
 	*/
 	//class laya.net.Loader extends laya.events.EventDispatcher
@@ -11418,74 +11486,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return LoaderManager;
 	})(EventDispatcher)
-
-
-	/**
-	*<p><code>ColorFilter</code> 是颜色滤镜。</p>
-	*/
-	//class laya.filters.ColorFilter extends laya.filters.Filter
-	var ColorFilter=(function(_super){
-		function ColorFilter(mat){
-			//this._mat=null;
-			//this._alpha=null;
-			ColorFilter.__super.call(this);
-			if (!mat){
-				mat=[0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0];
-			}
-			this._mat=new Float32Array(16);
-			this._alpha=new Float32Array(4);
-			var j=0;
-			var z=0;
-			for (var i=0;i < 20;i++){
-				if (i % 5 !=4){
-					this._mat[j++]=mat[i];
-					}else {
-					this._alpha[z++]=mat[i];
-				}
-			}
-			this._action=RunDriver.createFilterAction(0x20);
-			this._action.data=this;
-		}
-
-		__class(ColorFilter,'laya.filters.ColorFilter',_super);
-		var __proto=ColorFilter.prototype;
-		Laya.imps(__proto,{"laya.filters.IFilter":true})
-		/**
-		*@private 通知微端
-		*/
-		__proto.callNative=function(sp){
-			var t=sp._$P.cf=this;
-			sp.model && sp.model.setFilterMatrix&&sp.model.setFilterMatrix(this._mat,this._alpha);
-		}
-
-		/**@private */
-		__getset(0,__proto,'type',function(){
-			return 0x20;
-		});
-
-		/**@private */
-		__getset(0,__proto,'action',function(){
-			return this._action;
-		});
-
-		__getset(1,ColorFilter,'DEFAULT',function(){
-			if (!ColorFilter._DEFAULT){
-				ColorFilter._DEFAULT=new ColorFilter([1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]);
-			}
-			return ColorFilter._DEFAULT;
-		},laya.filters.Filter._$SET_DEFAULT);
-
-		__getset(1,ColorFilter,'GRAY',function(){
-			if (!ColorFilter._GRAY){
-				ColorFilter._GRAY=new ColorFilter([0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0]);
-			}
-			return ColorFilter._GRAY;
-		},laya.filters.Filter._$SET_GRAY);
-
-		ColorFilter._DEFAULT=null
-		ColorFilter._GRAY=null
-		return ColorFilter;
-	})(Filter)
 
 
 	/**
@@ -15258,162 +15258,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*...
-	*@author laoxie
-	*/
-	//class laya.display.quick.QkImage extends laya.display.Sprite
-	var QkImage=(function(_super){
-		function QkImage(){
-			this._renderKey=-1;
-			this._typedef=0;
-			this._tex=null;
-			this._offsetX=0;
-			this._offsetY=0;
-			QkImage.__super.call(this);
-			this._vbdata=new Float32Array(16);
-		}
-
-		__class(QkImage,'laya.display.quick.QkImage',_super);
-		var __proto=QkImage.prototype;
-		__proto.size=function(w,h){
-			this._typedef |=0x10 | 0x100;
-			return _super.prototype.size.call(this,w,h);
-		}
-
-		__proto.offset=function(x,y){
-			this._offsetX=0;
-			this._offsetY=0;
-		}
-
-		__proto._preRender=function(){
-			var vbdata=this._vbdata;
-			if (this._changeType & 0x10){
-				var _tf=this._style._tf;
-				var _sx=_tf.scaleX;
-				var _sy=_tf.scaleY;
-				var translateX=-_tf.translateX;
-				var translateY=-_tf.translateY;
-				if (_tf.rotate===0){
-					var px=translateX*_sx;
-					var py=translateY *_sy;
-					vbdata[0]=vbdata[12]=px;
-					vbdata[1]=vbdata[5]=py;
-					vbdata[4]=vbdata[8]=px+this._width *_sx;
-					vbdata[9]=vbdata[13]=py+this._height *_sy;
-				}
-				else{
-					vbdata[0]=vbdata[12]=translateX;
-					vbdata[1]=vbdata[5]=translateY;
-					vbdata[4]=vbdata[8]=this._width+translateX;
-					vbdata[9]=vbdata[13]=this._height+translateY;
-					var angle=_tf.rotate *0.0174532922222222;
-					var cos=Math.cos(angle),sin=Math.sin(angle);
-					var xcos=cos *_sx,ycos=cos *_sy;
-					var xsin=sin *_sx,ysin=sin *_sy;
-					for (var i=0;i < 16;i+=4){
-						var cx=vbdata[i];
-						var cy=vbdata[i+1];
-						vbdata[i]=cx *xcos-cy *ysin;
-						vbdata[i+1]=cx *xsin+cy *ycos;
-					}
-				}
-			}
-			if (this._changeType & 0x1000){
-				var uv=this._tex.uv;
-				vbdata[2]=uv[0];
-				vbdata[3]=uv[1];
-				vbdata[6]=uv[2];
-				vbdata[7]=uv[3];
-				vbdata[10]=uv[4];
-				vbdata[11]=uv[5];
-				vbdata[14]=uv[6];
-				vbdata[15]=uv[7];
-			}
-			this._changeType=0;
-		}
-
-		__proto.render=function(context,x,y){
-			if (this._tex){
-				this._changeType && this._preRender();
-				var ctx=context.ctx;
-				(this._renderKey!==ctx._renderKey)&& (this._renderKey=ctx.willDrawTexture(this._tex,this.alpha));
-				this._renderKey>0 && ctx.addTextureVb(this._vbdata,x+this._offsetX+this._x,y+this._offsetY+this._y);
-				Stat.spriteCount++;
-			}
-		}
-
-		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
-			this._typedef |=0x10;
-			this._changeType |=0x10;
-			_super.prototype._$set_width.call(this,value);
-		});
-
-		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
-			this._typedef |=0x100;
-			this._changeType |=0x10;
-			_super.prototype._$set_height.call(this,value);
-		});
-
-		__getset(0,__proto,'alpha',_super.prototype._$get_alpha,function(value){
-			if (this._style && this._style.alpha!==value){
-				this._renderKey=-1;
-				_super.prototype._$set_alpha.call(this,value);
-			}
-		});
-
-		__getset(0,__proto,'texture',function(){
-			return this._tex;
-			},function(tex){
-			if (this._tex!==tex){
-				this._tex=tex;
-				this._changeType |=0x1000;
-				if (tex){
-					this._renderKey=-1;
-					var vbdata=this._vbdata;
-					if (this._width!==tex.width || this._height!==tex.height){
-						this._width=(this._typedef & 0x10)?this._width:tex.width;
-						this._height=(this._typedef & 0x100)?this._height:tex.height;
-						this._changeType |=0x10;
-					}
-				}
-				else this._renderKey=0;
-			}
-		});
-
-		QkImage.TYPE_WIDTH_DEF=0x10;
-		QkImage.TYPE_HEIGHT_DEF=0x100;
-		return QkImage;
-	})(Sprite)
-
-
-	/**
-	*...
-	*@author laoxie
-	*/
-	//class laya.display.quick.QkBox extends laya.display.Sprite
-	var QkBox=(function(_super){
-		function QkBox(){
-			QkBox.__super.call(this);
-		}
-
-		__class(QkBox,'laya.display.quick.QkBox',_super);
-		var __proto=QkBox.prototype;
-		__proto.render=function(context,x,y){
-			x+=this._x;
-			y+=this._y;
-			var childs=this._childs;
-			var o;
-			for (var i=0,sz=this._childs.length;i < sz;i++){
-				(o=childs[i])._style.visible && o.render(context,x,y);
-			}
-			this._repaint=0;
-		}
-
-		return QkBox;
-	})(Sprite)
-
-
-	/**
 	*<p> <code>Stage</code> 类是显示对象的根节点。</p>
 	*可以通过 Laya.stage 访问。
 	*/
@@ -17200,57 +17044,6 @@ var Laya=window.Laya=(function(window,document){
 		]);
 		return Input;
 	})(Text)
-
-
-	/**
-	*...
-	*@author laoxie
-	*/
-	//class laya.display.quick.QkAni extends laya.display.quick.QkImage
-	var QkAni=(function(_super){
-		function QkAni(){
-			this._textures=[];
-			this._startTm=0;
-			this._interval=NaN;
-			this._preChgTm=NaN;
-			QkAni.__super.call(this);
-		}
-
-		__class(QkAni,'laya.display.quick.QkAni',_super);
-		var __proto=QkAni.prototype;
-		__proto.setTextures=function(value){
-			this._textures=value.concat();
-			this.texture=this._textures[0];
-			this._preChgTm=0;
-		}
-
-		__proto.start=function(interval){
-			this._startTm=Laya.timer.currTimer;
-			this._interval=interval;
-			this._preChgTm=0;
-		}
-
-		__proto.render=function(context,x,y){
-			if (this._startTm < 0 || this._textures.length===0)return;
-			var tm=Laya.timer.currTimer;
-			if ((tm-this._preChgTm)>=this._interval){
-				this._preChgTm=tm;
-				var i=Math.floor((tm-this._startTm)/ this._interval)% this._textures.length;
-				var t=this._textures[ i];
-				if (t!==this._tex){
-					this.texture=t;
-				}
-			}
-			if (!this._tex)return;
-			this._changeType && this._preRender();
-			var ctx=context.ctx;
-			(this._renderKey!==ctx._renderKey)&& (this._renderKey=ctx.willDrawTexture(this._tex,this.alpha));
-			this._renderKey>0 && ctx.addTextureVb(this._vbdata,x+this._offsetX+this._x,y+this._offsetY+this._y);
-			Stat.spriteCount++;
-		}
-
-		return QkAni;
-	})(QkImage)
 
 
 	/**

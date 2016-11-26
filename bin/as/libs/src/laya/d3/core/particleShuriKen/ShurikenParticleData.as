@@ -7,6 +7,7 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.particleShuriKen.module.SizeOverLifetime;
 	import laya.d3.core.particleShuriKen.module.StartFrame;
 	import laya.d3.core.particleShuriKen.module.TextureSheetAnimation;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
@@ -16,10 +17,13 @@ package laya.d3.core.particleShuriKen {
 	 *  @private
 	 */
 	public class ShurikenParticleData {
+		private static var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
 		private static var _tempDirection:Float32Array = new Float32Array(3);
 		private static var _tempStartColor:Float32Array = new Float32Array(4);
 		private static var _tempStartSize:Float32Array = new Float32Array(3);
-		private static var _tempStartRotation:Float32Array = new Float32Array(3);
+		private static var _tempStartRotation0:Float32Array = new Float32Array(3);
+		private static var _tempStartRotation1:Float32Array = new Float32Array(3);
+		private static var _tempStartRotation2:Float32Array = new Float32Array(3);
 		private static var _tempStartUVInfo:Float32Array = new Float32Array(4);
 		
 		public var startLifeTime:Number;
@@ -28,7 +32,9 @@ package laya.d3.core.particleShuriKen {
 		public var direction:Float32Array;
 		public var startColor:Float32Array;
 		public var startSize:Float32Array;
-		public var startRotation:Float32Array;
+		public var startRotation0:Float32Array;
+		public var startRotation1:Float32Array;
+		public var startRotation2:Float32Array;
 		
 		public var time:Number;
 		public var startSpeed:Number;
@@ -50,7 +56,7 @@ package laya.d3.core.particleShuriKen {
 			throw new Error("ShurikenParticleData: can't get value foam startLifeTimeGradient.");
 		}
 		
-		public static function create(particleSystem:ShurikenParticleSystem, position:Float32Array, direction:Float32Array, time:Number):ShurikenParticleData {
+		public static function create(particleSystem:ShurikenParticleSystem,particleRender:ShurikenParticleRender, position:Float32Array, direction:Float32Array, time:Number):ShurikenParticleData {
 			var particleData:ShurikenParticleData = new ShurikenParticleData();
 			particleData.position = position;
 			
@@ -137,39 +143,82 @@ package laya.d3.core.particleShuriKen {
 				}
 			}
 			
+			
 			//StartRotation
-			particleData.startRotation = _tempStartRotation;
-			var particleRotation:Float32Array = particleData.startRotation;
+			var particleRotation0:Float32Array;
+			var particleRotation1:Float32Array;
+			var particleRotation2:Float32Array;
+			var rotationMatrixE:Float32Array;
 			switch (particleSystem.startRotationType) {
 			case 0: 
-				if (particleSystem.threeDStartRotation) {//TODO:
+				if (particleSystem.threeDStartRotation&&(particleRender.renderMode!==1)&&(particleRender.renderMode!==1)) {
 					var startRotationConstantSeparate:Vector3 = particleSystem.startRotationConstantSeparate;
-					particleRotation[0] = startRotationConstantSeparate.x;
-					particleRotation[1] = startRotationConstantSeparate.y;
-					particleRotation[2] = startRotationConstantSeparate.z;
+					Matrix4x4.createRotationYawPitchRoll(startRotationConstantSeparate.y, startRotationConstantSeparate.x, startRotationConstantSeparate.z, _tempRotationMatrix);
+					 rotationMatrixE = _tempRotationMatrix.elements;
+					particleData.startRotation0 = _tempStartRotation0;
+					particleRotation0 = particleData.startRotation0;
+					particleRotation0[0] =rotationMatrixE[0];
+					particleRotation0[1] = rotationMatrixE[1];
+					particleRotation0[2] = rotationMatrixE[2];
+					
+					particleData.startRotation1 = _tempStartRotation1;
+					particleRotation1 = particleData.startRotation1;
+					particleRotation1[0] =rotationMatrixE[4];
+					particleRotation1[1] = rotationMatrixE[5];
+					particleRotation1[2] = rotationMatrixE[6];
+					
+					particleData.startRotation2 = _tempStartRotation2;
+					particleRotation2 = particleData.startRotation2;
+					particleRotation2[0] =rotationMatrixE[8];
+					particleRotation2[1] = rotationMatrixE[9];
+					particleRotation2[2] = rotationMatrixE[10];
+					
 				} else {
-					particleRotation[0] = particleRotation[1] = particleRotation[2] =  particleSystem.startRotationConstant;
+					particleData.startRotation0 = _tempStartRotation0;
+					particleRotation0 = particleData.startRotation0;
+					particleRotation0[0] = particleRotation0[1] = particleRotation0[2] = particleSystem.startRotationConstant;
 				}
 				break;
 			case 2: 
-				if (particleSystem.threeDStartRotation) {//TODO:
+				if (particleSystem.threeDStartRotation&&(particleRender.renderMode!==1)&&(particleRender.renderMode!==2)) {
+					particleData.startRotation0 = _tempStartRotation0;
+					particleRotation0 = particleData.startRotation0;
 					var startRotationConstantMinSeparate:Vector3 = particleSystem.startRotationConstantMinSeparate;
 					var startRotationConstantMaxSeparate:Vector3 = particleSystem.startRotationConstantMaxSeparate;
-					particleRotation[0] = MathUtil.lerp(startRotationConstantMinSeparate.x, startRotationConstantMaxSeparate.x, Math.random());
-					particleRotation[1] = MathUtil.lerp(startRotationConstantMinSeparate.y, startRotationConstantMaxSeparate.y, Math.random());
-					particleRotation[2] = MathUtil.lerp(startRotationConstantMinSeparate.z, startRotationConstantMaxSeparate.z, Math.random())
+					Matrix4x4.createRotationYawPitchRoll(MathUtil.lerp(startRotationConstantMinSeparate.y, startRotationConstantMaxSeparate.y, Math.random()), MathUtil.lerp(startRotationConstantMinSeparate.x, startRotationConstantMaxSeparate.x, Math.random()), MathUtil.lerp(startRotationConstantMinSeparate.z, startRotationConstantMaxSeparate.z, Math.random()), _tempRotationMatrix);
+					 rotationMatrixE = _tempRotationMatrix.elements;
+					particleData.startRotation0 = _tempStartRotation0;
+					particleRotation0 = particleData.startRotation0;
+					particleRotation0[0] =rotationMatrixE[0];
+					particleRotation0[1] = rotationMatrixE[1];
+					particleRotation0[2] = rotationMatrixE[2];
+					
+					particleData.startRotation1 = _tempStartRotation1;
+					particleRotation1 = particleData.startRotation1;
+					particleRotation1[0] =rotationMatrixE[4];
+					particleRotation1[1] = rotationMatrixE[5];
+					particleRotation1[2] = rotationMatrixE[6];
+					
+					particleData.startRotation2 = _tempStartRotation2;
+					particleRotation2 = particleData.startRotation2;
+					particleRotation2[0] =rotationMatrixE[8];
+					particleRotation2[1] = rotationMatrixE[9];
+					particleRotation2[2] = rotationMatrixE[10];
 				} else {
-					particleRotation[0] = particleRotation[1] = particleRotation[2] = MathUtil.lerp(particleSystem.startRotationConstantMin, particleSystem.startRotationConstantMax, Math.random());
+					particleData.startRotation0 = _tempStartRotation0;
+					particleRotation0 = particleData.startRotation0;
+					particleRotation0[0] = particleRotation0[1] = particleRotation0[2] = MathUtil.lerp(particleSystem.startRotationConstantMin, particleSystem.startRotationConstantMax, Math.random());
 				}
 				break;
 			}
-			if (Math.random() < particleSystem.randomizeRotationDirection)
-			{
-				particleRotation[0] = -particleRotation[0];
-				particleRotation[1] = -particleRotation[1];
-				particleRotation[2] = -particleRotation[2];
+			if (Math.random() < particleSystem.randomizeRotationDirection) {
+				particleRotation0[0] = -particleRotation0[0];
+				particleRotation0[1] = -particleRotation0[1];
+				particleRotation0[2] = -particleRotation0[2];
 			}
-			//particleRotation[0] = particleRotation[1] = particleRotation[2] = startRotation;
+			
+			particleData.startRotation1 = _tempStartRotation1;
+			particleData.startRotation2 = _tempStartRotation2;
 			
 			//StartLifetime
 			switch (particleSystem.startLifetimeType) {

@@ -2419,7 +2419,9 @@
 			this.direction=null;
 			this.startColor=null;
 			this.startSize=null;
-			this.startRotation=null;
+			this.startRotation0=null;
+			this.startRotation1=null;
+			this.startRotation2=null;
 			this.time=NaN;
 			this.startSpeed=NaN;
 			this.startUVInfo=null;
@@ -2438,7 +2440,7 @@
 			throw new Error("ShurikenParticleData: can't get value foam startLifeTimeGradient.");
 		}
 
-		ShurikenParticleData.create=function(particleSystem,position,direction,time){
+		ShurikenParticleData.create=function(particleSystem,particleRender,position,direction,time){
 			var particleData=new ShurikenParticleData();
 			particleData.position=position;
 			MathUtil.scaleVector3(direction,1.0,ShurikenParticleData._tempDirection);
@@ -2517,37 +2519,75 @@
 					particleSize[1]=particleSize[1] *randomSize;
 					particleSize[2]=particleSize[2] *randomSize;
 				}
-			}
-			particleData.startRotation=ShurikenParticleData._tempStartRotation;
-			var particleRotation=particleData.startRotation;
+			};
+			var particleRotation0;
+			var particleRotation1;
+			var particleRotation2;
+			var rotationMatrixE;
 			switch (particleSystem.startRotationType){
 				case 0:
-					if (particleSystem.threeDStartRotation){
+					if (particleSystem.threeDStartRotation&&(particleRender.renderMode!==1)&&(particleRender.renderMode!==1)){
 						var startRotationConstantSeparate=particleSystem.startRotationConstantSeparate;
-						particleRotation[0]=startRotationConstantSeparate.x;
-						particleRotation[1]=startRotationConstantSeparate.y;
-						particleRotation[2]=startRotationConstantSeparate.z;
+						Matrix4x4.createRotationYawPitchRoll(startRotationConstantSeparate.y,startRotationConstantSeparate.x,startRotationConstantSeparate.z,ShurikenParticleData._tempRotationMatrix);
+						rotationMatrixE=ShurikenParticleData._tempRotationMatrix.elements;
+						particleData.startRotation0=ShurikenParticleData._tempStartRotation0;
+						particleRotation0=particleData.startRotation0;
+						particleRotation0[0]=rotationMatrixE[0];
+						particleRotation0[1]=rotationMatrixE[1];
+						particleRotation0[2]=rotationMatrixE[2];
+						particleData.startRotation1=ShurikenParticleData._tempStartRotation1;
+						particleRotation1=particleData.startRotation1;
+						particleRotation1[0]=rotationMatrixE[4];
+						particleRotation1[1]=rotationMatrixE[5];
+						particleRotation1[2]=rotationMatrixE[6];
+						particleData.startRotation2=ShurikenParticleData._tempStartRotation2;
+						particleRotation2=particleData.startRotation2;
+						particleRotation2[0]=rotationMatrixE[8];
+						particleRotation2[1]=rotationMatrixE[9];
+						particleRotation2[2]=rotationMatrixE[10];
 						}else {
-						particleRotation[0]=particleRotation[1]=particleRotation[2]=particleSystem.startRotationConstant;
+						particleData.startRotation0=ShurikenParticleData._tempStartRotation0;
+						particleRotation0=particleData.startRotation0;
+						particleRotation0[0]=particleRotation0[1]=particleRotation0[2]=particleSystem.startRotationConstant;
 					}
 					break ;
 				case 2:
-					if (particleSystem.threeDStartRotation){
+					if (particleSystem.threeDStartRotation&&(particleRender.renderMode!==1)&&(particleRender.renderMode!==2)){
+						particleData.startRotation0=ShurikenParticleData._tempStartRotation0;
+						particleRotation0=particleData.startRotation0;
 						var startRotationConstantMinSeparate=particleSystem.startRotationConstantMinSeparate;
 						var startRotationConstantMaxSeparate=particleSystem.startRotationConstantMaxSeparate;
-						particleRotation[0]=MathUtil.lerp(startRotationConstantMinSeparate.x,startRotationConstantMaxSeparate.x,Math.random());
-						particleRotation[1]=MathUtil.lerp(startRotationConstantMinSeparate.y,startRotationConstantMaxSeparate.y,Math.random());
-						particleRotation[2]=MathUtil.lerp(startRotationConstantMinSeparate.z,startRotationConstantMaxSeparate.z,Math.random())
+						Matrix4x4.createRotationYawPitchRoll(MathUtil.lerp(startRotationConstantMinSeparate.y,startRotationConstantMaxSeparate.y,Math.random()),MathUtil.lerp(startRotationConstantMinSeparate.x,startRotationConstantMaxSeparate.x,Math.random()),MathUtil.lerp(startRotationConstantMinSeparate.z,startRotationConstantMaxSeparate.z,Math.random()),ShurikenParticleData._tempRotationMatrix);
+						rotationMatrixE=ShurikenParticleData._tempRotationMatrix.elements;
+						particleData.startRotation0=ShurikenParticleData._tempStartRotation0;
+						particleRotation0=particleData.startRotation0;
+						particleRotation0[0]=rotationMatrixE[0];
+						particleRotation0[1]=rotationMatrixE[1];
+						particleRotation0[2]=rotationMatrixE[2];
+						particleData.startRotation1=ShurikenParticleData._tempStartRotation1;
+						particleRotation1=particleData.startRotation1;
+						particleRotation1[0]=rotationMatrixE[4];
+						particleRotation1[1]=rotationMatrixE[5];
+						particleRotation1[2]=rotationMatrixE[6];
+						particleData.startRotation2=ShurikenParticleData._tempStartRotation2;
+						particleRotation2=particleData.startRotation2;
+						particleRotation2[0]=rotationMatrixE[8];
+						particleRotation2[1]=rotationMatrixE[9];
+						particleRotation2[2]=rotationMatrixE[10];
 						}else {
-						particleRotation[0]=particleRotation[1]=particleRotation[2]=MathUtil.lerp(particleSystem.startRotationConstantMin,particleSystem.startRotationConstantMax,Math.random());
+						particleData.startRotation0=ShurikenParticleData._tempStartRotation0;
+						particleRotation0=particleData.startRotation0;
+						particleRotation0[0]=particleRotation0[1]=particleRotation0[2]=MathUtil.lerp(particleSystem.startRotationConstantMin,particleSystem.startRotationConstantMax,Math.random());
 					}
 					break ;
 				}
 			if (Math.random()< particleSystem.randomizeRotationDirection){
-				particleRotation[0]=-particleRotation[0];
-				particleRotation[1]=-particleRotation[1];
-				particleRotation[2]=-particleRotation[2];
+				particleRotation0[0]=-particleRotation0[0];
+				particleRotation0[1]=-particleRotation0[1];
+				particleRotation0[2]=-particleRotation0[2];
 			}
+			particleData.startRotation1=ShurikenParticleData._tempStartRotation1;
+			particleData.startRotation2=ShurikenParticleData._tempStartRotation2;
 			switch (particleSystem.startLifetimeType){
 				case 0:
 					particleData.startLifeTime=particleSystem.startLifetimeConstant;
@@ -2633,7 +2673,7 @@
 		}
 
 		__static(ShurikenParticleData,
-		['_tempDirection',function(){return this._tempDirection=new Float32Array(3);},'_tempStartColor',function(){return this._tempStartColor=new Float32Array(4);},'_tempStartSize',function(){return this._tempStartSize=new Float32Array(3);},'_tempStartRotation',function(){return this._tempStartRotation=new Float32Array(3);},'_tempStartUVInfo',function(){return this._tempStartUVInfo=new Float32Array(4);}
+		['_tempRotationMatrix',function(){return this._tempRotationMatrix=new Matrix4x4();},'_tempDirection',function(){return this._tempDirection=new Float32Array(3);},'_tempStartColor',function(){return this._tempStartColor=new Float32Array(4);},'_tempStartSize',function(){return this._tempStartSize=new Float32Array(3);},'_tempStartRotation0',function(){return this._tempStartRotation0=new Float32Array(3);},'_tempStartRotation1',function(){return this._tempStartRotation1=new Float32Array(3);},'_tempStartRotation2',function(){return this._tempStartRotation2=new Float32Array(3);},'_tempStartUVInfo',function(){return this._tempStartUVInfo=new Float32Array(4);}
 		]);
 		return ShurikenParticleData;
 	})()
@@ -4159,7 +4199,7 @@
 					return 12;
 				case /*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4":
 					return 16;
-				case /*laya.d3.graphics.VertexElementFormat.Color*/"volor":
+				case /*laya.d3.graphics.VertexElementFormat.Color*/"color":
 					return 4;
 				case /*laya.d3.graphics.VertexElementFormat.Byte4*/"byte4":
 					return 4;
@@ -4231,7 +4271,7 @@
 		VertexElementFormat.Vector2="vector2";
 		VertexElementFormat.Vector3="vector3";
 		VertexElementFormat.Vector4="vector4";
-		VertexElementFormat.Color="volor";
+		VertexElementFormat.Color="color";
 		VertexElementFormat.Byte4="byte4";
 		VertexElementFormat.Short2="short2";
 		VertexElementFormat.Short4="short4";
@@ -4273,7 +4313,9 @@
 		VertexElementUsage.STARTCOLOR0="STARTCOLOR";
 		VertexElementUsage.STARTSIZE="STARTSIZE";
 		VertexElementUsage.AGEADDSCALE0="AGEADDSCALE0";
-		VertexElementUsage.STARTROTATION="STARTROTATION";
+		VertexElementUsage.STARTROTATION0="STARTROTATION0";
+		VertexElementUsage.STARTROTATION1="STARTROTATION1";
+		VertexElementUsage.STARTROTATION2="STARTROTATION2";
 		VertexElementUsage.ENDCOLOR0="ENDCOLOR";
 		VertexElementUsage.SIZEROTATION0="SIZEROTATION";
 		VertexElementUsage.RADIUS0="RADIUS";
@@ -4436,13 +4478,15 @@
 	*/
 	//class laya.d3.graphics.VertexParticleShuriken
 	var VertexParticleShuriken=(function(){
-		function VertexParticleShuriken(cornerTextureCoordinate,position,velocity,startColor,startSize,startRotation,ageAddScale,time,startSpeed,randoms0,randoms1){
+		function VertexParticleShuriken(cornerTextureCoordinate,position,velocity,startColor,startSize,startRotation0,startRotation1,startRotation2,ageAddScale,time,startSpeed,randoms0,randoms1){
 			this._cornerTextureCoordinate=null;
 			this._position=null;
 			this._velocity=null;
 			this._startColor=null;
 			this._startSize=null;
-			this._startRotation=null;
+			this._startRotation0=null;
+			this._startRotation1=null;
+			this._startRotation2=null;
 			this._startLifeTime=NaN;
 			this._time=NaN;
 			this._startSpeed=NaN;
@@ -4453,7 +4497,9 @@
 			this._velocity=velocity;
 			this._startColor=startColor;
 			this._startSize=startSize;
-			this._startRotation=startRotation;
+			this._startRotation0=startRotation0;
+			this._startRotation1=startRotation1;
+			this._startRotation2=startRotation2;
 			this._startLifeTime=ageAddScale;
 			this._time=time;
 			this._startSpeed=startSpeed;
@@ -4466,10 +4512,6 @@
 		Laya.imps(__proto,{"laya.d3.graphics.IVertex":true})
 		__getset(0,__proto,'cornerTextureCoordinate',function(){
 			return this._cornerTextureCoordinate;
-		});
-
-		__getset(0,__proto,'startSpeed',function(){
-			return this._startSpeed;
 		});
 
 		__getset(0,__proto,'velocity',function(){
@@ -4492,24 +4534,36 @@
 			return this._startColor;
 		});
 
-		__getset(0,__proto,'vertexDeclaration',function(){
-			return VertexParticleShuriken._vertexDeclaration;
+		__getset(0,__proto,'startRotation0',function(){
+			return this._startRotation0;
 		});
 
-		__getset(0,__proto,'startRotation',function(){
-			return this._startRotation;
+		__getset(0,__proto,'startRotation1',function(){
+			return this._startRotation1;
 		});
 
-		__getset(0,__proto,'time',function(){
-			return this._time;
+		__getset(0,__proto,'random1',function(){
+			return this._randoms1;
+		});
+
+		__getset(0,__proto,'startRotation2',function(){
+			return this._startRotation2;
 		});
 
 		__getset(0,__proto,'startLifeTime',function(){
 			return this._startLifeTime;
 		});
 
-		__getset(0,__proto,'random1',function(){
-			return this._randoms1;
+		__getset(0,__proto,'time',function(){
+			return this._time;
+		});
+
+		__getset(0,__proto,'startSpeed',function(){
+			return this._startSpeed;
+		});
+
+		__getset(0,__proto,'vertexDeclaration',function(){
+			return VertexParticleShuriken._vertexDeclaration;
 		});
 
 		__getset(1,VertexParticleShuriken,'vertexDeclaration',function(){
@@ -4517,18 +4571,20 @@
 		});
 
 		__static(VertexParticleShuriken,
-		['_vertexDeclaration',function(){return this._vertexDeclaration=new VertexDeclaration(124,
+		['_vertexDeclaration',function(){return this._vertexDeclaration=new VertexDeclaration(148,
 			[new VertexElement(0,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.CORNERTEXTURECOORDINATE0*/"CORNERTEXTURECOORDINATE"),
 			new VertexElement(16,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.POSITION0*/"POSITION"),
 			new VertexElement(28,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.DIRECTION*/"DIRECTION"),
 			new VertexElement(40,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.STARTCOLOR0*/"STARTCOLOR"),
 			new VertexElement(56,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.STARTSIZE*/"STARTSIZE"),
-			new VertexElement(68,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.STARTROTATION*/"STARTROTATION"),
-			new VertexElement(80,/*laya.d3.graphics.VertexElementFormat.Single*/"single",/*laya.d3.graphics.VertexElementUsage.STARTLIFETIME*/"STARTLIFETIME"),
-			new VertexElement(84,/*laya.d3.graphics.VertexElementFormat.Single*/"single",/*laya.d3.graphics.VertexElementUsage.TIME0*/"TIME"),
-			new VertexElement(88,/*laya.d3.graphics.VertexElementFormat.Single*/"single",/*laya.d3.graphics.VertexElementUsage.STARTSPEED*/"STARTSPEED"),
-			new VertexElement(92,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.RANDOM0*/"RANDOM0"),
-			new VertexElement(108,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.RANDOM1*/"RANDOM1")]);}
+			new VertexElement(68,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.STARTROTATION0*/"STARTROTATION0"),
+			new VertexElement(80,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.STARTROTATION1*/"STARTROTATION1"),
+			new VertexElement(92,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.STARTROTATION2*/"STARTROTATION2"),
+			new VertexElement(104,/*laya.d3.graphics.VertexElementFormat.Single*/"single",/*laya.d3.graphics.VertexElementUsage.STARTLIFETIME*/"STARTLIFETIME"),
+			new VertexElement(108,/*laya.d3.graphics.VertexElementFormat.Single*/"single",/*laya.d3.graphics.VertexElementUsage.TIME0*/"TIME"),
+			new VertexElement(112,/*laya.d3.graphics.VertexElementFormat.Single*/"single",/*laya.d3.graphics.VertexElementUsage.STARTSPEED*/"STARTSPEED"),
+			new VertexElement(116,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.RANDOM0*/"RANDOM0"),
+			new VertexElement(132,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.RANDOM1*/"RANDOM1")]);}
 		]);
 		return VertexParticleShuriken;
 	})()
@@ -7739,22 +7795,7 @@
 		__proto.equalsOtherMatrix=function(other){
 			var e=this.elements;
 			var oe=other.elements;
-			return (MathUtils3D.nearEqual(e[0],oe[0])&&
-			MathUtils3D.nearEqual(e[1],oe[1])&&
-			MathUtils3D.nearEqual(e[2],oe[2])&&
-			MathUtils3D.nearEqual(e[3],oe[3])&&
-			MathUtils3D.nearEqual(e[4],oe[4])&&
-			MathUtils3D.nearEqual(e[5],oe[5])&&
-			MathUtils3D.nearEqual(e[6],oe[6])&&
-			MathUtils3D.nearEqual(e[7],oe[7])&&
-			MathUtils3D.nearEqual(e[8],oe[8])&&
-			MathUtils3D.nearEqual(e[9],oe[9])&&
-			MathUtils3D.nearEqual(e[10],oe[10])&&
-			MathUtils3D.nearEqual(e[11],oe[11])&&
-			MathUtils3D.nearEqual(e[12],oe[12])&&
-			MathUtils3D.nearEqual(e[13],oe[13])&&
-			MathUtils3D.nearEqual(e[14],oe[14])&&
-			MathUtils3D.nearEqual(e[15],oe[15]));
+			return (MathUtils3D.nearEqual(e[0],oe[0])&& MathUtils3D.nearEqual(e[1],oe[1])&& MathUtils3D.nearEqual(e[2],oe[2])&& MathUtils3D.nearEqual(e[3],oe[3])&& MathUtils3D.nearEqual(e[4],oe[4])&& MathUtils3D.nearEqual(e[5],oe[5])&& MathUtils3D.nearEqual(e[6],oe[6])&& MathUtils3D.nearEqual(e[7],oe[7])&& MathUtils3D.nearEqual(e[8],oe[8])&& MathUtils3D.nearEqual(e[9],oe[9])&& MathUtils3D.nearEqual(e[10],oe[10])&& MathUtils3D.nearEqual(e[11],oe[11])&& MathUtils3D.nearEqual(e[12],oe[12])&& MathUtils3D.nearEqual(e[13],oe[13])&& MathUtils3D.nearEqual(e[14],oe[14])&& MathUtils3D.nearEqual(e[15],oe[15]));
 		}
 
 		/**
@@ -7971,6 +8012,40 @@
 			oe[4]=-s;
 		}
 
+		Matrix4x4.createRotationYawPitchRoll=function(yaw,pitch,roll,result){
+			Quaternion.createFromYawPitchRoll(yaw,pitch,roll,Matrix4x4._tempQuaternion);
+			Matrix4x4.createRotationQuaternion(Matrix4x4._tempQuaternion,result);
+		}
+
+		Matrix4x4.createRotationQuaternion=function(rotation,result){
+			var rotationE=rotation.elements;
+			var resultE=result.elements;
+			var rotationX=rotationE[0];
+			var rotationY=rotationE[1];
+			var rotationZ=rotationE[2];
+			var rotationW=rotationE[3];
+			var xx=rotationX *rotationX;
+			var yy=rotationY *rotationY;
+			var zz=rotationZ *rotationZ;
+			var xy=rotationX *rotationY;
+			var zw=rotationZ *rotationW;
+			var zx=rotationZ *rotationX;
+			var yw=rotationY *rotationW;
+			var yz=rotationY *rotationZ;
+			var xw=rotationX *rotationW;
+			resultE[3]=resultE[7]=resultE[11]=resultE[12]=resultE[13]=resultE[14]=0;
+			resultE[15]=1.0;
+			resultE[0]=1.0-(2.0 *(yy+zz));
+			resultE[1]=2.0 *(xy+zw);
+			resultE[2]=2.0 *(zx-yw);
+			resultE[4]=2.0 *(xy-zw);
+			resultE[5]=1.0-(2.0 *(zz+xx));
+			resultE[6]=2.0 *(yz+xw);
+			resultE[8]=2.0 *(zx+yw);
+			resultE[9]=2.0 *(yz-xw);
+			resultE[10]=1.0-(2.0 *(yy+xx));
+		}
+
 		Matrix4x4.createTranslate=function(trans,out){
 			var te=trans.elements;
 			var oe=out.elements;
@@ -8169,10 +8244,10 @@
 			oe[14]=ve[2];
 		}
 
-		Matrix4x4.TEMP=new Matrix4x4();
+		Matrix4x4._tempMatrix4x4=new Matrix4x4();
 		Matrix4x4.DEFAULT=new Matrix4x4();
 		__static(Matrix4x4,
-		['_translationVector',function(){return this._translationVector=new Vector3();}
+		['_tempQuaternion',function(){return this._tempQuaternion=new Quaternion();},'_translationVector',function(){return this._translationVector=new Vector3();}
 		]);
 		return Matrix4x4;
 	})()
@@ -10866,7 +10941,9 @@
 				'a_StartColor':/*laya.d3.graphics.VertexElementUsage.STARTCOLOR0*/"STARTCOLOR",
 				'a_EndColor':/*laya.d3.graphics.VertexElementUsage.ENDCOLOR0*/"ENDCOLOR",
 				'a_StartSize':/*laya.d3.graphics.VertexElementUsage.STARTSIZE*/"STARTSIZE",
-				'a_StartRotation':/*laya.d3.graphics.VertexElementUsage.STARTROTATION*/"STARTROTATION",
+				'a_StartRotation0':/*laya.d3.graphics.VertexElementUsage.STARTROTATION0*/"STARTROTATION0",
+				'a_StartRotation1':/*laya.d3.graphics.VertexElementUsage.STARTROTATION1*/"STARTROTATION1",
+				'a_StartRotation2':/*laya.d3.graphics.VertexElementUsage.STARTROTATION2*/"STARTROTATION2",
 				'a_StartLifeTime':/*laya.d3.graphics.VertexElementUsage.STARTLIFETIME*/"STARTLIFETIME",
 				'a_StartSpeed':/*laya.d3.graphics.VertexElementUsage.STARTSPEED*/"STARTSPEED",
 				'a_Time':/*laya.d3.graphics.VertexElementUsage.TIME0*/"TIME",
@@ -10931,7 +11008,7 @@
 				'u_TSAGradientUVs':/*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.TEXTURESHEETANIMATIONGRADIENTUVS*/"TEXTURESHEETANIMATIONGRADIENTUVS",
 				'u_TSAMaxGradientUVs':/*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.TEXTURESHEETANIMATIONGRADIENTMAXUVS*/"TEXTURESHEETANIMATIONGRADIENTMAXUVS"};
 			var PARTICLESHURIKEN=Shader.nameKey.add("PARTICLESHURIKEN");
-			vs="attribute vec4 a_CornerTextureCoordinate;\nattribute vec3 a_Position;\nattribute vec3 a_Direction;\nattribute vec4 a_StartColor;\nattribute vec3 a_StartSize;\nattribute vec3 a_StartRotation;\nattribute float a_StartLifeTime;\nattribute float a_Time;\nattribute float a_StartSpeed;\n#ifdef VELOCITYOVERLIFETIME||COLOROVERLIFETIME||RANDOMCOLOROVERLIFETIME||SIZEOVERLIFETIME||ROTATIONOVERLIFETIME\n  attribute vec4 a_Random0;\n#endif\n#ifdef TEXTURESHEETANIMATION\n  attribute vec4 a_Random1;\n#endif\n\nvarying float v_Discard;\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\n\nuniform float u_CurrentTime;\nuniform vec3 u_Gravity;\n\nuniform vec3 u_WorldPosition;\nuniform mat4 u_WorldRotationMat;\nuniform bool u_ThreeDStartRotation;\nuniform int u_ScalingMode;\nuniform vec3 u_PositionScale;\nuniform vec3 u_SizeScale;\nuniform mat4 u_View;\nuniform mat4 u_Projection;\n\nuniform vec3 u_CameraDirection;//TODO:只有几种广告牌模式需要用\nuniform vec3 u_CameraUp;\n\nuniform  float u_StretchedBillboardLengthScale;\nuniform  float u_StretchedBillboardSpeedScale;\n\n#ifdef VELOCITYOVERLIFETIME\n  uniform  int  u_VOLType;\n  uniform  vec3 u_VOLVelocityConst;\n  uniform  vec2 u_VOLVelocityGradientX[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientY[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientZ[4];//x为key,y为速度\n  uniform  vec3 u_VOLVelocityConstMax;\n  uniform  vec2 u_VOLVelocityGradientMaxX[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientMaxY[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientMaxZ[4];//x为key,y为速度\n  uniform  int  u_VOLSpaceType;\n#endif\n\n#ifdef COLOROVERLIFETIME\n  uniform  vec4 u_ColorOverLifeGradientColors[4];//x为key,yzw为Color\n  uniform  vec2 u_ColorOverLifeGradientAlphas[4];//x为key,y为Alpha\n#endif\n\n#ifdef RANDOMCOLOROVERLIFETIME\n  uniform  vec4 u_ColorOverLifeGradientColors[4];//x为key,yzw为Color\n  uniform  vec2 u_ColorOverLifeGradientAlphas[4];//x为key,y为Alpha\n  uniform  vec4 u_MaxColorOverLifeGradientColors[4];//x为key,yzw为Color\n  uniform  vec2 u_MaxColorOverLifeGradientAlphas[4];//x为key,y为Alpha\n#endif\n\n#ifdef SIZEOVERLIFETIME\n  uniform  int u_SOLType;\n  uniform  bool u_SOLSeprarate;\n  uniform  vec2 u_SOLSizeGradient[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientX[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientY[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientZ[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientMax[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientMaxX[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientMaxY[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientMaxZ[4];//x为key,y为尺寸\n#endif\n\n\n#ifdef ROTATIONOVERLIFETIME\n  uniform  int u_ROLType;\n  uniform  bool u_ROLSeprarate;\n  uniform  float u_ROLAngularVelocityConst;\n  uniform  vec3 u_ROLAngularVelocityConstSeprarate;\n  uniform  vec2 u_ROLAngularVelocityGradient[4];//x为key,y为旋转\n  uniform  vec2 u_ROLAngularVelocityGradientX[4];//x为key,y为旋转\n  uniform  vec2 u_ROLAngularVelocityGradientY[4];//x为key,y为旋转\n  uniform  vec2 u_ROLAngularVelocityGradientZ[4];//x为key,y为旋转\n  uniform  float u_ROLAngularVelocityConstMax;\n  uniform  vec3 u_ROLAngularVelocityConstMaxSeprarate;\n  uniform  vec2 u_ROLAngularVelocityGradientMax[4];//x为key,y为旋转\n  uniform  vec2 u_ROLAngularVelocityGradientMaxX[4];//x为key,y为旋转\n  uniform  vec2 u_ROLAngularVelocityGradientMaxY[4];//x为key,y为旋转\n  uniform  vec2 u_ROLAngularVelocityGradientMaxZ[4];//x为key,y为旋转\n#endif\n\n#ifdef TEXTURESHEETANIMATION\n  uniform  int u_TSAType;\n  uniform  float u_TSACycles;\n  uniform  vec2 u_TSASubUVLength;\n  uniform  vec2 u_TSAGradientUVs[4];//x为key,y为frame\n  uniform  vec2 u_TSAMaxGradientUVs[4];//x为key,y为frame\n#endif\n\nfloat getCurValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)\n{\n	float curValue;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientNumber=gradientNumbers[i];\n		float key=gradientNumber.x;\n		if(key>=normalizedAge)\n		{\n			vec2 lastGradientNumber=gradientNumbers[i-1];\n			float lastKey=lastGradientNumber.x;\n			float age=(normalizedAge-lastKey)/(key-lastKey);\n			curValue=mix(lastGradientNumber.y,gradientNumber.y,age);\n			break;\n		}\n	}\n	return curValue;\n}\n\n#ifdef VELOCITYOVERLIFETIME\n//float getTotalPositionFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)\n//{\n//	float totalPosition=0.0;\n//	for(int i=1;i<4;i++)\n//	{\n//		vec2 gradientNumber=gradientNumbers[i];\n//		float key=gradientNumber.x;\n//		vec2 lastGradientNumber=gradientNumbers[i-1];\n//		float lastValue=lastGradientNumber.y;\n//		\n//		if(key>=normalizedAge){\n//			float lastKey=lastGradientNumber.x;\n//			float age=(normalizedAge-lastKey)/(key-lastKey);\n//			\n//			float velocity=(lastValue+mix(lastValue,gradientNumber.y,age))/2.0;\n//			totalPosition+=velocity*a_StartLifeTime*(normalizedAge-lastKey);//TODO:计算POSITION时可用优化，用已计算好速度\n//			break;\n//		}\n//		else{\n//			float velocity=(lastValue+gradientNumber.y)/2.0;\n//			totalPosition+=velocity*a_StartLifeTime*(key-lastGradientNumber.x);\n//		}\n//	}\n//	return totalPosition;\n//}\n#endif\n\n\nfloat getTotalValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)\n{\n	float totalValue=0.0;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientNumber=gradientNumbers[i];\n		float key=gradientNumber.x;\n		vec2 lastGradientNumber=gradientNumbers[i-1];\n		float lastValue=lastGradientNumber.y;\n		\n		if(key>=normalizedAge){\n			float lastKey=lastGradientNumber.x;\n			float age=(normalizedAge-lastKey)/(key-lastKey);\n			totalValue+=(lastValue+mix(lastValue,gradientNumber.y,age))/2.0*a_StartLifeTime*(normalizedAge-lastKey);\n			break;\n		}\n		else{\n			totalValue+=(lastValue+gradientNumber.y)/2.0*a_StartLifeTime*(key-lastGradientNumber.x);\n		}\n	}\n	return totalValue;\n}\n\nvec4 getColorFromGradient(in vec2 gradientAlphas[4],in vec4 gradientColors[4],in float normalizedAge)\n{\n	vec4 overTimeColor;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientAlpha=gradientAlphas[i];\n		float alphaKey=gradientAlpha.x;\n		if(alphaKey>=normalizedAge)\n		{\n			vec2 lastGradientAlpha=gradientAlphas[i-1];\n			float lastAlphaKey=lastGradientAlpha.x;\n			float age=(normalizedAge-lastAlphaKey)/(alphaKey-lastAlphaKey);\n			overTimeColor.a=mix(lastGradientAlpha.y,gradientAlpha.y,age);\n			break;\n		}\n	}\n	\n	for(int i=1;i<4;i++)\n	{\n		vec4 gradientColor=gradientColors[i];\n		float colorKey=gradientColor.x;\n		if(colorKey>=normalizedAge)\n		{\n			vec4 lastGradientColor=gradientColors[i-1];\n			float lastColorKey=lastGradientColor.x;\n			float age=(normalizedAge-lastColorKey)/(colorKey-lastColorKey);\n			overTimeColor.rgb=mix(gradientColors[i-1].yzw,gradientColor.yzw,age);\n			break;\n		}\n	}\n	return overTimeColor;\n}\n\n\n\nfloat getFrameFromGradient(in vec2 gradientFrames[4],in float normalizedAge)\n{\n	float overTimeFrame;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientFrame=gradientFrames[i];\n		float key=gradientFrame.x;\n		if(key>=normalizedAge)\n		{\n			vec2 lastGradientFrame=gradientFrames[i-1];\n			float lastKey=lastGradientFrame.x;\n			float age=(normalizedAge-lastKey)/(key-lastKey);\n			overTimeFrame=mix(lastGradientFrame.y,gradientFrame.y,age);\n			break;\n		}\n	}\n	return floor(overTimeFrame);\n}\n\n#ifdef VELOCITYOVERLIFETIME\nvec3 computeParticleLifeVelocity(in float normalizedAge)\n{\n  vec3 outLifeVelocity;\n  if(u_VOLType==0)\n	 outLifeVelocity=u_VOLVelocityConst; \n  else if(u_VOLType==1)\n     outLifeVelocity= vec3(getCurValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge));\n  else if(u_VOLType==2)\n	 outLifeVelocity=mix(u_VOLVelocityConst,u_VOLVelocityConstMax,a_Random0.x); \n  else if(u_VOLType==3)\n     outLifeVelocity=vec3(mix(getCurValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientMaxX,normalizedAge),a_Random0.x),\n	                 mix(getCurValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientMaxY,normalizedAge),a_Random0.x),\n					 mix(getCurValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientMaxZ,normalizedAge),a_Random0.x));\n					\n  return outLifeVelocity;\n} \n#endif\n\nvec3 computeParticlePosition(in vec3 startVelocity, in vec3 lifeVelocity,in float age,in float normalizedAge)\n{\n   vec3 startPosition;\n   vec3 lifePosition;\n   #ifdef VELOCITYOVERLIFETIME\n	 if(u_VOLType==0){\n		  startPosition=startVelocity*age;\n		  lifePosition=lifeVelocity*age;\n	 }\n	 else if(u_VOLType==1){\n		  startPosition=startVelocity*age;\n		  lifePosition=vec3(getTotalValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge));\n	 }\n	 else if(u_VOLType==2){\n		  startPosition=startVelocity*age;\n		  lifePosition=lifeVelocity*age;\n	 }\n	 else if(u_VOLType==3){\n		  startPosition=startVelocity*age;\n		  lifePosition=vec3(mix(getTotalValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientMaxX,normalizedAge),a_Random0.x)\n	      ,mix(getTotalValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientMaxY,normalizedAge),a_Random0.x)\n	      ,mix(getTotalValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientMaxZ,normalizedAge),a_Random0.x));\n	 }\n	\n	vec3 finalPosition;\n	if(u_VOLSpaceType==0){\n	  if(u_ScalingMode!=2)\n	   finalPosition =mat3(u_WorldRotationMat)*(u_PositionScale*(a_Position+startPosition+lifePosition));\n	  else\n	   finalPosition =mat3(u_WorldRotationMat)*(u_PositionScale*a_Position+startPosition+lifePosition);\n	}\n	else{\n	  if(u_ScalingMode!=2)\n	    finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*(a_Position+startPosition))+lifePosition;\n	  else\n	    finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*a_Position+startPosition)+lifePosition;\n	}\n  #else\n	 startPosition=startVelocity*age;\n	 vec3 finalPosition;\n	 if(u_ScalingMode!=2)\n	   finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*(a_Position+startPosition));\n	 else\n	   finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*a_Position+startPosition);\n  #endif\n		  \n  finalPosition=finalPosition+u_WorldPosition;\n  finalPosition+=u_Gravity*age*normalizedAge;//计算受重力影响的位置//TODO:移除\n \n  return  finalPosition;\n}\n\n\nvec4 computeParticleColor(in vec4 color,in float normalizedAge)\n{\n	#ifdef COLOROVERLIFETIME\n	  color*=getColorFromGradient(u_ColorOverLifeGradientAlphas,u_ColorOverLifeGradientColors,normalizedAge);\n	#endif\n	\n	#ifdef RANDOMCOLOROVERLIFETIME\n	  color*=mix(getColorFromGradient(u_ColorOverLifeGradientAlphas,u_ColorOverLifeGradientColors,normalizedAge),getColorFromGradient(u_MaxColorOverLifeGradientAlphas,u_MaxColorOverLifeGradientColors,normalizedAge),a_Random0.y);\n	#endif\n\n    return color;\n}\n\nvec2 computeParticleSize(in vec2 size,in float normalizedAge)\n{\n	#ifdef SIZEOVERLIFETIME\n	 if(u_SOLType==0){\n		if(u_SOLSeprarate){\n		    size*=vec2(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge));\n		}\n		else{\n		    size*=getCurValueFromGradientFloat(u_SOLSizeGradient,normalizedAge);\n		}\n	 }\n	 else if(u_SOLType==2){\n		if(u_SOLSeprarate){\n			size*=vec2(mix(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxX,normalizedAge),a_Random0.z)\n	        ,mix(getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxY,normalizedAge),a_Random0.z));\n		}\n		else{\n			size*=mix(getCurValueFromGradientFloat(u_SOLSizeGradient,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMax,normalizedAge),a_Random0.z); \n		}\n	 }\n	#endif\n	return size;\n}\n\nmat2 computeParticleRotation(in vec3 rotation,in float age,in float normalizedAge)//TODO:不分轴是否无需计算XY，Billboard模式下好像是,待确认。拉伸模式旋转无效。\n{ \n	#ifdef ROTATIONOVERLIFETIME\n	   if(u_ROLType==0){\n		  if(u_ROLSeprarate){\n			  vec3 ageRot=u_ROLAngularVelocityConstSeprarate*age;\n	          rotation+=ageRot;\n			}\n			else{\n			  float ageRot=u_ROLAngularVelocityConst*age;\n	          rotation+=ageRot;\n			}\n		}\n	    else if(u_ROLType==1){\n		    if(u_ROLSeprarate){\n			  rotation+=vec3(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientZ,normalizedAge));\n			}\n			else{\n			  rotation+=getTotalValueFromGradientFloat(u_ROLAngularVelocityGradient,normalizedAge);\n			}\n		}\n	    else if(u_ROLType==2){\n		    if(u_ROLSeprarate){\n			  vec3 ageRot=mix(u_ROLAngularVelocityConstSeprarate,u_ROLAngularVelocityConstMaxSeprarate,a_Random0.w)*age;\n	          rotation+=ageRot;\n	        }\n			else{\n			  float ageRot=mix(u_ROLAngularVelocityConst,u_ROLAngularVelocityConstMax,a_Random0.w)*age;\n	          rotation+=ageRot;\n			}\n	    }\n	    else if(u_ROLType==3){\n		    if(u_ROLSeprarate){\n			   rotation+=vec3(mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxX,normalizedAge),a_Random0.w)\n	          ,mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxY,normalizedAge),a_Random0.w)\n	          ,mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientZ,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxZ,normalizedAge),a_Random0.w));\n			}\n			else{\n			  rotation+=mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradient,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMax,normalizedAge),a_Random0.w);\n			}\n		}\n	#endif\n	float rot=rotation.z;\n    float c = cos(rot);\n    float s = sin(rot);\n    return mat2(c, -s, s, c);\n}\n\nvec2 computeParticleUV(in vec2 uv,in float normalizedAge)\n{ \n	#ifdef TEXTURESHEETANIMATION\n	  if(u_TSAType==1){\n		float cycleNormalizedAge=normalizedAge*u_TSACycles;\n		float frame=getFrameFromGradient(u_TSAGradientUVs,normalizedAge*(cycleNormalizedAge-floor(cycleNormalizedAge)));\n		float totalULength=frame*u_TSASubUVLength.x;\n		float floorTotalULength=floor(totalULength);\n	    uv.x=uv.x+totalULength-floorTotalULength;\n		uv.y=uv.y+floorTotalULength*u_TSASubUVLength.y;\n	  }\n	  else if(u_TSAType==3){\n		float cycleNormalizedAge=normalizedAge*u_TSACycles;\n		float uvNormalizedAge=cycleNormalizedAge-floor(cycleNormalizedAge);\n	    float frame=floor(mix(getFrameFromGradient(u_TSAGradientUVs,uvNormalizedAge),getFrameFromGradient(u_TSAMaxGradientUVs,uvNormalizedAge),a_Random1.x));\n		float totalULength=frame*u_TSASubUVLength.x;\n		float floorTotalULength=floor(totalULength);\n	    uv.x=uv.x+totalULength-floorTotalULength;\n		uv.y=uv.y+floorTotalULength*u_TSASubUVLength.y;\n	  }\n    #endif\n	return uv;\n}\n\nvoid main()\n{\n   float age = u_CurrentTime - a_Time;\n   float normalizedAge = age/a_StartLifeTime;\n   vec3 lifeVelocity;\n   if(normalizedAge<1.0){ \n	  vec3 startVelocity=a_Direction*a_StartSpeed;\n   #ifdef VELOCITYOVERLIFETIME\n	  lifeVelocity= computeParticleLifeVelocity(normalizedAge);//计算粒子生命周期速度\n   #endif \n	  \n   vec3 center=computeParticlePosition(startVelocity, lifeVelocity, age, normalizedAge);//计算粒子位置\n   vec2 corner=a_CornerTextureCoordinate.xy;//Billboard模式z轴无效\n   \n   #ifdef SPHERHBILLBOARD\n        vec3 cameraUpVector =normalize(u_CameraUp);//TODO:是否外面归一化\n        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));\n        vec3 upVector = normalize(cross(sideVector,u_CameraDirection));\n	    corner*=computeParticleSize(a_StartSize.xy,normalizedAge);\n		//if(u_ThreeDStartRotation){\n		  //mat2 rotation = computeParticleRotation(a_StartRotation, age,normalizedAge);\n		  //corner=rotation*corner;\n		  //center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);\n		  //mat3 TBN = mat3(T, B, N);\n		//}\n		//else{\n		  mat2 rotation = computeParticleRotation(a_StartRotation, age,normalizedAge);\n		  corner=rotation*corner;\n		  center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);\n		//}\n       \n   #endif\n   \n   #ifdef STRETCHEDBILLBOARD\n	vec3 velocity;\n	#ifdef VELOCITYOVERLIFETIME\n	    if(u_VOLSpaceType==0)\n		  velocity=mat3(u_WorldRotationMat)*(u_SizeScale*(startVelocity+lifeVelocity));\n	    else\n		  velocity=mat3(u_WorldRotationMat)*(u_SizeScale*startVelocity)+lifeVelocity;\n    #else\n	    velocity= mat3(u_WorldRotationMat)*(u_SizeScale*startVelocity);\n    #endif   \n        vec3 cameraUpVector =normalize(velocity);\n        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));\n	    vec2 size=computeParticleSize(a_StartSize.xy,normalizedAge);\n	    const mat2 rotaionZHalfPI=mat2(0.0, -1.0, 1.0, 0.0);\n	    corner=rotaionZHalfPI*corner;\n	    corner.y=corner.y-abs(corner.y);\n	    float speed=length(velocity);//TODO:\n	    center +=u_SizeScale.xzy*size.x*corner.x*sideVector+((cameraUpVector*speed)*u_StretchedBillboardSpeedScale+cameraUpVector*size.y*u_StretchedBillboardLengthScale)*corner.y;\n   #endif\n   \n   #ifdef HORIZONTALBILLBOARD\n        const vec3 cameraUpVector =vec3(0.0,0.0,-1.0);\n	    const vec3 sideVector = vec3(1.0,0.0,0.0);\n        vec3 upVector=cameraUpVector;\n		corner*=computeParticleSize(a_StartSize.xy,normalizedAge);\n		mat2 rotation = computeParticleRotation(a_StartRotation, age,normalizedAge);\n	    corner=rotation*corner;\n        center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*upVector);\n   #endif\n   \n   #ifdef VERTICALBILLBOARD\n        const vec3 cameraUpVector =vec3(0.0,1.0,0.0);\n        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));\n        vec3 upVector=cameraUpVector;\n		corner*=computeParticleSize(a_StartSize.xy,normalizedAge);\n		mat2 rotation = computeParticleRotation(a_StartRotation, age,normalizedAge);\n	    corner=rotation*corner;\n        center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*upVector);\n   #endif\n   \n      gl_Position=u_Projection*u_View*vec4(center,1.0);\n      v_Color = computeParticleColor(a_StartColor, normalizedAge);\n      v_TextureCoordinate =computeParticleUV(a_CornerTextureCoordinate.zw, normalizedAge);\n      v_Discard=0.0;\n   }\n   else\n   {\n      v_Discard=1.0;\n   }\n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/ParticleShuriKen.vs*/;
+			vs="attribute vec4 a_CornerTextureCoordinate;\nattribute vec3 a_Position;\nattribute vec3 a_Direction;\nattribute vec4 a_StartColor;\nattribute vec3 a_StartSize;\nattribute vec3 a_StartRotation0;\nattribute vec3 a_StartRotation1;\nattribute vec3 a_StartRotation2;\nattribute float a_StartLifeTime;\nattribute float a_Time;\nattribute float a_StartSpeed;\n#ifdef VELOCITYOVERLIFETIME||COLOROVERLIFETIME||RANDOMCOLOROVERLIFETIME||SIZEOVERLIFETIME||ROTATIONOVERLIFETIME\n  attribute vec4 a_Random0;\n#endif\n#ifdef TEXTURESHEETANIMATION\n  attribute vec4 a_Random1;\n#endif\n\nvarying float v_Discard;\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\n\nuniform float u_CurrentTime;\nuniform vec3 u_Gravity;\n\nuniform vec3 u_WorldPosition;\nuniform mat4 u_WorldRotationMat;\nuniform bool u_ThreeDStartRotation;\nuniform int u_ScalingMode;\nuniform vec3 u_PositionScale;\nuniform vec3 u_SizeScale;\nuniform mat4 u_View;\nuniform mat4 u_Projection;\n\nuniform vec3 u_CameraDirection;//TODO:只有几种广告牌模式需要用\nuniform vec3 u_CameraUp;\n\nuniform  float u_StretchedBillboardLengthScale;\nuniform  float u_StretchedBillboardSpeedScale;\n\n#ifdef VELOCITYOVERLIFETIME\n  uniform  int  u_VOLType;\n  uniform  vec3 u_VOLVelocityConst;\n  uniform  vec2 u_VOLVelocityGradientX[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientY[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientZ[4];//x为key,y为速度\n  uniform  vec3 u_VOLVelocityConstMax;\n  uniform  vec2 u_VOLVelocityGradientMaxX[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientMaxY[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientMaxZ[4];//x为key,y为速度\n  uniform  int  u_VOLSpaceType;\n#endif\n\n#ifdef COLOROVERLIFETIME\n  uniform  vec4 u_ColorOverLifeGradientColors[4];//x为key,yzw为Color\n  uniform  vec2 u_ColorOverLifeGradientAlphas[4];//x为key,y为Alpha\n#endif\n\n#ifdef RANDOMCOLOROVERLIFETIME\n  uniform  vec4 u_ColorOverLifeGradientColors[4];//x为key,yzw为Color\n  uniform  vec2 u_ColorOverLifeGradientAlphas[4];//x为key,y为Alpha\n  uniform  vec4 u_MaxColorOverLifeGradientColors[4];//x为key,yzw为Color\n  uniform  vec2 u_MaxColorOverLifeGradientAlphas[4];//x为key,y为Alpha\n#endif\n\n#ifdef SIZEOVERLIFETIME\n  uniform  int u_SOLType;\n  uniform  bool u_SOLSeprarate;\n  uniform  vec2 u_SOLSizeGradient[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientX[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientY[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientZ[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientMax[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientMaxX[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientMaxY[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientMaxZ[4];//x为key,y为尺寸\n#endif\n\n\n#ifdef ROTATIONOVERLIFETIME\n  uniform  int u_ROLType;\n  uniform  bool u_ROLSeprarate;\n  uniform  float u_ROLAngularVelocityConst;\n  uniform  vec3 u_ROLAngularVelocityConstSeprarate;\n  uniform  vec2 u_ROLAngularVelocityGradient[4];//x为key,y为旋转\n  uniform  vec2 u_ROLAngularVelocityGradientX[4];//x为key,y为旋转\n  uniform  vec2 u_ROLAngularVelocityGradientY[4];//x为key,y为旋转\n  uniform  vec2 u_ROLAngularVelocityGradientZ[4];//x为key,y为旋转\n  uniform  float u_ROLAngularVelocityConstMax;\n  uniform  vec3 u_ROLAngularVelocityConstMaxSeprarate;\n  uniform  vec2 u_ROLAngularVelocityGradientMax[4];//x为key,y为旋转\n  uniform  vec2 u_ROLAngularVelocityGradientMaxX[4];//x为key,y为旋转\n  uniform  vec2 u_ROLAngularVelocityGradientMaxY[4];//x为key,y为旋转\n  uniform  vec2 u_ROLAngularVelocityGradientMaxZ[4];//x为key,y为旋转\n#endif\n\n#ifdef TEXTURESHEETANIMATION\n  uniform  int u_TSAType;\n  uniform  float u_TSACycles;\n  uniform  vec2 u_TSASubUVLength;\n  uniform  vec2 u_TSAGradientUVs[4];//x为key,y为frame\n  uniform  vec2 u_TSAMaxGradientUVs[4];//x为key,y为frame\n#endif\n\nfloat getCurValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)\n{\n	float curValue;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientNumber=gradientNumbers[i];\n		float key=gradientNumber.x;\n		if(key>=normalizedAge)\n		{\n			vec2 lastGradientNumber=gradientNumbers[i-1];\n			float lastKey=lastGradientNumber.x;\n			float age=(normalizedAge-lastKey)/(key-lastKey);\n			curValue=mix(lastGradientNumber.y,gradientNumber.y,age);\n			break;\n		}\n	}\n	return curValue;\n}\n\n#ifdef VELOCITYOVERLIFETIME\n//float getTotalPositionFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)\n//{\n//	float totalPosition=0.0;\n//	for(int i=1;i<4;i++)\n//	{\n//		vec2 gradientNumber=gradientNumbers[i];\n//		float key=gradientNumber.x;\n//		vec2 lastGradientNumber=gradientNumbers[i-1];\n//		float lastValue=lastGradientNumber.y;\n//		\n//		if(key>=normalizedAge){\n//			float lastKey=lastGradientNumber.x;\n//			float age=(normalizedAge-lastKey)/(key-lastKey);\n//			\n//			float velocity=(lastValue+mix(lastValue,gradientNumber.y,age))/2.0;\n//			totalPosition+=velocity*a_StartLifeTime*(normalizedAge-lastKey);//TODO:计算POSITION时可用优化，用已计算好速度\n//			break;\n//		}\n//		else{\n//			float velocity=(lastValue+gradientNumber.y)/2.0;\n//			totalPosition+=velocity*a_StartLifeTime*(key-lastGradientNumber.x);\n//		}\n//	}\n//	return totalPosition;\n//}\n#endif\n\n\nfloat getTotalValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)\n{\n	float totalValue=0.0;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientNumber=gradientNumbers[i];\n		float key=gradientNumber.x;\n		vec2 lastGradientNumber=gradientNumbers[i-1];\n		float lastValue=lastGradientNumber.y;\n		\n		if(key>=normalizedAge){\n			float lastKey=lastGradientNumber.x;\n			float age=(normalizedAge-lastKey)/(key-lastKey);\n			totalValue+=(lastValue+mix(lastValue,gradientNumber.y,age))/2.0*a_StartLifeTime*(normalizedAge-lastKey);\n			break;\n		}\n		else{\n			totalValue+=(lastValue+gradientNumber.y)/2.0*a_StartLifeTime*(key-lastGradientNumber.x);\n		}\n	}\n	return totalValue;\n}\n\nvec4 getColorFromGradient(in vec2 gradientAlphas[4],in vec4 gradientColors[4],in float normalizedAge)\n{\n	vec4 overTimeColor;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientAlpha=gradientAlphas[i];\n		float alphaKey=gradientAlpha.x;\n		if(alphaKey>=normalizedAge)\n		{\n			vec2 lastGradientAlpha=gradientAlphas[i-1];\n			float lastAlphaKey=lastGradientAlpha.x;\n			float age=(normalizedAge-lastAlphaKey)/(alphaKey-lastAlphaKey);\n			overTimeColor.a=mix(lastGradientAlpha.y,gradientAlpha.y,age);\n			break;\n		}\n	}\n	\n	for(int i=1;i<4;i++)\n	{\n		vec4 gradientColor=gradientColors[i];\n		float colorKey=gradientColor.x;\n		if(colorKey>=normalizedAge)\n		{\n			vec4 lastGradientColor=gradientColors[i-1];\n			float lastColorKey=lastGradientColor.x;\n			float age=(normalizedAge-lastColorKey)/(colorKey-lastColorKey);\n			overTimeColor.rgb=mix(gradientColors[i-1].yzw,gradientColor.yzw,age);\n			break;\n		}\n	}\n	return overTimeColor;\n}\n\n\n\nfloat getFrameFromGradient(in vec2 gradientFrames[4],in float normalizedAge)\n{\n	float overTimeFrame;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientFrame=gradientFrames[i];\n		float key=gradientFrame.x;\n		if(key>=normalizedAge)\n		{\n			vec2 lastGradientFrame=gradientFrames[i-1];\n			float lastKey=lastGradientFrame.x;\n			float age=(normalizedAge-lastKey)/(key-lastKey);\n			overTimeFrame=mix(lastGradientFrame.y,gradientFrame.y,age);\n			break;\n		}\n	}\n	return floor(overTimeFrame);\n}\n\n#ifdef VELOCITYOVERLIFETIME\nvec3 computeParticleLifeVelocity(in float normalizedAge)\n{\n  vec3 outLifeVelocity;\n  if(u_VOLType==0)\n	 outLifeVelocity=u_VOLVelocityConst; \n  else if(u_VOLType==1)\n     outLifeVelocity= vec3(getCurValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge));\n  else if(u_VOLType==2)\n	 outLifeVelocity=mix(u_VOLVelocityConst,u_VOLVelocityConstMax,a_Random0.x); \n  else if(u_VOLType==3)\n     outLifeVelocity=vec3(mix(getCurValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientMaxX,normalizedAge),a_Random0.x),\n	                 mix(getCurValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientMaxY,normalizedAge),a_Random0.x),\n					 mix(getCurValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientMaxZ,normalizedAge),a_Random0.x));\n					\n  return outLifeVelocity;\n} \n#endif\n\nvec3 computeParticlePosition(in vec3 startVelocity, in vec3 lifeVelocity,in float age,in float normalizedAge)\n{\n   vec3 startPosition;\n   vec3 lifePosition;\n   #ifdef VELOCITYOVERLIFETIME\n	 if(u_VOLType==0){\n		  startPosition=startVelocity*age;\n		  lifePosition=lifeVelocity*age;\n	 }\n	 else if(u_VOLType==1){\n		  startPosition=startVelocity*age;\n		  lifePosition=vec3(getTotalValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge));\n	 }\n	 else if(u_VOLType==2){\n		  startPosition=startVelocity*age;\n		  lifePosition=lifeVelocity*age;\n	 }\n	 else if(u_VOLType==3){\n		  startPosition=startVelocity*age;\n		  lifePosition=vec3(mix(getTotalValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientMaxX,normalizedAge),a_Random0.x)\n	      ,mix(getTotalValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientMaxY,normalizedAge),a_Random0.x)\n	      ,mix(getTotalValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientMaxZ,normalizedAge),a_Random0.x));\n	 }\n	\n	vec3 finalPosition;\n	if(u_VOLSpaceType==0){\n	  if(u_ScalingMode!=2)\n	   finalPosition =mat3(u_WorldRotationMat)*(u_PositionScale*(a_Position+startPosition+lifePosition));\n	  else\n	   finalPosition =mat3(u_WorldRotationMat)*(u_PositionScale*a_Position+startPosition+lifePosition);\n	}\n	else{\n	  if(u_ScalingMode!=2)\n	    finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*(a_Position+startPosition))+lifePosition;\n	  else\n	    finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*a_Position+startPosition)+lifePosition;\n	}\n  #else\n	 startPosition=startVelocity*age;\n	 vec3 finalPosition;\n	 if(u_ScalingMode!=2)\n	   finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*(a_Position+startPosition));\n	 else\n	   finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*a_Position+startPosition);\n  #endif\n		  \n  finalPosition=finalPosition+u_WorldPosition;\n  finalPosition+=u_Gravity*age*normalizedAge;//计算受重力影响的位置//TODO:移除\n \n  return  finalPosition;\n}\n\n\nvec4 computeParticleColor(in vec4 color,in float normalizedAge)\n{\n	#ifdef COLOROVERLIFETIME\n	  color*=getColorFromGradient(u_ColorOverLifeGradientAlphas,u_ColorOverLifeGradientColors,normalizedAge);\n	#endif\n	\n	#ifdef RANDOMCOLOROVERLIFETIME\n	  color*=mix(getColorFromGradient(u_ColorOverLifeGradientAlphas,u_ColorOverLifeGradientColors,normalizedAge),getColorFromGradient(u_MaxColorOverLifeGradientAlphas,u_MaxColorOverLifeGradientColors,normalizedAge),a_Random0.y);\n	#endif\n\n    return color;\n}\n\nvec2 computeParticleSize(in vec2 size,in float normalizedAge)\n{\n	#ifdef SIZEOVERLIFETIME\n	 if(u_SOLType==0){\n		if(u_SOLSeprarate){\n		    size*=vec2(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge));\n		}\n		else{\n		    size*=getCurValueFromGradientFloat(u_SOLSizeGradient,normalizedAge);\n		}\n	 }\n	 else if(u_SOLType==2){\n		if(u_SOLSeprarate){\n			size*=vec2(mix(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxX,normalizedAge),a_Random0.z)\n	        ,mix(getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxY,normalizedAge),a_Random0.z));\n		}\n		else{\n			size*=mix(getCurValueFromGradientFloat(u_SOLSizeGradient,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMax,normalizedAge),a_Random0.z); \n		}\n	 }\n	#endif\n	return size;\n}\n\nmat2 computeParticleRotation(in vec3 rotation,in float age,in float normalizedAge)//TODO:不分轴是否无需计算XY，Billboard模式下好像是,待确认。\n{ \n	#ifdef ROTATIONOVERLIFETIME\n	   if(u_ROLType==0){\n		  if(u_ROLSeprarate){\n			  vec3 ageRot=u_ROLAngularVelocityConstSeprarate*age;\n	          rotation+=ageRot;\n			}\n			else{\n			  float ageRot=u_ROLAngularVelocityConst*age;\n	          rotation+=ageRot;\n			}\n		}\n	    else if(u_ROLType==1){\n		    if(u_ROLSeprarate){\n			  rotation+=vec3(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientZ,normalizedAge));\n			}\n			else{\n			  rotation+=getTotalValueFromGradientFloat(u_ROLAngularVelocityGradient,normalizedAge);\n			}\n		}\n	    else if(u_ROLType==2){\n		    if(u_ROLSeprarate){\n			  vec3 ageRot=mix(u_ROLAngularVelocityConstSeprarate,u_ROLAngularVelocityConstMaxSeprarate,a_Random0.w)*age;\n	          rotation+=ageRot;\n	        }\n			else{\n			  float ageRot=mix(u_ROLAngularVelocityConst,u_ROLAngularVelocityConstMax,a_Random0.w)*age;\n	          rotation+=ageRot;\n			}\n	    }\n	    else if(u_ROLType==3){\n		    if(u_ROLSeprarate){\n			   rotation+=vec3(mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxX,normalizedAge),a_Random0.w)\n	          ,mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxY,normalizedAge),a_Random0.w)\n	          ,mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientZ,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxZ,normalizedAge),a_Random0.w));\n			}\n			else{\n			  rotation+=mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradient,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMax,normalizedAge),a_Random0.w);\n			}\n		}\n	#endif\n	float rot=rotation.z;\n    float c = cos(rot);\n    float s = sin(rot);\n    return mat2(c, -s, s, c);\n}\n\nvec2 computeParticleUV(in vec2 uv,in float normalizedAge)\n{ \n	#ifdef TEXTURESHEETANIMATION\n	  if(u_TSAType==1){\n		float cycleNormalizedAge=normalizedAge*u_TSACycles;\n		float frame=getFrameFromGradient(u_TSAGradientUVs,normalizedAge*(cycleNormalizedAge-floor(cycleNormalizedAge)));\n		float totalULength=frame*u_TSASubUVLength.x;\n		float floorTotalULength=floor(totalULength);\n	    uv.x=uv.x+totalULength-floorTotalULength;\n		uv.y=uv.y+floorTotalULength*u_TSASubUVLength.y;\n	  }\n	  else if(u_TSAType==3){\n		float cycleNormalizedAge=normalizedAge*u_TSACycles;\n		float uvNormalizedAge=cycleNormalizedAge-floor(cycleNormalizedAge);\n	    float frame=floor(mix(getFrameFromGradient(u_TSAGradientUVs,uvNormalizedAge),getFrameFromGradient(u_TSAMaxGradientUVs,uvNormalizedAge),a_Random1.x));\n		float totalULength=frame*u_TSASubUVLength.x;\n		float floorTotalULength=floor(totalULength);\n	    uv.x=uv.x+totalULength-floorTotalULength;\n		uv.y=uv.y+floorTotalULength*u_TSASubUVLength.y;\n	  }\n    #endif\n	return uv;\n}\n\nvoid main()\n{\n   float age = u_CurrentTime - a_Time;\n   float normalizedAge = age/a_StartLifeTime;\n   vec3 lifeVelocity;\n   if(normalizedAge<1.0){ \n	  vec3 startVelocity=a_Direction*a_StartSpeed;\n   #ifdef VELOCITYOVERLIFETIME\n	  lifeVelocity= computeParticleLifeVelocity(normalizedAge);//计算粒子生命周期速度\n   #endif \n	  \n   vec3 center=computeParticlePosition(startVelocity, lifeVelocity, age, normalizedAge);//计算粒子位置\n   vec2 corner=a_CornerTextureCoordinate.xy;//Billboard模式z轴无效\n   \n   #ifdef SPHERHBILLBOARD\n        vec3 cameraUpVector =normalize(u_CameraUp);//TODO:是否外面归一化\n        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));\n        vec3 upVector = normalize(cross(sideVector,u_CameraDirection));\n	    corner*=computeParticleSize(a_StartSize.xy,normalizedAge);\n		if(u_ThreeDStartRotation){\n		  center += u_SizeScale.xzy*(mat3(a_StartRotation0,a_StartRotation1,a_StartRotation2)*(corner.x*sideVector+corner.y*upVector));\n		}\n		else{\n		  mat2 rotation = computeParticleRotation(a_StartRotation0, age,normalizedAge);\n		  corner=rotation*corner;\n		  center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);\n		}\n       \n   #endif\n   \n   #ifdef STRETCHEDBILLBOARD\n	vec3 velocity;\n	#ifdef VELOCITYOVERLIFETIME\n	    if(u_VOLSpaceType==0)\n		  velocity=mat3(u_WorldRotationMat)*(u_SizeScale*(startVelocity+lifeVelocity));\n	    else\n		  velocity=mat3(u_WorldRotationMat)*(u_SizeScale*startVelocity)+lifeVelocity;\n    #else\n	    velocity= mat3(u_WorldRotationMat)*(u_SizeScale*startVelocity);\n    #endif   \n        vec3 cameraUpVector =normalize(velocity);\n        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));\n	    vec2 size=computeParticleSize(a_StartSize.xy,normalizedAge);\n	    const mat2 rotaionZHalfPI=mat2(0.0, -1.0, 1.0, 0.0);\n	    corner=rotaionZHalfPI*corner;\n	    corner.y=corner.y-abs(corner.y);\n	    float speed=length(velocity);//TODO:\n	    center +=u_SizeScale.xzy*size.x*corner.x*sideVector+((cameraUpVector*speed)*u_StretchedBillboardSpeedScale+cameraUpVector*size.y*u_StretchedBillboardLengthScale)*corner.y;\n   #endif\n   \n   #ifdef HORIZONTALBILLBOARD\n        const vec3 cameraUpVector =vec3(0.0,0.0,-1.0);\n	    const vec3 sideVector = vec3(1.0,0.0,0.0);\n		corner*=computeParticleSize(a_StartSize.xy,normalizedAge);\n		mat2 rotation = computeParticleRotation(a_StartRotation0, age,normalizedAge);\n	    corner=rotation*corner;\n        center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*cameraUpVector);\n   #endif\n   \n   #ifdef VERTICALBILLBOARD\n        const vec3 cameraUpVector =vec3(0.0,1.0,0.0);\n        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));\n		corner*=computeParticleSize(a_StartSize.xy,normalizedAge);\n		mat2 rotation = computeParticleRotation(a_StartRotation0, age,normalizedAge);\n	    corner=rotation*corner*cos(0.78539816339744830961566084581988);//TODO:临时缩小cos45,不确定U3D原因\n        center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*cameraUpVector);\n   #endif\n   \n      gl_Position=u_Projection*u_View*vec4(center,1.0);\n      v_Color = computeParticleColor(a_StartColor, normalizedAge);\n      v_TextureCoordinate =computeParticleUV(a_CornerTextureCoordinate.zw, normalizedAge);\n      v_Discard=0.0;\n   }\n   else\n   {\n      v_Discard=1.0;\n   }\n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/ParticleShuriKen.vs*/;
 			ps="#ifdef FSHIGHPRECISION\n  precision highp float;\n#else\n  precision mediump float;\n#endif\n\nvarying float v_Discard;\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\nuniform sampler2D u_texture;\n\n\nvoid main()\n{	\n	#ifdef DIFFUSEMAP\n	  if(v_Discard!=0.0)\n         discard;\n	  gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*v_Color;\n	#else\n	  gl_FragColor=vec4(0.0);\n	#endif\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/ParticleShuriKen.ps*/;
 			Shader.preCompile(PARTICLESHURIKEN,vs,ps,shaderNameMap);
 			shaderNameMap={
@@ -13863,7 +13940,7 @@
 			ShurikenParticleSystem.__super.call(this);
 			this._owner=owner;
 			this._currentTime=0;
-			this._floatCountPerVertex=31;
+			this._floatCountPerVertex=37;
 			this._maxParticles=1000;
 			this.duration=5.0;
 			this.looping=true;
@@ -13924,9 +14001,9 @@
 		__proto._retireActiveParticles=function(){
 			while (this._firstActiveElement !=this._firstNewElement){
 				var index=this._firstActiveElement *this._floatCountPerVertex *4;
-				var timeIndex=index+21;
+				var timeIndex=index+27;
 				var particleAge=this._currentTime-this._vertices[timeIndex];
-				if (particleAge < this._vertices[index+20])
+				if (particleAge < this._vertices[index+26])
 					break ;
 				this._vertices[timeIndex]=this._drawCounter;
 				this._firstActiveElement++;
@@ -13937,7 +14014,7 @@
 
 		__proto._freeRetiredParticles=function(){
 			while (this._firstRetiredElement !=this._firstActiveElement){
-				var age=this._drawCounter-this._vertices[this._firstRetiredElement *this._floatCountPerVertex *4+21];
+				var age=this._drawCounter-this._vertices[this._firstRetiredElement *this._floatCountPerVertex *4+27];
 				if (age < 3)
 					break ;
 				this._firstRetiredElement++;
@@ -14048,7 +14125,7 @@
 				nextFreeParticle=0;
 			if (nextFreeParticle===this._firstRetiredElement)
 				return;
-			var particleData=ShurikenParticleData.create(this,positionE,directionE,this._currentTime);
+			var particleData=ShurikenParticleData.create(this,this._owner.particleRender,positionE,directionE,this._currentTime);
 			var startIndex=this._firstFreeElement *this._floatCountPerVertex *4;
 			var randomX0=Math.random(),randomY0=Math.random(),randomZ0=Math.random(),randomW0=Math.random();
 			var randomX1=Math.random(),randomY1=Math.random(),randomZ1=Math.random(),randomW1=Math.random();
@@ -14076,18 +14153,22 @@
 				for (j=0,offset=14;j < 3;j++)
 				this._vertices[vertexStart+offset+j]=particleData.startSize[j];
 				for (j=0,offset=17;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.startRotation[j];
-				this._vertices[vertexStart+20]=particleData.startLifeTime;
-				this._vertices[vertexStart+21]=particleData.time;
-				this._vertices[vertexStart+22]=particleData.startSpeed;
-				this._vertices[vertexStart+23]=randomX0;
-				this._vertices[vertexStart+24]=randomY0;
-				this._vertices[vertexStart+25]=randomZ0;
-				this._vertices[vertexStart+26]=randomW0;
-				this._vertices[vertexStart+27]=randomX1;
-				this._vertices[vertexStart+28]=randomY1;
-				this._vertices[vertexStart+29]=randomZ1;
-				this._vertices[vertexStart+30]=randomW1;
+				this._vertices[vertexStart+offset+j]=particleData.startRotation0[j];
+				for (j=0,offset=20;j < 3;j++)
+				this._vertices[vertexStart+offset+j]=particleData.startRotation1[j];
+				for (j=0,offset=23;j < 3;j++)
+				this._vertices[vertexStart+offset+j]=particleData.startRotation2[j];
+				this._vertices[vertexStart+26]=particleData.startLifeTime;
+				this._vertices[vertexStart+27]=particleData.time;
+				this._vertices[vertexStart+28]=particleData.startSpeed;
+				this._vertices[vertexStart+29]=randomX0;
+				this._vertices[vertexStart+30]=randomY0;
+				this._vertices[vertexStart+31]=randomZ0;
+				this._vertices[vertexStart+32]=randomW0;
+				this._vertices[vertexStart+33]=randomX1;
+				this._vertices[vertexStart+34]=randomY1;
+				this._vertices[vertexStart+35]=randomZ1;
+				this._vertices[vertexStart+36]=randomW1;
 			}
 			this._firstFreeElement=nextFreeParticle;
 		}

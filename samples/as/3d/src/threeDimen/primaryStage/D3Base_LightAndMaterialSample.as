@@ -22,7 +22,6 @@ package threeDimen.primaryStage {
 	import laya.utils.Stat;
 	
 	public class D3Base_LightAndMaterialSample {
-		//private var currentShadingMode:int;
 		private var currentLightState:int;
 		private var currentLight:LightSprite;
 		private var scene:Scene;
@@ -40,7 +39,6 @@ package threeDimen.primaryStage {
 		public function D3Base_LightAndMaterialSample() {
 			tempQuaternion = new Quaternion();
 			tempVector3 = new Vector3();
-			//currentShadingMode = BaseScene.PIXEL_SHADING;
 			currentLightState = 0;
 			
 			Laya3D.init(0, 0, true);

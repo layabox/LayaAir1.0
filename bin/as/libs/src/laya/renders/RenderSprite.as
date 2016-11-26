@@ -310,7 +310,7 @@ package laya.renders {
 				var scaleX:Number = Render.isWebGL ? 1 : Browser.pixelRatio * Laya.stage.clientScaleX;
 				var scaleY:Number = Render.isWebGL ? 1 : Browser.pixelRatio * Laya.stage.clientScaleY;
 				
-				if (!Render.isWebGL||_cacheCanvas.type === 'bitmap') {
+				if (!Render.isWebGL) {//||_cacheCanvas.type === 'bitmap'
 					var chainScaleX:Number = 1;
 					var chainScaleY:Number = 1;
 					var tar:Sprite;

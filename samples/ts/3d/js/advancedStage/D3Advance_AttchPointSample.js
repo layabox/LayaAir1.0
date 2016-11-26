@@ -24,7 +24,7 @@ var AttchPointSample;
             this.skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm")));
             this.skinMesh.transform.localRotationEuler = this.rotation;
             this.skinAni = this.skinMesh.addComponent(Laya.SkinAnimations);
-            this.skinAni.url = "../../res/threeDimen/skinModel/dude/dude.ani";
+            this.skinAni.templet = Laya.AnimationTemplet.load("../../res/threeDimen/skinModel/dude/dude.ani");
             this.skinAni.player.play();
             this.attacthPoint = this.skinMesh.addComponent(Laya.AttachPoint);
             this.attacthPoint.attachBones.push("L_Middle1");

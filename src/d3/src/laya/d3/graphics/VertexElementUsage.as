@@ -29,7 +29,9 @@ package laya.d3.graphics {
 		public static const STARTCOLOR0:String = "STARTCOLOR";
 		public static const STARTSIZE:String = "STARTSIZE";
 		public static const AGEADDSCALE0:String = "AGEADDSCALE0";
-		public static const STARTROTATION:String = "STARTROTATION";
+		public static const STARTROTATION0:String = "STARTROTATION0";
+		public static const STARTROTATION1:String = "STARTROTATION1";
+		public static const STARTROTATION2:String = "STARTROTATION2";
 		public static const ENDCOLOR0:String = "ENDCOLOR";
 		
 		
