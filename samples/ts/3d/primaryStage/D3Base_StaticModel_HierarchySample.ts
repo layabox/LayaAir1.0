@@ -28,8 +28,9 @@ class StaticModel_HierarchySample {
                     });
                 }
             });
+            sprite.transform.localScale = new Laya.Vector3(10, 10, 10);
         });
-        staticMesh.transform.localScale = new Laya.Vector3(10, 10, 10);
+
     }
 }
 new StaticModel_HierarchySample();

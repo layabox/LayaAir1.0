@@ -74,11 +74,13 @@
     "looping":true,
     "prewarm":false,"prewarmTip":"暂不支持。",
 
-    "startDelayType":0.0,"startDelayTypeTip":"暂不支持。",
-    "startDelay":0.0,"startDelayTip":"暂不支持。",
+    "startDelayType":0,
+    "startDelay":0.0,
+    "startDelayMin":2.0,
+    "startDelayMax":5.0,
 
-    "startLifetimeType":0,
-    "startLifetimeConstant":1.0,  
+    "startLifetimeType":2,
+    "startLifetimeConstant":0.8,  
     "startLifetimeGradient":{ "startLifetimes":[{"key":0.0,"value":1.0},{"key":0.3,"value":0.0}]},
     "startLifetimeConstantMin":0.6, 
     "startLifetimeConstantMax":0.8,
@@ -86,61 +88,75 @@
     "startLifetimeGradientMax":{ "startLifetimes":[{"key":0.0,"value":1.0},{"key":0.3,"value":0.0}]},
 
     "startSpeedType":0,"startSpeedTypeTip":"暂不支持1、3模式",
-    "constantStartSpeed":10.0,  
-    "constantMinStartSpeed":10.0, 
-    "constantMaxStartSpeed":10.0,
+    "startSpeedConstant":0.0,  
+    "startSpeedConstantMin":10.0, 
+    "startSpeedConstantMax":10.0,
 
-    "threeDStartSize":false,"threeDStartSizeTip":"暂不支持",
+    "threeDStartSize":true,
     "startSizeType":0,"startSizeTypeTip":"暂不支持1、3模式",
-    "constantStartSize":5.0,
-    "constantMinStartSize":5.0,
-    "constantMaxStartSize":5.0,
+    "startSizeConstant":10.0,
+    "startSizeConstantSeparate":[10.0,2.0,3.0],
+    "startSizeConstantMin":5.0,
+    "startSizeConstantMax":5.0,
+    "startSizeConstantMinSeparate":[1.0,1.0,1.0],
+    "startSizeConstantMaxSeparate":[5.0,5.0,5.0],
 
-    "threeDStartRotation":false,"threeDStartRotationTip":"暂不支持",
-    "startRotationType":0,"startRotationTypeTip":"暂不支持1、3模式",
-    "constantStartRotation":0,
-    "constantMinStartRotation":90,
-    "constantMaxStartRotation":90,
+    "threeDStartRotation":true,
+    "startRotationType":2,"startRotationTypeTip":"暂不支持1、3模式",
+    "startRotationConstant":0,
+    "startRotationConstantSeparate":[60.0,-50.0,50.0],
+    "startRotationConstantMin":90,
+    "startRotationConstantMax":90,
+    "startRotationConstantMinSeparate":[60.0,-50.0,50.0],
+    "startRotationConstantMaxSeparate":[0.0,0.0,0.0],
 
     "randomizeRotationDirection":0,
 
     "startColorType":0,"startColorTypeTip":"暂不支持1、3模式",
-    "constantStartColor":[1.0,1.0,1.0,1.0],  
-    "constantMinStartColor":[1.0,1.0,1.0,1.0], 
-    "constantMaxStartColor":[1.0,1.0,1.0,1.0],
+    "startColorConstant":[1.0,1.0,1.0,1.0],  
+    "startColorConstantMin":[1.0,1.0,1.0,1.0], 
+    "startColorConstantMax":[1.0,1.0,1.0,1.0],
 
     "gravity":[0.0,-9.81,0.0],
     "gravityModifier":0,
 
-    "simulationSpace":0,
+    "simulationSpace":1,
 
     "scaleMode":0,
 
     "playOnAwake":true,
-    "maxParticles":300,
-
-   
+    "maxParticles":1000,
 	
 	"emission":{"enable":true,
-	    "emissionRate":10,"emissionRateTip":"暂不支持距离模式"
+	    "emissionRate":1,"emissionRateTip":"暂不支持距离模式",
+        "bursts":[{"time":0.0,"min":15,"max":15}]
 	},
 
-	"shape":{"enable":false,"shapeType":0,"shapeTypeTip":"目前支持0、1、3",
+	"shape":{"enable":true,"shapeType":0,"shapeTypeTip":"目前支持0(Sphere)、1(HemiSphere)、2(Cone)、3(Box)、7（Circle）",
 	    "sphereRadius":30,
-	    "sphereEmitFromShell": true,
+	    "sphereEmitFromShell": false,
 	    "sphereRandomDirection":false,
         "hemiSphereRadius":30,
-	    "hemiSphereEmitFromShell": true,
-	    "hemiSphereRandomDirection":false,
+	    "hemiSphereEmitFromShell": false,
+	    "hemiSphereRandomDirection":true,
+        "coneAngle": 30.0,
+        "coneRadius": 30.0,
+        "coneLength": 20.0,
+        "coneEmitType": 0,
+        "coneRandomDirection":false,
         "boxX": 1,
 	    "boxY": 1,
         "boxZ": 1,
-	    "boxRandomDirection":false
+	    "boxRandomDirection":false,
+        "circleRadius":30,
+        "circleArc":30,
+	    "circleEmitFromEdge": false,
+	    "circleRandomDirection":true
 	},
 
     "velocityOverLifetime":{"enable":false,"space":0,"velocity":{
         "type":0,
-        "constant":[60.0,10.0,0.0],
+        "constant":[-30.0,20.0,80.0],
         "gradientX":{ "velocitys":[{"key":0.0,"value":0.0},{"key":1.0,"value":0.0}]},
         "gradientY":{ "velocitys":[{"key":0.0,"value":0.0},{"key":0.5,"value":100.0},{"key":1.0,"value":-100.0}]},
         "gradientZ":{ "velocitys":[{"key":0.0,"value":0.0},{"key":1.0,"value":0.0}]},
@@ -214,7 +230,7 @@
     "enableUVChannels":0,"enableUVChannelsTip":"暂时只支持UV0"},
 
 
-     "renderMode": 1,"renderModeTip":"目前不支持mesh",
+     "renderMode": 3,"renderModeTip":"目前不支持mesh",
      "stretchedBillboardCameraSpeedScale":0,
      "stretchedBillboardSpeedScale":2,
      "stretchedBillboardLengthScale":4,

@@ -17,7 +17,7 @@ class D3Base_RigitAnimationSample {
         camera.clearColor = null;
 
         this.effectSprite = this.scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/effect/WuShen/WuShen.lh")) as Laya.Sprite3D;
-        this.effectSprite.once(Laya.Event.HIERARCHY_LOADED, this, (sender, sprite3D)=> {
+        this.effectSprite.once(Laya.Event.HIERARCHY_LOADED, this, (sprite3D)=> {
             this.setMeshParams(this.effectSprite, Laya.BaseMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
             var rootAnimations = sprite3D.addComponent(Laya.RigidAnimations);
             rootAnimations.url = "../../res/threeDimen/staticModel/effect/WuShen/WuShen.lani";

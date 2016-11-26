@@ -20,5 +20,5 @@ scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
 var skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm")));
 skinMesh.transform.localRotationEuler = new Laya.Vector3(0, 3.14, 0);
 var skinAni = skinMesh.addComponent(Laya.SkinAnimations);
-skinAni.url = "../../res/threeDimen/skinModel/dude/dude.ani";
+skinAni.templet = Laya.AnimationTemplet.load("../../res/threeDimen/skinModel/dude/dude.ani");
 skinAni.player.play();

@@ -83,8 +83,10 @@ module LightAndMaterialSample {
 			});
 
 			var sphere = this.scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/sphere/sphere.lh")) as Laya.Sprite3D;
-			sphere.transform.localScale = new Vector3(0.2, 0.2, 0.2);
-			sphere.transform.localPosition = new Vector3(0.0, 0.0, 0.2);
+			sphere.once(Laya.Event.HIERARCHY_LOADED, null, function():void {
+				sphere.transform.localScale = new Vector3(0.2, 0.2, 0.2);
+				sphere.transform.localPosition = new Vector3(0.0, 0.0, 0.2);
+			});
 
 			this.skinMesh = this.scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm"))) as Laya.MeshSprite3D;
 

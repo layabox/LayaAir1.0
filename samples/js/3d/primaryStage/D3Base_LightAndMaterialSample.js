@@ -64,8 +64,10 @@ grid.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
 });
 
 var sphere = scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/sphere/sphere.lh"));
-sphere.transform.localScale = new Vector3(0.2, 0.2, 0.2);
-sphere.transform.localPosition = new Vector3(0.0, 0.0, 0.2);
+sphere.once(Laya.Event.HIERARCHY_LOADED, null, function() {
+    sphere.transform.localScale = new Vector3(0.2, 0.2, 0.2);
+    sphere.transform.localPosition = new Vector3(0.0, 0.0, 0.2);
+});
 
 var skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm")));
 

@@ -18,21 +18,14 @@ module ParticleShurikenSample {
             grid.transform.localScale = new Laya.Vector3(100, 100, 100);
 
 
-            var settingPath:string = "../../res/threeDimen/particle/shurikenParticle0.json";
-            Laya.loader.load(settingPath, Laya.Handler.create(null, function(setting:Object):void {
-                var sprite3D:Laya.Sprite3D = new Laya.Sprite3D();
-				sprite3D.transform.localScale = new Laya.Vector3(1,1,1);
-				scene.addChild(sprite3D);
-
-                var preBasePath:string = Laya.URL.basePath;
-				Laya.URL.basePath =Laya.URL.getPath(Laya.URL.formatURL(settingPath));
-                var particle =Laya.Utils3D.loadParticle(setting);
-                Laya.URL.basePath = preBasePath;
-                particle.transform.rotate(new Laya.Vector3(0,0, 0), true, false);
-			    particle.transform.localScale = new Laya.Vector3(1, 1, 1);
-
-                sprite3D.addChild(particle);
-            }), null, Laya.Loader.JSON);
+            var particleRoot:Laya.Sprite3D = Laya.Sprite3D.load("../../res/threeDimen/particle/particleSystem0.lh");
+            scene.addChild(particleRoot) as Laya.Sprite3D;
+            var particle:Laya.ShuriKenParticle3D;
+            particleRoot.once(Laya.Event.HIERARCHY_LOADED, null, function():void {
+                particle = scene.getChildAt(2).getChildAt(0) as Laya.ShuriKenParticle3D;
+                particle.transform.rotate(new Laya.Vector3(-60 / 180 * Math.PI, -50 / 180 * Math.PI, 90 / 180 * Math.PI));
+                particle.transform.localPosition = new Laya.Vector3(0, 0, 0);
+            });
         }
 
     }

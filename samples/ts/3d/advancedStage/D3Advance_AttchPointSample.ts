@@ -35,13 +35,13 @@ module AttchPointSample {
             this.skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm"))) as Laya.MeshSprite3D;
             this.skinMesh.transform.localRotationEuler = this.rotation;
             this.skinAni = this.skinMesh.addComponent(Laya.SkinAnimations) as Laya.SkinAnimations;
-            this.skinAni.url = "../../res/threeDimen/skinModel/dude/dude.ani";
+            this.skinAni.templet = Laya.AnimationTemplet.load("../../res/threeDimen/skinModel/dude/dude.ani");
             this.skinAni.player.play();
 
             this.attacthPoint = this.skinMesh.addComponent(Laya.AttachPoint) as Laya.AttachPoint;
             this.attacthPoint.attachBones.push("L_Middle1");
             this.attacthPoint.attachBones.push("R_Middle1");
-            var settings: Laya.ParticleSettings = new Laya.ParticleSetting();
+            var settings:Laya.ParticleSettings = new Laya.ParticleSetting();
             settings.textureName = "../../res/threeDimen/particle/fire.png";
             settings.maxPartices = 200;
             settings.duration = 0.3;

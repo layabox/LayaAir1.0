@@ -20,16 +20,15 @@ module GlitterSample {
             this.camera.transform.translate(new Vector3(0, 5, 10));
             this.camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 
-            var setting = new Laya.GlitterSetting();
-            setting.texturePath = "../../res/threeDimen/layabox.png";
-            setting.lifeTime = 0.5;
-            setting.minSegmentDistance = 0.1;//最小距离，小于抛弃
-            setting.minInterpDistance = 0.6;//最大插值距离，超过则插值
-            setting.maxSlerpCount = 128;
-            setting.color = new Laya.Vector4(0.8, 0.6, 0.3, 0.8);
-            setting.maxSegments = 1000;
-
-            this.glitter = this.scene.addChild(new Laya.Glitter(setting)) as Laya.Glitter;
+            this.glitter = this.scene.addChild(new Laya.Glitter()) as Laya.Glitter;
+            var glitterTemplet:Laya.GlitterTemplet = this.glitter.templet;
+            (this.glitter.glitterRender.sharedMaterial as Laya.GlitterMaterial).diffuseTexture =Laya.Texture2D.load("../../res/threeDimen/layabox.png");
+            glitterTemplet.lifeTime = 0.5;
+            glitterTemplet.minSegmentDistance = 0.1;//最小距离，小于抛弃
+            glitterTemplet.minInterpDistance = 0.6;//最大插值距离，超过则插值
+            glitterTemplet.maxSlerpCount = 128;
+            glitterTemplet.color = new Laya.Vector4(0.8, 0.6, 0.3, 0.8);
+            glitterTemplet.maxSegments = 600;
 
             Laya.timer.frameLoop(1, this, this.loop);
         }
@@ -37,7 +36,7 @@ module GlitterSample {
         private loop(): void {
             var projectViewMat = (this.camera as Laya.Camera).projectionViewMatrix;
             this.sampler.getSampleP4();
-            this.glitter.templet.addVertexPosition(this.sampler.pos1, this.sampler.pos2);
+            this.glitter.addGlitterByPositions(this.sampler.pos1, this.sampler.pos2);
         }
     }
 }
