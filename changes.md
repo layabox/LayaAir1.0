@@ -5,7 +5,8 @@
 比如发布同时1.5.5Beta + 1.5.4Release，测试版经过两周的迭代，会变为正式版进行发布。想稳定就用正式版，想用最新功能就用测试版
 
 正式版会自动推送更新，测试版不推送，如果想使用最新测试版，请去官网手动下载http://ldc.layabox.com/
-####2D####
+#### 2D####
+
 Stage的frameRate属性增加休眠模式，休眠后帧率切换为1帧
 
 去掉Animation只有一帧的情况下不播放的优化（会导致一帧不派发complete事件）
@@ -19,7 +20,7 @@ Stage的frameRate属性增加休眠模式，休眠后帧率切换为1帧
 修复Webgl特定情况下，drawLines少绘制一条线的bug
 
 ###LayaAirIDE###
-优化IDE性能，进一步IDE消耗
+优化IDE性能，进一步减少IDE消耗
 
 页面可以快速clone了，方便直接复制某个页面（右键或者CTRL+C CTRL+V）
 

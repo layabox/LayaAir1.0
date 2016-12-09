@@ -13560,50 +13560,6 @@
 
 
 	/**
-	*<code>BoxShape</code> 类用于创建球形粒子形状。
-	*/
-	//class laya.d3.core.particleShuriKen.module.shape.BoxShape extends laya.d3.core.particleShuriKen.module.shape.BaseShape
-	var BoxShape=(function(_super){
-		function BoxShape(){
-			this.x=NaN;
-			this.y=NaN;
-			this.z=NaN;
-			this.randomDirection=false;
-			BoxShape.__super.call(this);
-			this.x=1.0;
-			this.y=1.0;
-			this.z=1.0;
-			this.randomDirection=false;
-		}
-
-		__class(BoxShape,'laya.d3.core.particleShuriKen.module.shape.BoxShape',_super);
-		var __proto=BoxShape.prototype;
-		/**
-		*用于生成粒子初始位置和方向。
-		*@param position 粒子位置。
-		*@param direction 粒子方向。
-		*/
-		__proto.generatePositionAndDirection=function(position,direction){
-			var rpE=position.elements;
-			var rdE=direction.elements;
-			ShapeUtils._randomPointInsideHalfUnitBox(position);
-			rpE[0]=this.x *rpE[0];
-			rpE[1]=this.y *rpE[1];
-			rpE[2]=this.z *rpE[2];
-			if (this.randomDirection){
-				ShapeUtils._randomPointUnitSphere(direction);
-				}else {
-				rdE[0]=0.0;
-				rdE[1]=0.0;
-				rdE[2]=-1.0;
-			}
-		}
-
-		return BoxShape;
-	})(BaseShape)
-
-
-	/**
 	*@private
 	*<code>ShaderDefines3D</code> 类用于创建3DshaderDefine相关。
 	*/
@@ -13692,6 +13648,50 @@
 		ShaderDefines3D._int2nameMap=[];
 		return ShaderDefines3D;
 	})(ShaderDefines)
+
+
+	/**
+	*<code>BoxShape</code> 类用于创建球形粒子形状。
+	*/
+	//class laya.d3.core.particleShuriKen.module.shape.BoxShape extends laya.d3.core.particleShuriKen.module.shape.BaseShape
+	var BoxShape=(function(_super){
+		function BoxShape(){
+			this.x=NaN;
+			this.y=NaN;
+			this.z=NaN;
+			this.randomDirection=false;
+			BoxShape.__super.call(this);
+			this.x=1.0;
+			this.y=1.0;
+			this.z=1.0;
+			this.randomDirection=false;
+		}
+
+		__class(BoxShape,'laya.d3.core.particleShuriKen.module.shape.BoxShape',_super);
+		var __proto=BoxShape.prototype;
+		/**
+		*用于生成粒子初始位置和方向。
+		*@param position 粒子位置。
+		*@param direction 粒子方向。
+		*/
+		__proto.generatePositionAndDirection=function(position,direction){
+			var rpE=position.elements;
+			var rdE=direction.elements;
+			ShapeUtils._randomPointInsideHalfUnitBox(position);
+			rpE[0]=this.x *rpE[0];
+			rpE[1]=this.y *rpE[1];
+			rpE[2]=this.z *rpE[2];
+			if (this.randomDirection){
+				ShapeUtils._randomPointUnitSphere(direction);
+				}else {
+				rdE[0]=0.0;
+				rdE[1]=0.0;
+				rdE[2]=-1.0;
+			}
+		}
+
+		return BoxShape;
+	})(BaseShape)
 
 
 	/**

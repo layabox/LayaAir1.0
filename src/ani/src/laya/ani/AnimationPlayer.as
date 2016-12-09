@@ -1,30 +1,12 @@
 package laya.ani {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
-	import laya.resource.IDestroy;
 	import laya.utils.Stat;
-	
-	/**开始播放时调度。
-	 * @eventType Event.PLAYED
-	 * */
-	[Event(name = "played", type = "laya.events.Event")]
-	/**暂停时调度。
-	 * @eventType Event.PAUSED
-	 * */
-	[Event(name = "paused", type = "laya.events.Event")]
-	/**完成一次循环时调度。
-	 * @eventType Event.COMPLETE
-	 * */
-	[Event(name = "complete", type = "laya.events.Event")]
-	/**停止时调度。
-	 * @eventType Event.STOPPED
-	 * */
-	[Event(name = "stopped", type = "laya.events.Event")]
 	
 	/**
 	 * <code>AnimationPlayer</code> 类用于动画播放器。
 	 */
-	public class AnimationPlayer extends EventDispatcher implements IDestroy {
+	public class AnimationPlayer extends EventDispatcher {
 		/** 数据模板*/
 		private var _templet:AnimationTemplet;
 		/** 当前精确时间，不包括重播时间*/
@@ -213,7 +195,7 @@ package laya.ani {
 			
 			if (value < _playStart || value > _playEnd)
 				throw new Error("AnimationPlayer:value must large than playStartTime,small than playEndTime.");
-			
+				
 			_startUpdateLoopCount = Stat.loopCount;
 			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
 			_currentTime = value /*% playDuration*/;
@@ -285,7 +267,7 @@ package laya.ani {
 			var anifullFrames:Array = _fullFrames = [];
 			var templet:AnimationTemplet = _templet;
 			
-			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
+			var cacheFrameInterval:Number = _cacheFrameRateInterval*_cachePlayRate;
 			
 			for (var i:int = 0, iNum:int = templet.getAnimationCount(); i < iNum; i++) {
 				var aniFullFrame:Array = [];
@@ -315,10 +297,10 @@ package laya.ani {
 					
 					aniFullFrame.push(nodeFullFrames);
 				}
-				
+
 				anifullFrames.push(aniFullFrame);
 			}
-			//event(Event.CACHEFRAMEINDEX_CHANGED, this);
+			event(Event.CACHEFRAMEINDEX_CHANGED, this);
 		}
 		
 		/**
@@ -326,23 +308,15 @@ package laya.ani {
 		 */
 		private function _calculatePlayDuration():void {
 			if (state !== AnimationState.stopped) {//防止动画已停止，异步回调导致BUG
-				var oriDuration:int = _templet.getAniDuration(_currentAnimationClipIndex);
+				var oriDuration:Number = _templet.getAniDuration(_currentAnimationClipIndex);
 				(_playEnd === 0) && (_playEnd = oriDuration);
 				
-				if (_playEnd> oriDuration)//以毫秒为最小时间单位,取整。FillTextureSprite
+				if (Math.floor(_playEnd) > oriDuration)//以毫秒为最小时间单位,取整。
+					//throw new Error("AnimationPlayer:playEnd must less than original Duration.");
 					_playEnd = oriDuration;
 				
 				_playDuration = _playEnd - _playStart;
 			}
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _destroy():void {
-			offAll();
-			_templet = null;
-			_fullFrames = null;
 		}
 		
 		/**
@@ -353,7 +327,7 @@ package laya.ani {
 		 * @param	playStart 播放的起始时间位置。
 		 * @param	playEnd 播放的结束时间位置。（0为动画一次循环的最长结束时间位置）。
 		 */
-		public function play(index:int = 0, playbackRate:Number = 1.0, overallDuration:int = /*int.MAX_VALUE*/ 2147483647, playStart:Number = 0, playEnd:Number = 0):void {
+		public function play(index:int = 0, playbackRate:Number = 1.0, overallDuration:int = /*int.MAX_VALUE*/2147483647, playStart:int = 0, playEnd:int = 0):void {
 			if (!_templet)
 				throw new Error("AnimationPlayer:templet must not be null,maybe you need to set url.");
 			
@@ -362,7 +336,7 @@ package laya.ani {
 			
 			if ((playEnd !== 0) && (playStart > playEnd))
 				throw new Error("AnimationPlayer:start must less than end.");
-			
+	        
 			_currentTime = 0;
 			_currentFrameTime = 0;
 			_elapsedPlaybackTime = 0;
@@ -392,7 +366,7 @@ package laya.ani {
 		 * @param	playStartFrame 播放的原始起始帧率位置。
 		 * @param	playEndFrame 播放的原始结束帧率位置。（0为动画一次循环的最长结束时间位置）。
 		 */
-		public function playByFrame(index:int = 0, playbackRate:Number = 1.0, overallDuration:Number = /*int.MAX_VALUE*/ 2147483647, playStartFrame:Number = 0, playEndFrame:Number = 0, fpsIn3DBuilder:int = 30):void {
+		public function playByFrame(index:int = 0, playbackRate:Number = 1.0, overallDuration:Number = /*Number.MAX_SAFE_INTEGER*/9007199254740991, playStartFrame:int = 0, playEndFrame:int = 0, fpsIn3DBuilder:int = 30):void {
 			var interval:Number = 1000.0 / fpsIn3DBuilder;
 			play(index, playbackRate, overallDuration, playStartFrame * interval, playEndFrame * interval);
 		}
@@ -451,6 +425,5 @@ package laya.ani {
 				this.event(Event.COMPLETE);
 			}
 		}
-	
 	}
 }
