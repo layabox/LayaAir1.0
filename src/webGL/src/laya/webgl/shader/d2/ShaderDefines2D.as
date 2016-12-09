@@ -28,7 +28,7 @@ package laya.webgl.shader.d2 {
 			reg("COLOR_ADD", COLORADD);
 			
 			reg("WORLDMAT", WORLDMAT);
-		
+			reg("FILLTEXTURE", FILLTEXTURE);
 		}
 		
 		public function ShaderDefines2D() {

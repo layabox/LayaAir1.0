@@ -45,6 +45,8 @@ package laya.events {
 		private var _isLeftMouse:Boolean;
 		private var _eventList:Array = [];
 		private var _prePoint:Point = new Point();
+		private var _touchIDs:Object = {};
+		private var _id:int = 1;
 		
 		/**
 		 * @private
@@ -129,7 +131,7 @@ package laya.events {
 			
 			_this.mouseX = _point.x;
 			_this.mouseY = _point.y;
-			_this._event.touchId = e.identifier;
+			_this._event.touchId = e.identifier || 0;
 		}
 		
 		private function checkMouseWheel(e:*):void {
@@ -187,10 +189,10 @@ package laya.events {
 		
 		private function _onMouseDown(ele:*):void {
 			if (_isLeftMouse) {
-				ele._set$P("$_MOUSEDOWN", true);
+				ele._set$P("$_MOUSEDOWN", _touchIDs[_event.touchId]);
 				ele.event(Event.MOUSE_DOWN, _event.setTo(Event.MOUSE_DOWN, ele, _target));
 			} else {
-				ele._set$P("$_RIGHTMOUSEDOWN", true);
+				ele._set$P("$_RIGHTMOUSEDOWN", _touchIDs[_event.touchId]);
 				ele.event(Event.RIGHT_MOUSE_DOWN, _event.setTo(Event.RIGHT_MOUSE_DOWN, ele, _target));
 			}
 			!_event._stoped && ele.parent && onMouseDown(ele.parent);
@@ -210,12 +212,12 @@ package laya.events {
 		
 		private function sendClick(ele:*, type:String):void {
 			if (ele.destroyed) return;
-			if (type === Event.MOUSE_UP && ele._get$P("$_MOUSEDOWN")) {
-				ele._set$P("$_MOUSEDOWN", false);
+			if (type === Event.MOUSE_UP && ele._get$P("$_MOUSEDOWN") === _touchIDs[_event.touchId]) {
+				ele._set$P("$_MOUSEDOWN", -1);
 				ele.event(Event.CLICK, _event.setTo(Event.CLICK, ele, _target));
 				_isDoubleClick && ele.event(Event.DOUBLE_CLICK, _event.setTo(Event.DOUBLE_CLICK, ele, _target));
-			} else if (type === Event.RIGHT_MOUSE_UP && ele._get$P("$_RIGHTMOUSEDOWN")) {
-				ele._set$P("$_RIGHTMOUSEDOWN", false);
+			} else if (type === Event.RIGHT_MOUSE_UP && ele._get$P("$_RIGHTMOUSEDOWN") === _touchIDs[_event.touchId]) {
+				ele._set$P("$_RIGHTMOUSEDOWN", -1);
 				ele.event(Event.RIGHT_CLICK, _event.setTo(Event.RIGHT_CLICK, ele, _target));
 			}
 			!_event._stoped && ele.parent && sendClick(ele.parent, type);
@@ -322,6 +324,7 @@ package laya.events {
 				
 				switch (evt.type) {
 				case 'mousedown': 
+					_touchIDs[0] = _id++;
 					if (!_isTouchRespond) {
 						_this._isLeftMouse = evt.button === 0;
 						_this.initEvent(evt);
@@ -352,7 +355,11 @@ package laya.events {
 					_this._isLeftMouse = true;
 					var touches:Array = evt.changedTouches;
 					for (var j:int = 0, n:int = touches.length; j < n; j++) {
-						_this.initEvent(touches[j], evt);
+						var touch:* = touches[j];
+						//200次点击清理一下id资源
+						if (_id % 200 === 0) _touchIDs = {};
+						_touchIDs[touch.identifier] = _id++;
+						_this.initEvent(touch, evt);
 						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseDown);
 					}
 					break;

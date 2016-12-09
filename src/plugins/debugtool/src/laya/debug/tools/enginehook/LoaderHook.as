@@ -68,7 +68,7 @@ package laya.debug.tools.enginehook
 				checkUrls(urls[i]);
 			}
 		}
-		override public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true,group:String=null):LoaderManager 
+		override public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):LoaderManager 
 		{
 			if (url is Array)
 			{
@@ -77,7 +77,7 @@ package laya.debug.tools.enginehook
 			{
 				checkUrls(url);
 			}
-			return super.load(url, complete, progress, type, priority, cache);
+			return super.load(url, complete, progress, type, priority, cache,group,ignoreCache);
 		}
 		
 		

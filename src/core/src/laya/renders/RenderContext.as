@@ -52,6 +52,7 @@ package laya.renders {
 		public function drawTexture(tex:Texture, x:Number, y:Number, width:Number, height:Number):void {
 			if (tex.loaded) this.ctx.drawTexture(tex, x, y, width, height, this.x, this.y);
 		}
+		
 		public var _drawTexture:Function = function(x:Number, y:Number, args:Array):void {
 			if (args[0].loaded) this.ctx.drawTexture(args[0], args[1], args[2], args[3], args[4], x, y);
 		}
@@ -62,57 +63,7 @@ package laya.renders {
 		}
 		
 		public var _fillTexture:Function = function(x:Number, y:Number, args:Array):void {
-			if (args[0].loaded) {
-				var texture:Texture = args[0];
-				var ctxi:* = this.ctx;
-				var pat:*;
-				if (Render.isWebGL)
-				{
-					var tSprite:* = args[7];
-					if (tSprite)
-					{
-						if (args[6])
-						{
-							tSprite.initTexture(texture, args[1], args[2], args[3], args[4], args[6].x, args[6].y);
-						}else {
-							tSprite.initTexture(texture, args[1], args[2], args[3], args[4], 0, 0);
-						}
-						var ctx:* = this.ctx;
-						tSprite.render(ctx, x, y);
-					}
-					return;
-				}
-				if (!Render.isConchApp) {
-					if (texture.uv != Texture.DEF_UV) {
-						var canvas:HTMLCanvas = new HTMLCanvas("2D");
-						canvas.getContext('2d');
-						canvas.size(texture.width, texture.height);
-						canvas.context.drawTexture(texture, 0, 0, texture.width, texture.height, 0, 0);
-						args[0] = texture = new Texture(canvas);
-					}
-					pat = args[7] ? args[7] : args[7] = ctxi.createPattern(texture.bitmap.source, args[5]);
-				} else {
-					if (texture.uv != Texture.DEF_UV) {
-						var w:Number = texture.bitmap.width, h:Number = texture.bitmap.height, uv:Array = texture.uv;
-						pat = args[7] ? args[7] : args[7] = ctxi.createPattern(texture.bitmap.source, args[5], uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h);
-					} else {
-						pat = args[7] ? args[7] : args[7] = ctxi.createPattern(texture.bitmap.source, args[5]);
-					}
-				}
-				var oX:Number = x + args[1], oY:Number = y + args[2];
-				var sX:Number = 0, sY:Number = 0;
-				if (args[6]) {
-					oX += args[6].x % texture.width;
-					oY += args[6].y % texture.height;
-					sX -= args[6].x % texture.width;
-					sY -= args[6].y % texture.height;
-				}
-				ctxi.translate(oX, oY);
-				ctxi.fillStyle = pat;
-				ctxi.fillRect(sX, sY, args[3], args[4]);
-				ctxi.translate(-oX, -oY);
-			} else {
-			}
+			if (args[0].loaded) this.ctx.fillTexture(args[0], args[1]+x, args[2]+y, args[3], args[4], args[5], args[6],args[7]);
 		}
 		
 		public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, m:Matrix, alpha:Number):void {

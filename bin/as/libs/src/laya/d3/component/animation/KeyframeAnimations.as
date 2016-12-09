@@ -10,10 +10,10 @@ package laya.d3.component.animation {
 	import laya.resource.Resource;
 	
 	/**
-	 * 在动画加载完成后调度。
-	 * @eventType Event.LOADED
+	 * 在动画切换时调度调度。
+	 * @eventType Event.ANIMATION_CHANGED
 	 */
-	[Event(name = "loaded", type = "laya.events.Event")]
+	[Event(name = "animationchanged", type = "laya.events.Event")]
 	
 	/**
 	 * <code>KeyframeAnimation</code> 类用于帧动画组件的父类。
@@ -30,13 +30,15 @@ package laya.d3.component.animation {
 		 */
 		public function set url(value:String):void {
 			trace("Warning: discard property,please use templet property instead.");
-			if (_player.state !== AnimationState.stopped)
-				_player.stop(true);
-			
 			var templet:AnimationTemplet = Laya.loader.create(value, null, null, AnimationTemplet);
-			_templet = templet;
-			_player.templet = templet;
-			event(Event.ANIMATION_CHANGED, this);
+			if (_templet !== templet) {
+				if (_player.state !== AnimationState.stopped)
+					_player.stop(true);
+				
+				_templet = templet;
+				_player.templet = templet;
+				event(Event.ANIMATION_CHANGED, this);
+			}
 		}
 		
 		/**
@@ -52,12 +54,14 @@ package laya.d3.component.animation {
 		 * @param value 设置动画模板。
 		 */
 		public function set templet(value:AnimationTemplet):void {
-			if (_player.state !== AnimationState.stopped)
-				_player.stop(true);
-			
-			_templet = value;
-			_player.templet = value;
-			event(Event.ANIMATION_CHANGED, this);
+			if (_templet !== value) {
+				if (_player.state !== AnimationState.stopped)
+					_player.stop(true);
+				
+				_templet = value;
+				_player.templet = value;
+				event(Event.ANIMATION_CHANGED, this);
+			}
 		}
 		
 		/**
@@ -88,7 +92,7 @@ package laya.d3.component.animation {
 		 * 获取播放器当前动画的节点数量。
 		 * @return 节点数量。
 		 */
-		public function get NodeCount():int {
+		public function get nodeCount():int {
 			return _templet.getNodeCount(_player.currentAnimationClipIndex);
 		}
 		
@@ -104,7 +108,7 @@ package laya.d3.component.animation {
 		 * @private
 		 */
 		private function _updateAnimtionPlayer():void {
-			_player.update(Laya.timer.delta);//为避免事件破坏for循环问题,需最先执行（如不则内部可能触发Stop事件等，如事件中加载新动画，可能_templet未加载完成，导致BUG）
+			_player.update(Laya.timer.delta);
 		}
 		
 		/**
@@ -163,20 +167,15 @@ package laya.d3.component.animation {
 		 * 卸载组件时执行
 		 */
 		override public function _unload(owner:Sprite3D):void {
+			super._unload(owner);
 			(_owner.displayedInStage && _owner.enable) && (_removeUpdatePlayerToTimer());
 			_owner.off(Event.ENABLED_CHANGED, this, _onOwnerEnableChanged);
 			_owner.off(Event.DISPLAY, this, _onDisplayInStage);
 			_owner.off(Event.UNDISPLAY, this, _onUnDisplayInStage);
+			_player._destroy();
+			_player = null;
+			_templet = null;
 		}
-		
-		/**
-		 * 停止播放当前动画
-		 * @param	immediate 是否立即停止
-		 */
-		public function stop(immediate:Boolean = true):void {
-			_player.stop(immediate);
-		}
-	
 	}
 
 }

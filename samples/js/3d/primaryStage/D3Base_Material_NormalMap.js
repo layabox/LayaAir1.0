@@ -39,10 +39,8 @@ function loadModel(meshPath, normalMapPath) {
 
     //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
     mesh.once(Laya.Event.LOADED, null, function () {
-        meshSprite.meshRender.sharedMaterials[0].once(Laya.Event.LOADED, null, function () {
-            material = meshSprite.meshRender.sharedMaterials[0];
-            (material && normalTexture) && (material.normalTexture = normalTexture);
-        });
+        material = meshSprite.meshRender.sharedMaterials[0];
+        (material && normalTexture) && (material.normalTexture = normalTexture);
     });
 
     Laya.loader.load(normalMapPath, Laya.Handler.create(null, function (texture) {

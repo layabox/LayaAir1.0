@@ -120,7 +120,7 @@ package laya.display {
 			this.loop = loop;
 			this._actionName = name;
 			_isReverse = wrapMode == 1;
-			if (this._frames && this._frames.length > 1 && this.interval > 0) {
+			if (this._frames && this.interval > 0) {
 				timerLoop(this.interval, this, _frameLoop, null, true);
 			}
 		}

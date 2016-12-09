@@ -28,6 +28,7 @@ package laya.d3.loaders {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
+	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.utils.Byte;
 	import laya.webgl.WebGLContext;
@@ -46,6 +47,8 @@ package laya.d3.loaders {
 		private var _strings:Array = ['BLOCK', 'DATA', "STRINGS"];//字符串数组
 		/**@private */
 		private var _materials:Vector.<BaseMaterial>;
+		/**@private */
+		private var _materialMap:Object;
 		/**@private */
 		private var _fileData:ArrayBuffer;
 		/**@private */
@@ -68,18 +71,18 @@ package laya.d3.loaders {
 		/**
 		 * 创建一个 <code>LoadModel</code> 实例。
 		 */
-		public function LoadModel(data:ArrayBuffer, mesh:Mesh, materials:Vector.<BaseMaterial>, url:String) {
+		public function LoadModel(data:ArrayBuffer, mesh:Mesh, materials:Vector.<BaseMaterial>, materialMap:Object) {
 			_mesh = mesh;
 			_materials = materials;
-			_onLoaded(data, url);
+			_materialMap = materialMap;
+			_onLoaded(data);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _onLoaded(data:*, url:String):Mesh {
+		private function _onLoaded(data:*):Mesh {
 			_fileData = data;
-			
 			_readData = new Byte(_fileData);
 			_readData.pos = 0;
 			
@@ -125,6 +128,7 @@ package laya.d3.loaders {
 			_STRINGS.size = _readData.getUint16();
 			var ofs:int = _readData.pos;
 			_readData.pos = _STRINGS.offset + _DATA.offset;
+			
 			for (var i:int = 0; i < _STRINGS.size; i++) {
 				_strings[i] = _readData.readUTFString();
 					//trace("string:" + i + "  " + _strings[i]);
@@ -139,12 +143,10 @@ package laya.d3.loaders {
 			
 			var shaderName:String = _readString();
 			var url:String = _readString();
-			if (url !== "null") {
-				url = URL.formatURL(url);
-				_materials[index] = Laya.loader.create(url,null, null, StandardMaterial);
-			} else {
+			if (url !== "null")
+				_materials[index] = Loader.getRes(_materialMap[url]);
+			else
 				_materials[index] = new BaseMaterial();
-			}
 			//trace("MATERIAL:" + index + " " + materialPath);
 			return true;
 		}
@@ -202,7 +204,6 @@ package laya.d3.loaders {
 			var arrayBuffer:ArrayBuffer = _readData.__getBuffer();
 			//trace("SUBMESH:ibofs=" + ibofs + "  ibsize=" + ibsize + "  vbofs=" + vbofs + " vbsize=" + vbsize + "  boneDicofs=" + boneDicofs + " boneDicsize=" + boneDicsize + " " + bufferAttribute);
 			var submesh:SubMesh = new SubMesh();
-			//submesh.verticesIndices = new Uint32Array(arrayBuffer.slice(vbIndicesofs + _DATA.offset, vbIndicesofs + _DATA.offset + vbIndicessize));//TODO:可取消
 			var vertexDeclaration:VertexDeclaration = _getVertexDeclaration();
 			
 			var vb:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, vbsize / vertexDeclaration.vertexStride, WebGLContext.STATIC_DRAW, true);

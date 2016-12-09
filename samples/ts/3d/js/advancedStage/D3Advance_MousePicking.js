@@ -25,10 +25,8 @@ var MousePickingScene = (function (_super) {
             var meshSprite3D = spirit3D;
             var mesh = meshSprite3D.meshFilter.sharedMesh;
             if (mesh != null) {
-                mesh.once(Laya.Event.LOADED, this, function () {
-                    for (var i = 0; i < mesh.materials.length; i++)
-                        mesh.materials[i].albedo = new Laya.Vector4(3.0, 3.0, 3.0, 1.0);
-                });
+                for (var i = 0; i < mesh.materials.length; i++)
+                    mesh.materials[i].albedo = new Laya.Vector4(3.0, 3.0, 3.0, 1.0);
             }
         }
         for (var i = 0; i < spirit3D.numChildren; i++)

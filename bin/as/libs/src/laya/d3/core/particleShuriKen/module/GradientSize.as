@@ -291,8 +291,8 @@ package laya.d3.core.particleShuriKen.module {
 			_gradientZ.cloneTo(destGradientSize._gradientZ);
 			destGradientSize._constantMin = _constantMin;
 			destGradientSize._constantMax = _constantMax;
-			destGradientSize._constantMinSeparate.copyFrom(_constantMinSeparate);
-			destGradientSize._constantMaxSeparate.copyFrom(_constantMaxSeparate);
+			_constantMinSeparate.cloneTo(destGradientSize._constantMinSeparate);
+			_constantMaxSeparate.cloneTo(destGradientSize._constantMaxSeparate);
 			_gradientMin.cloneTo(destGradientSize._gradientMin);
 			_gradientMax.cloneTo(destGradientSize._gradientMax);
 			_gradientXMin.cloneTo(destGradientSize._gradientXMin);

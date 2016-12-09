@@ -65,25 +65,21 @@ class StaticModel_MeshTerrainSample {
     }
 
 
-    private  setMeshParams(spirit3D:Laya.Sprite3D, renderMode:number, albedo:Laya.Vector4, ambientColor:Laya.Vector3, uvScale:Laya.Vector2, shaderName:String = null):void {
+    private setMeshParams(spirit3D:Laya.Sprite3D, renderMode:number, albedo:Laya.Vector4, ambientColor:Laya.Vector3, uvScale:Laya.Vector2, shaderName:String = null):void {
         if (spirit3D instanceof Laya.MeshSprite3D) {
             var meshSprite = spirit3D as Laya.MeshSprite3D;
             var mesh = meshSprite.meshFilter.sharedMesh;
             if (mesh != null) {
-                //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
                 mesh.once(Laya.Event.LOADED, this, function (mesh:Laya.BaseMesh):void {
                     for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-                        var material:Laya.Material = meshSprite.meshRender.sharedMaterials[i];
-                        material.once(Laya.Event.LOADED, null, function (mat:Laya.Material):void {
-                            var transformUV:Laya.TransformUV = new Laya.TransformUV();
-                            transformUV.tiling = uvScale;
-                            (shaderName) && (mat.setShaderName(shaderName));
-                            mat.transformUV = transformUV;
-                            mat.ambientColor = ambientColor;
-                            mat.albedo = albedo;
-                            mat.renderMode = renderMode;
-                        });
-
+                        var mat:Laya.BaseMaterial = meshSprite.meshRender.sharedMaterials[i];
+                        var transformUV:Laya.TransformUV = new Laya.TransformUV();
+                        transformUV.tiling = uvScale;
+                        (shaderName) && (mat.setShaderName(shaderName));
+                        mat.transformUV = transformUV;
+                        mat.ambientColor = ambientColor;
+                        mat.albedo = albedo;
+                        mat.renderMode = renderMode;
                     }
                 });
             }

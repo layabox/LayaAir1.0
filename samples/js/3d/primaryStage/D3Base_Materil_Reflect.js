@@ -4,8 +4,6 @@ Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
 Laya.Stat.show();
 
 var Vector3 = Laya.Vector3;
-var cubeTexture;
-var material;
 
 var scene = Laya.stage.addChild(new Laya.Scene());
 
@@ -24,12 +22,10 @@ var textureCube = Laya.TextureCube.load("../../res/threeDimen/skyBox/skyCube.ltc
 var mesh = Laya.Mesh.load("../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
 var meshSprite = sprit.addChild(new Laya.MeshSprite3D(mesh));
 mesh.once(Laya.Event.LOADED, null, function () {
-	meshSprite.meshRender.sharedMaterials[0].once(Laya.Event.LOADED, null, function () {
-		material = meshSprite.meshRender.sharedMaterials[0];
-		material.albedo = new Laya.Vector4(0.0,0.0,0.0,0.0);
-		material.renderMode = Laya.BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
-		material.reflectTexture = textureCube;
-	});
+	var material = meshSprite.meshRender.sharedMaterials[0];
+	material.albedo = new Laya.Vector4(0.0,0.0,0.0,0.0);
+	material.renderMode = Laya.BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
+	material.reflectTexture = textureCube;
 });
 meshSprite.transform.localPosition = new Vector3(-0.3, 0.0, 0.0);
 meshSprite.transform.localScale = new Vector3(0.5, 0.5, 0.5);

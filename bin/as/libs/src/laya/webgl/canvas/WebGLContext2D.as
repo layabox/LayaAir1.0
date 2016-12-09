@@ -16,6 +16,7 @@ package laya.webgl.canvas
 	import laya.utils.Stat;
 	import laya.utils.VectorGraphManager;
 	import laya.webgl.shader.d2.skinAnishader.SkinMeshBuffer;
+	import laya.webgl.shader.d2.value.FillTextureSV;
 	import laya.webgl.utils.Buffer;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
@@ -473,6 +474,65 @@ package laya.webgl.canvas
 			}
 		}
 		
+		public override function fillTexture(texture:Texture, x:Number, y:Number, width:Number, height:Number, type:String, offset:Point, other:*):void {
+			var vb:VertexBuffer2D = _vb;
+			var w:Number = texture.bitmap.width, h:Number = texture.bitmap.height, uv:Array = texture.uv;
+			if (w!=other.w||h!=other.h)
+			{
+				switch(type)
+				{
+					case "repeat":
+						other.width = width;
+						other.height = height;
+						break;
+					case "repeat-x":
+						other.width = width;
+						other.height = texture.height > height?height:texture.height;
+						break;
+					case "repeat-y":
+						other.width = texture.width > width?width:texture.width;
+						other.height = height;
+						break;
+					default:
+						other.width = width;
+						other.height = height;
+						break;
+						
+				}
+				other.w = w;
+				other.h = h;
+				other.uv = [0, 0,  other.width / w, 0, other.width / w, other.height / h,  0, other.height / h];
+			}
+			
+			if (GlUtils.fillRectImgVb(vb, _clipRect, x, y,  other.width,  other.height, other.uv, _curMat, _x, _y, 0, 0))
+			{
+				_renderKey = 0;
+				var submit:Submit = _curSubmit = Submit.create(this, _ib, vb, ((vb._byteLength - _RECTVBSIZE * Buffer2D.FLOAT32) / 32) * 3, Value2D.create(ShaderDefines2D.FILLTEXTURE, 0));
+				_submits[_submits._length++] = submit;
+				var shaderValue:FillTextureSV = submit.shaderValue as FillTextureSV;
+				shaderValue.textureHost = texture;
+				
+				var tTextureX:Number = uv[0] * w;
+				var tTextureY:Number = uv[1] * h;
+				var tTextureW:Number = (uv[2] - uv[0]) * w;
+				var tTextureH:Number = (uv[5] - uv[3]) * h;
+
+				var tx = -offset.x / w;
+				var ty=  -offset.y / h;
+				shaderValue.u_TexRange[0] = tTextureX / w;
+				shaderValue.u_TexRange[1] = tTextureW / w;
+				shaderValue.u_TexRange[2] = tTextureY / h;
+				shaderValue.u_TexRange[3] = tTextureH / h;
+				
+				shaderValue.u_offset[0] = tx;
+				shaderValue.u_offset[1] = ty;
+				submit._renderType = Submit.TYPE_TEXTURE;
+				_curSubmit._numEle += 6;
+			}
+			
+		}
+
+		
 		public function setShader(shader:Shader):void
 		{
 			SaveBase.save(this, SaveBase.TYPE_SHADER, _shader2D, true);
@@ -907,13 +967,13 @@ package laya.webgl.canvas
 		public function rotate(angle:Number):void
 		{
 			SaveTransform.save(this);
-			_curMat.rotate(angle);
+			_curMat.rotateEx(angle);
 		}
 		
 		override public function scale(scaleX:Number, scaleY:Number):void
 		{
 			SaveTransform.save(this);
-			_curMat.scale(scaleX, scaleY);
+			_curMat.scaleEx(scaleX, scaleY);
 		}
 		
 		override public function clipRect(x:Number, y:Number, width:Number, height:Number):void

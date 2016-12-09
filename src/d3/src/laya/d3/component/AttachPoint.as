@@ -46,10 +46,10 @@ package laya.d3.component {
 		 * @param	state 渲染状态。
 		 */
 		public override function _update(state:RenderState):void {
-			var player:AnimationPlayer = _attachSkeleton.player;
-			if (!_attachSkeleton || player.state !== AnimationState.playing || !_attachSkeleton.curBonesDatas)
+			if (!_attachSkeleton || _attachSkeleton.player.state !== AnimationState.playing || !_attachSkeleton.curBonesDatas)
 				return;
-			
+				
+			var player:AnimationPlayer = _attachSkeleton.player;			
 			matrixs.length = attachBones.length;
 			for (var i:int; i < attachBones.length; i++) {
 				

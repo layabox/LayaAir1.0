@@ -37,16 +37,16 @@ package laya.ani.bone {
 	 */
 	public class Skeleton extends Sprite {
 		
-		private var _templet:Templet;//动画解析器
-		private var _player:AnimationPlayer;//播放器
-		private var _curOriginalData:Float32Array;//当前骨骼的偏移数据
+		protected var _templet:Templet;//动画解析器
+		protected var _player:AnimationPlayer;//播放器
+		protected var _curOriginalData:Float32Array;//当前骨骼的偏移数据
 		private var _boneMatrixArray:Array = [];//当前骨骼动画的最终结果数据
 		private var _lastTime:Number = 0;//上次的帧时间
 		private var _currAniName:String = null;
 		private var _currAniIndex:int = -1;
 		private var _pause:Boolean = true;
-		private var _aniClipIndex:int = -1;
-		private var _clipIndex:int = -1;
+		protected var _aniClipIndex:int = -1;
+		protected var _clipIndex:int = -1;
 		private var _skinIndex:int = 0;
 		private var _skinName:String = "default";
 		//0,使用模板缓冲的数据，模板缓冲的数据，不允许修改					（内存开销小，计算开销小，不支持换装）
@@ -75,8 +75,8 @@ package laya.ani.bone {
 		private var _tfArr:Array;
 		private var _pathDic:Object;
 		private var _rootBone:Bone;
-		private var _boneList:Vector.<Bone>;
-		private var _aniSectionDic:Object;
+		protected var _boneList:Vector.<Bone>;
+		protected var _aniSectionDic:Object;
 		private var _eventIndex:int = 0;
 		private var _drawOrderIndex:int = 0;
 		private var _drawOrder:Vector.<int> = null;
@@ -102,7 +102,8 @@ package laya.ani.bone {
 		 * @param	aniMode		动画模式，0:不支持换装,1,2支持换装
 		 */
 		public function init(templet:Templet, aniMode:int = 0):void {
-			var i:int, n:int;			
+			var i:int, n:int;		
+			//aniMode = 1;
 			if (aniMode == 1)//使用动画自己的缓冲区
 			{
 				_graphicsCache = [];
@@ -216,7 +217,7 @@ package laya.ani.bone {
 				Templet.TEMPLET_DICTIONARY[_aniPath] = tFactory;
 				tFactory.on(Event.COMPLETE, this, _parseComplete);
 				tFactory.on(Event.ERROR, this, _parseFail);
-				tFactory.parseData(tTexture, arraybuffer, 60);
+				tFactory.parseData(tTexture, arraybuffer);
 			}
 		}
 		
@@ -345,6 +346,7 @@ package laya.ani.bone {
 			}
 			if (_aniClipIndex == -1) return;
 			var tGraphics:Graphics;
+			
 			if (_aniMode == 0) {
 				tGraphics = _templet.getGrahicsDataWithCache(_aniClipIndex, _clipIndex);
 				if (tGraphics) {
@@ -353,6 +355,22 @@ package laya.ani.bone {
 						this.graphics = tGraphics;
 					}
 					return;
+				}else
+				{
+					var i:int,minIndex:int;
+					minIndex = _clipIndex;
+					while ((!_templet.getGrahicsDataWithCache(_aniClipIndex, minIndex-1))&&(minIndex>0))
+					{
+						minIndex--;
+					}
+					if (minIndex < _clipIndex)
+					{
+						
+						for (i = minIndex; i < _clipIndex; i++)
+						{
+							_createGraphics(i);
+						}
+					}
 				}
 			} else if (_aniMode == 1) {
 				tGraphics = _getGrahicsDataWithCache(_aniClipIndex, _clipIndex);
@@ -362,15 +380,33 @@ package laya.ani.bone {
 						this.graphics = tGraphics;
 					}
 					return;
+				}else
+				{
+					minIndex = _clipIndex;
+					while ((!_getGrahicsDataWithCache(_aniClipIndex, minIndex-1))&&(minIndex>0))
+					{
+						minIndex--;
+					}
+					if (minIndex < _clipIndex)
+					{
+						
+						for (i = minIndex; i < _clipIndex; i++)
+						{
+							_createGraphics(i);
+						}
+					}
 				}
 			}
 			_createGraphics();
 		}
 		
 		/**
+		 * @private
 		 * 创建grahics图像
 		 */
-		private function _createGraphics():void {
+		protected function _createGraphics(_clipIndex:int = -1):void {
+			if (_clipIndex == -1) _clipIndex = this._clipIndex;
+			var curTime:Number = _clipIndex * _player.cacheFrameRateInterval;
 			//处理绘制顺序
 			var tDrawOrderData:DrawOrderData;
 			var tDrawOrderAniArr:Array = _templet.drawOrderAniArr;
@@ -379,7 +415,7 @@ package laya.ani.bone {
 			{
 				_drawOrderIndex = 0;
 				tDrawOrderData = tDrawOrderArr[_drawOrderIndex];
-				while ( _player.currentPlayTime >= tDrawOrderData.time)
+				while ( curTime >= tDrawOrderData.time)
 				{
 					_drawOrder = tDrawOrderData.drawOrder;
 					_drawOrderIndex++;
@@ -406,8 +442,7 @@ package laya.ani.bone {
 			tGraphics = this.graphics as GraphicsAni;
 			//获取骨骼数据
 			var bones:Vector.<*> = _templet.getNodes(_aniClipIndex);
-			_templet.getOriginalData(_aniClipIndex, _curOriginalData,_player._fullFrames[_aniClipIndex], _clipIndex, _player.currentFrameTime);
-			
+			_templet.getOriginalData(_aniClipIndex, _curOriginalData,_player._fullFrames[_aniClipIndex], _clipIndex, curTime);
 			var tSectionArr:Array = _aniSectionDic[_aniClipIndex];
 			var tParentMatrix:Matrix;//父骨骼矩阵的引用
 			var tStartIndex:int = 0;
@@ -427,6 +462,10 @@ package laya.ani.bone {
 				tSrcBone.resultTransform.scY = tParentTransform.scY * _curOriginalData[tStartIndex++];
 				tSrcBone.resultTransform.x = tParentTransform.x + _curOriginalData[tStartIndex++];
 				tSrcBone.resultTransform.y = tParentTransform.y + _curOriginalData[tStartIndex++];
+				if (_templet.tMatrixDataLen === 8) {
+					tSrcBone.resultTransform.skewX = tParentTransform.skewX + _curOriginalData[tStartIndex++];
+					tSrcBone.resultTransform.skewY = tParentTransform.skewY + _curOriginalData[tStartIndex++];
+				}
 			}
 			//对插槽进行插值计算
 			var tSlotDic:Object = {};
@@ -560,7 +599,7 @@ package laya.ani.bone {
 						for (j = 0; j < tDeformSlotData.deformSlotDisplayList.length; j++) {	
 							tDeformSlotDisplayData = tDeformSlotData.deformSlotDisplayList[j];
 							tDBBoneSlot = _boneSlotArray[tDeformSlotDisplayData.slotIndex];
-							tDeformSlotDisplayData.apply(_player.currentPlayTime, tDBBoneSlot);
+							tDeformSlotDisplayData.apply(curTime, tDBBoneSlot);
 							if (!tDeformDic[tDeformSlotDisplayData.slotIndex]) {	
 								tDeformDic[tDeformSlotDisplayData.slotIndex] = { };
 							}
@@ -575,7 +614,7 @@ package laya.ani.bone {
 						for (j = 0; j < tDeformSlotData.deformSlotDisplayList.length; j++) {	
 							tDeformSlotDisplayData = tDeformSlotData.deformSlotDisplayList[j];
 							tDBBoneSlot = _boneSlotArray[tDeformSlotDisplayData.slotIndex];
-							tDeformSlotDisplayData.apply(_player.currentPlayTime, tDBBoneSlot);
+							tDeformSlotDisplayData.apply(curTime, tDBBoneSlot);
 							if (!tDeformDic[tDeformSlotDisplayData.slotIndex]) {	
 								tDeformDic[tDeformSlotDisplayData.slotIndex] = { };
 							}

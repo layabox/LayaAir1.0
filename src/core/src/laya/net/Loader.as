@@ -86,7 +86,7 @@ package laya.net {
 		 * @param	group 分组。
 		 * @param	ignoreCache 是否忽略缓存，强制重新加载
 		 */
-		public function load(url:String, type:String = null, cache:Boolean = true, group:String = null ,ignoreCache:Boolean=false):void {
+		public function load(url:String, type:String = null, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):void {
 			if (url.indexOf("data:image") === 0) this._type = IMAGE;
 			url = URL.formatURL(url);
 			this._url = url;
@@ -118,16 +118,15 @@ package laya.net {
 				_http.on(Event.COMPLETE, this, onLoaded);
 			}
 			var contentType:String;
-			switch(type)
-			{
-				case ATLAS:
-					contentType = JSON;
-					break;
-				case FONT:
-					contentType = XML;
-					break;
-				default:
-					contentType = type;
+			switch (type) {
+			case ATLAS: 
+				contentType = JSON;
+				break;
+			case FONT: 
+				contentType = XML;
+				break;
+			default: 
+				contentType = type;
 			}
 			_http.send(url, null, "get", contentType);
 		}
@@ -287,7 +286,8 @@ package laya.net {
 						//loadedMap[url] = tex;
 						//map.push(tex);
 						//} else {
-						loadedMap[url] = Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h);
+						cacheRes(url, Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h));
+						//loadedMap[url] = Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h);
 						loadedMap[url].url = url;
 						map.push(url);
 							//}
@@ -300,20 +300,20 @@ package laya.net {
 					//pics[i].dispose();//Sub后可直接释放
 					complete(this._data);
 				}
-			}else if (type == FONT) {
+			} else if (type == FONT) {
 				//处理位图字体
 				if (!data.src) {
-					_data=data;
+					_data = data;
 					event(Event.PROGRESS, 0.5);
 					return _loadImage(URL.formatURL(_url.replace(".fnt", ".png")));
 				} else {
 					var bFont:BitmapFont;
-					bFont=new BitmapFont();				
+					bFont = new BitmapFont();
 					bFont.parseFont(_data, data);
-					var tArr:Array=this._url.split(".fnt")[0].split("/");
-					var fontName:String=tArr[tArr.length-1];
-					Text.registerBitmapFont(fontName,bFont);
-					_data=bFont;
+					var tArr:Array = this._url.split(".fnt")[0].split("/");
+					var fontName:String = tArr[tArr.length - 1];
+					Text.registerBitmapFont(fontName, bFont);
+					_data = bFont;
 					complete(this._data);
 				}
 			} else {
@@ -360,7 +360,7 @@ package laya.net {
 			content && (this._data = content);
 			/*[IF-FLASH]*/
 			if (this._data.hasOwnProperty("atomicCompareAndSwapIntAt")) this._data = new ArrayBuffer(this._data);
-			if (this._cache) loadedMap[this._url] = this._data;
+			if (this._cache) cacheRes(this._url, this._data);
 			event(Event.PROGRESS, 1);
 			event(Event.COMPLETE, data is Array ? [data] : data);
 		}
@@ -437,7 +437,12 @@ package laya.net {
 		 * @param	data 要缓存的内容。
 		 */
 		public static function cacheRes(url:String, data:*):void {
-			loadedMap[URL.formatURL(url)] = data;
+			url = URL.formatURL(url);
+			if (loadedMap[url] != null) {
+				trace("Resources already exist,is repeated loading:", url);
+			} else {
+				loadedMap[url] = data;
+			}
 		}
 		
 		/**

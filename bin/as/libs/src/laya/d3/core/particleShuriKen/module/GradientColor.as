@@ -132,9 +132,9 @@ package laya.d3.core.particleShuriKen.module {
 		public function cloneTo(destObject:*):void {
 			var destGradientColor:GradientColor = destObject as GradientColor;
 			destGradientColor._type = _type;
-			destGradientColor._constant.copyFrom(_constant);
-			destGradientColor._constantMin.copyFrom(_constantMin);
-			destGradientColor._constantMax.copyFrom(_constantMax);
+			_constant.cloneTo(destGradientColor._constant);
+			_constantMin.cloneTo(destGradientColor._constantMin);
+			_constantMax.cloneTo(destGradientColor._constantMax);
 			_gradient.cloneTo(destGradientColor._gradient);
 			_gradientMin.cloneTo(destGradientColor._gradientMin);
 			_gradientMax.cloneTo(destGradientColor._gradientMax);

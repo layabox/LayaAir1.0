@@ -199,12 +199,12 @@ package laya.d3.core.particleShuriKen.module {
 		public function cloneTo(destObject:*):void {
 			var destGradientVelocity:GradientVelocity = destObject as GradientVelocity;
 			destGradientVelocity._type = _type;
-			destGradientVelocity._constant.copyFrom(_constant);
+			_constant.cloneTo(destGradientVelocity._constant);
 			_gradientX.cloneTo(destGradientVelocity._gradientX);
 			_gradientY.cloneTo(destGradientVelocity._gradientY);
 			_gradientZ.cloneTo(destGradientVelocity._gradientZ);
-			destGradientVelocity._constantMin.copyFrom(_constantMin);
-			destGradientVelocity._constantMax.copyFrom(_constantMax);
+			_constantMin.cloneTo(destGradientVelocity._constantMin);
+			_constantMax.cloneTo(destGradientVelocity._constantMax);
 			_gradientXMin.cloneTo(destGradientVelocity._gradientXMin);
 			_gradientXMax.cloneTo(destGradientVelocity._gradientXMax);
 			_gradientYMin.cloneTo(destGradientVelocity._gradientYMin);

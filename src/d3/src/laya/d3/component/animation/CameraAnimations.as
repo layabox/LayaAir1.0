@@ -112,7 +112,7 @@ package laya.d3.component.animation {
 			if (!_templet || !_templet.loaded || _player.state !== AnimationState.playing)
 				return;
 			
-			var rate:Number = _player.playbackRate * state.scene.timer.scale;
+			var rate:Number = _player.playbackRate * Laya.timer.scale;
 			var frameIndex:int = (_player.isCache && rate >= 1.0) ? currentFrameIndex : -1;//慢动作或者不缓存时frameIndex为-1
 			var animationClipIndex:int = currentAnimationClipIndex;
 			

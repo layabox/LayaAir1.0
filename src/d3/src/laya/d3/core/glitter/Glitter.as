@@ -139,7 +139,7 @@ package laya.d3.core.glitter {
 			destTemplet.minSegmentDistance = _templet.minSegmentDistance;
 			destTemplet.minInterpDistance = _templet.minInterpDistance;
 			destTemplet.maxSlerpCount = _templet.maxSlerpCount;
-			destTemplet.color.copyFrom(_templet.color);
+			_templet.color.cloneTo(destTemplet.color);
 			destTemplet._maxSegments = _templet._maxSegments;
 			var destGlitterRender:GlitterRender = destGlitter._glitterRender;
 			destGlitterRender.sharedMaterials = _glitterRender.sharedMaterials;
@@ -152,7 +152,7 @@ package laya.d3.core.glitter {
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
-			_glitterRender.destroy();
+			_glitterRender._destroy();
 			_templet = null;
 		}
 	

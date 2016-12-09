@@ -48,17 +48,6 @@ package laya.d3.core.material {
 		public static const defaultMaterial:StandardMaterial = new StandardMaterial();
 		
 		/** @private */
-		private static var AMBIENTCOLORVALUE:Vector3 = new Vector3(0.6, 0.6, 0.6);
-		/** @private */
-		private static var DIFFUSECOLORVALUE:Vector3 = new Vector3(1.0, 1.0, 1.0);
-		/** @private */
-		private static var SPECULARCOLORVALUE:Vector4 = new Vector4(1.0, 1.0, 1.0, 8.0);
-		/** @private */
-		private static var REFLECTCOLORVALUE:Vector3 = new Vector3(1.0, 1.0, 1.0);
-		/** @private */
-		private static var ALBEDOVALUE:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);
-		
-		/** @private */
 		private static const _ambientColorIndex:int = 0;
 		/** @private */
 		private static const _diffuseColorIndex:int = 1;
@@ -325,11 +314,11 @@ package laya.d3.core.material {
 		
 		public function StandardMaterial() {
 			super();
-			_setColor(_ambientColorIndex, MATERIALAMBIENT, AMBIENTCOLORVALUE);
-			_setColor(_diffuseColorIndex, MATERIALDIFFUSE, DIFFUSECOLORVALUE);
-			_setColor(_speclarColorIndex, MATERIALSPECULAR, SPECULARCOLORVALUE);
-			_setColor(_reflectColorIndex, MATERIALREFLECT, REFLECTCOLORVALUE);
-			_setColor(_albedoColorIndex, ALBEDO, ALBEDOVALUE);
+			_setColor(_ambientColorIndex, MATERIALAMBIENT, new Vector3(0.6, 0.6, 0.6));
+			_setColor(_diffuseColorIndex, MATERIALDIFFUSE, new Vector3(1.0, 1.0, 1.0));
+			_setColor(_speclarColorIndex, MATERIALSPECULAR, new Vector4(1.0, 1.0, 1.0, 8.0));
+			_setColor(_reflectColorIndex, MATERIALREFLECT, new Vector3(1.0, 1.0, 1.0));
+			_setColor(_albedoColorIndex, ALBEDO, new Vector4(1.0, 1.0, 1.0, 1.0));
 			_setNumber(_alphaTestValueIndex, ALPHATESTVALUE, 0.5);
 			setShaderName("SIMPLE");
 		}
@@ -360,16 +349,6 @@ package laya.d3.core.material {
 			//(_transformUV) && (_setMatrix4x4(TRANSFORMUV, Buffer2D.MATRIX2, _transformUV.matrix, id));
 			state.shaderValue.pushValue(WORLDMATRIX, worldMatrix.elements/*worldTransformModifyID,从结构上应该在Mesh中更新*/);//Stat.loopCount + state.ower._ID有BUG,例：6+6=7+5,用worldTransformModifyID代替
 			state.shaderValue.pushValue(MVPMATRIX, pvw.elements /*state.camera.transform._worldTransformModifyID + worldTransformModifyID + state.camera._projectionMatrixModifyID,从结构上应该在Mesh中更新*/);
-		}
-		
-		/**
-		 * 克隆。
-		 * @param	destObject 克隆源。
-		 */
-		override public function cloneTo(destObject:*):void {
-			var destStandardMaterial:StandardMaterial = destObject as StandardMaterial;
-			destStandardMaterial._transformUV = _transformUV;
-			super.cloneTo(destStandardMaterial);
 		}
 	}
 

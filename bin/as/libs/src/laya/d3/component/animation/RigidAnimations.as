@@ -147,7 +147,7 @@ package laya.d3.component.animation {
 			if (_player.state !== AnimationState.playing || !_templet || !_templet.loaded)
 				return;
 			
-			var rate:Number = _player.playbackRate * state.scene.timer.scale;
+			var rate:Number = _player.playbackRate * Laya.timer.scale;
 			var cachePlayRate:Number = _player.cachePlayRate;
 			var isCache:Boolean = _player.isCache && rate >= cachePlayRate;//是否可以缓存
 			var frameIndex:int = isCache ? currentFrameIndex : -1;//慢动作或者不缓存时frameIndex为-1
@@ -201,9 +201,11 @@ package laya.d3.component.animation {
 		 */
 		override public function _unload(owner:Sprite3D):void {
 			super._unload(owner);
-			_player.off(Event.STOPPED, this, _animtionStop);
-			_player.off(Event.PLAYED, this, _animtionPlay);
-		
+			_animationSprites = null;
+			_animationSpritesInitLocalMatrix = null;
+			_tempCurAnimationData = null;
+			_curOriginalData = null;
+			_curAnimationDatas = null;
 		}
 	}
 }

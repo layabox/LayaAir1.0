@@ -88,8 +88,11 @@ package laya.d3.core {
 			}
 		}
 		
-		override public function destroy():void {
-			super.destroy();
+		/**
+		 * @private
+		 */
+		override public function _destroy():void {
+			super._destroy();
 			_meshSprite3DOwner = null;
 		
 		}

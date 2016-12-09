@@ -26,6 +26,11 @@ package laya.net {
 	 * 某个资源加载失败后，会按照最低优先级重试加载(属性retryNum决定重试几次)，如果重试后失败，则调用complete函数，并返回null
 	 */
 	public class LoaderManager extends EventDispatcher {
+		/**@private */
+		private static var _resMap:Object = {};
+		/**@private */
+		public static var createMap:Object = {atlas: [null, Loader.ATLAS]};
+		
 		/** 加载出错后的重试次数，默认重试一次*/
 		public var retryNum:int = 1;
 		/** 最大下载线程，默认为5个*/
@@ -37,16 +42,14 @@ package laya.net {
 		private var _loaderCount:int = 0;
 		/**@private */
 		private var _resInfos:Array = [];
-		/**@private */
-		private var _resMap:Object = {};
+		
 		/**@private */
 		private var _infoPool:Array = [];
 		/**@private */
 		private var _maxPriority:int = 5;
 		/**@private */
 		private var _failRes:Object = {};
-		/**@private */
-		public var createMap:Object = {atlas: [null, Loader.ATLAS]};
+	
 		
 		/**
 		 * 创建一个新的 <code>LoaderManager</code> 实例。
@@ -56,7 +59,7 @@ package laya.net {
 		}
 		
 		/**
-		 * 根据clas定义创建一个资源空壳，随后进行异步加载，资源加载完成后，会调用资源类的onAsynLoaded方法回调真正的数据
+		 * 根据clas定义创建一个资源空壳，随后进行异步加载，资源加载完成后，会调用资源类的onAsynLoaded方法回调真正的数据,套嵌资源的子资源会保留资源路径"?"后的部分
 		 * @param	url 资源地址或者数组，比如[{url:xx,clas:xx,priority:xx},{url:xx,clas:xx,priority:xx}]
 		 * @param	progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
 		 * @param	clas 资源类名，比如Texture
@@ -148,7 +151,7 @@ package laya.net {
 				//判断是否全部加载，如果是则抛出complete事件
 				_loaderCount || event(Event.COMPLETE);
 			} else {
-				var info:ResInfo = this._resMap[url];
+				var info:ResInfo = _resMap[url];
 				if (!info) {
 					info = _infoPool.length ? _infoPool.pop() : new ResInfo();
 					info.url = url;
@@ -158,7 +161,7 @@ package laya.net {
 					info.ignoreCache = ignoreCache;
 					complete && info.on(Event.COMPLETE, complete.caller, complete.method, complete.args);
 					progress && info.on(Event.PROGRESS, progress.caller, progress.method, progress.args);
-					this._resMap[url] = info;
+					_resMap[url] = info;
 					priority = priority < this._maxPriority ? priority : this._maxPriority - 1;
 					this._resInfos[priority].push(info);
 					_next();
@@ -219,7 +222,7 @@ package laya.net {
 					event(Event.ERROR, resInfo.url);
 				}
 			}
-			delete this._resMap[resInfo.url];
+			delete _resMap[resInfo.url];
 			resInfo.event(Event.COMPLETE, content);
 			resInfo.offAll();
 			_infoPool.push(resInfo);
@@ -267,7 +270,7 @@ package laya.net {
 				infos.length = 0;
 			}
 			this._loaderCount = 0;
-			this._resMap = {};
+			_resMap = {};
 		}
 		
 		/**
@@ -298,7 +301,7 @@ package laya.net {
 					}
 				}
 			}
-			if (this._resMap[url]) delete this._resMap[url];
+			if (_resMap[url]) delete _resMap[url];
 		}
 		
 		/**
@@ -335,7 +338,7 @@ package laya.net {
 				if (progress != null) {
 					item.progress = value;
 					var num:Number = 0;
-					for (var j:int = 0; j < itemCount; j++) {
+					for (var j:int = 0; j < items.length; j++) {
 						var item1:Object = items[j];
 						num += item1.size * item1.progress;
 					}

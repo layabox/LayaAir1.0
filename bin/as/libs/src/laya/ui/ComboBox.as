@@ -144,6 +144,10 @@ package laya.ui {
 		 * @private
 		 */
 		protected var _scrollBarSkin:String;
+		/**
+		 * 渲染项，用来显示下拉列表展示对象
+		 */
+		public var itemRender:* = null;
 		
 		/**
 		 * 创建一个新的 <code>ComboBox</code> 组件实例。
@@ -239,7 +243,7 @@ package laya.ui {
 			var labelWidth:Number = width - 2;
 			var labelColor:String = _itemColors[2];
 			_itemHeight = _itemSize + 6;
-			_list.itemRender = {type: "Box", child: [{type: "Label", props: {name: "label", x: 1, padding: "3,3,3,3", width: labelWidth, height: _itemHeight, fontSize: _itemSize, color: labelColor}}]};
+			_list.itemRender = itemRender || {type: "Box", child: [{type: "Label", props: {name: "label", x: 1, padding: "3,3,3,3", width: labelWidth, height: _itemHeight, fontSize: _itemSize, color: labelColor}}]};
 			_list.repeatY = _visibleNum;
 			if (_scrollBar) _scrollBar.x = width - _scrollBar.width - 1;
 			_list.refresh();
@@ -255,12 +259,14 @@ package laya.ui {
 				var box:Box = _list.getCell(index);
 				if (!box) return;
 				var label:Label = box.getChildByName("label") as Label;
-				if (type === Event.ROLL_OVER) {
-					label.bgColor = _itemColors[0];
-					label.color = _itemColors[1];
-				} else {
-					label.bgColor = null;
-					label.color = _itemColors[2];
+				if (label) {
+					if (type === Event.ROLL_OVER) {
+						label.bgColor = _itemColors[0];
+						label.color = _itemColors[1];
+					} else {
+						label.bgColor = null;
+						label.color = _itemColors[2];
+					}
 				}
 			} else if (type === Event.CLICK) {
 				selectedIndex = index;
@@ -501,6 +507,7 @@ package laya.ui {
 		 * 获取对 <code>ComboBox</code> 组件所包含的 <code>List</code> 列表组件的引用。
 		 */
 		public function get list():List {
+			_list || _createList();
 			return _list;
 		}
 		

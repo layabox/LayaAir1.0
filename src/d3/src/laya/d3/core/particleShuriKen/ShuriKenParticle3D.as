@@ -133,26 +133,29 @@ package laya.d3.core.particleShuriKen {
 			destParticleSystem.threeDStartSize = _particleSystem.threeDStartSize;
 			destParticleSystem.startSizeType = _particleSystem.startSizeType;
 			destParticleSystem.startSizeConstant = _particleSystem.startSizeConstant;
+			_particleSystem.startSizeConstantSeparate.cloneTo(destParticleSystem.startSizeConstantSeparate);
 			destParticleSystem.startSizeConstantMin = _particleSystem.startSizeConstantMin;
 			destParticleSystem.startSizeConstantMax = _particleSystem.startSizeConstantMax;
+			_particleSystem.startSizeConstantMinSeparate.cloneTo(destParticleSystem.startSizeConstantMinSeparate);
+			_particleSystem.startSizeConstantMaxSeparate.cloneTo(destParticleSystem.startSizeConstantMaxSeparate);
 			
 			destParticleSystem.threeDStartRotation = _particleSystem.threeDStartRotation;
 			destParticleSystem.startRotationType = _particleSystem.startRotationType;
 			destParticleSystem.startRotationConstant = _particleSystem.startRotationConstant;
-			destParticleSystem.startSizeConstantSeparate = _particleSystem.startSizeConstantSeparate;
+			_particleSystem.startRotationConstantSeparate.cloneTo(destParticleSystem.startRotationConstantSeparate);
 			destParticleSystem.startRotationConstantMin = _particleSystem.startRotationConstantMin;
 			destParticleSystem.startRotationConstantMax = _particleSystem.startRotationConstantMax;
-			destParticleSystem.startSizeConstantMinSeparate = _particleSystem.startSizeConstantMinSeparate;
-			destParticleSystem.startSizeConstantMaxSeparate = _particleSystem.startSizeConstantMaxSeparate;
+			_particleSystem.startRotationConstantMinSeparate.cloneTo(destParticleSystem.startRotationConstantMinSeparate);
+			_particleSystem.startRotationConstantMaxSeparate.cloneTo(destParticleSystem.startRotationConstantMaxSeparate);
 			
 			destParticleSystem.randomizeRotationDirection = _particleSystem.randomizeRotationDirection;
 			
 			destParticleSystem.startColorType = _particleSystem.startColorType;
-			destParticleSystem.startColorConstant.copyFrom(_particleSystem.startColorConstant);
-			destParticleSystem.startColorConstantMin.copyFrom(_particleSystem.startColorConstantMin);
-			destParticleSystem.startColorConstantMax.copyFrom(_particleSystem.startColorConstantMax);
+			_particleSystem.startColorConstant.cloneTo(destParticleSystem.startColorConstant);
+			_particleSystem.startColorConstantMin.cloneTo(destParticleSystem.startColorConstantMin);
+			_particleSystem.startColorConstantMax.cloneTo(destParticleSystem.startColorConstantMax);
 			
-			destParticleSystem.gravity.copyFrom(_particleSystem.gravity);
+			_particleSystem.gravity.cloneTo(destParticleSystem.gravity);
 			destParticleSystem.gravityModifier = _particleSystem.gravityModifier;
 			destParticleSystem.simulationSpace = _particleSystem.simulationSpace;
 			destParticleSystem.scaleMode = _particleSystem.scaleMode;
@@ -164,6 +167,7 @@ package laya.d3.core.particleShuriKen {
 			_particleSystem.sizeOverLifetime.cloneTo(destParticleSystem.sizeOverLifetime);
 			_particleSystem.rotationOverLifetime.cloneTo(destParticleSystem.rotationOverLifetime);
 			_particleSystem.textureSheetAnimation.cloneTo(destParticleSystem.textureSheetAnimation);
+			destParticleSystem.isPerformanceMode = _particleSystem.isPerformanceMode;
 			
 			var destParticleRender:ShurikenParticleRender = destShuriKenParticle3D._particleRender;
 			destParticleRender.sharedMaterials = _particleRender.sharedMaterials;
@@ -180,7 +184,9 @@ package laya.d3.core.particleShuriKen {
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
-			_particleRender.destroy();
+			_particleRender._destroy();
+			_particleSystem._destroy();
+			_particleRender = null;
 			_particleSystem = null;
 		}
 	

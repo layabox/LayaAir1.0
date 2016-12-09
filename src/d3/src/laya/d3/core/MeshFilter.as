@@ -44,7 +44,10 @@ package laya.d3.core {
 			_owner = owner;
 		}
 		
-		public function destroy():void {
+		/**
+		 * @private
+		 */
+		public function _destroy():void {
 			offAll();//移除所有事件监听
 			_owner = null;
 			_sharedMesh = null;

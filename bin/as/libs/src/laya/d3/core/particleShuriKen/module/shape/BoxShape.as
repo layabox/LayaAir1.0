@@ -34,12 +34,10 @@ package laya.d3.core.particleShuriKen.module.shape {
 		override public function generatePositionAndDirection(position:Vector3, direction:Vector3):void {
 			var rpE:Float32Array = position.elements;
 			var rdE:Float32Array = direction.elements;
-			
 			ShapeUtils._randomPointInsideHalfUnitBox(position);
 			rpE[0] = x * rpE[0];
-			rpE[1] = y * rpE[0];
-			rpE[2] = z * rpE[0];
-			
+			rpE[1] = y * rpE[1];
+			rpE[2] = z * rpE[2];
 			if (randomDirection) {
 				ShapeUtils._randomPointUnitSphere(direction);
 			} else {

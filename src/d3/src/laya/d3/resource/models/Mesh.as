@@ -14,6 +14,7 @@ package laya.d3.resource.models {
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
+	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.net.Loader;
@@ -150,10 +151,9 @@ package laya.d3.resource.models {
 		 *@private
 		 */
 		override public function onAsynLoaded(url:String, data:*):void {
-			var preBasePath:String = URL.basePath;
-			URL.basePath = URL.getPath(URL.formatURL(url));
-			new LoadModel(data as ArrayBuffer, this, _materials, url);
-			URL.basePath = preBasePath;
+			var bufferData:Object = data[0];
+			var textureMap:Object = data[1];
+			new LoadModel(bufferData as ArrayBuffer, this, _materials,textureMap);
 			_loaded = true;
 			event(Event.LOADED, this);
 		}

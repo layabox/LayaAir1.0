@@ -57,12 +57,10 @@ package laya.d3.core.render {
 		public var cameraBoundingFrustum:BoundFrustum;
 		/**当前视口。*/
 		public var viewport:Viewport;
-		/**当前世界ShaderValue。*/
-		public var worldShaderValue:ValusArray = new ValusArray;
 		/**当前ShaderValue。*/
 		public var shaderValue:ValusArray = new ValusArray;
 		/**当前ShaderDefs。*/
-		public var shaderDefs:ShaderDefines3D = new ShaderDefines3D();
+		public var shaderDefines:ShaderDefines3D = new ShaderDefines3D();
 		
 		/**
 		 * 创建一个 <code>RenderState</code> 实例。
@@ -75,10 +73,8 @@ package laya.d3.core.render {
 		 * 重置。
 		 */
 		public function reset():void {
-			worldShaderValue.length = 0;
 			shaderValue.length = 0;
-			shaderDefs.setValue(0);
-			(WebGL.frameShaderHighPrecision) && (shaderDefs.setValue(ShaderDefines3D.FSHIGHPRECISION));
+			shaderDefines.setValue(0);
 		}
 	
 	}

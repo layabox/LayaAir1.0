@@ -62,7 +62,6 @@ package laya.d3.core.particle {
 			var rve:Float32Array = _resultVelocity.elements;
 			var ve:Float32Array = velocity.elements;
 			var vve:Float32Array = velocityAddVariance.elements;
-			
 			rve[0] = ve[0] + vve[0] * Math.random();
 			rve[1] = ve[1] + vve[1] * Math.random();
 			rve[2] = ve[2] + vve[2] * Math.random();

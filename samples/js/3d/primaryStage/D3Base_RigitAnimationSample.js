@@ -22,17 +22,9 @@ effectSprite.once(Laya.Event.HIERARCHY_LOADED, this, function(sprite3D) {
 function setMeshParams(spirit3D, renderMode) {
     if (spirit3D instanceof Laya.MeshSprite3D) {
         var meshSprite = spirit3D;
-        var mesh = meshSprite.meshFilter.sharedMesh;
-        if (mesh) {
-            //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-            mesh.once(Laya.Event.LOADED, this, function(mesh) {
-                for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-                    var material = meshSprite.meshRender.sharedMaterials[i];
-                    material.once(Laya.Event.LOADED, null, function(mat) {
-                        mat.renderMode = renderMode;
-                    });
-                }
-            });
+        for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+            var material = meshSprite.meshRender.sharedMaterials[i];
+            material.renderMode = renderMode;
         }
     }
     for (var i = 0; i < spirit3D._childs.length; i++)

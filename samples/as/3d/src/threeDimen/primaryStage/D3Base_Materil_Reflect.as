@@ -34,7 +34,7 @@ package threeDimen.primaryStage {
 			
 			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
 			camera.transform.translate(new Vector3(0, 0.8, 1.5));
-			camera.transform.rotate(new Vector3( -30, 0, 0), true, false);
+			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			camera.clearFlag = BaseCamera.CLEARFLAG_SKY;
 			var skyBox:SkyBox = new SkyBox();
 			camera.sky = skyBox;
@@ -47,19 +47,16 @@ package threeDimen.primaryStage {
 			var mesh:Mesh = Mesh.load("../../../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
 			meshSprite = sprite.addChild(new MeshSprite3D(mesh)) as MeshSprite3D;
 			mesh.once(Event.LOADED, null, function():void {
-				meshSprite.meshRender.sharedMaterials[0].once(Event.LOADED, null, function():void {
-					material = meshSprite.meshRender.sharedMaterials[0] as  StandardMaterial;
-					material.albedo = new Vector4(0.0, 0.0, 0.0, 0.0);
-					material.renderMode = BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
-					material.reflectTexture = textureCube;
-				});
+				material = meshSprite.meshRender.sharedMaterials[0] as StandardMaterial;
+				material.albedo = new Vector4(0.0, 0.0, 0.0, 0.0);
+				material.renderMode = BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
+				material.reflectTexture = textureCube;
 			});
 			meshSprite.transform.localPosition = new Vector3(-0.3, 0.0, 0.0);
 			meshSprite.transform.localScale = new Vector3(0.5, 0.5, 0.5);
 			meshSprite.transform.localRotation = new Quaternion(-0.7071068, 0.0, 0.0, 0.7071068);
 			
-		   skyBox.textureCube = textureCube;
-
+			skyBox.textureCube = textureCube;
 			
 			Laya.timer.frameLoop(1, null, function():void {
 				meshSprite.transform.rotate(new Vector3(0, 0.01, 0), false);

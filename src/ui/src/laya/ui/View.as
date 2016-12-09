@@ -22,19 +22,17 @@ package laya.ui {
 	 */
 	public class View extends Box {
 		
-		/**
-		 * 存储UI配置数据(用于加载模式)。
-		 */
+		/**存储UI配置数据(用于加载模式)。*/
 		public static var uiMap:Object = {};
-		/**
-		 * UI类映射。
-		 */
+		/**UI类映射。*/
 		public static var uiClassMap:Object = {"ViewStack": ViewStack, "LinkButton": Button, "TextArea": TextArea, "ColorPicker": ColorPicker, "Box": Box, "Button": Button, "CheckBox": CheckBox, "Clip": Clip, "ComboBox": ComboBox, "Component": Component, "HScrollBar": HScrollBar, "HSlider": HSlider, "Image": Image, "Label": Label, "List": List, "Panel": Panel, "ProgressBar": ProgressBar, "Radio": Radio, "RadioGroup": RadioGroup, "ScrollBar": ScrollBar, "Slider": Slider, "Tab": Tab, "TextInput": TextInput, "View": View, "VScrollBar": VScrollBar, "VSlider": VSlider, "Tree": Tree, "HBox": HBox, "VBox": VBox, "Sprite": Sprite, "Animation": Animation, "Text": Text};
-		/**
-		 * @private
-		 * UI视图类映射。
-		 */
+		/**@private UI视图类映射。*/
 		protected static var viewClassMap:Object = {};
+		/**@private */
+		public var _idMap:Object;
+		/**@private */
+		public var _aniList:Array;
+		
 		_regs()
 		
 		/**
@@ -47,15 +45,6 @@ package laya.ui {
 				ClassUtils.regClass(key, uiClassMap[key]);
 			}
 		}
-		
-		public function View() {
-			if (_width > 0 && !mouseThrough) hitTestPrior = true;
-		}
-		
-		/**@private */
-		public var _idMap:Object;
-		/**@private */
-		public var _aniList:Array;
 		
 		/**
 		 * @private
@@ -95,6 +84,8 @@ package laya.ui {
 				}
 				_aniList = anilist;
 			}
+			
+			if (_width > 0 && uiView.props.hitTestPrior == null && !mouseThrough) hitTestPrior = true;
 		}
 		
 		/**
@@ -213,6 +204,17 @@ package laya.ui {
 		 */
 		public static function regViewRuntime(key:String, compClass:Class):void {
 			viewClassMap[key] = compClass;
+		}
+		
+		/**
+		 * <p>销毁此对象。</p>
+		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
+		 */
+		override public function destroy(destroyChild:Boolean = true):void {
+			if (_aniList)_aniList.length = 0;
+			_idMap = null;
+			_aniList = null;
+			super.destroy(destroyChild);
 		}
 	}
 }

@@ -149,6 +149,7 @@
             <option>UI_TextArea</option>
             <option>UI_Tree</option>
         </select>
+		<input type="button" value="切换" onclick="showNext()" />
     </div>
     <script>
     var jsCtrl,select,type;
@@ -185,6 +186,10 @@
         var r = window.location.search.substr(1).match(reg);
         if(r!=null)return  unescape(r[2]); return null;
         }
+		function showNext(){
+			select.selectedIndex++;
+			selectChanged();
+		}
         </script>
     </body>
 </html>

@@ -19,6 +19,7 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.shader.ShaderDefines3D;
+	import laya.utils.Stat;
 	import laya.webgl.utils.ValusArray;
 	
 	/**
@@ -42,6 +43,7 @@ package laya.d3.core.particleShuriKen {
 		public static const CAMERAUP:String = "CAMERAUP";
 		public static const STRETCHEDBILLBOARDLENGTHSCALE:String = "STRETCHEDBILLBOARDLENGTHSCALE";
 		public static const STRETCHEDBILLBOARDSPEEDSCALE:String = "STRETCHEDBILLBOARDSPEEDSCALE";
+		public static const SIMULATIONSPACE:String = "SIMULATIONSPACE";
 		
 		//VelocityOverLifetime
 		public static const VOLTYPE:String = "VOLTYPE";
@@ -160,10 +162,12 @@ package laya.d3.core.particleShuriKen {
 			
 			var shaderValues:ValusArray = state.shaderValue;
 			shaderValues.pushValue(GRAVITY, finalGravityE);
+
+			shaderValues.pushValue(SIMULATIONSPACE, particleSystem.simulationSpace);
 			
 			switch (particleSystem.simulationSpace) {
 			case 0: //World
-				shaderValues.pushValue(WORLDPOSITION, Vector3.ONE.elements);
+				shaderValues.pushValue(WORLDPOSITION, Vector3.ZERO.elements);//TODO是否可不传
 				break;
 			case 1: //Local
 				shaderValues.pushValue(WORLDPOSITION, transform.position.elements);
@@ -201,28 +205,30 @@ package laya.d3.core.particleShuriKen {
 			shaderValues.pushValue(STRETCHEDBILLBOARDLENGTHSCALE, particleRender.stretchedBillboardLengthScale);
 			shaderValues.pushValue(STRETCHEDBILLBOARDSPEEDSCALE, particleRender.stretchedBillboardSpeedScale);
 			
+
 			//设置粒子的时间参数，可通过此参数停止粒子动画
 			shaderValues.pushValue(CURRENTTIME, particleSystem.currentTime);
+
 			
 			switch (particleRender.renderMode) {
 			case 0: 
-				state.shaderDefs.add(ShaderDefines3D.SPHERHBILLBOARD);
+				state.shaderDefines.add(ShaderDefines3D.SPHERHBILLBOARD);
 				break;
 			case 1: 
-				state.shaderDefs.add(ShaderDefines3D.STRETCHEDBILLBOARD);
+				state.shaderDefines.add(ShaderDefines3D.STRETCHEDBILLBOARD);
 				break;
 			case 2: 
-				state.shaderDefs.add(ShaderDefines3D.HORIZONTALBILLBOARD);
+				state.shaderDefines.add(ShaderDefines3D.HORIZONTALBILLBOARD);
 				break;
 			case 3: 
-				state.shaderDefs.add(ShaderDefines3D.VERTICALBILLBOARD);
+				state.shaderDefines.add(ShaderDefines3D.VERTICALBILLBOARD);
 				break;
 			}
 			
 			//velocityOverLifetime
 			var velocityOverLifetime:VelocityOverLifetime = particleSystem.velocityOverLifetime;
 			if (velocityOverLifetime && velocityOverLifetime.enbale) {
-				state.shaderDefs.add(ShaderDefines3D.VELOCITYOVERLIFETIME);
+				state.shaderDefines.add(ShaderDefines3D.VELOCITYOVERLIFETIME);
 				var velocity:GradientVelocity = velocityOverLifetime.velocity;
 				var velocityType:int = velocity.type;
 				shaderValues.pushValue(VOLTYPE, velocityType);
@@ -258,13 +264,13 @@ package laya.d3.core.particleShuriKen {
 				var color:GradientColor = colorOverLifetime.color;
 				switch (color.type) {
 				case 1: 
-					state.shaderDefs.add(ShaderDefines3D.COLOROVERLIFETIME);
+					state.shaderDefines.add(ShaderDefines3D.COLOROVERLIFETIME);
 					var gradientColor:GradientDataColor = color.gradient;
 					shaderValues.pushValue(COLOROVERLIFEGRADIENTALPHAS, gradientColor._alphaElements);
 					shaderValues.pushValue(COLOROVERLIFEGRADIENTCOLORS, gradientColor._rgbElements);
 					break;
 				case 3: 
-					state.shaderDefs.add(ShaderDefines3D.RANDOMCOLOROVERLIFETIME);
+					state.shaderDefines.add(ShaderDefines3D.RANDOMCOLOROVERLIFETIME);
 					var minGradientColor:GradientDataColor = color.gradientMin;
 					var maxGradientColor:GradientDataColor = color.gradientMax;
 					shaderValues.pushValue(COLOROVERLIFEGRADIENTALPHAS, minGradientColor._alphaElements);
@@ -284,7 +290,7 @@ package laya.d3.core.particleShuriKen {
 				switch (sizeType) {
 				case 0: 
 					sizeSeparate = size.separateAxes;
-					state.shaderDefs.add(ShaderDefines3D.SIZEOVERLIFETIME);
+					state.shaderDefines.add(ShaderDefines3D.SIZEOVERLIFETIME);
 					shaderValues.pushValue(SOLTYPE, sizeType);
 					shaderValues.pushValue(SOLSEPRARATE, sizeSeparate);
 					if (sizeSeparate) {
@@ -297,7 +303,7 @@ package laya.d3.core.particleShuriKen {
 					break;
 				case 2: 
 					sizeSeparate = size.separateAxes;
-					state.shaderDefs.add(ShaderDefines3D.SIZEOVERLIFETIME);
+					state.shaderDefines.add(ShaderDefines3D.SIZEOVERLIFETIME);
 					shaderValues.pushValue(SOLTYPE, sizeType);
 					shaderValues.pushValue(SOLSEPRARATE, sizeSeparate);
 					if (sizeSeparate) {
@@ -318,7 +324,7 @@ package laya.d3.core.particleShuriKen {
 			//RotationOverLifetime
 			var rotationOverLifetime:RotationOverLifetime = particleSystem.rotationOverLifetime;
 			if (rotationOverLifetime && rotationOverLifetime.enbale) {
-				state.shaderDefs.add(ShaderDefines3D.ROTATIONOVERLIFETIME);
+				state.shaderDefines.add(ShaderDefines3D.ROTATIONOVERLIFETIME);
 				var rotation:GradientAngularVelocity = rotationOverLifetime.angularVelocity;
 				var rotationType:int = rotation.type;
 				var rotationSeparate:Boolean = rotation.separateAxes;
@@ -365,14 +371,14 @@ package laya.d3.core.particleShuriKen {
 					break;
 				}
 			}
-			
+
 			//TextureSheetAnimation
 			var textureSheetAnimation:TextureSheetAnimation = particleSystem.textureSheetAnimation;
 			if (textureSheetAnimation && textureSheetAnimation.enbale) {
 				var frameOverTime:FrameOverTime = textureSheetAnimation.frame;
 				var textureAniType:int = frameOverTime.type;
 				if (textureAniType === 1 || textureAniType === 3) {
-					state.shaderDefs.add(ShaderDefines3D.TEXTURESHEETANIMATION);
+					state.shaderDefines.add(ShaderDefines3D.TEXTURESHEETANIMATION);
 					shaderValues.pushValue(TEXTURESHEETANIMATIONTYPE, textureAniType);
 					shaderValues.pushValue(TEXTURESHEETANIMATIONCYCLES, textureSheetAnimation.cycles);
 					var title:Vector2 = textureSheetAnimation.tiles;

@@ -9,8 +9,8 @@
 	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Text=laya.display.Text,Texture=laya.resource.Texture;
 	var Tween=laya.utils.Tween,Utils=laya.utils.Utils;
 	Laya.interface('laya.ui.IItem');
-	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
@@ -2209,6 +2209,7 @@
 			this._listChanged=false;
 			this._itemChanged=false;
 			this._scrollBarSkin=null;
+			this.itemRender=null;
 			ComboBox.__super.call(this);
 			this._itemColors=Styles.comboBoxItemColors;
 			this.skin=skin;
@@ -2277,7 +2278,7 @@
 			var labelWidth=this.width-2;
 			var labelColor=this._itemColors[2];
 			this._itemHeight=this._itemSize+6;
-			this._list.itemRender={type:"Box",child:[{type:"Label",props:{name:"label",x:1,padding:"3,3,3,3",width:labelWidth,height:this._itemHeight,fontSize:this._itemSize,color:labelColor}}]};
+			this._list.itemRender=this.itemRender || {type:"Box",child:[{type:"Label",props:{name:"label",x:1,padding:"3,3,3,3",width:labelWidth,height:this._itemHeight,fontSize:this._itemSize,color:labelColor}}]};
 			this._list.repeatY=this._visibleNum;
 			if (this._scrollBar)this._scrollBar.x=this.width-this._scrollBar.width-1;
 			this._list.refresh();
@@ -2293,12 +2294,14 @@
 				var box=this._list.getCell(index);
 				if (!box)return;
 				var label=box.getChildByName("label");
-				if (type===/*laya.events.Event.ROLL_OVER*/"mouseover"){
-					label.bgColor=this._itemColors[0];
-					label.color=this._itemColors[1];
-					}else {
-					label.bgColor=null;
-					label.color=this._itemColors[2];
+				if (label){
+					if (type===/*laya.events.Event.ROLL_OVER*/"mouseover"){
+						label.bgColor=this._itemColors[0];
+						label.color=this._itemColors[1];
+						}else {
+						label.bgColor=null;
+						label.color=this._itemColors[2];
+					}
 				}
 				}else if (type===/*laya.events.Event.CLICK*/"click"){
 				this.selectedIndex=index;
@@ -2543,6 +2546,7 @@
 		*获取对 <code>ComboBox</code> 组件所包含的 <code>List</code> 列表组件的引用。
 		*/
 		__getset(0,__proto,'list',function(){
+			this._list || this._createList();
 			return this._list;
 		});
 
@@ -4508,7 +4512,6 @@
 			this._idMap=null;
 			this._aniList=null;
 			View.__super.call(this);
-			if (this._width > 0 && !this.mouseThrough)this.hitTestPrior=true;
 		}
 
 		__class(View,'laya.ui.View',_super);
@@ -4545,6 +4548,7 @@
 				}
 				this._aniList=anilist;
 			}
+			if (this._width > 0 && uiView.props.hitTestPrior==null && !this.mouseThrough)this.hitTestPrior=true;
 		}
 
 		/**
@@ -4555,6 +4559,18 @@
 		__proto.loadUI=function(path){
 			var uiView=View.uiMap[path];
 			uiView && this.createView(uiView);
+		}
+
+		/**
+		*<p>销毁此对象。</p>
+		*@param destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
+		*/
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			if (this._aniList)this._aniList.length=0;
+			this._idMap=null;
+			this._aniList=null;
+			laya.ui.Component.prototype.destroy.call(this,destroyChild);
 		}
 
 		View._regs=function(){
@@ -4638,7 +4654,7 @@
 		['uiClassMap',function(){return this.uiClassMap={"ViewStack":ViewStack,"LinkButton":Button,"TextArea":TextArea,"ColorPicker":ColorPicker,"Box":Box,"Button":Button,"CheckBox":CheckBox,"Clip":Clip,"ComboBox":ComboBox,"Component":Component,"HScrollBar":HScrollBar,"HSlider":HSlider,"Image":Image,"Label":Label,"List":List,"Panel":Panel,"ProgressBar":ProgressBar,"Radio":Radio,"RadioGroup":RadioGroup,"ScrollBar":ScrollBar,"Slider":Slider,"Tab":Tab,"TextInput":TextInput,"View":View,"VScrollBar":VScrollBar,"VSlider":VSlider,"Tree":Tree,"HBox":HBox,"VBox":VBox,"Sprite":Sprite,"Animation":Animation,"Text":Text};}
 		]);
 		View.__init$=function(){
-			View._regs();
+			View._regs()
 		}
 
 		return View;
@@ -5986,66 +6002,6 @@
 
 
 	/**
-	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
-	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
-	*@see laya.ui.RadioGroup
-	*/
-	//class laya.ui.Radio extends laya.ui.Button
-	var Radio=(function(_super){
-		function Radio(skin,label){
-			this._value=null;
-			(label===void 0)&& (label="");
-			Radio.__super.call(this,skin,label);
-		}
-
-		__class(Radio,'laya.ui.Radio',_super);
-		var __proto=Radio.prototype;
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			_super.prototype.destroy.call(this,destroyChild);
-			this._value=null;
-		}
-
-		/**@inheritDoc */
-		__proto.preinitialize=function(){
-			laya.ui.Component.prototype.preinitialize.call(this);
-			this.toggle=false;
-			this._autoSize=false;
-		}
-
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			_super.prototype.initialize.call(this);
-			this.createText();
-			this._text.align="left";
-			this._text.valign="top";
-			this._text.width=0;
-			this.on(/*laya.events.Event.CLICK*/"click",this,this.onClick);
-		}
-
-		/**
-		*@private
-		*对象的<code>Event.CLICK</code>事件侦听处理函数。
-		*/
-		__proto.onClick=function(e){
-			this.selected=true;
-		}
-
-		/**
-		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
-		*/
-		__getset(0,__proto,'value',function(){
-			return this._value !=null ? this._value :this.label;
-			},function(obj){
-			this._value=obj;
-		});
-
-		return Radio;
-	})(Button)
-
-
-	/**
 	*<code>Group</code> 是一个可以自动布局的项集合控件。
 	*<p> <code>Group</code> 的默认项对象为 <code>Button</code> 类实例。
 	*<code>Group</code> 是 <code>Tab</code> 和 <code>RadioGroup</code> 的基类。</p>
@@ -6447,6 +6403,66 @@
 
 		return UIGroup;
 	})(Box)
+
+
+	/**
+	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
+	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
+	*@see laya.ui.RadioGroup
+	*/
+	//class laya.ui.Radio extends laya.ui.Button
+	var Radio=(function(_super){
+		function Radio(skin,label){
+			this._value=null;
+			(label===void 0)&& (label="");
+			Radio.__super.call(this,skin,label);
+		}
+
+		__class(Radio,'laya.ui.Radio',_super);
+		var __proto=Radio.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._value=null;
+		}
+
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			laya.ui.Component.prototype.preinitialize.call(this);
+			this.toggle=false;
+			this._autoSize=false;
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			_super.prototype.initialize.call(this);
+			this.createText();
+			this._text.align="left";
+			this._text.valign="top";
+			this._text.width=0;
+			this.on(/*laya.events.Event.CLICK*/"click",this,this.onClick);
+		}
+
+		/**
+		*@private
+		*对象的<code>Event.CLICK</code>事件侦听处理函数。
+		*/
+		__proto.onClick=function(e){
+			this.selected=true;
+		}
+
+		/**
+		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
+		*/
+		__getset(0,__proto,'value',function(){
+			return this._value !=null ? this._value :this.label;
+			},function(obj){
+			this._value=obj;
+		});
+
+		return Radio;
+	})(Button)
 
 
 	/**
@@ -8196,7 +8212,7 @@
 				var item=this.getChildAt(i);
 				if (item){
 					items.push(item);
-					maxHeight=Math.max(maxHeight,item.displayHeight);
+					maxHeight=Math.max(maxHeight,item.height *item.scaleY);
 				}
 			}
 			this.sortItem(items);
@@ -8204,13 +8220,13 @@
 			for (i=0,n=this.numChildren;i < n;i++){
 				item=items[i];
 				item.x=left;
-				left+=item.displayWidth+this._space;
+				left+=item.width *item.scaleX+this._space;
 				if (this._align=="top"){
 					item.y=0;
 					}else if (this._align=="middle"){
-					item.y=(maxHeight-item.displayHeight)*0.5;
+					item.y=(maxHeight-item.height *item.scaleY)*0.5;
 					}else if (this._align=="bottom"){
-					item.y=maxHeight-item.displayHeight;
+					item.y=maxHeight-item.height *item.scaleY;
 				}
 			}
 			this.changeSize();
@@ -8243,7 +8259,7 @@
 				var item=this.getChildAt(i);
 				if (item){
 					items.push(item);
-					maxWidth=Math.max(maxWidth,item.displayWidth);
+					maxWidth=Math.max(maxWidth,item.width *item.scaleX);
 				}
 			}
 			this.sortItem(items);
@@ -8251,13 +8267,13 @@
 			for (i=0,n=this.numChildren;i < n;i++){
 				item=items[i];
 				item.y=top;
-				top+=item.displayHeight+this._space;
+				top+=item.height *item.scaleY+this._space;
 				if (this._align=="left"){
 					item.x=0;
 					}else if (this._align=="center"){
-					item.x=(maxWidth-item.displayWidth)*0.5;
+					item.x=(maxWidth-item.width *item.scaleX)*0.5;
 					}else if (this._align=="right"){
-					item.x=maxWidth-item.displayWidth;
+					item.x=maxWidth-item.width *item.scaleX;
 				}
 			}
 			this.changeSize();

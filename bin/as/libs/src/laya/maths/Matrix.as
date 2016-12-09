@@ -308,6 +308,57 @@ package laya.maths {
 			return out;
 		}
 		
+		
+		/**
+		 * 对矩阵应用缩放转换。反向相乘
+		 * @param	x 用于沿 x 轴缩放对象的乘数。
+		 * @param	y 用于沿 y 轴缩放对象的乘数。
+		 */
+		public function scaleEx(x:Number, y:Number):void {
+			var ba:Number = this.a, bb:Number = this.b, bc:Number = this.c, bd:Number = this.d;
+			if (bb !== 0 || bc !== 0) {
+				this.a = x * ba;
+				this.b = x * bb;
+				this.c = y * bc;
+				this.d = y * bd;
+			}
+			else
+			{
+				this.a = x * ba;
+				this.b = 0 * bd;
+				this.c = 0 * ba;
+				this.d = y * bd;
+			}
+			bTransform = true;
+		}
+		
+		
+		
+		/**
+		 * 对 Matrix 对象应用旋转转换。反向相乘
+		 * @param	angle 以弧度为单位的旋转角度。
+		 */
+		public function rotateEx(angle:Number):void {
+		    var cos:Number = Math.cos(angle);
+			var sin:Number = Math.sin(angle);
+			var ba:Number = this.a, bb:Number = this.b, bc:Number = this.c, bd:Number = this.d;
+			if (bb !== 0 || bc !== 0) {
+				this.a = cos * ba + sin * bc;
+				this.b = cos * bb + sin * bd;
+				this.c = - sin * ba + cos * bc;
+				this.d = - sin * bb + cos * bd;
+			}
+			else
+			{
+				this.a = cos * ba;
+				this.b = sin * bd;
+				this.c = - sin * ba;
+				this.d = cos * bd;
+			}
+			bTransform = true;
+		}
+		
+		
 		/**@private */
 		public static function mulPre(m1:Matrix, ba:Number, bb:Number, bc:Number, bd:Number, btx:Number, bty:Number, out:Matrix):Matrix {
 			var aa:Number = m1.a, ab:Number = m1.b, ac:Number = m1.c, ad:Number = m1.d, atx:Number = m1.tx, aty:Number = m1.ty;

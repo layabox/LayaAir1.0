@@ -87,15 +87,11 @@ package threeDimen.primaryStage {
 			grid.on(Event.HIERARCHY_LOADED, null, function(sprite:Sprite3D):void {
 				var meshSprite:MeshSprite3D = sprite.getChildAt(0) as MeshSprite3D;
 				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
-				mesh.once(Event.LOADED, null, function(templet:BaseMesh):void {
-					for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-						var material:StandardMaterial = meshSprite.meshRender.sharedMaterials[i] as StandardMaterial;
-						material.once(Event.LOADED, null, function():void {
-							material.diffuseColor = new Vector3(0.7, 0.7, 0.7);
-							material.specularColor = new Vector4(0.2, 0.2, 0.2, 32);
-						});
-					}
-				});
+				for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+					var material:StandardMaterial = meshSprite.meshRender.sharedMaterials[i] as StandardMaterial;
+					material.diffuseColor = new Vector3(0.7, 0.7, 0.7);
+					material.specularColor = new Vector4(0.2, 0.2, 0.2, 32);
+				}
 			});
 			
 			var sphere:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/staticModel/sphere/sphere.lh")) as Sprite3D;
@@ -125,6 +121,7 @@ package threeDimen.primaryStage {
 					break;
 				}
 			});
+		
 		}
 		
 		private function loadUI():void {

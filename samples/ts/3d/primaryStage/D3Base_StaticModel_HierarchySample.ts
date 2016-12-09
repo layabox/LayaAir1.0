@@ -1,6 +1,4 @@
 class StaticModel_HierarchySample {
-    private skinMesh: Laya.MeshSprite3D;
-    private skinAni: Laya.SkinAnimations;
 
     constructor() {
 
@@ -19,15 +17,10 @@ class StaticModel_HierarchySample {
         var staticMesh = scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh")) as Laya.Sprite3D;
         staticMesh.once(Laya.Event.HIERARCHY_LOADED, this, (sprite) => {
             var meshSprite = sprite.getChildAt(0) as Laya.MeshSprite3D;
-            var mesh = meshSprite.meshFilter.sharedMesh;
-            mesh.once(Laya.Event.LOADED, this, (mesh) => {
-                for (var i = 0; i <  meshSprite.meshRender.sharedMaterials.length; i++) {
-                    var material =  meshSprite.meshRender.sharedMaterials[i];
-                    material.once(Laya.Event.LOADED, this, (mat) => {
-                        mat.albedo = new  Laya.Vector4(3.5,3.5,3.5,1.0);
-                    });
-                }
-            });
+            for (var i = 0; i <  meshSprite.meshRender.sharedMaterials.length; i++) {
+                var material =  meshSprite.meshRender.sharedMaterials[i];
+                material.albedo = new  Laya.Vector4(3.5,3.5,3.5,1.0);
+            }
             sprite.transform.localScale = new Laya.Vector3(10, 10, 10);
         });
 

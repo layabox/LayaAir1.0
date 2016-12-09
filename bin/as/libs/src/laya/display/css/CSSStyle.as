@@ -511,7 +511,7 @@ package laya.display.css {
 		}
 		
 		/**
-		 * 边框属性。
+		 * 边框属性，比如border="5px solid red"
 		 */
 		public function get border():String {
 			return _border ? _border.value : "";

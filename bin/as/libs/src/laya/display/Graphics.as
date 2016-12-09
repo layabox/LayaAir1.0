@@ -479,13 +479,9 @@ package laya.display {
 		 */
 		public function fillTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, type:String = "repeat", offset:Point = null):void {
 			if (!tex) return;
-			var args:* = [tex, x, y, width, height, type, offset];
+			var args:* = [tex, x, y, width, height, type, offset||Point.EMPTY,{}];
 			if (!tex.loaded) {
 				tex.once(Event.LOADED, this, _textureLoaded, [tex, args]);
-			}
-			if (Render.isWebGL) {
-				var tFillTextureSprite:* = RunDriver.fillTextureShader(tex, x, y, width, height);
-				args.push(tFillTextureSprite);
 			}
 			_saveToCmd(Render._context._fillTexture, args);
 		}
@@ -589,7 +585,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 旋转当前绘图。
+		 * 旋转当前绘图。(推荐使用transform，性能更高)
 		 * @param	angle 旋转角度，以弧度计。
 		 * @param	pivotX 水平方向轴心点坐标。
 		 * @param	pivotY 垂直方向轴心点坐标。
@@ -599,7 +595,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 缩放当前绘图至更大或更小。
+		 * 缩放当前绘图至更大或更小。(推荐使用transform，性能更高)
 		 * @param	scaleX 水平方向缩放值。
 		 * @param	scaleY 垂直方向缩放值。
 		 * @param	pivotX 水平方向轴心点坐标。

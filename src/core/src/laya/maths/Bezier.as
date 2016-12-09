@@ -53,7 +53,6 @@ package laya.maths {
 			var lineY:Number = Math.pow((1 - t), 3) * p1.y + 3 * p2.y * t * (1 - t) * (1 - t) + 3 * p3.y * t * t * (1 - t) + p4.y * Math.pow(t, 3);
 			rst.push(lineX, lineY);
 		}
-		
 		/**
 		 * 计算贝塞尔点序列
 		 * @param count
@@ -94,7 +93,10 @@ package laya.maths {
 			default: 
 				return [];
 			}
-			
+			while(_controlPoints.length<=count)
+			{
+				_controlPoints.push(new Point());
+			}
 			for (i = 0; i < count * 2; i += 2) {
 				_switchPoint(pList[i], pList[i + 1]);
 			}

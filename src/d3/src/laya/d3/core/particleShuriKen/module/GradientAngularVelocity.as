@@ -331,15 +331,15 @@ package laya.d3.core.particleShuriKen.module {
 			destGradientAngularVelocity._type = _type;
 			destGradientAngularVelocity._separateAxes = _separateAxes;
 			destGradientAngularVelocity._constant = _constant;
-			destGradientAngularVelocity._constantSeparate.copyFrom(_constantSeparate);
+			_constantSeparate.cloneTo(destGradientAngularVelocity._constantSeparate);
 			_gradient.cloneTo(destGradientAngularVelocity._gradient);
 			_gradientX.cloneTo(destGradientAngularVelocity._gradientX);
 			_gradientY.cloneTo(destGradientAngularVelocity._gradientY);
 			_gradientZ.cloneTo(destGradientAngularVelocity._gradientZ);
 			destGradientAngularVelocity._constantMin = _constantMin;
 			destGradientAngularVelocity._constantMax = _constantMax;
-			destGradientAngularVelocity._constantMinSeparate.copyFrom(_constantMinSeparate);
-			destGradientAngularVelocity._constantMaxSeparate.copyFrom(_constantMaxSeparate);
+			_constantMinSeparate.cloneTo(destGradientAngularVelocity._constantMinSeparate);
+			_constantMaxSeparate.cloneTo(destGradientAngularVelocity._constantMaxSeparate);
 			_gradientMin.cloneTo(destGradientAngularVelocity._gradientMin);
 			_gradientMax.cloneTo(destGradientAngularVelocity._gradientMax);
 			_gradientXMin.cloneTo(destGradientAngularVelocity._gradientXMin);

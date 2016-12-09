@@ -117,9 +117,8 @@ package laya.d3.core.light {
 		 */
 		public override function updateToWorldState(state:RenderState):void {
 			if (state.scene.enableLight) {
-				var shaderValue:ValusArray = state.worldShaderValue;
-				var loopCount:int = Stat.loopCount;
-				state.shaderDefs.add(ShaderDefines3D.SPOTLIGHT);
+				var shaderValue:ValusArray = state.shaderValue;
+				state.shaderDefines.add(ShaderDefines3D.SPOTLIGHT);
 				shaderValue.pushValue(BaseScene.SPOTLIGHTDIFFUSE, diffuseColor.elements);
 				shaderValue.pushValue(BaseScene.SPOTLIGHTAMBIENT, ambientColor.elements);
 				shaderValue.pushValue(BaseScene.SPOTLIGHTSPECULAR, specularColor.elements);

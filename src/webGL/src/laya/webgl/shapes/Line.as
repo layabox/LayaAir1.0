@@ -10,11 +10,13 @@ package laya.webgl.shapes
 		public function Line(x:Number, y:Number, points:Array, borderWidth:int, color:uint)
 		{
 			//把没用的顶点数据过滤掉
+			
 			var tCurrX:Number;
 			var tCurrY:Number;
 			var tLastX:Number = -1;
 			var tLastY:Number = -1;
-			var tLen:int = points.length / 2 - 1;
+			//var tLen:int = points.length / 2 - 1;
+			var tLen:int = points.length / 2;
 			for (var i:int = 0; i < tLen; i++)
 			{
 				tCurrX = points[i * 2];
@@ -26,14 +28,14 @@ package laya.webgl.shapes
 				tLastX = tCurrX;
 				tLastY = tCurrY;
 			}
-			tCurrX = points[tLen * 2];
-			tCurrY = points[tLen * 2 + 1];
-			tLastX = _points[0];
-			tLastY = _points[1];
-			if (Math.abs(tLastX - tCurrX)> 0.01 || Math.abs(tLastY - tCurrY)>0.01)
-			{
-				_points.push(tCurrX, tCurrY);
-			}
+			//tCurrX = points[tLen * 2];
+			//tCurrY = points[tLen * 2 + 1];
+			//tLastX = _points[0];
+			//tLastY = _points[1];
+			//if (Math.abs(tLastX - tCurrX)> 0.01 || Math.abs(tLastY - tCurrY)>0.01)
+			//{
+				//_points.push(tCurrX, tCurrY);
+			//}
 			super(x, y, 0, 0, 0, color, borderWidth, color, 0);
 		}
 		

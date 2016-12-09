@@ -113,7 +113,7 @@ package laya.media.h5audio {
 		/**
 		 * 获取总时间。
 		 */
-		override public function get duration():Number 
+		public function get duration():Number 
 		{
 			var ad:Audio;
 			ad = _audioCache[url];

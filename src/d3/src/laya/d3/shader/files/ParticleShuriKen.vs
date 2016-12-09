@@ -15,6 +15,7 @@ attribute float a_StartSpeed;
 #ifdef TEXTURESHEETANIMATION
   attribute vec4 a_Random1;
 #endif
+attribute vec3 a_SimulationWorldPostion;
 
 varying float v_Discard;
 varying vec4 v_Color;
@@ -37,6 +38,7 @@ uniform vec3 u_CameraUp;
 
 uniform  float u_StretchedBillboardLengthScale;
 uniform  float u_StretchedBillboardSpeedScale;
+uniform int u_SimulationSpace;
 
 #ifdef VELOCITYOVERLIFETIME
   uniform  int  u_VOLType;
@@ -291,8 +293,12 @@ vec3 computeParticlePosition(in vec3 startVelocity, in vec3 lifeVelocity,in floa
 	 else
 	   finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*a_Position+startPosition);
   #endif
-		  
-  finalPosition=finalPosition+u_WorldPosition;
+  
+  if(u_SimulationSpace==0)
+    finalPosition=finalPosition+a_SimulationWorldPostion;
+  else if(u_SimulationSpace==1) 
+    finalPosition=finalPosition+u_WorldPosition;
+  
   finalPosition+=u_Gravity*age*normalizedAge;//计算受重力影响的位置//TODO:移除
  
   return  finalPosition;
@@ -336,7 +342,7 @@ vec2 computeParticleSize(in vec2 size,in float normalizedAge)
 	return size;
 }
 
-mat2 computeParticleRotation(in vec3 rotation,in float age,in float normalizedAge)//TODO:不分轴是否无需计算XY，Billboard模式下好像是,待确认。
+vec3 computeParticleRotation(in vec3 rotation,in float age,in float normalizedAge)//TODO:不分轴是否无需计算XY，Billboard模式下好像是,待确认。
 { 
 	#ifdef ROTATIONOVERLIFETIME
 	   if(u_ROLType==0){
@@ -378,10 +384,7 @@ mat2 computeParticleRotation(in vec3 rotation,in float age,in float normalizedAg
 			}
 		}
 	#endif
-	float rot=rotation.z;
-    float c = cos(rot);
-    float s = sin(rot);
-    return mat2(c, -s, s, c);
+	return rotation;
 }
 
 vec2 computeParticleUV(in vec2 uv,in float normalizedAge)
@@ -389,7 +392,7 @@ vec2 computeParticleUV(in vec2 uv,in float normalizedAge)
 	#ifdef TEXTURESHEETANIMATION
 	  if(u_TSAType==1){
 		float cycleNormalizedAge=normalizedAge*u_TSACycles;
-		float frame=getFrameFromGradient(u_TSAGradientUVs,normalizedAge*(cycleNormalizedAge-floor(cycleNormalizedAge)));
+		float frame=getFrameFromGradient(u_TSAGradientUVs,cycleNormalizedAge-floor(cycleNormalizedAge));
 		float totalULength=frame*u_TSASubUVLength.x;
 		float floorTotalULength=floor(totalULength);
 	    uv.x=uv.x+totalULength-floorTotalULength;
@@ -431,7 +434,11 @@ void main()
 		  center += u_SizeScale.xzy*(mat3(a_StartRotation0,a_StartRotation1,a_StartRotation2)*(corner.x*sideVector+corner.y*upVector));
 		}
 		else{
-		  mat2 rotation = computeParticleRotation(a_StartRotation0, age,normalizedAge);
+		  vec3 rotationAng = computeParticleRotation(a_StartRotation0, age,normalizedAge);
+		  float rot=rotationAng.z;
+          float c = cos(rot);
+          float s = sin(rot);
+          mat2 rotation= mat2(c, -s, s, c);
 		  corner=rotation*corner;
 		  center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);
 		}
@@ -462,8 +469,12 @@ void main()
         const vec3 cameraUpVector =vec3(0.0,0.0,-1.0);
 	    const vec3 sideVector = vec3(1.0,0.0,0.0);
 		corner*=computeParticleSize(a_StartSize.xy,normalizedAge);
-		mat2 rotation = computeParticleRotation(a_StartRotation0, age,normalizedAge);
-	    corner=rotation*corner;
+		vec3 rotationAng = computeParticleRotation(a_StartRotation0, age,normalizedAge);
+	    float rot=rotationAng.z;
+        float c = cos(rot);
+        float s = sin(rot);
+        mat2 rotation= mat2(c, -s, s, c);
+	    corner=rotation*corner*cos(0.78539816339744830961566084581988);//TODO:临时缩小cos45,不确定U3D原因
         center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*cameraUpVector);
    #endif
    
@@ -471,7 +482,11 @@ void main()
         const vec3 cameraUpVector =vec3(0.0,1.0,0.0);
         vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));
 		corner*=computeParticleSize(a_StartSize.xy,normalizedAge);
-		mat2 rotation = computeParticleRotation(a_StartRotation0, age,normalizedAge);
+		vec3 rotationAng = computeParticleRotation(a_StartRotation0, age,normalizedAge);
+		float rot=rotationAng.z;
+        float c = cos(rot);
+        float s = sin(rot);
+        mat2 rotation= mat2(c, -s, s, c);
 	    corner=rotation*corner*cos(0.78539816339744830961566084581988);//TODO:临时缩小cos45,不确定U3D原因
         center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*cameraUpVector);
    #endif

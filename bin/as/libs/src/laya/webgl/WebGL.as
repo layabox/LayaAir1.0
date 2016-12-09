@@ -28,7 +28,6 @@ package laya.webgl {
 	import laya.webgl.resource.IMergeAtlasBitmap;
 	import laya.webgl.resource.RenderTarget2D;
 	import laya.webgl.resource.WebGLImage;
-	import laya.webgl.shader.d2.fillTexture.FillTextureSprite;
 	import laya.webgl.shader.d2.Shader2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.shader.d2.skinAnishader.SkinMesh;
@@ -272,12 +271,6 @@ package laya.webgl {
 				}
 				return tArray;
 			}
-			
-			RunDriver.fillTextureShader = function(value:Texture, x:Number, y:Number, width:Number, height:Number):* {
-				var tFillTetureSprite:FillTextureSprite = new FillTextureSprite();
-				return tFillTetureSprite;
-			}
-			
 			RunDriver.skinAniSprite = function():* {
 				var tSkinSprite:SkinMesh = new SkinMesh()
 				return tSkinSprite;

@@ -1,9 +1,11 @@
 package laya.d3.math {
+	import laya.d3.core.IClone;
+	import laya.d3.core.material.StandardMaterial;
 	
 	/**
 	 * <code>Vector4</code> 类用于创建四维向量。
 	 */
-	public class Vector4 {
+	public class Vector4 implements IClone{
 		/**零向量，禁止修改*/
 		public static var ZERO:Vector4 = new Vector4();
 		
@@ -76,17 +78,29 @@ package laya.d3.math {
 			v[3] = w;
 		}
 		
+		
 		/**
-		 * 从一个四维向量复制。
-		 * @param	v  源向量。
+		 * 克隆。
+		 * @param	destObject 克隆源。
 		 */
-		public function copyFrom(v:Vector4):Vector4 {
-			var e:Float32Array = elements, s:Float32Array = v.elements;
-			e[0] = s[0];
-			e[1] = s[1];
-			e[2] = s[2];
-			e[3] = s[3];
-			return this;
+		public function cloneTo(destObject:*):void {
+			var destVector4:Vector4 = destObject as Vector4;
+			var destE:Float32Array = destVector4.elements;
+			var s:Float32Array = this.elements;
+			destE[0] = s[0];
+			destE[1] = s[1];
+			destE[2] = s[2];
+			destE[3] = s[3];
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var destVector4:Vector4 = __JS__("new this.constructor()");
+			cloneTo(destVector4);
+			return destVector4;
 		}
 		
 		

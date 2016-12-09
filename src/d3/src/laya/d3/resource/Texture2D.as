@@ -134,8 +134,8 @@ package laya.d3.resource {
 						_this._image = null;
 						return;
 					}
-					
 					_this._createWebGlTexture();
+					
 					_this.completeCreate();//处理创建完成后相关操作
 				};
 				_image.src = _src;

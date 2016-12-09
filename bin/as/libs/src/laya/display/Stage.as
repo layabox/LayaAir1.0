@@ -78,6 +78,8 @@ package laya.display {
 		public static const FRAME_SLOW:String = "slow";
 		/**自动模式，以30的帧率运行，但鼠标活动后会自动加速到60，鼠标不动2秒后降低为30帧，以节省消耗。*/
 		public static const FRAME_MOUSE:String = "mouse";
+		/**休眠模式，以1的帧率运行*/
+		public static const FRAME_SLEEP:String = "sleep";
 		
 		/**当前焦点对象，此对象会影响当前键盘事件的派发主体。*/
 		public var focus:Node;
@@ -127,6 +129,7 @@ package laya.display {
 			_scenes = [];
 			this.mouseEnabled = true;
 			this.hitTestPrior = true;
+			this.autoSize = false;
 			this._displayedInStage = true;
 			
 			var _this:Stage = this;
@@ -513,8 +516,14 @@ package laya.display {
 		
 		/**@inheritDoc */
 		override public function render(context:RenderContext, x:Number, y:Number):void {
-			Render.isFlash && repaint();
+			if (frameRate === FRAME_SLEEP) {
+				var now:Number = Browser.now();
+				if (now - _frameStartTime >= 1000) _frameStartTime = now;
+				else return;
+			}
+			
 			_renderCount++;
+			Render.isFlash && repaint();
 			
 			if (!visible) {
 				if (_renderCount % 5 === 0) {
@@ -524,6 +533,7 @@ package laya.display {
 				}
 				return;
 			}
+			
 			_frameStartTime = Browser.now();
 			var frameMode:String = frameRate === FRAME_MOUSE ? (((_frameStartTime - _mouseMoveTime) < 2000) ? FRAME_FAST : FRAME_SLOW) : frameRate;
 			var isFastMode:Boolean = (frameMode !== FRAME_SLOW);
@@ -562,12 +572,12 @@ package laya.display {
 					RunDriver.beginFlush();
 					context.flush();
 					RunDriver.endFinish();
+					VectorGraphManager.instance && VectorGraphManager.getInstance().endDispose();
 				} else {
 					RunDriver.clear(_bgColor);
 					super.render(context, x, y);
 				}
 			}
-			VectorGraphManager.instance && VectorGraphManager.getInstance().endDispose();
 		}
 		
 		/**是否开启全屏，用户点击后进入全屏*/

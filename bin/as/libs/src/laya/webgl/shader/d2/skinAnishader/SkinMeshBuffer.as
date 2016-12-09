@@ -2,7 +2,6 @@ package laya.webgl.shader.d2.skinAnishader
 {
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.shader.d2.fillTexture.FillTextureSprite;
 	import laya.webgl.utils.IndexBuffer2D;
 	import laya.webgl.utils.VertexBuffer2D;
 	
@@ -29,11 +28,7 @@ package laya.webgl.shader.d2.skinAnishader
 			skinMesh.getData(vb, ib, vb.byteLength / 32);
 		}
 		
-		public function addFillTexture(fillTexture:FillTextureSprite):void
-		{
-			fillTexture.getData(vb, ib, vb.byteLength / 32);
-		}
-		
+	
 		
 		public function reset():void {
 			this.vb.clear();

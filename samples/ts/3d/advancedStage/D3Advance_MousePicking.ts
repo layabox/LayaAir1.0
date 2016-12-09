@@ -28,10 +28,8 @@ class MousePickingScene extends Laya.Scene {
             var meshSprite3D = spirit3D as Laya.MeshSprite3D;
             var mesh = meshSprite3D.meshFilter.sharedMesh as Laya.Mesh;
             if (mesh != null) {
-                mesh.once(Laya.Event.LOADED, this, function (): void {
-                    for (var i = 0; i < mesh.materials.length; i++)
-                        mesh.materials[i].albedo = new Laya.Vector4(3.0,3.0,3.0,1.0);
-                });
+                for (var i = 0; i < mesh.materials.length; i++)
+                    mesh.materials[i].albedo = new Laya.Vector4(3.0,3.0,3.0,1.0);
             }
         }
         for (var i = 0; i < spirit3D.numChildren; i++)

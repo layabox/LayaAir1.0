@@ -61,14 +61,26 @@ package laya.d3.core.scene {
 		public static const SPOTLIGHTAMBIENT:String = "SPOTLIGHTAMBIENT";
 		public static const SPOTLIGHTSPECULAR:String = "SPOTLIGHTSPECULAR";
 		
+		/**
+		 * @private
+		 */
+		private static function _sortScenes(a:Node, b:Node):Number {
+			if (a.parent === Laya.stage && b.parent === Laya.stage) {
+				var stageChildren:Array = Laya.stage._childs;
+				return stageChildren.indexOf(a) - stageChildren.indexOf(b);
+			} else if (a.parent !== Laya.stage && b.parent !== Laya.stage) {
+				return _sortScenes(a.parent, b.parent);
+			} else {
+				return (a.parent === Laya.stage) ? -1 : 1;
+			}
+		}
+		
 		/** @private */
 		protected var _invertYProjectionMatrix:Matrix4x4;
 		/** @private */
 		protected var _invertYProjectionViewMatrix:Matrix4x4;
 		/** @private */
 		protected var _invertYScaleMatrix:Matrix4x4;
-		/**是否在Stage中。*/
-		protected var _isInStage:Boolean;
 		/** @private */
 		protected var _boundFrustum:BoundFrustum;
 		/** @private */
@@ -115,14 +127,6 @@ package laya.d3.core.scene {
 		 */
 		public function get scene():BaseScene {
 			return this;
-		}
-		
-		/**
-		 * 获取是否在场景树。
-		 *   @return	是否在场景树。
-		 */
-		public function get isInStage():Boolean {
-			return _isInStage;
 		}
 		
 		/**
@@ -221,49 +225,24 @@ package laya.d3.core.scene {
 			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
 			renderConfig.dFactor = WebGLContext.ONE;
 			
-			on(Event.ADDED, this, _onAdded);
-			on(Event.REMOVED, this, _onRemoved);
+			on(Event.DISPLAY, this, _onDisplay);
+			on(Event.UNDISPLAY, this, _onUnDisplay);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _onAdded():void {
-			if (Laya.stage.contains(this)) {
-				_addSelfAndChildrenRenderObjects();
-				
-				var index:int = _parent._childs.indexOf(this);
-				Laya.stage._scenes[index]=this;
-			}
+		private function _onDisplay():void {
+			Laya.stage._scenes.push(this);
+			Laya.stage._scenes.sort(_sortScenes);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _onRemoved():void {
-			if (Laya.stage.contains(this)) {//触发时还在stage中
-				_clearSelfAndChildrenRenderObjects();
-				
-				var scenes:Array = Laya.stage._scenes;
-				scenes.splice(scenes.indexOf(this), 1);
-			}
-		}
-		
-		
-		/**
-		 * 清理自身和子节点渲染物体,重写此函数。
-		 */
-		public function _clearSelfAndChildrenRenderObjects():void {
-			for (var i:int = 0, n:int = _childs.length; i < n; i++)
-				(_childs[i] as Sprite3D)._clearSelfAndChildrenRenderObjects();
-		}
-		
-		/**
-		 * 添加自身和子节点渲染物体,重写此函数。
-		 */
-		public function _addSelfAndChildrenRenderObjects():void {
-			for (var i:int = 0, n:int = _childs.length; i < n; i++)
-				(_childs[i] as Sprite3D)._addSelfAndChildrenRenderObjects();
+		private function _onUnDisplay():void {
+			var scenes:Array = Laya.stage._scenes;
+			scenes.splice(scenes.indexOf(this), 1);
 		}
 		
 		/**
@@ -273,7 +252,6 @@ package laya.d3.core.scene {
 		 * @return state 渲染状态。
 		 */
 		protected function _prepareUpdateToRenderState(gl:WebGLContext, state:RenderState):void {
-			state.reset();
 			state.context = WebGL.mainContext;
 			state.elapsedTime = _lastCurrentTime ? timer.currTimer - _lastCurrentTime : 0;
 			_lastCurrentTime = timer.currTimer;
@@ -288,14 +266,15 @@ package laya.d3.core.scene {
 		 * @return state 渲染状态。
 		 */
 		protected function _prepareRenderToRenderState(camera:BaseCamera, state:RenderState):void {
+			var shaderDefines:ShaderDefines3D = state.shaderDefines;
+			(WebGL.frameShaderHighPrecision) && (shaderDefines.addInt(ShaderDefines3D.FSHIGHPRECISION));
+			
 			Layer._currentCameraCullingMask = camera.cullingMask;
 			state.camera = camera;
 			
-			var worldShaderValue:ValusArray = state.worldShaderValue;
-			camera && worldShaderValue.pushValue(BaseScene.CAMERAPOS, camera.transform.position.elements);
-			
-			if (_lights.length > 0)//灯光相关
-			{
+			var shaderValue:ValusArray = state.shaderValue;
+			camera && shaderValue.pushValue(BaseScene.CAMERAPOS, camera.transform.position.elements);
+			if (_lights.length > 0) {
 				var lightCount:int = 0;
 				for (var i:int = 0; i < _lights.length; i++) {
 					var light:LightSprite = _lights[i];
@@ -306,17 +285,16 @@ package laya.d3.core.scene {
 					light.updateToWorldState(state);
 				}
 			}
-			if (enableFog)//雾化
-			{
-				worldShaderValue.pushValue(BaseScene.FOGSTART, fogStart);
-				worldShaderValue.pushValue(BaseScene.FOGRANGE, fogRange);
-				worldShaderValue.pushValue(BaseScene.FOGCOLOR, fogColor.elements);
+			if (enableFog) {
+				shaderDefines.addInt(ShaderDefines3D.FOG);
+				shaderValue.pushValue(BaseScene.FOGSTART, fogStart);
+				shaderValue.pushValue(BaseScene.FOGRANGE, fogRange);
+				shaderValue.pushValue(BaseScene.FOGCOLOR, fogColor.elements);
 			}
-			
-			state.shaderValue.pushArray(worldShaderValue);
-			
-			var shaderDefs:ShaderDefines3D = state.shaderDefs;
-			(enableFog) && (shaderDefs._value |= ShaderDefines3D.FOG);
+		}
+		
+		protected function _endRenderToRenderState(state:RenderState):void {
+			state.reset();
 		}
 		
 		/**
@@ -334,10 +312,8 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		protected function _updateChilds(state:RenderState):void {
-			for (var i:int = 0, n:int = _childs.length; i < n; ++i) {
-				var child:Sprite3D = _childs[i];
-				child._update(state);
-			}
+			for (var i:int = 0, n:int = _childs.length; i < n; ++i)
+				_childs[i]._update(state);
 		}
 		
 		/**
@@ -356,7 +332,6 @@ package laya.d3.core.scene {
 			var camera:BaseCamera = state.camera;
 			var renderTargetHeight:int = camera.renderTargetSize.height;
 			gl.viewport(viewport.x, renderTargetHeight - viewport.y - viewport.height, viewport.width, viewport.height);
-			
 			var clearFlag:int = 0;
 			switch (camera.clearFlag) {
 			case BaseCamera.CLEARFLAG_SOLIDCOLOR: 
@@ -389,7 +364,7 @@ package laya.d3.core.scene {
 					gl.disable(WebGLContext.SCISSOR_TEST);
 				} else {
 					gl.clear(WebGLContext.DEPTH_BUFFER_BIT);
-					//gl.clear(WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT | WebGLContext.COLOR_BUFFER_BIT);
+						//gl.clear(WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT | WebGLContext.COLOR_BUFFER_BIT);
 				}
 				break;
 			case BaseCamera.CLEARFLAG_SKY: 

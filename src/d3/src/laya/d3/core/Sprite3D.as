@@ -177,28 +177,24 @@ package laya.d3.core {
 			_id = ++_uniqueIDCounter;
 			layer = Layer.currentCreationLayer;
 			transform = new Transform3D(this);
-			on(Event.ADDED, this, _onAdded);
-			on(Event.REMOVED, this, _onRemoved);
+			on(Event.DISPLAY, this, _onDisplay);
+			on(Event.UNDISPLAY, this, _onUnDisplay);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _onAdded():void {
+		private function _onDisplay():void {
 			transform.parent = (_parent as Sprite3D).transform;
-			if (Laya.stage.contains(this)) {
-				_addSelfAndChildrenRenderObjects();
-			}
+			_addSelfRenderObjects();
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _onRemoved():void {
+		private function _onUnDisplay():void {
 			transform.parent = null;
-			if (Laya.stage.contains(this)) {//触发时还在stage中
-				_clearSelfAndChildrenRenderObjects();
-			}
+		    _clearSelfRenderObjects();
 		}
 		
 		/**
@@ -211,24 +207,6 @@ package laya.d3.core {
 		 * 添加自身渲染物体，请重载此函数。
 		 */
 		protected function _addSelfRenderObjects():void {
-		}
-		
-		/**
-		 * 清理自身和子节点渲染物体,重写此函数。
-		 */
-		public function _clearSelfAndChildrenRenderObjects():void {
-			_clearSelfRenderObjects();
-			for (var i:int = 0, n:int = _childs.length; i < n; i++)
-				(_childs[i] as Sprite3D)._clearSelfAndChildrenRenderObjects();
-		}
-		
-		/**
-		 * 添加自身和子节点渲染物体,重写此函数。
-		 */
-		public function _addSelfAndChildrenRenderObjects():void {
-			_addSelfRenderObjects();
-			for (var i:int = 0, n:int = _childs.length; i < n; i++)
-				(_childs[i] as Sprite3D)._addSelfAndChildrenRenderObjects();
 		}
 		
 		/**
@@ -262,10 +240,8 @@ package laya.d3.core {
 		protected function _updateChilds(state:RenderState):void {
 			var n:int = _childs.length;
 			if (n === 0) return;
-			for (var i:int = 0; i < n; ++i) {
-				var child:Sprite3D = _childs[i];
-				child._update((state));
-			}
+			for (var i:int = 0; i < n; ++i) 
+				_childs[i]._update((state));
 		}
 		
 		/**
@@ -359,6 +335,7 @@ package laya.d3.core {
 			var component:Component3D = _components[index];
 			_components.splice(index, 1);
 			_componentsMap.splice(index, 1);
+			component._uninitialize();
 			this.event(Event.COMPONENT_REMOVED, component);
 		}
 		
@@ -374,17 +351,16 @@ package laya.d3.core {
 		 *@private
 		 */
 		public function onAsynLoaded(url:String, data:*):void {
-			var preBasePath:String = URL.basePath;
-			URL.basePath = URL.getPath(URL.formatURL(url));
-			ClassUtils.createByJson(data as String, this, this, Handler.create(null, Utils3D._parseHierarchyProp, null, false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
-			URL.basePath = preBasePath;
+			var oriData:Object = data[0];
+			var innerResouMap:Object = data[1];
+			ClassUtils.createByJson(oriData as String, this, this, Handler.create(null, Utils3D._parseHierarchyProp, [innerResouMap], false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
 			event(Event.HIERARCHY_LOADED, [this]);
 		}
 		
 		public function cloneTo(destObject:*):void {
 			var destSprite3D:Sprite3D = destObject as Sprite3D;
 			
-			destSprite3D.name = name + "(clone)";
+			destSprite3D.name = name/* + "(clone)"*/;//TODO:克隆后不能播放刚体动画，找不到名字
 			destSprite3D.destroyed = destroyed;
 			destSprite3D.timer = timer;
 			destSprite3D._displayedInStage = _displayedInStage;
@@ -392,7 +368,10 @@ package laya.d3.core {
 			
 			destSprite3D._enable = _enable;
 			destSprite3D._layerMask = _layerMask;
-			destSprite3D.transform.localMatrix = transform.localMatrix;
+			
+			var destLocalMatrix:Matrix4x4 = destSprite3D.transform.localMatrix;
+			transform.localMatrix.cloneTo(destLocalMatrix);
+			destSprite3D.transform.localMatrix = destLocalMatrix;
 			destSprite3D.isStatic = isStatic;
 			
 			var i:int, n:int;

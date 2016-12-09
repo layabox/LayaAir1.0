@@ -31,7 +31,7 @@ package laya.utils {
 		}
 		
 		public static var newWebGLContext:Function = function(canvas:*, webGLName:String):* {
-			return canvas.getContext(webGLName, {stencil: true, alpha: false, antialias: Config.isAntialias, premultipliedAlpha: false});
+			return canvas.getContext(webGLName, {stencil: true, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha});
 		}
 		
 		public static var getPixelRatio:Function = function():Number {
@@ -156,11 +156,6 @@ package laya.utils {
 		public static var getTexturePixels:Function = function(value:Texture, x:Number, y:Number, width:Number, height:Number):Array {
 			return null;
 		};
-		
-		/** @private */
-		public static var fillTextureShader:Function = function(value:Texture, x:Number, y:Number, width:Number, height:Number):* {
-			return null;
-		}
 		
 		/** @private */
 		public static var skinAniSprite:Function = function():*{

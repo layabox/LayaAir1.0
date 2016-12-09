@@ -70,6 +70,7 @@
 							1,
 							1
 						],
+	"isPerformanceMode":true,
 	"duration":0.3,
     "looping":true,
     "prewarm":false,"prewarmTip":"暂不支持。",
@@ -148,10 +149,10 @@
 	    "boxY": 1,
         "boxZ": 1,
 	    "boxRandomDirection":false,
-        "CircleRadius":30,
-        "CircleArc":30,
-	    "CircleEmitFromEdge": true,
-	    "CircleRandomDirection":true
+        "circleRadius":30,
+        "circleArc":30,
+	    "circleEmitFromEdge": true,
+	    "circleRandomDirection":true
 	},
 
     "velocityOverLifetime":{"enable":false,"space":0,"velocity":{

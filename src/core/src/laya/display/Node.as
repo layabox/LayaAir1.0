@@ -189,8 +189,10 @@ package laya.display {
 		
 		/**@private */
 		public function _set$P(key:String, value:*):* {
-			this._$P === PROP_EMPTY && (this._$P = {});
-			this._$P[key] = value;
+			if (!destroyed) {
+				this._$P === PROP_EMPTY && (this._$P = {});
+				this._$P[key] = value;
+			}
 			return value;
 		}
 		

@@ -36,7 +36,7 @@ package laya.ui {
 				var item:Component = getChildAt(i) as Component;
 				if (item) {
 					items.push(item);
-					maxHeight = Math.max(maxHeight, item.displayHeight);
+					maxHeight = Math.max(maxHeight, item.height * item.scaleY);
 				}
 			}
 			
@@ -45,13 +45,13 @@ package laya.ui {
 			for (i = 0, n = numChildren; i < n; i++) {
 				item = items[i];
 				item.x = left;
-				left += item.displayWidth + _space;
+				left += item.width * item.scaleX + _space;
 				if (_align == TOP) {
 					item.y = 0;
 				} else if (_align == MIDDLE) {
-					item.y = (maxHeight - item.displayHeight) * 0.5;
+					item.y = (maxHeight - item.height * item.scaleY) * 0.5;
 				} else if (_align == BOTTOM) {
-					item.y = maxHeight - item.displayHeight;
+					item.y = maxHeight - item.height * item.scaleY;
 				}
 			}
 			changeSize();

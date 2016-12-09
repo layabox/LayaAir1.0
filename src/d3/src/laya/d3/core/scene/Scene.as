@@ -19,9 +19,8 @@ package laya.d3.core.scene {
 			super();
 		}
 		
-		private function renderCamera(gl:WebGLContext, state:RenderState, camera:Camera):void {
-			_prepareRenderToRenderState(camera, state);
-			
+		private function _renderCamera(gl:WebGLContext, state:RenderState, camera:Camera):void {
+			_prepareRenderToRenderState(camera, state);//TODO:优化多摄像机ShaderValue和ShaderDefine
 			beforeRender(state);//渲染之前
 			var renderTarget:RenderTexture = camera.renderTarget;
 			if (renderTarget) {
@@ -40,7 +39,7 @@ package laya.d3.core.scene {
 			_clear(gl, state);
 			_renderScene(gl, state);
 			lateRender(state);//渲染之后
-			
+			_endRenderToRenderState(state);
 			(renderTarget) && (renderTarget.end());
 		}
 		
@@ -49,13 +48,10 @@ package laya.d3.core.scene {
 		 */
 		override public function renderSubmit():int {
 			var gl:WebGLContext = WebGL.mainContext;
-			var state:RenderState = _renderState;
 			_set3DRenderConfig(gl);//设置3D配置
-			
 			for (var i:int = 0, n:int = _cameraPool.length; i < n; i++) {
 				var camera:Camera = _cameraPool[i] as Camera;
-				if (camera.enable)
-					renderCamera(gl, state, camera);
+				(camera.enable) && (_renderCamera(gl, _renderState, camera));
 			}
 			_set2DRenderConfig(gl);//设置2D配置
 			return 1;

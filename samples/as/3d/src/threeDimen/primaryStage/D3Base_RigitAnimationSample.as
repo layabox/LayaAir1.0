@@ -43,22 +43,18 @@ package threeDimen.primaryStage {
 		}
 		
 		private function setMeshParams(spirit3D:Sprite3D, renderMode:int):void {
+			var i:int, n:int;
 			if (spirit3D is MeshSprite3D) {
 				var meshSprite:MeshSprite3D = spirit3D as MeshSprite3D;
 				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
 				if (mesh != null) {
-					//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-					mesh.once(Event.LOADED, this, function(mesh:BaseMesh):void {
-						for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-							var material:BaseMaterial = meshSprite.meshRender.sharedMaterials[i];
-							material.once(Event.LOADED, null, function(mat:BaseMaterial):void {
-								mat.renderMode = renderMode;
-							});
-						}
-					});
+					for (i = 0, n = meshSprite.meshRender.sharedMaterials.length; i < n; i++) {
+						var mat:BaseMaterial = meshSprite.meshRender.sharedMaterials[i];
+						mat.renderMode = renderMode;
+					}
 				}
 			}
-			for (var i:int = 0; i < spirit3D._childs.length; i++)
+			for (i = 0, n = spirit3D._childs.length; i < n; i++)
 				setMeshParams(spirit3D._childs[i], renderMode);
 		}
 	}

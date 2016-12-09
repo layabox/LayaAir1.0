@@ -57,7 +57,7 @@ package laya.d3.graphics {
 		
 		private var _id:int;
 		private var _shaderValues:ValusArray;
-		private var _shaderDefine:int;
+		private var _shaderDefineValue:int;
 		//private var _shaderAttribute:*;
 		
 		private var _vertexStride:int;
@@ -81,9 +81,9 @@ package laya.d3.graphics {
 			return _shaderValues;
 		}
 		
-		public function get shaderDefine():int//TODO:临时这么做
+		public function get shaderDefineValue():int//TODO:临时这么做
 		{
-			return _shaderDefine;
+			return _shaderDefineValue;
 		}
 		
 		public function VertexDeclaration(vertexStride:int, vertexElements:Array) {
@@ -105,10 +105,10 @@ package laya.d3.graphics {
 				
 				switch (attributeName) {//TODO:临时
 				case VertexElementUsage.TEXTURECOORDINATE0: 
-					_shaderDefine |= ShaderDefines3D.UV;
+					_shaderDefineValue |= ShaderDefines3D.UV;
 					break;
 				case VertexElementUsage.COLOR0: 
-					_shaderDefine |= ShaderDefines3D.COLOR;
+					_shaderDefineValue |= ShaderDefines3D.COLOR;
 					break;
 				}
 			}

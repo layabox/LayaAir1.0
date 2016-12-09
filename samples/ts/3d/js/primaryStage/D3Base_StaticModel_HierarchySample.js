@@ -1,6 +1,5 @@
 var StaticModel_HierarchySample = (function () {
     function StaticModel_HierarchySample() {
-        var _this = this;
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
@@ -13,15 +12,10 @@ var StaticModel_HierarchySample = (function () {
         var staticMesh = scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh"));
         staticMesh.once(Laya.Event.HIERARCHY_LOADED, this, function (sprite) {
             var meshSprite = sprite.getChildAt(0);
-            var mesh = meshSprite.meshFilter.sharedMesh;
-            mesh.once(Laya.Event.LOADED, _this, function (mesh) {
-                for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-                    var material = meshSprite.meshRender.sharedMaterials[i];
-                    material.once(Laya.Event.LOADED, _this, function (mat) {
-                        mat.albedo = new Laya.Vector4(3.5, 3.5, 3.5, 1.0);
-                    });
-                }
-            });
+            for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+                var material = meshSprite.meshRender.sharedMaterials[i];
+                material.albedo = new Laya.Vector4(3.5, 3.5, 3.5, 1.0);
+            }
             sprite.transform.localScale = new Laya.Vector3(10, 10, 10);
         });
     }

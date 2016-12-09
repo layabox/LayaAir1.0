@@ -66,11 +66,8 @@ package threeDimen.advancedStage {
 				var meshSprite3D:MeshSprite3D = spirit3D as MeshSprite3D;
 				var mesh:Mesh = meshSprite3D.meshFilter.sharedMesh as Mesh;
 				if (mesh != null) {
-					
-					mesh.once(Event.LOADED, null, function():void {
-						for (var i:int = 0; i < mesh.materials.length; i++)
-							(mesh.materials[i] as StandardMaterial).albedo = new Vector4(3.0, 3.0, 3.0, 1.0);
-					});
+					for (var i:int = 0; i < mesh.materials.length; i++)
+						(mesh.materials[i] as StandardMaterial).albedo = new Vector4(3.0, 3.0, 3.0, 1.0);
 				}
 			}
 			for (var i:int = 0; i < spirit3D.numChildren; i++)

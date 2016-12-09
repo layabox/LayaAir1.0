@@ -49,8 +49,8 @@ package laya.webgl.shader.d2
 			ps = __INCLUDESTR__("files/primitive.ps");
 			Shader.preCompile2D(0, ShaderDefines2D.PRIMITIVE, vs, ps, null);
 			
-			vs = __INCLUDESTR__("fillTexture/fillTextureShader.vs");
-			ps = __INCLUDESTR__("fillTexture/fillTextureShader.ps");
+			vs = __INCLUDESTR__("files/texture.vs");
+			ps = __INCLUDESTR__("files/fillTextureShader.ps");
 			Shader.preCompile2D(0, ShaderDefines2D.FILLTEXTURE, vs, ps, null);
 			
 			vs = __INCLUDESTR__("skinAnishader/skinShader.vs");

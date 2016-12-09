@@ -720,7 +720,7 @@
 					}
 					if (!tGridSprite.isHaveAnimation){
 						tGridSprite.autoSize=true;
-						tGridSprite.cacheAsBitmap=true;
+						tGridSprite.cacheAs="bitmap";
 						tGridSprite.autoSize=false;
 					}
 					if (tGridSprite.drawImageNum > 0){

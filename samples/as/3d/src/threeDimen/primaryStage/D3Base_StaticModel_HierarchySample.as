@@ -34,15 +34,10 @@ package threeDimen.primaryStage {
 				staticMesh.transform.localScale = new Vector3(10, 10, 10);
 				var meshSprite:MeshSprite3D = sprite.getChildAt(0) as MeshSprite3D;
 				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
-				mesh.once(Event.LOADED, null, function(mesh:BaseMesh):void {
-					for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-						var material:StandardMaterial = meshSprite.meshRender.sharedMaterials[i] as StandardMaterial;
-						material.once(Event.LOADED, null, function(mat:StandardMaterial):void {
-							mat.albedo = new Vector4(3.5, 3.5, 3.5, 1.0);
-						});
-					}
-				});
-			
+				for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+					var mat:StandardMaterial = meshSprite.meshRender.sharedMaterials[i] as StandardMaterial;
+					mat.albedo = new Vector4(3.5, 3.5, 3.5, 1.0);
+				}
 			});
 		
 		}

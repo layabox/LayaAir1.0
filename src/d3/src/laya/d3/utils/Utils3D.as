@@ -202,18 +202,20 @@ package laya.d3.utils {
 			meshRender.sharedMaterials = shaderMaterials;
 		}
 		
-		public static function _loadParticle(settting:Object, particle:ShuriKenParticle3D):void {
+		public static function _loadParticle(settting:Object, particle:ShuriKenParticle3D, innerResouMap:Object = null):void {
 			const anglelToRad:Number = Math.PI / 180.0;
 			var i:int, n:int;
 			//Material
 			var material:ShurikenParticleMaterial = new ShurikenParticleMaterial();
-			material.diffuseTexture = Texture2D.load(settting.texturePath);
+			material.diffuseTexture = innerResouMap ? Loader.getRes(innerResouMap[settting.texturePath]) : Texture2D.load(settting.texturePath);
+			
 			material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
 			
 			particle.particleRender.sharedMaterial = material;
-			
 			//particleSystem
 			var particleSystem:ShurikenParticleSystem = particle.particleSystem;
+			particleSystem.isPerformanceMode = settting.isPerformanceMode;
+			
 			particleSystem.duration = settting.duration;
 			particleSystem.looping = settting.looping;
 			particleSystem.prewarm = settting.prewarm;
@@ -240,35 +242,65 @@ package laya.d3.utils {
 			particleSystem.startSizeType = settting.startSizeType;
 			particleSystem.startSizeConstant = settting.startSizeConstant;
 			var startSizeConstantSeparateArray:Array = settting.startSizeConstantSeparate;
-			particleSystem.startSizeConstantSeparate = new Vector3(startSizeConstantSeparateArray[0], startSizeConstantSeparateArray[1], startSizeConstantSeparateArray[2]);
+			var startSizeConstantSeparateElement:Float32Array = particleSystem.startSizeConstantSeparate.elements;
+			startSizeConstantSeparateElement[0] = startSizeConstantSeparateArray[0];
+			startSizeConstantSeparateElement[1] = startSizeConstantSeparateArray[1];
+			startSizeConstantSeparateElement[2] = startSizeConstantSeparateArray[2];
 			particleSystem.startSizeConstantMin = settting.startSizeConstantMin;
 			particleSystem.startSizeConstantMax = settting.startSizeConstantMax;
 			var startSizeConstantMinSeparateArray:Array = settting.startSizeConstantMinSeparate;
-			particleSystem.startSizeConstantMinSeparate = new Vector3(startSizeConstantMinSeparateArray[0], startSizeConstantMinSeparateArray[1], startSizeConstantMinSeparateArray[2]);
+			var startSizeConstantMinSeparateElement:Float32Array = particleSystem.startSizeConstantMinSeparate.elements;
+			startSizeConstantMinSeparateElement[0] = startSizeConstantMinSeparateArray[0];
+			startSizeConstantMinSeparateElement[1] = startSizeConstantMinSeparateArray[1];
+			startSizeConstantMinSeparateElement[2] = startSizeConstantMinSeparateArray[2];
 			var startSizeConstantMaxSeparateArray:Array = settting.startSizeConstantMaxSeparate;
-			particleSystem.startSizeConstantMaxSeparate = new Vector3(startSizeConstantMaxSeparateArray[0], startSizeConstantMaxSeparateArray[1], startSizeConstantMaxSeparateArray[2]);
+			var startSizeConstantMaxSeparateElement:Float32Array = particleSystem.startSizeConstantMaxSeparate.elements;
+			startSizeConstantMaxSeparateElement[0] = startSizeConstantMaxSeparateArray[0];
+			startSizeConstantMaxSeparateElement[1] = startSizeConstantMaxSeparateArray[1];
+			startSizeConstantMaxSeparateElement[2] = startSizeConstantMaxSeparateArray[2];
 			
 			particleSystem.threeDStartRotation = settting.threeDStartRotation;
 			particleSystem.startRotationType = settting.startRotationType;
-			particleSystem.startRotationConstant = settting.startRotationConstant *anglelToRad;
+			particleSystem.startRotationConstant = settting.startRotationConstant * anglelToRad;
 			var startRotationConstantSeparateArray:Array = settting.startRotationConstantSeparate;
-			particleSystem.startRotationConstantSeparate = new Vector3(startRotationConstantSeparateArray[0] *anglelToRad, startRotationConstantSeparateArray[1] *anglelToRad, startRotationConstantSeparateArray[2] *anglelToRad);
-			particleSystem.startRotationConstantMin = settting.startRotationConstantMin *anglelToRad;
-			particleSystem.startRotationConstantMax = settting.startRotationConstantMax *anglelToRad;
+			var startRotationConstantSeparateElement:Float32Array = particleSystem.startRotationConstantSeparate.elements;
+			startRotationConstantSeparateElement[0] = startRotationConstantSeparateArray[0] * anglelToRad;
+			startRotationConstantSeparateElement[1] = startRotationConstantSeparateArray[1] * anglelToRad;
+			startRotationConstantSeparateElement[2] = startRotationConstantSeparateArray[2] * anglelToRad;
+			particleSystem.startRotationConstantMin = settting.startRotationConstantMin * anglelToRad;
+			particleSystem.startRotationConstantMax = settting.startRotationConstantMax * anglelToRad;
 			var startRotationConstantMinSeparateArray:Array = settting.startRotationConstantMinSeparate;
-			particleSystem.startRotationConstantMinSeparate = new Vector3(startRotationConstantMinSeparateArray[0] *anglelToRad, startRotationConstantMinSeparateArray[1] *anglelToRad, startRotationConstantMinSeparateArray[2] *anglelToRad);
+			var startRotationConstantMinSeparateElement:Float32Array = particleSystem.startRotationConstantMinSeparate.elements;
+			startRotationConstantMinSeparateElement[0] = startRotationConstantMinSeparateArray[0] * anglelToRad;
+			startRotationConstantMinSeparateElement[1] = startRotationConstantMinSeparateArray[1] * anglelToRad;
+			startRotationConstantMinSeparateElement[2] = startRotationConstantMinSeparateArray[2] * anglelToRad;
 			var startRotationConstantMaxSeparateArray:Array = settting.startRotationConstantMaxSeparate;
-			particleSystem.startRotationConstantMaxSeparate = new Vector3(startRotationConstantMaxSeparateArray[0] *anglelToRad, startRotationConstantMaxSeparateArray[1] *anglelToRad, startRotationConstantMaxSeparateArray[2] *anglelToRad);
+			var startRotationConstantMaxSeparateElement:Float32Array = particleSystem.startRotationConstantMaxSeparate.elements;
+			startRotationConstantMaxSeparateElement[0] = startRotationConstantMaxSeparateArray[0] * anglelToRad;
+			startRotationConstantMaxSeparateElement[1] = startRotationConstantMaxSeparateArray[1] * anglelToRad;
+			startRotationConstantMaxSeparateElement[2] = startRotationConstantMaxSeparateArray[2] * anglelToRad;
 			
 			particleSystem.randomizeRotationDirection = settting.randomizeRotationDirection;
 			
 			particleSystem.startColorType = settting.startColorType;
 			var startColorConstantArray:Array = settting.startColorConstant;
-			particleSystem.startColorConstant = new Vector4(startColorConstantArray[0], startColorConstantArray[1], startColorConstantArray[2], startColorConstantArray[3]);
+			var startColorConstantElement:Float32Array = particleSystem.startColorConstant.elements;
+			startColorConstantElement[0] = startColorConstantArray[0];
+			startColorConstantElement[1] = startColorConstantArray[1];
+			startColorConstantElement[2] = startColorConstantArray[2];
+			startColorConstantElement[3] = startColorConstantArray[3];
 			var startColorConstantMinArray:Array = settting.startColorConstantMin;
-			particleSystem.startColorConstantMin = new Vector4(startColorConstantMinArray[0], startColorConstantMinArray[1], startColorConstantMinArray[2], startColorConstantMinArray[3]);
+			var startColorConstantMinElement:Float32Array = particleSystem.startColorConstantMin.elements;
+			startColorConstantMinElement[0] = startColorConstantMinArray[0];
+			startColorConstantMinElement[1] = startColorConstantMinArray[1];
+			startColorConstantMinElement[2] = startColorConstantMinArray[2];
+			startColorConstantMinElement[3] = startColorConstantMinArray[3];
 			var startColorConstantMaxArray:Array = settting.startColorConstantMax;
-			particleSystem.startColorConstantMax = new Vector4(startColorConstantMaxArray[0], startColorConstantMaxArray[1], startColorConstantMaxArray[2], startColorConstantMaxArray[3]);
+			var startColorConstantMaxElement:Float32Array = particleSystem.startColorConstantMax.elements;
+			startColorConstantMaxElement[0] = startColorConstantMaxArray[0];
+			startColorConstantMaxElement[1] = startColorConstantMaxArray[1];
+			startColorConstantMaxElement[2] = startColorConstantMaxArray[2];
+			startColorConstantMaxElement[3] = startColorConstantMaxArray[3];
 			
 			var gravityArray:Array = settting.gravity;
 			var gravityE:Float32Array = particleSystem.gravity.elements;
@@ -319,7 +351,7 @@ package laya.d3.utils {
 			case 2: 
 				var coneShape:ConeShape;
 				shape = coneShape = new ConeShape();
-				coneShape.angle = shapeData.coneAngle *anglelToRad;
+				coneShape.angle = shapeData.coneAngle * anglelToRad;
 				coneShape.radius = shapeData.coneRadius;
 				coneShape.length = shapeData.coneLength;
 				coneShape.emitType = shapeData.coneEmitType;
@@ -337,7 +369,7 @@ package laya.d3.utils {
 				var circleShape:CircleShape;
 				shape = circleShape = new CircleShape();
 				circleShape.radius = shapeData.circleRadius;
-				circleShape.arc = shapeData.circleArc *anglelToRad;
+				circleShape.arc = shapeData.circleArc * anglelToRad;
 				circleShape.emitFromEdge = shapeData.circleEmitFromEdge;
 				circleShape.randomDirection = shapeData.circleRandomDirection;
 				break;
@@ -445,7 +477,7 @@ package laya.d3.utils {
 					if (angularVelocityData.separateAxes) {
 						//TODO:待补充
 					} else {
-						angularVelocity = GradientAngularVelocity.createByConstant(angularVelocityData.constant *anglelToRad);
+						angularVelocity = GradientAngularVelocity.createByConstant(angularVelocityData.constant * anglelToRad);
 					}
 					break;
 				case 1: 
@@ -459,7 +491,7 @@ package laya.d3.utils {
 					if (angularVelocityData.separateAxes) {
 						//TODO:待补充
 					} else {
-						angularVelocity = GradientAngularVelocity.createByRandomTwoConstant(angularVelocityData.constantMin *anglelToRad, angularVelocityData.constantMax *anglelToRad);
+						angularVelocity = GradientAngularVelocity.createByRandomTwoConstant(angularVelocityData.constantMin * anglelToRad, angularVelocityData.constantMax * anglelToRad);
 					}
 					break;
 				case 3: 
@@ -525,20 +557,35 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function _parseHierarchyProp(node:Sprite3D, json:Object):void {
+		public static function _parseHierarchyProp(innerResouMap:Object, node:Sprite3D, json:Object):void {
 			var customProps:Object = json.customProps;
 			var transValue:Array = customProps.translate;
-			node.transform.localPosition = new Vector3(transValue[0], transValue[1], transValue[2]);
+			var loccalPosition:Vector3 = node.transform.localPosition;
+			var loccalPositionElments:Float32Array = loccalPosition.elements;
+			loccalPositionElments[0] = transValue[0];
+			loccalPositionElments[1] = transValue[1];
+			loccalPositionElments[2] = transValue[2];
+			node.transform.localPosition = loccalPosition;
 			var rotValue:Array = customProps.rotation;
-			node.transform.localRotation = new Quaternion(rotValue[0], rotValue[1], rotValue[2], rotValue[3]);
+			var localRotation:Quaternion = node.transform.localRotation;
+			var localRotationElement:Float32Array = localRotation.elements;
+			localRotationElement[0] = rotValue[0];
+			localRotationElement[1] = rotValue[1];
+			localRotationElement[2] = rotValue[2];
+			localRotationElement[3] = rotValue[3];
+			node.transform.localRotation = localRotation;
 			var scaleValue:Array = customProps.scale;
-			node.transform.localScale = new Vector3(scaleValue[0], scaleValue[1], scaleValue[2]);
+			var localScale:Vector3 = node.transform.localScale;
+			var localSceleElement:Float32Array = localScale.elements;
+			localSceleElement[0] = scaleValue[0];
+			localSceleElement[1] = scaleValue[1];
+			localSceleElement[2] = scaleValue[2];
+			node.transform.localScale = localScale;
 			switch (json.type) {
 			case "Sprite3D": 
 				break;
 			case "MeshSprite3D": 
-				var loadPath:String = URL.formatURL(json.instanceParams.loadPath);
-				var mesh:Mesh = Mesh.load(loadPath);
+				var mesh:Mesh = Loader.getRes(innerResouMap[json.instanceParams.loadPath]);
 				var meshSprite3D:MeshSprite3D = (node as MeshSprite3D);
 				meshSprite3D.meshFilter.sharedMesh = mesh;
 				
@@ -549,7 +596,7 @@ package laya.d3.utils {
 				break;
 			case "ShuriKenParticle3D": 
 				var shuriKenParticle3D:ShuriKenParticle3D = (node as ShuriKenParticle3D);
-				_loadParticle(customProps, shuriKenParticle3D);
+				_loadParticle(customProps, shuriKenParticle3D, innerResouMap);
 				break;
 			}
 		}
@@ -623,7 +670,7 @@ package laya.d3.utils {
 			var angularVelocitysData:Array = gradientData.angularVelocitys;
 			for (var i:int = 0, n:int = angularVelocitysData.length; i < n; i++) {
 				var valueData:Object = angularVelocitysData[i];
-				gradient.add(valueData.key, valueData.value /180.0*Math.PI);
+				gradient.add(valueData.key, valueData.value / 180.0 * Math.PI);
 			}
 			return gradient;
 		}
@@ -639,7 +686,7 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function _parseMaterial(material:StandardMaterial, json:Object):void {
+		public static function _parseMaterial(textureMap:Object, material:StandardMaterial, json:Object):void {
 			var customProps:Object = json.customProps;
 			var ambientColorValue:Array = customProps.ambientColor;
 			material.ambientColor = new Vector3(ambientColorValue[0], ambientColorValue[1], ambientColorValue[2]);
@@ -651,17 +698,22 @@ package laya.d3.utils {
 			material.reflectColor = new Vector3(reflectColorValue[0], reflectColorValue[1], reflectColorValue[2]);
 			
 			var diffuseTexture:String = customProps.diffuseTexture.texture2D;
-			(diffuseTexture) && (material.diffuseTexture = Laya.loader.create(_getTexturePath(diffuseTexture), null, null, Texture2D));
+			(diffuseTexture) && (material.diffuseTexture = Loader.getRes(textureMap[diffuseTexture]));
+			
 			var normalTexture:String = customProps.normalTexture.texture2D;
-			(normalTexture) && (material.normalTexture = Laya.loader.create(_getTexturePath(normalTexture), null, null, Texture2D));
+			(normalTexture) && (material.normalTexture = Loader.getRes(textureMap[normalTexture]));
+			
 			var specularTexture:String = customProps.specularTexture.texture2D;
-			(specularTexture) && (material.specularTexture = Laya.loader.create(_getTexturePath(specularTexture), null, null, Texture2D));
+			(specularTexture) && (material.specularTexture = Loader.getRes(textureMap[specularTexture]));
+			
 			var emissiveTexture:String = customProps.emissiveTexture.texture2D;
-			(emissiveTexture) && (material.emissiveTexture = Laya.loader.create(_getTexturePath(emissiveTexture), null, null, Texture2D));
+			(emissiveTexture) && (material.emissiveTexture = Loader.getRes(textureMap[emissiveTexture]));
+			
 			var ambientTexture:String = customProps.ambientTexture.texture2D;
-			(ambientTexture) && (material.ambientTexture = Laya.loader.create(_getTexturePath(ambientTexture), null, null, Texture2D));
+			(ambientTexture) && (material.ambientTexture = Loader.getRes(textureMap[ambientTexture]));
+			
 			var reflectTexture:String = customProps.reflectTexture.texture2D;
-			(reflectTexture) && (material.reflectTexture = Laya.loader.create(_getTexturePath(reflectTexture), null, null, Texture2D));
+			(reflectTexture) && (material.reflectTexture = Loader.getRes(textureMap[reflectTexture]));
 		}
 		
 		/** @private */
@@ -832,7 +884,7 @@ package laya.d3.utils {
 				for (j = 0; j < tangentElementCount; j++)
 					tangentVertexDatas[newVertexStride * index3 + vertexStride + j] = +tangent.elements[j];
 				
-					//tangent = ((UV3.Y - UV1.Y) * (position2 - position1) - (UV2.Y - UV1.Y) * (position3 - position1))/ ((UV2.X - UV1.X) * (UV3.Y - UV1.Y) - (UV2.Y - UV1.Y) * (UV3.X - UV1.X));
+				//tangent = ((UV3.Y - UV1.Y) * (position2 - position1) - (UV2.Y - UV1.Y) * (position3 - position1))/ ((UV2.X - UV1.X) * (UV3.Y - UV1.Y) - (UV2.Y - UV1.Y) * (UV3.X - UV1.X));
 			}
 			
 			for (i = 0; i < tangentVertexDatas.length; i += newVertexStride) {
@@ -1096,7 +1148,16 @@ package laya.d3.utils {
 			oe[1] = RenderState.clientHeight / 2 - se[1];
 			oe[2] = se[2];
 		}
-	
+		
+		/**
+		 * 获取URL版本字符。
+		 * @param	url
+		 * @return
+		 */
+		public static function getURLVerion(url:String):String {
+			var index:int = url.indexOf("?");
+			return index >= 0 ? url.substr(index) : null;
+		}
 	}
 
 }

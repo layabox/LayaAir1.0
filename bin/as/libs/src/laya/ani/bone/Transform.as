@@ -12,6 +12,8 @@ package laya.ani.bone {
 		public var scY:Number = 1;
 		public var x:Number = 0;
 		public var y:Number = 0;
+		public var skewX:Number = 0;
+		public var skewY:Number = 0;
 		private var mMatrix:Matrix;
 		
 		public function initData(data:*):void {
@@ -42,15 +44,32 @@ package laya.ani.bone {
 			} else {
 				tMatrix = mMatrix = new Matrix();
 			}
-			tMatrix.a = Math.cos(skY);
-			if (skX != 0 || skY != 0) {
-				var tAngle:Number = skX * Math.PI / 180;
-				var cos:Number = Math.cos(tAngle), sin:Number = Math.sin(tAngle);
-				tMatrix.setTo(scX * cos, scX * sin, scY * -sin, scY * cos, x, y);
-			} else {
-				tMatrix.setTo(scX, skX, skY, scY, x, y);
+			
+			tMatrix.identity();
+			tMatrix.scale(scX, scY);
+			if (skewX || skewX) {
+				skew(tMatrix,skewX * Math.PI / 180, skewY * Math.PI / 180);
 			}
+			tMatrix.rotate(skX * Math.PI / 180);
+			tMatrix.translate(x, y);
+			
 			return tMatrix;
+		}
+		
+		
+		public function skew(m:Matrix,x:Number, y:Number):Matrix {
+			var sinX:Number = Math.sin(y);
+            var cosX:Number = Math.cos(y);
+            var sinY:Number = Math.sin(x);
+            var cosY:Number = Math.cos(x);
+
+            m.setTo(m.a  * cosY - m.b  * sinX,
+					m.a  * sinY + m.b  * cosX,
+					m.c  * cosY - m.d  * sinX,
+					m.c  * sinY + m.d  * cosX,
+					m.tx * cosY - m.ty * sinX,
+					m.tx * sinY + m.ty * cosX);
+			return m;
 		}
 	}
 }

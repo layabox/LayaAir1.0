@@ -58,9 +58,8 @@ package laya.d3.core.light {
 		 */
 		public override function updateToWorldState(state:RenderState):void {
 			if (state.scene.enableLight) {
-				var shaderValue:ValusArray = state.worldShaderValue;
-				var loopCount:int = Stat.loopCount;
-				state.shaderDefs.add(ShaderDefines3D.DIRECTIONLIGHT);
+				var shaderValue:ValusArray = state.shaderValue;
+				state.shaderDefines.add(ShaderDefines3D.DIRECTIONLIGHT);
 				shaderValue.pushValue(BaseScene.LIGHTDIRDIFFUSE, diffuseColor.elements);
 				shaderValue.pushValue(BaseScene.LIGHTDIRAMBIENT, ambientColor.elements);
 				shaderValue.pushValue(BaseScene.LIGHTDIRSPECULAR, specularColor.elements);

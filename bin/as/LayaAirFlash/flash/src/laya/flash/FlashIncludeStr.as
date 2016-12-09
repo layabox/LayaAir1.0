@@ -43,9 +43,9 @@ public static var GlowFilter_ps_logic:Class;
 public static var GlowFilter_ps_uniform:Class;
 
 
-[Embed(source = "../../files/fillTexture/fillTextureShader.ps", mimeType = "application/octet-stream")]
+[Embed(source = "../../files/fillTextureShader.ps", mimeType = "application/octet-stream")]
 public static var FillTextureShader_ps:Class;
-[Embed(source = "../../files/fillTexture/fillTextureShader.vs", mimeType = "application/octet-stream")]
+[Embed(source = "../../files/fillTextureShader.vs", mimeType = "application/octet-stream")]
 public static var FillTextureShader_vs:Class;
 
 [Embed(source = "../../files/skinAnishader/skinShader.ps", mimeType = "application/octet-stream")]
@@ -79,8 +79,8 @@ public static var SkinAniShader_vs:Class;
 			add("files/parts/ColorFilter_ps_uniform.glsl", ColorFilter_ps_uniform);
 			add("files/parts/GlowFilter_ps_logic.glsl", GlowFilter_ps_logic);
 			add("files/parts/GlowFilter_ps_uniform.glsl", GlowFilter_ps_uniform);			
-			add("fillTexture/fillTextureShader.ps", FillTextureShader_ps);
-			add("fillTexture/fillTextureShader.vs", FillTextureShader_vs);
+			add("files/fillTextureShader.ps", FillTextureShader_ps);
+			add("files/fillTextureShader.vs", FillTextureShader_vs);
 			add("skinAnishader/skinShader.ps", SkinAniShader_ps);
 			add("skinAnishader/skinShader.vs", SkinAniShader_vs);
 		}

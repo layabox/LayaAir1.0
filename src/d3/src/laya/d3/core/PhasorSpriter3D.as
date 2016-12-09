@@ -358,7 +358,7 @@ package laya.d3.core {
 			_vb.bind_upload(_ib);
 			
 			var presz:int = _renderState.shaderValue.length;
-			var predef:int = _renderState.shaderDefs.getValue();
+			var predef:int = _renderState.shaderDefines.getValue();
 			
 			_shader = getShader(_renderState);
 			
@@ -370,7 +370,7 @@ package laya.d3.core {
 			
 			_shader.uploadArray(_renderState.shaderValue.data, _renderState.shaderValue.length, null);
 			
-			_renderState.shaderDefs.setValue(predef);
+			_renderState.shaderDefines.setValue(predef);
 			_renderState.shaderValue.length = presz;
 			
 			Stat.drawCall++;
@@ -381,13 +381,13 @@ package laya.d3.core {
 		}
 		
 		protected function getShader(state:RenderState):Shader {
-			var preDef:int = state.shaderDefs._value;
-			state.shaderDefs._value = preDef & (~(ShaderDefines3D.POINTLIGHT | ShaderDefines3D.SPOTLIGHT | ShaderDefines3D.DIRECTIONLIGHT));//无法线，去掉Shader光照宏定义
-			state.shaderDefs.add(ShaderDefines3D.COLOR);
+			var preDef:int = state.shaderDefines._value;
+			state.shaderDefines._value = preDef & (~(ShaderDefines3D.POINTLIGHT | ShaderDefines3D.SPOTLIGHT | ShaderDefines3D.DIRECTIONLIGHT));//无法线，去掉Shader光照宏定义
+			state.shaderDefines.add(ShaderDefines3D.COLOR);
 			
-			var nameID:Number = state.shaderDefs.getValue() + _sharderNameID * Shader.SHADERNAME2ID;
+			var nameID:Number = state.shaderDefines.getValue() + _sharderNameID * Shader.SHADERNAME2ID;
 			var shader:Shader = _shader ? _shader : Shader.getShader(nameID);
-			return shader || (shader = Shader.withCompile(_sharderNameID, state.shaderDefs.toNameDic(), nameID, null));
+			return shader || (shader = Shader.withCompile(_sharderNameID, state.shaderDefines.toNameDic(), nameID, null));
 		}
 		
 		private function addVertexIndexException():void {

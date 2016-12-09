@@ -145,7 +145,7 @@ package laya.d3.core.particle {
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
-			_particleRender.destroy();
+			_particleRender._destroy();
 			_templet = null;
 		}
 	}

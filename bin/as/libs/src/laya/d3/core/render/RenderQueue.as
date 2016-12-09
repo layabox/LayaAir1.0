@@ -212,7 +212,7 @@ package laya.d3.core.render {
 		 */
 		public function _render(state:RenderState):void {
 			var preShaderValue:int = state.shaderValue.length;
-			var preShadeDef:int = state.shaderDefs.getValue();
+			var preShadeDef:int = state.shaderDefines.getValue();
 			for (var i:int = 0, n:int = _finalElements.length; i < n; i++) {
 				var renderElement:RenderElement = _finalElements[i];
 				var renderObj:IRenderable, material:BaseMaterial;
@@ -250,7 +250,7 @@ package laya.d3.core.render {
 						_endRenderElement(state, renderObj, material);
 					}
 				}
-				state.shaderDefs.setValue(preShadeDef);
+				state.shaderDefines.setValue(preShadeDef);
 				state.shaderValue.length = preShaderValue;
 			}
 		}

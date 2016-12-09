@@ -240,7 +240,7 @@ package laya.d3.component.animation {
 			if (_player.state !== AnimationState.playing || !_templet || !_templet.loaded || !mesh.loaded)
 				return;
 			
-			var rate:Number = _player.playbackRate * state.scene.timer.scale;
+			var rate:Number = _player.playbackRate * Laya.timer.scale;
 			var cachePlayRate:Number = _player.cachePlayRate;
 			var isCache:Boolean = _player.isCache && rate >= cachePlayRate;//是否可以缓存
 			var frameIndex:int = isCache ? currentFrameIndex : -1;//慢动作或者不缓存时frameIndex为-1
@@ -329,15 +329,26 @@ package laya.d3.component.animation {
 		 */
 		public override function _preRenderUpdate(state:RenderState):void {
 			if (_curAnimationDatas) {
-				state.shaderDefs.addInt(ShaderDefines3D.BONE);
+				state.shaderDefines.addInt(ShaderDefines3D.BONE);
 				var subMeshIndex:int = state.renderElement.renderObj.indexOfHost;
 				state.shaderValue.pushValue(StandardMaterial.Bones, _curAnimationDatas[subMeshIndex]);
 			}
 		}
 		
+		/**
+		 * @private
+		 * 卸载组件时执行
+		 */
 		override public function _unload(owner:Sprite3D):void {
 			super._unload(owner);
-			_player.off(Event.STOPPED, this, _onAnimationStop);
+			_tempCurAnimationData = null;
+			_tempCurBonesData = null;
+			_curOriginalData = null;
+			_extenData = null;
+			_curMeshAnimationData = null;
+			_curBonesDatas = null;
+			_curAnimationDatas = null;
+			_ownerMesh = null;
 		}
 	}
 }

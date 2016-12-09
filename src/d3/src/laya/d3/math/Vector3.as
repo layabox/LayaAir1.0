@@ -1,9 +1,10 @@
 package laya.d3.math {
+	import laya.d3.core.IClone;
 	
 	/**
 	 * <code>Vector3</code> 类用于创建三维向量。
 	 */
-	public class Vector3 {
+	public class Vector3  implements IClone{
 		/** @private */
 		private static var TEMPVec4:Vector4 = new Vector4();
 		
@@ -453,39 +454,27 @@ package laya.d3.math {
 		}
 		
 		/**
-		 * 从一个三维向量复制。
-		 * @param	v  源向量。
+		 * 克隆。
+		 * @param	destObject 克隆源。
 		 */
-		public function copyFrom(v:Vector3):Vector3 {
-			var e:Float32Array = elements, s:Float32Array = v.elements;
-			e[0] = s[0];
-			e[1] = s[1];
-			e[2] = s[2];
-			return this;
+		public function cloneTo(destObject:*):void {
+			var destVector3:Vector3 = destObject as Vector3;
+			var destE:Float32Array = destVector3.elements;
+			var s:Float32Array = this.elements;
+			destE[0] = s[0];
+			destE[1] = s[1];
+			destE[2] = s[2];
+			
 		}
 		
 		/**
-		 * 克隆三维向量。
-		 * @return 输出三维向量。
+		 * 克隆。
+		 * @return	 克隆副本。
 		 */
-		public function clone():Vector3 {
-			var out:Vector3 = new Vector3();
-			var oe:Float32Array = out.elements, s:Float32Array = this.elements;
-			oe[0] = s[0];
-			oe[1] = s[1];
-			oe[2] = s[2];
-			return out;
-		}
-		
-		/**
-		 * 克隆三维向量。
-		 * @param	dest  输出三维向量。
-		 */
-		public function cloneTo(dest:Vector3):void {
-			var oe:Float32Array = dest.elements, s:Float32Array = this.elements;
-			oe[0] = s[0];
-			oe[1] = s[1];
-			oe[2] = s[2];
+		public function clone():* {
+			var destVector3:Vector3 = __JS__("new this.constructor()");
+			cloneTo(destVector3);
+			return destVector3;
 		}
 		
 		public function toDefault():void {

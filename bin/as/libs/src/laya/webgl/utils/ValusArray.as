@@ -45,26 +45,6 @@ package laya.webgl.utils {
 		public function get data():Array {
 			return _data;
 		}
-		
-		public function copyTo(dec:ValusArray):ValusArray {
-			dec || (dec = new ValusArray());
-			var values:Array = _data;
-			var decData:Array = dec._data;
-			for (var i:int = 0; i < _length; i++) {
-				//if (values[i] is Array) {
-					//debugger;//TODO:
-					//var valueArray:Array = values[i];
-					//var decDataArray:Array = decData[i] = [];
-					//decDataArray.length = valueArray.length;
-					//for (var j:int = 0; j < valueArray.length; j++)
-						//decDataArray[j] = valueArray[j];
-				//} else {
-					decData[i] = values[i];
-				//}
-			}
-			dec.length = _length;
-			return dec;
-		}
 	}
 
 }

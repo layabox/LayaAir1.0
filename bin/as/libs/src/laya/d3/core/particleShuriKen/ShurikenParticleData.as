@@ -1,4 +1,5 @@
 package laya.d3.core.particleShuriKen {
+	import laya.d3.core.Transform3D;
 	import laya.d3.core.particleShuriKen.module.ColorOverLifetime;
 	import laya.d3.core.particleShuriKen.module.FrameOverTime;
 	import laya.d3.core.particleShuriKen.module.GradientColor;
@@ -25,6 +26,7 @@ package laya.d3.core.particleShuriKen {
 		private static var _tempStartRotation1:Float32Array = new Float32Array(3);
 		private static var _tempStartRotation2:Float32Array = new Float32Array(3);
 		private static var _tempStartUVInfo:Float32Array = new Float32Array(4);
+		private static var _tempSimulationWorldPostion:Float32Array = new Float32Array(3);
 		
 		public var startLifeTime:Number;
 		
@@ -39,6 +41,8 @@ package laya.d3.core.particleShuriKen {
 		public var time:Number;
 		public var startSpeed:Number;
 		public var startUVInfo:Float32Array;
+		
+		public var simulationWorldPostion:Float32Array;
 		
 		public function ShurikenParticleData() {
 		
@@ -56,7 +60,7 @@ package laya.d3.core.particleShuriKen {
 			throw new Error("ShurikenParticleData: can't get value foam startLifeTimeGradient.");
 		}
 		
-		public static function create(particleSystem:ShurikenParticleSystem,particleRender:ShurikenParticleRender, position:Float32Array, direction:Float32Array, time:Number):ShurikenParticleData {
+		public static function create(particleSystem:ShurikenParticleSystem, particleRender:ShurikenParticleRender, position:Float32Array, direction:Float32Array, time:Number, transform:Transform3D):ShurikenParticleData {
 			var particleData:ShurikenParticleData = new ShurikenParticleData();
 			particleData.position = position;
 			
@@ -143,7 +147,6 @@ package laya.d3.core.particleShuriKen {
 				}
 			}
 			
-			
 			//StartRotation
 			var particleRotation0:Float32Array;
 			var particleRotation1:Float32Array;
@@ -151,25 +154,25 @@ package laya.d3.core.particleShuriKen {
 			var rotationMatrixE:Float32Array;
 			switch (particleSystem.startRotationType) {
 			case 0: 
-				if (particleSystem.threeDStartRotation&&(particleRender.renderMode!==1)&&(particleRender.renderMode!==1)) {
+				if (particleSystem.threeDStartRotation && (particleRender.renderMode !== 1) && (particleRender.renderMode !== 1)) {
 					var startRotationConstantSeparate:Vector3 = particleSystem.startRotationConstantSeparate;
 					Matrix4x4.createRotationYawPitchRoll(startRotationConstantSeparate.y, startRotationConstantSeparate.x, startRotationConstantSeparate.z, _tempRotationMatrix);
-					 rotationMatrixE = _tempRotationMatrix.elements;
+					rotationMatrixE = _tempRotationMatrix.elements;
 					particleData.startRotation0 = _tempStartRotation0;
 					particleRotation0 = particleData.startRotation0;
-					particleRotation0[0] =rotationMatrixE[0];
+					particleRotation0[0] = rotationMatrixE[0];
 					particleRotation0[1] = rotationMatrixE[1];
 					particleRotation0[2] = rotationMatrixE[2];
 					
 					particleData.startRotation1 = _tempStartRotation1;
 					particleRotation1 = particleData.startRotation1;
-					particleRotation1[0] =rotationMatrixE[4];
+					particleRotation1[0] = rotationMatrixE[4];
 					particleRotation1[1] = rotationMatrixE[5];
 					particleRotation1[2] = rotationMatrixE[6];
 					
 					particleData.startRotation2 = _tempStartRotation2;
 					particleRotation2 = particleData.startRotation2;
-					particleRotation2[0] =rotationMatrixE[8];
+					particleRotation2[0] = rotationMatrixE[8];
 					particleRotation2[1] = rotationMatrixE[9];
 					particleRotation2[2] = rotationMatrixE[10];
 					
@@ -180,28 +183,28 @@ package laya.d3.core.particleShuriKen {
 				}
 				break;
 			case 2: 
-				if (particleSystem.threeDStartRotation&&(particleRender.renderMode!==1)&&(particleRender.renderMode!==2)) {
+				if (particleSystem.threeDStartRotation && (particleRender.renderMode !== 1) && (particleRender.renderMode !== 2)) {
 					particleData.startRotation0 = _tempStartRotation0;
 					particleRotation0 = particleData.startRotation0;
 					var startRotationConstantMinSeparate:Vector3 = particleSystem.startRotationConstantMinSeparate;
 					var startRotationConstantMaxSeparate:Vector3 = particleSystem.startRotationConstantMaxSeparate;
 					Matrix4x4.createRotationYawPitchRoll(MathUtil.lerp(startRotationConstantMinSeparate.y, startRotationConstantMaxSeparate.y, Math.random()), MathUtil.lerp(startRotationConstantMinSeparate.x, startRotationConstantMaxSeparate.x, Math.random()), MathUtil.lerp(startRotationConstantMinSeparate.z, startRotationConstantMaxSeparate.z, Math.random()), _tempRotationMatrix);
-					 rotationMatrixE = _tempRotationMatrix.elements;
+					rotationMatrixE = _tempRotationMatrix.elements;
 					particleData.startRotation0 = _tempStartRotation0;
 					particleRotation0 = particleData.startRotation0;
-					particleRotation0[0] =rotationMatrixE[0];
+					particleRotation0[0] = rotationMatrixE[0];
 					particleRotation0[1] = rotationMatrixE[1];
 					particleRotation0[2] = rotationMatrixE[2];
 					
 					particleData.startRotation1 = _tempStartRotation1;
 					particleRotation1 = particleData.startRotation1;
-					particleRotation1[0] =rotationMatrixE[4];
+					particleRotation1[0] = rotationMatrixE[4];
 					particleRotation1[1] = rotationMatrixE[5];
 					particleRotation1[2] = rotationMatrixE[6];
 					
 					particleData.startRotation2 = _tempStartRotation2;
 					particleRotation2 = particleData.startRotation2;
-					particleRotation2[0] =rotationMatrixE[8];
+					particleRotation2[0] = rotationMatrixE[8];
 					particleRotation2[1] = rotationMatrixE[9];
 					particleRotation2[2] = rotationMatrixE[10];
 				} else {
@@ -311,6 +314,20 @@ package laya.d3.core.particleShuriKen {
 			}
 			
 			particleData.time = time;
+			
+			particleData.simulationWorldPostion = _tempSimulationWorldPostion;
+			var particleSimulationWorldPostion:Float32Array = particleData.simulationWorldPostion;
+			if (particleSystem.simulationSpace === 0) {
+				var positionE:Float32Array = transform.position.elements;
+				particleSimulationWorldPostion[0] = positionE[0];
+				particleSimulationWorldPostion[1] = positionE[1];
+				particleSimulationWorldPostion[2] = positionE[2];
+			} else {//TODO:是否可以不传
+				particleSimulationWorldPostion[0] = 0;
+				particleSimulationWorldPostion[1] = 0;
+				particleSimulationWorldPostion[2] = 0;
+			}
+			
 			return particleData;
 		}
 	

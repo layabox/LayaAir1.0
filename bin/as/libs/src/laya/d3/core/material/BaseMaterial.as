@@ -65,20 +65,12 @@ package laya.d3.core.material {
 		/** @private */
 		private var _sharderNameID:int;
 		/** @private */
-		private var _shaderDefine:int;
+		private var _shaderDefineValue:int;
 		/** @private */
-		private var _disableShaderDefine:int;
+		private var _disableShaderDefineValue:int;
 		/** @private */
 		private var _shaderValues:ValusArray;
 		
-		/** @private */
-		private var _textures:Vector.<BaseTexture>;
-		/** @private */
-		private var _colors:Vector.<*>;
-		/** @private */
-		private var _numbers:Vector.<Number>;
-		/** @private */
-		private var _matrix4x4s:Vector.<Matrix4x4>;
 		/** @private */
 		private var _textureSharderIndices:Vector.<int>;
 		/** @private */
@@ -87,6 +79,14 @@ package laya.d3.core.material {
 		private var _numberSharderIndices:Vector.<int>;
 		/** @private */
 		private var _matrix4x4SharderIndices:Vector.<int>;
+		/** @private */
+		private var _textures:Vector.<BaseTexture>;
+		/** @private */
+		private var _colors:Vector.<*>;
+		/** @private */
+		private var _numbers:Vector.<Number>;
+		/** @private */
+		private var _matrix4x4s:Vector.<Matrix4x4>;
 		
 		/** @private */
 		public var _isInstance:Boolean;
@@ -180,16 +180,14 @@ package laya.d3.core.material {
 				_renderQueue = RenderQueue.NONDEPTH_ALPHA_ADDTIVE_BLEND_DOUBLEFACE;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
-			
 			default: 
 				throw new Error("Material:renderMode value error.");
-				break;
 			}
 			
 			if (_renderMode === RENDERMODE_CUTOUT || _renderMode === RENDERMODE_CUTOUTDOUBLEFACE)
-				_shaderDefine |= ShaderDefines3D.ALPHATEST;
+				_addShaderDefine(ShaderDefines3D.ALPHATEST);
 			else
-				_shaderDefine = _shaderDefine & (~ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
 		}
 		
 		/**
@@ -199,8 +197,8 @@ package laya.d3.core.material {
 			super();
 			_loaded = true;
 			_isInstance = false;
-			_shaderDefine = 0;
-			_disableShaderDefine = 0;
+			_shaderDefineValue = 0;
+			_disableShaderDefineValue = 0;
 			_shaderValues = new ValusArray();
 			_textures = new Vector.<BaseTexture>();
 			_colors = new Vector.<*>();
@@ -231,20 +229,18 @@ package laya.d3.core.material {
 		 * @param state 相关渲染状态。
 		 * @return  Shader。
 		 */
-		private function _getShader(state:RenderState, vertexDeclaration:VertexDeclaration):void {
-			var shaderDefs:ShaderDefines3D = state.shaderDefs;
-			var shaderDefsValue:int = state.shaderDefs._value;
-			shaderDefsValue |= vertexDeclaration.shaderDefine | _shaderDefine;
-			_disableShaderDefine && (shaderDefsValue = shaderDefsValue & (~_disableShaderDefine));
-			shaderDefs._value = shaderDefsValue;
-			var nameID:Number = shaderDefs._value + _sharderNameID * Shader.SHADERNAME2ID;
-			shader = Shader.withCompile(_sharderNameID, shaderDefs.toNameDic(), nameID, null);
+		private function _getShader(stateShaderDefines:ShaderDefines3D, vertexShaderDefineValue:int):void {
+			var defineValue:int = stateShaderDefines._value | vertexShaderDefineValue | _shaderDefineValue;
+			_disableShaderDefineValue && (defineValue = defineValue & (~_disableShaderDefineValue));
+			stateShaderDefines._value = defineValue;
+			var nameID:Number = defineValue + _sharderNameID * Shader.SHADERNAME2ID;
+			shader = Shader.withCompile(_sharderNameID, stateShaderDefines.toNameDic(), nameID, null);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _uploadTexture(shaderIndex:int, textureSource:BaseTexture):void {
+		private function _uploadTexture(shaderIndex:int, textureSource:*):void {
 			_shaderValues.data[_textureSharderIndices[shaderIndex]] = textureSource;
 		}
 		
@@ -253,7 +249,7 @@ package laya.d3.core.material {
 		 * @param value 宏定义。
 		 */
 		protected function _addShaderDefine(value:int):void {
-			_shaderDefine |= value;
+			_shaderDefineValue |= value;
 		}
 		
 		/**
@@ -261,7 +257,7 @@ package laya.d3.core.material {
 		 * @param value 宏定义。
 		 */
 		protected function _removeShaderDefine(value:int):void {
-			_shaderDefine &= ~value;
+			_shaderDefineValue &= ~value;
 		}
 		
 		/**
@@ -269,7 +265,7 @@ package laya.d3.core.material {
 		 * @param value 宏定义。
 		 */
 		protected function _addDisableShaderDefine(value:int):void {
-			_disableShaderDefine |= value;
+			_disableShaderDefineValue |= value;
 		}
 		
 		/**
@@ -277,7 +273,7 @@ package laya.d3.core.material {
 		 * @param value 宏定义。
 		 */
 		protected function _removeDisableShaderDefine(value:int):void {
-			_disableShaderDefine &= ~value;
+			_disableShaderDefineValue &= ~value;
 		}
 		
 		protected function _setMatrix4x4(matrix4x4Index:int, shaderName:String, matrix4x4:Matrix4x4):void {
@@ -358,8 +354,7 @@ package laya.d3.core.material {
 		 */
 		public function _upload(state:RenderState, vertexDeclaration:VertexDeclaration, bufferUsageShader:*):void {
 			_uploadTextures();
-			
-			_getShader(state, vertexDeclaration);
+			_getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue);
 			var shaderValue:ValusArray = state.shaderValue;
 			shaderValue.pushArray(_shaderValues);
 			shader.uploadArray(shaderValue.data, shaderValue.length, bufferUsageShader);
@@ -373,12 +368,11 @@ package laya.d3.core.material {
 		 *@private
 		 */
 		override public function onAsynLoaded(url:String, data:*):void {
-			var preBasePath:String = URL.basePath;
-			URL.basePath = URL.getPath(URL.formatURL(url));
-			var customHandler:Handler = Handler.create(null, Utils3D._parseMaterial, null, false);
-			ClassUtils.createByJson(data as Object, this, null, customHandler);
+			var jsonData:Object = data[0];
+			var textureMap:Object = data[1];
+			var customHandler:Handler = Handler.create(null, Utils3D._parseMaterial, [textureMap], false);
+			ClassUtils.createByJson(jsonData as Object, this, null, customHandler, null);
 			customHandler.recover();
-			URL.basePath = preBasePath;
 			//_loaded = true;
 			event(Event.LOADED, this);
 		}
@@ -397,24 +391,66 @@ package laya.d3.core.material {
 		 */
 		public function cloneTo(destObject:*):void {
 			var destBaseMaterial:BaseMaterial = destObject as BaseMaterial;
+			destBaseMaterial.name = name;
 			destBaseMaterial._loaded = _loaded;
 			destBaseMaterial._renderQueue = _renderQueue;
 			destBaseMaterial._renderMode = _renderMode;
-			destBaseMaterial._textures = _textures.slice();
-			destBaseMaterial._colors = _colors.slice();
-			destBaseMaterial._numbers = _numbers.slice();
-			destBaseMaterial._matrix4x4s = _matrix4x4s.slice();
-			destBaseMaterial._textureSharderIndices = _textureSharderIndices.slice();
-			destBaseMaterial._colorSharderIndices = _colorSharderIndices.slice();
-			destBaseMaterial._numberSharderIndices = _numberSharderIndices.slice();
 			destBaseMaterial.shader = shader;
 			destBaseMaterial._sharderNameID = _sharderNameID;
-			destBaseMaterial._disableShaderDefine = _disableShaderDefine;
+			destBaseMaterial._disableShaderDefineValue = _disableShaderDefineValue;
+			destBaseMaterial._shaderDefineValue = _shaderDefineValue;
 			
-			destBaseMaterial._shaderDefine = _shaderDefine;
-			destBaseMaterial.name = name;
+			var i:int, n:int;
+			var shaderDataIndex:int;
+			var destShaderValues:ValusArray = destBaseMaterial._shaderValues;
+			destBaseMaterial._shaderValues.length = _shaderValues.length
 			
-			_shaderValues.copyTo(destBaseMaterial._shaderValues);
+			destBaseMaterial._colorSharderIndices = _colorSharderIndices.slice();
+			var colorCount:int = _colors.length;
+			var destColors:Vector.<*> = destBaseMaterial._colors;
+			destColors.length = colorCount;
+			for (i = 0, n = colorCount; i < n; i++) {
+				var destColor:* = destColors[i];
+				(_colors[i] as IClone).cloneTo(destColor);
+				shaderDataIndex = _colorSharderIndices[i] - 1;
+				destShaderValues.data[shaderDataIndex] = _shaderValues.data[shaderDataIndex];
+				destShaderValues.data[shaderDataIndex + 1] = destColor.elements;
+			}
+			
+			destBaseMaterial._numberSharderIndices = _numberSharderIndices.slice();
+			var numberCount:int = _numbers.length;
+			var destNumbers:Vector.<Number> = destBaseMaterial._numbers;
+			destNumbers.length = numberCount;
+			for (i = 0, n = numberCount; i < n; i++) {
+				var number:Number = _numbers[i];
+				destNumbers[i] = number;
+				shaderDataIndex = _numberSharderIndices[i] - 1;
+				destShaderValues.data[shaderDataIndex] = _shaderValues.data[shaderDataIndex];
+				destShaderValues.data[shaderDataIndex + 1] = number;
+			}
+			
+			destBaseMaterial._matrix4x4SharderIndices = _matrix4x4SharderIndices.slice();
+			var matrixCount:int = _matrix4x4s.length;
+			var destMatrixs:Vector.<Matrix4x4> = destBaseMaterial._matrix4x4s;
+			destMatrixs.length = matrixCount;
+			for (i = 0, n = matrixCount; i < n; i++) {
+				var destMatrix:Matrix4x4 = destMatrixs[i];
+				(_matrix4x4s[i] as IClone).cloneTo(destMatrix);
+				shaderDataIndex = _matrix4x4SharderIndices[i] - 1;
+				destShaderValues.data[shaderDataIndex] = _shaderValues.data[shaderDataIndex];
+				destShaderValues.data[shaderDataIndex + 1] = destMatrix.elements;
+			}
+			
+			destBaseMaterial._textureSharderIndices = _textureSharderIndices.slice();
+			var textureCount:int = _textures.length;
+			var destTextures:Vector.<BaseTexture> = destBaseMaterial._textures;
+			destTextures.length = textureCount;
+			for (i = 0, n = textureCount; i < n; i++) {
+				destTextures[i] = _textures[i];
+				shaderDataIndex = _textureSharderIndices[i] - 1;
+				destShaderValues.data[shaderDataIndex] = _shaderValues.data[shaderDataIndex];
+			}
+		
 		}
 		
 		/**

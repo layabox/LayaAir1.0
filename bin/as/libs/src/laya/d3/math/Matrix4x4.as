@@ -31,6 +31,7 @@ package laya.d3.math {
 		}
 		
 		/**
+		 * 
 		 * 绕Y轴旋转
 		 * @param	rad  旋转角度
 		 * @param	out 输出矩阵

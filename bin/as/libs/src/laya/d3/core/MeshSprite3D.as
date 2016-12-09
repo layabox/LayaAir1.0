@@ -172,8 +172,8 @@ package laya.d3.core {
 		
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
-			_meshFilter.destroy();
-			_meshRender.destroy();
+			_meshFilter._destroy();
+			_meshRender._destroy();
 		}
 	
 	}

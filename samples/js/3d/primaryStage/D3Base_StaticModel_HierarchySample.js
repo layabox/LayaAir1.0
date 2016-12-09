@@ -14,15 +14,10 @@ camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
 var staticMesh = scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh"));
 staticMesh.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
     var meshSprite = sprite.getChildAt(0);
-    var mesh = meshSprite.meshFilter.sharedMesh;
-    mesh.once(Laya.Event.LOADED, null, function (mesh) {
-        for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-            var material = meshSprite.meshRender.sharedMaterials[i];
-            material.once(Laya.Event.LOADED, null, function (mat) {
-                mat.albedo = new  Vector4(3.5,3.5,3.5,1.0);
-            });
-        }
-      });
+    for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+        var material = meshSprite.meshRender.sharedMaterials[i];
+        material.albedo = new  Vector4(3.5,3.5,3.5,1.0);
+    }
     sprite.transform.localScale = new Laya.Vector3(10, 10, 10);
 });
 

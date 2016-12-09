@@ -23,13 +23,11 @@ var Materil_Reflect;
             var mesh = Laya.Mesh.load("../../res/threeDimen/staticModel/teapot/teapot-Teapot001.lm");
             var meshSprite = sprit.addChild(new Laya.MeshSprite3D(mesh));
             mesh.once(Laya.Event.LOADED, this, function () {
-                meshSprite.meshRender.sharedMaterials[0].once(Laya.Event.LOADED, _this, function () {
-                    _this.material = meshSprite.meshRender.sharedMaterials[0];
-                    ;
-                    _this.material.albedo = new Vector4(0.0, 0.0, 0.0, 0.0);
-                    _this.material.renderMode = Laya.BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
-                    _this.material.reflectTexture = textureCube;
-                });
+                _this.material = meshSprite.meshRender.sharedMaterials[0];
+                ;
+                _this.material.albedo = new Vector4(0.0, 0.0, 0.0, 0.0);
+                _this.material.renderMode = Laya.BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
+                _this.material.reflectTexture = textureCube;
             });
             meshSprite.transform.localPosition = new Vector3(-0.3, 0.0, 0.0);
             meshSprite.transform.localScale = new Vector3(0.5, 0.5, 0.5);

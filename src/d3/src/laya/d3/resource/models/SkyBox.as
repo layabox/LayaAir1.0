@@ -125,10 +125,10 @@ package laya.d3.resource.models {
 		 * @private
 		 */
 		protected function _getShader(state:RenderState):Shader {
-			var shaderDefs:ShaderDefines3D = state.shaderDefs;
+			var shaderDefs:ShaderDefines3D = state.shaderDefines;
 			var preDef:int = shaderDefs._value;
 			var nameID:Number = shaderDefs._value + _sharderNameID * Shader.SHADERNAME2ID;
-			_shader = Shader.withCompile(_sharderNameID, state.shaderDefs.toNameDic(), nameID, null);
+			_shader = Shader.withCompile(_sharderNameID, state.shaderDefines.toNameDic(), nameID, null);
 			shaderDefs._value = preDef;
 			return _shader;
 		}

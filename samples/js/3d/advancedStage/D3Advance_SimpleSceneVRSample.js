@@ -86,21 +86,17 @@ function setMeshParams(spirit3D, renderMode, albedo, ambientColor, uvScale, shad
         var mesh = meshSprite.meshFilter.sharedMesh;
         if (mesh) {
             //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-            mesh.once(Laya.Event.LOADED, this, function (mesh) {
-                for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-                    var material = meshSprite.meshRender.sharedMaterials[i];
-                    material.once(Laya.Event.LOADED, null, function (mat) {
-                        var transformUV = new Laya.TransformUV();
-                        transformUV.tiling = uvScale;
-                        (shaderName) && (mat.setShaderName(shaderName));
-                        mat.transformUV = transformUV;
-                        mat.ambientColor = ambientColor;
-                        mat.albedo = albedo;
-                        mat.renderMode = renderMode;
-                    });
+            for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+                var mat = meshSprite.meshRender.sharedMaterials[i];
+                var transformUV = new Laya.TransformUV();
+                transformUV.tiling = uvScale;
+                (shaderName) && (mat.setShaderName(shaderName));
+                mat.transformUV = transformUV;
+                mat.ambientColor = ambientColor;
+                mat.albedo = albedo;
+                mat.renderMode = renderMode;
 
-                }
-            });
+            }
         }
     }
     for (var i = 0; i < spirit3D._childs.length; i++)

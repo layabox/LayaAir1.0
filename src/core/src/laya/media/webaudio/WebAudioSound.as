@@ -250,7 +250,7 @@ package laya.media.webaudio {
 			return channel;
 		}
 		
-		override public function get duration():Number 
+		public function get duration():Number 
 		{
 			if (this.audioBuffer) {
 				return this.audioBuffer.duration;

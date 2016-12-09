@@ -62,8 +62,8 @@ package laya.d3.resource {
 			_width = minWidth;
 			_height = minHeight;
 			_size = new Size(minWidth, minHeight);
-		}
 		
+		}
 		private function _createWebGlTexture():void {
 			var i:int;
 			for (i = 0; i < _texCount; i++) {

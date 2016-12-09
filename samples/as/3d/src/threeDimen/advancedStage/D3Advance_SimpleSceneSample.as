@@ -107,29 +107,24 @@ package threeDimen.advancedStage {
 		}
 		
 		private function setMeshParams(spirit3D:Sprite3D, renderMode:int, albedo:Vector4, ambientColor:Vector3, uvScale:Vector2, shaderName:String = null):void {
+			var i:int, n:int;
 			if (spirit3D is MeshSprite3D) {
 				var meshSprite:MeshSprite3D = spirit3D as MeshSprite3D;
 				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
 				if (mesh != null) {
-					//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
-					mesh.once(Event.LOADED, this, function(mesh:BaseMesh):void {
-						for (var i:int = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-							var material:StandardMaterial = meshSprite.meshRender.sharedMaterials[i] as StandardMaterial;
-							material.once(Event.LOADED, null, function(mat:StandardMaterial):void {
-								var transformUV:TransformUV = new TransformUV();
-								transformUV.tiling = uvScale;
-								(shaderName) && (mat.setShaderName(shaderName));
-								mat.transformUV = transformUV;
-								mat.ambientColor = ambientColor;
-								mat.albedo = albedo;
-								mat.renderMode = renderMode;
-							});
-							
-						}
-					});
+					for (i = 0, n = meshSprite.meshRender.sharedMaterials.length; i < n; i++) {
+						var mat:StandardMaterial = meshSprite.meshRender.sharedMaterials[i] as StandardMaterial;
+						var transformUV:TransformUV = new TransformUV();
+						transformUV.tiling = uvScale;
+						(shaderName) && (mat.setShaderName(shaderName));
+						mat.transformUV = transformUV;
+						mat.ambientColor = ambientColor;
+						mat.albedo = albedo;
+						mat.renderMode = renderMode;
+					}
 				}
 			}
-			for (var i:int = 0; i < spirit3D._childs.length; i++)
+			for (i = 0, n = spirit3D._childs.length; i < n; i++)
 				setMeshParams(spirit3D._childs[i], renderMode, albedo, ambientColor, uvScale, shaderName);
 		}
 	}

@@ -1,7 +1,6 @@
 package laya.webgl.shader.d2.value {
 	import laya.resource.Bitmap;
 	import laya.resource.Texture;
-	import laya.webgl.shader.d2.fillTexture.FillTextureSV;
 	import laya.webgl.shader.d2.skinAnishader.SkinSV;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.DrawStyle;

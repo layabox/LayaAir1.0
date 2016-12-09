@@ -51,16 +51,11 @@ var grid = scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/g
 //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 grid.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
     var meshSprite = sprite.getChildAt(0);
-    var mesh = meshSprite.meshFilter.sharedMesh;
-    mesh.once(Laya.Event.LOADED, null, function (templet) {
-        for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
-            var material = meshSprite.meshRender.sharedMaterials[i];
-            material.once(Laya.Event.LOADED, null, function () {
-                material.diffuseColor = new Vector3(0.7, 0.7, 0.7);
-                material.specularColor = new Laya.Vector4(0.2, 0.2, 0.2, 32);
-            })
-        }
-    });
+    for (var i = 0; i < meshSprite.meshRender.sharedMaterials.length; i++) {
+        var material = meshSprite.meshRender.sharedMaterials[i];
+        material.diffuseColor = new Vector3(0.7, 0.7, 0.7);
+        material.specularColor = new Laya.Vector4(0.2, 0.2, 0.2, 32);
+    }
 });
 
 var sphere = scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/sphere/sphere.lh"));

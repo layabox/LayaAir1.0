@@ -20,7 +20,7 @@ package threeDimen.primaryStage {
 		private var rotation:Vector3 = new Vector3(0, 0.01, 0);
 		
 		public function D3Base_Material_NormalMap() {
-			Laya3D.init(0, 0,true);
+			Laya3D.init(0, 0, true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
@@ -56,12 +56,10 @@ package threeDimen.primaryStage {
 			var mesh:Mesh = Mesh.load(meshPath);
 			var meshSprite:MeshSprite3D = root.addChild(new MeshSprite3D(mesh)) as MeshSprite3D;
 			
-			 //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
+			//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 			mesh.once(Event.LOADED, null, function():void {
-				meshSprite.meshRender.sharedMaterials[0].once(Event.LOADED, null, function():void {
-					material = meshSprite.meshRender.sharedMaterials[0] as StandardMaterial;
-					(material && normalTexture) && (material.normalTexture = normalTexture);
-				});
+				material = meshSprite.meshRender.sharedMaterials[0] as StandardMaterial;
+				(material && normalTexture) && (material.normalTexture = normalTexture);
 			});
 			
 			Laya.loader.load(normalMapPath, Handler.create(null, function(texture:Texture2D):void {

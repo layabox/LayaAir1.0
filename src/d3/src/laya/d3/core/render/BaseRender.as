@@ -245,10 +245,10 @@ package laya.d3.core.render {
 		}
 		
 		/**
-		 * 彻底清理资源。
+		 * @private
 		 */
-		public function destroy():void {
-			offAll();//移除所有事件监听
+		public function _destroy():void {
+			offAll();
 			_owner = null;
 			_renderObject = null;
 			_materials = null;
