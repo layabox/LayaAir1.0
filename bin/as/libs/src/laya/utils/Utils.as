@@ -187,10 +187,10 @@ package laya.utils {
 				array[j + 1] = c;
 				i++;
 			}
-		    var model:IConchNode = c.parent.model;
+		    var model:IConchNode = c.parent.conchModel;
 			if (model)
 			{
-				if (model.updateZOrder)
+				if (model.updateZOrder != null)
 				{
 					model.updateZOrder();
 				}
@@ -198,11 +198,11 @@ package laya.utils {
 				{
 					for (i=0; i < len;i++)
 					{
-						model.removeChild(array[i].model);
+						model.removeChild(array[i].conchModel);
 					}
 					for (i=0; i < len;i++)
 					{
-						model.addChildAt(array[i].model, i);
+						model.addChildAt(array[i].conchModel, i);
 					}
 				}
 			}

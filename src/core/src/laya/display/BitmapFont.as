@@ -17,11 +17,10 @@ package laya.display {
 		private var _fontCharDic:Object = {};
 		private var _complete:Handler;
 		private var _path:String;
-		private var _maxHeight:Number = 0;
+		//private var _maxHeight:Number = 0;
 		private var _maxWidth:Number = 0;
 		private var _spaceWidth:Number = 10;
-		private var _leftPadding:Number = 0;
-		private var _rightPadding:Number = 0;
+		private var _padding:Array;
 		private var _letterSpacing:Number = 0;
 		
 		/**
@@ -57,10 +56,11 @@ package laya.display {
 			
 			var tPadding:String = tInfo[0].attributes["padding"].nodeValue;
 			var tPaddingArray:Array = tPadding.split(",");
-			var tUpPadding:Number = parseInt(tPaddingArray[0]);
-			var tDownPadding:Number = parseInt(tPaddingArray[2]);
-			_leftPadding = parseInt(tPaddingArray[3]);
-			_rightPadding = parseInt(tPaddingArray[1]);
+			//var tUpPadding:Number = parseInt(tPaddingArray[0]);
+			//var tDownPadding:Number = parseInt(tPaddingArray[2]);
+			//_leftPadding = parseInt(tPaddingArray[3]);
+			//_rightPadding = parseInt(tPaddingArray[1]);			
+			_padding = [parseInt(tPaddingArray[0]), parseInt(tPaddingArray[1]), parseInt(tPaddingArray[2]), parseInt(tPaddingArray[3])];
 			
 			var chars:Array = xml.getElementsByTagName("char");
 			var i:int = 0;
@@ -80,8 +80,8 @@ package laya.display {
 				region.height = parseInt(tAttribute["height"].nodeValue);
 				
 				var tTexture:Texture = Texture.create(texture, region.x, region.y, region.width, region.height, xOffset, yOffset);
-				_maxHeight = Math.max(_maxHeight, tUpPadding + tDownPadding + tTexture.height);
-				_maxWidth = Math.max(_maxWidth, tTexture.width);
+				//_maxHeight = Math.max(_maxHeight, _padding[0] + _padding[2] + fontSize);
+				_maxWidth = Math.max(_maxWidth, tTexture.width + tTexture.offsetX * 2 + _letterSpacing + _padding[1] + _padding[3]);
 				_fontCharDic[tId] = tTexture;
 			}
 			if (getCharTexture(" ")) setSpaceWidth(getCharWidth(" "));
@@ -125,7 +125,7 @@ package laya.display {
 		public function getCharWidth(char:String):Number {
 			if (char == " ") return _spaceWidth + _letterSpacing;
 			var tTexture:Texture = getCharTexture(char)
-			if (tTexture) return tTexture.width + tTexture.offsetX * 2 + _letterSpacing;
+			if (tTexture) return tTexture.width + tTexture.offsetX * 2 + _letterSpacing + _padding[1] + _padding[3];
 			return 0;
 		}
 		
@@ -156,19 +156,18 @@ package laya.display {
 			_letterSpacing = value;
 		}
 		
-		
 		/**
 		 * 获取最大字符宽度。
 		 */
 		public function getMaxWidth():Number {
-			return _maxWidth + _letterSpacing;
+			return _maxWidth;
 		}
 		
 		/**
 		 * 获取最大字符高度。
 		 */
 		public function getMaxHeight():Number {
-			return _maxHeight;
+			return _padding[0] + _padding[2] + fontSize;
 		}
 		
 		/**
@@ -181,13 +180,13 @@ package laya.display {
 			for (var i:int = 0, n:int = text.length; i < n; i++) {
 				tWidth += getCharWidth(text.charAt(i));
 			}
-			var dx:Number = _leftPadding;
+			var dx:Number = _padding[3];
 			align === "center" && (dx = (width - tWidth) / 2);
-			align === "right" && (dx = (width - tWidth) - _rightPadding);
+			align === "right" && (dx = (width - tWidth) - _padding[0]);
 			var tX:Number = 0;
 			for (i = 0, n = text.length; i < n; i++) {
 				tTexture = getCharTexture(text.charAt(i));
-				if (tTexture) sprite.graphics.drawTexture(tTexture, drawX + tX + dx, drawY, tTexture.width, tTexture.height);
+				if (tTexture) sprite.graphics.drawTexture(tTexture, drawX + tX + dx, drawY + _padding[1], tTexture.width, tTexture.height);
 				tX += getCharWidth(text.charAt(i));
 			}
 		}

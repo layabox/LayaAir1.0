@@ -13,6 +13,7 @@ package laya.d3.component.animation {
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
+	import laya.renders.Render;
 	import laya.utils.Stat;
 	import laya.webgl.utils.Buffer2D;
 	
@@ -320,6 +321,12 @@ package laya.d3.component.animation {
 			}
 			
 			_lastFrameIndex = frameIndex;
+			if (Render.isConchNode) {//NATIVE
+				for (i = 0, n = mesh.getSubMeshCount(); i < n; i++) {
+					_ownerMesh.meshRender.sharedMaterials[i]._addShaderDefine(ShaderDefines3D.BONE);
+					_ownerMesh.meshRender.renderObject._renderElements[i]._conchSubmesh.setShaderValue(RenderElement.BONES, _curAnimationDatas[i],0);
+				}
+			}
 		}
 		
 		/**
@@ -330,8 +337,9 @@ package laya.d3.component.animation {
 		public override function _preRenderUpdate(state:RenderState):void {
 			if (_curAnimationDatas) {
 				state.shaderDefines.addInt(ShaderDefines3D.BONE);
-				var subMeshIndex:int = state.renderElement.renderObj.indexOfHost;
-				state.shaderValue.pushValue(StandardMaterial.Bones, _curAnimationDatas[subMeshIndex]);
+				var renderElement:RenderElement = state.renderElement;
+				var subMeshIndex:int = renderElement.renderObj.indexOfHost;
+				renderElement._shaderValue.setValue(RenderElement.BONES, _curAnimationDatas[subMeshIndex]);//TODO:
 			}
 		}
 		

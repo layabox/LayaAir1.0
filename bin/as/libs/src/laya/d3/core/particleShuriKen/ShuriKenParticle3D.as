@@ -3,10 +3,19 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
+	import laya.d3.core.particleShuriKen.module.ColorOverLifetime;
+	import laya.d3.core.particleShuriKen.module.Emission;
+	import laya.d3.core.particleShuriKen.module.GradientVelocity;
+	import laya.d3.core.particleShuriKen.module.RotationOverLifetime;
+	import laya.d3.core.particleShuriKen.module.SizeOverLifetime;
+	import laya.d3.core.particleShuriKen.module.TextureSheetAnimation;
+	import laya.d3.core.particleShuriKen.module.VelocityOverLifetime;
+	import laya.d3.core.particleShuriKen.module.shape.BaseShape;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.Texture2D;
 	import laya.display.Node;
@@ -20,6 +29,14 @@ package laya.d3.core.particleShuriKen {
 	 * <code>ShuriKenParticle3D</code> 3D粒子。
 	 */
 	public class ShuriKenParticle3D extends Sprite3D {
+		public static const WORLDPOSITION:int = 0;
+		public static const WORLDROTATIONMATRIX:int = 1;
+		public static const POSITIONSCALE:int = 4;
+		public static const SIZESCALE:int = 5;
+		
+		/** @private */
+		private var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
+		
 		/**@private */
 		private var _particleSystem:ShurikenParticleSystem;
 		/** @private */
@@ -98,12 +115,45 @@ package laya.d3.core.particleShuriKen {
 		 */
 		public override function _update(state:RenderState):void {
 			state.owner = this;
-			_particleSystem.update(state);
 			
 			Stat.spriteCount++;
 			_childs.length && _updateChilds(state);
 		}
 		
+		override public function _prepareShaderValuetoRender(view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
+			switch (particleSystem.simulationSpace) {
+			case 0: //World
+				_setShaderValueColor(WORLDPOSITION, Vector3.ZERO);//TODO是否可不传
+				break;
+			case 1: //Local
+				_setShaderValueColor(WORLDPOSITION, transform.position);
+				break;
+			default: 
+				throw new Error("ShurikenParticleMaterial: SimulationSpace value is invalid.");
+			}
+			
+			Matrix4x4.createFromQuaternion(transform.rotation, _tempRotationMatrix);
+			_setShaderValueMatrix4x4(WORLDROTATIONMATRIX, _tempRotationMatrix);
+			
+			switch (particleSystem.scaleMode) {
+			case 0: 
+				_setShaderValueColor(POSITIONSCALE, transform.scale);
+				_setShaderValueColor(SIZESCALE, transform.scale);
+				break;
+			case 1: 
+				_setShaderValueColor(POSITIONSCALE, transform.localScale);
+				_setShaderValueColor(SIZESCALE, transform.localScale);
+				break;
+			case 2: 
+				_setShaderValueColor(POSITIONSCALE, transform.scale);
+				_setShaderValueColor(SIZESCALE, Vector3.ONE);
+				break;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
 		override public function cloneTo(destObject:*):void {
 			super.cloneTo(destObject);
 			var destShuriKenParticle3D:ShuriKenParticle3D = destObject as ShuriKenParticle3D;
@@ -162,11 +212,23 @@ package laya.d3.core.particleShuriKen {
 			destParticleSystem.playOnAwake = _particleSystem.playOnAwake;
 			//destParticleSystem.autoRandomSeed = _particleSystem.autoRandomSeed;
 			
-			_particleSystem.velocityOverLifetime.cloneTo(destParticleSystem.velocityOverLifetime);
-			_particleSystem.colorOverLifetime.cloneTo(destParticleSystem.colorOverLifetime);
-			_particleSystem.sizeOverLifetime.cloneTo(destParticleSystem.sizeOverLifetime);
-			_particleSystem.rotationOverLifetime.cloneTo(destParticleSystem.rotationOverLifetime);
-			_particleSystem.textureSheetAnimation.cloneTo(destParticleSystem.textureSheetAnimation);
+			destParticleSystem.maxParticles = _particleSystem.maxParticles;
+			
+			var emission:Emission = _particleSystem.emission;
+			(emission) && (destParticleSystem.emission = emission.clone());
+			var shape:BaseShape = _particleSystem.shape;
+			(shape) && (destParticleSystem.shape = shape.clone());
+			var velocityOverLifetime:VelocityOverLifetime = _particleSystem.velocityOverLifetime;
+			(velocityOverLifetime) && (destParticleSystem.velocityOverLifetime = velocityOverLifetime.clone());
+			var colorOverLifetime:ColorOverLifetime = _particleSystem.colorOverLifetime;
+			(colorOverLifetime) && (destParticleSystem.colorOverLifetime = colorOverLifetime.clone());
+			var sizeOverLifetime:SizeOverLifetime = _particleSystem.sizeOverLifetime;
+			(sizeOverLifetime) && (destParticleSystem.sizeOverLifetime = sizeOverLifetime.clone());
+			var rotationOverLifetime:RotationOverLifetime = _particleSystem.rotationOverLifetime;
+			(rotationOverLifetime) && (destParticleSystem.rotationOverLifetime = rotationOverLifetime.clone());
+			var textureSheetAnimation:TextureSheetAnimation = _particleSystem.textureSheetAnimation;
+			(textureSheetAnimation) && (destParticleSystem.textureSheetAnimation = textureSheetAnimation.clone());
+			
 			destParticleSystem.isPerformanceMode = _particleSystem.isPerformanceMode;
 			
 			var destParticleRender:ShurikenParticleRender = destShuriKenParticle3D._particleRender;

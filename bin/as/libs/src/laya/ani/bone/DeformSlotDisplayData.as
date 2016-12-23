@@ -42,6 +42,7 @@ package laya.ani.bone
 		
 		public function apply(time:Number,boneSlot:BoneSlot,alpha:Number=1):void
 		{
+			time += 0.05;
 			if (timeList.length <= 0)
 			{
 				return;
@@ -87,6 +88,8 @@ package laya.ani.bone
 			if (tweenKeyList[tFrameIndex - 1])
 			{
 				alpha = (time - tPreFrameTime) / (tFrameTime - tPreFrameTime);
+			}else {
+				alpha = 0;
 			}
 
 			var tPrev:Number;

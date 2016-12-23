@@ -18,6 +18,11 @@ package threeDimen.primaryStage {
 		private var skinAni:SkinAnimations;
 		
 		public function D3Base_SkinAnimation_3DoverWeb() {
+			
+			__JS__("var div = document.createElement('div')");
+			__JS__("div.innerHTML = '<h1>此内容来源于HTML网页 - h1标签</h1>'");
+			__JS__("document.body.appendChild(div)");
+			
 			Laya3D.init(0, 0, true, true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;

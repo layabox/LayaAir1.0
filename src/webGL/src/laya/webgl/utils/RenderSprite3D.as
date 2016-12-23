@@ -54,14 +54,14 @@ package laya.webgl.utils {
 			scope.recycle();
 		}
 		
-		override public function _blend(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			var style:Style = sprite._style;
+		override public function _mask(sprite:Sprite, context:RenderContext, x:Number, y:Number):void
+		{
 			var next:RenderSprite = this._next;
 			var mask:Sprite = sprite.mask;
 			var submitCMD:SubmitCMD;
 			var submitStencil:SubmitStencil;
-			context.ctx.save();
 			if (mask) {
+			    context.ctx.save();
 				var preBlendMode:String = (context.ctx as WebGLContext2D).globalCompositeOperation;
 				var tRect:Rectangle = new Rectangle();
 				tRect.copyFrom(mask.getBounds());
@@ -92,13 +92,29 @@ package laya.webgl.utils {
 					submitStencil.blendMode = preBlendMode;
 					context.addRenderObject(submitStencil);
 				}
-			} else {
-				context.ctx.globalCompositeOperation = style.blendMode;
-				next = this._next;
+				context.ctx.restore();
+			}
+			else
+			{
 				next._fun.call(next, sprite, context, x, y);
 			}
-			context.ctx.restore();
+			
+		}
 		
+		override public function _blend(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+			var style:Style = sprite._style;
+			var next:RenderSprite = this._next;
+			if (style.blendMode)
+			{
+				context.ctx.save();
+				context.ctx.globalCompositeOperation = style.blendMode;
+				next._fun.call(next, sprite, context, x, y);
+				context.ctx.restore();
+			}
+			else
+			{
+				next._fun.call(next, sprite, context, x, y);
+			}
 		}
 		
 		override public function _transform(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
@@ -113,10 +129,10 @@ package laya.webgl.utils {
 				var m1:Matrix = m2.clone();
 				Matrix.mul(transform, m2, m2);
 				m2._checkTransform();
+				transform.tx = transform.ty = 0;
 				_next._fun.call(_next, sprite, context, 0, 0);
 				m1.copyTo(m2);
 				m1.destroy();
-				transform.tx = transform.ty = 0;
 			} else {
 				_next._fun.call(_next, sprite, context, x, y);
 			}

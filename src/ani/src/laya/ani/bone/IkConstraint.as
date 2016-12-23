@@ -1,4 +1,6 @@
 package laya.ani.bone {
+	import laya.display.Sprite;
+	import laya.maths.Matrix;
 	
 	/**
 	 * @private
@@ -11,12 +13,15 @@ package laya.ani.bone {
 		public var name:String;
 		public var mix:Number;
 		public var bendDirection:Number;
+		public var isSpine:Boolean = true;
 		static public var radDeg:Number = 180 / Math.PI;
 		static public var degRad:Number = Math.PI / 180;
+		private static var _tempMatrix:Matrix = new Matrix();
 		
 		public function IkConstraint(data:IkConstraintData, bones:Vector.<Bone>) {
 			_data = data;
 			_targetBone = bones[data.targetBoneIndex];
+			isSpine = data.isSpine;
 			if (_bones == null) _bones = new Vector.<Bone>();
 			_bones.length = 0;
 			for (var i:int = 0, n:int = data.boneIndexs.length; i < n; i++) {
@@ -33,7 +38,13 @@ package laya.ani.bone {
 				_applyIk1(_bones[0], _targetBone.resultMatrix.tx, _targetBone.resultMatrix.ty, mix);
 				break;
 			case 2: 
-				_applyIk2(_bones[0], _bones[1], _targetBone.resultMatrix.tx, _targetBone.resultMatrix.ty, bendDirection, mix);// tIkConstraintData.mix);
+				if (isSpine)
+				{
+					_applyIk2(_bones[0], _bones[1], _targetBone.resultMatrix.tx, _targetBone.resultMatrix.ty, bendDirection, mix);// tIkConstraintData.mix);
+				}else
+				{
+					_applyIk3(_bones[0], _bones[1], _targetBone.resultMatrix.tx, _targetBone.resultMatrix.ty, bendDirection, mix);// tIkConstraintData.mix);
+				}	
 				break;
 			}
 		}
@@ -54,10 +65,21 @@ package laya.ani.bone {
 			bone.update();
 		}
 		
+		//debug相关代码
+		private var _sp:Sprite;
+		private const isDebug:Boolean = false;
+		public function updatePos(x:Number, y:Number):void
+		{
+			if (_sp)
+			{
+				_sp.pos(x, y);
+			}
+		}
 		private function _applyIk2(parent:Bone, child:Bone, targetX:Number, targetY:Number, bendDir:int, alpha:Number):void {
 			if (alpha == 0) {
 				return;
 			}
+			//spine 双骨骼ik计算
 			var px:Number = parent.resultTransform.x, py:Number = parent.resultTransform.y;
 			var psx:Number = parent.transform.scX, psy:Number = parent.transform.scY;
 			var csx:Number = child.transform.scX;
@@ -80,6 +102,7 @@ package laya.ani.bone {
 			} else {
 				os2 = 0
 			}
+			
 			var cx:Number = child.resultTransform.x, cy:Number, cwx:Number, cwy:Number;
 			var a:Number = parent.resultMatrix.a, b:Number = parent.resultMatrix.c;
 			var c:Number = parent.resultMatrix.b, d:Number = parent.resultMatrix.d;
@@ -94,6 +117,21 @@ package laya.ani.bone {
 				cwx = a * cx + b * cy + parent.resultMatrix.tx;
 				cwy = c * cx + d * cy + parent.resultMatrix.ty;
 			}
+			//cwx,cwy为子骨骼应该在的世界坐标
+			
+			if (isDebug)
+			{
+				if (!_sp)
+				{
+					_sp = new Sprite();
+					Laya.stage.addChild(_sp);
+				} 
+				_sp.graphics.clear();
+				_sp.graphics.drawCircle(targetX, targetY, 15, "#ffff00");
+				
+				_sp.graphics.drawCircle(cwx, cwy, 15,"#ff00ff");
+			}
+			parent.setRotation(Math.atan2(cwy - parent.resultMatrix.ty, cwx - parent.resultMatrix.tx));
 			var pp:Bone = parent.parentBone;
 			a = pp.resultMatrix.a;
 			b = pp.resultMatrix.c;
@@ -105,6 +143,7 @@ package laya.ani.bone {
 			var x:Number = targetX - pp.resultMatrix.tx, y:Number = targetY - pp.resultMatrix.ty;
 			var tx:Number = (x * d - y * b) * id - px;
 			var ty:Number = (y * a - x * c) * id - py;
+			
 			//求得子骨骼的角度向量
 			x = cwx - pp.resultMatrix.tx;
 			y = cwy - pp.resultMatrix.ty;
@@ -206,6 +245,129 @@ package laya.ani.bone {
 			parent.update();
 		}
 	
+		
+		private function _applyIk3(parent:Bone, child:Bone, targetX:Number, targetY:Number, bendDir:int, alpha:Number):void {
+			if (alpha == 0) {
+				return;
+			}
+			var cwx:Number, cwy:Number;
+			
+			// 龙骨双骨骼ik计算
+			
+			const x:Number = child.resultMatrix.a * child.length;
+			const y:Number = child.resultMatrix.b * child.length;
+			
+			const lLL:Number = x * x + y * y;
+			//child骨骼长度
+			const lL:Number = Math.sqrt(lLL);
+			
+			
+			var parentX:Number = parent.resultMatrix.tx;
+			var parentY:Number = parent.resultMatrix.ty;
+			
+			var childX:Number = child.resultMatrix.tx;
+			var childY:Number = child.resultMatrix.ty;
+			var dX:Number = childX - parentX;
+			var dY:Number = childY -  parentY;
+			
+			const lPP:Number = dX * dX + dY * dY;
+			//parent骨骼长度
+			const lP:Number = Math.sqrt(lPP);
+			
+			dX = targetX -parent.resultMatrix.tx;
+			dY = targetY - parent.resultMatrix.ty;
+			const lTT:Number = dX * dX + dY * dY;
+			//parent到ik的长度
+			const lT:Number = Math.sqrt(lTT);
+			
+			var ikRadianA:Number = 0;
+			if (lL + lP <= lT || lT + lL <= lP || lT + lP <= lL)//构不成三角形,被拉成直线
+			{
+				var rate:Number;
+				if (lL + lP <= lT)
+				{
+					rate = 1;
+				}else
+				{
+					rate = -1;
+				}
+				childX = parentX + rate*(targetX - parentX) * lP / lT;
+				childY = parentY + rate*(targetY - parentY) * lP / lT;
+			}
+			else
+			{
+				const h:Number = (lPP - lLL + lTT) / (2 * lTT);
+				const r:Number = Math.sqrt(lPP - h * h * lTT) / lT;
+				const hX:Number = parentX + (dX * h);
+				const hY:Number = parentY + (dY * h);
+				const rX:Number = -dY * r;
+				const rY:Number = dX * r;
+				
+				if (bendDir>0)
+				{
+					childX = hX - rX;
+					childY = hY - rY;
+				}
+				else
+				{
+					childX = hX + rX;
+					childY = hY + rY;
+				}
+				
+			}
+			cwx = childX;
+			cwy = childY;
+		
+			//cwx,cwy为子骨骼应该在的世界坐标
+			
+			if (isDebug)
+			{
+				if (!_sp)
+				{
+					_sp = new Sprite();
+					Laya.stage.addChild(_sp);
+				} 
+				_sp.graphics.clear();
+				_sp.graphics.drawCircle(parentX, parentY, 15,"#ff00ff");
+				_sp.graphics.drawCircle(targetX, targetY, 15, "#ffff00");
+				
+				_sp.graphics.drawCircle(cwx, cwy, 15,"#ff00ff");
+			}
+			
+			
+			//根据当前计算出的世界坐标更新骨骼
+			
+			//更新parent
+			var pRotation:Number;
+			pRotation = Math.atan2(cwy - parent.resultMatrix.ty, cwx - parent.resultMatrix.tx);
+			parent.setRotation(pRotation);
+			
+			var pTarMatrix:Matrix;
+			pTarMatrix = _tempMatrix;
+			pTarMatrix.identity();
+			pTarMatrix.rotate(pRotation);
+			pTarMatrix.scale(parent.resultMatrix.getScaleX(), parent.resultMatrix.getScaleY());
+			pTarMatrix.translate(parent.resultMatrix.tx, parent.resultMatrix.ty);
+			
+			pTarMatrix.copyTo(parent.resultMatrix);
+			parent.updateChild();
+
+			
+			//更新child
+			var childRotation:Number;
+			childRotation = Math.atan2(targetY - cwy, targetX - cwx);
+			child.setRotation(childRotation);
+			
+			var childTarMatrix:Matrix;
+			childTarMatrix = _tempMatrix;
+			childTarMatrix.identity();
+			childTarMatrix.rotate(childRotation);
+			childTarMatrix.scale(child.resultMatrix.getScaleX(), child.resultMatrix.getScaleY());
+			childTarMatrix.translate(cwx, cwy);
+
+			pTarMatrix.copyTo(child.resultMatrix);
+			child.updateChild();
+		}
 	}
 
 }

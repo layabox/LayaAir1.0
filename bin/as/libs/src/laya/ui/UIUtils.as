@@ -2,6 +2,7 @@ package laya.ui {
 	import laya.display.Sprite;
 	import laya.filters.ColorFilter;
 	import laya.filters.IFilter;
+	import laya.utils.Utils;
 	
 	/**
 	 * <code>UIUtils</code> 是文本工具集。
@@ -35,9 +36,7 @@ package laya.ui {
 		 * @return 字符型颜色值。
 		 */
 		public static function toColor(color:uint):String {
-			var str:String = color.toString("16");
-			while (str.length < 6) str = "0" + str;
-			return "#" + str;
+			return Utils.toHexColor(color);
 		}
 		
 		/**

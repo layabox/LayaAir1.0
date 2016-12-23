@@ -16,16 +16,7 @@
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
     <class path="src" />
-    <class path="E:\Repository\libs\core\src" />
-    <class path="E:\Repository\libs\plugins\device\src" />
-    <class path="E:\Repository\libs\core\jsc" />
-    <class path="E:\Repository\libs\ui\src" />
-    <class path="E:\Repository\libs\plugins\flash\src" />
-    <class path="E:\Repository\libs\webGL\src" />
-    <class path="E:\Repository\libs\plugins\tiledmap\src" />
-    <class path="E:\Repository\libs\particle\src\laya" />
-    <class path="E:\Repository\libs\ani\src" />
-    <class path="E:\Repository\libs\flash\src" />
+    <class path="..\..\..\bin\as\libs\src" />
   </classpaths>
   <!-- Build options -->
   <build>
@@ -82,7 +73,7 @@
   </library>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
-    <compile path="src\PerformanceTest_Cartoon2.as" />
+    <compile path="src\Interaction_Swipe.as" />
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

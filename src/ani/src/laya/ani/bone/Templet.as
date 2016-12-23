@@ -71,13 +71,15 @@ package laya.ani.bone {
 		/** 实际显示对象列表，用于销毁用 */
 		public var skinSlotDisplayDataArr:Vector.<SkinSlotDisplayData> = new Vector.<SkinSlotDisplayData>();
 		
-		private var _rate:int = 60;
+		private var _rate:int = 30;
 		
 		public var aniSectionDic:Object = {};
 		private var _skBufferUrl:String;
 		private var _textureDic:Object = {};
 		private var _loadList:Array;
 		private var _path:String;
+		/**@private */
+		public var tMatrixDataLen:int;
 		
 		public var mRootBone:Bone;
 		public var mBoneArr:Vector.<Bone> = new Vector.<Bone>();
@@ -99,7 +101,7 @@ package laya.ani.bone {
 		 * @param	skeletonData	骨骼动画信息及纹理分块信息
 		 * @param	playbackRate	缓冲的帧率数据（会根据帧率去分帧）
 		 */
-		public function parseData(texture:Texture, skeletonData:ArrayBuffer, playbackRate:int = 60):void {
+		public function parseData(texture:Texture, skeletonData:ArrayBuffer, playbackRate:int = 30):void {
 			_mainTexture = texture;
 			if (_mainTexture) {
 				if (Render.isWebGL && texture.bitmap) {
@@ -133,7 +135,7 @@ package laya.ani.bone {
 			_endLoaded();
 			if (this._aniVersion != AnimationTemplet.LAYA_ANIMATION_VISION) {
 				//trace("[Error] Version " + _aniVersion + " The engine is inconsistent, update to the version " + KeyframesAniTemplet.LAYA_ANIMATION_VISION + " please.");
-				trace("[Error] 版本不一致，请使用IDE版本（1.5.3）重新导出");
+				trace("[Error] 版本不一致，请使用IDE版本（1.6.0）重新导出");
 				_loaded = false;
 			}
 			//解析公共数据
@@ -157,7 +159,7 @@ package laya.ani.bone {
 			var tX:Number = 0, tY:Number = 0, tWidth:Number = 0, tHeight:Number = 0;
 			var tFrameX:Number = 0, tFrameY:Number = 0, tFrameWidth:Number = 0, tFrameHeight:Number = 0;
 			var tTempleData:Number = 0;
-			var tTextureLen:int = tByte.getUint8();
+			var tTextureLen:int = tByte.getInt32();
 			var tTextureName:String = tByte.readUTFString();
 			var tTextureNameArr:Array = tTextureName.split("\n");
 			var tTexture:Texture;
@@ -210,11 +212,14 @@ package laya.ani.bone {
 			for (i = 0, n = getAnimationCount(); i < n; i++) {
 				_graphicsCache.push([]);
 			}
+			var isSpine:Boolean;
+			isSpine = aniClassName != "Dragon";
 			var tByte:Byte = new Byte(getPublicExtData());
 			var tX:Number = 0, tY:Number = 0, tWidth:Number = 0, tHeight:Number = 0;
 			var tFrameX:Number = 0, tFrameY:Number = 0, tFrameWidth:Number = 0, tFrameHeight:Number = 0;
 			var tTempleData:Number = 0;
-			var tTextureLen:int = tByte.getUint8();
+			//var tTextureLen:int = tByte.getUint8();
+			var tTextureLen:int = tByte.getInt32();
 			var tTextureName:String = tByte.readUTFString();
 			var tTextureNameArr:Array = tTextureName.split("\n");
 			var tTexture:Texture;
@@ -268,6 +273,7 @@ package laya.ani.bone {
 				} else {
 					tBone.root = tRootBone;
 				}
+				tBone.d = isSpine? -1:1;
 				tName = tByte.readUTFString();
 				tParentName = tByte.readUTFString();
 				tBone.length = tByte.getFloat32();
@@ -290,7 +296,7 @@ package laya.ani.bone {
 				mBoneArr.push(tBone);
 			}
 			
-			var tMatrixDataLen:int = tByte.getUint16();
+			tMatrixDataLen = tByte.getUint16();
 			var tLen:int = tByte.getUint16();
 			var parentIndex:int;
 			var boneLength:int = Math.floor(tLen / tMatrixDataLen);
@@ -304,6 +310,10 @@ package laya.ani.bone {
 				tResultTransform.scY = tByte.getFloat32();
 				tResultTransform.x = tByte.getFloat32();
 				tResultTransform.y = tByte.getFloat32();
+				if (tMatrixDataLen === 8) {
+					tResultTransform.skewX = tByte.getFloat32();
+					tResultTransform.skewY = tByte.getFloat32();
+				}
 				tMatrixArray.push(tResultTransform);
 				tBone = mBoneArr[i];
 				tBone.transform = tResultTransform;
@@ -324,6 +334,7 @@ package laya.ani.bone {
 				tIkConstraintData.targetBoneIndex = tByte.getInt16();
 				tIkConstraintData.bendDirection = tByte.getFloat32();
 				tIkConstraintData.mix = tByte.getFloat32();
+				tIkConstraintData.isSpine = isSpine;
 				ikArr.push(tIkConstraintData);
 			}
 			

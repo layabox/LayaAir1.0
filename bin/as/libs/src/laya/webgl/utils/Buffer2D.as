@@ -1,6 +1,7 @@
 package laya.webgl.utils {
 	import laya.utils.Stat;
 	import laya.webgl.WebGLContext;
+	import laya.webgl.shader.BaseShader;
 	import laya.webgl.shader.Shader;
 	
 	public class Buffer2D extends Buffer {
@@ -154,7 +155,7 @@ package laya.webgl.utils {
 			var scuess:Boolean = _bind_upload();
 			_gl.bindBuffer(_bufferType, null);
 			_bindActive[_bufferType] = null;
-			Shader.activeShader = null
+			BaseShader.activeShader = null
 			return scuess;
 		}
 		
@@ -162,7 +163,7 @@ package laya.webgl.utils {
 			var scuess:Boolean = _bind_subUpload();
 			_gl.bindBuffer(_bufferType, null);
 			_bindActive[_bufferType] = null;
-			Shader.activeShader = null
+			BaseShader.activeShader = null
 			return scuess;
 		}
 		

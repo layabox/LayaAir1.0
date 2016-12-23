@@ -7,7 +7,7 @@ package laya.ani.bone {
 	 * @private
 	 */
 	public class Bone {
-		
+		public static const ShowBones:Object = {};
 		public var name:String;
 		public var root:Bone;
 		public var parentBone:Bone;
@@ -20,6 +20,7 @@ package laya.ani.bone {
 		
 		public var rotation:Number;
 		public var resultRotation:Number;
+		public var d:int = -1;
 		
 		private var _tempMatrix:Matrix;
 		private var _children:Vector.<Bone> = new Vector.<Bone>();
@@ -28,8 +29,7 @@ package laya.ani.bone {
 		public function Bone() {
 		}
 		
-		public function setTempMatrix(matrix:Matrix):void
-		{
+		public function setTempMatrix(matrix:Matrix):void {
 			_tempMatrix = matrix;
 			var i:int = 0, n:int = 0;
 			var tBone:Bone;
@@ -46,21 +46,31 @@ package laya.ani.bone {
 				tResultMatrix = resultTransform.getMatrix();
 				Matrix.mul(tResultMatrix, pMatrix, resultMatrix);
 				resultRotation = rotation;
-			} else {
+			}
+			else {
 				resultRotation = rotation + parentBone.resultRotation;
 				if (parentBone) {
 					if (inheritRotation && inheritScale) {
 						tResultMatrix = resultTransform.getMatrix();
 						Matrix.mul(tResultMatrix, parentBone.resultMatrix, resultMatrix);
-					} else {
+					}
+					else {
 						var temp:Number = 0;
 						var parent:Bone = parentBone;
 						var tAngle:Number;
 						var cos:Number;
 						var sin:Number;
 						var tParentMatrix:Matrix = parentBone.resultMatrix;
-						var worldX:Number = tParentMatrix.a * transform.x + tParentMatrix.c * transform.y + tParentMatrix.tx;
-						var worldY:Number = tParentMatrix.b * transform.x + tParentMatrix.d * transform.y + tParentMatrix.ty;
+						
+						//var worldX:Number = tParentMatrix.a * transform.x + tParentMatrix.c * transform.y + tParentMatrix.tx;
+						//var worldY:Number = tParentMatrix.b * transform.x + tParentMatrix.d * transform.y + tParentMatrix.ty;
+						
+						//out.tx = ba * atx + bc * aty + btx;
+						//out.ty = bb * atx + bd * aty + bty;
+						tResultMatrix = resultTransform.getMatrix();
+						var worldX:Number = tParentMatrix.a * tResultMatrix.tx + tParentMatrix.c * tResultMatrix.ty + tParentMatrix.tx;
+						var worldY:Number = tParentMatrix.b * tResultMatrix.tx + tParentMatrix.d * tResultMatrix.ty + tParentMatrix.ty;
+						
 						var tTestMatrix:Matrix = new Matrix();
 						if (inheritRotation) {
 							tAngle = Math.atan2(parent.resultMatrix.b, parent.resultMatrix.a);
@@ -72,24 +82,27 @@ package laya.ani.bone {
 							Matrix.mul(tResultMatrix, tTestMatrix, resultMatrix);
 							resultMatrix.tx = worldX;
 							resultMatrix.ty = worldY;
-						} else if (inheritScale) {
+						}
+						else if (inheritScale) {
 							tResultMatrix = resultTransform.getMatrix();
 							Matrix.TEMP.identity();
-							Matrix.TEMP.d = -1;
+							Matrix.TEMP.d = d;
 							Matrix.mul(tResultMatrix, Matrix.TEMP, resultMatrix);
 							resultMatrix.tx = worldX;
 							resultMatrix.ty = worldY;
-						} else {
+						}
+						else {
 							tResultMatrix = resultTransform.getMatrix();
 							Matrix.TEMP.identity();
-							Matrix.TEMP.d = -1;
+							Matrix.TEMP.d = d;
 							Matrix.mul(tResultMatrix, Matrix.TEMP, resultMatrix);
 							resultMatrix.tx = worldX;
 							resultMatrix.ty = worldY;
 						}
 					}
 					
-				} else {
+				}
+				else {
 					tResultMatrix = resultTransform.getMatrix();
 					tResultMatrix.copyTo(resultMatrix);
 				}
@@ -111,17 +124,28 @@ package laya.ani.bone {
 			}
 		}
 		
-		public function updateDraw(x:Number, y:Number):void {
+		public function setRotation(rd:Number):void {
 			if (_sprite) {
-				_sprite.x = x + resultMatrix.tx;
-				_sprite.y = y + resultMatrix.ty;
-			} else {
-				_sprite = new Sprite();
-				_sprite.graphics.drawCircle(0, 0, 5, "#ff0000");
-				_sprite.graphics.fillText(name, 0, 0, "20px Arial", "#00ff00", "center");
-				Laya.stage.addChild(_sprite);
-				_sprite.x = x + resultMatrix.tx;
-				_sprite.y = y + resultMatrix.ty;
+				_sprite.rotation = rd * 180 / Math.PI;
+			}
+		}
+		
+		public function updateDraw(x:Number, y:Number):void {
+			if (!ShowBones || ShowBones[this.name]) {
+				if (_sprite) {
+					_sprite.x = x + resultMatrix.tx;
+					_sprite.y = y + resultMatrix.ty;
+				}
+				else {
+					_sprite = new Sprite();
+					_sprite.graphics.drawCircle(0, 0, 5, "#ff0000");
+					_sprite.graphics.drawLine(0, 0, length, 0, "#00ff00");
+					_sprite.graphics.fillText(name, 0, 0, "20px Arial", "#00ff00", "center");
+					Laya.stage.addChild(_sprite);
+					_sprite.x = x + resultMatrix.tx;
+					_sprite.y = y + resultMatrix.ty;
+				}
+				
 			}
 			var i:int = 0, n:int = 0;
 			var tBone:Bone;
@@ -139,7 +163,8 @@ package laya.ani.bone {
 		public function findBone(boneName:String):Bone {
 			if (this.name == boneName) {
 				return this;
-			} else {
+			}
+			else {
 				var i:int, n:int;
 				var tBone:Bone;
 				var tResult:Bone;

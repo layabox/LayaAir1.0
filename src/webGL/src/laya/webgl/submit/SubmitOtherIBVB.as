@@ -6,6 +6,7 @@ package laya.webgl.submit {
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.BlendMode;
 	import laya.webgl.canvas.WebGLContext2D;
+	import laya.webgl.shader.BaseShader;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.shader.d2.value.Value2D;
 	import laya.webgl.submit.ISubmit;
@@ -111,7 +112,7 @@ package laya.webgl.submit {
 			gl.drawElements(WebGLContext.TRIANGLES, this._numEle, WebGLContext.UNSIGNED_SHORT, startIndex);
 			RenderState2D.worldMatrix4 = w;
 			
-			Shader.activeShader = null;
+			BaseShader.activeShader = null;
 			return 1;
 		}
 	

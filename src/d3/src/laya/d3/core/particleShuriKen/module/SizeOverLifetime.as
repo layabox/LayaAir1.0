@@ -5,7 +5,7 @@ package laya.d3.core.particleShuriKen.module {
 	/**
 	 * <code>SizeOverLifetime</code> 类用于粒子的生命周期尺寸。
 	 */
-	public class SizeOverLifetime implements IClone{
+	public class SizeOverLifetime implements IClone {
 		/**@private */
 		private var _size:GradientSize;
 		
@@ -41,8 +41,29 @@ package laya.d3.core.particleShuriKen.module {
 		 * @return	 克隆副本。
 		 */
 		public function clone():* {
-			var destSizeOverLifetime:SizeOverLifetime = __JS__("new this.constructor()");
-			cloneTo(destSizeOverLifetime);
+			var destSize:GradientSize;
+			switch (_size.type) {
+			case 0: 
+				if (_size.separateAxes)
+					destSize = GradientSize.createByGradientSeparate(_size.gradientX.clone(),_size.gradientY.clone(),_size.gradientZ.clone());
+				else
+					destSize = GradientSize.createByGradient(_size.gradient.clone());
+				break;
+			case 1: 
+				if (_size.separateAxes)
+					destSize = GradientSize.createByRandomTwoConstantSeparate(_size.constantMinSeparate.clone(),_size.constantMaxSeparate.clone());
+				else
+					destSize = GradientSize.createByRandomTwoConstant(_size.constantMin,_size.constantMax);
+				break;
+			case 2: 
+				if (_size.separateAxes)
+					destSize = GradientSize.createByRandomTwoGradientSeparate(_size.gradientXMin.clone(), _size.gradientYMin.clone(),_size.gradientZMin.clone(),_size.gradientXMax.clone(), _size.gradientYMax.clone(),_size.gradientZMax.clone());
+				else
+					destSize = GradientSize.createByRandomTwoGradient(_size.gradientMin.clone(), _size.gradientMax.clone());
+				break;
+			}
+			
+			var destSizeOverLifetime:SizeOverLifetime = __JS__("new this.constructor(destSize)");
 			return destSizeOverLifetime;
 		}
 	

@@ -18,7 +18,7 @@ package laya.utils {
 		 */
 		private static var _temParam:Array = [];
 		
-		public static var _classMap:Object = /*[STATIC SAFE]*/ {'Sprite': 'laya.display.Sprite', 'Text': 'laya.display.Text', 'Animation': 'laya.display.Animation', 'Skeleton': 'laya.ani.bone.Skeleton', 'Particle2D': 'laya.particle.Particle2D', 'div': 'laya.html.dom.HTMLDivElement', 'img': 'laya.html.dom.HTMLImageElement', 'span': 'laya.html.dom.HTMLElement', 'br': 'laya.html.dom.HTMLBrElement', 'style': 'laya.html.dom.HTMLStyleElement', 'font': 'laya.html.dom.HTMLElement', 'a': 'laya.html.dom.HTMLElement', '#text': 'laya.html.dom.HTMLElement'}
+		public static var _classMap:Object = /*[STATIC SAFE]*/ {'Sprite': 'laya.display.Sprite', 'Text': 'laya.display.Text', 'Animation': 'laya.display.Animation', 'Skeleton': 'laya.ani.bone.Skeleton', 'Particle2D': 'laya.particle.Particle2D', 'div': 'laya.html.dom.HTMLDivElement', 'p': 'laya.html.dom.HTMLElement', 'img': 'laya.html.dom.HTMLImageElement', 'span': 'laya.html.dom.HTMLElement', 'br': 'laya.html.dom.HTMLBrElement', 'style': 'laya.html.dom.HTMLStyleElement', 'font': 'laya.html.dom.HTMLElement', 'a': 'laya.html.dom.HTMLElement', '#text': 'laya.html.dom.HTMLElement'}
 		
 		/**
 		 * 注册 Class 映射。

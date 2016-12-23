@@ -1,12 +1,8 @@
 package laya.webgl.shader.d2.skinAnishader {
-	import laya.filters.ColorFilter;
-	import laya.maths.Matrix;
 	import laya.maths.Matrix;
 	import laya.renders.Render;
 	import laya.resource.Texture;
-	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
-	import laya.webgl.shader.d2.skinAnishader.SkinSV;
 	import laya.webgl.shader.d2.value.Value2D;
 	import laya.webgl.submit.Submit;
 	import laya.webgl.utils.IndexBuffer2D;
@@ -23,13 +19,11 @@ package laya.webgl.shader.d2.skinAnishader {
 		private var mIBData:Uint16Array;
 		private var mEleNum:int = 0;
 		private var mTexture:Texture;
-		private var _tempMatrix:Matrix = new Matrix();
+		private var _tempMat16:Array = RenderState2D.getMatrArray();
 		public var transform:Matrix;
 		
 		private var _vs:Array;
 		private var _ps:Array;
-		private var _resultPs:Array;
-		private var _start:int = -1;
 		private var _indexStart:int = -1;
 		
 		public function SkinMesh() {
@@ -59,6 +53,8 @@ package laya.webgl.shader.d2.skinAnishader {
 				_ps.push(0, 1, 3, 3, 1, 2);
 			}
 			mVBData = new Float32Array(_vs);
+			mIBData = new Uint16Array(_ps.length);
+			mIBData["start"] = -1;
 			mEleNum = _ps.length;
 			mTexture = texture;
 		}
@@ -67,14 +63,14 @@ package laya.webgl.shader.d2.skinAnishader {
 			mVBBuffer = vb;
 			mIBBuffer = ib;
 			vb.append(mVBData);
-			_start = start;
 			_indexStart = ib.byteLength;
-			if (_resultPs == null)_resultPs = [];
-			_resultPs.length = 0;
-			for (var i:int = 0, n:int = _ps.length; i < n; i++) {	
-				_resultPs.push(_ps[i] + start);
+			if (mIBData["start"] != start)
+			{
+				for (var i:int = 0, n:int = _ps.length; i < n; i++) {
+					mIBData[i] = _ps[i] + start;
+				}
+				mIBData["start"] = start;
 			}
-			mIBData = new Uint16Array(_resultPs);
 			ib.append(mIBData);
 		}
 		
@@ -86,15 +82,13 @@ package laya.webgl.shader.d2.skinAnishader {
 				var tempSubmit:Submit = Submit.createShape(context, mIBBuffer, mVBBuffer, mEleNum, _indexStart, Value2D.create(ShaderDefines2D.SKINMESH, 0));
 				transform || (transform = Matrix.EMPTY);
 				transform.translate(x, y);
-				Matrix.mul(transform, context._curMat, _tempMatrix);
+				Matrix.mul16(transform, context._curMat, _tempMat16);
 				transform.translate( -x, -y);
-				var tArray:Array = RenderState2D.getMatrArray();
-				RenderState2D.mat2MatArray(_tempMatrix, tArray);
 				var tShaderValue:SkinSV = tempSubmit.shaderValue as SkinSV;
 				tShaderValue.textureHost = mTexture;
 				tShaderValue.offsetX = 0;
 				tShaderValue.offsetY = 0;
-				tShaderValue.u_mmat2 = tArray;
+				tShaderValue.u_mmat2 = _tempMat16;
 				tShaderValue.ALPHA = context._shader2D.ALPHA;
 				context._submits[context._submits._length++] = tempSubmit;
 			}

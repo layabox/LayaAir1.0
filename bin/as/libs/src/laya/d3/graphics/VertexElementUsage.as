@@ -5,45 +5,45 @@ package laya.d3.graphics {
 	 * @author ...
 	 */
 	public class VertexElementUsage {
-		public static const POSITION0:String = "POSITION";
-		public static const COLOR0:String = "COLOR";
-		public static const TEXTURECOORDINATE0:String = "UV" /*"TEXTURECOORDINATE"*/;//TODO:暂时这样做
-		public static const NORMAL0:String = "NORMAL";
-		public static const BINORMAL0:String = "BINORMAL";
-		public static const TANGENT0:String = "TANGENT0";
-		public static const BLENDINDICES0:String = "BLENDINDICES";
-		public static const BLENDWEIGHT0:String = "BLENDWEIGHT";
-		public static const DEPTH0:String = "DEPTH";
-		public static const FOG0:String = "FOG";
-		public static const POINTSIZE0:String = "POINTSIZE";
-		public static const SAMPLE0:String = "SAMPLE";
-		public static const TESSELLATEFACTOR0:String = "TESSELLATEFACTOR";
+		public static const POSITION0:int =0;
+		public static const COLOR0:int = 1;
+		public static const TEXTURECOORDINATE0:int = 2;
+		public static const NORMAL0:int = 3;
+		public static const BINORMAL0:int = 4;
+		public static const TANGENT0:int = 5;
+		public static const BLENDINDICES0:int = 6;
+		public static const BLENDWEIGHT0:int = 7;
+		public static const DEPTH0:int = 8;
+		public static const FOG0:int = 9;
+		public static const POINTSIZE0:int = 10;
+		public static const SAMPLE0:int = 11;
+		public static const TESSELLATEFACTOR0:int = 12;
 		
-		public static const COLOR1:String = "COLOR1";
-		public static const NEXTTEXTURECOORDINATE0:String = "NEXTUV";
-		public static const TEXTURECOORDINATE1:String = "UV1";
-		public static const NEXTTEXTURECOORDINATE1:String = "NEXTUV1";
+		public static const COLOR1:int = 13;
+		public static const NEXTTEXTURECOORDINATE0:int = 14;
+		public static const TEXTURECOORDINATE1:int = 15;
+		public static const NEXTTEXTURECOORDINATE1:int = 16;
 		
-		public static const CORNERTEXTURECOORDINATE0:String = "CORNERTEXTURECOORDINATE";
-		public static const VELOCITY0:String = "VELOCITY";
-		public static const STARTCOLOR0:String = "STARTCOLOR";
-		public static const STARTSIZE:String = "STARTSIZE";
-		public static const AGEADDSCALE0:String = "AGEADDSCALE0";
-		public static const STARTROTATION0:String = "STARTROTATION0";
-		public static const STARTROTATION1:String = "STARTROTATION1";
-		public static const STARTROTATION2:String = "STARTROTATION2";
-		public static const ENDCOLOR0:String = "ENDCOLOR";
+		public static const CORNERTEXTURECOORDINATE0:int = 17;
+		public static const VELOCITY0:int = 18;
+		public static const STARTCOLOR0:int = 19;
+		public static const STARTSIZE:int = 20;
+		public static const AGEADDSCALE0:int = 21;
+		public static const STARTROTATION0:int = 22;
+		public static const STARTROTATION1:int = 23;
+		public static const STARTROTATION2:int = 24;
+		public static const ENDCOLOR0:int = 25;
 		
 		
-		public static const SIZEROTATION0:String = "SIZEROTATION";
-		public static const RADIUS0:String = "RADIUS";
-		public static const RADIAN0:String = "RADIAN";
-		public static const STARTLIFETIME:String = "STARTLIFETIME";
-		public static const STARTSPEED:String = "STARTSPEED";
-		public static const DIRECTION:String = "DIRECTION";
-		public static const TIME0:String = "TIME";
-		public static const RANDOM0:String = "RANDOM0";
-		public static const RANDOM1:String = "RANDOM1";
-		public static const SIMULATIONWORLDPOSTION:String = "SIMULATIONWORLDPOSTION";
+		public static const SIZEROTATION0:int = 26;
+		public static const RADIUS0:int =27;
+		public static const RADIAN0:int = 28;
+		public static const STARTLIFETIME:int = 29;
+		public static const STARTSPEED:int = 30;
+		public static const DIRECTION:int = 31;
+		public static const TIME0:int = 32;
+		public static const RANDOM0:int = 33;
+		public static const RANDOM1:int = 34;
+		public static const SIMULATIONWORLDPOSTION:int = 35;
 	}
 }

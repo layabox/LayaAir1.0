@@ -298,8 +298,10 @@ package laya.ui {
 			_value = Math.round(Math.round(_value / _tick) * _tick * pow) / pow;
 			
 			_value = _value > _max ? _max : _value < _min ? _min : _value;
-			if (isVertical) _bar.y = (_value - _min) / (_max - _min) * (height - _bar.height);
-			else _bar.x = (_value - _min) / (_max - _min) * (width - _bar.width);
+			var num:Number = _max - _min;
+			if (num === 0) num = 1;
+			if (isVertical) _bar.y = (_value - _min) / num * (height - _bar.height);
+			else _bar.x = (_value - _min) / num * (width - _bar.width);
 		}
 		
 		/**

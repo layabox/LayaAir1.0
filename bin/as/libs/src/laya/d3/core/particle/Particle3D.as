@@ -7,6 +7,7 @@ package laya.d3.core.particle {
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.tempelet.ParticleTemplet3D;
@@ -58,9 +59,8 @@ package laya.d3.core.particle {
 			
 			var material:ParticleMaterial = new ParticleMaterial();
 			
-			if (setting.textureName) {
+			if (setting.textureName)
 				material.diffuseTexture = Texture2D.load(setting.textureName);
-			}
 			
 			_particleRender.sharedMaterial = material;
 			_templet = new ParticleTemplet3D(this, setting);
@@ -82,7 +82,6 @@ package laya.d3.core.particle {
 			
 			var material:BaseMaterial = _particleRender.sharedMaterials[index];
 			(material) || (material = ParticleMaterial.defaultMaterial);//确保有材质,由默认材质代替。
-			
 			var element:IRenderable = _templet;
 			renderElement._mainSortID = 0;
 			renderElement._sprite3D = this;
@@ -118,6 +117,15 @@ package laya.d3.core.particle {
 			
 			Stat.spriteCount++;
 			_childs.length && _updateChilds(state);
+		}
+		
+		/**
+		 * @private
+		 */
+		override public function _prepareShaderValuetoRender(view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
+			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
+			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
+			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
 		}
 		
 		/**

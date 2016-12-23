@@ -1,4 +1,5 @@
 package laya.d3.core.particleShuriKen.module {
+	import laya.d3.core.IClone;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.particleShuriKen.ShurikenParticleSystem;
 	import laya.d3.core.particleShuriKen.module.shape.BaseShape;
@@ -30,7 +31,7 @@ package laya.d3.core.particleShuriKen.module {
 	/**
 	 * <code>Emission</code> 类用于粒子发射器。
 	 */
-	public class Emission extends EventDispatcher implements IDestroy{
+	public class Emission extends EventDispatcher implements IClone, IDestroy {
 		/** @private */
 		private static var _tempPosition:Vector3 = new Vector3();
 		/** @private */
@@ -151,7 +152,7 @@ package laya.d3.core.particleShuriKen.module {
 		/**
 		 * @private
 		 */
-		private function _advanceTime(elapsedTime:Number, transform:Transform3D):void {
+		private function _advanceTime(elapsedTime:Number):void {
 			if (!_isPlaying || _isPaused)
 				return;
 			
@@ -162,37 +163,37 @@ package laya.d3.core.particleShuriKen.module {
 			var lastEmissionTime:Number = _emissionTime;
 			_emissionTime += elapsedTime;
 			var duration:Number = _particleSystem.duration;
-			var totalBurstCount:int = 0;
+			var totalEmitCount:int = 0;
 			if (_emissionTime > duration) {
-				totalBurstCount += _burst(lastEmissionTime, duration);//爆裂剩余未触发的//TODO:是否可以用_playbackTime代替计算，不必结束再爆裂一次。//TODO:待确认是否累计爆裂
+				totalEmitCount += _burst(lastEmissionTime, duration);//爆裂剩余未触发的//TODO:是否可以用_playbackTime代替计算，不必结束再爆裂一次。//TODO:待确认是否累计爆裂
 				if (_particleSystem.looping) {//TODO:有while
 					_emissionTime -= duration;
 					this.event(Event.COMPLETE);
 					_burstsIndex = 0;
-					totalBurstCount += _burst(0, _emissionTime);
+					totalEmitCount += _burst(0, _emissionTime);
 				} else {
 					_isPlaying = false;
 					
-					totalBurstCount = Math.min(_particleSystem.maxParticles - _particleSystem.aliveParticleCount, totalBurstCount);
-					for (i = 0; i < totalBurstCount; i++)
-						emit(transform);
+					totalEmitCount = Math.min(_particleSystem.maxParticles - _particleSystem.aliveParticleCount, totalEmitCount);
+					for (i = 0; i < totalEmitCount; i++)
+						emit();
 					
 					this.event(Event.STOPPED);
 					return;
 				}
 			} else {
-				totalBurstCount += _burst(lastEmissionTime, _emissionTime);
+				totalEmitCount += _burst(lastEmissionTime, _emissionTime);
 			}
 			
-			totalBurstCount = Math.min(_particleSystem.maxParticles - _particleSystem.aliveParticleCount, totalBurstCount);
-			for (i = 0; i < totalBurstCount; i++)
-				emit(transform);
+			totalEmitCount = Math.min(_particleSystem.maxParticles - _particleSystem.aliveParticleCount, totalEmitCount);
+			for (i = 0; i < totalEmitCount; i++)
+				emit();
 			
 			_frameTime += elapsedTime;
 			if (_frameTime < _minEmissionTime)
 				return;
 			while (_frameTime > _minEmissionTime) {
-				if (emit(transform))//TODO:可像brust一样优化
+				if (emit())//TODO:可像brust一样优化
 					_frameTime -= _minEmissionTime;
 				else
 					break;
@@ -325,17 +326,17 @@ package laya.d3.core.particleShuriKen.module {
 		 * 更新球粒子发射器。
 		 * @param state 渲染相关状态参数。
 		 */
-		public function update(elapsedTime:Number, transform:Transform3D):void {
-			(enbale) && (_advanceTime(elapsedTime, transform));
+		public function update(elapsedTime:Number):void {
+			(enbale) && (_advanceTime(elapsedTime));
 		}
 		
 		/**
 		 * 发射一个粒子。
 		 */
-		public function emit(transform:Transform3D):Boolean {
+		public function emit():Boolean {
 			var position:Vector3 = _tempPosition;
 			var direction:Vector3 = _tempDirection;
-			if (_shape.enbale) {
+			if (_shape.enable) {
 				_shape.generatePositionAndDirection(position, direction);
 			} else {
 				var positionE:Float32Array = position.elements;
@@ -345,9 +346,46 @@ package laya.d3.core.particleShuriKen.module {
 				directionE[2] = 1;
 			}
 			
-			return _particleSystem.addParticle(position, direction, transform);//TODO:提前判断优化
+			return _particleSystem.addParticle(position, direction);//TODO:提前判断优化
 		}
-	
+		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		public function cloneTo(destObject:*):void {
+			var destEmission:Emission = destObject as Emission;
+			destEmission._burstsIndex = _burstsIndex;
+			var destBursts:Vector.<Burst> = destEmission._bursts;
+			destBursts.length = _bursts.length;
+			for (var i:int = 0, n:int = _bursts.length; i < n; i++) {
+				var destBurst:Burst = destBursts[i];
+				if (destBurst)
+					_bursts[i].cloneTo(destBurst);
+				else
+					destBursts[i] = _bursts[i].clone();
+			}
+			destEmission._startDelay = _startDelay;
+			destEmission._isPlaying = _isPlaying;
+			destEmission._isPaused = _isPaused;
+			destEmission._frameTime = _frameTime;
+			destEmission._emissionTime = _emissionTime;
+			destEmission._playbackTime = _playbackTime;
+			destEmission._minEmissionTime = _minEmissionTime;
+			destEmission._emissionRate = _emissionRate;
+			destEmission._burstsIndex = _burstsIndex;
+			destEmission.enbale = enbale;
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var destEmission:Vector3 = __JS__("new this.constructor()");
+			cloneTo(destEmission);
+			return destEmission;
+		}
 	}
 
 }

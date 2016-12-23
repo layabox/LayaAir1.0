@@ -2,6 +2,7 @@ package laya.d3.resource.tempelet {
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.particle.Particle3D;
 	import laya.d3.core.render.IRenderable;
+	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
@@ -19,7 +20,6 @@ package laya.d3.resource.tempelet {
 	import laya.webgl.resource.WebGLImage;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.ValusArray;
 	
 	/**
 	 * @private
@@ -134,6 +134,10 @@ package laya.d3.resource.tempelet {
 					Stat.drawCall++;
 				}
 			}
+		}
+		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void//NATIVE
+		{
+			
 		}
 	}
 }

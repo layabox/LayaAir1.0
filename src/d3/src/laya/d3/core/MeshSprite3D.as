@@ -6,12 +6,15 @@ package laya.d3.core {
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.RenderObject;
+	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
 	import laya.display.Node;
 	import laya.events.Event;
+	import laya.renders.Render;
 	import laya.utils.Stat;
 	
 	/**
@@ -63,7 +66,16 @@ package laya.d3.core {
 			}
 		}
 		
-		/** @private */
+		/**
+		 * @private
+		 */
+		override public function createConchModel():* {
+			return null;
+		}
+		
+		/**
+		 * @private
+		 */
 		private function _changeRenderObjectByMesh(index:int):RenderElement {
 			var renderObjects:Vector.<RenderElement> = _meshRender.renderObject._renderElements;
 			
@@ -80,10 +92,17 @@ package laya.d3.core {
 			
 			renderElement.renderObj = element;
 			renderElement._material = material;
+			
+			if (Render.isConchNode) {//NATIVE
+				var vertexBuffer:VertexBuffer3D = element._getVertexBuffer();
+				renderElement._conchSubmesh.setVBIB(vertexBuffer.vertexDeclaration._conchVertexDeclaration, vertexBuffer.getData(), element._getIndexBuffer().getData());
+			}
 			return renderElement;
 		}
 		
-		/** @private */
+		/**
+		 * @private
+		 */
 		private function _changeRenderObjectByMaterial(index:int, material:BaseMaterial):RenderElement {
 			var renderElement:RenderElement = _meshRender.renderObject._renderElements[index];
 			
@@ -93,18 +112,30 @@ package laya.d3.core {
 			
 			renderElement.renderObj = element;
 			renderElement._material = material;
+			
+			if (Render.isConchNode) {//NATIVE
+				renderElement._conchSubmesh.setMaterial(material._conchMaterial);
+			}
 			return renderElement;
 		}
 		
-		/** @private */
+		/**
+		 * @private
+		 */
 		private function _changeRenderObjectsByMesh():void {
+			if (Render.isConchNode) {//NATIVE
+				var box:BoundBox = _meshFilter.sharedMesh.boundingBox;
+				_meshRender.renderObject._conchRenderObject.boundingBox(box.min.elements, box.max.elements);
+			}
 			var renderElementsCount:int = _meshFilter.sharedMesh.getRenderElementsCount();
 			_meshRender.renderObject._renderElements.length = renderElementsCount;
 			for (var i:int = 0; i < renderElementsCount; i++)
 				_changeRenderObjectByMesh(i);
 		}
 		
-		/** @private */
+		/**
+		 * @private
+		 */
 		private function _onMeshChanged(meshFilter:MeshFilter):void {
 			var mesh:BaseMesh = meshFilter.sharedMesh;
 			if (mesh.loaded)
@@ -113,28 +144,44 @@ package laya.d3.core {
 				mesh.once(Event.LOADED, this, _onMeshLoaded);//TODO:假设Mesh未加载完成前无效。
 		}
 		
-		/** @private */
+		/**
+		 * @private
+		 */
 		private function _onMeshLoaded(sender:Mesh):void {
 			(sender === meshFilter.sharedMesh) && (_changeRenderObjectsByMesh());
 		}
 		
-		/** @private */
+		/**
+		 * @private
+		 */
 		private function _onMaterialChanged(meshRender:MeshRender, index:int, material:BaseMaterial):void {//TODO:
 			var renderElementCount:int = _meshRender.renderObject._renderElements.length;
 			(index < renderElementCount) && _changeRenderObjectByMaterial(index, material);
 		}
 		
-		/** @private */
+		/**
+		 * @private
+		 */
 		override protected function _clearSelfRenderObjects():void {
 			scene.removeFrustumCullingObject(_meshRender.renderObject);
+			if (scene.conchModel) {//NATIVE
+				scene.conchModel.removeChild(_meshRender.renderObject._conchRenderObject);
+			}
 		}
 		
-		/** @private */
+		/**
+		 * @private
+		 */
 		override protected function _addSelfRenderObjects():void {
 			scene.addFrustumCullingObject(_meshRender.renderObject);
+			if (scene.conchModel) {//NATIVE
+				scene.conchModel.addChildAt(_meshRender.renderObject._conchRenderObject);
+			}
 		}
 		
-		/** @private */
+		/**
+		 * @private
+		 */
 		public function _applyMeshMaterials(mesh:Mesh):void {
 			var shaderMaterials:Vector.<BaseMaterial> = _meshRender.sharedMaterials;
 			var meshMaterials:Vector.<BaseMaterial> = mesh.materials;
@@ -150,12 +197,27 @@ package laya.d3.core {
 		public override function _update(state:RenderState):void {
 			state.owner = this;
 			if (_enable) {
+				if (Render.isConchNode) {//NATIVE
+					if (transform.worldNeedUpdate) {
+						_meshRender.renderObject._conchRenderObject.matrix(transform.worldMatrix.elements);
+					}
+					_meshRender.renderObject._renderRuntime(state);
+				}
 				_updateComponents(state);
 				_lateUpdateComponents(state);
 			}
 			
 			Stat.spriteCount++;
 			_childs.length && _updateChilds(state);
+		}
+		
+		/**
+		 * @private
+		 */
+		override public function _prepareShaderValuetoRender(view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
+			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
+			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
+			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
 		}
 		
 		override public function cloneTo(destObject:*):void {

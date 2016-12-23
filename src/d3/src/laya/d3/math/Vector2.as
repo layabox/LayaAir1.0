@@ -1,9 +1,10 @@
 package laya.d3.math {
+	import laya.d3.core.IClone;
 	
 	/**
 	 * <code>Vector2</code> 类用于创建二维向量。
 	 */
-	public class Vector2 {
+	public class Vector2 implements IClone {
 		/**零向量,禁止修改*/
 		public static const ZERO:Vector2 = new Vector2(0.0, 0.0);
 		/**一向量,禁止修改*/
@@ -53,13 +54,25 @@ package laya.d3.math {
 		}
 		
 		/**
-		 * 从一个克隆二维向量克隆。
-		 * @param	v 源二维向量。
+		 * 克隆。
+		 * @param	destObject 克隆源。
 		 */
-		public function clone(v:Vector2):void {
-			var out:Float32Array = elements, s:Float32Array = v.elements;
-			out[0] = s[0];
-			out[1] = s[1];
+		public function cloneTo(destObject:*):void {
+			var destVector2:Vector2 = destObject as Vector2;
+			var destE:Float32Array = destVector2.elements;
+			var s:Float32Array = this.elements;
+			destE[0] = s[0];
+			destE[1] = s[1];
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var destVector2:Vector2 = __JS__("new this.constructor()");
+			cloneTo(destVector2);
+			return destVector2;
 		}
 	
 	}

@@ -16,7 +16,7 @@ uniform float u_FogRange;
 uniform vec3 u_FogColor;
 #endif
 
-#ifdef DIFFUSEMAP&&NORMALMAP&&SPECULARMAP&&EMISSIVEMAP&&AMBIENTMAP
+#if defined(DIFFUSEMAP)&&defined(NORMALMAP)&&defined(SPECULARMAP)&&defined(EMISSIVEMAP)&&defined(AMBIENTMAP)
   varying vec2 v_Texcoord;
   varying vec2 v_TiledTexcoord;
   uniform sampler2D u_BlendTexture;
@@ -28,7 +28,7 @@ uniform vec3 u_FogColor;
 
 void main()
 {	
-  #ifdef DIFFUSEMAP&&NORMALMAP&&SPECULARMAP&&EMISSIVEMAP&&AMBIENTMAP
+  #if defined(DIFFUSEMAP)&&defined(NORMALMAP)&&defined(SPECULARMAP)&&defined(EMISSIVEMAP)&&defined(AMBIENTMAP)
   vec4 blend=texture2D(u_BlendTexture, v_Texcoord);
   vec4 c0=texture2D(u_LayerTexture0, v_TiledTexcoord);
   vec4 c1=texture2D(u_LayerTexture1, v_TiledTexcoord);

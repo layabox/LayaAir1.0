@@ -31,15 +31,15 @@ uniform vec3 u_FogColor;
 void main()
 {
   
-  #ifdef DIFFUSEMAP&&!COLOR
+  #if defined(DIFFUSEMAP)&&!defined(COLOR)
   gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);
   #endif 
   
-  #ifdef COLOR&&!DIFFUSEMAP
+  #if defined(COLOR)&&!defined(DIFFUSEMAP)
   gl_FragColor=v_Color;
   #endif 
   
-  #ifdef DIFFUSEMAP&&COLOR
+  #ifdef defined(DIFFUSEMAP)&&defined(COLOR)
   vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);
   gl_FragColor=texColor*v_Color;
   #endif

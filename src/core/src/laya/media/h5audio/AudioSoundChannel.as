@@ -60,6 +60,7 @@ package laya.media.h5audio {
 		 */
 		override public function play():void {
 			try {
+				_audio.playbackRate = SoundManager.playbackRate;
 				_audio.currentTime = this.startTime;
 			} catch (e:*) {
 				_audio.addEventListener("canplay", _resumePlay);

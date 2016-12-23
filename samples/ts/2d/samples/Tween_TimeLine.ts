@@ -31,7 +31,7 @@ module laya {
 		private createApe():void
 		{
 			this.target = new Sprite();
-			this.target.loadImage("../../../../res/apes/monkey2.png");
+			this.target.loadImage("../../res/apes/monkey2.png");
 			Laya.stage.addChild(this.target);
 			this.target.pivot(55, 72);
 			this.target.pos(100,100);

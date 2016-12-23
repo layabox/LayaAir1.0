@@ -518,7 +518,7 @@ package laya.ui {
 			if (_scrollBar) {
 				_content.scrollRect || (_content.scrollRect = new Rectangle());
 				_content.scrollRect.setTo(0, 0, width, height);
-				_content.model && _content.model.scrollRect(0, 0, width, height);//通知微端
+				_content.conchModel && _content.conchModel.scrollRect(0, 0, width, height);//通知微端
 				event(Event.RESIZE);
 			}
 		}
@@ -621,7 +621,7 @@ package laya.ui {
 			} else {
 				r.x = scrollValue;
 			}
-			_content.model && _content.model.scrollRect(r.x, r.y, r.width, r.height);
+			_content.conchModel && _content.conchModel.scrollRect(r.x, r.y, r.width, r.height);
 			repaint();
 		}
 		
@@ -925,6 +925,10 @@ package laya.ui {
 				_cellChanged = true;
 				callLater(changeCells);
 			}
+		}
+		
+		override protected function commitMeasure():void {
+			runCallLater(changeCells);
 		}
 	}
 }

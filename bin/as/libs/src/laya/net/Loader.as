@@ -49,7 +49,7 @@ package laya.net {
 		public static const FONT:String = "font";
 		
 		/** 文件后缀和类型对应表。*/
-		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json"};
+		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json", "fnt": "font"};
 		/**资源解析函数对应表，用来扩展更多类型的资源加载解析*/
 		public static var parserMap:Object = /*[STATIC SAFE]*/ {};
 		/** 已加载的资源池。*/

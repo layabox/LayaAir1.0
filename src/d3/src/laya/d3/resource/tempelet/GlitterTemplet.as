@@ -3,6 +3,7 @@ package laya.d3.resource.tempelet {
 	import laya.d3.core.glitter.SplineCurvePositionVelocity;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
+	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
@@ -20,7 +21,6 @@ package laya.d3.resource.tempelet {
 	import laya.webgl.resource.WebGLImage;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.ValusArray;
 	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
@@ -472,6 +472,9 @@ package laya.d3.resource.tempelet {
 		public function dispose():void {
 			_owner.off(Event.ENABLED_CHANGED, this, _onEnableChanged);
 		}
-	
+		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void//NATIVE
+		{
+			
+		}
 	}
 }

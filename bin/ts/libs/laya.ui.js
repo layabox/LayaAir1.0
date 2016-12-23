@@ -9,8 +9,8 @@
 	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Text=laya.display.Text,Texture=laya.resource.Texture;
 	var Tween=laya.utils.Tween,Utils=laya.utils.Utils;
 	Laya.interface('laya.ui.IItem');
-	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
@@ -77,9 +77,7 @@
 		}
 
 		UIUtils.toColor=function(color){
-			var str=color.toString("16");
-			while (str.length < 6)str="0"+str;
-			return "#"+str;
+			return Utils.toHexColor(color);
 		}
 
 		UIUtils.gray=function(traget,isGray){
@@ -534,7 +532,7 @@
 			},function(value){
 			if (this._width !=value){
 				this._width=value;
-				this.model && this.model.size(this._width,this._height);
+				this.conchModel && this.conchModel.size(this._width,this._height);
 				this.callLater(this.changeSize);
 				if (this._layout.enable && (!isNaN(this._layout.centerX)|| !isNaN(this._layout.right)|| !isNaN(this._layout.anchorX)))this.resetLayoutX();
 			}
@@ -591,7 +589,7 @@
 			},function(value){
 			if (this._height !=value){
 				this._height=value;
-				this.model && this.model.size(this._width,this._height);
+				this.conchModel && this.conchModel.size(this._width,this._height);
 				this.callLater(this.changeSize);
 				if (this._layout.enable && (!isNaN(this._layout.centerY)|| !isNaN(this._layout.bottom)|| !isNaN(this._layout.anchorY)))this.resetLayoutY();
 			}
@@ -2500,8 +2498,7 @@
 					this._list || this._createList();
 					this._listChanged && this.changeList();
 					this._itemChanged && this.changeItem();
-					Point.EMPTY.setTo(0,0);
-					var p=this.localToGlobal(Point.EMPTY);
+					var p=this.localToGlobal(Point.TEMP.setTo(0,0));
 					var py=p.y+this._button.height;
 					py=py+this._listHeight <=Laya.stage.height ? py :p.y-this._listHeight;
 					this._list.pos(p.x,py);
@@ -3256,8 +3253,10 @@
 			var pow=Math.pow(10,(this._tick+"").length-1);
 			this._value=Math.round(Math.round(this._value / this._tick)*this._tick *pow)/ pow;
 			this._value=this._value > this._max ? this._max :this._value < this._min ? this._min :this._value;
-			if (this.isVertical)this._bar.y=(this._value-this._min)/ (this._max-this._min)*(this.height-this._bar.height);
-			else this._bar.x=(this._value-this._min)/ (this._max-this._min)*(this.width-this._bar.width);
+			var num=this._max-this._min;
+			if (num===0)num=1;
+			if (this.isVertical)this._bar.y=(this._value-this._min)/ num *(this.height-this._bar.height);
+			else this._bar.x=(this._value-this._min)/ num *(this.width-this._bar.width);
 		}
 
 		/**
@@ -5071,7 +5070,7 @@
 			if (this._scrollBar){
 				this._content.scrollRect || (this._content.scrollRect=new Rectangle());
 				this._content.scrollRect.setTo(0,0,width,height);
-				this._content.model && this._content.model.scrollRect(0,0,width,height);
+				this._content.conchModel && this._content.conchModel.scrollRect(0,0,width,height);
 				this.event(/*laya.events.Event.RESIZE*/"resize");
 			}
 		}
@@ -5171,7 +5170,7 @@
 				}else {
 				r.x=scrollValue;
 			}
-			this._content.model && this._content.model.scrollRect(r.x,r.y,r.width,r.height);
+			this._content.conchModel && this._content.conchModel.scrollRect(r.x,r.y,r.width,r.height);
 			this.repaint();
 		}
 
@@ -5344,6 +5343,10 @@
 				this._cellChanged=true;
 				this.callLater(this.changeCells);
 			}
+		}
+
+		__proto.commitMeasure=function(){
+			this.runCallLater(this.changeCells);
 		}
 
 		/**@inheritDoc */
@@ -5738,7 +5741,7 @@
 			content.height=height;
 			content.scrollRect || (content.scrollRect=new Rectangle());
 			content.scrollRect.setTo(0,0,width,height);
-			content.model&&content.model.scrollRect(0,0,width,height);
+			content.conchModel&&content.conchModel.scrollRect(0,0,width,height);
 		}
 
 		/**
@@ -5752,7 +5755,7 @@
 			if (rect){
 				var start=Math.round(scrollBar.value);
 				scrollBar.isVertical ? rect.y=start :rect.x=start;
-				this._content.model&&this._content.model.scrollRect(rect.x,rect.y,rect.width,rect.height);
+				this._content.conchModel&&this._content.conchModel.scrollRect(rect.x,rect.y,rect.width,rect.height);
 			}
 		}
 
@@ -5999,6 +6002,66 @@
 
 		return HScrollBar;
 	})(ScrollBar)
+
+
+	/**
+	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
+	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
+	*@see laya.ui.RadioGroup
+	*/
+	//class laya.ui.Radio extends laya.ui.Button
+	var Radio=(function(_super){
+		function Radio(skin,label){
+			this._value=null;
+			(label===void 0)&& (label="");
+			Radio.__super.call(this,skin,label);
+		}
+
+		__class(Radio,'laya.ui.Radio',_super);
+		var __proto=Radio.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._value=null;
+		}
+
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			laya.ui.Component.prototype.preinitialize.call(this);
+			this.toggle=false;
+			this._autoSize=false;
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			_super.prototype.initialize.call(this);
+			this.createText();
+			this._text.align="left";
+			this._text.valign="top";
+			this._text.width=0;
+			this.on(/*laya.events.Event.CLICK*/"click",this,this.onClick);
+		}
+
+		/**
+		*@private
+		*对象的<code>Event.CLICK</code>事件侦听处理函数。
+		*/
+		__proto.onClick=function(e){
+			this.selected=true;
+		}
+
+		/**
+		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
+		*/
+		__getset(0,__proto,'value',function(){
+			return this._value !=null ? this._value :this.label;
+			},function(obj){
+			this._value=obj;
+		});
+
+		return Radio;
+	})(Button)
 
 
 	/**
@@ -6403,66 +6466,6 @@
 
 		return UIGroup;
 	})(Box)
-
-
-	/**
-	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
-	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
-	*@see laya.ui.RadioGroup
-	*/
-	//class laya.ui.Radio extends laya.ui.Button
-	var Radio=(function(_super){
-		function Radio(skin,label){
-			this._value=null;
-			(label===void 0)&& (label="");
-			Radio.__super.call(this,skin,label);
-		}
-
-		__class(Radio,'laya.ui.Radio',_super);
-		var __proto=Radio.prototype;
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			_super.prototype.destroy.call(this,destroyChild);
-			this._value=null;
-		}
-
-		/**@inheritDoc */
-		__proto.preinitialize=function(){
-			laya.ui.Component.prototype.preinitialize.call(this);
-			this.toggle=false;
-			this._autoSize=false;
-		}
-
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			_super.prototype.initialize.call(this);
-			this.createText();
-			this._text.align="left";
-			this._text.valign="top";
-			this._text.width=0;
-			this.on(/*laya.events.Event.CLICK*/"click",this,this.onClick);
-		}
-
-		/**
-		*@private
-		*对象的<code>Event.CLICK</code>事件侦听处理函数。
-		*/
-		__proto.onClick=function(e){
-			this.selected=true;
-		}
-
-		/**
-		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
-		*/
-		__getset(0,__proto,'value',function(){
-			return this._value !=null ? this._value :this.label;
-			},function(obj){
-			this._value=obj;
-		});
-
-		return Radio;
-	})(Button)
 
 
 	/**

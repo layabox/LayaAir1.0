@@ -1,13 +1,18 @@
 package laya.d3.core.render {
 	import laya.d3.component.Component3D;
+	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.graphics.DynamicBatch;
 	import laya.d3.graphics.StaticBatch;
-	import laya.d3.math.Matrix4x4;
+	import laya.d3.graphics.VertexBuffer3D;
+	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.math.Vector3;
+	import laya.d3.shader.Shader3D;
+	import laya.utils.Stat;
 	import laya.webgl.WebGLContext;
+	import laya.webgl.shader.BaseShader;
 	
 	/**
 	 * @private
@@ -15,7 +20,7 @@ package laya.d3.core.render {
 	 */
 	public class RenderQueue {
 		/**唯一标识ID计数器*/
-		private static var _uniqueIDCounter:int = 0/*int.MIN_VALUE*/;
+		private static var _uniqueIDCounter:int = 0;
 		/** 定义非透明渲染队列标记。*/
 		public static const OPAQUE:int = 1;//TODO:从零开始
 		/** 定义非透明、双面渲染队列标记。*/
@@ -107,18 +112,9 @@ package laya.d3.core.render {
 		 */
 		private function _begainRenderElement(state:RenderState, renderObj:IRenderable, material:BaseMaterial):Boolean {
 			if (renderObj._beforeRender(state)) {
-				state.shaderValue.pushArray(renderObj._getVertexBuffer(0).vertexDeclaration.shaderValues);
 				return true;
 			}
 			return false;
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _endRenderElement(state:RenderState, renderObj:IRenderable, material:BaseMaterial):void {
-			material._upload(state, renderObj._getVertexBuffer(0).vertexDeclaration, null);
-			renderObj._render(state);
 		}
 		
 		/**
@@ -211,47 +207,175 @@ package laya.d3.core.render {
 		 * @param	state 渲染状态。
 		 */
 		public function _render(state:RenderState):void {
-			var preShaderValue:int = state.shaderValue.length;
 			var preShadeDef:int = state.shaderDefines.getValue();
+			var loopCount:int = Stat.loopCount;
+			var scene:BaseScene = _scene;
+			var camera:BaseCamera = state.camera;
+			var cameraID:int = camera.id;
+			var vertexBuffer:VertexBuffer3D, vertexDeclaration:VertexDeclaration, lastBindShader:BaseShader, shader:Shader3D;
+			var needForceUpdate:Boolean, isNewCamera:Boolean;
+			
 			for (var i:int = 0, n:int = _finalElements.length; i < n; i++) {
 				var renderElement:RenderElement = _finalElements[i];
-				var renderObj:IRenderable, material:BaseMaterial;
+				var renderObj:IRenderable, material:BaseMaterial,owner:Sprite3D;
 				if (renderElement._type === 0) {
-					var owner:Sprite3D = renderElement._sprite3D;
-					state.owner = owner;
+					state.owner = owner = renderElement._sprite3D;
 					state.renderElement = renderElement;
 					_preRenderUpdateComponents(owner, state);
 					renderObj = renderElement.renderObj, material = renderElement._material;
 					if (_begainRenderElement(state, renderObj, material)) {
-						material._setLoopShaderParams(state, state.projectionViewMatrix, owner.transform.worldMatrix, renderElement.renderObj, material);
-						_endRenderElement(state, renderObj, material);
+						vertexBuffer = renderObj._getVertexBuffer(0);
+						vertexDeclaration = vertexBuffer.vertexDeclaration;
+						lastBindShader = BaseShader.bindShader;
+						material._setMaterialShaderDefineParams(owner,state.shaderDefines);
+						shader = material._getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue);
+						shader.bind();
+						needForceUpdate = (loopCount !== shader._uploadLoopCount) || (shader !== lastBindShader);
+						isNewCamera = cameraID !== shader._uploadCameraID;
+						
+						if (shader._uploadVertexBuffer !== vertexBuffer || needForceUpdate) {
+							shader.uploadAttributes(vertexDeclaration.shaderValues.data, null);
+							shader._uploadVertexBuffer = vertexBuffer;
+						}
+						
+						if (shader._uploadScene !== scene || needForceUpdate) {       
+							shader.uploadSceneUniforms(scene._shaderValues.data);
+							shader._uploadScene = scene;
+						}
+						
+						if (shader._uploadCamera !== camera || needForceUpdate) {
+							shader.uploadCameraUniforms(camera._shaderValues.data);
+							shader._uploadCamera = camera;
+						}
+						
+						if (shader._uploadSprite3D !== owner || needForceUpdate) {
+							shader.uploadSpriteUniforms(owner._shaderValues.data);
+							shader._uploadSprite3D = owner;
+						}
+						
+						if (shader._uploadMaterial !== material || needForceUpdate) {
+							material._setMaterialShaderParams(state, state.projectionViewMatrix, owner.transform.worldMatrix, renderElement.renderObj, material);//TODO:或许可以取消
+							material._upload();
+							shader._uploadMaterial = material;
+						}
+						
+						if (shader._uploadRenderElement !== renderElement || needForceUpdate) {
+							shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
+							shader._uploadRenderElement = renderElement;
+						}
+						
+						renderObj._render(state);
+						shader._uploadLoopCount = loopCount;
+						shader._uploadCameraID = cameraID;
 					}
 					_postRenderUpdateComponents(owner, state);
 				} else if (renderElement._type === 1) {//TODO:合并后组件渲染问题
 					var staticBatch:StaticBatch = renderElement.renderObj as StaticBatch;
-					state.owner = null;
+					state.owner = owner;
 					state.renderElement = renderElement;
 					state._batchIndexStart = renderElement._batchIndexStart;
 					state._batchIndexEnd = renderElement._batchIndexEnd;
 					renderObj = renderElement.renderObj, material = renderElement._material;
 					if (_begainRenderElement(state, renderObj, material)) {
-						renderElement._material._setLoopShaderParams(state, state.projectionViewMatrix, staticBatch._rootSprite.transform.worldMatrix, renderElement.renderObj, renderElement._material);
-						_endRenderElement(state, renderObj, material);
+						vertexBuffer = renderObj._getVertexBuffer(0);
+						vertexDeclaration = vertexBuffer.vertexDeclaration;
+						lastBindShader = BaseShader.bindShader;
+						material._setMaterialShaderDefineParams(owner,state.shaderDefines);
+						shader = material._getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue);
+						shader.bind();
+						needForceUpdate = (loopCount !== shader._uploadLoopCount) || (shader !== lastBindShader);
+						isNewCamera = cameraID !== shader._uploadCameraID;
+						
+						if (shader._uploadVertexBuffer !== vertexBuffer || needForceUpdate) {
+							shader.uploadAttributes(vertexDeclaration.shaderValues.data, null);
+							shader._uploadVertexBuffer = vertexBuffer;
+						}
+						
+						if (shader._uploadScene !== scene || needForceUpdate) {
+							shader.uploadSceneUniforms(scene._shaderValues.data);
+							shader._uploadScene = scene;
+						}
+						
+						if (shader._uploadCamera !== camera || needForceUpdate) {
+							shader.uploadCameraUniforms(camera._shaderValues.data);
+							shader._uploadCamera = camera;
+						}
+						
+						owner = staticBatch._rootSprite;
+						if (shader._uploadSprite3D !== owner || needForceUpdate) {
+							shader.uploadSpriteUniforms(owner._shaderValues.data);
+							shader._uploadSprite3D = owner;
+						}
+						
+						if (shader._uploadMaterial !== material || needForceUpdate) {
+							material._setMaterialShaderParams(state, state.projectionViewMatrix, owner.transform.worldMatrix, renderElement.renderObj, material);//TODO:或许可以取消
+							material._upload();
+							shader._uploadMaterial = material;
+						}
+						
+						if (shader._uploadRenderElement !== renderElement || needForceUpdate) {
+							shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
+							shader._uploadRenderElement = renderElement;
+						}
+						
+						renderObj._render(state);
+						shader._uploadLoopCount = loopCount;
+						shader._uploadCameraID = cameraID;
 					}
 				} else if (renderElement._type === 2) {//TODO:合并后组件渲染问题
 					var dynamicBatch:DynamicBatch = renderElement.renderObj as DynamicBatch;
-					state.owner = null;
+					state.owner = owner = renderElement._sprite3D;
 					state.renderElement = renderElement;
 					state._batchIndexStart = renderElement._batchIndexStart;
 					state._batchIndexEnd = renderElement._batchIndexEnd;
 					renderObj = renderElement.renderObj, material = renderElement._material;
 					if (_begainRenderElement(state, renderObj, material)) {
-						renderElement._material._setLoopShaderParams(state, state.projectionViewMatrix, Matrix4x4.DEFAULT, renderElement.renderObj, renderElement._material);
-						_endRenderElement(state, renderObj, material);
+						vertexBuffer = renderObj._getVertexBuffer(0);
+						vertexDeclaration = vertexBuffer.vertexDeclaration;
+						lastBindShader = BaseShader.bindShader;
+						material._setMaterialShaderDefineParams(owner,state.shaderDefines);
+						shader = material._getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue);
+						shader.bind();
+						needForceUpdate = (loopCount !== shader._uploadLoopCount) || (shader !== lastBindShader);
+						isNewCamera = cameraID !== shader._uploadCameraID;
+						
+						if (shader._uploadVertexBuffer !== vertexBuffer || needForceUpdate) {
+							shader.uploadAttributes(vertexDeclaration.shaderValues.data, null);
+							shader._uploadVertexBuffer = vertexBuffer;
+						}
+						
+						if (shader._uploadScene !== scene || needForceUpdate) {
+							shader.uploadSceneUniforms(scene._shaderValues.data);
+							shader._uploadScene = scene;
+						}
+						
+						if (shader._uploadCamera !== camera || needForceUpdate) {
+							shader.uploadCameraUniforms(camera._shaderValues.data);
+							shader._uploadCamera = camera;
+						}
+						
+						if (shader._uploadSprite3D !== owner || needForceUpdate) {
+							shader.uploadSpriteUniforms(owner._shaderValues.data);
+							shader._uploadSprite3D = owner;
+						}
+						
+						if (shader._uploadMaterial !== material || needForceUpdate) {
+							material._setMaterialShaderParams(state, state.projectionViewMatrix, owner.transform.worldMatrix, renderElement.renderObj, material);//TODO:或许可以取消
+							material._upload();
+							shader._uploadMaterial = material;
+						}
+						
+						if (shader._uploadRenderElement !== renderElement || needForceUpdate) {
+							shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
+							shader._uploadRenderElement = renderElement;
+						}
+						
+						renderObj._render(state);
+						shader._uploadLoopCount = loopCount;
+						shader._uploadCameraID = cameraID;
 					}
 				}
 				state.shaderDefines.setValue(preShadeDef);
-				state.shaderValue.length = preShaderValue;
 			}
 		}
 		

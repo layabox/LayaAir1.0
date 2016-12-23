@@ -559,14 +559,14 @@ package laya.display.css {
 			}
 			_border || (_border = {size: 1, type: 'solid'});
 			_border.color = (value == null) ? null : Color.create(value);
-			_ower.model && _ower.model.border(_border.color.strColor);
+			_ower.conchModel && _ower.conchModel.border(_border.color.strColor);
 			_ower._renderType |= RenderSprite.STYLE;
 		}
 		
 		public function set backgroundColor(value:String):void {
 			if (value === 'none') _bgground = null;
 			else (_bgground || (_bgground = { } ), _bgground.color = value);
-			_ower.model && _ower.model.bgColor(value);
+			_ower.conchModel && _ower.conchModel.bgColor(value);
 			_ower._renderType |= RenderSprite.STYLE;
 		}
 		
@@ -584,7 +584,7 @@ package laya.display.css {
 			}
 			_bgground || (_bgground = {});
 			_bgground.color = value;
-			_ower.model && _ower.model.bgColor(value);
+			_ower.conchModel && _ower.conchModel.bgColor(value);
 			_type |= _BACKGROUND_SET;
 			_ower._renderType |= RenderSprite.STYLE;
 		}

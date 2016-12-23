@@ -5,18 +5,19 @@ package laya.d3.core.render {
 	import laya.d3.graphics.RenderObject;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
+	import laya.d3.shader.ValusArray;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.resource.IDestroy;
 	import laya.resource.IDispose;
+	import laya.utils.Stat;
 	
 	/**
 	 * <code>Render</code> 类用于渲染器的父类，抽象类不允许示例。
 	 */
 	public class BaseRender extends EventDispatcher implements IDestroy {
-		/** @private */
-		private var _owner:Sprite3D;
 		/** @private */
 		private var _enable:Boolean;
 		/** @private */
@@ -31,6 +32,9 @@ package laya.d3.core.render {
 		protected var _boundingSphere:BoundSphere;
 		/** @private */
 		protected var _boundingBox:BoundBox;
+		
+		/** @private */
+		public var _owner:Sprite3D;
 		
 		
 		/**
@@ -187,7 +191,7 @@ package laya.d3.core.render {
 			_boundingSphere = new BoundSphere(new Vector3(), 0);
 			_boundingSphereNeedChange = true;
 			_boundingBoxNeedChange = true;
-			_renderObject = new RenderObject();
+			_renderObject = new RenderObject(owner);
 			_renderObject._render = this;
 			_renderObject._layerMask = _owner.layer.mask;
 			_renderObject._ownerEnable = _owner.enable;
@@ -243,6 +247,8 @@ package laya.d3.core.render {
 		protected function _calculateBoundingBox():void {
 			throw("BaseRender: must override it.");
 		}
+		
+
 		
 		/**
 		 * @private

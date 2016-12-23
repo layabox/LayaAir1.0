@@ -36,7 +36,7 @@ package laya.html.utils {
 			if ((element._style._type & CSSStyle.ADDLAYOUTED) === 0)
 				return null;
 			
-			element._style._type &= ~CSSStyle.ADDLAYOUTED;
+			element.getStyle()._type &= ~CSSStyle.ADDLAYOUTED;
 			/*
 			   if (element._childs.length > 0)
 			   return _multiLineLayout(element);

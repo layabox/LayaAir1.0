@@ -15,9 +15,6 @@ package laya.webgl.canvas
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	import laya.utils.VectorGraphManager;
-	import laya.webgl.shader.d2.skinAnishader.SkinMeshBuffer;
-	import laya.webgl.shader.d2.value.FillTextureSV;
-	import laya.webgl.utils.Buffer;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.atlas.AtlasResourceManager;
@@ -32,6 +29,8 @@ package laya.webgl.canvas
 	import laya.webgl.shader.Shader;
 	import laya.webgl.shader.d2.Shader2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
+	import laya.webgl.shader.d2.skinAnishader.SkinMeshBuffer;
+	import laya.webgl.shader.d2.value.FillTextureSV;
 	import laya.webgl.shader.d2.value.PrimitiveSV;
 	import laya.webgl.shader.d2.value.TextSV;
 	import laya.webgl.shader.d2.value.Value2D;
@@ -477,48 +476,102 @@ package laya.webgl.canvas
 		public override function fillTexture(texture:Texture, x:Number, y:Number, width:Number, height:Number, type:String, offset:Point, other:*):void {
 			var vb:VertexBuffer2D = _vb;
 			var w:Number = texture.bitmap.width, h:Number = texture.bitmap.height, uv:Array = texture.uv;
+			var ox:Number = offset.x % texture.width, oy:Number = offset.y % texture.height;
 			if (w!=other.w||h!=other.h)
 			{
-				switch(type)
+				if (!other.w && !other.h)
 				{
-					case "repeat":
-						other.width = width;
-						other.height = height;
-						break;
-					case "repeat-x":
-						other.width = width;
-						other.height = texture.height > height?height:texture.height;
-						break;
-					case "repeat-y":
-						other.width = texture.width > width?width:texture.width;
-						other.height = height;
-						break;
-					default:
-						other.width = width;
-						other.height = height;
-						break;
-						
+					other.oy = other.ox = 0;
+					switch(type)
+					{
+						case "repeat":
+							other.width = width;
+							other.height = height;
+							break;
+						case "repeat-x":
+							other.width = width;
+							if (oy < 0)
+							{
+								if (texture.height + oy > height)
+								{
+									other.height = height;
+								}
+								else
+								{
+									other.height = texture.height + oy;
+								}
+							}
+							else
+							{
+								other.oy = oy;
+							    if (texture.height+oy > height)
+								{
+									other.height = height-oy;
+								}
+								else
+								{
+									other.height = texture.height;
+								}
+							}
+							break;
+						case "repeat-y":
+							if (ox < 0)
+							{
+								if (texture.width + ox > width)
+								{
+									other.width = width;
+								}
+								else
+								{
+									other.width = texture.width + ox;
+								}
+							}
+							else
+							{
+								other.ox = ox;
+							    if (texture.width + ox > width)
+								{
+									other.width = width-ox;
+								}
+								else
+								{
+									other.width = texture.width;
+								}
+							}
+							other.height = height;
+							break;
+						default:
+							other.width = width;
+							other.height = height;
+							break;
+					}
 				}
 				other.w = w;
 				other.h = h;
 				other.uv = [0, 0,  other.width / w, 0, other.width / w, other.height / h,  0, other.height / h];
 			}
-			
+
+			x += other.ox;
+			y += other.oy;
+			ox -= other.ox;
+			oy -= other.oy;
 			if (GlUtils.fillRectImgVb(vb, _clipRect, x, y,  other.width,  other.height, other.uv, _curMat, _x, _y, 0, 0))
 			{
+					
 				_renderKey = 0;
-				var submit:Submit = _curSubmit = Submit.create(this, _ib, vb, ((vb._byteLength - _RECTVBSIZE * Buffer2D.FLOAT32) / 32) * 3, Value2D.create(ShaderDefines2D.FILLTEXTURE, 0));
+				var submit:SubmitTexture = SubmitTexture.create(this, _ib, vb, ((vb._byteLength - _RECTVBSIZE * Buffer2D.FLOAT32) / 32) * 3, Value2D.create(ShaderDefines2D.FILLTEXTURE, 0));
+			
 				_submits[_submits._length++] = submit;
 				var shaderValue:FillTextureSV = submit.shaderValue as FillTextureSV;
 				shaderValue.textureHost = texture;
-				
+			
 				var tTextureX:Number = uv[0] * w;
 				var tTextureY:Number = uv[1] * h;
 				var tTextureW:Number = (uv[2] - uv[0]) * w;
 				var tTextureH:Number = (uv[5] - uv[3]) * h;
 
-				var tx = -offset.x / w;
-				var ty=  -offset.y / h;
+				var tx:Number = -ox / w;
+				var ty:Number = -oy/ h;
 				shaderValue.u_TexRange[0] = tTextureX / w;
 				shaderValue.u_TexRange[1] = tTextureW / w;
 				shaderValue.u_TexRange[2] = tTextureY / h;
@@ -526,8 +579,16 @@ package laya.webgl.canvas
 				
 				shaderValue.u_offset[0] = tx;
 				shaderValue.u_offset[1] = ty;
-				submit._renderType = Submit.TYPE_TEXTURE;
-				_curSubmit._numEle += 6;
+				var curShader:Value2D = _curSubmit.shaderValue;
+				var shader:Shader2D = _shader2D;
+				
+				if (AtlasResourceManager.enabled && !this._isMain) //而且不是主画布
+					submit.addTexture(texture, (vb._byteLength >> 2) - WebGLContext2D._RECTVBSIZE);
+				submit._preIsSameTextureShader = _curSubmit._renderType === Submit.TYPE_FILLTEXTURE && shader.ALPHA === curShader.ALPHA;
+				_curSubmit = submit;
+		        
+				submit._renderType = Submit.TYPE_FILLTEXTURE;
+				submit._numEle += 6;
 			}
 			
 		}

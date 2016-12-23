@@ -11,7 +11,7 @@ module:"laya.particle"
 path:"../../src/particle/src"
 
 module:"laya.webgl"
-path:"../../src/webgl/src"
+path:"../../src/webGL/src"
 
 module:"laya.ani"
 path:"../../src/ani/src"

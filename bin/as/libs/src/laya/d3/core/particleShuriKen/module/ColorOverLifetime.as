@@ -39,8 +39,23 @@ package laya.d3.core.particleShuriKen.module {
 		 * @return	 克隆副本。
 		 */
 		public function clone():* {
-			var destColorOverLifetime:ColorOverLifetime = __JS__("new this.constructor()");
-			cloneTo(destColorOverLifetime);
+			var destColor:GradientColor;
+			switch (_color.type) {
+			case 0: 
+				destColor = GradientColor.createByConstant(_color.constant.clone());
+				break;
+			case 1: 
+				destColor = GradientColor.createByGradient(_color.gradient.clone());
+				break;
+			case 2: 
+				destColor = GradientColor.createByRandomTwoConstant(_color.constantMin.clone(), _color.constantMax.clone());
+				break;
+			case 3: 
+				destColor = GradientColor.createByRandomTwoGradient(_color.gradientMin.clone(), _color.gradientMax.clone());
+				break;
+			}
+			
+			var destColorOverLifetime:ColorOverLifetime = __JS__("new this.constructor(destColor)");
 			return destColorOverLifetime;
 		}
 	

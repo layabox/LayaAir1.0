@@ -1,4 +1,5 @@
 package laya.d3.graphics {
+	import laya.renders.Render;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.utils.Buffer;
@@ -66,11 +67,13 @@ package laya.d3.graphics {
 			_bufferType = WebGLContext.ARRAY_BUFFER;
 			_canRead = canRead;
 			
-			_bind();
 			var byteLength:int = _vertexDeclaration.vertexStride * vertexCount;
 			memorySize = byteLength;
 			_byteLength = byteLength;
-			_gl.bufferData(_bufferType, byteLength, _bufferUsage);
+			if (!Render.isConchNode) {//!NATIVE
+				_bind();
+				_gl.bufferData(_bufferType, byteLength, _bufferUsage);
+			}
 			canRead && (_buffer = new Float32Array(byteLength / 4));
 		}
 		
@@ -93,8 +96,11 @@ package laya.d3.graphics {
 		public function setData(data:Float32Array, bufferOffset:int = 0, dataStartIndex:int = 0, dataCount:uint = 4294967295/*uint.MAX_VALUE*/):void {
 			if (dataStartIndex !== 0 || dataCount !== 4294967295/*uint.MAX_VALUE*/)
 				data = new Float32Array(data.buffer, dataStartIndex * 4, dataCount);
-			_bind();
-			_gl.bufferSubData(_bufferType, bufferOffset * 4, data);
+			
+			if (!Render.isConchNode) {//!NATIVE
+				_bind();
+				_gl.bufferSubData(_bufferType, bufferOffset * 4, data);
+			}
 			
 			if (_canRead) {
 				if (bufferOffset !== 0 || dataStartIndex !== 0 || dataCount !== 4294967295/*uint.MAX_VALUE*/) {
@@ -139,6 +145,4 @@ package laya.d3.graphics {
 	}
 
 }
-
-
 

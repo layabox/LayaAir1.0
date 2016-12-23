@@ -442,8 +442,7 @@ package laya.ui {
 					_listChanged && changeList();
 					_itemChanged && changeItem();
 					
-					Point.EMPTY.setTo(0, 0);
-					var p:Point = localToGlobal(Point.EMPTY);
+					var p:Point = localToGlobal(Point.TEMP.setTo(0,0));
 					var py:Number = p.y + _button.height;
 					py = py + _listHeight <= Laya.stage.height ? py : p.y - _listHeight;
 					

@@ -1,14 +1,14 @@
 package {
 	import laya.ani.AnimationTemplet;
+	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Layer;
-	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.GlitterMaterial;
 	import laya.d3.core.material.ParticleMaterial;
 	import laya.d3.core.material.StandardMaterial;
+	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
 	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
-	import laya.d3.core.particleShuriKen.ShurikenParticleSystem;
+	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.graphics.VertexElementUsage;
@@ -16,6 +16,7 @@ package {
 	import laya.d3.resource.TextureCube;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.Sky;
+	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
@@ -25,11 +26,9 @@ package {
 	import laya.particle.shader.ParticleShader;
 	import laya.renders.Render;
 	import laya.utils.Byte;
-	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
 	import laya.utils.RunDriver;
 	import laya.webgl.WebGL;
-	import laya.webgl.shader.Shader;
 	
 	/**
 	 * <code>Laya3D</code> 类用于初始化3D设置。
@@ -66,19 +65,25 @@ package {
 		public function Laya3D() {
 		}
 		
+		/**
+		 *@private 
+		 */
 		private static function _changeWebGLSize(width:Number, height:Number):void {
 			WebGL.onStageResize(width, height);
 			RenderState.clientWidth = width;
 			RenderState.clientHeight = height;
 		}
 		
+		/**
+		 *@private 
+		 */
 		private static function _initShader():void {
-			Shader.addInclude("LightHelper.glsl", __INCLUDESTR__("laya/d3/shader/files/LightHelper.glsl"));
-			Shader.addInclude("VRHelper.glsl", __INCLUDESTR__("laya/d3/shader/files/VRHelper.glsl"));
+			Shader3D.addInclude("LightHelper.glsl", __INCLUDESTR__("laya/d3/shader/files/LightHelper.glsl"));
+			Shader3D.addInclude("VRHelper.glsl", __INCLUDESTR__("laya/d3/shader/files/VRHelper.glsl"));
 			
 			var vs:String, ps:String;
-			var shaderNameMap:Object = {
-			'a_Position': VertexElementUsage.POSITION0, 
+			var attributeMap:Object = {
+		    'a_Position': VertexElementUsage.POSITION0,
 			'a_Color': VertexElementUsage.COLOR0, 
 			'a_Normal': VertexElementUsage.NORMAL0, 
 			'a_Texcoord0': VertexElementUsage.TEXTURECOORDINATE0, 
@@ -86,80 +91,81 @@ package {
 			'a_TexcoordNext0': VertexElementUsage.NEXTTEXTURECOORDINATE0, 
 			'a_BoneWeights': VertexElementUsage.BLENDWEIGHT0, 
 			'a_BoneIndices': VertexElementUsage.BLENDINDICES0, 
-			'a_Tangent0': VertexElementUsage.TANGENT0, 
-			'u_CameraPos': BaseScene.CAMERAPOS, 
-			'u_FogStart': BaseScene.FOGSTART, 
-			'u_FogRange': BaseScene.FOGRANGE, 
-			'u_FogColor': BaseScene.FOGCOLOR, 
-			'u_DirectionLight.Direction': BaseScene.LIGHTDIRECTION, 
-			'u_DirectionLight.Diffuse': BaseScene.LIGHTDIRDIFFUSE, 
-			'u_DirectionLight.Ambient': BaseScene.LIGHTDIRAMBIENT, 
-			'u_DirectionLight.Specular': BaseScene.LIGHTDIRSPECULAR, 
-			'u_PointLight.Position': BaseScene.POINTLIGHTPOS, 
-			'u_PointLight.Range': BaseScene.POINTLIGHTRANGE, 
-			'u_PointLight.Attenuation': BaseScene.POINTLIGHTATTENUATION, 
-			'u_PointLight.Diffuse': BaseScene.POINTLIGHTDIFFUSE, 
-			'u_PointLight.Ambient': BaseScene.POINTLIGHTAMBIENT, 
-			'u_PointLight.Specular': BaseScene.POINTLIGHTSPECULAR, 
-			'u_SpotLight.Position': BaseScene.SPOTLIGHTPOS, 
-			'u_SpotLight.Direction': BaseScene.SPOTLIGHTDIRECTION, 
-			'u_SpotLight.Range': BaseScene.SPOTLIGHTRANGE, 
-			'u_SpotLight.Spot': BaseScene.SPOTLIGHTSPOT, 
-			'u_SpotLight.Attenuation': BaseScene.SPOTLIGHTATTENUATION, 
-			'u_SpotLight.Diffuse': BaseScene.SPOTLIGHTDIFFUSE, 
-			'u_SpotLight.Ambient': BaseScene.SPOTLIGHTAMBIENT, 
-			'u_SpotLight.Specular': BaseScene.SPOTLIGHTSPECULAR, 
-			'u_WorldMat': StandardMaterial.WORLDMATRIX, 
-			'u_DiffuseTexture': StandardMaterial.DIFFUSETEXTURE, 
-			'u_SpecularTexture': StandardMaterial.SPECULARTEXTURE, 
-			'u_NormalTexture': StandardMaterial.NORMALTEXTURE, 
-			'u_AmbientTexture': StandardMaterial.AMBIENTTEXTURE, 
-			'u_ReflectTexture': StandardMaterial.REFLECTTEXTURE, 
-			'u_MvpMatrix': StandardMaterial.MVPMATRIX, 
-			'u_Bones': StandardMaterial.Bones, 
-			'u_Albedo': StandardMaterial.ALBEDO, 
-			'u_AlphaTestValue': StandardMaterial.ALPHATESTVALUE, 
-			'u_UVMatrix': StandardMaterial.UVMATRIX, 
-			'u_UVAge': StandardMaterial.UVAGE, 
-			'u_UVAniAge': StandardMaterial.UVANIAGE, 
-			'u_MaterialDiffuse': StandardMaterial.MATERIALDIFFUSE, 
-			'u_MaterialAmbient': StandardMaterial.MATERIALAMBIENT, 
-			'u_MaterialSpecular': StandardMaterial.MATERIALSPECULAR, 
-			'u_MaterialReflect': StandardMaterial.MATERIALREFLECT}
-			
-			var SIMPLE:int = Shader.nameKey.add("SIMPLE");
+			'a_Tangent0': VertexElementUsage.TANGENT0};
+			var uniformMap:Object = {
+			'u_Bones': [RenderElement.BONES, Shader3D.PERIOD_RENDERELEMENT],
+			'u_DiffuseTexture': [StandardMaterial.DIFFUSETEXTURE,Shader3D.PERIOD_MATERIAL],
+			'u_SpecularTexture': [StandardMaterial.SPECULARTEXTURE,Shader3D.PERIOD_MATERIAL],
+			'u_NormalTexture': [StandardMaterial.NORMALTEXTURE,Shader3D.PERIOD_MATERIAL],
+			'u_AmbientTexture': [StandardMaterial.AMBIENTTEXTURE,Shader3D.PERIOD_MATERIAL],
+			'u_ReflectTexture': [StandardMaterial.REFLECTTEXTURE,Shader3D.PERIOD_MATERIAL],
+			'u_Albedo': [StandardMaterial.ALBEDO,Shader3D.PERIOD_MATERIAL],
+			'u_AlphaTestValue': [StandardMaterial.ALPHATESTVALUE,Shader3D.PERIOD_MATERIAL],
+			'u_UVMatrix': [StandardMaterial.UVMATRIX,Shader3D.PERIOD_MATERIAL],
+			'u_UVAge': [StandardMaterial.UVAGE,Shader3D.PERIOD_MATERIAL],
+			'u_UVAniAge': [StandardMaterial.UVANIAGE,Shader3D.PERIOD_MATERIAL],
+			'u_MaterialDiffuse': [StandardMaterial.MATERIALDIFFUSE,Shader3D.PERIOD_MATERIAL],
+			'u_MaterialAmbient': [StandardMaterial.MATERIALAMBIENT,Shader3D.PERIOD_MATERIAL],
+			'u_MaterialSpecular':[StandardMaterial.MATERIALSPECULAR,Shader3D.PERIOD_MATERIAL],
+			'u_MaterialReflect': [StandardMaterial.MATERIALREFLECT, Shader3D.PERIOD_MATERIAL],
+			'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE],
+			'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE],
+			'u_CameraPos': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA],
+			'u_FogStart': [BaseScene.FOGSTART, Shader3D.PERIOD_SCENE],
+			'u_FogRange': [BaseScene.FOGRANGE, Shader3D.PERIOD_SCENE],
+			'u_FogColor': [BaseScene.FOGCOLOR, Shader3D.PERIOD_SCENE],
+			'u_DirectionLight.Direction': [BaseScene.LIGHTDIRECTION, Shader3D.PERIOD_SCENE],
+			'u_DirectionLight.Diffuse': [BaseScene.LIGHTDIRDIFFUSE, Shader3D.PERIOD_SCENE],
+			'u_DirectionLight.Ambient': [BaseScene.LIGHTDIRAMBIENT, Shader3D.PERIOD_SCENE],
+			'u_DirectionLight.Specular': [BaseScene.LIGHTDIRSPECULAR, Shader3D.PERIOD_SCENE],
+			'u_PointLight.Position': [BaseScene.POINTLIGHTPOS, Shader3D.PERIOD_SCENE],
+			'u_PointLight.Range': [BaseScene.POINTLIGHTRANGE, Shader3D.PERIOD_SCENE],
+			'u_PointLight.Attenuation': [BaseScene.POINTLIGHTATTENUATION, Shader3D.PERIOD_SCENE],
+			'u_PointLight.Diffuse': [BaseScene.POINTLIGHTDIFFUSE, Shader3D.PERIOD_SCENE],
+			'u_PointLight.Ambient': [BaseScene.POINTLIGHTAMBIENT, Shader3D.PERIOD_SCENE],
+			'u_PointLight.Specular': [BaseScene.POINTLIGHTSPECULAR, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Position': [BaseScene.SPOTLIGHTPOS, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Direction': [BaseScene.SPOTLIGHTDIRECTION, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Range': [BaseScene.SPOTLIGHTRANGE, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Spot': [BaseScene.SPOTLIGHTSPOT, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Attenuation': [BaseScene.SPOTLIGHTATTENUATION, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Diffuse': [BaseScene.SPOTLIGHTDIFFUSE, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Ambient': [BaseScene.SPOTLIGHTAMBIENT, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Specular': [BaseScene.SPOTLIGHTSPECULAR,Shader3D.PERIOD_SCENE]};
+			var SIMPLE:int = Shader3D.nameKey.add("SIMPLE");
 			vs = __INCLUDESTR__("laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.ps");
-			Shader.preCompile(SIMPLE, vs, ps, shaderNameMap);
+			Shader3D.preCompile(SIMPLE, vs, ps, attributeMap,uniformMap);
 			
-			var SIMPLEVEXTEX:int = Shader.nameKey.add("SIMPLEVEXTEX");
+			var SIMPLEVEXTEX:int = Shader3D.nameKey.add("SIMPLEVEXTEX");
 			vs = __INCLUDESTR__("laya/d3/shader/files/VertexSimpleTextureSkinnedMesh.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/VertexSimpleTextureSkinnedMesh.ps");
-			Shader.preCompile(SIMPLEVEXTEX, vs, ps, shaderNameMap);
+			Shader3D.preCompile(SIMPLEVEXTEX, vs, ps,attributeMap, uniformMap);
 			
-			shaderNameMap = {
+			attributeMap = {
 			'a_Position': VertexElementUsage.POSITION0, 
-			'a_Texcoord': VertexElementUsage.TEXTURECOORDINATE0, 
-			'u_FogStart': BaseScene.FOGSTART, 
-			'u_FogRange': BaseScene.FOGRANGE, 
-			'u_FogColor': BaseScene.FOGCOLOR, 
-			'u_CameraPos': BaseScene.CAMERAPOS, 
-			'u_WorldMat': StandardMaterial.WORLDMATRIX, 
-			'u_BlendTexture': StandardMaterial.DIFFUSETEXTURE, 
-			'u_LayerTexture0': StandardMaterial.NORMALTEXTURE, 
-			'u_LayerTexture1': StandardMaterial.SPECULARTEXTURE, 
-			'u_LayerTexture2': StandardMaterial.EMISSIVETEXTURE, 
-			'u_LayerTexture3': StandardMaterial.AMBIENTTEXTURE, 
-			'u_MvpMatrix': StandardMaterial.MVPMATRIX, 
-			'u_Albedo': StandardMaterial.ALBEDO, 
-			'u_Ambient': StandardMaterial.MATERIALAMBIENT, 
-			'u_UVMatrix': StandardMaterial.UVMATRIX};
-			var TERRAIN:int = Shader.nameKey.add("TERRAIN");
+			'a_Texcoord': VertexElementUsage.TEXTURECOORDINATE0};
+			uniformMap = {
+			'u_BlendTexture': [StandardMaterial.DIFFUSETEXTURE,Shader3D.PERIOD_MATERIAL], 
+			'u_LayerTexture0': [StandardMaterial.NORMALTEXTURE,Shader3D.PERIOD_MATERIAL], 
+			'u_LayerTexture1': [StandardMaterial.SPECULARTEXTURE,Shader3D.PERIOD_MATERIAL],
+			'u_LayerTexture2': [StandardMaterial.EMISSIVETEXTURE,Shader3D.PERIOD_MATERIAL],
+			'u_LayerTexture3': [StandardMaterial.AMBIENTTEXTURE,Shader3D.PERIOD_MATERIAL],
+			'u_Albedo': [StandardMaterial.ALBEDO,Shader3D.PERIOD_MATERIAL],
+			'u_Ambient': [StandardMaterial.MATERIALAMBIENT,Shader3D.PERIOD_MATERIAL],
+			'u_UVMatrix': [StandardMaterial.UVMATRIX,Shader3D.PERIOD_MATERIAL],
+			'u_WorldMat': [Sprite3D.WORLDMATRIX,Shader3D.PERIOD_SPRITE],
+			'u_MvpMatrix': [Sprite3D.MVPMATRIX,Shader3D.PERIOD_SPRITE],
+			'u_CameraPos': [BaseCamera.CAMERAPOS,Shader3D.PERIOD_CAMERA],
+			'u_FogStart': [BaseScene.FOGSTART, Shader3D.PERIOD_SCENE],
+			'u_FogRange': [BaseScene.FOGRANGE, Shader3D.PERIOD_SCENE],
+			'u_FogColor': [BaseScene.FOGCOLOR,Shader3D.PERIOD_SCENE]};
+			var TERRAIN:int = Shader3D.nameKey.add("TERRAIN");
 			vs = __INCLUDESTR__("laya/d3/shader/files/modelTerrain.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/modelTerrain.ps");
-			Shader.preCompile(TERRAIN, vs, ps, shaderNameMap);
+			Shader3D.preCompile(TERRAIN, vs, ps,attributeMap, uniformMap);
 			
-			shaderNameMap = {
+			attributeMap = {
 			'a_CornerTextureCoordinate': VertexElementUsage.CORNERTEXTURECOORDINATE0, 
 			'a_Position': VertexElementUsage.POSITION0, 
 			'a_Velocity': VertexElementUsage.VELOCITY0, 
@@ -169,21 +175,22 @@ package {
 			'a_Radius': VertexElementUsage.RADIUS0, 
 			'a_Radian': VertexElementUsage.RADIAN0, 
 			'a_AgeAddScale': VertexElementUsage.STARTLIFETIME, 
-			'a_Time': VertexElementUsage.TIME0, 
-			'u_WorldMat': ParticleMaterial.WORLDMATRIX, 
-			'u_View': ParticleMaterial.VIEWMATRIX, 
-			'u_Projection': ParticleMaterial.PROJECTIONMATRIX, 
-			'u_ViewportScale': ParticleMaterial.VIEWPORTSCALE, 
-			'u_CurrentTime': ParticleMaterial.CURRENTTIME, 
-			'u_Duration': ParticleMaterial.DURATION, 
-			'u_Gravity': ParticleMaterial.GRAVITY, 
-			'u_EndVelocity': ParticleMaterial.ENDVELOCITY, 
-			'u_texture': ParticleMaterial.DIFFUSETEXTURE};
-			var PARTICLE:int = Shader.nameKey.add("PARTICLE");
-			Shader.preCompile(PARTICLE, ParticleShader.vs, ParticleShader.ps, shaderNameMap);
+			'a_Time': VertexElementUsage.TIME0};
+			uniformMap = {
+			'u_CurrentTime': [ParticleMaterial.CURRENTTIME,Shader3D.PERIOD_MATERIAL], 
+			'u_Duration': [ParticleMaterial.DURATION,Shader3D.PERIOD_MATERIAL], 
+			'u_Gravity': [ParticleMaterial.GRAVITY,Shader3D.PERIOD_MATERIAL], 
+			'u_EndVelocity': [ParticleMaterial.ENDVELOCITY,Shader3D.PERIOD_MATERIAL], 
+			'u_texture': [ParticleMaterial.DIFFUSETEXTURE,Shader3D.PERIOD_MATERIAL],
+			'u_WorldMat': [Sprite3D.WORLDMATRIX,Shader3D.PERIOD_SPRITE], 
+			'u_View': [BaseCamera.VIEWMATRIX,Shader3D.PERIOD_CAMERA], 
+			'u_Projection': [BaseCamera.PROJECTMATRIX,Shader3D.PERIOD_CAMERA], 
+			'u_ViewportScale': [ParticleMaterial.VIEWPORTSCALE,Shader3D.PERIOD_MATERIAL]};//TODO:
+			var PARTICLE:int = Shader3D.nameKey.add("PARTICLE");
+			Shader3D.preCompile(PARTICLE, ParticleShader.vs, ParticleShader.ps, attributeMap, uniformMap);
 			
-			shaderNameMap = {
-			'a_CornerTextureCoordinate': VertexElementUsage.CORNERTEXTURECOORDINATE0, 
+			attributeMap = {
+		    'a_CornerTextureCoordinate': VertexElementUsage.CORNERTEXTURECOORDINATE0, 
 			'a_Position': VertexElementUsage.POSITION0, 
 			'a_Direction': VertexElementUsage.DIRECTION, 
 			'a_StartColor': VertexElementUsage.STARTCOLOR0, 
@@ -197,111 +204,118 @@ package {
 			'a_Time': VertexElementUsage.TIME0, 
 			'a_Random0': VertexElementUsage.RANDOM0, 
 			'a_Random1': VertexElementUsage.RANDOM1, 
-			'a_SimulationWorldPostion': VertexElementUsage.SIMULATIONWORLDPOSTION, 
-			'u_WorldPosition': ShurikenParticleMaterial.WORLDPOSITION, 
-			'u_WorldRotationMat': ShurikenParticleMaterial.WORLDROTATIONMATRIX, 
-			'u_ThreeDStartRotation': ShurikenParticleMaterial.THREEDSTARTROTATION, 
-			'u_ScalingMode': ShurikenParticleMaterial.SCALINGMODE, 
-			'u_PositionScale': ShurikenParticleMaterial.POSITIONSCALE, 
-			'u_SizeScale': ShurikenParticleMaterial.SIZESCALE, 
-			'u_View': ShurikenParticleMaterial.VIEWMATRIX, 
-			'u_Projection': ShurikenParticleMaterial.PROJECTIONMATRIX, 
-			'u_CurrentTime': ShurikenParticleMaterial.CURRENTTIME, 
-			'u_Gravity': ShurikenParticleMaterial.GRAVITY, 
-			'u_texture': ShurikenParticleMaterial.DIFFUSETEXTURE, 
-			'u_CameraDirection': ShurikenParticleMaterial.CAMERADIRECTION, 
-			'u_CameraUp': ShurikenParticleMaterial.CAMERAUP, 
-			'u_StretchedBillboardLengthScale': ShurikenParticleMaterial.STRETCHEDBILLBOARDLENGTHSCALE, 
-			'u_StretchedBillboardSpeedScale': ShurikenParticleMaterial.STRETCHEDBILLBOARDSPEEDSCALE, 
-			'u_ColorOverLifeGradientAlphas': ShurikenParticleMaterial.COLOROVERLIFEGRADIENTALPHAS, 
-			'u_ColorOverLifeGradientColors': ShurikenParticleMaterial.COLOROVERLIFEGRADIENTCOLORS, 
-			'u_MaxColorOverLifeGradientAlphas': ShurikenParticleMaterial.MAXCOLOROVERLIFEGRADIENTALPHAS, 
-			'u_MaxColorOverLifeGradientColors': ShurikenParticleMaterial.MAXCOLOROVERLIFEGRADIENTCOLORS, 
-			'u_SimulationSpace': ShurikenParticleMaterial.SIMULATIONSPACE, 
-			'u_VOLType': ShurikenParticleMaterial.VOLTYPE, 
-			'u_VOLVelocityConst': ShurikenParticleMaterial.VOLVELOCITYCONST, 
-			'u_VOLVelocityGradientX': ShurikenParticleMaterial.VOLVELOCITYGRADIENTX, 
-			'u_VOLVelocityGradientY': ShurikenParticleMaterial.VOLVELOCITYGRADIENTY, 
-			'u_VOLVelocityGradientZ': ShurikenParticleMaterial.VOLVELOCITYGRADIENTZ, 
-			'u_VOLVelocityConstMax': ShurikenParticleMaterial.VOLVELOCITYCONSTMAX, 
-			'u_VOLVelocityGradientMaxX': ShurikenParticleMaterial.VOLVELOCITYGRADIENTXMAX, 
-			'u_VOLVelocityGradientMaxY': ShurikenParticleMaterial.VOLVELOCITYGRADIENTYMAX, 
-			'u_VOLVelocityGradientMaxZ': ShurikenParticleMaterial.VOLVELOCITYGRADIENTZMAX, 
-			'u_VOLSpaceType': ShurikenParticleMaterial.VOLSPACETYPE, 
-			'u_SOLType': ShurikenParticleMaterial.SOLTYPE, 
-			'u_SOLSeprarate': ShurikenParticleMaterial.SOLSEPRARATE, 
-			'u_SOLSizeGradient': ShurikenParticleMaterial.SOLSIZEGRADIENT, 
-			'u_SOLSizeGradientX': ShurikenParticleMaterial.SOLSIZEGRADIENTX, 
-			'u_SOLSizeGradientY': ShurikenParticleMaterial.SOLSIZEGRADIENTY, 
-			'u_SOLSizeGradientZ': ShurikenParticleMaterial.SOLSizeGradientZ, 
-			'u_SOLSizeGradientMax': ShurikenParticleMaterial.SOLSizeGradientMax, 
-			'u_SOLSizeGradientMaxX': ShurikenParticleMaterial.SOLSIZEGRADIENTXMAX, 
-			'u_SOLSizeGradientMaxY': ShurikenParticleMaterial.SOLSIZEGRADIENTYMAX, 
-			'u_SOLSizeGradientMaxZ': ShurikenParticleMaterial.SOLSizeGradientZMAX, 
-			'u_ROLType': ShurikenParticleMaterial.ROLTYPE, 
-			'u_ROLSeprarate': ShurikenParticleMaterial.ROLSEPRARATE, 
-			'u_ROLAngularVelocityConst': ShurikenParticleMaterial.ROLANGULARVELOCITYCONST, 
-			'u_ROLAngularVelocityConstSeprarate': ShurikenParticleMaterial.ROLANGULARVELOCITYCONSTSEPRARATE, 
-			'u_ROLAngularVelocityGradient': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENT, 
-			'u_ROLAngularVelocityGradientX': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTX, 
-			'u_ROLAngularVelocityGradientY': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTY, 
-			'u_ROLAngularVelocityGradientZ': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTZ, 
-			'u_ROLAngularVelocityConstMax': ShurikenParticleMaterial.ROLANGULARVELOCITYCONSTMAX, 
-			'u_ROLAngularVelocityConstMaxSeprarate': ShurikenParticleMaterial.ROLANGULARVELOCITYCONSTMAXSEPRARATE, 
-			'u_ROLAngularVelocityGradientMax': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTMAX, 
-			'u_ROLAngularVelocityGradientMaxX': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTXMAX, 
-			'u_ROLAngularVelocityGradientMaxY': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTYMAX, 
-			'u_ROLAngularVelocityGradientMaxZ': ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTZMAX, 
-			'u_TSAType': ShurikenParticleMaterial.TEXTURESHEETANIMATIONTYPE, 
-			'u_TSACycles': ShurikenParticleMaterial.TEXTURESHEETANIMATIONCYCLES, 
-			'u_TSASubUVLength': ShurikenParticleMaterial.TEXTURESHEETANIMATIONSUBUVLENGTH, 
-			'u_TSAGradientUVs': ShurikenParticleMaterial.TEXTURESHEETANIMATIONGRADIENTUVS, 
-			'u_TSAMaxGradientUVs': ShurikenParticleMaterial.TEXTURESHEETANIMATIONGRADIENTMAXUVS};
-			var PARTICLESHURIKEN:int = Shader.nameKey.add("PARTICLESHURIKEN");
+			'a_SimulationWorldPostion': VertexElementUsage.SIMULATIONWORLDPOSTION};
+			uniformMap = {
+			'u_WorldPosition': [ShuriKenParticle3D.WORLDPOSITION, Shader3D.PERIOD_SPRITE], 
+			'u_WorldRotationMat': [ShuriKenParticle3D.WORLDROTATIONMATRIX, Shader3D.PERIOD_SPRITE],
+			'u_View': [BaseCamera.VIEWMATRIX, Shader3D.PERIOD_CAMERA], 
+			'u_Projection': [BaseCamera.PROJECTMATRIX, Shader3D.PERIOD_CAMERA],
+			'u_CameraDirection': [ShurikenParticleMaterial.CAMERADIRECTION, Shader3D.PERIOD_MATERIAL],//TODO: 
+			'u_CameraUp': [ShurikenParticleMaterial.CAMERAUP, Shader3D.PERIOD_MATERIAL], //TODO:
+			'u_PositionScale': [ShuriKenParticle3D.POSITIONSCALE, Shader3D.PERIOD_SPRITE],
+			'u_SizeScale': [ShuriKenParticle3D.SIZESCALE, Shader3D.PERIOD_SPRITE],
+			'u_ThreeDStartRotation': [ShurikenParticleMaterial.THREEDSTARTROTATION, Shader3D.PERIOD_MATERIAL], 
+			'u_ScalingMode': [ShurikenParticleMaterial.SCALINGMODE, Shader3D.PERIOD_MATERIAL], 
+			'u_CurrentTime': [ShurikenParticleMaterial.CURRENTTIME, Shader3D.PERIOD_MATERIAL], 
+			'u_Gravity': [ShurikenParticleMaterial.GRAVITY, Shader3D.PERIOD_MATERIAL], 
+			'u_texture': [ShurikenParticleMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL], 
+			'u_StretchedBillboardLengthScale': [ShurikenParticleMaterial.STRETCHEDBILLBOARDLENGTHSCALE, Shader3D.PERIOD_MATERIAL], 
+			'u_StretchedBillboardSpeedScale': [ShurikenParticleMaterial.STRETCHEDBILLBOARDSPEEDSCALE, Shader3D.PERIOD_MATERIAL], 
+			'u_ColorOverLifeGradientAlphas': [ShurikenParticleMaterial.COLOROVERLIFEGRADIENTALPHAS, Shader3D.PERIOD_MATERIAL], 
+			'u_ColorOverLifeGradientColors': [ShurikenParticleMaterial.COLOROVERLIFEGRADIENTCOLORS, Shader3D.PERIOD_MATERIAL], 
+			'u_MaxColorOverLifeGradientAlphas': [ShurikenParticleMaterial.MAXCOLOROVERLIFEGRADIENTALPHAS, Shader3D.PERIOD_MATERIAL], 
+			'u_MaxColorOverLifeGradientColors': [ShurikenParticleMaterial.MAXCOLOROVERLIFEGRADIENTCOLORS, Shader3D.PERIOD_MATERIAL], 
+			'u_SimulationSpace': [ShurikenParticleMaterial.SIMULATIONSPACE, Shader3D.PERIOD_MATERIAL], 
+			'u_VOLType': [ShurikenParticleMaterial.VOLTYPE, Shader3D.PERIOD_MATERIAL], 
+			'u_VOLVelocityConst': [ShurikenParticleMaterial.VOLVELOCITYCONST, Shader3D.PERIOD_MATERIAL], 
+			'u_VOLVelocityGradientX': [ShurikenParticleMaterial.VOLVELOCITYGRADIENTX, Shader3D.PERIOD_MATERIAL], 
+			'u_VOLVelocityGradientY': [ShurikenParticleMaterial.VOLVELOCITYGRADIENTY, Shader3D.PERIOD_MATERIAL], 
+			'u_VOLVelocityGradientZ': [ShurikenParticleMaterial.VOLVELOCITYGRADIENTZ, Shader3D.PERIOD_MATERIAL], 
+			'u_VOLVelocityConstMax': [ShurikenParticleMaterial.VOLVELOCITYCONSTMAX, Shader3D.PERIOD_MATERIAL], 
+			'u_VOLVelocityGradientMaxX': [ShurikenParticleMaterial.VOLVELOCITYGRADIENTXMAX, Shader3D.PERIOD_MATERIAL], 
+			'u_VOLVelocityGradientMaxY': [ShurikenParticleMaterial.VOLVELOCITYGRADIENTYMAX, Shader3D.PERIOD_MATERIAL], 
+			'u_VOLVelocityGradientMaxZ': [ShurikenParticleMaterial.VOLVELOCITYGRADIENTZMAX, Shader3D.PERIOD_MATERIAL], 
+			'u_VOLSpaceType': [ShurikenParticleMaterial.VOLSPACETYPE, Shader3D.PERIOD_MATERIAL], 
+			'u_SOLType': [ShurikenParticleMaterial.SOLTYPE, Shader3D.PERIOD_MATERIAL], 
+			'u_SOLSeprarate': [ShurikenParticleMaterial.SOLSEPRARATE, Shader3D.PERIOD_MATERIAL], 
+			'u_SOLSizeGradient': [ShurikenParticleMaterial.SOLSIZEGRADIENT, Shader3D.PERIOD_MATERIAL], 
+			'u_SOLSizeGradientX': [ShurikenParticleMaterial.SOLSIZEGRADIENTX, Shader3D.PERIOD_MATERIAL], 
+			'u_SOLSizeGradientY': [ShurikenParticleMaterial.SOLSIZEGRADIENTY, Shader3D.PERIOD_MATERIAL], 
+			'u_SOLSizeGradientZ': [ShurikenParticleMaterial.SOLSizeGradientZ, Shader3D.PERIOD_MATERIAL], 
+			'u_SOLSizeGradientMax': [ShurikenParticleMaterial.SOLSizeGradientMax, Shader3D.PERIOD_MATERIAL], 
+			'u_SOLSizeGradientMaxX': [ShurikenParticleMaterial.SOLSIZEGRADIENTXMAX, Shader3D.PERIOD_MATERIAL], 
+			'u_SOLSizeGradientMaxY': [ShurikenParticleMaterial.SOLSIZEGRADIENTYMAX, Shader3D.PERIOD_MATERIAL], 
+			'u_SOLSizeGradientMaxZ': [ShurikenParticleMaterial.SOLSizeGradientZMAX, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLType': [ShurikenParticleMaterial.ROLTYPE, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLSeprarate': [ShurikenParticleMaterial.ROLSEPRARATE, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLAngularVelocityConst': [ShurikenParticleMaterial.ROLANGULARVELOCITYCONST, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLAngularVelocityConstSeprarate': [ShurikenParticleMaterial.ROLANGULARVELOCITYCONSTSEPRARATE, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLAngularVelocityGradient': [ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENT, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLAngularVelocityGradientX': [ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTX, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLAngularVelocityGradientY': [ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTY, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLAngularVelocityGradientZ': [ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTZ, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLAngularVelocityConstMax': [ShurikenParticleMaterial.ROLANGULARVELOCITYCONSTMAX, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLAngularVelocityConstMaxSeprarate': [ShurikenParticleMaterial.ROLANGULARVELOCITYCONSTMAXSEPRARATE, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLAngularVelocityGradientMax': [ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTMAX, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLAngularVelocityGradientMaxX': [ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTXMAX, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLAngularVelocityGradientMaxY': [ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTYMAX, Shader3D.PERIOD_MATERIAL], 
+			'u_ROLAngularVelocityGradientMaxZ': [ShurikenParticleMaterial.ROLANGULARVELOCITYGRADIENTZMAX, Shader3D.PERIOD_MATERIAL], 
+			'u_TSAType': [ShurikenParticleMaterial.TEXTURESHEETANIMATIONTYPE, Shader3D.PERIOD_MATERIAL], 
+			'u_TSACycles': [ShurikenParticleMaterial.TEXTURESHEETANIMATIONCYCLES, Shader3D.PERIOD_MATERIAL], 
+			'u_TSASubUVLength': [ShurikenParticleMaterial.TEXTURESHEETANIMATIONSUBUVLENGTH, Shader3D.PERIOD_MATERIAL], 
+			'u_TSAGradientUVs': [ShurikenParticleMaterial.TEXTURESHEETANIMATIONGRADIENTUVS, Shader3D.PERIOD_MATERIAL], 
+			'u_TSAMaxGradientUVs': [ShurikenParticleMaterial.TEXTURESHEETANIMATIONGRADIENTMAXUVS,Shader3D.PERIOD_MATERIAL]};
+			var PARTICLESHURIKEN:int = Shader3D.nameKey.add("PARTICLESHURIKEN");
 			vs = __INCLUDESTR__("laya/d3/shader/files/ParticleShuriKen.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/ParticleShuriKen.ps");
-			Shader.preCompile(PARTICLESHURIKEN, vs, ps, shaderNameMap);
 			
-			shaderNameMap = {
+			Shader3D.preCompile(PARTICLESHURIKEN, vs, ps,attributeMap,uniformMap);
+			
+			attributeMap = {
 			'a_Position': VertexElementUsage.POSITION0, 
 			'a_Texcoord0': VertexElementUsage.TEXTURECOORDINATE0, 
-			'a_Time': GlitterMaterial.TIME, 
-			'u_Texture': GlitterMaterial.DIFFUSETEXTURE, 
-			'u_MvpMatrix': GlitterMaterial.MVPMATRIX, 
-			'u_Albedo': GlitterMaterial.ALBEDO, 
-			'u_CurrentTime': GlitterMaterial.CURRENTTIME, 
-			'u_Color': GlitterMaterial.UNICOLOR, 
-			'u_Duration': GlitterMaterial.DURATION};
-			
-			var GLITTER:int = Shader.nameKey.add("GLITTER");
+			'a_Time': VertexElementUsage.TIME0};
+			uniformMap = {
+			'u_Texture':  [GlitterMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL],
+			'u_Albedo':  [GlitterMaterial.ALBEDO, Shader3D.PERIOD_MATERIAL],
+			'u_CurrentTime':  [GlitterMaterial.CURRENTTIME, Shader3D.PERIOD_MATERIAL],
+			'u_Color':  [GlitterMaterial.UNICOLOR, Shader3D.PERIOD_MATERIAL],
+			'u_Duration':  [GlitterMaterial.DURATION, Shader3D.PERIOD_MATERIAL],
+			'u_MvpMatrix':  [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE]};
+			var GLITTER:int = Shader3D.nameKey.add("GLITTER");
 			vs = __INCLUDESTR__("laya/d3/shader/files/Glitter.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/Glitter.ps");
-			Shader.preCompile(GLITTER, vs, ps, shaderNameMap);
+			Shader3D.preCompile(GLITTER, vs, ps,attributeMap, uniformMap);
 			
-			shaderNameMap = {
-			'a_Position': VertexElementUsage.POSITION0, 
-			'u_MvpMatrix': Sky.MVPMATRIX, 
-			'u_Intensity': Sky.INTENSITY, 
-			'u_AlphaBlending': Sky.ALPHABLENDING, 
-			'u_CubeTexture': Sky.DIFFUSETEXTURE};
-			var skyBox:int = Shader.nameKey.add("SkyBox");
+			attributeMap = {
+			'a_Position': VertexElementUsage.POSITION0};
+			uniformMap = {
+			'u_Intensity': [Sky.INTENSITY, Shader3D.PERIOD_MATERIAL],
+			'u_AlphaBlending': [Sky.ALPHABLENDING, Shader3D.PERIOD_MATERIAL],
+			'u_CubeTexture': [Sky.DIFFUSETEXTURE,Shader3D.PERIOD_MATERIAL],
+			'u_MvpMatrix': [BaseCamera.VPMATRIX_NO_TRANSLATE, Shader3D.PERIOD_CAMERA]};//TODO:优化
+			var skyBox:int = Shader3D.nameKey.add("SkyBox");
 			vs = __INCLUDESTR__("laya/d3/shader/files/SkyBox.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/SkyBox.ps");
-			Shader.preCompile(skyBox, vs, ps, shaderNameMap);
+			Shader3D.preCompile(skyBox, vs, ps,attributeMap, uniformMap);
 			
-			shaderNameMap = {
+			attributeMap = {
 			'a_Position': VertexElementUsage.POSITION0, 
-			'a_Texcoord0': VertexElementUsage.TEXTURECOORDINATE0, 
-			'u_MvpMatrix': Sky.MVPMATRIX, 
-			'u_Intensity': Sky.INTENSITY, 
-			'u_AlphaBlending': Sky.ALPHABLENDING, 
-			'u_texture': Sky.DIFFUSETEXTURE};
-			var skyDome:int = Shader.nameKey.add("SkyDome");
+			'a_Texcoord0': VertexElementUsage.TEXTURECOORDINATE0};
+			uniformMap = {
+			'u_Intensity': [Sky.INTENSITY, Shader3D.PERIOD_MATERIAL],
+			'u_AlphaBlending': [Sky.ALPHABLENDING, Shader3D.PERIOD_MATERIAL],
+			'u_texture': [Sky.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL],
+			'u_MvpMatrix': [BaseCamera.VPMATRIX_NO_TRANSLATE, Shader3D.PERIOD_CAMERA]};//TODO:优化
+			var skyDome:int = Shader3D.nameKey.add("SkyDome");
 			vs = __INCLUDESTR__("laya/d3/shader/files/SkyDome.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/SkyDome.ps");
-			Shader.preCompile(skyDome, vs, ps, shaderNameMap);
+			Shader3D.preCompile(skyDome, vs, ps,attributeMap, uniformMap);
 		}
 		
+		/**
+		 *@private 
+		 */
 		private static function _initResourceLoad():void {
 			//ClassUtils.regClass("Sprite3D", Sprite3D);
 			//ClassUtils.regClass("MeshSprite3D", MeshSprite3D);
@@ -327,20 +341,26 @@ package {
 			Loader.parserMap[Laya3D.TEXTURECUBE] = _loadTextureCube;
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function READ_BLOCK():Boolean {
 			_readData.pos += 4;
 			return true;
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function READ_DATA():Boolean {
 			_DATA.offset = _readData.getUint32();
 			_DATA.size = _readData.getUint32();
 			return true;
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function READ_STRINGS():Array {
 			var materialUrls:Array = [];
 			var _STRINGS:Object = {offset: 0, size: 0};
@@ -357,8 +377,10 @@ package {
 			return materialUrls;
 		}
 		
-		/** @private */
-		private static function _getSprite3DHierarchyInnerUrls(hierarchyNode:Object, urls:Array, urlMap:Object, urlVersion:String):void {
+		/**
+		 *@private 
+		 */
+		private static function _getSprite3DHierarchyInnerUrls(hierarchyNode:Object, urls:Array, urlMap:Object, urlVersion:String,hierarchyBasePath:String):void {
 			var path:String;
 			var clas:Class;
 			switch (hierarchyNode.type) {
@@ -373,7 +395,7 @@ package {
 			}
 			
 			if (path) {
-				var formatSubUrl:String = URL.formatURL(path);
+				var formatSubUrl:String = URL.formatURL(path,hierarchyBasePath);
 				(urlVersion) && (formatSubUrl = formatSubUrl + urlVersion);
 				urls.push({url:formatSubUrl,clas:clas});
 				urlMap[path] = formatSubUrl;
@@ -381,28 +403,30 @@ package {
 			
 			var children:Array = hierarchyNode.child;
 			for (var i:int = 0, n:int = children.length; i < n; i++)
-				_getSprite3DHierarchyInnerUrls(children[i], urls, urlMap, urlVersion);
+				_getSprite3DHierarchyInnerUrls(children[i], urls, urlMap, urlVersion,hierarchyBasePath);
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _loadSprite3DHierarchy(loader:Loader):void {
 			var lmLoader:Loader = new Loader();
 			lmLoader.on(Event.COMPLETE, null, _onSprite3DHierarchylhLoaded, [loader]);
 			lmLoader.load(loader.url, Loader.TEXT, false, null, true);
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _onSprite3DHierarchylhLoaded(loader:Loader, lhData:String):void {
 			var url:String = loader.url;
 			var urlVersion:String = Utils3D.getURLVerion(url);
-			var preBasePath:String = URL.basePath;
-			URL.basePath = URL.getPath(URL.formatURL(url));
-			
+			var hierarchyBasePath:String = URL.getPath(URL.formatURL(url));
 			var urls:Array = [];
 			var urlMap:Object = {};
 			var hierarchyData:Object = JSON.parse(lhData);
 			
-			_getSprite3DHierarchyInnerUrls(hierarchyData, urls, urlMap, urlVersion);
+			_getSprite3DHierarchyInnerUrls(hierarchyData, urls, urlMap, urlVersion,hierarchyBasePath);
 			var urlCount:int = urls.length;
 			var totalProcessCount:int = urlCount + 1;
 			var lhWeight:Number = 1 / totalProcessCount;
@@ -414,29 +438,32 @@ package {
 			} else {
 				_onSprite3DMeshsLoaded(loader, null, lhData, null);
 			}
-			
-			URL.basePath = preBasePath;
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _onSprite3DMeshsLoaded(loader:Loader, processHandler:Handler, lhData:Object, urlMap:Object):void {
 			loader.endLoad([lhData, urlMap]);
 			(processHandler) && (processHandler.recover());
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _loadMesh(loader:Loader):void {
 			var lmLoader:Loader = new Loader();
 			lmLoader.on(Event.COMPLETE, null, _onMeshLmLoaded, [loader]);
 			lmLoader.load(loader.url, Loader.BUFFER, false, null, true);
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _onMeshLmLoaded(loader:Loader, lmData:ArrayBuffer):void {
 			var url:String = loader.url;
 			var urlVersion:String = Utils3D.getURLVerion(url);
-			var preBasePath:String = URL.basePath;
-			URL.basePath = URL.getPath(URL.formatURL(url));
+			var meshBasePath:String = URL.getPath(URL.formatURL(url));
 			
 			var urls:Array;
 			var urlMap:Object = {};
@@ -462,7 +489,7 @@ package {
 			
 			for (i = 0, n = urls.length; i < n; i++) {
 				var subUrl:String = urls[i];
-				formatSubUrl = URL.formatURL(subUrl);
+				formatSubUrl = URL.formatURL(subUrl,meshBasePath);
 				(urlVersion) && (formatSubUrl = formatSubUrl + urlVersion);
 				urls[i] = formatSubUrl;
 				urlMap[subUrl] = formatSubUrl;
@@ -474,38 +501,44 @@ package {
 			_onProcessChange(loader, 0, lmatWeight, 1.0);
 			var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, lmatWeight, urlCount / totalProcessCount], false);
 			_innerMeshLoaderManager.create(urls, Handler.create(null, _onMeshMateialLoaded, [loader, processHandler, lmData, urlMap]), processHandler, StandardMaterial);
-			URL.basePath = preBasePath;
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _onMeshMateialLoaded(loader:Loader, processHandler:Handler, lmData:Object, urlMap:Object):void {
 			loader.endLoad([lmData, urlMap]);
 			processHandler.recover();
 		}
 		
-		/** @private */
-		private static function _getMaterialTexturePath(path:String, urlVersion:String):String {
+		/**
+		 *@private 
+		 */
+		private static function _getMaterialTexturePath(path:String, urlVersion:String,materialBath:String):String {
 			var extenIndex:int = path.length - 4;
 			if (path.indexOf(".dds") == extenIndex || path.indexOf(".tga") == extenIndex || path.indexOf(".exr") == extenIndex || path.indexOf(".DDS") == extenIndex || path.indexOf(".TGA") == extenIndex || path.indexOf(".EXR") == extenIndex)
 				path = path.substr(0, extenIndex) + ".png";
-			path = URL.formatURL(path);
+			path = URL.formatURL(path,materialBath);
 			(urlVersion) && (path = path + urlVersion);
 			return path;
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _loadMaterial(loader:Loader):void {
 			var lmatLoader:Loader = new Loader();
 			lmatLoader.on(Event.COMPLETE, null, _onMaterilLmatLoaded, [loader]);
 			lmatLoader.load(loader.url, Loader.JSON, false, null, true);
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _onMaterilLmatLoaded(loader:Loader, lmatData:Object):void {
 			var url:String = loader.url;
 			var urlVersion:String = Utils3D.getURLVerion(url);
-			var preBasePath:String = URL.basePath;
-			URL.basePath = URL.getPath(URL.formatURL(url));
+			var materialBasePath:String = URL.getPath(URL.formatURL(url));
 			
 			var urls:Array = [];
 			var urlMap:Object = {};
@@ -513,42 +546,42 @@ package {
 			var formatSubUrl:String;
 			var diffuseTexture:String = customProps.diffuseTexture.texture2D;
 			if (diffuseTexture) {
-				formatSubUrl = _getMaterialTexturePath(diffuseTexture, urlVersion);
+				formatSubUrl = _getMaterialTexturePath(diffuseTexture, urlVersion,materialBasePath);
 				urls.push(formatSubUrl);
 				urlMap[diffuseTexture] = formatSubUrl;
 			}
 			
 			var normalTexture:String = customProps.normalTexture.texture2D;
 			if (normalTexture) {
-				formatSubUrl = _getMaterialTexturePath(normalTexture, urlVersion);
+				formatSubUrl = _getMaterialTexturePath(normalTexture, urlVersion,materialBasePath);
 				urls.push(formatSubUrl);
 				urlMap[normalTexture] = formatSubUrl;
 			}
 			
 			var specularTexture:String = customProps.specularTexture.texture2D;
 			if (specularTexture) {
-				formatSubUrl = _getMaterialTexturePath(specularTexture, urlVersion);
+				formatSubUrl = _getMaterialTexturePath(specularTexture, urlVersion,materialBasePath);
 				urls.push(formatSubUrl);
 				urlMap[specularTexture] = formatSubUrl;
 			}
 			
 			var emissiveTexture:String = customProps.emissiveTexture.texture2D;
 			if (emissiveTexture) {
-				formatSubUrl = _getMaterialTexturePath(emissiveTexture, urlVersion);
+				formatSubUrl = _getMaterialTexturePath(emissiveTexture, urlVersion,materialBasePath);
 				urls.push(formatSubUrl);
 				urlMap[emissiveTexture] = formatSubUrl;
 			}
 			
 			var ambientTexture:String = customProps.ambientTexture.texture2D;
 			if (ambientTexture) {
-				formatSubUrl = _getMaterialTexturePath(ambientTexture, urlVersion);
+				formatSubUrl = _getMaterialTexturePath(ambientTexture, urlVersion,materialBasePath);
 				urls.push(formatSubUrl);
 				urlMap[ambientTexture] = formatSubUrl;
 			}
 			
 			var reflectTexture:String = customProps.reflectTexture.texture2D;
 			if (reflectTexture) {
-				formatSubUrl = _getMaterialTexturePath(reflectTexture, urlVersion);
+				formatSubUrl = _getMaterialTexturePath(reflectTexture, urlVersion,materialBasePath);
 				urls.push(formatSubUrl);
 				urlMap[reflectTexture] = formatSubUrl;
 			}
@@ -563,36 +596,40 @@ package {
 			} else {
 				_onMateialTexturesLoaded(loader, null, lmatData, null);
 			}
-			
-			URL.basePath = preBasePath;
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _onMateialTexturesLoaded(loader:Loader, processHandler:Handler, lmatData:Object, urlMap:Object):void {
 			loader.endLoad([lmatData, urlMap]);
 			(processHandler) && (processHandler.recover());
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _loadTextureCube(loader:Loader):void {
 			var ltcLoader:Loader = new Loader();
 			ltcLoader.on(Event.COMPLETE, null, _onTextureCubeLtcLoaded, [loader]);
 			ltcLoader.load(loader.url, Loader.JSON, false, null, true);
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _onTextureCubeLtcLoaded(loader:Loader, ltcData:Object):void {
-			var preBasePath:String = URL.basePath;
-			URL.basePath = URL.getPath(URL.formatURL(loader.url));
-			var urls:Array = [URL.formatURL(ltcData.px), URL.formatURL(ltcData.nx), URL.formatURL(ltcData.py), URL.formatURL(ltcData.ny), URL.formatURL(ltcData.pz), URL.formatURL(ltcData.nz)];
-			var ltcWeight:Number = 1 / 7;
+			var ltcBasePath:String = URL.getPath(URL.formatURL(loader.url));
+			var urls:Array = [URL.formatURL(ltcData.px,ltcBasePath), URL.formatURL(ltcData.nx,ltcBasePath), URL.formatURL(ltcData.py,ltcBasePath), URL.formatURL(ltcData.ny,ltcBasePath), URL.formatURL(ltcData.pz,ltcBasePath), URL.formatURL(ltcData.nz,ltcBasePath)];
+			var ltcWeight:Number = 1.0 / 7.0;
 			_onProcessChange(loader, 0, ltcWeight, 1.0);
 			var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, ltcWeight, 6 / 7], false);
 			_innerTextureCubeLoaderManager.load(urls, Handler.create(null, _onTextureCubeImagesLoaded, [loader, urls, processHandler]), processHandler, "nativeimage");
-			URL.basePath = preBasePath;
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _onTextureCubeImagesLoaded(loader:Loader, urls:Array, processHandler:Handler):void {
 			var images:Array = [];
 			images.length = 6;
@@ -605,9 +642,11 @@ package {
 			processHandler.recover();
 		}
 		
-		/** @private */
+		/**
+		 *@private 
+		 */
 		private static function _onProcessChange(loader:Loader, offset:Number, weight:Number, process:Number):void {
-			var process:Number = offset + process * weight;
+			process = offset + process * weight;
 			(process < 1.0) && (loader.event(Event.PROGRESS, process));
 		}
 		
@@ -617,7 +656,7 @@ package {
 		 * @param	height 3D画布高度。
 		 */
 		public static function init(width:Number, height:Number, antialias:Boolean = false, alpha:Boolean = false, premultipliedAlpha:Boolean = false):void {
-			if (!WebGL.enable()) {
+			if ( !Render.isConchNode && !WebGL.enable()) {
 				alert("Laya3D init err,must support webGL!");
 				return;
 			}

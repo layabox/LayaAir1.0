@@ -1,4 +1,5 @@
 package laya.d3.graphics {
+	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
@@ -6,6 +7,7 @@ package laya.d3.graphics {
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
 	import laya.utils.Stat;
 	import laya.webgl.WebGLContext;
@@ -79,12 +81,17 @@ package laya.d3.graphics {
 			_vertexDeclaration = vertexDeclaration;
 		}
 		
-		private function _getCombineRenderElementFromPool():RenderElement {
+		private function _getCombineRenderElementFromPool(view:Matrix4x4, projection:Matrix4x4,projectionView:Matrix4x4):RenderElement {
 			var renderElement:RenderElement = _combineRenderElementPool[_combineRenderElementPoolIndex++];
-			return renderElement || (_combineRenderElementPool[_combineRenderElementPoolIndex - 1] = new RenderElement());
+			if (!renderElement) {
+				_combineRenderElementPool[_combineRenderElementPoolIndex - 1] = renderElement = new RenderElement();
+				renderElement._sprite3D = new Sprite3D();//TODO:创建虚拟动态精灵	
+			}
+			renderElement._sprite3D._prepareShaderValuetoRender(view,projection,projectionView);//TODO:待调整,是否合理
+			return renderElement;
 		}
 		
-		private function _getRenderElement():void {
+		private function _getRenderElement(view:Matrix4x4, projection:Matrix4x4,projectionView:Matrix4x4):void {
 			if (!_vertexDatas) {
 				_vertexDatas = new Float32Array(_vertexDeclaration.vertexStride / 4 * maxVertexCount);
 				_indexDatas = new Uint16Array(maxIndexCount);
@@ -120,7 +127,7 @@ package laya.d3.graphics {
 			
 			_combineRenderElementPoolIndex = 0;//归零对象池指针
 			for (i = 0, n = _materials.length; i < n; i++) {
-				var merageElement:RenderElement = _getCombineRenderElementFromPool();
+				var merageElement:RenderElement = _getCombineRenderElementFromPool(view,projection,projectionView);
 				merageElement._type = 2;//代表DynamicBatch
 				merageElement._staticBatch = null;
 				merageElement.renderObj = this;
@@ -168,8 +175,8 @@ package laya.d3.graphics {
 			_currentCombineIndexCount = 0;
 		}
 		
-		public function _addToRenderQueue(scene:BaseScene):void {
-			_getRenderElement();
+		public function _addToRenderQueue(scene:BaseScene,view:Matrix4x4, projection:Matrix4x4,projectionView:Matrix4x4):void {
+			_getRenderElement(view,projection,projectionView);
 			
 			for (var i:int = 0, n:int = _materials.length; i < n; i++)
 				scene.getRenderQueue(_materials[i].renderQueue)._addDynamicBatchElement(_merageElements[i]);
@@ -186,6 +193,11 @@ package laya.d3.graphics {
 			state.context.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, state._batchIndexStart * 2);
 			Stat.drawCall++;
 			Stat.trianglesFaces += indexCount / 3;
+		}
+		
+		/**NATIVE*/
+		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void {
+		
 		}
 	
 	}

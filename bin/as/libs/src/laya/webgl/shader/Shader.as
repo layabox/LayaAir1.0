@@ -7,18 +7,17 @@ package laya.webgl.shader {
 	import laya.webgl.WebGLContext;
 	import laya.webgl.utils.ShaderCompile;
 	
-	public class Shader extends Resource {
+	public class Shader extends BaseShader {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		private static var _TEXTURES:Array = /*[STATIC SAFE]*/ [WebGLContext.TEXTURE0, WebGLContext.TEXTURE1, WebGLContext.TEXTURE2, WebGLContext.TEXTURE3, WebGLContext.TEXTURE4, WebGLContext.TEXTURE5, WebGLContext.TEXTURE6,, WebGLContext.TEXTURE7, WebGLContext.TEXTURE8];
 		private static var _includeFiles:* = {}; //shader里面inlcude的小文件
 		private static var _count:int = 0;
-		private static var _preCompileShader:* = {}; //存储预编译结果，可以通过名字获得内容,目前不支持#ifdef嵌套和条件
+		public static var _preCompileShader:* = {}; //存储预编译结果，可以通过名字获得内容,目前不支持#ifdef嵌套和条件
 		
 		protected static var shaderParamsMap:Object = {"float": WebGLContext.FLOAT, "int": WebGLContext.INT, "bool": WebGLContext.BOOL, "vec2": WebGLContext.FLOAT_VEC2, "vec3": WebGLContext.FLOAT_VEC3, "vec4": WebGLContext.FLOAT_VEC4, "ivec2": WebGLContext.INT_VEC2, "ivec3": WebGLContext.INT_VEC3, "ivec4": WebGLContext.INT_VEC4, "bvec2": WebGLContext.BOOL_VEC2, "bvec3": WebGLContext.BOOL_VEC3, "bvec4": WebGLContext.BOOL_VEC4, "mat2": WebGLContext.FLOAT_MAT2, "mat3": WebGLContext.FLOAT_MAT3, "mat4": WebGLContext.FLOAT_MAT4, "sampler2D": WebGLContext.SAMPLER_2D, "samplerCube": WebGLContext.SAMPLER_CUBE};
 		
 		public static const SHADERNAME2ID:Number = 0.0002;
 		
-		public static var activeShader:Shader;
 		
 		public static var nameKey:StringKey = new StringKey();
 		
@@ -496,6 +495,7 @@ package laya.webgl.shader {
 		 */
 		public function upload(shaderValue:ShaderValue, params:Array = null):void {
 			activeShader = this;
+			bindShader = this;
 			activeResource();
 			WebGLContext.UseProgram(_program);
 			
@@ -521,6 +521,7 @@ package laya.webgl.shader {
 		 */
 		public function uploadArray(shaderValue:Array, length:int, _bufferUsage:*):void {
 			activeShader = this;
+			bindShader = this;
 			activeResource();
 			WebGLContext.UseProgram(_program);
 			var params:* = _params, value:*;

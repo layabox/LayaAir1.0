@@ -4,6 +4,7 @@ package laya.webgl.resource {
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.WebGLContext2D;
+	import laya.webgl.shader.BaseShader;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.utils.RenderState2D;
@@ -63,7 +64,7 @@ package laya.webgl.resource {
 			RenderState2D.worldAlpha = 1;
 			RenderState2D.worldFilters = null;
 			RenderState2D.worldShaderDefines = null;
-			Shader.activeShader = null;
+			BaseShader.activeShader = null;
 			
 			target.start();
 			
@@ -72,7 +73,7 @@ package laya.webgl.resource {
 			context.flush();
 			target.end();
 			
-			Shader.activeShader = null;
+			BaseShader.activeShader = null;
 			RenderState2D.worldAlpha = preAlpha;
 			RenderState2D.worldMatrix4 = preMatrix4;
 			RenderState2D.worldMatrix = preMatrix;

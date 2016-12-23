@@ -6,11 +6,11 @@ package laya.d3.graphics {
 	public class VertexElement {
 		public var offset:int;
 		public var elementFormat:String;
-		public var elementUsage:String;
+		public var elementUsage:int;
 		
 		//public var usageIndex:int;//TODO:待确定是否添加
 		
-		public function VertexElement(offset:int, elementFormat:String, elementUsage:String/*, usageIndex:int*/) {
+		public function VertexElement(offset:int, elementFormat:String, elementUsage:int/*, usageIndex:int*/) {
 			this.offset = offset;
 			this.elementFormat = elementFormat;
 			this.elementUsage = elementUsage;

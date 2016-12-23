@@ -2,17 +2,17 @@ package threeDimen.advancedStage {
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
+	import laya.d3.core.Sprite3D;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.models.Mesh;
+	import laya.d3.shader.Shader3D;
 	import laya.display.Stage;
 	import laya.net.Loader;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
-	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer2D;
 	import threeDimen.advancedStage.custom.CustomMaterial;
 	
 	/**
@@ -49,17 +49,18 @@ package threeDimen.advancedStage {
 		
 		private function initShader():void {
 			var vs:String, ps:String;
-			var shaderNameMap:* = {
+			var attributeMap:Object = {
 				'a_Position': VertexElementUsage.POSITION0, 
 				'a_Normal': VertexElementUsage.NORMAL0, 
-				'a_Texcoord': VertexElementUsage.TEXTURECOORDINATE0, 
-				'u_MvpMatrix': CustomMaterial.MVPMATRIX, 
-				'u_texture': CustomMaterial.DIFFUSETEXTURE, 
-				'u_WorldMat': CustomMaterial.WORLDMATRIX};
-			var customShader:int = Shader.nameKey.add("CustomShader");
+				'a_Texcoord': VertexElementUsage.TEXTURECOORDINATE0};
+			var uniformMap:Object = {
+				'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE], 
+				'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE],
+				'u_texture': [CustomMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL]};
+			var customShader:int = Shader3D.nameKey.add("CustomShader");
 			vs = __INCLUDESTR__("shader/customShader.vs");
 			ps = __INCLUDESTR__("shader/customShader.ps");
-			Shader.preCompile(customShader, vs, ps, shaderNameMap);
+			Shader3D.preCompile(customShader, vs, ps, attributeMap, uniformMap);
 		}
 	
 	}

@@ -250,12 +250,17 @@ package laya.display {
 		 * 对于已知大小的容器（特别是根容器），设置此值为true，能减少节点碰撞，提高性能。默认为false
 		 */
 		public var hitTestPrior:Boolean = false;
-		/**@private 视口大小，视口外的东西，将不被渲染*/
-		public var viewport:Rectangle;
+		/**视口大小，视口外的东西，将不被渲染*/
+		public var viewport:Rectangle = null;
 		/** @private */
 		private var _optimizeScrollRect:Boolean = false;
 		/**@private */
 		private var _texture:Texture = null;
+		
+		override public function createConchModel():* 
+		{
+			return __JS__("new ConchNode()");
+		}
 		
 		public function get optimizeScrollRect():Boolean {
 			return _optimizeScrollRect;
@@ -269,7 +274,7 @@ package laya.display {
 		public function set optimizeScrollRect(b:Boolean):void {
 			if (_optimizeScrollRect != b) {
 				_optimizeScrollRect = b;
-				model && model.optimizeScrollRect(b);
+				conchModel && conchModel.optimizeScrollRect(b);
 			}
 		}
 		
@@ -310,7 +315,7 @@ package laya.display {
 					canvas._setContext(__JS__("new CanvasRenderingContext2D()"));
 					__JS__("this.customContext = new RenderContext(0, 0, canvas)");
 					canvas.context.setCanvasType && canvas.context.setCanvasType(2);
-					model.custom(canvas.context);
+					conchModel.custom(canvas.context);
 				}
 			}
 		}
@@ -336,7 +341,7 @@ package laya.display {
 				cacheCanvas.type = value;
 				cacheCanvas.reCache = true;
 				_renderType |= RenderSprite.CANVAS;
-				if (value == "bitmap") model && model.cacheAs(1);
+				if (value == "bitmap") conchModel && conchModel.cacheAs(1);
 				_set$P("cacheForFilters", false);
 			} else {
 				if (_$P["hasFilter"]) {
@@ -345,7 +350,7 @@ package laya.display {
 					if (cacheCanvas) Pool.recover("cacheCanvas", cacheCanvas);
 					_$P.cacheCanvas = null;
 					_renderType &= ~RenderSprite.CANVAS;
-					model && model.cacheAs(0);
+					conchModel && conchModel.cacheAs(0);
 				}
 				
 			}
@@ -378,7 +383,7 @@ package laya.display {
 			if (this._x !== value) {
 				if (this.destroyed) return;
 				this._x = value;
-				model && model.pos(value, this._y);
+				conchModel && conchModel.pos(value, this._y);
 				var p:Sprite = _parent as Sprite;
 				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
 				this._$P.maskParent && _$P.maskParent._repaint === 0 && (_$P.maskParent._repaint = 1, _$P.maskParent.parentRepaint());
@@ -394,7 +399,7 @@ package laya.display {
 			if (this._y !== value) {
 				if (this.destroyed) return;
 				this._y = value;
-				model && model.pos(this._x, value);
+				conchModel && conchModel.pos(this._x, value);
 				var p:Sprite = _parent as Sprite;
 				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
 				this._$P.maskParent && _$P.maskParent._repaint === 0 && (_$P.maskParent._repaint = 1, _$P.maskParent.parentRepaint());
@@ -410,7 +415,7 @@ package laya.display {
 		}
 		
 		public function set width(value:Number):void {
-			this._width !== value && (this._width = value, model && model.size(value, this._height), repaint());
+			this._width !== value && (this._width = value, conchModel && conchModel.size(value, this._height), repaint());
 		}
 		
 		/**
@@ -422,7 +427,7 @@ package laya.display {
 		}
 		
 		public function set height(value:Number):void {
-			this._height !== value && (this._height = value, model && model.size(this._width, value), repaint());
+			this._height !== value && (this._height = value, conchModel && conchModel.size(this._width, value), repaint());
 		}
 		
 		/**
@@ -576,7 +581,7 @@ package laya.display {
 				style.setScaleX(value);
 				_changeType |= CHG_VIEW;
 				_tfChanged = true;
-				model && model.scale(value, style._tf.scaleY);
+				conchModel && conchModel.scale(value, style._tf.scaleY);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
 				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
@@ -594,7 +599,7 @@ package laya.display {
 				style.setScaleY(value);
 				_changeType |= CHG_VIEW;
 				_tfChanged = true;
-				model && model.scale(style._tf.scaleX, value);
+				conchModel && conchModel.scale(style._tf.scaleX, value);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
 				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
@@ -612,7 +617,7 @@ package laya.display {
 				_changeType |= CHG_VIEW;
 				style.setRotate(value);
 				_tfChanged = true;
-				model && model.rotate(value);
+				conchModel && conchModel.rotate(value);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
 				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
@@ -645,7 +650,7 @@ package laya.display {
 			if (style._tf.skewY !== value) {
 				style.setSkewY(value);
 				_tfChanged = true;
-				model && model.skew(style._tf.skewX, value);
+				conchModel && conchModel.skew(style._tf.skewX, value);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
 				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
@@ -706,12 +711,12 @@ package laya.display {
 				_x = value.tx;
 				_y = value.ty;
 				value.tx = value.ty = 0;
-				model && model.transform(value.a, value.b, value.c, value.d, _x, _y);
+				conchModel && conchModel.transform(value.a, value.b, value.c, value.d, _x, _y);
 			}
 			if (value) _renderType |= RenderSprite.TRANSFORM;
 			else {
 				_renderType &= ~RenderSprite.TRANSFORM;
-				model && model.removeType(RenderSprite.TRANSFORM);
+				conchModel && conchModel.removeType(RenderSprite.TRANSFORM);
 			}
 			parentRepaint();
 		}
@@ -724,7 +729,7 @@ package laya.display {
 		public function set pivotX(value:Number):void {
 			getStyle().setTranslateX(value);
 			_changeType |= CHG_VIEW;
-			model && model.pivot(value, this._style._tf.translateY);
+			conchModel && conchModel.pivot(value, this._style._tf.translateY);
 			repaint();
 		}
 		
@@ -736,7 +741,7 @@ package laya.display {
 		public function set pivotY(value:Number):void {
 			getStyle().setTranslateY(value);
 			_changeType |= CHG_VIEW;
-			model && model.pivot(this._style._tf.translateX, value);
+			conchModel && conchModel.pivot(this._style._tf.translateX, value);
 			repaint();
 		}
 		
@@ -749,7 +754,7 @@ package laya.display {
 			if (_style && _style.alpha !== value) {
 				value = value < 0 ? 0 : (value > 1 ? 1 : value);
 				getStyle().alpha = value;
-				model && model.alpha(value);
+				conchModel && conchModel.alpha(value);
 				if (value !== 1) _renderType |= RenderSprite.ALPHA;
 				else _renderType &= ~RenderSprite.ALPHA;
 				parentRepaint();
@@ -764,7 +769,7 @@ package laya.display {
 		public function set visible(value:Boolean):void {
 			if (_style && _style.visible !== value) {
 				getStyle().visible = value;
-				model && model.visible(value);
+				conchModel && conchModel.visible(value);
 				parentRepaint();
 			}
 		}
@@ -776,7 +781,7 @@ package laya.display {
 		
 		public function set blendMode(value:String):void {
 			getStyle().blendMode = value;
-			model && model.blendMode(value);
+			conchModel && conchModel.blendMode(value);
 			if (value && value != "source-over") _renderType |= RenderSprite.BLEND;
 			else _renderType &= ~RenderSprite.BLEND;
 			parentRepaint();
@@ -794,12 +799,12 @@ package laya.display {
 				_renderType &= ~RenderSprite.IMAGE;
 				_renderType |= RenderSprite.GRAPHICS;
 				value._sp = this;
-				model && model.graphics(this._graphics);
+				conchModel && conchModel.graphics(this._graphics);
 					//if (value.empty()) _renderType &= ~RenderSprite.IMAGE;
 			} else {
 				_renderType &= ~RenderSprite.GRAPHICS;
 				_renderType &= ~RenderSprite.IMAGE;
-				model && model.removeType(RenderSprite.GRAPHICS);
+				conchModel && conchModel.removeType(RenderSprite.GRAPHICS);
 			}
 			repaint();
 		}
@@ -815,10 +820,10 @@ package laya.display {
 			repaint();
 			if (value) {
 				_renderType |= RenderSprite.CLIP;
-				model && model.scrollRect(value.x, value.y, value.width, value.height);
+				conchModel && conchModel.scrollRect(value.x, value.y, value.width, value.height);
 			} else {
 				_renderType &= ~RenderSprite.CLIP;
-				model && model.removeType(RenderSprite.CLIP);
+				conchModel && conchModel.removeType(RenderSprite.CLIP);
 			}
 		}
 		
@@ -947,7 +952,7 @@ package laya.display {
 			if (_$P.filters == value) return;
 			_set$P("filters", value ? value.slice() : null);
 			if (Render.isConchApp) {
-				model && model.removeType(0x10);
+				conchModel && conchModel.removeType(0x10);
 				if (_$P.filters && _$P.filters.length == 1 /*&& (_$P.filters[0] is ColorFilter)*/) {
 					_$P.filters[0].callNative(this);
 				}
@@ -1174,7 +1179,7 @@ package laya.display {
 		
 		/**cacheAs后，设置自己和父对象缓存失效。*/
 		public function repaint():void {
-			this.model && this.model.repaint && this.model.repaint();
+			this.conchModel&&this.conchModel.repaint&&this.conchModel.repaint();
 			(_repaint === 0) && (_repaint = 1, parentRepaint());
 			if (this._$P && this._$P.maskParent) {
 				_$P.maskParent.repaint();
@@ -1236,8 +1241,8 @@ package laya.display {
 				mask && mask._set$P("maskParent", null);
 				_set$P("_mask", value);
 			}
-			model && model.mask(value ? value.model : null);
-			_renderType |= RenderSprite.BLEND;
+			conchModel && conchModel.mask(value ? value.conchModel : null);
+			_renderType |= RenderSprite.MASK;
 			parentRepaint();
 		}
 		
@@ -1301,7 +1306,7 @@ package laya.display {
 		 */
 		public function hitTestPoint(x:Number, y:Number):Boolean {
 			var point:Point = globalToLocal(Point.TEMP.setTo(x, y));
-			var rect:Rectangle = _$P.hitArea ? _$P.hitArea : Rectangle.EMPTY.setTo(0, 0, _width, _height);
+			var rect:Rectangle = _$P.hitArea ? _$P.hitArea : Rectangle.TEMP.setTo(0, 0, _width, _height);
 			return rect.contains(point.x, point.y);
 		}
 		
@@ -1360,7 +1365,7 @@ package laya.display {
 		public function set zOrder(value:Number):void {
 			if (_zOrder != value) {
 				_zOrder = value;
-			     model && model.setZOrder && model.setZOrder(value);
+			    conchModel && conchModel.setZOrder && conchModel.setZOrder(value);
 				_parent && Laya.timer.callLater(_parent, updateZOrder);
 			}
 		}

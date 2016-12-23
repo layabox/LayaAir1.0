@@ -9,7 +9,7 @@ attribute vec3 a_StartRotation2;
 attribute float a_StartLifeTime;
 attribute float a_Time;
 attribute float a_StartSpeed;
-#ifdef VELOCITYOVERLIFETIME||COLOROVERLIFETIME||RANDOMCOLOROVERLIFETIME||SIZEOVERLIFETIME||ROTATIONOVERLIFETIME
+#ifdef defined(VELOCITYOVERLIFETIME)||defined(COLOROVERLIFETIME)||defined(RANDOMCOLOROVERLIFETIME)||defined(SIZEOVERLIFETIME)||defined(ROTATIONOVERLIFETIME)
   attribute vec4 a_Random0;
 #endif
 #ifdef TEXTURESHEETANIMATION

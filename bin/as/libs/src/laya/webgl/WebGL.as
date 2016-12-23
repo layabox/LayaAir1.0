@@ -490,6 +490,7 @@ package laya.webgl {
 		}
 		
 		public static function onStageResize(width:Number, height:Number):void {
+			if (mainContext == null) return;
 			mainContext.viewport(0, 0, width, height);
 			/*[IF-FLASH]*/
 			mainContext.configureBackBuffer(width, height, 0, true);

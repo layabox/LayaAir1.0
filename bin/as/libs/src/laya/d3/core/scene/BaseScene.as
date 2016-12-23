@@ -17,6 +17,7 @@ package laya.d3.core.scene {
 	import laya.d3.resource.RenderTexture;
 	import laya.d3.resource.models.Sky;
 	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shader.ValusArray;
 	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.events.Event;
@@ -29,37 +30,36 @@ package laya.d3.core.scene {
 	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.submit.ISubmit;
 	import laya.webgl.utils.RenderState2D;
-	import laya.webgl.utils.ValusArray;
 	
 	/**
 	 * <code>BaseScene</code> 类用于实现场景的父类。
 	 */
-	public class BaseScene extends Sprite implements ISubmit {
-		public static const FOGCOLOR:String = "FOGCOLOR";
-		public static const FOGSTART:String = "FOGSTART";
-		public static const FOGRANGE:String = "FOGRANGE";
-		public static const CAMERAPOS:String = "CAMERAPOS";
+	public class BaseScene extends Sprite implements ISubmit {		
+		public static const FOGCOLOR:int = 0;
+		public static const FOGSTART:int = 1;
+		public static const FOGRANGE:int = 2;
 		
-		public static const LIGHTDIRECTION:String = "LIGHTDIRECTION";
-		public static const LIGHTDIRDIFFUSE:String = "LIGHTDIRDIFFUSE";
-		public static const LIGHTDIRAMBIENT:String = "LIGHTDIRAMBIENT";
-		public static const LIGHTDIRSPECULAR:String = "LIGHTDIRSPECULAR";
+		public static const LIGHTDIRECTION:int = 3;
+		public static const LIGHTDIRDIFFUSE:int = 4;
+		public static const LIGHTDIRAMBIENT:int = 5;
+		public static const LIGHTDIRSPECULAR:int = 6;
 		
-		public static const POINTLIGHTPOS:String = "POINTLIGHTPOS";
-		public static const POINTLIGHTRANGE:String = "POINTLIGHTRANGE";
-		public static const POINTLIGHTATTENUATION:String = "POINTLIGHTATTENUATION";
-		public static const POINTLIGHTDIFFUSE:String = "POINTLIGHTDIFFUSE";
-		public static const POINTLIGHTAMBIENT:String = "POINTLIGHTAMBIENT";
-		public static const POINTLIGHTSPECULAR:String = "POINTLIGHTSPECULAR";
+		public static const POINTLIGHTPOS:int = 7;
+		public static const POINTLIGHTRANGE:int = 8;
+		public static const POINTLIGHTATTENUATION:int = 9;
+		public static const POINTLIGHTDIFFUSE:int = 10;
+		public static const POINTLIGHTAMBIENT:int = 11;
+		public static const POINTLIGHTSPECULAR:int = 12;
 		
-		public static const SPOTLIGHTPOS:String = "SPOTLIGHTPOS";
-		public static const SPOTLIGHTDIRECTION:String = "SPOTLIGHTDIRECTION";
-		public static const SPOTLIGHTSPOT:String = "SPOTLIGHTSPOT";
-		public static const SPOTLIGHTRANGE:String = "SPOTLIGHTRANGE";
-		public static const SPOTLIGHTATTENUATION:String = "SPOTLIGHTATTENUATION";
-		public static const SPOTLIGHTDIFFUSE:String = "SPOTLIGHTDIFFUSE";
-		public static const SPOTLIGHTAMBIENT:String = "SPOTLIGHTAMBIENT";
-		public static const SPOTLIGHTSPECULAR:String = "SPOTLIGHTSPECULAR";
+		public static const SPOTLIGHTPOS:int = 13;
+		public static const SPOTLIGHTDIRECTION:int = 14;
+		public static const SPOTLIGHTSPOT:int = 15;
+		public static const SPOTLIGHTRANGE:int = 16;
+		public static const SPOTLIGHTATTENUATION:int = 17;
+		public static const SPOTLIGHTDIFFUSE:int = 18;
+		public static const SPOTLIGHTAMBIENT:int = 19;
+		public static const SPOTLIGHTSPECULAR:int = 20;
+
 		
 		/**
 		 * @private
@@ -100,6 +100,9 @@ package laya.d3.core.scene {
 		protected var _lastCurrentTime:Number;
 		
 		/** @private */
+		public var _shaderValues:ValusArray;
+		
+		/** @private */
 		public var _frustumCullingObjects:Vector.<RenderObject> = new Vector.<RenderObject>();
 		/** @private */
 		public var _staticBatchManager:StaticBatchManager;//TODO:释放问题。
@@ -133,6 +136,7 @@ package laya.d3.core.scene {
 		 * 创建一个 <code>BaseScene</code> 实例。
 		 */
 		public function BaseScene() {
+			_shaderValues = new ValusArray();
 			_invertYProjectionMatrix = new Matrix4x4();
 			_invertYProjectionViewMatrix = new Matrix4x4();
 			_invertYScaleMatrix = new Matrix4x4();
@@ -229,6 +233,15 @@ package laya.d3.core.scene {
 			on(Event.UNDISPLAY, this, _onUnDisplay);
 		}
 		
+		override public function createConchModel():* //NATIVE
+		{
+			var pScene:* = __JS__("new ConchScene()");
+			//TODO wyw
+			pScene.init(512, 512, 512, 4);
+			return pScene;
+			;
+		}
+		
 		/**
 		 * @private
 		 */
@@ -265,15 +278,10 @@ package laya.d3.core.scene {
 		 * @param gl WebGL上下文。
 		 * @return state 渲染状态。
 		 */
-		protected function _prepareRenderToRenderState(camera:BaseCamera, state:RenderState):void {
+		protected function _prepareSceneToRender(state:RenderState):void {
 			var shaderDefines:ShaderDefines3D = state.shaderDefines;
 			(WebGL.frameShaderHighPrecision) && (shaderDefines.addInt(ShaderDefines3D.FSHIGHPRECISION));
 			
-			Layer._currentCameraCullingMask = camera.cullingMask;
-			state.camera = camera;
-			
-			var shaderValue:ValusArray = state.shaderValue;
-			camera && shaderValue.pushValue(BaseScene.CAMERAPOS, camera.transform.position.elements);
 			if (_lights.length > 0) {
 				var lightCount:int = 0;
 				for (var i:int = 0; i < _lights.length; i++) {
@@ -286,14 +294,16 @@ package laya.d3.core.scene {
 				}
 			}
 			if (enableFog) {
+				var sceneSV:ValusArray = _shaderValues;
 				shaderDefines.addInt(ShaderDefines3D.FOG);
-				shaderValue.pushValue(BaseScene.FOGSTART, fogStart);
-				shaderValue.pushValue(BaseScene.FOGRANGE, fogRange);
-				shaderValue.pushValue(BaseScene.FOGCOLOR, fogColor.elements);
+				sceneSV.setValue(BaseScene.FOGSTART, fogStart);
+				sceneSV.setValue(BaseScene.FOGRANGE, fogRange);
+				sceneSV.setValue(BaseScene.FOGCOLOR, fogColor.elements);
 			}
 		}
 		
 		protected function _endRenderToRenderState(state:RenderState):void {
+			_shaderValues.data.length = 0;
 			state.reset();
 		}
 		
@@ -303,9 +313,17 @@ package laya.d3.core.scene {
 		public function _updateScene():void {
 			var renderState:RenderState = _renderState;
 			_prepareUpdateToRenderState(WebGL.mainContext, renderState);
-			beforeUpate(renderState);//更新之前
+			beforeUpdate(renderState);//更新之前
 			_updateChilds(renderState);
-			lateUpate(renderState);//更新之后
+			lateUpdate(renderState);//更新之后
+			if (Render.isConchNode) {//NATIVE
+				_prepareSceneToRender(renderState);
+				for (var i:int = 0, n:int = _cameraPool.length; i < n; i++) {
+					var camera:BaseCamera = _cameraPool[i];
+					renderState.camera = camera;
+					camera._prepareCameraToRender();
+				}
+			}
 		}
 		
 		/**
@@ -322,7 +340,7 @@ package laya.d3.core.scene {
 		protected function _preRenderScene(gl:WebGLContext, state:RenderState):void {
 			_boundFrustum.matrix = state.projectionViewMatrix;
 			
-			FrustumCulling.RenderObjectCulling(_boundFrustum, this);
+			FrustumCulling.RenderObjectCulling(_boundFrustum, this,state.viewMatrix,state.projectionMatrix,state.projectionViewMatrix);
 			for (var i:int = 0, iNum:int = _quenes.length; i < iNum; i++)
 				(_quenes[i]) && (_quenes[i]._preRender(state));
 		}
@@ -524,14 +542,14 @@ package laya.d3.core.scene {
 		 * 更新前处理,可重写此函数。
 		 * @param state 渲染相关状态。
 		 */
-		public function beforeUpate(state:RenderState):void {
+		public function beforeUpdate(state:RenderState):void {
 		}
 		
 		/**
 		 * 更新后处理,可重写此函数。
 		 * @param state 渲染相关状态。
 		 */
-		public function lateUpate(state:RenderState):void {
+		public function lateUpdate(state:RenderState):void {
 		}
 		
 		/**

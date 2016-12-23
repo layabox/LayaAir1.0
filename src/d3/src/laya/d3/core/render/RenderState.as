@@ -7,9 +7,7 @@ package laya.d3.core.render {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Viewport;
 	import laya.d3.shader.ShaderDefines3D;
-	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.utils.ValusArray;
 	
 	/**
 	 * <code>RenderState</code> 类用于实现渲染状态。
@@ -57,8 +55,6 @@ package laya.d3.core.render {
 		public var cameraBoundingFrustum:BoundFrustum;
 		/**当前视口。*/
 		public var viewport:Viewport;
-		/**当前ShaderValue。*/
-		public var shaderValue:ValusArray = new ValusArray;
 		/**当前ShaderDefs。*/
 		public var shaderDefines:ShaderDefines3D = new ShaderDefines3D();
 		
@@ -73,7 +69,7 @@ package laya.d3.core.render {
 		 * 重置。
 		 */
 		public function reset():void {
-			shaderValue.length = 0;
+			//shaderValue.length = 0;
 			shaderDefines.setValue(0);
 		}
 	

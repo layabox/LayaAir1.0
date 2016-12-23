@@ -85,7 +85,7 @@ package laya.filters {
 		 */
 		public override function callNative(sp:Sprite):void
 		{
-			sp.model &&sp.model.glowFilter&&sp.model.glowFilter(_color.strColor, _elements[4], _elements[5], _elements[6]);
+			sp.conchModel &&sp.conchModel.glowFilter&&sp.conchModel.glowFilter(_color.strColor, _elements[4], _elements[5], _elements[6]);
 		}
 	
 	}

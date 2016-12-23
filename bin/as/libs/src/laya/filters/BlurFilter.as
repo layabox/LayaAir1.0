@@ -43,7 +43,7 @@ package laya.filters {
 		 */
 		public override function callNative(sp:Sprite):void
 		{
-			sp.model &&sp.model.blurFilter&&sp.model.blurFilter(strength);
+			sp.conchModel &&sp.conchModel.blurFilter&&sp.conchModel.blurFilter(strength);
 		}
 	}
 }

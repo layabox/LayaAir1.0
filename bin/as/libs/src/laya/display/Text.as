@@ -103,6 +103,8 @@ package laya.display {
 	 * </listing>
 	 */
 	public class Text extends Sprite {
+		/**@private 预测长度的文字，用来提升计算效率，不同语言找一个最大的字符即可*/
+		public static var _testWord:String = "游";
 		/**语言包*/
 		public static var langPacks:Object;
 		/**visible不进行任何裁切。*/
@@ -482,7 +484,7 @@ package laya.display {
 			_getCSSStyle().borderColor = value;
 			isChanged = true;
 		}
-
+		
 		/**
 		 * <p>描边宽度（以像素为单位）。</p>
 		 * 默认值0，表示不描边。
@@ -591,7 +593,7 @@ package laya.display {
 			// 输入框的prompt始终显示明文
 			if (("prompt" in this) && this['prompt'] == this._text)
 				password = false;
-
+			
 			var x:Number = 0, y:Number = 0;
 			var end:int = Math.min(_lines.length, visibleLineCount + begin) || 1;
 			for (var i:int = begin; i < end; i++) {
@@ -711,12 +713,11 @@ package laya.display {
 				nh = _lines.length * (_currBitmapFont.getMaxHeight() + leading) + padding[0] + padding[2];
 			else
 				nh = _lines.length * (_charSize.height + leading) + padding[0] + padding[2];
-			if (nw != _textWidth || nh != _textHeight)
-			{
+			if (nw != _textWidth || nh != _textHeight) {
 				_textWidth = nw;
 				_textHeight = nh;
-				if(!_width||!_height)
-				 model&&model.size(_width||_textWidth, _height||_textHeight);
+				if (!_width || !_height)
+					conchModel && conchModel.size(_width || _textWidth, _height || _textHeight);
 			}
 		}
 		
@@ -750,9 +751,15 @@ package laya.display {
 			if (needWordWrapOrTruncate) {
 				var wordWrapWidth:Number = getWordWrapWidth();
 			}
-			var measureResult:* = Browser.context.measureText("阳");
-			_charSize.width = measureResult.width;
-			_charSize.height = (measureResult.height || fontSize);
+			
+			if (_currBitmapFont) {
+				_charSize.width = _currBitmapFont.getMaxWidth();
+				_charSize.height = _currBitmapFont.getMaxHeight();
+			} else {
+				var measureResult:* = Browser.context.measureText(_testWord);
+				_charSize.width = measureResult.width;
+				_charSize.height = (measureResult.height || fontSize);
+			}
 			
 			var lines:Array = text.replace(/\r\n/g, "\n").split("\n");
 			for (var i:int = 0, n:int = lines.length; i < n; i++) {
@@ -796,7 +803,7 @@ package laya.display {
 				return;
 			}
 			
-			charsWidth = _currBitmapFont ? _currBitmapFont.getMaxWidth() : _charSize.width;
+			charsWidth = _charSize.width;
 			//优化2，预算第几个字符会超出，减少遍历及字符宽度度量
 			maybeIndex = Math.floor(wordWrapWidth / charsWidth);
 			(maybeIndex == 0) && (maybeIndex = 1);
@@ -979,13 +986,11 @@ package laya.display {
 			return _lines;
 		}
 		
-		public function get underlineColor():String 
-		{
+		public function get underlineColor():String {
 			return _underlineColor;
 		}
 		
-		public function set underlineColor(value:String):void 
-		{
+		public function set underlineColor(value:String):void {
 			_underlineColor = value;
 			_isChanged = true;
 			typeset();

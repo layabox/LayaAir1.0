@@ -161,28 +161,28 @@ package laya.d3.core.particleShuriKen.module {
 		/**
 		 * 渐变尺寸。
 		 */
-		public function get gradientSize():GradientDataNumber {
+		public function get gradient():GradientDataNumber {
 			return _gradient;
 		}
 		
 		/**
 		 * 渐变尺寸X。
 		 */
-		public function get gradientSizeX():GradientDataNumber {
+		public function get gradientX():GradientDataNumber {
 			return _gradientX;
 		}
 		
 		/**
 		 * 渐变尺寸Y。
 		 */
-		public function get gradientSizeY():GradientDataNumber {
+		public function get gradientY():GradientDataNumber {
 			return _gradientY;
 		}
 		
 		/**
 		 *渐变尺寸Z。
 		 */
-		public function get gradientSizeZ():GradientDataNumber {
+		public function get gradientZ():GradientDataNumber {
 			return _gradientZ;
 		}
 		

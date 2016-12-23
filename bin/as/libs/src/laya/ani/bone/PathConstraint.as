@@ -70,8 +70,10 @@ package laya.ani.bone {
 				for (var i:int = 0, n:int = spacesCount - 1; i < n; ) {
 					var bone:Bone = bones[i];
 					var length:Number = bone.length;
-					var x:Number = length * bone.transform.getMatrix().a;
-					var y:Number = length * bone.transform.getMatrix().c;
+					//var x:Number = length * bone.transform.getMatrix().a;
+					//var y:Number = length * bone.transform.getMatrix().c;
+					var x:Number = length * bone.resultMatrix.a;
+					var y:Number = length * bone.resultMatrix.c;
 					length = Math.sqrt(x * x + y * y);
 					if (tScale) lengths[i] = length;
 					spaces[++i] = tLengthSpacing ? Math.max(0, length + spacing) : spacing;

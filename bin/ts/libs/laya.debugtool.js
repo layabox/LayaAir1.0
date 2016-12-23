@@ -116,9 +116,9 @@
 				DebugTool.cmdToTypeO[ /*laya.renders.RenderSprite.IMAGE*/0x01]="IMAGE";
 				DebugTool.cmdToTypeO[ /*laya.renders.RenderSprite.ALPHA*/0x02]="ALPHA";
 				DebugTool.cmdToTypeO[ /*laya.renders.RenderSprite.TRANSFORM*/0x04]="TRANSFORM";
-				DebugTool.cmdToTypeO[ /*laya.renders.RenderSprite.CANVAS*/0x08]="CANVAS";
-				DebugTool.cmdToTypeO[ /*laya.renders.RenderSprite.GRAPHICS*/0x100]="GRAPHICS";
-				DebugTool.cmdToTypeO[ /*laya.renders.RenderSprite.CUSTOM*/0x200]="CUSTOM";
+				DebugTool.cmdToTypeO[ /*laya.renders.RenderSprite.CANVAS*/0x10]="CANVAS";
+				DebugTool.cmdToTypeO[ /*laya.renders.RenderSprite.GRAPHICS*/0x200]="GRAPHICS";
+				DebugTool.cmdToTypeO[ /*laya.renders.RenderSprite.CUSTOM*/0x400]="CUSTOM";
 				DebugTool.cmdToTypeO[ /*laya.renders.RenderSprite.CHILDS*/0x800]="CHILDS";
 				DebugExport.export();
 			}
@@ -1194,12 +1194,7 @@
 
 		__class(ColorTool,'laya.debug.tools.ColorTool');
 		ColorTool.toHexColor=function(color){
-			if (color < 0 || isNaN(color))
-				return null;
-			var str=color.toString(16);
-			while (str.length < 6)
-			str="0"+str;
-			return "#"+str;
+			return Utils.toHexColor(color);
 		}
 
 		ColorTool.getRGBByRGBStr=function(str){
@@ -2316,7 +2311,7 @@
 		__proto.createRenderSprite=function(type,next){
 			var rst;
 			rst=new RenderSprite(type,next);
-			if (type==/*laya.renders.RenderSprite.CANVAS*/0x08){
+			if (type==/*laya.renders.RenderSprite.CANVAS*/0x10){
 				rst["_oldCanvas"]=rst._fun;
 				rst._fun=RenderSpriteHook.I._canvas;
 			}

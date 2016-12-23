@@ -4,28 +4,21 @@ package threeDimen.advancedStage.custom {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.BaseTexture;
-	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * ...
 	 * @author ...
 	 */
 	public class CustomMaterial extends BaseMaterial {
-		public static const MVPMATRIX:String = "MVPMATRIX";
-		public static const DIFFUSETEXTURE:String = "DIFFUSETEXTURE";
-		public static const WORLDMATRIX:String = "MATRIX1";
-		
-		/** @private */
-		private static var _tempMatrix4x40:Matrix4x4 = new Matrix4x4();
-		/** @private */
-		private static const _diffuseTextureIndex:int = 0;
+		public static const DIFFUSETEXTURE:int = 0;
+		private static var _DIFFUSETEXTURE_ID:int;
 		
 		/**
 		 * 获取漫反射贴图。
 		 * @return 漫反射贴图。
 		 */
 		public function get diffuseTexture():BaseTexture {
-			return _getTexture(_diffuseTextureIndex);
+			return _getTexture(_DIFFUSETEXTURE_ID);
 		}
 		
 		/**
@@ -33,20 +26,16 @@ package threeDimen.advancedStage.custom {
 		 * @param value 漫反射贴图。
 		 */
 		public function set diffuseTexture(value:BaseTexture):void {
-			_setTexture(value, _diffuseTextureIndex, DIFFUSETEXTURE);
+			_setTexture(_DIFFUSETEXTURE_ID, value);
+		}
+		
+		override public function setShaderName(name:String):void {
+			super.setShaderName(name);
 		}
 		
 		public function CustomMaterial() {
 			super();
 			setShaderName("CustomShader");
-		}
-		
-		override public function _setLoopShaderParams(state:RenderState, projectionView:Matrix4x4, worldMatrix:Matrix4x4, mesh:IRenderable, material:BaseMaterial):void {
-			var pvw:Matrix4x4 = _tempMatrix4x40;
-			Matrix4x4.multiply(projectionView, worldMatrix, pvw);
-			
-			state.shaderValue.pushValue(MVPMATRIX, pvw.elements);
-			state.shaderValue.pushValue(WORLDMATRIX, worldMatrix.elements);
 		}
 	
 	}

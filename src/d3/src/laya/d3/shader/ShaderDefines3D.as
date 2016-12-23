@@ -1,4 +1,5 @@
 package laya.d3.shader {
+	import laya.renders.Render;
 	import laya.webgl.shader.ShaderDefines;
 	
 	/**
@@ -91,6 +92,9 @@ package laya.d3.shader {
 		
 		public static function reg(name:String, value:int):void {
 			_reg(name, value, _name2int, _int2name);
+			if (Render.isConchNode) {//NATIVE
+				__JS__("conch.regShaderDefine&&conch.regShaderDefine(name,value);")
+			}
 		}
 		
 		public static function toText(value:int, _int2name:Array, _int2nameMap:Object):* {

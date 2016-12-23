@@ -26,7 +26,7 @@ package laya.filters.webgl
 			var b:Rectangle=scope.getValue("bounds");
 			var shaderValue:Value2D = Value2D.create(ShaderDefines2D.TEXTURE2D, 0);
 			shaderValue.setFilters([data]);
-			var tMatrix:Matrix = Matrix.EMPTY;
+			var tMatrix:Matrix = Matrix.TEMP;
 			tMatrix.identity();
 			context.ctx.drawTarget(scope,0,0,b.width,b.height,tMatrix,"src",shaderValue);
 		}

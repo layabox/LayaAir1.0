@@ -9,6 +9,7 @@ package laya.d3.core {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
+	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
 	import laya.display.Node;
 	import laya.events.Event;
@@ -16,6 +17,7 @@ package laya.d3.core {
 	import laya.net.URL;
 	import laya.resource.ICreateResource;
 	import laya.resource.IDispose;
+	import laya.runtime.IConchNode;
 	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
@@ -24,6 +26,9 @@ package laya.d3.core {
 	 * <code>Sprite3D</code> 类用于实现3D精灵。
 	 */
 	public class Sprite3D extends Node implements IUpdate, ICreateResource, IClone {
+		public static const WORLDMATRIX:int = 0;
+		public static const MVPMATRIX:int = 1;
+		
 		/**唯一标识ID计数器。*/
 		protected static var _uniqueIDCounter:int = 0;
 		/**名字计数器。*/
@@ -38,7 +43,7 @@ package laya.d3.core {
 		 * @param   worldPositionStays 是否保持自身世界变换,注意:在position，rotation均为空时有效。
 		 * @return  克隆实例。
 		 */
-		public static function instantiate(original:Sprite3D, position:Vector3 = null, rotation:Quaternion = null, parent:Node = null, worldPositionStays:Boolean = true):* {
+		public static function instantiate(original:Sprite3D, position:Vector3 = null, rotation:Quaternion = null, parent:Node = null, worldPositionStays:Boolean = true):Sprite3D {
 			var destSprite3D:Sprite3D = original.clone();
 			
 			var transform:Transform3D;
@@ -75,6 +80,9 @@ package laya.d3.core {
 			return Laya.loader.create(url, null, null, Sprite3D, 1, false);
 		}
 		
+		/** @private */
+		private var _projectionViewWorldMatrix:Matrix4x4;
+		
 		/**唯一标识ID。*/
 		private var _id:int;
 		/**是否启用。*/
@@ -85,6 +93,9 @@ package laya.d3.core {
 		protected var _componentsMap:Array = [];
 		/**组件列表。*/
 		protected var _components:Vector.<Component3D> = new Vector.<Component3D>();
+		
+		/** @private */
+		public var _shaderValues:ValusArray;
 		
 		/**矩阵变换相关。*/
 		public var transform:Transform3D;
@@ -171,14 +182,20 @@ package laya.d3.core {
 		 * 创建一个 <code>Sprite3D</code> 实例。
 		 */
 		public function Sprite3D(name:String = null) {
-			(name) ? (this.name = name) : (this.name = "Sprite3D-" + _nameNumberCounter++);
+			_projectionViewWorldMatrix = new Matrix4x4();
+			_shaderValues = new ValusArray();
 			
+			(name) ? (this.name = name) : (this.name = "Sprite3D-" + _nameNumberCounter++);
 			_enable = true;
 			_id = ++_uniqueIDCounter;
 			layer = Layer.currentCreationLayer;
 			transform = new Transform3D(this);
 			on(Event.DISPLAY, this, _onDisplay);
 			on(Event.UNDISPLAY, this, _onUnDisplay);
+		}
+		
+		override public function createConchModel():* {
+			return __JS__("null");
 		}
 		
 		/**
@@ -194,7 +211,7 @@ package laya.d3.core {
 		 */
 		private function _onUnDisplay():void {
 			transform.parent = null;
-		    _clearSelfRenderObjects();
+			_clearSelfRenderObjects();
 		}
 		
 		/**
@@ -240,7 +257,7 @@ package laya.d3.core {
 		protected function _updateChilds(state:RenderState):void {
 			var n:int = _childs.length;
 			if (n === 0) return;
-			for (var i:int = 0; i < n; ++i) 
+			for (var i:int = 0; i < n; ++i)
 				_childs[i]._update((state));
 		}
 		
@@ -250,6 +267,19 @@ package laya.d3.core {
 		 */
 		public function _getSortID(renderElement:IRenderable, material:BaseMaterial):int {
 			return renderElement._getVertexBuffer().vertexDeclaration.id + material.id * VertexDeclaration._maxVertexDeclarationBit;
+		}
+		
+		/**
+		 * 准备精灵级Shader数据,可重载此函数。
+		 * @param	view
+		 * @param	projection
+		 * @param	projectionView
+		 */
+		public function _prepareShaderValuetoRender(view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
+			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);//TODO:静态合并需要使用,待调整移除。
+			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
+			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
+			debugger;
 		}
 		
 		/**
@@ -264,6 +294,34 @@ package laya.d3.core {
 			}
 			Stat.spriteCount++;
 			_childs.length && _updateChilds(state);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setShaderValueMatrix4x4(shaderName:int, matrix4x4:Matrix4x4):void {
+			_shaderValues.setValue(shaderName, matrix4x4 ? matrix4x4.elements : null);
+		}
+		
+		/**
+		 * 设置颜色。
+		 * @param	shaderIndex shader索引。
+		 * @param	color 颜色向量。
+		 */
+		protected function _setShaderValueColor(shaderIndex:int, color:*):void {
+			var shaderValue:ValusArray = _shaderValues;
+			shaderValue.setValue(shaderIndex, color ? color.elements : null);
+		}
+		
+		/**
+		 * 获取投影视图世界矩阵。
+		 * @param	projectionViewMatrix 投影视图矩阵。
+		 * @return  投影视图世界矩阵。
+		 */
+		public function getProjectionViewWorldMatrix(projectionViewMatrix:Matrix4x4):Matrix4x4 {
+			var curLoopCount:int = Stat.loopCount;
+			Matrix4x4.multiply(projectionViewMatrix, transform.worldMatrix, _projectionViewWorldMatrix);
+			return _projectionViewWorldMatrix;
 		}
 		
 		/**
@@ -351,6 +409,9 @@ package laya.d3.core {
 		 *@private
 		 */
 		public function onAsynLoaded(url:String, data:*):void {
+			if (destroyed)//TODO:其它资源是否同样处理
+				return;
+			
 			var oriData:Object = data[0];
 			var innerResouMap:Object = data[1];
 			ClassUtils.createByJson(oriData as String, this, this, Handler.create(null, Utils3D._parseHierarchyProp, [innerResouMap], false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
@@ -363,11 +424,9 @@ package laya.d3.core {
 			destSprite3D.name = name/* + "(clone)"*/;//TODO:克隆后不能播放刚体动画，找不到名字
 			destSprite3D.destroyed = destroyed;
 			destSprite3D.timer = timer;
-			destSprite3D._displayedInStage = _displayedInStage;
 			destSprite3D._$P = _$P;
 			
-			destSprite3D._enable = _enable;
-			destSprite3D._layerMask = _layerMask;
+			destSprite3D.enable = enable;
 			
 			var destLocalMatrix:Matrix4x4 = destSprite3D.transform.localMatrix;
 			transform.localMatrix.cloneTo(destLocalMatrix);

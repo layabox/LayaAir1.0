@@ -38,6 +38,8 @@ package laya.ani.bone {
 		private var _diyTexture:Texture;
 		private var _parentMatrix:Matrix;
 		private var _resultMatrix:Matrix;//只有不使用缓冲时才使用
+		/** 索引替换表 */
+		private var _replaceDic:Object = { };
 		
 		/** 实时模式下，复用使用 */
 		private var _skinSprite:*;
@@ -68,10 +70,44 @@ package laya.ani.bone {
 		}
 		
 		/**
+		 * 替换贴图名
+		 * @param	tarName 要替换的贴图名
+		 * @param	newName 替换后的贴图名
+		 */
+		public function replaceDisplayByName(tarName:String, newName:String):void
+		{
+			if (!currSlotData) return;
+			var preIndex:int;
+			preIndex = currSlotData.getDisplayByName(tarName);
+			var newIndex:int;
+			newIndex = currSlotData.getDisplayByName(newName);
+			if (newIndex >= 0)
+			{
+				replaceDisplayByIndex(preIndex, newIndex);
+			}
+		}
+		
+		/**
+		 * 替换贴图索引
+		 * @param	tarIndex 要替换的索引
+		 * @param	newIndex 替换后的索引
+		 */
+		public function replaceDisplayByIndex(tarIndex:int, newIndex:int):void
+		{
+			if (!currSlotData) return;
+			_replaceDic[tarIndex] = newIndex;
+			if (displayIndex == tarIndex)
+			{
+				showDisplayByIndex(tarIndex);
+			}
+		}
+		
+		/**
 		 * 指定显示对象
 		 * @param	index
 		 */
 		public function showDisplayByIndex(index:int):void {
+			if (_replaceDic[index]) index = _replaceDic[index];
 			if (currSlotData && index > -1 && index < currSlotData.displayArr.length) {
 				displayIndex = index;
 				currDisplayData = currSlotData.displayArr[index];
@@ -118,7 +154,6 @@ package laya.ani.bone {
 					return;
 				}
 			}
-			
 			var tTexture:Texture = currTexture;
 			if (_diyTexture) tTexture = _diyTexture;
 			var tSkinSprite:*;

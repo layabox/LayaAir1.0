@@ -103,7 +103,7 @@ package laya.d3.resource {
 			}
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			_image.onload = null;
-			_image = null;//TODO:临时
+			//_image = null;//TODO:临时
 			
 			if (isPot)
 				memorySize = w * h * 4 * (1 + 1 / 3);//使用mipmap则在原来的基础上增加1/3
@@ -155,7 +155,10 @@ package laya.d3.resource {
 		override public function onAsynLoaded(url:String, data:*):void {
 			_src = url;
 			_onTextureLoaded(data);
-			activeResource();
+			if (_conchTexture) //NATIVE
+				_conchTexture.setTexture2DImage(_image);
+			else
+				activeResource();
 			_loaded = true;
 			event(Event.LOADED, this);
 		}

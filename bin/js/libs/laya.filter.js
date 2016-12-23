@@ -106,7 +106,7 @@
 		*@private 通知微端
 		*/
 		__proto.callNative=function(sp){
-			sp.model &&sp.model.blurFilter&&sp.model.blurFilter(this.strength);
+			sp.conchModel &&sp.conchModel.blurFilter&&sp.conchModel.blurFilter(this.strength);
 		}
 
 		/**
@@ -163,7 +163,7 @@
 		*@private 通知微端
 		*/
 		__proto.callNative=function(sp){
-			sp.model &&sp.model.glowFilter&&sp.model.glowFilter(this._color.strColor,this._elements[4],this._elements[5],this._elements[6]);
+			sp.conchModel &&sp.conchModel.glowFilter&&sp.conchModel.glowFilter(this._color.strColor,this._elements[4],this._elements[5],this._elements[6]);
 		}
 
 		/**

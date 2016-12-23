@@ -1,6 +1,7 @@
 package laya.webgl.shader.d2.value {
 	import laya.resource.Bitmap;
 	import laya.resource.Texture;
+	import laya.webgl.shader.BaseShader;
 	import laya.webgl.shader.d2.skinAnishader.SkinSV;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.DrawStyle;
@@ -157,7 +158,7 @@ package laya.webgl.shader.d2.value {
 			/*[IF-FLASH]*/MatirxArray.ArrayMul(mmat, this.u_mmat2, TEMPMAT4_ARRAY);
 			/*[IF-FLASH]*/mul_mmat = TEMPMAT4_ARRAY;
 			
-			if (Shader.activeShader!==sd)
+			if (BaseShader.activeShader!==sd)
 			{
 				if (sd._shaderValueWidth !==  renderstate2d.width ||  sd._shaderValueHeight !== renderstate2d.height){
 					sd._shaderValueWidth  = renderstate2d.width;

@@ -1,5 +1,6 @@
 package laya.d3.core.particleShuriKen.module {
 	import laya.d3.core.IClone;
+	import laya.d3.math.Vector3;
 	
 	/**
 	 * <code>VelocityOverLifetime</code> 类用于粒子的生命周期速度。
@@ -43,8 +44,22 @@ package laya.d3.core.particleShuriKen.module {
 		 * @return	 克隆副本。
 		 */
 		public function clone():* {
-			var destVelocityOverLifetime:VelocityOverLifetime = __JS__("new this.constructor()");
-			cloneTo(destVelocityOverLifetime);
+			var destVelocity:GradientVelocity;
+			switch(_velocity.type){
+				case 0:
+					destVelocity = GradientVelocity.createByConstant( _velocity.constant.clone());
+					break;
+				case 1:
+					destVelocity = GradientVelocity.createByGradient(_velocity.gradientX.clone(),_velocity.gradientY.clone(),_velocity.gradientZ.clone());
+					break;
+				case 2:
+					destVelocity = GradientVelocity.createByRandomTwoConstant( _velocity.constantMin.clone(),_velocity.constantMax.clone());
+					break;
+				case 3:
+					destVelocity = GradientVelocity.createByRandomTwoGradient(_velocity.gradientXMin.clone(),_velocity.gradientYMin.clone(),_velocity.gradientZMin.clone(),_velocity.gradientXMax.clone(),_velocity.gradientYMax.clone(),_velocity.gradientZMax.clone());
+					break;
+			}
+			var destVelocityOverLifetime:VelocityOverLifetime = __JS__("new this.constructor(destVelocity)");
 			return destVelocityOverLifetime;
 		}
 	

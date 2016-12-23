@@ -189,7 +189,7 @@ package laya.ui {
 			content.height = height;
 			content.scrollRect || (content.scrollRect = new Rectangle());
 			content.scrollRect.setTo(0, 0, width, height);
-			content.model&&content.model.scrollRect(0, 0, width, height);//通知微端
+			content.conchModel&&content.conchModel.scrollRect(0, 0, width, height);//通知微端
 		}
 		
 		/**
@@ -272,7 +272,7 @@ package laya.ui {
 			if (rect) {
 				var start:int = Math.round(scrollBar.value);
 				scrollBar.isVertical ? rect.y = start : rect.x = start;
-				_content.model&&_content.model.scrollRect(rect.x, rect.y, rect.width, rect.height);
+				_content.conchModel&&_content.conchModel.scrollRect(rect.x, rect.y, rect.width, rect.height);
 			}
 		}
 		

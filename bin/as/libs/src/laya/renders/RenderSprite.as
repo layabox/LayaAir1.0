@@ -24,19 +24,21 @@ package laya.renders {
 		/** @private */
 		public static const TRANSFORM:int = 0x04;
 		/** @private */
-		public static const CANVAS:int = 0x08;
+		public static const BLEND:int = 0x08;
 		/** @private */
-		public static const FILTERS:int = 0x10;
+		public static const CANVAS:int = 0x10;
 		/** @private */
-		public static const BLEND:int = 0x20;
+		public static const FILTERS:int = 0x20;
 		/** @private */
-		public static const CLIP:int = 0x40;
+		public static const MASK:int = 0x40;
 		/** @private */
-		public static const STYLE:int = 0x80;
+		public static const CLIP:int = 0x80;
 		/** @private */
-		public static const GRAPHICS:int = 0x100;
+		public static const STYLE:int = 0x100;
 		/** @private */
-		public static const CUSTOM:int = 0x200;
+		public static const GRAPHICS:int = 0x200;
+		/** @private */
+		public static const CUSTOM:int = 0x400;
 		/** @private */
 		public static const CHILDS:int = 0x800;
 		/** @private */
@@ -113,6 +115,9 @@ package laya.renders {
 			case CANVAS: 
 				_fun = this._canvas;
 				return;
+			case MASK:
+				_fun = this._mask;
+				return;
 			case CLIP: 
 				_fun = this._clip;
 				return;
@@ -178,6 +183,12 @@ package laya.renders {
 			if (style.blendMode) {
 				context.ctx.globalCompositeOperation = style.blendMode;
 			}
+			var next:RenderSprite = this._next;
+			next._fun.call(next, sprite, context, x, y);
+			context.ctx.globalCompositeOperation = "source-over";
+		}
+		
+		public function _mask(sprite:Sprite, context:RenderContext, x:Number, y:Number):void{
 			var next:RenderSprite = this._next;
 			next._fun.call(next, sprite, context, x, y);
 			var mask:Sprite = sprite.mask;

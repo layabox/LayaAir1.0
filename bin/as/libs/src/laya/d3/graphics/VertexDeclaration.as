@@ -1,7 +1,8 @@
 package laya.d3.graphics {
 	import laya.d3.shader.ShaderDefines3D;
+	import laya.renders.Render;
+	import laya.d3.shader.ValusArray;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.utils.ValusArray;
 	
 	/**
 	 * ...
@@ -64,6 +65,8 @@ package laya.d3.graphics {
 		private var _vertexElements:Array;
 		private var _vertexElementsDic:Object;
 		
+		public var _conchVertexDeclaration:*;//NATIVE
+		
 		/**
 		 * 获取唯一标识ID(通常用于优化或识别)。
 		 * @return 唯一标识ID
@@ -86,6 +89,29 @@ package laya.d3.graphics {
 			return _shaderDefineValue;
 		}
 		
+		/**
+		 * 增加Shader宏定义。
+		 * @param value 宏定义。
+		 */
+		public function _addShaderDefine(value:int):void {
+			_shaderDefineValue |= value;
+			
+			if (_conchVertexDeclaration) {//NATIVE
+				_conchVertexDeclaration.addShaderDefine(value);
+			}
+		}
+		
+		/**
+		 * 移除Shader宏定义。
+		 * @param value 宏定义。
+		 */
+		protected function _removeShaderDefine(value:int):void {
+			_shaderDefineValue &= ~value;
+			if (_conchVertexDeclaration) {//NATIVE
+				_conchVertexDeclaration.removeShaderDefine(value)
+			}
+		}
+		
 		public function VertexDeclaration(vertexStride:int, vertexElements:Array) {
 			_id = ++_uniqueIDCounter;
 			if (_id > maxVertexDeclaration)
@@ -95,22 +121,45 @@ package laya.d3.graphics {
 			_vertexElementsDic = {};
 			_vertexStride = vertexStride;
 			_vertexElements = vertexElements;
+			if (Render.isConchNode) {//NATIVE
+				_conchVertexDeclaration = __JS__("new ConchVertexDeclare()");
+			}
 			
 			for (var i:int = 0; i < vertexElements.length; i++) {
 				var vertexElement:VertexElement = vertexElements[i];
-				var attributeName:String = vertexElement.elementUsage;
+				var attributeName:int = vertexElement.elementUsage;
 				_vertexElementsDic[attributeName] = vertexElement;
 				var value:Array = [_getTypeSize(vertexElement.elementFormat) / 4, WebGLContext.FLOAT, false, _vertexStride, vertexElement.offset];
-				_shaderValues.pushValue(attributeName, value);
+				_shaderValues.setValue(attributeName, value);
 				
 				switch (attributeName) {//TODO:临时
 				case VertexElementUsage.TEXTURECOORDINATE0: 
-					_shaderDefineValue |= ShaderDefines3D.UV;
+					_addShaderDefine(ShaderDefines3D.UV);
 					break;
 				case VertexElementUsage.COLOR0: 
-					_shaderDefineValue |= ShaderDefines3D.COLOR;
+					_addShaderDefine(ShaderDefines3D.COLOR);
 					break;
 				}
+			}
+			if (Render.isConchNode) {//NATIVE
+				var conchVertexElements:Array = [];
+				
+				for (var ci:int = 0, cn:int = vertexElements.length; ci < cn; ci++) {
+					var cVertexElement:VertexElement = vertexElements[ci];
+					switch (cVertexElement.elementFormat) {
+					case VertexElementFormat.Vector2: 
+						conchVertexElements.push({offset: cVertexElement.offset, elementFormat: WebGLContext.FLOAT_VEC2, elementUsage: cVertexElement.elementUsage});
+						break;
+					case VertexElementFormat.Vector3: 
+						conchVertexElements.push({offset: cVertexElement.offset, elementFormat: WebGLContext.FLOAT_VEC3, elementUsage: cVertexElement.elementUsage});
+						break;
+					case VertexElementFormat.Vector4: 
+						conchVertexElements.push({offset: cVertexElement.offset, elementFormat: WebGLContext.FLOAT_VEC4, elementUsage: cVertexElement.elementUsage});
+						break;
+						
+					}
+				}
+				_conchVertexDeclaration.setDelcare(conchVertexElements);
 			}
 		}
 		
@@ -118,7 +167,7 @@ package laya.d3.graphics {
 			return _vertexElements.slice();
 		}
 		
-		public function getVertexElementByUsage(usage:String):VertexElement {
+		public function getVertexElementByUsage(usage:int):VertexElement {
 			return _vertexElementsDic[usage];
 		}
 		

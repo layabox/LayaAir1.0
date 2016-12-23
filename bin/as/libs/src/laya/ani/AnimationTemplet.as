@@ -1,4 +1,5 @@
 package laya.ani {
+	import laya.ani.math.BezierLerp;
 	import laya.events.Event;
 	import laya.maths.MathUtil;
 	import laya.resource.Resource;
@@ -9,45 +10,58 @@ package laya.ani {
 	 */
 	public class AnimationTemplet extends Resource {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		public static var interpolation:Array = /*[STATIC SAFE]*/ [_LinearInterpolation_0, _QuaternionInterpolation_1, _AngleInterpolation_2, _RadiansInterpolation_3, _Matrix4x4Interpolation_4, _NoInterpolation_5];
+		public static var interpolation:Array = /*[STATIC SAFE]*/ [_LinearInterpolation_0, _QuaternionInterpolation_1, _AngleInterpolation_2, _RadiansInterpolation_3, _Matrix4x4Interpolation_4, _NoInterpolation_5, _BezierInterpolation_6, _BezierInterpolation_7];
 		
 		//线性插值函数
-		private static function _LinearInterpolation_0(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array):int {
+		private static function _LinearInterpolation_0(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null):int {
 			out[outOfs] = data[index] + dt * dData[index];
 			return 1;
 		}
 		
 		//四元素插值函数
-		private static function _QuaternionInterpolation_1(bone:*, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array):int {
+		private static function _QuaternionInterpolation_1(bone:*, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null):int {
 			var amount:Number = duration === 0 ? 0 : dt / duration;
 			MathUtil.slerpQuaternionArray(data, index, nextData, index, amount, out, outOfs);//(dt/duration)为amount比例
 			return 4;
 		}
 		
 		//角度插值函数
-		private static function _AngleInterpolation_2(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array):int {
+		private static function _AngleInterpolation_2(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null):int {
 			return 0;
 		}
 		
 		//弧度插值函数
-		private static function _RadiansInterpolation_3(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array):int {
+		private static function _RadiansInterpolation_3(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null):int {
 			return 0;
 		}
 		
 		//矩阵插值
-		private static function _Matrix4x4Interpolation_4(bone:*, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array):int {
+		private static function _Matrix4x4Interpolation_4(bone:*, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null):int {
 			for (var i:int = 0; i < 16; i++, index++)
 				out[outOfs + i] = data[index] + dt * dData[index];
 			return 16;
 		}
 		
 		//无插值函数
-		private static function _NoInterpolation_5(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array):int {
+		private static function _NoInterpolation_5(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null):int {
 			out[outOfs] = data[index];
 			return 1;
 		}
+		
+		//贝塞尔插值函数
+		private static function _BezierInterpolation_6(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null):int {
+			out[outOfs] = data[index] + (nextData[index] - data[index]) * BezierLerp.getBezierRate(dt / duration, interData[0], interData[1], interData[2], interData[3]);
+			return 5;
+		}
+		
+		//贝塞尔插值函数带偏移
+		private static function _BezierInterpolation_7(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null):int {
+			//interData=[x0,y0,x1,y1,start,d,offTime,allTime]
+			out[outOfs] = interData[4] + interData[5] * BezierLerp.getBezierRate((dt*0.001+interData[6]) / interData[7], interData[0], interData[1], interData[2], interData[3]);
+			return 9;
+		}
 		/**@private */
-		public static var LAYA_ANIMATION_VISION:String = "LAYAANIMATION:1.0.6";
+		public static var LAYA_ANIMATION_VISION:String = "LAYAANIMATION:1.6.0";
 		
 		/**
 		 * 加载动画模板。
@@ -65,6 +79,7 @@ package laya.ani {
 		protected var unfixedCurrentTimes:Float32Array;
 		protected var unfixedKeyframes:Vector.<KeyFramesContent>;
 		protected var unfixedLastAniIndex:int = -1;
+		protected var aniClassName:String;
 		
 		protected var _aniVersion:String;
 		
@@ -79,17 +94,17 @@ package laya.ani {
 		}
 		
 		public function parse(data:ArrayBuffer):void {
-			var i:int, j:int, k:int, n:int, l:int;
+			var i:int, j:int, k:int, n:int, l:int, m:int, o:int;
 			var read:Byte = new Byte(data);
 			
-			_aniVersion = read.readUTFString();//LAYAANIMATION:1.0.0
+			_aniVersion = read.readUTFString();
 			//if (head != KeyframesAniTemplet.LAYA_ANIMATION_VISION)
 			//{
 			//trace("[Error] Version " + _aniVersion + " The engine is inconsistent, update to the version " + KeyframesAniTemplet.LAYA_ANIMATION_VISION + " please.");
 			//return;
 			//}
 			var aniClassName:String = read.readUTFString();//字符串(动画播放器类名，缺省为ANI)
-			
+			this.aniClassName = aniClassName;
 			var strList:Array = read.readUTFString().split("\n");//字符串(\n分割 UTF8 )
 			var aniCount:int = read.getUint8();//动画块数:Uint8
 			
@@ -119,6 +134,7 @@ package laya.ani {
 				var boneCount:int = ani.nodes.length = read.getUint8();//得到本动画骨骼数目
 				
 				ani.totalKeyframesLength = 0;
+
 				for (j = 0; j < boneCount; j++) {
 					var node:AnimationNodeContent = ani.nodes[j] = /*[IF-FLASH]*/ new AnimationNodeContent();
 					//[IF-SCRIPT] {};//不要删除
@@ -134,20 +150,22 @@ package laya.ani {
 					node.parentIndex = read.getInt16();//父对象编号，相对本动画(INT16,-1表示没有)
 					node.parentIndex == -1 ? node.parent = null : node.parent = ani.nodes[node.parentIndex]
 					
-					var isLerp:Boolean = !!read.getUint8();//该节点是否插值
-					var keyframeParamsOffset:uint = read.getUint32();//相对于数据扩展区的偏移地址
+					node.lerpType = read.getUint8();//该节点插值类型:0为不插值，1为逐节点插值，2为私有插值
 					
+					var keyframeParamsOffset:uint = read.getUint32();//相对于数据扩展区的偏移地址
 					publicRead.pos = keyframeParamsOffset;//切换到数据区偏移地址
+					
 					var keyframeDataCount:int = node.keyframeWidth = publicRead.getUint16();//keyframe数据宽度:Uint8		
 					ani.totalKeyframesLength += keyframeDataCount;
 					//每个数据的插值方式:Uint8*keyframe数据宽度
-					if (isLerp)//是否插值，不插值则略过
+					if (node.lerpType === 0||node.lerpType === 1)//是否逐节点插值
 					{
 						node.interpolationMethod = [];
 						node.interpolationMethod.length = keyframeDataCount;
 						for (k = 0; k < keyframeDataCount; k++)
 							node.interpolationMethod[k] = interpolation[publicRead.getUint8()];
 					}
+					
 					
 					if (node.parent != null)
 						node.parent.childs.push(node);
@@ -167,6 +185,52 @@ package laya.ani {
 						//[IF-SCRIPT] {};//不要删除
 						keyFrame.duration = read.getFloat32();
 						keyFrame.startTime = startTime;
+						
+						if (node.lerpType === 2)//是否逐帧插值
+						{
+							keyFrame.interpolationData = [];
+							var interDataLength:int = read.getUint8();//插值数据长度
+							var lerpType:int;
+							lerpType = read.getFloat32();
+							switch (lerpType) {
+								case 254: //全线性插值
+									keyFrame.interpolationData.length = keyframeDataCount;
+									for (o = 0; o < keyframeDataCount; o++)
+										keyFrame.interpolationData[o] = 0;
+									break;
+								case 255: //全不插值
+									keyFrame.interpolationData.length = keyframeDataCount;
+									for (o = 0; o < keyframeDataCount; o++)
+										keyFrame.interpolationData[o] = 5;
+									break;
+								default: 
+									keyFrame.interpolationData.push(lerpType);
+									for (m = 1; m < interDataLength; m++)
+									{
+										keyFrame.interpolationData.push(read.getFloat32());
+									}
+								}
+							//for (m = 0; m < interDataLength; m++) {
+								//var lerpData:int = read.getFloat32();//插值数据
+								//switch (lerpData) {
+								//case 254: //全线性插值
+									//keyFrame.interpolationData.length = keyframeDataCount;
+									//for (o = 0; o < keyframeDataCount; o++)
+										//keyFrame.interpolationData[o] = 0;
+									//break;
+								//case 255: //全不插值
+									//
+									//keyFrame.interpolationData.length = keyframeDataCount;
+									//for (o = 0; o < keyframeDataCount; o++)
+										//keyFrame.interpolationData[o] = 5;
+									//break;
+								//default: 
+									//keyFrame.interpolationData.push(lerpData);
+								//}
+							//}
+							
+						}
+						
 						keyFrame.data = new Float32Array(keyframeDataCount);
 						keyFrame.dData = new Float32Array(keyframeDataCount);
 						keyFrame.nextData = new Float32Array(keyframeDataCount);
@@ -212,7 +276,7 @@ package laya.ani {
 			return _anis[aniIndex];
 		}
 		
-		public function getAniDuration(aniIndex:int):Number {
+		public function getAniDuration(aniIndex:int):int {
 			return _anis[aniIndex].playTime;
 		}
 		
@@ -271,9 +335,40 @@ package laya.ani {
 				node.dataOffset = outOfs;
 				
 				var dt:Number = playCurTime - key.startTime;
-				for (j = 0; j < node.keyframeWidth; ) {
-					j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, key.dData, key.duration, key.nextData);
+				switch (node.lerpType) {
+				case 0: 
+				case 1: 
+					for (j = 0; j < node.keyframeWidth; )
+						j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, key.dData, key.duration, key.nextData);
+					break;
+				case 2: 
+					var interpolationData:Array = key.interpolationData;
+					var interDataLen:int = interpolationData.length;
+					var dataIndex:int=0;
+					for (j = 0; j < interDataLen; )
+					{
+						var type:int = interpolationData[j];
+						switch(type)
+						{
+							case 6:
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j + 1, j + 5));
+							break;
+							case 7:
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j + 1, j + 9));
+							break;
+						default:
+							j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
+								
+						}
+					    //if (type === 6)
+						   //j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j+1, j + 5));
+					    //else
+						//j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
+						dataIndex++;
+					}		
+					break;
 				}
+				
 				outOfs += node.keyframeWidth;
 			}
 		}
@@ -290,8 +385,6 @@ package laya.ani {
 			
 			for (var i:int = 0, n:int = nodes.length, outOfs:int = 0; i < n; i++) {
 				var node:AnimationNodeContent = nodes[i];
-				//var playCurTime:Number = curTime % node.playTime;
-				
 				if (playCurTime < unfixedCurrentTimes[i])
 					unfixedCurrentFrameIndexes[i] = 0;
 				unfixedCurrentTimes[i] = playCurTime;
@@ -339,15 +432,45 @@ package laya.ani {
 				var key:KeyFramesContent = unfixedKeyframes[i];
 				node.dataOffset = outOfs;
 				var dt:Number = playCurTime - key.startTime;
-				for (j = 0; j < node.keyframeWidth; ) {
-					j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, key.dData, key.duration, key.nextData);
+				switch (node.lerpType) {
+				case 0: 
+				case 1: 
+					for (j = 0; j < node.keyframeWidth; )
+						j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, key.dData, key.duration, key.nextData);
+					break;
+				case 2: 
+					var interpolationData:Array = key.interpolationData;
+					var interDataLen:int = interpolationData.length;
+					var dataIndex:int=0;
+					for (j = 0; j < interDataLen; )
+					{
+						var type:int = interpolationData[j];
+						switch(type)
+						{
+							case 6:
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j + 1, j + 5));
+							break;
+							case 7:
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j + 1, j + 9));
+							break;
+						default:
+							j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
+								
+						}
+					    //if (type === 6)
+						    //j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j+1, j + 5));
+					    //else
+						    //j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
+						dataIndex++;
+					}
+					break;
 				}
+				
 				outOfs += node.keyframeWidth;
 			}
 		}
 		
-		override public function dispose():void 
-		{
+		override public function dispose():void {
 			resourceManager.removeResource(this);
 			super.dispose();
 		}
@@ -371,6 +494,7 @@ class AnimationNodeContent {
 	public var parentIndex:int;
 	public var parent:AnimationNodeContent;
 	public var keyframeWidth:int;
+	public var lerpType:int;
 	public var interpolationMethod:Array;
 	public var childs:Array;
 	public var keyFrame:Vector.<KeyFramesContent>;// = new Vector.<KeyFramesContent>;
@@ -383,6 +507,7 @@ class AnimationNodeContent {
 class KeyFramesContent {
 	public var startTime:Number;
 	public var duration:Number;
+	public var interpolationData:Array;//私有插值方式 [type0(插值类型),Data0(插值数据,可为空)，type1(插值类型),Data1(插值数据,可为空)] 注意：254全线性插值，255全不插值
 	public var data:Float32Array;//= new Float32Array();
 	public var dData:Float32Array;//= new Float32Array();
 	public var nextData:Float32Array;//= new Float32Array();

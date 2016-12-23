@@ -26,7 +26,7 @@ package laya.webgl.resource {
 			return _depthStencilBuffer;
 		}
 		
-		public function WebGLRenderTarget(width:int, height:int, surfaceFormat:int = WebGLContext.RGBA, surfaceType:int = WebGLContext.UNSIGNED_BYTE, depthStencilFormat:int = WebGLContext.DEPTH_COMPONENT16, mipMap:Boolean = false, repeat:Boolean = false, minFifter:int = -1, magFifter:int = 1) {
+		public function WebGLRenderTarget(width:int, height:int, surfaceFormat:int = WebGLContext.RGBA, surfaceType:int = WebGLContext.UNSIGNED_BYTE, depthStencilFormat:int = WebGLContext.DEPTH_STENCIL, mipMap:Boolean = false, repeat:Boolean = false, minFifter:int = -1, magFifter:int = 1) {
 			super();
 			_w = width;
 			_h = height;

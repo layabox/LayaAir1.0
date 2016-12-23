@@ -9,12 +9,12 @@ package laya.d3.graphics {
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
 	import laya.utils.Stat;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.ValusArray;
 	
 	/**
 	 * @private
@@ -69,6 +69,12 @@ package laya.d3.graphics {
 		public var _vertexDeclaration:VertexDeclaration;
 		public var _material:BaseMaterial;
 		
+		//TODO:临时
+		/** @private */
+		public var _shaderValues:ValusArray;
+		/** @private */
+		public var _owner:Sprite3D;
+		
 		public function get _vertexBufferCount():int {
 			return 1;
 		}
@@ -82,6 +88,9 @@ package laya.d3.graphics {
 		}
 		
 		public function StaticBatch(rootSprite:Sprite3D, vertexDeclaration:VertexDeclaration, material:BaseMaterial) {
+			_shaderValues = new ValusArray();
+			_owner = rootSprite;
+			
 			_currentCombineVertexCount = 0;
 			_currentCombineIndexCount = 0;
 			_needFinishCombine = false;
@@ -250,6 +259,11 @@ package laya.d3.graphics {
 			state.context.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, state._batchIndexStart * 2);
 			Stat.drawCall++;
 			Stat.trianglesFaces += indexCount / 3;
+		}
+		
+		/**NATIVE*/
+		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement,state:RenderState):void {
+		
 		}
 	}
 

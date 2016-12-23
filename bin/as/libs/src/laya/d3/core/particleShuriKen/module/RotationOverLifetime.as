@@ -5,7 +5,7 @@ package laya.d3.core.particleShuriKen.module {
 	/**
 	 * <code>RotationOverLifetime</code> 类用于粒子的生命周期旋转。
 	 */
-	public class RotationOverLifetime implements IClone{
+	public class RotationOverLifetime implements IClone {
 		/**@private */
 		private var _angularVelocity:GradientAngularVelocity;
 		
@@ -41,8 +41,35 @@ package laya.d3.core.particleShuriKen.module {
 		 * @return	 克隆副本。
 		 */
 		public function clone():* {
+			var destAngularVelocity:GradientAngularVelocity;
+			switch (_angularVelocity.type) {
+			case 0: 
+				if (_angularVelocity.separateAxes)
+					destAngularVelocity = GradientAngularVelocity.createByConstantSeparate(_angularVelocity.constantSeparate.clone());
+				else
+					destAngularVelocity = GradientAngularVelocity.createByConstant(_angularVelocity.constant);
+				break;
+			case 1: 
+				if (_angularVelocity.separateAxes)
+					destAngularVelocity = GradientAngularVelocity.createByGradientSeparate(_angularVelocity.gradientX.clone(), _angularVelocity.gradientY.clone(), _angularVelocity.gradientZ.clone());
+				else
+					destAngularVelocity = GradientAngularVelocity.createByGradient(_angularVelocity.gradient.clone());
+				break;
+			case 2: 
+				if (_angularVelocity.separateAxes)
+					destAngularVelocity = GradientAngularVelocity.createByRandomTwoConstantSeparate(_angularVelocity.constantMinSeparate.clone(), _angularVelocity.constantMaxSeparate.clone());
+				else
+					destAngularVelocity = GradientAngularVelocity.createByRandomTwoConstant(_angularVelocity.constantMin, _angularVelocity.constantMax);
+				break;
+			case 3: 
+				if (_angularVelocity.separateAxes)
+					destAngularVelocity = GradientAngularVelocity.createByRandomTwoGradientSeparate(_angularVelocity.gradientXMin.clone(), _angularVelocity.gradientYMin.clone(), _angularVelocity.gradientZMin.clone(), _angularVelocity.gradientXMax.clone(), _angularVelocity.gradientYMax.clone(), _angularVelocity.gradientZMax.clone());
+				else
+					destAngularVelocity = GradientAngularVelocity.createByRandomTwoGradient(_angularVelocity.gradientMin.clone(), _angularVelocity.gradientMax.clone());
+				break;
+			}
+			
 			var destRotationOverLifetime:RotationOverLifetime = __JS__("new this.constructor()");
-			cloneTo(destRotationOverLifetime);
 			return destRotationOverLifetime;
 		}
 	

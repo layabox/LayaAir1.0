@@ -20,19 +20,24 @@ package laya.d3.core.scene {
 		}
 		
 		private function _renderCamera(gl:WebGLContext, state:RenderState, camera:Camera):void {
-			_prepareRenderToRenderState(camera, state);//TODO:优化多摄像机ShaderValue和ShaderDefine
+			state.camera = camera;
+			camera._prepareCameraToRender();
 			beforeRender(state);//渲染之前
 			var renderTarget:RenderTexture = camera.renderTarget;
 			if (renderTarget) {
 				renderTarget.start();
 				Matrix4x4.multiply(_invertYScaleMatrix, camera.projectionMatrix, _invertYProjectionMatrix);
 				Matrix4x4.multiply(_invertYScaleMatrix, camera.projectionViewMatrix, _invertYProjectionViewMatrix);
-				state.projectionMatrix = _invertYProjectionMatrix;
-				state.projectionViewMatrix = _invertYProjectionViewMatrix;
+				state.projectionMatrix = _invertYProjectionMatrix;//todo:
+				camera._setShaderValueMatrix4x4(BaseCamera.PROJECTMATRIX, _invertYProjectionMatrix);
+				state.projectionViewMatrix = _invertYProjectionViewMatrix;//todo
 			} else {
-				state.projectionMatrix = camera.projectionMatrix;
-				state.projectionViewMatrix = camera.projectionViewMatrix;
+				state.projectionMatrix = camera.projectionMatrix;//todo
+				camera._setShaderValueMatrix4x4(BaseCamera.PROJECTMATRIX, camera.projectionMatrix);
+				state.projectionViewMatrix = camera.projectionViewMatrix;//todo
 			}
+			
+			camera._setShaderValueMatrix4x4(BaseCamera.VIEWMATRIX, camera.viewMatrix);
 			state.viewMatrix = camera.viewMatrix;
 			state.viewport = camera.viewport;
 			_preRenderScene(gl, state);
@@ -49,6 +54,8 @@ package laya.d3.core.scene {
 		override public function renderSubmit():int {
 			var gl:WebGLContext = WebGL.mainContext;
 			_set3DRenderConfig(gl);//设置3D配置
+			
+			_prepareSceneToRender(_renderState);
 			for (var i:int = 0, n:int = _cameraPool.length; i < n; i++) {
 				var camera:Camera = _cameraPool[i] as Camera;
 				(camera.enable) && (_renderCamera(gl, _renderState, camera));

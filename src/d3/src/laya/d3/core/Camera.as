@@ -1,4 +1,5 @@
 package laya.d3.core {
+	import laya.d3.core.render.RenderState;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Ray;
@@ -7,6 +8,7 @@ package laya.d3.core {
 	import laya.d3.math.Viewport;
 	import laya.d3.utils.Picker;
 	import laya.d3.utils.Size;
+	import laya.events.Event;
 	
 	/**
 	 * <code>Camera</code> 类用于创建摄像机。
@@ -148,8 +150,6 @@ package laya.d3.core {
 		
 		/**
 		 * 创建一个 <code>Camera</code> 实例。
-		 * @param	viewport 视口。
-		 * @param	fieldOfView 视野。
 		 * @param	aspectRatio 横纵比。
 		 * @param	nearPlane 近裁面。
 		 * @param	farPlane 远裁面。
@@ -217,7 +217,7 @@ package laya.d3.core {
 			if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
 			{
 				var outE:Float32Array = out.elements;
-				outE[0] = outE[1] =outE[2] =NaN;
+				outE[0] = outE[1] = outE[2] = NaN;
 			}
 		}
 		
@@ -232,8 +232,16 @@ package laya.d3.core {
 			if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
 			{
 				var outE:Float32Array = out.elements;
-				outE[0] = outE[1] =outE[2] =NaN;
+				outE[0] = outE[1] = outE[2] = NaN;
 			}
+		}
+		
+		override public function _update(state:RenderState):void {
+			if (conchModel) {//NATIVE
+				conchModel.setViewMatrix(viewMatrix.elements);
+				conchModel.setProjectMatrix(projectionMatrix.elements);
+			}
+			super._update(state);
 		}
 	}
 }

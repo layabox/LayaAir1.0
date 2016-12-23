@@ -98,7 +98,7 @@ package laya.ui {
 		override public function set width(value:Number):void {
 			if (_width != value) {
 				_width = value;
-				model && model.size(_width, _height);
+				conchModel && conchModel.size(_width, _height);
 				callLater(changeSize);
 				if (_layout.enable && (!isNaN(_layout.centerX) || !isNaN(_layout.right) || !isNaN(_layout.anchorX))) resetLayoutX();
 			}
@@ -148,7 +148,7 @@ package laya.ui {
 		override public function set height(value:Number):void {
 			if (_height != value) {
 				_height = value;
-				model && model.size(_width, _height);
+				conchModel && conchModel.size(_width, _height);
 				callLater(changeSize);
 				if (_layout.enable && (!isNaN(_layout.centerY) || !isNaN(_layout.bottom) || !isNaN(_layout.anchorY))) resetLayoutY();
 			}

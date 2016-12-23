@@ -181,7 +181,10 @@ package laya.d3.resource {
 		override public function onAsynLoaded(url:String, data:*):void {
 			_srcs = url;
 			_onTextureLoaded(data as Array); 
-			activeResource();
+			if (_conchTexture) //NATIVE
+				_conchTexture.setTextureCubeImages(_images);
+			else
+				activeResource();
 			_loaded = true;
 			event(Event.LOADED, this);
 		}

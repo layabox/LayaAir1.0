@@ -1,5 +1,8 @@
 var SkinAnimation_3DoverWeb = (function () {
     function SkinAnimation_3DoverWeb() {
+        var div = document.createElement("div");
+        div.innerHTML = "<h1>此内容来源于HTML网页 - h1标签</h1>";
+        document.body.appendChild(div);
         Laya3D.init(0, 0, true, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;

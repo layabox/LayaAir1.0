@@ -2,6 +2,7 @@ package laya.webgl.utils {
 	import laya.resource.Resource;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
+	import laya.webgl.shader.BaseShader;
 	import laya.webgl.shader.Shader;
 	
 	public class Buffer extends Resource {
@@ -34,7 +35,7 @@ package laya.webgl.utils {
 		
 		public function _bind():void {
 			activeResource();
-			(_bindActive[_bufferType] === _glBuffer) || (_gl.bindBuffer(_bufferType, _bindActive[_bufferType] = _glBuffer), Shader.activeShader = null);
+			(_bindActive[_bufferType] === _glBuffer) || (_gl.bindBuffer(_bufferType, _bindActive[_bufferType] = _glBuffer), BaseShader.activeShader = null);
 		}
 		
 		override protected function recreateResource():void {

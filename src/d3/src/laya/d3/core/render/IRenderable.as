@@ -1,6 +1,7 @@
 package laya.d3.core.render {
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
+	import laya.d3.graphics.VertexDeclaration;
 	
 	/**
 	 * <code>IRender</code> 接口用于实现3D对象的渲染相关功能。
@@ -14,5 +15,7 @@ package laya.d3.core.render {
 		function _getIndexBuffer():IndexBuffer3D;
 		function _beforeRender(state:RenderState):Boolean;
 		function _render(state:RenderState):void;
+		
+		function _renderRuntime(conchGraphics3D:*,renderElement:RenderElement,state:RenderState):void;//NATIVE
 	}
 }

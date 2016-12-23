@@ -49,11 +49,16 @@ package laya.display {
 		/**@private 系统保留的私有变量集合*/
 		public var _$P:Object = PROP_EMPTY;
 		/**@private */
-		public var model:IConchNode;
+		public var conchModel:*;
 		
 		/**@private */
 		public function Node() {
-			model = Render.isConchNode ? __JS__("new ConchNode()") : null;
+			this.conchModel =Render.isConchNode? this.createConchModel():null;
+		}
+		
+		public function createConchModel():*
+		{
+			return null;
 		}
 		
 		/**
@@ -100,16 +105,16 @@ package laya.display {
 			if (node._parent === this) {
 				this._childs.splice(getChildIndex(node), 1);
 				this._childs.push(node);
-				if (model) {
-					model.removeChild(node.model);
-					model.addChildAt(node.model, this._childs.length - 1);
+				if (conchModel) {
+					conchModel.removeChild(node.conchModel);
+					conchModel.addChildAt(node.conchModel, this._childs.length - 1);
 				}
 				_childChanged();
 			} else {
 				node.parent && node.parent.removeChild(node);
 				this._childs === ARRAY_EMPTY && (this._childs = []);
 				this._childs.push(node);
-				model && model.addChildAt(node.model, this._childs.length - 1);
+				conchModel && conchModel.addChildAt(node.conchModel, this._childs.length - 1);
 				node.parent = this;
 				_childChanged();
 			}
@@ -141,16 +146,16 @@ package laya.display {
 					var oldIndex:int = getChildIndex(node);
 					this._childs.splice(oldIndex, 1);
 					this._childs.splice(index, 0, node);
-					if (model) {
-						model.removeChild(node.model);
-						model.addChildAt(node.model, index);
+					if (conchModel) {
+						conchModel.removeChild(node.conchModel);
+						conchModel.addChildAt(node.conchModel, index);
 					}
 					_childChanged();
 				} else {
 					node.parent && node.parent.removeChild(node);
 					this._childs === ARRAY_EMPTY && (this._childs = []);
 					this._childs.splice(index, 0, node);
-					model && model.addChildAt(node.model, index);
+					conchModel && conchModel.addChildAt(node.conchModel, index);
 					node.parent = this;
 				}
 				return node;
@@ -221,9 +226,9 @@ package laya.display {
 			if (oldIndex < 0) throw new Error("setChildIndex:node is must child of this object.");
 			childs.splice(oldIndex, 1);
 			childs.splice(index, 0, node);
-			if (model) {
-				model.removeChild(node.model);
-				model.addChildAt(node.model, index);
+			if (conchModel) {
+				conchModel.removeChild(node.conchModel);
+				conchModel.addChildAt(node.conchModel, index);
 			}
 			_childChanged();
 			return node;
@@ -278,7 +283,7 @@ package laya.display {
 			var node:Node = getChildAt(index);
 			if (node) {
 				this._childs.splice(index, 1);
-				model && model.removeChild(node.model);
+				conchModel && conchModel.removeChild(node.conchModel);
 				node.parent = null;
 			}
 			return node;
@@ -301,7 +306,7 @@ package laya.display {
 				}
 				for (var i:int = 0, n:int = arr.length; i < n; i++) {
 					arr[i].parent = null;
-					model && model.removeChild(arr[i].model);
+					conchModel && conchModel.removeChild(arr[i].conchModel);
 				}
 			}
 			return this;
@@ -318,9 +323,9 @@ package laya.display {
 			var index:int = this._childs.indexOf(oldNode);
 			if (index > -1) {
 				this._childs.splice(index, 1, newNode);
-				if (model) {
-					model.removeChild(oldNode.model);
-					model.addChildAt(newNode.model, index);
+				if (conchModel) {
+					conchModel.removeChild(oldNode.conchModel);
+					conchModel.addChildAt(newNode.conchModel, index);
 				}
 				oldNode.parent = null;
 				newNode.parent = this;

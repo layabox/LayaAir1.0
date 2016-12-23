@@ -34,8 +34,6 @@ package laya.d3.core.particleShuriKen.module.shape {
 			randomDirection = false;
 		}
 		
-		
-		
 		/**
 		 *  用于生成粒子初始位置和方向。
 		 * @param	position 粒子位置。
@@ -133,6 +131,16 @@ package laya.d3.core.particleShuriKen.module.shape {
 			default: 
 				throw new Error("ConeShape:emitType is invalid.");
 			}
+		}
+		
+		override public function cloneTo(destObject:*):void {
+			super.cloneTo(destObject);
+			var destShape:ConeShape = destObject as ConeShape;
+			destShape.angle = angle;
+			destShape.radius = radius;
+			destShape.length = length;
+			destShape.emitType = emitType;
+			destShape.randomDirection = randomDirection;
 		}
 	
 	}

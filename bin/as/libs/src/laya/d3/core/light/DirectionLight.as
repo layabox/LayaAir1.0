@@ -3,9 +3,7 @@ package laya.d3.core.light {
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderDefines3D;
-	import laya.utils.Stat;
-	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.ValusArray;
+	import laya.d3.shader.ValusArray;
 	
 	/**
 	 * <code>DirectionLight</code> 类用于创建平行光。
@@ -57,13 +55,14 @@ package laya.d3.core.light {
 		 * @param state 渲染状态参数。
 		 */
 		public override function updateToWorldState(state:RenderState):void {
-			if (state.scene.enableLight) {
-				var shaderValue:ValusArray = state.shaderValue;
+			var scene:BaseScene = state.scene;
+			if (scene.enableLight) {
+				var shaderValue:ValusArray = scene._shaderValues;
 				state.shaderDefines.add(ShaderDefines3D.DIRECTIONLIGHT);
-				shaderValue.pushValue(BaseScene.LIGHTDIRDIFFUSE, diffuseColor.elements);
-				shaderValue.pushValue(BaseScene.LIGHTDIRAMBIENT, ambientColor.elements);
-				shaderValue.pushValue(BaseScene.LIGHTDIRSPECULAR, specularColor.elements);
-				shaderValue.pushValue(BaseScene.LIGHTDIRECTION, direction.elements);
+				shaderValue.setValue(BaseScene.LIGHTDIRDIFFUSE, diffuseColor.elements);
+				shaderValue.setValue(BaseScene.LIGHTDIRAMBIENT, ambientColor.elements);
+				shaderValue.setValue(BaseScene.LIGHTDIRSPECULAR, specularColor.elements);
+				shaderValue.setValue(BaseScene.LIGHTDIRECTION, direction.elements);
 			}
 		}
 	}

@@ -3,6 +3,7 @@ package laya.webgl.resource {
 	import laya.resource.Texture;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
+	import laya.webgl.shader.BaseShader;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.RenderState2D;
 	
@@ -60,6 +61,7 @@ package laya.webgl.resource {
 		override public function get source():* {
 			if (_alreadyResolved)
 				return super.source;
+			return null;
 			throw new Error("RenderTarget  还未准备好！");
 		}
 		
@@ -71,7 +73,7 @@ package laya.webgl.resource {
 		 * @param surfaceType    WebGLContext.UNSIGNED_BYTE  数据类型
 		 * @param depthFormat WebGLContext.DEPTH_COMPONENT16 数据类型等
 		 * **/
-		public function RenderTarget2D(width:int, height:int, surfaceFormat:int = WebGLContext.RGBA, surfaceType:int = WebGLContext.UNSIGNED_BYTE, depthStencilFormat:int = WebGLContext.DEPTH_COMPONENT16, mipMap:Boolean = false, repeat:Boolean = false, minFifter:int = -1, magFifter:int = -1) {
+		public function RenderTarget2D(width:int, height:int, surfaceFormat:int = WebGLContext.RGBA, surfaceType:int = WebGLContext.UNSIGNED_BYTE, depthStencilFormat:int = WebGLContext.DEPTH_STENCIL, mipMap:Boolean = false, repeat:Boolean = false, minFifter:int = -1, magFifter:int = -1) {
 			_type = TYPE2D;//待调整
 			_w = width;
 			_h = height;
@@ -119,7 +121,7 @@ package laya.webgl.resource {
 			POOL.push(this);
 		}
 		
-		public static function create(w:int, h:int, surfaceFormat:int = WebGLContext.RGBA, surfaceType:int = WebGLContext.UNSIGNED_BYTE, depthStencilFormat:int = WebGLContext.DEPTH_COMPONENT16, mipMap:Boolean = false, repeat:Boolean = false, minFifter:int = -1, magFifter:int = -1):RenderTarget2D {
+		public static function create(w:int, h:int, surfaceFormat:int = WebGLContext.RGBA, surfaceType:int = WebGLContext.UNSIGNED_BYTE, depthStencilFormat:int = WebGLContext.DEPTH_STENCIL, mipMap:Boolean = false, repeat:Boolean = false, minFifter:int = -1, magFifter:int = -1):RenderTarget2D {
 			var t:RenderTarget2D = POOL.pop();
 			t || (t = new RenderTarget2D(w, h));
 			
@@ -155,7 +157,7 @@ package laya.webgl.resource {
 				_svHeight = RenderState2D.height;
 				RenderState2D.width = _w;
 				RenderState2D.height = _h;
-				Shader.activeShader = null;
+				BaseShader.activeShader = null;
 			}
 			
 			return this;
@@ -193,7 +195,7 @@ package laya.webgl.resource {
 				gl.viewport(0, 0, _svWidth, _svHeight);
 				RenderState2D.width = _svWidth;
 				RenderState2D.height = _svHeight;
-				Shader.activeShader = null;
+				BaseShader.activeShader = null;
 			} else gl.viewport(0, 0, Laya.stage.width, Laya.stage.height);
 		}
 		

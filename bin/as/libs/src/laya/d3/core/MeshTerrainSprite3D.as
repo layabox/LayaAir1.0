@@ -167,7 +167,7 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		private function _createFromMeshAndHeightMapMeshLoaded(sender:Mesh, texture:Texture2D, minHeight:Number, maxHeight:Number):void {
+		private function _createFromMeshAndHeightMapMeshLoaded(texture:Texture2D, minHeight:Number, maxHeight:Number):void {
 			_initCreateFromMeshHeightMap(texture, minHeight, maxHeight);
 		}
 		

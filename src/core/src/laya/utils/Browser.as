@@ -254,7 +254,6 @@ package laya.utils {
 		   if (!_container) {
 		   _container = createElement("div");
 		   _container.id = "layaContainer";
-		   _container.style.cssText = "width:100%;height:100%";
 		   document.body.appendChild(_container);
 		   }
 		   return _container;

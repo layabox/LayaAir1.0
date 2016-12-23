@@ -111,7 +111,7 @@
 		Layout.layout=function(element){
 			if ((element._style._type & /*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200)===0)
 				return null;
-			element._style._type &=~ /*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200;
+			element.getStyle()._type &=~ /*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200;
 			var arr=Layout._multiLineLayout(element);
 			if (Render.isConchApp&&element["layaoutCallNative"]){
 				(element).layaoutCallNative();

@@ -71,7 +71,7 @@ package laya.filters {
 		public override function callNative(sp:Sprite):void
 		{
 			var t:ColorFilter = sp._$P.cf = this;
-			sp.model && sp.model.setFilterMatrix&&sp.model.setFilterMatrix(_mat, _alpha);
+			sp.conchModel && sp.conchModel.setFilterMatrix&&sp.conchModel.setFilterMatrix(_mat, _alpha);
 		}
 	}
 }

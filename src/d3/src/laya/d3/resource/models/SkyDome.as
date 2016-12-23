@@ -1,4 +1,5 @@
 package laya.d3.resource.models {
+	import laya.d3.core.BaseCamera;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
@@ -8,13 +9,14 @@ package laya.d3.resource.models {
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.Texture2D;
+	import laya.d3.shader.Shader3D;
+	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shader.ValusArray;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.ValusArray;
 	
 	/**
 	 * <code>Sky</code> 类用于创建天空盒。
@@ -31,26 +33,9 @@ package laya.d3.resource.models {
 		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(20, [new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.POSITION0), new VertexElement(12, VertexElementFormat.Vector2, VertexElementUsage.TEXTURECOORDINATE0)]);
 		
 		/** @private */
-		protected var _shaderValue:ValusArray = new ValusArray();
+		private var _numberVertices:int;
 		/** @private */
-		protected var _sharderNameID:int;
-		/** @private */
-		protected var _shader:Shader;
-		
-		/** @private */
-		protected var _numberVertices:int;
-		/** @private */
-		protected var _numberIndices:int;
-		/** @private */
-		private var _vertexBuffer:VertexBuffer3D;
-		/** @private */
-		private var _indexBuffer:IndexBuffer3D;
-		
-		/**  @private 透明混合度。 */
-		private var _alphaBlending:Number = 1.0;//TODO:可能移除
-		
-		/** @private 颜色强度。 */
-		private var _colorIntensity:Number = 1.0;
+		private var _numberIndices:int;
 		
 		/** @private 天空立方体纹理。 */
 		private var _texture:Texture2D;
@@ -60,44 +45,6 @@ package laya.d3.resource.models {
 		private var _slices:int = 16;
 		
 		private var _radius:Number = 1;
-		
-		/**
-		 * 获取透明混合度。
-		 * @return 透明混合度。
-		 */
-		public function get alphaBlending():Number {
-			return _alphaBlending;
-		}
-		
-		/**
-		 * 设置透明混合度。
-		 * @param value 透明混合度。
-		 */
-		public function set alphaBlending(value:Number):void {
-			_alphaBlending = value;
-			if (_alphaBlending < 0)
-				_alphaBlending = 0;
-			if (_alphaBlending > 1)
-				_alphaBlending = 1;
-		}
-		
-		/**
-		 * 获取颜色强度。
-		 * @return 颜色强度。
-		 */
-		public function get colorIntensity():Number {
-			return _colorIntensity;
-		}
-		
-		/**
-		 * 设置颜色强度。
-		 * @param value 颜色强度。
-		 */
-		public function set colorIntensity(value:Number):void {
-			_colorIntensity = value;
-			if (_colorIntensity < 0)
-				_colorIntensity = 0;
-		}
 		
 		/**
 		 * 获取天空立方体纹理。
@@ -113,6 +60,9 @@ package laya.d3.resource.models {
 		 */
 		public function set texture(value:Texture2D):void {
 			_texture = value;
+			if (_conchSky) {//NATIVE
+				_conchSky.setTexture(_texture._conchTexture, 0, Sky.DIFFUSETEXTURE);
+			}
 		}
 		
 		/**
@@ -124,16 +74,18 @@ package laya.d3.resource.models {
 			_nameNumber++;
 			loadShaderParams();
 			recreateResource();
+			alphaBlending = 1;
+			colorIntensity = 1;
 		}
 		
 		/**
 		 * @private
 		 */
-		protected function _getShader(state:RenderState):Shader {
+		protected function _getShader(state:RenderState):Shader3D {
 			var shaderDefs:ShaderDefines3D = state.shaderDefines;
 			var preDef:int = shaderDefs._value;
-			var nameID:Number = shaderDefs._value + _sharderNameID * Shader.SHADERNAME2ID;
-			_shader = Shader.withCompile(_sharderNameID, state.shaderDefines.toNameDic(), nameID, null);
+			var nameID:Number = shaderDefs._value + _sharderNameID * Shader3D.SHADERNAME2ID;
+			_shader = Shader3D.withCompile(_sharderNameID, state.shaderDefines, nameID);
 			shaderDefs._value = preDef;
 			return _shader;
 		}
@@ -195,14 +147,20 @@ package laya.d3.resource.models {
 			_indexBuffer.setData(indices);
 			memorySize = (_vertexBuffer.byteLength + _indexBuffer.byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
 			completeCreate();
+			if (_conchSky) {//NATIVE
+				_conchSky.setVBIB(_vertexDeclaration._conchVertexDeclaration, vertices, indices);
+				_sharderNameID = Shader3D.nameKey.get("SkyDome");
+				var shaderCompile:ShaderCompile3D = Shader3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
+				_conchSky.setShader(shaderCompile._conchShader);
+			}
 		}
 		
 		/**
 		 * @private
 		 */
 		protected function loadShaderParams():void {
-			_sharderNameID = Shader.nameKey.get("SkyDome");
-			_shaderValue.pushValue(Sky.DIFFUSETEXTURE, null);
+			_sharderNameID = Shader3D.nameKey.get("SkyDome");
+			_shaderCompile = Shader3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
 		}
 		
 		override public function _render(state:RenderState):void {
@@ -210,26 +168,23 @@ package laya.d3.resource.models {
 				//设备丢失时,貌似WebGL不会丢失.............................................................
 				//  todo  setData  here!
 				//...................................................................................
-				
 				_vertexBuffer._bind();
 				_indexBuffer._bind();
 				_shader = _getShader(state);
-				var presz:int = _shaderValue.length;
-				_shaderValue.pushArray(state.shaderValue);
-				_shaderValue.pushArray(_vertexBuffer.vertexDeclaration.shaderValues);
+				_shader.bind();
 				
-				state.camera.transform.worldMatrix.cloneTo(_tempMatrix4x40);//视图矩阵逆矩阵的转置矩阵，移除平移和缩放。
+				state.camera.transform.worldMatrix.cloneTo(_tempMatrix4x40);//视图矩阵逆矩阵的转置矩阵，移除平移和缩放。//TODO:可优化
 				_tempMatrix4x40.transpose();
 				Matrix4x4.multiply(state.projectionMatrix, _tempMatrix4x40, _tempMatrix4x41);
+				state.camera._shaderValues.setValue(BaseCamera.VPMATRIX_NO_TRANSLATE, _tempMatrix4x41.elements);
+				_shader.uploadCameraUniforms(state.camera._shaderValues.data);
+
+				_shaderValue.setValue(INTENSITY, _colorIntensity);
+				_shaderValue.setValue(ALPHABLENDING, _alphaBlending);
+				_shaderValue.setValue(DIFFUSETEXTURE, texture.source);
 				
-				_shaderValue.pushValue(Sky.MVPMATRIX, _tempMatrix4x41.elements);
-				_shaderValue.pushValue(Sky.INTENSITY, _colorIntensity);
-				_shaderValue.pushValue(Sky.ALPHABLENDING, alphaBlending);
-				
-				_shaderValue.data[1] = texture.source;
-				
-				_shader.uploadArray(_shaderValue.data, _shaderValue.length, null);
-				_shaderValue.length = presz;
+				_shader.uploadAttributes(_vertexDeclaration.shaderValues.data, null);
+				_shader.uploadMaterialUniforms(_shaderValue.data);
 				WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, _indexBuffer.indexCount, WebGLContext.UNSIGNED_SHORT, 0);
 				Stat.trianglesFaces += _numberIndices / 3;
 				Stat.drawCall++;

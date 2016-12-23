@@ -35,7 +35,7 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.5.5Beta";
+		public static var version:String = "1.6.0Beta";
 		public static var stageBox:Sprite;
 		/**Market对象 只有加速器模式下才有值*/
 		public static var conchMarket:IMarket = __JS__("window.conch?conchMarket:null");
@@ -70,7 +70,7 @@ package {
 			ResourceManager.__init__();
 			CacheManger.beginCheck();
 			stageBox = stage = new Stage();
-			stage.model&&stage.model.setRootNode();
+			stage.conchModel&&stage.conchModel.setRootNode();
 			var location:* = Browser.window.location;
 			var pathName:String = location.pathname;
 			// 索引为2的字符如果是':'就是windows file协议

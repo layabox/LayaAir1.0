@@ -28,6 +28,7 @@ package laya.webgl.submit {
 		public static const TYPE_CHANGE_VALUE:int = 10014;
 		public static const TYPE_SHAPE:int = 10015;
 		public static const TYPE_TEXTURE:int = 10016;
+		public static const TYPE_FILLTEXTURE:int = 10017;
 		
 		public static var RENDERBASE:Submit;
 		

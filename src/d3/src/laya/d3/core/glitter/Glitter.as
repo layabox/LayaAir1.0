@@ -7,6 +7,7 @@ package laya.d3.core.glitter {
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.tempelet.GlitterTemplet;
@@ -108,6 +109,15 @@ package laya.d3.core.glitter {
 			
 			Stat.spriteCount++;
 			_childs.length && _updateChilds(state);
+		}
+		
+		/**
+		 * @private
+		 */
+		override public function _prepareShaderValuetoRender(view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
+			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
+			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
+			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
 		}
 		
 		/**

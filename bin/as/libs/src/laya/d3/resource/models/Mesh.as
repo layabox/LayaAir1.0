@@ -9,7 +9,7 @@ package laya.d3.resource.models {
 	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexElementFormat;
 	import laya.d3.graphics.VertexElementUsage;
-	import laya.d3.loaders.LoadModel;
+	import laya.d3.loaders.MeshReader;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
@@ -43,7 +43,6 @@ package laya.d3.resource.models {
 		public var _bindPoses:Vector.<Matrix4x4>;
 		/** @private */
 		public var _inverseBindPoses:Vector.<Matrix4x4>;
-		
 		/**
 		 * 获取网格顶点
 		 * @return 网格顶点。
@@ -153,7 +152,7 @@ package laya.d3.resource.models {
 		override public function onAsynLoaded(url:String, data:*):void {
 			var bufferData:Object = data[0];
 			var textureMap:Object = data[1];
-			new LoadModel(bufferData as ArrayBuffer, this, _materials,textureMap);
+			MeshReader.read(bufferData as ArrayBuffer, this, _materials, textureMap);
 			_loaded = true;
 			event(Event.LOADED, this);
 		}

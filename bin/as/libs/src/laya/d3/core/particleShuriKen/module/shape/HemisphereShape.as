@@ -47,6 +47,14 @@ package laya.d3.core.particleShuriKen.module.shape {
 				position.cloneTo(direction);
 			}
 		}
+		
+		override public function cloneTo(destObject:*):void {
+			super.cloneTo(destObject);
+			var destShape:HemisphereShape = destObject as HemisphereShape;
+			destShape.radius = radius;
+			destShape.emitFromShell = emitFromShell;
+			destShape.randomDirection = randomDirection;
+		}
 	
 	}
 

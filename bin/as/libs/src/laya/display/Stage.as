@@ -126,6 +126,7 @@ package laya.display {
 		public var _scenes:Array;
 		
 		public function Stage() {
+			transform = Matrix.create();
 			_scenes = [];
 			this.mouseEnabled = true;
 			this.hitTestPrior = true;
@@ -225,7 +226,7 @@ package laya.display {
 			var canvasStyle:* = canvas.source.style;
 			canvas.size(1, 1);
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "";
-			_style.visible = false;
+			visible = false;
 			Laya.timer.once(100, this, this._changeCanvasSize);
 		}
 		
@@ -303,12 +304,11 @@ package laya.display {
 			scaleX *= this.scaleX;
 			scaleY *= this.scaleY;
 			if (scaleX === 1 && scaleY === 1) {
-				transform && transform.identity();
+				transform.identity();
 			} else {
-				transform || (transform = new Matrix());
-				transform.a = scaleX / (realWidth / canvasWidth);
-				transform.d = scaleY / (realHeight / canvasHeight);
-				model && model.scale(transform.a, transform.d);//由于上面的两句通知不到微端
+				transform.a = _formatData(scaleX / (realWidth / canvasWidth));
+				transform.d = _formatData(scaleY / (realHeight / canvasHeight));
+				conchModel && conchModel.scale(transform.a, transform.d);//由于上面的两句通知不到微端
 			}
 			
 			//处理canvas大小			
@@ -352,17 +352,27 @@ package laya.display {
 				}
 			}
 			
-			if (mat.a < 0.00000000000001) mat.a = mat.d = 0;
-			if (mat.tx < 0.00000000000001) mat.tx = 0;
-			if (mat.ty < 0.00000000000001) mat.ty = 0;
+			mat.a = _formatData(mat.a);
+			mat.d = _formatData(mat.d);
+			mat.tx = _formatData(mat.tx);
+			mat.ty = _formatData(mat.ty);
+			//if (Math.abs(mat.a) < 0.00000001) mat.a = mat.d = 0;
+			//if (Math.abs(mat.tx) < 0.00000001) mat.tx = 0;
+			//if (Math.abs(mat.ty) < 0.00000001) mat.ty = 0;
 			canvasStyle.transformOrigin = canvasStyle.webkitTransformOrigin = canvasStyle.msTransformOrigin = canvasStyle.mozTransformOrigin = canvasStyle.oTransformOrigin = "0px 0px 0px";
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "matrix(" + mat.toString() + ")";
 			//修正用户自行设置的偏移
 			//var rect:* = canvas.source.getBoundingClientRect();
 			mat.translate(parseInt(canvasStyle.left) || 0, parseInt(canvasStyle.top) || 0);
-			_style.visible = true;
+			visible = true;
 			_repaint = 1;
 			event(Event.RESIZE);
+		}
+		
+		private function _formatData(value:Number):Number {
+			if (Math.abs(value) < 0.000001) return 0;
+			if (Math.abs(1 - value) < 0.001) return value > 0 ? 1 : -1;
+			return value;
 		}
 		
 		/**
@@ -429,7 +439,7 @@ package laya.display {
 		
 		public function set bgColor(value:String):void {
 			_bgColor = value;
-			model && model.bgColor(value);
+			conchModel && conchModel.bgColor(value);
 			if (value) {
 				Render.canvas.style.background = value;
 			} else {

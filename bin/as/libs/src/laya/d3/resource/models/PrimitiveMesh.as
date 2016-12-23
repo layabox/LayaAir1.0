@@ -15,12 +15,12 @@ package laya.d3.resource.models {
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.utils.Utils3D;
+	import laya.renders.Render;
 	import laya.utils.Stat;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer;
 	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.ValusArray;
 	
 	/**
 	 * @private
@@ -116,6 +116,11 @@ package laya.d3.resource.models {
 			state.context.drawElements(WebGLContext.TRIANGLES, _numberIndices, WebGLContext.UNSIGNED_SHORT, 0);
 			Stat.drawCall++;
 			Stat.trianglesFaces += _numberIndices / 3;
+		}
+		
+		/**NATIVE*/
+		public function _renderRuntime(conchGraphics3D:*,renderElement:RenderElement,state:RenderState):void {
+			conchGraphics3D.drawSubmesh(renderElement._conchSubmesh,0,WebGLContext.TRIANGLES, 0,_numberIndices);
 		}
 	
 	}

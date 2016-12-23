@@ -12,7 +12,6 @@ package laya.display {
 	import laya.renders.RenderSprite;
 	import laya.resource.Texture;
 	import laya.utils.Handler;
-	import laya.utils.RunDriver;
 	import laya.utils.Utils;
 	import laya.utils.VectorGraphManager;
 	
@@ -90,6 +89,7 @@ package laya.display {
 					y += tex.offsetY;
 					var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
 					this.drawImageM(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x, y, width, height, m);
+					this._repaint();
 				}
 				from.fillTexture = function(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, type:String = "repeat", offset:Point = null):void {
 					if (!tex) return;
@@ -240,12 +240,12 @@ package laya.display {
 			for (var i:int = 0, n:int = cmds.length; i < n; i++) {
 				cmd = cmds[i];
 				switch (cmd.callee) {
-				case context.save: 
+				case context._save: 
 				case 7: //save
 					matrixs.push(tMatrix);
 					tMatrix = tMatrix.clone();
 					break;
-				case context.restore: 
+				case context._restore: 
 				case 8: //restore
 					tMatrix = matrixs.pop();
 					break;
@@ -303,13 +303,13 @@ package laya.display {
 					break;
 				case context._drawTextureWithTransform: 
 					var drawMatrix:Matrix;
-					if (cmd[5]){
+					if (cmd[5]) {
 						tMatrix.copyTo(tempMatrix);
-					    tempMatrix.concat(cmd[5]);
+						tempMatrix.concat(cmd[5]);
 						drawMatrix = tempMatrix;
-					}else{
+					} else {
 						drawMatrix = tMatrix;
-					}				
+					}
 					if (cmd[3] && cmd[4]) {
 						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), drawMatrix);
 					} else {
@@ -401,7 +401,7 @@ package laya.display {
 		 * @param	height 高度。
 		 * @param	m 矩阵信息。
 		 */
-		public function drawTexture(tex:Texture, x:Number=0, y:Number=0, width:Number = 0, height:Number = 0, m:Matrix = null, alpha:Number = 1):void {
+		public function drawTexture(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null, alpha:Number = 1):void {
 			if (!tex) return;
 			if (!width) width = tex.sourceWidth;
 			if (!height) height = tex.sourceHeight;
@@ -479,7 +479,7 @@ package laya.display {
 		 */
 		public function fillTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, type:String = "repeat", offset:Point = null):void {
 			if (!tex) return;
-			var args:* = [tex, x, y, width, height, type, offset||Point.EMPTY,{}];
+			var args:* = [tex, x, y, width, height, type, offset || Point.EMPTY, {}];
 			if (!tex.loaded) {
 				tex.once(Event.LOADED, this, _textureLoaded, [tex, args]);
 			}
@@ -756,7 +756,9 @@ package laya.display {
 				if (_vectorgraphArray == null) _vectorgraphArray = [];
 				_vectorgraphArray.push(tId);
 			}
-			var arr:Array = [fromX + 0.5, fromY + 0.5, toX + 0.5, toY + 0.5, lineColor, lineWidth, tId];
+			
+			var offset:Number = lineWidth % 2 === 0 ? 0 : 0.5;
+			var arr:Array = [fromX + offset, fromY + offset, toX + offset, toY + offset, lineColor, lineWidth, tId];
 			_saveToCmd(Render._context._drawLine, arr);
 		}
 		
@@ -775,7 +777,8 @@ package laya.display {
 				if (_vectorgraphArray == null) _vectorgraphArray = [];
 				_vectorgraphArray.push(tId);
 			}
-			var arr:Array = [x + 0.5, y + 0.5, points, lineColor, lineWidth, tId];
+			var offset:Number = lineWidth % 2 === 0 ? 0 : 0.5;
+			var arr:Array = [x + offset, y + offset, points, lineColor, lineWidth, tId];
 			_saveToCmd(Render._context._drawLines, arr);
 		}
 		
@@ -788,7 +791,7 @@ package laya.display {
 		 * @param	lineWidth 线段宽度。
 		 */
 		public function drawCurves(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):void {
-			var arr:Array = [x + 0.5, y + 0.5, points, lineColor, lineWidth];
+			var arr:Array = [x, y, points, lineColor, lineWidth];
 			_saveToCmd(Render._context._drawCurves, arr);
 		}
 		
@@ -803,8 +806,9 @@ package laya.display {
 		 * @param	lineWidth 边框宽度。
 		 */
 		public function drawRect(x:Number, y:Number, width:Number, height:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
-			var offset:Number = lineColor ? 0.5 : 0;
-			var arr:Array = [x + offset, y + offset, width, height, fillColor, lineColor, lineWidth];
+			var offset:Number = lineColor ? lineWidth / 2 : 0;
+			var lineOffset:Number = lineColor ? lineWidth : 0;
+			var arr:Array = [x + offset, y + offset, width - lineOffset, height - lineOffset, fillColor, lineColor, lineWidth];
 			_saveToCmd(Render._context._drawRect, arr);
 		}
 		
@@ -818,14 +822,15 @@ package laya.display {
 		 * @param	lineWidth 边框宽度。
 		 */
 		public function drawCircle(x:Number, y:Number, radius:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
-			var offset:Number = lineColor ? 0.5 : 0;
+			var offset:Number = lineColor ? lineWidth / 2 : 0;
+			
 			var tId:uint = 0;
 			if (Render.isWebGL) {
 				tId = VectorGraphManager.getInstance().getId();
 				if (_vectorgraphArray == null) _vectorgraphArray = [];
 				_vectorgraphArray.push(tId);
 			}
-			var arr:Array = [x + offset, y + offset, radius, fillColor, lineColor, lineWidth, tId];
+			var arr:Array = [x, y, radius - offset, fillColor, lineColor, lineWidth, tId];
 			_saveToCmd(Render._context._drawCircle, arr);
 		}
 		
@@ -841,14 +846,16 @@ package laya.display {
 		 * @param	lineWidth 边框宽度。
 		 */
 		public function drawPie(x:Number, y:Number, radius:Number, startAngle:Number, endAngle:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
-			var offset:Number = lineColor ? 0.5 : 0;
+			var offset:Number = lineColor ? lineWidth / 2 : 0;
+			var lineOffset:Number = lineColor ? lineWidth : 0;
+			
 			var tId:uint = 0;
 			if (Render.isWebGL) {
 				tId = VectorGraphManager.getInstance().getId();
 				if (_vectorgraphArray == null) _vectorgraphArray = [];
 				_vectorgraphArray.push(tId);
 			}
-			var arr:Array = [x + offset, y + offset, radius, startAngle, endAngle, fillColor, lineColor, lineWidth, tId];
+			var arr:Array = [x + offset, y + offset, radius - lineOffset, startAngle, endAngle, fillColor, lineColor, lineWidth, tId];
 			arr[3] = Utils.toRadian(startAngle);
 			arr[4] = Utils.toRadian(endAngle);
 			_saveToCmd(Render._context._drawPie, arr);
@@ -879,7 +886,6 @@ package laya.display {
 		 * @param	lineWidth 边框宽度。
 		 */
 		public function drawPoly(x:Number, y:Number, points:Array, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
-			var offset:Number = lineColor ? 0.5 : 0;
 			var tId:uint = 0;
 			if (Render.isWebGL) {
 				tId = VectorGraphManager.getInstance().getId();
@@ -893,6 +899,7 @@ package laya.display {
 					tIsConvexPolygon = true;
 				}
 			}
+			var offset:Number = lineColor ? (lineWidth % 2 === 0 ? 0 : 0.5) : 0;
 			var arr:Array = [x + offset, y + offset, points, fillColor, lineColor, lineWidth, tId, tIsConvexPolygon];
 			_saveToCmd(Render._context._drawPoly, arr);
 		}
@@ -924,7 +931,7 @@ package laya.display {
 		 * @param	pen 画笔定义，支持以下设置{strokeStyle,lineWidth,lineJoin,lineCap,miterLimit}。
 		 */
 		public function drawPath(x:Number, y:Number, paths:Array, brush:Object = null, pen:Object = null):void {
-			var arr:Array = [x + 0.5, y + 0.5, paths, brush, pen];
+			var arr:Array = [x, y, paths, brush, pen];
 			_saveToCmd(Render._context._drawPath, arr);
 		}
 	}

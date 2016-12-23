@@ -3,9 +3,9 @@ package laya.d3.core.light {
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shader.ValusArray;
 	import laya.utils.Stat;
 	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.ValusArray;
 	
 	/**
 	 * <code>SpotLight</code> 类用于创建聚光。
@@ -116,17 +116,18 @@ package laya.d3.core.light {
 		 * @param state 渲染状态参数。
 		 */
 		public override function updateToWorldState(state:RenderState):void {
-			if (state.scene.enableLight) {
-				var shaderValue:ValusArray = state.shaderValue;
+			var scene:BaseScene = state.scene;
+			if (scene.enableLight) {
+				var shaderValue:ValusArray = scene._shaderValues;
 				state.shaderDefines.add(ShaderDefines3D.SPOTLIGHT);
-				shaderValue.pushValue(BaseScene.SPOTLIGHTDIFFUSE, diffuseColor.elements);
-				shaderValue.pushValue(BaseScene.SPOTLIGHTAMBIENT, ambientColor.elements);
-				shaderValue.pushValue(BaseScene.SPOTLIGHTSPECULAR, specularColor.elements);
-				shaderValue.pushValue(BaseScene.SPOTLIGHTPOS, transform.position.elements);
-				shaderValue.pushValue(BaseScene.SPOTLIGHTDIRECTION, direction.elements);
-				shaderValue.pushValue(BaseScene.SPOTLIGHTRANGE, range);
-				shaderValue.pushValue(BaseScene.SPOTLIGHTSPOT, spot);
-				shaderValue.pushValue(BaseScene.SPOTLIGHTATTENUATION, attenuation.elements);
+				shaderValue.setValue(BaseScene.SPOTLIGHTDIFFUSE, diffuseColor.elements);
+				shaderValue.setValue(BaseScene.SPOTLIGHTAMBIENT, ambientColor.elements);
+				shaderValue.setValue(BaseScene.SPOTLIGHTSPECULAR, specularColor.elements);
+				shaderValue.setValue(BaseScene.SPOTLIGHTPOS, transform.position.elements);
+				shaderValue.setValue(BaseScene.SPOTLIGHTDIRECTION, direction.elements);
+				shaderValue.setValue(BaseScene.SPOTLIGHTRANGE, range);
+				shaderValue.setValue(BaseScene.SPOTLIGHTSPOT, spot);
+				shaderValue.setValue(BaseScene.SPOTLIGHTATTENUATION, attenuation.elements);
 			}
 		}
 	}

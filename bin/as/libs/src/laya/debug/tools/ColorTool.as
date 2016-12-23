@@ -1,5 +1,6 @@
 package laya.debug.tools
 {
+	import laya.utils.Utils;
 	
 	
 	/**
@@ -19,12 +20,7 @@ package laya.debug.tools
 		
 		public static function toHexColor(color:Number):String
 		{
-			if (color < 0 || isNaN(color))
-				return null;
-			var str:String = color.toString(16);
-			while (str.length < 6)
-				str = "0" + str;
-			return "#" + str;
+			return Utils.toHexColor(color);
 		}
 		
 		public static function getRGBByRGBStr(str:String):Array

@@ -9,14 +9,8 @@ package laya.d3.utils {
 	import laya.d3.core.particleShuriKen.ShurikenParticleRender;
 	import laya.d3.core.particleShuriKen.ShurikenParticleSystem;
 	import laya.d3.core.particleShuriKen.module.Burst;
-	import laya.d3.core.particleShuriKen.module.Emission;
-	import laya.d3.core.particleShuriKen.module.shape.BaseShape;
-	import laya.d3.core.particleShuriKen.module.shape.BoxShape;
-	import laya.d3.core.particleShuriKen.module.shape.CircleShape;
-	import laya.d3.core.particleShuriKen.module.shape.ConeShape;
-	import laya.d3.core.particleShuriKen.module.shape.HemisphereShape;
-	import laya.d3.core.particleShuriKen.module.shape.SphereShape;
 	import laya.d3.core.particleShuriKen.module.ColorOverLifetime;
+	import laya.d3.core.particleShuriKen.module.Emission;
 	import laya.d3.core.particleShuriKen.module.FrameOverTime;
 	import laya.d3.core.particleShuriKen.module.GradientAngularVelocity;
 	import laya.d3.core.particleShuriKen.module.GradientColor;
@@ -30,6 +24,12 @@ package laya.d3.utils {
 	import laya.d3.core.particleShuriKen.module.StartFrame;
 	import laya.d3.core.particleShuriKen.module.TextureSheetAnimation;
 	import laya.d3.core.particleShuriKen.module.VelocityOverLifetime;
+	import laya.d3.core.particleShuriKen.module.shape.BaseShape;
+	import laya.d3.core.particleShuriKen.module.shape.BoxShape;
+	import laya.d3.core.particleShuriKen.module.shape.CircleShape;
+	import laya.d3.core.particleShuriKen.module.shape.ConeShape;
+	import laya.d3.core.particleShuriKen.module.shape.HemisphereShape;
+	import laya.d3.core.particleShuriKen.module.shape.SphereShape;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
@@ -55,13 +55,9 @@ package laya.d3.utils {
 	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.models.Mesh;
 	import laya.events.Event;
-	import laya.maths.MathUtil;
 	import laya.net.Loader;
 	import laya.net.URL;
-	import laya.utils.ClassUtils;
-	import laya.utils.Handler;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.resource.WebGLImage;
 	
 	/**
 	 * <code>Utils3D</code> 类用于创建3D工具。
@@ -374,7 +370,7 @@ package laya.d3.utils {
 				circleShape.randomDirection = shapeData.circleRandomDirection;
 				break;
 			}
-			shape.enbale = shapeData.enable;
+			shape.enable = shapeData.enable;
 			particleSystem.shape = shape;
 			
 			//VelocityOverLifetime
@@ -1137,7 +1133,7 @@ package laya.d3.utils {
 		}
 		
 		/**
-		 * 转换3D坐标系统到2D坐标系统，以像素为单位,通常用于正交投影下的3D坐标（（0，0）在屏幕中心）到2D屏幕坐标（（0，0）在屏幕左上角）的转换。
+		 * 转换3D投影坐标系统到2D屏幕坐标系统，以像素为单位,通常用于正交投影下的3D坐标（（0，0）在屏幕中心）到2D屏幕坐标（（0，0）在屏幕左上角）的转换。
 		 * @param	source 源坐标。
 		 * @param	out 输出坐标。
 		 */

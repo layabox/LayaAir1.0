@@ -87,14 +87,9 @@ package threeDimen.primaryStage {
 		}
 		
 		private function onLoadComplete(e:* = null):void {
-			var cb:Button = createComboBox(skin);
-			cb.pos(80, 90);
-		}
-		
-		private function createComboBox(skin:String):Button {
 			var btn:Button = new Button(skin);
 			Laya.stage.addChild(btn);
-			return btn;
+			btn.pos(80, 90);
 		}
 	}
 }
