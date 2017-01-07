@@ -2,6 +2,7 @@ package {
 	import laya.ani.AnimationTemplet;
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Layer;
+	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.GlitterMaterial;
 	import laya.d3.core.material.ParticleMaterial;
@@ -66,7 +67,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _changeWebGLSize(width:Number, height:Number):void {
 			WebGL.onStageResize(width, height);
@@ -75,9 +76,9 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
-		private static function _initShader():void {
+private static function _initShader():void {
 			Shader3D.addInclude("LightHelper.glsl", __INCLUDESTR__("laya/d3/shader/files/LightHelper.glsl"));
 			Shader3D.addInclude("VRHelper.glsl", __INCLUDESTR__("laya/d3/shader/files/VRHelper.glsl"));
 			
@@ -110,6 +111,7 @@ package {
 			'u_MaterialReflect': [StandardMaterial.MATERIALREFLECT, Shader3D.PERIOD_MATERIAL],
 			'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE],
 			'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE],
+			'u_LightmapScaleOffset':[MeshSprite3D.LIGHTMAPSCALEOFFSET, Shader3D.PERIOD_SPRITE],
 			'u_CameraPos': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA],
 			'u_FogStart': [BaseScene.FOGSTART, Shader3D.PERIOD_SCENE],
 			'u_FogRange': [BaseScene.FOGRANGE, Shader3D.PERIOD_SCENE],
@@ -314,7 +316,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _initResourceLoad():void {
 			//ClassUtils.regClass("Sprite3D", Sprite3D);
@@ -331,7 +333,6 @@ package {
 			createMap["png"] = [Texture2D, "nativeimage"];
 			createMap["lsani"] = [AnimationTemplet, Loader.BUFFER];
 			createMap["lrani"] = [AnimationTemplet, Loader.BUFFER];
-			
 			createMap["ani"] = [AnimationTemplet, Loader.BUFFER];//兼容接口
 			createMap["lani"] = [AnimationTemplet, Loader.BUFFER];//兼容接口
 			
@@ -342,7 +343,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function READ_BLOCK():Boolean {
 			_readData.pos += 4;
@@ -350,7 +351,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function READ_DATA():Boolean {
 			_DATA.offset = _readData.getUint32();
@@ -359,7 +360,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function READ_STRINGS():Array {
 			var materialUrls:Array = [];
@@ -378,9 +379,9 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
-		private static function _getSprite3DHierarchyInnerUrls(hierarchyNode:Object, urls:Array, urlMap:Object, urlVersion:String,hierarchyBasePath:String):void {
+		private static function _getSprite3DHierarchyInnerUrls(hierarchyNode:Object, urls:Array, urlMap:Object, urlVersion:String, hierarchyBasePath:String):void {
 			var path:String;
 			var clas:Class;
 			switch (hierarchyNode.type) {
@@ -389,25 +390,31 @@ package {
 				clas = Mesh;
 				break;
 			case "ShuriKenParticle3D": 
-				path = hierarchyNode.customProps.texturePath;
-				clas = Texture2D;
+				var materialPath:String = hierarchyNode.customProps.materialPath;
+				if (materialPath) {
+					path = materialPath;
+					clas = ShurikenParticleMaterial;//TODO:应该自动序列化类型
+				} else {
+					path = hierarchyNode.customProps.texturePath;
+					clas = Texture2D;
+				}
 				break;
 			}
 			
 			if (path) {
-				var formatSubUrl:String = URL.formatURL(path,hierarchyBasePath);
+				var formatSubUrl:String = URL.formatURL(path, hierarchyBasePath);
 				(urlVersion) && (formatSubUrl = formatSubUrl + urlVersion);
-				urls.push({url:formatSubUrl,clas:clas});
+				urls.push({url: formatSubUrl, clas: clas});
 				urlMap[path] = formatSubUrl;
 			}
 			
 			var children:Array = hierarchyNode.child;
 			for (var i:int = 0, n:int = children.length; i < n; i++)
-				_getSprite3DHierarchyInnerUrls(children[i], urls, urlMap, urlVersion,hierarchyBasePath);
+				_getSprite3DHierarchyInnerUrls(children[i], urls, urlMap, urlVersion, hierarchyBasePath);
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _loadSprite3DHierarchy(loader:Loader):void {
 			var lmLoader:Loader = new Loader();
@@ -416,7 +423,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _onSprite3DHierarchylhLoaded(loader:Loader, lhData:String):void {
 			var url:String = loader.url;
@@ -426,7 +433,7 @@ package {
 			var urlMap:Object = {};
 			var hierarchyData:Object = JSON.parse(lhData);
 			
-			_getSprite3DHierarchyInnerUrls(hierarchyData, urls, urlMap, urlVersion,hierarchyBasePath);
+			_getSprite3DHierarchyInnerUrls(hierarchyData, urls, urlMap, urlVersion, hierarchyBasePath);
 			var urlCount:int = urls.length;
 			var totalProcessCount:int = urlCount + 1;
 			var lhWeight:Number = 1 / totalProcessCount;
@@ -441,7 +448,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _onSprite3DMeshsLoaded(loader:Loader, processHandler:Handler, lhData:Object, urlMap:Object):void {
 			loader.endLoad([lhData, urlMap]);
@@ -449,7 +456,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _loadMesh(loader:Loader):void {
 			var lmLoader:Loader = new Loader();
@@ -458,7 +465,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _onMeshLmLoaded(loader:Loader, lmData:ArrayBuffer):void {
 			var url:String = loader.url;
@@ -489,7 +496,7 @@ package {
 			
 			for (i = 0, n = urls.length; i < n; i++) {
 				var subUrl:String = urls[i];
-				formatSubUrl = URL.formatURL(subUrl,meshBasePath);
+				formatSubUrl = URL.formatURL(subUrl, meshBasePath);
 				(urlVersion) && (formatSubUrl = formatSubUrl + urlVersion);
 				urls[i] = formatSubUrl;
 				urlMap[subUrl] = formatSubUrl;
@@ -504,7 +511,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _onMeshMateialLoaded(loader:Loader, processHandler:Handler, lmData:Object, urlMap:Object):void {
 			loader.endLoad([lmData, urlMap]);
@@ -512,19 +519,19 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
-		private static function _getMaterialTexturePath(path:String, urlVersion:String,materialBath:String):String {
+		private static function _getMaterialTexturePath(path:String, urlVersion:String, materialBath:String):String {
 			var extenIndex:int = path.length - 4;
 			if (path.indexOf(".dds") == extenIndex || path.indexOf(".tga") == extenIndex || path.indexOf(".exr") == extenIndex || path.indexOf(".DDS") == extenIndex || path.indexOf(".TGA") == extenIndex || path.indexOf(".EXR") == extenIndex)
 				path = path.substr(0, extenIndex) + ".png";
-			path = URL.formatURL(path,materialBath);
+			path = URL.formatURL(path, materialBath);
 			(urlVersion) && (path = path + urlVersion);
 			return path;
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _loadMaterial(loader:Loader):void {
 			var lmatLoader:Loader = new Loader();
@@ -533,7 +540,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _onMaterilLmatLoaded(loader:Loader, lmatData:Object):void {
 			var url:String = loader.url;
@@ -546,42 +553,42 @@ package {
 			var formatSubUrl:String;
 			var diffuseTexture:String = customProps.diffuseTexture.texture2D;
 			if (diffuseTexture) {
-				formatSubUrl = _getMaterialTexturePath(diffuseTexture, urlVersion,materialBasePath);
+				formatSubUrl = _getMaterialTexturePath(diffuseTexture, urlVersion, materialBasePath);
 				urls.push(formatSubUrl);
 				urlMap[diffuseTexture] = formatSubUrl;
 			}
 			
 			var normalTexture:String = customProps.normalTexture.texture2D;
 			if (normalTexture) {
-				formatSubUrl = _getMaterialTexturePath(normalTexture, urlVersion,materialBasePath);
+				formatSubUrl = _getMaterialTexturePath(normalTexture, urlVersion, materialBasePath);
 				urls.push(formatSubUrl);
 				urlMap[normalTexture] = formatSubUrl;
 			}
 			
 			var specularTexture:String = customProps.specularTexture.texture2D;
 			if (specularTexture) {
-				formatSubUrl = _getMaterialTexturePath(specularTexture, urlVersion,materialBasePath);
+				formatSubUrl = _getMaterialTexturePath(specularTexture, urlVersion, materialBasePath);
 				urls.push(formatSubUrl);
 				urlMap[specularTexture] = formatSubUrl;
 			}
 			
 			var emissiveTexture:String = customProps.emissiveTexture.texture2D;
 			if (emissiveTexture) {
-				formatSubUrl = _getMaterialTexturePath(emissiveTexture, urlVersion,materialBasePath);
+				formatSubUrl = _getMaterialTexturePath(emissiveTexture, urlVersion, materialBasePath);
 				urls.push(formatSubUrl);
 				urlMap[emissiveTexture] = formatSubUrl;
 			}
 			
 			var ambientTexture:String = customProps.ambientTexture.texture2D;
 			if (ambientTexture) {
-				formatSubUrl = _getMaterialTexturePath(ambientTexture, urlVersion,materialBasePath);
+				formatSubUrl = _getMaterialTexturePath(ambientTexture, urlVersion, materialBasePath);
 				urls.push(formatSubUrl);
 				urlMap[ambientTexture] = formatSubUrl;
 			}
 			
 			var reflectTexture:String = customProps.reflectTexture.texture2D;
 			if (reflectTexture) {
-				formatSubUrl = _getMaterialTexturePath(reflectTexture, urlVersion,materialBasePath);
+				formatSubUrl = _getMaterialTexturePath(reflectTexture, urlVersion, materialBasePath);
 				urls.push(formatSubUrl);
 				urlMap[reflectTexture] = formatSubUrl;
 			}
@@ -599,7 +606,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _onMateialTexturesLoaded(loader:Loader, processHandler:Handler, lmatData:Object, urlMap:Object):void {
 			loader.endLoad([lmatData, urlMap]);
@@ -607,7 +614,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _loadTextureCube(loader:Loader):void {
 			var ltcLoader:Loader = new Loader();
@@ -616,11 +623,11 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _onTextureCubeLtcLoaded(loader:Loader, ltcData:Object):void {
 			var ltcBasePath:String = URL.getPath(URL.formatURL(loader.url));
-			var urls:Array = [URL.formatURL(ltcData.px,ltcBasePath), URL.formatURL(ltcData.nx,ltcBasePath), URL.formatURL(ltcData.py,ltcBasePath), URL.formatURL(ltcData.ny,ltcBasePath), URL.formatURL(ltcData.pz,ltcBasePath), URL.formatURL(ltcData.nz,ltcBasePath)];
+			var urls:Array = [URL.formatURL(ltcData.px, ltcBasePath), URL.formatURL(ltcData.nx, ltcBasePath), URL.formatURL(ltcData.py, ltcBasePath), URL.formatURL(ltcData.ny, ltcBasePath), URL.formatURL(ltcData.pz, ltcBasePath), URL.formatURL(ltcData.nz, ltcBasePath)];
 			var ltcWeight:Number = 1.0 / 7.0;
 			_onProcessChange(loader, 0, ltcWeight, 1.0);
 			var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, ltcWeight, 6 / 7], false);
@@ -628,7 +635,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _onTextureCubeImagesLoaded(loader:Loader, urls:Array, processHandler:Handler):void {
 			var images:Array = [];
@@ -643,7 +650,7 @@ package {
 		}
 		
 		/**
-		 *@private 
+		 *@private
 		 */
 		private static function _onProcessChange(loader:Loader, offset:Number, weight:Number, process:Number):void {
 			process = offset + process * weight;
@@ -656,7 +663,7 @@ package {
 		 * @param	height 3D画布高度。
 		 */
 		public static function init(width:Number, height:Number, antialias:Boolean = false, alpha:Boolean = false, premultipliedAlpha:Boolean = false):void {
-			if ( !Render.isConchNode && !WebGL.enable()) {
+			if (!Render.isConchNode && !WebGL.enable()) {
 				alert("Laya3D init err,must support webGL!");
 				return;
 			}

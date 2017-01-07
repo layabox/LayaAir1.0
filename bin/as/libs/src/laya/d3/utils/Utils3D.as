@@ -198,14 +198,20 @@ package laya.d3.utils {
 			meshRender.sharedMaterials = shaderMaterials;
 		}
 		
+		/** @private */
 		public static function _loadParticle(settting:Object, particle:ShuriKenParticle3D, innerResouMap:Object = null):void {
 			const anglelToRad:Number = Math.PI / 180.0;
 			var i:int, n:int;
 			//Material
-			var material:ShurikenParticleMaterial = new ShurikenParticleMaterial();
-			material.diffuseTexture = innerResouMap ? Loader.getRes(innerResouMap[settting.texturePath]) : Texture2D.load(settting.texturePath);
-			
-			material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
+			var material:ShurikenParticleMaterial;
+			var materialPath:String = settting.materialPath;
+			if (materialPath) {
+				material = Loader.getRes(innerResouMap[materialPath]);
+			} else {//TODO:兼容性代码
+				material = new ShurikenParticleMaterial();
+				material.diffuseTexture = innerResouMap ? Loader.getRes(innerResouMap[settting.texturePath]) : Texture2D.load(settting.texturePath);
+			}
+			material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;//TODO:不应自动设置
 			
 			particle.particleRender.sharedMaterial = material;
 			//particleSystem
@@ -548,8 +554,9 @@ package laya.d3.utils {
 			particleRender.stretchedBillboardCameraSpeedScale = settting.stretchedBillboardCameraSpeedScale;
 			particleRender.stretchedBillboardSpeedScale = settting.stretchedBillboardSpeedScale;
 			particleRender.stretchedBillboardLengthScale = settting.stretchedBillboardLengthScale;
+			particleRender.sortingFudge = settting.sortingFudge ? settting.sortingFudge : 0.0;
 			
-			(particleSystem.playOnAwake) && (emission.play());
+			(particleSystem.playOnAwake) && (particleSystem.play());
 		}
 		
 		/** @private */
@@ -577,16 +584,23 @@ package laya.d3.utils {
 			localSceleElement[1] = scaleValue[1];
 			localSceleElement[2] = scaleValue[2];
 			node.transform.localScale = localScale;
+			
+			
 			switch (json.type) {
 			case "Sprite3D": 
 				break;
 			case "MeshSprite3D": 
-				var mesh:Mesh = Loader.getRes(innerResouMap[json.instanceParams.loadPath]);
 				var meshSprite3D:MeshSprite3D = (node as MeshSprite3D);
+				var meshRender:MeshRender = meshSprite3D.meshRender;
+				var lightmapIndex:* = customProps.lightmapIndex;//TODO:
+				(lightmapIndex !== null) && (meshRender.lightmapIndex=lightmapIndex);
+				var lightmapScaleOffsetArray:Array = customProps.lightmapScaleOffset;
+				(lightmapScaleOffsetArray)&&(meshRender.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
+	
+				var mesh:Mesh = Loader.getRes(innerResouMap[json.instanceParams.loadPath]);			
 				meshSprite3D.meshFilter.sharedMesh = mesh;
-				
 				if (mesh.loaded)
-					meshSprite3D.meshRender.sharedMaterials = mesh.materials;
+					meshRender.sharedMaterials = mesh.materials;
 				else
 					mesh.once(Event.LOADED, meshSprite3D, meshSprite3D._applyMeshMaterials);
 				break;
@@ -880,7 +894,7 @@ package laya.d3.utils {
 				for (j = 0; j < tangentElementCount; j++)
 					tangentVertexDatas[newVertexStride * index3 + vertexStride + j] = +tangent.elements[j];
 				
-				//tangent = ((UV3.Y - UV1.Y) * (position2 - position1) - (UV2.Y - UV1.Y) * (position3 - position1))/ ((UV2.X - UV1.X) * (UV3.Y - UV1.Y) - (UV2.Y - UV1.Y) * (UV3.X - UV1.X));
+					//tangent = ((UV3.Y - UV1.Y) * (position2 - position1) - (UV2.Y - UV1.Y) * (position3 - position1))/ ((UV2.X - UV1.X) * (UV3.Y - UV1.Y) - (UV2.Y - UV1.Y) * (UV3.X - UV1.X));
 			}
 			
 			for (i = 0; i < tangentVertexDatas.length; i += newVertexStride) {
@@ -1130,6 +1144,20 @@ package laya.d3.utils {
 			result[resultOffset + 0] = vectorElem[0] * vectorElem[3];
 			result[resultOffset + 1] = vectorElem[1] * vectorElem[3];
 			result[resultOffset + 2] = vectorElem[2] * vectorElem[3];
+		}
+		
+		/**
+		 * 通过转换光照贴图UV。
+		 * @param	source 源三维向量所在数组。
+		 * @param	sourceOffset 源三维向量数组偏移。
+		 * @param	lightingMapScaleOffset  光照贴图的缩放和偏移。
+		 * @param	result 输出三维向量所在数组。
+		 * @param	resultOffset 输出三维向量数组偏移。
+		 */
+		public static function transformLightingMapTexcoordArray(source:Float32Array, sourceOffset:int, lightingMapScaleOffset:Vector4, result:Float32Array, resultOffset:int):void {
+			var lightingMapScaleOffsetE:Float32Array = lightingMapScaleOffset.elements;
+			result[resultOffset + 0] = source[sourceOffset + 0] * lightingMapScaleOffsetE[0] + lightingMapScaleOffsetE[2];
+			result[resultOffset + 1] = source[sourceOffset + 1] * lightingMapScaleOffsetE[1]- lightingMapScaleOffsetE[3];
 		}
 		
 		/**

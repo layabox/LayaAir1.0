@@ -105,7 +105,7 @@ void main()
   #endif 
   
   #ifdef AMBIENTMAP
-  gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_Texcoord1).rgb);
+  gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_Texcoord1).rgb); 
   #endif 
   
   gl_FragColor=gl_FragColor*u_Albedo;
@@ -164,10 +164,7 @@ void main()
   ambient+=amb;
   specular+=spe;
   #endif
-  
 
-  
-  
   
   #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
     #if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP)

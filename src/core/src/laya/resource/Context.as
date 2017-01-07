@@ -25,7 +25,7 @@ package laya.resource {
 			to.__fillText = to.fillText;
 			to.__fillRect = to.fillRect;
 			to.__strokeText = to.strokeText;
-			var funs:Array = ['drawTextures','fillWords','setIsMainContext','fillRect', 'strokeText','fillTexture', 'fillText', 'transformByMatrix', 'setTransformByMatrix', 'clipRect', 'drawTexture', 'drawTexture2', 'drawTextureWithTransform', 'flush', 'clear', 'destroy', 'drawCanvas', 'fillBorderText'];
+			var funs:Array = ['drawTextures','fillWords','setIsMainContext','fillRect', 'strokeText','fillTexture', 'fillText', 'transformByMatrix', 'setTransformByMatrix', 'clipRect', 'drawTexture', 'drawTexture2', 'drawTextureWithTransform', 'flush', 'clear', 'destroy', 'drawCanvas', 'fillBorderText','drawCurves'];
 			funs.forEach(function(i:String):void {
 				to[i] = from[i] || to[i];
 			});
@@ -353,6 +353,21 @@ package laya.resource {
 		public function clear():void {
 			this.clearRect(0, 0, _canvas.width, _canvas.height);
 			_repaint = false;
+		}
+		
+		public function drawCurves(x:Number, y:Number, args:Array):void
+		{
+			this.beginPath();
+			this.strokeStyle = args[3];
+			this.lineWidth = args[4];
+			var points:Array = args[2];
+			x += args[0], y += args[1];
+			this.moveTo(x + points[0], y + points[1]);
+			var i:int = 2, n:int = points.length;
+			while (i < n) {
+				this.quadraticCurveTo(x + points[i++], y + points[i++], x + points[i++], y + points[i++]);
+			}
+			this.stroke();
 		}
 	}
 }

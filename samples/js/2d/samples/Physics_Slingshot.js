@@ -1,30 +1,28 @@
 (function()
 {
-	var Sprite  = Laya.Sprite;
-	var Stage   = Laya.Stage;
+	var Sprite = Laya.Sprite;
+	var Stage = Laya.Stage;
+	var Render = Laya.Render;
 	var Browser = Laya.Browser;
-	var WebGL   = Laya.WebGL;
+	var WebGL = Laya.WebGL;
 
-	const stageWidth = 800;
-	const stageHeight = 600;
+	var stageWidth = 800;
+	var stageHeight = 600;
 
-	var Matter = Browser.window.Matter;
-	var LayaRender = Browser.window.LayaRender;
+	var Matter = window.Matter;
+	var LayaRender = window.LayaRender;
 
 	var mouseConstraint;
 	var engine;
 
 	(function()
 	{
-		// 不支持WebGL时自动切换至Canvas
-		Laya.init(stageWidth, stageHeight, WebGL);
-		Laya.Stat.show()
+		Laya.init(stageWidth, stageHeight);
 
 		Laya.stage.alignV = Stage.ALIGN_MIDDLE;
 		Laya.stage.alignH = Stage.ALIGN_CENTER;
 
 		Laya.stage.scaleMode = "showall";
-		Laya.stage.bgColor = "#232628";
 
 		setup();
 	})();
@@ -34,7 +32,6 @@
 		initMatter();
 		initWorld();
 
-		Matter.Engine.run(engine);
 		Laya.stage.on("resize", this, onResize);
 	}
 
@@ -43,24 +40,25 @@
 		var gameWorld = new Sprite();
 		Laya.stage.addChild(gameWorld);
 
-
 		// 初始化物理引擎
 		engine = Matter.Engine.create(
 		{
-			enableSleeping: true,
-			render:
+			enableSleeping: true
+		});
+		Matter.Engine.run(engine);
+
+		var render = LayaRender.create(
+		{
+			engine: engine,
+			width: 800,
+			height: 600,
+			options:
 			{
-				container: gameWorld,
-				controller: LayaRender,
-				options:
-				{
-					width: 800,
-					height: 600,
-					background: '../../res/physics/img/background.png',
-					hasBounds: true
-				}
+				background: '../../res/physics/img/background.png',
+				wireframes: false
 			}
 		});
+		LayaRender.run(render);
 
 		mouseConstraint = Matter.MouseConstraint.create(engine,
 		{
@@ -68,10 +66,11 @@
 			{
 				angularStiffness: 0.1,
 				stiffness: 2
-			}
+			},
+			element: Render.canvas
 		});
 		Matter.World.add(engine.world, mouseConstraint);
-		engine.render.mouse = mouseConstraint.mouse;
+		render.mouse = mouseConstraint.mouse;
 	}
 
 	function initWorld()
@@ -168,14 +167,13 @@
 				elastic.bodyB = rock;
 			}
 		});
-
-		var renderOptions = engine.render.options;
-		renderOptions.wireframes = false;
 	}
 
 	function onResize()
 	{
 		// 设置鼠标的坐标缩放
+		// Laya.stage.clientScaleX代表舞台缩放
+		// Laya.stage._canvasTransform代表画布缩放
 		Matter.Mouse.setScale(mouseConstraint.mouse,
 		{
 			x: 1 / (Laya.stage.clientScaleX * Laya.stage._canvasTransform.a),

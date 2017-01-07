@@ -26,7 +26,9 @@ package laya.d3.core {
 	 * <code>Sprite3D</code> 类用于实现3D精灵。
 	 */
 	public class Sprite3D extends Node implements IUpdate, ICreateResource, IClone {
+		/**着色器变量名，世界矩阵。*/
 		public static const WORLDMATRIX:int = 0;
+		/**着色器变量名，世界视图投影矩阵。*/
 		public static const MVPMATRIX:int = 1;
 		
 		/**唯一标识ID计数器。*/
@@ -77,7 +79,7 @@ package laya.d3.core {
 		 * @param url 模板地址。
 		 */
 		public static function load(url:String):Sprite3D {
-			return Laya.loader.create(url, null, null, Sprite3D, 1, false);
+			return Laya.loader.create(url, null, null, Sprite3D,null, 1, false);
 		}
 		
 		/** @private */
@@ -94,6 +96,8 @@ package laya.d3.core {
 		/**组件列表。*/
 		protected var _components:Vector.<Component3D> = new Vector.<Component3D>();
 		
+		/** @private */
+		public var _shaderDefineValue:int;
 		/** @private */
 		public var _shaderValues:ValusArray;
 		
@@ -199,6 +203,14 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * 增加Shader宏定义。
+		 * @param value 宏定义。
+		 */
+		public function _addShaderDefine(value:int):void {
+			_shaderDefineValue |= value;
+		}
+		
+		/**
 		 * @private
 		 */
 		private function _onDisplay():void {
@@ -279,7 +291,6 @@ package laya.d3.core {
 			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);//TODO:静态合并需要使用,待调整移除。
 			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
 			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
-			debugger;
 		}
 		
 		/**
@@ -308,7 +319,7 @@ package laya.d3.core {
 		 * @param	shaderIndex shader索引。
 		 * @param	color 颜色向量。
 		 */
-		protected function _setShaderValueColor(shaderIndex:int, color:*):void {
+		public function _setShaderValueColor(shaderIndex:int, color:*):void {
 			var shaderValue:ValusArray = _shaderValues;
 			shaderValue.setValue(shaderIndex, color ? color.elements : null);
 		}
@@ -408,7 +419,7 @@ package laya.d3.core {
 		/**
 		 *@private
 		 */
-		public function onAsynLoaded(url:String, data:*):void {
+		public function onAsynLoaded(url:String, data:*, params:Array):void {
 			if (destroyed)//TODO:其它资源是否同样处理
 				return;
 			

@@ -73,7 +73,7 @@ package laya.ani.bone {
 					//var x:Number = length * bone.transform.getMatrix().a;
 					//var y:Number = length * bone.transform.getMatrix().c;
 					var x:Number = length * bone.resultMatrix.a;
-					var y:Number = length * bone.resultMatrix.c;
+					var y:Number = length * bone.resultMatrix.b;
 					length = Math.sqrt(x * x + y * y);
 					if (tScale) lengths[i] = length;
 					spaces[++i] = tLengthSpacing ? Math.max(0, length + spacing) : spacing;
@@ -121,8 +121,10 @@ package laya.ani.bone {
 				boneY = y;
 				if (tRotate) {
 					var a:Number = bone.resultMatrix.a;
-					var b:Number = bone.resultMatrix.b;
-					var c:Number = bone.resultMatrix.c;
+					//var b:Number = bone.resultMatrix.b;
+					//var c:Number = bone.resultMatrix.c;
+					var b:Number = bone.resultMatrix.c;
+					var c:Number = bone.resultMatrix.b;
 					var d:Number = bone.resultMatrix.d;
 					var r:Number;
 					var cos:Number;

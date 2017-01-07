@@ -102,8 +102,6 @@ package laya.d3.core.particleShuriKen {
 		/** @private */
 		private static var _tempGravity:Vector3 = new Vector3();
 		
-	
-		
 		/** @private */
 		private static const _diffuseTextureIndex:int = 0;
 		
@@ -232,20 +230,19 @@ package laya.d3.core.particleShuriKen {
 			finalGravityE[1] = gravityE[1] * gravityModifier;
 			finalGravityE[2] = gravityE[2] * gravityModifier;
 			
-			debugger;
 			_setBuffer(GRAVITY, finalGravityE);
 			
 			_setInt(SIMULATIONSPACE, particleSystem.simulationSpace);
 			
 			//switch (particleSystem.simulationSpace) {
 			//case 0: //World
-				//_setColor(WORLDPOSITION, Vector3.ZERO);//TODO是否可不传
-				//break;
+			//_setColor(WORLDPOSITION, Vector3.ZERO);//TODO是否可不传
+			//break;
 			//case 1: //Local
-				//_setColor(WORLDPOSITION, transform.position);
-				//break;
+			//_setColor(WORLDPOSITION, transform.position);
+			//break;
 			//default: 
-				//throw new Error("ShurikenParticleMaterial: SimulationSpace value is invalid.");
+			//throw new Error("ShurikenParticleMaterial: SimulationSpace value is invalid.");
 			//}
 			
 			//Matrix4x4.createFromQuaternion(transform.rotation, _tempRotationMatrix);
@@ -255,17 +252,17 @@ package laya.d3.core.particleShuriKen {
 			_setInt(SCALINGMODE, particleSystem.scaleMode);
 			//switch (particleSystem.scaleMode) {
 			//case 0: 
-				//_setColor(POSITIONSCALE, transform.scale);
-				//_setColor(SIZESCALE, transform.scale);
-				//break;
+			//_setColor(POSITIONSCALE, transform.scale);
+			//_setColor(SIZESCALE, transform.scale);
+			//break;
 			//case 1: 
-				//_setColor(POSITIONSCALE, transform.localScale);
-				//_setColor(SIZESCALE, transform.localScale);
-				//break;
+			//_setColor(POSITIONSCALE, transform.localScale);
+			//_setColor(SIZESCALE, transform.localScale);
+			//break;
 			//case 2: 
-				//_setColor(POSITIONSCALE, transform.scale);
-				//_setColor(SIZESCALE, Vector3.ONE);
-				//break;
+			//_setColor(POSITIONSCALE, transform.scale);
+			//_setColor(SIZESCALE, Vector3.ONE);
+			//break;
 			//}
 			
 			_setColor(CAMERADIRECTION, state.camera.forward);

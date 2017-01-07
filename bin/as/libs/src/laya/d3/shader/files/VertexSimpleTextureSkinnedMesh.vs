@@ -21,6 +21,7 @@ varying vec2 v_Texcoord0;
 
 #ifdef AMBIENTMAP
 attribute vec2 a_Texcoord1;
+uniform vec4 u_LightmapScaleOffset;
 varying vec2 v_Texcoord1;
 #endif
 
@@ -181,7 +182,11 @@ v_Specular+=spe;
 #endif
 
 #ifdef AMBIENTMAP
-v_Texcoord1=a_Texcoord1;
+  #ifdef SCALEOFFSETLIGHTINGMAPUV
+  v_Texcoord1=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,a_Texcoord1.y*u_LightmapScaleOffset.y-u_LightmapScaleOffset.w);
+  #else
+  v_Texcoord1=a_Texcoord1;
+  #endif 
 #endif
   
 #ifdef COLOR

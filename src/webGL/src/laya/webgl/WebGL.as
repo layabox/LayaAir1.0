@@ -385,7 +385,11 @@ package laya.webgl {
 							tHalfPadding = 25;
 						}
 						b = new Rectangle();
-						b.copyFrom((sprite as Sprite).getBounds());
+						b.copyFrom((sprite as Sprite).getSelfBounds());
+						b.x += (sprite as Sprite).x;
+						b.y += (sprite as Sprite).y;
+						b.x -= (sprite as Sprite).pivotX;
+						b.y -= (sprite as Sprite).pivotY;
 						var tSX:Number = b.x;
 						var tSY:Number = b.y;
 						//重新计算宽和高

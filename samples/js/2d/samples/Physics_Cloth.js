@@ -1,10 +1,11 @@
 (function()
 {
-	var Sprite  = Laya.Sprite;
-	var Stage   = Laya.Stage;
-	var WebGL   = Laya.WebGL;
+	var Sprite = Laya.Sprite;
+	var Stage = Laya.Stage;
+	var WebGL = Laya.WebGL;
 	var Browser = Laya.Browser;
-	var Stat    = Laya.Stat;
+	var Stat = Laya.Stat;
+	var Render = Laya.Render;
 
 	var stageWidth = 800;
 	var stageHeight = 600;
@@ -36,7 +37,6 @@
 		initMatter();
 		initWorld();
 
-		Matter.Engine.run(engine);
 		Laya.stage.on("resize", this, onResize);
 	}
 
@@ -45,27 +45,32 @@
 		var gameWorld = new Sprite();
 		Laya.stage.addChild(gameWorld);
 
-
 		// 初始化物理引擎
 		engine = Matter.Engine.create(
 		{
-			enableSleeping: true,
-			render:
+			enableSleeping: true
+		});
+		Matter.Engine.run(engine);
+
+		var render = LayaRender.create(
+		{
+			engine: engine,
+			container: gameWorld,
+			width: stageWidth,
+			height: stageHeight,
+			options:
 			{
-				container: gameWorld,
-				controller: LayaRender,
-				options:
-				{
-					width: stageWidth,
-					height: stageHeight,
-					wireframes: false
-				}
+				wireframes: false
 			}
 		});
+		LayaRender.run(render);
 
-		mouseConstraint = Matter.MouseConstraint.create(engine);
+		mouseConstraint = Matter.MouseConstraint.create(engine,
+		{
+			element: Render.canvas
+		});
 		Matter.World.add(engine.world, mouseConstraint);
-		engine.render.mouse = mouseConstraint.mouse;
+		render.mouse = mouseConstraint.mouse;
 	}
 
 	function initWorld()

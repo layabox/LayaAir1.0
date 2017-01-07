@@ -10,8 +10,7 @@ package threeDimen.advancedStage.custom {
 	 * @author ...
 	 */
 	public class CustomMaterial extends BaseMaterial {
-		public static const DIFFUSETEXTURE:int = 0;
-		private static var _DIFFUSETEXTURE_ID:int;
+		private static var _DIFFUSETEXTURE_ID:int = 0;
 		
 		/**
 		 * 获取漫反射贴图。
@@ -27,10 +26,6 @@ package threeDimen.advancedStage.custom {
 		 */
 		public function set diffuseTexture(value:BaseTexture):void {
 			_setTexture(_DIFFUSETEXTURE_ID, value);
-		}
-		
-		override public function setShaderName(name:String):void {
-			super.setShaderName(name);
 		}
 		
 		public function CustomMaterial() {

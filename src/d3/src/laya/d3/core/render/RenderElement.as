@@ -1,4 +1,5 @@
 package laya.d3.core.render {
+	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.material.BaseMaterial;
@@ -93,6 +94,7 @@ package laya.d3.core.render {
 			var vertexDeclaration:VertexDeclaration = vb.vertexDeclaration;
 			var positionOffset:int = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.POSITION0).offset / byteSizeInFloat;
 			var normalOffset:int = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.NORMAL0).offset / byteSizeInFloat;
+			var lightingMapTexcoordOffset:int = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.TEXTURECOORDINATE1).offset / byteSizeInFloat;
 			
 			var rootTransform:Matrix4x4 = _staticBatch._rootSprite.transform.worldMatrix;
 			var transform:Matrix4x4 = _sprite3D.transform.worldMatrix;
@@ -105,13 +107,20 @@ package laya.d3.core.render {
 			result.decompose(_tempVector30, rotation, _tempVector31);//可不计算position和scale
 			
 			var vertexFloatCount:int = vertexDeclaration.vertexStride / byteSizeInFloat;
+			var owner:Sprite3D = _renderObject._owner;
 			for (var i:int = 0, n:int = bakedVertexes.length; i < n; i += vertexFloatCount) {
 				var posOffset:int = i + positionOffset;
 				var norOffset:int = i + normalOffset;
+				var lightingMapTexOffset:int = i + lightingMapTexcoordOffset;
 				
 				Utils3D.transformVector3ArrayToVector3ArrayCoordinate(bakedVertexes, posOffset, result, bakedVertexes, posOffset);
-				Utils3D.transformVector3ArrayByQuat(bakedVertexes, normalOffset, rotation, bakedVertexes, normalOffset);
+				Utils3D.transformVector3ArrayByQuat(bakedVertexes, norOffset, rotation, bakedVertexes, norOffset);
+				
+				if (owner is MeshSprite3D)//TODO:待修改。
+					Utils3D.transformLightingMapTexcoordArray(bakedVertexes, lightingMapTexOffset, (owner as MeshSprite3D).meshRender.lightmapScaleOffset, bakedVertexes, lightingMapTexOffset);
 			}
+
+			
 			return bakedVertexes;
 		}
 		

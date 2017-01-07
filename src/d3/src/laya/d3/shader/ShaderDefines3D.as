@@ -29,6 +29,7 @@ package laya.d3.shader {
 		public static const SKINNED:int = 0x10000;
 		public static const ALPHATEST:int = 0x20000;
 		public static const PARTICLE3D:int = 0x40000;
+		public static const SCALEOFFSETLIGHTINGMAPUV:int = 0x20000000;
 		
 		//ShurikenParticle
 		public static const SPHERHBILLBOARD:int = 0x80000;
@@ -58,6 +59,7 @@ package laya.d3.shader {
 			reg("AMBIENTMAP", AMBIENTMAP);
 			reg("REFLECTMAP", REFLECTMAP);
 			reg("PARTICLE3D", PARTICLE3D);
+			reg("SCALEOFFSETLIGHTINGMAPUV", SCALEOFFSETLIGHTINGMAPUV);
 			
 			reg("COLOR", COLOR);
 			reg("UV", UV);

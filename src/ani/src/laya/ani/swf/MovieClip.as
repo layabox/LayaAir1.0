@@ -424,10 +424,14 @@ package laya.ani.swf {
 		
 		/**@private */
 		private function _onLoaded():void {
-			this.basePath =_atlasPath?Loader.getAtlas(_atlasPath).dir:_url.split(".swf")[0] + "/image/";
 			var data:*;
 			data=Loader.getRes(_url);
-			if (!data) return;
+			if (!data)
+			{
+				event(Event.ERROR,"file not find");
+				return;
+			} 
+			this.basePath =_atlasPath?Loader.getAtlas(_atlasPath).dir:_url.split(".swf")[0] + "/image/";		
 			_initData(data);
 		}
 		

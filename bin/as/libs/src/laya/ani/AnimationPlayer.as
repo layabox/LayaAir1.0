@@ -292,7 +292,7 @@ package laya.ani {
 				
 				for (var j:int = 0, jNum:int = templet.getAnimation(i).nodes.length; j < jNum; j++) {
 					var node:* = templet.getAnimation(i).nodes[j];
-					var frameCount:int = Math.floor(node.playTime / cacheFrameInterval);
+					var frameCount:int = Math.floor((node.playTime+0.000001) / cacheFrameInterval);
 					var nodeFullFrames:Uint16Array = new Uint16Array(frameCount + 1);//本骨骼对应的全帧关键帧编号
 					
 					var lastFrameIndex:int = -1;
@@ -403,7 +403,7 @@ package laya.ani {
 		 */
 		public function stop(immediate:Boolean = true):void {
 			if (immediate) {
-				_currentAnimationClipIndex = _currentKeyframeIndex = -1;
+				_currentAnimationClipIndex /*= _currentKeyframeIndex*/ = -1;
 				this.event(Event.STOPPED);
 			} else {
 				_stopWhenCircleFinish = true;
@@ -421,7 +421,13 @@ package laya.ani {
 			
 			var currentAniClipPlayDuration:Number = playDuration;
 			if ((_overallDuration !== 0 && _elapsedPlaybackTime >= _overallDuration) || (_overallDuration === 0 && _elapsedPlaybackTime >= currentAniClipPlayDuration)) {
-				_currentAnimationClipIndex = _currentKeyframeIndex = -1;//动画结束
+				
+				//矫正末帧数据
+				_currentTime = currentAniClipPlayDuration;
+				_currentKeyframeIndex = Math.floor((currentAniClipPlayDuration+0.000001) / cacheFrameInterval);
+				_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
+				
+				_currentAnimationClipIndex /*= _currentKeyframeIndex*/ = -1;//动画结束	
 				this.event(Event.STOPPED);
 				return;
 			}
@@ -429,8 +435,9 @@ package laya.ani {
 			if (currentAniClipPlayDuration > 0) {
 				while (time >= currentAniClipPlayDuration) {//TODO:用求余改良
 					if (_stopWhenCircleFinish) {
-						_currentAnimationClipIndex = _currentKeyframeIndex = -1;
+						_currentAnimationClipIndex /*= _currentKeyframeIndex*/ = -1;
 						_stopWhenCircleFinish = false;
+						
 						this.event(Event.STOPPED);
 						return;
 					}
@@ -442,7 +449,7 @@ package laya.ani {
 				_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
 			} else {
 				if (_stopWhenCircleFinish) {
-					_currentAnimationClipIndex = _currentKeyframeIndex = -1;
+					_currentAnimationClipIndex /*= _currentKeyframeIndex&*/ = -1;
 					_stopWhenCircleFinish = false;
 					this.event(Event.STOPPED);
 					return;

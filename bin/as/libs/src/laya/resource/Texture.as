@@ -209,7 +209,7 @@ package laya.resource {
 					}
 				}
 				bitmap = null;
-				if (url && this === Laya.loader.getRes(url)) Laya.loader.clearRes(url);
+				if (url && this === Laya.loader.getRes(url)) Laya.loader.clearRes(url,forceDispose);
 				_loaded = false;
 			}
 		}

@@ -3,7 +3,6 @@ package laya.webgl
 	
 	public class WebGLContext
 	{
-		/*[DISBALEOUTCONST-BEGIN]*/
 		public static const DEPTH_BUFFER_BIT:int = 0x00000100;
 		public static const STENCIL_BUFFER_BIT:int = 0x00000400;
 		public static const COLOR_BUFFER_BIT:int = 0x00004000;
@@ -301,7 +300,7 @@ package laya.webgl
 		public static const UNPACK_COLORSPACE_CONVERSION_WEBGL:int = 0x9243;
 		public static const BROWSER_DEFAULT_WEBGL:int = 0x9244;
 		
-		/*[DISBALEOUTCONST-END]*/
+		
 		public static var _useProgram:* = null;
 		
 		public static function UseProgram(program:*):Boolean

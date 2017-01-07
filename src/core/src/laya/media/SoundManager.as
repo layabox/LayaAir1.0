@@ -224,6 +224,7 @@ package laya.media {
 				}
 			}
 		}
+		
 		/**
 		 * 停止所有声音播放。
 		 */
@@ -236,6 +237,22 @@ package laya.media {
 				channel.stop();
 			}
 		}
+		
+		/**
+		 * 停止所有音效,不包括背景音乐。
+		 */
+		public static function stopAllSound():void
+		{
+			var i:int;
+			var channel:SoundChannel;
+			for (i = _channels.length - 1; i >= 0; i--) {
+				channel = _channels[i];
+				if (channel.url != _tMusic) {
+					channel.stop();
+				}			
+			}
+		}
+		
 		/**
 		 * 停止背景音乐播放。
 		 * @param url  声音文件地址。
@@ -250,9 +267,9 @@ package laya.media {
 		 * @param volume 音量 标准值为1
 		 * @param url  声音文件地址。为null(默认值)时对所有音效起作用，不为空时仅对对于声音生效
 		 */
-		public static function setSoundVolume(volume:Number, url:String = null):void {
-			url = URL.formatURL(url);
+		public static function setSoundVolume(volume:Number, url:String = null):void {	
 			if (url) {
+				url = URL.formatURL(url);
 				_setVolume(url, volume);
 			} else {
 				soundVolume = volume;

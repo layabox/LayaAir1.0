@@ -187,7 +187,27 @@ package laya.debug.tools
 			}
 			return src;
 		}
-		
+		public static function insertArrToArr(src:Array, insertArr:Array, pos:int = 0):Array
+		{
+			if (pos < 0) pos = 0;
+			if (pos > src.length) pos = src.length;
+			var preLen:int = src.length;
+			var i:int, len:int;
+			src.length += insertArr.length;
+			var moveLen:int;
+			moveLen = insertArr.length;
+			for (i = src.length - 1; i >= pos; i--)
+			{
+				src[i] = src[i - moveLen];
+			}
+			len = insertArr.length;
+			for (i = 0; i < len; i++)
+			{
+				src[pos + i] = insertArr[i];
+			}
+			
+			return src;
+		}
 		public static function clearArr(arr:Array):Array {
 			if (!arr) return arr;
 			arr.length = 0;

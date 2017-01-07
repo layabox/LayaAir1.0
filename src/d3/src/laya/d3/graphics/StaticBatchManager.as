@@ -4,6 +4,7 @@ package laya.d3.graphics {
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.scene.BaseScene;
+	import laya.d3.math.Matrix4x4;
 	
 	/**
 	 * @private
@@ -118,9 +119,13 @@ package laya.d3.graphics {
 				_staticBatches[key]._clearRenderElements();
 		}
 		
-		public function _addToRenderQueue(scene:BaseScene):void {
+		public function _addToRenderQueue(scene:BaseScene,view:Matrix4x4,projection:Matrix4x4,projectionView:Matrix4x4):void {
 			for (var key:String in _staticBatches)
-				_staticBatches[key]._addToRenderQueue(scene);
+			{
+				var staticBatch:StaticBatch = _staticBatches[key];
+				staticBatch._owner._prepareShaderValuetoRender(view,projection,projectionView);//TODO:待调整,是否合理
+				staticBatch._addToRenderQueue(scene);
+			}
 		}
 		
 		public function dispose():void {

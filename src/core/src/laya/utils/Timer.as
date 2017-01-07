@@ -253,6 +253,7 @@ package laya.utils {
 		 * @param	caller 执行域(this)。
 		 */
 		public function clearAll(caller:*):void {
+			if (!caller) return;
 			for (var i:int = 0, n:int = _handlers.length; i < n; i++) {
 				var handler:TimerHandler = _handlers[i];
 				if (handler.caller === caller) {

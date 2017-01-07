@@ -1,5 +1,6 @@
 package laya.webgl.shapes
 {
+	import laya.maths.Matrix;
 	import laya.webgl.utils.Buffer2D;
 
 	public class Vertex implements IShape
@@ -22,5 +23,24 @@ package laya.webgl.shapes
 		{
 			
 		}
+		
+		public function needUpdate(mat:Matrix):Boolean
+		{
+			// TODO Auto Generated method stub
+			return false;
+		}
+		
+		public function rebuild(points:Array):void
+		{
+			// TODO Auto Generated method stub
+			
+		}
+		
+		public function setMatrix(mat:Matrix):void
+		{
+			// TODO Auto Generated method stub
+			
+		}
+		
 	}
 }

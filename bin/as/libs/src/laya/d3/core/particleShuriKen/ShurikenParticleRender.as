@@ -9,18 +9,34 @@ package laya.d3.core.particleShuriKen {
 	 * @author ...
 	 */
 	public class ShurikenParticleRender extends BaseRender {
+		///**排序模式,无。*/
+		//public const SORTINGMODE_NONE:int = 0;
+		///**排序模式,通过摄像机距离排序,暂不支持。*/
+		//public const SORTINGMODE_BYDISTANCE:int = 1;
+		///**排序模式,年长的在前绘制,暂不支持。*/
+		//public const SORTINGMODE_OLDESTINFRONT:int = 2;
+		///**排序模式,年轻的在前绘制,暂不支持*/
+		//public const SORTINGMODE_YOUNGESTINFRONT:int = 3;
+		
+		
 		/**渲染模式。*/
 		public var renderMode:int;
 		/**拉伸广告牌模式摄像机速度缩放,暂不支持*/
-		public var stretchedBillboardCameraSpeedScale:int = 0;
+		public var stretchedBillboardCameraSpeedScale:Number;
 		/**拉伸广告牌模式速度缩放*/
-		public var stretchedBillboardSpeedScale:int = 0;
+		public var stretchedBillboardSpeedScale:Number;
 		/**拉伸广告牌模式长度缩放*/
-		public var stretchedBillboardLengthScale:int = 1;
+		public var stretchedBillboardLengthScale:Number;
+		///**排序模式。*/
+		//public var sortingMode:int;
 
 		public function ShurikenParticleRender(owner:ShuriKenParticle3D) {
 			super(owner);
 			renderMode = 0;
+			stretchedBillboardCameraSpeedScale = 0.0;
+			stretchedBillboardSpeedScale = 0.0;
+			stretchedBillboardLengthScale = 1.0;
+			//sortingMode = SORTINGMODE_NONE;
 		}
 		
 		override protected function _calculateBoundingBox():void {//TODO:更具粒子参数计算

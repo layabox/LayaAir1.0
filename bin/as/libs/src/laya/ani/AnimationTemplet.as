@@ -49,15 +49,15 @@ package laya.ani {
 		}
 		
 		//贝塞尔插值函数
-		private static function _BezierInterpolation_6(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null):int {
-			out[outOfs] = data[index] + (nextData[index] - data[index]) * BezierLerp.getBezierRate(dt / duration, interData[0], interData[1], interData[2], interData[3]);
+		private static function _BezierInterpolation_6(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null,offset:int=0):int {
+			out[outOfs] = data[index] + (nextData[index] - data[index]) * BezierLerp.getBezierRate(dt / duration, interData[offset], interData[offset+1], interData[offset+2], interData[offset+3]);
 			return 5;
 		}
 		
 		//贝塞尔插值函数带偏移
-		private static function _BezierInterpolation_7(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null):int {
+		private static function _BezierInterpolation_7(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null,offset:int=0):int {
 			//interData=[x0,y0,x1,y1,start,d,offTime,allTime]
-			out[outOfs] = interData[4] + interData[5] * BezierLerp.getBezierRate((dt*0.001+interData[6]) / interData[7], interData[0], interData[1], interData[2], interData[3]);
+			out[outOfs] = interData[offset+4] + interData[offset+5] * BezierLerp.getBezierRate((dt*0.001+interData[offset+6]) / interData[offset+7], interData[offset], interData[offset+1], interData[offset+2], interData[offset+3]);
 			return 9;
 		}
 		/**@private */
@@ -263,7 +263,7 @@ package laya.ani {
 		/**
 		 *@private
 		 */
-		override public function onAsynLoaded(url:String, data:*):void {
+		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			parse(data as ArrayBuffer);
 			_endLoaded();
 		}
@@ -351,10 +351,10 @@ package laya.ani {
 						switch(type)
 						{
 							case 6:
-								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j + 1, j + 5));
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData,j+1);
 							break;
 							case 7:
-								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j + 1, j + 9));
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData,j+1);
 							break;
 						default:
 							j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
@@ -448,10 +448,10 @@ package laya.ani {
 						switch(type)
 						{
 							case 6:
-								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j + 1, j + 5));
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData,j+1);
 							break;
 							case 7:
-								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j + 1, j + 9));
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData,j+1);
 							break;
 						default:
 							j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);

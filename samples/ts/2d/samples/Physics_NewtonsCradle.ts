@@ -3,6 +3,8 @@ module laya {
 	import Stage = Laya.Stage;
 	import Browser = Laya.Browser;
 	import WebGL = Laya.WebGL;
+	import Render = Laya.Render;
+
 	export class Physics_NewtonsCradle {
 		private stageWidth: number = 800;
 		private stageHeight: number = 600;
@@ -30,7 +32,6 @@ module laya {
 			this.initMatter();
 			this.initWorld();
 
-			this.Matter.Engine.run(this.engine);
 			Laya.stage.on("resize", this, this.onResize);
 		}
 
@@ -38,27 +39,16 @@ module laya {
 			var gameWorld: Sprite = new Sprite();
 			Laya.stage.addChild(gameWorld);
 
-
 			// 初始化物理引擎
-			this.engine = this.Matter.Engine.create(
-				{
-					enableSleeping: true,
-					render:
-					{
-						container: gameWorld,
-						controller: this.LayaRender,
-						options:
-						{
-							width: this.stageWidth,
-							height: this.stageHeight,
-							wireframes: false
-						}
-					}
-				});
+			this.engine = this.Matter.Engine.create({ enableSleeping: true });
+			this.Matter.Engine.run(this.engine);
 
-			this.mouseConstraint = this.Matter.MouseConstraint.create(this.engine);
+			var render = LayaRender.create({ engine: this.engine, container: gameWorld, width: this.stageWidth, height: this.stageHeight, options: { wireframes: false } });
+			LayaRender.run(render);
+
+			this.mouseConstraint = this.Matter.MouseConstraint.create(this.engine, { element: Render.canvas });
 			this.Matter.World.add(this.engine.world, this.mouseConstraint);
-			this.engine.render.mouse = this.mouseConstraint.mouse;
+			render.mouse = this.mouseConstraint.mouse;
 		}
 
 		private initWorld(): void {

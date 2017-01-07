@@ -178,7 +178,7 @@ package laya.d3.resource {
 		/**
 		 * @private
 		 */
-		override public function onAsynLoaded(url:String, data:*):void {
+		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			_srcs = url;
 			_onTextureLoaded(data as Array); 
 			if (_conchTexture) //NATIVE

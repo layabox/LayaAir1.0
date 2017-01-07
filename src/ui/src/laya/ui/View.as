@@ -211,7 +211,7 @@ package laya.ui {
 		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
-			if (_aniList)_aniList.length = 0;
+			if (_aniList) _aniList.length = 0;
 			_idMap = null;
 			_aniList = null;
 			super.destroy(destroyChild);

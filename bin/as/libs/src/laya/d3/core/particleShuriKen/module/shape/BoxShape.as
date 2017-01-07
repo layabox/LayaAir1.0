@@ -43,7 +43,7 @@ package laya.d3.core.particleShuriKen.module.shape {
 			} else {
 				rdE[0] = 0.0;
 				rdE[1] = 0.0;
-				rdE[2] = -1.0;
+				rdE[2] = 1.0;
 			}
 		}
 		

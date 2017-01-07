@@ -535,6 +535,7 @@
 					break ;
 				};
 			var destColorOverLifetime=/*__JS__ */new this.constructor(destColor);
+			destColorOverLifetime.enbale=this.enbale;
 			return destColorOverLifetime;
 		}
 
@@ -546,6 +547,145 @@
 		});
 
 		return ColorOverLifetime;
+	})()
+
+
+	/**
+	*<code>Emission</code> 类用于粒子发射器。
+	*/
+	//class laya.d3.core.particleShuriKen.module.Emission
+	var Emission=(function(){
+		function Emission(){
+			this._emissionRate=0;
+			this._minEmissionTime=NaN;
+			this._particleSystem=null;
+			this._shape=null;
+			this._bursts=null;
+			this.enbale=false;
+			this.emissionRate=10;
+			this._bursts=[];
+		}
+
+		__class(Emission,'laya.d3.core.particleShuriKen.module.Emission');
+		var __proto=Emission.prototype;
+		Laya.imps(__proto,{"laya.d3.core.IClone":true,"laya.resource.IDestroy":true})
+		/**
+		*@private
+		*/
+		__proto._destroy=function(){
+			this._bursts=null;
+			this._particleSystem=null;
+		}
+
+		/**
+		*获取粒子爆裂个数。
+		*@return 粒子爆裂个数。
+		*/
+		__proto.getBurstsCount=function(){
+			return this._bursts.length;
+		}
+
+		/**
+		*通过索引获取粒子爆裂。
+		*@param index 爆裂索引。
+		*@return 粒子爆裂。
+		*/
+		__proto.getBurstByIndex=function(index){
+			return this._bursts[index];
+		}
+
+		/**
+		*增加粒子爆裂。
+		*@param burst 爆裂。
+		*/
+		__proto.addBurst=function(burst){
+			var burstsCount=this._bursts.length;
+			if (burstsCount > 0)
+				for (var i=0;i < burstsCount;i++){
+				if (this._bursts[i].time > burst.time)
+					this._bursts.splice(i,0,burst);
+			}
+			else
+			this._bursts.push(burst);
+		}
+
+		/**
+		*移除粒子爆裂。
+		*@param burst 爆裂。
+		*/
+		__proto.removeBurst=function(burst){
+			var index=this._bursts.indexOf(burst);
+			if (index!==-1){
+				this._bursts.splice(index,1);
+			}
+		}
+
+		/**
+		*通过索引移除粒子爆裂。
+		*@param index 爆裂索引。
+		*/
+		__proto.removeBurstByIndex=function(index){
+			this._bursts.splice(index,1);
+		}
+
+		/**
+		*清空粒子爆裂。
+		*/
+		__proto.clearBurst=function(){
+			this._bursts.length=0;
+		}
+
+		/**
+		*克隆。
+		*@param destObject 克隆源。
+		*/
+		__proto.cloneTo=function(destObject){
+			var destEmission=destObject;
+			var destBursts=destEmission._bursts;
+			destBursts.length=this._bursts.length;
+			for (var i=0,n=this._bursts.length;i < n;i++){
+				var destBurst=destBursts[i];
+				if (destBurst)
+					this._bursts[i].cloneTo(destBurst);
+				else
+				destBursts[i]=this._bursts[i].clone();
+			}
+			destEmission._minEmissionTime=this._minEmissionTime;
+			destEmission._emissionRate=this._emissionRate;
+			destEmission.enbale=this.enbale;
+		}
+
+		/**
+		*克隆。
+		*@return 克隆副本。
+		*/
+		__proto.clone=function(){
+			var destEmission=/*__JS__ */new this.constructor();
+			this.cloneTo(destEmission);
+			return destEmission;
+		}
+
+		/**
+		*设置粒子发射速率。
+		*@param emissionRate 粒子发射速率 (个/秒)。
+		*/
+		/**
+		*获取粒子发射速率。
+		*@return 粒子发射速率 (个/秒)。
+		*/
+		__getset(0,__proto,'emissionRate',function(){
+			return this._emissionRate;
+			},function(value){
+			if (value < 0)
+				throw new Error("ParticleBaseShape:emissionRate value must large or equal than 0.");
+			this._emissionRate=value;
+			if (value===0)
+				this._minEmissionTime=2147483647;
+			else
+			this._minEmissionTime=1 / value;
+		});
+
+		return Emission;
 	})()
 
 
@@ -1869,6 +2009,7 @@
 					break ;
 				};
 			var destRotationOverLifetime=/*__JS__ */new this.constructor();
+			destRotationOverLifetime.enbale=this.enbale;
 			return destRotationOverLifetime;
 		}
 
@@ -2045,6 +2186,7 @@
 					break ;
 				};
 			var destSizeOverLifetime=/*__JS__ */new this.constructor(destSize);
+			destSizeOverLifetime.enbale=this.enbale;
 			return destSizeOverLifetime;
 		}
 
@@ -2285,6 +2427,8 @@
 					break ;
 				};
 			var destVelocityOverLifetime=/*__JS__ */new this.constructor(destVelocity);
+			destVelocityOverLifetime.enbale=this.enbale;
+			destVelocityOverLifetime.space=this.space;
 			return destVelocityOverLifetime;
 		}
 
@@ -2485,13 +2629,13 @@
 					particleData.startLifeTime=particleSystem.startLifetimeConstant;
 					break ;
 				case 1:
-					particleData.startLifeTime=ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradient,particleSystem.emission.emissionTime);
+					particleData.startLifeTime=ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradient,particleSystem.emissionTime);
 					break ;
 				case 2:
 					particleData.startLifeTime=MathUtil.lerp(particleSystem.startLifetimeConstantMin,particleSystem.startLifetimeConstantMax,Math.random());
 					break ;
 				case 3:;
-					var emissionTime=particleSystem.emission.emissionTime;
+					var emissionTime=particleSystem.emissionTime;
 					particleData.startLifeTime=MathUtil.lerp(ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMin,emissionTime),ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMax,emissionTime),Math.random());
 					break ;
 				}
@@ -2580,552 +2724,6 @@
 		['_tempRotationMatrix',function(){return this._tempRotationMatrix=new Matrix4x4();},'_tempDirection',function(){return this._tempDirection=new Float32Array(3);},'_tempStartColor',function(){return this._tempStartColor=new Float32Array(4);},'_tempStartSize',function(){return this._tempStartSize=new Float32Array(3);},'_tempStartRotation0',function(){return this._tempStartRotation0=new Float32Array(3);},'_tempStartRotation1',function(){return this._tempStartRotation1=new Float32Array(3);},'_tempStartRotation2',function(){return this._tempStartRotation2=new Float32Array(3);},'_tempStartUVInfo',function(){return this._tempStartUVInfo=new Float32Array(4);},'_tempSimulationWorldPostion',function(){return this._tempSimulationWorldPostion=new Float32Array(3);}
 		]);
 		return ShurikenParticleData;
-	})()
-
-
-	/**
-	*<code>ShurikenParticleSystem</code> 类用于创建3D粒子数据模板。
-	*/
-	//class laya.d3.core.particleShuriKen.ShurikenParticleSystem
-	var ShurikenParticleSystem=(function(){
-		function ShurikenParticleSystem(owner){
-			this._owner=null;
-			this._vertices=null;
-			this._floatCountPerVertex=0;
-			this._firstActiveElement=0;
-			this._firstNewElement=0;
-			this._firstFreeElement=0;
-			this._firstRetiredElement=0;
-			this._drawCounter=0;
-			this._currentTime=NaN;
-			this._vertexBuffer=null;
-			this._indexBuffer=null;
-			this._maxParticles=0;
-			this._emission=null;
-			this._shape=null;
-			this._startUpdateLoopCount=0;
-			this.duration=NaN;
-			this.looping=false;
-			this.prewarm=false;
-			this.startDelayType=0;
-			this.startDelay=NaN;
-			this.startDelayMin=NaN;
-			this.startDelayMax=NaN;
-			this.startLifetimeType=0;
-			this.startLifetimeConstant=NaN;
-			this.startLifeTimeGradient=null;
-			this.startLifetimeConstantMin=NaN;
-			this.startLifetimeConstantMax=NaN;
-			this.startLifeTimeGradientMin=null;
-			this.startLifeTimeGradientMax=null;
-			this.startSpeedType=0;
-			this.startSpeedConstant=NaN;
-			this.startSpeedConstantMin=NaN;
-			this.startSpeedConstantMax=NaN;
-			this.threeDStartSize=false;
-			this.startSizeType=0;
-			this.startSizeConstant=NaN;
-			this.startSizeConstantSeparate=null;
-			this.startSizeConstantMin=NaN;
-			this.startSizeConstantMax=NaN;
-			this.startSizeConstantMinSeparate=null;
-			this.startSizeConstantMaxSeparate=null;
-			this.threeDStartRotation=false;
-			this.startRotationType=0;
-			this.startRotationConstant=NaN;
-			this.startRotationConstantSeparate=null;
-			this.startRotationConstantMin=NaN;
-			this.startRotationConstantMax=NaN;
-			this.startRotationConstantMinSeparate=null;
-			this.startRotationConstantMaxSeparate=null;
-			this.randomizeRotationDirection=NaN;
-			this.startColorType=0;
-			this.startColorConstant=null;
-			this.startColorConstantMin=null;
-			this.startColorConstantMax=null;
-			this.gravity=null;
-			this.gravityModifier=NaN;
-			this.simulationSpace=0;
-			this.scaleMode=0;
-			this.playOnAwake=false;
-			this.velocityOverLifetime=null;
-			this.colorOverLifetime=null;
-			this.sizeOverLifetime=null;
-			this.rotationOverLifetime=null;
-			this.textureSheetAnimation=null;
-			this.isPerformanceMode=false;
-			this._owner=owner;
-			this._currentTime=0;
-			this._floatCountPerVertex=40;
-			this._maxParticles=1000;
-			this.duration=5.0;
-			this.looping=true;
-			this.prewarm=false;
-			this.startDelayType=0;
-			this.startDelay=0.0;
-			this.startDelayMin=0.0;
-			this.startDelayMax=0.0;
-			this.startLifetimeType=0;
-			this.startLifetimeConstant=5.0;
-			this.startLifeTimeGradient=new GradientDataNumber();
-			this.startLifetimeConstantMin=0.0;
-			this.startLifetimeConstantMax=5.0;
-			this.startLifeTimeGradientMin=new GradientDataNumber();
-			this.startLifeTimeGradientMax=new GradientDataNumber();
-			this.startSpeedType=0;
-			this.startSpeedConstant=5.0;
-			this.startSpeedConstantMin=0.0;
-			this.startSpeedConstantMax=5.0;
-			this.threeDStartSize=false;
-			this.startSizeType=0;
-			this.startSizeConstant=1;
-			this.startSizeConstantSeparate=new Vector3(1,1,1);
-			this.startSizeConstantMin=0;
-			this.startSizeConstantMax=1;
-			this.startSizeConstantMinSeparate=new Vector3(0,0,0);
-			this.startSizeConstantMaxSeparate=new Vector3(1,1,1);
-			this.threeDStartRotation=false;
-			this.startRotationType=0;
-			this.startRotationConstant=0;
-			this.startRotationConstantSeparate=new Vector3(0,0,0);
-			this.startRotationConstantMin=0.0;
-			this.startRotationConstantMax=0.0;
-			this.startRotationConstantMinSeparate=new Vector3(0,0,0);
-			this.startRotationConstantMaxSeparate=new Vector3(0,0,0);
-			this.randomizeRotationDirection=0.0;
-			this.startColorType=0;
-			this.startColorConstant=new Vector4(1,1,1,1);
-			this.startColorConstantMin=new Vector4(1,1,1,1);
-			this.startColorConstantMax=new Vector4(1,1,1,1);
-			this.gravity=new Vector3(0,-9.81,0);
-			this.gravityModifier=0.0;
-			this.simulationSpace=1;
-			this.scaleMode=0;
-			this.playOnAwake=true;
-			this.isPerformanceMode=true;
-			this._owner.on(/*laya.events.Event.ENABLED_CHANGED*/"enabledchanged",this,this._onOwnerEnableChanged);
-			this._owner.on(/*laya.events.Event.DISPLAY*/"display",this,this._onDisplayInStage);
-			this._owner.on(/*laya.events.Event.UNDISPLAY*/"undisplay",this,this._onUnDisplayInStage);
-		}
-
-		__class(ShurikenParticleSystem,'laya.d3.core.particleShuriKen.ShurikenParticleSystem');
-		var __proto=ShurikenParticleSystem.prototype;
-		Laya.imps(__proto,{"laya.d3.core.render.IRenderable":true})
-		__proto._getVertexBuffer=function(index){
-			(index===void 0)&& (index=0);
-			if (index===0)
-				return this._vertexBuffer;
-			else
-			return null;
-		}
-
-		__proto._getIndexBuffer=function(){
-			return this._indexBuffer;
-		}
-
-		/**
-		*@private
-		*/
-		__proto._updateEmission=function(){
-			var elapsedTime=0;
-			(this._startUpdateLoopCount!==Stat.loopCount)&& (elapsedTime=Laya.timer.delta / 1000.0,this._currentTime+=elapsedTime);
-			this._retireActiveParticles();
-			this._freeRetiredParticles();
-			this._emission.update(elapsedTime);
-			if (this._firstActiveElement===this._firstFreeElement)
-				this._currentTime=0;
-			if (this._firstRetiredElement===this._firstActiveElement)
-				this._drawCounter=0;
-		}
-
-		/**
-		*@private
-		*/
-		__proto._addUpdateEmissionToTimer=function(){
-			Laya.timer.frameLoop(1,this,this._updateEmission);
-		}
-
-		/**
-		*@private
-		*/
-		__proto._removeUpdateEmissionToTimer=function(){
-			Laya.timer.clear(this,this._updateEmission);
-		}
-
-		/**
-		*@private
-		*/
-		__proto._onOwnerEnableChanged=function(enable){
-			if (this._owner.displayedInStage){
-				if (enable)
-					this._addUpdateEmissionToTimer();
-				else
-				this._removeUpdateEmissionToTimer();
-			}
-		}
-
-		/**
-		*@private
-		*/
-		__proto._onDisplayInStage=function(){
-			(this._owner.enable)&& (this._addUpdateEmissionToTimer());
-		}
-
-		/**
-		*@private
-		*/
-		__proto._onUnDisplayInStage=function(){
-			(this._owner.enable)&& (this._removeUpdateEmissionToTimer());
-		}
-
-		/**
-		*@private
-		*/
-		__proto._retireActiveParticles=function(){
-			var epsilon=0.0001;
-			while (this._firstActiveElement !=this._firstNewElement){
-				var index=this._firstActiveElement *this._floatCountPerVertex *4;
-				var timeIndex=index+27;
-				var particleAge=this._currentTime-this._vertices[timeIndex];
-				if (particleAge+epsilon < this._vertices[index+26])
-					break ;
-				this._vertices[timeIndex]=this._drawCounter;
-				this._firstActiveElement++;
-				if (this._firstActiveElement >=this._maxParticles)
-					this._firstActiveElement=0;
-			}
-		}
-
-		/**
-		*@private
-		*/
-		__proto._freeRetiredParticles=function(){
-			while (this._firstRetiredElement !=this._firstActiveElement){
-				var age=this._drawCounter-this._vertices[this._firstRetiredElement *this._floatCountPerVertex *4+27];
-				if (this.isPerformanceMode)
-					if (age < 3)
-				break ;
-				this._firstRetiredElement++;
-				if (this._firstRetiredElement >=this._maxParticles)
-					this._firstRetiredElement=0;
-			}
-		}
-
-		/**
-		*@private
-		*/
-		__proto._setPartVertexDatas=function(subU,subV,startU,startV){
-			for (var i=0;i < this._maxParticles;i++){
-				var particleOffset=i *this._floatCountPerVertex *4;
-				this._vertices[particleOffset+this._floatCountPerVertex *0+0]=-0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *0+1]=-0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *1+0]=0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *1+1]=-0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *2+0]=0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *2+1]=0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *3+0]=-0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *3+1]=0.5;
-			}
-		}
-
-		/**
-		*@private
-		*/
-		__proto._initPartVertexDatas=function(){
-			this._vertexBuffer=VertexBuffer3D.create(VertexParticleShuriken.vertexDeclaration,this._maxParticles *4,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
-			this._vertices=new Float32Array(this._maxParticles *this._floatCountPerVertex *4);
-			var enableSheetAnimation=this.textureSheetAnimation && this.textureSheetAnimation.enbale;
-			if (enableSheetAnimation){
-				var title=this.textureSheetAnimation.tiles;
-				var titleX=title.x,titleY=title.y;
-				var subU=1.0 / titleX,subV=1.0 / titleY;
-				var totalFrameCount=0;
-				var startRow=0;
-				var randomRow=this.textureSheetAnimation.randomRow;
-				switch (this.textureSheetAnimation.type){
-					case 0:
-						totalFrameCount=titleX *titleY;
-						break ;
-					case 1:
-						totalFrameCount=titleX;
-						if (randomRow)
-							startRow=Math.round(Math.random()*titleY);
-						else
-						startRow=0;
-						break ;
-					};
-				var startFrameCount=0;
-				var startFrame=this.textureSheetAnimation.startFrame;
-				switch (startFrame.type){
-					case 0:
-						startFrameCount=startFrame.constant;
-						break ;
-					case 1:
-						startFrameCount=Math.round(MathUtil.lerp(startFrame.constantMin,startFrame.constantMax,Math.random()));
-						break ;
-					};
-				var frame=this.textureSheetAnimation.frame;
-				switch (frame.type){
-					case 0:
-						startFrameCount+=frame.constant;
-						break ;
-					case 2:
-						startFrameCount+=Math.round(MathUtil.lerp(frame.constantMin,frame.constantMax,Math.random()));
-						break ;
-					}
-				if (!randomRow)
-					startRow=Math.floor(startFrameCount / titleX);
-				var startCol=startFrameCount % titleX;
-				this._setPartVertexDatas(subU,subV,startCol *subU,startRow *subV);
-				}else {
-				this._setPartVertexDatas(1.0,1.0,0.0,0.0);
-			}
-		}
-
-		/**
-		*@private
-		*/
-		__proto._initIndexDatas=function(){
-			this._indexBuffer=IndexBuffer3D.create(/*laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort",this._maxParticles *6,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
-			var indexes=new Uint16Array(this._maxParticles *6);
-			for (var i=0;i < this._maxParticles;i++){
-				var indexOffset=i *6;
-				var vertexOffset=i *4;
-				indexes[indexOffset+0]=(vertexOffset+0);
-				indexes[indexOffset+1]=(vertexOffset+2);
-				indexes[indexOffset+2]=(vertexOffset+1);
-				indexes[indexOffset+3]=(vertexOffset+0);
-				indexes[indexOffset+4]=(vertexOffset+3);
-				indexes[indexOffset+5]=(vertexOffset+2);
-			}
-			this._indexBuffer.setData(indexes);
-		}
-
-		/**
-		*@private
-		*/
-		__proto._destroy=function(){
-			this._vertexBuffer.dispose();
-			this._indexBuffer.dispose();
-			this._emission._destroy();
-			this._owner=null;
-			this._vertices=null;
-			this._vertexBuffer=null;
-			this._indexBuffer=null;
-			this._emission=null;
-			this._shape=null;
-			this.startLifeTimeGradient=null;
-			this.startLifeTimeGradientMin=null;
-			this.startLifeTimeGradientMax=null;
-			this.startSizeConstantSeparate=null;
-			this.startSizeConstantMinSeparate=null;
-			this.startSizeConstantMaxSeparate=null;
-			this.startRotationConstantSeparate=null;
-			this.startRotationConstantMinSeparate=null;
-			this.startRotationConstantMaxSeparate=null;
-			this.startColorConstant=null;
-			this.startColorConstantMin=null;
-			this.startColorConstantMax=null;
-			this.gravity=null;
-			this.velocityOverLifetime=null;
-			this.colorOverLifetime=null;
-			this.sizeOverLifetime=null;
-			this.rotationOverLifetime=null;
-			this.textureSheetAnimation=null;
-		}
-
-		__proto.addParticle=function(position,direction){
-			Vector3.normalize(direction,direction);
-			var positionE=position.elements;
-			var directionE=direction.elements;
-			var nextFreeParticle=this._firstFreeElement+1;
-			if (nextFreeParticle >=this._maxParticles)
-				nextFreeParticle=0;
-			if (nextFreeParticle===this._firstRetiredElement)
-				return false;
-			var particleData=ShurikenParticleData.create(this,this._owner.particleRender,positionE,directionE,this._currentTime,this._owner.transform);
-			var startIndex=this._firstFreeElement *this._floatCountPerVertex *4;
-			var randomX0=Math.random(),randomY0=Math.random(),randomZ0=Math.random(),randomW0=Math.random();
-			var randomX1=Math.random(),randomY1=Math.random(),randomZ1=Math.random(),randomW1=Math.random();
-			var subU=particleData.startUVInfo[0];
-			var subV=particleData.startUVInfo[1];
-			var startU=particleData.startUVInfo[2];
-			var startV=particleData.startUVInfo[3];
-			this._vertices[startIndex+2]=startU;
-			this._vertices[startIndex+3]=startV+subV;
-			this._vertices[startIndex+this._floatCountPerVertex+2]=startU+subU;
-			this._vertices[startIndex+this._floatCountPerVertex+3]=startV+subV;
-			this._vertices[startIndex+this._floatCountPerVertex *2+2]=startU+subU;
-			this._vertices[startIndex+this._floatCountPerVertex *2+3]=startV;
-			this._vertices[startIndex+this._floatCountPerVertex *3+2]=startU;
-			this._vertices[startIndex+this._floatCountPerVertex *3+3]=startV;
-			for (var i=0;i < 4;i++){
-				var vertexStart=startIndex+i *this._floatCountPerVertex;
-				var j=0,offset=0;
-				for (j=0,offset=4;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.position[j];
-				for (j=0,offset=7;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.direction[j];
-				for (j=0,offset=10;j < 4;j++)
-				this._vertices[vertexStart+offset+j]=particleData.startColor[j];
-				for (j=0,offset=14;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.startSize[j];
-				for (j=0,offset=17;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.startRotation0[j];
-				for (j=0,offset=20;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.startRotation1[j];
-				for (j=0,offset=23;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.startRotation2[j];
-				this._vertices[vertexStart+26]=particleData.startLifeTime;
-				this._vertices[vertexStart+27]=particleData.time;
-				this._vertices[vertexStart+28]=particleData.startSpeed;
-				this._vertices[vertexStart+29]=randomX0;
-				this._vertices[vertexStart+30]=randomY0;
-				this._vertices[vertexStart+31]=randomZ0;
-				this._vertices[vertexStart+32]=randomW0;
-				this._vertices[vertexStart+33]=randomX1;
-				this._vertices[vertexStart+34]=randomY1;
-				this._vertices[vertexStart+35]=randomZ1;
-				this._vertices[vertexStart+36]=randomW1;
-				for (j=0,offset=37;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.simulationWorldPostion[j];
-			}
-			this._firstFreeElement=nextFreeParticle;
-			return true;
-		}
-
-		__proto.addNewParticlesToVertexBuffer=function(){
-			var start=0;
-			if (this._firstNewElement < this._firstFreeElement){
-				start=this._firstNewElement *4 *this._floatCountPerVertex;
-				this._vertexBuffer.setData(this._vertices,start,start,(this._firstFreeElement-this._firstNewElement)*4 *this._floatCountPerVertex);
-				}else {
-				start=this._firstNewElement *4 *this._floatCountPerVertex;
-				this._vertexBuffer.setData(this._vertices,start,start,(this._maxParticles-this._firstNewElement)*4 *this._floatCountPerVertex);
-				if (this._firstFreeElement > 0){
-					this._vertexBuffer.setData(this._vertices,0,0,this._firstFreeElement *4 *this._floatCountPerVertex);
-				}
-			}
-			this._firstNewElement=this._firstFreeElement;
-		}
-
-		__proto._beforeRender=function(state){
-			if (this._firstNewElement !=this._firstFreeElement){
-				this.addNewParticlesToVertexBuffer();
-			}
-			this._drawCounter++;
-			if (this._firstActiveElement !=this._firstFreeElement){
-				this._vertexBuffer._bind();
-				this._indexBuffer._bind();
-				return true;
-			}
-			return false;
-		}
-
-		__proto._render=function(state){
-			var drawVertexCount=0;
-			var glContext=WebGL.mainContext;
-			if (this._firstActiveElement < this._firstFreeElement){
-				drawVertexCount=(this._firstFreeElement-this._firstActiveElement)*6;
-				glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
-				Stat.trianglesFaces+=drawVertexCount / 3;
-				Stat.drawCall++;
-				}else {
-				drawVertexCount=(this._maxParticles-this._firstActiveElement)*6;
-				glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
-				Stat.trianglesFaces+=drawVertexCount / 3;
-				Stat.drawCall++;
-				if (this._firstFreeElement > 0){
-					drawVertexCount=this._firstFreeElement *6;
-					glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,0);
-					Stat.trianglesFaces+=drawVertexCount / 3;
-					Stat.drawCall++;
-				}
-			}
-		}
-
-		__proto._renderRuntime=function(conchGraphics3D,renderElement,state){}
-		/**当前粒子时间。*/
-		__getset(0,__proto,'currentTime',function(){
-			return this._currentTime;
-		});
-
-		__getset(0,__proto,'indexOfHost',function(){
-			return 0;
-		});
-
-		/**设置最大粒子数,注意:谨慎修改此属性，有性能损耗。*/
-		/**获取最大粒子数。*/
-		__getset(0,__proto,'maxParticles',function(){
-			return this._maxParticles-1;
-			},function(value){
-			var newMaxParticles=value+1;
-			if (newMaxParticles!==this._maxParticles){
-				this._maxParticles=newMaxParticles;
-				if (this._vertexBuffer){
-					this._vertexBuffer.dispose();
-					this._indexBuffer.dispose();
-				}
-				this._initPartVertexDatas();
-				this._initIndexDatas();
-			}
-		});
-
-		/**
-		*是否存活。
-		*/
-		__getset(0,__proto,'isAlive',function(){
-			if (this._emission.isPlaying || this.aliveParticleCount > 0)
-				return true;
-			return false;
-		});
-
-		/**
-		*设置形状。
-		*/
-		/**
-		*获取形状。
-		*/
-		__getset(0,__proto,'shape',function(){
-			return this._shape;
-			},function(value){
-			this._shape=value;
-			this._emission._shape=value;
-		});
-
-		/**
-		*设置发射器。
-		*/
-		/**
-		*获取发射器。
-		*/
-		__getset(0,__proto,'emission',function(){
-			return this._emission;
-			},function(value){
-			this._emission=value;
-			value._particleSystem=this;
-			value._shape=this._shape;
-		});
-
-		/**
-		*粒子存活个数。
-		*/
-		__getset(0,__proto,'aliveParticleCount',function(){
-			if (this._firstNewElement >=this._firstRetiredElement)
-				return this._firstNewElement-this._firstRetiredElement;
-			else
-			return this._maxParticles-this._firstRetiredElement+this._firstNewElement;
-		});
-
-		__getset(0,__proto,'_vertexBufferCount',function(){
-			return 1;
-		});
-
-		__getset(0,__proto,'triangleCount',function(){
-			return this._indexBuffer.indexCount / 3;
-		});
-
-		return ShurikenParticleSystem;
 	})()
 
 
@@ -3499,6 +3097,7 @@
 			var vertexDeclaration=vb.vertexDeclaration;
 			var positionOffset=vertexDeclaration.getVertexElementByUsage(/*laya.d3.graphics.VertexElementUsage.POSITION0*/0).offset / byteSizeInFloat;
 			var normalOffset=vertexDeclaration.getVertexElementByUsage(/*laya.d3.graphics.VertexElementUsage.NORMAL0*/3).offset / byteSizeInFloat;
+			var lightingMapTexcoordOffset=vertexDeclaration.getVertexElementByUsage(/*laya.d3.graphics.VertexElementUsage.TEXTURECOORDINATE1*/15).offset / byteSizeInFloat;
 			var rootTransform=this._staticBatch._rootSprite.transform.worldMatrix;
 			var transform=this._sprite3D.transform.worldMatrix;
 			var rootInvertMat=RenderElement._tempMatrix4x40;
@@ -3508,11 +3107,15 @@
 			var rotation=RenderElement._tempQuaternion0;
 			result.decompose(RenderElement._tempVector30,rotation,RenderElement._tempVector31);
 			var vertexFloatCount=vertexDeclaration.vertexStride / byteSizeInFloat;
+			var owner=this._renderObject._owner;
 			for (var i=0,n=bakedVertexes.length;i < n;i+=vertexFloatCount){
 				var posOffset=i+positionOffset;
 				var norOffset=i+normalOffset;
+				var lightingMapTexOffset=i+lightingMapTexcoordOffset;
 				Utils3D.transformVector3ArrayToVector3ArrayCoordinate(bakedVertexes,posOffset,result,bakedVertexes,posOffset);
-				Utils3D.transformVector3ArrayByQuat(bakedVertexes,normalOffset,rotation,bakedVertexes,normalOffset);
+				Utils3D.transformVector3ArrayByQuat(bakedVertexes,norOffset,rotation,bakedVertexes,norOffset);
+				if ((owner instanceof laya.d3.core.MeshSprite3D ))
+					Utils3D.transformLightingMapTexcoordArray(bakedVertexes,lightingMapTexOffset,(owner).meshRender.lightmapScaleOffset,bakedVertexes,lightingMapTexOffset);
 			}
 			return bakedVertexes;
 		}
@@ -3596,7 +3199,7 @@
 		var __proto=RenderQueue.prototype;
 		__proto._sortAlphaFunc=function(a,b){
 			if (a._renderObject && b._renderObject)
-				return Vector3.distance(b._renderObject._boundingSphere.center,RenderQueue._cameraPosition)-Vector3.distance(a._renderObject._boundingSphere.center,RenderQueue._cameraPosition);
+				return b._renderObject._distanceForSort-a._renderObject._distanceForSort;
 			else
 			return 0;
 		}
@@ -3700,7 +3303,7 @@
 						vertexDeclaration=vertexBuffer.vertexDeclaration;
 						lastBindShader=BaseShader.bindShader;
 						material._setMaterialShaderDefineParams(owner,state.shaderDefines);
-						shader=material._getShader(state.shaderDefines,vertexDeclaration.shaderDefineValue);
+						shader=material._getShader(state.shaderDefines,vertexDeclaration.shaderDefineValue,owner._shaderDefineValue);
 						shader.bind();
 						needForceUpdate=(loopCount!==shader._uploadLoopCount)|| (shader!==lastBindShader);
 						isNewCamera=cameraID!==shader._uploadCameraID;
@@ -3746,7 +3349,7 @@
 						vertexDeclaration=vertexBuffer.vertexDeclaration;
 						lastBindShader=BaseShader.bindShader;
 						material._setMaterialShaderDefineParams(owner,state.shaderDefines);
-						shader=material._getShader(state.shaderDefines,vertexDeclaration.shaderDefineValue);
+						shader=material._getShader(state.shaderDefines,vertexDeclaration.shaderDefineValue,owner._shaderDefineValue);
 						shader.bind();
 						needForceUpdate=(loopCount!==shader._uploadLoopCount)|| (shader!==lastBindShader);
 						isNewCamera=cameraID!==shader._uploadCameraID;
@@ -3792,7 +3395,7 @@
 						vertexDeclaration=vertexBuffer.vertexDeclaration;
 						lastBindShader=BaseShader.bindShader;
 						material._setMaterialShaderDefineParams(owner,state.shaderDefines);
-						shader=material._getShader(state.shaderDefines,vertexDeclaration.shaderDefineValue);
+						shader=material._getShader(state.shaderDefines,vertexDeclaration.shaderDefineValue,owner._shaderDefineValue);
 						shader.bind();
 						needForceUpdate=(loopCount!==shader._uploadLoopCount)|| (shader!==lastBindShader);
 						isNewCamera=cameraID!==shader._uploadCameraID;
@@ -4279,7 +3882,7 @@
 	var FrustumCulling=(function(){
 		function FrustumCulling(){}
 		__class(FrustumCulling,'laya.d3.graphics.FrustumCulling');
-		FrustumCulling.RenderObjectCulling=function(boundFrustum,scene,view,projection,projectionView){
+		FrustumCulling.RenderObjectCulling=function(boundFrustum,scene,camera,view,projection,projectionView){
 			var i=0,iNum=0,j=0,jNum=0;
 			var queues=scene._quenes;
 			var staticBatchMananger=scene._staticBatchManager;
@@ -4289,10 +3892,12 @@
 			(queues[i])&& (queues[i]._clearRenderElements());
 			staticBatchMananger._clearRenderElements();
 			dynamicBatchManager._clearRenderElements();
+			var cameraPosition=camera.transform.position;
 			for (i=0,iNum=frustumCullingObjects.length;i < iNum;i++){
 				var renderObject=frustumCullingObjects[i];
 				if (Layer.isVisible(renderObject._layerMask)&& renderObject._ownerEnable && renderObject._enable && (boundFrustum.ContainsBoundSphere(renderObject._boundingSphere)!==/*laya.d3.math.ContainmentType.Disjoint*/0)){
 					renderObject._owner._prepareShaderValuetoRender(view,projection,projectionView);
+					renderObject._distanceForSort=Vector3.distance(renderObject._boundingSphere.center,cameraPosition)+renderObject._render.sortingFudge;
 					var renderElements=renderObject._renderElements;
 					for (j=0,jNum=renderElements.length;j < jNum;j++){
 						var renderElement=renderElements[j];
@@ -4301,7 +3906,7 @@
 							staticBatch._addRenderElement(renderElement);
 							}else {
 							var renderObj=renderElement.renderObj;
-							if ((renderObj.triangleCount < /*laya.d3.graphics.DynamicBatch.maxCombineTriangleCount*/50)&& (renderObj._vertexBufferCount===1)&& (renderObj._getIndexBuffer())&& (renderElement._material.renderQueue < 3)&& renderElement._canDynamicBatch)
+							if ((renderObj.triangleCount < /*laya.d3.graphics.DynamicBatch.maxCombineTriangleCount*/50)&& (renderObj._vertexBufferCount===1)&& (renderObj._getIndexBuffer())&& (renderElement._material.renderQueue < 3)&& renderElement._canDynamicBatch&&(!renderObject._owner.isStatic))
 								dynamicBatchManager._addPrepareRenderElement(renderElement);
 							else
 							scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);
@@ -4309,7 +3914,7 @@
 					}
 				}
 			}
-			staticBatchMananger._addToRenderQueue(scene);
+			staticBatchMananger._addToRenderQueue(scene,view,projection,projectionView);
 			dynamicBatchManager._finishCombineDynamicBatch(scene);
 			dynamicBatchManager._addToRenderQueue(scene,view,projection,projectionView);
 		}
@@ -4331,6 +3936,7 @@
 			this._layerMask=0;
 			this._ownerEnable=false;
 			this._enable=false;
+			this._distanceForSort=NaN;
 			this._conchRenderObject=null;
 			this._owner=owner;
 			this._renderElements=[];
@@ -4686,9 +4292,12 @@
 			this._staticBatches[key]._clearRenderElements();
 		}
 
-		__proto._addToRenderQueue=function(scene){
-			for (var key in this._staticBatches)
-			this._staticBatches[key]._addToRenderQueue(scene);
+		__proto._addToRenderQueue=function(scene,view,projection,projectionView){
+			for (var key in this._staticBatches){
+				var staticBatch=this._staticBatches[key];
+				staticBatch._owner._prepareShaderValuetoRender(view,projection,projectionView);
+				staticBatch._addToRenderQueue(scene);
+			}
 		}
 
 		__proto.dispose=function(){
@@ -11285,8 +10894,14 @@
 		Utils3D._loadParticle=function(settting,particle,innerResouMap){
 			var anglelToRad=Math.PI / 180.0;
 			var i=0,n=0;
-			var material=new ShurikenParticleMaterial();
-			material.diffuseTexture=innerResouMap ? Loader.getRes(innerResouMap[settting.texturePath]):Texture2D.load(settting.texturePath);
+			var material;
+			var materialPath=settting.materialPath;
+			if (materialPath){
+				material=Loader.getRes(innerResouMap[materialPath]);
+				}else {
+				material=new ShurikenParticleMaterial();
+				material.diffuseTexture=innerResouMap ? Loader.getRes(innerResouMap[settting.texturePath]):Texture2D.load(settting.texturePath);
+			}
 			material.renderMode=/*laya.d3.core.material.BaseMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE*/8;
 			particle.particleRender.sharedMaterial=material;
 			var particleSystem=particle.particleSystem;
@@ -11595,7 +11210,8 @@
 			particleRender.stretchedBillboardCameraSpeedScale=settting.stretchedBillboardCameraSpeedScale;
 			particleRender.stretchedBillboardSpeedScale=settting.stretchedBillboardSpeedScale;
 			particleRender.stretchedBillboardLengthScale=settting.stretchedBillboardLengthScale;
-			(particleSystem.playOnAwake)&& (emission.play());
+			particleRender.sortingFudge=settting.sortingFudge ? settting.sortingFudge :0.0;
+			(particleSystem.playOnAwake)&& (particleSystem.play());
 		}
 
 		Utils3D._parseHierarchyProp=function(innerResouMap,node,json){
@@ -11626,11 +11242,16 @@
 				case "Sprite3D":
 					break ;
 				case "MeshSprite3D":;
-					var mesh=Loader.getRes(innerResouMap[json.instanceParams.loadPath]);
 					var meshSprite3D=(node);
+					var meshRender=meshSprite3D.meshRender;
+					var lightmapIndex=customProps.lightmapIndex;
+					(lightmapIndex!==null)&& (meshRender.lightmapIndex=lightmapIndex);
+					var lightmapScaleOffsetArray=customProps.lightmapScaleOffset;
+					(lightmapScaleOffsetArray)&&(meshRender.lightmapScaleOffset=new Vector4(lightmapScaleOffsetArray[0],lightmapScaleOffsetArray[1],lightmapScaleOffsetArray[2],lightmapScaleOffsetArray[3]));
+					var mesh=Loader.getRes(innerResouMap[json.instanceParams.loadPath]);
 					meshSprite3D.meshFilter.sharedMesh=mesh;
 					if (mesh.loaded)
-						meshSprite3D.meshRender.sharedMaterials=mesh.materials;
+						meshRender.sharedMaterials=mesh.materials;
 					else
 					mesh.once(/*laya.events.Event.LOADED*/"loaded",meshSprite3D,meshSprite3D._applyMeshMaterials);
 					break ;
@@ -12035,6 +11656,12 @@
 			result[resultOffset+2]=vectorElem[2] *vectorElem[3];
 		}
 
+		Utils3D.transformLightingMapTexcoordArray=function(source,sourceOffset,lightingMapScaleOffset,result,resultOffset){
+			var lightingMapScaleOffsetE=lightingMapScaleOffset.elements;
+			result[resultOffset+0]=source[sourceOffset+0] *lightingMapScaleOffsetE[0]+lightingMapScaleOffsetE[2];
+			result[resultOffset+1]=source[sourceOffset+1] *lightingMapScaleOffsetE[1]-lightingMapScaleOffsetE[3];
+		}
+
 		Utils3D.convert3DCoordTo2DScreenCoord=function(source,out){
 			var se=source.elements;
 			var oe=out.elements;
@@ -12115,6 +11742,7 @@
 				'u_MaterialReflect':[ /*laya.d3.core.material.StandardMaterial.MATERIALREFLECT*/12,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
 				'u_WorldMat':[ /*laya.d3.core.Sprite3D.WORLDMATRIX*/0,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
 				'u_MvpMatrix':[ /*laya.d3.core.Sprite3D.MVPMATRIX*/1,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_LightmapScaleOffset':[ /*laya.d3.core.MeshSprite3D.LIGHTMAPSCALEOFFSET*/2,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
 				'u_CameraPos':[ /*laya.d3.core.BaseCamera.CAMERAPOS*/0,/*laya.d3.shader.Shader3D.PERIOD_CAMERA*/3],
 				'u_FogStart':[ /*laya.d3.core.scene.BaseScene.FOGSTART*/1,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4],
 				'u_FogRange':[ /*laya.d3.core.scene.BaseScene.FOGRANGE*/2,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4],
@@ -12138,11 +11766,11 @@
 				'u_SpotLight.Ambient':[ /*laya.d3.core.scene.BaseScene.SPOTLIGHTAMBIENT*/19,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4],
 				'u_SpotLight.Specular':[ /*laya.d3.core.scene.BaseScene.SPOTLIGHTSPECULAR*/20,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4]};
 			var SIMPLE=Shader3D.nameKey.add("SIMPLE");
-			vs="#include?VR \"VRHelper.glsl\";\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n\n\n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))\nattribute vec2 a_Texcoord0;\nvarying vec2 v_Texcoord0;\n  #ifdef MIXUV\n  attribute vec2 a_TexcoordNext0;\n  uniform float  u_UVAge;\n  #endif\n  #ifdef UVTRANSFORM \n  uniform mat4 u_UVMatrix;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nattribute vec2 a_Texcoord1;\nvarying vec2 v_Texcoord1;\n#endif\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n#ifdef BONE\nattribute vec4 a_BoneIndices;\nattribute vec4 a_BoneWeights;\nconst int c_MaxBoneCount = 24;\nuniform mat4 u_Bones[c_MaxBoneCount];\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\nattribute vec3 a_Normal;\nvarying vec3 v_Normal;\n#endif\n\n#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP))&&defined(NORMALMAP)\nattribute vec3 a_Tangent0;\nvarying vec3 v_Tangent0;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\nuniform mat4 u_WorldMat;\nvarying vec3 v_PositionWorld;\n#endif\n\n\nvoid main()\n{\n #ifdef BONE\n mat4 skinTransform=mat4(0.0);\n skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n vec4 position=skinTransform*a_Position;\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * position);\n   #else\n   gl_Position = u_MvpMatrix * position;\n   #endif\n #else\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n   #else\n   gl_Position = u_MvpMatrix * a_Position;\n   #endif\n #endif\n \n\n #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\n mat3 worldMat;\n   #ifdef BONE\n   worldMat=mat3(u_WorldMat*skinTransform);\n   #else\n   worldMat=mat3(u_WorldMat);\n   #endif  \n v_Normal=worldMat*a_Normal;\n   #if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)\n   v_Tangent0=worldMat*a_Tangent0;\n   #endif\n #endif\n \n #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)\n   #ifdef BONE\n   v_PositionWorld=(u_WorldMat*position).xyz;\n   #else\n   v_PositionWorld=(u_WorldMat*a_Position).xyz;\n   #endif\n #endif\n \n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))\n  #ifdef MIXUV\n  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n  #else\n  v_Texcoord0=a_Texcoord0;\n  #endif\n  #ifdef UVTRANSFORM\n  v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nv_Texcoord1=a_Texcoord1;\n#endif\n\n  \n#ifdef COLOR\nv_Color=a_Color;\n#endif\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\n#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT \"LightHelper.glsl\";\n\nuniform vec4 u_Albedo;\n\n#ifdef ALPHATEST\nuniform float u_AlphaTestValue;\n#endif\n\n#ifdef DIFFUSEMAP\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef REFLECTMAP\nuniform samplerCube u_ReflectTexture;\nuniform vec3 u_MaterialReflect;\n#endif\n\n#if   defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))\nvarying vec2 v_Texcoord0;\n#endif\n\n#ifdef AMBIENTMAP\nvarying vec2 v_Texcoord1;\nuniform sampler2D u_AmbientTexture;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\nuniform vec3 u_MaterialDiffuse;\nuniform vec4 u_MaterialSpecular;\n  #if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP) \n  uniform sampler2D u_SpecularTexture;\n  #endif\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(AMBIENTMAP)\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef FOG\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\n#ifdef MIXUV\nuniform float  u_UVAniAge;\n#endif\n\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\nvarying vec3 v_Normal;\n#endif\n\n#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)\nuniform sampler2D u_NormalTexture;\nvarying vec3 v_Tangent0;\n#endif\n\n#ifdef DIRECTIONLIGHT\nuniform DirectionLight u_DirectionLight;\n#endif\n\n#ifdef POINTLIGHT\nuniform PointLight u_PointLight;\n#endif\n\n#ifdef SPOTLIGHT\nuniform SpotLight u_SpotLight;\n#endif\n\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\nuniform vec3 u_CameraPos;\nvarying vec3 v_PositionWorld;\n#endif\n\n\nvoid main()\n{\n  #if defined(DIFFUSEMAP)&&!defined(COLOR)\n  gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  #endif \n  \n  #if defined(COLOR)&&!defined(DIFFUSEMAP)\n  gl_FragColor=v_Color;\n  #endif \n  \n  #if defined(DIFFUSEMAP)&&defined(COLOR)\n  vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  gl_FragColor=texColor*v_Color;\n  #endif\n  \n  #if !defined(DIFFUSEMAP)&&!defined(COLOR)\n  gl_FragColor=vec4(1.0,1.0,1.0,1.0);\n  #endif \n  \n  #ifdef AMBIENTMAP\n  gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_Texcoord1).rgb);\n  #endif \n  \n  gl_FragColor=gl_FragColor*u_Albedo;\n  \n  #ifdef ALPHATEST\n  if(gl_FragColor.a-u_AlphaTestValue<0.0)\n    discard;\n  #endif\n  \n  \n  #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\n  vec3 normal;\n    #if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)\n    vec3 normalMapSample = texture2D(u_NormalTexture, v_Texcoord0).rgb;\n	normal = normalize(NormalSampleToWorldSpace(normalMapSample, v_Normal, v_Tangent0));\n	#else\n	normal = normalize(v_Normal);\n    #endif\n  #endif\n	\n  #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n  vec3 diffuse = vec3(0.0);\n  vec3 ambient = vec3(0.0);\n  vec3 specular= vec3(0.0);\n  vec3 dif, amb, spe;\n  #endif\n  \n  #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\n  vec3 toEye;\n    #ifdef FOG\n	toEye=u_CameraPos-v_PositionWorld;\n    float toEyeLength=length(toEye);\n    toEye/=toEyeLength;\n    #else\n	toEye=normalize(u_CameraPos-v_PositionWorld);\n    #endif\n  #endif\n	\n  #ifdef DIRECTIONLIGHT\n  computeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);\n  diffuse+=dif;\n  ambient+=amb;\n  specular+=spe;\n  #endif\n \n  #ifdef POINTLIGHT\n  computePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n  diffuse+=dif;\n  ambient+=amb;\n  specular+=spe;\n  #endif\n\n  #ifdef SPOTLIGHT\n  ComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n  diffuse+=dif;\n  ambient+=amb;\n  specular+=spe;\n  #endif\n  \n\n  \n  \n  \n  #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n    #if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP)\n    specular =specular*texture2D(u_SpecularTexture, v_Texcoord0).rgb;\n    #endif\n  gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse) + specular,gl_FragColor.a);\n  #endif\n  \n  #ifdef REFLECTMAP\n  vec3 incident = -toEye;\n  vec3 reflectionVector = reflect(incident,normal);\n  vec3 reflectionColor  = textureCube(u_ReflectTexture,reflectionVector).rgb;\n  gl_FragColor.rgb += u_MaterialReflect*reflectionColor;\n  #endif\n  \n  #ifdef FOG\n  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n  #endif\n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.ps*/;
+			vs="#include?VR \"VRHelper.glsl\";\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n\n\n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))\nattribute vec2 a_Texcoord0;\nvarying vec2 v_Texcoord0;\n  #ifdef MIXUV\n  attribute vec2 a_TexcoordNext0;\n  uniform float  u_UVAge;\n  #endif\n  #ifdef UVTRANSFORM \n  uniform mat4 u_UVMatrix;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nattribute vec2 a_Texcoord1;\nuniform vec4 u_LightmapScaleOffset;\nvarying vec2 v_Texcoord1;\n#endif\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n#ifdef BONE\nattribute vec4 a_BoneIndices;\nattribute vec4 a_BoneWeights;\nconst int c_MaxBoneCount = 24;\nuniform mat4 u_Bones[c_MaxBoneCount];\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\nattribute vec3 a_Normal;\nvarying vec3 v_Normal;\n#endif\n\n#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP))&&defined(NORMALMAP)\nattribute vec3 a_Tangent0;\nvarying vec3 v_Tangent0;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\nuniform mat4 u_WorldMat;\nvarying vec3 v_PositionWorld;\n#endif\n\n\nvoid main()\n{\n #ifdef BONE\n mat4 skinTransform=mat4(0.0);\n skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n vec4 position=skinTransform*a_Position;\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * position);\n   #else\n   gl_Position = u_MvpMatrix * position;\n   #endif\n #else\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n   #else\n   gl_Position = u_MvpMatrix * a_Position;\n   #endif\n #endif\n \n\n #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\n mat3 worldMat;\n   #ifdef BONE\n   worldMat=mat3(u_WorldMat*skinTransform);\n   #else\n   worldMat=mat3(u_WorldMat);\n   #endif  \n v_Normal=worldMat*a_Normal;\n   #if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)\n   v_Tangent0=worldMat*a_Tangent0;\n   #endif\n #endif\n \n #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)\n   #ifdef BONE\n   v_PositionWorld=(u_WorldMat*position).xyz;\n   #else\n   v_PositionWorld=(u_WorldMat*a_Position).xyz;\n   #endif\n #endif\n \n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))\n  #ifdef MIXUV\n  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n  #else\n  v_Texcoord0=a_Texcoord0;\n  #endif\n  #ifdef UVTRANSFORM\n  v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\n  #ifdef SCALEOFFSETLIGHTINGMAPUV\n  v_Texcoord1=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,a_Texcoord1.y*u_LightmapScaleOffset.y-u_LightmapScaleOffset.w);\n  #else\n  v_Texcoord1=a_Texcoord1;\n  #endif \n#endif\n\n  \n#ifdef COLOR\nv_Color=a_Color;\n#endif\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\n#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT \"LightHelper.glsl\";\n\nuniform vec4 u_Albedo;\n\n#ifdef ALPHATEST\nuniform float u_AlphaTestValue;\n#endif\n\n#ifdef DIFFUSEMAP\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef REFLECTMAP\nuniform samplerCube u_ReflectTexture;\nuniform vec3 u_MaterialReflect;\n#endif\n\n#if   defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))\nvarying vec2 v_Texcoord0;\n#endif\n\n#ifdef AMBIENTMAP\nvarying vec2 v_Texcoord1;\nuniform sampler2D u_AmbientTexture;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\nuniform vec3 u_MaterialDiffuse;\nuniform vec4 u_MaterialSpecular;\n  #if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP) \n  uniform sampler2D u_SpecularTexture;\n  #endif\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(AMBIENTMAP)\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef FOG\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\n#ifdef MIXUV\nuniform float  u_UVAniAge;\n#endif\n\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\nvarying vec3 v_Normal;\n#endif\n\n#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)\nuniform sampler2D u_NormalTexture;\nvarying vec3 v_Tangent0;\n#endif\n\n#ifdef DIRECTIONLIGHT\nuniform DirectionLight u_DirectionLight;\n#endif\n\n#ifdef POINTLIGHT\nuniform PointLight u_PointLight;\n#endif\n\n#ifdef SPOTLIGHT\nuniform SpotLight u_SpotLight;\n#endif\n\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\nuniform vec3 u_CameraPos;\nvarying vec3 v_PositionWorld;\n#endif\n\n\nvoid main()\n{\n  #if defined(DIFFUSEMAP)&&!defined(COLOR)\n  gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  #endif \n  \n  #if defined(COLOR)&&!defined(DIFFUSEMAP)\n  gl_FragColor=v_Color;\n  #endif \n  \n  #if defined(DIFFUSEMAP)&&defined(COLOR)\n  vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n  gl_FragColor=texColor*v_Color;\n  #endif\n  \n  #if !defined(DIFFUSEMAP)&&!defined(COLOR)\n  gl_FragColor=vec4(1.0,1.0,1.0,1.0);\n  #endif \n  \n  #ifdef AMBIENTMAP\n  gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_Texcoord1).rgb); \n  #endif \n  \n  gl_FragColor=gl_FragColor*u_Albedo;\n  \n  #ifdef ALPHATEST\n  if(gl_FragColor.a-u_AlphaTestValue<0.0)\n    discard;\n  #endif\n  \n  \n  #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\n  vec3 normal;\n    #if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)\n    vec3 normalMapSample = texture2D(u_NormalTexture, v_Texcoord0).rgb;\n	normal = normalize(NormalSampleToWorldSpace(normalMapSample, v_Normal, v_Tangent0));\n	#else\n	normal = normalize(v_Normal);\n    #endif\n  #endif\n	\n  #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n  vec3 diffuse = vec3(0.0);\n  vec3 ambient = vec3(0.0);\n  vec3 specular= vec3(0.0);\n  vec3 dif, amb, spe;\n  #endif\n  \n  #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\n  vec3 toEye;\n    #ifdef FOG\n	toEye=u_CameraPos-v_PositionWorld;\n    float toEyeLength=length(toEye);\n    toEye/=toEyeLength;\n    #else\n	toEye=normalize(u_CameraPos-v_PositionWorld);\n    #endif\n  #endif\n	\n  #ifdef DIRECTIONLIGHT\n  computeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);\n  diffuse+=dif;\n  ambient+=amb;\n  specular+=spe;\n  #endif\n \n  #ifdef POINTLIGHT\n  computePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n  diffuse+=dif;\n  ambient+=amb;\n  specular+=spe;\n  #endif\n\n  #ifdef SPOTLIGHT\n  ComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n  diffuse+=dif;\n  ambient+=amb;\n  specular+=spe;\n  #endif\n\n  \n  #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n    #if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP)\n    specular =specular*texture2D(u_SpecularTexture, v_Texcoord0).rgb;\n    #endif\n  gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse) + specular,gl_FragColor.a);\n  #endif\n  \n  #ifdef REFLECTMAP\n  vec3 incident = -toEye;\n  vec3 reflectionVector = reflect(incident,normal);\n  vec3 reflectionColor  = textureCube(u_ReflectTexture,reflectionVector).rgb;\n  gl_FragColor.rgb += u_MaterialReflect*reflectionColor;\n  #endif\n  \n  #ifdef FOG\n  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n  #endif\n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.ps*/;
 			Shader3D.preCompile(SIMPLE,vs,ps,attributeMap,uniformMap);
 			var SIMPLEVEXTEX=Shader3D.nameKey.add("SIMPLEVEXTEX");
-			vs="#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT \"LightHelper.glsl\";\n\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n#include?VR \"VRHelper.glsl\";\n\n\n\n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(COLOR)&&defined(SPECULARMAP))\nattribute vec2 a_Texcoord0;\nvarying vec2 v_Texcoord0;\n  #ifdef MIXUV\n  attribute vec2 a_TexcoordNext0;\n  uniform float  u_UVAge;\n  #endif\n  #ifdef UVTRANSFORM\n  uniform mat4 u_UVMatrix;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nattribute vec2 a_Texcoord1;\nvarying vec2 v_Texcoord1;\n#endif\n\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n#ifdef BONE\nattribute vec4 a_BoneIndices;\nattribute vec4 a_BoneWeights;\nconst int c_MaxBoneCount = 24;\nuniform mat4 u_Bones[c_MaxBoneCount];\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\nattribute vec3 a_Normal;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\nuniform mat4 u_WorldMat;\nuniform vec3 u_CameraPos;\n#endif\n\n#ifdef DIRECTIONLIGHT\nuniform DirectionLight u_DirectionLight;\n#endif\n\n#ifdef POINTLIGHT\nuniform PointLight u_PointLight;\n#endif\n\n#ifdef SPOTLIGHT\nuniform SpotLight u_SpotLight;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\nuniform vec3 u_MaterialDiffuse;\nuniform vec4 u_MaterialSpecular;\n\nvarying vec3 v_Diffuse;\nvarying vec3 v_Ambient;\nvarying vec3 v_Specular;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(AMBIENTMAP)\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef FOG\nvarying float v_ToEyeLength;\n#endif\n\n#ifdef REFLECTMAP\nvarying vec3 v_ToEye;\nvarying vec3 v_Normal;\n#endif\n\n\nvoid main()\n{\n #ifdef BONE\n mat4 skinTransform=mat4(0.0);\n skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n vec4 position=skinTransform*a_Position;\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * position);\n   #else\n   gl_Position = u_MvpMatrix * position;\n   #endif\n #else\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n   #else\n   gl_Position = u_MvpMatrix * a_Position;\n   #endif\n #endif\n \n \n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\n  #ifdef BONE\n  vec3 normal=normalize( mat3(u_WorldMat*skinTransform)*a_Normal);\n  #else\n  vec3 normal=normalize( mat3(u_WorldMat)*a_Normal);\n  #endif\n \n  #ifdef REFLECTMAP\n  v_Normal=normal;\n  #endif\n#endif\n \n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n  v_Diffuse=vec3(0.0);\n  v_Ambient=vec3(0.0);\n  v_Specular=vec3(0.0);\n  vec3 dif, amb, spe;\n#endif\n\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\n  #ifdef BONE\n  vec3 positionWorld=(u_WorldMat*position).xyz;\n  #else\n  vec3 positionWorld=(u_WorldMat*a_Position).xyz;\n  #endif\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\nvec3 toEye;\n  #ifdef FOG\n  toEye=u_CameraPos-positionWorld;\n  v_ToEyeLength=length(toEye);\n  toEye/=v_ToEyeLength;\n  #else\n  toEye=normalize(u_CameraPos-positionWorld);\n  #endif\n \n  #ifdef REFLECTMAP\n  v_ToEye=toEye;\n  #endif\n#endif\n \n#ifdef DIRECTIONLIGHT\ncomputeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);\nv_Diffuse+=dif;\nv_Ambient+=amb;\nv_Specular+=spe;\n#endif\n \n#ifdef POINTLIGHT\ncomputePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,positionWorld,normal,toEye, dif, amb, spe);\nv_Diffuse+=dif;\nv_Ambient+=amb;\nv_Specular+=spe;\n#endif\n\n#ifdef SPOTLIGHT\nComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,positionWorld,normal,toEye, dif, amb, spe);\nv_Diffuse+=dif;\nv_Ambient+=amb;\nv_Specular+=spe;\n#endif\n  \n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(COLOR)&&defined(SPECULARMAP))\n  #ifdef MIXUV\n  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n  #else\n  v_Texcoord0=a_Texcoord0;\n  #endif\n  #ifdef UVTRANSFORM\n  v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nv_Texcoord1=a_Texcoord1;\n#endif\n  \n#ifdef COLOR\nv_Color=a_Color;\n#endif\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/VertexSimpleTextureSkinnedMesh.vs*/;
+			vs="#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT \"LightHelper.glsl\";\n\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n#include?VR \"VRHelper.glsl\";\n\n\n\n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(COLOR)&&defined(SPECULARMAP))\nattribute vec2 a_Texcoord0;\nvarying vec2 v_Texcoord0;\n  #ifdef MIXUV\n  attribute vec2 a_TexcoordNext0;\n  uniform float  u_UVAge;\n  #endif\n  #ifdef UVTRANSFORM\n  uniform mat4 u_UVMatrix;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\nattribute vec2 a_Texcoord1;\nuniform vec4 u_LightmapScaleOffset;\nvarying vec2 v_Texcoord1;\n#endif\n\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n#ifdef BONE\nattribute vec4 a_BoneIndices;\nattribute vec4 a_BoneWeights;\nconst int c_MaxBoneCount = 24;\nuniform mat4 u_Bones[c_MaxBoneCount];\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\nattribute vec3 a_Normal;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\nuniform mat4 u_WorldMat;\nuniform vec3 u_CameraPos;\n#endif\n\n#ifdef DIRECTIONLIGHT\nuniform DirectionLight u_DirectionLight;\n#endif\n\n#ifdef POINTLIGHT\nuniform PointLight u_PointLight;\n#endif\n\n#ifdef SPOTLIGHT\nuniform SpotLight u_SpotLight;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\nuniform vec3 u_MaterialDiffuse;\nuniform vec4 u_MaterialSpecular;\n\nvarying vec3 v_Diffuse;\nvarying vec3 v_Ambient;\nvarying vec3 v_Specular;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(AMBIENTMAP)\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef FOG\nvarying float v_ToEyeLength;\n#endif\n\n#ifdef REFLECTMAP\nvarying vec3 v_ToEye;\nvarying vec3 v_Normal;\n#endif\n\n\nvoid main()\n{\n #ifdef BONE\n mat4 skinTransform=mat4(0.0);\n skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n vec4 position=skinTransform*a_Position;\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * position);\n   #else\n   gl_Position = u_MvpMatrix * position;\n   #endif\n #else\n   #ifdef VR\n   gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n   #else\n   gl_Position = u_MvpMatrix * a_Position;\n   #endif\n #endif\n \n \n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\n  #ifdef BONE\n  vec3 normal=normalize( mat3(u_WorldMat*skinTransform)*a_Normal);\n  #else\n  vec3 normal=normalize( mat3(u_WorldMat)*a_Normal);\n  #endif\n \n  #ifdef REFLECTMAP\n  v_Normal=normal;\n  #endif\n#endif\n \n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n  v_Diffuse=vec3(0.0);\n  v_Ambient=vec3(0.0);\n  v_Specular=vec3(0.0);\n  vec3 dif, amb, spe;\n#endif\n\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\n  #ifdef BONE\n  vec3 positionWorld=(u_WorldMat*position).xyz;\n  #else\n  vec3 positionWorld=(u_WorldMat*a_Position).xyz;\n  #endif\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\nvec3 toEye;\n  #ifdef FOG\n  toEye=u_CameraPos-positionWorld;\n  v_ToEyeLength=length(toEye);\n  toEye/=v_ToEyeLength;\n  #else\n  toEye=normalize(u_CameraPos-positionWorld);\n  #endif\n \n  #ifdef REFLECTMAP\n  v_ToEye=toEye;\n  #endif\n#endif\n \n#ifdef DIRECTIONLIGHT\ncomputeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);\nv_Diffuse+=dif;\nv_Ambient+=amb;\nv_Specular+=spe;\n#endif\n \n#ifdef POINTLIGHT\ncomputePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,positionWorld,normal,toEye, dif, amb, spe);\nv_Diffuse+=dif;\nv_Ambient+=amb;\nv_Specular+=spe;\n#endif\n\n#ifdef SPOTLIGHT\nComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,positionWorld,normal,toEye, dif, amb, spe);\nv_Diffuse+=dif;\nv_Ambient+=amb;\nv_Specular+=spe;\n#endif\n  \n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(COLOR)&&defined(SPECULARMAP))\n  #ifdef MIXUV\n  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n  #else\n  v_Texcoord0=a_Texcoord0;\n  #endif\n  #ifdef UVTRANSFORM\n  v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;\n  #endif\n#endif\n\n#ifdef AMBIENTMAP\n  #ifdef SCALEOFFSETLIGHTINGMAPUV\n  v_Texcoord1=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,a_Texcoord1.y*u_LightmapScaleOffset.y-u_LightmapScaleOffset.w);\n  #else\n  v_Texcoord1=a_Texcoord1;\n  #endif \n#endif\n  \n#ifdef COLOR\nv_Color=a_Color;\n#endif\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/VertexSimpleTextureSkinnedMesh.vs*/;
 			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform vec4 u_Albedo;\n\n#ifdef ALPHATEST\nuniform float u_AlphaTestValue;\n#endif\n\n#ifdef DIFFUSEMAP\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef REFLECTMAP\nuniform samplerCube u_ReflectTexture;\nuniform vec3 u_MaterialReflect;\n#endif\n\n\n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(COLOR)&&defined(SPECULARMAP))\nvarying vec2 v_Texcoord0;\n#endif\n\n#ifdef AMBIENTMAP\nvarying vec2 v_Texcoord1;\nuniform sampler2D u_AmbientTexture;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(AMBIENTMAP)\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\nvarying vec3 v_Diffuse;\nvarying vec3 v_Ambient;\nvarying vec3 v_Specular;\n  #if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP)\n  uniform sampler2D u_SpecularTexture;\n  #endif\n#endif\n\n#ifdef FOG\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\nvarying float v_ToEyeLength;\n#endif\n\n#ifdef MIXUV\nuniform float  u_UVAniAge;\n#endif\n\n#ifdef REFLECTMAP\nvarying vec3 v_Normal;\nvarying vec3 v_ToEye;\n#endif\n\n\nvoid main()\n{\n #if defined(DIFFUSEMAP)&&!defined(COLOR)\n gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n #endif \n \n #if defined(COLOR)&&!defined(DIFFUSEMAP)\n gl_FragColor=v_Color;\n #endif \n \n #if defined(DIFFUSEMAP)&&defined(COLOR)\n vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n gl_FragColor=texColor*v_Color;\n #endif\n \n #if !defined(DIFFUSEMAP)&&!defined(COLOR)\n gl_FragColor=vec4(1.0,1.0,1.0,1.0);\n #endif \n \n #ifdef AMBIENTMAP\n gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_Texcoord1).rgb);\n #endif \n \n gl_FragColor=gl_FragColor*u_Albedo;\n  \n #ifdef ALPHATEST\n   if(gl_FragColor.a-u_AlphaTestValue<0.0)\n    discard;\n #endif\n \n \n #ifdef REFLECTMAP\n vec3 normal=normalize(v_Normal);\n #endif 	\n\n  \n #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n   #if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP)\n   vec3 specular =v_Specular*texture2D(u_SpecularTexture,v_Texcoord0).rgb;\n   gl_FragColor =vec4( gl_FragColor.rgb*(v_Ambient + v_Diffuse)+specular,gl_FragColor.a);\n   #else\n   gl_FragColor =vec4( gl_FragColor.rgb*(v_Ambient + v_Diffuse)+v_Specular,gl_FragColor.a);\n   #endif\n #endif\n \n #ifdef REFLECTMAP\n vec3 incident = -v_ToEye;\n vec3 reflectionVector = reflect(incident,v_Normal);\n vec3 reflectionColor  = textureCube(u_ReflectTexture,reflectionVector).rgb;\n gl_FragColor.rgb += u_MaterialReflect*reflectionColor;\n #endif\n \n #ifdef FOG\n float lerpFact=clamp((v_ToEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n #endif\n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/VertexSimpleTextureSkinnedMesh.ps*/;
 			Shader3D.preCompile(SIMPLEVEXTEX,vs,ps,attributeMap,uniformMap);
 			attributeMap={
@@ -12363,9 +11991,15 @@
 					path=hierarchyNode.instanceParams.loadPath;
 					clas=Mesh;
 					break ;
-				case "ShuriKenParticle3D":
-					path=hierarchyNode.customProps.texturePath;
-					clas=Texture2D;
+				case "ShuriKenParticle3D":;
+					var materialPath=hierarchyNode.customProps.materialPath;
+					if (materialPath){
+						path=materialPath;
+						clas=ShurikenParticleMaterial;
+						}else {
+						path=hierarchyNode.customProps.texturePath;
+						clas=Texture2D;
+					}
 					break ;
 				}
 			if (path){
@@ -12775,6 +12409,7 @@
 			this._boundingSphere=null;
 			this._boundingBox=null;
 			this._owner=null;
+			this.sortingFudge=NaN;
 			BaseRender.__super.call(this);
 			this._owner=owner;
 			this._enable=true;
@@ -12788,6 +12423,7 @@
 			this._renderObject._ownerEnable=this._owner.enable;
 			this._renderObject._enable=this._enable;
 			this._materials=[];
+			this.sortingFudge=0.0;
 			this._owner.transform.on(/*laya.events.Event.WORLDMATRIX_NEEDCHANGE*/"worldmatrixneedchanged",this,this._onWorldMatNeedChange);
 			this._owner.on(/*laya.events.Event.LAYER_CHANGED*/"layerchanged",this,this._onOwnerLayerChanged);
 			this._owner.on(/*laya.events.Event.ENABLED_CHANGED*/"enabledchanged",this,this._onOwnerEnableChanged);
@@ -13035,45 +12671,347 @@
 
 
 	/**
-	*<code>Emission</code> 类用于粒子发射器。
+	*<code>ShurikenParticleSystem</code> 类用于创建3D粒子数据模板。
 	*/
-	//class laya.d3.core.particleShuriKen.module.Emission extends laya.events.EventDispatcher
-	var Emission=(function(_super){
-		function Emission(){
-			this._burstsIndex=0;
-			this._bursts=null;
-			this._startDelay=NaN;
+	//class laya.d3.core.particleShuriKen.ShurikenParticleSystem extends laya.events.EventDispatcher
+	var ShurikenParticleSystem=(function(_super){
+		function ShurikenParticleSystem(owner){
+			this._owner=null;
+			this._vertices=null;
+			this._floatCountPerVertex=0;
+			this._firstActiveElement=0;
+			this._firstNewElement=0;
+			this._firstFreeElement=0;
+			this._firstRetiredElement=0;
+			this._drawCounter=0;
+			this._currentTime=NaN;
+			this._vertexBuffer=null;
+			this._indexBuffer=null;
+			this._bufferMaxParticles=0;
+			this._emission=null;
+			this._shape=null;
 			this._isPlaying=false;
 			this._isPaused=false;
+			this._playStartDelay=NaN;
 			this._frameTime=NaN;
 			this._emissionTime=NaN;
 			this._playbackTime=NaN;
-			this._minEmissionTime=NaN;
-			this._emissionRate=0;
-			this._particleSystem=null;
-			this._shape=null;
-			this.enbale=false;
-			Emission.__super.call(this);
 			this._burstsIndex=0;
+			this._startUpdateLoopCount=0;
+			this.duration=NaN;
+			this.looping=false;
+			this.prewarm=false;
+			this.startDelayType=0;
+			this.startDelay=NaN;
+			this.startDelayMin=NaN;
+			this.startDelayMax=NaN;
+			this.startLifetimeType=0;
+			this.startLifetimeConstant=NaN;
+			this.startLifeTimeGradient=null;
+			this.startLifetimeConstantMin=NaN;
+			this.startLifetimeConstantMax=NaN;
+			this.startLifeTimeGradientMin=null;
+			this.startLifeTimeGradientMax=null;
+			this.startSpeedType=0;
+			this.startSpeedConstant=NaN;
+			this.startSpeedConstantMin=NaN;
+			this.startSpeedConstantMax=NaN;
+			this.threeDStartSize=false;
+			this.startSizeType=0;
+			this.startSizeConstant=NaN;
+			this.startSizeConstantSeparate=null;
+			this.startSizeConstantMin=NaN;
+			this.startSizeConstantMax=NaN;
+			this.startSizeConstantMinSeparate=null;
+			this.startSizeConstantMaxSeparate=null;
+			this.threeDStartRotation=false;
+			this.startRotationType=0;
+			this.startRotationConstant=NaN;
+			this.startRotationConstantSeparate=null;
+			this.startRotationConstantMin=NaN;
+			this.startRotationConstantMax=NaN;
+			this.startRotationConstantMinSeparate=null;
+			this.startRotationConstantMaxSeparate=null;
+			this.randomizeRotationDirection=NaN;
+			this.startColorType=0;
+			this.startColorConstant=null;
+			this.startColorConstantMin=null;
+			this.startColorConstantMax=null;
+			this.gravity=null;
+			this.gravityModifier=NaN;
+			this.simulationSpace=0;
+			this.scaleMode=0;
+			this.playOnAwake=false;
+			this.velocityOverLifetime=null;
+			this.colorOverLifetime=null;
+			this.sizeOverLifetime=null;
+			this.rotationOverLifetime=null;
+			this.textureSheetAnimation=null;
+			this.isPerformanceMode=false;
+			ShurikenParticleSystem.__super.call(this);
+			this._owner=owner;
+			this._currentTime=0;
+			this._floatCountPerVertex=40;
 			this._isPlaying=false;
 			this._isPaused=false;
+			this._burstsIndex=0;
 			this._frameTime=0;
 			this._emissionTime=0;
 			this._playbackTime=0;
-			this.emissionRate=10;
-			this._bursts=[];
+			this._bufferMaxParticles=1000;
+			this.duration=5.0;
+			this.looping=true;
+			this.prewarm=false;
+			this.startDelayType=0;
+			this.startDelay=0.0;
+			this.startDelayMin=0.0;
+			this.startDelayMax=0.0;
+			this.startLifetimeType=0;
+			this.startLifetimeConstant=5.0;
+			this.startLifeTimeGradient=new GradientDataNumber();
+			this.startLifetimeConstantMin=0.0;
+			this.startLifetimeConstantMax=5.0;
+			this.startLifeTimeGradientMin=new GradientDataNumber();
+			this.startLifeTimeGradientMax=new GradientDataNumber();
+			this.startSpeedType=0;
+			this.startSpeedConstant=5.0;
+			this.startSpeedConstantMin=0.0;
+			this.startSpeedConstantMax=5.0;
+			this.threeDStartSize=false;
+			this.startSizeType=0;
+			this.startSizeConstant=1;
+			this.startSizeConstantSeparate=new Vector3(1,1,1);
+			this.startSizeConstantMin=0;
+			this.startSizeConstantMax=1;
+			this.startSizeConstantMinSeparate=new Vector3(0,0,0);
+			this.startSizeConstantMaxSeparate=new Vector3(1,1,1);
+			this.threeDStartRotation=false;
+			this.startRotationType=0;
+			this.startRotationConstant=0;
+			this.startRotationConstantSeparate=new Vector3(0,0,0);
+			this.startRotationConstantMin=0.0;
+			this.startRotationConstantMax=0.0;
+			this.startRotationConstantMinSeparate=new Vector3(0,0,0);
+			this.startRotationConstantMaxSeparate=new Vector3(0,0,0);
+			this.randomizeRotationDirection=0.0;
+			this.startColorType=0;
+			this.startColorConstant=new Vector4(1,1,1,1);
+			this.startColorConstantMin=new Vector4(1,1,1,1);
+			this.startColorConstantMax=new Vector4(1,1,1,1);
+			this.gravity=new Vector3(0,-9.81,0);
+			this.gravityModifier=0.0;
+			this.simulationSpace=1;
+			this.scaleMode=0;
+			this.playOnAwake=true;
+			this.isPerformanceMode=true;
+			this._owner.on(/*laya.events.Event.ENABLED_CHANGED*/"enabledchanged",this,this._onOwnerEnableChanged);
+			this._owner.on(/*laya.events.Event.DISPLAY*/"display",this,this._onDisplayInStage);
+			this._owner.on(/*laya.events.Event.UNDISPLAY*/"undisplay",this,this._onUnDisplayInStage);
 		}
 
-		__class(Emission,'laya.d3.core.particleShuriKen.module.Emission',_super);
-		var __proto=Emission.prototype;
-		Laya.imps(__proto,{"laya.d3.core.IClone":true,"laya.resource.IDestroy":true})
+		__class(ShurikenParticleSystem,'laya.d3.core.particleShuriKen.ShurikenParticleSystem',_super);
+		var __proto=ShurikenParticleSystem.prototype;
+		Laya.imps(__proto,{"laya.d3.core.render.IRenderable":true,"laya.d3.core.IClone":true})
+		__proto._getVertexBuffer=function(index){
+			(index===void 0)&& (index=0);
+			if (index===0)
+				return this._vertexBuffer;
+			else
+			return null;
+		}
+
+		__proto._getIndexBuffer=function(){
+			return this._indexBuffer;
+		}
+
+		/**
+		*@private
+		*/
+		__proto._updateEmission=function(){
+			if (!Laya.stage.isFocused)
+				return;
+			var elapsedTime=0;
+			(this._startUpdateLoopCount!==Stat.loopCount)&& (elapsedTime=Laya.timer.delta / 1000.0,this._currentTime+=elapsedTime);
+			this._retireActiveParticles();
+			this._freeRetiredParticles();
+			(this._emission.enbale)&& (this._advanceTime(elapsedTime));
+			if (this._firstActiveElement===this._firstFreeElement)
+				this._currentTime=0;
+			if (this._firstRetiredElement===this._firstActiveElement)
+				this._drawCounter=0;
+		}
+
+		/**
+		*@private
+		*/
+		__proto._addUpdateEmissionToTimer=function(){
+			Laya.timer.frameLoop(1,this,this._updateEmission);
+		}
+
+		/**
+		*@private
+		*/
+		__proto._removeUpdateEmissionToTimer=function(){
+			Laya.timer.clear(this,this._updateEmission);
+		}
+
+		/**
+		*@private
+		*/
+		__proto._onOwnerEnableChanged=function(enable){
+			if (this._owner.displayedInStage){
+				if (enable)
+					this._addUpdateEmissionToTimer();
+				else
+				this._removeUpdateEmissionToTimer();
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._onDisplayInStage=function(){
+			(this._owner.enable)&& (this._addUpdateEmissionToTimer());
+		}
+
+		/**
+		*@private
+		*/
+		__proto._onUnDisplayInStage=function(){
+			(this._owner.enable)&& (this._removeUpdateEmissionToTimer());
+		}
+
+		/**
+		*@private
+		*/
+		__proto._retireActiveParticles=function(){
+			var epsilon=0.0001;
+			while (this._firstActiveElement !=this._firstNewElement){
+				var index=this._firstActiveElement *this._floatCountPerVertex *4;
+				var timeIndex=index+27;
+				var particleAge=this._currentTime-this._vertices[timeIndex];
+				if (particleAge+epsilon < this._vertices[index+26])
+					break ;
+				this._vertices[timeIndex]=this._drawCounter;
+				this._firstActiveElement++;
+				if (this._firstActiveElement >=this._bufferMaxParticles)
+					this._firstActiveElement=0;
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._freeRetiredParticles=function(){
+			while (this._firstRetiredElement !=this._firstActiveElement){
+				var age=this._drawCounter-this._vertices[this._firstRetiredElement *this._floatCountPerVertex *4+27];
+				if (this.isPerformanceMode)
+					if (age < 3)
+				break ;
+				this._firstRetiredElement++;
+				if (this._firstRetiredElement >=this._bufferMaxParticles)
+					this._firstRetiredElement=0;
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._setPartVertexDatas=function(subU,subV,startU,startV){
+			for (var i=0;i < this._bufferMaxParticles;i++){
+				var particleOffset=i *this._floatCountPerVertex *4;
+				this._vertices[particleOffset+this._floatCountPerVertex *0+0]=-0.5;
+				this._vertices[particleOffset+this._floatCountPerVertex *0+1]=-0.5;
+				this._vertices[particleOffset+this._floatCountPerVertex *1+0]=0.5;
+				this._vertices[particleOffset+this._floatCountPerVertex *1+1]=-0.5;
+				this._vertices[particleOffset+this._floatCountPerVertex *2+0]=0.5;
+				this._vertices[particleOffset+this._floatCountPerVertex *2+1]=0.5;
+				this._vertices[particleOffset+this._floatCountPerVertex *3+0]=-0.5;
+				this._vertices[particleOffset+this._floatCountPerVertex *3+1]=0.5;
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._initPartVertexDatas=function(){
+			this._vertexBuffer=VertexBuffer3D.create(VertexParticleShuriken.vertexDeclaration,this._bufferMaxParticles *4,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
+			this._vertices=new Float32Array(this._bufferMaxParticles *this._floatCountPerVertex *4);
+			var enableSheetAnimation=this.textureSheetAnimation && this.textureSheetAnimation.enbale;
+			if (enableSheetAnimation){
+				var title=this.textureSheetAnimation.tiles;
+				var titleX=title.x,titleY=title.y;
+				var subU=1.0 / titleX,subV=1.0 / titleY;
+				var totalFrameCount=0;
+				var startRow=0;
+				var randomRow=this.textureSheetAnimation.randomRow;
+				switch (this.textureSheetAnimation.type){
+					case 0:
+						totalFrameCount=titleX *titleY;
+						break ;
+					case 1:
+						totalFrameCount=titleX;
+						if (randomRow)
+							startRow=Math.round(Math.random()*titleY);
+						else
+						startRow=0;
+						break ;
+					};
+				var startFrameCount=0;
+				var startFrame=this.textureSheetAnimation.startFrame;
+				switch (startFrame.type){
+					case 0:
+						startFrameCount=startFrame.constant;
+						break ;
+					case 1:
+						startFrameCount=Math.round(MathUtil.lerp(startFrame.constantMin,startFrame.constantMax,Math.random()));
+						break ;
+					};
+				var frame=this.textureSheetAnimation.frame;
+				switch (frame.type){
+					case 0:
+						startFrameCount+=frame.constant;
+						break ;
+					case 2:
+						startFrameCount+=Math.round(MathUtil.lerp(frame.constantMin,frame.constantMax,Math.random()));
+						break ;
+					}
+				if (!randomRow)
+					startRow=Math.floor(startFrameCount / titleX);
+				var startCol=startFrameCount % titleX;
+				this._setPartVertexDatas(subU,subV,startCol *subU,startRow *subV);
+				}else {
+				this._setPartVertexDatas(1.0,1.0,0.0,0.0);
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._initIndexDatas=function(){
+			this._indexBuffer=IndexBuffer3D.create(/*laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort",this._bufferMaxParticles *6,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
+			var indexes=new Uint16Array(this._bufferMaxParticles *6);
+			for (var i=0;i < this._bufferMaxParticles;i++){
+				var indexOffset=i *6;
+				var vertexOffset=i *4;
+				indexes[indexOffset+0]=(vertexOffset+0);
+				indexes[indexOffset+1]=(vertexOffset+2);
+				indexes[indexOffset+2]=(vertexOffset+1);
+				indexes[indexOffset+3]=(vertexOffset+0);
+				indexes[indexOffset+4]=(vertexOffset+3);
+				indexes[indexOffset+5]=(vertexOffset+2);
+			}
+			this._indexBuffer.setData(indexes);
+		}
+
 		/**
 		*@private
 		*/
 		__proto._burst=function(fromTime,toTime){
 			var totalEmitCount=0;
-			for (var n=this._bursts.length;this._burstsIndex < n;this._burstsIndex++){
-				var burst=this._bursts[this._burstsIndex];
+			var bursts=this._emission._bursts;
+			for (var n=bursts.length;this._burstsIndex < n;this._burstsIndex++){
+				var burst=bursts[this._burstsIndex];
 				var burstTime=burst.time;
 				if (burstTime >=fromTime && burstTime <=toTime){
 					var emitCount=MathUtil.lerp(burst.minCount,burst.maxCount,Math.random());
@@ -13092,23 +13030,22 @@
 			if (!this._isPlaying || this._isPaused)
 				return;
 			this._playbackTime+=elapsedTime;
-			if (this._playbackTime < this._startDelay)
+			if (this._playbackTime < this._playStartDelay)
 				return;
 			var i=0;
 			var lastEmissionTime=this._emissionTime;
 			this._emissionTime+=elapsedTime;
-			var duration=this._particleSystem.duration;
 			var totalEmitCount=0;
-			if (this._emissionTime > duration){
-				totalEmitCount+=this._burst(lastEmissionTime,duration);
-				if (this._particleSystem.looping){
-					this._emissionTime-=duration;
+			if (this._emissionTime > this.duration){
+				totalEmitCount+=this._burst(lastEmissionTime,this.duration);
+				if (this.looping){
+					this._emissionTime-=this.duration;
 					this.event(/*laya.events.Event.COMPLETE*/"complete");
 					this._burstsIndex=0;
 					totalEmitCount+=this._burst(0,this._emissionTime);
 					}else {
 					this._isPlaying=false;
-					totalEmitCount=Math.min(this._particleSystem.maxParticles-this._particleSystem.aliveParticleCount,totalEmitCount);
+					totalEmitCount=Math.min(this.maxParticles-this.aliveParticleCount,totalEmitCount);
 					for (i=0;i < totalEmitCount;i++)
 					this.emit();
 					this.event(/*laya.events.Event.STOPPED*/"stopped");
@@ -13117,15 +13054,16 @@
 				}else {
 				totalEmitCount+=this._burst(lastEmissionTime,this._emissionTime);
 			}
-			totalEmitCount=Math.min(this._particleSystem.maxParticles-this._particleSystem.aliveParticleCount,totalEmitCount);
+			totalEmitCount=Math.min(this.maxParticles-this.aliveParticleCount,totalEmitCount);
 			for (i=0;i < totalEmitCount;i++)
 			this.emit();
 			this._frameTime+=elapsedTime;
-			if (this._frameTime < this._minEmissionTime)
+			var minEmissionTime=this.emission._minEmissionTime;
+			if (this._frameTime < minEmissionTime)
 				return;
-			while (this._frameTime > this._minEmissionTime){
+			while (this._frameTime > minEmissionTime){
 				if (this.emit())
-					this._frameTime-=this._minEmissionTime;
+					this._frameTime-=minEmissionTime;
 				else
 				break ;
 			}
@@ -13135,11 +13073,166 @@
 		*@private
 		*/
 		__proto._destroy=function(){
+			this._vertexBuffer.dispose();
+			this._indexBuffer.dispose();
+			this._emission._destroy();
+			this._owner=null;
+			this._vertices=null;
+			this._vertexBuffer=null;
+			this._indexBuffer=null;
+			this._emission=null;
+			this._shape=null;
+			this.startLifeTimeGradient=null;
+			this.startLifeTimeGradientMin=null;
+			this.startLifeTimeGradientMax=null;
+			this.startSizeConstantSeparate=null;
+			this.startSizeConstantMinSeparate=null;
+			this.startSizeConstantMaxSeparate=null;
+			this.startRotationConstantSeparate=null;
+			this.startRotationConstantMinSeparate=null;
+			this.startRotationConstantMaxSeparate=null;
+			this.startColorConstant=null;
+			this.startColorConstantMin=null;
+			this.startColorConstantMax=null;
+			this.gravity=null;
+			this.velocityOverLifetime=null;
+			this.colorOverLifetime=null;
+			this.sizeOverLifetime=null;
+			this.rotationOverLifetime=null;
+			this.textureSheetAnimation=null;
 			this.offAll();
-			this._bursts=null;
-			this._particleSystem=null;
 		}
 
+		/**
+		*发射一个粒子。
+		*/
+		__proto.emit=function(){
+			var position=ShurikenParticleSystem._tempPosition;
+			var direction=ShurikenParticleSystem._tempDirection;
+			if (this._shape.enable){
+				this._shape.generatePositionAndDirection(position,direction);
+				}else {
+				var positionE=position.elements;
+				var directionE=direction.elements;
+				positionE[0]=positionE[1]=positionE[2]=0;
+				directionE[0]=directionE[1]=0;
+				directionE[2]=1;
+			}
+			return this.addParticle(position,direction);
+		}
+
+		//TODO:提前判断优化
+		__proto.addParticle=function(position,direction){
+			Vector3.normalize(direction,direction);
+			var positionE=position.elements;
+			var directionE=direction.elements;
+			var nextFreeParticle=this._firstFreeElement+1;
+			if (nextFreeParticle >=this._bufferMaxParticles)
+				nextFreeParticle=0;
+			if (nextFreeParticle===this._firstRetiredElement)
+				return false;
+			var particleData=ShurikenParticleData.create(this,this._owner.particleRender,positionE,directionE,this._currentTime,this._owner.transform);
+			var startIndex=this._firstFreeElement *this._floatCountPerVertex *4;
+			var randomX0=Math.random(),randomY0=Math.random(),randomZ0=Math.random(),randomW0=Math.random();
+			var randomX1=Math.random(),randomY1=Math.random(),randomZ1=Math.random(),randomW1=Math.random();
+			var subU=particleData.startUVInfo[0];
+			var subV=particleData.startUVInfo[1];
+			var startU=particleData.startUVInfo[2];
+			var startV=particleData.startUVInfo[3];
+			this._vertices[startIndex+2]=startU;
+			this._vertices[startIndex+3]=startV+subV;
+			this._vertices[startIndex+this._floatCountPerVertex+2]=startU+subU;
+			this._vertices[startIndex+this._floatCountPerVertex+3]=startV+subV;
+			this._vertices[startIndex+this._floatCountPerVertex *2+2]=startU+subU;
+			this._vertices[startIndex+this._floatCountPerVertex *2+3]=startV;
+			this._vertices[startIndex+this._floatCountPerVertex *3+2]=startU;
+			this._vertices[startIndex+this._floatCountPerVertex *3+3]=startV;
+			for (var i=0;i < 4;i++){
+				var vertexStart=startIndex+i *this._floatCountPerVertex;
+				var j=0,offset=0;
+				for (j=0,offset=4;j < 3;j++)
+				this._vertices[vertexStart+offset+j]=particleData.position[j];
+				for (j=0,offset=7;j < 3;j++)
+				this._vertices[vertexStart+offset+j]=particleData.direction[j];
+				for (j=0,offset=10;j < 4;j++)
+				this._vertices[vertexStart+offset+j]=particleData.startColor[j];
+				for (j=0,offset=14;j < 3;j++)
+				this._vertices[vertexStart+offset+j]=particleData.startSize[j];
+				for (j=0,offset=17;j < 3;j++)
+				this._vertices[vertexStart+offset+j]=particleData.startRotation0[j];
+				for (j=0,offset=20;j < 3;j++)
+				this._vertices[vertexStart+offset+j]=particleData.startRotation1[j];
+				for (j=0,offset=23;j < 3;j++)
+				this._vertices[vertexStart+offset+j]=particleData.startRotation2[j];
+				this._vertices[vertexStart+26]=particleData.startLifeTime;
+				this._vertices[vertexStart+27]=particleData.time;
+				this._vertices[vertexStart+28]=particleData.startSpeed;
+				this._vertices[vertexStart+29]=randomX0;
+				this._vertices[vertexStart+30]=randomY0;
+				this._vertices[vertexStart+31]=randomZ0;
+				this._vertices[vertexStart+32]=randomW0;
+				this._vertices[vertexStart+33]=randomX1;
+				this._vertices[vertexStart+34]=randomY1;
+				this._vertices[vertexStart+35]=randomZ1;
+				this._vertices[vertexStart+36]=randomW1;
+				for (j=0,offset=37;j < 3;j++)
+				this._vertices[vertexStart+offset+j]=particleData.simulationWorldPostion[j];
+			}
+			this._firstFreeElement=nextFreeParticle;
+			return true;
+		}
+
+		__proto.addNewParticlesToVertexBuffer=function(){
+			var start=0;
+			if (this._firstNewElement < this._firstFreeElement){
+				start=this._firstNewElement *4 *this._floatCountPerVertex;
+				this._vertexBuffer.setData(this._vertices,start,start,(this._firstFreeElement-this._firstNewElement)*4 *this._floatCountPerVertex);
+				}else {
+				start=this._firstNewElement *4 *this._floatCountPerVertex;
+				this._vertexBuffer.setData(this._vertices,start,start,(this._bufferMaxParticles-this._firstNewElement)*4 *this._floatCountPerVertex);
+				if (this._firstFreeElement > 0){
+					this._vertexBuffer.setData(this._vertices,0,0,this._firstFreeElement *4 *this._floatCountPerVertex);
+				}
+			}
+			this._firstNewElement=this._firstFreeElement;
+		}
+
+		__proto._beforeRender=function(state){
+			if (this._firstNewElement !=this._firstFreeElement){
+				this.addNewParticlesToVertexBuffer();
+			}
+			this._drawCounter++;
+			if (this._firstActiveElement !=this._firstFreeElement){
+				this._vertexBuffer._bind();
+				this._indexBuffer._bind();
+				return true;
+			}
+			return false;
+		}
+
+		__proto._render=function(state){
+			var drawVertexCount=0;
+			var glContext=WebGL.mainContext;
+			if (this._firstActiveElement < this._firstFreeElement){
+				drawVertexCount=(this._firstFreeElement-this._firstActiveElement)*6;
+				glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
+				Stat.trianglesFaces+=drawVertexCount / 3;
+				Stat.drawCall++;
+				}else {
+				drawVertexCount=(this._bufferMaxParticles-this._firstActiveElement)*6;
+				glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
+				Stat.trianglesFaces+=drawVertexCount / 3;
+				Stat.drawCall++;
+				if (this._firstFreeElement > 0){
+					drawVertexCount=this._firstFreeElement *6;
+					glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,0);
+					Stat.trianglesFaces+=drawVertexCount / 3;
+					Stat.drawCall++;
+				}
+			}
+		}
+
+		__proto._renderRuntime=function(conchGraphics3D,renderElement,state){}
 		/**
 		*开始发射粒子。
 		*/
@@ -13150,17 +13243,17 @@
 			this._frameTime=0;
 			this._emissionTime=0;
 			this._playbackTime=0;
-			switch (this._particleSystem.startDelayType){
+			switch (this.startDelayType){
 				case 0:
-					this._startDelay=this._particleSystem.startDelay;
+					this._playStartDelay=this.startDelay;
 					break ;
 				case 1:
-					this._startDelay=MathUtil.lerp(this._particleSystem.startDelayMin,this._particleSystem.startDelayMax,Math.random());
+					this._playStartDelay=MathUtil.lerp(this.startDelayMin,this.startDelayMax,Math.random());
 					break ;
 				default :
 					throw new Error("Utils3D: startDelayType is invalid.");
 				}
-			this._particleSystem._startUpdateLoopCount=Stat.loopCount;
+			this._startUpdateLoopCount=Stat.loopCount;
 			this.event(/*laya.events.Event.PLAYED*/"played");
 		}
 
@@ -13186,122 +13279,71 @@
 		}
 
 		/**
-		*获取粒子爆裂个数。
-		*@return 粒子爆裂个数。
-		*/
-		__proto.getBurstsCount=function(){
-			return this._bursts.length;
-		}
-
-		/**
-		*通过索引获取粒子爆裂。
-		*@param index 爆裂索引。
-		*@return 粒子爆裂。
-		*/
-		__proto.getBurstByIndex=function(index){
-			return this._bursts[index];
-		}
-
-		/**
-		*增加粒子爆裂。
-		*@param burst 爆裂。
-		*/
-		__proto.addBurst=function(burst){
-			var burstsCount=this._bursts.length;
-			if (burstsCount > 0)
-				for (var i=0;i < burstsCount;i++){
-				if (this._bursts[i].time > burst.time)
-					this._bursts.splice(i,0,burst);
-			}
-			else
-			this._bursts.push(burst);
-		}
-
-		/**
-		*移除粒子爆裂。
-		*@param burst 爆裂。
-		*/
-		__proto.removeBurst=function(burst){
-			var index=this._bursts.indexOf(burst);
-			if (index!==-1){
-				this._bursts.splice(index,1);
-				var maxBurstsIndex=this._bursts.length;
-				if (this._burstsIndex > maxBurstsIndex)
-					this._burstsIndex=maxBurstsIndex;
-			}
-		}
-
-		/**
-		*通过索引移除粒子爆裂。
-		*@param index 爆裂索引。
-		*/
-		__proto.removeBurstByIndex=function(index){
-			this._bursts.splice(index,1);
-			var maxBurstsIndex=this._bursts.length;
-			if (this._burstsIndex > maxBurstsIndex)
-				this._burstsIndex=maxBurstsIndex;
-		}
-
-		/**
-		*清空粒子爆裂。
-		*/
-		__proto.clearBurst=function(){
-			this._burstsIndex=0;
-			this._bursts.length=0;
-		}
-
-		/**
-		*更新球粒子发射器。
-		*@param state 渲染相关状态参数。
-		*/
-		__proto.update=function(elapsedTime){
-			(this.enbale)&& (this._advanceTime(elapsedTime));
-		}
-
-		/**
-		*发射一个粒子。
-		*/
-		__proto.emit=function(){
-			var position=Emission._tempPosition;
-			var direction=Emission._tempDirection;
-			if (this._shape.enable){
-				this._shape.generatePositionAndDirection(position,direction);
-				}else {
-				var positionE=position.elements;
-				var directionE=direction.elements;
-				positionE[0]=positionE[1]=positionE[2]=0;
-				directionE[0]=directionE[1]=0;
-				directionE[2]=1;
-			}
-			return this._particleSystem.addParticle(position,direction);
-		}
-
-		/**
 		*克隆。
 		*@param destObject 克隆源。
 		*/
 		__proto.cloneTo=function(destObject){
-			var destEmission=destObject;
-			destEmission._burstsIndex=this._burstsIndex;
-			var destBursts=destEmission._bursts;
-			destBursts.length=this._bursts.length;
-			for (var i=0,n=this._bursts.length;i < n;i++){
-				var destBurst=destBursts[i];
-				if (destBurst)
-					this._bursts[i].cloneTo(destBurst);
-				else
-				destBursts[i]=this._bursts[i].clone();
-			}
-			destEmission._startDelay=this._startDelay;
-			destEmission._isPlaying=this._isPlaying;
-			destEmission._isPaused=this._isPaused;
-			destEmission._frameTime=this._frameTime;
-			destEmission._emissionTime=this._emissionTime;
-			destEmission._playbackTime=this._playbackTime;
-			destEmission._minEmissionTime=this._minEmissionTime;
-			destEmission._emissionRate=this._emissionRate;
-			destEmission._burstsIndex=this._burstsIndex;
-			destEmission.enbale=this.enbale;
+			var dest=destObject;
+			dest.duration=this.duration;
+			dest.looping=this.looping;
+			dest.prewarm=this.prewarm;
+			dest.startDelayType=this.startDelayType;
+			dest.startDelay=this.startDelay;
+			dest.startDelayMin=this.startDelayMin;
+			dest.startDelayMax=this.startDelayMax;
+			dest.startLifetimeType=this.startLifetimeType;
+			dest.startLifetimeConstant=this.startLifetimeConstant;
+			this.startLifeTimeGradient.cloneTo(dest.startLifeTimeGradient);
+			dest.startLifetimeConstantMin=this.startLifetimeConstantMin;
+			dest.startLifetimeConstantMax=this.startLifetimeConstantMax;
+			this.startLifeTimeGradientMin.cloneTo(dest.startLifeTimeGradientMin);
+			this.startLifeTimeGradientMax.cloneTo(dest.startLifeTimeGradientMax);
+			dest.startSpeedType=this.startSpeedType;
+			dest.startSpeedConstant=this.startSpeedConstant;
+			dest.startSpeedConstantMin=this.startSpeedConstantMin;
+			dest.startSpeedConstantMax=this.startSpeedConstantMax;
+			dest.threeDStartSize=this.threeDStartSize;
+			dest.startSizeType=this.startSizeType;
+			dest.startSizeConstant=this.startSizeConstant;
+			this.startSizeConstantSeparate.cloneTo(dest.startSizeConstantSeparate);
+			dest.startSizeConstantMin=this.startSizeConstantMin;
+			dest.startSizeConstantMax=this.startSizeConstantMax;
+			this.startSizeConstantMinSeparate.cloneTo(dest.startSizeConstantMinSeparate);
+			this.startSizeConstantMaxSeparate.cloneTo(dest.startSizeConstantMaxSeparate);
+			dest.threeDStartRotation=this.threeDStartRotation;
+			dest.startRotationType=this.startRotationType;
+			dest.startRotationConstant=this.startRotationConstant;
+			this.startRotationConstantSeparate.cloneTo(dest.startRotationConstantSeparate);
+			dest.startRotationConstantMin=this.startRotationConstantMin;
+			dest.startRotationConstantMax=this.startRotationConstantMax;
+			this.startRotationConstantMinSeparate.cloneTo(dest.startRotationConstantMinSeparate);
+			this.startRotationConstantMaxSeparate.cloneTo(dest.startRotationConstantMaxSeparate);
+			dest.randomizeRotationDirection=this.randomizeRotationDirection;
+			dest.startColorType=this.startColorType;
+			this.startColorConstant.cloneTo(dest.startColorConstant);
+			this.startColorConstantMin.cloneTo(dest.startColorConstantMin);
+			this.startColorConstantMax.cloneTo(dest.startColorConstantMax);
+			this.gravity.cloneTo(dest.gravity);
+			dest.gravityModifier=this.gravityModifier;
+			dest.simulationSpace=this.simulationSpace;
+			dest.scaleMode=this.scaleMode;
+			dest.playOnAwake=this.playOnAwake;
+			dest.maxParticles=this.maxParticles;
+			(this.emission)&& (dest.emission=this.emission.clone());
+			(this.shape)&& (dest.shape=this.shape.clone());
+			(this.velocityOverLifetime)&& (dest.velocityOverLifetime=this.velocityOverLifetime.clone());
+			(this.colorOverLifetime)&& (dest.colorOverLifetime=this.colorOverLifetime.clone());
+			(this.sizeOverLifetime)&& (dest.sizeOverLifetime=this.sizeOverLifetime.clone());
+			(this.rotationOverLifetime)&& (dest.rotationOverLifetime=this.rotationOverLifetime.clone());
+			(this.textureSheetAnimation)&& (dest.textureSheetAnimation=this.textureSheetAnimation.clone());
+			dest.isPerformanceMode=this.isPerformanceMode;
+			dest._isPlaying=this._isPlaying;
+			dest._isPaused=this._isPaused;
+			dest._playStartDelay=this._playStartDelay;
+			dest._frameTime=this._frameTime;
+			dest._emissionTime=this._emissionTime;
+			dest._playbackTime=this._playbackTime;
+			dest._burstsIndex=this._burstsIndex;
 		}
 
 		/**
@@ -13309,10 +13351,96 @@
 		*@return 克隆副本。
 		*/
 		__proto.clone=function(){
-			var destEmission=/*__JS__ */new this.constructor();
-			this.cloneTo(destEmission);
-			return destEmission;
+			var dest=/*__JS__ */new this.constructor();
+			this.cloneTo(dest);
+			return dest;
 		}
+
+		/**是否已暂停。*/
+		__getset(0,__proto,'isPaused',function(){
+			return this._isPaused;
+		});
+
+		/**当前粒子时间。*/
+		__getset(0,__proto,'currentTime',function(){
+			return this._currentTime;
+		});
+
+		/**设置最大粒子数,注意:谨慎修改此属性，有性能损耗。*/
+		/**获取最大粒子数。*/
+		__getset(0,__proto,'maxParticles',function(){
+			return this._bufferMaxParticles-1;
+			},function(value){
+			var newMaxParticles=value+1;
+			if (newMaxParticles!==this._bufferMaxParticles){
+				this._bufferMaxParticles=newMaxParticles;
+				if (this._vertexBuffer){
+					this._vertexBuffer.dispose();
+					this._indexBuffer.dispose();
+				}
+				this._initPartVertexDatas();
+				this._initIndexDatas();
+			}
+		});
+
+		/**
+		*是否存活。
+		*/
+		__getset(0,__proto,'isAlive',function(){
+			if (this._isPlaying || this.aliveParticleCount > 0)
+				return true;
+			return false;
+		});
+
+		/**
+		*设置形状。
+		*/
+		/**
+		*获取形状。
+		*/
+		__getset(0,__proto,'shape',function(){
+			return this._shape;
+			},function(value){
+			this._shape=value;
+			this._emission._shape=value;
+		});
+
+		/**
+		*设置发射器。
+		*/
+		/**
+		*获取发射器。
+		*/
+		__getset(0,__proto,'emission',function(){
+			return this._emission;
+			},function(value){
+			this._emission=value;
+			value._particleSystem=this;
+			value._shape=this._shape;
+		});
+
+		/**
+		*获取一次循环内的累计时间。
+		*@return 一次循环内的累计时间。
+		*/
+		__getset(0,__proto,'emissionTime',function(){
+			return this._emissionTime > this.duration ? this.duration :this._emissionTime;
+		});
+
+		/**
+		*粒子存活个数。
+		*/
+		__getset(0,__proto,'aliveParticleCount',function(){
+			if (this._firstNewElement >=this._firstRetiredElement)
+				return this._firstNewElement-this._firstRetiredElement;
+			else
+			return this._bufferMaxParticles-this._firstRetiredElement+this._firstNewElement;
+		});
+
+		/**是否正在播放。*/
+		__getset(0,__proto,'isPlaying',function(){
+			return this._isPlaying;
+		});
 
 		/**
 		*获取播放的累计时间。
@@ -13322,49 +13450,22 @@
 			return this._playbackTime;
 		});
 
-		/**是否正在播放。*/
-		__getset(0,__proto,'isPlaying',function(){
-			return this._isPlaying;
+		__getset(0,__proto,'indexOfHost',function(){
+			return 0;
 		});
 
-		/**是否已暂停。*/
-		__getset(0,__proto,'isPaused',function(){
-			return this._isPaused;
+		__getset(0,__proto,'_vertexBufferCount',function(){
+			return 1;
 		});
 
-		/**
-		*获取一次循环内的累计时间。
-		*@return 一次循环内的累计时间。
-		*/
-		__getset(0,__proto,'emissionTime',function(){
-			var duration=this._particleSystem.duration;
-			return this._emissionTime > duration ? duration :this._emissionTime;
+		__getset(0,__proto,'triangleCount',function(){
+			return this._indexBuffer.indexCount / 3;
 		});
 
-		/**
-		*设置粒子发射速率。
-		*@param emissionRate 粒子发射速率 (个/秒)。
-		*/
-		/**
-		*获取粒子发射速率。
-		*@return 粒子发射速率 (个/秒)。
-		*/
-		__getset(0,__proto,'emissionRate',function(){
-			return this._emissionRate;
-			},function(value){
-			if (value < 0)
-				throw new Error("ParticleBaseShape:emissionRate value must large or equal than 0.");
-			this._emissionRate=value;
-			if (value===0)
-				this._minEmissionTime=2147483647;
-			else
-			this._minEmissionTime=1 / value;
-		});
-
-		__static(Emission,
+		__static(ShurikenParticleSystem,
 		['_tempPosition',function(){return this._tempPosition=new Vector3();},'_tempDirection',function(){return this._tempDirection=new Vector3();}
 		]);
-		return Emission;
+		return ShurikenParticleSystem;
 	})(EventDispatcher)
 
 
@@ -13466,6 +13567,26 @@
 				}else {
 				Quaternion.multiply(this._tempQuaternion0,this.rotation,this._rotation);
 				this.rotation=this._rotation;
+			}
+		}
+
+		/**
+		*从一个位置观察目标位置。
+		*@param Vector3 观察位置。
+		*@param Vector3 观察目标。
+		*@param Vector3 向上向量。
+		*@param isLocal 是否局部空间。
+		*/
+		__proto.lookAt=function(position,target,upVector,isLocal){
+			(isLocal===void 0)&& (isLocal=true);
+			if (isLocal){
+				Matrix4x4.createLookAt(position,target,upVector,this._localMatrix);
+				this._localMatrix.invert(this._localMatrix);
+				this.localMatrix=this._localMatrix;
+				}else {
+				Matrix4x4.createLookAt(position,target,upVector,this._worldMatrix);
+				this._worldMatrix.invert(this._worldMatrix);
+				this.worldMatrix=this._worldMatrix;
 			}
 		}
 
@@ -13716,14 +13837,14 @@
 	var TransformUV=(function(_super){
 		function TransformUV(){
 			this._rotation=0;
+			this._tiling=null;
 			this._matNeedUpdte=false;
 			TransformUV.__super.call(this);
-			this._tempTitlingV3=new Vector3();
 			this._tempRotationMatrix=new Matrix4x4();
 			this._tempTitlingMatrix=new Matrix4x4();
 			this._matrix=new Matrix4x4();
 			this._offset=new Vector2();
-			this._tiling=new Vector2();
+			this._tiling=new Vector2(1.0,1.0);
 		}
 
 		__class(TransformUV,'laya.d3.core.TransformUV',_super);
@@ -13732,16 +13853,12 @@
 		*@private
 		*/
 		__proto._updateMatrix=function(){
-			this._tempTitlingV3.elements[0]=this._tiling.x;
-			this._tempTitlingV3.elements[1]=this._tiling.y;
-			this._tempTitlingV3.elements[2]=1;
-			Matrix4x4.createScaling(this._tempTitlingV3,this._tempTitlingMatrix);
-			Matrix4x4.createRotationZ(this._rotation,this._tempRotationMatrix);
-			Matrix4x4.multiply(this._tempRotationMatrix,this._tempTitlingMatrix,this._matrix);
-			var mate=this._matrix.elements;
-			mate[12]=this._offset.x;
-			mate[13]=this._offset.y;
-			mate[14]=0;
+			TransformUV._tempOffsetV3.elements[0]=this._offset.x;
+			TransformUV._tempOffsetV3.elements[1]=this._offset.y;
+			Quaternion.createFromYawPitchRoll(0,0,this._rotation,TransformUV._tempRotationQua);
+			TransformUV._tempTitlingV3.elements[0]=this._tiling.x;
+			TransformUV._tempTitlingV3.elements[1]=this._tiling.y;
+			Matrix4x4.createAffineTransformation(TransformUV._tempOffsetV3,TransformUV._tempRotationQua,TransformUV._tempTitlingV3,this._matrix);
 		}
 
 		/**
@@ -13801,6 +13918,9 @@
 			this._matNeedUpdte=true;
 		});
 
+		__static(TransformUV,
+		['_tempOffsetV3',function(){return this._tempOffsetV3=new Vector3(0,0,0);},'_tempRotationQua',function(){return this._tempRotationQua=new Quaternion();},'_tempTitlingV3',function(){return this._tempTitlingV3=new Vector3(1,1,1);}
+		]);
 		return TransformUV;
 	})(EventDispatcher)
 
@@ -14607,7 +14727,7 @@
 				}else {
 				rdE[0]=0.0;
 				rdE[1]=0.0;
-				rdE[2]=-1.0;
+				rdE[2]=1.0;
 			}
 		}
 
@@ -14734,7 +14854,7 @@
 						rdE[0]=positionX *dirSinA;
 						rdE[1]=positionY *dirSinA;
 					}
-					rdE[2]=-dirCosA;
+					rdE[2]=dirCosA;
 					break ;
 				case 1:
 					ShapeUtils._randomPointUnitCircle(ConeShape._tempPositionPoint);
@@ -14752,7 +14872,7 @@
 						rdE[0]=positionX *dirSinA;
 						rdE[1]=positionY *dirSinA;
 					}
-					rdE[2]=-dirCosA;
+					rdE[2]=dirCosA;
 					break ;
 				case 2:
 					ShapeUtils._randomPointInsideUnitCircle(ConeShape._tempPositionPoint);
@@ -14763,7 +14883,7 @@
 					rpE[2]=0;
 					rdE[0]=positionX *dirSinA;
 					rdE[1]=positionY *dirSinA;
-					rdE[2]=-dirCosA;
+					rdE[2]=dirCosA;
 					Vector3.normalize(direction,direction);
 					Vector3.scale(direction,this.length *Math.random(),direction);
 					Vector3.add(position,direction,position);
@@ -14779,7 +14899,7 @@
 					rpE[2]=0;
 					rdE[0]=positionX *dirSinA;
 					rdE[1]=positionY *dirSinA;
-					rdE[2]=-dirCosA;
+					rdE[2]=dirCosA;
 					Vector3.normalize(direction,direction);
 					Vector3.scale(direction,this.length *Math.random(),direction);
 					Vector3.add(position,direction,position);
@@ -14925,6 +15045,7 @@
 			ShaderDefines3D.reg("AMBIENTMAP",0x10);
 			ShaderDefines3D.reg("REFLECTMAP",0x20);
 			ShaderDefines3D.reg("PARTICLE3D",0x40000);
+			ShaderDefines3D.reg("SCALEOFFSETLIGHTINGMAPUV",0x20000000);
 			ShaderDefines3D.reg("COLOR",0x800);
 			ShaderDefines3D.reg("UV",0x400);
 			ShaderDefines3D.reg("SKINNED",0x10000);
@@ -14982,6 +15103,7 @@
 		ShaderDefines3D.SKINNED=0x10000;
 		ShaderDefines3D.ALPHATEST=0x20000;
 		ShaderDefines3D.PARTICLE3D=0x40000;
+		ShaderDefines3D.SCALEOFFSETLIGHTINGMAPUV=0x20000000;
 		ShaderDefines3D.SPHERHBILLBOARD=0x80000;
 		ShaderDefines3D.STRETCHEDBILLBOARD=0x100000;
 		ShaderDefines3D.HORIZONTALBILLBOARD=0x200000;
@@ -15010,6 +15132,7 @@
 			this._enable=false;
 			this._layerMask=0;
 			this._componentsMap=[];
+			this._shaderDefineValue=0;
 			this._shaderValues=null;
 			this.transform=null;
 			this.isStatic=false;
@@ -15031,6 +15154,14 @@
 		Laya.imps(__proto,{"laya.d3.core.render.IUpdate":true,"laya.resource.ICreateResource":true,"laya.d3.core.IClone":true})
 		__proto.createConchModel=function(){
 			return /*__JS__ */null;
+		}
+
+		/**
+		*增加Shader宏定义。
+		*@param value 宏定义。
+		*/
+		__proto._addShaderDefine=function(value){
+			this._shaderDefineValue |=value;
 		}
 
 		/**
@@ -15110,7 +15241,6 @@
 			this._setShaderValueMatrix4x4(/*CLASS CONST:laya.d3.core.Sprite3D.WORLDMATRIX*/0,this.transform.worldMatrix);
 			var projViewWorld=this.getProjectionViewWorldMatrix(projectionView);
 			this._setShaderValueMatrix4x4(/*CLASS CONST:laya.d3.core.Sprite3D.MVPMATRIX*/1,projViewWorld);
-			debugger;
 		}
 
 		/**
@@ -15238,7 +15368,7 @@
 		/**
 		*@private
 		*/
-		__proto.onAsynLoaded=function(url,data){
+		__proto.onAsynLoaded=function(url,data,params){
 			if (this.destroyed)
 				return;
 			var oriData=data[0];
@@ -15386,7 +15516,7 @@
 		}
 
 		Sprite3D.load=function(url){
-			return Laya.loader.create(url,null,null,Sprite3D,1,false);
+			return Laya.loader.create(url,null,null,Sprite3D,null,1,false);
 		}
 
 		Sprite3D.WORLDMATRIX=0;
@@ -15449,8 +15579,8 @@
 		/**
 		*@private
 		*/
-		__proto._getShader=function(stateShaderDefines,vertexShaderDefineValue){
-			var defineValue=(stateShaderDefines._value | vertexShaderDefineValue | this._shaderDefineValue)& (~this._disableShaderDefineValue);
+		__proto._getShader=function(stateShaderDefines,vertexShaderDefineValue,spriteShaderDefineValue){
+			var defineValue=(stateShaderDefines._value | vertexShaderDefineValue | this._shaderDefineValue|spriteShaderDefineValue)& (~this._disableShaderDefineValue);
 			stateShaderDefines._value=defineValue;
 			var nameID=this._sharderNameID */*laya.d3.shader.Shader3D.SHADERNAME2ID*/0.0002+defineValue;
 			this._shader=Shader3D.withCompile(this._sharderNameID,stateShaderDefines,nameID);
@@ -15706,7 +15836,7 @@
 		/**
 		*@private
 		*/
-		__proto.onAsynLoaded=function(url,data){
+		__proto.onAsynLoaded=function(url,data,params){
 			var jsonData=data[0];
 			var textureMap=data[1];
 			var customHandler=Handler.create(null,Utils3D._parseMaterial,[textureMap],false);
@@ -16441,10 +16571,13 @@
 	var MeshRender=(function(_super){
 		function MeshRender(owner){
 			this._meshSprite3DOwner=null;
+			this._lightmapScaleOffset=null;
 			this.castShadow=false;
 			this.receiveShadow=false;
+			this.lightmapIndex=0;
 			MeshRender.__super.call(this,owner);
 			this._meshSprite3DOwner=owner;
+			this.lightmapIndex=-1;
 			this.castShadow=true;
 			this.receiveShadow=true;
 			this._meshSprite3DOwner.meshFilter.on(/*laya.events.Event.MESH_CHANGED*/"meshchanged",this,this._onMeshChanged);
@@ -16508,6 +16641,22 @@
 			this._meshSprite3DOwner=null;
 		}
 
+		/**
+		*设置光照贴图的缩放和偏移。
+		*@param 光照贴图的缩放和偏移。
+		*/
+		/**
+		*获取光照贴图的缩放和偏移。
+		*@return 光照贴图的缩放和偏移。
+		*/
+		__getset(0,__proto,'lightmapScaleOffset',function(){
+			return this._lightmapScaleOffset;
+			},function(value){
+			this._lightmapScaleOffset=value;
+			this._owner._setShaderValueColor(/*laya.d3.core.MeshSprite3D.LIGHTMAPSCALEOFFSET*/2,value);
+			this._owner._addShaderDefine(/*laya.d3.shader.ShaderDefines3D.SCALEOFFSETLIGHTINGMAPUV*/0x20000000);
+		});
+
 		return MeshRender;
 	})(BaseRender)
 
@@ -16555,15 +16704,19 @@
 	var ShurikenParticleRender=(function(_super){
 		function ShurikenParticleRender(owner){
 			this.renderMode=0;
-			this.stretchedBillboardCameraSpeedScale=0;
-			this.stretchedBillboardSpeedScale=0;
-			this.stretchedBillboardLengthScale=1;
+			this.stretchedBillboardCameraSpeedScale=NaN;
+			this.stretchedBillboardSpeedScale=NaN;
+			this.stretchedBillboardLengthScale=NaN;
 			ShurikenParticleRender.__super.call(this,owner);
 			this.renderMode=0;
+			this.stretchedBillboardCameraSpeedScale=0.0;
+			this.stretchedBillboardSpeedScale=0.0;
+			this.stretchedBillboardLengthScale=1.0;
 		}
 
 		__class(ShurikenParticleRender,'laya.d3.core.particleShuriKen.ShurikenParticleRender',_super);
 		var __proto=ShurikenParticleRender.prototype;
+		//sortingMode=SORTINGMODE_NONE;
 		__proto._calculateBoundingBox=function(){
 			var minE=this._boundingBox.min.elements;
 			minE[0]=-Number.MAX_VALUE;
@@ -16920,7 +17073,7 @@
 		*/
 		__proto._preRenderScene=function(gl,state){
 			this._boundFrustum.matrix=state.projectionViewMatrix;
-			FrustumCulling.RenderObjectCulling(this._boundFrustum,this,state.viewMatrix,state.projectionMatrix,state.projectionViewMatrix);
+			FrustumCulling.RenderObjectCulling(this._boundFrustum,this,state.camera,state.viewMatrix,state.projectionMatrix,state.projectionViewMatrix);
 			for (var i=0,iNum=this._quenes.length;i < iNum;i++)
 			(this._quenes[i])&& (this._quenes[i]._preRender(state));
 		}
@@ -17995,11 +18148,10 @@
 		*@private
 		*/
 		__proto._prepareShaderValuetoRender=function(view,projection,projectionView){
-			this._setShaderValueMatrix4x4(/*laya.d3.core.Sprite3D.WORLDMATRIX*/0,this.transform.worldMatrix);
-			var projViewWorld=this.getProjectionViewWorldMatrix(projectionView);
-			this._setShaderValueMatrix4x4(/*laya.d3.core.Sprite3D.MVPMATRIX*/1,projViewWorld);
+			_super.prototype._prepareShaderValuetoRender.call(this,view,projection,projectionView);
 		}
 
+		//_setShaderValueColor(LIGHTMAPSCALEOFFSET,_meshRender.lightmapScaleOffset);
 		__proto.cloneTo=function(destObject){
 			_super.prototype.cloneTo.call(this,destObject);
 			var meshSprite3D=destObject;
@@ -18034,6 +18186,7 @@
 			return this._meshRender;
 		});
 
+		MeshSprite3D.LIGHTMAPSCALEOFFSET=2;
 		return MeshSprite3D;
 	})(Sprite3D)
 
@@ -18911,66 +19064,7 @@
 			_super.prototype.cloneTo.call(this,destObject);
 			var destShuriKenParticle3D=destObject;
 			var destParticleSystem=destShuriKenParticle3D._particleSystem;
-			destParticleSystem.duration=this._particleSystem.duration;
-			destParticleSystem.looping=this._particleSystem.looping;
-			destParticleSystem.prewarm=this._particleSystem.prewarm;
-			destParticleSystem.startDelayType=this._particleSystem.startDelayType;
-			destParticleSystem.startDelay=this._particleSystem.startDelay;
-			destParticleSystem.startDelayMin=this._particleSystem.startDelayMin;
-			destParticleSystem.startDelayMax=this._particleSystem.startDelayMax;
-			destParticleSystem.startLifetimeType=this._particleSystem.startLifetimeType;
-			destParticleSystem.startLifetimeConstant=this._particleSystem.startLifetimeConstant;
-			this._particleSystem.startLifeTimeGradient.cloneTo(destParticleSystem.startLifeTimeGradient);
-			destParticleSystem.startLifetimeConstantMin=this._particleSystem.startLifetimeConstantMin;
-			destParticleSystem.startLifetimeConstantMax=this._particleSystem.startLifetimeConstantMax;
-			this._particleSystem.startLifeTimeGradientMin.cloneTo(destParticleSystem.startLifeTimeGradientMin);
-			this._particleSystem.startLifeTimeGradientMax.cloneTo(destParticleSystem.startLifeTimeGradientMax);
-			destParticleSystem.startSpeedType=this._particleSystem.startSpeedType;
-			destParticleSystem.startSpeedConstant=this._particleSystem.startSpeedConstant;
-			destParticleSystem.startSpeedConstantMin=this._particleSystem.startSpeedConstantMin;
-			destParticleSystem.startSpeedConstantMax=this._particleSystem.startSpeedConstantMax;
-			destParticleSystem.threeDStartSize=this._particleSystem.threeDStartSize;
-			destParticleSystem.startSizeType=this._particleSystem.startSizeType;
-			destParticleSystem.startSizeConstant=this._particleSystem.startSizeConstant;
-			this._particleSystem.startSizeConstantSeparate.cloneTo(destParticleSystem.startSizeConstantSeparate);
-			destParticleSystem.startSizeConstantMin=this._particleSystem.startSizeConstantMin;
-			destParticleSystem.startSizeConstantMax=this._particleSystem.startSizeConstantMax;
-			this._particleSystem.startSizeConstantMinSeparate.cloneTo(destParticleSystem.startSizeConstantMinSeparate);
-			this._particleSystem.startSizeConstantMaxSeparate.cloneTo(destParticleSystem.startSizeConstantMaxSeparate);
-			destParticleSystem.threeDStartRotation=this._particleSystem.threeDStartRotation;
-			destParticleSystem.startRotationType=this._particleSystem.startRotationType;
-			destParticleSystem.startRotationConstant=this._particleSystem.startRotationConstant;
-			this._particleSystem.startRotationConstantSeparate.cloneTo(destParticleSystem.startRotationConstantSeparate);
-			destParticleSystem.startRotationConstantMin=this._particleSystem.startRotationConstantMin;
-			destParticleSystem.startRotationConstantMax=this._particleSystem.startRotationConstantMax;
-			this._particleSystem.startRotationConstantMinSeparate.cloneTo(destParticleSystem.startRotationConstantMinSeparate);
-			this._particleSystem.startRotationConstantMaxSeparate.cloneTo(destParticleSystem.startRotationConstantMaxSeparate);
-			destParticleSystem.randomizeRotationDirection=this._particleSystem.randomizeRotationDirection;
-			destParticleSystem.startColorType=this._particleSystem.startColorType;
-			this._particleSystem.startColorConstant.cloneTo(destParticleSystem.startColorConstant);
-			this._particleSystem.startColorConstantMin.cloneTo(destParticleSystem.startColorConstantMin);
-			this._particleSystem.startColorConstantMax.cloneTo(destParticleSystem.startColorConstantMax);
-			this._particleSystem.gravity.cloneTo(destParticleSystem.gravity);
-			destParticleSystem.gravityModifier=this._particleSystem.gravityModifier;
-			destParticleSystem.simulationSpace=this._particleSystem.simulationSpace;
-			destParticleSystem.scaleMode=this._particleSystem.scaleMode;
-			destParticleSystem.playOnAwake=this._particleSystem.playOnAwake;
-			destParticleSystem.maxParticles=this._particleSystem.maxParticles;
-			var emission=this._particleSystem.emission;
-			(emission)&& (destParticleSystem.emission=emission.clone());
-			var shape=this._particleSystem.shape;
-			(shape)&& (destParticleSystem.shape=shape.clone());
-			var velocityOverLifetime=this._particleSystem.velocityOverLifetime;
-			(velocityOverLifetime)&& (destParticleSystem.velocityOverLifetime=velocityOverLifetime.clone());
-			var colorOverLifetime=this._particleSystem.colorOverLifetime;
-			(colorOverLifetime)&& (destParticleSystem.colorOverLifetime=colorOverLifetime.clone());
-			var sizeOverLifetime=this._particleSystem.sizeOverLifetime;
-			(sizeOverLifetime)&& (destParticleSystem.sizeOverLifetime=sizeOverLifetime.clone());
-			var rotationOverLifetime=this._particleSystem.rotationOverLifetime;
-			(rotationOverLifetime)&& (destParticleSystem.rotationOverLifetime=rotationOverLifetime.clone());
-			var textureSheetAnimation=this._particleSystem.textureSheetAnimation;
-			(textureSheetAnimation)&& (destParticleSystem.textureSheetAnimation=textureSheetAnimation.clone());
-			destParticleSystem.isPerformanceMode=this._particleSystem.isPerformanceMode;
+			this._particleSystem.cloneTo(destParticleSystem);
 			var destParticleRender=destShuriKenParticle3D._particleRender;
 			destParticleRender.sharedMaterials=this._particleRender.sharedMaterials;
 			destParticleRender.enable=this._particleRender.enable;
@@ -19766,7 +19860,6 @@
 			finalGravityE[0]=gravityE[0] *gravityModifier;
 			finalGravityE[1]=gravityE[1] *gravityModifier;
 			finalGravityE[2]=gravityE[2] *gravityModifier;
-			debugger;
 			this._setBuffer(3,finalGravityE);
 			this._setInt(9,particleSystem.simulationSpace);
 			this._setBool(0,particleSystem.threeDStartRotation);
@@ -20877,7 +20970,7 @@
 		/**
 		*@private
 		*/
-		__proto.onAsynLoaded=function(url,data){
+		__proto.onAsynLoaded=function(url,data,params){
 			var bufferData=data[0];
 			var textureMap=data[1];
 			MeshReader.read(bufferData,this,this._materials,textureMap);
@@ -21596,12 +21689,16 @@
 	*/
 	//class laya.d3.resource.Texture2D extends laya.d3.resource.BaseTexture
 	var Texture2D=(function(_super){
-		function Texture2D(){
+		function Texture2D(canRead){
+			this._canRead=false;
 			this._src=null;
 			this._image=null;
 			this._recreateLock=false;
 			this._needReleaseAgain=false;
+			this._pixels=null;
+			(canRead===void 0)&& (canRead=false);
 			Texture2D.__super.call(this);
+			this._canRead=canRead;
 		}
 
 		__class(Texture2D,'laya.d3.resource.Texture2D',_super);
@@ -21616,22 +21713,30 @@
 			this._width=w;
 			this._height=h;
 			this._size=new Size(w,h);
+			if (this._canRead){
+				Browser.canvas.size(w,h);
+				Browser.canvas.clear();
+				Browser.context.drawImage(img,0,0,w,h);
+				this._pixels=new Uint8Array(Browser.context.getImageData(0,0,w,h).data.buffer);
+			}
 		}
 
 		/**
 		*@private
 		*/
 		__proto._createWebGlTexture=function(){
-			if (!this._image){
+			if (!this._image)
 				throw "create GLTextur err:no data:"+this._image;
-			};
 			var gl=WebGL.mainContext;
-			var glTex=this._source=gl.createTexture();
+			var glTexture=this._source=gl.createTexture();
 			var w=this._width;
 			var h=this._height;
 			var preTarget=WebGLContext.curBindTexTarget;
 			var preTexture=WebGLContext.curBindTexValue;
-			WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
+			WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTexture);
+			if (this._canRead)
+				gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,w,h,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this._pixels);
+			else
 			gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this._image);
 			var minFifter=this._minFifter;
 			var magFifter=this._magFifter;
@@ -21658,6 +21763,7 @@
 			}
 			(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 			this._image.onload=null;
+			this._image=null;
 			if (isPot)
 				this.memorySize=w *h *4 *(1+1 / 3);
 			else
@@ -21702,7 +21808,10 @@
 		/**
 		*@private
 		*/
-		__proto.onAsynLoaded=function(url,data){
+		__proto.onAsynLoaded=function(url,data,params){
+			if (params){
+				this._canRead=params[0];
+			}
 			this._src=url;
 			this._onTextureLoaded(data);
 			if (this._conchTexture)
@@ -21711,6 +21820,17 @@
 			this.activeResource();
 			this._loaded=true;
 			this.event(/*laya.events.Event.LOADED*/"loaded",this);
+		}
+
+		/**
+		*返回图片像素。
+		*@return 图片像素。
+		*/
+		__proto.getPixels=function(){
+			if (this._canRead)
+				return this._pixels;
+			else
+			throw new Error("Texture2D: must set texture canRead is true.");
 		}
 
 		/**
@@ -21875,7 +21995,7 @@
 		/**
 		*@private
 		*/
-		__proto.onAsynLoaded=function(url,data){
+		__proto.onAsynLoaded=function(url,data,params){
 			this._srcs=url;
 			this._onTextureLoaded(data);
 			if (this._conchTexture)

@@ -19,6 +19,7 @@ package laya.display {
 	/**
 	 * 舞台获得焦点时调度。比如浏览器或者当前标签被切换到后台后，重新切换回来时。
 	 * @eventType Event.FOCUS
+	 *
 	 */
 	[Event(name = "focus", type = "laya.events.Event")]
 	/**
@@ -26,6 +27,16 @@ package laya.display {
 	 * @eventType Event.BLUR
 	 */
 	[Event(name = "blur", type = "laya.events.Event")]
+	/**
+	 * 舞台焦点变化时调度，使用Laya.stage.isFocused可以获取当前舞台是否获得焦点。
+	 * @eventType Event.FOCUS_CHANGE
+	 */
+	[Event(name = "focuschange", type = "laya.events.Event")]
+	/**
+	 * 舞台可见性发生变化时调度（比如浏览器或者当前标签被切换到后台后调度），使用Laya.stage.isVisibility可以获取当前是否处于显示状态。
+	 * @eventType Event.VISIBILITY_CHANGE
+	 */
+	[Event(name = "visibilitychange", type = "laya.events.Event")]
 	/**
 	 * 浏览器全屏更改时调度，比如进入全屏或者退出全屏。
 	 * @eventType Event.FULL_SCREEN_CHANGE
@@ -122,6 +133,10 @@ package laya.display {
 		private var _frameStartTime:Number;
 		/**@private */
 		private var _previousOrientation:int;
+		/**@private */
+		private var _isFocused:Boolean;
+		/**@private */
+		private var _isVisibility:Boolean;
 		/**@private 3D场景*/
 		public var _scenes:Array;
 		
@@ -132,15 +147,20 @@ package laya.display {
 			this.hitTestPrior = true;
 			this.autoSize = false;
 			this._displayedInStage = true;
+			this._isFocused = true;
 			
 			var _this:Stage = this;
 			var window:* = Browser.window;
 			
 			window.addEventListener("focus", function():void {
+				_isFocused = true;
 				_this.event(Event.FOCUS);
+				_this.event(Event.FOCUS_CHANGE);
 			});
 			window.addEventListener("blur", function():void {
+				_isFocused = false;
 				_this.event(Event.BLUR);
+				_this.event(Event.FOCUS_CHANGE);
 				if (_this._isInputting()) Input["inputElement"].target.focus = false;
 			});
 			// 各种浏览器兼容
@@ -163,11 +183,12 @@ package laya.display {
 			window.document.addEventListener(visibilityChange, visibleChangeFun);
 			function visibleChangeFun():void {
 				if (Browser.document[state] == "hidden") {
-					_this.event(Event.BLUR);
+					_isVisibility = false;
 					if (_this._isInputting()) Input["inputElement"].target.focus = false;
 				} else {
-					_this.event(Event.FOCUS);
+					_isVisibility = true;
 				}
+				_this.event(Event.VISIBILITY_CHANGE);
 			}
 			window.addEventListener("resize", function():void {
 				// 处理屏幕旋转。旋转后收起输入法。
@@ -213,6 +234,20 @@ package laya.display {
 			this.desginHeight = value;
 			super.height = value;
 			Laya.timer.callLater(this, _changeCanvasSize);
+		}
+		
+		/**
+		 *舞台是否获得焦点。
+		 */
+		public function get isFocused():Boolean {
+			return _isFocused;
+		}
+		
+		/**
+		 *舞台是否处于可见状态。
+		 */
+		public function get isVisibility():Boolean {
+			return _isVisibility;
 		}
 		
 		/** @private */

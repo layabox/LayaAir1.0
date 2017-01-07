@@ -22,6 +22,8 @@ package laya.d3.resource {
 			return Laya.loader.create(url, null, null, Texture2D);
 		}
 		
+		/** @private */
+		private var _canRead:Boolean;
 		/**@private 文件路径全名。*/
 		private var _src:String;
 		/**@private HTML Image*/
@@ -30,6 +32,8 @@ package laya.d3.resource {
 		private var _recreateLock:Boolean = false;
 		/**@private 异步加载完成后是否需要释放（有可能在恢复过程中,再次被释放，用此变量做标记）*/
 		private var _needReleaseAgain:Boolean = false;
+		/** @private */
+		private var _pixels:Uint8Array;
 		
 		/**
 		 * 获取文件路径全名。
@@ -41,8 +45,9 @@ package laya.d3.resource {
 		/**
 		 * 创建一个 <code>Texture2D</code> 实例。
 		 */
-		public function Texture2D() {
+		public function Texture2D(canRead:Boolean = false) {
 			super();
+			_canRead = canRead;
 		}
 		
 		/**
@@ -55,25 +60,35 @@ package laya.d3.resource {
 			_width = w;
 			_height = h;
 			_size = new Size(w, h);
+			
+			if (_canRead) {
+				Browser.canvas.size(w, h);
+				Browser.canvas.clear();
+				Browser.context.drawImage(img, 0, 0, w, h);
+				_pixels = new Uint8Array(Browser.context.getImageData(0, 0, w, h).data.buffer);
+			}
 		}
 		
 		/**
 		 * @private
 		 */
 		private function _createWebGlTexture():void {
-			if (!_image) {
+			if (!_image)
 				throw "create GLTextur err:no data:" + _image;
-			}
 			
 			var gl:WebGLContext = WebGL.mainContext;
-			var glTex:* = _source = gl.createTexture();
+			var glTexture:* = _source = gl.createTexture();
 			var w:int = _width;
 			var h:int = _height;
 			
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
-			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTex);
-			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _image);
+			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTexture);
+			
+			if (_canRead)
+				gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, w, h, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _pixels);//TODO:JPG无需使用alpha通道
+			else
+				gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _image);//TODO:JPG无需使用alpha通道
 			
 			var minFifter:int = this._minFifter;
 			var magFifter:int = this._magFifter;
@@ -103,7 +118,7 @@ package laya.d3.resource {
 			}
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			_image.onload = null;
-			//_image = null;//TODO:临时
+			_image = null;
 			
 			if (isPot)
 				memorySize = w * h * 4 * (1 + 1 / 3);//使用mipmap则在原来的基础上增加1/3
@@ -152,31 +167,33 @@ package laya.d3.resource {
 		/**
 		 *@private
 		 */
-		override public function onAsynLoaded(url:String, data:*):void {
+		override public function onAsynLoaded(url:String, data:*, params:Array):void {
+			if (params) {
+				_canRead = params[0];
+			}
+			
 			_src = url;
 			_onTextureLoaded(data);
+			
 			if (_conchTexture) //NATIVE
 				_conchTexture.setTexture2DImage(_image);
 			else
 				activeResource();
+			
 			_loaded = true;
 			event(Event.LOADED, this);
 		}
 		
-		///**
-		 //* 返回图片像素。
-		 //* @return 图片像素。
-		 //*/
-		//public function getPixels():Float32Array
-		//{
-			//var pixeles:Float32Array = new Float32Array(_width * _height);
-			//
-			//var rendertexture:RenderTexture = new RenderTexture(_width, _height);
-			//rendertexture.start();
-			//rendertexture.end();
-			//
-			//return  pixeles;
-		//}
+		/**
+		 * 返回图片像素。
+		 * @return 图片像素。
+		 */
+		public function getPixels():Uint8Array {
+			if (_canRead)
+				return _pixels;
+			else
+				throw new Error("Texture2D: must set texture canRead is true.");
+		}
 		
 		/**
 		 * 销毁资源。

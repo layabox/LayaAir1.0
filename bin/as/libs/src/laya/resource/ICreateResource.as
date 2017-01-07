@@ -5,6 +5,6 @@ package laya.resource {
 	 * <code>ICreateResource</code> 对象创建接口。
 	 */
 	public interface ICreateResource {
-		function onAsynLoaded(url:String, data:*):void;
+		function onAsynLoaded(url:String, data:*, params:Array):void;
 	}
 }

@@ -36,6 +36,9 @@ package laya.d3.core.render {
 		/** @private */
 		public var _owner:Sprite3D;
 		
+	    /**排序矫正值。*/
+		public var sortingFudge:Number;
+		
 		
 		/**
 		 * 获取是否可用。
@@ -197,6 +200,7 @@ package laya.d3.core.render {
 			_renderObject._ownerEnable = _owner.enable;
 			_renderObject._enable = _enable;
 			_materials = new Vector.<BaseMaterial>();
+			sortingFudge = 0.0;
 			
 			_owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);
 			_owner.on(Event.LAYER_CHANGED, this, _onOwnerLayerChanged);

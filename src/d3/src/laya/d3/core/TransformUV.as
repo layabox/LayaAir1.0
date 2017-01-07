@@ -1,5 +1,6 @@
 package laya.d3.core {
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.events.EventDispatcher;
@@ -9,7 +10,11 @@ package laya.d3.core {
 	 */
 	public class TransformUV extends EventDispatcher {
 		/** @private */
-		protected var _tempTitlingV3:Vector3 = new Vector3();
+		protected static var _tempOffsetV3:Vector3 = new Vector3(0, 0, 0);
+		/** @private */
+		protected static var _tempRotationQua:Quaternion = new Quaternion();
+		/** @private */
+		protected static var _tempTitlingV3:Vector3 = new Vector3(1, 1, 1);
 		/** @private */
 		protected var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
 		/** @private */
@@ -22,7 +27,7 @@ package laya.d3.core {
 		/** @private */
 		protected var _rotation:Number = 0;
 		/** @private */
-		protected var _tiling:Vector2 = new Vector2();
+		protected var _tiling:Vector2;
 		
 		/** @private */
 		protected var _matNeedUpdte:Boolean = false;
@@ -94,24 +99,20 @@ package laya.d3.core {
 		 * 创建一个 <code>TransformUV</code> 实例。
 		 */
 		public function TransformUV() {
-		
+			_tiling = new Vector2(1.0, 1.0);
 		}
 		
 		/**
 		 * @private
 		 */
 		protected function _updateMatrix():void {
+			_tempOffsetV3.elements[0] = _offset.x;
+			_tempOffsetV3.elements[1] = _offset.y;
+			Quaternion.createFromYawPitchRoll(0, 0, _rotation, _tempRotationQua);
 			_tempTitlingV3.elements[0] = _tiling.x;
 			_tempTitlingV3.elements[1] = _tiling.y;
-			_tempTitlingV3.elements[2] = 1;
 			
-			Matrix4x4.createScaling(_tempTitlingV3, _tempTitlingMatrix);
-			Matrix4x4.createRotationZ(_rotation, _tempRotationMatrix);
-			Matrix4x4.multiply(_tempRotationMatrix, _tempTitlingMatrix, _matrix);
-			var mate:Float32Array = _matrix.elements;
-			mate[12] = _offset.x;
-			mate[13] = _offset.y;
-			mate[14] = 0;
+			Matrix4x4.createAffineTransformation(_tempOffsetV3, _tempRotationQua, _tempTitlingV3, _matrix);
 		}
 	
 	}

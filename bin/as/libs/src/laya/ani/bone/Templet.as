@@ -624,8 +624,9 @@ package laya.ani.bone {
 		 * 显示指定的皮肤
 		 * @param	boneSlotDic	插糟字典的引用
 		 * @param	skinIndex	皮肤的索引
+		 * @param	freshDisplayIndex	是否重置插槽纹理
 		 */
-		public function showSkinByIndex(boneSlotDic:Object, skinIndex:int):Boolean {
+		public function showSkinByIndex(boneSlotDic:Object, skinIndex:int,freshDisplayIndex:Boolean=true):Boolean {
 			if (skinIndex < 0 && skinIndex >= skinDataArray.length) return false;
 			var i:int, n:int;
 			var tBoneSlot:BoneSlot;
@@ -637,8 +638,8 @@ package laya.ani.bone {
 					if (tSlotData) {
 						tBoneSlot = boneSlotDic[tSlotData.name];
 						if (tBoneSlot) {
-							tBoneSlot.showSlotData(tSlotData);
-							if (tBoneSlot.attachmentName != "undefined" && tBoneSlot.attachmentName != "null") {
+							tBoneSlot.showSlotData(tSlotData,freshDisplayIndex);
+							if (freshDisplayIndex&&tBoneSlot.attachmentName != "undefined" && tBoneSlot.attachmentName != "null") {
 								tBoneSlot.showDisplayByName(tBoneSlot.attachmentName);
 							} else {
 								tBoneSlot.showDisplayByIndex(tBoneSlot.displayIndex);

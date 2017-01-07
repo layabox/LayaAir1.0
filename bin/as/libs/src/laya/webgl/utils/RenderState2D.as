@@ -6,7 +6,8 @@ package laya.webgl.utils {
 	
 	public class RenderState2D {
 		public static const _MAXSIZE:int = 99999999;
-		
+		/**@private 一个初始化的 <code>Matrix</code> 对象，不允许修改此对象内容。*/
+		public static var EMPTYMAT4_ARRAY:Array =/*[STATIC SAFE]*/ [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 		public static var TEMPMAT4_ARRAY:Array =/*[STATIC SAFE]*/ [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 		public static var worldMatrix4:Array = /*[STATIC SAFE]*/ TEMPMAT4_ARRAY;
 		

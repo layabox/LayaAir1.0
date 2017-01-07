@@ -102,7 +102,7 @@ package laya.d3.core.render {
 		
 		private function _sortAlphaFunc(a:RenderElement, b:RenderElement):Number {
 			if (a._renderObject && b._renderObject)//TODO:临时
-				return Vector3.distance(b._renderObject._boundingSphere.center, _cameraPosition) - Vector3.distance(a._renderObject._boundingSphere.center, _cameraPosition);
+			    return b._renderObject._distanceForSort - a._renderObject._distanceForSort;
 			else
 				return 0;
 		}
@@ -228,7 +228,7 @@ package laya.d3.core.render {
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
 						lastBindShader = BaseShader.bindShader;
 						material._setMaterialShaderDefineParams(owner,state.shaderDefines);
-						shader = material._getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue);
+						shader = material._getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue,owner._shaderDefineValue);
 						shader.bind();
 						needForceUpdate = (loopCount !== shader._uploadLoopCount) || (shader !== lastBindShader);
 						isNewCamera = cameraID !== shader._uploadCameraID;
@@ -281,7 +281,7 @@ package laya.d3.core.render {
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
 						lastBindShader = BaseShader.bindShader;
 						material._setMaterialShaderDefineParams(owner,state.shaderDefines);
-						shader = material._getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue);
+						shader = material._getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue,owner._shaderDefineValue);
 						shader.bind();
 						needForceUpdate = (loopCount !== shader._uploadLoopCount) || (shader !== lastBindShader);
 						isNewCamera = cameraID !== shader._uploadCameraID;
@@ -301,6 +301,7 @@ package laya.d3.core.render {
 							shader._uploadCamera = camera;
 						}
 						
+						//debugger;
 						owner = staticBatch._rootSprite;
 						if (shader._uploadSprite3D !== owner || needForceUpdate) {
 							shader.uploadSpriteUniforms(owner._shaderValues.data);
@@ -334,7 +335,7 @@ package laya.d3.core.render {
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
 						lastBindShader = BaseShader.bindShader;
 						material._setMaterialShaderDefineParams(owner,state.shaderDefines);
-						shader = material._getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue);
+						shader = material._getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue,owner._shaderDefineValue);
 						shader.bind();
 						needForceUpdate = (loopCount !== shader._uploadLoopCount) || (shader !== lastBindShader);
 						isNewCamera = cameraID !== shader._uploadCameraID;

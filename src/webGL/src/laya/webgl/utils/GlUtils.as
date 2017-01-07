@@ -10,7 +10,7 @@ package laya.webgl.utils {
 		}
 		
 		// 填充几何图形的Vb
-		private static var _fillLineArray:Array =/*[STATIC SAFE]*/ [[0, 0, /*0,*/ 0, 0, 0, 0, /*0,*/ 0, 0, 0, 0, /*0,*/ 0, 0, 0, 0, /*0,*/ 0, 0]];
+		private static var _fillLineArray:Array =/*[STATIC SAFE]*/ [0, 0, /*0,*/ 0, 0, 0, 0, /*0,*/ 0, 0, 0, 0, /*0,*/ 0, 0, 0, 0, /*0,*/ 0, 0];
 		
 		/**
 		 *  初始化全局IB,IB索引如下:
@@ -213,8 +213,7 @@ package laya.webgl.utils {
 			{
 				cBx = clip.x, cBy = clip.y, cEx = clip.width + cBx, cEy = clip.height + cBy;
 			}
-			
-			if (mType !== 1 && (toBx >= cEx || toBy >= cEy || toEx <= cBx || toEy <= cBy))
+			if (mType !== 1 && ( Math.min(toBx,toEx) >= cEx ||  Math.min(toBy ,toEy)>= cEy ||  Math.max(toEx,toBx) <= cBx || Math.max(toEy,toBy) <= cBy))
 				return false;
 			
 			var vpos:int = (vb._byteLength >> 2)/*FLOAT32*/;// + WebGLContext2D._RECTVBSIZE;

@@ -56,6 +56,7 @@ package laya.d3.core.particleShuriKen.module {
 			}
 			
 			var destColorOverLifetime:ColorOverLifetime = __JS__("new this.constructor(destColor)");
+			destColorOverLifetime.enbale = enbale;
 			return destColorOverLifetime;
 		}
 	

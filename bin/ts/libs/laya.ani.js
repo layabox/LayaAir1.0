@@ -6,7 +6,7 @@
 	var EventDispatcher=laya.events.EventDispatcher,Graphics=laya.display.Graphics,Handler=laya.utils.Handler;
 	var Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil,Matrix=laya.maths.Matrix,Render=laya.renders.Render;
 	var Resource=laya.resource.Resource,RunDriver=laya.utils.RunDriver,Sprite=laya.display.Sprite,Stat=laya.utils.Stat;
-	var Texture=laya.resource.Texture,URL=laya.net.URL;
+	var Texture=laya.resource.Texture,URL=laya.net.URL,Utils=laya.utils.Utils;
 	/**
 	*@private
 	*/
@@ -219,8 +219,11 @@
 			this._parentMatrix=null;
 			this._resultMatrix=null;
 			this._replaceDic={};
+			this._curDiyUV=null;
+			this._curDiyVS=null;
 			this._skinSprite=null;
 			this.deformData=null;
+			this._mVerticleArr=null;
 		}
 
 		__class(BoneSlot,'laya.ani.bone.BoneSlot');
@@ -229,10 +232,13 @@
 		*设置要显示的插槽数据
 		*@param slotData
 		*@param disIndex
+		*@param freshIndex 是否重置纹理
 		*/
-		__proto.showSlotData=function(slotData){
+		__proto.showSlotData=function(slotData,freshIndex){
+			(freshIndex===void 0)&& (freshIndex=true);
 			this.currSlotData=slotData;
-			this.displayIndex=this.srcDisplayIndex;
+			if(freshIndex)
+				this.displayIndex=this.srcDisplayIndex;
 			this.currDisplayData=null;
 			this.currTexture=null;
 		}
@@ -258,9 +264,7 @@
 			preIndex=this.currSlotData.getDisplayByName(tarName);
 			var newIndex=0;
 			newIndex=this.currSlotData.getDisplayByName(newName);
-			if (newIndex >=0){
-				this.replaceDisplayByIndex(preIndex,newIndex);
-			}
+			this.replaceDisplayByIndex(preIndex,newIndex);
 		}
 
 		/**
@@ -305,6 +309,7 @@
 		*/
 		__proto.replaceSkin=function(_texture){
 			this._diyTexture=_texture;
+			if (this._curDiyUV)this._curDiyUV.length=0;
 		}
 
 		/**
@@ -347,7 +352,8 @@
 									tResultMatrix=new Matrix();
 								}
 								if ((!Render.isWebGL && this.currDisplayData.uvs)|| (Render.isWebGL && this._diyTexture && this.currDisplayData.uvs)){
-									var tTestMatrix=new Matrix(1,0,0,1);
+									var tTestMatrix=BoneSlot._tempMatrix;
+									tTestMatrix.identity();
 									if (this.currDisplayData.uvs[1] > this.currDisplayData.uvs[5]){
 										tTestMatrix.d=-1;
 									}
@@ -381,8 +387,7 @@
 					if (tSkinSprite==null){
 						return;
 					};
-					var tVBArray=[];
-					var tIBArray=[];
+					var tIBArray;
 					var tRed=1;
 					var tGreed=1;
 					var tBlue=1;
@@ -391,19 +396,24 @@
 						var tVertices=this.currDisplayData.weights;
 						if (this.deformData){
 							tVertices=this.deformData;
-						}
-						for (var i=0,ii=0;i < tVertices.length && ii< this.currDisplayData.uvs.length;){
-							var tX=tVertices[i++];
-							var tY=tVertices[i++];
-							tVBArray.push(tX,tY,this.currDisplayData.uvs[ii++],this.currDisplayData.uvs[ii++],tRed,tGreed,tBlue,tAlpha);
 						};
-						var tTriangleNum=this.currDisplayData.triangles.length / 3;
-						for (i=0;i < tTriangleNum;i++){
-							tIBArray.push(this.currDisplayData.triangles[i *3]);
-							tIBArray.push(this.currDisplayData.triangles[i *3+1]);
-							tIBArray.push(this.currDisplayData.triangles[i *3+2]);
+						var tUVs;
+						if (this._diyTexture){
+							if (!this._curDiyUV){
+								this._curDiyUV=[];
+							}
+							if (this._curDiyUV.length==0){
+								this._curDiyUV=UVTools.getRelativeUV(this.currTexture.uv,this.currDisplayData.uvs,this._curDiyUV);
+								this._curDiyUV=UVTools.getAbsoluteUV(this._diyTexture.uv,this._curDiyUV,this._curDiyUV);
+							}
+							tUVs=this._curDiyUV;
+							}else{
+							tUVs=this.currDisplayData.uvs;
 						}
-						tSkinSprite.init(this.currTexture,tVBArray,tIBArray);
+						this._mVerticleArr=tVertices;
+						var tTriangleNum=this.currDisplayData.triangles.length / 3;
+						tIBArray=this.currDisplayData.triangles;
+						tSkinSprite.init2(tTexture,null ,tIBArray,this._mVerticleArr,tUVs);
 						var tCurrentMatrix2=this.getDisplayMatrix();
 						if (this._parentMatrix){
 							if (tCurrentMatrix2){
@@ -450,11 +460,22 @@
 		*/
 		__proto.skinMesh=function(boneMatrixArray,skinSprite,alpha){
 			var tBones=this.currDisplayData.bones;
-			var tUvs=this.currDisplayData.uvs;
+			var tUvs;
+			if (this._diyTexture){
+				if (!this._curDiyUV){
+					this._curDiyUV=[];
+				}
+				if (this._curDiyUV.length==0){
+					this._curDiyUV=UVTools.getRelativeUV(this.currTexture.uv,this.currDisplayData.uvs,this._curDiyUV);
+					this._curDiyUV=UVTools.getAbsoluteUV(this._diyTexture.uv,this._curDiyUV,this._curDiyUV);
+				}
+				tUvs=this._curDiyUV;
+				}else{
+				tUvs=this.currDisplayData.uvs;
+			};
 			var tWeights=this.currDisplayData.weights;
 			var tTriangles=this.currDisplayData.triangles;
-			var tVBArray=[];
-			var tIBArray=[];
+			var tIBArray;
 			var tRx=0;
 			var tRy=0;
 			var nn=0;
@@ -501,15 +522,9 @@
 					tVertices.push(tRx,tRy);
 				}
 			}
-			for (i=0,j=0;i < tVertices.length && j < tUvs.length;){
-				tRx=tVertices[i++];
-				tRy=tVertices[i++];
-				tVBArray.push(tRx,tRy,tUvs[j++],tUvs[j++],tRed,tGreed,tBlue,tAlpha);
-			}
-			for (i=0,n=tTriangles.length;i < n;i++){
-				tIBArray.push(tTriangles[i]);
-			}
-			skinSprite.init(this.currTexture,tVBArray,tIBArray);
+			this._mVerticleArr=tVertices;
+			tIBArray=tTriangles;
+			skinSprite.init2(this.currTexture,null,tIBArray,this._mVerticleArr,tUvs);
 		}
 
 		/**
@@ -560,6 +575,9 @@
 			return tBoneSlot;
 		}
 
+		__static(BoneSlot,
+		['_tempMatrix',function(){return this._tempMatrix=new Matrix();}
+		]);
 		return BoneSlot;
 	})()
 
@@ -1111,7 +1129,7 @@
 					var bone=this.bones[i];
 					var length=bone.length;
 					var x=length *bone.resultMatrix.a;
-					var y=length *bone.resultMatrix.c;
+					var y=length *bone.resultMatrix.b;
 					length=Math.sqrt(x *x+y *y);
 					if (tScale)lengths[i]=length;
 					spaces[++i]=tLengthSpacing ? Math.max(0,length+spacing):spacing;
@@ -1158,8 +1176,8 @@
 				boneY=y;
 				if (tRotate){
 					var a=bone.resultMatrix.a;
-					var b=bone.resultMatrix.b;
-					var c=bone.resultMatrix.c;
+					var b=bone.resultMatrix.c;
+					var c=bone.resultMatrix.b;
 					var d=bone.resultMatrix.d;
 					var r=NaN;
 					var cos=NaN;
@@ -1825,6 +1843,58 @@
 
 
 	/**
+	*用于UV转换的工具类
+	*@private
+	*/
+	//class laya.ani.bone.UVTools
+	var UVTools=(function(){
+		function UVTools(){}
+		__class(UVTools,'laya.ani.bone.UVTools');
+		UVTools.getRelativeUV=function(bigUV,smallUV,rst){
+			var startX=bigUV[0];
+			var width=bigUV[2]-bigUV[0];
+			var startY=bigUV[1];
+			var height=bigUV[5]-bigUV[1];
+			if(!rst)rst=[];
+			rst.length=smallUV.length;
+			var i=0,len=0;
+			len=rst.length;
+			for (i=0;i < len;i+=2){
+				rst[i]=(smallUV[i]-startX)/ width;
+				rst[i+1]=(smallUV[i+1]-startY)/ height;
+			}
+			return rst;
+		}
+
+		UVTools.getAbsoluteUV=function(bigUV,smallUV,rst){
+			if (bigUV[0]==0 && bigUV[1]==0 && bigUV[4]==1 && bigUV[5]==1){
+				if (rst){
+					Utils.copyArray(rst,smallUV);
+					return rst;
+					}else{
+					return smallUV;
+				}
+			};
+			var startX=bigUV[0];
+			var width=bigUV[2]-bigUV[0];
+			var startY=bigUV[1];
+			var height=bigUV[5]-bigUV[1];
+			if(!rst)rst=[];
+			rst.length=smallUV.length;
+			var i=0,len=0;
+			len=rst.length;
+			for (i=0;i < len;i+=2){
+				rst[i]=smallUV[i]*width+startX;
+				rst[i+1]=smallUV[i+1]*height+startY;
+			}
+			return rst;
+		}
+
+		return UVTools;
+	})()
+
+
+	/**
 	*...
 	*@author ww
 	*/
@@ -1931,7 +2001,7 @@
 				var aniFullFrame=[];
 				for (var j=0,jNum=templet.getAnimation(i).nodes.length;j < jNum;j++){
 					var node=templet.getAnimation(i).nodes[j];
-					var frameCount=Math.floor(node.playTime / cacheFrameInterval);
+					var frameCount=Math.floor((node.playTime+0.000001)/ cacheFrameInterval);
 					var nodeFullFrames=new Uint16Array(frameCount+1);
 					var lastFrameIndex=-1;
 					for (var n=0,nNum=node.keyFrame.length;n < nNum;n++){
@@ -2040,7 +2110,7 @@
 		__proto.stop=function(immediate){
 			(immediate===void 0)&& (immediate=true);
 			if (immediate){
-				this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
+				this._currentAnimationClipIndex=-1;
 				this.event(/*laya.events.Event.STOPPED*/"stopped");
 				}else {
 				this._stopWhenCircleFinish=true;
@@ -2056,7 +2126,10 @@
 			(this._startUpdateLoopCount!==Stat.loopCount)&& (time=elapsedTime *this.playbackRate,this._elapsedPlaybackTime+=time);
 			var currentAniClipPlayDuration=this.playDuration;
 			if ((this._overallDuration!==0 && this._elapsedPlaybackTime >=this._overallDuration)|| (this._overallDuration===0 && this._elapsedPlaybackTime >=currentAniClipPlayDuration)){
-				this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
+				this._currentTime=currentAniClipPlayDuration;
+				this._currentKeyframeIndex=Math.floor((currentAniClipPlayDuration+0.000001)/ cacheFrameInterval);
+				this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
+				this._currentAnimationClipIndex=-1;
 				this.event(/*laya.events.Event.STOPPED*/"stopped");
 				return;
 			}
@@ -2064,7 +2137,7 @@
 			if (currentAniClipPlayDuration > 0){
 				while (time >=currentAniClipPlayDuration){
 					if (this._stopWhenCircleFinish){
-						this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
+						this._currentAnimationClipIndex=-1;
 						this._stopWhenCircleFinish=false;
 						this.event(/*laya.events.Event.STOPPED*/"stopped");
 						return;
@@ -2077,7 +2150,7 @@
 				this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
 				}else {
 				if (this._stopWhenCircleFinish){
-					this._currentAnimationClipIndex=this._currentKeyframeIndex=-1;
+					this._currentAnimationClipIndex=-1;
 					this._stopWhenCircleFinish=false;
 					this.event(/*laya.events.Event.STOPPED*/"stopped");
 					return;
@@ -2446,7 +2519,7 @@
 		/**
 		*@private
 		*/
-		__proto.onAsynLoaded=function(url,data){
+		__proto.onAsynLoaded=function(url,data,params){
 			this.parse(data);
 			this._endLoaded();
 		}
@@ -2527,10 +2600,10 @@
 							var type=interpolationData[j];
 						switch(type){
 							case 6:
-								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData.slice(j+1,j+5));
+								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
 								break ;
 							case 7:
-								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData.slice(j+1,j+9));
+								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
 								break ;
 							default :
 								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData);
@@ -2604,10 +2677,10 @@
 							var type=interpolationData[j];
 						switch(type){
 							case 6:
-								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData.slice(j+1,j+5));
+								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
 								break ;
 							case 7:
-								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData.slice(j+1,j+9));
+								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
 								break ;
 							default :
 								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData);
@@ -2655,13 +2728,15 @@
 			return 1;
 		}
 
-		AnimationTemplet._BezierInterpolation_6=function(bone,index,out,outOfs,data,dt,dData,duration,nextData,interData){
-			out[outOfs]=data[index]+(nextData[index]-data[index])*BezierLerp.getBezierRate(dt / duration,interData[0],interData[1],interData[2],interData[3]);
+		AnimationTemplet._BezierInterpolation_6=function(bone,index,out,outOfs,data,dt,dData,duration,nextData,interData,offset){
+			(offset===void 0)&& (offset=0);
+			out[outOfs]=data[index]+(nextData[index]-data[index])*BezierLerp.getBezierRate(dt / duration,interData[offset],interData[offset+1],interData[offset+2],interData[offset+3]);
 			return 5;
 		}
 
-		AnimationTemplet._BezierInterpolation_7=function(bone,index,out,outOfs,data,dt,dData,duration,nextData,interData){
-			out[outOfs]=interData[4]+interData[5] *BezierLerp.getBezierRate((dt*0.001+interData[6])/ interData[7],interData[0],interData[1],interData[2],interData[3]);
+		AnimationTemplet._BezierInterpolation_7=function(bone,index,out,outOfs,data,dt,dData,duration,nextData,interData,offset){
+			(offset===void 0)&& (offset=0);
+			out[outOfs]=interData[offset+4]+interData[offset+5] *BezierLerp.getBezierRate((dt*0.001+interData[offset+6])/ interData[offset+7],interData[offset],interData[offset+1],interData[offset+2],interData[offset+3]);
 			return 9;
 		}
 
@@ -2716,6 +2791,7 @@
 			this._drawOrderIndex=0;
 			this._drawOrder=null;
 			this._lastAniClipIndex=-1;
+			this._lastUpdateAniClipIndex=-1;
 			Skeleton.__super.call(this);
 			(aniMode===void 0)&& (aniMode=0);
 			if (templet)this.init(templet,aniMode);
@@ -2944,10 +3020,15 @@
 			var preIndex=this._player.currentKeyframeIndex;
 			if (autoKey){
 				this._player.update(tCurrTime-this._lastTime)
+				}else{
+				preIndex=-1;
 			}
 			this._lastTime=tCurrTime;
-			this._aniClipIndex=this._player.currentAnimationClipIndex;
 			this._clipIndex=this._player.currentKeyframeIndex;
+			if (this._clipIndex==preIndex&&this._lastUpdateAniClipIndex==this._aniClipIndex){
+				return;
+			}
+			this._lastUpdateAniClipIndex=this._aniClipIndex;
 			if (preIndex > this._clipIndex&&this._eventIndex!=0){
 				this._emitMissedEvents(this._player.playStart,this._player.playEnd,this._eventIndex);
 				this._eventIndex=0;
@@ -2965,8 +3046,7 @@
 					}else {
 					this._eventIndex++;
 				}
-			}
-			if (this._aniClipIndex==-1)return;
+			};
 			var tGraphics;
 			if (this._aniMode==0){
 				tGraphics=this._templet.getGrahicsDataWithCache(this._aniClipIndex,this._clipIndex);
@@ -3171,27 +3251,17 @@
 					}
 				};
 				var tSkinDeformAni=tDeformAniArr[this._aniClipIndex];
-				tDeformAniData=(tSkinDeformAni[this._skinName] || tSkinDeformAni["default"]);
-				if (!tDeformAniData){
-					var tSkin;
-					for (tSkin in tSkinDeformAni){
+				tDeformAniData=(tSkinDeformAni["default"]);
+				this._setDeform(tDeformAniData,tDeformDic,this._boneSlotArray,curTime);
+				var tSkin;
+				for (tSkin in tSkinDeformAni){
+					if (tSkin!="default"&&tSkin!=this._skinName){
 						tDeformAniData=tSkinDeformAni [tSkin];
+						this._setDeform(tDeformAniData,tDeformDic,this._boneSlotArray,curTime);
 					}
 				}
-				if (tDeformAniData){
-					for (i=0,n=tDeformAniData.deformSlotDataList.length;i < n;i++){
-						tDeformSlotData=tDeformAniData.deformSlotDataList[i];
-						for (j=0;j < tDeformSlotData.deformSlotDisplayList.length;j++){
-							tDeformSlotDisplayData=tDeformSlotData.deformSlotDisplayList[j];
-							tDBBoneSlot=this._boneSlotArray[tDeformSlotDisplayData.slotIndex];
-							tDeformSlotDisplayData.apply(curTime,tDBBoneSlot);
-							if (!tDeformDic[tDeformSlotDisplayData.slotIndex]){
-								tDeformDic[tDeformSlotDisplayData.slotIndex]={};
-							}
-							tDeformDic[tDeformSlotDisplayData.slotIndex][tDeformSlotDisplayData.attachment]=tDeformSlotDisplayData.deformData;
-						}
-					}
-				}
+				tDeformAniData=(tSkinDeformAni[this._skinName]);
+				this._setDeform(tDeformAniData,tDeformDic,this._boneSlotArray,curTime);
 			};
 			var tSlotData2;
 			var tSlotData3;
@@ -3275,6 +3345,35 @@
 		}
 
 		/**
+		*设置deform数据
+		*@param tDeformAniData
+		*@param tDeformDic
+		*@param _boneSlotArray
+		*@param curTime
+		*/
+		__proto._setDeform=function(tDeformAniData,tDeformDic,_boneSlotArray,curTime){
+			if (!tDeformAniData)return;
+			var tDeformSlotData;
+			var tDeformSlotDisplayData;
+			var tDBBoneSlot;
+			var i=0,n=0,j=0;
+			if (tDeformAniData){
+				for (i=0,n=tDeformAniData.deformSlotDataList.length;i < n;i++){
+					tDeformSlotData=tDeformAniData.deformSlotDataList[i];
+					for (j=0;j < tDeformSlotData.deformSlotDisplayList.length;j++){
+						tDeformSlotDisplayData=tDeformSlotData.deformSlotDisplayList[j];
+						tDBBoneSlot=_boneSlotArray[tDeformSlotDisplayData.slotIndex];
+						tDeformSlotDisplayData.apply(curTime,tDBBoneSlot);
+						if (!tDeformDic[tDeformSlotDisplayData.slotIndex]){
+							tDeformDic[tDeformSlotDisplayData.slotIndex]={};
+						}
+						tDeformDic[tDeformSlotDisplayData.slotIndex][tDeformSlotDisplayData.attachment]=tDeformSlotDisplayData.deformData;
+					}
+				}
+			}
+		}
+
+		/**
 		*得到当前动画的数量
 		*@return
 		*/
@@ -3302,20 +3401,24 @@
 		/**
 		*通过名字显示一套皮肤
 		*@param name 皮肤的名字
+		*@param freshSlotIndex 是否将插槽纹理重置到初始化状态
 		*/
-		__proto.showSkinByName=function(name){
-			this.showSkinByIndex(this._templet.getSkinIndexByName(name));
+		__proto.showSkinByName=function(name,freshSlotIndex){
+			(freshSlotIndex===void 0)&& (freshSlotIndex=true);
+			this.showSkinByIndex(this._templet.getSkinIndexByName(name),freshSlotIndex);
 		}
 
 		/**
 		*通过索引显示一套皮肤
 		*@param skinIndex 皮肤索引
+		*@param freshSlotIndex 是否将插槽纹理重置到初始化状态
 		*/
-		__proto.showSkinByIndex=function(skinIndex){
+		__proto.showSkinByIndex=function(skinIndex,freshSlotIndex){
+			(freshSlotIndex===void 0)&& (freshSlotIndex=true);
 			for (var i=0;i < this._boneSlotArray.length;i++){
-				(this._boneSlotArray [i]).showSlotData(null);
+				(this._boneSlotArray [i]).showSlotData(null,freshSlotIndex);
 			}
-			if (this._templet.showSkinByIndex(this._boneSlotDic,skinIndex)){
+			if (this._templet.showSkinByIndex(this._boneSlotDic,skinIndex,freshSlotIndex)){
 				var tSkinData=this._templet.skinDataArray[skinIndex];
 				this._skinIndex=skinIndex;
 				this._skinName=tSkinData.name;
@@ -3333,6 +3436,20 @@
 			var tBoneSlot=this.getSlotByName(slotName);
 			if (tBoneSlot){
 				tBoneSlot.showDisplayByIndex(index);
+			}
+			this._clearCache();
+		}
+
+		/**
+		*设置某插槽的皮肤
+		*@param slotName 插槽名称
+		*@param name 皮肤名称
+		*/
+		__proto.showSlotSkinByName=function(slotName,name){
+			if (this._aniMode==0)return;
+			var tBoneSlot=this.getSlotByName(slotName);
+			if (tBoneSlot){
+				tBoneSlot.showDisplayByName(name);
 			}
 			this._clearCache();
 		}
@@ -3399,11 +3516,13 @@
 		*@param force false,如果要播的动画跟上一个相同就不生效,true,强制生效
 		*@param start 起始时间
 		*@param end 结束时间
+		*@param freshSkin 是否刷新皮肤数据
 		*/
-		__proto.play=function(nameOrIndex,loop,force,start,end){
+		__proto.play=function(nameOrIndex,loop,force,start,end,freshSkin){
 			(force===void 0)&& (force=true);
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=0);
+			(freshSkin===void 0)&& (freshSkin=true);
 			this._indexControl=false;
 			var index=-1;
 			var duration=NaN;
@@ -3424,18 +3543,21 @@
 				index=nameOrIndex;
 			}
 			if (index >-1 && index < this.getAnimNum()){
+				this._aniClipIndex=index;
 				if (force || this._pause || this._currAniIndex !=index){
 					this._currAniIndex=index;
 					this._curOriginalData=new Float32Array(this._templet.getTotalkeyframesLength(index));
 					this._drawOrder=null;
 					this._eventIndex=0;
 					this._player.play(index,this._player.playbackRate,duration,start,end);
-					this._templet.showSkinByIndex(this._boneSlotDic,this._skinIndex);
+					if(freshSkin)
+						this._templet.showSkinByIndex(this._boneSlotDic,this._skinIndex);
 					if (this._pause){
 						this._pause=false;
 						this._lastTime=Browser.now();
 						Laya.stage.frameLoop(1,this,this._update,null,true);
 					}
+					this._update();
 				}
 			}
 		}
@@ -3917,10 +4039,13 @@
 
 		/**@private */
 		__proto._onLoaded=function(){
-			this.basePath=this._atlasPath?Loader.getAtlas(this._atlasPath).dir:this._url.split(".swf")[0]+"/image/";
 			var data;
 			data=Loader.getRes(this._url);
-			if (!data)return;
+			if (!data){
+				this.event(/*laya.events.Event.ERROR*/"error","file not find");
+				return;
+			}
+			this.basePath=this._atlasPath?Loader.getAtlas(this._atlasPath).dir:this._url.split(".swf")[0]+"/image/";
 			this._initData(data);
 		}
 
@@ -4540,8 +4665,10 @@
 		*显示指定的皮肤
 		*@param boneSlotDic 插糟字典的引用
 		*@param skinIndex 皮肤的索引
+		*@param freshDisplayIndex 是否重置插槽纹理
 		*/
-		__proto.showSkinByIndex=function(boneSlotDic,skinIndex){
+		__proto.showSkinByIndex=function(boneSlotDic,skinIndex,freshDisplayIndex){
+			(freshDisplayIndex===void 0)&& (freshDisplayIndex=true);
 			if (skinIndex < 0 && skinIndex >=this.skinDataArray.length)return false;
 			var i=0,n=0;
 			var tBoneSlot;
@@ -4553,8 +4680,8 @@
 					if (tSlotData){
 						tBoneSlot=boneSlotDic[tSlotData.name];
 						if (tBoneSlot){
-							tBoneSlot.showSlotData(tSlotData);
-							if (tBoneSlot.attachmentName !="undefined" && tBoneSlot.attachmentName !="null"){
+							tBoneSlot.showSlotData(tSlotData,freshDisplayIndex);
+							if (freshDisplayIndex&&tBoneSlot.attachmentName !="undefined" && tBoneSlot.attachmentName !="null"){
 								tBoneSlot.showDisplayByName(tBoneSlot.attachmentName);
 								}else {
 								tBoneSlot.showDisplayByIndex(tBoneSlot.displayIndex);

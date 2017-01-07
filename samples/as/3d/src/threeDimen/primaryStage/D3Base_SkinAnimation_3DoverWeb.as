@@ -20,7 +20,7 @@ package threeDimen.primaryStage {
 		public function D3Base_SkinAnimation_3DoverWeb() {
 			
 			__JS__("var div = document.createElement('div')");
-			__JS__("div.innerHTML = '<h1>此内容来源于HTML网页 - h1标签</h1>'");
+			__JS__("div.innerHTML = '<h1 style=\'color: red;\'>此内容来源于HTML网页 - h1标签</h1>'");
 			__JS__("document.body.appendChild(div)");
 			
 			Laya3D.init(0, 0, true, true);

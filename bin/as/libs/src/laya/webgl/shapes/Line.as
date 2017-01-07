@@ -10,7 +10,21 @@ package laya.webgl.shapes
 		public function Line(x:Number, y:Number, points:Array, borderWidth:int, color:uint)
 		{
 			//把没用的顶点数据过滤掉
+			rebuild(points);
+			super(x, y, 0, 0, 0, color, borderWidth, color, 0);
+		}
+		
+		override public function rebuild(points:Array):void
+		{
 			
+			var len:int = points.length;
+			var preLen:int = _points.length;
+			if (len != preLen)
+			{
+				this.mUint16Array = new Uint16Array((len/2-1) *6);
+				this.mFloat32Array = new Float32Array(len*5);
+			}
+			_points.length = 0;
 			var tCurrX:Number;
 			var tCurrY:Number;
 			var tLastX:Number = -1;
@@ -28,15 +42,6 @@ package laya.webgl.shapes
 				tLastX = tCurrX;
 				tLastY = tCurrY;
 			}
-			//tCurrX = points[tLen * 2];
-			//tCurrY = points[tLen * 2 + 1];
-			//tLastX = _points[0];
-			//tLastY = _points[1];
-			//if (Math.abs(tLastX - tCurrX)> 0.01 || Math.abs(tLastY - tCurrY)>0.01)
-			//{
-				//_points.push(tCurrX, tCurrY);
-			//}
-			super(x, y, 0, 0, 0, color, borderWidth, color, 0);
 		}
 		
 		override public function getData(ib:Buffer2D, vb:Buffer2D, start:int):void
@@ -45,8 +50,10 @@ package laya.webgl.shapes
 			var verts:Array = [];
 			
 			(borderWidth > 0) && createLine2(_points, indices, borderWidth, start, verts, _points.length / 2);
-			ib.append(new Uint16Array(indices));
-			vb.append(new Float32Array(verts));
+			this.mUint16Array.set(indices, 0);
+			this.mFloat32Array.set(verts, 0);
+			ib.append(this.mUint16Array);
+			vb.append(this.mFloat32Array);
 		
 			//下面方法用来测试边儿
 			//var outVertex:Array=[];

@@ -1,0 +1,1333 @@
+{ "height":31,
+ "layers":[
+        {
+         "compression":"zlib",
+         "data":"eJyNWE1vVVUU3Y0KQeXL4kBL7QAiEkcopQOIkjgysXagYeLIpE0HGucEtY5U6giw1Bj8AdiWxhZ+ANLS4nv+AJKW1+TVH9DklWfSR+LeeWt51j3eWxmsnPvuPR9rr7P3Pvu8hpkd7DFb8dYb24Pf89bFtOOio8\/xquNreZ\/jdccxx0nH53j+SN7F81nHOfz+BGs1vP0C706i\/1kZ+6asMWRdrvMY+4q3bzmedTwj\/FfAO\/i2HVcc10s4f+t4QzidcEw6vnd8lz0HfrAu3wOO8xj3seO44AT6cY0GONPWTx1jjp8cvzjO4Fsbfan\/luP3XXgrJ+4XtWnjeQX9VzBmErgsdud8lXdwCb94G5w3HE+g+R5ZcwDPDx114U3dY569wkW5UZ8J8I6+AfalPbT7MvhS03nMMV3CNzT+A5zHMt70obvezjrWwfue47HwynUhH3JivwG01E1Be0cs8eW3mOd9x2lwXHVsOx7AP8bgI\/PCZ5+PmwHvHceSaK76UZO2cGyg1X2mT\/eKrtOwUX2Le\/RcicbB4zfHyz6239sPs3VijtB6E33XRPPr0CbXmpwaAvrEPPyBvsDvOn4IbQ+4jkHnDaxfE52POl6zFIe0n1oH12Vw37Hq2HzH8W5o6DgE9FrRn+l7uk8rVvSZi6LvDdF4GaBPU2edS32kDjub1vWrMt6Mq8gJkc\/OwQbypq9T54jrKcfVkrl+Fq5ctwn9\/hTOZefIgPC+7VhEW9tFb+bwyL2Rw3le5DHGeVuY6xrma0DPJtpYL+Ip\/JT+TM7uT9\/k649jji3MEWMO+5gF2Py4hLOel8y\/A1bMKdRbeW8K99BkzlIOmMVe37GuL2u+y\/PYCNbbAkfGwCo0vyX9cq0nwbcsXnP\/e97xAjADzutoQ6def3+kJ2lMnCmZL\/wl\/C7y87bsTXDuOB5Bt\/\/jpbgiflBlQwe6am4bE40Dw6J1PscW9inmiJhlvvzVcaAn7fnT8JyC\/ZG77u\/SX3Nx8CPnQNRxl6xY05XZPYN5HoBv+F+VL49kccF9on9GG757q2J84KXMD0bBrw\/+EHt7yro5umqOh7IW1330FHtNvkvQdg72co8GKtajnn2ib+QJ1p7T2XMgzlDPI\/\/mv+C8Db5NWVO\/MeangB\/Bt4Y9CnuXs7FVIEfWofy9d5cxPF8mRKtNaDQLvxiy5O\/xvgMteQ5si7Y1PLdkf8owjvW+hIan7L85gnXJRLd\/wQ+ZD+jPjOU1K9ao1JLfeWatgfdtvGcNsBtnzjcu+\/+VdWMubNA6i3lNx9MWahl7qvUHa1RqS79pWjord9C\/hedFjLsKaByQ72KJLax1437GmqZX+OV2Mz+FP9y0dI52wKuFd3y\/CH3Zh1qz1f7x7n62X\/USHm3ggqU7pdYyeZ57EedTxI3W1XXw25T1a+DFs4vn\/Bz4d7BHm5bOOe4XvzdLeBBRO0YdwzszeYevjFvymYg1xiv1qFvKtx1o17QUi1EXMHYOgfsR8G9Z8hXWiZyrjvFVnFl\/kfOxjDdrmeAZeeuapTOce8x6gHquAVEv6jnL51VozH6shdbAn3VnrBvxdtCS7\/LdeUv\/NUQNxntlG7ypK\/dxHWuw\/tbzlTVIrMlaKu4Zeu4egm30I+a\/WbTL+KaaHoeWh8GX+sZ\/I1HnDlixFr9nqY5dtFQztjK+vMurbsH7hqU7J\/X+GxyXMGcNWJI9oy9csOJ\/PKEr\/0cJe96Dvjdl\/3g\/2ZZ1uH9\/Wbe2GnR8AC7Rb8dSPOV2jaIfc7ae6ew7akX\/nQRP+kC8j\/OO98vgvA95Yj\/q2v2SK7Sm5fx5rC2gT\/R\/YsXacRT7EeMXLMVdcNa4rYrByMd6B676j44+3QFn1U7jTLkzz6nGw\/I93m9Yyot5HcdzhPkrELkrYjD8mnGZc2a9pnUO+Q5mPEO\/fivG21Grtktty+8eqjM58b873tk+s25c6t0+cNdS\/cAYv1Oxfhn6pR20oh+dzvoOZ\/b+A6OnAUo=",
+         "encoding":"base64",
+         "height":31,
+         "name":"Ground",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":45,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "compression":"zlib",
+         "data":"eJzVl9lNw0AURZ8ltgr4YquAjliaYPl8DdAChCVABRB2KkBhpwK2sKQC4FgiShQ8tseMx\/aVjmRLY+fO3JnnFxGRGZiVamkBFos2EaOBQGQw6N6PFmcltcbwOx50vU+neKYztsb1OmzAZq4uo9XxbjO2wfUBHMJRjt5c6RyacAlXcF2oGzu9wCu0YCohpwcPftJqFdZ+r9uGMf1nvWjtwX7P\/UiEN5vzUiZRW5Qao9QarUHRftKI2qLUGKXWaCOjZ9\/zprYoNUapNdrM+Hsu5m0jaotSY5Rao62M73Ax70d4gme4yOgjSb01tH\/eu\/947xd8izvfS7Ds6F2+VZP8e5oVx+8rY0\/D90dN385QPnuapN7DZnxvT1O2HiCNqtYD2GaXt3aot9tQh62K9CJn+DyFEziuiOd7fN7BLdyUxDN5C7kL+Yf74I8+8fkB7\/AGQ+zdYU\/7t21YI\/IWchfyD\/dBoibwO1nwmSNvIXch\/3AfxCopE18ibyF3If9wH8TKNhOfMq2nTSZ5yXSeTOvZn0nU83Mw78Bb1P\/tUKbzlHY9k87jD20Li3Y=",
+         "encoding":"base64",
+         "height":31,
+         "name":"Fringe",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":45,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "height":0,
+         "name":"Objects",
+         "objects":[
+                {
+                 "height":99,
+                 "id":1,
+                 "name":"maggots",
+                 "properties":
+                    {
+                     "spawncount":5,
+                     "spawntype":"maggot"
+                    },
+                 "propertytypes":
+                    {
+                     "spawncount":"int",
+                     "spawntype":"string"
+                    },
+                 "rotation":0,
+                 "type":"location",
+                 "visible":true,
+                 "width":155,
+                 "x":435,
+                 "y":74
+                }, 
+                {
+                 "ellipse":true,
+                 "height":127,
+                 "id":2,
+                 "name":"discover chest",
+                 "properties":
+                    {
+                     "script":"chest-discovered.lua"
+                    },
+                 "propertytypes":
+                    {
+                     "script":"string"
+                    },
+                 "rotation":0,
+                 "type":"trigger",
+                 "visible":true,
+                 "width":127,
+                 "x":201,
+                 "y":200
+                }, 
+                {
+                 "height":0,
+                 "id":3,
+                 "name":"unreachable",
+                 "polygon":[
+                        {
+                         "x":0,
+                         "y":0
+                        }, 
+                        {
+                         "x":55,
+                         "y":-23
+                        }, 
+                        {
+                         "x":96,
+                         "y":-117
+                        }, 
+                        {
+                         "x":110,
+                         "y":-61
+                        }, 
+                        {
+                         "x":104,
+                         "y":-42
+                        }, 
+                        {
+                         "x":119,
+                         "y":-33
+                        }, 
+                        {
+                         "x":116,
+                         "y":6
+                        }, 
+                        {
+                         "x":104,
+                         "y":9
+                        }, 
+                        {
+                         "x":100,
+                         "y":36
+                        }, 
+                        {
+                         "x":60,
+                         "y":43
+                        }, 
+                        {
+                         "x":53,
+                         "y":58
+                        }, 
+                        {
+                         "x":43,
+                         "y":58
+                        }, 
+                        {
+                         "x":34,
+                         "y":74
+                        }, 
+                        {
+                         "x":21,
+                         "y":69
+                        }, 
+                        {
+                         "x":18,
+                         "y":90
+                        }, 
+                        {
+                         "x":0,
+                         "y":89
+                        }],
+                 "properties":
+                    {
+                     "friction":1,
+                     "static":true
+                    },
+                 "propertytypes":
+                    {
+                     "friction":"float",
+                     "static":"bool"
+                    },
+                 "rotation":0,
+                 "type":"Fixture",
+                 "visible":true,
+                 "width":0,
+                 "x":2,
+                 "y":158
+                }, 
+                {
+                 "height":0,
+                 "id":5,
+                 "name":"guard",
+                 "polyline":[
+                        {
+                         "x":-3,
+                         "y":120
+                        }, 
+                        {
+                         "x":87,
+                         "y":91
+                        }, 
+                        {
+                         "x":154,
+                         "y":96
+                        }, 
+                        {
+                         "x":181,
+                         "y":16
+                        }, 
+                        {
+                         "x":273,
+                         "y":-1
+                        }],
+                 "rotation":0,
+                 "type":"NPC",
+                 "visible":true,
+                 "width":0,
+                 "x":22,
+                 "y":361
+                }, 
+                {
+                 "height":0,
+                 "id":6,
+                 "name":"guard",
+                 "polyline":[
+                        {
+                         "x":0,
+                         "y":0
+                        }, 
+                        {
+                         "x":75,
+                         "y":78
+                        }, 
+                        {
+                         "x":133,
+                         "y":82
+                        }, 
+                        {
+                         "x":176,
+                         "y":179
+                        }, 
+                        {
+                         "x":274,
+                         "y":183
+                        }],
+                 "rotation":0,
+                 "type":"NPC",
+                 "visible":true,
+                 "width":0,
+                 "x":277,
+                 "y":18
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":10,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":413.333,
+                 "y":225.333
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":11,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":421.667,
+                 "y":218
+                }, 
+                {
+                 "gid":2147483930,
+                 "height":16,
+                 "id":12,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":423,
+                 "y":235.333
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":13,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":5,
+                 "y":70
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":14,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":-3.66667,
+                 "y":80.3333
+                }, 
+                {
+                 "gid":283,
+                 "height":16,
+                 "id":16,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":538,
+                 "y":418.333
+                }, 
+                {
+                 "gid":283,
+                 "height":16,
+                 "id":17,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":407.667,
+                 "y":462
+                }, 
+                {
+                 "gid":283,
+                 "height":16,
+                 "id":18,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":417,
+                 "y":473.667
+                }, 
+                {
+                 "gid":283,
+                 "height":16,
+                 "id":19,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":402.667,
+                 "y":469
+                }, 
+                {
+                 "gid":2147483930,
+                 "height":16,
+                 "id":21,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":683.333,
+                 "y":260.5
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":22,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":692.167,
+                 "y":269.167
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":23,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":701.667,
+                 "y":247.833
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":24,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":688.5,
+                 "y":242
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":25,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":670.5,
+                 "y":263.5
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":26,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":680,
+                 "y":284
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":27,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":643.833,
+                 "y":283.667
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":28,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":63.4165,
+                 "y":386
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":29,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":9.0835,
+                 "y":356.167
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":30,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":11.9165,
+                 "y":385
+                }, 
+                {
+                 "gid":282,
+                 "height":16,
+                 "id":31,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":54.2495,
+                 "y":378.5
+                }, 
+                {
+                 "gid":2147483930,
+                 "height":16,
+                 "id":32,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":2.4165,
+                 "y":364.5
+                }, 
+                {
+                 "gid":2147483930,
+                 "height":16,
+                 "id":33,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":41.5835,
+                 "y":382.833
+                }, 
+                {
+                 "gid":257,
+                 "height":16,
+                 "id":34,
+                 "name":"",
+                 "properties":
+                    {
+                     "text":"East West"
+                    },
+                 "propertytypes":
+                    {
+                     "text":"string"
+                    },
+                 "rotation":0,
+                 "type":"Sign",
+                 "visible":true,
+                 "width":16,
+                 "x":670.667,
+                 "y":87
+                }, 
+                {
+                 "height":16,
+                 "id":36,
+                 "name":"player-start",
+                 "rotation":0,
+                 "type":"Location",
+                 "visible":true,
+                 "width":16,
+                 "x":192,
+                 "y":160
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "width":0,
+         "x":0,
+         "y":0
+        }],
+ "nextobjectid":37,
+ "orientation":"orthogonal",
+ "properties":
+    {
+     "enemyTint":"#ffa33636"
+    },
+ "propertytypes":
+    {
+     "enemyTint":"color"
+    },
+ "renderorder":"right-down",
+ "tileheight":16,
+ "tilesets":[
+        {
+         "columns":24,
+         "firstgid":1,
+         "image":"..\/..\/..\/Program Files\/Tiled\/examples\/buch-outdoor.png",
+         "imageheight":192,
+         "imagewidth":384,
+         "margin":0,
+         "name":"outdoor",
+         "spacing":0,
+         "terrains":[
+                {
+                 "name":"Grass",
+                 "tile":150
+                }, 
+                {
+                 "name":"Dirt",
+                 "tile":100
+                }, 
+                {
+                 "name":"Dark Dirt",
+                 "tile":34
+                }, 
+                {
+                 "name":"Water",
+                 "tile":171
+                }],
+         "tilecount":288,
+         "tileheight":16,
+         "tiles":
+            {
+             "0":
+                {
+                 "terrain":[0, 0, 0, 1]
+                },
+             "1":
+                {
+                 "terrain":[0, 0, 1, 1]
+                },
+             "10":
+                {
+                 "terrain":[1, 1, 2, 2]
+                },
+             "100":
+                {
+                 "terrain":[1, 1, 1, 1]
+                },
+             "101":
+                {
+                 "terrain":[1, 0, 1, 0]
+                },
+             "102":
+                {
+                 "probability":0.100000001490116,
+                 "terrain":[0, 0, 0, 0]
+                },
+             "103":
+                {
+                 "terrain":[1, 2, 1, 2]
+                },
+             "104":
+                {
+                 "terrain":[2, 1, 1, 2]
+                },
+             "105":
+                {
+                 "terrain":[1, 2, 2, 1]
+                },
+             "106":
+                {
+                 "probability":0.100000001490116,
+                 "terrain":[2, 2, 2, 2]
+                },
+             "107":
+                {
+                 "probability":0.100000001490116,
+                 "terrain":[2, 2, 2, 2]
+                },
+             "108":
+                {
+                 "terrain":[2, 1, 2, 1]
+                },
+             "109":
+                {
+                 "terrain":[0, 2, 0, 2]
+                },
+             "11":
+                {
+                 "terrain":[1, 1, 2, 2]
+                },
+             "110":
+                {
+                 "terrain":[2, 0, 0, 2]
+                },
+             "111":
+                {
+                 "terrain":[0, 2, 2, 0]
+                },
+             "114":
+                {
+                 "terrain":[2, 0, 2, 0]
+                },
+             "12":
+                {
+                 "terrain":[1, 1, 2, 1]
+                },
+             "120":
+                {
+                 "terrain":[0, 1, 0, 0]
+                },
+             "121":
+                {
+                 "terrain":[1, 1, 0, 0]
+                },
+             "122":
+                {
+                 "terrain":[1, 1, 0, 0]
+                },
+             "123":
+                {
+                 "terrain":[1, 1, 0, 0]
+                },
+             "124":
+                {
+                 "terrain":[1, 1, 0, 0]
+                },
+             "125":
+                {
+                 "terrain":[1, 0, 0, 0]
+                },
+             "126":
+                {
+                 "probability":0.100000001490116,
+                 "terrain":[0, 0, 0, 0]
+                },
+             "127":
+                {
+                 "terrain":[1, 2, 1, 1]
+                },
+             "128":
+                {
+                 "terrain":[2, 2, 1, 1]
+                },
+             "129":
+                {
+                 "terrain":[2, 2, 1, 1]
+                },
+             "13":
+                {
+                 "terrain":[0, 0, 0, 2]
+                },
+             "130":
+                {
+                 "terrain":[2, 2, 1, 1]
+                },
+             "131":
+                {
+                 "terrain":[2, 2, 1, 1]
+                },
+             "132":
+                {
+                 "terrain":[2, 1, 1, 1]
+                },
+             "133":
+                {
+                 "terrain":[0, 2, 0, 0]
+                },
+             "134":
+                {
+                 "terrain":[2, 2, 0, 0]
+                },
+             "135":
+                {
+                 "terrain":[2, 2, 0, 0]
+                },
+             "136":
+                {
+                 "terrain":[2, 2, 0, 0]
+                },
+             "137":
+                {
+                 "terrain":[2, 2, 0, 0]
+                },
+             "138":
+                {
+                 "terrain":[2, 0, 0, 0]
+                },
+             "14":
+                {
+                 "terrain":[0, 0, 2, 2]
+                },
+             "144":
+                {
+                 "terrain":[0, 0, 0, 3]
+                },
+             "145":
+                {
+                 "terrain":[0, 0, 3, 3]
+                },
+             "146":
+                {
+                 "terrain":[0, 0, 3, 3]
+                },
+             "147":
+                {
+                 "terrain":[0, 0, 3, 3]
+                },
+             "148":
+                {
+                 "terrain":[0, 0, 3, 3]
+                },
+             "149":
+                {
+                 "terrain":[0, 0, 3, 0]
+                },
+             "15":
+                {
+                 "terrain":[0, 0, 2, 2]
+                },
+             "150":
+                {
+                 "terrain":[0, 0, 0, 0]
+                },
+             "151":
+                {
+                 "terrain":[1, 1, 1, 3]
+                },
+             "152":
+                {
+                 "terrain":[1, 1, 3, 3]
+                },
+             "153":
+                {
+                 "terrain":[1, 1, 3, 3]
+                },
+             "154":
+                {
+                 "terrain":[1, 1, 3, 3]
+                },
+             "155":
+                {
+                 "terrain":[1, 1, 3, 3]
+                },
+             "156":
+                {
+                 "terrain":[1, 1, 3, 1]
+                },
+             "16":
+                {
+                 "terrain":[0, 0, 2, 2]
+                },
+             "168":
+                {
+                 "terrain":[0, 3, 0, 3]
+                },
+             "169":
+                {
+                 "terrain":[3, 3, 3, 0]
+                },
+             "17":
+                {
+                 "terrain":[0, 0, 2, 2]
+                },
+             "170":
+                {
+                 "terrain":[3, 3, 0, 3]
+                },
+             "171":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "172":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "173":
+                {
+                 "terrain":[3, 0, 3, 0]
+                },
+             "174":
+                {
+                 "terrain":[0, 0, 0, 0]
+                },
+             "175":
+                {
+                 "terrain":[1, 3, 1, 3]
+                },
+             "176":
+                {
+                 "terrain":[3, 3, 3, 1]
+                },
+             "177":
+                {
+                 "terrain":[3, 3, 1, 3]
+                },
+             "178":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "179":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "18":
+                {
+                 "terrain":[0, 0, 2, 0]
+                },
+             "180":
+                {
+                 "terrain":[3, 1, 3, 1]
+                },
+             "192":
+                {
+                 "terrain":[0, 3, 0, 3]
+                },
+             "193":
+                {
+                 "terrain":[3, 0, 3, 3]
+                },
+             "194":
+                {
+                 "terrain":[0, 3, 3, 3]
+                },
+             "195":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "196":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "197":
+                {
+                 "terrain":[3, 0, 3, 0]
+                },
+             "198":
+                {
+                 "terrain":[0, 0, 0, 0]
+                },
+             "199":
+                {
+                 "terrain":[1, 3, 1, 3]
+                },
+             "2":
+                {
+                 "terrain":[0, 0, 1, 1]
+                },
+             "200":
+                {
+                 "terrain":[3, 1, 3, 3]
+                },
+             "201":
+                {
+                 "terrain":[1, 3, 3, 3]
+                },
+             "202":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "203":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "204":
+                {
+                 "terrain":[3, 1, 3, 1]
+                },
+             "216":
+                {
+                 "terrain":[0, 3, 0, 3]
+                },
+             "217":
+                {
+                 "terrain":[0, 3, 3, 0]
+                },
+             "218":
+                {
+                 "terrain":[3, 0, 0, 3]
+                },
+             "219":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "220":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "221":
+                {
+                 "terrain":[3, 0, 3, 0]
+                },
+             "222":
+                {
+                 "terrain":[0, 0, 0, 0]
+                },
+             "223":
+                {
+                 "terrain":[1, 3, 1, 3]
+                },
+             "224":
+                {
+                 "terrain":[1, 3, 3, 1]
+                },
+             "225":
+                {
+                 "terrain":[3, 1, 1, 3]
+                },
+             "226":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "227":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "228":
+                {
+                 "terrain":[3, 1, 3, 1]
+                },
+             "24":
+                {
+                 "terrain":[0, 1, 0, 1]
+                },
+             "240":
+                {
+                 "terrain":[0, 3, 0, 3]
+                },
+             "241":
+                {
+                 "terrain":[3, 0, 0, 3]
+                },
+             "242":
+                {
+                 "terrain":[0, 3, 3, 0]
+                },
+             "243":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "244":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "245":
+                {
+                 "terrain":[3, 0, 3, 0]
+                },
+             "246":
+                {
+                 "terrain":[0, 0, 0, 0]
+                },
+             "247":
+                {
+                 "terrain":[1, 3, 1, 3]
+                },
+             "248":
+                {
+                 "terrain":[3, 1, 1, 3]
+                },
+             "249":
+                {
+                 "terrain":[1, 3, 3, 1]
+                },
+             "25":
+                {
+                 "terrain":[1, 1, 1, 0]
+                },
+             "250":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "251":
+                {
+                 "terrain":[3, 3, 3, 3]
+                },
+             "252":
+                {
+                 "terrain":[3, 1, 3, 1]
+                },
+             "26":
+                {
+                 "terrain":[1, 1, 0, 1]
+                },
+             "264":
+                {
+                 "terrain":[0, 3, 0, 0]
+                },
+             "265":
+                {
+                 "terrain":[3, 3, 0, 0]
+                },
+             "266":
+                {
+                 "terrain":[3, 3, 0, 0]
+                },
+             "267":
+                {
+                 "terrain":[3, 3, 0, 0]
+                },
+             "268":
+                {
+                 "terrain":[3, 3, 0, 0]
+                },
+             "269":
+                {
+                 "terrain":[3, 0, 0, 0]
+                },
+             "27":
+                {
+                 "probability":0.0500000007450581,
+                 "terrain":[1, 1, 1, 1]
+                },
+             "270":
+                {
+                 "terrain":[0, 0, 0, 0]
+                },
+             "271":
+                {
+                 "terrain":[1, 3, 1, 1]
+                },
+             "272":
+                {
+                 "terrain":[3, 3, 1, 1]
+                },
+             "273":
+                {
+                 "terrain":[3, 3, 1, 1]
+                },
+             "274":
+                {
+                 "terrain":[3, 3, 1, 1]
+                },
+             "275":
+                {
+                 "terrain":[3, 3, 1, 1]
+                },
+             "276":
+                {
+                 "terrain":[3, 1, 1, 1]
+                },
+             "28":
+                {
+                 "probability":0.0500000007450581,
+                 "terrain":[1, 1, 1, 1]
+                },
+             "29":
+                {
+                 "terrain":[1, 0, 1, 0]
+                },
+             "3":
+                {
+                 "terrain":[0, 0, 1, 1]
+                },
+             "30":
+                {
+                 "probability":0.100000001490116,
+                 "terrain":[0, 0, 0, 0]
+                },
+             "31":
+                {
+                 "terrain":[1, 2, 1, 2]
+                },
+             "32":
+                {
+                 "terrain":[2, 2, 2, 1]
+                },
+             "33":
+                {
+                 "terrain":[2, 2, 1, 2]
+                },
+             "34":
+                {
+                 "terrain":[2, 2, 2, 2]
+                },
+             "35":
+                {
+                 "terrain":[2, 2, 2, 2]
+                },
+             "36":
+                {
+                 "terrain":[2, 1, 2, 1]
+                },
+             "37":
+                {
+                 "terrain":[0, 2, 0, 2]
+                },
+             "38":
+                {
+                 "terrain":[2, 2, 2, 0]
+                },
+             "39":
+                {
+                 "terrain":[2, 2, 0, 2]
+                },
+             "4":
+                {
+                 "terrain":[0, 0, 1, 1]
+                },
+             "40":
+                {
+                 "terrain":[2, 2, 2, 2]
+                },
+             "42":
+                {
+                 "terrain":[2, 0, 2, 0]
+                },
+             "48":
+                {
+                 "terrain":[0, 1, 0, 1]
+                },
+             "49":
+                {
+                 "terrain":[1, 0, 1, 1]
+                },
+             "5":
+                {
+                 "terrain":[0, 0, 1, 0]
+                },
+             "50":
+                {
+                 "terrain":[0, 1, 1, 1]
+                },
+             "51":
+                {
+                 "probability":0.0500000007450581,
+                 "terrain":[1, 1, 1, 1]
+                },
+             "52":
+                {
+                 "probability":0.0500000007450581,
+                 "terrain":[1, 1, 1, 1]
+                },
+             "53":
+                {
+                 "terrain":[1, 0, 1, 0]
+                },
+             "54":
+                {
+                 "probability":0.100000001490116,
+                 "terrain":[0, 0, 0, 0]
+                },
+             "55":
+                {
+                 "terrain":[1, 2, 1, 2]
+                },
+             "56":
+                {
+                 "terrain":[2, 1, 2, 2]
+                },
+             "57":
+                {
+                 "terrain":[1, 2, 2, 2]
+                },
+             "58":
+                {
+                 "terrain":[2, 2, 2, 2]
+                },
+             "59":
+                {
+                 "terrain":[2, 2, 2, 2]
+                },
+             "6":
+                {
+                 "probability":0.100000001490116,
+                 "terrain":[0, 0, 0, 0]
+                },
+             "60":
+                {
+                 "terrain":[2, 1, 2, 1]
+                },
+             "61":
+                {
+                 "terrain":[0, 2, 0, 2]
+                },
+             "62":
+                {
+                 "terrain":[2, 0, 2, 2]
+                },
+             "63":
+                {
+                 "terrain":[0, 2, 2, 2]
+                },
+             "66":
+                {
+                 "terrain":[2, 0, 2, 0]
+                },
+             "7":
+                {
+                 "terrain":[1, 1, 1, 2]
+                },
+             "72":
+                {
+                 "terrain":[0, 1, 0, 1]
+                },
+             "73":
+                {
+                 "terrain":[0, 1, 1, 0]
+                },
+             "74":
+                {
+                 "terrain":[1, 0, 0, 1]
+                },
+             "75":
+                {
+                 "probability":0.0500000007450581,
+                 "terrain":[1, 1, 1, 1]
+                },
+             "76":
+                {
+                 "probability":0.0500000007450581,
+                 "terrain":[1, 1, 1, 1]
+                },
+             "77":
+                {
+                 "terrain":[1, 0, 1, 0]
+                },
+             "78":
+                {
+                 "probability":0.100000001490116,
+                 "terrain":[0, 0, 0, 0]
+                },
+             "79":
+                {
+                 "terrain":[1, 2, 1, 2]
+                },
+             "8":
+                {
+                 "terrain":[1, 1, 2, 2]
+                },
+             "80":
+                {
+                 "terrain":[1, 2, 2, 1]
+                },
+             "81":
+                {
+                 "terrain":[2, 1, 1, 2]
+                },
+             "82":
+                {
+                 "probability":0.100000001490116,
+                 "terrain":[2, 2, 2, 2]
+                },
+             "83":
+                {
+                 "probability":0.100000001490116,
+                 "terrain":[2, 2, 2, 2]
+                },
+             "84":
+                {
+                 "terrain":[2, 1, 2, 1]
+                },
+             "85":
+                {
+                 "terrain":[0, 2, 0, 2]
+                },
+             "86":
+                {
+                 "terrain":[0, 2, 2, 0]
+                },
+             "87":
+                {
+                 "terrain":[2, 0, 0, 2]
+                },
+             "9":
+                {
+                 "terrain":[1, 1, 2, 2]
+                },
+             "90":
+                {
+                 "terrain":[2, 0, 2, 0]
+                },
+             "96":
+                {
+                 "terrain":[0, 1, 0, 1]
+                },
+             "97":
+                {
+                 "terrain":[1, 0, 0, 1]
+                },
+             "98":
+                {
+                 "terrain":[0, 1, 1, 0]
+                },
+             "99":
+                {
+                 "probability":0.0500000007450581,
+                 "terrain":[1, 1, 1, 1]
+                }
+            },
+         "tilewidth":16
+        }],
+ "tilewidth":16,
+ "version":1,
+ "width":45
+}

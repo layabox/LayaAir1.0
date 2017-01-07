@@ -2,83 +2,56 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Event=laya.events.Event,Keyboard=laya.events.Keyboard,Sprite=laya.display.Sprite,Stage=laya.display.Stage;
-	var TimeLine=laya.utils.TimeLine,WebGL=laya.webgl.WebGL;
-	//class Tween_TimeLine
-	var Tween_TimeLine=(function(){
-		function Tween_TimeLine(){
-			this.target=null;
-			this.timeLine=new TimeLine();
-			Laya.init(550,400,WebGL);
-			Laya.stage.alignV="middle";
-			Laya.stage.alignH="center";
+	var Event=laya.events.Event,Rectangle=laya.maths.Rectangle,Sprite=laya.display.Sprite;
+	/**
+	*...
+	*@author suvivor
+	*/
+	//class HitTest_Rectangular
+	var HitTest_Rectangular=(function(){
+		function HitTest_Rectangular(){
+			this.rect1=null;
+			this.rect2=null;
+			Laya.init(800,600);
 			Laya.stage.scaleMode="showall";
 			Laya.stage.bgColor="#232628";
-			this.setup();
+			this.rect1=this.createRect(100,"orange");
+			this.rect2=this.createRect(200,"purple");
+			Laya.timer.frameLoop(1,this,this.loop);
 		}
 
-		__class(Tween_TimeLine,'Tween_TimeLine');
-		var __proto=Tween_TimeLine.prototype;
-		__proto.setup=function(){
-			this.createApe();
-			this.createTimerLine();
-			Laya.stage.on("keydown",this,this.keyDown);
+		__class(HitTest_Rectangular,'HitTest_Rectangular');
+		var __proto=HitTest_Rectangular.prototype;
+		__proto.createRect=function(size,color){
+			var rect=new Sprite();
+			rect.graphics.drawRect(0,0,size,size,color);
+			rect.size(size,size);
+			Laya.stage.addChild(rect);
+			rect.on("mousedown",this,this.startDrag,[rect]);
+			rect.on("mouseup",this,this.stopDrag,[rect]);
+			return rect;
 		}
 
-		__proto.createApe=function(){
-			this.target=new Sprite();
-			this.target.loadImage("../../../../res/apes/monkey2.png");
-			Laya.stage.addChild(this.target);
-			this.target.pivot(55,72);
-			this.target.pos(100,100);
+		__proto.startDrag=function(target){
+			target.startDrag();
 		}
 
-		__proto.createTimerLine=function(){
-			this.timeLine.addLabel("turnRight",0).to(this.target,{x:450,y:100,scaleX:0.5,scaleY:0.5},2000,null,0)
-			.addLabel("turnDown",0).to(this.target,{x:450,y:300,scaleX:0.2,scaleY:1,alpha:1},2000,null,0)
-			.addLabel("turnLeft",0).to(this.target,{x:100,y:300,scaleX:1,scaleY:0.2,alpha:0.1},2000,null,0)
-			.addLabel("turnUp",0).to(this.target,{x:100,y:100,scaleX:1,scaleY:1,alpha:1},2000,null,0);
-			this.timeLine.play(0,true);
-			this.timeLine.on("complete",this,this.onComplete);
-			this.timeLine.on("label",this,this.onLabel);
+		__proto.stopDrag=function(target){
+			target.stopDrag();
 		}
 
-		__proto.onComplete=function(){
-			console.log("timeLine complete!!!!");
+		__proto.loop=function(){
+			var bounds1=this.rect1.getBounds();
+			var bounds2=this.rect2.getBounds();
+			var hit=bounds1.intersects(bounds2);
+			this.rect1.alpha=this.rect2.alpha=hit ? 0.5 :1;
 		}
 
-		__proto.onLabel=function(label){
-			console.log("LabelName:"+label);
-		}
-
-		__proto.keyDown=function(e){
-			switch(e.keyCode){
-				case 37:
-					this.timeLine.play("turnLeft");
-					break ;
-				case 39:
-					this.timeLine.play("turnRight");
-					break ;
-				case 38:
-					this.timeLine.play("turnUp");
-					break ;
-				case 40:
-					this.timeLine.play("turnDown");
-					break ;
-				case 80:
-					this.timeLine.pause();
-					break ;
-				case 82:
-					this.timeLine.resume();
-					break ;
-				}
-		}
-
-		return Tween_TimeLine;
+		return HitTest_Rectangular;
 	})()
 
 
 
-	new Tween_TimeLine();
+	new HitTest_Rectangular();
 
 })(window,document,Laya);

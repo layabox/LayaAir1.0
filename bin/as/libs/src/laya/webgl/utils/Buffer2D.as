@@ -139,6 +139,34 @@ package laya.webgl.utils {
 			_checkArrayUse();
 		}
 		
+		public function appendEx(data:*,type:Class):void {
+			_upload = true;
+			var byteLen:int, n:*;
+			byteLen = data.byteLength;
+			_resizeBuffer(_byteLength + byteLen, true);
+			n = new type(_buffer, _byteLength);
+			n.set(data, 0);
+			_byteLength += byteLen;
+			_checkArrayUse();
+		}
+		
+		public function appendEx2(data:*,type:Class,dataLen:int,perDataLen:int=1):void {
+			_upload = true;
+			var byteLen:int, n:*;
+			byteLen =dataLen*perDataLen;
+			_resizeBuffer(_byteLength + byteLen, true);
+			n = new type(_buffer, _byteLength);
+			var i:int;
+			for (i = 0; i < dataLen;i++ )
+			{
+				n[i] = data[i];
+			}
+			_byteLength += byteLen;
+			_checkArrayUse();
+		}
+		
+		
+		
 		public function getBuffer():ArrayBuffer {
 			return _buffer;
 		}

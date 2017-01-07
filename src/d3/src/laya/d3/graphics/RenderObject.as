@@ -25,6 +25,8 @@ package laya.d3.graphics {
 		public var _ownerEnable:Boolean;
 		/** @private */
 		public var _enable:Boolean;
+		/** @private */
+		public var _distanceForSort:Number;
 		
 		/** @private */
 		public var _conchRenderObject:IConchRenderObject;//NATIVE

@@ -91,6 +91,10 @@ package laya.events {
 		public static const BLUR:String = "blur";
 		/** 定义 focus 事件对象的 type 属性值。*/
 		public static const FOCUS:String = "focus";
+		/** 定义 visibilitychange 事件对象的 type 属性值。*/
+		public static const VISIBILITY_CHANGE:String = "visibilitychange";
+		/** 定义 focuschange 事件对象的 type 属性值。*/
+		public static const FOCUS_CHANGE:String = "focuschange";
 		/** 定义 played 事件对象的 type 属性值。*/
 		public static const PLAYED:String = "played";
 		/** 定义 paused 事件对象的 type 属性值。*/

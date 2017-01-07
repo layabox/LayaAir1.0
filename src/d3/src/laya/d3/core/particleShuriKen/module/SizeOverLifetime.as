@@ -64,6 +64,7 @@ package laya.d3.core.particleShuriKen.module {
 			}
 			
 			var destSizeOverLifetime:SizeOverLifetime = __JS__("new this.constructor(destSize)");
+			destSizeOverLifetime.enbale = enbale;
 			return destSizeOverLifetime;
 		}
 	

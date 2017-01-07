@@ -579,12 +579,12 @@ package laya.webgl.canvas
 				
 				shaderValue.u_offset[0] = tx;
 				shaderValue.u_offset[1] = ty;
-				var curShader:Value2D = _curSubmit.shaderValue;
-				var shader:Shader2D = _shader2D;
+				//var curShader:Value2D = _curSubmit.shaderValue;
+				//var shader:Shader2D = _shader2D;
 				
 				if (AtlasResourceManager.enabled && !this._isMain) //而且不是主画布
 					submit.addTexture(texture, (vb._byteLength >> 2) - WebGLContext2D._RECTVBSIZE);
-				submit._preIsSameTextureShader = _curSubmit._renderType === Submit.TYPE_FILLTEXTURE && shader.ALPHA === curShader.ALPHA;
+				//submit._preIsSameTextureShader = _curSubmit._renderType === Submit.TYPE_FILLTEXTURE && shader.ALPHA === curShader.ALPHA;
 				_curSubmit = submit;
 		        
 				submit._renderType = Submit.TYPE_FILLTEXTURE;
@@ -1199,6 +1199,8 @@ package laya.webgl.canvas
 		
 		public function movePath(x:Number, y:Number):void
 		{
+			x = _curMat.a * x + _curMat.c * y + _curMat.tx;
+			y = _curMat.b * x + _curMat.d * y	+_curMat.ty;
 			mX += x;
 			mY += y;
 		}
@@ -1237,6 +1239,7 @@ package laya.webgl.canvas
 					if (mHaveLineKey)
 					{
 						var tShapeLine:IShape = VectorGraphManager.getInstance().shapeLineDic[mId];
+						tShapeLine.rebuild(tPath.tempArray);
 						tPath.setGeomtry(tShapeLine);
 					}
 					else
@@ -1246,13 +1249,13 @@ package laya.webgl.canvas
 				}
 				
 				tPath.update();
-				var tArray:Array = RenderState2D.getMatrArray();
-				RenderState2D.mat2MatArray(_curMat, tArray);
+				//var tArray:Array = RenderState2D.getMatrArray();
+				//RenderState2D.mat2MatArray(_curMat, tArray);
 				var tPosArray:Array = [mX, mY];
 				var tempSubmit:Submit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
 				(tempSubmit.shaderValue as PrimitiveSV).u_pos = tPosArray;
-				tempSubmit.shaderValue.u_mmat2 = tArray;
+				tempSubmit.shaderValue.u_mmat2 = RenderState2D.TEMPMAT4_ARRAY;
 				_submits[_submits._length++] = tempSubmit;
 			}
 		}
@@ -1280,16 +1283,43 @@ package laya.webgl.canvas
 			}
 		}
 		
-		public function moveTo(x:Number, y:Number):void
+		public function moveTo(x:Number, y:Number,b:Boolean=true):void
 		{
 			var tPath:Path = _getPath();
+			if (b)
+			{
+				x = _curMat.a * x + _curMat.c * y + _curMat.tx;
+				y = _curMat.b * x + _curMat.d * y	+_curMat.ty;
+			}
 			tPath.addPoint(x, y);
 		}
 		
-		public function lineTo(x:Number, y:Number):void
+		public function lineTo(x:Number, y:Number,b:Boolean=true):void
 		{
 			var tPath:Path = _getPath();
+			if (b)
+			{
+				x = _curMat.a * x + _curMat.c * y + _curMat.tx;
+				y = _curMat.b * x + _curMat.d * y	+_curMat.ty;
+			}
 			tPath.addPoint(x, y);
+		}
+		
+		override public function drawCurves(x:Number, y:Number, args:Array):void
+		{
+			setPathId(-1);
+			beginPath();
+			strokeStyle = args[3];
+			lineWidth = args[4];
+			var points:Array = args[2];
+			x += args[0], y += args[1];
+			movePath(x, y);
+			moveTo(points[0], points[1]);
+			var i:int = 2, n:int = points.length;
+			while (i < n) {
+				quadraticCurveTo( points[i++],  points[i++],  points[i++],  points[i++]);
+			}
+			stroke();
 		}
 		
 		override public function arcTo(x1:Number, y1:Number, x2:Number, y2:Number, r:Number):void
@@ -1354,8 +1384,10 @@ package laya.webgl.canvas
 		{
 			if (mId != -1)
 			{
-				if (mHaveKey)
+				var tShape:IShape = VectorGraphManager.getInstance().shapeDic[this.mId];
+				if (tShape)
 				{
+					if (mHaveKey && !tShape.needUpdate(_curMat))
 					return;
 				}
 				cx = 0;
@@ -1423,6 +1455,9 @@ package laya.webgl.canvas
 				dy = Math.sin(a);
 				x = cx + dx * r;
 				y = cy + dy * r;
+				
+				x = _curMat.a * x + _curMat.c * y + _curMat.tx;
+				y = _curMat.b * x + _curMat.d * y	+_curMat.ty;
 				if (x != _path.getEndPointX() || y != _path.getEndPointY())
 				{
 					tPath.addPoint(x, y);
@@ -1432,6 +1467,8 @@ package laya.webgl.canvas
 			dy = Math.sin(endAngle);
 			x = cx + dx * r;
 			y = cy + dy * r;
+			x = _curMat.a * x + _curMat.c * y + _curMat.tx;
+			y = _curMat.b * x + _curMat.d * y	+_curMat.ty;
 			if (x != _path.getEndPointX() || y != _path.getEndPointY())
 			{
 				tPath.addPoint(x, y);
@@ -1442,12 +1479,16 @@ package laya.webgl.canvas
 		{
 			var tBezier:Bezier = Bezier.I;
 			var tResultArray:Array = [];
+			    x = _curMat.a * x + _curMat.c * y + _curMat.tx;
+				y = _curMat.b * x + _curMat.d * y	+_curMat.ty;
+				cpx = _curMat.a * cpx + _curMat.c * cpy + _curMat.tx;
+				cpy = _curMat.b * cpx + _curMat.d * cpy	+_curMat.ty;
 			var tArray:Array = tBezier.getBezierPoints([_path.getEndPointX(), _path.getEndPointY(), cpx, cpy, x, y], 30, 2);
 			for (var i:int = 0, n:int = tArray.length / 2; i < n; i++)
 			{
-				lineTo(tArray[i * 2], tArray[i * 2 + 1]);
+				lineTo(tArray[i * 2], tArray[i * 2 + 1],false);
 			}
-			lineTo(x, y);
+			lineTo(x, y,false);
 		}
 		
 		override public function rect(x:Number, y:Number, width:Number, height:Number):void
@@ -1490,18 +1531,22 @@ package laya.webgl.canvas
 				if (mHaveKey)
 				{
 					var tShape:IShape = VectorGraphManager.getInstance().shapeDic[mId];
+					tShape.setMatrix(_curMat);
+					tShape.rebuild(tPath.tempArray);
 					tPath.setGeomtry(tShape);
 				}
 				else
 				{
-					VectorGraphManager.getInstance().addShape(mId, tPath.polygon(x, y, points, color, lineWidth ? lineWidth : 1, boderColor));
+					var t:IShape = tPath.polygon(x, y, points, color, lineWidth ? lineWidth : 1, boderColor);
+					VectorGraphManager.getInstance().addShape(mId, t);
+					t.setMatrix(_curMat);
 				}
 			}
 			
 			tPath.update();
 			var tPosArray:Array = [mX, mY];
-			var tArray:Array = RenderState2D.getMatrArray();
-			RenderState2D.mat2MatArray(_curMat, tArray);
+			//var tArray:Array = RenderState2D.getMatrArray();
+			//RenderState2D.mat2MatArray(_curMat, tArray);
 			var tempSubmit:Submit;
 			if (!isConvexPolygon)
 			{
@@ -1512,7 +1557,7 @@ package laya.webgl.canvas
 				tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
 				(tempSubmit.shaderValue as PrimitiveSV).u_pos = tPosArray;
-				tempSubmit.shaderValue.u_mmat2 = tArray;
+				tempSubmit.shaderValue.u_mmat2 =  RenderState2D.EMPTYMAT4_ARRAY;
 				_submits[_submits._length++] = tempSubmit;
 				submit = SubmitStencil.create(5);
 				addRenderObject(submit);
@@ -1521,7 +1566,7 @@ package laya.webgl.canvas
 			tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 			tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
 			(tempSubmit.shaderValue as PrimitiveSV).u_pos = tPosArray;
-			tempSubmit.shaderValue.u_mmat2 = tArray;
+			tempSubmit.shaderValue.u_mmat2 = RenderState2D.EMPTYMAT4_ARRAY;
 			_submits[_submits._length++] = tempSubmit;
 			if (!isConvexPolygon)
 			{
@@ -1534,6 +1579,7 @@ package laya.webgl.canvas
 				if (mHaveLineKey)
 				{
 					var tShapeLine:IShape = VectorGraphManager.getInstance().shapeLineDic[mId];
+					tShapeLine.rebuild(tPath.tempArray);
 					tPath.setGeomtry(tShapeLine);
 				}
 				else
@@ -1543,7 +1589,7 @@ package laya.webgl.canvas
 				tPath.update();
 				tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-				tempSubmit.shaderValue.u_mmat2 = tArray;
+				tempSubmit.shaderValue.u_mmat2 = RenderState2D.EMPTYMAT4_ARRAY;
 				_submits[_submits._length++] = tempSubmit;
 			}
 		}

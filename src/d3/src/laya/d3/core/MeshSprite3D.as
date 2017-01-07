@@ -21,6 +21,9 @@ package laya.d3.core {
 	 * <code>MeshSprite3D</code> 类用于创建网格。
 	 */
 	public class MeshSprite3D extends Sprite3D {
+		/**着色器变量名，光照贴图缩放和偏移。*/
+		public static const LIGHTMAPSCALEOFFSET:int = 2;
+		
 		/** @private 网格数据模板。*/
 		private var _meshFilter:MeshFilter;
 		/** @private */
@@ -215,9 +218,9 @@ package laya.d3.core {
 		 * @private
 		 */
 		override public function _prepareShaderValuetoRender(view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
-			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
-			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
-			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
+			super._prepareShaderValuetoRender(view, projection, projectionView);
+			//if (_meshRender.lightmapIndex)//TODO:改良光照贴图到世界
+				//_setShaderValueColor(LIGHTMAPSCALEOFFSET, _meshRender.lightmapScaleOffset);
 		}
 		
 		override public function cloneTo(destObject:*):void {

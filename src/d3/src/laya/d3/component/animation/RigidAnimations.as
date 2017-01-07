@@ -65,7 +65,6 @@ package laya.d3.component.animation {
 			var nodes:Vector.<Object> = _templet.getNodes(currentAnimationClipIndex);
 			var curParentSprite:Node = _owner;//节点初始父节点
 			var nodeLength:int = nodes.length;
-			
 			var pathStart:int = 0;
 			var extentDatas:Uint16Array = new Uint16Array(_templet.getPublicExtData());
 			for (var i:int = 0; i < nodeLength; i++) {

@@ -149,7 +149,7 @@ package laya.events {
 				var ele:* = _lastOvers[i];
 				if (!ele.destroyed && _currOvers.indexOf(ele) < 0) {
 					ele._set$P("$_MOUSEOVER", false);
-					ele.event(Event.MOUSE_OUT, _event.setTo(Event.MOUSE_OUT, ele, _target));
+					ele.event(Event.MOUSE_OUT, _event.setTo(Event.MOUSE_OUT, ele, ele));
 				}
 			}
 			var temp:Array = _lastOvers;

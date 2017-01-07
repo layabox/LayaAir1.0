@@ -250,15 +250,20 @@ package laya.display {
 		 * 对于已知大小的容器（特别是根容器），设置此值为true，能减少节点碰撞，提高性能。默认为false
 		 */
 		public var hitTestPrior:Boolean = false;
-		/**视口大小，视口外的东西，将不被渲染*/
+		/**视口大小，视口外的子对象(如果想实现裁剪效果，请使用srollRect)，将不被渲染，合理使用能提高渲染性能。比如由一个个小图片拼成的地图块，viewport外面的小图片将不渲染
+		 * srollRect和viewport的区别：
+		 * 1.srollRect自带裁剪效果，srollRect只影响子对象渲染是否渲染，不具有裁剪效果（性能更高）
+		 * 2.设置rect的x,y属性均能实现区域滚动效果，但scrollRect会保持0,0点位置不变
+		 */
 		public var viewport:Rectangle = null;
 		/** @private */
 		private var _optimizeScrollRect:Boolean = false;
 		/**@private */
 		private var _texture:Texture = null;
 		
-		override public function createConchModel():* 
-		{
+		static private var RUNTIMEVERION:String = __JS__("window.conch?conchConfig.getRuntimeVersion().substr(conchConfig.getRuntimeVersion().lastIndexOf('-')+1):''");
+		
+		override public function createConchModel():* {
 			return __JS__("new ConchNode()");
 		}
 		
@@ -804,26 +809,41 @@ package laya.display {
 			} else {
 				_renderType &= ~RenderSprite.GRAPHICS;
 				_renderType &= ~RenderSprite.IMAGE;
-				conchModel && conchModel.removeType(RenderSprite.GRAPHICS);
+				if (conchModel) {
+					if (RUNTIMEVERION < "0.9.1")
+						conchModel.removeType(0x100);
+					else
+						conchModel.removeType(RenderSprite.GRAPHICS);
+					
+				}
 			}
 			repaint();
 		}
 		
-		/**显示对象的滚动矩形范围。*/
+		/**显示对象的滚动矩形范围，(如果只想限制子对象渲染区域，请使用viewport)，设置optimizeScrollRect=true，可以优化裁剪区域外的内容不进行渲染
+		 * srollRect和viewport的区别：
+		 * 1.srollRect自带裁剪效果，viewport只影响子对象渲染是否渲染，不具有裁剪效果（性能更高）
+		 * 2.设置rect的x,y属性均能实现区域滚动效果，但scrollRect会保持0,0点位置不变
+		 * */
 		public function get scrollRect():Rectangle {
 			return this._style.scrollRect;
 		}
 		
 		public function set scrollRect(value:Rectangle):void {
 			getStyle().scrollRect = value;
-			viewport = value;
+			//viewport = value;
 			repaint();
 			if (value) {
 				_renderType |= RenderSprite.CLIP;
 				conchModel && conchModel.scrollRect(value.x, value.y, value.width, value.height);
 			} else {
 				_renderType &= ~RenderSprite.CLIP;
-				conchModel && conchModel.removeType(RenderSprite.CLIP);
+				if (conchModel) {
+					if (RUNTIMEVERION < "0.9.1")
+						conchModel.removeType(0x40);
+					else
+						conchModel.removeType(RenderSprite.CLIP);
+				}
 			}
 		}
 		
@@ -952,7 +972,12 @@ package laya.display {
 			if (_$P.filters == value) return;
 			_set$P("filters", value ? value.slice() : null);
 			if (Render.isConchApp) {
-				conchModel && conchModel.removeType(0x10);
+				if (conchModel) {
+					if (RUNTIMEVERION < "0.9.1")
+						conchModel.removeType(0x10);
+					else
+						conchModel.removeType(RenderSprite.FILTERS);
+				}
 				if (_$P.filters && _$P.filters.length == 1 /*&& (_$P.filters[0] is ColorFilter)*/) {
 					_$P.filters[0].callNative(this);
 				}
@@ -1179,7 +1204,7 @@ package laya.display {
 		
 		/**cacheAs后，设置自己和父对象缓存失效。*/
 		public function repaint():void {
-			this.conchModel&&this.conchModel.repaint&&this.conchModel.repaint();
+			this.conchModel && this.conchModel.repaint && this.conchModel.repaint();
 			(_repaint === 0) && (_repaint = 1, parentRepaint());
 			if (this._$P && this._$P.maskParent) {
 				_$P.maskParent.repaint();
@@ -1268,7 +1293,7 @@ package laya.display {
 		 * @param	disableMouseEvent 禁用其他对象的鼠标检测，默认为false，设置为true能提高性能
 		 * @param	ratio 惯性阻尼系数
 		 */
-		public function startDrag(area:Rectangle = null, hasInertia:Boolean = false, elasticDistance:Number = 0, elasticBackTime:int = 300, data:* = null, disableMouseEvent:Boolean = false,ratio:Number=0.92):void {
+		public function startDrag(area:Rectangle = null, hasInertia:Boolean = false, elasticDistance:Number = 0, elasticBackTime:int = 300, data:* = null, disableMouseEvent:Boolean = false, ratio:Number = 0.92):void {
 			_$P.dragging || (_set$P("dragging", new Dragging()));
 			_$P.dragging.start(this, area, hasInertia, elasticDistance, elasticBackTime, data, disableMouseEvent, ratio);
 		}
@@ -1365,7 +1390,7 @@ package laya.display {
 		public function set zOrder(value:Number):void {
 			if (_zOrder != value) {
 				_zOrder = value;
-			    conchModel && conchModel.setZOrder && conchModel.setZOrder(value);
+				conchModel && conchModel.setZOrder && conchModel.setZOrder(value);
 				_parent && Laya.timer.callLater(_parent, updateZOrder);
 			}
 		}
@@ -1378,7 +1403,7 @@ package laya.display {
 		public function set texture(value:Texture):void {
 			if (_texture != value) {
 				_texture = value;
-				graphics.cleanByTexture(value,0,0);
+				graphics.cleanByTexture(value, 0, 0);
 			}
 		}
 		

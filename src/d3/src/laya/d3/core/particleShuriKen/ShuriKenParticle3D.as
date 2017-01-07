@@ -158,78 +158,7 @@ package laya.d3.core.particleShuriKen {
 			super.cloneTo(destObject);
 			var destShuriKenParticle3D:ShuriKenParticle3D = destObject as ShuriKenParticle3D;
 			var destParticleSystem:ShurikenParticleSystem = destShuriKenParticle3D._particleSystem;
-			
-			destParticleSystem.duration = _particleSystem.duration;
-			destParticleSystem.looping = _particleSystem.looping;
-			destParticleSystem.prewarm = _particleSystem.prewarm;
-			destParticleSystem.startDelayType = _particleSystem.startDelayType;
-			destParticleSystem.startDelay = _particleSystem.startDelay;
-			destParticleSystem.startDelayMin = _particleSystem.startDelayMin;
-			destParticleSystem.startDelayMax = _particleSystem.startDelayMax;
-			
-			destParticleSystem.startLifetimeType = _particleSystem.startLifetimeType;
-			destParticleSystem.startLifetimeConstant = _particleSystem.startLifetimeConstant;
-			_particleSystem.startLifeTimeGradient.cloneTo(destParticleSystem.startLifeTimeGradient);
-			destParticleSystem.startLifetimeConstantMin = _particleSystem.startLifetimeConstantMin;
-			destParticleSystem.startLifetimeConstantMax = _particleSystem.startLifetimeConstantMax;
-			_particleSystem.startLifeTimeGradientMin.cloneTo(destParticleSystem.startLifeTimeGradientMin);
-			_particleSystem.startLifeTimeGradientMax.cloneTo(destParticleSystem.startLifeTimeGradientMax);
-			
-			destParticleSystem.startSpeedType = _particleSystem.startSpeedType;
-			destParticleSystem.startSpeedConstant = _particleSystem.startSpeedConstant;
-			destParticleSystem.startSpeedConstantMin = _particleSystem.startSpeedConstantMin;
-			destParticleSystem.startSpeedConstantMax = _particleSystem.startSpeedConstantMax;
-			
-			destParticleSystem.threeDStartSize = _particleSystem.threeDStartSize;
-			destParticleSystem.startSizeType = _particleSystem.startSizeType;
-			destParticleSystem.startSizeConstant = _particleSystem.startSizeConstant;
-			_particleSystem.startSizeConstantSeparate.cloneTo(destParticleSystem.startSizeConstantSeparate);
-			destParticleSystem.startSizeConstantMin = _particleSystem.startSizeConstantMin;
-			destParticleSystem.startSizeConstantMax = _particleSystem.startSizeConstantMax;
-			_particleSystem.startSizeConstantMinSeparate.cloneTo(destParticleSystem.startSizeConstantMinSeparate);
-			_particleSystem.startSizeConstantMaxSeparate.cloneTo(destParticleSystem.startSizeConstantMaxSeparate);
-			
-			destParticleSystem.threeDStartRotation = _particleSystem.threeDStartRotation;
-			destParticleSystem.startRotationType = _particleSystem.startRotationType;
-			destParticleSystem.startRotationConstant = _particleSystem.startRotationConstant;
-			_particleSystem.startRotationConstantSeparate.cloneTo(destParticleSystem.startRotationConstantSeparate);
-			destParticleSystem.startRotationConstantMin = _particleSystem.startRotationConstantMin;
-			destParticleSystem.startRotationConstantMax = _particleSystem.startRotationConstantMax;
-			_particleSystem.startRotationConstantMinSeparate.cloneTo(destParticleSystem.startRotationConstantMinSeparate);
-			_particleSystem.startRotationConstantMaxSeparate.cloneTo(destParticleSystem.startRotationConstantMaxSeparate);
-			
-			destParticleSystem.randomizeRotationDirection = _particleSystem.randomizeRotationDirection;
-			
-			destParticleSystem.startColorType = _particleSystem.startColorType;
-			_particleSystem.startColorConstant.cloneTo(destParticleSystem.startColorConstant);
-			_particleSystem.startColorConstantMin.cloneTo(destParticleSystem.startColorConstantMin);
-			_particleSystem.startColorConstantMax.cloneTo(destParticleSystem.startColorConstantMax);
-			
-			_particleSystem.gravity.cloneTo(destParticleSystem.gravity);
-			destParticleSystem.gravityModifier = _particleSystem.gravityModifier;
-			destParticleSystem.simulationSpace = _particleSystem.simulationSpace;
-			destParticleSystem.scaleMode = _particleSystem.scaleMode;
-			destParticleSystem.playOnAwake = _particleSystem.playOnAwake;
-			//destParticleSystem.autoRandomSeed = _particleSystem.autoRandomSeed;
-			
-			destParticleSystem.maxParticles = _particleSystem.maxParticles;
-			
-			var emission:Emission = _particleSystem.emission;
-			(emission) && (destParticleSystem.emission = emission.clone());
-			var shape:BaseShape = _particleSystem.shape;
-			(shape) && (destParticleSystem.shape = shape.clone());
-			var velocityOverLifetime:VelocityOverLifetime = _particleSystem.velocityOverLifetime;
-			(velocityOverLifetime) && (destParticleSystem.velocityOverLifetime = velocityOverLifetime.clone());
-			var colorOverLifetime:ColorOverLifetime = _particleSystem.colorOverLifetime;
-			(colorOverLifetime) && (destParticleSystem.colorOverLifetime = colorOverLifetime.clone());
-			var sizeOverLifetime:SizeOverLifetime = _particleSystem.sizeOverLifetime;
-			(sizeOverLifetime) && (destParticleSystem.sizeOverLifetime = sizeOverLifetime.clone());
-			var rotationOverLifetime:RotationOverLifetime = _particleSystem.rotationOverLifetime;
-			(rotationOverLifetime) && (destParticleSystem.rotationOverLifetime = rotationOverLifetime.clone());
-			var textureSheetAnimation:TextureSheetAnimation = _particleSystem.textureSheetAnimation;
-			(textureSheetAnimation) && (destParticleSystem.textureSheetAnimation = textureSheetAnimation.clone());
-			
-			destParticleSystem.isPerformanceMode = _particleSystem.isPerformanceMode;
+			_particleSystem.cloneTo(destParticleSystem);
 			
 			var destParticleRender:ShurikenParticleRender = destShuriKenParticle3D._particleRender;
 			destParticleRender.sharedMaterials = _particleRender.sharedMaterials;

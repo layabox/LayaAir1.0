@@ -60,6 +60,8 @@ package laya.d3.core.particleShuriKen.module {
 					break;
 			}
 			var destVelocityOverLifetime:VelocityOverLifetime = __JS__("new this.constructor(destVelocity)");
+			destVelocityOverLifetime.enbale = enbale;
+			destVelocityOverLifetime.space = space;
 			return destVelocityOverLifetime;
 		}
 	

@@ -10,6 +10,10 @@ package laya.events {
 		/**@private */
 		private var _events:Object;
 		
+		public function EventDispatcher() {			
+			//[IF-JS]Object.defineProperty(this, "_events", {enumerable: false});
+		}
+		
 		/**
 		 * 检查 EventDispatcher 对象是否为特定事件类型注册了任何侦听器。
 		 * @param	type 事件的类型。

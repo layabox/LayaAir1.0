@@ -1,4 +1,5 @@
 package laya.d3.graphics {
+	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Layer;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
@@ -7,6 +8,7 @@ package laya.d3.graphics {
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.ContainmentType;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector3;
 	
 	/**
 	 * ...
@@ -17,7 +19,7 @@ package laya.d3.graphics {
 		public function FrustumCulling() {
 		}
 		
-		public static function RenderObjectCulling(boundFrustum:BoundFrustum, scene:BaseScene, view:Matrix4x4, projection:Matrix4x4,projectionView:Matrix4x4):void {
+		public static function RenderObjectCulling(boundFrustum:BoundFrustum, scene:BaseScene,camera:BaseCamera, view:Matrix4x4, projection:Matrix4x4,projectionView:Matrix4x4):void {
 			var i:int, iNum:int, j:int, jNum:int;
 			var queues:Vector.<RenderQueue> = scene._quenes;
 			var staticBatchMananger:StaticBatchManager = scene._staticBatchManager;
@@ -28,10 +30,13 @@ package laya.d3.graphics {
 			staticBatchMananger._clearRenderElements();
 			dynamicBatchManager._clearRenderElements();
 			
+			var cameraPosition:Vector3 = camera.transform.position;
 			for (i = 0, iNum = frustumCullingObjects.length; i < iNum; i++) {
 				var renderObject:RenderObject = frustumCullingObjects[i];
 				if (Layer.isVisible(renderObject._layerMask) && renderObject._ownerEnable && renderObject._enable && (boundFrustum.ContainsBoundSphere(renderObject._boundingSphere) !== ContainmentType.Disjoint)) {
-					renderObject._owner._prepareShaderValuetoRender(view, projection,projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
+					renderObject._owner._prepareShaderValuetoRender(view, projection, projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
+					
+				    renderObject._distanceForSort = Vector3.distance(renderObject._boundingSphere.center, cameraPosition)+ renderObject._render.sortingFudge;
 					var renderElements:Vector.<RenderElement> = renderObject._renderElements;
 					for (j = 0, jNum = renderElements.length; j < jNum; j++) {
 						var renderElement:RenderElement = renderElements[j];
@@ -40,7 +45,8 @@ package laya.d3.graphics {
 							staticBatch._addRenderElement(renderElement);
 						} else {
 							var renderObj:IRenderable = renderElement.renderObj;
-							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1) && (renderObj._getIndexBuffer()) && (renderElement._material.renderQueue < 3) && renderElement._canDynamicBatch)//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并
+							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1) && (renderObj._getIndexBuffer()) && (renderElement._material.renderQueue < 3) && renderElement._canDynamicBatch&&(!renderObject._owner.isStatic))//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并//TODO:静态物体如果没合并走动态合并现在会出BUG,lightmapUV问题。
+							
 								dynamicBatchManager._addPrepareRenderElement(renderElement);
 							else
 								scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);
@@ -48,7 +54,7 @@ package laya.d3.graphics {
 					}
 				}
 			}
-			staticBatchMananger._addToRenderQueue(scene);
+			staticBatchMananger._addToRenderQueue(scene,view,projection,projectionView);
 			dynamicBatchManager._finishCombineDynamicBatch(scene);
 			dynamicBatchManager._addToRenderQueue(scene,view,projection,projectionView);
 		}

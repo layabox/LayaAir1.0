@@ -6,8 +6,10 @@ package laya.d3.core {
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
+	import laya.d3.math.Vector4;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
+	import laya.d3.shader.ShaderDefines3D;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.renders.RenderSprite;
@@ -19,11 +21,36 @@ package laya.d3.core {
 	public class MeshRender extends BaseRender {
 		/** @private */
 		private var _meshSprite3DOwner:MeshSprite3D;
+		///** @private */
+		//private var _lightmapIndex:int;
+		/** @private */
+		private var _lightmapScaleOffset:Vector4;
 		
 		/** 是否产生阴影。 */
 		public var castShadow:Boolean;
 		/** 是否接收阴影。 */
 		public var receiveShadow:Boolean;
+		
+		/** 光照贴图的索引。*/
+		public var lightmapIndex:int;
+		
+		/**
+		 * 获取光照贴图的缩放和偏移。
+		 * @return  光照贴图的缩放和偏移。
+		 */
+		public function get lightmapScaleOffset():Vector4 {
+			return _lightmapScaleOffset;
+		}
+		
+		/**
+		 * 设置光照贴图的缩放和偏移。
+		 * @param  光照贴图的缩放和偏移。
+		 */
+		public function set lightmapScaleOffset(value:Vector4):void {
+			_lightmapScaleOffset = value;
+			_owner._setShaderValueColor(MeshSprite3D.LIGHTMAPSCALEOFFSET, value);
+			_owner._addShaderDefine(ShaderDefines3D.SCALEOFFSETLIGHTINGMAPUV);
+		}
 		
 		/**
 		 * 创建一个新的 <code>MeshRender</code> 实例。
@@ -31,7 +58,7 @@ package laya.d3.core {
 		public function MeshRender(owner:MeshSprite3D) {
 			super(owner);
 			_meshSprite3DOwner = owner;
-			
+			lightmapIndex =-1;
 			castShadow = true;
 			receiveShadow = true;
 			

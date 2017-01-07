@@ -81,6 +81,7 @@ package laya.ani.bone {
 		private var _drawOrderIndex:int = 0;
 		private var _drawOrder:Vector.<int> = null;
 		private var _lastAniClipIndex:int = -1;
+		private var _lastUpdateAniClipIndex:int = -1;
 		/**
 		 * 创建一个Skeleton对象
 		 * 0,使用模板缓冲的数据，模板缓冲的数据，不允许修改					（内存开销小，计算开销小，不支持换装）
@@ -343,10 +344,16 @@ package laya.ani.bone {
 			var preIndex:int = _player.currentKeyframeIndex;
 			if (autoKey) {
 				_player.update(tCurrTime - _lastTime)
+			}else{
+				preIndex = -1;
 			}
 			_lastTime = tCurrTime;
-			_aniClipIndex = _player.currentAnimationClipIndex;
 			_clipIndex = _player.currentKeyframeIndex;
+			if (_clipIndex == preIndex&&_lastUpdateAniClipIndex== _aniClipIndex)
+			{
+				return;
+			}
+			_lastUpdateAniClipIndex=_aniClipIndex;
 			if (preIndex > _clipIndex&&_eventIndex!=0)
 			{
 				_emitMissedEvents(_player.playStart, _player.playEnd, _eventIndex);
@@ -369,7 +376,7 @@ package laya.ani.bone {
 					_eventIndex++;
 				}
 			}
-			if (_aniClipIndex == -1) return;
+			//if (_aniClipIndex == -1) return;
 			var tGraphics:Graphics;
 			
 			if (_aniMode == 0) {
@@ -620,29 +627,24 @@ package laya.ani.bone {
 					}
 				}		
 				var tSkinDeformAni:Object = tDeformAniArr[_aniClipIndex];
-				tDeformAniData = (tSkinDeformAni[_skinName] || tSkinDeformAni["default"]) as DeformAniData;
-				if (!tDeformAniData)
-				{
+				//使用default数据
+				tDeformAniData = (tSkinDeformAni["default"]) as DeformAniData;
+				_setDeform(tDeformAniData,tDeformDic,_boneSlotArray,curTime);
+
+				//使用其他皮肤的数据
 					var tSkin:String;
 					for (tSkin in tSkinDeformAni)
 					{
-						tDeformAniData = tSkinDeformAni[tSkin] as DeformAniData;
+						if (tSkin!="default"&&tSkin!=_skinName)
+						{
+							tDeformAniData = tSkinDeformAni[tSkin] as DeformAniData;
+							_setDeform(tDeformAniData,tDeformDic,_boneSlotArray,curTime);
+						}		
 					}
-				}
-				if (tDeformAniData) {	
-					for (i = 0, n = tDeformAniData.deformSlotDataList.length; i < n; i++) {	
-						tDeformSlotData = tDeformAniData.deformSlotDataList[i];
-						for (j = 0; j < tDeformSlotData.deformSlotDisplayList.length; j++) {	
-							tDeformSlotDisplayData = tDeformSlotData.deformSlotDisplayList[j];
-							tDBBoneSlot = _boneSlotArray[tDeformSlotDisplayData.slotIndex];
-							tDeformSlotDisplayData.apply(curTime, tDBBoneSlot);
-							if (!tDeformDic[tDeformSlotDisplayData.slotIndex]) {	
-								tDeformDic[tDeformSlotDisplayData.slotIndex] = { };
-							}
-							tDeformDic[tDeformSlotDisplayData.slotIndex][tDeformSlotDisplayData.attachment] = tDeformSlotDisplayData.deformData;
-						}
-					}
-				}
+				
+				//使用自己皮肤的数据
+				tDeformAniData = (tSkinDeformAni[_skinName]) as DeformAniData;
+				_setDeform(tDeformAniData,tDeformDic,_boneSlotArray,curTime);
 			}
 			
 			//_rootBone.updateDraw(this.x,this.y);
@@ -732,7 +734,35 @@ package laya.ani.bone {
 				_setGrahicsDataWithCache(_aniClipIndex, _clipIndex, tGraphics);
 			}
 		}
-		
+		/**
+		 * 设置deform数据
+		 * @param	tDeformAniData
+		 * @param	tDeformDic
+		 * @param	_boneSlotArray
+		 * @param	curTime
+		 */
+		private function _setDeform(tDeformAniData:DeformAniData,tDeformDic:Object,_boneSlotArray:Array,curTime:Number):void
+		{
+			if (!tDeformAniData) return;
+			var tDeformSlotData:DeformSlotData;
+			var tDeformSlotDisplayData:DeformSlotDisplayData;
+			var tDBBoneSlot:BoneSlot;
+			var i:int, n:int,j:int;			
+			if (tDeformAniData) {	
+					for (i = 0, n = tDeformAniData.deformSlotDataList.length; i < n; i++) {	
+						tDeformSlotData = tDeformAniData.deformSlotDataList[i];
+						for (j = 0; j < tDeformSlotData.deformSlotDisplayList.length; j++) {	
+							tDeformSlotDisplayData = tDeformSlotData.deformSlotDisplayList[j];
+							tDBBoneSlot = _boneSlotArray[tDeformSlotDisplayData.slotIndex];
+							tDeformSlotDisplayData.apply(curTime, tDBBoneSlot);
+							if (!tDeformDic[tDeformSlotDisplayData.slotIndex]) {	
+								tDeformDic[tDeformSlotDisplayData.slotIndex] = { };
+							}
+							tDeformDic[tDeformSlotDisplayData.slotIndex][tDeformSlotDisplayData.attachment] = tDeformSlotDisplayData.deformData;
+						}
+					}
+				}
+		}
 		/*******************************************定义接口*************************************************/
 		/**
 		 * 得到当前动画的数量
@@ -762,21 +792,23 @@ package laya.ani.bone {
 		/**
 		 * 通过名字显示一套皮肤
 		 * @param	name	皮肤的名字
+		 * @param	freshSlotIndex	是否将插槽纹理重置到初始化状态
 		 */
-		public function showSkinByName(name:String):void {
-			showSkinByIndex(_templet.getSkinIndexByName(name));
+		public function showSkinByName(name:String,freshSlotIndex:Boolean=true):void {
+			showSkinByIndex(_templet.getSkinIndexByName(name),freshSlotIndex);
 		}
 		
 		/**
 		 * 通过索引显示一套皮肤
 		 * @param	skinIndex	皮肤索引
+		 * @param	freshSlotIndex	是否将插槽纹理重置到初始化状态
 		 */
-		public function showSkinByIndex(skinIndex:int):void {
+		public function showSkinByIndex(skinIndex:int, freshSlotIndex:Boolean = true):void {
 			for (var i:int = 0; i < _boneSlotArray.length; i++)
 			{
-				(_boneSlotArray[i] as BoneSlot).showSlotData(null);
+				(_boneSlotArray[i] as BoneSlot).showSlotData(null,freshSlotIndex);
 			}
-			if (_templet.showSkinByIndex(_boneSlotDic, skinIndex))
+			if (_templet.showSkinByIndex(_boneSlotDic, skinIndex,freshSlotIndex))
 			{
 				var tSkinData:SkinData = _templet.skinDataArray[skinIndex];
 				_skinIndex = skinIndex;
@@ -795,6 +827,20 @@ package laya.ani.bone {
 			var tBoneSlot:BoneSlot = getSlotByName(slotName);
 			if (tBoneSlot) {
 				tBoneSlot.showDisplayByIndex(index);
+			}
+			_clearCache();
+		}
+		
+		/**
+		 * 设置某插槽的皮肤
+		 * @param	slotName	插槽名称
+		 * @param	name	皮肤名称
+		 */
+		public function showSlotSkinByName(slotName:String, name:String):void {
+			if (_aniMode == 0) return;
+			var tBoneSlot:BoneSlot = getSlotByName(slotName);
+			if (tBoneSlot) {
+				tBoneSlot.showDisplayByName(name);
 			}
 			_clearCache();
 		}
@@ -861,8 +907,9 @@ package laya.ani.bone {
 		 * @param	force		false,如果要播的动画跟上一个相同就不生效,true,强制生效
 		 * @param	start		起始时间
 		 * @param	end			结束时间
+		 * @param	freshSkin	是否刷新皮肤数据
 		 */
-		public function play(nameOrIndex:*, loop:Boolean, force:Boolean = true, start:int = 0, end:int = 0):void {
+		public function play(nameOrIndex:*, loop:Boolean, force:Boolean = true, start:int = 0, end:int = 0,freshSkin:Boolean=true):void {
 			_indexControl = false;
 			var index:int = -1;
 			var duration:Number;
@@ -883,18 +930,21 @@ package laya.ani.bone {
 				index = nameOrIndex;
 			}
 			if (index > -1 && index < getAnimNum()) {
+				_aniClipIndex = index;
 				if (force || _pause || _currAniIndex != index) {
 					_currAniIndex = index;
 					_curOriginalData = new Float32Array(_templet.getTotalkeyframesLength(index));
 					_drawOrder = null;
 					_eventIndex = 0;
 					_player.play(index, _player.playbackRate, duration, start, end);
-					this._templet.showSkinByIndex(_boneSlotDic, _skinIndex);
+					if(freshSkin)
+					this._templet.showSkinByIndex(_boneSlotDic, _skinIndex);		
 					if (_pause) {
 						_pause = false;
 						_lastTime = Browser.now();
 						Laya.stage.frameLoop(1, this, _update, null, true);
 					}
+					_update();
 				}
 			}
 		}

@@ -149,7 +149,7 @@ package laya.d3.resource.models {
 		/**
 		 *@private
 		 */
-		override public function onAsynLoaded(url:String, data:*):void {
+		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			var bufferData:Object = data[0];
 			var textureMap:Object = data[1];
 			MeshReader.read(bufferData as ArrayBuffer, this, _materials, textureMap);

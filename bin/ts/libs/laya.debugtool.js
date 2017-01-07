@@ -4063,6 +4063,25 @@
 			return src;
 		}
 
+		ObjectTools.insertArrToArr=function(src,insertArr,pos){
+			(pos===void 0)&& (pos=0);
+			if (pos < 0)pos=0;
+			if (pos > src.length)pos=src.length;
+			var preLen=src.length;
+			var i=0,len=0;
+			src.length+=insertArr.length;
+			var moveLen=0;
+			moveLen=insertArr.length;
+			for (i=src.length-1;i >=pos;i--){
+				src[i]=src[i-moveLen];
+			}
+			len=insertArr.length;
+			for (i=0;i < len;i++){
+				src[pos+i]=insertArr[i];
+			}
+			return src;
+		}
+
 		ObjectTools.clearArr=function(arr){
 			if (!arr)return arr;
 			arr.length=0;
@@ -5699,9 +5718,9 @@
 	*@author ww
 	*/
 	//class laya.debug.tools.UVTools
-	var UVTools=(function(){
+	var UVTools1=(function(){
 		function UVTools(){}
-		__class(UVTools,'laya.debug.tools.UVTools');
+		__class(UVTools,'laya.debug.tools.UVTools',null,'UVTools1');
 		UVTools.getUVByRec=function(x,y,width,height){
 			return [x,y,x+width,y,x+width,y+height,x,y+height];
 		}
@@ -10713,6 +10732,25 @@
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -10729,25 +10767,6 @@
 
 		return FindNode;
 	})(FindNodeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
 
 
 	/**

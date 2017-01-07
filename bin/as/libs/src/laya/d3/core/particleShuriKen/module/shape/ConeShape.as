@@ -67,7 +67,7 @@ package laya.d3.core.particleShuriKen.module.shape {
 					rdE[0] = positionX * dirSinA;
 					rdE[1] = positionY * dirSinA;
 				}
-				rdE[2] = -dirCosA;
+				rdE[2] = dirCosA;
 				break;
 			case 1: 
 				ShapeUtils._randomPointUnitCircle(_tempPositionPoint);
@@ -86,7 +86,7 @@ package laya.d3.core.particleShuriKen.module.shape {
 					rdE[0] = positionX * dirSinA;
 					rdE[1] = positionY * dirSinA;
 				}
-				rdE[2] = -dirCosA;
+				rdE[2] = dirCosA;
 				break;
 			case 2: 
 				ShapeUtils._randomPointInsideUnitCircle(_tempPositionPoint);
@@ -98,7 +98,7 @@ package laya.d3.core.particleShuriKen.module.shape {
 				
 				rdE[0] = positionX * dirSinA;
 				rdE[1] = positionY * dirSinA;
-				rdE[2] = -dirCosA;
+				rdE[2] = dirCosA;
 				
 				Vector3.normalize(direction, direction);
 				Vector3.scale(direction, length * Math.random(), direction);
@@ -118,7 +118,7 @@ package laya.d3.core.particleShuriKen.module.shape {
 				
 				rdE[0] = positionX * dirSinA;
 				rdE[1] = positionY * dirSinA;
-				rdE[2] = -dirCosA;
+				rdE[2] = dirCosA;
 				
 				Vector3.normalize(direction, direction);
 				Vector3.scale(direction, length * Math.random(), direction);

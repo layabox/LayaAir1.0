@@ -231,8 +231,8 @@ package laya.d3.core.material {
 		/**
 		 * @private
 		 */
-		public function _getShader(stateShaderDefines:ShaderDefines3D, vertexShaderDefineValue:int):Shader3D {
-			var defineValue:int = (stateShaderDefines._value | vertexShaderDefineValue | _shaderDefineValue) & (~_disableShaderDefineValue);
+		public function _getShader(stateShaderDefines:ShaderDefines3D, vertexShaderDefineValue:int,spriteShaderDefineValue:int):Shader3D {
+			var defineValue:int = (stateShaderDefines._value | vertexShaderDefineValue | _shaderDefineValue|spriteShaderDefineValue) & (~_disableShaderDefineValue);
 			stateShaderDefines._value = defineValue;
 			var nameID:Number = _sharderNameID * Shader3D.SHADERNAME2ID + defineValue;
 			_shader = Shader3D.withCompile(_sharderNameID, stateShaderDefines, nameID);
@@ -495,7 +495,7 @@ package laya.d3.core.material {
 		/**
 		 *@private
 		 */
-		override public function onAsynLoaded(url:String, data:*):void {
+		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			var jsonData:Object = data[0];
 			var textureMap:Object = data[1];
 			var customHandler:Handler = Handler.create(null, Utils3D._parseMaterial, [textureMap], false);

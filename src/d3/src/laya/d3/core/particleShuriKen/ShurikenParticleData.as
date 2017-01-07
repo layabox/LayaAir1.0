@@ -229,13 +229,13 @@ package laya.d3.core.particleShuriKen {
 				particleData.startLifeTime = particleSystem.startLifetimeConstant;
 				break;
 			case 1: 
-				particleData.startLifeTime = _getStartLifetimeFromGradient(particleSystem.startLifeTimeGradient, particleSystem.emission.emissionTime);
+				particleData.startLifeTime = _getStartLifetimeFromGradient(particleSystem.startLifeTimeGradient, particleSystem.emissionTime);
 				break;
 			case 2: 
 				particleData.startLifeTime = MathUtil.lerp(particleSystem.startLifetimeConstantMin, particleSystem.startLifetimeConstantMax, Math.random());
 				break;
 			case 3: 
-				var emissionTime:Number = particleSystem.emission.emissionTime;
+				var emissionTime:Number = particleSystem.emissionTime;
 				particleData.startLifeTime = MathUtil.lerp(_getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMin, emissionTime), _getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMax, emissionTime), Math.random());
 				break;
 			}

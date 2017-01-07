@@ -33,6 +33,16 @@ package laya.utils {
 		}
 		
 		/**
+		 * 检测对象是否包含指定的点。
+		 * @param	x	点的 X 轴坐标值（水平位置）。
+		 * @param	y	点的 Y 轴坐标值（垂直位置）。
+		 * @return	如果包含指定的点，则值为 true；否则为 false。
+		 */
+		public function contains(x:Number, y:Number):Boolean {
+			return isHit(x, y);
+		}
+		
+		/**
 		 * @private
 		 * 是否击中Graphic
 		 */

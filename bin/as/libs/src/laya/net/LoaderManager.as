@@ -49,7 +49,6 @@ package laya.net {
 		private var _maxPriority:int = 5;
 		/**@private */
 		private var _failRes:Object = {};
-	
 		
 		/**
 		 * 创建一个新的 <code>LoaderManager</code> 实例。
@@ -60,7 +59,7 @@ package laya.net {
 		
 		/**
 		 * 根据clas定义创建一个资源空壳，随后进行异步加载，资源加载完成后，会调用资源类的onAsynLoaded方法回调真正的数据,套嵌资源的子资源会保留资源路径"?"后的部分
-		 * @param	url 资源地址或者数组，比如[{url:xx,clas:xx,priority:xx},{url:xx,clas:xx,priority:xx}]
+		 * @param	url 资源地址或者数组，比如[{url:xx,clas:xx,priority:xx,params:xx},{url:xx,clas:xx,priority:xx,params:xx}]
 		 * @param	progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
 		 * @param	clas 资源类名，比如Texture
 		 * @param	type 资源类型
@@ -68,7 +67,7 @@ package laya.net {
 		 * @param	cache 是否缓存
 		 * @return	返回资源对象
 		 */
-		public function create(url:*, complete:Handler = null, progress:Handler = null, clas:Class = null, priority:int = 1, cache:Boolean = true):* {
+		public function create(url:*, complete:Handler = null, progress:Handler = null, clas:Class = null, params:Array = null, priority:int = 1, cache:Boolean = true):* {
 			if (url is Array) {
 				var items:Array = url as Array;
 				var itemCount:int = items.length;
@@ -82,7 +81,7 @@ package laya.net {
 					item.progress = 0;
 					var progressHandler:Handler = progress ? Handler.create(null, onProgress, [item], false) : null;
 					var completeHandler:Handler = (progress || complete) ? Handler.create(null, onComplete, [item]) : null;
-					_create(item.url, completeHandler, progressHandler, item.clas || clas, item.priority || priority, cache);
+					_create(item.url, completeHandler, progressHandler, item.clas || clas, item.params || params, item.priority || priority, cache);
 				}
 				function onComplete(item:Object, content:* = null):void {
 					loadedCount++;
@@ -103,10 +102,10 @@ package laya.net {
 					progress2.runWith(v);
 				}
 				return true;
-			} else return _create(url, complete, progress, clas, priority, cache);
+			} else return _create(url, complete, progress, clas, params, priority, cache);
 		}
 		
-		private function _create(url:String, complete:Handler = null, progress:Handler = null, clas:Class = null, priority:int = 1, cache:Boolean = true):* {
+		private function _create(url:String, complete:Handler = null, progress:Handler = null, clas:Class = null, params:Array = null, priority:int = 1, cache:Boolean = true):* {
 			var item:ICreateResource = getRes(url);
 			if (!item) {
 				var extension:String = Utils.getFileExtension(url);
@@ -118,7 +117,7 @@ package laya.net {
 				item = clas ? new clas() : null;
 				load(url, Handler.create(null, onLoaded), progress, type, priority, false, null, true);
 				function onLoaded(data:*):void {
-					item && item.onAsynLoaded.call(item, url, data);
+					item && item.onAsynLoaded.call(item, url, data, params);
 					if (complete) complete.run();
 				}
 				if (cache) cacheRes(url, item);

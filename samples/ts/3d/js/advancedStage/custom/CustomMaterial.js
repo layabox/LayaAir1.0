@@ -8,24 +8,14 @@ var CustomMaterial = (function (_super) {
     function CustomMaterial() {
         _super.call(this);
         this.setShaderName("CustomShader");
-        this._tempMatrix4x40 = new Laya.Matrix4x4();
-        this._diffuseTextureIndex = 0;
+        this._DIFFUSETEXTURE_ID;
+        Number = 0;
     }
     CustomMaterial.prototype.getDiffuseTexture = function () {
-        return this._getTexture(CustomMaterial._diffuseTextureIndex);
+        return this._getTexture(CustomMaterial._DIFFUSETEXTURE_ID);
     };
     CustomMaterial.prototype.setDiffuseTexture = function (value) {
-        this._setTexture(value, CustomMaterial._diffuseTextureIndex, CustomMaterial.DIFFUSETEXTURE);
+        this._setTexture(CustomMaterial._DIFFUSETEXTURE_ID, value);
     };
-    CustomMaterial.prototype._setLoopShaderParams = function (state, projectionView, worldMatrix, mesh, material) {
-        var pvw = this._tempMatrix4x40;
-        Laya.Matrix4x4.multiply(projectionView, worldMatrix, pvw);
-        state.shaderValue.pushValue(CustomMaterial.MVPMATRIX, pvw.elements);
-        state.shaderValue.pushValue(CustomMaterial.WORLDMATRIX, worldMatrix.elements);
-    };
-    CustomMaterial.MVPMATRIX = "MVPMATRIX";
-    CustomMaterial.DIFFUSETEXTURE = "DIFFUSETEXTURE";
-    CustomMaterial.WORLDMATRIX = "MATRIX1";
-    CustomMaterial._diffuseTextureIndex = 0;
     return CustomMaterial;
 }(Laya.BaseMaterial));

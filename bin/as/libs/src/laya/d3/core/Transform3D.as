@@ -384,6 +384,25 @@ package laya.d3.core {
 				this.rotation = _rotation;
 			}
 		}
+		
+		/**
+		 * 从一个位置观察目标位置。
+		 * @param	Vector3 观察位置。
+		 * @param	Vector3 观察目标。
+		 * @param	Vector3 向上向量。
+		 * @param	isLocal 是否局部空间。
+		 */
+		public function lookAt(position:Vector3, target:Vector3, upVector:Vector3, isLocal:Boolean = true):void {
+			if (isLocal) {
+				Matrix4x4.createLookAt(position, target, upVector, _localMatrix);
+				_localMatrix.invert(_localMatrix);
+				localMatrix = _localMatrix;
+			} else {
+				Matrix4x4.createLookAt(position, target, upVector, _worldMatrix);
+				_worldMatrix.invert(_worldMatrix);
+				worldMatrix = _worldMatrix;
+			}
+		}
 	}
 
 }

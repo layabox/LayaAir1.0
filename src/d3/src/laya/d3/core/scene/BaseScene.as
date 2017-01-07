@@ -340,7 +340,7 @@ package laya.d3.core.scene {
 		protected function _preRenderScene(gl:WebGLContext, state:RenderState):void {
 			_boundFrustum.matrix = state.projectionViewMatrix;
 			
-			FrustumCulling.RenderObjectCulling(_boundFrustum, this,state.viewMatrix,state.projectionMatrix,state.projectionViewMatrix);
+			FrustumCulling.RenderObjectCulling(_boundFrustum, this,state.camera,state.viewMatrix,state.projectionMatrix,state.projectionViewMatrix);
 			for (var i:int = 0, iNum:int = _quenes.length; i < iNum; i++)
 				(_quenes[i]) && (_quenes[i]._preRender(state));
 		}

@@ -2,6 +2,7 @@ package
 {
 	import laya.display.Sprite;
 	import laya.display.Stage;
+	import laya.renders.Render;
 	import laya.utils.Browser;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
@@ -38,7 +39,6 @@ package
 			initMatter();
 			initWorld();
 			
-			Matter.Engine.run(engine);
 			Laya.stage.on("resize", this, onResize);
 		}
 		
@@ -47,27 +47,16 @@ package
 			var gameWorld:Sprite = new Sprite();
 			Laya.stage.addChild(gameWorld);
 			
-			
 			// 初始化物理引擎
-			engine = Matter.Engine.create(
-				{
-					enableSleeping: true, 
-					render: 
-					{
-						container: gameWorld, 
-						controller: LayaRender, 
-						options: 
-						{
-							width: stageWidth, 
-							height: stageHeight, 
-							wireframes: false
-						}
-					}
-				});
+			engine = Matter.Engine.create({enableSleeping: true});
+			Matter.Engine.run(engine);
 			
-			mouseConstraint = Matter.MouseConstraint.create(engine);
+			var render = LayaRender.create({engine: engine, container: gameWorld, width: stageWidth, height: stageHeight, options: {wireframes: false}});
+			LayaRender.run(render);
+			
+			mouseConstraint = Matter.MouseConstraint.create(engine, {element: Render.canvas});
 			Matter.World.add(engine.world, mouseConstraint);
-			engine.render.mouse = mouseConstraint.mouse;
+			render.mouse = mouseConstraint.mouse;
 		}
 		private function initWorld():void 
 		{

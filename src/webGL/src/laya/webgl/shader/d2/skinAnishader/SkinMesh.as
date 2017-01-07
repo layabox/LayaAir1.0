@@ -26,6 +26,13 @@ package laya.webgl.shader.d2.skinAnishader {
 		private var _ps:Array;
 		private var _indexStart:int = -1;
 		
+		private var _verticles:Array;
+		private var _uvs:Array;
+		private static var _tempVS:Array = [];
+		private static var _tempIB:Array = [];
+		private static var _defaultPS:Array;
+		private static var _tVSLen:int;
+		
 		public function SkinMesh() {
 		
 		}
@@ -49,14 +56,112 @@ package laya.webgl.shader.d2.skinAnishader {
 			if (ps) {
 				_ps = ps;
 			} else {
-				_ps = [];
-				_ps.push(0, 1, 3, 3, 1, 2);
+				if (!_defaultPS)
+				{
+					_defaultPS = [];
+				    _defaultPS.push(0, 1, 3, 3, 1, 2);
+				}
+				_ps = _defaultPS;
 			}
 			mVBData = new Float32Array(_vs);
 			mIBData = new Uint16Array(_ps.length);
 			mIBData["start"] = -1;
 			mEleNum = _ps.length;
 			mTexture = texture;
+		}
+		
+		
+		public function init2(texture:Texture, vs:Array, ps:Array,verticles:Array,uvs:Array):void {
+			if (ps) {
+				_ps = ps;
+			} else {
+				_ps = [];
+				_ps.push(0, 1, 3, 3, 1, 2);
+			}
+			_verticles = verticles;
+			_uvs = uvs;
+			mEleNum = _ps.length;
+			mTexture = texture;
+	       if (Render.isConchNode || Render.isConchApp)
+	       {
+			   _initMyData();
+			   mVBData = new Float32Array(_vs);
+		   }
+		}
+		
+		
+		private function _initMyData():void
+		{
+			var vsI:int=0;
+			var vI:int=0;
+			var vLen:int= _verticles.length;
+			var tempVLen:int = vLen * 4;
+			_vs = _tempVS;
+			var insertNew:Boolean=false;
+			if (Render.isConchNode || Render.isConchApp)
+			{
+				_vs.length = tempVLen;
+				insertNew = true;
+			}else
+			{
+				if (_vs.length < tempVLen)
+				{
+					_vs.length = tempVLen;
+					insertNew = true;
+				}
+			}
+			_tVSLen = tempVLen;
+			if (insertNew)
+			{
+				while (vsI < tempVLen)
+				{
+					_vs[vsI] = _verticles[vI];
+					_vs[vsI + 1] = _verticles[vI + 1];
+					_vs[vsI + 2] = _uvs[vI];
+					_vs[vsI + 3] = _uvs[vI + 1];
+					_vs[vsI + 4] = 1;
+					_vs[vsI + 5] = 1;
+					_vs[vsI + 6] = 1;
+					_vs[vsI + 7] = 1;
+					vsI += 8;
+					vI += 2;
+				}
+			}else
+			{
+				while (vsI < tempVLen)
+				{
+					_vs[vsI] = _verticles[vI];
+					_vs[vsI + 1] = _verticles[vI + 1];
+					_vs[vsI + 2] = _uvs[vI];
+					_vs[vsI + 3] = _uvs[vI + 1];
+					vsI += 8;
+					vI += 2;
+				}
+			}
+			
+		}
+		
+		public function getData2(vb:VertexBuffer2D, ib:IndexBuffer2D, start:int):void {	
+			mVBBuffer = vb;
+			mIBBuffer = ib;
+			_initMyData();
+
+			vb.appendEx2(_vs, Float32Array,_tVSLen,4);
+			
+			_indexStart = ib.byteLength;
+			var tIB:Array;
+			tIB = _tempIB;
+			if (tIB.length < _ps.length)
+			{
+				tIB.length = _ps.length;
+			}
+			
+
+			for (var i:int = 0, n:int = _ps.length; i < n; i++) {
+				tIB[i] = _ps[i] + start;
+			}
+			ib.appendEx2(tIB, Uint16Array, _ps.length, 2);
+
 		}
 		
 		public function getData(vb:VertexBuffer2D, ib:IndexBuffer2D, start:int):void {	
@@ -72,6 +177,7 @@ package laya.webgl.shader.d2.skinAnishader {
 				mIBData["start"] = start;
 			}
 			ib.append(mIBData);
+			
 		}
 		
 		public function render(context:*, x:Number, y:Number):void {
@@ -93,7 +199,7 @@ package laya.webgl.shader.d2.skinAnishader {
 				context._submits[context._submits._length++] = tempSubmit;
 			}
 			else if (Render.isConchApp&&mTexture)
-			{
+			{				
 				transform || (transform=Matrix.EMPTY);
 				context.setSkinMesh&&context.setSkinMesh(x, y, _ps, mVBData, mEleNum, 0, mTexture,this.transform );
 			}

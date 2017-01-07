@@ -115,7 +115,7 @@ package laya.renders {
 			case CANVAS: 
 				_fun = this._canvas;
 				return;
-			case MASK:
+			case MASK: 
 				_fun = this._mask;
 				return;
 			case CLIP: 
@@ -188,7 +188,7 @@ package laya.renders {
 			context.ctx.globalCompositeOperation = "source-over";
 		}
 		
-		public function _mask(sprite:Sprite, context:RenderContext, x:Number, y:Number):void{
+		public function _mask(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			var next:RenderSprite = this._next;
 			next._fun.call(next, sprite, context, x, y);
 			var mask:Sprite = sprite.mask;
@@ -255,11 +255,8 @@ package laya.renders {
 			}
 			
 			var childs:Array = sprite._childs, n:int = childs.length, ele:*;
-			if (!sprite.viewport || !sprite.optimizeScrollRect) {
-				for (var i:int = 0; i < n; ++i)
-					(ele = (childs[i] as Sprite))._style.visible && ele.render(context, x, y);
-			} else {
-				var rect:Rectangle = sprite.viewport;				
+			if (sprite.viewport || (sprite.optimizeScrollRect && sprite._style.scrollRect)) {
+				var rect:Rectangle = sprite.viewport || sprite._style.scrollRect;
 				var left:Number = rect.x;
 				var top:Number = rect.y;
 				var right:Number = rect.right;
@@ -271,6 +268,9 @@ package laya.renders {
 						ele.render(context, x, y);
 					}
 				}
+			} else {
+				for (var i:int = 0; i < n; ++i)
+					(ele = (childs[i] as Sprite))._style.visible && ele.render(context, x, y);
 			}
 		}
 		
@@ -296,22 +296,22 @@ package laya.renders {
 					_cacheCanvas._cacheRec = new Rectangle();
 				var w:Number, h:Number;
 				tRec = sprite.getSelfBounds();
-//				if (Render.isWebGL && _cacheCanvas.type === 'bitmap' && (tRec.width > 2048 || tRec.height > 2048)) {
-//					trace("cache bitmap size larger than 2048,cache ignored");
-//					if(_cacheCanvas.ctx)
-//					{
-//						Pool.recover("RenderContext",_cacheCanvas.ctx);
-//						_cacheCanvas.ctx=null;
-//				    }			
-//					_next._fun.call(_next, sprite, context, x, y);
-//					return;
-//				}
+				//				if (Render.isWebGL && _cacheCanvas.type === 'bitmap' && (tRec.width > 2048 || tRec.height > 2048)) {
+				//					trace("cache bitmap size larger than 2048,cache ignored");
+				//					if(_cacheCanvas.ctx)
+				//					{
+				//						Pool.recover("RenderContext",_cacheCanvas.ctx);
+				//						_cacheCanvas.ctx=null;
+				//				    }			
+				//					_next._fun.call(_next, sprite, context, x, y);
+				//					return;
+				//				}
 				tRec.x -= sprite.pivotX;
 				tRec.y -= sprite.pivotY;
-				tRec.x -= 10;
-				tRec.y -= 10;
-				tRec.width += 20;
-				tRec.height += 20;
+				tRec.x -= 16;
+				tRec.y -= 16;
+				tRec.width += 32;
+				tRec.height += 32;
 				tRec.x = Math.floor(tRec.x + x) - x;
 				tRec.y = Math.floor(tRec.y + y) - y;
 				tRec.width = Math.floor(tRec.width);
@@ -331,12 +331,10 @@ package laya.renders {
 						chainScaleY *= tar.scaleY;
 						tar = tar.parent as Sprite;
 					}
-					if(Render.isWebGL )
-					{
+					if (Render.isWebGL) {
 						if (chainScaleX < 1) scaleX *= chainScaleX;
 						if (chainScaleY < 1) scaleY *= chainScaleY;
-					}else
-					{
+					} else {
 						if (chainScaleX > 1) scaleX *= chainScaleX;
 						if (chainScaleY > 1) scaleY *= chainScaleY;
 					}
@@ -349,11 +347,10 @@ package laya.renders {
 				
 				if (Render.isWebGL && _cacheCanvas.type === 'bitmap' && (w > 2048 || h > 2048)) {
 					trace("cache bitmap size larger than 2048,cache ignored");
-					if(_cacheCanvas.ctx)
-					{
-						Pool.recover("RenderContext",_cacheCanvas.ctx);
-						_cacheCanvas.ctx=null;
-					}			
+					if (_cacheCanvas.ctx) {
+						Pool.recover("RenderContext", _cacheCanvas.ctx);
+						_cacheCanvas.ctx = null;
+					}
 					_next._fun.call(_next, sprite, context, x, y);
 					return;
 				}

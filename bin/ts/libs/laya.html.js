@@ -635,6 +635,7 @@
 		*设置标签内容
 		*/
 		__getset(0,__proto,'innerHTML',null,function(text){
+			if (!text)this.size(0,0);
 			this.destroyChildren();
 			this.appendHTML(text);
 		});

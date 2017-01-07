@@ -33,6 +33,7 @@ package laya.webgl.submit {
 			_preIsSameTextureShader = false;
 			_vb = null;
 			_texs.length = 0;
+			_vbPos.length = 0;
 			_isSameTexture = true;
 		}
 		
