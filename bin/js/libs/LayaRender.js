@@ -73,10 +73,6 @@
 			}
 		};
 
-		// caches
-		render.sprites = {};
-		render.primitives = {};
-
 		return render;
 	}
 
@@ -88,15 +84,25 @@
 	LayaRender.run = function(render)
 	{
 		Laya.timer.frameLoop(1, this, LayaRender.world, [render]);
+		Events.on(render.engine.world, 'afterRemove', LayaRender.onRemoveSprite);
 	};
 
 	/**
 	 * 停止渲染器。
+	 * @param  {render} LayaRender.create()返回的对象
 	 * @return {void}
 	 */
-	LayaRender.stop = function()
+	LayaRender.stop = function(render)
 	{
 		Laya.timer.clear(this, LayaRender.world);
+		Events.off(render.engine.world, 'afterRemove', LayaRender.onRemoveSprite);
+	}
+
+	LayaRender.onRemoveSprite = function(args)
+	{
+		var sprite = args.object.layaSprite;
+		if (sprite && sprite.parent)
+			sprite.parent.removeChild(sprite);
 	}
 
 	/**
@@ -223,12 +229,12 @@
 		if (bodyRender.sprite && bodyRender.sprite.texture)
 		{
 			var spriteId = 'b-' + body.id,
-				sprite = render.sprites[spriteId],
+				sprite = body.layaSprite,
 				container = render.container;
 
 			// 如果sprite不存在，则初始化一个
 			if (!sprite)
-				sprite = render.sprites[spriteId] = _createBodySprite(render, body);
+				sprite = body.layaSprite = _createBodySprite(render, body);
 
 			// 如果sprite未在显示列表，则添加至显示列表
 			if (!container.contains(sprite))
@@ -244,13 +250,13 @@
 		else // 没有纹理的body
 		{
 			var primitiveId = 'b-' + body.id,
-				sprite = render.primitives[primitiveId],
+				sprite = body.layaSprite,
 				container = render.container;
 
 			// 如果sprite不存在，则初始化一个
 			if (!sprite)
 			{
-				sprite = render.primitives[primitiveId] = _createBodyPrimitive(render, body);
+				sprite = body.layaSprite = _createBodyPrimitive(render, body);
 			}
 
 			// 如果sprite未在显示列表，则添加至显示列表
@@ -368,11 +374,11 @@
 			container = render.container,
 			constraintRender = constraint.render,
 			primitiveId = 'c-' + constraint.id,
-			sprite = render.primitives[primitiveId];
+			sprite = constraint.layaSprite;
 
 		// 如果sprite不存在，则初始化一个
 		if (!sprite)
-			sprite = render.primitives[primitiveId] = new Laya.Sprite();
+			sprite = constraint.layaSprite = new Laya.Sprite();
 
 		var primitive = sprite.graphics;
 
