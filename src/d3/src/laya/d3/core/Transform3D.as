@@ -11,11 +11,17 @@ package laya.d3.core {
 	 */
 	public class Transform3D extends EventDispatcher {
 		/** @private */
-		protected var _tempMatrix0:Matrix4x4 = new Matrix4x4();
+		private static var _tempVector30:Vector3 = new Vector3();
 		/** @private */
-		protected var _tempQuaternion0:Quaternion = new Quaternion();
+		private static var _tempVector31:Vector3 = new Vector3();
 		/** @private */
-		protected var _tempVector30:Vector3 = new Vector3();
+		private static var _tempVector32:Vector3 = new Vector3();
+			/** @private */
+		private static var _tempVector33:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempQuaternion0:Quaternion = new Quaternion();
+		/** @private */
+		private static var _tempMatrix0:Matrix4x4 = new Matrix4x4();
 		
 		/** @private */
 		protected var _localPosition:Vector3 = new Vector3();
@@ -54,6 +60,8 @@ package laya.d3.core {
 		protected var _worldUpdate:Boolean = true;
 		/** @private */
 		protected var _parent:Transform3D;
+		/** 变换中心点,注意:该中心点不受变换的影响。*/
+		public var pivot:Vector3;
 		
 		/**
 		 * 获取世界矩阵是否需要更新。
@@ -320,7 +328,22 @@ package laya.d3.core {
 		 * @private
 		 */
 		protected function _updateLocalMatrix():void {
-			Matrix4x4.createAffineTransformation(_localPosition, _localRotation, _localScale, _localMatrix);
+			if (pivot && (pivot.x !== 0 && pivot.y !== 0 && pivot.z !== 0)) {
+				var scalePivot:Vector3 = _tempVector30;
+				Vector3.multiply(pivot, _localScale, scalePivot);
+				var scaleOffsetPosition:Vector3 = _tempVector31;
+				Vector3.subtract(scalePivot, pivot, scaleOffsetPosition);
+				var rotationOffsetPosition:Vector3 = _tempVector32;
+				Vector3.transformQuat(scalePivot, _localRotation, rotationOffsetPosition);
+				Vector3.subtract(rotationOffsetPosition, scalePivot, rotationOffsetPosition);
+				
+				var resultLocalPosition:Vector3 = _tempVector33;
+				Vector3.subtract(_localPosition, scaleOffsetPosition, resultLocalPosition);
+				Vector3.subtract(resultLocalPosition, rotationOffsetPosition, resultLocalPosition);
+				Matrix4x4.createAffineTransformation(resultLocalPosition, _localRotation, _localScale, _localMatrix);
+			} else {
+				Matrix4x4.createAffineTransformation(_localPosition, _localRotation, _localScale, _localMatrix);
+			}
 		}
 		
 		/**
@@ -340,7 +363,6 @@ package laya.d3.core {
 				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
 					(_owner._childs[i] as Sprite3D).transform._onWorldTransform();
 			}
-		
 		}
 		
 		/**
@@ -403,6 +425,7 @@ package laya.d3.core {
 				worldMatrix = _worldMatrix;
 			}
 		}
+	
 	}
 
 }

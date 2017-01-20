@@ -420,6 +420,26 @@ package laya.d3.math {
 			e[15] = m44;
 		}
 		
+		public function getElementByRowColumn(row:Number, column:Number):Number {
+			
+			if (row < 0 || row > 3)
+				throw new Error("row", "Rows and columns for matrices run from 0 to 3, inclusive.");
+			if (column < 0 || column > 3)
+				throw new Error("column", "Rows and columns for matrices run from 0 to 3, inclusive.");
+				
+			return elements[(row * 4) + column];
+		}
+		
+		public function setElementByRowColumn(row:Number, column:Number, value:Number):void {
+			
+			if (row < 0 || row > 3)
+				throw new Error("row", "Rows and columns for matrices run from 0 to 3, inclusive.");
+			if (column < 0 || column > 3)
+				throw new Error("column", "Rows and columns for matrices run from 0 to 3, inclusive.");
+				
+			elements[(row * 4) + column] = value;
+		}
+		
 		/**
 		 * 判断两个4x4矩阵的值是否相等。
 		 * @param	other 4x4矩阵

@@ -35,7 +35,7 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.6.1Beta";
+		public static var version:String = "1.6.2beta";
 		public static var stageBox:Sprite;
 		/**Market对象 只有加速器模式下才有值*/
 		public static var conchMarket:IMarket = __JS__("window.conch?conchMarket:null");
@@ -81,7 +81,6 @@ package {
 			render = new Render(50, 50);
 			//[IF-JS]render = new Render(0, 0);
 			stage.size(width, height);
-			
 			RenderSprite.__init__();
 			KeyBoardManager.__init__();
 			MouseManager.instance.__init__(stage,Render.canvas);

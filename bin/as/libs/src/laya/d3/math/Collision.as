@@ -732,10 +732,11 @@ package laya.d3.math {
 			
 			if (distance > 0)
 				return Plane.PlaneIntersectionType_Front;
-			else if (distance < 0)
+				
+		    if (distance < 0)
 				return Plane.PlaneIntersectionType_Back;
-			else
-				return Plane.PlaneIntersectionType_Intersecting;
+			
+			return Plane.PlaneIntersectionType_Intersecting;
 		}
 		
 		/**
@@ -953,12 +954,13 @@ package laya.d3.math {
 			if (box1MaxeZ < box2MineZ || box1MineZ > box2MaxeZ)
 				return ContainmentType.Disjoint;
 			
-			if (box1MineX <= box2MineX && box2MaxeX <= box2MineX && box1MineY <= box2MineY && box2MaxeY <= box1MaxeY && box1MineZ <= box2MineZ && box2MaxeZ <= box1MaxeZ) {
+			if (box1MineX <= box2MineX && box2MaxeX <= box2MaxeX && box1MineY <= box2MineY && box2MaxeY <= box1MaxeY && box1MineZ <= box2MineZ && box2MaxeZ <= box1MaxeZ) {
 				return ContainmentType.Contains;
 			}
 			
 			return ContainmentType.Intersects;
 		}
+		
 		
 		/**
 		 * 空间中包围盒是否包含另一个包围球

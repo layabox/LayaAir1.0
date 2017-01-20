@@ -1,5 +1,6 @@
 package laya.d3.core.glitter {
 	import laya.d3.core.GlitterRender;
+	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.GlitterMaterial;
@@ -21,11 +22,9 @@ package laya.d3.core.glitter {
 	/**
 	 * <code>Glitter</code> 类用于创建闪光。
 	 */
-	public class Glitter extends Sprite3D {
+	public class Glitter extends RenderableSprite3D {
 		/** @private */
 		private var _templet:GlitterTemplet;
-		/** @private */
-		private var _glitterRender:GlitterRender;
 		
 		/**
 		 * 获取闪光模板。
@@ -40,7 +39,7 @@ package laya.d3.core.glitter {
 		 * @return  刀光渲染器。
 		 */
 		public function get glitterRender():GlitterRender {
-			return _glitterRender;
+			return _render as GlitterRender;
 		}
 		
 		/**
@@ -48,15 +47,15 @@ package laya.d3.core.glitter {
 		 *  @param	settings 配置信息。
 		 */
 		public function Glitter() {
-			_glitterRender = new GlitterRender(this);
-			_glitterRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
+			_render = new GlitterRender(this);
+			_render.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
 			var material:GlitterMaterial = new GlitterMaterial();
 			
-			_glitterRender.sharedMaterial = material;
+			_render.sharedMaterial = material;
 			_templet = new GlitterTemplet(this);
 			
-			material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
+			material.renderMode = GlitterMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
 			
 			_changeRenderObject(0);
 		
@@ -64,13 +63,13 @@ package laya.d3.core.glitter {
 		
 		/** @private */
 		private function _changeRenderObject(index:int):RenderElement {
-			var renderObjects:Vector.<RenderElement> = _glitterRender.renderObject._renderElements;
+			var renderObjects:Vector.<RenderElement> = _render.renderObject._renderElements;
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderObject = _glitterRender.renderObject;
+			renderElement._renderObject = _render.renderObject;
 			
-			var material:BaseMaterial = _glitterRender.sharedMaterials[index];
+			var material:BaseMaterial = _render.sharedMaterials[index];
 			(material) || (material = GlitterMaterial.defaultMaterial);//确保有材质,由默认材质代替。
 			
 			var element:IRenderable = _templet;
@@ -90,25 +89,18 @@ package laya.d3.core.glitter {
 		
 		/** @private */
 		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_glitterRender.renderObject);
+			scene.removeFrustumCullingObject(_render.renderObject);
 		}
 		
 		/** @private */
 		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_glitterRender.renderObject);
+			scene.addFrustumCullingObject(_render.renderObject);
 		}
 		
-		/**
-		 * @private
-		 * 更新闪光。
-		 * @param	state 渲染状态参数。
-		 */
-		public override function _update(state:RenderState):void {
+		override public function _update(state:RenderState):void 
+		{
 			_templet._update(state.elapsedTime);
-			state.owner = this;
-			
-			Stat.spriteCount++;
-			_childs.length && _updateChilds(state);
+			super._update(state);
 		}
 		
 		/**
@@ -151,9 +143,10 @@ package laya.d3.core.glitter {
 			destTemplet.maxSlerpCount = _templet.maxSlerpCount;
 			_templet.color.cloneTo(destTemplet.color);
 			destTemplet._maxSegments = _templet._maxSegments;
-			var destGlitterRender:GlitterRender = destGlitter._glitterRender;
-			destGlitterRender.sharedMaterials = _glitterRender.sharedMaterials;
-			destGlitterRender.enable = _glitterRender.enable;
+			var destGlitterRender:GlitterRender = destGlitter._render as GlitterRender;
+			var glitterRender:GlitterRender = _render as GlitterRender;
+			destGlitterRender.sharedMaterials = glitterRender.sharedMaterials;
+			destGlitterRender.enable = glitterRender.enable;
 		}
 		
 		/**
@@ -162,7 +155,6 @@ package laya.d3.core.glitter {
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
-			_glitterRender._destroy();
 			_templet = null;
 		}
 	

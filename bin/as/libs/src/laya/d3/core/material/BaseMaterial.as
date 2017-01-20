@@ -27,6 +27,8 @@ package laya.d3.core.material {
 	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
+	import laya.webgl.WebGL;
+	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.shader.ShaderValue;
 	import laya.webgl.utils.ShaderCompile;
@@ -35,43 +37,74 @@ package laya.d3.core.material {
 	 * <code>BaseMaterial</code> 类用于创建材质,抽象类,不允许实例。
 	 */
 	public class BaseMaterial extends Resource implements IClone {
-		/**渲染状态_不透明。*/
-		public static const RENDERMODE_OPAQUE:int = 1;
-		/**渲染状态_不透明_双面。*/
-		public static const RENDERMODE_OPAQUEDOUBLEFACE:int = 2;
-		/**渲染状态_透明测试。*/
-		public static const RENDERMODE_CUTOUT:int = 3;
-		/**渲染状态_透明测试_双面。*/
-		public static const RENDERMODE_CUTOUTDOUBLEFACE:int = 4;
-		/**渲染状态_透明混合。*/
-		public static const RENDERMODE_TRANSPARENT:int = 13;
-		/**渲染状态_透明混合_双面。*/
-		public static const RENDERMODE_TRANSPARENTDOUBLEFACE:int = 14;
-		/**渲染状态_加色法混合。*/
-		public static const RENDERMODE_ADDTIVE:int = 15;
-		/**渲染状态_加色法混合_双面。*/
-		public static const RENDERMODE_ADDTIVEDOUBLEFACE:int = 16;
-		/**渲染状态_只读深度_透明混合。*/
-		public static const RENDERMODE_DEPTHREAD_TRANSPARENT:int = 5;
-		/**渲染状态_只读深度_透明混合_双面。*/
-		public static const RENDERMODE_DEPTHREAD_TRANSPARENTDOUBLEFACE:int = 6;
-		/**渲染状态_只读深度_加色法混合。*/
-		public static const RENDERMODE_DEPTHREAD_ADDTIVE:int = 7;
-		/**渲染状态_只读深度_加色法混合_双面。*/
-		public static const RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE:int = 8;
-		/**渲染状态_无深度_透明混合。*/
-		public static const RENDERMODE_NONDEPTH_TRANSPARENT:int = 9;
-		/**渲染状态_无深度_透明混合_双面。*/
-		public static const RENDERMODE_NONDEPTH_TRANSPARENTDOUBLEFACE:int = 10;
-		/**渲染状态_无深度_加色法混合。*/
-		public static const RENDERMODE_NONDEPTH_ADDTIVE:int = 11;
-		/**渲染状态_无深度_加色法混合_双面。*/
-		public static const RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE:int = 12;
+		/**剔除枚举_不剔除。*/
+		public static const CULL_NONE:int = 0;
+		/**剔除枚举_剔除正面。*/
+		public static const CULL_FRONT:int = 1;
+		/**剔除枚举_剔除背面。*/
+		public static const CULL_BACK:int = 2;
 		
-		/**@private 所属渲染队列。*/
-		private var _renderQueue:int;
-		/**@private 渲染模式。*/
-		private var _renderMode:int;
+		/**混合枚举_禁用。*/
+		public static const BLEND_DISABLE:int = 0;
+		/**混合枚举_启用_RGB和Alpha统一混合。*/
+		public static const BLEND_ENABLE_ALL:int = 1;
+		/**混合枚举_启用_RGB和Alpha单独混合。*/
+		public static const BLEND_ENABLE_SEPERATE:int = 2;
+		
+		/**混合参数枚举_零,例：RGB(0,0,0),Alpha:(1)。*/
+		public static const BLENDPARAM_ZERO:int = 0;
+		/**混合参数枚举_一,例：RGB(1,1,1),Alpha:(1)。*/
+		public static const BLENDPARAM_ONE:int = 1;
+		/**混合参数枚举_源颜色,例：RGB(Rs, Gs, Bs)，Alpha(As)。*/
+		public static const BLENDPARAM_SRC_COLOR:int = 0x0300;
+		/**混合参数枚举_一减源颜色,例：RGB(1-Rs, 1-Gs, 1-Bs)，Alpha(1-As)。*/
+		public static const BLENDPARAM_ONE_MINUS_SRC_COLOR:int = 0x0301;
+		/**混合参数枚举_目标颜色,例：RGB(Rd, Gd, Bd),Alpha(Ad)。*/
+		public static const BLENDPARAM_DST_COLOR:int = 0x0306;
+		/**混合参数枚举_一减目标颜色,例：RGB(1-Rd, 1-Gd, 1-Bd)，Alpha(1-Ad)。*/
+		public static const BLENDPARAM_ONE_MINUS_DST_COLOR:int = 0x0307;
+		/**混合参数枚举_源透明,例:RGB(As, As, As),Alpha(1-As)。*/
+		public static const BLENDPARAM_SRC_ALPHA:int = 0x0302;
+		/**混合参数枚举_一减源阿尔法,例:RGB(1-As, 1-As, 1-As),Alpha(1-As)。*/
+		public static const BLENDPARAM_ONE_MINUS_SRC_ALPHA:int = 0x0303;
+		/**混合参数枚举_目标阿尔法，例：RGB(Ad, Ad, Ad),Alpha(Ad)。*/
+		public static const BLENDPARAM_DST_ALPHA:int = 0x0304;
+		/**混合参数枚举_一减目标阿尔法,例：RGB(1-Ad, 1-Ad, 1-Ad),Alpha(Ad)。*/
+		public static const BLENDPARAM_ONE_MINUS_DST_ALPHA:int = 0x0305;
+		/**混合参数枚举_常量颜色,例:RGB(Rc, Gc, Bc),Alpha(Ac)。*/
+		public static const BLENDPARAM_CONSTANT_COLOR:int = 0x8001;
+		/**混合参数枚举_一减常量颜色,例：RGB(1-Rc, 1-Gc, 1-Bc),Alpha(1-Ac)。*/
+		public static const BLENDPARAM_ONE_MINUS_CONSTANT_COLOR:int = 0x8002;
+		/**混合参数枚举_常量阿尔法,例：RGB(Ac, Ac, Ac)，Alpha(Ac)。*/
+		public static const BLENDPARAM_CONSTANT_ALPHA:int = 0x8003;
+		/**混合参数枚举_一减常量阿尔法,例：RGB(1-Ac, 1-Ac, 1-Ac)，Alpha(1-Ac)。*/
+		public static const BLENDPARAM_ONE_MINUS_CONSTANT_ALPHA:int = 0x8004;
+		/**混合参数枚举_阿尔法饱和，例：RGB(min(As, 1 - Ad), min(As, 1 - Ad), min(As, 1 - Ad)),Alpha(1)。*/
+		public static const BLENDPARAM_SRC_ALPHA_SATURATE:int = 0x0308;
+		
+		/**混合方程枚举_加法,例：source + destination*/
+		public static const BLENDEQUATION_ADD:int = 0;
+		/**混合方程枚举_减法，例：source - destination*/
+		public static const BLENDEQUATION_SUBTRACT:int = 1;
+		/**混合方程枚举_反序减法，例：destination - source*/
+		public static const BLENDEQUATION_REVERSE_SUBTRACT:int = 2;
+		
+		/**深度测试函数枚举_从不通过。*/
+		public static const DEPTHFUNC_NEVER:int = 0;
+		/**深度测试函数枚举_小于时通过。*/
+		public static const DEPTHFUNC_LESS:int = 1;
+		/**深度测试函数枚举_等于时通过。*/
+		public static const DEPTHFUNC_EQUAL:int = 2;
+		/**深度测试函数枚举_小于等于时通过。*/
+		public static const DEPTHFUNC_LEQUAL:int = 3;
+		/**深度测试函数枚举_大于时通过。*/
+		public static const DEPTHFUNC_GREATER:int = 4;
+		/**深度测试函数枚举_不等于时通过。*/
+		public static const DEPTHFUNC_NOTEQUAL:int = 5;
+		/**深度测试函数枚举_大于等于时通过。*/
+		public static const DEPTHFUNC_GEQUAL:int = 6;
+		/**深度测试函数枚举_总是通过。*/
+		public static const DEPTHFUNC_ALWAYS:int = 7;
 		
 		/** @private */
 		private var _sharderNameID:int;
@@ -81,7 +114,6 @@ package laya.d3.core.material {
 		private var _disableShaderDefineValue:int;
 		/** @private */
 		private var _shaderValues:ValusArray;
-		
 		/** @private */
 		private var _values:Array;
 		/** @private */
@@ -89,11 +121,44 @@ package laya.d3.core.material {
 		/** @private */
 		private var _shader:Shader3D;
 		
+		/**@private 所属渲染队列。*/
+		protected var _renderQueue:int;
 		/** @private */
 		protected var _shaderCompile:ShaderCompile3D;
 		
 		/** @private */
 		public var _isInstance:Boolean;
+		
+		/**渲染剔除。*/
+		public var cull:int;
+		/**透明混合。*/
+		public var blend:int;
+		/**源混合参数,在blend为BLEND_ENABLE_ALL时生效。*/
+		public var srcBlend:int;
+		/**目标混合参数,在blend为BLEND_ENABLE_ALL时生效。*/
+		public var dstBlend:int;
+		/**RGB源混合参数,在blend为BLEND_ENABLE_SEPERATE时生效。*/
+		public var srcBlendRGB:int;
+		/**RGB目标混合参数,在blend为BLEND_ENABLE_SEPERATE时生效。*/
+		public var dstBlendRGB:int;
+		/**Alpha源混合参数,在blend为BLEND_ENABLE_SEPERATE时生效。*/
+		public var srcBlendAlpha:int;
+		/**Alpha目标混合参数,在blend为BLEND_ENABLE_SEPERATE时生效。*/
+		public var dstBlendAlpha:int;
+		/**混合常量颜色。*/
+		public var blendConstColor:Vector4;
+		/**混合方程。*/
+		public var blendEquation:int;
+		/**RGB混合方程。*/
+		public var blendEquationRGB:int;
+		/**Alpha混合方程。*/
+		public var blendEquationAlpha:int;
+		/**是否深度测试。*/
+		public var depthTest:Boolean;
+		/**深度测试函数。*/
+		public var depthFunc:int;
+		/**是否深度写入。*/
+		public var depthWrite:Boolean;
 		
 		/** @private */
 		public var _conchMaterial:*;//NATIVE
@@ -104,96 +169,6 @@ package laya.d3.core.material {
 		 */
 		public function get renderQueue():int {
 			return _renderQueue;
-		}
-		
-		/**
-		 * 获取渲染状态。
-		 * @return 渲染状态。
-		 */
-		public function get renderMode():int {
-			return _renderMode;
-		}
-		
-		/**
-		 * 设置渲染模式。
-		 * @return 渲染模式。
-		 */
-		public function set renderMode(value:int):void {
-			_renderMode = value;
-			_conchMaterial && _conchMaterial.setRenderMode(value);//NATIVE
-			switch (value) {
-			case RENDERMODE_OPAQUE: 
-				_renderQueue = RenderQueue.OPAQUE;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_OPAQUEDOUBLEFACE: 
-				_renderQueue = RenderQueue.OPAQUE_DOUBLEFACE;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_CUTOUT: 
-				_renderQueue = RenderQueue.OPAQUE;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_CUTOUTDOUBLEFACE: 
-				_renderQueue = RenderQueue.OPAQUE_DOUBLEFACE;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_TRANSPARENT: 
-				_renderQueue = RenderQueue.ALPHA_BLEND;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_TRANSPARENTDOUBLEFACE: 
-				_renderQueue = RenderQueue.ALPHA_BLEND_DOUBLEFACE;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_ADDTIVE: 
-				_renderQueue = RenderQueue.ALPHA_ADDTIVE_BLEND;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_ADDTIVEDOUBLEFACE: 
-				_renderQueue = RenderQueue.ALPHA_ADDTIVE_BLEND_DOUBLEFACE;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_DEPTHREAD_TRANSPARENT: 
-				_renderQueue = RenderQueue.DEPTHREAD_ALPHA_BLEND;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_DEPTHREAD_TRANSPARENTDOUBLEFACE: 
-				_renderQueue = RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_DEPTHREAD_ADDTIVE: 
-				_renderQueue = RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE: 
-				_renderQueue = RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_NONDEPTH_TRANSPARENT: 
-				_renderQueue = RenderQueue.NONDEPTH_ALPHA_BLEND;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_NONDEPTH_TRANSPARENTDOUBLEFACE: 
-				_renderQueue = RenderQueue.NONDEPTH_ALPHA_BLEND_DOUBLEFACE;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_NONDEPTH_ADDTIVE: 
-				_renderQueue = RenderQueue.NONDEPTH_ALPHA_ADDTIVE_BLEND;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			case RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE: 
-				_renderQueue = RenderQueue.NONDEPTH_ALPHA_ADDTIVE_BLEND_DOUBLEFACE;
-				event(Event.RENDERQUEUE_CHANGED, this);
-				break;
-			default: 
-				throw new Error("Material:renderMode value error.");
-			}
-			
-			if (_renderMode === RENDERMODE_CUTOUT || _renderMode === RENDERMODE_CUTOUTDOUBLEFACE)
-				_addShaderDefine(ShaderDefines3D.ALPHATEST);
-			else
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
 		}
 		
 		/**
@@ -208,10 +183,25 @@ package laya.d3.core.material {
 			_shaderValues = new ValusArray();
 			_values = [];
 			_textureSharderIndices = new Vector.<int>();
+			cull = CULL_BACK;
+			blend = BLEND_DISABLE;
+			srcBlend = BLENDPARAM_ONE;
+			dstBlend = BLENDPARAM_ZERO;
+			srcBlendRGB = BLENDPARAM_ONE;
+			dstBlendRGB = BLENDPARAM_ZERO;
+			srcBlendAlpha = BLENDPARAM_ONE;
+			dstBlendAlpha = BLENDPARAM_ZERO;
+			blendConstColor = new Vector4(1, 1, 1, 1);
+			blendEquation = BLENDEQUATION_ADD;
+			blendEquationRGB = BLENDEQUATION_ADD;
+			blendEquationAlpha = BLENDEQUATION_ADD;
+			depthTest = true;
+			depthFunc = DEPTHFUNC_LESS;
+			depthWrite = true;
+			
 			if (Render.isConchNode) {//NATIVE
 				_conchMaterial = __JS__("new ConchMaterial()");
 			}
-			renderMode = RENDERMODE_OPAQUE;
 		}
 		
 		/**
@@ -231,10 +221,10 @@ package laya.d3.core.material {
 		/**
 		 * @private
 		 */
-		public function _getShader(stateShaderDefines:ShaderDefines3D, vertexShaderDefineValue:int,spriteShaderDefineValue:int):Shader3D {
-			var defineValue:int = (stateShaderDefines._value | vertexShaderDefineValue | _shaderDefineValue|spriteShaderDefineValue) & (~_disableShaderDefineValue);
+		public function _getShader(stateShaderDefines:ShaderDefines3D, vertexShaderDefineValue:int, spriteShaderDefineValue:int):Shader3D {
+			var defineValue:int = (stateShaderDefines._value | vertexShaderDefineValue | _shaderDefineValue | spriteShaderDefineValue) & (~_disableShaderDefineValue);
 			stateShaderDefines._value = defineValue;
-			var nameID:Number = _sharderNameID * Shader3D.SHADERNAME2ID + defineValue;
+			var nameID:Number = _sharderNameID * ShaderCompile3D.SHADERNAME2ID + defineValue;
 			_shader = Shader3D.withCompile(_sharderNameID, stateShaderDefines, nameID);
 			return _shader;
 		}
@@ -294,7 +284,7 @@ package laya.d3.core.material {
 			shaderValue.setValue(shaderIndex, buffer);
 			_values[shaderIndex] = buffer;
 			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, buffer,0);
+				_conchMaterial.setShaderValue(shaderIndex, buffer, 0);
 			}
 		}
 		
@@ -316,7 +306,7 @@ package laya.d3.core.material {
 			_shaderValues.setValue(shaderIndex, matrix4x4 ? matrix4x4.elements : null);
 			_values[shaderIndex] = matrix4x4;
 			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, matrix4x4.elements,0);
+				_conchMaterial.setShaderValue(shaderIndex, matrix4x4.elements, 0);
 			}
 		}
 		
@@ -339,7 +329,7 @@ package laya.d3.core.material {
 			shaderValue.setValue(shaderIndex, i);
 			_values[shaderIndex] = i;
 			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, i,1);
+				_conchMaterial.setShaderValue(shaderIndex, i, 1);
 			}
 		}
 		
@@ -362,7 +352,7 @@ package laya.d3.core.material {
 			shaderValue.setValue(shaderIndex, number);
 			_values[shaderIndex] = number;
 			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, number,2);
+				_conchMaterial.setShaderValue(shaderIndex, number, 2);
 			}
 		}
 		
@@ -385,7 +375,7 @@ package laya.d3.core.material {
 			shaderValue.setValue(shaderIndex, b);
 			_values[shaderIndex] = b;
 			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, b,1);
+				_conchMaterial.setShaderValue(shaderIndex, b, 1);
 			}
 		}
 		
@@ -408,7 +398,7 @@ package laya.d3.core.material {
 			shaderValue.setValue(shaderIndex, vector2 ? vector2.elements : null);
 			_values[shaderIndex] = vector2;
 			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, vector2.elements,0);
+				_conchMaterial.setShaderValue(shaderIndex, vector2.elements, 0);
 			}
 		}
 		
@@ -431,7 +421,7 @@ package laya.d3.core.material {
 			shaderValue.setValue(shaderIndex, color ? color.elements : null);
 			_values[shaderIndex] = color;
 			if (_conchMaterial && color) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, color.elements,0);
+				_conchMaterial.setShaderValue(shaderIndex, color.elements, 0);
 			}
 		}
 		
@@ -460,7 +450,6 @@ package laya.d3.core.material {
 			_values[shaderIndex] = texture;
 			
 			if (_conchMaterial) {//NATIVE//TODO: texture index
-				
 				_conchMaterial.setTexture(texture._conchTexture, _textureSharderIndices.indexOf(shaderIndex), shaderIndex);
 			}
 		}
@@ -486,19 +475,52 @@ package laya.d3.core.material {
 			_shader.uploadMaterialUniforms(_shaderValues.data);
 		}
 		
-		public function _setMaterialShaderDefineParams(owner:Sprite3D,shaderDefine:ShaderDefines3D):void {
+		public function _setMaterialShaderParams(state:RenderState, projectionView:Matrix4x4, worldMatrix:Matrix4x4, mesh:IRenderable, material:BaseMaterial):void {
 		}
 		
-		public function _setMaterialShaderParams(state:RenderState, projectionView:Matrix4x4, worldMatrix:Matrix4x4, mesh:IRenderable, material:BaseMaterial):void {
+		/**
+		 * 设置渲染相关状态。
+		 */
+		public function _setRenderState(isTarget:Boolean):void {
+			var gl:WebGLContext = WebGL.mainContext;
+			WebGLContext.setDepthTest(gl, depthTest);
+			WebGLContext.setDepthMask(gl, depthWrite);
+			switch (blend) {
+			case BLEND_DISABLE: 
+				WebGLContext.setBlend(gl, false);
+				break;
+			case BLEND_ENABLE_ALL: 
+				WebGLContext.setBlend(gl, true);
+				WebGLContext.setBlendFunc(gl, srcBlend, dstBlend);
+				break;
+			case BLEND_ENABLE_SEPERATE: 
+				WebGLContext.setBlend(gl, true);
+				//TODO:
+				break;
+			}
+			
+			switch (cull) {
+			case CULL_NONE: 
+				WebGLContext.setCullFace(gl, false);
+				break;
+			case CULL_FRONT: 
+				WebGLContext.setCullFace(gl, true);
+				WebGLContext.setFrontFace(gl, isTarget ? WebGLContext.CW : WebGLContext.CCW);
+				break;
+			case CULL_BACK: 
+				WebGLContext.setCullFace(gl, true);
+				WebGLContext.setFrontFace(gl, isTarget ? WebGLContext.CCW : WebGLContext.CW);
+				break;
+			}
 		}
 		
 		/**
 		 *@private
 		 */
-		override public function onAsynLoaded(url:String, data:*, params:Array):void {
+		override public function onAsynLoaded(url:String, data:*, params:Array):void {//TODO:移导子类
 			var jsonData:Object = data[0];
 			var textureMap:Object = data[1];
-			var customHandler:Handler = Handler.create(null, Utils3D._parseMaterial, [textureMap], false);
+			var customHandler:Handler = Handler.create(null, Utils3D._parseStandardMaterial, [textureMap], false);
 			ClassUtils.createByJson(jsonData as Object, this, null, customHandler, null);
 			customHandler.recover();
 			//_loaded = true;
@@ -511,7 +533,7 @@ package laya.d3.core.material {
 		 */
 		public function setShaderName(name:String):void {
 			_sharderNameID = Shader3D.nameKey.get(name);
-			_shaderCompile = Shader3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
+			_shaderCompile = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * _sharderNameID];
 			if (_conchMaterial) {//NATIVE
 				_conchMaterial.setShader(_shaderCompile._conchShader);
 			}
@@ -524,9 +546,24 @@ package laya.d3.core.material {
 		public function cloneTo(destObject:*):void {
 			var destBaseMaterial:BaseMaterial = destObject as BaseMaterial;
 			destBaseMaterial.name = name;
+			destBaseMaterial.cull = cull;
+			destBaseMaterial.blend = blend;
+			destBaseMaterial.srcBlend = srcBlend;
+			destBaseMaterial.dstBlend = dstBlend;
+			destBaseMaterial.srcBlendRGB = srcBlendRGB;
+			destBaseMaterial.dstBlendRGB = dstBlendRGB;
+			destBaseMaterial.srcBlendAlpha = srcBlendAlpha;
+			destBaseMaterial.dstBlendAlpha = dstBlendAlpha;
+			blendConstColor.cloneTo(destBaseMaterial.blendConstColor);
+			destBaseMaterial.blendEquation = blendEquation;
+			destBaseMaterial.blendEquationRGB = blendEquationRGB;
+			destBaseMaterial.blendEquationAlpha = blendEquationAlpha;
+			destBaseMaterial.depthTest = depthTest;
+			destBaseMaterial.depthFunc = depthFunc;
+			destBaseMaterial.depthWrite = depthWrite;
+			
 			destBaseMaterial._loaded = _loaded;
 			destBaseMaterial._renderQueue = _renderQueue;
-			destBaseMaterial._renderMode = _renderMode;
 			destBaseMaterial._shader = _shader;
 			destBaseMaterial._sharderNameID = _sharderNameID;
 			destBaseMaterial._disableShaderDefineValue = _disableShaderDefineValue;

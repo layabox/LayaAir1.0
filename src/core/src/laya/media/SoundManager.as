@@ -109,8 +109,9 @@ package laya.media {
 		
 		public static function set muted(value:Boolean):void {
 			if (value) {
-				stopAll();
+				stopAllSound();
 			}
+			musicMuted = value;
 			_muted = value;
 		}
 		
@@ -230,6 +231,7 @@ package laya.media {
 		 */
 		public static function stopAll():void
 		{
+			_tMusic = null;
 			var i:int;
 			var channel:SoundChannel;
 			for (i = _channels.length - 1; i >= 0; i--) {
@@ -258,6 +260,7 @@ package laya.media {
 		 * @param url  声音文件地址。
 		 */
 		public static function stopMusic():void {
+			_tMusic = null;
 			if (_musicChannel)
 				_musicChannel.stop();
 		}
@@ -273,6 +276,14 @@ package laya.media {
 				_setVolume(url, volume);
 			} else {
 				soundVolume = volume;
+				var i:int;
+				var channel:SoundChannel;
+				for (i = _channels.length - 1; i >= 0; i--) {
+					channel = _channels[i];
+					if (channel.url != _tMusic) {
+						channel.volume = volume;
+					}
+				}
 			}
 		}
 		

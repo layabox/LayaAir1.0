@@ -104,6 +104,8 @@ uniform int u_SimulationSpace;
   uniform  vec2 u_TSAMaxGradientUVs[4];//x为key,y为frame
 #endif
 
+ 
+#ifdef defined(VELOCITYOVERLIFETIME)||defined(SIZEOVERLIFETIME)
 float getCurValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)
 {
 	float curValue;
@@ -122,6 +124,7 @@ float getCurValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalize
 	}
 	return curValue;
 }
+#endif
 
 #ifdef VELOCITYOVERLIFETIME
 //float getTotalPositionFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)
@@ -151,7 +154,7 @@ float getCurValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalize
 //}
 #endif
 
-
+#ifdef defined(VELOCITYOVERLIFETIME)||defined(ROTATIONOVERLIFETIME)
 float getTotalValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)
 {
 	float totalValue=0.0;
@@ -174,7 +177,9 @@ float getTotalValueFromGradientFloat(in vec2 gradientNumbers[4],in float normali
 	}
 	return totalValue;
 }
+#endif
 
+#ifdef defined(COLOROVERLIFETIME)||defined(RANDOMCOLOROVERLIFETIME)
 vec4 getColorFromGradient(in vec2 gradientAlphas[4],in vec4 gradientColors[4],in float normalizedAge)
 {
 	vec4 overTimeColor;
@@ -207,9 +212,10 @@ vec4 getColorFromGradient(in vec2 gradientAlphas[4],in vec4 gradientColors[4],in
 	}
 	return overTimeColor;
 }
+#endif
 
 
-
+#ifdef TEXTURESHEETANIMATION
 float getFrameFromGradient(in vec2 gradientFrames[4],in float normalizedAge)
 {
 	float overTimeFrame;
@@ -228,6 +234,7 @@ float getFrameFromGradient(in vec2 gradientFrames[4],in float normalizedAge)
 	}
 	return floor(overTimeFrame);
 }
+#endif
 
 #ifdef VELOCITYOVERLIFETIME
 vec3 computeParticleLifeVelocity(in float normalizedAge)

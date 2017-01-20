@@ -10,7 +10,10 @@ package laya.d3.core.scene {
 	import laya.d3.graphics.FrustumCulling;
 	import laya.d3.graphics.RenderObject;
 	import laya.d3.graphics.StaticBatchManager;
+	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundFrustum;
+	import laya.d3.math.Collision;
+	import laya.d3.math.ContainmentType;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Viewport;
@@ -34,7 +37,7 @@ package laya.d3.core.scene {
 	/**
 	 * <code>BaseScene</code> 类用于实现场景的父类。
 	 */
-	public class BaseScene extends Sprite implements ISubmit {		
+	public class BaseScene extends Sprite implements ISubmit {
 		public static const FOGCOLOR:int = 0;
 		public static const FOGSTART:int = 1;
 		public static const FOGRANGE:int = 2;
@@ -59,7 +62,6 @@ package laya.d3.core.scene {
 		public static const SPOTLIGHTDIFFUSE:int = 18;
 		public static const SPOTLIGHTAMBIENT:int = 19;
 		public static const SPOTLIGHTSPECULAR:int = 20;
-
 		
 		/**
 		 * @private
@@ -123,6 +125,12 @@ package laya.d3.core.scene {
 		public var fogColor:Vector3;
 		/** 是否启用灯光。*/
 		public var enableLight:Boolean = true;
+		/** 八叉树的根节点。*/
+		public var octreeRoot:OctreeNode;
+		/** 八叉树的尺寸。*/
+		public var octreeSize:Vector3;
+		/** 八叉树的层数。*/
+		public var octreeLevel:int = 5;
 		
 		/**
 		 * 获取当前场景。
@@ -151,95 +159,44 @@ package laya.d3.core.scene {
 			
 			var renderConfig:RenderConfig;
 			renderConfig = _renderConfigs[RenderQueue.OPAQUE] = new RenderConfig();
-			
-			renderConfig = _renderConfigs[RenderQueue.OPAQUE_DOUBLEFACE] = new RenderConfig();
-			renderConfig.cullFace = false;
-			
-			renderConfig = _renderConfigs[RenderQueue.ALPHA_BLEND] = new RenderConfig();
-			renderConfig.blend = true;
-			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
-			renderConfig.dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
-			
-			renderConfig = _renderConfigs[RenderQueue.ALPHA_BLEND_DOUBLEFACE] = new RenderConfig();
-			renderConfig.cullFace = false;
-			renderConfig.blend = true;
-			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
-			renderConfig.dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
-			
-			renderConfig = _renderConfigs[RenderQueue.ALPHA_ADDTIVE_BLEND] = new RenderConfig();
-			renderConfig.blend = true;
-			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
-			renderConfig.dFactor = WebGLContext.ONE;
-			
-			renderConfig = _renderConfigs[RenderQueue.ALPHA_ADDTIVE_BLEND_DOUBLEFACE] = new RenderConfig();
-			renderConfig.cullFace = false;
-			renderConfig.blend = true;
-			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
-			renderConfig.dFactor = WebGLContext.ONE;
-			
-			renderConfig = _renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND] = new RenderConfig();
-			renderConfig.blend = true;
-			renderConfig.depthMask = 0;
-			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
-			renderConfig.dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
-			
-			renderConfig = _renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND] = new RenderConfig();
-			renderConfig.blend = true;
-			renderConfig.depthMask = 0;
-			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
-			renderConfig.dFactor = WebGLContext.ONE;
-			
-			renderConfig = _renderConfigs[RenderQueue.DEPTHREAD_ALPHA_BLEND_DOUBLEFACE] = new RenderConfig();
-			renderConfig.cullFace = false;
-			renderConfig.blend = true;
-			renderConfig.depthMask = 0;
-			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
-			renderConfig.dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
-			
-			renderConfig = _renderConfigs[RenderQueue.DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE] = new RenderConfig();
-			renderConfig.cullFace = false;
-			renderConfig.blend = true;
-			renderConfig.depthMask = 0;
-			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
-			renderConfig.dFactor = WebGLContext.ONE;
-			
-			renderConfig = _renderConfigs[RenderQueue.NONDEPTH_ALPHA_BLEND] = new RenderConfig();
-			renderConfig.blend = true;
-			renderConfig.depthTest = false;
-			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
-			renderConfig.dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
-			
-			renderConfig = _renderConfigs[RenderQueue.NONDEPTH_ALPHA_ADDTIVE_BLEND] = new RenderConfig();
-			renderConfig.blend = true;
-			renderConfig.depthTest = false;
-			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
-			renderConfig.dFactor = WebGLContext.ONE;
-			
-			renderConfig = _renderConfigs[RenderQueue.NONDEPTH_ALPHA_BLEND_DOUBLEFACE] = new RenderConfig();
-			renderConfig.cullFace = false;
-			renderConfig.blend = true;
-			renderConfig.depthTest = false;
-			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
-			renderConfig.dFactor = WebGLContext.ONE_MINUS_SRC_ALPHA;
-			
-			renderConfig = _renderConfigs[RenderQueue.NONDEPTH_ALPHA_ADDTIVE_BLEND_DOUBLEFACE] = new RenderConfig();
-			renderConfig.cullFace = false;
-			renderConfig.blend = true;
-			renderConfig.depthTest = false;
-			renderConfig.sFactor = WebGLContext.SRC_ALPHA;
-			renderConfig.dFactor = WebGLContext.ONE;
+			renderConfig = _renderConfigs[RenderQueue.TRANSPARENT] = new RenderConfig();
 			
 			on(Event.DISPLAY, this, _onDisplay);
 			on(Event.UNDISPLAY, this, _onUnDisplay);
 		}
 		
-		override public function createConchModel():* //NATIVE
-		{
+		public function initOctree(width:int, height:int, depth:int, level:int):void {
+			octreeSize = new Vector3(width, height, depth);
+			octreeLevel = level;
+			octreeRoot = new OctreeNode(this, 0);
+			var min:Vector3 = new Vector3();
+			var max:Vector3 = new Vector3();
+			Vector3.scale(octreeSize, -0.5, min);
+			Vector3.scale(octreeSize, 0.5, max);
+			octreeRoot._boundingBox = new BoundBox(min, max);
+		}
+		
+		public function addOctreeNode(renderObj:RenderObject):void {
+			if (!octreeSize) return;
+			if (Collision.boxContainsBox(octreeRoot._boundingBox, renderObj._render.boundingBox) === ContainmentType.Contains) {
+				octreeRoot.addNodeDown(renderObj, 0);
+			} else {
+				octreeRoot.addObject(renderObj);
+			}
+		}
+		
+		public function removeOctreeNode(renderObj:RenderObject):void {
+			if (!octreeSize) return;
+			if (renderObj._treeNode) {
+				renderObj._treeNode.removeObject(renderObj);
+			}
+		}
+		
+		override public function createConchModel():* { //NATIVE
 			var pScene:* = __JS__("new ConchScene()");
-			//TODO wyw
+			//TODO:wyw
 			pScene.init(512, 512, 512, 4);
 			return pScene;
-			;
 		}
 		
 		/**
@@ -338,10 +295,36 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		protected function _preRenderScene(gl:WebGLContext, state:RenderState):void {
-			_boundFrustum.matrix = state.projectionViewMatrix;
-			
-			FrustumCulling.RenderObjectCulling(_boundFrustum, this,state.camera,state.viewMatrix,state.projectionMatrix,state.projectionViewMatrix);
-			for (var i:int = 0, iNum:int = _quenes.length; i < iNum; i++)
+			var view:Matrix4x4 = state.viewMatrix;
+			var projection:Matrix4x4 = state.projectionMatrix;
+			var projectionView:Matrix4x4 = state.projectionViewMatrix;
+			var i:int, iNum:int;
+			var camera:BaseCamera = state.camera;
+			if (camera.useOcclusionCulling) {
+				_boundFrustum.matrix = state.projectionViewMatrix;
+				if (octreeRoot) {
+					var j:int, jNum:int;
+					var queues:Vector.<RenderQueue> = scene._quenes;
+					var staticBatchMananger:StaticBatchManager = scene._staticBatchManager;
+					var dynamicBatchManager:DynamicBatchManager = scene._dynamicBatchManager;
+					for (i = 0, iNum = queues.length; i < iNum; i++)
+						(queues[i]) && (queues[i]._clearRenderElements());
+					staticBatchMananger._clearRenderElements();
+					dynamicBatchManager._clearRenderElements();
+					
+					_frustumCullingObjects.length = 0;
+					octreeRoot.cullingObjects(_boundFrustum, true, 0, this, camera, view, projection, projectionView);
+					
+					staticBatchMananger._addToRenderQueue(scene, view, projection, projectionView);
+					dynamicBatchManager._finishCombineDynamicBatch(scene);
+					dynamicBatchManager._addToRenderQueue(scene, view, projection, projectionView);
+				} else {
+					FrustumCulling.renderObjectCulling(_boundFrustum, this, camera, view, projection, projectionView);
+				}
+			} else {
+				FrustumCulling.renderObjectCullingNoBoundFrustum(this, camera, view, projection, projectionView);
+			}
+			for (i = 0, iNum = _quenes.length; i < iNum; i++)
 				(_quenes[i]) && (_quenes[i]._preRender(state));
 		}
 		
@@ -421,11 +404,11 @@ package laya.d3.core.scene {
 			
 			var i:int, n:int;
 			var queue:RenderQueue;
-			for (i = 0; i < 3; i++) {//非透明队列
+			for (i = 0; i < 2; i++) {//非透明队列
 				queue = _quenes[i];
 				if (queue) {
-					queue._setState(gl, state);
-					queue._render(state);
+					//queue._sortOpaque(state.camera.transform.position);
+					camera.renderTarget ? queue._render(state, true) : queue._render(state, false);
 				}
 			}
 			
@@ -434,19 +417,18 @@ package laya.d3.core.scene {
 				if (sky) {
 					WebGLContext.setCullFace(gl, false);
 					WebGLContext.setDepthFunc(gl, WebGLContext.LEQUAL);
-					WebGLContext.setDepthMask(gl, 0);
+					WebGLContext.setDepthMask(gl, false);
 					sky._render(state);
 					WebGLContext.setDepthFunc(gl, WebGLContext.LESS);
-					WebGLContext.setDepthMask(gl, 1);
+					WebGLContext.setDepthMask(gl, true);
 				}
 			}
 			
-			for (i = 3, n = _quenes.length; i < n; i++) {//透明队列
+			for (i = 2, n = _quenes.length; i < n; i++) {//透明队列
 				queue = _quenes[i];
 				if (queue) {
-					queue._sortAlpha(state.camera.transform.position);//TODO:加色法
-					queue._setState(gl, state);
-					queue._render(state);
+					queue._sortAlpha(state.camera.transform.position);
+					camera.renderTarget ? queue._render(state, true) : queue._render(state, false);
 				}
 			}
 		}
@@ -465,7 +447,7 @@ package laya.d3.core.scene {
 			gl.enable(WebGLContext.CULL_FACE);
 			WebGLContext._cullFace = true;
 			gl.depthMask(1);
-			WebGLContext._depthMask = 1;
+			WebGLContext._depthMask = true;
 			gl.frontFace(WebGLContext.CW);
 			WebGLContext._frontFace = WebGLContext.CW;
 		}
@@ -478,8 +460,8 @@ package laya.d3.core.scene {
 			WebGLContext.setBlendFunc(gl, WebGLContext.SRC_ALPHA, WebGLContext.ONE_MINUS_SRC_ALPHA);
 			WebGLContext.setDepthTest(gl, false);
 			WebGLContext.setCullFace(gl, false);
-			WebGLContext.setDepthMask(gl, 1);
-			WebGLContext.setFrontFaceCCW(gl, WebGLContext.CCW);
+			WebGLContext.setDepthMask(gl, true);
+			WebGLContext.setFrontFace(gl, WebGLContext.CCW);
 			gl.viewport(0, 0, RenderState2D.width, RenderState2D.height);//还原2D视口
 		}
 		
@@ -501,24 +483,31 @@ package laya.d3.core.scene {
 		override public function addChildAt(node:Node, index:int):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
-			
 			return super.addChildAt(node, index);
 		}
 		
 		override public function addChild(node:Node):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
-			
 			return super.addChild(node);
 		}
 		
-		public function addFrustumCullingObject(frustumCullingObject:RenderObject):void {
-			_frustumCullingObjects.push(frustumCullingObject);
+		public function addFrustumCullingObject(renderObject:RenderObject):void {
+			if (octreeRoot)
+				addOctreeNode(renderObject);
+			else
+				_frustumCullingObjects.push(renderObject);
+		
 		}
 		
-		public function removeFrustumCullingObject(frustumCullingObject:RenderObject):void {
-			var index:int = _frustumCullingObjects.indexOf(frustumCullingObject);
-			(index !== -1) && (_frustumCullingObjects.splice(index, 1));
+		public function removeFrustumCullingObject(renderObject:RenderObject):void {
+			if (octreeRoot) {
+				removeOctreeNode(renderObject);
+			} else {
+				var index:int = _frustumCullingObjects.indexOf(renderObject);
+				(index !== -1) && (_frustumCullingObjects.splice(index, 1));
+			}
+		
 		}
 		
 		/**

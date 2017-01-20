@@ -4,6 +4,7 @@ package
 	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.particle.Particle2D;
+	import laya.particle.ParticleSetting;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
@@ -30,7 +31,7 @@ package
 			Laya.loader.load("res/particles/RadiusMode.part", Handler.create(this, onAssetsLoaded), null, Loader.JSON);
 		}
 
-		public function onAssetsLoaded(settings:ParticleSettings):void
+		public function onAssetsLoaded(settings:ParticleSetting):void
 		{
 			sp = new Particle2D(settings);
 			sp.emitter.start(); 	

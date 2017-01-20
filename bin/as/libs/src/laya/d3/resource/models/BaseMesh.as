@@ -17,7 +17,8 @@ package laya.d3.resource.models {
 		protected var _boundingBox:BoundBox;
 		/** @private */
 		protected var _boundingSphere:BoundSphere;
-
+		/** @private */
+		protected var _boundingBoxCorners:Vector.<Vector3>;
 		
 		/**
 		 * 获取SubMesh的个数。
@@ -28,7 +29,7 @@ package laya.d3.resource.models {
 		}
 		
 		/**
-		 * 获取AABB包围盒。
+		 * 获取AABB包围盒,禁止修改其数据。
 		 * @return AABB包围盒。
 		 */
 		public function get boundingBox():BoundBox {
@@ -36,11 +37,19 @@ package laya.d3.resource.models {
 		}
 		
 		/**
-		 * 获取包围球。
+		 * 获取包围球,禁止修改其数据。
 		 * @return 包围球。
 		 */
 		public function get boundingSphere():BoundSphere {
 			return _boundingSphere;
+		}
+		
+		/**
+		 * 获取包围球顶点,禁止修改其数据。
+		 * @return 包围球。
+		 */
+		public function get boundingBoxCorners():Vector.<Vector3> {
+			return _boundingBoxCorners;
 		}
 		
 		/**
@@ -56,6 +65,19 @@ package laya.d3.resource.models {
 		 */
 		public function BaseMesh() {
 			_loaded = false;
+			_boundingBoxCorners = new Vector.<Vector3>(8);
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _generateBoundingObject():void {
+			var pos:Vector.<Vector3> = positions;
+			_boundingSphere = new BoundSphere(new Vector3(), 0);
+			BoundSphere.createfromPoints(pos, _boundingSphere);
+			_boundingBox = new BoundBox(new Vector3(), new Vector3());
+			BoundBox.createfromPoints(pos, _boundingBox);
+			_boundingBox.getCorners(_boundingBoxCorners);
 		}
 		
 		/**
@@ -74,15 +96,15 @@ package laya.d3.resource.models {
 		public function getRenderElement(index:int):IRenderable {
 			throw new Error("未Override,请重载该属性！");
 		}
-		
+	
 		///** @private 待开放。*/
 		//public function Render():void {
-			//throw new Error("未Override,请重载该方法！");
+		//throw new Error("未Override,请重载该方法！");
 		//}
 		//
 		///** @private 待开放。*/
 		//public function RenderSubMesh(subMeshIndex:int):void {
-			//throw new Error("未Override,请重载该方法！");
+		//throw new Error("未Override,请重载该方法！");
 		//}
 	}
 }

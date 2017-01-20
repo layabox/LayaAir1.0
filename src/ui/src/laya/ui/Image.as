@@ -15,6 +15,8 @@ package laya.ui {
 	
 	/**
 	 * <code>Image</code> 类是用于表示位图图像或绘制图形的显示对象。
+	 * Image和Clip组件是唯一支持异步加载的两个组件，比如img.skin = "abc/xxx.png"，其他UI组件均不支持异步加载。
+	 * 
 	 * @example 以下示例代码，创建了一个新的 <code>Image</code> 实例，设置了它的皮肤、位置信息，并添加到舞台上。
 	 * <listing version="3.0">
 	 *	package

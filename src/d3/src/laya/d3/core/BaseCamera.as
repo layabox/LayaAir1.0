@@ -3,6 +3,7 @@ package laya.d3.core {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
@@ -23,9 +24,10 @@ package laya.d3.core {
 		public static const PROJECTMATRIX:int = 2;
 		public static const VPMATRIX:int = 3;//TODO:xx
 		public static const VPMATRIX_NO_TRANSLATE:int = 4;//TODO:xx
+		public static const CAMERADIRECTION:int = 5;
+		public static const CAMERAUP:int = 6;
 		
 
-		
 		/**渲染模式,延迟光照渲染，暂未开放。*/
 		public static const RENDERINGTYPE_DEFERREDLIGHTING:String = "DEFERREDLIGHTING";
 		/**渲染模式,前向渲染。*/
@@ -90,6 +92,8 @@ package laya.d3.core {
 		public var clearColor:Vector4;
 		/** 可视遮罩图层。 */
 		public var cullingMask:int;
+		/** 渲染时是否用遮挡剔除。 */
+		public var  useOcclusionCulling:Boolean;
 		
 		/**获取天空。*/
 		public function get sky():Sky {
@@ -151,6 +155,13 @@ package laya.d3.core {
 			righte[1] = worldMatrixe[1];
 			righte[2] = worldMatrixe[2];
 			return _right;
+		}
+		
+		public function lookAt(target:Vector3):void{
+			
+			var quaternion:Quaternion = new Quaternion();
+			Quaternion.lookAt(position, target, up, quaternion);
+			transform.rotation = quaternion;
 		}
 		
 		/**
@@ -343,6 +354,7 @@ package laya.d3.core {
 			cullingMask = 2147483647/*int.MAX_VALUE*/;
 			clearColor = new Vector4(0.26, 0.26, 0.26, 1.0);
 			clearFlag = BaseCamera.CLEARFLAG_SOLIDCOLOR;
+			useOcclusionCulling = true;
 			_calculateProjectionMatrix();
 			Laya.stage.on(Event.RESIZE, this, _onScreenSizeChanged);
 		}
@@ -385,7 +397,9 @@ package laya.d3.core {
 		public function _prepareCameraToRender():void {
 			Layer._currentCameraCullingMask = cullingMask;
 			var cameraSV:ValusArray = _shaderValues;
-			cameraSV.setValue(BaseCamera.CAMERAPOS, transform.position.elements);
+			cameraSV.setValue(BaseCamera.CAMERAPOS,transform.position.elements);
+			cameraSV.setValue(BaseCamera.CAMERADIRECTION, forward.elements);
+			cameraSV.setValue(BaseCamera.CAMERAUP, up.elements);
 		}
 		
 		/**

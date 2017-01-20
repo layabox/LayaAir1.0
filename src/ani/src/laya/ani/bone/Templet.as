@@ -709,6 +709,7 @@ package laya.ani.bone {
 			if (url) {
 				delete TEMPLET_DICTIONARY[url];
 			}
+			dispose();
 		}
 		
 		/***********************************下面为一些儿访问接口*****************************************/

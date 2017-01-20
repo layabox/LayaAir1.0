@@ -50,7 +50,7 @@ package laya.events {
 						n--;
 					}
 				}
-				if (listeners.length === 0) delete this._events[type];
+				if (listeners.length === 0 && _events) delete this._events[type];
 			}
 			
 			return true;

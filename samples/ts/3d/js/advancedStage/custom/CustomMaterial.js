@@ -8,8 +8,7 @@ var CustomMaterial = (function (_super) {
     function CustomMaterial() {
         _super.call(this);
         this.setShaderName("CustomShader");
-        this._DIFFUSETEXTURE_ID;
-        Number = 0;
+        this._DIFFUSETEXTURE_ID = 0;
     }
     CustomMaterial.prototype.getDiffuseTexture = function () {
         return this._getTexture(CustomMaterial._DIFFUSETEXTURE_ID);

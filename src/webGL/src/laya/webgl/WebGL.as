@@ -59,6 +59,22 @@ package laya.webgl {
 		private static var _bg_null:Array =/*[STATIC SAFE]*/ [0, 0, 0, 0];
 		private static var _isExperimentalWebgl:Boolean = false;
 		
+		private static function _arrayBufferSlice():ArrayBuffer {
+			var _this:* = __JS__("this");
+			var sz:int = _this.length;
+			var dec:ArrayBuffer = new ArrayBuffer(_this.length);
+			for (var i:int = 0; i < sz; i++) dec[i] = _this[i];
+			return dec;
+		}
+		
+		private static function _uint8ArraySlice():Uint8Array {
+			var _this:* = __JS__("this");
+			var sz:int = _this.length;
+			var dec:Uint8Array = new Uint8Array(_this.length);
+			for (var i:int = 0; i < sz; i++) dec[i] = _this[i];
+			return dec;
+		}
+		
 		private static function _float32ArraySlice():Float32Array {
 			var _this:* = __JS__("this");
 			var sz:int = _this.length;
@@ -151,14 +167,6 @@ package laya.webgl {
 				return new WebGLImage(src,def);
 			}
 			
-			/*
-			   __JS__("HTMLImage=WebGLImage");
-			   __JS__("HTMLCanvas=WebGLCanvas");
-			   __JS__("HTMLSubImage=WebGLSubImage");
-			   System.changeDefinition("HTMLImage", WebGLImage);
-			   System.changeDefinition("HTMLCanvas", WebGLCanvas);
-			   System.changeDefinition("HTMLSubImage", WebGLSubImage);
-			 */
 			
 			Render.WebGL = WebGL;
 			Render.isWebGL = true;
@@ -472,8 +480,11 @@ package laya.webgl {
 					mat.destroy();
 				}
 			}
+			
 			Float32Array.prototype.slice || (Float32Array.prototype.slice = _float32ArraySlice);
 			Uint16Array.prototype.slice || (Uint16Array.prototype.slice = _uint16ArraySlice);
+			Uint8Array.prototype.slice || (Uint8Array.prototype.slice = _uint8ArraySlice);
+			ArrayBuffer.prototype.slice || (ArrayBuffer.prototype.slice = _arrayBufferSlice);
 			return true;
 		}
 		
@@ -561,6 +572,18 @@ package laya.webgl {
 			}
 			
 			Browser.window.SetupWebglContext && Browser.window.SetupWebglContext(gl);
+			
+		   /*[IF-SCRIPT-BEGIN]
+			gl.deleteTexture1 = gl.deleteTexture;
+			gl.deleteTexture = function(t){
+				if (t == WebGLContext.curBindTexValue)
+				{
+					WebGLContext.curBindTexValue = null;
+				}
+				gl.deleteTexture1(t);
+			}
+		   [IF-SCRIPT-END]*/
+			
 			
 			onStageResize(width, height);
 			

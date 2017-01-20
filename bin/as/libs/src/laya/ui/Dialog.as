@@ -297,6 +297,7 @@ class DialogManager extends Sprite {
 	 */
 	public function DialogManager() {
 		this.mouseEnabled = dialogLayer.mouseEnabled = modalLayer.mouseEnabled = maskLayer.mouseEnabled = true;
+		this.zOrder = 1000;
 		addChild(dialogLayer);
 		addChild(modalLayer);
 		

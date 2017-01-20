@@ -21,7 +21,7 @@ var terrainSprite = scene.addChild(Laya.MeshTerrainSprite3D.createFromMesh(terra
 terrainSprite.transform.localScale = new Laya.Vector3(10, 10, 10);
 terrainSprite.transform.position = new Laya.Vector3(0, 2.6, 1.5);
 terrainSprite.transform.rotationEuler = new Laya.Vector3(0, 0.3, 0.4);
-setMeshParams(terrainSprite, Laya.BaseMaterial.RENDERMODE_OPAQUE, new Vector4(3.5,3.5,3.5,1.0), new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
+setMeshParams(terrainSprite, Laya.StandardMaterial.RENDERMODE_OPAQUE, new Vector4(3.5,3.5,3.5,1.0), new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
 
 var pathFingding = terrainSprite.addComponent(Laya.PathFind);
 pathFingding.setting = {allowDiagonal: true, dontCrossCorners: false, heuristic: PathFinding.core.Heuristic.manhattan, weight: 1};

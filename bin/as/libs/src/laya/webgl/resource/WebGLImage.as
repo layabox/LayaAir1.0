@@ -8,12 +8,9 @@ package laya.webgl.resource {
 	import laya.webgl.atlas.AtlasResourceManager;
 	
 	public class WebGLImage extends HTMLImage implements IMergeAtlasBitmap {
+		
 		/**HTML Image*/
 		private var _image:*;
-		
-		/**图片数据。*/
-		private var _imageDatas:Uint8Array;//TODO:临时
-		
 		/***是否创建私有Source,值为false时不根据src创建私有WebGLTexture,同时销毁时也只清空source=null,不调用WebGL.mainContext.deleteTexture类似函数，调用资源激活前有效*/
 		private var _allowMerageInAtlas:Boolean;
 		/**是否允许加入大图合集*/
@@ -27,6 +24,7 @@ package laya.webgl.resource {
 		public var minFifter:int;//动态默认值，判断是否可生成miplevel
 		/**放大过滤器*/
 		public var magFifter:int;//动态默认值，判断是否可生成miplevel
+		
 		
 		/**
 		 * 返回HTML Image,as3无internal货friend，通常禁止开发者修改image内的任何属性
@@ -87,29 +85,41 @@ package laya.webgl.resource {
 			}) : null);
 		}
 		
-		public function WebGLImage(src:String, def:*) {
-			super(src, def);
+		public function WebGLImage(src:String,def:*) {
+			super(src,def);
 			repeat = false;
 			mipmap = false;
 			minFifter = -1;
 			magFifter = -1;
-			_src = src;
-			_image = new Browser.window.Image();
-			if (def) {
-				def.onload && (this.onload = def.onload);
-				def.onerror && (this.onerror = def.onerror);
-				def.onCreate && def.onCreate(this);
+			
+			if (src is String)
+			{
+				_src = src;
+				_image = new Browser.window.Image();
+				if (def)
+				{
+					def.onload && (this.onload = def.onload);
+					def.onerror && (this.onerror = def.onerror);
+					def.onCreate && def.onCreate(this);
+				}
+				_image.crossOrigin = (src && (src.indexOf("data:") == 0)) ? null : "";
+				(src) && (_image.src = src);
+				
+			}else
+			{
+				_src = def;
+				_image = src["source"];
+				onresize();
 			}
-			_image.crossOrigin = (src && (src.indexOf("data:") == 0)) ? null : "";
 			(src) && (_image.src = src);
 			_enableMerageInAtlas = true;
 		}
 		
-		override protected function _init_(src:String, def:*):void {
+		override protected function _init_(src:String,def:*):void {
 		}
 		
 		private function _createWebGlTexture():void {
-			if (!_image && !_imageDatas) {//TODO:临时
+			if (!_image) {
 				throw "create GLTextur err:no data:" + _image;
 			}
 			
@@ -119,12 +129,7 @@ package laya.webgl.resource {
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTex);
-
-			if (_imageDatas)//TODO:临时
-				gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _w, _h, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _imageDatas);
-			else
-				gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _image);
-			
+			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _image);
 			
 			var minFifter:int = this.minFifter;
 			var magFifter:int = this.magFifter;
@@ -153,9 +158,8 @@ package laya.webgl.resource {
 				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
 			}
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
-			(_image) && (_image.onload = null);//TODO:临时
+			_image.onload = null;
 			_image = null;
-			_imageDatas = null;//TODO:临时
 			
 			if (isPot)
 				memorySize = _w * _h * 4 * (1 + 1 / 3);//使用mipmap则在原来的基础上增加1/3
@@ -169,7 +173,7 @@ package laya.webgl.resource {
 			if (_src == null || _src === "")
 				return;
 			_needReleaseAgain = false;
-			if (!_image && !_imageDatas) {//TODO:临时
+			if (!_image) {
 				_recreateLock = true;
 				startCreate();
 				var _this:WebGLImage = this;
@@ -216,14 +220,6 @@ package laya.webgl.resource {
 			this._w = this._image.width;
 			this._h = this._image.height;
 			(AtlasResourceManager.enabled) && (_w < AtlasResourceManager.atlasLimitWidth && _h < AtlasResourceManager.atlasLimitHeight) ? _allowMerageInAtlas = true : _allowMerageInAtlas = false;
-			
-			if (!_allowMerageInAtlas) {//TODO:临时
-				Browser.canvas.size(_w, _h);
-				Browser.canvas.clear();
-				Browser.context.drawImage(_image, 0, 0, _w, _h);
-				_imageDatas = new Uint8Array(Browser.context.getImageData(0, 0, _w, _h).data.buffer);
-				_image = null;
-			}
 		}
 		
 		public function clearAtlasSource():void {

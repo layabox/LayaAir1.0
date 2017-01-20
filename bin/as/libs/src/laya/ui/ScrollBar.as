@@ -536,5 +536,16 @@ package laya.ui {
 			Laya.timer.clear(this, tweenMove);
 			Tween.clearTween(this);
 		}
+		
+		/**
+		 * 滚动的刻度值，滑动数值为tick的整数倍。默认值为1。
+		 */
+		public function get tick():Number {
+			return slider.tick;
+		}
+		
+		public function set tick(value:Number):void {
+			slider.tick = value;
+		}
 	}
 }

@@ -292,7 +292,7 @@ package laya.ani {
 				
 				for (var j:int = 0, jNum:int = templet.getAnimation(i).nodes.length; j < jNum; j++) {
 					var node:* = templet.getAnimation(i).nodes[j];
-					var frameCount:int = Math.floor((node.playTime+0.000001) / cacheFrameInterval);
+					var frameCount:int = Math.floor(node.playTime/ cacheFrameInterval+0.01 );
 					var nodeFullFrames:Uint16Array = new Uint16Array(frameCount + 1);//本骨骼对应的全帧关键帧编号
 					
 					var lastFrameIndex:int = -1;
@@ -421,10 +421,9 @@ package laya.ani {
 			
 			var currentAniClipPlayDuration:Number = playDuration;
 			if ((_overallDuration !== 0 && _elapsedPlaybackTime >= _overallDuration) || (_overallDuration === 0 && _elapsedPlaybackTime >= currentAniClipPlayDuration)) {
-				
 				//矫正末帧数据
 				_currentTime = currentAniClipPlayDuration;
-				_currentKeyframeIndex = Math.floor((currentAniClipPlayDuration+0.000001) / cacheFrameInterval);
+				_currentKeyframeIndex = Math.floor(currentAniClipPlayDuration / cacheFrameInterval+0.01);
 				_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
 				
 				_currentAnimationClipIndex /*= _currentKeyframeIndex*/ = -1;//动画结束	

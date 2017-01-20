@@ -23,8 +23,7 @@ package laya.ui {
 		
 		/** @inheritDoc	*/
 		override protected function sortItem(items:Array):void {
-			if (items) items.sort(function(a:*, b:*):Number { return a.x > b.x ? 1 : -1
-			});
+			if (items) items.sort(function(a:*, b:*):Number { return a.x - b.x;});
 		}
 		
 		/** @inheritDoc	*/
@@ -39,7 +38,6 @@ package laya.ui {
 					maxHeight = Math.max(maxHeight, item.height * item.scaleY);
 				}
 			}
-			
 			sortItem(items);
 			var left:Number = 0;
 			for (i = 0, n = numChildren; i < n; i++) {

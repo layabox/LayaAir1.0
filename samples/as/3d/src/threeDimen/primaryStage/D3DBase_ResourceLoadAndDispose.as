@@ -27,7 +27,7 @@ package threeDimen.primaryStage {
 			processHandler = Handler.create(this, onProcessChange, null, false);//创建进度处理Handler，注意：后面要对应释放
 			var completeHandler:Handler = Handler.create(this, onComplete);//创建完成事件处理Handler
 			
-			Laya.loader.maxLoader = 1;
+			Laya.loader.maxLoader = 4;
 			//一:资源释放。
 			//1.批量加载复杂模式。
 			Laya.loader.create([

@@ -84,12 +84,7 @@ package laya.d3.resource.models {
 			_slices = slices;
 			recreateResource();
 			_loaded = true;
-			
-			var pos:Vector.<Vector3> = positions;
-			_boundingBox = new BoundBox(new Vector3(), new Vector3());
-			BoundBox.createfromPoints(pos, _boundingBox);
-			_boundingSphere = new BoundSphere(new Vector3(), 0);
-			BoundSphere.createfromPoints(pos, _boundingSphere);
+			_generateBoundingObject();
 		}
 		
 		override protected function recreateResource():void {

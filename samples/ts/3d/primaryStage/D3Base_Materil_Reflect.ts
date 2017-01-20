@@ -32,7 +32,7 @@ module Materil_Reflect {
             mesh.once(Laya.Event.LOADED, this, () => {
                 this.material = meshSprite.meshRender.sharedMaterials[0] as Laya.StandardMaterial;;
                 this.material.albedo = new Vector4(0.0,0.0,0.0,0.0);
-                this.material.renderMode = Laya.BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
+                this.material.renderMode = Laya.StandardMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
                 this.material.reflectTexture = textureCube;
             });
             meshSprite.transform.localPosition = new Vector3(-0.3, 0.0, 0.0);

@@ -150,7 +150,7 @@ package laya.d3.resource.models {
 			if (_conchSky) {//NATIVE
 				_conchSky.setVBIB(_vertexDeclaration._conchVertexDeclaration, vertices, indices);
 				_sharderNameID = Shader3D.nameKey.get("SkyDome");
-				var shaderCompile:ShaderCompile3D = Shader3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
+				var shaderCompile:ShaderCompile3D = ShaderCompile3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
 				_conchSky.setShader(shaderCompile._conchShader);
 			}
 		}
@@ -160,7 +160,7 @@ package laya.d3.resource.models {
 		 */
 		protected function loadShaderParams():void {
 			_sharderNameID = Shader3D.nameKey.get("SkyDome");
-			_shaderCompile = Shader3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
+			_shaderCompile = ShaderCompile3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
 		}
 		
 		override public function _render(state:RenderState):void {

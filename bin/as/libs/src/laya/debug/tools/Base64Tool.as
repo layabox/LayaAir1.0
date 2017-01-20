@@ -60,6 +60,7 @@ package laya.debug.tools
 		}
 		/**
 		 * 编码字符串 
+		 * 编码时会在最前面加上字符串长度
 		 * @param str
 		 * @return 
 		 * 
@@ -69,6 +70,20 @@ package laya.debug.tools
 			var byte:Byte;
 			byte = new Byte();
 			byte.writeUTFString(str);
+			return encodeByte(byte);
+		}
+		
+		/**
+		 * 编码字符串 
+		 * @param str
+		 * @return 
+		 * 
+		 */
+		public static function encodeStr2(str:String):String
+		{
+			var byte:Byte;
+			byte = new Byte();
+			byte.writeUTFBytes(str);
 			return encodeByte(byte);
 		}
 		/**

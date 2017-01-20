@@ -80,7 +80,7 @@ package laya.d3.resource.models {
 		protected function _getShader(state:RenderState):Shader3D {
 			var shaderDefs:ShaderDefines3D = state.shaderDefines;
 			var preDef:int = shaderDefs._value;
-			var nameID:Number = shaderDefs._value + _sharderNameID * Shader3D.SHADERNAME2ID;
+			var nameID:Number = shaderDefs._value + _sharderNameID * ShaderCompile3D.SHADERNAME2ID;
 			_shader = Shader3D.withCompile(_sharderNameID, state.shaderDefines, nameID);
 			shaderDefs._value = preDef;
 			return _shader;
@@ -178,7 +178,7 @@ package laya.d3.resource.models {
 			if (_conchSky) {//NATIVE
 				_conchSky.setVBIB(_vertexDeclaration._conchVertexDeclaration, vertices, indices);
 				_sharderNameID = Shader3D.nameKey.get("SkyBox");
-				var shaderCompile:ShaderCompile3D = Shader3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
+				var shaderCompile:ShaderCompile3D = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * _sharderNameID];
 				_conchSky.setShader(shaderCompile._conchShader);
 			}
 		}
@@ -199,7 +199,7 @@ package laya.d3.resource.models {
 		 */
 		protected function loadShaderParams():void {
 			_sharderNameID = Shader3D.nameKey.get("SkyBox");
-			_shaderCompile = Shader3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
+			_shaderCompile = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * _sharderNameID];
 		}
 		
 		override public function _render(state:RenderState):void {

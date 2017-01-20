@@ -251,7 +251,22 @@ package laya.renders {
 			/*[IF-FLASH]*/if (style.hasOwnProperty("_calculation")) {
 			//[IF-JS]if (style._calculation) {
 				var words:Vector.<HTMLChar> = sprite._getWords();
-				words && context.fillWords(words, x, y, (style as CSSStyle).font, (style as CSSStyle).color);
+				if (words)
+				{
+					
+					var tStyle:CSSStyle = style as CSSStyle;
+					if (tStyle)
+					{
+						if (tStyle.stroke)
+						{
+							context.fillBorderWords(words, x, y, tStyle.font, tStyle.color,tStyle.strokeColor,tStyle.stroke);
+						}else
+						{
+							context.fillWords(words, x, y, tStyle.font, tStyle.color);
+						}
+					}
+					
+				}
 			}
 			
 			var childs:Array = sprite._childs, n:int = childs.length, ele:*;
@@ -349,6 +364,7 @@ package laya.renders {
 					trace("cache bitmap size larger than 2048,cache ignored");
 					if (_cacheCanvas.ctx) {
 						Pool.recover("RenderContext", _cacheCanvas.ctx);
+						_cacheCanvas.ctx.canvas.size(0, 0);
 						_cacheCanvas.ctx = null;
 					}
 					_next._fun.call(_next, sprite, context, x, y);
@@ -360,10 +376,9 @@ package laya.renders {
 				}
 				
 				canvas = tx.canvas;
-				if (_cacheCanvas.type === 'bitmap') canvas.context.asBitmap = true;
-				
 				canvas.clear();
 				(canvas.width != w || canvas.height != h) && canvas.size(w, h);
+				if (_cacheCanvas.type === 'bitmap') canvas.context.asBitmap = true;
 				
 				var t:*;
 				//TODO:测试webgl下是否有缓存模糊问题

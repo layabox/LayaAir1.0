@@ -11,6 +11,7 @@ package laya.d3.core.render {
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.Shader3D;
 	import laya.utils.Stat;
+	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.BaseShader;
 	
@@ -23,35 +24,8 @@ package laya.d3.core.render {
 		private static var _uniqueIDCounter:int = 0;
 		/** 定义非透明渲染队列标记。*/
 		public static const OPAQUE:int = 1;//TODO:从零开始
-		/** 定义非透明、双面渲染队列标记。*/
-		public static const OPAQUE_DOUBLEFACE:int = 2;
-		
 		/** 透明混合渲染队列标记。*/
-		public static const ALPHA_BLEND:int = 3;
-		/** 透明混合、双面渲染队列标记。*/
-		public static const ALPHA_BLEND_DOUBLEFACE:int = 4;
-		/** 透明加色混合。*/
-		public static const ALPHA_ADDTIVE_BLEND:int = 5;
-		/** 透明加色混合、双面渲染队列标记。*/
-		public static const ALPHA_ADDTIVE_BLEND_DOUBLEFACE:int = 6;
-		
-		/** 定义深度只读、透明混合渲染队列标记。*/
-		public static const DEPTHREAD_ALPHA_BLEND:int = 7;
-		/** 定义深度只读、透明混合、双面渲染队列标记。*/
-		public static const DEPTHREAD_ALPHA_BLEND_DOUBLEFACE:int = 8;
-		/** 定义深度只读、透明加色混合。*/
-		public static const DEPTHREAD_ALPHA_ADDTIVE_BLEND:int = 9;
-		/** 定义深度只读、透明加色混合、双面渲染队列标记。*/
-		public static const DEPTHREAD_ALPHA_ADDTIVE_BLEND_DOUBLEFACE:int = 10;
-		
-		/** 定义无深度测试、透明混合渲染队列标记。*/
-		public static const NONDEPTH_ALPHA_BLEND:int = 11;
-		/** 定义无深度测试、透明混合、双面渲染队列标记。*/
-		public static const NONDEPTH_ALPHA_BLEND_DOUBLEFACE:int = 12;
-		/** 定义无深度测试、透明加色混合。*/
-		public static const NONDEPTH_ALPHA_ADDTIVE_BLEND:int = 13;
-		/** 定义无深度测试、透明加色混合、双面渲染队列标记。*/
-		public static const NONDEPTH_ALPHA_ADDTIVE_BLEND_DOUBLEFACE:int = 14;
+		public static const TRANSPARENT:int = 2;
 		
 		/** @private */
 		private static var _cameraPosition:Vector3;
@@ -98,6 +72,13 @@ package laya.d3.core.render {
 			_staticBatchCombineRenderElements = [];
 			_dynamicBatchCombineRenderElements = [];
 			_staticBatches = [];
+		}
+		
+		private function _sortOpaqueFunc(a:RenderElement, b:RenderElement):Number {
+			if (a._renderObject && b._renderObject)//TODO:临时
+			    return  a._renderObject._distanceForSort-b._renderObject._distanceForSort;
+			else
+				return 0;
 		}
 		
 		private function _sortAlphaFunc(a:RenderElement, b:RenderElement):Number {
@@ -170,21 +151,10 @@ package laya.d3.core.render {
 		
 		/**
 		 * @private
-		 * 应用渲染状态到显卡。
-		 * @param gl WebGL上下文。
 		 */
-		public function _setState(gl:WebGLContext, state:RenderState):void {
-			WebGLContext.setDepthTest(gl, _renderConfig.depthTest);
-			WebGLContext.setDepthMask(gl, _renderConfig.depthMask);
-			
-			WebGLContext.setBlend(gl, _renderConfig.blend);
-			WebGLContext.setBlendFunc(gl, _renderConfig.sFactor, _renderConfig.dFactor);
-			WebGLContext.setCullFace(gl, _renderConfig.cullFace);
-			
-			if (state.camera.renderTarget)
-				WebGLContext.setFrontFaceCCW(gl, _renderConfig.frontFace === WebGLContext.CW ? WebGLContext.CCW : WebGLContext.CW);
-			else
-				WebGLContext.setFrontFaceCCW(gl, _renderConfig.frontFace);
+		public function _sortOpaque(cameraPos:Vector3):void {
+			_cameraPosition = cameraPos;
+			_finalElements.sort(_sortOpaqueFunc);
 		}
 		
 		/**
@@ -206,7 +176,7 @@ package laya.d3.core.render {
 		 * 渲染队列。
 		 * @param	state 渲染状态。
 		 */
-		public function _render(state:RenderState):void {
+		public function _render(state:RenderState,isTarget:Boolean):void {
 			var preShadeDef:int = state.shaderDefines.getValue();
 			var loopCount:int = Stat.loopCount;
 			var scene:BaseScene = _scene;
@@ -214,7 +184,6 @@ package laya.d3.core.render {
 			var cameraID:int = camera.id;
 			var vertexBuffer:VertexBuffer3D, vertexDeclaration:VertexDeclaration, lastBindShader:BaseShader, shader:Shader3D;
 			var needForceUpdate:Boolean, isNewCamera:Boolean;
-			
 			for (var i:int = 0, n:int = _finalElements.length; i < n; i++) {
 				var renderElement:RenderElement = _finalElements[i];
 				var renderObj:IRenderable, material:BaseMaterial,owner:Sprite3D;
@@ -227,13 +196,16 @@ package laya.d3.core.render {
 						vertexBuffer = renderObj._getVertexBuffer(0);
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
 						lastBindShader = BaseShader.bindShader;
-						material._setMaterialShaderDefineParams(owner,state.shaderDefines);
 						shader = material._getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue,owner._shaderDefineValue);
 						shader.bind();
 						needForceUpdate = (loopCount !== shader._uploadLoopCount) || (shader !== lastBindShader);
 						isNewCamera = cameraID !== shader._uploadCameraID;
 						
 						if (shader._uploadVertexBuffer !== vertexBuffer || needForceUpdate) {
+						    //WebGL.mainContext.disableVertexAttribArray(0);
+							//WebGL.mainContext.disableVertexAttribArray(1);
+							//WebGL.mainContext.disableVertexAttribArray(2);
+							//WebGL.mainContext.disableVertexAttribArray(3);
 							shader.uploadAttributes(vertexDeclaration.shaderValues.data, null);
 							shader._uploadVertexBuffer = vertexBuffer;
 						}
@@ -255,6 +227,7 @@ package laya.d3.core.render {
 						
 						if (shader._uploadMaterial !== material || needForceUpdate) {
 							material._setMaterialShaderParams(state, state.projectionViewMatrix, owner.transform.worldMatrix, renderElement.renderObj, material);//TODO:或许可以取消
+							material._setRenderState(isTarget);
 							material._upload();
 							shader._uploadMaterial = material;
 						}
@@ -271,7 +244,7 @@ package laya.d3.core.render {
 					_postRenderUpdateComponents(owner, state);
 				} else if (renderElement._type === 1) {//TODO:合并后组件渲染问题
 					var staticBatch:StaticBatch = renderElement.renderObj as StaticBatch;
-					state.owner = owner;
+					state.owner = owner = staticBatch._rootSprite;
 					state.renderElement = renderElement;
 					state._batchIndexStart = renderElement._batchIndexStart;
 					state._batchIndexEnd = renderElement._batchIndexEnd;
@@ -280,7 +253,6 @@ package laya.d3.core.render {
 						vertexBuffer = renderObj._getVertexBuffer(0);
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
 						lastBindShader = BaseShader.bindShader;
-						material._setMaterialShaderDefineParams(owner,state.shaderDefines);
 						shader = material._getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue,owner._shaderDefineValue);
 						shader.bind();
 						needForceUpdate = (loopCount !== shader._uploadLoopCount) || (shader !== lastBindShader);
@@ -301,8 +273,7 @@ package laya.d3.core.render {
 							shader._uploadCamera = camera;
 						}
 						
-						//debugger;
-						owner = staticBatch._rootSprite;
+						
 						if (shader._uploadSprite3D !== owner || needForceUpdate) {
 							shader.uploadSpriteUniforms(owner._shaderValues.data);
 							shader._uploadSprite3D = owner;
@@ -310,6 +281,7 @@ package laya.d3.core.render {
 						
 						if (shader._uploadMaterial !== material || needForceUpdate) {
 							material._setMaterialShaderParams(state, state.projectionViewMatrix, owner.transform.worldMatrix, renderElement.renderObj, material);//TODO:或许可以取消
+							material._setRenderState(isTarget);
 							material._upload();
 							shader._uploadMaterial = material;
 						}
@@ -334,7 +306,6 @@ package laya.d3.core.render {
 						vertexBuffer = renderObj._getVertexBuffer(0);
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
 						lastBindShader = BaseShader.bindShader;
-						material._setMaterialShaderDefineParams(owner,state.shaderDefines);
 						shader = material._getShader(state.shaderDefines, vertexDeclaration.shaderDefineValue,owner._shaderDefineValue);
 						shader.bind();
 						needForceUpdate = (loopCount !== shader._uploadLoopCount) || (shader !== lastBindShader);
@@ -362,6 +333,7 @@ package laya.d3.core.render {
 						
 						if (shader._uploadMaterial !== material || needForceUpdate) {
 							material._setMaterialShaderParams(state, state.projectionViewMatrix, owner.transform.worldMatrix, renderElement.renderObj, material);//TODO:或许可以取消
+							material._setRenderState(isTarget);
 							material._upload();
 							shader._uploadMaterial = material;
 						}

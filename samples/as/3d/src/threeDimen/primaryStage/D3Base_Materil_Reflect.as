@@ -49,7 +49,7 @@ package threeDimen.primaryStage {
 			mesh.once(Event.LOADED, null, function():void {
 				material = meshSprite.meshRender.sharedMaterials[0] as StandardMaterial;
 				material.albedo = new Vector4(0.0, 0.0, 0.0, 0.0);
-				material.renderMode = BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
+				material.renderMode = StandardMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
 				material.reflectTexture = textureCube;
 			});
 			meshSprite.transform.localPosition = new Vector3(-0.3, 0.0, 0.0);

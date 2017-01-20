@@ -20,6 +20,9 @@ package laya.d3.core {
 	 */
 	public class MeshRender extends BaseRender {
 		/** @private */
+		private static var _tempBoudingBoxCorners:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+		
+		/** @private */
 		private var _meshSprite3DOwner:MeshSprite3D;
 		///** @private */
 		//private var _lightmapIndex:int;
@@ -58,7 +61,7 @@ package laya.d3.core {
 		public function MeshRender(owner:MeshSprite3D) {
 			super(owner);
 			_meshSprite3DOwner = owner;
-			lightmapIndex =-1;
+			lightmapIndex = -1;
 			castShadow = true;
 			receiveShadow = true;
 			
@@ -72,6 +75,7 @@ package laya.d3.core {
 			if (mesh.loaded) {
 				_boundingSphereNeedChange = true;
 				_boundingBoxNeedChange = true;
+				_octreeNodeNeedChange = true;
 			} else {
 				mesh.once(Event.LOADED, this, _onMeshLoaed);
 			}
@@ -83,6 +87,7 @@ package laya.d3.core {
 		private function _onMeshLoaed(sender:MeshRender, enable:Boolean):void {
 			_boundingSphereNeedChange = true;
 			_boundingBoxNeedChange = true;
+			_octreeNodeNeedChange = true;
 		}
 		
 		override protected function _calculateBoundingSphere():void {
@@ -108,10 +113,11 @@ package laya.d3.core {
 			if (_meshSprite3DOwner.meshFilter.sharedMesh === null || _meshSprite3DOwner.meshFilter.sharedMesh.boundingBox === null) {
 				_boundingBox.toDefault();
 			} else {
-				var meshBoudingBox:BoundBox = _meshSprite3DOwner.meshFilter.sharedMesh.boundingBox;//TODO:有问题,应该获取Corners八个点然后转换。
 				var worldMat:Matrix4x4 = _meshSprite3DOwner.transform.worldMatrix;
-				Vector3.transformCoordinate(meshBoudingBox.min, worldMat, _boundingBox.min);
-				Vector3.transformCoordinate(meshBoudingBox.max, worldMat, _boundingBox.max);
+				var corners:Vector.<Vector3> = _meshSprite3DOwner.meshFilter.sharedMesh.boundingBoxCorners;
+				for (var i:int = 0; i < 8; i++)
+					Vector3.transformCoordinate(corners[i], worldMat, _tempBoudingBoxCorners[i]);
+				BoundBox.createfromPoints(_tempBoudingBoxCorners, _boundingBox);
 			}
 		}
 		

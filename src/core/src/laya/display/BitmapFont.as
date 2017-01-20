@@ -154,7 +154,7 @@ package laya.display {
 		 * 获取最大字符高度。
 		 */
 		public function getMaxHeight():Number {
-			return _padding[0] + _padding[2] + fontSize;
+			return fontSize;
 		}
 		
 		/**
@@ -171,7 +171,7 @@ package laya.display {
 			for (var i:int = 0, n:int = text.length; i < n; i++) {
 				tTexture = getCharTexture(text.charAt(i));
 				if (tTexture) {
-					sprite.graphics.drawTexture(tTexture, drawX + tX + dx, drawY + _padding[0]);
+					sprite.graphics.drawTexture(tTexture, drawX + tX + dx, drawY );
 					tX += getCharWidth(text.charAt(i));
 				}
 			}

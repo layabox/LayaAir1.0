@@ -863,6 +863,13 @@
 			return Base64Tool.encodeByte(byte);
 		}
 
+		Base64Tool.encodeStr2=function(str){
+			var byte;
+			byte=new Byte();
+			byte.writeUTFBytes(str);
+			return Base64Tool.encodeByte(byte);
+		}
+
 		Base64Tool.encodeByte=function(byte,start,end){
 			(start===void 0)&& (start=0);
 			(end===void 0)&& (end=-1);
@@ -2310,7 +2317,7 @@
 		var __proto=RenderSpriteHook.prototype;
 		__proto.createRenderSprite=function(type,next){
 			var rst;
-			rst=new RenderSprite(type,next);
+			rst=RenderSpriteHook._preCreateFun(type,next);
 			if (type==/*laya.renders.RenderSprite.CANVAS*/0x10){
 				rst["_oldCanvas"]=rst._fun;
 				rst._fun=RenderSpriteHook.I._canvas;
@@ -2342,6 +2349,7 @@
 
 		RenderSpriteHook.init=function(){
 			RenderSpriteHook.I=new RenderSpriteHook();
+			RenderSpriteHook._preCreateFun=RunDriver.createRenderSprite;
 			RunDriver.createRenderSprite=RenderSpriteHook.I.createRenderSprite;
 		}
 
@@ -2360,6 +2368,7 @@
 		RenderSpriteHook.INIT=0x11111;
 		RenderSpriteHook.renders=[];
 		RenderSpriteHook.I=null
+		RenderSpriteHook._preCreateFun=null
 		return RenderSpriteHook;
 	})()
 

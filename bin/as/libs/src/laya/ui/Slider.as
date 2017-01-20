@@ -274,8 +274,7 @@ package laya.ui {
 		}
 		
 		/**
-		 * 表示当前的刻度值。默认值为1。
-		 * @return
+		 * 滑动的刻度值，滑动数值为tick的整数倍。默认值为1。
 		 */
 		public function get tick():Number {
 			return _tick;

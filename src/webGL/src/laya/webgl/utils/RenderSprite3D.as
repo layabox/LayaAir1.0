@@ -17,6 +17,7 @@ package laya.webgl.utils {
 	
 	public class RenderSprite3D extends RenderSprite {
 		
+		public static var tempUV:Array = new Array(8);
 		public function RenderSprite3D(type:int, next:RenderSprite) {
 			super(type, next);
 		}
@@ -98,7 +99,7 @@ package laya.webgl.utils {
 					const tempLimit:Number = 32;
 					if ( tRect.width < tempLimit || tRect.height < tempLimit )
 					{
-						uv = new Array(8);
+						uv = tempUV;
 						uv[0] = 0;
 						uv[1] = 0;
 						uv[2] = ( tRect.width >= 32 ) ? 1 : tRect.width/tempLimit;

@@ -160,9 +160,7 @@ package laya.d3.math {
 		 * @param	index 索引。
 		 */
 		public function getPlane(index:int):Plane{
-			
 			switch(index){
-				
 				case 0: 
 					return _near;
                 case 1: 
@@ -312,7 +310,7 @@ package laya.d3.math {
 		 * 与点的位置关系。返回-1,包涵;0,相交;1,不相交
 		 * @param  point  点。
 		 */
-		public function ContainsPoint(point:Vector3):int{
+		public function containsPoint(point:Vector3):int{
 			
 			var result:int = Plane.PlaneIntersectionType_Front;
 			var planeResult:int = Plane.PlaneIntersectionType_Front;
@@ -362,22 +360,21 @@ package laya.d3.math {
 		 * 与包围盒的位置关系。返回-1,包涵;0,相交;1,不相交
 		 * @param  box  包围盒。
 		 */
-		public function ContainsBoundBox(box:BoundBox):int{
-			
+		public function containsBoundBox(box:BoundBox):int{
+			var p:Vector3=_tempV30, n:Vector3=_tempV31;
 			var plane:Plane;
 			var result:int = ContainmentType.Contains;
-			
 			for (var i:int = 0; i < 6; i++ ){
-				
 				plane = getPlane(i);
-				_getBoxToPlanePVertexNVertex(box, plane.normal, _tempV30, _tempV31);
+				_getBoxToPlanePVertexNVertex(box, plane.normal, p, n);
 				
-				if (Collision.intersectsPlaneAndPoint(plane, _tempV30) == Plane.PlaneIntersectionType_Back)
+				if (Collision.intersectsPlaneAndPoint(plane, p) === Plane.PlaneIntersectionType_Back)
 					return ContainmentType.Disjoint;
 				
-				if (Collision.intersectsPlaneAndPoint(plane, _tempV31) == Plane.PlaneIntersectionType_Back)
+				if (Collision.intersectsPlaneAndPoint(plane, n) === Plane.PlaneIntersectionType_Back)
 					result = ContainmentType.Intersects;
 			}
+			
 			return result;
 		}
 		
@@ -385,7 +382,7 @@ package laya.d3.math {
 		 * 与包围球的位置关系。返回-1,包涵;0,相交;1,不相交
 		 * @param  sphere  包围球。
 		 */
-		public function ContainsBoundSphere(sphere:BoundSphere):int{
+		public function containsBoundSphere(sphere:BoundSphere):int{
 			
 			var result:int = Plane.PlaneIntersectionType_Front;
 			var planeResult:int = Plane.PlaneIntersectionType_Front;
@@ -436,7 +433,6 @@ package laya.d3.math {
 		 * @private
 		 */
 		private function _getBoxToPlanePVertexNVertex(box:BoundBox, planeNormal:Vector3, outP:Vector3, outN:Vector3):void{
-			
 			var boxMin:Vector3 = box.min;
 			var boxMinE:Float32Array = boxMin.elements;
 			
@@ -448,7 +444,7 @@ package laya.d3.math {
 			var planeNorEY:Number = planeNorE[1];
 			var planeNorEZ:Number = planeNorE[2];
 			
-			outP = boxMin;
+			boxMin.cloneTo(outP);;
 			var outPE:Float32Array = outP.elements;
             if (planeNorEX >= 0)
                 outPE[0] = boxMaxE[0];
@@ -457,7 +453,7 @@ package laya.d3.math {
             if (planeNorEZ >= 0)
                 outPE[2] = boxMaxE[2];
 
-            outN = boxMax;
+			boxMax.cloneTo(outN);
 			var outNE:Float32Array = outN.elements;
             if (planeNorEX >= 0)
                 outNE[0] = boxMinE[0];

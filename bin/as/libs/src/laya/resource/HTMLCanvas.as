@@ -129,6 +129,7 @@ package laya.resource {
 			if (_w != w || _h != h) {
 				_w = w;
 				_h = h;
+				memorySize = _w * _h * 4;
 				_ctx && _ctx.size(w, h);
 				_source && (_source.height = h, _source.width = w);
 			}

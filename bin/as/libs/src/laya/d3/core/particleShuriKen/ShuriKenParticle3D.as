@@ -1,4 +1,5 @@
 package laya.d3.core.particleShuriKen {
+	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.particleShuriKen.ShurikenParticleRender;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
@@ -28,19 +29,70 @@ package laya.d3.core.particleShuriKen {
 	/**
 	 * <code>ShuriKenParticle3D</code> 3D粒子。
 	 */
-	public class ShuriKenParticle3D extends Sprite3D {
+	public class ShuriKenParticle3D extends RenderableSprite3D {
 		public static const WORLDPOSITION:int = 0;
 		public static const WORLDROTATIONMATRIX:int = 1;
 		public static const POSITIONSCALE:int = 4;
 		public static const SIZESCALE:int = 5;
+		
+		//VelocityOverLifetime
+		public static const VOLTYPE:int = 6;
+		public static const VOLVELOCITYCONST:int = 7;
+		public static const VOLVELOCITYGRADIENTX:int = 8;
+		public static const VOLVELOCITYGRADIENTY:int = 9;
+		public static const VOLVELOCITYGRADIENTZ:int = 10;
+		public static const VOLVELOCITYCONSTMAX:int = 11;
+		public static const VOLVELOCITYGRADIENTXMAX:int = 12;
+		public static const VOLVELOCITYGRADIENTYMAX:int = 13;
+		public static const VOLVELOCITYGRADIENTZMAX:int = 14;
+		public static const VOLSPACETYPE:int = 15;
+		
+		//ColorOverLifetime
+		public static const COLOROVERLIFEGRADIENTALPHAS:int = 16;
+		public static const COLOROVERLIFEGRADIENTCOLORS:int = 17;
+		public static const MAXCOLOROVERLIFEGRADIENTALPHAS:int = 18;
+		public static const MAXCOLOROVERLIFEGRADIENTCOLORS:int = 19;
+		
+		//SizeOverLifetime
+		public static const SOLTYPE:int = 20;
+		public static const SOLSEPRARATE:int = 21;
+		public static const SOLSIZEGRADIENT:int = 22;
+		public static const SOLSIZEGRADIENTX:int = 23;
+		public static const SOLSIZEGRADIENTY:int = 24;
+		public static const SOLSizeGradientZ:int = 25;
+		public static const SOLSizeGradientMax:int = 26;
+		public static const SOLSIZEGRADIENTXMAX:int = 27;
+		public static const SOLSIZEGRADIENTYMAX:int = 28;
+		public static const SOLSizeGradientZMAX:int = 29;
+		
+		//RotationOverLifetime
+		public static const ROLTYPE:int = 30;
+		public static const ROLSEPRARATE:int = 31;
+		public static const ROLANGULARVELOCITYCONST:int = 32;
+		public static const ROLANGULARVELOCITYCONSTSEPRARATE:int = 33;
+		public static const ROLANGULARVELOCITYGRADIENT:int = 34;
+		public static const ROLANGULARVELOCITYGRADIENTX:int = 35;
+		public static const ROLANGULARVELOCITYGRADIENTY:int = 36;
+		public static const ROLANGULARVELOCITYGRADIENTZ:int = 37;
+		public static const ROLANGULARVELOCITYCONSTMAX:int = 38;
+		public static const ROLANGULARVELOCITYCONSTMAXSEPRARATE:int = 39;
+		public static const ROLANGULARVELOCITYGRADIENTMAX:int = 40;
+		public static const ROLANGULARVELOCITYGRADIENTXMAX:int = 41;
+		public static const ROLANGULARVELOCITYGRADIENTYMAX:int = 42;
+		public static const ROLANGULARVELOCITYGRADIENTZMAX:int = 43;
+		
+		//TextureSheetAnimation
+		public static const TEXTURESHEETANIMATIONTYPE:int = 44;
+		public static const TEXTURESHEETANIMATIONCYCLES:int = 45;
+		public static const TEXTURESHEETANIMATIONSUBUVLENGTH:int = 46;
+		public static const TEXTURESHEETANIMATIONGRADIENTUVS:int = 47;
+		public static const TEXTURESHEETANIMATIONGRADIENTMAXUVS:int = 48;
 		
 		/** @private */
 		private var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
 		
 		/**@private */
 		private var _particleSystem:ShurikenParticleSystem;
-		/** @private */
-		private var _particleRender:ShurikenParticleRender;
 		
 		/**
 		 * 获取粒子系统。
@@ -55,7 +107,7 @@ package laya.d3.core.particleShuriKen {
 		 * @return  粒子渲染器。
 		 */
 		public function get particleRender():ShurikenParticleRender {
-			return _particleRender;
+			return _render as ShurikenParticleRender;
 		}
 		
 		/**
@@ -63,24 +115,24 @@ package laya.d3.core.particleShuriKen {
 		 * @param settings value 粒子配置。
 		 */
 		public function ShuriKenParticle3D(material:ShurikenParticleMaterial = null) {
-			_particleRender = new ShurikenParticleRender(this);
-			_particleRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
+			_render = new ShurikenParticleRender(this);
+			_render.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
 			_particleSystem = new ShurikenParticleSystem(this);
 			_changeRenderObject(0);
 			
-			(material) && (_particleRender.sharedMaterial = material);
+			(material) && (_render.sharedMaterial = material);
 		}
 		
 		/** @private */
 		private function _changeRenderObject(index:int):RenderElement {
-			var renderObjects:Vector.<RenderElement> = _particleRender.renderObject._renderElements;
+			var renderObjects:Vector.<RenderElement> = _render.renderObject._renderElements;
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderObject = _particleRender.renderObject;
+			renderElement._renderObject = _render.renderObject;
 			
-			var material:BaseMaterial = _particleRender.sharedMaterials[index];
+			var material:BaseMaterial = _render.sharedMaterials[index];
 			
 			(material) || (material = ShurikenParticleMaterial.defaultMaterial);//确保有材质,由默认材质代替。
 			
@@ -101,23 +153,12 @@ package laya.d3.core.particleShuriKen {
 		
 		/** @private */
 		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_particleRender.renderObject);
+			scene.removeFrustumCullingObject(_render.renderObject);
 		}
 		
 		/** @private */
 		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_particleRender.renderObject);
-		}
-		
-		/**
-		 * 更新粒子。
-		 * @param state 渲染相关状态参数。
-		 */
-		public override function _update(state:RenderState):void {
-			state.owner = this;
-			
-			Stat.spriteCount++;
-			_childs.length && _updateChilds(state);
+			scene.addFrustumCullingObject(_render.renderObject);
 		}
 		
 		override public function _prepareShaderValuetoRender(view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
@@ -149,6 +190,7 @@ package laya.d3.core.particleShuriKen {
 				_setShaderValueColor(SIZESCALE, Vector3.ONE);
 				break;
 			}
+		
 		}
 		
 		/**
@@ -160,13 +202,14 @@ package laya.d3.core.particleShuriKen {
 			var destParticleSystem:ShurikenParticleSystem = destShuriKenParticle3D._particleSystem;
 			_particleSystem.cloneTo(destParticleSystem);
 			
-			var destParticleRender:ShurikenParticleRender = destShuriKenParticle3D._particleRender;
-			destParticleRender.sharedMaterials = _particleRender.sharedMaterials;
-			destParticleRender.enable = _particleRender.enable;
-			destParticleRender.renderMode = _particleRender.renderMode;
-			destParticleRender.stretchedBillboardCameraSpeedScale = _particleRender.stretchedBillboardCameraSpeedScale;
-			destParticleRender.stretchedBillboardSpeedScale = _particleRender.stretchedBillboardSpeedScale;
-			destParticleRender.stretchedBillboardLengthScale = _particleRender.stretchedBillboardLengthScale;
+			var destParticleRender:ShurikenParticleRender = destShuriKenParticle3D._render as ShurikenParticleRender;
+			var particleRender:ShurikenParticleRender = _render as ShurikenParticleRender;
+			destParticleRender.sharedMaterials = particleRender.sharedMaterials;
+			destParticleRender.enable = particleRender.enable;
+			destParticleRender.renderMode = particleRender.renderMode;
+			destParticleRender.stretchedBillboardCameraSpeedScale = particleRender.stretchedBillboardCameraSpeedScale;
+			destParticleRender.stretchedBillboardSpeedScale = particleRender.stretchedBillboardSpeedScale;
+			destParticleRender.stretchedBillboardLengthScale = particleRender.stretchedBillboardLengthScale;
 		}
 		
 		/**
@@ -175,9 +218,7 @@ package laya.d3.core.particleShuriKen {
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
-			_particleRender._destroy();
 			_particleSystem._destroy();
-			_particleRender = null;
 			_particleSystem = null;
 		}
 	

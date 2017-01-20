@@ -43,8 +43,8 @@ module laya {
 			this.engine = this.Matter.Engine.create({ enableSleeping: true });
 			this.Matter.Engine.run(this.engine);
 
-			var render = LayaRender.create({ engine: this.engine, container: gameWorld, width: this.stageWidth, height: this.stageHeight, options: { wireframes: false } });
-			LayaRender.run(render);
+			var render = this.LayaRender.create({ engine: this.engine, container: gameWorld, width: this.stageWidth, height: this.stageHeight, options: { wireframes: false } });
+			this.LayaRender.run(render);
 
 			this.mouseConstraint = this.Matter.MouseConstraint.create(this.engine, { element: Render.canvas });
 			this.Matter.World.add(this.engine.world, this.mouseConstraint);

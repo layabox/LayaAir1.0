@@ -204,6 +204,7 @@ package laya.webgl.canvas
 			_width = w;
 			_height = h;
 			_targets && (_targets.size(w, h));
+			_canvas.memorySize -=_canvas.memorySize;//webGLCanvas为0;
 		}
 		
 		public function set asBitmap(value:Boolean):void
@@ -356,7 +357,7 @@ package laya.webgl.canvas
 			_other.font === FontInContext.EMPTY ? (_other.font = new FontInContext(str)) : (_other.font.setFont(str));
 		}
 		
-		private function _fillText(txt:*, words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, color:String, textAlign:String):void
+		private function _fillText(txt:*, words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, color:String,strokeColor:String,lineWidth:int,textAlign:String):void
 		{
 			var shader:Shader2D = _shader2D;
 			var curShader:Value2D = _curSubmit.shaderValue;
@@ -366,7 +367,7 @@ package laya.webgl.canvas
 			{
 				if (shader.ALPHA !== curShader.ALPHA)
 					shader.glTexture = null;
-				DrawText.drawText(this, txt, words, _curMat, font, textAlign || _other.textAlign, color, null, -1, x, y);
+				DrawText.drawText(this, txt, words, _curMat, font, textAlign || _other.textAlign, color, strokeColor, lineWidth, x, y);
 			}
 			else
 			{
@@ -378,65 +379,41 @@ package laya.webgl.canvas
 					shader.colorAdd = colorAdd;
 				}
 				//shader.defines.add(ShaderDefines2D.COLORADD);
-				DrawText.drawText(this, txt, words, _curMat, font, textAlign || _other.textAlign, color, null, -1, x, y);
+				DrawText.drawText(this, txt, words, _curMat, font, textAlign || _other.textAlign, color, strokeColor,lineWidth, x, y);
 					//shader.defines.setValue(preDef);
 			}
 		}
 		
 		public override function fillWords(words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, color:String):void
 		{
-			words.length > 0 && _fillText(null, words, x, y, fontStr, color, null);
+			words.length > 0 && _fillText(null, words, x, y, fontStr, color,null,-1, null);
 		}
 		
 		override public function fillText(txt:*, x:Number, y:Number, fontStr:String, color:String, textAlign:String):void
 		{
-			txt.length > 0 && _fillText(txt, null, x, y, fontStr, color, textAlign);
+			txt.length > 0 && _fillText(txt, null, x, y, fontStr, color,null,-1, textAlign);
 		}
 		
 		override public function strokeText(txt:*, x:Number, y:Number, fontStr:String, color:String, lineWidth:Number, textAlign:String):void
 		{
 			if (txt.length === 0)
 				return;
-			var shader:Shader2D = _shader2D;
-			var curShader:Value2D = _curSubmit.shaderValue;
-			var font:FontInContext = fontStr ? (_fontTemp.setFont(fontStr), _fontTemp) : _other.font;
-			
-			if (AtlasResourceManager.enabled)
-			{
-				if (shader.ALPHA !== curShader.ALPHA)
-				{
-					shader.glTexture = null;
-				}
-				DrawText.drawText(this, txt, null, _curMat, font, textAlign || _other.textAlign, null, color, lineWidth || 1, x, y);
-			}
-			else
-			{
-				var preDef:int = _shader2D.defines.getValue();
-				
-				var colorAdd:Array = color ? Color.create(color)._color : shader.colorAdd;
-				if (shader.ALPHA !== curShader.ALPHA || colorAdd !== shader.colorAdd || curShader.colorAdd !== shader.colorAdd)
-				{
-					shader.glTexture = null;
-					shader.colorAdd = colorAdd;
-				}
-				
-				//shader.defines.add(ShaderDefines2D.COLORADD);
-				DrawText.drawText(this, txt, null, _curMat, font, textAlign || _other.textAlign, null, color, lineWidth || 1, x, y);
-					//shader.defines.setValue(preDef);
-			}
+		    this._fillText(txt, null, x, y, fontStr, null, color, lineWidth || 1, textAlign);
 		}
 		
 		override public function fillBorderText(txt:*, x:Number, y:Number, fontStr:String, fillColor:String, borderColor:String, lineWidth:int, textAlign:String):void
 		{
 			if (txt.length === 0)
-				return;
+					return;
+			_fillBorderText(txt, null, x, y, fontStr, fillColor, borderColor, lineWidth, textAlign);
+		}
+		private  function _fillBorderText(txt:*,words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, fillColor:String, borderColor:String, lineWidth:int, textAlign:String):void{
 			if (!AtlasResourceManager.enabled)
 			{
-				strokeText(txt, x, y, fontStr, borderColor, lineWidth, textAlign);
-				fillText(txt, x, y, fontStr, fillColor, textAlign);
+				_fillText(txt, words, x, y, fontStr, null, borderColor, lineWidth || 1, textAlign);
+				_fillText(txt, words, x, y, fontStr,fillColor,null,-1, textAlign);
 				return;
 			}
-			
 			//判断是否大图合集
 			var shader:Shader2D = _shader2D;
 			var curShader:Value2D = _curSubmit.shaderValue;
@@ -444,7 +421,13 @@ package laya.webgl.canvas
 				shader.glTexture = null;
 			
 			var font:FontInContext = fontStr ? (_fontTemp.setFont(fontStr), _fontTemp) : _other.font;
-			DrawText.drawText(this, txt, null, _curMat, font, textAlign || _other.textAlign, fillColor, borderColor, lineWidth || 1, x, y);
+			DrawText.drawText(this, txt, words, _curMat, font, textAlign || _other.textAlign, fillColor, borderColor, lineWidth || 1, x, y);
+		}
+		
+		override public function fillBorderWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String, borderColor:String, lineWidth:int):void {	
+			if (!words||words.length === 0)
+					return;
+			_fillBorderText(null, words, x, y, font, color, borderColor, lineWidth,null);
 		}
 		
 		override public function fillRect(x:Number, y:Number, width:Number, height:Number, fillStyle:*):void

@@ -876,7 +876,6 @@
 	var RenderTargetMAX=(function(){
 		var OneTarget;
 		function RenderTargetMAX(){
-			this.targets=null;
 			this.oneTargets=null;
 			this.repaint=false;
 			this._width=NaN;
@@ -898,6 +897,7 @@
 		}
 
 		__proto._flushToTarget=function(context,target){
+			if (target._destroy)return;
 			var worldScissorTest=RenderState2D.worldScissorTest;
 			var preworldClipRect=RenderState2D.worldClipRect;
 			RenderState2D.worldClipRect=this._clipRect;
@@ -1017,7 +1017,7 @@
 			ps="precision mediump float;\n//precision mediump float;\nvarying vec3 color;\nuniform float alpha;\nvoid main(){\n	//vec4 a=vec4(color.r, color.g, color.b, 1);\n	//a.a*=alpha;\n    gl_FragColor=vec4(color.r, color.g, color.b, alpha);\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/webGL/src/laya/webgl/shader/d2/files/primitive.ps*/;
 			Shader.preCompile2D(0,/*laya.webgl.shader.d2.ShaderDefines2D.PRIMITIVE*/0x04,vs,ps,null);
 			vs="attribute vec4 position;\nattribute vec2 texcoord;\nuniform vec2 size;\n\n#ifdef WORLDMAT\nuniform mat4 mmat;\n#endif\nvarying vec2 v_texcoord;\n\n#include?BLUR_FILTER  \"parts/BlurFilter_vs_uniform.glsl\";\nvoid main() {\n  #ifdef WORLDMAT\n  vec4 pos=mmat*position;\n  gl_Position =vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  #else\n  gl_Position =vec4((position.x/size.x-0.5)*2.0,(0.5-position.y/size.y)*2.0,position.z,1.0);\n  #endif\n  \n  v_texcoord = texcoord;\n  #include?BLUR_FILTER  \"parts/BlurFilter_vs_logic.glsl\";\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/webGL/src/laya/webgl/shader/d2/files/texture.vs*/;
-			ps="precision mediump float;\n//precision highp float;\nvarying vec2 v_texcoord;\nuniform sampler2D texture;\nuniform float alpha;\nuniform vec4 u_TexRange;\nuniform vec2 u_offset;\n#include?BLUR_FILTER  \"parts/BlurFilter_ps_uniform.glsl\";\n#include?COLOR_FILTER \"parts/ColorFilter_ps_uniform.glsl\";\n#include?GLOW_FILTER \"parts/GlowFilter_ps_uniform.glsl\";\n#include?COLOR_ADD \"parts/ColorAdd_ps_uniform.glsl\";\n\nvoid main() {\n   vec2 newTexCoord;\n   newTexCoord.x = mod(u_offset.x + v_texcoord.x,u_TexRange.y) + u_TexRange.x;\n   newTexCoord.y = mod(u_offset.y + v_texcoord.y,u_TexRange.w) + u_TexRange.z;\n   vec4 color= texture2D(texture, newTexCoord);\n   color.a*=alpha;\n   gl_FragColor=color;\n   #include?COLOR_ADD \"parts/ColorAdd_ps_logic.glsl\";   \n   #include?BLUR_FILTER  \"parts/BlurFilter_ps_logic.glsl\";\n   #include?COLOR_FILTER \"parts/ColorFilter_ps_logic.glsl\";\n   #include?GLOW_FILTER \"parts/GlowFilter_ps_logic.glsl\";\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/webGL/src/laya/webgl/shader/d2/files/fillTextureShader.ps*/;
+			ps="precision highp float;\n//precision highp float;\nvarying vec2 v_texcoord;\nuniform sampler2D texture;\nuniform float alpha;\nuniform vec4 u_TexRange;\nuniform vec2 u_offset;\n#include?BLUR_FILTER  \"parts/BlurFilter_ps_uniform.glsl\";\n#include?COLOR_FILTER \"parts/ColorFilter_ps_uniform.glsl\";\n#include?GLOW_FILTER \"parts/GlowFilter_ps_uniform.glsl\";\n#include?COLOR_ADD \"parts/ColorAdd_ps_uniform.glsl\";\n\nvoid main() {\n   vec2 newTexCoord;\n   newTexCoord.x = mod(u_offset.x + v_texcoord.x,u_TexRange.y) + u_TexRange.x;\n   newTexCoord.y = mod(u_offset.y + v_texcoord.y,u_TexRange.w) + u_TexRange.z;\n   vec4 color= texture2D(texture, newTexCoord);\n   color.a*=alpha;\n   gl_FragColor=color;\n   #include?COLOR_ADD \"parts/ColorAdd_ps_logic.glsl\";   \n   #include?BLUR_FILTER  \"parts/BlurFilter_ps_logic.glsl\";\n   #include?COLOR_FILTER \"parts/ColorFilter_ps_logic.glsl\";\n   #include?GLOW_FILTER \"parts/GlowFilter_ps_logic.glsl\";\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/webGL/src/laya/webgl/shader/d2/files/fillTextureShader.ps*/;
 			Shader.preCompile2D(0,/*laya.webgl.shader.d2.ShaderDefines2D.FILLTEXTURE*/0x100,vs,ps,null);
 			vs="attribute vec2 position;\nattribute vec2 texcoord;\nattribute vec4 color;\nuniform vec2 size;\nuniform float offsetX;\nuniform float offsetY;\nuniform mat4 mmat;\nuniform mat4 u_mmat2;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\nvoid main() {\n  vec4 pos=mmat*u_mmat2*vec4(offsetX+position.x,offsetY+position.y,0,1 );\n  gl_Position = vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);\n  v_color = color;\n  v_texcoord = texcoord;  \n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/webGL/src/laya/webgl/shader/d2/skinAnishader/skinShader.vs*/;
 			ps="precision mediump float;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\nuniform sampler2D texture;\nuniform float alpha;\nvoid main() {\n	vec4 t_color = texture2D(texture, v_texcoord);\n	gl_FragColor = t_color.rgba * v_color;\n	gl_FragColor.a = gl_FragColor.a * alpha;\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/webGL/src/laya/webgl/shader/d2/skinAnishader/skinShader.ps*/;
@@ -3120,6 +3120,22 @@
 	var WebGL=(function(){
 		function WebGL(){};
 		__class(WebGL,'laya.webgl.WebGL');
+		WebGL._arrayBufferSlice=function(){
+			var _this=/*__JS__ */this;
+			var sz=_this.length;
+			var dec=new ArrayBuffer(_this.length);
+			for (var i=0;i < sz;i++)dec[i]=_this[i];
+			return dec;
+		}
+
+		WebGL._uint8ArraySlice=function(){
+			var _this=/*__JS__ */this;
+			var sz=_this.length;
+			var dec=new Uint8Array(_this.length);
+			for (var i=0;i < sz;i++)dec[i]=_this[i];
+			return dec;
+		}
+
 		WebGL._float32ArraySlice=function(){
 			var _this=/*__JS__ */this;
 			var sz=_this.length;
@@ -3485,6 +3501,8 @@
 			}
 			Float32Array.prototype.slice || (Float32Array.prototype.slice=WebGL._float32ArraySlice);
 			Uint16Array.prototype.slice || (Uint16Array.prototype.slice=WebGL._uint16ArraySlice);
+			Uint8Array.prototype.slice || (Uint8Array.prototype.slice=WebGL._uint8ArraySlice);
+			ArrayBuffer.prototype.slice || (ArrayBuffer.prototype.slice=WebGL._arrayBufferSlice);
 			return true;
 		}
 
@@ -3554,6 +3572,13 @@
 				precisionFormat.precision ? WebGL.frameShaderHighPrecision=true :WebGL.frameShaderHighPrecision=false;
 			}catch (e){}
 			Browser.window.SetupWebglContext && Browser.window.SetupWebglContext(gl);
+			gl.deleteTexture1=gl.deleteTexture;
+			gl.deleteTexture=function (t){
+				if (t==WebGLContext.curBindTexValue){
+					WebGLContext.curBindTexValue=null;
+				}
+				gl.deleteTexture1(t);
+			}
 			WebGL.onStageResize(width,height);
 			if (WebGL.mainContext==null)
 				throw new Error("webGL getContext err!");
@@ -3616,7 +3641,7 @@
 			value!==WebGLContext._cullFace && (WebGLContext._cullFace=value,value?gl.enable(/*CLASS CONST:laya.webgl.WebGLContext.CULL_FACE*/0x0B44):gl.disable(/*CLASS CONST:laya.webgl.WebGLContext.CULL_FACE*/0x0B44));
 		}
 
-		WebGLContext.setFrontFaceCCW=function(gl,value){
+		WebGLContext.setFrontFace=function(gl,value){
 			value!==WebGLContext._frontFace && (WebGLContext._frontFace=value,gl.frontFace(value));
 		}
 
@@ -3924,7 +3949,7 @@
 		WebGLContext.BROWSER_DEFAULT_WEBGL=0x9244;
 		WebGLContext._useProgram=null;
 		WebGLContext._depthTest=true;
-		WebGLContext._depthMask=1;
+		WebGLContext._depthMask=true;
 		WebGLContext._blend=false;
 		WebGLContext._cullFace=false;
 		WebGLContext.curBindTexTarget=null
@@ -4065,6 +4090,7 @@
 			this._width=w;
 			this._height=h;
 			this._targets && (this._targets.size(w,h));
+			this._canvas.memorySize-=this._canvas.memorySize;
 		}
 
 		__proto._getTransformMatrix=function(){
@@ -4107,14 +4133,14 @@
 			return RunDriver.measureText(text,this._other.font.toString());
 		}
 
-		__proto._fillText=function(txt,words,x,y,fontStr,color,textAlign){
+		__proto._fillText=function(txt,words,x,y,fontStr,color,strokeColor,lineWidth,textAlign){
 			var shader=this._shader2D;
 			var curShader=this._curSubmit.shaderValue;
 			var font=fontStr ? FontInContext.create(fontStr):this._other.font;
 			if (AtlasResourceManager.enabled){
 				if (shader.ALPHA!==curShader.ALPHA)
 					shader.glTexture=null;
-				DrawText.drawText(this,txt,words,this._curMat,font,textAlign || this._other.textAlign,color,null,-1,x,y);
+				DrawText.drawText(this,txt,words,this._curMat,font,textAlign || this._other.textAlign,color,strokeColor,lineWidth,x,y);
 			}
 			else{
 				var preDef=this._shader2D.defines.getValue();
@@ -4123,49 +4149,35 @@
 					shader.glTexture=null;
 					shader.colorAdd=colorAdd;
 				}
-				DrawText.drawText(this,txt,words,this._curMat,font,textAlign || this._other.textAlign,color,null,-1,x,y);
+				DrawText.drawText(this,txt,words,this._curMat,font,textAlign || this._other.textAlign,color,strokeColor,lineWidth,x,y);
 			}
 		}
 
 		//shader.defines.setValue(preDef);
 		__proto.fillWords=function(words,x,y,fontStr,color){
-			words.length > 0 && this._fillText(null,words,x,y,fontStr,color,null);
+			words.length > 0 && this._fillText(null,words,x,y,fontStr,color,null,-1,null);
 		}
 
 		__proto.fillText=function(txt,x,y,fontStr,color,textAlign){
-			txt.length > 0 && this._fillText(txt,null,x,y,fontStr,color,textAlign);
+			txt.length > 0 && this._fillText(txt,null,x,y,fontStr,color,null,-1,textAlign);
 		}
 
 		__proto.strokeText=function(txt,x,y,fontStr,color,lineWidth,textAlign){
 			if (txt.length===0)
 				return;
-			var shader=this._shader2D;
-			var curShader=this._curSubmit.shaderValue;
-			var font=fontStr ? (WebGLContext2D._fontTemp.setFont(fontStr),WebGLContext2D._fontTemp):this._other.font;
-			if (AtlasResourceManager.enabled){
-				if (shader.ALPHA!==curShader.ALPHA){
-					shader.glTexture=null;
-				}
-				DrawText.drawText(this,txt,null,this._curMat,font,textAlign || this._other.textAlign,null,color,lineWidth || 1,x,y);
-			}
-			else{
-				var preDef=this._shader2D.defines.getValue();
-				var colorAdd=color ? Color.create(color)._color :shader.colorAdd;
-				if (shader.ALPHA!==curShader.ALPHA || colorAdd!==shader.colorAdd || curShader.colorAdd!==shader.colorAdd){
-					shader.glTexture=null;
-					shader.colorAdd=colorAdd;
-				}
-				DrawText.drawText(this,txt,null,this._curMat,font,textAlign || this._other.textAlign,null,color,lineWidth || 1,x,y);
-			}
+			this._fillText(txt,null,x,y,fontStr,null,color,lineWidth || 1,textAlign);
 		}
 
-		//shader.defines.setValue(preDef);
 		__proto.fillBorderText=function(txt,x,y,fontStr,fillColor,borderColor,lineWidth,textAlign){
 			if (txt.length===0)
 				return;
+			this._fillBorderText(txt,null,x,y,fontStr,fillColor,borderColor,lineWidth,textAlign);
+		}
+
+		__proto._fillBorderText=function(txt,words,x,y,fontStr,fillColor,borderColor,lineWidth,textAlign){
 			if (!AtlasResourceManager.enabled){
-				this.strokeText(txt,x,y,fontStr,borderColor,lineWidth,textAlign);
-				this.fillText(txt,x,y,fontStr,fillColor,textAlign);
+				this._fillText(txt,words,x,y,fontStr,null,borderColor,lineWidth || 1,textAlign);
+				this._fillText(txt,words,x,y,fontStr,fillColor,null,-1,textAlign);
 				return;
 			};
 			var shader=this._shader2D;
@@ -4173,7 +4185,13 @@
 			if (shader.ALPHA!==curShader.ALPHA)
 				shader.glTexture=null;
 			var font=fontStr ? (WebGLContext2D._fontTemp.setFont(fontStr),WebGLContext2D._fontTemp):this._other.font;
-			DrawText.drawText(this,txt,null,this._curMat,font,textAlign || this._other.textAlign,fillColor,borderColor,lineWidth || 1,x,y);
+			DrawText.drawText(this,txt,words,this._curMat,font,textAlign || this._other.textAlign,fillColor,borderColor,lineWidth || 1,x,y);
+		}
+
+		__proto.fillBorderWords=function(words,x,y,font,color,borderColor,lineWidth){
+			if (!words||words.length===0)
+				return;
+			this._fillBorderText(null,words,x,y,font,color,borderColor,lineWidth,null);
 		}
 
 		__proto.fillRect=function(x,y,width,height,fillStyle){
@@ -5089,6 +5107,7 @@
 			}
 		});
 
+		//webGLCanvas为0;
 		__getset(0,__proto,'asBitmap',null,function(value){
 			if (value){
 				this._targets || (this._targets=new RenderTargetMAX());
@@ -5402,7 +5421,7 @@
 					var h=tRect.height;
 					var tempLimit=32;
 					if (tRect.width < tempLimit || tRect.height < tempLimit){
-						uv=new Array(8);
+						uv=RenderSprite3D.tempUV;
 						uv[0]=0;
 						uv[1]=0;
 						uv[2]=(tRect.width >=32)? 1 :tRect.width/tempLimit;
@@ -5484,6 +5503,9 @@
 			scope.recycle();
 		}
 
+		__static(RenderSprite3D,
+		['tempUV',function(){return this.tempUV=new Array(8);}
+		]);
 		return RenderSprite3D;
 	})(RenderSprite)
 
@@ -6187,12 +6209,12 @@
 		}
 
 		__proto.size=function(w,h){
-			if (this.bitmap && this._w==w && this._h==h)
+			if (this._w==w && this._h==h)
 				return;
 			this._w=w;
 			this._h=h;
 			this.release();
-			this._createWebGLRenderTarget();
+			if (this._w !=0 && this._h !=0)this._createWebGLRenderTarget();
 		}
 
 		__proto.release=function(){
@@ -6277,6 +6299,7 @@
 				this._loaded=false;
 				this.bitmap.dispose();
 				this.bitmap=null;
+				this._alreadyResolved=false;
 				this._destroy=true;
 				_super.prototype.destroy.call(this);
 			}
@@ -6322,7 +6345,6 @@
 			if (this._alreadyResolved)
 				return _super.prototype._$get_source.call(this);
 			return null;
-			throw new Error("RenderTarget  还未准备好！");
 		});
 
 		RenderTarget2D.create=function(w,h,surfaceFormat,surfaceType,depthStencilFormat,mipMap,repeat,minFifter,magFifter){
@@ -8146,7 +8168,6 @@
 	var WebGLImage=(function(_super){
 		function WebGLImage(src,def){
 			this._image=null;
-			this._imageDatas=null;
 			this._allowMerageInAtlas=false;
 			this._enableMerageInAtlas=false;
 			this.repeat=false;
@@ -8158,14 +8179,21 @@
 			this.mipmap=false;
 			this.minFifter=-1;
 			this.magFifter=-1;
-			this._src=src;
-			this._image=new Browser.window.Image();
-			if (def){
-				def.onload && (this.onload=def.onload);
-				def.onerror && (this.onerror=def.onerror);
-				def.onCreate && def.onCreate(this);
+			if ((typeof src=='string')){
+				this._src=src;
+				this._image=new Browser.window.Image();
+				if (def){
+					def.onload && (this.onload=def.onload);
+					def.onerror && (this.onerror=def.onerror);
+					def.onCreate && def.onCreate(this);
+				}
+				this._image.crossOrigin=(src && (src.indexOf("data:")==0))? null :"";
+				(src)&& (this._image.src=src);
+				}else{
+				this._src=def;
+				this._image=src["source"];
+				this.onresize();
 			}
-			this._image.crossOrigin=(src && (src.indexOf("data:")==0))? null :"";
 			(src)&& (this._image.src=src);
 			this._enableMerageInAtlas=true;
 		}
@@ -8175,7 +8203,7 @@
 		Laya.imps(__proto,{"laya.webgl.resource.IMergeAtlasBitmap":true})
 		__proto._init_=function(src,def){}
 		__proto._createWebGlTexture=function(){
-			if (!this._image && !this._imageDatas){
+			if (!this._image){
 				throw "create GLTextur err:no data:"+this._image;
 			};
 			var gl=WebGL.mainContext;
@@ -8183,9 +8211,6 @@
 			var preTarget=WebGLContext.curBindTexTarget;
 			var preTexture=WebGLContext.curBindTexValue;
 			WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
-			if (this._imageDatas)
-				gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,this._w,this._h,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this._imageDatas);
-			else
 			gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this._image);
 			var minFifter=this.minFifter;
 			var magFifter=this.magFifter;
@@ -8211,9 +8236,8 @@
 				gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_T*/0x2803,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 			}
 			(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
-			(this._image)&& (this._image.onload=null);
+			this._image.onload=null;
 			this._image=null;
-			this._imageDatas=null;
 			if (isPot)
 				this.memorySize=this._w *this._h *4 *(1+1 / 3);
 			else
@@ -8227,7 +8251,7 @@
 			if (this._src==null || this._src==="")
 				return;
 			this._needReleaseAgain=false;
-			if (!this._image && !this._imageDatas){
+			if (!this._image){
 				this._recreateLock=true;
 				this.startCreate();
 				var _this=this;
@@ -8272,13 +8296,6 @@
 			this._w=this._image.width;
 			this._h=this._image.height;
 			(AtlasResourceManager.enabled)&& (this._w < AtlasResourceManager.atlasLimitWidth && this._h < AtlasResourceManager.atlasLimitHeight)? this._allowMerageInAtlas=true :this._allowMerageInAtlas=false;
-			if (!this._allowMerageInAtlas){
-				Browser.canvas.size(this._w,this._h);
-				Browser.canvas.clear();
-				Browser.context.drawImage(this._image,0,0,this._w,this._h);
-				this._imageDatas=new Uint8Array(Browser.context.getImageData(0,0,this._w,this._h).data.buffer);
-				this._image=null;
-			}
 		}
 
 		__proto.clearAtlasSource=function(){

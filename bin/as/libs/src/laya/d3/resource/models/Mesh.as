@@ -114,14 +114,6 @@ package laya.d3.resource.models {
 				once(Event.LOADED, this, _generateBoundingObject);
 		}
 		
-		private function _generateBoundingObject():void {
-			var pos:Vector.<Vector3> = positions;
-			_boundingBox = new BoundBox(new Vector3(), new Vector3());
-			BoundBox.createfromPoints(pos, _boundingBox);
-			_boundingSphere = new BoundSphere(new Vector3(), 0);
-			BoundSphere.createfromPoints(pos, _boundingSphere);
-		}
-		
 		/**
 		 * 添加子网格（开发者禁止修改）。
 		 * @param subMesh 子网格。

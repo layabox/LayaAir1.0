@@ -27,7 +27,7 @@ package laya.webgl.resource {
 		private var _repeat:Boolean;
 		private var _minFifter:int;
 		private var _magFifter:int;
-		private var _destroy:Boolean = false;
+		public var _destroy:Boolean = false;
 		
 		public function get surfaceFormat():int {
 			return _surfaceFormat;
@@ -62,7 +62,7 @@ package laya.webgl.resource {
 			if (_alreadyResolved)
 				return super.source;
 			return null;
-			throw new Error("RenderTarget  还未准备好！");
+			//throw new Error("RenderTarget  还未准备好！");
 		}
 		
 		/**
@@ -105,12 +105,12 @@ package laya.webgl.resource {
 		}
 		
 		public function size(w:Number, h:Number):void {
-			if (bitmap && _w == w && _h == h)
+			if (_w == w && _h == h)
 				return;
 			_w = w;
 			_h = h;
 			release();
-			_createWebGLRenderTarget();
+			if (_w != 0 && _h != 0)_createWebGLRenderTarget();
 		}
 		
 		public function release():void {
@@ -221,6 +221,7 @@ package laya.webgl.resource {
 				_loaded = false;
 				bitmap.dispose();
 				bitmap = null;
+				_alreadyResolved = false;
 				_destroy = true;
 				super.destroy();//待测试
 			}

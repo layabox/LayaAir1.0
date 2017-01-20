@@ -53,7 +53,7 @@ package threeDimen.primaryStage {
 			terrainSprite.transform.localScale = new Vector3(10, 10, 10);
 			terrainSprite.transform.position = new Vector3(0, 2.6, 1.5);
 			terrainSprite.transform.rotationEuler = new Vector3(0, 0.3, 0.4);
-			setMeshParams(terrainSprite, BaseMaterial.RENDERMODE_OPAQUE, new Vector4(3.5, 3.5, 3.5, 1.0), new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
+			setMeshParams(terrainSprite, StandardMaterial.RENDERMODE_OPAQUE, new Vector4(3.5, 3.5, 3.5, 1.0), new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
 			
 			pathFingding = terrainSprite.addComponent(PathFind) as PathFind;
 			pathFingding.setting = {allowDiagonal: true, dontCrossCorners: false, heuristic: Heuristic.manhattan, weight: 1};

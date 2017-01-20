@@ -148,6 +148,7 @@ package laya.display {
 			this.autoSize = false;
 			this._displayedInStage = true;
 			this._isFocused = true;
+			this._isVisibility = true;
 			
 			var _this:Stage = this;
 			var window:* = Browser.window;

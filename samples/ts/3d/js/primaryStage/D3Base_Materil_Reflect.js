@@ -26,7 +26,7 @@ var Materil_Reflect;
                 _this.material = meshSprite.meshRender.sharedMaterials[0];
                 ;
                 _this.material.albedo = new Vector4(0.0, 0.0, 0.0, 0.0);
-                _this.material.renderMode = Laya.BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
+                _this.material.renderMode = Laya.StandardMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
                 _this.material.reflectTexture = textureCube;
             });
             meshSprite.transform.localPosition = new Vector3(-0.3, 0.0, 0.0);

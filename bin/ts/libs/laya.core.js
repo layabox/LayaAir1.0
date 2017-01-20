@@ -383,7 +383,7 @@ var Laya=window.Laya=(function(window,document){
 		Laya.timer=null;
 		Laya.loader=null;
 		Laya.render=null
-		Laya.version="1.6.1Beta";
+		Laya.version="1.6.2beta";
 		Laya.stageBox=null
 		Laya._isinit=false;
 		__static(Laya,
@@ -461,7 +461,7 @@ var Laya=window.Laya=(function(window,document){
 						n--;
 					}
 				}
-				if (listeners.length===0)delete this._events[type];
+				if (listeners.length===0 && this._events)delete this._events[type];
 			}
 			return true;
 		}
@@ -851,7 +851,7 @@ var Laya=window.Laya=(function(window,document){
 		*获取最大字符高度。
 		*/
 		__proto.getMaxHeight=function(){
-			return this._padding[0]+this._padding[2]+this.fontSize;
+			return this.fontSize;
 		}
 
 		/**
@@ -868,7 +868,7 @@ var Laya=window.Laya=(function(window,document){
 			for (var i=0,n=text.length;i < n;i++){
 				tTexture=this.getCharTexture(text.charAt(i));
 				if (tTexture){
-					sprite.graphics.drawTexture(tTexture,drawX+tX+dx,drawY+this._padding[0]);
+					sprite.graphics.drawTexture(tTexture,drawX+tX+dx,drawY);
 					tX+=this.getCharWidth(text.charAt(i));
 				}
 			}
@@ -916,6 +916,12 @@ var Laya=window.Laya=(function(window,document){
 		__proto.setScaleX=function(value){
 			this._tf===Style._TF_EMPTY && (this._tf=new TransformInfo());
 			this._tf.scaleX=value;
+		}
+
+		__proto.setScale=function(x,y){
+			this._tf===Style._TF_EMPTY && (this._tf=new TransformInfo());
+			this._tf.scaleX=x;
+			this._tf.scaleY=y;
 		}
 
 		__proto.setScaleY=function(value){
@@ -4120,8 +4126,9 @@ var Laya=window.Laya=(function(window,document){
 			return SoundManager._muted;
 			},function(value){
 			if (value){
-				SoundManager.stopAll();
+				SoundManager.stopAllSound();
 			}
+			SoundManager.musicMuted=value;
 			SoundManager._muted=value;
 		});
 
@@ -4240,6 +4247,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		SoundManager.stopAll=function(){
+			SoundManager._tMusic=null;
 			var i=0;
 			var channel;
 			for (i=SoundManager._channels.length-1;i >=0;i--){
@@ -4260,6 +4268,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		SoundManager.stopMusic=function(){
+			SoundManager._tMusic=null;
 			if (SoundManager._musicChannel)
 				SoundManager._musicChannel.stop();
 		}
@@ -4270,6 +4279,14 @@ var Laya=window.Laya=(function(window,document){
 				SoundManager._setVolume(url,volume);
 				}else {
 				SoundManager.soundVolume=volume;
+				var i=0;
+				var channel;
+				for (i=SoundManager._channels.length-1;i >=0;i--){
+					channel=SoundManager._channels[i];
+					if (channel.url !=SoundManager._tMusic){
+						channel.volume=volume;
+					}
+				}
 			}
 		}
 
@@ -4489,6 +4506,11 @@ var Laya=window.Laya=(function(window,document){
 			}
 			Render._context=new RenderContext(width,height,isWebGl ? null :Render._mainCanvas);
 			Render._context.ctx.setIsMainContext();
+			var arr=/\bChrome\/(\d+)/.exec(Browser.userAgent);
+			if (arr && arr.length>1 && arr[1] < 38){
+				Browser.window.setInterval(function(){Laya.stage._loop();},1000/60);
+				return;
+			}
 			Browser.window.requestAnimationFrame(loop);
 			function loop (){
 				Laya.stage._loop();
@@ -5001,6 +5023,11 @@ var Laya=window.Laya=(function(window,document){
 			this.ctx.fillWords(words,x,y,font,color);
 		}
 
+		/***@private */
+		__proto.fillBorderWords=function(words,x,y,font,fillColor,borderColor,lineWidth){
+			this.ctx.fillBorderWords(words,x,y,font,fillColor,borderColor,lineWidth);
+		}
+
 		__proto.fillText=function(text,x,y,font,color,textAlign){
 			this.ctx.fillText(text,x+this.x,y+this.y,font,color,textAlign);
 		}
@@ -5197,7 +5224,16 @@ var Laya=window.Laya=(function(window,document){
 			y+=-style._tf.translateY+style.paddingTop;
 			if (style._calculation){
 				var words=sprite._getWords();
-				words && context.fillWords(words,x,y,(style).font,(style).color);
+				if (words){
+					var tStyle=style;
+					if (tStyle){
+						if (tStyle.stroke){
+							context.fillBorderWords(words,x,y,tStyle.font,tStyle.color,tStyle.strokeColor,tStyle.stroke);
+							}else{
+							context.fillWords(words,x,y,tStyle.font,tStyle.color);
+						}
+					}
+				}
 			};
 			var childs=sprite._childs,n=childs.length,ele;
 			if (sprite.viewport || (sprite.optimizeScrollRect && sprite._style.scrollRect)){
@@ -5277,6 +5313,7 @@ var Laya=window.Laya=(function(window,document){
 					console.log("cache bitmap size larger than 2048,cache ignored");
 					if (_cacheCanvas.ctx){
 						Pool.recover("RenderContext",_cacheCanvas.ctx);
+						_cacheCanvas.ctx.canvas.size(0,0);
 						_cacheCanvas.ctx=null;
 					}
 					_next._fun.call(_next,sprite,context,x,y);
@@ -5287,9 +5324,9 @@ var Laya=window.Laya=(function(window,document){
 					tx.ctx.sprite=sprite;
 				}
 				canvas=tx.canvas;
-				if (_cacheCanvas.type==='bitmap')canvas.context.asBitmap=true;
 				canvas.clear();
 				(canvas.width !=w || canvas.height !=h)&& canvas.size(w,h);
+				if (_cacheCanvas.type==='bitmap')canvas.context.asBitmap=true;
 				var t;
 				if (scaleX !=1 || scaleY !=1){
 					var ctx=(tx).ctx;
@@ -5560,6 +5597,21 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		/***@private */
+		__proto.fillBorderWords=function(words,x,y,font,color,borderColor,lineWidth){
+			font && (this.font=font);
+			color && (this.fillStyle=color);
+			this.textBaseline="top";
+			/*__JS__ */this.lineWidth=lineWidth;
+			/*__JS__ */this.textAlign='left';
+			/*__JS__ */this.strokeStyle=borderColor;
+			for (var i=0,n=words.length;i < n;i++){
+				var a=words[i];
+				/*__JS__ */this.__strokeText(a.char,a.x+x,a.y+y);
+				/*__JS__ */this.__fillText(a.char,a.x+x,a.y+y);
+			}
+		}
+
+		/***@private */
 		__proto.destroy=function(){
 			/*__JS__ */this.canvas.width=this.canvas.height=0;
 		}
@@ -5590,7 +5642,7 @@ var Laya=window.Laya=(function(window,document){
 			to.__fillText=to.fillText;
 			to.__fillRect=to.fillRect;
 			to.__strokeText=to.strokeText;
-			var funs=['drawTextures','fillWords','setIsMainContext','fillRect','strokeText','fillTexture','fillText','transformByMatrix','setTransformByMatrix','clipRect','drawTexture','drawTexture2','drawTextureWithTransform','flush','clear','destroy','drawCanvas','fillBorderText','drawCurves'];
+			var funs=['drawTextures','fillWords','fillBorderWords','setIsMainContext','fillRect','strokeText','fillTexture','fillText','transformByMatrix','setTransformByMatrix','clipRect','drawTexture','drawTexture2','drawTextureWithTransform','flush','clear','destroy','drawCanvas','fillBorderText','drawCurves'];
 			funs.forEach(function(i){
 				to[i]=from[i] || to[i];
 			});
@@ -6057,7 +6109,7 @@ var Laya=window.Laya=(function(window,document){
 				laya.utils.Browser._onMessage(e);
 			},false);
 			/*__JS__ */Browser.document.__createElement=Browser.document.createElement;
-			/*__JS__ */window.requestAnimationFrame=(function(){return window.requestAnimationFrame || window.webkitRequestAnimationFrame ||window.mozRequestAnimationFrame || window.oRequestAnimationFrame ||function (c){return window.setTimeout(c,1000 / 60);};})();
+			/*__JS__ */window.requestAnimationFrame=window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function (c){return window.setTimeout(c,1000 / 60);};;
 			/*__JS__ */var $BS=window.document.body.style;$BS.margin=0;$BS.overflow='hidden';;
 			/*__JS__ */var metas=window.document.getElementsByTagName('meta');;
 			/*__JS__ */var i=0,flag=false,content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no';;
@@ -8101,8 +8153,8 @@ var Laya=window.Laya=(function(window,document){
 				return;
 			};
 			var pixel=Browser.pixelRatio;
-			Stat._width=pixel *120;
-			Stat._vx=pixel *70;
+			Stat._width=pixel *130;
+			Stat._vx=pixel *75;
 			Stat._view[0]={title:"FPS(Canvas)",value:"_fpsStr",color:"yellow",units:"int"};
 			Stat._view[1]={title:"Sprite",value:"spriteCount",color:"white",units:"int"};
 			Stat._view[2]={title:"DrawCall",value:"drawCall",color:"white",units:"int"};
@@ -8206,7 +8258,7 @@ var Laya=window.Laya=(function(window,document){
 		Stat._ctx=null
 		Stat._timer=0;
 		Stat._count=0;
-		Stat._width=120;
+		Stat._width=130;
 		Stat._height=100;
 		Stat._view=[];
 		Stat._fontSize=12;
@@ -9165,7 +9217,7 @@ var Laya=window.Laya=(function(window,document){
 			this._childs=Node.ARRAY_EMPTY;
 			this.timer=Laya.timer;
 			this._$P=Node.PROP_EMPTY;
-			this.conchModel=Render.isConchNode? this.createConchModel():null;
+			this.conchModel=Render.isConchNode ? this.createConchModel():null;
 		}
 
 		__class(Node,'laya.display.Node',_super);
@@ -9209,6 +9261,7 @@ var Laya=window.Laya=(function(window,document){
 		*/
 		__proto.addChild=function(node){
 			if (this.destroyed || node===this)return node;
+			if (node && (node).zOrder)this._set$P("hasZorder",true);
 			if (node._parent===this){
 				this._childs.splice(this.getChildIndex(node),1);
 				this._childs.push(node);
@@ -9248,6 +9301,7 @@ var Laya=window.Laya=(function(window,document){
 		*/
 		__proto.addChildAt=function(node,index){
 			if (this.destroyed || node===this)return node;
+			if (node && (node).zOrder)this._set$P("hasZorder",true);
 			if (index >=0 && index <=this._childs.length){
 				if (node._parent===this){
 					var oldIndex=this.getChildIndex(node);
@@ -9457,7 +9511,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto._displayChild=function(node,display){
 			var childs=node._childs;
 			if (childs){
-				for (var i=childs.length-1;i >-1;i--){
+				for (var i=0,n=childs.length;i < n;i++){
 					var child=childs[i];
 					child._setDisplay(display);
 					child._childs.length && this._displayChild(child,display);
@@ -10820,6 +10874,74 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*<p><code>ColorFilter</code> 是颜色滤镜。</p>
+	*/
+	//class laya.filters.ColorFilter extends laya.filters.Filter
+	var ColorFilter=(function(_super){
+		function ColorFilter(mat){
+			//this._mat=null;
+			//this._alpha=null;
+			ColorFilter.__super.call(this);
+			if (!mat){
+				mat=[0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0];
+			}
+			this._mat=new Float32Array(16);
+			this._alpha=new Float32Array(4);
+			var j=0;
+			var z=0;
+			for (var i=0;i < 20;i++){
+				if (i % 5 !=4){
+					this._mat[j++]=mat[i];
+					}else {
+					this._alpha[z++]=mat[i];
+				}
+			}
+			this._action=RunDriver.createFilterAction(0x20);
+			this._action.data=this;
+		}
+
+		__class(ColorFilter,'laya.filters.ColorFilter',_super);
+		var __proto=ColorFilter.prototype;
+		Laya.imps(__proto,{"laya.filters.IFilter":true})
+		/**
+		*@private 通知微端
+		*/
+		__proto.callNative=function(sp){
+			var t=sp._$P.cf=this;
+			sp.conchModel && sp.conchModel.setFilterMatrix&&sp.conchModel.setFilterMatrix(this._mat,this._alpha);
+		}
+
+		/**@private */
+		__getset(0,__proto,'type',function(){
+			return 0x20;
+		});
+
+		/**@private */
+		__getset(0,__proto,'action',function(){
+			return this._action;
+		});
+
+		__getset(1,ColorFilter,'DEFAULT',function(){
+			if (!ColorFilter._DEFAULT){
+				ColorFilter._DEFAULT=new ColorFilter([1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]);
+			}
+			return ColorFilter._DEFAULT;
+		},laya.filters.Filter._$SET_DEFAULT);
+
+		__getset(1,ColorFilter,'GRAY',function(){
+			if (!ColorFilter._GRAY){
+				ColorFilter._GRAY=new ColorFilter([0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0]);
+			}
+			return ColorFilter._GRAY;
+		},laya.filters.Filter._$SET_GRAY);
+
+		ColorFilter._DEFAULT=null
+		ColorFilter._GRAY=null
+		return ColorFilter;
+	})(Filter)
+
+
+	/**
 	*<code>Loader</code> 类可用来加载文本、JSON、XML、二进制、图像等资源。
 	*/
 	//class laya.net.Loader extends laya.events.EventDispatcher
@@ -10916,7 +11038,7 @@ var Laya=window.Laya=(function(window,document){
 			};
 			var onerror=function (){
 				clear();
-				_this.event(/*laya.events.Event.ERROR*/"error","Load image filed");
+				_this.event(/*laya.events.Event.ERROR*/"error","Load image failed");
 			}
 			if (this._type==="nativeimage"){
 				image=new Browser.window.Image();
@@ -10948,7 +11070,8 @@ var Laya=window.Laya=(function(window,document){
 			}
 			function soundOnErr (){
 				clear();
-				_this.event(/*laya.events.Event.ERROR*/"error","Load sound filed");
+				sound.dispose();
+				_this.event(/*laya.events.Event.ERROR*/"error","Load sound failed");
 			}
 			function clear (){
 				sound.offAll();
@@ -10979,7 +11102,7 @@ var Laya=window.Laya=(function(window,document){
 				}else if (type==="sound" || type==="htmlimage" || type==="nativeimage"){
 				this.complete(data);
 				}else if (type==="atlas"){
-				if (!data.src){
+				if (!data.src && !data._setContext){
 					if (!this._data){
 						this._data=data;
 						if (data.meta && data.meta.image){
@@ -11177,74 +11300,6 @@ var Laya=window.Laya=(function(window,document){
 		Loader._startIndex=0;
 		return Loader;
 	})(EventDispatcher)
-
-
-	/**
-	*<p><code>ColorFilter</code> 是颜色滤镜。</p>
-	*/
-	//class laya.filters.ColorFilter extends laya.filters.Filter
-	var ColorFilter=(function(_super){
-		function ColorFilter(mat){
-			//this._mat=null;
-			//this._alpha=null;
-			ColorFilter.__super.call(this);
-			if (!mat){
-				mat=[0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0];
-			}
-			this._mat=new Float32Array(16);
-			this._alpha=new Float32Array(4);
-			var j=0;
-			var z=0;
-			for (var i=0;i < 20;i++){
-				if (i % 5 !=4){
-					this._mat[j++]=mat[i];
-					}else {
-					this._alpha[z++]=mat[i];
-				}
-			}
-			this._action=RunDriver.createFilterAction(0x20);
-			this._action.data=this;
-		}
-
-		__class(ColorFilter,'laya.filters.ColorFilter',_super);
-		var __proto=ColorFilter.prototype;
-		Laya.imps(__proto,{"laya.filters.IFilter":true})
-		/**
-		*@private 通知微端
-		*/
-		__proto.callNative=function(sp){
-			var t=sp._$P.cf=this;
-			sp.conchModel && sp.conchModel.setFilterMatrix&&sp.conchModel.setFilterMatrix(this._mat,this._alpha);
-		}
-
-		/**@private */
-		__getset(0,__proto,'type',function(){
-			return 0x20;
-		});
-
-		/**@private */
-		__getset(0,__proto,'action',function(){
-			return this._action;
-		});
-
-		__getset(1,ColorFilter,'DEFAULT',function(){
-			if (!ColorFilter._DEFAULT){
-				ColorFilter._DEFAULT=new ColorFilter([1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]);
-			}
-			return ColorFilter._DEFAULT;
-		},laya.filters.Filter._$SET_DEFAULT);
-
-		__getset(1,ColorFilter,'GRAY',function(){
-			if (!ColorFilter._GRAY){
-				ColorFilter._GRAY=new ColorFilter([0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0.3,0.59,0.11,0,0,0,0,0,1,0]);
-			}
-			return ColorFilter._GRAY;
-		},laya.filters.Filter._$SET_GRAY);
-
-		ColorFilter._DEFAULT=null
-		ColorFilter._GRAY=null
-		return ColorFilter;
-	})(Filter)
 
 
 	/**
@@ -11791,6 +11846,158 @@ var Laya=window.Laya=(function(window,document){
 		Socket.LITTLE_ENDIAN="littleEndian";
 		Socket.BIG_ENDIAN="bigEndian";
 		return Socket;
+	})(EventDispatcher)
+
+
+	/**
+	*@private
+	*Worker Image加载器
+	*/
+	//class laya.net.WorkerLoader extends laya.events.EventDispatcher
+	var WorkerLoader=(function(_super){
+		function WorkerLoader(){
+			this.worker=null;
+			WorkerLoader.__super.call(this);
+			var _$this=this;
+			this.worker=new Browser.window.Worker("libs/worker.js");
+			this.worker.onmessage=function (evt){
+				_$this.workerMessage(evt.data);
+			}
+		}
+
+		__class(WorkerLoader,'laya.net.WorkerLoader',_super);
+		var __proto=WorkerLoader.prototype;
+		/**
+		*@private
+		*/
+		__proto.workerMessage=function(data){
+			if (data){
+				switch(data.type){
+					case "Image":
+						this.imageLoaded(data);
+						break ;
+					case "Msg":
+						this.event("image_msg",data.msg);
+						break ;
+					}
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto.imageLoaded=function(data){
+			if (!data.dataType){
+				this.event(data.url,null);
+				this.event("image_err",data.url+"\n"+data.msg);
+				return;
+			};
+			var canvas=new HTMLCanvas("2D");
+			var ctx;
+			ctx=canvas.source.getContext("2d");
+			var imageData;
+			switch(data.dataType){
+				case "buffer":
+					imageData=ctx.createImageData(data.width,data.height);
+					imageData.data.set(data.buffer);
+					canvas.size(imageData.width,imageData.height);
+					ctx.putImageData(imageData,0,0);
+					break ;
+				case "imagedata":
+					imageData=data.imagedata;
+					canvas.size(imageData.width,imageData.height);
+					ctx.putImageData(imageData,0,0);
+					imageData=data.imagedata;
+					break ;
+				case "imageBitmap":
+					imageData=data.imageBitmap;
+					canvas.size(imageData.width,imageData.height);
+					ctx.drawImage(imageData,0,0);
+					break ;
+				}
+			if (Render.isWebGL){
+				/*__JS__ */canvas=new laya.webgl.resource.WebGLImage(canvas,data.url);;
+			}
+			this.event(data.url,canvas);
+		}
+
+		/**
+		*@private
+		*/
+		__proto._myTrace=function(__arg){
+			var arg=arguments;
+			var rst=[];
+			var i=0,len=arg.length;
+			for(i=0;i<len;i++){
+				rst.push(arg[i]);
+			}
+			this.event("image_msg",rst.join(" "));
+		}
+
+		/**
+		*加载图片
+		*@param url 图片地址
+		*/
+		__proto.loadImage=function(url){
+			var data;
+			data={};
+			data.type="load";
+			data.url=url;
+			this.worker.postMessage(data);
+		}
+
+		/**
+		*@private
+		*加载图片资源。
+		*@param url 资源地址。
+		*/
+		__proto._loadImage=function(url){
+			var _this=this;
+			if (!WorkerLoader._enable||url.toLowerCase().indexOf(".png")< 0){
+				WorkerLoader._preLoadFun.call(_this,url);
+				return;
+			}
+			function clear (){
+				laya.net.WorkerLoader.I.off(url,_this,onload);
+			};
+			var onload=function (image){
+				clear();
+				if (image){
+					_this.onLoaded(image);
+					}else{
+					WorkerLoader._preLoadFun.call(_this,url);
+				}
+			};
+			laya.net.WorkerLoader.I.on(url,_this,onload);
+			laya.net.WorkerLoader.I.loadImage(url);
+		}
+
+		/**
+		*是否启用。
+		*/
+		__getset(1,WorkerLoader,'enable',function(){
+			return WorkerLoader._enable;
+			},function(v){
+			WorkerLoader._enable=v;
+			if (WorkerLoader._enable && !WorkerLoader._preLoadFun)WorkerLoader.__init__();
+		});
+
+		WorkerLoader.__init__=function(){
+			if (WorkerLoader._preLoadFun)return;
+			if (!Browser.window.Worker)return;
+			WorkerLoader._preLoadFun=Loader["prototype"]["_loadImage"];
+			Loader["prototype"]["_loadImage"]=WorkerLoader["prototype"]["_loadImage"];
+			if (!WorkerLoader.I)WorkerLoader.I=new WorkerLoader();
+			return true;
+		}
+
+		WorkerLoader.IMAGE_LOADED="image_loaded";
+		WorkerLoader.IMAGE_ERR="image_err";
+		WorkerLoader.IMAGE_MSG="image_msg";
+		WorkerLoader.I=null
+		WorkerLoader._preLoadFun=null
+		WorkerLoader._enable=false;
+		return WorkerLoader;
 	})(EventDispatcher)
 
 
@@ -13040,25 +13247,18 @@ var Laya=window.Laya=(function(window,document){
 			if (tf.rotate || sx!==1 || sy!==1 || tf.skewX || tf.skewY){
 				m=this._transform || (this._transform=Matrix.create());
 				m.bTransform=true;
-				if (tf.rotate){
-					var angle=tf.rotate *0.0174532922222222;
-					var cos=m.cos=Math.cos(angle);
-					var sin=m.sin=Math.sin(angle);
-					m.a=sx *cos;
-					m.b=sx *sin;
-					m.c=-sy *sin;
-					m.d=sy *cos;
-					m.tx=m.ty=0;
-					return m;
-					}else {
-					m.a=sx;
-					m.d=sy;
-					m.c=m.b=m.tx=m.ty=0;
-					if (tf.skewX || tf.skewY){
-						return m.skew(tf.skewX *0.0174532922222222,tf.skewY *0.0174532922222222);
-					}
-					return m;
-				}
+				var skx=(tf.rotate-tf.skewX)*0.0174532922222222;
+				var sky=(tf.rotate+tf.skewY)*0.0174532922222222;
+				var cx=Math.cos(sky);
+				var ssx=Math.sin(sky);
+				var cy=Math.sin(skx);
+				var ssy=Math.cos(skx);
+				m.a=sx *cx;
+				m.b=sx *ssx;
+				m.c=-sy *cy;
+				m.d=sy *ssy;
+				m.tx=m.ty=0;
+				return m;
 				}else {
 				this._transform && this._transform.destroy();
 				this._transform=null;
@@ -13071,12 +13271,24 @@ var Laya=window.Laya=(function(window,document){
 		*设置坐标位置。
 		*@param x X 轴坐标。
 		*@param y Y 轴坐标。
+		*@param speedMode 是否极速模式，普通模式调用this.x=value进行赋值，极速模式直接调用内部函数处理，如果未重写x,y属性，建议设置为急速模式性能更高
 		*@return 返回对象本身。
 		*/
-		__proto.pos=function(x,y){
+		__proto.pos=function(x,y,speedMode){
+			(speedMode===void 0)&& (speedMode=false);
 			if (this._x!==x || this._y!==y){
-				this.x=x;
-				this.y=y;
+				if (this.destroyed)return this;
+				if (speedMode){
+					this._x=x;
+					this._y=y;
+					this.conchModel && this.conchModel.pos(this._x,this._y);
+					var p=this._parent;
+					p && p._repaint===0 && (p._repaint=1,p.parentRepaint());
+					this._$P.maskParent && this._$P.maskParent._repaint===0 && (this._$P.maskParent._repaint=1,this._$P.maskParent.parentRepaint());
+					}else {
+					this.x=x;
+					this.y=y;
+				}
 			}
 			return this;
 		}
@@ -13109,11 +13321,28 @@ var Laya=window.Laya=(function(window,document){
 		*设置缩放。
 		*@param scaleX X轴缩放比例。
 		*@param scaleY Y轴缩放比例。
+		*@param speedMode 是否极速模式，普通模式调用this.x=value进行赋值，极速模式直接调用内部函数处理，如果未重写x,y属性，建议设置为急速模式性能更高
 		*@return 返回对象本身。
 		*/
-		__proto.scale=function(scaleX,scaleY){
-			this.scaleX=scaleX;
-			this.scaleY=scaleY;
+		__proto.scale=function(scaleX,scaleY,speedMode){
+			(speedMode===void 0)&& (speedMode=false);
+			var style=this.getStyle();
+			var _tf=style._tf;
+			if (_tf.scaleX !=scaleX || _tf.scaleY !=scaleY){
+				if (this.destroyed)return this;
+				if (speedMode){
+					style.setScale(scaleX,scaleY);
+					this._changeType |=0x10;
+					this._tfChanged=true;
+					this.conchModel && this.conchModel.scale(scaleX,scaleY);
+					this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x04;
+					var p=this._parent;
+					p && p._repaint===0 && (p._repaint=1,p.parentRepaint());
+					}else {
+					this.scaleX=scaleX;
+					this.scaleY=scaleY;
+				}
+			}
 			return this;
 		}
 
@@ -13387,7 +13616,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto._childChanged=function(child){
 			if (this._childs.length)this._renderType |=/*laya.renders.RenderSprite.CHILDS*/0x800;
 			else this._renderType &=~ /*laya.renders.RenderSprite.CHILDS*/0x800;
-			if (child && (child).zOrder)Laya.timer.callLater(this,this.updateZOrder);
+			if(child&&this._get$P("hasZorder"))Laya.timer.callLater(this,this.updateZOrder);
 			this.repaint();
 		}
 
@@ -13426,6 +13655,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto._setDisplay=function(value){
 			if (!value && this._$P.cacheCanvas && this._$P.cacheCanvas.ctx){
 				Pool.recover("RenderContext",this._$P.cacheCanvas.ctx);
+				this._$P.cacheCanvas.ctx.canvas.size(0,0);
 				this._$P.cacheCanvas.ctx=null;
 			}
 			if (!value){
@@ -13606,7 +13836,10 @@ var Laya=window.Laya=(function(window,document){
 			if (this._zOrder !=value){
 				this._zOrder=value;
 				this.conchModel && this.conchModel.setZOrder && this.conchModel.setZOrder(value);
-				this._parent && Laya.timer.callLater(this._parent,this.updateZOrder);
+				if (this._parent){
+					value && this._parent._set$P("hasZorder",true);
+					Laya.timer.callLater(this._parent,this.updateZOrder);
+				}
 			}
 		});
 
@@ -15432,6 +15665,7 @@ var Laya=window.Laya=(function(window,document){
 			this.autoSize=false;
 			this._displayedInStage=true;
 			this._isFocused=true;
+			this._isVisibility=true;
 			var _this=this;
 			var window=Browser.window;
 			window.addEventListener("focus",function(){
@@ -16190,6 +16424,7 @@ var Laya=window.Laya=(function(window,document){
 			if (this._w !=w || this._h !=h){
 				this._w=w;
 				this._h=h;
+				this.memorySize=this._w *this._h *4;
 				this._ctx && this._ctx.size(w,h);
 				this._source && (this._source.height=h,this._source.width=w);
 			}

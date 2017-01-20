@@ -29,10 +29,12 @@ package laya.ani.bone
 			rst.length = smallUV.length;
 			var i:int, len:int;
 			len = rst.length;
+			var dWidth:Number = 1 / width;
+			var dHeight:Number = 1 / height;
 			for (i = 0; i < len; i += 2)
 			{
-				rst[i] = (smallUV[i] - startX) / width;
-				rst[i+1]=  (smallUV[i+1] - startY) / height;
+				rst[i] = (smallUV[i] - startX) *dWidth;
+				rst[i+1]=  (smallUV[i+1] - startY) *dHeight;
 			}
 			return rst;
 		}

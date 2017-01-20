@@ -8,7 +8,7 @@ package laya.d3.core.render {
 		/**是否进行深度测试。*/
 		public var depthTest:Boolean = true;
 		/**深度遮罩。*/
-		public var depthMask:int = 1;
+		public var depthMask:Boolean = true;
 		
 		//public  var depthFunc:int = -1;// Write it!!!
 		

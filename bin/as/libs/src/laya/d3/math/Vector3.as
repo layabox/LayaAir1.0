@@ -5,8 +5,6 @@ package laya.d3.math {
 	 * <code>Vector3</code> 类用于创建三维向量。
 	 */
 	public class Vector3  implements IClone{
-		/** @private */
-		private static var TEMPVec4:Vector4 = new Vector4();
 		
 		/**零向量，禁止修改*/
 		public static const ZERO:Vector3 = new Vector3(0.0, 0.0, 0.0);
@@ -26,6 +24,9 @@ package laya.d3.math {
 		public static const ForwardLH:Vector3 = new Vector3(0, 0, 1);
 		/**上向量,禁止修改*/
 		public static const Up:Vector3 = new Vector3(0, 1, 0);
+		
+		/** @private */
+		private static var TEMPVec4:Vector4 = new Vector4();
 		
 		/**
 		 * 两个三维向量距离的平方。
@@ -276,13 +277,6 @@ package laya.d3.math {
 		}
 		
 		/**
-		 * 求两个三维向量的和。
-		 * @param	a left三维向量。
-		 * @param	b right三维向量。
-		 * @param	out 输出向量。
-		 */
-		
-		/**
 		 * 求一个指定范围的向量
 		 * @param	value clamp向量
 		 * @param	min  最小
@@ -381,6 +375,12 @@ package laya.d3.math {
 			return r;
 		}
 		
+		/**
+		 * 判断两个三维向量是否相等。
+		 * @param	a 三维向量。
+		 * @param	b 三维向量。
+		 * @return  是否相等。
+		 */
 		public static function equals(a:Vector3, b:Vector3):Boolean {
 			var ae:Float32Array = a.elements;
 			var be:Float32Array = b.elements;

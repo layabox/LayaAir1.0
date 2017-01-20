@@ -32,7 +32,7 @@ package laya.html.dom {
 		 * 设置标签内容
 		 */
 		public function set innerHTML(text:String):void {
-			if (!text) this.size(0, 0);
+			//if (!text) this.size(0, 0);
 			this.destroyChildren();
 			appendHTML(text);
 		}

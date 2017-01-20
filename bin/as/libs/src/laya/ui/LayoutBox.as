@@ -83,8 +83,7 @@ package laya.ui {
 		 * @param items  项目列表。
 		 */
 		protected function sortItem(items:Array):void {
-			if (items) items.sort(function(a:*, b:*):Number { return a.y > b.y ? 1 : -1
-			});
+			if (items) items.sort(function(a:*, b:*):Number { return a.y - b.y;});
 		}
 		
 		protected function _setItemChanged():void {

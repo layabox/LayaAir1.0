@@ -367,7 +367,10 @@ package laya.renders {
 		public function fillWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String):void {
 			this.ctx.fillWords(words, x, y, font, color);
 		}
-		
+		/*** @private */
+		public function fillBorderWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, fillColor:String, borderColor:String, lineWidth:int):void {	
+			this.ctx.fillBorderWords(words, x, y, font, fillColor,borderColor,lineWidth);
+		}
 		public function fillText(text:String, x:Number, y:Number, font:String, color:String, textAlign:String):void {
 			this.ctx.fillText(text, x + this.x, y + this.y, font, color, textAlign);
 		}

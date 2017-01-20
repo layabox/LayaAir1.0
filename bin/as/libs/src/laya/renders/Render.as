@@ -89,16 +89,22 @@ package laya.renders {
 			_context = new RenderContext(width, height, isWebGl ? null : _mainCanvas);
 			_context.ctx.setIsMainContext();
 			
+			/*[IF-SCRIPT-BEGIN]
+			var arr:Array = /\bChrome\/(\d+)/.exec(Browser.userAgent);
+			if (arr && arr.length>1 && arr[1] < 38) {
+				Browser.window.setInterval(function():void {Laya.stage._loop();}, 1000/60);
+				return;
+			}
 			Browser.window.requestAnimationFrame(loop);
-			
 			function loop():void {
 				Laya.stage._loop();
 				Browser.window.requestAnimationFrame(loop);
 			}
-			/*[IF-FLASH]*/
-			Browser.window.stageIn.addEventListener("enterFrame", _enterFrame);
 			Laya.stage.on(Event.BLUR, this, _onBlur);
 			Laya.stage.on(Event.FOCUS, this, _onFocus);
+			[IF-SCRIPT-END]*/
+			/*[IF-FLASH]*/
+			Browser.window.stageIn.addEventListener("enterFrame", _enterFrame);			
 		}
 		
 		/**@private */

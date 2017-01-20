@@ -1,4 +1,56 @@
-##1.6.1 Beta##
+##1.6.2 Beta##
+----------------------------------------
+####2D####
+
+优化cacheAs内存，回收之前进行释放操作 【感谢：洛克】
+
+改进Sprite的skew和rotation不能同时生效的问题
+
+改进Sprite的zOrder属性，子对象只要设置zOrder，父对象增加任何子对象都会自动重新排序
+
+改进Sprite的size和scale函数，增加急速模式参数，提高大量调用时候的性能
+
+改进Graphics类fillTexture尺寸过大，会有缝隙的问题 【感谢：Doma.21号】
+
+优化9宫格效率
+
+HTML文本支持了描边功能，比如div.innerHTML='<span style="stroke:2;strokeColor:#ffff00">hello</span>';
+
+list滚动条设值为空格时不再打印丢失皮肤的日志
+
+声音加载失败后释放声音对象，以免再次加载无法进行的问题
+
+修复位图字体对齐方式不对的问题 【感谢：游戏爱好者】
+
+修复禁音又开启之后原本已经stop的背景音乐又开始放的问题
+
+####3D####
+增加不同混合模式混排
+
+Transform3D增加pivot轴心点接口
+
+新增粒子材质tintColor
+
+增加CameraUp和CameraDirection两个常用shader变量
+
+修复是动画完成事件中释放资源导致崩溃BUG
+
+修复其他若干BUG
+
+####LayaAirIDE####
+优化图集打包工具，增强算法，减少最终导出的图片尺寸
+
+优化图集打包工具，增加8位图片导出的支持，能大大减少png图片尺寸（F9设置）【感谢：fortune】
+
+导出图集时，增加.atlas后缀配置信息的导出，和原来的json内容相同，加载.atlas后缀时无需制定类型，会自动识别为图集，比如：common.json，common.atlas
+
+增加IDE发布UI和资源的命令行支持
+
+骨骼动画导出时，如果源文件版本号不支持，则会给出支持的版本号提示
+
+修复拖动多个图片到动画内可能导致的异常报错
+
+##1.6.1##
 ----------------------------------------
 ####2D####
 Stage增加focuschange，visibilitychange事件，用来判断舞台是否处于焦点状态和可见状态，同时增加isFocused，isVisibility等辅助属性

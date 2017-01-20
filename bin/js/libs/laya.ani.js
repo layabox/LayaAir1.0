@@ -1859,9 +1859,11 @@
 			rst.length=smallUV.length;
 			var i=0,len=0;
 			len=rst.length;
+			var dWidth=1 / width;
+			var dHeight=1 / height;
 			for (i=0;i < len;i+=2){
-				rst[i]=(smallUV[i]-startX)/ width;
-				rst[i+1]=(smallUV[i+1]-startY)/ height;
+				rst[i]=(smallUV[i]-startX)*dWidth;
+				rst[i+1]=(smallUV[i+1]-startY)*dHeight;
 			}
 			return rst;
 		}
@@ -2001,7 +2003,7 @@
 				var aniFullFrame=[];
 				for (var j=0,jNum=templet.getAnimation(i).nodes.length;j < jNum;j++){
 					var node=templet.getAnimation(i).nodes[j];
-					var frameCount=Math.floor((node.playTime+0.000001)/ cacheFrameInterval);
+					var frameCount=Math.floor(node.playTime/ cacheFrameInterval+0.01);
 					var nodeFullFrames=new Uint16Array(frameCount+1);
 					var lastFrameIndex=-1;
 					for (var n=0,nNum=node.keyFrame.length;n < nNum;n++){
@@ -2127,7 +2129,7 @@
 			var currentAniClipPlayDuration=this.playDuration;
 			if ((this._overallDuration!==0 && this._elapsedPlaybackTime >=this._overallDuration)|| (this._overallDuration===0 && this._elapsedPlaybackTime >=currentAniClipPlayDuration)){
 				this._currentTime=currentAniClipPlayDuration;
-				this._currentKeyframeIndex=Math.floor((currentAniClipPlayDuration+0.000001)/ cacheFrameInterval);
+				this._currentKeyframeIndex=Math.floor(currentAniClipPlayDuration / cacheFrameInterval+0.01);
 				this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
 				this._currentAnimationClipIndex=-1;
 				this.event(/*laya.events.Event.STOPPED*/"stopped");
@@ -2694,7 +2696,8 @@
 		}
 
 		__proto.dispose=function(){
-			this.resourceManager.removeResource(this);
+			if(this.resourceManager)
+				this.resourceManager.removeResource(this);
 			_super.prototype.dispose.call(this);
 		}
 
@@ -3275,7 +3278,7 @@
 						tGraphics.save();
 						tGraphics.alpha(tSlotData3);
 					}
-					if (!isNaN(tSlotData2)){
+					if (!isNaN(tSlotData2)&&tSlotData2!=-2){
 						if (this._templet.attachmentNames){
 							tDBBoneSlot.showDisplayByName(this._templet.attachmentNames[tSlotData2]);
 							}else {
@@ -3310,7 +3313,7 @@
 						tGraphics.save();
 						tGraphics.alpha(tSlotData3);
 					}
-					if (!isNaN(tSlotData2)){
+					if (!isNaN(tSlotData2)&&tSlotData2!=-2){
 						if (this._templet.attachmentNames){
 							tDBBoneSlot.showDisplayByName(this._templet.attachmentNames[tSlotData2]);
 							}else {
@@ -4755,6 +4758,7 @@
 			if (this.url){
 				delete Templet.TEMPLET_DICTIONARY[this.url];
 			}
+			this.dispose();
 		}
 
 		/**

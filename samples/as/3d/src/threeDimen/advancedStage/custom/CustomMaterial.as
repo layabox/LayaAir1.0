@@ -10,14 +10,14 @@ package threeDimen.advancedStage.custom {
 	 * @author ...
 	 */
 	public class CustomMaterial extends BaseMaterial {
-		private static var _DIFFUSETEXTURE_ID:int = 0;
+		public static var DIFFUSETEXTURE:int = 0;
 		
 		/**
 		 * 获取漫反射贴图。
 		 * @return 漫反射贴图。
 		 */
 		public function get diffuseTexture():BaseTexture {
-			return _getTexture(_DIFFUSETEXTURE_ID);
+			return _getTexture(DIFFUSETEXTURE);
 		}
 		
 		/**
@@ -25,7 +25,7 @@ package threeDimen.advancedStage.custom {
 		 * @param value 漫反射贴图。
 		 */
 		public function set diffuseTexture(value:BaseTexture):void {
-			_setTexture(_DIFFUSETEXTURE_ID, value);
+			_setTexture(DIFFUSETEXTURE, value);
 		}
 		
 		public function CustomMaterial() {

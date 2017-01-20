@@ -1,5 +1,6 @@
 package laya.d3.core.particle {
 	import laya.d3.core.ParticleRender;
+	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.ParticleMaterial;
@@ -22,15 +23,13 @@ package laya.d3.core.particle {
 	/**
 	 * <code>Particle3D</code> 3D粒子。
 	 */
-	public class Particle3D extends Sprite3D {
+	public class Particle3D extends RenderableSprite3D {
+		
 		/**@private */
 		private var _setting:ParticleSetting;
 		
 		/**@private 粒子模板。*/
 		private var _templet:ParticleTemplet3D;
-		
-		/** @private */
-		private var _particleRender:ParticleRender;
 		
 		/**
 		 * 获取粒子模板。
@@ -45,7 +44,7 @@ package laya.d3.core.particle {
 		 * @return  粒子渲染器。
 		 */
 		public function get particleRender():ParticleRender {
-			return _particleRender;
+			return _render as ParticleRender;
 		}
 		
 		/**
@@ -54,33 +53,33 @@ package laya.d3.core.particle {
 		 */
 		public function Particle3D(setting:ParticleSetting) {//暂不支持更换模板和初始化后修改混合状态。
 			_setting = setting;//TODO:临时
-			_particleRender = new ParticleRender(this);
-			_particleRender.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
+			_render = new ParticleRender(this);
+			_render.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
 			var material:ParticleMaterial = new ParticleMaterial();
 			
 			if (setting.textureName)
 				material.diffuseTexture = Texture2D.load(setting.textureName);
 			
-			_particleRender.sharedMaterial = material;
+			_render.sharedMaterial = material;
 			_templet = new ParticleTemplet3D(this, setting);
 			if (setting.blendState === 0)
-				material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_TRANSPARENT;
+				material.renderMode = ParticleMaterial.RENDERMODE_DEPTHREAD_TRANSPARENT;
 			else if (setting.blendState === 1)
-				material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_ADDTIVE;
+				material.renderMode = ParticleMaterial.RENDERMODE_DEPTHREAD_ADDTIVE;
 			
 			_changeRenderObject(0);
 		}
 		
 		/** @private */
 		private function _changeRenderObject(index:int):RenderElement {
-			var renderObjects:Vector.<RenderElement> = _particleRender.renderObject._renderElements;
+			var renderObjects:Vector.<RenderElement> = _render.renderObject._renderElements;
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderObject = _particleRender.renderObject;
+			renderElement._renderObject = _render.renderObject;
 			
-			var material:BaseMaterial = _particleRender.sharedMaterials[index];
+			var material:BaseMaterial = _render.sharedMaterials[index];
 			(material) || (material = ParticleMaterial.defaultMaterial);//确保有材质,由默认材质代替。
 			var element:IRenderable = _templet;
 			renderElement._mainSortID = 0;
@@ -92,31 +91,19 @@ package laya.d3.core.particle {
 		}
 		
 		/** @private */
-		private function _onMaterialChanged(_particleRender:ParticleRender, index:int, material:BaseMaterial):void {
-			var renderElementCount:int = _particleRender.renderObject._renderElements.length;
+		private function _onMaterialChanged(particleRender:ParticleRender, index:int, material:BaseMaterial):void {
+			var renderElementCount:int = particleRender.renderObject._renderElements.length;
 			(index < renderElementCount) && _changeRenderObject(index);
 		}
 		
 		/** @private */
 		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_particleRender.renderObject);
+			scene.removeFrustumCullingObject(_render.renderObject);
 		}
 		
 		/** @private */
 		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_particleRender.renderObject);
-		}
-		
-		/**
-		 * 更新粒子。
-		 * @param state 渲染相关状态参数。
-		 */
-		public override function _update(state:RenderState):void {
-			_templet.update(state.elapsedTime);
-			state.owner = this;
-			
-			Stat.spriteCount++;
-			_childs.length && _updateChilds(state);
+			scene.addFrustumCullingObject(_render.renderObject);
 		}
 		
 		/**
@@ -126,6 +113,12 @@ package laya.d3.core.particle {
 			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
 			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
 			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
+		}
+		
+		override public function _update(state:RenderState):void 
+		{
+			_templet.update(state.elapsedTime);
+			super._update(state);
 		}
 		
 		/**
@@ -142,9 +135,10 @@ package laya.d3.core.particle {
 			super.cloneTo(destObject);
 			var destParticle3D:Particle3D = destObject as Particle3D;
 			destParticle3D._templet = _templet;//TODO:待确认是否复用
-			var destParticleRender:ParticleRender = destParticle3D._particleRender;
-			destParticleRender.sharedMaterials = _particleRender.sharedMaterials;
-			destParticleRender.enable = _particleRender.enable;
+			var destParticleRender:ParticleRender = destParticle3D._render as ParticleRender;
+			var particleRender:ParticleRender = _render as ParticleRender;
+			destParticleRender.sharedMaterials = particleRender.sharedMaterials;
+			destParticleRender.enable = particleRender.enable;
 		}
 		
 		/**
@@ -153,7 +147,6 @@ package laya.d3.core.particle {
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
-			_particleRender._destroy();
 			_templet = null;
 		}
 	}

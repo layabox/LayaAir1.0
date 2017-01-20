@@ -12,7 +12,7 @@ package laya.webgl.resource {
 	public class RenderTargetMAX {
 		private static var _matrixDefault:Matrix = new Matrix();
 		
-		public var targets:Vector.<OneTarget>;//没用到
+		//public var targets:Vector.<OneTarget>;//没用到
 		public var oneTargets:OneTarget;
 		public var repaint:Boolean;
 		
@@ -39,6 +39,7 @@ package laya.webgl.resource {
 		}
 		
 		private function _flushToTarget(context:WebGLContext2D, target:RenderTarget2D):void {
+			if (target._destroy) return;
 			var worldScissorTest:Boolean = RenderState2D.worldScissorTest;
 			var preworldClipRect:Rectangle = RenderState2D.worldClipRect;
 			
@@ -116,8 +117,7 @@ import laya.webgl.resource.RenderTarget2D;
 
 class OneTarget {
 	/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-	public var x:Number;
-	import laya.webgl.resource.RenderTarget2D;
+	public var x:Number;	
 	public var width:Number;
 	public var height:Number;
 	public var target:RenderTarget2D;

@@ -37,7 +37,7 @@ package laya.utils {
 		private static var _ctx:Context;
 		private static var _timer:Number = 0;
 		private static var _count:int = 0;
-		private static var _width:int = 120;
+		private static var _width:int = 130;
 		private static var _height:int = 100;
 		private static var _view:Array = [];
 		private static var _fontSize:int = 12;
@@ -55,8 +55,8 @@ package laya.utils {
 				return;
 			}
 			var pixel:Number = Browser.pixelRatio;
-			_width = pixel * 120;
-			_vx = pixel * 70;
+			_width = pixel * 130;
+			_vx = pixel * 75;
 			
 			_view[0] = {title: "FPS(Canvas)", value: "_fpsStr", color: "yellow", units: "int"};
 			_view[1] = {title: "Sprite", value: "spriteCount", color: "white", units: "int"};

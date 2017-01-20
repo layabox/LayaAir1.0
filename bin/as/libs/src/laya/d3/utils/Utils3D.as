@@ -211,7 +211,7 @@ package laya.d3.utils {
 				material = new ShurikenParticleMaterial();
 				material.diffuseTexture = innerResouMap ? Loader.getRes(innerResouMap[settting.texturePath]) : Texture2D.load(settting.texturePath);
 			}
-			material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;//TODO:不应自动设置
+			material.renderMode = ShurikenParticleMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;//TODO:不应自动设置
 			
 			particle.particleRender.sharedMaterial = material;
 			//particleSystem
@@ -585,7 +585,6 @@ package laya.d3.utils {
 			localSceleElement[2] = scaleValue[2];
 			node.transform.localScale = localScale;
 			
-			
 			switch (json.type) {
 			case "Sprite3D": 
 				break;
@@ -593,11 +592,14 @@ package laya.d3.utils {
 				var meshSprite3D:MeshSprite3D = (node as MeshSprite3D);
 				var meshRender:MeshRender = meshSprite3D.meshRender;
 				var lightmapIndex:* = customProps.lightmapIndex;//TODO:
-				(lightmapIndex !== null) && (meshRender.lightmapIndex=lightmapIndex);
+				(lightmapIndex !== null) && (meshRender.lightmapIndex = lightmapIndex);
 				var lightmapScaleOffsetArray:Array = customProps.lightmapScaleOffset;
-				(lightmapScaleOffsetArray)&&(meshRender.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
-	
-				var mesh:Mesh = Loader.getRes(innerResouMap[json.instanceParams.loadPath]);			
+				if (lightmapScaleOffsetArray)
+					meshRender.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]);
+				else
+					meshRender.lightmapScaleOffset = new Vector4(1, 1, 0, 0);
+				
+				var mesh:Mesh = Loader.getRes(innerResouMap[json.instanceParams.loadPath]);
 				meshSprite3D.meshFilter.sharedMesh = mesh;
 				if (mesh.loaded)
 					meshRender.sharedMaterials = mesh.materials;
@@ -696,7 +698,7 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function _parseMaterial(textureMap:Object, material:StandardMaterial, json:Object):void {
+		public static function _parseStandardMaterial(textureMap:Object, material:StandardMaterial, json:Object):void {
 			var customProps:Object = json.customProps;
 			var ambientColorValue:Array = customProps.ambientColor;
 			material.ambientColor = new Vector3(ambientColorValue[0], ambientColorValue[1], ambientColorValue[2]);
@@ -723,7 +725,14 @@ package laya.d3.utils {
 			(ambientTexture) && (material.ambientTexture = Loader.getRes(textureMap[ambientTexture]));
 			
 			var reflectTexture:String = customProps.reflectTexture.texture2D;
-			(reflectTexture) && (material.reflectTexture = Loader.getRes(textureMap[reflectTexture]));
+			(reflectTexture) && (material.reflectTexture = Loader.getRes(textureMap[reflectTexture]));		
+		}
+		
+		/** @private */
+		public static function _parseShurikenParticleMaterial(textureMap:Object, material:StandardMaterial, json:Object):void {
+			var customProps:Object = json.customProps;
+			var diffuseTexture:String = customProps.diffuseTexture.texture2D;
+			(diffuseTexture) && (material.diffuseTexture = Loader.getRes(textureMap[diffuseTexture]));	
 		}
 		
 		/** @private */
@@ -1157,7 +1166,7 @@ package laya.d3.utils {
 		public static function transformLightingMapTexcoordArray(source:Float32Array, sourceOffset:int, lightingMapScaleOffset:Vector4, result:Float32Array, resultOffset:int):void {
 			var lightingMapScaleOffsetE:Float32Array = lightingMapScaleOffset.elements;
 			result[resultOffset + 0] = source[sourceOffset + 0] * lightingMapScaleOffsetE[0] + lightingMapScaleOffsetE[2];
-			result[resultOffset + 1] = source[sourceOffset + 1] * lightingMapScaleOffsetE[1]- lightingMapScaleOffsetE[3];
+			result[resultOffset + 1] = 1.0 + source[sourceOffset + 1] * lightingMapScaleOffsetE[1] + lightingMapScaleOffsetE[3];
 		}
 		
 		/**

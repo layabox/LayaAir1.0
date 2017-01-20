@@ -118,7 +118,9 @@ package laya.d3.resource {
 			}
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			_image.onload = null;
-			_image = null;
+			
+			//*************************** To Do ***************************
+			//_image = null;
 			
 			if (isPot)
 				memorySize = w * h * 4 * (1 + 1 / 3);//使用mipmap则在原来的基础上增加1/3

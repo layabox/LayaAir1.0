@@ -662,7 +662,8 @@ package laya.ani.bone {
 						tGraphics.save();
 						tGraphics.alpha(tSlotData3);
 					}
-					if (!isNaN(tSlotData2)) {
+					if (!isNaN(tSlotData2)&&tSlotData2!=-2) {
+						
 						if (_templet.attachmentNames) {	
 							tDBBoneSlot.showDisplayByName(_templet.attachmentNames[tSlotData2]);
 						}else {
@@ -699,7 +700,7 @@ package laya.ani.bone {
 						tGraphics.save();
 						tGraphics.alpha(tSlotData3);
 					}
-					if (!isNaN(tSlotData2)) {
+					if (!isNaN(tSlotData2)&&tSlotData2!=-2) {
 						if (_templet.attachmentNames) {	
 							tDBBoneSlot.showDisplayByName(_templet.attachmentNames[tSlotData2]);
 						}else {

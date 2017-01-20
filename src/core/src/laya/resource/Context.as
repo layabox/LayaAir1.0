@@ -25,7 +25,7 @@ package laya.resource {
 			to.__fillText = to.fillText;
 			to.__fillRect = to.fillRect;
 			to.__strokeText = to.strokeText;
-			var funs:Array = ['drawTextures','fillWords','setIsMainContext','fillRect', 'strokeText','fillTexture', 'fillText', 'transformByMatrix', 'setTransformByMatrix', 'clipRect', 'drawTexture', 'drawTexture2', 'drawTextureWithTransform', 'flush', 'clear', 'destroy', 'drawCanvas', 'fillBorderText','drawCurves'];
+			var funs:Array = ['drawTextures','fillWords','fillBorderWords','setIsMainContext','fillRect', 'strokeText','fillTexture', 'fillText', 'transformByMatrix', 'setTransformByMatrix', 'clipRect', 'drawTexture', 'drawTexture2', 'drawTextureWithTransform', 'flush', 'clear', 'destroy', 'drawCanvas', 'fillBorderText','drawCurves'];
 			funs.forEach(function(i:String):void {
 				to[i] = from[i] || to[i];
 			});
@@ -344,6 +344,22 @@ package laya.resource {
 			}
 		}
 		
+		/*** @private */
+		public function fillBorderWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String, borderColor:String, lineWidth:int):void {	
+			font && (this.font = font);
+			color && (this.fillStyle = color);
+			this.textBaseline = "top";
+			__JS__("this.lineWidth = lineWidth");
+			__JS__("this.textAlign = 'left'");
+			__JS__("this.strokeStyle = borderColor");
+			for (var i:int = 0, n:int = words.length; i < n; i++) {
+				var a:* = words[i];			
+				__JS__("this.__strokeText(a.char, a.x + x, a.y + y)");
+				__JS__("this.__fillText(a.char, a.x + x, a.y + y)");
+			}
+			
+		
+		}
 		/*** @private */
 		public function destroy():void {
 			__JS__("this.canvas.width = this.canvas.height = 0");

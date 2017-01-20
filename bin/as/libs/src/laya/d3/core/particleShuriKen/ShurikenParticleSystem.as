@@ -1,6 +1,11 @@
 package laya.d3.core.particleShuriKen {
 	import laya.d3.core.IClone;
 	import laya.d3.core.particleShuriKen.module.Burst;
+	import laya.d3.core.particleShuriKen.module.GradientAngularVelocity;
+	import laya.d3.core.particleShuriKen.module.GradientColor;
+	import laya.d3.core.particleShuriKen.module.GradientDataColor;
+	import laya.d3.core.particleShuriKen.module.GradientSize;
+	import laya.d3.core.particleShuriKen.module.GradientVelocity;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.particleShuriKen.module.ColorOverLifetime;
@@ -21,6 +26,7 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
+	import laya.d3.shader.ShaderDefines3D;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.maths.MathUtil;
@@ -99,6 +105,19 @@ package laya.d3.core.particleShuriKen {
 		private var _burstsIndex:int;
 		///**@private 发射粒子最小时间间隔。*/
 		//private var _minEmissionTime:Number;
+		/**@private */
+		private var _velocityOverLifetime:VelocityOverLifetime;
+		/**@private */
+		private var _colorOverLifetime:ColorOverLifetime;
+		/**@private */
+		private var _sizeOverLifetime:SizeOverLifetime;
+		/**@private */
+		private var _rotationOverLifetime:RotationOverLifetime;
+		/**@private */
+		private var _textureSheetAnimation:TextureSheetAnimation;
+		
+		/** @private */
+		private var _uvLength:Vector2 = new Vector2();//TODO:
 		
 		/**@private */
 		public var _startUpdateLoopCount:int;
@@ -192,7 +211,7 @@ package laya.d3.core.particleShuriKen {
 		public var gravity:Vector3;//TODO:应使用全局,待验证算法是否正确
 		/**重力敏感度。*/
 		public var gravityModifier:Number;
-		/**模拟器空间,0为Local,1为World。暂不支持*/
+		/**模拟器空间,0为World,1为Local。暂不支持*/
 		public var simulationSpace:int;
 		/**缩放模式，0为Hiercachy,1为Local,2为World。暂不支持1,2*/
 		public var scaleMode:int;
@@ -201,16 +220,6 @@ package laya.d3.core.particleShuriKen {
 		/**是否自动随机种子*/
 		//public var autoRandomSeed:int;
 		
-		/**生命周期速度。*/
-		public var velocityOverLifetime:VelocityOverLifetime;
-		/**生命周期颜色。*/
-		public var colorOverLifetime:ColorOverLifetime;
-		/**生命周期尺寸。*/
-		public var sizeOverLifetime:SizeOverLifetime;
-		/**生命周期旋转。*/
-		public var rotationOverLifetime:RotationOverLifetime;
-		/**纹理序列帧动画。*/
-		public var textureSheetAnimation:TextureSheetAnimation;
 		/**是否为性能模式,性能模式下会延迟粒子释放。*/
 		public var isPerformanceMode:Boolean;
 		
@@ -315,6 +324,342 @@ package laya.d3.core.particleShuriKen {
 			return _playbackTime;
 		}
 		
+		/**
+		 * 获取生命周期速度,注意:如修改该值的某些属性,需重新赋值此属性才可生效。
+		 * @return 生命周期速度.
+		 */
+		public function get velocityOverLifetime():VelocityOverLifetime {
+			return _velocityOverLifetime;
+		}
+		
+		/**
+		 * 设置生命周期速度,注意:如修改该值的某些属性,需重新赋值此属性才可生效。
+		 * @param value 生命周期速度.
+		 */
+		public function set velocityOverLifetime(value:VelocityOverLifetime):void {
+			if (value) {
+				if (value.enbale)
+					_owner._addShaderDefine(ShaderDefines3D.VELOCITYOVERLIFETIME);
+				else
+					_owner._removeShaderDefine(ShaderDefines3D.VELOCITYOVERLIFETIME);
+				
+				var velocity:GradientVelocity = value.velocity;
+				var velocityType:int = velocity.type;
+				_owner._setShaderValueInt(ShuriKenParticle3D.VOLTYPE, velocityType);
+				switch (velocityType) {
+				case 0: 
+					_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, velocity.constant);
+					break;
+				case 1: 
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, velocity.gradientX._elements);
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, velocity.gradientY._elements);
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, velocity.gradientZ._elements);
+					break;
+				case 2: 
+					_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, velocity.constantMin);
+					_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONSTMAX, velocity.constantMax);
+					break;
+				case 3: 
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, velocity.gradientXMin._elements);
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX, velocity.gradientXMax._elements);
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, velocity.gradientYMin._elements);
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX, velocity.gradientYMax._elements);
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, velocity.gradientZMin._elements);
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX, velocity.gradientZMax._elements);
+					break;
+				}
+				_owner._setShaderValueInt(ShuriKenParticle3D.VOLSPACETYPE, value.space);
+			} else {
+				_owner._removeShaderDefine(ShaderDefines3D.VELOCITYOVERLIFETIME);
+				
+				_owner._setShaderValueInt(ShuriKenParticle3D.VOLTYPE, undefined);
+				_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, null);
+				_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, null);
+				_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONSTMAX, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX, null);
+				_owner._setShaderValueInt(ShuriKenParticle3D.VOLSPACETYPE, undefined);
+			}
+			_velocityOverLifetime = value;
+		}
+		
+		/**
+		 * 获取生命周期颜色,注意:如修改该值的某些属性,需重新赋值此属性才可生效。
+		 * @return 生命周期颜色
+		 */
+		public function get colorOverLifetime():ColorOverLifetime {
+			return _colorOverLifetime;
+		}
+		
+		/**
+		 * 设置生命周期颜色,注意:如修改该值的某些属性,需重新赋值此属性才可生效。
+		 * @param value 生命周期颜色
+		 */
+		public function set colorOverLifetime(value:ColorOverLifetime):void {
+			if (value) {
+				var color:GradientColor = value.color;
+				if (value.enbale) {
+					switch (color.type) {
+					case 1: 
+						_owner._addShaderDefine(ShaderDefines3D.COLOROVERLIFETIME);
+						break;
+					case 3: 
+						_owner._addShaderDefine(ShaderDefines3D.RANDOMCOLOROVERLIFETIME);
+						break;
+					}
+				} else {
+					_owner._removeShaderDefine(ShaderDefines3D.COLOROVERLIFETIME);
+					_owner._removeShaderDefine(ShaderDefines3D.RANDOMCOLOROVERLIFETIME);
+				}
+				
+				switch (color.type) {
+				case 1: 
+					var gradientColor:GradientDataColor = color.gradient;
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, gradientColor._alphaElements);
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, gradientColor._rgbElements);
+					break;
+				case 3: 
+					var minGradientColor:GradientDataColor = color.gradientMin;
+					var maxGradientColor:GradientDataColor = color.gradientMax;
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, minGradientColor._alphaElements);
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, minGradientColor._rgbElements);
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS, maxGradientColor._alphaElements);
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS, maxGradientColor._rgbElements);
+					break;
+				}
+			} else {
+				_owner._removeShaderDefine(ShaderDefines3D.COLOROVERLIFETIME);
+				_owner._removeShaderDefine(ShaderDefines3D.RANDOMCOLOROVERLIFETIME);
+				
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, gradientColor._alphaElements);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, gradientColor._rgbElements);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, minGradientColor._alphaElements);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, minGradientColor._rgbElements);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS, maxGradientColor._alphaElements);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS, maxGradientColor._rgbElements);
+			}
+			_colorOverLifetime = value;
+		}
+		
+		/**
+		 * 获取生命周期尺寸,注意:如修改该值的某些属性,需重新赋值此属性才可生效。
+		 * @return 生命周期尺寸
+		 */
+		public function get sizeOverLifetime():SizeOverLifetime {
+			return _sizeOverLifetime;
+		}
+		
+		/**
+		 * 设置生命周期尺寸,注意:如修改该值的某些属性,需重新赋值此属性才可生效。
+		 * @param value 生命周期尺寸
+		 */
+		public function set sizeOverLifetime(value:SizeOverLifetime):void {
+			if (value) {
+				if (value.enbale)
+					_owner._addShaderDefine(ShaderDefines3D.SIZEOVERLIFETIME);
+				else
+					_owner._removeShaderDefine(ShaderDefines3D.SIZEOVERLIFETIME);
+				
+				var size:GradientSize = value.size;
+				var sizeType:int = size.type;
+				var sizeSeparate:Boolean;
+				switch (sizeType) {
+				case 0: 
+					sizeSeparate = size.separateAxes;
+					_owner._setShaderValueInt(ShuriKenParticle3D.SOLTYPE, sizeType);
+					_owner._setShaderValueBool(ShuriKenParticle3D.SOLSEPRARATE, sizeSeparate);
+					if (sizeSeparate) {
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, size.gradientX._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTY, size.gradientY._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZ, size.gradientZ._elements);
+					} else {
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENT, size.gradient._elements);
+					}
+					break;
+				case 2: 
+					sizeSeparate = size.separateAxes;
+					_owner._setShaderValueInt(ShuriKenParticle3D.SOLTYPE, sizeType);
+					_owner._setShaderValueBool(ShuriKenParticle3D.SOLSEPRARATE, sizeSeparate);
+					if (sizeSeparate) {
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, size.gradientXMin._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTXMAX, size.gradientXMax._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTY, size.gradientYMin._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTYMAX, size.gradientYMax._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZ, size.gradientZMin._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZMAX, size.gradientZMax._elements);
+					} else {
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENT, size.gradientMin._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientMax, size.gradientMax._elements);
+					}
+					break;
+				}
+			} else {
+				_owner._removeShaderDefine(ShaderDefines3D.SIZEOVERLIFETIME);
+				
+				_owner._setShaderValueInt(ShuriKenParticle3D.SOLTYPE, undefined);
+				_owner._setShaderValueBool(ShuriKenParticle3D.SOLSEPRARATE, undefined);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTXMAX, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTY, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTYMAX, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZ, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZMAX, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENT, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientMax, null);
+			}
+			_sizeOverLifetime = value;
+		}
+		
+		/**
+		 * 获取生命周期旋转,注意:如修改该值的某些属性,需重新赋值此属性才可生效。
+		 * @return 生命周期旋转。
+		 */
+		public function get rotationOverLifetime():RotationOverLifetime {
+			return _rotationOverLifetime;
+		}
+		
+		/**
+		 * 设置生命周期旋转,注意:如修改该值的某些属性,需重新赋值此属性才可生效。
+		 * @param value 生命周期旋转。
+		 */
+		public function set rotationOverLifetime(value:RotationOverLifetime):void {
+			if (value) {
+				if (value.enbale)
+					_owner._addShaderDefine(ShaderDefines3D.ROTATIONOVERLIFETIME);
+				else
+					_owner._removeShaderDefine(ShaderDefines3D.ROTATIONOVERLIFETIME);
+				
+				var rotation:GradientAngularVelocity = value.angularVelocity;
+				var rotationType:int = rotation.type;
+				var rotationSeparate:Boolean = rotation.separateAxes;
+				_owner._setShaderValueInt(ShuriKenParticle3D.ROLTYPE, rotationType);
+				_owner._setShaderValueBool(ShuriKenParticle3D.ROLSEPRARATE, rotationSeparate);
+				switch (rotationType) {
+				case 0: 
+					if (rotationSeparate) {
+						_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, rotation.constantSeparate);
+					} else {
+						_owner._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONST, rotation.constant);
+					}
+					break;
+				case 1: 
+					if (rotationSeparate) {
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX, rotation.gradientX._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY, rotation.gradientY._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, rotation.gradientZ._elements);
+					} else {
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, rotation.gradient._elements);
+					}
+					break;
+				case 2: 
+					if (rotationSeparate) {
+						_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, rotation.constantMinSeparate);
+						_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE, rotation.constantMaxSeparate);
+					} else {
+						_owner._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONST, rotation.constantMin);
+						_owner._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX, rotation.constantMax);
+					}
+					break;
+				case 3: 
+					if (rotationSeparate) {
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX, rotation.gradientXMin._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX, rotation.gradientXMax._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY, rotation.gradientYMin._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX, rotation.gradientYMax._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, rotation.gradientZMin._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX, rotation.gradientZMax._elements);
+					} else {
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, rotation.gradientMin._elements);
+						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX, rotation.gradientMax._elements);
+					}
+					break;
+				}
+			} else {
+				_owner._removeShaderDefine(ShaderDefines3D.ROTATIONOVERLIFETIME);
+				
+				_owner._setShaderValueInt(ShuriKenParticle3D.ROLTYPE, undefined);
+				_owner._setShaderValueBool(ShuriKenParticle3D.ROLSEPRARATE, undefined);
+				_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, null);
+				_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE, null);
+				_owner._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONST, undefined);
+				_owner._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX, undefined);
+				
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX, null);
+				
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX, null);
+			}
+			_rotationOverLifetime = value;
+		}
+		
+		/**
+		 * 获取生命周期纹理动画,注意:如修改该值的某些属性,需重新赋值此属性才可生效。
+		 * @return 生命周期纹理动画。
+		 */
+		public function get textureSheetAnimation():TextureSheetAnimation {
+			return _textureSheetAnimation;
+		}
+		
+		/**
+		 * 设置生命周期纹理动画,注意:如修改该值的某些属性,需重新赋值此属性才可生效。
+		 * @param value 生命周期纹理动画。
+		 */
+		public function set textureSheetAnimation(value:TextureSheetAnimation):void {
+			if (value) {
+				var frameOverTime:FrameOverTime = value.frame;
+				var textureAniType:int = frameOverTime.type;
+				if (value.enbale) {
+					
+					if (textureAniType === 1 || textureAniType === 3) {
+						_owner._addShaderDefine(ShaderDefines3D.TEXTURESHEETANIMATION);
+					}
+				} else {
+					_owner._removeShaderDefine(ShaderDefines3D.TEXTURESHEETANIMATION);
+				}
+				
+				if (textureAniType === 1 || textureAniType === 3) {
+					_owner._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONTYPE, textureAniType);
+					_owner._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES, value.cycles);
+					var title:Vector2 = value.tiles;
+					var _uvLengthE:Float32Array = _uvLength.elements;
+					_uvLengthE[0] = 1.0 / title.x;
+					_uvLengthE[1] = 1.0 / title.y;
+					_owner._setShaderValueVector2(ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, _uvLength);
+				}
+				switch (textureAniType) {
+				case 1: 
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, frameOverTime.frameOverTimeData._elements);
+					break;
+				case 3: 
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, frameOverTime.frameOverTimeDataMin._elements);
+					_owner._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS, frameOverTime.frameOverTimeDataMax._elements);
+					break;
+				}
+				
+			} else {
+				_owner._removeShaderDefine(ShaderDefines3D.TEXTURESHEETANIMATION);
+				
+				_owner._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONTYPE, undefined);
+				_owner._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES, undefined);
+				_owner._setShaderValueVector2(ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, null);
+				_owner._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS, null);
+			}
+			_textureSheetAnimation = value;
+		}
+		
 		public function get indexOfHost():int {
 			return 0;
 		}
@@ -410,8 +755,8 @@ package laya.d3.core.particleShuriKen {
 		 * @private
 		 */
 		private function _updateEmission():void {
-			if (!Laya.stage.isFocused)
-			    return;
+			if (!Laya.stage.isVisibility)
+				return;
 			
 			var elapsedTime:Number = 0;
 			(_startUpdateLoopCount !== Stat.loopCount) && (elapsedTime = Laya.timer.delta / 1000.0, _currentTime += elapsedTime);
@@ -678,6 +1023,7 @@ package laya.d3.core.particleShuriKen {
 		 * @private
 		 */
 		public function _destroy():void {
+			(_owner.displayedInStage && _owner.enable) && (_removeUpdateEmissionToTimer());
 			_vertexBuffer.dispose();
 			_indexBuffer.dispose();
 			_emission._destroy();
@@ -700,11 +1046,11 @@ package laya.d3.core.particleShuriKen {
 			startColorConstantMin = null;
 			startColorConstantMax = null;
 			gravity = null;
-			velocityOverLifetime = null;
-			colorOverLifetime = null;
-			sizeOverLifetime = null;
-			rotationOverLifetime = null;
-			textureSheetAnimation = null;
+			_velocityOverLifetime = null;
+			_colorOverLifetime = null;
+			_sizeOverLifetime = null;
+			_rotationOverLifetime = null;
+			_textureSheetAnimation = null;
 			
 			offAll();
 		}
@@ -864,11 +1210,6 @@ package laya.d3.core.particleShuriKen {
 			}
 		}
 		
-		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void//NATIVE
-		{
-		
-		}
-		
 		/**
 		 * 开始发射粒子。
 		 */
@@ -1008,6 +1349,11 @@ package laya.d3.core.particleShuriKen {
 			var dest:ShurikenParticleSystem = __JS__("new this.constructor()");
 			cloneTo(dest);
 			return dest;
+		}
+		
+		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void//NATIVE
+		{
+		
 		}
 	}
 }

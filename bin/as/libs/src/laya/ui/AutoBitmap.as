@@ -211,7 +211,7 @@ package laya.ui {
 		}
 		
 		private function drawBitmap(repeat:Boolean, tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0):void {
-			if (repeat) fillTexture(tex, x, y, width, height);
+			if (repeat && (tex.width!= width || tex.height !=height)) fillTexture(tex, x, y, width, height);
 			else drawTexture(tex, x, y, width, height);
 		}
 		

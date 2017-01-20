@@ -20,6 +20,7 @@ package laya.ui {
 	 * <p> <code>Clip</code> 可将一张图片，按横向分割数量 <code>clipX</code> 、竖向分割数量 <code>clipY</code> ，
 	 * 或横向分割每个切片的宽度 <code>clipWidth</code> 、竖向分割每个切片的高度 <code>clipHeight</code> ，
 	 * 从左向右，从上到下，分割组合为一个切片动画。</p>
+	 * Image和Clip组件是唯一支持异步加载的两个组件，比如clip.skin = "abc/xxx.png"，其他UI组件均不支持异步加载。
 	 *
 	 * @example 以下示例代码，创建了一个 <code>Clip</code> 实例。
 	 * <listing version="3.0">

@@ -41,6 +41,6 @@ package {
 		/**
 		 * 设置画布是否预乘，只对2D(WebGL)、3D有效。
 		 */
-		public static var premultipliedAlpha:Boolean = false;	
+		public static var premultipliedAlpha:Boolean = false;
 	}
 }

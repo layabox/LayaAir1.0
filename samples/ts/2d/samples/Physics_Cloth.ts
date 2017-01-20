@@ -13,8 +13,8 @@ module laya {
 		private stageWidth: number = 800;
 		private stageHeight: number = 600;
 
-		private Matter: Object = Browser.window.Matter;
-		private LayaRender: Object = Browser.window.LayaRender;
+		private Matter: any = Browser.window.Matter;
+		private LayaRender: any = Browser.window.LayaRender;
 
 		private mouseConstraint: any;
 		private engine: any;
@@ -49,8 +49,8 @@ module laya {
 			this.engine = Matter.Engine.create({ enableSleeping: true });
 			Matter.Engine.run(this.engine);
 
-			var render = LayaRender.create({ engine: this.engine, container: gameWorld, width: this.stageWidth, height: this.stageHeight, options: { wireframes: false } });
-			LayaRender.run(render);
+			var render = this.LayaRender.create({ engine: this.engine, container: gameWorld, width: this.stageWidth, height: this.stageHeight, options: { wireframes: false } });
+			this.LayaRender.run(render);
 
 			this.mouseConstraint = Matter.MouseConstraint.create(this.engine, { element: Render.canvas });
 			Matter.World.add(this.engine.world, this.mouseConstraint);

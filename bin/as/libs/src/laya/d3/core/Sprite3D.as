@@ -8,6 +8,7 @@ package laya.d3.core {
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
+	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
@@ -209,6 +210,13 @@ package laya.d3.core {
 		public function _addShaderDefine(value:int):void {
 			_shaderDefineValue |= value;
 		}
+		/**
+		 * 移除Shader宏定义。
+		 * @param value 宏定义。
+		 */
+		public function _removeShaderDefine(value:int):void {
+			_shaderDefineValue &= ~value;
+		}
 		
 		/**
 		 * @private
@@ -322,6 +330,56 @@ package laya.d3.core {
 		public function _setShaderValueColor(shaderIndex:int, color:*):void {
 			var shaderValue:ValusArray = _shaderValues;
 			shaderValue.setValue(shaderIndex, color ? color.elements : null);
+		}
+		
+		/**
+		 * 设置Buffer。
+		 * @param	shaderIndex shader索引。
+		 * @param	buffer  buffer数据。
+		 */
+		public function _setShaderValueBuffer(shaderIndex:int, buffer:Float32Array):void {
+			var shaderValue:ValusArray = _shaderValues;
+			shaderValue.setValue(shaderIndex, buffer);
+		}
+		
+		/**
+		 * 设置整型。
+		 * @param	shaderIndex shader索引。
+		 * @param	i 整形。
+		 */
+		public function _setShaderValueInt(shaderIndex:int, i:int):void {
+			var shaderValue:ValusArray = _shaderValues;
+			shaderValue.setValue(shaderIndex, i);
+		}
+		
+		/**
+		 * 设置布尔。
+		 * @param	shaderIndex shader索引。
+		 * @param	b 布尔。
+		 */
+		public function _setShaderValueBool(shaderIndex:int, b:Boolean):void {
+			var shaderValue:ValusArray = _shaderValues;
+			shaderValue.setValue(shaderIndex, b);
+		}
+		
+		/**
+		 * 设置浮点。
+		 * @param	shaderIndex shader索引。
+		 * @param	i 浮点。
+		 */
+		public function _setShaderValueNumber(shaderIndex:int, number:Number):void {
+			var shaderValue:ValusArray = _shaderValues;
+			shaderValue.setValue(shaderIndex, number);
+		}
+		
+		/**
+		 * 设置二维向量。
+		 * @param	shaderIndex shader索引。
+		 * @param	vector2 二维向量。
+		 */
+		public function _setShaderValueVector2(shaderIndex:int, vector2:Vector2):void {
+			var shaderValue:ValusArray = _shaderValues;
+			shaderValue.setValue(shaderIndex, vector2 ? vector2.elements : null);
 		}
 		
 		/**

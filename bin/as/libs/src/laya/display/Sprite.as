@@ -1,6 +1,7 @@
 package laya.display {
 	import laya.display.css.CSSStyle;
 	import laya.display.css.Style;
+	import laya.display.css.TransformInfo;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.filters.ColorFilter;
@@ -305,6 +306,7 @@ package laya.display {
 		}
 		
 		public function set cacheAsBitmap(value:Boolean):void {
+			//TODO:去掉关联
 			cacheAs = value ? (_$P["hasFilter"] ? "none" : "normal") : "none";
 		}
 		
@@ -673,26 +675,19 @@ package laya.display {
 			if (tf.rotate || sx !== 1 || sy !== 1 || tf.skewX || tf.skewY) {
 				m = this._transform || (this._transform = Matrix.create());
 				m.bTransform = true;
-				if (tf.rotate) {
-					var angle:Number = tf.rotate * 0.0174532922222222;//laya.CONST.PI180;
-					var cos:Number = m.cos = Math.cos(angle);
-					var sin:Number = m.sin = Math.sin(angle);
-					
-					m.a = sx * cos;
-					m.b = sx * sin;
-					m.c = -sy * sin;
-					m.d = sy * cos;
-					m.tx = m.ty = 0;
-					return m;
-				} else {
-					m.a = sx;
-					m.d = sy;
-					m.c = m.b = m.tx = m.ty = 0;
-					if (tf.skewX || tf.skewY) {
-						return m.skew(tf.skewX * 0.0174532922222222, tf.skewY * 0.0174532922222222);
-					}
-					return m;
-				}
+				
+				var skx:Number = (tf.rotate-tf.skewX) * 0.0174532922222222;//laya.CONST.PI180;
+				var sky:Number = (tf.rotate+tf.skewY) * 0.0174532922222222;
+				var cx:Number = Math.cos(sky);
+				var ssx:Number = Math.sin(sky);
+				var cy:Number = Math.sin(skx);
+				var ssy:Number = Math.cos(skx);
+				m.a = sx * cx;
+				m.b = sx * ssx;
+				m.c = -sy * cy;
+				m.d = sy * ssy;
+				m.tx = m.ty = 0;
+				return m;
 			} else {
 				this._transform && this._transform.destroy();
 				this._transform = null;
@@ -851,12 +846,23 @@ package laya.display {
 		 * 设置坐标位置。
 		 * @param	x X 轴坐标。
 		 * @param	y Y 轴坐标。
+		 * @param 	speedMode 是否极速模式，普通模式调用this.x=value进行赋值，极速模式直接调用内部函数处理，如果未重写x,y属性，建议设置为急速模式性能更高
 		 * @return	返回对象本身。
 		 */
-		public function pos(x:Number, y:Number):Sprite {
+		public function pos(x:Number, y:Number, speedMode:Boolean = false):Sprite {
 			if (_x !== x || _y !== y) {
-				this.x = x;
-				this.y = y;
+				if (this.destroyed) return this;
+				if (speedMode) {
+					this._x = x;
+					this._y = y;
+					conchModel && conchModel.pos(this._x, this._y);
+					var p:Sprite = _parent as Sprite;
+					p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
+					this._$P.maskParent && _$P.maskParent._repaint === 0 && (_$P.maskParent._repaint = 1, _$P.maskParent.parentRepaint());
+				} else {
+					this.x = x;
+					this.y = y;
+				}
 			}
 			return this;
 		}
@@ -889,11 +895,27 @@ package laya.display {
 		 * 设置缩放。
 		 * @param	scaleX X轴缩放比例。
 		 * @param	scaleY Y轴缩放比例。
+		 * @param 	speedMode 是否极速模式，普通模式调用this.x=value进行赋值，极速模式直接调用内部函数处理，如果未重写x,y属性，建议设置为急速模式性能更高
 		 * @return	返回对象本身。
 		 */
-		public function scale(scaleX:Number, scaleY:Number):Sprite {
-			this.scaleX = scaleX;
-			this.scaleY = scaleY;
+		public function scale(scaleX:Number, scaleY:Number, speedMode:Boolean = false):Sprite {
+			var style:Style = getStyle();
+			var _tf:TransformInfo = style._tf;
+			if (_tf.scaleX != scaleX || _tf.scaleY != scaleY) {
+				if (this.destroyed) return this;
+				if (speedMode) {
+					style.setScale(scaleX, scaleY);
+					_changeType |= CHG_VIEW;
+					_tfChanged = true;
+					conchModel && conchModel.scale(scaleX, scaleY);
+					_renderType |= RenderSprite.TRANSFORM;
+					var p:Sprite = _parent as Sprite;
+					p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
+				} else {
+					this.scaleX = scaleX;
+					this.scaleY = scaleY;
+				}
+			}
 			return this;
 		}
 		
@@ -1224,8 +1246,8 @@ package laya.display {
 		override protected function _childChanged(child:Node = null):void {
 			if (_childs.length) _renderType |= RenderSprite.CHILDS;
 			else _renderType &= ~RenderSprite.CHILDS;
-			
-			if (child && Sprite(child).zOrder) Laya.timer.callLater(this, updateZOrder);
+			if(child&&_get$P("hasZorder"))Laya.timer.callLater(this, updateZOrder);
+			//if (child && Sprite(child).zOrder) Laya.timer.callLater(this, updateZOrder);
 			repaint();
 		}
 		
@@ -1258,6 +1280,7 @@ package laya.display {
 		public function set mask(value:Sprite):void {
 			if (value && mask && mask._$P.maskParent) return;
 			if (value) {
+				//TODO:去掉关联
 				cacheAs = "bitmap";
 				_set$P("_mask", value);
 				value._set$P("maskParent", this);
@@ -1308,6 +1331,7 @@ package laya.display {
 			//如果从显示列表移除，则销毁cache缓存
 			if (!value && _$P.cacheCanvas && _$P.cacheCanvas.ctx) {
 				Pool.recover("RenderContext", _$P.cacheCanvas.ctx);
+				_$P.cacheCanvas.ctx.canvas.size(0, 0);
 				_$P.cacheCanvas.ctx = null;
 			}
 			if (!value) {
@@ -1391,7 +1415,10 @@ package laya.display {
 			if (_zOrder != value) {
 				_zOrder = value;
 				conchModel && conchModel.setZOrder && conchModel.setZOrder(value);
-				_parent && Laya.timer.callLater(_parent, updateZOrder);
+				if (_parent) {
+					value && _parent._set$P("hasZorder", true);
+					Laya.timer.callLater(_parent, updateZOrder);
+				}
 			}
 		}
 		

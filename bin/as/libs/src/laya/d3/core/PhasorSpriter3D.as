@@ -75,7 +75,7 @@ package laya.d3.core {
 			_vb = new VertexBuffer2D(-1, WebGLContext.DYNAMIC_DRAW);
 			_ib = new IndexBuffer2D();
 			_sharderNameID = Shader3D.nameKey.get("SIMPLE");
-			_shaderCompile = Shader3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
+			_shaderCompile = ShaderCompile3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
 		}
 		
 		public function line(startX:Number, startY:Number, startZ:Number, startR:Number, startG:Number, startB:Number, startA:Number, endX:Number, endY:Number, endZ:Number, endR:Number, endG:Number, endB:Number, endA:Number):PhasorSpriter3D {

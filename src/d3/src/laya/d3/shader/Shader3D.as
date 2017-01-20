@@ -22,17 +22,12 @@ package laya.d3.shader {
 		public static const PERIOD_CAMERA:int = 3;
 		public static const PERIOD_SCENE:int = 4;
 		
-	
-		
 		private static var _TEXTURES:Array = /*[STATIC SAFE]*/ [WebGLContext.TEXTURE0, WebGLContext.TEXTURE1, WebGLContext.TEXTURE2, WebGLContext.TEXTURE3, WebGLContext.TEXTURE4, WebGLContext.TEXTURE5, WebGLContext.TEXTURE6,, WebGLContext.TEXTURE7, WebGLContext.TEXTURE8];
-		private static var _includeFiles:* = {}; //shader里面inlcude的小文件
+		public static var _includeFiles:* = {}; //shader里面inlcude的小文件
 		private static var _count:int = 0;
-		public static var _preCompileShader:* = {}; //存储预编译结果，可以通过名字获得内容,目前不支持#ifdef嵌套和条件
 		
 		protected static var shaderParamsMap:Object = {"float": WebGLContext.FLOAT, "int": WebGLContext.INT, "bool": WebGLContext.BOOL, "vec2": WebGLContext.FLOAT_VEC2, "vec3": WebGLContext.FLOAT_VEC3, "vec4": WebGLContext.FLOAT_VEC4, "ivec2": WebGLContext.INT_VEC2, "ivec3": WebGLContext.INT_VEC3, "ivec4": WebGLContext.INT_VEC4, "bvec2": WebGLContext.BOOL_VEC2, "bvec3": WebGLContext.BOOL_VEC3, "bvec4": WebGLContext.BOOL_VEC4, "mat2": WebGLContext.FLOAT_MAT2, "mat3": WebGLContext.FLOAT_MAT3, "mat4": WebGLContext.FLOAT_MAT4, "sampler2D": WebGLContext.SAMPLER_2D, "samplerCube": WebGLContext.SAMPLER_CUBE};
-		
-		public static const SHADERNAME2ID:Number = 0.0002;
-		
+	
 		public static var nameKey:StringKey = new StringKey();
 		
 		public static var sharders:Array = /*[STATIC SAFE]*/ (sharders = [], sharders.length = 0x20, sharders);
@@ -58,9 +53,12 @@ package laya.d3.shader {
 			if (shader)
 				return shader;
 			
-			var pre:ShaderCompile3D = _preCompileShader[SHADERNAME2ID * nameID];
+			var pre:ShaderCompile3D = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * nameID];
 			if (!pre)
 				throw new Error("withCompile shader err!" + nameID);
+			
+			 if(ShaderCompile3D.debugMode)
+			 trace("ShaderName:"+nameID+" 宏定义:"+shaderDefine._value);
 			return pre.createShader(shaderDefine.toNameDic(), shaderName);
 		}
 		
@@ -72,16 +70,7 @@ package laya.d3.shader {
 			_includeFiles[fileName] = txt;
 		}
 	
-		/**
-		 * 预编译shader文件，主要是处理宏定义
-		 * @param	nameID,一般是特殊宏+shaderNameID*0.0002组成的一个浮点数当做唯一标识
-		 * @param	vs
-		 * @param	ps
-		 */
-		public static function preCompile(nameID:int, vs:String, ps:String,attributeMap:Object, uniformMap:Object):void {
-			var id:Number = SHADERNAME2ID * nameID;
-			_preCompileShader[id] = new ShaderCompile3D(id, vs, ps,attributeMap, uniformMap, _includeFiles);
-		}
+		
 		
 		private var customCompile:Boolean = false;
 		
@@ -150,6 +139,7 @@ package laya.d3.shader {
 			_materialUniformMap = materialUniformMap;
 			_renderElementUniformMap = renderElementUniformMap;
 			saveName != null && (sharders[saveName] = this);
+			recreateResource();
 		}
 		
 		override protected function recreateResource():void {

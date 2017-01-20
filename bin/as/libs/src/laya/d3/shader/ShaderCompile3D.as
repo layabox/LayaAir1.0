@@ -14,7 +14,31 @@ package laya.d3.shader {
 		public static const IFDEF_ELSE:int = 2;
 		private static var DEFINEREG:RegExp = new RegExp("defined(?=\\((.*?)\\))", "g");
 		private static var INCLUDE:RegExp = new RegExp("\\w+", "g");
+		public static const SHADERNAME2ID:Number = 0.0002;
+		public static var _preCompileShader:Object = {}; //存储预编译结果，可以通过名字获得内容,目前不支持#ifdef嵌套和条件
+		public static var debugMode:Boolean = false;
 		
+		/**
+		 * 添加预编译shader文件，主要是处理宏定义
+		 * @param	nameID,一般是特殊宏+shaderNameID*0.0002组成的一个浮点数当做唯一标识
+		 * @param	vs
+		 * @param	ps
+		 */
+		public static function add(nameID:int, vs:String, ps:String,attributeMap:Object, uniformMap:Object):ShaderCompile3D {
+			var id:Number = SHADERNAME2ID * nameID;
+			return ShaderCompile3D._preCompileShader[id] = new ShaderCompile3D(id, vs, ps,attributeMap, uniformMap, Shader3D._includeFiles);
+		}
+		
+		/**
+		 * 获取ShaderCompile3D。
+		 * @param	name
+		 * @return ShaderCompile3D。
+		 */
+		public static function get(name:String):ShaderCompile3D {
+			return ShaderCompile3D._preCompileShader[SHADERNAME2ID * Shader3D.nameKey.get(name)];
+		}
+		
+		private var _name:Number;
 		private var _VS:ShaderScriptBlock;
 		private var _PS:ShaderScriptBlock;
 		private var _VSTXT:String;
@@ -29,12 +53,12 @@ package laya.d3.shader {
 		public var _conchShader:*;//NATIVE		
 		
 		public function ShaderCompile3D(name:Number, vs:String, ps:String, attributeMap:Object, uniformMap:Object, includeFiles:*) {
+			_name = name;
 			_renderElementUniformMap = {};
 			_materialUniformMap = {};
 			_spriteUniformMap = {};
 			_cameraUniformMap = {};
 			_sceneUniformMap = {};
-			
 			//先要去掉注释,还没有完成			
 			_VSTXT = vs;
 			_PSTXT = ps;
@@ -178,7 +202,7 @@ package laya.d3.shader {
 			}
 		}
 		
-		public function createShader(define:*, shaderName:*):Shader3D {
+		public function createShader(define:Object, shaderName:*):Shader3D {
 			var defMap:* = {};
 			var defineStr:String = "";
 			if (define) {
@@ -192,6 +216,29 @@ package laya.d3.shader {
 			var vs:Array = _VS.toscript(defMap, []);
 			var ps:Array = _PS.toscript(defMap, []);
 			return Shader3D.create(defineStr + vs.join('\n'), defineStr + ps.join('\n'), shaderName, _attributeMap, _sceneUniformMap, _cameraUniformMap, _spriteUniformMap, _materialUniformMap, _renderElementUniformMap);
+		}
+		
+		
+		public function compileShader(shaderDefines:ShaderDefines3D, sceneShaderDefineValue:int, vertexShaderDefineValue:int, spriteShaderDefineValue:int, materialShaderDefineValue:int ):void {
+			var name:Number=_name/ShaderCompile3D.SHADERNAME2ID;
+			var preShadeDef:int = shaderDefines.getValue();
+			var defineValue:int = sceneShaderDefineValue | vertexShaderDefineValue | materialShaderDefineValue | spriteShaderDefineValue;
+			shaderDefines._value = defineValue;
+			var nameID:Number = name * ShaderCompile3D.SHADERNAME2ID + defineValue;
+			Shader3D.withCompile(name, shaderDefines, nameID);
+			shaderDefines.setValue(preShadeDef);
+		}
+		
+		public static var shaderDefines:ShaderDefines3D=new ShaderDefines3D();
+		
+		public function compileShaderWitthSingalValue(/*shaderDefines:ShaderDefines3D,*/shaderDefineValue:int):void {
+			var name:Number=_name/ShaderCompile3D.SHADERNAME2ID;
+			var preShadeDef:int = shaderDefines.getValue();
+			var defineValue:int = shaderDefineValue;
+			shaderDefines._value = defineValue;
+			var nameID:Number = name * ShaderCompile3D.SHADERNAME2ID + defineValue;
+			Shader3D.withCompile(name, shaderDefines, nameID);
+			shaderDefines.setValue(preShadeDef);
 		}
 	}
 

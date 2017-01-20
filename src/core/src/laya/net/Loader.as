@@ -162,7 +162,7 @@ package laya.net {
 			};
 			var onerror:Function = function():void {
 				clear();
-				_this.event(Event.ERROR, "Load image filed");
+				_this.event(Event.ERROR, "Load image failed");
 			}
 			
 			if (_type === "nativeimage") {
@@ -197,10 +197,11 @@ package laya.net {
 			}
 			function soundOnErr():void {
 				clear();
-				_this.event(Event.ERROR, "Load sound filed");
+				sound.dispose();
+				_this.event(Event.ERROR, "Load sound failed");
 			}
 			function clear():void {
-				sound.offAll();
+				sound.offAll();			
 			}
 		}
 		
@@ -229,7 +230,7 @@ package laya.net {
 				complete(data);
 			} else if (type === ATLAS) {
 				//处理图集
-				if (!data.src) {
+				if (!data.src && !data._setContext) {
 					if (!_data) {
 						this._data = data;
 						//构造加载图片信息

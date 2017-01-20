@@ -211,7 +211,7 @@
 		__proto.drawBitmap=function(repeat,tex,x,y,width,height){
 			(width===void 0)&& (width=0);
 			(height===void 0)&& (height=0);
-			if (repeat)this.fillTexture(tex,x,y,width,height);
+			if (repeat && (tex.width!=width || tex.height !=height))this.fillTexture(tex,x,y,width,height);
 			else this.drawTexture(tex,x,y,width,height);
 		}
 
@@ -1337,6 +1337,7 @@
 	*<p> <code>Clip</code> 可将一张图片，按横向分割数量 <code>clipX</code> 、竖向分割数量 <code>clipY</code> ，
 	*或横向分割每个切片的宽度 <code>clipWidth</code> 、竖向分割每个切片的高度 <code>clipHeight</code> ，
 	*从左向右，从上到下，分割组合为一个切片动画。</p>
+	*Image和Clip组件是唯一支持异步加载的两个组件，比如clip.skin="abc/xxx.png"，其他UI组件均不支持异步加载。
 	*
 	*@example 以下示例代码，创建了一个 <code>Clip</code> 实例。
 	*<listing version="3.0">
@@ -3062,6 +3063,15 @@
 			this._mouseWheelEnable=value;
 		});
 
+		/**
+		*滚动的刻度值，滑动数值为tick的整数倍。默认值为1。
+		*/
+		__getset(0,__proto,'tick',function(){
+			return this.slider.tick;
+			},function(value){
+			this.slider.tick=value;
+		});
+
 		return ScrollBar;
 	})(Component)
 
@@ -3320,8 +3330,7 @@
 		});
 
 		/**
-		*表示当前的刻度值。默认值为1。
-		*@return
+		*滑动的刻度值，滑动数值为tick的整数倍。默认值为1。
 		*/
 		__getset(0,__proto,'tick',function(){
 			return this._tick;
@@ -3397,6 +3406,8 @@
 
 	/**
 	*<code>Image</code> 类是用于表示位图图像或绘制图形的显示对象。
+	*Image和Clip组件是唯一支持异步加载的两个组件，比如img.skin="abc/xxx.png"，其他UI组件均不支持异步加载。
+	*
 	*@example 以下示例代码，创建了一个新的 <code>Image</code> 实例，设置了它的皮肤、位置信息，并添加到舞台上。
 	*<listing version="3.0">
 	*package
@@ -4245,6 +4256,7 @@
 			this._defaultTipHandler=this._showDefaultTip;
 			Laya.stage.on(/*laya.ui.UIEvent.SHOW_TIP*/"showtip",this,this._onStageShowTip);
 			Laya.stage.on(/*laya.ui.UIEvent.HIDE_TIP*/"hidetip",this,this._onStageHideTip);
+			this.zOrder=1100
 		}
 
 		__class(TipManager,'laya.ui.TipManager',_super);
@@ -4723,8 +4735,7 @@
 		*@param items 项目列表。
 		*/
 		__proto.sortItem=function(items){
-			if (items)items.sort(function(a,b){return a.y > b.y ? 1 :-1
-			});
+			if (items)items.sort(function(a,b){return a.y-b.y;});
 		}
 
 		__proto._setItemChanged=function(){
@@ -5397,7 +5408,8 @@
 			var scrollBar=new VScrollBar();
 			scrollBar.name="scrollBar";
 			scrollBar.right=0;
-			scrollBar.skin=value;
+			if (value && value !=" ")
+				scrollBar.skin=value;
 			this.scrollBar=scrollBar;
 			this.addChild(scrollBar);
 			this._setCellChanged();
@@ -5427,7 +5439,8 @@
 			var scrollBar=new HScrollBar();
 			scrollBar.name="scrollBar";
 			scrollBar.bottom=0;
-			scrollBar.skin=value;
+			if (value && value !=" ")
+				scrollBar.skin=value;
 			this.scrollBar=scrollBar;
 			this.addChild(scrollBar);
 			this._setCellChanged();
@@ -6005,66 +6018,6 @@
 
 
 	/**
-	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
-	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
-	*@see laya.ui.RadioGroup
-	*/
-	//class laya.ui.Radio extends laya.ui.Button
-	var Radio=(function(_super){
-		function Radio(skin,label){
-			this._value=null;
-			(label===void 0)&& (label="");
-			Radio.__super.call(this,skin,label);
-		}
-
-		__class(Radio,'laya.ui.Radio',_super);
-		var __proto=Radio.prototype;
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			_super.prototype.destroy.call(this,destroyChild);
-			this._value=null;
-		}
-
-		/**@inheritDoc */
-		__proto.preinitialize=function(){
-			laya.ui.Component.prototype.preinitialize.call(this);
-			this.toggle=false;
-			this._autoSize=false;
-		}
-
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			_super.prototype.initialize.call(this);
-			this.createText();
-			this._text.align="left";
-			this._text.valign="top";
-			this._text.width=0;
-			this.on(/*laya.events.Event.CLICK*/"click",this,this.onClick);
-		}
-
-		/**
-		*@private
-		*对象的<code>Event.CLICK</code>事件侦听处理函数。
-		*/
-		__proto.onClick=function(e){
-			this.selected=true;
-		}
-
-		/**
-		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
-		*/
-		__getset(0,__proto,'value',function(){
-			return this._value !=null ? this._value :this.label;
-			},function(obj){
-			this._value=obj;
-		});
-
-		return Radio;
-	})(Button)
-
-
-	/**
 	*<code>Group</code> 是一个可以自动布局的项集合控件。
 	*<p> <code>Group</code> 的默认项对象为 <code>Button</code> 类实例。
 	*<code>Group</code> 是 <code>Tab</code> 和 <code>RadioGroup</code> 的基类。</p>
@@ -6466,6 +6419,66 @@
 
 		return UIGroup;
 	})(Box)
+
+
+	/**
+	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
+	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
+	*@see laya.ui.RadioGroup
+	*/
+	//class laya.ui.Radio extends laya.ui.Button
+	var Radio=(function(_super){
+		function Radio(skin,label){
+			this._value=null;
+			(label===void 0)&& (label="");
+			Radio.__super.call(this,skin,label);
+		}
+
+		__class(Radio,'laya.ui.Radio',_super);
+		var __proto=Radio.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._value=null;
+		}
+
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			laya.ui.Component.prototype.preinitialize.call(this);
+			this.toggle=false;
+			this._autoSize=false;
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			_super.prototype.initialize.call(this);
+			this.createText();
+			this._text.align="left";
+			this._text.valign="top";
+			this._text.width=0;
+			this.on(/*laya.events.Event.CLICK*/"click",this,this.onClick);
+		}
+
+		/**
+		*@private
+		*对象的<code>Event.CLICK</code>事件侦听处理函数。
+		*/
+		__proto.onClick=function(e){
+			this.selected=true;
+		}
+
+		/**
+		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
+		*/
+		__getset(0,__proto,'value',function(){
+			return this._value !=null ? this._value :this.label;
+			},function(obj){
+			this._value=obj;
+		});
+
+		return Radio;
+	})(Button)
 
 
 	/**
@@ -8100,6 +8113,7 @@
 					this.modalLayer=new Sprite();
 					this.maskLayer=new Sprite();
 					this.mouseEnabled=this.dialogLayer.mouseEnabled=this.modalLayer.mouseEnabled=this.maskLayer.mouseEnabled=true;
+					this.zOrder=1000;
 					this.addChild(this.dialogLayer);
 					this.addChild(this.modalLayer);
 					this._stage=Laya.stage;
@@ -8202,8 +8216,7 @@
 		var __proto=HBox.prototype;
 		/**@inheritDoc */
 		__proto.sortItem=function(items){
-			if (items)items.sort(function(a,b){return a.x > b.x ? 1 :-1
-			});
+			if (items)items.sort(function(a,b){return a.x-b.x;});
 		}
 
 		/**@inheritDoc */

@@ -272,7 +272,8 @@ package laya.ui {
 			var scrollBar:VScrollBar = new VScrollBar();
 			scrollBar.name = "scrollBar";
 			scrollBar.right = 0;
-			scrollBar.skin = value;
+			if (value && value != " ")
+				scrollBar.skin = value;
 			this.scrollBar = scrollBar;
 			addChild(scrollBar);
 			_setCellChanged();
@@ -290,7 +291,8 @@ package laya.ui {
 			var scrollBar:HScrollBar = new HScrollBar();
 			scrollBar.name = "scrollBar";
 			scrollBar.bottom = 0;
-			scrollBar.skin = value;
+			if (value && value != " ")
+				scrollBar.skin = value;
 			this.scrollBar = scrollBar;
 			addChild(scrollBar);
 			_setCellChanged();
@@ -466,7 +468,8 @@ package laya.ui {
 		}
 		
 		protected function createItem():Box {
-			/*[IF-FLASH]*/return _itemRender.prototype!=null? new _itemRender() : View.createComp(_itemRender) as Box;
+			/*[IF-FLASH]*/
+			return _itemRender.prototype != null ? new _itemRender() : View.createComp(_itemRender) as Box;
 			//[IF-JS]return _itemRender is Function ? new _itemRender() : View.createComp(_itemRender) as Box;
 		}
 		

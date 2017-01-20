@@ -24,7 +24,7 @@ var meshSprite = sprit.addChild(new Laya.MeshSprite3D(mesh));
 mesh.once(Laya.Event.LOADED, null, function () {
 	var material = meshSprite.meshRender.sharedMaterials[0];
 	material.albedo = new Laya.Vector4(0.0,0.0,0.0,0.0);
-	material.renderMode = Laya.BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
+	material.renderMode = Laya.StandardMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
 	material.reflectTexture = textureCube;
 });
 meshSprite.transform.localPosition = new Vector3(-0.3, 0.0, 0.0);

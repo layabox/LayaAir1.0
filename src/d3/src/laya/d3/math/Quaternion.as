@@ -16,6 +16,8 @@ package laya.d3.math {
 		private static var TEMPMatrix0:Matrix4x4 = new Matrix4x4();
 		/**@private */
 		private static var TEMPMatrix1:Matrix4x4 = new Matrix4x4();
+		/**@private */
+		private static var _tempMatrix3x3:Matrix3x3 = new Matrix3x3();
 		
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Quaternion =/*[STATIC SAFE]*/ new Quaternion();
@@ -591,6 +593,91 @@ package laya.d3.math {
 			}
 			for (i = 0; i < 4; ++i) {
 				d[i] = sou[i];
+			}
+		}
+		
+		/**
+		 * 计算旋转观察四元数
+		 * @param	forward 方向
+		 * @param	up     上向量
+		 * @param	out    输出四元数
+		 */
+		public static function rotationLookAt(forward:Vector3, up:Vector3, out:Quaternion):void {
+			lookAt(Vector3.ZERO, forward, up, out);
+		}
+		
+		/**
+		 * 计算观察四元数
+		 * @param	eye    观察者位置
+		 * @param	target 目标位置
+		 * @param	up     上向量
+		 * @param	out    输出四元数
+		 */
+		public static function lookAt(eye:Vector3, target:Vector3, up:Vector3, out:Quaternion):void {
+			Matrix3x3.lookAt(eye, target, up, _tempMatrix3x3);
+			rotationMatrix(_tempMatrix3x3, out);
+		}
+		
+		/**
+		 * 通过一个3x3矩阵创建一个四元数
+		 * @param	matrix3x3  3x3矩阵
+		 * @param	out        四元数
+		 */
+		public static function rotationMatrix(matrix3x3:Matrix3x3, out:Quaternion):void {
+			
+			var me:Float32Array = matrix3x3.elements;
+			var m11:Number = me[0];
+			var m12:Number = me[1];
+			var m13:Number = me[2];
+			var m21:Number = me[3];
+			var m22:Number = me[4];
+			var m23:Number = me[5];
+			var m31:Number = me[6];
+			var m32:Number = me[7];
+			var m33:Number = me[8];
+			
+			var oe:Float32Array = out.elements;
+			
+			var sqrt:Number, half:Number;
+			var scale:Number = m11 + m22 + m33;
+			
+			if (scale > 0) {
+				
+				sqrt = Math.sqrt(scale + 1);
+				oe[3] = sqrt * 0.5;
+				sqrt = 0.5 / sqrt;
+				
+				oe[0] = (m23 - m32) * sqrt;
+				oe[1] = (m31 - m13) * sqrt;
+				oe[2] = (m12 - m21) * sqrt;
+				
+			} else if ((m11 >= m22) && (m11 >= m33)) {
+				
+				sqrt = Math.sqrt(1 + m11 - m22 - m33);
+				half = 0.5 / sqrt;
+				
+				oe[0] = 0.5 * sqrt;
+				oe[1] = (m12 + m21) * half;
+				oe[2] = (m13 + m31) * half;
+				oe[3] = (m23 - m32) * half;
+			} else if (m22 > m33) {
+				
+				sqrt = Math.sqrt(1 + m22 - m11 - m33);
+				half = 0.5 / sqrt;
+				
+				oe[0] = (m21 + m12) * half;
+				oe[1] = 0.5 * sqrt;
+				oe[2] = (m32 + m23) * half;
+				oe[3] = (m31 - m13) * half;
+			} else {
+				
+				sqrt = Math.sqrt(1 + m33 - m11 - m22);
+				half = 0.5 / sqrt;
+				
+				oe[0] = (m31 + m13) * half;
+				oe[1] = (m32 + m23) * half;
+				oe[2] = 0.5 * sqrt;
+				oe[3] = (m12 - m21) * half;
 			}
 		}
 	}

@@ -53,11 +53,10 @@ package laya.display {
 		
 		/**@private */
 		public function Node() {
-			this.conchModel =Render.isConchNode? this.createConchModel():null;
+			this.conchModel = Render.isConchNode ? this.createConchModel() : null;
 		}
 		
-		public function createConchModel():*
-		{
+		public function createConchModel():* {
 			return null;
 		}
 		
@@ -102,6 +101,7 @@ package laya.display {
 		 */
 		public function addChild(node:Node):Node {
 			if (destroyed || node === this) return node;
+			if (node && Sprite(node).zOrder) _set$P("hasZorder", true);
 			if (node._parent === this) {
 				this._childs.splice(getChildIndex(node), 1);
 				this._childs.push(node);
@@ -140,7 +140,7 @@ package laya.display {
 		 */
 		public function addChildAt(node:Node, index:int):Node {
 			if (destroyed || node === this) return node;
-			
+			if (node && Sprite(node).zOrder) _set$P("hasZorder", true);
 			if (index >= 0 && index <= this._childs.length) {
 				if (node._parent === this) {
 					var oldIndex:int = getChildIndex(node);
@@ -387,7 +387,7 @@ package laya.display {
 		private function _displayChild(node:Node, display:Boolean):void {
 			var childs:Array = node._childs;
 			if (childs) {
-				for (var i:int = childs.length - 1; i > -1; i--) {
+				for (var i:int = 0, n:int = childs.length; i < n; i++) {
 					var child:Node = childs[i];
 					child._setDisplay(display);
 					child._childs.length && _displayChild(child, display);

@@ -46,8 +46,8 @@ module laya
 			this.engine = Matter.Engine.create({enableSleeping: true});
 			Matter.Engine.run(this.engine);
 			
-			var render = LayaRender.create({engine: this.engine, width: 800, height: 600, options: {background: '../../res/physics/img/background.png', wireframes: false}});
-			LayaRender.run(render);
+			var render = this.LayaRender.create({engine: this.engine, width: 800, height: 600, options: {background: '../../res/physics/img/background.png', wireframes: false}});
+			this.LayaRender.run(render);
 			
 			this.mouseConstraint = Matter.MouseConstraint.create(this.engine, {constraint: {angularStiffness: 0.1, stiffness: 2}, element: Render.canvas});
 			Matter.World.add(this.engine.world, this.mouseConstraint);
