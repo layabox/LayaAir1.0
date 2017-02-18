@@ -1,0 +1,18 @@
+#ifdef FSHIGHPRECISION
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+uniform float u_Intensity;
+uniform float u_AlphaBlending;
+uniform sampler2D u_texture;
+
+varying vec2 v_Texcoord;
+
+
+void main()
+{	
+  gl_FragColor=vec4(texture2D(u_texture, v_Texcoord).rgb*u_Intensity,u_AlphaBlending);
+}
+

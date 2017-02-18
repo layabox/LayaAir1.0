@@ -1,0 +1,10 @@
+precision mediump float;
+uniform vec4 color;
+uniform float alpha;
+#include?COLOR_FILTER "parts/ColorFilter_ps_uniform.glsl";
+void main() {
+	vec4 a = vec4(color.r, color.g, color.b, color.a);
+	a.w = alpha;
+	gl_FragColor = a;
+	#include?COLOR_FILTER "parts/ColorFilter_ps_logic.glsl";
+}

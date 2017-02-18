@@ -1,0 +1,188 @@
+#ifdef FSHIGHPRECISION
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT "LightHelper.glsl";
+
+uniform vec4 u_Albedo;
+
+#ifdef ALPHATEST
+uniform float u_AlphaTestValue;
+#endif
+
+#ifdef DIFFUSEMAP
+uniform sampler2D u_DiffuseTexture;
+#endif
+
+#ifdef REFLECTMAP
+uniform samplerCube u_ReflectTexture;
+uniform vec3 u_MaterialReflect;
+#endif
+
+#if   defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))
+varying vec2 v_Texcoord0;
+#endif
+
+#ifdef AMBIENTMAP
+varying vec2 v_Texcoord1;
+uniform sampler2D u_AmbientTexture;
+#endif
+
+#ifdef COLOR
+varying vec4 v_Color;
+#endif
+
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
+uniform vec3 u_MaterialDiffuse;
+uniform vec4 u_MaterialSpecular;
+  #if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP) 
+  uniform sampler2D u_SpecularTexture;
+  #endif
+#endif
+
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(AMBIENTMAP)
+uniform vec3 u_MaterialAmbient;
+#endif
+
+#ifdef FOG
+uniform float u_FogStart;
+uniform float u_FogRange;
+uniform vec3 u_FogColor;
+#endif
+
+#ifdef MIXUV
+uniform float  u_UVAniAge;
+#endif
+
+
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)
+varying vec3 v_Normal;
+#endif
+
+#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)
+uniform sampler2D u_NormalTexture;
+varying vec3 v_Tangent0;
+#endif
+
+#ifdef DIRECTIONLIGHT
+uniform DirectionLight u_DirectionLight;
+#endif
+
+#ifdef POINTLIGHT
+uniform PointLight u_PointLight;
+#endif
+
+#ifdef SPOTLIGHT
+uniform SpotLight u_SpotLight;
+#endif
+
+
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)
+uniform vec3 u_CameraPos;
+varying vec3 v_PositionWorld;
+#endif
+
+
+void main()
+{
+  #if defined(DIFFUSEMAP)&&!defined(COLOR)
+  gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);
+  #endif 
+  
+  #if defined(COLOR)&&!defined(DIFFUSEMAP)
+  gl_FragColor=v_Color;
+  #endif 
+  
+  #if defined(DIFFUSEMAP)&&defined(COLOR)
+  vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);
+  gl_FragColor=texColor*v_Color;
+  #endif
+  
+  #if !defined(DIFFUSEMAP)&&!defined(COLOR)
+  gl_FragColor=vec4(1.0,1.0,1.0,1.0);
+  #endif 
+  
+  #ifdef AMBIENTMAP
+  gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_Texcoord1).rgb); 
+  #endif 
+  
+  gl_FragColor=gl_FragColor*u_Albedo;
+  
+  #ifdef ALPHATEST
+  if(gl_FragColor.a-u_AlphaTestValue<0.0)
+    discard;
+  #endif
+  
+  
+  #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)
+  vec3 normal;
+    #if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)
+    vec3 normalMapSample = texture2D(u_NormalTexture, v_Texcoord0).rgb;
+	normal = normalize(NormalSampleToWorldSpace(normalMapSample, v_Normal, v_Tangent0));
+	#else
+	normal = normalize(v_Normal);
+    #endif
+  #endif
+	
+  #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
+  vec3 diffuse = vec3(0.0);
+  vec3 ambient = vec3(0.0);
+  vec3 specular= vec3(0.0);
+  vec3 dif, amb, spe;
+  #endif
+  
+  #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)
+  vec3 toEye;
+    #ifdef FOG
+	toEye=u_CameraPos-v_PositionWorld;
+    float toEyeLength=length(toEye);
+    toEye/=toEyeLength;
+    #else
+	toEye=normalize(u_CameraPos-v_PositionWorld);
+    #endif
+  #endif
+	
+  #ifdef DIRECTIONLIGHT
+  computeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);
+  diffuse+=dif;
+  ambient+=amb;
+  specular+=spe;
+  #endif
+ 
+  #ifdef POINTLIGHT
+  computePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,v_PositionWorld,normal,toEye, dif, amb, spe);
+  diffuse+=dif;
+  ambient+=amb;
+  specular+=spe;
+  #endif
+
+  #ifdef SPOTLIGHT
+  ComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,v_PositionWorld,normal,toEye, dif, amb, spe);
+  diffuse+=dif;
+  ambient+=amb;
+  specular+=spe;
+  #endif
+
+  
+  #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
+    #if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP)
+    specular =specular*texture2D(u_SpecularTexture, v_Texcoord0).rgb;
+    #endif
+  gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse) + specular,gl_FragColor.a);
+  #endif
+  
+  #ifdef REFLECTMAP
+  vec3 incident = -toEye;
+  vec3 reflectionVector = reflect(incident,normal);
+  vec3 reflectionColor  = textureCube(u_ReflectTexture,reflectionVector).rgb;
+  gl_FragColor.rgb += u_MaterialReflect*reflectionColor;
+  #endif
+  
+  #ifdef FOG
+  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);
+  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);
+  #endif
+}
+

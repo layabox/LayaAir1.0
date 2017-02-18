@@ -1,0 +1,18 @@
+#ifdef FSHIGHPRECISION
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+uniform float u_Intensity;
+uniform float u_AlphaBlending;
+uniform samplerCube u_CubeTexture;
+
+varying vec3 v_Texcoord;
+
+
+void main()
+{	
+  gl_FragColor=vec4(textureCube(u_CubeTexture, v_Texcoord).rgb*u_Intensity,u_AlphaBlending);
+}
+
