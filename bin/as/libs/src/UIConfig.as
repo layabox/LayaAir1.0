@@ -12,5 +12,9 @@ package {
 		public static var popupBgColor:String = "#000000";
 		/**弹出框背景透明度*/
 		public static var popupBgAlpha:Number = 0.5;
+		/**模式窗口点击边缘，是否关闭窗口，默认是关闭的*/
+		public static var closeDialogOnSide:Boolean = true;
+		/**点击窗口是否切换先后顺序*/
+		public static var switchDialogOnClick:Boolean = true;
 	}
 }

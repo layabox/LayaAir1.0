@@ -459,9 +459,11 @@
 		*@param boneMatrixArray 当前帧的骨骼矩阵
 		*/
 		__proto.skinMesh=function(boneMatrixArray,skinSprite,alpha){
+			var tTexture=this.currTexture;
 			var tBones=this.currDisplayData.bones;
 			var tUvs;
 			if (this._diyTexture){
+				tTexture=this._diyTexture;
 				if (!this._curDiyUV){
 					this._curDiyUV=[];
 				}
@@ -524,7 +526,7 @@
 			}
 			this._mVerticleArr=tVertices;
 			tIBArray=tTriangles;
-			skinSprite.init2(this.currTexture,null,tIBArray,this._mVerticleArr,tUvs);
+			skinSprite.init2(tTexture,null,tIBArray,this._mVerticleArr,tUvs);
 		}
 
 		/**
@@ -3022,12 +3024,13 @@
 			var tCurrTime=Laya.timer.currTimer;
 			var preIndex=this._player.currentKeyframeIndex;
 			if (autoKey){
-				this._player.update(tCurrTime-this._lastTime)
+				this._player.update(tCurrTime-this._lastTime);
 				}else{
 				preIndex=-1;
 			}
 			this._lastTime=tCurrTime;
-			this._clipIndex=this._player.currentKeyframeIndex;
+			this._index=this._clipIndex=this._player.currentKeyframeIndex;
+			if (this._index < 0)return;
 			if (this._clipIndex==preIndex&&this._lastUpdateAniClipIndex==this._aniClipIndex){
 				return;
 			}
@@ -3957,12 +3960,17 @@
 						}
 						_data.pos=this._Pos;
 						break ;
-					case 3:
-						(this.addChild(_idOfSprite[ _data.getUint16()])).zOrder=_data.getUint16();
-						ifAdd=true;
+					case 3:;
+						var node=_idOfSprite[ _data.getUint16()];
+						if (node){
+							this.addChild(node);
+							node.zOrder=_data.getUint16();
+							ifAdd=true;
+						}
 						break ;
-					case 4:
-						_idOfSprite[ _data.getUint16()].removeSelf();
+					case 4:;
+						var node=_idOfSprite[ _data.getUint16()];
+						node && node.removeSelf();
 						break ;
 					case 5:
 						_idOfSprite[_data.getUint16()][MovieClip._ValueList[_data.getUint16()]]=(_data.getFloat32());

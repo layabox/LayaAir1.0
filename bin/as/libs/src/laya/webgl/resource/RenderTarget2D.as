@@ -1,4 +1,5 @@
 package laya.webgl.resource {
+	import laya.events.Event;
 	import laya.resource.IDispose;
 	import laya.resource.Texture;
 	import laya.webgl.WebGL;
@@ -106,7 +107,10 @@ package laya.webgl.resource {
 		
 		public function size(w:Number, h:Number):void {
 			if (_w == w && _h == h)
+			{
+				bitmap._released = true;
 				return;
+			}
 			_w = w;
 			_h = h;
 			release();
@@ -236,6 +240,9 @@ package laya.webgl.resource {
 			_alreadyResolved = true;
 			_destroy = false;
 			_loaded = true;
+			bitmap.on( Event.RECOVERED, this, function(e:Event):void{
+				this.event(Event.RECOVERED);
+			})
 		}
 	
 	}

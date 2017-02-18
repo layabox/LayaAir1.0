@@ -91,10 +91,16 @@ package laya.debug
 				LoaderHook.init();
 			}
 			CacheAnalyser.showCacheSprite = showCacheRec;
-			DisplayHook.initMe();
+			
 			NodeInfoPanel.init();
+			initBasicFunctions();
+		}
+		public static function initBasicFunctions():void
+		{
+			DisplayHook.initMe();
 			if (!debugLayer)
 			{
+				DebugInfoLayer.init();
 				debugLayer = DebugInfoLayer.I.graphicLayer;
 				debugLayer.mouseEnabled = false;
 				debugLayer.mouseThrough = true;

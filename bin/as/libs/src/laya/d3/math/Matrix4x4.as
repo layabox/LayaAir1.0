@@ -1,9 +1,10 @@
 package laya.d3.math {
+	import laya.d3.core.IClone;
 	
 	/**
 	 * <code>Matrix4x4</code> 类用于创建4x4矩阵。
 	 */
-	public class Matrix4x4 {
+	public class Matrix4x4 implements IClone{
 		/**@private */
 		private static var _tempMatrix4x4:Matrix4x4 = /*[STATIC SAFE]*/ new Matrix4x4();
 		/**@private */
@@ -598,14 +599,14 @@ package laya.d3.math {
 		}
 		
 		/**
-		 *  克隆一个4x4矩阵
-		 * @param	out 输出的4x4矩阵
+		 * 克隆。
+		 * @param	destObject 克隆源。
 		 */
-		public function cloneTo(out:Matrix4x4):void {
+		public function cloneTo(destObject:*):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var i:int, s:Float32Array, d:Float32Array;
 			s = this.elements;
-			d = out.elements;
+			d = destObject.elements;
 			if (s === d) {
 				return;
 			}
@@ -615,40 +616,17 @@ package laya.d3.math {
 		}
 		
 		/**
-		 * 从一个4x4矩阵复制
-		 * @param	sou 源4x4矩阵
+		 * 克隆。
+		 * @return	 克隆副本。
 		 */
-		public function copyFrom(sou:Matrix4x4):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var i:int, s:Float32Array, d:Float32Array;
-			s = sou.elements;
-			d = this.elements;
-			if (s === d) {
-				return;
-			}
-			for (i = 0; i < 16; ++i) {
-				d[i] = s[i];
-			}
+		public function clone():* {
+			var dest:Matrix4x4 = __JS__("new this.constructor()");
+			cloneTo(dest);
+			return dest;
 		}
 		
-		/**
-		 * 从一个数组复制
-		 * @param	sou 源Float32Array数组
-		 */
-		public function copyFromArray(sou:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var i:int, d:Float32Array;
-			d = this.elements;
-			if (sou === d) {
-				return;
-			}
-			for (i = 0; i < 16; ++i) {
-				d[i] = sou[i];
-			}
-		}
 		
 		public static function translation(v3:Vector3, out:Matrix4x4):void {
-			
 			var ve:Float32Array = v3.elements;
 			var oe:Float32Array = out.elements;
 			oe[0] = oe[5] = oe[10] = oe[15] = 1;

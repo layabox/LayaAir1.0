@@ -311,7 +311,7 @@ package laya.display {
 		
 		/**
 		 * 文本的字体名称，以字符串形式表示。
-		 * <p>默认值为："Arial"，可以通过Text.defaultFont设置默认字体。</p>		 *
+		 * <p>默认值为："Arial"，可以通过Font.defaultFont设置默认字体。</p>
 		 * @see laya.display.css.Font#defaultFamily
 		 */
 		public function get font():String {

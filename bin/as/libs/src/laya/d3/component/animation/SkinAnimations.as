@@ -10,7 +10,6 @@ package laya.d3.component.animation {
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.renders.Render;
@@ -21,6 +20,9 @@ package laya.d3.component.animation {
 	 * <code>SkinAnimations</code> 类用于创建蒙皮动画组件。
 	 */
 	public class SkinAnimations extends KeyframeAnimations {
+		public static const BONES:int = 0;
+		public static var SHADERDEFINE_BONE:int = 0x100;
+		
 		/**
 		 * @private
 		 */
@@ -323,8 +325,8 @@ package laya.d3.component.animation {
 			_lastFrameIndex = frameIndex;
 			if (Render.isConchNode) {//NATIVE
 				for (i = 0, n = mesh.getSubMeshCount(); i < n; i++) {
-					_ownerMesh.meshRender.sharedMaterials[i]._addShaderDefine(ShaderDefines3D.BONE);
-					_ownerMesh.meshRender.renderObject._renderElements[i]._conchSubmesh.setShaderValue(RenderElement.BONES, _curAnimationDatas[i],0);
+					_ownerMesh.meshRender.sharedMaterials[i]._addShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
+					_ownerMesh.meshRender.renderObject._renderElements[i]._conchSubmesh.setShaderValue(SkinAnimations.BONES, _curAnimationDatas[i],0);
 				}
 			}
 		}
@@ -336,10 +338,10 @@ package laya.d3.component.animation {
 		 */
 		public override function _preRenderUpdate(state:RenderState):void {
 			if (_curAnimationDatas) {
-				state.shaderDefines.addInt(ShaderDefines3D.BONE);
+				state.addShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
 				var renderElement:RenderElement = state.renderElement;
 				var subMeshIndex:int = renderElement.renderObj.indexOfHost;
-				renderElement._shaderValue.setValue(RenderElement.BONES, _curAnimationDatas[subMeshIndex]);//TODO:
+				renderElement._shaderValue.setValue(SkinAnimations.BONES, _curAnimationDatas[subMeshIndex]);//TODO:
 			}
 		}
 		

@@ -40,7 +40,7 @@ package laya.events {
 			if (type === "keydown") _pressKeys[_event.keyCode] = true;
 			else if (type === "keyup") _pressKeys[_event.keyCode] = null;
 			
-			var target:* = (Laya.stage.focus && (Laya.stage.focus.event != null)) ? Laya.stage.focus : Laya.stage;
+			var target:* = (Laya.stage.focus && (Laya.stage.focus.event != null)&&Laya.stage.focus.displayedInStage) ? Laya.stage.focus : Laya.stage;
 			var ct:* = target;
 			while (ct) {
 				ct.event(type, _event.setTo(type, ct, target));

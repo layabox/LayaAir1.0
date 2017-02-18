@@ -60,7 +60,6 @@ package laya.d3.resource {
 			_width = w;
 			_height = h;
 			_size = new Size(w, h);
-			
 			if (_canRead) {
 				Browser.canvas.size(w, h);
 				Browser.canvas.clear();
@@ -118,9 +117,7 @@ package laya.d3.resource {
 			}
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			_image.onload = null;
-			
-			//*************************** To Do ***************************
-			//_image = null;
+			_image = null;
 			
 			if (isPot)
 				memorySize = w * h * 4 * (1 + 1 / 3);//使用mipmap则在原来的基础上增加1/3

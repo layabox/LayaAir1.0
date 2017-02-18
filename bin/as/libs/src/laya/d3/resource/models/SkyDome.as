@@ -11,7 +11,6 @@ package laya.d3.resource.models {
 	import laya.d3.resource.Texture2D;
 	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderCompile3D;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.shader.ValusArray;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
@@ -82,11 +81,8 @@ package laya.d3.resource.models {
 		 * @private
 		 */
 		protected function _getShader(state:RenderState):Shader3D {
-			var shaderDefs:ShaderDefines3D = state.shaderDefines;
-			var preDef:int = shaderDefs._value;
-			var nameID:Number = shaderDefs._value + _sharderNameID * Shader3D.SHADERNAME2ID;
-			_shader = Shader3D.withCompile(_sharderNameID, state.shaderDefines, nameID);
-			shaderDefs._value = preDef;
+			var shaderDefineValue:int = state._shaderDefineValue;
+			_shader = _shaderCompile.withCompile(_sharderNameID, shaderDefineValue, shaderDefineValue + _sharderNameID * ShaderCompile3D.SHADERNAME2ID);
 			return _shader;
 		}
 		
@@ -149,8 +145,8 @@ package laya.d3.resource.models {
 			completeCreate();
 			if (_conchSky) {//NATIVE
 				_conchSky.setVBIB(_vertexDeclaration._conchVertexDeclaration, vertices, indices);
-				_sharderNameID = Shader3D.nameKey.get("SkyDome");
-				var shaderCompile:ShaderCompile3D = ShaderCompile3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
+				_sharderNameID = Shader3D.nameKey.getID("SkyDome");
+				var shaderCompile:ShaderCompile3D = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * _sharderNameID];
 				_conchSky.setShader(shaderCompile._conchShader);
 			}
 		}
@@ -159,8 +155,8 @@ package laya.d3.resource.models {
 		 * @private
 		 */
 		protected function loadShaderParams():void {
-			_sharderNameID = Shader3D.nameKey.get("SkyDome");
-			_shaderCompile = ShaderCompile3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
+			_sharderNameID = Shader3D.nameKey.getID("SkyDome");
+			_shaderCompile = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * _sharderNameID];
 		}
 		
 		override public function _render(state:RenderState):void {

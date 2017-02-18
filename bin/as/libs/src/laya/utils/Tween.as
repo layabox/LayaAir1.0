@@ -147,6 +147,7 @@ package laya.utils {
 		}
 		
 		private function _beginLoop():void {
+			_doEase();
 			Laya.timer.frameLoop(1, this, _doEase);
 		}
 		

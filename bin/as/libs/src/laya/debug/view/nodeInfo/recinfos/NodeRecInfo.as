@@ -1,5 +1,6 @@
 package laya.debug.view.nodeInfo.recinfos 
 {
+	import laya.debug.tools.DebugConsts;
 	import laya.display.Sprite;
 	import laya.display.Text;
 	import laya.maths.GrahamScan;
@@ -48,7 +49,7 @@ package laya.debug.view.nodeInfo.recinfos
 			WalkTools.walkArr(pointList,node.localToGlobal,node);	
 			pointList=GrahamScan.pointListToPlist(pointList);
 			_disBoundRec=Rectangle._getWrapRec(pointList,_disBoundRec);
-			this.graphics.drawRect(0, 0, _disBoundRec.width, _disBoundRec.height, null, recColor,2);
+			this.graphics.drawRect(0, 0, _disBoundRec.width, _disBoundRec.height, null, DebugConsts.RECACHE_REC_COLOR,2);
 			this.pos(_disBoundRec.x, _disBoundRec.y);
 		}
 		public function fresh():void

@@ -13,7 +13,6 @@ package laya.d3.resource.models {
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.utils.Utils3D;
 	import laya.renders.Render;
 	import laya.utils.Stat;

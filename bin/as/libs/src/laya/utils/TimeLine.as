@@ -308,6 +308,10 @@ package laya.utils {
 					_complete();
 					gotoTime(0);
 				} else {
+					for (var p:* in _tweenDic) {
+						tTween = _tweenDic[p];
+						tTween.complete();
+					}
 					_complete();
 					pause();
 					return;

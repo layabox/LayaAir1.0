@@ -1,7 +1,9 @@
 package {
 	import laya.ani.AnimationTemplet;
+	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Layer;
+	import laya.d3.core.material.PBRMaterial;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.GlitterMaterial;
@@ -13,13 +15,13 @@ package {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.graphics.VertexElementUsage;
+	import laya.d3.resource.DataTexture2D;
 	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.TextureCube;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.Sky;
 	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderCompile3D;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.net.Loader;
@@ -96,7 +98,7 @@ package {
 			'a_BoneIndices': VertexElementUsage.BLENDINDICES0, 
 			'a_Tangent0': VertexElementUsage.TANGENT0};
 			var uniformMap:Object = {
-			'u_Bones': [RenderElement.BONES, Shader3D.PERIOD_RENDERELEMENT],
+			'u_Bones': [SkinAnimations.BONES, Shader3D.PERIOD_RENDERELEMENT],
 			'u_DiffuseTexture': [StandardMaterial.DIFFUSETEXTURE,Shader3D.PERIOD_MATERIAL],
 			'u_SpecularTexture': [StandardMaterial.SPECULARTEXTURE,Shader3D.PERIOD_MATERIAL],
 			'u_NormalTexture': [StandardMaterial.NORMALTEXTURE,Shader3D.PERIOD_MATERIAL],
@@ -139,48 +141,88 @@ package {
 			var SIMPLE:int = Shader3D.nameKey.add("SIMPLE");
 			vs = __INCLUDESTR__("laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.ps");
-			/*var sx:ShaderCompile3D= */ShaderCompile3D.add(SIMPLE, vs, ps, attributeMap, uniformMap);
-			
-			//if (WebGL.frameShaderHighPrecision){
-			//sx.compileShaderWitthSingalValue(132737);
-			//sx.compileShaderWitthSingalValue(1665);
-			//sx.compileShaderWitthSingalValue(34433);
-			//sx.compileShaderWitthSingalValue(165505);
-			//sx.compileShaderWitthSingalValue(1664);
-			//sx.compileShaderWitthSingalValue(3713);
-			//sx.compileShaderWitthSingalValue(36481);
-			//sx.compileShaderWitthSingalValue(164993);
-			//sx.compileShaderWitthSingalValue(33921);
-			//
-			//sx.compileShaderWitthSingalValue(1152);
-			//sx.compileShaderWitthSingalValue(1153);
-			//sx.compileShaderWitthSingalValue(33920);
-			//sx.compileShaderWitthSingalValue(164992);
-			//}
-			//else
-			//{
-				//sx.compileShaderWitthSingalValue(132737-128);
-			//sx.compileShaderWitthSingalValue(1665-128);
-			//sx.compileShaderWitthSingalValue(34433-128);
-			//sx.compileShaderWitthSingalValue(165505-128);
-			//sx.compileShaderWitthSingalValue(1664-128);
-			//sx.compileShaderWitthSingalValue(3713-128);
-			//sx.compileShaderWitthSingalValue(36481-128);
-			//sx.compileShaderWitthSingalValue(164993-128);
-			//sx.compileShaderWitthSingalValue(33921-128);
-			//
-			//sx.compileShaderWitthSingalValue(1152-128);
-			//sx.compileShaderWitthSingalValue(1153-128);
-			//sx.compileShaderWitthSingalValue(33920-128);
-			//sx.compileShaderWitthSingalValue(164992-128);
-			//}
-			
+			var shaderCompile:ShaderCompile3D=ShaderCompile3D.add(SIMPLE, vs, ps, attributeMap, uniformMap);
+			StandardMaterial.SHADERDEFINE_DIFFUSEMAP=shaderCompile.registerDefine("DIFFUSEMAP");
+			StandardMaterial.SHADERDEFINE_NORMALMAP=shaderCompile.registerDefine("NORMALMAP");
+			StandardMaterial.SHADERDEFINE_SPECULARMAP=shaderCompile.registerDefine("SPECULARMAP");
+			StandardMaterial.SHADERDEFINE_EMISSIVEMAP=shaderCompile.registerDefine("EMISSIVEMAP");
+			StandardMaterial.SHADERDEFINE_AMBIENTMAP=shaderCompile.registerDefine("AMBIENTMAP");
+			StandardMaterial.SHADERDEFINE_REFLECTMAP=shaderCompile.registerDefine("REFLECTMAP");
+			StandardMaterial.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV=shaderCompile.registerDefine("SCALEOFFSETLIGHTINGMAPUV");
+			StandardMaterial.SHADERDEFINE_ALPHATEST=shaderCompile.registerDefine("ALPHATEST");
+			StandardMaterial.SHADERDEFINE_UVTRANSFORM=shaderCompile.registerDefine("UVTRANSFORM");
+			//shaderCompile.reg("MIXUV", StandardMaterial.MIXUV);
 
+			//PBR
+			attributeMap = {
+		    'position': VertexElementUsage.POSITION0,
+			'normal': VertexElementUsage.NORMAL0, 
+			'uv': VertexElementUsage.TEXTURECOORDINATE0, 
+			'a_BoneWeights': VertexElementUsage.BLENDWEIGHT0, 
+			'a_BoneIndices': VertexElementUsage.BLENDINDICES0, 
+			'a_Tangent0': VertexElementUsage.TANGENT0};
+			uniformMap = {
+			'u_Bones': [SkinAnimations.BONES, Shader3D.PERIOD_RENDERELEMENT],
+			'u_lodRect':[PBRMaterial.SIMLODINFO,Shader3D.PERIOD_MATERIAL],
+			'texBaseColor': [PBRMaterial.DIFFUSETEXTURE,Shader3D.PERIOD_MATERIAL],
+			'texNormal': [PBRMaterial.NORMALTEXTURE, Shader3D.PERIOD_MATERIAL],
+			'texORM': [PBRMaterial.PBRINFOTEXTURE,Shader3D.PERIOD_MATERIAL],
+			'texPrefilterdEnv': [PBRMaterial.ENVMAPTEXTURE, Shader3D.PERIOD_MATERIAL],
+			'texPrefilterDiff': [PBRMaterial.ENVDIFFTEXTURE, Shader3D.PERIOD_MATERIAL],			
+			'texBRDFLUT': [PBRMaterial.PBRLUTTEXTURE, Shader3D.PERIOD_MATERIAL],
+			
+			'u_AlphaTestValue': [PBRMaterial.ALPHATESTVALUE, Shader3D.PERIOD_MATERIAL],
+			'u_UVAniAge': [PBRMaterial.UVANIAGE, Shader3D.PERIOD_MATERIAL],
+			'u_MaterialRoughness':[PBRMaterial.MATERIALROUGHNESS, Shader3D.PERIOD_MATERIAL],
+			'u_UVMatrix': [PBRMaterial.UVMATRIX,Shader3D.PERIOD_MATERIAL],
+			'u_UVAge': [PBRMaterial.UVAGE,Shader3D.PERIOD_MATERIAL],
+			'modelMatrix': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE],
+			'mvp': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE],
+			'cameraPosition': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA],
+			'u_View': [BaseCamera.VIEWMATRIX, Shader3D.PERIOD_CAMERA], 
+			'u_Project': [BaseCamera.PROJECTMATRIX,Shader3D.PERIOD_CAMERA], 
+			'u_FogStart': [BaseScene.FOGSTART, Shader3D.PERIOD_SCENE],
+			'u_FogRange': [BaseScene.FOGRANGE, Shader3D.PERIOD_SCENE],
+			'u_FogColor': [BaseScene.FOGCOLOR, Shader3D.PERIOD_SCENE],
+			'u_DirectionLight.Direction': [BaseScene.LIGHTDIRECTION, Shader3D.PERIOD_SCENE],
+			'u_DirectionLight.Diffuse': [BaseScene.LIGHTDIRDIFFUSE, Shader3D.PERIOD_SCENE],
+			'u_DirectionLight.Ambient': [BaseScene.LIGHTDIRAMBIENT, Shader3D.PERIOD_SCENE],
+			'u_DirectionLight.Specular': [BaseScene.LIGHTDIRSPECULAR, Shader3D.PERIOD_SCENE],
+			'u_PointLight.Position': [BaseScene.POINTLIGHTPOS, Shader3D.PERIOD_SCENE],
+			'u_PointLight.Range': [BaseScene.POINTLIGHTRANGE, Shader3D.PERIOD_SCENE],
+			'u_PointLight.Attenuation': [BaseScene.POINTLIGHTATTENUATION, Shader3D.PERIOD_SCENE],
+			'u_PointLight.Diffuse': [BaseScene.POINTLIGHTDIFFUSE, Shader3D.PERIOD_SCENE],
+			'u_PointLight.Ambient': [BaseScene.POINTLIGHTAMBIENT, Shader3D.PERIOD_SCENE],
+			'u_PointLight.Specular': [BaseScene.POINTLIGHTSPECULAR, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Position': [BaseScene.SPOTLIGHTPOS, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Direction': [BaseScene.SPOTLIGHTDIRECTION, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Range': [BaseScene.SPOTLIGHTRANGE, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Spot': [BaseScene.SPOTLIGHTSPOT, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Attenuation': [BaseScene.SPOTLIGHTATTENUATION, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Diffuse': [BaseScene.SPOTLIGHTDIFFUSE, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Ambient': [BaseScene.SPOTLIGHTAMBIENT, Shader3D.PERIOD_SCENE],
+			'u_SpotLight.Specular': [BaseScene.SPOTLIGHTSPECULAR,Shader3D.PERIOD_SCENE]};
+			var PBR:int = Shader3D.nameKey.add("PBR");
+			vs = __INCLUDESTR__("laya/d3/shader/files/PBR.vs");
+			ps = __INCLUDESTR__("laya/d3/shader/files/PBR.ps");
+			shaderCompile = ShaderCompile3D.add(PBR, vs, ps, attributeMap, uniformMap);
+			//shaderCompile.registerDefine("");
+			
 			
 			var SIMPLEVEXTEX:int = Shader3D.nameKey.add("SIMPLEVEXTEX");
 			vs = __INCLUDESTR__("laya/d3/shader/files/VertexSimpleTextureSkinnedMesh.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/VertexSimpleTextureSkinnedMesh.ps");
-			ShaderCompile3D.add(SIMPLEVEXTEX, vs, ps,attributeMap, uniformMap);
+			shaderCompile=ShaderCompile3D.add(SIMPLEVEXTEX, vs, ps, attributeMap, uniformMap);
+			StandardMaterial.SHADERDEFINE_DIFFUSEMAP=shaderCompile.registerDefine("DIFFUSEMAP");
+			StandardMaterial.SHADERDEFINE_NORMALMAP=shaderCompile.registerDefine("NORMALMAP");
+			StandardMaterial.SHADERDEFINE_SPECULARMAP=shaderCompile.registerDefine("SPECULARMAP");
+			StandardMaterial.SHADERDEFINE_EMISSIVEMAP=shaderCompile.registerDefine("EMISSIVEMAP");
+			StandardMaterial.SHADERDEFINE_AMBIENTMAP=shaderCompile.registerDefine("AMBIENTMAP");
+			StandardMaterial.SHADERDEFINE_REFLECTMAP=shaderCompile.registerDefine("REFLECTMAP");
+			StandardMaterial.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV=shaderCompile.registerDefine("SCALEOFFSETLIGHTINGMAPUV");
+			StandardMaterial.SHADERDEFINE_ALPHATEST=shaderCompile.registerDefine("ALPHATEST");
+			StandardMaterial.SHADERDEFINE_UVTRANSFORM=shaderCompile.registerDefine("UVTRANSFORM");
+			//shaderCompile.reg("MIXUV", StandardMaterial.MIXUV);
 			
 			attributeMap = {
 			'a_Position': VertexElementUsage.POSITION0, 
@@ -203,7 +245,17 @@ package {
 			var TERRAIN:int = Shader3D.nameKey.add("TERRAIN");
 			vs = __INCLUDESTR__("laya/d3/shader/files/modelTerrain.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/modelTerrain.ps");
-			ShaderCompile3D.add(TERRAIN, vs, ps,attributeMap, uniformMap);
+			shaderCompile=ShaderCompile3D.add(TERRAIN, vs, ps, attributeMap, uniformMap);
+			StandardMaterial.SHADERDEFINE_DIFFUSEMAP=shaderCompile.registerDefine("DIFFUSEMAP");
+			StandardMaterial.SHADERDEFINE_NORMALMAP=shaderCompile.registerDefine("NORMALMAP");
+			StandardMaterial.SHADERDEFINE_SPECULARMAP=shaderCompile.registerDefine("SPECULARMAP");
+			StandardMaterial.SHADERDEFINE_EMISSIVEMAP=shaderCompile.registerDefine("EMISSIVEMAP");
+			StandardMaterial.SHADERDEFINE_AMBIENTMAP=shaderCompile.registerDefine("AMBIENTMAP");
+			StandardMaterial.SHADERDEFINE_REFLECTMAP=shaderCompile.registerDefine("REFLECTMAP");
+			StandardMaterial.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV=shaderCompile.registerDefine("SCALEOFFSETLIGHTINGMAPUV");
+			StandardMaterial.SHADERDEFINE_ALPHATEST=shaderCompile.registerDefine("ALPHATEST");
+			StandardMaterial.SHADERDEFINE_UVTRANSFORM=shaderCompile.registerDefine("UVTRANSFORM");
+			//shaderCompile.reg("MIXUV", StandardMaterial.MIXUV);
 			
 			attributeMap = {
 			'a_CornerTextureCoordinate': VertexElementUsage.CORNERTEXTURECOORDINATE0, 
@@ -227,21 +279,20 @@ package {
 			'u_Projection': [BaseCamera.PROJECTMATRIX,Shader3D.PERIOD_CAMERA], 
 			'u_ViewportScale': [ParticleMaterial.VIEWPORTSCALE,Shader3D.PERIOD_MATERIAL]};//TODO:
 			var PARTICLE:int = Shader3D.nameKey.add("PARTICLE");
-			ShaderCompile3D.add(PARTICLE, ParticleShader.vs, ParticleShader.ps, attributeMap, uniformMap);
+			shaderCompile =ShaderCompile3D.add(PARTICLE, ParticleShader.vs, ParticleShader.ps, attributeMap, uniformMap);
+			ParticleMaterial.SHADERDEFINE_PARTICLE3D=shaderCompile.registerDefine("PARTICLE3D");
 			
 			attributeMap = {
 		    'a_CornerTextureCoordinate': VertexElementUsage.CORNERTEXTURECOORDINATE0, 
-			'a_Position': VertexElementUsage.POSITION0, 
-			'a_Direction': VertexElementUsage.DIRECTION, 
+			'a_PositionStartLifeTime': VertexElementUsage.POSITIONSTARTLIFETIME, 
+			'a_DirectionTime': VertexElementUsage.DIRECTIONTIME, 
 			'a_StartColor': VertexElementUsage.STARTCOLOR0, 
 			'a_EndColor': VertexElementUsage.ENDCOLOR0, 
 			'a_StartSize': VertexElementUsage.STARTSIZE, 
 			'a_StartRotation0': VertexElementUsage.STARTROTATION0, 
 			'a_StartRotation1': VertexElementUsage.STARTROTATION1, 
 			'a_StartRotation2': VertexElementUsage.STARTROTATION2, 
-			'a_StartLifeTime': VertexElementUsage.STARTLIFETIME, 
 			'a_StartSpeed': VertexElementUsage.STARTSPEED, 
-			'a_Time': VertexElementUsage.TIME0, 
 			'a_Random0': VertexElementUsage.RANDOM0, 
 			'a_Random1': VertexElementUsage.RANDOM1, 
 			'a_SimulationWorldPostion': VertexElementUsage.SIMULATIONWORLDPOSTION};
@@ -263,7 +314,6 @@ package {
 			'u_ColorOverLifeGradientColors': [ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, Shader3D.PERIOD_SPRITE], 
 			'u_MaxColorOverLifeGradientAlphas': [ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS, Shader3D.PERIOD_SPRITE], 
 			'u_MaxColorOverLifeGradientColors': [ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS, Shader3D.PERIOD_SPRITE], 
-			'u_VOLType': [ShuriKenParticle3D.VOLTYPE, Shader3D.PERIOD_SPRITE], 
 			'u_VOLVelocityConst': [ShuriKenParticle3D.VOLVELOCITYCONST, Shader3D.PERIOD_SPRITE], 
 			'u_VOLVelocityGradientX': [ShuriKenParticle3D.VOLVELOCITYGRADIENTX, Shader3D.PERIOD_SPRITE], 
 			'u_VOLVelocityGradientY': [ShuriKenParticle3D.VOLVELOCITYGRADIENTY, Shader3D.PERIOD_SPRITE], 
@@ -273,8 +323,6 @@ package {
 			'u_VOLVelocityGradientMaxY': [ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX, Shader3D.PERIOD_SPRITE], 
 			'u_VOLVelocityGradientMaxZ': [ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX, Shader3D.PERIOD_SPRITE], 
 			'u_VOLSpaceType': [ShuriKenParticle3D.VOLSPACETYPE, Shader3D.PERIOD_SPRITE], 
-			'u_SOLType': [ShuriKenParticle3D.SOLTYPE, Shader3D.PERIOD_SPRITE], 
-			'u_SOLSeprarate': [ShuriKenParticle3D.SOLSEPRARATE, Shader3D.PERIOD_SPRITE], 
 			'u_SOLSizeGradient': [ShuriKenParticle3D.SOLSIZEGRADIENT, Shader3D.PERIOD_SPRITE], 
 			'u_SOLSizeGradientX': [ShuriKenParticle3D.SOLSIZEGRADIENTX, Shader3D.PERIOD_SPRITE], 
 			'u_SOLSizeGradientY': [ShuriKenParticle3D.SOLSIZEGRADIENTY, Shader3D.PERIOD_SPRITE], 
@@ -283,8 +331,6 @@ package {
 			'u_SOLSizeGradientMaxX': [ShuriKenParticle3D.SOLSIZEGRADIENTXMAX, Shader3D.PERIOD_SPRITE], 
 			'u_SOLSizeGradientMaxY': [ShuriKenParticle3D.SOLSIZEGRADIENTYMAX, Shader3D.PERIOD_SPRITE], 
 			'u_SOLSizeGradientMaxZ': [ShuriKenParticle3D.SOLSizeGradientZMAX, Shader3D.PERIOD_SPRITE], 
-			'u_ROLType': [ShuriKenParticle3D.ROLTYPE, Shader3D.PERIOD_SPRITE], 
-			'u_ROLSeprarate': [ShuriKenParticle3D.ROLSEPRARATE, Shader3D.PERIOD_SPRITE], 
 			'u_ROLAngularVelocityConst': [ShuriKenParticle3D.ROLANGULARVELOCITYCONST, Shader3D.PERIOD_SPRITE], 
 			'u_ROLAngularVelocityConstSeprarate': [ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, Shader3D.PERIOD_SPRITE], 
 			'u_ROLAngularVelocityGradient': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, Shader3D.PERIOD_SPRITE], 
@@ -297,7 +343,6 @@ package {
 			'u_ROLAngularVelocityGradientMaxX': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX, Shader3D.PERIOD_SPRITE], 
 			'u_ROLAngularVelocityGradientMaxY': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX, Shader3D.PERIOD_SPRITE], 
 			'u_ROLAngularVelocityGradientMaxZ': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX, Shader3D.PERIOD_SPRITE], 
-			'u_TSAType': [ShuriKenParticle3D.TEXTURESHEETANIMATIONTYPE, Shader3D.PERIOD_SPRITE], 
 			'u_TSACycles': [ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES, Shader3D.PERIOD_SPRITE], 
 			'u_TSASubUVLength': [ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, Shader3D.PERIOD_SPRITE], 
 			'u_TSAGradientUVs': [ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, Shader3D.PERIOD_SPRITE], 
@@ -310,75 +355,32 @@ package {
 			var PARTICLESHURIKEN:int = Shader3D.nameKey.add("PARTICLESHURIKEN");
 			vs = __INCLUDESTR__("laya/d3/shader/files/ParticleShuriKen.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/ParticleShuriKen.ps");
-			/*var sc:ShaderCompile3D = */ShaderCompile3D.add(PARTICLESHURIKEN, vs, ps, attributeMap, uniformMap);
+			shaderCompile = ShaderCompile3D.add(PARTICLESHURIKEN, vs, ps, attributeMap, uniformMap);
+			ShurikenParticleMaterial.SHADERDEFINE_DIFFUSEMAP=shaderCompile.registerDefine("DIFFUSEMAP");
+			ShurikenParticleMaterial.SHADERDEFINE_SPHERHBILLBOARD=shaderCompile.registerDefine("SPHERHBILLBOARD");
+			ShurikenParticleMaterial.SHADERDEFINE_STRETCHEDBILLBOARD=shaderCompile.registerDefine("STRETCHEDBILLBOARD");
+			ShurikenParticleMaterial.SHADERDEFINE_HORIZONTALBILLBOARD=shaderCompile.registerDefine("HORIZONTALBILLBOARD");
+			ShurikenParticleMaterial.SHADERDEFINE_VERTICALBILLBOARD=shaderCompile.registerDefine("VERTICALBILLBOARD");
+			ShurikenParticleMaterial.SHADERDEFINE_COLOROVERLIFETIME=shaderCompile.registerDefine("COLOROVERLIFETIME");
+			ShurikenParticleMaterial.SHADERDEFINE_RANDOMCOLOROVERLIFETIME=shaderCompile.registerDefine("RANDOMCOLOROVERLIFETIME");
+			ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT = shaderCompile.registerDefine("VELOCITYOVERLIFETIMECONSTANT");
+			ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE = shaderCompile.registerDefine("VELOCITYOVERLIFETIMECURVE");
+			ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT = shaderCompile.registerDefine("VELOCITYOVERLIFETIMERANDOMCONSTANT");
+			ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE = shaderCompile.registerDefine("VELOCITYOVERLIFETIMERANDOMCURVE");
+			ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE = shaderCompile.registerDefine("TEXTURESHEETANIMATIONCURVE");
+			ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE = shaderCompile.registerDefine("TEXTURESHEETANIMATIONRANDOMCURVE");
+			ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIME = shaderCompile.registerDefine("ROTATIONOVERLIFETIME");
+			ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE = shaderCompile.registerDefine("ROTATIONOVERLIFETIMESEPERATE");
+			ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT = shaderCompile.registerDefine("ROTATIONOVERLIFETIMECONSTANT");
+			ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE = shaderCompile.registerDefine("ROTATIONOVERLIFETIMECURVE");
+			ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS = shaderCompile.registerDefine("ROTATIONOVERLIFETIMERANDOMCONSTANTS");
+			ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES = shaderCompile.registerDefine("ROTATIONOVERLIFETIMERANDOMCURVES");
+			ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVE = shaderCompile.registerDefine("SIZEOVERLIFETIMECURVE");
+			ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE = shaderCompile.registerDefine("SIZEOVERLIFETIMECURVESEPERATE");
+			ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES = shaderCompile.registerDefine("SIZEOVERLIFETIMERANDOMCURVES");
+			ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE = shaderCompile.registerDefine("SIZEOVERLIFETIMERANDOMCURVESSEPERATE");
 			
-			//if (WebGL.frameShaderHighPrecision){
-			//sc.compileShaderWitthSingalValue(42992257);
-			//sc.compileShaderWitthSingalValue(109576833);
-			//sc.compileShaderWitthSingalValue(8913537);
-			//sc.compileShaderWitthSingalValue(42467969);
-			//sc.compileShaderWitthSingalValue(34079361);
-			//sc.compileShaderWitthSingalValue(34603649);
-			//sc.compileShaderWitthSingalValue(50856577);
-			//sc.compileShaderWitthSingalValue(101188225);
-			//sc.compileShaderWitthSingalValue(151519873);
-			//sc.compileShaderWitthSingalValue(117965441);
-			//sc.compileShaderWitthSingalValue(144704129);
-			//sc.compileShaderWitthSingalValue(143131265);
-			//sc.compileShaderWitthSingalValue(201851521);
-			//sc.compileShaderWitthSingalValue(235405953);
-			//sc.compileShaderWitthSingalValue(2097793);
-			//sc.compileShaderWitthSingalValue(168297089);
-			//sc.compileShaderWitthSingalValue(176685697);
-			//
-			//sc.compileShaderWitthSingalValue(9437825);
-			//sc.compileShaderWitthSingalValue(524929);
-			//sc.compileShaderWitthSingalValue(44040833);
-			//sc.compileShaderWitthSingalValue(35652225);
-			//sc.compileShaderWitthSingalValue(101712513);
-			//
-			//sc.compileShaderWitthSingalValue(109576321);
-			//sc.compileShaderWitthSingalValue(42991745);
-			//sc.compileShaderWitthSingalValue(8913025);
-			//sc.compileShaderWitthSingalValue(42467457);
-			//sc.compileShaderWitthSingalValue(50856065);
-			//sc.compileShaderWitthSingalValue(135266945);
-			//}
-			//else
-			//{
-			//sc.compileShaderWitthSingalValue(42992257-128);
-			//sc.compileShaderWitthSingalValue(109576833-128);
-			//sc.compileShaderWitthSingalValue(8913537-128);
-			//sc.compileShaderWitthSingalValue(42467969-128);
-			//sc.compileShaderWitthSingalValue(34079361-128);
-			//sc.compileShaderWitthSingalValue(34603649-128);
-			//sc.compileShaderWitthSingalValue(50856577-128);
-			//sc.compileShaderWitthSingalValue(101188225-128);
-			//sc.compileShaderWitthSingalValue(151519873-128);
-			//sc.compileShaderWitthSingalValue(117965441-128);
-			//sc.compileShaderWitthSingalValue(144704129-128);
-			//sc.compileShaderWitthSingalValue(143131265-128);
-			//sc.compileShaderWitthSingalValue(201851521-128);
-			//sc.compileShaderWitthSingalValue(235405953-128);
-			//sc.compileShaderWitthSingalValue(2097793-128);
-			//sc.compileShaderWitthSingalValue(168297089-128);
-			//sc.compileShaderWitthSingalValue(176685697-128);
-			//
-			//sc.compileShaderWitthSingalValue(9437825-128);
-			//sc.compileShaderWitthSingalValue(524929-128);
-			//sc.compileShaderWitthSingalValue(44040833-128);
-			//sc.compileShaderWitthSingalValue(35652225-128);
-			//sc.compileShaderWitthSingalValue(101712513-128);
-			//
-			//sc.compileShaderWitthSingalValue(109576321-128);
-			//sc.compileShaderWitthSingalValue(42991745-128);
-			//sc.compileShaderWitthSingalValue(8913025-128);
-			//sc.compileShaderWitthSingalValue(42467457-128);
-			//sc.compileShaderWitthSingalValue(50856065-128);
-			//sc.compileShaderWitthSingalValue(135266945-128);
-			//}
-			
-			
+
 			attributeMap = {
 			'a_Position': VertexElementUsage.POSITION0, 
 			'a_Texcoord0': VertexElementUsage.TEXTURECOORDINATE0, 
@@ -393,7 +395,7 @@ package {
 			var GLITTER:int = Shader3D.nameKey.add("GLITTER");
 			vs = __INCLUDESTR__("laya/d3/shader/files/Glitter.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/Glitter.ps");
-			ShaderCompile3D.add(GLITTER, vs, ps,attributeMap, uniformMap);
+			shaderCompile = ShaderCompile3D.add(GLITTER, vs, ps, attributeMap, uniformMap);
 			
 			attributeMap = {
 			'a_Position': VertexElementUsage.POSITION0};
@@ -441,6 +443,8 @@ package {
 			createMap["lrani"] = [AnimationTemplet, Loader.BUFFER];
 			createMap["ani"] = [AnimationTemplet, Loader.BUFFER];//兼容接口
 			createMap["lani"] = [AnimationTemplet, Loader.BUFFER];//兼容接口
+			createMap["raw"] = [DataTexture2D, Loader.BUFFER];
+			createMap["mipmaps"] = [DataTexture2D, Loader.BUFFER];
 			
 			Loader.parserMap[Laya3D.SPRITE3DHIERARCHY] = _loadSprite3DHierarchy;
 			Loader.parserMap[Laya3D.MESH] = _loadMesh;
@@ -789,7 +793,6 @@ package {
 				return;
 			}
 			
-			
 			_innerTextureCubeLoaderManager.maxLoader = 1;
 			_innerMaterialLoaderManager.maxLoader = 1;
 			_innerMeshLoaderManager.maxLoader = 1;
@@ -802,7 +805,7 @@ package {
 			Render.is3DMode = true;
 			Laya.init(width, height);
 			Layer.__init__();
-			ShaderDefines3D.__init__();
+			ShaderCompile3D.__init__();
 			_initShader();
 			_initResourceLoad();
 		}

@@ -211,7 +211,6 @@ package laya.d3.utils {
 				material = new ShurikenParticleMaterial();
 				material.diffuseTexture = innerResouMap ? Loader.getRes(innerResouMap[settting.texturePath]) : Texture2D.load(settting.texturePath);
 			}
-			material.renderMode = ShurikenParticleMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;//TODO:不应自动设置
 			
 			particle.particleRender.sharedMaterial = material;
 			//particleSystem
@@ -374,6 +373,17 @@ package laya.d3.utils {
 				circleShape.arc = shapeData.circleArc * anglelToRad;
 				circleShape.emitFromEdge = shapeData.circleEmitFromEdge;
 				circleShape.randomDirection = shapeData.circleRandomDirection;
+				break;
+			/**
+			 * ------------------------临时调整，待日后完善-------------------------------------
+			 */
+			default:
+				var tempShape:CircleShape;
+				shape = tempShape = new CircleShape();
+				tempShape.radius = shapeData.circleRadius;
+				tempShape.arc = shapeData.circleArc * anglelToRad;
+				tempShape.emitFromEdge = shapeData.circleEmitFromEdge;
+				tempShape.randomDirection = shapeData.circleRandomDirection;
 				break;
 			}
 			shape.enable = shapeData.enable;
@@ -596,8 +606,6 @@ package laya.d3.utils {
 				var lightmapScaleOffsetArray:Array = customProps.lightmapScaleOffset;
 				if (lightmapScaleOffsetArray)
 					meshRender.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]);
-				else
-					meshRender.lightmapScaleOffset = new Vector4(1, 1, 0, 0);
 				
 				var mesh:Mesh = Loader.getRes(innerResouMap[json.instanceParams.loadPath]);
 				meshSprite3D.meshFilter.sharedMesh = mesh;
@@ -729,10 +737,12 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function _parseShurikenParticleMaterial(textureMap:Object, material:StandardMaterial, json:Object):void {
+		public static function _parseShurikenParticleMaterial(textureMap:Object, material:ShurikenParticleMaterial, json:Object):void {
 			var customProps:Object = json.customProps;
 			var diffuseTexture:String = customProps.diffuseTexture.texture2D;
 			(diffuseTexture) && (material.diffuseTexture = Loader.getRes(textureMap[diffuseTexture]));	
+			var tintColorValue:Array = customProps.tintColor;
+			(tintColorValue)&&(material.tintColor = new Vector4(tintColorValue[0], tintColorValue[1], tintColorValue[2], tintColorValue[3]));
 		}
 		
 		/** @private */

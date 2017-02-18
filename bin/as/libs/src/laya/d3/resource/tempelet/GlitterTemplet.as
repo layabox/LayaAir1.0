@@ -1,4 +1,5 @@
 package laya.d3.resource.tempelet {
+	import laya.d3.core.GeometryFilter;
 	import laya.d3.core.glitter.Glitter;
 	import laya.d3.core.glitter.SplineCurvePositionVelocity;
 	import laya.d3.core.material.BaseMaterial;
@@ -11,7 +12,6 @@ package laya.d3.resource.tempelet {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.utils.Handler;
@@ -27,7 +27,7 @@ package laya.d3.resource.tempelet {
 	 * @private
 	 * <code>GlitterTemplet</code> 类用于创建闪光数据模板。
 	 */
-	public class GlitterTemplet extends EventDispatcher implements IRenderable {
+	public class GlitterTemplet extends GeometryFilter implements IRenderable {
 		private var _tempVector0:Vector3 = new Vector3();
 		private var _tempVector1:Vector3 = new Vector3();
 		private var _tempVector2:Vector3 = new Vector3();
@@ -469,12 +469,38 @@ package laya.d3.resource.tempelet {
 			}
 		}
 		
-		public function dispose():void {
-			_owner.off(Event.ENABLED_CHANGED, this, _onEnableChanged);
+		override public function _destroy():void {
+			super._destroy();
+			_tempVector0 = null;
+			_tempVector1 = null;
+			_tempVector2 = null;
+			_tempVector3 = null;
+			_owner = null;
+			_albedo = null;
+			_vertices = null;
+			_vertexBuffer.dispose();
+			_vertexBuffer = null;
+			scLeft = null;
+			scRight = null;
+			_posModeLastPosition0 = null;
+			_posModeLastPosition1 = null;
+			_posModePosition0 = null;
+			_posModePosition1 = null;
+			
+			_posVelModePosition0 = null;
+			_posVelModeVelocity0 = null;
+			_posVelModePosition1 = null;
+			_posVelModeVelocity1 = null;
+			
+			_lastPatchAddPos0 = null;
+			_lastPatchAddPos1 = null;
+			
+			color = null;
 		}
+		
 		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void//NATIVE
 		{
-			
+		
 		}
 	}
 }

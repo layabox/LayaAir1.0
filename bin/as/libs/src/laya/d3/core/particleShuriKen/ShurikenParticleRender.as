@@ -2,7 +2,6 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.particle.Particle3D;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
 	import laya.d3.core.render.BaseRender;
-	import laya.d3.shader.ShaderDefines3D;
 	
 	/**
 	 * ...
@@ -47,31 +46,31 @@ package laya.d3.core.particleShuriKen {
 			if (_renderMode !== value) {
 				switch (_renderMode) {
 				case 0: 
-					_owner._removeShaderDefine(ShaderDefines3D.SPHERHBILLBOARD);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SPHERHBILLBOARD);
 					break;
 				case 1: 
-					_owner._removeShaderDefine(ShaderDefines3D.STRETCHEDBILLBOARD);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_STRETCHEDBILLBOARD);
 					break;
 				case 2: 
-					_owner._removeShaderDefine(ShaderDefines3D.HORIZONTALBILLBOARD);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_HORIZONTALBILLBOARD);
 					break;
 				case 3: 
-					_owner._removeShaderDefine(ShaderDefines3D.VERTICALBILLBOARD);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VERTICALBILLBOARD);
 					break;
 				}
 				_renderMode = value;
 				switch (value) {
 				case 0: 
-					_owner._addShaderDefine(ShaderDefines3D.SPHERHBILLBOARD);
+					_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SPHERHBILLBOARD);
 					break;
 				case 1: 
-					_owner._addShaderDefine(ShaderDefines3D.STRETCHEDBILLBOARD);
+					_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_STRETCHEDBILLBOARD);
 					break;
 				case 2: 
-					_owner._addShaderDefine(ShaderDefines3D.HORIZONTALBILLBOARD);
+					_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_HORIZONTALBILLBOARD);
 					break;
 				case 3: 
-					_owner._addShaderDefine(ShaderDefines3D.VERTICALBILLBOARD);
+					_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VERTICALBILLBOARD);
 					break;
 				default:
 					throw new Error("ShurikenParticleRender: unknown renderMode Value.");
@@ -82,7 +81,7 @@ package laya.d3.core.particleShuriKen {
 		public function ShurikenParticleRender(owner:ShuriKenParticle3D) {
 			super(owner);
 			_renderMode = 0;
-			owner._addShaderDefine(ShaderDefines3D.SPHERHBILLBOARD);
+			owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SPHERHBILLBOARD);
 			stretchedBillboardCameraSpeedScale = 0.0;
 			stretchedBillboardSpeedScale = 0.0;
 			stretchedBillboardLengthScale = 1.0;

@@ -9,7 +9,6 @@ package laya.d3.core {
 	import laya.d3.math.Vector4;
 	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderCompile3D;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.shader.ValusArray;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
@@ -74,8 +73,8 @@ package laya.d3.core {
 			super();
 			_vb = new VertexBuffer2D(-1, WebGLContext.DYNAMIC_DRAW);
 			_ib = new IndexBuffer2D();
-			_sharderNameID = Shader3D.nameKey.get("SIMPLE");
-			_shaderCompile = ShaderCompile3D._preCompileShader[Shader3D.SHADERNAME2ID * _sharderNameID];
+			_sharderNameID = Shader3D.nameKey.getID("SIMPLE");
+			_shaderCompile = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * _sharderNameID];
 		}
 		
 		public function line(startX:Number, startY:Number, startZ:Number, startR:Number, startG:Number, startB:Number, startA:Number, endX:Number, endY:Number, endZ:Number, endR:Number, endG:Number, endB:Number, endA:Number):PhasorSpriter3D {
@@ -368,9 +367,7 @@ package laya.d3.core {
 			_vb.append(_vbData);//TODO:待调整
 			_vb.bind_upload(_ib);
 			
-			var predef:int = _renderState.shaderDefines.getValue();
-			
-			_shader = getShader(_renderState);
+			_shader = _getShader(_renderState);
 			_shader.bind();
 			
 			_shader.uploadAttributes(_vertexDeclaration.shaderValues.data, null);
@@ -381,8 +378,6 @@ package laya.d3.core {
 			_shader.uploadSpriteUniforms(_spriteShaderValue.data);
 			_shader.uploadMaterialUniforms(_materialShaderValue.data);
 			
-			_renderState.shaderDefines.setValue(predef);
-			
 			Stat.drawCall++;
 			WebGL.mainContext.drawElements(_primitiveType, _posInIBData, WebGLContext.UNSIGNED_SHORT, 0);
 			
@@ -390,14 +385,10 @@ package laya.d3.core {
 			_posInVBData = 0;
 		}
 		
-		protected function getShader(state:RenderState):Shader3D {
-			var preDef:int = state.shaderDefines._value;
-			state.shaderDefines._value = preDef & (~(ShaderDefines3D.POINTLIGHT | ShaderDefines3D.SPOTLIGHT | ShaderDefines3D.DIRECTIONLIGHT));//无法线，去掉Shader光照宏定义
-			state.shaderDefines.add(ShaderDefines3D.COLOR);
-			
-			var nameID:Number = state.shaderDefines.getValue() + _sharderNameID * Shader3D.SHADERNAME2ID;
-			var shader:Shader3D = _shader ? _shader : Shader3D.getShader(nameID);
-			return shader || (shader = Shader3D.withCompile(_sharderNameID, state.shaderDefines, nameID));
+		protected function _getShader(state:RenderState):Shader3D {
+			var defineValue:int = state._shaderDefineValue & (~(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT));//无法线，去掉Shader光照宏定义
+			defineValue|=ShaderCompile3D.SHADERDEFINE_COLOR;
+			return _shaderCompile.withCompile(_sharderNameID, defineValue, _sharderNameID * ShaderCompile3D.SHADERNAME2ID+defineValue);
 		}
 		
 		private function addVertexIndexException():void {

@@ -1,6 +1,4 @@
 //#version 300 es
-#extension GL_EXT_shader_texture_lod : enable
-//TODO 这个要去掉，大部分手机不支持这个扩展
 
 precision highp float;
 precision highp int;
@@ -10,6 +8,8 @@ const float _2PI = 6.2831853071796;
 varying vec2 vUv;
 varying vec3 vWorldNorm;
 varying vec3 vViewDir;
+varying vec4 vViewPos;
+varying vec4 vWorldPos;
 //
 uniform sampler2D texBaseColor;
 uniform sampler2D texNormal;
@@ -17,11 +17,18 @@ uniform sampler2D texORM;   //Ao, Roughness, Metallic
 //预计算的贴图
 uniform sampler2D texPrefilterdEnv;
 uniform sampler2D texBRDFLUT;
+uniform sampler2D texPrefilterDiff;
 
 uniform vec3 u_fresnel0;
 uniform float u_roughness;
+const float maxlv = 9.;	//现在只支持512分辨率的环境贴图
+const int nmaxlv = 9;//
+uniform vec4 u_lodRect[10];//现在只支持512分辨率的环境贴图，所以只有10个，[0]是原始， [9]是1x1.
+							//[u,v,w,h]。w,h都是0到1
+
 vec3 u_lightColor = vec3(1.,1.,1.);
 vec3 u_diffuseColor = vec3(0.1,0.1,0.1);
+vec3 speccontrib = vec3(0.);
 
 const float _maxu8 = 255.0;
 const float _maxu16 = 65535.0;
@@ -48,29 +55,77 @@ void texPanorama(sampler2D tex, const in vec3 dir, out vec4 rgba){
 }
 
 void texPanoramaLod(sampler2D tex, const in vec3 dir, out vec4 rgba, float lod){
+	float fl0 = floor(lod);
+    int l0 = int(fl0); 			//这里就不检查与maxlv的关系了
+    int l1 = l0+1;
+	if(l1>nmaxlv)l1=nmaxlv;
+    float k = lod-fl0;				//TODO fract
+	
+	//ps不支持索引数组
+	vec4 rect1;// = u_lodRect[l0];
+	vec4 rect2;// = u_lodRect[l1];
+	for( int i=0; i<10; i++){
+		if(i==l0) {
+			rect1 = u_lodRect[i];
+		}
+		if(i==l1){
+			rect2 = u_lodRect[i];
+		}
+	}
+	
     float u = atan(-dir.z,dir.x)/_2PI+0.5;  //逆时针增加，所以z取负
     float v = asin(dir.y)/PI+0.5;
     v = 1.-v;
-    //rgba = textureLod(tex, vec2(u,v),lod);
-	rgba = texture2DLodEXT(tex, vec2(u,v),lod);
+
+    vec4 v0 = texture2D(tex, vec2(u*rect1.z+rect1.x,v*rect1.w+rect1.y));
+    vec4 v1 = texture2D(tex, vec2(u*rect2.z+rect2.x,v*rect2.w+rect2.y));
+    rgba = mix(v0,v1,k);
+}
+/*
+void texPanoramaLod(sampler2D tex, const in vec3 dir, out vec4 rgba, float lod){
+    float u = atan(-dir.z,dir.x)/_2PI+0.5;  //逆时针增加，所以z取负
+    float v = asin(dir.y)/PI+0.5;
+    v = 1.-v;
+
+    float l0 = floor(lod);
+    float l1 = l0+1.0;
+    float k = lod-l0;
+    vec4 v0 = texture2DLodEXT(tex, vec2(u,v),l0);
+    vec4 v1 = texture2DLodEXT(tex, vec2(u,v),l1);
+    rgba = mix(v0,v1,k);
     //rgba = texelFetch(tex,ivec2(int(2048.*u), int(1024.*v)),int(lod));
 }
+*/
+
+
 
 vec3 ApproximateSpecularIBL( vec3 SpecularColor , float Roughness , float NoV, vec3 R){
     vec4 PrefilteredColor;
-    texPanoramaLod(texPrefilterdEnv, R, PrefilteredColor, floor(Roughness*10.0));
+    texPanoramaLod(texPrefilterdEnv, R, PrefilteredColor, Roughness*maxlv);
     PrefilteredColor.rgb = _RGBEToRGB(PrefilteredColor);
     vec4 EnvBRDF = texture2D(texBRDFLUT,vec2(Roughness , NoV));//TODO lod
     vec2 rg = _RGBAToU16(EnvBRDF);    
-    return PrefilteredColor.rgb * SpecularColor* rg.x + saturate( 50.0 * PrefilteredColor.g ) * rg.y;
+    //原来的括号不对
+    speccontrib = (SpecularColor* rg.x + saturate( 50.0 * PrefilteredColor.g ) * rg.y);
+    return PrefilteredColor.rgb * speccontrib;
 }
 
-vec3 testDiff(vec3 R ){
-    vec4 PrefilteredColor;
-    texPanoramaLod(texPrefilterdEnv, R, PrefilteredColor, 9.);
-    PrefilteredColor.rgb = _RGBEToRGB(PrefilteredColor);
-    return PrefilteredColor.rgb;
+vec3 testDiff(vec3 R){
+    vec4 PrefilteredDiff;
+    texPanorama(texPrefilterDiff, R, PrefilteredDiff);
+    return PrefilteredDiff.rgb;
 }
+/*
+    计算sh光照。
+    使用level=2，所以需要9个系数。
+    https://cseweb.ucsd.edu/~ravir/papers/envmap/envmap.pdf
+*/
+uniform mat4 rshcoeffs;
+vec3 diff_sh9(vec3 dir){
+    return vec3(0.0,0.,0.);
+}
+
+
 
 void main() {
     vec3 normal =  normalize(vWorldNorm);
@@ -79,9 +134,10 @@ void main() {
     vec4 basecolor = texture2D(texBaseColor,vUv);
     float NoV = saturate(dot( view, normal ));
     vec3 R = 2. * NoV * normal - view;
-    
-    vec3 color_spec = ApproximateSpecularIBL(basecolor.rgb*pbrinfo.b,pbrinfo.g, NoV, R);
-    vec3 color_diff= testDiff(normal)*basecolor.rgb;
-    gl_FragColor.rgb = color_spec+((1.0-pbrinfo.b)*color_diff) ;//+color_diff;// (refcol.xyz);// basecolor;
+    const vec3 nonmetalF0 =vec3(0.2);
+    vec3 F0 =  mix(nonmetalF0, basecolor.rgb, pbrinfo.b);
+    vec3 color_spec = ApproximateSpecularIBL(F0,pbrinfo.g, NoV, R);
+    vec3 color_diff=testDiff(normal);
+    gl_FragColor.rgb = color_diff*mix(basecolor.rgb,vec3(0,0,0),pbrinfo.b)+color_spec;
     gl_FragColor.a = 1.0;
 }

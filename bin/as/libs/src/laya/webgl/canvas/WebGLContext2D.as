@@ -302,7 +302,7 @@ package laya.webgl.canvas
 				if (_curMat.bTransform)
 				{
 					SaveTransform.save(this);
-					_curMat.transformPoint(Point.TEMP.setTo(x, y));
+					_curMat.transformPointN(Point.TEMP.setTo(x, y));
 					x = Point.TEMP.x;
 					y = Point.TEMP.y;
 				}
@@ -457,6 +457,12 @@ package laya.webgl.canvas
 		}
 		
 		public override function fillTexture(texture:Texture, x:Number, y:Number, width:Number, height:Number, type:String, offset:Point, other:*):void {
+			if (!(texture.loaded && texture.bitmap && texture.source)){
+				if (this.sprite){
+					Laya.timer.callLater(this,this._repaintSprite);
+				}
+				return;
+			};
 			var vb:VertexBuffer2D = _vb;
 			var w:Number = texture.bitmap.width, h:Number = texture.bitmap.height, uv:Array = texture.uv;
 			var ox:Number = offset.x % texture.width, oy:Number = offset.y % texture.height;
@@ -840,7 +846,8 @@ package laya.webgl.canvas
 		override public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, transform:Matrix, tx:Number, ty:Number, alpha:Number):void
 		{
 			var curMat:Matrix = _curMat;
-			
+			var prex:Number = _x;
+			var prey:Number = _y;
 			(tx !== 0 || ty !== 0) && (_x = tx * curMat.a + ty * curMat.c, _y = ty * curMat.d + tx * curMat.b);
 			
 			if (transform && curMat.bTransform)
@@ -855,7 +862,8 @@ package laya.webgl.canvas
 				_y += curMat.ty;
 			}
 			_drawTextureM(tex, x, y, width, height, 0, 0, transform, alpha);
-			_x = _y = 0;
+			_x = prex; 
+			_y = prey;
 		}
 		
 		public function fillQuadrangle(tex:Texture, x:Number, y:Number, point4:Array, m:Matrix):void
@@ -1271,8 +1279,8 @@ package laya.webgl.canvas
 			var tPath:Path = _getPath();
 			if (b)
 			{
-				x = _curMat.a * x + _curMat.c * y + _curMat.tx;
-				y = _curMat.b * x + _curMat.d * y	+_curMat.ty;
+				x = _curMat.a * x + _curMat.c * y ;
+				y = _curMat.b * x + _curMat.d * y;
 			}
 			tPath.addPoint(x, y);
 		}
@@ -1282,8 +1290,8 @@ package laya.webgl.canvas
 			var tPath:Path = _getPath();
 			if (b)
 			{
-				x = _curMat.a * x + _curMat.c * y + _curMat.tx;
-				y = _curMat.b * x + _curMat.d * y	+_curMat.ty;
+				x = _curMat.a * x + _curMat.c * y ;
+				y = _curMat.b * x + _curMat.d * y ;
 			}
 			tPath.addPoint(x, y);
 		}
@@ -1320,6 +1328,12 @@ package laya.webgl.canvas
 			var dx0:Number, dy0:Number, dx1:Number, dy1:Number, a:Number, d:Number, cx:Number, cy:Number, a0:Number, a1:Number;
 			var dir:Boolean;
 			// Calculate tangential circle to lines (x0,y0)-(x1,y1) and (x1,y1)-(x2,y2).
+			
+			x1 = _curMat.a * x1 + _curMat.c * y1;
+			y1 =  _curMat.b * x1 + _curMat.d * y1;
+			x2 = _curMat.a * x2 + _curMat.c * y2;
+			y2 =  _curMat.b *x2+ _curMat.d * y2;
+			r =   _curMat.a * r + _curMat.c * r;
 			dx0 = x0 - x1;
 			dy0 = y0 - y1;
 			dx1 = x2 - x1;
@@ -1360,10 +1374,10 @@ package laya.webgl.canvas
 				a1 = Math.atan2(dx1, -dy1);
 				dir = true;
 			}
-			arc(cx, cy, r, a0, a1, dir);
+			arc(cx, cy, r, a0, a1, dir,false);
 		}
 		
-		public function arc(cx:Number, cy:Number, r:Number, startAngle:Number, endAngle:Number, counterclockwise:Boolean = false):void
+		public function arc(cx:Number, cy:Number, r:Number, startAngle:Number, endAngle:Number, counterclockwise:Boolean = false,b:Boolean=true):void
 		{
 			if (mId != -1)
 			{
@@ -1438,9 +1452,11 @@ package laya.webgl.canvas
 				dy = Math.sin(a);
 				x = cx + dx * r;
 				y = cy + dy * r;
-				
-				x = _curMat.a * x + _curMat.c * y + _curMat.tx;
-				y = _curMat.b * x + _curMat.d * y	+_curMat.ty;
+				if (b)
+				{
+					x = _curMat.a * x + _curMat.c * y;
+					y = _curMat.b * x + _curMat.d * y;
+				}
 				if (x != _path.getEndPointX() || y != _path.getEndPointY())
 				{
 					tPath.addPoint(x, y);
@@ -1450,8 +1466,11 @@ package laya.webgl.canvas
 			dy = Math.sin(endAngle);
 			x = cx + dx * r;
 			y = cy + dy * r;
-			x = _curMat.a * x + _curMat.c * y + _curMat.tx;
-			y = _curMat.b * x + _curMat.d * y	+_curMat.ty;
+			if (b)
+			{
+				x = _curMat.a * x + _curMat.c * y;
+				y = _curMat.b * x + _curMat.d * y;
+			}
 			if (x != _path.getEndPointX() || y != _path.getEndPointY())
 			{
 				tPath.addPoint(x, y);
@@ -1462,10 +1481,10 @@ package laya.webgl.canvas
 		{
 			var tBezier:Bezier = Bezier.I;
 			var tResultArray:Array = [];
-			    x = _curMat.a * x + _curMat.c * y + _curMat.tx;
-				y = _curMat.b * x + _curMat.d * y	+_curMat.ty;
-				cpx = _curMat.a * cpx + _curMat.c * cpy + _curMat.tx;
-				cpy = _curMat.b * cpx + _curMat.d * cpy	+_curMat.ty;
+			    x = _curMat.a * x + _curMat.c * y ;
+				y = _curMat.b * x + _curMat.d * y;
+				cpx = _curMat.a * cpx + _curMat.c * cpy;
+				cpy = _curMat.b * cpx + _curMat.d * cpy;
 			var tArray:Array = tBezier.getBezierPoints([_path.getEndPointX(), _path.getEndPointY(), cpx, cpy, x, y], 30, 2);
 			for (var i:int = 0, n:int = tArray.length / 2; i < n; i++)
 			{

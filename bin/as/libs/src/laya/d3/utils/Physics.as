@@ -70,6 +70,7 @@ package laya.d3.utils {
 						var rayOriToPos:Vector3 = _tempVector33;
 						Vector3.subtract(preRayOrigin, elementRaycastHit.position, rayOriToPos);
 						outHitInfo.distance = Vector3.scalarLength(rayOriToPos);
+						outHitInfo.sprite3D = sprite3D;
 					}
 					
 					if (isHit && elementRaycastHit.distance < outHitInfo.distance) {

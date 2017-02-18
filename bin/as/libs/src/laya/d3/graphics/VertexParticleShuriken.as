@@ -8,7 +8,19 @@ package laya.d3.graphics {
 	 */
 	public class VertexParticleShuriken implements IVertex {
 		
-		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(160, [new VertexElement(0, VertexElementFormat.Vector4, VertexElementUsage.CORNERTEXTURECOORDINATE0), new VertexElement(16, VertexElementFormat.Vector3, VertexElementUsage.POSITION0), new VertexElement(28, VertexElementFormat.Vector3, VertexElementUsage.DIRECTION), new VertexElement(40, VertexElementFormat.Vector4, VertexElementUsage.STARTCOLOR0), new VertexElement(56, VertexElementFormat.Vector3, VertexElementUsage.STARTSIZE), new VertexElement(68, VertexElementFormat.Vector3, VertexElementUsage.STARTROTATION0), new VertexElement(80, VertexElementFormat.Vector3, VertexElementUsage.STARTROTATION1), new VertexElement(92, VertexElementFormat.Vector3, VertexElementUsage.STARTROTATION2), new VertexElement(104, VertexElementFormat.Single, VertexElementUsage.STARTLIFETIME), new VertexElement(108, VertexElementFormat.Single, VertexElementUsage.TIME0), new VertexElement(112, VertexElementFormat.Single, VertexElementUsage.STARTSPEED), new VertexElement(116, VertexElementFormat.Vector4, VertexElementUsage.RANDOM0), new VertexElement(132, VertexElementFormat.Vector4, VertexElementUsage.RANDOM1), new VertexElement(148, VertexElementFormat.Vector3, VertexElementUsage.SIMULATIONWORLDPOSTION)]);
+		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(160, [
+		new VertexElement(0, VertexElementFormat.Vector4, VertexElementUsage.CORNERTEXTURECOORDINATE0), 
+		new VertexElement(16, VertexElementFormat.Vector4, VertexElementUsage.POSITIONSTARTLIFETIME), 
+		new VertexElement(32, VertexElementFormat.Vector4, VertexElementUsage.DIRECTIONTIME), 
+		new VertexElement(48, VertexElementFormat.Vector4, VertexElementUsage.STARTCOLOR0), 
+		new VertexElement(64, VertexElementFormat.Vector3, VertexElementUsage.STARTSIZE), 
+		new VertexElement(76, VertexElementFormat.Vector3, VertexElementUsage.STARTROTATION0), 
+		new VertexElement(88, VertexElementFormat.Vector3, VertexElementUsage.STARTROTATION1), 
+		new VertexElement(100, VertexElementFormat.Vector3, VertexElementUsage.STARTROTATION2), 
+		new VertexElement(112, VertexElementFormat.Single, VertexElementUsage.STARTSPEED), 
+		new VertexElement(116, VertexElementFormat.Vector4, VertexElementUsage.RANDOM0), 
+		new VertexElement(132, VertexElementFormat.Vector4, VertexElementUsage.RANDOM1), 
+		new VertexElement(148, VertexElementFormat.Vector3, VertexElementUsage.SIMULATIONWORLDPOSTION)]);
 		
 		public static function get vertexDeclaration():VertexDeclaration {
 			return _vertexDeclaration;

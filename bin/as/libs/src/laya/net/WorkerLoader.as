@@ -38,6 +38,10 @@ package laya.net
 		 * @private
 		 */
 		private static var _enable:Boolean = false;
+		/**
+		 * worker.js的路径
+		 */
+		public static var workerPath:String = "libs/worker.js";
 		
 		/**
 		 * 尝试使用Work加载Image
@@ -73,7 +77,7 @@ package laya.net
 		public var worker:Worker ;
 		public function WorkerLoader() 
 		{
-			worker = new Browser.window.Worker("libs/worker.js");
+			worker = new Browser.window.Worker(workerPath);
 			worker.onmessage = function(evt) { 
 				//接收worker传过来的数据函数
 				workerMessage(evt.data);

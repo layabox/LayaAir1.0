@@ -394,7 +394,7 @@ package laya.d3.math {
 		
 		/**
 		 * 获取X轴坐标。
-		 * @return	x  X轴坐标。
+		 * @return	X轴坐标。
 		 */
 		public function get x():Number {
 			return this.elements[0];
@@ -402,7 +402,7 @@ package laya.d3.math {
 		
 		/**
 		 * 设置X轴坐标。
-		 * @param	x  X轴坐标。
+		 * @param	value  X轴坐标。
 		 */
 		public function set x(value:Number):void {
 			this.elements[0] = value;
@@ -410,7 +410,7 @@ package laya.d3.math {
 		
 		/**
 		 * 获取Y轴坐标。
-		 * @return	y  Y轴坐标。
+		 * @return	Y轴坐标。
 		 */
 		public function get y():Number {
 			return this.elements[1];
@@ -418,7 +418,7 @@ package laya.d3.math {
 		
 		/**
 		 * 设置Y轴坐标。
-		 * @param	y  Y轴坐标。
+		 * @param	value  Y轴坐标。
 		 */
 		public function set y(value:Number):void {
 			this.elements[1] = value;
@@ -426,7 +426,7 @@ package laya.d3.math {
 		
 		/**
 		 * 获取Z轴坐标。
-		 * @return	z  Z轴坐标。
+		 * @return	Z轴坐标。
 		 */
 		public function get z():Number {
 			return this.elements[2];
@@ -434,7 +434,7 @@ package laya.d3.math {
 		
 		/**
 		 * 设置Z轴坐标。
-		 * @param	z  Z轴坐标。
+		 * @param	value  Z轴坐标。
 		 */
 		public function set z(value:Number):void {
 			this.elements[2] = value;

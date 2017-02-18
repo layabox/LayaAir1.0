@@ -32,11 +32,62 @@ package laya.debug.tools
 			__JS__("rst=Object.getOwnPropertyDescriptor(obj,name);");
 			return rst;
 		}
-		
+		public static function getOwnPropertyDescriptors(obj:Object):Object
+		{
+			var rst:Object;
+			__JS__("rst=Object.getOwnPropertyDescriptors(obj);");
+			return rst;
+		}
 		public static function getOwnPropertyNames(obj:Object):Array
 		{
 			var rst:Array;
 			__JS__("rst=Object.getOwnPropertyNames(obj);");
+			return rst;
+		}
+		public static function getObjectGetSetKeys(obj:Object,rst:Array=null):Array
+		{
+			if (!rst) rst = [];
+			var keys:Array;
+			//keys = ClassTool.getOwnPropertyDescriptors(obj);
+			keys = ClassTool.getOwnPropertyNames(obj);
+			//trace("keys", getOwnPropertyNames(obj));
+			//trace("keys", Object.getOwnPropertySymbols(obj));
+			//trace("keys",Object.keys(obj));
+			var key:String;
+			for (key in keys)
+			{
+				key = keys[key];
+				if (key.indexOf("_$get_")>=0)
+				{
+					key = key.replace("_$get_", "");
+					rst.push(key);
+				}
+			}
+			if (obj["__proto__"])
+			{
+				getObjectGetSetKeys(obj["__proto__"],rst);
+			}
+			return rst;
+		}
+		
+		public static var displayTypes:Object = { "boolean":true, "number":true, "string":true };
+		public static function getObjectDisplayAbleKeys(obj:Object,rst:Array=null):Array
+		{
+			if (!rst) rst = [];
+			var key:String;
+			var tValue:*;
+			var tType:String;
+			for (key in obj)
+			{
+				tValue = obj[key];
+				tType = typeof(tValue);
+				if (key.charAt(0) == "_") continue;
+
+				rst.push(key);
+				
+			}
+			getObjectGetSetKeys(obj, rst);
+			rst = ObjectTools.getNoSameArr(rst);
 			return rst;
 		}
 		public static function getClassName(tar:Object):String

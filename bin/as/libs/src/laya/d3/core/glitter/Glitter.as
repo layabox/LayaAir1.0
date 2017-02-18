@@ -23,15 +23,13 @@ package laya.d3.core.glitter {
 	 * <code>Glitter</code> 类用于创建闪光。
 	 */
 	public class Glitter extends RenderableSprite3D {
-		/** @private */
-		private var _templet:GlitterTemplet;
 		
 		/**
 		 * 获取闪光模板。
 		 * @return  闪光模板。
 		 */
 		public function get templet():GlitterTemplet {
-			return _templet;
+			return _geometryFilter as GlitterTemplet;
 		}
 		
 		/**
@@ -53,7 +51,7 @@ package laya.d3.core.glitter {
 			var material:GlitterMaterial = new GlitterMaterial();
 			
 			_render.sharedMaterial = material;
-			_templet = new GlitterTemplet(this);
+			_geometryFilter = new GlitterTemplet(this);
 			
 			material.renderMode = GlitterMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
 			
@@ -72,7 +70,7 @@ package laya.d3.core.glitter {
 			var material:BaseMaterial = _render.sharedMaterials[index];
 			(material) || (material = GlitterMaterial.defaultMaterial);//确保有材质,由默认材质代替。
 			
-			var element:IRenderable = _templet;
+			var element:IRenderable = _geometryFilter as GlitterTemplet;
 			renderElement._mainSortID = 0;
 			renderElement._sprite3D = this;
 			
@@ -97,16 +95,15 @@ package laya.d3.core.glitter {
 			scene.addFrustumCullingObject(_render.renderObject);
 		}
 		
-		override public function _update(state:RenderState):void 
-		{
-			_templet._update(state.elapsedTime);
+		override public function _update(state:RenderState):void {
+			(_geometryFilter as GlitterTemplet)._update(state.elapsedTime);
 			super._update(state);
 		}
 		
 		/**
 		 * @private
 		 */
-		override public function _prepareShaderValuetoRender(view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
+		override public function _prepareShaderValuetoRender(projectionView:Matrix4x4):void {
 			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
 			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
 			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
@@ -118,7 +115,7 @@ package laya.d3.core.glitter {
 		 * @param position1 位置1。
 		 */
 		public function addGlitterByPositions(position0:Vector3, position1:Vector3):void {
-			_templet.addVertexPosition(position0, position1);
+			(_geometryFilter as GlitterTemplet).addVertexPosition(position0, position1);
 		}
 		
 		/**
@@ -129,7 +126,7 @@ package laya.d3.core.glitter {
 		 * @param velocity1 速度1。
 		 */
 		public function addGlitterByPositionsVelocitys(position0:Vector3, velocity0:Vector3, position1:Vector3, velocity1:Vector3):void {
-			_templet.addVertexPositionVelocity(position0, velocity0, position1, velocity1);
+			(_geometryFilter as GlitterTemplet).addVertexPositionVelocity(position0, velocity0, position1, velocity1);
 		}
 		
 		override public function cloneTo(destObject:*):void {
@@ -137,12 +134,13 @@ package laya.d3.core.glitter {
 			
 			var destGlitter:Glitter = destObject as Glitter;
 			var destTemplet:GlitterTemplet = destGlitter.templet;
-			destTemplet.lifeTime = _templet.lifeTime;
-			destTemplet.minSegmentDistance = _templet.minSegmentDistance;
-			destTemplet.minInterpDistance = _templet.minInterpDistance;
-			destTemplet.maxSlerpCount = _templet.maxSlerpCount;
-			_templet.color.cloneTo(destTemplet.color);
-			destTemplet._maxSegments = _templet._maxSegments;
+			var templet:GlitterTemplet = _geometryFilter as GlitterTemplet;
+			destTemplet.lifeTime = templet.lifeTime;
+			destTemplet.minSegmentDistance = templet.minSegmentDistance;
+			destTemplet.minInterpDistance = templet.minInterpDistance;
+			destTemplet.maxSlerpCount = templet.maxSlerpCount;
+			templet.color.cloneTo(destTemplet.color);
+			destTemplet._maxSegments = templet._maxSegments;
 			var destGlitterRender:GlitterRender = destGlitter._render as GlitterRender;
 			var glitterRender:GlitterRender = _render as GlitterRender;
 			destGlitterRender.sharedMaterials = glitterRender.sharedMaterials;
@@ -155,7 +153,8 @@ package laya.d3.core.glitter {
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
-			_templet = null;
+			_geometryFilter._destroy();
+			_geometryFilter = null;
 		}
 	
 	}

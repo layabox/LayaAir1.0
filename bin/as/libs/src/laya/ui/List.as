@@ -217,9 +217,9 @@ package laya.ui {
 		
 		/**@inheritDoc */
 		override public function destroy(destroyChild:Boolean = true):void {
-			super.destroy(destroyChild);
 			_content && _content.destroy(destroyChild);
 			_scrollBar && _scrollBar.destroy(destroyChild);
+			super.destroy(destroyChild);
 			_content = null;
 			_scrollBar = null;
 			_itemRender = null;
@@ -754,6 +754,7 @@ package laya.ui {
 			startIndex = _startIndex;
 			//重设滚动条
 			if (_scrollBar) {
+				_scrollBar.stopScroll();
 				//自动隐藏滚动条
 				var numX:int = _isVertical ? repeatX : repeatY;
 				var numY:int = _isVertical ? repeatY : repeatX;
@@ -791,7 +792,7 @@ package laya.ui {
 		 * 列表的数据总个数。
 		 */
 		public function get length():int {
-			return _array.length;
+			return _array ? _array.length : 0;
 		}
 		
 		/**@inheritDoc */

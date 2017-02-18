@@ -1,10 +1,17 @@
 package laya.d3.component {
 	import laya.ani.AnimationPlayer;
 	import laya.ani.AnimationState;
+	import laya.ani.AnimationTemplet;
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
+	import laya.events.Event;
+	
+	/**完成挂点更新时调度。
+	 * @eventType Event.COMPLETE
+	 * */
+	[Event(name = "complete", type = "laya.events.Event")]
 	
 	/**
 	 * <code>AttachPoint</code> 类用于创建挂点组件。
@@ -12,8 +19,6 @@ package laya.d3.component {
 	public class AttachPoint extends Component3D {
 		/** @private */
 		protected var _attachSkeleton:SkinAnimations;
-		/** @private */
-		protected var _data:Float32Array;
 		/** @private */
 		protected var _extenData:Float32Array;
 		/**挂点骨骼的名称。*/
@@ -47,19 +52,22 @@ package laya.d3.component {
 		public override function _update(state:RenderState):void {
 			if (!_attachSkeleton || _attachSkeleton.player.state !== AnimationState.playing || !_attachSkeleton.curBonesDatas)
 				return;
-				
-			var player:AnimationPlayer = _attachSkeleton.player;			
+			
+			var player:AnimationPlayer = _attachSkeleton.player;
+			var templet:AnimationTemplet = _attachSkeleton.templet;
 			matrixs.length = attachBones.length;
-			for (var i:int; i < attachBones.length; i++) {
-				
-				var index:int = _attachSkeleton.templet.getNodeIndexWithName(player.currentAnimationClipIndex, attachBones[i]);
-				_data = _attachSkeleton.curBonesDatas.subarray(index * 16, (index + 1) * 16);
+			var boneDatas:Float32Array = _attachSkeleton.curBonesDatas;
+			var worldMatrix:Matrix4x4 = owner.transform.worldMatrix;
+			for (var i:int, n:int = attachBones.length; i < n; i++) {
+				var startIndex:int = templet.getNodeIndexWithName(player.currentAnimationClipIndex, attachBones[i]) * 16;
 				var matrix:Matrix4x4 = matrixs[i];
-				
 				matrix || (matrix = matrixs[i] = new Matrix4x4());
-				matrix.copyFromArray(_data);
-				Matrix4x4.multiply(owner.transform.worldMatrix, matrix, matrix);
+				var matrixE:Float32Array = matrix.elements;
+				for (var j:int = 0; j < 16; j++)
+					matrixE[j] = boneDatas[startIndex + j];
+				Matrix4x4.multiply(worldMatrix, matrix, matrix);
 			}
+		    event(Event.COMPLETE);
 		}
 	}
 }

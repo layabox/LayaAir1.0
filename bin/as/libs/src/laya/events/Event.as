@@ -160,6 +160,8 @@ package laya.events {
 		public var touchId:int;
 		/**键盘值*/
 		public var keyCode:int;
+		/**滚轮滑动增量*/
+		public var delta:int;
 		
 		/**
 		 * 设置事件数据。

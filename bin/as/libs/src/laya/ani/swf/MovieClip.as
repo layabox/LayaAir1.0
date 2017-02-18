@@ -332,11 +332,16 @@ package laya.ani.swf {
 					_data.pos = _Pos;
 					break;
 				case 3: //addChild
-					(addChild(_idOfSprite[ /*key*/_data.getUint16()]) as Sprite).zOrder = _data.getUint16();
-					ifAdd = true;
+					var node:Sprite = _idOfSprite[ /*key*/_data.getUint16()];
+					if (node) {
+						addChild(node);
+						node.zOrder = _data.getUint16();
+						ifAdd = true;
+					}
 					break;
 				case 4: //remove
-					_idOfSprite[ /*key*/_data.getUint16()].removeSelf();
+					var node:Sprite = _idOfSprite[ /*key*/_data.getUint16()];
+					node && node.removeSelf();
 					break;
 				case 5: //setValue
 					_idOfSprite[_data.getUint16()][_ValueList[_data.getUint16()]] = (_data.getFloat32());
