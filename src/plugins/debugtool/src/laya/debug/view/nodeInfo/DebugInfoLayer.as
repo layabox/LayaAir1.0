@@ -42,8 +42,17 @@ package laya.debug.view.nodeInfo
 			addChild(graphicLayer);
 			
 			I = this;
+			this.zOrder = 999;
 			//if (Browser.onMobile) this.scale(2, 2);
 			Laya.stage.on(Event.DOUBLE_CLICK, this, setTop);
+		}
+		public static function init():void
+		{
+			if (!I)
+			{
+				new DebugInfoLayer();
+				Laya.stage.addChild(I);
+			}
 		}
 		public function setTop():void
 		{

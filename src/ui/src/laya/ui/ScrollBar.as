@@ -92,6 +92,7 @@ package laya.ui {
 		
 		/**@inheritDoc */
 		override public function destroy(destroyChild:Boolean = true):void {
+			stopScroll();
 			super.destroy(destroyChild);
 			upButton && upButton.destroy(destroyChild);
 			downButton && downButton.destroy(destroyChild);
@@ -518,9 +519,39 @@ package laya.ui {
 		/**@private */
 		protected function tweenMove():void {
 			_lastOffset *= rollRatio;
+			var tarSpeed:Number;
+			if (this.elasticDistance > 0)
+			{
+				if (_lastOffset > 0 && value <= min)
+				{
+					_isElastic = true;
+					tarSpeed = -(min - this.elasticDistance-value) * 0.5;
+					if (_lastOffset > tarSpeed) _lastOffset = tarSpeed;
+				}else if (_lastOffset<0&&value>=max)
+				{
+					_isElastic = true;
+					tarSpeed = -(max + this.elasticDistance-value) * 0.5;
+					if (_lastOffset < tarSpeed) _lastOffset = tarSpeed;
+				}
+			}
+			
 			value -= _lastOffset;
-			if (Math.abs(_lastOffset) < 1 || value== max || value == min) {
+			//if (Math.abs(_lastOffset) < 1 || value == max || value == min) 
+			if (Math.abs(_lastOffset) < 1 ) 
+			{
 				Laya.timer.clear(this, tweenMove);
+				if (_isElastic)
+				{
+					if (_value < min) {
+						Tween.to(this, {value: min}, elasticBackTime, Ease.sineOut, Handler.create(this, elasticOver));
+					} else if (_value > max) {
+						Tween.to(this, {value: max}, elasticBackTime, Ease.sineOut, Handler.create(this, elasticOver));
+					}else
+					{
+						elasticOver();
+					}
+					return;
+				}
 				event(Event.END);
 				if (!hide && autoHide) {
 					Tween.to(this, {alpha: 0}, 500);

@@ -400,15 +400,15 @@ package laya.ui {
 			var parent:Sprite = this.parent as Sprite;
 			if (parent) {
 				if (!isNaN(layout.centerX)) {
-					x = (parent.width - displayWidth) * 0.5 + layout.centerX + this.pivotX * this.scaleX;
+					x = Math.round((parent.width - displayWidth) * 0.5 + layout.centerX + this.pivotX * this.scaleX);
 				} else if (!isNaN(layout.left)) {
-					x = layout.left + this.pivotX * this.scaleX;
+					x = Math.round(layout.left + this.pivotX * this.scaleX);
 					if (!isNaN(layout.right)) {
 						//TODO:
 						width = (parent._width - layout.left - layout.right) / scaleX;
 					}
 				} else if (!isNaN(layout.right)) {
-					x = parent.width - displayWidth - layout.right + this.pivotX * this.scaleX;
+					x = Math.round(parent.width - displayWidth - layout.right + this.pivotX * this.scaleX);
 				}
 			}
 		}
@@ -422,15 +422,15 @@ package laya.ui {
 			var parent:Sprite = this.parent as Sprite;
 			if (parent) {
 				if (!isNaN(layout.centerY)) {
-					y = (parent.height - displayHeight) * 0.5 + layout.centerY + this.pivotY * this.scaleY;
+					y = Math.round((parent.height - displayHeight) * 0.5 + layout.centerY + this.pivotY * this.scaleY);
 				} else if (!isNaN(layout.top)) {
-					y = layout.top + this.pivotY * this.scaleY;
+					y = Math.round(layout.top + this.pivotY * this.scaleY);
 					if (!isNaN(layout.bottom)) {
 						//TODO:
 						height = (parent._height - layout.top - layout.bottom) / scaleY;
 					}
 				} else if (!isNaN(layout.bottom)) {
-					y = parent.height - displayHeight - layout.bottom + this.pivotY * this.scaleY;
+					y = Math.round(parent.height - displayHeight - layout.bottom + this.pivotY * this.scaleY);
 				}
 			}
 		}

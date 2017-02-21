@@ -19,7 +19,7 @@ package laya.d3.core.scene {
 	import laya.d3.math.Viewport;
 	import laya.d3.resource.RenderTexture;
 	import laya.d3.resource.models.Sky;
-	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
 	import laya.display.Node;
 	import laya.display.Sprite;
@@ -231,13 +231,9 @@ package laya.d3.core.scene {
 		
 		/**
 		 * @private
-		 * 场景相关渲染准备设置。
-		 * @param gl WebGL上下文。
-		 * @return state 渲染状态。
 		 */
 		protected function _prepareSceneToRender(state:RenderState):void {
-			var shaderDefines:ShaderDefines3D = state.shaderDefines;
-			(WebGL.frameShaderHighPrecision) && (shaderDefines.addInt(ShaderDefines3D.FSHIGHPRECISION));
+			(WebGL.frameShaderHighPrecision) && (state.addShaderDefine(ShaderCompile3D.SHADERDEFINE_FSHIGHPRECISION));
 			
 			if (_lights.length > 0) {
 				var lightCount:int = 0;
@@ -252,16 +248,19 @@ package laya.d3.core.scene {
 			}
 			if (enableFog) {
 				var sceneSV:ValusArray = _shaderValues;
-				shaderDefines.addInt(ShaderDefines3D.FOG);
+				state.addShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
 				sceneSV.setValue(BaseScene.FOGSTART, fogStart);
 				sceneSV.setValue(BaseScene.FOGRANGE, fogRange);
 				sceneSV.setValue(BaseScene.FOGCOLOR, fogColor.elements);
 			}
 		}
 		
+		/**
+		 * @private
+		 */
 		protected function _endRenderToRenderState(state:RenderState):void {
 			_shaderValues.data.length = 0;
-			state.reset();
+			state._reset();
 		}
 		
 		/**
@@ -365,7 +364,7 @@ package laya.d3.core.scene {
 					gl.disable(WebGLContext.SCISSOR_TEST);
 				} else {
 					gl.clear(WebGLContext.DEPTH_BUFFER_BIT);
-						//gl.clear(WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT | WebGLContext.COLOR_BUFFER_BIT);
+					//gl.clear(WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT | WebGLContext.COLOR_BUFFER_BIT);
 				}
 				break;
 			case BaseCamera.CLEARFLAG_SKY: 
@@ -386,7 +385,6 @@ package laya.d3.core.scene {
 				} else {
 					clearFlag |= WebGLContext.DEPTH_BUFFER_BIT;
 				}
-				
 				//gl.clear(clearFlag);
 				break;
 			case BaseCamera.CLEARFLAG_NONE: 
@@ -565,10 +563,23 @@ package laya.d3.core.scene {
 			super.render(context, x, y);
 		}
 		
+		protected function _renderCamera(gl:WebGLContext, state:RenderState, baseCamera:BaseCamera):void {
+			
+		}
+		
 		/**
 		 * @private
 		 */
 		public function renderSubmit():int {
+			var gl:WebGLContext = WebGL.mainContext;
+			_set3DRenderConfig(gl);//设置3D配置
+			_prepareSceneToRender(_renderState);
+			for (var i:int = 0, n:int = _cameraPool.length; i < n; i++) {
+				var camera:BaseCamera = _cameraPool[i];
+				(camera.enable) && (_renderCamera(gl, _renderState, camera));
+			}
+			_endRenderToRenderState(_renderState);
+			_set2DRenderConfig(gl);//设置2D配置
 			return 1;
 		}
 		

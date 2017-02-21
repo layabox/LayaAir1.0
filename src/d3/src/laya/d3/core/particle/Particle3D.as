@@ -109,7 +109,7 @@ package laya.d3.core.particle {
 		/**
 		 * @private
 		 */
-		override public function _prepareShaderValuetoRender(view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
+		override public function _prepareShaderValuetoRender(projectionView:Matrix4x4):void {
 			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
 			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
 			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);

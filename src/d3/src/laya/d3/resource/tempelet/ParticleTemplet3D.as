@@ -10,7 +10,6 @@ package laya.d3.resource.tempelet {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.particle.ParticleSetting;
 	import laya.particle.ParticleTemplateWebGL;
 	import laya.utils.Handler;

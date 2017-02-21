@@ -50,18 +50,15 @@ package PathFinding.core
 		}
 		
 		/**
-		 * 从图片生成高度图。
-		 * @param texture A*图资源。
+		 * 从图片生成AStar图。
+		 * @param texture AStar图资源。
 		 */
-		public static function createGridFromAStarMap(texture:*):Grid
+		public static function createGridFromAStarMap(texture:Texture2D):Grid
 		{
 			var textureWidth:Number = texture.width;
 			var textureHeight:Number = texture.height;
 			
-			Browser.canvas.size(textureWidth, textureHeight);
-			Browser.context.drawImage(texture._image, 0, 0,textureWidth,textureHeight);
-			var pixelsInfo:* = Browser.context.getImageData(0, 0, textureWidth, textureHeight).data;
-			
+			var pixelsInfo:Uint8Array = texture.getPixels();
 			var aStarArr:Array = new Array();
 			var index:int = 0;
 			

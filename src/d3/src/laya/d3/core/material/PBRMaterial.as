@@ -1,40 +1,25 @@
 package laya.d3.core.material {
-	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.TransformUV;
-	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.IRenderable;
-	import laya.d3.graphics.RenderObject;
-	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.math.Vector3;
-	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
-	import laya.d3.resource.TextureCube;
-	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
 	import laya.net.Loader;
-	import laya.net.URL;
-	import laya.utils.Stat;
-	import laya.webgl.resource.WebGLImage;
-	import laya.webgl.utils.Buffer2D;
+	import laya.webgl.WebGLContext;
 	
-	/**
-	 * ...
-	 * @author ...
-	 */
 	public class PBRMaterial extends BaseMaterial {
 		public static const DIFFUSETEXTURE:int = 0;
 		public static const NORMALTEXTURE:int = 1;
-		public static const SPECULARTEXTURE:int = 2;
-		public static const REFLECTTEXTURE:int = 3;
+		public static const ENVMAPTEXTURE:int = 2;
+		public static const PBRINFOTEXTURE:int = 3;
 		public static const PBRLUTTEXTURE:int = 4;
 		public static const ALPHATESTVALUE:int = 5;
 		public static const UVANIAGE:int = 6;
-		public static const MATERIALAMBIENT:int = 7;
-		public static const MATERIALDIFFUSE:int = 8;
-		public static const MATERIALSPECULAR:int = 9;
+		public static const ENVDIFFTEXTURE:int = 7;
+		public static const SIMLODINFO:int = 8;
 		public static const MATERIALROUGHNESS:int = 10;
 		public static const UVMATRIX:int = 11;
 		public static const UVAGE:int = 12;
@@ -51,42 +36,6 @@ package laya.d3.core.material {
 		 */
 		public static function load(url:String):PBRMaterial {
 			return Laya.loader.create(url, null, null, PBRMaterial);
-		}
-		
-		public function get ambientColor():Vector3 {
-			return _getColor(MATERIALAMBIENT);
-		}
-		
-		/**
-		 * 设置环境光颜色。
-		 * @param value 环境光颜色。
-		 */
-		public function set ambientColor(value:Vector3):void {
-			_setColor(MATERIALAMBIENT, value);
-		}
-		
-		public function get diffuseColor():Vector3 {
-			return _getColor(MATERIALDIFFUSE);
-		}
-		
-		/**
-		 * 设置漫反射光颜色。
-		 * @param value 漫反射光颜色。
-		 */
-		public function set diffuseColor(value:Vector3):void {
-			_setColor(MATERIALDIFFUSE, value);
-		}
-		
-		public function get specularColor():Vector4 {
-			return _getColor(MATERIALSPECULAR);
-		}
-		
-		/**
-		 * 设置高光颜色。
-		 * @param value 高光颜色。
-		 */
-		public function set specularColor(value:Vector4):void {
-			_setColor(MATERIALSPECULAR, value);
 		}
 		
 		/**
@@ -134,11 +83,6 @@ package laya.d3.core.material {
 		 * @param value 漫反射贴图。
 		 */
 		public function set diffuseTexture(value:BaseTexture):void {
-			if (value) {
-				_addShaderDefine(ShaderDefines3D.DIFFUSEMAP);
-			} else {
-				_removeShaderDefine(ShaderDefines3D.DIFFUSEMAP);
-			}
 			_setTexture(DIFFUSETEXTURE, value);
 		}
 		
@@ -146,7 +90,7 @@ package laya.d3.core.material {
 		 * 获取PBRLUT贴图。
 		 * @return PBRLUT贴图。
 		 */
-		public function get PBRLUTTexture():BaseTexture {
+		public function get pbrlutTexture():BaseTexture {
 			return _getTexture(PBRLUTTEXTURE);
 		}
 		
@@ -154,18 +98,27 @@ package laya.d3.core.material {
 		 * 设置PBRLUT贴图。
 		 * @param value PBRLUT贴图。
 		 */
-		public function set PBRLUTTexture(value:BaseTexture):void {
-			/*
-			if (value) {
-				_addShaderDefine(ShaderDefines3D.DIFFUSEMAP);
-			} else {
-				_removeShaderDefine(ShaderDefines3D.DIFFUSEMAP);
-			}
-			*/
+		public function set pbrlutTexture(value:BaseTexture):void {
 			_setTexture(PBRLUTTEXTURE, value);
 		}
 		
-				
+		/**
+		 * 获取预处理的diffuse贴图。
+		 * @return 预处理的diffuse贴图。
+		 */
+		public function get texPrefilterDiff():BaseTexture {
+			return _getTexture(ENVDIFFTEXTURE);
+		}
+		
+		/**
+		 * 设置预处理的diffuse贴图。
+		 * @param value 预处理的diffuse贴图。
+		 */
+		public function set texPrefilterDiff(value:BaseTexture):void {
+			value.minFifter = WebGLContext.NEAREST;
+			_setTexture(ENVDIFFTEXTURE, value);
+		}
+						
 		/**
 		 * 获取法线贴图。
 		 * @return 法线贴图。
@@ -179,55 +132,43 @@ package laya.d3.core.material {
 		 * @param value 法线贴图。
 		 */
 		public function set normalTexture(value:BaseTexture):void {
-			if (value) {
-				_addShaderDefine(ShaderDefines3D.NORMALMAP);
-			} else {
-				_removeShaderDefine(ShaderDefines3D.NORMALMAP);
-			}
 			_setTexture(NORMALTEXTURE, value);
 		}
 		
 		/**
-		 * 获取高光贴图。
-		 * @return 高光贴图。
+		 * 环境贴图。
+		 * @return 环境贴图。
 		 */
-		public function get specularTexture():BaseTexture {
-			return _getTexture(SPECULARTEXTURE);
+		public function get envmapTexture():BaseTexture {
+			return _getTexture(ENVMAPTEXTURE);
 		}
 		
 		/**
-		 * 设置高光贴图。
-		 * @param value  高光贴图。
+		 * 设置环境贴图。
+		 * @param value  环境贴图。
 		 */
-		public function set specularTexture(value:BaseTexture):void {
-			if (value) {
-				_addShaderDefine(ShaderDefines3D.SPECULARMAP);
-			} else {
-				_removeShaderDefine(ShaderDefines3D.SPECULARMAP);
+		public function set envmapTexture(value:BaseTexture):void {
+			var si:* = value['simLodInfo'];
+			if ( si && si is Float32Array ) {
+				_setBuffer(SIMLODINFO, si);
 			}
-			
-			_setTexture(SPECULARTEXTURE, value);
+			_setTexture(ENVMAPTEXTURE, value);
 		}
 		
 		/**
-		 * 获取反射贴图。
-		 * @return 反射贴图。
+		 * 获取pbr信息贴图。
+		 * @return pbr信息贴图。
 		 */
-		public function get reflectTexture():BaseTexture {
-			return _getTexture(REFLECTTEXTURE);
+		public function get pbrInfoTexture():BaseTexture {
+			return _getTexture(PBRINFOTEXTURE);
 		}
 		
 		/**
-		 * 设置反射贴图。
-		 * @param value 反射贴图。
+		 * 设置pbr信息贴图。
+		 * @param value pbr信息贴图。
 		 */
-		public function set reflectTexture(value:BaseTexture):void {
-			if (value) {
-				_addShaderDefine(ShaderDefines3D.REFLECTMAP);
-			} else {
-				_removeShaderDefine(ShaderDefines3D.REFLECTMAP);
-			}
-			_setTexture(REFLECTTEXTURE, value);
+		public function set pbrInfoTexture(value:BaseTexture):void {
+			_setTexture(PBRINFOTEXTURE, value);
 		}
 		
 		/**
@@ -245,22 +186,14 @@ package laya.d3.core.material {
 		public function set transformUV(value:TransformUV):void {
 			_transformUV = value;
 			_setMatrix4x4(UVMATRIX, value.matrix);
-			if (value)
-				_addShaderDefine(ShaderDefines3D.UVTRANSFORM);
-			else
-				_removeShaderDefine(ShaderDefines3D.UVTRANSFORM);
 			if (_conchMaterial) {//NATIVE//TODO:可取消
 				_conchMaterial.setShaderValue(UVMATRIX, value.matrix.elements,0);
 			}
 		}
 
-		
 		public function PBRMaterial() {
 			super();
 			setShaderName("PBR");
-			_setColor(MATERIALAMBIENT, new Vector3(0.6, 0.6, 0.6));
-			_setColor(MATERIALDIFFUSE, new Vector3(1.0, 1.0, 1.0));
-			_setColor(MATERIALSPECULAR, new Vector4(1.0, 1.0, 1.0, 8.0));
 			_setNumber(ALPHATESTVALUE, 0.5);
 		}
 		
@@ -268,22 +201,21 @@ package laya.d3.core.material {
 		 * 禁用灯光。
 		 */
 		public function disableLight():void {
-			_addDisableShaderDefine(ShaderDefines3D.POINTLIGHT | ShaderDefines3D.SPOTLIGHT | ShaderDefines3D.DIRECTIONLIGHT);
+			_addDisableShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
 		}
 		
 		/**
 		 * 禁用雾化。
 		 */
 		public function disableFog():void {
-			_addDisableShaderDefine(ShaderDefines3D.FOG);
+			_addDisableShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
 		}
 		
 		/**
 		 * @private
 		 */
-		override public function _setMaterialShaderParams(state:RenderState, projectionView:Matrix4x4, worldMatrix:Matrix4x4, mesh:IRenderable, material:BaseMaterial):void {
+		override public function _setMaterialShaderParams(state:RenderState):void {
 			(_transformUV) && (_transformUV.matrix);//触发UV矩阵更新TODO:临时
 		}
 	}
-
 }

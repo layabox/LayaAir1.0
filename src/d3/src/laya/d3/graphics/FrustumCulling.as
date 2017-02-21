@@ -34,7 +34,7 @@ package laya.d3.graphics {
 			for (i = 0, iNum = frustumCullingObjects.length; i < iNum; i++) {
 				var renderObject:RenderObject = frustumCullingObjects[i];
 				if (Layer.isVisible(renderObject._layerMask) && renderObject._ownerEnable && renderObject._enable && (boundFrustum.containsBoundSphere(renderObject._render.boundingSphere) !== ContainmentType.Disjoint)) {
-					renderObject._owner._prepareShaderValuetoRender(view, projection, projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
+					renderObject._owner._prepareShaderValuetoRender(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
 					renderObject._distanceForSort = Vector3.distance(renderObject._render.boundingSphere.center, cameraPosition) + renderObject._render.sortingFudge;
 					var renderElements:Vector.<RenderElement> = renderObject._renderElements;
 					for (j = 0, jNum = renderElements.length; j < jNum; j++) {
@@ -72,7 +72,7 @@ package laya.d3.graphics {
 			for (i = 0, iNum = frustumCullingObjects.length; i < iNum; i++) {
 				var renderObject:RenderObject = frustumCullingObjects[i];
 				if (Layer.isVisible(renderObject._layerMask) && renderObject._ownerEnable && renderObject._enable) {
-					renderObject._owner._prepareShaderValuetoRender(view, projection, projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
+					renderObject._owner._prepareShaderValuetoRender(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
 					renderObject._distanceForSort = Vector3.distance(renderObject._render.boundingSphere.center, cameraPosition) + renderObject._render.sortingFudge;
 					var renderElements:Vector.<RenderElement> = renderObject._renderElements;
 					for (j = 0, jNum = renderElements.length; j < jNum; j++) {

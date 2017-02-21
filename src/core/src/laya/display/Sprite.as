@@ -273,9 +273,8 @@ package laya.display {
 		}
 		
 		/**
-		 * <p>指定是否对使用了 scrollRect 的显示对象进行优化处理。</p>
-		 * <p>默认为false(不优化)。</p>
-		 * <p>当值为ture时：将对此对象使用了scrollRect 设定的显示区域以外的显示内容不进行渲染，以提高性能。</p>
+		 * <p>指定是否对使用了 scrollRect 的显示对象进行优化处理。默认为false(不优化)。</p>
+		 * <p>当值为ture时：将对此对象使用了scrollRect 设定的显示区域以外的显示内容不进行渲染，以提高性能(如果子对象有旋转缩放或者中心点偏移，则显示筛选会不精确)。</p>
 		 */
 		public function set optimizeScrollRect(b:Boolean):void {
 			if (_optimizeScrollRect != b) {

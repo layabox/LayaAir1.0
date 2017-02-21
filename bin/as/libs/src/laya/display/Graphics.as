@@ -304,10 +304,12 @@ package laya.display {
 					//width = width - tex.sourceWidth + tex.width;
 			        //height = height - tex.sourceHeight + tex.height;
 					tex = cmd[0];
+					var offX:Number=tex.offsetX>0?tex.offsetX:0;
+					var offY:Number=tex.offsetY>0?tex.offsetY:0;
 					if (cmd[3] && cmd[4]) {
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-tex.offsetX, cmd[2]-tex.offsetY, cmd[3]+tex.sourceWidth-tex.width, cmd[4]+tex.sourceHeight-tex.height), tMatrix);
+						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, cmd[3]+tex.sourceWidth-tex.width, cmd[4]+tex.sourceHeight-tex.height), tMatrix);
 					} else {
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-tex.offsetX, cmd[2]-tex.offsetY, tex.width+tex.sourceWidth-tex.width, tex.height+tex.sourceHeight-tex.height), tMatrix);
+						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, tex.width+tex.sourceWidth-tex.width, tex.height+tex.sourceHeight-tex.height), tMatrix);
 					}
 					break;
 				case context._fillTexture: 
@@ -328,8 +330,8 @@ package laya.display {
 						drawMatrix = tMatrix;
 					}
 					tex = cmd[0];
-					var offX:Number=tex.offsetX>0?tex.offsetX:0;
-					var offY:Number=tex.offsetY>0?tex.offsetY:0;
+					offX=tex.offsetX>0?tex.offsetX:0;
+					offY=tex.offsetY>0?tex.offsetY:0;
 					if (cmd[3] && cmd[4]) {
 						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, cmd[3]+tex.sourceWidth-tex.width, cmd[4]+tex.sourceHeight-tex.height), tMatrix);
 					} else {

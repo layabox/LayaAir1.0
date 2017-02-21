@@ -1,12 +1,10 @@
 package laya.net 
 {
 	import laya.events.EventDispatcher;
-	import laya.net.Loader;
 	import laya.renders.Render;
 	import laya.resource.HTMLCanvas;
-	import laya.resource.HTMLImage;
-	import laya.resource.Texture;
 	import laya.utils.Browser;
+
 	/**
 	 * @private
 	 * Worker Image加载器
@@ -49,8 +47,8 @@ package laya.net
 		 */
 		public static function __init__():Boolean
 		{
-			if (_preLoadFun) return;
-			if (!Browser.window.Worker) return;
+			if (_preLoadFun != null) return false;
+			if (!Browser.window.Worker) return false;
 			_preLoadFun = Loader["prototype"]["_loadImage"];
 			Loader["prototype"]["_loadImage"] = WorkerLoader["prototype"]["_loadImage"];
 			if (!I) I = new WorkerLoader();
@@ -63,7 +61,7 @@ package laya.net
 		public static function set enable(v:Boolean):void
 		{
 			_enable = v;
-			if (_enable && !_preLoadFun) __init__();
+			if (_enable && _preLoadFun == null) __init__();
 		}
 		
 		public static function get enable():Boolean
@@ -78,7 +76,7 @@ package laya.net
 		public function WorkerLoader() 
 		{
 			worker = new Browser.window.Worker(workerPath);
-			worker.onmessage = function(evt) { 
+			worker.onmessage = function(evt:*):void { 
 				//接收worker传过来的数据函数
 				workerMessage(evt.data);
 			}
@@ -115,16 +113,7 @@ package laya.net
 				return;
 			}
 			
-			//性能统计用
-			
-			//var acceptTime:Number;
-			//acceptTime = Browser.now();
-			//
-			//_myTrace("DataType:", data.dataType);
-			//_myTrace("transferTime:", acceptTime - data.sendTime);
-			
 			var canvas:HTMLCanvas = new HTMLCanvas("2D");
-			//canvas.src = data.url;
 			var ctx:*;
 			ctx = canvas.source.getContext("2d");   
 			
@@ -132,7 +121,6 @@ package laya.net
 			switch(data.dataType)
 			{
 				case "buffer":
-					 //_myTrace("new ImageDataTime:",Browser.now() -acceptTime);
 					 imageData = ctx.createImageData(data.width, data.height);
 			         imageData.data.set(data.buffer);
 					 canvas.size(imageData.width, imageData.height);
@@ -151,14 +139,6 @@ package laya.net
 					break;
 				
 			}
-			
-			//性能统计信息
-			//_myTrace("PNGdecodeTime:", data.decodeTime);
-			//_myTrace("getBufferTime:", data.getBufferTime);
-			//_myTrace("putImageDataTime:",Browser.now() -acceptTime);
-			//_myTrace("allDecodeTime:", Browser.now() - data.startTime);
-			
-			
 			if (Render.isWebGL)
 			{
 				__JS__("canvas=new laya.webgl.resource.WebGLImage(canvas,data.url);");
@@ -200,7 +180,7 @@ package laya.net
 		 * @param	url 资源地址。
 		 */
 		protected function _loadImage(url:String):void {
-			var _this:Loader = this;
+			var _this:Loader = this as Loader;
 			if (!_enable||url.toLowerCase().indexOf(".png") < 0)
 			{
 				_preLoadFun.call(_this, url);
@@ -214,7 +194,7 @@ package laya.net
 				clear();
 				if (image)
 				{
-					_this.onLoaded(image);
+					_this["onLoaded"](image);
 				}else
 				{
 					//失败之后使用原版的加载函数加载重试

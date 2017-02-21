@@ -6,9 +6,10 @@ var __extends = (this && this.__extends) || function (d, b) {
 var CustomMaterial = (function (_super) {
     __extends(CustomMaterial, _super);
     function CustomMaterial() {
-        _super.call(this);
-        this.setShaderName("CustomShader");
-        this._DIFFUSETEXTURE_ID = 0;
+        var _this = _super.call(this) || this;
+        _this.setShaderName("CustomShader");
+        _this._DIFFUSETEXTURE_ID = 0;
+        return _this;
     }
     CustomMaterial.prototype.getDiffuseTexture = function () {
         return this._getTexture(CustomMaterial._DIFFUSETEXTURE_ID);

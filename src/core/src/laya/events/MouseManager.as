@@ -224,35 +224,15 @@ package laya.events {
 		}
 		
 		private function check(sp:Sprite, mouseX:Number, mouseY:Number, callBack:Function):Boolean {
-			var transform:Matrix = sp.transform || this._matrix;
-			var pivotX:Number = sp.pivotX;
-			var pivotY:Number = sp.pivotY;
-			
-			//设置矩阵信息为相对父亲的偏移
-			if (pivotX === 0 && pivotY === 0) {
-				transform.setTranslate(sp.x, sp.y);
-			} else {
-				//如果有轴心旋转，则矩阵信息加上轴心的影响
-				if (transform === this._matrix) {
-					transform.setTranslate(sp.x - pivotX, sp.y - pivotY);
-				} else {
-					var cos:Number = transform.cos;
-					var sin:Number = transform.sin;
-					transform.setTranslate(sp.x - (pivotX * cos - pivotY * sin) * sp.scaleX, sp.y - (pivotX * sin + pivotY * cos) * sp.scaleY);
-				}
-			}
-			
-			//变换鼠标坐标到节点坐标系
-			transform.invertTransformPoint(this._point.setTo(mouseX, mouseY));
-			//重置transform
-			transform.setTranslate(0, 0);
+			this._point.setTo(mouseX, mouseY);
+			sp.fromParentPoint(this._point);
 			mouseX = this._point.x;
-			mouseY = this._point.y;
+			mouseY = this._point.y;	
 			
 			//如果有裁剪，则先判断是否在裁剪范围内
 			var scrollRect:Rectangle = sp.scrollRect;
 			if (scrollRect) {
-				_rect.setTo(0, 0, scrollRect.width, scrollRect.height);
+				_rect.setTo(scrollRect.x, scrollRect.y, scrollRect.width, scrollRect.height);
 				var isHit:Boolean = _rect.contains(mouseX, mouseY);
 				if (!isHit) return false;
 			}
@@ -268,7 +248,7 @@ package laya.events {
 					var child:Sprite = sp._childs[i];
 					//只有接受交互事件的，才进行处理
 					if (!child.destroyed && child.mouseEnabled && child.visible) {
-						flag = check(child, mouseX + (scrollRect ? scrollRect.x : 0), mouseY + (scrollRect ? scrollRect.y : 0), callBack);
+						flag = check(child, mouseX , mouseY , callBack);
 						if (flag) return true;
 					}
 				}

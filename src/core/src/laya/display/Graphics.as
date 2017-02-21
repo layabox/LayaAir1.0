@@ -71,8 +71,15 @@ package laya.display {
 						this.drawImageS(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, tex.offsetX, tex.offsetY, tex.width, tex.height, pos);
 					}
 				}
-				from.drawTexture = function(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null):void {
+				from.drawTexture = function(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null,alpha:Number=1):void {
 					if (!tex) return;
+					if (!tex.loaded)
+					{
+						tex.once(Event.LOADED, this, function():void{
+							this.drawTexture(tex, x, y, width, height, m);
+						});
+						return;
+					}
 					if (!(tex.loaded && tex.bitmap && tex.source))//source内调用tex.active();
 					{
 						return;
@@ -237,6 +244,7 @@ package laya.display {
 			tMatrix.identity();
 			var tempMatrix:Matrix = _tempMatrix;
 			var cmd:Object;
+			var tex:Texture
 			for (var i:int = 0, n:int = cmds.length; i < n; i++) {
 				cmd = cmds[i];
 				switch (cmd.callee) {
@@ -293,11 +301,22 @@ package laya.display {
 					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0], cmd[1], cmd[2], cmd[3]), tempMatrix);
 					break;
 				case context._drawTexture: 
+					//width = width - tex.sourceWidth + tex.width;
+			        //height = height - tex.sourceHeight + tex.height;
+					tex = cmd[0];
+					var offX:Number=tex.offsetX>0?tex.offsetX:0;
+					var offY:Number=tex.offsetY>0?tex.offsetY:0;
+					if (cmd[3] && cmd[4]) {
+						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, cmd[3]+tex.sourceWidth-tex.width, cmd[4]+tex.sourceHeight-tex.height), tMatrix);
+					} else {
+						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, tex.width+tex.sourceWidth-tex.width, tex.height+tex.sourceHeight-tex.height), tMatrix);
+					}
+					break;
 				case context._fillTexture: 
 					if (cmd[3] && cmd[4]) {
 						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
 					} else {
-						var tex:Texture = cmd[0];
+						tex = cmd[0];
 						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), tMatrix);
 					}
 					break;
@@ -310,11 +329,13 @@ package laya.display {
 					} else {
 						drawMatrix = tMatrix;
 					}
+					tex = cmd[0];
+					offX=tex.offsetX>0?tex.offsetX:0;
+					offY=tex.offsetY>0?tex.offsetY:0;
 					if (cmd[3] && cmd[4]) {
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), drawMatrix);
+						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, cmd[3]+tex.sourceWidth-tex.width, cmd[4]+tex.sourceHeight-tex.height), tMatrix);
 					} else {
-						tex = cmd[0];
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), drawMatrix);
+						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, tex.width+tex.sourceWidth-tex.width, tex.height+tex.sourceHeight-tex.height), tMatrix);
 					}
 					break;
 				case context._drawRect: 

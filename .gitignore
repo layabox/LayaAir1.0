@@ -14,6 +14,7 @@ local.properties
 .classpath
 .settings/
 .loadpath
+.svn
 
 # External tool builders
 .externalToolBuilders/
@@ -30,6 +31,7 @@ local.properties
 
 ide/
 idebranch/
+branch/
 utils/node_modules
 utils/copy.bat
 utils/debug.txt

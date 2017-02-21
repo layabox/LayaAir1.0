@@ -11,9 +11,6 @@ package laya.d3.core.render {
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.Shader3D;
 	import laya.utils.Stat;
-	import laya.webgl.WebGL;
-	import laya.webgl.WebGLContext;
-	import laya.webgl.shader.BaseShader;
 	
 	/**
 	 * @private

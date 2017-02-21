@@ -113,7 +113,7 @@ package laya.ui {
 		 * @param dialog 需要关闭的对象框 <code>Dialog</code> 实例。
 		 */
 		public function close(dialog:Dialog):void {
-			if (closeEffect) closeEffect(dialog);
+			if (closeEffect != null) closeEffect(dialog);
 			else _doClose(dialog);
 		}
 		

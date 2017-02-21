@@ -27,7 +27,7 @@ package {
 		/**
 		 * 向主线程发送消息
 		 */
-		public function postMessage(data:*, option:*):void {}
+		public function postMessage(data:*, option:* = null):void {}
 		
 		/**
 		 * 终止 worker

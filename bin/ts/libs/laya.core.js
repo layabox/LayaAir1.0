@@ -1432,10 +1432,12 @@ var Laya=window.Laya=(function(window,document){
 						break ;
 					case context._drawTexture:
 						tex=cmd[0];
+						var offX=tex.offsetX>0?tex.offsetX:0;
+						var offY=tex.offsetY>0?tex.offsetY:0;
 						if (cmd[3] && cmd[4]){
-							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-tex.offsetX,cmd[2]-tex.offsetY,cmd[3]+tex.sourceWidth-tex.width,cmd[4]+tex.sourceHeight-tex.height),tMatrix);
+							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,cmd[3]+tex.sourceWidth-tex.width,cmd[4]+tex.sourceHeight-tex.height),tMatrix);
 							}else {
-							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-tex.offsetX,cmd[2]-tex.offsetY,tex.width+tex.sourceWidth-tex.width,tex.height+tex.sourceHeight-tex.height),tMatrix);
+							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,tex.width+tex.sourceWidth-tex.width,tex.height+tex.sourceHeight-tex.height),tMatrix);
 						}
 						break ;
 					case context._fillTexture:
@@ -1456,8 +1458,8 @@ var Laya=window.Laya=(function(window,document){
 							drawMatrix=tMatrix;
 						}
 						tex=cmd[0];
-						var offX=tex.offsetX>0?tex.offsetX:0;
-						var offY=tex.offsetY>0?tex.offsetY:0;
+						offX=tex.offsetX>0?tex.offsetX:0;
+						offY=tex.offsetY>0?tex.offsetY:0;
 						if (cmd[3] && cmd[4]){
 							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,cmd[3]+tex.sourceWidth-tex.width,cmd[4]+tex.sourceHeight-tex.height),tMatrix);
 							}else {
@@ -2744,27 +2746,13 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.check=function(sp,mouseX,mouseY,callBack){
-			var transform=sp.transform || this._matrix;
-			var pivotX=sp.pivotX;
-			var pivotY=sp.pivotY;
-			if (pivotX===0 && pivotY===0){
-				transform.setTranslate(sp.x,sp.y);
-				}else {
-				if (transform===this._matrix){
-					transform.setTranslate(sp.x-pivotX,sp.y-pivotY);
-					}else {
-					var cos=transform.cos;
-					var sin=transform.sin;
-					transform.setTranslate(sp.x-(pivotX *cos-pivotY *sin)*sp.scaleX,sp.y-(pivotX *sin+pivotY *cos)*sp.scaleY);
-				}
-			}
-			transform.invertTransformPoint(this._point.setTo(mouseX,mouseY));
-			transform.setTranslate(0,0);
+			this._point.setTo(mouseX,mouseY);
+			sp.fromParentPoint(this._point);
 			mouseX=this._point.x;
 			mouseY=this._point.y;
 			var scrollRect=sp.scrollRect;
 			if (scrollRect){
-				this._rect.setTo(0,0,scrollRect.width,scrollRect.height);
+				this._rect.setTo(scrollRect.x,scrollRect.y,scrollRect.width,scrollRect.height);
 				var isHit=this._rect.contains(mouseX,mouseY);
 				if (!isHit)return false;
 			}
@@ -2776,7 +2764,7 @@ var Laya=window.Laya=(function(window,document){
 				for (var i=sp._childs.length-1;i >-1;i--){
 					var child=sp._childs[i];
 					if (!child.destroyed && child.mouseEnabled && child.visible){
-						flag=this.check(child,mouseX+(scrollRect ? scrollRect.x :0),mouseY+(scrollRect ? scrollRect.y :0),callBack);
+						flag=this.check(child,mouseX ,mouseY ,callBack);
 						if (flag)return true;
 					}
 				}
@@ -8771,12 +8759,12 @@ var Laya=window.Laya=(function(window,document){
 					var start=isTo ? target[p] :props[p];
 					var end=isTo ? props[p] :target[p];
 					this._props.push([p,start,end-start]);
+					if (!isTo)target[p]=start;
 				}
 			}
 		}
 
 		__proto._beginLoop=function(){
-			this._doEase();
 			Laya.timer.frameLoop(1,this,this._doEase);
 		}
 
@@ -8788,6 +8776,7 @@ var Laya=window.Laya=(function(window,document){
 		/**@private */
 		__proto._updateEase=function(time){
 			var target=this._target;
+			if (!target)return;
 			if (target.destroyed)return Tween.clearTween(target);
 			var usedTimer=this._usedTimer=time-this._startTimer-this._delay;
 			if (usedTimer < 0)return;
@@ -12041,7 +12030,7 @@ var Laya=window.Laya=(function(window,document){
 			var onload=function (image){
 				clear();
 				if (image){
-					_this.onLoaded(image);
+					_this["onLoaded"](image);
 					}else{
 					WorkerLoader._preLoadFun.call(_this,url);
 				}
@@ -12057,12 +12046,12 @@ var Laya=window.Laya=(function(window,document){
 			return WorkerLoader._enable;
 			},function(v){
 			WorkerLoader._enable=v;
-			if (WorkerLoader._enable && !WorkerLoader._preLoadFun)WorkerLoader.__init__();
+			if (WorkerLoader._enable && WorkerLoader._preLoadFun==null)WorkerLoader.__init__();
 		});
 
 		WorkerLoader.__init__=function(){
-			if (WorkerLoader._preLoadFun)return;
-			if (!Browser.window.Worker)return;
+			if (WorkerLoader._preLoadFun !=null)return false;
+			if (!Browser.window.Worker)return false;
 			WorkerLoader._preLoadFun=Loader["prototype"]["_loadImage"];
 			Loader["prototype"]["_loadImage"]=WorkerLoader["prototype"]["_loadImage"];
 			if (!WorkerLoader.I)WorkerLoader.I=new WorkerLoader();
@@ -12887,7 +12876,7 @@ var Laya=window.Laya=(function(window,document){
 					}
 				}
 			}
-			for (var p in this._tweenDic){
+			for (p in this._tweenDic){
 				tTween=this._tweenDic[p];
 				tTween._updateEase(tCurrTime);
 			}

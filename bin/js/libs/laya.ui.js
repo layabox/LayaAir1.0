@@ -919,7 +919,7 @@
 		*@param dialog 需要关闭的对象框 <code>Dialog</code> 实例。
 		*/
 		__proto.close=function(dialog){
-			if (this.closeEffect)this.closeEffect(dialog);
+			if (this.closeEffect !=null)this.closeEffect(dialog);
 			else this._doClose(dialog);
 		}
 
@@ -8212,7 +8212,7 @@
 						break ;
 					}
 			}
-			if (UIConfig.switchDialogOnClick)this.parent.addChild(this);
+			if (UIConfig.switchDialogOnClick && this.parent)this.parent.addChild(this);
 		}
 
 		/**

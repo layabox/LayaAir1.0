@@ -1,26 +1,18 @@
 package laya.d3.core.scene {
 	import laya.d3.core.BaseCamera;
-	import laya.d3.core.Camera;
 	import laya.d3.core.Layer;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.RenderQueue;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.DynamicBatch;
 	import laya.d3.graphics.DynamicBatchManager;
 	import laya.d3.graphics.RenderObject;
 	import laya.d3.graphics.StaticBatch;
-	import laya.d3.graphics.StaticBatchManager;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Collision;
 	import laya.d3.math.ContainmentType;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Vector4;
-	import laya.d3.resource.RenderTexture;
-	import laya.webgl.WebGL;
-	import laya.webgl.WebGLContext;
 	
 	public class OctreeNode {
 		static private const CHILD_NUM:int = 8;

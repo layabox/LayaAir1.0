@@ -3968,8 +3968,8 @@
 							ifAdd=true;
 						}
 						break ;
-					case 4:;
-						var node=_idOfSprite[ _data.getUint16()];
+					case 4:
+						node=_idOfSprite[ _data.getUint16()];
 						node && node.removeSelf();
 						break ;
 					case 5:

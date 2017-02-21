@@ -142,6 +142,7 @@ package laya.utils {
 					var start:Number = isTo ? target[p] : props[p];
 					var end:Number = isTo ? props[p] : target[p];
 					this._props.push([p, start, end - start]);
+					if (!isTo) target[p] = start;
 				}
 			}
 		}
@@ -158,6 +159,7 @@ package laya.utils {
 		/**@private */
 		public function _updateEase(time:Number):void {
 			var target:* = this._target;
+			if (!target) return;
 			
 			//如果对象被销毁，则立即停止缓动
 			/*[IF-FLASH]*/if (target is Node && target.destroyed) return clearTween(target);

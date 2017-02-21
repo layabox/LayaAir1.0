@@ -64,6 +64,7 @@ package laya.debug.tools.enginehook
 		public static var _preCreateFun:Function;
 		public static function init():void
 		{
+			if (I) return;
 			I = new RenderSpriteHook();
 			_preCreateFun = RunDriver.createRenderSprite;
 			RunDriver.createRenderSprite = I.createRenderSprite;

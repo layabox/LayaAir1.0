@@ -264,8 +264,7 @@ package laya.d3.math {
 		 * @param  p2  平面2。
 		 * @param  p3  平面3。
 		 */
-		public static function get3PlaneInterPoint(p1:Plane, p2:Plane, p3:Plane):Vector3{
-			
+		private static function _get3PlaneInterPoint(p1:Plane, p2:Plane, p3:Plane):Vector3{
 			var p1Nor:Vector3 = p1.normal;
 			var p2Nor:Vector3 = p2.normal;
 			var p3Nor:Vector3 = p3.normal;
@@ -296,14 +295,14 @@ package laya.d3.math {
 		 */
 		public function getCorners(corners:Vector.<Vector3>):void{
 			
-			corners[0] = get3PlaneInterPoint(_near, _bottom,  _right);
-            corners[1] = get3PlaneInterPoint(_near, _top,     _right);
-            corners[2] = get3PlaneInterPoint(_near, _top,     _left);
-            corners[3] = get3PlaneInterPoint(_near, _bottom,  _left);
-            corners[4] = get3PlaneInterPoint(_far,  _bottom,  _right);
-            corners[5] = get3PlaneInterPoint(_far,  _top,     _right);
-            corners[6] = get3PlaneInterPoint(_far,  _top,     _left);
-            corners[7] = get3PlaneInterPoint(_far,  _bottom,  _left);
+			_get3PlaneInterPoint(_near, _bottom,  _right).cloneTo(corners[0]);
+            _get3PlaneInterPoint(_near, _top,     _right).cloneTo(corners[1]);
+            _get3PlaneInterPoint(_near, _top,     _left).cloneTo(corners[2]);
+            _get3PlaneInterPoint(_near, _bottom,  _left).cloneTo(corners[3]);
+            _get3PlaneInterPoint(_far,  _bottom,  _right).cloneTo(corners[4]);
+            _get3PlaneInterPoint(_far,  _top,     _right).cloneTo(corners[5]);
+            _get3PlaneInterPoint(_far,  _top,     _left).cloneTo(corners[6]);
+            _get3PlaneInterPoint(_far,  _bottom,  _left).cloneTo(corners[7]);
 		}
 		
 		/**

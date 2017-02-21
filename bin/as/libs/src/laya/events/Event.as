@@ -143,8 +143,6 @@ package laya.events {
 		public static const WORLDMATRIX_NEEDCHANGE:String = "worldmatrixneedchanged";
 		/**更换动作时触发。*/
 		public static const ANIMATION_CHANGED:String = "animationchanged";
-		///**需重新缓存动画时触发，引擎内部使用。*/
-		//public static const CACHEFRAMEINDEX_CHANGED:String = "cacheframeindexchanged";
 		
 		/** 事件类型。*/
 		public var type:String;

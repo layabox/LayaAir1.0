@@ -38,8 +38,8 @@ package laya.utils {
 				var len:Number = str.length;
 				if (len == 3 || len == 4)
 				{
-					var temp = "";
-					for (var i = 0; i < len; i++)
+					var temp:String = "";
+					for (var i:int = 0; i < len; i++)
 					{
 					   	temp += (str[i] + str[i]);
 					}

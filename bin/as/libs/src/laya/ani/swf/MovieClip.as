@@ -340,7 +340,7 @@ package laya.ani.swf {
 					}
 					break;
 				case 4: //remove
-					var node:Sprite = _idOfSprite[ /*key*/_data.getUint16()];
+					node = _idOfSprite[ /*key*/_data.getUint16()];
 					node && node.removeSelf();
 					break;
 				case 5: //setValue

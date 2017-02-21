@@ -51,10 +51,7 @@ settings.blendState = 1;
 var fire = new Laya.Particle3D(settings);
 scene.addChild(fire);
 
-Laya.timer.frameLoop(1, this, loop);
-
-function loop() {
-
+attacthPoint.on(Laya.Event.COMPLETE, this, function(){
     for(var j = 0; j < attacthPoint.attachBones.length; j++){
         if (attacthPoint.matrixs[j]) {
             var e = attacthPoint.matrixs[j].elements;
@@ -63,5 +60,4 @@ function loop() {
             }
         }
     }
-
-}
+});

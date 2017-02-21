@@ -217,7 +217,7 @@ package laya.ui {
 					break;
 				}
 			}
-			if (UIConfig.switchDialogOnClick) parent.addChild(this);
+			if (UIConfig.switchDialogOnClick && parent) parent.addChild(this);
 		}
 		
 		/**

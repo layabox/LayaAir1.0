@@ -342,7 +342,7 @@ package laya.utils {
 				}
 			}
 			
-			for (var p:* in _tweenDic) {
+			for (p in _tweenDic) {
 				tTween = _tweenDic[p];
 				tTween._updateEase(tCurrTime);
 			}

@@ -128,6 +128,8 @@ package laya.resource {
 			var uv:Array = btex ? source.uv : DEF_UV;
 			var bitmap:* = btex ? source.bitmap : source;
 			var tex:Texture = new Texture(bitmap, null);
+			if (bitmap.width && width > bitmap.width) width = bitmap.width;
+			if (bitmap.height && height > bitmap.height) height = bitmap.height;
 			tex.width = width;
 			tex.height = height;
 			tex.offsetX = offsetX;

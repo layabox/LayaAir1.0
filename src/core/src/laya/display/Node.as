@@ -2,7 +2,6 @@ package laya.display {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.renders.Render;
-	import laya.runtime.IConchNode;
 	import laya.utils.Timer;
 	
 	/**
@@ -100,16 +99,19 @@ package laya.display {
 		 * @return	返回添加的节点
 		 */
 		public function addChild(node:Node):Node {
-			if (destroyed || node === this) return node;
-			if (node && Sprite(node).zOrder) _set$P("hasZorder", true);
+			if (!node || destroyed || node === this) return node;
+			if (Sprite(node).zOrder) _set$P("hasZorder", true);
 			if (node._parent === this) {
-				this._childs.splice(getChildIndex(node), 1);
-				this._childs.push(node);
-				if (conchModel) {
-					conchModel.removeChild(node.conchModel);
-					conchModel.addChildAt(node.conchModel, this._childs.length - 1);
+				var index:int = getChildIndex(node);
+				if (index !== _childs.length - 1) {
+					this._childs.splice(index, 1);
+					this._childs.push(node);
+					if (conchModel) {
+						conchModel.removeChild(node.conchModel);
+						conchModel.addChildAt(node.conchModel, this._childs.length - 1);
+					}
+					_childChanged();
 				}
-				_childChanged();
 			} else {
 				node.parent && node.parent.removeChild(node);
 				this._childs === ARRAY_EMPTY && (this._childs = []);
@@ -118,6 +120,7 @@ package laya.display {
 				node.parent = this;
 				_childChanged();
 			}
+			
 			return node;
 		}
 		
@@ -139,8 +142,8 @@ package laya.display {
 		 * @return	返回添加的节点。
 		 */
 		public function addChildAt(node:Node, index:int):Node {
-			if (destroyed || node === this) return node;
-			if (node && Sprite(node).zOrder) _set$P("hasZorder", true);
+			if (!node || destroyed || node === this) return node;
+			if (Sprite(node).zOrder) _set$P("hasZorder", true);
 			if (index >= 0 && index <= this._childs.length) {
 				if (node._parent === this) {
 					var oldIndex:int = getChildIndex(node);

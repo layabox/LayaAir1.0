@@ -21,8 +21,6 @@ package laya.d3.core.render {
 	 * <code>RenderElement</code> 类用于实现渲染物体。
 	 */
 	public class RenderElement {
-		public static const BONES:int = 0;
-		
 		/** @private */
 		private static var _tempVector30:Vector3 = new Vector3();
 		/** @private */
@@ -116,7 +114,7 @@ package laya.d3.core.render {
 				Utils3D.transformVector3ArrayToVector3ArrayCoordinate(bakedVertexes, posOffset, result, bakedVertexes, posOffset);
 				Utils3D.transformVector3ArrayByQuat(bakedVertexes, norOffset, rotation, bakedVertexes, norOffset);
 				
-				if (owner is MeshSprite3D)//TODO:待修改。
+				if (owner is MeshSprite3D&&(owner as MeshSprite3D).meshRender.lightmapScaleOffset)//TODO:待修改。
 					Utils3D.transformLightingMapTexcoordArray(bakedVertexes, lightingMapTexOffset, (owner as MeshSprite3D).meshRender.lightmapScaleOffset, bakedVertexes, lightingMapTexOffset);
 			}
 
