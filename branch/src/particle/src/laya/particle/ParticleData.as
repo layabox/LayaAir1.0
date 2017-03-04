@@ -41,15 +41,29 @@ package laya.particle {
 			particleData.startColor = _tempStartColor;
 			particleData.endColor = _tempEndColor;
 			var i:int;
-			if (settings.colorComponentInter) {
-				for (i = 0; i < 4; i++)
+			if (settings.disableColor)
+			{
+				for (i = 0; i < 3; i++)
 				{
-					particleData.startColor[i] = MathUtil.lerp(settings.minStartColor[i], settings.maxStartColor[i], Math.random());//R、G、B、A插值
-					particleData.endColor[i] = MathUtil.lerp(settings.minEndColor[i], settings.maxEndColor[i], Math.random());//R、G、B、A插值
+					particleData.startColor[i] = 255;
+					particleData.endColor[i] = 255;
 				}
-			} else {
-				MathUtil.lerpVector4(settings.minStartColor, settings.maxStartColor, Math.random(), particleData.startColor);//RGBA统一插值
-				MathUtil.lerpVector4(settings.minEndColor, settings.maxEndColor, Math.random(), particleData.endColor);//RGBA统一插值
+				particleData.startColor[i] = MathUtil.lerp(settings.minStartColor[i], settings.maxStartColor[i], Math.random());//R、G、B、A插值
+				particleData.endColor[i] = MathUtil.lerp(settings.minEndColor[i], settings.maxEndColor[i], Math.random());//R、G、B、A插值
+				
+			}
+			else
+			{
+				if (settings.colorComponentInter) {
+					for (i = 0; i < 4; i++)
+					{
+						particleData.startColor[i] = MathUtil.lerp(settings.minStartColor[i], settings.maxStartColor[i], Math.random());//R、G、B、A插值
+						particleData.endColor[i] = MathUtil.lerp(settings.minEndColor[i], settings.maxEndColor[i], Math.random());//R、G、B、A插值
+					}
+				} else {
+					MathUtil.lerpVector4(settings.minStartColor, settings.maxStartColor, Math.random(), particleData.startColor);//RGBA统一插值
+					MathUtil.lerpVector4(settings.minEndColor, settings.maxEndColor, Math.random(), particleData.endColor);//RGBA统一插值
+				}
 			}
 			
 			particleData.sizeRotation =_tempSizeRotation;

@@ -144,7 +144,7 @@ package laya.utils {
 					handler.caller = caller;
 					handler.method = method;
 					handler.args = args;
-					handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer);
+					handler.exeTime = delay + (useFrame ? this.currFrame : Browser.now());
 					return;
 				}
 			}
@@ -157,7 +157,7 @@ package laya.utils {
 			handler.caller = caller;
 			handler.method = method;
 			handler.args = args;
-			handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer);
+			handler.exeTime = delay + (useFrame ? this.currFrame : Browser.now());
 			
 			//索引handler
 			_indexHandler(handler);
@@ -311,6 +311,15 @@ package laya.utils {
 				_map[handler.method] = null;
 				handler.run(true);
 			}
+		}
+		
+		/**
+		 * 立即提前执行定时器，执行之后从队列中删除
+		 * @param	caller 执行域(this)。
+		 * @param	method 定时器回调函数。
+		 */
+		public function runTimer(caller:*, method:Function):void {
+			runCallLater(caller, method);
 		}
 	}
 }

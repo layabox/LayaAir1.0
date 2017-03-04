@@ -1,6 +1,7 @@
 package laya.resource {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
+	import laya.net.Loader;
 	import laya.utils.Stat;
 	
 	/**
@@ -24,7 +25,7 @@ package laya.resource {
 	/**
 	 * <code>Resource</code> 资源存取类。
 	 */
-	public class Resource extends EventDispatcher implements ICreateResource,IDispose{
+	public class Resource extends EventDispatcher implements ICreateResource, IDispose {
 		/**唯一标识ID计数器*/
 		private static var _uniqueIDCounter:int = 0;
 		/**此类型已载入资源*/
@@ -102,6 +103,9 @@ package laya.resource {
 		private var _memorySize:int;
 		/**名字。*/
 		private var _name:String;
+		/**@private */
+		private var _url:String;
+		
 		/**是否已加载,限于首次加载。*/
 		protected var _loaded:Boolean = false;
 		/**是否已释放。*/
@@ -164,6 +168,7 @@ package laya.resource {
 		public function get released():Boolean {
 			return _released;
 		}
+		
 		/**
 		 * 是否已处理。
 		 */
@@ -179,6 +184,22 @@ package laya.resource {
 			var offsetValue:int = value - _memorySize;
 			_memorySize = value;
 			resourceManager && resourceManager.addSize(offsetValue);
+		}
+		
+		/**
+		 * 获取资源的URL地址。
+		 * @return URL地址。
+		 */
+		public function get url():String {
+			return _url;
+		}
+		
+		/**
+		 * 色湖之资源的URL地址。
+		 * @param value URL地址。
+		 */
+		public function set url(value:String):void {
+			_url = value;
 		}
 		
 		/**
@@ -274,7 +295,7 @@ package laya.resource {
 		{
 			if (_resourceManager !== null)
 				throw new Error("附属于resourceManager的资源不能独立释放！");
-				
+			
 			_disposed = true;
 			lock = false;//解锁资源，强制清理
 			releaseResource();
@@ -283,6 +304,7 @@ package laya.resource {
 				_loadedResources.splice(index, 1);
 				_isLoadedResourcesSorted = false;
 			}
+			Loader.clearRes(url);
 		}
 		
 		/** 开始资源激活。*/

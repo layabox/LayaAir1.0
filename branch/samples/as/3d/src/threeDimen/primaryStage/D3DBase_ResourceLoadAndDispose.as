@@ -36,7 +36,7 @@ package threeDimen.primaryStage {
 			//{url:"../../../../res/fighter/fighter.atlas", clas:null, priority:1}
 			
 			//3D:
-			{url:"../../../../res/threeDimen/staticModel/sphere/sphere.lh", clas:Sprite3D, priority:1}//注意：加载层级文件会自动加载所包含的模型文件、材质文件、贴图文件。
+			//{url:"../../../../res/threeDimen/staticModel/sphere/sphere.lh", clas:Sprite3D, priority:1}//注意：加载层级文件会自动加载所包含的模型文件、材质文件、贴图文件。
 			
 			//{url:"../../../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm", clas:Mesh, priority:1}//}//注意：加载模型文件会自动加载所包含的材质文件、贴图文件。
 			
@@ -44,7 +44,7 @@ package threeDimen.primaryStage {
 			
 			//{url:"../../../../res/threeDimen/skyBox/skyCube.ltc", clas:TextureCube, priority:1},//注意：加载立方体贴图文件会自动加载所包含的贴图文件。
 			
-			//{url:"../../../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg", clas:Texture2D, priority:1}
+			{url:"../../../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg", clas:Texture2D, priority:1,params:[true]}//注意：params对应Texture2D的构造函数参数。
 			
 			//{url:"../../../../res/threeDimen/skinModel/dude/dude.ani", clas:AnimationTemplet, priority:1}
 			], completeHandler, processHandler);

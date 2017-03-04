@@ -11,8 +11,8 @@
 	var Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
 	var Resource=laya.resource.Resource,ResourceManager=laya.resource.ResourceManager,RunDriver=laya.utils.RunDriver;
 	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Stat=laya.utils.Stat,Style=laya.display.css.Style;
-	var Text=laya.display.Text,TextInput=laya.ui.TextInput,Texture=laya.resource.Texture,Tree=laya.ui.Tree,UIEvent=laya.ui.UIEvent;
-	var URL=laya.net.URL,Utils=laya.utils.Utils,View=laya.ui.View;
+	var Text=laya.display.Text,TextInput=laya.ui.TextInput,Texture=laya.resource.Texture,Timer=laya.utils.Timer;
+	var Tree=laya.ui.Tree,UIEvent=laya.ui.UIEvent,URL=laya.net.URL,Utils=laya.utils.Utils,View=laya.ui.View;
 	//class laya.debug.data.Base64AtlasManager
 	var Base64AtlasManager=(function(){
 		function Base64AtlasManager(){}
@@ -191,7 +191,6 @@
 			var mtreeo;
 			mtreeo=DebugPanel.getSpriteTreeArr(sprite);
 			this._treeDataList=[mtreeo];
-			console.log(mtreeo);
 			var wraped;
 			wraped={};
 			wraped.id=0;
@@ -1351,6 +1350,73 @@
 
 
 	/**
+	*
+	*@author ww
+	*@version 1.0
+	*
+	*@created 2017-3-2 下午12:11:59
+	*/
+	//class laya.debug.tools.CallLaterTool
+	var CallLaterTool=(function(){
+		function CallLaterTool(){
+			this._getHandler=null;
+			this._indexHandler=null;
+			this._pool=null;
+			this._laters=null;
+		}
+
+		__class(CallLaterTool,'laya.debug.tools.CallLaterTool');
+		var __proto=CallLaterTool.prototype;
+		/**
+		*延迟执行。
+		*@param caller 执行域(this)。
+		*@param method 定时器回调函数。
+		*@param args 回调参数。
+		*/
+		__proto.callLater=function(caller,method,args){
+			if (this._getHandler(caller,method)==null){
+				CallLaterTool.oldCallLater.call(this,caller,method,args);
+				if(CallLaterTool._isRecording){
+					CallLaterTool._recordedCallLaters.push(this._laters[this._laters.length-1]);
+				}
+			}
+		}
+
+		CallLaterTool.initCallLaterRecorder=function(){
+			if(CallLaterTool.oldCallLater)return;
+			CallLaterTool.oldCallLater=Laya.timer["callLater"];
+			Laya.timer["callLater"]=CallLaterTool["prototype"]["callLater"];
+		}
+
+		CallLaterTool.beginRecordCallLater=function(){
+			CallLaterTool.initCallLaterRecorder();
+			CallLaterTool._isRecording=true;
+		}
+
+		CallLaterTool.runRecordedCallLaters=function(){
+			CallLaterTool._isRecording=false;
+			var timer;
+			timer=Laya.timer;
+			var laters=timer["_laters"];
+			laters=CallLaterTool._recordedCallLaters;
+			for (var i=0,n=laters.length-1;i <=n;i++){
+				var handler=laters[i];
+				if(CallLaterTool._recordedCallLaters.indexOf(handler)<0)continue ;
+				handler.method!==null && handler.run(false);
+				timer["_recoverHandler"](handler);
+				laters.splice(i,1);
+			}
+			CallLaterTool._recordedCallLaters.length=0;
+		}
+
+		CallLaterTool._recordedCallLaters=[];
+		CallLaterTool._isRecording=false;
+		CallLaterTool.oldCallLater=null
+		return CallLaterTool;
+	})()
+
+
+	/**
 	*...
 	*@author ww
 	*/
@@ -1505,6 +1571,20 @@
 			preHeight=canvas.height;
 			canvas.size(preWidth+1,preHeight);
 			canvas.size(preWidth,preHeight);
+		}
+
+		CanvasTools.getImagePixels=function(x,y,width,data,colorLen){
+			(colorLen===void 0)&& (colorLen=4);
+			var pos=0;
+			pos=(x *width+y)*colorLen;
+			var i=0,len=0;
+			var rst;
+			rst=[];
+			len=colorLen;
+			for (i=0;i < len;i++){
+				rst.push(data[pos+i]);
+			}
+			return rst;
 		}
 
 		return CanvasTools;
@@ -1998,6 +2078,51 @@
 
 		]);
 		return DebugExport;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.tools.DebugTxt
+	var DebugTxt=(function(){
+		function DebugTxt(){}
+		__class(DebugTxt,'laya.debug.tools.DebugTxt');
+		DebugTxt.init=function(){
+			if (DebugTxt._txt)return;
+			DebugTxt._txt=new Text();
+			DebugTxt._txt.pos(100,100);
+			DebugTxt._txt.color="#ff00ff";
+			DebugTxt._txt.zOrder=999;
+			DebugTxt._txt.fontSize=24;
+			DebugTxt._txt.text="debugTxt inited";
+			Laya.stage.addChild(DebugTxt._txt);
+		}
+
+		DebugTxt.getArgArr=function(arg){
+			var rst;
+			rst=[];
+			var i=0,len=arg.length;
+			for(i=0;i<len;i++){
+				rst.push(arg[i]);
+			}
+			return rst;
+		}
+
+		DebugTxt.dTrace=function(__arg){
+			var arg=arguments;
+			arg=DebugTxt.getArgArr(arg);
+			var str;
+			str=arg.join(" ");
+			if (DebugTxt._txt){
+				DebugTxt._txt.text=str+"\n"+DebugTxt._txt.text;
+			}
+		}
+
+		DebugTxt._txt=null
+		DebugTxt.I=null
+		return DebugTxt;
 	})()
 
 
@@ -5790,7 +5915,7 @@
 				rId=str.lastIndexOf(right);
 				if(rId<lId)return "";
 				}else{
-				rId=str.indexOf(right,lId);
+				rId=str.indexOf(right,lId+1);
 			}
 			if(rId<0)return "";
 			return str.substring(lId+left.length,rId);
@@ -6019,7 +6144,39 @@
 			return "";
 		}
 
+		StringTool.initAlphaSign=function(){
+			if (StringTool.alphaSigns)return;
+			StringTool.alphaSigns={};
+			StringTool.addSign("a","z",StringTool.alphaSigns);
+			StringTool.addSign("A","Z",StringTool.alphaSigns);
+			StringTool.addSign("0","9",StringTool.alphaSigns);
+		}
+
+		StringTool.addSign=function(ss,e,tar){
+			var i=0;
+			var len=0;
+			var s=0;
+			s=ss.charCodeAt(0);
+			len=e.charCodeAt(0);
+			for(i=s;i<=len;i++){
+				tar[String.fromCharCode(i)]=true;
+				console.log("add :"+String.fromCharCode(i));
+			}
+		}
+
+		StringTool.isPureAlphaNum=function(str){
+			StringTool.initAlphaSign();
+			if (!str)return true;
+			var i=0,len=0;
+			len=str.length;
+			for (i=0;i < len;i++){
+				if (!StringTool.alphaSigns[str.charAt(i)])return false;
+			}
+			return true;
+		}
+
 		StringTool.emptyDic={};
+		StringTool.alphaSigns=null;
 		__static(StringTool,
 		['emptyStrDic',function(){return this.emptyStrDic={
 				" ":true,
@@ -6098,6 +6255,19 @@
 			rst=tTime-TimeTool.timeDic[sign];
 			TimeTool.timeDic[sign]=tTime;
 			return rst;
+		}
+
+		TimeTool.runAllCallLater=function(){
+			var timer;
+			timer=Laya.timer;
+			var laters=timer["_laters"];
+			for (var i=0,n=laters.length-1;i <=n;i++){
+				var handler=laters[i];
+				handler.method!==null && handler.run(false);
+				timer["_recoverHandler"](handler);
+				i===n && (n=laters.length-1);
+			}
+			laters.length=0;
 		}
 
 		TimeTool.timeDic={};
@@ -6768,6 +6938,106 @@
 
 		XML2Object._arrays=null
 		return XML2Object;
+	})()
+
+
+	/**
+	*XML转Object类
+	*@author ww
+	*
+	*/
+	//class laya.debug.tools.XML2ObjectNodejs
+	var XML2ObjectNodejs=(function(){
+		function XML2ObjectNodejs(){};
+		__class(XML2ObjectNodejs,'laya.debug.tools.XML2ObjectNodejs');
+		__getset(1,XML2ObjectNodejs,'arrays',function(){
+			if(!XML2ObjectNodejs._arrays){
+				XML2ObjectNodejs._arrays=[];
+			}
+			return XML2ObjectNodejs._arrays;
+			},function(a){
+			XML2ObjectNodejs._arrays=a;
+		});
+
+		XML2ObjectNodejs.parse=function(node,isFirst){
+			(isFirst===void 0)&& (isFirst=true);
+			var obj={};
+			if(isFirst)
+				obj.Name=node.localName;
+			var numOfChilds=node[XML2ObjectNodejs.ChildrenSign]?node[XML2ObjectNodejs.ChildrenSign].length:0;
+			var childs=[];
+			var children={};
+			obj.c=children;
+			obj.cList=childs;
+			for(var i=0;i<numOfChilds;i++){
+				var childNode=node[XML2ObjectNodejs.ChildrenSign][i];
+				var childNodeName=childNode.localName;
+				var value;
+				var numOfAttributes=0
+				if (!childNodeName)continue ;
+				value=XML2ObjectNodejs.parse(childNode,true);
+				childs.push(value);
+				if(children[childNodeName]){
+					if(XML2ObjectNodejs.getTypeof(children[childNodeName])=="array"){
+						children[childNodeName].push(value);
+						}else {
+						children[childNodeName]=[children[childNodeName],value];
+					}
+					}else if(XML2ObjectNodejs.isArray(childNodeName)){
+					children[childNodeName]=[value];
+					}else {
+					children[childNodeName]=value;
+				}
+			}
+			numOfAttributes=0;
+			if(node.attributes){
+				numOfAttributes=node.attributes.length;
+				var prop={};
+				obj.p=prop;
+				for(i=0;i<numOfAttributes;i++){
+					prop[node.attributes[i].name.toString()]=String(node.attributes[i].nodeValue);
+				}
+			}
+			if(numOfChilds==0){
+				if(numOfAttributes==0){
+				}else {}
+			}
+			return obj;
+		}
+
+		XML2ObjectNodejs.getArr=function(v){
+			if(!v)return [];
+			if(XML2ObjectNodejs.getTypeof(v)=="array")return v;
+			return [v];
+		}
+
+		XML2ObjectNodejs.isArray=function(nodeName){
+			var numOfArrays=XML2ObjectNodejs._arrays ? XML2ObjectNodejs._arrays.length :0;
+			for(var i=0;i<numOfArrays;i++){
+				if(nodeName==XML2ObjectNodejs._arrays[i]){
+					return true;
+				}
+			}
+			return false;
+		}
+
+		XML2ObjectNodejs.getTypeof=function(o){
+			if(typeof(o)=="object"){
+				if(o.length==null){
+					return "object";
+					}else if(typeof(o.length)=="number"){
+					return "array";
+					}else {
+					return "object";
+				}
+				}else {
+				return typeof(o);
+			}
+		}
+
+		XML2ObjectNodejs._arrays=null
+		XML2ObjectNodejs.ChildrenSign="childNodes";
+		return XML2ObjectNodejs;
 	})()
 
 
@@ -11461,6 +11731,26 @@
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.NodeTree extends laya.debug.ui.debugui.NodeTreeUI
 	var NodeTree=(function(_super){
 		function NodeTree(){
@@ -11698,26 +11988,6 @@
 		]);
 		return NodeTree;
 	})(NodeTreeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
 
 
 	/**

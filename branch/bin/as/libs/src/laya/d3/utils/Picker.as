@@ -66,37 +66,6 @@ package laya.d3.utils {
 			Vector3.normalize(out.direction, out.direction);
 		}
 		
-		///**
-		//* 计算射线和三角形碰撞并返回碰撞三角形和碰撞距离。
-		//* @param	ray 射线。
-		//* @param	positions 顶点数据。
-		//* @param	indices 索引数据。
-		//* @param	outVertex0 输出三角形顶点0。
-		//* @param	outVertex1 输出三角形顶点1。
-		//* @param	outVertex2 输出三角形顶点2。
-		//* @return   射线距离三角形的距离，返回Number.NaN则不相交。
-		//*/
-		//public static function rayIntersectsPositionsAndIndices(ray:Ray, positions:Vector.<Vector3>, indices:Uint16Array, outVertex0:Vector3, outVertex1:Vector3, outVertex2:Vector3):Number {
-		//
-		//var closestIntersection:Number = Number.MAX_VALUE;
-		//for (var j:int = 0; j < indices.length; j += 3) {
-		//var vertex1:Vector3 = positions[indices[j + 0]];
-		//var vertex2:Vector3 = positions[indices[j + 1]];
-		//var vertex3:Vector3 = positions[indices[j + 2]];
-		//
-		//var intersection:Number = Picker.rayIntersectsTriangle(ray, vertex1, vertex2, vertex3);
-		//
-		//if (!isNaN(intersection) && intersection < closestIntersection) {
-		//closestIntersection = intersection;
-		//vertex1.cloneTo(outVertex0);
-		//vertex2.cloneTo(outVertex1);
-		//vertex3.cloneTo(outVertex2);
-		//
-		//}
-		//}
-		//return closestIntersection;
-		//}
-		
 		/**
 		 * 计算射线和三角形碰撞并返回碰撞三角形和碰撞距离。
 		 * @param	ray 射线。

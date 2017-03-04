@@ -1,5 +1,4 @@
-package laya.d3.resource.models
-{
+package laya.d3.resource.models {
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -9,8 +8,7 @@ package laya.d3.resource.models
 	/**
 	 * <code>QuadMesh</code> 类用于创建四边形。
 	 */
-	public class QuadMesh extends PrimitiveMesh
-	{
+	public class QuadMesh extends PrimitiveMesh {
 		/** @private */
 		private var _long:Number;
 		/** @private */
@@ -20,8 +18,7 @@ package laya.d3.resource.models
 		 * 返回长度
 		 * @return 长
 		 */
-		public function get long():Number
-		{
+		public function get long():Number {
 			return _long;
 		}
 		
@@ -29,18 +26,19 @@ package laya.d3.resource.models
 		 * 设置长度（改变此属性会重新生成顶点和索引）
 		 * @param  value 长度
 		 */
-		public function set long(value:Number):void
-		{
-			_long = value;
-			recreateResource();
+		public function set long(value:Number):void {
+			if (_long !== value) {
+				_long = value;
+				releaseResource();
+				activeResource();
+			}
 		}
 		
 		/**
 		 * 返回宽度
 		 * @return 宽
 		 */
-		public function get width():Number
-		{
+		public function get width():Number {
 			return _width;
 		}
 		
@@ -48,10 +46,12 @@ package laya.d3.resource.models
 		 * 设置宽度（改变此属性会重新生成顶点和索引）
 		 * @param  value 宽度
 		 */
-		public function set width(value:Number):void
-		{
-			_width = value;
-			recreateResource();
+		public function set width(value:Number):void {
+			if (_width !== value) {
+				_width = value;
+				releaseResource();
+				activeResource();
+			}
 		}
 		
 		/**
@@ -59,18 +59,16 @@ package laya.d3.resource.models
 		 * @param long  长
 		 * @param width 宽
 		 */
-		public function QuadMesh(long:Number = 1, width:Number = 1)
-		{
+		public function QuadMesh(long:Number = 1, width:Number = 1) {
 			super();
 			_long = long;
 			_width = width;
-			recreateResource();
+			activeResource();
 			_loaded = true;
 			_generateBoundingObject();
 		}
 		
-		override protected function recreateResource():void
-		{
+		override protected function recreateResource():void {
 			startCreate();
 			
 			_numberVertices = 4;

@@ -8,7 +8,6 @@ package laya.d3.graphics {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
 	import laya.utils.Stat;
@@ -105,7 +104,6 @@ package laya.d3.graphics {
 			_material = material;
 		}
 		
-		
 		public function _getVertexBuffer(index:int = 0):VertexBuffer3D {
 			if (index === 0)
 				return _vertexBuffer;
@@ -171,6 +169,7 @@ package laya.d3.graphics {
 					var renderElement:RenderElement = _combineRenderElements[i];
 					var subVertexDatas:Float32Array = renderElement.getStaticBatchBakedVertexs(0);
 					var subIndexDatas:Uint16Array = renderElement.getBakedIndices();
+					var isInvert:Boolean = renderElement._sprite3D.transform._isFrontFaceInvert;
 					
 					var indexOffset:int = curMerVerCount / (_vertexDeclaration.vertexStride / 4);
 					var indexStart:int = curIndexCount;
@@ -180,8 +179,24 @@ package laya.d3.graphics {
 					renderElement._batchIndexEnd = indexEnd;
 					
 					indexDatas.set(subIndexDatas, curIndexCount);
-					for (var k:int = indexStart; k < indexEnd; k++)
-						indexDatas[k] = indexOffset + indexDatas[k];
+					
+					var k:int;					
+					if (isInvert) {
+						for (k = indexStart; k < indexEnd; k += 3) {
+							indexDatas[k] = indexOffset + indexDatas[k];
+							var index1:int = indexDatas[k + 1];
+							var index2:int = indexDatas[k + 2];
+							indexDatas[k + 1] = indexOffset + index2;
+							indexDatas[k + 2] = indexOffset + index1;
+						}
+					} else {
+						for (k = indexStart; k < indexEnd; k += 3) {
+							indexDatas[k] = indexOffset + indexDatas[k];
+							indexDatas[k + 1] = indexOffset + indexDatas[k + 1];
+							indexDatas[k + 2] = indexOffset + indexDatas[k + 2];
+						}
+					}
+					
 					curIndexCount += subIndexDatas.length;
 					
 					vertexDatas.set(subVertexDatas, curMerVerCount);
@@ -262,7 +277,7 @@ package laya.d3.graphics {
 		}
 		
 		/**NATIVE*/
-		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement,state:RenderState):void {
+		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void {
 		
 		}
 	}

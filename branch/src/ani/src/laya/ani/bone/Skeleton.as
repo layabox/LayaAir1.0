@@ -343,12 +343,13 @@ package laya.ani.bone {
 			var tCurrTime:Number = Laya.timer.currTimer;
 			var preIndex:int = _player.currentKeyframeIndex;
 			if (autoKey) {
-				_player.update(tCurrTime - _lastTime)
+				_player.update(tCurrTime - _lastTime);
 			}else{
 				preIndex = -1;
 			}
 			_lastTime = tCurrTime;
-			_clipIndex = _player.currentKeyframeIndex;
+			_index = _clipIndex = _player.currentKeyframeIndex;
+			if (_index < 0) return;
 			if (_clipIndex == preIndex&&_lastUpdateAniClipIndex== _aniClipIndex)
 			{
 				return;

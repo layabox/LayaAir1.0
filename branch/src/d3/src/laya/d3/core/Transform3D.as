@@ -16,7 +16,7 @@ package laya.d3.core {
 		private static var _tempVector31:Vector3 = new Vector3();
 		/** @private */
 		private static var _tempVector32:Vector3 = new Vector3();
-			/** @private */
+		/** @private */
 		private static var _tempVector33:Vector3 = new Vector3();
 		/** @private */
 		private static var _tempQuaternion0:Quaternion = new Quaternion();
@@ -59,9 +59,27 @@ package laya.d3.core {
 		/** @private */
 		protected var _worldUpdate:Boolean = true;
 		/** @private */
+		protected var _positionUpdate:Boolean = true;
+		/** @private */
+		protected var _rotationUpdate:Boolean = true;
+		/** @private */
+		protected var _scaleUpdate:Boolean = true;
+		/** @private */
 		protected var _parent:Transform3D;
+		
 		/** 变换中心点,注意:该中心点不受变换的影响。*/
 		public var pivot:Vector3;
+		
+		/**
+		 * @private
+		 */
+		public function get _isFrontFaceInvert():Boolean {
+			var scale:Vector3 = this.scale;
+			var isInvert:Boolean = scale.x < 0;
+			(scale.y < 0) && (isInvert = !isInvert);
+			(scale.z < 0) && (isInvert = !isInvert);
+			return isInvert;
+		}
 		
 		/**
 		 * 获取世界矩阵是否需要更新。
@@ -195,6 +213,9 @@ package laya.d3.core {
 		 * @return	世界位置。
 		 */
 		public function get position():Vector3 {
+			if (!_positionUpdate)
+				return _position;
+			
 			if (_parent !== null) {
 				var worldMatElem:Float32Array = worldMatrix.elements;
 				_position.elements[0] = worldMatElem[12];
@@ -203,6 +224,8 @@ package laya.d3.core {
 			} else {
 				_localPosition.cloneTo(_position);
 			}
+			
+			_positionUpdate = false;
 			return _position;
 		}
 		
@@ -226,11 +249,16 @@ package laya.d3.core {
 		 * @return	世界旋转。
 		 */
 		public function get rotation():Quaternion {
+			if (!_rotationUpdate)
+				return _rotation;
+			
 			if (_parent !== null) {
 				worldMatrix.decompose(_position, _rotation, _scale);//可不计算_position和_scale
 			} else {
 				_localRotation.cloneTo(_rotation);
 			}
+			
+			_rotationUpdate = false;
 			return _rotation;
 		}
 		
@@ -254,11 +282,15 @@ package laya.d3.core {
 		 * @return	世界缩放。
 		 */
 		public function get scale():Vector3 {
+			if (!_scaleUpdate)
+				return _scale;
 			if (_parent !== null) {
 				Vector3.multiply(_parent.scale, _localScale, _scale);
 			} else {
 				_localScale.cloneTo(_scale);
 			}
+			
+			_scaleUpdate = false;
 			return _scale;
 		}
 		
@@ -359,6 +391,9 @@ package laya.d3.core {
 		protected function _onWorldTransform():void {
 			if (!_worldUpdate) {
 				_worldUpdate = true;
+				_positionUpdate = true;
+				_rotationUpdate = true;
+				_scaleUpdate = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
 				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
 					(_owner._childs[i] as Sprite3D).transform._onWorldTransform();

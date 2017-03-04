@@ -1,5 +1,6 @@
 package laya.d3.core.particleShuriKen.module.shape {
 	import laya.d3.core.render.RenderState;
+	import laya.d3.math.Rand;
 	import laya.d3.math.Vector3;
 	
 	/**
@@ -31,15 +32,27 @@ package laya.d3.core.particleShuriKen.module.shape {
 		 * @param	position 粒子位置。
 		 * @param	direction 粒子方向。
 		 */
-		override public function generatePositionAndDirection(position:Vector3, direction:Vector3):void {
+		override public function generatePositionAndDirection(position:Vector3, direction:Vector3, rand:Rand = null, randomSeeds:Uint32Array = null):void {
 			var rpE:Float32Array = position.elements;
 			var rdE:Float32Array = direction.elements;
-			ShapeUtils._randomPointInsideHalfUnitBox(position);
+			if (rand) {
+				rand.seed = randomSeeds[16];
+				ShapeUtils._randomPointInsideHalfUnitBox(position, rand);
+				randomSeeds[16] = rand.seed;
+			} else {
+				ShapeUtils._randomPointInsideHalfUnitBox(position);
+			}
 			rpE[0] = x * rpE[0];
 			rpE[1] = y * rpE[1];
 			rpE[2] = z * rpE[2];
 			if (randomDirection) {
-				ShapeUtils._randomPointUnitSphere(direction);
+				if (rand) {
+					rand.seed = randomSeeds[17];
+					ShapeUtils._randomPointUnitSphere(direction, rand);
+					randomSeeds[17] = rand.seed;
+				} else {
+					ShapeUtils._randomPointUnitSphere(direction);
+				}
 			} else {
 				rdE[0] = 0.0;
 				rdE[1] = 0.0;

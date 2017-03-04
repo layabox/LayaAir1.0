@@ -22,6 +22,8 @@ package laya.d3.math {
 		private static var _tempV34:Vector3 = new Vector3();
 		/** @private */
 		private static var _tempV35:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempV36:Vector3 = new Vector3();
 		
 		/** @private */
 		private static var _tempM0:Matrix4x4 = new Matrix4x4();
@@ -46,7 +48,6 @@ package laya.d3.math {
 		/** @private */
 		private static var _boxBound3:BoundBox = new BoundBox(new Vector3(), new Vector3());
 		
-		
 		/**
 		 * 创建一个 <code>OrientedBoundBox</code> 实例。
 		 * @param	extents 每个轴长度的一半
@@ -58,13 +59,11 @@ package laya.d3.math {
 			this.transformation = transformation;
 		}
 		
-		
 		/**
 		 * 根据AABB包围盒创建一个 <code>OrientedBoundBox</code> 实例。
 		 * @param	box AABB包围盒。
 		 */
-		public static function createByBoundBox(box:BoundBox):OrientedBoundBox {
-			
+		public static function createByBoundBox(box:BoundBox,out:OrientedBoundBox):void {
 			var min:Vector3 = box.min;
 			var max:Vector3 = box.max;
 			
@@ -75,10 +74,12 @@ package laya.d3.math {
 			Vector3.subtract(max, _tempV31, _tempV32);
 			Matrix4x4.translation(_tempV31, _tempM0);
 			
-			var obb:OrientedBoundBox = new OrientedBoundBox(_tempV32, _tempM0);
-			return obb;
+			var extents:Vector3 = _tempV32.clone();
+			var transformation:Matrix4x4 = _tempM0.clone();
+			
+			out.extents = extents;
+			out.transformation = transformation;
 		}
-		
 		
 		/**
 		 * 根据包围盒的最大最小两顶点创建一个 <code>OrientedBoundBox</code> 实例。
@@ -98,7 +99,6 @@ package laya.d3.math {
 			return obb;
 		}
 		
-		
 		/**
 		 * 获取OBB包围盒的8个顶点。
 		 * @param	corners 返回顶点的输出队列。
@@ -109,50 +109,64 @@ package laya.d3.math {
 			
 			corners.length = 8;
 			
-			_tempV30.x = extentsE[0];
-			_tempV31.y = extentsE[1];
-			_tempV32.z = extentsE[2];
+			//_tempV30 xv 
+			//_tempV31 yv 
+			//_tempV32 zv 
+			//_tempV33 center
+			
+			var xve:Float32Array = _tempV30.elements;
+			var yve:Float32Array = _tempV31.elements;
+			var zve:Float32Array = _tempV32.elements;
+			
+			xve[0] = extentsE[0];
+			xve[1] = xve[2] = 0;
+			
+			yve[1] = extentsE[1];
+			yve[0] = yve[2] = 0;
+			
+			zve[2] = extentsE[2];
+			zve[0] = zve[1] = 0;
 			
 			Vector3.TransformNormal(_tempV30, transformation, _tempV30);
 			Vector3.TransformNormal(_tempV31, transformation, _tempV31);
 			Vector3.TransformNormal(_tempV32, transformation, _tempV32);
 			
-			_tempV33 = transformation.translationVector;
+			var center:Vector3 = _tempV33;
+			transformation.getTranslationVector(center);
 			
-			Vector3.add(_tempV33, _tempV30, _tempV34);
+			Vector3.add(center, _tempV30, _tempV34);
 			Vector3.add(_tempV34, _tempV31, _tempV34);
 			Vector3.add(_tempV34, _tempV32, corners[0]);
 			
-			Vector3.add(_tempV33, _tempV30, _tempV34);
+			Vector3.add(center, _tempV30, _tempV34);
 			Vector3.add(_tempV34, _tempV31, _tempV34);
 			Vector3.subtract(_tempV34, _tempV32, corners[1]);
 			
-			Vector3.subtract(_tempV33, _tempV30, _tempV34);
+			Vector3.subtract(center, _tempV30, _tempV34);
 			Vector3.add(_tempV34, _tempV31, _tempV34);
 			Vector3.subtract(_tempV34, _tempV32, corners[2]);
 			
-			Vector3.subtract(_tempV33, _tempV30, _tempV34);
+			Vector3.subtract(center, _tempV30, _tempV34);
 			Vector3.add(_tempV34, _tempV31, _tempV34);
 			Vector3.add(_tempV34, _tempV32, corners[3]);
 			
-			Vector3.add(_tempV33, _tempV30, _tempV34);
+			Vector3.add(center, _tempV30, _tempV34);
 			Vector3.subtract(_tempV34, _tempV31, _tempV34);
 			Vector3.add(_tempV34, _tempV32, corners[4]);
 			
-			Vector3.add(_tempV33, _tempV30, _tempV34);
+			Vector3.add(center, _tempV30, _tempV34);
 			Vector3.subtract(_tempV34, _tempV31, _tempV34);
 			Vector3.subtract(_tempV34, _tempV32, corners[5]);
 			
-			Vector3.subtract(_tempV33, _tempV30, _tempV34);
+			Vector3.subtract(center, _tempV30, _tempV34);
 			Vector3.subtract(_tempV34, _tempV31, _tempV34);
 			Vector3.subtract(_tempV34, _tempV32, corners[6]);
 			
-			Vector3.subtract(_tempV33, _tempV30, _tempV34);
+			Vector3.subtract(center, _tempV30, _tempV34);
 			Vector3.subtract(_tempV34, _tempV31, _tempV34);
 			Vector3.add(_tempV34, _tempV32, corners[7]);
 		
 		}
-		
 		
 		/**
 		 * 变换该包围盒的矩阵信息。
@@ -163,7 +177,6 @@ package laya.d3.math {
 			Matrix4x4.multiply(transformation, mat, transformation);
 		}
 		
-		
 		/**
 		 * 缩放该包围盒
 		 * @param	scaling 各轴的缩放比。
@@ -173,18 +186,15 @@ package laya.d3.math {
 			Vector3.multiply(extents, scaling, extents);
 		}
 		
-		
 		/**
 		 * 平移该包围盒。
 		 * @param	translation 平移参数
 		 */
 		public function translate(translation:Vector3):void {
-			
-			var v3:Vector3 = transformation.translationVector;
-			Vector3.add(v3, translation, _tempV30);
-			transformation.translationVector = _tempV30;
+			transformation.getTranslationVector(_tempV30);
+			Vector3.add(_tempV30, translation, _tempV31);
+			transformation.setTranslationVector(_tempV31);
 		}
-		
 		
 		/**
 		 * 该包围盒的尺寸。
@@ -194,7 +204,6 @@ package laya.d3.math {
 			
 			Vector3.scale(extents, 2, out);
 		}
-		
 		
 		/**
 		 * 该包围盒需要考虑的尺寸
@@ -217,7 +226,6 @@ package laya.d3.math {
 			oe[2] = Vector3.scalarLength(_tempV32);
 		}
 		
-		
 		/**
 		 * 该包围盒需要考虑尺寸的平方
 		 * @param	out 输出
@@ -239,15 +247,12 @@ package laya.d3.math {
 			oe[2] = Vector3.scalarLengthSquared(_tempV32);
 		}
 		
-		
 		/**
 		 * 该包围盒的几何中心
 		 */
-		public function get center():Vector3 {
-			
-			return transformation.translationVector;
+		public function getCenter(center:Vector3):void {
+			transformation.getTranslationVector(center);
 		}
-		
 		
 		/**
 		 * 该包围盒是否包含空间中一点
@@ -277,7 +282,6 @@ package laya.d3.math {
 			else
 				return ContainmentType.Disjoint;
 		}
-		
 		
 		/**
 		 * 该包围盒是否包含空间中多点
@@ -321,7 +325,6 @@ package laya.d3.math {
 				return ContainmentType.Disjoint;
 		}
 		
-		
 		/**
 		 * 该包围盒是否包含空间中一包围球
 		 * @param	sphere 包围球
@@ -349,7 +352,9 @@ package laya.d3.math {
 				
 				Vector3.scale(Vector3.UnitX, sphereR, _tempV31);
 				Vector3.TransformNormal(_tempV31, _tempM0, _tempV31);
-				locRadius = Vector3.scalarLength(_tempV31);;;
+				locRadius = Vector3.scalarLength(_tempV31);
+				;
+				;
 			}
 			
 			Vector3.scale(extents, -1, _tempV32);
@@ -376,7 +381,6 @@ package laya.d3.math {
 			return ContainmentType.Intersects;
 		}
 		
-		
 		private static function _getRows(mat:Matrix4x4, out:Vector.<Vector3>):void {
 			
 			out.length = 3;
@@ -399,21 +403,20 @@ package laya.d3.math {
 			row2e[2] = mate[10];
 		}
 		
-		
 		/**
 		 * 该包围盒是否包含空间中另一OBB包围盒
 		 * @param	obb OBB包围盒
 		 * @return  返回位置关系
 		 */
 		public function containsOrientedBoundBox(obb:OrientedBoundBox):int {
-		
+			
 			var i:int, k:int;
 			
 			obb.getCorners(_corners);
 			var cornersCheck:int = containsPoints(_corners);
 			if (cornersCheck != ContainmentType.Disjoint)
 				return cornersCheck;
-				
+			
 			var sizeAe:Float32Array = extents.elements;
 			obb.extents.cloneTo(_tempV35);
 			var sizeBe:Float32Array = _tempV35.elements;
@@ -423,15 +426,17 @@ package laya.d3.math {
 			
 			var extentA:Number, extentB:Number, separation:Number, dotNumber:Number;
 			
-			for (i = 0; i < 3; i++ ){
-				for (k = 0; k < 3; k++ ){
+			for (i = 0; i < 3; i++) {
+				for (k = 0; k < 3; k++) {
 					dotNumber = Vector3.dot(_rows1[i], _rows2[k]);
 					_tempM0.setElementByRowColumn(i, k, dotNumber);
 					_tempM1.setElementByRowColumn(i, k, Math.abs(dotNumber));
 				}
 			}
 			
-			Vector3.subtract(obb.center, center, _tempV30);
+			obb.getCenter(_tempV34);
+			getCenter(_tempV36);
+			Vector3.subtract(_tempV34, _tempV36, _tempV30);
 			
 			var vsepAe:Float32Array = _tempV31.elements;
 			vsepAe[0] = Vector3.dot(_tempV30, _rows1[0]);
@@ -441,7 +446,7 @@ package laya.d3.math {
 			var _tempV32e:Float32Array = _tempV32.elements;
 			var _tempV33e:Float32Array = _tempV33.elements;
 			
-			for (i = 0; i < 3; i++ ){
+			for (i = 0; i < 3; i++) {
 				
 				_tempV32e[0] = _tempM1.getElementByRowColumn(i, 0);
 				_tempV32e[1] = _tempM1.getElementByRowColumn(i, 1);
@@ -452,10 +457,10 @@ package laya.d3.math {
 				separation = Math.abs(vsepAe[i]);
 				
 				if (separation > extentA + extentB)
-                    return ContainmentType.Disjoint;
+					return ContainmentType.Disjoint;
 			}
 			
-			for (k = 0; k < 3; k++ ){
+			for (k = 0; k < 3; k++) {
 				
 				_tempV32e[0] = _tempM1.getElementByRowColumn(0, k);
 				_tempV32e[1] = _tempM1.getElementByRowColumn(1, k);
@@ -470,15 +475,15 @@ package laya.d3.math {
 				separation = Math.abs(Vector3.dot(_tempV31, _tempV33));
 				
 				if (separation > extentA + extentB)
-                    return ContainmentType.Disjoint;
+					return ContainmentType.Disjoint;
 			}
 			
-			for (i = 0; i < 3; i++ ){
+			for (i = 0; i < 3; i++) {
 				
-				for (k = 0; k < 3; k++ ){
+				for (k = 0; k < 3; k++) {
 					
 					var i1:Number = (i + 1) % 3, i2:Number = (i + 2) % 3;
-                    var k1:Number = (k + 1) % 3, k2:Number = (k + 2) % 3;
+					var k1:Number = (k + 1) % 3, k2:Number = (k + 2) % 3;
 					extentA = sizeAe[i1] * _tempM1.getElementByRowColumn(i2, k) + sizeBe[i2] * _tempM1.getElementByRowColumn(i2, k);
 					extentB = sizeAe[k1] * _tempM1.getElementByRowColumn(i, k2) + sizeBe[k2] * _tempM1.getElementByRowColumn(i, k1);
 					separation = Math.abs(vsepAe[i2] * _tempM0.getElementByRowColumn(i1, k) - vsepAe[i1] * _tempM0.getElementByRowColumn(i2, k));
@@ -488,9 +493,8 @@ package laya.d3.math {
 			}
 			
 			return ContainmentType.Intersects;
-			
-		}
 		
+		}
 		
 		/**
 		 * 该包围盒是否包含空间中一条线
@@ -505,12 +509,12 @@ package laya.d3.math {
 			var cornersCheck:int = containsPoints(_corners);
 			if (cornersCheck != ContainmentType.Disjoint)
 				return cornersCheck;
-				
+			
 			var extentsE:Float32Array = extents.elements;
 			var extentsX:Number = extentsE[0];
 			var extentsY:Number = extentsE[1];
 			var extentsZ:Number = extentsE[2];
-				
+			
 			transformation.invert(_tempM0);
 			Vector3.transformCoordinate(point1, _tempM0, _tempV30);
 			Vector3.transformCoordinate(point2, _tempM0, _tempV31);
@@ -536,26 +540,25 @@ package laya.d3.math {
 			
 			if (Math.abs(_tempV32X) > extentsX + _tempV34X)
 				return ContainmentType.Disjoint;
-				
+			
 			if (Math.abs(_tempV32Y) > extentsY + _tempV34Y)
 				return ContainmentType.Disjoint;
-				
+			
 			if (Math.abs(_tempV32Z) > extentsZ + _tempV34Z)
 				return ContainmentType.Disjoint;
-				
+			
 			if (Math.abs(_tempV32Y * _tempV33Z - _tempV32Z * _tempV33Y) > (extentsY * _tempV34Z + extentsZ * _tempV34Y))
 				return ContainmentType.Disjoint;
-				
+			
 			if (Math.abs(_tempV32X * _tempV33Z - _tempV32Z * _tempV33X) > (extentsX * _tempV34Z + extentsZ * _tempV34X))
 				return ContainmentType.Disjoint;
-				
+			
 			if (Math.abs(_tempV32X * _tempV33Y - _tempV32Y * _tempV33X) > (extentsX * _tempV34Y + extentsY * _tempV34X))
 				return ContainmentType.Disjoint;
-				
-			return ContainmentType.Intersects;
 			
-		}
+			return ContainmentType.Intersects;
 		
+		}
 		
 		/**
 		 * 该包围盒是否包含空间中另一OBB包围盒
@@ -572,7 +575,7 @@ package laya.d3.math {
 			var cornersCheck:int = containsPoints(_corners);
 			if (cornersCheck != ContainmentType.Disjoint)
 				return cornersCheck;
-				
+			
 			Vector3.subtract(max, min, _tempV30);
 			Vector3.scale(_tempV30, 0.5, _tempV30);
 			Vector3.add(min, _tempV30, _tempV30);
@@ -587,13 +590,14 @@ package laya.d3.math {
 			
 			var extentA:Number, extentB:Number, separation:Number, dotNumber:Number;
 			
-			for (i = 0; i < 3; i++ ){
-				for (k = 0; k < 3; k++ ){
-					_tempM1.setElementByRowColumn(i, k, Math.abs(_tempM0.getElementByRowColumn(i,k)));
+			for (i = 0; i < 3; i++) {
+				for (k = 0; k < 3; k++) {
+					_tempM1.setElementByRowColumn(i, k, Math.abs(_tempM0.getElementByRowColumn(i, k)));
 				}
 			}
-			  
-			Vector3.subtract(_tempV30, center, _tempV32);
+			
+			getCenter(_tempV35);
+			Vector3.subtract(_tempV30, _tempV35, _tempV32);
 			
 			var vsepAe:Float32Array = _tempV31.elements;
 			vsepAe[0] = Vector3.dot(_tempV32, _rows1[0]);
@@ -603,8 +607,7 @@ package laya.d3.math {
 			var _tempV33e:Float32Array = _tempV33.elements;
 			var _tempV34e:Float32Array = _tempV34.elements;
 			
-			
-			for (i = 0; i < 3; i++ ){
+			for (i = 0; i < 3; i++) {
 				
 				_tempV33e[0] = _tempM1.getElementByRowColumn(i, 0);
 				_tempV33e[1] = _tempM1.getElementByRowColumn(i, 1);
@@ -615,10 +618,10 @@ package laya.d3.math {
 				separation = Math.abs(vsepAe[i]);
 				
 				if (separation > extentA + extentB)
-                    return ContainmentType.Disjoint;
+					return ContainmentType.Disjoint;
 			}
 			
-			for (k = 0; k < 3; k++ ){
+			for (k = 0; k < 3; k++) {
 				
 				_tempV33e[0] = _tempM1.getElementByRowColumn(0, k);
 				_tempV33e[1] = _tempM1.getElementByRowColumn(1, k);
@@ -633,14 +636,14 @@ package laya.d3.math {
 				separation = Math.abs(Vector3.dot(_tempV31, _tempV34));
 				
 				if (separation > extentA + extentB)
-                    return ContainmentType.Disjoint;
+					return ContainmentType.Disjoint;
 			}
 			
-			for (i = 0; i < 3; i++ ){
-				for (k = 0; k < 3; k++ ){
+			for (i = 0; i < 3; i++) {
+				for (k = 0; k < 3; k++) {
 					
 					var i1:Number = (i + 1) % 3, i2:Number = (i + 2) % 3;
-                    var k1:Number = (k + 1) % 3, k2:Number = (k + 2) % 3;
+					var k1:Number = (k + 1) % 3, k2:Number = (k + 2) % 3;
 					extentA = sizeAe[i1] * _tempM1.getElementByRowColumn(i2, k) + sizeAe[i2] * _tempM1.getElementByRowColumn(i1, k);
 					extentB = sizeBe[k1] * _tempM1.getElementByRowColumn(i, k2) + sizeBe[k2] * _tempM1.getElementByRowColumn(i, k1);
 					separation = Math.abs(vsepAe[i2] * _tempM0.getElementByRowColumn(i1, k) - vsepAe[i1] * _tempM0.getElementByRowColumn(i2, k));
@@ -652,14 +655,13 @@ package laya.d3.math {
 			return ContainmentType.Intersects;
 		}
 		
-		
 		/**
 		 * 该包围盒是否与空间中另一射线相交
 		 * @param	ray
 		 * @param	out
-		 * @return  
+		 * @return
 		 */
-		public function intersectsRay(ray:Ray, out:Vector3):Boolean{
+		public function intersectsRay(ray:Ray, out:Vector3):Number {
 			
 			Vector3.scale(extents, -1, _tempV30);
 			
@@ -671,18 +673,17 @@ package laya.d3.math {
 			_boxBound1.min = _tempV30;
 			_boxBound1.max = extents;
 			
-			var intersects:Boolean = Collision.intersectsRayAndBoxRP(_ray, _boxBound1, _tempV31);
+			var intersects:Number = Collision.intersectsRayAndBoxRP(_ray, _boxBound1, out);
 			
-			if (intersects)
-				Vector3.transformCoordinate(_tempV31, transformation, _tempV32);
+			if (intersects !== -1)
+				Vector3.transformCoordinate(out, transformation, out);
 			
 			return intersects;
 		}
 		
-		
 		private function _getLocalCorners(corners:Vector.<Vector3>):void {
 			
-			corners.length = 8;	
+			corners.length = 8;
 			
 			var extentsE:Float32Array = extents.elements;
 			
@@ -711,10 +712,9 @@ package laya.d3.math {
 			Vector3.scale(corners[0], -1, corners[6]);
 			
 			Vector3.subtract(_tempV32, _tempV30, _tempV33);
-			Vector3.subtract(_tempV33,_tempV31,corners[7]);
-			
+			Vector3.subtract(_tempV33, _tempV31, corners[7]);
+		
 		}
-			
 		
 		/**
 		 * 计算Obb包围盒变换到另一Obb包围盒的矩阵
@@ -723,36 +723,37 @@ package laya.d3.math {
 		 * @param	noMatrixScaleApplied 是否考虑缩放
 		 * @param	out 输出变换矩阵
 		 */
-		public static function getObbtoObbMatrix4x4(a:OrientedBoundBox, b:OrientedBoundBox, noMatrixScaleApplied:Boolean, out:Matrix4x4):void{
+		public static function getObbtoObbMatrix4x4(a:OrientedBoundBox, b:OrientedBoundBox, noMatrixScaleApplied:Boolean, out:Matrix4x4):void {
 			
 			var at:Matrix4x4 = a.transformation;
 			var bt:Matrix4x4 = b.transformation;
 			
-			if (noMatrixScaleApplied){
+			if (noMatrixScaleApplied) {
 				
 				_getRows(at, _rows1);
 				_getRows(bt, _rows2);
 				
-				for (var i:int = 0; i < 3; i++ ){
-					for (var k:int = 0; k < 3; k++ ){
+				for (var i:int = 0; i < 3; i++) {
+					for (var k:int = 0; k < 3; k++) {
 						out.setElementByRowColumn(i, k, Vector3.dot(_rows2[i], _rows1[k]));
 					}
 				}
 				
-				Vector3.subtract(b.center, a.center, _tempV30);
+				b.getCenter(_tempV30);
+				a.getCenter(_tempV31);
+				Vector3.subtract(_tempV30, _tempV31, _tempV32);
 				var AtoBMe:Float32Array = out.elements;
-				AtoBMe[12] = Vector3.dot(_tempV30, _rows1[0]);
-				AtoBMe[13] = Vector3.dot(_tempV30, _rows1[1]);
-				AtoBMe[14] = Vector3.dot(_tempV30, _rows1[2]);
+				AtoBMe[12] = Vector3.dot(_tempV32, _rows1[0]);
+				AtoBMe[13] = Vector3.dot(_tempV32, _rows1[1]);
+				AtoBMe[14] = Vector3.dot(_tempV32, _rows1[2]);
 				AtoBMe[15] = 1;
 				
-			}else{
+			} else {
 				
 				at.invert(_tempM0);
 				Matrix4x4.multiply(bt, _tempM0, out);
 			}
 		}
-		
 		
 		/**
 		 * 把一个Obb类型的包围盒b合入另一Obb型包围盒a
@@ -760,7 +761,7 @@ package laya.d3.math {
 		 * @param	b obb包围盒
 		 * @param	noMatrixScaleApplied 是否考虑缩放
 		 */
-		public static function merge(a:OrientedBoundBox, b:OrientedBoundBox, noMatrixScaleApplied:Boolean):void{
+		public static function merge(a:OrientedBoundBox, b:OrientedBoundBox, noMatrixScaleApplied:Boolean):void {
 			
 			var ae:Vector3 = a.extents;
 			var at:Matrix4x4 = a.transformation;
@@ -792,21 +793,30 @@ package laya.d3.math {
 			Vector3.subtract(box3Max, _tempV32, ae);
 			
 			Vector3.transformCoordinate(_tempV32, at, _tempV33);
-			_tempV33.cloneTo(at.translationVector);
-			
-		}
+			//_tempV33.cloneTo(at.getTranslationVector());//TODO:WZY
 		
+		}
 		
 		/**
 		 * 判断两个包围盒是否相等
 		 * @param	obb obb包围盒
 		 * @return  Boolean
 		 */
-		public function equals(obb:OrientedBoundBox):Boolean{
+		public function equals(obb:OrientedBoundBox):Boolean {
 			
 			return extents == obb.extents && transformation == obb.transformation;
 		}
 		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		public function cloneTo(destObject:*):void {
+			var dest:OrientedBoundBox = destObject as OrientedBoundBox;
+			extents.cloneTo(dest.extents);
+			transformation.cloneTo(dest.transformation);
+		}
+	
 	}
 
 }

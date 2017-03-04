@@ -1,9 +1,10 @@
 package laya.d3.math {
+	import laya.d3.core.IClone;
 	
 	/**
 	 * <code>Matrix3x3</code> 类用于创建3x3矩阵。
 	 */
-	public class Matrix3x3 {
+	public class Matrix3x3 implements IClone{
 		
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Matrix3x3 =/*[STATIC SAFE]*/ new Matrix3x3();
@@ -323,14 +324,14 @@ package laya.d3.math {
 		}
 		
 		/**
-		 *  克隆一个3x3矩阵
-		 * @param	out 输出的3x3矩阵
+		 * 克隆。
+		 * @param	destObject 克隆源。
 		 */
-		public function cloneTo(out:Matrix3x3):void {
+		public function cloneTo(destObject:*):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var i:int, s:Float32Array, d:Float32Array;
 			s = this.elements;
-			d = out.elements;
+			d = destObject.elements;
 			if (s === d) {
 				return;
 			}
@@ -340,36 +341,13 @@ package laya.d3.math {
 		}
 		
 		/**
-		 * 从一个3x3矩阵复制
-		 * @param	sou 源3x3矩阵
+		 * 克隆。
+		 * @return	 克隆副本。
 		 */
-		public function copyFrom(sou:Matrix3x3):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var i:int, s:Float32Array, d:Float32Array;
-			s = sou.elements;
-			d = this.elements;
-			if (s === d) {
-				return;
-			}
-			for (i = 0; i < 9; ++i) {
-				d[i] = s[i];
-			}
-		}
-		
-		/**
-		 * 从一个数组复制
-		 * @param	sou 源Float32Array数组
-		 */
-		public function copyFromArray(sou:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var i:int, d:Float32Array;
-			d = this.elements;
-			if (sou === d) {
-				return;
-			}
-			for (i = 0; i < 9; ++i) {
-				d[i] = sou[i];
-			}
+		public function clone():* {
+			var dest:Matrix3x3 = __JS__("new this.constructor()");
+			cloneTo(dest);
+			return dest;
 		}
 		
 		/**

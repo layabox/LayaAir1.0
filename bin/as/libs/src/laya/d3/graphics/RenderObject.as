@@ -1,4 +1,5 @@
 package laya.d3.graphics {
+	import laya.d3.core.scene.ITreeNode;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderElement;
@@ -27,7 +28,7 @@ package laya.d3.graphics {
 		/** @private */
 		public var _distanceForSort:Number;
 		/** @private */
-		public var _treeNode:OctreeNode;
+		public var _treeNode:ITreeNode;
 		
 		/** @private */
 		public var _conchRenderObject:IConchRenderObject;//NATIVE

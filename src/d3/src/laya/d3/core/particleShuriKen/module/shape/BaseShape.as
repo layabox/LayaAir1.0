@@ -1,5 +1,6 @@
 package laya.d3.core.particleShuriKen.module.shape {
 	import laya.d3.core.IClone;
+	import laya.d3.math.Rand;
 	import laya.d3.math.Vector3;
 	
 	/**
@@ -20,7 +21,7 @@ package laya.d3.core.particleShuriKen.module.shape {
 		 * @param	position 粒子位置。
 		 * @param	direction 粒子方向。
 		 */
-		public function generatePositionAndDirection(position:Vector3, direction:Vector3):void {
+		public function generatePositionAndDirection(position:Vector3, direction:Vector3, rand:Rand = null,randomSeeds:Uint32Array=null):void {
 			throw new Error("BaseShape: must override it.");
 		}
 		

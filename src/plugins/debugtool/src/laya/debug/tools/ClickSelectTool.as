@@ -73,7 +73,7 @@ package laya.debug.tools
 			g.drawRect(0, 0, rec.width, rec.height, null,DebugConsts.CLICK_SELECT_COLOR,2);
 			_selectTip.pos(rec.x, rec.y);
 		}
-		public static var ignoreDebugTool = false;
+		public static var ignoreDebugTool:Boolean = false;
 		private function itemClicked(tar:Sprite):void
 		{
 			if (!isClickSelectState) return;

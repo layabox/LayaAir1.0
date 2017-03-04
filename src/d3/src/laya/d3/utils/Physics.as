@@ -1,9 +1,14 @@
 package laya.d3.utils {
+	import laya.d3.component.physics.Collider;
+	import laya.d3.component.physics.SphereCollider;
+	import laya.d3.core.Layer;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.graphics.VertexBuffer3D;
+	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Collision;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector3;
@@ -12,92 +17,78 @@ package laya.d3.utils {
 	import laya.utils.Stat;
 	
 	/**
-	 * ...
-	 * @author ...
+	 * <code>Physics</code> 类用于简单物理检测。
 	 */
 	public class Physics {
-		private static var _tempVector30:Vector3 = new Vector3();
-		private static var _tempVector31:Vector3 = new Vector3();
-		private static var _tempVector33:Vector3 = new Vector3();
-		private static var _tempMatrix4x40:Matrix4x4 = new Matrix4x4();
-		private static var _tempRaycastHit0:RaycastHit = new RaycastHit();
+		
+		/** @private */
+		private static var _outHitAllInfo:Vector.<RaycastHit> = new Vector.<RaycastHit>();
+		/** @private */
+		private static var _outHitInfo:RaycastHit = new RaycastHit();
 		
 		public function Physics() {
 		}
 		
-		public static function rayCastNode(ray:Ray, sprite3D:Sprite3D, outHitInfo:RaycastHit):void {//TODO:可能非Mesh
-			if (sprite3D is MeshSprite3D) {
-				var meshSprite3D:MeshSprite3D = sprite3D as MeshSprite3D;
-				var worldMatrix:Matrix4x4 = sprite3D.transform.worldMatrix;
+		/**
+		 * 在场景中投下可与所有碰撞器碰撞的一条光线,获取发生碰撞的第一个碰撞器。
+		 * @param  ray        射线
+		 * @param  outHitInfo 与该射线发生碰撞的第一个碰撞器的碰撞信息
+		 * @param  distance   射线长度,默认为最大值 
+		 * @param  layer      选定制定层内的碰撞器,其他层内碰撞器忽略
+		 */
+		public static function rayCast(ray:Ray, outHitInfo:RaycastHit, distance:Number = Number.MAX_VALUE, layer:int = 0):void {
+			_outHitAllInfo.length = 0;
+			var colliders:Vector.<Collider> = Layer.getLayerByNumber(layer)._colliders;
+			for (var i:int = 0, n:int = colliders.length; i < n; i++) {
 				
-				var invertWorldMatrix:Matrix4x4 = _tempMatrix4x40;
-				worldMatrix.invert(invertWorldMatrix);
-				
-				var preRayOrigin:Vector3 = _tempVector30;
-				var preRayDirection:Vector3 = _tempVector31;
-				var rayOrigin:Vector3 = ray.origin;
-				var rayDirection:Vector3 = ray.direction;
-				rayOrigin.cloneTo(preRayOrigin);
-				rayDirection.cloneTo(preRayDirection);
-				
-				Vector3.transformCoordinate(rayOrigin, invertWorldMatrix, rayOrigin);
-				Vector3.TransformNormal(rayDirection, invertWorldMatrix, rayDirection);
-				Vector3.normalize(rayDirection,rayDirection);//TODO:方向不是单位向量，计算出具体有问题，为矢量长度分之一。
-				
-				var renderElements:Vector.<RenderElement> = meshSprite3D.meshRender.renderObject._renderElements;
-				for (var i:int = 0, iNum:int = renderElements.length; i < iNum; i++) {
-					
-					var renderObj:IRenderable = renderElements[i].renderObj;
-					var vertexBuffer:VertexBuffer3D = renderObj._getVertexBuffer(0);
-					var vertexDatas:Float32Array = vertexBuffer.getData();//TODO:可能有多个VB,没渲染到屏幕上可以不检测
-					var indexDatas:Uint16Array = renderObj._getIndexBuffer().getData();
-					var elementRaycastHit:RaycastHit = _tempRaycastHit0;
-					
-					var isHit:Boolean = Picker.rayIntersectsPositionsAndIndices(ray, vertexDatas, vertexBuffer.vertexDeclaration, indexDatas, elementRaycastHit);
-					if (isHit) {
-						Vector3.transformCoordinate(elementRaycastHit.position, worldMatrix, elementRaycastHit.position);
-						
-						var trianglePositions:Array = elementRaycastHit.trianglePositions;
-						Vector3.transformCoordinate(trianglePositions[0], worldMatrix, trianglePositions[0]);
-						Vector3.transformCoordinate(trianglePositions[1], worldMatrix, trianglePositions[1]);
-						Vector3.transformCoordinate(trianglePositions[2], worldMatrix, trianglePositions[2]);
-						
-						var triangleNormals:Array = elementRaycastHit.triangleNormals;
-						Vector3.transformCoordinate(triangleNormals[0], worldMatrix, triangleNormals[0]);//TODO:不一定有法线
-						Vector3.transformCoordinate(triangleNormals[1], worldMatrix, triangleNormals[1]);
-						Vector3.transformCoordinate(triangleNormals[2], worldMatrix, triangleNormals[2]);
-						
-						var rayOriToPos:Vector3 = _tempVector33;
-						Vector3.subtract(preRayOrigin, elementRaycastHit.position, rayOriToPos);
-						outHitInfo.distance = Vector3.scalarLength(rayOriToPos);
-						outHitInfo.sprite3D = sprite3D;
-					}
-					
-					if (isHit && elementRaycastHit.distance < outHitInfo.distance) {
-						elementRaycastHit.copy(outHitInfo);
-					}
+				colliders[i].raycast(ray, _outHitInfo, distance);
+				if (_outHitInfo.distance !== -1 && _outHitInfo.distance <= distance) {
+					var outHit:RaycastHit = new RaycastHit();
+					_outHitInfo.cloneTo(outHit);
+					_outHitAllInfo.push(outHit);
 				}
-				
-				preRayOrigin.cloneTo(rayOrigin);
-				preRayDirection.cloneTo(rayDirection);
 			}
 			
-			for (var j:int = 0, jNum:int = sprite3D._childs.length; j < jNum; j++)
-				rayCast(ray, sprite3D._childs[j], outHitInfo);
+			if (_outHitAllInfo.length == 0) {
+				outHitInfo.sprite3D = null;
+				outHitInfo.distance = -1;
+				return;
+			}
+			
+			var minDistance:Number = Number.MAX_VALUE;
+			var minIndex:Number = 0;
+			for (var j:int = 0; j < _outHitAllInfo.length; j++) {
+				if (_outHitAllInfo[j].distance < minDistance) {
+					minDistance = _outHitAllInfo[j].distance;
+					minIndex = j;
+				}
+			}
+			_outHitAllInfo[minIndex].cloneTo(outHitInfo);
 		}
 		
-		public static function rayCast(ray:Ray, sprite3D:Sprite3D, outHitInfo:RaycastHit):void {
-			outHitInfo.position.toDefault();
-			outHitInfo.distance = Number.MAX_VALUE;
-			outHitInfo.trianglePositions[0].toDefault();
-			outHitInfo.trianglePositions[1].toDefault();
-			outHitInfo.trianglePositions[2].toDefault();
-			outHitInfo.triangleNormals[0].toDefault();
-			outHitInfo.triangleNormals[1].toDefault();
-			outHitInfo.triangleNormals[2].toDefault();
-			
-			rayCastNode(ray, sprite3D, outHitInfo);
+		
+		/**
+		 * 在场景中投下可与所有碰撞器碰撞的一条光线,获取发生碰撞的所有碰撞器。
+		 * @param  ray        射线
+		 * @param  outHitAllInfo 与该射线发生碰撞的所有碰撞器的碰撞信息
+		 * @param  distance   射线长度,默认为最大值 
+		 * @param  layer      选定制定层内的碰撞器,其他层内碰撞器忽略
+		 */
+		public static function rayCastAll(ray:Ray, outHitAllInfo:Vector.<RaycastHit>, distance:Number = Number.MAX_VALUE, layer:int = 0):void {
+			outHitAllInfo.length = 0;
+			var colliders:Vector.<Collider> = Layer.getLayerByNumber(layer)._colliders;
+			for (var i:int = 0, n:int = colliders.length; i < n; i++) {
+				_outHitInfo.distance = -1;
+				_outHitInfo.sprite3D = null;
+				
+				colliders[i].raycast(ray, _outHitInfo, distance);
+				if (_outHitInfo.distance !== -1 && _outHitInfo.distance <= distance) {
+					var outHit:RaycastHit = new RaycastHit();
+					_outHitInfo.cloneTo(outHit);
+					outHitAllInfo.push(outHit);
+				}
+			}
 		}
+	
 	}
-
 }

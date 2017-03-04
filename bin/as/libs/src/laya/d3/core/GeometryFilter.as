@@ -2,11 +2,14 @@ package laya.d3.core {
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.events.EventDispatcher;
+	import laya.resource.IDestroy;
 	
 	/**
 	 * <code>GeometryFilter</code> 类用于创建集合体过滤器,抽象类不允许实例。
 	 */
-	public class GeometryFilter extends EventDispatcher {
+	public class GeometryFilter extends EventDispatcher implements IDestroy {
+		/**@private */
+		private var _destroyed:Boolean;
 		
 		/** @private */
 		public function get _isAsyncLoaded():Boolean {
@@ -28,9 +31,18 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * 获取是否已销毁。
+		 * @return 是否已销毁。
+		 */
+		public function get destroyed():Boolean {
+			return _destroyed;
+		}
+		
+		/**
 		 * 创建一个 <code>GeometryFilter</code> 实例。
 		 */
 		public function GeometryFilter() {
+			_destroyed = false;
 		}
 		
 		/**
@@ -38,6 +50,7 @@ package laya.d3.core {
 		 */
 		public function _destroy():void {
 			offAll();
+			_destroyed = true;
 		}
 	
 	}

@@ -25,7 +25,7 @@ package laya.d3.core.scene {
 			state.camera = cameraVR;
 			cameraVR._prepareCameraToRender();
 			//_prepareRenderToRenderState(cameraVR, state);
-			state.addShaderDefine(ShaderCompile3D.SHADERDEFINE_VR);
+			state.scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_VR);
 			
 			beforeRender(state);//渲染之前
 			var renderTarget:RenderTexture = cameraVR.renderTarget;

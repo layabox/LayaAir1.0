@@ -2,7 +2,7 @@ package laya.d3.core.light {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Vector3;
-	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
 	
 	/**
@@ -58,7 +58,7 @@ package laya.d3.core.light {
 			var scene:BaseScene = state.scene;
 			if (scene.enableLight) {
 				var shaderValue:ValusArray = scene._shaderValues;
-				state.shaderDefines.add(ShaderDefines3D.DIRECTIONLIGHT);
+				state.addShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
 				shaderValue.setValue(BaseScene.LIGHTDIRDIFFUSE, diffuseColor.elements);
 				shaderValue.setValue(BaseScene.LIGHTDIRAMBIENT, ambientColor.elements);
 				shaderValue.setValue(BaseScene.LIGHTDIRSPECULAR, specularColor.elements);

@@ -23,6 +23,9 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
+	import laya.d3.math.BoundBox;
+	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Rand;
 	import laya.d3.math.Vector2;
 	import laya.d3.graphics.VertexParticleShuriken;
 	import laya.d3.math.Vector3;
@@ -55,10 +58,17 @@ package laya.d3.core.particleShuriKen {
 	 * <code>ShurikenParticleSystem</code> 类用于创建3D粒子数据模板。
 	 */
 	public class ShurikenParticleSystem extends GeometryFilter implements IRenderable, IClone {
+		/** @private 0:Burst,1:预留,2:StartDelay,3:StartColor,4:StartSize,5:StartRotation,6:randomizeRotationDirection,7:StartLifetime,8:StartSpeed,9:VelocityOverLifetime,10:ColorOverLifetime,11:SizeOverLifetime,12:RotationOverLifetime,13-15:TextureSheetAnimation,16-17:Shape*/
+		public static const _RANDOMOFFSET:Uint32Array = new Uint32Array([0x23571a3e, 0xc34f56fe, 0x13371337, 0x12460f3b, 0x6aed452e, 0xdec4aea1, 0x96aa4de3, 0x8d2c8431, 0xf3857f6f, 0xe0fbd834, 0x13740583, 0x591bc05c, 0x40eb95e4, 0xbc524e5f, 0xaf502044, 0xa614b381, 0x1034e524, 0xfc524e5f]);
+		
 		/** @private */
 		private static var _tempPosition:Vector3 = new Vector3();
 		/** @private */
 		private static var _tempDirection:Vector3 = new Vector3();
+		/** @private */
+		protected var _boundingSphere:BoundSphere = new BoundSphere(new Vector3(), 0);
+		/** @private */
+		protected var _boundingBox:BoundBox = new BoundBox(new Vector3(), new Vector3());
 		
 		/** @private */
 		private var _owner:ShuriKenParticle3D;
@@ -115,12 +125,15 @@ package laya.d3.core.particleShuriKen {
 		private var _rotationOverLifetime:RotationOverLifetime;
 		/**@private */
 		private var _textureSheetAnimation:TextureSheetAnimation;
-		
 		/** @private */
 		private var _uvLength:Vector2 = new Vector2();//TODO:
 		
 		/**@private */
 		public var _startUpdateLoopCount:int;
+		/**@private */
+		public var _rand:Rand;
+		/**@private */
+		public var _randomSeeds:Uint32Array;
 		
 		/**粒子运行的总时长，单位为秒。*/
 		public var duration:Number;
@@ -217,8 +230,11 @@ package laya.d3.core.particleShuriKen {
 		public var scaleMode:int;
 		/**是否自动开始。*/
 		public var playOnAwake:Boolean;
-		/**是否自动随机种子*/
-		//public var autoRandomSeed:int;
+		
+		/**随机种子,注:play()前设置有效。*/
+		public var randomSeed:Uint32Array;
+		/**是否使用随机种子。 */
+		public var autoRandomSeed:Boolean;
 		
 		/**是否为性能模式,性能模式下会延迟粒子释放。*/
 		public var isPerformanceMode:Boolean;
@@ -744,6 +760,35 @@ package laya.d3.core.particleShuriKen {
 			return _indexBuffer;
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
+		override public function get _originalBoundingSphere():BoundSphere {
+			var centerE:Float32Array = _boundingSphere.center.elements;
+			centerE[0] = 0;
+			centerE[1] = 0;
+			centerE[2] = 0;
+			_boundingSphere.radius = Number.MAX_VALUE;
+			
+			return _boundingSphere;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function get _originalBoundingBox():BoundBox {
+			var minE:Float32Array = _boundingBox.min.elements;
+			minE[0] = -Number.MAX_VALUE;
+			minE[1] = -Number.MAX_VALUE;
+			minE[2] = -Number.MAX_VALUE;
+			var maxE:Float32Array = _boundingBox.min.elements;
+			maxE[0] = Number.MAX_VALUE;
+			maxE[1] = Number.MAX_VALUE;
+			maxE[2] = Number.MAX_VALUE;
+			
+			return _boundingBox;
+		}
+		
 		public function ShurikenParticleSystem(owner:ShuriKenParticle3D) {
 			_owner = owner;
 			_currentTime = 0;
@@ -804,7 +849,10 @@ package laya.d3.core.particleShuriKen {
 			simulationSpace = 1;
 			scaleMode = 0;
 			playOnAwake = true;
-			//autoRandomSeed = true;
+			_rand = new Rand(0);
+			autoRandomSeed = true;
+			randomSeed = new Uint32Array(1);
+			_randomSeeds = new Uint32Array(_RANDOMOFFSET.length);
 			isPerformanceMode = true;
 			
 			_owner.on(Event.ENABLED_CHANGED, this, _onOwnerEnableChanged);
@@ -914,7 +962,7 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @private
 		 */
-		private function _setPartVertexDatas(subU:Number, subV:Number, startU:Number, startV:Number):void {
+		private function _setPartVertexDatas():void {
 			for (var i:int = 0; i < _bufferMaxParticles; i++) {
 				var particleOffset:int = i * _floatCountPerVertex * 4;
 				_vertices[particleOffset + _floatCountPerVertex * 0 + 0] = -0.5;
@@ -938,57 +986,76 @@ package laya.d3.core.particleShuriKen {
 			_vertexBuffer = VertexBuffer3D.create(VertexParticleShuriken.vertexDeclaration, _bufferMaxParticles * 4, WebGLContext.DYNAMIC_DRAW);
 			_vertices = new Float32Array(_bufferMaxParticles * _floatCountPerVertex * 4);
 			
-			var enableSheetAnimation:Boolean = textureSheetAnimation && textureSheetAnimation.enbale;
-			if (enableSheetAnimation) {
-				var title:Vector2 = textureSheetAnimation.tiles;
-				var titleX:int = title.x, titleY:int = title.y;
-				var subU:Number = 1.0 / titleX, subV:Number = 1.0 / titleY;
-				
-				var totalFrameCount:int;
-				var startRow:int;
-				var randomRow:Boolean = textureSheetAnimation.randomRow;
-				switch (textureSheetAnimation.type) {
-				case 0://Whole Sheet
-					totalFrameCount = titleX * titleY;
-					break;
-				case 1://Singal Row
-					totalFrameCount = titleX;
-					if (randomRow)
-						startRow = Math.round(Math.random() * titleY);
-					else
-						startRow = 0;
-					break;
-				}
-				
-				var startFrameCount:int;
-				var startFrame:StartFrame = textureSheetAnimation.startFrame;
-				switch (startFrame.type) {
-				case 0://常量模式
-					startFrameCount = startFrame.constant;
-					break;
-				case 1://随机双常量模式
-					startFrameCount = Math.round(MathUtil.lerp(startFrame.constantMin, startFrame.constantMax, Math.random()));
-					break;
-				}
-				
-				var frame:FrameOverTime = textureSheetAnimation.frame;
-				switch (frame.type) {
-				case 0: 
-					startFrameCount += frame.constant;
-					break;
-				case 2: 
-					startFrameCount += Math.round(MathUtil.lerp(frame.constantMin, frame.constantMax, Math.random()));
-					break;
-				}
-				
-				if (!randomRow)
-					startRow = Math.floor(startFrameCount / titleX);
-				
-				var startCol:int = startFrameCount % titleX;
-				_setPartVertexDatas(subU, subV, startCol * subU, startRow * subV);
-			} else {
-				_setPartVertexDatas(1.0, 1.0, 0.0, 0.0);
-			}
+			//var enableSheetAnimation:Boolean = textureSheetAnimation && textureSheetAnimation.enbale;
+			//if (enableSheetAnimation) {
+			//var title:Vector2 = textureSheetAnimation.tiles;
+			//var titleX:int = title.x, titleY:int = title.y;
+			//var subU:Number = 1.0 / titleX, subV:Number = 1.0 / titleY;
+			//
+			//var totalFrameCount:int;
+			//var startRow:int;
+			//var randomRow:Boolean = textureSheetAnimation.randomRow;
+			//switch (textureSheetAnimation.type) {
+			//case 0://Whole Sheet
+			//totalFrameCount = titleX * titleY;
+			//break;
+			//case 1://Singal Row
+			//totalFrameCount = titleX;
+			//if (randomRow) {
+			//if (autoRandomSeed) {
+			//startRow = Math.round(Math.random() * titleY);
+			//} else {
+			//_rand.seed = _randomSeeds[0];
+			//startRow = Math.round(_rand.getFloat() * titleY);
+			//_randomSeeds[0] = _rand.seed;
+			//}
+			//} else {
+			//startRow = 0;
+			//}
+			//break;
+			//}
+			//
+			//var startFrameCount:int;
+			//var startFrame:StartFrame = textureSheetAnimation.startFrame;
+			//switch (startFrame.type) {
+			//case 0://常量模式
+			//startFrameCount = startFrame.constant;
+			//break;
+			//case 1://随机双常量模式
+			//if (autoRandomSeed) {
+			//startFrameCount = Math.round(MathUtil.lerp(startFrame.constantMin, startFrame.constantMax, Math.random()));
+			//} else {
+			//_rand.seed = _randomSeeds[1];
+			//startFrameCount = Math.round(MathUtil.lerp(startFrame.constantMin, startFrame.constantMax, _rand.getFloat()));
+			//_randomSeeds[1] = _rand.seed;
+			//}
+			//break;
+			//}
+			//
+			//var frame:FrameOverTime = textureSheetAnimation.frame;
+			//switch (frame.type) {
+			//case 0: 
+			//startFrameCount += frame.constant;
+			//break;
+			//case 2: 
+			//if (autoRandomSeed) {
+			//startFrameCount += Math.round(MathUtil.lerp(frame.constantMin, frame.constantMax, Math.random()));
+			//} else {
+			//_rand.seed = _randomSeeds[2];
+			//startFrameCount += Math.round(MathUtil.lerp(frame.constantMin, frame.constantMax, _rand.getFloat()));
+			//_randomSeeds[2] = _rand.seed;
+			//}
+			//break;
+			//}
+			//
+			//if (!randomRow)
+			//startRow = Math.floor(startFrameCount / titleX);
+			//
+			//var startCol:int = startFrameCount % titleX;
+			//_setPartVertexDatas();
+			//} else {
+			_setPartVertexDatas();
+			//}
 		}
 		
 		/**
@@ -1021,7 +1088,14 @@ package laya.d3.core.particleShuriKen {
 				var burst:Burst = bursts[_burstsIndex];
 				var burstTime:Number = burst.time;
 				if (burstTime >= fromTime && burstTime <= toTime) {
-					var emitCount:int = MathUtil.lerp(burst.minCount, burst.maxCount, Math.random());
+					var emitCount:int;
+					if (autoRandomSeed) {
+						emitCount = MathUtil.lerp(burst.minCount, burst.maxCount, Math.random());
+					} else {
+						_rand.seed = _randomSeeds[0];
+						emitCount = MathUtil.lerp(burst.minCount, burst.maxCount, _rand.getFloat());
+						_randomSeeds[0] = _rand.seed;
+					}
 					totalEmitCount += emitCount;
 				} else {
 					break;
@@ -1122,7 +1196,10 @@ package laya.d3.core.particleShuriKen {
 			var position:Vector3 = _tempPosition;
 			var direction:Vector3 = _tempDirection;
 			if (_shape.enable) {
-				_shape.generatePositionAndDirection(position, direction);
+				if (autoRandomSeed)
+					_shape.generatePositionAndDirection(position, direction);
+				else
+					_shape.generatePositionAndDirection(position, direction, _rand, _randomSeeds);
 			} else {
 				var positionE:Float32Array = position.elements;
 				var directionE:Float32Array = direction.elements;
@@ -1164,55 +1241,94 @@ package laya.d3.core.particleShuriKen {
 			_vertices[startIndex + _floatCountPerVertex * 3 + 2] = startU;
 			_vertices[startIndex + _floatCountPerVertex * 3 + 3] = startV;
 			
-			var randomVelocity:Number, randomColor:Number, randomSize:Number, randomRotation:Number, randomTextureAnimation:Number;
+			var randomVelocityX:Number, randomVelocityY:Number, randomVelocityZ:Number, randomColor:Number, randomSize:Number, randomRotation:Number, randomTextureAnimation:Number;
 			
 			var needRandomVelocity:Boolean = _velocityOverLifetime && _velocityOverLifetime.enbale;
 			if (needRandomVelocity) {
 				var velocityType:int = _velocityOverLifetime.velocity.type;
-				if (velocityType === 3)
-					randomVelocity = Math.random();
-				else
+				if (velocityType === 2 || velocityType === 3) {
+					if (autoRandomSeed) {
+						randomVelocityX = Math.random();
+						randomVelocityY = Math.random();
+						randomVelocityZ = Math.random();
+					} else {
+						_rand.seed = _randomSeeds[9];
+						randomVelocityX = _rand.getFloat();
+						randomVelocityY = _rand.getFloat();
+						randomVelocityZ = _rand.getFloat();
+						_randomSeeds[9] = _rand.seed;
+					}
+				} else {
 					needRandomVelocity = false;
+				}
 			} else {
 				needRandomVelocity = false;
 			}
 			var needRandomColor:Boolean = _colorOverLifetime && _colorOverLifetime.enbale;
 			if (needRandomColor) {
 				var colorType:int = _colorOverLifetime.color.type;
-				if (colorType === 3)
-					randomColor = Math.random();
-				else
+				if (colorType === 3) {
+					if (autoRandomSeed) {
+						randomColor = Math.random();
+					} else {
+						_rand.seed = _randomSeeds[10];
+						randomColor = _rand.getFloat();
+						_randomSeeds[10] = _rand.seed;
+					}
+				} else {
 					needRandomColor = false;
+				}
 			} else {
 				needRandomColor = false;
 			}
 			var needRandomSize:Boolean = _sizeOverLifetime && _sizeOverLifetime.enbale;
 			if (needRandomSize) {
 				var sizeType:int = _sizeOverLifetime.size.type;
-				if (sizeType === 3)
-					randomSize = Math.random();
-				else
+				if (sizeType === 3) {
+					if (autoRandomSeed) {
+						randomSize = Math.random();
+					} else {
+						_rand.seed = _randomSeeds[11];
+						randomSize = _rand.getFloat();
+						_randomSeeds[11] = _rand.seed;
+					}
+				} else {
 					needRandomSize = false;
+				}
 			} else {
 				needRandomSize = false;
 			}
 			var needRandomRotation:Boolean = _rotationOverLifetime && _rotationOverLifetime.enbale;
 			if (needRandomRotation) {
 				var rotationType:int = _rotationOverLifetime.angularVelocity.type;
-				if (rotationType === 2 || rotationType === 3)
-					randomRotation = Math.random();
-				else
+				if (rotationType === 2 || rotationType === 3) {
+					if (autoRandomSeed) {
+						randomRotation = Math.random();
+					} else {
+						_rand.seed = _randomSeeds[12];
+						randomRotation = _rand.getFloat();
+						_randomSeeds[12] = _rand.seed;
+					}
+				} else {
 					needRandomRotation = false;
+				}
 			} else {
 				needRandomRotation = false;
 			}
 			var needRandomTextureAnimation:Boolean = _textureSheetAnimation && _textureSheetAnimation.enbale;
 			if (needRandomTextureAnimation) {
 				var textureAnimationType:int = _textureSheetAnimation.frame.type;
-				if (textureAnimationType === 3)
-					randomTextureAnimation = Math.random();
-				else
+				if (textureAnimationType === 3) {
+					if (autoRandomSeed) {
+						randomTextureAnimation = Math.random();
+					} else {
+						_rand.seed = _randomSeeds[15];
+						randomTextureAnimation = _rand.getFloat();
+						_randomSeeds[15] = _rand.seed;
+					}
+				} else {
 					needRandomTextureAnimation = false;
+				}
 			} else {
 				needRandomTextureAnimation = false;
 			}
@@ -1245,14 +1361,16 @@ package laya.d3.core.particleShuriKen {
 				
 				_vertices[vertexStart + 28] = particleData.startSpeed;
 				
-				needRandomVelocity && (_vertices[vertexStart + 29] = randomVelocity);
+				// (_vertices[vertexStart + 29] = XX);TODO:29预留
 				needRandomColor && (_vertices[vertexStart + 30] = randomColor);
 				needRandomSize && (_vertices[vertexStart + 31] = randomSize);
 				needRandomRotation && (_vertices[vertexStart + 32] = randomRotation);
 				needRandomTextureAnimation && (_vertices[vertexStart + 33] = randomTextureAnimation);
-				//_vertices[vertexStart + 34] = randomY1;
-				//_vertices[vertexStart + 35] = randomZ1;
-				//_vertices[vertexStart + 36] = randomW1;
+				if (needRandomVelocity) {
+					_vertices[vertexStart + 34] = randomVelocityX;
+					_vertices[vertexStart + 35] = randomVelocityY;
+					_vertices[vertexStart + 36] = randomVelocityZ;
+				}
 				
 				for (j = 0, offset = 37; j < 3; j++)
 					_vertices[vertexStart + offset + j] = particleData.simulationWorldPostion[j];
@@ -1329,12 +1447,23 @@ package laya.d3.core.particleShuriKen {
 			_emissionTime = 0;
 			_playbackTime = 0;
 			
+			if (!autoRandomSeed) {
+				for (var i:int = 0, n:int = _randomSeeds.length; i < n; i++)
+					_randomSeeds[i] = randomSeed[0] + _RANDOMOFFSET[i];
+			}
+			
 			switch (startDelayType) {
 			case 0: 
 				_playStartDelay = startDelay;
 				break;
 			case 1: 
-				_playStartDelay = MathUtil.lerp(startDelayMin, startDelayMax, Math.random());
+				if (autoRandomSeed) {
+					_playStartDelay = MathUtil.lerp(startDelayMin, startDelayMax, Math.random());
+				} else {
+					_rand.seed = _randomSeeds[2];
+					_playStartDelay = MathUtil.lerp(startDelayMin, startDelayMax, _rand.getFloat());
+					_randomSeeds[2] = _rand.seed;
+				}
 				break;
 			default: 
 				throw new Error("Utils3D: startDelayType is invalid.");

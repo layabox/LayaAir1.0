@@ -15,18 +15,34 @@ package laya.d3.math {
 		
 		/**
 		 * 获取X轴坐标。
-		 * @return	x  X轴坐标。
+		 * @return	X轴坐标。
 		 */
 		public function get x():Number {
 			return this.elements[0];
 		}
 		
 		/**
+		 * 设置X轴坐标。
+		 * @param value X轴坐标。
+		 */
+		public function set x(value:Number):void {
+			this.elements[0] = value;
+		}
+		
+		/**
 		 * 获取Y轴坐标。
-		 * @return	y  Y轴坐标。
+		 * @return Y轴坐标。
 		 */
 		public function get y():Number {
 			return this.elements[1];
+		}
+		
+		/**
+		 * 设置Y轴坐标。
+		 * @param value Y轴坐标。
+		 */
+		public function set y(value:Number):void {
+			this.elements[1] = value;
 		}
 		
 		/**

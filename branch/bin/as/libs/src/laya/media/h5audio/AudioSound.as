@@ -67,6 +67,7 @@ package laya.media.h5audio {
 			}
 			
 			function onErr():void {
+				ad.load = null;
 				offs();
 				me.event(Event.ERROR);
 			}

@@ -230,15 +230,12 @@ var Laya=window.Laya=(function(window,document){
 			return /*__JS__ */window;
 		}
 
-		RunDriver.newWebGLContext=function(canvas,webGLName){
-			return canvas.getContext(webGLName,{stencil:true,alpha:Config.isAlpha,antialias:Config.isAntialias,premultipliedAlpha:Config.premultipliedAlpha});
-		}
-
 		RunDriver.getPixelRatio=function(){
 			if (RunDriver.pixelRatio < 0){
 				var ctx=Browser.context;
 				var backingStore=ctx.backingStorePixelRatio || ctx.webkitBackingStorePixelRatio || ctx.mozBackingStorePixelRatio || ctx.msBackingStorePixelRatio || ctx.oBackingStorePixelRatio || ctx.backingStorePixelRatio || 1;
 				RunDriver.pixelRatio=(Browser.window.devicePixelRatio || 1)/ backingStore;
+				if(RunDriver.pixelRatio<1)RunDriver.pixelRatio=1;
 			}
 			return RunDriver.pixelRatio;
 		}
@@ -400,7 +397,7 @@ var Laya=window.Laya=(function(window,document){
 		Laya.timer=null;
 		Laya.loader=null;
 		Laya.render=null
-		Laya.version="1.7.0beta";
+		Laya.version="1.7.1beta";
 		Laya.stageBox=null
 		Laya._isinit=false;
 		__static(Laya,
@@ -426,6 +423,7 @@ var Laya=window.Laya=(function(window,document){
 		Config.isAntialias=false;
 		Config.isAlpha=false;
 		Config.premultipliedAlpha=false;
+		Config.isStencil=true;
 		return Config;
 	})()
 
@@ -438,7 +436,6 @@ var Laya=window.Laya=(function(window,document){
 		var EventHandler;
 		function EventDispatcher(){
 			this._events=null;
-			Object.defineProperty(this,"_events",{enumerable:false});
 		}
 
 		__class(EventDispatcher,'laya.events.EventDispatcher');
@@ -601,6 +598,7 @@ var Laya=window.Laya=(function(window,document){
 
 		EventDispatcher.MOUSE_EVENTS={"rightmousedown":true,"rightmouseup":true,"rightclick":true,"mousedown":true,"mouseup":true,"mousemove":true,"mouseover":true,"mouseout":true,"click":true,"doubleclick":true};
 		EventDispatcher.__init$=function(){
+			Object.defineProperty(laya.events.EventDispatcher.prototype,"_events",{enumerable:false,writable:true});
 			/**@private */
 			//class EventHandler extends laya.utils.Handler
 			EventHandler=(function(_super){
@@ -2769,7 +2767,7 @@ var Laya=window.Laya=(function(window,document){
 					}
 				}
 			}
-			isHit=this.hitTest(sp,mouseX,mouseY);
+			isHit=this.hitTest(sp,scrollRect ? mouseX-scrollRect.x :mouseX,scrollRect ? mouseY-scrollRect.y :mouseY);
 			if (isHit){
 				this._target=sp;
 				callBack.call(this,sp);
@@ -5358,8 +5356,8 @@ var Laya=window.Laya=(function(window,document){
 				}
 				if (!tx){
 					tx=_cacheCanvas.ctx=Pool.getItem("RenderContext")|| new RenderContext(w,h,HTMLCanvas.create(/*laya.resource.HTMLCanvas.TYPEAUTO*/"AUTO"));
-					tx.ctx.sprite=sprite;
 				}
+				tx.ctx.sprite=sprite;
 				canvas=tx.canvas;
 				canvas.clear();
 				(canvas.width !=w || canvas.height !=h)&& canvas.size(w,h);
@@ -6085,6 +6083,7 @@ var Laya=window.Laya=(function(window,document){
 		/**设备像素比。*/
 		__getset(1,Browser,'pixelRatio',function(){
 			Browser.__init__();
+			if (Browser.userAgent.indexOf("Mozilla/6.0(Linux; Android 6.0; HUAWEI NXT-AL10 Build/HUAWEINXT-AL10)")>-1)return 2;
 			return RunDriver.getPixelRatio();
 		});
 
@@ -6483,7 +6482,7 @@ var Laya=window.Laya=(function(window,document){
 		*/
 		__proto.writeUint8=function(value){
 			this.ensureWrite(this._pos_+1);
-			this._d_.setUint8(this._pos_,value,this._xd_);
+			this._d_.setUint8(this._pos_,value);
 			this._pos_++;
 		}
 
@@ -8212,6 +8211,8 @@ var Laya=window.Laya=(function(window,document){
 					}else {
 					Stat._view[0].title="FPS(3D)";
 					Stat._view[5]={title:"TriFaces",value:"trianglesFaces",color:"white",units:"int"};
+					Stat._view[6]={title:"treeNodeColl",value:"treeNodeCollision",color:"white",units:"int"};
+					Stat._view[7]={title:"treeSpriteColl",value:"treeSpriteCollision",color:"white",units:"int"};
 				}
 				}else {
 				Stat._view[4]={title:"Canvas",value:"_canvasStr",color:"white",units:"int"};
@@ -8247,7 +8248,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		Stat.clear=function(){
-			Stat.trianglesFaces=Stat.drawCall=Stat.shaderCall=Stat.spriteCount=Stat.canvasNormal=Stat.canvasBitmap=Stat.canvasReCache=0;
+			Stat.trianglesFaces=Stat.drawCall=Stat.shaderCall=Stat.spriteCount=Stat.treeNodeCollision=Stat.treeSpriteCollision=Stat.canvasNormal=Stat.canvasBitmap=Stat.canvasReCache=0;
 		}
 
 		Stat.loop=function(){
@@ -8264,7 +8265,10 @@ var Laya=window.Laya=(function(window,document){
 				Stat.canvasNormal=Math.round(Stat.canvasNormal / count);
 				Stat.canvasBitmap=Math.round(Stat.canvasBitmap / count);
 				Stat.canvasReCache=Math.ceil(Stat.canvasReCache / count);
-				Stat._fpsStr=Stat.FPS+(Stat.renderSlow ? " slow" :"");
+				Stat.treeNodeCollision=Math.round(Stat.treeNodeCollision / count);
+				Stat.treeSpriteCollision=Math.round(Stat.treeSpriteCollision / count);
+				var delay=Stat.FPS > 0?Math.floor(1000 / Stat.FPS).toString():" ";
+				Stat._fpsStr=Stat.FPS+(Stat.renderSlow ? " slow" :"")+" "+delay;
 				Stat._canvasStr=Stat.canvasReCache+"/"+Stat.canvasNormal+"/"+Stat.canvasBitmap;
 				Stat.currentMemorySize=ResourceManager.systemResourceManager.memorySize;
 				var ctx=Stat._ctx;
@@ -8286,12 +8290,14 @@ var Laya=window.Laya=(function(window,document){
 			Stat._timer=timer;
 		}
 
+		Stat.FPS=0;
 		Stat.loopCount=0;
 		Stat.shaderCall=0;
 		Stat.drawCall=0;
 		Stat.trianglesFaces=0;
 		Stat.spriteCount=0;
-		Stat.FPS=0;
+		Stat.treeNodeCollision=0;
+		Stat.treeSpriteCollision=0;
 		Stat.canvasNormal=0;
 		Stat.canvasBitmap=0;
 		Stat.canvasReCache=0;
@@ -8303,7 +8309,7 @@ var Laya=window.Laya=(function(window,document){
 		Stat._ctx=null
 		Stat._timer=0;
 		Stat._count=0;
-		Stat._width=130;
+		Stat._width=0;
 		Stat._height=100;
 		Stat._view=[];
 		Stat._fontSize=12;
@@ -8619,6 +8625,15 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		/**
+		*立即提前执行定时器，执行之后从队列中删除
+		*@param caller 执行域(this)。
+		*@param method 定时器回调函数。
+		*/
+		__proto.runTimer=function(caller,method){
+			this.runCallLater(caller,method);
+		}
+
+		/**
 		*两帧之间的时间间隔,单位毫秒。
 		*/
 		__getset(0,__proto,'delta',function(){
@@ -8749,6 +8764,10 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.firstStart=function(target,props,isTo){
+			if (target.destroyed){
+				this.clear();
+				return;
+			}
 			this._initProps(target,props,isTo);
 			this._beginLoop();
 		}
@@ -8795,6 +8814,7 @@ var Laya=window.Laya=(function(window,document){
 		*/
 		__proto.complete=function(){
 			if (!this._target)return;
+			Laya.timer.runTimer(this,this.firstStart);
 			var target=this._target;
 			var props=this._props;
 			var handler=this._complete;
@@ -10433,6 +10453,7 @@ var Laya=window.Laya=(function(window,document){
 				me.event(/*laya.events.Event.COMPLETE*/"complete");
 			}
 			function onErr (){
+				ad.load=null;
 				offs();
 				me.event(/*laya.events.Event.ERROR*/"error");
 			}
@@ -11446,14 +11467,22 @@ var Laya=window.Laya=(function(window,document){
 				var creatItem=LoaderManager.createMap[extension];
 				if (!clas)clas=creatItem[0];
 				var type=creatItem[1];
-				if (clas===Texture)type="htmlimage";
-				item=clas ? new clas():null;
-				this.load(url,Handler.create(null,onLoaded),progress,type,priority,false,null,true);
-				function onLoaded (data){
-					item && item.onAsynLoaded.call(item,url,data,params);
-					if (complete)complete.run();
+				if (extension=="atlas"){
+					this.load(url,complete,progress,type,priority,cache);
+					}else {
+					if (clas===Texture)type="htmlimage";
+					item=clas ? new clas():null;
+					this.load(url,Handler.create(null,onLoaded),progress,type,priority,false,null,true);
+					function onLoaded (data){
+						item && item.onAsynLoaded.call(item,url,data,params);
+						if (complete)complete.run();
+					}
+					if (cache){
+						var formatURL=URL.formatURL(url);
+						LoaderManager.cacheRes(formatURL,item);
+						item.url=formatURL;
+					}
 				}
-				if (cache)LoaderManager.cacheRes(url,item);
 				}else {
 				progress && progress.runWith(1);
 				complete && complete.run();
@@ -11954,6 +11983,13 @@ var Laya=window.Laya=(function(window,document){
 		*@private
 		*/
 		__proto.imageLoaded=function(data){
+			if (data && data.buffer && data.buffer.length < 10){
+				WorkerLoader._enable=false;
+				this._myTrace("buffer lost when postmessage ,disable workerloader");
+				this.event(data.url,null);
+				this.event("image_err",data.url+"\n"+data.msg);
+				return;
+			}
 			if (!data.dataType){
 				this.event(data.url,null);
 				this.event("image_err",data.url+"\n"+data.msg);
@@ -12058,6 +12094,10 @@ var Laya=window.Laya=(function(window,document){
 			return true;
 		}
 
+		WorkerLoader.workerSupported=function(){
+			return Browser.window.Worker?true:false;
+		}
+
 		WorkerLoader.IMAGE_LOADED="image_loaded";
 		WorkerLoader.IMAGE_ERR="image_err";
 		WorkerLoader.IMAGE_MSG="image_msg";
@@ -12079,6 +12119,7 @@ var Laya=window.Laya=(function(window,document){
 			this._lastUseFrameCount=0;
 			this._memorySize=0;
 			this._name=null;
+			this._url=null;
 			this._loaded=false;
 			this._released=false;
 			this._disposed=false;
@@ -12182,6 +12223,7 @@ var Laya=window.Laya=(function(window,document){
 				Resource._loadedResources.splice(index,1);
 				Resource._isLoadedResourcesSorted=false;
 			}
+			Loader.clearRes(this.url);
 		}
 
 		/**开始资源激活。*/
@@ -12207,17 +12249,17 @@ var Laya=window.Laya=(function(window,document){
 		});
 
 		/**
-		*是否已处理。
+		*色湖之资源的URL地址。
+		*@param value URL地址。
 		*/
-		__getset(0,__proto,'disposed',function(){
-			return this._disposed;
-		});
-
 		/**
-		*是否已释放。
+		*获取资源的URL地址。
+		*@return URL地址。
 		*/
-		__getset(0,__proto,'released',function(){
-			return this._released;
+		__getset(0,__proto,'url',function(){
+			return this._url;
+			},function(value){
+			this._url=value;
 		});
 
 		/**
@@ -12236,10 +12278,17 @@ var Laya=window.Laya=(function(window,document){
 		});
 
 		/**
-		*距离上次使用帧率。
+		*是否已处理。
 		*/
-		__getset(0,__proto,'lastUseFrameCount',function(){
-			return this._lastUseFrameCount;
+		__getset(0,__proto,'disposed',function(){
+			return this._disposed;
+		});
+
+		/**
+		*是否已释放。
+		*/
+		__getset(0,__proto,'released',function(){
+			return this._released;
 		});
 
 		/**
@@ -12247,6 +12296,13 @@ var Laya=window.Laya=(function(window,document){
 		*/
 		__getset(0,__proto,'resourceManager',function(){
 			return this._resourceManager;
+		});
+
+		/**
+		*距离上次使用帧率。
+		*/
+		__getset(0,__proto,'lastUseFrameCount',function(){
+			return this._lastUseFrameCount;
 		});
 
 		/**
@@ -12539,8 +12595,8 @@ var Laya=window.Laya=(function(window,document){
 			var uv=btex ? source.uv :Texture.DEF_UV;
 			var bitmap=btex ? source.bitmap :source;
 			var tex=new Texture(bitmap,null);
-			if (bitmap.width && width > bitmap.width)width=bitmap.width;
-			if (bitmap.height && height > bitmap.height)height=bitmap.height;
+			if (bitmap.width && (x+width)> bitmap.width)width=bitmap.width-x;
+			if (bitmap.height && (y+height)> bitmap.height)height=bitmap.height-y;
 			tex.width=width;
 			tex.height=height;
 			tex.offsetX=offsetX;
@@ -14044,7 +14100,10 @@ var Laya=window.Laya=(function(window,document){
 				this.conchModel && this.conchModel.scale(value,style._tf.scaleY);
 				this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x04;
 				var p=this._parent;
-				p && p._repaint===0 && (p._repaint=1,p.parentRepaint());
+				if (p && p._repaint===0){
+					p._repaint=1;
+					p.parentRepaint();
+				}
 			}
 		});
 
@@ -14060,7 +14119,10 @@ var Laya=window.Laya=(function(window,document){
 				this.conchModel && this.conchModel.scale(style._tf.scaleX,value);
 				this._renderType |=/*laya.renders.RenderSprite.TRANSFORM*/0x04;
 				var p=this._parent;
-				p && p._repaint===0 && (p._repaint=1,p.parentRepaint());
+				if (p && p._repaint===0){
+					p._repaint=1;
+					p.parentRepaint();
+				}
 			}
 		});
 
@@ -15902,7 +15964,7 @@ var Laya=window.Laya=(function(window,document){
 			this.offset.x=Math.round(this.offset.x);
 			this.offset.y=Math.round(this.offset.y);
 			mat.translate(this.offset.x,this.offset.y);
-			if (this._safariOffsetY && parseInt(canvasStyle.top)===0)canvasStyle.top=this._safariOffsetY+"px";
+			if (this._safariOffsetY)mat.translate(0,this._safariOffsetY);
 			this.canvasDegree=0;
 			if (rotation){
 				if (this._screenMode==="horizontal"){
@@ -15921,6 +15983,7 @@ var Laya=window.Laya=(function(window,document){
 			mat.ty=this._formatData(mat.ty);
 			canvasStyle.transformOrigin=canvasStyle.webkitTransformOrigin=canvasStyle.msTransformOrigin=canvasStyle.mozTransformOrigin=canvasStyle.oTransformOrigin="0px 0px 0px";
 			canvasStyle.transform=canvasStyle.webkitTransform=canvasStyle.msTransform=canvasStyle.mozTransform=canvasStyle.oTransform="matrix("+mat.toString()+")";
+			if (this._safariOffsetY)mat.translate(0,-this._safariOffsetY);
 			mat.translate(parseInt(canvasStyle.left)|| 0,parseInt(canvasStyle.top)|| 0);
 			this.visible=true;
 			this._repaint=1;
@@ -15988,10 +16051,18 @@ var Laya=window.Laya=(function(window,document){
 				Stat.loopCount++;
 				MouseManager.instance.runEvent();
 				Laya.timer._update();
+				var scene;
 				var i=0,n=0;
-				for (i=0,n=this._scenes.length;i < n;i++){
-					var scene=this._scenes[i];
-					(scene)&& (scene._updateScene());
+				if (Render.isConchNode){
+					for (i=0,n=this._scenes.length;i < n;i++){
+						scene=this._scenes[i];
+						(scene)&& (scene._updateSceneConch());
+					}
+					}else {
+					for (i=0,n=this._scenes.length;i < n;i++){
+						scene=this._scenes[i];
+						(scene)&& (scene._updateScene());
+					}
 				}
 				if (Render.isConchNode){
 					var customList=Sprite.CustomList;
@@ -17770,16 +17841,42 @@ var Laya=window.Laya=(function(window,document){
 			};
 			var m;
 			var px=params[5],py=params[6];
+			var aX=params[13],aY=params[14];
+			var sx=params[7],sy=params[8];
+			var rotate=params[9];
+			var skewX=params[11],skewY=params[12]
+			if (aX !=0){
+				px=aX *params[0].width;
+			}
+			if (aY !=0){
+				py=aY *params[0].height;
+			}
 			if (px !=0 || py !=0){
 				m=m || new Matrix();
 				m.translate(-px,-py);
 			};
-			var sx=params[7],sy=params[8];
-			var rotate=params[9];
-			if (sx !=1 || sy !=1 || rotate !=0){
-				m=m || new Matrix();
-				m.scale(sx,sy);
-				m.rotate(rotate *0.0174532922222222);
+			var tm=null;
+			if (rotate || sx!==1 || sy!==1 || skewX || skewY){
+				tm=GraphicAnimation._tempMt;
+				tm.identity();
+				tm.bTransform=true;
+				var skx=(rotate-skewX)*0.0174532922222222;
+				var sky=(rotate+skewY)*0.0174532922222222;
+				var cx=Math.cos(sky);
+				var ssx=Math.sin(sky);
+				var cy=Math.sin(skx);
+				var ssy=Math.cos(skx);
+				tm.a=sx *cx;
+				tm.b=sx *ssx;
+				tm.c=-sy *cy;
+				tm.d=sy *ssy;
+				tm.tx=tm.ty=0;
+			}
+			if (tm){
+				if (!m){
+					m=new Matrix();
+				}
+				m=Matrix.mul(m,tm,m);
 			}
 			if (m){
 				m.translate(params[1],params[2]);
@@ -17853,13 +17950,13 @@ var Laya=window.Laya=(function(window,document){
 		GraphicAnimation._temParam=[];
 		GraphicAnimation._I=null
 		__static(GraphicAnimation,
-		['_drawTextureCmd',function(){return this._drawTextureCmd=[["skin",null],["x",0],["y",0],["width",0],["height",0],["pivotX",0],["pivotY",0],["scaleX",1],["scaleY",1],["rotation",0],["alpha",1]];}
+		['_drawTextureCmd',function(){return this._drawTextureCmd=[["skin",null],["x",0],["y",0],["width",0],["height",0],["pivotX",0],["pivotY",0],["scaleX",1],["scaleY",1],["rotation",0],["alpha",1],["skewX",0],["skewY",0],["anchorX",0],["anchorY",0]];},'_tempMt',function(){return this._tempMt=new Matrix();}
 		]);
 		return GraphicAnimation;
 	})(FrameAnimation)
 
 
-	Laya.__init([EventDispatcher,LoaderManager,Render,Browser,Timer,LocalStorage,TimeLine]);
+	Laya.__init([LoaderManager,EventDispatcher,Render,Browser,Timer,LocalStorage,TimeLine]);
 })(window,document,Laya);
 
 (function(window,document,Laya){

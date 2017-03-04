@@ -64,7 +64,7 @@ package laya.debug.tools.enginehook
 			Stat.spriteCount++;
 			if (this[ShowBorderSign])
 			{
-				DebugTool.showDisBoundToSprite(this, DebugInfoLayer.I.cacheViewLayer, DebugConsts.SPRITE_REC_COLOR, DebugConsts.SPRITE_REC_LINEWIDTH);
+				DebugTool.showDisBoundToSprite(this as Sprite, DebugInfoLayer.I.cacheViewLayer, DebugConsts.SPRITE_REC_COLOR, DebugConsts.SPRITE_REC_LINEWIDTH);
 			}
 			RenderSprite.renders[_renderType]._fun(this, context, x + _x, y + _y);
 			_repaint = 0;

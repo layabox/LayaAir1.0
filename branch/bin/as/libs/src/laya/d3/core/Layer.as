@@ -1,4 +1,5 @@
 package laya.d3.core {
+	import laya.d3.component.physics.Collider;
 	
 	/**
 	 * <code>Layer</code> 类用于实现遮罩层。
@@ -36,7 +37,7 @@ package laya.d3.core {
 		public static function set activeLayers(value:int):void {
 			//29和30为预留蒙版层,不能禁用
 			_activeLayers = value | getLayerByNumber(29).mask | getLayerByNumber(30).mask;
-			for (var i:int = 0; i < _layerList.length; i++) {
+			for (var i:int = 0, n:int = _layerList.length; i < n; i++) {
 				var layer:Layer = _layerList[i];
 				layer._active = (layer._mask & _activeLayers) !== 0;
 			}
@@ -57,7 +58,7 @@ package laya.d3.core {
 		public static function set visibleLayers(value:int):void {
 			//29和30为预留蒙版层,不能禁用
 			_visibleLayers = value | getLayerByNumber(29).mask | getLayerByNumber(30).mask;
-			for (var i:int = 0; i < _layerList.length; i++) {
+			for (var i:int = 0, n:int = _layerList.length; i < n; i++) {
 				var layer:Layer = _layerList[i];
 				layer._visible = (layer._mask & _visibleLayers) !== 0;
 			}
@@ -145,15 +146,17 @@ package laya.d3.core {
 		}
 		
 		/**唯一标识ID。*/
-		protected var _id:int;
+		private var _id:int;
 		/**编号。*/
-		protected var _number:int;
+		private var _number:int;
 		/**蒙版值。*/
-		protected var _mask:int;
+		private var _mask:int;
 		/**是否激活。*/
-		protected var _active:Boolean = true;
+		private var _active:Boolean = true;
 		/**是否显示。*/
-		protected var _visible:Boolean = true;
+		private var _visible:Boolean = true;
+		/** @private */
+		public var _colliders:Vector.<Collider>;
 		
 		/**名字。*/
 		public var name:String;
@@ -226,11 +229,11 @@ package laya.d3.core {
 		 * 创建一个 <code>Layer</code> 实例。
 		 */
 		public function Layer() {
-			//由于AS3中无私有构造函数声明，只能在new时进行异常检测
+			if (_uniqueIDCounter > _layerCount)
+				throw new Error("不允许创建Layer，请参考函数getLayerByNumber、getLayerByMask、getLayerByName！");
 			_id = _uniqueIDCounter;
 			_uniqueIDCounter++;
-			if (_id > 1/*int.MIN_VALUE*/ + _layerCount)
-				throw new Error("不允许创建Layer，请参考函数getLayerByNumber、getLayerByMask、getLayerByName！");
+			_colliders = new Vector.<Collider>();
 		}
 	
 	}

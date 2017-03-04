@@ -5,6 +5,7 @@ package laya.d3.core {
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
+	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
 	import laya.d3.utils.Picker;
@@ -94,15 +95,12 @@ package laya.d3.core {
 		 * @param maxHeight 最小高度。
 		 * @param maxHeight 最大高度。
 		 */
-		public static function createFromImage(texture:*, minHeight:Number, maxHeight:Number):HeightMap {//TODO:texture类型，临时修复
+		public static function createFromImage(texture:Texture2D, minHeight:Number, maxHeight:Number):HeightMap {//TODO:texture类型，临时修复
 			var textureWidth:Number = texture.width;
 			var textureHeight:Number = texture.height;
 			var heightMap:HeightMap = new HeightMap(textureWidth, textureHeight, minHeight, maxHeight);
 			var compressionRatio:Number = (maxHeight - minHeight) / 254;
-			
-			Browser.canvas.size(textureWidth, textureHeight);
-			Browser.context.drawImage(texture._image, 0, 0,textureWidth,textureHeight);
-			var pixelsInfo:* = Browser.context.getImageData(0, 0, textureWidth, textureHeight).data;
+			var pixelsInfo:Uint8Array = texture.getPixels();
 			
 			var index:int = 0;
 			for (var w:int = 0; w < textureWidth; w++) {

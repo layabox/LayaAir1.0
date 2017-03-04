@@ -6,19 +6,20 @@ var __extends = (this && this.__extends) || function (d, b) {
 var MousePickingScene = (function (_super) {
     __extends(MousePickingScene, _super);
     function MousePickingScene() {
-        _super.call(this);
-        this.point = new Laya.Vector2();
-        this.ray = new Laya.Ray(new Laya.Vector3(), new Laya.Vector3());
-        this.raycastHit = new Laya.RaycastHit();
-        this.phasorSpriter3D = new Laya.PhasorSpriter3D();
-        this.camera = (this.addChild(new Laya.Camera(0, 0.1, 100)));
-        this.camera.transform.translate(new Laya.Vector3(0, 0.8, 1.5));
-        this.camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
-        this.sprite3d = this.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh"));
-        this.sprite3d.once(Laya.Event.HIERARCHY_LOADED, this, function (spirit3D) {
+        var _this = _super.call(this) || this;
+        _this.point = new Laya.Vector2();
+        _this.ray = new Laya.Ray(new Laya.Vector3(), new Laya.Vector3());
+        _this.raycastHit = new Laya.RaycastHit();
+        _this.phasorSpriter3D = new Laya.PhasorSpriter3D();
+        _this.camera = (_this.addChild(new Laya.Camera(0, 0.1, 100)));
+        _this.camera.transform.translate(new Laya.Vector3(0, 0.8, 1.5));
+        _this.camera.transform.rotate(new Laya.Vector3(-30, 0, 0), true, false);
+        _this.sprite3d = _this.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/simpleScene/B00IT001M000.v3f.lh"));
+        _this.sprite3d.once(Laya.Event.HIERARCHY_LOADED, _this, function (spirit3D) {
             this.setMaterial(spirit3D);
             spirit3D.transform.localScale = new Laya.Vector3(10, 10, 10);
         });
+        return _this;
     }
     MousePickingScene.prototype.setMaterial = function (spirit3D) {
         if (spirit3D instanceof Laya.MeshSprite3D) {

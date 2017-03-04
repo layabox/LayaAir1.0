@@ -1,22 +1,56 @@
 package laya.d3.shader {
+	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.scene.BaseScene;
+	import laya.d3.math.Vector3;
 	import laya.renders.Render;
 	import laya.utils.Browser;
 	import laya.webgl.shader.Shader;
 	
 	public class ShaderCompile3D {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+		public static var SHADERDEFINE_FSHIGHPRECISION:int = 0x1;
+		public static var SHADERDEFINE_VR:int = 0x2;
+		public static var SHADERDEFINE_FOG:int = 0x4;
+		public static var SHADERDEFINE_DIRECTIONLIGHT:int = 0x8;
+		public static var SHADERDEFINE_POINTLIGHT:int = 0x10;
+		public static var SHADERDEFINE_SPOTLIGHT:int = 0x20;
+		public static var SHADERDEFINE_UV:int = 0x40;
+		public static var SHADERDEFINE_COLOR:int = 0x80;
+		
+		private static var DEFINEREG:RegExp = new RegExp("defined(?=\\((.*?)\\))", "g");
+		private static var INCLUDE:RegExp = new RegExp("\\w+", "g");
+		private static var _globalInt2name:Array = [];
+		public static var _preCompileShader:Object = {}; //存储预编译结果，可以通过名字获得内容,目前不支持#ifdef嵌套和条件
 		public static const IFDEF_NO:int = 0;
 		public static const IFDEF_YES:int = 1;
 		public static const IFDEF_ELSE:int = 2;
-		private static var DEFINEREG:RegExp = new RegExp("defined(?=\\((.*?)\\))", "g");
-		private static var INCLUDE:RegExp = new RegExp("\\w+", "g");
 		public static const SHADERNAME2ID:Number = 0.0002;
-		public static var _preCompileShader:Object = {}; //存储预编译结果，可以通过名字获得内容,目前不支持#ifdef嵌套和条件
 		public static var debugMode:Boolean = false;
+		
+		/**
+		 * @private
+		 */
+		public static function __init__():void {
+			_globalRegDefine("FSHIGHPRECISION", SHADERDEFINE_FSHIGHPRECISION);
+			_globalRegDefine("VR", SHADERDEFINE_VR);
+			_globalRegDefine("FOG", SHADERDEFINE_FOG);
+			_globalRegDefine("DIRECTIONLIGHT", SHADERDEFINE_DIRECTIONLIGHT);
+			_globalRegDefine("POINTLIGHT", SHADERDEFINE_POINTLIGHT);
+			_globalRegDefine("SPOTLIGHT", SHADERDEFINE_SPOTLIGHT);
+			_globalRegDefine("UV", SHADERDEFINE_UV);
+			_globalRegDefine("COLOR", SHADERDEFINE_COLOR);
+			_globalRegDefine("BONE", SkinAnimations.SHADERDEFINE_BONE); //TODO:继续优化
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _globalRegDefine(name:String, value:int):void {
+			_globalInt2name[value] = name;
+		}
 		
 		/**
 		 * 添加预编译shader文件，主要是处理宏定义
@@ -24,9 +58,9 @@ package laya.d3.shader {
 		 * @param	vs
 		 * @param	ps
 		 */
-		public static function add(nameID:int, vs:String, ps:String,attributeMap:Object, uniformMap:Object):ShaderCompile3D {
+		public static function add(nameID:int, vs:String, ps:String, attributeMap:Object, uniformMap:Object):ShaderCompile3D {
 			var id:Number = SHADERNAME2ID * nameID;
-			return ShaderCompile3D._preCompileShader[id] = new ShaderCompile3D(id, vs, ps,attributeMap, uniformMap, Shader3D._includeFiles);
+			return ShaderCompile3D._preCompileShader[id] = new ShaderCompile3D(id, vs, ps, attributeMap, uniformMap, Shader3D._includeFiles);
 		}
 		
 		/**
@@ -35,7 +69,7 @@ package laya.d3.shader {
 		 * @return ShaderCompile3D。
 		 */
 		public static function get(name:String):ShaderCompile3D {
-			return ShaderCompile3D._preCompileShader[SHADERNAME2ID * Shader3D.nameKey.get(name)];
+			return ShaderCompile3D._preCompileShader[SHADERNAME2ID * Shader3D.nameKey.getID(name)];
 		}
 		
 		private var _name:Number;
@@ -49,6 +83,10 @@ package laya.d3.shader {
 		private var _spriteUniformMap:Object;
 		private var _cameraUniformMap:Object;
 		private var _sceneUniformMap:Object;
+		public var sharders:Array;
+		
+		private var _currentShaderDefinePower:int = 9;
+		public var _int2name:Array = [];
 		
 		public var _conchShader:*;//NATIVE		
 		
@@ -59,9 +97,14 @@ package laya.d3.shader {
 			_spriteUniformMap = {};
 			_cameraUniformMap = {};
 			_sceneUniformMap = {};
+			sharders = [];
+			sharders.length = 0x20;
 			//先要去掉注释,还没有完成			
 			_VSTXT = vs;
 			_PSTXT = ps;
+			
+			_int2name = _int2name.concat(_globalInt2name);//TODO:
+			
 			function split(str:String):Array//这里要修改
 			{
 				//replace(/(^\s*)|(\s*$)/g,"").split(/\s+/)
@@ -202,7 +245,34 @@ package laya.d3.shader {
 			}
 		}
 		
-		public function createShader(define:Object, shaderName:*):Shader3D {
+		/**
+		 * 根据宏动态生成shader文件，支持#include?COLOR_FILTER "parts/ColorFilter_ps_logic.glsl";条件嵌入文件
+		 * @param	name
+		 * @param	vs
+		 * @param	ps
+		 * @param	define 宏定义，格式:{name:value...}
+		 * @return
+		 */
+		public function withCompile(nameID:int, defineValue:int, cacheShaderID:Number):Shader3D {
+			var shader:Shader3D = sharders[cacheShaderID];
+			if (shader)
+				return shader;
+			
+			var defineGroup:Object = definesToNameDic(defineValue, _int2name);
+			if (ShaderCompile3D.debugMode) {
+				var defineGroupStr:String = "";
+				for (var key:String in defineGroup)
+					defineGroupStr += key + " ";
+				trace("DebugMode------Shader name:" + Shader3D.nameKey.getName(nameID) + " ID:" + nameID + ",shaderDefine result Value:" + defineValue + " define group:" + defineGroupStr + "------DebugMode");
+			}
+			
+			shader = createShader(defineGroup);
+			
+			(sharders[cacheShaderID] = shader);
+			return shader;
+		}
+		
+		public function createShader(define:Object):Shader3D {
 			var defMap:* = {};
 			var defineStr:String = "";
 			if (define) {
@@ -212,34 +282,44 @@ package laya.d3.shader {
 				}
 			}
 			
-			//trace("createShader:" + defineStr);
 			var vs:Array = _VS.toscript(defMap, []);
 			var ps:Array = _PS.toscript(defMap, []);
-			return Shader3D.create(defineStr + vs.join('\n'), defineStr + ps.join('\n'), shaderName, _attributeMap, _sceneUniformMap, _cameraUniformMap, _spriteUniformMap, _materialUniformMap, _renderElementUniformMap);
+			
+			return Shader3D.create(defineStr + vs.join('\n'), defineStr + ps.join('\n'), _attributeMap, _sceneUniformMap, _cameraUniformMap, _spriteUniformMap, _materialUniformMap, _renderElementUniformMap);
 		}
 		
-		
-		public function compileShader(shaderDefines:ShaderDefines3D, sceneShaderDefineValue:int, vertexShaderDefineValue:int, spriteShaderDefineValue:int, materialShaderDefineValue:int ):void {
-			var name:Number=_name/ShaderCompile3D.SHADERNAME2ID;
-			var preShadeDef:int = shaderDefines.getValue();
-			var defineValue:int = sceneShaderDefineValue | vertexShaderDefineValue | materialShaderDefineValue | spriteShaderDefineValue;
-			shaderDefines._value = defineValue;
-			var nameID:Number = name * ShaderCompile3D.SHADERNAME2ID + defineValue;
-			Shader3D.withCompile(name, shaderDefines, nameID);
-			shaderDefines.setValue(preShadeDef);
+		/**
+		 * 通过宏定义值预编译shader。
+		 * @param	defineValue。
+		 */
+		public function precompileShaderWithShaderDefine(defineValue:int):void {
+			withCompile(_name / ShaderCompile3D.SHADERNAME2ID, defineValue, _name + defineValue);
 		}
 		
-		public static var shaderDefines:ShaderDefines3D=new ShaderDefines3D();
-		
-		public function compileShaderWitthSingalValue(/*shaderDefines:ShaderDefines3D,*/shaderDefineValue:int):void {
-			var name:Number=_name/ShaderCompile3D.SHADERNAME2ID;
-			var preShadeDef:int = shaderDefines.getValue();
-			var defineValue:int = shaderDefineValue;
-			shaderDefines._value = defineValue;
-			var nameID:Number = name * ShaderCompile3D.SHADERNAME2ID + defineValue;
-			Shader3D.withCompile(name, shaderDefines, nameID);
-			shaderDefines.setValue(preShadeDef);
+		public function registerDefine(name:String):int {
+			var value:int = Math.pow(2, _currentShaderDefinePower++);//TODO:超界处理	
+			_int2name[value] = name;
+			
+			if (Render.isConchNode) {//NATIVE
+				__JS__("conch.regShaderDefine&&conch.regShaderDefine(name,value);")
+			}
+			return value;
 		}
+		
+		public function definesToNameDic(value:int, int2Name:Array):Object {
+			var o:Object = {};
+			var d:int = 1;
+			for (var i:int = 0; i < 32; i++) {
+				d = 1 << i;
+				if (d > value) break;
+				if (value & d) {
+					var name:String = int2Name[d];
+					name && (o[name] = "");
+				}
+			}
+			return o;
+		}
+	
 	}
 
 }

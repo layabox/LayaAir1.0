@@ -127,6 +127,8 @@
 
     "playOnAwake":true,
     "maxParticles":10,
+	"autoRandomSeed":true,
+	"randomSeed":111111111,
 	
 	"emission":{"enable":true,
 	    "emissionRate":1,"emissionRateTip":"暂不支持距离模式",

@@ -398,7 +398,7 @@ package laya.ui {
 			createText();
 			if (_text.text != value) {
 				value && !_text.displayedInStage && addChild(_text);
-				_text.text = (value+"").replace(/\\n/g, "\n");
+				_text.text = (value + "").replace(/\\n/g, "\n");
 				_setStateChanged();
 			}
 		}
@@ -633,7 +633,7 @@ package laya.ui {
 		
 		/**图标x,y偏移，格式：100,100*/
 		public function get iconOffset():String {
-			return _bitmap._offset ? null : _bitmap._offset.join(",");
+			return _bitmap._offset ? _bitmap._offset.join(",") : null;
 		}
 		
 		public function set iconOffset(value:String):void {

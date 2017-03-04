@@ -1,11 +1,9 @@
 package laya.d3.graphics {
-	import laya.d3.core.scene.OctreeNode;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.math.BoundBox;
-	import laya.d3.math.BoundSphere;
+	import laya.d3.core.scene.OctreeNode;
 	import laya.renders.Render;
 	import laya.runtime.IConchRenderObject;
 	

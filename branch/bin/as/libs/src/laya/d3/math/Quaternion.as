@@ -1,9 +1,10 @@
 package laya.d3.math {
+	import laya.d3.core.IClone;
 	
 	/**
 	 * <code>Quaternion</code> 类用于创建四元数。
 	 */
-	public class Quaternion {
+	public class Quaternion implements IClone{
 		/**@private */
 		private static var TEMPVector30:Vector3 = new Vector3();
 		/**@private */
@@ -546,15 +547,16 @@ package laya.d3.math {
 			e[3] = 1;
 		}
 		
+
 		/**
-		 *  克隆一个四元数
-		 * @param	out 输出的四元数
+		 * 克隆。
+		 * @param	destObject 克隆源。
 		 */
-		public function cloneTo(out:Quaternion):void {
+		public function cloneTo(destObject:*):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var i:int, s:Float32Array, d:Float32Array;
 			s = this.elements;
-			d = out.elements;
+			d = destObject.elements;
 			if (s === d) {
 				return;
 			}
@@ -564,36 +566,13 @@ package laya.d3.math {
 		}
 		
 		/**
-		 * 从一个四元数复制
-		 * @param	sou 源四元数
+		 * 克隆。
+		 * @return	 克隆副本。
 		 */
-		public function copyFrom(sou:Quaternion):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var i:int, s:Float32Array, d:Float32Array;
-			s = sou.elements;
-			d = this.elements;
-			if (s === d) {
-				return;
-			}
-			for (i = 0; i < 4; ++i) {
-				d[i] = s[i];
-			}
-		}
-		
-		/**
-		 * 从一个数组复制
-		 * @param	sou 源Float32Array数组
-		 */
-		public function copyFromArray(sou:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var i:int, d:Float32Array;
-			d = this.elements;
-			if (sou === d) {
-				return;
-			}
-			for (i = 0; i < 4; ++i) {
-				d[i] = sou[i];
-			}
+		public function clone():* {
+			var dest:Quaternion = __JS__("new this.constructor()");
+			cloneTo(dest);
+			return dest;
 		}
 		
 		/**

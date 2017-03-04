@@ -1,5 +1,5 @@
 package laya.d3.graphics {
-	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shader.ShaderCompile3D;
 	import laya.renders.Render;
 	import laya.d3.shader.ValusArray;
 	import laya.webgl.WebGLContext;
@@ -134,10 +134,10 @@ package laya.d3.graphics {
 				
 				switch (attributeName) {//TODO:临时
 				case VertexElementUsage.TEXTURECOORDINATE0: 
-					_addShaderDefine(ShaderDefines3D.UV);
+					_addShaderDefine(ShaderCompile3D.SHADERDEFINE_UV);
 					break;
 				case VertexElementUsage.COLOR0: 
-					_addShaderDefine(ShaderDefines3D.COLOR);
+					_addShaderDefine(ShaderCompile3D.SHADERDEFINE_COLOR);
 					break;
 				}
 			}

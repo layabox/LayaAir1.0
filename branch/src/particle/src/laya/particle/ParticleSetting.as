@@ -86,6 +86,8 @@ package laya.particle {
 		
 		/**false代表RGBA整体插值，true代表RGBA逐分量插值*/
 		public var colorComponentInter:Boolean = false;
+		/**false代表使用参数颜色数据，true代表使用原图颜色数据*/
+		public var disableColor:Boolean = false;
 		/**混合模式，待调整，引擎中暂无BlendState抽象*/
 		public var blendState:int = 0;
 		

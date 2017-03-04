@@ -20,8 +20,11 @@ package laya.debug.tools.enginehook
 		private static var nowFails:Object = { };
 		public static var enableFailDebugger:Boolean = true;
 		public static const FailSign:String = "LoadFailItems";
+		public static var isInited:Boolean = false;
 		public static function init():void
-		{		
+		{	
+			if (isInited) return;
+			isInited = true;
 			Laya.loader = new LoaderHook();
 			Laya.loader.on(Event.ERROR, null, onFail);
 			preFails = LocalStorage.getJSON(FailSign);

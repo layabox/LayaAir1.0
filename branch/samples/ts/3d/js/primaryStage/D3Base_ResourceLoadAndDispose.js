@@ -19,7 +19,8 @@ var ResourceLoadAndDispose = (function () {
             "../../res/threeDimen/staticModel/sphere/spheregridWhiteBlack.lmat",
             "../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg",
             "../../res/threeDimen/skyBox/skyCube.ltc",
-            "../../res/threeDimen/skinModel/dude/dude.ani"], null, processHandler);
+            "../../res/threeDimen/skinModel/dude/dude.ani"
+        ], null, processHandler);
         //3:单独加载模式。
         //加载层级文件，与其它资源区别为通常不缓存。
         var hierarchyUrl = "../../res/threeDimen/staticModel/sphere/sphere.lh";

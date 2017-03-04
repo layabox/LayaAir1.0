@@ -35,7 +35,12 @@ package laya.webgl.submit {
 			
 			var target:RenderTarget2D = scope.getValue(proName);
 			if (target)	{//??为什么会出现为空的情况
-				shaderValue.texture=target.source;
+				shaderValue.texture = target.source;
+				
+				if (shaderValue["strength"] && !shaderValue["blurInfo"])
+				{
+					shaderValue["blurInfo"] = [target.width, target.height];
+				}
 				shaderValue.upload();
 				blend();
 				Stat.drawCall++;

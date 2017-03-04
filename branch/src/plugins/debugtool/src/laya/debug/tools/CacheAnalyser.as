@@ -23,6 +23,7 @@ package laya.debug.tools
 		public static var I:CacheAnalyser = new CacheAnalyser();
 		private static var _nodeInfoDic:Object = { };
 		public static var showCacheSprite:Boolean = false;
+		public static var showRecacheSprite:Boolean = true;
 		public static function getNodeInfoByNode(node:Sprite):ReCacheRecInfo
 		{
 			IDTools.idObj(node);
@@ -39,10 +40,11 @@ package laya.debug.tools
 		{
 			if (!showCacheSprite) return;
 			if (DebugInfoLayer.I.isDebugItem(sprite)) return;
-			DebugTool.showDisBoundToSprite(sprite, DebugInfoLayer.I.cacheViewLayer, "#ff0000", 2);
+			DebugTool.showDisBoundToSprite(sprite, DebugInfoLayer.I.cacheViewLayer, DebugConsts.CANVAS_REC_COLOR, 4);
 		}
 		public function reCacheCanvas(sprite:Sprite,time:int=0):void
 		{
+			if (!showRecacheSprite) return;
 			if (DebugInfoLayer.I.isDebugItem(sprite)) return;
 			var info:ReCacheRecInfo;
 			info = getNodeInfoByNode(sprite);

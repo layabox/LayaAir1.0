@@ -6,8 +6,6 @@ uniform vec2 size;
 uniform mat4 mmat;
 #endif
 varying vec2 v_texcoord;
-
-#include?BLUR_FILTER  "parts/BlurFilter_vs_uniform.glsl";
 void main() {
   #ifdef WORLDMAT
   vec4 pos=mmat*position;
@@ -17,5 +15,4 @@ void main() {
   #endif
   
   v_texcoord = texcoord;
-  #include?BLUR_FILTER  "parts/BlurFilter_vs_logic.glsl";
 }

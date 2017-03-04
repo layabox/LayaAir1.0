@@ -20,7 +20,7 @@ package laya.webgl.resource {
 		
 		public var _width:Number;
 		public var _height:Number;
-		//private var _sp:Sprite;
+		private var _sp:Sprite;
 		
 		private var _clipRect:Rectangle = new Rectangle();
 		
@@ -28,15 +28,14 @@ package laya.webgl.resource {
 			
 		}
 		
-		/*public function setSP(sp:Sprite):void{
+		public function setSP(sp:Sprite):void{
 			_sp = sp;
-		}*/
+		}
 		
 		public function size(w:Number, h:Number):void {
 			if (_width === w && _height === h) 
 			{
-				repaint = true;
-				target.bitmap._released = true;
+				this.target.size(w, h);
 				return;
 			}
 		    repaint = true;
@@ -49,8 +48,7 @@ package laya.webgl.resource {
 			if (!target.hasListener(Event.RECOVERED))
 			{
 				target.on(Event.RECOVERED, this, function(e:Event):void{
-					repaint = true;
-					//_sp.repaint();
+					Laya.timer.callLater(_sp,_sp.repaint);
 				});
 			}
 		}
@@ -123,7 +121,7 @@ package laya.webgl.resource {
 			if (target) {
 				target.destroy();
 				target = null;
-				//_sp = null;
+				_sp = null;
 			}
 		}
 	}

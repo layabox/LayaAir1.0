@@ -240,6 +240,7 @@ package laya.utils {
 		/** 设备像素比。*/
 		public static function get pixelRatio():Number {
 			__init__();
+			if (userAgent.indexOf("Mozilla/6.0(Linux; Android 6.0; HUAWEI NXT-AL10 Build/HUAWEINXT-AL10)")>-1)return 2;
 			return RunDriver.getPixelRatio();
 		}
 		

@@ -1,6 +1,7 @@
 package laya.d3.core.material {
 	import laya.d3.core.IClone;
 	import laya.d3.core.Sprite3D;
+	import laya.d3.core.Transform3D;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderQueue;
@@ -15,7 +16,6 @@ package laya.d3.core.material {
 	import laya.d3.resource.SolidColorTexture2D;
 	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderCompile3D;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
@@ -221,11 +221,9 @@ package laya.d3.core.material {
 		/**
 		 * @private
 		 */
-		public function _getShader(stateShaderDefines:ShaderDefines3D, vertexShaderDefineValue:int, spriteShaderDefineValue:int):Shader3D {
-			var defineValue:int = (stateShaderDefines._value | vertexShaderDefineValue | _shaderDefineValue | spriteShaderDefineValue) & (~_disableShaderDefineValue);
-			stateShaderDefines._value = defineValue;
-			var nameID:Number = _sharderNameID * ShaderCompile3D.SHADERNAME2ID + defineValue;
-			_shader = Shader3D.withCompile(_sharderNameID, stateShaderDefines, nameID);
+		public function _getShader(stateDefineValue:int, vertexShaderDefineValue:int, spriteShaderDefineValue:int):Shader3D {
+			var defineValue:int = (stateDefineValue | vertexShaderDefineValue | _shaderDefineValue | spriteShaderDefineValue) & (~_disableShaderDefineValue);
+			_shader = _shaderCompile.withCompile(_sharderNameID, defineValue, _sharderNameID * ShaderCompile3D.SHADERNAME2ID + defineValue);
 			return _shader;
 		}
 		
@@ -475,13 +473,13 @@ package laya.d3.core.material {
 			_shader.uploadMaterialUniforms(_shaderValues.data);
 		}
 		
-		public function _setMaterialShaderParams(state:RenderState, projectionView:Matrix4x4, worldMatrix:Matrix4x4, mesh:IRenderable, material:BaseMaterial):void {
+		public function _setMaterialShaderParams(state:RenderState):void {
 		}
 		
 		/**
 		 * 设置渲染相关状态。
 		 */
-		public function _setRenderState(isTarget:Boolean):void {
+		public function _setRenderStateBlendDepth():void {
 			var gl:WebGLContext = WebGL.mainContext;
 			WebGLContext.setDepthTest(gl, depthTest);
 			WebGLContext.setDepthMask(gl, depthWrite);
@@ -498,18 +496,47 @@ package laya.d3.core.material {
 				//TODO:
 				break;
 			}
-			
+		}
+		
+		/**
+		 * 设置渲染相关状态。
+		 */
+		public function _setRenderStateFrontFace(isTarget:Boolean, transform:Transform3D):void {
+			var gl:WebGLContext = WebGL.mainContext;
+			var forntFace:int;
 			switch (cull) {
 			case CULL_NONE: 
 				WebGLContext.setCullFace(gl, false);
 				break;
 			case CULL_FRONT: 
 				WebGLContext.setCullFace(gl, true);
-				WebGLContext.setFrontFace(gl, isTarget ? WebGLContext.CW : WebGLContext.CCW);
+				if (isTarget) {
+					if (transform._isFrontFaceInvert)
+						forntFace = WebGLContext.CCW;
+					else
+						forntFace = WebGLContext.CW;
+				} else {
+					if (transform._isFrontFaceInvert)
+						forntFace = WebGLContext.CW;
+					else
+						forntFace = WebGLContext.CCW;
+				}
+				WebGLContext.setFrontFace(gl, forntFace);
 				break;
 			case CULL_BACK: 
 				WebGLContext.setCullFace(gl, true);
-				WebGLContext.setFrontFace(gl, isTarget ? WebGLContext.CCW : WebGLContext.CW);
+				if (isTarget) {
+					if (transform._isFrontFaceInvert)
+						forntFace = WebGLContext.CW;
+					else
+						forntFace = WebGLContext.CCW;
+				} else {
+					if (transform._isFrontFaceInvert)
+						forntFace = WebGLContext.CCW;
+					else
+						forntFace = WebGLContext.CW;
+				}
+				WebGLContext.setFrontFace(gl, forntFace);
 				break;
 			}
 		}
@@ -532,7 +559,7 @@ package laya.d3.core.material {
 		 * @param name 名称。
 		 */
 		public function setShaderName(name:String):void {
-			_sharderNameID = Shader3D.nameKey.get(name);
+			_sharderNameID = Shader3D.nameKey.getID(name);
 			_shaderCompile = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * _sharderNameID];
 			if (_conchMaterial) {//NATIVE
 				_conchMaterial.setShader(_shaderCompile._conchShader);

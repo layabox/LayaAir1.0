@@ -195,7 +195,6 @@ package laya.d3.core {
 		 * @param value 渲染目标的尺寸。
 		 */
 		public function set renderTargetSize(value:Size):void {
-			
 			if (renderTarget != null && _renderTargetSize != value) {
 				// Recreate render target with new size
 				//AssetContentManager userContentManager = AssetContentManager.CurrentContentManager;
@@ -331,7 +330,7 @@ package laya.d3.core {
 		 * @param	nearPlane 近裁面。
 		 * @param	farPlane 远裁面。
 		 */
-		public function BaseCamera(nearPlane:Number = 0.1, farPlane:Number = 1000) {
+		public function BaseCamera(nearPlane:Number = 0.3, farPlane:Number = 1000) {
 			_tempVector3 = new Vector3();
 			
 			_position = new Vector3();
@@ -407,7 +406,6 @@ package laya.d3.core {
 		 * @param layer 图层。
 		 */
 		public function addLayer(layer:Layer):void {
-			
 			if (layer.number === 29 || layer.number == 30)//29和30为预留蒙版层,已默认存在
 				return;
 			

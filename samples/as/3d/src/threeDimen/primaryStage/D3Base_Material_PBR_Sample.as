@@ -33,14 +33,20 @@ package threeDimen.primaryStage {
 	
 	public class D3Base_Material_PBR_Sample {
 		public function D3Base_Material_PBR_Sample() {
-			Laya3D.init(0, 0, true);
-			Laya.stage.scaleMode = Stage.SCALE_FULL;
+			if(true){
+				Laya3D.init(0, 0, false);
+				Laya.stage.scaleMode = Stage.SCALE_FULL;
+			}else {
+				//缩放来提高效率
+				Laya3D.init(600, 800, false);
+				Laya.stage.scaleMode = Stage.SCALE_EXACTFIT;			
+			}
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			scene.initOctree(512, 512, 512, 5 );
+			//scene.initOctree(512, 512, 512, 5 );
 			/*
 			var sPath = "http://10.10.20.200:7788/teapot/teapot-Teapot001.lm";
 			var pMesh = Mesh.load(sPath);
@@ -48,40 +54,44 @@ package threeDimen.primaryStage {
 			*/
 			
 			
-			var pMaterial:PBRMaterial = new PBRMaterial();
-			pMaterial.envmapTexture = DataTexture2D.load('./threeDimen/env/AtticRoom/env.mipmaps');
-			pMaterial.diffuseTexture = Texture2D.load('./threeDimen/pbr/basecolor.png');
-			pMaterial.normalTexture = Texture2D.load('./threeDimen/pbr/normal.png');
-			pMaterial.pbrInfoTexture = Texture2D.load('./threeDimen/pbr/orm.png');
-			pMaterial.texPrefilterDiff = Texture2D.load('./threeDimen/env/AtticRoom/envdiff.png');
-			pMaterial.pbrlutTexture = DataTexture2D.load('./threeDimen/pbrlut.raw', 256, 256, 0x2600, 0x2600);//nearest
-			pMaterial.pbrlutTexture.mipmap = false;
-			
-			//pMaterial.specularColor = new Vector4(0.95, 0.64, 0.54);
-			pMaterial.roughness = 0.15;
-			
-			var pMeshSprite:MeshSprite3D = scene.addChild( new MeshSprite3D(new SphereMesh(1, 32, 32))) as MeshSprite3D;
-			pMeshSprite.meshRender.sharedMaterial = pMaterial;
-			
-			scene.addChild( pMeshSprite );
-			pMeshSprite.transform.localPosition = new Vector3(0, 0, 0);
-			//pMeshSprite.transform.localRotation = new Quaternion(-0.7071068, 0.0, 0.0, 0.7071068);
-			pMeshSprite.transform.localScale = new Vector3(1, 1, 1);
-			
-			//var skinMesh:MeshSprite3D = scene.addChild(new MeshSprite3D(Mesh.load("./threeDimen/models/1/1-MF000.lm"))) as MeshSprite3D;
-			//skinMesh.transform.localRotationEuler = new Vector3(0, 3.14, 0);
-			var staticMesh:Sprite3D = scene.addChild(Sprite3D.load("./threeDimen/models/1/1.lh")) as Sprite3D;
+			var env:String = 'inthegarden';
+			//var env = 'AtticRoom';
+			//var env = 'overcloud';
 			
 			var camera:Camera = new Camera(0, 0.1, 1000);
 			scene.addChild(camera);
-			camera.transform.translate(new Vector3(0, 3, 4.5));
+			camera.transform.translate(new Vector3(0, 1.7, 1.0));
 			camera.transform.rotate(new Vector3( -30, 0, 0), true, false);
 			camera.addComponent(CameraMoveScript);
 			camera.clearFlag = BaseCamera.CLEARFLAG_SKY;
 			
 			var skyDome:SkyDome = new SkyDome();
 			camera.sky = skyDome;
-			skyDome.texture = Texture2D.load("./threeDimen/env/AtticRoom/env.png");
+			skyDome.texture = Texture2D.load("./threeDimen/env/" + env + "/env.png");
+			skyDome.environmentDiffuse = Texture2D.load('./threeDimen/env/' + env + '/envdiff.png');
+			skyDome.environmentSpecular = DataTexture2D.load('./threeDimen/env/'+env+'/env.mipmaps');
+			
+			var mtl1:PBRMaterial = new PBRMaterial();
+			mtl1.diffuseTexture = Texture2D.load('./threeDimen/pbr/basecolor.png');
+			mtl1.normalTexture = Texture2D.load('./threeDimen/pbr/normal.png');
+			mtl1.pbrInfoTexture = Texture2D.load('./threeDimen/pbr/orm.png');
+			var sphere1:MeshSprite3D = scene.addChild( new MeshSprite3D(new SphereMesh(0.1, 32, 32))) as MeshSprite3D;
+			sphere1.meshRender.sharedMaterial = mtl1;
+			sphere1.transform.localPosition = new Vector3(0, 0, 0);
+			sphere1.transform.localScale = new Vector3(1, 1, 1);
+			var mtl2:PBRMaterial = new PBRMaterial();
+			var land:MeshSprite3D = scene.addChild( new MeshSprite3D(Mesh.load('./threeDimen/models/tai/tai.lm'))) as MeshSprite3D;
+			land.meshRender.sharedMaterial = mtl2;
+			mtl2.diffuseTexture = Texture2D.load('./threeDimen/env/'+env+'/ny.png');
+			mtl2.normalTexture = Texture2D.load('./threeDimen/pbr/normal.png');
+			mtl2.pbrInfoTexture = Texture2D.load('./threeDimen/pbr/mirror.png');
+			
+			land.transform.localPosition = new Vector3(0, -0.1, 0);
+			land.transform.localRotationEuler = new Vector3( -3.14 / 2, 0, 0);
+			
+			//var skinMesh:MeshSprite3D = scene.addChild(new MeshSprite3D(Mesh.load("./threeDimen/models/1/1-MF000.lm"))) as MeshSprite3D;
+			//skinMesh.transform.localRotationEuler = new Vector3(0, 3.14, 0);
+			var girl:Sprite3D = scene.addChild(Sprite3D.load("./threeDimen/models/1/1.lh")) as Sprite3D;
 			
 			Laya.stage.on(Event.KEY_UP, this, onKeyUp);
 		}

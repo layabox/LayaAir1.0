@@ -1951,6 +1951,7 @@
 	//class laya.ani.AnimationPlayer extends laya.events.EventDispatcher
 	var AnimationPlayer=(function(_super){
 		function AnimationPlayer(){
+			this._destroyed=false;
 			this._templet=null;
 			this._currentTime=NaN;
 			this._currentFrameTime=NaN;
@@ -1972,6 +1973,7 @@
 			this.playbackRate=1.0;
 			this.returnToZeroStopped=true;
 			AnimationPlayer.__super.call(this);
+			this._destroyed=false;
 			this._currentAnimationClipIndex=-1;
 			this._currentKeyframeIndex=-1;
 			this._currentTime=0.0;
@@ -2005,7 +2007,7 @@
 				var aniFullFrame=[];
 				for (var j=0,jNum=templet.getAnimation(i).nodes.length;j < jNum;j++){
 					var node=templet.getAnimation(i).nodes[j];
-					var frameCount=Math.floor(node.playTime/ cacheFrameInterval+0.01);
+					var frameCount=Math.floor(node.playTime / cacheFrameInterval+0.01);
 					var nodeFullFrames=new Uint16Array(frameCount+1);
 					var lastFrameIndex=-1;
 					for (var n=0,nNum=node.keyFrame.length;n < nNum;n++){
@@ -2030,11 +2032,18 @@
 		/**
 		*@private
 		*/
+		__proto._onAnimationTempletLoaded=function(){
+			(this.destroyed)|| (this._calculatePlayDuration());
+		}
+
+		/**
+		*@private
+		*/
 		__proto._calculatePlayDuration=function(){
 			if (this.state!==/*laya.ani.AnimationState.stopped*/0){
 				var oriDuration=this._templet.getAniDuration(this._currentAnimationClipIndex);
 				(this._playEnd===0)&& (this._playEnd=oriDuration);
-				if (this._playEnd> oriDuration)
+				if (this._playEnd > oriDuration)
 					this._playEnd=oriDuration;
 				this._playDuration=this._playEnd-this._playStart;
 			}
@@ -2047,6 +2056,7 @@
 			this.offAll();
 			this._templet=null;
 			this._fullFrames=null;
+			this._destroyed=true;
 		}
 
 		/**
@@ -2084,7 +2094,7 @@
 			if (this._templet.loaded)
 				this._calculatePlayDuration();
 			else
-			this._templet.once(/*laya.events.Event.LOADED*/"loaded",this,this._calculatePlayDuration);
+			this._templet.once(/*laya.events.Event.LOADED*/"loaded",this,this._onAnimationTempletLoaded);
 			this.update(0);
 		}
 
@@ -2342,6 +2352,14 @@
 		*/
 		__getset(0,__proto,'cacheFrameRateInterval',function(){
 			return this._cacheFrameRateInterval;
+		});
+
+		/**
+		*获取是否已销毁。
+		*@return 是否已销毁。
+		*/
+		__getset(0,__proto,'destroyed',function(){
+			return this._destroyed;
 		});
 
 		return AnimationPlayer;
@@ -3735,6 +3753,8 @@
 			this._atlasPath=null;
 			this._url=null;
 			this._isRoot=false;
+			this._completeHandler=null;
+			this._endFrame=-1;
 			this.interval=30;
 			this.loop=false;
 			MovieClip.__super.call(this);
@@ -3833,6 +3853,15 @@
 			}
 			this._parse(this._playIndex);
 			if (this._labels && this._labels[this._playIndex])this.event(/*laya.events.Event.LABEL*/"label",this._labels[this._playIndex]);
+			if (this._endFrame!=-1&&this._endFrame==this._playIndex){
+				this._endFrame=-1;
+				if (this._completeHandler !=null){
+					var handler=this._completeHandler;
+					this._completeHandler=null;
+					handler.run();
+				}
+				this.stop();
+			}
 		}
 
 		/**
@@ -4084,6 +4113,18 @@
 			if (!this._parentMovieClip)Laya.timer.loop(this.interval,this,this.updates,null,true);
 		}
 
+		/**
+		*从开始索引播放到结束索引，结束之后出发complete回调
+		*@param start 开始索引
+		*@param end 结束索引
+		*@param complete 结束回调
+		*/
+		__proto.playTo=function(start,end,complete){
+			this._completeHandler=complete;
+			this._endFrame=end;
+			this.play(start,false);
+		}
+
 		/**当前播放索引。*/
 		__getset(0,__proto,'index',function(){
 			return this._playIndex;
@@ -4140,7 +4181,6 @@
 			this.skinDic={};
 			this.subTextureDic={};
 			this.isParseFail=false;
-			this.url=null;
 			this.yReverseMatrix=null;
 			this.drawOrderAniArr=[];
 			this.eventAniArr=[];

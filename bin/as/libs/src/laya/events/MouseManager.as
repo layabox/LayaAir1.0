@@ -254,7 +254,7 @@ package laya.events {
 				}
 			}
 			
-			isHit = hitTest(sp, mouseX, mouseY);
+			isHit = hitTest(sp, scrollRect ? mouseX - scrollRect.x : mouseX, scrollRect ? mouseY - scrollRect.y : mouseY);
 			
 			if (isHit) {
 				_target = sp;

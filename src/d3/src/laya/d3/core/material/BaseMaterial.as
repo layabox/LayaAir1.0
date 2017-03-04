@@ -542,19 +542,6 @@ package laya.d3.core.material {
 		}
 		
 		/**
-		 *@private
-		 */
-		override public function onAsynLoaded(url:String, data:*, params:Array):void {//TODO:移导子类
-			var jsonData:Object = data[0];
-			var textureMap:Object = data[1];
-			var customHandler:Handler = Handler.create(null, Utils3D._parseStandardMaterial, [textureMap], false);
-			ClassUtils.createByJson(jsonData as Object, this, null, customHandler, null);
-			customHandler.recover();
-			//_loaded = true;
-			event(Event.LOADED, this);
-		}
-		
-		/**
 		 * 设置使用Shader名字。
 		 * @param name 名称。
 		 */
@@ -564,6 +551,59 @@ package laya.d3.core.material {
 			if (_conchMaterial) {//NATIVE
 				_conchMaterial.setShader(_shaderCompile._conchShader);
 			}
+		}
+		
+		override public function onAsynLoaded(url:String, data:*, params:Array):void {
+			var jsonData:Object = data[0];
+			var textureMap:Object = data[1];
+			switch (jsonData.version) {
+			case "LAYAMATERIAL:01": 
+				var props:Object = jsonData.props;
+				var i:int, n:int;
+				for (var prop:String in props) {
+					switch (prop) {
+					case "colors": 
+						var colors:Array = props[prop];
+						for (i = 0, n = colors.length; i < n; i++) {
+							var color:Object = colors[i];
+							var colorValue:Array = color.value;
+							switch (colorValue.length) {
+							case 2: 
+								this[color.name] = new Vector2(colorValue[0], colorValue[1]);
+								break;
+							case 3: 
+								this[color.name] = new Vector3(colorValue[0], colorValue[1], colorValue[2]);
+								break;
+							case 4: 
+								this[color.name] = new Vector4(colorValue[0], colorValue[1], colorValue[2], colorValue[3]);
+								break;
+							default: 
+								throw new Error("BaseMaterial:unkonwn color length.");
+								
+							}
+							
+						}
+						break;
+					case "textures": 
+						var textures:Array = props[prop];
+						for (i = 0, n = textures.length; i < n; i++) {
+							var texture:Object = textures[i];
+							var path:String = texture.path;
+							(path) && (this[texture.name] = Loader.getRes(textureMap[path]));
+							//break;
+						}
+						break;
+					default: 
+						this[prop] = props[prop];
+					}
+				}
+				break;
+			default: 
+				throw new Error("BaseMaterial:unkonwn version.");
+			}
+			
+			//_loaded = true;
+			event(Event.LOADED, this);
 		}
 		
 		/**

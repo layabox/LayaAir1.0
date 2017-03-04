@@ -112,15 +112,22 @@ package laya.net {
 				var creatItem:Array = createMap[extension];
 				if (!clas) clas = creatItem[0];
 				var type:String = creatItem[1];
-				
-				if (clas === Texture) type = "htmlimage";
-				item = clas ? new clas() : null;
-				load(url, Handler.create(null, onLoaded), progress, type, priority, false, null, true);
-				function onLoaded(data:*):void {
-					item && item.onAsynLoaded.call(item, url, data, params);
-					if (complete) complete.run();
+				if (extension == "atlas") {
+					load(url, complete, progress, type, priority, cache);
+				} else {
+					if (clas === Texture) type = "htmlimage";
+					item = clas ? new clas() : null;
+					load(url, Handler.create(null, onLoaded), progress, type, priority, false, null, true);
+					function onLoaded(data:*):void {
+						item && item.onAsynLoaded.call(item, url, data, params);
+						if (complete) complete.run();
+					}
+					if (cache) {
+						var formatURL:String = URL.formatURL(url);
+						cacheRes(formatURL, item);
+						item.url = formatURL;
+					}
 				}
-				if (cache) cacheRes(url, item);
 			} else {
 				progress && progress.runWith(1);
 				complete && complete.run();

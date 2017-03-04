@@ -46,7 +46,8 @@ package threeDimen.primaryStage {
 			
 			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
 			camera.transform.translate(new Vector3(0, 4.2, 2.6));
-			camera.transform.rotate(new Vector3(-45, 0, 0), true, false);
+			camera.transform.rotate(new Vector3( -45, 0, 0), true, false);
+			camera.clearColor = new Vector4(0.3, 0.3, 0.3, 1.0);
 			
 			terrain = Mesh.load("../../../../res/threeDimen/staticModel/simpleScene/B00MP001M-DEFAULT01.lm");
 			terrainSprite = scene.addChild(MeshTerrainSprite3D.createFromMesh(terrain, 129, 129)) as MeshTerrainSprite3D;

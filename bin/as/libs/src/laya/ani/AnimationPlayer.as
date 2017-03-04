@@ -25,6 +25,8 @@ package laya.ani {
 	 * <code>AnimationPlayer</code> 类用于动画播放器。
 	 */
 	public class AnimationPlayer extends EventDispatcher implements IDestroy {
+		/**@private */
+		private var _destroyed:Boolean;
 		/** 数据模板*/
 		private var _templet:AnimationTemplet;
 		/** 当前精确时间，不包括重播时间*/
@@ -258,7 +260,16 @@ package laya.ani {
 			return AnimationState.playing;
 		}
 		
+		/**
+		 * 获取是否已销毁。
+		 * @return 是否已销毁。
+		 */
+		public function get destroyed():Boolean {
+			return _destroyed;
+		}
+		
 		public function AnimationPlayer() {
+			_destroyed = false;
 			_currentAnimationClipIndex = -1;
 			_currentKeyframeIndex = -1;
 			_currentTime = 0.0;
@@ -292,7 +303,7 @@ package laya.ani {
 				
 				for (var j:int = 0, jNum:int = templet.getAnimation(i).nodes.length; j < jNum; j++) {
 					var node:* = templet.getAnimation(i).nodes[j];
-					var frameCount:int = Math.floor(node.playTime/ cacheFrameInterval+0.01 );
+					var frameCount:int = Math.floor(node.playTime / cacheFrameInterval + 0.01);
 					var nodeFullFrames:Uint16Array = new Uint16Array(frameCount + 1);//本骨骼对应的全帧关键帧编号
 					
 					var lastFrameIndex:int = -1;
@@ -318,8 +329,14 @@ package laya.ani {
 				
 				anifullFrames.push(aniFullFrame);
 			}
-			//event(Event.CACHEFRAMEINDEX_CHANGED, this);
 		}
+		/**
+		 * @private
+		 */
+		private function _onAnimationTempletLoaded():void {
+			(destroyed) || (_calculatePlayDuration());
+		}
+		
 		
 		/**
 		 * @private
@@ -329,7 +346,7 @@ package laya.ani {
 				var oriDuration:int = _templet.getAniDuration(_currentAnimationClipIndex);
 				(_playEnd === 0) && (_playEnd = oriDuration);
 				
-				if (_playEnd> oriDuration)//以毫秒为最小时间单位,取整。FillTextureSprite
+				if (_playEnd > oriDuration)//以毫秒为最小时间单位,取整。FillTextureSprite
 					_playEnd = oriDuration;
 				
 				_playDuration = _playEnd - _playStart;
@@ -343,6 +360,7 @@ package laya.ani {
 			offAll();
 			_templet = null;
 			_fullFrames = null;
+			_destroyed = true;
 		}
 		
 		/**
@@ -379,7 +397,7 @@ package laya.ani {
 			if (_templet.loaded)
 				_calculatePlayDuration();
 			else
-				_templet.once(Event.LOADED, this, _calculatePlayDuration);
+				_templet.once(Event.LOADED, this, _onAnimationTempletLoaded);
 			
 			update(0);//如果分段播放,可修正帧率
 		}
@@ -423,7 +441,7 @@ package laya.ani {
 			if ((_overallDuration !== 0 && _elapsedPlaybackTime >= _overallDuration) || (_overallDuration === 0 && _elapsedPlaybackTime >= currentAniClipPlayDuration)) {
 				//矫正末帧数据
 				_currentTime = currentAniClipPlayDuration;
-				_currentKeyframeIndex = Math.floor(currentAniClipPlayDuration / cacheFrameInterval+0.01);
+				_currentKeyframeIndex = Math.floor(currentAniClipPlayDuration / cacheFrameInterval + 0.01);
 				_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
 				
 				_currentAnimationClipIndex /*= _currentKeyframeIndex*/ = -1;//动画结束	

@@ -4,21 +4,31 @@
 	 * @private
 	 */
 	public class ArrayBuffer extends ByteArray {
-		public var byteLength:int;
+		//public var byteLength:int;
 		public function ArrayBuffer(...args) { 
 			if ( args.length == 1 ) {
 				if ( args[0] is int ) {
 					this.length = args[0];
-
+					this.position = 0;
+					this.length = 0;
 				}
 				if ( args[0] is ByteArray ) {
 					var vs : ByteArray = (args[0] as ByteArray);
 					this.length = vs.length;
 					this.writeBytes( vs, 0, byteLength );
 				}			
-			}
+			} 
 			
-			byteLength = this.length;
+			//byteLength = this.length;
+		}
+		
+		public function get byteLength():int
+		{
+			return this.length;
+		}
+		public function set byteLength(value:int):void
+		{
+			this.length = value;
 		}
 				
 		/**
@@ -40,7 +50,7 @@
 			if ( end == -1 ) end = this.length;
 			var len : int = end - begin;
 			var tr : ArrayBuffer = new ArrayBuffer( len );
-			tr.writeBytes( this, begin, len );			
+			len&&tr.writeBytes( this, begin, len );			
 			return tr;
 		}
 		

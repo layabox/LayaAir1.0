@@ -309,9 +309,9 @@ package laya.ui {
 			if (_scrollBar != value) {
 				_scrollBar = value;
 				if (value) {
+					_isVertical = _scrollBar.isVertical;
 					addChild(_scrollBar);
 					_scrollBar.on(Event.CHANGE, this, onScrollBarChange);
-					_isVertical = _scrollBar.isVertical;
 				}
 			}
 		}
@@ -329,8 +329,15 @@ package laya.ui {
 		}
 		
 		public function set itemRender(value:*):void {
-			_itemRender = value;
-			_setCellChanged();
+			if (_itemRender != value) {
+				_itemRender = value;
+				//销毁老单元格
+				for (var i:int = _cells.length - 1; i > -1; i--) {
+					_cells[i].destroy();
+				}
+				_cells.length = 0;
+				_setCellChanged();
+			}
 		}
 		
 		/**@inheritDoc */
@@ -401,17 +408,11 @@ package laya.ui {
 		protected function changeCells():void {
 			_cellChanged = false;
 			if (_itemRender) {
-				//销毁老单元格
-				for (var i:int = _cells.length - 1; i > -1; i--) {
-					_cells[i].destroy();
-				}
-				_cells.length = 0;
-				
 				//获取滚动条
 				scrollBar = getChildByName("scrollBar") as ScrollBar;
 				
-				//自适应宽高
-				var cell:Box = createItem();
+				//自适应宽高				
+				var cell:Box = _getOneCell();
 				
 				var cellWidth:Number = (cell.width + _spaceX) || 1;
 				var cellHeight:Number = (cell.height + _spaceY) || 1;
@@ -440,9 +441,16 @@ package laya.ui {
 			}
 		}
 		
+		private function _getOneCell():Box {
+			if (_cells.length === 0) {
+				_cells.push(createItem());
+			}
+			return _cells[0];
+		}
+		
 		private function _createItems(startY:int, numX:int, numY:int):void {
 			var box:Box = _content;
-			var cell:Box = createItem();
+			var cell:Box = _getOneCell();
 			var cellWidth:Number = cell.width + _spaceX;
 			var cellHeight:Number = cell.height + _spaceY;
 			
@@ -455,9 +463,21 @@ package laya.ui {
 				box = cacheBox;
 			}
 			
+			var arr:Array = [];
+			for (var i:int = _cells.length - 1; i > -1; i--) {
+				var item:Box = _cells[i];
+				item.removeSelf();
+				arr.push(item);
+			}
+			_cells.length = 0;
+			
 			for (var k:int = startY; k < numY; k++) {
 				for (var l:int = 0; l < numX; l++) {
-					cell = createItem();
+					if (arr.length) {
+						cell = arr.pop();
+					} else {
+						cell = createItem();
+					}
 					cell.x = (_isVertical ? l : k) * cellWidth - box.x;
 					cell.y = (_isVertical ? k : l) * cellHeight - box.y;
 					cell.name = "item" + (k * numX + l);

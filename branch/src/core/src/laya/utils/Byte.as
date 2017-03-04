@@ -290,7 +290,7 @@ package laya.utils {
 		 */
 		public function writeUint8(value:int):void {
 			ensureWrite(this._pos_ + 1);
-			_d_.setUint8(_pos_, value, _xd_);
+			_d_.setUint8(_pos_, value);
 			_pos_++;
 		}
 		

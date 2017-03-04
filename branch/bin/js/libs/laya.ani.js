@@ -459,9 +459,11 @@
 		*@param boneMatrixArray 当前帧的骨骼矩阵
 		*/
 		__proto.skinMesh=function(boneMatrixArray,skinSprite,alpha){
+			var tTexture=this.currTexture;
 			var tBones=this.currDisplayData.bones;
 			var tUvs;
 			if (this._diyTexture){
+				tTexture=this._diyTexture;
 				if (!this._curDiyUV){
 					this._curDiyUV=[];
 				}
@@ -524,7 +526,7 @@
 			}
 			this._mVerticleArr=tVertices;
 			tIBArray=tTriangles;
-			skinSprite.init2(this.currTexture,null,tIBArray,this._mVerticleArr,tUvs);
+			skinSprite.init2(tTexture,null,tIBArray,this._mVerticleArr,tUvs);
 		}
 
 		/**
@@ -1949,6 +1951,7 @@
 	//class laya.ani.AnimationPlayer extends laya.events.EventDispatcher
 	var AnimationPlayer=(function(_super){
 		function AnimationPlayer(){
+			this._destroyed=false;
 			this._templet=null;
 			this._currentTime=NaN;
 			this._currentFrameTime=NaN;
@@ -1970,6 +1973,7 @@
 			this.playbackRate=1.0;
 			this.returnToZeroStopped=true;
 			AnimationPlayer.__super.call(this);
+			this._destroyed=false;
 			this._currentAnimationClipIndex=-1;
 			this._currentKeyframeIndex=-1;
 			this._currentTime=0.0;
@@ -2003,7 +2007,7 @@
 				var aniFullFrame=[];
 				for (var j=0,jNum=templet.getAnimation(i).nodes.length;j < jNum;j++){
 					var node=templet.getAnimation(i).nodes[j];
-					var frameCount=Math.floor(node.playTime/ cacheFrameInterval+0.01);
+					var frameCount=Math.floor(node.playTime / cacheFrameInterval+0.01);
 					var nodeFullFrames=new Uint16Array(frameCount+1);
 					var lastFrameIndex=-1;
 					for (var n=0,nNum=node.keyFrame.length;n < nNum;n++){
@@ -2028,11 +2032,18 @@
 		/**
 		*@private
 		*/
+		__proto._onAnimationTempletLoaded=function(){
+			(this.destroyed)|| (this._calculatePlayDuration());
+		}
+
+		/**
+		*@private
+		*/
 		__proto._calculatePlayDuration=function(){
 			if (this.state!==/*laya.ani.AnimationState.stopped*/0){
 				var oriDuration=this._templet.getAniDuration(this._currentAnimationClipIndex);
 				(this._playEnd===0)&& (this._playEnd=oriDuration);
-				if (this._playEnd> oriDuration)
+				if (this._playEnd > oriDuration)
 					this._playEnd=oriDuration;
 				this._playDuration=this._playEnd-this._playStart;
 			}
@@ -2045,6 +2056,7 @@
 			this.offAll();
 			this._templet=null;
 			this._fullFrames=null;
+			this._destroyed=true;
 		}
 
 		/**
@@ -2082,7 +2094,7 @@
 			if (this._templet.loaded)
 				this._calculatePlayDuration();
 			else
-			this._templet.once(/*laya.events.Event.LOADED*/"loaded",this,this._calculatePlayDuration);
+			this._templet.once(/*laya.events.Event.LOADED*/"loaded",this,this._onAnimationTempletLoaded);
 			this.update(0);
 		}
 
@@ -2340,6 +2352,14 @@
 		*/
 		__getset(0,__proto,'cacheFrameRateInterval',function(){
 			return this._cacheFrameRateInterval;
+		});
+
+		/**
+		*获取是否已销毁。
+		*@return 是否已销毁。
+		*/
+		__getset(0,__proto,'destroyed',function(){
+			return this._destroyed;
 		});
 
 		return AnimationPlayer;
@@ -3022,12 +3042,13 @@
 			var tCurrTime=Laya.timer.currTimer;
 			var preIndex=this._player.currentKeyframeIndex;
 			if (autoKey){
-				this._player.update(tCurrTime-this._lastTime)
+				this._player.update(tCurrTime-this._lastTime);
 				}else{
 				preIndex=-1;
 			}
 			this._lastTime=tCurrTime;
-			this._clipIndex=this._player.currentKeyframeIndex;
+			this._index=this._clipIndex=this._player.currentKeyframeIndex;
+			if (this._index < 0)return;
 			if (this._clipIndex==preIndex&&this._lastUpdateAniClipIndex==this._aniClipIndex){
 				return;
 			}
@@ -3957,12 +3978,17 @@
 						}
 						_data.pos=this._Pos;
 						break ;
-					case 3:
-						(this.addChild(_idOfSprite[ _data.getUint16()])).zOrder=_data.getUint16();
-						ifAdd=true;
+					case 3:;
+						var node=_idOfSprite[ _data.getUint16()];
+						if (node){
+							this.addChild(node);
+							node.zOrder=_data.getUint16();
+							ifAdd=true;
+						}
 						break ;
 					case 4:
-						_idOfSprite[ _data.getUint16()].removeSelf();
+						node=_idOfSprite[ _data.getUint16()];
+						node && node.removeSelf();
 						break ;
 					case 5:
 						_idOfSprite[_data.getUint16()][MovieClip._ValueList[_data.getUint16()]]=(_data.getFloat32());
@@ -4132,7 +4158,6 @@
 			this.skinDic={};
 			this.subTextureDic={};
 			this.isParseFail=false;
-			this.url=null;
 			this.yReverseMatrix=null;
 			this.drawOrderAniArr=[];
 			this.eventAniArr=[];

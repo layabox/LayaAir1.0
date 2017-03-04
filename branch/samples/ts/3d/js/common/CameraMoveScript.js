@@ -6,13 +6,14 @@ var __extends = (this && this.__extends) || function (d, b) {
 var CameraMoveScript = (function (_super) {
     __extends(CameraMoveScript, _super);
     function CameraMoveScript() {
-        _super.call(this);
-        this.yawPitchRoll = new Laya.Vector3();
-        this.resultRotation = new Laya.Quaternion();
-        this.tempRotationZ = new Laya.Quaternion();
-        this.tempRotationX = new Laya.Quaternion();
-        this.tempRotationY = new Laya.Quaternion();
-        this.rotaionSpeed = 0.00006;
+        var _this = _super.call(this) || this;
+        _this.yawPitchRoll = new Laya.Vector3();
+        _this.resultRotation = new Laya.Quaternion();
+        _this.tempRotationZ = new Laya.Quaternion();
+        _this.tempRotationX = new Laya.Quaternion();
+        _this.tempRotationY = new Laya.Quaternion();
+        _this.rotaionSpeed = 0.00006;
+        return _this;
     }
     CameraMoveScript.prototype._initialize = function (owner) {
         _super.prototype._initialize.call(this, owner);

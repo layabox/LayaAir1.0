@@ -358,7 +358,7 @@ package laya.debug.tools
 				if(rId<lId) return "";
 			}else
 			{
-				rId=str.indexOf(right,lId);
+				rId=str.indexOf(right,lId+1);
 			}
 			
 			if(rId<0) return "";
@@ -634,5 +634,39 @@ package laya.debug.tools
 			return "";
 		}
 
+		public static var alphaSigns:Object=null;
+		public static function initAlphaSign():void
+		{
+			if (alphaSigns) return;
+			alphaSigns = { };
+			addSign("a","z",alphaSigns);
+			addSign("A","Z",alphaSigns);
+			addSign("0","9",alphaSigns);
+		}
+		public static function addSign(ss:String,e:String,tar:Object):void
+		{
+			var i:int;
+			var len:int;
+			var s:int;
+			s=ss.charCodeAt(0);
+			len=e.charCodeAt(0);
+			for(i=s;i<=len;i++)
+			{
+				tar[String.fromCharCode(i)]=true;
+				trace("add :"+String.fromCharCode(i));
+			}
+		}
+		public static function isPureAlphaNum(str:String):Boolean
+		{
+			initAlphaSign();
+			if (!str) return true;
+			var i:int, len:int;
+			len = str.length;
+			for (i = 0; i < len; i++)
+			{
+				if (!alphaSigns[str.charAt(i)]) return false;
+			}
+			return true;
+		}
 	}
 }

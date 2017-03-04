@@ -180,6 +180,21 @@ package laya.debug.tools
 			canvas.size(preWidth + 1, preHeight);
 			canvas.size(preWidth, preHeight);
 		}
+		
+		public static function getImagePixels(x:int, y:int, width:int, data:Array,colorLen:int=4):Array
+		{
+			var pos:int;
+			pos = (x * width + y)*colorLen;
+			var i:int, len:int;
+			var rst:Array;
+			rst = [];
+			len = colorLen;
+			for (i = 0; i < len; i++)
+			{
+				rst.push(data[pos+i]);
+			}
+			return rst;
+		}
 	}
 
 }

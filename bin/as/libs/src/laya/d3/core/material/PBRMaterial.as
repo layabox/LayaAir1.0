@@ -5,25 +5,25 @@ package laya.d3.core.material {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.resource.BaseTexture;
+	import laya.d3.resource.DataTexture2D;
 	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
 	import laya.net.Loader;
+	import laya.utils.Browser;
 	import laya.webgl.WebGLContext;
 	
 	public class PBRMaterial extends BaseMaterial {
 		public static const DIFFUSETEXTURE:int = 0;
 		public static const NORMALTEXTURE:int = 1;
-		public static const ENVMAPTEXTURE:int = 2;
-		public static const PBRINFOTEXTURE:int = 3;
-		public static const PBRLUTTEXTURE:int = 4;
-		public static const ALPHATESTVALUE:int = 5;
-		public static const UVANIAGE:int = 6;
-		public static const ENVDIFFTEXTURE:int = 7;
-		public static const SIMLODINFO:int = 8;
-		public static const MATERIALROUGHNESS:int = 10;
-		public static const UVMATRIX:int = 11;
-		public static const UVAGE:int = 12;
+		public static const PBRINFOTEXTURE:int = 2;
+		public static const PBRLUTTEXTURE:int = 3;
+		public static const ALPHATESTVALUE:int = 4;
+		public static const UVANIAGE:int = 5;
+		public static const MATERIALROUGHNESS:int = 6;
+		public static const UVMATRIX:int = 7;
+		public static const UVAGE:int = 8;
 		
+		public static var pbrlutTex:DataTexture2D;
 		/** @private */
 		protected var _transformUV:TransformUV = null;
 		
@@ -103,23 +103,6 @@ package laya.d3.core.material {
 		}
 		
 		/**
-		 * 获取预处理的diffuse贴图。
-		 * @return 预处理的diffuse贴图。
-		 */
-		public function get texPrefilterDiff():BaseTexture {
-			return _getTexture(ENVDIFFTEXTURE);
-		}
-		
-		/**
-		 * 设置预处理的diffuse贴图。
-		 * @param value 预处理的diffuse贴图。
-		 */
-		public function set texPrefilterDiff(value:BaseTexture):void {
-			value.minFifter = WebGLContext.NEAREST;
-			_setTexture(ENVDIFFTEXTURE, value);
-		}
-						
-		/**
 		 * 获取法线贴图。
 		 * @return 法线贴图。
 		 */
@@ -133,26 +116,6 @@ package laya.d3.core.material {
 		 */
 		public function set normalTexture(value:BaseTexture):void {
 			_setTexture(NORMALTEXTURE, value);
-		}
-		
-		/**
-		 * 环境贴图。
-		 * @return 环境贴图。
-		 */
-		public function get envmapTexture():BaseTexture {
-			return _getTexture(ENVMAPTEXTURE);
-		}
-		
-		/**
-		 * 设置环境贴图。
-		 * @param value  环境贴图。
-		 */
-		public function set envmapTexture(value:BaseTexture):void {
-			var si:* = value['simLodInfo'];
-			if ( si && si is Float32Array ) {
-				_setBuffer(SIMLODINFO, si);
-			}
-			_setTexture(ENVMAPTEXTURE, value);
 		}
 		
 		/**
@@ -187,12 +150,22 @@ package laya.d3.core.material {
 			_transformUV = value;
 			_setMatrix4x4(UVMATRIX, value.matrix);
 			if (_conchMaterial) {//NATIVE//TODO:可取消
-				_conchMaterial.setShaderValue(UVMATRIX, value.matrix.elements,0);
+				_conchMaterial.setShaderValue(UVMATRIX, value.matrix.elements, 0);
 			}
 		}
-
+		
 		public function PBRMaterial() {
 			super();
+			if (!PBRMaterial.pbrlutTex) {
+				var lutdt:Array = Browser.window['__pbrlutdata'];
+				if (!lutdt) {
+					alert('no pbr lutdata, need pbrlut.js');
+					throw 'no pbr lutdata, need pbrlut.js';
+				}
+				var luttex:DataTexture2D = DataTexture2D.create((new Uint32Array(lutdt)).buffer, 256, 256, WebGLContext.NEAREST, WebGLContext.NEAREST, false);
+				PBRMaterial.pbrlutTex = luttex;
+			}
+			_setTexture(PBRLUTTEXTURE, PBRMaterial.pbrlutTex);
 			setShaderName("PBR");
 			_setNumber(ALPHATESTVALUE, 0.5);
 		}
@@ -216,6 +189,10 @@ package laya.d3.core.material {
 		 */
 		override public function _setMaterialShaderParams(state:RenderState):void {
 			(_transformUV) && (_transformUV.matrix);//触发UV矩阵更新TODO:临时
+		}
+		
+		override public function onAsynLoaded(url:String, data:*, params:Array):void {
+			super.onAsynLoaded(url, data, params);
 		}
 	}
 }

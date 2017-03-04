@@ -177,6 +177,16 @@ package laya.maths {
 			return out.setTo(a * out.x + c * out.y + tx, b * out.x + d * out.y + ty);
 		}
 		
+		
+		/**
+		 * 将 Matrix 对象表示的几何转换应用于指定点忽略tx ty。
+		 * @param	out 用来设定输出结果的点。
+		 * @return	返回out
+		 */
+		public function transformPointN(out:Point):Point {
+			return out.setTo(a * out.x + c * out.y /*+ tx*/, b * out.x + d * out.y /*+ ty*/);
+		}
+		
 		/**
 		 * @private
 		 * 将 Matrix 对象表示的几何转换应用于指定点。

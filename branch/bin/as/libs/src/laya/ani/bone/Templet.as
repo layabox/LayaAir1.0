@@ -56,8 +56,6 @@ package laya.ani.bone {
 		public var subTextureDic:Object = {};
 		/** 是否解析失败 */
 		public var isParseFail:Boolean = false;
-		/** 数据对应的URL，用来释放资源用 */
-		public var url:String;
 		/** 反转矩阵，有些骨骼动画要反转才能显示 */
 		public var yReverseMatrix:Matrix;
 		/** 渲染顺序动画数据 */

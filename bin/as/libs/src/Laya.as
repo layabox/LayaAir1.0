@@ -35,7 +35,7 @@ package {
 		/** Render 类的引用。*/
 		public static var render:Render;
 		/** 引擎版本。*/
-		public static var version:String = "1.7.0beta";
+		public static var version:String = "1.7.1beta";
 		/**@private */
 		public static var stageBox:Sprite;
 		/**Market对象 只有加速器模式下才有值*/

@@ -73,7 +73,7 @@ package laya.d3.core {
 		 */
 		private function _onMeshChanged(sender:MeshFilter, oldMesh:BaseMesh, mesh:BaseMesh):void {
 			if (mesh.loaded) {
-				_boundingSphereNeedChange = _boundingBoxNeedChange = _octreeNodeNeedChange = true;
+				_boundingSphereNeedChange = _boundingBoxNeedChange =_boundingBoxCenterNeedChange= _octreeNodeNeedChange = true;
 			} else {
 				mesh.once(Event.LOADED, this, _onMeshLoaed);
 			}
@@ -84,7 +84,7 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _onMeshLoaed(sender:MeshRender, enable:Boolean):void {
-			_boundingSphereNeedChange = _boundingBoxNeedChange = _octreeNodeNeedChange = true;
+			_boundingSphereNeedChange = _boundingBoxNeedChange=_boundingBoxCenterNeedChange = _octreeNodeNeedChange = true;
 		}
 		
 		override protected function _calculateBoundingSphere():void {

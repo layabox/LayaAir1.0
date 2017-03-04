@@ -108,7 +108,7 @@ package laya.d3.core {
 		 */
 		public function set localMatrix(value:Matrix4x4):void {
 			_localMatrix = value;
-			_localMatrix.decompose(_localPosition, _localRotation, _localScale);
+			_localMatrix.decomposeTransRotScale(_localPosition, _localRotation, _localScale);
 			_onWorldTransform();
 		}
 		
@@ -253,7 +253,7 @@ package laya.d3.core {
 				return _rotation;
 			
 			if (_parent !== null) {
-				worldMatrix.decompose(_position, _rotation, _scale);//可不计算_position和_scale
+				worldMatrix.decomposeTransRotScale(_position, _rotation, _scale);//可不计算_position和_scale,数学库有优化
 			} else {
 				_localRotation.cloneTo(_rotation);
 			}
@@ -360,7 +360,7 @@ package laya.d3.core {
 		 * @private
 		 */
 		protected function _updateLocalMatrix():void {
-			if (pivot && (pivot.x !== 0 && pivot.y !== 0 && pivot.z !== 0)) {
+			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0)) {
 				var scalePivot:Vector3 = _tempVector30;
 				Vector3.multiply(pivot, _localScale, scalePivot);
 				var scaleOffsetPosition:Vector3 = _tempVector31;

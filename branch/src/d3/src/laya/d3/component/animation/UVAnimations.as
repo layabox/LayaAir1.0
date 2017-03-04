@@ -5,15 +5,8 @@ package laya.d3.component.animation {
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.graphics.VertexDeclaration;
-	import laya.d3.resource.models.Mesh;
-	import laya.d3.resource.models.SubMesh;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.events.Event;
-	import laya.utils.Byte;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
 	 * <code>UVAnimations</code> 类用于创建UV动画组件。

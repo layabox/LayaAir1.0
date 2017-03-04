@@ -13,7 +13,7 @@ package laya.debug.view.nodeInfo.views
 	import laya.debug.tools.Notice;
 	import laya.debug.uicomps.ContextMenuItem;
 	import laya.debug.view.nodeInfo.DebugInfoLayer;
-	import laya.debug.view.nodeInfo.nodetree.DebugPanel;
+	import laya.debug.view.nodeInfo.nodetree.DebugPage;
 	import laya.debug.view.nodeInfo.NodeUtils;
 	import laya.debug.view.nodeInfo.ToolPanel;
 	import laya.debug.view.StyleConsts;
@@ -36,13 +36,13 @@ package laya.debug.view.nodeInfo.views
 			if (!_I) _I = new DebugPanelView();
 			return _I;
 		}
-		public var view:DebugPanel;
+		public var view:DebugPage;
 		
 		private var dragIcon:Sprite;
 		override public function createPanel():void
 		{
 
-			view = new DebugPanel();		
+			view = new DebugPage();		
 			//DisControlTool.setDragingItem(view.txt, view);
 			
 			dis = view;

@@ -900,6 +900,8 @@
 			this.preTarget=null;
 			this.preTexture=null;
 			WebGLVideo.__super.call(this);
+			if(Browser.onIPhone)
+				return;
 			this.gl=WebGL.mainContext;
 			this._source=this.gl.createTexture();
 			this.preTarget=WebGLContext.curBindTexTarget;
@@ -915,6 +917,8 @@
 		__class(WebGLVideo,'laya.device.media.WebGLVideo',_super);
 		var __proto=WebGLVideo.prototype;
 		__proto.updateTexture=function(){
+			if(Browser.onIPhone)
+				return;
 			WebGLContext.bindTexture(this.gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,this._source);
 			this.gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGB*/0x1907,/*laya.webgl.WebGLContext.RGB*/0x1907,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this.video);
 		}

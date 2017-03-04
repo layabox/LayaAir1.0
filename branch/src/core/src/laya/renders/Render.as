@@ -89,7 +89,7 @@ package laya.renders {
 			_context = new RenderContext(width, height, isWebGl ? null : _mainCanvas);
 			_context.ctx.setIsMainContext();
 			
-			/*[IF-SCRIPT-BEGIN]
+			/*[IF-SCRIPT-BEGIN]			
 			Browser.window.requestAnimationFrame(loop);
 			function loop():void {
 				Laya.stage._loop();

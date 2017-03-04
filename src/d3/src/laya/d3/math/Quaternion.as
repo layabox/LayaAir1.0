@@ -575,6 +575,14 @@ package laya.d3.math {
 			return dest;
 		}
 		
+		public function equals(b:Quaternion):Boolean{
+			
+			var ae:Float32Array = this.elements;
+			var be:Float32Array = b.elements;
+			
+			return MathUtils3D.nearEqual(ae[0], be[0]) && MathUtils3D.nearEqual(ae[1], be[1]) && MathUtils3D.nearEqual(ae[2], be[2]) && MathUtils3D.nearEqual(ae[3], be[3]);
+		}
+		
 		/**
 		 * 计算旋转观察四元数
 		 * @param	forward 方向

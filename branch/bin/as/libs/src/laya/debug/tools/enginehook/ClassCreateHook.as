@@ -16,8 +16,11 @@ package laya.debug.tools.enginehook
 		{
 			
 		}
+		public static var isInited:Boolean = false;
 		public function hookClass(clz:Class):void
 		{
+			if (isInited) return;
+			isInited = true;
 			var createFun:Function=function(sp:*):void
 		    {
 			    classCreated(sp,clz);

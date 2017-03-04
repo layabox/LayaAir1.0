@@ -371,9 +371,10 @@ package laya.renders {
 					return;
 				}
 				if (!tx) {
-					tx = _cacheCanvas.ctx = Pool.getItem("RenderContext") || new RenderContext(w, h, HTMLCanvas.create(HTMLCanvas.TYPEAUTO));
-					tx.ctx.sprite = sprite;
+				    tx = _cacheCanvas.ctx = Pool.getItem("RenderContext") || new RenderContext(w, h, HTMLCanvas.create(HTMLCanvas.TYPEAUTO));
 				}
+				tx.ctx.sprite = sprite;
+		
 				
 				canvas = tx.canvas;
 				canvas.clear();

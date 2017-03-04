@@ -396,13 +396,13 @@ package laya.webgl {
 						b.copyFrom((sprite as Sprite).getSelfBounds());
 						b.x += (sprite as Sprite).x;
 						b.y += (sprite as Sprite).y;
-						b.x -= (sprite as Sprite).pivotX;
-						b.y -= (sprite as Sprite).pivotY;
+						b.x -= (sprite as Sprite).pivotX+4;//blur 
+						b.y -= (sprite as Sprite).pivotY+4;//blur
 						var tSX:Number = b.x;
 						var tSY:Number = b.y;
 						//重新计算宽和高
-						b.width += tPadding;
-						b.height += tPadding;
+						b.width += (tPadding+8);//增加宽度 blur  由于blur系数为9
+						b.height += (tPadding+8);//增加高度 blur
 						p.x = b.x * mat.a + b.y * mat.c;
 						p.y = b.y * mat.d + b.x * mat.b;
 						b.x = p.x;

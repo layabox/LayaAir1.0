@@ -590,7 +590,10 @@ package laya.display {
 				conchModel && conchModel.scale(value, style._tf.scaleY);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
-				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
+				if (p && p._repaint === 0) {
+					p._repaint = 1;
+					p.parentRepaint();
+				}
 			}
 		}
 		
@@ -608,7 +611,10 @@ package laya.display {
 				conchModel && conchModel.scale(style._tf.scaleX, value);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
-				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
+				if (p && p._repaint === 0) {
+					p._repaint = 1;
+					p.parentRepaint();
+				}
 			}
 		}
 		

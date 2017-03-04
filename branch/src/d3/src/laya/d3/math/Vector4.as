@@ -5,59 +5,91 @@ package laya.d3.math {
 	/**
 	 * <code>Vector4</code> 类用于创建四维向量。
 	 */
-	public class Vector4 implements IClone{
+	public class Vector4 implements IClone {
 		
 		/**零向量，禁止修改*/
 		public static var ZERO:Vector4 = new Vector4();
 		
 		/*一向量，禁止修改*/
-        public static var ONE:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);
+		public static var ONE:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);
 		
 		/*X单位向量，禁止修改*/
-        public static var UnitX:Vector4 = new Vector4(1.0, 0.0, 0.0, 0.0);
-
-        /*Y单位向量，禁止修改*/
-        public static var UnitY:Vector4 = new Vector4(0.0, 1.0, 0.0, 0.0);
-
-        /*Z单位向量，禁止修改*/
-        public static var UnitZ:Vector4 = new Vector4(0.0, 0.0, 1.0, 0.0);
-
-        /*W单位向量，禁止修改*/
-        public static var UnitW:Vector4 = new Vector4(0.0, 0.0, 0.0, 1.0);
+		public static var UnitX:Vector4 = new Vector4(1.0, 0.0, 0.0, 0.0);
+		
+		/*Y单位向量，禁止修改*/
+		public static var UnitY:Vector4 = new Vector4(0.0, 1.0, 0.0, 0.0);
+		
+		/*Z单位向量，禁止修改*/
+		public static var UnitZ:Vector4 = new Vector4(0.0, 0.0, 1.0, 0.0);
+		
+		/*W单位向量，禁止修改*/
+		public static var UnitW:Vector4 = new Vector4(0.0, 0.0, 0.0, 1.0);
 		
 		/**四维向量元素数组*/
 		public var elements:* = new Float32Array(4);
 		
 		/**
 		 * 获取X轴坐标。
-		 * @return	x  X轴坐标。
+		 * @return  X轴坐标。
 		 */
 		public function get x():Number {
 			return this.elements[0];
 		}
 		
 		/**
+		 * 设置X轴坐标。
+		 * @param value X轴坐标。
+		 */
+		public function set x(value:Number):void {
+			this.elements[0] = value;
+		}
+		
+		/**
 		 * 获取Y轴坐标。
-		 * @return	y  Y轴坐标。
+		 * @return	Y轴坐标。
 		 */
 		public function get y():Number {
 			return this.elements[1];
 		}
 		
 		/**
+		 * 设置Y轴坐标。
+		 * @param	value  Y轴坐标。
+		 */
+		public function set y(value:Number):void {
+			this.elements[1] = value;
+		}
+		
+		/**
 		 * 获取Z轴坐标。
-		 * @return	z  Z轴坐标。
+		 * @return	 Z轴坐标。
 		 */
 		public function get z():Number {
 			return this.elements[2];
 		}
 		
 		/**
+		 * 设置Z轴坐标。
+		 * @param	value  Z轴坐标。
+		 */
+		public function set z(value:Number):void {
+			this.elements[2] = value;
+		}
+		
+		/**
 		 * 获取W轴坐标。
-		 * @return	w  W轴坐标。
+		 * @return	W轴坐标。
 		 */
 		public function get w():Number {
 			return this.elements[3];
+		}
+		
+		/**
+		 * 设置W轴坐标。
+		 * @param value	W轴坐标。
+		 */
+		public function set w(value:Number):void {
+			this.elements[3] = value;
 		}
 		
 		/**
@@ -124,7 +156,7 @@ package laya.d3.math {
 		 * @param	M4x4    4x4矩阵。
 		 * @param	out     转换后四维向量。
 		 */
-		public static function transformByM4x4(vector4:Vector4, m4x4:Matrix4x4, out:Vector4):void{
+		public static function transformByM4x4(vector4:Vector4, m4x4:Matrix4x4, out:Vector4):void {
 			
 			var ve:Float32Array = vector4.elements;
 			var vx:Number = ve[0];
@@ -147,21 +179,18 @@ package laya.d3.math {
 		 * @param	b 四维向量。
 		 * @return  是否相等。
 		 */
-		public static function equals(a:Vector4, b:Vector4):Boolean{
+		public static function equals(a:Vector4, b:Vector4):Boolean {
 			
 			var ae:Float32Array = a.elements;
 			var be:Float32Array = b.elements;
-			return  MathUtils3D.nearEqual(Math.abs(ae[0]), Math.abs(be[0])) 
-				 && MathUtils3D.nearEqual(Math.abs(ae[1]), Math.abs(be[1])) 
-				 && MathUtils3D.nearEqual(Math.abs(ae[2]), Math.abs(be[2]))
-				 && MathUtils3D.nearEqual(Math.abs(ae[3]), Math.abs(be[3]));
+			return MathUtils3D.nearEqual(Math.abs(ae[0]), Math.abs(be[0])) && MathUtils3D.nearEqual(Math.abs(ae[1]), Math.abs(be[1])) && MathUtils3D.nearEqual(Math.abs(ae[2]), Math.abs(be[2])) && MathUtils3D.nearEqual(Math.abs(ae[3]), Math.abs(be[3]));
 		}
 		
 		/**
 		 * 求四维向量的长度。
 		 * @return  长度。
 		 */
-		public function length():Number{
+		public function length():Number {
 			
 			return Math.sqrt(x * x + y * y + z * z + w * w);
 		}
@@ -170,7 +199,7 @@ package laya.d3.math {
 		 * 求四维向量长度的平方。
 		 * @return  长度的平方。
 		 */
-		public function lengthSquared():Number{
+		public function lengthSquared():Number {
 			
 			return x * x + y * y + z * z + w * w;
 		}

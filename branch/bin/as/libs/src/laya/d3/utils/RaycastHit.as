@@ -1,5 +1,6 @@
 package laya.d3.utils 
 {
+	import laya.d3.core.Sprite3D;
 	import laya.d3.math.Vector3;
 	
 	/**
@@ -12,6 +13,7 @@ package laya.d3.utils
 		public var trianglePositions:Array;
 		public var triangleNormals:Array;
 		public var position:Vector3;
+		public var sprite3D:Sprite3D;
 		
 		public function RaycastHit() 
 		{
@@ -23,6 +25,7 @@ package laya.d3.utils
 			triangleNormals.length = 3;
 			
 			position = new Vector3();
+			sprite3D = new Sprite3D();
 		}
 		
 

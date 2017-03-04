@@ -1,5 +1,6 @@
 package laya.d3.core {
 	import laya.d3.component.Component3D;
+	import laya.d3.component.physics.Collider;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.IUpdate;
@@ -80,7 +81,7 @@ package laya.d3.core {
 		 * @param url 模板地址。
 		 */
 		public static function load(url:String):Sprite3D {
-			return Laya.loader.create(url, null, null, Sprite3D,null, 1, false);
+			return Laya.loader.create(url, null, null, Sprite3D, null, 1, false);
 		}
 		
 		/** @private */
@@ -91,7 +92,7 @@ package laya.d3.core {
 		/**是否启用。*/
 		protected var _enable:Boolean;
 		/**图层蒙版。*/
-		protected var _layerMask:uint;
+		protected var _layerMask:int;
 		/**组件名字到索引映射。*/
 		protected var _componentsMap:Array = [];
 		/**组件列表。*/
@@ -101,6 +102,8 @@ package laya.d3.core {
 		public var _shaderDefineValue:int;
 		/** @private */
 		public var _shaderValues:ValusArray;
+		/** @private */
+		public var _colliders:Vector.<Collider>;
 		
 		/**矩阵变换相关。*/
 		public var transform:Transform3D;
@@ -163,8 +166,22 @@ package laya.d3.core {
 		 * @param	value 蒙版。
 		 */
 		public function set layer(value:Layer):void {
-			_layerMask = value.mask;
-			this.event(Event.LAYER_CHANGED, value);
+			if (value) {
+				var i:int, n:int = _colliders.length;
+				if (_layerMask !== -1) {
+					var oldColliders:Vector.<Collider> = Layer.getLayerByMask(_layerMask)._colliders;
+					for (i = 0; i < n; i++)
+						oldColliders.splice(oldColliders.indexOf(_colliders[i]), 1);
+				}
+				var colliders:Vector.<Collider> = value._colliders;
+				for (i = 0; i < n; i++)
+					colliders.push(_colliders[i]);
+				
+				_layerMask = value.mask;
+				this.event(Event.LAYER_CHANGED, value);
+			} else {
+				throw new Error("Layer value can be null.");
+			}
 		}
 		
 		/**
@@ -189,10 +206,12 @@ package laya.d3.core {
 		public function Sprite3D(name:String = null) {
 			_projectionViewWorldMatrix = new Matrix4x4();
 			_shaderValues = new ValusArray();
+			_colliders = new Vector.<Collider>();
 			
 			(name) ? (this.name = name) : (this.name = "Sprite3D-" + _nameNumberCounter++);
 			_enable = true;
 			_id = ++_uniqueIDCounter;
+			_layerMask = -1;
 			layer = Layer.currentCreationLayer;
 			transform = new Transform3D(this);
 			on(Event.DISPLAY, this, _onDisplay);
@@ -210,6 +229,7 @@ package laya.d3.core {
 		public function _addShaderDefine(value:int):void {
 			_shaderDefineValue |= value;
 		}
+		
 		/**
 		 * 移除Shader宏定义。
 		 * @param value 宏定义。
@@ -295,7 +315,7 @@ package laya.d3.core {
 		 * @param	projection
 		 * @param	projectionView
 		 */
-		public function _prepareShaderValuetoRender(view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
+		public function _prepareShaderValuetoRender(projectionView:Matrix4x4):void {
 			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);//TODO:静态合并需要使用,待调整移除。
 			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
 			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
@@ -423,9 +443,13 @@ package laya.d3.core {
 				throw new Error("无法创建" + type + "组件" + "，" + type + "组件已存在！");
 			
 			var component:Component3D = ClassUtils.getInstance(type);
-			component._initialize(this);
 			_componentsMap.push(type);
 			_components.push(component);
+			if (component is Collider) {
+				Layer.getLayerByMask(_layerMask)._colliders.push(component);
+				_colliders.push(component);
+			}
+			component._initialize(this);
 			this.event(Event.COMPONENT_ADDED, component);
 			return component;
 		}
@@ -460,6 +484,14 @@ package laya.d3.core {
 			if (index === -1)
 				return;
 			var component:Component3D = _components[index];
+			
+			if (component is Collider) {
+				var colliderComponent:Collider = component as Collider;
+				var colliders:Vector.<Collider> = Layer.getLayerByMask(_layerMask)._colliders;
+				colliders.splice(colliders.indexOf(colliderComponent), 1);
+				_colliders.splice(_colliders.indexOf(colliderComponent), 1);
+			}
+			
 			_components.splice(index, 1);
 			_componentsMap.splice(index, 1);
 			component._uninitialize();
@@ -522,11 +554,17 @@ package laya.d3.core {
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
-			for (var i:int, n:int = _components.length; i < n; i++)
+			var i:int, n:int;
+			for (i = 0, n = _components.length; i < n; i++)
 				_components[i]._uninitialize();
 			_components = null;
 			_componentsMap = null;
 			transform = null;
+			
+			var colliders:Vector.<Collider> = Layer.getLayerByMask(_layerMask)._colliders;
+			for (i = 0, n = _colliders.length; i < n; i++)
+				colliders.splice(colliders.indexOf(_colliders[i]), 1);
+			_colliders = null;
 		}
 	
 	}

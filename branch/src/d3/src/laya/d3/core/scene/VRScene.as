@@ -4,7 +4,7 @@ package laya.d3.core.scene {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.RenderTexture;
-	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shader.ShaderCompile3D;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	
@@ -20,11 +20,12 @@ package laya.d3.core.scene {
 			super();
 		}
 		
-		private function renderCamera(gl:WebGLContext, state:RenderState, cameraVR:VRCamera):void {
+		protected override function _renderCamera(gl:WebGLContext, state:RenderState, baseCamera:BaseCamera):void {
+			var cameraVR:VRCamera = baseCamera as VRCamera; 
 			state.camera = cameraVR;
 			cameraVR._prepareCameraToRender();
 			//_prepareRenderToRenderState(cameraVR, state);
-			state.shaderDefines.add(ShaderDefines3D.VR);
+			state.addShaderDefine(ShaderCompile3D.SHADERDEFINE_VR);
 			
 			beforeRender(state);//渲染之前
 			var renderTarget:RenderTexture = cameraVR.renderTarget;
@@ -70,24 +71,6 @@ package laya.d3.core.scene {
 			lateRender(state);//渲染之后
 			
 			(renderTarget) && (renderTarget.end());
-		}
-		
-		/**
-		 * @private
-		 */
-		override public final function renderSubmit():int {
-			var gl:WebGLContext = WebGL.mainContext;
-			var state:RenderState = _renderState;
-			_set3DRenderConfig(gl);//设置3D配置
-			
-			for (var i:int = 0, n:int = _cameraPool.length; i < n; i++) {
-				var cameraVR:VRCamera = _cameraPool[i] as VRCamera;
-				if (cameraVR.enable)
-					renderCamera(gl, state, cameraVR);
-				
-			}
-			_set2DRenderConfig(gl);//设置2D配置
-			return 1;
 		}
 	}
 }

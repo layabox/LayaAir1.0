@@ -646,10 +646,9 @@ package laya.d3.math {
 		 * 空间中射线和包围球是否相交
 		 * @param	ray    射线
 		 * @param	sphere 包围球
-		 * @param	out    相交距离,如果为0,不相交
+		 * @return	相交距离,-1表示不相交
 		 */
-		public static function intersectsRayAndSphereRD(ray:Ray, sphere:BoundSphere, out:Number):Boolean {
-			
+		public static function intersectsRayAndSphereRD(ray:Ray, sphere:BoundSphere):Number {
 			var sphereR:Number = sphere.radius;
 			Vector3.subtract(ray.origin, sphere.center, _tempV30);
 			
@@ -657,23 +656,21 @@ package laya.d3.math {
 			var c:Number = Vector3.dot(_tempV30, _tempV30) - (sphereR * sphereR);
 			
 			if (c > 0 && b > 0) {
-				out = 0;
-				return false;
+				return -1;
 			}
 			
 			var discriminant:Number = b * b - c;
 			
 			if (discriminant < 0) {
-				out = 0;
-				return false;
+				return -1;
 			}
 			
-			out = -b - Math.sqrt(discriminant);
+			var distance:Number = -b - Math.sqrt(discriminant);
 			
-			if (out < 0)
-				out = 0;
+			if (distance < 0)
+				distance = 0;
 			
-			return true;
+			return distance;
 		}
 		
 		/**
@@ -681,22 +678,20 @@ package laya.d3.math {
 		 * @param	ray    射线
 		 * @param	sphere 包围球
 		 * @param	out    相交点
+		 * @return  相交距离,-1表示不相交
 		 */
-		public static function intersectsRayAndSphereRP(ray:Ray, sphere:BoundSphere, out:Vector3):Boolean {
-			
-			var distance:Number;
-			if (!intersectsRayAndSphereRD(ray, sphere, distance)) {
-				
-				out = Vector3.ZERO;
-				return false;
+		public static function intersectsRayAndSphereRP(ray:Ray, sphere:BoundSphere, out:Vector3):Number {
+			var distance:Number = intersectsRayAndSphereRD(ray, sphere);
+			if (distance===-1) {
+				Vector3.ZERO.cloneTo(out);
+				return distance;
 			}
 			
 			Vector3.scale(ray.direction, distance, _tempV30);
 			Vector3.add(ray.origin, _tempV30, _tempV31);
 			
 			out = _tempV31;
-			
-			return true;
+			return distance;
 		}
 		
 		/**
@@ -1249,7 +1244,6 @@ package laya.d3.math {
 		 * @param	out 最近点
 		 */
 		public static function closestPointBoxPoint(box:BoundBox, point:Vector3, out:Vector3):void{
-			
 			Vector3.max(point, box.min, _tempV30);
 			Vector3.min(_tempV30, box.max, out);
 		}
@@ -1261,7 +1255,6 @@ package laya.d3.math {
 		 * @param	out 最近点
 		 */
 		public static function closestPointSpherePoint(sphere:BoundSphere, point:Vector3, out:Vector3):void{
-			
 			var sphereC:Vector3 = sphere.center;
 			
 			Vector3.subtract(point, sphereC, out);
@@ -1278,7 +1271,6 @@ package laya.d3.math {
 		 * @param	out 最近点
 		 */
 		public static function closestPointSphereSphere(sphere1:BoundSphere, sphere2:BoundSphere, out:Vector3):void{
-			
 			var sphere1C:Vector3 = sphere1.center;
 			
 			Vector3.subtract(sphere2.center, sphere1C, out);

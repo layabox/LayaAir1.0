@@ -25,8 +25,10 @@ package laya.d3.graphics {
 			var staticBatchMananger:StaticBatchManager = scene._staticBatchManager;
 			var dynamicBatchManager:DynamicBatchManager = scene._dynamicBatchManager;
 			var frustumCullingObjects:Vector.<RenderObject> = scene._frustumCullingObjects;
-			for (i = 0, iNum = queues.length; i < iNum; i++)
-				(queues[i]) && (queues[i]._clearRenderElements());
+			for (i = 0, iNum = queues.length; i < iNum; i++) {
+				var queue:RenderQueue = queues[i];
+				(queue) && (queue._clearRenderElements());
+			}
 			staticBatchMananger._clearRenderElements();
 			dynamicBatchManager._clearRenderElements();
 			
@@ -57,14 +59,35 @@ package laya.d3.graphics {
 			dynamicBatchManager._addToRenderQueue(scene, view, projection, projectionView);
 		}
 		
+		public static function renderObjectCullingOctree(boundFrustum:BoundFrustum, scene:BaseScene, camera:BaseCamera, view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
+			var queues:Vector.<RenderQueue> = scene._quenes;
+			var staticBatchMananger:StaticBatchManager = scene._staticBatchManager;
+			var dynamicBatchManager:DynamicBatchManager = scene._dynamicBatchManager;
+			for (var i:int = 0, n:int = queues.length; i < n; i++) {
+				var queue:RenderQueue = queues[i];
+				(queue) && (queue._clearRenderElements());
+			}
+			staticBatchMananger._clearRenderElements();
+			dynamicBatchManager._clearRenderElements();
+			
+			scene._frustumCullingObjects.length = 0;
+			scene.treeRoot.cullingObjects(boundFrustum, true, 0, camera.transform.position, projectionView);
+			
+			staticBatchMananger._addToRenderQueue(scene, view, projection, projectionView);
+			dynamicBatchManager._finishCombineDynamicBatch(scene);
+			dynamicBatchManager._addToRenderQueue(scene, view, projection, projectionView);
+		}
+		
 		public static function renderObjectCullingNoBoundFrustum(scene:BaseScene, camera:BaseCamera, view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
 			var i:int, iNum:int, j:int, jNum:int;
 			var queues:Vector.<RenderQueue> = scene._quenes;
 			var staticBatchMananger:StaticBatchManager = scene._staticBatchManager;
 			var dynamicBatchManager:DynamicBatchManager = scene._dynamicBatchManager;
 			var frustumCullingObjects:Vector.<RenderObject> = scene._frustumCullingObjects;
-			for (i = 0, iNum = queues.length; i < iNum; i++)
-				(queues[i]) && (queues[i]._clearRenderElements());
+			for (i = 0, iNum = queues.length; i < iNum; i++) {
+				var queue:RenderQueue = queues[i];
+				(queue) && (queue._clearRenderElements());
+			}
 			staticBatchMananger._clearRenderElements();
 			dynamicBatchManager._clearRenderElements();
 			

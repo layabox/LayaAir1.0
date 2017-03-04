@@ -310,6 +310,23 @@ package laya.debug.tools
 					tar[keys[i]]=src[keys[i]];
 			}
 		}
+		public static function getNoSameArr(arr:Array):Array
+		{
+			var i:int, len:int;
+			var rst:Array;
+			rst = [];
+			var tItem:Object;
+			len = arr.length;
+			for (i = 0; i < len; i++)
+			{
+				tItem = arr[i];
+				if (rst.indexOf(tItem) < 0)
+				{
+					rst.push(tItem);
+				}
+			}
+			return rst;
+		}
 		public static function insertValue(tar:Object, src:Object):void
 		{
 			var key:String;

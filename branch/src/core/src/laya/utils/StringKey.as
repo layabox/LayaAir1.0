@@ -5,8 +5,8 @@ package laya.utils {
 	 */
 	public class StringKey {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		
-		private var _strs:Object = {};
+		private var _strsToID:Object = {};
+		private var _idToStrs:Array = [];
 		private var _length:int = 0;
 		
 		/**
@@ -15,19 +15,31 @@ package laya.utils {
 		 * @return 此字符对应的数字。
 		 */
 		public function add(str:String):int {
-			var index:* = _strs[str];
+			var index:* = _strsToID[str];
 			if (index != null) return index;
-			return _strs[str] = _length++;
+			
+			_idToStrs[_length] = str;
+			return _strsToID[str] = _length++;
 		}
 		
 		/**
-		 * 获取指定字符对应的数字。
-		 * @param	str key 字符。
-		 * @return 此字符对应的数字。
+		 * 获取指定字符对应的ID。
+		 * @param	str 字符。
+		 * @return 此字符对应的ID。
 		 */
-		public function get(str:String):int {
-			var index:* = _strs[str];
+		public function getID(str:String):int {
+			var index:* = _strsToID[str];
 			return index == null ? -1 : index;
+		}
+		
+		/**
+		 * 根据指定ID获取对应字符。
+		 * @param  id ID。
+		 * @return 此id对应的字符。
+		 */
+		public function getName(id:int):String {
+			var str:* = _idToStrs[id];
+			return str == null ? undefined : str;
 		}
 	}
 }

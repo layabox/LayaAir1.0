@@ -12,8 +12,6 @@ package laya.d3.core.render {
 	 * <code>RenderState</code> 类用于实现渲染状态。
 	 */
 	public class RenderState {
-		/** shader宏定义值 */
-		public var _shaderDefineValue:int;
 		/** @private */
 		public var _staticBatch:StaticBatch;
 		/** @private */
@@ -54,22 +52,6 @@ package laya.d3.core.render {
 		 * 创建一个 <code>RenderState</code> 实例。
 		 */
 		public function RenderState() {
-			_reset();
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _reset():void {
-			_shaderDefineValue = 0;
-		}
-		
-		/**
-		 * 增加shader宏定义。
-		 * @param	define shader宏定义。
-		 */
-		public function addShaderDefine(define:int):void {
-			_shaderDefineValue |= define;
 		}
 	
 	}

@@ -574,7 +574,7 @@ package laya.debug
 			}
 		}
 		
-		public static function traceDisMouseEnable(tar:Sprite = null):*
+		public static function traceDisMouseEnable(tar:Object = null):*
 		{
 			trace("traceDisMouseEnable:");
 			if (!tar)
@@ -598,7 +598,7 @@ package laya.debug
 			return strArr.join("\n");
 		}
 		
-		public static function traceDisSizeChain(tar:Sprite = null):*
+		public static function traceDisSizeChain(tar:Object = null):*
 		{
 			trace("traceDisSizeChain:");
 			if (!tar)

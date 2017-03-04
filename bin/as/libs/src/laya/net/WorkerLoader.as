@@ -56,6 +56,14 @@ package laya.net
 		}
 		
 		/**
+		 * 是否支持worker
+		 * @return 是否支持worker
+		 */
+		public static function workerSupported():Boolean
+		{
+			return Browser.window.Worker?true:false;
+		}
+		/**
 		 * 是否启用。
 		 */
 		public static function set enable(v:Boolean):void
@@ -105,7 +113,14 @@ package laya.net
 		 */
 		private function imageLoaded(data:*):void
 		{
-			
+			if (data && data.buffer && data.buffer.length < 10)
+			{
+				_enable = false;
+				_myTrace("buffer lost when postmessage ,disable workerloader");
+				event(data.url, null);
+				event(IMAGE_ERR, data.url+"\n"+data.msg);
+				return;
+			}
 			if (!data.dataType)
 			{
 				event(data.url, null);

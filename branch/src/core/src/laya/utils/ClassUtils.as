@@ -131,7 +131,7 @@ package laya.utils {
 					}
 				}
 			}
-			
+
 			if (props) {
 				for (var prop:String in props) {
 					var value:* = props[prop];

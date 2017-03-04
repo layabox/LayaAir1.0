@@ -102,7 +102,7 @@ package laya.d3.core.render {
 			Matrix4x4.multiply(rootInvertMat, transform, result);
 			
 			var rotation:Quaternion = _tempQuaternion0;
-			result.decompose(_tempVector30, rotation, _tempVector31);//可不计算position和scale
+			result.decomposeTransRotScale(_tempVector30, rotation, _tempVector31);//可不计算position和scale
 			
 			var vertexFloatCount:int = vertexDeclaration.vertexStride / byteSizeInFloat;
 			var owner:Sprite3D = _renderObject._owner;

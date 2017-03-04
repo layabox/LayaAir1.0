@@ -87,16 +87,21 @@ package laya.d3.core {
 		/** @private */
 		private var _projectionViewWorldMatrix:Matrix4x4;
 		
-		/**唯一标识ID。*/
+		/** @private */
 		private var _id:int;
-		/**是否启用。*/
+		/** @private */
+		private var _componentsMap:Array;
+		/** @private */
+		private var _typeComponentsIndices:Vector.<Vector.<int>>;
+		/** @private */
+		private var _components:Vector.<Component3D>;
+		/**@private */
+		private var _url:String;
+		
+		/** @private */
 		protected var _enable:Boolean;
-		/**图层蒙版。*/
+		/** @private */
 		protected var _layerMask:int;
-		/**组件名字到索引映射。*/
-		protected var _componentsMap:Array = [];
-		/**组件列表。*/
-		protected var _components:Vector.<Component3D> = new Vector.<Component3D>();
 		
 		/** @private */
 		public var _shaderDefineValue:int;
@@ -197,16 +202,36 @@ package laya.d3.core {
 		 * @return	组件数量。
 		 */
 		public function get componentsCount():int {
-			return _components.length;
+			return _typeComponentsIndices.length;
 		}
 		
 		/**
+		 * 获取资源的URL地址。
+		 * @return URL地址。
+		 */
+		public function get url():String {
+			return _url;
+		}
+		
+		/**
+		 * 色湖之资源的URL地址。
+		 * @param value URL地址。
+		 */
+		public function set url(value:String):void {
+			_url = value;
+		}
+		
+		/**
+		 *
 		 * 创建一个 <code>Sprite3D</code> 实例。
 		 */
 		public function Sprite3D(name:String = null) {
 			_projectionViewWorldMatrix = new Matrix4x4();
 			_shaderValues = new ValusArray();
 			_colliders = new Vector.<Collider>();
+			_componentsMap = [];
+			_typeComponentsIndices = new Vector.<Vector.<int>>();
+			_components = new Vector.<Component3D>();
 			
 			(name) ? (this.name = name) : (this.name = "Sprite3D-" + _nameNumberCounter++);
 			_enable = true;
@@ -218,6 +243,43 @@ package laya.d3.core {
 			on(Event.UNDISPLAY, this, _onUnDisplay);
 		}
 		
+		/**
+		 * @private
+		 */
+		private function _removeComponent(mapIndex:int, index:int):void {
+			var componentIndices:Vector.<int> = _typeComponentsIndices[mapIndex];
+			var componentIndex:int = componentIndices[index];
+			var component:Component3D = _components[componentIndex];
+			
+			if (component is Collider) {
+				var colliderComponent:Collider = component as Collider;
+				var colliders:Vector.<Collider> = Layer.getLayerByMask(_layerMask)._colliders;
+				colliders.splice(colliders.indexOf(colliderComponent), 1);
+				_colliders.splice(_colliders.indexOf(colliderComponent), 1);
+			}
+			
+			_components.splice(componentIndex, 1);
+			componentIndices.splice(index, 1);
+			(componentIndices.length === 0) && (_typeComponentsIndices.splice(mapIndex, 1), _componentsMap.splice(mapIndex, 1));
+			
+			for (var i:int = 0, n:int = _componentsMap.length; i < n; i++) {
+				componentIndices = _typeComponentsIndices[i];
+				for (var j:int = componentIndices.length - 1; j >= 0; j--) {
+					var oldComponentIndex:int = componentIndices[j];
+					if (oldComponentIndex > componentIndex)
+						componentIndices[j] = --oldComponentIndex;
+					else
+						break;
+				}
+			}
+			
+			component._destroy();
+			this.event(Event.COMPONENT_REMOVED, component);
+		}
+		
+		/**
+		 * @private
+		 */
 		override public function createConchModel():* {
 			return __JS__("null");
 		}
@@ -302,6 +364,17 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * 更新子节点。
+		 * @param	state 渲染相关状态。
+		 */
+		protected function _updateChildsConch(state:RenderState):void {//NATIVE
+			var n:int = _childs.length;
+			if (n === 0) return;
+			for (var i:int = 0; i < n; ++i)
+				_childs[i]._update((state));
+		}
+		
+		/**
 		 * 排序函数。
 		 * @param	state 渲染相关状态。
 		 */
@@ -326,6 +399,20 @@ package laya.d3.core {
 		 * @param	state 渲染相关状态
 		 */
 		public function _update(state:RenderState):void {
+			state.owner = this;
+			if (_enable) {
+				_updateComponents(state);
+				_lateUpdateComponents(state);
+			}
+			Stat.spriteCount++;
+			_childs.length && _updateChilds(state);
+		}
+		
+		/**
+		 * 更新
+		 * @param	state 渲染相关状态
+		 */
+		public function _updateConch(state:RenderState):void {//NATIVE
 			state.owner = this;
 			if (_enable) {
 				_updateComponents(state);
@@ -421,12 +508,18 @@ package laya.d3.core {
 			addChild(Sprite3D.load(url));
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override public function addChildAt(node:Node, index:int):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
 			return super.addChildAt(node, index);
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override public function addChild(node:Node):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
@@ -439,11 +532,20 @@ package laya.d3.core {
 		 * @return	组件。
 		 */
 		public function addComponent(type:*):Component3D {
-			if (_componentsMap.indexOf(type) !== -1)
-				throw new Error("无法创建" + type + "组件" + "，" + type + "组件已存在！");
+			var typeComponentIndex:Vector.<int>;
+			var index:int = _componentsMap.indexOf(type);
+			if (index === -1) {
+				typeComponentIndex = new Vector.<int>();
+				_componentsMap.push(type);
+				_typeComponentsIndices.push(typeComponentIndex);
+			} else {
+				typeComponentIndex = _typeComponentsIndices[index];
+				if (_components[typeComponentIndex[0]].isSingleton)
+					throw new Error("无法单实例创建" + type + "组件" + "，" + type + "组件已存在！");
+			}
 			
 			var component:Component3D = ClassUtils.getInstance(type);
-			_componentsMap.push(type);
+			typeComponentIndex.push(_components.length);
 			_components.push(component);
 			if (component is Collider) {
 				Layer.getLayerByMask(_layerMask)._colliders.push(component);
@@ -455,55 +557,75 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 获得指定类型组件。
+		 * 通过指定类型和类型索引获得组件。
 		 * @param	type 组件类型。
-		 * @return	组件。
+		 * @param	typeIndex 类型索引。
+		 * @return 组件。
 		 */
-		public function getComponentByType(type:*):Component3D {
-			var index:int = _componentsMap.indexOf(type);
-			if (index === -1)
+		public function getComponentByType(type:*, typeIndex:int = 0):Component3D {
+			var mapIndex:int = _componentsMap.indexOf(type);
+			if (mapIndex === -1)
 				return null;
-			return _components[index];
+			return _components[_typeComponentsIndices[mapIndex][typeIndex]];
 		}
 		
 		/**
-		 * 获得指定类型组件。
+		 * 通过指定类型获得所有组件。
 		 * @param	type 组件类型。
-		 * @return	组件。
+		 * @param	components 组件输出队列。
+		 */
+		public function getComponentsByType(type:*, components:Vector.<Component3D>):void {
+			var index:int = _componentsMap.indexOf(type);
+			if (index === -1)
+				components.length = 0;
+			
+			var typeComponents:Vector.<int> = _typeComponentsIndices[index];
+			var count:int = typeComponents.length;
+			components.length = count;
+			for (var i:int = 0; i < count; i++)
+				components[i] = _components[typeComponents[i]];
+		}
+		
+		/**
+		 * 通过指定索引获得组件。
+		 * @param	index 索引。
+		 * @return 组件。
 		 */
 		public function getComponentByIndex(index:int):Component3D {
 			return _components[index];
 		}
 		
 		/**
-		 * 移除指定类型组件。
+		 * 通过指定类型和类型索引移除组件。
+		 * @param	type 组件类型。
+		 * @param	typeIndex 类型索引。
+		 */
+		public function removeComponentByType(type:*, typeIndex:int = 0):void {
+			var mapIndex:int = _componentsMap.indexOf(type);
+			if (mapIndex === -1)
+				return;
+			_removeComponent(mapIndex, typeIndex);
+		}
+		
+		/**
+		 * 通过指定类型移除所有组件。
 		 * @param	type 组件类型。
 		 */
-		public function removeComponent(type:String):void {
-			var index:int = _componentsMap.indexOf(type);
-			if (index === -1)
+		public function removeComponentsByType(type:*):void {
+			var mapIndex:int = _componentsMap.indexOf(type);
+			if (mapIndex === -1)
 				return;
-			var component:Component3D = _components[index];
-			
-			if (component is Collider) {
-				var colliderComponent:Collider = component as Collider;
-				var colliders:Vector.<Collider> = Layer.getLayerByMask(_layerMask)._colliders;
-				colliders.splice(colliders.indexOf(colliderComponent), 1);
-				_colliders.splice(_colliders.indexOf(colliderComponent), 1);
-			}
-			
-			_components.splice(index, 1);
-			_componentsMap.splice(index, 1);
-			component._uninitialize();
-			this.event(Event.COMPONENT_REMOVED, component);
+			var componentIndices:Vector.<int> = _typeComponentsIndices[mapIndex];
+			for (var i:int = 0, n:int = componentIndices.length; i < n; componentIndices.length < n ? n-- : i++)
+				_removeComponent(mapIndex, i);
 		}
 		
 		/**
 		 * 移除全部组件。
 		 */
 		public function removeAllComponent():void {
-			for (var component:* in _componentsMap)
-				removeComponent(component);
+			for (var i:int = 0, n:int = _componentsMap.length; i < n; _componentsMap.length < n ? n-- : i++)
+				removeComponentsByType(_componentsMap[i]);
 		}
 		
 		/**
@@ -519,6 +641,10 @@ package laya.d3.core {
 			event(Event.HIERARCHY_LOADED, [this]);
 		}
 		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
 		public function cloneTo(destObject:*):void {
 			var destSprite3D:Sprite3D = destObject as Sprite3D;
 			
@@ -529,9 +655,18 @@ package laya.d3.core {
 			
 			destSprite3D.enable = enable;
 			
-			var destLocalMatrix:Matrix4x4 = destSprite3D.transform.localMatrix;
-			transform.localMatrix.cloneTo(destLocalMatrix);
-			destSprite3D.transform.localMatrix = destLocalMatrix;
+			var destLocalPosition:Vector3 = destSprite3D.transform.localPosition;
+			transform.localPosition.cloneTo(destLocalPosition);
+			destSprite3D.transform.localPosition = destLocalPosition;
+			
+			var destLocalRotation:Quaternion = destSprite3D.transform.localRotation;
+			transform.localRotation.cloneTo(destLocalRotation);
+			destSprite3D.transform.localRotation = destLocalRotation;
+			
+			var destLocalScale:Vector3 = destSprite3D.transform.localScale;
+			transform.localScale.cloneTo(destLocalScale);
+			destSprite3D.transform.localScale = destLocalScale;
+			
 			destSprite3D.isStatic = isStatic;
 			
 			var i:int, n:int;
@@ -542,6 +677,10 @@ package laya.d3.core {
 				destSprite3D.addChild(_childs[i].clone());
 		}
 		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
 		public function clone():* {
 			var destSprite3D:Sprite3D = __JS__("new this.constructor()");
 			cloneTo(destSprite3D);
@@ -549,22 +688,24 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * <p>销毁此对象。</p>
-		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
+		 * @inheritDoc
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
 			var i:int, n:int;
 			for (i = 0, n = _components.length; i < n; i++)
-				_components[i]._uninitialize();
+				_components[i]._destroy();
 			_components = null;
 			_componentsMap = null;
+			_typeComponentsIndices = null;
+			
 			transform = null;
 			
 			var colliders:Vector.<Collider> = Layer.getLayerByMask(_layerMask)._colliders;
 			for (i = 0, n = _colliders.length; i < n; i++)
 				colliders.splice(colliders.indexOf(_colliders[i]), 1);
 			_colliders = null;
+			Loader.clearRes(url);
 		}
 	
 	}

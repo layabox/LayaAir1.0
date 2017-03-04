@@ -10,7 +10,7 @@ package laya.debug.view.nodeInfo
 	import laya.debug.tools.resizer.DisResizer;
 	import laya.debug.tools.TipManagerForDebug;
 	import laya.debug.uicomps.ContextMenu;
-	import laya.debug.view.nodeInfo.nodetree.DebugPanel;
+	import laya.debug.view.nodeInfo.nodetree.DebugPage;
 	import laya.debug.view.nodeInfo.nodetree.NodeTree;
 	import laya.debug.view.nodeInfo.views.DebugPanelView;
 	import laya.debug.view.nodeInfo.views.FilterView;

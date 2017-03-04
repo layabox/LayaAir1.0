@@ -12,7 +12,7 @@ package laya.d3.core.material {
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
-	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
 	import laya.events.Event;
 	import laya.net.Loader;
@@ -58,6 +58,17 @@ package laya.d3.core.material {
 		public static const RENDERMODE_NONDEPTH_ADDTIVE:int = 11;
 		/**渲染状态_无深度_加色法混合_双面。*/
 		public static const RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE:int = 12;
+		
+		public static var SHADERDEFINE_DIFFUSEMAP:int;
+		public static var SHADERDEFINE_NORMALMAP:int;
+		public static var SHADERDEFINE_SPECULARMAP:int;
+		public static var SHADERDEFINE_EMISSIVEMAP:int;
+		public static var SHADERDEFINE_AMBIENTMAP:int;
+		public static var SHADERDEFINE_REFLECTMAP:int;
+		public static var SHADERDEFINE_UVTRANSFORM:int;
+		public static var SHADERDEFINE_ALPHATEST:int;
+		public static var SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV:int;
+		//public static var MIXUV:int;//TODO：
 		
 		public static const DIFFUSETEXTURE:int = 0;
 		public static const NORMALTEXTURE:int = 1;
@@ -111,7 +122,7 @@ package laya.d3.core.material {
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_OPAQUEDOUBLEFACE: 
@@ -119,7 +130,7 @@ package laya.d3.core.material {
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_DISABLE;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_CUTOUT: 
@@ -127,7 +138,7 @@ package laya.d3.core.material {
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
 				_renderQueue = RenderQueue.OPAQUE;
-				_addShaderDefine(ShaderDefines3D.ALPHATEST);
+				_addShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_CUTOUTDOUBLEFACE: 
@@ -135,7 +146,7 @@ package laya.d3.core.material {
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_DISABLE;
-				_addShaderDefine(ShaderDefines3D.ALPHATEST);
+				_addShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENT: 
@@ -145,7 +156,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENTDOUBLEFACE: 
@@ -155,7 +166,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_ADDTIVE: 
@@ -165,7 +176,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_ADDTIVEDOUBLEFACE: 
@@ -175,7 +186,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_TRANSPARENT: 
@@ -185,7 +196,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_TRANSPARENTDOUBLEFACE: 
@@ -195,7 +206,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_ADDTIVE: 
@@ -205,7 +216,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE: 
@@ -215,7 +226,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENT: 
@@ -225,7 +236,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENTDOUBLEFACE: 
@@ -235,7 +246,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVE: 
@@ -245,7 +256,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE: 
@@ -255,7 +266,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
-				_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			default: 
@@ -355,9 +366,9 @@ package laya.d3.core.material {
 		 */
 		public function set diffuseTexture(value:BaseTexture):void {
 			if (value) {
-				_addShaderDefine(ShaderDefines3D.DIFFUSEMAP);
+				_addShaderDefine(StandardMaterial.SHADERDEFINE_DIFFUSEMAP);
 			} else {
-				_removeShaderDefine(ShaderDefines3D.DIFFUSEMAP);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_DIFFUSEMAP);
 			}
 			_setTexture(DIFFUSETEXTURE, value);
 		}
@@ -376,9 +387,9 @@ package laya.d3.core.material {
 		 */
 		public function set normalTexture(value:BaseTexture):void {
 			if (value) {
-				_addShaderDefine(ShaderDefines3D.NORMALMAP);
+				_addShaderDefine(StandardMaterial.SHADERDEFINE_NORMALMAP);
 			} else {
-				_removeShaderDefine(ShaderDefines3D.NORMALMAP);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_NORMALMAP);
 			}
 			_setTexture(NORMALTEXTURE, value);
 		}
@@ -397,9 +408,9 @@ package laya.d3.core.material {
 		 */
 		public function set specularTexture(value:BaseTexture):void {
 			if (value) {
-				_addShaderDefine(ShaderDefines3D.SPECULARMAP);
+				_addShaderDefine(StandardMaterial.SHADERDEFINE_SPECULARMAP);
 			} else {
-				_removeShaderDefine(ShaderDefines3D.SPECULARMAP);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_SPECULARMAP);
 			}
 			
 			_setTexture(SPECULARTEXTURE, value);
@@ -419,9 +430,9 @@ package laya.d3.core.material {
 		 */
 		public function set emissiveTexture(value:BaseTexture):void {
 			if (value) {
-				_addShaderDefine(ShaderDefines3D.EMISSIVEMAP);
+				_addShaderDefine(StandardMaterial.SHADERDEFINE_EMISSIVEMAP);
 			} else {
-				_removeShaderDefine(ShaderDefines3D.EMISSIVEMAP);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_EMISSIVEMAP);
 			}
 			_setTexture(EMISSIVETEXTURE, value);
 		}
@@ -440,9 +451,9 @@ package laya.d3.core.material {
 		 */
 		public function set ambientTexture(value:BaseTexture):void {
 			if (value) {
-				_addShaderDefine(ShaderDefines3D.AMBIENTMAP);
+				_addShaderDefine(StandardMaterial.SHADERDEFINE_AMBIENTMAP);
 			} else {
-				_removeShaderDefine(ShaderDefines3D.AMBIENTMAP);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_AMBIENTMAP);
 			}
 			_setTexture(AMBIENTTEXTURE, value);
 		}
@@ -461,9 +472,9 @@ package laya.d3.core.material {
 		 */
 		public function set reflectTexture(value:BaseTexture):void {
 			if (value) {
-				_addShaderDefine(ShaderDefines3D.REFLECTMAP);
+				_addShaderDefine(StandardMaterial.SHADERDEFINE_REFLECTMAP);
 			} else {
-				_removeShaderDefine(ShaderDefines3D.REFLECTMAP);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_REFLECTMAP);
 			}
 			_setTexture(REFLECTTEXTURE, value);
 		}
@@ -484,9 +495,9 @@ package laya.d3.core.material {
 			_transformUV = value;
 			_setMatrix4x4(UVMATRIX, value.matrix);
 			if (value)
-				_addShaderDefine(ShaderDefines3D.UVTRANSFORM);
+				_addShaderDefine(StandardMaterial.SHADERDEFINE_UVTRANSFORM);
 			else
-				_removeShaderDefine(ShaderDefines3D.UVTRANSFORM);
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_UVTRANSFORM);
 			if (_conchMaterial) {//NATIVE//TODO:可取消
 				_conchMaterial.setShaderValue(UVMATRIX, value.matrix.elements, 0);
 			}
@@ -508,20 +519,20 @@ package laya.d3.core.material {
 		 * 禁用灯光。
 		 */
 		public function disableLight():void {
-			_addDisableShaderDefine(ShaderDefines3D.POINTLIGHT | ShaderDefines3D.SPOTLIGHT | ShaderDefines3D.DIRECTIONLIGHT);
+			_addDisableShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
 		}
 		
 		/**
 		 * 禁用雾化。
 		 */
 		public function disableFog():void {
-			_addDisableShaderDefine(ShaderDefines3D.FOG);
+			_addDisableShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
 		}
 		
 		/**
 		 * @private
 		 */
-		override public function _setMaterialShaderParams(state:RenderState, projectionView:Matrix4x4, worldMatrix:Matrix4x4, mesh:IRenderable, material:BaseMaterial):void {
+		override public function _setMaterialShaderParams(state:RenderState):void {
 			(_transformUV) && (_transformUV.matrix);//触发UV矩阵更新TODO:临时
 		}
 		

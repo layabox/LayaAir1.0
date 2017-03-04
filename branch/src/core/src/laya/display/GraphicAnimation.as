@@ -29,7 +29,7 @@ package laya.display {
 		/**
 		 * @private
 		 */
-		protected static const _drawTextureCmd:Array = [["skin", null], ["x", 0], ["y", 0], ["width", 0], ["height", 0], ["pivotX", 0], ["pivotY", 0], ["scaleX", 1], ["scaleY", 1], ["rotation", 0], ["alpha", 1]];
+		protected static const _drawTextureCmd:Array = [["skin", null], ["x", 0], ["y", 0], ["width", 0], ["height", 0], ["pivotX", 0], ["pivotY", 0], ["scaleX", 1], ["scaleY", 1], ["rotation", 0], ["alpha", 1], ["skewX", 0], ["skewY", 0],["anchorX", 0], ["anchorY", 0]];
 		/**
 		 * @private
 		 */
@@ -142,6 +142,7 @@ package laya.display {
 			return noValue;
 		}
 		
+		private static var _tempMt:Matrix = new Matrix();
 		/**
 		 * @private
 		 */
@@ -161,24 +162,53 @@ package laya.display {
 			}
 			var m:Matrix;
 			var px:Number = params[5], py:Number = params[6];
+			var aX:Number = params[13], aY:Number = params[14];
+			var sx:Number = params[7], sy:Number = params[8];
+			var rotate:Number = params[9];
+			var skewX:Number = params[11], skewY:Number = params[12]
+			
+			if (aX != 0)
+			{
+				px = aX * params[0].width;
+			}
+			if (aY != 0)
+			{
+				py = aY * params[0].height;
+			}
 			if (px != 0 || py != 0) {
 				m = m || new Matrix();
 				m.translate(-px, -py);
 			}
-			
-			var sx:Number = params[7], sy:Number = params[8];
-			var rotate:Number = params[9];
-			
-			if (sx != 1 || sy != 1 || rotate != 0) {
-				m = m || new Matrix();
-				m.scale(sx, sy);
-				m.rotate(rotate * 0.0174532922222222);
+					
+			var tm:Matrix=null;
+			if (rotate || sx !== 1 || sy !== 1 || skewX || skewY) {
+				tm = _tempMt;
+				tm.identity();
+				tm.bTransform = true;			
+				var skx:Number = (rotate-skewX) * 0.0174532922222222;//laya.CONST.PI180;
+				var sky:Number = (rotate+skewY) * 0.0174532922222222;
+				var cx:Number = Math.cos(sky);
+				var ssx:Number = Math.sin(sky);
+				var cy:Number = Math.sin(skx);
+				var ssy:Number = Math.cos(skx);
+				tm.a = sx * cx;
+				tm.b = sx * ssx;
+				tm.c = -sy * cy;
+				tm.d = sy * ssy;
+				tm.tx = tm.ty = 0;
 			}
-			
+			if (tm)
+			{
+				if (!m)
+				{
+					m = new Matrix();
+				}
+				m = Matrix.mul(m, tm, m);
+			}
+				
 			if (m) {
 				m.translate(params[1], params[2]);
 				params[1] = params[2] = 0;
-				
 			}
 			
 			g.drawTexture(params[0], params[1], params[2], params[3], params[4], m,params[10]);

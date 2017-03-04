@@ -3,11 +3,11 @@ package
 	import laya.display.Sprite;
 	import laya.display.Stage;
 	import laya.webgl.WebGL;
-	
+
 	public class Sprite_DrawShapes
 	{
 		private var sp:Sprite;
-		
+
 		public function Sprite_DrawShapes()
 		{
 			// 不支持WebGL时自动切换至Canvas
@@ -42,8 +42,8 @@ package
 			sp.graphics.drawCircle(98, 332, 50, "#00ffff");
 			//画扇形
 			sp.graphics.drawPie(240, 290, 100, 10, 60, "#00ffff");
-			//绘制圆角矩形，自定义路径，限canvas
-			//sp.graphics.drawPath(400, 310, [["moveTo", 5, 0], ["lineTo", 105, 0], ["arcTo", 110, 0, 110, 5, 5], ["lineTo", 110, 55], ["arcTo", 110, 60, 105, 60, 5], ["lineTo", 5, 60], ["arcTo", 0, 60, 0, 55, 5], ["lineTo", 0, 5], ["arcTo", 0, 0, 5, 0, 5], ["closePath"]], {fillStyle: "#00ffff"});
+			//绘制圆角矩形，自定义路径
+			sp.graphics.drawPath(400, 310, [["moveTo", 5, 0], ["lineTo", 105, 0], ["arcTo", 110, 0, 110, 5, 5], ["lineTo", 110, 55], ["arcTo", 110, 60, 105, 60, 5], ["lineTo", 5, 60], ["arcTo", 0, 60, 0, 55, 5], ["lineTo", 0, 5], ["arcTo", 0, 0, 5, 0, 5], ["closePath"]], {fillStyle: "#00ffff"});
 		}
 	}
 }

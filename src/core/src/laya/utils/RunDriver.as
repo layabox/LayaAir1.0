@@ -30,16 +30,13 @@ package laya.utils {
 			return __JS__('window');
 		}
 		
-		public static var newWebGLContext:Function = function(canvas:*, webGLName:String):* {
-			return canvas.getContext(webGLName, {stencil: true, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha});
-		}
-		
 		public static var getPixelRatio:Function = function():Number {
 			if (pixelRatio < 0) {
 				var ctx:* = Browser.context;
 				var backingStore:Number = ctx.backingStorePixelRatio || ctx.webkitBackingStorePixelRatio || ctx.mozBackingStorePixelRatio || ctx.msBackingStorePixelRatio || ctx.oBackingStorePixelRatio || ctx.backingStorePixelRatio || 1;
 				pixelRatio = (Browser.window.devicePixelRatio || 1) / backingStore;
-			}
+				if(pixelRatio<1) pixelRatio=1;
+			}	
 			return pixelRatio;
 		}
 		

@@ -50,7 +50,7 @@ package laya.d3.component {
 		 * @param	state 渲染状态。
 		 */
 		public override function _update(state:RenderState):void {
-			if (!_attachSkeleton || _attachSkeleton.player.state !== AnimationState.playing || !_attachSkeleton.curBonesDatas)
+			if (!_attachSkeleton||_attachSkeleton.destroyed || _attachSkeleton.player.state !== AnimationState.playing || !_attachSkeleton.curBonesDatas)
 				return;
 			
 			var player:AnimationPlayer = _attachSkeleton.player;
@@ -67,7 +67,7 @@ package laya.d3.component {
 					matrixE[j] = boneDatas[startIndex + j];
 				Matrix4x4.multiply(worldMatrix, matrix, matrix);
 			}
-		    event(Event.COMPLETE);
+			event(Event.COMPLETE);
 		}
 	}
 }

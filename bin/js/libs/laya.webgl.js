@@ -879,108 +879,97 @@
 			this.repaint=false;
 			this._width=NaN;
 			this._height=NaN;
+			this._sp=null;
 			this._clipRect=new Rectangle();
 		}
 
 		__class(RenderTargetMAX,'laya.webgl.resource.RenderTargetMAX');
 		var __proto=RenderTargetMAX.prototype;
-		/*public function setSP(sp:Sprite):void{
-		_sp=sp;
-	}*/
+		__proto.setSP=function(sp){
+			this._sp=sp;
+		}
 
-
-	__proto.size=function(w,h){
-		var _$this=this;
-		if (this._width===w && this._height===h){
+		__proto.size=function(w,h){
+			var _$this=this;
+			if (this._width===w && this._height===h){
+				this.target.size(w,h);
+				return;
+			}
 			this.repaint=true;
-			this.target.bitmap._released=true;
-			return;
+			this._width=w;
+			this._height=h;
+			if (!this.target)
+				this.target=RenderTarget2D.create(w,h);
+			else
+			this.target.size(w,h);
+			if (!this.target.hasListener(/*laya.events.Event.RECOVERED*/"recovered")){
+				this.target.on(/*laya.events.Event.RECOVERED*/"recovered",this,function(e){
+					Laya.timer.callLater(_$this._sp,_$this._sp.repaint);
+				});
+			}
 		}
 
-		this.repaint=true;
-		this._width=w;
-		this._height=h;
-		if (!this.target)
-			this.target=RenderTarget2D.create(w,h);
-		else
-		this.target.size(w,h);
-		if (!this.target.hasListener(/*laya.events.Event.RECOVERED*/"recovered")){
-			this.target.on(/*laya.events.Event.RECOVERED*/"recovered",this,function(e){
-				_$this.repaint=true;
-			});
+		__proto._flushToTarget=function(context,target){
+			if (target._destroy)return;
+			var worldScissorTest=RenderState2D.worldScissorTest;
+			var preworldClipRect=RenderState2D.worldClipRect;
+			RenderState2D.worldClipRect=this._clipRect;
+			this._clipRect.x=this._clipRect.y=0;
+			this._clipRect.width=this._width;
+			this._clipRect.height=this._height;
+			RenderState2D.worldScissorTest=false;
+			WebGL.mainContext.disable(/*laya.webgl.WebGLContext.SCISSOR_TEST*/0x0C11);
+			var preAlpha=RenderState2D.worldAlpha;
+			var preMatrix4=RenderState2D.worldMatrix4;
+			var preMatrix=RenderState2D.worldMatrix;
+			var preFilters=RenderState2D.worldFilters;
+			var preShaderDefines=RenderState2D.worldShaderDefines;
+			RenderState2D.worldMatrix=Matrix.EMPTY;
+			RenderState2D.restoreTempArray();
+			RenderState2D.worldMatrix4=RenderState2D.TEMPMAT4_ARRAY;
+			RenderState2D.worldAlpha=1;
+			RenderState2D.worldFilters=null;
+			RenderState2D.worldShaderDefines=null;
+			BaseShader.activeShader=null;
+			target.start();
+			Config.showCanvasMark ? target.clear(0,1,0,0.3):target.clear(0,0,0,0);
+			context.flush();
+			target.end();
+			BaseShader.activeShader=null;
+			RenderState2D.worldAlpha=preAlpha;
+			RenderState2D.worldMatrix4=preMatrix4;
+			RenderState2D.worldMatrix=preMatrix;
+			RenderState2D.worldFilters=preFilters;
+			RenderState2D.worldShaderDefines=preShaderDefines;
+			RenderState2D.worldScissorTest=worldScissorTest
+			if (worldScissorTest){
+				var y=RenderState2D.height-preworldClipRect.y-preworldClipRect.height;
+				WebGL.mainContext.scissor(preworldClipRect.x,y,preworldClipRect.width,preworldClipRect.height);
+				WebGL.mainContext.enable(/*laya.webgl.WebGLContext.SCISSOR_TEST*/0x0C11);
+			}
+			RenderState2D.worldClipRect=preworldClipRect;
 		}
 
-	}
-
-
-	//_sp.repaint();
-	__proto._flushToTarget=function(context,target){
-		if (target._destroy)return;
-		var worldScissorTest=RenderState2D.worldScissorTest;
-		var preworldClipRect=RenderState2D.worldClipRect;
-		RenderState2D.worldClipRect=this._clipRect;
-		this._clipRect.x=this._clipRect.y=0;
-		this._clipRect.width=this._width;
-		this._clipRect.height=this._height;
-		RenderState2D.worldScissorTest=false;
-		WebGL.mainContext.disable(/*laya.webgl.WebGLContext.SCISSOR_TEST*/0x0C11);
-		var preAlpha=RenderState2D.worldAlpha;
-		var preMatrix4=RenderState2D.worldMatrix4;
-		var preMatrix=RenderState2D.worldMatrix;
-		var preFilters=RenderState2D.worldFilters;
-		var preShaderDefines=RenderState2D.worldShaderDefines;
-		RenderState2D.worldMatrix=Matrix.EMPTY;
-		RenderState2D.restoreTempArray();
-		RenderState2D.worldMatrix4=RenderState2D.TEMPMAT4_ARRAY;
-		RenderState2D.worldAlpha=1;
-		RenderState2D.worldFilters=null;
-		RenderState2D.worldShaderDefines=null;
-		BaseShader.activeShader=null;
-		target.start();
-		Config.showCanvasMark ? target.clear(0,1,0,0.3):target.clear(0,0,0,0);
-		context.flush();
-		target.end();
-		BaseShader.activeShader=null;
-		RenderState2D.worldAlpha=preAlpha;
-		RenderState2D.worldMatrix4=preMatrix4;
-		RenderState2D.worldMatrix=preMatrix;
-		RenderState2D.worldFilters=preFilters;
-		RenderState2D.worldShaderDefines=preShaderDefines;
-		RenderState2D.worldScissorTest=worldScissorTest
-		if (worldScissorTest){
-			var y=RenderState2D.height-preworldClipRect.y-preworldClipRect.height;
-			WebGL.mainContext.scissor(preworldClipRect.x,y,preworldClipRect.width,preworldClipRect.height);
-			WebGL.mainContext.enable(/*laya.webgl.WebGLContext.SCISSOR_TEST*/0x0C11);
+		__proto.flush=function(context){
+			if (this.repaint){
+				this._flushToTarget(context,this.target);
+				this.repaint=false;
+			}
 		}
 
-		RenderState2D.worldClipRect=preworldClipRect;
-	}
-
-
-	__proto.flush=function(context){
-		if (this.repaint){
-			this._flushToTarget(context,this.target);
-			this.repaint=false;
+		__proto.drawTo=function(context,x,y,width,height){
+			context.drawTexture(this.target.getTexture(),x,y,width,height,0,0);
 		}
 
-	}
-
-
-	__proto.drawTo=function(context,x,y,width,height){
-		context.drawTexture(this.target.getTexture(),x,y,width,height,0,0);
-	}
-
-
-	__proto.destroy=function(){
-		if (this.target){
-			this.target.destroy();
-			this.target=null;
+		__proto.destroy=function(){
+			if (this.target){
+				this.target.destroy();
+				this.target=null;
+				this._sp=null;
+			}
 		}
 
-	}
-
-
-	return RenderTargetMAX;
+		return RenderTargetMAX;
 	})()
 
 
@@ -1171,6 +1160,7 @@
 		}
 
 		__proto.init2=function(texture,vs,ps,verticles,uvs){
+			if (this.transform)this.transform=null;
 			if (ps){
 				this._ps=ps;
 				}else {
@@ -3158,6 +3148,7 @@
 		}
 
 		WebGL.enable=function(){
+			Browser.__init__();
 			if (Render.isConchApp){
 				if (!Render.isConchWebGL){
 					RunDriver.skinAniSprite=function (){
@@ -3168,7 +3159,9 @@
 					return false;
 				}
 			}
-			if (!WebGL.isWebGLSupported())return false;
+			WebGL.mainContext=WebGL.getWebGLContext(Render._mainCanvas);
+			if (WebGL.mainContext==null)
+				return false;
 			if (Render.isWebGL)return true;
 			HTMLImage.create=function (src,def){
 				return new WebGLImage(src,def);
@@ -3194,9 +3187,7 @@
 			}
 			RunDriver.clear=function (color){
 				RenderState2D.worldScissorTest && laya.webgl.WebGL.mainContext.disable(/*laya.webgl.WebGLContext.SCISSOR_TEST*/0x0C11);
-				if (color==null){
-					Render.context.ctx.clearBG(0,0,0,0);
-					}else {
+				if (color && color!=="black" && color!=="#000000"){
 					var c=Color.create(color)._color;
 					Render.context.ctx.clearBG(c[0],c[1],c[2],c[3]);
 				}
@@ -3459,15 +3450,17 @@
 			return true;
 		}
 
-		WebGL.isWebGLSupported=function(){
-			var canvas=Browser.createElement('canvas');
+		WebGL.getWebGLContext=function(canvas){
 			var gl;
 			var names=["webgl","experimental-webgl","webkit-3d","moz-webgl"];
 			for (var i=0;i < names.length;i++){
 				try {
-					gl=canvas.getContext(names[i]);
+					gl=canvas.getContext(names[i],{stencil:Config.isStencil,alpha:Config.isAlpha,antialias:Config.isAntialias,premultipliedAlpha:Config.premultipliedAlpha,preserveDrawingBuffer:false});
 				}catch (e){}
-				if (gl)return names[i];
+				if (gl){
+					(i!==0)&& (WebGL._isExperimentalWebgl=true);
+					return gl;
+				}
 			}
 			return null;
 		}
@@ -3515,16 +3508,14 @@
 			WebGL.mainCanvas=canvas;
 			HTMLCanvas._createContext=function (canvas){
 				return new WebGLContext2D(canvas);
-			};
-			var webGLName=WebGL.isWebGLSupported();
-			var gl=WebGL.mainContext=RunDriver.newWebGLContext(canvas,webGLName);
-			WebGL._isExperimentalWebgl=(webGLName !="webgl" && (Browser.onWeiXin || Browser.onMQQBrowser));
+			}
+			WebGL._isExperimentalWebgl=(WebGL._isExperimentalWebgl && (Browser.onWeiXin || Browser.onMQQBrowser));
 			WebGL.frameShaderHighPrecision=false;
+			var gl=laya.webgl.WebGL.mainContext;
 			try {
-				var precisionFormat=laya.webgl.WebGL.mainContext.getShaderPrecisionFormat(/*laya.webgl.WebGLContext.FRAGMENT_SHADER*/0x8B30,/*laya.webgl.WebGLContext.HIGH_FLOAT*/0x8DF2);
+				var precisionFormat=gl.getShaderPrecisionFormat(/*laya.webgl.WebGLContext.FRAGMENT_SHADER*/0x8B30,/*laya.webgl.WebGLContext.HIGH_FLOAT*/0x8DF2);
 				precisionFormat.precision ? WebGL.frameShaderHighPrecision=true :WebGL.frameShaderHighPrecision=false;
 			}catch (e){}
-			Browser.window.SetupWebglContext && Browser.window.SetupWebglContext(gl);
 			gl.deleteTexture1=gl.deleteTexture;
 			gl.deleteTexture=function (t){
 				if (t==WebGLContext.curBindTexValue){
@@ -4002,7 +3993,7 @@
 		__proto.clearBG=function(r,g,b,a){
 			var gl=WebGL.mainContext;
 			gl.clearColor(r,g,b,a);
-			gl.clear(/*laya.webgl.WebGLContext.COLOR_BUFFER_BIT*/0x00004000 | /*laya.webgl.WebGLContext.DEPTH_BUFFER_BIT*/0x00000100);
+			gl.clear(/*laya.webgl.WebGLContext.COLOR_BUFFER_BIT*/0x00004000);
 		}
 
 		__proto._getSubmits=function(){
@@ -4712,8 +4703,9 @@
 		}
 
 		__proto.movePath=function(x,y){
-			x=this._curMat.a *x+this._curMat.c *y+this._curMat.tx;
-			y=this._curMat.b *x+this._curMat.d *y+this._curMat.ty;
+			var _x1=x,_y1=y;
+			x=this._curMat.a *_x1+this._curMat.c *_y1+this._curMat.tx;
+			y=this._curMat.b *_x1+this._curMat.d *_y1+this._curMat.ty;
 			this.mX+=x;
 			this.mY+=y;
 		}
@@ -4785,8 +4777,9 @@
 			(b===void 0)&& (b=true);
 			var tPath=this._getPath();
 			if (b){
-				x=this._curMat.a *x+this._curMat.c *y;
-				y=this._curMat.b *x+this._curMat.d *y;
+				var _x1=x,_y1=y;
+				x=this._curMat.a *_x1+this._curMat.c *_y1;
+				y=this._curMat.b *_x1+this._curMat.d *_y1;
 			}
 			tPath.addPoint(x,y);
 		}
@@ -4795,8 +4788,9 @@
 			(b===void 0)&& (b=true);
 			var tPath=this._getPath();
 			if (b){
-				x=this._curMat.a *x+this._curMat.c *y;
-				y=this._curMat.b *x+this._curMat.d *y;
+				var _x1=x,_y1=y;
+				x=this._curMat.a *_x1+this._curMat.c *_y1;
+				y=this._curMat.b *_x1+this._curMat.d *_y1;
 			}
 			tPath.addPoint(x,y);
 		}
@@ -4828,10 +4822,12 @@
 			var y0=tPath.getEndPointY();
 			var dx0=NaN,dy0=NaN,dx1=NaN,dy1=NaN,a=NaN,d=NaN,cx=NaN,cy=NaN,a0=NaN,a1=NaN;
 			var dir=false;
-			x1=this._curMat.a *x1+this._curMat.c *y1;
-			y1=this._curMat.b *x1+this._curMat.d *y1;
-			x2=this._curMat.a *x2+this._curMat.c *y2;
-			y2=this._curMat.b *x2+this._curMat.d *y2;
+			var _x1=x1,_y1=y1;
+			x1=this._curMat.a *_x1+this._curMat.c *_y1;
+			y1=this._curMat.b *_x1+this._curMat.d *_y1;
+			_x1=x2,_y1=y2;
+			x2=this._curMat.a *_x1+this._curMat.c *_y1;
+			y2=this._curMat.b *_x1+this._curMat.d *_y1;
 			r=this._curMat.a *r+this._curMat.c *r;
 			dx0=x0-x1;
 			dy0=y0-y1;
@@ -4921,6 +4917,7 @@
 				kappa=-kappa;
 			nvals=0;
 			var tPath=this._getPath();
+			var _x1=NaN,_y1=NaN;
 			for (i=0;i <=ndivs;i++){
 				a=startAngle+da *(i / ndivs);
 				dx=Math.cos(a);
@@ -4928,8 +4925,9 @@
 				x=cx+dx *r;
 				y=cy+dy *r;
 				if (b){
-					x=this._curMat.a *x+this._curMat.c *y;
-					y=this._curMat.b *x+this._curMat.d *y;
+					_x1=x,_y1=y;
+					x=this._curMat.a *_x1+this._curMat.c *_y1;
+					y=this._curMat.b *_x1+this._curMat.d *_y1;
 				}
 				if (x !=this._path.getEndPointX()|| y !=this._path.getEndPointY()){
 					tPath.addPoint(x,y);
@@ -4940,8 +4938,9 @@
 			x=cx+dx *r;
 			y=cy+dy *r;
 			if (b){
-				x=this._curMat.a *x+this._curMat.c *y;
-				y=this._curMat.b *x+this._curMat.d *y;
+				_x1=x,_y1=y;
+				x=this._curMat.a *_x1+this._curMat.c *_y1;
+				y=this._curMat.b *_x1+this._curMat.d *_y1;
 			}
 			if (x !=this._path.getEndPointX()|| y !=this._path.getEndPointY()){
 				tPath.addPoint(x,y);
@@ -4951,10 +4950,12 @@
 		__proto.quadraticCurveTo=function(cpx,cpy,x,y){
 			var tBezier=Bezier.I;
 			var tResultArray=[];
-			x=this._curMat.a *x+this._curMat.c *y;
-			y=this._curMat.b *x+this._curMat.d *y;
-			cpx=this._curMat.a *cpx+this._curMat.c *cpy;
-			cpy=this._curMat.b *cpx+this._curMat.d *cpy;
+			var _x1=x,_y1=y;
+			x=this._curMat.a *_x1+this._curMat.c *_y1;
+			y=this._curMat.b *_x1+this._curMat.d *_y1;
+			_x1=cpx,_y1=cpy;
+			cpx=this._curMat.a *_x1+this._curMat.c *_y1;
+			cpy=this._curMat.b *_x1+this._curMat.d *_y1;
 			var tArray=tBezier.getBezierPoints([this._path.getEndPointX(),this._path.getEndPointY(),cpx,cpy,x,y],30,2);
 			for (var i=0,n=tArray.length / 2;i < n;i++){
 				this.lineTo(tArray[i *2],tArray[i *2+1],false);
@@ -5086,6 +5087,7 @@
 				this._targets.repaint=true;
 				if (!this._width || !this._height)
 					throw Error("asBitmap no size!");
+				this._targets.setSP(this.sprite);
 				this._targets.size(this._width,this._height);
 			}
 			else
@@ -6181,10 +6183,7 @@
 		}
 
 		__proto.size=function(w,h){
-			if (this._w==w && this._h==h){
-				this.bitmap._released=true;
-				return;
-			}
+			if (this._w==w && this._h==h)return;
 			this._w=w;
 			this._h=h;
 			this.release();

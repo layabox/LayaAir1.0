@@ -131,6 +131,10 @@ package laya.utils {
 		}
 		
 		private function firstStart(target:*, props:Object, isTo:Boolean):void {
+			if (target.destroyed) {
+				this.clear();
+				return;
+			}
 			_initProps(target, props, isTo);
 			_beginLoop();
 		}
@@ -189,6 +193,10 @@ package laya.utils {
 		 */
 		public function complete():void {
 			if (!this._target) return;
+			
+			//立即执行初始化
+			Laya.timer.runTimer(this, firstStart);
+			
 			//缓存当前属性
 			var target:* = this._target;
 			var props:* = this._props;

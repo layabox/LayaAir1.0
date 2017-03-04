@@ -58,7 +58,7 @@ package laya.display {
 		public static const SCALE_NOBORDER:String = "noborder";
 		/**应用保持设计宽高不变，不缩放不变型，stage的宽高等于屏幕宽高。*/
 		public static const SCALE_FULL:String = "full";
-		/**应用保持设计宽度不变，高度根据屏幕比缩放，stage的宽度等于设计宽度，高度根据屏幕比率大小而变化*/
+		/**应用保持设计宽度不变，高度根据屏幕比缩放，stage的宽度等于设计高度，高度根据屏幕比率大小而变化*/
 		public static const SCALE_FIXED_WIDTH:String = "fixedwidth";
 		/**应用保持设计高度不变，宽度根据屏幕比缩放，stage的高度等于设计宽度，宽度根据屏幕比率大小而变化*/
 		public static const SCALE_FIXED_HEIGHT:String = "fixedheight";
@@ -372,7 +372,7 @@ package laya.display {
 			offset.x = Math.round(offset.x);
 			offset.y = Math.round(offset.y);
 			mat.translate(offset.x, offset.y);
-			if (_safariOffsetY && parseInt(canvasStyle.top) === 0) canvasStyle.top = _safariOffsetY + "px";
+			if (_safariOffsetY) mat.translate(0, _safariOffsetY);
 			
 			//处理横竖屏
 			canvasDegree = 0;
@@ -392,13 +392,10 @@ package laya.display {
 			mat.d = _formatData(mat.d);
 			mat.tx = _formatData(mat.tx);
 			mat.ty = _formatData(mat.ty);
-			//if (Math.abs(mat.a) < 0.00000001) mat.a = mat.d = 0;
-			//if (Math.abs(mat.tx) < 0.00000001) mat.tx = 0;
-			//if (Math.abs(mat.ty) < 0.00000001) mat.ty = 0;
 			canvasStyle.transformOrigin = canvasStyle.webkitTransformOrigin = canvasStyle.msTransformOrigin = canvasStyle.mozTransformOrigin = canvasStyle.oTransformOrigin = "0px 0px 0px";
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "matrix(" + mat.toString() + ")";
 			//修正用户自行设置的偏移
-			//var rect:* = canvas.source.getBoundingClientRect();
+			if (_safariOffsetY) mat.translate(0, -_safariOffsetY);
 			mat.translate(parseInt(canvasStyle.left) || 0, parseInt(canvasStyle.top) || 0);
 			visible = true;
 			_repaint = 1;
@@ -592,10 +589,18 @@ package laya.display {
 				MouseManager.instance.runEvent();
 				Laya.timer._update();
 				
+				var scene:*;
 				var i:int, n:int;
-				for (i = 0, n = _scenes.length; i < n; i++) {
-					var scene:* = _scenes[i];
-					(scene) && (scene._updateScene());
+				if (Render.isConchNode) {
+					for (i = 0, n = _scenes.length; i < n; i++) {
+						scene = _scenes[i];
+						(scene) && (scene._updateSceneConch());
+					}
+				} else {
+					for (i = 0, n = _scenes.length; i < n; i++) {
+						scene = _scenes[i];
+						(scene) && (scene._updateScene());
+					}
 				}
 				
 				if (Render.isConchNode) {//NATIVE

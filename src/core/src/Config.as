@@ -42,5 +42,9 @@ package {
 		 * 设置画布是否预乘，只对2D(WebGL)、3D有效。
 		 */
 		public static var premultipliedAlpha:Boolean = false;
+		/**
+		 * 设置画布的模板缓冲，只对2D(WebGL)、3D有效。
+		 */
+		public static var isStencil:Boolean = true;
 	}
 }

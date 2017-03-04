@@ -501,7 +501,7 @@ package laya.d3.math {
 		 * @param	box	包围盒
 		 * @param	out 相交距离,如果为0,不相交
 		 */
-		public static function intersectsRayAndBoxRD(ray:Ray, box:BoundBox, out:Number):Boolean {
+		public static function intersectsRayAndBoxRD(ray:Ray, box:BoundBox):Number {
 			
 			var rayoe:Float32Array = ray.origin.elements;
 			var rayoeX:Number = rayoe[0];
@@ -523,7 +523,7 @@ package laya.d3.math {
 			var boxMaxeY:Number = boxMaxe[1];
 			var boxMaxeZ:Number = boxMaxe[2];
 			
-			out = 0;
+			var out:Number = 0;
 			
 			var tmax:Number = MathUtils3D.MaxValue;
 			
@@ -531,8 +531,8 @@ package laya.d3.math {
 				
 				if (rayoeX < boxMineX || rayoeX > boxMaxeX) {
 					
-					out = 0;
-					return false;
+					//out = 0;
+					return -1;
 				}
 			} else {
 				
@@ -552,8 +552,8 @@ package laya.d3.math {
 				
 				if (out > tmax) {
 					
-					out = 0;
-					return false;
+					//out = 0;
+					return -1;
 				}
 			}
 			
@@ -561,8 +561,8 @@ package laya.d3.math {
 				
 				if (rayoeY < boxMineY || rayoeY > boxMaxeY) {
 					
-					out = 0;
-					return false;
+					//out = 0;
+					return -1;
 				}
 			} else {
 				
@@ -582,8 +582,8 @@ package laya.d3.math {
 				
 				if (out > tmax) {
 					
-					out = 0;
-					return false;
+					//out = 0;
+					return -1;
 				}
 			}
 			
@@ -591,8 +591,8 @@ package laya.d3.math {
 				
 				if (rayoeZ < boxMineZ || rayoeZ > boxMaxeZ) {
 					
-					out = 0;
-					return false;
+					//out = 0;
+					return -1;
 				}
 			} else {
 				
@@ -612,12 +612,12 @@ package laya.d3.math {
 				
 				if (out > tmax) {
 					
-					out = 0;
-					return false;
+					//out = 0;
+					return -1;
 				}
 			}
 			
-			return true;
+			return out;
 		}
 		
 		/**
@@ -626,20 +626,20 @@ package laya.d3.math {
 		 * @param	box	包围盒
 		 * @param	out 相交点
 		 */
-		public static function intersectsRayAndBoxRP(ray:Ray, box:BoundBox, out:Vector3):Boolean {
+		public static function intersectsRayAndBoxRP(ray:Ray, box:BoundBox, out:Vector3):Number {
 			
-			var distance:Number;
-			if (!intersectsRayAndBoxRD(ray, box, distance)) {
+			var distance:Number = intersectsRayAndBoxRD(ray, box);
+			if (distance === -1) {
 				
-				out = Vector3.ZERO;
-				return false;
+				Vector3.ZERO.cloneTo(out);
+				return distance;
 			}
-			
 			Vector3.scale(ray.direction, distance, _tempV30);
 			Vector3.add(ray.origin, _tempV30, _tempV31);
 			
-			out = _tempV31;
-			return true;
+			_tempV31.cloneTo(out);
+			
+			return distance;
 		}
 		
 		/**
@@ -649,6 +649,7 @@ package laya.d3.math {
 		 * @return	相交距离,-1表示不相交
 		 */
 		public static function intersectsRayAndSphereRD(ray:Ray, sphere:BoundSphere):Number {
+			
 			var sphereR:Number = sphere.radius;
 			Vector3.subtract(ray.origin, sphere.center, _tempV30);
 			
@@ -671,6 +672,7 @@ package laya.d3.math {
 				distance = 0;
 			
 			return distance;
+			
 		}
 		
 		/**
@@ -690,7 +692,7 @@ package laya.d3.math {
 			Vector3.scale(ray.direction, distance, _tempV30);
 			Vector3.add(ray.origin, _tempV30, _tempV31);
 			
-			out = _tempV31;
+			_tempV31.cloneTo(out);
 			return distance;
 		}
 		

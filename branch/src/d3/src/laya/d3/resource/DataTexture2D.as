@@ -3,8 +3,6 @@ package laya.d3.resource {
 	import laya.events.Event;
 	import laya.maths.Arith;
 	import laya.net.Loader;
-	import laya.resource.Bitmap;
-	import laya.ui.Image;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import laya.utils.Utils;
@@ -14,27 +12,49 @@ package laya.d3.resource {
 	
 	public class DataTexture2D extends BaseTexture {
 		/**
+		 * * 把所有的lod排列在一层上，这里记录每一lod的位置信息
+		 */
+		public var simLodInfo:Float32Array;
+		public static var simLodRect:Uint32Array = new Uint32Array([
+			//x,y,w,h,
+			0, 0, 							512, 	256,
+			512, 0, 						256, 	128,
+			512+256, 0, 					128, 	64,
+			512+256+128, 0, 				64, 	32,
+			512+256+128+64, 0, 				32, 	16,
+			512+256+128+64+32, 0, 			16, 	8,
+			512+256+128+64+32+16, 0, 		8, 		4,
+			512+256+128+64+32+16+8, 0, 		4, 		2,
+			512+256+128+64+32+16+8+4, 0, 	2, 		1,
+			512+256+128+64+32+16+8+4+2, 0, 	1, 		1
+		]);
+
+		
+		/**
 		 * 加载Texture2D。
 		 * @param url Texture2D地址。
 		 */
-		public static function load(url:String, w:int, h:int, magfilter:int, minfilter:int):DataTexture2D {
+		public static function load(url:String, w:int=0, h:int=0, magfilter:int=WebGLContext.LINEAR, minfilter:int=WebGLContext.LINEAR):DataTexture2D {
 			var extension:String = Utils.getFileExtension(url);
 			if (extension === 'mipmaps') {
-				return Laya.loader.create(url, null, null, DataTexture2D, [function(data:ArrayBuffer) {
+				var ret:DataTexture2D = Laya.loader.create(url, null, null, DataTexture2D, [function(data:ArrayBuffer):* {
 					this._mipmaps = [];
-					this.mipmap = false;
-					var iinfo = new Uint32Array(data);
-					this._width = iinfo[0];
-					this._height = iinfo[1];
-					var curw:int = this._width;
+					var szinfo:Uint32Array = new Uint32Array(data);
+					this._width = szinfo[0] * 2;	//因为要把lod合并到一起，所以*2
+					if (this._width != 1024) {
+						console.error("现在只支持512x256的环境贴图。当前的是" + szinfo[0]);
+						throw "现在只支持512x256的环境贴图。当前的是"+szinfo[0];
+					}
+					this._height = szinfo[1];
+					var curw:int = this._width/2;
 					var curh:int = this._height;
-					var cursz = 8;
+					var cursz:int = 8;
 					while (true) {
-						var curbufsz = curw * curh * 4;
+						var curbufsz:int = curw * curh * 4;
 						if (cursz + curbufsz > data.byteLength) {
 							throw "load mipmaps data size error ";
 						}
-						var tbuf = new Uint8Array(data, cursz,curbufsz);
+						var tbuf:Uint8Array = new Uint8Array(data, cursz, curbufsz);
 						this._mipmaps.push(tbuf);
 						cursz += curbufsz;
 						if (curw == 1 && curh == 1) {
@@ -47,16 +67,32 @@ package laya.d3.resource {
 					}
 					return null;
 				}]);
-			}
-			else if( typeof(w)=='number'){
-				return Laya.loader.create(url, null, null, DataTexture2D, [function(data){
+				
+				//假设目前只允许原始大小为512x256的环境贴图。展开后大小为1024
+				//load函数一调用，这个就要存在，所以不能放在下载完成中。
+				ret.simLodInfo = new Float32Array(40);
+				for ( var i:int = 0; i < ret.simLodInfo.length; ) {
+					ret.simLodInfo[i] = (simLodRect[i]+0.5) / 1024;	//这时候还不知道多大，假设都是这个值
+					i++;
+					ret.simLodInfo[i] = (simLodRect[i]+0.5) / 256;
+					i++;
+					ret.simLodInfo[i] = Math.max(simLodRect[i]-1,0.1)/ 1024;
+					i++;
+					ret.simLodInfo[i] = Math.max(simLodRect[i] - 1.5, 0.1) / 256;	//这个数字是凑出来的
+					i++;
+				}
+				return ret;
+			} else if (typeof(w) == 'number') {
+				return Laya.loader.create(url, null, null, DataTexture2D, [function(data:* ):* {
 					this._width = w;
 					this._height = h;
 					this._buffer = data;
 					return null;
 				}]);
-			}else if (typeof(w) == 'function') {
-				return Laya.loader.create(url, null, null, DataTexture2D, [w]);	
+			} else if (typeof(w) == 'function') {
+				return Laya.loader.create(url, null, null, DataTexture2D, [w]);
+			} else {
+				throw new Error("unknown params.");
 			}
 		}
 		
@@ -88,14 +124,14 @@ package laya.d3.resource {
 		 * @private
 		 */
 		private function _onTextureLoaded(buff:ArrayBuffer):void {
-			/*
-			this._buffer = buff;
-			var w:int = img.width;
-			var h:int = img.height;
-			_width = w;
-			_height = h;
-			_size = new Size(w, h);
-			*/
+		/*
+		   this._buffer = buff;
+		   var w:int = img.width;
+		   var h:int = img.height;
+		   _width = w;
+		   _height = h;
+		   _size = new Size(w, h);
+		 */
 		}
 		
 		/**
@@ -117,21 +153,32 @@ package laya.d3.resource {
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTexture);
 			
 			if (this._mipmaps) {
-				var cw:int = this._width;
-				var ch:int = this._height;
+				//var cw:int = this._width;
+				//var ch:int = this._height;
+				var infoi:int = 0;
+				gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _width, _height, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, null);
 				for (var i:int = 0; i < this._mipmaps.length; i++) {
+					/*
 					if (_mipmaps[i].byteLength != cw * ch * 4) {
-						throw	"mipmap size error  level:"+i;
+						throw "mipmap size error  level:" + i;
 					}
 					gl.texImage2D(WebGLContext.TEXTURE_2D, i, WebGLContext.RGBA, cw, ch, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, new Uint8Array(_mipmaps[i]));
 					cw /= 2;
 					ch /= 2;
 					if (cw < 1) cw = 1;
 					if (ch < 1) ch = 1;
+					*/
+					gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, 
+						simLodRect[infoi++], 
+						simLodRect[infoi++],
+						simLodRect[infoi++],
+						simLodRect[infoi++],
+						WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, new Uint8Array(_mipmaps[i]));
 				}
+				this.minFifter = WebGLContext.LINEAR;
+				this.magFifter = WebGLContext.LINEAR;
 				this.mipmap = false;
-			}
-			else{
+			} else {
 				gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, w, h, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, new Uint8Array(_buffer));
 			}
 			
@@ -178,8 +225,8 @@ package laya.d3.resource {
 			if (!_buffer && !_mipmaps) {
 				_recreateLock = true;
 				startCreate();
-				var _this:Texture2D = this;
-				//TODO 怎么恢复
+				var _this:DataTexture2D = this;
+					//TODO 怎么恢复
 			} else {
 				if (_recreateLock) {
 					return;
@@ -194,9 +241,9 @@ package laya.d3.resource {
 		 *@private
 		 */
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
-			var imgdata;//width,height,data
+			var imgdata:*;//width,height,data
 			if (params) {
-				imgdata = params[0].call(this,data);
+				imgdata = params[0].call(this, data);
 			}
 			if (imgdata) {
 				this._width = imgdata.width;
@@ -208,8 +255,7 @@ package laya.d3.resource {
 			if (_conchTexture) {//NATIVE
 				//_conchTexture.setTexture2DImage(_image);
 				throw '怎么给runtime传递datatexture数据';
-			}
-			else
+			} else
 				activeResource();
 			
 			_loaded = true;
@@ -221,7 +267,7 @@ package laya.d3.resource {
 		 * @return 图片像素。
 		 */
 		public function getPixels():Uint8Array {
-			return this._buffer;
+			return new Uint8Array(this._buffer);
 		}
 		
 		/**
@@ -238,8 +284,6 @@ package laya.d3.resource {
 				memorySize = 0;
 			}
 		}
-	
 	}
-
 }
 

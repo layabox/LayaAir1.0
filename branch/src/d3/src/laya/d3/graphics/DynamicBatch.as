@@ -6,7 +6,6 @@ package laya.d3.graphics {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
 	import laya.utils.Stat;
@@ -87,7 +86,7 @@ package laya.d3.graphics {
 				_combineRenderElementPool[_combineRenderElementPoolIndex - 1] = renderElement = new RenderElement();
 				renderElement._sprite3D = new Sprite3D();//TODO:创建虚拟动态精灵	
 			}
-			renderElement._sprite3D._prepareShaderValuetoRender(view,projection,projectionView);//TODO:待调整,是否合理
+			renderElement._sprite3D._prepareShaderValuetoRender(projectionView);//TODO:待调整,是否合理
 			return renderElement;
 		}
 		
@@ -106,6 +105,7 @@ package laya.d3.graphics {
 				var renderElement:RenderElement = _combineRenderElements[i];
 				var subVertexDatas:Float32Array = renderElement.getDynamicBatchBakedVertexs(0);
 				var subIndexDatas:Uint16Array = renderElement.getBakedIndices();
+				var isInvert:Boolean = renderElement._sprite3D.transform._isFrontFaceInvert;
 				
 				var indexOffset:int = curMerVerCount / (_vertexDeclaration.vertexStride / 4);
 				var indexStart:int = curIndexCount;
@@ -115,8 +115,24 @@ package laya.d3.graphics {
 				renderElement._batchIndexEnd = indexEnd;
 				
 				_indexDatas.set(subIndexDatas, curIndexCount);
-				for (var k:int = indexStart; k < indexEnd; k++)
-					_indexDatas[k] = indexOffset + _indexDatas[k];
+				
+				var k:int;					
+					if (isInvert) {
+						for (k = indexStart; k < indexEnd; k += 3) {
+							_indexDatas[k] = indexOffset + _indexDatas[k];
+							var index1:int = _indexDatas[k + 1];
+							var index2:int = _indexDatas[k + 2];
+							_indexDatas[k + 1] = indexOffset + index2;
+							_indexDatas[k + 2] = indexOffset + index1;
+						}
+					} else {
+						for (k = indexStart; k < indexEnd; k += 3) {
+							_indexDatas[k] = indexOffset + _indexDatas[k];
+							_indexDatas[k + 1] = indexOffset + _indexDatas[k + 1];
+							_indexDatas[k + 2] = indexOffset + _indexDatas[k + 2];
+						}
+					}
+				
 				curIndexCount += subIndexDatas.length;
 				
 				_vertexDatas.set(subVertexDatas, curMerVerCount);

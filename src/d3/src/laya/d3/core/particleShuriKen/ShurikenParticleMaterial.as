@@ -24,6 +24,7 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
+	import laya.net.Loader;
 	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
@@ -151,7 +152,7 @@ package laya.d3.core.particleShuriKen {
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
-			//case RENDERMODE_CUTOUT: 
+				//case RENDERMODE_CUTOUT: 
 				//depthWrite = true;
 				//cull = CULL_BACK;
 				//blend = BLEND_DISABLE;
@@ -159,7 +160,7 @@ package laya.d3.core.particleShuriKen {
 				//_addShaderDefine(ShaderDefines3D.ALPHATEST);
 				//event(Event.RENDERQUEUE_CHANGED, this);
 				break;
-			//case RENDERMODE_CUTOUTDOUBLEFACE: 
+				//case RENDERMODE_CUTOUTDOUBLEFACE: 
 				//_renderQueue = RenderQueue.OPAQUE;
 				//depthWrite = true;
 				//cull = CULL_NONE;
@@ -338,6 +339,20 @@ package laya.d3.core.particleShuriKen {
 			renderMode = RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
 		}
 		
+		/**
+		 * @private
+		 */
+		public static function _parseShurikenParticleMaterial(textureMap:Object, material:ShurikenParticleMaterial, json:Object):void {//兼容性函数
+			var customProps:Object = json.customProps;
+			var diffuseTexture:String = customProps.diffuseTexture.texture2D;
+			(diffuseTexture) && (material.diffuseTexture = Loader.getRes(textureMap[diffuseTexture]));
+			var tintColorValue:Array = customProps.tintColor;
+			(tintColorValue) && (material.tintColor = new Vector4(tintColorValue[0], tintColorValue[1], tintColorValue[2], tintColorValue[3]));
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
 		override public function _setMaterialShaderParams(state:RenderState):void {
 			var particle:ShuriKenParticle3D = state.owner as ShuriKenParticle3D;
 			var particleSystem:ShurikenParticleSystem = particle.particleSystem;
@@ -370,14 +385,23 @@ package laya.d3.core.particleShuriKen {
 		 */
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			var jsonData:Object = data[0];
-			var textureMap:Object = data[1];
-			var customHandler:Handler = Handler.create(null, Utils3D._parseShurikenParticleMaterial, [textureMap], false);
-			ClassUtils.createByJson(jsonData as Object, this, null, customHandler, null);
-			customHandler.recover();
-			//_loaded = true;
-			event(Event.LOADED, this);
+			if (jsonData.version) {
+				super.onAsynLoaded(url, data, params);
+			} else {//兼容性代码
+				var textureMap:Object = data[1];
+				var props:Object = jsonData.props;
+				for (var prop:String in props)
+					this[prop] = props[prop];
+				_parseShurikenParticleMaterial(textureMap, this, jsonData);
+				
+				//_loaded = true;
+				event(Event.LOADED, this);
+			}
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override public function cloneTo(destObject:*):void {
 			super.cloneTo(destObject);
 			var dest:ShurikenParticleMaterial = destObject as ShurikenParticleMaterial;

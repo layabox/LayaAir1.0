@@ -67,7 +67,7 @@ package laya.debug.tools
 			trace(rst);
 			return rst;
 		}
-		public static function traceSize(tar:Sprite):void
+		public static function traceSize(tar:Object):void
 		{
 			DebugTool.dTrace("Size: x:"+tar.x+" y:"+tar.y+" w:"+tar.width+" h:"+tar.height+" scaleX:"+tar.scaleX+" scaleY:"+tar.scaleY);
 		}

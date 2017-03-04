@@ -1,4 +1,5 @@
 package laya.d3.core.particleShuriKen {
+	import laya.d3.core.GeometryFilter;
 	import laya.d3.core.IClone;
 	import laya.d3.core.particleShuriKen.module.Burst;
 	import laya.d3.core.particleShuriKen.module.GradientAngularVelocity;
@@ -22,11 +23,10 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.graphics.VertexParticleShuriken;
 	import laya.d3.math.Vector2;
+	import laya.d3.graphics.VertexParticleShuriken;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.maths.MathUtil;
@@ -54,7 +54,7 @@ package laya.d3.core.particleShuriKen {
 	/**
 	 * <code>ShurikenParticleSystem</code> 类用于创建3D粒子数据模板。
 	 */
-	public class ShurikenParticleSystem extends EventDispatcher implements IRenderable, IClone {
+	public class ShurikenParticleSystem extends GeometryFilter implements IRenderable, IClone {
 		/** @private */
 		private static var _tempPosition:Vector3 = new Vector3();
 		/** @private */
@@ -338,14 +338,31 @@ package laya.d3.core.particleShuriKen {
 		 */
 		public function set velocityOverLifetime(value:VelocityOverLifetime):void {
 			if (value) {
-				if (value.enbale)
-					_owner._addShaderDefine(ShaderDefines3D.VELOCITYOVERLIFETIME);
-				else
-					_owner._removeShaderDefine(ShaderDefines3D.VELOCITYOVERLIFETIME);
-				
 				var velocity:GradientVelocity = value.velocity;
 				var velocityType:int = velocity.type;
-				_owner._setShaderValueInt(ShuriKenParticle3D.VOLTYPE, velocityType);
+				if (value.enbale) {
+					switch (velocityType) {
+					case 0: 
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
+						break;
+					case 1: 
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
+						break;
+					case 2: 
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
+						break;
+					case 3: 
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
+						break;
+					}
+					
+				} else {
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
+				}
+				
 				switch (velocityType) {
 				case 0: 
 					_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, velocity.constant);
@@ -370,9 +387,11 @@ package laya.d3.core.particleShuriKen {
 				}
 				_owner._setShaderValueInt(ShuriKenParticle3D.VOLSPACETYPE, value.space);
 			} else {
-				_owner._removeShaderDefine(ShaderDefines3D.VELOCITYOVERLIFETIME);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
 				
-				_owner._setShaderValueInt(ShuriKenParticle3D.VOLTYPE, undefined);
 				_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, null);
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, null);
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, null);
@@ -408,15 +427,15 @@ package laya.d3.core.particleShuriKen {
 				if (value.enbale) {
 					switch (color.type) {
 					case 1: 
-						_owner._addShaderDefine(ShaderDefines3D.COLOROVERLIFETIME);
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_COLOROVERLIFETIME);
 						break;
 					case 3: 
-						_owner._addShaderDefine(ShaderDefines3D.RANDOMCOLOROVERLIFETIME);
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
 						break;
 					}
 				} else {
-					_owner._removeShaderDefine(ShaderDefines3D.COLOROVERLIFETIME);
-					_owner._removeShaderDefine(ShaderDefines3D.RANDOMCOLOROVERLIFETIME);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_COLOROVERLIFETIME);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
 				}
 				
 				switch (color.type) {
@@ -435,8 +454,8 @@ package laya.d3.core.particleShuriKen {
 					break;
 				}
 			} else {
-				_owner._removeShaderDefine(ShaderDefines3D.COLOROVERLIFETIME);
-				_owner._removeShaderDefine(ShaderDefines3D.RANDOMCOLOROVERLIFETIME);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_COLOROVERLIFETIME);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
 				
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, gradientColor._alphaElements);
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, gradientColor._rgbElements);
@@ -462,19 +481,34 @@ package laya.d3.core.particleShuriKen {
 		 */
 		public function set sizeOverLifetime(value:SizeOverLifetime):void {
 			if (value) {
-				if (value.enbale)
-					_owner._addShaderDefine(ShaderDefines3D.SIZEOVERLIFETIME);
-				else
-					_owner._removeShaderDefine(ShaderDefines3D.SIZEOVERLIFETIME);
-				
 				var size:GradientSize = value.size;
+				var sizeSeparate:Boolean = size.separateAxes;
 				var sizeType:int = size.type;
-				var sizeSeparate:Boolean;
+				if (value.enbale) {
+					switch (sizeType) {
+					case 0: 
+						if (sizeSeparate)
+							_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
+						else
+							_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
+						break;
+					case 2: 
+						if (sizeSeparate)
+							_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
+						else
+							_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
+						break;
+					}
+					
+				} else {
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
+				}
+				
 				switch (sizeType) {
 				case 0: 
-					sizeSeparate = size.separateAxes;
-					_owner._setShaderValueInt(ShuriKenParticle3D.SOLTYPE, sizeType);
-					_owner._setShaderValueBool(ShuriKenParticle3D.SOLSEPRARATE, sizeSeparate);
 					if (sizeSeparate) {
 						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, size.gradientX._elements);
 						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTY, size.gradientY._elements);
@@ -484,9 +518,6 @@ package laya.d3.core.particleShuriKen {
 					}
 					break;
 				case 2: 
-					sizeSeparate = size.separateAxes;
-					_owner._setShaderValueInt(ShuriKenParticle3D.SOLTYPE, sizeType);
-					_owner._setShaderValueBool(ShuriKenParticle3D.SOLSEPRARATE, sizeSeparate);
 					if (sizeSeparate) {
 						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, size.gradientXMin._elements);
 						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTXMAX, size.gradientXMax._elements);
@@ -501,10 +532,11 @@ package laya.d3.core.particleShuriKen {
 					break;
 				}
 			} else {
-				_owner._removeShaderDefine(ShaderDefines3D.SIZEOVERLIFETIME);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
 				
-				_owner._setShaderValueInt(ShuriKenParticle3D.SOLTYPE, undefined);
-				_owner._setShaderValueBool(ShuriKenParticle3D.SOLSEPRARATE, undefined);
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, null);
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTXMAX, null);
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTY, null);
@@ -531,16 +563,37 @@ package laya.d3.core.particleShuriKen {
 		 */
 		public function set rotationOverLifetime(value:RotationOverLifetime):void {
 			if (value) {
-				if (value.enbale)
-					_owner._addShaderDefine(ShaderDefines3D.ROTATIONOVERLIFETIME);
-				else
-					_owner._removeShaderDefine(ShaderDefines3D.ROTATIONOVERLIFETIME);
-				
 				var rotation:GradientAngularVelocity = value.angularVelocity;
-				var rotationType:int = rotation.type;
 				var rotationSeparate:Boolean = rotation.separateAxes;
-				_owner._setShaderValueInt(ShuriKenParticle3D.ROLTYPE, rotationType);
-				_owner._setShaderValueBool(ShuriKenParticle3D.ROLSEPRARATE, rotationSeparate);
+				var rotationType:int = rotation.type;
+				if (value.enbale) {
+					if (rotationSeparate)
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
+					else
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIME);
+					switch (rotationType) {
+					case 0: 
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
+						break;
+					case 1: 
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
+						break;
+					case 2: 
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
+						break;
+					case 3: 
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
+						break;
+					}
+				} else {
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIME);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
+				}
+				
 				switch (rotationType) {
 				case 0: 
 					if (rotationSeparate) {
@@ -582,10 +635,13 @@ package laya.d3.core.particleShuriKen {
 					break;
 				}
 			} else {
-				_owner._removeShaderDefine(ShaderDefines3D.ROTATIONOVERLIFETIME);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIME);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
 				
-				_owner._setShaderValueInt(ShuriKenParticle3D.ROLTYPE, undefined);
-				_owner._setShaderValueBool(ShuriKenParticle3D.ROLSEPRARATE, undefined);
 				_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, null);
 				_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE, null);
 				_owner._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONST, undefined);
@@ -621,16 +677,21 @@ package laya.d3.core.particleShuriKen {
 				var frameOverTime:FrameOverTime = value.frame;
 				var textureAniType:int = frameOverTime.type;
 				if (value.enbale) {
-					
-					if (textureAniType === 1 || textureAniType === 3) {
-						_owner._addShaderDefine(ShaderDefines3D.TEXTURESHEETANIMATION);
+					switch (textureAniType) {
+					case 1: 
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
+						break;
+						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
+					case 3: 
+						break;
+						
 					}
 				} else {
-					_owner._removeShaderDefine(ShaderDefines3D.TEXTURESHEETANIMATION);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
 				}
 				
 				if (textureAniType === 1 || textureAniType === 3) {
-					_owner._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONTYPE, textureAniType);
 					_owner._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES, value.cycles);
 					var title:Vector2 = value.tiles;
 					var _uvLengthE:Float32Array = _uvLength.elements;
@@ -649,9 +710,9 @@ package laya.d3.core.particleShuriKen {
 				}
 				
 			} else {
-				_owner._removeShaderDefine(ShaderDefines3D.TEXTURESHEETANIMATION);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
+				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
 				
-				_owner._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONTYPE, undefined);
 				_owner._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES, undefined);
 				_owner._setShaderValueVector2(ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, null);
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, null);
@@ -686,7 +747,7 @@ package laya.d3.core.particleShuriKen {
 		public function ShurikenParticleSystem(owner:ShuriKenParticle3D) {
 			_owner = owner;
 			_currentTime = 0;
-			_floatCountPerVertex = 40;//0~3为CornerTextureCoordinate,4~6为Position,7~9Direction,10到13为StartColor,14到16为StartSize,17到19为3DStartRotationForward(或17为2DStartRotation),20到22为3DStartRotationRight,23到25为3DStartRotationUp，26为StartLifeTime,27为Time,28为startSpeed,29到32为random0,33到36为random1,37到39为世界空间模拟器模式位置(附加数据)
+			_floatCountPerVertex = 40;//(0~3为CornerTextureCoordinate),(4~6为Position,7为StartLifeTime),(8~10Direction,11为Time),12到15为StartColor,16到18为StartSize,19到21为3DStartRotationForward(或19为2DStartRotation),22到24为3DStartRotationRight,25到27为3DStartRotationUp,28为startSpeed,29到32为random0,33到36为random1,37到39为世界空间模拟器模式位置(附加数据)
 			
 			_isPlaying = false;
 			_isPaused = false;
@@ -820,10 +881,10 @@ package laya.d3.core.particleShuriKen {
 			const epsilon:Number = 0.0001;
 			while (_firstActiveElement != _firstNewElement) {
 				var index:int = _firstActiveElement * _floatCountPerVertex * 4;
-				var timeIndex:int = index + 27;//27为Time
+				var timeIndex:int = index + 11;//11为Time
 				
 				var particleAge:Number = _currentTime - _vertices[timeIndex];
-				if (particleAge + epsilon < _vertices[index + 26]/*_maxLifeTime*/)//26为真实lifeTime,TODO:shader内精度误差
+				if (particleAge + epsilon < _vertices[index + 7]/*_maxLifeTime*/)//7为真实lifeTime
 					break;
 				
 				_vertices[timeIndex] = _drawCounter;
@@ -838,7 +899,7 @@ package laya.d3.core.particleShuriKen {
 		 */
 		private function _freeRetiredParticles():void {
 			while (_firstRetiredElement != _firstActiveElement) {
-				var age:int = _drawCounter - _vertices[_firstRetiredElement * _floatCountPerVertex * 4 + 27];//27为Time
+				var age:int = _drawCounter - _vertices[_firstRetiredElement * _floatCountPerVertex * 4 + 11];//11为Time
 				
 				if (isPerformanceMode)
 					if (age < 3)//GPU从不滞后于CPU两帧，出于显卡驱动BUG等安全因素考虑滞后三帧
@@ -1022,7 +1083,8 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @private
 		 */
-		public function _destroy():void {
+		override public function _destroy():void {
+			super._destroy();
 			(_owner.displayedInStage && _owner.enable) && (_removeUpdateEmissionToTimer());
 			_vertexBuffer.dispose();
 			_indexBuffer.dispose();
@@ -1051,8 +1113,6 @@ package laya.d3.core.particleShuriKen {
 			_sizeOverLifetime = null;
 			_rotationOverLifetime = null;
 			_textureSheetAnimation = null;
-			
-			offAll();
 		}
 		
 		/**
@@ -1091,9 +1151,6 @@ package laya.d3.core.particleShuriKen {
 			
 			var startIndex:int = _firstFreeElement * _floatCountPerVertex * 4;
 			
-			var randomX0:Number = Math.random(), randomY0:Number = Math.random(), randomZ0:Number = Math.random(), randomW0:Number = Math.random();
-			var randomX1:Number = Math.random(), randomY1:Number = Math.random(), randomZ1:Number = Math.random(), randomW1:Number = Math.random();
-			
 			var subU:Number = particleData.startUVInfo[0];
 			var subV:Number = particleData.startUVInfo[1];
 			var startU:Number = particleData.startUVInfo[2];
@@ -1107,44 +1164,95 @@ package laya.d3.core.particleShuriKen {
 			_vertices[startIndex + _floatCountPerVertex * 3 + 2] = startU;
 			_vertices[startIndex + _floatCountPerVertex * 3 + 3] = startV;
 			
+			var randomVelocity:Number, randomColor:Number, randomSize:Number, randomRotation:Number, randomTextureAnimation:Number;
+			
+			var needRandomVelocity:Boolean = _velocityOverLifetime && _velocityOverLifetime.enbale;
+			if (needRandomVelocity) {
+				var velocityType:int = _velocityOverLifetime.velocity.type;
+				if (velocityType === 3)
+					randomVelocity = Math.random();
+				else
+					needRandomVelocity = false;
+			} else {
+				needRandomVelocity = false;
+			}
+			var needRandomColor:Boolean = _colorOverLifetime && _colorOverLifetime.enbale;
+			if (needRandomColor) {
+				var colorType:int = _colorOverLifetime.color.type;
+				if (colorType === 3)
+					randomColor = Math.random();
+				else
+					needRandomColor = false;
+			} else {
+				needRandomColor = false;
+			}
+			var needRandomSize:Boolean = _sizeOverLifetime && _sizeOverLifetime.enbale;
+			if (needRandomSize) {
+				var sizeType:int = _sizeOverLifetime.size.type;
+				if (sizeType === 3)
+					randomSize = Math.random();
+				else
+					needRandomSize = false;
+			} else {
+				needRandomSize = false;
+			}
+			var needRandomRotation:Boolean = _rotationOverLifetime && _rotationOverLifetime.enbale;
+			if (needRandomRotation) {
+				var rotationType:int = _rotationOverLifetime.angularVelocity.type;
+				if (rotationType === 2 || rotationType === 3)
+					randomRotation = Math.random();
+				else
+					needRandomRotation = false;
+			} else {
+				needRandomRotation = false;
+			}
+			var needRandomTextureAnimation:Boolean = _textureSheetAnimation && _textureSheetAnimation.enbale;
+			if (needRandomTextureAnimation) {
+				var textureAnimationType:int = _textureSheetAnimation.frame.type;
+				if (textureAnimationType === 3)
+					randomTextureAnimation = Math.random();
+				else
+					needRandomTextureAnimation = false;
+			} else {
+				needRandomTextureAnimation = false;
+			}
+			
 			for (var i:int = 0; i < 4; i++) {
 				var vertexStart:int = startIndex + i * _floatCountPerVertex;
 				var j:int, offset:int;
 				for (j = 0, offset = 4; j < 3; j++)
 					_vertices[vertexStart + offset + j] = particleData.position[j];
+				_vertices[vertexStart + 7] = particleData.startLifeTime;
 				
-				for (j = 0, offset = 7; j < 3; j++)
+				for (j = 0, offset = 8; j < 3; j++)
 					_vertices[vertexStart + offset + j] = particleData.direction[j];
+				_vertices[vertexStart + 11] = particleData.time;
 				
-				for (j = 0, offset = 10; j < 4; j++)
+				for (j = 0, offset = 12; j < 4; j++)
 					_vertices[vertexStart + offset + j] = particleData.startColor[j];
 				
-				for (j = 0, offset = 14; j < 3; j++)
+				for (j = 0, offset = 16; j < 3; j++)
 					_vertices[vertexStart + offset + j] = particleData.startSize[j];
 				
-				for (j = 0, offset = 17; j < 3; j++)
+				for (j = 0, offset = 19; j < 3; j++)
 					_vertices[vertexStart + offset + j] = particleData.startRotation0[j];
 				
-				for (j = 0, offset = 20; j < 3; j++)
+				for (j = 0, offset = 22; j < 3; j++)
 					_vertices[vertexStart + offset + j] = particleData.startRotation1[j];
 				
-				for (j = 0, offset = 23; j < 3; j++)
+				for (j = 0, offset = 25; j < 3; j++)
 					_vertices[vertexStart + offset + j] = particleData.startRotation2[j];
-				
-				_vertices[vertexStart + 26] = particleData.startLifeTime;
-				
-				_vertices[vertexStart + 27] = particleData.time;
 				
 				_vertices[vertexStart + 28] = particleData.startSpeed;
 				
-				_vertices[vertexStart + 29] = randomX0;
-				_vertices[vertexStart + 30] = randomY0;
-				_vertices[vertexStart + 31] = randomZ0;
-				_vertices[vertexStart + 32] = randomW0;
-				_vertices[vertexStart + 33] = randomX1;
-				_vertices[vertexStart + 34] = randomY1;
-				_vertices[vertexStart + 35] = randomZ1;
-				_vertices[vertexStart + 36] = randomW1;
+				needRandomVelocity && (_vertices[vertexStart + 29] = randomVelocity);
+				needRandomColor && (_vertices[vertexStart + 30] = randomColor);
+				needRandomSize && (_vertices[vertexStart + 31] = randomSize);
+				needRandomRotation && (_vertices[vertexStart + 32] = randomRotation);
+				needRandomTextureAnimation && (_vertices[vertexStart + 33] = randomTextureAnimation);
+				//_vertices[vertexStart + 34] = randomY1;
+				//_vertices[vertexStart + 35] = randomZ1;
+				//_vertices[vertexStart + 36] = randomW1;
 				
 				for (j = 0, offset = 37; j < 3; j++)
 					_vertices[vertexStart + offset + j] = particleData.simulationWorldPostion[j];

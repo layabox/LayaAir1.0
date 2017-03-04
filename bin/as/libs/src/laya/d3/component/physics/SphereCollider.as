@@ -51,18 +51,61 @@ package laya.d3.component.physics {
 		}
 		
 		/**
+		 * 获取包围球。
+		 * @return 包围球。
+		 */
+		public function get boundSphere():BoundSphere {
+			_updateCollider();
+			return _transformBoundSphere;
+		}
+		
+		/**
 		 * 创建一个 <code>SphereCollider</code> 实例。
 		 */
 		public function SphereCollider() {
+			_needUpdate = false;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _updateCollider():void {
+			if (_needUpdate) {
+				var maxScale:Number;
+				var transform:Transform3D = _owner.transform;
+				var scale:Vector3 = transform.scale;
+				if (scale.x >= scale.y && scale.x >= scale.z)
+					maxScale = scale.x;
+				else
+					maxScale = scale.y >= scale.z ? scale.y : scale.z;
+				
+				Vector3.transformCoordinate(_originalBoundSphere.center, transform.worldMatrix, _transformBoundSphere.center);
+				_transformBoundSphere.radius = _originalBoundSphere.radius * maxScale;
+				_needUpdate = false;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _onGeometryFilterLoaded():void {
+			(destroyed) || (_initBoundSphere());
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _onWorldMatrixChanged():void {
+			_needUpdate = true;
 		}
 		
 		/**
 		 * @private
 		 */
 		private function _initBoundSphere():void {
-			_originalBoundSphere = new BoundSphere(new Vector3(0, 0, 0), 0);
-			_transformBoundSphere = new BoundSphere(new Vector3(0, 0, 0), 0);
 			(owner as RenderableSprite3D)._geometryFilter._originalBoundingSphere.cloneTo(_originalBoundSphere);
+			owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
+			_needUpdate = true;
 		}
 		
 		/**
@@ -70,46 +113,44 @@ package laya.d3.component.physics {
 		 */
 		override public function _initialize(owner:Sprite3D):void {
 			super._initialize(owner);
-			if (_owner is RenderableSprite3D) {
+			if (owner is RenderableSprite3D) {
 				var renderableOwner:RenderableSprite3D = owner as RenderableSprite3D;
+				_originalBoundSphere = new BoundSphere(new Vector3(0, 0, 0), 0);
+				_transformBoundSphere = new BoundSphere(new Vector3(0, 0, 0), 0);
 				if (renderableOwner._geometryFilter._isAsyncLoaded) {
 					_initBoundSphere();
 				} else {
-					renderableOwner._geometryFilter.once(Event.LOADED, this, _initBoundSphere);
+					renderableOwner._geometryFilter.once(Event.LOADED, this, _onGeometryFilterLoaded);
 				}
 			} else {
 				_originalBoundSphere = new BoundSphere(new Vector3(0, 0, 0), 0.5);
 				_transformBoundSphere = new BoundSphere(new Vector3(0, 0, 0), 0.5);
+				owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
+				_needUpdate = true;
 			}
 		}
 		
 		/**
-		 * @inheritDoc
+		 * 在场景中投下可与球体碰撞器碰撞的一条光线,获取发生碰撞的球体碰撞器信息。
+		 * @param  ray        射线
+		 * @param  outHitInfo 与该射线发生碰撞球体碰撞器的碰撞信息
+		 * @param  distance   射线长度,默认为最大值 
 		 */
-		override public function raycast(ray:Ray, maxDistance:Number, hitInfo:RaycastHit):Boolean {
-			if (_originalBoundSphere == null)
-				return false;
-			
-			var maxScale:Number;
-			var transform:Transform3D = _owner.transform;
-			var scale:Vector3 = transform.scale;
-			if (scale.x >= scale.y && scale.x >= scale.z)
-				maxScale = scale.x;
-			else
-				maxScale = scale.y >= scale.z ? scale.y : scale.z;
-			
-			Vector3.transformCoordinate(_originalBoundSphere.center, transform.worldMatrix, _transformBoundSphere.center);
-			_transformBoundSphere.radius = _originalBoundSphere.radius * maxScale;
+		override public function raycast(ray:Ray, hitInfo:RaycastHit, maxDistance:Number = Number.MAX_VALUE):Boolean {
+			_updateCollider();
 			
 			var distance:Number = _transformBoundSphere.intersectsRayPoint(ray, hitInfo.position);
-			if (distance === -1) {
-				hitInfo.distance = -1;
-				hitInfo.sprite3D = null;
-				return false;
-			} else {
+			
+			if (distance !== -1 && distance <= maxDistance) {
+				
 				hitInfo.distance = distance;
 				hitInfo.sprite3D = _owner;
 				return true;
+			} else {
+				
+				hitInfo.distance = -1;
+				hitInfo.sprite3D = null;
+				return false;
 			}
 		}
 	}

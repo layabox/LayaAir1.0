@@ -9,9 +9,10 @@ package laya.d3.core {
 	 * <code>RenderableSprite3D</code> 类用于可渲染3D精灵的父类，抽象类不允许实例。
 	 */
 	public class RenderableSprite3D extends Sprite3D {
-		
 		/** @private */
 		protected var _render:BaseRender;
+		/** @private */
+		public var _geometryFilter:GeometryFilter;//TODO:
 		
 		/**
 		 * 创建一个 <code>RenderableSprite3D</code> 实例。

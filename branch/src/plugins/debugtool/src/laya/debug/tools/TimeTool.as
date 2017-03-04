@@ -1,6 +1,8 @@
 package laya.debug.tools 
 {
 	import laya.utils.Browser;
+	import laya.utils.Timer;
+
 	/**
 	 * ...
 	 * @author ww
@@ -27,6 +29,23 @@ package laya.debug.tools
 			rst = tTime-timeDic[sign];
 			timeDic[sign] = tTime;
 			return rst;
+		}
+		
+		
+		
+		public static function runAllCallLater():void
+		{
+			var timer:Timer;
+			timer=Laya.timer;
+			//处理callLater
+			var laters:Array = timer["_laters"];
+			for (var i:int = 0, n:int = laters.length - 1; i <= n; i++) {
+				var handler:* = laters[i];
+				handler.method !== null && handler.run(false);
+				timer["_recoverHandler"](handler);
+				i === n && (n = laters.length - 1);
+			}
+			laters.length = 0;
 		}
 		
 	}
