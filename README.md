@@ -1,5 +1,5 @@
 #LayaAir is an open-source HTML5 engine
-It provides Canvas and WebGl for rendering, if Webgl is not supported, it switch automatically into Canvas mode.
+It provides Canvas and WebGL for rendering, if WebGL is not supported, it switch automatically into Canvas mode.
 LayaAir Engine is designed for high performance games and support ActionScript 3.0, TypeScript, JavaScript programming language.
 Develop once, publish for 3 target platform (flash, HTML5, mobile)
 
@@ -8,11 +8,11 @@ Develop once, publish for 3 target platform (flash, HTML5, mobile)
 - High performance
 
 Display render is set priority to WebGL mode. However, renderer fallback using Canvas for systems with missing/incompatible graphics cards.
-LayaAir is design to be run without Plugin.
+LayaAir is design to be run without Plugin and on embedded system.
 
 - Light weight and easy to use
 
-LayaAir API is designed to be simple, easy to handle, concepted to require small size installation. It can run basic and complete need for HTML5 engine.
+LayaAir API architecture aim to be simple, easy to handle, concepted to require small size installation. It can run basic and complete need for HTML5 engine.
 
 - Multi-language development support
 
@@ -24,14 +24,14 @@ functionality for 2D, 3D, VR, Timeline animation controls, slow motion, UI syste
 
 - Provide a visual assistance in the development and tool flow
 
-LayaAirIDE offer code development tools and visual editor. Clear workflow make, ergonomic, designed development efficiency.
+[LayaAirIDE](http://ldc.layabox.com/index.php?m=content&c=index&a=lists&catid=27) offer code development tools and visual editor. Clear workflow make, ergonomic, designed development efficiency.
 
 - Open-source and free
 
 our official Layabox Github with complete engine source version, free of charge, including commercial usage.
 
 ##general features overview
-- Webgl rendering
+- WebGL rendering
 - Canvas rendering
 - Vector renderer
 - Atlas texture support
@@ -46,11 +46,12 @@ our official Layabox Github with complete engine source version, free of charge,
 - Bones animation
 - Physical systems
 - IDE viewer
-- 3D
+- 3D (FBX Autodesk and Unity3D assets are supported)
 - VR
 
 ##Beginner usage
 ####JS version
+```js
     Laya.init(550, 400);
     Laya.stage.scaleMode = "showall";
     
@@ -59,8 +60,10 @@ our official Layabox Github with complete engine source version, free of charge,
     ape.loadImage("res/apes/monkey2.png");
     
     Laya.stage.addChild(ape);
-	
+```
+
 ####AS version
+```as3
     package
     {
         import laya.display.Sprite;
@@ -81,8 +84,10 @@ our official Layabox Github with complete engine source version, free of charge,
             }
         }
     }
-	
+```
+
 ####TS version
+```ts
     /// <reference path="../../libs/LayaAir.d.ts" />
     class Sprite_DisplayImage{
     
@@ -98,7 +103,8 @@ our official Layabox Github with complete engine source version, free of charge,
         }
     }
     new Sprite_DisplayImage();
-	
+```
+
 ##Samples Demo
 
 - http://layaair.ldc.layabox.com/demo/
@@ -112,7 +118,9 @@ http://game.layabox.com/265
 http://layaair.ldc.layabox.com/api/
 
 ##Documentation Tutorial
-http://ldc.layabox.com/index.php?m=content&c=index&a=show&catid=8&id=10
+
+- http://ldc.layabox.com/index.php?m=content&c=index&a=show&catid=8&id=10
+- https://github.com/layabox/layaair/wiki
 
 ##Developer Center
 
