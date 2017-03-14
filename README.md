@@ -111,7 +111,9 @@ our official Layabox Github with complete engine source version, free of charge,
 - http://layabox.github.io/layaair-examples/
 
 ##Games Demo
-http://game.layabox.com/265
+
+- http://game.layabox.com/265 (2D)
+- http://layaair.ldc.layabox.com/test/ZhanPaiKeJi/ (3D)
 
 ##API Help
 
