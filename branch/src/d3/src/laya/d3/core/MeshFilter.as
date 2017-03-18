@@ -18,7 +18,7 @@ package laya.d3.core {
 	/**
 	 * <code>MeshFilter</code> 类用于创建网格过滤器。
 	 */
-	public class MeshFilter extends GeometryFilter implements IDestroy {
+	public class MeshFilter extends GeometryFilter {
 		/** @private */
 		private var _owner:MeshSprite3D;
 		/** @private */
@@ -89,6 +89,7 @@ package laya.d3.core {
 			super._destroy();
 			_owner = null;
 			_sharedMesh = null;
+		
 		}
 	
 	}

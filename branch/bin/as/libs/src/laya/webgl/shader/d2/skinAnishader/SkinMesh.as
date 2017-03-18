@@ -71,7 +71,8 @@ package laya.webgl.shader.d2.skinAnishader {
 		}
 		
 		
-		public function init2(texture:Texture, vs:Array, ps:Array,verticles:Array,uvs:Array):void {
+		public function init2(texture:Texture, vs:Array, ps:Array, verticles:Array, uvs:Array):void {
+			if (transform) transform=null;
 			if (ps) {
 				_ps = ps;
 			} else {

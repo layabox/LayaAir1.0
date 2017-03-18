@@ -1,0 +1,23 @@
+#ifdef FSHIGHPRECISION
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform sampler2D u_SplatAlphaTexture;
+uniform sampler2D u_DiffuseTexture1;
+uniform sampler2D u_DiffuseTexture2;
+uniform sampler2D u_DiffuseTexture3;
+uniform sampler2D u_DiffuseTexture4;
+varying vec2 v_Texcoord0;
+varying vec2 v_Texcoord1;
+void main()
+{
+	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1);
+	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1);
+	vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1);
+	vec4 color4 = texture2D(u_DiffuseTexture4, v_Texcoord1);
+	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
+	gl_FragColor.xyz = color1.xyz * splatAlpha.x + color2.xyz * splatAlpha.y + color3.xyz * splatAlpha.z + color4.xyz * splatAlpha.w;
+	gl_FragColor.w = 1.0;
+}
+

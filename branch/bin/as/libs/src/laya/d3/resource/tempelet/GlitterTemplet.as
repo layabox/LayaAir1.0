@@ -9,6 +9,8 @@ package laya.d3.resource.tempelet {
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexGlitter;
+	import laya.d3.math.BoundBox;
+	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
@@ -127,6 +129,20 @@ package laya.d3.resource.tempelet {
 		
 		public function _getIndexBuffer():IndexBuffer3D {
 			return null;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function get _originalBoundingSphere():BoundSphere {
+			return super._originalBoundingSphere;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function get _originalBoundingBox():BoundBox {
+			return super._originalBoundingBox;
 		}
 		
 		public function GlitterTemplet(owner:Glitter) {

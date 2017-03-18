@@ -10,6 +10,11 @@ package laya.maths {
 		/**全局临时的矩形区域，此对象用于全局复用，以减少对象创建*/
 		public static const TEMP:Rectangle =/*[STATIC SAFE]*/ new Rectangle();
 		
+		/** @private */
+		private static var _temB:Array = [];
+		/** @private */
+		private static var _temA:Array = [];
+		
 		/** 矩形左上角的 X 轴坐标。*/
 		public var x:Number;
 		/** 矩形左上角的 Y 轴坐标。*/
@@ -18,11 +23,6 @@ package laya.maths {
 		public var width:Number;
 		/** 矩形的高度。*/
 		public var height:Number;
-		
-		/** @private */
-		private static var _temB:Array = [];
-		/** @private */
-		private static var _temA:Array = [];
 		
 		/**
 		 * 创建一个 <code>Rectangle</code> 对象。
@@ -106,7 +106,7 @@ package laya.maths {
 		/**
 		 * 获取此对象与传入的矩形对象的相交区域。并将相交区域赋值给传入的输出矩形对象。
 		 * @param	rect 待比较的矩形区域。
-		 * @param	out	待输出的矩形区域。建议：尽量用此对象复用对象，减少对象创建消耗。
+		 * @param	out	待输出的矩形区域。如果为空则创建一个新的。建议：尽量复用对象，减少对象创建消耗。
 		 * @return	返回相交的矩形区域对象。
 		 */
 		public function intersection(rect:Rectangle, out:Rectangle = null):Rectangle {
@@ -122,7 +122,7 @@ package laya.maths {
 		/**
 		 * 矩形联合，通过填充两个矩形之间的水平和垂直空间，将这两个矩形组合在一起以创建一个新的 Rectangle 对象。
 		 * @param	目标矩形对象。
-		 * @param	out	待输出结果的矩形对象。建议：尽量用此对象复用对象，减少对象创建消耗。
+		 * @param	out	待输出结果的矩形对象。如果为空则创建一个新的。建议：尽量复用对象，减少对象创建消耗。
 		 * @return	两个矩形后联合的 Rectangle 对象 out 。
 		 */
 		public function union(source:Rectangle, out:Rectangle = null):Rectangle {
@@ -136,7 +136,7 @@ package laya.maths {
 		
 		/**
 		 * 返回一个 Rectangle 对象，其 x、y、width 和 height 属性的值与当前 Rectangle 对象的对应值相同。
-		 * @param	out	待输出的矩形对象。建议：尽量用此对象复用对象，减少对象创建消耗。
+		 * @param	out	待输出的矩形对象。如果为空则创建一个新的。建议：尽量复用对象，减少对象创建消耗。
 		 * @return	Rectangle 对象 out ，其 x、y、width 和 height 属性的值与当前 Rectangle 对象的对应值相同。
 		 */
 		public function clone(out:Rectangle = null):Rectangle {

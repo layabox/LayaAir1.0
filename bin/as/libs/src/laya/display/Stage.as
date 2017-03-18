@@ -19,7 +19,6 @@ package laya.display {
 	/**
 	 * 舞台获得焦点时调度。比如浏览器或者当前标签被切换到后台后，重新切换回来时。
 	 * @eventType Event.FOCUS
-	 *
 	 */
 	[Event(name = "focus", type = "laya.events.Event")]
 	/**
@@ -44,8 +43,9 @@ package laya.display {
 	[Event(name = "fullscreenchange", type = "laya.events.Event")]
 	
 	/**
-	 * <p> <code>Stage</code> 类是显示对象的根节点。</p>
-	 * 可以通过 Laya.stage 访问。
+	 * <p> <code>Stage</code> 是舞台类，显示列表的根节点，所有显示对象都在舞台上显示。通过 Laya.stage 单例访问。</p>
+	 * Stage提供几种适配模式，不同的适配模式会产生不同的画布大小，画布越大，渲染压力越大，所以要选择合适的适配方案。
+	 * Stage提供不同的帧率模式，帧率越高，渲染压力越大，越费电，合理使用帧率甚至动态更改帧率有利于改进手机耗电。
 	 */
 	public class Stage extends Sprite {
 		/**应用保持设计宽高不变，不缩放不变型，stage的宽高等于设计宽高。*/
@@ -96,9 +96,7 @@ package laya.display {
 		public var focus:Node;
 		/**@private 相对浏览器左上角的偏移，弃用，请使用_canvasTransform。*/
 		public var offset:Point = new Point();
-		///**@private 开发者自己设置的画布偏移*/
-		//private var _offset:Point;
-		/**帧率类型，支持三种模式：fast-60帧(默认)，slow-30帧，mouse-30帧，但鼠标活动后会自动加速到60，鼠标不动2秒后降低为30帧，以节省消耗。*/
+		/**帧率类型，支持三种模式：fast-60帧(默认)，slow-30帧，mouse-30帧（鼠标活动后会自动加速到60，鼠标不动2秒后降低为30帧，以节省消耗），sleep-1帧。*/
 		public var frameRate:String = "fast";
 		/**设计宽度（初始化时设置的宽度Laya.init(width,height)）*/
 		public var desginWidth:Number = 0;
@@ -106,28 +104,29 @@ package laya.display {
 		public var desginHeight:Number = 0;
 		/**画布是否发生翻转。*/
 		public var canvasRotation:Boolean = false;
-		/**画布旋转角度。*/
+		/**画布的旋转角度。*/
 		public var canvasDegree:int = 0;
-		/**设置是否渲染，设置为false，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟*/
+		/**设置是否渲染，设置为false，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟
+		 * 比如非激活状态，可以设置renderingEnabled=true以节省消耗。*/
 		public var renderingEnabled:Boolean = true;
 		
-		/** @private */
+		/**@private */
 		public var _canvasTransform:Matrix = new Matrix();
-		/** @private */
+		/**@private */
 		private var _screenMode:String = "none";
-		/** @private */
+		/**@private */
 		private var _scaleMode:String = "noscale";
-		/** @private */
+		/**@private */
 		private var _alignV:String = "top";
-		/** @private */
+		/**@private */
 		private var _alignH:String = "left";
-		/** @private */
+		/**@private */
 		private var _bgColor:String = "black";
-		/** @private */
+		/**@private */
 		private var _mouseMoveTime:Number = 0;
-		/** @private */
+		/**@private */
 		private var _renderCount:int = 0;
-		/** @private */
+		/**@private */
 		private var _safariOffsetY:Number = 0;
 		/**@private */
 		private var _frameStartTime:Number;
@@ -140,9 +139,11 @@ package laya.display {
 		/**@private 3D场景*/
 		public var _scenes:Array;
 		
+		/**场景类，请用Laya.stage单例访问。*/
 		public function Stage() {
 			transform = Matrix.create();
 			_scenes = [];
+			//重置默认值，请不要修改
 			this.mouseEnabled = true;
 			this.hitTestPrior = true;
 			this.autoSize = false;
@@ -150,8 +151,8 @@ package laya.display {
 			this._isFocused = true;
 			this._isVisibility = true;
 			
-			var _this:Stage = this;
 			var window:* = Browser.window;
+			var _this:Stage = this;
 			
 			window.addEventListener("focus", function():void {
 				_isFocused = true;
@@ -164,6 +165,7 @@ package laya.display {
 				_this.event(Event.FOCUS_CHANGE);
 				if (_this._isInputting()) Input["inputElement"].target.focus = false;
 			});
+			
 			// 各种浏览器兼容
 			var hidden:String = "hidden", state:String = "visibilityState", visibilityChange:String = "visibilitychange";
 			var document:* = window.document;
@@ -219,6 +221,7 @@ package laya.display {
 		}
 		
 		/**
+		 * @private
 		 * 在移动端输入时，输入法弹出期间不进行画布尺寸重置。
 		 */
 		private function _isInputting():Boolean {
@@ -238,25 +241,25 @@ package laya.display {
 		}
 		
 		/**
-		 *舞台是否获得焦点。
+		 * 舞台是否获得焦点。
 		 */
 		public function get isFocused():Boolean {
 			return _isFocused;
 		}
 		
 		/**
-		 *舞台是否处于可见状态。
+		 * 舞台是否处于可见状态。
 		 */
 		public function get isVisibility():Boolean {
 			return _isVisibility;
 		}
 		
-		/** @private */
+		/**@private */
 		private function _changeCanvasSize():void {
 			setScreenSize(Browser.clientWidth * Browser.pixelRatio, Browser.clientHeight * Browser.pixelRatio);
 		}
 		
-		/** @private */
+		/**@private */
 		protected function _resetCanvas():void {
 			var canvas:HTMLCanvas = Render._mainCanvas;
 			var canvasStyle:* = canvas.source.style;
@@ -362,13 +365,7 @@ package laya.display {
 			else if (_alignV === ALIGN_BOTTOM) offset.y = screenHeight - realHeight;
 			else offset.y = (screenHeight - realHeight) * 0.5 / pixelRatio;
 			
-			////处理用户自行设置的画布偏移
-			//if (!_offset) {
-			//_offset = new Point(parseInt(canvasStyle.left) || 0, parseInt(canvasStyle.top) || 0);
-			//canvasStyle.left = canvasStyle.top = "0px";
-			//}
-			//offset.x += _offset.x;
-			//offset.y += _offset.y;
+			//处理用户自行设置的画布偏移
 			offset.x = Math.round(offset.x);
 			offset.y = Math.round(offset.y);
 			mat.translate(offset.x, offset.y);
@@ -402,6 +399,7 @@ package laya.display {
 			event(Event.RESIZE);
 		}
 		
+		/**@private */
 		private function _formatData(value:Number):Number {
 			if (Math.abs(value) < 0.000001) return 0;
 			if (Math.abs(1 - value) < 0.001) return value > 0 ? 1 : -1;
@@ -455,6 +453,7 @@ package laya.display {
 		 * <li>"middle" ：居中对齐；</li>
 		 * <li>"bottom" ：居底部对齐；</li>
 		 * </ul></p>
+		 * 默认值为"top"。
 		 */
 		public function get alignV():String {
 			return _alignV;
@@ -480,7 +479,7 @@ package laya.display {
 			}
 		}
 		
-		/** 鼠标在 Stage 上的 X 轴坐标。*/
+		/**鼠标在 Stage 上的 X 轴坐标。*/
 		override public function get mouseX():Number {
 			// River: 加入了round.
 			return Math.round(MouseManager.instance.mouseX / clientScaleX);
@@ -532,24 +531,24 @@ package laya.display {
 		override public function parentRepaint():void {
 		}
 		
-		/** @private */
+		/**@private */
 		public function _loop():Boolean {
 			render(Render.context, 0, 0);
 			return true;
 		}
 		
-		/** @private */
+		/**@private */
 		private function _onmouseMove(e:Event):void {
 			_mouseMoveTime = Browser.now();
 		}
 		
 		/**获得距当前帧开始后，过了多少时间，单位为毫秒
-		 * 可以用来判断函数内时间消耗，控制每帧函数处理消耗的时间过长，导致帧率下降*/
+		 * 可以用来判断函数内时间消耗，通过合理控制每帧函数处理消耗时长，避免一帧做事情太多，对复杂计算分帧处理，能有效降低帧率波动。*/
 		public function getTimeFromFrameStart():Number {
 			return Browser.now() - _frameStartTime;
 		}
 		
-		public override function set visible(value:Boolean):void {
+		override public function set visible(value:Boolean):void {
 			if (this.visible !== value) {
 				super.visible = value;
 				var style:* = Render._mainCanvas.source.style;
@@ -604,7 +603,7 @@ package laya.display {
 				}
 				
 				if (Render.isConchNode) {//NATIVE
-					var customList:Array = Sprite.CustomList;
+					var customList:Array = Sprite["CustomList"];
 					for (i = 0, n = customList.length; i < n; i++) {
 						var customItem:* = customList[i];
 						customItem.customRender(customItem.customContext, 0, 0);

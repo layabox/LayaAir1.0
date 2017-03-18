@@ -1,7 +1,0 @@
-package protobuf;
- 
-message UserModel {
-  required string UserNo = 1;
-  required string PassWord = 2;
-  required string Status = 3;
-}

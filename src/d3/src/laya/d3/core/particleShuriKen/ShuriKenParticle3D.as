@@ -201,6 +201,7 @@ package laya.d3.core.particleShuriKen {
 			destParticleRender.stretchedBillboardCameraSpeedScale = particleRender.stretchedBillboardCameraSpeedScale;
 			destParticleRender.stretchedBillboardSpeedScale = particleRender.stretchedBillboardSpeedScale;
 			destParticleRender.stretchedBillboardLengthScale = particleRender.stretchedBillboardLengthScale;
+			destParticleRender.sortingFudge = particleRender.sortingFudge;
 		}
 		
 		/**

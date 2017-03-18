@@ -137,6 +137,130 @@ A method to handle bash/zsh/whatever completions.
 Type: `Function`  
 Default: `null`
 
+#### opts.configFiles
+
+An object of configuration files to find. Each property is keyed by the default basename of the file being found, and the value is an object of [path arguments](#path-arguments) keyed by unique names.
+
+__Note:__ This option is useful if, for example, you want to support an `.apprc` file in addition to an `appfile.js`. If you only need a single configuration file, you probably don't need this. In addition to letting you find multiple files, this option allows more fine-grained control over how configuration files are located.
+
+Type: `Object`  
+Default: `null`
+
+#### Path arguments
+
+The [`fined`](https://github.com/js-cli/fined) module accepts a string representing the path to search or an object with the following keys:
+
+* `path` __(required)__
+
+  The path to search. Using only a string expands to this property.
+
+  Type: `String`  
+  Default: `null`
+
+* `name`
+
+  The basename of the file to find. Extensions are appended during lookup.
+
+  Type: `String`  
+  Default: Top-level key in `configFiles`
+
+* `extensions`
+
+  The extensions to append to `name` during lookup. See also: [`opts.extensions`](#optsextensions).
+
+  Type: `String|Array|Object`  
+  Default: The value of [`opts.extensions`](#optsextensions)
+
+* `cwd` 
+
+  The base directory of `path` (if relative).
+
+  Type: `String`  
+  Default: The value of [`opts.cwd`](#optscwd)
+
+* `findUp`
+
+  Whether the `path` should be traversed up to find the file.
+
+  Type: `Boolean`  
+  Default: `false`
+
+**Examples:**
+
+In this example Liftoff will look for the `.hacker.js` file relative to the `cwd` as declared in `configFiles`.
+```js
+const MyApp = new Liftoff({
+  name: 'hacker',
+  configFiles: {
+    '.hacker': {
+      cwd: '.'
+    }
+  }
+});
+```
+
+In this example, Liftoff will look for `.hackerrc` in the home directory.
+```js
+const MyApp = new Liftoff({
+  name: 'hacker',
+  configFiles: {
+    '.hacker': {
+      home: {
+        path: '~',
+        extensions: {
+          'rc': null
+        }
+      }
+    }
+  }
+});
+```
+
+In this example, Liftoff will look in the `cwd` and then lookup the tree for the `.hacker.js` file.
+```js
+const MyApp = new Liftoff({
+  name: 'hacker',
+  configFiles: {
+    '.hacker': {
+      up: {
+        path: '.',
+        findUp: true
+      }
+    }
+  }
+});
+```
+
+In this example, the `name` is overridden and the key is ignored so Liftoff looks for `.override.js`.
+```js
+const MyApp = new Liftoff({
+  name: 'hacker',
+  configFiles: {
+    hacker: {
+      override: {
+        path: '.',
+        name: '.override'
+      }
+    }
+  }
+});
+```
+
+In this example, Liftoff will use the home directory as the `cwd` and looks for `~/.hacker.js`.
+```js
+const MyApp = new Liftoff({
+  name: 'hacker',
+  configFiles: {
+    '.hacker': {
+      home: {
+        path: '.',
+        cwd: '~'
+      }
+    }
+  }
+});
+```
+
 ## launch(opts, callback(env))
 Launches your application with provided options, builds an environment, and invokes your callback, passing the calculated environment as the first argument.
 
@@ -243,6 +367,7 @@ A function to start your application.  When invoked, `this` will be your instanc
 - `configBase`: the base directory of your configuration file (if found)
 - `modulePath`: the full path to the local module your project relies on (if found)
 - `modulePackage`: the contents of the local module's package.json (if found)
+- `configFiles`: an object of filepaths for each found config file (filepath values will be null if not found)
 
 ### events
 
@@ -274,12 +399,12 @@ Hacker.on('requireFail', function (name, err) {
 
 #### respawn(flags, child)
 
-Emitted when Liftoff re-spawns your process (when a [`nodeFlag`](#optsnodeflags) is detected).
+Emitted when Liftoff re-spawns your process (when a [`v8flags`](#optsv8flags) is detected).
 
 ```js
 var Hacker = new Liftoff({
   name: 'hacker',
-  nodeFlags: ['--harmony']
+  v8flags: ['--harmony']
 });
 Hacker.on('respawn', function (flags, child) {
   console.log('Detected node flags:', flags);

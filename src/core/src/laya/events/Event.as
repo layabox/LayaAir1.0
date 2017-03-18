@@ -105,14 +105,14 @@ package laya.events {
 		public static const START:String = "start";
 		/** 定义 end 事件对象的 type 属性值。*/
 		public static const END:String = "end";
-		/** 定义 enabledchanged 事件对象的 type 属性值。*/
-		public static const ENABLED_CHANGED:String = "enabledchanged";
+		/** 定义 enablechanged 事件对象的 type 属性值。*/
+		public static const ENABLE_CHANGED:String = "enablechanged";
+		/** 定义 activeinhierarchychanged 事件对象的 type 属性值。*/
+		public static const ACTIVE_IN_HIERARCHY_CHANGED:String = "activeinhierarchychanged";
 		/** 定义 componentadded 事件对象的 type 属性值。*/
 		public static const COMPONENT_ADDED:String = "componentadded";
 		/** 定义 componentremoved 事件对象的 type 属性值。*/
 		public static const COMPONENT_REMOVED:String = "componentremoved";
-		/** 定义 activechanged 事件对象的 type 属性值。*/
-		public static const ACTIVE_CHANGED:String = "activechanged";
 		/** 定义 layerchanged 事件对象的 type 属性值。*/
 		public static const LAYER_CHANGED:String = "layerchanged";
 		/** 定义 hierarchyloaded 事件对象的 type 属性值。*/

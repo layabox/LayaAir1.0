@@ -369,7 +369,7 @@
 			var startX=0;
 			for (var i=0,n=txt.length;i < n;i++){
 				size=Utils.measureText(txt.charAt(i),fontStr);
-				var tHTMLChar=words[i]=new HTMLChar(txt.charAt(i),size.width,size.height,style);
+				var tHTMLChar=words[i]=new HTMLChar(txt.charAt(i),size.width,size.height||style.fontSize,style);
 				if (this.href){
 					var tSprite=new Sprite();
 					this.addChild(tSprite);

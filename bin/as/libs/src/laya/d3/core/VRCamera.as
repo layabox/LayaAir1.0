@@ -1,8 +1,10 @@
 package laya.d3.core {
+	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Viewport;
 	import laya.d3.utils.Size;
+	import laya.events.Event;
 	
 	/**
 	 * <code>Camera</code> 类用于创建VR摄像机。
@@ -39,6 +41,14 @@ package laya.d3.core {
 		private var _rightProjectionViewMatrix:Matrix4x4;
 		/** @private 瞳距。*/
 		private var _pupilDistande:int;
+		/** @private */
+		private var _leftBoundFrustumUpdate:Boolean;
+		/** @private */
+		private var _rightBoundFrustumUpdate:Boolean;
+		/** @private */
+		private var _leftBoundFrustum:BoundFrustum;
+		/** @private */
+		private var _rightBoundFrustum:BoundFrustum;
 		
 		/**
 		 * 获取左横纵比。
@@ -253,6 +263,26 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * 获取摄像机左视锥。
+		 */
+		public function get leftBoundFrustum():BoundFrustum {//TODO:视锥裁剪是否可以合并
+			if (_leftBoundFrustumUpdate)
+				_leftBoundFrustum.matrix = leftProjectionViewMatrix;
+			
+			return _leftBoundFrustum;
+		}
+		
+		/**
+		 * 获取摄像机右视锥。
+		 */
+		public function get rightBoundFrustum():BoundFrustum {//TODO:视锥裁剪是否可以合并
+			if (_rightBoundFrustumUpdate)
+				_rightBoundFrustum.matrix = rightProjectionViewMatrix;
+			
+			return _rightBoundFrustum;
+		}
+		
+		/**
 		 * 创建一个 <code>VRCamera</code> 实例。
 		 * @param	leftViewport 左视口。
 		 * @param	rightViewport 右视口。
@@ -263,7 +293,7 @@ package laya.d3.core {
 		 * @param	nearPlane 近裁面。
 		 * @param	farPlane 远裁面。
 		 */
-		public function VRCamera(pupilDistande:Number = 0.1, leftAspectRatio:Number = 0, rightAspectRatio:Number = 0, nearPlane:Number = 0.1, farPlane:Number = 1000) {
+		public function VRCamera(pupilDistande:Number = 0.1, leftAspectRatio:Number = 0, rightAspectRatio:Number = 0, nearPlane:Number = 0.3, farPlane:Number = 1000) {
 			_tempMatrix = new Matrix4x4();
 			_leftViewMatrix = new Matrix4x4();
 			_leftProjectionMatrix = new Matrix4x4();
@@ -280,7 +310,19 @@ package laya.d3.core {
 			_rightAspectRatio = rightAspectRatio;
 			
 			_pupilDistande = pupilDistande;
+			_leftBoundFrustumUpdate = true;
+			_leftBoundFrustum = new BoundFrustum(Matrix4x4.DEFAULT);
+			_rightBoundFrustumUpdate = true;
+			_rightBoundFrustum = new BoundFrustum(Matrix4x4.DEFAULT);
 			super(nearPlane, farPlane);
+			transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _onWorldMatrixChanged():void {
+			_leftBoundFrustumUpdate = _rightBoundFrustumUpdate = true;
 		}
 		
 		/**
@@ -307,7 +349,7 @@ package laya.d3.core {
 					Matrix4x4.createPerspective(3.1416 * fieldOfView / 180.0, leftAspectRatio, nearPlane, farPlane, _rightProjectionMatrix);
 				}
 			}
-			_projectionMatrixModifyID += 0.01 / id;
+			_leftBoundFrustumUpdate = true;
 		}
 		
 		/**
@@ -325,12 +367,11 @@ package laya.d3.core {
 					Matrix4x4.createPerspective(3.1416 * fieldOfView / 180.0, rightAspectRatio, nearPlane, farPlane, _rightProjectionMatrix);
 				}
 			}
-			_projectionMatrixModifyID += 0.01 / id;
+			_rightBoundFrustumUpdate = true;
 		}
 		
 		/**
-		 * @private
-		 * 计算投影矩阵。
+		 * @inheritDoc
 		 */
 		override protected function _calculateProjectionMatrix():void {
 			if (!_useUserProjectionMatrix) {
@@ -347,7 +388,7 @@ package laya.d3.core {
 					Matrix4x4.createPerspective(3.1416 * fieldOfView / 180.0, rightAspectRatio, nearPlane, farPlane, _rightProjectionMatrix);
 				}
 			}
-			_projectionMatrixModifyID += 0.01 / id;
+			_leftBoundFrustumUpdate = _rightBoundFrustumUpdate = true;
 		}
 	
 	}

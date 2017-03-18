@@ -5,34 +5,50 @@ package
 	
 	public class Network_ProtocolBuffer 
 	{
-		private var ProtoBuf:* = Browser.window.dcodeIO.ProtoBuf;
+		private var ProtoBuf:* = Browser.window.ProtoBuf;
 		
 		public function Network_ProtocolBuffer() 
 		{
 			Laya.init(550, 400);
 			
-			Laya.loader.load("../../../../res/protobuf/user.proto", Handler.create(this, onAssetsLoaded));
+			ProtoBuf.load("../../../../res/protobuf/awesome.proto", onAssetsLoaded);
 		}
 		
-		private function onAssetsLoaded(data:String):void
+		private function onAssetsLoaded(err:*, root:*):void
 		{
-			var UserModel:* = ProtoBuf.loadProto(data).build('protobuf').UserModel;
-			
-			// 设置用户信息
-			var userModel:* = new UserModel();
-			userModel.set('UserNo', '10001');
-			userModel.set('PassWord', 'password123');
-			userModel.set('Status', '1');
-			
-			// 编码成二进制
-			var buffer:* = userModel.encode().toBuffer();
-			// 处理二进制编码...
-			
-			// 从二进制解码
-			var userInfo:* = UserModel.decode(buffer);
-			trace(userInfo.get('UserNo'));
-			trace(userInfo.get('PassWord'));
-			trace(userInfo.get('Status'));
+			if (err)
+				throw err;
+
+			// Obtain a message type
+			var AwesomeMessage:* = root.lookup("awesomepackage.AwesomeMessage");
+
+			// Create a new message
+			var message:* = AwesomeMessage.create(
+			{
+				awesomeField: "AwesomeString"
+			});
+
+			// Verify the message if necessary (i.e. when possibly incomplete or invalid)
+			var errMsg:* = AwesomeMessage.verify(message);
+			if (errMsg)
+				throw Error(errMsg);
+
+			// Encode a message to an Uint8Array (browser) or Buffer (node)
+			var buffer:* = AwesomeMessage.encode(message).finish();
+			// ... do something with buffer
+
+			// Or, encode a plain object
+			var buffer:* = AwesomeMessage.encode(
+			{
+				awesomeField: "AwesomeString"
+			}).finish();
+			// ... do something with buffer
+
+			// Decode an Uint8Array (browser) or Buffer (node) to a message
+			var message:* = AwesomeMessage.decode(buffer);
+			// ... do something with message
+
+			// If your application uses length-delimited buffers, there is also encodeDelimited and decodeDelimited.
 		}
 	}
 }

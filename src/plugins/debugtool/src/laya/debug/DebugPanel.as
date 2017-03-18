@@ -28,9 +28,16 @@ package laya.debug {
 			_init();
 		}
 		public static var I:DebugPanel;
-		
-		public static function init():void {
+		private static var overlay:Boolean;
+		/**
+		 * 初始化调试面板 
+		 * @param underGame 是否在游戏下方显示，true:将改变原游戏的大小,false:直接覆盖在游戏上方
+		 * @param bgColor 调试面板背景颜色
+		 * 
+		 */		
+		public static function init(underGame:Boolean=true,bgColor:String="#ffffff"):void {
 			if (!I) {
+				overlay = !underGame;
 				DivScripts.init();
 				DebugTool.initBasicFunctions();
 				RenderSpriteHook.init();
@@ -38,6 +45,10 @@ package laya.debug {
 				I = new DebugPanel();
 				I.setRoot(Laya.stage);
 				CacheAnalyser.showRecacheSprite = false;
+				if (bgColor)
+				{
+					I.div.style.background = bgColor;
+				}
 			}
 		
 		}
@@ -251,9 +262,18 @@ package laya.debug {
 			}
 		}
 		
+		private var fromMe:Boolean = false;
 		private function adptPos():void {
+			if (fromMe) return;
+			fromMe = true;
 			JSTools.setPos(div, 0, Browser.clientHeight - this.height);
 			debug_view.resize(Browser.clientWidth, this.height);
+			if (!overlay)
+			{
+				Laya.stage.setScreenSize(Browser.clientWidth * Browser.pixelRatio, (Browser.clientHeight - this.height) * Browser.pixelRatio);
+			}
+			
+			fromMe = false;
 		}
 		
 		private var _treeDataList:Array;

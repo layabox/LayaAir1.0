@@ -113,7 +113,7 @@ package laya.ui {
 		public function showDislayTip(tip:Sprite):void {
 			addChild(tip);
 			_showToStage(this);
-			Laya.stageBox.addChild(this);
+			Laya._currentStage.addChild(this);
 		}
 		
 		/**
@@ -126,7 +126,7 @@ package laya.ui {
 			g.drawRect(0, 0, _tipText.width + 10, _tipText.height + 10, tipBackColor);
 			addChild(_tipBox);
 			_showToStage(this);
-			Laya.stageBox.addChild(this);
+			Laya._currentStage.addChild(this);
 		}
 		
 		/**默认鼠标提示函数*/

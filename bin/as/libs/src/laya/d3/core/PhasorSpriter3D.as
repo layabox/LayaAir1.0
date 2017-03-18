@@ -70,7 +70,7 @@ package laya.d3.core {
 			_vb = VertexBuffer3D.create(_vertexDeclaration,_defaultBufferSize/_floatSizePerVer, WebGLContext.DYNAMIC_DRAW);
 			_ib = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, _defaultBufferSize, WebGLContext.DYNAMIC_DRAW);
 			_sharderNameID = Shader3D.nameKey.getID("LINE");
-			_shaderCompile = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * _sharderNameID];
+			_shaderCompile = ShaderCompile3D._preCompileShader[_sharderNameID];
 		}
 		
 		public function line(startX:Number, startY:Number, startZ:Number, startR:Number, startG:Number, startB:Number, startA:Number, endX:Number, endY:Number, endZ:Number, endR:Number, endG:Number, endB:Number, endA:Number):PhasorSpriter3D {
@@ -366,7 +366,7 @@ package laya.d3.core {
 			
 			_shader.uploadAttributes(_vertexDeclaration.shaderValues.data, null);
 			
-			_spriteShaderValue.setValue(Sprite3D.MVPMATRIX, _renderState.projectionViewMatrix.elements);
+			_spriteShaderValue.setValue(Sprite3D.MVPMATRIX, _renderState._projectionViewMatrix.elements);
 			_shader.uploadSpriteUniforms(_spriteShaderValue.data);
 			
 			Stat.drawCall++;
@@ -378,7 +378,7 @@ package laya.d3.core {
 		
 		protected function _getShader(state:RenderState):Shader3D {
 			var defineValue:int = state.scene._shaderDefineValue;
-			return _shaderCompile.withCompile(_sharderNameID, defineValue, _sharderNameID * ShaderCompile3D.SHADERNAME2ID+defineValue);
+			return _shaderCompile.withCompile(_sharderNameID, 0,defineValue);
 		}
 		
 		private function addVertexIndexException():void {

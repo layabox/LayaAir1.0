@@ -6,7 +6,7 @@ module laya
 	
 	export class Network_ProtocolBuffer 
 	{
-		private ProtoBuf:any = Browser.window.dcodeIO.ProtoBuf;
+		private ProtoBuf:any = Browser.window.ProtoBuf;
 		
 		constructor()
 		{
@@ -15,25 +15,41 @@ module laya
 			Laya.loader.load("../../res/protobuf/user.proto", Handler.create(this, this.onAssetsLoaded));
 		}
 		
-		private onAssetsLoaded(data:string):void
+		private onAssetsLoaded(err:any, root:any):void
 		{
-			var UserModel:any = this.ProtoBuf.loadProto(data).build('protobuf').UserModel;
-			
-			// 设置用户信息
-			var userModel:any = new UserModel();
-			userModel.set('UserNo', '10001');
-			userModel.set('PassWord', 'password123');
-			userModel.set('Status', '1');
-			
-			// 编码成二进制
-			var buffer:any = userModel.encode().toBuffer();
-			// 处理二进制编码...
-			
-			// 从二进制解码
-			var userInfo:any = UserModel.decode(buffer);
-			console.log(userInfo.get('UserNo'));
-			console.log(userInfo.get('PassWord'));
-			console.log(userInfo.get('Status'));
+			if (err)
+				throw err;
+
+			// Obtain a message type
+			var AwesomeMessage:any = root.lookup("awesomepackage.AwesomeMessage");
+
+			// Create a new message
+			var message:any = AwesomeMessage.create(
+			{
+				awesomeField: "AwesomeString"
+			});
+
+			// Verify the message if necessary (i.e. when possibly incomplete or invalid)
+			var errMsg:any = AwesomeMessage.verify(message);
+			if (errMsg)
+				throw Error(errMsg);
+
+			// Encode a message to an Uint8Array (browser) or Buffer (node)
+			var buffer:any = AwesomeMessage.encode(message).finish();
+			// ... do something with buffer
+
+			// Or, encode a plain object
+			var buffer:any = AwesomeMessage.encode(
+			{
+				awesomeField: "AwesomeString"
+			}).finish();
+			// ... do something with buffer
+
+			// Decode an Uint8Array (browser) or Buffer (node) to a message
+			var message:any = AwesomeMessage.decode(buffer);
+			// ... do something with message
+
+			// If your application uses length-delimited buffers, there is also encodeDelimited and decodeDelimited.
 		}
 	}
 }

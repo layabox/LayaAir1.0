@@ -545,15 +545,14 @@ package laya.display {
 			}
 			var startY:Number = padding[0];
 			
-			//处理水平对齐
-			if ((!tCurrBitmapFont) && this._width > 0 && _textWidth <= _width) {
-				if (align == "right") {
-					textAlgin = "right";
-					startX = this._width - padding[1];
-				} else if (align == "center") {
-					textAlgin = "center";
-					startX = this._width * 0.5 + padding[3] - padding[1];
-				}
+			//处理对齐
+			if (align == "right") {
+				textAlgin = "right";
+				startX = this._width - padding[1];
+			}
+			else if (align == "center") {
+				textAlgin = "center";
+				startX = this._width * 0.5 + padding[3] - padding[1];
 			}
 			
 			if (_height > 0) {

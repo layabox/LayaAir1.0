@@ -22,6 +22,7 @@ package laya.ui {
 		
 		/**弹出对话框效果，可以设置一个效果代替默认的弹出效果，如果不想有任何效果，可以赋值为null*/
 		public var popupEffect:Function = function(dialog:Sprite):void {
+			dialog.scale(1, 1);
 			Tween.from(dialog, {x: Laya.stage.width / 2, y: Laya.stage.height / 2, scaleX: 0, scaleY: 0}, 300, Ease.backOut);
 		}
 		

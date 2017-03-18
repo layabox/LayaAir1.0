@@ -20,9 +20,9 @@ package laya.utils {
 		public static var trianglesFaces:int = 0;
 		/** 精灵<code>Sprite</code> 的数量。*/
 		public static var spriteCount:int = 0;
-		/** 四/八叉树节点检测次数。*/
+		/** 八叉树节点检测次数。*/
 		public static var treeNodeCollision:int = 0;
-		/** 四/八叉树精灵碰撞检测次数。*/
+		/** 八叉树精灵碰撞检测次数。*/
 		public static var treeSpriteCollision:int = 0;
 		
 		/** 画布 canvas 使用标准渲染的次数。*/

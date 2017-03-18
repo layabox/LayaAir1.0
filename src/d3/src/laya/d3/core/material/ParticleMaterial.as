@@ -50,12 +50,12 @@ package laya.d3.core.material {
 		
 		public static var SHADERDEFINE_PARTICLE3D:int;
 		
-		public static const VIEWPORTSCALE:int = 0;//TODO:
-		public static const CURRENTTIME:int = 1;
-		public static const DURATION:int = 2;
-		public static const GRAVITY:int = 3;
-		public static const ENDVELOCITY:int = 4;
-		public static const DIFFUSETEXTURE:int = 5;
+		public static const VIEWPORTSCALE:int = 1;//TODO:
+		public static const CURRENTTIME:int = 2;
+		public static const DURATION:int = 3;
+		public static const GRAVITY:int = 4;
+		public static const ENDVELOCITY:int = 5;
+		public static const DIFFUSETEXTURE:int = 6;
 		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:ParticleMaterial = new ParticleMaterial();
@@ -278,7 +278,7 @@ package laya.d3.core.material {
 			_setNumber(ENDVELOCITY, setting.endVelocity);
 			
 			//设置视口尺寸，被用于转换粒子尺寸到屏幕空间的尺寸
-			var aspectRadio:Number = state.viewport.width / state.viewport.height;
+			var aspectRadio:Number = state._viewport.width / state._viewport.height;
 			var viewportScale:Vector2 = new Vector2(0.5 / aspectRadio, -0.5);
 			_setVector2(VIEWPORTSCALE, viewportScale);
 			

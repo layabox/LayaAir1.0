@@ -127,7 +127,7 @@ package laya.webgl.text {
 		
 		public static function drawText(ctx:WebGLContext2D, txt:*, words:Vector.<HTMLChar>, curMat:Matrix, font:FontInContext, textAlign:String, fillColor:String, borderColor:String, lineWidth:int, x:Number, y:Number):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			if ((txt && txt.length === 0) || (words && words.length === 0))
+			if ((txt && txt.length===0) || (words && words.length === 0))
 				return;
 			var sx:Number = curMat.a, sy:Number = curMat.d;
 			(curMat.b !== 0 || curMat.c !== 0) && (sx = sy = 1);

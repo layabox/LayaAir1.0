@@ -22,7 +22,7 @@ package laya.d3.loaders {
 				_readVersion01(readData, version, mesh, materials, materialMap);
 				break;
 			case "LAYAMODEL:02": 
-				_readVersion02(readData, version, mesh, materials, materialMap);
+				_readVersion01(readData, version, mesh, materials, materialMap);
 				break;
 			default: 
 				throw new Error("MeshReader: unknown mesh version.");

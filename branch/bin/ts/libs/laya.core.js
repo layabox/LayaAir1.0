@@ -1,7 +1,7 @@
 var window = window || global;
 var document = document || (window.document = {});
 /***********************************/
-/*http://www.layabox.com 2016/11/25*/
+/*http://www.layabox.com 2017/01/16*/
 /***********************************/
 var Laya=window.Laya=(function(window,document){
 	var Laya={
@@ -84,13 +84,14 @@ var Laya=window.Laya=(function(window,document){
 				var supers=_super.split(',');
 				a.extend=[];
 				for(var i=0;i<supers.length;i++){
-					var name=supers[i];
-					ins[name]=ins[name] || {self:name};
-					a.extend.push(ins[name]);
+					var nm=supers[i];
+					ins[nm]=ins[nm] || {self:nm};
+					a.extend.push(ins[nm]);
 				}
 			}
 			var o=window,words=name.split('.');
-			for(var i=0;i<words.length-1;i++) o=o[words[i]];o[words[words.length-1]]={__interface__:name};
+			for(var i=0;i<words.length-1;i++) o=o[words[i]];
+			o[words[words.length-1]]={__interface__:name};
 		},
 		class:function(o,fullName,_super,miniName){
 			_super && Laya.__extend(o,_super);
@@ -230,10 +231,6 @@ var Laya=window.Laya=(function(window,document){
 			return /*__JS__ */window;
 		}
 
-		RunDriver.newWebGLContext=function(canvas,webGLName){
-			return canvas.getContext(webGLName,{stencil:true,alpha:Config.isAlpha,antialias:Config.isAntialias,premultipliedAlpha:Config.premultipliedAlpha});
-		}
-
 		RunDriver.getPixelRatio=function(){
 			if (RunDriver.pixelRatio < 0){
 				var ctx=Browser.context;
@@ -345,12 +342,14 @@ var Laya=window.Laya=(function(window,document){
 
 	/**
 	*<code>Laya</code> 是全局对象的引用入口集。
+	*Laya类引用了一些常用的全局对象，比如Laya.stage：舞台，Laya.timer：时间管理器，Laya.loader：加载管理器，使用时注意大小写。
 	*/
 	//class Laya
 	var ___Laya=(function(){
 		//function Laya(){};
 		/**
-		*表示是否捕获全局错误并弹出提示。
+		*表示是否捕获全局错误并弹出提示。默认为false。
+		*适用于移动设备等不方便调试的时候，设置为true后，如有未知错误，可以弹窗抛出详细错误堆栈。
 		*/
 		__getset(1,Laya,'alertGlobalError',null,function(value){
 			var erralert=0;
@@ -380,8 +379,8 @@ var Laya=window.Laya=(function(window,document){
 			Style.__init__();
 			ResourceManager.__init__();
 			CacheManger.beginCheck();
-			Laya.stageBox=Laya.stage=new Stage();
-			Laya.stage.conchModel&&Laya.stage.conchModel.setRootNode();
+			Laya._currentStage=Laya.stage=new Stage();
+			Laya.stage.conchModel && Laya.stage.conchModel.setRootNode();
 			var location=Browser.window.location;
 			var pathName=location.pathname;
 			pathName=pathName.charAt(2)==':' ? pathName.substring(1):pathName;
@@ -400,9 +399,9 @@ var Laya=window.Laya=(function(window,document){
 		Laya.stage=null;
 		Laya.timer=null;
 		Laya.loader=null;
+		Laya.version="1.7.1";
 		Laya.render=null
-		Laya.version="1.7.0";
-		Laya.stageBox=null
+		Laya._currentStage=null
 		Laya._isinit=false;
 		__static(Laya,
 		['conchMarket',function(){return this.conchMarket=/*__JS__ */window.conch?conchMarket:null;},'PlatformClass',function(){return this.PlatformClass=/*__JS__ */window.PlatformClass;}
@@ -427,7 +426,7 @@ var Laya=window.Laya=(function(window,document){
 		Config.isAntialias=false;
 		Config.isAlpha=false;
 		Config.premultipliedAlpha=false;
-		Config.isStencil=false;
+		Config.isStencil=true;
 		return Config;
 	})()
 
@@ -17960,7 +17959,7 @@ var Laya=window.Laya=(function(window,document){
 	})(FrameAnimation)
 
 
-	Laya.__init([EventDispatcher,LoaderManager,Render,Browser,Timer,LocalStorage,TimeLine]);
+	Laya.__init([LoaderManager,EventDispatcher,Render,Browser,Timer,LocalStorage,TimeLine]);
 })(window,document,Laya);
 
 (function(window,document,Laya){

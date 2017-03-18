@@ -86,6 +86,10 @@ package laya.d3.core {
 		
 		/** @private */
 		private var _projectionViewWorldMatrix:Matrix4x4;
+		/** @private */
+		public var _projectionViewWorldUpdateLoopCount:int;
+		/** @private */
+		public var _projectionViewWorldUpdateCamera:BaseCamera;
 		
 		/** @private */
 		private var _id:int;
@@ -99,7 +103,9 @@ package laya.d3.core {
 		private var _url:String;
 		
 		/** @private */
-		protected var _enable:Boolean;
+		protected var _active:Boolean;
+		/** @private */
+		protected var _activeInHierarchy:Boolean;
 		/** @private */
 		protected var _layerMask:int;
 		
@@ -124,38 +130,55 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 获取是否启用。
+		 * 获取是否启用,注意:兼容性接口。
 		 *   @return	是否激活。
 		 */
 		public function get enable():Boolean {
-			return _enable;
+			return _active;
 		}
 		
 		/**
-		 * 设置是否启用。
+		 * 设置是否启用,注意:兼容性接口。
 		 * @param	value 是否启动。
 		 */
 		public function set enable(value:Boolean):void {
-			if (_enable !== value) {
-				_enable = value;
-				this.event(Event.ENABLED_CHANGED, _enable);
+			if (_active !== value) {
+				_active = value;
+				if (value)
+					_activeHierarchy();
+				else
+					_inActiveHierarchy();
 			}
 		}
 		
 		/**
-		 * 获取是否激活。
-		 *   @return	是否激活。
+		 * 获取自身是否激活。
+		 *   @return	自身是否激活。
 		 */
 		public function get active():Boolean {
-			return Layer.isActive(_layerMask) && _enable;
+			return _active;
 		}
 		
 		/**
-		 * 获取是否显示。
-		 * @return	是否显示。
+		 * 设置是否激活。
+		 * @param	value 是否激活。
 		 */
-		public function get visible():Boolean {
-			return Layer.isVisible(_layerMask) && _enable;
+		public function set active(value:Boolean):void {
+			if (_active !== value) {
+				_active = value;
+				if (value)
+					_activeHierarchy();
+				else
+					_inActiveHierarchy();
+			}
+		}
+		
+		/**
+		 * 获取在层级中是否激活。
+		 *   @return	在层级中是否激活。
+		 */
+		public function get activeInHierarchy():Boolean {
+			return _activeInHierarchy;
 		}
 		
 		/**
@@ -226,6 +249,7 @@ package laya.d3.core {
 		 * 创建一个 <code>Sprite3D</code> 实例。
 		 */
 		public function Sprite3D(name:String = null) {
+			_projectionViewWorldUpdateLoopCount = -1;
 			_projectionViewWorldMatrix = new Matrix4x4();
 			_shaderValues = new ValusArray();
 			_colliders = new Vector.<Collider>();
@@ -234,13 +258,42 @@ package laya.d3.core {
 			_components = new Vector.<Component3D>();
 			
 			(name) ? (this.name = name) : (this.name = "Sprite3D-" + _nameNumberCounter++);
-			_enable = true;
+			_activeInHierarchy = false;
 			_id = ++_uniqueIDCounter;
 			_layerMask = -1;
 			layer = Layer.currentCreationLayer;
 			transform = new Transform3D(this);
+			active = true;
 			on(Event.DISPLAY, this, _onDisplay);
 			on(Event.UNDISPLAY, this, _onUnDisplay);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _inActiveHierarchy():void {
+			_activeInHierarchy = false;
+			(_displayedInStage) && (_clearSelfRenderObjects());
+			this.event(Event.ACTIVE_IN_HIERARCHY_CHANGED, false);
+			
+			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
+				var child:Sprite3D = _childs[i] as Sprite3D;
+				(child._activeHierarchy) && (child._inActiveHierarchy());
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _activeHierarchy():void {
+			_activeInHierarchy = true;
+			(_displayedInStage) && (_addSelfRenderObjects());
+			this.event(Event.ACTIVE_IN_HIERARCHY_CHANGED, true);
+			
+			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
+				var child:Sprite3D = _childs[i] as Sprite3D;
+				(child._active) && (child._activeHierarchy());
+			}
 		}
 		
 		/**
@@ -305,7 +358,7 @@ package laya.d3.core {
 		 */
 		private function _onDisplay():void {
 			transform.parent = (_parent as Sprite3D).transform;
-			_addSelfRenderObjects();
+			(_activeInHierarchy) && (_addSelfRenderObjects());
 		}
 		
 		/**
@@ -313,7 +366,7 @@ package laya.d3.core {
 		 */
 		private function _onUnDisplay():void {
 			transform.parent = null;
-			_clearSelfRenderObjects();
+			(_activeInHierarchy) && (_clearSelfRenderObjects());
 		}
 		
 		/**
@@ -336,7 +389,7 @@ package laya.d3.core {
 			for (var i:int = 0, n:int = _components.length; i < n; i++) {
 				var component:Component3D = _components[i];
 				(!component.started) && (component._start(state), component.started = true);
-				(component.isActive) && (component._update(state));
+				(component.enable) && (component._update(state));
 			}
 		}
 		
@@ -348,7 +401,7 @@ package laya.d3.core {
 			for (var i:int = 0; i < _components.length; i++) {
 				var component:Component3D = _components[i];
 				(!component.started) && (component._start(state), component.started = true);
-				(component.isActive) && (component._lateUpdate(state));
+				(component.enable) && (component._lateUpdate(state));
 			}
 		}
 		
@@ -400,12 +453,13 @@ package laya.d3.core {
 		 */
 		public function _update(state:RenderState):void {
 			state.owner = this;
-			if (_enable) {
+			if (_activeInHierarchy) {
 				_updateComponents(state);
 				_lateUpdateComponents(state);
+				
+				Stat.spriteCount++;
+				_childs.length && _updateChilds(state);
 			}
-			Stat.spriteCount++;
-			_childs.length && _updateChilds(state);
 		}
 		
 		/**
@@ -414,12 +468,13 @@ package laya.d3.core {
 		 */
 		public function _updateConch(state:RenderState):void {//NATIVE
 			state.owner = this;
-			if (_enable) {
+			if (_activeInHierarchy) {
 				_updateComponents(state);
 				_lateUpdateComponents(state);
+				
+				Stat.spriteCount++;
+				_childs.length && _updateChilds(state);
 			}
-			Stat.spriteCount++;
-			_childs.length && _updateChilds(state);
 		}
 		
 		/**
@@ -653,7 +708,7 @@ package laya.d3.core {
 			destSprite3D.timer = timer;
 			destSprite3D._$P = _$P;
 			
-			destSprite3D.enable = enable;
+			destSprite3D._active = _active;
 			
 			var destLocalPosition:Vector3 = destSprite3D.transform.localPosition;
 			transform.localPosition.cloneTo(destLocalPosition);

@@ -1,20 +1,7 @@
 package laya.d3.utils {
 	import laya.d3.component.physics.Collider;
-	import laya.d3.component.physics.SphereCollider;
 	import laya.d3.core.Layer;
-	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.Sprite3D;
-	import laya.d3.core.render.IRenderable;
-	import laya.d3.core.render.RenderElement;
-	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.math.BoundSphere;
-	import laya.d3.math.Collision;
-	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Ray;
-	import laya.d3.math.Vector3;
-	import laya.d3.resource.models.Mesh;
-	import laya.d3.resource.models.SubMesh;
-	import laya.utils.Stat;
 	
 	/**
 	 * <code>Physics</code> 类用于简单物理检测。

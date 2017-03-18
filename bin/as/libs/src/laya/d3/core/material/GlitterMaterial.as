@@ -51,11 +51,11 @@ package laya.d3.core.material {
 		/**渲染状态_无深度_加色法混合_双面。*/
 		public static const RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE:int = 12;
 		
-		public static const DIFFUSETEXTURE:int = 0;
-		public static const ALBEDO:int = 1;
-		public static const CURRENTTIME:int = 2;
-		public static const UNICOLOR:int = 3;
-		public static const DURATION:int = 4;
+		public static const DIFFUSETEXTURE:int = 1;
+		public static const ALBEDO:int = 2;
+		public static const CURRENTTIME:int = 3;
+		public static const UNICOLOR:int = 4;
+		public static const DURATION:int = 5;
 		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:GlitterMaterial = new GlitterMaterial();

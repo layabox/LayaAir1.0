@@ -1,5 +1,6 @@
 package laya.d3.core.scene {
 	import laya.d3.core.BaseCamera;
+	import laya.d3.core.Camera;
 	import laya.d3.core.Layer;
 	import laya.d3.core.PhasorSpriter3D;
 	import laya.d3.core.Sprite3D;
@@ -22,6 +23,7 @@ package laya.d3.core.scene {
 	import laya.d3.resource.models.Sky;
 	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
+	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.events.Event;
@@ -65,6 +67,13 @@ package laya.d3.core.scene {
 		public static const SPOTLIGHTAMBIENT:int = 19;
 		public static const SPOTLIGHTSPECULAR:int = 20;
 		
+		public static const SHADOWDISTANCE:int = 21;
+		public static const SHADOWLIGHTVIEWPROJECT:int = 22;
+		public static const SHADOWMAPPCFOFFSET:int = 23;
+		public static const SHADOWMAPTEXTURE1:int = 24;
+		public static const SHADOWMAPTEXTURE2:int = 25;
+		public static const SHADOWMAPTEXTURE3:int = 26;
+		
 		/**
 		 * @private
 		 */
@@ -86,8 +95,6 @@ package laya.d3.core.scene {
 		/** @private */
 		protected var _invertYScaleMatrix:Matrix4x4;
 		/** @private */
-		protected var _boundFrustum:BoundFrustum;
-		/** @private */
 		protected var _renderState:RenderState = new RenderState();
 		/** @private */
 		protected var _lights:Vector.<LightSprite> = new Vector.<LightSprite>;
@@ -100,6 +107,14 @@ package laya.d3.core.scene {
 		protected var _customRenderQueneIndex:int = 11;
 		/** @private */
 		protected var _lastCurrentTime:Number;
+		/** @private */
+		protected var _enableFog:Boolean;
+		/** @private */
+		protected var _fogStart:Number;
+		/** @private */
+		protected var _fogRange:Number;
+		/** @private */
+		protected var _fogColor:Vector3;
 		
 		/** @private */
 		public var _shaderValues:ValusArray;
@@ -117,14 +132,6 @@ package laya.d3.core.scene {
 		/**  @private 相机的对象池*/
 		public var _cameraPool:Vector.<BaseCamera> = new Vector.<BaseCamera>();
 		
-		/** 是否允许雾化。*/
-		public var enableFog:Boolean;
-		/** 雾化起始距离。*/
-		public var fogStart:Number;
-		/** 雾化结束距离。*/
-		public var fogRange:Number;
-		/** 雾化颜色。*/
-		public var fogColor:Vector3;
 		/** 是否启用灯光。*/
 		public var enableLight:Boolean = true;
 		/** 四/八叉树的根节点。*/
@@ -133,6 +140,82 @@ package laya.d3.core.scene {
 		public var treeSize:Vector3;
 		/** 四/八叉树的层数。*/
 		public var treeLevel:int;
+		
+		//阴影相关变量
+		public var parallelSplitShadowMaps:Vector.<ParallelSplitShadowMap>;
+		
+		/**
+		 * 获取是否允许雾化。
+		 * @return 是否允许雾化。
+		 */
+		public function get enableFog():Boolean {
+			return _enableFog;
+		}
+		
+		/**
+		 * 设置是否允许雾化。
+		 * @param value 是否允许雾化。
+		 */
+		public function set enableFog(value:Boolean):void {
+			if (_enableFog !== value) {
+				_enableFog = value;
+				if (value)
+					addShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
+				else
+					removeShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
+			}
+		}
+		
+		/**
+		 * 获取雾化颜色。
+		 * @return 雾化颜色。
+		 */
+		public function get fogColor():Vector3 {
+			return _fogColor;
+		}
+		
+		/**
+		 * 设置雾化颜色。
+		 * @param value 雾化颜色。
+		 */
+		public function set fogColor(value:Vector3):void {
+			_fogColor = value;
+			_shaderValues.setValue(BaseScene.FOGCOLOR, value.elements);
+		}
+		
+		/**
+		 * 获取雾化起始位置。
+		 * @return 雾化起始位置。
+		 */
+		public function get fogStart():Number {
+			return _fogStart;
+		}
+		
+		/**
+		 * 设置雾化起始位置。
+		 * @param value 雾化起始位置。
+		 */
+		public function set fogStart(value:Number):void {
+			_fogStart = value;
+			_shaderValues.setValue(BaseScene.FOGSTART, value);
+		}
+		
+		/**
+		 * 获取雾化范围。
+		 * @return 雾化范围。
+		 */
+		public function get fogRange():Number {
+			return _fogRange;
+		}
+		
+		/**
+		 * 设置雾化范围。
+		 * @param value 雾化范围。
+		 */
+		public function set fogRange(value:Number):void {
+			_fogRange = value;
+			_shaderValues.setValue(BaseScene.FOGRANGE, value);
+		}
 		
 		/**
 		 * 获取当前场景。
@@ -150,49 +233,32 @@ package laya.d3.core.scene {
 			_invertYProjectionMatrix = new Matrix4x4();
 			_invertYProjectionViewMatrix = new Matrix4x4();
 			_invertYScaleMatrix = new Matrix4x4();
+			parallelSplitShadowMaps = new Vector.<ParallelSplitShadowMap>();
 			Matrix4x4.createScaling(new Vector3(1, -1, 1), _invertYScaleMatrix);
 			_staticBatchManager = new StaticBatchManager();
 			_dynamicBatchManager = new DynamicBatchManager();
-			_boundFrustum = new BoundFrustum(Matrix4x4.DEFAULT);
 			enableFog = false;
 			fogStart = 300;
 			fogRange = 1000;
 			fogColor = new Vector3(0.7, 0.7, 0.7);
-			
+			(WebGL.frameShaderHighPrecision) && (addShaderDefine(ShaderCompile3D.SHADERDEFINE_FSHIGHPRECISION));
 			on(Event.DISPLAY, this, _onDisplay);
 			on(Event.UNDISPLAY, this, _onUnDisplay);
 		}
 		
+		/**
+		 * 初始化八叉树。
+		 * @param	width 八叉树宽度。
+		 * @param	height 八叉树高度。
+		 * @param	depth 八叉树深度。
+		 * @param	center 八叉树中心点
+		 * @param	level 八叉树层级。
+		 */
 		public function initOctree(width:int, height:int, depth:int, center:Vector3, level:int = 6):void {
 			treeSize = new Vector3(width, height, depth);
 			treeLevel = level;
 			treeRoot = new OctreeNode(this, 0);
 			treeRoot.init(center, treeSize);
-		}
-		
-		public function initQuadtree(width:int, height:int, depth:int, center:Vector3, level:int = 6):void {
-			treeSize = new Vector3(width, height, depth);
-			treeLevel = level;
-			treeRoot = new QuadtreeNode(this, 0);
-			treeRoot.init(center, treeSize);
-		}
-		
-		public function addTreeNode(renderObj:RenderObject):void {
-			treeRoot.addTreeNode(renderObj);
-		}
-		
-		public function removeTreeNode(renderObj:RenderObject):void {
-			if (!treeSize) return;
-			if (renderObj._treeNode) {
-				renderObj._treeNode.removeObject(renderObj);
-			}
-		}
-		
-		override public function createConchModel():* { //NATIVE
-			var pScene:* = __JS__("new ConchScene()");
-			//TODO:wyw
-			pScene.init(512, 512, 512, 4);
-			return pScene;
 		}
 		
 		/**
@@ -218,10 +284,8 @@ package laya.d3.core.scene {
 		 * @return state 渲染状态。
 		 */
 		protected function _prepareUpdateToRenderState(gl:WebGLContext, state:RenderState):void {
-			state.context = WebGL.mainContext;
 			state.elapsedTime = _lastCurrentTime ? timer.currTimer - _lastCurrentTime : 0;
 			_lastCurrentTime = timer.currTimer;
-			state.loopCount = Stat.loopCount;
 			state.scene = this;
 		}
 		
@@ -229,63 +293,17 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		protected function _prepareSceneToRender(state:RenderState):void {
-			(WebGL.frameShaderHighPrecision) && (addShaderDefine(ShaderCompile3D.SHADERDEFINE_FSHIGHPRECISION));
-			
-			if (_lights.length > 0) {
-				var lightCount:int = 0;
-				for (var i:int = 0; i < _lights.length; i++) {
-					var light:LightSprite = _lights[i];
-					if (!light.active) continue;
-					lightCount++;
-					if (lightCount > _enableLightCount)
+			var lightCount:int = _lights.length;
+			if (lightCount > 0) {
+				var renderLightCount:int = 0;
+				for (var i:int = 0; i < lightCount; i++) {
+					if (!_lights[i].updateToWorldState(state))
+						continue;
+					renderLightCount++;
+					if (renderLightCount >= _enableLightCount)
 						break;
-					light.updateToWorldState(state);
 				}
 			}
-			if (enableFog) {
-				var sceneSV:ValusArray = _shaderValues;
-				addShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
-				sceneSV.setValue(BaseScene.FOGSTART, fogStart);
-				sceneSV.setValue(BaseScene.FOGRANGE, fogRange);
-				sceneSV.setValue(BaseScene.FOGCOLOR, fogColor.elements);
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		protected function _endRenderToRenderState(state:RenderState):void {
-			_shaderValues.data.length = 0;
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _updateScene():void {
-			var renderState:RenderState = _renderState;
-			_prepareUpdateToRenderState(WebGL.mainContext, renderState);
-			beforeUpdate(renderState);//更新之前
-			_updateChilds(renderState);
-			lateUpdate(renderState);//更新之后
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _updateSceneConch():void {//NATIVE
-			var renderState:RenderState = _renderState;
-			_prepareUpdateToRenderState(WebGL.mainContext, renderState);
-			beforeUpdate(renderState);//更新之前
-			_updateChildsConch(renderState);
-			lateUpdate(renderState);//更新之后
-			
-			_prepareSceneToRender(renderState);
-			for (var i:int = 0, n:int = _cameraPool.length; i < n; i++) {
-				var camera:BaseCamera = _cameraPool[i];
-				renderState.camera = camera;
-				camera._prepareCameraToRender();
-			}
-		
 		}
 		
 		/**
@@ -308,17 +326,16 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		protected function _preRenderScene(gl:WebGLContext, state:RenderState):void {
-			var view:Matrix4x4 = state.viewMatrix;
-			var projection:Matrix4x4 = state.projectionMatrix;
-			var projectionView:Matrix4x4 = state.projectionViewMatrix;
+			var view:Matrix4x4 = state._viewMatrix;
+			var projection:Matrix4x4 = state._projectionMatrix;
+			var projectionView:Matrix4x4 = state._projectionViewMatrix;
 			var i:int, iNum:int;
 			var camera:BaseCamera = state.camera;
-			if (camera.useOcclusionCulling) {
-				_boundFrustum.matrix = state.projectionViewMatrix;
+			if (camera.useOcclusionCulling) { 
 				if (treeRoot)
-					FrustumCulling.renderObjectCullingOctree(_boundFrustum, this, camera, view, projection, projectionView);
+					FrustumCulling.renderObjectCullingOctree(state._boundFrustum, this, camera, view, projection, projectionView);
 				else
-					FrustumCulling.renderObjectCulling(_boundFrustum, this, camera, view, projection, projectionView);
+					FrustumCulling.renderObjectCulling(state._boundFrustum, this, camera, view, projection, projectionView);
 			} else {
 				FrustumCulling.renderObjectCullingNoBoundFrustum(this, camera, view, projection, projectionView);
 			}
@@ -326,16 +343,18 @@ package laya.d3.core.scene {
 				(_quenes[i]) && (_quenes[i]._preRender(state));
 		}
 		
+		/**
+		 * @private
+		 */
 		protected function _clear(gl:WebGLContext, state:RenderState):void {
-			var viewport:Viewport = state.viewport;
+			var viewport:Viewport = state._viewport;
 			var camera:BaseCamera = state.camera;
 			var vpX:Number = viewport.x;
 			var vpY:Number = camera.renderTargetSize.height - viewport.y - viewport.height;
 			var vpWidth:Number = viewport.width;
 			var vpHeight:Number = viewport.height;
 			gl.viewport(vpX, vpY, vpWidth, vpHeight);
-			var flag:int = 0;
-			
+			var flag:int = WebGLContext.DEPTH_BUFFER_BIT;
 			var renderTarget:RenderTexture = camera.renderTarget;
 			switch (camera.clearFlag) {
 			case BaseCamera.CLEARFLAG_SOLIDCOLOR: 
@@ -345,7 +364,7 @@ package laya.d3.core.scene {
 					gl.scissor(vpX, vpY, vpWidth, vpHeight);
 					var clearColorE:Float32Array = clearColor.elements;
 					gl.clearColor(clearColorE[0], clearColorE[1], clearColorE[2], clearColorE[3]);
-					flag = WebGLContext.COLOR_BUFFER_BIT;
+					flag |= WebGLContext.COLOR_BUFFER_BIT;
 				}
 				
 				if (renderTarget) {
@@ -363,7 +382,7 @@ package laya.d3.core.scene {
 						break;
 					}
 				}
-				(flag) && (gl.clear(flag));
+				gl.clear(flag);
 				
 				if (clearColor)
 					gl.disable(WebGLContext.SCISSOR_TEST);
@@ -385,7 +404,7 @@ package laya.d3.core.scene {
 						break;
 					}
 				}
-				(flag) && (gl.clear(flag));
+				gl.clear(flag);
 				break;
 			case BaseCamera.CLEARFLAG_NONE: 
 				break;
@@ -478,18 +497,133 @@ package laya.d3.core.scene {
 			index >= 0 && (_lights.splice(index, 1));
 		}
 		
+		/**
+		 * @private
+		 */
+		public function _updateScene():void {
+			var renderState:RenderState = _renderState;
+			_prepareUpdateToRenderState(WebGL.mainContext, renderState);
+			beforeUpdate(renderState);//更新之前
+			_updateChilds(renderState);
+			lateUpdate(renderState);//更新之后
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _updateSceneConch():void {//NATIVE
+			var renderState:RenderState = _renderState;
+			_prepareUpdateToRenderState(WebGL.mainContext, renderState);
+			beforeUpdate(renderState);//更新之前
+			_updateChildsConch(renderState);
+			lateUpdate(renderState);//更新之后
+			
+			_prepareSceneToRender(renderState);
+			for (var i:int = 0, n:int = _cameraPool.length; i < n; i++) {
+				var camera:BaseCamera = _cameraPool[i];
+				renderState.camera = camera;
+				camera._prepareCameraToRender();
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _preRenderShadow(state:RenderState, lightFrustum:Vector.<BoundFrustum>, shdowQueues:Vector.<RenderQueue>, lightViewProjectMatrix:Matrix4x4, nPSSMNum:int):void {//TODO:SM
+			if (treeRoot) {
+				FrustumCulling.renderShadowObjectCullingOctree(this, lightFrustum, shdowQueues, lightViewProjectMatrix, nPSSMNum);
+			} else {
+				FrustumCulling.renderShadowObjectCulling(this, lightFrustum, shdowQueues, lightViewProjectMatrix, nPSSMNum);
+			}
+			for (var i:int = 0, iNum:int = shdowQueues.length; i < iNum; i++)
+				(shdowQueues[i]) && (shdowQueues[i]._preRender(state));
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _renderShadowMap(gl:WebGLContext, state:RenderState, sceneCamera:BaseCamera):void {//TODO:SM
+			var parallelSplitShadowMap:ParallelSplitShadowMap = parallelSplitShadowMaps[0];
+			parallelSplitShadowMap._calcAllLightCameraInfo(sceneCamera);
+			var pssmNum:int = parallelSplitShadowMap.PSSMNum;
+			_preRenderShadow(state, parallelSplitShadowMap._lightCulling, parallelSplitShadowMap._shadowQuenes, parallelSplitShadowMap._lightVPMatrix[0], pssmNum);
+			//增加宏定义
+			addShaderDefine( ParallelSplitShadowMap.SHADERDEFINE_CAST_SHADOW );
+			var renderTarget:RenderTexture, shadowQuene:RenderQueue,lightCamera:Camera;
+			if (pssmNum > 1) {
+				for (var i:int = 0; i < pssmNum; i++) {
+					//trace(">>>>>i="+i+",size=" + _shadowQuenes[i]._renderElements.length);
+					renderTarget = parallelSplitShadowMap.getRenderTarget(i + 1);
+					parallelSplitShadowMap.beginRenderTarget(i + 1);
+					gl.clearColor(0, 0, 0, 0);
+					gl.clear(WebGLContext.COLOR_BUFFER_BIT | WebGLContext.DEPTH_BUFFER_BIT);
+					gl.viewport(0, 0, renderTarget.width, renderTarget.height);
+					state.camera=lightCamera = parallelSplitShadowMap.getLightCamera(i);
+					lightCamera._prepareCameraToRender();
+					lightCamera._prepareCameraViewProject(lightCamera.viewMatrix, lightCamera.projectionMatrix);
+					state._projectionViewMatrix = parallelSplitShadowMap._lightVPMatrix[i + 1];
+					shadowQuene = parallelSplitShadowMap._shadowQuenes[i];
+					shadowQuene._preRender(state);//TODO:静态合并和动态合并用，是否调用重复了
+					shadowQuene._renderShadow(state, true, false);
+					parallelSplitShadowMap.endRenderTarget(i + 1);
+				}
+			} else {
+				renderTarget = parallelSplitShadowMap.getRenderTarget(1);
+				parallelSplitShadowMap.beginRenderTarget(1);
+				gl.clearColor(0, 0, 0, 0);
+				gl.clear(WebGLContext.COLOR_BUFFER_BIT | WebGLContext.DEPTH_BUFFER_BIT);
+				gl.viewport(0, 0, renderTarget.width, renderTarget.height);
+				state.camera=lightCamera = parallelSplitShadowMap.getLightCamera(0);
+				lightCamera._prepareCameraToRender();
+				lightCamera._prepareCameraViewProject(lightCamera.viewMatrix, lightCamera.projectionMatrix);
+				state._projectionViewMatrix = parallelSplitShadowMap._lightVPMatrix[0];
+				shadowQuene = parallelSplitShadowMap._shadowQuenes[0];
+				shadowQuene._preRender(state);//TODO:静态合并和动态合并用，是否调用重复了
+				shadowQuene._renderShadow(state, true, true);
+				parallelSplitShadowMap.endRenderTarget(1);
+			}
+			//去掉宏定义
+			removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_CAST_SHADOW);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function addTreeNode(renderObj:RenderObject):void {
+			treeRoot.addTreeNode(renderObj);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function removeTreeNode(renderObj:RenderObject):void {
+			if (!treeSize) return;
+			if (renderObj._treeNode) {
+				renderObj._treeNode.removeObject(renderObj);
+			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
 		override public function addChildAt(node:Node, index:int):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
 			return super.addChildAt(node, index);
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override public function addChild(node:Node):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
 			return super.addChild(node);
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		public function addFrustumCullingObject(renderObject:RenderObject):void {
 			if (treeRoot)
 				addTreeNode(renderObject);
@@ -498,6 +632,9 @@ package laya.d3.core.scene {
 		
 		}
 		
+		/**
+		 * @private
+		 */
 		public function removeFrustumCullingObject(renderObject:RenderObject):void {
 			if (treeRoot) {
 				removeTreeNode(renderObject);
@@ -505,7 +642,6 @@ package laya.d3.core.scene {
 				var index:int = _frustumCullingObjects.indexOf(renderObject);
 				(index !== -1) && (_frustumCullingObjects.splice(index, 1));
 			}
-		
 		}
 		
 		/**
@@ -562,7 +698,15 @@ package laya.d3.core.scene {
 		}
 		
 		/**
-		 * @private
+		 * 移除shader宏定义。
+		 * @param	define shader宏定义。
+		 */
+		public function removeShaderDefine(define:int):void {
+			_shaderDefineValue &= ~define;
+		}
+		
+		/**
+		 * @inheritDoc
 		 */
 		public override function render(context:RenderContext, x:Number, y:Number):void {
 			(Render._context.ctx as WebGLContext2D)._shader2D.glTexture = null;//TODO:临时清空2D合并，不然影响图层合并。
@@ -571,8 +715,10 @@ package laya.d3.core.scene {
 			super.render(context, x, y);
 		}
 		
+		/**
+		 * @private
+		 */
 		protected function _renderCamera(gl:WebGLContext, state:RenderState, baseCamera:BaseCamera):void {
-		
 		}
 		
 		/**
@@ -584,11 +730,64 @@ package laya.d3.core.scene {
 			_prepareSceneToRender(_renderState);
 			for (var i:int = 0, n:int = _cameraPool.length; i < n; i++) {
 				var camera:BaseCamera = _cameraPool[i];
-				(camera.enable) && (_renderCamera(gl, _renderState, camera));
+				(camera.activeInHierarchy) && (_renderCamera(gl, _renderState, camera));
 			}
-			_endRenderToRenderState(_renderState);
 			_set2DRenderConfig(gl);//设置2D配置
 			return 1;
+		}
+		
+		private var bFirst:Boolean = false;
+		private var debugSpriter:PhasorSpriter3D = null;
+		private var boxCorners:Vector.<Vector3> = null;
+		private var debugSpriter1:PhasorSpriter3D = null;
+		private var boxCorners1:Vector.<Vector3> = null;
+		protected function _renderDebug(gl:WebGLContext, state:RenderState):void {
+			//var camera:BaseCamera = state.camera;
+			//if (!bFirst) {
+				//if (!debugSpriter) debugSpriter = new PhasorSpriter3D();
+				//if (!debugSpriter1) debugSpriter1 = new PhasorSpriter3D();
+				//var i:int = 0;
+				//boxCorners = new Vector.<Vector3>(8);
+				//for (i = 0; i < 8; i++) {
+					//boxCorners[i] = new Vector3();
+				//}
+				//parallelSplitShadowMaps[0].getSplitFrustumCulling().getCorners(boxCorners);
+				//
+				//boxCorners1 = new Vector.<Vector3>(8);
+				//for (i = 0; i < 8; i++) {
+					//boxCorners1[i] = new Vector3();
+				//}
+				//parallelSplitShadowMaps[0].getLightFrustumCulling(0).getCorners(boxCorners1);//TODO:SM
+				//bFirst = true;
+			//}
+			//debugSpriter.begin(WebGLContext.LINES, state);
+			//debugSpriter.line(boxCorners[0].x, boxCorners[0].y, boxCorners[0].z, 1.0, 1.0, 0.0, 1.0, boxCorners[1].x, boxCorners[1].y, boxCorners[1].z, 1.0, 1.0, 0.0, 1.0);
+			//debugSpriter.line(boxCorners[2].x, boxCorners[2].y, boxCorners[2].z, 1.0, 1.0, 0.0, 1.0, boxCorners[3].x, boxCorners[3].y, boxCorners[3].z, 1.0, 1.0, 0.0, 1.0);
+			//debugSpriter.line(boxCorners[4].x, boxCorners[4].y, boxCorners[4].z, 1.0, 1.0, 0.0, 1.0, boxCorners[5].x, boxCorners[5].y, boxCorners[5].z, 1.0, 1.0, 0.0, 1.0);
+			//debugSpriter.line(boxCorners[6].x, boxCorners[6].y, boxCorners[6].z, 1.0, 1.0, 0.0, 1.0, boxCorners[7].x, boxCorners[7].y, boxCorners[7].z, 1.0, 1.0, 0.0, 1.0);
+			//debugSpriter.line(boxCorners[0].x, boxCorners[0].y, boxCorners[0].z, 1.0, 1.0, 0.0, 1.0, boxCorners[3].x, boxCorners[3].y, boxCorners[3].z, 1.0, 1.0, 0.0, 1.0);
+			//debugSpriter.line(boxCorners[1].x, boxCorners[1].y, boxCorners[1].z, 1.0, 1.0, 0.0, 1.0, boxCorners[2].x, boxCorners[2].y, boxCorners[2].z, 1.0, 1.0, 0.0, 1.0);
+			//debugSpriter.line(boxCorners[2].x, boxCorners[2].y, boxCorners[2].z, 1.0, 1.0, 0.0, 1.0, boxCorners[6].x, boxCorners[6].y, boxCorners[6].z, 1.0, 1.0, 0.0, 1.0);
+			//debugSpriter.line(boxCorners[3].x, boxCorners[3].y, boxCorners[3].z, 1.0, 1.0, 0.0, 1.0, boxCorners[7].x, boxCorners[7].y, boxCorners[7].z, 1.0, 1.0, 0.0, 1.0);
+			//debugSpriter.line(boxCorners[0].x, boxCorners[0].y, boxCorners[0].z, 1.0, 1.0, 0.0, 1.0, boxCorners[4].x, boxCorners[4].y, boxCorners[4].z, 1.0, 1.0, 0.0, 1.0);
+			//debugSpriter.line(boxCorners[1].x, boxCorners[1].y, boxCorners[1].z, 1.0, 1.0, 0.0, 1.0, boxCorners[5].x, boxCorners[5].y, boxCorners[5].z, 1.0, 1.0, 0.0, 1.0);
+			//debugSpriter.line(boxCorners[4].x, boxCorners[4].y, boxCorners[4].z, 1.0, 1.0, 0.0, 1.0, boxCorners[7].x, boxCorners[7].y, boxCorners[7].z, 1.0, 1.0, 0.0, 1.0);
+			//debugSpriter.line(boxCorners[5].x, boxCorners[5].y, boxCorners[5].z, 1.0, 1.0, 0.0, 1.0, boxCorners[6].x, boxCorners[6].y, boxCorners[6].z, 1.0, 1.0, 0.0, 1.0);
+			//debugSpriter.end();
+			//debugSpriter1.begin(WebGLContext.LINES, state);
+			//debugSpriter1.line(boxCorners1[0].x, boxCorners1[0].y, boxCorners1[0].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[1].x, boxCorners1[1].y, boxCorners1[1].z, 1.0, 0.0, 0.0, 1.0);
+			//debugSpriter1.line(boxCorners1[2].x, boxCorners1[2].y, boxCorners1[2].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[3].x, boxCorners1[3].y, boxCorners1[3].z, 1.0, 0.0, 0.0, 1.0);
+			//debugSpriter1.line(boxCorners1[4].x, boxCorners1[4].y, boxCorners1[4].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[5].x, boxCorners1[5].y, boxCorners1[5].z, 1.0, 0.0, 0.0, 1.0);
+			//debugSpriter1.line(boxCorners1[6].x, boxCorners1[6].y, boxCorners1[6].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[7].x, boxCorners1[7].y, boxCorners1[7].z, 1.0, 0.0, 0.0, 1.0);
+			//debugSpriter1.line(boxCorners1[0].x, boxCorners1[0].y, boxCorners1[0].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[3].x, boxCorners1[3].y, boxCorners1[3].z, 1.0, 0.0, 0.0, 1.0);
+			//debugSpriter1.line(boxCorners1[1].x, boxCorners1[1].y, boxCorners1[1].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[2].x, boxCorners1[2].y, boxCorners1[2].z, 1.0, 0.0, 0.0, 1.0);
+			//debugSpriter1.line(boxCorners1[2].x, boxCorners1[2].y, boxCorners1[2].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[6].x, boxCorners1[6].y, boxCorners1[6].z, 1.0, 0.0, 0.0, 1.0);
+			//debugSpriter1.line(boxCorners1[3].x, boxCorners1[3].y, boxCorners1[3].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[7].x, boxCorners1[7].y, boxCorners1[7].z, 1.0, 0.0, 0.0, 1.0);
+			//debugSpriter1.line(boxCorners1[0].x, boxCorners1[0].y, boxCorners1[0].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[4].x, boxCorners1[4].y, boxCorners1[4].z, 1.0, 0.0, 0.0, 1.0);
+			//debugSpriter1.line(boxCorners1[1].x, boxCorners1[1].y, boxCorners1[1].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[5].x, boxCorners1[5].y, boxCorners1[5].z, 1.0, 0.0, 0.0, 1.0);
+			//debugSpriter1.line(boxCorners1[4].x, boxCorners1[4].y, boxCorners1[4].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[7].x, boxCorners1[7].y, boxCorners1[7].z, 1.0, 0.0, 0.0, 1.0);
+			//debugSpriter1.line(boxCorners1[5].x, boxCorners1[5].y, boxCorners1[5].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[6].x, boxCorners1[6].y, boxCorners1[6].z, 1.0, 0.0, 0.0, 1.0);
+			//debugSpriter1.end();
 		}
 		
 		/**
@@ -602,6 +801,16 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		public function releaseRender():void {
+		}
+		
+		/**
+		 * @private
+		 */
+		override public function createConchModel():* { //NATIVE
+			var pScene:* = __JS__("new ConchScene()");
+			//TODO:wyw
+			pScene.init(512, 512, 512, 4);
+			return pScene;
 		}
 	
 	}

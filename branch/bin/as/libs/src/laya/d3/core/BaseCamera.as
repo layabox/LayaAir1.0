@@ -26,6 +26,10 @@ package laya.d3.core {
 		public static const VPMATRIX_NO_TRANSLATE:int = 4;//TODO:xx
 		public static const CAMERADIRECTION:int = 5;
 		public static const CAMERAUP:int = 6;
+		public static const ENVIRONMENTDIFFUSE:int = 7;
+		public static const ENVIRONMENTSPECULAR:int = 8;
+		public static const SIMLODINFO:int = 9;
+		
 		
 
 		/**渲染模式,延迟光照渲染，暂未开放。*/
@@ -103,6 +107,7 @@ package laya.d3.core {
 		/**设置天空。*/
 		public function set sky(value:Sky):void {
 			_sky = value;
+			value._ownerCamera = this;
 			if (conchModel) {//NATIVE
 				conchModel.setSkyMesh(_sky._conchSky);
 			}
@@ -351,7 +356,6 @@ package laya.d3.core {
 			_farPlane = farPlane;
 			
 			cullingMask = 2147483647/*int.MAX_VALUE*/;
-			clearColor = new Vector4(0.26, 0.26, 0.26, 1.0);
 			clearFlag = BaseCamera.CLEARFLAG_SOLIDCOLOR;
 			useOcclusionCulling = true;
 			_calculateProjectionMatrix();

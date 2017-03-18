@@ -106,11 +106,7 @@ package laya.webgl.resource {
 		}
 		
 		public function size(w:Number, h:Number):void {
-			if (_w == w && _h == h)
-			{
-				bitmap._released = true;
-				return;
-			}
+			if (_w == w && _h == h)return;
 			_w = w;
 			_h = h;
 			release();

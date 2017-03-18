@@ -14,9 +14,12 @@ package laya.d3.core.material {
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
+	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.net.URL;
+	import laya.utils.ClassUtils;
+	import laya.utils.Handler;
 	import laya.utils.Stat;
 	import laya.webgl.resource.WebGLImage;
 	import laya.webgl.utils.Buffer2D;
@@ -516,6 +519,39 @@ package laya.d3.core.material {
 		}
 		
 		/**
+		 * @private
+		 */
+		public static function _parseStandardMaterial(textureMap:Object, material:StandardMaterial, json:Object):void {//兼容性函数
+			var customProps:Object = json.customProps;
+			var ambientColorValue:Array = customProps.ambientColor;
+			material.ambientColor = new Vector3(ambientColorValue[0], ambientColorValue[1], ambientColorValue[2]);
+			var diffuseColorValue:Array = customProps.diffuseColor;
+			material.diffuseColor = new Vector3(diffuseColorValue[0], diffuseColorValue[1], diffuseColorValue[2]);
+			var specularColorValue:Array = customProps.specularColor;
+			material.specularColor = new Vector4(specularColorValue[0], specularColorValue[1], specularColorValue[2], specularColorValue[3]);
+			var reflectColorValue:Array = customProps.reflectColor;
+			material.reflectColor = new Vector3(reflectColorValue[0], reflectColorValue[1], reflectColorValue[2]);
+			
+			var diffuseTexture:String = customProps.diffuseTexture.texture2D;
+			(diffuseTexture) && (material.diffuseTexture = Loader.getRes(textureMap[diffuseTexture]));
+			
+			var normalTexture:String = customProps.normalTexture.texture2D;
+			(normalTexture) && (material.normalTexture = Loader.getRes(textureMap[normalTexture]));
+			
+			var specularTexture:String = customProps.specularTexture.texture2D;
+			(specularTexture) && (material.specularTexture = Loader.getRes(textureMap[specularTexture]));
+			
+			var emissiveTexture:String = customProps.emissiveTexture.texture2D;
+			(emissiveTexture) && (material.emissiveTexture = Loader.getRes(textureMap[emissiveTexture]));
+			
+			var ambientTexture:String = customProps.ambientTexture.texture2D;
+			(ambientTexture) && (material.ambientTexture = Loader.getRes(textureMap[ambientTexture]));
+			
+			var reflectTexture:String = customProps.reflectTexture.texture2D;
+			(reflectTexture) && (material.reflectTexture = Loader.getRes(textureMap[reflectTexture]));
+		}
+		
+		/**
 		 * 禁用灯光。
 		 */
 		public function disableLight():void {
@@ -530,12 +566,34 @@ package laya.d3.core.material {
 		}
 		
 		/**
+		 * @inheritDoc
+		 */
+		override public function onAsynLoaded(url:String, data:*, params:Array):void {
+			var jsonData:Object = data[0];
+			if (jsonData.version) {
+				super.onAsynLoaded(url, data, params);
+			} else {//兼容性代码
+				var textureMap:Object = data[1];
+				var props:Object = jsonData.props;
+				for (var prop:String in props)
+					this[prop] = props[prop];
+				_parseStandardMaterial(textureMap, this, jsonData);
+				
+				//_loaded = true;
+				event(Event.LOADED, this);
+			}
+		}
+		
+		/**
 		 * @private
 		 */
 		override public function _setMaterialShaderParams(state:RenderState):void {
 			(_transformUV) && (_transformUV.matrix);//触发UV矩阵更新TODO:临时
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override public function cloneTo(destObject:*):void {
 			super.cloneTo(destObject);
 			var dest:StandardMaterial = destObject as StandardMaterial;

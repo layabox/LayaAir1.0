@@ -81,7 +81,7 @@ package laya.d3.resource.models {
 		 * @private
 		 */
 		protected function _getShader(state:RenderState):Shader3D {
-			var shaderDefineValue:int = state._shaderDefineValue;
+			var shaderDefineValue:int = state.scene._shaderDefineValue;
 			_shader = _shaderCompile.withCompile(_sharderNameID, shaderDefineValue, shaderDefineValue + _sharderNameID * ShaderCompile3D.SHADERNAME2ID);
 			return _shader;
 		}
@@ -120,7 +120,7 @@ package laya.d3.resource.models {
 					vertices[vertexCount + 1] = y * _radius;
 					vertices[vertexCount + 2] = z * _radius;
 					
-					vertices[vertexCount + 3] = slice / _slices;
+					vertices[vertexCount + 3] = -(slice / _slices)+0.75;//gzk 改成我喜欢的坐标系 原来是 slice/_slices
 					vertices[vertexCount + 4] = stack / _stacks;
 					vertexCount += vertexFloatStride;
 					if (stack != (_stacks - 1)) {

@@ -119,7 +119,7 @@ package laya.d3.core.light {
 			var scene:BaseScene = state.scene;
 			if (scene.enableLight) {
 				var shaderValue:ValusArray = scene._shaderValues;
-				state.addShaderDefine(ShaderCompile3D.SHADERDEFINE_SPOTLIGHT);
+				scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_SPOTLIGHT);
 				shaderValue.setValue(BaseScene.SPOTLIGHTDIFFUSE, diffuseColor.elements);
 				shaderValue.setValue(BaseScene.SPOTLIGHTAMBIENT, ambientColor.elements);
 				shaderValue.setValue(BaseScene.SPOTLIGHTSPECULAR, specularColor.elements);

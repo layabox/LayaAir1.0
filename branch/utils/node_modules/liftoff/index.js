@@ -6,7 +6,9 @@ const EE = require('events').EventEmitter;
 const extend = require('extend');
 const resolve = require('resolve');
 const flaggedRespawn = require('flagged-respawn');
-const rechoir = require('rechoir');
+const isPlainObject = require('lodash.isplainobject');
+const mapValues = require('lodash.mapvalues');
+const fined = require('fined');
 
 const findCwd = require('./lib/find_cwd');
 const findConfig = require('./lib/find_config');
@@ -14,6 +16,7 @@ const fileSearch = require('./lib/file_search');
 const parseOptions = require('./lib/parse_options');
 const silentRequire = require('./lib/silent_require');
 const buildConfigName = require('./lib/build_config_name');
+const registerLoader = require('./lib/register_loader');
 
 
 function Liftoff (opts) {
@@ -121,22 +124,23 @@ Liftoff.prototype.buildEnvironment = function (opts) {
     }, this);
   }
 
-  // use rechoir to autoload any required modules
-  var autoloads;
-  if (configPath) {
-    autoloads = rechoir.prepare(this.extensions, configPath, cwd, true);
-    if (autoloads instanceof Error) {
-      autoloads = autoloads.failures;
-    }
-    if (Array.isArray(autoloads)) {
-      autoloads.forEach(function (attempt) {
-        if (attempt.error) {
-          this.emit('requireFail', attempt.moduleName, attempt.error);
-        } else {
-          this.emit('require', attempt.moduleName, attempt.module);
+  var exts = this.extensions;
+  var eventEmitter = this;
+  registerLoader(eventEmitter, exts, configPath, cwd);
+
+  var configFiles = {};
+  if (isPlainObject(this.configFiles)) {
+    var notfound = { path: null };
+    configFiles = mapValues(this.configFiles, function(prop, name) {
+      var defaultObj = { name: name, cwd: cwd, extensions: exts };
+      return mapValues(prop, function(pathObj) {
+        var found = fined(pathObj, defaultObj) || notfound;
+        if (isPlainObject(found.extension)) {
+          registerLoader(eventEmitter, found.extension, found.path, cwd);
         }
-      }, this);
-    }
+        return found.path;
+      });
+    });
   }
 
   return {
@@ -146,7 +150,8 @@ Liftoff.prototype.buildEnvironment = function (opts) {
     configPath: configPath,
     configBase: configBase,
     modulePath: modulePath,
-    modulePackage: modulePackage || {}
+    modulePackage: modulePackage || {},
+    configFiles: configFiles
   };
 };
 

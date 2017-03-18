@@ -1,5 +1,5 @@
-[![Build Status](https://secure.travis-ci.org/orchestrator/orchestrator.svg?branch=master)](https://travis-ci.org/orchestrator/orchestrator)
-[![Dependency Status](https://david-dm.org/orchestrator/orchestrator.svg)](https://david-dm.org/orchestrator/orchestrator)
+[![Build Status](https://secure.travis-ci.org/robrich/orchestrator.svg?branch=master)](https://travis-ci.org/robrich/orchestrator)
+[![Dependency Status](https://david-dm.org/robrich/orchestrator.svg)](https://david-dm.org/robrich/orchestrator)
 
 Orchestrator
 ============
@@ -264,7 +264,7 @@ LICENSE
 
 (MIT License)
 
-Copyright (c) 2013 [Richardson & Sons, LLC](http://richardsonandsons.com/)
+Copyright (c) 2013-2015 [Richardson & Sons, LLC](http://richardsonandsons.com/)
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

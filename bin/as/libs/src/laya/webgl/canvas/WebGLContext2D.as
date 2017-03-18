@@ -343,11 +343,6 @@ package laya.webgl.canvas
 			}
 		}
 		
-		override public function measureText(text:String):*
-		{
-			return RunDriver.measureText(text, _other.font.toString());
-		}
-		
 		override public function set font(str:String):void
 		{
 			if (str == _other.font.toString())
@@ -386,25 +381,21 @@ package laya.webgl.canvas
 		
 		public override function fillWords(words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, color:String):void
 		{
-			words.length > 0 && _fillText(null, words, x, y, fontStr, color,null,-1, null);
+			words && _fillText(null, words, x, y, fontStr, color,null,-1, null);
 		}
 		
 		override public function fillText(txt:*, x:Number, y:Number, fontStr:String, color:String, textAlign:String):void
 		{
-			txt.length > 0 && _fillText(txt, null, x, y, fontStr, color,null,-1, textAlign);
+			_fillText(txt, null, x, y, fontStr, color,null,-1, textAlign);
 		}
 		
 		override public function strokeText(txt:*, x:Number, y:Number, fontStr:String, color:String, lineWidth:Number, textAlign:String):void
 		{
-			if (txt.length === 0)
-				return;
-		    this._fillText(txt, null, x, y, fontStr, null, color, lineWidth || 1, textAlign);
+		    _fillText(txt, null, x, y, fontStr, null, color, lineWidth || 1, textAlign);
 		}
 		
 		override public function fillBorderText(txt:*, x:Number, y:Number, fontStr:String, fillColor:String, borderColor:String, lineWidth:int, textAlign:String):void
 		{
-			if (txt.length === 0)
-					return;
 			_fillBorderText(txt, null, x, y, fontStr, fillColor, borderColor, lineWidth, textAlign);
 		}
 		private  function _fillBorderText(txt:*,words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, fillColor:String, borderColor:String, lineWidth:int, textAlign:String):void{
@@ -425,9 +416,7 @@ package laya.webgl.canvas
 		}
 		
 		override public function fillBorderWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String, borderColor:String, lineWidth:int):void {	
-			if (!words||words.length === 0)
-					return;
-			_fillBorderText(null, words, x, y, font, color, borderColor, lineWidth,null);
+			words && _fillBorderText(null, words, x, y, font, color, borderColor, lineWidth,null);
 		}
 		
 		override public function fillRect(x:Number, y:Number, width:Number, height:Number, fillStyle:*):void

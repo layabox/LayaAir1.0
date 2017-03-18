@@ -106,7 +106,7 @@ package laya.net {
 		}
 		
 		private function _create(url:String, complete:Handler = null, progress:Handler = null, clas:Class = null, params:Array = null, priority:int = 1, cache:Boolean = true):* {
-			var item:* = getRes(url);
+			var item:ICreateResource = getRes(url);
 			if (!item) {
 				var extension:String = Utils.getFileExtension(url);
 				var creatItem:Array = createMap[extension];

@@ -45,6 +45,6 @@ package {
 		/**
 		 * 设置画布的模板缓冲，只对2D(WebGL)、3D有效。
 		 */
-		public static var isStencil:Boolean = false;
+		public static var isStencil:Boolean = true;
 	}
 }

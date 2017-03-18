@@ -52,7 +52,8 @@ package threeDimen.primaryStage {
 			Laya3D.init(0, 0,true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
-			Stat.show();
+			Stat.show(); 
+			
 			
 			//****************************2D背景************************
 			var dialog:Image = new Image("../../../../res/bg.jpg");

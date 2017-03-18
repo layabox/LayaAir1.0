@@ -103,21 +103,21 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			//case RENDERMODE_CUTOUT: 
-				//depthWrite = true;
-				//cull = CULL_BACK;
-				//blend = BLEND_DISABLE;
-				//_renderQueue = RenderQueue.OPAQUE;
-				////_addShaderDefine(ShaderDefines3D.ALPHATEST);
-				//event(Event.RENDERQUEUE_CHANGED, this);
-				//break;
+			//depthWrite = true;
+			//cull = CULL_BACK;
+			//blend = BLEND_DISABLE;
+			//_renderQueue = RenderQueue.OPAQUE;
+			////_addShaderDefine(ShaderDefines3D.ALPHATEST);
+			//event(Event.RENDERQUEUE_CHANGED, this);
+			//break;
 			//case RENDERMODE_CUTOUTDOUBLEFACE: 
-				//_renderQueue = RenderQueue.OPAQUE;
-				//depthWrite = true;
-				//cull = CULL_NONE;
-				//blend = BLEND_DISABLE;
-				////_addShaderDefine(ShaderDefines3D.ALPHATEST);
-				//event(Event.RENDERQUEUE_CHANGED, this);
-				//break;
+			//_renderQueue = RenderQueue.OPAQUE;
+			//depthWrite = true;
+			//cull = CULL_NONE;
+			//blend = BLEND_DISABLE;
+			////_addShaderDefine(ShaderDefines3D.ALPHATEST);
+			//event(Event.RENDERQUEUE_CHANGED, this);
+			//break;
 			case RENDERMODE_TRANSPARENT: 
 				_renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
@@ -261,6 +261,9 @@ package laya.d3.core.material {
 			_setTexture(DIFFUSETEXTURE, value);
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override public function setShaderName(name:String):void {
 			super.setShaderName(name);
 		}
@@ -271,6 +274,9 @@ package laya.d3.core.material {
 			renderMode = RENDERMODE_OPAQUE;
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override public function _setMaterialShaderParams(state:RenderState):void {
 			var glitter:Glitter = state.owner as Glitter;
 			var templet:GlitterTemplet = glitter.templet;
@@ -281,6 +287,9 @@ package laya.d3.core.material {
 			_setNumber(CURRENTTIME, templet._currentTime);//设置粒子的时间参数，可通过此参数停止粒子动画
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override public function cloneTo(destObject:*):void {
 			super.cloneTo(destObject);
 			var dest:GlitterMaterial = destObject as GlitterMaterial;

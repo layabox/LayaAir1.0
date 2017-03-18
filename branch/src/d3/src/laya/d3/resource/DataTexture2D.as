@@ -14,6 +14,7 @@ package laya.d3.resource {
 		/**
 		 * * 把所有的lod排列在一层上，这里记录每一lod的位置信息
 		 */
+		static private var lodasatlas:Boolean = false;
 		public var simLodInfo:Float32Array;
 		public static var simLodRect:Uint32Array = new Uint32Array([
 			//x,y,w,h,
@@ -29,7 +30,42 @@ package laya.d3.resource {
 			512+256+128+64+32+16+8+4+2, 0, 	1, 		1
 		]);
 
+		//先只接收RGBA int8的
+		public static function create(data:ArrayBuffer, w:int, h:int, magfilter:int = WebGLContext.LINEAR, minfilter:int = WebGLContext.LINEAR, mipmap:Boolean=true):DataTexture2D {
+			if (!data || data.byteLength < (w * h * 4))
+				throw 'DataTexture2D create error';
+			var ret:DataTexture2D = new DataTexture2D();
+			ret._buffer = data;
+			ret._width = w;
+			ret._height = h;
+			ret._mipmap = mipmap;
+			ret._magFifter = magfilter;
+			ret._minFifter = minfilter;
+			//直接设置数据的话，就认为是加载完成
+			ret._size=new Size(ret._width,ret._height);
+			if (ret._conchTexture){
+				alert('怎么给runtime传递datatexture数据');
+			}else
+				ret.activeResource();
+			ret._loaded=true;				
+			return ret;
+		}
 		
+		private function genDebugMipmaps():* {
+			//生成9层
+			var ret:* = [];
+			ret.push(new Uint8Array((new Uint32Array(512 * 256)).fill(0xff0000ff).buffer));
+			ret.push(new Uint8Array((new Uint32Array(256 * 128)).fill(0xff0080ff).buffer));
+			ret.push(new Uint8Array((new Uint32Array(128 * 64)).fill(0xff00ffff).buffer));
+			ret.push(new Uint8Array((new Uint32Array(64 * 32)).fill(0xff00ff00).buffer));
+			ret.push(new Uint8Array((new Uint32Array(32 * 16)).fill(0xff804000).buffer));
+			ret.push(new Uint8Array((new Uint32Array(16 * 8)).fill(0xffff0000).buffer));
+			ret.push(new Uint8Array((new Uint32Array(8 * 4)).fill(0xffff0080).buffer));
+			ret.push(new Uint8Array((new Uint32Array(4 * 2)).fill(0x0).buffer));
+			ret.push(new Uint8Array((new Uint32Array(2 * 1)).fill(0xff808080).buffer));
+			ret.push(new Uint8Array((new Uint32Array(1 * 1)).fill(0xffffffff).buffer));
+			return ret;
+		}
 		/**
 		 * 加载Texture2D。
 		 * @param url Texture2D地址。
@@ -40,13 +76,18 @@ package laya.d3.resource {
 				var ret:DataTexture2D = Laya.loader.create(url, null, null, DataTexture2D, [function(data:ArrayBuffer):* {
 					this._mipmaps = [];
 					var szinfo:Uint32Array = new Uint32Array(data);
-					this._width = szinfo[0] * 2;	//因为要把lod合并到一起，所以*2
-					if (this._width != 1024) {
+					this._width = szinfo[0] ;	
+					var validw:int = 512;
+					if (DataTexture2D.lodasatlas) { 
+						this._width *= 2;//因为要把lod合并到一起，所以*2
+						validw = 1024;
+					}
+					if (this._width != validw) {
 						console.error("现在只支持512x256的环境贴图。当前的是" + szinfo[0]);
 						throw "现在只支持512x256的环境贴图。当前的是"+szinfo[0];
 					}
 					this._height = szinfo[1];
-					var curw:int = this._width/2;
+					var curw:int = DataTexture2D.lodasatlas?this._width/ 2:this._width;
 					var curh:int = this._height;
 					var cursz:int = 8;
 					while (true) {
@@ -65,21 +106,25 @@ package laya.d3.resource {
 						if (curw < 1) curw = 1;
 						if (curh < 1) curh = 1;
 					}
+					//DEBUG
+					//this._mipmaps = this.genDebugMipmaps();
 					return null;
 				}]);
 				
 				//假设目前只允许原始大小为512x256的环境贴图。展开后大小为1024
 				//load函数一调用，这个就要存在，所以不能放在下载完成中。
-				ret.simLodInfo = new Float32Array(40);
-				for ( var i:int = 0; i < ret.simLodInfo.length; ) {
-					ret.simLodInfo[i] = (simLodRect[i]+0.5) / 1024;	//这时候还不知道多大，假设都是这个值
-					i++;
-					ret.simLodInfo[i] = (simLodRect[i]+0.5) / 256;
-					i++;
-					ret.simLodInfo[i] = Math.max(simLodRect[i]-1,0.1)/ 1024;
-					i++;
-					ret.simLodInfo[i] = Math.max(simLodRect[i] - 1.5, 0.1) / 256;	//这个数字是凑出来的
-					i++;
+				if( DataTexture2D.lodasatlas){
+					ret.simLodInfo = new Float32Array(40);
+					for ( var i:int = 0; i < ret.simLodInfo.length; ) {
+						ret.simLodInfo[i] = (simLodRect[i]+0.5) / 1024;	//这时候还不知道多大，假设都是这个值
+						i++;
+						ret.simLodInfo[i] = (simLodRect[i]+0.5) / 256;
+						i++;
+						ret.simLodInfo[i] = Math.max(simLodRect[i]-1,0.1)/ 1024;
+						i++;
+						ret.simLodInfo[i] = Math.max(simLodRect[i] - 1.5, 0.1) / 256;	//这个数字是凑出来的
+						i++;
+					}
 				}
 				return ret;
 			} else if (typeof(w) == 'number') {
@@ -153,30 +198,41 @@ package laya.d3.resource {
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTexture);
 			
 			if (this._mipmaps) {
-				//var cw:int = this._width;
-				//var ch:int = this._height;
-				var infoi:int = 0;
-				gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _width, _height, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, null);
-				for (var i:int = 0; i < this._mipmaps.length; i++) {
-					/*
-					if (_mipmaps[i].byteLength != cw * ch * 4) {
-						throw "mipmap size error  level:" + i;
+				if ( DataTexture2D.lodasatlas) {
+					var infoi:int = 0;
+					gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _width, _height, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, null);
+					for (var i:int = 0; i < this._mipmaps.length; i++) {
+						if (_mipmaps[i].byteLength != cw * ch * 4) {
+							throw "mipmap size error  level:" + i;
+						}
+						gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, 
+							simLodRect[infoi++], 
+							simLodRect[infoi++],
+							simLodRect[infoi++],
+							simLodRect[infoi++],
+							WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, new Uint8Array(_mipmaps[i]));
 					}
-					gl.texImage2D(WebGLContext.TEXTURE_2D, i, WebGLContext.RGBA, cw, ch, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, new Uint8Array(_mipmaps[i]));
-					cw /= 2;
-					ch /= 2;
-					if (cw < 1) cw = 1;
-					if (ch < 1) ch = 1;
-					*/
-					gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, 
-						simLodRect[infoi++], 
-						simLodRect[infoi++],
-						simLodRect[infoi++],
-						simLodRect[infoi++],
-						WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, new Uint8Array(_mipmaps[i]));
+					this.minFifter = WebGLContext.LINEAR;
+					this.magFifter = WebGLContext.LINEAR;
 				}
-				this.minFifter = WebGLContext.LINEAR;
-				this.magFifter = WebGLContext.LINEAR;
+				else {
+					var cw:int = this._width;
+					var ch:int = this._height;
+					infoi = 0;
+					gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _width, _height, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, null);
+					for (i = 0; i < this._mipmaps.length; i++) {
+						if (_mipmaps[i].byteLength != cw * ch * 4) {
+							throw "mipmap size error  level:" + i;
+						}
+						gl.texImage2D(WebGLContext.TEXTURE_2D, i, WebGLContext.RGBA, cw, ch, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, new Uint8Array(_mipmaps[i]));
+						cw /= 2;
+						ch /= 2;
+						if (cw < 1) cw = 1;
+						if (ch < 1) ch = 1;
+						this.minFifter = WebGLContext.LINEAR_MIPMAP_LINEAR;
+						this.magFifter = WebGLContext.LINEAR_MIPMAP_LINEAR;
+					}
+				}
 				this.mipmap = false;
 			} else {
 				gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, w, h, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, new Uint8Array(_buffer));
@@ -198,14 +254,18 @@ package laya.d3.resource {
 				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MIN_FILTER, minFifter);
 				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MAG_FILTER, magFifter);
 				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_S, repeat);
-				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, repeat);
+				if(this._mipmaps)
+					gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
+				else 
+					gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, repeat);
 				this._mipmap && gl.generateMipmap(WebGLContext.TEXTURE_2D);
 			} else {
 				throw "data texture must be POT";
 			}
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			//TODO 需要删除原始数据么
-			this._buffer = null;
+			if(this.src && this.src.length>0)
+				this._buffer = null;
 			
 			if (isPot)
 				memorySize = w * h * 4 * (1 + 1 / 3);//使用mipmap则在原来的基础上增加1/3
@@ -218,7 +278,7 @@ package laya.d3.resource {
 		 * 重新创建资源，如果异步创建中被强制释放再创建，则需等待释放完成后再重新加载创建。
 		 */
 		override protected function recreateResource():void {
-			if (_src == null || _src === "")
+			if (!_buffer && (_src == null || _src === ""))
 				return;
 			
 			_needReleaseAgain = false;
@@ -254,7 +314,7 @@ package laya.d3.resource {
 			_size = new Size(this._width, this._height);
 			if (_conchTexture) {//NATIVE
 				//_conchTexture.setTexture2DImage(_image);
-				throw '怎么给runtime传递datatexture数据';
+				alert('怎么给runtime传递datatexture数据');
 			} else
 				activeResource();
 			

@@ -6,6 +6,7 @@ package laya.ui {
 	import laya.ui.AutoBitmap;
 	import laya.ui.UIUtils;
 	import laya.utils.Handler;
+	import laya.utils.Utils;
 	
 	/**
 	 * 当按钮的选中状态（ <code>selected</code> 属性）发生改变时调度。
@@ -341,7 +342,8 @@ package laya.ui {
 			}
 			var width:Number = img.sourceWidth;
 			var height:Number = img.sourceHeight / _stateNum;
-			var key:String = _skin + _stateNum;
+			img.$_GID || (img.$_GID = Utils.getGID());
+			var key:String = img.$_GID +"-"+ _stateNum;
 			var clips:Array = AutoBitmap.getCache(key);
 			if (clips) _sources = clips;
 			else {

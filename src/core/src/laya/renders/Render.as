@@ -1,5 +1,4 @@
 package laya.renders {
-	import laya.events.Event;
 	import laya.resource.HTMLCanvas;
 	import laya.utils.Browser;
 	
@@ -82,6 +81,8 @@ package laya.renders {
 			
 			_mainCanvas.source.id = _mainCanvas.source.id || "layaCanvas";
 			var isWebGl:Boolean = Render.isWebGL;
+			_mainCanvas.source.width = width;
+			_mainCanvas.source.height = height;
 			isWebGl && WebGL.init(_mainCanvas, width, height);
 			if (_mainCanvas.source.nodeName || Render.isConchApp) {
 				Browser.container.appendChild(_mainCanvas.source);
@@ -89,29 +90,27 @@ package laya.renders {
 			_context = new RenderContext(width, height, isWebGl ? null : _mainCanvas);
 			_context.ctx.setIsMainContext();
 			
-			/*[IF-SCRIPT-BEGIN]			
-			Browser.window.requestAnimationFrame(loop);
-			function loop():void {
-				Laya.stage._loop();
-				Browser.window.requestAnimationFrame(loop);
-			}
-			Laya.stage.on(Event.BLUR, this, _onBlur);
-			Laya.stage.on(Event.FOCUS, this, _onFocus);
-			[IF-SCRIPT-END]*/
+			/*[IF-SCRIPT-BEGIN]
+			   Browser.window.requestAnimationFrame(loop);
+			   function loop():void {
+			   Laya.stage._loop();
+			   Browser.window.requestAnimationFrame(loop);
+			   }
+			   Laya.stage.on("visibilitychange", this, _onVisibilitychange);
+			   [IF-SCRIPT-END]*/
 			/*[IF-FLASH]*/
-			Browser.window.stageIn.addEventListener("enterFrame", _enterFrame);			
-		}
-		
-		/**@private */
-		private function _onFocus():void {
-			Browser.window.clearInterval(_timeId);
+			Browser.window.stageIn.addEventListener("enterFrame", _enterFrame);
 		}
 		/**@private */
 		private var _timeId:int = 0;
 		
 		/**@private */
-		private function _onBlur():void {
-			_timeId = Browser.window.setInterval(this._enterFrame, 1000);
+		private function _onVisibilitychange():void {
+			if (Laya.stage.isVisibility) {
+				_timeId = Browser.window.setInterval(this._enterFrame, 1000);
+			} else if (_timeId != 0) {
+				Browser.window.clearInterval(_timeId);
+			}
 		}
 		
 		/**@private */

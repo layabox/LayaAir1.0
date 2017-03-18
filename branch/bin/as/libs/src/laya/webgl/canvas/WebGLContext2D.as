@@ -140,11 +140,10 @@ package laya.webgl.canvas
 			this._isMain = true;
 		}
 		
-		public function clearBG(r:Number, g:Number, b:Number, a:Number):void
-		{
+		public function clearBG(r:Number, g:Number, b:Number, a:Number):void{
 			var gl:WebGLContext = WebGL.mainContext;
 			gl.clearColor(r, g, b, a);
-			gl.clear(WebGLContext.COLOR_BUFFER_BIT | WebGLContext.DEPTH_BUFFER_BIT);
+			gl.clear(WebGLContext.COLOR_BUFFER_BIT);
 		}
 		
 		public function _getSubmits():Array
@@ -215,6 +214,7 @@ package laya.webgl.canvas
 				_targets.repaint = true;
 				if (!_width || !_height)
 					throw Error("asBitmap no size!");
+					_targets.setSP(sprite);
 				_targets.size(_width, _height);
 			}
 			else
@@ -1190,8 +1190,9 @@ package laya.webgl.canvas
 		
 		public function movePath(x:Number, y:Number):void
 		{
-			x = _curMat.a * x + _curMat.c * y + _curMat.tx;
-			y = _curMat.b * x + _curMat.d * y	+_curMat.ty;
+			var _x1:Number=x, _y1:Number=y;
+			x = _curMat.a * _x1 + _curMat.c * _y1 + _curMat.tx;
+			y = _curMat.b * _x1 + _curMat.d * _y1	+_curMat.ty;
 			mX += x;
 			mY += y;
 		}
@@ -1279,8 +1280,9 @@ package laya.webgl.canvas
 			var tPath:Path = _getPath();
 			if (b)
 			{
-				x = _curMat.a * x + _curMat.c * y ;
-				y = _curMat.b * x + _curMat.d * y;
+				var _x1:Number = x, _y1:Number = y;
+				x = _curMat.a * _x1 + _curMat.c * _y1;
+				y = _curMat.b * _x1 + _curMat.d * _y1;
 			}
 			tPath.addPoint(x, y);
 		}
@@ -1290,8 +1292,9 @@ package laya.webgl.canvas
 			var tPath:Path = _getPath();
 			if (b)
 			{
-				x = _curMat.a * x + _curMat.c * y ;
-				y = _curMat.b * x + _curMat.d * y ;
+				var _x1:Number = x, _y1:Number = y;
+				x = _curMat.a * _x1 + _curMat.c * _y1;
+				y = _curMat.b * _x1 + _curMat.d * _y1;
 			}
 			tPath.addPoint(x, y);
 		}
@@ -1328,11 +1331,12 @@ package laya.webgl.canvas
 			var dx0:Number, dy0:Number, dx1:Number, dy1:Number, a:Number, d:Number, cx:Number, cy:Number, a0:Number, a1:Number;
 			var dir:Boolean;
 			// Calculate tangential circle to lines (x0,y0)-(x1,y1) and (x1,y1)-(x2,y2).
-			
-			x1 = _curMat.a * x1 + _curMat.c * y1;
-			y1 =  _curMat.b * x1 + _curMat.d * y1;
-			x2 = _curMat.a * x2 + _curMat.c * y2;
-			y2 =  _curMat.b *x2+ _curMat.d * y2;
+			var _x1:Number = x1, _y1:Number = y1;
+			x1 = _curMat.a * _x1 + _curMat.c * _y1;
+			y1 = _curMat.b * _x1 + _curMat.d * _y1;
+		    _x1 = x2, _y1 = y2;
+			x2 = _curMat.a * _x1 + _curMat.c * _y1;
+			y2 =  _curMat.b *_x1+ _curMat.d * _y1;
 			r =   _curMat.a * r + _curMat.c * r;
 			dx0 = x0 - x1;
 			dy0 = y0 - y1;
@@ -1445,6 +1449,7 @@ package laya.webgl.canvas
 			
 			nvals = 0;
 			var tPath:Path = _getPath();
+			var _x1:Number, _y1:Number;
 			for (i = 0; i <= ndivs; i++)
 			{
 				a = startAngle + da * (i / ndivs);
@@ -1454,8 +1459,9 @@ package laya.webgl.canvas
 				y = cy + dy * r;
 				if (b)
 				{
-					x = _curMat.a * x + _curMat.c * y;
-					y = _curMat.b * x + _curMat.d * y;
+					_x1 = x,_y1 = y;
+					x = _curMat.a * _x1 + _curMat.c * _y1;
+					y = _curMat.b * _x1 + _curMat.d * _y1;
 				}
 				if (x != _path.getEndPointX() || y != _path.getEndPointY())
 				{
@@ -1468,8 +1474,9 @@ package laya.webgl.canvas
 			y = cy + dy * r;
 			if (b)
 			{
-				x = _curMat.a * x + _curMat.c * y;
-				y = _curMat.b * x + _curMat.d * y;
+				_x1 = x,_y1 = y;
+				x = _curMat.a * _x1 + _curMat.c * _y1;
+				y = _curMat.b * _x1 + _curMat.d * _y1;
 			}
 			if (x != _path.getEndPointX() || y != _path.getEndPointY())
 			{
@@ -1481,10 +1488,12 @@ package laya.webgl.canvas
 		{
 			var tBezier:Bezier = Bezier.I;
 			var tResultArray:Array = [];
-			    x = _curMat.a * x + _curMat.c * y ;
-				y = _curMat.b * x + _curMat.d * y;
-				cpx = _curMat.a * cpx + _curMat.c * cpy;
-				cpy = _curMat.b * cpx + _curMat.d * cpy;
+			var _x1:Number=x, _y1:Number=y;
+			x = _curMat.a * _x1 + _curMat.c * _y1 ;
+			y = _curMat.b * _x1 + _curMat.d * _y1;
+			_x1 = cpx, _y1 = cpy;
+			cpx = _curMat.a * _x1 + _curMat.c * _y1;
+			cpy = _curMat.b * _x1 + _curMat.d * _y1;
 			var tArray:Array = tBezier.getBezierPoints([_path.getEndPointX(), _path.getEndPointY(), cpx, cpy, x, y], 30, 2);
 			for (var i:int = 0, n:int = tArray.length / 2; i < n; i++)
 			{

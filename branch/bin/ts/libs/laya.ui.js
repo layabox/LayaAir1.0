@@ -9,8 +9,8 @@
 	var Sprite=laya.display.Sprite,Text=laya.display.Text,Texture=laya.resource.Texture,Tween=laya.utils.Tween;
 	var Utils=laya.utils.Utils;
 	Laya.interface('laya.ui.IItem');
-	Laya.interface('laya.ui.ISelect');
 	Laya.interface('laya.ui.IRender');
+	Laya.interface('laya.ui.ISelect');
 	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
@@ -212,6 +212,7 @@
 		__proto.drawBitmap=function(repeat,tex,x,y,width,height){
 			(width===void 0)&& (width=0);
 			(height===void 0)&& (height=0);
+			if (width < 0.1 || height < 0.1)return;
 			if (repeat && (tex.width!=width || tex.height !=height))this.fillTexture(tex,x,y,width,height);
 			else this.drawTexture(tex,x,y,width,height);
 		}
@@ -832,6 +833,7 @@
 		function DialogManager(){
 			this.lockLayer=null;
 			this.popupEffect=function(dialog){
+				dialog.scale(1,1);
 				Tween.from(dialog,{x:Laya.stage.width / 2,y:Laya.stage.height / 2,scaleX:0,scaleY:0},300,Ease.backOut);
 			}
 			this.closeEffect=function(dialog){
@@ -2114,7 +2116,7 @@
 			var py=p.y+this._colorButton.height;
 			py=py+this._colorPanel.height <=Laya.stage.height ? py :p.y-this._colorPanel.height;
 			this._colorPanel.pos(px,py);
-			Laya.stageBox.addChild(this._colorPanel);
+			Laya._currentStage.addChild(this._colorPanel);
 			Laya.stage.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.removeColorBox);
 		}
 
@@ -2667,7 +2669,7 @@
 					var py=p.y+this._button.height;
 					py=py+this._listHeight <=Laya.stage.height ? py :p.y-this._listHeight;
 					this._list.pos(p.x,py);
-					Laya.stageBox.addChild(this._list);
+					Laya._currentStage.addChild(this._list);
 					Laya.stage.once(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.removeList);
 					this._list.selectedIndex=this._selectedIndex;
 					}else {
@@ -4530,7 +4532,7 @@
 		__proto.showDislayTip=function(tip){
 			this.addChild(tip);
 			this._showToStage(this);
-			Laya.stageBox.addChild(this);
+			Laya._currentStage.addChild(this);
 		}
 
 		/**
@@ -4543,7 +4545,7 @@
 			g.drawRect(0,0,this._tipText.width+10,this._tipText.height+10,TipManager.tipBackColor);
 			this.addChild(this._tipBox);
 			this._showToStage(this);
-			Laya.stageBox.addChild(this);
+			Laya._currentStage.addChild(this);
 		}
 
 		/**默认鼠标提示函数*/
@@ -5163,12 +5165,8 @@
 		__proto.changeCells=function(){
 			this._cellChanged=false;
 			if (this._itemRender){
-				for (var i=this._cells.length-1;i >-1;i--){
-					this._cells[i].destroy();
-				}
-				this._cells.length=0;
 				this.scrollBar=this.getChildByName("scrollBar");
-				var cell=this.createItem();
+				var cell=this._getOneCell();
 				var cellWidth=(cell.width+this._spaceX)|| 1;
 				var cellHeight=(cell.height+this._spaceY)|| 1;
 				if (this._width > 0)this._repeatX2=this._isVertical ? Math.round(this._width / cellWidth):Math.ceil(this._width / cellWidth);
@@ -5191,9 +5189,16 @@
 			}
 		}
 
+		__proto._getOneCell=function(){
+			if (this._cells.length===0){
+				this._cells.push(this.createItem());
+			}
+			return this._cells[0];
+		}
+
 		__proto._createItems=function(startY,numX,numY){
 			var box=this._content;
-			var cell=this.createItem();
+			var cell=this._getOneCell();
 			var cellWidth=cell.width+this._spaceX;
 			var cellHeight=cell.height+this._spaceY;
 			if (this.cacheContent){
@@ -5203,10 +5208,21 @@
 				this._content.addChild(cacheBox);
 				this._content.optimizeScrollRect=true;
 				box=cacheBox;
+			};
+			var arr=[];
+			for (var i=this._cells.length-1;i >-1;i--){
+				var item=this._cells[i];
+				item.removeSelf();
+				arr.push(item);
 			}
+			this._cells.length=0;
 			for (var k=startY;k < numY;k++){
 				for (var l=0;l < numX;l++){
-					cell=this.createItem();
+					if (arr.length){
+						cell=arr.pop();
+						}else {
+						cell=this.createItem();
+					}
 					cell.x=(this._isVertical ? l :k)*cellWidth-box.x;
 					cell.y=(this._isVertical ? k :l)*cellHeight-box.y;
 					cell.name="item"+(k *numX+l);
@@ -5581,8 +5597,14 @@
 		__getset(0,__proto,'itemRender',function(){
 			return this._itemRender;
 			},function(value){
-			this._itemRender=value;
-			this._setCellChanged();
+			if (this._itemRender !=value){
+				this._itemRender=value;
+				for (var i=this._cells.length-1;i >-1;i--){
+					this._cells[i].destroy();
+				}
+				this._cells.length=0;
+				this._setCellChanged();
+			}
 		});
 
 		/**
@@ -5652,9 +5674,9 @@
 			if (this._scrollBar !=value){
 				this._scrollBar=value;
 				if (value){
+					this._isVertical=this._scrollBar.isVertical;
 					this.addChild(this._scrollBar);
 					this._scrollBar.on(/*laya.events.Event.CHANGE*/"change",this,this.onScrollBarChange);
-					this._isVertical=this._scrollBar.isVertical;
 				}
 			}
 		});
@@ -6206,6 +6228,115 @@
 
 
 	/**
+	*使用 <code>HSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>HSlider</code> 控件采用水平方向。滑块轨道从左向右扩展，而标签位于轨道的顶部或底部。</p>
+	*
+	*@example 以下示例代码，创建了一个 <code>HSlider</code> 实例。
+	*<listing version="3.0">
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.utils.Handler;
+		*public class HSlider_Example
+		*{
+			*private var hSlider:HSlider;
+			*public function HSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/hslider.png","resource/ui/hslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*hSlider=new HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
+				*hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
+				*hSlider.min=0;//设置 hSlider 最低位置值。
+				*hSlider.max=10;//设置 hSlider 最高位置值。
+				*hSlider.value=2;//设置 hSlider 当前位置值。
+				*hSlider.tick=1;//设置 hSlider 刻度值。
+				*hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
+				*hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
+				*hSlider.changeHandler=new Handler(this,onChange);//设置 hSlider 位置变化处理器。
+				*Laya.stage.addChild(hSlider);//把 hSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*Laya.init(640,800,"canvas");//设置游戏画布宽高、渲染模式
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var hSlider;
+	*var res=["resource/ui/hslider.png","resource/ui/hslider$bar.png"];
+	*Laya.loader.load(res,laya.utils.Handler.create(this,onLoadComplete));
+	*function onLoadComplete(){
+		*console.log("资源加载完成！");
+		*hSlider=new laya.ui.HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
+		*hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
+		*hSlider.min=0;//设置 hSlider 最低位置值。
+		*hSlider.max=10;//设置 hSlider 最高位置值。
+		*hSlider.value=2;//设置 hSlider 当前位置值。
+		*hSlider.tick=1;//设置 hSlider 刻度值。
+		*hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
+		*hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
+		*hSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 hSlider 位置变化处理器。
+		*Laya.stage.addChild(hSlider);//把 hSlider 添加到显示列表。
+		*}
+	*function onChange(value)
+	*{
+		*console.log("滑块的位置： value="+value);
+		*}
+	*</listing>
+	*<listing version="3.0">
+	*import Handler=laya.utils.Handler;
+	*import HSlider=laya.ui.HSlider;
+	*class HSlider_Example {
+		*private hSlider:HSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/hslider.png","resource/ui/hslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.hSlider=new HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
+			*this.hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
+			*this.hSlider.min=0;//设置 hSlider 最低位置值。
+			*this.hSlider.max=10;//设置 hSlider 最高位置值。
+			*this.hSlider.value=2;//设置 hSlider 当前位置值。
+			*this.hSlider.tick=1;//设置 hSlider 刻度值。
+			*this.hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
+			*this.hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
+			*this.hSlider.changeHandler=new Handler(this,this.onChange);//设置 hSlider 位置变化处理器。
+			*Laya.stage.addChild(this.hSlider);//把 hSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*</listing>
+	*
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.HSlider extends laya.ui.Slider
+	var HSlider=(function(_super){
+		/**
+		*创建一个 <code>HSlider</code> 类实例。
+		*@param skin 皮肤。
+		*/
+		function HSlider(skin){
+			HSlider.__super.call(this,skin);
+			this.isVertical=false;
+		}
+
+		__class(HSlider,'laya.ui.HSlider',_super);
+		return HSlider;
+	})(Slider)
+
+
+	/**
 	*<code>Group</code> 是一个可以自动布局的项集合控件。
 	*<p> <code>Group</code> 的默认项对象为 <code>Button</code> 类实例。
 	*<code>Group</code> 是 <code>Tab</code> 和 <code>RadioGroup</code> 的基类。</p>
@@ -6607,115 +6738,6 @@
 
 		return UIGroup;
 	})(Box)
-
-
-	/**
-	*使用 <code>HSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>HSlider</code> 控件采用水平方向。滑块轨道从左向右扩展，而标签位于轨道的顶部或底部。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>HSlider</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.utils.Handler;
-		*public class HSlider_Example
-		*{
-			*private var hSlider:HSlider;
-			*public function HSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/hslider.png","resource/ui/hslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*hSlider=new HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
-				*hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
-				*hSlider.min=0;//设置 hSlider 最低位置值。
-				*hSlider.max=10;//设置 hSlider 最高位置值。
-				*hSlider.value=2;//设置 hSlider 当前位置值。
-				*hSlider.tick=1;//设置 hSlider 刻度值。
-				*hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
-				*hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
-				*hSlider.changeHandler=new Handler(this,onChange);//设置 hSlider 位置变化处理器。
-				*Laya.stage.addChild(hSlider);//把 hSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800,"canvas");//设置游戏画布宽高、渲染模式
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var hSlider;
-	*var res=["resource/ui/hslider.png","resource/ui/hslider$bar.png"];
-	*Laya.loader.load(res,laya.utils.Handler.create(this,onLoadComplete));
-	*function onLoadComplete(){
-		*console.log("资源加载完成！");
-		*hSlider=new laya.ui.HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
-		*hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
-		*hSlider.min=0;//设置 hSlider 最低位置值。
-		*hSlider.max=10;//设置 hSlider 最高位置值。
-		*hSlider.value=2;//设置 hSlider 当前位置值。
-		*hSlider.tick=1;//设置 hSlider 刻度值。
-		*hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
-		*hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
-		*hSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 hSlider 位置变化处理器。
-		*Laya.stage.addChild(hSlider);//把 hSlider 添加到显示列表。
-		*}
-	*function onChange(value)
-	*{
-		*console.log("滑块的位置： value="+value);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import Handler=laya.utils.Handler;
-	*import HSlider=laya.ui.HSlider;
-	*class HSlider_Example {
-		*private hSlider:HSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/hslider.png","resource/ui/hslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.hSlider=new HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
-			*this.hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
-			*this.hSlider.min=0;//设置 hSlider 最低位置值。
-			*this.hSlider.max=10;//设置 hSlider 最高位置值。
-			*this.hSlider.value=2;//设置 hSlider 当前位置值。
-			*this.hSlider.tick=1;//设置 hSlider 刻度值。
-			*this.hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
-			*this.hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
-			*this.hSlider.changeHandler=new Handler(this,this.onChange);//设置 hSlider 位置变化处理器。
-			*Laya.stage.addChild(this.hSlider);//把 hSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*</listing>
-	*
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.HSlider extends laya.ui.Slider
-	var HSlider=(function(_super){
-		/**
-		*创建一个 <code>HSlider</code> 类实例。
-		*@param skin 皮肤。
-		*/
-		function HSlider(skin){
-			HSlider.__super.call(this,skin);
-			this.isVertical=false;
-		}
-
-		__class(HSlider,'laya.ui.HSlider',_super);
-		return HSlider;
-	})(Slider)
 
 
 	/**
@@ -8873,14 +8895,20 @@
 			(closeOther===void 0)&& (closeOther=false);
 			Dialog.manager.lock(true);
 			this.once("ready",this,this._open,[false,closeOther]);
+			this.beforeOpen();
 		}
 
 		__proto.popup=function(closeOther){
 			(closeOther===void 0)&& (closeOther=false);
 			Dialog.manager.lock(true);
 			this.once("ready",this,this._open,[true,closeOther]);
+			this.beforeOpen();
 		}
 
+		/**
+		*打开页面之前，可以重构此方法，处理一些资源加载或网络通讯工作，准备完毕后，调用ready来呈现页面
+		*/
+		__proto.beforeOpen=function(){}
 		return AsynDialog;
 	})(Dialog)
 

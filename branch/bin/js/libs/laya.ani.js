@@ -3753,6 +3753,8 @@
 			this._atlasPath=null;
 			this._url=null;
 			this._isRoot=false;
+			this._completeHandler=null;
+			this._endFrame=-1;
 			this.interval=30;
 			this.loop=false;
 			MovieClip.__super.call(this);
@@ -3851,6 +3853,15 @@
 			}
 			this._parse(this._playIndex);
 			if (this._labels && this._labels[this._playIndex])this.event(/*laya.events.Event.LABEL*/"label",this._labels[this._playIndex]);
+			if (this._endFrame!=-1&&this._endFrame==this._playIndex){
+				this._endFrame=-1;
+				if (this._completeHandler !=null){
+					var handler=this._completeHandler;
+					this._completeHandler=null;
+					handler.run();
+				}
+				this.stop();
+			}
 		}
 
 		/**
@@ -4100,6 +4111,18 @@
 			this.play(0);
 			this.event(/*laya.events.Event.LOADED*/"loaded");
 			if (!this._parentMovieClip)Laya.timer.loop(this.interval,this,this.updates,null,true);
+		}
+
+		/**
+		*从开始索引播放到结束索引，结束之后出发complete回调
+		*@param start 开始索引
+		*@param end 结束索引
+		*@param complete 结束回调
+		*/
+		__proto.playTo=function(start,end,complete){
+			this._completeHandler=complete;
+			this._endFrame=end;
+			this.play(start,false);
 		}
 
 		/**当前播放索引。*/

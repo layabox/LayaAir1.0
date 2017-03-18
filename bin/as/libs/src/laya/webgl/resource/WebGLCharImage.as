@@ -113,17 +113,10 @@ package laya.webgl.resource {
 				_ctx = canvas.getContext('2d', undefined);
 			}
 		
-			var t:* = null;
-			if (bIsConchApp) {
-				_ctx.font = font;
-				t = _ctx.measureText(char);
-				cw = t.width * xs;
-				ch = t.height * ys;
-			} else {
-				t = Utils.measureText(char, font);
-				cw = t.width * xs;
-				ch = t.height * ys;
-			}
+			var t:* = Utils.measureText(char, font);
+			cw = t.width * xs;
+			ch = (t.height || fontSize) * ys;
+			
 			onresize(cw + CborderSize * 2, ch + CborderSize * 2);
 			
 			texture = new Texture(this);

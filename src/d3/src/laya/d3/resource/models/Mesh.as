@@ -5,6 +5,7 @@ package laya.d3.resource.models {
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexElementFormat;
@@ -40,9 +41,15 @@ package laya.d3.resource.models {
 		/** @private */
 		private var _subMeshes:Vector.<SubMesh>;
 		/** @private */
+		public var _boneNames:Vector.<String>;
+		/** @private */
 		public var _bindPoses:Vector.<Matrix4x4>;
 		/** @private */
 		public var _inverseBindPoses:Vector.<Matrix4x4>;
+		/** @private */
+		public var _vertexBuffers:Vector.<VertexBuffer3D>;
+		/** @private */
+		public var _indexBuffers:IndexBuffer3D;
 		/**
 		 * 获取网格顶点
 		 * @return 网格顶点。
@@ -107,6 +114,7 @@ package laya.d3.resource.models {
 			super();
 			_subMeshes = new Vector.<SubMesh>();
 			_materials = new Vector.<BaseMaterial>();
+			_vertexBuffers = new Vector.<VertexBuffer3D>();
 			
 			if (_loaded)
 				_generateBoundingObject();

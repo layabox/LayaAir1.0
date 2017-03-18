@@ -1,3 +1,47 @@
+##1.7.2beta##
+----------------------------------------
+####2D####
+webgl normal模式不在使用bounds
+修改对齐规则，原本文本宽度超出文本域宽度后，只按照左对齐。取消这一限制
+修正webgl出现黑块的问题
+解决loadAnimation有缓存时没有调loaded的问题
+解决字体度量错误导致的文字偏移。
+解决list有时改变大小会回到最上面的问题，解决有时会闪的问题
+修正9宫格刚好为设定值时显示错误
+修复Dialog单例弹出效果不对的bug
+更换字体度量方式，解决部分文字显示偏移的bug
+
+####3D####
+调整精灵激活相关接口，新增active属性,activeInHierarchy属性,enable做为兼容性接口存在，功能调整为和active一致，受父级影响
+
+摄像机增加boundFrustum椎体属性
+
+调整AlphaTest功能到BaseMaterial中
+
+增加CylinderMesh
+
+扩充引擎宏定义由32至64（包含引擎内部宏定义）
+
+优化灯光相关精灵，灯光精灵的transform变换和direction等属性绑定，不再无关
+
+修复无光照贴图场景崩溃BUG
+
+修复粒子克隆排序错误问题
+
+####LayaAirIDE####
+
+
+修复始终重新发布的问题
+
+仅在资源修改了的情况下修改导出的时间戳
+
+继续优化Mac版本的使用体验
+
+修改调试继续快捷键为f8
+
+使用新版本laya.js编译AS代码
+
+
 ##1.7.1beta##
 ----------------------------------------
 ####2D####
@@ -18,7 +62,6 @@ MovieClip实现playTo方法，支持设置播放起点和终点，播放结束�
 修复延迟Tween立即结束时，初始值不对的bug
 
 修复safari浏览器下横屏后，弹出导航栏后，点击区域偏下的问题
-
 
 ####3D####
 增加SphereCollider、BoxCollider、MeshCollider碰撞器组件，详见示例：D3Advance_MousePickingSample

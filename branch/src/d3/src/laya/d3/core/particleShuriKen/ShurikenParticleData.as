@@ -9,6 +9,7 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.particleShuriKen.module.StartFrame;
 	import laya.d3.core.particleShuriKen.module.TextureSheetAnimation;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Rand;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
@@ -19,7 +20,6 @@ package laya.d3.core.particleShuriKen {
 	 */
 	public class ShurikenParticleData {
 		private static var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
-		private static var _tempDirection:Float32Array = new Float32Array(3);
 		private static var _tempStartColor:Float32Array = new Float32Array(4);
 		private static var _tempStartSize:Float32Array = new Float32Array(3);
 		private static var _tempStartRotation0:Float32Array = new Float32Array(3);
@@ -61,11 +61,13 @@ package laya.d3.core.particleShuriKen {
 		}
 		
 		public static function create(particleSystem:ShurikenParticleSystem, particleRender:ShurikenParticleRender, position:Float32Array, direction:Float32Array, time:Number, transform:Transform3D):ShurikenParticleData {
+			var autoRandomSeed:Boolean = particleSystem.autoRandomSeed;
+			var rand:Rand = particleSystem._rand;
+			var randomSeeds:Uint32Array = particleSystem._randomSeeds;
+			
 			var particleData:ShurikenParticleData = new ShurikenParticleData();
 			particleData.position = position;
-			
-			MathUtil.scaleVector3(direction, 1.0/*settings.emitterVelocitySensitivity*/, _tempDirection);//TODO:
-			particleData.direction = _tempDirection;
+			particleData.direction = direction;
 			
 			//StartColor
 			particleData.startColor = _tempStartColor;
@@ -79,7 +81,13 @@ package laya.d3.core.particleShuriKen {
 				startColorE[3] = constantStartColorE[3];
 				break;
 			case 2: 
-				MathUtil.lerpVector4(particleSystem.startColorConstantMin.elements, particleSystem.startColorConstantMax.elements, Math.random(), particleData.startColor);
+				if (autoRandomSeed) {
+					MathUtil.lerpVector4(particleSystem.startColorConstantMin.elements, particleSystem.startColorConstantMax.elements, Math.random(), particleData.startColor);
+				} else {
+					rand.seed = randomSeeds[3];
+					MathUtil.lerpVector4(particleSystem.startColorConstantMin.elements, particleSystem.startColorConstantMax.elements, rand.getFloat(), particleData.startColor);
+					randomSeeds[3] = rand.seed;
+				}
 				break;
 			}
 			var colorOverLifetime:ColorOverLifetime = particleSystem.colorOverLifetime;
@@ -94,7 +102,14 @@ package laya.d3.core.particleShuriKen {
 					startColor[3] = startColor[3] * color.constant.w;
 					break;
 				case 2: 
-					var colorRandom:Number = Math.random();
+					var colorRandom:Number;
+					if (autoRandomSeed) {
+						colorRandom = Math.random();
+					} else {
+						rand.seed = randomSeeds[10];
+						colorRandom = rand.getFloat();
+						randomSeeds[10] = rand.seed;
+					}
 					var minConstantColor:Vector4 = color.constantMin;
 					var maxConstantColor:Vector4 = color.constantMax;
 					startColor[0] = startColor[0] * MathUtil.lerp(minConstantColor.x, maxConstantColor.x, colorRandom);
@@ -123,11 +138,25 @@ package laya.d3.core.particleShuriKen {
 				if (particleSystem.threeDStartSize) {
 					var startSizeConstantMinSeparate:Vector3 = particleSystem.startSizeConstantMinSeparate;
 					var startSizeConstantMaxSeparate:Vector3 = particleSystem.startSizeConstantMaxSeparate;
-					particleSize[0] = MathUtil.lerp(startSizeConstantMinSeparate.x, startSizeConstantMaxSeparate.x, Math.random());
-					particleSize[1] = MathUtil.lerp(startSizeConstantMinSeparate.y, startSizeConstantMaxSeparate.y, Math.random());
-					particleSize[2] = MathUtil.lerp(startSizeConstantMinSeparate.z, startSizeConstantMaxSeparate.z, Math.random());
+					if (autoRandomSeed) {
+						particleSize[0] = MathUtil.lerp(startSizeConstantMinSeparate.x, startSizeConstantMaxSeparate.x, Math.random());
+						particleSize[1] = MathUtil.lerp(startSizeConstantMinSeparate.y, startSizeConstantMaxSeparate.y, Math.random());
+						particleSize[2] = MathUtil.lerp(startSizeConstantMinSeparate.z, startSizeConstantMaxSeparate.z, Math.random());
+					} else {
+						rand.seed = randomSeeds[4];
+						particleSize[0] = MathUtil.lerp(startSizeConstantMinSeparate.x, startSizeConstantMaxSeparate.x, rand.getFloat());
+						particleSize[1] = MathUtil.lerp(startSizeConstantMinSeparate.y, startSizeConstantMaxSeparate.y, rand.getFloat());
+						particleSize[2] = MathUtil.lerp(startSizeConstantMinSeparate.z, startSizeConstantMaxSeparate.z, rand.getFloat());
+						randomSeeds[4] = rand.seed;
+					}
 				} else {
-					particleSize[0] = particleSize[1] = particleSize[2] = MathUtil.lerp(particleSystem.startSizeConstantMin, particleSystem.startSizeConstantMax, Math.random());
+					if (autoRandomSeed) {
+						particleSize[0] = particleSize[1] = particleSize[2] = MathUtil.lerp(particleSystem.startSizeConstantMin, particleSystem.startSizeConstantMax, Math.random());
+					} else {
+						rand.seed = randomSeeds[4];
+						particleSize[0] = particleSize[1] = particleSize[2] = MathUtil.lerp(particleSystem.startSizeConstantMin, particleSystem.startSizeConstantMax, rand.getFloat());
+						randomSeeds[4] = rand.seed;
+					}
 				}
 				break;
 			}
@@ -136,11 +165,26 @@ package laya.d3.core.particleShuriKen {
 			if (sizeOverLifetime && sizeOverLifetime.enbale && sizeOverLifetime.size.type === 1) {
 				var size:GradientSize = sizeOverLifetime.size;
 				if (size.separateAxes) {
-					particleSize[0] = particleSize[0] * MathUtil.lerp(size.constantMinSeparate.x, size.constantMaxSeparate.x, Math.random());
-					particleSize[1] = particleSize[1] * MathUtil.lerp(size.constantMinSeparate.y, size.constantMaxSeparate.y, Math.random());
-					particleSize[2] = particleSize[2] * MathUtil.lerp(size.constantMinSeparate.z, size.constantMaxSeparate.z, Math.random());
+					if (autoRandomSeed) {
+						particleSize[0] = particleSize[0] * MathUtil.lerp(size.constantMinSeparate.x, size.constantMaxSeparate.x, Math.random());
+						particleSize[1] = particleSize[1] * MathUtil.lerp(size.constantMinSeparate.y, size.constantMaxSeparate.y, Math.random());
+						particleSize[2] = particleSize[2] * MathUtil.lerp(size.constantMinSeparate.z, size.constantMaxSeparate.z, Math.random());
+					} else {
+						rand.seed = randomSeeds[11];
+						particleSize[0] = particleSize[0] * MathUtil.lerp(size.constantMinSeparate.x, size.constantMaxSeparate.x, rand.getFloat());
+						particleSize[1] = particleSize[1] * MathUtil.lerp(size.constantMinSeparate.y, size.constantMaxSeparate.y, rand.getFloat());;
+						particleSize[2] = particleSize[2] * MathUtil.lerp(size.constantMinSeparate.z, size.constantMaxSeparate.z, rand.getFloat());
+						randomSeeds[11] = rand.seed;
+					}
 				} else {
-					var randomSize:Number = MathUtil.lerp(size.constantMin, size.constantMax, Math.random());
+					var randomSize:Number;
+					if (autoRandomSeed) {
+						randomSize = MathUtil.lerp(size.constantMin, size.constantMax, Math.random());
+					} else {
+						rand.seed = randomSeeds[11];
+						randomSize = MathUtil.lerp(size.constantMin, size.constantMax, rand.getFloat());
+						randomSeeds[11] = rand.seed;
+					}
 					particleSize[0] = particleSize[0] * randomSize;
 					particleSize[1] = particleSize[1] * randomSize;
 					particleSize[2] = particleSize[2] * randomSize;
@@ -188,7 +232,13 @@ package laya.d3.core.particleShuriKen {
 					particleRotation0 = particleData.startRotation0;
 					var startRotationConstantMinSeparate:Vector3 = particleSystem.startRotationConstantMinSeparate;
 					var startRotationConstantMaxSeparate:Vector3 = particleSystem.startRotationConstantMaxSeparate;
-					Matrix4x4.createRotationYawPitchRoll(MathUtil.lerp(startRotationConstantMinSeparate.y, startRotationConstantMaxSeparate.y, Math.random()), MathUtil.lerp(startRotationConstantMinSeparate.x, startRotationConstantMaxSeparate.x, Math.random()), MathUtil.lerp(startRotationConstantMinSeparate.z, startRotationConstantMaxSeparate.z, Math.random()), _tempRotationMatrix);
+					if (autoRandomSeed) {
+						Matrix4x4.createRotationYawPitchRoll(MathUtil.lerp(startRotationConstantMinSeparate.y, startRotationConstantMaxSeparate.y, Math.random()), MathUtil.lerp(startRotationConstantMinSeparate.x, startRotationConstantMaxSeparate.x, Math.random()), MathUtil.lerp(startRotationConstantMinSeparate.z, startRotationConstantMaxSeparate.z, Math.random()), _tempRotationMatrix);
+					} else {
+						rand.seed = randomSeeds[5];
+						Matrix4x4.createRotationYawPitchRoll(MathUtil.lerp(startRotationConstantMinSeparate.y, startRotationConstantMaxSeparate.y, rand.getFloat()), MathUtil.lerp(startRotationConstantMinSeparate.x, startRotationConstantMaxSeparate.x, rand.getFloat()), MathUtil.lerp(startRotationConstantMinSeparate.z, startRotationConstantMaxSeparate.z, rand.getFloat()), _tempRotationMatrix);
+						randomSeeds[5] = rand.seed;
+					}
 					rotationMatrixE = _tempRotationMatrix.elements;
 					particleData.startRotation0 = _tempStartRotation0;
 					particleRotation0 = particleData.startRotation0;
@@ -210,11 +260,26 @@ package laya.d3.core.particleShuriKen {
 				} else {
 					particleData.startRotation0 = _tempStartRotation0;
 					particleRotation0 = particleData.startRotation0;
-					particleRotation0[0] = particleRotation0[1] = particleRotation0[2] = MathUtil.lerp(particleSystem.startRotationConstantMin, particleSystem.startRotationConstantMax, Math.random());
+					if (autoRandomSeed) {
+						particleRotation0[0] = particleRotation0[1] = particleRotation0[2] = MathUtil.lerp(particleSystem.startRotationConstantMin, particleSystem.startRotationConstantMax, Math.random());
+					} else {
+						rand.seed = randomSeeds[5];
+						particleRotation0[0] = particleRotation0[1] = particleRotation0[2] = MathUtil.lerp(particleSystem.startRotationConstantMin, particleSystem.startRotationConstantMax, rand.getFloat());
+						randomSeeds[5] = rand.seed;
+					}
 				}
 				break;
 			}
-			if (Math.random() < particleSystem.randomizeRotationDirection) {
+			
+			var randDic:Number;
+			if (autoRandomSeed) {
+				randDic = Math.random();
+			} else {
+				rand.seed = randomSeeds[6];
+				randDic = rand.getFloat();
+				randomSeeds[6] = rand.seed;
+			}
+			if (randDic < particleSystem.randomizeRotationDirection) {
 				particleRotation0[0] = -particleRotation0[0];
 				particleRotation0[1] = -particleRotation0[1];
 				particleRotation0[2] = -particleRotation0[2];
@@ -232,20 +297,39 @@ package laya.d3.core.particleShuriKen {
 				particleData.startLifeTime = _getStartLifetimeFromGradient(particleSystem.startLifeTimeGradient, particleSystem.emissionTime);
 				break;
 			case 2: 
-				particleData.startLifeTime = MathUtil.lerp(particleSystem.startLifetimeConstantMin, particleSystem.startLifetimeConstantMax, Math.random());
+				if (autoRandomSeed) {
+					particleData.startLifeTime = MathUtil.lerp(particleSystem.startLifetimeConstantMin, particleSystem.startLifetimeConstantMax, Math.random());
+				} else {
+					rand.seed = randomSeeds[7];
+					particleData.startLifeTime = MathUtil.lerp(particleSystem.startLifetimeConstantMin, particleSystem.startLifetimeConstantMax, rand.getFloat());
+					randomSeeds[7] = rand.seed;
+				}
 				break;
 			case 3: 
 				var emissionTime:Number = particleSystem.emissionTime;
-				particleData.startLifeTime = MathUtil.lerp(_getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMin, emissionTime), _getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMax, emissionTime), Math.random());
+				if (autoRandomSeed) {
+					particleData.startLifeTime = MathUtil.lerp(_getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMin, emissionTime), _getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMax, emissionTime), Math.random());
+				} else {
+					rand.seed = randomSeeds[7];
+					particleData.startLifeTime = MathUtil.lerp(_getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMin, emissionTime), _getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMax, emissionTime), rand.getFloat());
+					randomSeeds[7] = rand.seed;
+				}
 				break;
 			}
 			
+			//StartSpeed
 			switch (particleSystem.startSpeedType) {
 			case 0: 
 				particleData.startSpeed = particleSystem.startSpeedConstant;
 				break;
 			case 2: 
-				particleData.startSpeed = MathUtil.lerp(particleSystem.startSpeedConstantMin, particleSystem.startSpeedConstantMax, Math.random());
+				if (autoRandomSeed) {
+					particleData.startSpeed = MathUtil.lerp(particleSystem.startSpeedConstantMin, particleSystem.startSpeedConstantMax, Math.random());
+				} else {
+					rand.seed = randomSeeds[8];
+					particleData.startSpeed = MathUtil.lerp(particleSystem.startSpeedConstantMin, particleSystem.startSpeedConstantMax, rand.getFloat());
+					randomSeeds[8] = rand.seed;
+				}
 				break;
 			}
 			
@@ -268,10 +352,17 @@ package laya.d3.core.particleShuriKen {
 					break;
 				case 1://Singal Row
 					totalFrameCount = titleX;
-					if (randomRow)
-						startRow = Math.round(Math.random() * titleY);
-					else
+					if (randomRow) {
+						if (autoRandomSeed) {
+							startRow = Math.round(Math.random() * titleY);
+						} else {
+							rand.seed = randomSeeds[13];
+							startRow = Math.round(rand.getFloat() * titleY);
+							randomSeeds[13] = rand.seed;
+						}
+					} else {
 						startRow = 0;
+					}
 					break;
 				}
 				
@@ -282,7 +373,13 @@ package laya.d3.core.particleShuriKen {
 					startFrameCount = startFrame.constant;
 					break;
 				case 1://随机双常量模式
-					startFrameCount = Math.round(MathUtil.lerp(startFrame.constantMin, startFrame.constantMax, Math.random()));
+					if (autoRandomSeed) {
+						startFrameCount = Math.round(MathUtil.lerp(startFrame.constantMin, startFrame.constantMax, Math.random()));
+					} else {
+						rand.seed = randomSeeds[14];
+						startFrameCount = Math.round(MathUtil.lerp(startFrame.constantMin, startFrame.constantMax, rand.getFloat()));
+						randomSeeds[14] = rand.seed;
+					}
 					break;
 				}
 				
@@ -292,7 +389,13 @@ package laya.d3.core.particleShuriKen {
 					startFrameCount += frame.constant;
 					break;
 				case 2: 
-					startFrameCount += Math.round(MathUtil.lerp(frame.constantMin, frame.constantMax, Math.random()));
+					if (autoRandomSeed) {
+						startFrameCount += Math.round(MathUtil.lerp(frame.constantMin, frame.constantMax, Math.random()));
+					} else {
+						rand.seed = randomSeeds[15];
+						startFrameCount += Math.round(MathUtil.lerp(frame.constantMin, frame.constantMax, rand.getFloat()));
+						randomSeeds[15] = rand.seed;
+					}
 					break;
 				}
 				

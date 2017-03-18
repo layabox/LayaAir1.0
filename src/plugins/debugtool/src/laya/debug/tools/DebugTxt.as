@@ -50,6 +50,18 @@ package laya.debug.tools
 				_txt.text = str + "\n" + _txt.text;
 			}
 		}
+		public static function show(...arg):void
+		{
+			arg=getArgArr(arg);
+			//arg.push(TraceTool.getCallLoc(2));
+			//__JS__("console.log.apply(console,arg)");
+			var str:String;
+			str=arg.join(" ");
+			if (_txt)
+			{
+				_txt.text = str;
+			}
+		}
 	}
 
 }

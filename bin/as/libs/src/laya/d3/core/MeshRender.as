@@ -10,6 +10,7 @@ package laya.d3.core {
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
+	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.renders.RenderSprite;
@@ -28,12 +29,6 @@ package laya.d3.core {
 		//private var _lightmapIndex:int;//TODO:改良光照贴图到世界
 		/** @private */
 		private var _lightmapScaleOffset:Vector4;
-		
-		/** 是否产生阴影。 */
-		public var castShadow:Boolean;
-		/** 是否接收阴影。 */
-		public var receiveShadow:Boolean;
-		
 		/** 光照贴图的索引。*/
 		public var lightmapIndex:int;
 		
@@ -62,9 +57,8 @@ package laya.d3.core {
 			super(owner);
 			_meshSprite3DOwner = owner;
 			lightmapIndex = -1;
-			castShadow = true;
-			receiveShadow = true;
-			
+			castShadow = false;
+			receiveShadow = false;
 			_meshSprite3DOwner.meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
 		}
 		
@@ -73,7 +67,7 @@ package laya.d3.core {
 		 */
 		private function _onMeshChanged(sender:MeshFilter, oldMesh:BaseMesh, mesh:BaseMesh):void {
 			if (mesh.loaded) {
-				_boundingSphereNeedChange = _boundingBoxNeedChange =_boundingBoxCenterNeedChange= _octreeNodeNeedChange = true;
+				_boundingSphereNeedChange = _boundingBoxNeedChange = _boundingBoxCenterNeedChange = _octreeNodeNeedChange = true;
 			} else {
 				mesh.once(Event.LOADED, this, _onMeshLoaed);
 			}
@@ -84,9 +78,12 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _onMeshLoaed(sender:MeshRender, enable:Boolean):void {
-			_boundingSphereNeedChange = _boundingBoxNeedChange=_boundingBoxCenterNeedChange = _octreeNodeNeedChange = true;
+			_boundingSphereNeedChange = _boundingBoxNeedChange = _boundingBoxCenterNeedChange = _octreeNodeNeedChange = true;
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override protected function _calculateBoundingSphere():void {
 			var sharedMesh:BaseMesh = _meshSprite3DOwner.meshFilter.sharedMesh;
 			if (sharedMesh == null || sharedMesh.boundingSphere == null) {
@@ -106,6 +103,9 @@ package laya.d3.core {
 			}
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override protected function _calculateBoundingBox():void {
 			var sharedMesh:BaseMesh = _meshSprite3DOwner.meshFilter.sharedMesh;
 			if (sharedMesh == null || sharedMesh.boundingBox == null) {

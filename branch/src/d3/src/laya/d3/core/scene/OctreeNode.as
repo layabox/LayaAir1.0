@@ -1,6 +1,8 @@
 package laya.d3.core.scene {
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Layer;
+	import laya.d3.core.PhasorSpriter3D;
+	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.graphics.DynamicBatch;
@@ -9,25 +11,73 @@ package laya.d3.core.scene {
 	import laya.d3.graphics.StaticBatch;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundFrustum;
+	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Collision;
 	import laya.d3.math.ContainmentType;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
+	import laya.utils.Stat;
 	
-	public class OctreeNode {
-		static private const CHILD_NUM:int = 8;
-		private var _scene:BaseScene = null;
-		private var _parent:OctreeNode = null;
-		private var _children:Vector.<OctreeNode> = new Vector.<OctreeNode>(CHILD_NUM);
-		private var _objects:Vector.<RenderObject> = new Vector.<RenderObject>();
-		public var _boundingBox:BoundBox = null;
-		private var _currentDepth:int = 0;
-		private static var s_octreeSplit:Array = [new Vector3(0.250, 0.250, 0.250), new Vector3(0.750, 0.250, 0.250), new Vector3(0.250, 0.750, 0.250), new Vector3(0.750, 0.750, 0.250), new Vector3(0.250, 0.250, 0.750), new Vector3(0.750, 0.250, 0.750), new Vector3(0.250, 0.750, 0.750), new Vector3(0.750, 0.750, 0.750)];
-		
-		private static var tempVector1:Vector3 = new Vector3();
-		private static var tempVector2:Vector3 = new Vector3();
+	public class OctreeNode implements ITreeNode{
+		private static var relax:Number = 1.15;
+		private static var tempVector0:Vector3 = new Vector3();
 		private static var tempSize:Vector3 = new Vector3();
 		private static var tempCenter:Vector3 = new Vector3();
+		
+		private static const CHILDNUM:int = 8;
+		private static var _octreeSplit:Array = [new Vector3(0.250, 0.250, 0.250), new Vector3(0.750, 0.250, 0.250), new Vector3(0.250, 0.750, 0.250), new Vector3(0.750, 0.750, 0.250), new Vector3(0.250, 0.250, 0.750), new Vector3(0.750, 0.250, 0.750), new Vector3(0.250, 0.750, 0.750), new Vector3(0.750, 0.750, 0.750)];
+		
+		private var _exactBox:BoundBox = null;
+		private var _relaxBox:BoundBox = null;
+		
+		private var _boundingSphere:BoundSphere = new BoundSphere(new Vector3(), 0);
+		private var _corners:Vector.<Vector3> = new Vector.<Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+		private var _boundingBoxCenter:Vector3 = new Vector3();
+		private var _scene:BaseScene = null;
+		private var _parent:OctreeNode = null;
+		public var _children:Vector.<OctreeNode> = new Vector.<OctreeNode>(CHILDNUM);
+		private var _objects:Vector.<RenderObject> = new Vector.<RenderObject>();
+		private var _currentDepth:int = 0;
+		private var _tempBoundBoxCorners:Vector.<Vector3> = new Vector.<Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+		
+		public function init(center:Vector3, treeSize:Vector3):void {
+			var min:Vector3 = new Vector3();
+			var max:Vector3 = new Vector3();
+			Vector3.scale(treeSize, -0.5, min);
+			Vector3.scale(treeSize, 0.5, max);
+			Vector3.add( min, center, min );
+			Vector3.add( max, center, max );
+			exactBox = new BoundBox(min, max);
+			relaxBox = new BoundBox(min, max);	
+		}
+		
+		public function addTreeNode(renderObj:RenderObject):void {
+			if (Collision.boxContainsBox(_exactBox, renderObj._render.boundingBox) === ContainmentType.Contains)
+				addNodeDown(renderObj, 0);
+			else
+				addObject(renderObj);
+		}
+		
+		public function get exactBox():BoundBox {
+			return _exactBox;
+		}
+		
+		public function set exactBox(value:BoundBox):void {
+			_exactBox = value;
+			Vector3.add(value.min, value.max, _boundingBoxCenter);
+			Vector3.scale(_boundingBoxCenter, 0.5, _boundingBoxCenter);
+		}
+		
+		public function set relaxBox(value:BoundBox):void {
+			_relaxBox = value;
+			value.getCorners(_corners);
+			BoundSphere.createfromPoints(_corners, _boundingSphere);
+		}
+		
+		public function get relaxBox():BoundBox {
+			return _relaxBox;
+		}
 		
 		public function OctreeNode(scene:BaseScene, currentDepth:int) {
 			_scene = scene;
@@ -41,9 +91,9 @@ package laya.d3.core.scene {
 				_children[index] = child;
 				child._parent = this;
 				
-				Vector3.subtract(_boundingBox.max, _boundingBox.min, tempSize);
-				Vector3.multiply(tempSize, s_octreeSplit[index], tempCenter);
-				Vector3.add(_boundingBox.min, tempCenter, tempCenter);
+				Vector3.subtract(_exactBox.max, _exactBox.min, tempSize);
+				Vector3.multiply(tempSize, _octreeSplit[index], tempCenter);
+				Vector3.add(_exactBox.min, tempCenter, tempCenter);
 				//size * 0.25
 				Vector3.scale(tempSize, 0.25, tempSize);
 				//计算最小点和最大点
@@ -52,7 +102,15 @@ package laya.d3.core.scene {
 				Vector3.subtract(tempCenter, tempSize, min);
 				Vector3.add(tempCenter, tempSize, max);
 				//构造包围盒
-				child._boundingBox = new BoundBox(min, max);
+				child.exactBox = new BoundBox(min, max);
+				
+				//relax包围盒
+				Vector3.scale(tempSize, relax, tempSize);
+				var relaxMin:Vector3 = new Vector3();
+				var relaxMax:Vector3 = new Vector3();
+				Vector3.subtract(tempCenter, tempSize, relaxMin);
+				Vector3.add(tempCenter, tempSize, relaxMax);
+				child.relaxBox = new BoundBox(relaxMin, relaxMax);
 			}
 			return child;
 		}
@@ -80,44 +138,37 @@ package laya.d3.core.scene {
 		}
 		
 		public function addNodeUp(object:RenderObject, depth:int):void {
-			if (_parent && (Collision.boxContainsBox(_boundingBox, object._render.boundingBox) !== ContainmentType.Contains))
+			if (_parent && (Collision.boxContainsBox(_exactBox, object._render.boundingBox) !== ContainmentType.Contains)) {
 				_parent.addNodeUp(object, depth - 1);
-			else
+			} else
 				addNodeDown(object, depth);
 		}
 		
 		public function addNodeDown(object:RenderObject, depth:int):void {
-			if (depth < _scene.octreeLevel) {
-				var box:BoundBox = object._render.boundingBox;
-				var center:Vector3 = tempVector1;
-				Vector3.add(box.min, box.max, center);
-				Vector3.scale(center, 0.5, center);
+			if (depth < _scene.treeLevel) {
+				var render:BaseRender = object._render;
+				var childIndex:int = inChildIndex(render.boundingBoxCenter);
+				var child:OctreeNode = addChild(childIndex);
 				
-				var nIndex:int = inChildIndex(center);
-				var child:OctreeNode = addChild(nIndex);
-				if (Collision.boxContainsBox(child._boundingBox, box) === ContainmentType.Contains) {
-					child.addNodeDown(object, depth + 1);
-					return;
-				}
+				if (Collision.boxContainsBox(child._relaxBox, render.boundingBox) === ContainmentType.Contains) {
+					child.addNodeDown(object, ++depth);
+				} else
+					addObject(object);
+			} else {
+				addObject(object);
 			}
-			addObject(object);
 		}
 		
-		public function inChildIndex(v:Vector3):int {
-			var center:Vector3 = tempVector2;
-			Vector3.add(_boundingBox.min, _boundingBox.max, center);
-			Vector3.scale(center, 0.5, center);
-			
-			var c:Vector3 = center;
-			var z:int = v.z < c.z ? 0 : 1;
-			var y:int = v.y < c.y ? 0 : 1;
-			var x:int = v.x < c.x ? 0 : 1;
+		public function inChildIndex(objectCenter:Vector3):int {
+			var z:int = objectCenter.z < _boundingBoxCenter.z ? 0 : 1;
+			var y:int = objectCenter.y < _boundingBoxCenter.y ? 0 : 1;
+			var x:int = objectCenter.x < _boundingBoxCenter.x ? 0 : 1;
 			return z * 4 + y * 2 + x;
 		}
 		
 		public function updateObject(object:RenderObject):void {
 			//TODO 优化，效率不高
-			if (Collision.boxContainsBox(_boundingBox, object._render.boundingBox) === ContainmentType.Contains) {
+			if (Collision.boxContainsBox(_relaxBox, object._render.boundingBox) === ContainmentType.Contains) {
 				removeObject(object);
 				object._treeNode = null;
 				addNodeDown(object, _currentDepth);
@@ -128,24 +179,24 @@ package laya.d3.core.scene {
 			}
 		}
 		
-		public function cullingObjects(boundFrustum:BoundFrustum, bTestVisible:Boolean, flags:int, scene:BaseScene,camera:BaseCamera, view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
-			var iNum:int,jNum:int;
-			var dynamicBatchManager:DynamicBatchManager = scene._dynamicBatchManager;
-			
-			
-			var cameraPosition:Vector3 = camera.transform.position;
-			for (var i:int = 0, n:int = _objects.length; i < n; ++i) {
+		public function cullingObjects(boundFrustum:BoundFrustum, testVisible:Boolean, flags:int, cameraPosition:Vector3, projectionView:Matrix4x4):void {
+			var i:int, j:int, n:int, m:int;
+			var dynamicBatchManager:DynamicBatchManager = _scene._dynamicBatchManager;
+			for (i = 0, n = _objects.length; i < n; i++) {
 				var renderObject:RenderObject = _objects[i];
 				//if ((pObject->m_nFlag & nFlags) == 0) continue;//TODO:阴影等
 				if (Layer.isVisible(renderObject._layerMask) && renderObject._ownerEnable && renderObject._enable) {
-					if (bTestVisible)
-						if (boundFrustum.containsBoundBox(renderObject._render.boundingBox) === ContainmentType.Disjoint)
+					var render:BaseRender = renderObject._render;
+					if (testVisible) {
+						Stat.treeSpriteCollision += 1;
+						if (boundFrustum.containsBoundSphere(render.boundingSphere) === ContainmentType.Disjoint)
 							continue;
+					}
 					
 					renderObject._owner._prepareShaderValuetoRender(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
-					renderObject._distanceForSort = Vector3.distance(renderObject._render.boundingSphere.center, cameraPosition) + renderObject._render.sortingFudge;
+					renderObject._distanceForSort = Vector3.distance(render.boundingSphere.center, cameraPosition) + render.sortingFudge;
 					var renderElements:Vector.<RenderElement> = renderObject._renderElements;
-					for (j = 0, jNum = renderElements.length; j < jNum; j++) {
+					for (j = 0, m = renderElements.length; j < m; j++) {
 						var renderElement:RenderElement = renderElements[j];
 						var staticBatch:StaticBatch = renderElement._staticBatch;//TODO:换vertexBuffer后应该取消合并,修改顶点数据后，从动态列表移除，暂时忽略，不允许直接修改Buffer。
 						if (staticBatch && /*(staticBatch._vertexDeclaration===renderElement.element.getVertexBuffer().vertexDeclaration)&&*/ (staticBatch._material === renderElement._material)) {
@@ -155,49 +206,66 @@ package laya.d3.core.scene {
 							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1) && (renderObj._getIndexBuffer()) && (renderElement._material.renderQueue < 2) && renderElement._canDynamicBatch && (!renderObject._owner.isStatic))//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并//TODO:静态物体如果没合并走动态合并现在会出BUG,lightmapUV问题。
 								dynamicBatchManager._addPrepareRenderElement(renderElement);
 							else
-								scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);
+								_scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);
 						}
 					}
 				}
 				
 			}
-			for (var j:int = 0; j < CHILD_NUM; ++j) {
-				var pChild:OctreeNode = _children[j];
-				if (pChild == null) continue;
-				var bTestChild:Boolean = bTestVisible;
-				if (bTestVisible) {
-					var nType:int = boundFrustum.containsBoundBox(pChild._boundingBox);
-					
-					if (nType === ContainmentType.Disjoint)
+			for (i = 0; i < CHILDNUM; i++) {
+				var child:OctreeNode = _children[i];
+				if (child == null)
+					continue;
+				var testVisibleChild:Boolean = testVisible;
+				if (testVisible) {
+					//var type:int = boundFrustum.containsBoundSphere(child._boundingSphere);
+					var type:int = boundFrustum.containsBoundBox(child._relaxBox);
+					Stat.treeNodeCollision += 1;
+					if (type === ContainmentType.Disjoint)
 						continue;
-					
-					bTestChild = (nType === ContainmentType.Intersects);
+					testVisibleChild = (type === ContainmentType.Intersects);
 				}
-				pChild.cullingObjects(boundFrustum, bTestChild, flags,scene,camera,view,projection,projectionView);
+				child.cullingObjects(boundFrustum, testVisibleChild, flags, cameraPosition, projectionView);
 			}
 		}
 		
-		public function renderBoudingBox(currentCamera:BaseCamera):void {
-			_renderBoudingBox(currentCamera);
-			for (var i:int = 0; i < CHILD_NUM; ++i) {
+		public function renderBoudingBox(linePhasor:PhasorSpriter3D):void {
+			_renderBoudingBox(linePhasor);
+			for (var i:int = 0; i < CHILDNUM; ++i) {
 				var pChild:OctreeNode = _children[i];
 				if (pChild) {
-					pChild.renderBoudingBox(currentCamera);
+					pChild.renderBoudingBox(linePhasor);
 				}
 			}
 		}
 		
 		public function buildAllChild(depth:int):void {
-			if (depth < _scene.octreeLevel) {
-				for (var i:int = 0; i < CHILD_NUM; i++) {
+			if (depth < _scene.treeLevel) {
+				for (var i:int = 0; i < CHILDNUM; i++) {
 					var child:OctreeNode = addChild(i);
 					child.buildAllChild(depth + 1);
 				}
 			}
 		}
 		
-		private function _renderBoudingBox(currentCamera:BaseCamera):void {
-		
+		private function _renderBoudingBox(linePhasor:PhasorSpriter3D):void {
+			var boundBox:BoundBox = _relaxBox;
+			var corners:Vector.<Vector3> = _tempBoundBoxCorners;
+			boundBox.getCorners(corners);
+			linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 1.0, 0.0, 0.0, 1.0, corners[1].x, corners[1].y, corners[1].z, 1.0, 0.0, 0.0, 1.0);
+			linePhasor.line(corners[2].x, corners[2].y, corners[2].z, 1.0, 0.0, 0.0, 1.0, corners[3].x, corners[3].y, corners[3].z, 1.0, 0.0, 0.0, 1.0);
+			linePhasor.line(corners[4].x, corners[4].y, corners[4].z, 1.0, 0.0, 0.0, 1.0, corners[5].x, corners[5].y, corners[5].z, 1.0, 0.0, 0.0, 1.0);
+			linePhasor.line(corners[6].x, corners[6].y, corners[6].z, 1.0, 0.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 1.0, 0.0, 0.0, 1.0);
+			
+			linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 1.0, 0.0, 0.0, 1.0, corners[3].x, corners[3].y, corners[3].z, 1.0, 0.0, 0.0, 1.0);
+			linePhasor.line(corners[1].x, corners[1].y, corners[1].z, 1.0, 0.0, 0.0, 1.0, corners[2].x, corners[2].y, corners[2].z, 1.0, 0.0, 0.0, 1.0);
+			linePhasor.line(corners[2].x, corners[2].y, corners[2].z, 1.0, 0.0, 0.0, 1.0, corners[6].x, corners[6].y, corners[6].z, 1.0, 0.0, 0.0, 1.0);
+			linePhasor.line(corners[3].x, corners[3].y, corners[3].z, 1.0, 0.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 1.0, 0.0, 0.0, 1.0);
+			
+			linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 1.0, 0.0, 0.0, 1.0, corners[4].x, corners[4].y, corners[4].z, 1.0, 0.0, 0.0, 1.0);
+			linePhasor.line(corners[1].x, corners[1].y, corners[1].z, 1.0, 0.0, 0.0, 1.0, corners[5].x, corners[5].y, corners[5].z, 1.0, 0.0, 0.0, 1.0);
+			linePhasor.line(corners[4].x, corners[4].y, corners[4].z, 1.0, 0.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 1.0, 0.0, 0.0, 1.0);
+			linePhasor.line(corners[5].x, corners[5].y, corners[5].z, 1.0, 0.0, 0.0, 1.0, corners[6].x, corners[6].y, corners[6].z, 1.0, 0.0, 0.0, 1.0);
 		}
 	}
 }

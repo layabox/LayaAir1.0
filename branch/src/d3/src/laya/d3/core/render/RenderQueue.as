@@ -37,8 +37,6 @@ package laya.d3.core.render {
 		/** @private */
 		private var _renderableRenderObjects:Array;
 		/** @private */
-		private var _renderConfig:RenderConfig;
-		/** @private */
 		private var _staticBatchCombineRenderElements:Array;
 		/** @private */
 		private var _dynamicBatchCombineRenderElements:Array;
@@ -58,10 +56,9 @@ package laya.d3.core.render {
 		 * 创建一个 <code>RenderQuene</code> 实例。
 		 * @param renderConfig 渲染配置。
 		 */
-		public function RenderQueue(renderConfig:RenderConfig, scene:BaseScene) {
+		public function RenderQueue(scene:BaseScene) {
 			_id = ++_uniqueIDCounter;
 			_needSort = false;
-			_renderConfig = renderConfig;
 			_scene = scene;
 			_renderElements = [];
 			_renderableRenderObjects = [];
@@ -174,14 +171,12 @@ package laya.d3.core.render {
 		 * @param	state 渲染状态。
 		 */
 		public function _render(state:RenderState, isTarget:Boolean):void {
-			var preShadeDefine:int = state._shaderDefineValue;
 			var loopCount:int = Stat.loopCount;
 			var scene:BaseScene = _scene;
 			var camera:BaseCamera = state.camera;
 			var cameraID:int = camera.id;
 			var vertexBuffer:VertexBuffer3D, vertexDeclaration:VertexDeclaration, shader:Shader3D;
 			var forceUploadParams:Boolean;
-			var defineValue:int;
 			var lastStateMaterial:BaseMaterial,lastStateOwner:Sprite3D;
 			
 			for (var i:int = 0, n:int = _finalElements.length; i < n; i++) {
@@ -191,12 +186,11 @@ package laya.d3.core.render {
 					state.owner = owner = renderElement._sprite3D;
 					state.renderElement = renderElement;
 					_preRenderUpdateComponents(owner, state);
-					defineValue = state._shaderDefineValue;
 					renderObj = renderElement.renderObj, material = renderElement._material;
 					if (_begainRenderElement(state, renderObj, material)) {
 						vertexBuffer = renderObj._getVertexBuffer(0);
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
-						shader = material._getShader(defineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
+						shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
 						forceUploadParams = shader.bind() || (loopCount !== shader._uploadLoopCount);
 						
 						if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
@@ -259,12 +253,11 @@ package laya.d3.core.render {
 					state.renderElement = renderElement;
 					state._batchIndexStart = renderElement._batchIndexStart;
 					state._batchIndexEnd = renderElement._batchIndexEnd;
-					defineValue = state._shaderDefineValue;
 					renderObj = renderElement.renderObj, material = renderElement._material;
 					if (_begainRenderElement(state, renderObj, material)) {
 						vertexBuffer = renderObj._getVertexBuffer(0);
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
-						shader = material._getShader(defineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
+						shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
 						forceUploadParams = shader.bind() || (loopCount !== shader._uploadLoopCount);
 						
 						if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
@@ -320,12 +313,11 @@ package laya.d3.core.render {
 					state.renderElement = renderElement;
 					state._batchIndexStart = renderElement._batchIndexStart;
 					state._batchIndexEnd = renderElement._batchIndexEnd;
-					defineValue = state._shaderDefineValue;
 					renderObj = renderElement.renderObj, material = renderElement._material;
 					if (_begainRenderElement(state, renderObj, material)) {
 						vertexBuffer = renderObj._getVertexBuffer(0);
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
-						shader = material._getShader(defineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
+						shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
 						forceUploadParams = shader.bind() || (loopCount !== shader._uploadLoopCount);
 						
 						if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
@@ -377,7 +369,6 @@ package laya.d3.core.render {
 						
 					}
 				}
-				state._shaderDefineValue = preShadeDefine;
 			}
 		}
 		

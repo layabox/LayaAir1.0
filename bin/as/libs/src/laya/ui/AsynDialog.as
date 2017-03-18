@@ -26,11 +26,20 @@ package laya.ui {
 		override public function show(closeOther:Boolean = false):void {
 			manager.lock(true);
 			once("ready", this, _open, [false, closeOther]);
+			beforeOpen();
 		}
 		
 		override public function popup(closeOther:Boolean = false):void {
 			manager.lock(true);
 			once("ready", this, _open, [true, closeOther]);
+			beforeOpen();
+		}
+		
+		/**
+		 * 打开页面之前，可以重构此方法，处理一些资源加载或网络通讯工作，准备完毕后，调用ready来呈现页面
+		 */
+		public function beforeOpen():void {
+		
 		}
 	}
 }

@@ -28,7 +28,6 @@ package laya.d3.shader {
 		public static const IFDEF_YES:int = 1;
 		public static const IFDEF_ELSE:int = 2;
 		public static const SHADERNAME2ID:Number = 0.0002;
-		public static var debugMode:Boolean = false;
 		
 		/**
 		 * @private
@@ -259,7 +258,7 @@ package laya.d3.shader {
 				return shader;
 			
 			var defineGroup:Object = definesToNameDic(defineValue, _int2name);
-			if (ShaderCompile3D.debugMode) {
+			if (Laya3D.shaderCompileDebug) {
 				var defineGroupStr:String = "";
 				for (var key:String in defineGroup)
 					defineGroupStr += key + " ";

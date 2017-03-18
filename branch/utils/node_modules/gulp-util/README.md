@@ -22,7 +22,6 @@
 var gutil = require('gulp-util');
 
 gutil.log('stuff happened', 'Really it did', gutil.colors.magenta('123'));
-gutil.beep();
 
 gutil.replaceExtension('file.coffee', '.js'); // file.js
 

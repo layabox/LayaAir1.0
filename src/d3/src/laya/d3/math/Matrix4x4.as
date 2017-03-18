@@ -452,7 +452,6 @@ package laya.d3.math {
 		 * @param	other 4x4矩阵
 		 */
 		public function equalsOtherMatrix(other:Matrix4x4):Boolean {
-			
 			var e:Float32Array = this.elements;
 			var oe:Float32Array = other.elements;
 			
@@ -679,22 +678,52 @@ package laya.d3.math {
 			oe[14] = ve[2];
 		}
 		
-		public function getTranslationVector(translate:Vector3):void {
+		/**
+		 * 获取平移向量。
+		 * @param	out 平移向量。
+		 */
+		public function getTranslationVector(out:Vector3):void {
 			var me:Float32Array = this.elements;
-			var te:Float32Array = translate.elements;
+			var te:Float32Array = out.elements;
 			te[0] = me[12];
 			te[1] = me[13];
 			te[2] = me[14];
 		}
 		
-		public function setTranslationVector(v3:Vector3):void {
-			
+		/**
+		 * 设置平移向量。
+		 * @param	translate 平移向量。 
+		 */
+		public function setTranslationVector(translate:Vector3):void {
 			var me:Float32Array = this.elements;
-			var ve:Float32Array = v3.elements;
-			
+			var ve:Float32Array = translate.elements;
 			me[12] = ve[0];
 			me[13] = ve[1];
 			me[14] = ve[2];
+		}
+		
+		/**
+		 * 获取前向量。
+		 * @param	out 前向量。
+		 */
+		public function getForward(out:Vector3):void {
+			var me:Float32Array = this.elements;
+			var te:Float32Array = out.elements;
+			te[0] = -me[8];
+			te[1] = -me[9];
+			te[2] = -me[10];
+		}
+		
+		/**
+		 * 设置前向量。
+		 * @param	forward 前向量。 
+		 */
+		public function setForward(forward:Vector3):void {
+			var me:Float32Array = this.elements;
+			var ve:Float32Array = forward.elements;
+			me[8] = -ve[0];
+			me[9] = -ve[1];
+			me[10] = -ve[2];
 		}
 	
 	}

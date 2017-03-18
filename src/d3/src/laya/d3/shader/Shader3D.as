@@ -151,6 +151,7 @@ package laya.d3.shader {
 			_vshader = _createShader(gl, text[0], WebGLContext.VERTEX_SHADER);
 			_pshader = _createShader(gl, text[1], WebGLContext.FRAGMENT_SHADER);
 			
+
 			gl.attachShader(_program, _vshader);
 			gl.attachShader(_program, _pshader);
 			gl.linkProgram(_program);

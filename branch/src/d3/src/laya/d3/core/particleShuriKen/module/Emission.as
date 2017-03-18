@@ -9,6 +9,8 @@ package laya.d3.core.particleShuriKen.module {
 	 * <code>Emission</code> 类用于粒子发射器。
 	 */
 	public class Emission implements IClone, IDestroy {
+		/**@private */
+		private var _destroyed:Boolean;
 		/**@private 粒子发射速率,每秒发射的个数。*/
 		private var _emissionRate:int;
 		
@@ -48,9 +50,18 @@ package laya.d3.core.particleShuriKen.module {
 		}
 		
 		/**
+		 * 获取是否已销毁。
+		 * @return 是否已销毁。
+		 */
+		public function get destroyed():Boolean {
+			return _destroyed;
+		}
+		
+		/**
 		 * 创建一个 <code>Emission</code> 实例。
 		 */
 		public function Emission() {
+			_destroyed = false;
 			emissionRate = 10;
 			_bursts = new Vector.<Burst>();
 		}
@@ -61,6 +72,7 @@ package laya.d3.core.particleShuriKen.module {
 		public function _destroy():void {
 			_bursts = null;
 			_particleSystem = null;
+			_destroyed = true;
 		}
 		
 		/**

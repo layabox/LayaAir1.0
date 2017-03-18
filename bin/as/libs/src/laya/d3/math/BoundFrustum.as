@@ -4,7 +4,6 @@ package laya.d3.math {
 	 * <code>BoundFrustum</code> 类用于创建锥截体。
 	 */
 	public class BoundFrustum {
-		
 		/** @private */
 		private static var _tempV30:Vector3 = new Vector3();
 		/** @private */
@@ -42,13 +41,12 @@ package laya.d3.math {
 		 * @param	matrix 锥截体的描述4x4矩阵。
 		 */
 		public function BoundFrustum(matrix:Matrix4x4) {
-			
 			_matrix = matrix;
-			_near   = new Plane(new Vector3());
-			_far    = new Plane(new Vector3());
-			_left   = new Plane(new Vector3());
-			_right  = new Plane(new Vector3());
-			_top    = new Plane(new Vector3());
+			_near = new Plane(new Vector3());
+			_far = new Plane(new Vector3());
+			_left = new Plane(new Vector3());
+			_right = new Plane(new Vector3());
+			_top = new Plane(new Vector3());
 			_bottom = new Plane(new Vector3());
 			_getPlanesFromMatrix(_matrix, _near, _far, _left, _right, _top, _bottom);
 		}
@@ -57,8 +55,7 @@ package laya.d3.math {
 		 * 获取描述矩阵。
 		 * @return  描述矩阵。
 		 */
-		public function get matrix():Matrix4x4{
-			
+		public function get matrix():Matrix4x4 {
 			return _matrix;
 		}
 		
@@ -66,8 +63,7 @@ package laya.d3.math {
 		 * 设置描述矩阵。
 		 * @param matrix 描述矩阵。
 		 */
-		public function set matrix(matrix:Matrix4x4):void{
-			
+		public function set matrix(matrix:Matrix4x4):void {
 			_matrix = matrix;
 			_getPlanesFromMatrix(_matrix, _near, _far, _left, _right, _top, _bottom);
 		}
@@ -76,8 +72,7 @@ package laya.d3.math {
 		 * 获取近平面。
 		 * @return  近平面。
 		 */
-		public function get near():Plane{
-			
+		public function get near():Plane {
 			return _near;
 		}
 		
@@ -85,7 +80,7 @@ package laya.d3.math {
 		 * 获取远平面。
 		 * @return  远平面。
 		 */
-		public function get far():Plane{
+		public function get far():Plane {
 			
 			return _far;
 		}
@@ -94,7 +89,7 @@ package laya.d3.math {
 		 * 获取左平面。
 		 * @return  左平面。
 		 */
-		public function get left():Plane{
+		public function get left():Plane {
 			
 			return _left;
 		}
@@ -103,7 +98,7 @@ package laya.d3.math {
 		 * 获取右平面。
 		 * @return  右平面。
 		 */
-		public function get right():Plane{
+		public function get right():Plane {
 			
 			return _right;
 		}
@@ -112,7 +107,7 @@ package laya.d3.math {
 		 * 获取顶平面。
 		 * @return  顶平面。
 		 */
-		public function get top():Plane{
+		public function get top():Plane {
 			
 			return _top;
 		}
@@ -121,28 +116,27 @@ package laya.d3.math {
 		 * 获取底平面。
 		 * @return  底平面。
 		 */
-		public function get bottom():Plane{
+		public function get bottom():Plane {
 			
 			return _bottom;
 		}
-		
 		
 		/**
 		 * 判断是否与其他锥截体相等。
 		 * @param	other 锥截体。
 		 */
-		public function equalsBoundFrustum(other:BoundFrustum):Boolean{
+		public function equalsBoundFrustum(other:BoundFrustum):Boolean {
 			
 			return _matrix.equalsOtherMatrix(other.matrix)
-        }
+		}
 		
 		/**
 		 * 判断是否与其他对象相等。
 		 * @param	obj 对象。
 		 */
-		public function equalsObj(obj:Object):Boolean{
+		public function equalsObj(obj:Object):Boolean {
 			
-			if (obj is BoundFrustum){
+			if (obj is BoundFrustum) {
 				var bf:BoundFrustum = obj as BoundFrustum;
 				return equalsBoundFrustum(bf);
 			}
@@ -159,25 +153,25 @@ package laya.d3.math {
 		 * 5:底平面
 		 * @param	index 索引。
 		 */
-		public function getPlane(index:int):Plane{
-			switch(index){
-				case 0: 
-					return _near;
-                case 1: 
-					return _far;
-                case 2: 
-					return _left;
-                case 3: 
-					return _right;
-                case 4: 
-					return _top;
-                case 5: 
-					return _bottom;
-                default:
-                    return null;
+		public function getPlane(index:int):Plane {
+			switch (index) {
+			case 0: 
+				return _near;
+			case 1: 
+				return _far;
+			case 2: 
+				return _left;
+			case 3: 
+				return _right;
+			case 4: 
+				return _top;
+			case 5: 
+				return _bottom;
+			default: 
+				return null;
 			}
 		}
-	
+		
 		/**
 		 * 根据描述矩阵获取锥截体的6个面。
 		 * @param  m 描述矩阵。
@@ -188,7 +182,7 @@ package laya.d3.math {
 		 * @param  tp    顶平面。
 		 * @param  bp 底平面。
 		 */
-		private static function _getPlanesFromMatrix(m:Matrix4x4, np:Plane, fp:Plane, lp:Plane, rp:Plane, tp:Plane, bp:Plane):void{
+		private static function _getPlanesFromMatrix(m:Matrix4x4, np:Plane, fp:Plane, lp:Plane, rp:Plane, tp:Plane, bp:Plane):void {
 			
 			var matrixE:Float32Array = m.elements;
 			var m11:Number = matrixE[0];
@@ -255,7 +249,7 @@ package laya.d3.math {
 			bottomNorE[2] = m34 + m32;
 			bp.distance = m44 + m42;
 			bp.normalize();
-			
+		
 		}
 		
 		/**
@@ -264,7 +258,7 @@ package laya.d3.math {
 		 * @param  p2  平面2。
 		 * @param  p3  平面3。
 		 */
-		private static function _get3PlaneInterPoint(p1:Plane, p2:Plane, p3:Plane):Vector3{
+		private static function _get3PlaneInterPoint(p1:Plane, p2:Plane, p3:Plane):Vector3 {
 			var p1Nor:Vector3 = p1.normal;
 			var p2Nor:Vector3 = p2.normal;
 			var p3Nor:Vector3 = p3.normal;
@@ -293,65 +287,65 @@ package laya.d3.math {
 		 * 锥截体的8个顶点。
 		 * @param  corners  返回顶点的输出队列。
 		 */
-		public function getCorners(corners:Vector.<Vector3>):void{
+		public function getCorners(corners:Vector.<Vector3>):void {
 			
-			_get3PlaneInterPoint(_near, _bottom,  _right).cloneTo(corners[0]);
-            _get3PlaneInterPoint(_near, _top,     _right).cloneTo(corners[1]);
-            _get3PlaneInterPoint(_near, _top,     _left).cloneTo(corners[2]);
-            _get3PlaneInterPoint(_near, _bottom,  _left).cloneTo(corners[3]);
-            _get3PlaneInterPoint(_far,  _bottom,  _right).cloneTo(corners[4]);
-            _get3PlaneInterPoint(_far,  _top,     _right).cloneTo(corners[5]);
-            _get3PlaneInterPoint(_far,  _top,     _left).cloneTo(corners[6]);
-            _get3PlaneInterPoint(_far,  _bottom,  _left).cloneTo(corners[7]);
+			_get3PlaneInterPoint(_near, _bottom, _right).cloneTo(corners[0]);
+			_get3PlaneInterPoint(_near, _top, _right).cloneTo(corners[1]);
+			_get3PlaneInterPoint(_near, _top, _left).cloneTo(corners[2]);
+			_get3PlaneInterPoint(_near, _bottom, _left).cloneTo(corners[3]);
+			_get3PlaneInterPoint(_far, _bottom, _right).cloneTo(corners[4]);
+			_get3PlaneInterPoint(_far, _top, _right).cloneTo(corners[5]);
+			_get3PlaneInterPoint(_far, _top, _left).cloneTo(corners[6]);
+			_get3PlaneInterPoint(_far, _bottom, _left).cloneTo(corners[7]);
 		}
 		
 		/**
 		 * 与点的位置关系。返回-1,包涵;0,相交;1,不相交
 		 * @param  point  点。
 		 */
-		public function containsPoint(point:Vector3):int{
+		public function containsPoint(point:Vector3):int {
 			
 			var result:int = Plane.PlaneIntersectionType_Front;
 			var planeResult:int = Plane.PlaneIntersectionType_Front;
 			
-			for (var i:int = 0; i < 6; i++){
+			for (var i:int = 0; i < 6; i++) {
 				
-				switch(i){
-					
-					case 0: 
-						planeResult = Collision.intersectsPlaneAndPoint(_near, point);
-						break;
-					case 1:
-						planeResult = Collision.intersectsPlaneAndPoint(_far, point);
-						break;
-					case 2:
-						planeResult = Collision.intersectsPlaneAndPoint(_left, point);
-						break;
-					case 3:
-						planeResult = Collision.intersectsPlaneAndPoint(_right, point);
-						break;
-					case 4:
-						planeResult = Collision.intersectsPlaneAndPoint(_top, point);
-						break;
-					case 5:
-						planeResult = Collision.intersectsPlaneAndPoint(_bottom, point);
-						break;
+				switch (i) {
+				
+				case 0: 
+					planeResult = Collision.intersectsPlaneAndPoint(_near, point);
+					break;
+				case 1: 
+					planeResult = Collision.intersectsPlaneAndPoint(_far, point);
+					break;
+				case 2: 
+					planeResult = Collision.intersectsPlaneAndPoint(_left, point);
+					break;
+				case 3: 
+					planeResult = Collision.intersectsPlaneAndPoint(_right, point);
+					break;
+				case 4: 
+					planeResult = Collision.intersectsPlaneAndPoint(_top, point);
+					break;
+				case 5: 
+					planeResult = Collision.intersectsPlaneAndPoint(_bottom, point);
+					break;
 				}
 				
-				switch(planeResult){
-					case Plane.PlaneIntersectionType_Back:
-						return ContainmentType.Disjoint;
-					case Plane.PlaneIntersectionType_Intersecting:
-						result = Plane.PlaneIntersectionType_Intersecting;
-						break;
+				switch (planeResult) {
+				case Plane.PlaneIntersectionType_Back: 
+					return ContainmentType.Disjoint;
+				case Plane.PlaneIntersectionType_Intersecting: 
+					result = Plane.PlaneIntersectionType_Intersecting;
+					break;
 				}
 			}
 			
-			switch(result){
-				case Plane.PlaneIntersectionType_Intersecting:
-					return ContainmentType.Intersects;
-				default:
-					return ContainmentType.Contains;
+			switch (result) {
+			case Plane.PlaneIntersectionType_Intersecting: 
+				return ContainmentType.Intersects;
+			default: 
+				return ContainmentType.Contains;
 			}
 		}
 		
@@ -359,11 +353,11 @@ package laya.d3.math {
 		 * 与包围盒的位置关系。返回-1,包涵;0,相交;1,不相交
 		 * @param  box  包围盒。
 		 */
-		public function containsBoundBox(box:BoundBox):int{
-			var p:Vector3=_tempV30, n:Vector3=_tempV31;
+		public function containsBoundBox(box:BoundBox):int {
+			var p:Vector3 = _tempV30, n:Vector3 = _tempV31;
 			var plane:Plane;
 			var result:int = ContainmentType.Contains;
-			for (var i:int = 0; i < 6; i++ ){
+			for (var i:int = 0; i < 6; i++) {
 				plane = getPlane(i);
 				_getBoxToPlanePVertexNVertex(box, plane.normal, p, n);
 				
@@ -381,57 +375,56 @@ package laya.d3.math {
 		 * 与包围球的位置关系。返回-1,包涵;0,相交;1,不相交
 		 * @param  sphere  包围球。
 		 */
-		public function containsBoundSphere(sphere:BoundSphere):int{
+		public function containsBoundSphere(sphere:BoundSphere):int {
 			
 			var result:int = Plane.PlaneIntersectionType_Front;
 			var planeResult:int = Plane.PlaneIntersectionType_Front;
-			for (var i:int = 0; i < 6; i++){
+			for (var i:int = 0; i < 6; i++) {
 				
-				switch(i){
-					case 0: 
-						planeResult = Collision.intersectsPlaneAndSphere(_near, sphere);
-						break;
-					case 1:
-						planeResult = Collision.intersectsPlaneAndSphere(_far, sphere);
-						break;
-					case 2:
-						planeResult = Collision.intersectsPlaneAndSphere(_left, sphere);
-						break;
-					case 3:
-						planeResult = Collision.intersectsPlaneAndSphere(_right, sphere);
-						break;
-					case 4:
-						planeResult = Collision.intersectsPlaneAndSphere(_top, sphere);
-						break;
-					case 5:
-						planeResult = Collision.intersectsPlaneAndSphere(_bottom, sphere);
-						break;
+				switch (i) {
+				case 0: 
+					planeResult = Collision.intersectsPlaneAndSphere(_near, sphere);
+					break;
+				case 1: 
+					planeResult = Collision.intersectsPlaneAndSphere(_far, sphere);
+					break;
+				case 2: 
+					planeResult = Collision.intersectsPlaneAndSphere(_left, sphere);
+					break;
+				case 3: 
+					planeResult = Collision.intersectsPlaneAndSphere(_right, sphere);
+					break;
+				case 4: 
+					planeResult = Collision.intersectsPlaneAndSphere(_top, sphere);
+					break;
+				case 5: 
+					planeResult = Collision.intersectsPlaneAndSphere(_bottom, sphere);
+					break;
 				}
 				
-				switch(planeResult){
-					
-					case Plane.PlaneIntersectionType_Back:
-						return ContainmentType.Disjoint;
-					case Plane.PlaneIntersectionType_Intersecting:
-						result = Plane.PlaneIntersectionType_Intersecting;
-						break;
+				switch (planeResult) {
+				
+				case Plane.PlaneIntersectionType_Back: 
+					return ContainmentType.Disjoint;
+				case Plane.PlaneIntersectionType_Intersecting: 
+					result = Plane.PlaneIntersectionType_Intersecting;
+					break;
 				}
 			}
 			
-			switch(result){
-				
-				case Plane.PlaneIntersectionType_Intersecting:
-					return ContainmentType.Intersects;
-				default:
-					return ContainmentType.Contains;
+			switch (result) {
+			
+			case Plane.PlaneIntersectionType_Intersecting: 
+				return ContainmentType.Intersects;
+			default: 
+				return ContainmentType.Contains;
 			}
 		}
-		 
-		 
+		
 		/**
 		 * @private
 		 */
-		private function _getBoxToPlanePVertexNVertex(box:BoundBox, planeNormal:Vector3, outP:Vector3, outN:Vector3):void{
+		private function _getBoxToPlanePVertexNVertex(box:BoundBox, planeNormal:Vector3, outP:Vector3, outN:Vector3):void {
 			var boxMin:Vector3 = box.min;
 			var boxMinE:Float32Array = boxMin.elements;
 			
@@ -443,23 +436,24 @@ package laya.d3.math {
 			var planeNorEY:Number = planeNorE[1];
 			var planeNorEZ:Number = planeNorE[2];
 			
-			boxMin.cloneTo(outP);;
+			boxMin.cloneTo(outP);
+			;
 			var outPE:Float32Array = outP.elements;
-            if (planeNorEX >= 0)
-                outPE[0] = boxMaxE[0];
-            if (planeNorEY >= 0)
-                outPE[1] = boxMaxE[1];
-            if (planeNorEZ >= 0)
-                outPE[2] = boxMaxE[2];
-
+			if (planeNorEX >= 0)
+				outPE[0] = boxMaxE[0];
+			if (planeNorEY >= 0)
+				outPE[1] = boxMaxE[1];
+			if (planeNorEZ >= 0)
+				outPE[2] = boxMaxE[2];
+			
 			boxMax.cloneTo(outN);
 			var outNE:Float32Array = outN.elements;
-            if (planeNorEX >= 0)
-                outNE[0] = boxMinE[0];
-            if (planeNorEY >= 0)
-                outNE[1] = boxMinE[1];
-            if (planeNorEZ >= 0)
-                outNE[2] = boxMinE[2];
+			if (planeNorEX >= 0)
+				outNE[0] = boxMinE[0];
+			if (planeNorEY >= 0)
+				outNE[1] = boxMinE[1];
+			if (planeNorEZ >= 0)
+				outNE[2] = boxMinE[2];
 		}
 	}
 

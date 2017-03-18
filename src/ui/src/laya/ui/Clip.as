@@ -280,17 +280,17 @@ package laya.ui {
 		 */
 		protected function loadComplete(url:String, img:Texture):void {
 			if (url === _skin && img) {
-				_clipWidth || (_clipWidth = Math.ceil(img.sourceWidth / _clipX));
-				_clipHeight || (_clipHeight = Math.ceil(img.sourceHeight / _clipY));
+				var w:Number = _clipWidth || Math.ceil(img.sourceWidth / _clipX);
+				var h:Number = _clipHeight || Math.ceil(img.sourceHeight / _clipY);
 				
-				var key:String = _skin + _clipWidth + _clipHeight;
+				var key:String = _skin + w + h;
 				var clips:Array = AutoBitmap.getCache(key);
 				if (clips) _sources = clips;
 				else {
 					_sources = [];
 					for (var i:int = 0; i < _clipY; i++) {
 						for (var j:int = 0; j < _clipX; j++) {
-							_sources.push(Texture.createFromTexture(img, _clipWidth * j, _clipHeight * i, _clipWidth, _clipHeight));
+							_sources.push(Texture.createFromTexture(img, w * j, h * i, w, h));
 						}
 					}
 					AutoBitmap.setCache(key, _sources);

@@ -61,9 +61,12 @@ package laya.display {
 	[Event(name = "dragend", type = "laya.events.Event")]
 	
 	/**
-	 * <p> <code>Sprite</code> 类是基本显示列表构造块：一个可显示图形并且也可包含子项的显示列表节点。</p>
+	 * <p> <code>Sprite</code> 类是基本显示对象节点，通过graphics可以绘制图片或者矢量图，支持旋转，缩放，位移等操作。Sprite同时也是容器类，用来添加多个子节点。</p>
+	 * LayaAir引擎API设计精简巧妙。核心显示类只有一个Sprite。Sprite针对不同的情况做了渲染优化，所以保证一个类实现丰富功能的同时，又达到高性能。
+	 * Sprite默认没有宽高，可以手动设置宽高，或者通过getbounds函数获取，还可以设置autoSize=true，然后再获取宽高。Sprite的宽高只是用来做碰撞使用，并不影响显示大小，如果更改显示大小，需要使用scaleX，scaleY。
+	 * Sprite默认不接受鼠标事件，即mouseEnabled=false，但是只要对其监听任意鼠标事件，会自动打开自己以及所有父对象的mouseEnabled=true。所以一般也无需手动设置mouseEnabled。
 	 *
-	 * @example 以下示例代码，创建了一个 <code>Text</code> 实例。
+	 * @example 以下示例代码，创建了一个 <code>Sprite</code> 实例。
 	 * <listing version="3.0">
 	 * package
 	 * {
@@ -202,80 +205,74 @@ package laya.display {
 	 */
 	public class Sprite extends Node implements ILayout {
 		/** @private */
-		protected static const CHG_VIEW:int = 0x10;
-		protected static const CHG_SCALE:int = 0x100;
-		protected static const CHG_TEXTURE:int = 0x1000;
-		/** @private */
-		public static var CustomList:Array = [];
-		/**指定当mouseEnabled=true时，是否可穿透。默认值为false，如果设置为true，则点击空白区域可以穿透过去。*/
-		public var mouseThrough:Boolean = false;
-		/** @private 矩阵变换信息。*/
+		private static var CustomList:Array = [];		
+		/**@private 矩阵变换信息。*/
 		protected var _transform:Matrix;
-		/** @private */
+		/**@private */
 		protected var _tfChanged:Boolean;
-		/** @private */
+		/**@private */
 		protected var _x:Number = 0;
-		/** @private */
+		/**@private */
 		protected var _y:Number = 0;
-		/** @private */
+		/**@private */
 		public var _width:Number = 0;
-		/** @private */
+		/**@private */
 		public var _height:Number = 0;
-		/** @private */
+		/**@private */
 		protected var _repaint:int = 1;
-		/** @private */
-		protected var _changeType:int = 0;
-		
-		/** @private 鼠标状态，0:auto,1:mouseEnabled=false,2:mouseEnabled=true。*/
+		/**@private 鼠标状态，0:auto,1:mouseEnabled=false,2:mouseEnabled=true。*/
 		protected var _mouseEnableState:int = 0;
-		/** @private Z排序，数值越大越靠前。*/
+		/**@private Z排序，数值越大越靠前。*/
 		public var _zOrder:Number = 0;
-		
 		//以下变量为系统调用，请不要直接使用
-		/** @private */
+		/**@private */
 		public var _style:Style = Style.EMPTY;
-		/** @private */
+		/**@private */
 		public var _graphics:Graphics;
-		/** @private */
+		/**@private */
 		public var _renderType:int = 0;
+		/**@private */
+		private var _optimizeScrollRect:Boolean = false;
+		/**@private */
+		private var _texture:Texture = null;
+		
+		/**指定当mouseEnabled=true时，是否可穿透。默认值为false，如果设置为true，则点击空白区域可以穿透过去，只针对自身有效。*/
+		public var mouseThrough:Boolean = false;
 		/**
 		 * 指定是否自动计算宽高数据。默认值为 false 。
-		 * 自动计算计算量较大，对性能有一定影响。
-		 * 在手动设置宽高属性之后该属性不起作用。
+		 * Sprite宽高默认为0，并且不会随着绘制内容的变化而变化，如果想根据绘制内容获取宽高，可以设置本属性为true，或者通过getBounds方法获取。设置为true，对性能有一定影响。
 		 */
 		public var autoSize:Boolean = false;
 		/**
 		 * 指定鼠标碰撞检测是否优先检测自己。默认为false
 		 * 鼠标碰撞检测是优先检测子对象，然后冒泡到父对象，如果hitTestPrior=true
 		 * 鼠标碰撞优先检测本对象，本对象被击中后，才进一步检测子对象。
-		 * 对于已知大小的容器（特别是根容器），设置此值为true，能减少节点碰撞，提高性能。默认为false
+		 * 对于已知大小的容器（特别是根容器），设置此值为true，能减少节点碰撞，提高性能。默认为false。UI的View组建默认为true。
 		 */
 		public var hitTestPrior:Boolean = false;
-		/**视口大小，视口外的子对象(如果想实现裁剪效果，请使用srollRect)，将不被渲染，合理使用能提高渲染性能。比如由一个个小图片拼成的地图块，viewport外面的小图片将不渲染
+		/**视口大小，视口外的子对象，将不被渲染(如果想实现裁剪效果，请使用srollRect)，合理使用能提高渲染性能。比如由一个个小图片拼成的地图块，viewport外面的小图片将不渲染
 		 * srollRect和viewport的区别：
-		 * 1.srollRect自带裁剪效果，srollRect只影响子对象渲染是否渲染，不具有裁剪效果（性能更高）
-		 * 2.设置rect的x,y属性均能实现区域滚动效果，但scrollRect会保持0,0点位置不变
+		 * 1.srollRect自带裁剪效果，viewport只影响子对象渲染是否渲染，不具有裁剪效果（性能更高）。
+		 * 2.设置rect的x,y属性均能实现区域滚动效果，但scrollRect会保持0,0点位置不变。
 		 */
 		public var viewport:Rectangle = null;
-		/** @private */
-		private var _optimizeScrollRect:Boolean = false;
+		
 		/**@private */
-		private var _texture:Texture = null;
+		private static var RUNTIMEVERION:String = __JS__("window.conch?conchConfig.getRuntimeVersion().substr(conchConfig.getRuntimeVersion().lastIndexOf('-')+1):''");
 		
-		static private var RUNTIMEVERION:String = __JS__("window.conch?conchConfig.getRuntimeVersion().substr(conchConfig.getRuntimeVersion().lastIndexOf('-')+1):''");
-		
+		/**@private */
 		override public function createConchModel():* {
 			return __JS__("new ConchNode()");
-		}
-		
-		public function get optimizeScrollRect():Boolean {
-			return _optimizeScrollRect;
 		}
 		
 		/**
 		 * <p>指定是否对使用了 scrollRect 的显示对象进行优化处理。默认为false(不优化)。</p>
 		 * <p>当值为ture时：将对此对象使用了scrollRect 设定的显示区域以外的显示内容不进行渲染，以提高性能(如果子对象有旋转缩放或者中心点偏移，则显示筛选会不精确)。</p>
 		 */
+		public function get optimizeScrollRect():Boolean {
+			return _optimizeScrollRect;
+		}
+		
 		public function set optimizeScrollRect(b:Boolean):void {
 			if (_optimizeScrollRect != b) {
 				_optimizeScrollRect = b;
@@ -310,13 +307,13 @@ package laya.display {
 		}
 		
 		/**
-		 * 开启自定义渲染，只有开启自定义渲染，才能使用customRender函数渲染
+		 * 设置是否开启自定义渲染，只有开启自定义渲染，才能使用customRender函数渲染。
 		 */
 		public function set customRenderEnable(b:Boolean):void {
 			if (b) {
 				_renderType |= RenderSprite.CUSTOM;
 				if (Render.isConchNode) {
-					Sprite.CustomList.push(this);
+					CustomList.push(this);
 					var canvas:HTMLCanvas = new HTMLCanvas("2d");
 					canvas._setContext(__JS__("new CanvasRenderingContext2D()"));
 					__JS__("this.customContext = new RenderContext(0, 0, canvas)");
@@ -328,10 +325,10 @@ package laya.display {
 		
 		/**
 		 * <p>指定显示对象是否缓存为静态图像，cacheAs时，子对象发生变化，会自动重新缓存，同时也可以手动调用reCache方法更新缓存。</p>
-		 * 建议把不经常变化的复杂内容缓存为静态图像，能极大提高渲染性能，有"none"，"normal"和"bitmap"三个值可选。
+		 * 建议把不经常变化的“复杂内容”缓存为静态图像，能极大提高渲染性能。cacheAs有"none"，"normal"和"bitmap"三个值可选。
 		 * <li>默认为"none"，不做任何缓存。</li>
-		 * <li>当值为"normal"时，canvas下进行画布缓存，webgl模式下进行命令缓存。</li>
-		 * <li>当值为"bitmap"时，canvas下进行依然是画布缓存，webgl模式下使用renderTarget缓存。</li>
+		 * <li>当值为"normal"时，canvas模式下进行画布缓存，webgl模式下进行命令缓存。</li>
+		 * <li>当值为"bitmap"时，canvas模式下进行依然是画布缓存，webgl模式下使用renderTarget缓存。</li>
 		 * webgl下renderTarget缓存模式有最大2048大小限制，会额外增加内存开销，不断重绘时开销比较大，但是会减少drawcall，渲染性能最高。
 		 * webgl下命令缓存模式只会减少节点遍历及命令组织，不会减少drawcall，性能中等。
 		 */
@@ -375,7 +372,7 @@ package laya.display {
 			}
 		}
 		
-		/**在设置cacheAs或staticCache=true的情况下，调用此方法会重新刷新缓存。*/
+		/**在设置cacheAs的情况下，调用此方法会重新刷新缓存。*/
 		public function reCache():void {
 			if (_$P.cacheCanvas) _$P.cacheCanvas.reCache = true;
 		}
@@ -414,6 +411,7 @@ package laya.display {
 		
 		/**
 		 * 表示显示对象的宽度，以像素为单位。
+		 * 宽度默认为0，可以手动设置，或者通过getbounds获取实际宽度。设置此宽度只用来做鼠标碰撞使用，改变后并不影响显示对象大小。
 		 */
 		public function get width():Number {
 			if (!autoSize) return this._width;
@@ -426,6 +424,7 @@ package laya.display {
 		
 		/**
 		 * 表示显示对象的高度，以像素为单位。
+		 * 高度默认为0，可以手动设置，或者通过getbounds获取实际宽度。设置此高度只用来做鼠标碰撞使用，改变后并不影响显示对象大小。
 		 */
 		public function get height():Number {
 			if (!autoSize) return this._height;
@@ -437,7 +436,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 设置bounds大小，如果有设置，则不再通过getBounds计算
+		 * 设置bounds大小，如果有设置，则不再通过getBounds计算，合理使用能提高性能。
 		 * @param	bound bounds矩形区域
 		 */
 		public function setBounds(bound:Rectangle):void {
@@ -462,12 +461,6 @@ package laya.display {
 		public function getSelfBounds():Rectangle {
 			if (!_$P.mBounds) _set$P("mBounds", new Rectangle());
 			return Rectangle._getWrapRec(_getBoundPointsM(false), _$P.mBounds);
-		/*
-		   if (this.autoSize) return Rectangle._getWrapRec(_getBoundPointsM(false), Rectangle.TEMP);
-		   Rectangle.TEMP.x = Rectangle.TEMP.y = 0;
-		   Rectangle.TEMP.width = _width;
-		   Rectangle.TEMP.height = _height;
-		   return Rectangle.TEMP;*/
 		}
 		
 		/**
@@ -492,10 +485,7 @@ package laya.display {
 			if (!pList || pList.length < 1) return pList;
 			
 			if (pList.length != 8) {
-				//				trace("beforeLen:"+pList.length);
 				pList = ifRotate ? GrahamScan.scanPList(pList) : Rectangle._getWrapRec(pList, Rectangle.TEMP)._getBoundPoints();
-					//				pList = true ? GrahamScan.scanPList(pList) : Rectangle.getWrapRec(pList,Rectangle.temp).getBoundPoints();
-					//				trace("afterLen:"+pList.length);
 			}
 			
 			if (!transform) {
@@ -515,7 +505,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 返回此实例中的绘图对象（ <code>Graphics</code> ）的显示区域。
+		 * 返回此实例中的绘图对象（ <code>Graphics</code> ）的显示区域，不包括子对象。
 		 * @return 一个 Rectangle 对象，表示获取到的显示区域。
 		 */
 		public function getGraphicBounds():Rectangle {
@@ -576,7 +566,7 @@ package laya.display {
 			this._style = value;
 		}
 		
-		/**X轴缩放值，默认值为1。*/
+		/**X轴缩放值，默认值为1。设置为负数，可以实现水平反转效果，比如scaleX=-1。*/
 		public function get scaleX():Number {
 			return this._style._tf.scaleX;
 		}
@@ -585,7 +575,6 @@ package laya.display {
 			var style:Style = getStyle();
 			if (style._tf.scaleX !== value) {
 				style.setScaleX(value);
-				_changeType |= CHG_VIEW;
 				_tfChanged = true;
 				conchModel && conchModel.scale(value, style._tf.scaleY);
 				_renderType |= RenderSprite.TRANSFORM;
@@ -597,7 +586,7 @@ package laya.display {
 			}
 		}
 		
-		/**Y轴缩放值，默认值为1。*/
+		/**Y轴缩放值，默认值为1。设置为负数，可以实现垂直反转效果，比如scaleX=-1。*/
 		public function get scaleY():Number {
 			return this._style._tf.scaleY;
 		}
@@ -606,7 +595,6 @@ package laya.display {
 			var style:Style = getStyle();
 			if (style._tf.scaleY !== value) {
 				style.setScaleY(value);
-				_changeType |= CHG_VIEW;
 				_tfChanged = true;
 				conchModel && conchModel.scale(style._tf.scaleX, value);
 				_renderType |= RenderSprite.TRANSFORM;
@@ -618,7 +606,7 @@ package laya.display {
 			}
 		}
 		
-		/**旋转角度，默认值为0。*/
+		/**旋转角度，默认值为0。以角度为单位。*/
 		public function get rotation():Number {
 			return this._style._tf.rotate;
 		}
@@ -626,7 +614,6 @@ package laya.display {
 		public function set rotation(value:Number):void {
 			var style:Style = getStyle();
 			if (style._tf.rotate !== value) {
-				_changeType |= CHG_VIEW;
 				style.setRotate(value);
 				_tfChanged = true;
 				conchModel && conchModel.rotate(value);
@@ -636,7 +623,7 @@ package laya.display {
 			}
 		}
 		
-		/**水平倾斜角度，默认值为0。*/
+		/**水平倾斜角度，默认值为0。以角度为单位。*/
 		public function get skewX():Number {
 			return this._style._tf.skewX;
 		}
@@ -652,7 +639,7 @@ package laya.display {
 			}
 		}
 		
-		/**垂直倾斜角度，默认值为0。*/
+		/**垂直倾斜角度，默认值为0。以角度为单位。*/
 		public function get skewY():Number {
 			return this._style._tf.skewY;
 		}
@@ -669,7 +656,7 @@ package laya.display {
 			}
 		}
 		
-		/** @private */
+		/**@private */
 		private function _adjustTransform():Matrix {
 			'use strict';
 			_tfChanged = false;
@@ -681,8 +668,8 @@ package laya.display {
 				m = this._transform || (this._transform = Matrix.create());
 				m.bTransform = true;
 				
-				var skx:Number = (tf.rotate-tf.skewX) * 0.0174532922222222;//laya.CONST.PI180;
-				var sky:Number = (tf.rotate+tf.skewY) * 0.0174532922222222;
+				var skx:Number = (tf.rotate - tf.skewX) * 0.0174532922222222;//laya.CONST.PI180;
+				var sky:Number = (tf.rotate + tf.skewY) * 0.0174532922222222;
 				var cx:Number = Math.cos(sky);
 				var ssx:Number = Math.sin(sky);
 				var cy:Number = Math.sin(skx);
@@ -702,7 +689,8 @@ package laya.display {
 		}
 		
 		/**
-		 * 对象的矩阵信息。
+		 * 对象的矩阵信息。通过设置矩阵可以实现节点旋转，缩放，位移效果。
+		 * 矩阵更多信息请参考 <code>Matrix</code>
 		 */
 		public function get transform():Matrix {
 			return _tfChanged ? _adjustTransform() : _transform;
@@ -726,31 +714,29 @@ package laya.display {
 			parentRepaint();
 		}
 		
-		/**X轴 轴心点的位置，单位为像素，默认为0，轴心点会影响对象位置，缩放，旋转。*/
+		/**X轴 轴心点的位置，单位为像素，默认为0。轴心点会影响对象位置，缩放中心，旋转中心。*/
 		public function get pivotX():Number {
 			return this._style._tf.translateX;
 		}
 		
 		public function set pivotX(value:Number):void {
 			getStyle().setTranslateX(value);
-			_changeType |= CHG_VIEW;
 			conchModel && conchModel.pivot(value, this._style._tf.translateY);
 			repaint();
 		}
 		
-		/**Y轴 轴心点的位置，单位为像素，默认为0，轴心点会影响对象位置，缩放，旋转。*/
+		/**Y轴 轴心点的位置，单位为像素，默认为0。轴心点会影响对象位置，缩放中心，旋转中心。*/
 		public function get pivotY():Number {
 			return this._style._tf.translateY;
 		}
 		
 		public function set pivotY(value:Number):void {
 			getStyle().setTranslateY(value);
-			_changeType |= CHG_VIEW;
 			conchModel && conchModel.pivot(this._style._tf.translateX, value);
 			repaint();
 		}
 		
-		/**透明度，值为0-1，默认值为1，表示不透明。*/
+		/**透明度，值为0-1，默认值为1，表示不透明。更改alpha值会影响drawcall。*/
 		public function get alpha():Number {
 			return this._style.alpha;
 		}
@@ -766,7 +752,7 @@ package laya.display {
 			}
 		}
 		
-		/**表示是否可见，默认为true。*/
+		/**表示是否可见，默认为true。如果设置不可见，节点将不被渲染。*/
 		public function get visible():Boolean {
 			return this._style.visible;
 		}
@@ -779,7 +765,7 @@ package laya.display {
 			}
 		}
 		
-		/**指定要使用的混合模式。*/
+		/**指定要使用的混合模式。目前只支持"lighter"。*/
 		public function get blendMode():String {
 			return this._style.blendMode;
 		}
@@ -792,7 +778,7 @@ package laya.display {
 			parentRepaint();
 		}
 		
-		/**绘图对象。*/
+		/**绘图对象。封装了绘制位图和矢量图的接口，Sprite所有的绘图操作都通过Graphics来实现的。*/
 		public function get graphics():Graphics {
 			return this._graphics || (this.graphics = RunDriver.createGraphics());
 		}
@@ -814,16 +800,15 @@ package laya.display {
 						conchModel.removeType(0x100);
 					else
 						conchModel.removeType(RenderSprite.GRAPHICS);
-					
 				}
 			}
 			repaint();
 		}
 		
-		/**显示对象的滚动矩形范围，(如果只想限制子对象渲染区域，请使用viewport)，设置optimizeScrollRect=true，可以优化裁剪区域外的内容不进行渲染
+		/**显示对象的滚动矩形范围，具有裁剪效果(如果只想限制子对象渲染区域，请使用viewport)，设置optimizeScrollRect=true，可以优化裁剪区域外的内容不进行渲染。
 		 * srollRect和viewport的区别：
-		 * 1.srollRect自带裁剪效果，viewport只影响子对象渲染是否渲染，不具有裁剪效果（性能更高）
-		 * 2.设置rect的x,y属性均能实现区域滚动效果，但scrollRect会保持0,0点位置不变
+		 * 1.srollRect自带裁剪效果，viewport只影响子对象渲染是否渲染，不具有裁剪效果（性能更高）。
+		 * 2.设置rect的x,y属性均能实现区域滚动效果，但scrollRect会保持0,0点位置不变。
 		 * */
 		public function get scrollRect():Rectangle {
 			return this._style.scrollRect;
@@ -848,10 +833,10 @@ package laya.display {
 		}
 		
 		/**
-		 * 设置坐标位置。
+		 * 设置坐标位置。相当于分别设置x和y属性。
 		 * @param	x X 轴坐标。
 		 * @param	y Y 轴坐标。
-		 * @param 	speedMode 是否极速模式，普通模式调用this.x=value进行赋值，极速模式直接调用内部函数处理，如果未重写x,y属性，建议设置为急速模式性能更高
+		 * @param 	speedMode 是否极速模式，正常是调用this.x=value进行赋值，极速模式直接调用内部函数处理，如果未重写x,y属性，建议设置为急速模式性能更高。
 		 * @return	返回对象本身。
 		 */
 		public function pos(x:Number, y:Number, speedMode:Boolean = false):Sprite {
@@ -873,7 +858,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 设置轴心点。
+		 * 设置轴心点。相当于分别设置pivotX和pivotY属性。
 		 * @param	x X轴心点。
 		 * @param	y Y轴心点。
 		 * @return	返回对象本身。
@@ -885,9 +870,9 @@ package laya.display {
 		}
 		
 		/**
-		 * 设置宽高。
-		 * @param	width 宽度。
-		 * @param	hegiht 高度。
+		 * 设置宽高。相当于分别设置width和height属性。
+		 * @param	width 宽度值。
+		 * @param	hegiht 高度值。
 		 * @return	返回对象本身。
 		 */
 		public function size(width:Number, height:Number):Sprite {
@@ -897,10 +882,10 @@ package laya.display {
 		}
 		
 		/**
-		 * 设置缩放。
+		 * 设置缩放。相当于分别设置scaleX和scaleY属性。
 		 * @param	scaleX X轴缩放比例。
 		 * @param	scaleY Y轴缩放比例。
-		 * @param 	speedMode 是否极速模式，普通模式调用this.x=value进行赋值，极速模式直接调用内部函数处理，如果未重写x,y属性，建议设置为急速模式性能更高
+		 * @param 	speedMode 是否极速模式，正常是调用this.scaleX=value进行赋值，极速模式直接调用内部函数处理，如果未重写scaleX,scaleY属性，建议设置为急速模式性能更高。
 		 * @return	返回对象本身。
 		 */
 		public function scale(scaleX:Number, scaleY:Number, speedMode:Boolean = false):Sprite {
@@ -910,7 +895,6 @@ package laya.display {
 				if (this.destroyed) return this;
 				if (speedMode) {
 					style.setScale(scaleX, scaleY);
-					_changeType |= CHG_VIEW;
 					_tfChanged = true;
 					conchModel && conchModel.scale(scaleX, scaleY);
 					_renderType |= RenderSprite.TRANSFORM;
@@ -925,7 +909,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 设置倾斜角度。
+		 * 设置倾斜角度。相当于分别设置skewX和skewY属性。
 		 * @param	skewX 水平倾斜角度。
 		 * @param	skewY 垂直倾斜角度。
 		 * @return	返回对象本身
@@ -937,7 +921,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 更新、呈现显示对象。
+		 * 更新、呈现显示对象。由系统调用。
 		 * @param	context 渲染的上下文引用。
 		 * @param	x X轴坐标。
 		 * @param	y Y轴坐标。
@@ -949,7 +933,8 @@ package laya.display {
 		}
 		
 		/**
-		 * 绘制 <code>Sprite</code> 到 <code>canvas</code> 上。
+		 * 绘制 当前<code>Sprite</code> 到 <code>Canvas</code> 上，并返回一个HtmlCanvas
+		 * 注意：HtmlCanvas不是浏览器原生的canvas对象，可以通过canvas.source来获取原生的canvas对象。
 		 * @param	canvasWidth 画布宽度。
 		 * @param	canvasHeight 画布高度。
 		 * @param	x 绘制的 X 轴偏移量。
@@ -957,16 +942,12 @@ package laya.display {
 		 * @return  HTMLCanvas 对象。
 		 */
 		public function drawToCanvas(canvasWidth:Number, canvasHeight:Number, offsetX:Number, offsetY:Number):HTMLCanvas {
-			//var canvas:HTMLCanvas = new HTMLCanvas("2D");
-			//var context:RenderContext = new RenderContext(canvasWidth, canvasHeight, canvas);
-			//RenderSprite.renders[_renderType]._fun(this, context, offsetX, offsetY);
-			//return canvas;
-			return RunDriver.drawToCanvas(this, _renderType, canvasWidth, canvasHeight, offsetX, offsetY);//暂时这么做
+			return RunDriver.drawToCanvas(this, _renderType, canvasWidth, canvasHeight, offsetX, offsetY);
 		}
 		
 		/**
-		 * 自定义更新、呈现显示对象。
-		 * <p><b>注意</b>不要在此函数内增加或删除树节点，否则会树节点遍历照成影响。</p>
+		 * 自定义更新、呈现显示对象。一般用来扩展渲染模式，请合理使用，可能会导致在加速器上无法渲染。
+		 * <p><b>注意</b>不要在此函数内增加或删除树节点，否则会对树节点遍历造成影响。</p>
 		 * @param	context  渲染的上下文引用。
 		 * @param	x X轴坐标。
 		 * @param	y Y轴坐标。
@@ -989,7 +970,7 @@ package laya.display {
 			}
 		}
 		
-		/**滤镜集合。*/
+		/**滤镜集合。可以设置多个滤镜组合。*/
 		public function get filters():Array {
 			return _$P.filters;
 		}
@@ -1058,9 +1039,9 @@ package laya.display {
 		}
 		
 		/**
-		 * 本地坐标转全局坐标。
+		 * 把本地坐标转换为相对stage的全局坐标。
 		 * @param	point 本地坐标点。
-		 * @param	createNewPoint 用于存储转换后的坐标的点。
+		 * @param	createNewPoint 是否创建一个新的Point对象作为返回值，默认为false，使用输入的point对象返回，减少对象创建开销。
 		 * @return  转换后的坐标的点。
 		 */
 		public function localToGlobal(point:Point, createNewPoint:Boolean = false):Point {
@@ -1079,14 +1060,14 @@ package laya.display {
 		}
 		
 		/**
-		 * 全局坐标转本地坐标。
+		 * 把stage的全局坐标转换为本地坐标。
 		 * @param	point 全局坐标点。
-		 * @param	createNewPoint 用于存储转换后的坐标的点。
+		 * @param	createNewPoint 是否创建一个新的Point对象作为返回值，默认为false，使用输入的point对象返回，减少对象创建开销。
 		 * @return 转换后的坐标的点。
 		 */
 		public function globalToLocal(point:Point, createNewPoint:Boolean = false):Point {
 			if (!_displayedInStage || !point) return point;
-			if (createNewPoint === true) {
+			if (createNewPoint) {
 				point = new Point(point.x, point.y);
 			}
 			var ele:Sprite = this;
@@ -1106,7 +1087,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 将本地坐标系坐标转换到父容器坐标系。
+		 * 将本地坐标系坐标转转换到父容器坐标系。
 		 * @param point 本地坐标点。
 		 * @return  转换后的点。
 		 */
@@ -1152,8 +1133,8 @@ package laya.display {
 		}
 		
 		/**
-		 * 使用 EventDispatcher 对象注册指定类型的事件侦听器对象，以使侦听器能够接收事件通知。
-		 * 如果侦听鼠标事件，则会自动设置自己和父亲节点的属性 mouseEnable 的值为 true。
+		 * 增加事件侦听器，以使侦听器能够接收事件通知。
+		 * 如果侦听鼠标事件，则会自动设置自己和父亲节点的属性 mouseEnabled 的值为 true(如果父节点mouseEnabled=false，则停止设置父节点mouseEnabled属性)。
 		 * @param	type 事件的类型。
 		 * @param	caller 事件侦听函数的执行域。
 		 * @param	listener 事件侦听函数。
@@ -1170,7 +1151,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 使用 EventDispatcher 对象注册指定类型的事件侦听器对象，以使侦听器能够接收事件通知，此侦听事件响应一次后自动移除。
+		 * 增加事件侦听器，以使侦听器能够接收事件通知，此侦听事件响应一次后则自动移除侦听。
 		 * 如果侦听鼠标事件，则会自动设置自己和父亲节点的属性 mouseEnabled 的值为 true(如果父节点mouseEnabled=false，则停止设置父节点mouseEnabled属性)。
 		 * @param	type 事件的类型。
 		 * @param	caller 事件侦听函数的执行域。
@@ -1199,7 +1180,8 @@ package laya.display {
 		}
 		
 		/**
-		 * 加载并显示一个图片。功能等同于Graphics.loadImage
+		 * 加载并显示一个图片。功能等同于graphics.loadImage方法。支持异步加载。
+		 * 注意：多次调用loadImage绘制不同的图片，会同时显示。
 		 * @param	url	图片地址。
 		 * @param	x 显示图片的x位置
 		 * @param	y 显示图片的y位置
@@ -1247,12 +1229,11 @@ package laya.display {
 			return (_repaint !== 0) && _$P.cacheCanvas && _$P.cacheCanvas.reCache;
 		}
 		
-		/**@inheritDoc	*/
+		/**@private	*/
 		override protected function _childChanged(child:Node = null):void {
 			if (_childs.length) _renderType |= RenderSprite.CHILDS;
 			else _renderType &= ~RenderSprite.CHILDS;
-			if(child&&_get$P("hasZorder"))Laya.timer.callLater(this, updateZOrder);
-			//if (child && Sprite(child).zOrder) Laya.timer.callLater(this, updateZOrder);
+			if (child && _get$P("hasZorder")) Laya.timer.callLater(this, updateZOrder);
 			repaint();
 		}
 		
@@ -1262,12 +1243,14 @@ package laya.display {
 			p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
 		}
 		
-		/** 对舞台 <code>stage</code> 的引用。*/
+		/**对舞台 <code>stage</code> 的引用。*/
 		public function get stage():Stage {
 			return Laya.stage;
 		}
 		
-		/** 手动设置的可点击区域，或者一个HitArea区域。*/
+		/**可以设置一个Rectangle区域作为点击区域，或者设置一个<code>HitArea</code>实例作为点击区域，HitArea内可以设置可点击和不可点击区域。
+		 * 如果不设置hitArea，则根据宽高形成的区域进行碰撞。
+		 */
 		public function get hitArea():* {
 			return _$P.hitArea;
 		}
@@ -1276,8 +1259,8 @@ package laya.display {
 			_set$P("hitArea", value);
 		}
 		
-		/**遮罩，可以设置一个对象或者图片，根据对象形状进行遮罩显示。
-		 *【注意】遮罩对象坐标系是相对遮罩对象本身的，这个和flash机制不同*/
+		/**遮罩，可以设置一个对象(支持位图和矢量图)，根据对象形状进行遮罩显示。
+		 *【注意】遮罩对象坐标系是相对遮罩对象本身的，和Flash机制不同*/
 		public function get mask():Sprite {
 			return this._$P._mask;
 		}
@@ -1318,8 +1301,8 @@ package laya.display {
 		 * @param	elasticDistance 橡皮筋效果的距离值，0为无橡皮筋效果，默认为0，可选。
 		 * @param	elasticBackTime 橡皮筋回弹时间，单位为毫秒，默认为300毫秒，可选。
 		 * @param	data 拖动事件携带的数据，可选。
-		 * @param	disableMouseEvent 禁用其他对象的鼠标检测，默认为false，设置为true能提高性能
-		 * @param	ratio 惯性阻尼系数
+		 * @param	disableMouseEvent 禁用其他对象的鼠标检测，默认为false，设置为true能提高性能。
+		 * @param	ratio 惯性阻尼系数，影响惯性力度和时长。
 		 */
 		public function startDrag(area:Rectangle = null, hasInertia:Boolean = false, elasticDistance:Number = 0, elasticBackTime:int = 300, data:* = null, disableMouseEvent:Boolean = false, ratio:Number = 0.92):void {
 			_$P.dragging || (_set$P("dragging", new Dragging()));
@@ -1370,7 +1353,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 获得全局X轴缩放值
+		 * 获得相对于stage的全局X轴缩放值（会叠加父亲节点的缩放值）。
 		 */
 		public function get globalScaleX():Number {
 			var scale:Number = 1;
@@ -1384,7 +1367,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 获得全局Y轴缩放值
+		 * 获得相对于stage的全局Y轴缩放值（会叠加父亲节点的缩放值）。
 		 */
 		public function get globalScaleY():Number {
 			var scale:Number = 1;
@@ -1398,20 +1381,20 @@ package laya.display {
 		}
 		
 		/**
-		 * 表示鼠标在此对象上的 X 轴坐标信息。
+		 * 返回鼠标在此对象坐标系上的 X 轴坐标信息。
 		 */
 		public function get mouseX():Number {
 			return getMousePoint().x;
 		}
 		
 		/**
-		 * 表示鼠标在此对象上的 Y 轴坐标信息。
+		 * 返回鼠标在此对象坐标系上的 Y 轴坐标信息。
 		 */
 		public function get mouseY():Number {
 			return getMousePoint().y;
 		}
 		
-		/** z排序，更改此值，按照值的大小进行显示层级排序。*/
+		/**z排序，更改此值，则会按照值的大小对同一容器的所有对象重新排序。值越大，越靠上。默认为0，则根据添加顺序排序。*/
 		public function get zOrder():Number {
 			return _zOrder;
 		}
@@ -1427,7 +1410,7 @@ package laya.display {
 			}
 		}
 		
-		/**@private 清理graphics，只显示此texture图片，等同于graphics.clear();graphics.drawTexture()*/
+		/**设置一个Texture实例，并显示此图片（如果之前有其他绘制，则会被清除掉）。等同于graphics.clear();graphics.drawTexture()*/
 		public function get texture():Texture {
 			return _texture;
 		}

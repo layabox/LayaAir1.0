@@ -32,7 +32,7 @@
             "type": "MeshSprite3D",
             "instanceParams":
             {
-                "loadPath": "cloth.lm"
+                "loadPath": "1-MF000_2.lm"
             },
             "props":
             {
@@ -70,7 +70,7 @@
             "type": "MeshSprite3D",
             "instanceParams":
             {
-                "loadPath": "body.lm"
+                "loadPath": "1-MF000.lm"
             },
             "props":
             {
@@ -108,7 +108,7 @@
             "type": "MeshSprite3D",
             "instanceParams":
             {
-                "loadPath": "face.lm"
+                "loadPath": "1-MF000F.lm"
             },
             "props":
             {
@@ -146,7 +146,7 @@
             "type": "MeshSprite3D",
             "instanceParams":
             {
-                "loadPath": "hair.lm"
+                "loadPath": "1-MF000H.lm"
             },
             "props":
             {

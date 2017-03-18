@@ -149,6 +149,7 @@ package laya.webgl {
 		}
 		
 		public static function enable():Boolean {
+			Browser.__init__();
 			if (Render.isConchApp) {
 				if (!Render.isConchWebGL) {
 					RunDriver.skinAniSprite = function():* {
@@ -159,14 +160,16 @@ package laya.webgl {
 					return false;
 				}
 			}
-			if (!isWebGLSupported()) return false;
+			
+			mainContext = getWebGLContext(Render._mainCanvas);
+			if (mainContext == null)
+				return false;
 			
 			if (Render.isWebGL) return true;
 			
-			HTMLImage.create = function(src:String,def:*=null):HTMLImage {
-				return new WebGLImage(src,def);
+			HTMLImage.create = function(src:String, def:* = null):HTMLImage {
+				return new WebGLImage(src, def);
 			}
-			
 			
 			Render.WebGL = WebGL;
 			Render.isWebGL = true;
@@ -193,9 +196,7 @@ package laya.webgl {
 			
 			RunDriver.clear = function(color:String):void {
 				RenderState2D.worldScissorTest && WebGL.mainContext.disable(WebGLContext.SCISSOR_TEST);
-				if (color == null) {
-					Render.context.ctx.clearBG(0, 0, 0, 0);
-				} else {
+				if (color && color !== "black" && color !== "#000000") {
 					var c:Array = Color.create(color)._color;
 					Render.context.ctx.clearBG(c[0], c[1], c[2], c[3]);
 				}
@@ -396,13 +397,13 @@ package laya.webgl {
 						b.copyFrom((sprite as Sprite).getSelfBounds());
 						b.x += (sprite as Sprite).x;
 						b.y += (sprite as Sprite).y;
-						b.x -= (sprite as Sprite).pivotX+4;//blur 
-						b.y -= (sprite as Sprite).pivotY+4;//blur
+						b.x -= (sprite as Sprite).pivotX + 4;//blur 
+						b.y -= (sprite as Sprite).pivotY + 4;//blur
 						var tSX:Number = b.x;
 						var tSY:Number = b.y;
 						//重新计算宽和高
-						b.width += (tPadding+8);//增加宽度 blur  由于blur系数为9
-						b.height += (tPadding+8);//增加高度 blur
+						b.width += (tPadding + 8);//增加宽度 blur  由于blur系数为9
+						b.height += (tPadding + 8);//增加高度 blur
 						p.x = b.x * mat.a + b.y * mat.c;
 						p.y = b.y * mat.d + b.x * mat.b;
 						b.x = p.x;
@@ -488,18 +489,18 @@ package laya.webgl {
 			return true;
 		}
 		
-		public static function isWebGLSupported():String {
-			/*[IF-FLASH]*/
-			return 'webgl';
-			var canvas:* = Browser.createElement('canvas');
+		public static function getWebGLContext(canvas:*):WebGLContext {
 			var gl:WebGLContext;
 			var names:Array = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
 			for (var i:int = 0; i < names.length; i++) {
 				try {
-					gl = canvas.getContext(names[i]);
+					gl = canvas.getContext(names[i], {stencil: Config.isStencil, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha, preserveDrawingBuffer: false});
 				} catch (e:*) {
 				}
-				if (gl) return names[i];
+				if (gl) {
+					(i !== 0) && (_isExperimentalWebgl = true);
+					return gl;
+				}
 			}
 			return null;
 		}
@@ -559,31 +560,26 @@ package laya.webgl {
 				return new WebGLContext2D(canvas);
 			}
 			
-			var webGLName:String = isWebGLSupported();
-			var gl:WebGLContext = mainContext = RunDriver.newWebGLContext(canvas, webGLName) as WebGLContext;
-			
-			_isExperimentalWebgl = (webGLName != "webgl" && (Browser.onWeiXin || Browser.onMQQBrowser));
+			_isExperimentalWebgl = (_isExperimentalWebgl && (Browser.onWeiXin || Browser.onMQQBrowser));
 			
 			frameShaderHighPrecision = false;
+			var gl:WebGLContext = WebGL.mainContext;
 			try {//某些浏览器中未实现此函数，使用try catch增强兼容性。
-				var precisionFormat:* = WebGL.mainContext.getShaderPrecisionFormat(WebGLContext.FRAGMENT_SHADER, WebGLContext.HIGH_FLOAT);
+				var precisionFormat:* = gl.getShaderPrecisionFormat(WebGLContext.FRAGMENT_SHADER, WebGLContext.HIGH_FLOAT);
 				precisionFormat.precision ? frameShaderHighPrecision = true : frameShaderHighPrecision = false;
 			} catch (e:*) {
 			}
 			
-			Browser.window.SetupWebglContext && Browser.window.SetupWebglContext(gl);
-			
-		   /*[IF-SCRIPT-BEGIN]
-			gl.deleteTexture1 = gl.deleteTexture;
-			gl.deleteTexture = function(t){
-				if (t == WebGLContext.curBindTexValue)
-				{
-					WebGLContext.curBindTexValue = null;
-				}
-				gl.deleteTexture1(t);
-			}
-		   [IF-SCRIPT-END]*/
-			
+			/*[IF-SCRIPT-BEGIN]
+			   gl.deleteTexture1 = gl.deleteTexture;
+			   gl.deleteTexture = function(t){
+			   if (t == WebGLContext.curBindTexValue)
+			   {
+			   WebGLContext.curBindTexValue = null;
+			   }
+			   gl.deleteTexture1(t);
+			   }
+			   [IF-SCRIPT-END]*/
 			
 			onStageResize(width, height);
 			

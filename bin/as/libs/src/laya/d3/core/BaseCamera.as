@@ -29,9 +29,11 @@ package laya.d3.core {
 		public static const ENVIRONMENTDIFFUSE:int = 7;
 		public static const ENVIRONMENTSPECULAR:int = 8;
 		public static const SIMLODINFO:int = 9;
+		public static const DIFFUSEIRRADMATR:int = 10;
+		public static const DIFFUSEIRRADMATG:int = 11;
+		public static const DIFFUSEIRRADMATB:int = 12;
+		public static const HDREXPOSURE:int = 13;
 		
-		
-
 		/**渲染模式,延迟光照渲染，暂未开放。*/
 		public static const RENDERINGTYPE_DEFERREDLIGHTING:String = "DEFERREDLIGHTING";
 		/**渲染模式,前向渲染。*/
@@ -87,9 +89,6 @@ package laya.d3.core {
 		/** @private 表明视口是否使用裁剪空间表达。*/
 		protected var _viewportExpressedInClipSpace:Boolean;
 		
-		/** @private */
-		public var _projectionMatrixModifyID:Number = 0;
-		
 		/**清楚标记。*/
 		public var clearFlag:int;
 		/**摄像机的清除颜色。*/
@@ -97,7 +96,7 @@ package laya.d3.core {
 		/** 可视遮罩图层。 */
 		public var cullingMask:int;
 		/** 渲染时是否用遮挡剔除。 */
-		public var  useOcclusionCulling:Boolean;
+		public var useOcclusionCulling:Boolean;
 		
 		/**获取天空。*/
 		public function get sky():Sky {
@@ -160,13 +159,6 @@ package laya.d3.core {
 			righte[1] = worldMatrixe[1];
 			righte[2] = worldMatrixe[2];
 			return _right;
-		}
-		
-		public function lookAt(target:Vector3):void{
-			
-			var quaternion:Quaternion = new Quaternion();
-			Quaternion.lookAt(position, target, up, quaternion);
-			transform.rotation = quaternion;
 		}
 		
 		/**
@@ -383,26 +375,38 @@ package laya.d3.core {
 			}
 		}
 		
+		/**
+		 * @private
+		 */
 		protected function _calculateProjectionMatrix():void {
 		
 		}
 		
+		/**
+		 * @private
+		 */
 		private function _onScreenSizeChanged():void {
 			_calculateProjectionMatrix();
 		}
 		
 		/**
 		 * @private
-		 * 场景相关渲染准备设置。
-		 * @param gl WebGL上下文。
-		 * @return state 渲染状态。
 		 */
 		public function _prepareCameraToRender():void {
 			Layer._currentCameraCullingMask = cullingMask;
 			var cameraSV:ValusArray = _shaderValues;
-			cameraSV.setValue(BaseCamera.CAMERAPOS,transform.position.elements);
+			cameraSV.setValue(BaseCamera.CAMERAPOS, transform.position.elements);
 			cameraSV.setValue(BaseCamera.CAMERADIRECTION, forward.elements);
 			cameraSV.setValue(BaseCamera.CAMERAUP, up.elements);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _prepareCameraViewProject(viewMatrix:Matrix4x4,projectMatrix:Matrix4x4):void {
+			var cameraSV:ValusArray = _shaderValues;
+			cameraSV.setValue(BaseCamera.VIEWMATRIX, viewMatrix.elements);
+			cameraSV.setValue(BaseCamera.PROJECTMATRIX, projectMatrix.elements);
 		}
 		
 		/**
@@ -449,7 +453,10 @@ package laya.d3.core {
 		override public function destroy(destroyChild:Boolean = true):void {
 			//postProcess = null;
 			//AmbientLight = null;
-			sky = null;
+			if (_sky) {
+				_sky._ownerCamera = null;
+				_sky = null;
+			}
 			renderTarget = null;
 			
 			Laya.stage.off(Event.RESIZE, this, _onScreenSizeChanged);

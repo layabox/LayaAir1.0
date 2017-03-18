@@ -101,7 +101,7 @@ package laya.d3.core.render {
 			for (var i:int = 0; i < sprite3D.componentsCount; i++) {
 				var component:Component3D = sprite3D.getComponentByIndex(i);
 				(!component.started) && (component._start(state), component.started = true);
-				(component.isActive) && (component._preRenderUpdate(state));
+				(component.enable) && (component._preRenderUpdate(state));
 			}
 		}
 		
@@ -114,7 +114,7 @@ package laya.d3.core.render {
 			for (var i:int = 0; i < sprite3D.componentsCount; i++) {
 				var component:Component3D = sprite3D.getComponentByIndex(i);
 				(!component.started) && (component._start(state), component.started = true);
-				(component.isActive) && (component._postRenderUpdate(state));
+				(component.enable) && (component._postRenderUpdate(state));
 			}
 		}
 		
@@ -368,6 +368,87 @@ package laya.d3.core.render {
 						shader._uploadLoopCount = loopCount;
 						
 					}
+				}
+			}
+		}
+		
+				/**
+		 * @private
+		 * 渲染队列。
+		 * @param	state 渲染状态。
+		 */
+		public function _renderShadow(state:RenderState, isTarget:Boolean,isOnePSSM:Boolean):void {//TODO:SM
+			var loopCount:int = Stat.loopCount;
+			var scene:BaseScene = _scene;
+			var camera:BaseCamera = state.camera;//TODO:是否直接设置灯光摄像机
+			var vertexBuffer:VertexBuffer3D, vertexDeclaration:VertexDeclaration,shader:Shader3D;
+			var forceUploadParams:Boolean;
+			var lastStateMaterial:BaseMaterial, lastStateOwner:Sprite3D;
+			
+			for (var i:int = 0, n:int = _finalElements.length; i < n; i++) {
+				var renderElement:RenderElement = _finalElements[i];
+				var renderObj:IRenderable, material:BaseMaterial, owner:Sprite3D;
+				if (renderElement._type === 0) {//TODO:静态合并,动态合并
+					state.owner = owner = renderElement._sprite3D;
+					//传入灯光的MVP矩阵
+					if (!isOnePSSM&&(owner._projectionViewWorldUpdateCamera!==camera||owner._projectionViewWorldUpdateLoopCount!==Stat.loopCount)){
+						owner._prepareShaderValuetoRender(state._projectionViewMatrix);
+						owner._projectionViewWorldUpdateLoopCount = Stat.loopCount;
+						owner._projectionViewWorldUpdateCamera = camera;
+					}
+					state.renderElement = renderElement;
+					_preRenderUpdateComponents(owner, state);
+					renderObj = renderElement.renderObj,material = renderElement._material;
+					if (_begainRenderElement(state, renderObj, null)) {
+						vertexBuffer = renderObj._getVertexBuffer(0);
+						vertexDeclaration = vertexBuffer.vertexDeclaration;
+						shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
+						forceUploadParams = shader.bind() || (loopCount !== shader._uploadLoopCount);
+						if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
+							//WebGL.mainContext.disableVertexAttribArray(0);
+							//WebGL.mainContext.disableVertexAttribArray(1);
+							//WebGL.mainContext.disableVertexAttribArray(2);
+							//WebGL.mainContext.disableVertexAttribArray(3);
+							shader.uploadAttributes(vertexDeclaration.shaderValues.data, null);
+							shader._uploadVertexBuffer = vertexBuffer;
+						}
+						
+						if (camera !== shader._uploadCamera || shader._uploadSprite3D !== owner || forceUploadParams) {
+							shader.uploadSpriteUniforms(owner._shaderValues.data);
+							shader._uploadSprite3D = owner;
+						}
+						
+						if (camera !== shader._uploadCamera || forceUploadParams) {
+							shader.uploadCameraUniforms(camera._shaderValues.data);
+							shader._uploadCamera = camera;
+						}
+						
+						if (shader._uploadMaterial !== material || forceUploadParams) {
+							material._setMaterialShaderParams(state);//TODO:或许可以取消
+							material._upload();
+							shader._uploadMaterial = material;
+						}
+						
+						if (shader._uploadRenderElement !== renderElement || forceUploadParams) {
+							shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
+							shader._uploadRenderElement = renderElement;
+						}
+						
+						if (lastStateMaterial !== material) {//lastStateMaterial,lastStateOwner存到全局，多摄像机还可优化
+							material._setRenderStateFrontFace(isTarget, owner.transform);
+							lastStateMaterial = material;
+							lastStateOwner = owner;
+						} else {
+							if (lastStateOwner !== owner) {
+								material._setRenderStateFrontFace(isTarget, owner.transform);
+								lastStateOwner = owner;
+							}
+						}
+						
+						renderObj._render(state);
+						shader._uploadLoopCount = loopCount;
+					}
+					_postRenderUpdateComponents(owner, state);
 				}
 			}
 		}

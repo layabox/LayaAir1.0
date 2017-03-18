@@ -16,7 +16,8 @@ package laya.display {
 	import laya.utils.VectorGraphManager;
 	
 	/**
-	 * <code>Graphics</code> 类用于创建绘图显示对象。
+	 * <code>Graphics</code> 类用于创建绘图显示对象。Graphics可以同时绘制多个位图或者矢量图，还可以结合save，restore，transform，scale，rotate，translate，alpha等指令对绘图效果进行变化。
+	 * Graphics以命令流方式存储，可以通过cmds属性访问所有命令流。Graphics是比Sprite更轻量级的对象，合理使用能提高应用性能(比如把大量的节点绘图改为一个节点的Graphics命令集合，能减少大量节点创建消耗)。
 	 * @see laya.display.Sprite#graphics
 	 */
 	public class Graphics {
@@ -31,6 +32,7 @@ package laya.display {
 		private static var _tempMatrixArrays:Array = [];
 		/**@private */
 		private static var _tempCmds:Array = [];
+		
 		/**@private */
 		public var _sp:Sprite;
 		/**@private */
@@ -39,6 +41,7 @@ package laya.display {
 		public var _render:Function = _renderEmpty;
 		/**@private */
 		private var _cmds:Array = null;
+		
 		/**@private */
 		private var _temp:Array;
 		/**@private */
@@ -123,10 +126,9 @@ package laya.display {
 		}
 		
 		/**
-		 *  创建一个新的 <code>Graphics</code> 类实例。
+		 * 创建一个新的 <code>Graphics</code> 类实例。
 		 */
 		public function Graphics() {
-			_render = _renderEmpty;
 			if (Render.isConchNode) {
 				__JS__("this._nativeObj=new _conchGraphics();");
 				__JS__("this.id=this._nativeObj.conchID;");
@@ -141,6 +143,7 @@ package laya.display {
 			_temp = null;
 			_bounds = null;
 			_rstBoundPoints = null;
+			_vectorgraphArray = null;
 			_sp && (_sp._renderType = 0);
 			_sp = null;
 		}
@@ -161,8 +164,7 @@ package laya.display {
 					VectorGraphManager.getInstance().deleteShape(_vectorgraphArray[i]);
 				}
 				_vectorgraphArray.length = 0;
-			}
-		
+			}		
 		}
 		
 		/**
@@ -174,20 +176,19 @@ package laya.display {
 			_sp && _sp.repaint();
 		}
 		
-		/**@private  */
+		/**@private */
 		public function _isOnlyOne():Boolean {
 			return !_cmds || _cmds.length === 0;
 		}
 		
 		/**
 		 * @private
-		 * 命令流。
+		 * 命令流。存储了所有绘制命令。
 		 */
 		public function get cmds():Array {
 			return _cmds;
 		}
 		
-		/** @private */
 		public function set cmds(value:Array):void {
 			_sp && (_sp._renderType |= RenderSprite.GRAPHICS);
 			_cmds = value;

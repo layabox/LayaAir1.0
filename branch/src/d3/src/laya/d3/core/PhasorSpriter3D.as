@@ -1,6 +1,8 @@
 package laya.d3.core {
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.graphics.IndexBuffer3D;
+	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexElementFormat;
@@ -39,17 +41,15 @@ package laya.d3.core {
 		private var _tempNumver2:Number;
 		private var _tempNumver3:Number;
 		
-		private var _albedo:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);
-		
 		private const _floatSizePerVer:int = 7;//顶点结构为Position(3个float)+Color(4个float)
 		private const _defaultBufferSize:int = 600 * _floatSizePerVer;
 		
 		private var _vbData:Float32Array = new Float32Array(_defaultBufferSize);
-		private var _vb:VertexBuffer2D;
+		private var _vb:VertexBuffer3D;
 		private var _posInVBData:uint;
 		
 		private var _ibData:Uint16Array = new Uint16Array(_defaultBufferSize);
-		private var _ib:IndexBuffer2D;
+		private var _ib:IndexBuffer3D;
 		private var _posInIBData:uint;
 		
 		private var _primitiveType:Number;
@@ -64,16 +64,12 @@ package laya.d3.core {
 		protected var _shaderCompile:ShaderCompile3D;
 		/** @private */
 		private var _spriteShaderValue:ValusArray = new ValusArray();
-		/** @private */
-		private var _materialShaderValue:ValusArray = new ValusArray();
-		
-		private var _wvpMatrix:Matrix4x4 = new Matrix4x4();
 		
 		public function PhasorSpriter3D() {
 			super();
-			_vb = new VertexBuffer2D(-1, WebGLContext.DYNAMIC_DRAW);
-			_ib = new IndexBuffer2D();
-			_sharderNameID = Shader3D.nameKey.getID("SIMPLE");
+			_vb = VertexBuffer3D.create(_vertexDeclaration,_defaultBufferSize/_floatSizePerVer, WebGLContext.DYNAMIC_DRAW);
+			_ib = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, _defaultBufferSize, WebGLContext.DYNAMIC_DRAW);
+			_sharderNameID = Shader3D.nameKey.getID("LINE");
 			_shaderCompile = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * _sharderNameID];
 		}
 		
@@ -332,7 +328,7 @@ package laya.d3.core {
 			return this;
 		}
 		
-		public function begin(primitive:Number, wvpMatrix:Matrix4x4, renState:RenderState):PhasorSpriter3D {
+		public function begin(primitive:Number, state:RenderState):PhasorSpriter3D {
 			if (_hasBegun)
 				beginException0();
 			
@@ -340,8 +336,7 @@ package laya.d3.core {
 				beginException1();
 			
 			_primitiveType = primitive;
-			_wvpMatrix = wvpMatrix;
-			_renderState = renState;
+			_renderState = state;
 			
 			_hasBegun = true;
 			
@@ -360,23 +355,19 @@ package laya.d3.core {
 		private function flush():void {
 			if (_posInVBData === 0)
 				return;
-			
-			_ib.clear();
-			_ib.append(_ibData);//TODO:待调整
-			_vb.clear();
-			_vb.append(_vbData);//TODO:待调整
-			_vb.bind_upload(_ib);
+
+			_ib.setData(_ibData);
+			_vb.setData(_vbData);
+			_vb._bind();
+			_ib._bind();
 			
 			_shader = _getShader(_renderState);
 			_shader.bind();
 			
 			_shader.uploadAttributes(_vertexDeclaration.shaderValues.data, null);
 			
-			_spriteShaderValue.setValue(Sprite3D.MVPMATRIX, _wvpMatrix.elements);
-			_materialShaderValue.setValue(StandardMaterial.ALBEDO, _albedo.elements);
-			
+			_spriteShaderValue.setValue(Sprite3D.MVPMATRIX, _renderState.projectionViewMatrix.elements);
 			_shader.uploadSpriteUniforms(_spriteShaderValue.data);
-			_shader.uploadMaterialUniforms(_materialShaderValue.data);
 			
 			Stat.drawCall++;
 			WebGL.mainContext.drawElements(_primitiveType, _posInIBData, WebGLContext.UNSIGNED_SHORT, 0);
@@ -386,8 +377,7 @@ package laya.d3.core {
 		}
 		
 		protected function _getShader(state:RenderState):Shader3D {
-			var defineValue:int = state._shaderDefineValue & (~(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT));//无法线，去掉Shader光照宏定义
-			defineValue|=ShaderCompile3D.SHADERDEFINE_COLOR;
+			var defineValue:int = state.scene._shaderDefineValue;
 			return _shaderCompile.withCompile(_sharderNameID, defineValue, _sharderNameID * ShaderCompile3D.SHADERNAME2ID+defineValue);
 		}
 		

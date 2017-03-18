@@ -1,0 +1,13 @@
+{
+  "version":"LAYAMATERIAL:01",
+  "type": "PBRMaterial",
+  "props": {
+    "name": "character_anim_jacketM",
+    "renderMode": 1,
+    "has_tangent":true,
+    "textures":[
+        {"name":"diffuseTexture","path":"jacketC.png"},
+        {"name":"normalTexture","path":"jacketN.png"}
+    ]
+  }
+}

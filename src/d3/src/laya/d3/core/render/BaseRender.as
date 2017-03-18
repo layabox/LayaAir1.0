@@ -10,6 +10,7 @@ package laya.d3.core.render {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ValusArray;
+	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.resource.IDestroy;
@@ -28,6 +29,8 @@ package laya.d3.core.render {
 		private var _renderObject:RenderObject;
 		/** @private */
 		private var _materials:Vector.<BaseMaterial>;
+		/** @private */
+		private var _receiveShadow:Boolean;
 		/** @private */
 		protected var _boundingSphere:BoundSphere;
 		/** @private */
@@ -48,6 +51,8 @@ package laya.d3.core.render {
 		
 		/**排序矫正值。*/
 		public var sortingFudge:Number;
+		/** 是否产生阴影。 */
+		public var castShadow:Boolean;
 		
 		/**
 		 * 获取是否可用。
@@ -63,7 +68,7 @@ package laya.d3.core.render {
 		 */
 		public function set enable(value:Boolean):void {
 			_enable = value;
-			event(Event.ENABLED_CHANGED, [this, value]);
+			event(Event.ENABLE_CHANGED, [this, value]);
 		}
 		
 		/**
@@ -211,6 +216,26 @@ package laya.d3.core.render {
 		}
 		
 		/**
+		 * 设置是否接收阴影属性
+		 */
+		public function set receiveShadow(value:Boolean):void {
+			if (_receiveShadow !== value) {
+				_receiveShadow = value;
+				if (value)
+					_owner._addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW);
+				else
+					_owner._removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW);
+			}
+		}
+		
+		/**
+		 * 获得是否接收阴影属性
+		 */
+		public function get receiveShadow():Boolean {
+			return _receiveShadow;
+		}
+		
+		/**
 		 * 获取是否已销毁。
 		 * @return 是否已销毁。
 		 */
@@ -218,6 +243,9 @@ package laya.d3.core.render {
 			return _destroyed;
 		}
 		
+		/**
+		 * 创建一个新的 <code>BaseRender</code> 实例。
+		 */
 		public function BaseRender(owner:Sprite3D) {
 			_destroyed = false;
 			_owner = owner;
@@ -232,15 +260,15 @@ package laya.d3.core.render {
 			_renderObject = new RenderObject(owner);
 			_renderObject._render = this;
 			_renderObject._layerMask = _owner.layer.mask;
-			_renderObject._ownerEnable = _owner.enable;
+			_renderObject._ownerActiveSelf = _owner.active;
 			_renderObject._enable = _enable;
 			_materials = new Vector.<BaseMaterial>();
 			sortingFudge = 0.0;
 			
 			_owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);
 			_owner.on(Event.LAYER_CHANGED, this, _onOwnerLayerChanged);
-			_owner.on(Event.ENABLED_CHANGED, this, _onOwnerEnableChanged);
-			on(Event.ENABLED_CHANGED, this, _onEnableChanged);
+			_owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveChanged);
+			on(Event.ENABLE_CHANGED, this, _onEnableChanged);//TODO:是否直接移到属性
 		
 		}
 		
@@ -264,8 +292,8 @@ package laya.d3.core.render {
 		/**
 		 * @private
 		 */
-		private function _onOwnerEnableChanged(enable:Boolean):void {
-			_renderObject._ownerEnable = enable;
+		private function _onOwnerActiveChanged(active:Boolean):void {
+			_renderObject._ownerActiveSelf = active;
 		}
 		
 		/**

@@ -16,6 +16,27 @@ function log(){
   return this;
 }
 
+function info(){
+  var time = getTimestamp();
+  process.stdout.write(time + ' ');
+  console.info.apply(console, arguments);
+  return this;
+}
+
+function dir(){
+  var time = getTimestamp();
+  process.stdout.write(time + ' ');
+  console.dir.apply(console, arguments);
+  return this;
+}
+
+function warn(){
+  var time = getTimestamp();
+  process.stderr.write(time + ' ');
+  console.warn.apply(console, arguments);
+  return this;
+}
+
 function error(){
   var time = getTimestamp();
   process.stderr.write(time + ' ');
@@ -24,4 +45,7 @@ function error(){
 }
 
 module.exports = log;
+module.exports.info = info;
+module.exports.dir = dir;
+module.exports.warn = warn;
 module.exports.error = error;

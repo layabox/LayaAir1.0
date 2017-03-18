@@ -82,7 +82,7 @@ package laya.d3.resource.models {
 		 */
 		protected function _getShader(state:RenderState):Shader3D {
 			var shaderDefineValue:int = state.scene._shaderDefineValue;
-			_shader = _shaderCompile.withCompile(_sharderNameID, shaderDefineValue, shaderDefineValue + _sharderNameID * ShaderCompile3D.SHADERNAME2ID);
+			_shader = _shaderCompile.withCompile(_sharderNameID, shaderDefineValue, 0);
 			return _shader;
 		}
 		
@@ -146,7 +146,7 @@ package laya.d3.resource.models {
 			if (_conchSky) {//NATIVE
 				_conchSky.setVBIB(_vertexDeclaration._conchVertexDeclaration, vertices, indices);
 				_sharderNameID = Shader3D.nameKey.getID("SkyDome");
-				var shaderCompile:ShaderCompile3D = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * _sharderNameID];
+				var shaderCompile:ShaderCompile3D = ShaderCompile3D._preCompileShader[_sharderNameID];
 				_conchSky.setShader(shaderCompile._conchShader);
 			}
 		}
@@ -156,14 +156,11 @@ package laya.d3.resource.models {
 		 */
 		protected function loadShaderParams():void {
 			_sharderNameID = Shader3D.nameKey.getID("SkyDome");
-			_shaderCompile = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * _sharderNameID];
+			_shaderCompile = ShaderCompile3D._preCompileShader[_sharderNameID];
 		}
 		
 		override public function _render(state:RenderState):void {
 			if (_texture && _texture.loaded) {
-				//设备丢失时,貌似WebGL不会丢失.............................................................
-				//  todo  setData  here!
-				//...................................................................................
 				_vertexBuffer._bind();
 				_indexBuffer._bind();
 				_shader = _getShader(state);
@@ -171,7 +168,7 @@ package laya.d3.resource.models {
 				
 				state.camera.transform.worldMatrix.cloneTo(_tempMatrix4x40);//视图矩阵逆矩阵的转置矩阵，移除平移和缩放。//TODO:可优化
 				_tempMatrix4x40.transpose();
-				Matrix4x4.multiply(state.projectionMatrix, _tempMatrix4x40, _tempMatrix4x41);
+				Matrix4x4.multiply(state._projectionMatrix, _tempMatrix4x40, _tempMatrix4x41);
 				state.camera._shaderValues.setValue(BaseCamera.VPMATRIX_NO_TRANSLATE, _tempMatrix4x41.elements);
 				_shader.uploadCameraUniforms(state.camera._shaderValues.data);
 

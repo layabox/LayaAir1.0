@@ -16,6 +16,7 @@ package laya.d3.resource.models {
 	import laya.d3.utils.Utils3D;
 	import laya.resource.IDispose;
 	import laya.utils.Stat;
+	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer2D;
@@ -28,15 +29,24 @@ package laya.d3.resource.models {
 		private var _mesh:Mesh;
 		
 		/** @private */
-		public var _vertexBuffer:VertexBuffer3D;
-		/** @private */
-		public var _indexBuffer:IndexBuffer3D;
-		/** @private */
 		public var _boneIndices:Uint8Array;
 		/** @private */
 		public var _bufferUsage:*;
 		/** @private */
 		public var _indexInMesh:int;
+		
+		/** @private */
+		public var _vertexBuffer:VertexBuffer3D;
+		/** @private */
+		public var _vertexBufferStart:int;
+		/** @private */
+		public var __vertexBufferCount:int;
+		/** @private */
+		public var _indexBuffer:IndexBuffer3D;
+		/** @private */
+		public var _indexBufferStart:int;
+		/** @private */
+		public var _indexBufferCount:int;
 		
 		/**
 		 * @private
@@ -116,7 +126,7 @@ package laya.d3.resource.models {
 		 */
 		public function _render(state:RenderState):void {
 			var indexCount:int = _indexBuffer.indexCount;
-			state.context.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 0);
+			WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 0);
 			Stat.drawCall++;
 			Stat.trianglesFaces += indexCount / 3;
 		}

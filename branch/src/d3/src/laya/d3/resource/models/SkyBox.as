@@ -77,7 +77,7 @@ package laya.d3.resource.models {
 		 * @private
 		 */
 		protected function _getShader(state:RenderState):Shader3D {
-			var shaderDefineValue:int = state._shaderDefineValue;
+			var shaderDefineValue:int = state.scene._shaderDefineValue;
 			_shader = _shaderCompile.withCompile(_sharderNameID, shaderDefineValue, shaderDefineValue + _sharderNameID * ShaderCompile3D.SHADERNAME2ID);
 			return _shader;
 		}

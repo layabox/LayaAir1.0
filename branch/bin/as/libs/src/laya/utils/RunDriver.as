@@ -30,9 +30,6 @@ package laya.utils {
 			return __JS__('window');
 		}
 		
-		public static var newWebGLContext:Function = function(canvas:*, webGLName:String):* {
-			return canvas.getContext(webGLName, {stencil: true, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha});
-		}
 		public static var getPixelRatio:Function = function():Number {
 			if (pixelRatio < 0) {
 				var ctx:* = Browser.context;

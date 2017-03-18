@@ -1,0 +1,13 @@
+{
+  "version":"LAYAMATERIAL:01",
+  "type": "PBRMaterial",
+  "props": {
+    "name": "Material__25",
+    "renderMode": 1,
+    "has_tangent":true,
+    "textures":[
+        {"name":"diffuseTexture","path":""},
+        {"name":"normalTexture","path":""}
+    ]
+  }
+}

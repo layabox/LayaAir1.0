@@ -1,5 +1,6 @@
 package laya.d3.core.render {
 	import laya.d3.core.Layer;
+	import laya.d3.core.scene.ITreeNode;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.scene.OctreeNode;
@@ -19,6 +20,8 @@ package laya.d3.core.render {
 	 * <code>Render</code> 类用于渲染器的父类，抽象类不允许示例。
 	 */
 	public class BaseRender extends EventDispatcher implements IDestroy {
+		/**@private */
+		private var _destroyed:Boolean;
 		/** @private */
 		private var _enable:Boolean;
 		/** @private */
@@ -30,9 +33,13 @@ package laya.d3.core.render {
 		/** @private */
 		protected var _boundingBox:BoundBox;
 		/** @private */
+		protected var _boundingBoxCenter:Vector3;
+		/** @private */
 		protected var _boundingSphereNeedChange:Boolean;
 		/** @private */
 		protected var _boundingBoxNeedChange:Boolean;
+		/** @private */
+		protected var _boundingBoxCenterNeedChange:Boolean;
 		/** @private */
 		protected var _octreeNodeNeedChange:Boolean;
 		
@@ -189,13 +196,38 @@ package laya.d3.core.render {
 			return _boundingBox;
 		}
 		
+		/**
+		 * 获取包围盒中心。
+		 * @return 包围盒中心。
+		 */
+		public function get boundingBoxCenter():Vector3 {
+			if (_boundingBoxCenterNeedChange) {
+				var boundBox:BoundBox = boundingBox;
+				Vector3.add(boundBox.min, boundBox.max, _boundingBoxCenter);
+				Vector3.scale(_boundingBoxCenter, 0.5, _boundingBoxCenter);
+				_boundingBoxCenterNeedChange = false;
+			}
+			return _boundingBoxCenter;
+		}
+		
+		/**
+		 * 获取是否已销毁。
+		 * @return 是否已销毁。
+		 */
+		public function get destroyed():Boolean {
+			return _destroyed;
+		}
+		
 		public function BaseRender(owner:Sprite3D) {
+			_destroyed = false;
 			_owner = owner;
 			_enable = true;
 			_boundingBox = new BoundBox(new Vector3(), new Vector3());
+			_boundingBoxCenter = new Vector3();
 			_boundingSphere = new BoundSphere(new Vector3(), 0);
 			_boundingSphereNeedChange = true;
 			_boundingBoxNeedChange = true;
+			_boundingBoxCenterNeedChange = true;
 			_octreeNodeNeedChange = true;
 			_renderObject = new RenderObject(owner);
 			_renderObject._render = this;
@@ -218,6 +250,7 @@ package laya.d3.core.render {
 		private function _onWorldMatNeedChange():void {
 			_boundingSphereNeedChange = true;
 			_boundingBoxNeedChange = true;
+			_boundingBoxCenterNeedChange = true;
 			_octreeNodeNeedChange = true;
 		}
 		
@@ -260,10 +293,10 @@ package laya.d3.core.render {
 		 * @private
 		 */
 		public function _updateOctreeNode():void {
-			var treeNode:OctreeNode = _renderObject._treeNode;
+			var treeNode:ITreeNode = _renderObject._treeNode;
 			if (treeNode && _octreeNodeNeedChange) {
 				treeNode.updateObject(_renderObject);
-				_octreeNodeNeedChange = true;
+				_octreeNodeNeedChange = false;
 			}
 		}
 		
@@ -276,7 +309,9 @@ package laya.d3.core.render {
 			_renderObject = null;
 			_materials = null;
 			_boundingBox = null;
+			_boundingBoxCenter = null;
 			_boundingSphere = null;
+			_destroyed = true;
 		}
 	
 	}

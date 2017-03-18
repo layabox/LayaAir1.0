@@ -584,8 +584,7 @@ package laya.ui {
 		override protected function changeSize():void {
 			super.changeSize();
 			setContentSize(this.width, this.height);
-			if (_scrollBar)
-				Laya.timer.once(10, this, onScrollBarChange);
+			if (_scrollBar) callLater(onScrollBarChange);
 		}
 		
 		/**
@@ -783,7 +782,7 @@ package laya.ui {
 				if (total > 1) {
 					_scrollBar.scrollSize = _cellSize;
 					_scrollBar.thumbPercent = numY / lineCount;
-					_scrollBar.setScroll(0, (lineCount - numY) * _cellSize + _cellOffset, _isVertical ? _content.scrollRect.y : _content.scrollRect.x);
+					_scrollBar.setScroll(0, (lineCount - numY) * _cellSize + _cellOffset, _scrollBar.value);
 					_scrollBar.target = _content;
 				} else {
 					_scrollBar.setScroll(0, 0, 0);

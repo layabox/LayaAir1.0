@@ -58,7 +58,7 @@ package laya.d3.core.light {
 			var scene:BaseScene = state.scene;
 			if (scene.enableLight) {
 				var shaderValue:ValusArray = scene._shaderValues;
-				state.addShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
+				scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
 				shaderValue.setValue(BaseScene.LIGHTDIRDIFFUSE, diffuseColor.elements);
 				shaderValue.setValue(BaseScene.LIGHTDIRAMBIENT, ambientColor.elements);
 				shaderValue.setValue(BaseScene.LIGHTDIRSPECULAR, specularColor.elements);

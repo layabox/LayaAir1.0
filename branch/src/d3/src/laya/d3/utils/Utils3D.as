@@ -318,6 +318,11 @@ package laya.d3.utils {
 			particleSystem.playOnAwake = settting.playOnAwake;
 			particleSystem.maxParticles = settting.maxParticles;
 			
+			var autoRandomSeed:* = settting.autoRandomSeed;
+			(autoRandomSeed!=null) && (particleSystem.autoRandomSeed = autoRandomSeed);
+			var randomSeed:* = settting.randomSeed;
+			(randomSeed != null) && (particleSystem.randomSeed[0] = randomSeed);
+			
 			//Emission
 			var emissionData:Object = settting.emission;
 			var emission:Emission = new Emission();
@@ -377,7 +382,7 @@ package laya.d3.utils {
 			/**
 			 * ------------------------临时调整，待日后完善-------------------------------------
 			 */
-			default:
+			default: 
 				var tempShape:CircleShape;
 				shape = tempShape = new CircleShape();
 				tempShape.radius = shapeData.circleRadius;
@@ -703,46 +708,6 @@ package laya.d3.utils {
 				overTimeFrame.add(frameData.key, frameData.value);
 			}
 			return overTimeFrame;
-		}
-		
-		/** @private */
-		public static function _parseStandardMaterial(textureMap:Object, material:StandardMaterial, json:Object):void {
-			var customProps:Object = json.customProps;
-			var ambientColorValue:Array = customProps.ambientColor;
-			material.ambientColor = new Vector3(ambientColorValue[0], ambientColorValue[1], ambientColorValue[2]);
-			var diffuseColorValue:Array = customProps.diffuseColor;
-			material.diffuseColor = new Vector3(diffuseColorValue[0], diffuseColorValue[1], diffuseColorValue[2]);
-			var specularColorValue:Array = customProps.specularColor;
-			material.specularColor = new Vector4(specularColorValue[0], specularColorValue[1], specularColorValue[2], specularColorValue[3]);
-			var reflectColorValue:Array = customProps.reflectColor;
-			material.reflectColor = new Vector3(reflectColorValue[0], reflectColorValue[1], reflectColorValue[2]);
-			
-			var diffuseTexture:String = customProps.diffuseTexture.texture2D;
-			(diffuseTexture) && (material.diffuseTexture = Loader.getRes(textureMap[diffuseTexture]));
-			
-			var normalTexture:String = customProps.normalTexture.texture2D;
-			(normalTexture) && (material.normalTexture = Loader.getRes(textureMap[normalTexture]));
-			
-			var specularTexture:String = customProps.specularTexture.texture2D;
-			(specularTexture) && (material.specularTexture = Loader.getRes(textureMap[specularTexture]));
-			
-			var emissiveTexture:String = customProps.emissiveTexture.texture2D;
-			(emissiveTexture) && (material.emissiveTexture = Loader.getRes(textureMap[emissiveTexture]));
-			
-			var ambientTexture:String = customProps.ambientTexture.texture2D;
-			(ambientTexture) && (material.ambientTexture = Loader.getRes(textureMap[ambientTexture]));
-			
-			var reflectTexture:String = customProps.reflectTexture.texture2D;
-			(reflectTexture) && (material.reflectTexture = Loader.getRes(textureMap[reflectTexture]));		
-		}
-		
-		/** @private */
-		public static function _parseShurikenParticleMaterial(textureMap:Object, material:ShurikenParticleMaterial, json:Object):void {
-			var customProps:Object = json.customProps;
-			var diffuseTexture:String = customProps.diffuseTexture.texture2D;
-			(diffuseTexture) && (material.diffuseTexture = Loader.getRes(textureMap[diffuseTexture]));	
-			var tintColorValue:Array = customProps.tintColor;
-			(tintColorValue)&&(material.tintColor = new Vector4(tintColorValue[0], tintColorValue[1], tintColorValue[2], tintColorValue[3]));
 		}
 		
 		/** @private */
