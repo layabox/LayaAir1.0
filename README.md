@@ -51,7 +51,7 @@ our official Layabox Github with complete engine source version, free of charge,
 
 ##Beginner usage
 ####JS version
-```as3
+```js
     Laya.init(550, 400);
     Laya.stage.scaleMode = "showall";
     
@@ -87,7 +87,7 @@ our official Layabox Github with complete engine source version, free of charge,
 ```
 
 ####TS version
-```as3
+```ts
     /// <reference path="../../libs/LayaAir.d.ts" />
     class Sprite_DisplayImage{
     
@@ -199,7 +199,7 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
     ape.loadImage("res/apes/monkey2.png");
     
     Laya.stage.addChild(ape);
-    
+
 ####AS版本
     package
     {
