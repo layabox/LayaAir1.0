@@ -1,17 +1,5 @@
 package laya.particle {
-	import laya.display.Sprite;
-	import laya.display.Stage;
-	import laya.maths.MathUtil;
-	import laya.renders.RenderContext;
-	import laya.resource.Texture;
-	import laya.utils.Stat;
-	import laya.utils.Timer;
-	import laya.webgl.WebGL;
-	import laya.webgl.WebGLContext;
-	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer;
-	import laya.webgl.utils.IndexBuffer2D;
-	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
 	 *  @private
@@ -86,11 +74,14 @@ package laya.particle {
 		}
 		
 		private function retireActiveParticles():void {
+			const epsilon:Number = 0.0001;
 			var particleDuration:Number = settings.duration;
 			while (_firstActiveElement != _firstNewElement) {
-				var index:int = _firstActiveElement * _floatCountPerVertex * 4 + 28;//28为Time
+				var offset:int = _firstActiveElement * _floatCountPerVertex * 4;
+				var index:int = offset + 28;//28为Time
 				var particleAge:Number = _currentTime - _vertices[index];
-				if (particleAge < particleDuration)
+				particleAge *= (1.0 + _vertices[offset + 27]);//真实时间
+				if (particleAge+epsilon < particleDuration)
 					break;
 				
 				_vertices[index] = _drawCounter;
@@ -104,8 +95,7 @@ package laya.particle {
 		
 		private function freeRetiredParticles():void {
 			while (_firstRetiredElement != _firstActiveElement) {
-				
-				var age:int = _drawCounter - _vertices[_firstRetiredElement * _floatCountPerVertex * 4 + 28];//28为Time,注意Numver到Int类型转换,JS中可忽略
+				var age:int = _drawCounter - _vertices[_firstRetiredElement * _floatCountPerVertex * 4 + 28];//28为Time
 				//GPU从不滞后于CPU两帧，出于显卡驱动BUG等安全因素考虑滞后三帧
 				if (age < 3)
 					break;

@@ -13,10 +13,10 @@ package laya.d3.resource.models {
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.utils.Utils3D;
 	import laya.renders.Render;
 	import laya.utils.Stat;
+	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer;
@@ -113,7 +113,7 @@ package laya.d3.resource.models {
 		}
 		
 		public function _render(state:RenderState):void {
-			state.context.drawElements(WebGLContext.TRIANGLES, _numberIndices, WebGLContext.UNSIGNED_SHORT, 0);
+			WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, _numberIndices, WebGLContext.UNSIGNED_SHORT, 0);
 			Stat.drawCall++;
 			Stat.trianglesFaces += _numberIndices / 3;
 		}

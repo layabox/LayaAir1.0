@@ -1,9 +1,10 @@
 package laya.d3.math {
+	import laya.d3.core.IClone;
 	
 	/**
 	 * <code>Quaternion</code> 类用于创建四元数。
 	 */
-	public class Quaternion {
+	public class Quaternion implements IClone{
 		/**@private */
 		private static var TEMPVector30:Vector3 = new Vector3();
 		/**@private */
@@ -16,6 +17,8 @@ package laya.d3.math {
 		private static var TEMPMatrix0:Matrix4x4 = new Matrix4x4();
 		/**@private */
 		private static var TEMPMatrix1:Matrix4x4 = new Matrix4x4();
+		/**@private */
+		private static var _tempMatrix3x3:Matrix3x3 = new Matrix3x3();
 		
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Quaternion =/*[STATIC SAFE]*/ new Quaternion();
@@ -544,15 +547,16 @@ package laya.d3.math {
 			e[3] = 1;
 		}
 		
+
 		/**
-		 *  克隆一个四元数
-		 * @param	out 输出的四元数
+		 * 克隆。
+		 * @param	destObject 克隆源。
 		 */
-		public function cloneTo(out:Quaternion):void {
+		public function cloneTo(destObject:*):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var i:int, s:Float32Array, d:Float32Array;
 			s = this.elements;
-			d = out.elements;
+			d = destObject.elements;
 			if (s === d) {
 				return;
 			}
@@ -562,35 +566,105 @@ package laya.d3.math {
 		}
 		
 		/**
-		 * 从一个四元数复制
-		 * @param	sou 源四元数
+		 * 克隆。
+		 * @return	 克隆副本。
 		 */
-		public function copyFrom(sou:Quaternion):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var i:int, s:Float32Array, d:Float32Array;
-			s = sou.elements;
-			d = this.elements;
-			if (s === d) {
-				return;
-			}
-			for (i = 0; i < 4; ++i) {
-				d[i] = s[i];
-			}
+		public function clone():* {
+			var dest:Quaternion = __JS__("new this.constructor()");
+			cloneTo(dest);
+			return dest;
+		}
+		
+		public function equals(b:Quaternion):Boolean{
+			
+			var ae:Float32Array = this.elements;
+			var be:Float32Array = b.elements;
+			
+			return MathUtils3D.nearEqual(ae[0], be[0]) && MathUtils3D.nearEqual(ae[1], be[1]) && MathUtils3D.nearEqual(ae[2], be[2]) && MathUtils3D.nearEqual(ae[3], be[3]);
 		}
 		
 		/**
-		 * 从一个数组复制
-		 * @param	sou 源Float32Array数组
+		 * 计算旋转观察四元数
+		 * @param	forward 方向
+		 * @param	up     上向量
+		 * @param	out    输出四元数
 		 */
-		public function copyFromArray(sou:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var i:int, d:Float32Array;
-			d = this.elements;
-			if (sou === d) {
-				return;
-			}
-			for (i = 0; i < 4; ++i) {
-				d[i] = sou[i];
+		public static function rotationLookAt(forward:Vector3, up:Vector3, out:Quaternion):void {
+			lookAt(Vector3.ZERO, forward, up, out);
+		}
+		
+		/**
+		 * 计算观察四元数
+		 * @param	eye    观察者位置
+		 * @param	target 目标位置
+		 * @param	up     上向量
+		 * @param	out    输出四元数
+		 */
+		public static function lookAt(eye:Vector3, target:Vector3, up:Vector3, out:Quaternion):void {
+			Matrix3x3.lookAt(eye, target, up, _tempMatrix3x3);
+			rotationMatrix(_tempMatrix3x3, out);
+		}
+		
+		/**
+		 * 通过一个3x3矩阵创建一个四元数
+		 * @param	matrix3x3  3x3矩阵
+		 * @param	out        四元数
+		 */
+		public static function rotationMatrix(matrix3x3:Matrix3x3, out:Quaternion):void {
+			
+			var me:Float32Array = matrix3x3.elements;
+			var m11:Number = me[0];
+			var m12:Number = me[1];
+			var m13:Number = me[2];
+			var m21:Number = me[3];
+			var m22:Number = me[4];
+			var m23:Number = me[5];
+			var m31:Number = me[6];
+			var m32:Number = me[7];
+			var m33:Number = me[8];
+			
+			var oe:Float32Array = out.elements;
+			
+			var sqrt:Number, half:Number;
+			var scale:Number = m11 + m22 + m33;
+			
+			if (scale > 0) {
+				
+				sqrt = Math.sqrt(scale + 1);
+				oe[3] = sqrt * 0.5;
+				sqrt = 0.5 / sqrt;
+				
+				oe[0] = (m23 - m32) * sqrt;
+				oe[1] = (m31 - m13) * sqrt;
+				oe[2] = (m12 - m21) * sqrt;
+				
+			} else if ((m11 >= m22) && (m11 >= m33)) {
+				
+				sqrt = Math.sqrt(1 + m11 - m22 - m33);
+				half = 0.5 / sqrt;
+				
+				oe[0] = 0.5 * sqrt;
+				oe[1] = (m12 + m21) * half;
+				oe[2] = (m13 + m31) * half;
+				oe[3] = (m23 - m32) * half;
+			} else if (m22 > m33) {
+				
+				sqrt = Math.sqrt(1 + m22 - m11 - m33);
+				half = 0.5 / sqrt;
+				
+				oe[0] = (m21 + m12) * half;
+				oe[1] = 0.5 * sqrt;
+				oe[2] = (m32 + m23) * half;
+				oe[3] = (m31 - m13) * half;
+			} else {
+				
+				sqrt = Math.sqrt(1 + m33 - m11 - m22);
+				half = 0.5 / sqrt;
+				
+				oe[0] = (m31 + m13) * half;
+				oe[1] = (m32 + m23) * half;
+				oe[2] = 0.5 * sqrt;
+				oe[3] = (m12 - m21) * half;
 			}
 		}
 	}

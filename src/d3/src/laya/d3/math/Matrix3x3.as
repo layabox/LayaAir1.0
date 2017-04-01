@@ -1,11 +1,20 @@
 package laya.d3.math {
+	import laya.d3.core.IClone;
 	
 	/**
 	 * <code>Matrix3x3</code> 类用于创建3x3矩阵。
 	 */
-	public class Matrix3x3 {
+	public class Matrix3x3 implements IClone{
+		
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Matrix3x3 =/*[STATIC SAFE]*/ new Matrix3x3();
+		
+		/** @private */
+		private static var _tempV30:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempV31:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempV32:Vector3 = new Vector3();
 		
 		/**
 		 * 根据指定平移生成3x3矩阵
@@ -315,14 +324,14 @@ package laya.d3.math {
 		}
 		
 		/**
-		 *  克隆一个3x3矩阵
-		 * @param	out 输出的3x3矩阵
+		 * 克隆。
+		 * @param	destObject 克隆源。
 		 */
-		public function cloneTo(out:Matrix3x3):void {
+		public function cloneTo(destObject:*):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var i:int, s:Float32Array, d:Float32Array;
 			s = this.elements;
-			d = out.elements;
+			d = destObject.elements;
 			if (s === d) {
 				return;
 			}
@@ -332,36 +341,46 @@ package laya.d3.math {
 		}
 		
 		/**
-		 * 从一个3x3矩阵复制
-		 * @param	sou 源3x3矩阵
+		 * 克隆。
+		 * @return	 克隆副本。
 		 */
-		public function copyFrom(sou:Matrix3x3):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var i:int, s:Float32Array, d:Float32Array;
-			s = sou.elements;
-			d = this.elements;
-			if (s === d) {
-				return;
-			}
-			for (i = 0; i < 9; ++i) {
-				d[i] = s[i];
-			}
+		public function clone():* {
+			var dest:Matrix3x3 = __JS__("new this.constructor()");
+			cloneTo(dest);
+			return dest;
 		}
 		
 		/**
-		 * 从一个数组复制
-		 * @param	sou 源Float32Array数组
+		 * 计算观察3x3矩阵
+		 * @param	eye    观察者位置
+		 * @param	target 目标位置
+		 * @param	up     上向量  
+		 * @param	out    输出3x3矩阵
 		 */
-		public function copyFromArray(sou:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var i:int, d:Float32Array;
-			d = this.elements;
-			if (sou === d) {
-				return;
-			}
-			for (i = 0; i < 9; ++i) {
-				d[i] = sou[i];
-			}
+		public static function lookAt(eye:Vector3, target:Vector3, up:Vector3, out:Matrix3x3):void{
+			
+			Vector3.subtract(eye, target, _tempV30);
+			Vector3.normalize(_tempV30, _tempV30);
+			
+			Vector3.cross(up, _tempV30, _tempV31);
+			Vector3.normalize(_tempV31, _tempV31);
+			
+			Vector3.cross(_tempV30, _tempV31, _tempV32);
+			
+			var v0e:Float32Array = _tempV30.elements;
+			var v1e:Float32Array = _tempV31.elements;
+			var v2e:Float32Array = _tempV32.elements;
+			
+			var me:Float32Array = out.elements;
+			me[0] = v1e[0];
+			me[1] = v1e[1];
+			me[2] = v1e[2];
+			me[3] = v2e[0];
+			me[4] = v2e[1];
+			me[5] = v2e[2];
+			me[6] = v0e[0];
+			me[7] = v0e[1];
+			me[8] = v0e[2];
 		}
 	}
 }

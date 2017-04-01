@@ -91,10 +91,16 @@ package laya.debug
 				LoaderHook.init();
 			}
 			CacheAnalyser.showCacheSprite = showCacheRec;
-			DisplayHook.initMe();
+			
 			NodeInfoPanel.init();
+			initBasicFunctions();
+		}
+		public static function initBasicFunctions():void
+		{
+			DisplayHook.initMe();
 			if (!debugLayer)
 			{
+				DebugInfoLayer.init();
 				debugLayer = DebugInfoLayer.I.graphicLayer;
 				debugLayer.mouseEnabled = false;
 				debugLayer.mouseThrough = true;
@@ -568,7 +574,7 @@ package laya.debug
 			}
 		}
 		
-		public static function traceDisMouseEnable(tar:Sprite = null):*
+		public static function traceDisMouseEnable(tar:Object = null):*
 		{
 			trace("traceDisMouseEnable:");
 			if (!tar)
@@ -592,7 +598,7 @@ package laya.debug
 			return strArr.join("\n");
 		}
 		
-		public static function traceDisSizeChain(tar:Sprite = null):*
+		public static function traceDisSizeChain(tar:Object = null):*
 		{
 			trace("traceDisSizeChain:");
 			if (!tar)

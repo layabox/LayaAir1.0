@@ -2,7 +2,7 @@ package laya.d3.core.light {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Vector3;
-	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
 	import laya.utils.Stat;
 	import laya.webgl.utils.Buffer2D;
@@ -73,20 +73,40 @@ package laya.d3.core.light {
 		}
 		
 		/**
+		 * @inheritDoc
+		 */
+		override protected function _clearSelfRenderObjects():void {
+			var scene:BaseScene = this.scene;
+			var shaderValue:ValusArray = scene._shaderValues;
+			shaderValue.setValue(BaseScene.POINTLIGHTDIFFUSE, null);
+			shaderValue.setValue(BaseScene.POINTLIGHTAMBIENT, null);
+			shaderValue.setValue(BaseScene.POINTLIGHTSPECULAR, null);
+			shaderValue.setValue(BaseScene.POINTLIGHTPOS, null);
+			shaderValue.setValue(BaseScene.POINTLIGHTRANGE, null);
+			shaderValue.setValue(BaseScene.POINTLIGHTATTENUATION, null);
+			(enable) && (scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT));
+		}
+		
+		/**
 		 * 更新点光相关渲染状态参数。
 		 * @param state 渲染状态参数。
 		 */
-		public override function updateToWorldState(state:RenderState):void {
+		public override function updateToWorldState(state:RenderState):Boolean {
 			var scene:BaseScene = state.scene;
-			if (scene.enableLight) {
+			if (scene.enableLight && active) {
 				var shaderValue:ValusArray = scene._shaderValues;
-				state.shaderDefines.add(ShaderDefines3D.POINTLIGHT);
+				scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT);
 				shaderValue.setValue(BaseScene.POINTLIGHTDIFFUSE, diffuseColor.elements);
 				shaderValue.setValue(BaseScene.POINTLIGHTAMBIENT, ambientColor.elements);
 				shaderValue.setValue(BaseScene.POINTLIGHTSPECULAR, specularColor.elements);
+				
 				shaderValue.setValue(BaseScene.POINTLIGHTPOS, transform.position.elements);
 				shaderValue.setValue(BaseScene.POINTLIGHTRANGE, range);
 				shaderValue.setValue(BaseScene.POINTLIGHTATTENUATION, attenuation.elements);
+				return true;
+			} else {
+				scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT);
+				return false;
 			}
 		}
 	

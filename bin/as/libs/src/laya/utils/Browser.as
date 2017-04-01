@@ -76,7 +76,7 @@ package laya.utils {
 			
 			__JS__("Browser.document.__createElement=Browser.document.createElement");
 			//TODO:优化
-			__JS__("window.requestAnimationFrame=(function(){return window.requestAnimationFrame || window.webkitRequestAnimationFrame ||window.mozRequestAnimationFrame || window.oRequestAnimationFrame ||function (c){return window.setTimeout(c, 1000 / 60);};})()");
+			__JS__("window.requestAnimationFrame=window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function (c){return window.setTimeout(c, 1000 / 60);};");
 			//强制修改body样式
 			__JS__("var $BS=window.document.body.style;$BS.margin=0;$BS.overflow='hidden';");
 			//强制修改meta标签
@@ -129,7 +129,6 @@ package laya.utils {
 							   type: 'image',
 							   success:function(res:*):void
 							   {
-							   debugger;
 							   _this.success(res);
 							   }
 							   });*/
@@ -241,6 +240,7 @@ package laya.utils {
 		/** 设备像素比。*/
 		public static function get pixelRatio():Number {
 			__init__();
+			if (userAgent.indexOf("Mozilla/6.0(Linux; Android 6.0; HUAWEI NXT-AL10 Build/HUAWEINXT-AL10)")>-1)return 2;
 			return RunDriver.getPixelRatio();
 		}
 		

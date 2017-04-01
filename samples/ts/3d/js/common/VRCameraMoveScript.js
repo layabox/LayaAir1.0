@@ -6,11 +6,12 @@ var __extends = (this && this.__extends) || function (d, b) {
 var VRCameraMoveScript = (function (_super) {
     __extends(VRCameraMoveScript, _super);
     function VRCameraMoveScript() {
-        _super.call(this);
-        this.q0 = new Laya.Quaternion();
-        this.q1 = new Laya.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
-        this.q2 = new Laya.Quaternion();
-        this.q3 = new Laya.Quaternion();
+        var _this = _super.call(this) || this;
+        _this.q0 = new Laya.Quaternion();
+        _this.q1 = new Laya.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
+        _this.q2 = new Laya.Quaternion();
+        _this.q3 = new Laya.Quaternion();
+        return _this;
     }
     VRCameraMoveScript.prototype._initialize = function (owner) {
         _super.prototype._initialize.call(this, owner);

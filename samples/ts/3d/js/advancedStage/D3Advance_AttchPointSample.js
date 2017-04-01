@@ -48,18 +48,17 @@ var AttchPointSample;
             settings.blendState = 1;
             this.fire = new Laya.Particle3D(settings);
             scene.addChild(this.fire);
-            Laya.timer.frameLoop(1, this, this.loop);
-        }
-        AttchPointSample.prototype.loop = function () {
-            for (var j = 0; j < this.attacthPoint.attachBones.length; j++) {
-                if (this.attacthPoint.matrixs[j]) {
-                    var e = this.attacthPoint.matrixs[j].elements;
-                    for (var i = 0; i < 10; i++) {
-                        this.fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0)); //矩阵的12、13、14分别为Position的X、Y、Z
+            this.attacthPoint.on(Laya.Event.COMPLETE, this, function () {
+                for (var j = 0; j < this.attacthPoint.attachBones.length; j++) {
+                    if (this.attacthPoint.matrixs[j]) {
+                        var e = this.attacthPoint.matrixs[j].elements;
+                        for (var i = 0; i < 10; i++) {
+                            this.fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0)); //矩阵的12、13、14分别为Position的X、Y、Z
+                        }
                     }
                 }
-            }
-        };
+            });
+        }
         return AttchPointSample;
     }());
     AttchPointSample_1.AttchPointSample = AttchPointSample;

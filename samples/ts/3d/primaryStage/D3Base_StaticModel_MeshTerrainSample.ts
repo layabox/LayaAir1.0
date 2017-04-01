@@ -30,7 +30,7 @@ class StaticModel_MeshTerrainSample {
         this.terrainSprite.transform.localScale = new Laya.Vector3(10, 10, 10);
         this.terrainSprite.transform.position = new Laya.Vector3(0, 2.6, 1.5);
         this.terrainSprite.transform.rotationEuler = new Laya.Vector3(0, 0.3, 0.4);
-        this.setMeshParams(this.terrainSprite, Laya.BaseMaterial.RENDERMODE_OPAQUE, new Laya.Vector4(3.5,3.5,3.5,1.0), new Laya.Vector3(0.6823, 0.6549, 0.6352), new Laya.Vector2(25.0, 25.0), "TERRAIN");
+        this.setMeshParams(this.terrainSprite, Laya.StandardMaterial.RENDERMODE_OPAQUE, new Laya.Vector4(3.5,3.5,3.5,1.0), new Laya.Vector3(0.6823, 0.6549, 0.6352), new Laya.Vector2(25.0, 25.0), "TERRAIN");
 
         this.pathFingding = this.terrainSprite.addComponent(Laya.PathFind) as Laya.PathFind;
         this.pathFingding.setting = { allowDiagonal: true, dontCrossCorners: false, heuristic: PathFinding.core.Heuristic.manhattan, weight: 1 };

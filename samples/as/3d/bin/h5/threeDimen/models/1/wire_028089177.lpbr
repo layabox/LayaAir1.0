@@ -1,0 +1,13 @@
+{
+  "version":"LAYAMATERIAL:01",
+  "type": "PBRMaterial",
+  "props": {
+    "name": "wire_028089177",
+    "renderMode": 1,
+    "has_tangent":true,
+    "textures":[
+        {"name":"diffuseTexture","path":"bodybasecolor.png"},
+        {"name":"normalTexture","path":"bodynormal.png"}
+     ]
+  }
+}

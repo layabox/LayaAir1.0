@@ -3,7 +3,7 @@ class CustomMaterial extends Laya.BaseMaterial {
     constructor(){
         super();
         this.setShaderName("CustomShader");
-        this._DIFFUSETEXTURE_ID:Number = 0;
+        this._DIFFUSETEXTURE_ID = 0;
     }
 
     public getDiffuseTexture():Laya.BaseTexture{

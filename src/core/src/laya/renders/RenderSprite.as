@@ -251,7 +251,22 @@ package laya.renders {
 			/*[IF-FLASH]*/if (style.hasOwnProperty("_calculation")) {
 			//[IF-JS]if (style._calculation) {
 				var words:Vector.<HTMLChar> = sprite._getWords();
-				words && context.fillWords(words, x, y, (style as CSSStyle).font, (style as CSSStyle).color);
+				if (words)
+				{
+					
+					var tStyle:CSSStyle = style as CSSStyle;
+					if (tStyle)
+					{
+						if (tStyle.stroke)
+						{
+							context.fillBorderWords(words, x, y, tStyle.font, tStyle.color,tStyle.strokeColor,tStyle.stroke);
+						}else
+						{
+							context.fillWords(words, x, y, tStyle.font, tStyle.color);
+						}
+					}
+					
+				}
 			}
 			
 			var childs:Array = sprite._childs, n:int = childs.length, ele:*;
@@ -295,28 +310,25 @@ package laya.renders {
 				if (!_cacheCanvas._cacheRec)
 					_cacheCanvas._cacheRec = new Rectangle();
 				var w:Number, h:Number;
-				tRec = sprite.getSelfBounds();
-				//				if (Render.isWebGL && _cacheCanvas.type === 'bitmap' && (tRec.width > 2048 || tRec.height > 2048)) {
-				//					trace("cache bitmap size larger than 2048,cache ignored");
-				//					if(_cacheCanvas.ctx)
-				//					{
-				//						Pool.recover("RenderContext",_cacheCanvas.ctx);
-				//						_cacheCanvas.ctx=null;
-				//				    }			
-				//					_next._fun.call(_next, sprite, context, x, y);
-				//					return;
-				//				}
-				tRec.x -= sprite.pivotX;
-				tRec.y -= sprite.pivotY;
-				tRec.x -= 16;
-				tRec.y -= 16;
-				tRec.width += 32;
-				tRec.height += 32;
-				tRec.x = Math.floor(tRec.x + x) - x;
-				tRec.y = Math.floor(tRec.y + y) - y;
-				tRec.width = Math.floor(tRec.width);
-				tRec.height = Math.floor(tRec.height);
-				_cacheCanvas._cacheRec.copyFrom(tRec);
+				if (!Render.isWebGL || _cacheCanvas.type === "bitmap")
+				{
+					tRec = sprite.getSelfBounds();
+					tRec.x -= sprite.pivotX;
+					tRec.y -= sprite.pivotY;
+					tRec.x -= 16;
+					tRec.y -= 16;
+					tRec.width += 32;
+					tRec.height += 32;
+					tRec.x = Math.floor(tRec.x + x) - x;
+					tRec.y = Math.floor(tRec.y + y) - y;
+					tRec.width = Math.floor(tRec.width);
+					tRec.height = Math.floor(tRec.height);
+					_cacheCanvas._cacheRec.copyFrom(tRec);
+				}else
+				{
+					_cacheCanvas._cacheRec.setTo(0,0,1,1);
+				}
+				
 				tRec = _cacheCanvas._cacheRec;
 				var scaleX:Number = Render.isWebGL ? 1 : Browser.pixelRatio * Laya.stage.clientScaleX;
 				var scaleY:Number = Render.isWebGL ? 1 : Browser.pixelRatio * Laya.stage.clientScaleY;
@@ -349,21 +361,22 @@ package laya.renders {
 					trace("cache bitmap size larger than 2048,cache ignored");
 					if (_cacheCanvas.ctx) {
 						Pool.recover("RenderContext", _cacheCanvas.ctx);
+						_cacheCanvas.ctx.canvas.size(0, 0);
 						_cacheCanvas.ctx = null;
 					}
 					_next._fun.call(_next, sprite, context, x, y);
 					return;
 				}
 				if (!tx) {
-					tx = _cacheCanvas.ctx = Pool.getItem("RenderContext") || new RenderContext(w, h, HTMLCanvas.create(HTMLCanvas.TYPEAUTO));
-					tx.ctx.sprite = sprite;
+				    tx = _cacheCanvas.ctx = Pool.getItem("RenderContext") || new RenderContext(w, h, HTMLCanvas.create(HTMLCanvas.TYPEAUTO));
 				}
+				tx.ctx.sprite = sprite;
+		
 				
 				canvas = tx.canvas;
-				if (_cacheCanvas.type === 'bitmap') canvas.context.asBitmap = true;
-				
 				canvas.clear();
 				(canvas.width != w || canvas.height != h) && canvas.size(w, h);
+				if (_cacheCanvas.type === 'bitmap') canvas.context.asBitmap = true;
 				
 				var t:*;
 				//TODO:测试webgl下是否有缓存模糊问题

@@ -97,7 +97,12 @@ package laya.utils {
 			var laters:Array = this._laters;
 			for (var i:int = 0, n:int = laters.length - 1; i <= n; i++) {
 				var handler:TimerHandler = laters[i];
-				handler.method !== null && handler.run(false);
+				if (handler.method !== null) {
+					/*[IF-FLASH]*/
+					_map[handler.method] = null;
+					//[IF-SCRIPT]_map[handler.key] = null;
+					handler.run(false);
+				}
 				_recoverHandler(handler);
 				i === n && (n = laters.length - 1);
 			}
@@ -144,7 +149,7 @@ package laya.utils {
 					handler.caller = caller;
 					handler.method = method;
 					handler.args = args;
-					handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer);
+					handler.exeTime = delay + (useFrame ? this.currFrame : Browser.now());
 					return;
 				}
 			}
@@ -157,7 +162,7 @@ package laya.utils {
 			handler.caller = caller;
 			handler.method = method;
 			handler.args = args;
-			handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer);
+			handler.exeTime = delay + (useFrame ? this.currFrame : Browser.now());
 			
 			//索引handler
 			_indexHandler(handler);
@@ -312,6 +317,15 @@ package laya.utils {
 				handler.run(true);
 			}
 		}
+		
+		/**
+		 * 立即提前执行定时器，执行之后从队列中删除
+		 * @param	caller 执行域(this)。
+		 * @param	method 定时器回调函数。
+		 */
+		public function runTimer(caller:*, method:Function):void {
+			runCallLater(caller, method);
+		}
 	}
 }
 import laya.display.Node;
@@ -337,8 +351,8 @@ class TimerHandler {
 		var caller:* = this.caller;
 		/*[IF-FLASH]*/
 		if ((caller is Node) && caller.destroyed)
-		/*[IF-FLASH]*/
-		return clear();
+			/*[IF-FLASH]*/
+			return clear();
 		//[IF-SCRIPT] if (caller && caller.destroyed) return clear();
 		var method:Function = this.method;
 		var args:Array = this.args;

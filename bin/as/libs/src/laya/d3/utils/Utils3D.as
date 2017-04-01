@@ -211,7 +211,6 @@ package laya.d3.utils {
 				material = new ShurikenParticleMaterial();
 				material.diffuseTexture = innerResouMap ? Loader.getRes(innerResouMap[settting.texturePath]) : Texture2D.load(settting.texturePath);
 			}
-			material.renderMode = BaseMaterial.RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;//TODO:不应自动设置
 			
 			particle.particleRender.sharedMaterial = material;
 			//particleSystem
@@ -319,6 +318,11 @@ package laya.d3.utils {
 			particleSystem.playOnAwake = settting.playOnAwake;
 			particleSystem.maxParticles = settting.maxParticles;
 			
+			var autoRandomSeed:* = settting.autoRandomSeed;
+			(autoRandomSeed!=null) && (particleSystem.autoRandomSeed = autoRandomSeed);
+			var randomSeed:* = settting.randomSeed;
+			(randomSeed != null) && (particleSystem.randomSeed[0] = randomSeed);
+			
 			//Emission
 			var emissionData:Object = settting.emission;
 			var emission:Emission = new Emission();
@@ -374,6 +378,17 @@ package laya.d3.utils {
 				circleShape.arc = shapeData.circleArc * anglelToRad;
 				circleShape.emitFromEdge = shapeData.circleEmitFromEdge;
 				circleShape.randomDirection = shapeData.circleRandomDirection;
+				break;
+			/**
+			 * ------------------------临时调整，待日后完善-------------------------------------
+			 */
+			default: 
+				var tempShape:CircleShape;
+				shape = tempShape = new CircleShape();
+				tempShape.radius = shapeData.circleRadius;
+				tempShape.arc = shapeData.circleArc * anglelToRad;
+				tempShape.emitFromEdge = shapeData.circleEmitFromEdge;
+				tempShape.randomDirection = shapeData.circleRandomDirection;
 				break;
 			}
 			shape.enable = shapeData.enable;
@@ -585,7 +600,6 @@ package laya.d3.utils {
 			localSceleElement[2] = scaleValue[2];
 			node.transform.localScale = localScale;
 			
-			
 			switch (json.type) {
 			case "Sprite3D": 
 				break;
@@ -593,11 +607,12 @@ package laya.d3.utils {
 				var meshSprite3D:MeshSprite3D = (node as MeshSprite3D);
 				var meshRender:MeshRender = meshSprite3D.meshRender;
 				var lightmapIndex:* = customProps.lightmapIndex;//TODO:
-				(lightmapIndex !== null) && (meshRender.lightmapIndex=lightmapIndex);
+				(lightmapIndex !== null) && (meshRender.lightmapIndex = lightmapIndex);
 				var lightmapScaleOffsetArray:Array = customProps.lightmapScaleOffset;
-				(lightmapScaleOffsetArray)&&(meshRender.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
-	
-				var mesh:Mesh = Loader.getRes(innerResouMap[json.instanceParams.loadPath]);			
+				if (lightmapScaleOffsetArray)
+					meshRender.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]);
+				
+				var mesh:Mesh = Loader.getRes(innerResouMap[json.instanceParams.loadPath]);
 				meshSprite3D.meshFilter.sharedMesh = mesh;
 				if (mesh.loaded)
 					meshRender.sharedMaterials = mesh.materials;
@@ -693,37 +708,6 @@ package laya.d3.utils {
 				overTimeFrame.add(frameData.key, frameData.value);
 			}
 			return overTimeFrame;
-		}
-		
-		/** @private */
-		public static function _parseMaterial(textureMap:Object, material:StandardMaterial, json:Object):void {
-			var customProps:Object = json.customProps;
-			var ambientColorValue:Array = customProps.ambientColor;
-			material.ambientColor = new Vector3(ambientColorValue[0], ambientColorValue[1], ambientColorValue[2]);
-			var diffuseColorValue:Array = customProps.diffuseColor;
-			material.diffuseColor = new Vector3(diffuseColorValue[0], diffuseColorValue[1], diffuseColorValue[2]);
-			var specularColorValue:Array = customProps.specularColor;
-			material.specularColor = new Vector4(specularColorValue[0], specularColorValue[1], specularColorValue[2], specularColorValue[3]);
-			var reflectColorValue:Array = customProps.reflectColor;
-			material.reflectColor = new Vector3(reflectColorValue[0], reflectColorValue[1], reflectColorValue[2]);
-			
-			var diffuseTexture:String = customProps.diffuseTexture.texture2D;
-			(diffuseTexture) && (material.diffuseTexture = Loader.getRes(textureMap[diffuseTexture]));
-			
-			var normalTexture:String = customProps.normalTexture.texture2D;
-			(normalTexture) && (material.normalTexture = Loader.getRes(textureMap[normalTexture]));
-			
-			var specularTexture:String = customProps.specularTexture.texture2D;
-			(specularTexture) && (material.specularTexture = Loader.getRes(textureMap[specularTexture]));
-			
-			var emissiveTexture:String = customProps.emissiveTexture.texture2D;
-			(emissiveTexture) && (material.emissiveTexture = Loader.getRes(textureMap[emissiveTexture]));
-			
-			var ambientTexture:String = customProps.ambientTexture.texture2D;
-			(ambientTexture) && (material.ambientTexture = Loader.getRes(textureMap[ambientTexture]));
-			
-			var reflectTexture:String = customProps.reflectTexture.texture2D;
-			(reflectTexture) && (material.reflectTexture = Loader.getRes(textureMap[reflectTexture]));
 		}
 		
 		/** @private */
@@ -974,11 +958,8 @@ package laya.d3.utils {
 		 */
 		public static function transformVector3ArrayByQuat(sourceArray:Float32Array, sourceOffset:int, rotation:Quaternion, outArray:Float32Array, outOffset:int):void {
 			var re:Float32Array = rotation.elements;
-			
 			var x:Number = sourceArray[sourceOffset], y:Number = sourceArray[sourceOffset + 1], z:Number = sourceArray[sourceOffset + 2], qx:Number = re[0], qy:Number = re[1], qz:Number = re[2], qw:Number = re[3],
-			
 			ix:Number = qw * x + qy * z - qz * y, iy:Number = qw * y + qz * x - qx * z, iz:Number = qw * z + qx * y - qy * x, iw:Number = -qx * x - qy * y - qz * z;
-			
 			outArray[outOffset] = ix * qw + iw * -qx + iy * -qz - iz * -qy;
 			outArray[outOffset + 1] = iy * qw + iw * -qy + iz * -qx - ix * -qz;
 			outArray[outOffset + 2] = iz * qw + iw * -qz + ix * -qy - iy * -qx;
@@ -1157,7 +1138,7 @@ package laya.d3.utils {
 		public static function transformLightingMapTexcoordArray(source:Float32Array, sourceOffset:int, lightingMapScaleOffset:Vector4, result:Float32Array, resultOffset:int):void {
 			var lightingMapScaleOffsetE:Float32Array = lightingMapScaleOffset.elements;
 			result[resultOffset + 0] = source[sourceOffset + 0] * lightingMapScaleOffsetE[0] + lightingMapScaleOffsetE[2];
-			result[resultOffset + 1] = source[sourceOffset + 1] * lightingMapScaleOffsetE[1]- lightingMapScaleOffsetE[3];
+			result[resultOffset + 1] = 1.0 + source[sourceOffset + 1] * lightingMapScaleOffsetE[1] + lightingMapScaleOffsetE[3];
 		}
 		
 		/**

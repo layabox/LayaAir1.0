@@ -24,6 +24,7 @@ package threeDimen.primaryStage {
 			
 			var camera1:Camera = new Camera( 0, 0.1, 100);
 			scene.addChild(camera1);
+			camera1.clearColor = new Vector4(0.3, 0.3, 0.3, 1.0);
 			camera1.transform.translate(new Vector3(0, 0.8, 1.5));
 			camera1.transform.rotate(new Vector3( -30, 0, 0), true, false);
 			camera1.normalizedViewport = new Viewport(0, 0, 0.5, 1.0);

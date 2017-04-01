@@ -1,0 +1,53 @@
+#ifdef FSHIGHPRECISION
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+uniform vec4 u_Albedo;
+uniform vec3 u_Ambient;
+
+#ifdef FOG
+uniform vec3 u_CameraPos;
+varying vec3 v_PositionWorld;
+
+uniform float u_FogStart;
+uniform float u_FogRange;
+uniform vec3 u_FogColor;
+#endif
+
+#if defined(DIFFUSEMAP)&&defined(NORMALMAP)&&defined(SPECULARMAP)&&defined(EMISSIVEMAP)&&defined(AMBIENTMAP)
+  varying vec2 v_Texcoord;
+  varying vec2 v_TiledTexcoord;
+  uniform sampler2D u_BlendTexture;
+  uniform sampler2D u_LayerTexture0;
+  uniform sampler2D u_LayerTexture1;
+  uniform sampler2D u_LayerTexture2;
+  uniform sampler2D u_LayerTexture3;
+#endif
+
+void main()
+{	
+  #if defined(DIFFUSEMAP)&&defined(NORMALMAP)&&defined(SPECULARMAP)&&defined(EMISSIVEMAP)&&defined(AMBIENTMAP)
+  vec4 blend=texture2D(u_BlendTexture, v_Texcoord);
+  vec4 c0=texture2D(u_LayerTexture0, v_TiledTexcoord);
+  vec4 c1=texture2D(u_LayerTexture1, v_TiledTexcoord);
+  vec4 c2=texture2D(u_LayerTexture2, v_TiledTexcoord);
+  vec4 c3=texture2D(u_LayerTexture3, v_TiledTexcoord);
+  vec4 texColor = c0;
+  texColor = mix(texColor, c1, blend.r);
+  texColor = mix(texColor, c2, blend.g);
+  texColor = mix(texColor, c3, blend.b);
+  gl_FragColor=vec4(texColor.rgb*u_Ambient.rgb*blend.a,1.0);
+  gl_FragColor=gl_FragColor*u_Albedo;
+  #endif 
+  
+  #ifdef FOG
+  vec3 toEye=u_CameraPos-v_PositionWorld;
+  float toEyeLength=length(toEye);
+  
+  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);
+  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);
+  #endif
+}
+

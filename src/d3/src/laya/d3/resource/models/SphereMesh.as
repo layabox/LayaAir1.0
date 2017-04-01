@@ -33,8 +33,11 @@ package laya.d3.resource.models {
 		 * @param  value 半径
 		 */
 		public function set radius(value:Number):void {
-			_radius = value;
-			recreateResource();
+			if (_radius !== value) {
+				_radius = value;
+				releaseResource();
+				activeResource();
+			}
 		}
 		
 		/**
@@ -50,8 +53,11 @@ package laya.d3.resource.models {
 		 * @param  value 宽度分段
 		 */
 		public function set slices(value:int):void {
-			_slices = value;
-			recreateResource();
+			if (_slices !== value) {
+				_slices = value;
+				releaseResource();
+				activeResource();
+			}
 		}
 		
 		/**
@@ -67,8 +73,11 @@ package laya.d3.resource.models {
 		 * @param  value高度分段
 		 */
 		public function set stacks(value:int):void {
-			_stacks = value;
-			recreateResource();
+			if (_stacks !== value) {
+				_stacks = value;
+				releaseResource();
+				activeResource();
+			}
 		}
 		
 		/**
@@ -77,23 +86,17 @@ package laya.d3.resource.models {
 		 * @param stacks 水平层数
 		 * @param slices 垂直层数
 		 */
-		public function SphereMesh(radius:Number = 10, stacks:int = 8, slices:int = 8) {
+		public function SphereMesh(radius:Number = 0.5, stacks:int = 32, slices:int = 32) {
 			super();
 			_radius = radius;
 			_stacks = stacks;
 			_slices = slices;
-			recreateResource();
+			activeResource();
 			_loaded = true;
-			
-			var pos:Vector.<Vector3> = positions;
-			_boundingBox = new BoundBox(new Vector3(), new Vector3());
-			BoundBox.createfromPoints(pos, _boundingBox);
-			_boundingSphere = new BoundSphere(new Vector3(), 0);
-			BoundSphere.createfromPoints(pos, _boundingSphere);
+			_generateBoundingObject();
 		}
 		
 		override protected function recreateResource():void {
-			//(this._released) || (dispose());//如果已存在，则释放资源
 			startCreate();
 			_numberVertices = (_stacks + 1) * (_slices + 1);
 			_numberIndices = (3 * _stacks * (_slices + 1)) * 2;

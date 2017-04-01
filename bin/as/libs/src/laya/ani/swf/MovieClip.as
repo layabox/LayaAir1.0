@@ -75,6 +75,10 @@ package laya.ani.swf {
 		private var _url:String;
 		/**@private */
 		private var _isRoot:Boolean;
+		/**@private */
+		private var _completeHandler:Handler;
+		/**@private */
+		private var _endFrame:int=-1;
 		
 		/** 播放间隔(单位：毫秒)。*/
 		public var interval:int = 30;
@@ -205,6 +209,18 @@ package laya.ani.swf {
 			}
 			_parse(_playIndex);
 			if (_labels && _labels[_playIndex]) event(Event.LABEL, _labels[_playIndex]);
+			if (_endFrame!=-1&&_endFrame == _playIndex )
+			{
+				_endFrame = -1;
+				if (_completeHandler != null)
+				{
+					var handler:Handler = _completeHandler;
+					_completeHandler = null;	
+					handler.run();
+				}
+				stop();
+				
+			}
 		}
 		
 		/**
@@ -332,11 +348,16 @@ package laya.ani.swf {
 					_data.pos = _Pos;
 					break;
 				case 3: //addChild
-					(addChild(_idOfSprite[ /*key*/_data.getUint16()]) as Sprite).zOrder = _data.getUint16();
-					ifAdd = true;
+					var node:Sprite = _idOfSprite[ /*key*/_data.getUint16()];
+					if (node) {
+						addChild(node);
+						node.zOrder = _data.getUint16();
+						ifAdd = true;
+					}
 					break;
 				case 4: //remove
-					_idOfSprite[ /*key*/_data.getUint16()].removeSelf();
+					node = _idOfSprite[ /*key*/_data.getUint16()];
+					node && node.removeSelf();
 					break;
 				case 5: //setValue
 					_idOfSprite[_data.getUint16()][_ValueList[_data.getUint16()]] = (_data.getFloat32());
@@ -456,8 +477,20 @@ package laya.ani.swf {
 			_initState();	
 			play(0);
 			event(Event.LOADED);
-			if (!_parentMovieClip) Laya.timer.loop(this.interval, this, updates, null, true);
-			
+			if (!_parentMovieClip) Laya.timer.loop(this.interval, this, updates, null, true);			
+		}
+		
+		
+		/**
+		 * 从开始索引播放到结束索引，结束之后出发complete回调
+		 * @param	start	开始索引
+		 * @param	end		结束索引
+		 * @param	complete	结束回调
+		 */
+		public function playTo(start:int, end:int, complete:Handler=null):void {
+			_completeHandler = complete;
+			this._endFrame = end;
+			play(start, false);
 		}
 	}
 }

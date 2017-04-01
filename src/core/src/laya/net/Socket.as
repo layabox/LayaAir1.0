@@ -64,6 +64,10 @@ package laya.net {
 		 * 用来发送接收数据的Byte类
 		 */
 		private var _byteClass:Class;
+		/**
+		 * 用的子协议，字符串或数组
+		 */
+		public var protocols:*=[];
 		
 		/**
 		 * 表示服务端发来的数据。
@@ -136,7 +140,15 @@ package laya.net {
 				close();	
 			
 			_socket && _cleanSocket();
-			_socket = new Browser.window.WebSocket( url );
+			
+			if (!protocols || protocols.length == 0)
+			{
+				_socket = new Browser.window.WebSocket( url );
+			}else
+			{
+				_socket = new Browser.window.WebSocket( url, protocols );
+			}
+			
 			_socket.binaryType = "arraybuffer";
 			
 			_output = new _byteClass();

@@ -9,6 +9,7 @@ package threeDimen.advancedStage {
 	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.shader.Shader3D;
+	import laya.d3.shader.ShaderCompile3D;
 	import laya.display.Stage;
 	import laya.net.Loader;
 	import laya.utils.Handler;
@@ -60,7 +61,7 @@ package threeDimen.advancedStage {
 			var customShader:int = Shader3D.nameKey.add("CustomShader");
 			vs = __INCLUDESTR__("shader/customShader.vs");
 			ps = __INCLUDESTR__("shader/customShader.ps");
-			Shader3D.preCompile(customShader, vs, ps, attributeMap, uniformMap);
+			ShaderCompile3D.add(customShader, vs, ps, attributeMap, uniformMap);
 		}
 	
 	}

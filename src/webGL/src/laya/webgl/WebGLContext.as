@@ -313,7 +313,7 @@ package laya.webgl
 		
 		//潜在问题 WebGLContext为实例对象，以下渲染配置均属于实例对象，非静态
 		public static var _depthTest:Boolean = true;
-		public static var _depthMask:int = 1;
+		public static var _depthMask:Boolean = true;
 		public static var _depthFunc:int = WebGLContext.LESS; 
 	
 		public static var _blend:Boolean = false;
@@ -331,7 +331,7 @@ package laya.webgl
 			value !== _depthTest && (_depthTest=value, value?gl.enable(WebGLContext.DEPTH_TEST):gl.disable(WebGLContext.DEPTH_TEST));
 		}
 		
-		public static function setDepthMask(gl:WebGLContext, value:int):void
+		public static function setDepthMask(gl:WebGLContext, value:Boolean):void
 		{
 			value !== _depthMask && (_depthMask=value, gl.depthMask(value));
 		}
@@ -356,7 +356,7 @@ package laya.webgl
 			 value !== _cullFace && (_cullFace = value, value?gl.enable(WebGLContext.CULL_FACE):gl.disable(WebGLContext.CULL_FACE));
 		}
 		
-		public static function setFrontFaceCCW(gl:WebGLContext, value:int):void
+		public static function setFrontFace(gl:WebGLContext, value:int):void
 		{
 			value !== _frontFace && (_frontFace = value, gl.frontFace(value));
 		}

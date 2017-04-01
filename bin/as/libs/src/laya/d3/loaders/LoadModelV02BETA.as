@@ -5,6 +5,7 @@ package laya.d3.loaders {
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.graphics.VertexElement;
+	import laya.d3.graphics.VertexPositionNTBTextureSkin;
 	import laya.d3.graphics.VertexPositionNormalColor;
 	import laya.d3.graphics.VertexPositionNormalColorSkin;
 	import laya.d3.graphics.VertexPositionNormalColorSkinTangent;
@@ -25,6 +26,7 @@ package laya.d3.loaders {
 	import laya.d3.graphics.VertexPositionNormalTextureSkin;
 	import laya.d3.graphics.VertexPositionNormalTextureSkinTangent;
 	import laya.d3.graphics.VertexPositionNormalTextureTangent;
+	import laya.d3.graphics.VertexPositionNTBTexture;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
@@ -174,6 +176,7 @@ package laya.d3.loaders {
 				trace("Warning: The (.lm) file is converted by old fbxTools,please reConverted it use  lastest fbxTools version,later we will remove the  support of old version (.lm) support.");
 				break;
 			case "LAYASKINANI:01": 
+			case "LAYAMODEL:02":
 				var arrayBuffer:ArrayBuffer = _readData.__getBuffer();
 				var i:int, n:int;
 				var bindPoseStart:uint = _readData.getUint32();
@@ -227,6 +230,7 @@ package laya.d3.loaders {
 			var vertexDecID:int = vertexDeclaration.id;
 			var vertexBufferData:Float32Array = _decIDToVertexbufferData[vertexDecID];
 			if (vertexBufferData) {//TODO:
+				//问题：合并的话是否会导致由于渲染顺序导致的错误
 				indexBufferOffset = vertexBufferData.byteLength / vertexDeclaration.vertexStride;
 				var newData:Float32Array = new Float32Array(vbArrayBuffer);
 				var mergeData:Float32Array = new Float32Array(vertexBufferData.length + newData.length);
@@ -259,7 +263,6 @@ package laya.d3.loaders {
 			for (i = 0, n = indexBufferData.length; i < n; i++) {
 				indexBufferData[i] = indexBufferOffset + indexBufferData[i];
 			}
-			
 			ib.setData(indexBufferData);
 			submesh._indexBuffer = ib;
 			
@@ -277,6 +280,7 @@ package laya.d3.loaders {
 		
 		private function _getVertexDeclaration():VertexDeclaration {
 			var position:Boolean, normal:Boolean, color:Boolean, texcoord0:Boolean, texcoord1:Boolean, tangent:Boolean, blendWeight:Boolean, blendIndex:Boolean;
+			var binormal:Boolean = false;
 			for (var i:int = 0; i < _shaderAttributes.length; i += 8) {
 				switch (_shaderAttributes[i]) {
 				case "POSITION": 
@@ -303,6 +307,9 @@ package laya.d3.loaders {
 				case "TANGENT": 
 					tangent = true;
 					break;
+				case "BINORMAL":
+					binormal = true;
+					break;
 				}
 			}
 			var vertexDeclaration:VertexDeclaration;
@@ -319,6 +326,8 @@ package laya.d3.loaders {
 				vertexDeclaration = VertexPositionNormalColorTextureSkinTangent.vertexDeclaration;
 			else if (position && normal && color && texcoord0 && blendWeight && blendIndex)
 				vertexDeclaration = VertexPositionNormalColorTextureSkin.vertexDeclaration;
+			else if (position && normal && tangent && binormal && texcoord0 && blendWeight && blendIndex)
+				vertexDeclaration = VertexPositionNTBTextureSkin.vertexDeclaration;
 			else if (position && normal && texcoord0 && blendWeight && blendIndex && tangent)
 				vertexDeclaration = VertexPositionNormalTextureSkinTangent.vertexDeclaration;
 			else if (position && normal && texcoord0 && blendWeight && blendIndex)
@@ -337,6 +346,8 @@ package laya.d3.loaders {
 				vertexDeclaration = VertexPositionNormalTexture0Texture1.vertexDeclaration;
 			else if (position && normal && color && texcoord0 && tangent)
 				vertexDeclaration = VertexPositionNormalColorTextureTangent.vertexDeclaration;
+			else if (position && normal && texcoord0 && tangent && binormal)
+				vertexDeclaration = VertexPositionNTBTexture.vertexDeclaration;
 			else if (position && normal && color && texcoord0)
 				vertexDeclaration = VertexPositionNormalColorTexture.vertexDeclaration;
 			else if (position && normal && texcoord0 && tangent)

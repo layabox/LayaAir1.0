@@ -3,7 +3,7 @@ package laya.d3.graphics {
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.math.BoundSphere;
+	import laya.d3.core.scene.ITreeNode;
 	import laya.renders.Render;
 	import laya.runtime.IConchRenderObject;
 	
@@ -14,7 +14,6 @@ package laya.d3.graphics {
 	public class RenderObject {
 		/** @private */
 		public var _owner:Sprite3D;
-		
 		/** @private */
 		public var _render:BaseRender;
 		/** @private */
@@ -22,18 +21,16 @@ package laya.d3.graphics {
 		/** @private */
 		public var _layerMask:int;
 		/** @private */
-		public var _ownerEnable:Boolean;
+		public var _ownerActiveSelf:Boolean;
 		/** @private */
 		public var _enable:Boolean;
 		/** @private */
 		public var _distanceForSort:Number;
+		/** @private */
+		public var _treeNode:ITreeNode;
 		
 		/** @private */
 		public var _conchRenderObject:IConchRenderObject;//NATIVE
-		
-		public function get _boundingSphere():BoundSphere {
-			return _render.boundingSphere;
-		}
 		
 		public function RenderObject(owner:Sprite3D) {
 			_owner = owner;

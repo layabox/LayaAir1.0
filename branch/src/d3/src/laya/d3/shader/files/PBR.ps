@@ -1,0 +1,171 @@
+//#version 300 es
+
+precision highp float;
+precision lowp int;
+
+const float PI = 3.14159265358979323846264;
+const float _2PI = 6.2831853071796;
+varying vec2 vUv;
+varying vec3 vWorldNorm;
+varying vec3 vWorldTangent;
+varying vec3 vWorldBinormal;
+varying vec3 vViewDir;
+varying vec4 vViewPos;
+varying vec4 vWorldPos;
+//
+uniform sampler2D texBaseColor;
+uniform sampler2D texNormal;
+//uniform sampler2D texORM;   //Ao, Roughness, Metallic
+//预计算的贴图
+uniform sampler2D texPrefilterdEnv;
+uniform sampler2D texBRDFLUT;
+uniform sampler2D texPrefilterDiff;
+
+uniform vec3 u_fresnel0;
+uniform float u_roughness;
+const float maxlv = 9.;	//现在只支持512分辨率的环境贴图
+const int nmaxlv = 9;//
+//atlas
+//uniform vec4 u_lodRect[10];//现在只支持512分辨率的环境贴图，所以只有10个，[0]是原始， [9]是1x1.
+							//[u,v,w,h]。w,h都是0到1
+
+vec3 u_lightColor = vec3(1.,1.,1.);
+vec3 u_diffuseColor = vec3(0.1,0.1,0.1);
+vec3 speccontrib = vec3(0.);
+
+const float _maxu8 = 255.0;
+const float _maxu16 = 65535.0;
+const float _shift8 = 256.0;    //平移的话是*256而不是255
+vec2 _RGBAToU16(const in vec4 rgba){
+    return vec2((rgba.r*_maxu8+rgba.g*_maxu8*_shift8)/_maxu16, (rgba.b*_maxu8+rgba.a*_maxu8*_shift8)/_maxu16);
+}
+vec3 _RGBEToRGB( const in vec4 rgba ){
+    float f = pow(2.0, rgba.w * 255.0 - (128.0 + 8.0));
+    return rgba.rgb * (255.0 * f);
+}
+float saturate(float v){
+    return min(max(v,0.),1.);
+}
+
+/* 合并的方式
+vec4 texPanoramaLod(sampler2D tex, const in vec3 dir, float lod){
+	float fl0 = floor(lod);
+    int l0 = int(fl0); 			//这里就不检查与maxlv的关系了
+    int l1 = l0+1;
+	if(l1>nmaxlv)l1=nmaxlv;
+    float k = lod-fl0;				//TODO fract
+	
+	//ps不支持索引数组
+	vec4 rect1;// = u_lodRect[l0];
+	vec4 rect2;// = u_lodRect[l1];
+	for( int i=0; i<10; i++){
+		if(i==l0) {
+			rect1 = u_lodRect[i];
+		}
+		if(i==l1){
+			rect2 = u_lodRect[i];
+		}
+	}
+	
+    float u = atan(dir.z,dir.x)/_2PI+0.5;  
+    float v = acos(dir.y)/PI;
+
+    vec4 v0 = texture2D(tex, vec2(u*rect1.z+rect1.x,v*rect1.w+rect1.y));
+    vec4 v1 = texture2D(tex, vec2(u*rect2.z+rect2.x,v*rect2.w+rect2.y));
+    return mix(v0,v1,k);
+}
+*/
+
+vec4 tex2dLod(sampler2D tex, float u, float v, float lod){
+	vec2 uv = vec2(u,v);
+	uv+=mod(gl_FragCoord.xy-vec2(0.5),2.0)*vec2(128.,0.);
+	return texture2D(tex,uv,lod-16.);//16=log(512)+log(128)
+}
+
+/*
+* 对一个全景图进行采样。假设x轴指向中心。
+*/
+vec4 texPanorama(sampler2D tex, const in vec3 dir){
+	float envu = atan(dir.z,dir.x)/_2PI+0.5; 	
+	float envv = acos(dir.y)/PI;//(1.0-R.y)/2.0;
+	return texture2D(tex,vec2(envu,envv));
+}
+
+vec4 texPanoramaLod(sampler2D tex, const in vec3 dir, float lod){
+	float envu = atan(dir.z,dir.x)/_2PI+0.5; 	
+	float envv = acos(dir.y)/PI;//(1.0-R.y)/2.0;
+	return tex2dLod(tex,envu,envv,lod);
+}
+
+vec3 ApproximateSpecularIBL( vec3 SpecularColor , float Roughness , float NoV, vec3 R){
+    vec4 PrefilteredColor = texPanoramaLod(texPrefilterdEnv, R, Roughness*maxlv);
+    PrefilteredColor.rgb = _RGBEToRGB(PrefilteredColor);
+    vec4 EnvBRDF = texture2D(texBRDFLUT,vec2(Roughness , NoV));//TODO lod
+    vec2 rg = _RGBAToU16(EnvBRDF);    
+    //原来的括号不对
+    speccontrib = (SpecularColor* rg.x + saturate( 50.0 * PrefilteredColor.g ) * rg.y);
+    return PrefilteredColor.rgb * speccontrib;
+}
+
+vec3 testDiff(vec3 dir){
+	return texPanorama(texPrefilterDiff, dir).rgb;
+}
+/*
+    计算sh光照。
+    使用level=2，所以需要9个系数。
+    https://cseweb.ucsd.edu/~ravir/papers/envmap/envmap.pdf
+*/
+uniform mat4 rshcoeffs;
+vec3 diff_sh9(vec3 dir){
+    return vec3(0.0,0.,0.);
+}
+
+vec3 applyNormalTex( vec3 norm, vec3 surf_norm ) {
+    vec3 mapN = norm * 2.0 - 1.0;
+    //mapN.xy = normalScale * mapN.xy;
+    mat3 tsn = mat3( vWorldTangent, vWorldBinormal, surf_norm );  //注意调整T,B的顺序
+    return normalize( tsn * mapN );
+}
+
+vec3 pbrlight(vec3 normal, float rough, float NoV, vec3 R){
+    vec4 basecolor = texture2D(texBaseColor,vUv);
+	float metaless = 1.0;
+	const float ismetalinfov = (128./255.);
+	if(basecolor.a>=ismetalinfov){//这时候表示金属度
+		metaless = (basecolor.a-ismetalinfov)*2.;
+		basecolor.a = 1.0;
+	}else{
+		metaless = 0.;
+		basecolor.a = basecolor.a*2.0;
+	}
+    //vec4 pbrinfo = texture2D(texORM,vUv);
+    const vec3 nonmetalF0 =vec3(0.2);
+    vec3 F0 =  mix(nonmetalF0, basecolor.rgb, metaless);
+    vec3 color_spec = ApproximateSpecularIBL(F0,rough, NoV, R);
+    vec3 color_diff=testDiff(normal);
+    return color_diff*mix(basecolor.rgb,vec3(0,0,0),metaless)+color_spec;
+}
+
+vec3 oldlight(vec4 normal, float NoV, vec3 R){
+    vec4 basecolor = texture2D(texBaseColor,vUv);
+    //vec4 pbrinfo = texture2D(texORM,vUv);
+	const vec3 lightdir=normalize(vec3(1.,1.,0.));
+	const vec3 spcecol = vec3(1.,0.8,0.8);
+	const vec3 amb = vec3(0.5);
+	vec3 diffv =  (vec3(saturate(dot(lightdir,normal.xyz)))+amb);
+	//vec3 spec = spcecol* pow(saturate(dot(R,lightdir)),(1.-pbrinfo.g)*5.);
+	return diffv*basecolor.rgb;//+spec;
+}
+
+void main() {
+    vec3 normal =  normalize(vWorldNorm);
+	vec3 smoothnorm = normal;
+	vec4 normtex = texture2D( texNormal, vUv );
+	normal = applyNormalTex(normtex.xyz, normal);
+    vec3 view   = -normalize(vViewDir);
+    float NoV = saturate(dot( view, normal ));
+    vec3 R = 2. * NoV * normal - view;
+    gl_FragColor.rgb = pbrlight(normal,normtex.a,NoV,R);
+	//gl_FragColor.rgb = oldlight(normtex,NoV,R);
+    gl_FragColor.a = 1.0;
+}

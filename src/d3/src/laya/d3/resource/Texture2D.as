@@ -60,7 +60,6 @@ package laya.d3.resource {
 			_width = w;
 			_height = h;
 			_size = new Size(w, h);
-			
 			if (_canRead) {
 				Browser.canvas.size(w, h);
 				Browser.canvas.clear();

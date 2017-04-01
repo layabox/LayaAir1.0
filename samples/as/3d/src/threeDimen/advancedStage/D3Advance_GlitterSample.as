@@ -30,8 +30,8 @@ package threeDimen.advancedStage {
 			
 			camera = scene.addChild(new Camera(0, 1, 1000)) as Camera;
 			camera.transform.translate(new Vector3(0, 5, 10));
-			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
-			
+			camera.transform.rotate(new Vector3( -30, 0, 0), true, false);
+			camera.clearColor = new Vector4(0.2, 0.2, 0.2, 1.0);
 			
 			
 			glitter = scene.addChild(new Glitter()) as Glitter;

@@ -105,14 +105,14 @@ package laya.events {
 		public static const START:String = "start";
 		/** 定义 end 事件对象的 type 属性值。*/
 		public static const END:String = "end";
-		/** 定义 enabledchanged 事件对象的 type 属性值。*/
-		public static const ENABLED_CHANGED:String = "enabledchanged";
+		/** 定义 enablechanged 事件对象的 type 属性值。*/
+		public static const ENABLE_CHANGED:String = "enablechanged";
+		/** 定义 activeinhierarchychanged 事件对象的 type 属性值。*/
+		public static const ACTIVE_IN_HIERARCHY_CHANGED:String = "activeinhierarchychanged";
 		/** 定义 componentadded 事件对象的 type 属性值。*/
 		public static const COMPONENT_ADDED:String = "componentadded";
 		/** 定义 componentremoved 事件对象的 type 属性值。*/
 		public static const COMPONENT_REMOVED:String = "componentremoved";
-		/** 定义 activechanged 事件对象的 type 属性值。*/
-		public static const ACTIVE_CHANGED:String = "activechanged";
 		/** 定义 layerchanged 事件对象的 type 属性值。*/
 		public static const LAYER_CHANGED:String = "layerchanged";
 		/** 定义 hierarchyloaded 事件对象的 type 属性值。*/
@@ -143,8 +143,6 @@ package laya.events {
 		public static const WORLDMATRIX_NEEDCHANGE:String = "worldmatrixneedchanged";
 		/**更换动作时触发。*/
 		public static const ANIMATION_CHANGED:String = "animationchanged";
-		///**需重新缓存动画时触发，引擎内部使用。*/
-		//public static const CACHEFRAMEINDEX_CHANGED:String = "cacheframeindexchanged";
 		
 		/** 事件类型。*/
 		public var type:String;
@@ -160,6 +158,8 @@ package laya.events {
 		public var touchId:int;
 		/**键盘值*/
 		public var keyCode:int;
+		/**滚轮滑动增量*/
+		public var delta:int;
 		
 		/**
 		 * 设置事件数据。

@@ -91,7 +91,7 @@ package laya.display
 		 * @param targetDic 节点表
 		 * 
 		 */
-		private function _displayNodeToFrame(node:Object,frame:int,targetDic:Object=null):void
+		protected function _displayNodeToFrame(node:Object,frame:int,targetDic:Object=null):void
 		{
 			if(!targetDic) targetDic=this._targetDic;
 			var target:Object=targetDic[node.target];

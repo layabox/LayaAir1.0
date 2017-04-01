@@ -8,6 +8,8 @@ package laya.utils {
 	 * <code>Stat</code> 用于显示帧率统计信息。
 	 */
 	public class Stat {
+		/** 每秒帧数。*/
+		public static var FPS:int = 0;
 		/**主舞台 <code>Stage</code> 渲染次数计数。 */
 		public static var loopCount:int = 0;
 		/** 着色器请求次数。*/
@@ -18,8 +20,11 @@ package laya.utils {
 		public static var trianglesFaces:int = 0;
 		/** 精灵<code>Sprite</code> 的数量。*/
 		public static var spriteCount:int = 0;
-		/** 每秒帧数。*/
-		public static var FPS:int = 0;
+		/** 八叉树节点检测次数。*/
+		public static var treeNodeCollision:int = 0;
+		/** 八叉树精灵碰撞检测次数。*/
+		public static var treeSpriteCollision:int = 0;
+		
 		/** 画布 canvas 使用标准渲染的次数。*/
 		public static var canvasNormal:int = 0;
 		/** 画布 canvas 使用位图渲染的次数。*/
@@ -37,7 +42,7 @@ package laya.utils {
 		private static var _ctx:Context;
 		private static var _timer:Number = 0;
 		private static var _count:int = 0;
-		private static var _width:int = 120;
+		private static var _width:int;
 		private static var _height:int = 100;
 		private static var _view:Array = [];
 		private static var _fontSize:int = 12;
@@ -55,8 +60,8 @@ package laya.utils {
 				return;
 			}
 			var pixel:Number = Browser.pixelRatio;
-			_width = pixel * 120;
-			_vx = pixel * 70;
+			_width = pixel * 130;
+			_vx = pixel * 75;
 			
 			_view[0] = {title: "FPS(Canvas)", value: "_fpsStr", color: "yellow", units: "int"};
 			_view[1] = {title: "Sprite", value: "spriteCount", color: "white", units: "int"};
@@ -71,6 +76,8 @@ package laya.utils {
 				} else {
 					_view[0].title = "FPS(3D)";
 					_view[5] = {title: "TriFaces", value: "trianglesFaces", color: "white", units: "int"};
+					_view[6] = {title: "treeNodeColl", value: "treeNodeCollision", color: "white", units: "int"};
+					_view[7] = {title: "treeSpriteColl", value: "treeSpriteCollision", color: "white", units: "int"};
 				}
 			} else {
 				_view[4] = {title: "Canvas", value: "_canvasStr", color: "white", units: "int"};
@@ -81,6 +88,7 @@ package laya.utils {
 				_view[i].x = 4;
 				_view[i].y = i * _fontSize + 2 * pixel;
 			}
+		    
 			_height = pixel * (_view.length * 12 + 3 * pixel);
 			
 			if (!_canvas) {
@@ -117,7 +125,7 @@ package laya.utils {
 		 * 清除帧频计算相关的数据。
 		 */
 		public static function clear():void {
-			trianglesFaces = drawCall = shaderCall = spriteCount = canvasNormal = canvasBitmap = canvasReCache = 0;
+			trianglesFaces = drawCall = shaderCall = spriteCount=treeNodeCollision=treeSpriteCollision = canvasNormal = canvasBitmap = canvasReCache = 0;
 		}
 		
 		/**
@@ -150,8 +158,11 @@ package laya.utils {
 				canvasNormal = Math.round(canvasNormal / count);
 				canvasBitmap = Math.round(canvasBitmap / count);
 				canvasReCache = Math.ceil(canvasReCache / count);
+				treeNodeCollision = Math.round(treeNodeCollision / count);
+				treeSpriteCollision = Math.round(treeSpriteCollision / count);
 				
-				_fpsStr = FPS + (renderSlow ? " slow" : "");
+				var delay:String = FPS > 0?Math.floor(1000 / FPS).toString():" ";
+				_fpsStr = FPS + (renderSlow ? " slow" : "")+" "+delay;
 				_canvasStr = canvasReCache + "/" + canvasNormal + "/" + canvasBitmap;
 				currentMemorySize = ResourceManager.systemResourceManager.memorySize;
 				

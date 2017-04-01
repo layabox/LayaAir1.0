@@ -10,7 +10,6 @@ package laya.d3.component.animation {
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.renders.Render;
@@ -21,6 +20,9 @@ package laya.d3.component.animation {
 	 * <code>SkinAnimations</code> 类用于创建蒙皮动画组件。
 	 */
 	public class SkinAnimations extends KeyframeAnimations {
+		public static const BONES:int = 0;
+		public static var SHADERDEFINE_BONE:int = 0x1;
+		
 		/**
 		 * @private
 		 */
@@ -84,21 +86,39 @@ package laya.d3.component.animation {
 		 * @param value 地址。
 		 */
 		override public function set url(value:String):void {
-			super.url = value;
-			_curOriginalData = _extenData = null;//替换文件_extenData不清空会产生BUG，用了旧文件的_extenData
-			_curMeshAnimationData = null;
-			_tempCurBonesData = null;
-			_tempCurAnimationData = null;
-			(_templet._animationDatasCache) || (_templet._animationDatasCache = [[], []]);
+			trace("Warning: discard property,please use templet property instead.");
+			var templet:AnimationTemplet = Laya.loader.create(value, null, null, AnimationTemplet);
+			if (_templet !== templet) {
+				if (_player.state !== AnimationState.stopped)
+					_player.stop(true);
+				
+				_templet = templet;
+				_player.templet = templet;
+				
+				_curOriginalData = _extenData = null;//替换文件_extenData不清空会产生BUG，用了旧文件的_extenData
+				_curMeshAnimationData = null;
+				_tempCurBonesData = null;
+				_tempCurAnimationData = null;
+				(_templet._animationDatasCache) || (_templet._animationDatasCache = [[], []]);
+				event(Event.ANIMATION_CHANGED, this);
+			}
 		}
 		
 		override public function set templet(value:AnimationTemplet):void {
-			super.templet = value;
-			_curOriginalData = _extenData = null;//替换文件_extenData不清空会产生BUG，用了旧文件的_extenData
-			_curMeshAnimationData = null;
-			_tempCurBonesData = null;
-			_tempCurAnimationData = null;
-			(_templet._animationDatasCache) || (_templet._animationDatasCache = [[], []]);
+			if (_templet !== value) {
+				if (_player.state !== AnimationState.stopped)
+					_player.stop(true);
+				
+				_templet = value;
+				_player.templet = value;
+				
+				_curOriginalData = _extenData = null;//替换文件_extenData不清空会产生BUG，用了旧文件的_extenData
+				_curMeshAnimationData = null;
+				_tempCurBonesData = null;
+				_tempCurAnimationData = null;
+				(_templet._animationDatasCache) || (_templet._animationDatasCache = [[], []]);
+				event(Event.ANIMATION_CHANGED, this);
+			}
 		}
 		
 		/**
@@ -137,6 +157,11 @@ package laya.d3.component.animation {
 		}
 		
 		/** @private */
+		private function _onMeshLoaded():void {
+			(destroyed) || (_onAnimationPlayMeshLoaded);
+		}
+		
+		/** @private */
 		private function _onAnimationPlayMeshLoaded():void {
 			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender.renderObject._renderElements;//播放骨骼动画时禁止动态合并
 			for (var i:int = 0, n:int = renderElements.length; i < n; i++)
@@ -149,7 +174,7 @@ package laya.d3.component.animation {
 			if (mesh.loaded)
 				_onAnimationPlayMeshLoaded();
 			else
-				mesh.on(Event.LOADED, this, _onAnimationPlayMeshLoaded);
+				mesh.on(Event.LOADED, this, _onMeshLoaded);
 		}
 		
 		/** @private */
@@ -176,6 +201,7 @@ package laya.d3.component.animation {
 			
 			_player.on(Event.PLAYED, this, _onAnimationPlay);
 			_player.on(Event.STOPPED, this, _onAnimationStop);
+			_ownerMesh._addShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
 		}
 		
 		/**
@@ -323,8 +349,8 @@ package laya.d3.component.animation {
 			_lastFrameIndex = frameIndex;
 			if (Render.isConchNode) {//NATIVE
 				for (i = 0, n = mesh.getSubMeshCount(); i < n; i++) {
-					_ownerMesh.meshRender.sharedMaterials[i]._addShaderDefine(ShaderDefines3D.BONE);
-					_ownerMesh.meshRender.renderObject._renderElements[i]._conchSubmesh.setShaderValue(RenderElement.BONES, _curAnimationDatas[i],0);
+					_ownerMesh.meshRender.sharedMaterials[i]._addShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
+					_ownerMesh.meshRender.renderObject._renderElements[i]._conchSubmesh.setShaderValue(SkinAnimations.BONES, _curAnimationDatas[i], 0);
 				}
 			}
 		}
@@ -336,10 +362,9 @@ package laya.d3.component.animation {
 		 */
 		public override function _preRenderUpdate(state:RenderState):void {
 			if (_curAnimationDatas) {
-				state.shaderDefines.addInt(ShaderDefines3D.BONE);
 				var renderElement:RenderElement = state.renderElement;
 				var subMeshIndex:int = renderElement.renderObj.indexOfHost;
-				renderElement._shaderValue.setValue(RenderElement.BONES, _curAnimationDatas[subMeshIndex]);//TODO:
+				renderElement._shaderValue.setValue(SkinAnimations.BONES, _curAnimationDatas[subMeshIndex]);//TODO:
 			}
 		}
 		
@@ -357,6 +382,7 @@ package laya.d3.component.animation {
 			_curBonesDatas = null;
 			_curAnimationDatas = null;
 			_ownerMesh = null;
+			_owner._removeShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
 		}
 	}
 }

@@ -5,6 +5,7 @@ package threeDimen.primaryStage {
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.BaseMesh;
@@ -35,7 +36,7 @@ package threeDimen.primaryStage {
 			
 			effectSprite = scene.addChild(Sprite3D.load("../../../../res/threeDimen/staticModel/effect/WuShen/WuShen.lh")) as Sprite3D;
 			effectSprite.once(Event.HIERARCHY_LOADED, null, function(sender:Sprite3D):void {
-				setMeshParams(effectSprite, BaseMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
+				setMeshParams(effectSprite, StandardMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
 				var rootAnimations:RigidAnimations = sender.addComponent(RigidAnimations) as RigidAnimations;
 				rootAnimations.url = "../../../../res/threeDimen/staticModel/effect/WuShen/WuShen.lani";
 				rootAnimations.player.play(0);
@@ -49,7 +50,7 @@ package threeDimen.primaryStage {
 				var mesh:BaseMesh = meshSprite.meshFilter.sharedMesh;
 				if (mesh != null) {
 					for (i = 0, n = meshSprite.meshRender.sharedMaterials.length; i < n; i++) {
-						var mat:BaseMaterial = meshSprite.meshRender.sharedMaterials[i];
+						var mat:StandardMaterial = meshSprite.meshRender.sharedMaterials[i] as  StandardMaterial;
 						mat.renderMode = renderMode;
 					}
 				}

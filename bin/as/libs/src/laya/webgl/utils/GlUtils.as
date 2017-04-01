@@ -152,21 +152,6 @@ package laya.webgl.utils {
 			var vpos:int = (vb._byteLength >> 2)/*FLOAT32*/;// + WebGLContext2D._RECTVBSIZE;
 			vb.byteLength = ((vpos + WebGLContext2D._RECTVBSIZE) << 2);
 			var vbdata:* = vb.getFloat32Array();
-			/*
-			for (var i:int = 0; i < 16; i++)
-			{
-				vbdata[vpos + i] = vbdata[vpos + i-16];
-			}
-			
-			vbdata[vpos] 	 += dx;
-			vbdata[vpos + 1] += dy;
-			vbdata[vpos + 4] += dx;
-			vbdata[vpos + 5] += dy;
-			vbdata[vpos + 8] += dx;
-			vbdata[vpos + 9] += dy;
-			vbdata[vpos + 12]+= dx;
-			vbdata[vpos + 13]+= dy;
-			*/
 			for (var i:int=0,ci:int=vpos -16; i < 4; i++) {
 				vbdata[vpos] = vbdata[ci] + dx;++vpos;++ci;
 				vbdata[vpos] = vbdata[ci] + dy;++vpos;++ci;				

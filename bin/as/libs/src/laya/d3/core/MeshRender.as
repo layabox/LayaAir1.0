@@ -1,5 +1,6 @@
 package laya.d3.core {
 	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.graphics.RenderObject;
 	import laya.d3.math.BoundBox;
@@ -9,7 +10,7 @@ package laya.d3.core {
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
-	import laya.d3.shader.ShaderDefines3D;
+	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.renders.RenderSprite;
@@ -20,17 +21,14 @@ package laya.d3.core {
 	 */
 	public class MeshRender extends BaseRender {
 		/** @private */
+		private static var _tempBoudingBoxCorners:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+		
+		/** @private */
 		private var _meshSprite3DOwner:MeshSprite3D;
 		///** @private */
-		//private var _lightmapIndex:int;
+		//private var _lightmapIndex:int;//TODO:改良光照贴图到世界
 		/** @private */
 		private var _lightmapScaleOffset:Vector4;
-		
-		/** 是否产生阴影。 */
-		public var castShadow:Boolean;
-		/** 是否接收阴影。 */
-		public var receiveShadow:Boolean;
-		
 		/** 光照贴图的索引。*/
 		public var lightmapIndex:int;
 		
@@ -49,7 +47,7 @@ package laya.d3.core {
 		public function set lightmapScaleOffset(value:Vector4):void {
 			_lightmapScaleOffset = value;
 			_owner._setShaderValueColor(MeshSprite3D.LIGHTMAPSCALEOFFSET, value);
-			_owner._addShaderDefine(ShaderDefines3D.SCALEOFFSETLIGHTINGMAPUV);
+			_owner._addShaderDefine(StandardMaterial.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV);
 		}
 		
 		/**
@@ -58,10 +56,9 @@ package laya.d3.core {
 		public function MeshRender(owner:MeshSprite3D) {
 			super(owner);
 			_meshSprite3DOwner = owner;
-			lightmapIndex =-1;
-			castShadow = true;
-			receiveShadow = true;
-			
+			lightmapIndex = -1;
+			castShadow = false;
+			receiveShadow = false;
 			_meshSprite3DOwner.meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
 		}
 		
@@ -70,26 +67,29 @@ package laya.d3.core {
 		 */
 		private function _onMeshChanged(sender:MeshFilter, oldMesh:BaseMesh, mesh:BaseMesh):void {
 			if (mesh.loaded) {
-				_boundingSphereNeedChange = true;
-				_boundingBoxNeedChange = true;
+				_boundingSphereNeedChange = _boundingBoxNeedChange = _boundingBoxCenterNeedChange = _octreeNodeNeedChange = true;
 			} else {
 				mesh.once(Event.LOADED, this, _onMeshLoaed);
 			}
+		
 		}
 		
 		/**
 		 * @private
 		 */
 		private function _onMeshLoaed(sender:MeshRender, enable:Boolean):void {
-			_boundingSphereNeedChange = true;
-			_boundingBoxNeedChange = true;
+			_boundingSphereNeedChange = _boundingBoxNeedChange = _boundingBoxCenterNeedChange = _octreeNodeNeedChange = true;
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override protected function _calculateBoundingSphere():void {
-			if (_meshSprite3DOwner.meshFilter.sharedMesh === null || _meshSprite3DOwner.meshFilter.sharedMesh.boundingSphere === null) {
+			var sharedMesh:BaseMesh = _meshSprite3DOwner.meshFilter.sharedMesh;
+			if (sharedMesh == null || sharedMesh.boundingSphere == null) {
 				_boundingSphere.toDefault();
 			} else {
-				var meshBoundingSphere:BoundSphere = _meshSprite3DOwner.meshFilter.sharedMesh.boundingSphere;
+				var meshBoundingSphere:BoundSphere = sharedMesh.boundingSphere;
 				var maxScale:Number;
 				var transform:Transform3D = _meshSprite3DOwner.transform;
 				var scale:Vector3 = transform.scale;
@@ -101,17 +101,21 @@ package laya.d3.core {
 				Vector3.transformCoordinate(meshBoundingSphere.center, transform.worldMatrix, _boundingSphere.center);
 				_boundingSphere.radius = meshBoundingSphere.radius * maxScale;
 			}
-		
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override protected function _calculateBoundingBox():void {
-			if (_meshSprite3DOwner.meshFilter.sharedMesh === null || _meshSprite3DOwner.meshFilter.sharedMesh.boundingBox === null) {
+			var sharedMesh:BaseMesh = _meshSprite3DOwner.meshFilter.sharedMesh;
+			if (sharedMesh == null || sharedMesh.boundingBox == null) {
 				_boundingBox.toDefault();
 			} else {
-				var meshBoudingBox:BoundBox = _meshSprite3DOwner.meshFilter.sharedMesh.boundingBox;//TODO:有问题,应该获取Corners八个点然后转换。
 				var worldMat:Matrix4x4 = _meshSprite3DOwner.transform.worldMatrix;
-				Vector3.transformCoordinate(meshBoudingBox.min, worldMat, _boundingBox.min);
-				Vector3.transformCoordinate(meshBoudingBox.max, worldMat, _boundingBox.max);
+				var corners:Vector.<Vector3> = sharedMesh.boundingBoxCorners;
+				for (var i:int = 0; i < 8; i++)
+					Vector3.transformCoordinate(corners[i], worldMat, _tempBoudingBoxCorners[i]);
+				BoundBox.createfromPoints(_tempBoudingBoxCorners, _boundingBox);
 			}
 		}
 		
@@ -120,6 +124,7 @@ package laya.d3.core {
 		 */
 		override public function _destroy():void {
 			super._destroy();
+			_lightmapScaleOffset = null;
 			_meshSprite3DOwner = null;
 		
 		}

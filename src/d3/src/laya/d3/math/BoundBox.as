@@ -1,9 +1,10 @@
 package laya.d3.math {
+	import laya.d3.core.IClone;
 	
 	/**
 	 * <code>BoundBox</code> 类用于创建包围盒。
 	 */
-	public class BoundBox {
+	public class BoundBox implements IClone {
 		/**最小顶点。*/
 		public var min:Vector3;
 		/**最大顶点。*/
@@ -51,22 +52,59 @@ package laya.d3.math {
 		/**
 		 * 从顶点生成包围盒。
 		 * @param	points 所需顶点队列。
-		 * @param	result 生成的包围盒。
+		 * @param	out 生成的包围盒。
 		 */
 		public static function createfromPoints(points:Vector.<Vector3>, out:BoundBox):void {
 			if (points == null)
 				throw new Error("points");
 			
-			var min:Vector3 = new Vector3(Number.MAX_VALUE);
-			var max:Vector3 = new Vector3(-Number.MAX_VALUE);
+			var min:Vector3 = out.min;
+			var max:Vector3 = out.max;
+			var minE:Float32Array = min.elements;
+			minE[0] = Number.MAX_VALUE;
+			minE[1] = Number.MAX_VALUE;
+			minE[2] = Number.MAX_VALUE;
+			var maxE:Float32Array = max.elements;
+			maxE[0] = -Number.MAX_VALUE;
+			maxE[1] = -Number.MAX_VALUE;
+			maxE[2] = -Number.MAX_VALUE;
 			
-			for (var i:int = 0; i < points.length; ++i) {
+			for (var i:int = 0, n:int = points.length; i < n; ++i) {
 				Vector3.min(min, points[i], min);
 				Vector3.max(max, points[i], max);
 			}
+		}
+		
+		/**
+		 * 合并两个包围盒。
+		 * @param	box1 包围盒1。
+		 * @param	box2 包围盒2。
+		 * @param	out 生成的包围盒。
+		 */
+		public static function merge(box1:BoundBox, box2:BoundBox, out:BoundBox):void {
 			
-			out.min = min;
-			out.max = max;
+			Vector3.min(box1.min, box2.min, out.min);
+			Vector3.max(box1.max, box2.max, out.max);
+		}
+		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		public function cloneTo(destObject:*):void {
+			var dest:BoundBox = destObject as BoundBox;
+			min.cloneTo(dest.min);
+			max.cloneTo(dest.max);
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var dest:BoundBox = __JS__("new this.constructor()");
+			cloneTo(dest);
+			return dest;
 		}
 	
 	}

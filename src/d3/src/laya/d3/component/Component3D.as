@@ -5,6 +5,7 @@ package laya.d3.component {
 	import laya.d3.core.render.RenderState;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
+	import laya.resource.IDestroy;
 	
 	/**
 	 * 在enable属性发生变化后调度。
@@ -15,7 +16,12 @@ package laya.d3.component {
 	/**
 	 * <code>Component3D</code> 类用于创建组件的父类。
 	 */
-	public class Component3D extends EventDispatcher implements IUpdate {
+	public class Component3D extends EventDispatcher implements IUpdate, IDestroy {
+		/** @private */
+		private static var _isSingleton:Boolean = true;
+		
+		/**@private */
+		private var _destroyed:Boolean;
 		/** @private 唯一标识ID计数器。*/
 		protected static var _uniqueIDCounter:int = 1;
 		/** @private 唯一标识ID。*/
@@ -23,7 +29,7 @@ package laya.d3.component {
 		/** @private 所属节点遮罩层。*/
 		protected var _cachedOwnerLayerMask:uint;
 		/** @private 所属节点是否启动。*/
-		protected var _cachedOwnerEnable:Boolean;
+		protected var _cachedOwnerActiveInHierarchy:Boolean;
 		/** @private 是否启动。*/
 		protected var _enable:Boolean;
 		/** @private 所属Sprite3D节点。*/
@@ -63,30 +69,31 @@ package laya.d3.component {
 		public function set enable(value:Boolean):void {
 			if (_enable !== value) {
 				_enable = value;
-				this.event(Event.ENABLED_CHANGED, _enable);
+				this.event(Event.ENABLE_CHANGED, _enable);
 			}
 		}
-		
+
 		/**
-		 * 获取是否激活。
-		 * @return 是否激活。
+		 * 获取是否为单实例组件。
+		 * @return  是否为单实例组件。
 		 */
-		public function get isActive():Boolean {
-			return Layer.isActive(_cachedOwnerLayerMask) && _cachedOwnerEnable && _enable;
+		public function get isSingleton():Boolean {
+			return _isSingleton;
 		}
 		
 		/**
-		 * 获取是否可见。
-		 * @return 是否可见。
+		 * 获取是否已销毁。
+		 * @return 是否已销毁。
 		 */
-		public function get isVisible():Boolean {
-			return Layer.isVisible(_cachedOwnerLayerMask) && _cachedOwnerEnable && _enable;
+		public function get destroyed():Boolean {
+			return _destroyed;
 		}
 		
 		/**
 		 * 创建一个新的 <code>Component3D</code> 实例。
 		 */
 		public function Component3D() {
+			_destroyed = false; 
 			_id = _uniqueIDCounter;
 			_uniqueIDCounter++;
 		}
@@ -105,8 +112,8 @@ package laya.d3.component {
 		 * owner启用变化事件处理。
 		 * @param	enable 是否启用。
 		 */
-		protected function _onEnableChanged(enable:Boolean):void {
-			_cachedOwnerEnable = enable;
+		protected function _onActiveHierarchyChanged(active:Boolean):void {
+			_cachedOwnerActiveInHierarchy = active;
 		}
 		
 		/**
@@ -120,18 +127,19 @@ package laya.d3.component {
 			started = false;
 			_cachedOwnerLayerMask = owner.layer.mask;
 			_owner.on(Event.LAYER_CHANGED, this, _onLayerChanged);
-			_cachedOwnerEnable = owner.enable;
-			_owner.on(Event.ENABLED_CHANGED, this, _onEnableChanged);
+			_cachedOwnerActiveInHierarchy = owner.activeInHierarchy;
+			_owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onActiveHierarchyChanged);
 			_load(owner);
 		}
 		
 		/**
 		 * @private
-		 * 卸载组件。
+		 * 销毁组件。
 		 */
-		public function _uninitialize():void {
+		public function _destroy():void {
 			_unload(owner);
 			_owner = null;
+			_destroyed = true;
 		}
 		
 		/**

@@ -56,8 +56,6 @@ package laya.ani.bone {
 		public var subTextureDic:Object = {};
 		/** 是否解析失败 */
 		public var isParseFail:Boolean = false;
-		/** 数据对应的URL，用来释放资源用 */
-		public var url:String;
 		/** 反转矩阵，有些骨骼动画要反转才能显示 */
 		public var yReverseMatrix:Matrix;
 		/** 渲染顺序动画数据 */
@@ -135,7 +133,7 @@ package laya.ani.bone {
 			_endLoaded();
 			if (this._aniVersion != AnimationTemplet.LAYA_ANIMATION_VISION) {
 				//trace("[Error] Version " + _aniVersion + " The engine is inconsistent, update to the version " + KeyframesAniTemplet.LAYA_ANIMATION_VISION + " please.");
-				trace("[Error] 版本不一致，请使用IDE版本（1.6.0）重新导出");
+				trace("[Error] 版本不一致，请使用IDE版本配套的重新导出"+this._aniVersion+"->"+AnimationTemplet.LAYA_ANIMATION_VISION);
 				_loaded = false;
 			}
 			//解析公共数据
@@ -709,6 +707,7 @@ package laya.ani.bone {
 			if (url) {
 				delete TEMPLET_DICTIONARY[url];
 			}
+			dispose();
 		}
 		
 		/***********************************下面为一些儿访问接口*****************************************/

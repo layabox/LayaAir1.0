@@ -1,6 +1,7 @@
 package laya.device.media
 {
 	import laya.device.media.HtmlVideo;
+	import laya.utils.Browser;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	
@@ -17,10 +18,13 @@ package laya.device.media
 		{
 			super();
 			
+			if(Browser.onIPhone)
+				return;
+			
 			gl = WebGL.mainContext;
 			_source = gl.createTexture();
 			
-			preTarget = WebGLContext.curBindTexTarget;
+			preTarget = WebGLContext.curBindTexTarget; 
 			preTexture = WebGLContext.curBindTexValue;
 			
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, _source);
@@ -35,7 +39,10 @@ package laya.device.media
 		
 		public function updateTexture():void
 		{
-			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, _source);
+			if(Browser.onIPhone)
+				return;
+			
+ 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, _source);
 			
 			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGB, WebGLContext.RGB, WebGLContext.UNSIGNED_BYTE, video);
 		}

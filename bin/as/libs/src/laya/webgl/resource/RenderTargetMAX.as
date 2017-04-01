@@ -1,4 +1,6 @@
 package laya.webgl.resource {
+	import laya.display.Sprite;
+	import laya.events.Event;
 	import laya.maths.Matrix;
 	import laya.maths.Rectangle;
 	import laya.webgl.WebGL;
@@ -9,36 +11,50 @@ package laya.webgl.resource {
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.utils.RenderState2D;
 	
-	public class RenderTargetMAX {
-		private static var _matrixDefault:Matrix = new Matrix();
+	public class RenderTargetMAX{
+		//private static var _matrixDefault:Matrix = new Matrix();//可否换成Matrix的EMPTY
 		
-		public var targets:Vector.<OneTarget>;//没用到
-		public var oneTargets:OneTarget;
+		//public var targets:Vector.<OneTarget>;//没用到
+		public var target:RenderTarget2D;
 		public var repaint:Boolean;
 		
 		public var _width:Number;
 		public var _height:Number;
+		private var _sp:Sprite;
 		
 		private var _clipRect:Rectangle = new Rectangle();
 		
 		public function RenderTargetMAX() {
+			
+		}
 		
+		public function setSP(sp:Sprite):void{
+			_sp = sp;
 		}
 		
 		public function size(w:Number, h:Number):void {
-			if (_width === w && _height === h) return;
-			repaint = true;
+			if (_width === w && _height === h) 
+			{
+				this.target.size(w, h);
+				return;
+			}
+		    repaint = true;
 			_width = w;
 			_height = h;
-			
-			if (!oneTargets)
-				oneTargets = new OneTarget(w, h);
+			if (!target)
+				target = RenderTarget2D.create(w, h);
 			else
-				oneTargets.target.size(w, h);
-		
+				target.size(w, h);
+			if (!target.hasListener(Event.RECOVERED))
+			{
+				target.on(Event.RECOVERED, this, function(e:Event):void{
+					Laya.timer.callLater(_sp,_sp.repaint);
+				});
+			}
 		}
 		
 		private function _flushToTarget(context:WebGLContext2D, target:RenderTarget2D):void {
+			if (target._destroy) return;
 			var worldScissorTest:Boolean = RenderState2D.worldScissorTest;
 			var preworldClipRect:Rectangle = RenderState2D.worldClipRect;
 			
@@ -57,7 +73,7 @@ package laya.webgl.resource {
 			var preFilters:Array = RenderState2D.worldFilters;
 			var preShaderDefines:ShaderDefines2D = RenderState2D.worldShaderDefines;
 			
-			RenderState2D.worldMatrix = _matrixDefault;
+			RenderState2D.worldMatrix = Matrix.EMPTY;
 			
 			RenderState2D.restoreTempArray();
 			RenderState2D.worldMatrix4 = RenderState2D.TEMPMAT4_ARRAY;
@@ -92,39 +108,22 @@ package laya.webgl.resource {
 		
 		public function flush(context:WebGLContext2D):void {
 			if (repaint) {
-				_flushToTarget(context, oneTargets.target);
+				_flushToTarget(context,target);
 				repaint = false;
 			}
 		}
 		
 		public function drawTo(context:WebGLContext2D, x:Number, y:Number, width:Number, height:Number):void {
-			context.drawTexture(oneTargets.target.getTexture(), x, y, width, height, 0, 0);
+			context.drawTexture(target.getTexture(), x, y, width, height, 0, 0);
 		}
 		
 		public function destroy():void {
-			if (oneTargets) {
-				oneTargets.target.destroy();
-				oneTargets.target = null;
-				oneTargets = null;
+			if (target) {
+				target.destroy();
+				target = null;
+				_sp = null;
 			}
 		}
 	}
 
-}
-
-import laya.webgl.resource.RenderTarget2D;
-
-class OneTarget {
-	/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-	public var x:Number;
-	import laya.webgl.resource.RenderTarget2D;
-	public var width:Number;
-	public var height:Number;
-	public var target:RenderTarget2D;
-	
-	public function OneTarget(w:Number, h:Number) {
-		width = w;
-		height = h;
-		target = RenderTarget2D.create(w, h);
-	}
 }

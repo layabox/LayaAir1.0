@@ -1,4 +1,5 @@
-package laya.d3.resource.models {
+package laya.d3.resource.models
+{
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -10,23 +11,23 @@ package laya.d3.resource.models {
 	import laya.webgl.utils.Buffer;
 	
 	/**
-	 * <code>MeshCylinder</code> 类用于创建圆柱。
+	 * <code>CylinderMesh</code> 类用于创建圆柱。
 	 */
-	public class CylinderMesh extends PrimitiveMesh {
+	public class CylinderMesh extends PrimitiveMesh
+	{
 		/** @private */
 		private var _radius:Number;
 		/** @private */
 		private var _height:Number;
 		/** @private */
 		private var _slices:int;
-		/** @private */
-		private var _stacks:int;
 		
 		/**
 		 * 返回半径
 		 * @return 半径
 		 */
-		public function get radius():Number {
+		public function get radius():Number
+		{
 			return _radius;
 		}
 		
@@ -34,16 +35,43 @@ package laya.d3.resource.models {
 		 * 设置半径（改变此属性会重新生成顶点和索引）
 		 * @param  value 半径
 		 */
-		public function set radius(value:Number):void {
-			_radius = value;
-			recreateResource();
+		public function set radius(value:Number):void
+		{
+			if (_radius !== value) {
+				_radius = value;
+				releaseResource();
+				activeResource();
+			}
+		}
+		
+		/**
+		 * 返回高度
+		 * @return 高度
+		 */
+		public function get height():Number
+		{
+			return _height;
+		}
+		
+		/**
+		 * 设置高度（改变此属性会重新生成顶点和索引）
+		 * @param  value 高度
+		 */
+		public function set height(value:Number):void
+		{
+			if (_height !== value) {
+				_height = value;
+				releaseResource();
+				activeResource();
+			}
 		}
 		
 		/**
 		 * 获取宽度分段
 		 * @return 宽度分段
 		 */
-		public function get slices():int {
+		public function get slices():int
+		{
 			return _slices;
 		}
 		
@@ -51,137 +79,207 @@ package laya.d3.resource.models {
 		 * 设置宽度分段（改变此属性会重新生成顶点和索引）
 		 * @param  value 宽度分段
 		 */
-		public function set slices(value:int):void {
-			_slices = value;
-			recreateResource();
+		public function set slices(value:int):void
+		{
+			if (_slices !== value) {
+				_slices = value;
+				releaseResource();
+				activeResource();
+			}
 		}
 		
 		/**
-		 * 获取高度分段
-		 * @return 高度分段
-		 */
-		public function get stacks():int {
-			return _stacks;
-		}
-		
-		/**
-		 * 设置高度分段（改变此属性会重新生成顶点和索引）
-		 * @param  value高度分段
-		 */
-		public function set stacks(value:int):void {
-			_stacks = value;
-			recreateResource();
-		}
-		
-		/**
-		 * 创建一个球体模型
+		 * 创建一个圆柱体模型
 		 * @param radius 半径
-		 * @param stacks 水平层数
+		 * @param height 高度
 		 * @param slices 垂直层数
 		 */
-		public function CylinderMesh(radius:Number = 10, height:int=10, stacks:int = 8, slices:int = 8) {
+		public function CylinderMesh(radius:Number = 0.5, height:Number = 1, slices:int = 32)
+		{
 			super();
 			_radius = radius;
 			_height = height;
-			_stacks = stacks;
 			_slices = slices;
 			recreateResource();
 			_loaded = true;
-			
-			var pos:Vector.<Vector3> = positions;
-			_boundingBox = new BoundBox(new Vector3(), new Vector3());
-			BoundBox.createfromPoints(pos, _boundingBox);
-			_boundingSphere = new BoundSphere(new Vector3(), 0);
-			BoundSphere.createfromPoints(pos, _boundingSphere);
+			_generateBoundingObject();
 		}
 		
-		override protected function recreateResource():void {
+		override protected function recreateResource():void
+		{
+			
 			//(this._released) || (dispose());//如果已存在，则释放资源
 			startCreate();
-			_numberVertices = (_stacks + 1 + 2) * (_slices + 1);	//结合的地方是有缝的，所以_slices+1
-			_numberIndices = (_slices -1+_stacks*_slices)*2*3;
 			
-			var indices:Uint16Array = new Uint16Array(_numberIndices);
+			_numberVertices = (_slices + 1 + 1) + (_slices + 1) * 2 + (_slices + 1 + 1);
+			_numberIndices = 3 * _slices + 6 * _slices + 3 * _slices;
+			
+			//定义顶点数据结构
 			var vertexDeclaration:VertexDeclaration = VertexPositionNormalTexture.vertexDeclaration;
+			//单个顶点数据个数,总共字节数/单个字节数
 			var vertexFloatStride:int = vertexDeclaration.vertexStride / 4;
-			var vertices:Float32Array = new Float32Array(_numberVertices * vertexFloatStride); //TODO 多少
+			//顶点
+			var vertices:Float32Array = new Float32Array(_numberVertices * vertexFloatStride);
+			//顶点索引
+			var indices:Uint16Array = new Uint16Array(_numberIndices);
 			
 			var sliceAngle:Number = (Math.PI * 2.0) / _slices;
 			
-			var cAng:Number = 0;
-			var buttomUVCenterX:Number = 0.5;
-			var buttomUVCenterY:Number = 0.5;
-			var buttomUVR:Number = 0.5;
-			var capUVCenterX:Number = 0.5;
-			var capUVCenterY:Number = 0.5;
-			var wallUVLeft:Number = 0;
-			var wallUVTop:Number = 0;
-			var wallUVRight:Number = 1;
-			var wallUVBottom:Number = 1;
+			var halfHeight:Number = _height / 2;
+			var curAngle:Number = 0;
+			var verticeCount:Number = 0;
+			var posX:Number = 0;
+			var posY:Number = 0;
+			var posZ:Number = 0;
 			
-			var indexCount:int = 0;
-			var vertexIndex:int = 0;
-			var vertexCount:int = 0;
+			var vc:int = 0;
+			var ic:int = 0;
+			
+			//顶
+			for (var tv:int = 0; tv <= _slices; tv++)
+			{
+				
+				if (tv === 0)
+				{
+					//pos
+					vertices[vc++] = 0;
+					vertices[vc++] = halfHeight;
+					vertices[vc++] = 0;
+					//normal
+					vertices[vc++] = 0;
+					vertices[vc++] = 1;
+					vertices[vc++] = 0;
+					//uv
+					vertices[vc++] = 0.5;
+					vertices[vc++] = 0.5;
+					
+				}
+				
+				curAngle = tv * sliceAngle;
+				posX = Math.cos(curAngle) * _radius;
+				posY = halfHeight;
+				posZ = Math.sin(curAngle) * _radius;
+				
+				//pos
+				vertices[vc++] = posX;
+				vertices[vc++] = posY;
+				vertices[vc++] = posZ;
+				//normal
+				vertices[vc++] = 0;
+				vertices[vc++] = 1;
+				vertices[vc++] = 0;
+				
+				//uv
+				vertices[vc++] = 0.5 + Math.cos(curAngle) * 0.5;
+				vertices[vc++] = 0.5 + Math.sin(curAngle) * 0.5;
+			}
+			
+			for (var ti:int = 0; ti < _slices; ti++)
+			{
+				indices[ic++] = 0;
+				indices[ic++] = ti + 1;
+				indices[ic++] = ti + 2;
+			}
+			verticeCount += _slices + 1 + 1;
+			
+			//壁
+			for (var rv:int = 0; rv <= _slices; rv++)
+			{
+				curAngle = rv * sliceAngle;
+				posX = Math.cos(curAngle) * _radius;
+				posY = halfHeight;
+				posZ = Math.sin(curAngle) * _radius;
+				
+				//pos
+				vertices[vc++] = posX;
+				vertices[vc + (_slices + 1) * 8 - 1] = posX;
+				vertices[vc++] = posY;
+				vertices[vc + (_slices + 1) * 8 - 1] = -posY;
+				vertices[vc++] = posZ;
+				vertices[vc + (_slices + 1) * 8 - 1] = posZ;
+				//normal
+				vertices[vc++] = posX;
+				vertices[vc + (_slices + 1) * 8 - 1] = posX;
+				vertices[vc++] = 0;
+				vertices[vc + (_slices + 1) * 8 - 1] = 0;
+				vertices[vc++] = posZ;
+				vertices[vc + (_slices + 1) * 8 - 1] = posZ;
+				//uv    
+				vertices[vc++] = 1 - rv * 1 / _slices;
+				vertices[vc + (_slices + 1) * 8 - 1] = 1 - rv * 1 / _slices;
+				vertices[vc++] = 0;
+				vertices[vc + (_slices + 1) * 8 - 1] = 1;
+				
+			}
+			
+			vc += (_slices + 1) * 8;
+			
+			for (var ri:int = 0; ri < _slices; ri++)
+			{
+				indices[ic++] = ri + verticeCount + (_slices + 1);
+				indices[ic++] = ri + verticeCount + 1;
+				indices[ic++] = ri + verticeCount;
+				
+				indices[ic++] = ri + verticeCount + (_slices + 1);
+				indices[ic++] = ri + verticeCount + (_slices + 1) + 1;
+				indices[ic++] = ri + verticeCount + 1;
+				
+			}
+			
+			verticeCount += 2 * (_slices + 1);
 			
 			//底
-			var cv:int = 0;
-			for ( var slice:int = 0; slice < (_slices +1); slice++) {
-				var x:Number = Math.cos(cAng);
-				var y:Number = Math.sin(cAng);
-				cAng += sliceAngle;
-				vertices[cv++] = _radius *x; vertices[cv++] = _radius * y; vertices[cv++] = 0;	//pos
-				vertices[cv++] = 0; vertices[cv++] = 0; vertices[cv++] = -1;	//normal
-				vertices[cv++] = buttomUVR * x + buttomUVCenterX; vertices[cv++] = buttomUVR * y + buttomUVCenterY; 	//uv
-			}
-			for ( slice = 2; slice < (_slices + 1); slice++) {
-				indices[indexCount++] = 0;
-				indices[indexCount++] = slice-1;
-				indices[indexCount++] = slice;
-			}
-			vertexCount += (_slices+1);
-			//壁
-			var hdist:Number = _height / _stacks;
-			var cz:Number = 0;
-			for ( var h:int = 0; h < _stacks + 1; h++) {
-				for (slice = 0; slice < (_slices+1);slice++){
-					var tx:Number = vertices[ slice*vertexFloatStride ];
-					var ty:Number = vertices[ slice*vertexFloatStride + 1];
-					vertices[cv++] = tx; vertices[cv++] = ty; vertices[cv++] = cz;	//pos
-					vertices[cv++] = tx; vertices[cv++] = ty; vertices[cv++] = 0;	//normal
-					vertices[cv++] = wallUVLeft + slice * (wallUVRight - wallUVLeft) / _slices; //u
-					vertices[cv++] = wallUVBottom + h * (wallUVTop - wallUVBottom) / _stacks; 	//v
-					if (h > 0 && slice > 0) {
-						var v1:int = vertexCount - 1;
-						var v2:int = vertexCount;
-						var v3:int = vertexCount - (_slices + 1);
-						var v4:int = vertexCount - (_slices + 1) - 1;
-						indices[indexCount++] = v4; indices[indexCount++] = v1; indices[indexCount++] = v2;
-						indices[indexCount++] = v4; indices[indexCount++] = v2; indices[indexCount++] = v3;
-					}
-					vertexCount++;
+			for (var bv:int = 0; bv <= _slices; bv++)
+			{
+				if (bv === 0)
+				{
+					//pos
+					vertices[vc++] = 0;
+					vertices[vc++] = -halfHeight;
+					vertices[vc++] = 0;
+					//normal
+					vertices[vc++] = 0;
+					vertices[vc++] = -1;
+					vertices[vc++] = 0;
+					//uv
+					vertices[vc++] = 0.5;
+					vertices[vc++] = 0.5;
+					
 				}
-				cz += hdist;
+				
+				curAngle = bv * sliceAngle;
+				posX = Math.cos(curAngle) * _radius;
+				posY = -halfHeight;
+				posZ = Math.sin(curAngle) * _radius;
+				
+				//pos
+				vertices[vc++] = posX;
+				vertices[vc++] = posY;
+				vertices[vc++] = posZ;
+				//normal
+				vertices[vc++] = 0;
+				vertices[vc++] = -1;
+				vertices[vc++] = 0;
+				//uv
+				vertices[vc++] = 0.5 + Math.cos(curAngle) * 0.5;
+				vertices[vc++] = 0.5 + Math.sin(curAngle) * 0.5;
+				
 			}
-			//盖
-			for ( slice = 0; slice < (_slices + 1);slice++) {
-				tx = vertices[ slice*vertexFloatStride ];
-				ty = vertices[ slice*vertexFloatStride + 1];
-				vertices[cv++] = tx; vertices[cv++] = ty; vertices[cv++] = _height;	//pos
-				vertices[cv++] = 0; vertices[cv++] = 0; vertices[cv++] = 1;	//normal
-				vertices[cv++] = buttomUVR*tx/_radius+capUVCenterX; vertices[cv++] = buttomUVR*ty/_radius+capUVCenterY; 	//uv
-			}
-			for ( slice = 2; slice < (_slices + 1); slice++) {
-				indices[indexCount++] = vertexCount;
-				indices[indexCount++] = vertexCount + slice;
-				indices[indexCount++] = vertexCount + slice-1;
-			}
-			vertexCount += (_slices + 1);
 			
+			for (var bi:int = 0; bi < _slices; bi++)
+			{
+				indices[ic++] = 0 + verticeCount;
+				indices[ic++] = bi + 2 + verticeCount;
+				indices[ic++] = bi + 1 + verticeCount;
+			}
+			
+			verticeCount += _slices + 1 + 1;
+			debugger;
 			_vertexBuffer = new VertexBuffer3D(vertexDeclaration, _numberVertices, WebGLContext.STATIC_DRAW, true);
 			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _numberIndices, WebGLContext.STATIC_DRAW, true);
 			_vertexBuffer.setData(vertices);
 			_indexBuffer.setData(indices);
-			memorySize = (_vertexBuffer.byteLength + _indexBuffer.byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
+			memorySize = (_vertexBuffer.byteLength + _indexBuffer.byteLength) * 2;
 			completeCreate();
 		}
 	}

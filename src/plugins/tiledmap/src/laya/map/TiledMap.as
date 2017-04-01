@@ -177,6 +177,12 @@ package laya.map {
 			_width = _mapTileW * _mapW;
 			_height = _mapTileH * _mapH;
 			
+			
+			if (_orientation == ORIENTATION_STAGGERED)
+			{
+				_height = (0.5 + _mapH*0.5) * _mapTileH;
+			}
+			
 			_mapLastRect.top = _mapLastRect.bottom = _mapLastRect.left = _mapLastRect.right = -1;
 			
 			var tArray:Array = tJsonData.tilesets;
@@ -432,6 +438,7 @@ package laya.map {
 			if (0 < _tileTexSetArr.length) {
 				var tGridSprite:GridSprite = new GridSprite();
 				tGridSprite.initData(this, true);
+				tGridSprite.size(width, height);
 				var tTileTexSet:TileTexSet = _tileTexSetArr[index];
 				if (tTileTexSet != null && tTileTexSet.texture != null) {
 					if (tTileTexSet.isAnimation) {

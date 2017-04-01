@@ -501,7 +501,7 @@ package laya.d3.math {
 		 * @param	box	包围盒
 		 * @param	out 相交距离,如果为0,不相交
 		 */
-		public static function intersectsRayAndBoxRD(ray:Ray, box:BoundBox, out:Number):Boolean {
+		public static function intersectsRayAndBoxRD(ray:Ray, box:BoundBox):Number {
 			
 			var rayoe:Float32Array = ray.origin.elements;
 			var rayoeX:Number = rayoe[0];
@@ -523,7 +523,7 @@ package laya.d3.math {
 			var boxMaxeY:Number = boxMaxe[1];
 			var boxMaxeZ:Number = boxMaxe[2];
 			
-			out = 0;
+			var out:Number = 0;
 			
 			var tmax:Number = MathUtils3D.MaxValue;
 			
@@ -531,8 +531,8 @@ package laya.d3.math {
 				
 				if (rayoeX < boxMineX || rayoeX > boxMaxeX) {
 					
-					out = 0;
-					return false;
+					//out = 0;
+					return -1;
 				}
 			} else {
 				
@@ -552,8 +552,8 @@ package laya.d3.math {
 				
 				if (out > tmax) {
 					
-					out = 0;
-					return false;
+					//out = 0;
+					return -1;
 				}
 			}
 			
@@ -561,8 +561,8 @@ package laya.d3.math {
 				
 				if (rayoeY < boxMineY || rayoeY > boxMaxeY) {
 					
-					out = 0;
-					return false;
+					//out = 0;
+					return -1;
 				}
 			} else {
 				
@@ -582,8 +582,8 @@ package laya.d3.math {
 				
 				if (out > tmax) {
 					
-					out = 0;
-					return false;
+					//out = 0;
+					return -1;
 				}
 			}
 			
@@ -591,8 +591,8 @@ package laya.d3.math {
 				
 				if (rayoeZ < boxMineZ || rayoeZ > boxMaxeZ) {
 					
-					out = 0;
-					return false;
+					//out = 0;
+					return -1;
 				}
 			} else {
 				
@@ -612,12 +612,12 @@ package laya.d3.math {
 				
 				if (out > tmax) {
 					
-					out = 0;
-					return false;
+					//out = 0;
+					return -1;
 				}
 			}
 			
-			return true;
+			return out;
 		}
 		
 		/**
@@ -626,29 +626,29 @@ package laya.d3.math {
 		 * @param	box	包围盒
 		 * @param	out 相交点
 		 */
-		public static function intersectsRayAndBoxRP(ray:Ray, box:BoundBox, out:Vector3):Boolean {
+		public static function intersectsRayAndBoxRP(ray:Ray, box:BoundBox, out:Vector3):Number {
 			
-			var distance:Number;
-			if (!intersectsRayAndBoxRD(ray, box, distance)) {
+			var distance:Number = intersectsRayAndBoxRD(ray, box);
+			if (distance === -1) {
 				
-				out = Vector3.ZERO;
-				return false;
+				Vector3.ZERO.cloneTo(out);
+				return distance;
 			}
-			
 			Vector3.scale(ray.direction, distance, _tempV30);
 			Vector3.add(ray.origin, _tempV30, _tempV31);
 			
-			out = _tempV31;
-			return true;
+			_tempV31.cloneTo(out);
+			
+			return distance;
 		}
 		
 		/**
 		 * 空间中射线和包围球是否相交
 		 * @param	ray    射线
 		 * @param	sphere 包围球
-		 * @param	out    相交距离,如果为0,不相交
+		 * @return	相交距离,-1表示不相交
 		 */
-		public static function intersectsRayAndSphereRD(ray:Ray, sphere:BoundSphere, out:Number):Boolean {
+		public static function intersectsRayAndSphereRD(ray:Ray, sphere:BoundSphere):Number {
 			
 			var sphereR:Number = sphere.radius;
 			Vector3.subtract(ray.origin, sphere.center, _tempV30);
@@ -657,23 +657,22 @@ package laya.d3.math {
 			var c:Number = Vector3.dot(_tempV30, _tempV30) - (sphereR * sphereR);
 			
 			if (c > 0 && b > 0) {
-				out = 0;
-				return false;
+				return -1;
 			}
 			
 			var discriminant:Number = b * b - c;
 			
 			if (discriminant < 0) {
-				out = 0;
-				return false;
+				return -1;
 			}
 			
-			out = -b - Math.sqrt(discriminant);
+			var distance:Number = -b - Math.sqrt(discriminant);
 			
-			if (out < 0)
-				out = 0;
+			if (distance < 0)
+				distance = 0;
 			
-			return true;
+			return distance;
+			
 		}
 		
 		/**
@@ -681,22 +680,20 @@ package laya.d3.math {
 		 * @param	ray    射线
 		 * @param	sphere 包围球
 		 * @param	out    相交点
+		 * @return  相交距离,-1表示不相交
 		 */
-		public static function intersectsRayAndSphereRP(ray:Ray, sphere:BoundSphere, out:Vector3):Boolean {
-			
-			var distance:Number;
-			if (!intersectsRayAndSphereRD(ray, sphere, distance)) {
-				
-				out = Vector3.ZERO;
-				return false;
+		public static function intersectsRayAndSphereRP(ray:Ray, sphere:BoundSphere, out:Vector3):Number {
+			var distance:Number = intersectsRayAndSphereRD(ray, sphere);
+			if (distance===-1) {
+				Vector3.ZERO.cloneTo(out);
+				return distance;
 			}
 			
 			Vector3.scale(ray.direction, distance, _tempV30);
 			Vector3.add(ray.origin, _tempV30, _tempV31);
 			
-			out = _tempV31;
-			
-			return true;
+			_tempV31.cloneTo(out);
+			return distance;
 		}
 		
 		/**
@@ -732,10 +729,11 @@ package laya.d3.math {
 			
 			if (distance > 0)
 				return Plane.PlaneIntersectionType_Front;
-			else if (distance < 0)
+				
+		    if (distance < 0)
 				return Plane.PlaneIntersectionType_Back;
-			else
-				return Plane.PlaneIntersectionType_Intersecting;
+			
+			return Plane.PlaneIntersectionType_Intersecting;
 		}
 		
 		/**
@@ -953,12 +951,13 @@ package laya.d3.math {
 			if (box1MaxeZ < box2MineZ || box1MineZ > box2MaxeZ)
 				return ContainmentType.Disjoint;
 			
-			if (box1MineX <= box2MineX && box2MaxeX <= box2MineX && box1MineY <= box2MineY && box2MaxeY <= box1MaxeY && box1MineZ <= box2MineZ && box2MaxeZ <= box1MaxeZ) {
+			if (box1MineX <= box2MineX && box2MaxeX <= box2MaxeX && box1MineY <= box2MineY && box2MaxeY <= box1MaxeY && box1MineZ <= box2MineZ && box2MaxeZ <= box1MaxeZ) {
 				return ContainmentType.Contains;
 			}
 			
 			return ContainmentType.Intersects;
 		}
+		
 		
 		/**
 		 * 空间中包围盒是否包含另一个包围球
@@ -1247,7 +1246,6 @@ package laya.d3.math {
 		 * @param	out 最近点
 		 */
 		public static function closestPointBoxPoint(box:BoundBox, point:Vector3, out:Vector3):void{
-			
 			Vector3.max(point, box.min, _tempV30);
 			Vector3.min(_tempV30, box.max, out);
 		}
@@ -1259,7 +1257,6 @@ package laya.d3.math {
 		 * @param	out 最近点
 		 */
 		public static function closestPointSpherePoint(sphere:BoundSphere, point:Vector3, out:Vector3):void{
-			
 			var sphereC:Vector3 = sphere.center;
 			
 			Vector3.subtract(point, sphereC, out);
@@ -1276,7 +1273,6 @@ package laya.d3.math {
 		 * @param	out 最近点
 		 */
 		public static function closestPointSphereSphere(sphere1:BoundSphere, sphere2:BoundSphere, out:Vector3):void{
-			
 			var sphere1C:Vector3 = sphere1.center;
 			
 			Vector3.subtract(sphere2.center, sphere1C, out);

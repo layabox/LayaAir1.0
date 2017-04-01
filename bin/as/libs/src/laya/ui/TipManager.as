@@ -1,5 +1,5 @@
 package laya.ui {
-
+	
 	import laya.display.Graphics;
 	import laya.display.Sprite;
 	import laya.display.Text;
@@ -8,7 +8,6 @@ package laya.ui {
 	import laya.ui.Component;
 	import laya.ui.UIEvent;
 	import laya.utils.Handler;
-	
 	
 	/**鼠标提示管理类*/
 	public class TipManager extends Component {
@@ -28,9 +27,9 @@ package laya.ui {
 			_tipText.x = _tipText.y = 5;
 			_tipText.color = tipTextColor;
 			_defaultTipHandler = _showDefaultTip;
-			Laya.stage.on(UIEvent.SHOW_TIP,this, _onStageShowTip);
-			Laya.stage.on(UIEvent.HIDE_TIP, this,_onStageHideTip);
-			
+			Laya.stage.on(UIEvent.SHOW_TIP, this, _onStageShowTip);
+			Laya.stage.on(UIEvent.HIDE_TIP, this, _onStageHideTip);
+			this.zOrder = 1100
 		}
 		
 		/**
@@ -46,7 +45,7 @@ package laya.ui {
 		 * @private
 		 */
 		private function _onStageShowTip(data:Object):void {
-			Laya.timer.once(tipDelay, this,_showTip, [data],true);
+			Laya.timer.once(tipDelay, this, _showTip, [data], true);
 		}
 		
 		/**
@@ -64,8 +63,8 @@ package laya.ui {
 				(tip as Function).apply();
 			}
 			if (true) {
-				Laya.stage.on(Event.MOUSE_MOVE, this,_onStageMouseMove);
-				Laya.stage.on(Event.MOUSE_DOWN, this,_onStageMouseDown);
+				Laya.stage.on(Event.MOUSE_MOVE, this, _onStageMouseMove);
+				Laya.stage.on(Event.MOUSE_DOWN, this, _onStageMouseDown);
 			}
 			
 			_onStageMouseMove(null);
@@ -82,30 +81,28 @@ package laya.ui {
 		 * @private
 		 */
 		private function _onStageMouseMove(e:Event):void {
-			_showToStage(this,offsetX,offsetY);
+			_showToStage(this, offsetX, offsetY);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _showToStage(dis:Sprite, offX:int = 0, offY:int = 0):void
-		{
+		private function _showToStage(dis:Sprite, offX:int = 0, offY:int = 0):void {
 			var rec:Rectangle = dis.getBounds();
 			dis.x = Laya.stage.mouseX + offX;
 			dis.y = Laya.stage.mouseY + offY;
-			if (dis.x + rec.width > Laya.stage.width)
-			{
+			if (dis.x + rec.width > Laya.stage.width) {
 				dis.x -= rec.width + offX;
 			}
-			if (dis.y + rec.height > Laya.stage.height)
-			{
+			if (dis.y + rec.height > Laya.stage.height) {
 				dis.y -= rec.height + offY;
 			}
 		}
+		
 		/**关闭所有鼠标提示*/
 		public function closeAll():void {
 			Laya.timer.clear(this, _showTip);
-			Laya.stage.off(Event.MOUSE_MOVE, this,_onStageMouseMove);
+			Laya.stage.off(Event.MOUSE_MOVE, this, _onStageMouseMove);
 			Laya.stage.off(Event.MOUSE_DOWN, this, _onStageMouseDown);
 			this.removeChildren();
 		}
@@ -113,11 +110,10 @@ package laya.ui {
 		/**
 		 * 显示显示对象类型的tip
 		 */
-		public function showDislayTip(tip:Sprite):void
-		{
+		public function showDislayTip(tip:Sprite):void {
 			addChild(tip);
 			_showToStage(this);
-			Laya.stageBox.addChild(this);
+			Laya._currentStage.addChild(this);
 		}
 		
 		/**
@@ -126,11 +122,11 @@ package laya.ui {
 		private function _showDefaultTip(text:String):void {
 			_tipText.text = text;
 			var g:Graphics = _tipBox.graphics;
-			g.clear();	
+			g.clear();
 			g.drawRect(0, 0, _tipText.width + 10, _tipText.height + 10, tipBackColor);
 			addChild(_tipBox);
 			_showToStage(this);
-			Laya.stageBox.addChild(this);
+			Laya._currentStage.addChild(this);
 		}
 		
 		/**默认鼠标提示函数*/

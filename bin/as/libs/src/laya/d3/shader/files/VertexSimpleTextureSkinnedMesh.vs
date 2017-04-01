@@ -183,7 +183,7 @@ v_Specular+=spe;
 
 #ifdef AMBIENTMAP
   #ifdef SCALEOFFSETLIGHTINGMAPUV
-  v_Texcoord1=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,a_Texcoord1.y*u_LightmapScaleOffset.y-u_LightmapScaleOffset.w);
+  v_Texcoord1=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,1.0+a_Texcoord1.y*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
   #else
   v_Texcoord1=a_Texcoord1;
   #endif 

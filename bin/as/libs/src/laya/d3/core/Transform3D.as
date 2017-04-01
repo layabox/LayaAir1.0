@@ -11,11 +11,17 @@ package laya.d3.core {
 	 */
 	public class Transform3D extends EventDispatcher {
 		/** @private */
-		protected var _tempMatrix0:Matrix4x4 = new Matrix4x4();
+		private static var _tempVector30:Vector3 = new Vector3();
 		/** @private */
-		protected var _tempQuaternion0:Quaternion = new Quaternion();
+		private static var _tempVector31:Vector3 = new Vector3();
 		/** @private */
-		protected var _tempVector30:Vector3 = new Vector3();
+		private static var _tempVector32:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempVector33:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempQuaternion0:Quaternion = new Quaternion();
+		/** @private */
+		private static var _tempMatrix0:Matrix4x4 = new Matrix4x4();
 		
 		/** @private */
 		protected var _localPosition:Vector3 = new Vector3();
@@ -53,7 +59,27 @@ package laya.d3.core {
 		/** @private */
 		protected var _worldUpdate:Boolean = true;
 		/** @private */
+		protected var _positionUpdate:Boolean = true;
+		/** @private */
+		protected var _rotationUpdate:Boolean = true;
+		/** @private */
+		protected var _scaleUpdate:Boolean = true;
+		/** @private */
 		protected var _parent:Transform3D;
+		
+		/** 变换中心点,注意:该中心点不受变换的影响。*/
+		public var pivot:Vector3;
+		
+		/**
+		 * @private
+		 */
+		public function get _isFrontFaceInvert():Boolean {
+			var scale:Vector3 = this.scale;
+			var isInvert:Boolean = scale.x < 0;
+			(scale.y < 0) && (isInvert = !isInvert);
+			(scale.z < 0) && (isInvert = !isInvert);
+			return isInvert;
+		}
 		
 		/**
 		 * 获取世界矩阵是否需要更新。
@@ -82,7 +108,7 @@ package laya.d3.core {
 		 */
 		public function set localMatrix(value:Matrix4x4):void {
 			_localMatrix = value;
-			_localMatrix.decompose(_localPosition, _localRotation, _localScale);
+			_localMatrix.decomposeTransRotScale(_localPosition, _localRotation, _localScale);
 			_onWorldTransform();
 		}
 		
@@ -132,7 +158,7 @@ package laya.d3.core {
 		public function set localPosition(value:Vector3):void {
 			_localPosition = value;
 			_onLocalTransform();
-			_onWorldTransform();
+			_onWorldPositionTransform();
 		}
 		
 		/**
@@ -151,7 +177,10 @@ package laya.d3.core {
 			_localRotation = value;
 			_localRotation.normalize(_localRotation);
 			_onLocalTransform();
-			_onWorldTransform();
+			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
+				_onWorldPositionRotationTransform();
+			else
+				_onWorldRotationTransform();
 		}
 		
 		/**
@@ -169,7 +198,10 @@ package laya.d3.core {
 		public function set localScale(value:Vector3):void {
 			_localScale = value;
 			_onLocalTransform();
-			_onWorldTransform();
+			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
+				_onWorldPositionScaleTransform();
+			else
+				_onWorldScaleTransform();
 		}
 		
 		/**
@@ -179,7 +211,10 @@ package laya.d3.core {
 		public function set localRotationEuler(value:Vector3):void {
 			Quaternion.createFromYawPitchRoll(value.y, value.x, value.z, _localRotation);
 			_onLocalTransform();
-			_onWorldTransform();
+			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
+				_onWorldPositionRotationTransform();
+			else
+				_onWorldRotationTransform();
 		}
 		
 		/**
@@ -187,6 +222,9 @@ package laya.d3.core {
 		 * @return	世界位置。
 		 */
 		public function get position():Vector3 {
+			if (!_positionUpdate)
+				return _position;
+			
 			if (_parent !== null) {
 				var worldMatElem:Float32Array = worldMatrix.elements;
 				_position.elements[0] = worldMatElem[12];
@@ -195,6 +233,8 @@ package laya.d3.core {
 			} else {
 				_localPosition.cloneTo(_position);
 			}
+			
+			_positionUpdate = false;
 			return _position;
 		}
 		
@@ -218,11 +258,16 @@ package laya.d3.core {
 		 * @return	世界旋转。
 		 */
 		public function get rotation():Quaternion {
+			if (!_rotationUpdate)
+				return _rotation;
+			
 			if (_parent !== null) {
-				worldMatrix.decompose(_position, _rotation, _scale);//可不计算_position和_scale
+				worldMatrix.decomposeTransRotScale(_position, _rotation, _scale);//可不计算_position和_scale,数学库有优化
 			} else {
 				_localRotation.cloneTo(_rotation);
 			}
+			
+			_rotationUpdate = false;
 			return _rotation;
 		}
 		
@@ -246,11 +291,15 @@ package laya.d3.core {
 		 * @return	世界缩放。
 		 */
 		public function get scale():Vector3 {
+			if (!_scaleUpdate)
+				return _scale;
 			if (_parent !== null) {
 				Vector3.multiply(_parent.scale, _localScale, _scale);
 			} else {
 				_localScale.cloneTo(_scale);
 			}
+			
+			_scaleUpdate = false;
 			return _scale;
 		}
 		
@@ -320,7 +369,22 @@ package laya.d3.core {
 		 * @private
 		 */
 		protected function _updateLocalMatrix():void {
-			Matrix4x4.createAffineTransformation(_localPosition, _localRotation, _localScale, _localMatrix);
+			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0)) {
+				var scalePivot:Vector3 = _tempVector30;
+				Vector3.multiply(pivot, _localScale, scalePivot);
+				var scaleOffsetPosition:Vector3 = _tempVector31;
+				Vector3.subtract(scalePivot, pivot, scaleOffsetPosition);
+				var rotationOffsetPosition:Vector3 = _tempVector32;
+				Vector3.transformQuat(scalePivot, _localRotation, rotationOffsetPosition);
+				Vector3.subtract(rotationOffsetPosition, scalePivot, rotationOffsetPosition);
+				
+				var resultLocalPosition:Vector3 = _tempVector33;
+				Vector3.subtract(_localPosition, scaleOffsetPosition, resultLocalPosition);
+				Vector3.subtract(resultLocalPosition, rotationOffsetPosition, resultLocalPosition);
+				Matrix4x4.createAffineTransformation(resultLocalPosition, _localRotation, _localScale, _localMatrix);
+			} else {
+				Matrix4x4.createAffineTransformation(_localPosition, _localRotation, _localScale, _localMatrix);
+			}
 		}
 		
 		/**
@@ -334,13 +398,72 @@ package laya.d3.core {
 		 * @private
 		 */
 		protected function _onWorldTransform():void {
-			if (!_worldUpdate) {
-				_worldUpdate = true;
+			if (!_worldUpdate || !_positionUpdate || !_rotationUpdate || !_scaleUpdate) {
+				_worldUpdate = _positionUpdate = _rotationUpdate = _scaleUpdate = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
 				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
 					(_owner._childs[i] as Sprite3D).transform._onWorldTransform();
 			}
+		}
 		
+		/**
+		 * @private
+		 */
+		protected function _onWorldPositionRotationTransform():void {
+			if (!_worldUpdate || !_positionUpdate || !_rotationUpdate) {
+				_worldUpdate = _positionUpdate = _rotationUpdate = true;
+				event(Event.WORLDMATRIX_NEEDCHANGE);
+				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
+					(_owner._childs[i] as Sprite3D).transform._onWorldPositionRotationTransform();
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _onWorldPositionScaleTransform():void {
+			if (!_worldUpdate || !_positionUpdate || !_scaleUpdate) {
+				_worldUpdate = _positionUpdate = _scaleUpdate = true;
+				event(Event.WORLDMATRIX_NEEDCHANGE);
+				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
+					(_owner._childs[i] as Sprite3D).transform._onWorldPositionScaleTransform();
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _onWorldPositionTransform():void {
+			if (!_worldUpdate || !_positionUpdate) {
+				_worldUpdate = _positionUpdate = true;
+				event(Event.WORLDMATRIX_NEEDCHANGE);
+				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
+					(_owner._childs[i] as Sprite3D).transform._onWorldPositionTransform();
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _onWorldRotationTransform():void {
+			if (!_worldUpdate || !_rotationUpdate) {
+				_worldUpdate = _rotationUpdate = true;
+				event(Event.WORLDMATRIX_NEEDCHANGE);
+				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
+					(_owner._childs[i] as Sprite3D).transform._onWorldRotationTransform();
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _onWorldScaleTransform():void {
+			if (!_worldUpdate || !_scaleUpdate) {
+				_worldUpdate = _scaleUpdate = true;
+				event(Event.WORLDMATRIX_NEEDCHANGE);
+				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
+					(_owner._childs[i] as Sprite3D).transform._onWorldScaleTransform();
+			}
 		}
 		
 		/**
@@ -403,6 +526,7 @@ package laya.d3.core {
 				worldMatrix = _worldMatrix;
 			}
 		}
+	
 	}
 
 }

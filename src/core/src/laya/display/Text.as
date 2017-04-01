@@ -311,7 +311,7 @@ package laya.display {
 		
 		/**
 		 * 文本的字体名称，以字符串形式表示。
-		 * <p>默认值为："Arial"，可以通过Text.defaultFont设置默认字体。</p>		 *
+		 * <p>默认值为："Arial"，可以通过Font.defaultFont设置默认字体。</p>
 		 * @see laya.display.css.Font#defaultFamily
 		 */
 		public function get font():String {
@@ -545,15 +545,14 @@ package laya.display {
 			}
 			var startY:Number = padding[0];
 			
-			//处理水平对齐
-			if ((!tCurrBitmapFont) && this._width > 0 && _textWidth <= _width) {
-				if (align == "right") {
-					textAlgin = "right";
-					startX = this._width - padding[1];
-				} else if (align == "center") {
-					textAlgin = "center";
-					startX = this._width * 0.5 + padding[3] - padding[1];
-				}
+			//处理对齐
+			if (align == "right") {
+				textAlgin = "right";
+				startX = this._width - padding[1];
+			}
+			else if (align == "center") {
+				textAlgin = "center";
+				startX = this._width * 0.5 + padding[3] - padding[1];
 			}
 			
 			if (_height > 0) {

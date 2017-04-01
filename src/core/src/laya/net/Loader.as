@@ -5,6 +5,7 @@ package laya.net {
 	import laya.events.EventDispatcher;
 	import laya.media.Sound;
 	import laya.media.SoundManager;
+	import laya.renders.Render;
 	import laya.resource.HTMLImage;
 	import laya.resource.Texture;
 	import laya.utils.Browser;
@@ -49,7 +50,7 @@ package laya.net {
 		public static const FONT:String = "font";
 		
 		/** 文件后缀和类型对应表。*/
-		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json", "fnt": "font"};
+		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "atlas": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json", "fnt": "font"};
 		/**资源解析函数对应表，用来扩展更多类型的资源加载解析*/
 		public static var parserMap:Object = /*[STATIC SAFE]*/ {};
 		/** 已加载的资源池。*/
@@ -87,7 +88,7 @@ package laya.net {
 		 * @param	ignoreCache 是否忽略缓存，强制重新加载
 		 */
 		public function load(url:String, type:String = null, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):void {
-			if (url.indexOf("data:image") === 0) this._type = IMAGE;
+			if (url.indexOf("data:image") === 0) type = IMAGE;
 			url = URL.formatURL(url);
 			this._url = url;
 			this._type = type || (type = getTypeFromUrl(url));
@@ -162,7 +163,7 @@ package laya.net {
 			};
 			var onerror:Function = function():void {
 				clear();
-				_this.event(Event.ERROR, "Load image filed");
+				_this.event(Event.ERROR, "Load image failed");
 			}
 			
 			if (_type === "nativeimage") {
@@ -197,7 +198,8 @@ package laya.net {
 			}
 			function soundOnErr():void {
 				clear();
-				_this.event(Event.ERROR, "Load sound filed");
+				sound.dispose();
+				_this.event(Event.ERROR, "Load sound failed");
 			}
 			function clear():void {
 				sound.offAll();
@@ -229,7 +231,7 @@ package laya.net {
 				complete(data);
 			} else if (type === ATLAS) {
 				//处理图集
-				if (!data.src) {
+				if (!data.src && !data._setContext) {
 					if (!_data) {
 						this._data = data;
 						//构造加载图片信息
@@ -278,13 +280,13 @@ package laya.net {
 						
 						//if (needSub) {
 						//var merageInAtlas:Boolean = false;
-						//(obj.frame.w > Config.atlasLimitWidth || obj.frame.h > Config.atlasLimitHeight) && (merageInAtlas = true);
-						//var webGLSubImage:HTMLSubImage = new HTMLSubImage(Browser.canvas.source, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h,tPic.image,tPic.image.src, merageInAtlas);
-						//var tex:Texture = new Texture(webGLSubImage);
-						//tex.offsetX = obj.spriteSourceSize.x;
-						//tex.offsetY = obj.spriteSourceSize.y;
-						//loadedMap[url] = tex;
-						//map.push(tex);
+						//var webGLSubImage:HTMLSubImage = HTMLSubImage.create(Browser.canvas.source, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, tPic.image, tPic.image.src);
+						//var subTex:Texture = new Texture(webGLSubImage);
+						//subTex.offsetX = obj.spriteSourceSize.x;
+						//subTex.offsetY = obj.spriteSourceSize.y;
+						//cacheRes(url, subTex);
+						////loadedMap[url] = tex;
+						//map.push(url);
 						//} else {
 						cacheRes(url, Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h));
 						//loadedMap[url] = Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h);
@@ -292,12 +294,13 @@ package laya.net {
 						map.push(url);
 							//}
 					}
+					
 					/*[IF-FLASH]*/
 					map.sort();
 					
 					//if (needSub)
-					//for (i = 0; i < pics.length; i++)
-					//pics[i].dispose();//Sub后可直接释放
+						//for (i = 0; i < pics.length; i++)
+							//pics[i].dispose();//Sub后可直接释放
 					complete(this._data);
 				}
 			} else if (type == FONT) {

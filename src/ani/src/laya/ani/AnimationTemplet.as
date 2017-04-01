@@ -471,6 +471,7 @@ package laya.ani {
 		}
 		
 		override public function dispose():void {
+			if(resourceManager)
 			resourceManager.removeResource(this);
 			super.dispose();
 		}

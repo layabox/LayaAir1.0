@@ -14,14 +14,14 @@ package laya.display {
 	[Event(name = "label", type = "laya.events.Event")]
 	
 	/**
-	 *  动画播放控制器
+	 * 动画播放基类
 	 */
 	public class AnimationPlayerBase extends Sprite {
-		/**是否循环播放 */
+		/**是否循环播放*/
 		public var loop:Boolean;
 		/**播放类型：0为正序播放，1为倒序播放，2为pingpong播放*/
 		public var wrapMode:int = 0;
-		/** 播放间隔(单位：毫秒)。*/
+		/**@private 播放间隔(单位：毫秒)。*/
 		protected var _interval:int = Config.animationInterval;
 		/**@private */
 		protected var _index:int;
@@ -57,7 +57,11 @@ package laya.display {
 			}
 		}
 		
-		/** 播放间隔(单位：毫秒)。*/
+		/** 播放间隔(单位：毫秒)，默认为50毫秒，可以通过Config.animationInterval修改默认时间间隔。*/
+		public function get interval():int {
+			return _interval;
+		}
+		
 		public function set interval(value:int):void {
 			if (_interval != value) {
 				_frameRateChanged = true;
@@ -66,11 +70,6 @@ package laya.display {
 					timerLoop(value, this, _frameLoop, null, true);
 				}
 			}
-		}
-		
-		/** 播放间隔(单位：毫秒)。*/
-		public function get interval():int {
-			return _interval;
 		}
 		
 		/**@private */
@@ -216,7 +215,6 @@ package laya.display {
 		 * @private
 		 * 显示到某帧
 		 * @param value 帧索引
-		 *
 		 */
 		protected function _displayToIndex(value:int):void {
 		}

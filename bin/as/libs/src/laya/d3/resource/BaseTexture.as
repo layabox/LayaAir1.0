@@ -23,6 +23,7 @@ package laya.d3.resource {
 		protected var _magFifter:int;
 		/** @private */
 		protected var _source:*;
+		/** @private */
 		public var _conchTexture:*//NATIVE
 		
 		/**

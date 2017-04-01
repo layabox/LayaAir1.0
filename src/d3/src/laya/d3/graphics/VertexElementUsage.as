@@ -33,17 +33,18 @@ package laya.d3.graphics {
 		public static const STARTROTATION1:int = 23;
 		public static const STARTROTATION2:int = 24;
 		public static const ENDCOLOR0:int = 25;
+		public static const STARTLIFETIME:int = 26;
+		public static const TIME0:int = 33;
 		
 		
-		public static const SIZEROTATION0:int = 26;
-		public static const RADIUS0:int =27;
-		public static const RADIAN0:int = 28;
-		public static const STARTLIFETIME:int = 29;
-		public static const STARTSPEED:int = 30;
-		public static const DIRECTION:int = 31;
-		public static const TIME0:int = 32;
-		public static const RANDOM0:int = 33;
-		public static const RANDOM1:int = 34;
-		public static const SIMULATIONWORLDPOSTION:int = 35;
+		public static const POSITIONSTARTLIFETIME:int = 30;
+		public static const DIRECTIONTIME:int = 32;
+		public static const SIZEROTATION0:int = 27;
+		public static const RADIUS0:int =28;
+		public static const RADIAN0:int = 29;
+		public static const STARTSPEED:int = 31;
+		public static const RANDOM0:int = 34;
+		public static const RANDOM1:int = 35;
+		public static const SIMULATIONWORLDPOSTION:int = 36;
 	}
 }

@@ -5,6 +5,7 @@ package laya.d3.resource.models {
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexElementFormat;
@@ -40,9 +41,15 @@ package laya.d3.resource.models {
 		/** @private */
 		private var _subMeshes:Vector.<SubMesh>;
 		/** @private */
+		public var _boneNames:Vector.<String>;
+		/** @private */
 		public var _bindPoses:Vector.<Matrix4x4>;
 		/** @private */
 		public var _inverseBindPoses:Vector.<Matrix4x4>;
+		/** @private */
+		public var _vertexBuffers:Vector.<VertexBuffer3D>;
+		/** @private */
+		public var _indexBuffers:IndexBuffer3D;
 		/**
 		 * 获取网格顶点
 		 * @return 网格顶点。
@@ -107,19 +114,12 @@ package laya.d3.resource.models {
 			super();
 			_subMeshes = new Vector.<SubMesh>();
 			_materials = new Vector.<BaseMaterial>();
+			_vertexBuffers = new Vector.<VertexBuffer3D>();
 			
 			if (_loaded)
 				_generateBoundingObject();
 			else
 				once(Event.LOADED, this, _generateBoundingObject);
-		}
-		
-		private function _generateBoundingObject():void {
-			var pos:Vector.<Vector3> = positions;
-			_boundingBox = new BoundBox(new Vector3(), new Vector3());
-			BoundBox.createfromPoints(pos, _boundingBox);
-			_boundingSphere = new BoundSphere(new Vector3(), 0);
-			BoundSphere.createfromPoints(pos, _boundingSphere);
 		}
 		
 		/**

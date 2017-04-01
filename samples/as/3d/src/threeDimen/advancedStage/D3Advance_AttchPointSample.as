@@ -11,6 +11,7 @@ package threeDimen.advancedStage {
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.Mesh;
 	import laya.display.Stage;
+	import laya.events.Event;
 	import laya.particle.ParticleSetting;
 	import laya.utils.Stat;
 	
@@ -72,27 +73,25 @@ package threeDimen.advancedStage {
 			fire = new Particle3D(setting);
 			scene.addChild(fire);
 			
-			Laya.timer.frameLoop(1, this, loop);
-		}
-		
-		private function loop():void {
-			var matrix0:Matrix4x4 = attacthPoint.matrixs[0];
-			var e:Float32Array;
-			var i:int;
-			if (matrix0) {
-				e = matrix0.elements;
-				for (i = 0; i < 10; i++) {
-					fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0));//矩阵的12、13、14分别为Position的X、Y、Z
+			attacthPoint.on(Event.COMPLETE, this, function():void{
+				var matrix0:Matrix4x4 = attacthPoint.matrixs[0];
+				var e:Float32Array;
+				var i:int;
+				if (matrix0) {
+					e = matrix0.elements;
+					for (i = 0; i < 10; i++) {
+						fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0));//矩阵的12、13、14分别为Position的X、Y、Z
+					}
 				}
-			}
-			
-			var matrix1:Matrix4x4 = attacthPoint.matrixs[1];
-			if (matrix1) {
-				e = matrix1.elements;
-				for (i = 0; i < 10; i++) {
-					fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0));//矩阵的12、13、14分别为Position的X、Y、Z
+				
+				var matrix1:Matrix4x4 = attacthPoint.matrixs[1];
+				if (matrix1) {
+					e = matrix1.elements;
+					for (i = 0; i < 10; i++) {
+						fire.addParticle(new Vector3(e[12], e[13], e[14]), new Vector3(0, 0, 0));//矩阵的12、13、14分别为Position的X、Y、Z
+					}
 				}
-			}
+			});
 		}
 	}
 }

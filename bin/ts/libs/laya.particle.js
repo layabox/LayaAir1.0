@@ -5,9 +5,9 @@
 	var BlendMode=laya.webgl.canvas.BlendMode,Event=laya.events.Event,HTMLCanvas=laya.resource.HTMLCanvas;
 	var Handler=laya.utils.Handler,IndexBuffer2D=laya.webgl.utils.IndexBuffer2D,Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil;
 	var Matrix=laya.maths.Matrix,Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
-	var Shader=laya.webgl.shader.Shader,Sprite=laya.display.Sprite,Stage=laya.display.Stage,Stat=laya.utils.Stat;
-	var Texture=laya.resource.Texture,Timer=laya.utils.Timer,Utils=laya.utils.Utils,Value2D=laya.webgl.shader.d2.value.Value2D;
-	var VertexBuffer2D=laya.webgl.utils.VertexBuffer2D,WebGL=laya.webgl.WebGL,WebGLContext=laya.webgl.WebGLContext;
+	var Shader=laya.webgl.shader.Shader,Sprite=laya.display.Sprite,Stat=laya.utils.Stat,Texture=laya.resource.Texture;
+	var Utils=laya.utils.Utils,Value2D=laya.webgl.shader.d2.value.Value2D,VertexBuffer2D=laya.webgl.utils.VertexBuffer2D;
+	var WebGL=laya.webgl.WebGL,WebGLContext=laya.webgl.WebGLContext;
 	/**
 	*<code>EmitterBase</code> 类是粒子发射器类
 	*/
@@ -131,14 +131,24 @@
 			particleData.startColor=ParticleData._tempStartColor;
 			particleData.endColor=ParticleData._tempEndColor;
 			var i=0;
-			if (settings.colorComponentInter){
-				for (i=0;i < 4;i++){
-					particleData.startColor[i]=MathUtil.lerp(settings.minStartColor[i],settings.maxStartColor[i],Math.random());
-					particleData.endColor[i]=MathUtil.lerp(settings.minEndColor[i],settings.maxEndColor[i],Math.random());
+			if (settings.disableColor){
+				for (i=0;i < 3;i++){
+					particleData.startColor[i]=255;
+					particleData.endColor[i]=255;
 				}
-				}else {
-				MathUtil.lerpVector4(settings.minStartColor,settings.maxStartColor,Math.random(),particleData.startColor);
-				MathUtil.lerpVector4(settings.minEndColor,settings.maxEndColor,Math.random(),particleData.endColor);
+				particleData.startColor[i]=MathUtil.lerp(settings.minStartColor[i],settings.maxStartColor[i],Math.random());
+				particleData.endColor[i]=MathUtil.lerp(settings.minEndColor[i],settings.maxEndColor[i],Math.random());
+			}
+			else{
+				if (settings.colorComponentInter){
+					for (i=0;i < 4;i++){
+						particleData.startColor[i]=MathUtil.lerp(settings.minStartColor[i],settings.maxStartColor[i],Math.random());
+						particleData.endColor[i]=MathUtil.lerp(settings.minEndColor[i],settings.maxEndColor[i],Math.random());
+					}
+					}else {
+					MathUtil.lerpVector4(settings.minStartColor,settings.maxStartColor,Math.random(),particleData.startColor);
+					MathUtil.lerpVector4(settings.minEndColor,settings.maxEndColor,Math.random(),particleData.endColor);
+				}
 			}
 			particleData.sizeRotation=ParticleData._tempSizeRotation;
 			var sizeRandom=Math.random();
@@ -247,6 +257,7 @@
 			this.minVerticalEndRadian=0;
 			this.maxVerticalEndRadian=0;
 			this.colorComponentInter=false;
+			this.disableColor=false;
 			this.blendState=0;
 			this.emitterType="null";
 			this.emissionRate=0;
@@ -621,11 +632,14 @@
 		}
 
 		__proto.retireActiveParticles=function(){
+			var epsilon=0.0001;
 			var particleDuration=this.settings.duration;
 			while (this._firstActiveElement !=this._firstNewElement){
-				var index=this._firstActiveElement *this._floatCountPerVertex *4+28;
+				var offset=this._firstActiveElement *this._floatCountPerVertex *4;
+				var index=offset+28;
 				var particleAge=this._currentTime-this._vertices[index];
-				if (particleAge < particleDuration)
+				particleAge *=(1.0+this._vertices[offset+27]);
+				if (particleAge+epsilon < particleDuration)
 					break ;
 				this._vertices[index]=this._drawCounter;
 				this._firstActiveElement++;
@@ -815,7 +829,7 @@
 			if(!this._ready)return;
 			if(this.activeParticles.length<1)return;
 			if (this.textureList.length < 2)return;
-			if (this.settings.colorComponentInter){
+			if (this.settings.disableColor){
 				this.noColorRender(context,x,y);
 				}else{
 				this.canvasRender(context,x,y);
@@ -896,7 +910,7 @@
 		ParticleTemplateCanvas.changeTexture=function(texture,rst,settings){
 			if(!rst)rst=[];
 			rst.length=0;
-			if (settings&&settings.colorComponentInter){
+			if (settings&&settings.disableColor){
 				rst.push(texture,texture,texture);
 				}else{
 				Utils.copyArray(rst,PicTool.getRGBPic(texture));
@@ -1019,7 +1033,6 @@
 		}
 
 		__proto.dispose=function(){
-			this._vertexBuffer2D.dispose();
 			this._indexBuffer2D.dispose();
 		}
 

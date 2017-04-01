@@ -217,9 +217,9 @@ package laya.ui {
 		
 		/**@inheritDoc */
 		override public function destroy(destroyChild:Boolean = true):void {
-			super.destroy(destroyChild);
 			_content && _content.destroy(destroyChild);
 			_scrollBar && _scrollBar.destroy(destroyChild);
+			super.destroy(destroyChild);
 			_content = null;
 			_scrollBar = null;
 			_itemRender = null;
@@ -272,7 +272,8 @@ package laya.ui {
 			var scrollBar:VScrollBar = new VScrollBar();
 			scrollBar.name = "scrollBar";
 			scrollBar.right = 0;
-			scrollBar.skin = value;
+			if (value && value != " ")
+				scrollBar.skin = value;
 			this.scrollBar = scrollBar;
 			addChild(scrollBar);
 			_setCellChanged();
@@ -290,7 +291,8 @@ package laya.ui {
 			var scrollBar:HScrollBar = new HScrollBar();
 			scrollBar.name = "scrollBar";
 			scrollBar.bottom = 0;
-			scrollBar.skin = value;
+			if (value && value != " ")
+				scrollBar.skin = value;
 			this.scrollBar = scrollBar;
 			addChild(scrollBar);
 			_setCellChanged();
@@ -307,9 +309,9 @@ package laya.ui {
 			if (_scrollBar != value) {
 				_scrollBar = value;
 				if (value) {
+					_isVertical = _scrollBar.isVertical;
 					addChild(_scrollBar);
 					_scrollBar.on(Event.CHANGE, this, onScrollBarChange);
-					_isVertical = _scrollBar.isVertical;
 				}
 			}
 		}
@@ -327,8 +329,15 @@ package laya.ui {
 		}
 		
 		public function set itemRender(value:*):void {
-			_itemRender = value;
-			_setCellChanged();
+			if (_itemRender != value) {
+				_itemRender = value;
+				//销毁老单元格
+				for (var i:int = _cells.length - 1; i > -1; i--) {
+					_cells[i].destroy();
+				}
+				_cells.length = 0;
+				_setCellChanged();
+			}
 		}
 		
 		/**@inheritDoc */
@@ -399,17 +408,11 @@ package laya.ui {
 		protected function changeCells():void {
 			_cellChanged = false;
 			if (_itemRender) {
-				//销毁老单元格
-				for (var i:int = _cells.length - 1; i > -1; i--) {
-					_cells[i].destroy();
-				}
-				_cells.length = 0;
-				
 				//获取滚动条
 				scrollBar = getChildByName("scrollBar") as ScrollBar;
 				
-				//自适应宽高
-				var cell:Box = createItem();
+				//自适应宽高				
+				var cell:Box = _getOneCell();
 				
 				var cellWidth:Number = (cell.width + _spaceX) || 1;
 				var cellHeight:Number = (cell.height + _spaceY) || 1;
@@ -438,9 +441,16 @@ package laya.ui {
 			}
 		}
 		
+		private function _getOneCell():Box {
+			if (_cells.length === 0) {
+				_cells.push(createItem());
+			}
+			return _cells[0];
+		}
+		
 		private function _createItems(startY:int, numX:int, numY:int):void {
 			var box:Box = _content;
-			var cell:Box = createItem();
+			var cell:Box = _getOneCell();
 			var cellWidth:Number = cell.width + _spaceX;
 			var cellHeight:Number = cell.height + _spaceY;
 			
@@ -453,9 +463,21 @@ package laya.ui {
 				box = cacheBox;
 			}
 			
+			var arr:Array = [];
+			for (var i:int = _cells.length - 1; i > -1; i--) {
+				var item:Box = _cells[i];
+				item.removeSelf();
+				arr.push(item);
+			}
+			_cells.length = 0;
+			
 			for (var k:int = startY; k < numY; k++) {
 				for (var l:int = 0; l < numX; l++) {
-					cell = createItem();
+					if (arr.length) {
+						cell = arr.pop();
+					} else {
+						cell = createItem();
+					}
 					cell.x = (_isVertical ? l : k) * cellWidth - box.x;
 					cell.y = (_isVertical ? k : l) * cellHeight - box.y;
 					cell.name = "item" + (k * numX + l);
@@ -466,7 +488,8 @@ package laya.ui {
 		}
 		
 		protected function createItem():Box {
-			/*[IF-FLASH]*/return _itemRender.prototype!=null? new _itemRender() : View.createComp(_itemRender) as Box;
+			/*[IF-FLASH]*/
+			return _itemRender.prototype != null ? new _itemRender() : View.createComp(_itemRender) as Box;
 			//[IF-JS]return _itemRender is Function ? new _itemRender() : View.createComp(_itemRender) as Box;
 		}
 		
@@ -561,8 +584,7 @@ package laya.ui {
 		override protected function changeSize():void {
 			super.changeSize();
 			setContentSize(this.width, this.height);
-			if (_scrollBar)
-				Laya.timer.once(10, this, onScrollBarChange);
+			if (_scrollBar) callLater(onScrollBarChange);
 		}
 		
 		/**
@@ -751,6 +773,7 @@ package laya.ui {
 			startIndex = _startIndex;
 			//重设滚动条
 			if (_scrollBar) {
+				_scrollBar.stopScroll();
 				//自动隐藏滚动条
 				var numX:int = _isVertical ? repeatX : repeatY;
 				var numY:int = _isVertical ? repeatY : repeatX;
@@ -759,7 +782,7 @@ package laya.ui {
 				if (total > 1) {
 					_scrollBar.scrollSize = _cellSize;
 					_scrollBar.thumbPercent = numY / lineCount;
-					_scrollBar.setScroll(0, (lineCount - numY) * _cellSize + _cellOffset, _isVertical ? _content.scrollRect.y : _content.scrollRect.x);
+					_scrollBar.setScroll(0, (lineCount - numY) * _cellSize + _cellOffset, _scrollBar.value);
 					_scrollBar.target = _content;
 				} else {
 					_scrollBar.setScroll(0, 0, 0);
@@ -788,7 +811,7 @@ package laya.ui {
 		 * 列表的数据总个数。
 		 */
 		public function get length():int {
-			return _array.length;
+			return _array ? _array.length : 0;
 		}
 		
 		/**@inheritDoc */

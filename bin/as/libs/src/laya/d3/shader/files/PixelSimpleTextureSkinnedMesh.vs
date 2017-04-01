@@ -44,77 +44,126 @@ attribute vec3 a_Tangent0;
 varying vec3 v_Tangent0;
 #endif
 
-#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)||defined(RECEIVESHADOW)
 uniform mat4 u_WorldMat;
 varying vec3 v_PositionWorld;
 #endif
 
+#ifdef RECEIVESHADOW
+varying float v_posViewZ;
+  #ifdef SHADOWMAP_PSSM1 
+  varying vec4 v_lightMVPPos;
+  uniform mat4 u_lightShadowVP[4];
+  #endif
+#endif
 
-void main()
+void main_castShadow()
 {
- #ifdef BONE
- mat4 skinTransform=mat4(0.0);
- skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;
- skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;
- skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;
- skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;
- vec4 position=skinTransform*a_Position;
-   #ifdef VR
-   gl_Position = DistortFishEye(u_MvpMatrix * position);
-   #else
-   gl_Position = u_MvpMatrix * position;
-   #endif
- #else
-   #ifdef VR
-   gl_Position = DistortFishEye(u_MvpMatrix * a_Position);
-   #else
-   gl_Position = u_MvpMatrix * a_Position;
-   #endif
- #endif
+#ifdef BONE
+	mat4 skinTransform=mat4(0.0);
+	skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;
+	skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;
+	skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;
+	skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;
+	vec4 position=skinTransform*a_Position;
+	#ifdef VR
+		gl_Position = DistortFishEye(u_MvpMatrix * position);
+	#else
+		gl_Position = u_MvpMatrix * position;
+	#endif
+#else
+	#ifdef VR
+		gl_Position = DistortFishEye(u_MvpMatrix * a_Position);
+	#else
+		gl_Position = u_MvpMatrix * a_Position;
+	#endif
+#endif
  
+//TODO没考虑UV动画呢
+#if defined(DIFFUSEMAP)&&defined(ALPHATEST)
+	v_Texcoord0=a_Texcoord0;
+#endif
+}
 
- #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)
- mat3 worldMat;
-   #ifdef BONE
-   worldMat=mat3(u_WorldMat*skinTransform);
-   #else
-   worldMat=mat3(u_WorldMat);
-   #endif  
- v_Normal=worldMat*a_Normal;
-   #if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)
-   v_Tangent0=worldMat*a_Tangent0;
-   #endif
- #endif
- 
- #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)
-   #ifdef BONE
-   v_PositionWorld=(u_WorldMat*position).xyz;
-   #else
-   v_PositionWorld=(u_WorldMat*a_Position).xyz;
-   #endif
- #endif
- 
+void main_normal()
+{
+#ifdef BONE
+	mat4 skinTransform=mat4(0.0);
+	skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;
+	skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;
+	skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;
+	skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;
+	vec4 position=skinTransform*a_Position;
+	#ifdef VR
+		gl_Position = DistortFishEye(u_MvpMatrix * position);
+	#else
+		gl_Position = u_MvpMatrix * position;
+	#endif
+#else
+	#ifdef VR
+		gl_Position = DistortFishEye(u_MvpMatrix * a_Position);
+	#else
+		gl_Position = u_MvpMatrix * a_Position;
+	#endif
+#endif
+
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)
+	mat3 worldMat;
+	#ifdef BONE
+		worldMat=mat3(u_WorldMat*skinTransform);
+	#else
+		worldMat=mat3(u_WorldMat);
+	#endif  
+	v_Normal=worldMat*a_Normal;
+	#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)
+		v_Tangent0=worldMat*a_Tangent0;
+	#endif
+#endif
+
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(RECEIVESHADOW)
+	#ifdef BONE
+		v_PositionWorld=(u_WorldMat*position).xyz;
+	#else
+		v_PositionWorld=(u_WorldMat*a_Position).xyz;
+	#endif
+#endif
+
 #if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))
-  #ifdef MIXUV
-  v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);
-  #else
-  v_Texcoord0=a_Texcoord0;
-  #endif
-  #ifdef UVTRANSFORM
-  v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;
-  #endif
+	#ifdef MIXUV
+		v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);
+	#else
+		v_Texcoord0=a_Texcoord0;
+	#endif
+	#ifdef UVTRANSFORM
+		v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;
+	#endif
 #endif
 
 #ifdef AMBIENTMAP
-  #ifdef SCALEOFFSETLIGHTINGMAPUV
-  v_Texcoord1=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,a_Texcoord1.y*u_LightmapScaleOffset.y-u_LightmapScaleOffset.w);
-  #else
-  v_Texcoord1=a_Texcoord1;
-  #endif 
+	#ifdef SCALEOFFSETLIGHTINGMAPUV
+		v_Texcoord1=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,1.0+a_Texcoord1.y*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
+	#else
+		v_Texcoord1=a_Texcoord1;
+	#endif 
 #endif
 
-  
 #ifdef COLOR
-v_Color=a_Color;
+	v_Color=a_Color;
+#endif
+
+#ifdef RECEIVESHADOW
+	v_posViewZ = gl_Position.w;
+	#ifdef SHADOWMAP_PSSM1 
+		v_lightMVPPos = u_lightShadowVP[0] * vec4(v_PositionWorld,1.0);
+	#endif
+#endif
+}
+
+void main()
+{
+#ifdef CASTSHADOW
+	main_castShadow();
+#else
+	main_normal();
 #endif
 }

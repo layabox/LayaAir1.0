@@ -17,7 +17,7 @@ Laya.Stat.show();
          'u_texture': [CustomMaterial.DIFFUSETEXTURE, Laya.Shader3D.PERIOD_MATERIAL]
     };
     var customShader = Laya.Shader3D.nameKey.add("CustomShader");
-    Laya.Shader3D.preCompile(customShader, vs, ps, attributeMap, uniformMap);
+    Laya.ShaderCompile3D.add(customShader, vs, ps, attributeMap, uniformMap);
 })();
 
 var scene = Laya.stage.addChild(new Laya.Scene());

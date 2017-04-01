@@ -1,0 +1,13 @@
+{
+  "version":"LAYAMATERIAL:01",
+  "type": "PBRMaterial",
+  "props": {
+    "name": "character_anim_pantsM",
+    "renderMode": 1,
+    "has_tangent":true,
+    "textures":[
+        {"name":"diffuseTexture","path":"pantsC.png"},
+        {"name":"normalTexture","path":"pantsN.png"}
+    ]
+  }
+}

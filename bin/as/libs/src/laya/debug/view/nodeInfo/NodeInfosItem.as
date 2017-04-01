@@ -26,7 +26,8 @@ package laya.debug.view.nodeInfo
 		{
 			if (!NodeInfoContainer)
 			{
-				NodeInfoContainer = new DebugInfoLayer();
+				DebugInfoLayer.init();
+				NodeInfoContainer = DebugInfoLayer.I;
 				Laya.stage.addChild(NodeInfoContainer);
 			}
 		

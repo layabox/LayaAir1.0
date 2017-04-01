@@ -4,10 +4,11 @@ package laya.webgl.text {
 	import laya.utils.HTMLChar;
 	import laya.utils.WordText;
 	import laya.webgl.canvas.WebGLContext2D;
+	import laya.webgl.resource.WebGLCharImage;
 	
 	public class DrawText {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		private static var _charsTemp:Vector.<DrawTextChar>;
+		private static var _charsTemp:Vector.<WebGLCharImage>;
 		
 		private static var _textCachesPool:Array = [];
 		private static var _curPoolIndex:int = 0;
@@ -25,7 +26,7 @@ package laya.webgl.text {
 		private static var _charSeg:ICharSegment = null;
 		
 		public static function __init__():void {
-			_charsTemp = new Vector.<DrawTextChar>;
+			_charsTemp = new Vector.<WebGLCharImage>;
 			_drawValue = new CharValue();
 			_charSeg = new CharSegment();
 		}
@@ -40,9 +41,9 @@ package laya.webgl.text {
 		
 		//如果stage缩放发生变化，应该清除所有文字信息，释放所有资源
 		
-		public static function getChar(char:String, id:Number, drawValue:CharValue):DrawTextChar {
+		public static function getChar(char:String, id:Number, drawValue:CharValue):WebGLCharImage {
 			//_charsCacheCount ++;
-			return _charsCache[id] = DrawTextChar.createOneChar(char, drawValue);
+			return _charsCache[id] =  WebGLCharImage.createOneChar(char, drawValue);
 		}
 		
 		private static function _drawSlow(save:Array, ctx:WebGLContext2D, txt:String, words:Vector.<HTMLChar>, curMat:Matrix, font:FontInContext, textAlign:String, fillColor:String, borderColor:String, lineWidth:int, x:Number, y:Number, sx:Number, sy:Number):void {
@@ -57,8 +58,8 @@ package laya.webgl.text {
 			var drawValue:CharValue = _drawValue.value(font, fillColor, borderColor, lineWidth, sx, sy);
 			
 			var i:int, n:int;
-			var chars:Vector.<DrawTextChar> = _charsTemp;
-			var width:int = 0, oneChar:DrawTextChar, htmlWord:HTMLChar, id:Number;
+			var chars:Vector.<WebGLCharImage> = _charsTemp;
+			var width:int = 0, oneChar:WebGLCharImage, htmlWord:HTMLChar, id:Number;
 			if (words) {
 				chars.length = words.length;
 				for (i = 0, n = words.length; i < n; i++) {
@@ -80,7 +81,7 @@ package laya.webgl.text {
 					id = _charSeg.getCharCode(i) + drawValue.txtID;
 					chars[i] = oneChar = _charsCache[id] || getChar(_charSeg.getChar(i), id, drawValue);
 					oneChar.active();
-					width += oneChar.width;
+					width += oneChar.cw;
 				}
 			}
 			
@@ -108,7 +109,7 @@ package laya.webgl.text {
 						ctx._drawText(texture, x + dx - bdSz, y - bdSz, texture.width, texture.height, curMat, 0, 0, 0, 0);
 						save && (value = save[saveLength++], value || (value = save[saveLength - 1] = []), value[0] = texture, value[1] = dx - bdSz, value[2] = -bdSz);
 					}
-					dx += oneChar.width;
+					dx += oneChar.cw;
 				}
 				save && (save.length = saveLength);
 			}
@@ -126,7 +127,7 @@ package laya.webgl.text {
 		
 		public static function drawText(ctx:WebGLContext2D, txt:*, words:Vector.<HTMLChar>, curMat:Matrix, font:FontInContext, textAlign:String, fillColor:String, borderColor:String, lineWidth:int, x:Number, y:Number):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			if ((txt && txt.length === 0) || (words && words.length === 0))
+			if ((txt && txt.length===0) || (words && words.length === 0))
 				return;
 			var sx:Number = curMat.a, sy:Number = curMat.d;
 			(curMat.b !== 0 || curMat.c !== 0) && (sx = sy = 1);

@@ -69,7 +69,7 @@ package laya.d3.core.particleShuriKen.module {
 				break;
 			}
 			
-			var destRotationOverLifetime:RotationOverLifetime = __JS__("new this.constructor()");
+			var destRotationOverLifetime:RotationOverLifetime = __JS__("new this.constructor(destAngularVelocity)");
 			destRotationOverLifetime.enbale = enbale;
 			return destRotationOverLifetime;
 		}

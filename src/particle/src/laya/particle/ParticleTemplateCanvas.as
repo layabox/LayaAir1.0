@@ -116,7 +116,7 @@ package laya.particle
 		{
 			if(!rst) rst=[];
 			rst.length = 0;
-			if (settings&&settings.colorComponentInter)
+			if (settings&&settings.disableColor)
 			{
 				rst.push(texture, texture, texture);
 			}else
@@ -220,7 +220,7 @@ package laya.particle
 			if(!_ready) return;
 			if(activeParticles.length<1) return;
 			if (textureList.length < 2) return;
-			if (settings.colorComponentInter)
+			if (settings.disableColor)
 			{
 				noColorRender(context,x,y);
 			}else

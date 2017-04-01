@@ -130,6 +130,9 @@
 			this._mapTileH=tJsonData.tileheight;
 			this._width=this._mapTileW *this._mapW;
 			this._height=this._mapTileH *this._mapH;
+			if (this._orientation=="staggered"){
+				this._height=(0.5+this._mapH*0.5)*this._mapTileH;
+			}
 			this._mapLastRect.top=this._mapLastRect.bottom=this._mapLastRect.left=this._mapLastRect.right=-1;
 			var tArray=tJsonData.tilesets;
 			var tileset;
@@ -355,6 +358,7 @@
 			if (0 < this._tileTexSetArr.length){
 				var tGridSprite=new GridSprite();
 				tGridSprite.initData(this,true);
+				tGridSprite.size(width,height);
 				var tTileTexSet=this._tileTexSetArr[index];
 				if (tTileTexSet !=null && tTileTexSet.texture !=null){
 					if (tTileTexSet.isAnimation){

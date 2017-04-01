@@ -41,7 +41,7 @@ package threeDimen.advancedStage {
 			var mesh:MeshSprite3D = scene.addChild(new MeshSprite3D(new SphereMesh(1, 20, 20))) as MeshSprite3D;
 			
 			var material:StandardMaterial = new StandardMaterial();
-			material.renderMode = BaseMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
+			material.renderMode = StandardMaterial.RENDERMODE_OPAQUEDOUBLEFACE;
 			mesh.meshRender.sharedMaterial = material;
 			
 			material.diffuseTexture = Texture2D.load("../../../../res/threeDimen/panorama/panorama.jpg");

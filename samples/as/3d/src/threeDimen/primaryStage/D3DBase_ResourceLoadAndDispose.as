@@ -27,7 +27,7 @@ package threeDimen.primaryStage {
 			processHandler = Handler.create(this, onProcessChange, null, false);//创建进度处理Handler，注意：后面要对应释放
 			var completeHandler:Handler = Handler.create(this, onComplete);//创建完成事件处理Handler
 			
-			Laya.loader.maxLoader = 1;
+			Laya.loader.maxLoader = 4;
 			//一:资源释放。
 			//1.批量加载复杂模式。
 			Laya.loader.create([
@@ -36,7 +36,7 @@ package threeDimen.primaryStage {
 			//{url:"../../../../res/fighter/fighter.atlas", clas:null, priority:1}
 			
 			//3D:
-			{url:"../../../../res/threeDimen/staticModel/sphere/sphere.lh", clas:Sprite3D, priority:1}//注意：加载层级文件会自动加载所包含的模型文件、材质文件、贴图文件。
+			//{url:"../../../../res/threeDimen/staticModel/sphere/sphere.lh", clas:Sprite3D, priority:1}//注意：加载层级文件会自动加载所包含的模型文件、材质文件、贴图文件。
 			
 			//{url:"../../../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm", clas:Mesh, priority:1}//}//注意：加载模型文件会自动加载所包含的材质文件、贴图文件。
 			
@@ -44,7 +44,7 @@ package threeDimen.primaryStage {
 			
 			//{url:"../../../../res/threeDimen/skyBox/skyCube.ltc", clas:TextureCube, priority:1},//注意：加载立方体贴图文件会自动加载所包含的贴图文件。
 			
-			//{url:"../../../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg", clas:Texture2D, priority:1}
+			{url:"../../../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg", clas:Texture2D, priority:1,params:[true]}//注意：params对应Texture2D的构造函数参数。
 			
 			//{url:"../../../../res/threeDimen/skinModel/dude/dude.ani", clas:AnimationTemplet, priority:1}
 			], completeHandler, processHandler);

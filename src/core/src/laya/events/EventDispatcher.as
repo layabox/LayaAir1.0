@@ -10,9 +10,7 @@ package laya.events {
 		/**@private */
 		private var _events:Object;
 		
-		public function EventDispatcher() {			
-			//[IF-JS]Object.defineProperty(this, "_events", {enumerable: false});
-		}
+		//[IF-JS]Object.defineProperty(EventDispatcher.prototype, "_events", {enumerable: false,writable:true});
 		
 		/**
 		 * 检查 EventDispatcher 对象是否为特定事件类型注册了任何侦听器。
@@ -50,7 +48,7 @@ package laya.events {
 						n--;
 					}
 				}
-				if (listeners.length === 0) delete this._events[type];
+				if (listeners.length === 0 && _events) delete this._events[type];
 			}
 			
 			return true;

@@ -14,6 +14,7 @@ package laya.webgl {
 	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
 	import laya.resource.HTMLImage;
+	import laya.resource.HTMLSubImage;
 	import laya.resource.ResourceManager;
 	import laya.resource.Texture;
 	import laya.system.System;
@@ -28,6 +29,7 @@ package laya.webgl {
 	import laya.webgl.resource.IMergeAtlasBitmap;
 	import laya.webgl.resource.RenderTarget2D;
 	import laya.webgl.resource.WebGLImage;
+	import laya.webgl.resource.WebGLSubImage;
 	import laya.webgl.shader.d2.Shader2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.shader.d2.skinAnishader.SkinMesh;
@@ -58,6 +60,22 @@ package laya.webgl {
 		
 		private static var _bg_null:Array =/*[STATIC SAFE]*/ [0, 0, 0, 0];
 		private static var _isExperimentalWebgl:Boolean = false;
+		
+		private static function _arrayBufferSlice():ArrayBuffer {
+			var _this:* = __JS__("this");
+			var sz:int = _this.length;
+			var dec:ArrayBuffer = new ArrayBuffer(_this.length);
+			for (var i:int = 0; i < sz; i++) dec[i] = _this[i];
+			return dec;
+		}
+		
+		private static function _uint8ArraySlice():Uint8Array {
+			var _this:* = __JS__("this");
+			var sz:int = _this.length;
+			var dec:Uint8Array = new Uint8Array(_this.length);
+			for (var i:int = 0; i < sz; i++) dec[i] = _this[i];
+			return dec;
+		}
 		
 		private static function _float32ArraySlice():Float32Array {
 			var _this:* = __JS__("this");
@@ -133,6 +151,7 @@ package laya.webgl {
 		}
 		
 		public static function enable():Boolean {
+			Browser.__init__();
 			if (Render.isConchApp) {
 				if (!Render.isConchWebGL) {
 					RunDriver.skinAniSprite = function():* {
@@ -143,22 +162,20 @@ package laya.webgl {
 					return false;
 				}
 			}
-			if (!isWebGLSupported()) return false;
+			
+			mainContext = getWebGLContext(Render._mainCanvas);
+			if (mainContext == null)
+				return false;
 			
 			if (Render.isWebGL) return true;
 			
-			HTMLImage.create = function(src:String,def:*=null):HTMLImage {
-				return new WebGLImage(src,def);
+			HTMLImage.create = function(src:String, def:* = null):HTMLImage {
+				return new WebGLImage(src, def);
 			}
 			
-			/*
-			   __JS__("HTMLImage=WebGLImage");
-			   __JS__("HTMLCanvas=WebGLCanvas");
-			   __JS__("HTMLSubImage=WebGLSubImage");
-			   System.changeDefinition("HTMLImage", WebGLImage);
-			   System.changeDefinition("HTMLCanvas", WebGLCanvas);
-			   System.changeDefinition("HTMLSubImage", WebGLSubImage);
-			 */
+			HTMLSubImage.create = function(canvas:*, offsetX:int, offsetY:int, width:int, height:int, atlasImage:*, src:String):WebGLSubImage {
+				return new WebGLSubImage(canvas, offsetX, offsetY, width, height, atlasImage, src);
+			}
 			
 			Render.WebGL = WebGL;
 			Render.isWebGL = true;
@@ -185,9 +202,7 @@ package laya.webgl {
 			
 			RunDriver.clear = function(color:String):void {
 				RenderState2D.worldScissorTest && WebGL.mainContext.disable(WebGLContext.SCISSOR_TEST);
-				if (color == null) {
-					Render.context.ctx.clearBG(0, 0, 0, 0);
-				} else {
+				if (color && color !== "black" && color !== "#000000"||Config.preserveDrawingBuffer) {//兼容性代码
 					var c:Array = Color.create(color)._color;
 					Render.context.ctx.clearBG(c[0], c[1], c[2], c[3]);
 				}
@@ -388,13 +403,13 @@ package laya.webgl {
 						b.copyFrom((sprite as Sprite).getSelfBounds());
 						b.x += (sprite as Sprite).x;
 						b.y += (sprite as Sprite).y;
-						b.x -= (sprite as Sprite).pivotX;
-						b.y -= (sprite as Sprite).pivotY;
+						b.x -= (sprite as Sprite).pivotX + 4;//blur 
+						b.y -= (sprite as Sprite).pivotY + 4;//blur
 						var tSX:Number = b.x;
 						var tSY:Number = b.y;
 						//重新计算宽和高
-						b.width += tPadding;
-						b.height += tPadding;
+						b.width += (tPadding + 8);//增加宽度 blur  由于blur系数为9
+						b.height += (tPadding + 8);//增加高度 blur
 						p.x = b.x * mat.a + b.y * mat.c;
 						p.y = b.y * mat.d + b.x * mat.b;
 						b.x = p.x;
@@ -472,23 +487,26 @@ package laya.webgl {
 					mat.destroy();
 				}
 			}
+			
 			Float32Array.prototype.slice || (Float32Array.prototype.slice = _float32ArraySlice);
 			Uint16Array.prototype.slice || (Uint16Array.prototype.slice = _uint16ArraySlice);
+			Uint8Array.prototype.slice || (Uint8Array.prototype.slice = _uint8ArraySlice);
+			ArrayBuffer.prototype.slice || (ArrayBuffer.prototype.slice = _arrayBufferSlice);
 			return true;
 		}
 		
-		public static function isWebGLSupported():String {
-			/*[IF-FLASH]*/
-			return 'webgl';
-			var canvas:* = Browser.createElement('canvas');
+		public static function getWebGLContext(canvas:*):WebGLContext {
 			var gl:WebGLContext;
 			var names:Array = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
 			for (var i:int = 0; i < names.length; i++) {
 				try {
-					gl = canvas.getContext(names[i]);
+					gl = canvas.getContext(names[i], {stencil: Config.isStencil, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha, preserveDrawingBuffer: Config.preserveDrawingBuffer});
 				} catch (e:*) {
 				}
-				if (gl) return names[i];
+				if (gl) {
+					(i !== 0) && (_isExperimentalWebgl = true);
+					return gl;
+				}
 			}
 			return null;
 		}
@@ -548,19 +566,26 @@ package laya.webgl {
 				return new WebGLContext2D(canvas);
 			}
 			
-			var webGLName:String = isWebGLSupported();
-			var gl:WebGLContext = mainContext = RunDriver.newWebGLContext(canvas, webGLName) as WebGLContext;
-			
-			_isExperimentalWebgl = (webGLName != "webgl" && (Browser.onWeiXin || Browser.onMQQBrowser));
+			_isExperimentalWebgl = (_isExperimentalWebgl && (Browser.onWeiXin || Browser.onMQQBrowser));
 			
 			frameShaderHighPrecision = false;
+			var gl:WebGLContext = WebGL.mainContext;
 			try {//某些浏览器中未实现此函数，使用try catch增强兼容性。
-				var precisionFormat:* = WebGL.mainContext.getShaderPrecisionFormat(WebGLContext.FRAGMENT_SHADER, WebGLContext.HIGH_FLOAT);
+				var precisionFormat:* = gl.getShaderPrecisionFormat(WebGLContext.FRAGMENT_SHADER, WebGLContext.HIGH_FLOAT);
 				precisionFormat.precision ? frameShaderHighPrecision = true : frameShaderHighPrecision = false;
 			} catch (e:*) {
 			}
 			
-			Browser.window.SetupWebglContext && Browser.window.SetupWebglContext(gl);
+			/*[IF-SCRIPT-BEGIN]
+			   gl.deleteTexture1 = gl.deleteTexture;
+			   gl.deleteTexture = function(t){
+			   if (t == WebGLContext.curBindTexValue)
+			   {
+			   WebGLContext.curBindTexValue = null;
+			   }
+			   gl.deleteTexture1(t);
+			   }
+			   [IF-SCRIPT-END]*/
 			
 			onStageResize(width, height);
 			

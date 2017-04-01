@@ -13,7 +13,7 @@ camera.clearColor = null;
 
 var effectSprite = scene.addChild(Sprite3D.load("../../res/threeDimen/staticModel/effect/WuShen/WuShen.lh"));
 effectSprite.once(Laya.Event.HIERARCHY_LOADED, this, function(sprite3D) {
-    setMeshParams(effectSprite, Laya.BaseMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
+    setMeshParams(effectSprite, Laya.StandardMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
     var rootAnimations = sprite3D.addComponent(Laya.RigidAnimations);
     rootAnimations.url = "../../res/threeDimen/staticModel/effect/WuShen/WuShen.lani";
     rootAnimations.player.play(0);

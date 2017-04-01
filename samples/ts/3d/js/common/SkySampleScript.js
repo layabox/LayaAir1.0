@@ -6,7 +6,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var SkySampleScript = (function (_super) {
     __extends(SkySampleScript, _super);
     function SkySampleScript() {
-        _super.call(this);
+        return _super.call(this) || this;
     }
     SkySampleScript.prototype._update = function (state) {
         _super.prototype._update.call(this, state);

@@ -1,0 +1,1 @@
+tsc -p . --outDir js

@@ -62,7 +62,7 @@ package laya.webgl.resource {
 			_allowMerageInAtlas = value;
 		}
 		
-		public function WebGLSubImage(canvas:*, offsetX:int, offsetY:int, width:int, height:int, atlasImage:*, src:String, enableMerageInAtlas:Boolean = true) {
+		public function WebGLSubImage(canvas:*, offsetX:int, offsetY:int, width:int, height:int, atlasImage:*, src:String) {
 			super();
 			repeat = true;
 			mipmap = false;
@@ -73,20 +73,20 @@ package laya.webgl.resource {
 			
 			this.canvas = canvas;
 			_ctx = canvas.getContext('2d', undefined);
-			
 			_w = width;
 			_h = height;
 			this.offsetX = offsetX;
 			this.offsetY = offsetY;
 			this.src = src;
-			_enableMerageInAtlas = enableMerageInAtlas;
+			_enableMerageInAtlas = true;
+			(AtlasResourceManager.enabled) && (_w < AtlasResourceManager.atlasLimitWidth && _h < AtlasResourceManager.atlasLimitHeight) ? _allowMerageInAtlas = true : _allowMerageInAtlas = false;
 		}
 		
 		/*override public function copyTo(dec:Bitmap):void {
 		   var d:WebGLSubImage = dec as WebGLSubImage;
 		   super.copyTo(dec);
 		   d._ctx = _ctx;
-		   }*/
+		  }*/
 		
 		private function size(w:Number, h:Number):void {
 			_w = w;
@@ -100,13 +100,12 @@ package laya.webgl.resource {
 			size(_w, _h);
 			_ctx.drawImage(atlasImage, offsetX, offsetY, _w, _h, 0, 0, _w, _h);
 			//imageData = _ctx.getImageData(0, 0, _w, _h);
-			(!(AtlasResourceManager.enabled && _allowMerageInAtlas)) && (createWebGlTexture());
+			(!(_allowMerageInAtlas && _enableMerageInAtlas)) ? (createWebGlTexture()) : (memorySize = 0/*, _recreateLock = false*/);
 			completeCreate();
 		}
 		
 		private function createWebGlTexture():void {
 			var gl:WebGLContext = WebGL.mainContext;
-			
 			if (!canvas) {
 				throw "create GLTextur err:no data:" + canvas;
 			}
@@ -156,8 +155,15 @@ package laya.webgl.resource {
 			}
 		}
 		
+		///***调整尺寸*/
+		//override protected function onresize():void {
+			//this._w = this._image.width;
+			//this._h = this._image.height;
+			
+		//}
+		
 		public function clearAtlasSource():void {
-			canvas = null;
+			//canvas = null;//资源恢复时问题
 		}
 		
 		override public function dispose():void {

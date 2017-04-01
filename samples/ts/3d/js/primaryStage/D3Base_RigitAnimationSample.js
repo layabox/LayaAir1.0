@@ -12,7 +12,7 @@ var D3Base_RigitAnimationSample = (function () {
         camera.clearColor = null;
         this.effectSprite = this.scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/effect/WuShen/WuShen.lh"));
         this.effectSprite.once(Laya.Event.HIERARCHY_LOADED, this, function (sprite3D) {
-            _this.setMeshParams(_this.effectSprite, Laya.BaseMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
+            _this.setMeshParams(_this.effectSprite, Laya.StandardMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE);
             var rootAnimations = sprite3D.addComponent(Laya.RigidAnimations);
             rootAnimations.url = "../../res/threeDimen/staticModel/effect/WuShen/WuShen.lani";
             rootAnimations.player.play(0);

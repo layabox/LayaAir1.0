@@ -2,7 +2,6 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.particle.Particle3D;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
 	import laya.d3.core.render.BaseRender;
-	import laya.d3.shader.ShaderDefines3D;
 	
 	/**
 	 * ...
@@ -18,21 +17,71 @@ package laya.d3.core.particleShuriKen {
 		///**排序模式,年轻的在前绘制,暂不支持*/
 		//public const SORTINGMODE_YOUNGESTINFRONT:int = 3;
 		
+		/**@private */
+		private var _renderMode:int;
 		
-		/**渲染模式。*/
-		public var renderMode:int;
 		/**拉伸广告牌模式摄像机速度缩放,暂不支持*/
 		public var stretchedBillboardCameraSpeedScale:Number;
 		/**拉伸广告牌模式速度缩放*/
 		public var stretchedBillboardSpeedScale:Number;
 		/**拉伸广告牌模式长度缩放*/
 		public var stretchedBillboardLengthScale:Number;
+		
 		///**排序模式。*/
 		//public var sortingMode:int;
-
+		
+		/**
+		 * 获取渲染模式。
+		 * @return 渲染模式。
+		 */
+		public function get renderMode():int {
+			return _renderMode;
+		}
+		
+		/**
+		 * 设置渲染模式。
+		 * @param value 渲染模式。
+		 */
+		public function set renderMode(value:int):void {
+			if (_renderMode !== value) {
+				switch (_renderMode) {
+				case 0: 
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SPHERHBILLBOARD);
+					break;
+				case 1: 
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_STRETCHEDBILLBOARD);
+					break;
+				case 2: 
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_HORIZONTALBILLBOARD);
+					break;
+				case 3: 
+					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VERTICALBILLBOARD);
+					break;
+				}
+				_renderMode = value;
+				switch (value) {
+				case 0: 
+					_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SPHERHBILLBOARD);
+					break;
+				case 1: 
+					_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_STRETCHEDBILLBOARD);
+					break;
+				case 2: 
+					_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_HORIZONTALBILLBOARD);
+					break;
+				case 3: 
+					_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VERTICALBILLBOARD);
+					break;
+				default:
+					throw new Error("ShurikenParticleRender: unknown renderMode Value.");
+				}
+			}
+		}
+		
 		public function ShurikenParticleRender(owner:ShuriKenParticle3D) {
 			super(owner);
-			renderMode = 0;
+			_renderMode = 0;
+			owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SPHERHBILLBOARD);
 			stretchedBillboardCameraSpeedScale = 0.0;
 			stretchedBillboardSpeedScale = 0.0;
 			stretchedBillboardLengthScale = 1.0;

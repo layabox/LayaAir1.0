@@ -91,6 +91,7 @@ package laya.debug.uicomps
 					separatorBefore = true;
 				}
 			}
+			menu.zOrder = 9999;
 			return menu;
 		}
 		public static function adptMenu(menu:ContextMenu):void

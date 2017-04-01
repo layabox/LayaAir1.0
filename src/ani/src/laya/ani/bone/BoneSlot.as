@@ -136,6 +136,10 @@ package laya.ani.bone {
 		public function replaceSkin(_texture:Texture):void {
 			_diyTexture = _texture;
 			if (_curDiyUV) _curDiyUV.length = 0;
+			if (currDisplayData&&_diyTexture == currDisplayData.texture)
+			{
+				_diyTexture = null;
+			}
 		}
 		
 		/**
@@ -305,10 +309,12 @@ package laya.ani.bone {
 		 */
 		private function skinMesh(boneMatrixArray:Array,skinSprite:*,alpha:Number):void
 		{
+			var tTexture:Texture = currTexture;
 			var tBones:Array = currDisplayData.bones;
 			var tUvs:Array;				
 			if (_diyTexture)
 			{
+				tTexture = _diyTexture;
 				if (!_curDiyUV)
 				{
 					_curDiyUV = [];
@@ -379,7 +385,7 @@ package laya.ani.bone {
 			}
 			_mVerticleArr = tVertices;
 			tIBArray = tTriangles;
-			skinSprite.init2(currTexture, null, tIBArray, _mVerticleArr,tUvs);
+			skinSprite.init2(tTexture, null, tIBArray, _mVerticleArr,tUvs);
 		}
 		
 		/**

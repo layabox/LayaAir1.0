@@ -6,6 +6,7 @@ package laya.ui {
 	import laya.ui.AutoBitmap;
 	import laya.ui.UIUtils;
 	import laya.utils.Handler;
+	import laya.utils.Utils;
 	
 	/**
 	 * 当按钮的选中状态（ <code>selected</code> 属性）发生改变时调度。
@@ -341,7 +342,8 @@ package laya.ui {
 			}
 			var width:Number = img.sourceWidth;
 			var height:Number = img.sourceHeight / _stateNum;
-			var key:String = _skin + _stateNum;
+			img.$_GID || (img.$_GID = Utils.getGID());
+			var key:String = img.$_GID +"-"+ _stateNum;
 			var clips:Array = AutoBitmap.getCache(key);
 			if (clips) _sources = clips;
 			else {
@@ -398,7 +400,7 @@ package laya.ui {
 			createText();
 			if (_text.text != value) {
 				value && !_text.displayedInStage && addChild(_text);
-				_text.text = (value+"").replace(/\\n/g, "\n");
+				_text.text = (value + "").replace(/\\n/g, "\n");
 				_setStateChanged();
 			}
 		}
@@ -633,7 +635,7 @@ package laya.ui {
 		
 		/**图标x,y偏移，格式：100,100*/
 		public function get iconOffset():String {
-			return _bitmap._offset ? null : _bitmap._offset.join(",");
+			return _bitmap._offset ? _bitmap._offset.join(",") : null;
 		}
 		
 		public function set iconOffset(value:String):void {

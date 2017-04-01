@@ -70,10 +70,12 @@ package laya.media {
 		public static function set autoStopMusic(v:Boolean):void {
 			Laya.stage.off(Event.BLUR, null, _stageOnBlur);
 			Laya.stage.off(Event.FOCUS, null, _stageOnFocus);
+			Laya.stage.off(Event.VISIBILITY_CHANGE, null, _visibilityChange);
 			_autoStopMusic = v;
 			if (v) {
 				Laya.stage.on(Event.BLUR, null, _stageOnBlur);
 				Laya.stage.on(Event.FOCUS, null, _stageOnFocus);
+				Laya.stage.on(Event.VISIBILITY_CHANGE, null, _visibilityChange);
 			}
 		}
 		
@@ -83,6 +85,17 @@ package laya.media {
 		 */
 		public static function get autoStopMusic():Boolean {
 			return _autoStopMusic;
+		}
+		
+		private static function _visibilityChange():void
+		{
+			if (Laya.stage.isVisibility)
+			{
+				_stageOnFocus();
+			}else
+			{
+				_stageOnBlur();
+			}
 		}
 		
 		private static function _stageOnBlur():void {
@@ -109,8 +122,9 @@ package laya.media {
 		
 		public static function set muted(value:Boolean):void {
 			if (value) {
-				stopAll();
+				stopAllSound();
 			}
+			musicMuted = value;
 			_muted = value;
 		}
 		
@@ -154,6 +168,7 @@ package laya.media {
 		 * @param url 声音文件地址。
 		 * @param loops 循环次数,0表示无限循环。
 		 * @param complete 声音播放完成回调  Handler对象。
+		 * @param soundClass 使用哪个声音类进行播放，null表示自动选择。
 		 * @param startTime  声音播放起始时间。
 		 * @return SoundChannel对象。
 		 */
@@ -230,6 +245,7 @@ package laya.media {
 		 */
 		public static function stopAll():void
 		{
+			_tMusic = null;
 			var i:int;
 			var channel:SoundChannel;
 			for (i = _channels.length - 1; i >= 0; i--) {
@@ -258,6 +274,7 @@ package laya.media {
 		 * @param url  声音文件地址。
 		 */
 		public static function stopMusic():void {
+			_tMusic = null;
 			if (_musicChannel)
 				_musicChannel.stop();
 		}
@@ -273,6 +290,14 @@ package laya.media {
 				_setVolume(url, volume);
 			} else {
 				soundVolume = volume;
+				var i:int;
+				var channel:SoundChannel;
+				for (i = _channels.length - 1; i >= 0; i--) {
+					channel = _channels[i];
+					if (channel.url != _tMusic) {
+						channel.volume = volume;
+					}
+				}
 			}
 		}
 		

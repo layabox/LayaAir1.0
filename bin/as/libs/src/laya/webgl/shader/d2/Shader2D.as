@@ -19,7 +19,7 @@ package laya.webgl.shader.d2
 		public var fillStyle:DrawStyle;
 		
 		public static function __init__():void
-		{			
+		{
 			Shader.addInclude("parts/ColorFilter_ps_uniform.glsl", __INCLUDESTR__("files/parts/ColorFilter_ps_uniform.glsl"));
 			Shader.addInclude("parts/ColorFilter_ps_logic.glsl", __INCLUDESTR__("files/parts/ColorFilter_ps_logic.glsl"));
 			
@@ -28,9 +28,6 @@ package laya.webgl.shader.d2
 			
 			Shader.addInclude("parts/BlurFilter_ps_logic.glsl", __INCLUDESTR__("files/parts/BlurFilter_ps_logic.glsl"));
 			Shader.addInclude("parts/BlurFilter_ps_uniform.glsl", __INCLUDESTR__("files/parts/BlurFilter_ps_uniform.glsl"));
-			
-			Shader.addInclude("parts/BlurFilter_vs_uniform.glsl", __INCLUDESTR__("files/parts/BlurFilter_vs_uniform.glsl"));
-			Shader.addInclude("parts/BlurFilter_vs_logic.glsl", __INCLUDESTR__("files/parts/BlurFilter_vs_logic.glsl"));
 			
 			Shader.addInclude("parts/ColorAdd_ps_uniform.glsl", __INCLUDESTR__("files/parts/ColorAdd_ps_uniform.glsl"));
 			Shader.addInclude("parts/ColorAdd_ps_logic.glsl", __INCLUDESTR__("files/parts/ColorAdd_ps_logic.glsl"));

@@ -1,4 +1,5 @@
 package laya.d3.resource.tempelet {
+	import laya.d3.core.GeometryFilter;
 	import laya.d3.core.glitter.Glitter;
 	import laya.d3.core.glitter.SplineCurvePositionVelocity;
 	import laya.d3.core.material.BaseMaterial;
@@ -8,10 +9,11 @@ package laya.d3.resource.tempelet {
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexGlitter;
+	import laya.d3.math.BoundBox;
+	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.shader.ShaderDefines3D;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.utils.Handler;
@@ -27,7 +29,7 @@ package laya.d3.resource.tempelet {
 	 * @private
 	 * <code>GlitterTemplet</code> 类用于创建闪光数据模板。
 	 */
-	public class GlitterTemplet extends EventDispatcher implements IRenderable {
+	public class GlitterTemplet extends GeometryFilter implements IRenderable {
 		private var _tempVector0:Vector3 = new Vector3();
 		private var _tempVector1:Vector3 = new Vector3();
 		private var _tempVector2:Vector3 = new Vector3();
@@ -129,6 +131,20 @@ package laya.d3.resource.tempelet {
 			return null;
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
+		override public function get _originalBoundingSphere():BoundSphere {
+			return super._originalBoundingSphere;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function get _originalBoundingBox():BoundBox {
+			return super._originalBoundingBox;
+		}
+		
 		public function GlitterTemplet(owner:Glitter) {
 			_owner = owner;
 			_lastTime = 0
@@ -153,7 +169,7 @@ package laya.d3.resource.tempelet {
 			color = new Vector4(1.0, 1.0, 1.0, 1.0);
 			_maxSegments = 200;
 			
-			_owner.on(Event.ENABLED_CHANGED, this, _onEnableChanged);
+			_owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onActiveHierarchyChanged);
 		}
 		
 		/**
@@ -164,8 +180,8 @@ package laya.d3.resource.tempelet {
 			_vertices = new Float32Array(maxSegments * _floatCountPerVertex * 2);
 		}
 		
-		public function _onEnableChanged(enable:Boolean):void {
-			if (!enable) {
+		public function _onActiveHierarchyChanged(active:Boolean):void {
+			if (!active) {
 				_numPositionMode = 0;
 				_numPositionVelocityMode = 0;
 				
@@ -387,7 +403,7 @@ package laya.d3.resource.tempelet {
 		 * @param position1 位置1。
 		 */
 		public function addVertexPosition(position0:Vector3, position1:Vector3):void {
-			if (_owner.enable) {
+			if (_owner.activeInHierarchy) {
 				if (_numPositionMode < 2) {
 					if (_numPositionMode === 0) {
 						position0.cloneTo(_posModeLastPosition0);
@@ -420,7 +436,7 @@ package laya.d3.resource.tempelet {
 		 * @param velocity1 速度1。
 		 */
 		public function addVertexPositionVelocity(position0:Vector3, velocity0:Vector3, position1:Vector3, velocity1:Vector3):void {
-			if (_owner.enable) {
+			if (_owner.activeInHierarchy) {
 				if (_numPositionVelocityMode === 0) {
 					_numPositionVelocityMode++;
 				} else {
@@ -469,12 +485,38 @@ package laya.d3.resource.tempelet {
 			}
 		}
 		
-		public function dispose():void {
-			_owner.off(Event.ENABLED_CHANGED, this, _onEnableChanged);
+		override public function _destroy():void {
+			super._destroy();
+			_tempVector0 = null;
+			_tempVector1 = null;
+			_tempVector2 = null;
+			_tempVector3 = null;
+			_owner = null;
+			_albedo = null;
+			_vertices = null;
+			_vertexBuffer.dispose();
+			_vertexBuffer = null;
+			scLeft = null;
+			scRight = null;
+			_posModeLastPosition0 = null;
+			_posModeLastPosition1 = null;
+			_posModePosition0 = null;
+			_posModePosition1 = null;
+			
+			_posVelModePosition0 = null;
+			_posVelModeVelocity0 = null;
+			_posVelModePosition1 = null;
+			_posVelModeVelocity1 = null;
+			
+			_lastPatchAddPos0 = null;
+			_lastPatchAddPos1 = null;
+			
+			color = null;
 		}
+		
 		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void//NATIVE
 		{
-			
+		
 		}
 	}
 }
