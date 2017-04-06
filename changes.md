@@ -1,4 +1,4 @@
-# 1.7.3beta ##
+# 1.7.3beta
 ### 2D ###
 改进Laya.js编译器性能(as3编译器)，大幅提高了编译速度（第一次会慢）
 
@@ -77,7 +77,12 @@ LoaderManager使用数组加载时，complete回调函数会返回一个success�
 
 # 1.7.2##
 ### 2D ###
-提高WebGL下cacheAs="normal"时的渲染性能
+=======
+##1.7.2beta
+
+####2D####
+>>>>>>> df2e9b72e9c6899d01e6b9ef5c66034950fee18b
+>>>>>>> 提高WebGL下cacheAs="normal"时的渲染性能
 
 更换字体度量方式，解决部分情况下文字显示偏移的bug
 
