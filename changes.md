@@ -1,4 +1,5 @@
-##1.7.2beta##
+##1.7.2beta
+
 ####2D####
 提高WebGL下cacheAs="normal"时的渲染性能
 
