@@ -306,6 +306,7 @@ package laya.utils {
 			if (_currTime >= _startTime) {
 				if (_loopKey) {
 					_complete();
+					if (!_tweenDataList) return;
 					gotoTime(0);
 				} else {
 					for (var p:* in _tweenDic) {

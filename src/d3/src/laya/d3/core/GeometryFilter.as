@@ -1,6 +1,7 @@
 package laya.d3.core {
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Vector3;
 	import laya.events.EventDispatcher;
 	import laya.resource.IDestroy;
 	
@@ -27,6 +28,13 @@ package laya.d3.core {
 		 * @private
 		 */
 		public function get _originalBoundingBox():BoundBox {
+			throw new Error("BaseRender: must override it.");
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _originalBoundingBoxCorners():Vector.<Vector3> {
 			throw new Error("BaseRender: must override it.");
 		}
 		

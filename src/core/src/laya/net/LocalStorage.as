@@ -104,7 +104,7 @@ class Storage {
 		try {
 			support && items.setItem(key, value);
 		} catch (e:*) {
-			trace("set localStorage failed", e);
+			console.warn("set localStorage failed", e);
 		}
 	}
 	
@@ -126,7 +126,7 @@ class Storage {
 		try {
 			support && items.setItem(key, JSON.stringify(value));
 		} catch (e:*) {
-			trace("set localStorage failed", e);
+			console.warn("set localStorage failed", e);
 		}
 	}
 	

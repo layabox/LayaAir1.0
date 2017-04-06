@@ -86,7 +86,7 @@ package laya.webgl.resource {
 		   var d:WebGLSubImage = dec as WebGLSubImage;
 		   super.copyTo(dec);
 		   d._ctx = _ctx;
-		  }*/
+		   }*/
 		
 		private function size(w:Number, h:Number):void {
 			_w = w;
@@ -157,9 +157,9 @@ package laya.webgl.resource {
 		
 		///***调整尺寸*/
 		//override protected function onresize():void {
-			//this._w = this._image.width;
-			//this._h = this._image.height;
-			
+		//this._w = this._image.width;
+		//this._h = this._image.height;
+		
 		//}
 		
 		public function clearAtlasSource():void {

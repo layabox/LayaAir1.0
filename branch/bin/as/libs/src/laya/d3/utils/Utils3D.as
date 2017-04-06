@@ -958,11 +958,8 @@ package laya.d3.utils {
 		 */
 		public static function transformVector3ArrayByQuat(sourceArray:Float32Array, sourceOffset:int, rotation:Quaternion, outArray:Float32Array, outOffset:int):void {
 			var re:Float32Array = rotation.elements;
-			
 			var x:Number = sourceArray[sourceOffset], y:Number = sourceArray[sourceOffset + 1], z:Number = sourceArray[sourceOffset + 2], qx:Number = re[0], qy:Number = re[1], qz:Number = re[2], qw:Number = re[3],
-			
 			ix:Number = qw * x + qy * z - qz * y, iy:Number = qw * y + qz * x - qx * z, iz:Number = qw * z + qx * y - qy * x, iw:Number = -qx * x - qy * y - qz * z;
-			
 			outArray[outOffset] = ix * qw + iw * -qx + iy * -qz - iz * -qy;
 			outArray[outOffset + 1] = iy * qw + iw * -qy + iz * -qx - ix * -qz;
 			outArray[outOffset + 2] = iz * qw + iw * -qz + ix * -qy - iy * -qx;

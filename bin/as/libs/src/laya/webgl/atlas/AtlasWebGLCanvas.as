@@ -77,7 +77,7 @@ package laya.webgl.atlas {
 				(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			} else {
 				if (!_flashCacheImage) {
-					_flashCacheImage = HTMLImage.create(null);
+					_flashCacheImage = HTMLImage.create("");
 					_flashCacheImage.image.createCanvas(_w, _h);
 				}
 				

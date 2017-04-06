@@ -310,6 +310,9 @@
 		__proto.replaceSkin=function(_texture){
 			this._diyTexture=_texture;
 			if (this._curDiyUV)this._curDiyUV.length=0;
+			if (this.currDisplayData&&this._diyTexture==this.currDisplayData.texture){
+				this._diyTexture=null;
+			}
 		}
 
 		/**
@@ -4253,7 +4256,7 @@
 			_super.prototype.parse.call(this,data);
 			this._endLoaded();
 			if (this._aniVersion !=AnimationTemplet.LAYA_ANIMATION_VISION){
-				console.log("[Error] 版本不一致，请使用IDE版本（1.6.0）重新导出");
+				console.log("[Error] 版本不一致，请使用IDE版本配套的重新导出"+this._aniVersion+"->"+AnimationTemplet.LAYA_ANIMATION_VISION);
 				this._loaded=false;
 			}
 			if (this._loaded){

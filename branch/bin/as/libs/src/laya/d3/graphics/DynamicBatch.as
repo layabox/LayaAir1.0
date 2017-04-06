@@ -9,6 +9,7 @@ package laya.d3.graphics {
 	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
 	import laya.utils.Stat;
+	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.Shader;
 	import laya.webgl.utils.Buffer2D;
@@ -206,7 +207,7 @@ package laya.d3.graphics {
 		
 		public function _render(state:RenderState):void {
 			var indexCount:int = state._batchIndexEnd - state._batchIndexStart;
-			state.context.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, state._batchIndexStart * 2);
+			WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, state._batchIndexStart * 2);
 			Stat.drawCall++;
 			Stat.trianglesFaces += indexCount / 3;
 		}

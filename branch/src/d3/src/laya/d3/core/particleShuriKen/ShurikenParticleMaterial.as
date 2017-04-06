@@ -91,15 +91,15 @@ package laya.d3.core.particleShuriKen {
 		public static var SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES:int;
 		public static var SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE:int;
 		
-		public static const THREEDSTARTROTATION:int = 0;
-		public static const SCALINGMODE:int = 1;
-		public static const CURRENTTIME:int = 2;
-		public static const GRAVITY:int = 3;
-		public static const DIFFUSETEXTURE:int = 4;
-		public static const STRETCHEDBILLBOARDLENGTHSCALE:int = 5;
-		public static const STRETCHEDBILLBOARDSPEEDSCALE:int = 6;
-		public static const SIMULATIONSPACE:int = 7;
-		public static const TINTCOLOR:int = 8;
+		public static const THREEDSTARTROTATION:int = 1;
+		public static const SCALINGMODE:int = 2;
+		public static const CURRENTTIME:int = 3;
+		public static const GRAVITY:int = 4;
+		public static const DIFFUSETEXTURE:int = 5;
+		public static const STRETCHEDBILLBOARDLENGTHSCALE:int = 6;
+		public static const STRETCHEDBILLBOARDSPEEDSCALE:int = 7;
+		public static const SIMULATIONSPACE:int = 8;
+		public static const TINTCOLOR:int = 9;
 		
 		/** @private */
 		private static var _tempGravity:Vector3 = new Vector3();

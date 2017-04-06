@@ -5,12 +5,16 @@ package laya.d3.shader {
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Vector3;
+	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	import laya.renders.Render;
 	import laya.utils.Browser;
 	import laya.webgl.shader.Shader;
 	
 	public class ShaderCompile3D {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+		/**是否开启调试模式。 */
+		public static var debugMode:Boolean = false;
+		
 		public static var SHADERDEFINE_FSHIGHPRECISION:int = 0x1;
 		public static var SHADERDEFINE_VR:int = 0x2;
 		public static var SHADERDEFINE_FOG:int = 0x4;
@@ -27,7 +31,6 @@ package laya.d3.shader {
 		public static const IFDEF_NO:int = 0;
 		public static const IFDEF_YES:int = 1;
 		public static const IFDEF_ELSE:int = 2;
-		public static const SHADERNAME2ID:Number = 0.0002;
 		
 		/**
 		 * @private
@@ -41,7 +44,18 @@ package laya.d3.shader {
 			_globalRegDefine("SPOTLIGHT", SHADERDEFINE_SPOTLIGHT);
 			_globalRegDefine("UV", SHADERDEFINE_UV);
 			_globalRegDefine("COLOR", SHADERDEFINE_COLOR);
-			_globalRegDefine("BONE", SkinAnimations.SHADERDEFINE_BONE); //TODO:继续优化
+			_globalRegDefine("CASTSHADOW", ParallelSplitShadowMap.SHADERDEFINE_CAST_SHADOW); //TODO：
+            //TODO:
+			_globalRegDefine("RECEIVESHADOW", ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW); 
+			_globalRegDefine("SHADOWMAP_PSSM1", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM1); 
+			_globalRegDefine("SHADOWMAP_PSSM2", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM2); 
+			_globalRegDefine("SHADOWMAP_PSSM3", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM3); 
+			_globalRegDefine("SHADOWMAP_PCF_NO", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF_NO); 
+			_globalRegDefine("SHADOWMAP_PCF1", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF1); 
+			_globalRegDefine("SHADOWMAP_PCF2", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF2); 
+			_globalRegDefine("SHADOWMAP_PCF3", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF3); 
+			
+			//_globalRegDefine("BONE", SkinAnimations.SHADERDEFINE_BONE);
 		}
 		
 		/**
@@ -58,8 +72,7 @@ package laya.d3.shader {
 		 * @param	ps
 		 */
 		public static function add(nameID:int, vs:String, ps:String, attributeMap:Object, uniformMap:Object):ShaderCompile3D {
-			var id:Number = SHADERNAME2ID * nameID;
-			return ShaderCompile3D._preCompileShader[id] = new ShaderCompile3D(id, vs, ps, attributeMap, uniformMap, Shader3D._includeFiles);
+			return ShaderCompile3D._preCompileShader[nameID] = new ShaderCompile3D(nameID, vs, ps, attributeMap, uniformMap, Shader3D._includeFiles);
 		}
 		
 		/**
@@ -68,7 +81,7 @@ package laya.d3.shader {
 		 * @return ShaderCompile3D。
 		 */
 		public static function get(name:String):ShaderCompile3D {
-			return ShaderCompile3D._preCompileShader[SHADERNAME2ID * Shader3D.nameKey.getID(name)];
+			return ShaderCompile3D._preCompileShader[Shader3D.nameKey.getID(name)];
 		}
 		
 		private var _name:Number;
@@ -84,7 +97,7 @@ package laya.d3.shader {
 		private var _sceneUniformMap:Object;
 		public var sharders:Array;
 		
-		private var _currentShaderDefinePower:int = 9;
+		private var _currentShaderDefinePower:int = 1;
 		public var _int2name:Array = [];
 		
 		public var _conchShader:*;//NATIVE		
@@ -97,12 +110,12 @@ package laya.d3.shader {
 			_cameraUniformMap = {};
 			_sceneUniformMap = {};
 			sharders = [];
-			sharders.length = 0x20;
 			//先要去掉注释,还没有完成			
 			_VSTXT = vs;
 			_PSTXT = ps;
 			
-			_int2name = _int2name.concat(_globalInt2name);//TODO:
+			_int2name[SkinAnimations.SHADERDEFINE_BONE] = "BONE";
+			//_globalRegDefine("BONE", SkinAnimations.SHADERDEFINE_BONE);
 			
 			function split(str:String):Array//这里要修改
 			{
@@ -159,7 +172,7 @@ package laya.d3.shader {
 							if (ofs > 0) fname = fname.substr(0, ofs);
 						}
 						ofs = words[0].indexOf('?');
-						var str:String = ofs > 0 ? words[0].substr(ofs + 1) : words[0];
+						var str:String = ofs > 0 ? words[0].substr(ofs + 1) : null;
 						new ShaderScriptBlock(IFDEF_YES, str, includeFiles[fname], parent);
 						if (Render.isConchNode)//NATIVE
 						{
@@ -252,32 +265,50 @@ package laya.d3.shader {
 		 * @param	define 宏定义，格式:{name:value...}
 		 * @return
 		 */
-		public function withCompile(nameID:int, defineValue:int, cacheShaderID:Number):Shader3D {
-			var shader:Shader3D = sharders[cacheShaderID];
-			if (shader)
-				return shader;
-			
-			var defineGroup:Object = definesToNameDic(defineValue, _int2name);
-			if (Laya3D.shaderCompileDebug) {
-				var defineGroupStr:String = "";
-				for (var key:String in defineGroup)
-					defineGroupStr += key + " ";
-				trace("DebugMode------Shader name:" + Shader3D.nameKey.getName(nameID) + " ID:" + nameID + ",shaderDefine result Value:" + defineValue + " define group:" + defineGroupStr + "------DebugMode");
+		public function withCompile(nameID:int, publicDefine:int, materialDefine:int):Shader3D {
+			var shader:Shader3D
+			var materialDefShaders:Array = sharders[publicDefine];
+			if (materialDefShaders) {
+				shader = materialDefShaders[materialDefine];
+				if (shader)
+					return shader;
+			} else {
+				materialDefShaders = sharders[publicDefine] = [];
 			}
 			
-			shader = createShader(defineGroup);
+			var publicDefGroup:Object = definesToNameDic(publicDefine, _globalInt2name);
+			var materialDefGroup:Object = definesToNameDic(materialDefine, _int2name);
+			if (ShaderCompile3D.debugMode) {
+				var publicDefGroupStr:String = "",key:String;
+				for (key in publicDefGroup)
+					publicDefGroupStr += key + " ";
+				
+				var materialDefGroupStr:String = "";
+				for (key in materialDefGroup)
+					materialDefGroupStr += key + " ";
+				
+				trace("ShaderCompile3DDebugMode---(Name:" + Shader3D.nameKey.getName(nameID) + " ID:" + nameID + " PublicDefine:" + publicDefine + " MaterialDefine:" + materialDefine + " PublicDefineGroup:" + publicDefGroupStr + "MaterialDefineGroup: " + materialDefGroupStr + ")---ShaderCompile3DDebugMode");
+			}
 			
-			(sharders[cacheShaderID] = shader);
+			shader = createShader(publicDefGroup, materialDefGroup);
+			materialDefShaders[materialDefine] = shader;
 			return shader;
 		}
 		
-		public function createShader(define:Object):Shader3D {
+		public function createShader(publicDefine:Object, materialDefine:Object):Shader3D {
 			var defMap:* = {};
-			var defineStr:String = "";
-			if (define) {
-				for (var i:String in define) {
-					defineStr += "#define " + i + "\n";
-					defMap[i] = true;
+			var defineStr:String = "", key:String;
+			if (publicDefine) {
+				for (key in publicDefine) {
+					defineStr += "#define " + key + "\n";
+					defMap[key] = true;
+				}
+			}
+			
+			if (materialDefine) {
+				for (key in materialDefine) {
+					defineStr += "#define " + key + "\n";
+					defMap[key] = true;
 				}
 			}
 			
@@ -291,8 +322,8 @@ package laya.d3.shader {
 		 * 通过宏定义值预编译shader。
 		 * @param	defineValue。
 		 */
-		public function precompileShaderWithShaderDefine(defineValue:int):void {
-			withCompile(_name / ShaderCompile3D.SHADERNAME2ID, defineValue, _name + defineValue);
+		public function precompileShaderWithShaderDefine(publicDefine:int, materialDefine:int):void {
+			withCompile(_name, publicDefine, materialDefine);
 		}
 		
 		public function registerDefine(name:String):int {
@@ -340,7 +371,12 @@ class ShaderScriptBlock {
 		this.parent = parent;
 		parent && parent.childs.push(this);
 		
-		if (!condition) return;
+		if (!condition) {
+			if (this.type == ShaderCompile.IFDEF_YES) {
+				this.type = ShaderCompile.IFDEF_NO;
+			}
+			return;
+		}
 		
 		/*[IF-FLASH]*/
 		this.condition = RunDriver.createShaderCondition(condition);

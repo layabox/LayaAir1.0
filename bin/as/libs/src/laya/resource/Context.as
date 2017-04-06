@@ -27,7 +27,7 @@ package laya.resource {
 			to.__strokeText = to.strokeText;
 			var funs:Array = ['drawTextures','fillWords','fillBorderWords','setIsMainContext','fillRect', 'strokeText','fillTexture', 'fillText', 'transformByMatrix', 'setTransformByMatrix', 'clipRect', 'drawTexture', 'drawTexture2', 'drawTextureWithTransform', 'flush', 'clear', 'destroy', 'drawCanvas', 'fillBorderText','drawCurves'];
 			funs.forEach(function(i:String):void {
-				to[i] = from[i] || to[i];
+				to[i] = from[i];
 			});
 		}
 		
@@ -166,8 +166,8 @@ package laya.resource {
 		public function drawTextures(tex:Texture, pos:Array, tx:Number, ty:Number):void
 		{
 			Stat.drawCall += pos.length / 2;
-			var w:Number = tex.bitmap.width;
-			var h:Number = tex.bitmap.height;		
+			var w:Number = tex.width;
+			var h:Number = tex.height;
 			for (var i:int = 0, sz:int = pos.length; i < sz; i += 2)
 			{
 				drawTexture(tex, pos[i], pos[i + 1], w, h, tx, ty);

@@ -128,9 +128,9 @@ package laya.d3.component.animation {
 		/**
 		 * @private
 		 */
-		private function _onOwnerEnableChanged(enable:Boolean):void {
+		private function _onOwnerActiveHierarchyChanged(active:Boolean):void {
 			if (_owner.displayedInStage) {
-				if (enable)
+				if (active)
 					_addUpdatePlayerToTimer();
 				else
 					_removeUpdatePlayerToTimer();
@@ -141,14 +141,14 @@ package laya.d3.component.animation {
 		 * @private
 		 */
 		private function _onDisplayInStage():void {
-			(_owner.enable) && (_addUpdatePlayerToTimer());
+			(_owner.activeInHierarchy) && (_addUpdatePlayerToTimer());
 		}
 		
 		/**
 		 * @private
 		 */
 		private function _onUnDisplayInStage():void {
-			(_owner.enable) && (_removeUpdatePlayerToTimer());
+			(_owner.activeInHierarchy) && (_removeUpdatePlayerToTimer());
 		}
 		
 		/**
@@ -156,8 +156,8 @@ package laya.d3.component.animation {
 		 * 载入组件时执行
 		 */
 		override public function _load(owner:Sprite3D):void {
-			(_owner.displayedInStage && _owner.enable) && (_addUpdatePlayerToTimer());
-			_owner.on(Event.ENABLED_CHANGED, this, _onOwnerEnableChanged);
+			(_owner.displayedInStage && _owner.activeInHierarchy) && (_addUpdatePlayerToTimer());
+			_owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);
 			_owner.on(Event.DISPLAY, this, _onDisplayInStage);
 			_owner.on(Event.UNDISPLAY, this, _onUnDisplayInStage);
 		}
@@ -168,8 +168,8 @@ package laya.d3.component.animation {
 		 */
 		override public function _unload(owner:Sprite3D):void {
 			super._unload(owner);
-			(_owner.displayedInStage && _owner.enable) && (_removeUpdatePlayerToTimer());
-			_owner.off(Event.ENABLED_CHANGED, this, _onOwnerEnableChanged);
+			(_owner.displayedInStage && _owner.activeInHierarchy) && (_removeUpdatePlayerToTimer());
+			_owner.off(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);
 			_owner.off(Event.DISPLAY, this, _onDisplayInStage);
 			_owner.off(Event.UNDISPLAY, this, _onUnDisplayInStage);
 			_player._destroy();

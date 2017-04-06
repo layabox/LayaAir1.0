@@ -111,7 +111,7 @@ package laya.d3.core {
 		 * @return 裁剪空间的视口。
 		 */
 		public function set normalizedViewport(value:Viewport):void {
-			if (value.x < 0 || value.y < 0 || (value.x + value.width) > 1 || (value.x + value.height) > 1)
+			if (value.x < 0 || value.y < 0 || (value.x + value.width) > 1 || (value.y + value.height) > 1)
 				throw new Error("Camera: viewport size invalid.", "value");
 			_viewportExpressedInClipSpace = true;
 			_normalizedViewport = value;

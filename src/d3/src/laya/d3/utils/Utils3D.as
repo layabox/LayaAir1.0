@@ -1127,15 +1127,19 @@ package laya.d3.utils {
 			result[resultOffset + 2] = vectorElem[2] * vectorElem[3];
 		}
 		
+	    /**
+	     * @private
+	     */
+		public static function transformLightingMapTexcoordByUV0Array(source:Float32Array, sourceOffset:int, lightingMapScaleOffset:Vector4, result:Float32Array, resultOffset:int):void {
+			var lightingMapScaleOffsetE:Float32Array = lightingMapScaleOffset.elements;
+			result[resultOffset + 0] = source[sourceOffset + 0] * lightingMapScaleOffsetE[0] + lightingMapScaleOffsetE[2];
+			result[resultOffset + 1] = (source[sourceOffset + 1] - 1.0) * lightingMapScaleOffsetE[1] + lightingMapScaleOffsetE[3];
+		}
+		
 		/**
-		 * 通过转换光照贴图UV。
-		 * @param	source 源三维向量所在数组。
-		 * @param	sourceOffset 源三维向量数组偏移。
-		 * @param	lightingMapScaleOffset  光照贴图的缩放和偏移。
-		 * @param	result 输出三维向量所在数组。
-		 * @param	resultOffset 输出三维向量数组偏移。
-		 */
-		public static function transformLightingMapTexcoordArray(source:Float32Array, sourceOffset:int, lightingMapScaleOffset:Vector4, result:Float32Array, resultOffset:int):void {
+	     * @private
+	     */
+		public static function transformLightingMapTexcoordByUV1Array(source:Float32Array, sourceOffset:int, lightingMapScaleOffset:Vector4, result:Float32Array, resultOffset:int):void {
 			var lightingMapScaleOffsetE:Float32Array = lightingMapScaleOffset.elements;
 			result[resultOffset + 0] = source[sourceOffset + 0] * lightingMapScaleOffsetE[0] + lightingMapScaleOffsetE[2];
 			result[resultOffset + 1] = 1.0 + source[sourceOffset + 1] * lightingMapScaleOffsetE[1] + lightingMapScaleOffsetE[3];

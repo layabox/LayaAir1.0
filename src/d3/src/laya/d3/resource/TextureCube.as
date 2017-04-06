@@ -1,4 +1,5 @@
 package laya.d3.resource {
+	import laya.d3.math.Vector4;
 	import laya.d3.utils.Size;
 	import laya.events.Event;
 	import laya.maths.Arith;
@@ -10,6 +11,9 @@ package laya.d3.resource {
 	import laya.webgl.WebGLContext;
 	
 	public class TextureCube extends BaseTexture {
+		/**灰色纯色纹理。*/
+		public static var grayTexture:SolidColorTextureCube = new SolidColorTextureCube(new Vector4(0.5, 0.5, 0.5, 1.0));
+		
 		/**
 		 * 加载TextureCube。
 		 * @param url TextureCube地址。
@@ -38,6 +42,13 @@ package laya.d3.resource {
 		 */
 		public function get srcs():String {
 			return _srcs;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function get defaulteTexture():BaseTexture {
+			return grayTexture;
 		}
 		
 		public function TextureCube() {

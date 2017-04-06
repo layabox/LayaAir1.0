@@ -108,7 +108,7 @@ package laya.ui {
 		public static function createComp(uiView:Object, comp:* = null, view:View = null):* {
 			comp = comp || getCompInstance(uiView);
 			if (!comp) {
-				trace("can not create:" + uiView.type);
+				console.warn("can not create:" + uiView.type);
 				return null;
 			}
 			var child:Array = uiView.child;
@@ -124,7 +124,13 @@ package laya.ui {
 					} else {
 						var tChild:* = createComp(node, null, view);
 						if (node.type == "Script") {
-							tChild["owner"] = comp;
+							if (tChild.hasOwnProperty("owner"))
+							{
+								tChild["owner"] = comp;
+							}else if (tChild.hasOwnProperty("target"))
+							{
+								tChild["target"] = comp;
+							}	
 						} else if (node.props.renderType == "mask" || node.props.name == "mask") {
 							comp.mask = tChild;
 						} else {
@@ -159,11 +165,7 @@ package laya.ui {
 		private static function setCompValue(comp:*, prop:String, value:String, view:View = null):void {
 			if (prop === "var" && view) {
 				view[value] = comp;
-			} 
-			//[IF-SCRIPT]else if (prop==="x" || prop==="y" || prop==="width" || prop === "height" || comp[prop] is Number) {
-			//[IF-SCRIPT]	comp[prop] = parseFloat(value);
-			//[IF-SCRIPT]}
-			else {
+			} else {
 				/*[IF-FLASH]*/
 				if (comp.hasOwnProperty(prop))
 					comp[prop] = (value === "true" ? true : (value === "false" ? false : value))
@@ -177,11 +179,11 @@ package laya.ui {
 		 * @return Component 对象。
 		 */
 		protected static function getCompInstance(json:Object):* {
-			var runtime:String = json.props ? json.props.runtime : "";
+			var runtime:String = json.props?json.props.runtime:null;
 			var compClass:Class;
 			//[IF-SCRIPT]compClass = runtime ? (viewClassMap[runtime] || uiClassMap[runtime]|| Laya["__classmap"][runtime]) : uiClassMap[json.type];
-			/*[IF-FLASH]*/
-			compClass = runtime ? (viewClassMap[runtime] || uiClassMap[runtime]) : uiClassMap[json.type];
+			/*[IF-FLASH]*/compClass = runtime ? (viewClassMap[runtime] || uiClassMap[runtime]) : uiClassMap[json.type];
+			if (json.props && json.props.hasOwnProperty("renderType") && json.props["renderType"]=="instance") return compClass["instance"];
 			return compClass ? new compClass() : null;
 		}
 		

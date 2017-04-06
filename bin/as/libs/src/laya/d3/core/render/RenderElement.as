@@ -3,7 +3,6 @@ package laya.d3.core.render {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.graphics.RenderObject;
 	import laya.d3.graphics.StaticBatch;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -39,14 +38,14 @@ package laya.d3.core.render {
 		/** @private 排序ID。*/
 		public var _mainSortID:int;
 		/** @private */
-		public var _renderObject:RenderObject;
+		public var _render:BaseRender;
 		/** @private 所属Sprite3D精灵。*/
 		public var _sprite3D:Sprite3D;
 		/** @private 渲染所用材质。*/
 		public var _material:BaseMaterial;
 		/** @private 渲染元素。*/
 		private var _renderObj:IRenderable;
-				
+		
 		/** @private */
 		public var _staticBatch:StaticBatch;
 		/** @private */
@@ -88,17 +87,43 @@ package laya.d3.core.render {
 		 */
 		public function getStaticBatchBakedVertexs(index:int):Float32Array {
 			const byteSizeInFloat:int = 4;
-			var vb:VertexBuffer3D = _renderObj._getVertexBuffer(index);
-			var bakedVertexes:Float32Array = vb.getData().slice() as Float32Array;
-			
-			var vertexDeclaration:VertexDeclaration = vb.vertexDeclaration;
+			var vertexBuffer:VertexBuffer3D = _renderObj._getVertexBuffer(index);
+			var vertexDeclaration:VertexDeclaration = vertexBuffer.vertexDeclaration;
 			var positionOffset:int = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.POSITION0).offset / byteSizeInFloat;
 			var normalOffset:int = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.NORMAL0).offset / byteSizeInFloat;
+			var owner:Sprite3D = _render._owner;
+			var lightmapScaleOffset:Vector4 = (owner as MeshSprite3D).meshRender.lightmapScaleOffset;
 			
-			var owner:Sprite3D = _renderObject._owner;
-			var lightmapScaleOffset:Vector4=(owner as MeshSprite3D).meshRender.lightmapScaleOffset;
-			var lightingMapTexcoordOffset:int;
-			(lightmapScaleOffset)&&(lightingMapTexcoordOffset=vertexDeclaration.getVertexElementByUsage(VertexElementUsage.TEXTURECOORDINATE1).offset / byteSizeInFloat);
+			var i:int, n:int, bakedVertexes:Float32Array, bakedVertexFloatCount:int, lightingMapTexcoordOffset:int, uv1Element:VertexElement;
+			var uv0Offset:int, oriVertexFloatCount:int;
+			if (lightmapScaleOffset) {
+				uv1Element = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.TEXTURECOORDINATE1);
+				if (uv1Element) {
+					bakedVertexFloatCount = vertexDeclaration.vertexStride / byteSizeInFloat;
+					bakedVertexes = vertexBuffer.getData().slice() as Float32Array;
+					lightingMapTexcoordOffset = uv1Element.offset / byteSizeInFloat;
+				} else {
+					oriVertexFloatCount = vertexDeclaration.vertexStride / byteSizeInFloat;
+					bakedVertexFloatCount = oriVertexFloatCount + 2;
+					bakedVertexes = new Float32Array(vertexBuffer.vertexCount * (vertexBuffer.vertexDeclaration.vertexStride / byteSizeInFloat + 2));
+					uv0Offset = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.TEXTURECOORDINATE0).offset / byteSizeInFloat;
+					lightingMapTexcoordOffset = uv0Offset + 2;
+					
+					var oriVertexes:Float32Array = vertexBuffer.getData();
+					for (i = 0, n = oriVertexes.length / oriVertexFloatCount; i < n; i++) {
+						var oriVertexOffset:int = i * oriVertexFloatCount;
+						var bakedVertexOffset:int = i * bakedVertexFloatCount;
+						var j:int;
+						for (j = 0; j < lightingMapTexcoordOffset; j++)
+							bakedVertexes[bakedVertexOffset + j] = oriVertexes[oriVertexOffset + j];
+						for (j = lightingMapTexcoordOffset; j < oriVertexFloatCount; j++)
+							bakedVertexes[bakedVertexOffset + j + 2] = oriVertexes[oriVertexOffset + j];
+					}
+				}
+			} else {
+				bakedVertexFloatCount = vertexDeclaration.vertexStride / byteSizeInFloat;
+				bakedVertexes = vertexBuffer.getData().slice() as Float32Array;
+			}
 			
 			var rootTransform:Matrix4x4 = _staticBatch._rootSprite.transform.worldMatrix;
 			var transform:Matrix4x4 = _sprite3D.transform.worldMatrix;
@@ -110,24 +135,23 @@ package laya.d3.core.render {
 			var rotation:Quaternion = _tempQuaternion0;
 			result.decomposeTransRotScale(_tempVector30, rotation, _tempVector31);//可不计算position和scale
 			
-			var vertexFloatCount:int = vertexDeclaration.vertexStride / byteSizeInFloat;
-			
-			for (var i:int = 0, n:int = bakedVertexes.length; i < n; i += vertexFloatCount) {
-				var posOffset:int = i + positionOffset;
-				var norOffset:int = i + normalOffset;
-				
+			for (i = 0, n = bakedVertexes.length / bakedVertexFloatCount; i < n; i++) {
+				var posOffset:int = i * bakedVertexFloatCount + positionOffset;
+				var norOffset:int = i * bakedVertexFloatCount + normalOffset;
 				
 				Utils3D.transformVector3ArrayToVector3ArrayCoordinate(bakedVertexes, posOffset, result, bakedVertexes, posOffset);
 				Utils3D.transformVector3ArrayByQuat(bakedVertexes, norOffset, rotation, bakedVertexes, norOffset);
 				
-				if (owner is MeshSprite3D && lightmapScaleOffset)//TODO:待修改。
-				{
-					var lightingMapTexOffset:int = i + lightingMapTexcoordOffset;
-					Utils3D.transformLightingMapTexcoordArray(bakedVertexes, lightingMapTexOffset, lightmapScaleOffset, bakedVertexes, lightingMapTexOffset);
+				if (owner is MeshSprite3D && lightmapScaleOffset) {//TODO:待修改。
+					var lightingMapTexOffset:int = i * bakedVertexFloatCount + lightingMapTexcoordOffset;
+					if (uv1Element) {
+						Utils3D.transformLightingMapTexcoordByUV1Array(bakedVertexes, lightingMapTexOffset, lightmapScaleOffset, bakedVertexes, lightingMapTexOffset);
+					} else {
+						var tex0Offset:int = i * oriVertexFloatCount + uv0Offset;
+						Utils3D.transformLightingMapTexcoordByUV0Array(oriVertexes, tex0Offset, lightmapScaleOffset, bakedVertexes, lightingMapTexOffset);
+					}
 				}
 			}
-
-			
 			return bakedVertexes;
 		}
 		
@@ -150,7 +174,7 @@ package laya.d3.core.render {
 			for (var i:int = 0, n:int = bakedVertexes.length; i < n; i += vertexFloatCount) {
 				var posOffset:int = i + positionOffset;
 				var norOffset:int = i + normalOffset;
-			
+				
 				Utils3D.transformVector3ArrayToVector3ArrayCoordinate(bakedVertexes, posOffset, worldMatrix, bakedVertexes, posOffset);
 				Utils3D.transformVector3ArrayByQuat(bakedVertexes, norOffset, rotation, bakedVertexes, norOffset);
 			}

@@ -2,6 +2,7 @@ package laya.d3.core.material {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.TransformUV;
 	import laya.d3.core.render.IRenderable;
+	import laya.d3.core.render.RenderQueue;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.resource.BaseTexture;
@@ -11,17 +12,37 @@ package laya.d3.core.material {
 	import laya.net.Loader;
 	import laya.utils.Browser;
 	import laya.webgl.WebGLContext;
+	import laya.events.Event;
 	
 	public class PBRMaterial extends BaseMaterial {
-		public static const DIFFUSETEXTURE:int = 0;
-		public static const NORMALTEXTURE:int = 1;
-		public static const PBRINFOTEXTURE:int = 2;
-		public static const PBRLUTTEXTURE:int = 3;
-		public static const ALPHATESTVALUE:int = 4;
+		public static const DIFFUSETEXTURE:int = 1;
+		public static const NORMALTEXTURE:int = 2;
+		public static const PBRINFOTEXTURE:int = 3;
+		public static const PBRLUTTEXTURE:int = 4;
 		public static const UVANIAGE:int = 5;
 		public static const MATERIALROUGHNESS:int = 6;
-		public static const UVMATRIX:int = 7;
-		public static const UVAGE:int = 8;
+		public static const MATERIALMETALESS:int = 7;
+		public static const UVMATRIX:int = 8;
+		public static const UVAGE:int = 9;
+		public static const AOOBJPOS:int = 14;
+		
+		
+		public static var SHADERDEFINE_FIX_ROUGHNESS:int = 0;
+		public static var SHADERDEFINE_FIX_METALESS:int = 0;
+		public static var SHADERDEFINE_HAS_TANGENT:int = 0;
+		public static var SHADERDEFINE_TEST_CLIPZ:int = 0;
+		public static var SHADERDEFINE_HAS_PBRINFO:int = 0;
+		
+		/**渲染状态_不透明。*/
+		public static const RENDERMODE_OPAQUE:int = 1;
+		/**渲染状态_不透明_双面。*/
+		public static const RENDERMODE_OPAQUEDOUBLEFACE:int = 2;
+		/**渲染状态_透明测试。*/
+		public static const RENDERMODE_CUTOUT:int = 3;
+		/**渲染状态_透明测试_双面。*/
+		public static const RENDERMODE_CUTOUTDOUBLEFACE:int = 4;
+		/**渲染状态_透明混合。*/
+		public static const RENDERMODE_TRANSPARENT:int = 13;
 		
 		public static var pbrlutTex:DataTexture2D;
 		/** @private */
@@ -30,28 +51,15 @@ package laya.d3.core.material {
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:PBRMaterial = new PBRMaterial();
 		
+		/**@private 渲染模式。*/
+		private var _renderMode:int;
+		
 		/**
 		 * 加载标准材质。
 		 * @param url 标准材质地址。
 		 */
 		public static function load(url:String):PBRMaterial {
 			return Laya.loader.create(url, null, null, PBRMaterial);
-		}
-		
-		/**
-		 * 获取透明测试模式裁剪值。
-		 * @return 透明测试模式裁剪值。
-		 */
-		public function get alphaTestValue():Number {
-			return _getNumber(ALPHATESTVALUE);
-		}
-		
-		/**
-		 * 设置透明测试模式裁剪值。
-		 * @param value 透明测试模式裁剪值。
-		 */
-		public function set alphaTestValue(value:Number):void {
-			_setNumber(ALPHATESTVALUE, value);
 		}
 		
 		/**
@@ -68,6 +76,20 @@ package laya.d3.core.material {
 		 */
 		public function set roughness(value:Number):void {
 			_setNumber(MATERIALROUGHNESS, value);
+			_addShaderDefine(SHADERDEFINE_FIX_ROUGHNESS);
+		}
+		
+		public function get metaless():Number {
+			return _getNumber(MATERIALMETALESS);
+		}
+		
+		public function set metaless(v:Number):void {
+			_setNumber(MATERIALMETALESS, v);
+			_addShaderDefine(SHADERDEFINE_FIX_METALESS);
+		}
+		
+		public function set has_tangent(v:Boolean):void {
+			_addShaderDefine(SHADERDEFINE_HAS_TANGENT);
 		}
 		
 		/**
@@ -132,6 +154,7 @@ package laya.d3.core.material {
 		 */
 		public function set pbrInfoTexture(value:BaseTexture):void {
 			_setTexture(PBRINFOTEXTURE, value);
+			_addShaderDefine(SHADERDEFINE_HAS_PBRINFO);
 		}
 		
 		/**
@@ -163,6 +186,7 @@ package laya.d3.core.material {
 					throw 'no pbr lutdata, need pbrlut.js';
 				}
 				var luttex:DataTexture2D = DataTexture2D.create((new Uint32Array(lutdt)).buffer, 256, 256, WebGLContext.NEAREST, WebGLContext.NEAREST, false);
+				//luttex.repeat = false; 编译不过
 				PBRMaterial.pbrlutTex = luttex;
 			}
 			_setTexture(PBRLUTTEXTURE, PBRMaterial.pbrlutTex);
@@ -174,14 +198,66 @@ package laya.d3.core.material {
 		 * 禁用灯光。
 		 */
 		public function disableLight():void {
-			_addDisableShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
+			_addDisablePublicShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
 		}
 		
 		/**
 		 * 禁用雾化。
 		 */
 		public function disableFog():void {
-			_addDisableShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
+			_addDisablePublicShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
+		}
+		
+		/**
+		 * 获取渲染状态。
+		 * @return 渲染状态。
+		 */
+		public function get renderMode():int {
+			return _renderMode;
+		}
+		
+		public function set renderMode(value:int):void {
+			_renderMode = value;
+			switch (value) {
+			case RENDERMODE_OPAQUE: 
+				_renderQueue = RenderQueue.OPAQUE;
+				depthWrite = true;
+				cull = CULL_BACK;
+				blend = BLEND_DISABLE;
+				alphaTest = false;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_OPAQUEDOUBLEFACE: 
+				_renderQueue = RenderQueue.OPAQUE;
+				depthWrite = true;
+				cull = CULL_NONE;
+				blend = BLEND_DISABLE;
+				alphaTest = false;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_CUTOUT: 
+				depthWrite = true;
+				cull = CULL_BACK;
+				blend = BLEND_DISABLE;
+				_renderQueue = RenderQueue.OPAQUE;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			case RENDERMODE_TRANSPARENT: 
+				_renderQueue = RenderQueue.TRANSPARENT;
+				depthWrite = true;
+				cull = CULL_BACK;
+				blend = BLEND_ENABLE_ALL;
+				srcBlend = BLENDPARAM_SRC_ALPHA;
+				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
+				event(Event.RENDERQUEUE_CHANGED, this);
+				break;
+			default: 
+				throw new Error("PBRMaterial:renderMode value error.");
+			}
+		}
+		
+		public function set testClipZ(v:Boolean):void {
+			_addShaderDefine(SHADERDEFINE_TEST_CLIPZ);
 		}
 		
 		/**

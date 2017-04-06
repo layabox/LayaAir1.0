@@ -1,37 +1,21 @@
 package laya.d3.core.material {
 	import laya.d3.core.IClone;
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
-	import laya.d3.core.render.BaseRender;
-	import laya.d3.core.render.IRenderable;
-	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.graphics.RenderObject;
-	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
-	import laya.d3.resource.SolidColorTexture2D;
 	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
-	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
-	import laya.events.EventDispatcher;
 	import laya.net.Loader;
-	import laya.net.URL;
-	import laya.resource.Resource;
 	import laya.renders.Render;
-	import laya.utils.ClassUtils;
-	import laya.utils.Handler;
-	import laya.utils.Stat;
+	import laya.resource.Resource;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.shader.Shader;
-	import laya.webgl.shader.ShaderValue;
-	import laya.webgl.utils.ShaderCompile;
 	
 	/**
 	 * <code>BaseMaterial</code> 类用于创建材质,抽象类,不允许实例。
@@ -90,24 +74,24 @@ package laya.d3.core.material {
 		public static const BLENDEQUATION_REVERSE_SUBTRACT:int = 2;
 		
 		/**深度测试函数枚举_从不通过。*/
-		public static const DEPTHFUNC_NEVER:int = 0;
+		public static const DEPTHFUNC_NEVER:int =0x0200/*WebGLContext.NEVER*/;
 		/**深度测试函数枚举_小于时通过。*/
-		public static const DEPTHFUNC_LESS:int = 1;
+		public static const DEPTHFUNC_LESS:int =0x0201/*WebGLContext.LESS*/;
 		/**深度测试函数枚举_等于时通过。*/
-		public static const DEPTHFUNC_EQUAL:int = 2;
+		public static const DEPTHFUNC_EQUAL:int =0x0202/*WebGLContext.EQUAL*/;
 		/**深度测试函数枚举_小于等于时通过。*/
-		public static const DEPTHFUNC_LEQUAL:int = 3;
+		public static const DEPTHFUNC_LEQUAL:int =0x0203/*WebGLContext.LEQUAL*/;
 		/**深度测试函数枚举_大于时通过。*/
-		public static const DEPTHFUNC_GREATER:int = 4;
+		public static const DEPTHFUNC_GREATER:int =0x0204/*WebGLContext.GREATER*/;
 		/**深度测试函数枚举_不等于时通过。*/
-		public static const DEPTHFUNC_NOTEQUAL:int = 5;
+		public static const DEPTHFUNC_NOTEQUAL:int =0x0205/*WebGLContext.NOTEQUAL*/;
 		/**深度测试函数枚举_大于等于时通过。*/
-		public static const DEPTHFUNC_GEQUAL:int = 6;
+		public static const DEPTHFUNC_GEQUAL:int =0x0206/*WebGLContext.GEQUAL*/;
 		/**深度测试函数枚举_总是通过。*/
-		public static const DEPTHFUNC_ALWAYS:int = 7;
+		public static const DEPTHFUNC_ALWAYS:int =0x0207/*WebGLContext.ALWAYS*/;
 		
 		/**宏定义_透明测试。*/
-		public static var SHADERDEFINE_ALPHATEST:int;
+		public static var SHADERDEFINE_ALPHATEST:int = 0x1;
 		
 		/**Shader变量_透明测试值。*/
 		public static const ALPHATESTVALUE:int = 0;
@@ -255,10 +239,8 @@ package laya.d3.core.material {
 			for (var i:int = 0, n:int = _textureSharderIndices.length; i < n; i++) {
 				var shaderIndex:int = _textureSharderIndices[i];
 				var texture:BaseTexture = _values[shaderIndex];
-				if (texture) {
-					var source:* = texture.source;
-					(source) ? _uploadTexture(shaderIndex, source) : _uploadTexture(shaderIndex, SolidColorTexture2D.grayTexture.source);
-				}
+				if (texture)
+					_uploadTexture(shaderIndex, texture.source || texture.defaulteTexture.source);
 			}
 		}
 		
@@ -266,8 +248,8 @@ package laya.d3.core.material {
 		 * @private
 		 */
 		public function _getShader(sceneDefineValue:int, vertexDefineValue:int, spriteDefineValue:int):Shader3D {
-			var publicDefineValue:int = (sceneDefineValue | vertexDefineValue ) & (~_disablePublicShaderDefine);//TODO:调整shaderDefine
-			_shader = _shaderCompile.withCompile(_sharderNameID, publicDefineValue,_shaderDefineValue| spriteDefineValue);//TODO:
+			var publicDefineValue:int = (sceneDefineValue | vertexDefineValue) & (~_disablePublicShaderDefine);
+			_shader = _shaderCompile.withCompile(_sharderNameID, publicDefineValue, spriteDefineValue, _shaderDefineValue);
 			return _shader;
 		}
 		
@@ -527,6 +509,7 @@ package laya.d3.core.material {
 			var gl:WebGLContext = WebGL.mainContext;
 			WebGLContext.setDepthTest(gl, depthTest);
 			WebGLContext.setDepthMask(gl, depthWrite);
+			WebGLContext.setDepthFunc(gl, depthFunc);
 			switch (blend) {
 			case BLEND_DISABLE: 
 				WebGLContext.setBlend(gl, false);

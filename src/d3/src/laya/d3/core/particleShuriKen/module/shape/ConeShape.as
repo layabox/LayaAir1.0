@@ -1,4 +1,5 @@
 package laya.d3.core.particleShuriKen.module.shape {
+	import laya.d3.math.BoundBox;
 	import laya.d3.math.Rand;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
@@ -20,8 +21,6 @@ package laya.d3.core.particleShuriKen.module.shape {
 		public var length:Number;
 		/**发射类型,0为Base,1为BaseShell,2为Volume,3为VolumeShell。*/
 		public var emitType:int;
-		/**随机方向。*/
-		public var randomDirection:Boolean;
 		
 		/**
 		 * 创建一个 <code>ConeShape</code> 实例。
@@ -33,6 +32,35 @@ package laya.d3.core.particleShuriKen.module.shape {
 			length = 5.0;
 			emitType = 0;
 			randomDirection = false;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _getShapeBoundBox(boundBox:BoundBox):void {
+			const  coneRadius2:Number = radius + length * Math.sin(angle);
+			const  coneLength:Number = length * Math.cos(angle);
+			
+			var minE:Float32Array = boundBox.min.elements;
+			minE[0] = minE[1] = -coneRadius2;
+			minE[2] = 0;
+			
+			var maxE:Float32Array = boundBox.max.elements;
+			maxE[0] = maxE[1] = coneRadius2;
+			maxE[2] = coneLength;//TODO:是否为负
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _getSpeedBoundBox(boundBox:BoundBox):void {
+			const  sinA:Number = Math.sin(angle);
+			var minE:Float32Array = boundBox.min.elements;
+			minE[0] = minE[1] = -sinA;
+			minE[2] = 0;
+			var maxE:Float32Array = boundBox.max.elements;
+			maxE[0] = minE[1] = sinA;
+			maxE[2] = 1;
 		}
 		
 		/**

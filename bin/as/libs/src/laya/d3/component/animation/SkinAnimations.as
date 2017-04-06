@@ -21,7 +21,7 @@ package laya.d3.component.animation {
 	 */
 	public class SkinAnimations extends KeyframeAnimations {
 		public static const BONES:int = 0;
-		public static var SHADERDEFINE_BONE:int = 0x1;
+		public static var SHADERDEFINE_BONE:int = 0x4;//Sprite
 		
 		/**
 		 * @private
@@ -163,13 +163,14 @@ package laya.d3.component.animation {
 		
 		/** @private */
 		private function _onAnimationPlayMeshLoaded():void {
-			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender.renderObject._renderElements;//播放骨骼动画时禁止动态合并
+			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender._renderElements;//播放骨骼动画时禁止动态合并
 			for (var i:int = 0, n:int = renderElements.length; i < n; i++)
 				renderElements[i]._canDynamicBatch = false;
 		}
 		
 		/** @private */
 		private function _onAnimationPlay():void {
+			_ownerMesh._addShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
 			var mesh:BaseMesh = _ownerMesh.meshFilter.sharedMesh;
 			if (mesh.loaded)
 				_onAnimationPlayMeshLoaded();
@@ -183,9 +184,10 @@ package laya.d3.component.animation {
 			if (_player.returnToZeroStopped) {
 				_curBonesDatas = null;
 				_curAnimationDatas = null;
+				_ownerMesh._removeShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
 			}
 			
-			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender.renderObject._renderElements;
+			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender._renderElements;
 			for (var i:int = 0, n:int = renderElements.length; i < n; i++)
 				renderElements[i]._canDynamicBatch = true;
 		}
@@ -201,7 +203,6 @@ package laya.d3.component.animation {
 			
 			_player.on(Event.PLAYED, this, _onAnimationPlay);
 			_player.on(Event.STOPPED, this, _onAnimationStop);
-			_ownerMesh._addShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
 		}
 		
 		/**
@@ -350,7 +351,7 @@ package laya.d3.component.animation {
 			if (Render.isConchNode) {//NATIVE
 				for (i = 0, n = mesh.getSubMeshCount(); i < n; i++) {
 					_ownerMesh.meshRender.sharedMaterials[i]._addShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
-					_ownerMesh.meshRender.renderObject._renderElements[i]._conchSubmesh.setShaderValue(SkinAnimations.BONES, _curAnimationDatas[i], 0);
+					_ownerMesh.meshRender._renderElements[i]._conchSubmesh.setShaderValue(SkinAnimations.BONES, _curAnimationDatas[i], 0);
 				}
 			}
 		}
@@ -373,6 +374,7 @@ package laya.d3.component.animation {
 		 * 卸载组件时执行
 		 */
 		override public function _unload(owner:Sprite3D):void {
+			(player.state == AnimationState.playing) && (_owner._removeShaderDefine(SkinAnimations.SHADERDEFINE_BONE));
 			super._unload(owner);
 			_tempCurAnimationData = null;
 			_tempCurBonesData = null;
@@ -382,7 +384,7 @@ package laya.d3.component.animation {
 			_curBonesDatas = null;
 			_curAnimationDatas = null;
 			_ownerMesh = null;
-			_owner._removeShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
+			
 		}
 	}
 }

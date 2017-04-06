@@ -279,7 +279,8 @@ package laya.renders {
 				var _x:Number, _y:Number;
 				
 				for (i = 0; i < n; ++i) {
-					if ((ele = childs[i] as Sprite).visible && ((_x = ele._x) < right && (_x + ele.width) > left && (_y = ele._y) < bottom && (_y + ele.height) > top)) {
+				/*[IF-FLASH]*/ if ((ele = childs[i] as Sprite).visible && ((_x = ele.x) < right && (_x + ele.width) > left && (_y = ele.y) < bottom && (_y + ele.height) > top)) {
+				//[IF-JS] if ((ele = childs[i] as Sprite).visible && ((_x = ele._x) < right && (_x + ele.width) > left && (_y = ele._y) < bottom && (_y + ele.height) > top)) {
 						ele.render(context, x, y);
 					}
 				}
@@ -326,7 +327,7 @@ package laya.renders {
 					_cacheCanvas._cacheRec.copyFrom(tRec);
 				}else
 				{
-					_cacheCanvas._cacheRec.setTo(0,0,1,1);
+					_cacheCanvas._cacheRec.setTo(-sprite.pivotX,-sprite.pivotY,1,1);
 				}
 				
 				tRec = _cacheCanvas._cacheRec;
@@ -358,7 +359,7 @@ package laya.renders {
 				top = tRec.y;
 				
 				if (Render.isWebGL && _cacheCanvas.type === 'bitmap' && (w > 2048 || h > 2048)) {
-					trace("cache bitmap size larger than 2048,cache ignored");
+					console.warn("cache bitmap size larger than 2048,cache ignored");
 					if (_cacheCanvas.ctx) {
 						Pool.recover("RenderContext", _cacheCanvas.ctx);
 						_cacheCanvas.ctx.canvas.size(0, 0);
@@ -377,6 +378,7 @@ package laya.renders {
 				canvas.clear();
 				(canvas.width != w || canvas.height != h) && canvas.size(w, h);
 				if (_cacheCanvas.type === 'bitmap') canvas.context.asBitmap = true;
+				else if(_cacheCanvas.type === 'normal')canvas.context.asBitmap = false;
 				
 				var t:*;
 				//TODO:测试webgl下是否有缓存模糊问题

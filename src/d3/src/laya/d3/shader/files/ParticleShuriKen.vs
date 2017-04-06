@@ -485,11 +485,11 @@ void main()
 	    corner=rotaionZHalfPI*corner;
 	    corner.y=corner.y-abs(corner.y);
 	    float speed=length(velocity);//TODO:
-	    center +=u_SizeScale.xzy*size.x*corner.x*sideVector+((cameraUpVector*speed)*u_StretchedBillboardSpeedScale+cameraUpVector*size.y*u_StretchedBillboardLengthScale)*corner.y;
+	    center +=u_SizeScale.xzy*(size.x*corner.x*sideVector+(cameraUpVector*speed*u_StretchedBillboardSpeedScale+cameraUpVector*size.y*u_StretchedBillboardLengthScale)*corner.y);
    #endif
    
    #ifdef HORIZONTALBILLBOARD
-        const vec3 cameraUpVector =vec3(0.0,0.0,-1.0);
+        const vec3 cameraUpVector=vec3(0.0,0.0,-1.0);
 	    const vec3 sideVector = vec3(1.0,0.0,0.0);
 		corner*=computeParticleSize(a_StartSize.xy,normalizedAge);
 		vec3 rotationAng = computeParticleRotation(a_StartRotation0, age,normalizedAge);

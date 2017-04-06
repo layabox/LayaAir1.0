@@ -217,6 +217,7 @@ package laya.d3.core {
 			var lightmapScaleOffset:Vector4 = meshRender.lightmapScaleOffset;
 			lightmapScaleOffset && (destMeshRender.lightmapScaleOffset = lightmapScaleOffset.clone());
 			destMeshRender.receiveShadow = meshRender.receiveShadow;
+			destMeshRender.sortingFudge = meshRender.sortingFudge;
 		}
 		
 		override public function destroy(destroyChild:Boolean = true):void {

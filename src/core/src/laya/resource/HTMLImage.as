@@ -1,4 +1,5 @@
 package laya.resource {
+	import laya.net.URL;
 	import laya.utils.Browser;
 	
 	/**
@@ -59,7 +60,7 @@ package laya.resource {
 			}
 			if (src.indexOf("data:image") != 0) _source.crossOrigin = "";
 			
-			(src) && (_source.src = src);
+			(src) && (_source.src = URL.formatURL(src));
 		}
 		
 		/**
@@ -89,7 +90,7 @@ package laya.resource {
 					_this._recreateLock = false;
 					_this.completeCreate();//处理创建完成后相关操作
 				};
-				_source.src = _src;
+				_source.src = URL.formatURL(_src);
 			} else {
 				if (_recreateLock)
 					return;

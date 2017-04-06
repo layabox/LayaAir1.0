@@ -63,6 +63,13 @@ package laya.utils {
 			return r;
 		}
 		
+
+		/**
+		 * @private
+		 */
+		public static var getWebGLContext:Function = function(canvas:*):void {
+		}
+		
 		/**
 		 * 开始函数。
 		 */

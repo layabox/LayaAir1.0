@@ -52,33 +52,15 @@ package laya.utils {
 		private static var fontMap:Array = [];
 		public static var measureText:Function = function(txt:String, font:String):* {
 			var isChinese:Boolean = hanzi.test(txt);
-			var r:*;
-			if (isChinese&&fontMap[font])
-			{
+			if (isChinese && fontMap[font]){
 				return fontMap[font];
 			}
-			if (Render.isConchApp) {
-				var ctx:* = __JS__("ConchTextCanvas");
-				ctx.font = font;
-				r = ctx.measureText(txt);
-				if (isChinese) fontMap[font] = r;
-				return r;
-			}
-			else
-			{
-				r = {};
-				if (isChinese) fontMap[font] = r;
-				if (_charSizeTestDiv == null) {
-					_charSizeTestDiv = Browser.createElement('div');
-					_charSizeTestDiv.style.cssText = "z-index:10000000;padding:0px;position: absolute;left:0px;visibility:hidden;top:0px;background:white";
-					Browser.container.appendChild(_charSizeTestDiv);
-				}
-				_charSizeTestDiv.style.font = font;
-				_charSizeTestDiv.innerText = txt == " " ? "i" : txt;
-				r.width = _charSizeTestDiv.offsetWidth;
-				r.height = _charSizeTestDiv.offsetHeight;
-				return r;
-			}
+			
+			var ctx:* = Browser.context;
+			ctx.font = font;
+			var r:* = ctx.measureText(txt);
+			if (isChinese) fontMap[font] = r;
+			return r;
 		}
 		
 		/**

@@ -381,7 +381,7 @@ package laya.webgl.canvas
 		
 		public override function fillWords(words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, color:String):void
 		{
-			words && _fillText(null, words, x, y, fontStr, color,null,-1, null);
+			_fillText(null, words, x, y, fontStr, color,null,-1, null);
 		}
 		
 		override public function fillText(txt:*, x:Number, y:Number, fontStr:String, color:String, textAlign:String):void
@@ -416,7 +416,7 @@ package laya.webgl.canvas
 		}
 		
 		override public function fillBorderWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String, borderColor:String, lineWidth:int):void {	
-			words && _fillBorderText(null, words, x, y, font, color, borderColor, lineWidth,null);
+			_fillBorderText(null, words, x, y, font, color, borderColor, lineWidth,null);
 		}
 		
 		override public function fillRect(x:Number, y:Number, width:Number, height:Number, fillStyle:*):void
@@ -891,6 +891,7 @@ package laya.webgl.canvas
 		
 		override public function drawTexture2(x:Number, y:Number, pivotX:Number, pivotY:Number, transform:Matrix, alpha:Number, blendMode:String, args:Array):void
 		{
+			if (alpha == 0) return;
 			var curMat:Matrix = _curMat;
 			_x = x * curMat.a + y * curMat.c;
 			_y = y * curMat.d + x * curMat.b;

@@ -93,7 +93,6 @@ package laya.events {
 			canvas.addEventListener("touchstart", function(e:*):void {
 				if (enabled) {
 					list.push(e);
-					runEvent();
 					if (!Input.isInputting) e.preventDefault();
 					_this.mouseDownTime = Browser.now();
 				}

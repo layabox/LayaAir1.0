@@ -169,7 +169,7 @@ package laya.d3.resource.tempelet {
 			color = new Vector4(1.0, 1.0, 1.0, 1.0);
 			_maxSegments = 200;
 			
-			_owner.on(Event.ENABLED_CHANGED, this, _onEnableChanged);
+			_owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onActiveHierarchyChanged);
 		}
 		
 		/**
@@ -180,8 +180,8 @@ package laya.d3.resource.tempelet {
 			_vertices = new Float32Array(maxSegments * _floatCountPerVertex * 2);
 		}
 		
-		public function _onEnableChanged(enable:Boolean):void {
-			if (!enable) {
+		public function _onActiveHierarchyChanged(active:Boolean):void {
+			if (!active) {
 				_numPositionMode = 0;
 				_numPositionVelocityMode = 0;
 				
@@ -403,7 +403,7 @@ package laya.d3.resource.tempelet {
 		 * @param position1 位置1。
 		 */
 		public function addVertexPosition(position0:Vector3, position1:Vector3):void {
-			if (_owner.enable) {
+			if (_owner.activeInHierarchy) {
 				if (_numPositionMode < 2) {
 					if (_numPositionMode === 0) {
 						position0.cloneTo(_posModeLastPosition0);
@@ -436,7 +436,7 @@ package laya.d3.resource.tempelet {
 		 * @param velocity1 速度1。
 		 */
 		public function addVertexPositionVelocity(position0:Vector3, velocity0:Vector3, position1:Vector3, velocity1:Vector3):void {
-			if (_owner.enable) {
+			if (_owner.activeInHierarchy) {
 				if (_numPositionVelocityMode === 0) {
 					_numPositionVelocityMode++;
 				} else {

@@ -5,12 +5,13 @@
 	var Arith=laya.maths.Arith,Bezier=laya.maths.Bezier,Bitmap=laya.resource.Bitmap,Browser=laya.utils.Browser;
 	var Color=laya.utils.Color,ColorFilter=laya.filters.ColorFilter,Config=Laya.Config,Context=laya.resource.Context;
 	var Event=laya.events.Event,Filter=laya.filters.Filter,Graphics=laya.display.Graphics,HTMLCanvas=laya.resource.HTMLCanvas;
-	var HTMLChar=laya.utils.HTMLChar,HTMLImage=laya.resource.HTMLImage,Handler=laya.utils.Handler,Matrix=laya.maths.Matrix;
-	var Point=laya.maths.Point,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render,RenderContext=laya.renders.RenderContext;
-	var RenderSprite=laya.renders.RenderSprite,Resource=laya.resource.Resource,ResourceManager=laya.resource.ResourceManager;
-	var RunDriver=laya.utils.RunDriver,Sprite=laya.display.Sprite,Stat=laya.utils.Stat,StringKey=laya.utils.StringKey;
-	var Style=laya.display.css.Style,System=laya.system.System,Texture=laya.resource.Texture,Utils=laya.utils.Utils;
-	var VectorGraphManager=laya.utils.VectorGraphManager,WordText=laya.utils.WordText;
+	var HTMLChar=laya.utils.HTMLChar,HTMLImage=laya.resource.HTMLImage,HTMLSubImage=laya.resource.HTMLSubImage;
+	var Handler=laya.utils.Handler,Matrix=laya.maths.Matrix,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle;
+	var Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
+	var Resource=laya.resource.Resource,ResourceManager=laya.resource.ResourceManager,RunDriver=laya.utils.RunDriver;
+	var Sprite=laya.display.Sprite,Stat=laya.utils.Stat,StringKey=laya.utils.StringKey,Style=laya.display.css.Style;
+	var System=laya.system.System,Texture=laya.resource.Texture,Utils=laya.utils.Utils,VectorGraphManager=laya.utils.VectorGraphManager;
+	var WordText=laya.utils.WordText;
 	Laya.interface('laya.webgl.shapes.IShape');
 	Laya.interface('laya.webgl.submit.ISubmit');
 	Laya.interface('laya.webgl.text.ICharSegment');
@@ -3166,6 +3167,9 @@
 			HTMLImage.create=function (src,def){
 				return new WebGLImage(src,def);
 			}
+			HTMLSubImage.create=function (canvas,offsetX,offsetY,width,height,atlasImage,src){
+				return new WebGLSubImage(canvas,offsetX,offsetY,width,height,atlasImage,src);
+			}
 			Render.WebGL=WebGL;
 			Render.isWebGL=true;
 			DrawText.__init__();
@@ -3187,10 +3191,9 @@
 			}
 			RunDriver.clear=function (color){
 				RenderState2D.worldScissorTest && laya.webgl.WebGL.mainContext.disable(/*laya.webgl.WebGLContext.SCISSOR_TEST*/0x0C11);
-				if (color && color!=="black" && color!=="#000000"){
-					var c=Color.create(color)._color;
-					Render.context.ctx.clearBG(c[0],c[1],c[2],c[3]);
-				}
+				var ctx=Render.context.ctx;
+				var c=(ctx._submits._length==0 || Config.preserveDrawingBuffer)?Color.create(color)._color:Laya.stage._wgColor;
+				if (c)ctx.clearBG(c[0],c[1],c[2],c[3]);
 				RenderState2D.clear();
 			}
 			RunDriver.addToAtlas=function (texture,force){
@@ -3455,7 +3458,7 @@
 			var names=["webgl","experimental-webgl","webkit-3d","moz-webgl"];
 			for (var i=0;i < names.length;i++){
 				try {
-					gl=canvas.getContext(names[i],{stencil:Config.isStencil,alpha:Config.isAlpha,antialias:Config.isAntialias,premultipliedAlpha:Config.premultipliedAlpha,preserveDrawingBuffer:false});
+					gl=canvas.getContext(names[i],{stencil:Config.isStencil,alpha:Config.isAlpha,antialias:Config.isAntialias,premultipliedAlpha:Config.premultipliedAlpha,preserveDrawingBuffer:Config.preserveDrawingBuffer});
 				}catch (e){}
 				if (gl){
 					(i!==0)&& (WebGL._isExperimentalWebgl=true);
@@ -4073,10 +4076,6 @@
 			}
 		}
 
-		__proto.measureText=function(text){
-			return RunDriver.measureText(text,this._other.font.toString());
-		}
-
 		__proto._fillText=function(txt,words,x,y,fontStr,color,strokeColor,lineWidth,textAlign){
 			var shader=this._shader2D;
 			var curShader=this._curSubmit.shaderValue;
@@ -4099,22 +4098,18 @@
 
 		//shader.defines.setValue(preDef);
 		__proto.fillWords=function(words,x,y,fontStr,color){
-			words.length > 0 && this._fillText(null,words,x,y,fontStr,color,null,-1,null);
+			this._fillText(null,words,x,y,fontStr,color,null,-1,null);
 		}
 
 		__proto.fillText=function(txt,x,y,fontStr,color,textAlign){
-			txt.length > 0 && this._fillText(txt,null,x,y,fontStr,color,null,-1,textAlign);
+			this._fillText(txt,null,x,y,fontStr,color,null,-1,textAlign);
 		}
 
 		__proto.strokeText=function(txt,x,y,fontStr,color,lineWidth,textAlign){
-			if (txt.length===0)
-				return;
 			this._fillText(txt,null,x,y,fontStr,null,color,lineWidth || 1,textAlign);
 		}
 
 		__proto.fillBorderText=function(txt,x,y,fontStr,fillColor,borderColor,lineWidth,textAlign){
-			if (txt.length===0)
-				return;
 			this._fillBorderText(txt,null,x,y,fontStr,fillColor,borderColor,lineWidth,textAlign);
 		}
 
@@ -4133,8 +4128,6 @@
 		}
 
 		__proto.fillBorderWords=function(words,x,y,font,color,borderColor,lineWidth){
-			if (!words||words.length===0)
-				return;
 			this._fillBorderText(null,words,x,y,font,color,borderColor,lineWidth,null);
 		}
 
@@ -6811,17 +6804,9 @@
 				}else {
 				this._ctx=this.canvas.getContext('2d',undefined);
 			};
-			var t=null;
-			if (bIsConchApp){
-				this._ctx.font=this.font;
-				t=this._ctx.measureText(this.char);
-				this.cw=t.width *this.xs;
-				this.ch=t.height *this.ys;
-				}else {
-				t=Utils.measureText(this.char,this.font);
-				this.cw=t.width *this.xs;
-				this.ch=t.height *this.ys;
-			}
+			var t=Utils.measureText(this.char,this.font);
+			this.cw=t.width *this.xs;
+			this.ch=(t.height || this.fontSize)*this.ys;
 			this.onresize(this.cw+this.CborderSize *2,this.ch+this.CborderSize *2);
 			this.texture=new Texture(this);
 		}
@@ -7045,7 +7030,7 @@
 
 	//class laya.webgl.resource.WebGLSubImage extends laya.resource.Bitmap
 	var WebGLSubImage=(function(_super){
-		function WebGLSubImage(canvas,offsetX,offsetY,width,height,atlasImage,src,enableMerageInAtlas){
+		function WebGLSubImage(canvas,offsetX,offsetY,width,height,atlasImage,src){
 			//this._ctx=null;
 			//this._allowMerageInAtlas=false;
 			//this._enableMerageInAtlas=false;
@@ -7058,7 +7043,6 @@
 			this.offsetX=0;
 			this.offsetY=0;
 			//this.src=null;
-			(enableMerageInAtlas===void 0)&& (enableMerageInAtlas=true);
 			WebGLSubImage.__super.call(this);
 			this.repeat=true;
 			this.mipmap=false;
@@ -7072,7 +7056,8 @@
 			this.offsetX=offsetX;
 			this.offsetY=offsetY;
 			this.src=src;
-			this._enableMerageInAtlas=enableMerageInAtlas;
+			this._enableMerageInAtlas=true;
+			(AtlasResourceManager.enabled)&& (this._w < AtlasResourceManager.atlasLimitWidth && this._h < AtlasResourceManager.atlasLimitHeight)? this._allowMerageInAtlas=true :this._allowMerageInAtlas=false;
 		}
 
 		__class(WebGLSubImage,'laya.webgl.resource.WebGLSubImage',_super);
@@ -7097,7 +7082,7 @@
 		this.startCreate();
 		this.size(this._w,this._h);
 		this._ctx.drawImage(this.atlasImage,this.offsetX,this.offsetY,this._w,this._h,0,0,this._w,this._h);
-		(!(AtlasResourceManager.enabled && this._allowMerageInAtlas))&& (this.createWebGlTexture());
+		(!(this._allowMerageInAtlas && this._enableMerageInAtlas))? (this.createWebGlTexture()):(this.memorySize=0);
 		this.completeCreate();
 	}
 
@@ -7153,11 +7138,9 @@
 	}
 
 
-	__proto.clearAtlasSource=function(){
-		this.canvas=null;
-	}
-
-
+	//}
+	__proto.clearAtlasSource=function(){}
+	//canvas=null;//资源恢复时问题
 	__proto.dispose=function(){
 		this.resourceManager.removeResource(this);
 		_super.prototype.dispose.call(this);

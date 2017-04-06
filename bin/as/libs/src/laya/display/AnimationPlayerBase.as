@@ -40,6 +40,10 @@ package laya.display {
 		/**@private */
 		protected var _actionName:String;
 		
+		public function AnimationPlayerBase()
+		{
+			_setUpNoticeType(Node.NOTICE_DISPLAY);
+		}
 		/**
 		 * 播放动画。
 		 * @param	start 开始播放的动画索引或label。

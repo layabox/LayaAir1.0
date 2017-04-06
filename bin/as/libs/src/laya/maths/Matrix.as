@@ -10,12 +10,8 @@ package laya.maths {
 		/** 用于中转使用的 <code>Matrix</code> 对象。*/
 		public static var TEMP:Matrix =/*[STATIC SAFE]*/ new Matrix();
 		/**@private */
-		public static var _cache:* = [];
+		public static var _cache:* = [];		
 		
-		/**@private 矩阵旋转角度的余弦值。*/
-		public var cos:Number = 1;
-		/**@private 矩阵旋转角度的正弦值。*/
-		public var sin:Number = 0;
 		/**缩放或旋转图像时影响像素沿 x 轴定位的值。*/
 		public var a:Number;
 		/**旋转或倾斜图像时影响像素沿 y 轴定位的值。*/
@@ -113,8 +109,8 @@ package laya.maths {
 		 * @param	angle 以弧度为单位的旋转角度。
 		 */
 		public function rotate(angle:Number):void {
-			var cos:Number = this.cos = Math.cos(angle);
-			var sin:Number = this.sin = Math.sin(angle);
+			var cos:Number = Math.cos(angle);
+			var sin:Number = Math.sin(angle);
 			var a1:Number = this.a;
 			var c1:Number = this.c;
 			var tx1:Number = this.tx;

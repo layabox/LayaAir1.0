@@ -10,7 +10,7 @@ package laya.d3.resource.models {
 	import laya.webgl.utils.Buffer;
 	
 	/**
-	 * <code>CapsuleMesh</code> 类用于创建圆柱。
+	 * <code>CapsuleMesh</code> 类用于创建胶囊体。
 	 */
 	public class CapsuleMesh extends PrimitiveMesh {
 		/** @private */
@@ -109,7 +109,7 @@ package laya.d3.resource.models {
 		 * @param stacks 水平层数,一般设为垂直层数的一半
 		 * @param slices 垂直层数
 		 */
-		public function CapsuleMesh(radius:Number = 0.25, height:Number = 1, stacks:int = 16, slices:int = 32) {
+		public function CapsuleMesh(radius:Number = 0.5, height:Number = 2, stacks:int = 16, slices:int = 32) {
 			super();
 			_radius = radius;
 			_height = height < radius * 2 ? radius * 2 : height;
@@ -153,21 +153,21 @@ package laya.d3.resource.models {
 			var verticeCount:int = 0;
 			
 			var stack:int, slice:int;
-			;
+			
 			//顶部半球
 			for (stack = 0; stack <= _stacks; stack++) {
 				
 				for (slice = 0; slice <= _slices; slice++) {
 					
-					posX = _radius * Math.cos(stack * stackAngle) * Math.cos(slice * sliceAngle);
+					posX = _radius * Math.cos(stack * stackAngle) * Math.cos(slice * sliceAngle + Math.PI);
 					posY = _radius * Math.sin(stack * stackAngle);
-					posZ = _radius * Math.cos(stack * stackAngle) * Math.sin(slice * sliceAngle);
+					posZ = _radius * Math.cos(stack * stackAngle) * Math.sin(slice * sliceAngle + Math.PI);
 					
 					//pos
 					vertices[vc++] = posX;
 					vertices[vc++] = posY + hcHeight;
 					vertices[vc++] = posZ;
-					
+
 					//normal
 					vertices[vc++] = posX;
 					vertices[vc++] = posY;
@@ -175,7 +175,7 @@ package laya.d3.resource.models {
 					
 					//uv
 					vertices[vc++] = 1 - slice / _slices;
-					vertices[vc++] = (1 - stack / _stacks) * (_radius / _height);
+					vertices[vc++] = (1 - stack / _stacks) * ((Math.PI *_radius / 2) / (_height + Math.PI * _radius));
 					
 					if (stack < _stacks) {
 						
@@ -200,9 +200,9 @@ package laya.d3.resource.models {
 				
 				for (slice = 0; slice <= _slices; slice++) {
 					
-					posX = _radius * Math.cos(stack * stackAngle) * Math.cos(slice * sliceAngle);
+					posX = _radius * Math.cos(stack * stackAngle) * Math.cos(slice * sliceAngle + Math.PI);
 					posY = _radius * Math.sin(-stack * stackAngle);
-					posZ = _radius * Math.cos(stack * stackAngle) * Math.sin(slice * sliceAngle);
+					posZ = _radius * Math.cos(stack * stackAngle) * Math.sin(slice * sliceAngle + Math.PI);
 					
 					//pos
 					vertices[vc++] = posX;
@@ -216,7 +216,7 @@ package laya.d3.resource.models {
 					
 					//uv
 					vertices[vc++] = 1 - slice / _slices;
-					vertices[vc++] = ((stack / _stacks) * _radius + (_height - _radius)) / _height;
+					vertices[vc++] = ((stack / _stacks) * (Math.PI *_radius / 2)  + (_height + Math.PI * _radius / 2)) /  (_height + Math.PI * _radius);
 					
 					if (stack < _stacks) {
 						
@@ -237,9 +237,9 @@ package laya.d3.resource.models {
 			
 			//侧壁
 			for (slice = 0; slice <= _slices; slice++) {
-				posX = _radius * Math.cos(slice * sliceAngle);
+				posX = _radius * Math.cos(slice * sliceAngle + Math.PI);
 				posY = hcHeight;
-				posZ = _radius * Math.sin(slice * sliceAngle);
+				posZ = _radius * Math.sin(slice * sliceAngle + Math.PI);
 				
 				//pos
 				vertices[vc++] = posX;
@@ -258,9 +258,8 @@ package laya.d3.resource.models {
 				//uv    
 				vertices[vc++] = 1 - slice * 1 / _slices;
 				vertices[vc + (_slices + 1) * 8 - 1] = 1 - slice * 1 / _slices;
-				vertices[vc++] = _radius / _height;
-				vertices[vc + (_slices + 1) * 8 - 1] = (_height - _radius) / _height;
-				
+				vertices[vc++] = (Math.PI * _radius / 2) /  (_height + Math.PI * _radius);
+				vertices[vc + (_slices + 1) * 8 - 1] = (Math.PI * _radius / 2 + _height) /  (_height + Math.PI * _radius);
 			}
 			
 			for (slice = 0; slice < _slices; slice++) {

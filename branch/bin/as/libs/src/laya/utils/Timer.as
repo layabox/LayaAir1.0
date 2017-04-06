@@ -97,7 +97,12 @@ package laya.utils {
 			var laters:Array = this._laters;
 			for (var i:int = 0, n:int = laters.length - 1; i <= n; i++) {
 				var handler:TimerHandler = laters[i];
-				handler.method !== null && handler.run(false);
+				if (handler.method !== null) {
+					/*[IF-FLASH]*/
+					_map[handler.method] = null;
+					//[IF-SCRIPT]_map[handler.key] = null;
+					handler.run(false);
+				}
 				_recoverHandler(handler);
 				i === n && (n = laters.length - 1);
 			}
@@ -346,8 +351,8 @@ class TimerHandler {
 		var caller:* = this.caller;
 		/*[IF-FLASH]*/
 		if ((caller is Node) && caller.destroyed)
-		/*[IF-FLASH]*/
-		return clear();
+			/*[IF-FLASH]*/
+			return clear();
 		//[IF-SCRIPT] if (caller && caller.destroyed) return clear();
 		var method:Function = this.method;
 		var args:Array = this.args;

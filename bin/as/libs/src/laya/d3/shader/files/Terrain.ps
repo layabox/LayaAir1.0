@@ -1,23 +1,165 @@
 #ifdef FSHIGHPRECISION
-precision highp float;
+	precision highp float;
 #else
-precision mediump float;
+	precision mediump float;
 #endif
+
+#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT "LightHelper.glsl";
+
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
+	uniform vec3 u_MaterialDiffuse;
+	uniform vec4 u_MaterialSpecular;
+	uniform vec3 u_MaterialAmbient;
+	uniform vec3 u_CameraPos;
+	varying vec3 v_Normal;
+	varying vec3 v_PositionWorld;
+#endif
+
+#ifdef FOG
+	uniform float u_FogStart;
+	uniform float u_FogRange;
+	uniform vec3 u_FogColor;
+#endif
+
+
+#ifdef DIRECTIONLIGHT
+	uniform DirectionLight u_DirectionLight;
+#endif
+
+#ifdef POINTLIGHT
+	uniform PointLight u_PointLight;
+#endif
+
+#ifdef SPOTLIGHT
+	uniform SpotLight u_SpotLight;
+#endif
+
+#include "ShadowHelper.glsl"
+#ifdef RECEIVESHADOW
+	#if defined(SHADOWMAP_PSSM2)||defined(SHADOWMAP_PSSM3)
+	uniform mat4 u_lightShadowVP[4];
+	#endif
+	#ifdef SHADOWMAP_PSSM1 
+	varying vec4 v_lightMVPPos;
+	#endif
+#endif
+varying float v_posViewZ;
+
+
 uniform sampler2D u_SplatAlphaTexture;
+uniform sampler2D u_NormalTexture;
 uniform sampler2D u_DiffuseTexture1;
 uniform sampler2D u_DiffuseTexture2;
 uniform sampler2D u_DiffuseTexture3;
 uniform sampler2D u_DiffuseTexture4;
+uniform vec2 u_DiffuseScale1;
+uniform vec2 u_DiffuseScale2;
+uniform vec2 u_DiffuseScale3;
+uniform vec2 u_DiffuseScale4;
 varying vec2 v_Texcoord0;
 varying vec2 v_Texcoord1;
+
+
 void main()
 {
-	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1);
-	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1);
-	vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1);
-	vec4 color4 = texture2D(u_DiffuseTexture4, v_Texcoord1);
+	float splatAlphaB = 1.0;
+#ifdef DETAIL_NUM1
+	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
 	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
-	gl_FragColor.xyz = color1.xyz * splatAlpha.x + color2.xyz * splatAlpha.y + color3.xyz * splatAlpha.z + color4.xyz * splatAlpha.w;
+	splatAlphaB = splatAlpha.r;
+	gl_FragColor.xyz = color1.xyz * splatAlpha.r;
+#endif
+#ifdef DETAIL_NUM2
+	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
+	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);
+	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
+	splatAlphaB = max(splatAlpha.r,splatAlpha.g);
+	gl_FragColor.xyz = color1.xyz * splatAlpha.r + color2.xyz * splatAlpha.g;
+#endif
+#ifdef DETAIL_NUM3
+	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
+	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);
+	vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1/u_DiffuseScale3);
+	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
+	splatAlphaB = max(max(splatAlpha.r,splatAlpha.g),splatAlpha.b);
+	gl_FragColor.xyz = color1.xyz * splatAlpha.r + color2.xyz * splatAlpha.g + color3.xyz * splatAlpha.b;
+#endif
+#ifdef DETAIL_NUM4
+	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
+	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);
+	vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1/u_DiffuseScale3);
+	vec4 color4 = texture2D(u_DiffuseTexture4, v_Texcoord1/u_DiffuseScale4);
+	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
+	splatAlphaB = max(max(max(splatAlpha.r,splatAlpha.g),splatAlpha.b),splatAlpha.a);
+	gl_FragColor.xyz = color1.xyz * splatAlpha.r + color2.xyz * splatAlpha.g + color3.xyz * splatAlpha.b + color4.xyz * splatAlpha.a;
+#endif
+
 	gl_FragColor.w = 1.0;
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
+    vec3 normal = texture2D(u_NormalTexture,v_Normal.xy).xyz;
+	normal = normal*2.0 - vec3(1.0);
+	vec3 diffuse = vec3(0.0);
+	vec3 ambient = vec3(0.0);
+	vec3 specular= vec3(0.0);
+	vec3 dif, amb, spe;
+#endif
+
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)
+	vec3 toEye;
+	#ifdef FOG
+		toEye=u_CameraPos-v_PositionWorld;
+		float toEyeLength=length(toEye);
+		toEye/=toEyeLength;
+	#else
+		toEye=normalize(u_CameraPos-v_PositionWorld);
+	#endif
+#endif
+
+#ifdef DIRECTIONLIGHT
+	computeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);
+	diffuse+=dif;
+	ambient+=amb;
+	specular+=spe;
+#endif
+ 
+#ifdef POINTLIGHT
+	computePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,v_PositionWorld,normal,toEye, dif, amb, spe);
+	diffuse+=dif;
+	ambient+=amb;
+	specular+=spe;
+#endif
+
+#ifdef SPOTLIGHT
+	ComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,v_PositionWorld,normal,toEye, dif, amb, spe);
+	diffuse+=dif;
+	ambient+=amb;
+	specular+=spe;
+#endif
+
+#ifdef RECEIVESHADOW
+	float shadowValue = 1.0;
+	#ifdef SHADOWMAP_PSSM3
+		shadowValue = getShadowPSSM3( u_shadowMap1,u_shadowMap2,u_shadowMap3,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,v_PositionWorld,v_posViewZ,0.001);
+	#endif
+	#ifdef SHADOWMAP_PSSM2
+		shadowValue = getShadowPSSM2( u_shadowMap1,u_shadowMap2,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,v_PositionWorld,v_posViewZ,0.001);
+	#endif 
+	#ifdef SHADOWMAP_PSSM1
+		shadowValue = getShadowPSSM1( u_shadowMap1,v_lightMVPPos,u_shadowPSSMDistance,u_shadowPCFoffset,v_posViewZ,0.001);
+	#endif
+#endif
+	
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
+	#ifdef RECEIVESHADOW
+		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse*shadowValue) + specular * splatAlphaB * shadowValue,gl_FragColor.a);
+	#else
+		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse) + specular * splatAlphaB, gl_FragColor.a);
+	#endif
+#endif
+
+#ifdef FOG
+	float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);
+	gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);
+#endif
 }
 

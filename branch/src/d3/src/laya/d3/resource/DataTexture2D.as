@@ -230,7 +230,7 @@ package laya.d3.resource {
 						if (cw < 1) cw = 1;
 						if (ch < 1) ch = 1;
 						this.minFifter = WebGLContext.LINEAR_MIPMAP_LINEAR;
-						this.magFifter = WebGLContext.LINEAR_MIPMAP_LINEAR;
+						this.magFifter = WebGLContext.LINEAR;
 					}
 				}
 				this.mipmap = false;

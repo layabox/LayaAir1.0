@@ -14,6 +14,7 @@ package laya.webgl {
 	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
 	import laya.resource.HTMLImage;
+	import laya.resource.HTMLSubImage;
 	import laya.resource.ResourceManager;
 	import laya.resource.Texture;
 	import laya.system.System;
@@ -28,6 +29,7 @@ package laya.webgl {
 	import laya.webgl.resource.IMergeAtlasBitmap;
 	import laya.webgl.resource.RenderTarget2D;
 	import laya.webgl.resource.WebGLImage;
+	import laya.webgl.resource.WebGLSubImage;
 	import laya.webgl.shader.d2.Shader2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.shader.d2.skinAnishader.SkinMesh;
@@ -171,6 +173,10 @@ package laya.webgl {
 				return new WebGLImage(src, def);
 			}
 			
+			HTMLSubImage.create = function(canvas:*, offsetX:int, offsetY:int, width:int, height:int, atlasImage:*, src:String):WebGLSubImage {
+				return new WebGLSubImage(canvas, offsetX, offsetY, width, height, atlasImage, src);
+			}
+			
 			Render.WebGL = WebGL;
 			Render.isWebGL = true;
 			
@@ -196,10 +202,10 @@ package laya.webgl {
 			
 			RunDriver.clear = function(color:String):void {
 				RenderState2D.worldScissorTest && WebGL.mainContext.disable(WebGLContext.SCISSOR_TEST);
-				if (color && color !== "black" && color !== "#000000") {
-					var c:Array = Color.create(color)._color;
-					Render.context.ctx.clearBG(c[0], c[1], c[2], c[3]);
-				}
+				var ctx:* = Render.context.ctx;
+				//兼容浏览器
+				var c:Array = (ctx._submits._length==0 || Config.preserveDrawingBuffer)?Color.create(color)._color:Laya.stage._wgColor;
+				if (c) ctx.clearBG(c[0], c[1], c[2], c[3]);
 				RenderState2D.clear();
 			}
 			
@@ -494,7 +500,7 @@ package laya.webgl {
 			var names:Array = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
 			for (var i:int = 0; i < names.length; i++) {
 				try {
-					gl = canvas.getContext(names[i], {stencil: Config.isStencil, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha, preserveDrawingBuffer: false});
+					gl = canvas.getContext(names[i], {stencil: Config.isStencil, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha, preserveDrawingBuffer: Config.preserveDrawingBuffer});
 				} catch (e:*) {
 				}
 				if (gl) {

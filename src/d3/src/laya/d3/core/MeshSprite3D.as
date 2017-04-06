@@ -1,11 +1,11 @@
 package laya.d3.core {
+	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.graphics.RenderObject;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
@@ -22,9 +22,8 @@ package laya.d3.core {
 	 * <code>MeshSprite3D</code> 类用于创建网格。
 	 */
 	public class MeshSprite3D extends RenderableSprite3D {
-		/**着色器变量名，光照贴图缩放和偏移。*/
 		public static const LIGHTMAPSCALEOFFSET:int = 2;
-		
+	
 		/**
 		 * 加载网格模板,注意:不缓存。
 		 * @param url 模板地址。
@@ -84,11 +83,11 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _changeRenderObjectByMesh(index:int):RenderElement {
-			var renderObjects:Vector.<RenderElement> = _render.renderObject._renderElements;
+			var renderObjects:Vector.<RenderElement> = _render._renderElements;
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderObject = _render.renderObject;
+			renderElement._render = _render;
 			
 			var material:BaseMaterial = _render.sharedMaterials[index];
 			(material) || (material = StandardMaterial.defaultMaterial);//确保有材质,由默认材质代替。
@@ -111,7 +110,7 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _changeRenderObjectByMaterial(index:int, material:BaseMaterial):RenderElement {
-			var renderElement:RenderElement = _render.renderObject._renderElements[index];
+			var renderElement:RenderElement = _render._renderElements[index];
 			
 			var element:IRenderable = (_geometryFilter as MeshFilter).sharedMesh.getRenderElement(index);
 			renderElement._mainSortID = _getSortID(element, material);//根据MeshID排序，处理同材质合并处理。
@@ -131,11 +130,11 @@ package laya.d3.core {
 		 */
 		private function _changeRenderObjectsByMesh():void {
 			if (Render.isConchNode) {//NATIVE
-				var box:BoundBox = (_geometryFilter as MeshFilter).sharedMesh.boundingBox;
-				_render.renderObject._conchRenderObject.boundingBox(box.min.elements, box.max.elements);
+				//var box:BoundBox = (_geometryFilter as MeshFilter).sharedMesh.boundingBox;
+				//_render._conchRenderObject.boundingBox(box.min.elements, box.max.elements);
 			}
 			var renderElementsCount:int = (_geometryFilter as MeshFilter).sharedMesh.getRenderElementsCount();
-			_render.renderObject._renderElements.length = renderElementsCount;
+			_render._renderElements.length = renderElementsCount;
 			for (var i:int = 0; i < renderElementsCount; i++)
 				_changeRenderObjectByMesh(i);
 		}
@@ -162,7 +161,7 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _onMaterialChanged(meshRender:MeshRender, index:int, material:BaseMaterial):void {//TODO:
-			var renderElementCount:int = _render.renderObject._renderElements.length;
+			var renderElementCount:int = _render._renderElements.length;
 			(index < renderElementCount) && _changeRenderObjectByMaterial(index, material);
 		}
 		
@@ -170,9 +169,9 @@ package laya.d3.core {
 		 * @private
 		 */
 		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_render.renderObject);
+			scene.removeFrustumCullingObject(_render);
 			if (scene.conchModel) {//NATIVE
-				scene.conchModel.removeChild(_render.renderObject._conchRenderObject);
+				//scene.conchModel.removeChild(_render._conchRenderObject);
 			}
 		}
 		
@@ -180,9 +179,9 @@ package laya.d3.core {
 		 * @private
 		 */
 		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_render.renderObject);
+			scene.addFrustumCullingObject(_render);
 			if (scene.conchModel) {//NATIVE
-				scene.conchModel.addChildAt(_render.renderObject._conchRenderObject);
+				//scene.conchModel.addChildAt(_render._conchRenderObject);
 			}
 		}
 		
@@ -201,8 +200,8 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		override public function _prepareShaderValuetoRender(projectionView:Matrix4x4):void {
-			super._prepareShaderValuetoRender(projectionView);
+		override public function _renderUpdate(projectionView:Matrix4x4):void {
+			super._renderUpdate(projectionView);
 		}
 		
 		override public function cloneTo(destObject:*):void {

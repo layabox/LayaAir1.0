@@ -158,7 +158,7 @@ package laya.d3.core {
 		public function set localPosition(value:Vector3):void {
 			_localPosition = value;
 			_onLocalTransform();
-			_onWorldTransform();
+			_onWorldPositionTransform();
 		}
 		
 		/**
@@ -177,7 +177,10 @@ package laya.d3.core {
 			_localRotation = value;
 			_localRotation.normalize(_localRotation);
 			_onLocalTransform();
-			_onWorldTransform();
+			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
+				_onWorldPositionRotationTransform();
+			else
+				_onWorldRotationTransform();
 		}
 		
 		/**
@@ -195,7 +198,10 @@ package laya.d3.core {
 		public function set localScale(value:Vector3):void {
 			_localScale = value;
 			_onLocalTransform();
-			_onWorldTransform();
+			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
+				_onWorldPositionScaleTransform();
+			else
+				_onWorldScaleTransform();
 		}
 		
 		/**
@@ -205,7 +211,10 @@ package laya.d3.core {
 		public function set localRotationEuler(value:Vector3):void {
 			Quaternion.createFromYawPitchRoll(value.y, value.x, value.z, _localRotation);
 			_onLocalTransform();
-			_onWorldTransform();
+			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
+				_onWorldPositionRotationTransform();
+			else
+				_onWorldRotationTransform();
 		}
 		
 		/**
@@ -389,14 +398,71 @@ package laya.d3.core {
 		 * @private
 		 */
 		protected function _onWorldTransform():void {
-			if (!_worldUpdate) {
-				_worldUpdate = true;
-				_positionUpdate = true;
-				_rotationUpdate = true;
-				_scaleUpdate = true;
+			if (!_worldUpdate || !_positionUpdate || !_rotationUpdate || !_scaleUpdate) {
+				_worldUpdate = _positionUpdate = _rotationUpdate = _scaleUpdate = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
 				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
 					(_owner._childs[i] as Sprite3D).transform._onWorldTransform();
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _onWorldPositionRotationTransform():void {
+			if (!_worldUpdate || !_positionUpdate || !_rotationUpdate) {
+				_worldUpdate = _positionUpdate = _rotationUpdate = true;
+				event(Event.WORLDMATRIX_NEEDCHANGE);
+				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
+					(_owner._childs[i] as Sprite3D).transform._onWorldPositionRotationTransform();
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _onWorldPositionScaleTransform():void {
+			if (!_worldUpdate || !_positionUpdate || !_scaleUpdate) {
+				_worldUpdate = _positionUpdate = _scaleUpdate = true;
+				event(Event.WORLDMATRIX_NEEDCHANGE);
+				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
+					(_owner._childs[i] as Sprite3D).transform._onWorldPositionScaleTransform();
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _onWorldPositionTransform():void {
+			if (!_worldUpdate || !_positionUpdate) {
+				_worldUpdate = _positionUpdate = true;
+				event(Event.WORLDMATRIX_NEEDCHANGE);
+				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
+					(_owner._childs[i] as Sprite3D).transform._onWorldPositionTransform();
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _onWorldRotationTransform():void {
+			if (!_worldUpdate || !_rotationUpdate) {
+				_worldUpdate = _rotationUpdate = true;
+				event(Event.WORLDMATRIX_NEEDCHANGE);
+				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
+					(_owner._childs[i] as Sprite3D).transform._onWorldRotationTransform();
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _onWorldScaleTransform():void {
+			if (!_worldUpdate || !_scaleUpdate) {
+				_worldUpdate = _scaleUpdate = true;
+				event(Event.WORLDMATRIX_NEEDCHANGE);
+				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
+					(_owner._childs[i] as Sprite3D).transform._onWorldScaleTransform();
 			}
 		}
 		

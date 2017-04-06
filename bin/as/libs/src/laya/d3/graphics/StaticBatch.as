@@ -2,6 +2,7 @@ package laya.d3.graphics {
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
@@ -27,7 +28,7 @@ package laya.d3.graphics {
 			var i:int, n:int;
 			if ((sprite3D is MeshSprite3D) && (sprite3D.isStatic))//TODO:可能会移除,目前只针对MeshSprite3D
 			{
-				var renderElements:Vector.<RenderElement> = (sprite3D as MeshSprite3D).meshRender.renderObject._renderElements;
+				var renderElements:Vector.<RenderElement> = (sprite3D as MeshSprite3D).meshRender._renderElements;
 				for (i = 0, n = renderElements.length; i < n; i++) {
 					var renderElement:RenderElement = renderElements[i];
 					if (renderElement.renderObj._vertexBufferCount === 1)//VertexBufferCount必须等于1
@@ -99,10 +100,33 @@ package laya.d3.graphics {
 			
 			_combineRenderElementPool = new Vector.<RenderElement>();
 			_combineRenderElementPoolIndex = 0;
-			
 			_rootSprite = rootSprite;
 			_vertexDeclaration = vertexDeclaration;
+			if (material is StandardMaterial) {
+				if ((material as StandardMaterial).ambientTexture)
+					_vertexDeclaration = _getLightMapVertexDec(vertexDeclaration);//TODO:判断不优,修改后VB声明一致，是否可用静态合并，改良静态合并增加可能性
+			}
 			_material = material;
+		}
+		
+		private function _getLightMapVertexDec(vertexDeclaration:VertexDeclaration):VertexDeclaration {
+			if (vertexDeclaration === VertexPositionNormalTextureSkinTangent.vertexDeclaration) {
+				return VertexPositionNormalTexture0Texture1SkinTangent.vertexDeclaration;
+			} else if (vertexDeclaration === VertexPositionNormalTextureSkin.vertexDeclaration) {
+				return VertexPositionNormalTexture0Texture1Skin.vertexDeclaration;
+			} else if (vertexDeclaration === VertexPositionNormalColorTextureTangent.vertexDeclaration) {
+				return VertexPositionNormalColorTexture0Texture1Tangent.vertexDeclaration;
+			} else if (vertexDeclaration === VertexPositionNTBTexture.vertexDeclaration) {
+				return null;//TODO:老郭补
+			} else if (vertexDeclaration === VertexPositionNormalColorTexture.vertexDeclaration) {
+				return VertexPositionNormalColorTexture0Texture1.vertexDeclaration;
+			} else if (vertexDeclaration === VertexPositionNormalTextureTangent.vertexDeclaration) {
+				return VertexPositionNormalTexture0Texture1Tangent.vertexDeclaration;
+			} else if (vertexDeclaration === VertexPositionNormalTexture.vertexDeclaration) {
+				return VertexPositionNormalTexture0Texture1.vertexDeclaration;
+			} else {
+				return vertexDeclaration;
+			}
 		}
 		
 		public function _getVertexBuffer(index:int = 0):VertexBuffer3D {
@@ -181,7 +205,7 @@ package laya.d3.graphics {
 					
 					indexDatas.set(subIndexDatas, curIndexCount);
 					
-					var k:int;					
+					var k:int;
 					if (isInvert) {
 						for (k = indexStart; k < indexEnd; k += 3) {
 							indexDatas[k] = indexOffset + indexDatas[k];

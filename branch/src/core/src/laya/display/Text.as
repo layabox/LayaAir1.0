@@ -763,9 +763,6 @@ package laya.display {
 			
 			var lines:Array = text.replace(/\r\n/g, "\n").split("\n");
 			for (var i:int = 0, n:int = lines.length; i < n; i++) {
-				if (i < n - 1)
-					lines[i] += "\n"; //在换行处补上换行
-				
 				var line:String = lines[i];
 				// 开启了自动换行需要计算换行位置
 				// overflow为hidden需要计算截断位置

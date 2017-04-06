@@ -378,7 +378,7 @@ package laya.d3.core {
 		
 		protected function _getShader(state:RenderState):Shader3D {
 			var defineValue:int = state.scene._shaderDefineValue;
-			return _shaderCompile.withCompile(_sharderNameID, 0,defineValue);
+			return _shaderCompile.withCompile(_sharderNameID, defineValue,0,0);
 		}
 		
 		private function addVertexIndexException():void {

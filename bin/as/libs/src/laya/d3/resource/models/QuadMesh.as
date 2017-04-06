@@ -73,66 +73,27 @@ package laya.d3.resource.models {
 			
 			_numberVertices = 4;
 			_numberIndices = 6;
-			var indices:Uint16Array = new Uint16Array(_numberIndices);
 			//定义顶点数据结构
 			var vertexDeclaration:VertexDeclaration = VertexPositionNormalTexture.vertexDeclaration;
 			//单个顶点数据个数,总共字节数/单个字节数
 			var vertexFloatStride:int = vertexDeclaration.vertexStride / 4;
-			//顶点数组长度
-			var vertices:Float32Array = new Float32Array(_numberVertices * vertexFloatStride);
 			
 			var halfLong:Number = _long / 2;
 			var halfWidth:Number = _width / 2;
 			
-			var verticeIndex:int = 0;
-			vertices[0 + verticeIndex * 8] = -halfLong;
-			vertices[1 + verticeIndex * 8] = 0;
-			vertices[2 + verticeIndex * 8] = -halfWidth;
-			vertices[3 + verticeIndex * 8] = 0;
-			vertices[4 + verticeIndex * 8] = 1;
-			vertices[5 + verticeIndex * 8] = 0;
-			vertices[6 + verticeIndex * 8] = 0;
-			vertices[7 + verticeIndex * 8] = 0;
+			var vertices:Float32Array = new Float32Array([
+				
+				-halfLong,   halfWidth,  0,   0, 0, 1, 0, 0,
+				 halfLong,   halfWidth,  0,   0, 0, 1, 1, 0,
+				-halfLong,  -halfWidth,  0,   0, 0, 1, 0, 1,
+				 halfLong,  -halfWidth,  0,   0, 0, 1, 1, 1,
+			]);
 			
-			verticeIndex++;
-			vertices[0 + verticeIndex * 8] = halfLong;
-			vertices[1 + verticeIndex * 8] = 0;
-			vertices[2 + verticeIndex * 8] = -halfWidth;
-			vertices[3 + verticeIndex * 8] = 0;
-			vertices[4 + verticeIndex * 8] = 1;
-			vertices[5 + verticeIndex * 8] = 0;
-			vertices[6 + verticeIndex * 8] = 1;
-			vertices[7 + verticeIndex * 8] = 0;
+			var indices:Uint16Array = new Uint16Array([
 			
-			verticeIndex++;
-			vertices[0 + verticeIndex * 8] = halfLong;
-			vertices[1 + verticeIndex * 8] = 0;
-			vertices[2 + verticeIndex * 8] = halfWidth;
-			vertices[3 + verticeIndex * 8] = 0;
-			vertices[4 + verticeIndex * 8] = 1;
-			vertices[5 + verticeIndex * 8] = 0;
-			vertices[6 + verticeIndex * 8] = 1;
-			vertices[7 + verticeIndex * 8] = 1;
-			
-			verticeIndex++;
-			vertices[0 + verticeIndex * 8] = -halfLong;
-			vertices[1 + verticeIndex * 8] = 0;
-			vertices[2 + verticeIndex * 8] = halfWidth;
-			vertices[3 + verticeIndex * 8] = 0;
-			vertices[4 + verticeIndex * 8] = 1;
-			vertices[5 + verticeIndex * 8] = 0;
-			vertices[6 + verticeIndex * 8] = 0;
-			vertices[7 + verticeIndex * 8] = 1;
-			
-			var indiceIndex:int = 0;
-			indices[0 + indiceIndex * 3] = 0;
-			indices[1 + indiceIndex * 3] = 1;
-			indices[2 + indiceIndex * 3] = 3;
-			
-			indiceIndex++;
-			indices[0 + indiceIndex * 3] = 1;
-			indices[1 + indiceIndex * 3] = 2;
-			indices[2 + indiceIndex * 3] = 3;
+				0,  1,  2,
+				3,  2,  1,
+			]);
 			
 			//初始化顶点缓冲
 			_vertexBuffer = new VertexBuffer3D(vertexDeclaration, _numberVertices, WebGLContext.STATIC_DRAW, true);

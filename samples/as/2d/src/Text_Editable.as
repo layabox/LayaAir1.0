@@ -32,9 +32,6 @@ package
 			
 			inputText.text = "这段文本不可编辑，但可复制";
 			inputText.editable = false;
-			// 输入期间输入框的位置偏移
-			//inputText.inputElementXAdjuster = -1;
-			//inputText.inputElementYAdjuster = 1;
 			
 			// 设置字体样式
 			inputText.bold = true;

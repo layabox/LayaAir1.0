@@ -12,6 +12,7 @@ package laya.webgl.shader.d2 {
 		public static const WORLDMAT:int = 0x80;
 		public static const FILLTEXTURE:int = 0x100;
 		public static const SKINMESH:int = 0x200;
+		public static const SHADERDEFINE_FSHIGHPRECISION:int = 0x400;
 		
 		private static var __name2int:Object = {};
 		private static var __int2name:Array = [];
@@ -29,6 +30,7 @@ package laya.webgl.shader.d2 {
 			
 			reg("WORLDMAT", WORLDMAT);
 			reg("FILLTEXTURE", FILLTEXTURE);
+			reg("FSHIGHPRECISION", SHADERDEFINE_FSHIGHPRECISION);
 		}
 		
 		public function ShaderDefines2D() {

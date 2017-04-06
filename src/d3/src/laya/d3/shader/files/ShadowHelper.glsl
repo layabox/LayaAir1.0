@@ -62,7 +62,7 @@ float getShadowPSSM3( sampler2D shadowMap1,sampler2D shadowMap2,sampler2D shadow
 	*/
 	if( fMyZ <= 1.0 )
 	{
-		float zdepth=1.0;
+		float zdepth=0.0;
 #ifdef SHADOWMAP_PCF3
 		if ( nPSNum == 0 )
 		{
@@ -70,52 +70,52 @@ float getShadowPSSM3( sampler2D shadowMap1,sampler2D shadowMap2,sampler2D shadow
 			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.xy),shadowPCFOffset,	fMyZ );
 			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.x,0),shadowPCFOffset,	fMyZ );
 			value += tex2DPCF( shadowMap1, vText.xy+vec2(0,shadowPCFOffset.y),shadowPCFOffset,	fMyZ );
-			value = 1.0 - value/4.0;
+			value = value/4.0;
 		} 
 		else if( nPSNum == 1 )
 		{
-			value = 1.0-tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);
+			value = tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);
 		}
 		else if( nPSNum == 2 )
 		{
 			vec4 color = texture2D( shadowMap3,vText.xy );
 			zdepth = unpackDepth(color);
-			value = float(fMyZ > zdepth);
+			value = float(fMyZ < zdepth);
 		}
 #endif
 #ifdef SHADOWMAP_PCF2
 		if ( nPSNum == 0 )
 		{
-			value = 1.0-tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);
+			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);
 		}
 		else if( nPSNum == 1 )
 		{
-			value = 1.0-tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);
+			value = tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);
 		}
 		else if( nPSNum == 2 )
 		{
 			vec4 color = texture2D( shadowMap3,vText.xy );
 			zdepth = unpackDepth(color);
-			value = float(fMyZ > zdepth);
+			value = float(fMyZ < zdepth);
 		}
 
 #endif
 #ifdef SHADOWMAP_PCF1
 		if ( nPSNum == 0 )
 		{
-			value = 1.0-tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);
+			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);
 		}
 		else if( nPSNum == 1 )
 		{
 			vec4 color = texture2D( shadowMap2,vText.xy );
 			zdepth = unpackDepth(color);
-			value = float(fMyZ > zdepth);
+			value = float(fMyZ < zdepth);
 		}
 		else if( nPSNum == 2 )
 		{
 			vec4 color = texture2D( shadowMap3,vText.xy );
 			zdepth = unpackDepth(color);
-			value = float(fMyZ > zdepth);
+			value = float(fMyZ < zdepth);
 		}
 #endif
 #ifdef SHADOWMAP_PCF_NO
@@ -133,7 +133,7 @@ float getShadowPSSM3( sampler2D shadowMap1,sampler2D shadowMap2,sampler2D shadow
 			color = texture2D( shadowMap3,vText.xy );
 		}
 		zdepth = unpackDepth(color);
-		value = float(fMyZ > zdepth);
+		value = float(fMyZ < zdepth);
 #endif
 	}
 	return value;
@@ -167,7 +167,7 @@ float getShadowPSSM2( sampler2D shadowMap1,sampler2D shadowMap2,mat4 lightShadow
 	*/
 	if( fMyZ <= 1.0 )
 	{
-		float zdepth=1.0;
+		float zdepth=0.0;
 #ifdef SHADOWMAP_PCF3
 		if ( nPSNum == 0 )
 		{
@@ -175,33 +175,33 @@ float getShadowPSSM2( sampler2D shadowMap1,sampler2D shadowMap2,mat4 lightShadow
 			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.xy),shadowPCFOffset,	fMyZ );
 			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.x,0),shadowPCFOffset,	fMyZ );
 			value += tex2DPCF( shadowMap1, vText.xy+vec2(0,shadowPCFOffset.y),shadowPCFOffset,	fMyZ );
-			value = 1.0 - value/4.0;
+			value = value/4.0;
 		}
 		else if( nPSNum == 1 )
 		{
-			value = 1.0-tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);
+			value = tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);
 		}
 #endif
 #ifdef SHADOWMAP_PCF2
 		if ( nPSNum == 0 )
 		{
-			value = 1.0-tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);
+			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);
 		}
 		else if( nPSNum == 1 )
 		{
-			value = 1.0-tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);
+			value = tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);
 		}
 #endif
 #ifdef SHADOWMAP_PCF1
 		if ( nPSNum == 0 )
 		{
-			value = 1.0-tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);
+			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);
 		}
 		else if( nPSNum == 1 )
 		{
 			vec4 color = texture2D( shadowMap2,vText.xy );
 			zdepth = unpackDepth(color);
-			value = float(fMyZ > zdepth);
+			value = float(fMyZ < zdepth);
 		}
 #endif
 #ifdef SHADOWMAP_PCF_NO
@@ -215,7 +215,7 @@ float getShadowPSSM2( sampler2D shadowMap1,sampler2D shadowMap2,mat4 lightShadow
 			color = texture2D( shadowMap2,vText.xy );
 		}
 		zdepth = unpackDepth(color);
-		value = float(fMyZ > zdepth);
+		value = float(fMyZ < zdepth);
 #endif
 	}
 	return value;
@@ -235,24 +235,24 @@ float getShadowPSSM1( sampler2D shadowMap1,vec4 lightMVPPos,vec4 pssmDistance,ve
 		*/
 		if ( fMyZ <= 1.0 ) 
 		{
-			float zdepth=1.0;
+			float zdepth=0.0;
 #ifdef SHADOWMAP_PCF3
 			value =  tex2DPCF( shadowMap1, vText.xy,shadowPCFOffset,fMyZ );
 			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.xy),shadowPCFOffset,fMyZ );
 			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.x,0),shadowPCFOffset,fMyZ );
 			value += tex2DPCF( shadowMap1, vText.xy+vec2(0,shadowPCFOffset.y),shadowPCFOffset,fMyZ );
-			value = 1.0 - value/4.0;
+			value = value/4.0;
 #endif
 #ifdef SHADOWMAP_PCF2		
-			value = 1.0-tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);
+			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);
 #endif
 #ifdef SHADOWMAP_PCF1
-			value = 1.0-tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);
+			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);
 #endif
 #ifdef SHADOWMAP_PCF_NO		
 			vec4 color = texture2D( shadowMap1,vText.xy );
 			zdepth = unpackDepth(color);
-			value = float(fMyZ > zdepth);
+			value = float(fMyZ < zdepth);
 #endif
 		}
 	}

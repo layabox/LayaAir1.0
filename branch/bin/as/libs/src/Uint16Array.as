@@ -19,12 +19,37 @@
 					for ( var ti :int = 0, len :int = va.length; ti < len; ti ++ ) {
 						vecData[ti] = va[ti];
 					}
-				}				
+				}else if(arg[0] is int)
+				{
+					vecData = new Vector.<uint>(arg[0]);
+				}
 			}
 		}
 		
 		public function getVecBuf() : Vector.<uint> {
 			return vecData;
 		}
+		
+		/**
+		 * 
+		 * uint16Array.set(index, value);
+         * uint16Array.set(array, offset);
+		 * 
+		*/
+		public function set(array:Object, offset:int):void
+		{
+			if(array is int)
+			{
+				this.vecData[array] =offset; 
+			}else{
+				if ( array is Array ) {
+					for(var i:int = 0;i<array.length;i++)
+					{
+						this.vecData[offset++] = array[i];
+					}
+				}		
+			}
+		}
+		
 	}
 }

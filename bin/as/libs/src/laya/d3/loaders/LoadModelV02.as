@@ -42,30 +42,27 @@ package laya.d3.loaders {
 		/**@private */
 		private static var _attrReg:RegExp =/*[STATIC SAFE]*/ new RegExp("(\\w+)|([:,;])", "g");//切割字符串正则
 		/**@private */
-		private static var _currentBlockIndex:int;
+		private static var _BLOCK:Object = {count: 0};
+		/**@private */
+		private static var _DATA:Object = {offset: 0, size: 0};
 		
 		/**@private */
-		private var _strings:Array = [];
+		private static var _strings:Array = [];
 		/**@private */
-		private var _BLOCK:Object = {count: 0};
+		private static var _readData:Byte;
 		/**@private */
-		private var _DATA:Object = {offset: 0, size: 0};
+		private static var _version:String;
 		/**@private */
-		private var _readData:Byte;
-		
+		private static var _mesh:Mesh;
 		/**@private */
-		private var _version:String;
+		private static var _materials:Vector.<BaseMaterial>;
 		/**@private */
-		private var _mesh:Mesh;
-		/**@private */
-		private var _materials:Vector.<BaseMaterial>;
-		/**@private */
-		private var _materialMap:Object;
+		private static var _materialMap:Object;
 		
 		/**
-		 * 创建一个 <code>LoadModel</code> 实例。
+		 * @private
 		 */
-		public function LoadModelV02(readData:Byte, version:String, mesh:Mesh, materials:Vector.<BaseMaterial>, materialMap:Object) {
+		public static function parse(readData:Byte, version:String, mesh:Mesh, materials:Vector.<BaseMaterial>, materialMap:Object):void {
 			_mesh = mesh;
 			_materials = materials;
 			_materialMap = materialMap;
@@ -74,29 +71,35 @@ package laya.d3.loaders {
 			READ_DATA();
 			READ_BLOCK();
 			READ_STRINGS();
-			var n:int;
-			for (_currentBlockIndex = 0, n = _BLOCK.count; _currentBlockIndex < n; _currentBlockIndex++) {
+			for (var i:int = 0, n:int = _BLOCK.count; i < n; i++) {
 				var index:int = _readData.getUint16();
 				var blockName:String = _strings[index];
-				var fn:Function = this["READ_" + blockName];
+				var fn:Function = LoadModelV02["READ_" + blockName];
 				if (fn == null)
 					throw new Error("model file err,no this function:" + index + " " + blockName);
 				else
-					fn.call(this);
+					fn.call();
 			}
+			
+			_strings.length = 0;
+			_readData = null;
+			_version = null;
+			_mesh = null;
+			_materials = null;
+			_materialMap = null;
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _readString():String {
+		private static function _readString():String {
 			return _strings[_readData.getUint16()];
 		}
 		
 		/**
 		 * @private
 		 */
-		private function READ_DATA():void {
+		private static function READ_DATA():void {
 			_DATA.offset = _readData.getUint32();
 			_DATA.size = _readData.getUint32();
 		}
@@ -104,7 +107,7 @@ package laya.d3.loaders {
 		/**
 		 * @private
 		 */
-		private function READ_BLOCK():void {
+		private static function READ_BLOCK():void {
 			var count:uint = _BLOCK.count = _readData.getUint16();
 			var blockStarts:Array = _BLOCK.blockStarts = [];
 			var blockLengths:Array = _BLOCK.blockLengths = [];
@@ -117,7 +120,7 @@ package laya.d3.loaders {
 		/**
 		 * @private
 		 */
-		private function READ_STRINGS():void {
+		private static function READ_STRINGS():void {
 			var offset:uint = _readData.getUint32();
 			var count:uint = _readData.getUint16();
 			var prePos:int = _readData.pos;
@@ -132,9 +135,8 @@ package laya.d3.loaders {
 		/**
 		 * @private
 		 */
-		private function READ_MATERIAL():Boolean {
+		private static function READ_MATERIAL():Boolean {
 			var i:int, n:int;
-			//var index:int = _readData.getUint16();
 			var clasName:String = _readString();//TODO:
 			var shaderName:String = _readString();
 			var url:String = _readString();
@@ -148,7 +150,7 @@ package laya.d3.loaders {
 		/**
 		 * @private
 		 */
-		private function READ_MESH():Boolean {
+		private static function READ_MESH():Boolean {
 			var name:String = _readString();
 			
 			var arrayBuffer:ArrayBuffer = _readData.__getBuffer();
@@ -163,8 +165,9 @@ package laya.d3.loaders {
 				var bufferAttribute:String = _readString();
 				var shaderAttributes:Array = bufferAttribute.match(_attrReg);
 				var vertexDeclaration:VertexDeclaration = _getVertexDeclaration(shaderAttributes);
-				var VertexBuffer:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, (vbDatas.length * 4) / vertexDeclaration.vertexStride, WebGLContext.STATIC_DRAW, true);
-				VertexBuffer.setData(vbDatas);
+				var vertexBuffer:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, (vbDatas.length * 4) / vertexDeclaration.vertexStride, WebGLContext.STATIC_DRAW, true);
+				vertexBuffer.setData(vbDatas);
+				_mesh._vertexBuffers.push(vertexBuffer);
 			}
 			
 			var ibStart:uint = offset + _readData.getUint32();
@@ -172,12 +175,17 @@ package laya.d3.loaders {
 			var ibDatas:Uint16Array = new Uint16Array(arrayBuffer.slice(ibStart, ibStart + ibLength));
 			var indexBuffer:IndexBuffer3D = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, ibLength / 2, WebGLContext.STATIC_DRAW, true);
 			indexBuffer.setData(ibDatas);
+			_mesh._indexBuffer = indexBuffer;
 			
 			var boneNames:Vector.<String> = _mesh._boneNames = new Vector.<String>();
 			var boneCount:uint = _readData.getUint16();
 			boneNames.length = boneCount;
 			for (i = 0; i < boneCount; i++)
 				boneNames[i] = _readData.getString();
+			
+			var boneParentsStart:uint = _readData.getUint32();
+			var boneParentsLength:uint = _readData.getUint32();
+			_mesh._boneParents = new Int16Array(arrayBuffer.slice(offset + boneParentsStart, offset + bindPoseStart + boneParentsLength));
 			
 			var bindPoseStart:uint = _readData.getUint32();
 			var binPoseLength:uint = _readData.getUint32();
@@ -204,7 +212,7 @@ package laya.d3.loaders {
 		/**
 		 * @private
 		 */
-		private function READ_SUBMESH():Boolean {
+		private static function READ_SUBMESH():Boolean {
 			var arrayBuffer:ArrayBuffer = _readData.__getBuffer();
 			var submesh:SubMesh = new SubMesh(_mesh);
 			
@@ -215,10 +223,9 @@ package laya.d3.loaders {
 			submesh._vertexBufferStart = vbStart;
 			submesh.__vertexBufferCount = vbLength;
 			
-			var ibIndex:int = _readData.getInt16();
 			var ibStart:int = _readData.getUint32();
 			var ibLength:int = _readData.getUint32();
-			submesh._indexBuffer = _mesh._indexBuffers[ibIndex];
+			submesh._indexBuffer = _mesh._indexBuffer;
 			submesh._indexBufferStart = ibStart;
 			submesh._indexBufferCount = ibLength;
 			
@@ -235,7 +242,7 @@ package laya.d3.loaders {
 		/**
 		 * @private
 		 */
-		private function _getVertexDeclaration(shaderAttributes:Array):VertexDeclaration {
+		private static function _getVertexDeclaration(shaderAttributes:Array):VertexDeclaration {
 			var position:Boolean, normal:Boolean, color:Boolean, texcoord0:Boolean, texcoord1:Boolean, tangent:Boolean, blendWeight:Boolean, blendIndex:Boolean;
 			var binormal:Boolean = false;
 			for (var i:int = 0; i < shaderAttributes.length; i++) {

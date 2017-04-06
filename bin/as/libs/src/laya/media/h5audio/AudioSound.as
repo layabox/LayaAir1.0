@@ -3,9 +3,10 @@ package laya.media.h5audio {
 	import laya.events.EventDispatcher;
 	import laya.media.SoundChannel;
 	import laya.media.SoundManager;
+	import laya.net.URL;
 	import laya.utils.Browser;
 	import laya.utils.Pool;
-
+	
 	/**
 	 * @private
 	 * 使用Audio标签播放声音
@@ -38,7 +39,6 @@ package laya.media.h5audio {
 			}
 		}
 		
-		
 		/**
 		 * 加载声音
 		 * @param url
@@ -53,7 +53,7 @@ package laya.media.h5audio {
 			}
 			if (!ad) {
 				ad = Browser.createElement("audio") as Audio;
-				ad.src = url;
+				ad.src = URL.formatURL(url);
 				_audioCache[url] = ad;
 			}
 			
@@ -80,10 +80,10 @@ package laya.media.h5audio {
 			this.audio = ad;
 			if (ad.load) {
 				ad.load();
-			}else {
+			} else {
 				onErr();
 			}
-			
+		
 		}
 		
 		/**
@@ -100,8 +100,8 @@ package laya.media.h5audio {
 			ad = _audioCache[url];
 			if (!ad) return null;
 			var tAd:Audio;
-			tAd=Pool.getItem("audio:"+url);
-			tAd=tAd?tAd:ad.cloneNode(true);
+			tAd = Pool.getItem("audio:" + url);
+			tAd = tAd ? tAd : ad.cloneNode(true);
 			var channel:AudioSoundChannel = new AudioSoundChannel(tAd);
 			channel.url = this.url;
 			channel.loops = loops;
@@ -114,8 +114,7 @@ package laya.media.h5audio {
 		/**
 		 * 获取总时间。
 		 */
-		public function get duration():Number 
-		{
+		public function get duration():Number {
 			var ad:Audio;
 			ad = _audioCache[url];
 			if (!ad)

@@ -1,5 +1,8 @@
 package laya.d3.terrain {
+	import laya.d3.core.BaseCamera;
+	import laya.d3.core.Camera;
 	import laya.d3.core.GeometryFilter;
+	import laya.d3.core.material.TerrainMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
@@ -9,6 +12,7 @@ package laya.d3.terrain {
 	import laya.d3.graphics.VertexPositionTerrain;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.utils.Stat;
@@ -16,44 +20,54 @@ package laya.d3.terrain {
 	import laya.webgl.WebGLContext;
 	
 	/**
-	 * <code>MeshFilter</code> 类用于创建网格过滤器。
+	 * <code>TerrainFilter</code> 类用于创建TerrainFilter过滤器。
 	 */
 	public class TerrainFilter extends GeometryFilter  implements IRenderable {
 		/** @private */
+		public static var LINE_MODEL:Boolean = false;
+		public static var TOLERANCE_VALUE:Number = 4;
 		public var _owner:TerrainChunk;
 		public var _indexOfHost:int;
-		public var _gridXNum:int;
-		public var _gridZNum:int;
-		public var _gridSize:int;
-		public var _sizeOfY:Vector2;
+		public var _gridSize:Number;
 		public var memorySize:int;
 		protected var _numberVertices:int;
-		protected var _numberIndices:int;
+		protected var _maxNumberIndices:int;
+		protected var _currentNumberIndices:int;
 		protected var _numberTriangle:int;
 		protected var _vertexBuffer:VertexBuffer3D;
 		protected var _indexBuffer:IndexBuffer3D;
 		protected var _boundingSphere:BoundSphere;
 		protected var _boundingBox:BoundBox;
+		protected var _indexArrayBuffer:Uint16Array;
 		public var _boundingBoxCorners:Vector.<Vector3>;
-		public var bUseStrip:Boolean = true;
+		private var _leafs:Vector.<TerrainLeaf>;
+		private var _leafNum:int;
+		private var _terrainHeightData:Float32Array;
+		private var _terrainHeightDataWidth:int;
+		private var _terrainHeightDataHeight:int;
+		private var _chunkOffsetX:int;
+		private var _chunkOffsetZ:int;
+		
+
 		/**
 		 * 创建一个新的 <code>MeshFilter</code> 实例。
 		 * @param owner 所属网格精灵。
 		 */
-		public function TerrainFilter(owner:TerrainChunk,gridXNum:int,gridZNum:int,gridSize:int) {
+		public function TerrainFilter(owner:TerrainChunk,chunkOffsetX:int,chunkOffsetZ:int,gridSize:Number,terrainHeightData:Float32Array,heightDataWidth:int,heightDataHeight:int) {
 			_owner = owner;
-			_gridXNum = gridXNum;
-			_gridZNum = gridZNum;
+			_chunkOffsetX = chunkOffsetX;
+			_chunkOffsetZ = chunkOffsetZ;
 			_gridSize = gridSize;
+			_terrainHeightData = terrainHeightData;
+			_terrainHeightDataWidth = heightDataWidth;
+			_terrainHeightDataHeight = heightDataHeight;
+			_leafNum = (TerrainLeaf.CHUNK_GRID_NUM / TerrainLeaf.LEAF_GRID_NUM)*(TerrainLeaf.CHUNK_GRID_NUM / TerrainLeaf.LEAF_GRID_NUM);
+			_leafs = new Vector.<TerrainLeaf>(_leafNum);
+			for ( var i:int = 0; i < _leafNum; i++ )
+			{
+				_leafs[i] = new TerrainLeaf();
+			}
 			recreateResource();
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function get _isAsyncLoaded():Boolean {
-			//TODO
-			return true;
 		}
 		
 		/**
@@ -82,99 +96,93 @@ package laya.d3.terrain {
 		
 		protected function recreateResource():void 
 		{
-			if (bUseStrip === false)
+			_currentNumberIndices = 0;
+			_numberTriangle = 0;
+			var nLeafVertexCount:int = TerrainLeaf.LEAF_VERTEXT_COUNT;
+			var nLeafIndexCount:int = TerrainLeaf.LEAF_MAX_INDEX_COUNT;
+			_numberVertices = nLeafVertexCount * _leafNum;
+			_maxNumberIndices = nLeafIndexCount * _leafNum;
+			_indexArrayBuffer = new Uint16Array(_maxNumberIndices);
+			var vertexDeclaration:VertexDeclaration = VertexPositionTerrain.vertexDeclaration;
+			var vertexFloatStride:int = vertexDeclaration.vertexStride / 4;
+			var vertices:Float32Array = new Float32Array(_numberVertices * vertexFloatStride);
+			var nNum:int = TerrainLeaf.CHUNK_GRID_NUM / TerrainLeaf.LEAF_GRID_NUM;
+			var i:int = 0,x:int=0,z:int=0;
+			for ( i = 0; i < _leafNum; i++ )
 			{
-				_numberVertices = (_gridXNum + 1) * (_gridZNum + 1);
-				_numberTriangle = _gridXNum * _gridZNum * 2;
-				_numberIndices = _numberTriangle * 3;
-				var indices:Uint16Array = new Uint16Array(_numberIndices);
-				var vertexDeclaration:VertexDeclaration = VertexPositionTerrain.vertexDeclaration;
-				var vertexFloatStride:int = vertexDeclaration.vertexStride / 4;
-				var vertices:Float32Array = new Float32Array(_numberVertices * vertexFloatStride);
-				var nNum:int = 0;
-				for( var i:int = 0,n:int = _gridXNum + 1 ; i < n; i++ )
-				{
-					for( var j:int = 0,n1:int = _gridZNum + 1 ; j < n1; j++ )
-					{
-						vertices[nNum] = i * _gridSize; nNum++; vertices[nNum] = 0; nNum++; vertices[nNum] = j * _gridSize; nNum++;
-						vertices[nNum] = 0; nNum++; vertices[nNum] = 1; nNum++; vertices[nNum] = 0; nNum++;
-						vertices[nNum] = i/_gridXNum; nNum++; vertices[nNum] = j/_gridZNum; nNum++;
-						vertices[nNum] = i; nNum++; vertices[nNum] = j; nNum++;
-					}
-				}
-				nNum = 0;
-				for( j = 0; j < _gridZNum; j++ )
-				{
-					for( i = 0; i < _gridXNum; i++ )
-					{
-						indices[nNum] = ( j + 1 ) * (_gridXNum + 1) + i;nNum++;
-						indices[nNum] = ( j + 1 ) * (_gridXNum + 1) + i + 1;nNum++;
-						indices[nNum] = j * ( _gridXNum + 1 )  + i + 1; nNum++;
-						indices[nNum] = j * ( _gridXNum + 1 )  + i + 1; nNum++;
-						indices[nNum] = j * ( _gridXNum + 1 ) + i;nNum++;
-						indices[nNum] = ( j + 1 ) * ( _gridXNum + 1 ) + i;nNum++;
-					}
-				}
+				x = i % nNum;
+				z = Math.floor(i / nNum);
+				_leafs[i].calcVertextBuffer( _chunkOffsetX, _chunkOffsetZ, x * TerrainLeaf.LEAF_GRID_NUM, z * TerrainLeaf.LEAF_GRID_NUM, _gridSize, vertices, 
+								i * TerrainLeaf.LEAF_PLANE_VERTEXT_COUNT, vertexFloatStride,_terrainHeightData,_terrainHeightDataWidth,_terrainHeightDataHeight );
 			}
-			else 
+			for ( i = 0; i < _leafNum; i++ )
 			{
-				_numberVertices = (_gridXNum + 1) * (_gridZNum + 1);
-				_numberTriangle = _gridXNum * _gridZNum * 2;//不算退化三角形？
-				_numberIndices = _gridXNum * 2 * (_gridZNum + 1) + (_gridXNum - 1);
-				indices = new Uint16Array(_numberIndices);
-				vertexDeclaration = VertexPositionTerrain.vertexDeclaration;
-				vertexFloatStride = vertexDeclaration.vertexStride / 4;
-				vertices = new Float32Array(_numberVertices * vertexFloatStride);
-				nNum = 0;
-				for( i = 0,n = _gridXNum + 1 ; i < n; i++ )
-				{
-					for( j = 0, n1= _gridZNum + 1 ; j < n1; j++ )
-					{
-						vertices[nNum] = i * _gridSize; nNum++; vertices[nNum] = 0; nNum++; vertices[nNum] = j * _gridSize; nNum++;
-						vertices[nNum] = 0; nNum++; vertices[nNum] = 1; nNum++; vertices[nNum] = 0; nNum++;
-						vertices[nNum] = i/_gridXNum; nNum++; vertices[nNum] = j/_gridZNum; nNum++;
-						vertices[nNum] = i; nNum++; vertices[nNum] = j; nNum++;
-					}
-				}
-				nNum = 0;
-				var currentVertex:int = 0;
-				var topToBottom:Boolean = true;
-				for( j = 0; j < _gridXNum; j++ )
-				{
-					for( i = 0; i < _gridZNum + 1; i++ )
-					{
-						indices[nNum] = currentVertex;nNum++;
-						indices[nNum] = currentVertex + _gridZNum + 1; nNum++;
-						
-						if (i < _gridZNum)
-						{
-							currentVertex = topToBottom ? currentVertex + 1 : currentVertex -1;
-						}
-					}
-					topToBottom = !topToBottom;
-					currentVertex += _gridZNum + 1;
-					indices[nNum] = currentVertex; nNum++;
-				}
+				x = i % nNum;
+				z = Math.floor(i / nNum);
+				_leafs[i].calcSkirtVertextBuffer( _chunkOffsetX, _chunkOffsetZ, x * TerrainLeaf.LEAF_GRID_NUM, z * TerrainLeaf.LEAF_GRID_NUM, _gridSize, vertices, 
+								_leafNum * TerrainLeaf.LEAF_PLANE_VERTEXT_COUNT + i * TerrainLeaf.LEAF_SKIRT_VERTEXT_COUNT, vertexFloatStride,_terrainHeightData,_terrainHeightDataWidth,_terrainHeightDataHeight );
 			}
-			_sizeOfY = new Vector2(-_gridSize, _gridSize);
-			_vertexBuffer = new VertexBuffer3D(vertexDeclaration, _numberVertices, WebGLContext.STATIC_DRAW, true);
-			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _numberIndices, WebGLContext.STATIC_DRAW, true);
+			//assembleIndex();
+			_vertexBuffer = new VertexBuffer3D(vertexDeclaration, _numberVertices, WebGLContext.STATIC_DRAW, false);
+			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _maxNumberIndices, WebGLContext.STATIC_DRAW, false);
 			_vertexBuffer.setData(vertices);
-			_indexBuffer.setData(indices);
+			//_indexBuffer.setData(_indexArrayBuffer);
 			memorySize = (_vertexBuffer.byteLength + _indexBuffer.byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
-			calcBoudingBoxAndSphere();
+			calcOriginalBoudingBoxAndSphere();
 		}
-		public function calcBoudingBoxAndSphere():void
+		protected function assembleIndex(camera:Camera):void
 		{
-			var min:Vector3 = new Vector3( 0, _sizeOfY.x, 0 );
-			var max:Vector3 = new Vector3( _gridXNum * _gridSize, _sizeOfY.y, _gridZNum * _gridSize );
+			//TODO是否可以存储到摄影机中
+			var perspectiveFactor:Number = Math.min(camera.viewport.width,camera.viewport.height) / (2 * Math.tan( Math.PI * camera.fieldOfView / 180.0 ) );
+			_currentNumberIndices = 0;
+			_numberTriangle = 0;
+			var nOffsetIndex:int = 0;
+			for ( var i:int = 0; i < _leafNum; i++ )
+			{
+				var nLODLevel:int = _leafs[i].determineLod( camera.position,perspectiveFactor,TOLERANCE_VALUE );
+				var planeLODIndex:Uint16Array = TerrainLeaf.getPlaneLODIndex( i, nLODLevel );
+				_indexArrayBuffer.set( planeLODIndex, nOffsetIndex);
+				nOffsetIndex += planeLODIndex.length;
+				var skirtLODIndex:Uint16Array = TerrainLeaf.getSkirtLODIndex( i, nLODLevel );
+				_indexArrayBuffer.set( skirtLODIndex, nOffsetIndex);
+				nOffsetIndex += skirtLODIndex.length;
+				_currentNumberIndices += (planeLODIndex.length + skirtLODIndex.length);
+			}
+			_numberTriangle = _currentNumberIndices / 3;
+		}
+		public function calcOriginalBoudingBoxAndSphere():void
+		{
+			var sizeOfY:Vector2 = new Vector2(2147483647,-2147483647);
+			for ( var i:int = 0; i < _leafNum; i++ )
+			{
+				sizeOfY.x = _leafs[i]._sizeOfY.x < sizeOfY.x ? _leafs[i]._sizeOfY.x : sizeOfY.x;
+				sizeOfY.y = _leafs[i]._sizeOfY.y > sizeOfY.y ? _leafs[i]._sizeOfY.y : sizeOfY.y;
+			}
+			var min:Vector3 = new Vector3( _chunkOffsetX * TerrainLeaf.CHUNK_GRID_NUM * _gridSize, sizeOfY.x, _chunkOffsetZ * TerrainLeaf.CHUNK_GRID_NUM * _gridSize );
+			var max:Vector3 = new Vector3( (_chunkOffsetX + 1) * TerrainLeaf.CHUNK_GRID_NUM * _gridSize, sizeOfY.y, (_chunkOffsetZ + 1) * TerrainLeaf.CHUNK_GRID_NUM * _gridSize );
 			_boundingBox = new BoundBox(min, max);
 			var size:Vector3 = new Vector3();
 			Vector3.subtract( max, min, size );
 			Vector3.scale(size, 0.5, size);
-			_boundingSphere = new BoundSphere(size, Vector3.scalarLength(size));
+			var center:Vector3 = new Vector3();
+			Vector3.add( min, size, center );
+			_boundingSphere = new BoundSphere(center, Vector3.scalarLength(size));
 			_boundingBoxCorners = new Vector.<Vector3>(8);
 			_boundingBox.getCorners(_boundingBoxCorners);
+		}
+		public function calcLeafBoudingBox(worldMatrix:Matrix4x4):void
+		{
+			for ( var i:int = 0; i < _leafNum; i++ )
+			{
+				_leafs[i].calcLeafBoudingBox(worldMatrix);
+			}
+		}
+		public function calcLeafBoudingSphere(worldMatrix:Matrix4x4,maxScale:Number):void
+		{
+			for ( var i:int = 0; i < _leafNum; i++ )
+			{
+				_leafs[i].calcLeafBoudingSphere(worldMatrix,maxScale);
+			}
 		}
 		public function get _vertexBufferCount():int
 		{
@@ -204,13 +212,15 @@ package laya.d3.terrain {
 		{
 			_vertexBuffer._bind();
 			_indexBuffer._bind();
+			assembleIndex(state.camera as Camera);
+			_indexBuffer.setData(_indexArrayBuffer);
 			return  true;
 		}
 		public function _render(state:RenderState):void
-		{
-			WebGL.mainContext.drawElements((bUseStrip === true) ? WebGLContext.TRIANGLE_STRIP : WebGLContext.TRIANGLES, _numberIndices, WebGLContext.UNSIGNED_SHORT, 0);
-			Stat.drawCall++;
+		{		
+			WebGL.mainContext.drawElements( LINE_MODEL ? WebGLContext.LINES : WebGLContext.TRIANGLES, _currentNumberIndices, WebGLContext.UNSIGNED_SHORT, 0);
 			Stat.trianglesFaces += _numberTriangle;
+			Stat.drawCall++;
 		}
 		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void
 		{

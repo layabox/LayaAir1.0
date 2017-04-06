@@ -405,7 +405,7 @@ package laya.ui {
 					x = Math.round(layout.left + this.pivotX * this.scaleX);
 					if (!isNaN(layout.right)) {
 						//TODO:
-						width = (parent._width - layout.left - layout.right) / scaleX;
+						width = (parent._width - layout.left - layout.right) / (scaleX || 0.01);
 					}
 				} else if (!isNaN(layout.right)) {
 					x = Math.round(parent.width - displayWidth - layout.right + this.pivotX * this.scaleX);
@@ -427,7 +427,7 @@ package laya.ui {
 					y = Math.round(layout.top + this.pivotY * this.scaleY);
 					if (!isNaN(layout.bottom)) {
 						//TODO:
-						height = (parent._height - layout.top - layout.bottom) / scaleY;
+						height = (parent._height - layout.top - layout.bottom) / (scaleY || 0.01);
 					}
 				} else if (!isNaN(layout.bottom)) {
 					y = Math.round(parent.height - displayHeight - layout.bottom + this.pivotY * this.scaleY);

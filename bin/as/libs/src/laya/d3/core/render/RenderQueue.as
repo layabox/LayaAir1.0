@@ -69,15 +69,15 @@ package laya.d3.core.render {
 		}
 		
 		private function _sortOpaqueFunc(a:RenderElement, b:RenderElement):Number {
-			if (a._renderObject && b._renderObject)//TODO:临时
-				return a._renderObject._distanceForSort - b._renderObject._distanceForSort;
+			if (a._render && b._render)//TODO:临时
+				return a._render._distanceForSort - b._render._distanceForSort;
 			else
 				return 0;
 		}
 		
 		private function _sortAlphaFunc(a:RenderElement, b:RenderElement):Number {
-			if (a._renderObject && b._renderObject)//TODO:临时
-				return b._renderObject._distanceForSort - a._renderObject._distanceForSort;
+			if (a._render && b._render)//TODO:临时
+				return b._render._distanceForSort - a._render._distanceForSort;
 			else
 				return 0;
 		}
@@ -377,7 +377,7 @@ package laya.d3.core.render {
 		 * 渲染队列。
 		 * @param	state 渲染状态。
 		 */
-		public function _renderShadow(state:RenderState, isTarget:Boolean,isOnePSSM:Boolean):void {//TODO:SM
+		public function _renderShadow(state:RenderState,isOnePSSM:Boolean):void {//TODO:SM
 			var loopCount:int = Stat.loopCount;
 			var scene:BaseScene = _scene;
 			var camera:BaseCamera = state.camera;//TODO:是否直接设置灯光摄像机
@@ -392,7 +392,7 @@ package laya.d3.core.render {
 					state.owner = owner = renderElement._sprite3D;
 					//传入灯光的MVP矩阵
 					if (!isOnePSSM&&(owner._projectionViewWorldUpdateCamera!==camera||owner._projectionViewWorldUpdateLoopCount!==Stat.loopCount)){
-						owner._prepareShaderValuetoRender(state._projectionViewMatrix);
+						owner._renderUpdate(state._projectionViewMatrix);
 						owner._projectionViewWorldUpdateLoopCount = Stat.loopCount;
 						owner._projectionViewWorldUpdateCamera = camera;
 					}
@@ -435,12 +435,12 @@ package laya.d3.core.render {
 						}
 						
 						if (lastStateMaterial !== material) {//lastStateMaterial,lastStateOwner存到全局，多摄像机还可优化
-							material._setRenderStateFrontFace(isTarget, owner.transform);
+							material._setRenderStateFrontFace(false, owner.transform);
 							lastStateMaterial = material;
 							lastStateOwner = owner;
 						} else {
 							if (lastStateOwner !== owner) {
-								material._setRenderStateFrontFace(isTarget, owner.transform);
+								material._setRenderStateFrontFace(false, owner.transform);
 								lastStateOwner = owner;
 							}
 						}

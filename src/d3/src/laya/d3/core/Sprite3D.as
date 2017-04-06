@@ -33,9 +33,9 @@ package laya.d3.core {
 		/**着色器变量名，世界视图投影矩阵。*/
 		public static const MVPMATRIX:int = 1;
 		
-		/**唯一标识ID计数器。*/
+		/**@private */
 		protected static var _uniqueIDCounter:int = 0;
-		/**名字计数器。*/
+		/**@private */
 		protected static var _nameNumberCounter:int = 0;
 		
 		/**
@@ -107,7 +107,7 @@ package laya.d3.core {
 		/** @private */
 		protected var _activeInHierarchy:Boolean;
 		/** @private */
-		protected var _layerMask:int;
+		protected var _layer:Layer;
 		
 		/** @private */
 		public var _shaderDefineValue:int;
@@ -127,28 +127,6 @@ package laya.d3.core {
 		 */
 		public function get id():int {
 			return _id;
-		}
-		
-		/**
-		 * 获取是否启用,注意:兼容性接口。
-		 *   @return	是否激活。
-		 */
-		public function get enable():Boolean {
-			return _active;
-		}
-		
-		/**
-		 * 设置是否启用,注意:兼容性接口。
-		 * @param	value 是否启动。
-		 */
-		public function set enable(value:Boolean):void {
-			if (_active !== value) {
-				_active = value;
-				if (value)
-					_activeHierarchy();
-				else
-					_inActiveHierarchy();
-			}
 		}
 		
 		/**
@@ -186,7 +164,7 @@ package laya.d3.core {
 		 * @return	蒙版。
 		 */
 		public function get layer():Layer {
-			return Layer.getLayerByMask(_layerMask);
+			return _layer;
 		}
 		
 		/**
@@ -196,8 +174,8 @@ package laya.d3.core {
 		public function set layer(value:Layer):void {
 			if (value) {
 				var i:int, n:int = _colliders.length;
-				if (_layerMask !== -1) {
-					var oldColliders:Vector.<Collider> = Layer.getLayerByMask(_layerMask)._colliders;
+				if (_layer) {
+					var oldColliders:Vector.<Collider> = _layer._colliders;
 					for (i = 0; i < n; i++)
 						oldColliders.splice(oldColliders.indexOf(_colliders[i]), 1);
 				}
@@ -205,7 +183,7 @@ package laya.d3.core {
 				for (i = 0; i < n; i++)
 					colliders.push(_colliders[i]);
 				
-				_layerMask = value.mask;
+				_layer = value;
 				this.event(Event.LAYER_CHANGED, value);
 			} else {
 				throw new Error("Layer value can be null.");
@@ -260,7 +238,6 @@ package laya.d3.core {
 			(name) ? (this.name = name) : (this.name = "Sprite3D-" + _nameNumberCounter++);
 			_activeInHierarchy = false;
 			_id = ++_uniqueIDCounter;
-			_layerMask = -1;
 			layer = Layer.currentCreationLayer;
 			transform = new Transform3D(this);
 			active = true;
@@ -306,7 +283,7 @@ package laya.d3.core {
 			
 			if (component is Collider) {
 				var colliderComponent:Collider = component as Collider;
-				var colliders:Vector.<Collider> = Layer.getLayerByMask(_layerMask)._colliders;
+				var colliders:Vector.<Collider> = _layer._colliders;
 				colliders.splice(colliders.indexOf(colliderComponent), 1);
 				_colliders.splice(_colliders.indexOf(colliderComponent), 1);
 			}
@@ -436,12 +413,9 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 准备精灵级Shader数据,可重载此函数。
-		 * @param	view
-		 * @param	projection
-		 * @param	projectionView
+		 * @private
 		 */
-		public function _prepareShaderValuetoRender(projectionView:Matrix4x4):void {
+		public function _renderUpdate(projectionView:Matrix4x4):void {
 			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);//TODO:静态合并需要使用,待调整移除。
 			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
 			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
@@ -603,7 +577,7 @@ package laya.d3.core {
 			typeComponentIndex.push(_components.length);
 			_components.push(component);
 			if (component is Collider) {
-				Layer.getLayerByMask(_layerMask)._colliders.push(component);
+				_layer._colliders.push(component);
 				_colliders.push(component);
 			}
 			component._initialize(this);
@@ -723,7 +697,6 @@ package laya.d3.core {
 			destSprite3D.transform.localScale = destLocalScale;
 			
 			destSprite3D.isStatic = isStatic;
-			
 			var i:int, n:int;
 			for (i = 0, n = _componentsMap.length; i < n; i++)
 				destSprite3D.addComponent(_componentsMap[i]);
@@ -756,7 +729,7 @@ package laya.d3.core {
 			
 			transform = null;
 			
-			var colliders:Vector.<Collider> = Layer.getLayerByMask(_layerMask)._colliders;
+			var colliders:Vector.<Collider> = _layer._colliders;
 			for (i = 0, n = _colliders.length; i < n; i++)
 				colliders.splice(colliders.indexOf(_colliders[i]), 1);
 			_colliders = null;

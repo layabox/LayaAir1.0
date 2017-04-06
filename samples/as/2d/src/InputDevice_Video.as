@@ -275,7 +275,7 @@ package
 			}
 			
 			video.on('loadedmetadata', this, onVideoReady);
-			video.on('complete', this, onVideoPlayEnded);
+			video.on('ended', this, onVideoPlayEnded);
 			
 			// 加载视频源
 			video.load("../../../../res/av/mov_bbb.mp4");

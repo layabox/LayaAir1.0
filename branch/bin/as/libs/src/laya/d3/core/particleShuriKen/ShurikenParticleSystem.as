@@ -58,6 +58,8 @@ package laya.d3.core.particleShuriKen {
 	 * <code>ShurikenParticleSystem</code> 类用于创建3D粒子数据模板。
 	 */
 	public class ShurikenParticleSystem extends GeometryFilter implements IRenderable, IClone {
+		/** @private */
+		public static const _maxElapsedTime:Number = 1.0 / 3;
 		/** @private 0:Burst,1:预留,2:StartDelay,3:StartColor,4:StartSize,5:StartRotation,6:randomizeRotationDirection,7:StartLifetime,8:StartSpeed,9:VelocityOverLifetime,10:ColorOverLifetime,11:SizeOverLifetime,12:RotationOverLifetime,13-15:TextureSheetAnimation,16-17:Shape*/
 		public static const _RANDOMOFFSET:Uint32Array = new Uint32Array([0x23571a3e, 0xc34f56fe, 0x13371337, 0x12460f3b, 0x6aed452e, 0xdec4aea1, 0x96aa4de3, 0x8d2c8431, 0xf3857f6f, 0xe0fbd834, 0x13740583, 0x591bc05c, 0x40eb95e4, 0xbc524e5f, 0xaf502044, 0xa614b381, 0x1034e524, 0xfc524e5f]);
 		
@@ -855,7 +857,7 @@ package laya.d3.core.particleShuriKen {
 			_randomSeeds = new Uint32Array(_RANDOMOFFSET.length);
 			isPerformanceMode = true;
 			
-			_owner.on(Event.ENABLED_CHANGED, this, _onOwnerEnableChanged);
+			_owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);
 			_owner.on(Event.DISPLAY, this, _onDisplayInStage);
 			_owner.on(Event.UNDISPLAY, this, _onUnDisplayInStage);
 		}
@@ -899,9 +901,9 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @private
 		 */
-		private function _onOwnerEnableChanged(enable:Boolean):void {
+		private function _onOwnerActiveHierarchyChanged(active:Boolean):void {
 			if (_owner.displayedInStage) {
-				if (enable)
+				if (active)
 					_addUpdateEmissionToTimer();
 				else
 					_removeUpdateEmissionToTimer();
@@ -912,14 +914,14 @@ package laya.d3.core.particleShuriKen {
 		 * @private
 		 */
 		private function _onDisplayInStage():void {
-			(_owner.enable) && (_addUpdateEmissionToTimer());
+			(_owner.activeInHierarchy) && (_addUpdateEmissionToTimer());
 		}
 		
 		/**
 		 * @private
 		 */
 		private function _onUnDisplayInStage():void {
-			(_owner.enable) && (_removeUpdateEmissionToTimer());
+			(_owner.activeInHierarchy) && (_removeUpdateEmissionToTimer());
 		}
 		
 		/**
@@ -1108,6 +1110,7 @@ package laya.d3.core.particleShuriKen {
 		 * @private
 		 */
 		private function _advanceTime(elapsedTime:Number):void {
+			elapsedTime = Math.min(_maxElapsedTime, elapsedTime);
 			if (!_isPlaying || _isPaused)
 				return;
 			_playbackTime += elapsedTime;
@@ -1159,7 +1162,7 @@ package laya.d3.core.particleShuriKen {
 		 */
 		override public function _destroy():void {
 			super._destroy();
-			(_owner.displayedInStage && _owner.enable) && (_removeUpdateEmissionToTimer());
+			(_owner.displayedInStage && _owner.activeInHierarchy) && (_removeUpdateEmissionToTimer());
 			_vertexBuffer.dispose();
 			_indexBuffer.dispose();
 			_emission._destroy();

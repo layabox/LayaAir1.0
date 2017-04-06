@@ -5,6 +5,7 @@ package laya.d3.loaders {
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.graphics.VertexElement;
+	import laya.d3.graphics.VertexPositionNTBTextureSkin;
 	import laya.d3.graphics.VertexPositionNormalColor;
 	import laya.d3.graphics.VertexPositionNormalColorSkin;
 	import laya.d3.graphics.VertexPositionNormalColorSkinTangent;
@@ -262,7 +263,6 @@ package laya.d3.loaders {
 			for (i = 0, n = indexBufferData.length; i < n; i++) {
 				indexBufferData[i] = indexBufferOffset + indexBufferData[i];
 			}
-			
 			ib.setData(indexBufferData);
 			submesh._indexBuffer = ib;
 			
@@ -326,6 +326,8 @@ package laya.d3.loaders {
 				vertexDeclaration = VertexPositionNormalColorTextureSkinTangent.vertexDeclaration;
 			else if (position && normal && color && texcoord0 && blendWeight && blendIndex)
 				vertexDeclaration = VertexPositionNormalColorTextureSkin.vertexDeclaration;
+			else if (position && normal && tangent && binormal && texcoord0 && blendWeight && blendIndex)
+				vertexDeclaration = VertexPositionNTBTextureSkin.vertexDeclaration;
 			else if (position && normal && texcoord0 && blendWeight && blendIndex && tangent)
 				vertexDeclaration = VertexPositionNormalTextureSkinTangent.vertexDeclaration;
 			else if (position && normal && texcoord0 && blendWeight && blendIndex)

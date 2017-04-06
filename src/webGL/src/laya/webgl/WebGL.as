@@ -163,7 +163,23 @@ package laya.webgl {
 				}
 			}
 			
-			mainContext = getWebGLContext(Render._mainCanvas);
+			RunDriver.getWebGLContext = function getWebGLContext(canvas:*):WebGLContext {
+				var gl:WebGLContext;
+				var names:Array = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
+				for (var i:int = 0; i < names.length; i++) {
+					try {
+						gl = canvas.getContext(names[i], {stencil: Config.isStencil, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha, preserveDrawingBuffer: Config.preserveDrawingBuffer});
+					} catch (e:*) {
+					}
+					if (gl) {
+						(i !== 0) && (_isExperimentalWebgl = true);
+						return gl;
+					}
+				}
+				return null;
+			}
+			
+			mainContext = RunDriver.getWebGLContext(Render._mainCanvas);
 			if (mainContext == null)
 				return false;
 			
@@ -202,10 +218,10 @@ package laya.webgl {
 			
 			RunDriver.clear = function(color:String):void {
 				RenderState2D.worldScissorTest && WebGL.mainContext.disable(WebGLContext.SCISSOR_TEST);
-				if (color && color !== "black" && color !== "#000000"||Config.preserveDrawingBuffer) {//兼容性代码
-					var c:Array = Color.create(color)._color;
-					Render.context.ctx.clearBG(c[0], c[1], c[2], c[3]);
-				}
+				var ctx:* = Render.context.ctx;
+				//兼容浏览器
+				var c:Array = (ctx._submits._length == 0 || Config.preserveDrawingBuffer) ? Color.create(color)._color : Laya.stage._wgColor;
+				if (c) ctx.clearBG(c[0], c[1], c[2], c[3]);
 				RenderState2D.clear();
 			}
 			
@@ -493,22 +509,6 @@ package laya.webgl {
 			Uint8Array.prototype.slice || (Uint8Array.prototype.slice = _uint8ArraySlice);
 			ArrayBuffer.prototype.slice || (ArrayBuffer.prototype.slice = _arrayBufferSlice);
 			return true;
-		}
-		
-		public static function getWebGLContext(canvas:*):WebGLContext {
-			var gl:WebGLContext;
-			var names:Array = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
-			for (var i:int = 0; i < names.length; i++) {
-				try {
-					gl = canvas.getContext(names[i], {stencil: Config.isStencil, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha, preserveDrawingBuffer: Config.preserveDrawingBuffer});
-				} catch (e:*) {
-				}
-				if (gl) {
-					(i !== 0) && (_isExperimentalWebgl = true);
-					return gl;
-				}
-			}
-			return null;
 		}
 		
 		public static function onStageResize(width:Number, height:Number):void {

@@ -100,12 +100,13 @@ package laya.d3.resource {
 			startCreate();
 			var gl:WebGLContext = WebGL.mainContext;
 			_frameBuffer = gl.createFramebuffer();
+			//var ext = gl.getExtension('OES_texture_float');
 			_source = gl.createTexture();
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, _source);
 			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _width, _height, 0, _surfaceFormat, _surfaceType, null);
-			
+			//gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _width, _height, 0, WebGLContext.RGBA, WebGLContext.FLOAT, null);
 			var minFifter:int = this._minFifter;
 			var magFifter:int = this._magFifter;
 			var repeat:int = this._repeat ? WebGLContext.REPEAT : WebGLContext.CLAMP_TO_EDGE;

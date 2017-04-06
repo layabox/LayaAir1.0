@@ -7,7 +7,9 @@ package laya.net {
 	public class URL {
 		/**版本号。*/
 		public static var version:Object = {};
+		/**@private */
 		private var _url:String;
+		/**@private */
 		private var _path:String;
 		
 		/**创建一个新的 <code>URL</code> 实例。*/
@@ -31,7 +33,11 @@ package laya.net {
 		/**根路径。*/
 		public static var rootPath:String = "";
 		/** 自定义url格式化。例如： customFormat = function(url:String,basePath:String):String{} */
-		public static var customFormat:Function;
+		public static var customFormat:Function = function(url:String):String {
+			var newUrl:String = version[url];
+			if (!Render.isConchApp && newUrl) url += "?v=" + newUrl;
+			return url;
+		}
 		
 		/**
 		 * 格式化指定的地址并	返回。
@@ -40,17 +46,22 @@ package laya.net {
 		 * @return 格式化处理后的地址。
 		 */
 		public static function formatURL(url:String, base:String = null):String {
-			if (customFormat != null) url = customFormat(url, base);
 			if (!url) return "null path";
-			if (url.indexOf("data:image") === 0) return url;
-			if (Render.isConchApp == false) {
-				version[url] && (url += "?v=" + version[url]);
-			}
-			if (url.charAt(0) == '~') return rootPath + url.substring(1);
-			if (isAbsolute(url)) return url;
+			if (customFormat != null) url = customFormat(url, base);
 			
-			var retVal:String = (base || basePath) + url;
-			return formatRelativePath(retVal);
+			var char1:String = url.charAt(0);
+			if (char1 === "h" || char1 === "f") {
+				if (url.indexOf(":") > 0) return url;
+			} else if (char1 === ".") {
+				formatRelativePath((base || basePath) + url);
+			} else if (char1 === '~') {
+				return rootPath + url.substring(1);
+			} else if (char1 === "d") {
+				if (url.indexOf("data:image") === 0) return url;
+			} else if (char1 === "/" || url.indexOf(":") > 0) {
+				return url;
+			}
+			return (base || basePath) + url;
 		}
 		
 		/**
@@ -58,23 +69,17 @@ package laya.net {
 		 * @param	value
 		 * @return
 		 */
-		private static function formatRelativePath(value:String):String 
-		{
-			if (value.indexOf("../") > -1)
-			{
-				var parts:Array = value.split("/");
-				for (var i:int = 0, len:int = parts.length; i < len; i++)
-				{
-					if (parts[i] == '..')
-					{
-						parts.splice(i - 1, 2);
-						i-=2;
-					}
+		private static function formatRelativePath(value:String):String {
+			var parts:Array = value.split("/");
+			for (var i:int = 0, len:int = parts.length; i < len; i++) {
+				if (parts[i] == '..') {
+					parts.splice(i - 1, 2);
+					i -= 2;
 				}
-				return parts.join('/');
 			}
-			return value;
+			return parts.join('/');
 		}
+		
 		/**
 		 * 检测指定 URL 是否是绝对地址。
 		 * @param	url 地址。

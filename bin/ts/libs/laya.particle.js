@@ -370,7 +370,7 @@
 			var i=0,len=0;
 			len=3;
 			for (i=0;i < len;i++){
-				this._position[i]+=this._position[i]+(velocity[i] / lenVelocity)*velocityIntegral *this.u_Duration;
+				this._position[i]=this._position[i]+(velocity[i] / lenVelocity)*velocityIntegral *this.u_Duration;
 				this._position[i]+=this.u_Gravity[i] *age *normalizedAge;
 			};
 			var radius=MathUtil.lerp(this.a_Radius[0],this.a_Radius[1],normalizedAge);

@@ -545,14 +545,15 @@ package laya.display {
 			}
 			var startY:Number = padding[0];
 			
-			//处理对齐
-			if (align == "right") {
-				textAlgin = "right";
-				startX = this._width - padding[1];
-			}
-			else if (align == "center") {
-				textAlgin = "center";
-				startX = this._width * 0.5 + padding[3] - padding[1];
+			//处理水平对齐
+			if ((!tCurrBitmapFont) && this._width > 0 && _textWidth <= _width) {
+				if (align == "right") {
+					textAlgin = "right";
+					startX = this._width - padding[1];
+				} else if (align == "center") {
+					textAlgin = "center";
+					startX = this._width * 0.5 + padding[3] - padding[1];
+				}
 			}
 			
 			if (_height > 0) {
@@ -762,9 +763,6 @@ package laya.display {
 			
 			var lines:Array = text.replace(/\r\n/g, "\n").split("\n");
 			for (var i:int = 0, n:int = lines.length; i < n; i++) {
-				if (i < n - 1)
-					lines[i] += "\n"; //在换行处补上换行
-				
 				var line:String = lines[i];
 				// 开启了自动换行需要计算换行位置
 				// overflow为hidden需要计算截断位置
@@ -982,6 +980,9 @@ package laya.display {
 		}
 		
 		public function get lines():Array {
+			if (_isChanged)
+				typeset();
+				
 			return _lines;
 		}
 		

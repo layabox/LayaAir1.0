@@ -21,7 +21,7 @@ package laya.d3.component.animation {
 	 */
 	public class SkinAnimations extends KeyframeAnimations {
 		public static const BONES:int = 0;
-		public static var SHADERDEFINE_BONE:int = 0x100;
+		public static var SHADERDEFINE_BONE:int = 0x1;
 		
 		/**
 		 * @private

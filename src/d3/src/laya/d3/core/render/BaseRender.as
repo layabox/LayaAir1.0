@@ -4,7 +4,6 @@ package laya.d3.core.render {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.scene.OctreeNode;
-	import laya.d3.graphics.RenderObject;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
@@ -21,14 +20,15 @@ package laya.d3.core.render {
 	 * <code>Render</code> 类用于渲染器的父类，抽象类不允许示例。
 	 */
 	public class BaseRender extends EventDispatcher implements IDestroy {
+		/** @private */
+		public static var _tempBoudingBoxCorners:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+		
 		/**@private */
 		private var _destroyed:Boolean;
 		/** @private */
 		private var _enable:Boolean;
 		/** @private */
-		private var _renderObject:RenderObject;
-		/** @private */
-		private var _materials:Vector.<BaseMaterial>;
+		public var _materials:Vector.<BaseMaterial>;//TODO:
 		/** @private */
 		private var _receiveShadow:Boolean;
 		/** @private */
@@ -45,10 +45,17 @@ package laya.d3.core.render {
 		protected var _boundingBoxCenterNeedChange:Boolean;
 		/** @private */
 		protected var _octreeNodeNeedChange:Boolean;
-		
+	
 		/** @private */
 		public var _owner:Sprite3D;
+		/** @private */
+		public var _renderElements:Vector.<RenderElement>;
+		/** @private */
+		public var _distanceForSort:Number;
+		/** @private */
+		public var _treeNode:ITreeNode;
 		
+			
 		/**排序矫正值。*/
 		public var sortingFudge:Number;
 		/** 是否产生阴影。 */
@@ -69,14 +76,6 @@ package laya.d3.core.render {
 		public function set enable(value:Boolean):void {
 			_enable = value;
 			event(Event.ENABLE_CHANGED, [this, value]);
-		}
-		
-		/**
-		 * 获取渲染物体。
-		 * @return 渲染物体。
-		 */
-		public function get renderObject():RenderObject {
-			return _renderObject;
 		}
 		
 		/**
@@ -178,7 +177,7 @@ package laya.d3.core.render {
 		}
 		
 		/**
-		 * 获取包围球。
+		 * 获取包围球,不允许修改其值。
 		 * @return 包围球。
 		 */
 		public function get boundingSphere():BoundSphere {
@@ -190,7 +189,7 @@ package laya.d3.core.render {
 		}
 		
 		/**
-		 * 获取包围盒。
+		 * 获取包围盒,不允许修改其值。
 		 * @return 包围盒。
 		 */
 		public function get boundingBox():BoundBox {
@@ -202,7 +201,7 @@ package laya.d3.core.render {
 		}
 		
 		/**
-		 * 获取包围盒中心。
+		 * 获取包围盒中心,不允许修改其值。
 		 * @return 包围盒中心。
 		 */
 		public function get boundingBoxCenter():Vector3 {
@@ -257,19 +256,11 @@ package laya.d3.core.render {
 			_boundingBoxNeedChange = true;
 			_boundingBoxCenterNeedChange = true;
 			_octreeNodeNeedChange = true;
-			_renderObject = new RenderObject(owner);
-			_renderObject._render = this;
-			_renderObject._layerMask = _owner.layer.mask;
-			_renderObject._ownerActiveSelf = _owner.active;
-			_renderObject._enable = _enable;
 			_materials = new Vector.<BaseMaterial>();
 			sortingFudge = 0.0;
+			_renderElements = new Vector.<RenderElement>();
 			
 			_owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);
-			_owner.on(Event.LAYER_CHANGED, this, _onOwnerLayerChanged);
-			_owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveChanged);
-			on(Event.ENABLE_CHANGED, this, _onEnableChanged);//TODO:是否直接移到属性
-		
 		}
 		
 		/**
@@ -280,27 +271,6 @@ package laya.d3.core.render {
 			_boundingBoxNeedChange = true;
 			_boundingBoxCenterNeedChange = true;
 			_octreeNodeNeedChange = true;
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _onOwnerLayerChanged(layer:Layer):void {
-			_renderObject._layerMask = layer.mask;
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _onOwnerActiveChanged(active:Boolean):void {
-			_renderObject._ownerActiveSelf = active;
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _onEnableChanged(sender:BaseRender, enable:Boolean):void {
-			_renderObject._enable = enable;
 		}
 		
 		/**
@@ -321,9 +291,9 @@ package laya.d3.core.render {
 		 * @private
 		 */
 		public function _updateOctreeNode():void {
-			var treeNode:ITreeNode = _renderObject._treeNode;
+			var treeNode:ITreeNode = _treeNode;
 			if (treeNode && _octreeNodeNeedChange) {
-				treeNode.updateObject(_renderObject);
+				treeNode.updateObject(this);
 				_octreeNodeNeedChange = false;
 			}
 		}
@@ -334,7 +304,6 @@ package laya.d3.core.render {
 		public function _destroy():void {
 			offAll();
 			_owner = null;
-			_renderObject = null;
 			_materials = null;
 			_boundingBox = null;
 			_boundingBoxCenter = null;

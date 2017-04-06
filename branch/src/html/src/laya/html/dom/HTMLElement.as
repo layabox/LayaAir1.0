@@ -126,7 +126,7 @@ package laya.html.dom
 			for (var i:int = 0, n:int = txt.length; i < n; i++)
 			{
 				size = Utils.measureText(txt.charAt(i), fontStr);
-				var tHTMLChar:HTMLChar = words[i] = new HTMLChar(txt.charAt(i), size.width, size.height, style);
+				var tHTMLChar:HTMLChar = words[i] = new HTMLChar(txt.charAt(i), size.width, size.height||style.fontSize, style);
 				if (href)
 				{
 					var tSprite:Sprite = new Sprite();

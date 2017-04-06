@@ -10,7 +10,7 @@ package laya.d3.resource.models {
 	import laya.webgl.utils.Buffer;
 	
 	/**
-	 * <code>Sphere</code> 类用于创建球体。
+	 * <code>Sphere</code> 类用于创建方体。
 	 */
 	public class BoxMesh extends PrimitiveMesh {
 		/** @private */
@@ -81,7 +81,7 @@ package laya.d3.resource.models {
 		}
 		
 		/**
-		 * 创建一个球体模型
+		 * 创建一个方体模型
 		 * @param radius 半径
 		 * @param stacks 水平层数
 		 * @param slices 垂直层数
@@ -100,284 +100,68 @@ package laya.d3.resource.models {
 			startCreate();
 			_numberVertices = 24;
 			_numberIndices = 36;
-			var indices:Uint16Array = new Uint16Array(_numberIndices);
+			
 			var vertexDeclaration:VertexDeclaration = VertexPositionNormalTexture.vertexDeclaration;
 			var vertexFloatStride:int = vertexDeclaration.vertexStride / 4;
-			var vertices:Float32Array = new Float32Array(_numberVertices * vertexFloatStride);
+			
 			var halfLong:Number = _long / 2;
+			var halfHeight:Number = _height / 2;
 			var halfWidth:Number = _width / 2;
-			//上
-			var nPointNum:int = 0;
-			vertices[nPointNum + 0] = -halfLong;
-			vertices[nPointNum + 1] = _height;
-			vertices[nPointNum + 2] = -halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = 1;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 0;
-			vertices[nPointNum + 7] = 0;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = halfLong;
-			vertices[nPointNum + 1] = _height;
-			vertices[nPointNum + 2] = -halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = 1;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 1;
-			vertices[nPointNum + 7] = 0;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = halfLong;
-			vertices[nPointNum + 1] = _height;
-			vertices[nPointNum + 2] = halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = 1;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 1;
-			vertices[nPointNum + 7] = 1;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = -halfLong;
-			vertices[nPointNum + 1] = _height;
-			vertices[nPointNum + 2] = halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = 1;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 0;
-			vertices[nPointNum + 7] = 1;
-			nPointNum += 8;
-			//下
-			vertices[nPointNum + 0] = -halfLong;
-			vertices[nPointNum + 1] = 0;
-			vertices[nPointNum + 2] = -halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = -1;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 1;
-			vertices[nPointNum + 7] = 0;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = halfLong;
-			vertices[nPointNum + 1] = 0;
-			vertices[nPointNum + 2] = -halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = -1;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 0;
-			vertices[nPointNum + 7] = 0;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = halfLong;
-			vertices[nPointNum + 1] = 0;
-			vertices[nPointNum + 2] = halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = -1;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 0;
-			vertices[nPointNum + 7] = 1;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = -halfLong;
-			vertices[nPointNum + 1] = 0;
-			vertices[nPointNum + 2] = halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = -1;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 1;
-			vertices[nPointNum + 7] = 1;
-			nPointNum += 8;
-			//左
-			vertices[nPointNum + 0] = -halfLong;
-			vertices[nPointNum + 1] = _height;
-			vertices[nPointNum + 2] = -halfWidth;
-			vertices[nPointNum + 3] = -1;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 0;
-			vertices[nPointNum + 7] = 0;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = -halfLong;
-			vertices[nPointNum + 1] = _height;
-			vertices[nPointNum + 2] = halfWidth;
-			vertices[nPointNum + 3] = -1;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 1;
-			vertices[nPointNum + 7] = 0;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = -halfLong;
-			vertices[nPointNum + 1] = 0;
-			vertices[nPointNum + 2] = halfWidth;
-			vertices[nPointNum + 3] = -1;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 1;
-			vertices[nPointNum + 7] = 1;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = -halfLong;
-			vertices[nPointNum + 1] = 0;
-			vertices[nPointNum + 2] = -halfWidth;
-			vertices[nPointNum + 3] = -1;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 0;
-			vertices[nPointNum + 7] = 1;
-			nPointNum += 8;
-			//右
-			vertices[nPointNum + 0] = halfLong;
-			vertices[nPointNum + 1] = _height;
-			vertices[nPointNum + 2] = -halfWidth;
-			vertices[nPointNum + 3] = 1;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 1;
-			vertices[nPointNum + 7] = 0;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = halfLong;
-			vertices[nPointNum + 1] = _height;
-			vertices[nPointNum + 2] = halfWidth;
-			vertices[nPointNum + 3] = 1;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 0;
-			vertices[nPointNum + 7] = 0;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = halfLong;
-			vertices[nPointNum + 1] = 0;
-			vertices[nPointNum + 2] = halfWidth;
-			vertices[nPointNum + 3] = 1;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 0;
-			vertices[nPointNum + 7] = 1;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = halfLong;
-			vertices[nPointNum + 1] = 0;
-			vertices[nPointNum + 2] = -halfWidth;
-			vertices[nPointNum + 3] = 1;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = 0;
-			vertices[nPointNum + 6] = 1;
-			vertices[nPointNum + 7] = 1;
-			nPointNum += 8;
-			//前
-			vertices[nPointNum + 0] = -halfLong;
-			vertices[nPointNum + 1] = _height;
-			vertices[nPointNum + 2] = halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = 1;
-			vertices[nPointNum + 6] = 0;
-			vertices[nPointNum + 7] = 0;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = halfLong;
-			vertices[nPointNum + 1] = _height;
-			vertices[nPointNum + 2] = halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = 1;
-			vertices[nPointNum + 6] = 1;
-			vertices[nPointNum + 7] = 0;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = halfLong;
-			vertices[nPointNum + 1] = 0;
-			vertices[nPointNum + 2] = halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = 1;
-			vertices[nPointNum + 6] = 1;
-			vertices[nPointNum + 7] = 1;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = -halfLong;
-			vertices[nPointNum + 1] = 0;
-			vertices[nPointNum + 2] = halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = 1;
-			vertices[nPointNum + 6] = 0;
-			vertices[nPointNum + 7] = 1;
-			nPointNum += 8;
-			//后
-			vertices[nPointNum + 0] = -halfLong;
-			vertices[nPointNum + 1] = _height;
-			vertices[nPointNum + 2] = -halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = -1;
-			vertices[nPointNum + 6] = 1;
-			vertices[nPointNum + 7] = 0;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = halfLong;
-			vertices[nPointNum + 1] = _height;
-			vertices[nPointNum + 2] = -halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = -1;
-			vertices[nPointNum + 6] = 0;
-			vertices[nPointNum + 7] = 0;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = halfLong;
-			vertices[nPointNum + 1] = 0;
-			vertices[nPointNum + 2] = -halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = -1;
-			vertices[nPointNum + 6] = 0;
-			vertices[nPointNum + 7] = 1;
-			nPointNum += 8;
-			vertices[nPointNum + 0] = -halfLong;
-			vertices[nPointNum + 1] = 0;
-			vertices[nPointNum + 2] = -halfWidth;
-			vertices[nPointNum + 3] = 0;
-			vertices[nPointNum + 4] = 0;
-			vertices[nPointNum + 5] = -1;
-			vertices[nPointNum + 6] = 1;
-			vertices[nPointNum + 7] = 1;
-			//indexBuffer 分别是 上 下 左 右  前 后
-			var nFaceNum:int = 0;
-			indices[nFaceNum + 0] = 0;
-			indices[nFaceNum + 1] = 1;
-			indices[nFaceNum + 2] = 2;
-			nFaceNum += 3;
-			indices[nFaceNum + 0] = 2;
-			indices[nFaceNum + 1] = 3;
-			indices[nFaceNum + 2] = 0;
-			nFaceNum += 3;
-			indices[nFaceNum + 0] = 4;
-			indices[nFaceNum + 1] = 7;
-			indices[nFaceNum + 2] = 6;
-			nFaceNum += 3;
-			indices[nFaceNum + 0] = 6;
-			indices[nFaceNum + 1] = 5;
-			indices[nFaceNum + 2] = 4;
-			nFaceNum += 3;
-			indices[nFaceNum + 0] = 8;
-			indices[nFaceNum + 1] = 9;
-			indices[nFaceNum + 2] = 10;
-			nFaceNum += 3;
-			indices[nFaceNum + 0] = 10;
-			indices[nFaceNum + 1] = 11;
-			indices[nFaceNum + 2] = 8;
-			nFaceNum += 3;
-			indices[nFaceNum + 0] = 12;
-			indices[nFaceNum + 1] = 15;
-			indices[nFaceNum + 2] = 14;
-			nFaceNum += 3;
-			indices[nFaceNum + 0] = 14;
-			indices[nFaceNum + 1] = 13;
-			indices[nFaceNum + 2] = 12;
-			nFaceNum += 3;
-			indices[nFaceNum + 0] = 16;
-			indices[nFaceNum + 1] = 17;
-			indices[nFaceNum + 2] = 18;
-			nFaceNum += 3;
-			indices[nFaceNum + 0] = 18;
-			indices[nFaceNum + 1] = 19;
-			indices[nFaceNum + 2] = 16;
-			nFaceNum += 3;
-			indices[nFaceNum + 0] = 20;
-			indices[nFaceNum + 1] = 23;
-			indices[nFaceNum + 2] = 22;
-			nFaceNum += 3;
-			indices[nFaceNum + 0] = 22;
-			indices[nFaceNum + 1] = 21;
-			indices[nFaceNum + 2] = 20;
-			//
+			
+			var vertices:Float32Array = new Float32Array([
+				//上
+				-halfLong, halfHeight,  -halfWidth, 0, 1, 0, 0, 0,
+				halfLong,  halfHeight,  -halfWidth, 0, 1, 0, 1, 0,
+				halfLong,  halfHeight,  halfWidth,  0, 1, 0, 1, 1,
+				-halfLong, halfHeight,  halfWidth,  0, 1, 0, 0, 1,
+				//下
+				-halfLong, -halfHeight, -halfWidth, 0, -1, 0, 0, 1,
+				halfLong,  -halfHeight, -halfWidth, 0, -1, 0, 1, 1,
+				halfLong,  -halfHeight, halfWidth,  0, -1, 0, 1, 0,
+				-halfLong, -halfHeight, halfWidth,  0, -1, 0, 0, 0,
+				//左
+				-halfLong, halfHeight,  -halfWidth, -1, 0, 0, 0, 0,
+				-halfLong, halfHeight,  halfWidth,  -1, 0, 0, 1, 0,
+				-halfLong, -halfHeight, halfWidth,  -1, 0, 0, 1, 1,
+				-halfLong, -halfHeight, -halfWidth, -1, 0, 0, 0, 1,
+				//右
+				halfLong,  halfHeight,  -halfWidth,  1, 0, 0, 1, 0,
+				halfLong,  halfHeight,  halfWidth,   1, 0, 0, 0, 0,
+				halfLong,  -halfHeight, halfWidth,   1, 0, 0, 0, 1,
+				halfLong,  -halfHeight, -halfWidth,  1, 0, 0, 1, 1,
+				//前
+				-halfLong, halfHeight,  halfWidth,   0, 0, 1, 0, 0,
+				halfLong,  halfHeight,  halfWidth,   0, 0, 1, 1, 0,
+				halfLong,  -halfHeight, halfWidth,   0, 0, 1, 1, 1,
+				-halfLong, -halfHeight, halfWidth,   0, 0, 1, 0, 1,
+				//后
+				-halfLong, halfHeight,  -halfWidth,  0, 0, -1, 1, 0,
+				halfLong,  halfHeight,  -halfWidth,  0, 0, -1, 0, 0,
+				halfLong,  -halfHeight, -halfWidth,  0, 0, -1, 0, 1,
+				-halfLong, -halfHeight, -halfWidth,  0, 0, -1, 1, 1
+			]);
+			
+			var indices:Uint16Array = new Uint16Array([
+				//上
+				0,  1,  2,
+				2,  3,  0,
+				//下
+				4,  7,  6,
+				6,  5,  4,
+				//左
+				8,  9,  10,
+				10, 11, 8,
+				//右
+				12, 15, 14,
+				14, 13, 12,
+				//前
+				16, 17, 18,
+				18, 19, 16,
+				//后
+				20, 23, 22,
+				22, 21, 20
+			]);
+			
 			_vertexBuffer = new VertexBuffer3D(vertexDeclaration, _numberVertices, WebGLContext.STATIC_DRAW, true);
 			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _numberIndices, WebGLContext.STATIC_DRAW, true);
 			_vertexBuffer.setData(vertices);

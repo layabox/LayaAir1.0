@@ -151,6 +151,10 @@ package laya.debug.tools
 			var key:String;
 			for(key in obj)
 			{
+				if(obj[key]===null||obj[key]===undefined)
+				{
+					rst[key]=obj[key];
+				}else
 				if(obj[key] is Array)
 				{
 					rst[key]=copyArr(obj[key]);

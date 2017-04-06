@@ -12,9 +12,8 @@ package laya.debug.tools
 		{
 			
 		}
-		private static var _txt:Text;
+		public static var _txt:Text;
 		public static var I:DebugTxt;
-		
 		public static function init():void
 		{
 			if (_txt) return;

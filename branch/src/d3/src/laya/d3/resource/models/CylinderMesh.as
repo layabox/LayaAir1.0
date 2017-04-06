@@ -11,7 +11,7 @@ package laya.d3.resource.models
 	import laya.webgl.utils.Buffer;
 	
 	/**
-	 * <code>MeshCylinder</code> 类用于创建圆柱。
+	 * <code>CylinderMesh</code> 类用于创建圆柱。
 	 */
 	public class CylinderMesh extends PrimitiveMesh
 	{
@@ -94,7 +94,7 @@ package laya.d3.resource.models
 		 * @param height 高度
 		 * @param slices 垂直层数
 		 */
-		public function CylinderMesh(radius:Number = 0.5, height:int = 1, slices:int = 32)
+		public function CylinderMesh(radius:Number = 0.5, height:Number = 1, slices:int = 32)
 		{
 			super();
 			_radius = radius;

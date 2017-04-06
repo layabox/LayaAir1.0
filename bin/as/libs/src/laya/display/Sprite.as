@@ -2,7 +2,6 @@ package laya.display {
 	import laya.display.css.CSSStyle;
 	import laya.display.css.Style;
 	import laya.display.css.TransformInfo;
-	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.filters.ColorFilter;
 	import laya.filters.Filter;
@@ -205,7 +204,7 @@ package laya.display {
 	 */
 	public class Sprite extends Node implements ILayout {
 		/** @private */
-		private static var CustomList:Array = [];		
+		private static var CustomList:Array = [];
 		/**@private 矩阵变换信息。*/
 		protected var _transform:Matrix;
 		/**@private */
@@ -340,6 +339,7 @@ package laya.display {
 			var cacheCanvas:* = _$P.cacheCanvas;
 			if (value === (cacheCanvas ? cacheCanvas.type : "none")) return;
 			if (value !== "none") {
+				if (!_getBit(Node.NOTICE_DISPLAY)) _setUpNoticeType(Node.NOTICE_DISPLAY);
 				cacheCanvas || (cacheCanvas = _set$P("cacheCanvas", Pool.getItemByClass("cacheCanvas", Object)));
 				cacheCanvas.type = value;
 				cacheCanvas.reCache = true;
@@ -367,14 +367,13 @@ package laya.display {
 		
 		public function set staticCache(value:Boolean):void {
 			_set$P("staticCache", value);
-			if (!value && _$P.cacheCanvas) {
-				_$P.cacheCanvas.reCache = true;
-			}
+			if (!value) reCache();
 		}
 		
 		/**在设置cacheAs的情况下，调用此方法会重新刷新缓存。*/
 		public function reCache():void {
 			if (_$P.cacheCanvas) _$P.cacheCanvas.reCache = true;
+			_repaint = 1;
 		}
 		
 		/**表示显示对象相对于父容器的水平方向坐标值。*/
@@ -388,8 +387,14 @@ package laya.display {
 				this._x = value;
 				conchModel && conchModel.pos(value, this._y);
 				var p:Sprite = _parent as Sprite;
-				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
-				this._$P.maskParent && _$P.maskParent._repaint === 0 && (_$P.maskParent._repaint = 1, _$P.maskParent.parentRepaint());
+				if (p && p._repaint === 0) {
+					p._repaint = 1;
+					p.parentRepaint();
+				}
+				if (this._$P.maskParent && _$P.maskParent._repaint === 0) {
+					_$P.maskParent._repaint = 1;
+					_$P.maskParent.parentRepaint();
+				}
 			}
 		}
 		
@@ -404,8 +409,14 @@ package laya.display {
 				this._y = value;
 				conchModel && conchModel.pos(this._x, value);
 				var p:Sprite = _parent as Sprite;
-				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
-				this._$P.maskParent && _$P.maskParent._repaint === 0 && (_$P.maskParent._repaint = 1, _$P.maskParent.parentRepaint());
+				if (p && p._repaint === 0) {
+					p._repaint = 1;
+					p.parentRepaint();
+				}
+				if (this._$P.maskParent && _$P.maskParent._repaint === 0) {
+					_$P.maskParent._repaint = 1;
+					_$P.maskParent.parentRepaint();
+				}
 			}
 		}
 		
@@ -419,7 +430,11 @@ package laya.display {
 		}
 		
 		public function set width(value:Number):void {
-			this._width !== value && (this._width = value, conchModel && conchModel.size(value, this._height), repaint());
+			if (this._width !== value) {
+				this._width = value;
+				conchModel && conchModel.size(value, this._height)
+				repaint();
+			}
 		}
 		
 		/**
@@ -432,7 +447,11 @@ package laya.display {
 		}
 		
 		public function set height(value:Number):void {
-			this._height !== value && (this._height = value, conchModel && conchModel.size(this._width, value), repaint());
+			if (this._height !== value) {
+				this._height = value;
+				conchModel && conchModel.size(this._width, value);
+				repaint();
+			}
 		}
 		
 		/**
@@ -619,7 +638,10 @@ package laya.display {
 				conchModel && conchModel.rotate(value);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
-				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
+				if (p && p._repaint === 0) {
+					p._repaint = 1;
+					p.parentRepaint();
+				}
 			}
 		}
 		
@@ -635,7 +657,10 @@ package laya.display {
 				_tfChanged = true;
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
-				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
+				if (p && p._repaint === 0) {
+					p._repaint = 1;
+					p.parentRepaint();
+				}
 			}
 		}
 		
@@ -652,7 +677,10 @@ package laya.display {
 				conchModel && conchModel.skew(style._tf.skewX, value);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
-				p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
+				if (p && p._repaint === 0) {
+					p._repaint = 1;
+					p.parentRepaint();
+				}
 			}
 		}
 		
@@ -847,8 +875,14 @@ package laya.display {
 					this._y = y;
 					conchModel && conchModel.pos(this._x, this._y);
 					var p:Sprite = _parent as Sprite;
-					p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
-					this._$P.maskParent && _$P.maskParent._repaint === 0 && (_$P.maskParent._repaint = 1, _$P.maskParent.parentRepaint());
+					if (p && p._repaint === 0) {
+						p._repaint = 1;
+						p.parentRepaint();
+					}
+					if (this._$P.maskParent && _$P.maskParent._repaint === 0) {
+						_$P.maskParent._repaint = 1;
+						_$P.maskParent.parentRepaint();
+					}
 				} else {
 					this.x = x;
 					this.y = y;
@@ -899,7 +933,10 @@ package laya.display {
 					conchModel && conchModel.scale(scaleX, scaleY);
 					_renderType |= RenderSprite.TRANSFORM;
 					var p:Sprite = _parent as Sprite;
-					p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
+					if (p && p._repaint === 0) {
+						p._repaint = 1;
+						p.parentRepaint();
+					}
 				} else {
 					this.scaleX = scaleX;
 					this.scaleY = scaleY;
@@ -1000,6 +1037,7 @@ package laya.display {
 			}
 			
 			if (value && value.length > 0) {
+				if (!_getBit(Node.NOTICE_DISPLAY)) _setUpNoticeType(Node.NOTICE_DISPLAY);
 				if (!(Render.isWebGL && value.length == 1 && (value[0] is ColorFilter))) {
 					if (cacheAs != "bitmap") {
 						if (!Render.isConchNode) cacheAs = "bitmap";
@@ -1045,7 +1083,7 @@ package laya.display {
 		 * @return  转换后的坐标的点。
 		 */
 		public function localToGlobal(point:Point, createNewPoint:Boolean = false):Point {
-			if (!_displayedInStage || !point) return point;
+			//if (!_displayedInStage || !point) return point;
 			if (createNewPoint === true) {
 				point = new Point(point.x, point.y);
 			}
@@ -1066,7 +1104,7 @@ package laya.display {
 		 * @return 转换后的坐标的点。
 		 */
 		public function globalToLocal(point:Point, createNewPoint:Boolean = false):Point {
-			if (!_displayedInStage || !point) return point;
+			//if (!_displayedInStage || !point) return point;
 			if (createNewPoint) {
 				point = new Point(point.x, point.y);
 			}
@@ -1144,8 +1182,12 @@ package laya.display {
 		override public function on(type:String, caller:*, listener:Function, args:Array = null):EventDispatcher {
 			//如果是鼠标事件，则设置自己和父对象为可接受鼠标交互事件
 			if (_mouseEnableState !== 1 && isMouseEvent(type)) {
-				if (_displayedInStage) _onDisplay();
-				else super.once(Event.DISPLAY, this, _onDisplay);
+				this.mouseEnabled = true;
+				_setBit(Node.MOUSEENABLE, true);
+				if (_parent) {
+					_onDisplay();
+				}
+				return _createListener(type, caller, listener, args, false);
 			}
 			return super.on(type, caller, listener, args);
 		}
@@ -1162,8 +1204,12 @@ package laya.display {
 		override public function once(type:String, caller:*, listener:Function, args:Array = null):EventDispatcher {
 			//如果是鼠标事件，则设置自己和父对象为可接受鼠标交互事件
 			if (_mouseEnableState !== 1 && isMouseEvent(type)) {
-				if (_displayedInStage) _onDisplay();
-				else super.once(Event.DISPLAY, this, _onDisplay);
+				this.mouseEnabled = true;
+				_setBit(Node.MOUSEENABLE, true);
+				if (_parent) {
+					_onDisplay();
+				}
+				return _createListener(type, caller, listener, args, true);
 			}
 			return super.once(type, caller, listener, args);
 		}
@@ -1171,11 +1217,21 @@ package laya.display {
 		/** @private */
 		private function _onDisplay():void {
 			if (_mouseEnableState !== 1) {
-				var ele:* = this;
+				var ele:Sprite = this;
+				ele = ele.parent as Sprite;
 				while (ele && ele._mouseEnableState !== 1) {
+					if (ele._getBit(Node.MOUSEENABLE)) break;
 					ele.mouseEnabled = true;
+					ele._setBit(Node.MOUSEENABLE, true);
 					ele = ele.parent as Sprite;
 				}
+			}
+		}
+		
+		override public function set parent(value:Node):void {
+			super.parent = value;
+			if (value && _getBit(Node.MOUSEENABLE)) {
+				_onDisplay();
 			}
 		}
 		
@@ -1214,7 +1270,10 @@ package laya.display {
 		/**cacheAs后，设置自己和父对象缓存失效。*/
 		public function repaint():void {
 			this.conchModel && this.conchModel.repaint && this.conchModel.repaint();
-			(_repaint === 0) && (_repaint = 1, parentRepaint());
+			if (_repaint === 0) {
+				_repaint = 1;
+				parentRepaint();
+			}
 			if (this._$P && this._$P.maskParent) {
 				_$P.maskParent.repaint();
 			}
@@ -1240,7 +1299,10 @@ package laya.display {
 		/**cacheAs时，设置所有父对象缓存失效。 */
 		public function parentRepaint():void {
 			var p:Sprite = _parent as Sprite;
-			p && p._repaint === 0 && (p._repaint = 1, p.parentRepaint());
+			if (p && p._repaint === 0) {
+				p._repaint = 1;
+				p.parentRepaint();
+			}
 		}
 		
 		/**对舞台 <code>stage</code> 的引用。*/
@@ -1316,13 +1378,14 @@ package laya.display {
 		
 		/**@private */
 		override public function _setDisplay(value:Boolean):void {
-			//如果从显示列表移除，则销毁cache缓存
-			if (!value && _$P.cacheCanvas && _$P.cacheCanvas.ctx) {
-				Pool.recover("RenderContext", _$P.cacheCanvas.ctx);
-				_$P.cacheCanvas.ctx.canvas.size(0, 0);
-				_$P.cacheCanvas.ctx = null;
-			}
 			if (!value) {
+				var cc:* = _$P.cacheCanvas;
+				//如果从显示列表移除，则销毁cache缓存
+				if (cc && cc.ctx) {
+					Pool.recover("RenderContext", cc.ctx);
+					cc.ctx.canvas.size(0, 0);
+					cc.ctx = null;
+				}
 				var fc:* = _$P._filterCache;
 				//fc && (fc.destroy(), fc.recycle(), this._set$P('_filterCache', null));
 				if (fc) {

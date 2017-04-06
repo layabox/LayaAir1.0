@@ -54,7 +54,6 @@ package threeDimen.primaryStage {
 			camera.transform.translate(new Vector3(0, 0.8, 1.2));
 			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			camera.clearColor = null;
-			var _this:D3Base_LightAndMaterialSample = this;
 			
 			directionLight = scene.addChild(new DirectionLight()) as DirectionLight;
 			directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
@@ -103,21 +102,26 @@ package threeDimen.primaryStage {
 			skinMesh = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
 			
 			Laya.stage.timer.frameLoop(1, null, function():void {
-				switch (_this.currentLightState) {
+				var direction:Vector3;
+				switch (currentLightState) {
 				case 0: 
-					Quaternion.createFromYawPitchRoll(0.03, 0, 0, _this.tempQuaternion);
-					Vector3.transformQuat(_this.directionLight.direction, _this.tempQuaternion, _this.directionLight.direction);
+					Quaternion.createFromYawPitchRoll(0.03, 0, 0, tempQuaternion);
+					direction = directionLight.direction;
+					Vector3.transformQuat(direction, tempQuaternion, direction);
+					directionLight.direction = direction;
 					break;
 				case 1: 
-					Quaternion.createFromYawPitchRoll(0.03, 0, 0, _this.tempQuaternion);
-					Vector3.transformQuat(_this.pointLight.transform.position, _this.tempQuaternion, _this.tempVector3);
-					_this.pointLight.transform.position = _this.tempVector3;
+					Quaternion.createFromYawPitchRoll(0.03, 0, 0, tempQuaternion);
+					Vector3.transformQuat(pointLight.transform.position, tempQuaternion, tempVector3);
+					pointLight.transform.position = tempVector3;
 					break;
 				case 2: 
-					Quaternion.createFromYawPitchRoll(0.03, 0, 0, _this.tempQuaternion);
-					Vector3.transformQuat(_this.spotLight.transform.position, _this.tempQuaternion, _this.tempVector3);
-					_this.spotLight.transform.position = _this.tempVector3;
-					Vector3.transformQuat(_this.spotLight.direction, _this.tempQuaternion, _this.spotLight.direction);
+					Quaternion.createFromYawPitchRoll(0.03, 0, 0, tempQuaternion);
+					Vector3.transformQuat(spotLight.transform.position, tempQuaternion, tempVector3);
+					spotLight.transform.position = tempVector3;
+					direction = spotLight.direction;
+					Vector3.transformQuat(direction, tempQuaternion, direction);
+					spotLight.direction = direction;
 					break;
 				}
 			});

@@ -15,8 +15,8 @@ package laya.display {
 	[Event(name = "label", type = "laya.events.Event")]
 	
 	/**
-	 * <p> <code>Animation</code> 类是位图动画,用于创建位图动画。</p>
-	 * <p> <code>Animation</code> 类可以加载并显示一组位图图片，并组成动画进行播放。</p>
+	 * <p> <code>Animation</code> 是Graphics动画类（不断切换Graphics来实现动画），实现了基于Graphics的动画创建，播放控制接口。</p>
+	 * <p> <code>Animation</code> 可以加载一组图片集合或图集文件或IDE设计好的动画进行播放。</p>
 	 * @example 以下示例代码，创建了一个 <code>Text</code> 实例。
 	 * <listing version="3.0">
 	 * package
@@ -85,7 +85,7 @@ package laya.display {
 	 * </listing>
 	 */
 	public class Animation extends AnimationPlayerBase {
-		/**全局缓存动画索引，存储全局Graphics动画数据，可以指定播放某个动画，比如ani.play(0 , true ,"hero_run"); */
+		/**全局缓存动画缓存池，存储了全局Graphics动画数据。使用缓存可以播放指定动画，比如播放"hero_run"动画：ani.play(0 , true ,"hero_run"); */
 		public static var framesMap:Object = {};
 		/**@private */
 		protected var _frames:Array;
@@ -108,9 +108,9 @@ package laya.display {
 		}
 		
 		/**
-		 * 播放动画。
+		 * 播放动画。可以指定name属性，播放缓存中某个动画。
 		 * @param	start 开始播放的动画索引或label。
-		 * @param	loop 是否循环。
+		 * @param	loop 是否循环播放。
 		 * @param	name 如果name为空(可选)，则播放当前动画，如果不为空，则播放全局缓存动画（如果有）
 		 */
 		override public function play(start:* = 0, loop:Boolean = true, name:String = ""):void {
@@ -125,29 +125,32 @@ package laya.display {
 			}
 		}
 		
+		/**@private */
 		protected function _setFramesFromCache(name:String):Boolean {
 			if (_url) name = _url + "#" + name;
 			if (name && framesMap[name]) {
 				this._frames = framesMap[name];
 				this._count = _frames.length;
 				//如果是读取动的画配置信息，帧率按照动画设置的帧率播放
-				if (!_frameRateChanged && framesMap[name+"$len"]) _interval = framesMap[name+"$len"];
+				if (!_frameRateChanged && framesMap[name + "$len"]) _interval = framesMap[name + "$len"];
 				return true;
 			}
 			return false;
 		}
 		
+		/**@private */
 		override protected function _frameLoop():void {
 			if (_style.visible && _style.alpha > 0.01) {
 				super._frameLoop();
 			}
 		}
 		
+		/**@private */
 		override protected function _displayToIndex(value:int):void {
 			if (this._frames) this.graphics = this._frames[value];
 		}
 		
-		/**Graphics集合*/
+		/**动画帧信息，里面存储的是Graphics数组，Animation本身就是不断切换Graphics来实现动画效果。*/
 		public function get frames():Array {
 			return _frames;
 		}
@@ -161,14 +164,16 @@ package laya.display {
 			}
 		}
 		
-		/**图集地址或者图片集合*/
+		/**动画数据源，可以是图集，图片集合，IDE动画
+		 * 比如：图集："xx/a1.json" 图片集合："a1.png,a2.png,a3.png" IDE动画"xx/a1.ani"
+		 */
 		public function set source(value:String):void {
 			if (value.indexOf(".ani") > -1) loadAnimation(value);
-			else if (value.indexOf(".json") > -1 || value.indexOf("als") > -1) loadAtlas(value);
+			else if (value.indexOf(".json") > -1 || value.indexOf("als") > -1 || value.indexOf("atlas") > -1) loadAtlas(value);
 			else loadImages(value.split(","));
 		}
 		
-		/**是否自动播放*/
+		/**是否自动播放，默认为false，如果设置为true，则动画被添加到舞台后，就会自动播放*/
 		public function set autoPlay(value:Boolean):void {
 			if (value) play();
 			else stop();
@@ -183,9 +188,9 @@ package laya.display {
 		}
 		
 		/**
-		 * 加载图片集合，组成动画。
+		 * 加载图片集合作为动画。
 		 * @param	urls	图片地址集合。如：[url1,url2,url3,...]。
-		 * @param	cacheName 缓存为模板的名称，下次可以直接使用play调用，无需重新创建动画模板，设置为空则不缓存
+		 * @param	cacheName 缓存的动画模板名称。此模板为全局模板，缓存后，可以使用play(start,loop,name)接口进行播放，无需重复创建动画模板（相同动画能节省创建动画模板开销），设置为空则不缓存。
 		 * @return 	返回动画本身。
 		 */
 		public function loadImages(urls:Array, cacheName:String = ""):Animation {
@@ -197,10 +202,10 @@ package laya.display {
 		}
 		
 		/**
-		 * 加载并播放一个图集。
+		 * 加载一个图集作为动画。
 		 * @param	url 	图集地址。
-		 * @param	loaded	加载完毕回调
-		 * @param	cacheName 缓存为模板的名称，下次可以直接使用play调用，无需重新创建动画模板，设置为空则不缓存
+		 * @param	loaded	加载完毕回调。
+		 * @param	cacheName 缓存的动画模板名称。此模板为全局模板，缓存后，可以使用play(start,loop,name)接口进行播放，无需重复创建动画模板（相同动画能节省创建动画模板开销），设置为空则不缓存。
 		 * @return 	返回动画本身。
 		 */
 		public function loadAtlas(url:String, loaded:Handler = null, cacheName:String = ""):Animation {
@@ -220,9 +225,10 @@ package laya.display {
 		}
 		
 		/**
-		 * 加载并播放一个由IDE制作的动画，播放的帧率按照IDE设计的帧率
+		 * 加载由IDE制作的动画。播放的帧率则按照IDE设计的帧率。加载后，默认会根据 "url+动画名称" 缓存为动画模板。
+		 * 【注意】加载解析IDE动画之前，请确保动画使用的图片被预加载，否则会导致动画创建失败。
 		 * @param	url 	动画地址。
-		 * @param	loaded	加载完毕回调
+		 * @param	loaded	加载完毕回调。
 		 * @return 	返回动画本身。
 		 */
 		public function loadAnimation(url:String, loaded:Handler = null):Animation {
@@ -242,24 +248,23 @@ package laya.display {
 								var info:Object = obj[name];
 								if (info.frames.length) {
 									framesMap[url + "#" + name] = info.frames;
-									framesMap[url + "#" + name+"$len"] = info.interval;
+									framesMap[url + "#" + name + "$len"] = info.interval;
 								} else {
 									flag = false;
 								}
 							}
 							
 							//设置第一个为默认
-							if(!_this._frameRateChanged) _this._interval=aniData.animationList[0].interval;
-							_this.frames = aniData.animationList[0].frames;							
-							if (flag) {							
+							if (!_this._frameRateChanged) _this._interval = aniData.animationList[0].interval;
+							_this.frames = aniData.animationList[0].frames;
+							if (flag) {
 								framesMap[url + "#$len"] = aniData.animationList[0].interval;
 								framesMap[url + "#"] = _this.frames;
 							}
 						} else {
-							if(!_this._frameRateChanged) _this._interval=framesMap[url + "#$len"];
-							_this.frames = framesMap[url + "#"];							
+							if (!_this._frameRateChanged) _this._interval = framesMap[url + "#$len"];
+							_this.frames = framesMap[url + "#"];
 						}
-						
 						if (loaded) loaded.run();
 					}
 				}
@@ -268,6 +273,8 @@ package laya.display {
 				
 				//清理掉配置
 				Loader.clearRes(url);
+			} else {
+				if (loaded) loaded.run();
 			}
 			return this;
 		}
@@ -279,6 +286,7 @@ package laya.display {
 		
 		/**
 		 * 创建动画模板，相同地址的动画可共享播放模板，而不必每次都创建一份新的，从而节省创建Graphics集合的开销
+		 * createFrames如果url是图集则需要预加载图集，而loadAtlas方法则不需要
 		 * @param	url 图集路径(已经加载过的)或者url数组(可以异步加载)
 		 * @param	name 全局动画名称，如果name不为空，则缓存动画模板，否则不缓存
 		 * @return	Graphics动画模板

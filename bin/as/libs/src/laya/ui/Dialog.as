@@ -7,8 +7,9 @@ package laya.ui {
 	
 	/**
 	 * <code>Dialog</code> 组件是一个弹出对话框，实现对话框弹出，拖动，模式窗口功能。
-	 * 可以通过UIConfig设置弹出框背景透明度，模式窗口点击边缘是否关闭，点击窗口是否切换层次等
+	 * 可以通过UIConfig设置弹出框背景透明度，模式窗口点击边缘是否关闭等
 	 * 通过设置zOrder属性，可以更改弹出的层次
+	 * 通过设置manager.popupEffect和manager.closeEffect可以设置弹出效果和关闭效果
 	 *
 	 * @example 以下示例代码，创建了一个 <code>Dialog</code> 实例。
 	 * <listing version="3.0">
@@ -247,7 +248,7 @@ package laya.ui {
 		 * @param type 如果是点击默认关闭按钮触发，则传入关闭按钮的名字(name)，否则为null。
 		 */
 		public function close(type:String = null):void {
-			manager.close(this);
+			manager.close(this, type);
 		}
 		
 		/**

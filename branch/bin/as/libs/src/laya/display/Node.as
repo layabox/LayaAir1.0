@@ -31,36 +31,41 @@ package laya.display {
 	public class Node extends EventDispatcher {
 		/**@private */
 		private static const ARRAY_EMPTY:Array = [];
+		/** @private */
+		private static const PROP_EMPTY:Object = {};
+		
 		/**@private 子对象集合，请不要直接修改此对象。*/
 		public var _childs:Array = ARRAY_EMPTY;
-		/**节点名称。*/
-		public var name:String = "";
-		/**是否已经销毁。*/
-		public var destroyed:Boolean;
-		/**时间控制器，默认为Laya.timer。*/
-		public var timer:Timer = Laya.timer;
 		/**@private 是否在显示列表中显示*/
 		protected var _displayedInStage:Boolean;
 		/**@private 父节点对象*/
 		protected var _parent:Node;
-		/** @private */
-		private static const PROP_EMPTY:Object = {};
 		/**@private 系统保留的私有变量集合*/
 		public var _$P:Object = PROP_EMPTY;
 		/**@private */
 		public var conchModel:*;
 		
-		/**@private */
+		/**节点名称。*/
+		public var name:String = "";
+		/**是否已经销毁。对象销毁后不能再使用。*/
+		public var destroyed:Boolean;
+		/**时间控制器，默认为Laya.timer。*/
+		public var timer:Timer = Laya.timer;
+		
+		/**
+		 * <code>Node</code> 类用于创建节点对象，节点是最基本的元素。
+		 */
 		public function Node() {
 			this.conchModel = Render.isConchNode ? this.createConchModel() : null;
 		}
 		
+		/**@private */
 		public function createConchModel():* {
 			return null;
 		}
 		
 		/**
-		 * <p>销毁此对象。</p>
+		 * <p>销毁此对象。destroy对象默认会把自己从父节点移除，并且清理自身引用关系，等待js自动垃圾回收机制回收。destroy后不能再使用。</p>
 		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
 		 */
 		public function destroy(destroyChild:Boolean = true):void {
@@ -367,7 +372,7 @@ package laya.display {
 			}
 		}
 		
-		/**表示是否在显示列表中显示。是否在显示渲染列表中。*/
+		/**表示是否在显示列表中显示。*/
 		public function get displayedInStage():Boolean {
 			return _displayedInStage;
 		}
@@ -414,7 +419,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 定时重复执行某函数。
+		 * 定时重复执行某函数。功能同Laya.timer.timerLoop()。
 		 * @param	delay	间隔时间(单位毫秒)。
 		 * @param	caller	执行域(this)。
 		 * @param	method	结束时的回调方法。
@@ -426,7 +431,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 定时执行某函数一次。
+		 * 定时执行某函数一次。功能同Laya.timer.timerOnce()。
 		 * @param	delay	延迟时间(单位毫秒)。
 		 * @param	caller	执行域(this)。
 		 * @param	method	结束时的回调方法。
@@ -438,7 +443,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 定时重复执行某函数(基于帧率)。
+		 * 定时重复执行某函数(基于帧率)。功能同Laya.timer.frameLoop()。
 		 * @param	delay	间隔几帧(单位为帧)。
 		 * @param	caller	执行域(this)。
 		 * @param	method	结束时的回调方法。
@@ -450,7 +455,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 定时执行一次某函数(基于帧率)。
+		 * 定时执行一次某函数(基于帧率)。功能同Laya.timer.frameOnce()。
 		 * @param	delay	延迟几帧(单位为帧)。
 		 * @param	caller	执行域(this)
 		 * @param	method	结束时的回调方法
@@ -462,7 +467,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 清理定时器。
+		 * 清理定时器。功能同Laya.timer.clearTimer()。
 		 * @param	caller 执行域(this)。
 		 * @param	method 结束时的回调方法。
 		 */

@@ -5,11 +5,11 @@ package laya.d3.core.scene {
 	import laya.d3.core.PhasorSpriter3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.light.LightSprite;
+	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.DynamicBatchManager;
 	import laya.d3.graphics.FrustumCulling;
-	import laya.d3.graphics.RenderObject;
 	import laya.d3.graphics.StaticBatchManager;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundFrustum;
@@ -122,7 +122,7 @@ package laya.d3.core.scene {
 		public var _shaderDefineValue:int;
 		
 		/** @private */
-		public var _frustumCullingObjects:Vector.<RenderObject> = new Vector.<RenderObject>();
+		public var _frustumCullingObjects:Vector.<BaseRender> = new Vector.<BaseRender>();
 		/** @private */
 		public var _staticBatchManager:StaticBatchManager;//TODO:释放问题。
 		/** @private */
@@ -331,7 +331,7 @@ package laya.d3.core.scene {
 			var projectionView:Matrix4x4 = state._projectionViewMatrix;
 			var i:int, iNum:int;
 			var camera:BaseCamera = state.camera;
-			if (camera.useOcclusionCulling) { 
+			if (camera.useOcclusionCulling) {
 				if (treeRoot)
 					FrustumCulling.renderObjectCullingOctree(state._boundFrustum, this, camera, view, projection, projectionView);
 				else
@@ -503,6 +503,7 @@ package laya.d3.core.scene {
 		public function _updateScene():void {
 			var renderState:RenderState = _renderState;
 			_prepareUpdateToRenderState(WebGL.mainContext, renderState);
+			
 			beforeUpdate(renderState);//更新之前
 			_updateChilds(renderState);
 			lateUpdate(renderState);//更新之后
@@ -548,38 +549,38 @@ package laya.d3.core.scene {
 			var pssmNum:int = parallelSplitShadowMap.PSSMNum;
 			_preRenderShadow(state, parallelSplitShadowMap._lightCulling, parallelSplitShadowMap._shadowQuenes, parallelSplitShadowMap._lightVPMatrix[0], pssmNum);
 			//增加宏定义
-			addShaderDefine( ParallelSplitShadowMap.SHADERDEFINE_CAST_SHADOW );
-			var renderTarget:RenderTexture, shadowQuene:RenderQueue,lightCamera:Camera;
+			addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_CAST_SHADOW);
+			var renderTarget:RenderTexture, shadowQuene:RenderQueue, lightCamera:Camera;
 			if (pssmNum > 1) {
 				for (var i:int = 0; i < pssmNum; i++) {
 					//trace(">>>>>i="+i+",size=" + _shadowQuenes[i]._renderElements.length);
 					renderTarget = parallelSplitShadowMap.getRenderTarget(i + 1);
 					parallelSplitShadowMap.beginRenderTarget(i + 1);
-					gl.clearColor(0, 0, 0, 0);
+					gl.clearColor(1, 1, 1, 1);
 					gl.clear(WebGLContext.COLOR_BUFFER_BIT | WebGLContext.DEPTH_BUFFER_BIT);
 					gl.viewport(0, 0, renderTarget.width, renderTarget.height);
-					state.camera=lightCamera = parallelSplitShadowMap.getLightCamera(i);
+					state.camera = lightCamera = parallelSplitShadowMap.getLightCamera(i);
 					lightCamera._prepareCameraToRender();
 					lightCamera._prepareCameraViewProject(lightCamera.viewMatrix, lightCamera.projectionMatrix);
 					state._projectionViewMatrix = parallelSplitShadowMap._lightVPMatrix[i + 1];
 					shadowQuene = parallelSplitShadowMap._shadowQuenes[i];
 					shadowQuene._preRender(state);//TODO:静态合并和动态合并用，是否调用重复了
-					shadowQuene._renderShadow(state, true, false);
+					shadowQuene._renderShadow(state, false);
 					parallelSplitShadowMap.endRenderTarget(i + 1);
 				}
 			} else {
 				renderTarget = parallelSplitShadowMap.getRenderTarget(1);
 				parallelSplitShadowMap.beginRenderTarget(1);
-				gl.clearColor(0, 0, 0, 0);
+				gl.clearColor(1, 1, 1, 1);
 				gl.clear(WebGLContext.COLOR_BUFFER_BIT | WebGLContext.DEPTH_BUFFER_BIT);
 				gl.viewport(0, 0, renderTarget.width, renderTarget.height);
-				state.camera=lightCamera = parallelSplitShadowMap.getLightCamera(0);
+				state.camera = lightCamera = parallelSplitShadowMap.getLightCamera(0);
 				lightCamera._prepareCameraToRender();
 				lightCamera._prepareCameraViewProject(lightCamera.viewMatrix, lightCamera.projectionMatrix);
 				state._projectionViewMatrix = parallelSplitShadowMap._lightVPMatrix[0];
 				shadowQuene = parallelSplitShadowMap._shadowQuenes[0];
 				shadowQuene._preRender(state);//TODO:静态合并和动态合并用，是否调用重复了
-				shadowQuene._renderShadow(state, true, true);
+				shadowQuene._renderShadow(state, true);
 				parallelSplitShadowMap.endRenderTarget(1);
 			}
 			//去掉宏定义
@@ -589,14 +590,14 @@ package laya.d3.core.scene {
 		/**
 		 * @private
 		 */
-		public function addTreeNode(renderObj:RenderObject):void {
+		public function addTreeNode(renderObj:BaseRender):void {
 			treeRoot.addTreeNode(renderObj);
 		}
 		
 		/**
 		 * @private
 		 */
-		public function removeTreeNode(renderObj:RenderObject):void {
+		public function removeTreeNode(renderObj:BaseRender):void {
 			if (!treeSize) return;
 			if (renderObj._treeNode) {
 				renderObj._treeNode.removeObject(renderObj);
@@ -624,7 +625,7 @@ package laya.d3.core.scene {
 		/**
 		 * @inheritDoc
 		 */
-		public function addFrustumCullingObject(renderObject:RenderObject):void {
+		public function addFrustumCullingObject(renderObject:BaseRender):void {
 			if (treeRoot)
 				addTreeNode(renderObject);
 			else
@@ -635,7 +636,7 @@ package laya.d3.core.scene {
 		/**
 		 * @private
 		 */
-		public function removeFrustumCullingObject(renderObject:RenderObject):void {
+		public function removeFrustumCullingObject(renderObject:BaseRender):void {
 			if (treeRoot) {
 				removeTreeNode(renderObject);
 			} else {
@@ -726,12 +727,25 @@ package laya.d3.core.scene {
 		 */
 		public function renderSubmit():int {
 			var gl:WebGLContext = WebGL.mainContext;
+			var renderState:RenderState = _renderState;
 			_set3DRenderConfig(gl);//设置3D配置
 			_prepareSceneToRender(_renderState);
-			for (var i:int = 0, n:int = _cameraPool.length; i < n; i++) {
-				var camera:BaseCamera = _cameraPool[i];
-				(camera.activeInHierarchy) && (_renderCamera(gl, _renderState, camera));
+			
+			var i:int, n:int, camera:BaseCamera;
+			if (Laya3D.debugMode || OctreeNode.debugMode) {
+				for (i = 0, n = _cameraPool.length; i < n; i++) {
+					Laya3D._debugPhasorSprite.begin(WebGLContext.LINES, renderState);
+					camera = _cameraPool[i];
+					(camera.activeInHierarchy) && (_renderCamera(gl, renderState, camera));
+					Laya3D._debugPhasorSprite.end();
+				}
+			} else {
+				for (i = 0, n = _cameraPool.length; i < n; i++) {
+					camera = _cameraPool[i];
+					(camera.activeInHierarchy) && (_renderCamera(gl, renderState, camera));
+				}
 			}
+			
 			_set2DRenderConfig(gl);//设置2D配置
 			return 1;
 		}
@@ -741,53 +755,54 @@ package laya.d3.core.scene {
 		private var boxCorners:Vector.<Vector3> = null;
 		private var debugSpriter1:PhasorSpriter3D = null;
 		private var boxCorners1:Vector.<Vector3> = null;
+		
 		protected function _renderDebug(gl:WebGLContext, state:RenderState):void {
-			//var camera:BaseCamera = state.camera;
-			//if (!bFirst) {
-				//if (!debugSpriter) debugSpriter = new PhasorSpriter3D();
-				//if (!debugSpriter1) debugSpriter1 = new PhasorSpriter3D();
-				//var i:int = 0;
-				//boxCorners = new Vector.<Vector3>(8);
-				//for (i = 0; i < 8; i++) {
-					//boxCorners[i] = new Vector3();
-				//}
-				//parallelSplitShadowMaps[0].getSplitFrustumCulling().getCorners(boxCorners);
-				//
-				//boxCorners1 = new Vector.<Vector3>(8);
-				//for (i = 0; i < 8; i++) {
-					//boxCorners1[i] = new Vector3();
-				//}
-				//parallelSplitShadowMaps[0].getLightFrustumCulling(0).getCorners(boxCorners1);//TODO:SM
-				//bFirst = true;
-			//}
-			//debugSpriter.begin(WebGLContext.LINES, state);
-			//debugSpriter.line(boxCorners[0].x, boxCorners[0].y, boxCorners[0].z, 1.0, 1.0, 0.0, 1.0, boxCorners[1].x, boxCorners[1].y, boxCorners[1].z, 1.0, 1.0, 0.0, 1.0);
-			//debugSpriter.line(boxCorners[2].x, boxCorners[2].y, boxCorners[2].z, 1.0, 1.0, 0.0, 1.0, boxCorners[3].x, boxCorners[3].y, boxCorners[3].z, 1.0, 1.0, 0.0, 1.0);
-			//debugSpriter.line(boxCorners[4].x, boxCorners[4].y, boxCorners[4].z, 1.0, 1.0, 0.0, 1.0, boxCorners[5].x, boxCorners[5].y, boxCorners[5].z, 1.0, 1.0, 0.0, 1.0);
-			//debugSpriter.line(boxCorners[6].x, boxCorners[6].y, boxCorners[6].z, 1.0, 1.0, 0.0, 1.0, boxCorners[7].x, boxCorners[7].y, boxCorners[7].z, 1.0, 1.0, 0.0, 1.0);
-			//debugSpriter.line(boxCorners[0].x, boxCorners[0].y, boxCorners[0].z, 1.0, 1.0, 0.0, 1.0, boxCorners[3].x, boxCorners[3].y, boxCorners[3].z, 1.0, 1.0, 0.0, 1.0);
-			//debugSpriter.line(boxCorners[1].x, boxCorners[1].y, boxCorners[1].z, 1.0, 1.0, 0.0, 1.0, boxCorners[2].x, boxCorners[2].y, boxCorners[2].z, 1.0, 1.0, 0.0, 1.0);
-			//debugSpriter.line(boxCorners[2].x, boxCorners[2].y, boxCorners[2].z, 1.0, 1.0, 0.0, 1.0, boxCorners[6].x, boxCorners[6].y, boxCorners[6].z, 1.0, 1.0, 0.0, 1.0);
-			//debugSpriter.line(boxCorners[3].x, boxCorners[3].y, boxCorners[3].z, 1.0, 1.0, 0.0, 1.0, boxCorners[7].x, boxCorners[7].y, boxCorners[7].z, 1.0, 1.0, 0.0, 1.0);
-			//debugSpriter.line(boxCorners[0].x, boxCorners[0].y, boxCorners[0].z, 1.0, 1.0, 0.0, 1.0, boxCorners[4].x, boxCorners[4].y, boxCorners[4].z, 1.0, 1.0, 0.0, 1.0);
-			//debugSpriter.line(boxCorners[1].x, boxCorners[1].y, boxCorners[1].z, 1.0, 1.0, 0.0, 1.0, boxCorners[5].x, boxCorners[5].y, boxCorners[5].z, 1.0, 1.0, 0.0, 1.0);
-			//debugSpriter.line(boxCorners[4].x, boxCorners[4].y, boxCorners[4].z, 1.0, 1.0, 0.0, 1.0, boxCorners[7].x, boxCorners[7].y, boxCorners[7].z, 1.0, 1.0, 0.0, 1.0);
-			//debugSpriter.line(boxCorners[5].x, boxCorners[5].y, boxCorners[5].z, 1.0, 1.0, 0.0, 1.0, boxCorners[6].x, boxCorners[6].y, boxCorners[6].z, 1.0, 1.0, 0.0, 1.0);
-			//debugSpriter.end();
-			//debugSpriter1.begin(WebGLContext.LINES, state);
-			//debugSpriter1.line(boxCorners1[0].x, boxCorners1[0].y, boxCorners1[0].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[1].x, boxCorners1[1].y, boxCorners1[1].z, 1.0, 0.0, 0.0, 1.0);
-			//debugSpriter1.line(boxCorners1[2].x, boxCorners1[2].y, boxCorners1[2].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[3].x, boxCorners1[3].y, boxCorners1[3].z, 1.0, 0.0, 0.0, 1.0);
-			//debugSpriter1.line(boxCorners1[4].x, boxCorners1[4].y, boxCorners1[4].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[5].x, boxCorners1[5].y, boxCorners1[5].z, 1.0, 0.0, 0.0, 1.0);
-			//debugSpriter1.line(boxCorners1[6].x, boxCorners1[6].y, boxCorners1[6].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[7].x, boxCorners1[7].y, boxCorners1[7].z, 1.0, 0.0, 0.0, 1.0);
-			//debugSpriter1.line(boxCorners1[0].x, boxCorners1[0].y, boxCorners1[0].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[3].x, boxCorners1[3].y, boxCorners1[3].z, 1.0, 0.0, 0.0, 1.0);
-			//debugSpriter1.line(boxCorners1[1].x, boxCorners1[1].y, boxCorners1[1].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[2].x, boxCorners1[2].y, boxCorners1[2].z, 1.0, 0.0, 0.0, 1.0);
-			//debugSpriter1.line(boxCorners1[2].x, boxCorners1[2].y, boxCorners1[2].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[6].x, boxCorners1[6].y, boxCorners1[6].z, 1.0, 0.0, 0.0, 1.0);
-			//debugSpriter1.line(boxCorners1[3].x, boxCorners1[3].y, boxCorners1[3].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[7].x, boxCorners1[7].y, boxCorners1[7].z, 1.0, 0.0, 0.0, 1.0);
-			//debugSpriter1.line(boxCorners1[0].x, boxCorners1[0].y, boxCorners1[0].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[4].x, boxCorners1[4].y, boxCorners1[4].z, 1.0, 0.0, 0.0, 1.0);
-			//debugSpriter1.line(boxCorners1[1].x, boxCorners1[1].y, boxCorners1[1].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[5].x, boxCorners1[5].y, boxCorners1[5].z, 1.0, 0.0, 0.0, 1.0);
-			//debugSpriter1.line(boxCorners1[4].x, boxCorners1[4].y, boxCorners1[4].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[7].x, boxCorners1[7].y, boxCorners1[7].z, 1.0, 0.0, 0.0, 1.0);
-			//debugSpriter1.line(boxCorners1[5].x, boxCorners1[5].y, boxCorners1[5].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[6].x, boxCorners1[6].y, boxCorners1[6].z, 1.0, 0.0, 0.0, 1.0);
-			//debugSpriter1.end();
+			var camera:BaseCamera = state.camera;
+			if (!bFirst) {
+				if (!debugSpriter) debugSpriter = new PhasorSpriter3D();
+				if (!debugSpriter1) debugSpriter1 = new PhasorSpriter3D();
+				var i:int = 0;
+				boxCorners = new Vector.<Vector3>(8);
+				for (i = 0; i < 8; i++) {
+					boxCorners[i] = new Vector3();
+				}
+				parallelSplitShadowMaps[0].getSplitFrustumCulling().getCorners(boxCorners);
+				
+				boxCorners1 = new Vector.<Vector3>(8);
+				for (i = 0; i < 8; i++) {
+					boxCorners1[i] = new Vector3();
+				}
+				parallelSplitShadowMaps[0].getLightFrustumCulling(0).getCorners(boxCorners1);//TODO:SM
+				bFirst = true;
+			}
+			debugSpriter.begin(WebGLContext.LINES, state);
+			debugSpriter.line(boxCorners[0].x, boxCorners[0].y, boxCorners[0].z, 1.0, 1.0, 0.0, 1.0, boxCorners[1].x, boxCorners[1].y, boxCorners[1].z, 1.0, 1.0, 0.0, 1.0);
+			debugSpriter.line(boxCorners[2].x, boxCorners[2].y, boxCorners[2].z, 1.0, 1.0, 0.0, 1.0, boxCorners[3].x, boxCorners[3].y, boxCorners[3].z, 1.0, 1.0, 0.0, 1.0);
+			debugSpriter.line(boxCorners[4].x, boxCorners[4].y, boxCorners[4].z, 1.0, 1.0, 0.0, 1.0, boxCorners[5].x, boxCorners[5].y, boxCorners[5].z, 1.0, 1.0, 0.0, 1.0);
+			debugSpriter.line(boxCorners[6].x, boxCorners[6].y, boxCorners[6].z, 1.0, 1.0, 0.0, 1.0, boxCorners[7].x, boxCorners[7].y, boxCorners[7].z, 1.0, 1.0, 0.0, 1.0);
+			debugSpriter.line(boxCorners[0].x, boxCorners[0].y, boxCorners[0].z, 1.0, 1.0, 0.0, 1.0, boxCorners[3].x, boxCorners[3].y, boxCorners[3].z, 1.0, 1.0, 0.0, 1.0);
+			debugSpriter.line(boxCorners[1].x, boxCorners[1].y, boxCorners[1].z, 1.0, 1.0, 0.0, 1.0, boxCorners[2].x, boxCorners[2].y, boxCorners[2].z, 1.0, 1.0, 0.0, 1.0);
+			debugSpriter.line(boxCorners[2].x, boxCorners[2].y, boxCorners[2].z, 1.0, 1.0, 0.0, 1.0, boxCorners[6].x, boxCorners[6].y, boxCorners[6].z, 1.0, 1.0, 0.0, 1.0);
+			debugSpriter.line(boxCorners[3].x, boxCorners[3].y, boxCorners[3].z, 1.0, 1.0, 0.0, 1.0, boxCorners[7].x, boxCorners[7].y, boxCorners[7].z, 1.0, 1.0, 0.0, 1.0);
+			debugSpriter.line(boxCorners[0].x, boxCorners[0].y, boxCorners[0].z, 1.0, 1.0, 0.0, 1.0, boxCorners[4].x, boxCorners[4].y, boxCorners[4].z, 1.0, 1.0, 0.0, 1.0);
+			debugSpriter.line(boxCorners[1].x, boxCorners[1].y, boxCorners[1].z, 1.0, 1.0, 0.0, 1.0, boxCorners[5].x, boxCorners[5].y, boxCorners[5].z, 1.0, 1.0, 0.0, 1.0);
+			debugSpriter.line(boxCorners[4].x, boxCorners[4].y, boxCorners[4].z, 1.0, 1.0, 0.0, 1.0, boxCorners[7].x, boxCorners[7].y, boxCorners[7].z, 1.0, 1.0, 0.0, 1.0);
+			debugSpriter.line(boxCorners[5].x, boxCorners[5].y, boxCorners[5].z, 1.0, 1.0, 0.0, 1.0, boxCorners[6].x, boxCorners[6].y, boxCorners[6].z, 1.0, 1.0, 0.0, 1.0);
+			debugSpriter.end();
+			debugSpriter1.begin(WebGLContext.LINES, state);
+			debugSpriter1.line(boxCorners1[0].x, boxCorners1[0].y, boxCorners1[0].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[1].x, boxCorners1[1].y, boxCorners1[1].z, 1.0, 0.0, 0.0, 1.0);
+			debugSpriter1.line(boxCorners1[2].x, boxCorners1[2].y, boxCorners1[2].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[3].x, boxCorners1[3].y, boxCorners1[3].z, 1.0, 0.0, 0.0, 1.0);
+			debugSpriter1.line(boxCorners1[4].x, boxCorners1[4].y, boxCorners1[4].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[5].x, boxCorners1[5].y, boxCorners1[5].z, 1.0, 0.0, 0.0, 1.0);
+			debugSpriter1.line(boxCorners1[6].x, boxCorners1[6].y, boxCorners1[6].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[7].x, boxCorners1[7].y, boxCorners1[7].z, 1.0, 0.0, 0.0, 1.0);
+			debugSpriter1.line(boxCorners1[0].x, boxCorners1[0].y, boxCorners1[0].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[3].x, boxCorners1[3].y, boxCorners1[3].z, 1.0, 0.0, 0.0, 1.0);
+			debugSpriter1.line(boxCorners1[1].x, boxCorners1[1].y, boxCorners1[1].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[2].x, boxCorners1[2].y, boxCorners1[2].z, 1.0, 0.0, 0.0, 1.0);
+			debugSpriter1.line(boxCorners1[2].x, boxCorners1[2].y, boxCorners1[2].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[6].x, boxCorners1[6].y, boxCorners1[6].z, 1.0, 0.0, 0.0, 1.0);
+			debugSpriter1.line(boxCorners1[3].x, boxCorners1[3].y, boxCorners1[3].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[7].x, boxCorners1[7].y, boxCorners1[7].z, 1.0, 0.0, 0.0, 1.0);
+			debugSpriter1.line(boxCorners1[0].x, boxCorners1[0].y, boxCorners1[0].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[4].x, boxCorners1[4].y, boxCorners1[4].z, 1.0, 0.0, 0.0, 1.0);
+			debugSpriter1.line(boxCorners1[1].x, boxCorners1[1].y, boxCorners1[1].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[5].x, boxCorners1[5].y, boxCorners1[5].z, 1.0, 0.0, 0.0, 1.0);
+			debugSpriter1.line(boxCorners1[4].x, boxCorners1[4].y, boxCorners1[4].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[7].x, boxCorners1[7].y, boxCorners1[7].z, 1.0, 0.0, 0.0, 1.0);
+			debugSpriter1.line(boxCorners1[5].x, boxCorners1[5].y, boxCorners1[5].z, 1.0, 0.0, 0.0, 1.0, boxCorners1[6].x, boxCorners1[6].y, boxCorners1[6].z, 1.0, 0.0, 0.0, 1.0);
+			debugSpriter1.end();
 		}
 		
 		/**

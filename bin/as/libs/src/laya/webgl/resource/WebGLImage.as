@@ -1,6 +1,6 @@
 package laya.webgl.resource {
 	import laya.maths.Arith;
-	import laya.renders.Render;
+	import laya.net.URL;
 	import laya.resource.HTMLImage;
 	import laya.utils.Browser;
 	import laya.webgl.WebGL;
@@ -24,7 +24,6 @@ package laya.webgl.resource {
 		public var minFifter:int;//动态默认值，判断是否可生成miplevel
 		/**放大过滤器*/
 		public var magFifter:int;//动态默认值，判断是否可生成miplevel
-		
 		
 		/**
 		 * 返回HTML Image,as3无internal货friend，通常禁止开发者修改image内的任何属性
@@ -85,37 +84,33 @@ package laya.webgl.resource {
 			}) : null);
 		}
 		
-		public function WebGLImage(src:String,def:*) {
-			super(src,def);
+		public function WebGLImage(src:String, def:*) {
+			super(src, def);
 			repeat = false;
 			mipmap = false;
 			minFifter = -1;
 			magFifter = -1;
 			
-			if (src is String)
-			{
+			if (src is String) {
 				_src = src;
 				_image = new Browser.window.Image();
-				if (def)
-				{
+				if (def) {
 					def.onload && (this.onload = def.onload);
 					def.onerror && (this.onerror = def.onerror);
 					def.onCreate && def.onCreate(this);
 				}
 				_image.crossOrigin = (src && (src.indexOf("data:") == 0)) ? null : "";
-				(src) && (_image.src = src);
+				(src) && (_image.src = URL.formatURL(src));
 				
-			}else
-			{
+			} else {
 				_src = def;
 				_image = src["source"];
 				onresize();
 			}
-			(src) && (_image.src = src);
 			_enableMerageInAtlas = true;
 		}
 		
-		override protected function _init_(src:String,def:*):void {
+		override protected function _init_(src:String, def:*):void {
 		}
 		
 		private function _createWebGlTexture():void {
@@ -191,7 +186,7 @@ package laya.webgl.resource {
 					(!(_this._allowMerageInAtlas && _this._enableMerageInAtlas)) ? (_this._createWebGlTexture()) : (memorySize = 0, _recreateLock = false);
 					_this.completeCreate();//处理创建完成后相关操作
 				};
-				_image.src = _src;
+				_image.src = URL.formatURL(_src);
 			} else {
 				if (_recreateLock) {
 					return;

@@ -46,8 +46,7 @@ package laya.particle.particleUtils
 		}
 
 		public function ComputeParticlePosition(position:Float32Array, velocity:Float32Array, age:Number, normalizedAge:Number):Float32Array
-		{
-			
+		{	
 			_position[0]=position[0];
 			_position[1]=position[1];
 			_position[2]=position[2];
@@ -61,7 +60,7 @@ package laya.particle.particleUtils
 			len = 3;
 			for (i = 0; i < len; i++)
 			{
-				_position[i] +=_position[i] + (velocity[i] / lenVelocity) * velocityIntegral * u_Duration; //计算受自身速度影响的位置，转换标量到矢量    
+				_position[i] =_position[i] + (velocity[i] / lenVelocity) * velocityIntegral * u_Duration; //计算受自身速度影响的位置，转换标量到矢量    
 				_position[i] += u_Gravity[i] * age * normalizedAge; //计算受重力影响的位置
 			}
 			

@@ -10,7 +10,7 @@ package threeDimen.advancedStage.custom {
 	 * @author ...
 	 */
 	public class CustomMaterial extends BaseMaterial {
-		public static var DIFFUSETEXTURE:int = 0;
+		public static var DIFFUSETEXTURE:int = 1;
 		
 		/**
 		 * 获取漫反射贴图。

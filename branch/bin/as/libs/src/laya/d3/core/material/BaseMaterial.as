@@ -106,22 +106,30 @@ package laya.d3.core.material {
 		/**深度测试函数枚举_总是通过。*/
 		public static const DEPTHFUNC_ALWAYS:int = 7;
 		
+		/**宏定义_透明测试。*/
+		public static var SHADERDEFINE_ALPHATEST:int;
+		
+		/**Shader变量_透明测试值。*/
+		public static const ALPHATESTVALUE:int = 0;
+		
 		/** @private */
 		private var _sharderNameID:int;
 		/** @private */
 		private var _shaderDefineValue:int;
 		/** @private */
-		private var _disableShaderDefineValue:int;
+		private var _disablePublicShaderDefine:int;
 		/** @private */
-		private var _shaderValues:ValusArray;
+		public var _shaderValues:ValusArray;
 		/** @private */
 		private var _values:Array;
 		/** @private */
 		private var _textureSharderIndices:Vector.<int>;
 		/** @private */
 		private var _shader:Shader3D;
+		/** @private */
+		private var _alphaTest:Boolean;
 		
-		/**@private 所属渲染队列。*/
+		/** @private */
 		protected var _renderQueue:int;
 		/** @private */
 		protected var _shaderCompile:ShaderCompile3D;
@@ -172,6 +180,42 @@ package laya.d3.core.material {
 		}
 		
 		/**
+		 * 获取透明测试模式裁剪值。
+		 * @return 透明测试模式裁剪值。
+		 */
+		public function get alphaTestValue():Number {
+			return _getNumber(ALPHATESTVALUE);
+		}
+		
+		/**
+		 * 设置透明测试模式裁剪值。
+		 * @param value 透明测试模式裁剪值。
+		 */
+		public function set alphaTestValue(value:Number):void {
+			_setNumber(ALPHATESTVALUE, value);
+		}
+		
+		/**
+		 * 获取是否透明裁剪。
+		 * @return 是否透明裁剪。
+		 */
+		public function get alphaTest():Boolean {
+			return _alphaTest;
+		}
+		
+		/**
+		 * 设置是否透明裁剪。
+		 * @param value 是否透明裁剪。
+		 */
+		public function set alphaTest(value:Boolean):void {
+			_alphaTest = value;
+			if (value)
+				_addShaderDefine(BaseMaterial.SHADERDEFINE_ALPHATEST);
+			else
+				_removeShaderDefine(BaseMaterial.SHADERDEFINE_ALPHATEST);
+		}
+		
+		/**
 		 * 创建一个 <code>BaseMaterial</code> 实例。
 		 */
 		public function BaseMaterial() {
@@ -179,7 +223,7 @@ package laya.d3.core.material {
 			_loaded = true;
 			_isInstance = false;
 			_shaderDefineValue = 0;
-			_disableShaderDefineValue = 0;
+			_disablePublicShaderDefine = 0;
 			_shaderValues = new ValusArray();
 			_values = [];
 			_textureSharderIndices = new Vector.<int>();
@@ -221,9 +265,9 @@ package laya.d3.core.material {
 		/**
 		 * @private
 		 */
-		public function _getShader(stateDefineValue:int, vertexShaderDefineValue:int, spriteShaderDefineValue:int):Shader3D {
-			var defineValue:int = (stateDefineValue | vertexShaderDefineValue | _shaderDefineValue | spriteShaderDefineValue) & (~_disableShaderDefineValue);
-			_shader = _shaderCompile.withCompile(_sharderNameID, defineValue, _sharderNameID * ShaderCompile3D.SHADERNAME2ID + defineValue);
+		public function _getShader(sceneDefineValue:int, vertexDefineValue:int, spriteDefineValue:int):Shader3D {
+			var publicDefineValue:int = (sceneDefineValue | vertexDefineValue ) & (~_disablePublicShaderDefine);//TODO:调整shaderDefine
+			_shader = _shaderCompile.withCompile(_sharderNameID, publicDefineValue,_shaderDefineValue| spriteDefineValue);//TODO:
 			return _shader;
 		}
 		
@@ -260,16 +304,16 @@ package laya.d3.core.material {
 		 * 增加禁用宏定义。
 		 * @param value 宏定义。
 		 */
-		protected function _addDisableShaderDefine(value:int):void {
-			_disableShaderDefineValue |= value;
+		protected function _addDisablePublicShaderDefine(value:int):void {
+			_disablePublicShaderDefine |= value;
 		}
 		
 		/**
 		 * 移除禁用宏定义。
 		 * @param value 宏定义。
 		 */
-		protected function _removeDisableShaderDefine(value:int):void {
-			_disableShaderDefineValue &= ~value;
+		protected function _removeDisablePublicShaderDefine(value:int):void {
+			_disablePublicShaderDefine &= ~value;
 		}
 		
 		/**
@@ -547,12 +591,15 @@ package laya.d3.core.material {
 		 */
 		public function setShaderName(name:String):void {
 			_sharderNameID = Shader3D.nameKey.getID(name);
-			_shaderCompile = ShaderCompile3D._preCompileShader[ShaderCompile3D.SHADERNAME2ID * _sharderNameID];
+			_shaderCompile = ShaderCompile3D._preCompileShader[_sharderNameID];
 			if (_conchMaterial) {//NATIVE
 				_conchMaterial.setShader(_shaderCompile._conchShader);
 			}
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			var jsonData:Object = data[0];
 			var textureMap:Object = data[1];
@@ -590,7 +637,7 @@ package laya.d3.core.material {
 							var texture:Object = textures[i];
 							var path:String = texture.path;
 							(path) && (this[texture.name] = Loader.getRes(textureMap[path]));
-							//break;
+								//break;
 						}
 						break;
 					default: 
@@ -633,7 +680,7 @@ package laya.d3.core.material {
 			destBaseMaterial._renderQueue = _renderQueue;
 			destBaseMaterial._shader = _shader;
 			destBaseMaterial._sharderNameID = _sharderNameID;
-			destBaseMaterial._disableShaderDefineValue = _disableShaderDefineValue;
+			destBaseMaterial._disablePublicShaderDefine = _disablePublicShaderDefine;
 			destBaseMaterial._shaderDefineValue = _shaderDefineValue;
 			
 			var i:int, n:int;
@@ -689,6 +736,9 @@ package laya.d3.core.material {
 			return destBaseMaterial;
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override public function dispose():void {
 			resourceManager.removeResource(this);
 			super.dispose();

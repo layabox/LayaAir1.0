@@ -1,4 +1,5 @@
 package laya.d3.core.particleShuriKen.module.shape {
+	import laya.d3.math.BoundBox;
 	import laya.d3.math.Rand;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
@@ -16,8 +17,6 @@ package laya.d3.core.particleShuriKen.module.shape {
 		public var arc:Number;
 		/**从边缘发射。*/
 		public var emitFromEdge:Boolean;
-		/**随机方向。*/
-		public var randomDirection:Boolean;
 		
 		/**
 		 * 创建一个 <code>CircleShape</code> 实例。
@@ -28,6 +27,30 @@ package laya.d3.core.particleShuriKen.module.shape {
 			arc = 360.0 / 180.0 * Math.PI;
 			emitFromEdge = false;
 			randomDirection = false;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _getShapeBoundBox(boundBox:BoundBox):void {
+			var minE:Float32Array = boundBox.min.elements;
+			minE[0]  = minE[2] = -radius;
+			minE[1] = 0;
+			var maxE:Float32Array = boundBox.max.elements;
+			maxE[0] = maxE[2] = radius;
+			maxE[1] = 0;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _getSpeedBoundBox(boundBox:BoundBox):void {
+			var minE:Float32Array = boundBox.min.elements;
+			minE[0] = minE[1] =-1;
+			minE[2] = 0;
+			var maxE:Float32Array = boundBox.max.elements;
+			maxE[0] = maxE[1] = 1;
+			maxE[2] = 0;
 		}
 		
 		/**

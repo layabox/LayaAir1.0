@@ -1,44 +1,71 @@
 package laya.ui {
 	
 	/**
-	 * 异步Dialog，页面视图先不创建，等资源加载完毕或者网络通讯完毕后，手动调用ready再创建节点，并且弹出
-	 * 注意：ready之后页面才真正创建，所有对页面节点的操作必须在ready之后执行
+	 * 异步Dialog的生命周期:show或者popup > onCreate(如果没有创建过) > onOpen > onClose > onDestroy(如果销毁)
+	 * onCreate在页面未创建时执行一次，再次打开页面不会再执行，适合写一些只执行一次的逻辑，比如资源加载，节点事件监听
+	 * onOpen在页面每次打开都会执行，适合做一些每次都需要处理的事情，比如消息请求，根据数据初始化页面
+	 * onClose在每次关闭的时候调用，适合关闭时停止动画，网络消息监听等逻辑
+	 * onDestroy在页面被销毁的时候调用，适合置空引用对象
 	 */
 	public class AsynDialog extends Dialog {
 		/**@private */
 		protected var _uiView:Object;
+		/**打开时是否关闭其他页面*/
+		public var isCloseOther:Boolean;
 		
 		/**@private */
 		override protected function createView(uiView:Object):void {
 			_uiView = uiView;
 		}
 		
-		/**页面准备完毕，可以显示了，ready之后页面才真正创建，所有对页面节点的操作必须在ready之后执行*/
-		public function ready():void {
-			if (_uiView) {
-				super.createView(_uiView);
-				_uiView = null;
-			}
-			_dealDragArea();
-			callLater(event, ["ready"]);
-		}
-		
-		override public function show(closeOther:Boolean = false):void {
+		override protected function _open(modal:Boolean, closeOther:Boolean):void {
+			isModal = modal;
+			isCloseOther = closeOther;
 			manager.lock(true);
-			once("ready", this, _open, [false, closeOther]);
-			beforeOpen();
-		}
-		
-		override public function popup(closeOther:Boolean = false):void {
-			manager.lock(true);
-			once("ready", this, _open, [true, closeOther]);
-			beforeOpen();
+			if (_uiView) onCreated();
+			else onOpen();
 		}
 		
 		/**
-		 * 打开页面之前，可以重构此方法，处理一些资源加载或网络通讯工作，准备完毕后，调用ready来呈现页面
+		 * 在页面未创建时执行一次，再次打开页面不会再执行，适合写一些只执行一次的逻辑，比如资源加载，节点事件监听
 		 */
-		public function beforeOpen():void {
+		public function onCreated():void {
+			super.createView(_uiView);
+			_uiView = null;
+			_dealDragArea();
+			onOpen();
+		}
+		
+		/**
+		 * 在页面每次打开都会执行，适合做一些每次都需要处理的事情，比如消息请求，根据数据初始化页面
+		 */
+		public function onOpen():void {
+			manager.open(this, isCloseOther);
+			manager.lock(false);
+		}
+		
+		override public function close(type:String = null):void {
+			manager.close(this);
+			onClose();
+		}
+		
+		/**
+		 * 在每次关闭的时候调用，适合关闭时停止动画，网络消息监听等逻辑
+		 */
+		public function onClose():void {
+		
+		}
+		
+		override public function destroy(destroyChild:Boolean = true):void {
+			super.destroy(destroyChild);
+			_uiView = null;
+			onDestroy();
+		}
+		
+		/**
+		 * 在页面被销毁的时候调用，适合置空引用对象
+		 */
+		public function onDestroy():void {
 		
 		}
 	}

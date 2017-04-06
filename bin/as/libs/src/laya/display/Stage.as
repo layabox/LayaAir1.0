@@ -7,6 +7,7 @@ package laya.display {
 	import laya.renders.RenderContext;
 	import laya.resource.HTMLCanvas;
 	import laya.utils.Browser;
+	import laya.utils.Color;
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	import laya.utils.VectorGraphManager;
@@ -99,9 +100,9 @@ package laya.display {
 		/**帧率类型，支持三种模式：fast-60帧(默认)，slow-30帧，mouse-30帧（鼠标活动后会自动加速到60，鼠标不动2秒后降低为30帧，以节省消耗），sleep-1帧。*/
 		public var frameRate:String = "fast";
 		/**设计宽度（初始化时设置的宽度Laya.init(width,height)）*/
-		public var desginWidth:Number = 0;
+		public var designWidth:Number = 0;
 		/**设计高度（初始化时设置的高度Laya.init(width,height)）*/
-		public var desginHeight:Number = 0;
+		public var designHeight:Number = 0;
 		/**画布是否发生翻转。*/
 		public var canvasRotation:Boolean = false;
 		/**画布的旋转角度。*/
@@ -131,15 +132,17 @@ package laya.display {
 		/**@private */
 		private var _frameStartTime:Number;
 		/**@private */
-		private var _previousOrientation:int;
+		private var _previousOrientation:int = Browser.window.orientation;
 		/**@private */
 		private var _isFocused:Boolean;
 		/**@private */
 		private var _isVisibility:Boolean;
 		/**@private 3D场景*/
 		public var _scenes:Array;
+		/**@private webgl Color*/
+		public var _wgColor:Array;
 		
-		/**场景类，请用Laya.stage单例访问。*/
+		/**场景类，引擎中只有一个stage实例，此实例可以通过Laya.stage访问。*/
 		public function Stage() {
 			transform = Matrix.create();
 			_scenes = [];
@@ -229,15 +232,29 @@ package laya.display {
 		}
 		
 		override public function set width(value:Number):void {
-			this.desginWidth = value;
+			this.designWidth = value;
 			super.width = value;
 			Laya.timer.callLater(this, _changeCanvasSize);
 		}
 		
 		override public function set height(value:Number):void {
-			this.desginHeight = value;
+			this.designHeight = value;
 			super.height = value;
 			Laya.timer.callLater(this, _changeCanvasSize);
+		}
+		
+		/**@private 已经弃用，请使用designWidth代替*/
+		//[Deprecated]
+		public function get desginWidth():Number {
+			console.debug("desginWidth已经弃用，请使用designWidth代替");
+			return designWidth;
+		}
+		
+		/**@private 已经弃用，请使用designHeight代替*/
+		//[Deprecated]
+		public function get desginHeight():Number {
+			console.debug("desginHeight已经弃用，请使用designHeight代替");
+			return designHeight;
 		}
 		
 		/**
@@ -248,7 +265,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 舞台是否处于可见状态。
+		 * 舞台是否处于可见状态(是否进入后台)。
 		 */
 		public function get isVisibility():Boolean {
 			return _isVisibility;
@@ -270,7 +287,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 设置屏幕大小，场景会根据屏幕大小进行适配。
+		 * 设置屏幕大小，场景会根据屏幕大小进行适配。可以动态调用此方法，来更改游戏显示的大小。
 		 * @param	screenWidth		屏幕宽度。
 		 * @param	screenHeight	屏幕高度。
 		 */
@@ -295,32 +312,32 @@ package laya.display {
 			var canvasStyle:* = canvas.source.style;
 			var mat:Matrix = this._canvasTransform.identity();
 			var scaleMode:String = this._scaleMode;
-			var scaleX:Number = screenWidth / desginWidth
-			var scaleY:Number = screenHeight / desginHeight;
-			var canvasWidth:Number = desginWidth;
-			var canvasHeight:Number = desginHeight;
+			var scaleX:Number = screenWidth / designWidth
+			var scaleY:Number = screenHeight / designHeight;
+			var canvasWidth:Number = designWidth;
+			var canvasHeight:Number = designHeight;
 			var realWidth:Number = screenWidth;
 			var realHeight:Number = screenHeight;
 			var pixelRatio:Number = Browser.pixelRatio;
-			_width = desginWidth;
-			_height = desginHeight;
+			_width = designWidth;
+			_height = designHeight;
 			
 			//处理缩放模式
 			switch (scaleMode) {
 			case SCALE_NOSCALE: 
 				scaleX = scaleY = 1;
-				realWidth = desginWidth;
-				realHeight = desginHeight;
+				realWidth = designWidth;
+				realHeight = designHeight;
 				break;
 			case SCALE_SHOWALL: 
 				scaleX = scaleY = Math.min(scaleX, scaleY);
-				canvasWidth = realWidth = Math.round(desginWidth * scaleX);
-				canvasHeight = realHeight = Math.round(desginHeight * scaleY);
+				canvasWidth = realWidth = Math.round(designWidth * scaleX);
+				canvasHeight = realHeight = Math.round(designHeight * scaleY);
 				break;
 			case SCALE_NOBORDER: 
 				scaleX = scaleY = Math.max(scaleX, scaleY);
-				realWidth = Math.round(desginWidth * scaleX);
-				realHeight = Math.round(desginHeight * scaleY);
+				realWidth = Math.round(designWidth * scaleX);
+				realHeight = Math.round(designHeight * scaleY);
 				break;
 			case SCALE_FULL: 
 				scaleX = scaleY = 1;
@@ -472,6 +489,15 @@ package laya.display {
 		public function set bgColor(value:String):void {
 			_bgColor = value;
 			conchModel && conchModel.bgColor(value);
+			
+			if (Render.isWebGL) {
+				if (value && value !== "black" && value !== "#000000") {
+					_wgColor = Color.create(value)._color;
+				} else {
+					_wgColor = null;
+				}
+			}
+			
 			if (value) {
 				Render.canvas.style.background = value;
 			} else {
@@ -630,7 +656,8 @@ package laya.display {
 			}
 		}
 		
-		/**是否开启全屏，用户点击后进入全屏*/
+		/**是否开启全屏，用户点击后进入全屏。
+		 * 兼容性提示：部分浏览器不允许点击进入全屏，比如Iphone等*/
 		public function set fullScreenEnabled(value:Boolean):void {
 			var document:* = Browser.document;
 			var canvas:* = Render.canvas;
@@ -670,7 +697,7 @@ package laya.display {
 			Laya.stage.event(Event.FULL_SCREEN_CHANGE);
 		}
 		
-		/**退出全屏*/
+		/**退出全屏模式*/
 		public function exitFullscreen():void {
 			var document:* = Browser.document;
 			if (document.exitFullscreen) {

@@ -1,5 +1,6 @@
 package laya.ui {
 	import laya.events.Event;
+	import laya.maths.Point;
 	import laya.maths.Rectangle;
 	import laya.utils.Handler;
 	import laya.utils.Tween;
@@ -214,6 +215,8 @@ package laya.ui {
 		protected var _createdLine:int = 0;
 		/**@private */
 		protected var _cellChanged:Boolean;
+		/**@private */
+		protected var _offset:Point = new Point();
 		
 		/**@inheritDoc */
 		override public function destroy(destroyChild:Boolean = true):void {
@@ -443,7 +446,9 @@ package laya.ui {
 		
 		private function _getOneCell():Box {
 			if (_cells.length === 0) {
-				_cells.push(createItem());
+				var item:Box = createItem();
+				_offset.setTo(item.x, item.y);
+				_cells.push(item);
 			}
 			return _cells[0];
 		}
@@ -538,12 +543,12 @@ package laya.ui {
 		public function setContentSize(width:Number, height:Number):void {
 			_content.width = width;
 			_content.height = height;
-			if (_scrollBar) {
-				_content.scrollRect || (_content.scrollRect = new Rectangle());
-				_content.scrollRect.setTo(0, 0, width, height);
-				_content.conchModel && _content.conchModel.scrollRect(0, 0, width, height);//通知微端
-				event(Event.RESIZE);
-			}
+			//if (_scrollBar) {
+			_content.scrollRect || (_content.scrollRect = new Rectangle());
+			_content.scrollRect.setTo(-_offset.x, -_offset.y, width, height);
+			_content.conchModel && _content.conchModel.scrollRect(-_offset.x, -_offset.y, width, height);//通知微端
+			event(Event.RESIZE);
+			//}
 		}
 		
 		/**
@@ -600,8 +605,9 @@ package laya.ui {
 			
 			if (!cacheContent) {
 				var index:int = scrollLine * lineX;
+				var num:int = 0;
 				if (index > _startIndex) {
-					var num:int = index - _startIndex;
+					num = index - _startIndex;
 					var down:Boolean = true;
 					var toIndex:int = _startIndex + lineX * (lineY + 1);
 					_isMoved = true;
@@ -639,9 +645,11 @@ package laya.ui {
 			
 			var r:Rectangle = _content.scrollRect;
 			if (_isVertical) {
-				r.y = scrollValue;
+				r.y = scrollValue - _offset.y;
+				r.x = -_offset.x;
 			} else {
-				r.x = scrollValue;
+				r.y = -_offset.y;
+				r.x = scrollValue - _offset.x;
 			}
 			_content.conchModel && _content.conchModel.scrollRect(r.x, r.y, r.width, r.height);
 			repaint();

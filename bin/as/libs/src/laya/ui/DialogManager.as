@@ -27,9 +27,8 @@ package laya.ui {
 		}
 		
 		/**关闭对话框效果，可以设置一个效果代替默认的关闭效果，如果不想有任何效果，可以赋值为null*/
-		public var closeEffect:Function = function(dialog:Sprite):void {
-			var _this:DialogManager = this;
-			Tween.to(dialog, {x: Laya.stage.width / 2, y: Laya.stage.height / 2, scaleX: 0, scaleY: 0}, 300, Ease.strongOut, Handler.create(_this, _this._doClose, [dialog]));
+		public var closeEffect:Function = function(dialog:Sprite, type:String):void {
+			Tween.to(dialog, {x: Laya.stage.width / 2, y: Laya.stage.height / 2, scaleX: 0, scaleY: 0}, 300, Ease.strongOut, Handler.create(this, this.doClose, [dialog, type]));
 		}
 		
 		/**
@@ -112,16 +111,22 @@ package laya.ui {
 		/**
 		 * 关闭对话框。
 		 * @param dialog 需要关闭的对象框 <code>Dialog</code> 实例。
+		 * @param type	关闭的类型，默认为空
 		 */
-		public function close(dialog:Dialog):void {
-			if (closeEffect != null) closeEffect(dialog);
-			else _doClose(dialog);
+		public function close(dialog:Dialog, type:String = null):void {
+			if (closeEffect != null) closeEffect(dialog, type);
+			else doClose(dialog);
 		}
 		
-		private function _doClose(dialog:Dialog):void {
+		/**
+		 * 真正关闭对话框。
+		 * @param dialog 需要关闭的对象框 <code>Dialog</code> 实例。
+		 * @param type	关闭的类型，默认为空
+		 */
+		public function doClose(dialog:Dialog, type:String = null):void {
 			dialog.removeSelf();
 			dialog.isModal && _checkMask();
-			dialog.closeHandler && dialog.closeHandler.run();
+			dialog.closeHandler && dialog.closeHandler.runWith(type);
 			event(Event.CLOSE);
 		}
 		

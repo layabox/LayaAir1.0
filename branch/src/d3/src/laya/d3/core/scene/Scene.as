@@ -31,61 +31,63 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		private function _renderRenderableBoundBox(linePhasor:PhasorSpriter3D, sprite:*):void {
-			if (sprite is RenderableSprite3D) {
-				var renderableSprite:RenderableSprite3D = sprite as RenderableSprite3D;
-				var boundBox:BoundBox = renderableSprite._render.boundingBox;
-				var corners:Vector.<Vector3> = _tempBoundBoxCorners;
-				boundBox.getCorners(corners);
-				linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 0.0, 1.0, 0.0, 1.0, corners[1].x, corners[1].y, corners[1].z, 0.0, 1.0, 0.0, 1.0);
-				linePhasor.line(corners[2].x, corners[2].y, corners[2].z, 0.0, 1.0, 0.0, 1.0, corners[3].x, corners[3].y, corners[3].z, 0.0, 1.0, 0.0, 1.0);
-				linePhasor.line(corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0, corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0);
-				linePhasor.line(corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
-				
-				linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 0.0, 1.0, 0.0, 1.0, corners[3].x, corners[3].y, corners[3].z, 0.0, 1.0, 0.0, 1.0);
-				linePhasor.line(corners[1].x, corners[1].y, corners[1].z, 0.0, 1.0, 0.0, 1.0, corners[2].x, corners[2].y, corners[2].z, 0.0, 1.0, 0.0, 1.0);
-				linePhasor.line(corners[2].x, corners[2].y, corners[2].z, 0.0, 1.0, 0.0, 1.0, corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0);
-				linePhasor.line(corners[3].x, corners[3].y, corners[3].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
-				
-				linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 0.0, 1.0, 0.0, 1.0, corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0);
-				linePhasor.line(corners[1].x, corners[1].y, corners[1].z, 0.0, 1.0, 0.0, 1.0, corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0);
-				linePhasor.line(corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
-				linePhasor.line(corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0, corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0);
-			}
-			
-			for (var i:int = 0, n:int = sprite._childs.length; i < n; i++)
-				_renderRenderableBoundBox(linePhasor, sprite._childs[i]);
+			//if (sprite is RenderableSprite3D) {
+				//var renderableSprite:RenderableSprite3D = sprite as RenderableSprite3D;
+				//var boundBox:BoundBox = renderableSprite._render.boundingBox;
+				//var corners:Vector.<Vector3> = _tempBoundBoxCorners;
+				//boundBox.getCorners(corners);
+				//linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 0.0, 1.0, 0.0, 1.0, corners[1].x, corners[1].y, corners[1].z, 0.0, 1.0, 0.0, 1.0);
+				//linePhasor.line(corners[2].x, corners[2].y, corners[2].z, 0.0, 1.0, 0.0, 1.0, corners[3].x, corners[3].y, corners[3].z, 0.0, 1.0, 0.0, 1.0);
+				//linePhasor.line(corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0, corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0);
+				//linePhasor.line(corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
+				//
+				//linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 0.0, 1.0, 0.0, 1.0, corners[3].x, corners[3].y, corners[3].z, 0.0, 1.0, 0.0, 1.0);
+				//linePhasor.line(corners[1].x, corners[1].y, corners[1].z, 0.0, 1.0, 0.0, 1.0, corners[2].x, corners[2].y, corners[2].z, 0.0, 1.0, 0.0, 1.0);
+				//linePhasor.line(corners[2].x, corners[2].y, corners[2].z, 0.0, 1.0, 0.0, 1.0, corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0);
+				//linePhasor.line(corners[3].x, corners[3].y, corners[3].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
+				//
+				//linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 0.0, 1.0, 0.0, 1.0, corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0);
+				//linePhasor.line(corners[1].x, corners[1].y, corners[1].z, 0.0, 1.0, 0.0, 1.0, corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0);
+				//linePhasor.line(corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
+				//linePhasor.line(corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0, corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0);
+			//}
+			//
+			//for (var i:int = 0, n:int = sprite._childs.length; i < n; i++)
+				//_renderRenderableBoundBox(linePhasor, sprite._childs[i]);
 		}
 		
 		protected override function _renderCamera(gl:WebGLContext, state:RenderState, baseCamera:BaseCamera):void {
 			var camera:Camera = baseCamera as Camera;
-			state.camera = camera;
+			(parallelSplitShadowMaps[0]) && (_renderShadowMap(gl, state, camera));//TODO:SM
+		    state.camera = camera;
 			camera._prepareCameraToRender();
 			beforeRender(state);//渲染之前
-			var renderTarget:RenderTexture = camera.renderTarget;
 			
+			var viewMatrix:Matrix4x4 = camera.viewMatrix;
+			var projectMatrix:Matrix4x4;
+			state._viewMatrix = viewMatrix;
+			var renderTarget:RenderTexture = camera.renderTarget;
 			if (renderTarget) {
 				renderTarget.start();
 				Matrix4x4.multiply(_invertYScaleMatrix, camera.projectionMatrix, _invertYProjectionMatrix);
 				Matrix4x4.multiply(_invertYScaleMatrix, camera.projectionViewMatrix, _invertYProjectionViewMatrix);
-				state.projectionMatrix = _invertYProjectionMatrix;//todo:
-				camera._setShaderValueMatrix4x4(BaseCamera.PROJECTMATRIX, _invertYProjectionMatrix);
-				state.projectionViewMatrix = _invertYProjectionViewMatrix;//todo
+				projectMatrix=state._projectionMatrix = _invertYProjectionMatrix;//TODO:
+				state._projectionViewMatrix = _invertYProjectionViewMatrix;//TODO:
 			} else {
-				state.projectionMatrix = camera.projectionMatrix;//todo
-				camera._setShaderValueMatrix4x4(BaseCamera.PROJECTMATRIX, camera.projectionMatrix);
-				state.projectionViewMatrix = camera.projectionViewMatrix;//todo
+				projectMatrix=state._projectionMatrix = camera.projectionMatrix;//TODO:
+				state._projectionViewMatrix = camera.projectionViewMatrix;//TODO:
 			}
 			
-			camera._setShaderValueMatrix4x4(BaseCamera.VIEWMATRIX, camera.viewMatrix);
-			
-			state.viewMatrix = camera.viewMatrix;
-			state.viewport = camera.viewport;
+			camera._prepareCameraViewProject(viewMatrix, projectMatrix);
+			state._boundFrustum = camera.boundFrustum;
+			state._viewport = camera.viewport;
 			_preRenderScene(gl, state);
 			_clear(gl, state);
 			_renderScene(gl, state);
+			//_renderDebug(gl, state);
 			lateRender(state);//渲染之后
 			
-			if (Laya3D.treeDebug&&treeRoot) {
+			if (OctreeNode.debugMode&&treeRoot) {
 				var linePhasor:PhasorSpriter3D = Laya3D.debugPhasorSprite;
 				linePhasor.begin(WebGLContext.LINES, state);
 				_renderRenderableBoundBox(linePhasor, this);

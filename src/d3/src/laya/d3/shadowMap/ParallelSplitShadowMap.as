@@ -19,19 +19,28 @@ package laya.d3.shadowMap {
 	 * @author ...
 	 */
 	public class ParallelSplitShadowMap {
-		public static var SHADERDEFINE_CAST_SHADOW:int = 0x200;
-		public static var SHADERDEFINE_RECEIVE_SHADOW:int=0x400;
-		public static var SHADERDEFINE_SHADOW_PSSM1:int=0x800;
-		public static var SHADERDEFINE_SHADOW_PSSM2:int=0x1000;
-		public static var SHADERDEFINE_SHADOW_PSSM3:int=0x2000;
-		public static var SHADERDEFINE_SHADOW_PCF_NO:int=0x4000;
-		public static var SHADERDEFINE_SHADOW_PCF1:int=0x8000;
-		public static var SHADERDEFINE_SHADOW_PCF2:int=0x10000;
-		public static var SHADERDEFINE_SHADOW_PCF3:int = 0x20000;
+		/**@private */
+		public static const SHADERDEFINE_RECEIVE_SHADOW:int = 0x1;
 		
+		/**@private */
+		public static var SHADERDEFINE_CAST_SHADOW:int = 0x200;
+		/**@private */
+		public static var SHADERDEFINE_SHADOW_PSSM1:int = 0x400;
+		/**@private */
+		public static var SHADERDEFINE_SHADOW_PSSM2:int = 0x800;
+		/**@private */
+		public static var SHADERDEFINE_SHADOW_PSSM3:int = 0x1000;
+		/**@private */
+		public static var SHADERDEFINE_SHADOW_PCF_NO:int = 0x2000;
+		/**@private */
+		public static var SHADERDEFINE_SHADOW_PCF1:int = 0x4000;
+		/**@private */
+		public static var SHADERDEFINE_SHADOW_PCF2:int = 0x8000;
+		/**@private */
+		public static var SHADERDEFINE_SHADOW_PCF3:int = 0x10000;
+		
+		/**@private */
 		public static const MAX_PSSM_COUNT:int = 3;
-		//生成阴影是否使用贴图
-		public static var SHADERDEFINE_BUILD_SHADOW_DIFFUSEMAP:int;
 		
 		
 		

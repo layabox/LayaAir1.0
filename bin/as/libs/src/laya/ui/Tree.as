@@ -7,6 +7,11 @@ package laya.ui {
 	 * @eventType laya.events.Event
 	 */
 	[Event(name = "change", type = "laya.events.Event")]
+	/**
+	 * 节点打开关闭时触发。
+	 * @eventType laya.events.Event
+	 */
+	[Event(name = "open", type = "laya.events.Event")]
 	
 	/**
 	 * <code>Tree</code> 控件使用户可以查看排列为可扩展树的层次结构数据。
@@ -512,6 +517,7 @@ package laya.ui {
 			var arrow:Clip = e.currentTarget as Clip;
 			var index:int = arrow.tag;
 			_list.array[index].isOpen = !_list.array[index].isOpen;
+			event(Event.OPEN);
 			_list.array = getArray();
 		}
 		

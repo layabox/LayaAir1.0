@@ -26,7 +26,7 @@ varying vec2 v_Texcoord0;
 #endif
 
 #ifdef AMBIENTMAP
-varying vec2 v_Texcoord1;
+varying vec2 v_LightMapUV;
 uniform sampler2D u_AmbientTexture;
 #endif
 
@@ -88,7 +88,6 @@ varying vec3 v_PositionWorld;
 
 #include "ShadowHelper.glsl"
 #ifdef RECEIVESHADOW
-varying float v_posViewZ;
 	#if defined(SHADOWMAP_PSSM2)||defined(SHADOWMAP_PSSM3)
 	uniform mat4 u_lightShadowVP[4];
 	#endif
@@ -96,10 +95,12 @@ varying float v_posViewZ;
 	varying vec4 v_lightMVPPos;
 	#endif
 #endif
+varying float v_posViewZ;
 
 void main_castShadow()
 {
-	gl_FragColor=packDepth(gl_FragCoord.w);
+	//gl_FragColor=vec4(v_posViewZ,0.0,0.0,1.0);
+	gl_FragColor=packDepth(v_posViewZ);
 	#if defined(DIFFUSEMAP)&&defined(ALPHATEST)
 		float alpha = texture2D(u_DiffuseTexture,v_Texcoord0).w;
 		if( alpha < u_AlphaTestValue )
@@ -128,7 +129,7 @@ void main_normal()
 #endif 
   
 #ifdef AMBIENTMAP
-	gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_Texcoord1).rgb); 
+	gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb); 
 #endif 
 	gl_FragColor=gl_FragColor*u_Albedo;
   

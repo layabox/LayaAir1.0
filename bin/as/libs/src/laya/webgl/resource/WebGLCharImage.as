@@ -162,8 +162,8 @@ package laya.webgl.resource {
 				}
 				
 				if (fillColor && borderColor) {
-					__JS__("this._ctx.strokeStyle = this.borderColor");
-					__JS__("this._ctx.lineWidth = this.lineWidth");
+					this._ctx.strokeStyle = this.borderColor;
+					this._ctx.lineWidth = this.lineWidth;
 					_ctx.strokeText(char, 0, 0, null, null, 0, null);
 					_ctx.fillStyle = fillColor;
 					_ctx.fillText(char, 0, 0, null, null, null);
@@ -172,8 +172,8 @@ package laya.webgl.resource {
 						_ctx.fillStyle = fillColor ? fillColor : "white";
 						_ctx.fillText(char, 0, 0, null, null, null);
 					} else {
-						__JS__("this._ctx.strokeStyle = this.borderColor?this.borderColor:'white'");
-						__JS__("this._ctx.lineWidth = this.lineWidth");
+						this._ctx.strokeStyle = this.borderColor?this.borderColor:'white';
+						this._ctx.lineWidth = this.lineWidth;
 						_ctx.strokeText(char, 0, 0, null, null, 0, null);
 					}
 				}

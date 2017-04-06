@@ -136,6 +136,10 @@ package laya.ani.bone {
 		public function replaceSkin(_texture:Texture):void {
 			_diyTexture = _texture;
 			if (_curDiyUV) _curDiyUV.length = 0;
+			if (currDisplayData&&_diyTexture == currDisplayData.texture)
+			{
+				_diyTexture = null;
+			}
 		}
 		
 		/**

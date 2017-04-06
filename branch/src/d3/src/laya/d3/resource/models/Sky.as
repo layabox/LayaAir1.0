@@ -128,6 +128,16 @@ package laya.d3.resource.models {
 			return _environmentSpecular;
 		}
 		
+		public function set envDiffuseSHRed(value:Float32Array):void {
+			__ownerCamera._shaderValues.setValue(BaseCamera.DIFFUSEIRRADMATR, value);
+		}
+		public function set envDiffuseSHGreen(value:Float32Array):void {
+			__ownerCamera._shaderValues.setValue(BaseCamera.DIFFUSEIRRADMATG, value);
+		}
+		public function set envDiffuseSHBlue(value:Float32Array):void {
+			__ownerCamera._shaderValues.setValue(BaseCamera.DIFFUSEIRRADMATB, value);
+		}
+		
 		/**
 		 * 设置环境高光贴图。
 		 * @param value 环境高光贴图。

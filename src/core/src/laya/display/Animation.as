@@ -236,6 +236,7 @@ package laya.display {
 			var _this:Animation = this;
 			if (!_this._setFramesFromCache("")) {
 				function onLoaded(loadUrl:String):void {
+					if (!Loader.getRes(loadUrl)) return;
 					if (url === loadUrl) {
 						if (!framesMap[url + "#"]) {
 							var aniData:Object = _this._parseGraphicAnimation(Loader.getRes(url));

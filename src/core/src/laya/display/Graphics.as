@@ -424,7 +424,7 @@ package laya.display {
 		 * @param	m 矩阵信息。
 		 */
 		public function drawTexture(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null, alpha:Number = 1):void {
-			if (!tex) return;
+			if (!tex || alpha < 0.01) return;
 			if (!width) width = tex.sourceWidth;
 			if (!height) height = tex.sourceHeight;
 			

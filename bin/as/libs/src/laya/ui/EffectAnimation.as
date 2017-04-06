@@ -5,21 +5,35 @@ package laya.ui {
 	import laya.utils.Ease;
 	
 	/**
-	 * ...
+	 * 动效类
 	 * @author ww
 	 */
 	public class EffectAnimation extends FrameAnimation {
+		/**
+		 * 动效开始事件 
+		 */
 		public static const EffectAnimationBegin:String = "effectanimationbegin";
 		
 		public function EffectAnimation() {
 		
 		}
 		
-		public function set owner(v:*):void {
-			target = v;
-		}
+		/**@private */
 		private var _target:*;
+		/**@private */
+		private var _playEvents:String;
+		/**@private */
+		private var _initData:Object = {};
+		/**@private */
+		private var _aniKeys:Array;
+		/**@private */
+		private var _effectClass:Class;
 		
+		/**
+		 * 控制对象 
+		 * @param v
+		 * 
+		 */
 		public function set target(v:*):void {
 			if (_target) {
 				_target.off(EffectAnimationBegin, this, _onOtherBegin);
@@ -31,17 +45,28 @@ package laya.ui {
 			addEvent();
 		}
 		
+		/**
+		 *  控制对象 
+		 * @return 
+		 * 
+		 */		
+		public function get target():* {
+			return _target;
+		}
+		
+		/**@private */
 		private function _onOtherBegin(effect:*):void {
 			if (effect == this)
 				return;
 			this.stop();
 		}
 		
-		public function get target():* {
-			return _target;
-		}
-		private var _playEvents:String;
 		
+		/**
+		 * 设置开始播放的事件 
+		 * @param event
+		 * 
+		 */		
 		public function set playEvent(event:String):void {
 			_playEvents = event;
 			if (!event)
@@ -49,6 +74,7 @@ package laya.ui {
 			addEvent();
 		}
 		
+		/**@private */
 		private function addEvent():void {
 			if (!_target || !_playEvents)
 				return;
@@ -56,6 +82,7 @@ package laya.ui {
 			_target.on(_playEvents, this, _onPlayAction);
 		}
 		
+		/**@private */
 		private function _onPlayAction():void {
 			if (!_target)
 				return;
@@ -63,9 +90,8 @@ package laya.ui {
 			_recordInitData();
 			play(0, false);
 		}
-		private var _initData:Object = {};
-		private var _aniKeys:Array;
 		
+		/**@private */
 		private function _recordInitData():void {
 			if (!_aniKeys)
 				return;
@@ -77,8 +103,12 @@ package laya.ui {
 				_initData[key] = _target[key];
 			}
 		}
-		private var _effectClass:Class;
 		
+		/**
+		 * 设置提供数据的类 
+		 * @param classStr 类路径
+		 * 
+		 */		
 		public function set effectClass(classStr:String):void {
 			_effectClass = ClassUtils.getClass(classStr);
 			if (_effectClass) {
@@ -97,6 +127,7 @@ package laya.ui {
 			}
 		}
 		
+		/**@private */
 		override protected function _displayToIndex(value:int):void {
 			if (!_animationData)
 				return;
@@ -111,6 +142,7 @@ package laya.ui {
 			}
 		}
 		
+		/**@private */
 		override protected function _displayNodeToFrame(node:Object, frame:int, targetDic:Object = null):void {
 			if (!_target)
 				return;
@@ -163,6 +195,7 @@ package laya.ui {
 			}
 		}
 		
+		/**@private */
 		override protected function _calculateNodeKeyFrames(node:Object):void {
 			super._calculateNodeKeyFrames(node);
 			var keyFrames:Object = node.keyframes, key:String, tKeyFrames:Array, target:int = node.target;

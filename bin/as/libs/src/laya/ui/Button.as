@@ -1,4 +1,5 @@
 package laya.ui {
+	import laya.display.Node;
 	import laya.display.Text;
 	import laya.events.Event;
 	import laya.net.Loader;
@@ -266,11 +267,16 @@ package laya.ui {
 		
 		/**@inheritDoc */
 		override protected function initialize():void {
-			on(Event.MOUSE_OVER, this, onMouse);
-			on(Event.MOUSE_OUT, this, onMouse);
-			on(Event.MOUSE_DOWN, this, onMouse);
-			on(Event.MOUSE_UP, this, onMouse);
-			on(Event.CLICK, this, onMouse);
+			if (_mouseEnableState !== 1)
+			{
+				this.mouseEnabled = true;
+				_setBit(Node.MOUSEENABLE, true);	
+			}
+			_createListener(Event.MOUSE_OVER, this, onMouse,null,false,false);
+			_createListener(Event.MOUSE_OUT, this, onMouse,null,false,false);
+			_createListener(Event.MOUSE_DOWN, this, onMouse,null,false,false);
+			_createListener(Event.MOUSE_UP, this, onMouse,null,false,false);
+			_createListener(Event.CLICK, this, onMouse,null,false,false);
 		}
 		
 		/**
@@ -399,7 +405,7 @@ package laya.ui {
 			if (!_text && !value) return;
 			createText();
 			if (_text.text != value) {
-				value && !_text.displayedInStage && addChild(_text);
+				value && !_text.parent && addChild(_text);
 				_text.text = (value + "").replace(/\\n/g, "\n");
 				_setStateChanged();
 			}

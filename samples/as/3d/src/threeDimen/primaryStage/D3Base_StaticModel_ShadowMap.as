@@ -89,7 +89,7 @@ package threeDimen.primaryStage {
 			pssmLabel.fontSize = 25;
 			var pssmLabelText:String = "PSSM=";
 			if (directionLight.shadow) {
-				pssmLabelText += directionLight.shadowMapCount;
+				pssmLabelText += directionLight.shadowPSSMCount;
 			} else {
 				pssmLabelText = "PSSM 未初始化shadow";
 			}
@@ -97,12 +97,12 @@ package threeDimen.primaryStage {
 			Laya.stage.addChild(pssmLabel);
 			pssmLabel.on(Event.MOUSE_DOWN, this, function():void {
 				if (directionLight.shadow) {
-					var nCurrentPSSMNum:int = directionLight.shadowMapCount;
+					var nCurrentPSSMNum:int = directionLight.shadowPSSMCount;
 					nCurrentPSSMNum++;
 					if (nCurrentPSSMNum > 3) {
 						nCurrentPSSMNum = 1;
 					}
-					directionLight.shadowMapCount = nCurrentPSSMNum;
+					directionLight.shadowPSSMCount = nCurrentPSSMNum;
 					pssmLabel.text = "PSSM=" + nCurrentPSSMNum;
 				} else {
 					pssmLabel.text = "PCF 没有初始化阴影";
@@ -116,7 +116,7 @@ package threeDimen.primaryStage {
 			pcfLabel.bgColor = "#aaaaaa";
 			var pcfLabelText:String = "PCF=";
 			if (directionLight.shadow) {
-				pcfLabelText += directionLight.shadowMapPCFType;
+				pcfLabelText += directionLight.shadowPCFType;
 			} else {
 				pcfLabelText = "PCF 未初始化shadow";
 			}
@@ -124,12 +124,12 @@ package threeDimen.primaryStage {
 			Laya.stage.addChild(pcfLabel);
 			pcfLabel.on(Event.MOUSE_DOWN, this, function():void {
 				if (directionLight.shadow) {
-					var nCurrentPCFNum:int = directionLight.shadowMapPCFType;
+					var nCurrentPCFNum:int = directionLight.shadowPCFType;
 					nCurrentPCFNum++;
 					if (nCurrentPCFNum > 3) {
 						nCurrentPCFNum = 0;
 					}
-					directionLight.shadowMapPCFType = nCurrentPCFNum;
+					directionLight.shadowPCFType = nCurrentPCFNum;
 					pcfLabel.text = "PCF=" + nCurrentPCFNum;
 				} else {
 					pcfLabel.text = "PCF 没有初始化阴影";
@@ -143,7 +143,7 @@ package threeDimen.primaryStage {
 			shadowSizeLabel.bgColor = "#aaaaaa";
 			var shadowSizeLabelText:String = "SMTSize=";
 			if (directionLight.shadow) {
-				shadowSizeLabelText += directionLight.shadowMapSize;
+				shadowSizeLabelText += directionLight.shadowResolution;
 			} else {
 				shadowSizeLabelText = "SMTSize 未初始化阴影";
 			}
@@ -151,7 +151,7 @@ package threeDimen.primaryStage {
 			Laya.stage.addChild(shadowSizeLabel);
 			shadowSizeLabel.on(Event.MOUSE_DOWN, this, function():void {
 				if (directionLight.shadow) {
-					var textureSize:int = directionLight.shadowMapSize;
+					var textureSize:int = directionLight.shadowResolution;
 					if (textureSize == 512) {
 						textureSize = 1024;
 					} else if (textureSize == 1024) {
@@ -159,7 +159,7 @@ package threeDimen.primaryStage {
 					} else {
 						textureSize = 512;
 					}
-					directionLight.shadowMapSize = textureSize;
+					directionLight.shadowResolution = textureSize;
 					shadowSizeLabel.text = "SMTSize=" + textureSize;
 				} else {
 					shadowSizeLabel.text = "SMTSize 未初始化阴影";
@@ -197,7 +197,7 @@ package threeDimen.primaryStage {
 			distanceLabelShow.fontSize = 25;
 			distanceLabelShow.bgColor = "#aaaaaa";
 			if (directionLight.shadow) {
-				distanceLabelShow.text = "距离=" + directionLight.shadowFarPlane;
+				distanceLabelShow.text = "距离=" + directionLight.shadowDistance;
 			}
 			Laya.stage.addChild(distanceLabelShow);
 			
@@ -210,9 +210,9 @@ package threeDimen.primaryStage {
 			Laya.stage.addChild(distanceLabel);
 			distanceLabel.on(Event.MOUSE_DOWN, this, function():void {
 				if (directionLight.shadow) {
-					var nCurrentDistance:Number = directionLight.shadowFarPlane;
+					var nCurrentDistance:Number = directionLight.shadowDistance;
 					nCurrentDistance--;
-					directionLight.shadowFarPlane = nCurrentDistance;
+					directionLight.shadowDistance = nCurrentDistance;
 					distanceLabelShow.text = "距离=" + nCurrentDistance;
 				}
 			});
@@ -225,9 +225,9 @@ package threeDimen.primaryStage {
 			Laya.stage.addChild(distanceLabel1);
 			distanceLabel1.on(Event.MOUSE_DOWN, this, function():void {
 				if (directionLight.shadow) {
-					var nCurrentDistance:Number = directionLight.shadowFarPlane;
+					var nCurrentDistance:Number = directionLight.shadowDistance;
 					nCurrentDistance++;
-					directionLight.shadowFarPlane = nCurrentDistance;
+					directionLight.shadowDistance = nCurrentDistance;
 					distanceLabelShow.text = "距离=" + nCurrentDistance;
 				}
 			});

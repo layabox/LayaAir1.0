@@ -5814,11 +5814,11 @@ declare module laya.d3.core {
          */
         id: number;
         /**
-         * 获取是否启用,注意:兼容性接口。
+         * 获取是否启用,注意:兼容性接口,未来会移除，请使用active代替。
          *   @return	是否激活。
          */
         /**
-         * 设置是否启用,注意:兼容性接口。
+         * 设置是否启用,注意:兼容性接口,未来会移除，请使用active代替。
          * @param	value 是否启动。
          */
         enable: boolean;
@@ -12780,6 +12780,7 @@ declare module laya.display {
         renderingEnabled: boolean;
         _canvasTransform: laya.maths.Matrix;
         _scenes: Array<any>;
+        _wgColor: Array<any>;
         /**场景类，请用Laya.stage单例访问。*/
         constructor();
         width: number;
@@ -22842,6 +22843,7 @@ declare module laya.utils {
      * <code>Pool</code> 是对象池类，用于对象的存贮、重复使用。
      */
     class Pool {
+        private static _poolDic;
         /**
          * 根据对象类型标识字符，获取对象池。
          * @param sign 对象类型标识字符。
@@ -23988,8 +23990,8 @@ declare module laya.webgl.resource {
          * @param height
          * @param mimMap
          * @param surfaceFormat RGB ,R,RGBA......
-         * @param surfaceType    0  数据类型
-         * @param depthFormat 0 数据类型等
+         * @param surfaceType    WebGLContext.UNSIGNED_BYTE  数据类型
+         * @param depthFormat WebGLContext.DEPTH_COMPONENT16 数据类型等
          * **/
         constructor(width: number, height: number, surfaceFormat?: number, surfaceType?: number, depthStencilFormat?: number, mipMap?: boolean, repeat?: boolean, minFifter?: number, magFifter?: number);
         getType(): number;
@@ -24740,7 +24742,6 @@ declare module laya.webgl.submit {
         releaseRender(): void;
         addTexture(tex: laya.resource.Texture, vbpos: number): void;
         checkTexture(): void;
-        private static _shaderSet;
         renderSubmit(): number;
         static create(context: laya.webgl.canvas.WebGLContext2D, ib: laya.webgl.utils.IndexBuffer2D, vb: laya.webgl.utils.VertexBuffer2D, pos: number, sv: laya.webgl.shader.d2.value.Value2D): SubmitTexture;
     }
@@ -26468,16 +26469,18 @@ declare class Laya {
 }
 /**全局配置*/
 declare class UIConfig {
-    /**是否开启触摸滚动（针对滚动条）*/
-    static touchScrollEnable: boolean;
-    /**是否开启滑轮滚动（针对滚动条）*/
-    static mouseWheelEnable: boolean;
-    /**是否显示滚动条按钮*/
-    static showButtons: boolean;
-    /**弹出框背景颜色*/
-    static popupBgColor: string;
-    /**弹出框背景透明度*/
-    static popupBgAlpha: number;
+  /**是否开启触摸滚动（针对滚动条）*/
+		public static   touchScrollEnable:boolean;
+		/**是否开启滑轮滚动（针对滚动条）*/
+		public static   mouseWheelEnable:boolean ;
+		/**是否显示滚动条按钮*/
+		public static   showButtons:boolean;
+		/**弹出框背景颜色*/
+		public static   popupBgColor:string;
+		/**弹出框背景透明度*/
+		public static   popupBgAlpha:number;
+		/**模式窗口点击边缘，是否关闭窗口，默认是关闭的*/
+		public static   closeDialogOnSide:boolean;
 }
 /**
  *  Config 用于配置一些全局参数。
@@ -26532,3 +26535,4 @@ declare module laya.debug {
         static init(cacheAnalyseEnable?: boolean, loaderAnalyseEnable?: boolean, createAnalyseEnable?: boolean, renderAnalyseEnable?: boolean): void;
     }
 }
+

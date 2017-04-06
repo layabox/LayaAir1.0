@@ -19,7 +19,7 @@ varying vec2 v_Texcoord0;
 #ifdef AMBIENTMAP
 attribute vec2 a_Texcoord1;
 uniform vec4 u_LightmapScaleOffset;
-varying vec2 v_Texcoord1;
+varying vec2 v_LightMapUV;
 #endif
 
 #ifdef COLOR
@@ -49,8 +49,8 @@ uniform mat4 u_WorldMat;
 varying vec3 v_PositionWorld;
 #endif
 
-#ifdef RECEIVESHADOW
 varying float v_posViewZ;
+#ifdef RECEIVESHADOW
   #ifdef SHADOWMAP_PSSM1 
   varying vec4 v_lightMVPPos;
   uniform mat4 u_lightShadowVP[4];
@@ -83,6 +83,7 @@ void main_castShadow()
 #if defined(DIFFUSEMAP)&&defined(ALPHATEST)
 	v_Texcoord0=a_Texcoord0;
 #endif
+	v_posViewZ = gl_Position.z;
 }
 
 void main_normal()
@@ -141,9 +142,17 @@ void main_normal()
 
 #ifdef AMBIENTMAP
 	#ifdef SCALEOFFSETLIGHTINGMAPUV
-		v_Texcoord1=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,1.0+a_Texcoord1.y*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
+		#ifdef UV1
+			v_LightMapUV=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,1.0+a_Texcoord1.y*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
+		#else
+			v_LightMapUV=vec2(a_Texcoord0.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,(a_Texcoord0.y-1.0)*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
+		#endif 
 	#else
-		v_Texcoord1=a_Texcoord1;
+		#ifdef UV1
+			v_LightMapUV=a_Texcoord1;
+		#else
+			v_LightMapUV=a_Texcoord0;
+		#endif 
 	#endif 
 #endif
 

@@ -4,7 +4,6 @@ package laya.d3.terrain {
 	import laya.d3.core.material.TerrainMaterial;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.Transform3D;
-	import laya.d3.graphics.RenderObject;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
@@ -22,8 +21,6 @@ package laya.d3.terrain {
 	 * <code>MeshRender</code> 类用于网格渲染器。
 	 */
 	public class TerrainRender extends BaseRender {
-		/** @private */
-		private static var _tempBoudingBoxCorners:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		
 		/** @private */
 		private var _terrainSprite3DOwner:TerrainChunk;
@@ -34,7 +31,6 @@ package laya.d3.terrain {
 		public function TerrainRender(owner:TerrainChunk) {
 			super(owner);
 			_terrainSprite3DOwner = owner;
-			sharedMaterial = new TerrainMaterial();
 		}
 		
 		override protected function _calculateBoundingSphere():void {
@@ -52,12 +48,13 @@ package laya.d3.terrain {
 					maxScale = scale.y >= scale.z ? scale.y : scale.z;
 				Vector3.transformCoordinate(meshBoundingSphere.center, transform.worldMatrix, _boundingSphere.center);
 				_boundingSphere.radius = meshBoundingSphere.radius * maxScale;
+				terrainFilter.calcLeafBoudingSphere(transform.worldMatrix, maxScale);
 			}
 		}
 		
 		override protected function _calculateBoundingBox():void {
 			var terrainFilter:TerrainFilter = _terrainSprite3DOwner.terrainFilter;
-			if ( terrainFilter ) {
+			if ( terrainFilter == null ) {
 				_boundingBox.toDefault();
 			} else {
 				var worldMat:Matrix4x4 = _terrainSprite3DOwner.transform.worldMatrix;
@@ -65,6 +62,7 @@ package laya.d3.terrain {
 				for (var i:int = 0; i < 8; i++)
 					Vector3.transformCoordinate(corners[i], worldMat, _tempBoudingBoxCorners[i]);
 				BoundBox.createfromPoints(_tempBoudingBoxCorners, _boundingBox);
+				terrainFilter.calcLeafBoudingBox(worldMat);
 			}
 		}
 		

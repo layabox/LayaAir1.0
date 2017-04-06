@@ -122,7 +122,6 @@ package laya.d3.utils {
 			if (closestIntersection !== Number.MAX_VALUE) {//TODO:是否能检测到
 				outHitInfo.distance = closestIntersection;
 				
-				Vector3.normalize(ray.direction, ray.direction);
 				Vector3.scale(ray.direction, closestIntersection, outHitInfo.position);
 				Vector3.add(ray.origin, outHitInfo.position, outHitInfo.position);
 				
