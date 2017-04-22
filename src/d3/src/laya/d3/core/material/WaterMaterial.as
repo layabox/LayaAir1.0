@@ -25,10 +25,20 @@ package laya.d3.core.material {
 		public static const UVAGE:int = 7;
 		public static const CURTM:int = 8;
 		public static const DETAILTEXTURE:int = 9;
+		public static const DEEPCOLORTEXTURE:int = 10;
 		public static const SKYTEXTURE:int = 11;
 		public static const WAVEINFO:int = 12;
-		public static const WAVEMAINDIR:int = 13;
+		public static const WAVEINFOD:int = 13;
+		public static const WAVEMAINDIR:int = 14;
+		public static const SCRSIZE:int = 15;
+		public static const WATERINFO:int = 16;
+		public static const FOAMTEXTURE:int = 17;
+		public static const GEOWAVE_UV_SCALE:int = 18;
+		public static const SEA_COLOR:int = 19;
 		
+		public static var SHADERDEFINE_SHOW_NORMAL:int = 0;
+		public static var SHADERDEFINE_CUBE_ENV:int = 0;
+		public static var SHADERDEFINE_HDR_ENV:int = 0;
 		/**渲染状态_不透明。*/
 		public static const RENDERMODE_OPAQUE:int = 1;
 		/**渲染状态_不透明_双面。*/
@@ -104,6 +114,22 @@ package laya.d3.core.material {
 			_setTexture(SKYTEXTURE, v);
 		}
 		
+		public function get waterInfoTexture():BaseTexture {
+			return _getTexture(WATERINFO);
+		}
+		
+		public function set waterInfoTexture(v:BaseTexture):void {
+			_setTexture(WATERINFO, v);
+		}
+		
+		public function get foamTexture():BaseTexture {
+			return _getTexture(FOAMTEXTURE);
+		}
+		
+		public function set foamTexture(v:BaseTexture):void {
+			_setTexture(FOAMTEXTURE,v);
+		}
+		
 		/**
 		 * 对定点进行变换的纹理。现在不用
 		 */
@@ -123,6 +149,14 @@ package laya.d3.core.material {
 			return _getTexture(DETAILTEXTURE);
 		}
 		
+		public function get deepColorTexture():BaseTexture {
+			return _getTexture(DEEPCOLORTEXTURE);
+		}
+		
+		public function set deepColorTexture(v:BaseTexture):void {
+			_setTexture(DEEPCOLORTEXTURE, v);
+		}
+		
 		public function get currentTm():Number {
 			return _getNumber(CURTM);
 		}
@@ -137,6 +171,41 @@ package laya.d3.core.material {
 		
 		public function  set waveInfo(v:Float32Array):void{
 			_setBuffer(WAVEINFO, v);
+		}
+		public function get waveInfoD():Float32Array{
+			return _getBuffer(WAVEINFOD);
+		}
+		
+		public function  set waveInfoD(v:Float32Array):void{
+			_setBuffer(WAVEINFOD, v);
+		}
+		
+		public function set waveMainDir(deg:Number):void{
+			_setNumber(WAVEMAINDIR,deg*Math.PI/180);
+		}
+		
+		public function get waveMainDir():Number {
+			return _getNumber(WAVEMAINDIR);	
+		}
+		
+		public function get geoWaveUVScale():Number {
+			return _getNumber(GEOWAVE_UV_SCALE);
+		}
+		
+		public function  set geoWaveUVScale(v:Number):void {
+			_setNumber(GEOWAVE_UV_SCALE,v);
+		}
+		
+		public function set scrsize(v:Float32Array):void {
+			_setBuffer(SCRSIZE, v);
+		}
+		
+		public function get seaColor():Float32Array{
+			return _getBuffer(SEA_COLOR);
+		}
+		
+		public function set seaColor(v:Float32Array):void {
+			_setBuffer(SEA_COLOR, v);
 		}
 		
 		public function WaterMaterial() {

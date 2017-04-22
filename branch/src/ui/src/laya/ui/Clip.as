@@ -179,18 +179,12 @@ package laya.ui {
 			graphics = _bitmap = new AutoBitmap();
 		}
 		
-		/**@inheritDoc */
-		override protected function initialize():void {
-			on(Event.DISPLAY, this, _onDisplay);
-			on(Event.UNDISPLAY, this, _onDisplay);
-		}
-		
 		/**@private	 */
 		protected function _onDisplay(e:Event = null):void {
 			if (_isPlaying) {
 				if (_displayedInStage) play();
 				else stop();
-			} else if (_autoPlay && _displayedInStage) {
+			} else if (_autoPlay) {
 				play();
 			}
 		}
@@ -436,6 +430,9 @@ package laya.ui {
 			this.index = 0;
 			this._index++;
 			Laya.timer.loop(this.interval, this, _loop);
+			
+			on(Event.DISPLAY, this, _onDisplay);
+			on(Event.UNDISPLAY, this, _onDisplay);
 		}
 		
 		/**

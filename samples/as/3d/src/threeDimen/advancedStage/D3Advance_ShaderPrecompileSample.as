@@ -24,9 +24,9 @@ package threeDimen.advancedStage {
 			var sc:ShaderCompile3D = ShaderCompile3D.get("SIMPLE");
 			//部分低端移动设备不支持高精度shader,所以如果在PC端或高端移动设备输出的宏定义值需做判断移除高精度宏定义
 			if (WebGL.frameShaderHighPrecision)
-				sc.precompileShaderWithShaderDefine(2889);
+				sc.precompileShaderWithShaderDefine(73,4,20);
 			else
-				sc.precompileShaderWithShaderDefine(2889 - ShaderCompile3D.SHADERDEFINE_FSHIGHPRECISION);
+				sc.precompileShaderWithShaderDefine(73 - ShaderCompile3D.SHADERDEFINE_FSHIGHPRECISION,4,20);
 			
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;

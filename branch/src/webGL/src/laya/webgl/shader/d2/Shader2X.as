@@ -27,7 +27,7 @@ package laya.webgl.shader.d2 {
 				var params:Array = _params, one:*;
 				for (var i:int = 0, n:int = params.length; i < n; i++) {
 					one = params[i];
-					if (!Render.isFlash && (one.name === "size" || one.name === "mmat" || one.name === "position" || one.name === "texcoord")) continue;
+					if (!Render.isFlash && (one.name === "size" || /*one.name === "mmat" ||*/ one.name === "position" || one.name === "texcoord")) continue;
 					_params2dQuick1.push(one);
 				}
 			}

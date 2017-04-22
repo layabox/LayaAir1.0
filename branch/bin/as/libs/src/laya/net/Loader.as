@@ -5,7 +5,6 @@ package laya.net {
 	import laya.events.EventDispatcher;
 	import laya.media.Sound;
 	import laya.media.SoundManager;
-	import laya.renders.Render;
 	import laya.resource.HTMLImage;
 	import laya.resource.Texture;
 	import laya.utils.Browser;
@@ -89,7 +88,6 @@ package laya.net {
 		 */
 		public function load(url:String, type:String = null, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):void {
 			if (url.indexOf("data:image") === 0) type = IMAGE;
-			url = URL.formatURL(url);
 			this._url = url;
 			this._type = type || (type = getTypeFromUrl(url));
 			this._cache = cache;
@@ -129,7 +127,7 @@ package laya.net {
 			default: 
 				contentType = type;
 			}
-			_http.send(url, null, "get", contentType);
+			_http.send(URL.formatURL(url), null, "get", contentType);
 		}
 		
 		/**
@@ -140,7 +138,7 @@ package laya.net {
 		protected function getTypeFromUrl(url:String):String {
 			var type:String = Utils.getFileExtension(url);
 			if (type) return typeMap[type];
-			trace("Not recognize the resources suffix", url);
+			console.warn("Not recognize the resources suffix", url);
 			return "text";
 		}
 		
@@ -171,7 +169,7 @@ package laya.net {
 				image.crossOrigin = "";
 				image.onload = onload;
 				image.onerror = onerror;
-				image.src = url;
+				image.src = URL.formatURL(url);
 			} else {
 				new HTMLImage.create(url, {onload: onload, onerror: onerror, onCreate: function(img:*):void {
 					image = img;
@@ -241,11 +239,11 @@ package laya.net {
 							var split:String = _url.indexOf("/") >= 0 ? "/" : "\\";
 							var idx:int = _url.lastIndexOf(split);
 							var folderPath:String = idx >= 0 ? _url.substr(0, idx + 1) : "";
-							idx = _url.indexOf("?");
-							var ver:String;
-							ver = idx >= 0 ? _url.substr(idx) : "";
+							//idx = _url.indexOf("?");
+							//var ver:String;
+							//ver = idx >= 0 ? _url.substr(idx) : "";
 							for (var i:int = 0, len:int = toloadPics.length; i < len; i++) {
-								toloadPics[i] = folderPath + toloadPics[i] + ver;
+								toloadPics[i] = folderPath + toloadPics[i];
 							}
 						} else {
 							//不带图片信息
@@ -258,49 +256,32 @@ package laya.net {
 						data.pics = [];
 					}
 					event(Event.PROGRESS, 0.3 + 1 / toloadPics.length * 0.6);
-					return _loadImage(URL.formatURL(toloadPics.pop()));
+					return _loadImage(toloadPics.pop());
 				} else {
 					_data.pics.push(data);
 					if (_data.toLoads.length > 0) {
 						event(Event.PROGRESS, 0.3 + 1 / _data.toLoads.length * 0.6);
 						//有图片未加载
-						return _loadImage(URL.formatURL(_data.toLoads.pop()));
+						return _loadImage(_data.toLoads.pop());
 					}
 					var frames:Object = this._data.frames;
 					var cleanUrl:String = this._url.split("?")[0];
-					var directory:String = (this._data.meta && this._data.meta.prefix) ? URL.basePath + this._data.meta.prefix : cleanUrl.substring(0, cleanUrl.lastIndexOf(".")) + "/";
+					var directory:String = (this._data.meta && this._data.meta.prefix) ? this._data.meta.prefix : cleanUrl.substring(0, cleanUrl.lastIndexOf(".")) + "/";
 					var pics:Array = _data.pics;
 					var map:Array = atlasMap[this._url] || (atlasMap[this._url] = []);
 					map.dir = directory;
-					//var needSub:Boolean = Config.atlasEnable && Render.isWebGL;
 					for (var name:String in frames) {
 						var obj:Object = frames[name];//取对应的图
 						var tPic:Object = pics[obj.frame.idx ? obj.frame.idx : 0];//是否释放
 						var url:String = directory + name;
 						
-						//if (needSub) {
-						//var merageInAtlas:Boolean = false;
-						//var webGLSubImage:HTMLSubImage = HTMLSubImage.create(Browser.canvas.source, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, tPic.image, tPic.image.src);
-						//var subTex:Texture = new Texture(webGLSubImage);
-						//subTex.offsetX = obj.spriteSourceSize.x;
-						//subTex.offsetY = obj.spriteSourceSize.y;
-						//cacheRes(url, subTex);
-						////loadedMap[url] = tex;
-						//map.push(url);
-						//} else {
 						cacheRes(url, Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h));
-						//loadedMap[url] = Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h);
 						loadedMap[url].url = url;
 						map.push(url);
-							//}
 					}
 					
 					/*[IF-FLASH]*/
 					map.sort();
-					
-					//if (needSub)
-						//for (i = 0; i < pics.length; i++)
-							//pics[i].dispose();//Sub后可直接释放
 					complete(this._data);
 				}
 			} else if (type == FONT) {
@@ -308,7 +289,7 @@ package laya.net {
 				if (!data.src) {
 					_data = data;
 					event(Event.PROGRESS, 0.5);
-					return _loadImage(URL.formatURL(_url.replace(".fnt", ".png")));
+					return _loadImage(_url.replace(".fnt", ".png"));
 				} else {
 					var bFont:BitmapFont;
 					bFont = new BitmapFont();
@@ -344,7 +325,7 @@ package laya.net {
 				_loaders[_startIndex].endLoad();
 				_startIndex++;
 				if (Browser.now() - startTimer > maxTimeOut) {
-					trace("loader callback cost a long time:" + (Browser.now() - startTimer) + " url=" + _loaders[_startIndex - 1].url);
+					console.warn("loader callback cost a long time:" + (Browser.now() - startTimer) + " url=" + _loaders[_startIndex - 1].url);
 					Laya.timer.frameOnce(1, null, checkNext);
 					return;
 				}
@@ -394,7 +375,6 @@ package laya.net {
 		 * @param	forceDispose 是否强制销毁，有些资源是采用引用计数方式销毁，如果forceDispose=true，则忽略引用计数，直接销毁，比如Texture，默认为false
 		 */
 		public static function clearRes(url:String, forceDispose:Boolean = false):void {
-			url = URL.formatURL(url);
 			//删除图集
 			var arr:Array = atlasMap[url];
 			if (arr) {
@@ -422,7 +402,7 @@ package laya.net {
 		 * @return	返回资源。
 		 */
 		public static function getRes(url:String):* {
-			return loadedMap[URL.formatURL(url)];
+			return loadedMap[url];
 		}
 		
 		/**
@@ -431,7 +411,7 @@ package laya.net {
 		 * @return	返回地址集合。
 		 */
 		public static function getAtlas(url:String):Array {
-			return atlasMap[URL.formatURL(url)];
+			return atlasMap[url];
 		}
 		
 		/**
@@ -440,9 +420,8 @@ package laya.net {
 		 * @param	data 要缓存的内容。
 		 */
 		public static function cacheRes(url:String, data:*):void {
-			url = URL.formatURL(url);
 			if (loadedMap[url] != null) {
-				trace("Resources already exist,is repeated loading:", url);
+				console.warn("Resources already exist,is repeated loading:", url);
 			} else {
 				loadedMap[url] = data;
 			}

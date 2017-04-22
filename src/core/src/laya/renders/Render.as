@@ -77,7 +77,7 @@ package laya.renders {
 		
 		/**@private */
 		private function _onVisibilitychange():void {
-			if (Laya.stage.isVisibility) {
+			if (!Laya.stage.isVisibility) {
 				_timeId = Browser.window.setInterval(this._enterFrame, 1000);
 			} else if (_timeId != 0) {
 				Browser.window.clearInterval(_timeId);

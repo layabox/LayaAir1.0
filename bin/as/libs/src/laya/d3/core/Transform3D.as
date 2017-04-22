@@ -1,4 +1,5 @@
 package laya.d3.core {
+	import laya.d3.math.MathUtils3D;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
@@ -133,14 +134,14 @@ package laya.d3.core {
 		 * 设置世界矩阵。
 		 * @param	value 世界矩阵。
 		 */
-		public function set worldMatrix(value:Matrix4x4):void {
-			if (_parent === null)
-				localMatrix = value;
-			else {
+		public function set worldMatrix(value:Matrix4x4):void {//TODO:待研究是否可直接保存world矩阵，无需重复更新。
+			if (_parent === null) {
+				value.cloneTo(_localMatrix);
+			} else {
 				_parent.worldMatrix.invert(_localMatrix);
 				Matrix4x4.multiply(_localMatrix, value, _localMatrix);
-				localMatrix = _localMatrix;
 			}
+			localMatrix = _localMatrix;
 		}
 		
 		/**
@@ -354,7 +355,7 @@ package laya.d3.core {
 		 */
 		public function set parent(value:Transform3D):void {
 			_parent = value;
-			_onWorldTransform();
+			(value) && (_onWorldTransform());
 		}
 		
 		/**
@@ -392,18 +393,6 @@ package laya.d3.core {
 		 */
 		protected function _onLocalTransform():void {
 			_localUpdate = true;
-		}
-		
-		/**
-		 * @private
-		 */
-		protected function _onWorldTransform():void {
-			if (!_worldUpdate || !_positionUpdate || !_rotationUpdate || !_scaleUpdate) {
-				_worldUpdate = _positionUpdate = _rotationUpdate = _scaleUpdate = true;
-				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
-					(_owner._childs[i] as Sprite3D).transform._onWorldTransform();
-			}
 		}
 		
 		/**
@@ -467,6 +456,18 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * @private
+		 */
+		public function _onWorldTransform():void {
+			if (!_worldUpdate || !_positionUpdate || !_rotationUpdate || !_scaleUpdate) {
+				_worldUpdate = _positionUpdate = _rotationUpdate = _scaleUpdate = true;
+				event(Event.WORLDMATRIX_NEEDCHANGE);
+				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
+					(_owner._childs[i] as Sprite3D).transform._onWorldTransform();
+			}
+		}
+		
+		/**
 		 * 平移变换。
 		 * @param 	translation 移动距离。
 		 * @param 	isLocal 是否局部空间。
@@ -509,21 +510,31 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 从一个位置观察目标位置。
-		 * @param	Vector3 观察位置。
-		 * @param	Vector3 观察目标。
-		 * @param	Vector3 向上向量。
+		 * 观察目标位置。
+		 * @param	target 观察目标。
+		 * @param	up 向上向量。
 		 * @param	isLocal 是否局部空间。
 		 */
-		public function lookAt(position:Vector3, target:Vector3, upVector:Vector3, isLocal:Boolean = true):void {
+		public function lookAt(target:Vector3, up:Vector3, isLocal:Boolean = false):void {
+			var targetE:Float32Array = target.elements;
+			var eyeE:Float32Array;
 			if (isLocal) {
-				Matrix4x4.createLookAt(position, target, upVector, _localMatrix);
-				_localMatrix.invert(_localMatrix);
-				localMatrix = _localMatrix;
+				eyeE = _localPosition.elements;
+				if (Math.abs(eyeE[0] - targetE[0]) < MathUtils3D.zeroTolerance && Math.abs(eyeE[1] - targetE[1]) < MathUtils3D.zeroTolerance && Math.abs(eyeE[2] - targetE[2]) < MathUtils3D.zeroTolerance)
+					return;
+				
+				Quaternion.lookAt(_localPosition, target, up, _localRotation);
+				_localRotation.invert(_localRotation);
+				localRotation = _localRotation;
 			} else {
-				Matrix4x4.createLookAt(position, target, upVector, _worldMatrix);
-				_worldMatrix.invert(_worldMatrix);
-				worldMatrix = _worldMatrix;
+				var worldPosition:Vector3 = position;
+				eyeE = worldPosition.elements;
+				if (Math.abs(eyeE[0] - targetE[0]) < MathUtils3D.zeroTolerance && Math.abs(eyeE[1] - targetE[1]) < MathUtils3D.zeroTolerance && Math.abs(eyeE[2] - targetE[2]) < MathUtils3D.zeroTolerance)
+					return;
+				
+				Quaternion.lookAt(worldPosition, target, up, _rotation);
+				_rotation.invert(_rotation);
+				rotation = _rotation;
 			}
 		}
 	

@@ -271,72 +271,27 @@ package laya.d3.math {
 		 * @param	up 向上向量
 		 * @param	out 输出矩阵
 		 */
-		public static function createLookAt(eye:Vector3, center:Vector3, up:Vector3, out:Matrix4x4):void {
+		public static function createLookAt(eye:Vector3, target:Vector3, up:Vector3, out:Matrix4x4):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var ee:Float32Array = eye.elements;
-			var ce:Float32Array = center.elements;
-			var ue:Float32Array = up.elements;
-			var oe:Float32Array = out.elements;
-			
-			var x0:Number, x1:Number, x2:Number, y0:Number, y1:Number, y2:Number, z0:Number, z1:Number, z2:Number, len:Number, eyex:Number = ee[0], eyey:Number = ee[1], eyez:Number = ee[2], upx:Number = ue[0], upy:Number = ue[1], upz:Number = ue[2], centerx:Number = ce[0], centery:Number = ce[1], centerz:Number = ce[2];
-			
-			if (Math.abs(eyex - centerx) < MathUtils3D.zeroTolerance && Math.abs(eyey - centery) < MathUtils3D.zeroTolerance && Math.abs(eyez - centerz) < MathUtils3D.zeroTolerance) {
-				out.identity();
-				return;
-			}
-			
-			z0 = eyex - centerx;
-			z1 = eyey - centery;
-			z2 = eyez - centerz;
-			
-			len = 1 / Math.sqrt(z0 * z0 + z1 * z1 + z2 * z2);
-			z0 *= len;
-			z1 *= len;
-			z2 *= len;
-			
-			x0 = upy * z2 - upz * z1;
-			x1 = upz * z0 - upx * z2;
-			x2 = upx * z1 - upy * z0;
-			len = Math.sqrt(x0 * x0 + x1 * x1 + x2 * x2);
-			if (!len) {
-				x0 = x1 = x2 = 0;
-			} else {
-				len = 1 / len;
-				x0 *= len;
-				x1 *= len;
-				x2 *= len;
-			}
-			
-			y0 = z1 * x2 - z2 * x1;
-			y1 = z2 * x0 - z0 * x2;
-			y2 = z0 * x1 - z1 * x0;
-			
-			len = Math.sqrt(y0 * y0 + y1 * y1 + y2 * y2);
-			if (!len) {
-				y0 = y1 = y2 = 0;
-			} else {
-				len = 1 / len;
-				y0 *= len;
-				y1 *= len;
-				y2 *= len;
-			}
-			
-			oe[0] = x0;
-			oe[1] = y0;
-			oe[2] = z0;
-			oe[3] = 0;
-			oe[4] = x1;
-			oe[5] = y1;
-			oe[6] = z1;
-			oe[7] = 0;
-			oe[8] = x2;
-			oe[9] = y2;
-			oe[10] = z2;
-			oe[11] = 0;
-			oe[12] = -(x0 * eyex + x1 * eyey + x2 * eyez);
-			oe[13] = -(y0 * eyex + y1 * eyey + y2 * eyez);
-			oe[14] = -(z0 * eyex + z1 * eyey + z2 * eyez);
-			oe[15] = 1;
+			//注:WebGL为右手坐标系统
+			var oE:Float32Array = out.elements;
+			var xaxis:Vector3 = _tempVector0; 
+			var yaxis:Vector3= _tempVector1;
+			var zaxis:Vector3= _tempVector2;
+            Vector3.subtract(eye,target, zaxis);
+			Vector3.normalize(zaxis,zaxis);
+            Vector3.cross( up,zaxis,  xaxis); 
+			Vector3.normalize(xaxis,xaxis);
+            Vector3.cross( zaxis,xaxis,  yaxis);
+
+            out.identity();
+            oE[0] = xaxis.x; oE[4] = xaxis.y; oE[8] = xaxis.z;
+            oE[1] = yaxis.x; oE[5] = yaxis.y; oE[9] = yaxis.z;
+            oE[2] = zaxis.x; oE[6] = zaxis.y; oE[10] = zaxis.z;
+
+            oE[12]=-Vector3.dot( xaxis,  eye);
+            oE[13]=-Vector3.dot( yaxis,  eye);
+            oE[14]=-Vector3.dot( zaxis,  eye);
 		}
 		
 		/**

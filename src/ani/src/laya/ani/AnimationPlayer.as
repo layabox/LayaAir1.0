@@ -268,6 +268,9 @@ package laya.ani {
 			return _destroyed;
 		}
 		
+		/**
+		 * 创建一个 <code>AnimationPlayer</code> 实例。
+		 */
 		public function AnimationPlayer() {
 			_destroyed = false;
 			_currentAnimationClipIndex = -1;
@@ -331,13 +334,13 @@ package laya.ani {
 				anifullFrames.push(aniFullFrame);
 			}
 		}
+		
 		/**
 		 * @private
 		 */
 		private function _onAnimationTempletLoaded():void {
 			(destroyed) || (_calculatePlayDuration());
 		}
-		
 		
 		/**
 		 * @private
@@ -351,6 +354,75 @@ package laya.ani {
 					_playEnd = oriDuration;
 				
 				_playDuration = _playEnd - _playStart;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _setPlayParams(time:Number, cacheFrameInterval:Number):void {
+			_currentTime = time;
+			_currentKeyframeIndex = Math.floor((currentPlayTime) / cacheFrameInterval + 0.01);
+			_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _setPlayParamsWhenStop(currentAniClipPlayDuration:Number, cacheFrameInterval:Number):void {
+			_currentTime = currentAniClipPlayDuration;
+			_currentKeyframeIndex = Math.floor(currentAniClipPlayDuration / cacheFrameInterval + 0.01);
+			_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
+			_currentAnimationClipIndex = -1;//动画结束	
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _update(elapsedTime:Number):void {
+			if (_currentAnimationClipIndex === -1 || _paused || !_templet || !_templet.loaded)//动画停止或暂停，不更新
+				return;
+			
+			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
+			var time:Number = 0;
+			(_startUpdateLoopCount !== Stat.loopCount) && (time = elapsedTime * playbackRate, _elapsedPlaybackTime += time);//elapsedTime为距离上一帧时间,首帧播放如果_startPlayLoopCount===Stat.loopCount，则不累加时间
+			
+			var currentAniClipPlayDuration:Number = playDuration;
+			if ((_overallDuration !== 0 && _elapsedPlaybackTime >= _overallDuration) || (_overallDuration === 0 && _elapsedPlaybackTime >= currentAniClipPlayDuration)) {
+				_setPlayParamsWhenStop(currentAniClipPlayDuration, cacheFrameInterval);
+				this.event(Event.STOPPED);
+				return;
+			}
+			time += _currentTime;
+			if (currentAniClipPlayDuration > 0) {
+				if (time >= currentAniClipPlayDuration) {
+					do {//TODO:用求余改良
+						time -= currentAniClipPlayDuration;
+						if (_stopWhenCircleFinish) {
+							_setPlayParamsWhenStop(currentAniClipPlayDuration, cacheFrameInterval);
+							_stopWhenCircleFinish = false;
+							this.event(Event.STOPPED);
+							return;
+						}
+						
+						if (time < currentAniClipPlayDuration) {
+							_setPlayParams(time, cacheFrameInterval);
+							this.event(Event.COMPLETE);
+						}
+						
+					} while (time >= currentAniClipPlayDuration)
+				} else {
+					_setPlayParams(time, cacheFrameInterval);
+				}
+			} else {
+				if (_stopWhenCircleFinish) {
+					_setPlayParamsWhenStop(currentAniClipPlayDuration, cacheFrameInterval);
+					_stopWhenCircleFinish = false;
+					this.event(Event.STOPPED);
+					return;
+				}
+				_currentTime = _currentFrameTime = _currentKeyframeIndex = 0;
+				this.event(Event.COMPLETE);
 			}
 		}
 		
@@ -400,7 +472,7 @@ package laya.ani {
 			else
 				_templet.once(Event.LOADED, this, _onAnimationTempletLoaded);
 			
-			update(0);//如果分段播放,可修正帧率
+			_update(0);//如果分段播放,可修正帧率
 		}
 		
 		/**
@@ -422,58 +494,11 @@ package laya.ani {
 		 */
 		public function stop(immediate:Boolean = true):void {
 			if (immediate) {
-				_currentAnimationClipIndex /*= _currentKeyframeIndex*/ = -1;
+				_currentTime = _currentFrameTime = _currentKeyframeIndex = 0;
+				_currentAnimationClipIndex = -1;
 				this.event(Event.STOPPED);
 			} else {
 				_stopWhenCircleFinish = true;
-			}
-		}
-		
-		/**更新动画播放器 */
-		public function update(elapsedTime:Number):void {
-			if (_currentAnimationClipIndex === -1 || _paused || !_templet || !_templet.loaded)//动画停止或暂停，不更新
-				return;
-			
-			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
-			var time:Number = 0;
-			(_startUpdateLoopCount !== Stat.loopCount) && (time = elapsedTime * playbackRate, _elapsedPlaybackTime += time);//elapsedTime为距离上一帧时间,首帧播放如果_startPlayLoopCount===Stat.loopCount，则不累加时间
-			
-			var currentAniClipPlayDuration:Number = playDuration;
-			if ((_overallDuration !== 0 && _elapsedPlaybackTime >= _overallDuration) || (_overallDuration === 0 && _elapsedPlaybackTime >= currentAniClipPlayDuration)) {
-				//矫正末帧数据
-				_currentTime = currentAniClipPlayDuration;
-				_currentKeyframeIndex = Math.floor(currentAniClipPlayDuration / cacheFrameInterval + 0.01);
-				_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
-				
-				_currentAnimationClipIndex /*= _currentKeyframeIndex*/ = -1;//动画结束	
-				this.event(Event.STOPPED);
-				return;
-			}
-			time += _currentTime;
-			if (currentAniClipPlayDuration > 0) {
-				while (time >= currentAniClipPlayDuration) {//TODO:用求余改良
-					if (_stopWhenCircleFinish) {
-						_currentAnimationClipIndex /*= _currentKeyframeIndex*/ = -1;
-						_stopWhenCircleFinish = false;
-						
-						this.event(Event.STOPPED);
-						return;
-					}
-					time -= currentAniClipPlayDuration;
-					this.event(Event.COMPLETE);
-				}
-				_currentTime = time;
-				_currentKeyframeIndex = Math.floor((currentPlayTime) / cacheFrameInterval);
-				_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
-			} else {
-				if (_stopWhenCircleFinish) {
-					_currentAnimationClipIndex /*= _currentKeyframeIndex&*/ = -1;
-					_stopWhenCircleFinish = false;
-					this.event(Event.STOPPED);
-					return;
-				}
-				_currentTime = _currentFrameTime = _currentKeyframeIndex = 0;
-				this.event(Event.COMPLETE);
 			}
 		}
 	

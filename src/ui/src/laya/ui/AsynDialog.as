@@ -30,10 +30,15 @@ package laya.ui {
 		 * 在页面未创建时执行一次，再次打开页面不会再执行，适合写一些只执行一次的逻辑，比如资源加载，节点事件监听
 		 */
 		public function onCreated():void {
+			createUI();
+			onOpen();
+		}
+		
+		/**根据节点数据创建UI*/
+		public function createUI():void {
 			super.createView(_uiView);
 			_uiView = null;
 			_dealDragArea();
-			onOpen();
 		}
 		
 		/**

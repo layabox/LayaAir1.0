@@ -344,11 +344,12 @@ package laya.ani.bone {
 			var preIndex:int = _player.currentKeyframeIndex;
 			var dTime:Number = tCurrTime - _lastTime;
 			if (autoKey) {
-				_player.update(dTime);
+				_player._update(dTime);
 			}else{
 				preIndex = -1;
 			}
 			_lastTime = tCurrTime;
+			if (!_player) return;
 			_index = _clipIndex = _player.currentKeyframeIndex;
 			if (_index < 0) return;
 			if (dTime>0&&_clipIndex == preIndex&&_lastUpdateAniClipIndex== _aniClipIndex)
@@ -1032,7 +1033,7 @@ package laya.ani.bone {
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
 			_templet = null;//动画解析器
-			_player.offAll();
+			if(_player) _player.offAll();
 			_player = null;// 播放器
 			_curOriginalData = null;//当前骨骼的偏移数据
 			_boneMatrixArray.length = 0;//当前骨骼动画的最终结果数据

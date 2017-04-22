@@ -275,7 +275,7 @@ package laya.d3.core.material {
 		 * 移除Shader宏定义。
 		 * @param value 宏定义。
 		 */
-		protected function _removeShaderDefine(value:int):void {
+		public function _removeShaderDefine(value:int):void {
 			_shaderDefineValue &= ~value;
 			if (_conchMaterial) {//NATIVE
 				_conchMaterial.removeShaderDefine(value);

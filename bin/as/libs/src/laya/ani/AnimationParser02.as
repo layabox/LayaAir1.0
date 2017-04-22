@@ -56,6 +56,7 @@ package laya.ani {
 		 * @private
 		 */
 		public static function parse(templet:AnimationTemplet, reader:Byte):void {
+			_templet = templet;
 			_reader = reader;
 			var arrayBuffer:ArrayBuffer = reader.__getBuffer();
 			READ_DATA();
@@ -64,7 +65,7 @@ package laya.ani {
 			for (var i:int = 0, n:int = _BLOCK.count; i < n; i++) {
 				var index:int = reader.getUint16();
 				var blockName:String = _strings[index];
-				var fn:Function = AnimationTemplet["READ_" + blockName];
+				var fn:Function = AnimationParser02["READ_" + blockName];
 				if (fn == null)
 					throw new Error("model file err,no this function:" + index + " " + blockName);
 				else
@@ -72,7 +73,7 @@ package laya.ani {
 			}
 		}
 		
-		public function READ_ANIMATIONS():void {
+		public static function READ_ANIMATIONS():void {
 			var reader:Byte = _reader;
 			var arrayBuffer:ArrayBuffer = reader.__getBuffer();
 			var i:int, j:int, k:int, n:int, l:int;
@@ -80,7 +81,7 @@ package laya.ani {
 			var interpolationMethod:Array = [];
 			interpolationMethod.length = keyframeWidth;
 			for (i = 0; i < keyframeWidth; i++)
-				interpolationMethod[i] = reader.getUint8();//TODO:
+				interpolationMethod[i] = AnimationTemplet.interpolation[reader.getByte()];
 			
 			var aniCount:int = reader.getUint8();
 			_templet._anis.length = aniCount;
@@ -92,15 +93,16 @@ package laya.ani {
 				var aniName:String = ani.name = _strings[reader.getUint16()];
 				_templet._aniMap[aniName] = i;//按名字可以取得动画索引
 				ani.bone3DMap = {};
-				ani.playTime = reader.getFloat32();
+				ani.playTime = reader.getUint32();
 				var boneCount:int = ani.nodes.length = reader.getInt16();
-				ani.totalKeyframesLength = 0;
+				ani.totalKeyframeDatasLength = 0;
 				for (j = 0; j < boneCount; j++) {
 					var node:AnimationNodeContent = ani.nodes[j] = /*[IF-FLASH]*/ new AnimationNodeContent();
 					//[IF-SCRIPT] {};//不要删除
+					node.keyframeWidth = keyframeWidth;//TODO:存在骨骼里是否合并，需要优化到动画中更合理。
 					node.childs = [];
 					
-					var nameIndex:int = reader.getInt16();
+					var nameIndex:int = reader.getUint16();
 					if (nameIndex >= 0) {
 						node.name = _strings[nameIndex];//骨骼名字
 						ani.bone3DMap[node.name] = j;
@@ -110,7 +112,7 @@ package laya.ani {
 					node.parentIndex = reader.getInt16();//父对象编号，相对本动画(INT16,-1表示没有)
 					node.parentIndex == -1 ? node.parent = null : node.parent = ani.nodes[node.parentIndex]
 					
-					ani.totalKeyframesLength += keyframeWidth;
+					ani.totalKeyframeDatasLength += keyframeWidth;
 					
 					node.interpolationMethod = interpolationMethod;//TODO:
 					
@@ -123,7 +125,7 @@ package laya.ani {
 					for (k = 0, n = keyframeCount; k < n; k++) {
 						var keyFrame:KeyFramesContent = node.keyFrame[k] = /*[IF-FLASH]*/ new KeyFramesContent();
 						//[IF-SCRIPT] {};//不要删除
-						keyFrame.duration = reader.getFloat32();
+						keyFrame.duration = reader.getUint32();
 						keyFrame.startTime = startTime;
 						
 						//keyFrame.data = new Float32Array(keyframeWidth);

@@ -267,8 +267,10 @@ package laya.d3.shader {
 					one.fun = this._uniform1i;
 					break;
 				case WebGLContext.FLOAT_MAT2: 
+					one.fun = this._uinformMatrix2fv;
+					break;
 				case WebGLContext.FLOAT_MAT3: 
-					throw new Error("compile shader err!");
+					one.fun = this._uinformMatrix3fv;
 					break;
 				default: 
 					throw new Error("compile shader err!");
@@ -390,6 +392,16 @@ package laya.d3.shader {
 		
 		private function _uniformMatrix4fv(one:*, value:*):int {
 			WebGL.mainContext.uniformMatrix4fv(one.location, false, value);
+			return 1;
+		}
+		
+		private function _uinformMatrix2fv(one:*, value:*):int {
+			WebGL.mainContext.uniformMatrix2fv(one.location, false, value);
+			return 1;
+		}
+
+		private function _uinformMatrix3fv(one:*, value:*):int {
+			WebGL.mainContext.uniformMatrix3fv(one.location, false, value);
 			return 1;
 		}
 		

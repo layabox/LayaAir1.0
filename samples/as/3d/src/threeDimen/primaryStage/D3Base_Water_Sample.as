@@ -41,7 +41,7 @@ package threeDimen.primaryStage {
 		public var water:WaterSprite;
 		public function D3Base_Water_Sample() {
 			if(true){
-				Laya3D.init(0, 0, true);
+				Laya3D.init(0, 0, false);
 				Laya.stage.scaleMode = Stage.SCALE_FULL;
 			}else {
 				//缩放来提高效率
@@ -69,8 +69,8 @@ package threeDimen.primaryStage {
 			camera._shaderValues.setValue(BaseCamera.HDREXPOSURE, 2.0);
 			scene.addChild(camera);
 			//camera.transform.translate(new Vector3(0, 1.7, 1.0));
-			camera.transform.translate(new Vector3(0, 40, .0));
-			//camera.transform.rotate(new Vector3( -30, 0, 0), true, false);
+			camera.transform.translate(new Vector3(0, 4, 6.0));
+			camera.transform.rotate(new Vector3( -30, 0, 0), true, false);
 			camera.addComponent(CameraMoveScript);
 			camera.clearFlag = BaseCamera.CLEARFLAG_SKY;
 			var skyDome:SkyDome = new SkyDome();
@@ -103,10 +103,39 @@ package threeDimen.primaryStage {
 				//sphere.transform.localPosition = new Vector3((x-rnum/2)*(w/rnum), 1.0, -2);
 			}
 			*/
+			/*
+			var cylinder:MeshSprite3D = scene.addChild(new MeshSprite3D(Mesh.load("./threeDimen/models/shape/cylinder1x100.lm"))) as MeshSprite3D;
+			cylinder.transform.rotation = new Quaternion( -0.7071068, -0, 0, 0.7071068);
+			cylinder.transform.localPosition = new Vector3(0, -10, 0);
+			*/
+			/*
+			var dude:MeshSprite3D = scene.addChild( new MeshSprite3D( Mesh.load('./threeDimen/models/dude/dude-him.lm.lm'))) as MeshSprite3D;
+			dude.transform.localPosition = new Vector3( -50, 0, 0);
+			dude.transform.localScale = new Vector3(2, 2, 2);
+			//dude.transform.localRotationEuler = new Vector3(0, 3.14, 0);
+			*/
+			
+			
+			var m1:MeshSprite3D = scene.addChild(new MeshSprite3D(Mesh.load("./threeDimen/models/haitan/haitan-Plane001.lm"))) as MeshSprite3D;
+			m1.transform.rotation = new Quaternion( -0.7071068, -0, 0, 0.7071068);
+			var mtl2:StandardMaterial= new StandardMaterial();
+			mtl2.diffuseTexture = Texture2D.load('./threeDimen/water/sand.jpg');
+			m1.meshRender.sharedMaterial = mtl2;
 			{
+				var m2:MeshSprite3D = new MeshSprite3D(Mesh.load("./threeDimen/models/haitan/haitan_s-Plane001.lm"));
+				m2.transform.rotation = new Quaternion( -0.7071068, -0, 0, 0.7071068);
+				var mtl3:StandardMaterial= new StandardMaterial();
+				mtl3.diffuseTexture = Texture2D.load('./threeDimen/water/sand.jpg');
+				m2.meshRender.sharedMaterial = mtl3;
+				
 				water = scene.addChild(new WaterSprite()) as WaterSprite;
-				water.loadMesh('');
+				water.src = './threeDimen/water/sea1.json';
+				water._scene = scene;
+				water.addRefractObj(m2);
+				water.transform.localPosition = new Vector3(0, .01, 0);
 			}
+
+			
 			Laya.stage.on(Event.KEY_UP, this, onKeyUp);
 		}
 		

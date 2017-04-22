@@ -40,7 +40,7 @@ package laya.d3.core.light {
 			transform.worldMatrix = worldMatrix;
 			Vector3.normalize(value, value);
 			_direction = value;
-			(shadow) && (_parallelSplitShadowMap._setGlobalParallelLightDir(_direction));
+			(shadow&&_parallelSplitShadowMap) && (_parallelSplitShadowMap._setGlobalParallelLightDir(_direction));
 		}
 		
 		/**
@@ -121,7 +121,7 @@ package laya.d3.core.light {
 			shaderValue.setValue(BaseScene.LIGHTDIRAMBIENT, null);
 			shaderValue.setValue(BaseScene.LIGHTDIRSPECULAR, null);
 			shaderValue.setValue(BaseScene.LIGHTDIRECTION, null);
-			(_activeHierarchy) && (scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT));
+			(_activeInHierarchy) && (scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT));
 		}
 		
 		/**

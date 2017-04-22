@@ -87,7 +87,7 @@ package laya.d3.graphics {
 				_combineRenderElementPool[_combineRenderElementPoolIndex - 1] = renderElement = new RenderElement();
 				renderElement._sprite3D = new Sprite3D();//TODO:创建虚拟动态精灵	
 			}
-			renderElement._sprite3D._prepareShaderValuetoRender(projectionView);//TODO:待调整,是否合理
+			renderElement._sprite3D._renderUpdate(projectionView);//TODO:待调整,是否合理
 			return renderElement;
 		}
 		

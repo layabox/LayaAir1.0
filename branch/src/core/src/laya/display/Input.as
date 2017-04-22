@@ -278,9 +278,11 @@ package laya.display {
 			var sy:Number = perpendicular ? tm.a : tm.d;
 			tm.destroy();
 			
-			var tx:Number = padding[3];
-			var ty:Number = padding[0];
+			var tx:Number, ty:Number;
 			if (Laya.stage.canvasDegree == 0) {
+				tx = padding[3];
+				ty = padding[0];
+
 				tx += rec.x;
 				ty += rec.y;
 				
@@ -291,6 +293,9 @@ package laya.display {
 				ty += m.ty;
 			} else if (Laya.stage.canvasDegree == 90) 	// screenMode = horizontal
 			{
+				tx = padding[0];
+				ty = padding[3];
+
 				tx += rec.y;
 				ty += rec.x;
 				
@@ -647,7 +652,6 @@ package laya.display {
 		
 		/**原生输入框 X 轴调整值，用来调整输入框坐标。
 		 * 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。*/
-		//[Deprecated]
 		public function get inputElementXAdjuster():int {
 			console.warn("deprecated: 由于即使设置了该值，在各平台和浏览器之间也不一定一致，inputElementXAdjuster已弃用。");
 			return 0;

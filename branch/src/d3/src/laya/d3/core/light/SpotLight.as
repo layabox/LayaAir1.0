@@ -146,7 +146,7 @@ package laya.d3.core.light {
 			shaderValue.setValue(BaseScene.SPOTLIGHTRANGE, null);
 			shaderValue.setValue(BaseScene.SPOTLIGHTSPOT, null);
 			shaderValue.setValue(BaseScene.SPOTLIGHTATTENUATION, null);
-			(enable) && (scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_SPOTLIGHT));
+			(_activeHierarchy) && (scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_SPOTLIGHT));
 		}
 		
 		/**

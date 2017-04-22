@@ -46,7 +46,7 @@ uniform vec4 u_MaterialSpecular;
 uniform vec3 u_MaterialAmbient;
 #endif
 
-#ifdef FOG
+#if defined(FOG)||defined(DEPTHFOG)
 uniform float u_FogStart;
 uniform float u_FogRange;
 uniform vec3 u_FogColor;
@@ -79,10 +79,10 @@ uniform SpotLight u_SpotLight;
 #endif
 
 
-#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)||(defined(RECEIVESHADOW)&&(defined(SHADOWMAP_PSM2)||defined(SHADOWMAP_PSM3)))
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(REFLECTMAP)||(defined(RECEIVESHADOW)&&(defined(SHADOWMAP_PSM2)||defined(SHADOWMAP_PSM3)))
 uniform vec3 u_CameraPos;
 #endif
-#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(REFLECTMAP)
 varying vec3 v_PositionWorld;
 #endif
 
@@ -221,6 +221,10 @@ void main_normal()
   
 #ifdef FOG
 	float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);
+	gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);
+#endif
+#ifdef DEPTHFOG
+	float lerpFact = (-v_PositionWorld.y-u_FogStart)/u_FogRange;
 	gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);
 #endif
 }

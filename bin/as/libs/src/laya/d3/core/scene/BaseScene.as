@@ -109,6 +109,7 @@ package laya.d3.core.scene {
 		protected var _lastCurrentTime:Number;
 		/** @private */
 		protected var _enableFog:Boolean;
+		protected var _enableDepthFog:Boolean;//不能与_enableFog共存
 		/** @private */
 		protected var _fogStart:Number;
 		/** @private */
@@ -159,10 +160,28 @@ package laya.d3.core.scene {
 		public function set enableFog(value:Boolean):void {
 			if (_enableFog !== value) {
 				_enableFog = value;
-				if (value)
+				if (value){
 					addShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
+					removeShaderDefine(ShaderCompile3D.SAHDERDEFINE_DEPTHFOG);
+				}
 				else
 					removeShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
+			}
+		}
+		
+		public function get enableDepthFog():Boolean {
+			return _enableDepthFog;
+		}
+		
+		public function set enableDepthFog(v:Boolean):void {
+			if (_enableDepthFog != v) {
+				_enableDepthFog = v;
+				if (v) {
+					addShaderDefine(ShaderCompile3D.SAHDERDEFINE_DEPTHFOG);
+					removeShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
+				}else {
+					removeShaderDefine(ShaderCompile3D.SAHDERDEFINE_DEPTHFOG);
+				}
 			}
 		}
 		
@@ -610,7 +629,13 @@ package laya.d3.core.scene {
 		override public function addChildAt(node:Node, index:int):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
-			return super.addChildAt(node, index);
+			
+			var returnNode:Node = super.addChildAt(node, index);
+			var sprite3D:Sprite3D = node as Sprite3D;
+			sprite3D.transform._onWorldTransform();
+			sprite3D._setBelongScene();
+			(sprite3D.active) && (sprite3D._activeHierarchy());
+			return returnNode;
 		}
 		
 		/**
@@ -619,7 +644,54 @@ package laya.d3.core.scene {
 		override public function addChild(node:Node):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
-			return super.addChild(node);
+			
+			var returnNode:Node = super.addChild(node);
+			var sprite3D:Sprite3D = node as Sprite3D;
+			sprite3D.transform._onWorldTransform();
+			sprite3D._setBelongScene();
+			(sprite3D.active) && (sprite3D._activeHierarchy());
+			return returnNode;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function removeChildAt(index:int):Node {
+			var node:Node = getChildAt(index);
+			if (node) {
+				var sprite3D:Sprite3D = node as Sprite3D;
+				sprite3D.transform.parent = null;
+				sprite3D._setUnBelongScene();
+				(sprite3D.active) && (sprite3D._inActiveHierarchy());
+				this._childs.splice(index, 1);
+				conchModel && conchModel.removeChild(node.conchModel);
+				node.parent = null;
+			}
+			return node;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function removeChildren(beginIndex:int = 0, endIndex:int = 0x7fffffff):Node {
+			if (_childs && _childs.length > 0) {
+				var childs:Array = this._childs;
+				if (beginIndex === 0 && endIndex >= n) {
+					var arr:Array = childs;
+					this._childs = ARRAY_EMPTY;
+				} else {
+					arr = childs.splice(beginIndex, endIndex - beginIndex);
+				}
+				for (var i:int = 0, n:int = arr.length; i < n; i++) {
+					arr[i].parent = null;
+					var sprite3D:Sprite3D = arr[i] as Sprite3D;
+					sprite3D.transform.parent = null;
+					sprite3D._setUnBelongScene();
+					(sprite3D.active) && (sprite3D._inActiveHierarchy());
+					conchModel && conchModel.removeChild(arr[i].conchModel);
+				}
+			}
+			return this;
 		}
 		
 		/**

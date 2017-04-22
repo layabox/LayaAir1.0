@@ -11,7 +11,7 @@ package laya.d3.resource.models
 	import laya.webgl.utils.Buffer;
 	
 	/**
-	 * <code>CylinderMesh</code> 类用于创建圆柱。
+	 * <code>CylinderMesh</code> 类用于创建圆柱体。
 	 */
 	public class CylinderMesh extends PrimitiveMesh
 	{
@@ -94,7 +94,7 @@ package laya.d3.resource.models
 		 * @param height 高度
 		 * @param slices 垂直层数
 		 */
-		public function CylinderMesh(radius:Number = 0.5, height:Number = 1, slices:int = 32)
+		public function CylinderMesh(radius:Number = 0.5, height:Number = 2, slices:int = 32)
 		{
 			super();
 			_radius = radius;
@@ -186,9 +186,9 @@ package laya.d3.resource.models
 			for (var rv:int = 0; rv <= _slices; rv++)
 			{
 				curAngle = rv * sliceAngle;
-				posX = Math.cos(curAngle) * _radius;
+				posX = Math.cos(curAngle + Math.PI) * _radius;
 				posY = halfHeight;
-				posZ = Math.sin(curAngle) * _radius;
+				posZ = Math.sin(curAngle + Math.PI) * _radius;
 				
 				//pos
 				vertices[vc++] = posX;
@@ -248,9 +248,9 @@ package laya.d3.resource.models
 				}
 				
 				curAngle = bv * sliceAngle;
-				posX = Math.cos(curAngle) * _radius;
+				posX = Math.cos(curAngle + Math.PI) * _radius;
 				posY = -halfHeight;
-				posZ = Math.sin(curAngle) * _radius;
+				posZ = Math.sin(curAngle + Math.PI) * _radius;
 				
 				//pos
 				vertices[vc++] = posX;

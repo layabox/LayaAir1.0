@@ -173,7 +173,7 @@ package laya.d3.component.animation {
 		 * @param	state 渲染状态参数。
 		 */
 		public override function _update(state:RenderState):void {
-			player.update(state.elapsedTime);//需最先执行（如不则内部可能触发Stop事件等，如事件中加载新动画，可能_templet未加载完成，导致BUG）
+			player._update(state.elapsedTime);//需最先执行（如不则内部可能触发Stop事件等，如事件中加载新动画，可能_templet未加载完成，导致BUG）
 			
 			if (!_templet || !_templet.loaded || player.state !== AnimationState.playing)
 				return;

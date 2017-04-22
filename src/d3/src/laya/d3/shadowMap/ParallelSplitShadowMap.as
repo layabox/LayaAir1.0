@@ -580,7 +580,8 @@ package laya.d3.shadowMap {
 			Vector3.scale(_globalParallelLightDir, boundSphere.radius * 4, _tempPos);
 			Vector3.subtract(_tempLookAt3, _tempPos, _tempPos);
 			var curLightCamera:Camera = _lightCameras[_currentPSSM];
-			curLightCamera.transform.lookAt(_tempPos, _tempLookAt3, _tempLightUp, false);
+			curLightCamera.transform.position = _tempPos;
+			curLightCamera.transform.lookAt(_tempLookAt3, _tempLightUp, false);
 			var tempMaxElements:Float32Array = _tempMax.elements;
 			var tempMinElements:Float32Array = _tempMin.elements;
 			tempMaxElements[0] = tempMaxElements[1] = tempMaxElements[2] = -100000.0;
@@ -649,7 +650,8 @@ package laya.d3.shadowMap {
 			tempPosElement[0] = tempValueElement[0] - tempPosElement[0];
 			tempPosElement[1] = tempValueElement[1] - tempPosElement[1];
 			tempPosElement[2] = tempValueElement[2] - tempPosElement[2];
-			curLightCamera.transform.lookAt(_tempPos, _tempLookAt3, _tempLightUp, false);
+			curLightCamera.transform.position = _tempPos;
+			curLightCamera.transform.lookAt(_tempLookAt3, _tempLightUp, false);
 			Matrix4x4.createOrthogonal(tempMinElements[0], tempMaxElements[0], tempMinElements[1], tempMaxElements[1], 1.0, farPlane + 0.5 * (tempMaxElements[2] - tempMinElements[2]), curLightCamera.projectionMatrix);
 			
 			//calc frustum

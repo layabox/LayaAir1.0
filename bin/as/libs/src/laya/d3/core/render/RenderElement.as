@@ -58,6 +58,8 @@ package laya.d3.core.render {
 		/**当前ShaderValue。*/
 		public var _shaderValue:ValusArray;
 		
+		public var _onPreRenderFunction:Function;
+		
 		/** @private */
 		public var _conchSubmesh:*;/**NATIVE*/
 		

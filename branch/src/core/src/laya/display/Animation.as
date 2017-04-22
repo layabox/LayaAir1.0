@@ -1,6 +1,7 @@
 package laya.display {
 	import laya.net.Loader;
 	import laya.utils.Handler;
+	import laya.utils.Utils;
 	
 	/**
 	 * 动画播放完毕后调度。
@@ -129,13 +130,39 @@ package laya.display {
 		protected function _setFramesFromCache(name:String):Boolean {
 			if (_url) name = _url + "#" + name;
 			if (name && framesMap[name]) {
-				this._frames = framesMap[name];
-				this._count = _frames.length;
-				//如果是读取动的画配置信息，帧率按照动画设置的帧率播放
-				if (!_frameRateChanged && framesMap[name + "$len"]) _interval = framesMap[name + "$len"];
+				var tAniO:*;
+				tAniO = framesMap[name];
+				if (tAniO is Array)
+				{
+					this._frames = framesMap[name];
+					this._count = _frames.length;
+				}else
+				{
+					this._frames = tAniO.frames;
+					this._count = _frames.length;
+					//如果是读取动的画配置信息，帧率按照动画设置的帧率播放
+					if (!_frameRateChanged) _interval = tAniO.interval;
+					_labels = _copyLabels(tAniO.labels);
+				}			
 				return true;
+			}else {
+				trace("ani not found:",name);
 			}
 			return false;
+		}
+		
+		/**@private */
+		private function _copyLabels(labels:Object):Object
+		{
+			if (!labels) return null;
+			var rst:Object;
+			rst = { };
+			var key:String;
+			for (key in labels)
+			{
+				rst[key] = Utils.copyArray([],labels[key]);
+			}
+			return rst;
 		}
 		
 		/**@private */
@@ -236,34 +263,36 @@ package laya.display {
 			var _this:Animation = this;
 			if (!_this._setFramesFromCache("")) {
 				function onLoaded(loadUrl:String):void {
+					if (!Loader.getRes(loadUrl)) return;
 					if (url === loadUrl) {
+						var tAniO:Object;
 						if (!framesMap[url + "#"]) {
 							var aniData:Object = _this._parseGraphicAnimation(Loader.getRes(url));
-							if (!aniData) return;
-							
+							if (!aniData) return;			
 							//缓存动画数据
-							var obj:Object = aniData.animationDic;
-							var flag:Boolean = true;
-							for (var name:String in obj) {
-								var info:Object = obj[name];
-								if (info.frames.length) {
-									framesMap[url + "#" + name] = info.frames;
-									framesMap[url + "#" + name + "$len"] = info.interval;
-								} else {
-									flag = false;
+							var aniList:Array=aniData.animationList;
+							var i:int, len:int = aniList.length;
+							var defaultO:Object;
+							for (i = 0; i < len; i++)
+							{
+								tAniO = aniList[i];
+								if (tAniO.frames.length)
+								{
+									framesMap[url + "#" + tAniO.name] = tAniO;
+									if (!defaultO) defaultO = tAniO;
 								}
 							}
-							
-							//设置第一个为默认
-							if (!_this._frameRateChanged) _this._interval = aniData.animationList[0].interval;
-							_this.frames = aniData.animationList[0].frames;
-							if (flag) {
-								framesMap[url + "#$len"] = aniData.animationList[0].interval;
-								framesMap[url + "#"] = _this.frames;
+							if (defaultO)
+							{
+								framesMap[url + "#"] = defaultO;
+								_this._setFramesFromCache("");
+								index = 0;
 							}
+							_checkResumePlaying();
 						} else {
-							if (!_this._frameRateChanged) _this._interval = framesMap[url + "#$len"];
-							_this.frames = framesMap[url + "#"];
+							_this._setFramesFromCache("");
+							index = 0;
+							_checkResumePlaying();
 						}
 						if (loaded) loaded.run();
 					}

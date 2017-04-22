@@ -33,7 +33,12 @@ package laya.display {
 		private static const ARRAY_EMPTY:Array = [];
 		/** @private */
 		private static const PROP_EMPTY:Object = {};
-		
+		/** @private */
+		public static const NOTICE_DISPLAY:int = 0x1;
+		/** @private */
+		public static const MOUSEENABLE:int = 0x2;
+		/** @private */
+		private var _bits:int = 0;
 		/**@private 子对象集合，请不要直接修改此对象。*/
 		public var _childs:Array = ARRAY_EMPTY;
 		/**@private 是否在显示列表中显示*/
@@ -57,6 +62,81 @@ package laya.display {
 		 */
 		public function Node() {
 			this.conchModel = Render.isConchNode ? this.createConchModel() : null;
+		}
+		
+		/** @private */
+		public function _setBit(type:int, value:Boolean):void {
+			if (type == NOTICE_DISPLAY) {
+				var preValue:Boolean = _getBit(type);
+				if (preValue != value) {
+					_updateDisplayedInstage();
+				}
+			}
+			if (value) {
+				_bits |= type;
+			} else {
+				_bits &= ~type;
+			}
+		}
+		
+		/** @private */
+		public function _getBit(type:int):Boolean {
+			return (_bits & type) != 0;
+		}
+		
+		/** @private */
+		public function _setUpNoticeChain():void {
+			if (_getBit(NOTICE_DISPLAY)) {
+				_setUpNoticeType(NOTICE_DISPLAY);
+			}
+		}
+		
+		/** @private */
+		public function _setUpNoticeType(type:int):void {
+			var ele:Node = this;
+			ele._setBit(type, true);
+			ele = ele.parent;
+			while (ele) {
+				if (ele._getBit(type)) return;
+				ele._setBit(type, true);
+				ele = ele.parent;
+			}
+		}
+		
+		/**
+		 * 增加事件侦听器，以使侦听器能够接收事件通知。
+		 * 如果侦听鼠标事件，则会自动设置自己和父亲节点的属性 mouseEnabled 的值为 true(如果父节点mouseEnabled=false，则停止设置父节点mouseEnabled属性)。
+		 * @param	type 事件的类型。
+		 * @param	caller 事件侦听函数的执行域。
+		 * @param	listener 事件侦听函数。
+		 * @param	args 事件侦听函数的回调参数。
+		 * @return 此 EventDispatcher 对象。
+		 */
+		override public function on(type:String, caller:*, listener:Function, args:Array = null):EventDispatcher {
+			if (type === Event.DISPLAY || type === Event.UNDISPLAY) {
+				if (!_getBit(NOTICE_DISPLAY)) {
+					_setUpNoticeType(NOTICE_DISPLAY);
+				}
+			}
+			return _createListener(type, caller, listener, args, false);
+		}
+		
+		/**
+		 * 增加事件侦听器，以使侦听器能够接收事件通知，此侦听事件响应一次后则自动移除侦听。
+		 * 如果侦听鼠标事件，则会自动设置自己和父亲节点的属性 mouseEnabled 的值为 true(如果父节点mouseEnabled=false，则停止设置父节点mouseEnabled属性)。
+		 * @param	type 事件的类型。
+		 * @param	caller 事件侦听函数的执行域。
+		 * @param	listener 事件侦听函数。
+		 * @param	args 事件侦听函数的回调参数。
+		 * @return 此 EventDispatcher 对象。
+		 */
+		override public function once(type:String, caller:*, listener:Function, args:Array = null):EventDispatcher {
+			if (type === Event.DISPLAY || type === Event.UNDISPLAY) {
+				if (!_getBit(NOTICE_DISPLAY)) {
+					_setUpNoticeType(NOTICE_DISPLAY);
+				}
+			}
+			return _createListener(type, caller, listener, args, true);
 		}
 		
 		/**@private */
@@ -188,9 +268,11 @@ package laya.display {
 		 */
 		public function getChildByName(name:String):Node {
 			var nodes:Array = this._childs;
-			for (var i:int = 0, n:int = nodes.length; i < n; i++) {
-				var node:Node = nodes[i];
-				if (node.name === name) return node;
+			if (nodes) {
+				for (var i:int = 0, n:int = nodes.length; i < n; i++) {
+					var node:Node = nodes[i];
+					if (node.name === name) return node;
+				}
 			}
 			return null;
 		}
@@ -360,13 +442,16 @@ package laya.display {
 					this._parent = value;
 					//如果父对象可见，则设置子对象可见					
 					event(Event.ADDED);
-					value.displayedInStage && _displayChild(this, true);
+					if (_getBit(NOTICE_DISPLAY)) {
+						_setUpNoticeChain();
+						value.displayedInStage && _displayChild(this, true);
+					}
 					value._childChanged(this);
 				} else {
 					//设置子对象不可见
 					event(Event.REMOVED);
 					this._parent._childChanged();
-					_displayChild(this, false);
+					if (_getBit(NOTICE_DISPLAY)) _displayChild(this, false);
 					this._parent = value;
 				}
 			}
@@ -374,7 +459,29 @@ package laya.display {
 		
 		/**表示是否在显示列表中显示。*/
 		public function get displayedInStage():Boolean {
+			if (_getBit(NOTICE_DISPLAY)) return _displayedInStage;
+			_setUpNoticeType(NOTICE_DISPLAY);
 			return _displayedInStage;
+		}
+		
+		/** @private */
+		private function _updateDisplayedInstage():void {
+			var ele:Node;
+			ele = this;
+			var stage:Stage = Laya.stage;
+			_displayedInStage = false;
+			while (ele) {
+				if (ele._getBit(NOTICE_DISPLAY)) {
+					_displayedInStage = ele._displayedInStage;
+					break;
+				}
+				if (ele == stage || ele._displayedInStage) {
+					_displayedInStage = true;
+					break;
+				}
+				
+				ele = ele.parent;
+			}
 		}
 		
 		/** @private */
@@ -397,8 +504,12 @@ package laya.display {
 			if (childs) {
 				for (var i:int = 0, n:int = childs.length; i < n; i++) {
 					var child:Node = childs[i];
-					child._setDisplay(display);
-					child._childs.length && _displayChild(child, display);
+					if (!child._getBit(NOTICE_DISPLAY)) continue;
+					if (child._childs.length > 0) {
+						_displayChild(child, display);
+					} else {
+						child._setDisplay(display);
+					}
 				}
 			}
 			node._setDisplay(display);

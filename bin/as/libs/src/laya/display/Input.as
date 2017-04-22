@@ -636,6 +636,20 @@ package laya.display {
 		
 		/**
 		 * 输入框类型为Input静态常量之一。
+		 * <ul>
+		 * <li>TYPE_TEXT</li>
+		 * <li>TYPE_PASSWORD</li>
+		 * <li>TYPE_EMAIL</li>
+		 * <li>TYPE_URL</li>
+		 * <li>TYPE_NUMBER</li>
+		 * <li>TYPE_RANGE</li>
+		 * <li>TYPE_DATE</li>
+		 * <li>TYPE_MONTH</li>
+		 * <li>TYPE_WEEK</li>
+		 * <li>TYPE_TIME</li>
+		 * <li>TYPE_DATE_TIME</li>
+		 * <li>TYPE_DATE_TIME_LOCAL</li>
+		 * </ul>
 		 * 平台兼容性参见http://www.w3school.com.cn/html5/html_5_form_input_types.asp。
 		 */
 		public function get type():String {

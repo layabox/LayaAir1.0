@@ -46,7 +46,7 @@ package laya.ani {
 				ani.playTime = reader.getFloat32();//本骨骼播放时间
 				var boneCount:int = ani.nodes.length = reader.getUint8();//得到本动画骨骼数目
 				
-				ani.totalKeyframesLength = 0;
+				ani.totalKeyframeDatasLength = 0;
 				
 				for (j = 0; j < boneCount; j++) {
 					var node:AnimationNodeContent = ani.nodes[j] = new AnimationNodeContent();
@@ -69,7 +69,7 @@ package laya.ani {
 					publicRead.pos = keyframeParamsOffset;//切换到数据区偏移地址
 					
 					var keyframeDataCount:int = node.keyframeWidth = publicRead.getUint16();//keyframe数据宽度:Uint8		
-					ani.totalKeyframesLength += keyframeDataCount;
+					ani.totalKeyframeDatasLength += keyframeDataCount;
 					//每个数据的插值方式:Uint8*keyframe数据宽度
 					if (node.lerpType === 0 || node.lerpType === 1)//是否逐节点插值
 					{

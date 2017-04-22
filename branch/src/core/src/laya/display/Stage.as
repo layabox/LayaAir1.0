@@ -100,9 +100,9 @@ package laya.display {
 		/**帧率类型，支持三种模式：fast-60帧(默认)，slow-30帧，mouse-30帧（鼠标活动后会自动加速到60，鼠标不动2秒后降低为30帧，以节省消耗），sleep-1帧。*/
 		public var frameRate:String = "fast";
 		/**设计宽度（初始化时设置的宽度Laya.init(width,height)）*/
-		public var desginWidth:Number = 0;
+		public var designWidth:Number = 0;
 		/**设计高度（初始化时设置的高度Laya.init(width,height)）*/
-		public var desginHeight:Number = 0;
+		public var designHeight:Number = 0;
 		/**画布是否发生翻转。*/
 		public var canvasRotation:Boolean = false;
 		/**画布的旋转角度。*/
@@ -110,6 +110,8 @@ package laya.display {
 		/**设置是否渲染，设置为false，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟
 		 * 比如非激活状态，可以设置renderingEnabled=true以节省消耗。*/
 		public var renderingEnabled:Boolean = true;
+		/**是否启用屏幕适配，可以适配后，在某个时候关闭屏幕适配，防止某些操作导致的屏幕以外改变*/
+		public var screenAdaptationEnabled:Boolean = true;
 		
 		/**@private */
 		public var _canvasTransform:Matrix = new Matrix();
@@ -132,7 +134,7 @@ package laya.display {
 		/**@private */
 		private var _frameStartTime:Number;
 		/**@private */
-		private var _previousOrientation:int;
+		private var _previousOrientation:int = Browser.window.orientation;
 		/**@private */
 		private var _isFocused:Boolean;
 		/**@private */
@@ -142,7 +144,7 @@ package laya.display {
 		/**@private webgl Color*/
 		public var _wgColor:Array;
 		
-		/**场景类，请用Laya.stage单例访问。*/
+		/**场景类，引擎中只有一个stage实例，此实例可以通过Laya.stage访问。*/
 		public function Stage() {
 			transform = Matrix.create();
 			_scenes = [];
@@ -232,15 +234,34 @@ package laya.display {
 		}
 		
 		override public function set width(value:Number):void {
-			this.desginWidth = value;
+			this.designWidth = value;
 			super.width = value;
 			Laya.timer.callLater(this, _changeCanvasSize);
 		}
 		
 		override public function set height(value:Number):void {
-			this.desginHeight = value;
+			this.designHeight = value;
 			super.height = value;
 			Laya.timer.callLater(this, _changeCanvasSize);
+		}
+		
+		override public function get transform():Matrix {
+			if (_tfChanged) _adjustTransform();
+			return _transform ||= Matrix.create();
+		}
+		
+		/**@private 已经弃用，请使用designWidth代替*/
+		//[Deprecated]
+		public function get desginWidth():Number {
+			console.debug("desginWidth已经弃用，请使用designWidth代替");
+			return designWidth;
+		}
+		
+		/**@private 已经弃用，请使用designHeight代替*/
+		//[Deprecated]
+		public function get desginHeight():Number {
+			console.debug("desginHeight已经弃用，请使用designHeight代替");
+			return designHeight;
 		}
 		
 		/**
@@ -251,7 +272,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 舞台是否处于可见状态。
+		 * 舞台是否处于可见状态(是否进入后台)。
 		 */
 		public function get isVisibility():Boolean {
 			return _isVisibility;
@@ -264,16 +285,18 @@ package laya.display {
 		
 		/**@private */
 		protected function _resetCanvas():void {
+			if (!screenAdaptationEnabled) return;
 			var canvas:HTMLCanvas = Render._mainCanvas;
 			var canvasStyle:* = canvas.source.style;
 			canvas.size(1, 1);
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "";
-			visible = false;
-			Laya.timer.once(100, this, this._changeCanvasSize);
+			//visible = false;
+			//Laya.timer.once(100, this, this._changeCanvasSize);
+			_changeCanvasSize();
 		}
 		
 		/**
-		 * 设置屏幕大小，场景会根据屏幕大小进行适配。
+		 * 设置屏幕大小，场景会根据屏幕大小进行适配。可以动态调用此方法，来更改游戏显示的大小。
 		 * @param	screenWidth		屏幕宽度。
 		 * @param	screenHeight	屏幕高度。
 		 */
@@ -298,32 +321,32 @@ package laya.display {
 			var canvasStyle:* = canvas.source.style;
 			var mat:Matrix = this._canvasTransform.identity();
 			var scaleMode:String = this._scaleMode;
-			var scaleX:Number = screenWidth / desginWidth
-			var scaleY:Number = screenHeight / desginHeight;
-			var canvasWidth:Number = desginWidth;
-			var canvasHeight:Number = desginHeight;
+			var scaleX:Number = screenWidth / designWidth
+			var scaleY:Number = screenHeight / designHeight;
+			var canvasWidth:Number = designWidth;
+			var canvasHeight:Number = designHeight;
 			var realWidth:Number = screenWidth;
 			var realHeight:Number = screenHeight;
 			var pixelRatio:Number = Browser.pixelRatio;
-			_width = desginWidth;
-			_height = desginHeight;
+			_width = designWidth;
+			_height = designHeight;
 			
 			//处理缩放模式
 			switch (scaleMode) {
 			case SCALE_NOSCALE: 
 				scaleX = scaleY = 1;
-				realWidth = desginWidth;
-				realHeight = desginHeight;
+				realWidth = designWidth;
+				realHeight = designHeight;
 				break;
 			case SCALE_SHOWALL: 
 				scaleX = scaleY = Math.min(scaleX, scaleY);
-				canvasWidth = realWidth = Math.round(desginWidth * scaleX);
-				canvasHeight = realHeight = Math.round(desginHeight * scaleY);
+				canvasWidth = realWidth = Math.round(designWidth * scaleX);
+				canvasHeight = realHeight = Math.round(designHeight * scaleY);
 				break;
 			case SCALE_NOBORDER: 
 				scaleX = scaleY = Math.max(scaleX, scaleY);
-				realWidth = Math.round(desginWidth * scaleX);
-				realHeight = Math.round(desginHeight * scaleY);
+				realWidth = Math.round(designWidth * scaleX);
+				realHeight = Math.round(designHeight * scaleY);
 				break;
 			case SCALE_FULL: 
 				scaleX = scaleY = 1;
@@ -332,13 +355,11 @@ package laya.display {
 				break;
 			case SCALE_FIXED_WIDTH: 
 				scaleY = scaleX;
-				_height = screenHeight / scaleX;
-				canvasHeight = Math.round(screenHeight / scaleX);
+				_height = canvasHeight = Math.round(screenHeight / scaleX);
 				break;
 			case SCALE_FIXED_HEIGHT: 
 				scaleX = scaleY;
-				_width = screenWidth / scaleY;
-				canvasWidth = Math.round(screenWidth / scaleY);
+				_width = canvasWidth = Math.round(screenWidth / scaleY);
 				break;
 			}
 			
@@ -579,7 +600,7 @@ package laya.display {
 			_renderCount++;
 			Render.isFlash && repaint();
 			
-			if (!visible) {
+			if (!this._style.visible) {
 				if (_renderCount % 5 === 0) {
 					Stat.loopCount++;
 					MouseManager.instance.runEvent();
@@ -642,7 +663,8 @@ package laya.display {
 			}
 		}
 		
-		/**是否开启全屏，用户点击后进入全屏*/
+		/**是否开启全屏，用户点击后进入全屏。
+		 * 兼容性提示：部分浏览器不允许点击进入全屏，比如Iphone等*/
 		public function set fullScreenEnabled(value:Boolean):void {
 			var document:* = Browser.document;
 			var canvas:* = Render.canvas;
@@ -682,7 +704,7 @@ package laya.display {
 			Laya.stage.event(Event.FULL_SCREEN_CHANGE);
 		}
 		
-		/**退出全屏*/
+		/**退出全屏模式*/
 		public function exitFullscreen():void {
 			var document:* = Browser.document;
 			if (document.exitFullscreen) {

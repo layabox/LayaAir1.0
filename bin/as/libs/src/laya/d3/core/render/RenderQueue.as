@@ -177,11 +177,14 @@ package laya.d3.core.render {
 			var cameraID:int = camera.id;
 			var vertexBuffer:VertexBuffer3D, vertexDeclaration:VertexDeclaration, shader:Shader3D;
 			var forceUploadParams:Boolean;
-			var lastStateMaterial:BaseMaterial,lastStateOwner:Sprite3D;
+			var lastStateMaterial:BaseMaterial, lastStateOwner:Sprite3D;
 			
 			for (var i:int = 0, n:int = _finalElements.length; i < n; i++) {
 				var renderElement:RenderElement = _finalElements[i];
 				var renderObj:IRenderable, material:BaseMaterial, owner:Sprite3D;
+				if (renderElement._onPreRenderFunction!=null) {
+					renderElement._onPreRenderFunction.call(renderElement._sprite3D, state);
+				}
 				if (renderElement._type === 0) {
 					state.owner = owner = renderElement._sprite3D;
 					state.renderElement = renderElement;
@@ -190,7 +193,7 @@ package laya.d3.core.render {
 					if (_begainRenderElement(state, renderObj, material)) {
 						vertexBuffer = renderObj._getVertexBuffer(0);
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
-						shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
+						shader = state._shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
 						forceUploadParams = shader.bind() || (loopCount !== shader._uploadLoopCount);
 						
 						if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
@@ -223,12 +226,6 @@ package laya.d3.core.render {
 							shader._uploadMaterial = material;
 						}
 						
-						if (shader._uploadRenderElement !== renderElement || forceUploadParams) {
-							shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
-							shader._uploadRenderElement = renderElement;
-						}
-						
-						
 						if (lastStateMaterial !== material) {//lastStateMaterial,lastStateOwner存到全局，多摄像机还可优化
 							material._setRenderStateBlendDepth();
 							material._setRenderStateFrontFace(isTarget, owner.transform);
@@ -257,7 +254,7 @@ package laya.d3.core.render {
 					if (_begainRenderElement(state, renderObj, material)) {
 						vertexBuffer = renderObj._getVertexBuffer(0);
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
-						shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
+						shader = state._shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
 						forceUploadParams = shader.bind() || (loopCount !== shader._uploadLoopCount);
 						
 						if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
@@ -285,12 +282,6 @@ package laya.d3.core.render {
 							material._upload();
 							shader._uploadMaterial = material;
 						}
-						
-						if (shader._uploadRenderElement !== renderElement || forceUploadParams) {
-							shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
-							shader._uploadRenderElement = renderElement;
-						}
-						
 						
 						if (lastStateMaterial !== material) {//lastStateMaterial,lastStateOwner存到全局，多摄像机还可优化
 							material._setRenderStateBlendDepth();
@@ -317,7 +308,7 @@ package laya.d3.core.render {
 					if (_begainRenderElement(state, renderObj, material)) {
 						vertexBuffer = renderObj._getVertexBuffer(0);
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
-						shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
+						shader = state._shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
 						forceUploadParams = shader.bind() || (loopCount !== shader._uploadLoopCount);
 						
 						if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
@@ -346,12 +337,6 @@ package laya.d3.core.render {
 							shader._uploadMaterial = material;
 						}
 						
-						if (shader._uploadRenderElement !== renderElement || forceUploadParams) {
-							shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
-							shader._uploadRenderElement = renderElement;
-						}
-						
-						
 						if (lastStateMaterial !== material) {//lastStateMaterial,lastStateOwner存到全局，多摄像机还可优化
 							material._setRenderStateBlendDepth();
 							material._setRenderStateFrontFace(isTarget, owner.transform);
@@ -372,16 +357,16 @@ package laya.d3.core.render {
 			}
 		}
 		
-				/**
+		/**
 		 * @private
 		 * 渲染队列。
 		 * @param	state 渲染状态。
 		 */
-		public function _renderShadow(state:RenderState,isOnePSSM:Boolean):void {//TODO:SM
+		public function _renderShadow(state:RenderState, isOnePSSM:Boolean):void {//TODO:SM
 			var loopCount:int = Stat.loopCount;
 			var scene:BaseScene = _scene;
 			var camera:BaseCamera = state.camera;//TODO:是否直接设置灯光摄像机
-			var vertexBuffer:VertexBuffer3D, vertexDeclaration:VertexDeclaration,shader:Shader3D;
+			var vertexBuffer:VertexBuffer3D, vertexDeclaration:VertexDeclaration, shader:Shader3D;
 			var forceUploadParams:Boolean;
 			var lastStateMaterial:BaseMaterial, lastStateOwner:Sprite3D;
 			
@@ -391,14 +376,14 @@ package laya.d3.core.render {
 				if (renderElement._type === 0) {//TODO:静态合并,动态合并
 					state.owner = owner = renderElement._sprite3D;
 					//传入灯光的MVP矩阵
-					if (!isOnePSSM&&(owner._projectionViewWorldUpdateCamera!==camera||owner._projectionViewWorldUpdateLoopCount!==Stat.loopCount)){
+					if (!isOnePSSM && (owner._projectionViewWorldUpdateCamera !== camera || owner._projectionViewWorldUpdateLoopCount !== Stat.loopCount)) {
 						owner._renderUpdate(state._projectionViewMatrix);
 						owner._projectionViewWorldUpdateLoopCount = Stat.loopCount;
 						owner._projectionViewWorldUpdateCamera = camera;
 					}
 					state.renderElement = renderElement;
 					_preRenderUpdateComponents(owner, state);
-					renderObj = renderElement.renderObj,material = renderElement._material;
+					renderObj = renderElement.renderObj, material = renderElement._material;
 					if (_begainRenderElement(state, renderObj, null)) {
 						vertexBuffer = renderObj._getVertexBuffer(0);
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
@@ -429,9 +414,9 @@ package laya.d3.core.render {
 							shader._uploadMaterial = material;
 						}
 						
-						if (shader._uploadRenderElement !== renderElement || forceUploadParams) {
-							shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
-							shader._uploadRenderElement = renderElement;
+						if (shader._uploadRenderElement !== renderElement || forceUploadParams) {//TODO:是否也删除
+							//shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
+							//shader._uploadRenderElement = renderElement;
 						}
 						
 						if (lastStateMaterial !== material) {//lastStateMaterial,lastStateOwner存到全局，多摄像机还可优化

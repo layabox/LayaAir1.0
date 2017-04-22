@@ -1,4 +1,8 @@
+#ifdef FSHIGHPRECISION
 precision highp float;
+#else
+precision mediump float;
+#endif
 //precision highp float;
 varying vec2 v_texcoord;
 uniform sampler2D texture;

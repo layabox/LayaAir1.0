@@ -23,7 +23,6 @@ package laya.d3.core.glitter {
 	 * <code>Glitter</code> 类用于创建闪光。
 	 */
 	public class Glitter extends RenderableSprite3D {
-		
 		/**
 		 * 获取闪光模板。
 		 * @return  闪光模板。
@@ -61,11 +60,11 @@ package laya.d3.core.glitter {
 		
 		/** @private */
 		private function _changeRenderObject(index:int):RenderElement {
-			var renderObjects:Vector.<RenderElement> = _render.renderObject._renderElements;
+			var renderObjects:Vector.<RenderElement> = _render._renderElements;
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderObject = _render.renderObject;
+			renderElement._render = _render;
 			
 			var material:BaseMaterial = _render.sharedMaterials[index];
 			(material) || (material = GlitterMaterial.defaultMaterial);//确保有材质,由默认材质代替。
@@ -81,18 +80,18 @@ package laya.d3.core.glitter {
 		
 		/** @private */
 		private function _onMaterialChanged(_glitterRender:GlitterRender, index:int, material:BaseMaterial):void {
-			var renderElementCount:int = _glitterRender.renderObject._renderElements.length;
+			var renderElementCount:int = _glitterRender._renderElements.length;
 			(index < renderElementCount) && _changeRenderObject(index);
 		}
 		
 		/** @private */
 		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_render.renderObject);
+			scene.removeFrustumCullingObject(_render);
 		}
 		
 		/** @private */
 		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_render.renderObject);
+			scene.addFrustumCullingObject(_render);
 		}
 		
 		override public function _update(state:RenderState):void {
@@ -103,7 +102,7 @@ package laya.d3.core.glitter {
 		/**
 		 * @private
 		 */
-		override public function _prepareShaderValuetoRender(projectionView:Matrix4x4):void {
+		override public function _renderUpdate(projectionView:Matrix4x4):void {
 			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
 			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
 			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);

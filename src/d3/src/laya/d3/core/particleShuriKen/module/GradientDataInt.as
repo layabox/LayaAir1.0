@@ -29,10 +29,15 @@ package laya.d3.core.particleShuriKen.module {
 		 */
 		public function add(key:Number, value:int):void {
 			if (_currentLength < 8) {
+				if ((_currentLength === 6) && ((key !== 1))) {
+					key = 1;
+					console.log("Warning:the forth key is  be force set to 1.");
+				}
+				
 				_elements[_currentLength++] = key;
 				_elements[_currentLength++] = value;
 			} else {
-				throw new Error("GradientDataInt:  Count must less than 4.");
+				console.log("Warning:data count must lessEqual than 4");
 			}
 		}
 		

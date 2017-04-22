@@ -2,7 +2,6 @@ package laya.resource {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.maths.Rectangle;
-	import laya.net.URL;
 	import laya.renders.Render;
 	import laya.utils.Browser;
 	import laya.utils.RunDriver;
@@ -28,7 +27,6 @@ package laya.resource {
 		private static var _rect1:Rectangle =/*[STATIC SAFE]*/ new Rectangle();
 		/**@private */
 		private static var _rect2:Rectangle =/*[STATIC SAFE]*/ new Rectangle();
-		
 		
 		/** 图片或者canvas 。*/
 		public var bitmap:*;
@@ -128,8 +126,8 @@ package laya.resource {
 			var uv:Array = btex ? source.uv : DEF_UV;
 			var bitmap:* = btex ? source.bitmap : source;
 			var tex:Texture = new Texture(bitmap, null);
-			if (bitmap.width && (x+width) > bitmap.width) width = bitmap.width-x;
-			if (bitmap.height && (y+height) > bitmap.height) height = bitmap.height-y;
+			if (bitmap.width && (x + width) > bitmap.width) width = bitmap.width - x;
+			if (bitmap.height && (y + height) > bitmap.height) height = bitmap.height - y;
 			tex.width = width;
 			tex.height = height;
 			tex.offsetX = offsetX;
@@ -211,7 +209,7 @@ package laya.resource {
 					}
 				}
 				bitmap = null;
-				if (url && this === Laya.loader.getRes(url)) Laya.loader.clearRes(url,forceDispose);
+				if (url && this === Laya.loader.getRes(url)) Laya.loader.clearRes(url, forceDispose);
 				_loaded = false;
 			}
 		}
@@ -288,7 +286,7 @@ package laya.resource {
 		 */
 		public function load(url:String):void {
 			_loaded = false;
-			var fileBitmap:FileBitmap = (this.bitmap || (this.bitmap = HTMLImage.create(URL.formatURL(url)))) as FileBitmap;//WebGl模式被自动替换为WebGLImage
+			var fileBitmap:FileBitmap = (this.bitmap || (this.bitmap = HTMLImage.create(url))) as FileBitmap;//WebGl模式被自动替换为WebGLImage
 			if (fileBitmap) fileBitmap.useNum++;
 			var _this:Texture = this;
 			fileBitmap.onload = function():void {

@@ -7,7 +7,6 @@ package laya.d3.resource.models {
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
-	import laya.d3.graphics.RenderObject;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.graphics.VertexElementUsage;
@@ -74,7 +73,7 @@ package laya.d3.resource.models {
 		 * @param	mesh  网格数据模板。
 		 */
 		public function SubMesh(mesh:Mesh) {
-			_bufferUsage = { };
+			_bufferUsage = {};
 			_mesh = mesh;
 		}
 		
@@ -109,14 +108,14 @@ package laya.d3.resource.models {
 			var material:BaseMaterial = renderElement._material, owner:Sprite3D = renderElement._sprite3D;
 			//TODO NATIVE scene的shaderValue
 			/*
-			var datas:Array=state.scene._shaderValues.data;
-			var len:int = datas.length;
-			for (var i:int = 0; i < len; i ++) {
-				var data:*= datas[i];
-				//(data)&&(renderElement._conchSubmesh.setShaderValue(i, data));
-			}
-			*/
-			conchGraphics3D.drawSubmesh(renderElement._conchSubmesh,0,WebGLContext.TRIANGLES, 0,_indexBuffer.indexCount);
+			   var datas:Array=state.scene._shaderValues.data;
+			   var len:int = datas.length;
+			   for (var i:int = 0; i < len; i ++) {
+			   var data:*= datas[i];
+			   //(data)&&(renderElement._conchSubmesh.setShaderValue(i, data));
+			   }
+			 */
+			conchGraphics3D.drawSubmesh(renderElement._conchSubmesh, 0, WebGLContext.TRIANGLES, 0, _indexBuffer.indexCount);
 		}
 		
 		/**
@@ -125,8 +124,14 @@ package laya.d3.resource.models {
 		 * @param	state 渲染状态。
 		 */
 		public function _render(state:RenderState):void {
-			var indexCount:int = _indexBuffer.indexCount;
-			WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 0);
+			var indexCount:int;
+			if (_indexBufferCount > 0) {
+				indexCount = _indexBufferCount;
+				WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, _indexBufferStart*2);
+			} else {//TODO:兼容旧格式
+				indexCount = _indexBuffer.indexCount;
+				WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 0);
+			}
 			Stat.drawCall++;
 			Stat.trianglesFaces += indexCount / 3;
 		}

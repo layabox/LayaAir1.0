@@ -162,8 +162,8 @@ package laya.d3.core.material {
 				depthTest = true;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
-				srcBlend = BLENDPARAM_ONE;
-				dstBlend = BLENDPARAM_ONE;
+				srcBlend = BLENDPARAM_SRC_ALPHA;
+				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
 				depthFunc = DEPTHFUNC_LEQUAL;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;

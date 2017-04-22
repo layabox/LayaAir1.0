@@ -49,6 +49,16 @@ package laya.debug.tools
 				_txt.text = str + "\n" + _txt.text;
 			}
 		}
+		private static function getTimeStr():String
+		{
+			var dateO:*= __JS__("new Date()");
+			return dateO.toTimeString();
+		}
+		public static function traceTime(msg:String):void
+		{
+			dTrace(getTimeStr());
+			dTrace(msg);
+		}
 		public static function show(...arg):void
 		{
 			arg=getArgArr(arg);

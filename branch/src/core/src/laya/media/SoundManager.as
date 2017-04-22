@@ -1,7 +1,6 @@
 package laya.media {
 	import laya.events.Event;
 	import laya.net.Loader;
-	import laya.net.URL;
 	import laya.utils.Handler;
 	
 	/**
@@ -40,6 +39,7 @@ package laya.media {
 		private static var _musicCompleteHandler:Handler = null;
 		/**@private */
 		public static var _soundClass:Class;
+		
 		/**
 		 * 添加播放的声音实例。
 		 * @param channel <code>SoundChannel</code> 对象。
@@ -87,13 +87,10 @@ package laya.media {
 			return _autoStopMusic;
 		}
 		
-		private static function _visibilityChange():void
-		{
-			if (Laya.stage.isVisibility)
-			{
+		private static function _visibilityChange():void {
+			if (Laya.stage.isVisibility) {
 				_stageOnFocus();
-			}else
-			{
+			} else {
 				_stageOnBlur();
 			}
 		}
@@ -104,7 +101,7 @@ package laya.media {
 					_blurPaused = true;
 					_musicLoops = _musicChannel.loops;
 					_musicCompleteHandler = _musicChannel.completeHandler;
-					_musicPosition=_musicChannel.position;
+					_musicPosition = _musicChannel.position;
 					_musicChannel.stop();
 					Laya.stage.once(Event.MOUSE_DOWN, null, _stageOnFocus);
 				}
@@ -114,8 +111,10 @@ package laya.media {
 		
 		private static function _stageOnFocus():void {
 			Laya.stage.off(Event.MOUSE_DOWN, null, _stageOnFocus);
-			if (_blurPaused) {			
-				playMusic(_tMusic,_musicLoops,_musicCompleteHandler,_musicPosition);
+			if (_blurPaused) {
+				if (_tMusic) {
+					playMusic(_tMusic, _musicLoops, _musicCompleteHandler, _musicPosition);
+				}
 				_blurPaused = false;
 			}
 		}
@@ -135,7 +134,7 @@ package laya.media {
 			return _muted;
 		}
 		
-		public static function set soundMuted(value:Boolean):void {			
+		public static function set soundMuted(value:Boolean):void {
 			_soundMuted = value;
 		}
 		
@@ -172,10 +171,8 @@ package laya.media {
 		 * @param startTime  声音播放起始时间。
 		 * @return SoundChannel对象。
 		 */
-		public static function playSound(url:String, loops:int = 1, complete:Handler = null, soundClass:Class = null,startTime:Number=0):SoundChannel {
-			if (_muted)
-				return null;
-			url = URL.formatURL(url);
+		public static function playSound(url:String, loops:int = 1, complete:Handler = null, soundClass:Class = null, startTime:Number = 0):SoundChannel {
+			if (_muted) return null;
 			if (url == _tMusic) {
 				if (_musicMuted) return null;
 			} else {
@@ -200,7 +197,7 @@ package laya.media {
 		 * 释放声音资源。
 		 * @param url 声音文件地址。
 		 */
-		public static function destroySound(url:String):void {			
+		public static function destroySound(url:String):void {
 			var tSound:Sound = Laya.loader.getRes(url);
 			if (tSound) {
 				Loader.clearRes(url);
@@ -216,12 +213,10 @@ package laya.media {
 		 * @param startTime  声音播放起始时间。
 		 * @return audio对象。
 		 */
-		public static function playMusic(url:String, loops:int = 0, complete:Handler = null,startTime:Number=0):SoundChannel {
-			url = URL.formatURL(url);
+		public static function playMusic(url:String, loops:int = 0, complete:Handler = null, startTime:Number = 0):SoundChannel {
 			_tMusic = url;
-			if (_musicChannel)
-				_musicChannel.stop();
-			return _musicChannel = playSound(url, loops, complete, null,startTime);
+			if (_musicChannel) _musicChannel.stop();
+			return _musicChannel = playSound(url, loops, complete, null, startTime);
 		}
 		
 		/**
@@ -229,7 +224,6 @@ package laya.media {
 		 * @param url  声音文件地址。
 		 */
 		public static function stopSound(url:String):void {
-			url = URL.formatURL(url);
 			var i:int;
 			var channel:SoundChannel;
 			for (i = _channels.length - 1; i >= 0; i--) {
@@ -243,8 +237,7 @@ package laya.media {
 		/**
 		 * 停止所有声音播放。
 		 */
-		public static function stopAll():void
-		{
+		public static function stopAll():void {
 			_tMusic = null;
 			var i:int;
 			var channel:SoundChannel;
@@ -257,15 +250,14 @@ package laya.media {
 		/**
 		 * 停止所有音效,不包括背景音乐。
 		 */
-		public static function stopAllSound():void
-		{
+		public static function stopAllSound():void {
 			var i:int;
 			var channel:SoundChannel;
 			for (i = _channels.length - 1; i >= 0; i--) {
 				channel = _channels[i];
 				if (channel.url != _tMusic) {
 					channel.stop();
-				}			
+				}
 			}
 		}
 		
@@ -275,8 +267,7 @@ package laya.media {
 		 */
 		public static function stopMusic():void {
 			_tMusic = null;
-			if (_musicChannel)
-				_musicChannel.stop();
+			if (_musicChannel) _musicChannel.stop();
 		}
 		
 		/**
@@ -284,9 +275,8 @@ package laya.media {
 		 * @param volume 音量 标准值为1
 		 * @param url  声音文件地址。为null(默认值)时对所有音效起作用，不为空时仅对对于声音生效
 		 */
-		public static function setSoundVolume(volume:Number, url:String = null):void {	
+		public static function setSoundVolume(volume:Number, url:String = null):void {
 			if (url) {
-				url = URL.formatURL(url);
 				_setVolume(url, volume);
 			} else {
 				soundVolume = volume;

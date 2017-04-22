@@ -9,7 +9,6 @@ package laya.d3.core.scene {
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.graphics.DynamicBatch;
 	import laya.d3.graphics.DynamicBatchManager;
-	import laya.d3.graphics.RenderObject;
 	import laya.d3.graphics.StaticBatch;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundFrustum;
@@ -42,7 +41,7 @@ package laya.d3.core.scene {
 		private var _scene:BaseScene = null;
 		private var _parent:OctreeNode = null;
 		public var _children:Vector.<OctreeNode> = new Vector.<OctreeNode>(CHILDNUM);
-		private var _objects:Vector.<RenderObject> = new Vector.<RenderObject>();
+		private var _objects:Vector.<BaseRender> = new Vector.<BaseRender>();
 		private var _currentDepth:int = 0;
 		private var _tempBoundBoxCorners:Vector.<Vector3> = new Vector.<Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		
@@ -57,11 +56,11 @@ package laya.d3.core.scene {
 			relaxBox = new BoundBox(min, max);	
 		}
 		
-		public function addTreeNode(renderObj:RenderObject):void {
-			if (Collision.boxContainsBox(_exactBox, renderObj._render.boundingBox) === ContainmentType.Contains)
-				addNodeDown(renderObj, 0);
+		public function addTreeNode(render:BaseRender):void {
+			if (Collision.boxContainsBox(_relaxBox, render.boundingBox) === ContainmentType.Contains)
+				addNodeDown(render, 0);
 			else
-				addObject(renderObj);
+				addObject(render);
 		}
 		
 		public function get exactBox():BoundBox {
@@ -120,12 +119,12 @@ package laya.d3.core.scene {
 			return child;
 		}
 		
-		public function addObject(object:RenderObject):void {
+		public function addObject(object:BaseRender):void {
 			object._treeNode = this;
 			_objects.push(object);
 		}
 		
-		public function removeObject(object:RenderObject):Boolean {
+		public function removeObject(object:BaseRender):Boolean {
 			if (object._treeNode != this) {
 				trace("OctreeNode::removeObject error");
 				return false;
@@ -142,25 +141,24 @@ package laya.d3.core.scene {
 			_objects.length = 0;
 		}
 		
-		public function addNodeUp(object:RenderObject, depth:int):void {
-			if (_parent && (Collision.boxContainsBox(_exactBox, object._render.boundingBox) !== ContainmentType.Contains)) {
-				_parent.addNodeUp(object, depth - 1);
+		public function addNodeUp(render:BaseRender, depth:int):void {
+			if (_parent && (Collision.boxContainsBox(_exactBox, render.boundingBox) !== ContainmentType.Contains)) {
+				_parent.addNodeUp(render, depth - 1);
 			} else
-				addNodeDown(object, depth);
+				addNodeDown(render, depth);
 		}
 		
-		public function addNodeDown(object:RenderObject, depth:int):void {
+		public function addNodeDown(render:BaseRender, depth:int):void {
 			if (depth < _scene.treeLevel) {
-				var render:BaseRender = object._render;
 				var childIndex:int = inChildIndex(render.boundingBoxCenter);
 				var child:OctreeNode = addChild(childIndex);
 				
 				if (Collision.boxContainsBox(child._relaxBox, render.boundingBox) === ContainmentType.Contains) {
-					child.addNodeDown(object, ++depth);
+					child.addNodeDown(render, ++depth);
 				} else
-					addObject(object);
+					addObject(render);
 			} else {
-				addObject(object);
+				addObject(render);
 			}
 		}
 		
@@ -171,16 +169,16 @@ package laya.d3.core.scene {
 			return z * 4 + y * 2 + x;
 		}
 		
-		public function updateObject(object:RenderObject):void {
+		public function updateObject(render:BaseRender):void {
 			//TODO 优化，效率不高
-			if (Collision.boxContainsBox(_relaxBox, object._render.boundingBox) === ContainmentType.Contains) {
-				removeObject(object);
-				object._treeNode = null;
-				addNodeDown(object, _currentDepth);
+			if (Collision.boxContainsBox(_relaxBox, render.boundingBox) === ContainmentType.Contains) {
+				removeObject(render);
+				render._treeNode = null;
+				addNodeDown(render, _currentDepth);
 			} else if (_parent) {
-				removeObject(object);
-				object._treeNode = null;
-				_parent.addNodeUp(object, _currentDepth - 1);
+				removeObject(render);
+				render._treeNode = null;
+				_parent.addNodeUp(render, _currentDepth - 1);
 			}
 		}
 		
@@ -188,19 +186,18 @@ package laya.d3.core.scene {
 			var i:int, j:int, n:int, m:int;
 			var dynamicBatchManager:DynamicBatchManager = _scene._dynamicBatchManager;
 			for (i = 0, n = _objects.length; i < n; i++) {
-				var renderObject:RenderObject = _objects[i];
+				var render:BaseRender = _objects[i];
 				//if ((pObject->m_nFlag & nFlags) == 0) continue;//TODO:阴影等
-				if (Layer.isVisible(renderObject._layerMask)  && renderObject._enable) {
-					var render:BaseRender = renderObject._render;
+				if (Layer.isVisible(render._owner.layer.mask)  && render.enable) {
 					if (testVisible) {
 						Stat.treeSpriteCollision += 1;
 						if (boundFrustum.containsBoundSphere(render.boundingSphere) === ContainmentType.Disjoint)
 							continue;
 					}
 					
-					renderObject._owner._prepareShaderValuetoRender(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
-					renderObject._distanceForSort = Vector3.distance(render.boundingSphere.center, cameraPosition) + render.sortingFudge;
-					var renderElements:Vector.<RenderElement> = renderObject._renderElements;
+					render._owner._renderUpdate(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
+					render._distanceForSort = Vector3.distance(render.boundingSphere.center, cameraPosition) + render.sortingFudge;
+					var renderElements:Vector.<RenderElement> = render._renderElements;
 					for (j = 0, m = renderElements.length; j < m; j++) {
 						var renderElement:RenderElement = renderElements[j];
 						var staticBatch:StaticBatch = renderElement._staticBatch;//TODO:换vertexBuffer后应该取消合并,修改顶点数据后，从动态列表移除，暂时忽略，不允许直接修改Buffer。
@@ -208,7 +205,7 @@ package laya.d3.core.scene {
 							staticBatch._addRenderElement(renderElement);
 						} else {
 							var renderObj:IRenderable = renderElement.renderObj;
-							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1) && (renderObj._getIndexBuffer()) && (renderElement._material.renderQueue < 2) && renderElement._canDynamicBatch && (!renderObject._owner.isStatic))//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并//TODO:静态物体如果没合并走动态合并现在会出BUG,lightmapUV问题。
+							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1) && (renderObj._getIndexBuffer()) && (renderElement._material.renderQueue < 2) && renderElement._canDynamicBatch && (!render._owner.isStatic))//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并//TODO:静态物体如果没合并走动态合并现在会出BUG,lightmapUV问题。
 								dynamicBatchManager._addPrepareRenderElement(renderElement);
 							else
 								_scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);
@@ -242,9 +239,8 @@ package laya.d3.core.scene {
 			var i:int, j:int, n:int, m:int;
 			var dynamicBatchManager:DynamicBatchManager = _scene._dynamicBatchManager;
 			for (i = 0, n = _objects.length; i < n; i++) {
-				var renderObject:RenderObject = _objects[i];
-				var baseRender:BaseRender = renderObject._render;
-				if (baseRender.castShadow && Layer.isVisible(renderObject._layerMask)&& renderObject._enable) {
+				var baseRender:BaseRender = _objects[i];
+				if (baseRender.castShadow && Layer.isVisible(baseRender._owner.layer.mask)&& baseRender.enable) {
 					if (testVisible && lightBoundFrustum[0].containsBoundSphere(baseRender.boundingSphere) === ContainmentType.Disjoint)
 						continue;
 					
@@ -252,7 +248,7 @@ package laya.d3.core.scene {
 					for (var k:int = 1, kNum:int = lightBoundFrustum.length; k < kNum; k++) {
 						var shadowQueue:RenderQueue = splitShadowQueues[k-1];
 						if (lightBoundFrustum[k].containsBoundSphere(baseRender.boundingSphere) !== ContainmentType.Disjoint) {
-							var renderElements:Vector.<RenderElement> = renderObject._renderElements;
+							var renderElements:Vector.<RenderElement> = baseRender._renderElements;
 							for (j = 0, m = renderElements.length; j < m; j++)
 								shadowQueue._addRenderElement(renderElements[j]);
 						}
@@ -284,14 +280,13 @@ package laya.d3.core.scene {
 			var i:int, j:int, n:int, m:int;
 			//var cameraPosition:Vector3 = camera.transform.position;
 			for (i = 0, n = _objects.length; i < n; i++) {
-				var renderObject:RenderObject = _objects[i];
-				var baseRender:BaseRender = renderObject._render;
-				if (baseRender.castShadow && Layer.isVisible(renderObject._layerMask)&& renderObject._enable) {
+				var baseRender:BaseRender = _objects[i];
+				if (baseRender.castShadow && Layer.isVisible(baseRender._owner.layer.mask)&& baseRender.enable) {
 					if (testVisible && lightBoundFrustum.containsBoundSphere(baseRender.boundingSphere) === ContainmentType.Disjoint)
 						continue;
-					renderObject._owner._prepareShaderValuetoRender(lightViewProjectMatrix);
+					baseRender._owner._renderUpdate(lightViewProjectMatrix);
 					//TODO:计算距离排序
-					var renderElements:Vector.<RenderElement> = renderObject._renderElements;
+					var renderElements:Vector.<RenderElement> = baseRender._renderElements;
 					for (j = 0, m = renderElements.length; j < m; j++)
 						shadowQueue._addRenderElement(renderElements[j]);
 				}

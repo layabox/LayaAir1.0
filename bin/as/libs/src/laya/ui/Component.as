@@ -220,7 +220,7 @@ package laya.ui {
 		public function set dataSource(value:*):void {
 			_dataSource = value;
 			for (var prop:String in _dataSource) {
-				if (hasOwnProperty(prop)) {
+				if (hasOwnProperty(prop) && !(this[prop] is Function)) {
 					this[prop] = _dataSource[prop];
 				}
 			}

@@ -11,7 +11,7 @@ package laya.d3.terrain {
 	 */
 	public class TerrainLeaf {
 		public static var CHUNK_GRID_NUM:int = 64;
-		public static var LEAF_GRID_NUM:int = 16;
+		public static var LEAF_GRID_NUM:int = 32;
 		
 		public static var LEAF_PLANE_VERTEXT_COUNT:int = (LEAF_GRID_NUM + 1) * (LEAF_GRID_NUM + 1);
 		public static var LEAF_SKIRT_VERTEXT_COUNT:int =  (LEAF_GRID_NUM + 1) * 2 * 4;
@@ -30,6 +30,7 @@ package laya.d3.terrain {
 		public var _boundingBox:BoundBox;
 		public var _sizeOfY:Vector2;
 		public var _currentLODLevel:int;
+		private var _lastDistanceToEye:Number;
 		private var _originalBoundingSphere:BoundSphere;
 		private var _originalBoundingBox:BoundBox;
 		private var _originalBoundingBoxCorners:Vector.<Vector3>;
@@ -38,6 +39,7 @@ package laya.d3.terrain {
 		private var _beginGridX:int;//针对整个大地形的偏移
 		private var _beginGridZ:int;//针对整个大地形的偏移
 		private var _LODError:Float32Array;
+		
 		
 		public static function __init__():void
 		{
@@ -270,7 +272,7 @@ package laya.d3.terrain {
 					//给顶点赋值
 					vertextBuffer[nNum] = normal.x; nNum++; vertextBuffer[nNum] = normal.y; nNum++; vertextBuffer[nNum] = normal.z; nNum++;
 					vertextBuffer[nNum] = (beginX + j) / CHUNK_GRID_NUM; nNum++; vertextBuffer[nNum] =  (beginZ + 0) / CHUNK_GRID_NUM; nNum++; 
-					vertextBuffer[nNum] = _beginGridX + j; nNum++; vertextBuffer[nNum] = _beginGridZ + (i == 0) ? -1 : 0; nNum++;
+					vertextBuffer[nNum] = _beginGridX + j; nNum++; vertextBuffer[nNum] = hZIndex; nNum++;
 				}
 			}
 			//下
@@ -297,7 +299,7 @@ package laya.d3.terrain {
 					//给顶点赋值
 					vertextBuffer[nNum] = normal.x; nNum++; vertextBuffer[nNum] = normal.y; nNum++; vertextBuffer[nNum] = normal.z; nNum++;
 					vertextBuffer[nNum] = (beginX + j) / CHUNK_GRID_NUM; nNum++; vertextBuffer[nNum] =  (beginZ + LEAF_GRID_NUM) / CHUNK_GRID_NUM; nNum++; 
-					vertextBuffer[nNum] = _beginGridX + j; nNum++; vertextBuffer[nNum] = _beginGridZ + LEAF_GRID_NUM + i; nNum++;
+					vertextBuffer[nNum] = _beginGridX + j; nNum++; vertextBuffer[nNum] = hZIndex; nNum++;
 				}
 			}
 			//左
@@ -324,7 +326,7 @@ package laya.d3.terrain {
 					//给顶点赋值
 					vertextBuffer[nNum] = normal.x; nNum++; vertextBuffer[nNum] = normal.y; nNum++; vertextBuffer[nNum] = normal.z; nNum++;
 					vertextBuffer[nNum] = (beginX + 0) / CHUNK_GRID_NUM; nNum++; vertextBuffer[nNum] =  (beginZ + j) / CHUNK_GRID_NUM; nNum++; 
-					vertextBuffer[nNum] = _beginGridX + (i == 0) ? 0 : -1; nNum++; vertextBuffer[nNum] = _beginGridZ + j; nNum++;
+					vertextBuffer[nNum] = hXIndex; nNum++; vertextBuffer[nNum] = _beginGridZ + j; nNum++;
 				}
 			}
 			//右
@@ -350,7 +352,7 @@ package laya.d3.terrain {
 					//给顶点赋值
 					vertextBuffer[nNum] = normal.x; nNum++; vertextBuffer[nNum] = normal.y; nNum++; vertextBuffer[nNum] = normal.z; nNum++;
 					vertextBuffer[nNum] = (beginX + LEAF_GRID_NUM) / CHUNK_GRID_NUM; nNum++; vertextBuffer[nNum] =  (beginZ + j) / CHUNK_GRID_NUM; nNum++; 
-					vertextBuffer[nNum] =  _beginGridX + LEAF_GRID_NUM + (i == 1 ? 0 : 1 ); nNum++; vertextBuffer[nNum] = _beginGridZ + j; nNum++;
+					vertextBuffer[nNum] =  hXIndex; nNum++; vertextBuffer[nNum] = _beginGridZ + j; nNum++;
 				}
 			}
 		}
@@ -418,18 +420,30 @@ package laya.d3.terrain {
 				_LODError[i] = maxError;
 			}
 		}
-		public function determineLod(eyePos:Vector3, perspectiveFactor:Number, tolerance:Number):int
+		public function determineLod(eyePos:Vector3, perspectiveFactor:Number, tolerance:Number, tolerAndPerspectiveChanged:Boolean ):int
 		{
-			return 0;
 			var nDistanceToEye:Number = Vector3.distance(eyePos, _boundingSphere.center );
-			for (var i:int = _maxLODLevel; i >= 1; i--) 
+			var n:int = _maxLODLevel;
+			if ( !tolerAndPerspectiveChanged )
 			{
-				if ( _LODError[i] / nDistanceToEye * perspectiveFactor < tolerance)
+				if ( _lastDistanceToEye == nDistanceToEye )
+				{
+					return _currentLODLevel;
+				}
+				else if ( _lastDistanceToEye > nDistanceToEye )
+				{
+					n = _currentLODLevel;
+				}
+			}
+			for (var i:int = n; i >= 1; i--) 
+			{
+				if ( Terrain.LOD_DISTANCE_FACTOR * _LODError[i] / nDistanceToEye * perspectiveFactor < tolerance)
 				{
 					_currentLODLevel = i;
 					break;
 				}
 			}
+			_lastDistanceToEye = nDistanceToEye;
 			return _currentLODLevel;
 		}
 	}

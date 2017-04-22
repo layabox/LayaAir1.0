@@ -6,6 +6,7 @@ package laya.debug.tools
 	import laya.maths.Rectangle;
 	import laya.debug.view.nodeInfo.ToolPanel;
 	import laya.debug.DebugTool;
+	import laya.utils.HitArea;
 	
 	/**
 	 * ...
@@ -90,42 +91,15 @@ package laya.debug.tools
 			IDTools.idObj(sp);
 			var isInAnlyseChain:Boolean;
 			isInAnlyseChain = nodeO[IDTools.getObjID(sp)];
-			var transform:Matrix = sp.transform || _matrix;
-			var pivotX:Number = sp.pivotX;
-			var pivotY:Number = sp.pivotY;
-			
-			//设置矩阵信息为相对父亲的偏移
-			if (pivotX === 0 && pivotY === 0)
-			{
-				transform.setTranslate(sp.x, sp.y);
-			}
-			else
-			{
-				//如果有轴心旋转，则矩阵信息加上轴心的影响
-				if (transform === _matrix)
-				{
-					transform.setTranslate(sp.x - pivotX, sp.y - pivotY);
-				}
-				else
-				{
-					var cos:Number = transform.cos;
-					var sin:Number = transform.sin;
-					transform.setTranslate(sp.x - (pivotX * cos - pivotY * sin) * sp.scaleX, sp.y - (pivotX * sin + pivotY * cos) * sp.scaleY);
-				}
-			}
-			
-			//变换鼠标坐标到节点坐标系
-			transform.invertTransformPoint(_point.setTo(mouseX, mouseY));
-			//重置transform
-			transform.setTranslate(0, 0);
+			_point.setTo(mouseX, mouseY);
+			sp.fromParentPoint(_point);
 			mouseX = _point.x;
-			mouseY = _point.y;
+			mouseY = _point.y;	
 			
 			//如果有裁剪，则先判断是否在裁剪范围内
 			var scrollRect:Rectangle = sp.scrollRect;
-			if (scrollRect)
-			{
-				_rect.setTo(0, 0, scrollRect.width, scrollRect.height);
+			if (scrollRect) {
+				_rect.setTo(scrollRect.x, scrollRect.y, scrollRect.width, scrollRect.height);
 				var isHit:Boolean = _rect.contains(mouseX, mouseY);
 				if (!isHit)
 				{
@@ -136,6 +110,7 @@ package laya.debug.tools
 					return false;
 				}
 			}
+			
 			
 			//先判定子对象是否命中
 			
@@ -182,7 +157,7 @@ package laya.debug.tools
 				//只有接受交互事件的，才进行处理
 				if (child.mouseEnabled && child.visible)
 				{
-					flag = check(child, mouseX + (scrollRect ? scrollRect.x : 0), mouseY + (scrollRect ? scrollRect.y : 0), callBack);
+					flag = check(child, mouseX , mouseY, callBack);
 					
 					if (flag)
 					{
@@ -267,6 +242,9 @@ package laya.debug.tools
 		}
 		private static function hitTest(sp:Sprite, mouseX:Number, mouseY:Number):Boolean {
 			var isHit:Boolean = false;
+			if (sp.hitArea is HitArea) {
+				return sp.hitArea.isHit(mouseX, mouseY);
+			}
 			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough || sp.hitArea) {
 				//判断是否在矩形区域内
 				var hitRect:Rectangle = _rect;

@@ -576,6 +576,7 @@ package laya.d3.utils {
 		
 		/** @private */
 		public static function _parseHierarchyProp(innerResouMap:Object, node:Sprite3D, json:Object):void {
+			
 			var customProps:Object = json.customProps;
 			var transValue:Array = customProps.translate;
 			var loccalPosition:Vector3 = node.transform.localPosition;
@@ -744,7 +745,40 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function _computeBoneAndAnimationDatasByBindPoseMatrxix(bones:*, curData:Float32Array, inverGlobalBindPose:Vector.<Matrix4x4>, outBonesDatas:Float32Array, outAnimationDatas:Float32Array):void {
+		public static function _computeBoneAndAnimationDatasByBindPoseMatrxix(bones:*, curData:Float32Array, inverGlobalBindPose:Vector.<Matrix4x4>, outBonesDatas:Float32Array, outAnimationDatas:Float32Array,boneIndexToMesh:Vector.<int>):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var offset:int = 0;
+			var matOffset:int = 0;
+			
+			var i:int;
+			var parentOffset:int;
+			var boneLength:int = bones.length;
+			for (i = 0; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++) {
+				//将旋转平移缩放合成矩阵...........................................
+				Utils3D._rotationTransformScaleSkinAnimation(curData[offset + 0], curData[offset + 1], curData[offset + 2], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 7], curData[offset + 8], curData[offset + 9], outBonesDatas, matOffset);
+				
+				if (i != 0) {
+					parentOffset = bones[i].parentIndex * 16;
+					Utils3D.mulMatrixByArray(outBonesDatas, parentOffset, outBonesDatas, matOffset, outBonesDatas, matOffset);
+				}
+			}
+			
+			var n:int = inverGlobalBindPose.length;
+			for (i = 0; i < n; i++)//将绝对矩阵乘以反置矩阵................................................
+			{
+				Utils3D.mulMatrixByArrayAndMatrixFast(outBonesDatas, boneIndexToMesh[i]*16, inverGlobalBindPose[i], outAnimationDatas, i * 16);//TODO:-1处理
+			}
+		}
+		
+		/** @private */
+		public static function _computeAnimationDatasByArrayAndMatrixFast(inverGlobalBindPose:Vector.<Matrix4x4>, bonesDatas:Float32Array, outAnimationDatas:Float32Array,boneIndexToMesh:Vector.<int>):void {
+			for (var i:int = 0,n:int=inverGlobalBindPose.length; i < n; i++)//将绝对矩阵乘以反置矩阵
+				Utils3D.mulMatrixByArrayAndMatrixFast(bonesDatas, boneIndexToMesh[i] * 16, inverGlobalBindPose[i], outAnimationDatas, i*16);//TODO:-1处理
+		}
+		
+		
+				/** @private */
+		public static function _computeBoneAndAnimationDatasByBindPoseMatrxixOld(bones:*, curData:Float32Array, inverGlobalBindPose:Vector.<Matrix4x4>, outBonesDatas:Float32Array, outAnimationDatas:Float32Array):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var offset:int = 0;
 			var matOffset:int = 0;
@@ -771,7 +805,7 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function _computeAnimationDatasByArrayAndMatrixFast(inverGlobalBindPose:Vector.<Matrix4x4>, bonesDatas:Float32Array, outAnimationDatas:Float32Array):void {
+		public static function _computeAnimationDatasByArrayAndMatrixFastOld(inverGlobalBindPose:Vector.<Matrix4x4>, bonesDatas:Float32Array, outAnimationDatas:Float32Array):void {
 			var n:int = inverGlobalBindPose.length;
 			for (var i:int = 0; i < n; i++)//将绝对矩阵乘以反置矩阵................................................
 			{

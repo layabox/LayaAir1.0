@@ -149,7 +149,7 @@ package laya.utils {
 					handler.caller = caller;
 					handler.method = method;
 					handler.args = args;
-					handler.exeTime = delay + (useFrame ? this.currFrame : Browser.now());
+					handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer+Browser.now()-_lastTimer);
 					return;
 				}
 			}
@@ -162,7 +162,7 @@ package laya.utils {
 			handler.caller = caller;
 			handler.method = method;
 			handler.args = args;
-			handler.exeTime = delay + (useFrame ? this.currFrame : Browser.now());
+			handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer+Browser.now()-_lastTimer);
 			
 			//索引handler
 			_indexHandler(handler);
@@ -347,7 +347,7 @@ class TimerHandler {
 		args = null;
 	}
 	
-	public function run(widthClear:Boolean):void {
+	public function run(withClear:Boolean):void {
 		var caller:* = this.caller;
 		/*[IF-FLASH]*/
 		if ((caller is Node) && caller.destroyed)
@@ -356,7 +356,7 @@ class TimerHandler {
 		//[IF-SCRIPT] if (caller && caller.destroyed) return clear();
 		var method:Function = this.method;
 		var args:Array = this.args;
-		widthClear && clear();
+		withClear && clear();
 		if (method == null) return;
 		args ? method.apply(caller, args) : method.call(caller);
 	}

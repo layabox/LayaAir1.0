@@ -445,10 +445,10 @@ package laya.ui {
 			
 			if (!this._checkElastic) {
 				if (this.elasticDistance > 0) {
-					if (!this._checkElastic && _lastOffset != 0) {
-						this._checkElastic = true;
+					if (!this._checkElastic && _lastOffset != 0) {					
 						if ((_lastOffset > 0 && _value <= min) || (_lastOffset < 0 && _value >= max)) {
 							this._isElastic = true;
+							this._checkElastic = true;
 						} else {
 							this._isElastic = false;
 						}
@@ -457,16 +457,14 @@ package laya.ui {
 					_checkElastic = true;
 				}
 			}
-			if (this._checkElastic) {
-				if (this._isElastic) {
-					if (_value <= min) {
-						value -= _lastOffset * Math.max(0, (1 - ((min - _value) / elasticDistance)));
-					} else if (_value >= max) {
-						value -= _lastOffset * Math.max(0, (1 - ((_value - max) / elasticDistance)));
-					}
-				} else {
-					value -= _lastOffset;
+			if (this._isElastic) {
+				if (_value <= min) {
+					value -= _lastOffset * Math.max(0, (1 - ((min - _value) / elasticDistance)));
+				} else if (_value >= max) {
+					value -= _lastOffset * Math.max(0, (1 - ((_value - max) / elasticDistance)));
 				}
+			} else {
+				value -= _lastOffset;
 			}
 		}
 		

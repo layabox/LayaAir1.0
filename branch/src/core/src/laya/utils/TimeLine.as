@@ -251,6 +251,7 @@ package laya.utils {
 		 * @param	loop 是否循环播放。
 		 */
 		public function play(timeOrLabel:* = 0, loop:Boolean = false):void {
+			if (!_tweenDataList) return;
 			if (_startTimeSort) {
 				_startTimeSort = false;
 				//对数据排序
@@ -306,6 +307,7 @@ package laya.utils {
 			if (_currTime >= _startTime) {
 				if (_loopKey) {
 					_complete();
+					if (!_tweenDataList) return;
 					gotoTime(0);
 				} else {
 					for (var p:* in _tweenDic) {

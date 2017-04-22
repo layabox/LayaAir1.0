@@ -891,6 +891,7 @@ package laya.webgl.canvas
 		
 		override public function drawTexture2(x:Number, y:Number, pivotX:Number, pivotY:Number, transform:Matrix, alpha:Number, blendMode:String, args:Array):void
 		{
+			if (alpha == 0) return;
 			var curMat:Matrix = _curMat;
 			_x = x * curMat.a + y * curMat.c;
 			_y = y * curMat.d + x * curMat.b;

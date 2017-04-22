@@ -47,8 +47,6 @@ package laya.d3.resource.models {
 		/** @private */
 		public var _boneNames:Vector.<String>;
 		/** @private */
-		public var _boneParents:Int16Array;
-		/** @private */
 		public var _bindPoses:Vector.<Matrix4x4>;
 		/** @private */
 		public var _inverseBindPoses:Vector.<Matrix4x4>;

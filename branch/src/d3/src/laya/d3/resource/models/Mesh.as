@@ -41,42 +41,65 @@ package laya.d3.resource.models {
 		/** @private */
 		private var _subMeshes:Vector.<SubMesh>;
 		/** @private */
+		public var _vertexBuffers:Vector.<VertexBuffer3D>;
+		/** @private */
+		public var _indexBuffer:IndexBuffer3D;
+		/** @private */
 		public var _boneNames:Vector.<String>;
+		/** @private */
+		public var _boneParents:Int16Array;
 		/** @private */
 		public var _bindPoses:Vector.<Matrix4x4>;
 		/** @private */
 		public var _inverseBindPoses:Vector.<Matrix4x4>;
-		/** @private */
-		public var _vertexBuffers:Vector.<VertexBuffer3D>;
-		/** @private */
-		public var _indexBuffers:IndexBuffer3D;
+		
 		/**
 		 * 获取网格顶点
 		 * @return 网格顶点。
 		 */
 		override public function get positions():Vector.<Vector3> {
 			var vertices:Vector.<Vector3> = new Vector.<Vector3>();
-			var submesheCount:int = _subMeshes.length;
-			for (var i:int = 0; i < submesheCount; i++) {
-				var subMesh:SubMesh = _subMeshes[i];
-				var vertexBuffer:VertexBuffer3D = subMesh._getVertexBuffer();
-				
-				var positionElement:VertexElement;
-				var vertexElements:Array = vertexBuffer.vertexDeclaration.getVertexElements();
-				var j:int;
-				for (j = 0; j < vertexElements.length; j++) {
-					var vertexElement:VertexElement = vertexElements[j];
-					if (vertexElement.elementFormat === VertexElementFormat.Vector3 && vertexElement.elementUsage === VertexElementUsage.POSITION0) {
-						positionElement = vertexElement;
-						break;
+			var i:int, j:int, vertexBuffer:VertexBuffer3D, positionElement:VertexElement, vertexElements:Array, vertexElement:VertexElement, ofset:int, verticesData:Float32Array;
+			if (_vertexBuffers.length !== 0) {
+				var vertexBufferCount:int = _vertexBuffers.length;
+				for (i = 0; i < vertexBufferCount; i++) {
+					vertexBuffer = _vertexBuffers[i];
+					
+					vertexElements = vertexBuffer.vertexDeclaration.getVertexElements();
+					for (j = 0; j < vertexElements.length; j++) {
+						vertexElement = vertexElements[j];
+						if (vertexElement.elementFormat === VertexElementFormat.Vector3 && vertexElement.elementUsage === VertexElementUsage.POSITION0) {
+							positionElement = vertexElement;
+							break;
+						}
+					}
+					
+					 verticesData = vertexBuffer.getData();
+					for (j = 0; j < verticesData.length; j += vertexBuffer.vertexDeclaration.vertexStride / 4) {
+						ofset = j + positionElement.offset / 4;
+						vertices.push(new Vector3(verticesData[ofset + 0], verticesData[ofset + 1], verticesData[ofset + 2]));
 					}
 				}
-				
-				var verticesData:Float32Array = vertexBuffer.getData();
-				for (j = 0; j < verticesData.length; j += vertexBuffer.vertexDeclaration.vertexStride / 4) {
-					var ofset:int = j + positionElement.offset / 4;
-					var position:Vector3 = new Vector3(verticesData[ofset + 0], verticesData[ofset + 1], verticesData[ofset + 2]);
-					vertices.push(position);
+			} else {//兼容旧格式
+				var submesheCount:int = _subMeshes.length;
+				for (i = 0; i < submesheCount; i++) {
+					var subMesh:SubMesh = _subMeshes[i];
+					vertexBuffer = subMesh._getVertexBuffer();
+					
+					vertexElements = vertexBuffer.vertexDeclaration.getVertexElements();
+					for (j = 0; j < vertexElements.length; j++) {
+						vertexElement = vertexElements[j];
+						if (vertexElement.elementFormat === VertexElementFormat.Vector3 && vertexElement.elementUsage === VertexElementUsage.POSITION0) {
+							positionElement = vertexElement;
+							break;
+						}
+					}
+					
+					 verticesData = vertexBuffer.getData();
+					for (j = 0; j < verticesData.length; j += vertexBuffer.vertexDeclaration.vertexStride / 4) {
+						ofset = j + positionElement.offset / 4;
+						vertices.push(new Vector3(verticesData[ofset + 0], verticesData[ofset + 1], verticesData[ofset + 2]));
+					}
 				}
 			}
 			return vertices;

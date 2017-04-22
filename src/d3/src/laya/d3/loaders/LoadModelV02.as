@@ -181,11 +181,7 @@ package laya.d3.loaders {
 			var boneCount:uint = _readData.getUint16();
 			boneNames.length = boneCount;
 			for (i = 0; i < boneCount; i++)
-				boneNames[i] = _readData.getString();
-			
-			var boneParentsStart:uint = _readData.getUint32();
-			var boneParentsLength:uint = _readData.getUint32();
-			_mesh._boneParents = new Int16Array(arrayBuffer.slice(offset + boneParentsStart, offset + bindPoseStart + boneParentsLength));
+				boneNames[i] = _strings[_readData.getUint16()];
 			
 			var bindPoseStart:uint = _readData.getUint32();
 			var binPoseLength:uint = _readData.getUint32();
@@ -228,12 +224,22 @@ package laya.d3.loaders {
 			submesh._indexBuffer = _mesh._indexBuffer;
 			submesh._indexBufferStart = ibStart;
 			submesh._indexBufferCount = ibLength;
-			
 			var offset:int = _DATA.offset;
-			var boneDicofs:int = _readData.getUint32();
-			var boneDicsize:int = _readData.getUint32();
-			var boneDicArrayBuffer:ArrayBuffer = arrayBuffer.slice(offset + boneDicofs, offset + boneDicofs + boneDicsize);
-			submesh._boneIndices = new Uint8Array(boneDicArrayBuffer);
+			
+			var subIndexBufferStart:Vector.<int> = submesh._subIndexBufferStart;
+			var subIndexBufferCount:Vector.<int> = submesh._subIndexBufferCount;
+			var boneIndicesList:Vector.<Uint8Array> = submesh._boneIndicesList;
+			var drawCount:int = _readData.getUint16();
+			subIndexBufferStart.length = drawCount;
+			subIndexBufferCount.length = drawCount;
+			boneIndicesList.length = drawCount;
+			for (var i:int = 0; i < drawCount; i++) {
+				subIndexBufferStart[i] = _readData.getUint32();
+				subIndexBufferCount[i] = _readData.getUint32();
+				var boneDicofs:int = _readData.getUint32();
+				var boneDicsize:int = _readData.getUint32();
+				submesh._boneIndicesList[i] = new Uint8Array(arrayBuffer.slice(offset + boneDicofs, offset + boneDicofs + boneDicsize));
+			}
 			
 			_mesh._add(submesh);
 			return true;

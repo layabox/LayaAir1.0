@@ -27,10 +27,10 @@ package laya.d3.core.scene {
 			super();
 		}
 		
-		/**
-		 * @private
-		 */
-		private function _renderRenderableBoundBox(linePhasor:PhasorSpriter3D, sprite:*):void {
+		///**
+		 //* @private
+		 //*/
+		//private function _renderRenderableBoundBox(linePhasor:PhasorSpriter3D, sprite:*):void {
 			//if (sprite is RenderableSprite3D) {
 				//var renderableSprite:RenderableSprite3D = sprite as RenderableSprite3D;
 				//var boundBox:BoundBox = renderableSprite._render.boundingBox;
@@ -51,10 +51,9 @@ package laya.d3.core.scene {
 				//linePhasor.line(corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
 				//linePhasor.line(corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0, corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0);
 			//}
-			//
 			//for (var i:int = 0, n:int = sprite._childs.length; i < n; i++)
 				//_renderRenderableBoundBox(linePhasor, sprite._childs[i]);
-		}
+		//}
 		
 		protected override function _renderCamera(gl:WebGLContext, state:RenderState, baseCamera:BaseCamera):void {
 			var camera:Camera = baseCamera as Camera;
@@ -87,13 +86,13 @@ package laya.d3.core.scene {
 			//_renderDebug(gl, state);
 			lateRender(state);//渲染之后
 			
-			if (OctreeNode.debugMode&&treeRoot) {
-				var linePhasor:PhasorSpriter3D = Laya3D.debugPhasorSprite;
-				linePhasor.begin(WebGLContext.LINES, state);
-				_renderRenderableBoundBox(linePhasor, this);
-				treeRoot.renderBoudingBox(linePhasor);
-				linePhasor.end();
-			}
+			//if (Laya3D.debugMode||OctreeNode.debugMode&&treeRoot) {
+				//var linePhasor:PhasorSpriter3D = Laya3D._debugPhasorSprite;
+				//linePhasor.begin(WebGLContext.LINES, state);
+				//_renderRenderableBoundBox(linePhasor, this);
+				//treeRoot.renderBoudingBox(linePhasor);
+				//linePhasor.end();
+			//}
 			(renderTarget) && (renderTarget.end());
 		
 		}

@@ -61,6 +61,9 @@ package laya.d3.core.particleShuriKen {
 	 */
 	public class ShurikenParticleSystem extends GeometryFilter implements IRenderable, IClone {
 		/** @private */
+		private const halfKSqrtOf2:Number = 1.42 * 0.5;
+		
+		/** @private */
 		public static const _maxElapsedTime:Number = 1.0 / 3.0;
 		/** @private 0:Burst,1:预留,2:StartDelay,3:StartColor,4:StartSize,5:StartRotation,6:randomizeRotationDirection,7:StartLifetime,8:StartSpeed,9:VelocityOverLifetime,10:ColorOverLifetime,11:SizeOverLifetime,12:RotationOverLifetime,13-15:TextureSheetAnimation,16-17:Shape*/
 		public static const _RANDOMOFFSET:Uint32Array = new Uint32Array([0x23571a3e, 0xc34f56fe, 0x13371337, 0x12460f3b, 0x6aed452e, 0xdec4aea1, 0x96aa4de3, 0x8d2c8431, 0xf3857f6f, 0xe0fbd834, 0x13740583, 0x591bc05c, 0x40eb95e4, 0xbc524e5f, 0xaf502044, 0xa614b381, 0x1034e524, 0xfc524e5f]);
@@ -77,10 +80,21 @@ package laya.d3.core.particleShuriKen {
 		private static var _tempVector33:Vector3 = new Vector3();
 		/**@private */
 		private static var _tempVector34:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempVector35:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempVector36:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempVector37:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempVector38:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempVector39:Vector3 = new Vector3();
 		/** @private */
 		private static var _tempPosition:Vector3 = new Vector3();
 		/** @private */
 		private static var _tempDirection:Vector3 = new Vector3();
+		
 		/** @private */
 		protected var _boundingSphere:BoundSphere = new BoundSphere(new Vector3(), 0);
 		/** @private */
@@ -970,21 +984,34 @@ package laya.d3.core.particleShuriKen {
 				}
 			}
 			
+			var positionScale:Vector3, velocityScale:Vector3;
 			var transform:Transform3D = _owner.transform;
 			var worldPosition:Vector3 = transform.position;
-			var positionScale:Vector3, sizeScale:Vector3;
+			var sizeScale:Vector3 = _tempVector39;
+			var sizeScaleE:Float32Array = sizeScale.elements;
+			var renderMode:int = particleRender.renderMode;
+			
 			switch (scaleMode) {
 			case 0: 
 				var scale:Vector3 = transform.scale;
-				positionScale = sizeScale = scale;
+				positionScale = scale;
+				sizeScaleE[0] = scale.x;
+				sizeScaleE[1] = scale.z;
+				sizeScaleE[2] = scale.y;
+				(renderMode === 1) && (velocityScale = scale);
 				break;
 			case 1: 
 				var localScale:Vector3 = transform.localScale;
-				positionScale = sizeScale = localScale;
+				positionScale = localScale;
+				sizeScaleE[0] = localScale.x;
+				sizeScaleE[1] = localScale.z;
+				sizeScaleE[2] = localScale.y;
+				(renderMode === 1) && (velocityScale = localScale);
 				break;
 			case 2: 
 				positionScale = transform.scale;
-				sizeScale = Vector3.ONE;
+				sizeScaleE[0] = sizeScaleE[1] = sizeScaleE[2] = 1;
+				(renderMode === 1) && (velocityScale = Vector3.ONE);
 				break;
 			}
 			
@@ -1011,7 +1038,7 @@ package laya.d3.core.particleShuriKen {
 					
 					Vector3.add(maxPosition, maxStratPosition, boundMax);
 					Vector3.multiply(positionScale, boundMax, boundMax);
-					//Vector3.transformQuat(boundMax, worldRotation, boundMax);
+						//Vector3.transformQuat(boundMax, worldRotation, boundMax);
 				} else {
 					Vector3.multiply(positionScale, minPosition, boundMin);
 					Vector3.add(boundMin, minStratPosition, boundMin);
@@ -1019,7 +1046,7 @@ package laya.d3.core.particleShuriKen {
 					
 					Vector3.multiply(positionScale, maxPosition, boundMax);
 					Vector3.add(boundMax, maxStratPosition, boundMax);
-					//Vector3.transformQuat(boundMax, worldRotation, boundMax);
+						//Vector3.transformQuat(boundMax, worldRotation, boundMax);
 				}
 			}
 			
@@ -1034,35 +1061,35 @@ package laya.d3.core.particleShuriKen {
 			}
 			//TODO:重力
 			
-			var renderMode:int = particleRender.renderMode;
+			
 			// 通过粒子最大尺寸扩充包围盒，最大尺寸为粒子对角线。TODO:HORIZONTALBILLBOARD和VERTICALBILLBOARD缩小cos45
 			var maxSize:Number, maxSizeY:Number;
 			switch (startSizeType) {
 			case 0: 
-					if (threeDStartSize) {
-						var startSizeConstantSeparate:Vector3 = startSizeConstantSeparate;
-						maxSize = Math.max(startSizeConstantSeparate.x, startSizeConstantSeparate.y);//TODO:是否非Mesh模型下不用考虑Z
-						if (renderMode === 1) 
+				if (threeDStartSize) {
+					var startSizeConstantSeparate:Vector3 = startSizeConstantSeparate;
+					maxSize = Math.max(startSizeConstantSeparate.x, startSizeConstantSeparate.y);//TODO:是否非Mesh模型下不用考虑Z
+					if (renderMode === 1)
 						maxSizeY = startSizeConstantSeparate.y;
-					} else {
-						maxSize = startSizeConstant;
-						if (renderMode === 1) 
+				} else {
+					maxSize = startSizeConstant;
+					if (renderMode === 1)
 						maxSizeY = startSizeConstant;
-					}
+				}
 				break;
 			case 1://TODO:
 				break;
 			case 2: 
-					if (threeDStartSize) {
-						var startSizeConstantMaxSeparate:Vector3 = startSizeConstantMaxSeparate;
-						maxSize = Math.max(startSizeConstantMaxSeparate.x, startSizeConstantMaxSeparate.y);
-						if (renderMode === 1) 
+				if (threeDStartSize) {
+					var startSizeConstantMaxSeparate:Vector3 = startSizeConstantMaxSeparate;
+					maxSize = Math.max(startSizeConstantMaxSeparate.x, startSizeConstantMaxSeparate.y);
+					if (renderMode === 1)
 						maxSizeY = startSizeConstantMaxSeparate.y;
-					} else {
-						maxSize = startSizeConstantMax;//TODO:是否非Mesh模型下不用考虑Z
-						if (renderMode === 1) 
+				} else {
+					maxSize = startSizeConstantMax;//TODO:是否非Mesh模型下不用考虑Z
+					if (renderMode === 1)
 						maxSizeY = startSizeConstantMax;
-					}
+				}
 				break;
 			case 3://TODO:
 				break;
@@ -1073,55 +1100,58 @@ package laya.d3.core.particleShuriKen {
 				maxSize *= _sizeOverLifetime.size.getMaxSizeInGradient();
 			}
 			
-			
-			var threeDMaxSize:Vector3 = _tempVector31;
+			var threeDMaxSize:Vector3 = _tempVector30;
 			var threeDMaxSizeE:Float32Array = threeDMaxSize.elements;
 			
-			
 			var rotSize:Number, nonRotSize:Number;
-			var halfKSqrtOf2:Number;
 			switch (renderMode) {
 			case 0: 
-				 halfKSqrtOf2 = 1.42 * 0.5;
 				rotSize = maxSize * halfKSqrtOf2;
-				threeDMaxSizeE[0] = sizeScale.x * maxSize;
-				threeDMaxSizeE[1] = sizeScale.z * maxSize;
-				threeDMaxSizeE[2] = sizeScale.y * maxSize;
+				Vector3.scale(sizeScale, maxSize, threeDMaxSize);
 				Vector3.subtract(boundMin, threeDMaxSize, boundMin);
 				Vector3.add(boundMax, threeDMaxSize, boundMax);
 				break;
 			case 1: 
-				//var minSize:Number;
-				var minStretchPosition:Vector3 = _tempVector30;
-			    //var minStretchPositionE:Float32Array = minStretchPosition.elements;
+				var maxStretchPosition:Vector3 = _tempVector31;
+				var maxStretchVelocity:Vector3 = _tempVector32;
+				var minStretchVelocity:Vector3 = _tempVector33;
+				var minStretchPosition:Vector3 = _tempVector34;
 				
-				var stretchVelocity:Vector3 = _tempVector32;
 				if (_velocityOverLifetime && _velocityOverLifetime.enbale) {
 					//TODO:
 				} else {
-					Vector3.multiply(sizeScale, startMaxVelocity, stretchVelocity);
+					Vector3.multiply(velocityScale, startMaxVelocity, maxStretchVelocity);
+					Vector3.multiply(velocityScale, startMinVelocity, minStretchVelocity);
 				}
-				var stretchSpeed:Number = Vector3.scalarLength(stretchVelocity);
-				var stretchLength :Number = stretchSpeed * particleRender.stretchedBillboardSpeedScale + maxSizeY * particleRender.stretchedBillboardLengthScale;
-				//var stretch:Vector3 = new Vector3();
-				var normalizeStreVelocity:Vector3 = _tempVector33;
-				Vector3.normalize(stretchVelocity, normalizeStreVelocity);
-				Vector3.scale(normalizeStreVelocity, stretchLength, minStretchPosition);
+				var sizeStretch:Number = maxSizeY * particleRender.stretchedBillboardLengthScale;
+				var maxStretchLength:Number = Vector3.scalarLength(maxStretchVelocity) * particleRender.stretchedBillboardSpeedScale + sizeStretch;
+				var minStretchLength:Number = Vector3.scalarLength(minStretchVelocity) * particleRender.stretchedBillboardSpeedScale + sizeStretch;
+				var norMaxStretchVelocity:Vector3 = _tempVector35;
+				var norMinStretchVelocity:Vector3 = _tempVector36;
+				Vector3.normalize(maxStretchVelocity, norMaxStretchVelocity);
+				Vector3.scale(norMaxStretchVelocity, maxStretchLength, minStretchPosition);
 				Vector3.subtract(maxStratPosition, minStretchPosition, minStretchPosition);
-				
-				//Vector3.subtract(maxStratPosition, (startMaxVelocity)*new Vector3(stretch, stretch, stretch), threeDMinSize);
-				//center +=u_SizeScale.xzy*(size.x*corner.x*sideVector+(cameraUpVector*speed*u_StretchedBillboardSpeedScale+cameraUpVector*size.y*u_StretchedBillboardLengthScale)*corner.y);
-				
-				 halfKSqrtOf2 = 0.42 * 0.5;
+				Vector3.normalize(minStretchVelocity, norMinStretchVelocity);
+				Vector3.scale(norMinStretchVelocity, minStretchLength, maxStretchPosition);
+				Vector3.add(minStratPosition, maxStretchPosition, maxStretchPosition);
+				debugger;
 				rotSize = maxSize * halfKSqrtOf2;
-				threeDMaxSizeE[0] = sizeScale.x * rotSize;
-				threeDMaxSizeE[1] = sizeScale.z * rotSize;
-				threeDMaxSizeE[2] = sizeScale.y * rotSize;
+				Vector3.scale(sizeScale, rotSize, threeDMaxSize);
 				
+				var halfNorMaxStretchVelocity:Vector3 = _tempVector37;
+				var halfNorMinStretchVelocity:Vector3 = _tempVector38;
+				Vector3.scale(norMaxStretchVelocity,  0.5, halfNorMaxStretchVelocity);
+				Vector3.scale(norMinStretchVelocity,  0.5, halfNorMinStretchVelocity);
+				Vector3.multiply(halfNorMaxStretchVelocity,  sizeScale, halfNorMaxStretchVelocity);
+				Vector3.multiply(halfNorMinStretchVelocity,  sizeScale, halfNorMinStretchVelocity);
+				
+				Vector3.add(boundMin, halfNorMinStretchVelocity, boundMin);
+				Vector3.min(boundMin, minStretchPosition, boundMin);
 				Vector3.subtract(boundMin, threeDMaxSize, boundMin);
-				Vector3.add(boundMax, threeDMaxSize, boundMax);
 				
-				Vector3.subtract(minStretchPosition, threeDMaxSize, minStretchPosition);
+				Vector3.subtract(boundMax, halfNorMaxStretchVelocity, boundMax);
+				Vector3.max(boundMax, maxStretchPosition, boundMax);
+				Vector3.add(boundMax, threeDMaxSize, boundMax);
 				break;
 			case 2: 
 				maxSize *= Math.cos(0.78539816339744830961566084581988);
@@ -1134,9 +1164,7 @@ package laya.d3.core.particleShuriKen {
 			case 3: 
 				maxSize *= Math.cos(0.78539816339744830961566084581988);
 				nonRotSize = maxSize * 0.5;
-				threeDMaxSizeE[0] = sizeScale.x * nonRotSize;
-				threeDMaxSizeE[1] = sizeScale.z * nonRotSize;
-				threeDMaxSizeE[2] = sizeScale.y * nonRotSize;
+				Vector3.scale(sizeScale, nonRotSize, threeDMaxSize);
 				Vector3.subtract(boundMin, threeDMaxSize, boundMin);
 				Vector3.add(boundMax, threeDMaxSize, boundMax);
 				break;
@@ -1146,8 +1174,6 @@ package laya.d3.core.particleShuriKen {
 			//TODO:max
 			_boundingBox.getCorners(_boundingBoxCorners);
 		}
-		
-		
 		
 		/**
 		 * @private

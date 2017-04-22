@@ -31,18 +31,17 @@ package laya.d3.graphics {
 				var quene:RenderQueue = shadowQueues[i];
 				(quene) && (quene._clearRenderElements());
 			}
-			var frustumCullingObjects:Vector.<RenderObject> = scene._frustumCullingObjects;
-			var renderObject:RenderObject, baseRender:BaseRender, shadowQueue:RenderQueue, renderElements:Vector.<RenderElement>;
+			var frustumCullingObjects:Vector.<BaseRender> = scene._frustumCullingObjects;
+			var baseRender:BaseRender, shadowQueue:RenderQueue, renderElements:Vector.<RenderElement>;
 			if (nPSSMNum > 1) {
 				for (i = 0, n = frustumCullingObjects.length; i < n; i++) {
-					renderObject = frustumCullingObjects[i];
-					baseRender = renderObject._render;
-					if (baseRender.castShadow && Layer.isVisible(renderObject._layerMask) && renderObject._enable) {
+					baseRender = frustumCullingObjects[i];
+					if (baseRender.castShadow && Layer.isVisible(baseRender._owner.layer.mask) && baseRender.enable) {
 						for (var k:int = 1, kNum:int = lightFrustum.length; k < kNum; k++) {
 							shadowQueue = shadowQueues[k - 1];
 							if (lightFrustum[k].containsBoundSphere(baseRender.boundingSphere) !== ContainmentType.Disjoint) {
 								//TODO:距离排序
-								renderElements = renderObject._renderElements;
+								renderElements = baseRender._renderElements;
 								for (j = 0, m = renderElements.length; j < m; j++)
 									shadowQueue._addRenderElement(renderElements[j]);
 							}
@@ -51,14 +50,13 @@ package laya.d3.graphics {
 				}
 			} else {
 				for (i = 0, n = frustumCullingObjects.length; i < n; i++) {
-					renderObject = frustumCullingObjects[i];
-					baseRender = renderObject._render;
-					if (baseRender.castShadow && Layer.isVisible(renderObject._layerMask)  && renderObject._enable) {
+					baseRender = frustumCullingObjects[i];
+					if (baseRender.castShadow && Layer.isVisible(baseRender._owner.layer.mask)  && baseRender.enable) {
 						if (lightFrustum[0].containsBoundSphere(baseRender.boundingSphere) !== ContainmentType.Disjoint) {
-							renderObject._owner._prepareShaderValuetoRender(lightViewProjectMatrix);
+							baseRender._owner._renderUpdate(lightViewProjectMatrix);
 							//TODO:距离排序
 							shadowQueue = shadowQueues[0];
-							renderElements = renderObject._renderElements;
+							renderElements = baseRender._renderElements;
 							for (j = 0, m = renderElements.length; j < m; j++)
 								shadowQueue._addRenderElement(renderElements[j]);
 						}
@@ -89,7 +87,7 @@ package laya.d3.graphics {
 			var queues:Vector.<RenderQueue> = scene._quenes;
 			var staticBatchMananger:StaticBatchManager = scene._staticBatchManager;
 			var dynamicBatchManager:DynamicBatchManager = scene._dynamicBatchManager;
-			var frustumCullingObjects:Vector.<RenderObject> = scene._frustumCullingObjects;
+			var frustumCullingObjects:Vector.<BaseRender> = scene._frustumCullingObjects;
 			for (i = 0, iNum = queues.length; i < iNum; i++) {
 				var queue:RenderQueue = queues[i];
 				(queue) && (queue._clearRenderElements());
@@ -99,11 +97,11 @@ package laya.d3.graphics {
 			
 			var cameraPosition:Vector3 = camera.transform.position;
 			for (i = 0, iNum = frustumCullingObjects.length; i < iNum; i++) {
-				var renderObject:RenderObject = frustumCullingObjects[i];
-				if (Layer.isVisible(renderObject._layerMask)  && renderObject._enable && (boundFrustum.containsBoundSphere(renderObject._render.boundingSphere) !== ContainmentType.Disjoint)) {
-					renderObject._owner._prepareShaderValuetoRender(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
-					renderObject._distanceForSort = Vector3.distance(renderObject._render.boundingSphere.center, cameraPosition) + renderObject._render.sortingFudge;
-					var renderElements:Vector.<RenderElement> = renderObject._renderElements;
+				var baseRender:BaseRender = frustumCullingObjects[i];
+				if (Layer.isVisible(baseRender._owner.layer.mask)  && baseRender.enable && (boundFrustum.containsBoundSphere(baseRender.boundingSphere) !== ContainmentType.Disjoint)) {
+					baseRender._owner._renderUpdate(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
+					baseRender._distanceForSort = Vector3.distance(baseRender.boundingSphere.center, cameraPosition) + baseRender.sortingFudge;
+					var renderElements:Vector.<RenderElement> = baseRender._renderElements;
 					for (j = 0, jNum = renderElements.length; j < jNum; j++) {
 						var renderElement:RenderElement = renderElements[j];
 						var staticBatch:StaticBatch = renderElement._staticBatch;//TODO:换vertexBuffer后应该取消合并,修改顶点数据后，从动态列表移除，暂时忽略，不允许直接修改Buffer。
@@ -111,7 +109,7 @@ package laya.d3.graphics {
 							staticBatch._addRenderElement(renderElement);
 						} else {//TODO:暂时取消动态合并，sprite3D也需判断合并，例如阴影receiveShadow问题。
 							var renderObj:IRenderable = renderElement.renderObj;
-							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1) && (renderObj._getIndexBuffer()) && (renderElement._material.renderQueue < 2) && renderElement._canDynamicBatch && (!renderObject._owner.isStatic))//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并//TODO:静态物体如果没合并走动态合并现在会出BUG,lightmapUV问题。
+							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1) && (renderObj._getIndexBuffer()) && (renderElement._material.renderQueue < 2) && renderElement._canDynamicBatch && (!baseRender._owner.isStatic))//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并//TODO:静态物体如果没合并走动态合并现在会出BUG,lightmapUV问题。
 								dynamicBatchManager._addPrepareRenderElement(renderElement);
 							else
 								scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);
@@ -148,7 +146,7 @@ package laya.d3.graphics {
 			var queues:Vector.<RenderQueue> = scene._quenes;
 			var staticBatchMananger:StaticBatchManager = scene._staticBatchManager;
 			var dynamicBatchManager:DynamicBatchManager = scene._dynamicBatchManager;
-			var frustumCullingObjects:Vector.<RenderObject> = scene._frustumCullingObjects;
+			var frustumCullingObjects:Vector.<BaseRender> = scene._frustumCullingObjects;
 			for (i = 0, iNum = queues.length; i < iNum; i++) {
 				var queue:RenderQueue = queues[i];
 				(queue) && (queue._clearRenderElements());
@@ -158,11 +156,11 @@ package laya.d3.graphics {
 			
 			var cameraPosition:Vector3 = camera.transform.position;
 			for (i = 0, iNum = frustumCullingObjects.length; i < iNum; i++) {
-				var renderObject:RenderObject = frustumCullingObjects[i];
-				if (Layer.isVisible(renderObject._layerMask) && renderObject._enable) {
-					renderObject._owner._prepareShaderValuetoRender(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
-					renderObject._distanceForSort = Vector3.distance(renderObject._render.boundingSphere.center, cameraPosition) + renderObject._render.sortingFudge;
-					var renderElements:Vector.<RenderElement> = renderObject._renderElements;
+				var baseRender:BaseRender = frustumCullingObjects[i];
+				if (Layer.isVisible(baseRender._owner.layer.mask) && baseRender.enable) {
+					baseRender._owner._renderUpdate(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
+					baseRender._distanceForSort = Vector3.distance(baseRender.boundingSphere.center, cameraPosition) + baseRender.sortingFudge;
+					var renderElements:Vector.<RenderElement> = baseRender._renderElements;
 					for (j = 0, jNum = renderElements.length; j < jNum; j++) {
 						var renderElement:RenderElement = renderElements[j];
 						var staticBatch:StaticBatch = renderElement._staticBatch;//TODO:换vertexBuffer后应该取消合并,修改顶点数据后，从动态列表移除，暂时忽略，不允许直接修改Buffer。
@@ -170,7 +168,7 @@ package laya.d3.graphics {
 							staticBatch._addRenderElement(renderElement);
 						} else {//TODO:暂时取消动态合并，sprite3D也需判断合并
 							var renderObj:IRenderable = renderElement.renderObj;
-							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1) && (renderObj._getIndexBuffer()) && (renderElement._material.renderQueue < 2) && renderElement._canDynamicBatch && (!renderObject._owner.isStatic))//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并//TODO:静态物体如果没合并走动态合并现在会出BUG,lightmapUV问题。
+							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1) && (renderObj._getIndexBuffer()) && (renderElement._material.renderQueue < 2) && renderElement._canDynamicBatch && (!baseRender._owner.isStatic))//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并//TODO:静态物体如果没合并走动态合并现在会出BUG,lightmapUV问题。
 								dynamicBatchManager._addPrepareRenderElement(renderElement);
 							else
 								scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);

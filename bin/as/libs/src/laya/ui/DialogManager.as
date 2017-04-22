@@ -8,6 +8,15 @@ package laya.ui {
 	import laya.utils.Handler;
 	import laya.utils.Tween;
 	
+	/**打开任意窗口后调度。
+	 * @eventType Event.OPEN
+	 */
+	[Event(name = "open", type = "laya.events.Event")]
+	/**关闭任意窗口后调度。
+	 * @eventType Event.CLOSE
+	 */
+	[Event(name = "close", type = "laya.events.Event")]
+	
 	/**
 	 * <code>DialogManager</code> 对话框管理容器，所有的对话框都在该容器内，并且受管理器管理。
 	 * 任意对话框打开和关闭，都会出发管理类的open和close事件
@@ -23,7 +32,7 @@ package laya.ui {
 		/**弹出对话框效果，可以设置一个效果代替默认的弹出效果，如果不想有任何效果，可以赋值为null*/
 		public var popupEffect:Function = function(dialog:Sprite):void {
 			dialog.scale(1, 1);
-			Tween.from(dialog, {x: Laya.stage.width / 2, y: Laya.stage.height / 2, scaleX: 0, scaleY: 0}, 300, Ease.backOut);
+			Tween.from(dialog, {x: Laya.stage.width / 2, y: Laya.stage.height / 2, scaleX: 0, scaleY: 0}, 300, Ease.backOut, Handler.create(this, this.doOpen, [dialog]));
 		}
 		
 		/**关闭对话框效果，可以设置一个效果代替默认的关闭效果，如果不想有任何效果，可以赋值为null*/
@@ -94,8 +103,18 @@ package laya.ui {
 			if (dialog.popupCenter) _centerDialog(dialog);
 			addChild(dialog);
 			if (dialog.isModal || this._$P["hasZorder"]) timer.callLater(this, _checkMask);
-			popupEffect && popupEffect(dialog);
+			if (popupEffect != null) popupEffect(dialog);
+			else doOpen(dialog);
 			event(Event.OPEN);
+		}
+		
+		/**
+		 * 执行打开对话框。
+		 * @param dialog 需要关闭的对象框 <code>Dialog</code> 实例。
+		 * @param type	关闭的类型，默认为空
+		 */
+		public function doOpen(dialog:Dialog):void {
+			dialog.onOpened();
 		}
 		
 		/**
@@ -116,10 +135,11 @@ package laya.ui {
 		public function close(dialog:Dialog, type:String = null):void {
 			if (closeEffect != null) closeEffect(dialog, type);
 			else doClose(dialog);
+			event(Event.CLOSE);
 		}
 		
 		/**
-		 * 真正关闭对话框。
+		 * 执行关闭对话框。
 		 * @param dialog 需要关闭的对象框 <code>Dialog</code> 实例。
 		 * @param type	关闭的类型，默认为空
 		 */
@@ -127,7 +147,7 @@ package laya.ui {
 			dialog.removeSelf();
 			dialog.isModal && _checkMask();
 			dialog.closeHandler && dialog.closeHandler.runWith(type);
-			event(Event.CLOSE);
+			dialog.onClosed(type);
 		}
 		
 		/**

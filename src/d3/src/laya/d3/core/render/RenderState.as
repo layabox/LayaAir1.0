@@ -6,6 +6,7 @@ package laya.d3.core.render {
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Viewport;
+	import laya.d3.shader.Shader3D;
 	import laya.webgl.WebGLContext;
 	
 	/**
@@ -34,6 +35,8 @@ package laya.d3.core.render {
 		public var _viewport:Viewport;
 		/** @private */
 		public var _boundFrustum:BoundFrustum;
+		/** @private */
+		public var _shader:Shader3D;
 		
 		
 		

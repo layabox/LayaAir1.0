@@ -2,7 +2,6 @@ package laya.d3.core {
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.BaseRender;
-	import laya.d3.graphics.RenderObject;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
@@ -20,9 +19,6 @@ package laya.d3.core {
 	 * <code>MeshRender</code> 类用于网格渲染器。
 	 */
 	public class MeshRender extends BaseRender {
-		/** @private */
-		private static var _tempBoudingBoxCorners:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
-		
 		/** @private */
 		private var _meshSprite3DOwner:MeshSprite3D;
 		///** @private */
@@ -47,7 +43,7 @@ package laya.d3.core {
 		public function set lightmapScaleOffset(value:Vector4):void {
 			_lightmapScaleOffset = value;
 			_owner._setShaderValueColor(MeshSprite3D.LIGHTMAPSCALEOFFSET, value);
-			_owner._addShaderDefine(StandardMaterial.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV);
+			_owner._addShaderDefine(RenderableSprite3D.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV);
 		}
 		
 		/**

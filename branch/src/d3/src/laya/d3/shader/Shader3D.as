@@ -5,14 +5,13 @@ package laya.d3.shader {
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.graphics.VertexBuffer3D;
+	import laya.d3.resource.SolidColorTextureCube;
 	import laya.renders.Render;
-	import laya.resource.Resource;
 	import laya.utils.Stat;
 	import laya.utils.StringKey;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.BaseShader;
-	import laya.webgl.utils.ShaderCompile;
 	
 	public class Shader3D extends BaseShader {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
@@ -206,32 +205,27 @@ package laya.d3.shader {
 				one.value = [one.location, null];
 				one.codename = one.name;
 				
-				if (_sceneUniformMap[one.codename] != null)
-				{
+				if (_sceneUniformMap[one.codename] != null){
 					one.name = _sceneUniformMap[one.codename];
 					_sceneUniformParamsMap.push(one.name);
 				   _sceneUniformParamsMap.push(one);
 				}
-				else if  (_cameraUniformMap[one.codename] != null)
-				{
+				else if  (_cameraUniformMap[one.codename] != null){
 					one.name = _cameraUniformMap[one.codename];
 					_cameraUniformParamsMap.push(one.name);
 				   _cameraUniformParamsMap.push(one);
 				}
-				else if  (_spriteUniformMap[one.codename] != null)
-				{
+				else if  (_spriteUniformMap[one.codename] != null){
 					one.name = _spriteUniformMap[one.codename];
 					_spriteUniformParamsMap.push(one.name);
 				   _spriteUniformParamsMap.push(one);
 				}
-				else if  (_materialUniformMap[one.codename] != null)
-				{
+				else if  (_materialUniformMap[one.codename] != null){
 					one.name = _materialUniformMap[one.codename];
 					_materialUniformParamsMap.push(one.name);
 				   _materialUniformParamsMap.push(one);
 				}
-				else if  (_renderElementUniformMap[one.codename] != null)
-				{
+				else if  (_renderElementUniformMap[one.codename] != null){
 					one.name = _renderElementUniformMap[one.codename];
 					_renderElementUniformParamsMap.push(one.name);
 				   _renderElementUniformParamsMap.push(one);
@@ -462,12 +456,15 @@ package laya.d3.shader {
 				uploadedValue[0] = _curActTexIndex;
 				gl.uniform1i(one.location, _curActTexIndex);
 				gl.activeTexture(_TEXTURES[_curActTexIndex]);
-				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
+				
+				if(value)
+				   WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
 				_curActTexIndex++;
 				return 1;
 			} else {
 				gl.activeTexture(_TEXTURES[uploadedValue[0]]);
-				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
+				if(value)
+				   WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
 				return 0;
 			}
 		}
@@ -479,12 +476,18 @@ package laya.d3.shader {
 				uploadedValue[0] = _curActTexIndex;
 				gl.uniform1i(one.location, _curActTexIndex);
 				gl.activeTexture(_TEXTURES[_curActTexIndex]);
-				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
+				if(value)
+				   WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
+				else
+			 	   WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, SolidColorTextureCube.grayTexture.source);
 				_curActTexIndex++;
 				return 1;
 			} else {
 				gl.activeTexture(_TEXTURES[uploadedValue[0]]);
-				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
+				if(value)
+				   WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
+				else
+				   WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, SolidColorTextureCube.grayTexture.source);
 				return 0;
 			}
 		}

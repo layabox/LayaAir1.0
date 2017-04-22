@@ -110,6 +110,8 @@ package laya.display {
 		/**设置是否渲染，设置为false，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟
 		 * 比如非激活状态，可以设置renderingEnabled=true以节省消耗。*/
 		public var renderingEnabled:Boolean = true;
+		/**是否启用屏幕适配，可以适配后，在某个时候关闭屏幕适配，防止某些操作导致的屏幕以外改变*/
+		public var screenAdaptationEnabled:Boolean = true;
 		
 		/**@private */
 		public var _canvasTransform:Matrix = new Matrix();
@@ -243,6 +245,11 @@ package laya.display {
 			Laya.timer.callLater(this, _changeCanvasSize);
 		}
 		
+		override public function get transform():Matrix {
+			if (_tfChanged) _adjustTransform();
+			return _transform ||= Matrix.create();
+		}
+		
 		/**@private 已经弃用，请使用designWidth代替*/
 		//[Deprecated]
 		public function get desginWidth():Number {
@@ -278,12 +285,14 @@ package laya.display {
 		
 		/**@private */
 		protected function _resetCanvas():void {
+			if (!screenAdaptationEnabled) return;
 			var canvas:HTMLCanvas = Render._mainCanvas;
 			var canvasStyle:* = canvas.source.style;
 			canvas.size(1, 1);
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "";
-			visible = false;
-			Laya.timer.once(100, this, this._changeCanvasSize);
+			//visible = false;
+			//Laya.timer.once(100, this, this._changeCanvasSize);
+			_changeCanvasSize();
 		}
 		
 		/**
@@ -346,13 +355,11 @@ package laya.display {
 				break;
 			case SCALE_FIXED_WIDTH: 
 				scaleY = scaleX;
-				_height = screenHeight / scaleX;
-				canvasHeight = Math.round(screenHeight / scaleX);
+				_height = canvasHeight = Math.round(screenHeight / scaleX);
 				break;
 			case SCALE_FIXED_HEIGHT: 
 				scaleX = scaleY;
-				_width = screenWidth / scaleY;
-				canvasWidth = Math.round(screenWidth / scaleY);
+				_width = canvasWidth = Math.round(screenWidth / scaleY);
 				break;
 			}
 			
@@ -593,7 +600,7 @@ package laya.display {
 			_renderCount++;
 			Render.isFlash && repaint();
 			
-			if (!visible) {
+			if (!this._style.visible) {
 				if (_renderCount % 5 === 0) {
 					Stat.loopCount++;
 					MouseManager.instance.runEvent();

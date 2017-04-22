@@ -262,6 +262,8 @@ package laya.ui {
 				_text.overflow = Text.HIDDEN;
 				_text.align = "center";
 				_text.valign = "middle";
+				_text.width = _width;
+				_text.height = _height;
 			}
 		}
 		

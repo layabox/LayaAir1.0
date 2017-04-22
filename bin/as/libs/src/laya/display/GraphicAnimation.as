@@ -352,6 +352,7 @@ package laya.display {
 				var tAniO:Object;
 				for (i = 0; i < len; i++) {
 					tAniO = animations[i];
+					_labels = null;
 					if (!tAniO)
 						continue;
 					try {
@@ -363,6 +364,8 @@ package laya.display {
 					var frameO:Object = {};
 					frameO.interval = 1000 / tAniO["frameRate"];
 					frameO.frames = _gList;
+					frameO.labels = _labels;
+					frameO.name = tAniO.name;
 					anilist.push(frameO);
 					aniDic[tAniO.name] = frameO;
 				}

@@ -42,7 +42,8 @@ package threeDimen.primaryStage {
 			
 			camera = new Camera(0, 0.1, 20);
 			scene.addChild(camera);
-			camera.transform.lookAt(new Vector3(0, 3, 4), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+			camera.transform.position = new Vector3(0, 3, 4);
+			camera.transform.lookAt(new Vector3(0, 0, 0), new Vector3(0, 1, 0));
 			camera.addComponent(CameraMoveScript);
 			
 			directionLight = scene.addChild(new DirectionLight()) as DirectionLight;

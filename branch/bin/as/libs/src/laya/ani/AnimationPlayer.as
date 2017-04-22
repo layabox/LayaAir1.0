@@ -67,7 +67,7 @@ package laya.ani {
 		/** 播放速率*/
 		public var playbackRate:Number = 1.0;
 		/** 停止时是否归零*/
-		public var returnToZeroStopped:Boolean = true;
+		public var returnToZeroStopped:Boolean;
 		
 		/**
 		 * 获取动画数据模板
@@ -279,6 +279,7 @@ package laya.ani {
 			_startUpdateLoopCount = -1;
 			_cachePlayRate = 1.0;
 			cacheFrameRate = 60;
+			returnToZeroStopped = false;
 		}
 		
 		/**

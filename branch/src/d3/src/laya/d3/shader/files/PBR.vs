@@ -68,7 +68,7 @@ void main() {
 	vWorldBinormal = normalize((modelMat*vec4(binormal,0.0)).xyz);
 	#endif
     
-    vViewDir = normalize(vWorldPos.xyz-cameraPosition);
+    vViewDir = (vWorldPos.xyz-cameraPosition);//这个不能normalize。否则无法线性差值了
 #ifdef RECEIVESHADOW
 	v_posViewZ = gl_Position.z;
 	#ifdef SHADOWMAP_PSSM1 

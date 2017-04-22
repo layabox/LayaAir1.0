@@ -8,17 +8,13 @@ package laya.d3.core {
 	/**
 	 * <code>TransformUV</code> 类用于实现UV变换。
 	 */
-	public class TransformUV extends EventDispatcher {
+	public class TransformUV extends EventDispatcher implements IClone {
 		/** @private */
 		protected static var _tempOffsetV3:Vector3 = new Vector3(0, 0, 0);
 		/** @private */
 		protected static var _tempRotationQua:Quaternion = new Quaternion();
 		/** @private */
 		protected static var _tempTitlingV3:Vector3 = new Vector3(1, 1, 1);
-		/** @private */
-		protected var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
-		/** @private */
-		protected var _tempTitlingMatrix:Matrix4x4 = new Matrix4x4();
 		
 		/** @private */
 		protected var _matrix:Matrix4x4 = new Matrix4x4();
@@ -113,6 +109,28 @@ package laya.d3.core {
 			_tempTitlingV3.elements[1] = _tiling.y;
 			
 			Matrix4x4.createAffineTransformation(_tempOffsetV3, _tempRotationQua, _tempTitlingV3, _matrix);
+		}
+		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		public function cloneTo(destObject:*):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			destObject._matrix = _matrix.clone();
+			destObject._offset = _offset.clone();
+			destObject._rotation = _rotation;
+			destObject._tiling = _tiling.clone();
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {
+			var dest:TransformUV = __JS__("new this.constructor()");
+			cloneTo(dest);
+			return dest;
 		}
 	
 	}

@@ -23,8 +23,7 @@ package laya.d3.core.particle {
 	/**
 	 * <code>Particle3D</code> 3D粒子。
 	 */
-	public class Particle3D extends RenderableSprite3D {
-		
+	public class Particle3D extends RenderableSprite3D {		
 		/**@private */
 		private var _setting:ParticleSetting;
 		
@@ -73,11 +72,11 @@ package laya.d3.core.particle {
 		
 		/** @private */
 		private function _changeRenderObject(index:int):RenderElement {
-			var renderObjects:Vector.<RenderElement> = _render.renderObject._renderElements;
+			var renderObjects:Vector.<RenderElement> = _render._renderElements;
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderObject = _render.renderObject;
+			renderElement._render = _render;
 			
 			var material:BaseMaterial = _render.sharedMaterials[index];
 			(material) || (material = ParticleMaterial.defaultMaterial);//确保有材质,由默认材质代替。
@@ -92,31 +91,30 @@ package laya.d3.core.particle {
 		
 		/** @private */
 		private function _onMaterialChanged(particleRender:ParticleRender, index:int, material:BaseMaterial):void {
-			var renderElementCount:int = particleRender.renderObject._renderElements.length;
+			var renderElementCount:int = particleRender._renderElements.length;
 			(index < renderElementCount) && _changeRenderObject(index);
 		}
 		
 		/** @private */
 		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_render.renderObject);
+			scene.removeFrustumCullingObject(_render);
 		}
 		
 		/** @private */
 		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_render.renderObject);
+			scene.addFrustumCullingObject(_render);
 		}
 		
 		/**
 		 * @private
 		 */
-		override public function _prepareShaderValuetoRender(projectionView:Matrix4x4):void {
+		override public function _renderUpdate(projectionView:Matrix4x4):void {
 			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
 			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
 			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
 		}
 		
-		override public function _update(state:RenderState):void 
-		{
+		override public function _update(state:RenderState):void {
 			_templet.update(state.elapsedTime);
 			super._update(state);
 		}

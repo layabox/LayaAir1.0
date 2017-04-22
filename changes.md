@@ -1,8 +1,101 @@
-# 1.7.3beta
+# 1.7.4beta
+
+## 2D
+
+### 新特性
+
+LoaderManager批量加载时，增加后缀的自动识别
+
+LoaderManager增加setGroup和clearResByGroup方法，方便基于组的加载和管理
+
+Animation增加对IDE动画的labels的支持，动画加载完成后默认显示第一个动画第一帧
+
+Sprite类的getGraphicBounds方法增加是否使用图片真实区域的参数
+
+声音释放增加是否在ios的判断，避免在非ios的平台尝试释放声音资源报错
+
+Node销毁时同时移除所有时间监听
+
+优化设置9宫格后，宽高小于9宫格最小值时的显示效果
+
+Dialog增加onOpened和onClosed方法，分别是打开对话框动画和关闭对话框动画后触发
+
+### 修复Bug
+
+修复某些手机浏览器mouseout触发异常的bug
+
+
+
+## 3D
+
+### 新特性
+
+调整并优化Transform3D.lookAt()接口,使其更合理,同时修复其BUG
+
+调整粒子相关关键帧属性的超界处理，不再强制崩溃，自动修复避免产生相关BUG,并给出警告提示
+
+调整Laya3Dinit初始化参数，避免某些低端机中chrome内核浏览器出现异常闪屏BUG
+
+调整骨骼超借引擎渲染机制，不再强制拆分为多个SubMesh,保持美术建模初衷，更合理（需配合新版U3D导出插件，待发布）
+
+### 修复Bug
+
+修复active属性导致的节点添加或移除BUG
+
+修复精灵克隆方法导致的active属性BUG
+
+修复Transform3D.worldMatrix属性设置导致的引擎内部引用错乱BUG
+
+
+## LayaAirIDE
+
+### 新特性
+
+IDE增加搜索面板，可以通过关键词检索遇到的问题，合理利用能快速解决遇到的问题
+
+![search](imgs/search.jpg)
+
+IDE各个面板增加帮助tip，点击可打开帮助文档，方便学习
+
+![panel_help](imgs/panel_help.jpg)
+
+
+
+增加IDE帧率设置，IDE默认30帧，可以设置为60帧
+
+![framerate](imgs/framerate.jpg)
+
+
+
+增加展开和关闭所有节点的菜单
+
+![menu2](imgs/menu2.jpg)
+
+
+
+时间轴面板增加创建关键帧快捷键ctrl+k，方便k帧
+
+### 修复Bug
+
+修复粒子编辑器时键盘事件重复派发的问题
+
+修复鼠标提示有时不显示的问题
+
+修复父容器有缩放子对象pivot点显示不对的问题
+
+修复某些情况移动页面文件夹，但页面引用可能没更新的问题
+
+修复某些情况拖动组件边框修改大小时，无法保存数据的问题
+
+修复某些情况树节点展开异常的问题
+
+
+# 1.7.3 ##
+
 ### 2D ###
 改进Laya.js编译器性能(as3编译器)，大幅提高了编译速度（第一次会慢）
 
-![layajs](.\imgs\layajs.jpg)
+![layajs](imgs/layajs.jpg)
 
 优化引擎，降低展示节点的开销
 
@@ -41,21 +134,21 @@ LoaderManager使用数组加载时，complete回调函数会返回一个success�
 
 详细教程:http://ldc.layabox.com/index.php?m=content&c=index&a=show&catid=69&id=638
 
-![effect](.\imgs\effect.jpg)
+![effect](imgs/effect.jpg)
 
 节点增加了图集标识，方便优化drawcall
 
 相同图集的节点，颜色相同，如果中间有不同颜色穿插，可能就需要优化了
 
-![node](.\imgs\node.jpg)
+![node](imgs/node.jpg)
 
 增加单例的支持，允许设置某个嵌套视图为单例，减少对象创建开销
 
-![instance](.\imgs\instance.jpg)
+![instance](imgs/instance.jpg)
 
 新增导出代码功能（F11快捷键），只发布代码，不打包资源，能提高导出代码的性能
 
-![daochu](.\imgs\daochu.jpg)
+![daochu](imgs/daochu.jpg)
 
 
 改进IDE节点选取操作方式，解决层级面板选中某个节点后，无法直接拖动的问题
@@ -77,12 +170,7 @@ LoaderManager使用数组加载时，complete回调函数会返回一个success�
 
 # 1.7.2##
 ### 2D ###
-=======
-##1.7.2beta
-
-####2D####
->>>>>>> df2e9b72e9c6899d01e6b9ef5c66034950fee18b
->>>>>>> 提高WebGL下cacheAs="normal"时的渲染性能
+提高WebGL下cacheAs="normal"时的渲染性能
 
 更换字体度量方式，解决部分情况下文字显示偏移的bug
 

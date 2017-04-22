@@ -40,6 +40,10 @@ package laya.display {
 		/**@private */
 		protected var _actionName:String;
 		
+		public function AnimationPlayerBase()
+		{
+			_setUpNoticeType(Node.NOTICE_DISPLAY);
+		}
 		/**
 		 * 播放动画。
 		 * @param	start 开始播放的动画索引或label。
@@ -76,7 +80,7 @@ package laya.display {
 		protected function _getFrameByLabel(label:String):int {
 			var i:int;
 			for (i = 0; i < _count; i++) {
-				if (_labels[i] == label) return i;
+				if (_labels[i] && (_labels[i] as Array).indexOf(label) >= 0) return i;
 			}
 			return 0;
 		}
@@ -126,24 +130,24 @@ package laya.display {
 		/**@private */
 		public function _setControlNode(node:Sprite):void {
 			if (_controlNode) {
-				_controlNode.off(Event.DISPLAY, this, _onDisplay);
-				_controlNode.off(Event.UNDISPLAY, this, _onDisplay);
+				_controlNode.off(Event.DISPLAY, this, _checkResumePlaying);
+				_controlNode.off(Event.UNDISPLAY, this, _checkResumePlaying);
 			}
 			_controlNode = node;
 			if (node && node != this) {
-				node.on(Event.DISPLAY, this, _onDisplay);
-				node.on(Event.UNDISPLAY, this, _onDisplay);
+				node.on(Event.DISPLAY, this, _checkResumePlaying);
+				node.on(Event.UNDISPLAY, this, _checkResumePlaying);
 			}
 		}
 		
 		/**@private */
 		override public function _setDisplay(value:Boolean):void {
 			super._setDisplay(value);
-			_onDisplay();
+			_checkResumePlaying();
 		}
 		
 		/**@private */
-		private function _onDisplay():void {
+		protected function _checkResumePlaying():void {
 			if (_isPlaying) {
 				if (_controlNode.displayedInStage) play(_index, loop, _actionName);
 				else clearTimer(this, _frameLoop);
@@ -171,8 +175,9 @@ package laya.display {
 		 * @param	index	索引位置
 		 */
 		public function addLabel(label:String, index:int):void {
-			if (!_labels) _labels = {};
-			_labels[index] = label;
+			if (!_labels) _labels = { };
+			if (!_labels[index])_labels[index] = [];
+			_labels[index].push(label);
 		}
 		
 		/**
@@ -183,10 +188,19 @@ package laya.display {
 			if (!label) _labels = null;
 			else if (_labels) {
 				for (var name:String in _labels) {
-					if (_labels[name] === label) {
-						delete _labels[name];
-						break;
-					}
+					_removeLabelFromLabelList(_labels[name],label);
+				}
+			}
+		}
+		
+		/**@private */
+		private function _removeLabelFromLabelList(list:Array, label:String):void {
+			if (!list) return;
+			for (var i:int = list.length - 1; i >= 0; i--)
+			{
+				if (list[i] == label)
+				{
+					list.splice(i, 1);
 				}
 			}
 		}
@@ -208,7 +222,14 @@ package laya.display {
 		public function set index(value:int):void {
 			_index = value;
 			_displayToIndex(value);
-			if (_labels && _labels[value]) event(Event.LABEL, _labels[value]);
+			if (_labels && _labels[value])
+			{
+				var tArr:Array = _labels[value];
+				for (var i:int = 0, len:int = tArr.length; i < len; i++)
+				{
+					event(Event.LABEL, tArr[i]);
+				}
+			} 
 		}
 		
 		/**

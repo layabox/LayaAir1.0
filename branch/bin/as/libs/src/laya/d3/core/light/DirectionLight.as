@@ -56,19 +56,7 @@ package laya.d3.core.light {
 		override public function set shadow(value:Boolean):void {
 			if (_shadow !== value) {
 				_shadow = value;
-				if (value) {
-					_parallelSplitShadowMap = new ParallelSplitShadowMap();
-					scene.parallelSplitShadowMaps.push(_parallelSplitShadowMap);
-					_parallelSplitShadowMap.setInfo(scene, _shadowFarPlane, direction, _shadowMapSize, _shadowMapCount, _shadowMapPCFType);
-				} else {
-					var parallelSplitShadowMaps:Vector.<ParallelSplitShadowMap> = scene.parallelSplitShadowMaps;
-					parallelSplitShadowMaps.splice(parallelSplitShadowMaps.indexOf(_parallelSplitShadowMap), 1);
-					_parallelSplitShadowMap.disposeAllRenderTarget();
-					_parallelSplitShadowMap = null;
-					scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM1);
-					scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM2);
-					scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM3);
-				}
+				(scene) && (_initShadow());
 			}
 		}
 		
@@ -92,8 +80,35 @@ package laya.d3.core.light {
 		/**
 		 * @private
 		 */
+		private function _initShadow():void {
+			if (_shadow) {
+				_parallelSplitShadowMap = new ParallelSplitShadowMap();
+				scene.parallelSplitShadowMaps.push(_parallelSplitShadowMap);
+				_parallelSplitShadowMap.setInfo(scene, _shadowFarPlane, direction, _shadowMapSize, _shadowMapCount, _shadowMapPCFType);
+			} else {
+				var parallelSplitShadowMaps:Vector.<ParallelSplitShadowMap> = scene.parallelSplitShadowMaps;
+				parallelSplitShadowMaps.splice(parallelSplitShadowMaps.indexOf(_parallelSplitShadowMap), 1);
+				_parallelSplitShadowMap.disposeAllRenderTarget();
+				_parallelSplitShadowMap = null;
+				scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM1);
+				scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM2);
+				scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM3);
+			}
+		}
+		
+		/**
+		 * @private
+		 */
 		private function _onWorldMatrixChange():void {
 			_updateDirection = true;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _addSelfRenderObjects():void {
+			super._addSelfRenderObjects();
+			_shadow && (_initShadow());
 		}
 		
 		/**

@@ -358,14 +358,13 @@ package laya.d3.math {
 		 * @param	out    输出3x3矩阵
 		 */
 		public static function lookAt(eye:Vector3, target:Vector3, up:Vector3, out:Matrix3x3):void{
-			
-			Vector3.subtract(eye, target, _tempV30);
+			Vector3.subtract(eye,target, _tempV30);//WebGL为右手坐标系统
 			Vector3.normalize(_tempV30, _tempV30);
 			
-			Vector3.cross(up, _tempV30, _tempV31);
+			Vector3.cross(up,_tempV30, _tempV31);
 			Vector3.normalize(_tempV31, _tempV31);
 			
-			Vector3.cross(_tempV30, _tempV31, _tempV32);
+			Vector3.cross(_tempV30,_tempV31, _tempV32);
 			
 			var v0e:Float32Array = _tempV30.elements;
 			var v1e:Float32Array = _tempV31.elements;
@@ -373,14 +372,43 @@ package laya.d3.math {
 			
 			var me:Float32Array = out.elements;
 			me[0] = v1e[0];
-			me[1] = v1e[1];
-			me[2] = v1e[2];
-			me[3] = v2e[0];
+			me[3] = v1e[1];
+			me[6] = v1e[2];
+			
+			me[1] = v2e[0];
 			me[4] = v2e[1];
-			me[5] = v2e[2];
-			me[6] = v0e[0];
-			me[7] = v0e[1];
+			me[7] = v2e[2];
+			
+			me[2] = v0e[0];
+			me[5] = v0e[1];
 			me[8] = v0e[2];
+			
+			
+			//var oE:Float32Array = out.elements;
+			//var xaxis:Vector3 = _tempV30; 
+			//var yaxis:Vector3= _tempV31;
+			//var zaxis:Vector3 = _tempV32;
+			//
+			//Vector3.subtract(target,eye, zaxis);
+			//Vector3.normalize(zaxis, zaxis);
+			//
+			//Vector3.cross(zaxis,up, xaxis);
+			//Vector3.normalize(xaxis, xaxis);
+			//
+			//Vector3.cross(xaxis,zaxis, yaxis);
+			//
+			//var me:Float32Array = out.elements;
+			//me[0] = xaxis.x;
+			//me[3] = xaxis.y;
+			//me[6] = xaxis.z;
+			//
+			//me[1] = yaxis.x;
+			//me[4] = yaxis.y;
+			//me[7] = yaxis.z;
+			//
+			//me[2] = zaxis.x;
+			//me[5] = zaxis.y;
+			//me[8] = zaxis.z;
 		}
 	}
 }

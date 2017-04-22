@@ -167,7 +167,7 @@ package laya.ui {
 			var sizeGrid:Array = this._sizeGrid;
 			var sw:Number = source.sourceWidth;
 			var sh:Number = source.sourceHeight;
-			
+
 			//如果没有设置9宫格，或大小未改变，则直接用原图绘制
 			if (!sizeGrid || (sw === width && sh === height)) {
 				cleanByTexture(source, _offset ? _offset[0] : 0, _offset ? _offset[1] : 0, width, height);
@@ -186,8 +186,16 @@ package laya.ui {
 				var bottom:Number = sizeGrid[2];
 				var left:Number = sizeGrid[3];
 				var repeat:Boolean = sizeGrid[4];
+				var needClip:Boolean = false;
 				if (left + right > width) {
-					right = 0;
+					var clipWidth:Number = width;
+					needClip = true;
+					width = left + right;
+				}
+				
+				if (needClip) {
+					save();
+					clipRect(0, 0, clipWidth, height);
 				}
 				
 				//绘制四个角
@@ -203,6 +211,8 @@ package laya.ui {
 				right && drawBitmap(repeat, getTexture(source, sw - right, top, right, sh - top - bottom), width - right, top, right, height - top - bottom);
 				//绘制中间
 				drawBitmap(repeat, getTexture(source, left, top, sw - left - right, sh - top - bottom), left, top, width - left - right, height - top - bottom);
+				
+				if (needClip) restore();
 				
 				//缓存命令
 				if (autoCacheCmd && !Render.isConchApp) cmdCaches[key] = this.cmds;

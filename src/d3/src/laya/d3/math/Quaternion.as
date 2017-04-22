@@ -605,13 +605,45 @@ package laya.d3.math {
 			rotationMatrix(_tempMatrix3x3, out);
 		}
 		
+		
+		/**
+		 * 计算长度的平方。
+		 * @return 长度的平方。
+		 */
+	    public function lengthSquared():Number{
+			var x:Number = elements[0];
+			var y:Number = elements[1];
+			var z:Number = elements[2];
+			var w:Number = elements[3];
+            return (x * x) + (y * y) + (z * z) + (w * w);
+        }
+		
+		
+		/**
+		 * 计算四元数的逆四元数。
+		 * @param	value 四元数。
+		 * @param	out 逆四元数。
+		 */
+		public static function invert(value:Quaternion, out:Quaternion):void{
+			var vE:Float32Array = value.elements;
+			var oE:Float32Array = out.elements;
+            var lengthSq:Number = value.lengthSquared();
+            if (!MathUtils3D.isZero(lengthSq)){
+                lengthSq = 1.0 / lengthSq;
+
+                oE[0] = -vE[0] * lengthSq;
+                oE[1] = -vE[1] * lengthSq;
+                oE[2] = -vE[2] * lengthSq;
+                oE[3] = vE[3] * lengthSq;
+            }
+        }
+		
 		/**
 		 * 通过一个3x3矩阵创建一个四元数
 		 * @param	matrix3x3  3x3矩阵
 		 * @param	out        四元数
 		 */
 		public static function rotationMatrix(matrix3x3:Matrix3x3, out:Quaternion):void {
-			
 			var me:Float32Array = matrix3x3.elements;
 			var m11:Number = me[0];
 			var m12:Number = me[1];

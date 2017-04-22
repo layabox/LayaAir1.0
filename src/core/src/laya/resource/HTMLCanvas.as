@@ -132,5 +132,9 @@ package laya.resource {
 				_source && (_source.height = h, _source.width = w);
 			}
 		}
+		
+		public function getCanvas():*{
+			return _source;
+		}
 	}
 }

@@ -59,7 +59,7 @@ package laya.utils {
 			if (compClass)
 				return new compClass();
 			else
-				trace("[error] Undefined class:", className);
+				console.warn("[error] Undefined class:", className);
 			return null;
 		}
 		
@@ -121,7 +121,12 @@ package laya.utils {
 						} else {
 							var tChild:* = createByJson(data, null, root, customHandler, instanceHandler)
 							if (data.type == "Script") {
-								tChild["owner"] = node;
+								if (tChild.hasOwnProperty("owner")) {
+									tChild["owner"] = node;
+								}else if (tChild.hasOwnProperty("target")) {
+									tChild["target"] = node;
+								}
+								
 							} else if (data.props.renderType == "mask") {
 								node.mask = tChild;
 							} else {

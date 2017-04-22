@@ -24,7 +24,9 @@ uniform sampler2D texPrefilterDiff;
 #ifdef HAS_PBRINFO
 uniform sampler2D texPbrInfo;   //Ao, Roughness, Metallic
 #endif
-
+#ifdef USE_GROUNDTRUTH
+uniform sampler2D texHSNoise;
+#endif
 uniform float u_hdrexposure;
 uniform float u_AlphaTestValue;
 
@@ -56,38 +58,37 @@ vec3 _RGBEToRGB( const in vec4 rgba ){
     float f = pow(2.0, rgba.w * 255.0 - (128.0 + 8.0));
     return rgba.rgb * (255.0 * f);
 }
+/*
+vec2 frexp(float value) {
+	float e = floor(log2(value));
+	float s = value/pow(2.,e);
+	return vec2(s,e);
+}
+*/
+
+vec2 frexp(float x){
+   float e = ceil(log2(x));
+   return vec2(x * exp2(-e),e);
+}
+
+vec4 _RGBtoRGBE(vec3 rgb){
+    float v = rgb.x;
+    if (rgb.y > v) v = rgb.y;  
+    if (rgb.z > v) v = rgb.z;  
+    if (v < 1e-32) {  
+        return vec4(0.0);
+    }  
+    else {
+        vec2 e = frexp(v);
+        v = e.x /v; //当某个值为v的时候，其尾数就是e[0]。 这里*256了，所以反向的时候有个/256即-(128+8)里的8
+                            //e[0]永远不会为1所以结果<256
+		return vec4(rgb.xyz*v, e.y+0.5);
+    }
+}
+
 float saturate(float v){
     return min(max(v,0.),1.);
 }
-
-/* 合并的方式
-vec4 texPanoramaLod(sampler2D tex, const in vec3 dir, float lod){
-	float fl0 = floor(lod);
-    int l0 = int(fl0); 			//这里就不检查与maxlv的关系了
-    int l1 = l0+1;
-	if(l1>nmaxlv)l1=nmaxlv;
-    float k = lod-fl0;				//TODO fract
-	
-	//ps不支持索引数组
-	vec4 rect1;// = u_lodRect[l0];
-	vec4 rect2;// = u_lodRect[l1];
-	for( int i=0; i<10; i++){
-		if(i==l0) {
-			rect1 = u_lodRect[i];
-		}
-		if(i==l1){
-			rect2 = u_lodRect[i];
-		}
-	}
-	
-    float u = atan(dir.z,dir.x)/_2PI+0.5;  
-    float v = acos(dir.y)/PI;
-
-    vec4 v0 = texture2D(tex, vec2(u*rect1.z+rect1.x,v*rect1.w+rect1.y));
-    vec4 v1 = texture2D(tex, vec2(u*rect2.z+rect2.x,v*rect2.w+rect2.y));
-    return mix(v0,v1,k);
-}
-*/
 
 vec4 tex2dLod(sampler2D tex, float u, float v, float lod){
 	vec2 uv = vec2(u,v);
@@ -110,14 +111,14 @@ vec4 texPanoramaLod(sampler2D tex, const in vec3 dir, float lod){
 	return tex2dLod(tex,envu,envv,lod);
 }
 
-vec3 ApproximateSpecularIBL( vec3 SpecularColor , float Roughness , float NoV, vec3 R){
+vec4 ApproximateSpecularIBL( vec3 SpecularColor , float Roughness , float NoV, vec3 R){
     vec4 PrefilteredColor = texPanoramaLod(texPrefilterdEnv, R, Roughness*maxlv);
     PrefilteredColor.rgb = _RGBEToRGB(PrefilteredColor);
     vec4 EnvBRDF = texture2D(texBRDFLUT,vec2(Roughness , NoV));//TODO lod
     vec2 rg = _RGBAToU16(EnvBRDF);    
     //原来的括号不对
     speccontrib = (SpecularColor* rg.x + saturate( 50.0 * PrefilteredColor.g ) * rg.y);
-    return PrefilteredColor.rgb * speccontrib;
+    return vec4(PrefilteredColor.rgb, speccontrib);
 }
 
 vec3 testDiff(vec3 dir){
@@ -130,17 +131,6 @@ vec3 testDiff(vec3 dir){
 */
 float environment_exposure = 1.0;
 vec3 diff_sh9(vec3 dir){
-	/*
-	  float rot = environment_rotation * M_2PI;
-	  float crot = cos(rot);
-	  float srot = sin(rot);
-	  vec4 shDir = vec4(dir.xzy, 1.0);
-	  shDir = vec4(
-		shDir.x * crot - shDir.y * srot,
-		shDir.x * srot + shDir.y * crot,
-		shDir.z,
-		1.0);
-	*/
 	vec4 shDir = vec4(dir.x,-dir.z,dir.y,1.0);
   return max(vec3(0.0), vec3(
 	dot(shDir, irrad_mat_red * shDir),
@@ -157,6 +147,111 @@ vec3 applyNormalTex( vec3 norm, vec3 surf_norm ) {
     return normalize( tsn * mapN );
 }
 #endif
+
+#ifdef USE_GROUNDTRUTH
+
+float G_Smith( float Roughness, float NoV, float NoL ){
+    float k= Roughness * sqrt(2.0/3.14159265);
+    float one_minus_k= 1.0 -k;
+    return ( NoL / (NoL * one_minus_k + k) ) * ( NoV / (NoV * one_minus_k + k));
+}
+/*
+vec2 Hammersley(int i, int NumSamples){
+    return hammersley2d(i,NumSamples);
+}
+*/
+//https://de45xmedrsdbp.cloudfront.net/Resources/files/2013SiggraphPresentationsNotes-26915738.pdf
+//Image-Based Lighting
+//P4
+// N的作用是用来把生成的H转换到世界空间用。
+vec3 ImportanceSampleGGX( vec2 Xi, float Roughness, vec3 N ){
+    float a = Roughness * Roughness;
+    float Phi = 2. * PI * Xi.x;//与水平面x轴的夹角
+    float CosTheta = sqrt( (1. - Xi.y) / ( 1. + (a*a - 1.) * Xi.y ) );
+    float SinTheta = sqrt( 1. - CosTheta * CosTheta );
+    vec3 H;
+    //TODO 这里需要修改朝向么，坐标系
+    H.x = SinTheta * cos( Phi );
+    H.y = SinTheta * sin( Phi );
+    H.z = CosTheta;//Z向上，应该对应N
+    vec3 UpVector = abs(N.z) < 0.9999 ? vec3(0.,0.,1.) : vec3(1.,0.,0.);
+    vec3 TangentX = normalize( cross( UpVector,N ) );
+    vec3 TangentY = cross( N, TangentX );
+    // Tangent to world space
+    return TangentX * H.x + TangentY * H.y + N * H.z;
+}
+
+/*
+    环境贴图的预处理。
+    R 是入射灯光的朝向。
+    实际计算的时候用这个作为N来转换返回的H
+	TODO 以后换成SP的方式。
+*/
+vec3 PrefilterEnvMap( float Roughness , vec3 R ){
+    vec3 N = R;//TODO 用优化么
+    vec3 V = R;
+    vec3 PrefilteredColor = vec3(0.,0.,0.);
+    float TotalWeight = 0.;
+	float tx = 0.;
+	float ty = 0.;
+    const int NumSamples = 1024;
+	const float fNumSamples = 1024.0;
+    for( int i = 0; i < NumSamples; i++ ) {
+		float fi = float(i);
+        ty = floor(fi/32.0)/32.0;
+        tx = mod(fi,32.0)/32.0;
+        vec2 Xi = vec2(fi/fNumSamples,texture2D(texHSNoise,vec2(tx,ty)).r);// Hammersley( i, NumSamples );
+        vec3 H = ImportanceSampleGGX( Xi, Roughness , N );
+        vec3 L = 2. * dot( V, H ) * H - V;
+        float NoL = max( dot( N, L ),0. );
+        if( NoL > 0. ){
+            //vec4 SampleColor=texPanorama(texEnv, L);
+			vec4 SampleColor = texPanoramaLod(texPrefilterdEnv, L,0.);
+            SampleColor.rgb = _RGBEToRGB(SampleColor);
+            PrefilteredColor += SampleColor.rgb * NoL;
+            TotalWeight += NoL;
+        }
+    }
+    return PrefilteredColor / TotalWeight;
+}
+
+/*
+    BRDF部分的积分的预处理。
+    在排除F0以后，剩下的可以预计算了。
+    输入为 Roughness 和 cosθ。
+*/
+vec2 IntegrateBRDF( float Roughness , float NoV ){
+    vec3 N=vec3(0.,0.,1.);//TODO 为什么是 001呢
+    vec3 V;
+    V.x = sqrt( 1.0 - NoV * NoV ); // sin
+    V.y = 0.;
+    V.z = NoV; // cos
+    float A = 0.;
+    float B = 0.;
+	float tx = 0.;
+	float ty = 0.;
+    const int NumSamples = 1024;
+	const float fNumSamples = 1024.0;
+    for( int i = 0; i < NumSamples; i++ ){
+		float fi = float(i);
+        ty = floor(fi/32.0)/32.0;
+        tx = mod(fi,32.0)/32.0;
+        vec2 Xi = vec2(fi/fNumSamples,texture2D(texHSNoise,vec2(tx,ty)).r);// Hammersley( i, NumSamples );
+        vec3 H = ImportanceSampleGGX( Xi, Roughness , N );
+        vec3 L = 2. * dot( V, H ) * H - V;
+        float NoL = saturate( L.z );
+        float NoH = saturate( H.z );
+        float VoH = saturate( dot( V, H ) );
+        if( NoL > 0. ){
+            float G = G_Smith( Roughness , NoV, NoL );
+            float G_Vis = G * VoH / (NoH * NoV);
+            float Fc = pow( 1. - VoH, 5. );
+            A += (1. - Fc) * G_Vis; //F0的缩放部分 A*F0+B
+            B += Fc * G_Vis;        //F0的偏移部分
+        }
+    }
+    return vec2( A, B ) / fNumSamples;
+}
 
 vec4 pbrlight(vec3 normal, float rough, float NoV, vec3 R){
     vec4 basecolor = texture2D(texBaseColor,vUv);
@@ -178,7 +273,46 @@ vec4 pbrlight(vec3 normal, float rough, float NoV, vec3 R){
     //vec4 pbrinfo = texture2D(texORM,vUv);
     const vec3 nonmetalF0 =vec3(0.05);
     vec3 F0 =  mix(nonmetalF0, basecolor.rgb, metaless);
-    vec3 color_spec = ApproximateSpecularIBL(F0,rough, NoV, R);
+    //vec4 color_spec = ApproximateSpecularIBL(F0,rough, NoV, R);
+    vec3 PrefilteredColor = PrefilterEnvMap( rough , R );
+    vec2 EnvBRDF = IntegrateBRDF( rough , NoV );
+	speccontrib =  F0 * EnvBRDF.x + EnvBRDF.y;
+	vec3 color_spec = PrefilteredColor * speccontrib;
+	vec3 color_diff=diff_sh9(normal);//testDiff(normal);//
+	vec3 outc = color_diff*mix(basecolor.rgb,vec3(0.),metaless)*(vec3(1.0)-speccontrib)+color_spec*u_hdrexposure;
+    return vec4(outc,basecolor.a);//TODO 这里应该没有括号
+}
+#else
+vec4 pbrlight(vec3 normal, float rough, float NoV, vec3 R){
+    vec4 basecolor = texture2D(texBaseColor,vUv);
+	float metaless = 1.0; 	
+	const float ismetalinfov = (128./255.);
+	if(basecolor.a>=ismetalinfov){//这时候表示金属度
+		metaless = (basecolor.a-ismetalinfov)*2.;
+		basecolor.a = 1.0;
+	}else{
+		metaless = 0.;
+		basecolor.a = basecolor.a*2.0;
+	}
+	#ifdef FIX_METALESS
+	metaless = u_metaless;
+	#endif
+	#ifdef HAS_PBRINFO	
+	vec4 pbrinfo = texture2D(texPbrInfo, vUv);
+	#endif
+    //vec4 pbrinfo = texture2D(texORM,vUv);
+    const vec3 nonmetalF0 =vec3(0.05);
+    vec3 F0 =  mix(nonmetalF0, basecolor.rgb, metaless);
+    //vec4 color_spec = ApproximateSpecularIBL(F0,rough, NoV, R);
+	
+    vec4 PrefilteredColor = texPanoramaLod(texPrefilterdEnv, R, rough*maxlv);
+    PrefilteredColor.rgb = _RGBEToRGB(PrefilteredColor);
+    vec4 EnvBRDF = texture2D(texBRDFLUT,vec2(rough , NoV));//TODO lod
+    vec2 rg = _RGBAToU16(EnvBRDF);    
+    //原来的括号不对
+    speccontrib = (F0* rg.x + saturate( 50.0 * PrefilteredColor.g ) * rg.y);
+	vec3 color_spec = PrefilteredColor.rgb*speccontrib;
+	
 	vec3 color_diff=diff_sh9(normal);//testDiff(normal);//
 	//return vec4(color_diff,basecolor.a);
 	//一起控制的话，diff总也不好
@@ -187,10 +321,11 @@ vec4 pbrlight(vec3 normal, float rough, float NoV, vec3 R){
 	float ao = pbrinfo.r;
 	vec3 outc = (color_diff*mix(basecolor.rgb,vec3(0.),metaless)+color_spec*u_hdrexposure)*ao;
 	#else
-	vec3 outc = color_diff*mix(basecolor.rgb,vec3(0.),metaless)+color_spec*u_hdrexposure;
+	vec3 outc = color_diff*mix(basecolor.rgb,vec3(0.),metaless)*(vec3(1.0)-speccontrib)+color_spec*u_hdrexposure;
 	#endif
     return vec4(outc, basecolor.a);
 }
+#endif
 
 vec3 oldlight(vec4 normal, float NoV, vec3 R){
     vec4 basecolor = texture2D(texBaseColor,vUv);
@@ -223,6 +358,17 @@ float calcAO(vec3 worldpos,vec3 normal, vec3 surfacenorm){
 		k *= sqrt(d*d-r*r)/d;
 	}
 	return k;
+}
+
+vec2 packf(float v){
+	float iv = v*255.;
+	float l = mod(iv,256.)/255.;
+	float h = floor(iv/256.)/255.;
+	return vec2(h,l);
+}
+
+float unpackf(vec2 v){
+	return (v.x*255.*256.+v.y*255.)/255.;
 }
 
 void main() {
@@ -276,5 +422,6 @@ void main() {
 	
 	//gl_FragColor.rgb *= calcAO(vWorldPos.xyz, normal, smoothnorm);
     gl_FragColor.a = pbrl.a;
+
 #endif
 }

@@ -5,10 +5,10 @@
 	var Box=laya.ui.Box,Browser=laya.utils.Browser,Button=laya.ui.Button,Byte=laya.utils.Byte,CSSStyle=laya.display.css.CSSStyle;
 	var Component=laya.ui.Component,Config=Laya.Config,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher;
 	var Filter=laya.filters.Filter,GrahamScan=laya.maths.GrahamScan,Graphics=laya.display.Graphics,HTMLCanvas=laya.resource.HTMLCanvas;
-	var Handler=laya.utils.Handler,Image=laya.ui.Image,Input=laya.display.Input,Label=laya.ui.Label,List=laya.ui.List;
-	var Loader=laya.net.Loader,LoaderManager=laya.net.LoaderManager,LocalStorage=laya.net.LocalStorage,MathUtil=laya.maths.MathUtil;
-	var Matrix=laya.maths.Matrix,Node=laya.display.Node,Point=laya.maths.Point,Pool=laya.utils.Pool,Rectangle=laya.maths.Rectangle;
-	var Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
+	var Handler=laya.utils.Handler,HitArea=laya.utils.HitArea,Image=laya.ui.Image,Input=laya.display.Input,Label=laya.ui.Label;
+	var List=laya.ui.List,Loader=laya.net.Loader,LoaderManager=laya.net.LoaderManager,LocalStorage=laya.net.LocalStorage;
+	var MathUtil=laya.maths.MathUtil,Matrix=laya.maths.Matrix,Node=laya.display.Node,Point=laya.maths.Point,Pool=laya.utils.Pool;
+	var Rectangle=laya.maths.Rectangle,Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
 	var Resource=laya.resource.Resource,ResourceManager=laya.resource.ResourceManager,RunDriver=laya.utils.RunDriver;
 	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Stat=laya.utils.Stat,Style=laya.display.css.Style;
 	var Text=laya.display.Text,TextInput=laya.ui.TextInput,Texture=laya.resource.Texture,Timer=laya.utils.Timer;
@@ -1963,6 +1963,17 @@
 			sp=new Sprite();
 			sp.graphics.drawRect(0,0,width,height,color);
 			sp.size(width,height);
+			return sp;
+		}
+
+		CommonTools.createBtn=function(txt,width,height){
+			(width===void 0)&& (width=100);
+			(height===void 0)&& (height=40);
+			var sp;
+			sp=new Sprite();
+			sp.size(width,height);
+			sp.graphics.drawRect(0,0,sp.width,sp.height,"#ff0000");
+			sp.graphics.fillText(txt,sp.width *0.5,sp.height *0.5,null,"#ffff00","center");
 			return sp;
 		}
 
@@ -4481,29 +4492,13 @@
 			IDTools.idObj(sp);
 			var isInAnlyseChain=false;
 			isInAnlyseChain=MouseEventAnalyser.nodeO[IDTools.getObjID(sp)];
-			var transform=sp.transform || MouseEventAnalyser._matrix;
-			var pivotX=sp.pivotX;
-			var pivotY=sp.pivotY;
-			if (pivotX===0 && pivotY===0){
-				transform.setTranslate(sp.x,sp.y);
-			}
-			else{
-				if (transform===MouseEventAnalyser._matrix){
-					transform.setTranslate(sp.x-pivotX,sp.y-pivotY);
-				}
-				else{
-					var cos=transform.cos;
-					var sin=transform.sin;
-					transform.setTranslate(sp.x-(pivotX *cos-pivotY *sin)*sp.scaleX,sp.y-(pivotX *sin+pivotY *cos)*sp.scaleY);
-				}
-			}
-			transform.invertTransformPoint(MouseEventAnalyser._point.setTo(mouseX,mouseY));
-			transform.setTranslate(0,0);
+			MouseEventAnalyser._point.setTo(mouseX,mouseY);
+			sp.fromParentPoint(MouseEventAnalyser._point);
 			mouseX=MouseEventAnalyser._point.x;
 			mouseY=MouseEventAnalyser._point.y;
 			var scrollRect=sp.scrollRect;
 			if (scrollRect){
-				MouseEventAnalyser._rect.setTo(0,0,scrollRect.width,scrollRect.height);
+				MouseEventAnalyser._rect.setTo(scrollRect.x,scrollRect.y,scrollRect.width,scrollRect.height);
 				var isHit=MouseEventAnalyser._rect.contains(mouseX,mouseY);
 				if (!isHit){
 					if (isInAnlyseChain){
@@ -4546,7 +4541,7 @@
 					coverByOthers=false;
 				}
 				if (child.mouseEnabled && child.visible){
-					flag=MouseEventAnalyser.check(child,mouseX+(scrollRect ? scrollRect.x :0),mouseY+(scrollRect ? scrollRect.y :0),callBack);
+					flag=MouseEventAnalyser.check(child,mouseX ,mouseY,callBack);
 					if (flag){
 						MouseEventAnalyser.hitO[IDTools.getObjID(sp)]=true;
 						MouseEventAnalyser.infoO[IDTools.getObjID(sp)]="子对象被击中";
@@ -4606,6 +4601,9 @@
 
 		MouseEventAnalyser.hitTest=function(sp,mouseX,mouseY){
 			var isHit=false;
+			if ((sp.hitArea instanceof laya.utils.HitArea )){
+				return sp.hitArea.isHit(mouseX,mouseY);
+			}
 			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough || sp.hitArea){
 				var hitRect=MouseEventAnalyser._rect;
 				if (!sp.mouseThrough){
@@ -4743,6 +4741,9 @@
 			var rst={};
 			var key;
 			for(key in obj){
+				if(obj[key]===null||obj[key]===undefined){
+					rst[key]=obj[key];
+				}else
 				if(((obj[key])instanceof Array)){
 					rst[key]=ObjectTools.copyArr(obj[key]);
 				}
@@ -11619,25 +11620,6 @@
 	*...
 	*@author ww
 	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -11654,6 +11636,25 @@
 
 		return FindNode;
 	})(FindNodeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
 
 
 	/**

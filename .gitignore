@@ -32,6 +32,7 @@ local.properties
 ide/
 idebranch/
 branch/
+log/
 utils/node_modules
 utils/copy.bat
 utils/debug.txt

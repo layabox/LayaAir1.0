@@ -123,7 +123,7 @@ package laya.d3.graphics {
 			for (var key:String in _staticBatches)
 			{
 				var staticBatch:StaticBatch = _staticBatches[key];
-				staticBatch._owner._prepareShaderValuetoRender(projectionView);//TODO:待调整,是否合理
+				staticBatch._owner._renderUpdate(projectionView);//TODO:待调整,是否合理
 				staticBatch._addToRenderQueue(scene);
 			}
 		}

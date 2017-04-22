@@ -122,7 +122,7 @@ package laya.d3.core.light {
 		 * 获取阴影最远范围。
 		 * @return 阴影最远范围。
 		 */
-		public function get shadowFarPlane():Number {
+		public function get shadowDistance():Number {
 			return _shadowFarPlane;
 		}
 		
@@ -130,7 +130,7 @@ package laya.d3.core.light {
 		 * 设置阴影最远范围。
 		 * @param value 阴影最远范围。
 		 */
-		public function set shadowFarPlane(value:Number):void {
+		public function set shadowDistance(value:Number):void {
 			_shadowFarPlane = value;
 			(_parallelSplitShadowMap) && (_parallelSplitShadowMap.setFarDistance(value));
 		}
@@ -139,7 +139,7 @@ package laya.d3.core.light {
 		 * 获取阴影贴图尺寸。
 		 * @return 阴影贴图尺寸。
 		 */
-		public function get shadowMapSize():Number {
+		public function get shadowResolution():Number {
 			return _shadowMapSize;
 		}
 		
@@ -147,7 +147,7 @@ package laya.d3.core.light {
 		 * 设置阴影贴图尺寸。
 		 * @param value 阴影贴图尺寸。
 		 */
-		public function set shadowMapSize(value:Number):void {
+		public function set shadowResolution(value:Number):void {
 			_shadowMapSize = value;
 			(_parallelSplitShadowMap) && (_parallelSplitShadowMap.setShadowMapTextureSize(value));
 		}
@@ -156,7 +156,7 @@ package laya.d3.core.light {
 		 * 获取阴影分段数。
 		 * @return 阴影分段数。
 		 */
-		public function get shadowMapCount():int {
+		public function get shadowPSSMCount():int {
 			return _shadowMapCount;
 		}
 		
@@ -164,7 +164,7 @@ package laya.d3.core.light {
 		 * 设置阴影分段数。
 		 * @param value 阴影分段数。
 		 */
-		public function set shadowMapCount(value:int):void {
+		public function set shadowPSSMCount(value:int):void {
 			_shadowMapCount = value;
 			(_parallelSplitShadowMap) && (_parallelSplitShadowMap.PSSMNum = value);
 		}
@@ -173,7 +173,7 @@ package laya.d3.core.light {
 		 * 获取阴影PCF类型。
 		 * @return PCF类型。
 		 */
-		public function get shadowMapPCFType():int {
+		public function get shadowPCFType():int {
 			return _shadowMapPCFType;
 		}
 		
@@ -181,7 +181,7 @@ package laya.d3.core.light {
 		 * 设置阴影PCF类型。
 		 * @param value PCF类型。
 		 */
-		public function set shadowMapPCFType(value:int):void {
+		public function set shadowPCFType(value:int):void {
 			_shadowMapPCFType = value;
 			(_parallelSplitShadowMap) && (_parallelSplitShadowMap.setPCFType(value));
 		}
@@ -200,9 +200,6 @@ package laya.d3.core.light {
 		public function LightSprite() {
 			super();
 			
-			on(Event.ADDED, this, _onAdded);
-			on(Event.REMOVED, this, _onRemoved);
-			
 			_diffuseColor = new Vector3(0.8, 0.8, 0.8);
 			_ambientColor = new Vector3(0.6, 0.6, 0.6);
 			_specularColor = new Vector3(1.0, 1.0, 1.0);
@@ -215,19 +212,17 @@ package laya.d3.core.light {
 		}
 		
 		/**
-		 * @private
-		 * 灯光节点移除事件处理函数。
+		 * @inheritDoc
 		 */
-		private function _onRemoved():void {
-			scene._removeLight(this);
+		override protected function _addSelfRenderObjects():void {
+			scene._addLight(this);
 		}
 		
 		/**
-		 * @private
-		 * 灯光节点添加事件处理函数。
+		 * @inheritDoc
 		 */
-		private function _onAdded():void {
-			scene._addLight(this);
+		override protected function _clearSelfRenderObjects():void {
+			scene._removeLight(this);
 		}
 		
 		/**

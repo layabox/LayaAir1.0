@@ -65,7 +65,7 @@ package laya.debug.tools
 			sp.size(width, height);
 			return sp;
 		}
-		public static function createBtn(txt:String,width:Number=100,height:Number=40):void
+		public static function createBtn(txt:String,width:Number=100,height:Number=40):Sprite
 		{
 			var sp:Sprite;
 			sp = new Sprite();

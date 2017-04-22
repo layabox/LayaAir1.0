@@ -23,9 +23,6 @@ package laya.d3.terrain {
 		public var _detailTextureInfos:Vector.<DetailTextureInfo>;
 		public var _chunkInfos:Vector.<ChunkInfo>;
 		public var _heightData:TerrainHeightData;
-		public var _position:Vector3;
-		public var _rotation:Quaternion;
-		public var _scale:Vector3;
 		/**
 		 * 加载地形模板,注意:不缓存。
 		 * @param url 模板地址。
@@ -41,7 +38,7 @@ package laya.d3.terrain {
 			super();
 		}
 		
-		public function parseData( data:* ):Boolean
+		public function parseData( data:*,path:String ):Boolean
 		{
 			var json:* = data;
 			_version = json.version;
@@ -50,23 +47,20 @@ package laya.d3.terrain {
 				_gridSize = json.gridSize;
 				_chunkNumX = json.chunkNumX;
 				_chunkNumZ = json.chunkNumZ;
-				_position = new Vector3(json.transform.position[0], json.transform.position[1], json.transform.position[2]);
-				_rotation = new Quaternion(json.transform.rotation[0], json.transform.rotation[1], json.transform.rotation[2],json.transform.rotation[3]);
-				_scale = new Vector3(json.transform.scale[0],json.transform.scale[1],json.transform.scale[2]);
 				var heightData:* = json.heightData;
 				_heightDataX = heightData.numX;
 				_heightDataZ = heightData.numZ;
 				_heightDataBitType = heightData.bitType;
 				_heightDataValue = heightData.value;
-				_heightDataUrl = heightData.url;
+				_heightDataUrl = path + heightData.url;
 				var detailTextures:* = json.detailTexture;
 				_detailTextureInfos = new Vector.<DetailTextureInfo>( detailTextures.length );
 				for ( var i:int = 0; i < detailTextures.length; i++ )
 				{
 					var detail:* = detailTextures[i];
 					var info:DetailTextureInfo = new DetailTextureInfo();
-					info.diffuseTexture = detail.diffuse;
-					info.normalTexture = detail.norml;
+					info.diffuseTexture = path + detail.diffuse;
+					info.normalTexture = detail.normal ? path + detail.normal : null;
 					if ( detail.scale )
 					{
 						info.scale = new Vector2( detail.scale[0],detail.scale[1] );
@@ -106,10 +100,10 @@ package laya.d3.terrain {
 					}
 					chunkinfo.alphaMap = new Vector.<String>( nAlphaMapNum );
 					chunkinfo.detailID = new Vector.<Uint8Array>( nDetailIDNum );
-					chunkinfo.normalMap = jchunk.normalMap;
+					chunkinfo.normalMap = path + jchunk.normalMap;
 					for ( var j:int = 0; j < nAlphaMapNum; j++ )
 					{
-						chunkinfo.alphaMap[j] = jchunk.alphaMap[j];
+						chunkinfo.alphaMap[j] = path + jchunk.alphaMap[j];
 						var jid:* = jchunk.detailID[j];
 						var nIDNum:int = jid.length;
 						chunkinfo.detailID[j] = new Uint8Array(nIDNum);
@@ -137,7 +131,14 @@ package laya.d3.terrain {
 		 * 异步回调
 		 */
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
-			parseData(data);
+			var sBuffer:Array = url.split('/');
+			var sPath:String="";
+			for (var i:int = 0, n:int = sBuffer.length-1; i < n; i++ )
+			{
+				sPath += sBuffer[i];
+				sPath += "/";
+			}
+			parseData(data,sPath);
 		}
 	}
 }

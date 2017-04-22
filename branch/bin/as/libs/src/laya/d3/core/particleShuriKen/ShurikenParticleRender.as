@@ -1,13 +1,22 @@
 package laya.d3.core.particleShuriKen {
 	import laya.d3.core.particle.Particle3D;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
+	import laya.d3.core.particleShuriKen.module.GradientDataNumber;
+	import laya.d3.core.particleShuriKen.module.SizeOverLifetime;
+	import laya.d3.core.particleShuriKen.module.shape.BaseShape;
 	import laya.d3.core.render.BaseRender;
+	import laya.d3.math.BoundBox;
+	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Quaternion;
+	import laya.d3.math.Vector3;
 	
 	/**
-	 * ...
-	 * @author ...
+	 * <code>ShurikenParticleRender</code> 类用于创建3D粒子渲染器。
 	 */
 	public class ShurikenParticleRender extends BaseRender {
+		/**@private */
+		private var _defaultBoundBox:BoundBox;
+		
 		///**排序模式,无。*/
 		//public const SORTINGMODE_NONE:int = 0;
 		///**排序模式,通过摄像机距离排序,暂不支持。*/
@@ -46,49 +55,64 @@ package laya.d3.core.particleShuriKen {
 			if (_renderMode !== value) {
 				switch (_renderMode) {
 				case 0: 
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SPHERHBILLBOARD);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
 					break;
 				case 1: 
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_STRETCHEDBILLBOARD);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD);
 					break;
 				case 2: 
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_HORIZONTALBILLBOARD);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD);
 					break;
 				case 3: 
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VERTICALBILLBOARD);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD);
 					break;
 				}
 				_renderMode = value;
 				switch (value) {
 				case 0: 
-					_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SPHERHBILLBOARD);
+					_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
 					break;
 				case 1: 
-					_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_STRETCHEDBILLBOARD);
+					_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD);
 					break;
 				case 2: 
-					_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_HORIZONTALBILLBOARD);
+					_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD);
 					break;
 				case 3: 
-					_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VERTICALBILLBOARD);
+					_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD);
 					break;
-				default:
+				default: 
 					throw new Error("ShurikenParticleRender: unknown renderMode Value.");
 				}
 			}
 		}
 		
+		/**
+		 * 创建一个 <code>ShurikenParticleRender</code> 实例。
+		 */
 		public function ShurikenParticleRender(owner:ShuriKenParticle3D) {
 			super(owner);
+			_defaultBoundBox = new BoundBox(new Vector3(), new Vector3());
 			_renderMode = 0;
-			owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SPHERHBILLBOARD);
+			owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
 			stretchedBillboardCameraSpeedScale = 0.0;
 			stretchedBillboardSpeedScale = 0.0;
 			stretchedBillboardLengthScale = 1.0;
 			//sortingMode = SORTINGMODE_NONE;
 		}
 		
-		override protected function _calculateBoundingBox():void {//TODO:更具粒子参数计算
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _calculateBoundingBox():void {
+			//var particleSystem:ShurikenParticleSystem = (_owner as ShuriKenParticle3D).particleSystem;
+			//particleSystem._generateBoundingBox();
+			//var rotation:Quaternion = _owner.transform.rotation;
+			//var corners:Vector.<Vector3> = particleSystem._boundingBoxCorners;
+			//for (var i:int = 0; i < 8; i++)
+			//	Vector3.transformQuat(corners[i], rotation, _tempBoudingBoxCorners[i]);
+			//BoundBox.createfromPoints(_tempBoudingBoxCorners, _boundingBox);
+		
 			var minE:Float32Array = _boundingBox.min.elements;
 			minE[0] = -Number.MAX_VALUE;
 			minE[1] = -Number.MAX_VALUE;
@@ -99,12 +123,30 @@ package laya.d3.core.particleShuriKen {
 			maxE[2] = Number.MAX_VALUE;
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override protected function _calculateBoundingSphere():void {//TODO:更具粒子参数计算
 			var centerE:Float32Array = _boundingSphere.center.elements;
 			centerE[0] = 0;
 			centerE[1] = 0;
 			centerE[2] = 0;
 			_boundingSphere.radius = Number.MAX_VALUE;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function get boundingBox():BoundBox {
+			if (!(_owner as ShuriKenParticle3D).particleSystem.isAlive) {
+				return _defaultBoundBox;
+			} else {
+				if (_boundingBoxNeedChange) {
+					_calculateBoundingBox();
+					_boundingBoxNeedChange = false;
+				}
+				return _boundingBox;
+			}
 		}
 	
 	}

@@ -5,7 +5,6 @@ package laya.d3.core.material {
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderQueue;
-	import laya.d3.graphics.RenderObject;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.core.render.RenderState;
@@ -69,7 +68,6 @@ package laya.d3.core.material {
 		public static var SHADERDEFINE_AMBIENTMAP:int;
 		public static var SHADERDEFINE_REFLECTMAP:int;
 		public static var SHADERDEFINE_UVTRANSFORM:int;
-		public static var SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV:int;
 		//public static var MIXUV:int;//TODO：
 		
 		public static const DIFFUSETEXTURE:int = 1;
@@ -580,6 +578,7 @@ package laya.d3.core.material {
 			super.cloneTo(destObject);
 			var dest:StandardMaterial = destObject as StandardMaterial;
 			dest._renderMode = _renderMode;
+			(_transformUV) && (dest._transformUV = _transformUV.clone());
 		}
 	}
 

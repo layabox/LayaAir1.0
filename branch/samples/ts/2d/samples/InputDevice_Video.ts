@@ -278,7 +278,7 @@ module laya {
 			}
 			
 			this.video.on('loadedmetadata', this, this.onVideoReady);
-			this.video.on('complete', this, this.onVideoPlayEnded);
+			this.video.on('ended', this, this.onVideoPlayEnded);
 			
 			// 设置视频源
 			this.video.load("../../res/av/mov_bbb.mp4");

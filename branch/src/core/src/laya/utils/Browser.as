@@ -5,7 +5,6 @@ package laya.utils {
 	import laya.renders.Render;
 	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
-	import laya.resource.WXCanvas;
 	
 	SoundManager;
 	
@@ -109,51 +108,7 @@ package laya.utils {
 			__JS__("window.focus()");
 			__JS__("SoundManager._soundClass=Sound;");
 			
-			var MainCanvas:* = null;
-			
-			if (window.MainCanvasID) {
-				//为了支持微信小应用
-				var _wx:* = __JS__("wx");
-				if (_wx && !_wx.createContext) _wx = null;
-				if ((WXCanvas.wx = _wx) != null) {
-					MainCanvas = new WXCanvas(window.MainCanvasID);
-					var from:* = Context.prototype;
-					from.flush = null;
-					
-					window.Image = function():void {
-						this.setSrc = function(url:*):void {
-							this.__src = url;
-							var _this:* = this;
-							/*_wx.downloadFile({
-							   url: url,
-							   type: 'image',
-							   success:function(res:*):void
-							   {
-							   _this.success(res);
-							   }
-							   });*/
-							this.success();
-						}
-						
-						this.success = function(res:*):void {
-							this.width = 200;
-							this.height = 200;
-							this.tempFilePath = res ? res.tempFilePath : this.__src;
-							this.onload && this.onload();
-						}
-						
-						this.getSrc = function():String {
-							return this.__src;
-						}
-					
-						//[IF-SCRIPT]Object.defineProperty(this, "src", { get:this.getSrc,set:this.setSrc, enumerable:false } );
-					}
-				} else {
-					MainCanvas = document.getElementById(window.MainCanvasID);
-				}
-			}
-			
-			Render._mainCanvas = Render._mainCanvas || HTMLCanvas.create('2D', MainCanvas);
+			Render._mainCanvas = Render._mainCanvas || HTMLCanvas.create('2D');
 			if (canvas) return;
 			canvas = HTMLCanvas.create('2D');
 			context = canvas.getContext('2d');
@@ -168,7 +123,7 @@ package laya.utils {
 				window.innerHeight = e.data.height;
 				window.__innerHeight = e.data.clientHeight;
 				if (!document.createEvent){
-					trace("no document.createEvent");
+					console.warn("no document.createEvent");
 					return;
 				}
 				var evt:* = document.createEvent("HTMLEvents");

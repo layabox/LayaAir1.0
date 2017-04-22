@@ -20,7 +20,9 @@ package laya.d3.resource {
 		/**灰色纯色纹理。*/
 		public static var grayTexture:SolidColorTexture2D = new SolidColorTexture2D(new Vector4(0.5, 0.5, 0.5, 1.0));
 		
+		/**@private */
 		private var _color:Vector4;
+		/**@private */
 		private var _pixels:Uint8Array;
 		
 		override public function get source():* {

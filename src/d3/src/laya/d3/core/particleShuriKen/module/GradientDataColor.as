@@ -40,10 +40,16 @@ package laya.d3.core.particleShuriKen.module {
 		 */
 		public function addAlpha(key:Number, value:int):void {
 			if (_alphaCurrentLength < 8) {
+				
+				if ((_alphaCurrentLength === 6) && ((key !== 1))) {
+					key = 1;
+					console.log("GradientDataColor warning:the forth key is  be force set to 1.");
+				}
+				
 				_alphaElements[_alphaCurrentLength++] = key;
 				_alphaElements[_alphaCurrentLength++] = value;
 			} else {
-				throw new Error("GradientDataColor:Alpha count must less than 4.");
+				console.log("GradientDataColor warning:data count must lessEqual than 4");
 			}
 		}
 		
@@ -54,12 +60,18 @@ package laya.d3.core.particleShuriKen.module {
 		 */
 		public function addRGB(key:Number, value:Vector3):void {
 			if (_rgbCurrentLength < 16) {
+				
+				if ((_rgbCurrentLength === 12) && ((key !== 1))) {
+					key = 1;
+					console.log("GradientDataColor warning:the forth key is  be force set to 1.");
+				}
+				
 				_rgbElements[_rgbCurrentLength++] = key;
 				_rgbElements[_rgbCurrentLength++] = value.x;
 				_rgbElements[_rgbCurrentLength++] = value.y;
 				_rgbElements[_rgbCurrentLength++] = value.z;
 			} else {
-				throw new Error("GradientDataColor:RGB count must less than 4.");
+				console.log("GradientDataColor warning:data count must lessEqual than 4");
 			}
 		}
 		

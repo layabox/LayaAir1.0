@@ -4,9 +4,287 @@
 
 	var Bezier=laya.maths.Bezier,Browser=laya.utils.Browser,Byte=laya.utils.Byte,Event=laya.events.Event;
 	var EventDispatcher=laya.events.EventDispatcher,Graphics=laya.display.Graphics,Handler=laya.utils.Handler;
-	var Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil,Matrix=laya.maths.Matrix,Render=laya.renders.Render;
+	var Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil,Matrix=laya.maths.Matrix,Node=laya.display.Node,Render=laya.renders.Render;
 	var Resource=laya.resource.Resource,RunDriver=laya.utils.RunDriver,Sprite=laya.display.Sprite,Stat=laya.utils.Stat;
 	var Texture=laya.resource.Texture,URL=laya.net.URL,Utils=laya.utils.Utils;
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ani.AnimationContent
+	var AnimationContent=(function(){
+		function AnimationContent(){
+			this.nodes=null;
+			this.name=null;
+			this.playTime=NaN;
+			this.bone3DMap=null;
+			this.totalKeyframesLength=0;
+		}
+
+		__class(AnimationContent,'laya.ani.AnimationContent');
+		return AnimationContent;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.ani.AnimationNodeContent
+	var AnimationNodeContent=(function(){
+		function AnimationNodeContent(){
+			this.name=null;
+			this.parentIndex=0;
+			this.parent=null;
+			this.keyframeWidth=0;
+			this.lerpType=0;
+			this.interpolationMethod=null;
+			this.childs=null;
+			this.keyFrame=null;
+			this.playTime=NaN;
+			this.extenData=null;
+			this.dataOffset=0;
+		}
+
+		__class(AnimationNodeContent,'laya.ani.AnimationNodeContent');
+		return AnimationNodeContent;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.ani.AnimationParser01
+	var AnimationParser01=(function(){
+		function AnimationParser01(){};
+		__class(AnimationParser01,'laya.ani.AnimationParser01');
+		AnimationParser01.parse=function(templet,reader){
+			var data=reader.__getBuffer();
+			var i=0,j=0,k=0,n=0,l=0,m=0,o=0;
+			var aniClassName=reader.readUTFString();
+			templet._aniClassName=aniClassName;
+			var strList=reader.readUTFString().split("\n");
+			var aniCount=reader.getUint8();
+			var publicDataPos=reader.getUint32();
+			var publicExtDataPos=reader.getUint32();
+			var publicData;
+			if (publicDataPos > 0)
+				publicData=data.slice(publicDataPos,publicExtDataPos);
+			var publicRead=new Byte(publicData);
+			if (publicExtDataPos > 0)
+				templet._publicExtData=data.slice(publicExtDataPos,data.byteLength);
+			templet._useParent=!!reader.getUint8();
+			templet._anis.length=aniCount;
+			for (i=0;i < aniCount;i++){
+				var ani=templet._anis[i]=new AnimationContent();
+				{};
+				ani.nodes=new Array;
+				var name=ani.name=strList[reader.getUint16()];
+				templet._aniMap[name]=i;
+				ani.bone3DMap={};
+				ani.playTime=reader.getFloat32();
+				var boneCount=ani.nodes.length=reader.getUint8();
+				ani.totalKeyframesLength=0;
+				for (j=0;j < boneCount;j++){
+					var node=ani.nodes[j]=new AnimationNodeContent();
+					{};
+					node.childs=[];
+					var nameIndex=reader.getInt16();
+					if (nameIndex >=0){
+						node.name=strList[nameIndex];
+						ani.bone3DMap[node.name]=j;
+					}
+					node.keyFrame=new Array;
+					node.parentIndex=reader.getInt16();
+					node.parentIndex==-1 ? node.parent=null :node.parent=ani.nodes[node.parentIndex]
+					node.lerpType=reader.getUint8();
+					var keyframeParamsOffset=reader.getUint32();
+					publicRead.pos=keyframeParamsOffset;
+					var keyframeDataCount=node.keyframeWidth=publicRead.getUint16();
+					ani.totalKeyframesLength+=keyframeDataCount;
+					if (node.lerpType===0 || node.lerpType===1){
+						node.interpolationMethod=[];
+						node.interpolationMethod.length=keyframeDataCount;
+						for (k=0;k < keyframeDataCount;k++)
+						node.interpolationMethod[k]=AnimationTemplet.interpolation[publicRead.getUint8()];
+					}
+					if (node.parent !=null)
+						node.parent.childs.push(node);
+					var privateDataLen=reader.getUint16();
+					if (privateDataLen > 0){
+						node.extenData=data.slice(reader.pos,reader.pos+privateDataLen);
+						reader.pos+=privateDataLen;
+					};
+					var keyframeCount=reader.getUint16();
+					node.keyFrame.length=keyframeCount;
+					var startTime=0;
+					for (k=0,n=keyframeCount;k < n;k++){
+						var keyFrame=node.keyFrame[k]=new KeyFramesContent();
+						{};
+						keyFrame.duration=reader.getFloat32();
+						keyFrame.startTime=startTime;
+						if (node.lerpType===2){
+							keyFrame.interpolationData=[];
+							var interDataLength=reader.getUint8();
+							var lerpType=0;
+							lerpType=reader.getFloat32();
+							switch (lerpType){
+								case 254:
+									keyFrame.interpolationData.length=keyframeDataCount;
+									for (o=0;o < keyframeDataCount;o++)
+									keyFrame.interpolationData[o]=0;
+									break ;
+								case 255:
+									keyFrame.interpolationData.length=keyframeDataCount;
+									for (o=0;o < keyframeDataCount;o++)
+									keyFrame.interpolationData[o]=5;
+									break ;
+								default :
+									keyFrame.interpolationData.push(lerpType);
+									for (m=1;m < interDataLength;m++){
+										keyFrame.interpolationData.push(reader.getFloat32());
+									}
+								}
+						}
+						keyFrame.data=new Float32Array(keyframeDataCount);
+						keyFrame.dData=new Float32Array(keyframeDataCount);
+						keyFrame.nextData=new Float32Array(keyframeDataCount);
+						for (l=0;l < keyframeDataCount;l++){
+							keyFrame.data[l]=reader.getFloat32();
+							if (keyFrame.data[l] >-0.00000001 && keyFrame.data[l] < 0.00000001)keyFrame.data[l]=0;
+						}
+						startTime+=keyFrame.duration;
+					}
+					node.playTime=ani.playTime;
+					templet._calculateKeyFrame(node,keyframeCount,keyframeDataCount);
+				}
+			}
+		}
+
+		return AnimationParser01;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.ani.AnimationParser02
+	var AnimationParser02=(function(){
+		function AnimationParser02(){};
+		__class(AnimationParser02,'laya.ani.AnimationParser02');
+		var __proto=AnimationParser02.prototype;
+		__proto.READ_ANIMATIONS=function(){
+			var reader=AnimationParser02._reader;
+			var arrayBuffer=reader.__getBuffer();
+			var i=0,j=0,k=0,n=0,l=0;
+			var keyframeWidth=reader.getUint16();
+			var interpolationMethod=[];
+			interpolationMethod.length=keyframeWidth;
+			for (i=0;i < keyframeWidth;i++)
+			interpolationMethod[i]=reader.getUint8();
+			var aniCount=reader.getUint8();
+			AnimationParser02._templet._anis.length=aniCount;
+			for (i=0;i < aniCount;i++){
+				var ani=AnimationParser02._templet._anis[i]=
+				{};
+				ani.nodes=new Array;
+				var aniName=ani.name=AnimationParser02._strings[reader.getUint16()];
+				AnimationParser02._templet._aniMap[aniName]=i;
+				ani.bone3DMap={};
+				ani.playTime=reader.getFloat32();
+				var boneCount=ani.nodes.length=reader.getInt16();
+				ani.totalKeyframesLength=0;
+				for (j=0;j < boneCount;j++){
+					var node=ani.nodes[j]=
+					{};
+					node.childs=[];
+					var nameIndex=reader.getInt16();
+					if (nameIndex >=0){
+						node.name=AnimationParser02._strings[nameIndex];
+						ani.bone3DMap[node.name]=j;
+					}
+					node.keyFrame=new Array;
+					node.parentIndex=reader.getInt16();
+					node.parentIndex==-1 ? node.parent=null :node.parent=ani.nodes[node.parentIndex]
+					ani.totalKeyframesLength+=keyframeWidth;
+					node.interpolationMethod=interpolationMethod;
+					if (node.parent !=null)
+						node.parent.childs.push(node);
+					var keyframeCount=reader.getUint16();
+					node.keyFrame.length=keyframeCount;
+					var startTime=0;
+					for (k=0,n=keyframeCount;k < n;k++){
+						var keyFrame=node.keyFrame[k]=
+						{};
+						keyFrame.duration=reader.getFloat32();
+						keyFrame.startTime=startTime;
+						keyFrame.dData=new Float32Array(keyframeWidth);
+						keyFrame.nextData=new Float32Array(keyframeWidth);
+						var offset=AnimationParser02._DATA.offset;
+						var keyframeDataOffset=reader.getUint32();
+						var keyframeDataLength=keyframeWidth *4;
+						var keyframeArrayBuffer=arrayBuffer.slice(offset+keyframeDataOffset,offset+keyframeDataOffset+keyframeDataLength);
+						keyFrame.data=new Float32Array(keyframeArrayBuffer);
+						startTime+=keyFrame.duration;
+					}
+					node.playTime=ani.playTime;
+					AnimationParser02._templet._calculateKeyFrame(node,keyframeCount,keyframeWidth);
+				}
+			}
+		}
+
+		AnimationParser02.READ_DATA=function(){
+			AnimationParser02._DATA.offset=AnimationParser02._reader.getUint32();
+			AnimationParser02._DATA.size=AnimationParser02._reader.getUint32();
+		}
+
+		AnimationParser02.READ_BLOCK=function(){
+			var count=AnimationParser02._BLOCK.count=AnimationParser02._reader.getUint16();
+			var blockStarts=AnimationParser02._BLOCK.blockStarts=[];
+			var blockLengths=AnimationParser02._BLOCK.blockLengths=[];
+			for (var i=0;i < count;i++){
+				blockStarts.push(AnimationParser02._reader.getUint32());
+				blockLengths.push(AnimationParser02._reader.getUint32());
+			}
+		}
+
+		AnimationParser02.READ_STRINGS=function(){
+			var offset=AnimationParser02._reader.getUint32();
+			var count=AnimationParser02._reader.getUint16();
+			var prePos=AnimationParser02._reader.pos;
+			AnimationParser02._reader.pos=offset+AnimationParser02._DATA.offset;
+			for (var i=0;i < count;i++)
+			AnimationParser02._strings[i]=AnimationParser02._reader.readUTFString();
+			AnimationParser02._reader.pos=prePos;
+		}
+
+		AnimationParser02.parse=function(templet,reader){
+			AnimationParser02._reader=reader;
+			var arrayBuffer=reader.__getBuffer();
+			AnimationParser02.READ_DATA();
+			AnimationParser02.READ_BLOCK();
+			AnimationParser02.READ_STRINGS();
+			for (var i=0,n=AnimationParser02._BLOCK.count;i < n;i++){
+				var index=reader.getUint16();
+				var blockName=AnimationParser02._strings[index];
+				var fn=AnimationTemplet["READ_"+blockName];
+				if (fn==null)
+					throw new Error("model file err,no this function:"+index+" "+blockName);
+				else
+				fn.call();
+			}
+		}
+
+		AnimationParser02._templet=null
+		AnimationParser02._reader=null
+		AnimationParser02._strings=[];
+		__static(AnimationParser02,
+		['_BLOCK',function(){return this._BLOCK={count:0};},'_DATA',function(){return this._DATA={offset:0,size:0};}
+		]);
+		return AnimationParser02;
+	})()
+
+
 	/**
 	*@private
 	*/
@@ -1903,6 +2181,26 @@
 
 	/**
 	*...
+	*@author ...
+	*/
+	//class laya.ani.KeyFramesContent
+	var KeyFramesContent=(function(){
+		function KeyFramesContent(){
+			this.startTime=NaN;
+			this.duration=NaN;
+			this.interpolationData=null;
+			this.data=null;
+			this.dData=null;
+			this.nextData=null;
+		}
+
+		__class(KeyFramesContent,'laya.ani.KeyFramesContent');
+		return KeyFramesContent;
+	})()
+
+
+	/**
+	*...
 	*@author ww
 	*/
 	//class laya.ani.math.BezierLerp
@@ -1974,7 +2272,7 @@
 			this._fullFrames=null;
 			this.isCache=true;
 			this.playbackRate=1.0;
-			this.returnToZeroStopped=true;
+			this.returnToZeroStopped=false;
 			AnimationPlayer.__super.call(this);
 			this._destroyed=false;
 			this._currentAnimationClipIndex=-1;
@@ -1986,6 +2284,7 @@
 			this._startUpdateLoopCount=-1;
 			this._cachePlayRate=1.0;
 			this.cacheFrameRate=60;
+			this.returnToZeroStopped=false;
 		}
 
 		__class(AnimationPlayer,'laya.ani.AnimationPlayer',_super);
@@ -2403,6 +2702,7 @@
 	//class laya.ani.AnimationTemplet extends laya.resource.Resource
 	var AnimationTemplet=(function(_super){
 		function AnimationTemplet(){
+			//this._aniVersion=null;
 			this._aniMap={};
 			//this._publicExtData=null;
 			//this._useParent=false;
@@ -2410,8 +2710,7 @@
 			//this.unfixedCurrentTimes=null;
 			//this.unfixedKeyframes=null;
 			this.unfixedLastAniIndex=-1;
-			//this.aniClassName=null;
-			//this._aniVersion=null;
+			//this._aniClassName=null;
 			//this._animationDatasCache=null;
 			AnimationTemplet.__super.call(this);
 			this._anis=new Array;
@@ -2419,115 +2718,26 @@
 
 		__class(AnimationTemplet,'laya.ani.AnimationTemplet',_super);
 		var __proto=AnimationTemplet.prototype;
+		/**
+		*@private
+		*/
+		__proto.parse=function(data){
+			var reader=new Byte(data);
+			this._aniVersion=reader.readUTFString();
+			AnimationParser01.parse(this,reader);
+		}
+
+		/**
+		*@private
+		*/
 		__proto._endLoaded=function(){
 			this._loaded=true;
 			this.event(/*laya.events.Event.LOADED*/"loaded",this);
 		}
 
-		__proto.parse=function(data){
-			var i=0,j=0,k=0,n=0,l=0,m=0,o=0;
-			var read=new Byte(data);
-			this._aniVersion=read.readUTFString();
-			var aniClassName=read.readUTFString();
-			this.aniClassName=aniClassName;
-			var strList=read.readUTFString().split("\n");
-			var aniCount=read.getUint8();
-			var publicDataPos=read.getUint32();
-			var publicExtDataPos=read.getUint32();
-			var publicData;
-			if (publicDataPos > 0)
-				publicData=data.slice(publicDataPos,publicExtDataPos);
-			var publicRead=new Byte(publicData);
-			if (publicExtDataPos > 0)
-				this._publicExtData=data.slice(publicExtDataPos,data.byteLength);
-			this._useParent=!!read.getUint8();
-			this._anis.length=aniCount;
-			for (i=0;i < aniCount;i++){
-				var ani=this._anis[i]=
-				{};
-				ani.nodes=new Array;
-				var name=ani.name=strList[read.getUint16()];
-				this._aniMap[name]=i;
-				ani.bone3DMap={};
-				ani.playTime=read.getFloat32();
-				var boneCount=ani.nodes.length=read.getUint8();
-				ani.totalKeyframesLength=0;
-				for (j=0;j < boneCount;j++){
-					var node=ani.nodes[j]=
-					{};
-					node.childs=[];
-					var nameIndex=read.getInt16();
-					if (nameIndex >=0){
-						node.name=strList[nameIndex];
-						ani.bone3DMap[node.name]=j;
-					}
-					node.keyFrame=new Array;
-					node.parentIndex=read.getInt16();
-					node.parentIndex==-1 ? node.parent=null :node.parent=ani.nodes[node.parentIndex]
-					node.lerpType=read.getUint8();
-					var keyframeParamsOffset=read.getUint32();
-					publicRead.pos=keyframeParamsOffset;
-					var keyframeDataCount=node.keyframeWidth=publicRead.getUint16();
-					ani.totalKeyframesLength+=keyframeDataCount;
-					if (node.lerpType===0||node.lerpType===1){
-						node.interpolationMethod=[];
-						node.interpolationMethod.length=keyframeDataCount;
-						for (k=0;k < keyframeDataCount;k++)
-						node.interpolationMethod[k]=AnimationTemplet.interpolation[publicRead.getUint8()];
-					}
-					if (node.parent !=null)
-						node.parent.childs.push(node);
-					var privateDataLen=read.getUint16();
-					if (privateDataLen > 0){
-						node.extenData=data.slice(read.pos,read.pos+privateDataLen);
-						read.pos+=privateDataLen;
-					};
-					var keyframeCount=read.getUint16();
-					node.keyFrame.length=keyframeCount;
-					var startTime=0;
-					for (k=0,n=keyframeCount;k < n;k++){
-						var keyFrame=node.keyFrame[k]=
-						{};
-						keyFrame.duration=read.getFloat32();
-						keyFrame.startTime=startTime;
-						if (node.lerpType===2){
-							keyFrame.interpolationData=[];
-							var interDataLength=read.getUint8();
-							var lerpType=0;
-							lerpType=read.getFloat32();
-							switch (lerpType){
-								case 254:
-									keyFrame.interpolationData.length=keyframeDataCount;
-									for (o=0;o < keyframeDataCount;o++)
-									keyFrame.interpolationData[o]=0;
-									break ;
-								case 255:
-									keyFrame.interpolationData.length=keyframeDataCount;
-									for (o=0;o < keyframeDataCount;o++)
-									keyFrame.interpolationData[o]=5;
-									break ;
-								default :
-									keyFrame.interpolationData.push(lerpType);
-									for (m=1;m < interDataLength;m++){
-										keyFrame.interpolationData.push(read.getFloat32());
-									}
-								}
-						}
-						keyFrame.data=new Float32Array(keyframeDataCount);
-						keyFrame.dData=new Float32Array(keyframeDataCount);
-						keyFrame.nextData=new Float32Array(keyframeDataCount);
-						for (l=0;l < keyframeDataCount;l++){
-							keyFrame.data[l]=read.getFloat32();
-							if (keyFrame.data[l] >-0.00000001 && keyFrame.data[l] < 0.00000001)keyFrame.data[l]=0;
-						}
-						startTime+=keyFrame.duration;
-					}
-					node.playTime=ani.playTime;
-					this._calculateKeyFrame(node,keyframeCount,keyframeDataCount);
-				}
-			}
-		}
-
+		/**
+		*@private
+		*/
 		__proto._calculateKeyFrame=function(node,keyframeCount,keyframeDataCount){
 			var keyFrames=node.keyFrame;
 			keyFrames[keyframeCount]=keyFrames[0];
@@ -2542,10 +2752,18 @@
 		}
 
 		/**
-		*@private
+		*@inheritDoc
 		*/
 		__proto.onAsynLoaded=function(url,data,params){
-			this.parse(data);
+			var reader=new Byte(data);
+			this._aniVersion=reader.readUTFString();
+			switch (this._aniVersion){
+				case "LAYAANIMATION:02":
+					AnimationParser02.parse(this,reader);
+					break ;
+				default :
+					AnimationParser01.parse(this,reader);
+				}
 			this._endLoaded();
 		}
 
@@ -2623,7 +2841,7 @@
 						var dataIndex=0;
 						for (j=0;j < interDataLen;){
 							var type=interpolationData[j];
-						switch(type){
+						switch (type){
 							case 6:
 								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
 								break ;
@@ -2700,7 +2918,7 @@
 						var dataIndex=0;
 						for (j=0;j < interDataLen;){
 							var type=interpolationData[j];
-						switch(type){
+						switch (type){
 							case 6:
 								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
 								break ;
@@ -2719,7 +2937,7 @@
 		}
 
 		__proto.dispose=function(){
-			if(this.resourceManager)
+			if (this.resourceManager)
 				this.resourceManager.removeResource(this);
 			_super.prototype.dispose.call(this);
 		}
@@ -2762,7 +2980,7 @@
 
 		AnimationTemplet._BezierInterpolation_7=function(bone,index,out,outOfs,data,dt,dData,duration,nextData,interData,offset){
 			(offset===void 0)&& (offset=0);
-			out[outOfs]=interData[offset+4]+interData[offset+5] *BezierLerp.getBezierRate((dt*0.001+interData[offset+6])/ interData[offset+7],interData[offset],interData[offset+1],interData[offset+2],interData[offset+3]);
+			out[outOfs]=interData[offset+4]+interData[offset+5] *BezierLerp.getBezierRate((dt *0.001+interData[offset+6])/ interData[offset+7],interData[offset],interData[offset+1],interData[offset+2],interData[offset+3]);
 			return 9;
 		}
 
@@ -2771,7 +2989,6 @@
 		}
 
 		AnimationTemplet.interpolation=[AnimationTemplet._LinearInterpolation_0,AnimationTemplet._QuaternionInterpolation_1,AnimationTemplet._AngleInterpolation_2,AnimationTemplet._RadiansInterpolation_3,AnimationTemplet._Matrix4x4Interpolation_4,AnimationTemplet._NoInterpolation_5,AnimationTemplet._BezierInterpolation_6,AnimationTemplet._BezierInterpolation_7];
-		AnimationTemplet.LAYA_ANIMATION_VISION="LAYAANIMATION:1.6.0";
 		return AnimationTemplet;
 	})(Resource)
 
@@ -3044,15 +3261,16 @@
 			};
 			var tCurrTime=Laya.timer.currTimer;
 			var preIndex=this._player.currentKeyframeIndex;
+			var dTime=tCurrTime-this._lastTime;
 			if (autoKey){
-				this._player.update(tCurrTime-this._lastTime);
+				this._player.update(dTime);
 				}else{
 				preIndex=-1;
 			}
 			this._lastTime=tCurrTime;
 			this._index=this._clipIndex=this._player.currentKeyframeIndex;
 			if (this._index < 0)return;
-			if (this._clipIndex==preIndex&&this._lastUpdateAniClipIndex==this._aniClipIndex){
+			if (dTime>0&&this._clipIndex==preIndex&&this._lastUpdateAniClipIndex==this._aniClipIndex){
 				return;
 			}
 			this._lastUpdateAniClipIndex=this._aniClipIndex;
@@ -3769,6 +3987,7 @@
 			if (!parentMovieClip){
 				this._movieClipList=[this];
 				this._isRoot=true;
+				this._setUpNoticeType(/*laya.display.Node.NOTICE_DISPLAY*/0x1);
 				}else {
 				this._isRoot=false;
 				this._movieClipList=parentMovieClip._movieClipList;
@@ -3792,13 +4011,13 @@
 		__proto._setDisplay=function(value){
 			_super.prototype._setDisplay.call(this,value);
 			if (this._isRoot){
-				this._$3__onDisplay();
+				this._$3__onDisplay(value);
 			}
 		}
 
 		/**@private */
-		__proto._$3__onDisplay=function(){
-			if (this._displayedInStage)Laya.timer.loop(this.interval,this,this.updates,null,true);
+		__proto._$3__onDisplay=function(value){
+			if (value)Laya.timer.loop(this.interval,this,this.updates,null,true);
 			else Laya.timer.clear(this,this.updates);
 		}
 
@@ -4189,6 +4408,7 @@
 			this.eventAniArr=[];
 			this.attachmentNames=null;
 			this.deformAniArr=[];
+			this._isDestroyed=false;
 			this._rate=30;
 			this.aniSectionDic={};
 			this._skBufferUrl=null;
@@ -4210,6 +4430,10 @@
 		}
 
 		__proto.onComplete=function(content){
+			if (this._isDestroyed){
+				this.destroy();
+				return;
+			};
 			var tSkBuffer=Loader.getRes(this._skBufferUrl);
 			this._path=this._skBufferUrl.slice(0,this._skBufferUrl.lastIndexOf("/"))+"/";
 			this.parseData(null,tSkBuffer);
@@ -4255,8 +4479,8 @@
 		__proto.parse=function(data){
 			_super.prototype.parse.call(this,data);
 			this._endLoaded();
-			if (this._aniVersion !=AnimationTemplet.LAYA_ANIMATION_VISION){
-				console.log("[Error] 版本不一致，请使用IDE版本配套的重新导出"+this._aniVersion+"->"+AnimationTemplet.LAYA_ANIMATION_VISION);
+			if (this._aniVersion !=Templet.LAYA_ANIMATION_VISION){
+				console.log("[Error] 版本不一致，请使用IDE版本配套的重新导出"+this._aniVersion+"->"+Templet.LAYA_ANIMATION_VISION);
 				this._loaded=false;
 			}
 			if (this._loaded){
@@ -4272,6 +4496,10 @@
 		}
 
 		__proto._parseTexturePath=function(){
+			if (this._isDestroyed){
+				this.destroy();
+				return;
+			};
 			var i=0;
 			this._loadList=[];
 			var tByte=new Byte(this.getPublicExtData());
@@ -4330,7 +4558,7 @@
 				this._graphicsCache.push([]);
 			};
 			var isSpine=false;
-			isSpine=this.aniClassName !="Dragon";
+			isSpine=this._aniClassName !="Dragon";
 			var tByte=new Byte(this.getPublicExtData());
 			var tX=0,tY=0,tWidth=0,tHeight=0;
 			var tFrameX=0,tFrameY=0,tFrameWidth=0,tFrameHeight=0;
@@ -4790,6 +5018,7 @@
 		*释放纹理
 		*/
 		__proto.destroy=function(){
+			this._isDestroyed=true;
 			var tTexture;
 			/*for each*/for(var $each_tTexture in this.subTextureDic){
 				tTexture=this.subTextureDic[$each_tTexture];
@@ -4827,6 +5056,7 @@
 			return this._rate;
 		});
 
+		Templet.LAYA_ANIMATION_VISION="LAYAANIMATION:1.6.0";
 		Templet.TEMPLET_DICTIONARY=null
 		return Templet;
 	})(AnimationTemplet)

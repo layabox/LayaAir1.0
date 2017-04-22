@@ -356,7 +356,7 @@ package laya.events {
 					}
 					break;
 				case "touchmove": 
-					var touchemoves:Array = evt.changedTouches;
+					var touchemoves:Array = evt.targetTouches;
 					for (j = 0, n = touchemoves.length; j < n; j++) {
 						_this.initEvent(touchemoves[j], evt);
 						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseMove);

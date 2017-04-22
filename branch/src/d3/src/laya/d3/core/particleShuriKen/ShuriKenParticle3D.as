@@ -12,11 +12,14 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.particleShuriKen.module.TextureSheetAnimation;
 	import laya.d3.core.particleShuriKen.module.VelocityOverLifetime;
 	import laya.d3.core.particleShuriKen.module.shape.BaseShape;
+	import laya.d3.core.particleShuriKen.module.shape.SphereShape;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.math.BoundBox;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.Texture2D;
 	import laya.display.Node;
@@ -30,6 +33,29 @@ package laya.d3.core.particleShuriKen {
 	 * <code>ShuriKenParticle3D</code> 3D粒子。
 	 */
 	public class ShuriKenParticle3D extends RenderableSprite3D {
+		public static var SHADERDEFINE_SPHERHBILLBOARD:int = 0x2;
+		public static var SHADERDEFINE_STRETCHEDBILLBOARD:int = 0x4;
+		public static var SHADERDEFINE_HORIZONTALBILLBOARD:int = 0x8;
+		public static var SHADERDEFINE_VERTICALBILLBOARD:int = 0x10;
+		public static var SHADERDEFINE_RANDOMCOLOROVERLIFETIME:int = 0x20;
+		public static var SHADERDEFINE_COLOROVERLIFETIME:int = 0x40;
+		public static var SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT:int = 0x80;
+		public static var SHADERDEFINE_VELOCITYOVERLIFETIMECURVE:int = 0x100;
+		public static var SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT:int = 0x200;
+		public static var SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE:int = 0x400;
+		public static var SHADERDEFINE_TEXTURESHEETANIMATIONCURVE:int = 0x800;
+		public static var SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE:int = 0x1000;
+		public static var SHADERDEFINE_ROTATIONOVERLIFETIME:int = 0x2000;
+		public static var SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE:int = 0x4000;
+		public static var SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT:int = 0x8000;
+		public static var SHADERDEFINE_ROTATIONOVERLIFETIMECURVE:int = 0x10000;
+		public static var SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS:int = 0x20000;
+		public static var SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES:int = 0x40000;
+		public static var SHADERDEFINE_SIZEOVERLIFETIMECURVE:int = 0x80000;
+		public static var SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE:int = 0x100000;
+		public static var SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES:int = 0x200000;
+		public static var SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE:int = 0x400000;
+		
 		public static const WORLDPOSITION:int = 0;
 		public static const WORLDROTATIONMATRIX:int = 1;
 		public static const POSITIONSCALE:int = 4;
@@ -117,11 +143,11 @@ package laya.d3.core.particleShuriKen {
 		
 		/** @private */
 		private function _changeRenderObject(index:int):RenderElement {
-			var renderObjects:Vector.<RenderElement> = _render.renderObject._renderElements;
+			var renderObjects:Vector.<RenderElement> = _render._renderElements;
 			
 			var renderElement:RenderElement = renderObjects[index];
 			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._renderObject = _render.renderObject;
+			renderElement._render = _render;
 			
 			var material:BaseMaterial = _render.sharedMaterials[index];
 			
@@ -138,21 +164,24 @@ package laya.d3.core.particleShuriKen {
 		
 		/** @private */
 		private function _onMaterialChanged(_particleRender:ShurikenParticleRender, index:int, material:BaseMaterial):void {
-			var renderElementCount:int = _particleRender.renderObject._renderElements.length;
+			var renderElementCount:int = _particleRender._renderElements.length;
 			(index < renderElementCount) && _changeRenderObject(index);
 		}
 		
 		/** @private */
 		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_render.renderObject);
+			scene.removeFrustumCullingObject(_render);
 		}
 		
 		/** @private */
 		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_render.renderObject);
+			scene.addFrustumCullingObject(_render);
 		}
 		
-		override public function _prepareShaderValuetoRender(projectionView:Matrix4x4):void {
+		/**
+		 * @inheritDoc
+		 */
+		override public function _renderUpdate(projectionView:Matrix4x4):void {
 			switch (particleSystem.simulationSpace) {
 			case 0: //World
 				_setShaderValueColor(WORLDPOSITION, Vector3.ZERO);//TODO是否可不传
@@ -169,19 +198,23 @@ package laya.d3.core.particleShuriKen {
 			
 			switch (particleSystem.scaleMode) {
 			case 0: 
-				_setShaderValueColor(POSITIONSCALE, transform.scale);
-				_setShaderValueColor(SIZESCALE, transform.scale);
+				var scale:Vector3 = transform.scale;
+				_setShaderValueColor(POSITIONSCALE, scale);
+				_setShaderValueColor(SIZESCALE, scale);
 				break;
 			case 1: 
-				_setShaderValueColor(POSITIONSCALE, transform.localScale);
-				_setShaderValueColor(SIZESCALE, transform.localScale);
+				var localScale:Vector3 = transform.localScale;
+				_setShaderValueColor(POSITIONSCALE, localScale);
+				_setShaderValueColor(SIZESCALE, localScale);
 				break;
 			case 2: 
 				_setShaderValueColor(POSITIONSCALE, transform.scale);
 				_setShaderValueColor(SIZESCALE, Vector3.ONE);
 				break;
 			}
-		
+			
+			if (Laya3D.debugMode)
+				_renderRenderableBoundBox();
 		}
 		
 		/**

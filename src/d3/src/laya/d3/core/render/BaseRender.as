@@ -28,8 +28,6 @@ package laya.d3.core.render {
 		/** @private */
 		private var _enable:Boolean;
 		/** @private */
-		public var _materials:Vector.<BaseMaterial>;//TODO:
-		/** @private */
 		private var _receiveShadow:Boolean;
 		/** @private */
 		protected var _boundingSphere:BoundSphere;
@@ -46,6 +44,8 @@ package laya.d3.core.render {
 		/** @private */
 		protected var _octreeNodeNeedChange:Boolean;
 	
+		/** @private */
+		public var _materials:Vector.<BaseMaterial>;
 		/** @private */
 		public var _owner:Sprite3D;
 		/** @private */

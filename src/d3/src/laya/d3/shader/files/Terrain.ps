@@ -62,27 +62,23 @@ varying vec2 v_Texcoord1;
 
 void main()
 {
-	float splatAlphaB = 1.0;
 #ifdef DETAIL_NUM1
 	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
 	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
-	splatAlphaB = splatAlpha.r;
-	gl_FragColor.xyz = color1.xyz * splatAlpha.r;
+	gl_FragColor.xyz = color1.xyz;
 #endif
 #ifdef DETAIL_NUM2
 	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
 	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);
 	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
-	splatAlphaB = max(splatAlpha.r,splatAlpha.g);
-	gl_FragColor.xyz = color1.xyz * splatAlpha.r + color2.xyz * splatAlpha.g;
+	gl_FragColor.xyz = color1.xyz * (1.0-splatAlpha.r) + color2.xyz * splatAlpha.r;
 #endif
 #ifdef DETAIL_NUM3
 	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
 	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);
 	vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1/u_DiffuseScale3);
 	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
-	splatAlphaB = max(max(splatAlpha.r,splatAlpha.g),splatAlpha.b);
-	gl_FragColor.xyz = color1.xyz * splatAlpha.r + color2.xyz * splatAlpha.g + color3.xyz * splatAlpha.b;
+	gl_FragColor.xyz = color1.xyz * (1.0-(splatAlpha.r+splatAlpha.g)) + color2.xyz * splatAlpha.r + color3.xyz * splatAlpha.g;
 #endif
 #ifdef DETAIL_NUM4
 	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
@@ -90,11 +86,10 @@ void main()
 	vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1/u_DiffuseScale3);
 	vec4 color4 = texture2D(u_DiffuseTexture4, v_Texcoord1/u_DiffuseScale4);
 	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
-	splatAlphaB = max(max(max(splatAlpha.r,splatAlpha.g),splatAlpha.b),splatAlpha.a);
-	gl_FragColor.xyz = color1.xyz * splatAlpha.r + color2.xyz * splatAlpha.g + color3.xyz * splatAlpha.b + color4.xyz * splatAlpha.a;
+	gl_FragColor.xyz = color1.xyz * (1.0-(splatAlpha.r+splatAlpha.g+splatAlpha.b))+ color2.xyz * splatAlpha.r + color3.xyz * splatAlpha.g + color4.xyz * splatAlpha.b;
 #endif
-
-	gl_FragColor.w = 1.0;
+	gl_FragColor.w = splatAlpha.a;
+	
 #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
     vec3 normal = texture2D(u_NormalTexture,v_Normal.xy).xyz;
 	normal = normal*2.0 - vec3(1.0);
@@ -151,9 +146,9 @@ void main()
 	
 #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
 	#ifdef RECEIVESHADOW
-		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse*shadowValue) + specular * splatAlphaB * shadowValue,gl_FragColor.a);
+		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse*shadowValue) + specular * shadowValue,gl_FragColor.a);
 	#else
-		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse) + specular * splatAlphaB, gl_FragColor.a);
+		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse) + specular, gl_FragColor.a);
 	#endif
 #endif
 

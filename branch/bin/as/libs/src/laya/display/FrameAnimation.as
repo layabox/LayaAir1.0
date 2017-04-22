@@ -57,11 +57,13 @@ package laya.display
 			if (animationData.parsed) 
 			{ 
 				this._count = animationData.count;
+				this._labels = animationData.labels;
 			}else
 			{
 				_calculateDatas();
 			}		
 			animationData.parsed = true;
+			animationData.labels = _labels;
 			animationData.count = _count;
 		}
 		/**@inheritDoc */

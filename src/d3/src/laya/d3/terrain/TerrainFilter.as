@@ -24,8 +24,7 @@ package laya.d3.terrain {
 	 */
 	public class TerrainFilter extends GeometryFilter  implements IRenderable {
 		/** @private */
-		public static var LINE_MODEL:Boolean = false;
-		public static var TOLERANCE_VALUE:Number = 4;
+		public static var _TEMP_ARRAY_BUFFER:Uint32Array = new Uint32Array(TerrainLeaf.CHUNK_GRID_NUM / TerrainLeaf.LEAF_GRID_NUM * TerrainLeaf.CHUNK_GRID_NUM / TerrainLeaf.LEAF_GRID_NUM );
 		public var _owner:TerrainChunk;
 		public var _indexOfHost:int;
 		public var _gridSize:Number;
@@ -47,6 +46,10 @@ package laya.d3.terrain {
 		private var _terrainHeightDataHeight:int;
 		private var _chunkOffsetX:int;
 		private var _chunkOffsetZ:int;
+		private var _cameraPos:Vector3;
+		private var _currentLOD:uint;//LOD级别 4个叶子节点  第1个叶子的level<<24 + 第2个叶子的level<<16 + 第3个叶子的level<<8 + 第4个叶子的level
+		private var _perspectiveFactor:Number;
+		private var _LODTolerance:int;
 		
 
 		/**
@@ -55,6 +58,7 @@ package laya.d3.terrain {
 		 */
 		public function TerrainFilter(owner:TerrainChunk,chunkOffsetX:int,chunkOffsetZ:int,gridSize:Number,terrainHeightData:Float32Array,heightDataWidth:int,heightDataHeight:int) {
 			_owner = owner;
+			_cameraPos = new Vector3();
 			_chunkOffsetX = chunkOffsetX;
 			_chunkOffsetZ = chunkOffsetZ;
 			_gridSize = gridSize;
@@ -122,33 +126,94 @@ package laya.d3.terrain {
 				_leafs[i].calcSkirtVertextBuffer( _chunkOffsetX, _chunkOffsetZ, x * TerrainLeaf.LEAF_GRID_NUM, z * TerrainLeaf.LEAF_GRID_NUM, _gridSize, vertices, 
 								_leafNum * TerrainLeaf.LEAF_PLANE_VERTEXT_COUNT + i * TerrainLeaf.LEAF_SKIRT_VERTEXT_COUNT, vertexFloatStride,_terrainHeightData,_terrainHeightDataWidth,_terrainHeightDataHeight );
 			}
-			//assembleIndex();
+			assembleIndexInit();
 			_vertexBuffer = new VertexBuffer3D(vertexDeclaration, _numberVertices, WebGLContext.STATIC_DRAW, false);
 			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _maxNumberIndices, WebGLContext.STATIC_DRAW, false);
 			_vertexBuffer.setData(vertices);
-			//_indexBuffer.setData(_indexArrayBuffer);
+			_indexBuffer.setData(_indexArrayBuffer);
 			memorySize = (_vertexBuffer.byteLength + _indexBuffer.byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
 			calcOriginalBoudingBoxAndSphere();
 		}
-		protected function assembleIndex(camera:Camera):void
+		private function setLODLevel( leafsLODLevel:Uint32Array ):Boolean
 		{
-			//TODO是否可以存储到摄影机中
-			var perspectiveFactor:Number = Math.min(camera.viewport.width,camera.viewport.height) / (2 * Math.tan( Math.PI * camera.fieldOfView / 180.0 ) );
+			if ( leafsLODLevel.length != 4 ) return true;
+			var nLOD:int = ((leafsLODLevel[0] + 1) << 24) + ((leafsLODLevel[1] + 1) << 16) + ((leafsLODLevel[2] + 1) << 8) + (leafsLODLevel[3] + 1);
+			if (_currentLOD == nLOD)
+			{
+				return false;
+			}
+			_currentLOD = nLOD;
+			return true;
+		}
+		protected function assembleIndexInit():void
+		{
 			_currentNumberIndices = 0;
 			_numberTriangle = 0;
 			var nOffsetIndex:int = 0;
 			for ( var i:int = 0; i < _leafNum; i++ )
 			{
-				var nLODLevel:int = _leafs[i].determineLod( camera.position,perspectiveFactor,TOLERANCE_VALUE );
-				var planeLODIndex:Uint16Array = TerrainLeaf.getPlaneLODIndex( i, nLODLevel );
+				var planeLODIndex:Uint16Array = TerrainLeaf.getPlaneLODIndex( i, 0 );
 				_indexArrayBuffer.set( planeLODIndex, nOffsetIndex);
 				nOffsetIndex += planeLODIndex.length;
-				var skirtLODIndex:Uint16Array = TerrainLeaf.getSkirtLODIndex( i, nLODLevel );
+				var skirtLODIndex:Uint16Array = TerrainLeaf.getSkirtLODIndex( i, 0 );
 				_indexArrayBuffer.set( skirtLODIndex, nOffsetIndex);
 				nOffsetIndex += skirtLODIndex.length;
 				_currentNumberIndices += (planeLODIndex.length + skirtLODIndex.length);
 			}
+			
 			_numberTriangle = _currentNumberIndices / 3;
+		}
+		protected function isNeedAssemble( camera:Camera,cameraPostion:Vector3 ):int
+		{
+			//TODO是否可以存储到摄影机中
+			var perspectiveFactor:Number = Math.min(camera.viewport.width, camera.viewport.height) / (2 * Math.tan( Math.PI * camera.fieldOfView / 180.0 ) );
+			if ( _perspectiveFactor != perspectiveFactor )
+			{
+				_perspectiveFactor = perspectiveFactor;
+				return 1;
+			}
+			if ( _LODTolerance != Terrain.LOD_TOLERANCE_VALUE )
+			{
+				_LODTolerance = Terrain.LOD_TOLERANCE_VALUE;
+				return 1;
+			}
+			if ( Vector3.equals( cameraPostion, _cameraPos ) == false)
+			{
+				_cameraPos.x = cameraPostion.x; _cameraPos.y = cameraPostion.y; _cameraPos.z = cameraPostion.z;
+				return 2;
+			}
+			return 0;
+		}
+		protected function assembleIndex(camera:Camera,cameraPostion:Vector3):Boolean
+		{
+			var nNeedType:int = isNeedAssemble( camera, cameraPostion);
+			if (  nNeedType > 0 )
+			{
+				for ( var i:int = 0; i < _leafNum; i++ )
+				{
+					_TEMP_ARRAY_BUFFER[i] = _leafs[i].determineLod( cameraPostion, _perspectiveFactor, Terrain.LOD_TOLERANCE_VALUE, nNeedType==1 );
+				}
+				if ( setLODLevel( _TEMP_ARRAY_BUFFER ))
+				{
+					_currentNumberIndices = 0;
+					_numberTriangle = 0;
+					var nOffsetIndex:int = 0;
+					for ( i = 0; i < _leafNum; i++ )
+					{
+						var nLODLevel:int = _TEMP_ARRAY_BUFFER[i];
+						var planeLODIndex:Uint16Array = TerrainLeaf.getPlaneLODIndex( i, nLODLevel );
+						_indexArrayBuffer.set( planeLODIndex, nOffsetIndex);
+						nOffsetIndex += planeLODIndex.length;
+						var skirtLODIndex:Uint16Array = TerrainLeaf.getSkirtLODIndex( i, nLODLevel );
+						_indexArrayBuffer.set( skirtLODIndex, nOffsetIndex);
+						nOffsetIndex += skirtLODIndex.length;
+						_currentNumberIndices += (planeLODIndex.length + skirtLODIndex.length);
+					}
+					_numberTriangle = _currentNumberIndices / 3;
+					return true;
+				}
+			}
+			return false;
 		}
 		public function calcOriginalBoudingBoxAndSphere():void
 		{
@@ -212,13 +277,32 @@ package laya.d3.terrain {
 		{
 			_vertexBuffer._bind();
 			_indexBuffer._bind();
-			assembleIndex(state.camera as Camera);
-			_indexBuffer.setData(_indexArrayBuffer);
+			var terrainMaterial:TerrainMaterial = state.renderElement._material as TerrainMaterial;
+			if ( terrainMaterial.renderMode == TerrainMaterial.RENDERMODE_OPAQUE )
+			{				
+				var camera:Camera = state.camera as Camera;
+				if ( assembleIndex(camera,camera.position) )
+				{
+					_indexBuffer.setData(_indexArrayBuffer);
+				}
+			}
 			return  true;
 		}
 		public function _render(state:RenderState):void
-		{		
-			WebGL.mainContext.drawElements( LINE_MODEL ? WebGLContext.LINES : WebGLContext.TRIANGLES, _currentNumberIndices, WebGLContext.UNSIGNED_SHORT, 0);
+		{
+			/*
+			//绘制第二遍的时候，如果DEPTHFUNC_LEQUAL有bug，就可以用这种偏移的方式
+			if ( (state.renderElement._material as TerrainMaterial).renderMode == TerrainMaterial.RENDERMODE_TRANSPARENT )
+			{
+				WebGL.mainContext.enable( WebGLContext.POLYGON_OFFSET_FILL );
+				WebGL.mainContext.polygonOffset(-1,0);
+			}
+			else
+			{
+				WebGL.mainContext.disable( WebGLContext.POLYGON_OFFSET_FILL );
+			}
+			*/
+			WebGL.mainContext.drawElements( Terrain.RENDER_LINE_MODEL ? WebGLContext.LINES : WebGLContext.TRIANGLES, _currentNumberIndices, WebGLContext.UNSIGNED_SHORT, 0);
 			Stat.trianglesFaces += _numberTriangle;
 			Stat.drawCall++;
 		}

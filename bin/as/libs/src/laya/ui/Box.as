@@ -11,7 +11,7 @@ package laya.ui {
 			for (var name:String in value) {
 				var comp:Component = getChildByName(name) as Component;
 				if (comp) comp.dataSource = value[name];
-				else if (hasOwnProperty(name)) this[name] = value[name];
+				else if (hasOwnProperty(name) && !(this[name] is Function)) this[name] = value[name];
 			}
 		}	
 	}

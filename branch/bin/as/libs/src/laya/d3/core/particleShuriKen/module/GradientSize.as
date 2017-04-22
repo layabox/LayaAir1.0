@@ -5,7 +5,7 @@ package laya.d3.core.particleShuriKen.module {
 	/**
 	 * <code>GradientSize</code> 类用于创建渐变尺寸。
 	 */
-	public class GradientSize implements IClone{
+	public class GradientSize implements IClone {
 		/**
 		 * 通过渐变尺寸创建一个 <code>GradientSize</code> 实例。
 		 * @param	gradient 渐变尺寸。
@@ -274,7 +274,58 @@ package laya.d3.core.particleShuriKen.module {
 		 * 创建一个 <code>GradientSize,不允许new，请使用静态创建函数。</code> 实例。
 		 */
 		public function GradientSize() {
+		}
 		
+		/**
+		 * 获取最大尺寸。
+		 */
+		public function getMaxSizeInGradient():Number {
+			var i:int, n:int;
+			var maxSize:Number =-Number.MAX_VALUE;
+			switch (_type) {
+			case 0: 
+				if (_separateAxes) {
+					for (i = 0, n = _gradientX.gradientCount; i < n; i++)
+						maxSize = Math.max(maxSize, _gradientX.getValueByIndex(i));
+					for (i = 0, n = _gradientY.gradientCount; i < n; i++)
+						maxSize = Math.max(maxSize, _gradientY.getValueByIndex(i));
+						//TODO:除了RenderMode为MeshZ无效
+				} else {
+					for (i = 0, n = _gradient.gradientCount; i < n; i++)
+						maxSize = Math.max(maxSize, _gradient.getValueByIndex(i));
+				}
+				break;
+			case 1: 
+				if (_separateAxes) {
+					maxSize = Math.max(_constantMinSeparate.x, _constantMaxSeparate.x);
+					maxSize = Math.max(maxSize, _constantMinSeparate.y);
+					maxSize = Math.max(maxSize, _constantMaxSeparate.y);
+					//TODO:除了RenderMode为MeshZ无效
+				} else {
+					maxSize = Math.max(_constantMin, _constantMax);
+				}
+				break;
+			case 2: 
+				if (_separateAxes) {
+					for (i = 0, n = _gradientXMin.gradientCount; i < n; i++)
+						maxSize = Math.max(maxSize, _gradientXMin.getValueByIndex(i));
+					for (i = 0, n = _gradientXMax.gradientCount; i < n; i++)
+						maxSize = Math.max(maxSize, _gradientXMax.getValueByIndex(i));
+					
+					for (i = 0, n = _gradientYMin.gradientCount; i < n; i++)
+						maxSize = Math.max(maxSize, _gradientYMin.getValueByIndex(i));
+					for (i = 0, n = _gradientZMax.gradientCount; i < n; i++)
+						maxSize = Math.max(maxSize, _gradientZMax.getValueByIndex(i));
+						//TODO:除了RenderMode为MeshZ无效
+				} else {
+					for (i = 0, n = _gradientMin.gradientCount; i < n; i++)
+						maxSize = Math.max(maxSize, _gradientMin.getValueByIndex(i));
+					for (i = 0, n = _gradientMax.gradientCount; i < n; i++)
+						maxSize = Math.max(maxSize, _gradientMax.getValueByIndex(i));
+				}
+				break;
+			}
+			return maxSize;
 		}
 		
 		/**

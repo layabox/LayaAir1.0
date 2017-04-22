@@ -980,6 +980,9 @@ package laya.display {
 		}
 		
 		public function get lines():Array {
+			if (_isChanged)
+				typeset();
+				
 			return _lines;
 		}
 		

@@ -133,11 +133,14 @@ package laya.d3.graphics {
 				_shaderValues.setValue(attributeName, value);
 				
 				switch (attributeName) {//TODO:临时
-				case VertexElementUsage.TEXTURECOORDINATE0: 
-					_addShaderDefine(ShaderCompile3D.SHADERDEFINE_UV);
-					break;
 				case VertexElementUsage.COLOR0: 
 					_addShaderDefine(ShaderCompile3D.SHADERDEFINE_COLOR);
+					break
+				case VertexElementUsage.TEXTURECOORDINATE0: 
+					_addShaderDefine(ShaderCompile3D.SHADERDEFINE_UV0);
+					break;
+				case VertexElementUsage.TEXTURECOORDINATE1: 
+					_addShaderDefine(ShaderCompile3D.SHADERDEFINE_UV1);
 					break;
 				}
 			}

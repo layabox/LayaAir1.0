@@ -33,6 +33,8 @@ package laya.net {
 		
 		/** 加载出错后的重试次数，默认重试一次*/
 		public var retryNum:int = 1;
+		/** 延迟时间多久再进行错误重试，默认立即重试*/
+		public var retryDelay:int = 0;
 		/** 最大下载线程，默认为5个*/
 		public var maxLoader:int = 5;
 		
@@ -123,9 +125,8 @@ package laya.net {
 						if (complete) complete.run();
 					}
 					if (cache) {
-						var formatURL:String = URL.formatURL(url);
-						cacheRes(formatURL, item);
-						item.url = formatURL;
+						cacheRes(url, item);
+						item.url = url;
 					}
 				}
 			} else {
@@ -149,7 +150,6 @@ package laya.net {
 		 */
 		public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):LoaderManager {
 			if (url is Array) return _loadAssets(url as Array, complete, progress, type, priority, cache, group);
-			url = URL.formatURL(url);
 			var content:* = Loader.getRes(url);
 			if (content != null) {
 				progress && progress.runWith(1);
@@ -216,15 +216,15 @@ package laya.net {
 		
 		private function _endLoad(resInfo:ResInfo, content:*):void {
 			//如果加载后为空，放入队列末尾重试
-			if (content === null) {
+			if (content == null) {
 				var errorCount:int = this._failRes[resInfo.url] || 0;
 				if (errorCount < this.retryNum) {
-					trace("[warn]Retry to load:", resInfo.url);
+					console.warn("[warn]Retry to load:", resInfo.url);
 					this._failRes[resInfo.url] = errorCount + 1;
-					this._resInfos[this._maxPriority - 1].push(resInfo);
+					Laya.timer.once(retryDelay, this, _addReTry, [resInfo], false);
 					return;
 				} else {
-					trace("[error]Failed to load:", resInfo.url);
+					console.warn("[error]Failed to load:", resInfo.url);
 					event(Event.ERROR, resInfo.url);
 				}
 			}
@@ -232,6 +232,11 @@ package laya.net {
 			resInfo.event(Event.COMPLETE, content);
 			resInfo.offAll();
 			_infoPool.push(resInfo);
+		}
+		
+		private function _addReTry(resInfo:ResInfo):void {
+			this._resInfos[this._maxPriority - 1].push(resInfo);
+			_next();
 		}
 		
 		/**
@@ -295,7 +300,6 @@ package laya.net {
 		 * @param	url 资源地址
 		 */
 		public function cancelLoadByUrl(url:String):void {
-			url = URL.formatURL(url);
 			for (var i:int = 0; i < this._maxPriority; i++) {
 				var infos:Array = this._resInfos[i];
 				for (var j:int = infos.length - 1; j > -1; j--) {
@@ -320,6 +324,7 @@ package laya.net {
 			var totalSize:int = 0;
 			var items:Array = [];
 			var defaultType:String = type || Loader.IMAGE;
+			var success:Boolean = true;
 			for (var i:int = 0; i < itemCount; i++) {
 				var item:Object = arr[i];
 				if (item is String) item = {url: item, type: defaultType, size: 1, priority: priority};
@@ -335,8 +340,9 @@ package laya.net {
 			function loadComplete(item:Object, content:* = null):void {
 				loadedCount++;
 				item.progress = 1;
+				if (!content) success = false;
 				if (loadedCount === itemCount && complete) {
-					complete.run();
+					complete.runWith(success);
 				}
 			}
 			

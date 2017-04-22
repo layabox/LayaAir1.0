@@ -1,4 +1,5 @@
 package laya.ani.swf {
+	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.events.Event;
 	import laya.maths.Matrix;
@@ -98,11 +99,12 @@ package laya.ani.swf {
 			if (!parentMovieClip) {
 				_movieClipList = [this];
 				_isRoot = true;
+				_setUpNoticeType(Node.NOTICE_DISPLAY);
 			} else {
 				_isRoot = false;
 				_movieClipList = parentMovieClip._movieClipList;
 				_movieClipList.push(this);
-			}
+			}	
 		}
 		
 		/**
@@ -120,12 +122,12 @@ package laya.ani.swf {
 			super._setDisplay(value);
 			if (_isRoot)
 			{
-				_onDisplay();
+				_onDisplay(value);
 			}
 		}
 		/**@private */
-		private function _onDisplay():void {			
-			if (_displayedInStage) Laya.timer.loop(this.interval, this, updates, null, true);
+		private function _onDisplay(value:Boolean):void {			
+			if (value) Laya.timer.loop(this.interval, this, updates, null, true);
 			else Laya.timer.clear(this, updates);		
 		}
 		

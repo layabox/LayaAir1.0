@@ -5,7 +5,6 @@ module laya
 	import Rectangle = Laya.Rectangle;
 	import Loader = Laya.Loader;
 	import Browser = Laya.Browser;
-	import Handler = Laya.Handler;
 	import WebGL = Laya.WebGL;
 
 	export class Animation_Altas {
@@ -21,7 +20,7 @@ module laya
 			Laya.stage.scaleMode = "showall";
 			Laya.stage.bgColor = "#232628";
 
-			Laya.loader.load(this.AniConfPath, Handler.create(this, this.createAnimation), null, Loader.ATLAS);
+			ProtoBuf.load(this.AniConfPath, this.createAnimation);
 		}
 
 		private createAnimation(): void {

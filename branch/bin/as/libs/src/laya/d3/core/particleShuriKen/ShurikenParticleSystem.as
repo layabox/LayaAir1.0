@@ -25,6 +25,8 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Quaternion;
 	import laya.d3.math.Rand;
 	import laya.d3.math.Vector2;
 	import laya.d3.graphics.VertexParticleShuriken;
@@ -59,10 +61,22 @@ package laya.d3.core.particleShuriKen {
 	 */
 	public class ShurikenParticleSystem extends GeometryFilter implements IRenderable, IClone {
 		/** @private */
-		public static const _maxElapsedTime:Number = 1.0 / 3;
+		public static const _maxElapsedTime:Number = 1.0 / 3.0;
 		/** @private 0:Burst,1:预留,2:StartDelay,3:StartColor,4:StartSize,5:StartRotation,6:randomizeRotationDirection,7:StartLifetime,8:StartSpeed,9:VelocityOverLifetime,10:ColorOverLifetime,11:SizeOverLifetime,12:RotationOverLifetime,13-15:TextureSheetAnimation,16-17:Shape*/
 		public static const _RANDOMOFFSET:Uint32Array = new Uint32Array([0x23571a3e, 0xc34f56fe, 0x13371337, 0x12460f3b, 0x6aed452e, 0xdec4aea1, 0x96aa4de3, 0x8d2c8431, 0xf3857f6f, 0xe0fbd834, 0x13740583, 0x591bc05c, 0x40eb95e4, 0xbc524e5f, 0xaf502044, 0xa614b381, 0x1034e524, 0xfc524e5f]);
 		
+		/** @private */
+		private var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
+		/**@private */
+		private static var _tempVector30:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempVector31:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempVector32:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempVector33:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempVector34:Vector3 = new Vector3();
 		/** @private */
 		private static var _tempPosition:Vector3 = new Vector3();
 		/** @private */
@@ -71,6 +85,8 @@ package laya.d3.core.particleShuriKen {
 		protected var _boundingSphere:BoundSphere = new BoundSphere(new Vector3(), 0);
 		/** @private */
 		protected var _boundingBox:BoundBox = new BoundBox(new Vector3(), new Vector3());
+		/** @private */
+		public var _boundingBoxCorners:Vector.<Vector3>;
 		
 		/** @private */
 		private var _owner:ShuriKenParticle3D;
@@ -361,24 +377,24 @@ package laya.d3.core.particleShuriKen {
 				if (value.enbale) {
 					switch (velocityType) {
 					case 0: 
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
 						break;
 					case 1: 
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
 						break;
 					case 2: 
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
 						break;
 					case 3: 
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
 						break;
 					}
 					
 				} else {
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
 				}
 				
 				switch (velocityType) {
@@ -405,10 +421,10 @@ package laya.d3.core.particleShuriKen {
 				}
 				_owner._setShaderValueInt(ShuriKenParticle3D.VOLSPACETYPE, value.space);
 			} else {
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
 				
 				_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, null);
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, null);
@@ -445,15 +461,15 @@ package laya.d3.core.particleShuriKen {
 				if (value.enbale) {
 					switch (color.type) {
 					case 1: 
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_COLOROVERLIFETIME);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME);
 						break;
 					case 3: 
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
 						break;
 					}
 				} else {
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_COLOROVERLIFETIME);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
 				}
 				
 				switch (color.type) {
@@ -472,8 +488,8 @@ package laya.d3.core.particleShuriKen {
 					break;
 				}
 			} else {
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_COLOROVERLIFETIME);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
 				
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, gradientColor._alphaElements);
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, gradientColor._rgbElements);
@@ -506,23 +522,23 @@ package laya.d3.core.particleShuriKen {
 					switch (sizeType) {
 					case 0: 
 						if (sizeSeparate)
-							_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
+							_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
 						else
-							_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
+							_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
 						break;
 					case 2: 
 						if (sizeSeparate)
-							_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
+							_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
 						else
-							_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
+							_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
 						break;
 					}
 					
 				} else {
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
 				}
 				
 				switch (sizeType) {
@@ -550,10 +566,10 @@ package laya.d3.core.particleShuriKen {
 					break;
 				}
 			} else {
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
 				
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, null);
 				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTXMAX, null);
@@ -586,30 +602,30 @@ package laya.d3.core.particleShuriKen {
 				var rotationType:int = rotation.type;
 				if (value.enbale) {
 					if (rotationSeparate)
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
 					else
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIME);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIME);
 					switch (rotationType) {
 					case 0: 
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
 						break;
 					case 1: 
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
 						break;
 					case 2: 
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
 						break;
 					case 3: 
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
 						break;
 					}
 				} else {
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIME);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIME);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
 				}
 				
 				switch (rotationType) {
@@ -653,12 +669,12 @@ package laya.d3.core.particleShuriKen {
 					break;
 				}
 			} else {
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIME);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIME);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
 				
 				_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, null);
 				_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE, null);
@@ -697,16 +713,16 @@ package laya.d3.core.particleShuriKen {
 				if (value.enbale) {
 					switch (textureAniType) {
 					case 1: 
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
 						break;
-						_owner._addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
+						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
 					case 3: 
 						break;
 						
 					}
 				} else {
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
-					_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
+					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
 				}
 				
 				if (textureAniType === 1 || textureAniType === 3) {
@@ -728,8 +744,8 @@ package laya.d3.core.particleShuriKen {
 				}
 				
 			} else {
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
-				_owner._removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
+				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
 				
 				_owner._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES, undefined);
 				_owner._setShaderValueVector2(ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, null);
@@ -766,12 +782,6 @@ package laya.d3.core.particleShuriKen {
 		 * @inheritDoc
 		 */
 		override public function get _originalBoundingSphere():BoundSphere {
-			var centerE:Float32Array = _boundingSphere.center.elements;
-			centerE[0] = 0;
-			centerE[1] = 0;
-			centerE[2] = 0;
-			_boundingSphere.radius = Number.MAX_VALUE;
-			
 			return _boundingSphere;
 		}
 		
@@ -779,20 +789,20 @@ package laya.d3.core.particleShuriKen {
 		 * @inheritDoc
 		 */
 		override public function get _originalBoundingBox():BoundBox {
-			var minE:Float32Array = _boundingBox.min.elements;
-			minE[0] = -Number.MAX_VALUE;
-			minE[1] = -Number.MAX_VALUE;
-			minE[2] = -Number.MAX_VALUE;
-			var maxE:Float32Array = _boundingBox.min.elements;
-			maxE[0] = Number.MAX_VALUE;
-			maxE[1] = Number.MAX_VALUE;
-			maxE[2] = Number.MAX_VALUE;
-			
 			return _boundingBox;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function get _originalBoundingBoxCorners():Vector.<Vector3> {
+			return _boundingBoxCorners;
 		}
 		
 		public function ShurikenParticleSystem(owner:ShuriKenParticle3D) {
 			_owner = owner;
+			_boundingBoxCorners = new Vector.<Vector3>(8);
+			
 			_currentTime = 0;
 			_floatCountPerVertex = 40;//(0~3为CornerTextureCoordinate),(4~6为Position,7为StartLifeTime),(8~10Direction,11为Time),12到15为StartColor,16到18为StartSize,19到21为3DStartRotationForward(或19为2DStartRotation),22到24为3DStartRotationRight,25到27为3DStartRotationUp,28为startSpeed,29到32为random0,33到36为random1,37到39为世界空间模拟器模式位置(附加数据)
 			
@@ -861,6 +871,283 @@ package laya.d3.core.particleShuriKen {
 			_owner.on(Event.DISPLAY, this, _onDisplayInStage);
 			_owner.on(Event.UNDISPLAY, this, _onUnDisplayInStage);
 		}
+		
+		/**
+		 * @private
+		 */
+		public function _generateBoundingSphere():void {//TODO：应在本类内部处理。
+			var centerE:Float32Array = _boundingSphere.center.elements;
+			centerE[0] = 0;
+			centerE[1] = 0;
+			centerE[2] = 0;
+			_boundingSphere.radius = Number.MAX_VALUE;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _generateBoundingBox():void {//TODO：应在本类内部处理。			
+			var particle:ShuriKenParticle3D = _owner as ShuriKenParticle3D;
+			var particleRender:ShurikenParticleRender = particle.particleRender;
+			var boundMin:Vector3 = _boundingBox.min;
+			var boundMax:Vector3 = _boundingBox.max;
+			var i:int, n:int;
+			
+			//MaxLifeTime
+			var maxStartLifeTime:Number;
+			switch (startLifetimeType) {
+			case 0: 
+				maxStartLifeTime = startLifetimeConstant;
+				break;
+			case 1: 
+				maxStartLifeTime = -Number.MAX_VALUE;
+				var startLifeTimeGradient:GradientDataNumber = startLifeTimeGradient;
+				for (i = 0, n = startLifeTimeGradient.gradientCount; i < n; i++)
+					maxStartLifeTime = Math.max(maxStartLifeTime, startLifeTimeGradient.getValueByIndex(i));
+				break;
+			case 2: 
+				maxStartLifeTime = Math.max(startLifetimeConstantMin, startLifetimeConstantMax);
+				break;
+			case 3: 
+				maxStartLifeTime = -Number.MAX_VALUE;
+				var startLifeTimeGradientMin:GradientDataNumber = startLifeTimeGradientMin;
+				for (i = 0, n = startLifeTimeGradientMin.gradientCount; i < n; i++)
+					maxStartLifeTime = Math.max(maxStartLifeTime, startLifeTimeGradientMin.getValueByIndex(i));
+				var startLifeTimeGradientMax:GradientDataNumber = startLifeTimeGradientMax;
+				for (i = 0, n = startLifeTimeGradientMax.gradientCount; i < n; i++)
+					maxStartLifeTime = Math.max(maxStartLifeTime, startLifeTimeGradientMax.getValueByIndex(i));
+				break;
+			}
+			
+			//MinMaxSpeed
+			var minStartSpeed:Number, maxStartSpeed:Number;
+			switch (startSpeedType) {
+			case 0: 
+				minStartSpeed = maxStartSpeed = startSpeedConstant;
+				break;
+			case 1: //TODO:
+				break;
+			case 2: 
+				minStartSpeed = startLifetimeConstantMin;
+				maxStartSpeed = startLifetimeConstantMax;
+				break;
+			case 3: //TODO:
+				break;
+			}
+			
+			//MinMaxPosition、MinMaxDiection
+			var minPosition:Vector3, maxPosition:Vector3, minDirection:Vector3, maxDirection:Vector3;
+			if (_shape && _shape.enable) {
+				//TODO:
+			} else {
+				minPosition = maxPosition = Vector3.ZERO;
+				minDirection = Vector3.ZERO;
+				maxDirection = Vector3.UnitZ;
+			}
+			
+			var startMinVelocity:Vector3 = new Vector3(minDirection.x * minStartSpeed, minDirection.y * minStartSpeed, minDirection.z * minStartSpeed);
+			var startMaxVelocity:Vector3 = new Vector3(maxDirection.x * maxStartSpeed, maxDirection.y * maxStartSpeed, maxDirection.z * maxStartSpeed);
+			
+			if (_velocityOverLifetime && _velocityOverLifetime.enbale) {
+				var lifeMinVelocity:Vector3;
+				var lifeMaxVelocity:Vector3;
+				var velocity:GradientVelocity = _velocityOverLifetime.velocity;
+				switch (velocity.type) {
+				case 0: 
+					lifeMinVelocity = lifeMaxVelocity = velocity.constant;
+					break;
+				case 1: 
+					lifeMinVelocity = lifeMaxVelocity = new Vector3(velocity.gradientX.getAverageValue(), velocity.gradientY.getAverageValue(), velocity.gradientZ.getAverageValue());
+					break;
+				case 2: 
+					lifeMinVelocity = velocity.constantMin;//TODO:Min
+					lifeMaxVelocity = velocity.constantMax;
+					break;
+				case 3: 
+					lifeMinVelocity = new Vector3(velocity.gradientXMin.getAverageValue(), velocity.gradientYMin.getAverageValue(), velocity.gradientZMin.getAverageValue());
+					lifeMaxVelocity = new Vector3(velocity.gradientXMax.getAverageValue(), velocity.gradientYMax.getAverageValue(), velocity.gradientZMax.getAverageValue());
+					break;
+				}
+			}
+			
+			var transform:Transform3D = _owner.transform;
+			var worldPosition:Vector3 = transform.position;
+			var positionScale:Vector3, sizeScale:Vector3;
+			switch (scaleMode) {
+			case 0: 
+				var scale:Vector3 = transform.scale;
+				positionScale = sizeScale = scale;
+				break;
+			case 1: 
+				var localScale:Vector3 = transform.localScale;
+				positionScale = sizeScale = localScale;
+				break;
+			case 2: 
+				positionScale = transform.scale;
+				sizeScale = Vector3.ONE;
+				break;
+			}
+			
+			var minStratPosition:Vector3, maxStratPosition:Vector3;
+			if (_velocityOverLifetime && _velocityOverLifetime.enbale) {
+				//var minLifePosition:Vector3, maxLifePosition:Vector3;
+				//switch (_velocityOverLifetime.velocity.type) {
+				//case 0: 
+				//minStratPosition = new Vector3(startMinVelocity.x * maxStartLifeTime, startMinVelocity.y * maxStartLifeTime, startMinVelocity.z * maxStartLifeTime);
+				//maxStratPosition = new Vector3(startMaxVelocity.x * maxStartLifeTime, startMaxVelocity.y * maxStartLifeTime, startMaxVelocity.z * maxStartLifeTime);
+				//minLifePosition = new Vector3(lifeMinVelocity.x * maxStartLifeTime, lifeMinVelocity.y * maxStartLifeTime, lifeMinVelocity.z * maxStartLifeTime);
+				//maxLifePosition = new Vector3(lifeMaxVelocity.x * maxStartLifeTime, lifeMaxVelocity.y * maxStartLifeTime, lifeMaxVelocity.z * maxStartLifeTime);
+				//break;
+				//}
+				////TODO:
+			} else {
+				minStratPosition = new Vector3(startMinVelocity.x * maxStartLifeTime, startMinVelocity.y * maxStartLifeTime, startMinVelocity.z * maxStartLifeTime);
+				maxStratPosition = new Vector3(startMaxVelocity.x * maxStartLifeTime, startMaxVelocity.y * maxStartLifeTime, startMaxVelocity.z * maxStartLifeTime);
+				
+				if (scaleMode != 2) {
+					Vector3.add(minPosition, minStratPosition, boundMin);
+					Vector3.multiply(positionScale, boundMin, boundMin);
+					//Vector3.transformQuat(boundMin, worldRotation, boundMin);
+					
+					Vector3.add(maxPosition, maxStratPosition, boundMax);
+					Vector3.multiply(positionScale, boundMax, boundMax);
+					//Vector3.transformQuat(boundMax, worldRotation, boundMax);
+				} else {
+					Vector3.multiply(positionScale, minPosition, boundMin);
+					Vector3.add(boundMin, minStratPosition, boundMin);
+					//Vector3.transformQuat(boundMin, worldRotation, boundMin);
+					
+					Vector3.multiply(positionScale, maxPosition, boundMax);
+					Vector3.add(boundMax, maxStratPosition, boundMax);
+					//Vector3.transformQuat(boundMax, worldRotation, boundMax);
+				}
+			}
+			
+			switch (simulationSpace) {
+			case 0: 
+				//TODO:不能用次方法计算
+				break;
+			case 1: 
+				Vector3.add(boundMin, worldPosition, boundMin);
+				Vector3.add(boundMax, worldPosition, boundMax);
+				break;
+			}
+			//TODO:重力
+			
+			var renderMode:int = particleRender.renderMode;
+			// 通过粒子最大尺寸扩充包围盒，最大尺寸为粒子对角线。TODO:HORIZONTALBILLBOARD和VERTICALBILLBOARD缩小cos45
+			var maxSize:Number, maxSizeY:Number;
+			switch (startSizeType) {
+			case 0: 
+					if (threeDStartSize) {
+						var startSizeConstantSeparate:Vector3 = startSizeConstantSeparate;
+						maxSize = Math.max(startSizeConstantSeparate.x, startSizeConstantSeparate.y);//TODO:是否非Mesh模型下不用考虑Z
+						if (renderMode === 1) 
+						maxSizeY = startSizeConstantSeparate.y;
+					} else {
+						maxSize = startSizeConstant;
+						if (renderMode === 1) 
+						maxSizeY = startSizeConstant;
+					}
+				break;
+			case 1://TODO:
+				break;
+			case 2: 
+					if (threeDStartSize) {
+						var startSizeConstantMaxSeparate:Vector3 = startSizeConstantMaxSeparate;
+						maxSize = Math.max(startSizeConstantMaxSeparate.x, startSizeConstantMaxSeparate.y);
+						if (renderMode === 1) 
+						maxSizeY = startSizeConstantMaxSeparate.y;
+					} else {
+						maxSize = startSizeConstantMax;//TODO:是否非Mesh模型下不用考虑Z
+						if (renderMode === 1) 
+						maxSizeY = startSizeConstantMax;
+					}
+				break;
+			case 3://TODO:
+				break;
+			}
+			
+			if (_sizeOverLifetime && _sizeOverLifetime.enbale) {
+				var size:GradientSize = _sizeOverLifetime.size;
+				maxSize *= _sizeOverLifetime.size.getMaxSizeInGradient();
+			}
+			
+			
+			var threeDMaxSize:Vector3 = _tempVector31;
+			var threeDMaxSizeE:Float32Array = threeDMaxSize.elements;
+			
+			
+			var rotSize:Number, nonRotSize:Number;
+			var halfKSqrtOf2:Number;
+			switch (renderMode) {
+			case 0: 
+				 halfKSqrtOf2 = 1.42 * 0.5;
+				rotSize = maxSize * halfKSqrtOf2;
+				threeDMaxSizeE[0] = sizeScale.x * maxSize;
+				threeDMaxSizeE[1] = sizeScale.z * maxSize;
+				threeDMaxSizeE[2] = sizeScale.y * maxSize;
+				Vector3.subtract(boundMin, threeDMaxSize, boundMin);
+				Vector3.add(boundMax, threeDMaxSize, boundMax);
+				break;
+			case 1: 
+				//var minSize:Number;
+				var minStretchPosition:Vector3 = _tempVector30;
+			    //var minStretchPositionE:Float32Array = minStretchPosition.elements;
+				
+				var stretchVelocity:Vector3 = _tempVector32;
+				if (_velocityOverLifetime && _velocityOverLifetime.enbale) {
+					//TODO:
+				} else {
+					Vector3.multiply(sizeScale, startMaxVelocity, stretchVelocity);
+				}
+				var stretchSpeed:Number = Vector3.scalarLength(stretchVelocity);
+				var stretchLength :Number = stretchSpeed * particleRender.stretchedBillboardSpeedScale + maxSizeY * particleRender.stretchedBillboardLengthScale;
+				//var stretch:Vector3 = new Vector3();
+				var normalizeStreVelocity:Vector3 = _tempVector33;
+				Vector3.normalize(stretchVelocity, normalizeStreVelocity);
+				Vector3.scale(normalizeStreVelocity, stretchLength, minStretchPosition);
+				Vector3.subtract(maxStratPosition, minStretchPosition, minStretchPosition);
+				
+				//Vector3.subtract(maxStratPosition, (startMaxVelocity)*new Vector3(stretch, stretch, stretch), threeDMinSize);
+				//center +=u_SizeScale.xzy*(size.x*corner.x*sideVector+(cameraUpVector*speed*u_StretchedBillboardSpeedScale+cameraUpVector*size.y*u_StretchedBillboardLengthScale)*corner.y);
+				
+				 halfKSqrtOf2 = 0.42 * 0.5;
+				rotSize = maxSize * halfKSqrtOf2;
+				threeDMaxSizeE[0] = sizeScale.x * rotSize;
+				threeDMaxSizeE[1] = sizeScale.z * rotSize;
+				threeDMaxSizeE[2] = sizeScale.y * rotSize;
+				
+				Vector3.subtract(boundMin, threeDMaxSize, boundMin);
+				Vector3.add(boundMax, threeDMaxSize, boundMax);
+				
+				Vector3.subtract(minStretchPosition, threeDMaxSize, minStretchPosition);
+				break;
+			case 2: 
+				maxSize *= Math.cos(0.78539816339744830961566084581988);
+				nonRotSize = maxSize * 0.5;
+				threeDMaxSizeE[0] = sizeScale.x * nonRotSize;
+				threeDMaxSizeE[1] = sizeScale.z * nonRotSize;
+				Vector3.subtract(boundMin, threeDMaxSize, boundMin);
+				Vector3.add(boundMax, threeDMaxSize, boundMax);
+				break;
+			case 3: 
+				maxSize *= Math.cos(0.78539816339744830961566084581988);
+				nonRotSize = maxSize * 0.5;
+				threeDMaxSizeE[0] = sizeScale.x * nonRotSize;
+				threeDMaxSizeE[1] = sizeScale.z * nonRotSize;
+				threeDMaxSizeE[2] = sizeScale.y * nonRotSize;
+				Vector3.subtract(boundMin, threeDMaxSize, boundMin);
+				Vector3.add(boundMax, threeDMaxSize, boundMax);
+				break;
+			}
+			
+			//TODO:min
+			//TODO:max
+			_boundingBox.getCorners(_boundingBoxCorners);
+		}
+		
+		
 		
 		/**
 		 * @private
@@ -987,77 +1274,7 @@ package laya.d3.core.particleShuriKen {
 		private function _initPartVertexDatas():void {
 			_vertexBuffer = VertexBuffer3D.create(VertexParticleShuriken.vertexDeclaration, _bufferMaxParticles * 4, WebGLContext.DYNAMIC_DRAW);
 			_vertices = new Float32Array(_bufferMaxParticles * _floatCountPerVertex * 4);
-			
-			//var enableSheetAnimation:Boolean = textureSheetAnimation && textureSheetAnimation.enbale;
-			//if (enableSheetAnimation) {
-			//var title:Vector2 = textureSheetAnimation.tiles;
-			//var titleX:int = title.x, titleY:int = title.y;
-			//var subU:Number = 1.0 / titleX, subV:Number = 1.0 / titleY;
-			//
-			//var totalFrameCount:int;
-			//var startRow:int;
-			//var randomRow:Boolean = textureSheetAnimation.randomRow;
-			//switch (textureSheetAnimation.type) {
-			//case 0://Whole Sheet
-			//totalFrameCount = titleX * titleY;
-			//break;
-			//case 1://Singal Row
-			//totalFrameCount = titleX;
-			//if (randomRow) {
-			//if (autoRandomSeed) {
-			//startRow = Math.round(Math.random() * titleY);
-			//} else {
-			//_rand.seed = _randomSeeds[0];
-			//startRow = Math.round(_rand.getFloat() * titleY);
-			//_randomSeeds[0] = _rand.seed;
-			//}
-			//} else {
-			//startRow = 0;
-			//}
-			//break;
-			//}
-			//
-			//var startFrameCount:int;
-			//var startFrame:StartFrame = textureSheetAnimation.startFrame;
-			//switch (startFrame.type) {
-			//case 0://常量模式
-			//startFrameCount = startFrame.constant;
-			//break;
-			//case 1://随机双常量模式
-			//if (autoRandomSeed) {
-			//startFrameCount = Math.round(MathUtil.lerp(startFrame.constantMin, startFrame.constantMax, Math.random()));
-			//} else {
-			//_rand.seed = _randomSeeds[1];
-			//startFrameCount = Math.round(MathUtil.lerp(startFrame.constantMin, startFrame.constantMax, _rand.getFloat()));
-			//_randomSeeds[1] = _rand.seed;
-			//}
-			//break;
-			//}
-			//
-			//var frame:FrameOverTime = textureSheetAnimation.frame;
-			//switch (frame.type) {
-			//case 0: 
-			//startFrameCount += frame.constant;
-			//break;
-			//case 2: 
-			//if (autoRandomSeed) {
-			//startFrameCount += Math.round(MathUtil.lerp(frame.constantMin, frame.constantMax, Math.random()));
-			//} else {
-			//_rand.seed = _randomSeeds[2];
-			//startFrameCount += Math.round(MathUtil.lerp(frame.constantMin, frame.constantMax, _rand.getFloat()));
-			//_randomSeeds[2] = _rand.seed;
-			//}
-			//break;
-			//}
-			//
-			//if (!randomRow)
-			//startRow = Math.floor(startFrameCount / titleX);
-			//
-			//var startCol:int = startFrameCount % titleX;
-			//_setPartVertexDatas();
-			//} else {
 			_setPartVertexDatas();
-			//}
 		}
 		
 		/**
@@ -1422,12 +1639,12 @@ package laya.d3.core.particleShuriKen {
 			if (_firstActiveElement < _firstFreeElement) {
 				
 				drawVertexCount = (_firstFreeElement - _firstActiveElement) * 6;
-				glContext.drawElements(WebGLContext.TRIANGLES, drawVertexCount, WebGLContext.UNSIGNED_SHORT, _firstActiveElement * 6 * 2);//2为ushort字节数
+				glContext.drawElements(WebGLContext.TRIANGLES, drawVertexCount, WebGLContext.UNSIGNED_SHORT, _firstActiveElement * 6 * 2);
 				Stat.trianglesFaces += drawVertexCount / 3;
 				Stat.drawCall++;
 			} else {
 				drawVertexCount = (_bufferMaxParticles - _firstActiveElement) * 6;
-				glContext.drawElements(WebGLContext.TRIANGLES, drawVertexCount, WebGLContext.UNSIGNED_SHORT, _firstActiveElement * 6 * 2);//2为ushort字节数
+				glContext.drawElements(WebGLContext.TRIANGLES, drawVertexCount, WebGLContext.UNSIGNED_SHORT, _firstActiveElement * 6 * 2);
 				Stat.trianglesFaces += drawVertexCount / 3;
 				Stat.drawCall++;
 				if (_firstFreeElement > 0) {

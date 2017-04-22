@@ -1,7 +1,9 @@
 package laya.d3.shader {
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.BaseCamera;
+	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.scene.BaseScene;
 	import laya.d3.math.Vector3;
@@ -21,8 +23,9 @@ package laya.d3.shader {
 		public static var SHADERDEFINE_DIRECTIONLIGHT:int = 0x8;
 		public static var SHADERDEFINE_POINTLIGHT:int = 0x10;
 		public static var SHADERDEFINE_SPOTLIGHT:int = 0x20;
-		public static var SHADERDEFINE_UV:int = 0x40;
+		public static var SHADERDEFINE_UV0:int = 0x40;
 		public static var SHADERDEFINE_COLOR:int = 0x80;
+		public static var SHADERDEFINE_UV1:int = 0x100;
 		
 		private static var DEFINEREG:RegExp = new RegExp("defined(?=\\((.*?)\\))", "g");
 		private static var INCLUDE:RegExp = new RegExp("\\w+", "g");
@@ -42,19 +45,19 @@ package laya.d3.shader {
 			_globalRegDefine("DIRECTIONLIGHT", SHADERDEFINE_DIRECTIONLIGHT);
 			_globalRegDefine("POINTLIGHT", SHADERDEFINE_POINTLIGHT);
 			_globalRegDefine("SPOTLIGHT", SHADERDEFINE_SPOTLIGHT);
-			_globalRegDefine("UV", SHADERDEFINE_UV);
+			_globalRegDefine("UV", SHADERDEFINE_UV0);
 			_globalRegDefine("COLOR", SHADERDEFINE_COLOR);
-			_globalRegDefine("CASTSHADOW", ParallelSplitShadowMap.SHADERDEFINE_CAST_SHADOW); //TODO：
-            //TODO:
-			_globalRegDefine("RECEIVESHADOW", ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW); 
-			_globalRegDefine("SHADOWMAP_PSSM1", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM1); 
-			_globalRegDefine("SHADOWMAP_PSSM2", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM2); 
-			_globalRegDefine("SHADOWMAP_PSSM3", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM3); 
-			_globalRegDefine("SHADOWMAP_PCF_NO", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF_NO); 
-			_globalRegDefine("SHADOWMAP_PCF1", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF1); 
-			_globalRegDefine("SHADOWMAP_PCF2", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF2); 
-			_globalRegDefine("SHADOWMAP_PCF3", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF3); 
-			
+			_globalRegDefine("UV1", SHADERDEFINE_UV1);
+			//TODO:
+			_globalRegDefine("CASTSHADOW", ParallelSplitShadowMap.SHADERDEFINE_CAST_SHADOW);
+			_globalRegDefine("SHADOWMAP_PSSM1", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM1);
+			_globalRegDefine("SHADOWMAP_PSSM2", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM2);
+			_globalRegDefine("SHADOWMAP_PSSM3", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM3);
+			_globalRegDefine("SHADOWMAP_PCF_NO", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF_NO);
+			_globalRegDefine("SHADOWMAP_PCF1", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF1);
+			_globalRegDefine("SHADOWMAP_PCF2", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF2);
+			_globalRegDefine("SHADOWMAP_PCF3", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF3);
+		
 			//_globalRegDefine("BONE", SkinAnimations.SHADERDEFINE_BONE);
 		}
 		
@@ -97,8 +100,10 @@ package laya.d3.shader {
 		private var _sceneUniformMap:Object;
 		public var sharders:Array;
 		
-		private var _currentShaderDefinePower:int = 1;
-		public var _int2name:Array = [];
+		private var _curMaterialDefinePower:int = 1;
+		private var _curSpriteDefinePower:int = 3;
+		public var _materialInt2name:Array = [];
+		public var _spriteInt2name:Array = [];
 		
 		public var _conchShader:*;//NATIVE		
 		
@@ -114,8 +119,10 @@ package laya.d3.shader {
 			_VSTXT = vs;
 			_PSTXT = ps;
 			
-			_int2name[SkinAnimations.SHADERDEFINE_BONE] = "BONE";
-			//_globalRegDefine("BONE", SkinAnimations.SHADERDEFINE_BONE);
+			_spriteInt2name[ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW] = "RECEIVESHADOW";
+			_spriteInt2name[RenderableSprite3D.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV] = "SCALEOFFSETLIGHTINGMAPUV";
+			_spriteInt2name[SkinAnimations.SHADERDEFINE_BONE] = "BONE";
+			_materialInt2name[BaseMaterial.SHADERDEFINE_ALPHATEST] = "ALPHATEST";
 			
 			function split(str:String):Array//这里要修改
 			{
@@ -265,41 +272,66 @@ package laya.d3.shader {
 		 * @param	define 宏定义，格式:{name:value...}
 		 * @return
 		 */
-		public function withCompile(nameID:int, publicDefine:int, materialDefine:int):Shader3D {
-			var shader:Shader3D
-			var materialDefShaders:Array = sharders[publicDefine];
-			if (materialDefShaders) {
-				shader = materialDefShaders[materialDefine];
-				if (shader)
-					return shader;
+		public function withCompile(nameID:int, publicDefine:int, spriteDefine:int, materialDefine:int):Shader3D {
+			var shader:Shader3D;
+			var publicDefShaders:Array = sharders[nameID],spriteDefShaders:Array,materialDefShaders:Array;
+			if (publicDefShaders) {
+				spriteDefShaders = publicDefShaders[publicDefine];
+				if (spriteDefShaders) {
+					materialDefShaders = spriteDefShaders[spriteDefine];
+					if (materialDefShaders) {
+						shader = materialDefShaders[materialDefine];
+						if (shader)
+							return shader;
+					} else {
+						materialDefShaders = spriteDefShaders[spriteDefine] = [];
+					}
+				} else {
+					spriteDefShaders = publicDefShaders[publicDefine] = [];
+					materialDefShaders = spriteDefShaders[spriteDefine] = [];
+				}
 			} else {
-				materialDefShaders = sharders[publicDefine] = [];
+				publicDefShaders = sharders[nameID] = [];
+				spriteDefShaders = publicDefShaders[publicDefine] = [];
+				materialDefShaders = spriteDefShaders[spriteDefine] = [];
 			}
 			
 			var publicDefGroup:Object = definesToNameDic(publicDefine, _globalInt2name);
-			var materialDefGroup:Object = definesToNameDic(materialDefine, _int2name);
+			var spriteDefGroup:Object = definesToNameDic(spriteDefine, _spriteInt2name);
+			var materialDefGroup:Object = definesToNameDic(materialDefine, _materialInt2name);
 			if (ShaderCompile3D.debugMode) {
-				var publicDefGroupStr:String = "",key:String;
+				var publicDefGroupStr:String = "", key:String;
 				for (key in publicDefGroup)
 					publicDefGroupStr += key + " ";
+				
+				var spriteDefGroupStr:String = "";
+				for (key in spriteDefGroup)
+					spriteDefGroupStr += key + " ";
 				
 				var materialDefGroupStr:String = "";
 				for (key in materialDefGroup)
 					materialDefGroupStr += key + " ";
 				
-				trace("ShaderCompile3DDebugMode---(Name:" + Shader3D.nameKey.getName(nameID) + " ID:" + nameID + " PublicDefine:" + publicDefine + " MaterialDefine:" + materialDefine + " PublicDefineGroup:" + publicDefGroupStr + "MaterialDefineGroup: " + materialDefGroupStr + ")---ShaderCompile3DDebugMode");
+				trace("ShaderCompile3DDebugMode---(Name:" + Shader3D.nameKey.getName(nameID) + " PublicDefine:" + publicDefine + " SpriteDefine:" + spriteDefine + " MaterialDefine:" + materialDefine + " PublicDefineGroup:" + publicDefGroupStr + " SpriteDefineGroup:" + spriteDefGroupStr + "MaterialDefineGroup: " + materialDefGroupStr + ")---ShaderCompile3DDebugMode");
 			}
 			
-			shader = createShader(publicDefGroup, materialDefGroup);
+			shader = createShader(publicDefGroup, spriteDefGroup, materialDefGroup);
 			materialDefShaders[materialDefine] = shader;
 			return shader;
 		}
 		
-		public function createShader(publicDefine:Object, materialDefine:Object):Shader3D {
+		public function createShader(publicDefine:Object, spriteDefine:Object, materialDefine:Object):Shader3D {
 			var defMap:* = {};
 			var defineStr:String = "", key:String;
 			if (publicDefine) {
 				for (key in publicDefine) {
+					defineStr += "#define " + key + "\n";
+					defMap[key] = true;
+				}
+			}
+			
+			if (spriteDefine) {
+				for (key in spriteDefine) {
 					defineStr += "#define " + key + "\n";
 					defMap[key] = true;
 				}
@@ -319,16 +351,39 @@ package laya.d3.shader {
 		}
 		
 		/**
-		 * 通过宏定义值预编译shader。
-		 * @param	defineValue。
+		 * 通过宏定义预编译shader。
+		 * @param	spriteIntToNameDic 精灵宏定义数组。
+		 * @param	publicDefine 公共宏定义值。
+		 * @param	spriteDefine 精灵宏定义值。
+		 * @param	materialDefine 材质宏定义值。
 		 */
-		public function precompileShaderWithShaderDefine(publicDefine:int, materialDefine:int):void {
-			withCompile(_name, publicDefine, materialDefine);
+		public function precompileShaderWithShaderDefine(publicDefine:int, spriteDefine:int, materialDefine:int):void {
+			withCompile(_name, publicDefine, spriteDefine, materialDefine);
 		}
 		
-		public function registerDefine(name:String):int {
-			var value:int = Math.pow(2, _currentShaderDefinePower++);//TODO:超界处理	
-			_int2name[value] = name;
+		/**
+		 * 注册材质宏定义。
+		 * @param	name 宏定义名称。
+		 * @return
+		 */
+		public function registerMaterialDefine(name:String):int {
+			var value:int = Math.pow(2, _curMaterialDefinePower++);//TODO:超界处理	
+			_materialInt2name[value] = name;
+			
+			if (Render.isConchNode) {//NATIVE
+				__JS__("conch.regShaderDefine&&conch.regShaderDefine(name,value);")
+			}
+			return value;
+		}
+		
+		/**
+		 * 注册精灵宏定义。
+		 * @param	name 宏定义名称。
+		 * @return
+		 */
+		public function registerSpriteDefine(name:String):int {
+			var value:int = Math.pow(2, _curSpriteDefinePower++);//TODO:超界处理	
+			_spriteInt2name[value] = name;
 			
 			if (Render.isConchNode) {//NATIVE
 				__JS__("conch.regShaderDefine&&conch.regShaderDefine(name,value);")

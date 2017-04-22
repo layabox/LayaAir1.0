@@ -25,6 +25,7 @@ package laya.d3.core.material {
 		public static const UVMATRIX:int = 8;
 		public static const UVAGE:int = 9;
 		public static const AOOBJPOS:int = 14;
+		public static const HSNOISETEXTURE:int = 15;
 		
 		
 		public static var SHADERDEFINE_FIX_ROUGHNESS:int = 0;
@@ -32,6 +33,7 @@ package laya.d3.core.material {
 		public static var SHADERDEFINE_HAS_TANGENT:int = 0;
 		public static var SHADERDEFINE_TEST_CLIPZ:int = 0;
 		public static var SHADERDEFINE_HAS_PBRINFO:int = 0;
+		public static var SHADERDEFINE_USE_GROUNDTRUTH:int = 0;
 		
 		/**渲染状态_不透明。*/
 		public static const RENDERMODE_OPAQUE:int = 1;
@@ -45,6 +47,8 @@ package laya.d3.core.material {
 		public static const RENDERMODE_TRANSPARENT:int = 13;
 		
 		public static var pbrlutTex:DataTexture2D;
+		
+		public static var HammersleyNoiseTex:DataTexture2D;
 		/** @private */
 		protected var _transformUV:TransformUV = null;
 		
@@ -90,6 +94,21 @@ package laya.d3.core.material {
 		
 		public function set has_tangent(v:Boolean):void {
 			_addShaderDefine(SHADERDEFINE_HAS_TANGENT);
+		}
+		
+		public function set use_groundtruth(v:Boolean):void {
+			if (v) {
+				_addShaderDefine(SHADERDEFINE_USE_GROUNDTRUTH);
+				//创建随机值查找表
+				if ( !PBRMaterial.HammersleyNoiseTex) {
+					var texdata:Uint8Array = createHammersleyTex(32, 32);
+					PBRMaterial.HammersleyNoiseTex = DataTexture2D.create(texdata.buffer, 32, 32, WebGLContext.NEAREST, WebGLContext.NEAREST, false);
+				}
+				_setTexture(HSNOISETEXTURE, HammersleyNoiseTex);
+			}else {
+				PBRMaterial.HammersleyNoiseTex = null;
+				_removeShaderDefine(SHADERDEFINE_USE_GROUNDTRUTH);
+			}
 		}
 		
 		/**
@@ -270,5 +289,40 @@ package laya.d3.core.material {
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			super.onAsynLoaded(url, data, params);
 		}
+		
+		/**
+		 * vdc算法产生的序列。这个比random要均匀一些。
+		 */
+		public function radicalInverse_VdC(bits:int):Number {
+			var tmpUint:Uint32Array = new Uint32Array(1);
+			return (function(bits:Number):Number{
+				//先颠倒前后16位
+				bits = (bits << 16) | (bits >>> 16);
+				//下面颠倒16位中的前后8位
+				bits = ((bits & 0x55555555) << 1) | ((bits & 0xAAAAAAAA) >>> 1);
+				bits = ((bits & 0x33333333) << 2) | ((bits & 0xCCCCCCCC) >>> 2);
+				bits = ((bits & 0x0F0F0F0F) << 4) | ((bits & 0xF0F0F0F0) >>> 4);
+				bits = ((bits & 0x00FF00FF) << 8) | ((bits & 0xFF00FF00) >>> 8);
+				//必须是uint的
+				tmpUint[0]=bits;
+				return tmpUint[0] * 2.3283064365386963e-10; // / 0x100000000
+			})(bits);
+		 }		
+		/**
+		 * 
+		 */
+		public function createHammersleyTex(w:int, h:int):Uint8Array{
+			var ret:Uint8Array = new Uint8Array(w*h*4);
+			var ri:int=0;
+			var ci:int=0;
+			for(ci=0; ci<w*h; ci++){
+				var v:Number = radicalInverse_VdC(ci);
+				ret[ri++] = v*255;
+				ret[ri++]=0;
+				ret[ri++]=0;
+				ret[ri++]=255;
+			}
+			return ret;
+		}		
 	}
 }

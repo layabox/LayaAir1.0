@@ -9,6 +9,6 @@ package laya.ani {
 		public var name:String;
 		public var playTime:Number;
 		public var bone3DMap:*;
-		public var totalKeyframesLength:int;
+		public var totalKeyframeDatasLength:int;
 	}
 }

@@ -834,6 +834,11 @@ package laya.webgl.canvas
 		
 		override public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, transform:Matrix, tx:Number, ty:Number, alpha:Number):void
 		{
+			if (!transform)
+			{
+				_drawTextureM(tex, x, y, width, height, tx, ty, null, alpha);
+				return;
+			}
 			var curMat:Matrix = _curMat;
 			var prex:Number = _x;
 			var prey:Number = _y;

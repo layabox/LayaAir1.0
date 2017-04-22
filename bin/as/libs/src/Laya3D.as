@@ -247,12 +247,20 @@ package {
 				'texPrefilterDiff': [BaseCamera.ENVIRONMENTDIFFUSE, Shader3D.PERIOD_CAMERA], 
 				'texWaterDisp':[WaterMaterial.VERTEXDISPTEXTURE, Shader3D.PERIOD_MATERIAL],
 				'texWaveDetail':[WaterMaterial.DETAILTEXTURE, Shader3D.PERIOD_MATERIAL],
+				'texDeepColor':[WaterMaterial.DEEPCOLORTEXTURE, Shader3D.PERIOD_MATERIAL],
+				'texWaterInfo':[WaterMaterial.WATERINFO, Shader3D.PERIOD_MATERIAL],
+				'texFoam':[WaterMaterial.FOAMTEXTURE, Shader3D.PERIOD_MATERIAL],
+				'GEOWAVE_UV_SCALE':[WaterMaterial.GEOWAVE_UV_SCALE,Shader3D.PERIOD_MATERIAL],
 				'modelMatrix': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE], 
 				'mvp': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE], 
 				//'u_vpMatrix':[BaseCamera.VPMATRIX,Shader3D.PERIOD_CAMERA],
 				'cameraPosition': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA], 
 				'u_curTm':[WaterMaterial.CURTM, Shader3D.PERIOD_MATERIAL],//这个要改成全局的
+				'u_scrsize':[WaterMaterial.SCRSIZE, Shader3D.PERIOD_MATERIAL],//TODO 这个要全局的
+				'u_WaveInfoD':[WaterMaterial.WAVEINFOD, Shader3D.PERIOD_MATERIAL],
 				'u_WaveInfo':[WaterMaterial.WAVEINFO, Shader3D.PERIOD_MATERIAL],
+				'u_WaveMainDir':[WaterMaterial.WAVEMAINDIR, Shader3D.PERIOD_MATERIAL],//转换矩阵
+				'u_SeaColor':[WaterMaterial.SEA_COLOR,Shader3D.PERIOD_MATERIAL],
 				'u_View': [BaseCamera.VIEWMATRIX, Shader3D.PERIOD_CAMERA], 
 				'u_Project': [BaseCamera.PROJECTMATRIX, Shader3D.PERIOD_CAMERA], 
 				'u_FogStart': [BaseScene.FOGSTART, Shader3D.PERIOD_SCENE], 
@@ -281,6 +289,9 @@ package {
 			vs = __INCLUDESTR__("laya/d3/shader/files/water.vs");
 			ps = __INCLUDESTR__("laya/d3/shader/files/water.ps");
 			shaderCompile = ShaderCompile3D.add(Water, vs, ps, attributeMap, uniformMap);
+			WaterMaterial.SHADERDEFINE_CUBE_ENV = shaderCompile.registerMaterialDefine("CUBE_ENV");
+			WaterMaterial.SHADERDEFINE_HDR_ENV = shaderCompile.registerMaterialDefine("HDR_ENV");
+			WaterMaterial.SHADERDEFINE_SHOW_NORMAL = shaderCompile.registerMaterialDefine("SHOW_NORMAL");
 			
 			attributeMap = {'a_Position': VertexElementUsage.POSITION0, 'a_Texcoord': VertexElementUsage.TEXTURECOORDINATE0};
 			uniformMap = {'u_BlendTexture': [StandardMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL], 'u_LayerTexture0': [StandardMaterial.NORMALTEXTURE, Shader3D.PERIOD_MATERIAL], 'u_LayerTexture1': [StandardMaterial.SPECULARTEXTURE, Shader3D.PERIOD_MATERIAL], 'u_LayerTexture2': [StandardMaterial.EMISSIVETEXTURE, Shader3D.PERIOD_MATERIAL], 'u_LayerTexture3': [StandardMaterial.AMBIENTTEXTURE, Shader3D.PERIOD_MATERIAL], 'u_Albedo': [StandardMaterial.ALBEDO, Shader3D.PERIOD_MATERIAL], 'u_Ambient': [StandardMaterial.MATERIALAMBIENT, Shader3D.PERIOD_MATERIAL], 'u_UVMatrix': [StandardMaterial.UVMATRIX, Shader3D.PERIOD_MATERIAL], 'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE], 'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE], 'u_CameraPos': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA], 'u_FogStart': [BaseScene.FOGSTART, Shader3D.PERIOD_SCENE], 'u_FogRange': [BaseScene.FOGRANGE, Shader3D.PERIOD_SCENE], 'u_FogColor': [BaseScene.FOGCOLOR, Shader3D.PERIOD_SCENE]};
@@ -816,7 +827,7 @@ package {
 		 * @param	width  3D画布宽度。
 		 * @param	height 3D画布高度。
 		 */
-		public static function init(width:Number, height:Number, antialias:Boolean = false, alpha:Boolean = false, premultipliedAlpha:Boolean = false, stencil:Boolean = true):void {
+		public static function init(width:Number, height:Number, antialias:Boolean = false, alpha:Boolean = false, premultipliedAlpha:Boolean = true, stencil:Boolean = true):void {
 			Config.isAntialias = antialias;
 			Config.isAlpha = alpha;
 			Config.premultipliedAlpha = premultipliedAlpha;
