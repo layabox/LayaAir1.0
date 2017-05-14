@@ -1,8 +1,8 @@
 package laya.resource {
-	import laya.events.Event;
 	import laya.utils.Stat;
 	
 	/**
+	 * @private
 	 * <code>ResourceManager</code> 是资源管理类。它用于资源的载入、获取、销毁。
 	 */
 	public class ResourceManager implements IDispose {

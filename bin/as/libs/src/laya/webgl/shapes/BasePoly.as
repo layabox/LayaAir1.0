@@ -2,7 +2,6 @@ package laya.webgl.shapes
 {
 	
 	import laya.maths.Matrix;
-	import laya.maths.Point;
 	import laya.webgl.utils.Buffer2D;
 	//此类可以减少代码
 	public class BasePoly implements IShape
@@ -157,7 +156,8 @@ package laya.webgl.shapes
 		}
 		
 		//用于比如 扇形 不带两直线
-		protected function createLine(p:Array, indices:Array, lineWidth:Number, len:Number /*,outVertex:Array,outIndex:Array*/):Array
+		// /*,outVertex:Array,outIndex:Array*/
+		protected function createLine(p:Array, indices:Array, lineWidth:Number, len:Number):Array
 		{
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var points:Array = p.concat();

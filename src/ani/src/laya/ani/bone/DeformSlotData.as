@@ -1,8 +1,7 @@
 package laya.ani.bone 
 {
 	/**
-	 * ...
-	 * @author 
+	 * @private
 	 */
 	public class DeformSlotData 
 	{

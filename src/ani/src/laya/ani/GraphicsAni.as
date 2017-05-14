@@ -2,16 +2,19 @@ package laya.ani {
 	import laya.display.Graphics;
 	import laya.maths.Matrix;
 	import laya.renders.Render;
+	/**
+	 * @private
+	 */
 	public class GraphicsAni extends Graphics {
 		
 		public function GraphicsAni() {
 			super();
-		    if (Render.isConchNode)
+			if (Render.isConchNode)
 			{
 				this["drawSkin"] = function(skin:*):void
 				{
-				   skin.transform || (skin.transform = Matrix.EMPTY);
-				   this.setSkinMesh&&this.setSkinMesh( skin._ps, skin.mVBData, skin.mEleNum, 0, skin.mTexture,skin.transform );
+					skin.transform || (skin.transform = Matrix.EMPTY);
+					this.setSkinMesh&&this.setSkinMesh( skin._ps, skin.mVBData, skin.mEleNum, 0, skin.mTexture,skin.transform );
 				};
 			}
 		}

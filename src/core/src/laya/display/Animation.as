@@ -1,5 +1,6 @@
 package laya.display {
 	import laya.net.Loader;
+	import laya.utils.GraphicAnimation;
 	import laya.utils.Handler;
 	import laya.utils.Utils;
 	
@@ -128,39 +129,36 @@ package laya.display {
 		
 		/**@private */
 		protected function _setFramesFromCache(name:String):Boolean {
+			var showWarn:Boolean = name != "";
 			if (_url) name = _url + "#" + name;
 			if (name && framesMap[name]) {
 				var tAniO:*;
 				tAniO = framesMap[name];
-				if (tAniO is Array)
-				{
+				if (tAniO is Array) {
 					this._frames = framesMap[name];
 					this._count = _frames.length;
-				}else
-				{
+				} else {
 					this._frames = tAniO.frames;
 					this._count = _frames.length;
 					//如果是读取动的画配置信息，帧率按照动画设置的帧率播放
 					if (!_frameRateChanged) _interval = tAniO.interval;
 					_labels = _copyLabels(tAniO.labels);
-				}			
+				}
 				return true;
-			}else {
-				trace("ani not found:",name);
+			} else {
+				if (showWarn) trace("ani not found:", name);
 			}
 			return false;
 		}
 		
 		/**@private */
-		private function _copyLabels(labels:Object):Object
-		{
+		private function _copyLabels(labels:Object):Object {
 			if (!labels) return null;
 			var rst:Object;
-			rst = { };
+			rst = {};
 			var key:String;
-			for (key in labels)
-			{
-				rst[key] = Utils.copyArray([],labels[key]);
+			for (key in labels) {
+				rst[key] = Utils.copyArray([], labels[key]);
 			}
 			return rst;
 		}
@@ -198,6 +196,11 @@ package laya.display {
 			if (value.indexOf(".ani") > -1) loadAnimation(value);
 			else if (value.indexOf(".json") > -1 || value.indexOf("als") > -1 || value.indexOf("atlas") > -1) loadAtlas(value);
 			else loadImages(value.split(","));
+		}
+		
+		/**设置默认播放的动画名称，IDE里面可以制作多个动画，设置其中一个动画名称进行播放*/
+		public function set autoAnimation(value:String):void {
+			play(0, true, value);
 		}
 		
 		/**是否自动播放，默认为false，如果设置为true，则动画被添加到舞台后，就会自动播放*/
@@ -255,57 +258,72 @@ package laya.display {
 		 * 加载由IDE制作的动画。播放的帧率则按照IDE设计的帧率。加载后，默认会根据 "url+动画名称" 缓存为动画模板。
 		 * 【注意】加载解析IDE动画之前，请确保动画使用的图片被预加载，否则会导致动画创建失败。
 		 * @param	url 	动画地址。
-		 * @param	loaded	加载完毕回调。
+		 * @param	loaded	加载完毕回调（可选）。
+		 * @param	atlas	动画用到的图集地址（可选）。
 		 * @return 	返回动画本身。
 		 */
-		public function loadAnimation(url:String, loaded:Handler = null):Animation {
+		public function loadAnimation(url:String, loaded:Handler = null, atlas:String = null):Animation {
 			this._url = url;
 			var _this:Animation = this;
+			if (!_actionName) _actionName = "";
 			if (!_this._setFramesFromCache("")) {
-				function onLoaded(loadUrl:String):void {
-					if (!Loader.getRes(loadUrl)) return;
-					if (url === loadUrl) {
-						var tAniO:Object;
-						if (!framesMap[url + "#"]) {
-							var aniData:Object = _this._parseGraphicAnimation(Loader.getRes(url));
-							if (!aniData) return;			
-							//缓存动画数据
-							var aniList:Array=aniData.animationList;
-							var i:int, len:int = aniList.length;
-							var defaultO:Object;
-							for (i = 0; i < len; i++)
-							{
-								tAniO = aniList[i];
-								if (tAniO.frames.length)
-								{
-									framesMap[url + "#" + tAniO.name] = tAniO;
-									if (!defaultO) defaultO = tAniO;
-								}
-							}
-							if (defaultO)
-							{
-								framesMap[url + "#"] = defaultO;
-								_this._setFramesFromCache("");
-								index = 0;
-							}
-							_checkResumePlaying();
-						} else {
-							_this._setFramesFromCache("");
-							index = 0;
-							_checkResumePlaying();
-						}
-						if (loaded) loaded.run();
-					}
+				if (!atlas || Loader.getAtlas(atlas)) {
+					_loadAnimationData(url, loaded, atlas);
+				} else {
+					Laya.loader.load(atlas, Handler.create(this, _loadAnimationData, [url, loaded, atlas]), null, Loader.ATLAS)
 				}
-				if (Loader.getRes(url)) onLoaded(url);
-				else Laya.loader.load(url, Handler.create(null, onLoaded, [url]), null, Loader.JSON);
-				
-				//清理掉配置
-				Loader.clearRes(url);
 			} else {
+				_this._setFramesFromCache(_actionName);
 				if (loaded) loaded.run();
 			}
 			return this;
+		}
+		
+		/**@private */
+		private function _loadAnimationData(url:String, loaded:Handler = null, atlas:String = null):void {
+			if (atlas && !Loader.getAtlas(atlas)) {
+				console.warn("atlas load fail:" + atlas);
+				return;
+			}
+			var _this:Animation = this;
+			
+			function onLoaded(loadUrl:String):void {
+				if (!Loader.getRes(loadUrl)) return;
+				if (url === loadUrl) {
+					var tAniO:Object;
+					if (!framesMap[url + "#"]) {
+						var aniData:Object = _this._parseGraphicAnimation(Loader.getRes(url));
+						if (!aniData) return;
+						//缓存动画数据
+						var aniList:Array = aniData.animationList;
+						var i:int, len:int = aniList.length;
+						var defaultO:Object;
+						for (i = 0; i < len; i++) {
+							tAniO = aniList[i];
+							if (tAniO.frames.length) {
+								framesMap[url + "#" + tAniO.name] = tAniO;
+								if (!defaultO) defaultO = tAniO;
+							}
+						}
+						if (defaultO) {
+							framesMap[url + "#"] = defaultO;
+							_this._setFramesFromCache(_actionName);
+							index = 0;
+						}
+						_checkResumePlaying();
+					} else {
+						_this._setFramesFromCache(_actionName);
+						index = 0;
+						_checkResumePlaying();
+					}
+					if (loaded) loaded.run();
+				}
+			}
+			if (Loader.getRes(url)) onLoaded(url);
+			else Laya.loader.load(url, Handler.create(null, onLoaded, [url]), null, Loader.JSON);
+			
+			//清理掉配置
+			Loader.clearRes(url);
 		}
 		
 		/**@private */

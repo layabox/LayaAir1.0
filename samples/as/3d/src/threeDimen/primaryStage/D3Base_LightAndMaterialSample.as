@@ -27,7 +27,6 @@ package threeDimen.primaryStage {
 		private var scene:Scene;
 		
 		private var buttonLight:Button;
-		//private var shadingLight:Button;
 		private var skinMesh:MeshSprite3D;
 		private var skinAni:SkinAnimations;
 		private var directionLight:DirectionLight;
@@ -143,18 +142,6 @@ package threeDimen.primaryStage {
 				_this.buttonLight.on(Event.CLICK, _this, _this.onclickButtonLight);
 				Laya.stage.addChild(_this.buttonLight);
 				
-				//_this.shadingLight = new Button();
-				//_this.shadingLight.skin = "../../../../res/threeDimen/ui/button.png";
-				//_this.shadingLight.label = "像素着色";
-				//_this.shadingLight.labelBold = true;
-				//_this.shadingLight.labelSize = 20;
-				//_this.shadingLight.sizeGrid = "4,4,4,4";
-				//_this.shadingLight.size(120, 30);
-				//_this.shadingLight.scale(Browser.pixelRatio, Browser.pixelRatio);
-				//_this.shadingLight.pos(Laya.stage.width / 2 - _this.shadingLight.width * Browser.pixelRatio / 2, Laya.stage.height - 50 * Browser.pixelRatio);
-				//_this.shadingLight.on(Event.CLICK, _this, _this.onclickButtonShading);
-				//Laya.stage.addChild(_this.shadingLight);
-				
 				Laya.stage.on(Event.RESIZE, null, function():void {
 					_this.buttonLight.pos(Laya.stage.width / 2 - _this.buttonLight.width * Browser.pixelRatio / 2, Laya.stage.height - 100 * Browser.pixelRatio);
 					//_this.shadingLight.pos(Laya.stage.width / 2 - _this.shadingLight.width * Browser.pixelRatio / 2, Laya.stage.height - 50 * Browser.pixelRatio);
@@ -163,17 +150,6 @@ package threeDimen.primaryStage {
 			}));
 		
 		}
-		
-		//private function onclickButtonShading():void {
-		//currentShadingMode++;
-		//(currentShadingMode > BaseScene.PIXEL_SHADING) && (currentShadingMode = BaseScene.VERTEX_SHADING);
-		//if (currentShadingMode == BaseScene.VERTEX_SHADING) {
-		//shadingLight.label = "顶点着色";
-		//} else {
-		//shadingLight.label = "像素着色";
-		//}
-		//scene.shadingMode = currentShadingMode;
-		//}
 		
 		private function onclickButtonLight():void {
 			currentLightState++;

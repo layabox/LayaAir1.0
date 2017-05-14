@@ -26,6 +26,10 @@ package laya.ui {
 		protected var _disabled:Boolean;
 		/**@private 变灰*/
 		protected var _gray:Boolean;
+		/**
+		 * 是否启用相对布局
+		 */
+		public var layoutEnabled:Boolean = true;
 		
 		/**
 		 * <p>创建一个新的 <code>Component</code> 实例。</p>
@@ -138,7 +142,6 @@ package laya.ui {
 		/**
 		 * <p>表示显示对象的高度，以像素为单位。</p>
 		 * <p><b>注：</b>当值为0时，高度为自适应大小。</p>
-		 * @return
 		 */
 		override public function get height():Number {
 			if (_height) return _height;
@@ -211,7 +214,6 @@ package laya.ui {
 		   //任意属性赋值
 		   dataSource = {label2: {text:"改变了label",size:14}, checkbox2: {selected:true,x:10}};
 		   </listing>
-		 * @return
 		 */
 		public function get dataSource():* {
 			return _dataSource;
@@ -244,7 +246,7 @@ package laya.ui {
 		
 		public function set top(value:Number):void {
 			getLayout().top = value;
-			layOutEabled = true;
+			_setLayoutEnabled(true);
 			resetLayoutY();
 		}
 		
@@ -257,7 +259,7 @@ package laya.ui {
 		
 		public function set bottom(value:Number):void {
 			getLayout().bottom = value;
-			layOutEabled = true;
+			_setLayoutEnabled(true);
 			resetLayoutY();
 		}
 		
@@ -270,7 +272,7 @@ package laya.ui {
 		
 		public function set left(value:Number):void {
 			getLayout().left = value;
-			layOutEabled = true;
+			_setLayoutEnabled(true);
 			resetLayoutX();
 		}
 		
@@ -283,7 +285,7 @@ package laya.ui {
 		
 		public function set right(value:Number):void {
 			getLayout().right = value;
-			layOutEabled = true;
+			_setLayoutEnabled(true);
 			resetLayoutX();
 		}
 		
@@ -296,7 +298,7 @@ package laya.ui {
 		
 		public function set centerX(value:Number):void {
 			getLayout().centerX = value;
-			layOutEabled = true;
+			_setLayoutEnabled(true);
 			resetLayoutX();
 		}
 		
@@ -309,7 +311,7 @@ package laya.ui {
 		
 		public function set centerY(value:Number):void {
 			getLayout().centerY = value;
-			layOutEabled = true;
+			_setLayoutEnabled(true);
 			resetLayoutY();
 		}
 		
@@ -320,7 +322,7 @@ package laya.ui {
 		
 		public function set anchorX(value:Number):void {
 			getLayout().anchorX = value;
-			layOutEabled = true;
+			_setLayoutEnabled(true);
 			resetLayoutX();
 		}
 		
@@ -331,7 +333,7 @@ package laya.ui {
 		
 		public function set anchorY(value:Number):void {
 			getLayout().anchorY = value;
-			layOutEabled = true;
+			_setLayoutEnabled(true);
 			resetLayoutY();
 		}
 		
@@ -353,14 +355,14 @@ package laya.ui {
 		 * <p>如果值为true,则此对象可以使用布局样式，否则不使用布局样式。</p>
 		 * @param value 一个 Boolean 值，指定对象是否可使用布局。
 		 */
-		private function set layOutEabled(value:Boolean):void {
+		private function _setLayoutEnabled(value:Boolean):void
+		{
 			if (_layout && _layout.enable != value) {
 				_layout.enable = value;
+				on(Event.ADDED, this, onAdded);
+				on(Event.REMOVED, this, onRemoved);
 				if (this.parent) {
 					onAdded();
-				} else {
-					on(Event.ADDED, this, onAdded);
-					on(Event.REMOVED, this, onRemoved);
 				}
 			}
 		}
@@ -397,6 +399,7 @@ package laya.ui {
 		protected function resetLayoutX():void {
 			var layout:LayoutStyle = _layout;
 			if (!isNaN(layout.anchorX)) this.pivotX = layout.anchorX * width;
+			if (!layoutEnabled) return;
 			var parent:Sprite = this.parent as Sprite;
 			if (parent) {
 				if (!isNaN(layout.centerX)) {
@@ -419,6 +422,7 @@ package laya.ui {
 		protected function resetLayoutY():void {
 			var layout:LayoutStyle = _layout;
 			if (!isNaN(layout.anchorY)) this.pivotY = layout.anchorY * height;
+			if (!layoutEnabled) return;
 			var parent:Sprite = this.parent as Sprite;
 			if (parent) {
 				if (!isNaN(layout.centerY)) {

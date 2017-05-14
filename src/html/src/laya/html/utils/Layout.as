@@ -33,6 +33,7 @@ package laya.html.utils {
 		}
 		
 		public static function layout(element:Sprite):Array {
+			if (!element || !element._style) return null;
 			if ((element._style._type & CSSStyle.ADDLAYOUTED) === 0)
 				return null;
 			

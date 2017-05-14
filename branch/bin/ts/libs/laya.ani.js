@@ -18,7 +18,7 @@
 			this.name=null;
 			this.playTime=NaN;
 			this.bone3DMap=null;
-			this.totalKeyframesLength=0;
+			this.totalKeyframeDatasLength=0;
 		}
 
 		__class(AnimationContent,'laya.ani.AnimationContent');
@@ -84,7 +84,7 @@
 				ani.bone3DMap={};
 				ani.playTime=reader.getFloat32();
 				var boneCount=ani.nodes.length=reader.getUint8();
-				ani.totalKeyframesLength=0;
+				ani.totalKeyframeDatasLength=0;
 				for (j=0;j < boneCount;j++){
 					var node=ani.nodes[j]=new AnimationNodeContent();
 					{};
@@ -101,7 +101,7 @@
 					var keyframeParamsOffset=reader.getUint32();
 					publicRead.pos=keyframeParamsOffset;
 					var keyframeDataCount=node.keyframeWidth=publicRead.getUint16();
-					ani.totalKeyframesLength+=keyframeDataCount;
+					ani.totalKeyframeDatasLength+=keyframeDataCount;
 					if (node.lerpType===0 || node.lerpType===1){
 						node.interpolationMethod=[];
 						node.interpolationMethod.length=keyframeDataCount;
@@ -172,67 +172,6 @@
 	var AnimationParser02=(function(){
 		function AnimationParser02(){};
 		__class(AnimationParser02,'laya.ani.AnimationParser02');
-		var __proto=AnimationParser02.prototype;
-		__proto.READ_ANIMATIONS=function(){
-			var reader=AnimationParser02._reader;
-			var arrayBuffer=reader.__getBuffer();
-			var i=0,j=0,k=0,n=0,l=0;
-			var keyframeWidth=reader.getUint16();
-			var interpolationMethod=[];
-			interpolationMethod.length=keyframeWidth;
-			for (i=0;i < keyframeWidth;i++)
-			interpolationMethod[i]=reader.getUint8();
-			var aniCount=reader.getUint8();
-			AnimationParser02._templet._anis.length=aniCount;
-			for (i=0;i < aniCount;i++){
-				var ani=AnimationParser02._templet._anis[i]=
-				{};
-				ani.nodes=new Array;
-				var aniName=ani.name=AnimationParser02._strings[reader.getUint16()];
-				AnimationParser02._templet._aniMap[aniName]=i;
-				ani.bone3DMap={};
-				ani.playTime=reader.getFloat32();
-				var boneCount=ani.nodes.length=reader.getInt16();
-				ani.totalKeyframesLength=0;
-				for (j=0;j < boneCount;j++){
-					var node=ani.nodes[j]=
-					{};
-					node.childs=[];
-					var nameIndex=reader.getInt16();
-					if (nameIndex >=0){
-						node.name=AnimationParser02._strings[nameIndex];
-						ani.bone3DMap[node.name]=j;
-					}
-					node.keyFrame=new Array;
-					node.parentIndex=reader.getInt16();
-					node.parentIndex==-1 ? node.parent=null :node.parent=ani.nodes[node.parentIndex]
-					ani.totalKeyframesLength+=keyframeWidth;
-					node.interpolationMethod=interpolationMethod;
-					if (node.parent !=null)
-						node.parent.childs.push(node);
-					var keyframeCount=reader.getUint16();
-					node.keyFrame.length=keyframeCount;
-					var startTime=0;
-					for (k=0,n=keyframeCount;k < n;k++){
-						var keyFrame=node.keyFrame[k]=
-						{};
-						keyFrame.duration=reader.getFloat32();
-						keyFrame.startTime=startTime;
-						keyFrame.dData=new Float32Array(keyframeWidth);
-						keyFrame.nextData=new Float32Array(keyframeWidth);
-						var offset=AnimationParser02._DATA.offset;
-						var keyframeDataOffset=reader.getUint32();
-						var keyframeDataLength=keyframeWidth *4;
-						var keyframeArrayBuffer=arrayBuffer.slice(offset+keyframeDataOffset,offset+keyframeDataOffset+keyframeDataLength);
-						keyFrame.data=new Float32Array(keyframeArrayBuffer);
-						startTime+=keyFrame.duration;
-					}
-					node.playTime=ani.playTime;
-					AnimationParser02._templet._calculateKeyFrame(node,keyframeCount,keyframeWidth);
-				}
-			}
-		}
-
 		AnimationParser02.READ_DATA=function(){
 			AnimationParser02._DATA.offset=AnimationParser02._reader.getUint32();
 			AnimationParser02._DATA.size=AnimationParser02._reader.getUint32();
@@ -259,6 +198,7 @@
 		}
 
 		AnimationParser02.parse=function(templet,reader){
+			AnimationParser02._templet=templet;
 			AnimationParser02._reader=reader;
 			var arrayBuffer=reader.__getBuffer();
 			AnimationParser02.READ_DATA();
@@ -267,11 +207,72 @@
 			for (var i=0,n=AnimationParser02._BLOCK.count;i < n;i++){
 				var index=reader.getUint16();
 				var blockName=AnimationParser02._strings[index];
-				var fn=AnimationTemplet["READ_"+blockName];
+				var fn=AnimationParser02["READ_"+blockName];
 				if (fn==null)
 					throw new Error("model file err,no this function:"+index+" "+blockName);
 				else
 				fn.call();
+			}
+		}
+
+		AnimationParser02.READ_ANIMATIONS=function(){
+			var reader=AnimationParser02._reader;
+			var arrayBuffer=reader.__getBuffer();
+			var i=0,j=0,k=0,n=0,l=0;
+			var keyframeWidth=reader.getUint16();
+			var interpolationMethod=[];
+			interpolationMethod.length=keyframeWidth;
+			for (i=0;i < keyframeWidth;i++)
+			interpolationMethod[i]=AnimationTemplet.interpolation[reader.getByte()];
+			var aniCount=reader.getUint8();
+			AnimationParser02._templet._anis.length=aniCount;
+			for (i=0;i < aniCount;i++){
+				var ani=AnimationParser02._templet._anis[i]=
+				{};
+				ani.nodes=new Array;
+				var aniName=ani.name=AnimationParser02._strings[reader.getUint16()];
+				AnimationParser02._templet._aniMap[aniName]=i;
+				ani.bone3DMap={};
+				ani.playTime=reader.getUint32();
+				var boneCount=ani.nodes.length=reader.getInt16();
+				ani.totalKeyframeDatasLength=0;
+				for (j=0;j < boneCount;j++){
+					var node=ani.nodes[j]=
+					{};
+					node.keyframeWidth=keyframeWidth;
+					node.childs=[];
+					var nameIndex=reader.getUint16();
+					if (nameIndex >=0){
+						node.name=AnimationParser02._strings[nameIndex];
+						ani.bone3DMap[node.name]=j;
+					}
+					node.keyFrame=new Array;
+					node.parentIndex=reader.getInt16();
+					node.parentIndex==-1 ? node.parent=null :node.parent=ani.nodes[node.parentIndex]
+					ani.totalKeyframeDatasLength+=keyframeWidth;
+					node.interpolationMethod=interpolationMethod;
+					if (node.parent !=null)
+						node.parent.childs.push(node);
+					var keyframeCount=reader.getUint16();
+					node.keyFrame.length=keyframeCount;
+					var startTime=0;
+					for (k=0,n=keyframeCount;k < n;k++){
+						var keyFrame=node.keyFrame[k]=
+						{};
+						keyFrame.duration=reader.getUint32();
+						keyFrame.startTime=startTime;
+						keyFrame.dData=new Float32Array(keyframeWidth);
+						keyFrame.nextData=new Float32Array(keyframeWidth);
+						var offset=AnimationParser02._DATA.offset;
+						var keyframeDataOffset=reader.getUint32();
+						var keyframeDataLength=keyframeWidth *4;
+						var keyframeArrayBuffer=arrayBuffer.slice(offset+keyframeDataOffset,offset+keyframeDataOffset+keyframeDataLength);
+						keyFrame.data=new Float32Array(keyframeArrayBuffer);
+						startTime+=keyFrame.duration;
+					}
+					node.playTime=ani.playTime;
+					AnimationParser02._templet._calculateKeyFrame(node,keyframeCount,keyframeWidth);
+				}
 			}
 		}
 
@@ -2354,6 +2355,71 @@
 		/**
 		*@private
 		*/
+		__proto._setPlayParams=function(time,cacheFrameInterval){
+			this._currentTime=time;
+			this._currentKeyframeIndex=Math.floor((this.currentPlayTime)/ cacheFrameInterval+0.01);
+			this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
+		}
+
+		/**
+		*@private
+		*/
+		__proto._setPlayParamsWhenStop=function(currentAniClipPlayDuration,cacheFrameInterval){
+			this._currentTime=currentAniClipPlayDuration;
+			this._currentKeyframeIndex=Math.floor(currentAniClipPlayDuration / cacheFrameInterval+0.01);
+			this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
+			this._currentAnimationClipIndex=-1;
+		}
+
+		/**
+		*@private
+		*/
+		__proto._update=function(elapsedTime){
+			if (this._currentAnimationClipIndex===-1 || this._paused || !this._templet || !this._templet.loaded)
+				return;
+			var cacheFrameInterval=this._cacheFrameRateInterval *this._cachePlayRate;
+			var time=0;
+			(this._startUpdateLoopCount!==Stat.loopCount)&& (time=elapsedTime *this.playbackRate,this._elapsedPlaybackTime+=time);
+			var currentAniClipPlayDuration=this.playDuration;
+			if ((this._overallDuration!==0 && this._elapsedPlaybackTime >=this._overallDuration)|| (this._overallDuration===0 && this._elapsedPlaybackTime >=currentAniClipPlayDuration)){
+				this._setPlayParamsWhenStop(currentAniClipPlayDuration,cacheFrameInterval);
+				this.event(/*laya.events.Event.STOPPED*/"stopped");
+				return;
+			}
+			time+=this._currentTime;
+			if (currentAniClipPlayDuration > 0){
+				if (time >=currentAniClipPlayDuration){
+					do {
+						time-=currentAniClipPlayDuration;
+						if (this._stopWhenCircleFinish){
+							this._setPlayParamsWhenStop(currentAniClipPlayDuration,cacheFrameInterval);
+							this._stopWhenCircleFinish=false;
+							this.event(/*laya.events.Event.STOPPED*/"stopped");
+							return;
+						}
+						if (time < currentAniClipPlayDuration){
+							this._setPlayParams(time,cacheFrameInterval);
+							this.event(/*laya.events.Event.COMPLETE*/"complete");
+						}
+					}while (time >=currentAniClipPlayDuration)
+					}else {
+					this._setPlayParams(time,cacheFrameInterval);
+				}
+				}else {
+				if (this._stopWhenCircleFinish){
+					this._setPlayParamsWhenStop(currentAniClipPlayDuration,cacheFrameInterval);
+					this._stopWhenCircleFinish=false;
+					this.event(/*laya.events.Event.STOPPED*/"stopped");
+					return;
+				}
+				this._currentTime=this._currentFrameTime=this._currentKeyframeIndex=0;
+				this.event(/*laya.events.Event.COMPLETE*/"complete");
+			}
+		}
+
+		/**
+		*@private
+		*/
 		__proto._destroy=function(){
 			this.offAll();
 			this._templet=null;
@@ -2397,7 +2463,7 @@
 				this._calculatePlayDuration();
 			else
 			this._templet.once(/*laya.events.Event.LOADED*/"loaded",this,this._onAnimationTempletLoaded);
-			this.update(0);
+			this._update(0);
 		}
 
 		/**
@@ -2426,53 +2492,11 @@
 		__proto.stop=function(immediate){
 			(immediate===void 0)&& (immediate=true);
 			if (immediate){
+				this._currentTime=this._currentFrameTime=this._currentKeyframeIndex=0;
 				this._currentAnimationClipIndex=-1;
 				this.event(/*laya.events.Event.STOPPED*/"stopped");
 				}else {
 				this._stopWhenCircleFinish=true;
-			}
-		}
-
-		/**更新动画播放器 */
-		__proto.update=function(elapsedTime){
-			if (this._currentAnimationClipIndex===-1 || this._paused || !this._templet || !this._templet.loaded)
-				return;
-			var cacheFrameInterval=this._cacheFrameRateInterval *this._cachePlayRate;
-			var time=0;
-			(this._startUpdateLoopCount!==Stat.loopCount)&& (time=elapsedTime *this.playbackRate,this._elapsedPlaybackTime+=time);
-			var currentAniClipPlayDuration=this.playDuration;
-			if ((this._overallDuration!==0 && this._elapsedPlaybackTime >=this._overallDuration)|| (this._overallDuration===0 && this._elapsedPlaybackTime >=currentAniClipPlayDuration)){
-				this._currentTime=currentAniClipPlayDuration;
-				this._currentKeyframeIndex=Math.floor(currentAniClipPlayDuration / cacheFrameInterval+0.01);
-				this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
-				this._currentAnimationClipIndex=-1;
-				this.event(/*laya.events.Event.STOPPED*/"stopped");
-				return;
-			}
-			time+=this._currentTime;
-			if (currentAniClipPlayDuration > 0){
-				while (time >=currentAniClipPlayDuration){
-					if (this._stopWhenCircleFinish){
-						this._currentAnimationClipIndex=-1;
-						this._stopWhenCircleFinish=false;
-						this.event(/*laya.events.Event.STOPPED*/"stopped");
-						return;
-					}
-					time-=currentAniClipPlayDuration;
-					this.event(/*laya.events.Event.COMPLETE*/"complete");
-				}
-				this._currentTime=time;
-				this._currentKeyframeIndex=Math.floor((this.currentPlayTime)/ cacheFrameInterval);
-				this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
-				}else {
-				if (this._stopWhenCircleFinish){
-					this._currentAnimationClipIndex=-1;
-					this._stopWhenCircleFinish=false;
-					this.event(/*laya.events.Event.STOPPED*/"stopped");
-					return;
-				}
-				this._currentTime=this._currentFrameTime=this._currentKeyframeIndex=0;
-				this.event(/*laya.events.Event.COMPLETE*/"complete");
 			}
 		}
 
@@ -2792,7 +2816,7 @@
 		}
 
 		__proto.getTotalkeyframesLength=function(aniIndex){
-			return this._anis[aniIndex].totalKeyframesLength;
+			return this._anis[aniIndex].totalKeyframeDatasLength;
 		}
 
 		__proto.getPublicExtData=function(){
@@ -2829,31 +2853,37 @@
 				key=node.keyFrame[nodesFrameIndices[i][frameIndex]];
 				node.dataOffset=outOfs;
 				var dt=playCurTime-key.startTime;
-				switch (node.lerpType){
-					case 0:
-					case 1:
-						for (j=0;j < node.keyframeWidth;)
-						j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
+				var lerpType=node.lerpType;
+				if (lerpType){
+					switch (lerpType){
+						case 0:
+						case 1:
+							for (j=0;j < node.keyframeWidth;)
+							j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
+							break ;
+						case 2:;
+							var interpolationData=key.interpolationData;
+							var interDataLen=interpolationData.length;
+							var dataIndex=0;
+							for (j=0;j < interDataLen;){
+								var type=interpolationData[j];
+							switch (type){
+								case 6:
+									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
+									break ;
+								case 7:
+									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
+									break ;
+								default :
+									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData);
+								}
+							dataIndex++;
+						}
 						break ;
-					case 2:;
-						var interpolationData=key.interpolationData;
-						var interDataLen=interpolationData.length;
-						var dataIndex=0;
-						for (j=0;j < interDataLen;){
-							var type=interpolationData[j];
-						switch (type){
-							case 6:
-								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
-								break ;
-							case 7:
-								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
-								break ;
-							default :
-								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData);
-							}
-						dataIndex++;
 					}
-					break ;
+					}else {
+					for (j=0;j < node.keyframeWidth;)
+					j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
 				}
 				outOfs+=node.keyframeWidth;
 			}
@@ -2906,31 +2936,37 @@
 				var key=this.unfixedKeyframes[i];
 				node.dataOffset=outOfs;
 				var dt=playCurTime-key.startTime;
-				switch (node.lerpType){
-					case 0:
-					case 1:
-						for (j=0;j < node.keyframeWidth;)
-						j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
+				var lerpType=node.lerpType;
+				if (lerpType){
+					switch (node.lerpType){
+						case 0:
+						case 1:
+							for (j=0;j < node.keyframeWidth;)
+							j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
+							break ;
+						case 2:;
+							var interpolationData=key.interpolationData;
+							var interDataLen=interpolationData.length;
+							var dataIndex=0;
+							for (j=0;j < interDataLen;){
+								var type=interpolationData[j];
+							switch (type){
+								case 6:
+									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
+									break ;
+								case 7:
+									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
+									break ;
+								default :
+									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData);
+								}
+							dataIndex++;
+						}
 						break ;
-					case 2:;
-						var interpolationData=key.interpolationData;
-						var interDataLen=interpolationData.length;
-						var dataIndex=0;
-						for (j=0;j < interDataLen;){
-							var type=interpolationData[j];
-						switch (type){
-							case 6:
-								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
-								break ;
-							case 7:
-								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
-								break ;
-							default :
-								j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData);
-							}
-						dataIndex++;
 					}
-					break ;
+					}else {
+					for (j=0;j < node.keyframeWidth;)
+					j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
 				}
 				outOfs+=node.keyframeWidth;
 			}
@@ -3263,11 +3299,12 @@
 			var preIndex=this._player.currentKeyframeIndex;
 			var dTime=tCurrTime-this._lastTime;
 			if (autoKey){
-				this._player.update(dTime);
+				this._player._update(dTime);
 				}else{
 				preIndex=-1;
 			}
 			this._lastTime=tCurrTime;
+			if (!this._player)return;
 			this._index=this._clipIndex=this._player.currentKeyframeIndex;
 			if (this._index < 0)return;
 			if (dTime>0&&this._clipIndex==preIndex&&this._lastUpdateAniClipIndex==this._aniClipIndex){
@@ -3887,7 +3924,7 @@
 			(destroyChild===void 0)&& (destroyChild=true);
 			_super.prototype.destroy.call(this,destroyChild);
 			this._templet=null;
-			this._player.offAll();
+			if(this._player)this._player.offAll();
 			this._player=null;
 			this._curOriginalData=null;
 			this._boneMatrixArray.length=0;
@@ -4435,6 +4472,10 @@
 				return;
 			};
 			var tSkBuffer=Loader.getRes(this._skBufferUrl);
+			if (!tSkBuffer){
+				this.event(/*laya.events.Event.ERROR*/"error","load failed:"+this._skBufferUrl);
+				return;
+			}
 			this._path=this._skBufferUrl.slice(0,this._skBufferUrl.lastIndexOf("/"))+"/";
 			this.parseData(null,tSkBuffer);
 		}

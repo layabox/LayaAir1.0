@@ -2,7 +2,7 @@ package laya.d3.shadowMap {
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Camera;
 	import laya.d3.core.render.RenderQueue;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.BoundSphere;
@@ -19,7 +19,7 @@ package laya.d3.shadowMap {
 	 * @author ...
 	 */
 	public class ParallelSplitShadowMap {
-		/**@private */
+		/**@private 精灵级着色器宏定义,接收阴影。*/
 		public static const SHADERDEFINE_RECEIVE_SHADOW:int = 0x1;
 		
 		/**@private */
@@ -78,7 +78,7 @@ package laya.d3.shadowMap {
 		/**@private */
 		private var _shadowMapTextureSize:int = 1024;
 		/**@private */
-		private var _scene:BaseScene = null;
+		private var _scene:Scene = null;
 		/**@private */
 		private var _boundingSphere:Vector.<BoundSphere> = new Vector.<BoundSphere>(ParallelSplitShadowMap.MAX_PSSM_COUNT + 1);
 		/**@private */
@@ -149,7 +149,7 @@ package laya.d3.shadowMap {
 			_tempScaleMatrix44.elements[13] = 0.5;
 		}
 		
-		public function setInfo(scene:BaseScene, maxDistance:Number, globalParallelDir:Vector3, shadowMapTextureSize:int, numberOfPSSM:int, PCFType:int):void {
+		public function setInfo(scene:Scene, maxDistance:Number, globalParallelDir:Vector3, shadowMapTextureSize:int, numberOfPSSM:int, PCFType:int):void {
 			if (numberOfPSSM > ParallelSplitShadowMap.MAX_PSSM_COUNT) {
 				_numberOfPSSM = ParallelSplitShadowMap.MAX_PSSM_COUNT;
 			}
@@ -308,7 +308,7 @@ package laya.d3.shadowMap {
 		 * @private
 		 */
 		private function _uploadShaderValue():void {
-			var scene:BaseScene = _scene;
+			var scene:Scene = _scene;
 			switch (_numberOfPSSM) {
 			case 1: 
 				scene.addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM1);
@@ -328,21 +328,21 @@ package laya.d3.shadowMap {
 			}
 			
 			var sceneSV:ValusArray = scene._shaderValues;
-			sceneSV.setValue(BaseScene.SHADOWDISTANCE, _shaderValueDistance.elements);
-			sceneSV.setValue(BaseScene.SHADOWLIGHTVIEWPROJECT, _shaderValueLightVP);
-			sceneSV.setValue(BaseScene.SHADOWMAPPCFOFFSET, _shadowPCFOffset.elements);
+			sceneSV.setValue(Scene.SHADOWDISTANCE, _shaderValueDistance.elements);
+			sceneSV.setValue(Scene.SHADOWLIGHTVIEWPROJECT, _shaderValueLightVP);
+			sceneSV.setValue(Scene.SHADOWMAPPCFOFFSET, _shadowPCFOffset.elements);
 			switch (_numberOfPSSM) {
 			case 3: 
-				sceneSV.setValue(BaseScene.SHADOWMAPTEXTURE1, getRenderTarget(1).source);
-				sceneSV.setValue(BaseScene.SHADOWMAPTEXTURE2, getRenderTarget(2).source);
-				sceneSV.setValue(BaseScene.SHADOWMAPTEXTURE3, getRenderTarget(3).source);
+				sceneSV.setValue(Scene.SHADOWMAPTEXTURE1, getRenderTarget(1).source);
+				sceneSV.setValue(Scene.SHADOWMAPTEXTURE2, getRenderTarget(2).source);
+				sceneSV.setValue(Scene.SHADOWMAPTEXTURE3, getRenderTarget(3).source);
 				break;
 			case 2: 
-				sceneSV.setValue(BaseScene.SHADOWMAPTEXTURE1, getRenderTarget(1).source);
-				sceneSV.setValue(BaseScene.SHADOWMAPTEXTURE2, getRenderTarget(2).source);
+				sceneSV.setValue(Scene.SHADOWMAPTEXTURE1, getRenderTarget(1).source);
+				sceneSV.setValue(Scene.SHADOWMAPTEXTURE2, getRenderTarget(2).source);
 				break;
 			case 1: 
-				sceneSV.setValue(BaseScene.SHADOWMAPTEXTURE1, getRenderTarget(1).source);
+				sceneSV.setValue(Scene.SHADOWMAPTEXTURE1, getRenderTarget(1).source);
 				break;
 			}
 		}
@@ -619,7 +619,8 @@ package laya.d3.shadowMap {
 			 */
 			Matrix4x4.multiply(curLightCamera.viewMatrix, cameraMatViewInv, _tempMatrix44);
 			var tempValueElement:Float32Array = _tempValue.elements;
-			var corners:Vector.<Vector3> = new Vector.<Vector3>(8);
+			var corners:Array =[];
+			corners.length = 8;
 			_boundingBox[_currentPSSM].getCorners(corners);
 			for (var i:int = 0; i < 8; i++) {
 				var frustumPosElements:Float32Array = corners[i].elements;

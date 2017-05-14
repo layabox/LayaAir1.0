@@ -9,7 +9,7 @@ package threeDimen.primaryStage {
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;

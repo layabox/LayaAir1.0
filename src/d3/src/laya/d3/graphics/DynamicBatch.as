@@ -1,10 +1,13 @@
 package laya.d3.graphics {
+	import laya.d3.core.MeshRender;
+	import laya.d3.core.MeshSprite3D;
+	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
@@ -38,10 +41,6 @@ package laya.d3.graphics {
 		
 		private var _combineRenderElementPool:Vector.<RenderElement>;
 		private var _combineRenderElementPoolIndex:int;
-		
-		public function get indexOfHost():int {
-			return 0;
-		}
 		
 		public function get _vertexBufferCount():int {
 			return 1;
@@ -85,9 +84,9 @@ package laya.d3.graphics {
 			var renderElement:RenderElement = _combineRenderElementPool[_combineRenderElementPoolIndex++];
 			if (!renderElement) {
 				_combineRenderElementPool[_combineRenderElementPoolIndex - 1] = renderElement = new RenderElement();
-				renderElement._sprite3D = new Sprite3D();//TODO:创建虚拟动态精灵	
+				renderElement._sprite3D = new MeshSprite3D();//TODO:创建虚拟动态精灵,临时瞎new	
 			}
-			renderElement._sprite3D._renderUpdate(projectionView);//TODO:待调整,是否合理
+			renderElement._sprite3D._render._renderUpdate(projectionView);//TODO:待调整,是否合理
 			return renderElement;
 		}
 		
@@ -112,8 +111,8 @@ package laya.d3.graphics {
 				var indexStart:int = curIndexCount;
 				var indexEnd:int = indexStart + subIndexDatas.length;
 				
-				renderElement._batchIndexStart = indexStart;
-				renderElement._batchIndexEnd = indexEnd;
+				renderElement._tempBatchIndexStart = indexStart;
+				renderElement._tempBatchIndexEnd = indexEnd;
 				
 				_indexDatas.set(subIndexDatas, curIndexCount);
 				
@@ -149,11 +148,11 @@ package laya.d3.graphics {
 				merageElement._staticBatch = null;
 				merageElement.renderObj = this;
 				
-				var renderElementStartIndex:int = _combineRenderElements[_materialToRenderElementsOffsets[i]]._batchIndexStart;
-				var renderElementEndIndex:int = (i + 1 === _materialToRenderElementsOffsets.length) ? curIndexCount : _combineRenderElements[_materialToRenderElementsOffsets[i + 1]]._batchIndexStart;
+				var renderElementStartIndex:int = _combineRenderElements[_materialToRenderElementsOffsets[i]]._tempBatchIndexStart;
+				var renderElementEndIndex:int = (i + 1 === _materialToRenderElementsOffsets.length) ? curIndexCount : _combineRenderElements[_materialToRenderElementsOffsets[i + 1]]._tempBatchIndexStart;
 				
-				merageElement._batchIndexStart = renderElementStartIndex;
-				merageElement._batchIndexEnd = renderElementEndIndex;
+				merageElement._tempBatchIndexStart = renderElementStartIndex;
+				merageElement._tempBatchIndexEnd = renderElementEndIndex;
 				merageElement._material = _materials[i];
 				_merageElements.push(merageElement);
 			}
@@ -192,7 +191,7 @@ package laya.d3.graphics {
 			_currentCombineIndexCount = 0;
 		}
 		
-		public function _addToRenderQueue(scene:BaseScene,view:Matrix4x4, projection:Matrix4x4,projectionView:Matrix4x4):void {
+		public function _addToRenderQueue(scene:Scene,view:Matrix4x4, projection:Matrix4x4,projectionView:Matrix4x4):void {
 			_getRenderElement(view,projection,projectionView);
 			
 			for (var i:int = 0, n:int = _materials.length; i < n; i++)

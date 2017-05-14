@@ -1,10 +1,10 @@
 package laya.d3.loaders {
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.graphics.VertexElement;
+	import laya.d3.graphics.VertexPositionNTBTexture;
 	import laya.d3.graphics.VertexPositionNTBTextureSkin;
 	import laya.d3.graphics.VertexPositionNormalColor;
 	import laya.d3.graphics.VertexPositionNormalColorSkin;
@@ -26,12 +26,10 @@ package laya.d3.loaders {
 	import laya.d3.graphics.VertexPositionNormalTextureSkin;
 	import laya.d3.graphics.VertexPositionNormalTextureSkinTangent;
 	import laya.d3.graphics.VertexPositionNormalTextureTangent;
-	import laya.d3.graphics.VertexPositionNTBTexture;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
 	import laya.net.Loader;
-	import laya.net.URL;
 	import laya.utils.Byte;
 	import laya.webgl.WebGLContext;
 	

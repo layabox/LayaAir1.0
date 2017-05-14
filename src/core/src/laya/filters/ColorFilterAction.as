@@ -1,6 +1,7 @@
 package laya.filters {
 	
 	/**
+	 * @private
 	 * <code>ColorFilterAction</code> 是一个颜色滤镜应用类。
 	 */
 	public class ColorFilterAction implements IFilterAction {

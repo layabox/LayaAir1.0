@@ -15,17 +15,15 @@ package threeDimen.primaryStage {
 	 * @author laya
 	 */
 	public class D3Base_ScriptAndCameraSample {
-		private var skinMesh:MeshSprite3D;
-		
 		public function D3Base_ScriptAndCameraSample() {
-			Laya3D.init(0, 0,true);
+			Laya3D.init(0, 0, true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			var camera:Camera = (scene.addChild(new Camera( 0, 0.1, 100))) as Camera;
+			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
 			camera.transform.translate(new Vector3(0, 0.8, 1.0));
 			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			camera.clearColor = null;
@@ -40,7 +38,8 @@ package threeDimen.primaryStage {
 			pointLight.specularColor = new Vector3(2.0, 2.0, 1.6);
 			pointLight.diffuseColor = new Vector3(1, 1, 1);
 			
-			skinMesh = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
+			var skinMesh:MeshSprite3D = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
+			skinMesh.transform.localScale = new Vector3(0.01,0.01,0.01);
 		}
 	
 	}

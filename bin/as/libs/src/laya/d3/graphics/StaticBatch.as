@@ -1,115 +1,94 @@
 package laya.d3.graphics {
-	import laya.d3.core.MeshSprite3D;
+	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.render.SubMeshRenderElement;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.shader.ValusArray;
-	import laya.d3.utils.Utils3D;
-	import laya.utils.Stat;
-	import laya.webgl.WebGL;
-	import laya.webgl.WebGLContext;
-	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer2D;
 	
 	/**
-	 * @private
-	 * <code>StaticBatch</code> 类用于静态批处理。
+	 * <code>StaticBatch</code> 类用于静态合并的父类,该类为抽象类。
 	 */
 	public class StaticBatch implements IRenderable {
-		public static var maxVertexCount:int = 65535;
-		
-		private static function _addToRenderQueueStaticBatch(scene:BaseScene, sprite3D:Sprite3D):void {
-			var i:int, n:int;
-			if ((sprite3D is MeshSprite3D) && (sprite3D.isStatic))//TODO:可能会移除,目前只针对MeshSprite3D
-			{
-				var renderElements:Vector.<RenderElement> = (sprite3D as MeshSprite3D).meshRender._renderElements;
-				for (i = 0, n = renderElements.length; i < n; i++) {
-					var renderElement:RenderElement = renderElements[i];
-					if (renderElement.renderObj._vertexBufferCount === 1)//VertexBufferCount必须等于1
-						scene._staticBatchManager._addPrepareRenderElement(renderElement);
-				}
-			}
-			
-			for (i = 0, n = sprite3D.numChildren; i < n; i++)
-				_addToRenderQueueStaticBatch(scene, sprite3D._childs[i] as Sprite3D);
-		}
+		/** @private */
+		public static const maxBatchVertexCount:int = 65535;
 		
 		/**
-		 * 合并节点为静态批处理。
-		 * @param staticBatchRoot 静态批处理根节点。
+		 * 兼容性接口,请使用StaticBatchManager.combine()代替。
 		 */
 		public static function combine(staticBatchRoot:Sprite3D):void {
-			var scene:BaseScene = staticBatchRoot.scene;
-			if (!scene)
-				throw new Error("BaseScene: staticBatchRoot is not a part of scene.");
-			
-			_addToRenderQueueStaticBatch(scene, staticBatchRoot);
-			scene._staticBatchManager._finishCombineStaticBatch(staticBatchRoot);
+			trace("StaticBatch: discard property,please use StaticBatchManager.combine() function instead.");
+			StaticBatchManager.combine(staticBatchRoot);
 		}
 		
-		private var _vertexBuffer:VertexBuffer3D;
-		private var _indexBuffer:IndexBuffer3D;
-		private var _renderElements:Vector.<RenderElement>;
+		/** @private */
+		protected var _combineRenderElementPoolIndex:int;
+		/** @private */
+		protected var _combineRenderElementPool:Vector.<RenderElement>;
+		/** @private */
+		protected var _initBatchRenderElements:Vector.<RenderElement>;
+		/** @private */
+		public var _batchRenderElements:Vector.<RenderElement>;
 		
-		private var _combineRenderElementPool:Vector.<RenderElement>;
-		private var _combineRenderElementPoolIndex:int;
-		
-		private var _combineRenderElements:Vector.<RenderElement>;
-		private var _currentCombineVertexCount:int;
-		private var _currentCombineIndexCount:int;
-		
-		private var _needFinishCombine:Boolean;
-		
-		public var _rootSprite:Sprite3D;
-		public var _vertexDeclaration:VertexDeclaration;
+		/** @private */
 		public var _material:BaseMaterial;
-		
-		//TODO:临时
 		/** @private */
-		public var _shaderValues:ValusArray;
-		/** @private */
-		public var _owner:Sprite3D;
+		public var _rootOwner:Sprite3D;
 		
+		//..................临时.................................
 		public function get _vertexBufferCount():int {
 			return 1;
 		}
 		
-		public function get indexOfHost():int {
+		public function get triangleCount():int {
 			return 0;
 		}
 		
-		public function get triangleCount():int {
-			return _indexBuffer.indexCount / 3;
-		}
+		//..................临时.................................
 		
-		public function StaticBatch(rootSprite:Sprite3D, vertexDeclaration:VertexDeclaration, material:BaseMaterial) {
-			_shaderValues = new ValusArray();
-			_owner = rootSprite;
-			
-			_currentCombineVertexCount = 0;
-			_currentCombineIndexCount = 0;
-			_needFinishCombine = false;
-			_renderElements = new Vector.<RenderElement>();
-			_combineRenderElements = new Vector.<RenderElement>();
-			
-			_combineRenderElementPool = new Vector.<RenderElement>();
+		/**
+		 * 创建一个 <code>StaticBatch</code> 实例。
+		 */
+		public function StaticBatch(rootOwner:Sprite3D) {
 			_combineRenderElementPoolIndex = 0;
-			_rootSprite = rootSprite;
-			_vertexDeclaration = vertexDeclaration;
-			if (material is StandardMaterial) {
-				if ((material as StandardMaterial).ambientTexture)
-					_vertexDeclaration = _getLightMapVertexDec(vertexDeclaration);//TODO:判断不优,修改后VB声明一致，是否可用静态合并，改良静态合并增加可能性
-			}
-			_material = material;
+			_combineRenderElementPool = new Vector.<RenderElement>();
+			
+			_initBatchRenderElements = new Vector.<RenderElement>();
+			_batchRenderElements = new Vector.<RenderElement>();
+			_rootOwner = rootOwner;
 		}
 		
-		private function _getLightMapVertexDec(vertexDeclaration:VertexDeclaration):VertexDeclaration {
+		/**
+		 * @private
+		 */
+		private function _binarySearch(renderElement:RenderElement):int {
+			var start:int = 0;
+			var end:int = _batchRenderElements.length - 1;
+			var mid:int;
+			while (start <= end) {
+				mid = __JS__("parseInt((start + end) / 2)");
+				if (_compareBatchRenderElement(_batchRenderElements[mid], renderElement))
+					end = mid - 1;
+				else
+					start = mid + 1;
+			}
+			return start;
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _compareBatchRenderElement(a:RenderElement, b:RenderElement):Boolean {
+			throw new Error("StaticBatch:must override this function.");
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _getVertexDecLightMap(vertexDeclaration:VertexDeclaration):VertexDeclaration {
 			if (vertexDeclaration === VertexPositionNormalTextureSkinTangent.vertexDeclaration) {
 				return VertexPositionNormalTexture0Texture1SkinTangent.vertexDeclaration;
 			} else if (vertexDeclaration === VertexPositionNormalTextureSkin.vertexDeclaration) {
@@ -129,182 +108,71 @@ package laya.d3.graphics {
 			}
 		}
 		
+		/**
+		 * @private
+		 */
+		protected function _getCombineRenderElementFromPool():RenderElement {
+			throw new Error("StaticBatch:must override this function.");
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _addBatchRenderElement(renderElement:RenderElement):void {
+			_batchRenderElements.splice(_binarySearch(renderElement), 0, renderElement);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _updateToRenderQueue(scene:Scene, projectionView:Matrix4x4):void {
+			_combineRenderElementPoolIndex = 0;//归零对象池
+			_getRenderElement(scene.getRenderQueue(_material.renderQueue)._renderElements, scene, projectionView);
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _getRenderElement(mergeElements:Array, scene:Scene, projectionView:Matrix4x4):void {
+			throw new Error("StaticBatch:must override this function.");
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _finshInit():void {
+			throw new Error("StaticBatch:must override this function.");
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _clearRenderElements():void {
+			_batchRenderElements.length = 0;
+		}
+		
+		//..................临时.................................
 		public function _getVertexBuffer(index:int = 0):VertexBuffer3D {
-			if (index === 0)
-				return _vertexBuffer;
-			else
-				return null;
+			return null;
 		}
 		
 		public function _getIndexBuffer():IndexBuffer3D {
-			return _indexBuffer;
-		}
-		
-		private function _getCombineRenderElementFromPool():RenderElement {
-			var renderElement:RenderElement = _combineRenderElementPool[_combineRenderElementPoolIndex++];
-			return renderElement || (_combineRenderElementPool[_combineRenderElementPoolIndex - 1] = new RenderElement());
-		}
-		
-		public function _addCombineRenderObjTest(renderElement:RenderElement):Boolean {
-			var renderObj:IRenderable = renderElement.renderObj;
-			var vertexCount:int = _currentCombineVertexCount + renderObj._getVertexBuffer().vertexCount;
-			if (vertexCount > maxVertexCount) {
-				return false;
-			}
-			return true;
-		}
-		
-		public function _addCombineRenderObj(renderElement:RenderElement):void {
-			var renderObj:IRenderable = renderElement.renderObj;
-			_combineRenderElements.push(renderElement);
-			renderElement._staticBatch = this;
-			_currentCombineIndexCount = _currentCombineIndexCount + renderObj._getIndexBuffer().indexCount;
-			_currentCombineVertexCount = _currentCombineVertexCount + renderObj._getVertexBuffer().vertexCount;
-			_needFinishCombine = true;
-		}
-		
-		public function _deleteCombineRenderObj(renderElement:RenderElement):void {
-			var renderObj:IRenderable = renderElement.renderObj;
-			var index:int = _combineRenderElements.indexOf(renderElement);
-			if (index !== -1) {
-				_combineRenderElements.splice(index, 1);
-				renderElement._staticBatch = null;
-				_currentCombineIndexCount = _currentCombineIndexCount - renderObj._getIndexBuffer().indexCount;
-				_currentCombineVertexCount = _currentCombineVertexCount - renderObj._getVertexBuffer().vertexCount;
-				_needFinishCombine = true;
-			}
-		}
-		
-		public function _finshCombine():void {
-			if (_needFinishCombine) {//TODO:合并前应处理排序
-				var curMerVerCount:int = 0;
-				var curIndexCount:int = 0;
-				
-				var vertexDatas:Float32Array = new Float32Array(_vertexDeclaration.vertexStride / 4 * _currentCombineVertexCount);
-				var indexDatas:Uint16Array = new Uint16Array(_currentCombineIndexCount);
-				
-				if (_vertexBuffer) {
-					_vertexBuffer.dispose();
-					_indexBuffer.dispose();
-				}
-				_vertexBuffer = VertexBuffer3D.create(_vertexDeclaration, _currentCombineVertexCount, WebGLContext.STATIC_DRAW);
-				_indexBuffer = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, _currentCombineIndexCount, WebGLContext.STATIC_DRAW);
-				
-				for (var i:int = 0, n:int = _combineRenderElements.length; i < n; i++) {
-					var renderElement:RenderElement = _combineRenderElements[i];
-					var subVertexDatas:Float32Array = renderElement.getStaticBatchBakedVertexs(0);
-					var subIndexDatas:Uint16Array = renderElement.getBakedIndices();
-					var isInvert:Boolean = renderElement._sprite3D.transform._isFrontFaceInvert;
-					
-					var indexOffset:int = curMerVerCount / (_vertexDeclaration.vertexStride / 4);
-					var indexStart:int = curIndexCount;
-					var indexEnd:int = indexStart + subIndexDatas.length;
-					
-					renderElement._batchIndexStart = indexStart;
-					renderElement._batchIndexEnd = indexEnd;
-					
-					indexDatas.set(subIndexDatas, curIndexCount);
-					
-					var k:int;
-					if (isInvert) {
-						for (k = indexStart; k < indexEnd; k += 3) {
-							indexDatas[k] = indexOffset + indexDatas[k];
-							var index1:int = indexDatas[k + 1];
-							var index2:int = indexDatas[k + 2];
-							indexDatas[k + 1] = indexOffset + index2;
-							indexDatas[k + 2] = indexOffset + index1;
-						}
-					} else {
-						for (k = indexStart; k < indexEnd; k += 3) {
-							indexDatas[k] = indexOffset + indexDatas[k];
-							indexDatas[k + 1] = indexOffset + indexDatas[k + 1];
-							indexDatas[k + 2] = indexOffset + indexDatas[k + 2];
-						}
-					}
-					
-					curIndexCount += subIndexDatas.length;
-					
-					vertexDatas.set(subVertexDatas, curMerVerCount);
-					curMerVerCount += subVertexDatas.length;
-				}
-				
-				_vertexBuffer.setData(vertexDatas);
-				_indexBuffer.setData(indexDatas);
-				_needFinishCombine = false;
-			}
-		}
-		
-		public function _clearRenderElements():void {
-			_renderElements.length = 0;
-		}
-		
-		public function _addRenderElement(renderElement:RenderElement):void {
-			for (var i:int = 0, n:int = _renderElements.length; i < n; i++) {
-				if (_renderElements[i]._batchIndexStart > renderElement._batchIndexStart) {
-					_renderElements.splice(i, 0, renderElement);
-					return;
-				}
-			}
-			_renderElements.push(renderElement);
-		}
-		
-		public function _getRenderElement(mergeElements:Array):void {
-			_combineRenderElementPoolIndex = 0;//归零对象池
-			
-			var length:int = _renderElements.length;
-			var merageElement:RenderElement = _getCombineRenderElementFromPool();
-			merageElement._type = 1;//代表StaticBatch
-			merageElement._staticBatch = null;
-			merageElement.renderObj = this;
-			
-			merageElement._batchIndexStart = _renderElements[0]._batchIndexStart;
-			merageElement._batchIndexEnd = _renderElements[0]._batchIndexEnd;
-			merageElement._material = _material;
-			merageElement._material = _material;
-			mergeElements.push(merageElement);
-			
-			if (length > 1) {
-				for (var i:int = 1; i < length; i++) {
-					var renderElement:RenderElement = _renderElements[i];
-					if (_renderElements[i - 1]._batchIndexEnd !== renderElement._batchIndexStart) {
-						merageElement = _getCombineRenderElementFromPool();
-						merageElement._type = 1;//代表StaticBatch
-						merageElement._staticBatch = null;
-						merageElement.renderObj = this;
-						
-						merageElement._batchIndexStart = renderElement._batchIndexStart;
-						merageElement._batchIndexEnd = renderElement._batchIndexEnd;
-						merageElement._material = _material;
-						mergeElements.push(merageElement);
-					} else {
-						merageElement._batchIndexEnd = renderElement._batchIndexEnd;
-					}
-				}
-			}
-		
-		}
-		
-		public function _addToRenderQueue(scene:BaseScene):void {
-			(_renderElements.length > 0) && (scene.getRenderQueue(_material.renderQueue)._addStaticBatch(this));//TODO:>0移到外层
+			return null;
 		}
 		
 		public function _beforeRender(state:RenderState):Boolean {
-			_vertexBuffer._bind();
-			_indexBuffer._bind();
 			return true;
 		}
 		
 		public function _render(state:RenderState):void {
-			var indexCount:int = state._batchIndexEnd - state._batchIndexStart;
-			WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, state._batchIndexStart * 2);
-			Stat.drawCall++;
-			Stat.trianglesFaces += indexCount / 3;
 		}
 		
 		/**NATIVE*/
 		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void {
 		
 		}
+		//..................临时.................................
+	
 	}
 
 }

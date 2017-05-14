@@ -35,10 +35,17 @@ package laya.d3.core.material {
 		public static const FOAMTEXTURE:int = 17;
 		public static const GEOWAVE_UV_SCALE:int = 18;
 		public static const SEA_COLOR:int = 19;
+		public static const WAVEINFODEEPSCALE:int = 20;
 		
 		public static var SHADERDEFINE_SHOW_NORMAL:int = 0;
 		public static var SHADERDEFINE_CUBE_ENV:int = 0;
 		public static var SHADERDEFINE_HDR_ENV:int = 0;
+		public static var SHADERDEFINE_USE_FOAM:int = 0;
+		public static var SHADERDEFINE_USE_REFRACT_TEX:int = 0;
+		/**
+		 * 如果定义了这个宏，就不再使用深度纹理，可以提高速度，但是建模麻烦一些。
+		 */
+		public static var SHADERDEFINE_USEVERTEXHEIGHT:int = 0;	
 		/**渲染状态_不透明。*/
 		public static const RENDERMODE_OPAQUE:int = 1;
 		/**渲染状态_不透明_双面。*/
@@ -56,8 +63,7 @@ package laya.d3.core.material {
 		/**@private 渲染模式。*/
 		private var _renderMode:int;
 		
-		private var _startTm:Number = 0;
-		
+		private var _useVertexDeep:Boolean = false;
 		/**
 		 * 加载标准材质。
 		 * @param url 标准材质地址。
@@ -162,7 +168,7 @@ package laya.d3.core.material {
 		}
 		
 		public function  set currentTm(v:Number):void {
-			_setNumber(CURTM, v-_startTm);
+			_setNumber(CURTM, v);
 		}
 		
 		public function get waveInfo():Float32Array{
@@ -188,6 +194,14 @@ package laya.d3.core.material {
 			return _getNumber(WAVEMAINDIR);	
 		}
 		
+		public function set deepScale(v:Number):void {
+			_setNumber(WAVEINFODEEPSCALE, v);
+		}
+		
+		public function get deepScale():Number {
+			return _getNumber(WAVEINFODEEPSCALE);
+		}
+		
 		public function get geoWaveUVScale():Number {
 			return _getNumber(GEOWAVE_UV_SCALE);
 		}
@@ -208,9 +222,52 @@ package laya.d3.core.material {
 			_setBuffer(SEA_COLOR, v);
 		}
 		
+		public function set useVertexDeep(v:Boolean):void {
+			_useVertexDeep = v;
+			if(v)
+				_addShaderDefine(SHADERDEFINE_USEVERTEXHEIGHT);
+			else{
+				_removeShaderDefine(SHADERDEFINE_USEVERTEXHEIGHT);	
+			}
+		}
+		public function get useVertexDeep():Boolean {
+			return _useVertexDeep;
+		}
+		
+		public function get windDir():Number {
+			return 0;
+		}
+		public function set windDir(d:Number):void {
+			
+		}
+		
+		public function get windSpeed():Number {
+			return 0;
+		}
+		
+		public function set windSpeed(s:Number):void {
+			
+		}
+		
+		public function set useFoam(v:Boolean):void {
+			if (v) {
+				_addShaderDefine(SHADERDEFINE_USE_FOAM);
+			}else {
+				_removeShaderDefine(SHADERDEFINE_USE_FOAM);
+			}
+		}
+		
+		public function set useRefractTexture(v:Boolean):void {
+			if (v) {
+				_addShaderDefine(SHADERDEFINE_USE_REFRACT_TEX);
+			}else {
+				_removeShaderDefine(SHADERDEFINE_USE_REFRACT_TEX);
+			}
+		}
+		
 		public function WaterMaterial() {
 			super();
-			_startTm = Laya.timer.currTimer;
+			//_startTm = Laya.timer.currTimer;
 			setShaderName("Water");
 		}
 		

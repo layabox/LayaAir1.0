@@ -32,6 +32,7 @@ package laya.d3.utils {
 	import laya.d3.core.particleShuriKen.module.shape.SphereShape;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -54,6 +55,8 @@ package laya.d3.utils {
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.models.Mesh;
+	import laya.d3.terrain.Terrain;
+	import laya.display.Node;
 	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.net.URL;
@@ -319,7 +322,7 @@ package laya.d3.utils {
 			particleSystem.maxParticles = settting.maxParticles;
 			
 			var autoRandomSeed:* = settting.autoRandomSeed;
-			(autoRandomSeed!=null) && (particleSystem.autoRandomSeed = autoRandomSeed);
+			(autoRandomSeed != null) && (particleSystem.autoRandomSeed = autoRandomSeed);
 			var randomSeed:* = settting.randomSeed;
 			(randomSeed != null) && (particleSystem.randomSeed[0] = randomSeed);
 			
@@ -575,9 +578,7 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function _parseHierarchyProp(innerResouMap:Object, node:Sprite3D, json:Object):void {
-			
-			var customProps:Object = json.customProps;
+		public static function _parseHierarchyTRS(node:Sprite3D, customProps:Object):void {
 			var transValue:Array = customProps.translate;
 			var loccalPosition:Vector3 = node.transform.localPosition;
 			var loccalPositionElments:Float32Array = loccalPosition.elements;
@@ -600,29 +601,68 @@ package laya.d3.utils {
 			localSceleElement[1] = scaleValue[1];
 			localSceleElement[2] = scaleValue[2];
 			node.transform.localScale = localScale;
-			
-			switch (json.type) {
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _parseHierarchyProp(innerResouMap:Object, node:Node, json:Object):void {
+			var lightmapScaleOffsetArray:Array, lightmapIndex:*;
+			var type:String = json.type;
+			var customProps:Object = json.customProps;
+			switch (type) {
+			case "Scene": 
+				var scene:Scene = node as Scene;
+				var lightMapsData:Array = json.customProps.lightmaps;
+				var lightMapCount:int = lightMapsData.length;
+				var lightmaps:Vector.<Texture2D> = scene.getlightmaps();
+				lightmaps.length = lightMapCount;
+				for (var i:int = 0; i < lightMapCount; i++)
+					lightmaps[i] = Loader.getRes(innerResouMap[lightMapsData[i].replace("exr", "png")]);
+				
+				scene.setlightmaps(lightmaps);
+				break;
+			case "VRScene": 
+				break;
 			case "Sprite3D": 
+				_parseHierarchyTRS(node as Sprite3D, customProps);
 				break;
 			case "MeshSprite3D": 
+				_parseHierarchyTRS(node as Sprite3D, customProps);
 				var meshSprite3D:MeshSprite3D = (node as MeshSprite3D);
 				var meshRender:MeshRender = meshSprite3D.meshRender;
-				var lightmapIndex:* = customProps.lightmapIndex;//TODO:
-				(lightmapIndex !== null) && (meshRender.lightmapIndex = lightmapIndex);
-				var lightmapScaleOffsetArray:Array = customProps.lightmapScaleOffset;
-				if (lightmapScaleOffsetArray)
-					meshRender.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]);
+				lightmapIndex = customProps.lightmapIndex;
+				(lightmapIndex != null) && (meshRender.lightmapIndex = lightmapIndex);
+				lightmapScaleOffsetArray = customProps.lightmapScaleOffset;
+				(lightmapScaleOffsetArray) && (meshRender.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
 				
-				var mesh:Mesh = Loader.getRes(innerResouMap[json.instanceParams.loadPath]);
-				meshSprite3D.meshFilter.sharedMesh = mesh;
-				if (mesh.loaded)
-					meshRender.sharedMaterials = mesh.materials;
-				else
-					mesh.once(Event.LOADED, meshSprite3D, meshSprite3D._applyMeshMaterials);
+				var meshPath:String = json.instanceParams.loadPath;
+				if (meshPath) {
+					var mesh:Mesh = Loader.getRes(innerResouMap[meshPath]);
+					meshSprite3D.meshFilter.sharedMesh = mesh;
+					if (mesh.loaded)
+						meshRender.sharedMaterials = mesh.materials;
+					else
+						mesh.once(Event.LOADED, meshSprite3D, meshSprite3D._applyMeshMaterials);
+				}
 				break;
 			case "ShuriKenParticle3D": 
+				_parseHierarchyTRS(node as Sprite3D, customProps);
 				var shuriKenParticle3D:ShuriKenParticle3D = (node as ShuriKenParticle3D);
 				_loadParticle(customProps, shuriKenParticle3D, innerResouMap);
+				break;
+			case "Terrain": 
+				_parseHierarchyTRS(node as Sprite3D, customProps);
+				var terrain:Terrain = (node as Terrain);
+				terrain.terrainRes = Loader.getRes(innerResouMap[json.instanceParams.loadPath]);
+				
+				lightmapIndex = customProps.lightmapIndex;
+				if (lightmapIndex != null)
+					terrain.setLightmapIndex(lightmapIndex);
+				
+				lightmapScaleOffsetArray = customProps.lightmapScaleOffset;
+				if (lightmapScaleOffsetArray)
+					terrain.setLightmapScaleOffset(new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
 				break;
 			}
 		}
@@ -638,6 +678,9 @@ package laya.d3.utils {
 				break;
 			case "ShuriKenParticle3D": 
 				return new ShuriKenParticle3D();
+				break;
+			case "Terrain": 
+				return new Terrain();
 				break;
 			default: 
 				throw new Error("Utils3D:unidentified class type in (.lh) file.");
@@ -712,40 +755,7 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function _computeBoneAndAnimationDatas(bones:*, curData:Float32Array, exData:Float32Array, outBonesDatas:Float32Array, outAnimationDatas:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var offset:int = 0;
-			var matOffset:int = 0;
-			
-			var len:int = exData.length / 2;
-			var i:int;
-			var parentOffset:int;
-			var boneLength:int = bones.length;
-			for (i = 0; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++) {
-				//将旋转平移缩放合成矩阵...........................................
-				Utils3D._rotationTransformScaleSkinAnimation(curData[offset + 7], curData[offset + 8], curData[offset + 9], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 0], curData[offset + 1], curData[offset + 2], outBonesDatas, matOffset);
-				
-				if (i != 0) {
-					parentOffset = bones[i].parentIndex * 16;
-					Utils3D.mulMatrixByArray(outBonesDatas, parentOffset, outBonesDatas, matOffset, outBonesDatas, matOffset);
-				}
-			}
-			
-			for (i = 0; i < len; i += 16) {//将绝对矩阵乘以反置矩阵................................................
-				Utils3D.mulMatrixByArrayFast(outBonesDatas, i, exData, len + i, outAnimationDatas, i);
-			}
-		}
-		
-		/** @private */
-		public static function _computeAnimationDatas(exData:Float32Array, bonesDatas:Float32Array, outAnimationDatas:Float32Array):void {
-			var len:int = exData.length / 2;
-			for (var i:int = 0; i < len; i += 16) {//将绝对矩阵乘以反置矩阵................................................
-				Utils3D.mulMatrixByArrayFast(bonesDatas, i, exData, len + i, outAnimationDatas, i);
-			}
-		}
-		
-		/** @private */
-		public static function _computeBoneAndAnimationDatasByBindPoseMatrxix(bones:*, curData:Float32Array, inverGlobalBindPose:Vector.<Matrix4x4>, outBonesDatas:Float32Array, outAnimationDatas:Float32Array,boneIndexToMesh:Vector.<int>):void {
+		public static function _computeBoneAndAnimationDatasByBindPoseMatrxix(bones:*, curData:Float32Array, inverGlobalBindPose:Vector.<Matrix4x4>, outBonesDatas:Float32Array, outAnimationDatas:Float32Array, boneIndexToMesh:Vector.<int>):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var offset:int = 0;
 			var matOffset:int = 0;
@@ -766,18 +776,17 @@ package laya.d3.utils {
 			var n:int = inverGlobalBindPose.length;
 			for (i = 0; i < n; i++)//将绝对矩阵乘以反置矩阵................................................
 			{
-				Utils3D.mulMatrixByArrayAndMatrixFast(outBonesDatas, boneIndexToMesh[i]*16, inverGlobalBindPose[i], outAnimationDatas, i * 16);//TODO:-1处理
+				Utils3D.mulMatrixByArrayAndMatrixFast(outBonesDatas, boneIndexToMesh[i] * 16, inverGlobalBindPose[i], outAnimationDatas, i * 16);//TODO:-1处理
 			}
 		}
 		
 		/** @private */
-		public static function _computeAnimationDatasByArrayAndMatrixFast(inverGlobalBindPose:Vector.<Matrix4x4>, bonesDatas:Float32Array, outAnimationDatas:Float32Array,boneIndexToMesh:Vector.<int>):void {
-			for (var i:int = 0,n:int=inverGlobalBindPose.length; i < n; i++)//将绝对矩阵乘以反置矩阵
-				Utils3D.mulMatrixByArrayAndMatrixFast(bonesDatas, boneIndexToMesh[i] * 16, inverGlobalBindPose[i], outAnimationDatas, i*16);//TODO:-1处理
+		public static function _computeAnimationDatasByArrayAndMatrixFast(inverGlobalBindPose:Vector.<Matrix4x4>, bonesDatas:Float32Array, outAnimationDatas:Float32Array, boneIndexToMesh:Vector.<int>):void {
+			for (var i:int = 0, n:int = inverGlobalBindPose.length; i < n; i++)//将绝对矩阵乘以反置矩阵
+				Utils3D.mulMatrixByArrayAndMatrixFast(bonesDatas, boneIndexToMesh[i] * 16, inverGlobalBindPose[i], outAnimationDatas, i * 16);//TODO:-1处理
 		}
 		
-		
-				/** @private */
+		/** @private */
 		public static function _computeBoneAndAnimationDatasByBindPoseMatrxixOld(bones:*, curData:Float32Array, inverGlobalBindPose:Vector.<Matrix4x4>, outBonesDatas:Float32Array, outAnimationDatas:Float32Array):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var offset:int = 0;
@@ -992,8 +1001,7 @@ package laya.d3.utils {
 		 */
 		public static function transformVector3ArrayByQuat(sourceArray:Float32Array, sourceOffset:int, rotation:Quaternion, outArray:Float32Array, outOffset:int):void {
 			var re:Float32Array = rotation.elements;
-			var x:Number = sourceArray[sourceOffset], y:Number = sourceArray[sourceOffset + 1], z:Number = sourceArray[sourceOffset + 2], qx:Number = re[0], qy:Number = re[1], qz:Number = re[2], qw:Number = re[3],
-			ix:Number = qw * x + qy * z - qz * y, iy:Number = qw * y + qz * x - qx * z, iz:Number = qw * z + qx * y - qy * x, iw:Number = -qx * x - qy * y - qz * z;
+			var x:Number = sourceArray[sourceOffset], y:Number = sourceArray[sourceOffset + 1], z:Number = sourceArray[sourceOffset + 2], qx:Number = re[0], qy:Number = re[1], qz:Number = re[2], qw:Number = re[3], ix:Number = qw * x + qy * z - qz * y, iy:Number = qw * y + qz * x - qx * z, iz:Number = qw * z + qx * y - qy * x, iw:Number = -qx * x - qy * y - qz * z;
 			outArray[outOffset] = ix * qw + iw * -qx + iy * -qz - iz * -qy;
 			outArray[outOffset + 1] = iy * qw + iw * -qy + iz * -qx - ix * -qz;
 			outArray[outOffset + 2] = iz * qw + iw * -qz + ix * -qy - iy * -qx;
@@ -1161,9 +1169,9 @@ package laya.d3.utils {
 			result[resultOffset + 2] = vectorElem[2] * vectorElem[3];
 		}
 		
-	    /**
-	     * @private
-	     */
+		/**
+		 * @private
+		 */
 		public static function transformLightingMapTexcoordByUV0Array(source:Float32Array, sourceOffset:int, lightingMapScaleOffset:Vector4, result:Float32Array, resultOffset:int):void {
 			var lightingMapScaleOffsetE:Float32Array = lightingMapScaleOffset.elements;
 			result[resultOffset + 0] = source[sourceOffset + 0] * lightingMapScaleOffsetE[0] + lightingMapScaleOffsetE[2];
@@ -1171,8 +1179,8 @@ package laya.d3.utils {
 		}
 		
 		/**
-	     * @private
-	     */
+		 * @private
+		 */
 		public static function transformLightingMapTexcoordByUV1Array(source:Float32Array, sourceOffset:int, lightingMapScaleOffset:Vector4, result:Float32Array, resultOffset:int):void {
 			var lightingMapScaleOffsetE:Float32Array = lightingMapScaleOffset.elements;
 			result[resultOffset + 0] = source[sourceOffset + 0] * lightingMapScaleOffsetE[0] + lightingMapScaleOffsetE[2];

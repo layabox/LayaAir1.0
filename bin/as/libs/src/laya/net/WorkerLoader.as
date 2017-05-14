@@ -156,6 +156,8 @@ package laya.net
 			}
 			if (Render.isWebGL)
 			{
+				//避免被计算两次
+				canvas.memorySize = 0;
 				__JS__("canvas=new laya.webgl.resource.WebGLImage(canvas,data.url);");
 				
 			}
@@ -201,6 +203,7 @@ package laya.net
 				_preLoadFun.call(_this, url);
 				return;
 			}
+			url = URL.formatURL(url);
 			function clear():void {
 				WorkerLoader.I.off(url, _this, onload);
 			}

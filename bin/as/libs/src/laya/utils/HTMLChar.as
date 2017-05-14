@@ -4,6 +4,7 @@ package laya.utils {
 	import laya.display.Sprite;
 	
 	/**
+	 * @private
 	 * <code>HTMLChar</code> 是一个 HTML 字符类。
 	 */
 	public class HTMLChar implements ILayout {

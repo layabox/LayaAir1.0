@@ -5,7 +5,7 @@ package
 	
 	public class Network_ProtocolBuffer 
 	{
-		private var ProtoBuf:* = Browser.window.ProtoBuf;
+		private var ProtoBuf:* = Browser.window.protobuf;
 		
 		public function Network_ProtocolBuffer() 
 		{

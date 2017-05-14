@@ -5,6 +5,7 @@ package laya.d3.core.material {
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
+	import laya.d3.shader.ShaderCompile3D;
 	import laya.events.Event;
 	
 	/**
@@ -24,7 +25,7 @@ package laya.d3.core.material {
 		public static const DIFFUSETEXTURE2:int = 3;
 		public static const DIFFUSETEXTURE3:int = 4;
 		public static const DIFFUSETEXTURE4:int = 5;
-		public static const DIFFUSESCALE1 :int = 6;
+		public static const DIFFUSESCALE1:int = 6;
 		public static const DIFFUSESCALE2:int = 7;
 		public static const DIFFUSESCALE3:int = 8;
 		public static const DIFFUSESCALE4:int = 9;
@@ -32,13 +33,11 @@ package laya.d3.core.material {
 		public static const MATERIALDIFFUSE:int = 11;
 		public static const MATERIALSPECULAR:int = 12;
 		
-		
 		/**地形细节宏定义。*/
 		public static var SHADERDEFINE_DETAIL_NUM1:int;
 		public static var SHADERDEFINE_DETAIL_NUM2:int;
 		public static var SHADERDEFINE_DETAIL_NUM3:int;
 		public static var SHADERDEFINE_DETAIL_NUM4:int;
-		
 		
 		private var _diffuseScale1:Vector2;
 		private var _diffuseScale2:Vector2;
@@ -66,53 +65,52 @@ package laya.d3.core.material {
 		public function get renderMode():int {
 			return _renderMode;
 		}
-		public function setDiffuseScale1(x:Number,y:Number):void
-		{
+		
+		public function setDiffuseScale1(x:Number, y:Number):void {
 			_diffuseScale1.x = x;
 			_diffuseScale1.y = y;
-			_setColor(DIFFUSESCALE1,_diffuseScale1);
+			_setColor(DIFFUSESCALE1, _diffuseScale1);
 		}
-		public function setDiffuseScale2(x:Number,y:Number):void
-		{
+		
+		public function setDiffuseScale2(x:Number, y:Number):void {
 			_diffuseScale2.x = x;
 			_diffuseScale2.y = y;
-			_setColor(DIFFUSESCALE2,_diffuseScale2);
+			_setColor(DIFFUSESCALE2, _diffuseScale2);
 		}
-		public function setDiffuseScale3(x:Number,y:Number):void
-		{
+		
+		public function setDiffuseScale3(x:Number, y:Number):void {
 			_diffuseScale3.x = x;
 			_diffuseScale3.y = y;
-			_setColor(DIFFUSESCALE3,_diffuseScale3);
+			_setColor(DIFFUSESCALE3, _diffuseScale3);
 		}
-		public function setDiffuseScale4(x:Number,y:Number):void
-		{
+		
+		public function setDiffuseScale4(x:Number, y:Number):void {
 			_diffuseScale4.x = x;
 			_diffuseScale4.y = y;
-			_setColor(DIFFUSESCALE4,_diffuseScale4);
+			_setColor(DIFFUSESCALE4, _diffuseScale4);
 		}
-		public function setDetailNum(value:int):void
-		{
-			switch( value )
-			{
-			case 1:
+		
+		public function setDetailNum(value:int):void {
+			switch (value) {
+			case 1: 
 				_addShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM1);
 				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM2);
 				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM3);
 				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM4);
 				break;
-			case 2:
+			case 2: 
 				_addShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM2);
 				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM1);
 				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM3);
 				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM4);
 				break;
-			case 3:
+			case 3: 
 				_addShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM3);
 				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM1);
 				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM2);
 				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM4);
 				break;
-			case 4:
+			case 4: 
 				_addShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM4);
 				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM1);
 				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM2);
@@ -124,18 +122,23 @@ package laya.d3.core.material {
 		public function get ambientColor():Vector3 {
 			return _getColor(MATERIALAMBIENT);
 		}
+		
 		public function set ambientColor(value:Vector3):void {
 			_setColor(MATERIALAMBIENT, value);
 		}
+		
 		public function get diffuseColor():Vector3 {
 			return _getColor(MATERIALDIFFUSE);
 		}
+		
 		public function set diffuseColor(value:Vector3):void {
 			_setColor(MATERIALDIFFUSE, value);
 		}
+		
 		public function get specularColor():Vector4 {
 			return _getColor(MATERIALSPECULAR);
 		}
+		
 		public function set specularColor(value:Vector4):void {
 			_setColor(MATERIALSPECULAR, value);
 		}
@@ -156,7 +159,7 @@ package laya.d3.core.material {
 				depthFunc = DEPTHFUNC_LESS;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
-			case RENDERMODE_TRANSPARENT:
+			case RENDERMODE_TRANSPARENT: 
 				_renderQueue = RenderQueue.OPAQUE;
 				depthWrite = false;
 				depthTest = true;
@@ -188,6 +191,7 @@ package laya.d3.core.material {
 		public function set diffuseTexture1(value:BaseTexture):void {
 			_setTexture(DIFFUSETEXTURE1, value);
 		}
+		
 		/**
 		 * 获取第二层贴图。
 		 * @return 第二层贴图。
@@ -203,6 +207,7 @@ package laya.d3.core.material {
 		public function set diffuseTexture2(value:BaseTexture):void {
 			_setTexture(DIFFUSETEXTURE2, value);
 		}
+		
 		/**
 		 * 获取第三层贴图。
 		 * @return 第三层贴图。
@@ -218,6 +223,7 @@ package laya.d3.core.material {
 		public function set diffuseTexture3(value:BaseTexture):void {
 			_setTexture(DIFFUSETEXTURE3, value);
 		}
+		
 		/**
 		 * 获取第四层贴图。
 		 * @return 第四层贴图。
@@ -249,13 +255,17 @@ package laya.d3.core.material {
 		public function set splatAlphaTexture(value:BaseTexture):void {
 			_setTexture(SPLATALPHATEXTURE, value);
 		}
-		public function get normalTexture():BaseTexture
-		{
+		
+		public function get normalTexture():BaseTexture {
 			return _getTexture(NORMALTEXTURE);
 		}
-		public function set normalTexture(value:BaseTexture):void
-		{
+		
+		public function set normalTexture(value:BaseTexture):void {
 			_setTexture(NORMALTEXTURE, value);
+		}
+		
+		public function disableLight():void {
+			_addDisablePublicShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
 		}
 		
 		/**
@@ -282,7 +292,7 @@ package laya.d3.core.material {
 		 * @inheritDoc
 		 */
 		override public function _setMaterialShaderParams(state:RenderState):void {
-			
+		
 		}
 		
 		/**

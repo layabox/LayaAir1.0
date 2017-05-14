@@ -11,11 +11,9 @@ package laya.d3.resource.models {
 	import laya.d3.resource.Texture2D;
 	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderCompile3D;
-	import laya.d3.shader.ValusArray;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * <code>Sky</code> 类用于创建天空盒。

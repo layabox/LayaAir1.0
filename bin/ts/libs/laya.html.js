@@ -109,6 +109,7 @@
 		}
 
 		Layout.layout=function(element){
+			if (!element || !element._style)return null;
 			if ((element._style._type & /*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200)===0)
 				return null;
 			element.getStyle()._type &=~ /*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200;
@@ -454,6 +455,7 @@
 		}
 
 		__proto.formatURL=function(url){
+			if (!this.URI)return url;
 			return URL.formatURL(url,this.URI ? this.URI.path :null);
 		}
 
@@ -645,7 +647,10 @@
 		__getset(0,__proto,'width',function(){
 			if (this._width)return this._width;
 			return this.contextWidth;
-		},_super.prototype._$set_width);
+			},function(value){
+			_super.prototype._$set_width.call(this,value);
+			this.layout();
+		});
 
 		return HTMLDivElement;
 	})(HTMLElement)
@@ -714,12 +719,6 @@
 			url=this.formatURL(url);
 			if (this._url==url)return;
 			this._url=url;
-			this._tex=Loader.getRes(url)
-			if (!this._tex){
-				this._tex=new Texture();
-				this._tex.load(url);
-				Loader.cacheRes(url,this._tex);
-			};
 			var tex=this._tex=Loader.getRes(url);
 			if (!tex){
 				this._tex=tex=new Texture();

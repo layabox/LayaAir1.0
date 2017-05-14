@@ -20,7 +20,7 @@ package laya.webgl.utils {
 		 *	 |__\|
 		 *	 3   2
 		 */
-		public static function fillIBQuadrangle(buffer:IndexBuffer2D, count:int/*Quadrangle count*/):Boolean {
+		public static function fillIBQuadrangle(buffer:IndexBuffer2D, count:int):Boolean {
 			if (count > 65535 / 4) {
 				throw Error("IBQuadrangle count:" + count + " must<:" + Math.floor(65535 / 4));
 				return false;
@@ -45,7 +45,7 @@ package laya.webgl.utils {
 			return true;
 		}
 		
-		public static function expandIBQuadrangle(buffer:IndexBuffer2D, count:int/*Quadrangle count*/):void {
+		public static function expandIBQuadrangle(buffer:IndexBuffer2D, count:int):void {
 			buffer.bufferLength >= (count * 6 * Buffer2D.SHORT) || fillIBQuadrangle(buffer, count);
 		}
 		

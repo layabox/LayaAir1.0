@@ -2,6 +2,7 @@ package laya.utils {
 	import laya.utils.Utils;
 	
 	/**
+	 * @private
 	 * <code>Color</code> 是一个颜色值处理类。
 	 */
 	public class Color {

@@ -2,7 +2,7 @@ package laya.runtime
 {
 	
 	/**
-	 * ...
+	 * @private
 	 * @author hugao
 	 */
 	public interface IPlatform 

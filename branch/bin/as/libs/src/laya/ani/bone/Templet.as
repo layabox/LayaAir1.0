@@ -95,7 +95,13 @@ package laya.ani.bone {
 				destroy();
 				return;
 			}
+			
 			var tSkBuffer:ArrayBuffer = Loader.getRes(_skBufferUrl);
+			if (!tSkBuffer)
+			{
+				event(Event.ERROR, "load failed:"+_skBufferUrl);
+				return;
+			}
 			_path = _skBufferUrl.slice(0, _skBufferUrl.lastIndexOf("/")) + "/";
 			parseData(null, tSkBuffer);
 		}

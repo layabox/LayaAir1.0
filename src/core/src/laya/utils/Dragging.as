@@ -6,6 +6,7 @@ package laya.utils {
 	import laya.maths.Rectangle;
 	
 	/**
+	 * @private
 	 * <code>Dragging</code> 类是触摸滑动控件。
 	 */
 	public class Dragging {

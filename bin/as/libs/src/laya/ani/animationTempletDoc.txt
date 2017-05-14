@@ -27,14 +27,14 @@
 		uint8 animationCount;
         for(int i=0;i<animationCount;i++){
 			uint16 动画名字符索引;
-			uint32 动画播放时间;
+			double 动画播放时间;
 			int16 节点个数;
 			for(int j=0;j<节点个数;j++){
 				uint16 (节点名字/属性名字)符索引;
 				int16 父节点编号;
 				uint16 帧个数;
 				for (k = 0; k < 帧个数; k++) {
-					uint32 duration;
+					double startTime;
 					uint32 keyframeDataStart(相对数据区);
 				}
 			}

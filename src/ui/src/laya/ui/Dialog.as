@@ -9,7 +9,7 @@ package laya.ui {
 	 * <code>Dialog</code> 组件是一个弹出对话框，实现对话框弹出，拖动，模式窗口功能。
 	 * 可以通过UIConfig设置弹出框背景透明度，模式窗口点击边缘是否关闭等
 	 * 通过设置zOrder属性，可以更改弹出的层次
-	 * 通过设置manager.popupEffect和manager.closeEffect可以设置弹出效果和关闭效果
+	 * 通过设置popupEffect和closeEffect可以设置弹出效果和关闭效果，如果不想有任何弹出关闭效果，可以设置前述属性为空
 	 *
 	 * @example 以下示例代码，创建了一个 <code>Dialog</code> 实例。
 	 * <listing version="3.0">
@@ -178,6 +178,16 @@ package laya.ui {
 		 * <p>回调函数参数为用户点击的按钮名字name:String。</p>
 		 */
 		public var closeHandler:Handler;
+		/**
+		 * 弹出对话框效果，可以设置一个效果代替默认的弹出效果，如果不想有任何效果，可以赋值为null
+		 * 全局默认弹出效果可以通过manager.popupEffect修改
+		 */
+		public var popupEffect:Handler;
+		/**
+		 * 关闭对话框效果，可以设置一个效果代替默认的关闭效果，如果不想有任何效果，可以赋值为null
+		 * 全局默认关闭效果可以通过manager.closeEffect修改
+		 */
+		public var closeEffect:Handler;
 		/**组名称*/
 		public var group:String;
 		/**是否是模式窗口*/
@@ -187,6 +197,8 @@ package laya.ui {
 		
 		/**@inheritDoc */
 		override protected function initialize():void {
+			popupEffect = manager.popupEffectHandler;
+			closeEffect = manager.closeEffectHandler;
 			_dealDragArea();
 			on(Event.CLICK, this, _onClick);
 		}
@@ -268,7 +280,6 @@ package laya.ui {
 		 * </p>
 		 *
 		 * @see #includeExamplesSummary 请参考示例
-		 * @return
 		 */
 		public function get dragArea():String {
 			if (_dragArea) return _dragArea.toString();

@@ -1,6 +1,6 @@
 package laya.d3.core.light {
 	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderCompile3D;
@@ -115,13 +115,13 @@ package laya.d3.core.light {
 		 * @inheritDoc
 		 */
 		override protected function _clearSelfRenderObjects():void {
-			var scene:BaseScene = this.scene;
+			var scene:Scene = this.scene;
 			var shaderValue:ValusArray = scene._shaderValues;
-			shaderValue.setValue(BaseScene.LIGHTDIRDIFFUSE, null);
-			shaderValue.setValue(BaseScene.LIGHTDIRAMBIENT, null);
-			shaderValue.setValue(BaseScene.LIGHTDIRSPECULAR, null);
-			shaderValue.setValue(BaseScene.LIGHTDIRECTION, null);
-			(_activeInHierarchy) && (scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT));
+			shaderValue.setValue(Scene.LIGHTDIRDIFFUSE, null);
+			shaderValue.setValue(Scene.LIGHTDIRAMBIENT, null);
+			shaderValue.setValue(Scene.LIGHTDIRSPECULAR, null);
+			shaderValue.setValue(Scene.LIGHTDIRECTION, null);
+			scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
 		}
 		
 		/**
@@ -129,14 +129,14 @@ package laya.d3.core.light {
 		 * @param state 渲染状态参数。
 		 */
 		public override function updateToWorldState(state:RenderState):Boolean {
-			var scene:BaseScene = state.scene;
-			if (scene.enableLight && active) {
+			var scene:Scene = state.scene;
+			if (scene.enableLight && _activeInHierarchy) {
 				var shaderValue:ValusArray = scene._shaderValues;
 				scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
-				shaderValue.setValue(BaseScene.LIGHTDIRDIFFUSE, diffuseColor.elements);
-				shaderValue.setValue(BaseScene.LIGHTDIRAMBIENT, ambientColor.elements);
-				shaderValue.setValue(BaseScene.LIGHTDIRSPECULAR, specularColor.elements);
-				shaderValue.setValue(BaseScene.LIGHTDIRECTION, direction.elements);
+				shaderValue.setValue(Scene.LIGHTDIRDIFFUSE, diffuseColor.elements);
+				shaderValue.setValue(Scene.LIGHTDIRAMBIENT, ambientColor.elements);
+				shaderValue.setValue(Scene.LIGHTDIRSPECULAR, specularColor.elements);
+				shaderValue.setValue(Scene.LIGHTDIRECTION, direction.elements);
 				return true;
 			} else {
 				scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);

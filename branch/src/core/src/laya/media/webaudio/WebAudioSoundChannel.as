@@ -137,6 +137,11 @@ package laya.media.webaudio {
 		}
 		private function _tryClearBuffer(sourceNode:*):void
 		{
+			if (!Browser.onIOS)
+			{
+				_tryCleanFailed = true;
+				return;
+			}
 			try { sourceNode.buffer = WebAudioSound._miniBuffer; } catch (e:*) { _tryCleanFailed = true; }
 		}
 		/**

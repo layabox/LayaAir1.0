@@ -824,6 +824,7 @@ package laya.display {
 		 */
 		public function drawLines(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):void {
 			var tId:uint = 0;
+			if (!points || points.length < 1) return;
 			if (Render.isWebGL) {
 				tId = VectorGraphManager.getInstance().getId();
 				if (_vectorgraphArray == null) _vectorgraphArray = [];

@@ -2,7 +2,6 @@
 uniform vec2 u_WaveInfoD[20];
 uniform vec4 u_WaveInfo[20];
 
-uniform float GEOWAVE_UV_SCALE ;//= 100.0;
 uniform float TEXWAVE_UV_SCALE ;//= 20.0; //每texwidth像素代表的实际距离
 /**
 	这里的计算都是
@@ -13,14 +12,13 @@ uniform float TEXWAVE_UV_SCALE ;//= 20.0; //每texwidth像素代表的实际距�
 *  开始计算的时候都按照z向上，最后输出的时候，颠倒一下。
 * @param tm {float} 毫秒
 */
-void calcGerstnerWave(float curtm, vec3 pos, float deep, vec2 uv, out vec3 opos, out vec3 B, out vec3 T, out vec3 N, out float foamS){
+void calcGerstnerWave(float curtm, vec3 pos, float deep, vec2 uvpos, out vec3 opos, out vec3 B, out vec3 T, out vec3 N, out float foamS){
 	float tm = curtm/1000.;
 	opos = pos;
 	vec3 wpos=vec3(0.);		//累加的位置
 	N=vec3(0.,0.,0.);	//输出的法线初始化一下
 	T=vec3(0.,0.,0.);
 	B=vec3(0.,0.,0.);
-	vec2 uvpos = uv*GEOWAVE_UV_SCALE;
 	vec2 cD ;//= D;
 	//float deepAtt = max(0.,min(deep,1.0));
 	//A*=deepAtt; //TODO
@@ -53,11 +51,13 @@ void calcGerstnerWave(float curtm, vec3 pos, float deep, vec2 uv, out vec3 opos,
 				cD.x*AWc
 			);
 		//float v1 = exp(-tan((dop*W - tm*P)/2.+1.07));//除2，+pi/2 这样正好能对齐
+#ifdef USE_FOAM		
 		float v1 = 0.5-sin((dop*W - tm*P)/1.+2.0)/2.;
 		foamS += pow(v1,9.)/4.;
+#endif
 	}
 	T.y=1.-T.y; B.x=1.-B.x;N.z=1.-N.z;
-	opos += vec3(wpos.x,wpos.z*deep,wpos.y);
+	opos += vec3(wpos.x,wpos.z*min(deep/10.,1.),wpos.y);
 	//y和z交换一下。现在根据uv计算的位置，所以直接交换yz就行。其他情况下有问题么
 	T.xyz=T.xzy;
 	B.xyz=B.xzy;

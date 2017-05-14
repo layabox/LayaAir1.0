@@ -74,26 +74,26 @@ package laya.d3.core.material {
 		public static const BLENDEQUATION_REVERSE_SUBTRACT:int = 2;
 		
 		/**深度测试函数枚举_从不通过。*/
-		public static const DEPTHFUNC_NEVER:int =0x0200/*WebGLContext.NEVER*/;
+		public static const DEPTHFUNC_NEVER:int = 0x0200/*WebGLContext.NEVER*/;
 		/**深度测试函数枚举_小于时通过。*/
-		public static const DEPTHFUNC_LESS:int =0x0201/*WebGLContext.LESS*/;
+		public static const DEPTHFUNC_LESS:int = 0x0201/*WebGLContext.LESS*/;
 		/**深度测试函数枚举_等于时通过。*/
-		public static const DEPTHFUNC_EQUAL:int =0x0202/*WebGLContext.EQUAL*/;
+		public static const DEPTHFUNC_EQUAL:int = 0x0202/*WebGLContext.EQUAL*/;
 		/**深度测试函数枚举_小于等于时通过。*/
-		public static const DEPTHFUNC_LEQUAL:int =0x0203/*WebGLContext.LEQUAL*/;
+		public static const DEPTHFUNC_LEQUAL:int = 0x0203/*WebGLContext.LEQUAL*/;
 		/**深度测试函数枚举_大于时通过。*/
-		public static const DEPTHFUNC_GREATER:int =0x0204/*WebGLContext.GREATER*/;
+		public static const DEPTHFUNC_GREATER:int = 0x0204/*WebGLContext.GREATER*/;
 		/**深度测试函数枚举_不等于时通过。*/
-		public static const DEPTHFUNC_NOTEQUAL:int =0x0205/*WebGLContext.NOTEQUAL*/;
+		public static const DEPTHFUNC_NOTEQUAL:int = 0x0205/*WebGLContext.NOTEQUAL*/;
 		/**深度测试函数枚举_大于等于时通过。*/
-		public static const DEPTHFUNC_GEQUAL:int =0x0206/*WebGLContext.GEQUAL*/;
+		public static const DEPTHFUNC_GEQUAL:int = 0x0206/*WebGLContext.GEQUAL*/;
 		/**深度测试函数枚举_总是通过。*/
-		public static const DEPTHFUNC_ALWAYS:int =0x0207/*WebGLContext.ALWAYS*/;
+		public static const DEPTHFUNC_ALWAYS:int = 0x0207/*WebGLContext.ALWAYS*/;
 		
-		/**宏定义_透明测试。*/
+		/**@private 材质级着色器宏定义,接收阴影。*/
 		public static var SHADERDEFINE_ALPHATEST:int = 0x1;
 		
-		/**Shader变量_透明测试值。*/
+		/**@private 着色器变量,透明测试值。*/
 		public static const ALPHATESTVALUE:int = 0;
 		
 		/** @private */
@@ -371,7 +371,7 @@ package laya.d3.core.material {
 		 * @param	shaderIndex shader索引。
 		 * @param	i 浮点。
 		 */
-		protected function _setNumber(shaderIndex:int, number:Number):void {
+		public function _setNumber(shaderIndex:int, number:Number):void {
 			var shaderValue:ValusArray = _shaderValues;
 			shaderValue.setValue(shaderIndex, number);
 			_values[shaderIndex] = number;
@@ -538,12 +538,12 @@ package laya.d3.core.material {
 			case CULL_FRONT: 
 				WebGLContext.setCullFace(gl, true);
 				if (isTarget) {
-					if (transform._isFrontFaceInvert)
+					if (transform && transform._isFrontFaceInvert)
 						forntFace = WebGLContext.CCW;
 					else
 						forntFace = WebGLContext.CW;
 				} else {
-					if (transform._isFrontFaceInvert)
+					if (transform && transform._isFrontFaceInvert)
 						forntFace = WebGLContext.CW;
 					else
 						forntFace = WebGLContext.CCW;
@@ -553,12 +553,12 @@ package laya.d3.core.material {
 			case CULL_BACK: 
 				WebGLContext.setCullFace(gl, true);
 				if (isTarget) {
-					if (transform._isFrontFaceInvert)
+					if (transform && transform._isFrontFaceInvert)
 						forntFace = WebGLContext.CW;
 					else
 						forntFace = WebGLContext.CCW;
 				} else {
-					if (transform._isFrontFaceInvert)
+					if (transform && transform._isFrontFaceInvert)
 						forntFace = WebGLContext.CCW;
 					else
 						forntFace = WebGLContext.CW;

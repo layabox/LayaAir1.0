@@ -842,7 +842,7 @@
 			this.lockLayer=null;
 			this.popupEffect=function(dialog){
 				dialog.scale(1,1);
-				Tween.from(dialog,{x:Laya.stage.width / 2,y:Laya.stage.height / 2,scaleX:0,scaleY:0},300,Ease.backOut);
+				Tween.from(dialog,{x:Laya.stage.width / 2,y:Laya.stage.height / 2,scaleX:0,scaleY:0},300,Ease.backOut,Handler.create(this,this.doOpen,[dialog]));
 			}
 			this.closeEffect=function(dialog,type){
 				Tween.to(dialog,{x:Laya.stage.width / 2,y:Laya.stage.height / 2,scaleX:0,scaleY:0},300,Ease.strongOut,Handler.create(this,this.doClose,[dialog,type]));
@@ -908,8 +908,18 @@
 			if (dialog.popupCenter)this._centerDialog(dialog);
 			this.addChild(dialog);
 			if (dialog.isModal || this._$P["hasZorder"])this.timer.callLater(this,this._checkMask);
-			this.popupEffect && this.popupEffect(dialog);
+			if (this.popupEffect !=null)this.popupEffect(dialog);
+			else this.doOpen(dialog);
 			this.event(/*laya.events.Event.OPEN*/"open");
+		}
+
+		/**
+		*执行打开对话框。
+		*@param dialog 需要关闭的对象框 <code>Dialog</code> 实例。
+		*@param type 关闭的类型，默认为空
+		*/
+		__proto.doOpen=function(dialog){
+			dialog.onOpened();
 		}
 
 		/**
@@ -930,10 +940,11 @@
 		__proto.close=function(dialog,type){
 			if (this.closeEffect !=null)this.closeEffect(dialog,type);
 			else this.doClose(dialog);
+			this.event(/*laya.events.Event.CLOSE*/"close");
 		}
 
 		/**
-		*真正关闭对话框。
+		*执行关闭对话框。
 		*@param dialog 需要关闭的对象框 <code>Dialog</code> 实例。
 		*@param type 关闭的类型，默认为空
 		*/
@@ -941,7 +952,7 @@
 			dialog.removeSelf();
 			dialog.isModal && this._checkMask();
 			dialog.closeHandler && dialog.closeHandler.runWith(type);
-			this.event(/*laya.events.Event.CLOSE*/"close");
+			dialog.onClosed(type);
 		}
 
 		/**
@@ -2132,6 +2143,7 @@
 			var py=p.y+this._colorButton.height;
 			py=py+this._colorPanel.height <=Laya.stage.height ? py :p.y-this._colorPanel.height;
 			this._colorPanel.pos(px,py);
+			this._colorPanel.zOrder=1001;
 			Laya._currentStage.addChild(this._colorPanel);
 			Laya.stage.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.removeColorBox);
 		}
@@ -2685,6 +2697,7 @@
 					var py=p.y+this._button.height;
 					py=py+this._listHeight <=Laya.stage.height ? py :p.y-this._listHeight;
 					this._list.pos(p.x,py);
+					this._list.zOrder=1001;
 					Laya._currentStage.addChild(this._list);
 					Laya.stage.once(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.removeList);
 					this._list.selectedIndex=this._selectedIndex;
@@ -3035,6 +3048,7 @@
 					Tween.to(this,{value:this.max},this.elasticBackTime,Ease.sineOut,Handler.create(this,this.elasticOver));
 				}
 				}else {
+				if (!this._offsets)return;
 				if (this._offsets.length < 1){
 					this._offsets[0]=this.isVertical ? Laya.stage.mouseY-this._lastPoint.y :Laya.stage.mouseX-this._lastPoint.x;
 				};
@@ -4947,7 +4961,7 @@
 		View.uiMap={};
 		View.viewClassMap={};
 		__static(View,
-		['uiClassMap',function(){return this.uiClassMap={"ViewStack":ViewStack,"LinkButton":Button,"TextArea":TextArea,"ColorPicker":ColorPicker,"Box":Box,"Button":Button,"CheckBox":CheckBox,"Clip":Clip,"ComboBox":ComboBox,"Component":Component,"HScrollBar":HScrollBar,"HSlider":HSlider,"Image":Image,"Label":Label,"List":List,"Panel":Panel,"ProgressBar":ProgressBar,"Radio":Radio,"RadioGroup":RadioGroup,"ScrollBar":ScrollBar,"Slider":Slider,"Tab":Tab,"TextInput":TextInput,"View":View,"VScrollBar":VScrollBar,"VSlider":VSlider,"Tree":Tree,"HBox":HBox,"VBox":VBox,"Sprite":Sprite,"Animation":Animation,"Text":Text};}
+		['uiClassMap',function(){return this.uiClassMap={"ViewStack":ViewStack,"LinkButton":Button,"TextArea":TextArea,"ColorPicker":ColorPicker,"Box":Box,"Button":Button,"CheckBox":CheckBox,"Clip":Clip,"ComboBox":ComboBox,"Component":Component,"HScrollBar":HScrollBar,"HSlider":HSlider,"Image":Image,"Label":Label,"List":List,"Panel":Panel,"ProgressBar":ProgressBar,"Radio":Radio,"RadioGroup":RadioGroup,"ScrollBar":ScrollBar,"Slider":Slider,"Tab":Tab,"TextInput":TextInput,"View":View,"VScrollBar":VScrollBar,"VSlider":VSlider,"Tree":Tree,"HBox":HBox,"VBox":VBox,"Sprite":Sprite,"Animation":Animation,"Text":Text,"FontClip":FontClip};}
 		]);
 		View.__init$=function(){
 			View._regs()
@@ -5168,6 +5182,150 @@
 
 		return LayoutBox;
 	})(Box)
+
+
+	/**
+	*
+	*简单易用的位图字体类
+	*
+	*/
+	//class laya.ui.FontClip extends laya.ui.Clip
+	var FontClip=(function(_super){
+		function FontClip(url,clipX,clipY){
+			this._sheet=null;
+			this._valueArr=[];
+			this._xDirection=true;
+			this._direction="horizontal";
+			this._spaceX=0;
+			this._spaceY=0;
+			this._strValue=null;
+			this._indexDir=[];
+			FontClip.__super.call(this);
+			(clipX===void 0)&& (clipX=1);
+			(clipY===void 0)&& (clipY=1);
+			this._clipX=clipX;
+			this._clipY=clipY;
+			this.skin=url;
+		}
+
+		__class(FontClip,'laya.ui.FontClip',_super);
+		var __proto=FontClip.prototype;
+		__proto.createChildren=function(){
+			this._bitmap=new AutoBitmap();
+			this.on(/*laya.events.Event.LOADED*/"loaded",this,this.onClipLoaded);
+		}
+
+		/**
+		*资源加载完毕
+		*/
+		__proto.onClipLoaded=function(){
+			this.callLater(this.changeValue);
+		}
+
+		/**渲染数值*/
+		__proto.changeValue=function(){
+			if(this.sources==null)
+				return;
+			this.graphics.clear();
+			var texture;
+			for(var i=0,sz=this._valueArr.length;i<sz;i++){
+				var index=this._indexDir[this._valueArr[i]];
+				if (!this.sources[index])continue ;
+				texture=this.sources[index];
+				if(this._xDirection){
+					this.graphics.drawTexture(texture,i *(texture.width+this.spaceX),0,texture.width,texture.height);
+					}else{
+					this.graphics.drawTexture(texture,0,i *(texture.height+this.spaceY),texture.width,texture.height);
+				}
+			}
+			if (!texture)return;
+			if(this._xDirection){
+				this.size(this._valueArr.length*(texture.width+this.spaceX),texture.height);
+				}else{
+				this.size(texture.width,(texture.height+this.spaceY)*this._valueArr.length);
+			}
+		}
+
+		__proto.dispose=function(){
+			this._valueArr=null;
+			this._indexDir=null;
+			this.graphics.clear();
+			this.removeSelf();
+			this.off(/*laya.events.Event.LOADED*/"loaded",this,this.onClipLoaded);
+			_super.prototype.dispose.call(this);
+		}
+
+		/**
+		*设置位图字体内容
+		*@param value
+		*/
+		__getset(0,__proto,'sheet',function(){
+			return this._sheet;
+			},function(value){
+			this._indexDir=[];
+			value=String(value+"");
+			this._sheet=value;
+			for(var i=0;i<value.length;i++){
+				this._indexDir[value.charAt(i)]=i;
+			}
+		});
+
+		/**
+		*布局方向。
+		*<p>默认值为"horizontal"。</p>
+		*<p><b>取值：</b>
+		*<li>"horizontal"：表示水平布局。</li>
+		*<li>"vertical"：表示垂直布局。</li>
+		*</p>
+		*/
+		__getset(0,__proto,'direction',function(){
+			return this._direction;
+			},function(value){
+			this._direction=value;
+			this._xDirection=(value=="horizontal");
+			this.callLater(this.changeValue);
+		});
+
+		/**
+		*设置问题字体的显示内容
+		*@param value
+		*/
+		__getset(0,__proto,'value',function(){
+			return this._valueArr.join("");
+			},function(value){
+			value=String(value+"");
+			this._valueArr=value.split("");
+			this.callLater(this.changeValue);
+		});
+
+		/**资源加载完成*/
+		__getset(0,__proto,'sources',function(){
+			return this._sources;
+			},function(value){
+			_super.prototype._$set_sources.call(this,value);
+			this.callLater(this.changeValue);
+		});
+
+		/**X方向间隙*/
+		__getset(0,__proto,'spaceX',function(){
+			return this._spaceX;
+			},function(value){
+			this._spaceX=value;
+			if(this._xDirection)
+				this.callLater(this.changeValue);
+		});
+
+		/**Y方向间隙*/
+		__getset(0,__proto,'spaceY',function(){
+			return this._spaceY;
+			},function(value){
+			this._spaceY=value;
+			if(!this._xDirection)
+				this.callLater(this.changeValue);
+		});
+
+		return FontClip;
+	})(Clip)
 
 
 	/**
@@ -8481,6 +8639,8 @@
 			Dialog.manager.open(this,closeOther);
 		}
 
+		/**打开完成后，调用此方法（如果有弹出动画，则在动画完成后执行）*/
+		__proto.onOpened=function(){}
 		/**
 		*关闭对话框。
 		*@param type 如果是点击默认关闭按钮触发，则传入关闭按钮的名字(name)，否则为null。
@@ -8489,6 +8649,10 @@
 			Dialog.manager.close(this,type);
 		}
 
+		/**关闭完成后，调用此方法（如果有关闭动画，则在动画完成后执行）
+		*@param type 如果是点击默认关闭按钮触发，则传入关闭按钮的名字(name)，否则为null。
+		*/
+		__proto.onClosed=function(type){}
 		/**@private */
 		__proto._onMouseDown=function(e){
 			var point=this.getMousePoint();
@@ -9118,10 +9282,15 @@
 		*在页面未创建时执行一次，再次打开页面不会再执行，适合写一些只执行一次的逻辑，比如资源加载，节点事件监听
 		*/
 		__proto.onCreated=function(){
+			this.createUI();
+			this.onOpen();
+		}
+
+		/**根据节点数据创建UI*/
+		__proto.createUI=function(){
 			laya.ui.View.prototype.createView.call(this,this._uiView);
 			this._uiView=null;
 			this._dealDragArea();
-			this.onOpen();
 		}
 
 		/**

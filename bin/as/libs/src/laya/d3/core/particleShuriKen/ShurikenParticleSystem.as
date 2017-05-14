@@ -7,6 +7,7 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.particleShuriKen.module.GradientDataColor;
 	import laya.d3.core.particleShuriKen.module.GradientSize;
 	import laya.d3.core.particleShuriKen.module.GradientVelocity;
+	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.particleShuriKen.module.ColorOverLifetime;
@@ -100,7 +101,7 @@ package laya.d3.core.particleShuriKen {
 		/** @private */
 		protected var _boundingBox:BoundBox = new BoundBox(new Vector3(), new Vector3());
 		/** @private */
-		public var _boundingBoxCorners:Vector.<Vector3>;
+		public var _boundingBoxCorners:Array;
 		
 		/** @private */
 		private var _owner:ShuriKenParticle3D;
@@ -385,74 +386,75 @@ package laya.d3.core.particleShuriKen {
 		 * @param value 生命周期速度.
 		 */
 		public function set velocityOverLifetime(value:VelocityOverLifetime):void {
+			var render:BaseRender = _owner._render;
 			if (value) {
 				var velocity:GradientVelocity = value.velocity;
 				var velocityType:int = velocity.type;
 				if (value.enbale) {
 					switch (velocityType) {
 					case 0: 
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
 						break;
 					case 1: 
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
 						break;
 					case 2: 
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
 						break;
 					case 3: 
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
 						break;
 					}
 					
 				} else {
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
 				}
 				
 				switch (velocityType) {
 				case 0: 
-					_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, velocity.constant);
+					render._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, velocity.constant);
 					break;
 				case 1: 
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, velocity.gradientX._elements);
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, velocity.gradientY._elements);
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, velocity.gradientZ._elements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, velocity.gradientX._elements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, velocity.gradientY._elements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, velocity.gradientZ._elements);
 					break;
 				case 2: 
-					_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, velocity.constantMin);
-					_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONSTMAX, velocity.constantMax);
+					render._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, velocity.constantMin);
+					render._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONSTMAX, velocity.constantMax);
 					break;
 				case 3: 
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, velocity.gradientXMin._elements);
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX, velocity.gradientXMax._elements);
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, velocity.gradientYMin._elements);
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX, velocity.gradientYMax._elements);
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, velocity.gradientZMin._elements);
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX, velocity.gradientZMax._elements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, velocity.gradientXMin._elements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX, velocity.gradientXMax._elements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, velocity.gradientYMin._elements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX, velocity.gradientYMax._elements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, velocity.gradientZMin._elements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX, velocity.gradientZMax._elements);
 					break;
 				}
-				_owner._setShaderValueInt(ShuriKenParticle3D.VOLSPACETYPE, value.space);
+				render._setShaderValueInt(ShuriKenParticle3D.VOLSPACETYPE, value.space);
 			} else {
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
 				
-				_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, null);
-				_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, null);
-				_owner._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONSTMAX, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX, null);
-				_owner._setShaderValueInt(ShuriKenParticle3D.VOLSPACETYPE, undefined);
+				render._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, null);
+				render._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONST, null);
+				render._setShaderValueColor(ShuriKenParticle3D.VOLVELOCITYCONSTMAX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTY, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX, null);
+				render._setShaderValueInt(ShuriKenParticle3D.VOLSPACETYPE, undefined);
 			}
 			_velocityOverLifetime = value;
 		}
@@ -470,47 +472,48 @@ package laya.d3.core.particleShuriKen {
 		 * @param value 生命周期颜色
 		 */
 		public function set colorOverLifetime(value:ColorOverLifetime):void {
+			var render:BaseRender = _owner._render;
 			if (value) {
 				var color:GradientColor = value.color;
 				if (value.enbale) {
 					switch (color.type) {
 					case 1: 
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME);
 						break;
 					case 3: 
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
 						break;
 					}
 				} else {
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
 				}
 				
 				switch (color.type) {
 				case 1: 
 					var gradientColor:GradientDataColor = color.gradient;
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, gradientColor._alphaElements);
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, gradientColor._rgbElements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, gradientColor._alphaElements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, gradientColor._rgbElements);
 					break;
 				case 3: 
 					var minGradientColor:GradientDataColor = color.gradientMin;
 					var maxGradientColor:GradientDataColor = color.gradientMax;
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, minGradientColor._alphaElements);
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, minGradientColor._rgbElements);
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS, maxGradientColor._alphaElements);
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS, maxGradientColor._rgbElements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, minGradientColor._alphaElements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, minGradientColor._rgbElements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS, maxGradientColor._alphaElements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS, maxGradientColor._rgbElements);
 					break;
 				}
 			} else {
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
 				
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, gradientColor._alphaElements);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, gradientColor._rgbElements);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, minGradientColor._alphaElements);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, minGradientColor._rgbElements);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS, maxGradientColor._alphaElements);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS, maxGradientColor._rgbElements);
+				render._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, gradientColor._alphaElements);
+				render._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, gradientColor._rgbElements);
+				render._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, minGradientColor._alphaElements);
+				render._setShaderValueBuffer(ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, minGradientColor._rgbElements);
+				render._setShaderValueBuffer(ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS, maxGradientColor._alphaElements);
+				render._setShaderValueBuffer(ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS, maxGradientColor._rgbElements);
 			}
 			_colorOverLifetime = value;
 		}
@@ -528,6 +531,7 @@ package laya.d3.core.particleShuriKen {
 		 * @param value 生命周期尺寸
 		 */
 		public function set sizeOverLifetime(value:SizeOverLifetime):void {
+			var render:BaseRender = _owner._render;
 			if (value) {
 				var size:GradientSize = value.size;
 				var sizeSeparate:Boolean = size.separateAxes;
@@ -536,63 +540,63 @@ package laya.d3.core.particleShuriKen {
 					switch (sizeType) {
 					case 0: 
 						if (sizeSeparate)
-							_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
+							render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
 						else
-							_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
+							render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
 						break;
 					case 2: 
 						if (sizeSeparate)
-							_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
+							render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
 						else
-							_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
+							render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
 						break;
 					}
 					
 				} else {
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
 				}
 				
 				switch (sizeType) {
 				case 0: 
 					if (sizeSeparate) {
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, size.gradientX._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTY, size.gradientY._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZ, size.gradientZ._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, size.gradientX._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTY, size.gradientY._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZ, size.gradientZ._elements);
 					} else {
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENT, size.gradient._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENT, size.gradient._elements);
 					}
 					break;
 				case 2: 
 					if (sizeSeparate) {
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, size.gradientXMin._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTXMAX, size.gradientXMax._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTY, size.gradientYMin._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTYMAX, size.gradientYMax._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZ, size.gradientZMin._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZMAX, size.gradientZMax._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, size.gradientXMin._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTXMAX, size.gradientXMax._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTY, size.gradientYMin._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTYMAX, size.gradientYMax._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZ, size.gradientZMin._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZMAX, size.gradientZMax._elements);
 					} else {
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENT, size.gradientMin._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientMax, size.gradientMax._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENT, size.gradientMin._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientMax, size.gradientMax._elements);
 					}
 					break;
 				}
 			} else {
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVE);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
 				
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTXMAX, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTY, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTYMAX, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZ, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZMAX, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENT, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientMax, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTXMAX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTY, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENTYMAX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZ, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientZMAX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.SOLSIZEGRADIENT, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.SOLSizeGradientMax, null);
 			}
 			_sizeOverLifetime = value;
 		}
@@ -610,100 +614,101 @@ package laya.d3.core.particleShuriKen {
 		 * @param value 生命周期旋转。
 		 */
 		public function set rotationOverLifetime(value:RotationOverLifetime):void {
+			var render:BaseRender = _owner._render;
 			if (value) {
 				var rotation:GradientAngularVelocity = value.angularVelocity;
 				var rotationSeparate:Boolean = rotation.separateAxes;
 				var rotationType:int = rotation.type;
 				if (value.enbale) {
 					if (rotationSeparate)
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
 					else
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIME);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIME);
 					switch (rotationType) {
 					case 0: 
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
 						break;
 					case 1: 
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
 						break;
 					case 2: 
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
 						break;
 					case 3: 
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
 						break;
 					}
 				} else {
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIME);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIME);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
 				}
 				
 				switch (rotationType) {
 				case 0: 
 					if (rotationSeparate) {
-						_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, rotation.constantSeparate);
+						render._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, rotation.constantSeparate);
 					} else {
-						_owner._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONST, rotation.constant);
+						render._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONST, rotation.constant);
 					}
 					break;
 				case 1: 
 					if (rotationSeparate) {
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX, rotation.gradientX._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY, rotation.gradientY._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, rotation.gradientZ._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX, rotation.gradientX._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY, rotation.gradientY._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, rotation.gradientZ._elements);
 					} else {
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, rotation.gradient._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, rotation.gradient._elements);
 					}
 					break;
 				case 2: 
 					if (rotationSeparate) {
-						_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, rotation.constantMinSeparate);
-						_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE, rotation.constantMaxSeparate);
+						render._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, rotation.constantMinSeparate);
+						render._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE, rotation.constantMaxSeparate);
 					} else {
-						_owner._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONST, rotation.constantMin);
-						_owner._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX, rotation.constantMax);
+						render._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONST, rotation.constantMin);
+						render._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX, rotation.constantMax);
 					}
 					break;
 				case 3: 
 					if (rotationSeparate) {
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX, rotation.gradientXMin._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX, rotation.gradientXMax._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY, rotation.gradientYMin._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX, rotation.gradientYMax._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, rotation.gradientZMin._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX, rotation.gradientZMax._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX, rotation.gradientXMin._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX, rotation.gradientXMax._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY, rotation.gradientYMin._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX, rotation.gradientYMax._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, rotation.gradientZMin._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX, rotation.gradientZMax._elements);
 					} else {
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, rotation.gradientMin._elements);
-						_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX, rotation.gradientMax._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, rotation.gradientMin._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX, rotation.gradientMax._elements);
 					}
 					break;
 				}
 			} else {
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIME);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIME);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
 				
-				_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, null);
-				_owner._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE, null);
-				_owner._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONST, undefined);
-				_owner._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX, undefined);
+				render._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, null);
+				render._setShaderValueColor(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE, null);
+				render._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONST, undefined);
+				render._setShaderValueNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX, undefined);
 				
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX, null);
 				
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX, null);
 			}
 			_rotationOverLifetime = value;
 		}
@@ -721,56 +726,53 @@ package laya.d3.core.particleShuriKen {
 		 * @param value 生命周期纹理动画。
 		 */
 		public function set textureSheetAnimation(value:TextureSheetAnimation):void {
+			var render:BaseRender = _owner._render;
 			if (value) {
 				var frameOverTime:FrameOverTime = value.frame;
 				var textureAniType:int = frameOverTime.type;
 				if (value.enbale) {
 					switch (textureAniType) {
 					case 1: 
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
 						break;
-						_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
+						render._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
 					case 3: 
 						break;
 						
 					}
 				} else {
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
+					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
 				}
 				
 				if (textureAniType === 1 || textureAniType === 3) {
-					_owner._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES, value.cycles);
+					render._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES, value.cycles);
 					var title:Vector2 = value.tiles;
 					var _uvLengthE:Float32Array = _uvLength.elements;
 					_uvLengthE[0] = 1.0 / title.x;
 					_uvLengthE[1] = 1.0 / title.y;
-					_owner._setShaderValueVector2(ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, _uvLength);
+					render._setShaderValueVector2(ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, _uvLength);
 				}
 				switch (textureAniType) {
 				case 1: 
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, frameOverTime.frameOverTimeData._elements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, frameOverTime.frameOverTimeData._elements);
 					break;
 				case 3: 
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, frameOverTime.frameOverTimeDataMin._elements);
-					_owner._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS, frameOverTime.frameOverTimeDataMax._elements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, frameOverTime.frameOverTimeDataMin._elements);
+					render._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS, frameOverTime.frameOverTimeDataMax._elements);
 					break;
 				}
 				
 			} else {
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
-				_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
+				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
 				
-				_owner._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES, undefined);
-				_owner._setShaderValueVector2(ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, null);
-				_owner._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS, null);
+				render._setShaderValueInt(ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES, undefined);
+				render._setShaderValueVector2(ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS, null);
 			}
 			_textureSheetAnimation = value;
-		}
-		
-		public function get indexOfHost():int {
-			return 0;
 		}
 		
 		public function get _vertexBufferCount():int {
@@ -809,7 +811,7 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @inheritDoc
 		 */
-		override public function get _originalBoundingBoxCorners():Vector.<Vector3> {
+		override public function get _originalBoundingBoxCorners():Array {
 			return _boundingBoxCorners;
 		}
 		

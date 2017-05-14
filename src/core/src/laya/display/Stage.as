@@ -63,6 +63,8 @@ package laya.display {
 		public static const SCALE_FIXED_WIDTH:String = "fixedwidth";
 		/**应用保持设计高度不变，宽度根据屏幕比缩放，stage的高度等于设计宽度，宽度根据屏幕比率大小而变化*/
 		public static const SCALE_FIXED_HEIGHT:String = "fixedheight";
+		/**应用保持设计比例不变，全屏显示全部内容(类似showall，但showall非全屏，会有黑边)，根据屏幕长宽比，自动选择使用SCALE_FIXED_WIDTH或SCALE_FIXED_HEIGHT*/
+		public static const SCALE_FIXED_AUTO:String = "fixedauto";
 		
 		/**画布水平居左对齐。*/
 		public static const ALIGN_LEFT:String = "left";
@@ -288,11 +290,11 @@ package laya.display {
 			if (!screenAdaptationEnabled) return;
 			var canvas:HTMLCanvas = Render._mainCanvas;
 			var canvasStyle:* = canvas.source.style;
-			canvas.size(1, 1);
+			//canvas.size(1, 1);
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "";
 			//visible = false;
-			//Laya.timer.once(100, this, this._changeCanvasSize);
-			_changeCanvasSize();
+			Laya.timer.once(100, this, this._changeCanvasSize);
+			//_changeCanvasSize();
 		}
 		
 		/**
@@ -360,6 +362,15 @@ package laya.display {
 			case SCALE_FIXED_HEIGHT: 
 				scaleX = scaleY;
 				_width = canvasWidth = Math.round(screenWidth / scaleY);
+				break;
+			case SCALE_FIXED_AUTO: 
+				if ((screenWidth / screenHeight) < (designWidth / designHeight)) {
+					scaleY = scaleX;
+					_height = canvasHeight = Math.round(screenHeight / scaleX);
+				} else {
+					scaleX = scaleY;
+					_width = canvasWidth = Math.round(screenWidth / scaleY);
+				}
 				break;
 			}
 			

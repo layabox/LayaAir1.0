@@ -3,10 +3,7 @@ package laya.d3.water
 	import laya.d3.core.MeshFilter;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.RenderableSprite3D;
-	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.PBRMaterial;
 	import laya.d3.core.material.WaterMaterial;
-	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
@@ -23,7 +20,6 @@ package laya.d3.water
 	import laya.d3.resource.models.QuadMesh;
 	import laya.d3.shader.Shader3D;
 	import laya.events.Event;
-	import laya.filters.webgl.FilterActionGL;
 	import laya.net.Loader;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
@@ -36,6 +32,8 @@ package laya.d3.water
 		public var mtl:WaterMaterial;
 		public var detailMtl:WaterDetailMaterial;
 		public var mesh:Mesh;
+		private  var useRefrTex:Boolean = true;
+		public var renderDetailWav:Boolean = true;
 		private var _stop:Boolean = false;
 		private var _texWave:RenderTexture;
 		private var _texRefract:RenderTexture;
@@ -61,10 +59,16 @@ package laya.d3.water
 		private var _waterColor:Vector3 = new Vector3();
 		private var _waterFogStart:Number = 0;
 		private var _waterFogRange:Number = 20;
+		public var startTm:Number = 0;
+		public var curTm:Number = 0;
+		private var _syncObj:WaterSprite = null;
+		public var afterDescLoaded:Function;//给个修改参数的机会。
 		
 		public function WaterSprite(mesh:BaseMesh=null, name:String = null) {
 			super(mesh, name);
 			mtl = new WaterMaterial();
+			startTm = Laya.timer.currTimer;
+			curTm = 0;
 		}
 		
 		private function _getWaveInfo(out:Float32Array, outdir:Float32Array, i:int, deg:Number, L:Number, Q:Number, A:Number):void {
@@ -79,21 +83,26 @@ package laya.d3.water
 			out[st++] = 7.846987702957 / Math.sqrt(L);
 		}
 		
-		public function set src(v:String) {
+		public function set src(v:String):void {
 			var ld:Loader = new Loader();
 			ld.on(Event.COMPLETE, this, onDescLoaded);
 			ld.load(v);
 		}
 		
-		private function onDescLoaded(desc:Object) {
+		private function onDescLoaded(desc:Object):void {
 			var mesh:Mesh = Mesh.load(desc.mesh);
 		
 			_texWave = new RenderTexture(desc.detailTexSize[0], desc.detailTexSize[1],WebGLContext.RGBA,WebGLContext.UNSIGNED_BYTE,WebGLContext.DEPTH_COMPONENT16,false,false);
 			//_texWave.repeat = false;
 			//_texWave.mipmap = true;
-			_texRefract = new RenderTexture(desc.refracTexSize[0], desc.refracTexSize[1]);
-			_texRefract.repeat = false;
-			_texRefract.mipmap = true;
+			if(useRefrTex){
+				_texRefract = new RenderTexture(desc.refracTexSize[0], desc.refracTexSize[1]);
+				_texRefract.repeat = false;
+				_texRefract.mipmap = true;
+				mtl.useRefractTexture = true;
+			}else {
+				mtl.useRefractTexture = false;
+			}
 			
 			(_geometryFilter as MeshFilter).sharedMesh = mesh;
 			mesh.once(Event.LOADED, this, _applyMeshMaterials);
@@ -109,6 +118,12 @@ package laya.d3.water
 			if (desc.hdrsky) {
 				mtl._addShaderDefine(WaterMaterial.SHADERDEFINE_HDR_ENV);
 			}
+			if (desc.deepScale != undefined)
+				mtl.deepScale = desc.deepScale;//TODO 有的属性应该直接设置，能简化代码
+			if ( desc.useVertexDeep) {
+				mtl.useVertexDeep = true;
+			}
+				
 			mtl.skyTexture.repeat = true;
 			//mtl.detailTexture = Texture2D.load('./threeDimen/water/seanormal.jpg');
 			//mtl.detailTexture = Texture2D.load('./threeDimen/water/normal1.png');
@@ -141,10 +156,13 @@ package laya.d3.water
 				_getWaveInfo(_texWaveInfo, _texWaveInfoDir, i, v.dir, v.L, 1.5, v.L * kAmp_over_L);
 			});
 			
-			_waterColor.x = desc.color[0]; _waterColor.y = desc.color[1]; _waterColor.z = desc.color[2];
-			mtl.seaColor = new Float32Array(desc.color);
+			_waterColor.x = desc.color[0]/255; _waterColor.y = desc.color[1]/255; _waterColor.z = desc.color[2]/255;
+			mtl.seaColor = new Float32Array([_waterColor.x,_waterColor.y,_waterColor.z]);
 			_waterFogStart = desc.fogStart;
 			_waterFogRange = desc.fogRange;
+			if (afterDescLoaded) {
+				afterDescLoaded.call(this);
+			}
 		}
 		
 		public function  onMeshLoaded():void {
@@ -178,18 +196,23 @@ package laya.d3.water
 			_refractObjecs.push(obj);
 		}
 		
+		public function set syncObj(obj:WaterSprite):void {
+			_syncObj = obj;
+			renderDetailWav = false;
+		}
+		
 		/**
 		 * 渲染之前，生成必要的数据。
 		 * @param	state
 		 */
-		public function onPreRender(state:RenderState) {
+		public function onPreRender(state:RenderState):void {
 			if (!_loaded)
 				return;
 			if (_refractObjStack.length) {
 				for (var i:int = 0; i < _refractObjStack.length; i++) {
 					var obj:RenderableSprite3D = _refractObjStack[i];
 					if (obj._render._renderElements.length) {
-						obj._render._renderElements.forEach(function(v:RenderElement) { _refractQueue._addRenderElement(v); } );
+						obj._render._renderElements.forEach(function(v:RenderElement):void { _refractQueue._addRenderElement(v); } );
 						_refractObjStack.splice(i, 1);
 						i--;
 					}
@@ -201,64 +224,76 @@ package laya.d3.water
 			var oldvp:Float32Array = gl.getParameter(WebGLContext.VIEWPORT) as Float32Array;
 			
 			//渲染折射对象
-			_texRefract.start();
-			gl.viewport(0, 0, _texRefract.width, _texRefract.height);
-			gl.clearColor( _waterColor.x,_waterColor.y,_waterColor.z,1.);
-			gl.clear(WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.COLOR_BUFFER_BIT);
-			_refractObjecs.forEach(function(v:MeshSprite3D) { 
-				v._renderUpdate(state._projectionViewMatrix);//给mvp的shaderValue赋值
-			} );
-			_refractQueue._preRender(state);
-			
-			var old_fog:Boolean = scene.enableDepthFog;
-			var old_fogcol:Vector3 = scene.fogColor;
-			var old_fogstart:Number = scene.fogStart;
-			var old_fogrange:Number = scene.fogRange;
-			scene.enableDepthFog = true;
-			scene.fogColor = _waterColor;
-			scene.fogStart = _waterFogStart;
-			scene.fogRange = _waterFogRange;
-			_refractQueue._render(state, false);//TODO false? true?
-			_texRefract.end();
-			_texRefract.repeat = true;
-			scene.enableDepthFog = old_fog;
-			scene.fogColor = old_fogcol;
-			scene.fogStart = old_fogstart;
-			scene.fogRange = old_fogrange;
-			
+			var needRestoreVP:Boolean = false;
+			if(useRefrTex){
+				_texRefract.start();
+				needRestoreVP = true;
+				gl.viewport(0, 0, _texRefract.width, _texRefract.height);
+				gl.clearColor( _waterColor.x,_waterColor.y,_waterColor.z,1.);
+				gl.clear(WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.COLOR_BUFFER_BIT);
+				_refractObjecs.forEach(function(v:MeshSprite3D):void { 
+					v._renderUpdate(state._projectionViewMatrix);//给mvp的shaderValue赋值
+				} );
+				_refractQueue._preRender(state);
+				
+				//var old_fog:Boolean = scene.enableDepthFog;
+				//var old_fogcol:Vector3 = scene.fogColor;
+				//var old_fogstart:Number = scene.fogStart;
+				//var old_fogrange:Number = scene.fogRange;
+				//scene.enableDepthFog = false;// true;
+				//scene.fogColor = _waterColor;
+				//scene.fogStart = _waterFogStart;
+				//scene.fogRange = _waterFogRange;
+				_refractQueue._render(state, false);//TODO false? true?
+				_texRefract.end();
+				_texRefract.repeat = true;
+				//scene.enableDepthFog = old_fog;
+				//scene.fogColor = old_fogcol;
+				//scene.fogStart = old_fogstart;
+				//scene.fogRange = old_fogrange;
+			}
 			//TODO 下面的状态恢复是不是有问题
 			//https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/getParameter
-			_texWave.start();
-			gl.disable(WebGLContext.DEPTH_TEST);
-			gl.disable(WebGLContext.CULL_FACE);
-			gl.viewport(0, 0, detailTexWidth, detailTexHeight);
-			var re:IRenderable = _detailMesh.getRenderElement(0);	//(_detailMesh._geometryFilter as MeshFilter).sharedMesh
-			re._beforeRender(state);//
-			detailMtl.currentTm = Laya.timer.currTimer;
-			detailMtl.waveInfo = _texWaveInfo;
-			detailMtl.waveInfoD = _texWaveInfoDir;
-			var detailShader:Shader3D = detailMtl._getShader(0, 0, 0);
-			detailShader.bind();
-			var vb:VertexBuffer3D = _detailMesh._getVertexBuffer(0);
-			detailShader.uploadAttributes(vb.vertexDeclaration.shaderValues.data,null);//TODO 只做一次
-			detailMtl._upload();
-			re._render(state);
-			_texWave.end();
-			
-			olddf && gl.enable(WebGLContext.DEPTH_TEST);
-			oldcf && gl.enable(WebGLContext.CULL_FACE);
-			gl.viewport(oldvp[0], oldvp[1], oldvp[2], oldvp[3]);
-			
-			mtl.detailTexture = _texWave;//TODO 优化一下
+			if(renderDetailWav){
+				_texWave.start();
+				gl.disable(WebGLContext.DEPTH_TEST);
+				gl.disable(WebGLContext.CULL_FACE);
+				needRestoreVP = true;
+				gl.viewport(0, 0, detailTexWidth, detailTexHeight);
+				var re:IRenderable = _detailMesh.getRenderElement(0);	//(_detailMesh._geometryFilter as MeshFilter).sharedMesh
+				re._beforeRender(state);//
+				detailMtl.currentTm = Laya.timer.currTimer;
+				detailMtl.waveInfo = _texWaveInfo;
+				detailMtl.waveInfoD = _texWaveInfoDir;
+				var detailShader:Shader3D = detailMtl._getShader(0, 0, 0);
+				detailShader.bind();
+				var vb:VertexBuffer3D = _detailMesh._getVertexBuffer(0);
+				detailShader.uploadAttributes(vb.vertexDeclaration.shaderValues.data,null);//TODO 只做一次
+				detailMtl._upload();
+				re._render(state);
+				_texWave.end();
+				
+				olddf && gl.enable(WebGLContext.DEPTH_TEST);
+				oldcf && gl.enable(WebGLContext.CULL_FACE);
+			}
+			if(needRestoreVP)
+				gl.viewport(oldvp[0], oldvp[1], oldvp[2], oldvp[3]);
+			if (_syncObj) {
+				mtl.detailTexture = _syncObj._texWave;
+			}else
+				mtl.detailTexture = _texWave;//TODO 优化一下
 			mtl.waveInfo = _geoWaveInfo;
 			mtl.waveInfoD = _geoWaveInfoDir;
 			mtl.underWaterTexture = _texRefract;
-			
-			if(!_stop){
-				mtl.currentTm = Laya.timer.currTimer;
+			if (!_stop) {
+				if (_syncObj) curTm = _syncObj.curTm;
+				else curTm = Laya.timer.currTimer - startTm;
+				
+				mtl._setNumber(WaterMaterial.CURTM, curTm);
+				//mtl.currentTm = Laya.timer.currTimer;
 			}else {
-				_texWaveDegTest += 0.02;	
-				mtl.waveMainDir = _texWaveDegTest;
+				//_texWaveDegTest += 0.02;	
+				//mtl.waveMainDir = _texWaveDegTest;
 				//mtl.texWaveTrans = getTexTrans(_texWaveDegTest, _texWaveTrans);
 			}
 			

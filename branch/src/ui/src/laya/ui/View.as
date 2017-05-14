@@ -25,7 +25,7 @@ package laya.ui {
 		/**存储UI配置数据(用于加载模式)。*/
 		public static var uiMap:Object = {};
 		/**UI类映射。*/
-		public static var uiClassMap:Object = {"ViewStack": ViewStack, "LinkButton": Button, "TextArea": TextArea, "ColorPicker": ColorPicker, "Box": Box, "Button": Button, "CheckBox": CheckBox, "Clip": Clip, "ComboBox": ComboBox, "Component": Component, "HScrollBar": HScrollBar, "HSlider": HSlider, "Image": Image, "Label": Label, "List": List, "Panel": Panel, "ProgressBar": ProgressBar, "Radio": Radio, "RadioGroup": RadioGroup, "ScrollBar": ScrollBar, "Slider": Slider, "Tab": Tab, "TextInput": TextInput, "View": View, "VScrollBar": VScrollBar, "VSlider": VSlider, "Tree": Tree, "HBox": HBox, "VBox": VBox, "Sprite": Sprite, "Animation": Animation, "Text": Text};
+		public static var uiClassMap:Object = {"ViewStack": ViewStack, "LinkButton": Button, "TextArea": TextArea, "ColorPicker": ColorPicker, "Box": Box, "Button": Button, "CheckBox": CheckBox, "Clip": Clip, "ComboBox": ComboBox, "Component": Component, "HScrollBar": HScrollBar, "HSlider": HSlider, "Image": Image, "Label": Label, "List": List, "Panel": Panel, "ProgressBar": ProgressBar, "Radio": Radio, "RadioGroup": RadioGroup, "ScrollBar": ScrollBar, "Slider": Slider, "Tab": Tab, "TextInput": TextInput, "View": View, "VScrollBar": VScrollBar, "VSlider": VSlider, "Tree": Tree, "HBox": HBox, "VBox": VBox, "Sprite": Sprite, "Animation": Animation, "Text": Text,"FontClip":FontClip};
 		/**@private UI视图类映射。*/
 		protected static var viewClassMap:Object = {};
 		/**@private */

@@ -71,7 +71,7 @@ package laya.d3.core {
 		/**
 		 * @inheritDoc
 		 */
-		override public function get _originalBoundingBoxCorners():Vector.<Vector3> {
+		override public function get _originalBoundingBoxCorners():Array {
 			return _sharedMesh.boundingBoxCorners;
 		}
 		

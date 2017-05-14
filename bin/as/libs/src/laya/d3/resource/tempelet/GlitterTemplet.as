@@ -2,7 +2,6 @@ package laya.d3.resource.tempelet {
 	import laya.d3.core.GeometryFilter;
 	import laya.d3.core.glitter.Glitter;
 	import laya.d3.core.glitter.SplineCurvePositionVelocity;
-	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
@@ -11,19 +10,12 @@ package laya.d3.resource.tempelet {
 	import laya.d3.graphics.VertexGlitter;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
-	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.events.Event;
-	import laya.events.EventDispatcher;
-	import laya.utils.Handler;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.resource.WebGLImage;
-	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
 	 * @private
@@ -99,10 +91,6 @@ package laya.d3.resource.tempelet {
 				}
 				_initialize();
 			}
-		}
-		
-		public function get indexOfHost():int {
-			return 0;
 		}
 		
 		public function get _vertexBufferCount():int {

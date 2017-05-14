@@ -1,6 +1,7 @@
 package laya.utils {
 	
 	/**
+	 * @private
 	 * 基于个数的对象缓存管理器
 	 */
 	public class PoolCache {

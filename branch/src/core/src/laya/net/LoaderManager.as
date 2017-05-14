@@ -8,22 +8,26 @@ package laya.net {
 	import laya.utils.Utils;
 	
 	/**
-	 * 加载完成时调度。
+	 * 所有资源加载完成时调度。
 	 * @eventType Event.COMPLETE
 	 * */
 	[Event(name = "complete", type = "laya.events.Event")]
 	
 	/**
-	 * 加载出错时调度。
+	 * 任何资源加载出错时调度。
 	 * @eventType Event.ERROR
 	 * */
 	[Event(name = "error", type = "laya.events.Event")]
 	
 	/**
 	 * <p> <code>LoaderManager</code> 类用于用于批量加载资源、数据。</p>
-	 * <p>批量加载器，单例，可以通过Laya.loader访问。</p>
-	 * 多线程(默认5个线程)，5个优先级(0最快，4最慢,默认为1)
-	 * 某个资源加载失败后，会按照最低优先级重试加载(属性retryNum决定重试几次)，如果重试后失败，则调用complete函数，并返回null
+	 * <p>批量加载器，单例，可以通过Laya.loader访问，注意大小写。</p>
+	 * 多线程：默认5个线程，可以通过maxLoader属性修改线程数量
+	 * 多优先级：默认5个优先级，0最快，4最慢，默认为1
+	 * 重复过滤：自动过滤重复加载以及已经加载过的地址，防止重复加载
+	 * 错误重试：资源加载失败后，会重试加载（按照最低优先级），retryNum设定加载失败后重试次数，retryDelay设定加载重试的时间间隔
+	 * 如果单个地址加载方式，加载重试后仍然失败，则调用complete回调，并返回null。如果多地址加载方式，重试后仍然失败，则调用complete回调，返回为success=false
+	 * 全部队列加载完成，会派发complete事件，如果队列中任意一个加载失败，会派发error事件
 	 */
 	public class LoaderManager extends EventDispatcher {
 		/**@private */
@@ -64,8 +68,8 @@ package laya.net {
 		 * @param	url 资源地址或者数组，比如[{url:xx,clas:xx,priority:xx,params:xx},{url:xx,clas:xx,priority:xx,params:xx}]
 		 * @param	progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
 		 * @param	clas 资源类名，比如Texture
-		 * @param	type 资源类型
-		 * @param	priority 优先级
+		 * @param	type 资源类型，比如：Loader.IMAGE
+		 * @param	priority 优先级，默认5个优先级，0最快，4最慢，默认为1
 		 * @param	cache 是否缓存
 		 * @return	返回资源对象
 		 */
@@ -138,13 +142,13 @@ package laya.net {
 		
 		/**
 		 * 加载资源。
-		 * @param	url 地址，或者资源对象数组(简单数组：["a.png","b.png"]，复杂数组[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}])。
+		 * @param	url 单个资源地址，或者资源地址数组(简单数组：["a.png","b.png"]，复杂数组[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}])。
 		 * @param	complete 结束回调，如果加载失败，则返回 null 。
 		 * @param	progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
-		 * @param	type 资源类型。
-		 * @param	priority 优先级，0-4，五个优先级，0优先级最高，默认为1。
+		 * @param	type 资源类型。比如：Loader.IMAGE
+		 * @param	priority 优先级，0-4，5个优先级，0优先级最高，默认为1。
 		 * @param	cache 是否缓存加载结果。
-		 * @param	group 分组。
+		 * @param	group 分组，方便对资源进行管理。
 		 * @param	ignoreCache 是否忽略缓存，强制重新加载
 		 * @return 此 LoaderManager 对象。
 		 */
@@ -262,6 +266,33 @@ package laya.net {
 		 * @param	url 资源地址。
 		 * @param	data 要缓存的内容。
 		 */
+		public function cacheRes(url:String, data:*):void {
+			Loader.cacheRes(url, data);
+		}
+		
+		/**
+		 * 设置资源分组。
+		 * @param url 资源地址。
+		 * @param group 分组名
+		 */
+		public function setGroup(url:String, group:String):void {
+			Loader.setGroup(url, group);
+		}
+		
+		/**
+		 * 根据分组清理资源
+		 * @param group 分组名
+		 */
+		public function clearResByGroup(group:String):void {
+			Loader.clearResByGroup(group);
+		}
+		
+		/**
+		 * @private
+		 * 缓存资源。
+		 * @param	url 资源地址。
+		 * @param	data 要缓存的内容。
+		 */
 		public static function cacheRes(url:String, data:*):void {
 			Loader.cacheRes(url, data);
 		}
@@ -323,11 +354,10 @@ package laya.net {
 			var loadedCount:int = 0;
 			var totalSize:int = 0;
 			var items:Array = [];
-			var defaultType:String = type || Loader.IMAGE;
 			var success:Boolean = true;
 			for (var i:int = 0; i < itemCount; i++) {
 				var item:Object = arr[i];
-				if (item is String) item = {url: item, type: defaultType, size: 1, priority: priority};
+				if (item is String) item = {url: item, type: type, size: 1, priority: priority};
 				if (!item.size) item.size = 1;
 				item.progress = 0;
 				totalSize += item.size;

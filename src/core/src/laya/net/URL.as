@@ -53,7 +53,7 @@ package laya.net {
 			if (char1 === "h" || char1 === "f") {
 				if (url.indexOf(":") > 0) return url;
 			} else if (char1 === ".") {
-				formatRelativePath((base || basePath) + url);
+				return formatRelativePath((base || basePath) + url);
 			} else if (char1 === '~') {
 				return rootPath + url.substring(1);
 			} else if (char1 === "d") {

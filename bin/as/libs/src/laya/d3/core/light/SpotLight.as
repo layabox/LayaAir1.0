@@ -1,6 +1,6 @@
 package laya.d3.core.light {
 	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderCompile3D;
@@ -136,17 +136,17 @@ package laya.d3.core.light {
 		 * @inheritDoc
 		 */
 		override protected function _clearSelfRenderObjects():void {
-			var scene:BaseScene = this.scene;
+			var scene:Scene = this.scene;
 			var shaderValue:ValusArray = scene._shaderValues;
-			shaderValue.setValue(BaseScene.SPOTLIGHTDIFFUSE, null);
-			shaderValue.setValue(BaseScene.SPOTLIGHTAMBIENT, null);
-			shaderValue.setValue(BaseScene.SPOTLIGHTSPECULAR, null);
-			shaderValue.setValue(BaseScene.SPOTLIGHTPOS, null);
-			shaderValue.setValue(BaseScene.SPOTLIGHTDIRECTION, null);
-			shaderValue.setValue(BaseScene.SPOTLIGHTRANGE, null);
-			shaderValue.setValue(BaseScene.SPOTLIGHTSPOT, null);
-			shaderValue.setValue(BaseScene.SPOTLIGHTATTENUATION, null);
-			(_activeInHierarchy) && (scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_SPOTLIGHT));
+			shaderValue.setValue(Scene.SPOTLIGHTDIFFUSE, null);
+			shaderValue.setValue(Scene.SPOTLIGHTAMBIENT, null);
+			shaderValue.setValue(Scene.SPOTLIGHTSPECULAR, null);
+			shaderValue.setValue(Scene.SPOTLIGHTPOS, null);
+			shaderValue.setValue(Scene.SPOTLIGHTDIRECTION, null);
+			shaderValue.setValue(Scene.SPOTLIGHTRANGE, null);
+			shaderValue.setValue(Scene.SPOTLIGHTSPOT, null);
+			shaderValue.setValue(Scene.SPOTLIGHTATTENUATION, null);
+			scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_SPOTLIGHT);
 		}
 		
 		/**
@@ -154,18 +154,18 @@ package laya.d3.core.light {
 		 * @param state 渲染状态参数。
 		 */
 		public override function updateToWorldState(state:RenderState):Boolean {
-			var scene:BaseScene = state.scene;
-			if (scene.enableLight && active) {
+			var scene:Scene = state.scene;
+			if (scene.enableLight && _activeInHierarchy) {
 				var shaderValue:ValusArray = scene._shaderValues;
 				scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_SPOTLIGHT);
-				shaderValue.setValue(BaseScene.SPOTLIGHTDIFFUSE, diffuseColor.elements);
-				shaderValue.setValue(BaseScene.SPOTLIGHTAMBIENT, ambientColor.elements);
-				shaderValue.setValue(BaseScene.SPOTLIGHTSPECULAR, specularColor.elements);
-				shaderValue.setValue(BaseScene.SPOTLIGHTPOS, transform.position.elements);
-				shaderValue.setValue(BaseScene.SPOTLIGHTDIRECTION, direction.elements);
-				shaderValue.setValue(BaseScene.SPOTLIGHTRANGE, range);
-				shaderValue.setValue(BaseScene.SPOTLIGHTSPOT, spot);
-				shaderValue.setValue(BaseScene.SPOTLIGHTATTENUATION, attenuation.elements);
+				shaderValue.setValue(Scene.SPOTLIGHTDIFFUSE, diffuseColor.elements);
+				shaderValue.setValue(Scene.SPOTLIGHTAMBIENT, ambientColor.elements);
+				shaderValue.setValue(Scene.SPOTLIGHTSPECULAR, specularColor.elements);
+				shaderValue.setValue(Scene.SPOTLIGHTPOS, transform.position.elements);
+				shaderValue.setValue(Scene.SPOTLIGHTDIRECTION, direction.elements);
+				shaderValue.setValue(Scene.SPOTLIGHTRANGE, range);
+				shaderValue.setValue(Scene.SPOTLIGHTSPOT, spot);
+				shaderValue.setValue(Scene.SPOTLIGHTATTENUATION, attenuation.elements);
 				return true;
 			} else {
 				scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_SPOTLIGHT);

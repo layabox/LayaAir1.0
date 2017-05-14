@@ -485,8 +485,7 @@ void main()
 	    corner=rotaionZHalfPI*corner;
 	    corner.y=corner.y-abs(corner.y);
 	    float speed=length(velocity);//TODO:
-	    //center +=u_SizeScale.xzy*(size.x*corner.x*sideVector+(cameraUpVector*speed*u_StretchedBillboardSpeedScale+cameraUpVector*size.y*u_StretchedBillboardLengthScale)*corner.y);//TODO:要改良吧
-		center +=u_SizeScale.xzy*size.x*corner.x*sideVector+((cameraUpVector*speed)*u_StretchedBillboardSpeedScale+cameraUpVector*size.y*u_StretchedBillboardLengthScale)*corner.y;//待确认
+	    center +=u_SizeScale.xzy*(size.x*corner.x*sideVector+(speed*u_StretchedBillboardSpeedScale+size.y*u_StretchedBillboardLengthScale)*corner.y*cameraUpVector);
    #endif
    
    #ifdef HORIZONTALBILLBOARD

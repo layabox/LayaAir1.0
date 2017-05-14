@@ -385,7 +385,7 @@ var Laya=window.Laya=(function(window,document){
 		Laya.stage=null;
 		Laya.timer=null;
 		Laya.loader=null;
-		Laya.version="1.7.3";
+		Laya.version="1.7.4";
 		Laya.render=null
 		Laya._currentStage=null
 		Laya._isinit=false;
@@ -409,7 +409,7 @@ var Laya=window.Laya=(function(window,document){
 		Config.animationInterval=50;
 		Config.isAntialias=false;
 		Config.isAlpha=false;
-		Config.premultipliedAlpha=false;
+		Config.premultipliedAlpha=true;
 		Config.isStencil=true;
 		Config.preserveDrawingBuffer=false;
 		return Config;
@@ -1263,6 +1263,7 @@ var Laya=window.Laya=(function(window,document){
 			//this._bounds=null;
 			//this._rstBoundPoints=null;
 			//this._vectorgraphArray=null;
+			this._cacheBoundsType=false;
 			this._render=this._renderEmpty;
 			if (Render.isConchNode){
 				/*__JS__ */this._nativeObj=new _conchGraphics();;
@@ -1320,22 +1321,28 @@ var Laya=window.Laya=(function(window,document){
 
 		/**
 		*获取位置及宽高信息矩阵(比较耗，尽量少用)。
+		*@param realSize 使用图片的真实大小，默认为false
 		*@return 位置与宽高组成的 一个 Rectangle 对象。
 		*/
-		__proto.getBounds=function(){
-			if (!this._bounds || !this._temp || this._temp.length < 1){
-				this._bounds=Rectangle._getWrapRec(this.getBoundPoints(),this._bounds)
+		__proto.getBounds=function(realSize){
+			(realSize===void 0)&& (realSize=false);
+			if (!this._bounds || !this._temp || this._temp.length < 1||realSize!=this._cacheBoundsType){
+				this._bounds=Rectangle._getWrapRec(this.getBoundPoints(realSize),this._bounds)
 			}
+			this._cacheBoundsType=realSize;
 			return this._bounds;
 		}
 
 		/**
 		*@private
+		*@param realSize 使用图片的真实大小，默认为false
 		*获取端点列表。
 		*/
-		__proto.getBoundPoints=function(){
-			if (!this._temp || this._temp.length < 1)
-				this._temp=this._getCmdPoints();
+		__proto.getBoundPoints=function(realSize){
+			(realSize===void 0)&& (realSize=false);
+			if (!this._temp || this._temp.length < 1||realSize!=this._cacheBoundsType)
+				this._temp=this._getCmdPoints(realSize);
+			this._cacheBoundsType=realSize;
 			return this._rstBoundPoints=Utils.copyArray(this._rstBoundPoints,this._temp);
 		}
 
@@ -1345,7 +1352,8 @@ var Laya=window.Laya=(function(window,document){
 			this._cmds.push(a);
 		}
 
-		__proto._getCmdPoints=function(){
+		__proto._getCmdPoints=function(realSize){
+			(realSize===void 0)&& (realSize=false);
 			var context=Render._context;
 			var cmds=this._cmds;
 			var rst;
@@ -1419,12 +1427,21 @@ var Laya=window.Laya=(function(window,document){
 						break ;
 					case context._drawTexture:
 						tex=cmd[0];
-						var offX=tex.offsetX>0?tex.offsetX:0;
-						var offY=tex.offsetY>0?tex.offsetY:0;
-						if (cmd[3] && cmd[4]){
-							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,cmd[3]+tex.sourceWidth-tex.width,cmd[4]+tex.sourceHeight-tex.height),tMatrix);
-							}else {
-							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,tex.width+tex.sourceWidth-tex.width,tex.height+tex.sourceHeight-tex.height),tMatrix);
+						if (realSize){
+							if (cmd[3] && cmd[4]){
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],cmd[3],cmd[4]),tMatrix);
+								}else {
+								tex=cmd[0];
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],tex.width,tex.height),tMatrix);
+							}
+							}else{
+							var offX=tex.offsetX>0?tex.offsetX:0;
+							var offY=tex.offsetY>0?tex.offsetY:0;
+							if (cmd[3] && cmd[4]){
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,cmd[3]+tex.sourceWidth-tex.width,cmd[4]+tex.sourceHeight-tex.height),tMatrix);
+								}else {
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,tex.width+tex.sourceWidth-tex.width,tex.height+tex.sourceHeight-tex.height),tMatrix);
+							}
 						}
 						break ;
 					case context._fillTexture:
@@ -1444,13 +1461,22 @@ var Laya=window.Laya=(function(window,document){
 							}else {
 							drawMatrix=tMatrix;
 						}
-						tex=cmd[0];
-						offX=tex.offsetX>0?tex.offsetX:0;
-						offY=tex.offsetY>0?tex.offsetY:0;
-						if (cmd[3] && cmd[4]){
-							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,cmd[3]+tex.sourceWidth-tex.width,cmd[4]+tex.sourceHeight-tex.height),tMatrix);
-							}else {
-							Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,tex.width+tex.sourceWidth-tex.width,tex.height+tex.sourceHeight-tex.height),tMatrix);
+						if (realSize){
+							if (cmd[3] && cmd[4]){
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],cmd[3],cmd[4]),drawMatrix);
+								}else {
+								tex=cmd[0];
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1],cmd[2],tex.width,tex.height),drawMatrix);
+							}
+							}else{
+							tex=cmd[0];
+							offX=tex.offsetX>0?tex.offsetX:0;
+							offY=tex.offsetY>0?tex.offsetY:0;
+							if (cmd[3] && cmd[4]){
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,cmd[3]+tex.sourceWidth-tex.width,cmd[4]+tex.sourceHeight-tex.height),tMatrix);
+								}else {
+								Graphics._addPointArrToRst(rst,Rectangle._getBoundPointS(cmd[1]-offX,cmd[2]-offY,tex.width+tex.sourceWidth-tex.width,tex.height+tex.sourceHeight-tex.height),tMatrix);
+							}
 						}
 						break ;
 					case context._drawRect:
@@ -2542,20 +2568,18 @@ var Laya=window.Laya=(function(window,document){
 			this.mouseMoveAccuracy=2;
 			this._stage=null;
 			this._target=null;
-			this._lastOvers=[];
-			this._currOvers=[];
-			this._lastClickTimer=0;
 			this._lastMoveTimer=0;
-			this._isDoubleClick=false;
 			this._isLeftMouse=false;
 			this._eventList=[];
 			this._touchIDs={};
 			this._id=1;
+			this._tTouchID=0;
 			this._event=new Event();
 			this._matrix=new Matrix();
 			this._point=new Point();
 			this._rect=new Rectangle();
 			this._prePoint=new Point();
+			this._curTouchID=NaN;
 		}
 
 		__class(MouseManager,'laya.events.MouseManager');
@@ -2633,100 +2657,42 @@ var Laya=window.Laya=(function(window,document){
 			_this._event._stoped=false;
 			_this._event.nativeEvent=nativeEvent || e;
 			_this._target=null;
-			this._point.setTo(e.clientX,e.clientY);
+			this._point.setTo(e.pageX || e.clientX,e.pageY || e.clientY);
 			this._stage._canvasTransform.invertTransformPoint(this._point);
 			_this.mouseX=this._point.x;
 			_this.mouseY=this._point.y;
 			_this._event.touchId=e.identifier || 0;
+			this._tTouchID=_this._event.touchId;
+			var evt;
+			evt=TouchManager.I._event;
+			evt._stoped=false;
+			evt.nativeEvent=_this._event.nativeEvent;
+			evt.touchId=_this._event.touchId;
 		}
 
 		__proto.checkMouseWheel=function(e){
 			this._event.delta=e.wheelDelta ? e.wheelDelta *0.025 :-e.detail;
-			for (var i=0,n=this._lastOvers.length;i < n;i++){
-				var ele=this._lastOvers[i];
+			var _lastOvers=TouchManager.I.getLastOvers();
+			for (var i=0,n=_lastOvers.length;i < n;i++){
+				var ele=_lastOvers[i];
 				ele.event(/*laya.events.Event.MOUSE_WHEEL*/"mousewheel",this._event.setTo(/*laya.events.Event.MOUSE_WHEEL*/"mousewheel",ele,this._target));
 			}
-			this._stage.event(/*laya.events.Event.MOUSE_WHEEL*/"mousewheel",this._event.setTo(/*laya.events.Event.MOUSE_WHEEL*/"mousewheel",this._stage,this._target));
 		}
 
-		__proto.checkMouseOut=function(){
-			if (this.disableMouseEvent)return;
-			for (var i=0,n=this._lastOvers.length;i < n;i++){
-				var ele=this._lastOvers[i];
-				if (!ele.destroyed && this._currOvers.indexOf(ele)< 0){
-					ele._set$P("$_MOUSEOVER",false);
-					ele.event(/*laya.events.Event.MOUSE_OUT*/"mouseout",this._event.setTo(/*laya.events.Event.MOUSE_OUT*/"mouseout",ele,ele));
-				}
-			};
-			var temp=this._lastOvers;
-			this._lastOvers=this._currOvers;
-			this._currOvers=temp;
-			this._currOvers.length=0;
-		}
-
+		// _stage.event(Event.MOUSE_WHEEL,_event.setTo(Event.MOUSE_WHEEL,_stage,_target));
 		__proto.onMouseMove=function(ele){
-			this.sendMouseMove(ele);
-			this._event._stoped=false;
-			this.sendMouseOver(this._target);
-		}
-
-		__proto.sendMouseMove=function(ele){
-			ele.event(/*laya.events.Event.MOUSE_MOVE*/"mousemove",this._event.setTo(/*laya.events.Event.MOUSE_MOVE*/"mousemove",ele,this._target));
-			!this._event._stoped && ele.parent && this.sendMouseMove(ele.parent);
-		}
-
-		__proto.sendMouseOver=function(ele){
-			if (ele.parent || ele===this._stage){
-				if (!ele._get$P("$_MOUSEOVER")){
-					ele._set$P("$_MOUSEOVER",true);
-					ele.event(/*laya.events.Event.MOUSE_OVER*/"mouseover",this._event.setTo(/*laya.events.Event.MOUSE_OVER*/"mouseover",ele,this._target));
-				}
-				this._currOvers.push(ele);
-			}
-			!this._event._stoped && ele.parent && this.sendMouseOver(ele.parent);
+			TouchManager.I.onMouseMove(ele,this._tTouchID);
 		}
 
 		__proto.onMouseDown=function(ele){
 			if (Input.isInputting && Laya.stage.focus && Laya.stage.focus["focus"] && !Laya.stage.focus.contains(this._target)){
 				Laya.stage.focus["focus"]=false;
 			}
-			this._onMouseDown(ele);
-		}
-
-		__proto._onMouseDown=function(ele){
-			if (this._isLeftMouse){
-				ele._set$P("$_MOUSEDOWN",this._touchIDs[this._event.touchId]);
-				ele.event(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this._event.setTo(/*laya.events.Event.MOUSE_DOWN*/"mousedown",ele,this._target));
-				}else {
-				ele._set$P("$_RIGHTMOUSEDOWN",this._touchIDs[this._event.touchId]);
-				ele.event(/*laya.events.Event.RIGHT_MOUSE_DOWN*/"rightmousedown",this._event.setTo(/*laya.events.Event.RIGHT_MOUSE_DOWN*/"rightmousedown",ele,this._target));
-			}
-			!this._event._stoped && ele.parent && this.onMouseDown(ele.parent);
+			TouchManager.I.onMouseDown(ele,this._tTouchID,this._isLeftMouse);
 		}
 
 		__proto.onMouseUp=function(ele){
-			var type=this._isLeftMouse ? /*laya.events.Event.MOUSE_UP*/"mouseup" :/*laya.events.Event.RIGHT_MOUSE_UP*/"rightmouseup";
-			this.sendMouseUp(ele,type);
-			this._event._stoped=false;
-			this.sendClick(this._target,type);
-		}
-
-		__proto.sendMouseUp=function(ele,type){
-			ele.event(type,this._event.setTo(type,ele,this._target));
-			!this._event._stoped && ele.parent && this.sendMouseUp(ele.parent,type);
-		}
-
-		__proto.sendClick=function(ele,type){
-			if (ele.destroyed)return;
-			if (type===/*laya.events.Event.MOUSE_UP*/"mouseup" && ele._get$P("$_MOUSEDOWN")===this._touchIDs[this._event.touchId]){
-				ele._set$P("$_MOUSEDOWN",-1);
-				ele.event(/*laya.events.Event.CLICK*/"click",this._event.setTo(/*laya.events.Event.CLICK*/"click",ele,this._target));
-				this._isDoubleClick && ele.event(/*laya.events.Event.DOUBLE_CLICK*/"doubleclick",this._event.setTo(/*laya.events.Event.DOUBLE_CLICK*/"doubleclick",ele,this._target));
-				}else if (type===/*laya.events.Event.RIGHT_MOUSE_UP*/"rightmouseup" && ele._get$P("$_RIGHTMOUSEDOWN")===this._touchIDs[this._event.touchId]){
-				ele._set$P("$_RIGHTMOUSEDOWN",-1);
-				ele.event(/*laya.events.Event.RIGHT_CLICK*/"rightclick",this._event.setTo(/*laya.events.Event.RIGHT_CLICK*/"rightclick",ele,this._target));
-			}
-			!this._event._stoped && ele.parent && this.sendClick(ele.parent,type);
+			TouchManager.I.onMouseUp(ele,this._tTouchID,this._isLeftMouse);
 		}
 
 		__proto.check=function(sp,mouseX,mouseY,callBack){
@@ -2748,7 +2714,7 @@ var Laya=window.Laya=(function(window,document){
 				for (var i=sp._childs.length-1;i >-1;i--){
 					var child=sp._childs[i];
 					if (!child.destroyed && child.mouseEnabled && child.visible){
-						flag=this.check(child,mouseX ,mouseY ,callBack);
+						flag=this.check(child,mouseX,mouseY,callBack);
 						if (flag)return true;
 					}
 				}
@@ -2805,9 +2771,6 @@ var Laya=window.Laya=(function(window,document){
 						break ;
 					case 'mouseup':
 						_this._isLeftMouse=evt.button===0;
-						var now=Browser.now();
-						_this._isDoubleClick=(now-_this._lastClickTimer)< 300;
-						_this._lastClickTimer=now;
 						_this.initEvent(evt);
 						_this.check(_this._stage,_this.mouseX,_this.mouseY,_this.onMouseUp);
 						break ;
@@ -2817,7 +2780,6 @@ var Laya=window.Laya=(function(window,document){
 							this._prePoint.y=evt.clientY;
 							_this.initEvent(evt);
 							_this.check(_this._stage,_this.mouseX,_this.mouseY,_this.onMouseMove);
-							_this.checkMouseOut();
 						}
 						break ;
 					case "touchstart":
@@ -2826,31 +2788,37 @@ var Laya=window.Laya=(function(window,document){
 						var touches=evt.changedTouches;
 						for (var j=0,n=touches.length;j < n;j++){
 							var touch=touches[j];
-							if (this._id % 200===0)this._touchIDs={};
-							this._touchIDs[touch.identifier]=this._id++;
-							_this.initEvent(touch,evt);
-							_this.check(_this._stage,_this.mouseX,_this.mouseY,_this.onMouseDown);
+							if (MouseManager.multiTouchEnabled || isNaN(this._curTouchID)){
+								this._curTouchID=touch.identifier;
+								if (this._id % 200===0)this._touchIDs={};
+								this._touchIDs[touch.identifier]=this._id++;
+								_this.initEvent(touch,evt);
+								_this.check(_this._stage,_this.mouseX,_this.mouseY,_this.onMouseDown);
+							}
 						}
 						break ;
 					case "touchend":
 						MouseManager._isTouchRespond=true;
 						_this._isLeftMouse=true;
-						now=Browser.now();
-						_this._isDoubleClick=(now-_this._lastClickTimer)< 300;
-						_this._lastClickTimer=now;
 						var touchends=evt.changedTouches;
 						for (j=0,n=touchends.length;j < n;j++){
-							_this.initEvent(touchends[j],evt);
-							_this.check(_this._stage,_this.mouseX,_this.mouseY,_this.onMouseUp);
+							touch=touchends[j];
+							if (MouseManager.multiTouchEnabled || touch.identifier==this._curTouchID){
+								this._curTouchID=NaN;
+								_this.initEvent(touch,evt);
+								_this.check(_this._stage,_this.mouseX,_this.mouseY,_this.onMouseUp);
+							}
 						}
 						break ;
 					case "touchmove":;
-						var touchemoves=evt.targetTouches;
+						var touchemoves=evt.changedTouches;
 						for (j=0,n=touchemoves.length;j < n;j++){
-							_this.initEvent(touchemoves[j],evt);
-							_this.check(_this._stage,_this.mouseX,_this.mouseY,_this.onMouseMove);
+							touch=touchemoves[j];
+							if (MouseManager.multiTouchEnabled || touch.identifier==this._curTouchID){
+								_this.initEvent(touch,evt);
+								_this.check(_this._stage,_this.mouseX,_this.mouseY,_this.onMouseMove);
+							}
 						}
-						_this.checkMouseOut();
 						break ;
 					case "wheel":
 					case "mousewheel":
@@ -2870,11 +2838,317 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		MouseManager.enabled=true;
+		MouseManager.multiTouchEnabled=true;
 		MouseManager._isTouchRespond=false;
 		__static(MouseManager,
 		['instance',function(){return this.instance=new MouseManager();}
 		]);
 		return MouseManager;
+	})()
+
+
+	/**
+	*@private
+	*Touch事件管理类，处理多点触控下的鼠标事件
+	*/
+	//class laya.events.TouchManager
+	var TouchManager=(function(){
+		function TouchManager(){
+			this.preOvers=[];
+			this.preDowns=[];
+			this.preRightDowns=[];
+			this.enable=true;
+			this._lastClickTime=0;
+			this._event=new Event();
+		}
+
+		__class(TouchManager,'laya.events.TouchManager');
+		var __proto=TouchManager.prototype;
+		/**
+		*从touch表里查找对应touchID的数据
+		*@param touchID touch ID
+		*@param arr touch表
+		*@return
+		*
+		*/
+		__proto.getTouchFromArr=function(touchID,arr){
+			var i=0,len=0;
+			len=arr.length;
+			var tTouchO;
+			for (i=0;i < len;i++){
+				tTouchO=arr[i];
+				if (tTouchO.id==touchID){
+					return tTouchO;
+				}
+			}
+			return null;
+		}
+
+		/**
+		*从touch表里移除一个元素
+		*@param touchID touch ID
+		*@param arr touch表
+		*
+		*/
+		__proto.removeTouchFromArr=function(touchID,arr){
+			var i=0;
+			for (i=arr.length-1;i >=0;i--){
+				if (arr[i].id==touchID){
+					arr.splice(i,1);
+				}
+			}
+		}
+
+		/**
+		*创建一个touch数据
+		*@param ele 当前的根节点
+		*@param touchID touchID
+		*@return
+		*
+		*/
+		__proto.createTouchO=function(ele,touchID){
+			var rst;
+			rst=Pool.getItem("TouchData")|| {};
+			rst.id=touchID;
+			rst.tar=ele;
+			return rst;
+		}
+
+		/**
+		*处理touchStart
+		*@param ele 根节点
+		*@param touchID touchID
+		*
+		*/
+		__proto.onMouseDown=function(ele,touchID,isLeft){
+			(isLeft===void 0)&& (isLeft=false);
+			if (!this.enable)
+				return;
+			var preO;
+			var tO;
+			var arrs;
+			preO=this.getTouchFromArr(touchID,this.preOvers);
+			arrs=this.getEles(ele,null,TouchManager._tEleArr);
+			if (!preO){
+				tO=this.createTouchO(ele,touchID);
+				this.preOvers.push(tO);
+				}else {
+				preO.tar=ele;
+			}
+			if (Browser.onMobile)
+				this.sendEvents(arrs,/*laya.events.Event.MOUSE_OVER*/"mouseover",touchID);
+			var preDowns;
+			preDowns=isLeft ? this.preDowns :this.preRightDowns;
+			preO=this.getTouchFromArr(touchID,preDowns);
+			if (!preO){
+				tO=this.createTouchO(ele,touchID);
+				preDowns.push(tO);
+				}else {
+				preO.tar=ele;
+			}
+			this.sendEvents(arrs,isLeft ? /*laya.events.Event.MOUSE_DOWN*/"mousedown" :/*laya.events.Event.RIGHT_MOUSE_DOWN*/"rightmousedown",touchID);
+		}
+
+		/**
+		*派发事件
+		*@param eles 对象列表
+		*@param type 事件类型
+		*@param touchID touchID
+		*
+		*/
+		__proto.sendEvents=function(eles,type,touchID){
+			(touchID===void 0)&& (touchID=0);
+			var i=0,len=0;
+			len=eles.length;
+			this._event._stoped=false;
+			var _target;
+			_target=eles[0];
+			var tE;
+			for (i=0;i < len;i++){
+				tE=eles[i];
+				if (tE.destroyed)return;
+				tE.event(type,this._event.setTo(type,tE,_target));
+				if (this._event._stoped)
+					break ;
+			}
+		}
+
+		/**
+		*获取对象列表
+		*@param start 起始节点
+		*@param end 结束节点
+		*@return
+		*
+		*/
+		__proto.getEles=function(start,end,rst){
+			if (!rst){
+				rst=[];
+				}else {
+				rst.length=0;
+			}
+			while (start && start !=end){
+				rst.push(start);
+				start=start.parent;
+			}
+			return rst;
+		}
+
+		/**
+		*touchMove时处理out事件和over时间
+		*@param eleNew 新的根节点
+		*@param elePre 旧的根节点
+		*@param touchID touchID
+		*
+		*/
+		__proto.checkMouseOutAndOverOfMove=function(eleNew,elePre,touchID){
+			(touchID===void 0)&& (touchID=0);
+			if (elePre==eleNew)
+				return;
+			var tar;
+			var arrs;
+			var i=0,len=0;
+			if (elePre.contains(eleNew)){
+				arrs=this.getEles(eleNew,elePre,TouchManager._tEleArr);
+				this.sendEvents(arrs,/*laya.events.Event.MOUSE_OVER*/"mouseover",touchID);
+				}else if (eleNew.contains(elePre)){
+				arrs=this.getEles(elePre,eleNew,TouchManager._tEleArr);
+				this.sendEvents(arrs,/*laya.events.Event.MOUSE_OUT*/"mouseout",touchID);
+				}else {
+				arrs=TouchManager._tEleArr;
+				arrs.length=0;
+				var oldArr;
+				oldArr=this.getEles(elePre,null,TouchManager._oldArr);
+				var newArr;
+				newArr=this.getEles(eleNew,null,TouchManager._newArr);
+				len=oldArr.length;
+				var tIndex=0;
+				for (i=0;i < len;i++){
+					tar=oldArr[i];
+					tIndex=newArr.indexOf(tar);
+					if (tIndex >=0){
+						newArr.splice(tIndex,newArr.length-tIndex);
+						break ;
+						}else {
+						arrs.push(tar);
+					}
+				}
+				if (arrs.length > 0){
+					this.sendEvents(arrs,/*laya.events.Event.MOUSE_OUT*/"mouseout",touchID);
+				}
+				if (newArr.length > 0){
+					this.sendEvents(newArr,/*laya.events.Event.MOUSE_OVER*/"mouseover",touchID);
+				}
+			}
+		}
+
+		/**
+		*处理TouchMove事件
+		*@param ele 根节点
+		*@param touchID touchID
+		*
+		*/
+		__proto.onMouseMove=function(ele,touchID){
+			if (!this.enable)
+				return;
+			var preO;
+			preO=this.getTouchFromArr(touchID,this.preOvers);
+			var arrs;
+			arrs=this.getEles(ele,null,TouchManager._tEleArr);
+			var tO;
+			if (!preO){
+				this.sendEvents(arrs,/*laya.events.Event.MOUSE_OVER*/"mouseover",touchID);
+				this.preOvers.push(this.createTouchO(ele,touchID));
+				}else {
+				this.checkMouseOutAndOverOfMove(ele,preO.tar);
+				preO.tar=ele;
+			}
+			this.sendEvents(arrs,/*laya.events.Event.MOUSE_MOVE*/"mousemove",touchID);
+		}
+
+		__proto.getLastOvers=function(){
+			TouchManager._tEleArr.length=0;
+			if (this.preOvers.length > 0 && this.preOvers[0].tar){
+				return this.getEles(this.preOvers[0].tar,null,TouchManager._tEleArr);
+			}
+			TouchManager._tEleArr.push(Laya.stage);
+			return TouchManager._tEleArr;
+		}
+
+		/**
+		*处理TouchEnd事件
+		*@param ele 根节点
+		*@param touchID touchID
+		*
+		*/
+		__proto.onMouseUp=function(ele,touchID,isLeft){
+			(isLeft===void 0)&& (isLeft=false);
+			if (!this.enable)
+				return;
+			var preO;
+			var tO;
+			var arrs;
+			var oldArr;
+			var i=0,len=0;
+			var tar;
+			var sendArr;
+			var onMobile=Browser.onMobile;
+			arrs=this.getEles(ele,null,TouchManager._tEleArr);
+			this.sendEvents(arrs,isLeft ? /*laya.events.Event.MOUSE_UP*/"mouseup" :/*laya.events.Event.RIGHT_MOUSE_UP*/"rightmouseup",touchID);
+			var preDowns;
+			preDowns=isLeft ? this.preDowns :this.preRightDowns;
+			preO=this.getTouchFromArr(touchID,preDowns);
+			if (!preO){
+				}else {
+				var isDouble=false;
+				var now=Browser.now();
+				isDouble=now-this._lastClickTime < 300;
+				this._lastClickTime=now;
+				if (ele==preO.tar){
+					sendArr=arrs;
+					}else {
+					oldArr=this.getEles(preO.tar,null,TouchManager._oldArr);
+					sendArr=TouchManager._newArr;
+					sendArr.length=0;
+					len=oldArr.length;
+					for (i=0;i < len;i++){
+						tar=oldArr[i];
+						if (arrs.indexOf(tar)>=0){
+							sendArr.push(tar);
+						}
+					}
+				}
+				if (sendArr.length > 0){
+					this.sendEvents(sendArr,isLeft ? /*laya.events.Event.CLICK*/"click" :/*laya.events.Event.RIGHT_CLICK*/"rightclick",touchID);
+				}
+				if (isLeft && isDouble){
+					this.sendEvents(sendArr,/*laya.events.Event.DOUBLE_CLICK*/"doubleclick",touchID);
+				}
+				this.removeTouchFromArr(touchID,preDowns);
+				preO.tar=null;
+				Pool.recover("TouchData",preO);
+			}
+			preO=this.getTouchFromArr(touchID,this.preOvers);
+			if (!preO){
+				}else {
+				if (onMobile){
+					sendArr=this.getEles(preO.tar,null,sendArr);
+					if (sendArr && sendArr.length > 0){
+						this.sendEvents(sendArr,/*laya.events.Event.MOUSE_OUT*/"mouseout",touchID);
+					}
+					this.removeTouchFromArr(touchID,this.preOvers);
+					preO.tar=null;
+					Pool.recover("TouchData",preO);
+				}
+			}
+		}
+
+		TouchManager._oldArr=[];
+		TouchManager._newArr=[];
+		TouchManager._tEleArr=[];
+		__static(TouchManager,
+		['I',function(){return this.I=new TouchManager();}
+		]);
+		return TouchManager;
 	})()
 
 
@@ -4429,6 +4703,38 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		return LocalStorage;
+	})()
+
+
+	/**
+	*资源版本的生成由layacmd或IDE完成，使用ResourceVersion简化使用过程。
+	*调用enable启用资源版本管理。
+	*/
+	//class laya.net.ResourceVersion
+	var ResourceVersion=(function(){
+		function ResourceVersion(){};
+		__class(ResourceVersion,'laya.net.ResourceVersion');
+		ResourceVersion.enable=function(manifestFile,callback){
+			Laya.loader.load(manifestFile,Handler.create(null,ResourceVersion.onManifestLoaded,[callback]),null,/*laya.net.Loader.JSON*/"json");
+			URL.customFormat=ResourceVersion.addVersionPrefix;
+		}
+
+		ResourceVersion.onManifestLoaded=function(callback,data){
+			ResourceVersion.manifest=data;
+			callback.run();
+			if (!data){
+				console.warn("资源版本清单文件不存在，不使用资源版本管理。忽略ERR_FILE_NOT_FOUND错误。");
+			}
+		}
+
+		ResourceVersion.addVersionPrefix=function(originURL){
+			if (ResourceVersion.manifest && ResourceVersion.manifest[originURL])
+				return ResourceVersion.manifest[originURL]+"/"+originURL;
+			return originURL;
+		}
+
+		ResourceVersion.manifest=null
+		return ResourceVersion;
 	})()
 
 
@@ -9263,6 +9569,7 @@ var Laya=window.Laya=(function(window,document){
 
 		/**
 		*<p>销毁此对象。destroy对象默认会把自己从父节点移除，并且清理自身引用关系，等待js自动垃圾回收机制回收。destroy后不能再使用。</p>
+		*destroy时会移除自身的事情监听，自身的timer监听，移除子对象及从父节点移除自己。
 		*@param destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
 		*/
 		__proto.destroy=function(destroyChild){
@@ -9276,6 +9583,7 @@ var Laya=window.Laya=(function(window,document){
 			this._childs=null;
 			this._$P=null;
 			this.offAll();
+			this.timer.clearAll(this);
 		}
 
 		/**
@@ -11305,9 +11613,13 @@ var Laya=window.Laya=(function(window,document){
 
 	/**
 	*<p> <code>LoaderManager</code> 类用于用于批量加载资源、数据。</p>
-	*<p>批量加载器，单例，可以通过Laya.loader访问。</p>
-	*多线程(默认5个线程)，5个优先级(0最快，4最慢,默认为1)
-	*某个资源加载失败后，会按照最低优先级重试加载(属性retryNum决定重试几次)，如果重试后失败，则调用complete函数，并返回null
+	*<p>批量加载器，单例，可以通过Laya.loader访问，注意大小写。</p>
+	*多线程：默认5个线程，可以通过maxLoader属性修改线程数量
+	*多优先级：默认5个优先级，0最快，4最慢，默认为1
+	*重复过滤：自动过滤重复加载以及已经加载过的地址，防止重复加载
+	*错误重试：资源加载失败后，会重试加载（按照最低优先级），retryNum设定加载失败后重试次数，retryDelay设定加载重试的时间间隔
+	*如果单个地址加载方式，加载重试后仍然失败，则调用complete回调，并返回null。如果多地址加载方式，重试后仍然失败，则调用complete回调，返回为success=false
+	*全部队列加载完成，会派发complete事件，如果队列中任意一个加载失败，会派发error事件
 	*/
 	//class laya.net.LoaderManager extends laya.events.EventDispatcher
 	var LoaderManager=(function(_super){
@@ -11333,8 +11645,8 @@ var Laya=window.Laya=(function(window,document){
 		*@param url 资源地址或者数组，比如[{url:xx,clas:xx,priority:xx,params:xx},{url:xx,clas:xx,priority:xx,params:xx}]
 		*@param progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
 		*@param clas 资源类名，比如Texture
-		*@param type 资源类型
-		*@param priority 优先级
+		*@param type 资源类型，比如：Loader.IMAGE
+		*@param priority 优先级，默认5个优先级，0最快，4最慢，默认为1
 		*@param cache 是否缓存
 		*@return 返回资源对象
 		*/
@@ -11397,7 +11709,7 @@ var Laya=window.Laya=(function(window,document){
 						if (complete)complete.run();
 					}
 					if (cache){
-						LoaderManager.cacheRes(url,item);
+						this.cacheRes(url,item);
 						item.url=url;
 					}
 				}
@@ -11410,13 +11722,13 @@ var Laya=window.Laya=(function(window,document){
 
 		/**
 		*加载资源。
-		*@param url 地址，或者资源对象数组(简单数组：["a.png","b.png"]，复杂数组[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}])。
+		*@param url 单个资源地址，或者资源地址数组(简单数组：["a.png","b.png"]，复杂数组[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}])。
 		*@param complete 结束回调，如果加载失败，则返回 null 。
 		*@param progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
-		*@param type 资源类型。
-		*@param priority 优先级，0-4，五个优先级，0优先级最高，默认为1。
+		*@param type 资源类型。比如：Loader.IMAGE
+		*@param priority 优先级，0-4，5个优先级，0优先级最高，默认为1。
 		*@param cache 是否缓存加载结果。
-		*@param group 分组。
+		*@param group 分组，方便对资源进行管理。
 		*@param ignoreCache 是否忽略缓存，强制重新加载
 		*@return 此 LoaderManager 对象。
 		*/
@@ -11530,6 +11842,32 @@ var Laya=window.Laya=(function(window,document){
 			return Loader.getRes(url);
 		}
 
+		/**
+		*缓存资源。
+		*@param url 资源地址。
+		*@param data 要缓存的内容。
+		*/
+		__proto.cacheRes=function(url,data){
+			Loader.cacheRes(url,data);
+		}
+
+		/**
+		*设置资源分组。
+		*@param url 资源地址。
+		*@param group 分组名
+		*/
+		__proto.setGroup=function(url,group){
+			Loader.setGroup(url,group);
+		}
+
+		/**
+		*根据分组清理资源
+		*@param group 分组名
+		*/
+		__proto.clearResByGroup=function(group){
+			Loader.clearResByGroup(group);
+		}
+
 		/**清理当前未完成的加载，所有未加载的内容全部停止加载。*/
 		__proto.clearUnLoaded=function(){
 			for (var i=0;i < this._maxPriority;i++){
@@ -11588,11 +11926,10 @@ var Laya=window.Laya=(function(window,document){
 			var loadedCount=0;
 			var totalSize=0;
 			var items=[];
-			var defaultType=type || /*laya.net.Loader.IMAGE*/"image";
 			var success=true;
 			for (var i=0;i < itemCount;i++){
 				var item=arr[i];
-				if ((typeof item=='string'))item={url:item,type:defaultType,size:1,priority:priority};
+				if ((typeof item=='string'))item={url:item,type:type,size:1,priority:priority};
 				if (!item.size)item.size=1;
 				item.progress=0;
 				totalSize+=item.size;
@@ -12010,6 +12347,7 @@ var Laya=window.Laya=(function(window,document){
 					break ;
 				}
 			if (Render.isWebGL){
+				canvas.memorySize=0;
 				/*__JS__ */canvas=new laya.webgl.resource.WebGLImage(canvas,data.url);;
 			}
 			this.event(data.url,canvas);
@@ -12051,6 +12389,7 @@ var Laya=window.Laya=(function(window,document){
 				WorkerLoader._preLoadFun.call(_this,url);
 				return;
 			}
+			url=URL.formatURL(url);
 			function clear (){
 				laya.net.WorkerLoader.I.off(url,_this,onload);
 			};
@@ -13304,11 +13643,13 @@ var Laya=window.Laya=(function(window,document){
 
 		/**
 		*返回此实例中的绘图对象（ <code>Graphics</code> ）的显示区域，不包括子对象。
+		*@param realSize 使用图片的真实大小，默认为false
 		*@return 一个 Rectangle 对象，表示获取到的显示区域。
 		*/
-		__proto.getGraphicBounds=function(){
+		__proto.getGraphicBounds=function(realSize){
+			(realSize===void 0)&& (realSize=false);
 			if (!this._graphics)return Rectangle.TEMP.setTo(0,0,0,0);
-			return this._graphics.getBounds();
+			return this._graphics.getBounds(realSize);
 		}
 
 		/**
@@ -13507,7 +13848,20 @@ var Laya=window.Laya=(function(window,document){
 
 		/**
 		*绘制 当前<code>Sprite</code> 到 <code>Canvas</code> 上，并返回一个HtmlCanvas
-		*注意：HtmlCanvas不是浏览器原生的canvas对象，可以通过canvas.source来获取原生的canvas对象。
+		*绘制的结果可以当作图片源，再次绘制到其他Sprite里面，示例：
+		*
+		*var htmlCanvas:HTMLCanvas=sprite.drawToCanvas(100,100,0,0);//把精灵绘制到canvas上面
+		*var texture:Texture=new Texture(htmlCanvas);//使用htmlCanvas创建Texture
+		*var sp:Sprite=new Sprite().pos(0,200);//创建精灵并把它放倒200位置
+		*sp.graphics.drawTexture(texture);//把截图绘制到精灵上
+		*Laya.stage.addChild(sp);//把精灵显示到舞台
+		*
+		*也可以获取原始图片数据，分享到网上，从而实现截图效果，示例：
+		*
+		*var htmlCanvas:HTMLCanvas=sprite.drawToCanvas(100,100,0,0);//把精灵绘制到canvas上面
+		*var canvas:*=htmlCanvas.getCanvas();//获取原生的canvas对象
+		*trace(canvas.toDataURL("image/png"));//打印图片base64信息，可以发给服务器或者保存为图片
+		*
 		*@param canvasWidth 画布宽度。
 		*@param canvasHeight 画布高度。
 		*@param x 绘制的 X 轴偏移量。
@@ -14653,6 +15007,10 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto._tryClearBuffer=function(sourceNode){
+			if (!Browser.onIOS){
+				WebAudioSoundChannel._tryCleanFailed=true;
+				return;
+			}
 			try {sourceNode.buffer=WebAudioSound._miniBuffer;}catch (e){WebAudioSoundChannel._tryCleanFailed=true;}
 		}
 
@@ -15123,7 +15481,8 @@ var Laya=window.Laya=(function(window,document){
 		/**
 		*@inheritDoc
 		*/
-		__proto.getGraphicBounds=function(){
+		__proto.getGraphicBounds=function(realSize){
+			(realSize===void 0)&& (realSize=false);
 			var rec=Rectangle.TEMP;
 			rec.setTo(0,0,this.width,this.height);
 			return rec;
@@ -16517,28 +16876,6 @@ var Laya=window.Laya=(function(window,document){
 	})(Sprite)
 
 
-	//class laya.scene.Scene2D extends laya.display.Sprite
-	var Scene2D=(function(_super){
-		function Scene2D(){
-			Scene2D.__super.call(this);
-			this.createChildren();
-		}
-
-		__class(Scene2D,'laya.scene.Scene2D',_super);
-		var __proto=Scene2D.prototype;
-		/**
-		*<p>创建并添加控件子节点。</p>
-		*@internal 子类可在此函数内创建并添加子节点。
-		*/
-		__proto.createChildren=function(){}
-		__proto.createView=function(sceneData){
-			ClassUtils.createByJson(sceneData,this,this);
-		}
-
-		return Scene2D;
-	})(Sprite)
-
-
 	/**
 	*@private
 	*<code>FileBitmap</code> 是图片文件资源类。
@@ -16668,6 +17005,10 @@ var Laya=window.Laya=(function(window,document){
 				this._ctx && this._ctx.size(w,h);
 				this._source && (this._source.height=h,this._source.width=w);
 			}
+		}
+
+		__proto.getCanvas=function(){
+			return this._source;
 		}
 
 		/**

@@ -89,7 +89,7 @@ package laya.utils {
 				_view[i].y = i * _fontSize + 2 * pixel;
 			}
 		    
-			_height = pixel * (_view.length * 12 + 3 * pixel);
+			_height = pixel * (_view.length * 12 + 3 * pixel)+4;
 			
 			if (!_canvas) {
 				_canvas = new HTMLCanvas('2D');

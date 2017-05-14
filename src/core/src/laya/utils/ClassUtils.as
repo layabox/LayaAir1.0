@@ -40,7 +40,7 @@ package laya.utils {
 		/**
 		 * 根据名字返回类对象。
 		 * @param	className 类名。
-		 * @return
+		 * @return 类对象
 		 */
 		public static var getClass:Function = function(className:String):* {
 			var classObject:* = _classMap[className] || className;

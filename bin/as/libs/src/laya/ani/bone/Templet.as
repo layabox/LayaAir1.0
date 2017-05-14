@@ -18,11 +18,11 @@ package laya.ani.bone {
 	/**数据解析完成后的调度。
 	 * @eventType Event.COMPLETE
 	 * */
-	[Event(name = "complete", type = "laya.events.Event")]
+	[Event(name = "complete", type = "laya.events.Event.COMPLETE", desc = "数据解析完成后的调度")]
 	/**数据解析错误后的调度。
 	 * @eventType Event.ERROR
 	 * */
-	[Event(name = "error", type = "laya.events.Event")]
+	[Event(name = "error", type = "laya.events.Event.ERROR", desc = "数据解析错误后的调度")]
 	/**
 	 * 动画模板类
 	 */
@@ -743,6 +743,10 @@ package laya.ani.bone {
 		
 		public function get rate():Number {
 			return _rate;
+		}
+		
+		public function set rate(v:Number):void {
+			_rate = v;
 		}
 	}
 }

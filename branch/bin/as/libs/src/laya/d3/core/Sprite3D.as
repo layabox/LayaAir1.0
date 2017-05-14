@@ -101,6 +101,8 @@ package laya.d3.core {
 		private var _components:Vector.<Component3D>;
 		/**@private */
 		private var _url:String;
+		/**@private */
+		private var _belongScene:Boolean;
 		
 		/** @private */
 		protected var _active:Boolean;
@@ -144,10 +146,12 @@ package laya.d3.core {
 		public function set active(value:Boolean):void {
 			if (_active !== value) {
 				_active = value;
-				if (value)
-					_activeHierarchy();
-				else
-					_inActiveHierarchy();
+				if (_belongScene) {
+					if (value)
+						_activeHierarchy();
+					else
+						_inActiveHierarchy();
+				}
 			}
 		}
 		
@@ -223,7 +227,14 @@ package laya.d3.core {
 		}
 		
 		/**
-		 *
+		 * 获取是否属于场景。
+		 * @return  是否属于场景。
+		 */
+		public function get belongScene():Boolean {
+			return _belongScene;
+		}
+		
+		/**
 		 * 创建一个 <code>Sprite3D</code> 实例。
 		 */
 		public function Sprite3D(name:String = null) {
@@ -234,6 +245,7 @@ package laya.d3.core {
 			_componentsMap = [];
 			_typeComponentsIndices = new Vector.<Vector.<int>>();
 			_components = new Vector.<Component3D>();
+			_belongScene = false;
 			
 			(name) ? (this.name = name) : (this.name = "Sprite3D-" + _nameNumberCounter++);
 			_activeInHierarchy = false;
@@ -241,8 +253,24 @@ package laya.d3.core {
 			layer = Layer.currentCreationLayer;
 			transform = new Transform3D(this);
 			active = true;
-			on(Event.DISPLAY, this, _onDisplay);
-			on(Event.UNDISPLAY, this, _onUnDisplay);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setBelongScene():void {
+			_belongScene = true;
+			for (var i:int = 0, n:int = _childs.length; i < n; i++)
+				(_childs[i] as Sprite3D)._setBelongScene();
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setUnBelongScene():void {
+			_belongScene = false;
+			for (var i:int = 0, n:int = _childs.length; i < n; i++)
+				(_childs[i] as Sprite3D)._setUnBelongScene();
 		}
 		
 		/**
@@ -250,12 +278,12 @@ package laya.d3.core {
 		 */
 		public function _inActiveHierarchy():void {
 			_activeInHierarchy = false;
-			(_displayedInStage) && (_clearSelfRenderObjects());
+			_clearSelfRenderObjects();
 			this.event(Event.ACTIVE_IN_HIERARCHY_CHANGED, false);
 			
 			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
 				var child:Sprite3D = _childs[i] as Sprite3D;
-				(child._activeHierarchy) && (child._inActiveHierarchy());
+				(child._active) && (child._inActiveHierarchy());
 			}
 		}
 		
@@ -264,7 +292,7 @@ package laya.d3.core {
 		 */
 		public function _activeHierarchy():void {
 			_activeInHierarchy = true;
-			(_displayedInStage) && (_addSelfRenderObjects());
+			_addSelfRenderObjects();
 			this.event(Event.ACTIVE_IN_HIERARCHY_CHANGED, true);
 			
 			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
@@ -328,22 +356,6 @@ package laya.d3.core {
 		 */
 		public function _removeShaderDefine(value:int):void {
 			_shaderDefineValue &= ~value;
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _onDisplay():void {
-			transform.parent = (_parent as Sprite3D).transform;
-			(_activeInHierarchy) && (_addSelfRenderObjects());
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _onUnDisplay():void {
-			transform.parent = null;
-			(_activeInHierarchy) && (_clearSelfRenderObjects());
 		}
 		
 		/**
@@ -543,7 +555,15 @@ package laya.d3.core {
 		override public function addChildAt(node:Node, index:int):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
-			return super.addChildAt(node, index);
+			
+			var returnNode:Node = super.addChildAt(node, index);
+			var sprite3D:Sprite3D = node as Sprite3D;
+			sprite3D.transform.parent = transform;
+			if (_belongScene) {
+				sprite3D._setBelongScene();
+				(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
+			}
+			return returnNode;
 		}
 		
 		/**
@@ -552,7 +572,60 @@ package laya.d3.core {
 		override public function addChild(node:Node):Node {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
-			return super.addChild(node);
+			
+			var returnNode:Node = super.addChild(node);
+			var sprite3D:Sprite3D = node as Sprite3D;
+			sprite3D.transform.parent = transform;
+			if (_belongScene) {
+				sprite3D._setBelongScene();
+				(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
+			}
+			return returnNode;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function removeChildAt(index:int):Node {
+			var node:Node = getChildAt(index);
+			if (node) {
+				var sprite3D:Sprite3D = node as Sprite3D;
+				sprite3D.transform.parent = null;
+				if (_belongScene) {
+					sprite3D._setUnBelongScene();
+					(_activeInHierarchy && sprite3D._active) && (sprite3D._inActiveHierarchy());
+				}
+				this._childs.splice(index, 1);
+				conchModel && conchModel.removeChild(node.conchModel);
+				node.parent = null;
+			}
+			return node;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function removeChildren(beginIndex:int = 0, endIndex:int = 0x7fffffff):Node {
+			if (_childs && _childs.length > 0) {
+				var childs:Array = this._childs;
+				if (beginIndex === 0 && endIndex >= n) {
+					var arr:Array = childs;
+					this._childs = ARRAY_EMPTY;
+				} else {
+					arr = childs.splice(beginIndex, endIndex - beginIndex);
+				}
+				for (var i:int = 0, n:int = arr.length; i < n; i++) {
+					arr[i].parent = null;
+					var sprite3D:Sprite3D = arr[i] as Sprite3D;
+					sprite3D.transform.parent = null;
+					if (_belongScene) {
+						sprite3D._setUnBelongScene();
+						(_activeInHierarchy && sprite3D._active) && (sprite3D._inActiveHierarchy());
+					}
+					conchModel && conchModel.removeChild(arr[i].conchModel);
+				}
+			}
+			return this;
 		}
 		
 		/**
@@ -682,7 +755,7 @@ package laya.d3.core {
 			destSprite3D.timer = timer;
 			destSprite3D._$P = _$P;
 			
-			destSprite3D._active = _active;
+			destSprite3D.active = _active;
 			
 			var destLocalPosition:Vector3 = destSprite3D.transform.localPosition;
 			transform.localPosition.cloneTo(destLocalPosition);

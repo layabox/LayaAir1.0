@@ -1,6 +1,6 @@
 package laya.ui {
-	import laya.display.css.Font;
 	import laya.display.Text;
+	import laya.display.css.Font;
 	import laya.events.Event;
 	import laya.ui.Component;
 	import laya.ui.UIUtils;
@@ -121,10 +121,7 @@ package laya.ui {
 	 * @see laya.display.Text
 	 */
 	public class Label extends Component {
-		/**
-		 * @private
-		 */
-		private static var _textReg:RegExp = new RegExp("\\\\n", "g");
+		
 		/**
 		 * @private
 		 * 文本 <code>Text</code> 实例。
@@ -162,7 +159,7 @@ package laya.ui {
 		public function set text(value:String):void {
 			if (_tf.text != value) {
 				if(value)
-				value=(value+"").replace(_textReg,"\n");
+				value=UIUtils.adptString(value+"");
 				_tf.text = value;
 				event(Event.CHANGE);
 			}

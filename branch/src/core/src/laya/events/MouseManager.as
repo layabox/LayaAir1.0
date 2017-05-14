@@ -19,6 +19,8 @@ package laya.events {
 		
 		/**是否开启鼠标检测，默认为true*/
 		public static var enabled:Boolean = true;
+		/**是否开启多点触控*/
+		public static var multiTouchEnabled:Boolean = true;
 		/** canvas 上的鼠标X坐标。*/
 		public var mouseX:Number = 0;
 		/** canvas 上的鼠标Y坐标。*/
@@ -37,16 +39,19 @@ package laya.events {
 		private var _point:Point = new Point();
 		private var _rect:Rectangle = new Rectangle();
 		private var _target:*;
-		private var _lastOvers:Array = [];
-		private var _currOvers:Array = [];
-		private var _lastClickTimer:Number = 0;
+		//		private var _lastOvers:Array = [];
+		//		private var _currOvers:Array = [];
+		//		private var _lastClickTimer:Number = 0;
 		private var _lastMoveTimer:Number = 0;
-		private var _isDoubleClick:Boolean = false;
+		//		private var _isDoubleClick:Boolean = false;
 		private var _isLeftMouse:Boolean;
 		private var _eventList:Array = [];
 		private var _prePoint:Point = new Point();
 		private var _touchIDs:Object = {};
+		private var _curTouchID:Number = NaN;
 		private var _id:int = 1;
+		
+		//		private var _isTouch:Boolean = false;
 		
 		/**
 		 * @private
@@ -95,6 +100,7 @@ package laya.events {
 					list.push(e);
 					if (!Input.isInputting) e.preventDefault();
 					_this.mouseDownTime = Browser.now();
+						//runEvent();
 				}
 			});
 			canvas.addEventListener("touchend", function(e:*):void {
@@ -117,6 +123,7 @@ package laya.events {
 				if (enabled) list.push(e);
 			});
 		}
+		private var _tTouchID:int;
 		
 		private function initEvent(e:*, nativeEvent:* = null):void {
 			var _this:MouseManager = this;
@@ -125,108 +132,54 @@ package laya.events {
 			_this._event.nativeEvent = nativeEvent || e;
 			_this._target = null;
 			
-			_point.setTo(e.clientX, e.clientY);
+			_point.setTo(e.pageX || e.clientX, e.pageY || e.clientY);
 			_stage._canvasTransform.invertTransformPoint(_point);
 			
 			_this.mouseX = _point.x;
 			_this.mouseY = _point.y;
 			_this._event.touchId = e.identifier || 0;
+			_tTouchID = _this._event.touchId;
+			
+			var evt:Event;
+			evt = TouchManager.I._event;
+			evt._stoped = false;
+			evt.nativeEvent = _this._event.nativeEvent;
+			evt.touchId = _this._event.touchId;
 		}
 		
 		private function checkMouseWheel(e:*):void {
 			_event.delta = e.wheelDelta ? e.wheelDelta * 0.025 : -e.detail;
+			var _lastOvers:Array = TouchManager.I.getLastOvers();
+			
 			for (var i:int = 0, n:int = _lastOvers.length; i < n; i++) {
 				var ele:* = _lastOvers[i];
 				ele.event(Event.MOUSE_WHEEL, _event.setTo(Event.MOUSE_WHEEL, ele, _target));
 			}
-			_stage.event(Event.MOUSE_WHEEL, _event.setTo(Event.MOUSE_WHEEL, _stage, _target));
-		}
-		
-		private function checkMouseOut():void {
-			if (disableMouseEvent) return;
-			for (var i:int = 0, n:int = _lastOvers.length; i < n; i++) {
-				var ele:* = _lastOvers[i];
-				if (!ele.destroyed && _currOvers.indexOf(ele) < 0) {
-					ele._set$P("$_MOUSEOVER", false);
-					ele.event(Event.MOUSE_OUT, _event.setTo(Event.MOUSE_OUT, ele, ele));
-				}
-			}
-			var temp:Array = _lastOvers;
-			_lastOvers = _currOvers;
-			_currOvers = temp;
-			_currOvers.length = 0;
+			//			_stage.event(Event.MOUSE_WHEEL, _event.setTo(Event.MOUSE_WHEEL, _stage, _target));
 		}
 		
 		private function onMouseMove(ele:*):void {
-			sendMouseMove(ele);
-			_event._stoped = false;
-			sendMouseOver(_target);
-		}
+			
+			TouchManager.I.onMouseMove(ele, _tTouchID);
 		
-		private function sendMouseMove(ele:*):void {
-			ele.event(Event.MOUSE_MOVE, _event.setTo(Event.MOUSE_MOVE, ele, _target));
-			!_event._stoped && ele.parent && sendMouseMove(ele.parent);
-		}
-		
-		private function sendMouseOver(ele:*):void {
-			if (ele.parent || ele === _stage) {
-				if (!ele._get$P("$_MOUSEOVER")) {
-					ele._set$P("$_MOUSEOVER", true);
-					ele.event(Event.MOUSE_OVER, _event.setTo(Event.MOUSE_OVER, ele, _target));
-				}
-				_currOvers.push(ele);
-			}
-			!_event._stoped && ele.parent && sendMouseOver(ele.parent);
 		}
 		
 		private function onMouseDown(ele:*):void {
 			if (Input.isInputting && Laya.stage.focus && Laya.stage.focus["focus"] && !Laya.stage.focus.contains(_target)) {
 				Laya.stage.focus["focus"] = false;
 			}
-			_onMouseDown(ele);
-		}
-		
-		private function _onMouseDown(ele:*):void {
-			if (_isLeftMouse) {
-				ele._set$P("$_MOUSEDOWN", _touchIDs[_event.touchId]);
-				ele.event(Event.MOUSE_DOWN, _event.setTo(Event.MOUSE_DOWN, ele, _target));
-			} else {
-				ele._set$P("$_RIGHTMOUSEDOWN", _touchIDs[_event.touchId]);
-				ele.event(Event.RIGHT_MOUSE_DOWN, _event.setTo(Event.RIGHT_MOUSE_DOWN, ele, _target));
-			}
-			!_event._stoped && ele.parent && onMouseDown(ele.parent);
+			TouchManager.I.onMouseDown(ele, _tTouchID, _isLeftMouse);
 		}
 		
 		private function onMouseUp(ele:*):void {
-			var type:String = _isLeftMouse ? Event.MOUSE_UP : Event.RIGHT_MOUSE_UP;
-			sendMouseUp(ele, type);
-			_event._stoped = false;
-			sendClick(_target, type);
-		}
-		
-		private function sendMouseUp(ele:*, type:String):void {
-			ele.event(type, _event.setTo(type, ele, _target));
-			!_event._stoped && ele.parent && sendMouseUp(ele.parent, type);
-		}
-		
-		private function sendClick(ele:*, type:String):void {
-			if (ele.destroyed) return;
-			if (type === Event.MOUSE_UP && ele._get$P("$_MOUSEDOWN") === _touchIDs[_event.touchId]) {
-				ele._set$P("$_MOUSEDOWN", -1);
-				ele.event(Event.CLICK, _event.setTo(Event.CLICK, ele, _target));
-				_isDoubleClick && ele.event(Event.DOUBLE_CLICK, _event.setTo(Event.DOUBLE_CLICK, ele, _target));
-			} else if (type === Event.RIGHT_MOUSE_UP && ele._get$P("$_RIGHTMOUSEDOWN") === _touchIDs[_event.touchId]) {
-				ele._set$P("$_RIGHTMOUSEDOWN", -1);
-				ele.event(Event.RIGHT_CLICK, _event.setTo(Event.RIGHT_CLICK, ele, _target));
-			}
-			!_event._stoped && ele.parent && sendClick(ele.parent, type);
+			TouchManager.I.onMouseUp(ele, _tTouchID, _isLeftMouse);
 		}
 		
 		private function check(sp:Sprite, mouseX:Number, mouseY:Number, callBack:Function):Boolean {
 			this._point.setTo(mouseX, mouseY);
 			sp.fromParentPoint(this._point);
 			mouseX = this._point.x;
-			mouseY = this._point.y;	
+			mouseY = this._point.y;
 			
 			//如果有裁剪，则先判断是否在裁剪范围内
 			var scrollRect:Rectangle = sp.scrollRect;
@@ -247,7 +200,7 @@ package laya.events {
 					var child:Sprite = sp._childs[i];
 					//只有接受交互事件的，才进行处理
 					if (!child.destroyed && child.mouseEnabled && child.visible) {
-						flag = check(child, mouseX , mouseY , callBack);
+						flag = check(child, mouseX, mouseY, callBack);
 						if (flag) return true;
 					}
 				}
@@ -313,10 +266,6 @@ package laya.events {
 					break;
 				case 'mouseup': 
 					_this._isLeftMouse = evt.button === 0;
-					var now:Number = Browser.now();
-					_this._isDoubleClick = (now - _this._lastClickTimer) < 300;
-					_this._lastClickTimer = now;
-					
 					_this.initEvent(evt);
 					_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseUp);
 					break;
@@ -326,7 +275,7 @@ package laya.events {
 						_prePoint.y = evt.clientY;
 						_this.initEvent(evt);
 						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseMove);
-						_this.checkMouseOut();
+							//						_this.checkMouseOut();
 					}
 					break;
 				case "touchstart": 
@@ -335,33 +284,43 @@ package laya.events {
 					var touches:Array = evt.changedTouches;
 					for (var j:int = 0, n:int = touches.length; j < n; j++) {
 						var touch:* = touches[j];
-						//200次点击清理一下id资源
-						if (_id % 200 === 0) _touchIDs = {};
-						_touchIDs[touch.identifier] = _id++;
-						_this.initEvent(touch, evt);
-						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseDown);
+						//是否禁用多点触控
+						if (multiTouchEnabled || isNaN(_curTouchID)) {
+							_curTouchID = touch.identifier;
+							//200次点击清理一下id资源
+							if (_id % 200 === 0) _touchIDs = {};
+							_touchIDs[touch.identifier] = _id++;
+							_this.initEvent(touch, evt);
+							_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseDown);
+						}
 					}
+					
 					break;
 				case "touchend": 
 					_isTouchRespond = true;
 					_this._isLeftMouse = true;
-					now = Browser.now();
-					_this._isDoubleClick = (now - _this._lastClickTimer) < 300;
-					_this._lastClickTimer = now;
-					
 					var touchends:Array = evt.changedTouches;
 					for (j = 0, n = touchends.length; j < n; j++) {
-						_this.initEvent(touchends[j], evt);
-						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseUp);
+						touch = touchends[j];
+						//是否禁用多点触控
+						if (multiTouchEnabled || touch.identifier == _curTouchID) {
+							_curTouchID = NaN;
+							_this.initEvent(touch, evt);
+							_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseUp);
+						}
 					}
+					
 					break;
 				case "touchmove": 
-					var touchemoves:Array = evt.targetTouches;
+					var touchemoves:Array = evt.changedTouches;
 					for (j = 0, n = touchemoves.length; j < n; j++) {
-						_this.initEvent(touchemoves[j], evt);
-						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseMove);
+						touch = touchemoves[j];
+						//是否禁用多点触控
+						if (multiTouchEnabled || touch.identifier == _curTouchID) {
+							_this.initEvent(touch, evt);
+							_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseMove);
+						}
 					}
-					_this.checkMouseOut();
 					break;
 				case "wheel": 
 				case "mousewheel": 

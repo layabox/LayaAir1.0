@@ -79,7 +79,7 @@ package laya.utils {
 		}
 		
 		/**
-		 *  @private
+		 * @private
 		 * 是否击中绘图指令
 		 */
 		public static function isHitCmd(x:Number, y:Number, cmd:Array):Boolean {

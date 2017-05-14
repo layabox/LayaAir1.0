@@ -23,6 +23,7 @@ package laya.resource {
 	[Event(name = "recovered", type = "laya.events.Event")]
 	
 	/**
+	 * @private
 	 * <code>Resource</code> 资源存取类。
 	 */
 	public class Resource extends EventDispatcher implements ICreateResource, IDispose {

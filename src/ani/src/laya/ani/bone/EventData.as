@@ -1,5 +1,8 @@
 package laya.ani.bone {
 	
+	/**
+	 * @private
+	 */
 	public class EventData {
 		
 		public var name:String;

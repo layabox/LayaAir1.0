@@ -172,7 +172,12 @@ package laya.device.media
 		/**
 		 * 检测是否支持播放指定格式视频。
 		 * @param type	参数为Video.MP4 / Video.OGG / Video.WEBM之一。
-		 * @return
+		 * @return 表示支持的级别。可能的值：
+		 * <ul>
+		 * <li>"probably"，Video.SUPPORT_PROBABLY - 浏览器最可能支持该音频/视频类型</li>
+		 * <li>"maybe"，Video.SUPPORT_MAYBY - 浏览器也许支持该音频/视频类型</li>
+		 * <li>""，Video.SUPPORT_NO- （空字符串）浏览器不支持该音频/视频类型</li>
+		 * </ul>
 		 */
 		public function canPlayType(type:int):String
 		{
@@ -214,7 +219,7 @@ package laya.device.media
 		/**
 		 * buffered 属性返回 TimeRanges(JS)对象。TimeRanges 对象表示用户的音视频缓冲范围。缓冲范围指的是已缓冲音视频的时间范围。如果用户在音视频中跳跃播放，会得到多个缓冲范围。
 		 * <p>buffered.length返回缓冲范围个数。如获取第一个缓冲范围则是buffered.start(0)和buffered.end(0)。以秒计。</p>
-		 * @return
+		 * @return TimeRanges(JS)对象
 		 */
 		public function get buffered():*
 		{
@@ -370,8 +375,6 @@ package laya.device.media
 		 * <li>metadata	指示当页面加载后仅加载音频/视频的元数据。</li>
 		 * <li>none	指示页面加载后不应加载音频/视频。</li>
 		 * </ul>
-		 * @return
-		 *
 		 */
 		public function get preload():String
 		{
@@ -385,8 +388,6 @@ package laya.device.media
 		
 		/**
 		 * 参见 <i>http://www.w3school.com.cn/tags/av_prop_seekable.asp</i>。
-		 * @return
-		 *
 		 */
 		public function get seekable():*
 		{
@@ -454,6 +455,9 @@ package laya.device.media
 			videoElement.removeEventListener("volumechange", onVolumechange);
 			videoElement.removeEventListener("waiting", onWaiting);
 			videoElement.removeEventListener("ended", onPlayComplete);
+			
+			pause();
+			videoElement = null;
 		}
 		
 		private function syncVideoPosition():void

@@ -108,11 +108,10 @@ package laya.ui {
 		/**
 		 * @private
 		 * 滑块的的 <code>Event.MOUSE_DOWN</code> 事件侦听处理函数。
-		 * @param e
 		 */
 		protected function onBarMouseDown(e:Event):void {
 			_globalSacle || (_globalSacle = new Point());
-			_globalSacle.setTo(globalScaleX, globalScaleY);
+			_globalSacle.setTo(globalScaleX || 0.01, globalScaleY || 0.01);
 			
 			_maxMove = isVertical ? (height - _bar.height) : (width - _bar.width);
 			_tx = Laya.stage.mouseX;
@@ -153,7 +152,6 @@ package laya.ui {
 		
 		/**
 		 * @private
-		 * @param e
 		 */
 		private function mouseUp(e:Event):void {
 			Laya.stage.off(Event.MOUSE_MOVE, this, mouseMove);
@@ -163,7 +161,6 @@ package laya.ui {
 		
 		/**
 		 * @private
-		 * @param e
 		 */
 		private function mouseMove(e:Event):void {
 			var oldValue:Number = _value;
@@ -192,7 +189,6 @@ package laya.ui {
 		
 		/**
 		 * @private
-		 * @param type
 		 */
 		protected function sendChangeEvent(type:String = Event.CHANGE):void {
 			event(type);
@@ -201,7 +197,6 @@ package laya.ui {
 		
 		/**
 		 * @copy laya.ui.Image#skin
-		 * @return
 		 */
 		public function get skin():String {
 			return _skin;
@@ -249,7 +244,6 @@ package laya.ui {
 		 * <p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
 		 * <ul><li>例如："4,4,4,4,1"</li></ul></p>
 		 * @see laya.ui.AutoBitmap.sizeGrid
-		 * @return
 		 */
 		public function get sizeGrid():String {
 			return _bg.sizeGrid;

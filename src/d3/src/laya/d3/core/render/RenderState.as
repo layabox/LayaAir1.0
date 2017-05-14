@@ -1,7 +1,7 @@
 package laya.d3.core.render {
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.graphics.StaticBatch;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
@@ -43,7 +43,7 @@ package laya.d3.core.render {
 		/**距上一帧间隔时间。*/
 		public var elapsedTime:Number;
 		/**当前场景。*/
-		public var scene:BaseScene;
+		public var scene:Scene;
 		/**当前渲染3D精灵。*/
 		public var owner:Sprite3D;
 		/**当前渲染物体。*/

@@ -108,7 +108,7 @@ package laya.d3.component.animation {
 		 * @private
 		 */
 		private function _updateAnimtionPlayer():void {
-			_player.update(Laya.timer.delta);
+			_player._update(Laya.timer.delta);
 		}
 		
 		/**

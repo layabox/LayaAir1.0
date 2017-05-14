@@ -32,12 +32,12 @@ package laya.html.dom
 			url = formatURL(url);
 			if (_url == url) return;
 			_url = url;
-			_tex = Loader.getRes(url)
-			if (!_tex) {
-				_tex = new Texture();
-				_tex.load(url);
-				Loader.cacheRes(url, _tex);
-			}
+			//_tex = Loader.getRes(url)
+			//if (!_tex) {
+				//_tex = new Texture();
+				//_tex.load(url);
+				//Loader.cacheRes(url, _tex);
+			//}
 			
 			var tex:Texture = _tex=Loader.getRes(url);
 			if (!tex) {

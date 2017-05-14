@@ -28,6 +28,7 @@ package laya.webgl {
 	import laya.webgl.display.GraphicsGL;
 	import laya.webgl.resource.IMergeAtlasBitmap;
 	import laya.webgl.resource.RenderTarget2D;
+	import laya.webgl.resource.WebGLCanvas;
 	import laya.webgl.resource.WebGLImage;
 	import laya.webgl.resource.WebGLSubImage;
 	import laya.webgl.shader.d2.Shader2D;
@@ -167,7 +168,7 @@ package laya.webgl {
 				var gl:WebGLContext;
 				var names:Array = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
 				for (var i:int = 0; i < names.length; i++) {
-					try {
+					try {						
 						gl = canvas.getContext(names[i], {stencil: Config.isStencil, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha, preserveDrawingBuffer: Config.preserveDrawingBuffer});
 					} catch (e:*) {
 					}
@@ -250,13 +251,31 @@ package laya.webgl {
 			RunDriver.drawToCanvas = function(sprite:Sprite, _renderType:int, canvasWidth:Number, canvasHeight:Number, offsetX:Number, offsetY:Number):* {
 				var renderTarget:RenderTarget2D = new RenderTarget2D(canvasWidth, canvasHeight, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, 0, false);
 				renderTarget.start();
-				renderTarget.clear(1.0, 0.0, 0.0, 1.0);
-				sprite.render(Render.context, -offsetX, RenderState2D.height - canvasHeight - offsetY);
+				Render.context.clear();
+				sprite.render(Render.context, offsetX, RenderState2D.height - canvasHeight + offsetY);
 				Render.context.flush();
 				renderTarget.end();
-				var pixels:Uint8Array = renderTarget.getData(0, 0, renderTarget.width, renderTarget.height);
+				var pixels:Uint8Array = renderTarget.getData(0, 0, renderTarget.width, renderTarget.height);	
 				renderTarget.dispose();
-				return pixels;
+				
+				var htmlCanvas:* = new WebGLCanvas();
+				htmlCanvas._canvas = Browser.createElement("canvas");
+				htmlCanvas.size(canvasWidth, canvasHeight);
+				var context:*= htmlCanvas._canvas.getContext('2d');
+				
+				Browser.canvas.size(canvasWidth, canvasHeight);
+				var tempContext:*= Browser.context;
+				var imgData:* = tempContext.createImageData(canvasWidth, canvasHeight);
+				imgData.data.set(__JS__("new Uint8ClampedArray(pixels.buffer)"));
+				tempContext.putImageData(imgData, 0, 0);
+				
+				context.save();
+				context.translate(0, canvasHeight);
+				context.scale(1,-1);
+				context.drawImage(Browser.canvas.source, 0, 0);
+				context.restore();
+				
+				return htmlCanvas;
 			}
 			
 			RunDriver.createFilterAction = function(type:int):* {

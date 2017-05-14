@@ -6,8 +6,7 @@ package threeDimen.advancedStage {
 	import laya.d3.core.VRCamera;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
-	import laya.d3.core.scene.BaseScene;
-	import laya.d3.core.scene.VRScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
@@ -31,7 +30,7 @@ package threeDimen.advancedStage {
 			Laya.stage.screenMode = Stage.SCREEN_HORIZONTAL;
 			Stat.show();
 			
-			var scene:VRScene = Laya.stage.addChild(new VRScene()) as VRScene;
+			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			
 			var camera:VRCamera = new VRCamera(0.03, 0, 0, 0.1, 100);
 			camera = (scene.addChild(camera)) as VRCamera;
@@ -43,7 +42,7 @@ package threeDimen.advancedStage {
 			loadScene(scene, camera);
 		}
 		
-		private function loadScene(scene:BaseScene, camera:VRCamera):void {
+		private function loadScene(scene:Scene, camera:VRCamera):void {
 			var root:Sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;
 			root.transform.localScale = new Vector3(10, 10, 10);
 			

@@ -1,7 +1,7 @@
 package laya.ani {
 	
 	/**
-	 * ...
+	 * @private
 	 * @author ...
 	 */
 	public class KeyFramesContent {

@@ -1,21 +1,11 @@
 package laya.d3.terrain {
-	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.material.StandardMaterial;
-	import laya.d3.core.material.TerrainMaterial;
-	import laya.d3.core.render.BaseRender;
+	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
+	import laya.d3.core.render.BaseRender;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Vector4;
-	import laya.d3.resource.models.BaseMesh;
-	import laya.d3.resource.models.Mesh;
-	import laya.d3.shadowMap.ParallelSplitShadowMap;
-	import laya.events.Event;
-	import laya.events.EventDispatcher;
-	import laya.renders.RenderSprite;
-	import laya.resource.IDispose;
 	
 	/**
 	 * <code>MeshRender</code> 类用于网格渲染器。
@@ -54,16 +44,25 @@ package laya.d3.terrain {
 		
 		override protected function _calculateBoundingBox():void {
 			var terrainFilter:TerrainFilter = _terrainSprite3DOwner.terrainFilter;
-			if ( terrainFilter == null ) {
+			if (terrainFilter == null) {
 				_boundingBox.toDefault();
 			} else {
 				var worldMat:Matrix4x4 = _terrainSprite3DOwner.transform.worldMatrix;
-				var corners:Vector.<Vector3> = terrainFilter._boundingBoxCorners;
+				var corners:Array = terrainFilter._boundingBoxCorners;
 				for (var i:int = 0; i < 8; i++)
-					Vector3.transformCoordinate(corners[i], worldMat, _tempBoudingBoxCorners[i]);
-				BoundBox.createfromPoints(_tempBoudingBoxCorners, _boundingBox);
+					Vector3.transformCoordinate(corners[i], worldMat, _tempBoundBoxCorners[i]);
+				BoundBox.createfromPoints(_tempBoundBoxCorners, _boundingBox);
 				terrainFilter.calcLeafBoudingBox(worldMat);
 			}
+		}
+		
+		/**
+		 * @private
+		 */
+		override public function _renderUpdate(projectionView:Matrix4x4):void {
+			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, _owner.transform.worldMatrix);
+			var projViewWorld:Matrix4x4 = _owner.getProjectionViewWorldMatrix(projectionView);
+			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
 		}
 		
 		/**

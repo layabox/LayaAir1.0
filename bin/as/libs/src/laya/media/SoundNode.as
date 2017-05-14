@@ -4,6 +4,9 @@ package laya.media {
 	import laya.events.Event;
 	import laya.utils.Handler;
 	
+	/**
+	 * @private
+	 */
 	public class SoundNode extends Sprite {
 		public var url:String;
 		private var _channel:SoundChannel;

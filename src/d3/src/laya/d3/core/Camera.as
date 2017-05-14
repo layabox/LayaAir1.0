@@ -1,15 +1,17 @@
 package laya.d3.core {
 	import laya.d3.core.render.RenderState;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Viewport;
-	import laya.d3.shader.ValusArray;
+	import laya.d3.resource.RenderTexture;
 	import laya.d3.utils.Picker;
 	import laya.d3.utils.Size;
 	import laya.events.Event;
+	import laya.webgl.WebGLContext;
 	
 	/**
 	 * <code>Camera</code> 类用于创建摄像机。
@@ -189,8 +191,6 @@ package laya.d3.core {
 			_boundFrustumUpdate = true;
 		}
 		
-		
-		
 		/**
 		 * @inheritDoc
 		 */
@@ -207,8 +207,6 @@ package laya.d3.core {
 			_boundFrustumUpdate = true;
 		}
 		
-		
-		
 		/**
 		 * @inheritDoc
 		 */
@@ -218,6 +216,40 @@ package laya.d3.core {
 				conchModel.setProjectMatrix(projectionMatrix.elements);
 			}
 			super._update(state);
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _renderCamera(gl:WebGLContext, state:RenderState, scene:Scene):void {
+			(scene.parallelSplitShadowMaps[0]) && (scene._renderShadowMap(gl, state, this));//TODO:SM
+			state.camera = this;
+			_prepareCameraToRender();
+			scene.beforeRender(state);//渲染之前
+			
+			var viewMat:Matrix4x4, projectMat:Matrix4x4;
+			viewMat = state._viewMatrix = viewMatrix;
+			var renderTar:RenderTexture = _renderTarget;
+			if (renderTar) {
+				renderTar.start();
+				Matrix4x4.multiply(_invertYScaleMatrix, _projectionMatrix, _invertYProjectionMatrix);
+				Matrix4x4.multiply(_invertYScaleMatrix, projectionViewMatrix, _invertYProjectionViewMatrix);
+				projectMat = state._projectionMatrix = _invertYProjectionMatrix;//TODO:
+				state._projectionViewMatrix = _invertYProjectionViewMatrix;//TODO:
+			} else {
+				projectMat = state._projectionMatrix = _projectionMatrix;//TODO:
+				state._projectionViewMatrix = projectionViewMatrix;//TODO:
+			}
+			
+			_prepareCameraViewProject(viewMat, projectMat);
+			state._boundFrustum = boundFrustum;
+			state._viewport = viewport;
+			scene._preRenderScene(gl, state);
+			scene._clear(gl, state);
+			scene._renderScene(gl, state);
+			scene.lateRender(state);//渲染之后
+			
+			(renderTar) && (renderTar.end());
 		}
 		
 		/**

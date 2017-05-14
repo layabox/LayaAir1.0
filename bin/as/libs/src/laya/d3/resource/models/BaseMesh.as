@@ -1,7 +1,5 @@
 package laya.d3.resource.models {
-	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Vector3;
@@ -18,7 +16,7 @@ package laya.d3.resource.models {
 		/** @private */
 		protected var _boundingSphere:BoundSphere;
 		/** @private */
-		protected var _boundingBoxCorners:Vector.<Vector3>;
+		protected var _boundingBoxCorners:Array;
 		
 		/**
 		 * 获取SubMesh的个数。
@@ -48,7 +46,7 @@ package laya.d3.resource.models {
 		 * 获取包围球顶点,禁止修改其数据。
 		 * @return 包围球。
 		 */
-		public function get boundingBoxCorners():Vector.<Vector3> {
+		public function get boundingBoxCorners():Array {
 			return _boundingBoxCorners;
 		}
 		
@@ -56,7 +54,7 @@ package laya.d3.resource.models {
 		 * 获取网格顶点,请重载此方法。
 		 * @return 网格顶点。
 		 */
-		public function get positions():Vector.<Vector3> {
+		public function get positions():Array {
 			throw new Error("未Override,请重载该属性！");
 		}
 		
@@ -72,7 +70,7 @@ package laya.d3.resource.models {
 		 * @private
 		 */
 		protected function _generateBoundingObject():void {
-			var pos:Vector.<Vector3> = positions;
+			var pos:Array = positions;
 			_boundingSphere = new BoundSphere(new Vector3(), 0);
 			BoundSphere.createfromPoints(pos, _boundingSphere);
 			_boundingBox = new BoundBox(new Vector3(), new Vector3());

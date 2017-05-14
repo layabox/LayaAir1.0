@@ -1,7 +1,5 @@
 package laya.d3.core.scene {
-	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Layer;
-	import laya.d3.core.MeshRender;
 	import laya.d3.core.PhasorSpriter3D;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.IRenderable;
@@ -16,7 +14,6 @@ package laya.d3.core.scene {
 	import laya.d3.math.Collision;
 	import laya.d3.math.ContainmentType;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.utils.Stat;
 	
@@ -36,9 +33,9 @@ package laya.d3.core.scene {
 		private var _relaxBox:BoundBox = null;
 		
 		private var _boundingSphere:BoundSphere = new BoundSphere(new Vector3(), 0);
-		private var _corners:Vector.<Vector3> = new Vector.<Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+		private var _corners:Array = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		private var _boundingBoxCenter:Vector3 = new Vector3();
-		private var _scene:BaseScene = null;
+		private var _scene:Scene = null;
 		private var _parent:OctreeNode = null;
 		public var _children:Vector.<OctreeNode> = new Vector.<OctreeNode>(CHILDNUM);
 		private var _objects:Vector.<BaseRender> = new Vector.<BaseRender>();
@@ -83,7 +80,7 @@ package laya.d3.core.scene {
 			return _relaxBox;
 		}
 		
-		public function OctreeNode(scene:BaseScene, currentDepth:int) {
+		public function OctreeNode(scene:Scene, currentDepth:int) {
 			_scene = scene;
 			_currentDepth = currentDepth;
 		}
@@ -195,14 +192,14 @@ package laya.d3.core.scene {
 							continue;
 					}
 					
-					render._owner._renderUpdate(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
+					render._renderUpdate(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
 					render._distanceForSort = Vector3.distance(render.boundingSphere.center, cameraPosition) + render.sortingFudge;
 					var renderElements:Vector.<RenderElement> = render._renderElements;
 					for (j = 0, m = renderElements.length; j < m; j++) {
 						var renderElement:RenderElement = renderElements[j];
 						var staticBatch:StaticBatch = renderElement._staticBatch;//TODO:换vertexBuffer后应该取消合并,修改顶点数据后，从动态列表移除，暂时忽略，不允许直接修改Buffer。
 						if (staticBatch && /*(staticBatch._vertexDeclaration===renderElement.element.getVertexBuffer().vertexDeclaration)&&*/ (staticBatch._material === renderElement._material)) {
-							staticBatch._addRenderElement(renderElement);
+							staticBatch._addBatchRenderElement(renderElement);
 						} else {
 							var renderObj:IRenderable = renderElement.renderObj;
 							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1) && (renderObj._getIndexBuffer()) && (renderElement._material.renderQueue < 2) && renderElement._canDynamicBatch && (!render._owner.isStatic))//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并//TODO:静态物体如果没合并走动态合并现在会出BUG,lightmapUV问题。
@@ -234,7 +231,7 @@ package laya.d3.core.scene {
 		/**
 		 * @private
 		 */
-		public function cullingShadowObjects(lightBoundFrustum:Vector.<BoundFrustum>, splitShadowQueues:Vector.<RenderQueue>, testVisible:Boolean, flags:int, scene:BaseScene):void {//TODO:SM
+		public function cullingShadowObjects(lightBoundFrustum:Vector.<BoundFrustum>, splitShadowQueues:Vector.<RenderQueue>, testVisible:Boolean, flags:int, scene:Scene):void {//TODO:SM
 			//TODO:动态合并和静态合并
 			var i:int, j:int, n:int, m:int;
 			var dynamicBatchManager:DynamicBatchManager = _scene._dynamicBatchManager;
@@ -274,7 +271,7 @@ package laya.d3.core.scene {
 		/**
 		 * @private
 		 */
-		public function cullingShadowObjectsOnePSSM(lightBoundFrustum:BoundFrustum, splitShadowQueues:Vector.<RenderQueue>, lightViewProjectMatrix:Matrix4x4, testVisible:Boolean, flags:int, scene:BaseScene):void {//TODO:SM
+		public function cullingShadowObjectsOnePSSM(lightBoundFrustum:BoundFrustum, splitShadowQueues:Vector.<RenderQueue>, lightViewProjectMatrix:Matrix4x4, testVisible:Boolean, flags:int, scene:Scene):void {//TODO:SM
 			//TODO:动态合并和静态合并
 			var shadowQueue:RenderQueue = splitShadowQueues[0];
 			var i:int, j:int, n:int, m:int;
@@ -284,7 +281,7 @@ package laya.d3.core.scene {
 				if (baseRender.castShadow && Layer.isVisible(baseRender._owner.layer.mask)&& baseRender.enable) {
 					if (testVisible && lightBoundFrustum.containsBoundSphere(baseRender.boundingSphere) === ContainmentType.Disjoint)
 						continue;
-					baseRender._owner._renderUpdate(lightViewProjectMatrix);
+					baseRender._renderUpdate(lightViewProjectMatrix);
 					//TODO:计算距离排序
 					var renderElements:Vector.<RenderElement> = baseRender._renderElements;
 					for (j = 0, m = renderElements.length; j < m; j++)

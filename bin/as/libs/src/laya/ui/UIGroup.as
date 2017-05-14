@@ -37,6 +37,8 @@ package laya.ui {
 		/**@private */
 		protected var _labelColors:String;
 		/**@private */
+		private var _labelFont:String;
+		/**@private */
 		protected var _labelStrokeColor:String;
 		/**@private */
 		protected var _strokeColors:String;
@@ -314,7 +316,8 @@ package laya.ui {
 		}
 		
 		/**
-		 * 表示按钮文本标签的字体大小。
+		 * 表示按钮的状态值，以数字表示，默认为3态。
+		 * @see laya.ui.Button#stateNum
 		 */
 		public function get stateNum():int {
 			return _stateNum;
@@ -341,6 +344,20 @@ package laya.ui {
 			}
 		}
 		
+		/**
+		 * 表示按钮文本标签的字体名称，以字符串形式表示。
+		 * @see laya.display.Text.font()
+		 */
+		public function get labelFont():String {
+			return _labelFont;
+		}
+		
+		public function set labelFont(value:String):void {
+			if (_labelFont != value) {
+				_labelFont = value;
+				_setLabelChanged();
+			}
+		}
 		/**
 		 * 表示按钮文本标签的边距。
 		 * <p><b>格式：</b>"上边距,右边距,下边距,左边距"。</p>
@@ -405,6 +422,7 @@ package laya.ui {
 					_labelPadding && (btn.labelPadding = _labelPadding);
 					_labelAlign && (btn.labelAlign = _labelAlign);
 					_stateNum && (btn.stateNum = _stateNum);
+					_labelFont && (btn.labelFont=_labelFont);
 					if (_direction === "horizontal") {
 						btn.y = 0;
 						btn.x = left;

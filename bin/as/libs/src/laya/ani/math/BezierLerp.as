@@ -2,6 +2,7 @@ package laya.ani.math
 {
 	import laya.maths.Bezier;
 	/**
+	 * @private
 	 * ...
 	 * @author ww
 	 */

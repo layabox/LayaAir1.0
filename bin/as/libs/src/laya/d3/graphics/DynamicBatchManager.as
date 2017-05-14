@@ -2,7 +2,7 @@ package laya.d3.graphics {
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
 	
 	/**
@@ -45,7 +45,7 @@ package laya.d3.graphics {
 		}
 		
 		/** @private */
-		public function _finishCombineDynamicBatch(scene:BaseScene):void {
+		public function _finishCombineDynamicBatch(scene:Scene):void {
 			_prepareDynamicBatchCombineElements.sort(_sortPrepareDynamicBatch);
 			var lastMaterial:BaseMaterial;
 			var lastVertexDeclaration:VertexDeclaration;
@@ -161,7 +161,7 @@ package laya.d3.graphics {
 				_dynamicBatches[key]._clearRenderElements();
 		}
 		
-		public function _addToRenderQueue(scene:BaseScene,view:Matrix4x4, projection:Matrix4x4,projectionView:Matrix4x4):void {
+		public function _addToRenderQueue(scene:Scene,view:Matrix4x4, projection:Matrix4x4,projectionView:Matrix4x4):void {
 			for (var key:String in _dynamicBatches) {
 				var dynamicBatch:DynamicBatch = _dynamicBatches[key];
 				(dynamicBatch.combineRenderElementsCount > 0) && (dynamicBatch._addToRenderQueue(scene,view,projection,projectionView));

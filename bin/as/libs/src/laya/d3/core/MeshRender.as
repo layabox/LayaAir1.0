@@ -19,43 +19,15 @@ package laya.d3.core {
 	 * <code>MeshRender</code> 类用于网格渲染器。
 	 */
 	public class MeshRender extends BaseRender {
-		/** @private */
-		private var _meshSprite3DOwner:MeshSprite3D;
-		///** @private */
-		//private var _lightmapIndex:int;//TODO:改良光照贴图到世界
-		/** @private */
-		private var _lightmapScaleOffset:Vector4;
-		/** 光照贴图的索引。*/
-		public var lightmapIndex:int;
-		
-		/**
-		 * 获取光照贴图的缩放和偏移。
-		 * @return  光照贴图的缩放和偏移。
-		 */
-		public function get lightmapScaleOffset():Vector4 {
-			return _lightmapScaleOffset;
-		}
-		
-		/**
-		 * 设置光照贴图的缩放和偏移。
-		 * @param  光照贴图的缩放和偏移。
-		 */
-		public function set lightmapScaleOffset(value:Vector4):void {
-			_lightmapScaleOffset = value;
-			_owner._setShaderValueColor(MeshSprite3D.LIGHTMAPSCALEOFFSET, value);
-			_owner._addShaderDefine(RenderableSprite3D.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV);
-		}
-		
 		/**
 		 * 创建一个新的 <code>MeshRender</code> 实例。
 		 */
 		public function MeshRender(owner:MeshSprite3D) {
 			super(owner);
-			_meshSprite3DOwner = owner;
 			lightmapIndex = -1;
 			castShadow = false;
 			receiveShadow = false;
-			_meshSprite3DOwner.meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
+			owner.meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
 		}
 		
 		/**
@@ -81,13 +53,13 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override protected function _calculateBoundingSphere():void {
-			var sharedMesh:BaseMesh = _meshSprite3DOwner.meshFilter.sharedMesh;
+			var sharedMesh:BaseMesh = (_owner as MeshSprite3D).meshFilter.sharedMesh;
 			if (sharedMesh == null || sharedMesh.boundingSphere == null) {
 				_boundingSphere.toDefault();
 			} else {
 				var meshBoundingSphere:BoundSphere = sharedMesh.boundingSphere;
 				var maxScale:Number;
-				var transform:Transform3D = _meshSprite3DOwner.transform;
+				var transform:Transform3D = _owner.transform;
 				var scale:Vector3 = transform.scale;
 				if (scale.x >= scale.y && scale.x >= scale.z)
 					maxScale = scale.x;
@@ -103,28 +75,32 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override protected function _calculateBoundingBox():void {
-			var sharedMesh:BaseMesh = _meshSprite3DOwner.meshFilter.sharedMesh;
+			var sharedMesh:BaseMesh = (_owner as MeshSprite3D).meshFilter.sharedMesh;
 			if (sharedMesh == null || sharedMesh.boundingBox == null) {
 				_boundingBox.toDefault();
 			} else {
-				var worldMat:Matrix4x4 = _meshSprite3DOwner.transform.worldMatrix;
-				var corners:Vector.<Vector3> = sharedMesh.boundingBoxCorners;
+				var worldMat:Matrix4x4 = (_owner as MeshSprite3D).transform.worldMatrix;
+				var corners:Array = sharedMesh.boundingBoxCorners;
 				for (var i:int = 0; i < 8; i++)
-					Vector3.transformCoordinate(corners[i], worldMat, _tempBoudingBoxCorners[i]);
-				BoundBox.createfromPoints(_tempBoudingBoxCorners, _boundingBox);
+					Vector3.transformCoordinate(corners[i], worldMat, _tempBoundBoxCorners[i]);
+				BoundBox.createfromPoints(_tempBoundBoxCorners, _boundingBox);
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		override public function _destroy():void {
-			super._destroy();
-			_lightmapScaleOffset = null;
-			_meshSprite3DOwner = null;
-		
+		override public function _renderUpdate(projectionView:Matrix4x4):void {
+			var transform:Transform3D = _owner.transform;
+			if (transform) {
+				_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
+				var projViewWorld:Matrix4x4 = _owner.getProjectionViewWorldMatrix(projectionView);
+				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
+			} else {
+				_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, Matrix4x4.DEFAULT);
+				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projectionView);
+			}
 		}
-	
 	}
 
 }

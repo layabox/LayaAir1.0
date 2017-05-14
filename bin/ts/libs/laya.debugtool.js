@@ -7,12 +7,13 @@
 	var Filter=laya.filters.Filter,GrahamScan=laya.maths.GrahamScan,Graphics=laya.display.Graphics,HTMLCanvas=laya.resource.HTMLCanvas;
 	var Handler=laya.utils.Handler,HitArea=laya.utils.HitArea,Image=laya.ui.Image,Input=laya.display.Input,Label=laya.ui.Label;
 	var List=laya.ui.List,Loader=laya.net.Loader,LoaderManager=laya.net.LoaderManager,LocalStorage=laya.net.LocalStorage;
-	var MathUtil=laya.maths.MathUtil,Matrix=laya.maths.Matrix,Node=laya.display.Node,Point=laya.maths.Point,Pool=laya.utils.Pool;
-	var Rectangle=laya.maths.Rectangle,Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
-	var Resource=laya.resource.Resource,ResourceManager=laya.resource.ResourceManager,RunDriver=laya.utils.RunDriver;
-	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Stat=laya.utils.Stat,Style=laya.display.css.Style;
-	var Text=laya.display.Text,TextInput=laya.ui.TextInput,Texture=laya.resource.Texture,Timer=laya.utils.Timer;
-	var Tree=laya.ui.Tree,UIEvent=laya.ui.UIEvent,URL=laya.net.URL,Utils=laya.utils.Utils,View=laya.ui.View;
+	var MathUtil=laya.maths.MathUtil,Matrix=laya.maths.Matrix,MeshData=laya.ani.bone.canvasmesh.MeshData,Node=laya.display.Node;
+	var Point=laya.maths.Point,Pool=laya.utils.Pool,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render;
+	var RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite,Resource=laya.resource.Resource;
+	var ResourceManager=laya.resource.ResourceManager,RunDriver=laya.utils.RunDriver,Sprite=laya.display.Sprite;
+	var Stage=laya.display.Stage,Stat=laya.utils.Stat,Style=laya.display.css.Style,Text=laya.display.Text,TextInput=laya.ui.TextInput;
+	var Texture=laya.resource.Texture,Timer=laya.utils.Timer,Tree=laya.ui.Tree,UIEvent=laya.ui.UIEvent,URL=laya.net.URL;
+	var Utils=laya.utils.Utils,View=laya.ui.View;
 	//class laya.debug.data.Base64AtlasManager
 	var Base64AtlasManager=(function(){
 		function Base64AtlasManager(){}
@@ -4441,6 +4442,191 @@
 
 
 	/**
+	*@private
+	*Mesh测试工具
+	*@author ww
+	*/
+	//class laya.debug.tools.MeshDebugTools
+	var MeshDebugTools=(function(){
+		function MeshDebugTools(){};
+		__class(MeshDebugTools,'laya.debug.tools.MeshDebugTools');
+		MeshDebugTools.workMesh=function(mesh){
+			if (mesh["inList"])return;
+			mesh["inList"]=true;
+			MeshDebugTools.meshList.push(mesh);
+			console.log("ver:");
+			console.log(mesh.vertices.join(","));
+			console.log("uvs:");
+			console.log(mesh.uvs.join(","));
+		}
+
+		MeshDebugTools.showToStage=function(){
+			Laya.stage.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",null,MeshDebugTools.onMouseDown);
+		}
+
+		MeshDebugTools.onMouseDown=function(){
+			if (MeshDebugTools.meshList.length < 0)return;
+			MeshDebugTools.tI=MeshDebugTools.tI % MeshDebugTools.meshList.length;
+			MeshDebugTools.showMeshToStage(MeshDebugTools.meshList[MeshDebugTools.tI]);
+			MeshDebugTools.tI++;
+		}
+
+		MeshDebugTools.showMeshToStage=function(mesh){
+			if (!MeshDebugTools._meshView)MeshDebugTools._meshView=new MeshDebugView();
+			MeshDebugTools._meshView.showMesh(mesh);
+			MeshDebugTools._meshView.pos(MeshDebugTools.pos.x,MeshDebugTools.pos.y);
+			Laya.stage.addChild(MeshDebugTools._meshView);
+		}
+
+		MeshDebugTools.drawVerticles=function(verticles,scaleX,scaleY,sp,offX,offY,r,color,dT){
+			(scaleX===void 0)&& (scaleX=1);
+			(scaleY===void 0)&& (scaleY=1);
+			(offX===void 0)&& (offX=0);
+			(offY===void 0)&& (offY=0);
+			(r===void 0)&& (r=1);
+			(color===void 0)&& (color="#ff0000");
+			(dT===void 0)&& (dT=0);
+			sp=sp||new Sprite();
+			var g;
+			g=sp.graphics;
+			var i=0,len=0;
+			len=verticles.length;
+			var tX=NaN,tY=NaN;
+			for (i=0;i < len;i+=2){
+				tX=verticles[i] *scaleX+offX;
+				tY=verticles[i+1] *scaleY+offY;
+				g.drawCircle(verticles[i]*scaleX+offX,verticles[i+1]*scaleY+offY,r,color);
+			}
+			return sp;
+		}
+
+		MeshDebugTools.findEdge=function(verticles,offI,min){
+			(offI===void 0)&& (offI=0);
+			(min===void 0)&& (min=true);
+			var i=0,len=0;
+			var tIndex=0;
+			len=verticles.length;
+			tIndex=-1;
+			for (i=0;i < len;i+=2){
+				if (tIndex < 0 || (min==(verticles[tIndex+offI] < verticles[i+offI]))){
+					tIndex=i;
+				}
+			}
+			return tIndex;
+		}
+
+		MeshDebugTools.findBestTriangle=function(verticles){
+			var topI=0;
+			topI=MeshDebugTools.findEdge(verticles,1,true);
+			var bottomI=0;
+			bottomI=MeshDebugTools.findEdge(verticles,1,false);
+			var leftI=0;
+			leftI=MeshDebugTools.findEdge(verticles,0,true);
+			var rightI=0;
+			rightI=MeshDebugTools.findEdge(verticles,0,false);
+			var rst;
+			rst=MeshDebugTools._bestTriangle;
+			rst.length=0;
+			rst.push(leftI,rightI);
+			if (rst.indexOf(topI)< 0)rst.push(topI);
+			if (rst.indexOf(bottomI)< 0)rst.push(bottomI);
+			return rst;
+		}
+
+		MeshDebugTools.solveMesh=function(mesh,rst){
+			rst=rst||[];
+			rst.length=0;
+			var mUv;
+			mUv=mesh.uvs;
+			var mVer;
+			mVer=mesh.vertices;
+			var uvAbs;
+			var indexs;
+			indexs=MeshDebugTools.findBestTriangle(mUv);
+			var index0=0;
+			var index1=0;
+			var index2=0;
+			index0=indexs[0];
+			index1=indexs[1];
+			index2=indexs[2];
+			MeshDebugTools._absArr.length=0;
+			uvAbs=MeshDebugTools.solvePoints(mesh.texture.uv,mUv[index0],mUv[index0+1],mUv[index1]-mUv[index0],mUv[index1+1]-mUv[index0+1],mUv[index2]-mUv[index0],mUv[index2+1]-mUv[index0+1],MeshDebugTools._absArr);
+			var newVerticles;
+			newVerticles=MeshDebugTools.transPoints(uvAbs,mVer[index0],mVer[index0+1],mVer[index1]-mVer[index0],mVer[index1+1]-mVer[index0+1],mVer[index2]-mVer[index0],mVer[index2+1]-mVer[index0+1],rst);
+			return newVerticles;
+		}
+
+		MeshDebugTools.solvePoints=function(pointList,oX,oY,v1x,v1y,v2x,v2y,rst){
+			rst=rst||[];
+			var i=0,len=0;
+			len=pointList.length;
+			var tRst;
+			for (i=0;i < len;i+=2){
+				tRst=MeshDebugTools.solve2(pointList[i],pointList[i+1],oX,oY,v1x,v1y,v2x,v2y);
+				rst.push(tRst[0],tRst[1]);
+			}
+			return rst;
+		}
+
+		MeshDebugTools.transPoints=function(abs,oX,oY,v1x,v1y,v2x,v2y,rst){
+			rst=rst|| [];
+			var i=0,len=0;
+			len=abs.length;
+			var tRst;
+			for (i=0;i < len;i+=2){
+				tRst=MeshDebugTools.transPoint(abs[i],abs[i+1],oX,oY,v1x,v1y,v2x,v2y,rst);
+			}
+			return rst;
+		}
+
+		MeshDebugTools.transPoint=function(a,b,oX,oY,v1x,v1y,v2x,v2y,rst){
+			rst=rst|| [];
+			var nX=NaN;
+			var nY=NaN;
+			nX=oX+v1x *a+v2x *b;
+			nY=oY+v1y *a+v2y *b;
+			rst.push(nX,nY)
+			return rst;
+		}
+
+		MeshDebugTools.solve2=function(rx,ry,oX,oY,v1x,v1y,v2x,v2y,rv,rst){
+			(rv===void 0)&& (rv=false);
+			rst=rst||[];
+			var a=NaN,b=NaN;
+			if (v1x==0){
+				return MeshDebugTools.solve2(rx,ry,oX,oY,v2x,v2y,v1x,v1y,true,rst);
+			};
+			var dX=NaN;
+			var dY=NaN;
+			dX=rx-oX;
+			dY=ry-oY;
+			b=(dY-dX *v1y / v1x)/ (v2y-v2x *v1y / v1x);
+			a=(dX-b *v2x)/ v1x;
+			if(rv){
+				rst.push(b,a);
+				}else{
+				rst.push(a,b);
+			}
+			return rst;
+		}
+
+		MeshDebugTools.solve=function(pointC,point0,v1,v2){
+			return MeshDebugTools.solve2(pointC.x,pointC.y,point0.x,point0.y,v1.x,v1.y,v2.x,v2.y);
+		}
+
+		MeshDebugTools.meshList=[];
+		MeshDebugTools.tI=0;
+		MeshDebugTools._meshView=null
+		MeshDebugTools._bestTriangle=[];
+		MeshDebugTools._absArr=[];
+		__static(MeshDebugTools,
+		['pos',function(){return this.pos=new Point();}
+		]);
+		return MeshDebugTools;
+	})()
+
+
+	/**
 	*...
 	*@author ww
 	*/
@@ -8461,6 +8647,45 @@
 
 
 	/**
+	*
+	*@author ww
+	*/
+	//class laya.debug.tools.MeshDebugView extends laya.display.Sprite
+	var MeshDebugView=(function(_super){
+		function MeshDebugView(){
+			this.textureCt=null;
+			this.resultCt=null;
+			MeshDebugView.__super.call(this);
+			this.textureCt=new Sprite();
+			this.resultCt=new Sprite();
+			this.addChild(this.textureCt);
+			this.addChild(this.resultCt);
+		}
+
+		__class(MeshDebugView,'laya.debug.tools.MeshDebugView',_super);
+		var __proto=MeshDebugView.prototype;
+		__proto.showMesh=function(mesh){
+			this.textureCt.graphics.clear();
+			this.textureCt.graphics.drawTexture(mesh.texture);
+			var oWidth=mesh.texture.bitmap.width;
+			var oHeight=mesh.texture.bitmap.height;
+			debugger;
+			MeshDebugTools.drawVerticles(mesh.uvs,oWidth,oHeight,this.textureCt,-oWidth *mesh.texture.uv[0],-oHeight *mesh.texture.uv[1]);
+			MeshDebugTools.drawVerticles(mesh.texture.uv,oWidth,oHeight,this.textureCt,-oWidth *mesh.texture.uv[0],-oHeight *mesh.texture.uv[1],2,"#00ff00",10);
+			this.resultCt.graphics.clear();
+			MeshDebugTools.drawVerticles(mesh.vertices,1,1,this.resultCt);
+			this.resultCt.pos(300,0);
+			var newVers;
+			newVers=MeshDebugTools.solveMesh(mesh);
+			debugger;
+			MeshDebugTools.drawVerticles(newVers,1,1,this.resultCt,0,0,2,"#00ff00",20);
+		}
+
+		return MeshDebugView;
+	})(Sprite)
+
+
+	/**
 	*...
 	*@author ww
 	*/
@@ -11657,6 +11882,25 @@
 	*...
 	*@author ww
 	*/
+	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+	var FindNodeSmall=(function(_super){
+		function FindNodeSmall(){
+			FindNodeSmall.__super.call(this);
+			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+			this.createView(FindNodeSmallUI.uiView);
+		}
+
+		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+		var __proto=FindNodeSmall.prototype;
+		__proto.createChildren=function(){}
+		return FindNodeSmall;
+	})(FindNodeSmallUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 	var FindNode=(function(_super){
 		function FindNode(){
@@ -11673,25 +11917,6 @@
 
 		return FindNode;
 	})(FindNodeUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-	var FindNodeSmall=(function(_super){
-		function FindNodeSmall(){
-			FindNodeSmall.__super.call(this);
-			Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-			this.createView(FindNodeSmallUI.uiView);
-		}
-
-		__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-		var __proto=FindNodeSmall.prototype;
-		__proto.createChildren=function(){}
-		return FindNodeSmall;
-	})(FindNodeSmallUI)
 
 
 	/**
@@ -11796,26 +12021,6 @@
 		__proto.createChildren=function(){}
 		return NodeTool;
 	})(NodeToolUI)
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
-	var NodeTreeSetting=(function(_super){
-		function NodeTreeSetting(){
-			NodeTreeSetting.__super.call(this);
-			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
-			this.createView(NodeTreeSettingUI.uiView);
-		}
-
-		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
-		var __proto=NodeTreeSetting.prototype;
-		//inits();
-		__proto.createChildren=function(){}
-		return NodeTreeSetting;
-	})(NodeTreeSettingUI)
 
 
 	/**
@@ -12059,6 +12264,26 @@
 		]);
 		return NodeTree;
 	})(NodeTreeUI)
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.debug.view.nodeInfo.nodetree.NodeTreeSetting extends laya.debug.ui.debugui.NodeTreeSettingUI
+	var NodeTreeSetting=(function(_super){
+		function NodeTreeSetting(){
+			NodeTreeSetting.__super.call(this);
+			Base64AtlasManager.replaceRes(NodeTreeSettingUI.uiView);
+			this.createView(NodeTreeSettingUI.uiView);
+		}
+
+		__class(NodeTreeSetting,'laya.debug.view.nodeInfo.nodetree.NodeTreeSetting',_super);
+		var __proto=NodeTreeSetting.prototype;
+		//inits();
+		__proto.createChildren=function(){}
+		return NodeTreeSetting;
+	})(NodeTreeSettingUI)
 
 
 	/**

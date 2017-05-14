@@ -3,7 +3,7 @@ package laya.d3.shader {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.resource.SolidColorTextureCube;
 	import laya.renders.Render;
@@ -26,7 +26,7 @@ package laya.d3.shader {
 		/**shader变量提交周期，逐场景。*/
 		public static const PERIOD_SCENE:int = 4;
 		
-		private static var _TEXTURES:Array = /*[STATIC SAFE]*/ [WebGLContext.TEXTURE0, WebGLContext.TEXTURE1, WebGLContext.TEXTURE2, WebGLContext.TEXTURE3, WebGLContext.TEXTURE4, WebGLContext.TEXTURE5, WebGLContext.TEXTURE6,, WebGLContext.TEXTURE7, WebGLContext.TEXTURE8];
+		private static var _TEXTURES:Array = /*[STATIC SAFE]*/ [WebGLContext.TEXTURE0, WebGLContext.TEXTURE1, WebGLContext.TEXTURE2, WebGLContext.TEXTURE3, WebGLContext.TEXTURE4, WebGLContext.TEXTURE5, WebGLContext.TEXTURE6,WebGLContext.TEXTURE7, WebGLContext.TEXTURE8];
 		public static var _includeFiles:* = {}; //shader里面inlcude的小文件
 		private static var _count:int = 0;
 		
@@ -87,7 +87,7 @@ package laya.d3.shader {
 		/**@private */
 		public  var _uploadCamera:BaseCamera;
 		/**@private */
-		public  var _uploadScene:BaseScene;
+		public  var _uploadScene:Scene;
 		/**@private */
 		public  var _uploadVertexBuffer:VertexBuffer3D;
 		

@@ -1,4 +1,6 @@
 package laya.d3.core.particleShuriKen {
+	import laya.d3.core.Sprite3D;
+	import laya.d3.core.Transform3D;
 	import laya.d3.core.particle.Particle3D;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
 	import laya.d3.core.particleShuriKen.module.GradientDataNumber;
@@ -14,6 +16,9 @@ package laya.d3.core.particleShuriKen {
 	 * <code>ShurikenParticleRender</code> 类用于创建3D粒子渲染器。
 	 */
 	public class ShurikenParticleRender extends BaseRender {
+		/** @private */
+		private var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
+		
 		/**@private */
 		private var _defaultBoundBox:BoundBox;
 		
@@ -55,31 +60,31 @@ package laya.d3.core.particleShuriKen {
 			if (_renderMode !== value) {
 				switch (_renderMode) {
 				case 0: 
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
+					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
 					break;
 				case 1: 
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD);
+					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD);
 					break;
 				case 2: 
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD);
+					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD);
 					break;
 				case 3: 
-					_owner._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD);
+					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD);
 					break;
 				}
 				_renderMode = value;
 				switch (value) {
 				case 0: 
-					_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
+					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
 					break;
 				case 1: 
-					_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD);
+					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD);
 					break;
 				case 2: 
-					_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD);
+					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD);
 					break;
 				case 3: 
-					_owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD);
+					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD);
 					break;
 				default: 
 					throw new Error("ShurikenParticleRender: unknown renderMode Value.");
@@ -94,7 +99,7 @@ package laya.d3.core.particleShuriKen {
 			super(owner);
 			_defaultBoundBox = new BoundBox(new Vector3(), new Vector3());
 			_renderMode = 0;
-			owner._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
+			_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
 			stretchedBillboardCameraSpeedScale = 0.0;
 			stretchedBillboardSpeedScale = 0.0;
 			stretchedBillboardLengthScale = 1.0;
@@ -112,7 +117,7 @@ package laya.d3.core.particleShuriKen {
 			//for (var i:int = 0; i < 8; i++)
 			//	Vector3.transformQuat(corners[i], rotation, _tempBoudingBoxCorners[i]);
 			//BoundBox.createfromPoints(_tempBoudingBoxCorners, _boundingBox);
-		
+			
 			var minE:Float32Array = _boundingBox.min.elements;
 			minE[0] = -Number.MAX_VALUE;
 			minE[1] = -Number.MAX_VALUE;
@@ -132,6 +137,47 @@ package laya.d3.core.particleShuriKen {
 			centerE[1] = 0;
 			centerE[2] = 0;
 			_boundingSphere.radius = Number.MAX_VALUE;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _renderUpdate(projectionView:Matrix4x4):void {
+			var particleSystem:ShurikenParticleSystem = (_owner as ShuriKenParticle3D).particleSystem;
+			var transform:Transform3D = _owner.transform;
+			switch (particleSystem.simulationSpace) {
+			case 0: //World
+				_setShaderValueColor(ShuriKenParticle3D.WORLDPOSITION, Vector3.ZERO);//TODO:是否可不传
+				break;
+			case 1: //Local
+				_setShaderValueColor(ShuriKenParticle3D.WORLDPOSITION, transform.position);
+				break;
+			default: 
+				throw new Error("ShurikenParticleMaterial: SimulationSpace value is invalid.");
+			}
+			
+			Matrix4x4.createFromQuaternion(transform.rotation, _tempRotationMatrix);
+			_setShaderValueMatrix4x4(ShuriKenParticle3D.WORLDROTATIONMATRIX, _tempRotationMatrix);
+			
+			switch (particleSystem.scaleMode) {
+			case 0: 
+				var scale:Vector3 = transform.scale;
+				_setShaderValueColor(ShuriKenParticle3D.POSITIONSCALE, scale);
+				_setShaderValueColor(ShuriKenParticle3D.SIZESCALE, scale);
+				break;
+			case 1: 
+				var localScale:Vector3 = transform.localScale;
+				_setShaderValueColor(ShuriKenParticle3D.POSITIONSCALE, localScale);
+				_setShaderValueColor(ShuriKenParticle3D.SIZESCALE, localScale);
+				break;
+			case 2: 
+				_setShaderValueColor(ShuriKenParticle3D.POSITIONSCALE, transform.scale);
+				_setShaderValueColor(ShuriKenParticle3D.SIZESCALE, Vector3.ONE);
+				break;
+			}
+			
+			if (Laya3D.debugMode)
+				_renderRenderableBoundBox();
 		}
 		
 		/**

@@ -252,6 +252,7 @@ package laya.html.dom
 		
 		public function formatURL(url:String):String
 		{
+			if (!URI) return url;
 			return URL.formatURL(url, URI ? URI.path : null);
 		}
 		

@@ -1,10 +1,7 @@
 package laya.d3.core {
-	import laya.d3.core.Layer;
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.math.Quaternion;
-	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.RenderTexture;
@@ -12,8 +9,7 @@ package laya.d3.core {
 	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Size;
 	import laya.events.Event;
-	import laya.maths.Rectangle;
-	import laya.renders.Render;
+	import laya.webgl.WebGLContext;
 	
 	/**
 	 * <code>BaseCamera</code> 类用于创建摄像机的父类。
@@ -48,6 +44,13 @@ package laya.d3.core {
 		/**清除标记，不清除。*/
 		public static const CLEARFLAG_NONE:int = 3;
 		
+		/** @private */
+		protected static const _invertYScaleMatrix:Matrix4x4 = new Matrix4x4(1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//Matrix4x4.createScaling(new Vector3(1, -1, 1), _invertYScaleMatrix);
+		/** @private */
+		protected static const _invertYProjectionMatrix:Matrix4x4 = new Matrix4x4();
+		/** @private */
+		protected static const _invertYProjectionViewMatrix:Matrix4x4 = new Matrix4x4();
+		
 		//private static const Vector3[] cornersWorldSpace:Vector.<Vector3> = new Vector.<Vector3>(8);
 		//private static const  boundingFrustum:BoundingFrustum = new BoundingFrustum(Matrix4x4.Identity);
 		
@@ -63,9 +66,6 @@ package laya.d3.core {
 		private var _forward:Vector3;
 		/** @private 右向量。*/
 		private var _right:Vector3;
-		
-		/** @private 渲染目标。*/
-		private var _renderTarget:RenderTexture;
 		/** @private 渲染顺序。*/
 		private var _renderingOrder:int;
 		/**@private 渲染目标尺寸。*/
@@ -84,6 +84,8 @@ package laya.d3.core {
 		/**@private 天空。*/
 		private var _sky:Sky;
 		
+		/** @private 渲染目标。*/
+		protected var _renderTarget:RenderTexture;
 		/**@private 是否使用用户自定义投影矩阵，如果使用了用户投影矩阵，摄像机投影矩阵相关的参数改变则不改变投影矩阵的值，需调用ResetProjectionMatrix方法。*/
 		protected var _useUserProjectionMatrix:Boolean;
 		/** @private 表明视口是否使用裁剪空间表达。*/
@@ -403,10 +405,16 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		public function _prepareCameraViewProject(viewMatrix:Matrix4x4,projectMatrix:Matrix4x4):void {
+		public function _prepareCameraViewProject(viewMatrix:Matrix4x4, projectMatrix:Matrix4x4):void {
 			var cameraSV:ValusArray = _shaderValues;
 			cameraSV.setValue(BaseCamera.VIEWMATRIX, viewMatrix.elements);
 			cameraSV.setValue(BaseCamera.PROJECTMATRIX, projectMatrix.elements);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _renderCamera(gl:WebGLContext, state:RenderState, scene:Scene):void {
 		}
 		
 		/**

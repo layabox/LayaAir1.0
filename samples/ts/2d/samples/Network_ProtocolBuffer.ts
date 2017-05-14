@@ -6,13 +6,13 @@ module laya
 	
 	export class Network_ProtocolBuffer 
 	{
-		private ProtoBuf:any = Browser.window.ProtoBuf;
+		private ProtoBuf:any = Browser.window.protobuf;
 		
 		constructor()
 		{
 			Laya.init(550, 400);
 			
-			Laya.loader.load("../../res/protobuf/user.proto", Handler.create(this, this.onAssetsLoaded));
+			this.ProtoBuf.load("../../res/protobuf/user.proto", this.onAssetsLoaded);
 		}
 		
 		private onAssetsLoaded(err:any, root:any):void

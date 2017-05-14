@@ -243,12 +243,22 @@ package laya.ui {
 			manager.open(this, closeOther);
 		}
 		
+		/**打开完成后，调用此方法（如果有弹出动画，则在动画完成后执行）*/
+		public function onOpened():void {
+		}
+		
 		/**
 		 * 关闭对话框。
 		 * @param type 如果是点击默认关闭按钮触发，则传入关闭按钮的名字(name)，否则为null。
 		 */
 		public function close(type:String = null):void {
 			manager.close(this, type);
+		}
+		
+		/**关闭完成后，调用此方法（如果有关闭动画，则在动画完成后执行）
+		 * @param type 如果是点击默认关闭按钮触发，则传入关闭按钮的名字(name)，否则为null。
+		 */
+		public function onClosed(type:String = null):void {
 		}
 		
 		/**

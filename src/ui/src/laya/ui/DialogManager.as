@@ -29,16 +29,21 @@ package laya.ui {
 		/**锁屏层*/
 		public var lockLayer:Sprite;
 		
-		/**弹出对话框效果，可以设置一个效果代替默认的弹出效果，如果不想有任何效果，可以赋值为null*/
+		/**@private 全局默认弹出对话框效果，可以设置一个效果代替默认的弹出效果，如果不想有任何效果，可以赋值为null*/
 		public var popupEffect:Function = function(dialog:Sprite):void {
 			dialog.scale(1, 1);
 			Tween.from(dialog, {x: Laya.stage.width / 2, y: Laya.stage.height / 2, scaleX: 0, scaleY: 0}, 300, Ease.backOut, Handler.create(this, this.doOpen, [dialog]));
 		}
 		
-		/**关闭对话框效果，可以设置一个效果代替默认的关闭效果，如果不想有任何效果，可以赋值为null*/
+		/**@private 全局默认关闭对话框效果，可以设置一个效果代替默认的关闭效果，如果不想有任何效果，可以赋值为null*/
 		public var closeEffect:Function = function(dialog:Sprite, type:String):void {
 			Tween.to(dialog, {x: Laya.stage.width / 2, y: Laya.stage.height / 2, scaleX: 0, scaleY: 0}, 300, Ease.strongOut, Handler.create(this, this.doClose, [dialog, type]));
 		}
+		
+		/**全局默认关闭对话框效果，可以设置一个效果代替默认的关闭效果，如果不想有任何效果，可以赋值为null*/
+		public var popupEffectHandler:Handler = new Handler(this, popupEffect);
+		/**全局默认弹出对话框效果，可以设置一个效果代替默认的弹出效果，如果不想有任何效果，可以赋值为null*/
+		public var closeEffectHandler:Handler = new Handler(this,closeEffect);
 		
 		/**
 		 * 创建一个新的 <code>DialogManager</code> 类实例。
@@ -103,7 +108,7 @@ package laya.ui {
 			if (dialog.popupCenter) _centerDialog(dialog);
 			addChild(dialog);
 			if (dialog.isModal || this._$P["hasZorder"]) timer.callLater(this, _checkMask);
-			if (popupEffect != null) popupEffect(dialog);
+			if (dialog.popupEffect != null) dialog.popupEffect.runWith(dialog);
 			else doOpen(dialog);
 			event(Event.OPEN);
 		}
@@ -133,7 +138,7 @@ package laya.ui {
 		 * @param type	关闭的类型，默认为空
 		 */
 		public function close(dialog:Dialog, type:String = null):void {
-			if (closeEffect != null) closeEffect(dialog, type);
+			if (dialog.closeEffect != null) dialog.closeEffect.runWith([dialog, type]);
 			else doClose(dialog);
 			event(Event.CLOSE);
 		}

@@ -447,6 +447,7 @@ package laya.ui {
 					py = py + _listHeight <= Laya.stage.height ? py : p.y - _listHeight;
 					
 					_list.pos(p.x, py);
+					_list.zOrder = 1001;
 					Laya._currentStage.addChild(_list);
 					Laya.stage.once(Event.MOUSE_DOWN, this, removeList);
 					_list.selectedIndex = _selectedIndex;

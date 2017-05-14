@@ -1,6 +1,6 @@
 package laya.d3.core.light {
 	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
@@ -76,15 +76,15 @@ package laya.d3.core.light {
 		 * @inheritDoc
 		 */
 		override protected function _clearSelfRenderObjects():void {
-			var scene:BaseScene = this.scene;
+			var scene:Scene = this.scene;
 			var shaderValue:ValusArray = scene._shaderValues;
-			shaderValue.setValue(BaseScene.POINTLIGHTDIFFUSE, null);
-			shaderValue.setValue(BaseScene.POINTLIGHTAMBIENT, null);
-			shaderValue.setValue(BaseScene.POINTLIGHTSPECULAR, null);
-			shaderValue.setValue(BaseScene.POINTLIGHTPOS, null);
-			shaderValue.setValue(BaseScene.POINTLIGHTRANGE, null);
-			shaderValue.setValue(BaseScene.POINTLIGHTATTENUATION, null);
-			(_activeInHierarchy) && (scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT));
+			shaderValue.setValue(Scene.POINTLIGHTDIFFUSE, null);
+			shaderValue.setValue(Scene.POINTLIGHTAMBIENT, null);
+			shaderValue.setValue(Scene.POINTLIGHTSPECULAR, null);
+			shaderValue.setValue(Scene.POINTLIGHTPOS, null);
+			shaderValue.setValue(Scene.POINTLIGHTRANGE, null);
+			shaderValue.setValue(Scene.POINTLIGHTATTENUATION, null);
+			scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT);
 		}
 		
 		/**
@@ -92,17 +92,17 @@ package laya.d3.core.light {
 		 * @param state 渲染状态参数。
 		 */
 		public override function updateToWorldState(state:RenderState):Boolean {
-			var scene:BaseScene = state.scene;
-			if (scene.enableLight && active) {
+			var scene:Scene = state.scene;
+			if (scene.enableLight && _activeInHierarchy) {
 				var shaderValue:ValusArray = scene._shaderValues;
 				scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT);
-				shaderValue.setValue(BaseScene.POINTLIGHTDIFFUSE, diffuseColor.elements);
-				shaderValue.setValue(BaseScene.POINTLIGHTAMBIENT, ambientColor.elements);
-				shaderValue.setValue(BaseScene.POINTLIGHTSPECULAR, specularColor.elements);
+				shaderValue.setValue(Scene.POINTLIGHTDIFFUSE, diffuseColor.elements);
+				shaderValue.setValue(Scene.POINTLIGHTAMBIENT, ambientColor.elements);
+				shaderValue.setValue(Scene.POINTLIGHTSPECULAR, specularColor.elements);
 				
-				shaderValue.setValue(BaseScene.POINTLIGHTPOS, transform.position.elements);
-				shaderValue.setValue(BaseScene.POINTLIGHTRANGE, range);
-				shaderValue.setValue(BaseScene.POINTLIGHTATTENUATION, attenuation.elements);
+				shaderValue.setValue(Scene.POINTLIGHTPOS, transform.position.elements);
+				shaderValue.setValue(Scene.POINTLIGHTRANGE, range);
+				shaderValue.setValue(Scene.POINTLIGHTATTENUATION, attenuation.elements);
 				return true;
 			} else {
 				scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT);

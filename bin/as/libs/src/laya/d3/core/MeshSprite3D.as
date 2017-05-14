@@ -6,6 +6,9 @@ package laya.d3.core {
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.core.render.SubMeshRenderElement;
+	import laya.d3.graphics.MeshSprite3DStaticBatchManager;
+	import laya.d3.graphics.StaticBatchManager;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
@@ -22,8 +25,16 @@ package laya.d3.core {
 	 * <code>MeshSprite3D</code> 类用于创建网格。
 	 */
 	public class MeshSprite3D extends RenderableSprite3D {
-		public static const LIGHTMAPSCALEOFFSET:int = 2;
-	
+		/** @private */
+		private static var _staticBatchManager:MeshSprite3DStaticBatchManager = new MeshSprite3DStaticBatchManager();
+		
+		/**
+		 * @private
+		 */
+		public static function __init__():void {
+			StaticBatchManager._staticBatchManagers.push(_staticBatchManager);
+		}
+		
 		/**
 		 * 加载网格模板,注意:不缓存。
 		 * @param url 模板地址。
@@ -75,33 +86,26 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		override public function createConchModel():* {
-			return null;
-		}
-		
-		/**
-		 * @private
-		 */
 		private function _changeRenderObjectByMesh(index:int):RenderElement {
 			var renderObjects:Vector.<RenderElement> = _render._renderElements;
 			
 			var renderElement:RenderElement = renderObjects[index];
-			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
+			(renderElement) || (renderElement = renderObjects[index] = new SubMeshRenderElement());
 			renderElement._render = _render;
 			
 			var material:BaseMaterial = _render.sharedMaterials[index];
 			(material) || (material = StandardMaterial.defaultMaterial);//确保有材质,由默认材质代替。
 			
-			var element:IRenderable = (_geometryFilter as MeshFilter).sharedMesh.getRenderElement(index);
-			renderElement._mainSortID = _getSortID(element, material);//根据MeshID排序，处理同材质合并处理。
+			var renderObj:IRenderable = (_geometryFilter as MeshFilter).sharedMesh.getRenderElement(index);
+			renderElement._mainSortID = _getSortID(renderObj, material);//根据MeshID排序，处理同材质合并处理。
 			renderElement._sprite3D = this;
 			
-			renderElement.renderObj = element;
+			renderElement.renderObj = renderObj;
 			renderElement._material = material;
 			
 			if (Render.isConchNode) {//NATIVE
-				var vertexBuffer:VertexBuffer3D = element._getVertexBuffer();
-				renderElement._conchSubmesh.setVBIB(vertexBuffer.vertexDeclaration._conchVertexDeclaration, vertexBuffer.getData(), element._getIndexBuffer().getData());
+				var vertexBuffer:VertexBuffer3D = renderObj._getVertexBuffer();
+				renderElement._conchSubmesh.setVBIB(vertexBuffer.vertexDeclaration._conchVertexDeclaration, vertexBuffer.getData(), renderObj._getIndexBuffer().getData());
 			}
 			return renderElement;
 		}
@@ -112,11 +116,11 @@ package laya.d3.core {
 		private function _changeRenderObjectByMaterial(index:int, material:BaseMaterial):RenderElement {
 			var renderElement:RenderElement = _render._renderElements[index];
 			
-			var element:IRenderable = (_geometryFilter as MeshFilter).sharedMesh.getRenderElement(index);
-			renderElement._mainSortID = _getSortID(element, material);//根据MeshID排序，处理同材质合并处理。
+			var renderObj:IRenderable = (_geometryFilter as MeshFilter).sharedMesh.getRenderElement(index);
+			renderElement._mainSortID = _getSortID(renderObj, material);//根据MeshID排序，处理同材质合并处理。
 			renderElement._sprite3D = this;
 			
-			renderElement.renderObj = element;
+			renderElement.renderObj = renderObj;
 			renderElement._material = material;
 			
 			if (Render.isConchNode) {//NATIVE
@@ -198,12 +202,15 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * @private
+		 * @inheritDoc
 		 */
-		override public function _renderUpdate(projectionView:Matrix4x4):void {
-			super._renderUpdate(projectionView);
+		override public function _addToInitStaticBatchManager():void {
+			_staticBatchManager._addInitBatchSprite(this);
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override public function cloneTo(destObject:*):void {
 			super.cloneTo(destObject);
 			var meshSprite3D:MeshSprite3D = destObject as MeshSprite3D;
@@ -219,9 +226,19 @@ package laya.d3.core {
 			destMeshRender.sortingFudge = meshRender.sortingFudge;
 		}
 		
+		/**
+		 * @inheritDoc
+		 */
 		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(destroyChild);
 			(_geometryFilter as MeshFilter)._destroy();
+		}
+		
+		/**
+		 * @private
+		 */
+		override public function createConchModel():* {
+			return null;
 		}
 	
 	}

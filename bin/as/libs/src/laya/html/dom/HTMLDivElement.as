@@ -36,7 +36,11 @@ package laya.html.dom {
 			this.destroyChildren();
 			appendHTML(text);
 		}
-		
+		override public function set width(value:Number):void 
+		{
+			super.width = value;
+			layout();
+		}
 		/**
 		 * 追加内容，解析并对显示对象排版
 		 * @param	text

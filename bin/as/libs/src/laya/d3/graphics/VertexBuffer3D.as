@@ -67,12 +67,10 @@ package laya.d3.graphics {
 			_bufferType = WebGLContext.ARRAY_BUFFER;
 			_canRead = canRead;
 			
-			var byteLength:int = _vertexDeclaration.vertexStride * vertexCount;
-			memorySize = byteLength;
-			_byteLength = byteLength;
+			memorySize = _byteLength = _vertexDeclaration.vertexStride * vertexCount;
 			if (!Render.isConchNode) {//!NATIVE
 				_bind();
-				_gl.bufferData(_bufferType, byteLength, _bufferUsage);
+				_gl.bufferData(_bufferType, _byteLength, _bufferUsage);
 			}
 			canRead && (_buffer = new Float32Array(byteLength / 4));
 		}

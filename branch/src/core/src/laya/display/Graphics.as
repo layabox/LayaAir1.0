@@ -50,6 +50,8 @@ package laya.display {
 		private var _rstBoundPoints:Array;
 		/**@private */
 		private var _vectorgraphArray:Array;
+		/**@private */
+		private var _cacheBoundsType:Boolean=false;
 		
 		/**@private */
 		public static function __init__():void {
@@ -198,22 +200,26 @@ package laya.display {
 		
 		/**
 		 * 获取位置及宽高信息矩阵(比较耗，尽量少用)。
+		 * @param realSize 使用图片的真实大小，默认为false
 		 * @return 位置与宽高组成的 一个 Rectangle 对象。
 		 */
-		public function getBounds():Rectangle {
-			if (!_bounds || !_temp || _temp.length < 1) {
-				_bounds = Rectangle._getWrapRec(getBoundPoints(), _bounds)
+		public function getBounds(realSize:Boolean = false):Rectangle {
+			if (!_bounds || !_temp || _temp.length < 1||realSize!=_cacheBoundsType) {
+				_bounds = Rectangle._getWrapRec(getBoundPoints(realSize), _bounds)
 			}
+			_cacheBoundsType = realSize;
 			return _bounds;
 		}
 		
 		/**
 		 * @private
+		 * @param realSize 使用图片的真实大小，默认为false
 		 * 获取端点列表。
 		 */
-		public function getBoundPoints():Array {
-			if (!_temp || _temp.length < 1)
-				_temp = _getCmdPoints();
+		public function getBoundPoints(realSize:Boolean=false):Array {
+			if (!_temp || _temp.length < 1||realSize!=_cacheBoundsType)
+				_temp = _getCmdPoints(realSize);
+			_cacheBoundsType = realSize;
 			return _rstBoundPoints = Utils.copyArray(_rstBoundPoints, _temp);
 		}
 		
@@ -223,7 +229,7 @@ package laya.display {
 			this._cmds.push(a);
 		}
 		
-		private function _getCmdPoints():Array {
+		private function _getCmdPoints(realSize:Boolean=false):Array {
 			var context:RenderContext = Render._context;
 			var cmds:Array = this._cmds;
 			var rst:Array;
@@ -305,13 +311,25 @@ package laya.display {
 					//width = width - tex.sourceWidth + tex.width;
 			        //height = height - tex.sourceHeight + tex.height;
 					tex = cmd[0];
-					var offX:Number=tex.offsetX>0?tex.offsetX:0;
-					var offY:Number=tex.offsetY>0?tex.offsetY:0;
-					if (cmd[3] && cmd[4]) {
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, cmd[3]+tex.sourceWidth-tex.width, cmd[4]+tex.sourceHeight-tex.height), tMatrix);
-					} else {
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, tex.width+tex.sourceWidth-tex.width, tex.height+tex.sourceHeight-tex.height), tMatrix);
+					if (realSize)
+					{
+						if (cmd[3] && cmd[4]) {
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
+						} else {
+							tex = cmd[0];
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), tMatrix);
+						}
+					}else
+					{
+						var offX:Number=tex.offsetX>0?tex.offsetX:0;
+						var offY:Number=tex.offsetY>0?tex.offsetY:0;
+						if (cmd[3] && cmd[4]) {
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, cmd[3]+tex.sourceWidth-tex.width, cmd[4]+tex.sourceHeight-tex.height), tMatrix);
+						} else {
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, tex.width+tex.sourceWidth-tex.width, tex.height+tex.sourceHeight-tex.height), tMatrix);
+						}
 					}
+					
 					break;
 				case context._fillTexture: 
 					if (cmd[3] && cmd[4]) {
@@ -330,14 +348,26 @@ package laya.display {
 					} else {
 						drawMatrix = tMatrix;
 					}
-					tex = cmd[0];
-					offX=tex.offsetX>0?tex.offsetX:0;
-					offY=tex.offsetY>0?tex.offsetY:0;
-					if (cmd[3] && cmd[4]) {
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, cmd[3]+tex.sourceWidth-tex.width, cmd[4]+tex.sourceHeight-tex.height), tMatrix);
-					} else {
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, tex.width+tex.sourceWidth-tex.width, tex.height+tex.sourceHeight-tex.height), tMatrix);
+					if (realSize)
+					{
+						if (cmd[3] && cmd[4]) {
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), drawMatrix);
+						} else {
+							tex = cmd[0];
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), drawMatrix);
+						}
+					}else
+					{
+						tex = cmd[0];
+						offX=tex.offsetX>0?tex.offsetX:0;
+						offY=tex.offsetY>0?tex.offsetY:0;
+						if (cmd[3] && cmd[4]) {
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, cmd[3]+tex.sourceWidth-tex.width, cmd[4]+tex.sourceHeight-tex.height), tMatrix);
+						} else {
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, tex.width+tex.sourceWidth-tex.width, tex.height+tex.sourceHeight-tex.height), tMatrix);
+						}
 					}
+					
 					break;
 				case context._drawRect: 
 				case 13://case context._drawRect:

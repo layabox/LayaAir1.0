@@ -12,10 +12,12 @@ varying vec3 vWorldBin;
 varying vec3 vViewDir;//入射。pos-cam
 varying vec4 vViewPos;
 varying vec4 vWorldPos;
-varying vec3 vDisp;
-//varying float fDeep;
+varying float fDeep;
 varying mat2 matUVTrans;
+#ifdef USE_VERTEX_DEEPINFO
+#else
 varying vec4 vWaterInfo;
+#endif
 mat3 matTBNOff;//
 
 //
@@ -164,7 +166,7 @@ vec3 calcScatter(vec3 start, vec3 dir, vec3 end){
 }
 ///* 根据散射公式来计算某个方向的亮度  END *///
 
-const float cDeep = -4.;	//假设水的深度
+const float cDeep = -2.;	//假设水的深度
 vec3 getShuiDiColor(vec3 pos, vec3 dir, vec3 normal){
 	//一个无限大的水底，黑白格纹理。纹理长度为1米
 	float t = ( cDeep-pos.y )/dir.y;
@@ -173,30 +175,24 @@ vec3 getShuiDiColor(vec3 pos, vec3 dir, vec3 normal){
 	vec3 hitpos;
 	vec3 hitcolor;
 	vec3 hn;
-	/*
 	if(hitClydiner(pos,dir,hitpos,hn) && hitpos.y>cDeep && hitpos.y<pos.y){
 		bhit=true;
 		hitcolor = vec3(.8,.8,.8);
 
 	}else
-	*/
 	{
 		hitpos = pos+dir*t;
 		vec3 hp = floor(hitpos);
 		float a = mod((hp.x+hp.z),2.);
-		//hitcolor = (a<.9)?vec3(0.,0.,0.):vec3(1.,1.,1.);
+		hitcolor = (a<.9)?vec3(0.,0.,0.):vec3(1.,1.,1.);
 		//hitcolor = texture2D(texUnderWater,hitpos.xz/10.).rgb;
 	}
 	
-	hitcolor = texture2D(texUnderWater, gl_FragCoord.xy/u_scrsize+normal.xz/8.).rgb;
-	return hitcolor;
-	/*
 	float l = length(hitpos-pos);
 	//return texture2D(texDeepColor,vec2(min(max(l/400.,0.),1.),0.5)).rgb;
 	//return SEA_COLOR1*calcScatter(pos,dir,hitpos);
 	float left = pow(0.8,l);//假设透过率为80%，则到达水底的时候的光强。
 	return mix(hitcolor,u_SeaColor,1.-left);
-	*/
 }
 
 /*
@@ -208,10 +204,18 @@ vec3 getRefractColor(vec3 view,vec3 normal){
 }
 
 vec4 calcWaterC(vec3 view, vec3 normal, float von, vec3 R, float rough){
+	/*
+	只有浪顶的法线向下，也就是波形形成了交叠的时候，才会这样，所以要通过参数控制避免出现这种情况，而不是在这里保护。
 	if(dot(R,vec3(0.,1.,0.))<0.){
 		R = -R;
 	}
-	vec3 refr = getRefractColor(-view,normal);
+	*/
+	//vec3 refr = getRefractColor(-view,normal);
+#ifdef USE_REFR_TEX	
+	vec3 refr = texture2D(texUnderWater, gl_FragCoord.xy/u_scrsize+normal.xz/8.).rgb;
+#else
+	vec3 refr = u_SeaColor;
+#endif
 	float F0=0.02;
 	//菲涅尔，越大反射越强
 	float f =  F0+(1.0-F0)*exp2((-5.55473*von-6.98316)*von);
@@ -231,7 +235,7 @@ vec4 calcWaterC(vec3 view, vec3 normal, float von, vec3 R, float rough){
 	//return vec4(refl*(1.-rough),1.);
 	
 	//vec3 refl = reflc.rgb*f;
-	vec3 final = refr+refl*(max(0.,1.-rough));// mix(refr,refl,f);
+	vec3 final = mix(refr, u_SeaColor, min(fDeep/10.,1.))+refl*(max(0.,1.-rough));
 #ifdef HDR_ENV
 	final = ACESToneMapping(final,1.);//TODO 这个要uniform传入
 #endif
@@ -268,22 +272,23 @@ void main() {
     float NoV = saturate(dot( view, normal ));
     //vec3 R = 2. * NoV * normal - view;
 	
+#ifdef USE_FOAM	
 	vec4 foamc = (texture2D(texFoam,vUv*50.)+texture2D(texFoam,vUv*20.))/2.;
-	float nearcoast = 1.-vWaterInfo.r;
+	float nearcoast = 1.-min(fDeep/10.,1.);// 1.-vWaterInfo.r;
 	float foams = (nearcoast/4.+fFoam)*2.*nearcoast;
+#else
+	float foams =0.;
+#endif
 	
 	vec3 R = reflect(-view,normal);
 	vec4 wc = calcWaterC(view, normal,NoV,R, foams);
 
-
-	#ifdef SHOW_NORMAL
-	gl_FragColor.rgb = normal;
-	#else
 	gl_FragColor.rgb = wc.rgb;//normalize(detailNorm).rrr;//((normal)+vec3(0.0))/1.;//normalize(normal).rgb;//texture2D(texWaveDetail,vUv).rgb;// fracColor * texture2D(texUnderWater, vUv*20.0).rgb;// vec3(1.0);//pbrl.rgb;
-	#endif
     gl_FragColor.a = 1.0;//wc.a;
+#ifdef USE_FOAM
 	gl_FragColor.rgb = mix(gl_FragColor.rgb,vec3(1.),foamc.a*foams);
-	//if(mod(vUv.x*100.,1.0)<0.02 || mod(vUv.y*100.,1.0)<0.02) gl_FragColor.rgb=vec3(0.5,.5,.5);
 	gl_FragColor.a = foamc.r;
+#endif
+	//if(mod(vUv.x*100.,1.0)<0.02 || mod(vUv.y*100.,1.0)<0.02) gl_FragColor.rgb=vec3(0.5,.5,.5);
 	//gl_FragColor.rgb = detailNorm;
 }

@@ -1,5 +1,8 @@
 package laya.d3.core.render {
 	import laya.d3.core.Layer;
+	import laya.d3.core.PhasorSpriter3D;
+	import laya.d3.core.RenderableSprite3D;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.core.scene.ITreeNode;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
@@ -7,7 +10,12 @@ package laya.d3.core.render {
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
+	import laya.d3.math.Vector4;
+	import laya.d3.resource.BaseTexture;
+	import laya.d3.resource.Texture2D;
+	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
 	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	import laya.events.Event;
@@ -20,11 +28,15 @@ package laya.d3.core.render {
 	 * <code>Render</code> 类用于渲染器的父类，抽象类不允许示例。
 	 */
 	public class BaseRender extends EventDispatcher implements IDestroy {
-		/** @private */
-		public static var _tempBoudingBoxCorners:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+		/**@private */
+		public static var _tempBoundBoxCorners:Array = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		
 		/**@private */
 		private var _destroyed:Boolean;
+		/** @private */
+		private var _lightmapScaleOffset:Vector4;
+		/** @private */
+		private var _lightmapIndex:int;
 		/** @private */
 		private var _enable:Boolean;
 		/** @private */
@@ -43,23 +55,64 @@ package laya.d3.core.render {
 		protected var _boundingBoxCenterNeedChange:Boolean;
 		/** @private */
 		protected var _octreeNodeNeedChange:Boolean;
-	
+		
 		/** @private */
 		public var _materials:Vector.<BaseMaterial>;
 		/** @private */
-		public var _owner:Sprite3D;
+		public var _owner:RenderableSprite3D;
 		/** @private */
 		public var _renderElements:Vector.<RenderElement>;
 		/** @private */
 		public var _distanceForSort:Number;
 		/** @private */
 		public var _treeNode:ITreeNode;
+		/**@private */
+		public var  _isPartOfStaticBatch:Boolean;
+		/**@private */
+		public var _staticBatchRootSprite3D:Sprite3D;
+		/**@private */
+		public var _staticBatchRenderElements:Vector.<RenderElement>;
 		
-			
 		/**排序矫正值。*/
 		public var sortingFudge:Number;
 		/** 是否产生阴影。 */
 		public var castShadow:Boolean;
+		
+		/**
+		 * 获取光照贴图的索引。
+		 * @return 光照贴图的索引。
+		 */
+		public function get lightmapIndex():int {
+			return _lightmapIndex;
+		}
+		
+		/**
+		 * 设置光照贴图的索引。
+		 * @param value 光照贴图的索引。
+		 */
+		public function set lightmapIndex(value:int):void {
+			_lightmapIndex = value;
+			_applyLightMapParams();
+		
+		}
+		
+		/**
+		 * 获取光照贴图的缩放和偏移。
+		 * @return  光照贴图的缩放和偏移。
+		 */
+		public function get lightmapScaleOffset():Vector4 {
+			return _lightmapScaleOffset;
+		}
+		
+		/**
+		 * 设置光照贴图的缩放和偏移。
+		 * @param  光照贴图的缩放和偏移。
+		 */
+		public function set lightmapScaleOffset(value:Vector4):void {
+			_lightmapScaleOffset = value;
+			_setShaderValueColor(RenderableSprite3D.LIGHTMAPSCALEOFFSET, value);
+			_addShaderDefine(RenderableSprite3D.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV);
+		}
 		
 		/**
 		 * 获取是否可用。
@@ -221,9 +274,9 @@ package laya.d3.core.render {
 			if (_receiveShadow !== value) {
 				_receiveShadow = value;
 				if (value)
-					_owner._addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW);
+					_addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW);
 				else
-					_owner._removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW);
+					_removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW);
 			}
 		}
 		
@@ -245,7 +298,7 @@ package laya.d3.core.render {
 		/**
 		 * 创建一个新的 <code>BaseRender</code> 实例。
 		 */
-		public function BaseRender(owner:Sprite3D) {
+		public function BaseRender(owner:RenderableSprite3D) {
 			_destroyed = false;
 			_owner = owner;
 			_enable = true;
@@ -259,8 +312,16 @@ package laya.d3.core.render {
 			_materials = new Vector.<BaseMaterial>();
 			sortingFudge = 0.0;
 			_renderElements = new Vector.<RenderElement>();
+			_isPartOfStaticBatch = false;
 			
 			_owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _setShaderValuelightMap(lightMap:Texture2D):void {
+			_setShaderValueTexture(RenderableSprite3D.LIGHTMAP, lightMap);
 		}
 		
 		/**
@@ -276,6 +337,30 @@ package laya.d3.core.render {
 		/**
 		 * @private
 		 */
+		protected function _renderRenderableBoundBox():void {
+			var linePhasor:PhasorSpriter3D = Laya3D._debugPhasorSprite;
+			var boundBox:BoundBox = boundingBox;
+			var corners:Array = _tempBoundBoxCorners;
+			boundBox.getCorners(corners);
+			linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 0.0, 1.0, 0.0, 1.0, corners[1].x, corners[1].y, corners[1].z, 0.0, 1.0, 0.0, 1.0);
+			linePhasor.line(corners[2].x, corners[2].y, corners[2].z, 0.0, 1.0, 0.0, 1.0, corners[3].x, corners[3].y, corners[3].z, 0.0, 1.0, 0.0, 1.0);
+			linePhasor.line(corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0, corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0);
+			linePhasor.line(corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
+			
+			linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 0.0, 1.0, 0.0, 1.0, corners[3].x, corners[3].y, corners[3].z, 0.0, 1.0, 0.0, 1.0);
+			linePhasor.line(corners[1].x, corners[1].y, corners[1].z, 0.0, 1.0, 0.0, 1.0, corners[2].x, corners[2].y, corners[2].z, 0.0, 1.0, 0.0, 1.0);
+			linePhasor.line(corners[2].x, corners[2].y, corners[2].z, 0.0, 1.0, 0.0, 1.0, corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0);
+			linePhasor.line(corners[3].x, corners[3].y, corners[3].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
+			
+			linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 0.0, 1.0, 0.0, 1.0, corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0);
+			linePhasor.line(corners[1].x, corners[1].y, corners[1].z, 0.0, 1.0, 0.0, 1.0, corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0);
+			linePhasor.line(corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
+			linePhasor.line(corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0, corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0);
+		}
+		
+		/**
+		 * @private
+		 */
 		protected function _calculateBoundingSphere():void {
 			throw("BaseRender: must override it.");
 		}
@@ -285,6 +370,122 @@ package laya.d3.core.render {
 		 */
 		protected function _calculateBoundingBox():void {
 			throw("BaseRender: must override it.");
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setShaderValueTexture(shaderName:int, texture:BaseTexture):void {
+			_owner._shaderValues.setValue(shaderName, texture ? texture.source : null);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setShaderValueMatrix4x4(shaderName:int, matrix4x4:Matrix4x4):void {
+			_owner._shaderValues.setValue(shaderName, matrix4x4 ? matrix4x4.elements : null);
+		}
+		
+		/**
+		 * 设置颜色。
+		 * @param	shaderIndex shader索引。
+		 * @param	color 颜色向量。
+		 */
+		public function _setShaderValueColor(shaderIndex:int, color:*):void {
+			_owner._shaderValues.setValue(shaderIndex, color ? color.elements : null);
+		}
+		
+		/**
+		 * 设置Buffer。
+		 * @param	shaderIndex shader索引。
+		 * @param	buffer  buffer数据。
+		 */
+		public function _setShaderValueBuffer(shaderIndex:int, buffer:Float32Array):void {
+			_owner._shaderValues.setValue(shaderIndex, buffer);
+		}
+		
+		/**
+		 * 设置整型。
+		 * @param	shaderIndex shader索引。
+		 * @param	i 整形。
+		 */
+		public function _setShaderValueInt(shaderIndex:int, i:int):void {
+			_owner._shaderValues.setValue(shaderIndex, i);
+		}
+		
+		/**
+		 * 设置布尔。
+		 * @param	shaderIndex shader索引。
+		 * @param	b 布尔。
+		 */
+		public function _setShaderValueBool(shaderIndex:int, b:Boolean):void {
+			_owner._shaderValues.setValue(shaderIndex, b);
+		}
+		
+		/**
+		 * 设置浮点。
+		 * @param	shaderIndex shader索引。
+		 * @param	i 浮点。
+		 */
+		public function _setShaderValueNumber(shaderIndex:int, number:Number):void {
+			_owner._shaderValues.setValue(shaderIndex, number);
+		}
+		
+		/**
+		 * 设置二维向量。
+		 * @param	shaderIndex shader索引。
+		 * @param	vector2 二维向量。
+		 */
+		public function _setShaderValueVector2(shaderIndex:int, vector2:Vector2):void {
+			_owner._shaderValues.setValue(shaderIndex, vector2 ? vector2.elements : null);
+		}
+		
+		/**
+		 * 增加Shader宏定义。
+		 * @param value 宏定义。
+		 */
+		public function _addShaderDefine(value:int):void {
+			_owner._shaderDefineValue |= value;
+		}
+		
+		/**
+		 * 移除Shader宏定义。
+		 * @param value 宏定义。
+		 */
+		public function _removeShaderDefine(value:int):void {
+			_owner._shaderDefineValue &= ~value;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _renderUpdate(projectionView:Matrix4x4):void {
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _applyLightMapParams():void {
+			if (_lightmapIndex >= 0) {
+				var scene:Scene = _owner.scene;
+				if (scene) {
+					var lightMaps:Vector.<Texture2D> = scene.getlightmaps();
+					var lightMap:Texture2D = lightMaps[_lightmapIndex];
+					if (lightMap) {
+						_addShaderDefine(RenderableSprite3D.SAHDERDEFINE_LIGHTMAP);
+						if (lightMap.loaded)
+							_setShaderValuelightMap(lightMap);
+						else
+							lightMap.once(Event.LOADED, this, _setShaderValuelightMap);
+					} else {
+						_removeShaderDefine(RenderableSprite3D.SAHDERDEFINE_LIGHTMAP);
+					}
+				} else {
+					_removeShaderDefine(RenderableSprite3D.SAHDERDEFINE_LIGHTMAP);
+				}
+			} else {
+				_removeShaderDefine(RenderableSprite3D.SAHDERDEFINE_LIGHTMAP);
+			}
 		}
 		
 		/**
@@ -308,6 +509,7 @@ package laya.d3.core.render {
 			_boundingBox = null;
 			_boundingBoxCenter = null;
 			_boundingSphere = null;
+			_lightmapScaleOffset = null;
 			_destroyed = true;
 		}
 	

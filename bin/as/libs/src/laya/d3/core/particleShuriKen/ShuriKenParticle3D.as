@@ -58,7 +58,7 @@ package laya.d3.core.particleShuriKen {
 		
 		public static const WORLDPOSITION:int = 0;
 		public static const WORLDROTATIONMATRIX:int = 1;
-		public static const POSITIONSCALE:int = 4;
+		public static const POSITIONSCALE:int = 4;//TODO:是否可以从2开始
 		public static const SIZESCALE:int = 5;
 		
 		//VelocityOverLifetime
@@ -108,8 +108,7 @@ package laya.d3.core.particleShuriKen {
 		public static const TEXTURESHEETANIMATIONGRADIENTUVS:int = 41;
 		public static const TEXTURESHEETANIMATIONGRADIENTMAXUVS:int = 42;
 		
-		/** @private */
-		private var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
+		
 		
 		/**
 		 * 获取粒子系统。
@@ -178,44 +177,7 @@ package laya.d3.core.particleShuriKen {
 			scene.addFrustumCullingObject(_render);
 		}
 		
-		/**
-		 * @inheritDoc
-		 */
-		override public function _renderUpdate(projectionView:Matrix4x4):void {
-			switch (particleSystem.simulationSpace) {
-			case 0: //World
-				_setShaderValueColor(WORLDPOSITION, Vector3.ZERO);//TODO是否可不传
-				break;
-			case 1: //Local
-				_setShaderValueColor(WORLDPOSITION, transform.position);
-				break;
-			default: 
-				throw new Error("ShurikenParticleMaterial: SimulationSpace value is invalid.");
-			}
-			
-			Matrix4x4.createFromQuaternion(transform.rotation, _tempRotationMatrix);
-			_setShaderValueMatrix4x4(WORLDROTATIONMATRIX, _tempRotationMatrix);
-			
-			switch (particleSystem.scaleMode) {
-			case 0: 
-				var scale:Vector3 = transform.scale;
-				_setShaderValueColor(POSITIONSCALE, scale);
-				_setShaderValueColor(SIZESCALE, scale);
-				break;
-			case 1: 
-				var localScale:Vector3 = transform.localScale;
-				_setShaderValueColor(POSITIONSCALE, localScale);
-				_setShaderValueColor(SIZESCALE, localScale);
-				break;
-			case 2: 
-				_setShaderValueColor(POSITIONSCALE, transform.scale);
-				_setShaderValueColor(SIZESCALE, Vector3.ONE);
-				break;
-			}
-			
-			if (Laya3D.debugMode)
-				_renderRenderableBoundBox();
-		}
+		
 		
 		/**
 		 * @private

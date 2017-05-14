@@ -16,7 +16,7 @@ varying vec2 v_Texcoord0;
   #endif
 #endif
 
-#ifdef AMBIENTMAP
+#ifdef defined(AMBIENTMAP)||defined(LIGHTMAP)
 attribute vec2 a_Texcoord1;
 uniform vec4 u_LightmapScaleOffset;
 varying vec2 v_LightMapUV;
@@ -140,7 +140,7 @@ void main_normal()
 	#endif
 #endif
 
-#ifdef AMBIENTMAP
+#ifdef defined(AMBIENTMAP)||defined(LIGHTMAP)
 	#ifdef SCALEOFFSETLIGHTINGMAPUV
 		#ifdef UV1
 			v_LightMapUV=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,1.0+a_Texcoord1.y*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);

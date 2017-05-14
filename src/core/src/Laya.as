@@ -34,7 +34,7 @@ package {
 		/** 加载管理器的引用。*/
 		public static var loader:LoaderManager = null;
 		/** 当前引擎版本。*/
-		public static var version:String = "1.7.4beta";
+		public static var version:String = "1.7.5beta";
 		/**@private Render 类的引用。*/
 		public static var render:Render;
 		/**@private */
@@ -50,7 +50,7 @@ package {
 		 * 初始化引擎。使用引擎需要先初始化引擎，否则可能会报错。
 		 * @param	width 初始化的游戏窗口宽度，又称设计宽度。
 		 * @param	height	初始化的游戏窗口高度，又称设计高度。
-		 * @param	插件列表，比如 WebGL（使用WebGL方式渲染）。
+		 * @param	plugins 插件列表，比如 WebGL（使用WebGL方式渲染）。
 		 * @return	返回原生canvas引用，方便对canvas属性进行修改
 		 */
 		public static function init(width:Number, height:Number, ... plugins):* {

@@ -15,14 +15,14 @@ package threeDimen.primaryStage {
 		private var skinAni:SkinAnimations;
 		
 		public function D3Base_SkinAnimation_MultiSubMeshSample() {
-			Laya3D.init(0, 0,true);
+			Laya3D.init(0, 0, true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;
 			Stat.show();
 			
 			var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
 			
-			var camera:Camera = (scene.addChild(new Camera( 0, 0.1, 100))) as Camera;
+			var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
 			camera.transform.translate(new Vector3(0, 0.8, 1.0));
 			camera.transform.rotate(new Vector3(-30, 0, 0), true, false);
 			camera.clearColor = null;
@@ -36,8 +36,9 @@ package threeDimen.primaryStage {
 			skinMesh = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
 			skinMesh.transform.localRotationEuler = new Vector3(0, 3.14, 0);
 			skinAni = skinMesh.addComponent(SkinAnimations) as SkinAnimations;
-			skinAni.templet = AnimationTemplet.load("../../../../res/threeDimen/skinModel/dude/dude.ani");
+			skinAni.templet = AnimationTemplet.load("../../../../res/threeDimen/skinModel/dude/dude-Take 001.lsani");
 			skinAni.player.play();
+		
 		}
 	}
 }

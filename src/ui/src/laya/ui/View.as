@@ -1,5 +1,6 @@
 package laya.ui {
 	import laya.display.Animation;
+	import laya.display.FrameAnimation;
 	import laya.display.Sprite;
 	import laya.display.Text;
 	import laya.ui.Box;
@@ -59,10 +60,10 @@ package laya.ui {
 				var anilist:Array = [];
 				var animations:Array = uiView.animations;
 				var i:int, len:int = animations.length;
-				var tAni:FrameClip;
+				var tAni:FrameAnimation;
 				var tAniO:Object;
 				for (i = 0; i < len; i++) {
-					tAni = new FrameClip();
+					tAni = new FrameAnimation();
 					tAniO = animations[i];
 					tAni._setUp(_idMap, tAniO);
 					/*[IF-FLASH-BEGIN]*/

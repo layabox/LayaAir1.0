@@ -1,16 +1,9 @@
 package laya.d3.shader {
 	import laya.d3.component.animation.SkinAnimations;
-	import laya.d3.core.BaseCamera;
 	import laya.d3.core.RenderableSprite3D;
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.scene.BaseScene;
-	import laya.d3.math.Vector3;
 	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	import laya.renders.Render;
-	import laya.utils.Browser;
-	import laya.webgl.shader.Shader;
 	
 	public class ShaderCompile3D {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
@@ -60,8 +53,6 @@ package laya.d3.shader {
 			_globalRegDefine("SHADOWMAP_PCF3", ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF3);
 			
 			_globalRegDefine("DEPTHFOG", SAHDERDEFINE_DEPTHFOG);
-		
-			//_globalRegDefine("BONE", SkinAnimations.SHADERDEFINE_BONE);
 		}
 		
 		/**
@@ -124,7 +115,9 @@ package laya.d3.shader {
 			
 			_spriteInt2name[ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW] = "RECEIVESHADOW";
 			_spriteInt2name[RenderableSprite3D.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV] = "SCALEOFFSETLIGHTINGMAPUV";
+			_spriteInt2name[RenderableSprite3D.SAHDERDEFINE_LIGHTMAP] = "LIGHTMAP";
 			_spriteInt2name[SkinAnimations.SHADERDEFINE_BONE] = "BONE";
+			
 			_materialInt2name[BaseMaterial.SHADERDEFINE_ALPHATEST] = "ALPHATEST";
 			
 			function split(str:String):Array//这里要修改
@@ -411,7 +404,6 @@ package laya.d3.shader {
 	}
 
 }
-import laya.utils.Browser;
 import laya.utils.RunDriver;
 import laya.webgl.utils.ShaderCompile;
 

@@ -22,10 +22,6 @@ package laya.d3.resource.tempelet {
 		private var _vertexBuffer3D:VertexBuffer3D;
 		private var _indexBuffer3D:IndexBuffer3D;
 		
-		public function get indexOfHost():int {
-			return 0;
-		}
-		
 		public function get _vertexBufferCount():int {
 			return 1;
 		}

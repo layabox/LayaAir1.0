@@ -86,7 +86,7 @@ package laya.ani {
 		}
 		
 		/**@private */
-		protected var _aniVersion:String;
+		public var _aniVersion:String;
 		/**@private */
 		public var _anis:Vector.<AnimationContent> = new Vector.<AnimationContent>;
 		/**@private */
@@ -187,7 +187,7 @@ package laya.ani {
 		}
 		
 		public function getTotalkeyframesLength(aniIndex:int):int {
-			return _anis[aniIndex].totalKeyframesLength;
+			return _anis[aniIndex].totalKeyframeDatasLength;
 		}
 		
 		public function getPublicExtData():ArrayBuffer {
@@ -229,36 +229,43 @@ package laya.ani {
 				node.dataOffset = outOfs;
 				
 				var dt:Number = playCurTime - key.startTime;
-				switch (node.lerpType) {
-				case 0: 
-				case 1: 
+				
+				var lerpType:int = node.lerpType;
+				if (lerpType) {
+					switch (lerpType) {
+					case 0: 
+					case 1: 
+						for (j = 0; j < node.keyframeWidth; )
+							j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, key.dData, key.duration, key.nextData);
+						break;
+					case 2: 
+						var interpolationData:Array = key.interpolationData;
+						var interDataLen:int = interpolationData.length;
+						var dataIndex:int = 0;
+						for (j = 0; j < interDataLen; ) {
+							var type:int = interpolationData[j];
+							switch (type) {
+							case 6: 
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData, j + 1);
+								break;
+							case 7: 
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData, j + 1);
+								break;
+							default: 
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
+								
+							}
+							//if (type === 6)
+							//j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j+1, j + 5));
+							//else
+							//j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
+							dataIndex++;
+						}
+						break;
+					}
+				} else {
 					for (j = 0; j < node.keyframeWidth; )
 						j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, key.dData, key.duration, key.nextData);
-					break;
-				case 2: 
-					var interpolationData:Array = key.interpolationData;
-					var interDataLen:int = interpolationData.length;
-					var dataIndex:int = 0;
-					for (j = 0; j < interDataLen; ) {
-						var type:int = interpolationData[j];
-						switch (type) {
-						case 6: 
-							j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData, j + 1);
-							break;
-						case 7: 
-							j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData, j + 1);
-							break;
-						default: 
-							j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
-							
-						}
-						//if (type === 6)
-						//j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j+1, j + 5));
-						//else
-						//j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
-						dataIndex++;
-					}
-					break;
 				}
 				
 				outOfs += node.keyframeWidth;
@@ -324,36 +331,42 @@ package laya.ani {
 				var key:KeyFramesContent = unfixedKeyframes[i];
 				node.dataOffset = outOfs;
 				var dt:Number = playCurTime - key.startTime;
-				switch (node.lerpType) {
-				case 0: 
-				case 1: 
+				var lerpType:int = node.lerpType;
+				if (lerpType) {
+					switch (node.lerpType) {
+					case 0: 
+					case 1: 
+						for (j = 0; j < node.keyframeWidth; )
+							j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, key.dData, key.duration, key.nextData);
+						break;
+					case 2: 
+						var interpolationData:Array = key.interpolationData;
+						var interDataLen:int = interpolationData.length;
+						var dataIndex:int = 0;
+						for (j = 0; j < interDataLen; ) {
+							var type:int = interpolationData[j];
+							switch (type) {
+							case 6: 
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData, j + 1);
+								break;
+							case 7: 
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData, j + 1);
+								break;
+							default: 
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
+								
+							}
+							//if (type === 6)
+							//j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j+1, j + 5));
+							//else
+							//j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
+							dataIndex++;
+						}
+						break;
+					}
+				} else {
 					for (j = 0; j < node.keyframeWidth; )
 						j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, key.dData, key.duration, key.nextData);
-					break;
-				case 2: 
-					var interpolationData:Array = key.interpolationData;
-					var interDataLen:int = interpolationData.length;
-					var dataIndex:int = 0;
-					for (j = 0; j < interDataLen; ) {
-						var type:int = interpolationData[j];
-						switch (type) {
-						case 6: 
-							j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData, j + 1);
-							break;
-						case 7: 
-							j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData, j + 1);
-							break;
-						default: 
-							j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
-							
-						}
-						//if (type === 6)
-						//j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData.slice(j+1, j + 5));
-						//else
-						//j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
-						dataIndex++;
-					}
-					break;
 				}
 				
 				outOfs += node.keyframeWidth;

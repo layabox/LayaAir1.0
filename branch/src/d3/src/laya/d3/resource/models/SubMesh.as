@@ -1,4 +1,5 @@
 package laya.d3.resource.models {
+	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
@@ -28,7 +29,14 @@ package laya.d3.resource.models {
 		private var _mesh:Mesh;
 		
 		/** @private */
-		public var _boneIndices:Uint8Array;
+		public var _boneIndicesList:Vector.<Uint8Array>;
+		/** @private */
+		public var _subIndexBufferStart:Vector.<int>;
+		/** @private */
+		public var _subIndexBufferCount:Vector.<int>;
+		/** @private */
+		public var _skinAnimationDatas:Vector.<Float32Array>;
+		
 		/** @private */
 		public var _bufferUsage:*;
 		/** @private */
@@ -75,6 +83,9 @@ package laya.d3.resource.models {
 		public function SubMesh(mesh:Mesh) {
 			_bufferUsage = {};
 			_mesh = mesh;
+			_boneIndicesList = new Vector.<Uint8Array>();
+			_subIndexBufferStart = new Vector.<int>();
+			_subIndexBufferCount = new Vector.<int>();
 		}
 		
 		/**
@@ -124,12 +135,32 @@ package laya.d3.resource.models {
 		 * @param	state 渲染状态。
 		 */
 		public function _render(state:RenderState):void {
-			var indexCount:int;
-			if (_indexBufferCount > 0) {
+			var indexCount:int = 0;
+			var renderElement:RenderElement = state.renderElement;
+			if (_indexBufferCount > 1) {
+				var boneIndicesListCount:int = _boneIndicesList.length;
+				if (boneIndicesListCount > 0) {
+					for (var i:int = 0; i < boneIndicesListCount; i++) {
+						if (_skinAnimationDatas) {
+							renderElement._shaderValue.setValue(SkinAnimations.BONES, _skinAnimationDatas[i]);
+							state._shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
+						}
+						WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, _subIndexBufferCount[i], WebGLContext.UNSIGNED_SHORT, _subIndexBufferStart[i] * 2);
+					}
+				} else {
+					if (_skinAnimationDatas) {
+						renderElement._shaderValue.setValue(SkinAnimations.BONES, _skinAnimationDatas[0]);
+						state._shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
+					}
+					WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, _indexBufferCount, WebGLContext.UNSIGNED_SHORT, _indexBufferStart * 2);
+				}
 				indexCount = _indexBufferCount;
-				WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, _indexBufferStart*2);
 			} else {//TODO:兼容旧格式
 				indexCount = _indexBuffer.indexCount;
+				if (_skinAnimationDatas) {
+					renderElement._shaderValue.setValue(SkinAnimations.BONES, _skinAnimationDatas[0]);
+					state._shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
+				}
 				WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 0);
 			}
 			Stat.drawCall++;
@@ -141,7 +172,7 @@ package laya.d3.resource.models {
 		 * <p><b>注意：</b>会强制解锁清理。</p>
 		 */
 		public function dispose():void {
-			_boneIndices = null;
+			_boneIndicesList = null;
 			_indexBuffer.dispose();
 			_vertexBuffer.dispose();
 		}

@@ -159,7 +159,7 @@ package laya.ui {
 		}
 		
 		/**@inheritDoc */
-		override public function destroy(clearFromCache:Boolean = false):void {
+		override public function destroy(destroyChild:Boolean = true):void {
 			super.destroy(true);
 			_bitmap && _bitmap.destroy();
 			_bitmap = null;
@@ -213,7 +213,7 @@ package laya.ui {
 		}
 		
 		public function set clipX(value:int):void {
-			_clipX = value;
+			_clipX = value || 1;
 			_setClipChanged()
 		}
 		
@@ -223,7 +223,7 @@ package laya.ui {
 		}
 		
 		public function set clipY(value:int):void {
-			_clipY = value;
+			_clipY = value || 1;
 			_setClipChanged()
 		}
 		

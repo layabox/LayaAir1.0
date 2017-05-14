@@ -226,6 +226,19 @@ package laya.ui {
 			_bg.sizeGrid = UIUtils.fillArray(Styles.defaultSizeGrid, value, Number);
 		}
 		
+		/**
+		 * 当前文本内容字符串。
+		 * @see laya.display.Text.text
+		 */
+		override public function set text(value:String):void 
+		{
+			if (_tf.text != value) {
+				value = value + "";
+				_tf.text = value;
+				event(Event.CHANGE);
+			}
+		}
+		
 		/**@inheritDoc */
 		override public function set width(value:Number):void {
 			super.width = value;

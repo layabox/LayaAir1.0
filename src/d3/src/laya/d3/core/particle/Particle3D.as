@@ -105,14 +105,7 @@ package laya.d3.core.particle {
 			scene.addFrustumCullingObject(_render);
 		}
 		
-		/**
-		 * @private
-		 */
-		override public function _renderUpdate(projectionView:Matrix4x4):void {
-			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
-			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
-			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
-		}
+		
 		
 		override public function _update(state:RenderState):void {
 			_templet.update(state.elapsedTime);

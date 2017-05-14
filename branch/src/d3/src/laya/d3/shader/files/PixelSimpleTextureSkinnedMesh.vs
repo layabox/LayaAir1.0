@@ -44,7 +44,7 @@ attribute vec3 a_Tangent0;
 varying vec3 v_Tangent0;
 #endif
 
-#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)||defined(RECEIVESHADOW)
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(REFLECTMAP)||defined(RECEIVESHADOW)
 uniform mat4 u_WorldMat;
 varying vec3 v_PositionWorld;
 #endif
@@ -121,7 +121,7 @@ void main_normal()
 	#endif
 #endif
 
-#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(RECEIVESHADOW)
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(RECEIVESHADOW)
 	#ifdef BONE
 		v_PositionWorld=(u_WorldMat*position).xyz;
 	#else

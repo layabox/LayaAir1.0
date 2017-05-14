@@ -1,7 +1,9 @@
 package laya.media {
 	import laya.events.Event;
 	import laya.net.Loader;
+	import laya.renders.Render;
 	import laya.utils.Handler;
+	import laya.utils.Utils;
 	
 	/**
 	 * <code>SoundManager</code> 是一个声音管理类。
@@ -25,7 +27,7 @@ package laya.media {
 		private static var _tMusic:String = null;
 		/**@private 当前背景音乐声道。*/
 		private static var _musicChannel:SoundChannel = null;
-		/**@private 当前\播放的Channel列表。*/
+		/**@private 当前播放的Channel列表。*/
 		private static var _channels:Array = [];
 		/**@private */
 		private static var _autoStopMusic:Boolean;
@@ -81,7 +83,6 @@ package laya.media {
 		
 		/**
 		 * 表示是否失去焦点后自动停止背景音乐。
-		 * @return
 		 */
 		public static function get autoStopMusic():Boolean {
 			return _autoStopMusic;
@@ -176,6 +177,15 @@ package laya.media {
 			if (url == _tMusic) {
 				if (_musicMuted) return null;
 			} else {
+				if ( Render.isConchApp )
+				{
+					var ext:String = Utils.getFileExtension(url);
+					if ( ext != "wav" && ext != "ogg")
+					{
+						alert("The sound only supports wav or ogg format,for optimal performance reason,please refer to the official website document.");
+						return null;
+					}
+				}
 				if (_soundMuted) return null;
 			}
 			var tSound:Sound = Laya.loader.getRes(url);

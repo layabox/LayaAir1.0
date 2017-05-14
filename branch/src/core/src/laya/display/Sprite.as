@@ -525,11 +525,12 @@ package laya.display {
 		
 		/**
 		 * 返回此实例中的绘图对象（ <code>Graphics</code> ）的显示区域，不包括子对象。
+		 * @param realSize 使用图片的真实大小，默认为false
 		 * @return 一个 Rectangle 对象，表示获取到的显示区域。
 		 */
-		public function getGraphicBounds():Rectangle {
+		public function getGraphicBounds(realSize:Boolean=false):Rectangle {
 			if (!this._graphics) return Rectangle.TEMP.setTo(0, 0, 0, 0);
-			return this._graphics.getBounds();
+			return this._graphics.getBounds(realSize);
 		}
 		
 		/**
@@ -971,7 +972,20 @@ package laya.display {
 		
 		/**
 		 * 绘制 当前<code>Sprite</code> 到 <code>Canvas</code> 上，并返回一个HtmlCanvas
-		 * 注意：HtmlCanvas不是浏览器原生的canvas对象，可以通过canvas.source来获取原生的canvas对象。
+		 * 绘制的结果可以当作图片源，再次绘制到其他Sprite里面，示例：
+		 * 
+		 * var htmlCanvas:HTMLCanvas = sprite.drawToCanvas(100, 100, 0, 0);//把精灵绘制到canvas上面
+		 * var texture:Texture = new Texture(htmlCanvas);//使用htmlCanvas创建Texture
+		 * var sp:Sprite = new Sprite().pos(0, 200);//创建精灵并把它放倒200位置
+		 * sp.graphics.drawTexture(texture);//把截图绘制到精灵上
+		 * Laya.stage.addChild(sp);//把精灵显示到舞台
+		 * 
+		 * 也可以获取原始图片数据，分享到网上，从而实现截图效果，示例：
+		 * 
+		 * var htmlCanvas:HTMLCanvas = sprite.drawToCanvas(100, 100, 0, 0);//把精灵绘制到canvas上面
+		 * var canvas:* = htmlCanvas.getCanvas();//获取原生的canvas对象
+		 * trace(canvas.toDataURL("image/png"));//打印图片base64信息，可以发给服务器或者保存为图片
+		 * 
 		 * @param	canvasWidth 画布宽度。
 		 * @param	canvasHeight 画布高度。
 		 * @param	x 绘制的 X 轴偏移量。

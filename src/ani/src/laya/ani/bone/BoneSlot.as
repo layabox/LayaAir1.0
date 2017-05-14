@@ -1,6 +1,8 @@
 package laya.ani.bone {
 	
 	import laya.ani.GraphicsAni;
+	import laya.ani.bone.canvasmesh.SimpleSkinMeshCanvas;
+	import laya.ani.bone.canvasmesh.SkinMeshCanvas;
 	import laya.display.Graphics;
 	import laya.maths.Matrix;
 	import laya.renders.Render;
@@ -152,6 +154,27 @@ package laya.ani.bone {
 		
 		private var _mVerticleArr:Array;
 		private static var _tempMatrix:Matrix = new Matrix();
+		public static function createSkinMesh():*
+		{
+			if (Render.isWebGL || Render.isConchApp)
+			{
+				return RunDriver.skinAniSprite();
+			}else
+			{
+				if (!Render.isWebGL)
+				{
+					if (Skeleton.useSimpleMeshInCanvas)
+					{
+						return new SimpleSkinMeshCanvas();
+					}else
+					{
+						return new SkinMeshCanvas();
+					}
+					
+				}	
+			}
+			return null;
+		}
 		/**
 		 * 把纹理画到Graphics上
 		 * @param	graphics
@@ -215,11 +238,11 @@ package laya.ani.bone {
 				case 1:
 					if (noUseSave) {	
 						if (_skinSprite == null) {	
-							_skinSprite = RunDriver.skinAniSprite();
+							_skinSprite = createSkinMesh();
 						}
 						tSkinSprite = _skinSprite;
 					}else {
-						tSkinSprite = RunDriver.skinAniSprite();
+						tSkinSprite = createSkinMesh();
 					}
 					if (tSkinSprite == null)
 					{
@@ -280,16 +303,17 @@ package laya.ani.bone {
 					}else {
 						skinMesh(boneMatrixArray,tSkinSprite,alpha);
 					}
+					
 					graphics.drawSkin(tSkinSprite);
 					break;
 				case 2:
 					if (noUseSave) {	
 						if (_skinSprite == null) {	
-							_skinSprite = RunDriver.skinAniSprite();
+							_skinSprite = createSkinMesh();
 						}
 						tSkinSprite = _skinSprite;
 					}else {
-						tSkinSprite = RunDriver.skinAniSprite();
+						tSkinSprite = createSkinMesh();
 					}
 					if (tSkinSprite == null)
 					{

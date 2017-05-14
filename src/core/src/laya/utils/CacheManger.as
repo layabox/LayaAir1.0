@@ -1,6 +1,7 @@
 package laya.utils 
 {
 	/**
+	 * @private
 	 * 对象缓存统一管理类
 	 */
 	public class CacheManger 

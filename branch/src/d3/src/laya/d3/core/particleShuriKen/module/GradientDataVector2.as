@@ -30,11 +30,17 @@ package laya.d3.core.particleShuriKen.module {
 		 */
 		public function add(key:Number, value:Vector2):void {
 			if (_currentLength < 8) {
+				
+				if ((_currentLength === 6) && ((key !== 1))) {
+					key = 1;
+					console.log("GradientDataVector2 warning:the forth key is  be force set to 1.");
+				}
+				
 				_elements[_currentLength++] = key;
 				_elements[_currentLength++] = value.x;
 				_elements[_currentLength++] = value.y;
 			} else {
-				throw new Error("GradientDataVector2:  Count must less than 4.");
+				console.log("GradientDataVector2 warning:data count must lessEqual than 4");
 			}
 		}
 		

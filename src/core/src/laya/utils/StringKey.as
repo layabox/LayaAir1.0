@@ -1,6 +1,7 @@
 package laya.utils {
 	
 	/**
+	 * @private
 	 * <code>StringKey</code> 类用于存取字符串对应的数字。
 	 */
 	public class StringKey {

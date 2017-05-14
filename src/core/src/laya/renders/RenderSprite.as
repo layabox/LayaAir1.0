@@ -223,7 +223,7 @@ package laya.renders {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var style:Style = sprite._style;
 			var alpha:Number;
-			if ((alpha = style.alpha) > 0.01) {
+			if ((alpha = style.alpha) > 0.01 || sprite._needRepaint()) {
 				var temp:Number = context.ctx.globalAlpha;
 				context.ctx.globalAlpha *= alpha;
 				var next:RenderSprite = this._next;

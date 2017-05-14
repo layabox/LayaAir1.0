@@ -5,12 +5,13 @@ package laya.d3.core {
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.IUpdate;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
+	import laya.d3.resource.BaseTexture;
 	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
 	import laya.display.Node;
@@ -28,9 +29,9 @@ package laya.d3.core {
 	 * <code>Sprite3D</code> 类用于实现3D精灵。
 	 */
 	public class Sprite3D extends Node implements IUpdate, ICreateResource, IClone {
-		/**着色器变量名，世界矩阵。*/
+		/**@private 着色器变量名，世界矩阵。*/
 		public static const WORLDMATRIX:int = 0;
-		/**着色器变量名，世界视图投影矩阵。*/
+		/**@private 着色器变量名，世界视图投影矩阵。*/
 		public static const MVPMATRIX:int = 1;
 		
 		/**@private */
@@ -117,9 +118,11 @@ package laya.d3.core {
 		public var _shaderValues:ValusArray;
 		/** @private */
 		public var _colliders:Vector.<Collider>;
+		/**@private */
+		public var _scene:Scene;
+		/**@private */
+		public var _transform:Transform3D;
 		
-		/**矩阵变换相关。*/
-		public var transform:Transform3D;
 		/**是否静态,静态包含一系列的特殊处理*/
 		public var isStatic:Boolean;
 		
@@ -198,8 +201,8 @@ package laya.d3.core {
 		 * 获得所属场景。
 		 * @return	场景。
 		 */
-		public function get scene():BaseScene {
-			return parent ? (parent as Object).scene : null;
+		public function get scene():Scene {
+			return _scene;
 		}
 		
 		/**
@@ -235,6 +238,13 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * 获取精灵变换。
+		 */
+		public function get transform():Transform3D{
+			return _transform;
+		}
+		
+		/**
 		 * 创建一个 <code>Sprite3D</code> 实例。
 		 */
 		public function Sprite3D(name:String = null) {
@@ -251,40 +261,28 @@ package laya.d3.core {
 			_activeInHierarchy = false;
 			_id = ++_uniqueIDCounter;
 			layer = Layer.currentCreationLayer;
-			transform = new Transform3D(this);
+			_transform = new Transform3D(this);
 			active = true;
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _setBelongScene():void {
+		public function _setBelongScene(scene:Scene):void {
+			_scene = scene;
 			_belongScene = true;
 			for (var i:int = 0, n:int = _childs.length; i < n; i++)
-				(_childs[i] as Sprite3D)._setBelongScene();
+				(_childs[i] as Sprite3D)._setBelongScene(scene);
 		}
 		
 		/**
 		 * @private
 		 */
 		public function _setUnBelongScene():void {
+			_scene = null;
 			_belongScene = false;
 			for (var i:int = 0, n:int = _childs.length; i < n; i++)
 				(_childs[i] as Sprite3D)._setUnBelongScene();
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _inActiveHierarchy():void {
-			_activeInHierarchy = false;
-			_clearSelfRenderObjects();
-			this.event(Event.ACTIVE_IN_HIERARCHY_CHANGED, false);
-			
-			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
-				var child:Sprite3D = _childs[i] as Sprite3D;
-				(child._active) && (child._inActiveHierarchy());
-			}
 		}
 		
 		/**
@@ -298,6 +296,20 @@ package laya.d3.core {
 			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
 				var child:Sprite3D = _childs[i] as Sprite3D;
 				(child._active) && (child._activeHierarchy());
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _inActiveHierarchy():void {
+			_activeInHierarchy = false;
+			_clearSelfRenderObjects();
+			this.event(Event.ACTIVE_IN_HIERARCHY_CHANGED, false);
+			
+			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
+				var child:Sprite3D = _childs[i] as Sprite3D;
+				(child._active) && (child._inActiveHierarchy());
 			}
 		}
 		
@@ -340,22 +352,6 @@ package laya.d3.core {
 		 */
 		override public function createConchModel():* {
 			return __JS__("null");
-		}
-		
-		/**
-		 * 增加Shader宏定义。
-		 * @param value 宏定义。
-		 */
-		public function _addShaderDefine(value:int):void {
-			_shaderDefineValue |= value;
-		}
-		
-		/**
-		 * 移除Shader宏定义。
-		 * @param value 宏定义。
-		 */
-		public function _removeShaderDefine(value:int):void {
-			_shaderDefineValue &= ~value;
 		}
 		
 		/**
@@ -421,16 +417,7 @@ package laya.d3.core {
 		 * @param	state 渲染相关状态。
 		 */
 		public function _getSortID(renderElement:IRenderable, material:BaseMaterial):int {
-			return renderElement._getVertexBuffer().vertexDeclaration.id + material.id * VertexDeclaration._maxVertexDeclarationBit;
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _renderUpdate(projectionView:Matrix4x4):void {
-			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);//TODO:静态合并需要使用,待调整移除。
-			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
-			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
+			return material.id * VertexDeclaration._maxVertexDeclarationBit+renderElement._getVertexBuffer().vertexDeclaration.id;
 		}
 		
 		/**
@@ -463,72 +450,7 @@ package laya.d3.core {
 			}
 		}
 		
-		/**
-		 * @private
-		 */
-		public function _setShaderValueMatrix4x4(shaderName:int, matrix4x4:Matrix4x4):void {
-			_shaderValues.setValue(shaderName, matrix4x4 ? matrix4x4.elements : null);
-		}
 		
-		/**
-		 * 设置颜色。
-		 * @param	shaderIndex shader索引。
-		 * @param	color 颜色向量。
-		 */
-		public function _setShaderValueColor(shaderIndex:int, color:*):void {
-			var shaderValue:ValusArray = _shaderValues;
-			shaderValue.setValue(shaderIndex, color ? color.elements : null);
-		}
-		
-		/**
-		 * 设置Buffer。
-		 * @param	shaderIndex shader索引。
-		 * @param	buffer  buffer数据。
-		 */
-		public function _setShaderValueBuffer(shaderIndex:int, buffer:Float32Array):void {
-			var shaderValue:ValusArray = _shaderValues;
-			shaderValue.setValue(shaderIndex, buffer);
-		}
-		
-		/**
-		 * 设置整型。
-		 * @param	shaderIndex shader索引。
-		 * @param	i 整形。
-		 */
-		public function _setShaderValueInt(shaderIndex:int, i:int):void {
-			var shaderValue:ValusArray = _shaderValues;
-			shaderValue.setValue(shaderIndex, i);
-		}
-		
-		/**
-		 * 设置布尔。
-		 * @param	shaderIndex shader索引。
-		 * @param	b 布尔。
-		 */
-		public function _setShaderValueBool(shaderIndex:int, b:Boolean):void {
-			var shaderValue:ValusArray = _shaderValues;
-			shaderValue.setValue(shaderIndex, b);
-		}
-		
-		/**
-		 * 设置浮点。
-		 * @param	shaderIndex shader索引。
-		 * @param	i 浮点。
-		 */
-		public function _setShaderValueNumber(shaderIndex:int, number:Number):void {
-			var shaderValue:ValusArray = _shaderValues;
-			shaderValue.setValue(shaderIndex, number);
-		}
-		
-		/**
-		 * 设置二维向量。
-		 * @param	shaderIndex shader索引。
-		 * @param	vector2 二维向量。
-		 */
-		public function _setShaderValueVector2(shaderIndex:int, vector2:Vector2):void {
-			var shaderValue:ValusArray = _shaderValues;
-			shaderValue.setValue(shaderIndex, vector2 ? vector2.elements : null);
-		}
 		
 		/**
 		 * 获取投影视图世界矩阵。
@@ -536,7 +458,6 @@ package laya.d3.core {
 		 * @return  投影视图世界矩阵。
 		 */
 		public function getProjectionViewWorldMatrix(projectionViewMatrix:Matrix4x4):Matrix4x4 {
-			var curLoopCount:int = Stat.loopCount;
 			Matrix4x4.multiply(projectionViewMatrix, transform.worldMatrix, _projectionViewWorldMatrix);
 			return _projectionViewWorldMatrix;
 		}
@@ -560,7 +481,7 @@ package laya.d3.core {
 			var sprite3D:Sprite3D = node as Sprite3D;
 			sprite3D.transform.parent = transform;
 			if (_belongScene) {
-				sprite3D._setBelongScene();
+				sprite3D._setBelongScene(_scene);
 				(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
 			}
 			return returnNode;
@@ -577,7 +498,7 @@ package laya.d3.core {
 			var sprite3D:Sprite3D = node as Sprite3D;
 			sprite3D.transform.parent = transform;
 			if (_belongScene) {
-				sprite3D._setBelongScene();
+				sprite3D._setBelongScene(_scene);
 				(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
 			}
 			return returnNode;
@@ -592,8 +513,8 @@ package laya.d3.core {
 				var sprite3D:Sprite3D = node as Sprite3D;
 				sprite3D.transform.parent = null;
 				if (_belongScene) {
-					sprite3D._setUnBelongScene();
 					(_activeInHierarchy && sprite3D._active) && (sprite3D._inActiveHierarchy());
+					sprite3D._setUnBelongScene();
 				}
 				this._childs.splice(index, 1);
 				conchModel && conchModel.removeChild(node.conchModel);
@@ -619,8 +540,8 @@ package laya.d3.core {
 					var sprite3D:Sprite3D = arr[i] as Sprite3D;
 					sprite3D.transform.parent = null;
 					if (_belongScene) {
-						sprite3D._setUnBelongScene();
 						(_activeInHierarchy && sprite3D._active) && (sprite3D._inActiveHierarchy());
+						sprite3D._setUnBelongScene();
 					}
 					conchModel && conchModel.removeChild(arr[i].conchModel);
 				}
@@ -738,6 +659,10 @@ package laya.d3.core {
 				return;
 			
 			var oriData:Object = data[0];
+			var json:Object = JSON.parse(oriData as String);
+			if (json.type !== "Sprite3D")
+				throw new Error("Sprite3D: the .lh file root type must be Sprite3D,please use other function to  load  this file.");
+			
 			var innerResouMap:Object = data[1];
 			ClassUtils.createByJson(oriData as String, this, this, Handler.create(null, Utils3D._parseHierarchyProp, [innerResouMap], false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
 			event(Event.HIERARCHY_LOADED, [this]);
@@ -799,8 +724,7 @@ package laya.d3.core {
 			_components = null;
 			_componentsMap = null;
 			_typeComponentsIndices = null;
-			
-			transform = null;
+			_transform = null;
 			
 			var colliders:Vector.<Collider> = _layer._colliders;
 			for (i = 0, n = _colliders.length; i < n; i++)

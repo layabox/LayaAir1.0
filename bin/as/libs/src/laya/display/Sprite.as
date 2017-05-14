@@ -60,10 +60,10 @@ package laya.display {
 	[Event(name = "dragend", type = "laya.events.Event")]
 	
 	/**
-	 * <p> <code>Sprite</code> 类是基本显示对象节点，通过graphics可以绘制图片或者矢量图，支持旋转，缩放，位移等操作。Sprite同时也是容器类，用来添加多个子节点。</p>
-	 * LayaAir引擎API设计精简巧妙。核心显示类只有一个Sprite。Sprite针对不同的情况做了渲染优化，所以保证一个类实现丰富功能的同时，又达到高性能。
-	 * Sprite默认没有宽高，可以手动设置宽高，或者通过getbounds函数获取，还可以设置autoSize=true，然后再获取宽高。Sprite的宽高只是用来做碰撞使用，并不影响显示大小，如果更改显示大小，需要使用scaleX，scaleY。
-	 * Sprite默认不接受鼠标事件，即mouseEnabled=false，但是只要对其监听任意鼠标事件，会自动打开自己以及所有父对象的mouseEnabled=true。所以一般也无需手动设置mouseEnabled。
+	 * <p> <code>Sprite</code> 类是基本显示对象节点，通过<code>graphics</code>可以绘制图片或者矢量图，支持旋转，缩放，位移等操作。<code>Sprite</code>同时也是容器类，用来添加多个子节点。</p>
+	 * LayaAir引擎API设计精简巧妙。核心显示类只有一个<code>Sprite</code>。<code>Sprite</code>针对不同的情况做了渲染优化，所以保证一个类实现丰富功能的同时，又达到高性能。
+	 * <p><code>Sprite</code>默认没有宽高，可以手动设置宽高，或者通过<code>getbounds</code>函数获取，还可以设置<code>autoSize=true</code>，然后再获取宽高。<code>Sprite</code>的宽高只是用来做碰撞使用，并不影响显示大小，如果更改显示大小，需要使用<code>scaleX</code>，<code>scaleY</code>。</p>
+	 * <p><code>Sprite</code>默认不接受鼠标事件，即<code>mouseEnabled=false</code>，但是只要对其监听任意鼠标事件，会自动打开自己以及所有父对象的<code>mouseEnabled=true</code>。所以一般也无需手动设置<code>mouseEnabled</code>。</p>
 	 *
 	 * @example 以下示例代码，创建了一个 <code>Sprite</code> 实例。
 	 * <listing version="3.0">
@@ -294,7 +294,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 指定显示对象是否缓存为静态图像。功能同cacheAs的normal模式。
+		 * 指定显示对象是否缓存为静态图像。功能同cacheAs的normal模式。建议优先使用cacheAs代替。
 		 */
 		public function get cacheAsBitmap():Boolean {
 			return cacheAs !== "none";
@@ -328,8 +328,10 @@ package laya.display {
 		 * <li>默认为"none"，不做任何缓存。</li>
 		 * <li>当值为"normal"时，canvas模式下进行画布缓存，webgl模式下进行命令缓存。</li>
 		 * <li>当值为"bitmap"时，canvas模式下进行依然是画布缓存，webgl模式下使用renderTarget缓存。</li>
-		 * webgl下renderTarget缓存模式有最大2048大小限制，会额外增加内存开销，不断重绘时开销比较大，但是会减少drawcall，渲染性能最高。
-		 * webgl下命令缓存模式只会减少节点遍历及命令组织，不会减少drawcall，性能中等。
+		 * <p>
+		 * webgl下renderTarget缓存模式缺点：会额外创建renderTarget对象，增加内存开销，缓存面积有最大2048限制，不断重绘时会增加CPU开销。优点：大幅减少drawcall，渲染性能最高。
+		 * webgl下命令缓存模式缺点：只会减少节点遍历及命令组织，不会减少drawcall数，性能中等。优点：没有额外内存开销，无需renderTarget支持。
+		 * </p>
 		 */
 		public function get cacheAs():String {
 			return _$P.cacheCanvas == null ? "none" : _$P.cacheCanvas.type;
@@ -508,7 +510,7 @@ package laya.display {
 			}
 			
 			if (!transform) {
-				Utils.transPointList(pList, this.x - pX, this.y - pY);
+				Utils.transPointList(pList, this._x - pX, this._y - pY);
 				return pList;
 			}
 			var tPoint:Point = Point.TEMP;

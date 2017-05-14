@@ -1,26 +1,16 @@
 package laya.d3.resource.models {
-	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexElementFormat;
 	import laya.d3.graphics.VertexElementUsage;
-	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
-	import laya.d3.utils.Utils3D;
-	import laya.renders.Render;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer;
-	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * @private
@@ -31,13 +21,6 @@ package laya.d3.resource.models {
 		protected var _numberIndices:int;
 		protected var _vertexBuffer:VertexBuffer3D;
 		protected var _indexBuffer:IndexBuffer3D;
-		
-		/** @private */
-		public var _indexOfHost:int;
-		
-		public function get indexOfHost():int {
-			return _indexOfHost;
-		}
 		
 		public function get _vertexBufferCount():int {
 			return 1;
@@ -62,9 +45,9 @@ package laya.d3.resource.models {
 		 * 获取网格顶点
 		 * @return 网格顶点。
 		 */
-		override public function get positions():Vector.<Vector3>//WEBGL1.0不能从Buffer显存中获取内存数据
+		override public function get positions():Array//WEBGL1.0不能从Buffer显存中获取内存数据
 		{
-			var vertices:Vector.<Vector3> = new Vector.<Vector3>();
+			var vertices:Array =[];
 			
 			var positionElement:VertexElement;
 			var vertexElements:Array = _vertexBuffer.vertexDeclaration.getVertexElements();
@@ -89,7 +72,6 @@ package laya.d3.resource.models {
 		
 		public function PrimitiveMesh() {
 			super();
-			_indexOfHost = 0;
 		}
 		
 		override public function getRenderElement(index:int):IRenderable {

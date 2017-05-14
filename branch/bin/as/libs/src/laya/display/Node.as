@@ -30,7 +30,7 @@ package laya.display {
 	 */
 	public class Node extends EventDispatcher {
 		/**@private */
-		private static const ARRAY_EMPTY:Array = [];
+		protected static const ARRAY_EMPTY:Array = [];
 		/** @private */
 		private static const PROP_EMPTY:Object = {};
 		/** @private */
@@ -146,6 +146,7 @@ package laya.display {
 		
 		/**
 		 * <p>销毁此对象。destroy对象默认会把自己从父节点移除，并且清理自身引用关系，等待js自动垃圾回收机制回收。destroy后不能再使用。</p>
+		 * destroy时会移除自身的事情监听，自身的timer监听，移除子对象及从父节点移除自己。
 		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
 		 */
 		public function destroy(destroyChild:Boolean = true):void {
@@ -160,10 +161,13 @@ package laya.display {
 			
 			this._childs = null;
 			
-			_$P = null;
+			this._$P = null;
 			
 			//移除所有事件监听
 			this.offAll();
+			
+			//移除所有timer
+			this.timer.clearAll(this);
 		}
 		
 		/**

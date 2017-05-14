@@ -116,8 +116,8 @@ package laya.ui {
 		/**@private */
 		private function changeScroll():void {
 			_scrollChanged = false;
-			var contentW:Number = contentWidth;
-			var contentH:Number = contentHeight;
+			var contentW:Number = contentWidth || 1;
+			var contentH:Number = contentHeight || 1;
 			
 			var vscroll:ScrollBar = _vScrollBar;
 			var hscroll:ScrollBar = _hScrollBar;

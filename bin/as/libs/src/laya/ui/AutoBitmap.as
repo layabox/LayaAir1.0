@@ -8,7 +8,7 @@ package laya.ui {
 	 * <code>AutoBitmap</code> 类是用于表示位图图像或绘制图形的显示对象。
 	 * <p>封装了位置，宽高及九宫格的处理，供UI组件使用。</p>
 	 */
-	public final class AutoBitmap extends Graphics {
+	public class AutoBitmap extends Graphics {
 		
 		/**
 		 * @private
@@ -46,7 +46,7 @@ package laya.ui {
 		 */
 		private var _sizeGrid:Array;
 		/**@private */
-		private var _isChanged:Boolean;
+		protected var _isChanged:Boolean;
 		/**@private */
 		public var _offset:Array;
 		
@@ -156,7 +156,7 @@ package laya.ui {
 		 * @private
 		 * 修改纹理资源。
 		 */
-		private function changeSource():void {
+		protected function changeSource():void {
 			if (cacheCount++ > 50) clearCache();
 			_isChanged = false;
 			var source:Texture = this._source;

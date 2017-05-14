@@ -1,5 +1,4 @@
 package laya.d3.terrain {
-	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Camera;
 	import laya.d3.core.GeometryFilter;
 	import laya.d3.core.material.TerrainMaterial;
@@ -26,7 +25,6 @@ package laya.d3.terrain {
 		/** @private */
 		public static var _TEMP_ARRAY_BUFFER:Uint32Array = new Uint32Array(TerrainLeaf.CHUNK_GRID_NUM / TerrainLeaf.LEAF_GRID_NUM * TerrainLeaf.CHUNK_GRID_NUM / TerrainLeaf.LEAF_GRID_NUM );
 		public var _owner:TerrainChunk;
-		public var _indexOfHost:int;
 		public var _gridSize:Number;
 		public var memorySize:int;
 		protected var _numberVertices:int;
@@ -38,7 +36,7 @@ package laya.d3.terrain {
 		protected var _boundingSphere:BoundSphere;
 		protected var _boundingBox:BoundBox;
 		protected var _indexArrayBuffer:Uint16Array;
-		public var _boundingBoxCorners:Vector.<Vector3>;
+		public var _boundingBoxCorners:Array;
 		private var _leafs:Vector.<TerrainLeaf>;
 		private var _leafNum:int;
 		private var _terrainHeightData:Float32Array;
@@ -46,6 +44,7 @@ package laya.d3.terrain {
 		private var _terrainHeightDataHeight:int;
 		private var _chunkOffsetX:int;
 		private var _chunkOffsetZ:int;
+		private var _cameraCoordinateInverse:Boolean;
 		private var _cameraPos:Vector3;
 		private var _currentLOD:uint;//LOD级别 4个叶子节点  第1个叶子的level<<24 + 第2个叶子的level<<16 + 第3个叶子的level<<8 + 第4个叶子的level
 		private var _perspectiveFactor:Number;
@@ -56,7 +55,7 @@ package laya.d3.terrain {
 		 * 创建一个新的 <code>MeshFilter</code> 实例。
 		 * @param owner 所属网格精灵。
 		 */
-		public function TerrainFilter(owner:TerrainChunk,chunkOffsetX:int,chunkOffsetZ:int,gridSize:Number,terrainHeightData:Float32Array,heightDataWidth:int,heightDataHeight:int) {
+		public function TerrainFilter(owner:TerrainChunk,chunkOffsetX:int,chunkOffsetZ:int,gridSize:Number,terrainHeightData:Float32Array,heightDataWidth:int,heightDataHeight:int,cameraCoordinateInverse:Boolean) {
 			_owner = owner;
 			_cameraPos = new Vector3();
 			_chunkOffsetX = chunkOffsetX;
@@ -67,6 +66,7 @@ package laya.d3.terrain {
 			_terrainHeightDataHeight = heightDataHeight;
 			_leafNum = (TerrainLeaf.CHUNK_GRID_NUM / TerrainLeaf.LEAF_GRID_NUM)*(TerrainLeaf.CHUNK_GRID_NUM / TerrainLeaf.LEAF_GRID_NUM);
 			_leafs = new Vector.<TerrainLeaf>(_leafNum);
+			_cameraCoordinateInverse = cameraCoordinateInverse;
 			for ( var i:int = 0; i < _leafNum; i++ )
 			{
 				_leafs[i] = new TerrainLeaf();
@@ -117,7 +117,7 @@ package laya.d3.terrain {
 				x = i % nNum;
 				z = Math.floor(i / nNum);
 				_leafs[i].calcVertextBuffer( _chunkOffsetX, _chunkOffsetZ, x * TerrainLeaf.LEAF_GRID_NUM, z * TerrainLeaf.LEAF_GRID_NUM, _gridSize, vertices, 
-								i * TerrainLeaf.LEAF_PLANE_VERTEXT_COUNT, vertexFloatStride,_terrainHeightData,_terrainHeightDataWidth,_terrainHeightDataHeight );
+								i * TerrainLeaf.LEAF_PLANE_VERTEXT_COUNT, vertexFloatStride,_terrainHeightData,_terrainHeightDataWidth,_terrainHeightDataHeight,_cameraCoordinateInverse );
 			}
 			for ( i = 0; i < _leafNum; i++ )
 			{
@@ -225,6 +225,11 @@ package laya.d3.terrain {
 			}
 			var min:Vector3 = new Vector3( _chunkOffsetX * TerrainLeaf.CHUNK_GRID_NUM * _gridSize, sizeOfY.x, _chunkOffsetZ * TerrainLeaf.CHUNK_GRID_NUM * _gridSize );
 			var max:Vector3 = new Vector3( (_chunkOffsetX + 1) * TerrainLeaf.CHUNK_GRID_NUM * _gridSize, sizeOfY.y, (_chunkOffsetZ + 1) * TerrainLeaf.CHUNK_GRID_NUM * _gridSize );
+			if (TerrainLeaf.__ADAPT_MATRIX__)
+			{
+				Vector3.transformV3ToV3(min, TerrainLeaf.__ADAPT_MATRIX__, min);
+				Vector3.transformV3ToV3(max, TerrainLeaf.__ADAPT_MATRIX__, max);
+			}
 			_boundingBox = new BoundBox(min, max);
 			var size:Vector3 = new Vector3();
 			Vector3.subtract( max, min, size );
@@ -232,7 +237,8 @@ package laya.d3.terrain {
 			var center:Vector3 = new Vector3();
 			Vector3.add( min, size, center );
 			_boundingSphere = new BoundSphere(center, Vector3.scalarLength(size));
-			_boundingBoxCorners = new Vector.<Vector3>(8);
+			_boundingBoxCorners =[];
+			_boundingBoxCorners.length = 8;
 			_boundingBox.getCorners(_boundingBoxCorners);
 		}
 		public function calcLeafBoudingBox(worldMatrix:Matrix4x4):void
@@ -253,10 +259,7 @@ package laya.d3.terrain {
 		{
 			return _numberVertices;
 		}
-		public function get indexOfHost():int
-		{
-			return _indexOfHost;
-		}
+
 		public function get triangleCount():int
 		{
 			return _numberTriangle;

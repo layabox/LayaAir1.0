@@ -9,8 +9,8 @@
 	var Sprite=laya.display.Sprite,Text=laya.display.Text,Texture=laya.resource.Texture,Tween=laya.utils.Tween;
 	var Utils=laya.utils.Utils;
 	Laya.interface('laya.ui.IItem');
-	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
@@ -106,8 +106,16 @@
 			}
 		}
 
+		UIUtils._getReplaceStr=function(word){
+			return UIUtils.escapeSequence[word];
+		}
+
+		UIUtils.adptString=function(str){
+			return str.replace(/\\(\w)/g,UIUtils._getReplaceStr);
+		}
+
 		__static(UIUtils,
-		['grayFilter',function(){return this.grayFilter=new ColorFilter([0.3086,0.6094,0.082,0,0,0.3086,0.6094,0.082,0,0,0.3086,0.6094,0.082,0,0,0,0,0,1,0]);}
+		['grayFilter',function(){return this.grayFilter=new ColorFilter([0.3086,0.6094,0.082,0,0,0.3086,0.6094,0.082,0,0,0.3086,0.6094,0.082,0,0,0,0,0,1,0]);},'escapeSequence',function(){return this.escapeSequence={"\\n":"\n","\\t":"\t"};}
 		]);
 		return UIUtils;
 	})()
@@ -365,6 +373,7 @@
 			this._tag=null;
 			this._disabled=false;
 			this._gray=false;
+			this.layoutEnabled=true;
 			Component.__super.call(this);
 			this._layout=LayoutStyle.EMPTY;
 			this.preinitialize();
@@ -444,6 +453,23 @@
 		}
 
 		/**
+		*@private
+		*<p>指定对象是否可使用布局。</p>
+		*<p>如果值为true,则此对象可以使用布局样式，否则不使用布局样式。</p>
+		*@param value 一个 Boolean 值，指定对象是否可使用布局。
+		*/
+		__proto._setLayoutEnabled=function(value){
+			if (this._layout && this._layout.enable !=value){
+				this._layout.enable=value;
+				this.on(/*laya.events.Event.ADDED*/"added",this,this.onAdded);
+				this.on(/*laya.events.Event.REMOVED*/"removed",this,this.onRemoved);
+				if (this.parent){
+					this.onAdded();
+				}
+			}
+		}
+
+		/**
 		*对象从显示列表移除的事件侦听处理函数。
 		*/
 		__proto.onRemoved=function(){
@@ -475,6 +501,7 @@
 		__proto.resetLayoutX=function(){
 			var layout=this._layout;
 			if (!isNaN(layout.anchorX))this.pivotX=layout.anchorX *this.width;
+			if (!this.layoutEnabled)return;
 			var parent=this.parent;
 			if (parent){
 				if (!isNaN(layout.centerX)){
@@ -496,6 +523,7 @@
 		__proto.resetLayoutY=function(){
 			var layout=this._layout;
 			if (!isNaN(layout.anchorY))this.pivotY=layout.anchorY *this.height;
+			if (!this.layoutEnabled)return;
 			var parent=this.parent;
 			if (parent){
 				if (!isNaN(layout.centerY)){
@@ -564,24 +592,6 @@
 		});
 
 		/**
-		*@private
-		*<p>指定对象是否可使用布局。</p>
-		*<p>如果值为true,则此对象可以使用布局样式，否则不使用布局样式。</p>
-		*@param value 一个 Boolean 值，指定对象是否可使用布局。
-		*/
-		__getset(0,__proto,'layOutEabled',null,function(value){
-			if (this._layout && this._layout.enable !=value){
-				this._layout.enable=value;
-				if (this.parent){
-					this.onAdded();
-					}else {
-					this.on(/*laya.events.Event.ADDED*/"added",this,this.onAdded);
-					this.on(/*laya.events.Event.REMOVED*/"removed",this,this.onRemoved);
-				}
-			}
-		});
-
-		/**
 		*<p>对象的显示高度（以像素为单位）。</p>
 		*/
 		__getset(0,__proto,'displayHeight',function(){
@@ -591,7 +601,6 @@
 		/**
 		*<p>表示显示对象的高度，以像素为单位。</p>
 		*<p><b>注：</b>当值为0时，高度为自适应大小。</p>
-		*@return
 		*/
 		__getset(0,__proto,'height',function(){
 			if (this._height)return this._height;
@@ -615,7 +624,6 @@
 		//任意属性赋值
 		dataSource={label2:{text:"改变了label",size:14},checkbox2:{selected:true,x:10}};
 		</listing>
-		*@return
 		*/
 		__getset(0,__proto,'dataSource',function(){
 			return this._dataSource;
@@ -668,7 +676,7 @@
 			return this._layout.top;
 			},function(value){
 			this.getLayout().top=value;
-			this.layOutEabled=true;
+			this._setLayoutEnabled(true);
 			this.resetLayoutY();
 		});
 
@@ -679,7 +687,7 @@
 			return this._layout.bottom;
 			},function(value){
 			this.getLayout().bottom=value;
-			this.layOutEabled=true;
+			this._setLayoutEnabled(true);
 			this.resetLayoutY();
 		});
 
@@ -690,7 +698,7 @@
 			return this._layout.left;
 			},function(value){
 			this.getLayout().left=value;
-			this.layOutEabled=true;
+			this._setLayoutEnabled(true);
 			this.resetLayoutX();
 		});
 
@@ -701,7 +709,7 @@
 			return this._layout.right;
 			},function(value){
 			this.getLayout().right=value;
-			this.layOutEabled=true;
+			this._setLayoutEnabled(true);
 			this.resetLayoutX();
 		});
 
@@ -712,7 +720,7 @@
 			return this._layout.centerX;
 			},function(value){
 			this.getLayout().centerX=value;
-			this.layOutEabled=true;
+			this._setLayoutEnabled(true);
 			this.resetLayoutX();
 		});
 
@@ -723,7 +731,7 @@
 			return this._layout.centerY;
 			},function(value){
 			this.getLayout().centerY=value;
-			this.layOutEabled=true;
+			this._setLayoutEnabled(true);
 			this.resetLayoutY();
 		});
 
@@ -732,7 +740,7 @@
 			return this._layout.anchorX;
 			},function(value){
 			this.getLayout().anchorX=value;
-			this.layOutEabled=true;
+			this._setLayoutEnabled(true);
 			this.resetLayoutX();
 		});
 
@@ -741,7 +749,7 @@
 			return this._layout.anchorY;
 			},function(value){
 			this.getLayout().anchorY=value;
-			this.layOutEabled=true;
+			this._setLayoutEnabled(true);
 			this.resetLayoutY();
 		});
 
@@ -849,6 +857,8 @@
 			}
 			DialogManager.__super.call(this);
 			this.maskLayer=new Sprite();
+			this.popupEffectHandler=new Handler(this,this.popupEffect);
+			this.closeEffectHandler=new Handler(this,this.closeEffect);
 			this.mouseEnabled=this.maskLayer.mouseEnabled=true;
 			this.zOrder=1000;
 			Laya.stage.addChild(this);
@@ -908,7 +918,7 @@
 			if (dialog.popupCenter)this._centerDialog(dialog);
 			this.addChild(dialog);
 			if (dialog.isModal || this._$P["hasZorder"])this.timer.callLater(this,this._checkMask);
-			if (this.popupEffect !=null)this.popupEffect(dialog);
+			if (dialog.popupEffect !=null)dialog.popupEffect.runWith(dialog);
 			else this.doOpen(dialog);
 			this.event(/*laya.events.Event.OPEN*/"open");
 		}
@@ -938,7 +948,7 @@
 		*@param type 关闭的类型，默认为空
 		*/
 		__proto.close=function(dialog,type){
-			if (this.closeEffect !=null)this.closeEffect(dialog,type);
+			if (dialog.closeEffect !=null)dialog.closeEffect.runWith([dialog,type]);
 			else this.doClose(dialog);
 			this.event(/*laya.events.Event.CLOSE*/"close");
 		}
@@ -1321,7 +1331,7 @@
 		*<li>2：两态。图片将以竖直方向被等比切割为2部分，从上向下，依次为
 		*弹起状态皮肤、
 		*按下和经过及选中状态皮肤。</li>
-		*<li>3：三态。图片将以竖直方向被等比切割为2部分，从上向下，依次为
+		*<li>3：三态。图片将以竖直方向被等比切割为3部分，从上向下，依次为
 		*弹起状态皮肤、
 		*经过状态皮肤、
 		*按下和选中状态皮肤</li>
@@ -1658,8 +1668,8 @@
 		__class(Clip,'laya.ui.Clip',_super);
 		var __proto=Clip.prototype;
 		/**@inheritDoc */
-		__proto.destroy=function(clearFromCache){
-			(clearFromCache===void 0)&& (clearFromCache=false);
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
 			_super.prototype.destroy.call(this,true);
 			this._bitmap && this._bitmap.destroy();
 			this._bitmap=null;
@@ -1813,7 +1823,7 @@
 		__getset(0,__proto,'clipX',function(){
 			return this._clipX;
 			},function(value){
-			this._clipX=value;
+			this._clipX=value || 1;
 			this._setClipChanged()
 		});
 
@@ -1821,7 +1831,7 @@
 		__getset(0,__proto,'clipY',function(){
 			return this._clipY;
 			},function(value){
-			this._clipY=value;
+			this._clipY=value || 1;
 			this._setClipChanged()
 		});
 
@@ -2143,6 +2153,7 @@
 			var py=p.y+this._colorButton.height;
 			py=py+this._colorPanel.height <=Laya.stage.height ? py :p.y-this._colorPanel.height;
 			this._colorPanel.pos(px,py);
+			this._colorPanel.zOrder=1001;
 			Laya._currentStage.addChild(this._colorPanel);
 			Laya.stage.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.removeColorBox);
 		}
@@ -2696,6 +2707,7 @@
 					var py=p.y+this._button.height;
 					py=py+this._listHeight <=Laya.stage.height ? py :p.y-this._listHeight;
 					this._list.pos(p.x,py);
+					this._list.zOrder=1001;
 					Laya._currentStage.addChild(this._list);
 					Laya.stage.once(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.removeList);
 					this._list.selectedIndex=this._selectedIndex;
@@ -3046,6 +3058,7 @@
 					Tween.to(this,{value:this.max},this.elasticBackTime,Ease.sineOut,Handler.create(this,this.elasticOver));
 				}
 				}else {
+				if (!this._offsets)return;
 				if (this._offsets.length < 1){
 					this._offsets[0]=this.isVertical ? Laya.stage.mouseY-this._lastPoint.y :Laya.stage.mouseX-this._lastPoint.x;
 				};
@@ -3351,11 +3364,10 @@
 		/**
 		*@private
 		*滑块的的 <code>Event.MOUSE_DOWN</code> 事件侦听处理函数。
-		*@param e
 		*/
 		__proto.onBarMouseDown=function(e){
 			this._globalSacle || (this._globalSacle=new Point());
-			this._globalSacle.setTo(this.globalScaleX,this.globalScaleY);
+			this._globalSacle.setTo(this.globalScaleX || 0.01,this.globalScaleY || 0.01);
 			this._maxMove=this.isVertical ? (this.height-this._bar.height):(this.width-this._bar.width);
 			this._tx=Laya.stage.mouseX;
 			this._ty=Laya.stage.mouseY;
@@ -3393,7 +3405,6 @@
 
 		/**
 		*@private
-		*@param e
 		*/
 		__proto.mouseUp=function(e){
 			Laya.stage.off(/*laya.events.Event.MOUSE_MOVE*/"mousemove",this,this.mouseMove);
@@ -3403,7 +3414,6 @@
 
 		/**
 		*@private
-		*@param e
 		*/
 		__proto.mouseMove=function(e){
 			var oldValue=this._value;
@@ -3430,7 +3440,6 @@
 
 		/**
 		*@private
-		*@param type
 		*/
 		__proto.sendChangeEvent=function(type){
 			(type===void 0)&& (type=/*laya.events.Event.CHANGE*/"change");
@@ -3500,7 +3509,6 @@
 
 		/**
 		*@copy laya.ui.Image#skin
-		*@return
 		*/
 		__getset(0,__proto,'skin',function(){
 			return this._skin;
@@ -3560,7 +3568,6 @@
 		*<p>数据格式："上边距,右边距,下边距,左边距,是否重复填充(值为0：不重复填充，1：重复填充)"，以逗号分隔。
 		*<ul><li>例如："4,4,4,4,1"</li></ul></p>
 		*@see laya.ui.AutoBitmap.sizeGrid
-		*@return
 		*/
 		__getset(0,__proto,'sizeGrid',function(){
 			return this._bg.sizeGrid;
@@ -4006,7 +4013,7 @@
 			},function(value){
 			if (this._tf.text !=value){
 				if(value)
-					value=(value+"").replace(Label._textReg,"\n");
+					value=UIUtils.adptString(value+"");
 				this._tf.text=value;
 				this.event(/*laya.events.Event.CHANGE*/"change");
 			}
@@ -4206,9 +4213,6 @@
 			this._tf.underlineColor=value;
 		});
 
-		__static(Label,
-		['_textReg',function(){return this._textReg=new RegExp("\\\\n","g");}
-		]);
 		return Label;
 	})(Component)
 
@@ -4590,225 +4594,6 @@
 
 
 	/**
-	*动效类
-	*@author ww
-	*/
-	//class laya.ui.EffectAnimation extends laya.display.FrameAnimation
-	var EffectAnimation=(function(_super){
-		function EffectAnimation(){
-			this._target=null;
-			this._playEvents=null;
-			this._initData={};
-			this._aniKeys=null;
-			this._effectClass=null;
-			EffectAnimation.__super.call(this);
-		}
-
-		__class(EffectAnimation,'laya.ui.EffectAnimation',_super);
-		var __proto=EffectAnimation.prototype;
-		/**@private */
-		__proto._onOtherBegin=function(effect){
-			if (effect==this)
-				return;
-			this.stop();
-		}
-
-		/**@private */
-		__proto.addEvent=function(){
-			if (!this._target || !this._playEvents)
-				return;
-			this._setControlNode(this._target);
-			this._target.on(this._playEvents,this,this._onPlayAction);
-		}
-
-		/**@private */
-		__proto._onPlayAction=function(){
-			if (!this._target)
-				return;
-			this._target.event("effectanimationbegin",[this]);
-			this._recordInitData();
-			this.play(0,false);
-		}
-
-		/**@private */
-		__proto._recordInitData=function(){
-			if (!this._aniKeys)
-				return;
-			var i=0,len=0;
-			len=this._aniKeys.length;
-			var key;
-			for (i=0;i < len;i++){
-				key=this._aniKeys[i];
-				this._initData[key]=this._target[key];
-			}
-		}
-
-		/**@private */
-		__proto._displayToIndex=function(value){
-			if (!this._animationData)
-				return;
-			if (value < 0)
-				value=0;
-			if (value > this._count)
-				value=this._count;
-			var nodes=this._animationData.nodes,i=0,len=nodes.length;
-			len=len > 1 ? 1 :len;
-			for (i=0;i < len;i++){
-				this._displayNodeToFrame(nodes[i],value);
-			}
-		}
-
-		/**@private */
-		__proto._displayNodeToFrame=function(node,frame,targetDic){
-			if (!this._target)
-				return;
-			var target;
-			target=this._target;
-			var frames=node.frames,key,propFrames,value;
-			var keys=node.keys,i=0,len=keys.length;
-			var secondFrames;
-			secondFrames=node.secondFrames;
-			var tSecondFrame=0;
-			var easeFun;
-			var tKeyFrames;
-			var startFrame;
-			var endFrame;
-			for (i=0;i < len;i++){
-				key=keys[i];
-				propFrames=frames[key];
-				tSecondFrame=secondFrames[key];
-				if (tSecondFrame==-1){
-					value=this._initData[key];
-				}
-				else {
-					if (frame < tSecondFrame){
-						tKeyFrames=node.keyframes[key];
-						startFrame=tKeyFrames[0];
-						if (startFrame.tween){
-							easeFun=Ease[startFrame.tweenMethod];
-							if (easeFun==null){
-								easeFun=Ease.linearNone;
-							}
-							endFrame=tKeyFrames[1];
-							value=easeFun(frame,this._initData[key],endFrame.value-this._initData[key],endFrame.index);
-						}
-						else {
-							value=this._initData[key];
-						}
-					}
-					else {
-						if (propFrames.length > frame){
-							value=propFrames[frame];
-						}
-						else {
-							value=propFrames[propFrames.length-1];
-						}
-					}
-				}
-				target[key]=value;
-			}
-		}
-
-		/**@private */
-		__proto._calculateNodeKeyFrames=function(node){
-			_super.prototype._calculateNodeKeyFrames.call(this,node);
-			var keyFrames=node.keyframes,key,tKeyFrames,target=node.target;
-			var secondFrames;
-			secondFrames={};
-			node.secondFrames=secondFrames;
-			for (key in keyFrames){
-				tKeyFrames=keyFrames[key];
-				if (tKeyFrames.length <=1){
-					secondFrames[key]=-1;
-				}
-				else {
-					secondFrames[key]=tKeyFrames[1].index;
-				}
-			}
-		}
-
-		/**
-		*控制对象
-		*@param v
-		*
-		*/
-		/**
-		*控制对象
-		*@return
-		*
-		*/
-		__getset(0,__proto,'target',function(){
-			return this._target;
-			},function(v){
-			if (this._target){
-				this._target.off("effectanimationbegin",this,this._onOtherBegin);
-			}
-			this._target=v;
-			if (this._target){
-				this._target.on("effectanimationbegin",this,this._onOtherBegin);
-			}
-			this.addEvent();
-		});
-
-		/**
-		*设置开始播放的事件
-		*@param event
-		*
-		*/
-		__getset(0,__proto,'playEvent',null,function(event){
-			this._playEvents=event;
-			if (!event)
-				return;
-			this.addEvent();
-		});
-
-		/**
-		*设置提供数据的类
-		*@param classStr 类路径
-		*
-		*/
-		__getset(0,__proto,'effectClass',null,function(classStr){
-			this._effectClass=ClassUtils.getClass(classStr);
-			if (this._effectClass){
-				var uiData;
-				uiData=this._effectClass["uiView"];
-				if (uiData){
-					var aniData;
-					aniData=uiData["animations"];
-					if (aniData && aniData[0]){
-						this._setUp({},aniData[0]);
-						if (aniData[0].nodes && aniData[0].nodes[0]){
-							this._aniKeys=aniData[0].nodes[0].keys;
-						}
-					}
-				}
-			}
-		});
-
-		EffectAnimation.EffectAnimationBegin="effectanimationbegin";
-		return EffectAnimation;
-	})(FrameAnimation)
-
-
-	/**
-	*关键帧动画播放类
-	*
-	*/
-	//class laya.ui.FrameClip extends laya.display.FrameAnimation
-	var FrameClip=(function(_super){
-		/**
-		*创建一个 <code>FrameClip</code> 实例。
-		*/
-		function FrameClip(){
-			FrameClip.__super.call(this);
-		}
-
-		__class(FrameClip,'laya.ui.FrameClip',_super);
-		return FrameClip;
-	})(FrameAnimation)
-
-
-	/**
 	*<code>View</code> 是一个视图类。
 	*@internal <p><code>View</code></p>
 	*/
@@ -4837,7 +4622,7 @@
 				var tAni;
 				var tAniO;
 				for (i=0;i < len;i++){
-					tAni=new FrameClip();
+					tAni=new FrameAnimation();
 					tAniO=animations[i];
 					tAni._setUp(this._idMap,tAniO);
 					this[tAniO.name]=tAni;
@@ -5182,88 +4967,86 @@
 
 
 	/**
-	*
-	*简单易用的位图字体类
-	*
+	*字体切片，简化版的位图字体，只需设置一个切片图片和文字内容即可使用，效果同位图字体
+	*使用方式：设置位图字体皮肤skin，设置皮肤对应的字体内容sheet（如果多行，可以使用空格换行），示例：
+	*fontClip.skin="font1.png";//设置皮肤
+	*fontClip.sheet="abc123 456";//设置皮肤对应的内容，空格换行。此皮肤为2行5列（显示时skin会被等分为2行5列），第一行对应的文字为"abc123"，第二行为"456"
+	*fontClip.value="a1326";//显示"a1326"文字
 	*/
 	//class laya.ui.FontClip extends laya.ui.Clip
 	var FontClip=(function(_super){
-		function FontClip(url,clipX,clipY){
+		function FontClip(skin,sheet){
+			this._valueArr=null;
+			this._indexMap=null;
 			this._sheet=null;
-			this._valueArr=[];
-			this._xDirection=true;
 			this._direction="horizontal";
 			this._spaceX=0;
 			this._spaceY=0;
-			this._strValue=null;
-			this._indexDir=[];
 			FontClip.__super.call(this);
-			(clipX===void 0)&& (clipX=1);
-			(clipY===void 0)&& (clipY=1);
-			this._clipX=clipX;
-			this._clipY=clipY;
-			this.skin=url;
+			if (skin)this.skin=skin;
+			if (sheet)this.sheet=sheet;
 		}
 
 		__class(FontClip,'laya.ui.FontClip',_super);
 		var __proto=FontClip.prototype;
 		__proto.createChildren=function(){
 			this._bitmap=new AutoBitmap();
-			this.on(/*laya.events.Event.LOADED*/"loaded",this,this.onClipLoaded);
+			this.on(/*laya.events.Event.LOADED*/"loaded",this,this._onClipLoaded);
 		}
 
 		/**
 		*资源加载完毕
 		*/
-		__proto.onClipLoaded=function(){
+		__proto._onClipLoaded=function(){
 			this.callLater(this.changeValue);
 		}
 
 		/**渲染数值*/
 		__proto.changeValue=function(){
-			if(this.sources==null)
-				return;
+			if (!this._sources)return;
 			this.graphics.clear();
 			var texture;
-			for(var i=0,sz=this._valueArr.length;i<sz;i++){
-				var index=this._indexDir[this._valueArr[i]];
+			var isHorizontal=(this._direction==="horizontal");
+			for (var i=0,sz=this._valueArr.length;i < sz;i++){
+				var index=this._indexMap[this._valueArr[i]];
 				if (!this.sources[index])continue ;
 				texture=this.sources[index];
-				if(this._xDirection){
-					this.graphics.drawTexture(texture,i *(texture.width+this.spaceX),0,texture.width,texture.height);
-					}else{
-					this.graphics.drawTexture(texture,0,i *(texture.height+this.spaceY),texture.width,texture.height);
-				}
+				if (isHorizontal)this.graphics.drawTexture(texture,i *(texture.width+this.spaceX),0,texture.width,texture.height);
+				else this.graphics.drawTexture(texture,0,i *(texture.height+this.spaceY),texture.width,texture.height);
 			}
 			if (!texture)return;
-			if(this._xDirection){
-				this.size(this._valueArr.length*(texture.width+this.spaceX),texture.height);
-				}else{
-				this.size(texture.width,(texture.height+this.spaceY)*this._valueArr.length);
-			}
+			if (isHorizontal)this.size(this._valueArr.length *(texture.width+this.spaceX),texture.height);
+			else this.size(texture.width,(texture.height+this.spaceY)*this._valueArr.length);
 		}
 
-		__proto.dispose=function(){
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
 			this._valueArr=null;
-			this._indexDir=null;
+			this._indexMap=null;
+			this._indexMap=null;
 			this.graphics.clear();
 			this.removeSelf();
-			this.off(/*laya.events.Event.LOADED*/"loaded",this,this.onClipLoaded);
-			_super.prototype.dispose.call(this);
+			this.off(/*laya.events.Event.LOADED*/"loaded",this,this._onClipLoaded);
+			_super.prototype.destroy.call(this,destroyChild);
 		}
 
 		/**
-		*设置位图字体内容
-		*@param value
+		*设置位图字体内容，空格代表换行。比如"abc123 456"，代表第一行对应的文字为"abc123"，第二行为"456"
 		*/
 		__getset(0,__proto,'sheet',function(){
 			return this._sheet;
 			},function(value){
-			this._indexDir=[];
-			value=String(value+"");
+			value+="";
 			this._sheet=value;
-			for(var i=0;i<value.length;i++){
-				this._indexDir[value.charAt(i)]=i;
+			var arr=value.split(" ");
+			this._clipX=String(arr[0]).length;
+			this.clipY=arr.length;
+			this._indexMap={};
+			for (var i=0;i < this._clipY;i++){
+				var line=arr[i].split("");
+				for (var j=0,n=line.length;j < n;j++){
+					this._indexMap[line[j]]=i *this._clipY+j;
+				}
 			}
 		});
 
@@ -5279,46 +5062,35 @@
 			return this._direction;
 			},function(value){
 			this._direction=value;
-			this._xDirection=(value=="horizontal");
 			this.callLater(this.changeValue);
 		});
 
 		/**
-		*设置问题字体的显示内容
-		*@param value
+		*设置位图字体的显示内容
 		*/
 		__getset(0,__proto,'value',function(){
+			if (!this._valueArr)return "";
 			return this._valueArr.join("");
 			},function(value){
-			value=String(value+"");
+			value+="";
 			this._valueArr=value.split("");
 			this.callLater(this.changeValue);
 		});
 
-		/**资源加载完成*/
-		__getset(0,__proto,'sources',function(){
-			return this._sources;
-			},function(value){
-			_super.prototype._$set_sources.call(this,value);
-			this.callLater(this.changeValue);
-		});
-
-		/**X方向间隙*/
+		/**X方向文字间隙*/
 		__getset(0,__proto,'spaceX',function(){
 			return this._spaceX;
 			},function(value){
 			this._spaceX=value;
-			if(this._xDirection)
-				this.callLater(this.changeValue);
+			if (this._direction==="horizontal")this.callLater(this.changeValue);
 		});
 
-		/**Y方向间隙*/
+		/**Y方向文字间隙*/
 		__getset(0,__proto,'spaceY',function(){
 			return this._spaceY;
 			},function(value){
 			this._spaceY=value;
-			if(!this._xDirection)
-				this.callLater(this.changeValue);
+			if (!(this._direction==="horizontal"))this.callLater(this.changeValue);
 		});
 
 		return FontClip;
@@ -5817,7 +5589,7 @@
 		*刷新列表数据源。
 		*/
 		__proto.refresh=function(){
-			this.array=this._array;
+			this.startIndex=this._startIndex;
 		}
 
 		/**
@@ -6092,7 +5864,7 @@
 		});
 
 		/**
-		*表示当前选择的项索引。
+		*表示当前选择的项索引。selectedIndex值更改会引起list重新渲染
 		*/
 		__getset(0,__proto,'selectedIndex',function(){
 			return this._selectedIndex;
@@ -6101,8 +5873,9 @@
 				this._selectedIndex=value;
 				this.changeSelectStatus();
 				this.event(/*laya.events.Event.CHANGE*/"change");
-				this.selectHandler && this.selectHandler.runWith(value);
 			}
+			this.selectHandler && this.selectHandler.runWith(value);
+			this.startIndex=this._startIndex;
 		});
 
 		/**
@@ -6294,8 +6067,8 @@
 		/**@private */
 		__proto.changeScroll=function(){
 			this._scrollChanged=false;
-			var contentW=this.contentWidth;
-			var contentH=this.contentHeight;
+			var contentW=this.contentWidth || 1;
+			var contentH=this.contentHeight || 1;
 			var vscroll=this._vScrollBar;
 			var hscroll=this._hScrollBar;
 			var vShow=vscroll && contentH > this._height;
@@ -6617,6 +6390,7 @@
 			this._space=0;
 			this._labels=null;
 			this._labelColors=null;
+			this._labelFont=null;
 			this._labelStrokeColor=null;
 			this._strokeColors=null;
 			this._labelStroke=NaN;
@@ -6774,6 +6548,7 @@
 					this._labelPadding && (btn.labelPadding=this._labelPadding);
 					this._labelAlign && (btn.labelAlign=this._labelAlign);
 					this._stateNum && (btn.stateNum=this._stateNum);
+					this._labelFont && (btn.labelFont=this._labelFont);
 					if (this._direction==="horizontal"){
 						btn.y=0;
 						btn.x=left;
@@ -6916,7 +6691,8 @@
 		});
 
 		/**
-		*表示按钮文本标签的字体大小。
+		*表示按钮的状态值，以数字表示，默认为3态。
+		*@see laya.ui.Button#stateNum
 		*/
 		__getset(0,__proto,'stateNum',function(){
 			return this._stateNum;
@@ -6935,6 +6711,19 @@
 			},function(value){
 			if (this._labelBold !=value){
 				this._labelBold=value;
+				this._setLabelChanged();
+			}
+		});
+
+		/**
+		*表示按钮文本标签的字体名称，以字符串形式表示。
+		*@see laya.display.Text.font()
+		*/
+		__getset(0,__proto,'labelFont',function(){
+			return this._labelFont;
+			},function(value){
+			if (this._labelFont !=value){
+				this._labelFont=value;
 				this._setLabelChanged();
 			}
 		});
@@ -7003,66 +6792,6 @@
 
 		return UIGroup;
 	})(Box)
-
-
-	/**
-	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
-	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
-	*@see laya.ui.RadioGroup
-	*/
-	//class laya.ui.Radio extends laya.ui.Button
-	var Radio=(function(_super){
-		function Radio(skin,label){
-			this._value=null;
-			(label===void 0)&& (label="");
-			Radio.__super.call(this,skin,label);
-		}
-
-		__class(Radio,'laya.ui.Radio',_super);
-		var __proto=Radio.prototype;
-		/**@inheritDoc */
-		__proto.destroy=function(destroyChild){
-			(destroyChild===void 0)&& (destroyChild=true);
-			_super.prototype.destroy.call(this,destroyChild);
-			this._value=null;
-		}
-
-		/**@inheritDoc */
-		__proto.preinitialize=function(){
-			laya.ui.Component.prototype.preinitialize.call(this);
-			this.toggle=false;
-			this._autoSize=false;
-		}
-
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			_super.prototype.initialize.call(this);
-			this.createText();
-			this._text.align="left";
-			this._text.valign="top";
-			this._text.width=0;
-			this.on(/*laya.events.Event.CLICK*/"click",this,this.onClick);
-		}
-
-		/**
-		*@private
-		*对象的<code>Event.CLICK</code>事件侦听处理函数。
-		*/
-		__proto.onClick=function(e){
-			this.selected=true;
-		}
-
-		/**
-		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
-		*/
-		__getset(0,__proto,'value',function(){
-			return this._value !=null ? this._value :this.label;
-			},function(obj){
-			this._value=obj;
-		});
-
-		return Radio;
-	})(Button)
 
 
 	/**
@@ -7172,6 +6901,66 @@
 		__class(HSlider,'laya.ui.HSlider',_super);
 		return HSlider;
 	})(Slider)
+
+
+	/**
+	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
+	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
+	*@see laya.ui.RadioGroup
+	*/
+	//class laya.ui.Radio extends laya.ui.Button
+	var Radio=(function(_super){
+		function Radio(skin,label){
+			this._value=null;
+			(label===void 0)&& (label="");
+			Radio.__super.call(this,skin,label);
+		}
+
+		__class(Radio,'laya.ui.Radio',_super);
+		var __proto=Radio.prototype;
+		/**@inheritDoc */
+		__proto.destroy=function(destroyChild){
+			(destroyChild===void 0)&& (destroyChild=true);
+			_super.prototype.destroy.call(this,destroyChild);
+			this._value=null;
+		}
+
+		/**@inheritDoc */
+		__proto.preinitialize=function(){
+			laya.ui.Component.prototype.preinitialize.call(this);
+			this.toggle=false;
+			this._autoSize=false;
+		}
+
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			_super.prototype.initialize.call(this);
+			this.createText();
+			this._text.align="left";
+			this._text.valign="top";
+			this._text.width=0;
+			this.on(/*laya.events.Event.CLICK*/"click",this,this.onClick);
+		}
+
+		/**
+		*@private
+		*对象的<code>Event.CLICK</code>事件侦听处理函数。
+		*/
+		__proto.onClick=function(e){
+			this.selected=true;
+		}
+
+		/**
+		*获取或设置 <code>Radio</code> 关联的可选用户定义值。
+		*/
+		__getset(0,__proto,'value',function(){
+			return this._value !=null ? this._value :this.label;
+			},function(obj){
+			this._value=obj;
+		});
+
+		return Radio;
+	})(Button)
 
 
 	/**
@@ -8176,12 +7965,33 @@
 		}
 
 		/**
+		*当前文本内容字符串。
+		*@see laya.display.Text.text
+		*/
+		__getset(0,__proto,'text',_super.prototype._$get_text,function(value){
+			if (this._tf.text !=value){
+				value=value+"";
+				this._tf.text=value;
+				this.event(/*laya.events.Event.CHANGE*/"change");
+			}
+		});
+
+		/**
 		*表示此对象包含的文本背景 <code>AutoBitmap</code> 组件实例。
 		*/
 		__getset(0,__proto,'bg',function(){
 			return this._bg;
 			},function(value){
 			this.graphics=this._bg=value;
+		});
+
+		/**
+		*设置原生input输入框的y坐标偏移。
+		*/
+		__getset(0,__proto,'inputElementYAdjuster',function(){
+			return (this._tf).inputElementYAdjuster;
+			},function(value){
+			(this._tf).inputElementYAdjuster=value;
 		});
 
 		/**
@@ -8192,15 +8002,6 @@
 			return (this._tf).multiline;
 			},function(value){
 			(this._tf).multiline=value;
-		});
-
-		/**
-		*设置原生input输入框的y坐标偏移。
-		*/
-		__getset(0,__proto,'inputElementYAdjuster',function(){
-			return (this._tf).inputElementYAdjuster;
-			},function(value){
-			(this._tf).inputElementYAdjuster=value;
 		});
 
 		/**
@@ -8431,7 +8232,7 @@
 	*<code>Dialog</code> 组件是一个弹出对话框，实现对话框弹出，拖动，模式窗口功能。
 	*可以通过UIConfig设置弹出框背景透明度，模式窗口点击边缘是否关闭等
 	*通过设置zOrder属性，可以更改弹出的层次
-	*通过设置manager.popupEffect和manager.closeEffect可以设置弹出效果和关闭效果
+	*通过设置popupEffect和closeEffect可以设置弹出效果和关闭效果，如果不想有任何弹出关闭效果，可以设置前述属性为空
 	*
 	*@example 以下示例代码，创建了一个 <code>Dialog</code> 实例。
 	*<listing version="3.0">
@@ -8568,6 +8369,8 @@
 		function Dialog(){
 			this.popupCenter=true;
 			this.closeHandler=null;
+			this.popupEffect=null;
+			this.closeEffect=null;
 			this.group=null;
 			this.isModal=false;
 			this._dragArea=null;
@@ -8578,6 +8381,8 @@
 		var __proto=Dialog.prototype;
 		/**@inheritDoc */
 		__proto.initialize=function(){
+			this.popupEffect=Dialog.manager.popupEffectHandler;
+			this.closeEffect=Dialog.manager.closeEffectHandler;
 			this._dealDragArea();
 			this.on(/*laya.events.Event.CLICK*/"click",this,this._onClick);
 		}
@@ -8664,7 +8469,6 @@
 		*</p>
 		*
 		*@see #includeExamplesSummary 请参考示例
-		*@return
 		*/
 		__getset(0,__proto,'dragArea',function(){
 			if (this._dragArea)return this._dragArea.toString();
@@ -8753,14 +8557,14 @@
 			var maxHeight=0;
 			for (var i=0,n=this.numChildren;i < n;i++){
 				var item=this.getChildAt(i);
-				if (item){
+				if (item&&item.layoutEnabled){
 					items.push(item);
-					maxHeight=Math.max(maxHeight,item.height *item.scaleY);
+					maxHeight=this._height?this._height:Math.max(maxHeight,item.height *item.scaleY);
 				}
 			}
 			this.sortItem(items);
 			var left=0;
-			for (i=0,n=this.numChildren;i < n;i++){
+			for (i=0,n=items.length;i < n;i++){
 				item=items[i];
 				item.x=left;
 				left+=item.width *item.scaleX+this._space;
@@ -8774,6 +8578,13 @@
 			}
 			this.changeSize();
 		}
+
+		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
+			if (this._height !=value){
+				_super.prototype._$set_height.call(this,value);
+				this.callLater(this.changeItems);
+			}
+		});
 
 		HBox.NONE="none";
 		HBox.TOP="top";
@@ -8800,14 +8611,14 @@
 			var maxWidth=0;
 			for (var i=0,n=this.numChildren;i < n;i++){
 				var item=this.getChildAt(i);
-				if (item){
+				if (item&&item.layoutEnabled){
 					items.push(item);
-					maxWidth=Math.max(maxWidth,item.width *item.scaleX);
+					maxWidth=this._width?this._width:Math.max(maxWidth,item.width *item.scaleX);
 				}
 			}
 			this.sortItem(items);
 			var top=0;
-			for (i=0,n=this.numChildren;i < n;i++){
+			for (i=0,n=items.length;i < n;i++){
 				item=items[i];
 				item.y=top;
 				top+=item.height *item.scaleY+this._space;
@@ -8821,6 +8632,13 @@
 			}
 			this.changeSize();
 		}
+
+		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
+			if (this._width !=value){
+				_super.prototype._$set_width.call(this,value);
+				this.callLater(this.changeItems);
+			}
+		});
 
 		VBox.NONE="none";
 		VBox.LEFT="left";

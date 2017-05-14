@@ -2,13 +2,9 @@ package laya.d3.resource {
 	import laya.d3.utils.Size;
 	import laya.events.Event;
 	import laya.maths.Arith;
-	import laya.net.Loader;
-	import laya.utils.Browser;
-	import laya.utils.Handler;
 	import laya.utils.Utils;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.resource.WebGLImage;
 	
 	public class DataTexture2D extends BaseTexture {
 		/**

@@ -93,7 +93,7 @@ package laya.ani {
 				var aniName:String = ani.name = _strings[reader.getUint16()];
 				_templet._aniMap[aniName] = i;//按名字可以取得动画索引
 				ani.bone3DMap = {};
-				ani.playTime = reader.getUint32();
+				ani.playTime = reader.getFloat32();
 				var boneCount:int = ani.nodes.length = reader.getInt16();
 				ani.totalKeyframeDatasLength = 0;
 				for (j = 0; j < boneCount; j++) {
@@ -121,25 +121,27 @@ package laya.ani {
 					
 					var keyframeCount:int = reader.getUint16();
 					node.keyFrame.length = keyframeCount;
-					var startTime:Number = 0;
+					var keyFrame:KeyFramesContent = null, lastKeyFrame:KeyFramesContent = null;
 					for (k = 0, n = keyframeCount; k < n; k++) {
-						var keyFrame:KeyFramesContent = node.keyFrame[k] = /*[IF-FLASH]*/ new KeyFramesContent();
+						keyFrame = node.keyFrame[k] = /*[IF-FLASH]*/ new KeyFramesContent();
 						//[IF-SCRIPT] {};//不要删除
-						keyFrame.duration = reader.getUint32();
-						keyFrame.startTime = startTime;
+						keyFrame.startTime = reader.getFloat32();
 						
-						//keyFrame.data = new Float32Array(keyframeWidth);
+						(lastKeyFrame) && (lastKeyFrame.duration = keyFrame.startTime - lastKeyFrame.startTime);
+						
 						keyFrame.dData = new Float32Array(keyframeWidth);
 						keyFrame.nextData = new Float32Array(keyframeWidth);
 						
 						var offset:int = _DATA.offset;
+						
 						var keyframeDataOffset:int = reader.getUint32();
 						var keyframeDataLength:int = keyframeWidth * 4;
 						var keyframeArrayBuffer:ArrayBuffer = arrayBuffer.slice(offset + keyframeDataOffset, offset + keyframeDataOffset + keyframeDataLength);
 						keyFrame.data = new Float32Array(keyframeArrayBuffer);
-						
-						startTime += keyFrame.duration;
+						lastKeyFrame = keyFrame;
 					}
+					keyFrame.duration = 0;
+					
 					node.playTime = ani.playTime;//节点总时间可能比总时长大，次处修正
 					_templet._calculateKeyFrame(node, keyframeCount, keyframeWidth);
 				}

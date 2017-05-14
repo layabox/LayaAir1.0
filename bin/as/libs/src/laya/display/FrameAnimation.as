@@ -1,6 +1,6 @@
 package laya.display
 {
-	import laya.events.EventDispatcher;
+	import laya.events.Event;
 	import laya.maths.MathUtil;
 	import laya.utils.Ease;	
 
@@ -36,8 +36,8 @@ package laya.display
 		 */
 		public var _targetDic:Object;
 		/**
-		 *  @private
-		 *  动画数据
+		 * @private
+		 * 动画数据
 		 */
 		public var _animationData:Object;
 		

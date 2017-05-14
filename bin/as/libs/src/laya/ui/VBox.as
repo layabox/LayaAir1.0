@@ -20,23 +20,31 @@ package laya.ui {
 		 * 右对齐。
 		 */
 		public static const RIGHT:String = "right";
-		
+			
+		override public function set width(value:Number):void 
+		{
+			if (_width != value) {
+				super.width = value;
+				callLater(changeItems);
+			}
+		}
 		/** @inheritDoc	*/
 		override protected function changeItems():void {
 			_itemChanged = false;
 			var items:Array = [];
 			var maxWidth:Number = 0;
+			
 			for (var i:int = 0, n:int = numChildren; i < n; i++) {
 				var item:Component = getChildAt(i) as Component;
-				if (item) {
+				if (item&&item.layoutEnabled) {
 					items.push(item);
-					maxWidth = Math.max(maxWidth, item.width * item.scaleX);
+					maxWidth = _width?_width:Math.max(maxWidth, item.width * item.scaleX);
 				}
 			}
 			
 			sortItem(items);
 			var top:Number = 0;
-			for (i = 0, n = numChildren; i < n; i++) {
+			for (i = 0, n = items.length; i < n; i++) {
 				item = items[i];
 				item.y = top;
 				top += item.height * item.scaleY + _space;

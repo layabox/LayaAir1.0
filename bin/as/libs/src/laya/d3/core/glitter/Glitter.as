@@ -100,15 +100,6 @@ package laya.d3.core.glitter {
 		}
 		
 		/**
-		 * @private
-		 */
-		override public function _renderUpdate(projectionView:Matrix4x4):void {
-			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
-			var projViewWorld:Matrix4x4 = getProjectionViewWorldMatrix(projectionView);
-			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
-		}
-		
-		/**
 		 * 通过位置添加刀光。
 		 * @param position0 位置0。
 		 * @param position1 位置1。

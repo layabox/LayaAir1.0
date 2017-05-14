@@ -222,7 +222,7 @@ package laya.d3.loaders {
 			submesh._indexBuffer = ib;
 			
 			var boneDicArrayBuffer:ArrayBuffer = arrayBuffer.slice(boneDicofs + _DATA.offset, boneDicofs + _DATA.offset + boneDicsize);
-			submesh._boneIndices = new Uint8Array(boneDicArrayBuffer);
+			submesh._boneIndicesList[0] = new Uint8Array(boneDicArrayBuffer);//兼容性代码
 			
 			_mesh._add(submesh);
 			

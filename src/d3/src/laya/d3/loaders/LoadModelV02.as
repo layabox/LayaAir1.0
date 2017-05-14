@@ -1,10 +1,9 @@
 package laya.d3.loaders {
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
-	import laya.d3.graphics.VertexElement;
+	import laya.d3.graphics.VertexPositionNTBTexture;
 	import laya.d3.graphics.VertexPositionNormalColor;
 	import laya.d3.graphics.VertexPositionNormalColorSkin;
 	import laya.d3.graphics.VertexPositionNormalColorSkinTangent;
@@ -25,12 +24,10 @@ package laya.d3.loaders {
 	import laya.d3.graphics.VertexPositionNormalTextureSkin;
 	import laya.d3.graphics.VertexPositionNormalTextureSkinTangent;
 	import laya.d3.graphics.VertexPositionNormalTextureTangent;
-	import laya.d3.graphics.VertexPositionNTBTexture;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
 	import laya.net.Loader;
-	import laya.net.URL;
 	import laya.utils.Byte;
 	import laya.webgl.WebGLContext;
 	
@@ -216,14 +213,14 @@ package laya.d3.loaders {
 			var vbStart:int = _readData.getUint32();
 			var vbLength:int = _readData.getUint32();
 			submesh._vertexBuffer = _mesh._vertexBuffers[vbIndex];
-			submesh._vertexBufferStart = vbStart;
-			submesh.__vertexBufferCount = vbLength;
+			submesh._vertexStart = vbStart;
+			submesh._vertexCount = vbLength;
 			
 			var ibStart:int = _readData.getUint32();
 			var ibLength:int = _readData.getUint32();
 			submesh._indexBuffer = _mesh._indexBuffer;
-			submesh._indexBufferStart = ibStart;
-			submesh._indexBufferCount = ibLength;
+			submesh._indexStart = ibStart;
+			submesh._indexCount = ibLength;
 			var offset:int = _DATA.offset;
 			
 			var subIndexBufferStart:Vector.<int> = submesh._subIndexBufferStart;

@@ -484,6 +484,7 @@ package laya.ui {
 					Tween.to(this, {value: max}, elasticBackTime, Ease.sineOut, Handler.create(this, elasticOver));
 				}
 			} else {
+				if (!_offsets) return;
 				//计算平均值
 				if (_offsets.length < 1) {
 					_offsets[0] = isVertical ? Laya.stage.mouseY - _lastPoint.y : Laya.stage.mouseX - _lastPoint.x;

@@ -59,11 +59,11 @@ package laya.ani.bone {
 		
 		public function skew(m:Matrix,x:Number, y:Number):Matrix {
 			var sinX:Number = Math.sin(y);
-            var cosX:Number = Math.cos(y);
-            var sinY:Number = Math.sin(x);
-            var cosY:Number = Math.cos(x);
+			var cosX:Number = Math.cos(y);
+			var sinY:Number = Math.sin(x);
+			var cosY:Number = Math.cos(x);
 
-            m.setTo(m.a  * cosY - m.b  * sinX,
+			m.setTo(m.a  * cosY - m.b  * sinX,
 					m.a  * sinY + m.b  * cosX,
 					m.c  * cosY - m.d  * sinX,
 					m.c  * sinY + m.d  * cosX,

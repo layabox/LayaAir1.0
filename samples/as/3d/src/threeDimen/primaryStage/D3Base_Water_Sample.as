@@ -10,7 +10,7 @@ package threeDimen.primaryStage {
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.material.WaterMaterial;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
@@ -132,7 +132,18 @@ package threeDimen.primaryStage {
 				water.src = './threeDimen/water/sea1.json';
 				water._scene = scene;
 				water.addRefractObj(m2);
-				water.transform.localPosition = new Vector3(0, .01, 0);
+				water.transform.localPosition = new Vector3(0, .1, 0);
+				water.mtl.useFoam = true;
+				
+				var water1 = scene.addChild(new WaterSprite()) as WaterSprite;
+				water1.src = './threeDimen/water/sea2.json';
+				water1._scene = scene;
+				water1.syncObj = water;
+				water1.addRefractObj(m2);
+				water1.transform.localPosition = new Vector3(100, .1, 0);
+				water1.afterDescLoaded = function() {
+					//this.mtl.useVertexDeep = true;
+				}
 			}
 
 			

@@ -1,5 +1,6 @@
 package laya.d3.core.render {
 	import laya.d3.core.MeshSprite3D;
+	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.material.BaseMaterial;
@@ -22,25 +23,14 @@ package laya.d3.core.render {
 	 * <code>RenderElement</code> 类用于实现渲染物体。
 	 */
 	public class RenderElement {
-		/** @private */
-		private static var _tempVector30:Vector3 = new Vector3();
-		/** @private */
-		private static var _tempVector31:Vector3 = new Vector3();
-		/** @private */
-		private static var _tempQuaternion0:Quaternion = new Quaternion();
-		/** @private */
-		private static var _tempMatrix4x40:Matrix4x4 = new Matrix4x4();
-		/** @private */
-		private static var _tempMatrix4x41:Matrix4x4 = new Matrix4x4();
-		
-		/** @private 类型0为默认，1为StaticBatch。*/
+		/** @private 类型0为默认，2为DynamicBatch。*/
 		public var _type:int = 0;
 		/** @private 排序ID。*/
 		public var _mainSortID:int;
 		/** @private */
 		public var _render:BaseRender;
 		/** @private 所属Sprite3D精灵。*/
-		public var _sprite3D:Sprite3D;
+		public var _sprite3D:RenderableSprite3D;
 		/** @private 渲染所用材质。*/
 		public var _material:BaseMaterial;
 		/** @private 渲染元素。*/
@@ -48,10 +38,13 @@ package laya.d3.core.render {
 		
 		/** @private */
 		public var _staticBatch:StaticBatch;
-		/** @private */
-		public var _batchIndexStart:int;
-		/** @private */
-		public var _batchIndexEnd:int;
+	 
+		
+		//...............临时...........................
+		public var _tempBatchIndexStart:int;//TODO:
+		public var _tempBatchIndexEnd:int;//TODO:
+		//...............临时...........................
+		
 		/** @private */
 		public var _canDynamicBatch:Boolean;
 		
@@ -82,79 +75,6 @@ package laya.d3.core.render {
 			if (Render.isConchNode) {//NATIVE
 				_conchSubmesh = __JS__("new ConchSubmesh()");
 			}
-		}
-		
-		/**
-		 * @private
-		 */
-		public function getStaticBatchBakedVertexs(index:int):Float32Array {
-			const byteSizeInFloat:int = 4;
-			var vertexBuffer:VertexBuffer3D = _renderObj._getVertexBuffer(index);
-			var vertexDeclaration:VertexDeclaration = vertexBuffer.vertexDeclaration;
-			var positionOffset:int = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.POSITION0).offset / byteSizeInFloat;
-			var normalOffset:int = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.NORMAL0).offset / byteSizeInFloat;
-			var owner:Sprite3D = _render._owner;
-			var lightmapScaleOffset:Vector4 = (owner as MeshSprite3D).meshRender.lightmapScaleOffset;
-			
-			var i:int, n:int, bakedVertexes:Float32Array, bakedVertexFloatCount:int, lightingMapTexcoordOffset:int, uv1Element:VertexElement;
-			var uv0Offset:int, oriVertexFloatCount:int;
-			if (lightmapScaleOffset) {
-				uv1Element = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.TEXTURECOORDINATE1);
-				if (uv1Element) {
-					bakedVertexFloatCount = vertexDeclaration.vertexStride / byteSizeInFloat;
-					bakedVertexes = vertexBuffer.getData().slice() as Float32Array;
-					lightingMapTexcoordOffset = uv1Element.offset / byteSizeInFloat;
-				} else {
-					oriVertexFloatCount = vertexDeclaration.vertexStride / byteSizeInFloat;
-					bakedVertexFloatCount = oriVertexFloatCount + 2;
-					bakedVertexes = new Float32Array(vertexBuffer.vertexCount * (vertexBuffer.vertexDeclaration.vertexStride / byteSizeInFloat + 2));
-					uv0Offset = vertexDeclaration.getVertexElementByUsage(VertexElementUsage.TEXTURECOORDINATE0).offset / byteSizeInFloat;
-					lightingMapTexcoordOffset = uv0Offset + 2;
-					
-					var oriVertexes:Float32Array = vertexBuffer.getData();
-					for (i = 0, n = oriVertexes.length / oriVertexFloatCount; i < n; i++) {
-						var oriVertexOffset:int = i * oriVertexFloatCount;
-						var bakedVertexOffset:int = i * bakedVertexFloatCount;
-						var j:int;
-						for (j = 0; j < lightingMapTexcoordOffset; j++)
-							bakedVertexes[bakedVertexOffset + j] = oriVertexes[oriVertexOffset + j];
-						for (j = lightingMapTexcoordOffset; j < oriVertexFloatCount; j++)
-							bakedVertexes[bakedVertexOffset + j + 2] = oriVertexes[oriVertexOffset + j];
-					}
-				}
-			} else {
-				bakedVertexFloatCount = vertexDeclaration.vertexStride / byteSizeInFloat;
-				bakedVertexes = vertexBuffer.getData().slice() as Float32Array;
-			}
-			
-			var rootTransform:Matrix4x4 = _staticBatch._rootSprite.transform.worldMatrix;
-			var transform:Matrix4x4 = _sprite3D.transform.worldMatrix;
-			var rootInvertMat:Matrix4x4 = _tempMatrix4x40;
-			var result:Matrix4x4 = _tempMatrix4x41;
-			rootTransform.invert(rootInvertMat);
-			Matrix4x4.multiply(rootInvertMat, transform, result);
-			
-			var rotation:Quaternion = _tempQuaternion0;
-			result.decomposeTransRotScale(_tempVector30, rotation, _tempVector31);//可不计算position和scale
-			
-			for (i = 0, n = bakedVertexes.length / bakedVertexFloatCount; i < n; i++) {
-				var posOffset:int = i * bakedVertexFloatCount + positionOffset;
-				var norOffset:int = i * bakedVertexFloatCount + normalOffset;
-				
-				Utils3D.transformVector3ArrayToVector3ArrayCoordinate(bakedVertexes, posOffset, result, bakedVertexes, posOffset);
-				Utils3D.transformVector3ArrayByQuat(bakedVertexes, norOffset, rotation, bakedVertexes, norOffset);
-				
-				if (owner is MeshSprite3D && lightmapScaleOffset) {//TODO:待修改。
-					var lightingMapTexOffset:int = i * bakedVertexFloatCount + lightingMapTexcoordOffset;
-					if (uv1Element) {
-						Utils3D.transformLightingMapTexcoordByUV1Array(bakedVertexes, lightingMapTexOffset, lightmapScaleOffset, bakedVertexes, lightingMapTexOffset);
-					} else {
-						var tex0Offset:int = i * oriVertexFloatCount + uv0Offset;
-						Utils3D.transformLightingMapTexcoordByUV0Array(oriVertexes, tex0Offset, lightmapScaleOffset, bakedVertexes, lightingMapTexOffset);
-					}
-				}
-			}
-			return bakedVertexes;
 		}
 		
 		/**

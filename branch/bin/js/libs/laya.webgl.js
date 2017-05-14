@@ -3233,13 +3233,27 @@
 			RunDriver.drawToCanvas=function (sprite,_renderType,canvasWidth,canvasHeight,offsetX,offsetY){
 				var renderTarget=new RenderTarget2D(canvasWidth,canvasHeight,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,0,false);
 				renderTarget.start();
-				renderTarget.clear(1.0,0.0,0.0,1.0);
-				sprite.render(Render.context,-offsetX,RenderState2D.height-canvasHeight-offsetY);
+				Render.context.clear();
+				sprite.render(Render.context,offsetX,RenderState2D.height-canvasHeight+offsetY);
 				Render.context.flush();
 				renderTarget.end();
 				var pixels=renderTarget.getData(0,0,renderTarget.width,renderTarget.height);
 				renderTarget.dispose();
-				return pixels;
+				var htmlCanvas=new WebGLCanvas();
+				htmlCanvas._canvas=Browser.createElement("canvas");
+				htmlCanvas.size(canvasWidth,canvasHeight);
+				var context=htmlCanvas._canvas.getContext('2d');
+				Browser.canvas.size(canvasWidth,canvasHeight);
+				var tempContext=Browser.context;
+				var imgData=tempContext.createImageData(canvasWidth,canvasHeight);
+				imgData.data.set(/*__JS__ */new Uint8ClampedArray(pixels.buffer));
+				tempContext.putImageData(imgData,0,0);
+				context.save();
+				context.translate(0,canvasHeight);
+				context.scale(1,-1);
+				context.drawImage(Browser.canvas.source,0,0);
+				context.restore();
+				return htmlCanvas;
 			}
 			RunDriver.createFilterAction=function (type){
 				var action;
@@ -4419,6 +4433,10 @@
 		}
 
 		__proto.drawTextureWithTransform=function(tex,x,y,width,height,transform,tx,ty,alpha){
+			if (!transform){
+				this._drawTextureM(tex,x,y,width,height,tx,ty,null,alpha);
+				return;
+			};
 			var curMat=this._curMat;
 			var prex=this._x;
 			var prey=this._y;
@@ -6619,34 +6637,20 @@
 
 	//class laya.webgl.resource.WebGLCanvas extends laya.resource.Bitmap
 	var WebGLCanvas=(function(_super){
-		function WebGLCanvas(type){
+		function WebGLCanvas(){
 			//this._ctx=null;
-			this._is2D=false;
 			//this._canvas=null;
 			//this.iscpuSource=false;
-			var _$this=this;
 			WebGLCanvas.__super.call(this);
-			this._canvas=this;
-			if (type==="2D" || (type==="AUTO" && !Render.isWebGL)){
-				this._is2D=true;
-				this._canvas=this._source=Browser.createElement("canvas");
-				this.iscpuSource=true;
-				var o=this;
-				o.getContext=function (contextID,other){
-					if (_$this._ctx)return _$this._ctx;
-					var ctx=_$this._ctx=_$this._canvas.getContext(contextID,other);
-					if (ctx){
-						ctx._canvas=o;
-						ctx.size=function (){
-						};
-					}
-					return ctx;
-				}
-			}else this._canvas={};
 		}
 
 		__class(WebGLCanvas,'laya.webgl.resource.WebGLCanvas',_super);
 		var __proto=WebGLCanvas.prototype;
+		//}
+		__proto.getCanvas=function(){
+			return this._canvas;
+		}
+
 		__proto.clear=function(){
 			this._ctx && this._ctx.clear();
 		}
@@ -6709,17 +6713,17 @@
 		var preTarget=WebGLContext.curBindTexTarget;
 		var preTexture=WebGLContext.curBindTexValue;
 		WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
-		gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,this._w,this._h,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,null);
+		gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this._canvas);
 		gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MAG_FILTER*/0x2800,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
 		gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MIN_FILTER*/0x2801,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
 		gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_S*/0x2802,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 		gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_T*/0x2803,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 		this.memorySize=this._w *this._h *4;
 		(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
-		this._canvas=null;
 	}
 
 
+	//_canvas=null;
 	__proto.texSubImage2D=function(webglCanvas,xoffset,yoffset){
 		var gl=WebGL.mainContext;
 		var preTarget=WebGLContext.curBindTexTarget;
@@ -6730,15 +6734,6 @@
 	}
 
 
-	/**
-	*返回HTML Image,as3无internal货friend，通常禁止开发者修改image内的任何属性
-	*@param HTML Image
-	*/
-	__getset(0,__proto,'canvas',function(){
-		return this._canvas;
-	});
-
-
 	__getset(0,__proto,'context',function(){
 		return this._ctx;
 	});
@@ -6747,11 +6742,6 @@
 	__getset(0,__proto,'asBitmap',null,function(value){
 		this._ctx && (this._ctx.asBitmap=value);
 	});
-
-
-	WebGLCanvas.create=function(type){
-		return new WebGLCanvas(type);
-	}
 
 
 	WebGLCanvas._createContext=null

@@ -1,28 +1,15 @@
 package laya.d3.resource.models {
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
-	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.RenderQueue;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexElementFormat;
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.loaders.MeshReader;
-	import laya.d3.math.BoundBox;
-	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
-	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
-	import laya.events.EventDispatcher;
-	import laya.net.Loader;
-	import laya.net.URL;
-	import laya.resource.Resource;
-	import laya.utils.Handler;
-	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
 	 * <code>Mesh</code> 类用于创建文件网格数据模板。
@@ -55,8 +42,8 @@ package laya.d3.resource.models {
 		 * 获取网格顶点
 		 * @return 网格顶点。
 		 */
-		override public function get positions():Vector.<Vector3> {
-			var vertices:Vector.<Vector3> = new Vector.<Vector3>();
+		override public function get positions():Array {
+			var vertices:Array = [];
 			var i:int, j:int, vertexBuffer:VertexBuffer3D, positionElement:VertexElement, vertexElements:Array, vertexElement:VertexElement, ofset:int, verticesData:Float32Array;
 			if (_vertexBuffers.length !== 0) {
 				var vertexBufferCount:int = _vertexBuffers.length;
@@ -72,7 +59,7 @@ package laya.d3.resource.models {
 						}
 					}
 					
-					 verticesData = vertexBuffer.getData();
+					verticesData = vertexBuffer.getData();
 					for (j = 0; j < verticesData.length; j += vertexBuffer.vertexDeclaration.vertexStride / 4) {
 						ofset = j + positionElement.offset / 4;
 						vertices.push(new Vector3(verticesData[ofset + 0], verticesData[ofset + 1], verticesData[ofset + 2]));
@@ -93,7 +80,7 @@ package laya.d3.resource.models {
 						}
 					}
 					
-					 verticesData = vertexBuffer.getData();
+					verticesData = vertexBuffer.getData();
 					for (j = 0; j < verticesData.length; j += vertexBuffer.vertexDeclaration.vertexStride / 4) {
 						ofset = j + positionElement.offset / 4;
 						vertices.push(new Vector3(verticesData[ofset + 0], verticesData[ofset + 1], verticesData[ofset + 2]));
@@ -213,9 +200,13 @@ package laya.d3.resource.models {
 			
 			for (var i:int = 0; i < _subMeshes.length; i++)
 				_subMeshes[i].dispose();
-			
+			_materials = null;
 			_subMeshes = null;
-			_subMeshCount = 0;
+			_vertexBuffers = null;
+			_indexBuffer = null;
+			_boneNames = null;
+			_bindPoses = null;
+			_inverseBindPoses = null;
 		}
 	}
 }

@@ -664,7 +664,7 @@ package laya.ui {
 		}
 		
 		/**
-		 * 表示当前选择的项索引。
+		 * 表示当前选择的项索引。selectedIndex值更改会引起list重新渲染
 		 */
 		public function get selectedIndex():int {
 			return _selectedIndex;
@@ -675,15 +675,10 @@ package laya.ui {
 				_selectedIndex = value;
 				changeSelectStatus();
 				event(Event.CHANGE);
-				selectHandler && selectHandler.runWith(value);
 			}
-		
-			//if (selectEnable && _scrollBar) {
-			//var numX:int = _isVertical ? repeatX : repeatY;
-			//if (value < _startIndex || (value + numX > _startIndex + repeatX * repeatY)) {
-			//scrollTo(value);
-			//}
-			//}
+			selectHandler && selectHandler.runWith(value);
+			//选择发生变化，自动渲染一次
+			startIndex = _startIndex;
 		}
 		
 		/**
@@ -842,7 +837,8 @@ package laya.ui {
 		 * 刷新列表数据源。
 		 */
 		public function refresh():void {
-			array = _array;
+			//array = _array;
+			startIndex = _startIndex;
 		}
 		
 		/**

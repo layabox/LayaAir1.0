@@ -84,7 +84,7 @@ package laya.d3.core.light {
 			shaderValue.setValue(BaseScene.POINTLIGHTPOS, null);
 			shaderValue.setValue(BaseScene.POINTLIGHTRANGE, null);
 			shaderValue.setValue(BaseScene.POINTLIGHTATTENUATION, null);
-			(_activeHierarchy) && (scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT));
+			(_activeInHierarchy) && (scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT));
 		}
 		
 		/**

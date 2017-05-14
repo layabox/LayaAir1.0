@@ -22,7 +22,9 @@ package laya.d3.component.animation {
 	 */
 	public class SkinAnimations extends KeyframeAnimations {
 		public static const BONES:int = 0;
-		public static var SHADERDEFINE_BONE:int = 0x4;//Sprite
+		
+		/**@private 精灵级着色器宏定义,骨骼动画。*/
+		public static var SHADERDEFINE_BONE:int = 0x8;
 		
 		/**
 		 * @private
@@ -41,8 +43,6 @@ package laya.d3.component.animation {
 		protected var _tempCurBonesData:Float32Array;
 		/** @private */
 		protected var _curOriginalData:Float32Array;
-		/** @private */
-		protected var _extenData:Float32Array;
 		/** @private */
 		protected var _lastFrameIndex:int = -1;
 		/** @private */
@@ -76,7 +76,7 @@ package laya.d3.component.animation {
 				_player.templet = value;
 				_computeBoneIndeToMeshOnTemplet();
 				
-				_curOriginalData = _extenData = null;//替换文件_extenData不清空会产生BUG，用了旧文件的_extenData
+				_curOriginalData = null;
 				_curMeshAnimationData = null;
 				_tempCurBonesData = null;
 				_tempCurAnimationData = null;
@@ -168,7 +168,7 @@ package laya.d3.component.animation {
 		
 		/** @private */
 		private function _onMeshLoaded():void {
-			(destroyed) || (_onAnimationPlayMeshLoaded);
+			(destroyed)||(_onAnimationPlayMeshLoaded());
 		}
 		
 		/** @private */
@@ -180,12 +180,13 @@ package laya.d3.component.animation {
 		
 		/** @private */
 		private function _onAnimationPlay():void {
-			_ownerMesh._addShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
+			_ownerMesh._render._addShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
 			var mesh:BaseMesh = _ownerMesh.meshFilter.sharedMesh;
 			if (mesh.loaded)
 				_onAnimationPlayMeshLoaded();
 			else
-				mesh.on(Event.LOADED, this, _onMeshLoaded);
+				mesh.once(Event.LOADED, this, _onMeshLoaded);
+			
 		}
 		
 		/** @private */
@@ -194,7 +195,7 @@ package laya.d3.component.animation {
 			if (_player.returnToZeroStopped) {
 				_curBonesDatas = null;
 				_curAnimationDatas = null;
-				_ownerMesh._removeShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
+				_ownerMesh._render._removeShaderDefine(SkinAnimations.SHADERDEFINE_BONE);
 			}
 			
 			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender._renderElements;
@@ -258,8 +259,9 @@ package laya.d3.component.animation {
 			var boneFloatCount:int = bones.length * 16;
 			
 			var inverseAbsoluteBindPoses:Vector.<Matrix4x4> = mesh.InverseAbsoluteBindPoses;
+			
 			if (_oldVersion) //兼容性代码
-				(_curMeshAnimationData) || (_curMeshAnimationData = new Float32Array(boneFloatCount * 16));//使用临时数组，防止对已缓存数据造成破坏
+				(_curMeshAnimationData) || (_curMeshAnimationData = new Float32Array(boneFloatCount));//使用临时数组，防止对已缓存数据造成破坏
 			else
 				(_curMeshAnimationData) || (_curMeshAnimationData = new Float32Array(inverseAbsoluteBindPoses.length * 16));//使用临时数组，防止对已缓存数据造成破坏
 			
@@ -302,27 +304,20 @@ package laya.d3.component.animation {
 				_templet.getOriginalData(animationClipIndex, _curOriginalData, _player._fullFrames[animationClipIndex], frameIndex, _player.currentFrameTime);
 			else//慢动作或者不缓存时
 				_templet.getOriginalDataUnfixedRate(animationClipIndex, _curOriginalData, _player.currentPlayTime);
-			if (inverseAbsoluteBindPoses) {
-				if (_oldVersion) {//兼容性代码
-					if (isCache && isCacheBonesDatas)
-						Utils3D._computeAnimationDatasByArrayAndMatrixFastOld(inverseAbsoluteBindPoses, _curBonesDatas, _curMeshAnimationData);
-					else
-						Utils3D._computeBoneAndAnimationDatasByBindPoseMatrxixOld(bones, _curOriginalData, inverseAbsoluteBindPoses, _curBonesDatas, _curMeshAnimationData);
-				} else {
-					var boneIndexToMesh:Vector.<int> = _boneIndexToMeshList[animationClipIndex];
-					if (isCache && isCacheBonesDatas)
-						Utils3D._computeAnimationDatasByArrayAndMatrixFast(inverseAbsoluteBindPoses, _curBonesDatas, _curMeshAnimationData, boneIndexToMesh);
-					else
-						Utils3D._computeBoneAndAnimationDatasByBindPoseMatrxix(bones, _curOriginalData, inverseAbsoluteBindPoses, _curBonesDatas, _curMeshAnimationData, boneIndexToMesh);
-				}
-				
-			} else {//兼容旧格式
-				_extenData || (_extenData = new Float32Array(_templet.getPublicExtData()));
+			
+			if (_oldVersion) {//兼容性代码
 				if (isCache && isCacheBonesDatas)
-					Utils3D._computeAnimationDatas(_extenData, _curBonesDatas, _curMeshAnimationData);
+					Utils3D._computeAnimationDatasByArrayAndMatrixFastOld(inverseAbsoluteBindPoses, _curBonesDatas, _curMeshAnimationData);
 				else
-					Utils3D._computeBoneAndAnimationDatas(bones, _curOriginalData, _extenData, _curBonesDatas, _curMeshAnimationData);
+					Utils3D._computeBoneAndAnimationDatasByBindPoseMatrxixOld(bones, _curOriginalData, inverseAbsoluteBindPoses, _curBonesDatas, _curMeshAnimationData);
+			} else {
+				var boneIndexToMesh:Vector.<int> = _boneIndexToMeshList[animationClipIndex];
+				if (isCache && isCacheBonesDatas)
+					Utils3D._computeAnimationDatasByArrayAndMatrixFast(inverseAbsoluteBindPoses, _curBonesDatas, _curMeshAnimationData, boneIndexToMesh);
+				else
+					Utils3D._computeBoneAndAnimationDatasByBindPoseMatrxix(bones, _curOriginalData, inverseAbsoluteBindPoses, _curBonesDatas, _curMeshAnimationData, boneIndexToMesh);
 			}
+			
 			for (i = 0; i < subMeshCount; i++) {
 				var boneIndicesList:Vector.<Uint8Array> = mesh.getSubMesh(i)._boneIndicesList;
 				boneIndicesCount = boneIndicesList.length;
@@ -353,7 +348,7 @@ package laya.d3.component.animation {
 		public override function _preRenderUpdate(state:RenderState):void {
 			var subMesh:SubMesh = state.renderElement.renderObj as SubMesh;
 			if (_curAnimationDatas)
-				subMesh._skinAnimationDatas = _curAnimationDatas[subMesh.indexOfHost];
+				subMesh._skinAnimationDatas = _curAnimationDatas[subMesh._indexInMesh];
 			else
 				subMesh._skinAnimationDatas = null;
 		}
@@ -363,12 +358,11 @@ package laya.d3.component.animation {
 		 * 卸载组件时执行
 		 */
 		override public function _unload(owner:Sprite3D):void {
-			(player.state == AnimationState.playing) && (_owner._removeShaderDefine(SkinAnimations.SHADERDEFINE_BONE));
+			(player.state == AnimationState.playing) && (_ownerMesh._render._removeShaderDefine(SkinAnimations.SHADERDEFINE_BONE));
 			super._unload(owner);
 			_tempCurAnimationData = null;
 			_tempCurBonesData = null;
 			_curOriginalData = null;
-			_extenData = null;
 			_curMeshAnimationData = null;
 			_curBonesDatas = null;
 			_curAnimationDatas = null;

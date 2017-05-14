@@ -3,11 +3,7 @@ package laya.d3.resource.models {
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.graphics.VertexPositionNormalTexture;
-	import laya.d3.math.BoundBox;
-	import laya.d3.math.BoundSphere;
-	import laya.d3.math.Vector3;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.utils.Buffer;
 	
 	/**
 	 * <code>Sphere</code> 类用于创建球体。

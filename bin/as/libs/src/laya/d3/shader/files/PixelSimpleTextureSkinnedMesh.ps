@@ -25,9 +25,14 @@ uniform vec3 u_MaterialReflect;
 varying vec2 v_Texcoord0;
 #endif
 
-#ifdef AMBIENTMAP
+#ifdef defined(AMBIENTMAP)||defined(LIGHTMAP)
 varying vec2 v_LightMapUV;
+#endif
+#ifdef AMBIENTMAP
 uniform sampler2D u_AmbientTexture;
+#endif
+#ifdef LIGHTMAP
+uniform sampler2D u_LightMap;
 #endif
 
 #ifdef COLOR
@@ -42,7 +47,7 @@ uniform vec4 u_MaterialSpecular;
   #endif
 #endif
 
-#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(AMBIENTMAP)
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(AMBIENTMAP)||defined(LIGHTMAP)
 uniform vec3 u_MaterialAmbient;
 #endif
 
@@ -127,12 +132,7 @@ void main_normal()
 #if !defined(DIFFUSEMAP)&&!defined(COLOR)
 	gl_FragColor=vec4(1.0,1.0,1.0,1.0);
 #endif 
-  
-#ifdef AMBIENTMAP
-	gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb); 
-#endif 
-	gl_FragColor=gl_FragColor*u_Albedo;
-  
+    
 #ifdef ALPHATEST
 	if(gl_FragColor.a-u_AlphaTestValue<0.0)
 		discard;
@@ -200,7 +200,33 @@ void main_normal()
 		shadowValue = getShadowPSSM1( u_shadowMap1,v_lightMVPPos,u_shadowPSSMDistance,u_shadowPCFoffset,v_posViewZ,0.001);
 	#endif
 #endif
-  
+
+#ifdef AMBIENTMAP
+	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
+		gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb); 
+	#else
+		#if defined(RECEIVESHADOW)
+			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb * shadowValue );
+		#else
+			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb); 
+		#endif
+	#endif
+#endif
+
+#ifdef LIGHTMAP
+	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
+		gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb); 
+	#else
+		#if defined(RECEIVESHADOW)
+			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb * shadowValue );
+		#else
+			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb); 
+		#endif
+	#endif
+#endif
+
+gl_FragColor=gl_FragColor*u_Albedo;
+
 #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
 	#if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP)
 		specular =specular*texture2D(u_SpecularTexture, v_Texcoord0).rgb;

@@ -210,7 +210,7 @@ package laya.display {
 		/**
 		 * @inheritDoc
 		 */
-		override public function getGraphicBounds():Rectangle {
+		override public function getGraphicBounds(realSize:Boolean=false):Rectangle {
 			var rec:Rectangle = Rectangle.TEMP;
 			rec.setTo(0, 0, width, height);
 			return rec;

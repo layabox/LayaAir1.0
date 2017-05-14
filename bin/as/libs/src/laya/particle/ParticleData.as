@@ -45,8 +45,8 @@ package laya.particle {
 			{
 				for (i = 0; i < 3; i++)
 				{
-					particleData.startColor[i] = 255;
-					particleData.endColor[i] = 255;
+					particleData.startColor[i] = 1;
+					particleData.endColor[i] = 1;
 				}
 				particleData.startColor[i] = MathUtil.lerp(settings.minStartColor[i], settings.maxStartColor[i], Math.random());//R、G、B、A插值
 				particleData.endColor[i] = MathUtil.lerp(settings.minEndColor[i], settings.maxEndColor[i], Math.random());//R、G、B、A插值

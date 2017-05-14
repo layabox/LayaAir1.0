@@ -4,8 +4,6 @@ package laya.d3.resource.models {
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.resource.BaseTexture;
-	import laya.d3.resource.DataTexture2D;
-	import laya.d3.resource.Texture2D;
 	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
