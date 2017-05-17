@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html>
+<head>
+    <meta charset='utf-8'/>
+    <title>wwww.layabox.com</title>
+    <meta name='apple-mobile-web-app-capable' content='yes' />
+    <meta name='full-screen' content='true' />
+    <meta name='screen-orientation' content='portrait' />
+    <meta name='x5-fullscreen' content='true' />
+    <meta name='360-fullscreen' content='true' />
+    <meta http-equiv='expires' content='0' />
+    <meta name='laya' logoimg='logo.png' logobkcolor='#ffffff' screenorientation='landscape' cacheid='fffffffff' />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+</head>
+<body style="background-color: #FFFFFF;">
+	<script>
+	var temp=window.conch?4:0;
+var types=[
+    temp+1,
+	temp,
+	temp+2
+]
+	function GetQueryString(name){
+        var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+        var r = window.location.search.substr(1).match(reg);
+        if(r!=null)return  unescape(r[2]); return null;
+ }
+  var id=GetQueryString("id")||0;
+ var type=GetQueryString("type")||0;
+  window.ConchRenderType=types[type];
+  </script>
+    <script type="text/javascript" src="../../../bin/js/libs/bytebuffer.js"></script>
+    <script type="text/javascript" src="../../../bin/js/libs/protobuf.js"></script>
+    <!-- libraries -->
+    <script src="../../../bin/js/libs/matter.js"></script>
+    <script src="../../../bin/js/libs/laya.core.js"></script>
+    <script src="../../../bin/js/libs/LayaRender.js"></script>
+    <script src="../../../bin/js/libs/laya.webgl.js"></script>
+    <script src="../../../bin/js/libs/laya.filter.js"></script>
+    <script src="../../../bin/js/libs/laya.particle.js"></script>
+    <script src="../../../bin/js/libs/laya.ani.js"></script>
+    <script src="../../../bin/js/libs/laya.ui.js"></script>
+    <script src="../../../bin/js/libs/laya.html.js"></script>
+    <script src="../../../bin/js/libs/laya.tiledmap.js"></script>
+    <script src="../../../bin/js/libs/laya.device.js"></script>
+	<script src="conchInit.js"></script>
+
+    <!-- demos -->
+  
+    </body>
+</html>

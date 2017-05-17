@@ -1,0 +1,30 @@
+{
+    "mesh":"./threeDimen/models/plane/plane100-Plane001.lm",
+    "infoTexture":"./threeDimen/water/info2.png",
+    "deepScale":20,
+    "foamTexture":"./threeDimen/water/foam1.png",
+    "skyTexture":"./threeDimen/env/inthegarden/envhdr.png",
+    "hdrsky":true,
+    "useVertexDeep":false,
+    "//maindir":180,
+    "//mainA":1,
+    "geoWaveData":[
+        {"dir":180,"L":35,"Q":2.8,"A":0.5},
+        {"dir":160,"L":29.2,"Q":2.4,"A":0.4},
+        {"dir":210,"L":29.2,"Q":2.4,"A":0.4},
+        {"dir":225,"L":24.3,"Q":2.0,"A":0.3}
+    ],
+    "detailData":[
+        {"dir":14.036243467926477,"L":4.85071250072666},
+        {"dir":63.43494882292201,"L":2.23606797749979},
+        {"dir":19.98310652189998,"L":1.708715315433522},
+        {"dir":45,"L":2.82842712474619}
+    ],
+    "refracTexSize":[256,256],
+    "detailTexSize":[256,256],
+    "color":[2,57,63],
+    "fogStart":0,
+    "fogRange":2,
+    "geoWaveUVScale":100.0,
+    "detailWaveUVScale":20
+}
