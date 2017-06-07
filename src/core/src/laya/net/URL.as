@@ -32,7 +32,7 @@ package laya.net {
 		public static var basePath:String = "";
 		/**根路径。*/
 		public static var rootPath:String = "";
-		/** 自定义url格式化。例如： customFormat = function(url:String,basePath:String):String{} */
+		/** 自定义url格式化。例如： customFormat = function(url:String):String{} */
 		public static var customFormat:Function = function(url:String):String {
 			var newUrl:String = version[url];
 			if (!Render.isConchApp && newUrl) url += "?v=" + newUrl;
@@ -47,18 +47,20 @@ package laya.net {
 		 */
 		public static function formatURL(url:String, base:String = null):String {
 			if (!url) return "null path";
+			
+			//如果是全路径，直接返回，提高性能
+			if (url.indexOf(":") > 0) return url;
+			//自定义路径格式化
 			if (customFormat != null) url = customFormat(url, base);
 			
 			var char1:String = url.charAt(0);
-			if (char1 === "h" || char1 === "f") {
-				if (url.indexOf(":") > 0) return url;
-			} else if (char1 === ".") {
+			if (char1 === ".") {
 				return formatRelativePath((base || basePath) + url);
 			} else if (char1 === '~') {
 				return rootPath + url.substring(1);
 			} else if (char1 === "d") {
 				if (url.indexOf("data:image") === 0) return url;
-			} else if (char1 === "/" || url.indexOf(":") > 0) {
+			} else if (char1 === "/") {
 				return url;
 			}
 			return (base || basePath) + url;

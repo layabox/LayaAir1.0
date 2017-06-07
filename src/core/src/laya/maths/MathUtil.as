@@ -85,7 +85,7 @@ package laya.maths {
 		 * @return 弧度值。
 		 */
 		public static function getRotation(x0:Number, y0:Number, x1:Number, y1:Number):Number {
-			return Math.atan2(y1 - y0,x1 - x0) / Math.PI * 180;
+			return Math.atan2(y1 - y0, x1 - x0) / Math.PI * 180;
 		}
 		
 		/**
@@ -104,7 +104,7 @@ package laya.maths {
 		 * 一个用来确定数组元素排序顺序的比较函数。
 		 * @param	a 待比较数字。
 		 * @param	b 待比较数字。
-		 * @return 如果a等于b 则值为0；如果b>a则值为-1；如果b<则值为1。 
+		 * @return 如果a等于b 则值为0；如果b>a则值为-1；如果b<则值为1。
 		 */
 		public static function sortSmallFirst(a:Number, b:Number):Number {
 			if (a == b)
@@ -121,6 +121,7 @@ package laya.maths {
 		public static function sortNumBigFirst(a:*, b:*):Number {
 			return parseFloat(b) - parseFloat(a);
 		}
+		
 		/**
 		 * 将指定的元素转为数字进行比较。
 		 * @param	a 待比较元素。
@@ -130,6 +131,7 @@ package laya.maths {
 		public static function sortNumSmallFirst(a:*, b:*):Number {
 			return parseFloat(a) - parseFloat(b);
 		}
+		
 		/**
 		 * 返回根据对象指定的属性进行排序的比较函数。
 		 * @param	key 排序要依据的元素属性名。
@@ -146,7 +148,7 @@ package laya.maths {
 			}
 			return function(a:Object, b:Object):Number {
 				return _sortFun(a[key], b[key]);
-			}		
+			}
 		}
 	}
 

@@ -1,9 +1,9 @@
 package laya.utils {
+	import laya.display.FrameAnimation;
+	import laya.display.Graphics;
 	import laya.maths.Matrix;
 	import laya.net.Loader;
 	import laya.resource.Texture;
-	import laya.display.FrameAnimation;
-	import laya.display.Graphics;
 	
 	/**
 	 * @private
@@ -83,9 +83,15 @@ package laya.utils {
 		private function _createGraphicData():void {
 			var gList:Array = [];
 			var i:int, len:int = count;
+			var animationDataNew:Array = this._animationNewFrames;
+			if (!animationDataNew) animationDataNew = [];
+			var preGraphic:Graphics;
 			for (i = 0; i < len; i++) {
-				
-				gList.push(_createFrameGraphic(i));
+				if (animationDataNew[i] || !preGraphic)
+				{
+					preGraphic = _createFrameGraphic(i);
+				}
+				gList.push(preGraphic);
 			}
 			_gList = gList;
 		}
@@ -114,14 +120,17 @@ package laya.utils {
 			tResultTransform = tNodeG.resultTransform;
 			Matrix.mul(tNodeG.transform, parentTransfrom, tResultTransform);
 			var tTex:Texture;
+			var tGraphicAlpha:Number = tNodeG.alpha * alpha;
+			if (tGraphicAlpha < 0.01) return;
 			if (tNodeG.skin) {
 				tTex = _getTextureByUrl(tNodeG.skin);
 				if (tTex) {
 					if (tResultTransform._checkTransform()) {
-						g.drawTexture(tTex, 0, 0, tNodeG.width, tNodeG.height, tResultTransform, tNodeG.alpha * alpha);
+						g.drawTexture(tTex, 0, 0, tNodeG.width, tNodeG.height, tResultTransform, tGraphicAlpha);
 						tNodeG.resultTransform = null;
-					} else {
-						g.drawTexture(tTex, tResultTransform.tx, tResultTransform.ty, tNodeG.width, tNodeG.height, null, tNodeG.alpha * alpha);
+					}
+					else {
+						g.drawTexture(tTex, tResultTransform.tx, tResultTransform.ty, tNodeG.width, tNodeG.height, null,tGraphicAlpha);
 					}
 				}
 			}
@@ -132,21 +141,24 @@ package laya.utils {
 			var i:int, len:int;
 			len = childs.length;
 			for (i = 0; i < len; i++) {
-				_updateNodeGraphic(childs[i], frame, tResultTransform, g, tNodeG.alpha * alpha);
+				_updateNodeGraphic(childs[i], frame, tResultTransform, g, tGraphicAlpha);
 			}
 		}
 		
 		protected function _updateNoChilds(tNodeG:GraphicNode, g:Graphics):void {
-			if (!tNodeG.skin) return;
+			if (!tNodeG.skin)
+				return;
 			var tTex:Texture = _getTextureByUrl(tNodeG.skin);
-			if (!tTex) return;
+			if (!tTex)
+				return;
 			var tTransform:Matrix = tNodeG.transform;
 			tTransform._checkTransform();
 			var onlyTranslate:Boolean;
 			onlyTranslate = !tTransform.bTransform;
 			if (!onlyTranslate) {
 				g.drawTexture(tTex, 0, 0, tNodeG.width, tNodeG.height, tTransform.clone(), tNodeG.alpha);
-			} else {
+			}
+			else {
 				g.drawTexture(tTex, tTransform.tx, tTransform.ty, tNodeG.width, tNodeG.height, null, tNodeG.alpha);
 			}
 		}
@@ -174,7 +186,8 @@ package laya.utils {
 			}
 			if (!onlyTranslate) {
 				g.transform(tTransform.clone());
-			} else if (hasTrans) {
+			}
+			else if (hasTrans) {
 				g.translate(tTransform.tx, tTransform.ty);
 			}
 			
@@ -198,10 +211,12 @@ package laya.utils {
 			
 			if (ifSave) {
 				g.restore();
-			} else {
+			}
+			else {
 				if (!onlyTranslate) {
 					g.transform(tTransform.clone().invert());
-				} else if (hasTrans) {
+				}
+				else if (hasTrans) {
 					g.translate(-tTransform.tx, -tTransform.ty);
 				}
 			}
@@ -257,7 +272,8 @@ package laya.utils {
 				rst = new GraphicNode();
 			if (!rst.transform) {
 				rst.transform = new Matrix();
-			} else {
+			}
+			else {
 				rst.transform.identity();
 			}
 			
@@ -283,11 +299,12 @@ package laya.utils {
 				tex = _getTextureByUrl(url);
 				if (tex) {
 					if (!width)
-					width = tex.width;
+						width = tex.width;
 					if (!height)
-					height = tex.height;
-				} else {
-					console.warn("lost skin:", url,",you may load pics first");
+						height = tex.height;
+				}
+				else {
+					console.warn("lost skin:", url, ",you may load pics first");
 				}
 			}
 			
@@ -342,7 +359,7 @@ package laya.utils {
 		/**
 		 * @private
 		 */
-		public function setAniData(uiView:Object):void {
+		public function setAniData(uiView:Object, aniName:String = null):void {
 			if (uiView.animations) {
 				_nodeDefaultProps = {};
 				_nodeGDic = {};
@@ -358,11 +375,15 @@ package laya.utils {
 				for (i = 0; i < len; i++) {
 					tAniO = animations[i];
 					_labels = null;
+					if (aniName && aniName != tAniO.name) {
+						continue;
+					}
 					if (!tAniO)
 						continue;
 					try {
 						_calGraphicData(tAniO);
-					} catch (e:*) {
+					}
+					catch (e:*) {
 						console.warn("parse animation fail:" + tAniO.name + ",empty animation created");
 						_gList = [];
 					}
@@ -381,6 +402,61 @@ package laya.utils {
 		
 		}
 		
+		public function parseByData(aniData:Object):Object {
+			var rootNode:Object, aniO:Object;
+			rootNode = aniData.nodeRoot;
+			aniO = aniData.aniO;
+			delete aniData.nodeRoot;
+			delete aniData.aniO;
+			//trace("parse:",aniO.name);
+			_nodeDefaultProps = {};
+			_nodeGDic = {};
+			if (_nodeList)
+				_nodeList.length = 0;
+			_rootNode = rootNode;
+			_parseNodeList(rootNode);
+			_labels = null;
+			try {
+				_calGraphicData(aniO);
+			}
+			catch (e:*) {
+				console.warn("parse animation fail:" + aniO.name + ",empty animation created");
+				_gList = [];
+			}
+			var frameO:Object = aniData;
+			frameO.interval = 1000 / aniO["frameRate"];
+			frameO.frames = _gList;
+			frameO.labels = _labels;
+			frameO.name = aniO.name;
+			return frameO;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function setUpAniData(uiView:Object):void {
+			if (uiView.animations) {
+				var aniDic:Object = {};
+				var anilist:Array = [];
+				var animations:Array = uiView.animations;
+				var i:int, len:int = animations.length;
+				var tAniO:Object;
+				for (i = 0; i < len; i++) {
+					tAniO = animations[i];
+					if (!tAniO)
+						continue;
+					var frameO:Object = {};
+					frameO.name = tAniO.name;
+					frameO.aniO = tAniO;
+					frameO.nodeRoot = uiView;
+					anilist.push(frameO);
+					aniDic[tAniO.name] = frameO;
+				}
+				animationList = anilist;
+				animationDic = aniDic;
+			}
+		}
+		
 		/**
 		 * @private
 		 */
@@ -390,11 +466,21 @@ package laya.utils {
 			_gList = null;
 			_nodeGDic = null;
 		}
-		
+				
+		public static function parseAnimationByData(animationObject:Object):Object
+		{
+			if (!_I)
+				_I = new GraphicAnimation();
+			var rst:Object;
+			rst = _I.parseByData(animationObject);
+			_I._clear();
+			return rst;
+		}
 		public static function parseAnimationData(aniData:Object):Object {
 			if (!_I)
 				_I = new GraphicAnimation();
-			_I.setAniData(aniData);
+			//_I.setAniData(aniData);
+			_I.setUpAniData(aniData);
 			var rst:Object;
 			rst = {};
 			rst.animationList = _I.animationList;

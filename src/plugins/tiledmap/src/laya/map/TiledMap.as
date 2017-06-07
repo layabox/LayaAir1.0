@@ -107,6 +107,14 @@ package laya.map {
 		private var _pathArray:Array;
 		//把地图限制在显示区域
 		private var _limitRange:Boolean = false;
+		/**
+		 * 是否自动缓存没有动画的地块
+		 */
+		public var autoCache:Boolean = true;
+		/**
+		 * 自动缓存类型
+		 */
+		public var autoCacheType:String = "bitmap";
 		
 		public function TiledMap() {
 		
@@ -307,7 +315,8 @@ package laya.map {
 					tTileTexSet = new TileTexSet();
 					tTileTexSet.offX = tTileSet.titleoffsetX;
 					tTileTexSet.offY = tTileSet.titleoffsetY - (tTileTextureH - _mapTileH);
-					tTileTexSet.texture = Texture.create(tTexture, tTileSet.margin + (tTileTextureW + tTileSet.spacing) * j, tTileSet.margin + (tTileTextureH + tTileSet.spacing) * i, tTileTextureW, tTileTextureH);
+					//tTileTexSet.texture = Texture.create(tTexture, tTileSet.margin + (tTileTextureW + tTileSet.spacing) * j, tTileSet.margin + (tTileTextureH + tTileSet.spacing) * i, tTileTextureW, tTileTextureH);
+					tTileTexSet.texture = Texture.createFromTexture(tTexture, tTileSet.margin + (tTileTextureW + tTileSet.spacing) * j, tTileSet.margin + (tTileTextureH + tTileSet.spacing) * i, tTileTextureW, tTileTextureH);
 					_tileTexSetArr.push(tTileTexSet);
 					tTileTexSet.gid = _tileTexSetArr.length;
 				}
@@ -353,8 +362,8 @@ package laya.map {
 			if (_gridWidth < _mapTileW) {
 				_gridWidth = _mapTileW;
 			}
-			if (_gridWidth < _mapTileH) {
-				_gridWidth = _mapTileH;
+			if (_gridHeight < _mapTileH) {
+				_gridHeight = _mapTileH;
 			}
 			
 			_gridW = Math.ceil(_width / _gridWidth);
@@ -854,7 +863,8 @@ package laya.map {
 					//没动画了GRID，保存为图片
 					if (!tGridSprite.isHaveAnimation) {
 						tGridSprite.autoSize = true;
-						tGridSprite.cacheAs = "bitmap";
+						if(autoCache)
+						tGridSprite.cacheAs = autoCacheType;
 						tGridSprite.autoSize = false;
 					}
 					if (tGridSprite.drawImageNum > 0) {

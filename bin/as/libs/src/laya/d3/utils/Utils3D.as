@@ -202,10 +202,12 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function _loadParticle(settting:Object, particle:ShuriKenParticle3D, innerResouMap:Object = null):void {
+		public static function _loadParticle(settting:Object, particle:ShuriKenParticle3D, innerResouMap:Object):void {
 			const anglelToRad:Number = Math.PI / 180.0;
 			var i:int, n:int;
-			//Material
+			
+			//Render
+			var particleRender:ShurikenParticleRender = particle.particleRender;
 			var material:ShurikenParticleMaterial;
 			var materialPath:String = settting.materialPath;
 			if (materialPath) {
@@ -214,8 +216,16 @@ package laya.d3.utils {
 				material = new ShurikenParticleMaterial();
 				material.diffuseTexture = innerResouMap ? Loader.getRes(innerResouMap[settting.texturePath]) : Texture2D.load(settting.texturePath);
 			}
+			particleRender.sharedMaterial = material;
+			var meshPath:String = settting.meshPath;
+			(meshPath) && (particleRender.mesh = Loader.getRes(innerResouMap[meshPath]));
 			
-			particle.particleRender.sharedMaterial = material;
+			particleRender.renderMode = settting.renderMode;
+			particleRender.stretchedBillboardCameraSpeedScale = settting.stretchedBillboardCameraSpeedScale;
+			particleRender.stretchedBillboardSpeedScale = settting.stretchedBillboardSpeedScale;
+			particleRender.stretchedBillboardLengthScale = settting.stretchedBillboardLengthScale;
+			particleRender.sortingFudge = settting.sortingFudge ? settting.sortingFudge : 0.0;
+			
 			//particleSystem
 			var particleSystem:ShurikenParticleSystem = particle.particleSystem;
 			particleSystem.isPerformanceMode = settting.isPerformanceMode;
@@ -305,12 +315,6 @@ package laya.d3.utils {
 			startColorConstantMaxElement[1] = startColorConstantMaxArray[1];
 			startColorConstantMaxElement[2] = startColorConstantMaxArray[2];
 			startColorConstantMaxElement[3] = startColorConstantMaxArray[3];
-			
-			var gravityArray:Array = settting.gravity;
-			var gravityE:Float32Array = particleSystem.gravity.elements;
-			gravityE[0] = gravityArray[0];
-			gravityE[1] = gravityArray[1];
-			gravityE[2] = gravityArray[2];
 			
 			particleSystem.gravityModifier = settting.gravityModifier;
 			
@@ -566,13 +570,7 @@ package laya.d3.utils {
 				particleSystem.textureSheetAnimation = textureSheetAnimation;
 			}
 			
-			//Render
-			var particleRender:ShurikenParticleRender = particle.particleRender;
-			particleRender.renderMode = settting.renderMode;
-			particleRender.stretchedBillboardCameraSpeedScale = settting.stretchedBillboardCameraSpeedScale;
-			particleRender.stretchedBillboardSpeedScale = settting.stretchedBillboardSpeedScale;
-			particleRender.stretchedBillboardLengthScale = settting.stretchedBillboardLengthScale;
-			particleRender.sortingFudge = settting.sortingFudge ? settting.sortingFudge : 0.0;
+			
 			
 			(particleSystem.playOnAwake) && (particleSystem.play());
 		}
@@ -852,7 +850,7 @@ package laya.d3.utils {
 		}
 		
 		/** @private */
-		public static function generateTangent(vertexDatas:Float32Array, vertexStride:int, positionOffset:int, uvOffset:int, indices:Uint16Array/*还有UNIT8类型*/):Float32Array {
+		public static function generateTangent(vertexDatas:Float32Array, vertexStride:int, positionOffset:int, uvOffset:int, indices:Uint16Array):Float32Array {//indices:还有UNIT8类型
 			const tangentElementCount:int = 3;
 			var newVertexStride:int = vertexStride + tangentElementCount;
 			var tangentVertexDatas:Float32Array = new Float32Array(newVertexStride * (vertexDatas.length / vertexStride));

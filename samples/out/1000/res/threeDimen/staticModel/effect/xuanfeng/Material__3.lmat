@@ -1,0 +1,61 @@
+{
+    "type": "Material",
+    "props":
+    {
+        "name": "Material__3",
+        "transparent": true,
+        "cullFace": false
+    },
+    "customProps":
+    {
+        "ambientColor":
+        [
+            1,
+            1,
+            1
+        ],
+        "diffuseColor":
+        [
+            1,
+            1,
+            1
+        ],
+        "specularColor":
+        [
+            0.9,
+            0.9,
+            0.9,
+            1
+        ],
+        "reflectColor":
+        [
+            0,
+            0,
+            0
+        ],
+        "diffuseTexture":
+        {
+            "texture2D": "00000.png"
+        },
+        "normalTexture":
+        {
+            "texture2D": ""
+        },
+        "specularTexture":
+        {
+            "texture2D": ""
+        },
+        "emissiveTexture":
+        {
+            "texture2D": ""
+        },
+        "ambientTexture":
+        {
+            "texture2D": ""
+        },
+        "reflectTexture":
+        {
+            "texture2D": ""
+        }
+    }
+}

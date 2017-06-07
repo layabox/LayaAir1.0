@@ -7,7 +7,7 @@ var PanoramaVRSample;
             Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
             Laya.stage.screenMode = Laya.Stage.SCREEN_HORIZONTAL;
             Laya.Stat.show();
-            var scene = Laya.stage.addChild(new Laya.VRScene());
+            var scene = Laya.stage.addChild(new Laya.Scene());
             var camera = new Laya.VRCamera(0.03, 0, 0, 0.1, 100);
             camera = (scene.addChild(camera));
             camera.addComponent(VRCameraMoveScript);

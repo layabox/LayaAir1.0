@@ -7,7 +7,7 @@ package laya.d3.math {
 	public class Matrix4x4 implements IClone {
 		
 		/**@private */
-		private static var _tempMatrix4x4:Matrix4x4 =  new Matrix4x4();
+		private static var _tempMatrix4x4:Matrix4x4 = new Matrix4x4();
 		/**@private */
 		private static var _tempVector0:Vector3 = new Vector3();
 		/**@private */
@@ -81,6 +81,40 @@ package laya.d3.math {
 		public static function createRotationYawPitchRoll(yaw:Number, pitch:Number, roll:Number, result:Matrix4x4):void {
 			Quaternion.createFromYawPitchRoll(yaw, pitch, roll, _tempQuaternion);
 			createRotationQuaternion(_tempQuaternion, result);
+		}
+		
+		/**
+		 * 通过旋转轴axis和旋转角度angle计算旋转矩阵。
+		 * @param	axis 旋转轴,假定已经归一化。
+		 * @param	angle 旋转角度。
+		 * @param	result 结果矩阵。
+		 */
+		public static function createRotationAxis(axis:Vector3, angle:Number, result:Matrix4x4):void {
+			var axisE:Float32Array = axis.elements;
+			var x:Number = axisE[0];
+			var y:Number = axisE[1];
+			var z:Number = axisE[2];
+			var cos:Number = Math.cos(angle);
+			var sin:Number = Math.sin(angle);
+			var xx:Number = x * x;
+			var yy:Number = y * y;
+			var zz:Number = z * z;
+			var xy:Number = x * y;
+			var xz:Number = x * z;
+			var yz:Number = y * z;
+			
+			var resultE:Float32Array = result.elements;
+			resultE[3] = resultE[7] = resultE[11] = resultE[12] = resultE[13] = resultE[14] = 0;
+			resultE[15] = 1.0;
+			resultE[0] = xx + (cos * (1.0 - xx));
+			resultE[1] = (xy - (cos * xy)) + (sin * z);
+			resultE[2] = (xz - (cos * xz)) - (sin * y);
+			resultE[4] = (xy - (cos * xy)) - (sin * z);
+			resultE[5] = yy + (cos * (1.0 - yy));
+			resultE[6] = (yz - (cos * yz)) + (sin * x);
+			resultE[8] = (xz - (cos * xz)) + (sin * y);
+			resultE[9] = (yz - (cos * yz)) - (sin * x);
+			resultE[10] = zz + (cos * (1.0 - zz));
 		}
 		
 		/**
@@ -275,23 +309,29 @@ package laya.d3.math {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			//注:WebGL为右手坐标系统
 			var oE:Float32Array = out.elements;
-			var xaxis:Vector3 = _tempVector0; 
-			var yaxis:Vector3= _tempVector1;
-			var zaxis:Vector3= _tempVector2;
-            Vector3.subtract(eye,target, zaxis);
-			Vector3.normalize(zaxis,zaxis);
-            Vector3.cross( up,zaxis,  xaxis); 
-			Vector3.normalize(xaxis,xaxis);
-            Vector3.cross( zaxis,xaxis,  yaxis);
-
-            out.identity();
-            oE[0] = xaxis.x; oE[4] = xaxis.y; oE[8] = xaxis.z;
-            oE[1] = yaxis.x; oE[5] = yaxis.y; oE[9] = yaxis.z;
-            oE[2] = zaxis.x; oE[6] = zaxis.y; oE[10] = zaxis.z;
-
-            oE[12]=-Vector3.dot( xaxis,  eye);
-            oE[13]=-Vector3.dot( yaxis,  eye);
-            oE[14]=-Vector3.dot( zaxis,  eye);
+			var xaxis:Vector3 = _tempVector0;
+			var yaxis:Vector3 = _tempVector1;
+			var zaxis:Vector3 = _tempVector2;
+			Vector3.subtract(eye, target, zaxis);
+			Vector3.normalize(zaxis, zaxis);
+			Vector3.cross(up, zaxis, xaxis);
+			Vector3.normalize(xaxis, xaxis);
+			Vector3.cross(zaxis, xaxis, yaxis);
+			
+			out.identity();
+			oE[0] = xaxis.x;
+			oE[4] = xaxis.y;
+			oE[8] = xaxis.z;
+			oE[1] = yaxis.x;
+			oE[5] = yaxis.y;
+			oE[9] = yaxis.z;
+			oE[2] = zaxis.x;
+			oE[6] = zaxis.y;
+			oE[10] = zaxis.z;
+			
+			oE[12] = -Vector3.dot(xaxis, eye);
+			oE[13] = -Vector3.dot(yaxis, eye);
+			oE[14] = -Vector3.dot(zaxis, eye);
 		}
 		
 		/**
@@ -401,7 +441,6 @@ package laya.d3.math {
 			elements[(row * 4) + column] = value;
 		}
 		
-		
 		/**
 		 * 判断两个4x4矩阵的值是否相等。
 		 * @param	other 4x4矩阵
@@ -415,14 +454,14 @@ package laya.d3.math {
 		
 		/**
 		 * 分解矩阵为平移向量、旋转四元数、缩放向量。
-		 * @param	translation 平移向量。 
+		 * @param	translation 平移向量。
 		 * @param	rotation 旋转四元数。
 		 * @param	scale 缩放向量。
 		 * @return 是否分解成功。
 		 */
 		public function decomposeTransRotScale(translation:Vector3, rotation:Quaternion, scale:Vector3):Boolean {
 			var rotationMatrix:Matrix4x4 = _tempMatrix4x4;
-			if (decomposeTransRotMatScale(translation, rotationMatrix,scale)) {
+			if (decomposeTransRotMatScale(translation, rotationMatrix, scale)) {
 				Quaternion.createFromMatrix4x4(rotationMatrix, rotation);
 				return true;
 			} else {
@@ -433,7 +472,7 @@ package laya.d3.math {
 		
 		/**
 		 * 分解矩阵为平移向量、旋转矩阵、缩放向量。
-		 * @param	translation 平移向量。 
+		 * @param	translation 平移向量。
 		 * @param	rotationMatrix 旋转矩阵。
 		 * @param	scale 缩放向量。
 		 * @return 是否分解成功。
@@ -647,7 +686,7 @@ package laya.d3.math {
 		
 		/**
 		 * 设置平移向量。
-		 * @param	translate 平移向量。 
+		 * @param	translate 平移向量。
 		 */
 		public function setTranslationVector(translate:Vector3):void {
 			var me:Float32Array = this.elements;
@@ -671,7 +710,7 @@ package laya.d3.math {
 		
 		/**
 		 * 设置前向量。
-		 * @param	forward 前向量。 
+		 * @param	forward 前向量。
 		 */
 		public function setForward(forward:Vector3):void {
 			var me:Float32Array = this.elements;

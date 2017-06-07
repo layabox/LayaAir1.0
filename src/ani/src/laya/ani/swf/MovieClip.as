@@ -258,6 +258,10 @@ package laya.ani.swf {
 				}
 				_movieClipList.length = 0;
 			}	
+			if (_atlasPath)
+			{
+				Loader.clearRes(_atlasPath);
+			}
 			var key:String;
 			for (key in _loadedImage)
 			{

@@ -73,6 +73,8 @@ package laya.html.dom
 					graphics.drawTexture(_tex, 0, 0, _renderArgs[3], _renderArgs[4]);
 					//context.ctx.drawTexture2(0, 0, style.translateX, style.translateY, transform, style.alpha, style.blendMode, _renderArgs);
 				}
+				repaint();
+				parentRepaint();
 			}
 			
 			tex.loaded?onloaded():tex.on(Event.LOADED, null, onloaded);			

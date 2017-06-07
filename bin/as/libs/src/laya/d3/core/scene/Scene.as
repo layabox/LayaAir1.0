@@ -270,7 +270,7 @@ package laya.d3.core.scene {
 		/**
 		 * 获取场景的可渲染精灵。
 		 */
-		public function get renderableSprite3Ds():Vector.<RenderableSprite3D>{
+		public function get renderableSprite3Ds():Vector.<RenderableSprite3D> {
 			return _renderableSprite3Ds.slice();
 		}
 		
@@ -674,12 +674,34 @@ package laya.d3.core.scene {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
 			
-			var returnNode:Node = super.addChildAt(node, index);
-			var sprite3D:Sprite3D = node as Sprite3D;
-			sprite3D.transform._onWorldTransform();
-			sprite3D._setBelongScene(this);
-			(sprite3D.active) && (sprite3D._activeHierarchy());
-			return returnNode;
+			if (!node || destroyed || node === this) return node;
+			if (Sprite(node).zOrder) _set$P("hasZorder", true);
+			if (index >= 0 && index <= this._childs.length) {
+				if (node._parent === this) {
+					var oldIndex:int = getChildIndex(node);
+					this._childs.splice(oldIndex, 1);
+					this._childs.splice(index, 0, node);
+					if (conchModel) {
+						conchModel.removeChild(node.conchModel);
+						conchModel.addChildAt(node.conchModel, index);
+					}
+					_childChanged();
+				} else {
+					node.parent && node.parent.removeChild(node);
+					this._childs === ARRAY_EMPTY && (this._childs = []);
+					this._childs.splice(index, 0, node);
+					conchModel && conchModel.addChildAt(node.conchModel, index);
+					node.parent = this;
+					
+					var sprite3D:Sprite3D = node as Sprite3D;
+					sprite3D.transform._onWorldTransform();
+					sprite3D._setBelongScene(this);
+					(sprite3D.active) && (sprite3D._activeHierarchy());
+				}
+				return node;
+			} else {
+				throw new Error("appendChildAt:The index is out of bounds");
+			}
 		}
 		
 		/**
@@ -689,12 +711,33 @@ package laya.d3.core.scene {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
 			
-			var returnNode:Node = super.addChild(node);
-			var sprite3D:Sprite3D = node as Sprite3D;
-			sprite3D.transform._onWorldTransform();
-			sprite3D._setBelongScene(this);
-			(sprite3D.active) && (sprite3D._activeHierarchy());
-			return returnNode;
+			if (!node || destroyed || node === this) return node;
+			if (Sprite(node).zOrder) _set$P("hasZorder", true);
+			if (node._parent === this) {
+				var index:int = getChildIndex(node);
+				if (index !== _childs.length - 1) {
+					this._childs.splice(index, 1);
+					this._childs.push(node);
+					if (conchModel) {
+						conchModel.removeChild(node.conchModel);
+						conchModel.addChildAt(node.conchModel, this._childs.length - 1);
+					}
+					_childChanged();
+				}
+			} else {
+				node.parent && node.parent.removeChild(node);
+				this._childs === ARRAY_EMPTY && (this._childs = []);
+				this._childs.push(node);
+				conchModel && conchModel.addChildAt(node.conchModel, this._childs.length - 1);
+				node.parent = this;
+				_childChanged();
+				
+				var sprite3D:Sprite3D = node as Sprite3D;
+				sprite3D.transform._onWorldTransform();
+				sprite3D._setBelongScene(this);
+				(sprite3D.active) && (sprite3D._activeHierarchy());
+			}
+			return node;
 		}
 		
 		/**
@@ -867,10 +910,9 @@ package laya.d3.core.scene {
 			if (destroyed)//TODO:其它资源是否同样处理
 				return;
 			
-			var oriData:Object = data[0];
-			var json:Object = JSON.parse(oriData as String);
-			if (json.type !== "Scene")//TODO:未来取消VRScene
-				throw new Error("BaseScene: the .lh file root type must be Scene,please use other function to  load  this file.");
+			var json:Object = JSON.parse(data[0] as String);
+			if (json.type !== "Scene")
+				throw new Error("Scene: the .lh file root type must be Scene,please use other function to  load  this file.");
 			
 			var innerResouMap:Object = data[1];
 			ClassUtils.createByJson(json, this, this, Handler.create(null, Utils3D._parseHierarchyProp, [innerResouMap], false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));

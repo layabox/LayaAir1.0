@@ -9,7 +9,13 @@ package laya.events {
 	import laya.utils.HitArea;
 	
 	/**
-	 * <code>MouseManager</code> 是鼠标、触摸交互管理器。
+	 * <p><code>MouseManager</code> 是鼠标、触摸交互管理器。</p>
+	 * <p>
+	 * 鼠标事件流包括捕获阶段、目标阶段、冒泡阶段。<br/>
+	 * 捕获阶段：此阶段引擎会从stage开始递归检测stage及其子对象，直到找到命中的目标对象或者未命中任何对象；<br/>
+	 * 目标阶段：找到命中的目标对象；<br/>
+	 * 冒泡阶段：事件离开目标对象，按节点层级向上逐层通知，直到到达舞台的过程。
+	 * <p>
 	 */
 	public class MouseManager {
 		/**
@@ -160,7 +166,17 @@ package laya.events {
 		
 		private function onMouseDown(ele:*):void {
 			if (Input.isInputting && Laya.stage.focus && Laya.stage.focus["focus"] && !Laya.stage.focus.contains(_target)) {
-				Laya.stage.focus["focus"] = false;
+				// 从UI Input组件中取得Input引用
+				// _tf 是TextInput的属性
+				var pre_input:* = Laya.stage.focus['_tf'] || Laya.stage.focus;
+				var new_input:Input = ele['_tf'] || ele;
+				
+				// 新的焦点是Input的情况下，不需要blur；
+				// 不过如果是Input和TextArea之间的切换，还是需要重新弹出输入法；
+				if (new_input is Input && new_input.multiline == pre_input.multiline)
+					pre_input['_focusOut']();
+				else
+					pre_input.focus = false;
 			}
 			TouchManager.I.onMouseDown(ele, _tTouchID, _isLeftMouse);
 		}
@@ -179,13 +195,11 @@ package laya.events {
 			var scrollRect:Rectangle = sp.scrollRect;
 			if (scrollRect) {
 				_rect.setTo(scrollRect.x, scrollRect.y, scrollRect.width, scrollRect.height);
-				var isHit:Boolean = _rect.contains(mouseX, mouseY);
-				if (!isHit) return false;
+				if (!_rect.contains(mouseX, mouseY)) return false;
 			}
 			
 			//先判定子对象是否命中
 			if (!disableMouseEvent) {
-				var flag:Boolean = false;
 				//优先判断父对象
 				if (sp.hitTestPrior && !sp.mouseThrough && !hitTest(sp, mouseX, mouseY)) {
 					return false;
@@ -194,13 +208,13 @@ package laya.events {
 					var child:Sprite = sp._childs[i];
 					//只有接受交互事件的，才进行处理
 					if (!child.destroyed && child.mouseEnabled && child.visible) {
-						flag = check(child, mouseX, mouseY, callBack);
-						if (flag) return true;
+						if (check(child, mouseX, mouseY, callBack)) return true;
 					}
 				}
 			}
 			
-			isHit = hitTest(sp, scrollRect ? mouseX - scrollRect.x : mouseX, scrollRect ? mouseY - scrollRect.y : mouseY);
+			//避免重复进行碰撞检测，考虑了判断的命中率，一般hitTestPrior和disableMouseEvent都为false，而hitTestPrior为true的概率更高。
+			var isHit:Boolean = (sp.hitTestPrior && !sp.mouseThrough &&  !disableMouseEvent) ? true : hitTest(sp, mouseX, mouseY);
 			
 			if (isHit) {
 				_target = sp;
@@ -221,8 +235,8 @@ package laya.events {
 			}
 			if (sp.width > 0 && sp.height > 0 || sp.mouseThrough || sp.hitArea) {
 				//判断是否在矩形区域内
-				var hitRect:Rectangle = this._rect;
 				if (!sp.mouseThrough) {
+					var hitRect:Rectangle = this._rect;
 					if (sp.hitArea) hitRect = sp.hitArea;
 					else hitRect.setTo(0, 0, sp.width, sp.height);
 					isHit = hitRect.contains(mouseX, mouseY);

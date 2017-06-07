@@ -12,8 +12,7 @@ package laya.ui {
 	
 	/**
 	 * <code>ProgressBar</code> 组件显示内容的加载进度。
-	 * @example 以下示例代码，创建了一个新的 <code>ProgressBar</code> 实例，设置了它的皮肤、位置、宽高、网格等信息，并添加到舞台上。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个新的 <code>ProgressBar</code> 实例，设置了它的皮肤、位置、宽高、网格等信息，并添加到舞台上。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.ProgressBar;
@@ -51,8 +50,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * var res = ["resource/ui/progress.png", "resource/ui/progress$bar.png"];
@@ -79,8 +77,7 @@ package laya.ui {
 	 * {
 	 *     console.log("进度发生改变： value=" ,value);
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import ProgressBar = laya.ui.ProgressBar;
 	 * import Handler = laya.utils.Handler;
 	 * class ProgressBar_Example {
@@ -110,7 +107,6 @@ package laya.ui {
 	 *         console.log("进度发生改变： value=", value);
 	 *     }
 	 * }
-	 * </listing>
 	 */
 	public class ProgressBar extends Component {
 		/**

@@ -5,6 +5,8 @@ package laya.d3.math {
 	 * <code>Vector3</code> 类用于创建三维向量。
 	 */
 	public class Vector3  implements IClone{
+		/**@private	*/
+		public static const _tempVector4:Vector4 = new Vector4();
 		
 		/**零向量，禁止修改*/
 		public static const ZERO:Vector3 = new Vector3(0.0, 0.0, 0.0);
@@ -201,7 +203,7 @@ package laya.d3.math {
 		 * @param	result 输出三维向量。
 		 */
 		public static function transformV3ToV3(vector:Vector3, transform:Matrix4x4, result:Vector3):void {
-			var intermediate:Vector4 = new Vector4();
+			var intermediate:Vector4 = _tempVector4;
 			transformV3ToV4(vector, transform, intermediate);
 			var intermediateElem:Float32Array = intermediate.elements;
 			var resultElem:Float32Array = result.elements;

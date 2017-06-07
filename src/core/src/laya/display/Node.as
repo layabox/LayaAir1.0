@@ -31,20 +31,20 @@ package laya.display {
 	public class Node extends EventDispatcher {
 		/**@private */
 		protected static const ARRAY_EMPTY:Array = [];
-		/** @private */
+		/**@private */
 		private static const PROP_EMPTY:Object = {};
-		/** @private */
+		/**@private */
 		public static const NOTICE_DISPLAY:int = 0x1;
-		/** @private */
+		/**@private */
 		public static const MOUSEENABLE:int = 0x2;
-		/** @private */
+		/**@private */
 		private var _bits:int = 0;
 		/**@private 子对象集合，请不要直接修改此对象。*/
 		public var _childs:Array = ARRAY_EMPTY;
 		/**@private 是否在显示列表中显示*/
 		protected var _displayedInStage:Boolean;
 		/**@private 父节点对象*/
-		protected var _parent:Node;
+		public var _parent:Node;
 		/**@private 系统保留的私有变量集合*/
 		public var _$P:Object = PROP_EMPTY;
 		/**@private */
@@ -52,7 +52,7 @@ package laya.display {
 		
 		/**节点名称。*/
 		public var name:String = "";
-		/**是否已经销毁。对象销毁后不能再使用。*/
+		/**[只读]是否已经销毁。对象销毁后不能再使用。*/
 		public var destroyed:Boolean;
 		/**时间控制器，默认为Laya.timer。*/
 		public var timer:Timer = Laya.timer;
@@ -64,7 +64,7 @@ package laya.display {
 			this.conchModel = Render.isConchNode ? this.createConchModel() : null;
 		}
 		
-		/** @private */
+		/**@private */
 		public function _setBit(type:int, value:Boolean):void {
 			if (type == NOTICE_DISPLAY) {
 				var preValue:Boolean = _getBit(type);
@@ -79,19 +79,19 @@ package laya.display {
 			}
 		}
 		
-		/** @private */
+		/**@private */
 		public function _getBit(type:int):Boolean {
 			return (_bits & type) != 0;
 		}
 		
-		/** @private */
+		/**@private */
 		public function _setUpNoticeChain():void {
 			if (_getBit(NOTICE_DISPLAY)) {
 				_setUpNoticeType(NOTICE_DISPLAY);
 			}
 		}
 		
-		/** @private */
+		/**@private */
 		public function _setUpNoticeType(type:int):void {
 			var ele:Node = this;
 			ele._setBit(type, true);
@@ -104,12 +104,12 @@ package laya.display {
 		}
 		
 		/**
-		 * 增加事件侦听器，以使侦听器能够接收事件通知。
-		 * 如果侦听鼠标事件，则会自动设置自己和父亲节点的属性 mouseEnabled 的值为 true(如果父节点mouseEnabled=false，则停止设置父节点mouseEnabled属性)。
-		 * @param	type 事件的类型。
-		 * @param	caller 事件侦听函数的执行域。
-		 * @param	listener 事件侦听函数。
-		 * @param	args 事件侦听函数的回调参数。
+		 * <p>增加事件侦听器，以使侦听器能够接收事件通知。</p>
+		 * <p>如果侦听鼠标事件，则会自动设置自己和父亲节点的属性 mouseEnabled 的值为 true(如果父节点mouseEnabled=false，则停止设置父节点mouseEnabled属性)。</p>
+		 * @param	type		事件的类型。
+		 * @param	caller		事件侦听函数的执行域。
+		 * @param	listener	事件侦听函数。
+		 * @param	args		（可选）事件侦听函数的回调参数。
 		 * @return 此 EventDispatcher 对象。
 		 */
 		override public function on(type:String, caller:*, listener:Function, args:Array = null):EventDispatcher {
@@ -122,12 +122,12 @@ package laya.display {
 		}
 		
 		/**
-		 * 增加事件侦听器，以使侦听器能够接收事件通知，此侦听事件响应一次后则自动移除侦听。
-		 * 如果侦听鼠标事件，则会自动设置自己和父亲节点的属性 mouseEnabled 的值为 true(如果父节点mouseEnabled=false，则停止设置父节点mouseEnabled属性)。
-		 * @param	type 事件的类型。
-		 * @param	caller 事件侦听函数的执行域。
-		 * @param	listener 事件侦听函数。
-		 * @param	args 事件侦听函数的回调参数。
+		 * <p>增加事件侦听器，以使侦听器能够接收事件通知，此侦听事件响应一次后则自动移除侦听。</p>
+		 * <p>如果侦听鼠标事件，则会自动设置自己和父亲节点的属性 mouseEnabled 的值为 true(如果父节点mouseEnabled=false，则停止设置父节点mouseEnabled属性)。</p>
+		 * @param	type		事件的类型。
+		 * @param	caller		事件侦听函数的执行域。
+		 * @param	listener	事件侦听函数。
+		 * @param	args		（可选）事件侦听函数的回调参数。
 		 * @return 此 EventDispatcher 对象。
 		 */
 		override public function once(type:String, caller:*, listener:Function, args:Array = null):EventDispatcher {
@@ -146,8 +146,8 @@ package laya.display {
 		
 		/**
 		 * <p>销毁此对象。destroy对象默认会把自己从父节点移除，并且清理自身引用关系，等待js自动垃圾回收机制回收。destroy后不能再使用。</p>
-		 * destroy时会移除自身的事情监听，自身的timer监听，移除子对象及从父节点移除自己。
-		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
+		 * <p>destroy时会移除自身的事情监听，自身的timer监听，移除子对象及从父节点移除自己。</p>
+		 * @param destroyChild	（可选）是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
 		 */
 		public function destroy(destroyChild:Boolean = true):void {
 			destroyed = true;
@@ -468,7 +468,7 @@ package laya.display {
 			return _displayedInStage;
 		}
 		
-		/** @private */
+		/**@private */
 		private function _updateDisplayedInstage():void {
 			var ele:Node;
 			ele = this;
@@ -488,7 +488,7 @@ package laya.display {
 			}
 		}
 		
-		/** @private */
+		/**@private */
 		public function _setDisplay(value:Boolean):void {
 			if (_displayedInStage !== value) {
 				_displayedInStage = value;
@@ -520,9 +520,9 @@ package laya.display {
 		}
 		
 		/**
-		 * 当前容器是否包含 <code>node</code> 节点。
-		 * @param	node  某一个节点 <code>Node</code>。
-		 * @return	一个布尔值表示是否包含<code>node</code>节点。
+		 * 当前容器是否包含指定的 <code>Node</code> 节点对象 。
+		 * @param	node  指定的 <code>Node</code> 节点对象 。
+		 * @return	一个布尔值表示是否包含指定的 <code>Node</code> 节点对象 。
 		 */
 		public function contains(node:Node):Boolean {
 			if (node === this) return true;
@@ -535,11 +535,11 @@ package laya.display {
 		
 		/**
 		 * 定时重复执行某函数。功能同Laya.timer.timerLoop()。
-		 * @param	delay	间隔时间(单位毫秒)。
-		 * @param	caller	执行域(this)。
-		 * @param	method	结束时的回调方法。
-		 * @param	args	回调参数。
-		 * @param	coverBefore	是否覆盖之前的延迟执行，默认为true。
+		 * @param	delay		间隔时间(单位毫秒)。
+		 * @param	caller		执行域(this)。
+		 * @param	method		结束时的回调方法。
+		 * @param	args		（可选）回调参数。
+		 * @param	coverBefore	（可选）是否覆盖之前的延迟执行，默认为true。
 		 */
 		public function timerLoop(delay:int, caller:*, method:Function, args:Array = null, coverBefore:Boolean = true):void {
 			timer._create(false, true, delay, caller, method, args, coverBefore);
@@ -547,11 +547,11 @@ package laya.display {
 		
 		/**
 		 * 定时执行某函数一次。功能同Laya.timer.timerOnce()。
-		 * @param	delay	延迟时间(单位毫秒)。
-		 * @param	caller	执行域(this)。
-		 * @param	method	结束时的回调方法。
-		 * @param	args	回调参数。
-		 * @param	coverBefore	是否覆盖之前的延迟执行，默认为true。
+		 * @param	delay		延迟时间(单位毫秒)。
+		 * @param	caller		执行域(this)。
+		 * @param	method		结束时的回调方法。
+		 * @param	args		（可选）回调参数。
+		 * @param	coverBefore	（可选）是否覆盖之前的延迟执行，默认为true。
 		 */
 		public function timerOnce(delay:int, caller:*, method:Function, args:Array = null, coverBefore:Boolean = true):void {
 			timer._create(false, false, delay, caller, method, args, coverBefore);
@@ -559,11 +559,11 @@ package laya.display {
 		
 		/**
 		 * 定时重复执行某函数(基于帧率)。功能同Laya.timer.frameLoop()。
-		 * @param	delay	间隔几帧(单位为帧)。
-		 * @param	caller	执行域(this)。
-		 * @param	method	结束时的回调方法。
-		 * @param	args	回调参数。
-		 * @param	coverBefore	是否覆盖之前的延迟执行，默认为true。
+		 * @param	delay		间隔几帧(单位为帧)。
+		 * @param	caller		执行域(this)。
+		 * @param	method		结束时的回调方法。
+		 * @param	args		（可选）回调参数。
+		 * @param	coverBefore	（可选）是否覆盖之前的延迟执行，默认为true。
 		 */
 		public function frameLoop(delay:int, caller:*, method:Function, args:Array = null, coverBefore:Boolean = true):void {
 			timer._create(true, true, delay, caller, method, args, coverBefore);
@@ -571,11 +571,11 @@ package laya.display {
 		
 		/**
 		 * 定时执行一次某函数(基于帧率)。功能同Laya.timer.frameOnce()。
-		 * @param	delay	延迟几帧(单位为帧)。
-		 * @param	caller	执行域(this)
-		 * @param	method	结束时的回调方法
-		 * @param	args	回调参数
-		 * @param	coverBefore	是否覆盖之前的延迟执行，默认为true
+		 * @param	delay		延迟几帧(单位为帧)。
+		 * @param	caller		执行域(this)
+		 * @param	method		结束时的回调方法
+		 * @param	args		（可选）回调参数
+		 * @param	coverBefore	（可选）是否覆盖之前的延迟执行，默认为true
 		 */
 		public function frameOnce(delay:int, caller:*, method:Function, args:Array = null, coverBefore:Boolean = true):void {
 			timer._create(true, false, delay, caller, method, args, coverBefore);

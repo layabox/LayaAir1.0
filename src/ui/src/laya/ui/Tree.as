@@ -16,8 +16,7 @@ package laya.ui {
 	/**
 	 * <code>Tree</code> 控件使用户可以查看排列为可扩展树的层次结构数据。
 	 *
-	 * @example 以下示例代码，创建了一个 <code>Tree</code> 实例。
-	 * <listing version="3.0">
+	 * @example
 	 * package
 	 *	{
 	 *		import laya.ui.Tree;
@@ -97,8 +96,7 @@ package laya.ui {
 	 *			addChild(arrow);
 	 *		}
 	 *	 }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高、渲染模式
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * var res = ["resource/ui/vscroll.png", "resource/ui/vscroll$bar.png", "resource/ui/vscroll$down.png", "resource/ui/vscroll$up.png", "resource/ui/clip_selectBox.png", "resource/ui/clip_tree_folder.png", "resource/ui/clip_tree_arrow.png"];
@@ -158,8 +156,7 @@ package laya.ui {
 	 *     };
 	 *     Laya.class(Item,"mypackage.treeExample.Item",_super);//注册类 Item 。
 	 * })(laya.ui.Box);
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import Tree = laya.ui.Tree;
 	 * import Browser = laya.utils.Browser;
 	 * import Handler = laya.utils.Handler;
@@ -228,7 +225,6 @@ package laya.ui {
 	 *         this.addChild(arrow);
 	 *     }
 	 * }
-	 * </listing>
 	 */
 	public class Tree extends Box implements IRender {
 		/**@private */

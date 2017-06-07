@@ -32,5 +32,5 @@ mesh.transform.localScale = new Laya.Vector3(0.5, 0.5, 0.5);
 
 var customMaterial = new CustomMaterial();
 customMaterial.setDiffuseTexture(Laya.Texture2D.load("../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg"));
-mesh.meshRender.sharedMaterial = customMaterial;
+mesh.meshRender.material = customMaterial;
 

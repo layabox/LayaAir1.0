@@ -20,8 +20,7 @@ package laya.ui {
 	/**
 	 * <code>List</code> 控件可显示项目列表。默认为垂直方向列表。可通过UI编辑器自定义列表。
 	 *
-	 * @example 以下示例代码，创建了一个 <code>List</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>List</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.List;
@@ -72,8 +71,7 @@ package laya.ui {
 	 *			addChild(label);
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * (function (_super){
 	 *     function Item(){
 	 *         Item.__super.call(this);//初始化父类
@@ -115,8 +113,7 @@ package laya.ui {
 	 *     console.log("当前选择的项目索引： index= ", index);
 	 * }
 	 *
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import List = laya.ui.List;
 	 * import Handler = laya.utils.Handler;
 	 * public class List_Example {
@@ -158,7 +155,6 @@ package laya.ui {
 	 *         this.addChild(label);
 	 *     }
 	 * }
-	 * </listing>
 	 */
 	public class List extends Box implements IRender, IItem {
 		
@@ -543,12 +539,12 @@ package laya.ui {
 		public function setContentSize(width:Number, height:Number):void {
 			_content.width = width;
 			_content.height = height;
-			//if (_scrollBar) {
+			if (_scrollBar||_offset.x!=0||_offset.y!=0) {
 			_content.scrollRect || (_content.scrollRect = new Rectangle());
 			_content.scrollRect.setTo(-_offset.x, -_offset.y, width, height);
-			_content.conchModel && _content.conchModel.scrollRect(-_offset.x, -_offset.y, width, height);//通知微端
+			_content.conchModel && _content.conchModel.scrollRect(-_offset.x, -_offset.y, width, height);//通知微端		
+			}
 			event(Event.RESIZE);
-			//}
 		}
 		
 		/**
@@ -675,10 +671,10 @@ package laya.ui {
 				_selectedIndex = value;
 				changeSelectStatus();
 				event(Event.CHANGE);
+				selectHandler && selectHandler.runWith(value);
+				//选择发生变化，自动渲染一次
+				startIndex = _startIndex;
 			}
-			selectHandler && selectHandler.runWith(value);
-			//选择发生变化，自动渲染一次
-			startIndex = _startIndex;
 		}
 		
 		/**
@@ -730,7 +726,7 @@ package laya.ui {
 		 * 渲染单元格列表。
 		 */
 		protected function renderItems(from:int = 0, to:int = 0):void {
-			for (var i:int = 0, n:int = to || _cells.length; i < n; i++) {
+			for (var i:int = from, n:int = to || _cells.length; i < n; i++) {
 				renderItem(_cells[i], _startIndex + i);
 			}
 			changeSelectStatus();
@@ -742,7 +738,7 @@ package laya.ui {
 		 * @param index 单元格索引。
 		 */
 		protected function renderItem(cell:Box, index:int):void {
-			if (index >= 0 && index < _array.length) {
+			if (_array&&index >= 0 && index < _array.length) {
 				cell.visible = true;
 				cell.dataSource = _array[index];
 				if (!cacheContent) {

@@ -241,7 +241,7 @@ package laya.html.utils {
 				}
 				for (i = 0, n = lines.length; i < n; i++) {
 					lines[i].updatePos(0, tWidth, i, tY, align, valign, lineHeight);
-					tY += Math.max(lineHeight, lines[i].h);
+					tY += Math.max(lineHeight, lines[i].h+leading);
 				}
 				y = tY;
 			}

@@ -22,8 +22,7 @@ package laya.ui {
 	 * 从左向右，从上到下，分割组合为一个切片动画。</p>
 	 * Image和Clip组件是唯一支持异步加载的两个组件，比如clip.skin = "abc/xxx.png"，其他UI组件均不支持异步加载。
 	 *
-	 * @example 以下示例代码，创建了一个 <code>Clip</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>Clip</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.Clip;
@@ -58,8 +57,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * var clip;
@@ -84,8 +82,7 @@ package laya.ui {
 	 *         clip.play();
 	 *     }
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import Clip = laya.ui.Clip;
 	 * import Handler = laya.utils.Handler;
 	 * class Clip_Example {
@@ -114,7 +111,6 @@ package laya.ui {
 	 *     }
 	 * }
 	 *
-	 * </listing>
 	 */
 	public class Clip extends Component {
 		/**@private */

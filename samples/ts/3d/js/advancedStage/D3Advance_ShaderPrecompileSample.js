@@ -25,7 +25,7 @@ var ShaderPrecompileSample = (function () {
         this.skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm")));
         this.skinMesh.transform.localRotationEuler = new Laya.Vector3(0, 3.14, 0);
         this.skinAni = this.skinMesh.addComponent(Laya.SkinAnimations);
-        this.skinAni.templet = Laya.AnimationTemplet.load("../../res/threeDimen/skinModel/dude/dude.ani");
+        this.skinAni.templet = Laya.AnimationTemplet.load("../../res/threeDimen/skinModel/dude/dude-Take 001.lsani");
         this.skinAni.player.play();
     }
     return ShaderPrecompileSample;

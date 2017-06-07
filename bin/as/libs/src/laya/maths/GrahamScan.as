@@ -25,7 +25,7 @@ package laya.maths {
 		public static function dis(p1:Point, p2:Point):Number {
 			return (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
 		}
-
+		
 		private static function _getPoints(count:int, tempUse:Boolean = false, rst:Array = null):Array {
 			if (!_mPointList) _mPointList = [];
 			while (_mPointList.length < count) _mPointList.push(new Point());
@@ -70,7 +70,6 @@ package laya.maths {
 			}
 			return rst;
 		}
-
 		
 		/**
 		 *  [x,y...]列表 转 Point列表
@@ -108,7 +107,6 @@ package laya.maths {
 		public static function scanPList(pList:Array):Array {
 			return Utils.copyArray(pList, pointListToPlist(scan(pListToPointList(pList, true))));
 		}
-		
 		
 		/**
 		 * 寻找包括所有点的最小多边形顶点集合

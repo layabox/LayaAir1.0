@@ -24,36 +24,36 @@ class ResourceLoadAndDispose {
             "../../res/threeDimen/staticModel/sphere/spheregridWhiteBlack.lmat",
             "../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg",
             "../../res/threeDimen/skyBox/skyCube.ltc",
-            "../../res/threeDimen/skinModel/dude/dude.ani"], null, processHandler);
+            "../../res/threeDimen/skinModel/dude/dude-Take 001.lsani"], null, processHandler);
 
         //3:单独加载模式。
         //加载层级文件，与其它资源区别为通常不缓存。
-        var hierarchyUrl:String = "../../res/threeDimen/staticModel/sphere/sphere.lh";
+        var hierarchyUrl:string = "../../res/threeDimen/staticModel/sphere/sphere.lh";
         //var sprite:Laya.Sprite3D = Laya.loader.create(hierarchyUrl, null, null, Laya.Sprite3D, 1, false);//复杂加载。
         var sprite:Laya.Sprite3D = Laya.Sprite3D.load(hierarchyUrl);//简单加载，为复杂加载的封装。
 
         //加载网格文件。
-        var meshUrl:String = "../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm";
+        var meshUrl:string = "../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm";
         //var mesh:Laya.Sprite3D = Laya.loader.create(meshUrl, null, null, Laya.Mesh);//复杂加载。
         var mesh:Laya.Mesh = Laya.Mesh.load(meshUrl);//简单加载，为复杂加载的封装。
 
         //加载材质文件。
-        var materialUrl:String = "../../res/threeDimen/staticModel/sphere/spheregridWhiteBlack.lmat";
+        var materialUrl:string = "../../res/threeDimen/staticModel/sphere/spheregridWhiteBlack.lmat";
         //var material:Laya.StandardMaterial = Laya.loader.create(materialUrl, null, null, Laya.StandardMaterial);//复杂加载。
         var material:Laya.StandardMaterial=Laya.StandardMaterial.load(materialUrl);//简单加载，为复杂加载的封装。
 
         //加载Texture2D文件。
-        var texture2DUrl:String = "../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg";
+        var texture2DUrl:string = "../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg";
         //var texture2D:Laya.Texture2D = Laya.loader.create(texture2DUrl, null, null, Laya.Texture2D);//复杂加载。
         var texture2D:Laya.Texture2D=Laya.Texture2D.load(texture2DUrl);//简单加载，为复杂加载的封装。
 
         //加载TextureCube文件。
-        var textureCubeUrl:String = "../../res/threeDimen/skyBox/skyCube.ltc";
+        var textureCubeUrl:string = "../../res/threeDimen/skyBox/skyCube.ltc";
         //var textureCube:Laya.TextureCube = Laya.loader.create(textureCubeUrl, null, null, Laya.TextureCube);//复杂加载。
         var textureCube:Laya.TextureCube = Laya.TextureCube.load(textureCubeUrl);//简单加载，为复杂加载的封装。*/
 
         //加载动画模板文件。
-        var animationTempletUrl:String = "../../res/threeDimen/skinModel/dude/dude.ani";
+        var animationTempletUrl:string = "../../res/threeDimen/skinModel/dude/dude-Take 001.lsani";
         //var animationTemplet:Laya.AnimationTemplet = Laya.loader.create(keyframesAniTempletUrl, null, null, Laya.AnimationTemplet);//复杂加载。
         var animationTemplet:Laya.AnimationTemplet =Laya.AnimationTemplet.load(animationTempletUrl);//简单加载，为复杂加载的封装。
 

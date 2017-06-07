@@ -30,8 +30,7 @@ package laya.ui {
 	/**
 	 * <code>TextInput</code> 类用于创建显示对象以显示和输入文本。
 	 *
-	 * @example 以下示例代码，创建了一个 <code>TextInput</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>TextInput</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.display.Stage;
@@ -63,8 +62,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * Laya.loader.load(["resource/ui/input.png"], laya.utils.Handler.create(this, onLoadComplete));//加载资源。
@@ -83,8 +81,7 @@ package laya.ui {
 	 *     textInput.height = 200;//设置 textInput 的高度。
 	 *     Laya.stage.addChild(textInput);//将 textInput 添加到显示列表。
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import Stage = laya.display.Stage;
 	 * import TextInput = laya.ui.TextInput;
 	 * import Handler = laya.utils.Handler;
@@ -110,7 +107,6 @@ package laya.ui {
 	 *         Laya.stage.addChild(textInput);//将 textInput 添加到显示列表。
 	 *     }
 	 * }
-	 * </listing>
 	 */
 	public class TextInput extends Label {
 		/** @private */

@@ -4,8 +4,7 @@ package laya.ui {
 	 * 使用 <code>HSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
 	 * <p> <code>HSlider</code> 控件采用水平方向。滑块轨道从左向右扩展，而标签位于轨道的顶部或底部。</p>
 	 *
-	 * @example 以下示例代码，创建了一个 <code>HSlider</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>HSlider</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.HSlider;
@@ -38,8 +37,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800, "canvas");//设置游戏画布宽高、渲染模式
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * var hSlider;
@@ -62,8 +60,7 @@ package laya.ui {
 	 * {
 	 *     console.log("滑块的位置： value=" + value);
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import Handler = laya.utils.Handler;
 	 * import HSlider = laya.ui.HSlider;
 	 * class HSlider_Example {
@@ -89,7 +86,6 @@ package laya.ui {
 	 *         console.log("滑块的位置： value=" + value);
 	 *     }
 	 * }
-	 * </listing>
 	 *
 	 * @see laya.ui.Slider
 	 */

@@ -4,7 +4,7 @@ uniform mat4 u_MvpMatrix;
 
 
 
-#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))
+#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))||(defined(LIGHTMAP)&&defined(UV))
 attribute vec2 a_Texcoord0;
 varying vec2 v_Texcoord0;
   #ifdef MIXUV
@@ -16,11 +16,15 @@ varying vec2 v_Texcoord0;
   #endif
 #endif
 
-#ifdef defined(AMBIENTMAP)||defined(LIGHTMAP)
+#ifdef defined(AMBIENTMAP)||(defined(LIGHTMAP)&&defined(UV1))
 attribute vec2 a_Texcoord1;
+#endif
+
+#ifdef defined(AMBIENTMAP)||defined(LIGHTMAP)
 uniform vec4 u_LightmapScaleOffset;
 varying vec2 v_LightMapUV;
 #endif
+
 
 #ifdef COLOR
 attribute vec4 a_Color;

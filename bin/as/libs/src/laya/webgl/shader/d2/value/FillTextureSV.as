@@ -7,8 +7,6 @@ package laya.webgl.shader.d2.value {
 	import laya.webgl.WebGLContext;
 	import laya.webgl.utils.CONST3D2D;
 	public class FillTextureSV extends Value2D {
-		/*public var u_texRange:Array = [0, 1, 0, 1];
-		public var u_offset:Array = [0.5, 0.5];	*/
 		public var texcoord:Array = _TEXCOORD;
 		public var u_colorMatrix:Array;
 		public var strength : Number = 0;

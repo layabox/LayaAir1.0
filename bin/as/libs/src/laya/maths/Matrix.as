@@ -1,7 +1,8 @@
 package laya.maths {
 	
 	/**
-	 * <code>Matrix</code> 类表示一个转换矩阵，它确定如何将点从一个坐标空间映射到另一个坐标空间。
+	 * <p> <code>Matrix</code> 类表示一个转换矩阵，它确定如何将点从一个坐标空间映射到另一个坐标空间。</p>
+	 * <p>您可以对一个显示对象执行不同的图形转换，方法是设置 Matrix 对象的属性，将该 Matrix 对象应用于 Transform 对象的 matrix 属性，然后应用该 Transform 对象作为显示对象的 transform 属性。这些转换函数包括平移（x 和 y 重新定位）、旋转、缩放和倾斜。</p>
 	 */
 	public class Matrix {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
@@ -10,7 +11,7 @@ package laya.maths {
 		/** 用于中转使用的 <code>Matrix</code> 对象。*/
 		public static var TEMP:Matrix =/*[STATIC SAFE]*/ new Matrix();
 		/**@private */
-		public static var _cache:* = [];		
+		public static var _cache:* = [];
 		
 		/**缩放或旋转图像时影响像素沿 x 轴定位的值。*/
 		public var a:Number;
@@ -32,12 +33,12 @@ package laya.maths {
 		
 		/**
 		 * 使用指定参数创建新的 <code>Matrix</code> 对象。
-		 * @param	a 缩放或旋转图像时影响像素沿 x 轴定位的值。
-		 * @param	b 旋转或倾斜图像时影响像素沿 y 轴定位的值。
-		 * @param	c 旋转或倾斜图像时影响像素沿 x 轴定位的值。
-		 * @param	d 缩放或旋转图像时影响像素沿 y 轴定位的值。
-		 * @param	tx 沿 x 轴平移每个点的距离。
-		 * @param	ty 沿 y 轴平移每个点的距离。
+		 * @param a		（可选）缩放或旋转图像时影响像素沿 x 轴定位的值。
+		 * @param b		（可选）旋转或倾斜图像时影响像素沿 y 轴定位的值。
+		 * @param c		（可选）旋转或倾斜图像时影响像素沿 x 轴定位的值。
+		 * @param d		（可选）缩放或旋转图像时影响像素沿 y 轴定位的值。
+		 * @param tx	（可选）沿 x 轴平移每个点的距离。
+		 * @param ty	（可选）沿 y 轴平移每个点的距离。
 		 */
 		public function Matrix(a:Number = 1, b:Number = 0, c:Number = 0, d:Number = 1, tx:Number = 0, ty:Number = 0) {
 			this.a = a;
@@ -50,7 +51,7 @@ package laya.maths {
 		}
 		
 		/**
-		 * 为每个矩阵属性设置一个值。
+		 * 将本矩阵设置为单位矩阵。
 		 * @return 返回当前矩形。
 		 */
 		public function identity():Matrix {
@@ -78,10 +79,10 @@ package laya.maths {
 		}
 		
 		/**
-		 * 沿 x 和 y 轴平移矩阵，由 x 和 y 参数指定。
+		 * 沿 x 和 y 轴平移矩阵，平移的变化量由 x 和 y 参数指定。
 		 * @param	x 沿 x 轴向右移动的量（以像素为单位）。
 		 * @param	y 沿 y 轴向下移动的量（以像素为单位）。
-		 * @return 返回此矩形。
+		 * @return 返回此矩形对象。
 		 */
 		public function translate(x:Number, y:Number):Matrix {
 			this.tx += x;
@@ -173,9 +174,8 @@ package laya.maths {
 			return out.setTo(a * out.x + c * out.y + tx, b * out.x + d * out.y + ty);
 		}
 		
-		
 		/**
-		 * 将 Matrix 对象表示的几何转换应用于指定点忽略tx ty。
+		 * 将 Matrix 对象表示的几何转换应用于指定点，忽略tx、ty。
 		 * @param	out 用来设定输出结果的点。
 		 * @return	返回out
 		 */
@@ -314,11 +314,11 @@ package laya.maths {
 			return out;
 		}
 		
-			/**
-		 * 将指定的两个矩阵相乘后的结果赋值给指定的输出数组长度为16。
-		 * @param	m1 矩阵一。
-		 * @param	m2 矩阵二。
-		 * @param	out 输出对象Array。
+		/**
+		 * 将指定的两个矩阵相乘，结果赋值给指定的输出数组，长度为16。
+		 * @param m1	矩阵一。
+		 * @param m2	矩阵二。
+		 * @param out	输出对象Array。
 		 * @return 结果输出对象 out。
 		 */
 		public static function mul16(m1:Matrix, m2:Matrix, out:Array):Array {
@@ -342,8 +342,8 @@ package laya.maths {
 			return out;
 		}
 		
-		
 		/**
+		 * @private
 		 * 对矩阵应用缩放转换。反向相乘
 		 * @param	x 用于沿 x 轴缩放对象的乘数。
 		 * @param	y 用于沿 y 轴缩放对象的乘数。
@@ -355,9 +355,7 @@ package laya.maths {
 				this.b = x * bb;
 				this.c = y * bc;
 				this.d = y * bd;
-			}
-			else
-			{
+			} else {
 				this.a = x * ba;
 				this.b = 0 * bd;
 				this.c = 0 * ba;
@@ -366,32 +364,28 @@ package laya.maths {
 			bTransform = true;
 		}
 		
-		
-		
 		/**
+		 * @private
 		 * 对 Matrix 对象应用旋转转换。反向相乘
 		 * @param	angle 以弧度为单位的旋转角度。
 		 */
 		public function rotateEx(angle:Number):void {
-		    var cos:Number = Math.cos(angle);
+			var cos:Number = Math.cos(angle);
 			var sin:Number = Math.sin(angle);
 			var ba:Number = this.a, bb:Number = this.b, bc:Number = this.c, bd:Number = this.d;
 			if (bb !== 0 || bc !== 0) {
 				this.a = cos * ba + sin * bc;
 				this.b = cos * bb + sin * bd;
-				this.c = - sin * ba + cos * bc;
-				this.d = - sin * bb + cos * bd;
-			}
-			else
-			{
+				this.c = -sin * ba + cos * bc;
+				this.d = -sin * bb + cos * bd;
+			} else {
 				this.a = cos * ba;
 				this.b = sin * bd;
-				this.c = - sin * ba;
+				this.c = -sin * ba;
 				this.d = cos * bd;
 			}
 			bTransform = true;
 		}
-		
 		
 		/**@private */
 		public static function mulPre(m1:Matrix, ba:Number, bb:Number, bc:Number, bd:Number, btx:Number, bty:Number, out:Matrix):Matrix {
@@ -468,8 +462,8 @@ package laya.maths {
 		}
 		
 		/**
-		 * 返回一个新的 Matrix 对象，它是此矩阵的克隆，带有与所含对象完全相同的副本。
-		 * @return 一个 Matrix 对象。
+		 * 返回此 Matrix 对象的副本。
+		 * @return 与原始实例具有完全相同的属性的新 Matrix 实例。
 		 */
 		public function clone():Matrix {
 			var no:* = _cache;

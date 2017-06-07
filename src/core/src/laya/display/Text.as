@@ -17,8 +17,7 @@ package laya.display {
 	
 	/**
 	 * <p> <code>Text</code> 类用于创建显示对象以显示文本。</p>
-	 * @example 以下示例代码，创建了一个 <code>Text</code> 实例。
-	 * <listing version="3.0">
+	 * @example
 	 * package
 	 * {
 	 * 	import laya.display.Text;
@@ -49,8 +48,7 @@ package laya.display {
 	 * 		}
 	 * 	}
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Text_Example();
 	 * function Text_Example()
 	 * {
@@ -75,8 +73,7 @@ package laya.display {
 	 *     text.borderColor = "#fff000";//设置 text 的文本边框颜色。
 	 *     Laya.stage.addChild(text);//将 text 添加到显示列表。
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * class Text_Example {
 	 *     constructor() {
 	 *         Laya.init(640, 800);//设置游戏画布宽高、渲染模式。
@@ -100,7 +97,6 @@ package laya.display {
 	 *         Laya.stage.addChild(text);//将 text 添加到显示列表。
 	 *     }
 	 * }
-	 * </listing>
 	 */
 	public class Text extends Sprite {
 		/**@private 预测长度的文字，用来提升计算效率，不同语言找一个最大的字符即可*/
@@ -142,8 +138,10 @@ package laya.display {
 		/**  @private */
 		protected var _charSize:Object = {};
 		
-		/**overflow 指定文本超出文本域后的行为。其值为"hidden"、"visible"和"scroll"之一。
-		 * 性能从高至低为：hidden > visible > scroll*/
+		/**
+		 * <p>overflow 指定文本超出文本域后的行为。其值为"hidden"、"visible"和"scroll"之一。</p>
+		 * <p>性能从高到低依次为：hidden > visible > scroll。</p>
+		 */
 		public var overflow:String = VISIBLE;
 		/**
 		 * 是否显示下划线。
@@ -175,7 +173,7 @@ package laya.display {
 		/**
 		 * 移除注册的位图字体文件。
 		 * @param	name		位图字体的名称。
-		 * @param	destroy		是否销毁当前字体文件。
+		 * @param	destroy		是否销毁指定的字体文件。
 		 */
 		public static function unregisterBitmapFont(name:String, destroy:Boolean = true):void {
 			if (_bitmapFonts && _bitmapFonts[name]) {
@@ -210,7 +208,7 @@ package laya.display {
 		/**
 		 * @inheritDoc
 		 */
-		override public function getGraphicBounds(realSize:Boolean=false):Rectangle {
+		override public function getGraphicBounds(realSize:Boolean = false):Rectangle {
 			var rec:Rectangle = Rectangle.TEMP;
 			rec.setTo(0, 0, width, height);
 			return rec;
@@ -310,7 +308,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 文本的字体名称，以字符串形式表示。
+		 * <p>文本的字体名称，以字符串形式表示。</p>
 		 * <p>默认值为："Arial"，可以通过Font.defaultFont设置默认字体。</p>
 		 * @see laya.display.css.Font#defaultFamily
 		 */
@@ -331,7 +329,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 指定文本的字体大小（以像素为单位）。
+		 * <p>指定文本的字体大小（以像素为单位）。</p>
 		 * <p>默认为20像素，可以通过 <code>Text.defaultSize</code> 设置默认大小。</p>
 		 */
 		public function get fontSize():int {
@@ -344,7 +342,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 指定文本是否为粗体字。
+		 * <p>指定文本是否为粗体字。</p>
 		 * <p>默认值为 false，这意味着不使用粗体字。如果值为 true，则文本为粗体字。</p>
 		 */
 		public function get bold():Boolean {
@@ -357,7 +355,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 表示文本的颜色值。可以通过 <code>Text.defaultColor</code> 设置默认颜色。
+		 * <p>表示文本的颜色值。可以通过 <code>Text.defaultColor</code> 设置默认颜色。</p>
 		 * <p>默认值为黑色。</p>
 		 */
 		public function get color():String {
@@ -377,7 +375,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 表示使用此文本格式的文本是否为斜体。
+		 * <p>表示使用此文本格式的文本是否为斜体。</p>
 		 * <p>默认值为 false，这意味着不使用斜体。如果值为 true，则文本为斜体。</p>
 		 */
 		public function get italic():Boolean {
@@ -390,7 +388,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 表示文本的水平显示方式。
+		 * <p>表示文本的水平显示方式。</p>
 		 * <p><b>取值：</b>
 		 * <li>"left"： 居左对齐显示。</li>
 		 * <li>"center"： 居中对齐显示。</li>
@@ -407,7 +405,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 表示文本的垂直显示方式。
+		 * <p>表示文本的垂直显示方式。</p>
 		 * <p><b>取值：</b>
 		 * <li>"top"： 居顶部对齐显示。</li>
 		 * <li>"middle"： 居中对齐显示。</li>
@@ -424,7 +422,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 表示文本是否自动换行，默认为false。
+		 * <p>表示文本是否自动换行，默认为false。</p>
 		 * <p>若值为true，则自动换行；否则不自动换行。</p>
 		 */
 		public function get wordWrap():Boolean {
@@ -449,7 +447,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 边距信息。
+		 * <p>边距信息。</p>
 		 * <p>数据格式：[上边距，右边距，下边距，左边距]（边距以像素为单位）。</p>
 		 */
 		public function get padding():Array {
@@ -487,7 +485,7 @@ package laya.display {
 		
 		/**
 		 * <p>描边宽度（以像素为单位）。</p>
-		 * 默认值0，表示不描边。
+		 * <p>默认值0，表示不描边。<p>q
 		 */
 		public function get stroke():Number {
 			return this._getCSSStyle().stroke;
@@ -500,7 +498,7 @@ package laya.display {
 		
 		/**
 		 * <p>描边颜色，以字符串表示。</p>
-		 * 默认值为 "#000000"（黑色）;
+		 * <p>默认值为 "#000000"（黑色）;</p>
 		 */
 		public function get strokeColor():String {
 			return this._getCSSStyle().strokeColor;
@@ -726,7 +724,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 快速更改显示文本。不进行排版计算，效率较高。
+		 * <p>快速更改显示文本。不进行排版计算，效率较高。</p>
 		 * <p>如果只更改文字内容，不更改文字样式，建议使用此接口，能提高效率。</p>
 		 * @param text 文本内容。
 		 */
@@ -818,7 +816,7 @@ package laya.display {
 						var newLine:String = line.substring(startIndex, j);
 						if (newLine.charCodeAt(newLine.length - 1) < 255) {
 							//按照英文单词字边界截取 因此将会无视中文
-							execResult = /[^\x20-]+$/.exec(newLine);
+							execResult = /(?:\w|-)+$/.exec(newLine);
 							if (execResult) {
 								j = execResult.index + startIndex;
 								//此行只够容纳这一个单词 强制换行
@@ -834,6 +832,7 @@ package laya.display {
 						lines.push(newLine);
 						_lineWidths.push(wordWidth - charsWidth);
 						//如果非自动换行，则只截取字符串
+						
 						startIndex = j;
 						if (j + maybeIndex < m) {
 							j += maybeIndex;
@@ -887,10 +886,10 @@ package laya.display {
 		}
 		
 		/**
-		 * 返回字符的位置信息。
-		 * @param	charIndex 索引位置。
-		 * @param	out 输出的Point引用。
-		 * @return	返回Point位置信息。
+		 * 返回字符在本类实例的父坐标系下的坐标。
+		 * @param charIndex	索引位置。
+		 * @param out		（可选）输出的Point引用。
+		 * @return Point 字符在本类实例的父坐标系下的坐标。如果out参数不为空，则将结果赋值给指定的Point对象，否则创建一个新的Point对象返回。建议使用Point.TEMP作为out参数，可以省去Point对象创建和垃圾回收的开销，尤其是在需要频繁执行的逻辑中，比如帧循环和MOUSE_MOVE事件回调函数里面。
 		 */
 		public function getCharPoint(charIndex:int, out:Point = null):Point {
 			_isChanged && Laya.timer.runCallLater(this, typeset);
@@ -912,7 +911,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 设置横向滚动量。
+		 * <p>设置横向滚动量。</p>
 		 * <p>即使设置超出滚动范围的值，也会被自动限制在可能的最大值处。</p>
 		 */
 		public function set scrollX(value:Number):void {
@@ -982,7 +981,7 @@ package laya.display {
 		public function get lines():Array {
 			if (_isChanged)
 				typeset();
-				
+			
 			return _lines;
 		}
 		

@@ -23,10 +23,6 @@ terrainSprite.transform.position = new Laya.Vector3(0, 2.6, 1.5);
 terrainSprite.transform.rotationEuler = new Laya.Vector3(0, 0.3, 0.4);
 setMeshParams(terrainSprite, Laya.StandardMaterial.RENDERMODE_OPAQUE, new Vector4(3.5,3.5,3.5,1.0), new Vector3(0.6823, 0.6549, 0.6352), new Vector2(25.0, 25.0), "TERRAIN");
 
-var pathFingding = terrainSprite.addComponent(Laya.PathFind);
-pathFingding.setting = {allowDiagonal: true, dontCrossCorners: false, heuristic: PathFinding.core.Heuristic.manhattan, weight: 1};
-pathFingding.grid = new PathFinding.core.Grid(64, 36);
-
 var sphere = Laya.Mesh.load("../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm");
 var sphereSprite = scene.addChild(new Laya.MeshSprite3D(sphere));
 sphereSprite.transform.localScale = new Laya.Vector3(0.1, 0.1, 0.1);
@@ -51,8 +47,6 @@ function _update() {
 	position.elements[2] = position.z;
 	sphereSprite.transform.position = position;
 
-	var array = pathFingding.findPath(0, 0, position.x, position.z);
-	// console.log("start:", 0, 0, " end:", position.x, position.z, "path:", array.toString());
 }
 
 function setMeshParams(spirit3D, renderMode, albedo, ambientColor, uvScale, shaderName) {

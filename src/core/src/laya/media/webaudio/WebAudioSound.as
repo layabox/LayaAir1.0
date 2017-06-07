@@ -158,7 +158,7 @@ package laya.media.webaudio {
 		 */
 		public function load(url:String):void {
 			var me:WebAudioSound = this;
-			
+			url = URL.formatURL(url);
 			this.url = url;
 			
 			audioBuffer = _dataCache[url];
@@ -174,7 +174,7 @@ package laya.media.webaudio {
 			__loadingSound[url] = true;
 			
 			var request:* = new Browser.window.XMLHttpRequest();
-			request.open("GET", URL.formatURL(url), true);
+			request.open("GET", url, true);
 			request.responseType = "arraybuffer";
 			request.onload = function():void {
 				me.data = request.response;

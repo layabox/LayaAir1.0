@@ -113,6 +113,7 @@ package laya.ani.bone {
 		 * @param	playbackRate	缓冲的帧率数据（会根据帧率去分帧）
 		 */
 		public function parseData(texture:Texture, skeletonData:ArrayBuffer, playbackRate:int = 30):void {
+			if(!_path&&url)_path = url.slice(0, url.lastIndexOf("/")) + "/";
 			_mainTexture = texture;
 			if (_mainTexture) {
 				if (Render.isWebGL && texture.bitmap) {

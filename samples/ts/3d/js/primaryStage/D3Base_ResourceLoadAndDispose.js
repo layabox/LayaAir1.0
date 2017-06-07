@@ -19,7 +19,7 @@ var ResourceLoadAndDispose = (function () {
             "../../res/threeDimen/staticModel/sphere/spheregridWhiteBlack.lmat",
             "../../res/threeDimen/staticModel/sphere/gridWhiteBlack.jpg",
             "../../res/threeDimen/skyBox/skyCube.ltc",
-            "../../res/threeDimen/skinModel/dude/dude.ani"
+            "../../res/threeDimen/skinModel/dude/dude-Take 001.lsani"
         ], null, processHandler);
         //3:单独加载模式。
         //加载层级文件，与其它资源区别为通常不缓存。
@@ -43,7 +43,7 @@ var ResourceLoadAndDispose = (function () {
         //var textureCube:Laya.TextureCube = Laya.loader.create(textureCubeUrl, null, null, Laya.TextureCube);//复杂加载。
         var textureCube = Laya.TextureCube.load(textureCubeUrl); //简单加载，为复杂加载的封装。*/
         //加载动画模板文件。
-        var animationTempletUrl = "../../res/threeDimen/skinModel/dude/dude.ani";
+        var animationTempletUrl = "../../res/threeDimen/skinModel/dude/dude-Take 001.lsani";
         //var animationTemplet:Laya.AnimationTemplet = Laya.loader.create(keyframesAniTempletUrl, null, null, Laya.AnimationTemplet);//复杂加载。
         var animationTemplet = Laya.AnimationTemplet.load(animationTempletUrl); //简单加载，为复杂加载的封装。
         processHandler.recover(); //释放进度处理Handler

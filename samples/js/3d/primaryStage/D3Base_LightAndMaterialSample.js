@@ -6,12 +6,10 @@ Laya.Stat.show();
 var Browser = Laya.Browser;
 var Vector3 = Laya.Vector3;
 var tempVector3 = new Vector3();
+var direction = new Vector3();
 var tempQuaternion = new Laya.Quaternion();
-var currentShadingMode = Laya.BaseScene.PIXEL_SHADING;
 var currentLightState = 0;
 var buttonLight;
-var shadingLight;
-
 
 var scene = Laya.stage.addChild(new Laya.Scene());
 
@@ -45,8 +43,6 @@ spotLight.attenuation = new Vector3(0.0, 0.0, 0.8);
 spotLight.range = 3.0;
 spotLight.spot = 32;
 
-scene.shadingMode = currentShadingMode;
-
 var grid = scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/grid/plane.lh"));
 //可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 grid.once(Laya.Event.HIERARCHY_LOADED, null, function (sprite) {
@@ -65,6 +61,10 @@ sphere.once(Laya.Event.HIERARCHY_LOADED, null, function() {
 });
 
 var skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm")));
+skinMesh.transform.localRotationEuler = new Laya.Vector3(0, 3.14, 0);
+var skinAni = skinMesh.addComponent(Laya.SkinAnimations);
+skinAni.templet = Laya.AnimationTemplet.load("../../res/threeDimen/skinModel/dude/dude-Take 001.lsani");
+skinAni.player.play();
 
 Laya.stage.timer.frameLoop(1, null, function () {
     switch (currentLightState) {
@@ -81,12 +81,12 @@ Laya.stage.timer.frameLoop(1, null, function () {
             Laya.Quaternion.createFromYawPitchRoll(0.03, 0, 0, tempQuaternion);
             Vector3.transformQuat(spotLight.transform.position, tempQuaternion, tempVector3);
             spotLight.transform.position = tempVector3;
-            Vector3.transformQuat(spotLight.direction, tempQuaternion, spotLight.direction);
+            direction = spotLight.direction;
+            Vector3.transformQuat(direction, tempQuaternion, direction);
+            spotLight.direction = direction;
             break;
     }
 });
-
-
 
 
 (function loadUI() {
@@ -103,36 +103,12 @@ Laya.stage.timer.frameLoop(1, null, function () {
         buttonLight.on(Laya.Event.CLICK, this, onclickButtonLight);
         Laya.stage.addChild(buttonLight);
 
-        shadingLight = new Laya.Button();
-        shadingLight.skin = "../../res/threeDimen/ui/button.png";
-        shadingLight.label = "像素着色";
-        shadingLight.labelBold = true;
-        shadingLight.labelSize = 20;
-        shadingLight.sizeGrid = "4,4,4,4";
-        shadingLight.size(120, 30);
-        shadingLight.scale(Browser.pixelRatio, Browser.pixelRatio);
-        shadingLight.pos(Laya.stage.width / 2 - shadingLight.width * Browser.pixelRatio / 2, Laya.stage.height - 50 * Browser.pixelRatio);
-        shadingLight.on(Laya.Event.CLICK, this, onclickButtonShading);
-        Laya.stage.addChild(shadingLight);
-
         Laya.stage.on(Laya.Event.RESIZE, null, function () {
             buttonLight.pos(Laya.stage.width / 2 - buttonLight.width * Browser.pixelRatio / 2, Laya.stage.height - 100 * Browser.pixelRatio);
-            shadingLight.pos(Laya.stage.width / 2 - shadingLight.width * Browser.pixelRatio / 2, Laya.stage.height - 50 * Browser.pixelRatio);
         });
 
     }));
 })();
-
-function onclickButtonShading() {
-    currentShadingMode++;
-    (currentShadingMode > Laya.BaseScene.PIXEL_SHADING) && (currentShadingMode = Laya.BaseScene.VERTEX_SHADING);
-    if (currentShadingMode == Laya.BaseScene.VERTEX_SHADING) {
-        shadingLight.label = "顶点着色";
-    } else {
-        shadingLight.label = "像素着色";
-    }
-    scene.shadingMode = currentShadingMode;
-}
 
 function onclickButtonLight() {
     currentLightState++;

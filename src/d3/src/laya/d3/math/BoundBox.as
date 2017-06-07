@@ -102,7 +102,7 @@ package laya.d3.math {
 		 * @return	 克隆副本。
 		 */
 		public function clone():* {
-			var dest:BoundBox = __JS__("new this.constructor()");
+			var dest:BoundBox = __JS__("new this.constructor(new Vector3(),new Vector3())");
 			cloneTo(dest);
 			return dest;
 		}

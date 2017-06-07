@@ -156,7 +156,6 @@ package laya.ani {
 				break;
 			default: 
 				AnimationParser01.parse(this, reader);
-					//_parseOld(reader, _aniVersion);
 			}
 			
 			_endLoaded();

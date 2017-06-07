@@ -1,0 +1,53 @@
+{
+	"type":"Sprite3D",
+	"props":{
+		"name":"temp"
+	},
+	"customProps":{
+		"translate":[
+			0,
+			0,
+			0
+		],
+		"rotation":[
+			0,
+			0,
+			0,
+			-1
+		],
+		"scale":[
+			1,
+			1,
+			1
+		]
+	},
+	"child":[
+{
+  "type": "MeshSprite3D",
+  "instanceParams":{
+	"loadPath": "B00IT007M-DEFAULT01.lm"
+	},
+  "props": {
+    "isStatic": false,
+    "name": "DEFAULT01"
+  },
+  "customProps": {
+    "translate": [
+      -0.467529982,
+      0.05024,
+      0.32712
+    ],
+    "rotation": [
+      -0.0002500625,
+      -0.000249874953,
+      -0.000250124955,
+      0.9999999
+    ],
+    "scale": [
+      1.000001,
+      1.0,
+      1.00000048
+    ]
+  },
+  "child": []
+}]}

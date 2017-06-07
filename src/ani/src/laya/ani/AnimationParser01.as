@@ -92,8 +92,9 @@ package laya.ani {
 					var keyframeCount:int = reader.getUint16();
 					node.keyFrame.length = keyframeCount;
 					var startTime:Number = 0;
+					var keyFrame:KeyFramesContent;
 					for (k = 0, n = keyframeCount; k < n; k++) {
-						var keyFrame:KeyFramesContent = node.keyFrame[k] = new KeyFramesContent();
+						keyFrame = node.keyFrame[k] = new KeyFramesContent();
 						//[IF-SCRIPT] {};//不要删除
 						keyFrame.duration = reader.getFloat32();
 						keyFrame.startTime = startTime;
@@ -151,6 +152,7 @@ package laya.ani {
 						}
 						startTime += keyFrame.duration;
 					}
+					keyFrame.startTime = ani.playTime;//因工具BUG，矫正最后一帧startTime
 					node.playTime = ani.playTime;//节点总时间可能比总时长大，次处修正
 					templet._calculateKeyFrame(node, keyframeCount, keyframeDataCount);
 				}

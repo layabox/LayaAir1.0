@@ -14,10 +14,18 @@ uniform vec4 u_Tintcolor;
 void main()
 {	
 	#ifdef DIFFUSEMAP
-	  if(v_Discard!=0.0)
-         discard;
-	  gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*u_Tintcolor*2.0*v_Color;
+		if(v_Discard!=0.0)
+			discard;
+		#ifdef TINTCOLOR
+			gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*u_Tintcolor*2.0*v_Color;
+		#else
+			gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*v_Color;
+		#endif
 	#else
-	  gl_FragColor=vec4(0.0);
+		#ifdef TINTCOLOR
+			gl_FragColor=u_Tintcolor*2.0*v_Color;
+		#else
+			gl_FragColor=v_Color;
+		#endif
 	#endif
 }

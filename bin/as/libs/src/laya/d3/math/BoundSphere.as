@@ -104,11 +104,11 @@ package laya.d3.math {
 		/**
 		 * 判断射线是否与碰撞球交叉，并返回交叉点。
 		 * @param	ray  射线。
-		 * @param	point 交叉点。
+		 * @param	outPoint 交叉点。
 		 * @return  距离交叉点的距离，-1表示不交叉。
 		 */
-		public function intersectsRayPoint(ray:Ray, point:Vector3):Number {
-			return Collision.intersectsRayAndSphereRP(ray, this, point);
+		public function intersectsRayPoint(ray:Ray, outPoint:Vector3):Number {
+			return Collision.intersectsRayAndSphereRP(ray, this, outPoint);
 		}
 		
 		/**
@@ -126,7 +126,7 @@ package laya.d3.math {
 		 * @return	 克隆副本。
 		 */
 		public function clone():* {
-			var dest:BoundSphere = __JS__("new this.constructor()");
+			var dest:BoundSphere = __JS__("new this.constructor(new Vector3(),new Vector3())");
 			cloneTo(dest);
 			return dest;
 		}

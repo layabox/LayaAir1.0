@@ -270,7 +270,6 @@ package laya.d3.resource.models
 			}
 			
 			verticeCount += _slices + 1 + 1;
-			debugger;
 			_vertexBuffer = new VertexBuffer3D(vertexDeclaration, _numberVertices, WebGLContext.STATIC_DRAW, true);
 			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _numberIndices, WebGLContext.STATIC_DRAW, true);
 			_vertexBuffer.setData(vertices);

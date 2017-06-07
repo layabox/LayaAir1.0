@@ -8,9 +8,6 @@ package laya.d3.resource {
 	import laya.webgl.WebGLContext;
 	
 	public class TextureCube extends BaseTexture {
-		/**灰色纯色纹理。*/
-		public static var grayTexture:SolidColorTextureCube = new SolidColorTextureCube(new Vector4(0.5, 0.5, 0.5, 1.0));
-		
 		/**
 		 * 加载TextureCube。
 		 * @param url TextureCube地址。
@@ -45,7 +42,7 @@ package laya.d3.resource {
 		 * @inheritDoc
 		 */
 		override public function get defaulteTexture():BaseTexture {
-			return grayTexture;
+			return SolidColorTextureCube.grayTexture;
 		}
 		
 		public function TextureCube() {

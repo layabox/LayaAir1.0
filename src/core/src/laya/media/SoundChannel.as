@@ -65,6 +65,19 @@ package laya.media {
 		public function stop():void {
 		
 		}
+		
+		/**
+		 * 暂停。
+		 */
+		public function pause():void {
+		}
+		
+		/**
+		 * 继续播放。
+		 */
+		public function resume():void {
+		}
+		
 		/**
 		 * private
 		 */

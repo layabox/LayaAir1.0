@@ -6,8 +6,7 @@ package laya.ui {
 	 * <code>CheckBox</code> 组件还可以显示可选的文本标签，默认该标签位于 CheckBox 右侧。
 	 * <p><code>CheckBox</code> 使用 <code>dataSource</code>赋值时的的默认属性是：<code>selected</code>。</p>
 	 *
-	 * @example 以下示例代码，创建了一个 <code>CheckBox</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>CheckBox</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.CheckBox;
@@ -35,8 +34,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * Laya.loader.load("resource/ui/check.png",laya.utils.Handler.create(this,loadComplete));//加载资源
@@ -53,8 +51,7 @@ package laya.ui {
 	 * {
 	 *     console.log("checkBox.selected = ",checkBox.selected);
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import CheckBox= laya.ui.CheckBox;
 	 * import Handler=laya.utils.Handler;
 	 * class CheckBox_Example{
@@ -77,7 +74,6 @@ package laya.ui {
 	 *         console.log("输出选中状态: checkBox.selected = " + checkBox.selected);
 	 *     }
 	 * }
-	 * </listing>
 	 */
 	public class CheckBox extends Button {
 		

@@ -25,7 +25,7 @@ package laya.d3.core.render {
 	import laya.utils.Stat;
 	
 	/**
-	 * <code>Render</code> 类用于渲染器的父类，抽象类不允许示例。
+	 * <code>Render</code> 类用于渲染器的父类，抽象类不允许实例。
 	 */
 	public class BaseRender extends EventDispatcher implements IDestroy {
 		/**@private */
@@ -299,9 +299,6 @@ package laya.d3.core.render {
 		 * 创建一个新的 <code>BaseRender</code> 实例。
 		 */
 		public function BaseRender(owner:RenderableSprite3D) {
-			_destroyed = false;
-			_owner = owner;
-			_enable = true;
 			_boundingBox = new BoundBox(new Vector3(), new Vector3());
 			_boundingBoxCenter = new Vector3();
 			_boundingSphere = new BoundSphere(new Vector3(), 0);
@@ -310,10 +307,15 @@ package laya.d3.core.render {
 			_boundingBoxCenterNeedChange = true;
 			_octreeNodeNeedChange = true;
 			_materials = new Vector.<BaseMaterial>();
-			sortingFudge = 0.0;
 			_renderElements = new Vector.<RenderElement>();
 			_isPartOfStaticBatch = false;
-			
+			_destroyed = false;
+			_owner = owner;
+			_enable = true;
+			lightmapIndex = -1;
+			castShadow = false;
+			receiveShadow = false;
+			sortingFudge = 0.0;
 			_owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);
 		}
 		

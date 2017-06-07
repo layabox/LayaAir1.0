@@ -1,5 +1,6 @@
 class CustomMaterial extends Laya.BaseMaterial {
 
+    private _DIFFUSETEXTURE_ID:int;
     constructor(){
         super();
         this.setShaderName("CustomShader");

@@ -23,7 +23,6 @@ package laya.filters {
 			var canvas:* = srcCanvas.ctx.ctx.canvas;
 			
 			if (canvas.width == 0 || canvas.height == 0) return canvas;
-
 			
 			var imgdata:* = ctx.getImageData(0, 0, canvas.width, canvas.height);
 			

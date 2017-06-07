@@ -565,7 +565,7 @@ package laya.display.css {
 		
 		public function set backgroundColor(value:String):void {
 			if (value === 'none') _bgground = null;
-			else (_bgground || (_bgground = { } ), _bgground.color = value);
+			else (_bgground || (_bgground = {}), _bgground.color = value);
 			_ower.conchModel && _ower.conchModel.bgColor(value);
 			_ower._renderType |= RenderSprite.STYLE;
 		}

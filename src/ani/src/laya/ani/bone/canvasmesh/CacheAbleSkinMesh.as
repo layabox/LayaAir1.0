@@ -8,7 +8,6 @@ package laya.ani.bone.canvasmesh
 	/**
 	 * @private
 	 * 将mesh元素缓存到canvas中并进行绘制
-	 * @author ww
 	 */
 	public class CacheAbleSkinMesh extends SkinMeshCanvas 
 	{

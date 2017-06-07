@@ -15,6 +15,7 @@ package laya.d3.core {
 	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
 	import laya.display.Node;
+	import laya.display.Sprite;
 	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.net.URL;
@@ -135,6 +136,14 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * 获取是否属于场景。
+		 * @return  是否属于场景。
+		 */
+		public function get belongScene():Boolean {
+			return _belongScene;
+		}
+		
+		/**
 		 * 获取自身是否激活。
 		 *   @return	自身是否激活。
 		 */
@@ -230,17 +239,9 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 获取是否属于场景。
-		 * @return  是否属于场景。
-		 */
-		public function get belongScene():Boolean {
-			return _belongScene;
-		}
-		
-		/**
 		 * 获取精灵变换。
 		 */
-		public function get transform():Transform3D{
+		public function get transform():Transform3D {
 			return _transform;
 		}
 		
@@ -417,7 +418,7 @@ package laya.d3.core {
 		 * @param	state 渲染相关状态。
 		 */
 		public function _getSortID(renderElement:IRenderable, material:BaseMaterial):int {
-			return material.id * VertexDeclaration._maxVertexDeclarationBit+renderElement._getVertexBuffer().vertexDeclaration.id;
+			return material.id * VertexDeclaration._maxVertexDeclarationBit + renderElement._getVertexBuffer().vertexDeclaration.id;
 		}
 		
 		/**
@@ -450,8 +451,6 @@ package laya.d3.core {
 			}
 		}
 		
-		
-		
 		/**
 		 * 获取投影视图世界矩阵。
 		 * @param	projectionViewMatrix 投影视图矩阵。
@@ -477,14 +476,36 @@ package laya.d3.core {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
 			
-			var returnNode:Node = super.addChildAt(node, index);
-			var sprite3D:Sprite3D = node as Sprite3D;
-			sprite3D.transform.parent = transform;
-			if (_belongScene) {
-				sprite3D._setBelongScene(_scene);
-				(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
+			if (!node || destroyed || node === this) return node;
+			if (Sprite(node).zOrder) _set$P("hasZorder", true);
+			if (index >= 0 && index <= this._childs.length) {
+				if (node._parent === this) {
+					var oldIndex:int = getChildIndex(node);
+					this._childs.splice(oldIndex, 1);
+					this._childs.splice(index, 0, node);
+					if (conchModel) {
+						conchModel.removeChild(node.conchModel);
+						conchModel.addChildAt(node.conchModel, index);
+					}
+					_childChanged();
+				} else {
+					node.parent && node.parent.removeChild(node);
+					this._childs === ARRAY_EMPTY && (this._childs = []);
+					this._childs.splice(index, 0, node);
+					conchModel && conchModel.addChildAt(node.conchModel, index);
+					node.parent = this;
+					
+					var sprite3D:Sprite3D = node as Sprite3D;
+					sprite3D.transform.parent = transform;
+					if (_belongScene) {
+						sprite3D._setBelongScene(_scene);
+						(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
+					}
+				}
+				return node;
+			} else {
+				throw new Error("appendChildAt:The index is out of bounds");
 			}
-			return returnNode;
 		}
 		
 		/**
@@ -494,14 +515,36 @@ package laya.d3.core {
 			if (!(node is Sprite3D))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
 			
-			var returnNode:Node = super.addChild(node);
-			var sprite3D:Sprite3D = node as Sprite3D;
-			sprite3D.transform.parent = transform;
-			if (_belongScene) {
-				sprite3D._setBelongScene(_scene);
-				(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
+			if (!node || destroyed || node === this) return node;
+			if (Sprite(node).zOrder) _set$P("hasZorder", true);
+			if (node._parent === this) {
+				var index:int = getChildIndex(node);
+				if (index !== _childs.length - 1) {
+					this._childs.splice(index, 1);
+					this._childs.push(node);
+					if (conchModel) {
+						conchModel.removeChild(node.conchModel);
+						conchModel.addChildAt(node.conchModel, this._childs.length - 1);
+					}
+					_childChanged();
+				}
+			} else {
+				node.parent && node.parent.removeChild(node);
+				this._childs === ARRAY_EMPTY && (this._childs = []);
+				this._childs.push(node);
+				conchModel && conchModel.addChildAt(node.conchModel, this._childs.length - 1);
+				node.parent = this;
+				_childChanged();
+				
+				var sprite3D:Sprite3D = node as Sprite3D;
+				sprite3D.transform.parent = transform;
+				if (_belongScene) {
+					sprite3D._setBelongScene(_scene);
+					(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
+				}
 			}
-			return returnNode;
+			
+			return node;
 		}
 		
 		/**
@@ -658,13 +701,12 @@ package laya.d3.core {
 			if (destroyed)//TODO:其它资源是否同样处理
 				return;
 			
-			var oriData:Object = data[0];
-			var json:Object = JSON.parse(oriData as String);
+			var json:Object = JSON.parse(data[0] as String);
 			if (json.type !== "Sprite3D")
-				throw new Error("Sprite3D: the .lh file root type must be Sprite3D,please use other function to  load  this file.");
+				throw new Error("Sprite3D: The .lh file root type must be Sprite3D,please use other function to  load  this file.");
 			
 			var innerResouMap:Object = data[1];
-			ClassUtils.createByJson(oriData as String, this, this, Handler.create(null, Utils3D._parseHierarchyProp, [innerResouMap], false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
+			ClassUtils.createByJson(json, this, this, Handler.create(null, Utils3D._parseHierarchyProp, [innerResouMap], false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
 			event(Event.HIERARCHY_LOADED, [this]);
 		}
 		
@@ -673,6 +715,9 @@ package laya.d3.core {
 		 * @param	destObject 克隆源。
 		 */
 		public function cloneTo(destObject:*):void {
+			if (destroyed)
+				throw new Error("Sprite3D: Can't be cloned if the Spriote3D has destroyed.");
+				
 			var destSprite3D:Sprite3D = destObject as Sprite3D;
 			
 			destSprite3D.name = name/* + "(clone)"*/;//TODO:克隆后不能播放刚体动画，找不到名字

@@ -43,7 +43,6 @@ package laya.d3.graphics {
 		 */
 		public function SubMeshStaticBatch(rootOwner:Sprite3D, vertexDeclaration:VertexDeclaration, material:BaseMaterial) {
 			super(rootOwner);
-			
 			_batchOwnerIndices = new Vector.<Vector.<int>>();
 			_batchOwners = new Vector.<MeshSprite3D>();
 			
@@ -175,7 +174,6 @@ package laya.d3.graphics {
 						}
 					}
 					
-					//debugger;
 					curIndexCount += subIndexDatas.length;
 					
 					vertexDatas.set(subVertexDatas, curMerVerCount);
@@ -222,27 +220,26 @@ package laya.d3.graphics {
 					merageElement._material = _material;
 					merageElement._batchIndexStart = (renderElement as SubMeshRenderElement)._batchIndexStart;
 					merageElement._batchIndexEnd = (renderElement as SubMeshRenderElement)._batchIndexEnd;
-					//debugger;
 					
 					//精灵对象池清理，移动到StaticBtachManager复用率更高。
-					var lightMapIndex:int = renderElement._render.lightmapIndex;
+					var lightMapIndex:int = render.lightmapIndex;
 					var cacheLightMapIndex:int = lightMapIndex + 1;
 					var lightMapBatchOwnerIndices:Vector.<int> = _batchOwnerIndices[cacheLightMapIndex];
 					(lightMapBatchOwnerIndices) || (lightMapBatchOwnerIndices = _batchOwnerIndices[cacheLightMapIndex] = new Vector.<int>());
 					var batchOwnerIndex:* = lightMapBatchOwnerIndices[renderElement._render.receiveShadow ? 1 : 0];
 					var batchOwner:MeshSprite3D;
 					if (batchOwnerIndex === undefined) {
-						lightMapBatchOwnerIndices[renderElement._render.receiveShadow ? 1 : 0] = _batchOwners.length;
+						lightMapBatchOwnerIndices[render.receiveShadow ? 1 : 0] = _batchOwners.length;
 						batchOwner = new MeshSprite3D(null, "StaticBatchMeshSprite3D");
 						batchOwner._scene = scene;
 						batchOwner._transform = _rootOwner ? _rootOwner._transform : null;
 						batchOwner._render.lightmapIndex = lightMapIndex;
 						batchOwner._render.receiveShadow = renderElement._render.receiveShadow;
-						batchOwner._render._renderUpdate(projectionView);
 						_batchOwners.push(batchOwner);
 					} else {
 						batchOwner = _batchOwners[batchOwnerIndex];
 					}
+					batchOwner._render._renderUpdate(projectionView);
 					
 					merageElement._sprite3D = batchOwner;
 					renderQueueElements.push(merageElement);
@@ -265,7 +262,6 @@ package laya.d3.graphics {
 		 * @inheritDoc
 		 */
 		override public function _render(state:RenderState):void {
-			//debugger;
 			var renderElement:SubMeshRenderElement = state.renderElement as SubMeshRenderElement;
 			var batchIndexStart:int = renderElement._batchIndexStart;
 			var indexCount:int = renderElement._batchIndexEnd - batchIndexStart;

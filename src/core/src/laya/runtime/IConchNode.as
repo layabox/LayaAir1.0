@@ -1,6 +1,5 @@
 package laya.runtime {
 	import laya.display.Graphics;
-	import laya.display.Graphics;
 	import laya.resource.Context;
 	/**
 	 * @private

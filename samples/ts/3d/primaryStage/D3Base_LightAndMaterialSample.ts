@@ -4,24 +4,24 @@ module LightAndMaterialSample {
 	import Vector3 = Laya.Vector3;
 
 	export class LightAndMaterialSample {
-		private currentShadingMode: number;
 		private currentLightState: number;
 		private currentLight: Laya.LightSprite;
 		private scene: Laya.Scene;
 
 		private buttonLight: Laya.Button;
-		private shadingLight: Laya.Button;
 		private skinMesh: Laya.MeshSprite3D;
-		private skinAni: Laya.SkinAnimations;
+		private skinAni:Laya.SkinAnimations;
 		private directionLight: Laya.DirectionLight;
 		private pointLight: Laya.PointLight;
 		private spotLight: Laya.SpotLight;
 		private tempQuaternion: Laya.Quaternion;
 		private tempVector3: Vector3;
+		private direction: Vector3;
 
 		constructor() {
 			this.tempQuaternion = new Laya.Quaternion();
 			this.tempVector3 = new Vector3();
+			this.direction = new Vector3();
 			this.currentLightState = 0;
 
 			Laya3D.init(0, 0,true);
@@ -63,9 +63,6 @@ module LightAndMaterialSample {
 			this.spotLight.range = 3.0;
 			this.spotLight.spot = 32;
 
-			this.scene.shadingMode = this.currentShadingMode;
-
-
 			var grid = this.scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/grid/plane.lh")) as Laya.Sprite3D;
 			//可采用预加载资源方式，避免异步加载资源问题，则无需注册事件。
 			grid.once(Laya.Event.HIERARCHY_LOADED, null, (sprite) => {
@@ -84,6 +81,10 @@ module LightAndMaterialSample {
 			});
 
 			this.skinMesh = this.scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm"))) as Laya.MeshSprite3D;
+			this.skinMesh.transform.localRotationEuler = new Laya.Vector3(0, 3.14, 0);
+			this.skinAni = this.skinMesh.addComponent(Laya.SkinAnimations) as Laya.SkinAnimations;
+			this.skinAni.templet = Laya.AnimationTemplet.load("../../res/threeDimen/skinModel/dude/dude-Take 001.lsani");
+			this.skinAni.player.play();
 
 
 			Laya.stage.timer.frameLoop(1, null, () => {
@@ -101,7 +102,9 @@ module LightAndMaterialSample {
 						Laya.Quaternion.createFromYawPitchRoll(0.03, 0, 0, _this.tempQuaternion);
 						Vector3.transformQuat(_this.spotLight.transform.position, _this.tempQuaternion, _this.tempVector3);
 						_this.spotLight.transform.position = _this.tempVector3;
-						Vector3.transformQuat(_this.spotLight.direction, _this.tempQuaternion, _this.spotLight.direction);
+						_this.direction = _this.spotLight.direction;
+						Vector3.transformQuat(_this.direction,  _this.tempQuaternion, _this.direction);
+						_this.spotLight.direction = _this.direction;
 						break;
 				}
 			});
@@ -122,36 +125,12 @@ module LightAndMaterialSample {
 				_this.buttonLight.on(Laya.Event.CLICK, _this, _this.onclickButtonLight);
 				Laya.stage.addChild(_this.buttonLight);
 
-				_this.shadingLight = new Laya.Button();
-				_this.shadingLight.skin = "../../res/threeDimen/ui/button.png";
-				_this.shadingLight.label = "像素着色";
-				_this.shadingLight.labelBold = true;
-				_this.shadingLight.labelSize = 20;
-				_this.shadingLight.sizeGrid = "4,4,4,4";
-				_this.shadingLight.size(120, 30);
-				_this.shadingLight.scale(Browser.pixelRatio, Browser.pixelRatio);
-				_this.shadingLight.pos(Laya.stage.width / 2 - _this.shadingLight.width * Browser.pixelRatio / 2, Laya.stage.height - 50 * Browser.pixelRatio);
-				_this.shadingLight.on(Laya.Event.CLICK, _this, _this.onclickButtonShading);
-				Laya.stage.addChild(_this.shadingLight);
-
 				Laya.stage.on(Laya.Event.RESIZE, null, () => {
 					_this.buttonLight.pos(Laya.stage.width / 2 - _this.buttonLight.width * Browser.pixelRatio / 2, Laya.stage.height - 100 * Browser.pixelRatio);
-					_this.shadingLight.pos(Laya.stage.width / 2 - _this.shadingLight.width * Browser.pixelRatio / 2, Laya.stage.height - 50 * Browser.pixelRatio);
 				});
 
 			}));
 
-		}
-
-		private onclickButtonShading(): void {
-			this.currentShadingMode++;
-			(this.currentShadingMode > Laya.BaseScene.PIXEL_SHADING) && (this.currentShadingMode = Laya.BaseScene.VERTEX_SHADING);
-			if (this.currentShadingMode == Laya.BaseScene.VERTEX_SHADING) {
-				this.shadingLight.label = "顶点着色";
-			} else {
-				this.shadingLight.label = "像素着色";
-			}
-			this.scene.shadingMode = this.currentShadingMode;
 		}
 
 		private onclickButtonLight(): void {

@@ -6,7 +6,6 @@ package laya.ani.bone
 	/**
 	 * @private
 	 * Mesh数据处理工具
-	 * @author ww
 	 * @version 1.0
 	 * 
 	 * @created  2017-4-28 下午2:46:23

@@ -65,7 +65,7 @@ package laya.ui {
 			for (var i:int = 0; i < _clipY; i++) {
 				var line:Array = arr[i].split("");
 				for (var j:int = 0, n:int = line.length; j < n; j++) {
-					_indexMap[line[j]] = i * _clipY + j;
+					_indexMap[line[j]] = i * _clipX + j;
 				}
 			}
 		}
@@ -124,6 +124,7 @@ package laya.ui {
 		/**渲染数值*/
 		protected function changeValue():void {
 			if (!this._sources) return;
+			if (!_valueArr) return;
 			this.graphics.clear();
 			var texture:Texture;
 			

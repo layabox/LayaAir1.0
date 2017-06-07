@@ -7,7 +7,6 @@ var Vector3 = Laya.Vector3;
 var rotation = new Vector3(0, 0.01, 0);
 
 var scene = Laya.stage.addChild(new Laya.Scene());
-scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
 
 var camera = scene.addChild(new Laya.Camera( 0, 0.1, 100));
 camera.transform.translate(new Vector3(0, 0.8, 1.6));

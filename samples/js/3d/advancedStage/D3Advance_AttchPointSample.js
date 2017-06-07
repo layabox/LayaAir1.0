@@ -17,13 +17,12 @@ pointLight.attenuation = new Vector3(0.6, 0.6, 0.6);
 pointLight.ambientColor = new Vector3(0.2, 0.2, 0.0);
 pointLight.specularColor = new Vector3(2.0, 2.0, 2.0);
 pointLight.diffuseColor = new Vector3(1, 1, 1);
-scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
 
 var skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm")));
 skinMesh.transform.localRotationEuler = new Vector3(0, 3.14, 0);
 
 var skinAni = skinMesh.addComponent(Laya.SkinAnimations);
-skinAni.templet = Laya.AnimationTemplet.load("../../res/threeDimen/skinModel/dude/dude.ani");
+skinAni.templet = Laya.AnimationTemplet.load("../../res/threeDimen/skinModel/dude/dude-Take 001.lsani");
 skinAni.player.play();
 
 var attacthPoint = skinMesh.addComponent(Laya.AttachPoint);

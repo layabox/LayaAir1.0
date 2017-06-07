@@ -1,4 +1,5 @@
 package threeDimen.primaryStage {
+	import laya.ani.AnimationTemplet;
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.Camera;
 	import laya.d3.core.MeshSprite3D;
@@ -27,8 +28,6 @@ package threeDimen.primaryStage {
 		private var scene:Scene;
 		
 		private var buttonLight:Button;
-		private var skinMesh:MeshSprite3D;
-		private var skinAni:SkinAnimations;
 		private var directionLight:DirectionLight;
 		private var pointLight:PointLight;
 		private var spotLight:SpotLight;
@@ -98,7 +97,11 @@ package threeDimen.primaryStage {
 				sphere.transform.localPosition = new Vector3(0.0, 0.0, 0.2);
 			});
 			
-			skinMesh = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
+			var skinMesh:MeshSprite3D = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
+			skinMesh.transform.localRotationEuler = new Vector3(0, 3.14, 0);
+			var skinAni:SkinAnimations = skinMesh.addComponent(SkinAnimations) as SkinAnimations;
+			skinAni.templet = AnimationTemplet.load("../../../../res/threeDimen/skinModel/dude/dude-Take 001.lsani");
+			skinAni.player.play();
 			
 			Laya.stage.timer.frameLoop(1, null, function():void {
 				var direction:Vector3;
@@ -144,7 +147,6 @@ package threeDimen.primaryStage {
 				
 				Laya.stage.on(Event.RESIZE, null, function():void {
 					_this.buttonLight.pos(Laya.stage.width / 2 - _this.buttonLight.width * Browser.pixelRatio / 2, Laya.stage.height - 100 * Browser.pixelRatio);
-					//_this.shadingLight.pos(Laya.stage.width / 2 - _this.shadingLight.width * Browser.pixelRatio / 2, Laya.stage.height - 50 * Browser.pixelRatio);
 				});
 			
 			}));

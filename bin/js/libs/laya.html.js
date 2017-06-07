@@ -234,7 +234,7 @@
 				}
 				for (i=0,n=lines.length;i < n;i++){
 					lines[i].updatePos(0,tWidth,i,tY,align,valign,lineHeight);
-					tY+=Math.max(lineHeight,lines[i].h);
+					tY+=Math.max(lineHeight,lines[i].h+leading);
 				}
 				y=tY;
 			}
@@ -433,7 +433,9 @@
 						tSprite=tHTMLChar.getSprite();
 						if (tSprite){
 							var tHeight=tHTMLChar.height-1;
-							tSprite.graphics.drawLine(0,tHeight,tHTMLChar.width,tHeight,tHTMLChar._getCSSStyle().color);
+							var dX=tHTMLChar.style.letterSpacing*0.5;
+							if (!dX)dX=0;
+							tSprite.graphics.drawLine(0-dX,tHeight,tHTMLChar.width+dX,tHeight,tHTMLChar._getCSSStyle().color);
 							tSprite.size(tHTMLChar.width,tHTMLChar.height);
 							tSprite.on(/*laya.events.Event.CLICK*/"click",this,this.onLinkHandler);
 						}
@@ -648,8 +650,11 @@
 			if (this._width)return this._width;
 			return this.contextWidth;
 			},function(value){
+			var changed=false;
+			changed=value !=this.width;
 			_super.prototype._$set_width.call(this,value);
-			this.layout();
+			if(changed)
+				this.layout();
 		});
 
 		return HTMLDivElement;
@@ -745,6 +750,8 @@
 					_$this._renderArgs[4]=_$this.height || _$this._tex.height;
 					_$this.graphics.drawTexture(_$this._tex,0,0,_$this._renderArgs[3],_$this._renderArgs[4]);
 				}
+				_$this.repaint();
+				_$this.parentRepaint();
 			}
 			tex.loaded?onloaded():tex.on(/*laya.events.Event.LOADED*/"loaded",null,onloaded);
 		});

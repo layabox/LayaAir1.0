@@ -24,15 +24,19 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
+	import laya.d3.graphics.VertexDeclaration;
+	import laya.d3.graphics.VertexElementUsage;
+	import laya.d3.graphics.VertexShurikenParticleMesh;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Rand;
 	import laya.d3.math.Vector2;
-	import laya.d3.graphics.VertexParticleShuriken;
+	import laya.d3.graphics.VertexShurikenParticleBillboard;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
+	import laya.d3.resource.models.Mesh;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.maths.MathUtil;
@@ -61,16 +65,15 @@ package laya.d3.core.particleShuriKen {
 	 * <code>ShurikenParticleSystem</code> 类用于创建3D粒子数据模板。
 	 */
 	public class ShurikenParticleSystem extends GeometryFilter implements IRenderable, IClone {
+		/** @private 0:Burst,1:预留,2:StartDelay,3:StartColor,4:StartSize,5:StartRotation,6:randomizeRotationDirection,7:StartLifetime,8:StartSpeed,9:VelocityOverLifetime,10:ColorOverLifetime,11:SizeOverLifetime,12:RotationOverLifetime,13-15:TextureSheetAnimation,16-17:Shape,18-20:StartRotation*/
+		public static const _RANDOMOFFSET:Uint32Array = new Uint32Array([0x23571a3e, 0xc34f56fe, 0x13371337, 0x12460f3b, 0x6aed452e, 0xdec4aea1, 0x96aa4de3, 0x8d2c8431, 0xf3857f6f, 0xe0fbd834, 0x13740583, 0x591bc05c, 0x40eb95e4, 0xbc524e5f, 0xaf502044, 0xa614b381, 0x1034e524, 0xfc524e5f, 0xec17ee0f, 0xac5483ef, 0x5ce24e5f]);
+		
 		/** @private */
-		private const halfKSqrtOf2:Number = 1.42 * 0.5;
+		private static const halfKSqrtOf2:Number = 1.42 * 0.5;
 		
 		/** @private */
 		public static const _maxElapsedTime:Number = 1.0 / 3.0;
-		/** @private 0:Burst,1:预留,2:StartDelay,3:StartColor,4:StartSize,5:StartRotation,6:randomizeRotationDirection,7:StartLifetime,8:StartSpeed,9:VelocityOverLifetime,10:ColorOverLifetime,11:SizeOverLifetime,12:RotationOverLifetime,13-15:TextureSheetAnimation,16-17:Shape*/
-		public static const _RANDOMOFFSET:Uint32Array = new Uint32Array([0x23571a3e, 0xc34f56fe, 0x13371337, 0x12460f3b, 0x6aed452e, 0xdec4aea1, 0x96aa4de3, 0x8d2c8431, 0xf3857f6f, 0xe0fbd834, 0x13740583, 0x591bc05c, 0x40eb95e4, 0xbc524e5f, 0xaf502044, 0xa614b381, 0x1034e524, 0xfc524e5f]);
 		
-		/** @private */
-		private var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
 		/**@private */
 		private static var _tempVector30:Vector3 = new Vector3();
 		/**@private */
@@ -97,18 +100,28 @@ package laya.d3.core.particleShuriKen {
 		private static var _tempDirection:Vector3 = new Vector3();
 		
 		/** @private */
-		protected var _boundingSphere:BoundSphere = new BoundSphere(new Vector3(), 0);
+		private var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
+		
 		/** @private */
-		protected var _boundingBox:BoundBox = new BoundBox(new Vector3(), new Vector3());
+		protected var _boundingSphere:BoundSphere;
+		/** @private */
+		protected var _boundingBox:BoundBox;
 		/** @private */
 		public var _boundingBoxCorners:Array;
 		
 		/** @private */
 		private var _owner:ShuriKenParticle3D;
+		/** @private */
+		private var _ownerRender:ShurikenParticleRender;
 		/**@private */
 		private var _vertices:Float32Array;
 		/**@private */
 		private var _floatCountPerVertex:uint;
+		/**@private */
+		private var _startLifeTimeIndex:uint;
+		/**@private */
+		private var _timeIndex:uint;
+		
 		/**@private */
 		private var _firstActiveElement:int;
 		/**@private */
@@ -160,6 +173,10 @@ package laya.d3.core.particleShuriKen {
 		private var _textureSheetAnimation:TextureSheetAnimation;
 		/** @private */
 		private var _uvLength:Vector2 = new Vector2();//TODO:
+		/** @private */
+		private var _vertexStride:int;
+		/** @private */
+		private var _indexStride:int;
 		
 		/**@private */
 		public var _startUpdateLoopCount:int;
@@ -207,7 +224,7 @@ package laya.d3.core.particleShuriKen {
 		/**最大开始速度,1模式。*/
 		public var startSpeedConstantMax:Number;
 		
-		/**3D开始尺寸，暂不支持*/
+		/**开始尺寸是否为3D模式。*/
 		public var threeDStartSize:Boolean;
 		/**开始尺寸模式,0为恒定尺寸，2为两个恒定尺寸的随机插值。缺少1、3模式和对应的二种3D模式*/
 		public var startSizeType:int;
@@ -253,8 +270,6 @@ package laya.d3.core.particleShuriKen {
 		/**最大开始颜色，1模式。*/
 		public var startColorConstantMax:Vector4;
 		
-		/**重力。*/
-		public var gravity:Vector3;//TODO:应使用全局,待验证算法是否正确
 		/**重力敏感度。*/
 		public var gravityModifier:Number;
 		/**模拟器空间,0为World,1为Local。暂不支持*/
@@ -291,8 +306,7 @@ package laya.d3.core.particleShuriKen {
 					_vertexBuffer.dispose();
 					_indexBuffer.dispose();
 				}
-				_initPartVertexDatas();
-				_initIndexDatas();
+				_initBufferDatas();
 			}
 		}
 		
@@ -386,7 +400,7 @@ package laya.d3.core.particleShuriKen {
 		 * @param value 生命周期速度.
 		 */
 		public function set velocityOverLifetime(value:VelocityOverLifetime):void {
-			var render:BaseRender = _owner._render;
+			var render:BaseRender = _ownerRender;
 			if (value) {
 				var velocity:GradientVelocity = value.velocity;
 				var velocityType:int = velocity.type;
@@ -472,7 +486,7 @@ package laya.d3.core.particleShuriKen {
 		 * @param value 生命周期颜色
 		 */
 		public function set colorOverLifetime(value:ColorOverLifetime):void {
-			var render:BaseRender = _owner._render;
+			var render:BaseRender = _ownerRender;
 			if (value) {
 				var color:GradientColor = value.color;
 				if (value.enbale) {
@@ -531,7 +545,7 @@ package laya.d3.core.particleShuriKen {
 		 * @param value 生命周期尺寸
 		 */
 		public function set sizeOverLifetime(value:SizeOverLifetime):void {
-			var render:BaseRender = _owner._render;
+			var render:BaseRender = _ownerRender;
 			if (value) {
 				var size:GradientSize = value.size;
 				var sizeSeparate:Boolean = size.separateAxes;
@@ -614,7 +628,7 @@ package laya.d3.core.particleShuriKen {
 		 * @param value 生命周期旋转。
 		 */
 		public function set rotationOverLifetime(value:RotationOverLifetime):void {
-			var render:BaseRender = _owner._render;
+			var render:BaseRender = _ownerRender;
 			if (value) {
 				var rotation:GradientAngularVelocity = value.angularVelocity;
 				var rotationSeparate:Boolean = rotation.separateAxes;
@@ -660,6 +674,7 @@ package laya.d3.core.particleShuriKen {
 						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX, rotation.gradientX._elements);
 						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY, rotation.gradientY._elements);
 						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, rotation.gradientZ._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTW, rotation.gradientW._elements);
 					} else {
 						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, rotation.gradient._elements);
 					}
@@ -681,6 +696,8 @@ package laya.d3.core.particleShuriKen {
 						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX, rotation.gradientYMax._elements);
 						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, rotation.gradientZMin._elements);
 						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX, rotation.gradientZMax._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTW, rotation.gradientWMin._elements);
+						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTWMAX, rotation.gradientWMax._elements);
 					} else {
 						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, rotation.gradientMin._elements);
 						render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX, rotation.gradientMax._elements);
@@ -706,6 +723,8 @@ package laya.d3.core.particleShuriKen {
 				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX, null);
 				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, null);
 				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTW, null);
+				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTWMAX, null);
 				
 				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT, null);
 				render._setShaderValueBuffer(ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX, null);
@@ -726,7 +745,7 @@ package laya.d3.core.particleShuriKen {
 		 * @param value 生命周期纹理动画。
 		 */
 		public function set textureSheetAnimation(value:TextureSheetAnimation):void {
-			var render:BaseRender = _owner._render;
+			var render:BaseRender = _ownerRender;
 			if (value) {
 				var frameOverTime:FrameOverTime = value.frame;
 				var textureAniType:int = frameOverTime.type;
@@ -817,10 +836,12 @@ package laya.d3.core.particleShuriKen {
 		
 		public function ShurikenParticleSystem(owner:ShuriKenParticle3D) {
 			_owner = owner;
+			_ownerRender = owner.particleRender;
 			_boundingBoxCorners = new Vector.<Vector3>(8);
+			_boundingSphere = new BoundSphere(new Vector3(), 0);
+			_boundingBox = new BoundBox(new Vector3(), new Vector3());
 			
 			_currentTime = 0;
-			_floatCountPerVertex = 40;//(0~3为CornerTextureCoordinate),(4~6为Position,7为StartLifeTime),(8~10Direction,11为Time),12到15为StartColor,16到18为StartSize,19到21为3DStartRotationForward(或19为2DStartRotation),22到24为3DStartRotationRight,25到27为3DStartRotationUp,28为startSpeed,29到32为random0,33到36为random1,37到39为世界空间模拟器模式位置(附加数据)
 			
 			_isPlaying = false;
 			_isPaused = false;
@@ -829,7 +850,7 @@ package laya.d3.core.particleShuriKen {
 			_emissionTime = 0;
 			_playbackTime = 0;
 			
-			_bufferMaxParticles = 1000;
+			_bufferMaxParticles = 1;
 			duration = 5.0;
 			looping = true;
 			prewarm = false;
@@ -872,7 +893,7 @@ package laya.d3.core.particleShuriKen {
 			startColorConstant = new Vector4(1, 1, 1, 1);
 			startColorConstantMin = new Vector4(1, 1, 1, 1);
 			startColorConstantMax = new Vector4(1, 1, 1, 1);
-			gravity = new Vector3(0, -9.81, 0);
+			
 			gravityModifier = 0.0;
 			simulationSpace = 1;
 			scaleMode = 0;
@@ -1063,7 +1084,6 @@ package laya.d3.core.particleShuriKen {
 			}
 			//TODO:重力
 			
-			
 			// 通过粒子最大尺寸扩充包围盒，最大尺寸为粒子对角线。TODO:HORIZONTALBILLBOARD和VERTICALBILLBOARD缩小cos45
 			var maxSize:Number, maxSizeY:Number;
 			switch (startSizeType) {
@@ -1136,16 +1156,16 @@ package laya.d3.core.particleShuriKen {
 				Vector3.normalize(minStretchVelocity, norMinStretchVelocity);
 				Vector3.scale(norMinStretchVelocity, minStretchLength, maxStretchPosition);
 				Vector3.add(minStratPosition, maxStretchPosition, maxStretchPosition);
-				debugger;
+				
 				rotSize = maxSize * halfKSqrtOf2;
 				Vector3.scale(sizeScale, rotSize, threeDMaxSize);
 				
 				var halfNorMaxStretchVelocity:Vector3 = _tempVector37;
 				var halfNorMinStretchVelocity:Vector3 = _tempVector38;
-				Vector3.scale(norMaxStretchVelocity,  0.5, halfNorMaxStretchVelocity);
-				Vector3.scale(norMinStretchVelocity,  0.5, halfNorMinStretchVelocity);
-				Vector3.multiply(halfNorMaxStretchVelocity,  sizeScale, halfNorMaxStretchVelocity);
-				Vector3.multiply(halfNorMinStretchVelocity,  sizeScale, halfNorMinStretchVelocity);
+				Vector3.scale(norMaxStretchVelocity, 0.5, halfNorMaxStretchVelocity);
+				Vector3.scale(norMinStretchVelocity, 0.5, halfNorMinStretchVelocity);
+				Vector3.multiply(halfNorMaxStretchVelocity, sizeScale, halfNorMaxStretchVelocity);
+				Vector3.multiply(halfNorMinStretchVelocity, sizeScale, halfNorMinStretchVelocity);
 				
 				Vector3.add(boundMin, halfNorMinStretchVelocity, boundMin);
 				Vector3.min(boundMin, minStretchPosition, boundMin);
@@ -1194,6 +1214,7 @@ package laya.d3.core.particleShuriKen {
 			
 			if (_firstActiveElement === _firstFreeElement)
 				_currentTime = 0;
+			
 			if (_firstRetiredElement === _firstActiveElement)
 				_drawCounter = 0;
 		
@@ -1245,11 +1266,11 @@ package laya.d3.core.particleShuriKen {
 		private function _retireActiveParticles():void {
 			const epsilon:Number = 0.0001;
 			while (_firstActiveElement != _firstNewElement) {
-				var index:int = _firstActiveElement * _floatCountPerVertex * 4;
-				var timeIndex:int = index + 11;//11为Time
+				var index:int = _firstActiveElement * _floatCountPerVertex * _vertexStride;
+				var timeIndex:int = index + _timeIndex;//11为Time
 				
 				var particleAge:Number = _currentTime - _vertices[timeIndex];
-				if (particleAge + epsilon < _vertices[index + 7]/*_maxLifeTime*/)//7为真实lifeTime
+				if (particleAge + epsilon < _vertices[index + _startLifeTimeIndex]/*_maxLifeTime*/)//7为真实lifeTime
 					break;
 				
 				_vertices[timeIndex] = _drawCounter;
@@ -1264,7 +1285,7 @@ package laya.d3.core.particleShuriKen {
 		 */
 		private function _freeRetiredParticles():void {
 			while (_firstRetiredElement != _firstActiveElement) {
-				var age:int = _drawCounter - _vertices[_firstRetiredElement * _floatCountPerVertex * 4 + 11];//11为Time
+				var age:int = _drawCounter - _vertices[_firstRetiredElement * _floatCountPerVertex * _vertexStride + _timeIndex];//11为Time
 				
 				if (isPerformanceMode)
 					if (age < 3)//GPU从不滞后于CPU两帧，出于显卡驱动BUG等安全因素考虑滞后三帧
@@ -1274,55 +1295,6 @@ package laya.d3.core.particleShuriKen {
 				if (_firstRetiredElement >= _bufferMaxParticles)
 					_firstRetiredElement = 0;
 			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _setPartVertexDatas():void {
-			for (var i:int = 0; i < _bufferMaxParticles; i++) {
-				var particleOffset:int = i * _floatCountPerVertex * 4;
-				_vertices[particleOffset + _floatCountPerVertex * 0 + 0] = -0.5;
-				_vertices[particleOffset + _floatCountPerVertex * 0 + 1] = -0.5;
-				
-				_vertices[particleOffset + _floatCountPerVertex * 1 + 0] = 0.5;
-				_vertices[particleOffset + _floatCountPerVertex * 1 + 1] = -0.5;
-				
-				_vertices[particleOffset + _floatCountPerVertex * 2 + 0] = 0.5;
-				_vertices[particleOffset + _floatCountPerVertex * 2 + 1] = 0.5;
-				
-				_vertices[particleOffset + _floatCountPerVertex * 3 + 0] = -0.5;
-				_vertices[particleOffset + _floatCountPerVertex * 3 + 1] = 0.5;
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _initPartVertexDatas():void {
-			_vertexBuffer = VertexBuffer3D.create(VertexParticleShuriken.vertexDeclaration, _bufferMaxParticles * 4, WebGLContext.DYNAMIC_DRAW);
-			_vertices = new Float32Array(_bufferMaxParticles * _floatCountPerVertex * 4);
-			_setPartVertexDatas();
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _initIndexDatas():void {
-			_indexBuffer = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, _bufferMaxParticles * 6, WebGLContext.STATIC_DRAW);
-			var indexes:Uint16Array = new Uint16Array(_bufferMaxParticles * 6);
-			for (var i:int = 0; i < _bufferMaxParticles; i++) {
-				var indexOffset:int = i * 6;
-				var vertexOffset:int = i * 4;
-				indexes[indexOffset + 0] = (vertexOffset + 0);
-				indexes[indexOffset + 1] = (vertexOffset + 2);
-				indexes[indexOffset + 2] = (vertexOffset + 1);
-				
-				indexes[indexOffset + 3] = (vertexOffset + 0);
-				indexes[indexOffset + 4] = (vertexOffset + 3);
-				indexes[indexOffset + 5] = (vertexOffset + 2);
-			}
-			_indexBuffer.setData(indexes);
 		}
 		
 		/**
@@ -1405,6 +1377,100 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @private
 		 */
+		public function _initBufferDatas():void {
+			var render:ShurikenParticleRender = _ownerRender;
+			var renderMode:int = render.renderMode;
+			var indices:Uint16Array, i:int, j:int, m:int, indexOffset:int, perPartOffset:int;
+			if (renderMode !== -1 && maxParticles > 0) {
+				var mesh:Mesh = render.mesh;
+				if (renderMode === 4 && mesh) {
+					var vertexBufferCount:int = mesh._vertexBuffers.length;
+					if (vertexBufferCount > 1) {
+						throw new Error("ShurikenParticleSystem: submesh Count mesh be One or all subMeshes have the same vertexDeclaration.");
+					} else {
+						_floatCountPerVertex = 36;//(0~3为CornerTextureCoordinate),(4~6为Position,7为StartLifeTime),(8~10Direction,11为Time),12到15为StartColor,16到18为StartSize,19到21为3DStartRotationForward(或19为2DStartRotation),22到24为3DStartRotationRight,25到27为3DStartRotationUp,28为startSpeed,29到32为random0,33到36为random1,37到39为世界空间模拟器模式位置(附加数据)
+						_startLifeTimeIndex = 8;
+						_timeIndex = 12;
+						_vertexStride = mesh._vertexBuffers[0].vertexCount;
+						var totalVertexCount:int = _bufferMaxParticles * _vertexStride;
+						var vbCount:int = Math.floor(totalVertexCount / 65535) + 1;
+						var lastVBVertexCount:int = totalVertexCount % 65535;
+						if (vbCount > 1) {//TODO:随后支持
+							throw new Error("ShurikenParticleSystem:the maxParticleCount multiply mesh vertexCount is large than 65535.");
+						}
+						
+						_vertexBuffer = VertexBuffer3D.create(VertexShurikenParticleMesh.vertexDeclaration, lastVBVertexCount, WebGLContext.DYNAMIC_DRAW);
+						_vertices = new Float32Array(_floatCountPerVertex * lastVBVertexCount);
+						
+						_indexStride = mesh._indexBuffer.indexCount;
+						var indexDatas:Uint16Array = mesh._indexBuffer.getData();
+						var indexCount:int = _bufferMaxParticles * _indexStride;
+						_indexBuffer = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, indexCount, WebGLContext.STATIC_DRAW);
+						indices = new Uint16Array(indexCount);
+						
+						indexOffset = 0;
+						for (i = 0; i < _bufferMaxParticles; i++) {
+							var indexValueOffset:int = i * _vertexStride;
+							for (j = 0, m = indexDatas.length; j < m; j++)
+								indices[indexOffset++] = indexValueOffset + indexDatas[j];
+						}
+						_indexBuffer.setData(indices);
+					}
+				} else {
+					_floatCountPerVertex = 35;//(0~3为CornerTextureCoordinate),(4~6为Position,7为StartLifeTime),(8~10Direction,11为Time),12到15为StartColor,16到18为StartSize,19到21为3DStartRotationForward(或19为2DStartRotation),22到24为3DStartRotationRight,25到27为3DStartRotationUp,28为startSpeed,29到32为random0,33到36为random1,37到39为世界空间模拟器模式位置(附加数据)
+					_startLifeTimeIndex = 7;
+					_timeIndex = 11;
+					_vertexStride = 4;
+					_vertexBuffer = VertexBuffer3D.create(VertexShurikenParticleBillboard.vertexDeclaration, _bufferMaxParticles * _vertexStride, WebGLContext.DYNAMIC_DRAW);
+					_vertices = new Float32Array(_floatCountPerVertex * _bufferMaxParticles * _vertexStride);
+					
+					for (i = 0; i < _bufferMaxParticles; i++) {
+						perPartOffset = i * _floatCountPerVertex * _vertexStride;
+						_vertices[perPartOffset] = -0.5;
+						_vertices[perPartOffset + 1] = -0.5;
+						_vertices[perPartOffset + 2] = 0;
+						_vertices[perPartOffset + 3] = 1;
+						
+						perPartOffset += _floatCountPerVertex;
+						_vertices[perPartOffset] = 0.5;
+						_vertices[perPartOffset + 1] = -0.5;
+						_vertices[perPartOffset + 2] = 1;
+						_vertices[perPartOffset + 3] = 1;
+						
+						perPartOffset += _floatCountPerVertex
+						_vertices[perPartOffset] = 0.5;
+						_vertices[perPartOffset + 1] = 0.5;
+						_vertices[perPartOffset + 2] = 1;
+						_vertices[perPartOffset + 3] = 0;
+						
+						perPartOffset += _floatCountPerVertex
+						_vertices[perPartOffset] = -0.5;
+						_vertices[perPartOffset + 1] = 0.5;
+						_vertices[perPartOffset + 2] = 0;
+						_vertices[perPartOffset + 3] = 0;
+					}
+					
+					_indexStride = 6;
+					_indexBuffer = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, _bufferMaxParticles * 6, WebGLContext.STATIC_DRAW);
+					indices = new Uint16Array(_bufferMaxParticles * 6);
+					for (i = 0; i < _bufferMaxParticles; i++) {
+						indexOffset = i * 6;
+						var firstVertex:int = i * _vertexStride, secondVertex:int = firstVertex + 2;
+						indices[indexOffset++] = firstVertex;
+						indices[indexOffset++] = secondVertex;
+						indices[indexOffset++] = firstVertex + 1;
+						indices[indexOffset++] = firstVertex;
+						indices[indexOffset++] = firstVertex + 3;
+						indices[indexOffset++] = secondVertex;
+					}
+					_indexBuffer.setData(indices);
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
 		override public function _destroy():void {
 			super._destroy();
 			(_owner.displayedInStage && _owner.activeInHierarchy) && (_removeUpdateEmissionToTimer());
@@ -1429,7 +1495,6 @@ package laya.d3.core.particleShuriKen {
 			startColorConstant = null;
 			startColorConstantMin = null;
 			startColorConstantMax = null;
-			gravity = null;
 			_velocityOverLifetime = null;
 			_colorOverLifetime = null;
 			_sizeOverLifetime = null;
@@ -1461,36 +1526,17 @@ package laya.d3.core.particleShuriKen {
 		
 		public function addParticle(position:Vector3, direction:Vector3):Boolean {
 			Vector3.normalize(direction, direction);
-			var positionE:Float32Array = position.elements;
-			var directionE:Float32Array = direction.elements;
 			
 			var nextFreeParticle:int = _firstFreeElement + 1;
-			
 			if (nextFreeParticle >= _bufferMaxParticles)
 				nextFreeParticle = 0;
 			
 			if (nextFreeParticle === _firstRetiredElement)
 				return false;
 			
-			var particleData:ShurikenParticleData = ShurikenParticleData.create(this, _owner.particleRender, positionE, directionE, _currentTime, _owner.transform);
-			
-			var startIndex:int = _firstFreeElement * _floatCountPerVertex * 4;
-			
-			var subU:Number = particleData.startUVInfo[0];
-			var subV:Number = particleData.startUVInfo[1];
-			var startU:Number = particleData.startUVInfo[2];
-			var startV:Number = particleData.startUVInfo[3];
-			_vertices[startIndex + 2] = startU;
-			_vertices[startIndex + 3] = startV + subV;
-			_vertices[startIndex + _floatCountPerVertex + 2] = startU + subU;
-			_vertices[startIndex + _floatCountPerVertex + 3] = startV + subV;
-			_vertices[startIndex + _floatCountPerVertex * 2 + 2] = startU + subU;
-			_vertices[startIndex + _floatCountPerVertex * 2 + 3] = startV;
-			_vertices[startIndex + _floatCountPerVertex * 3 + 2] = startU;
-			_vertices[startIndex + _floatCountPerVertex * 3 + 3] = startV;
+			ShurikenParticleData.create(this, _ownerRender, _owner.transform);
 			
 			var randomVelocityX:Number, randomVelocityY:Number, randomVelocityZ:Number, randomColor:Number, randomSize:Number, randomRotation:Number, randomTextureAnimation:Number;
-			
 			var needRandomVelocity:Boolean = _velocityOverLifetime && _velocityOverLifetime.enbale;
 			if (needRandomVelocity) {
 				var velocityType:int = _velocityOverLifetime.velocity.type;
@@ -1581,47 +1627,88 @@ package laya.d3.core.particleShuriKen {
 				needRandomTextureAnimation = false;
 			}
 			
-			for (var i:int = 0; i < 4; i++) {
-				var vertexStart:int = startIndex + i * _floatCountPerVertex;
+			var startIndex:int = _firstFreeElement * _floatCountPerVertex * _vertexStride;
+			var subU:Number = ShurikenParticleData.startUVInfo[0];
+			var subV:Number = ShurikenParticleData.startUVInfo[1];
+			var startU:Number = ShurikenParticleData.startUVInfo[2];
+			var startV:Number = ShurikenParticleData.startUVInfo[3];
+			var positionE:Float32Array = position.elements;
+			var directionE:Float32Array = direction.elements;
+			
+			var meshVertices:Float32Array, meshVertexStride:int, meshUVOffset:int, meshPosOffset:int, meshVertexIndex:int;
+			var render:ShurikenParticleRender = _ownerRender;
+			if (render.renderMode === 4) {
+				var meshVB:VertexBuffer3D = render.mesh._vertexBuffers[0];
+				meshVertices = meshVB.getData();
+				var meshVertexDeclaration:VertexDeclaration = meshVB.vertexDeclaration;
+				meshPosOffset = meshVertexDeclaration.getVertexElementByUsage(VertexElementUsage.POSITION0).offset / 4;
+				meshUVOffset = meshVertexDeclaration.getVertexElementByUsage(VertexElementUsage.TEXTURECOORDINATE0).offset / 4;
+				meshVertexStride = meshVertexDeclaration.vertexStride / 4;
+				meshVertexIndex = 0;
+			} else {
+				_vertices[startIndex + 2] = startU;
+				_vertices[startIndex + 3] = startV + subV;
+				var secondOffset:int = startIndex + _floatCountPerVertex;
+				_vertices[secondOffset + 2] = startU + subU;
+				_vertices[secondOffset + 3] = startV + subV;
+				var thirdOffset:int = secondOffset + _floatCountPerVertex;
+				_vertices[thirdOffset + 2] = startU + subU;
+				_vertices[thirdOffset + 3] = startV;
+				var fourthOffset:int = thirdOffset + _floatCountPerVertex;
+				_vertices[fourthOffset + 2] = startU;
+				_vertices[fourthOffset + 3] = startV;
+			}
+			
+			for (var i:int = startIndex, n:int = startIndex + _floatCountPerVertex * _vertexStride; i < n; i += _floatCountPerVertex) {
 				var j:int, offset:int;
-				for (j = 0, offset = 4; j < 3; j++)
-					_vertices[vertexStart + offset + j] = particleData.position[j];
-				_vertices[vertexStart + 7] = particleData.startLifeTime;
-				
-				for (j = 0, offset = 8; j < 3; j++)
-					_vertices[vertexStart + offset + j] = particleData.direction[j];
-				_vertices[vertexStart + 11] = particleData.time;
-				
-				for (j = 0, offset = 12; j < 4; j++)
-					_vertices[vertexStart + offset + j] = particleData.startColor[j];
-				
-				for (j = 0, offset = 16; j < 3; j++)
-					_vertices[vertexStart + offset + j] = particleData.startSize[j];
-				
-				for (j = 0, offset = 19; j < 3; j++)
-					_vertices[vertexStart + offset + j] = particleData.startRotation0[j];
-				
-				for (j = 0, offset = 22; j < 3; j++)
-					_vertices[vertexStart + offset + j] = particleData.startRotation1[j];
-				
-				for (j = 0, offset = 25; j < 3; j++)
-					_vertices[vertexStart + offset + j] = particleData.startRotation2[j];
-				
-				_vertices[vertexStart + 28] = particleData.startSpeed;
-				
-				// (_vertices[vertexStart + 29] = XX);TODO:29预留
-				needRandomColor && (_vertices[vertexStart + 30] = randomColor);
-				needRandomSize && (_vertices[vertexStart + 31] = randomSize);
-				needRandomRotation && (_vertices[vertexStart + 32] = randomRotation);
-				needRandomTextureAnimation && (_vertices[vertexStart + 33] = randomTextureAnimation);
-				if (needRandomVelocity) {
-					_vertices[vertexStart + 34] = randomVelocityX;
-					_vertices[vertexStart + 35] = randomVelocityY;
-					_vertices[vertexStart + 36] = randomVelocityZ;
+				if (render.renderMode === 4) {
+					offset = i;
+					var vertexOffset:int = meshVertexStride * (meshVertexIndex++);
+					var oriMeshOffset:int = vertexOffset + meshPosOffset;
+					for (j = 0; j < 3; j++)
+						_vertices[offset++] = meshVertices[oriMeshOffset + j];
+					
+					var meshVertexOffset:int = vertexOffset + meshUVOffset;
+					_vertices[offset++] = startU + meshVertices[meshVertexOffset] * subU;
+					_vertices[offset++] = startV + meshVertices[++meshVertexOffset] * subV;
+				} else {
+					offset = i + 4;
 				}
 				
-				for (j = 0, offset = 37; j < 3; j++)
-					_vertices[vertexStart + offset + j] = particleData.simulationWorldPostion[j];
+				for (j = 0; j < 3; j++)
+					_vertices[offset++] = positionE[j];
+				
+				_vertices[offset++] = ShurikenParticleData.startLifeTime;
+				
+				for (j = 0; j < 3; j++)
+					_vertices[offset++] = directionE[j];
+				_vertices[offset++] = _currentTime;
+				
+				for (j = 0; j < 4; j++)
+					_vertices[offset++] = ShurikenParticleData.startColor[j];
+				
+				for (j = 0; j < 3; j++)
+					_vertices[offset++] = ShurikenParticleData.startSize[j];
+				
+				for (j = 0; j < 4; j++)
+					_vertices[offset++] = ShurikenParticleData.startRotation[j];
+				
+				_vertices[offset++] = ShurikenParticleData.startSpeed;
+				
+				// (_vertices[offset] = XX);TODO:29预留
+				needRandomColor && (_vertices[offset+1] = randomColor);
+				needRandomSize && (_vertices[offset+2] = randomSize);
+				needRandomRotation && (_vertices[offset+3] = randomRotation);
+				needRandomTextureAnimation && (_vertices[offset+4] = randomTextureAnimation);
+				if (needRandomVelocity) {
+					_vertices[offset + 5] = randomVelocityX;
+					_vertices[offset + 6] = randomVelocityY;
+					_vertices[offset + 7] = randomVelocityZ;
+				}
+				
+				offset = offset + 8;
+				for (j = 0; j < 3; j++)
+					_vertices[offset++] = ShurikenParticleData.simulationWorldPostion[j];
 			}
 			
 			_firstFreeElement = nextFreeParticle;
@@ -1631,15 +1718,15 @@ package laya.d3.core.particleShuriKen {
 		public function addNewParticlesToVertexBuffer():void {
 			var start:int;
 			if (_firstNewElement < _firstFreeElement) {
-				start = _firstNewElement * 4 * _floatCountPerVertex;
-				_vertexBuffer.setData(_vertices, start, start, (_firstFreeElement - _firstNewElement) * 4 * _floatCountPerVertex);
+				start = _firstNewElement * _vertexStride * _floatCountPerVertex;
+				_vertexBuffer.setData(_vertices, start, start, (_firstFreeElement - _firstNewElement) * _vertexStride * _floatCountPerVertex);
 				
 			} else {
-				start = _firstNewElement * 4 * _floatCountPerVertex;
-				_vertexBuffer.setData(_vertices, start, start, (_bufferMaxParticles - _firstNewElement) * 4 * _floatCountPerVertex);
+				start = _firstNewElement * _vertexStride * _floatCountPerVertex;
+				_vertexBuffer.setData(_vertices, start, start, (_bufferMaxParticles - _firstNewElement) * _vertexStride * _floatCountPerVertex);
 				
 				if (_firstFreeElement > 0) {
-					_vertexBuffer.setData(_vertices, 0, 0, _firstFreeElement * 4 * _floatCountPerVertex);
+					_vertexBuffer.setData(_vertices, 0, 0, _firstFreeElement * _vertexStride * _floatCountPerVertex);
 					
 				}
 			}
@@ -1661,24 +1748,26 @@ package laya.d3.core.particleShuriKen {
 			return false;
 		}
 		
+		/**
+		 * @private
+		 */
 		public function _render(state:RenderState):void {
-			var drawVertexCount:int;
-			var glContext:WebGLContext = WebGL.mainContext;
+			var indexCount:int;
+			var gl:WebGLContext = WebGL.mainContext;
 			if (_firstActiveElement < _firstFreeElement) {
-				
-				drawVertexCount = (_firstFreeElement - _firstActiveElement) * 6;
-				glContext.drawElements(WebGLContext.TRIANGLES, drawVertexCount, WebGLContext.UNSIGNED_SHORT, _firstActiveElement * 6 * 2);
-				Stat.trianglesFaces += drawVertexCount / 3;
+				indexCount = (_firstFreeElement - _firstActiveElement) * _indexStride;
+				gl.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 2 * _firstActiveElement * _indexStride);
+				Stat.trianglesFaces += indexCount / 3;
 				Stat.drawCall++;
 			} else {
-				drawVertexCount = (_bufferMaxParticles - _firstActiveElement) * 6;
-				glContext.drawElements(WebGLContext.TRIANGLES, drawVertexCount, WebGLContext.UNSIGNED_SHORT, _firstActiveElement * 6 * 2);
-				Stat.trianglesFaces += drawVertexCount / 3;
+				indexCount = (_bufferMaxParticles - _firstActiveElement) * _indexStride;
+				gl.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 2 * _firstActiveElement * _indexStride);
+				Stat.trianglesFaces += indexCount / 3;
 				Stat.drawCall++;
 				if (_firstFreeElement > 0) {
-					drawVertexCount = _firstFreeElement * 6;
-					glContext.drawElements(WebGLContext.TRIANGLES, drawVertexCount, WebGLContext.UNSIGNED_SHORT, 0);
-					Stat.trianglesFaces += drawVertexCount / 3;
+					indexCount = _firstFreeElement * _indexStride;
+					gl.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 0);
+					Stat.trianglesFaces += indexCount / 3;
 					Stat.drawCall++;
 				}
 			}
@@ -1796,7 +1885,6 @@ package laya.d3.core.particleShuriKen {
 			startColorConstantMin.cloneTo(dest.startColorConstantMin);
 			startColorConstantMax.cloneTo(dest.startColorConstantMax);
 			
-			gravity.cloneTo(dest.gravity);
 			dest.gravityModifier = gravityModifier;
 			dest.simulationSpace = simulationSpace;
 			dest.scaleMode = scaleMode;

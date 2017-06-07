@@ -125,8 +125,8 @@ package laya.utils {
 		/** @private */
 		private function _recoverHandler(handler:TimerHandler):void {
 			/*[IF-FLASH]*/
-			_map[handler.method] = null;
-			//[IF-SCRIPT]_map[handler.key] = null;
+			if(_map[handler.method]==handler) _map[handler.method] = null;
+			//[IF-SCRIPT]if(_map[handler.key]==handler) _map[handler.key] = null;
 			handler.clear();
 			_pool.push(handler);
 		}

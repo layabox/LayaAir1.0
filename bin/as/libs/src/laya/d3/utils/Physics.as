@@ -2,16 +2,19 @@ package laya.d3.utils {
 	import laya.d3.component.physics.Collider;
 	import laya.d3.core.Layer;
 	import laya.d3.math.Ray;
+	import laya.d3.math.Vector3;
 	
 	/**
 	 * <code>Physics</code> 类用于简单物理检测。
 	 */
 	public class Physics {
-		
 		/** @private */
 		private static var _outHitAllInfo:Vector.<RaycastHit> = new Vector.<RaycastHit>();
 		/** @private */
 		private static var _outHitInfo:RaycastHit = new RaycastHit();
+		
+		/**重力。*/
+		public static var gravity:Vector3 = new Vector3(0, -9.81, 0);
 		
 		public function Physics() {
 		}
@@ -20,7 +23,7 @@ package laya.d3.utils {
 		 * 在场景中投下可与所有碰撞器碰撞的一条光线,获取发生碰撞的第一个碰撞器。
 		 * @param  ray        射线
 		 * @param  outHitInfo 与该射线发生碰撞的第一个碰撞器的碰撞信息
-		 * @param  distance   射线长度,默认为最大值 
+		 * @param  distance   射线长度,默认为最大值
 		 * @param  layer      选定制定层内的碰撞器,其他层内碰撞器忽略
 		 */
 		public static function rayCast(ray:Ray, outHitInfo:RaycastHit, distance:Number = Number.MAX_VALUE, layer:int = 0):void {
@@ -53,12 +56,11 @@ package laya.d3.utils {
 			_outHitAllInfo[minIndex].cloneTo(outHitInfo);
 		}
 		
-		
 		/**
 		 * 在场景中投下可与所有碰撞器碰撞的一条光线,获取发生碰撞的所有碰撞器。
 		 * @param  ray        射线
 		 * @param  outHitAllInfo 与该射线发生碰撞的所有碰撞器的碰撞信息
-		 * @param  distance   射线长度,默认为最大值 
+		 * @param  distance   射线长度,默认为最大值
 		 * @param  layer      选定制定层内的碰撞器,其他层内碰撞器忽略
 		 */
 		public static function rayCastAll(ray:Ray, outHitAllInfo:Vector.<RaycastHit>, distance:Number = Number.MAX_VALUE, layer:int = 0):void {

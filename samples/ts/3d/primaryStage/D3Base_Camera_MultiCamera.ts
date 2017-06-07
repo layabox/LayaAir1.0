@@ -9,7 +9,6 @@ class Camera_MultiCamera{
 
         var scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
-
         var camera1 = new Laya.Camera(0,0.1,100);
         scene.addChild(camera1);
         camera1.transform.translate(new Laya.Vector3(0, 0.8, 1.5));

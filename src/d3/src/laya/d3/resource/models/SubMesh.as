@@ -146,7 +146,6 @@ package laya.d3.resource.models {
 					//if (_vertexCount > 0)//todo:
 					//oriVertexes = vertexBuffer.getData().slice(_vertexStart * oriVertexFloatCount, (_vertexStart + _vertexCount) * oriVertexFloatCount) as Float32Array
 					//else//兼容性代码
-					debugger;
 					var oriVertexes:Float32Array = vertexBuffer.getData();
 					for (i = 0, n = oriVertexes.length / oriVertexFloatCount; i < n; i++) {
 						var oriVertexOffset:int;

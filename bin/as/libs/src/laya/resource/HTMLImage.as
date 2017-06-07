@@ -60,7 +60,7 @@ package laya.resource {
 			}
 			if (src.indexOf("data:image") != 0) _source.crossOrigin = "";
 			
-			(src) && (_source.src = URL.formatURL(src));
+			(src) && (_source.src = src);
 		}
 		
 		/**
@@ -90,7 +90,7 @@ package laya.resource {
 					_this._recreateLock = false;
 					_this.completeCreate();//处理创建完成后相关操作
 				};
-				_source.src = URL.formatURL(_src);
+				_source.src = _src;
 			} else {
 				if (_recreateLock)
 					return;

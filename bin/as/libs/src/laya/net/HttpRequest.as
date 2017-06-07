@@ -1,6 +1,7 @@
 package laya.net {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
+	import laya.renders.Render;
 	import laya.utils.Browser;
 	import laya.utils.Utils;
 	
@@ -49,7 +50,7 @@ package laya.net {
 				for (var i:int = 0; i < headers.length; i++) {
 					http.setRequestHeader(headers[i++], headers[i]);
 				}
-			} else {
+			} else if(!Render.isConchApp) {
 				if (!data || data is String) http.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 				else http.setRequestHeader("Content-Type", "application/json");
 			}

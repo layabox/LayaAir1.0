@@ -13,7 +13,7 @@ module SimpleSceneVRSample {
             Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
             Laya.Stat.show();
 
-            var scene: Laya.VRScene = Laya.stage.addChild(new Laya.VRScene()) as Laya.VRScene;
+            var scene: Laya.VRScene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
             var camera = new Laya.VRCamera(0.03, 0, 0, 0.1, 100);
             camera = scene.addChild(camera) as Laya.VRCamera;

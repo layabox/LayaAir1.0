@@ -11,8 +11,7 @@ package laya.ui {
 	 * 通过设置zOrder属性，可以更改弹出的层次
 	 * 通过设置popupEffect和closeEffect可以设置弹出效果和关闭效果，如果不想有任何弹出关闭效果，可以设置前述属性为空
 	 *
-	 * @example 以下示例代码，创建了一个 <code>Dialog</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>Dialog</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.Dialog;
@@ -63,8 +62,7 @@ package laya.ui {
 	 *			addChild(button);
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高、渲染模式
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * var dialog;
@@ -99,8 +97,7 @@ package laya.ui {
 	 *         console.log("通过点击 name 为" + name + "的组件，关闭了dialog。");
 	 *     }
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import Dialog = laya.ui.Dialog;
 	 * import Handler = laya.utils.Handler;
 	 * class Dialog_Example {
@@ -139,7 +136,6 @@ package laya.ui {
 	 *         this.addChild(button);
 	 *     }
 	 * }
-	 * </listing>
 	 */
 	public class Dialog extends View {
 		/**对话框内的某个按钮命名为close，点击此按钮则会关闭*/
@@ -349,8 +345,8 @@ package laya.ui {
 		 * 根据组关闭所有弹出框
 		 * @param	group 需要关闭的组名称
 		 */
-		public static function closeByGround(group:String):Array {
-			return manager.closeByGround(group);
+		public static function closeByGroup(group:String):Array {
+			return manager.closeByGroup(group);
 		}
 	}
 }

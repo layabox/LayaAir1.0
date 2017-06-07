@@ -26,7 +26,8 @@ package laya.filters {
 				WebGLFilter.enable();
 			}
 			this._color = new Color(color);
-			this.blur = blur;
+			//限制最大效果为20
+			this.blur = Math.min(blur, 20);
 			this.offX = offX;
 			this.offY = offY;
 			_action = RunDriver.createFilterAction(GLOW);

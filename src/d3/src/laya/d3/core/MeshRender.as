@@ -19,14 +19,14 @@ package laya.d3.core {
 	 * <code>MeshRender</code> 类用于网格渲染器。
 	 */
 	public class MeshRender extends BaseRender {
+		/**@private */
+		public var _belongAvatar:Avatar;
+		
 		/**
 		 * 创建一个新的 <code>MeshRender</code> 实例。
 		 */
 		public function MeshRender(owner:MeshSprite3D) {
 			super(owner);
-			lightmapIndex = -1;
-			castShadow = false;
-			receiveShadow = false;
 			owner.meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
 		}
 		

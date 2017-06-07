@@ -617,13 +617,11 @@
 		/**
 		*<p>数据赋值，通过对UI赋值来控制UI显示逻辑。</p>
 		*<p>简单赋值会更改组件的默认属性，使用大括号可以指定组件的任意属性进行赋值。</p>
-		*@example 以下示例中， <code>label1、checkbox1</code> 分别为示例的name属性值。
-		<listing version="3.0">
+		*@example
 		//默认属性赋值
 		dataSource={label1:"改变了label",checkbox1:true};//(更改了label1的text属性值，更改checkbox1的selected属性)。
 		//任意属性赋值
 		dataSource={label2:{text:"改变了label",size:14},checkbox2:{selected:true,x:10}};
-		</listing>
 		*/
 		__getset(0,__proto,'dataSource',function(){
 			return this._dataSource;
@@ -675,9 +673,11 @@
 		__getset(0,__proto,'top',function(){
 			return this._layout.top;
 			},function(value){
-			this.getLayout().top=value;
-			this._setLayoutEnabled(true);
-			this.resetLayoutY();
+			if (value !=this._layout.top){
+				this.getLayout().top=value;
+				this._setLayoutEnabled(true);
+				this.resetLayoutY();
+			}
 		});
 
 		/**
@@ -686,9 +686,11 @@
 		__getset(0,__proto,'bottom',function(){
 			return this._layout.bottom;
 			},function(value){
-			this.getLayout().bottom=value;
-			this._setLayoutEnabled(true);
-			this.resetLayoutY();
+			if (value !=this._layout.bottom){
+				this.getLayout().bottom=value;
+				this._setLayoutEnabled(true);
+				this.resetLayoutY();
+			}
 		});
 
 		/**
@@ -697,9 +699,11 @@
 		__getset(0,__proto,'left',function(){
 			return this._layout.left;
 			},function(value){
-			this.getLayout().left=value;
-			this._setLayoutEnabled(true);
-			this.resetLayoutX();
+			if (value !=this._layout.left){
+				this.getLayout().left=value;
+				this._setLayoutEnabled(true);
+				this.resetLayoutX();
+			}
 		});
 
 		/**
@@ -708,9 +712,11 @@
 		__getset(0,__proto,'right',function(){
 			return this._layout.right;
 			},function(value){
-			this.getLayout().right=value;
-			this._setLayoutEnabled(true);
-			this.resetLayoutX();
+			if (value !=this._layout.right){
+				this.getLayout().right=value;
+				this._setLayoutEnabled(true);
+				this.resetLayoutX();
+			}
 		});
 
 		/**
@@ -719,9 +725,11 @@
 		__getset(0,__proto,'centerX',function(){
 			return this._layout.centerX;
 			},function(value){
-			this.getLayout().centerX=value;
-			this._setLayoutEnabled(true);
-			this.resetLayoutX();
+			if (value !=this._layout.centerX){
+				this.getLayout().centerX=value;
+				this._setLayoutEnabled(true);
+				this.resetLayoutX();
+			}
 		});
 
 		/**
@@ -730,27 +738,33 @@
 		__getset(0,__proto,'centerY',function(){
 			return this._layout.centerY;
 			},function(value){
-			this.getLayout().centerY=value;
-			this._setLayoutEnabled(true);
-			this.resetLayoutY();
+			if (value !=this._layout.centerY){
+				this.getLayout().centerY=value;
+				this._setLayoutEnabled(true);
+				this.resetLayoutY();
+			}
 		});
 
 		/**X轴锚点，值为0-1*/
 		__getset(0,__proto,'anchorX',function(){
 			return this._layout.anchorX;
 			},function(value){
-			this.getLayout().anchorX=value;
-			this._setLayoutEnabled(true);
-			this.resetLayoutX();
+			if (value !=this._layout.anchorX){
+				this.getLayout().anchorX=value;
+				this._setLayoutEnabled(true);
+				this.resetLayoutX();
+			}
 		});
 
 		/**Y轴锚点，值为0-1*/
 		__getset(0,__proto,'anchorY',function(){
 			return this._layout.anchorY;
 			},function(value){
-			this.getLayout().anchorY=value;
-			this._setLayoutEnabled(true);
-			this.resetLayoutY();
+			if (value !=this._layout.anchorY){
+				this.getLayout().anchorY=value;
+				this._setLayoutEnabled(true);
+				this.resetLayoutY();
+			}
 		});
 
 		/**
@@ -766,29 +780,24 @@
 		/**
 		*<p>鼠标悬停提示。</p>
 		*<p>可以赋值为文本 <code>String</code> 或函数 <code>Handler</code> ，用来实现自定义样式的鼠标提示和参数携带等。</p>
-		*@example 以下例子展示了三种鼠标提示：
-		<listing version="3.0">
-		private var _testTips:TestTipsUI=new TestTipsUI();
-		private function testTips():void {
+		*@example
+		*private var _testTips:TestTipsUI=new TestTipsUI();
+		*private function testTips():void {
 			//简单鼠标提示
-			btn2.toolTip="这里是鼠标提示&lt;b&gt;粗体&lt;/b&gt;&lt;br&gt;换行";
+			*btn2.toolTip="这里是鼠标提示&lt;b&gt;粗体&lt;/b&gt;&lt;br&gt;换行";
 			//自定义的鼠标提示
-			btn1.toolTip=showTips1;
+			*btn1.toolTip=showTips1;
 			//带参数的自定义鼠标提示
-			clip.toolTip=new Handler(this,showTips2,["clip"]);
-		}
-
-		private function showTips1():void {
-			_testTips.label.text="这里是按钮["+btn1.label+"]";
-			tip.addChild(_testTips);
-		}
-
-		private function showTips2(name:String):void {
-			_testTips.label.text="这里是"+name;
-			tip.addChild(_testTips);
-		}
-
-		</listing>
+			*clip.toolTip=new Handler(this,showTips2,["clip"]);
+			*}
+		*private function showTips1():void {
+			*_testTips.label.text="这里是按钮["+btn1.label+"]";
+			*tip.addChild(_testTips);
+			*}
+		*private function showTips2(name:String):void {
+			*_testTips.label.text="这里是"+name;
+			*tip.addChild(_testTips);
+			*}
 		*/
 		__getset(0,__proto,'toolTip',function(){
 			return this._toolTip;
@@ -992,13 +1001,15 @@
 		/**
 		*根据组关闭所有弹出框
 		*@param group 需要关闭的组名称
+		*@return 需要关闭的对话框数组
 		*/
-		__proto.closeByGround=function(group){
+		__proto.closeByGroup=function(group){
 			var arr=[];
 			for (var i=this.numChildren-1;i >-1;i--){
 				var item=this.getChildAt(i);
 				if (item.group===group){
 					item.close();
+					arr.push(item);
 				}
 			}
 			return arr;
@@ -1049,8 +1060,7 @@
 	*<code>Button</code> 组件用来表示常用的多态按钮。 <code>Button</code> 组件可显示文本标签、图标或同时显示两者。 *
 	*<p>可以是单态，两态和三态，默认三态(up,over,down)。</p>
 	*
-	*@example 以下示例代码，创建了一个 <code>Button</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>Button</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.Button;
@@ -1078,8 +1088,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高、渲染模式。
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
 	*Laya.loader.load("resource/ui/button.png",laya.utils.Handler.create(this,loadComplete));//加载资源
@@ -1096,8 +1105,7 @@
 	*{
 		*console.log("按钮被点击了。",button);
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import Button=laya.ui.Button;
 	*import Handler=laya.utils.Handler;
 	*class Button_Example{
@@ -1120,7 +1128,6 @@
 			*console.log("按钮button被点击了！")
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.Button extends laya.ui.Component
 	var Button=(function(_super){
@@ -1546,8 +1553,7 @@
 	*从左向右，从上到下，分割组合为一个切片动画。</p>
 	*Image和Clip组件是唯一支持异步加载的两个组件，比如clip.skin="abc/xxx.png"，其他UI组件均不支持异步加载。
 	*
-	*@example 以下示例代码，创建了一个 <code>Clip</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>Clip</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.Clip;
@@ -1582,8 +1588,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*var clip;
@@ -1608,8 +1613,7 @@
 			*clip.play();
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import Clip=laya.ui.Clip;
 	*import Handler=laya.utils.Handler;
 	*class Clip_Example {
@@ -1638,7 +1642,6 @@
 			*}
 		*}
 	*
-	*</listing>
 	*/
 	//class laya.ui.Clip extends laya.ui.Component
 	var Clip=(function(_super){
@@ -1965,8 +1968,7 @@
 	/**
 	*<code>ColorPicker</code> 组件将显示包含多个颜色样本的列表，用户可以从中选择颜色。
 	*
-	*@example 以下示例代码，创建了一个 <code>ColorPicker</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>ColorPicker</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.ColorPicker;
@@ -1995,8 +1997,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*Laya.loader.load("resource/ui/color.png",laya.utils.Handler.create(this,loadComplete));//加载资源
@@ -2014,8 +2015,7 @@
 	*{
 		*console.log("当前选择的颜色： "+colorPicket.selectedColor);
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import ColorPicker=laya.ui.ColorPicker;
 	*import Handler=laya.utils.Handler;
 	*class ColorPicker_Example {
@@ -2037,7 +2037,6 @@
 			*console.log("当前选择的颜色： "+colorPicket.selectedColor);
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.ColorPicker extends laya.ui.Component
 	var ColorPicker=(function(_super){
@@ -2324,8 +2323,7 @@
 	/**
 	*<code>ComboBox</code> 组件包含一个下拉列表，用户可以从该列表中选择单个值。
 	*
-	*@example 以下示例代码，创建了一个 <code>ComboBox</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>ComboBox</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.ComboBox;
@@ -2353,8 +2351,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高。
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
 	*Laya.loader.load("resource/ui/button.png",laya.utils.Handler.create(this,loadComplete));//加载资源
@@ -2370,8 +2367,7 @@
 	*{
 		*console.log("当前选中的项对象索引： ",index);
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import ComboBox=laya.ui.ComboBox;
 	*import Handler=laya.utils.Handler;
 	*class ComboBox_Example {
@@ -2393,7 +2389,6 @@
 			*}
 		*}
 	*
-	*</listing>
 	*/
 	//class laya.ui.ComboBox extends laya.ui.Component
 	var ComboBox=(function(_super){
@@ -2402,7 +2397,6 @@
 			this._button=null;
 			this._list=null;
 			this._isOpen=false;
-			this._scrollBar=null;
 			this._itemSize=12;
 			this._labels=[];
 			this._selectedIndex=-1;
@@ -2412,6 +2406,7 @@
 			this._listChanged=false;
 			this._itemChanged=false;
 			this._scrollBarSkin=null;
+			this._isCustomList=false;
 			this.itemRender=null;
 			ComboBox.__super.call(this);
 			this._itemColors=Styles.comboBoxItemColors;
@@ -2427,10 +2422,8 @@
 			_super.prototype.destroy.call(this,destroyChild);
 			this._button && this._button.destroy(destroyChild);
 			this._list && this._list.destroy(destroyChild);
-			this._scrollBar && this._scrollBar.destroy(destroyChild);
 			this._button=null;
 			this._list=null;
-			this._scrollBar=null;
 			this._itemColors=null;
 			this._labels=null;
 			this._selectHandler=null;
@@ -2446,16 +2439,15 @@
 
 		__proto._createList=function(){
 			this._list=new List();
+			if (this._scrollBarSkin)this._list.vScrollBarSkin=this._scrollBarSkin;
+			this._setListEvent(this._list);
+		}
+
+		__proto._setListEvent=function(list){
 			this._list.selectEnable=true;
 			this._list.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onListDown);
 			this._list.mouseHandler=Handler.create(this,this.onlistItemMouse,null,false);
-			if (this._scrollBarSkin){
-				this._list.addChild(this._scrollBar=new VScrollBar());
-				this._scrollBar.skin=this._scrollBarSkin;
-				this._scrollBar.name="scrollBar";
-				this._scrollBar.y=1;
-				this._scrollBar.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onScrollBarDown);
-			}
+			if (this._list.scrollBar)this._list.scrollBar.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onScrollBarDown);
 		}
 
 		/**
@@ -2483,7 +2475,6 @@
 			this._itemHeight=this._itemSize+6;
 			this._list.itemRender=this.itemRender || {type:"Box",child:[{type:"Label",props:{name:"label",x:1,padding:"3,3,3,3",width:labelWidth,height:this._itemHeight,fontSize:this._itemSize,color:labelColor}}]};
 			this._list.repeatY=this._visibleNum;
-			if (this._scrollBar)this._scrollBar.x=this.width-this._scrollBar.width-1;
 			this._list.refresh();
 		}
 
@@ -2494,6 +2485,7 @@
 		__proto.onlistItemMouse=function(e,index){
 			var type=e.type;
 			if (type===/*laya.events.Event.MOUSE_OVER*/"mouseover" || type===/*laya.events.Event.MOUSE_OUT*/"mouseout"){
+				if (this._isCustomList)return;
 				var box=this._list.getCell(index);
 				if (!box)return;
 				var label=box.getChildByName("label");
@@ -2531,23 +2523,19 @@
 		*/
 		__proto.changeItem=function(){
 			this._itemChanged=false;
-			this.runCallLater(this.changeList);
 			this._listHeight=this._labels.length > 0 ? Math.min(this._visibleNum,this._labels.length)*this._itemHeight :this._itemHeight;
-			if (this._scrollBar)this._scrollBar.height=this._listHeight-2;
-			var g=this._list.graphics;
-			g.clear();
-			g.drawRect(0,0,this.width-1,this._listHeight,this._itemColors[4],this._itemColors[3]);
+			if (!this._isCustomList){
+				var g=this._list.graphics;
+				g.clear();
+				g.drawRect(0,0,this.width-1,this._listHeight,this._itemColors[4],this._itemColors[3]);
+			};
 			var a=this._list.array || [];
 			a.length=0;
 			for (var i=0,n=this._labels.length;i < n;i++){
 				a.push({label:this._labels[i]});
 			}
+			this._list.height=this._listHeight;
 			this._list.array=a;
-			if (this._visibleNum > a.length){
-				this._list.height=this._listHeight;
-				}else {
-				this._list.height=0;
-			}
 		}
 
 		__proto.changeSelected=function(){
@@ -2687,7 +2675,7 @@
 		*获取对 <code>ComboBox</code> 组件所包含的 <code>VScrollBar</code> 滚动条组件的引用。
 		*/
 		__getset(0,__proto,'scrollBar',function(){
-			return this._scrollBar;
+			return this.list.scrollBar;
 		});
 
 		/**
@@ -2701,7 +2689,7 @@
 				this._button.selected=this._isOpen;
 				if (this._isOpen){
 					this._list || this._createList();
-					this._listChanged && this.changeList();
+					this._listChanged && !this._isCustomList && this.changeList();
 					this._itemChanged && this.changeItem();
 					var p=this.localToGlobal(Point.TEMP.setTo(0,0));
 					var py=p.y+this._button.height;
@@ -2751,6 +2739,14 @@
 		__getset(0,__proto,'list',function(){
 			this._list || this._createList();
 			return this._list;
+			},function(value){
+			if (value){
+				value.removeSelf();
+				this._isCustomList=true;
+				this._list=value;
+				this._setListEvent(value);
+				this._itemHeight=value.getCell(0).height+value.spaceY;
+			}
 		});
 
 		/**@inheritDoc */
@@ -3324,6 +3320,7 @@
 			this._value=0;
 			this._skin=null;
 			this._bg=null;
+			this._progress=null;
 			this._bar=null;
 			this._tx=NaN;
 			this._ty=NaN;
@@ -3343,8 +3340,10 @@
 			_super.prototype.destroy.call(this,destroyChild);
 			this._bg && this._bg.destroy(destroyChild);
 			this._bar && this._bar.destroy(destroyChild);
+			this._progress && this._progress.destroy(destroyChild);
 			this._bg=null;
 			this._bar=null;
+			this._progress=null;
 			this.changeHandler=null;
 		}
 
@@ -3358,6 +3357,7 @@
 		__proto.initialize=function(){
 			this._bar.on(/*laya.events.Event.MOUSE_DOWN*/"mousedown",this,this.onBarMouseDown);
 			this._bg.sizeGrid=this._bar.sizeGrid="4,4,4,4,0";
+			if (this._progress)this._progress.sizeGrid=this._bar.sizeGrid;
 			this.allowClickBack=true;
 		}
 
@@ -3422,11 +3422,13 @@
 				if (this._bar.y > this._maxMove)this._bar.y=this._maxMove;
 				else if (this._bar.y < 0)this._bar.y=0;
 				this._value=this._bar.y / this._maxMove *(this._max-this._min)+this._min;
+				if(this._progress)this._progress.height=this._bar.y+0.5*this._bar.height;
 				}else {
 				this._bar.x+=(Laya.stage.mouseX-this._tx)/ this._globalSacle.x;
 				if (this._bar.x > this._maxMove)this._bar.x=this._maxMove;
 				else if (this._bar.x < 0)this._bar.x=0;
 				this._value=this._bar.x / this._maxMove *(this._max-this._min)+this._min;
+				if(this._progress)this._progress.width=this._bar.x+0.5*this._bar.width;
 			}
 			this._tx=Laya.stage.mouseX;
 			this._ty=Laya.stage.mouseY;
@@ -3488,8 +3490,14 @@
 			this._value=this._value > this._max ? this._max :this._value < this._min ? this._min :this._value;
 			var num=this._max-this._min;
 			if (num===0)num=1;
-			if (this.isVertical)this._bar.y=(this._value-this._min)/ num *(this.height-this._bar.height);
-			else this._bar.x=(this._value-this._min)/ num *(this.width-this._bar.width);
+			if (this.isVertical){
+				this._bar.y=(this._value-this._min)/ num *(this.height-this._bar.height);
+				if(this._progress)this._progress.height=this._bar.y+0.5*this._bar.height;
+			}
+			else{
+				this._bar.x=(this._value-this._min)/ num *(this.width-this._bar.width);
+				if(this._progress)this._progress.width=this._bar.x+0.5*this._bar.width;
+			}
 		}
 
 		/**
@@ -3517,7 +3525,17 @@
 				this._skin=value;
 				this._bg.skin=this._skin;
 				this._bar.skin=this._skin.replace(".png","$bar.png");
+				var progressSkin=this._skin.replace(".png","$progress.png");
+				if (Loader.getRes(progressSkin)){
+					if (!this._progress){
+						this.addChild(this._progress=new Image());
+						this._progress.sizeGrid=this._bar.sizeGrid;
+						this.setChildIndex(this._progress,1);
+					}
+					this._progress.skin=progressSkin;
+				}
 				this.setBarPoint();
+				this.callLater(this.changeValue);
 			}
 		});
 
@@ -3629,8 +3647,7 @@
 	*<code>Image</code> 类是用于表示位图图像或绘制图形的显示对象。
 	*Image和Clip组件是唯一支持异步加载的两个组件，比如img.skin="abc/xxx.png"，其他UI组件均不支持异步加载。
 	*
-	*@example 以下示例代码，创建了一个新的 <code>Image</code> 实例，设置了它的皮肤、位置信息，并添加到舞台上。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个新的 <code>Image</code> 实例，设置了它的皮肤、位置信息，并添加到舞台上。</caption>
 	*package
 	*{
 		*import laya.ui.Image;
@@ -3658,8 +3675,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*onInit();
@@ -3676,8 +3692,7 @@
 		*image.y=100;//设置 image 对象的属性 y 的值，用于控制 image 对象的显示位置。
 		*Laya.stage.addChild(image);//将此 image 对象添加到显示列表。
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*class Image_Example {
 		*constructor(){
 			*Laya.init(640,800);//设置游戏画布宽高。
@@ -3698,7 +3713,6 @@
 			*Laya.stage.addChild(image);//将此 image 对象添加到显示列表。
 			*}
 		*}
-	*</listing>
 	*@see laya.ui.AutoBitmap
 	*/
 	//class laya.ui.Image extends laya.ui.Component
@@ -3839,8 +3853,7 @@
 	/**
 	*<p> <code>Label</code> 类用于创建显示对象以显示文本。</p>
 	*
-	*@example 以下示例代码，创建了一个 <code>Label</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>Label</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.Label;
@@ -3879,8 +3892,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*onInit();
@@ -3908,8 +3920,7 @@
 		*passwordLabel.fontSize=20;//设置 passwordLabel 的文本字体大小。
 		*Laya.stage.addChild(passwordLabel);//将 passwordLabel 添加到显示列表。
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import Label=laya.ui.Label;
 	*class Label_Example {
 		*constructor(){
@@ -3942,7 +3953,6 @@
 			*Laya.stage.addChild(passwordLabel);//将 passwordLabel 添加到显示列表。
 			*}
 		*}
-	*</listing>
 	*@see laya.display.Text
 	*/
 	//class laya.ui.Label extends laya.ui.Component
@@ -4219,8 +4229,7 @@
 
 	/**
 	*<code>ProgressBar</code> 组件显示内容的加载进度。
-	*@example 以下示例代码，创建了一个新的 <code>ProgressBar</code> 实例，设置了它的皮肤、位置、宽高、网格等信息，并添加到舞台上。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个新的 <code>ProgressBar</code> 实例，设置了它的皮肤、位置、宽高、网格等信息，并添加到舞台上。</caption>
 	*package
 	*{
 		*import laya.ui.ProgressBar;
@@ -4258,8 +4267,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*var res=["resource/ui/progress.png","resource/ui/progress$bar.png"];
@@ -4286,8 +4294,7 @@
 	*{
 		*console.log("进度发生改变： value=" ,value);
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import ProgressBar=laya.ui.ProgressBar;
 	*import Handler=laya.utils.Handler;
 	*class ProgressBar_Example {
@@ -4317,7 +4324,6 @@
 			*console.log("进度发生改变： value=",value);
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.ProgressBar extends laya.ui.Component
 	var ProgressBar=(function(_super){
@@ -4690,9 +4696,9 @@
 						}else {
 						var tChild=View.createComp(node,null,view);
 						if (node.type=="Script"){
-							if (tChild.hasOwnProperty("owner")){
+							if ("owner" in tChild){
 								tChild["owner"]=comp;
-								}else if (tChild.hasOwnProperty("target")){
+								}else if ("target" in tChild){
 								tChild["target"]=comp;
 							}
 							}else if (node.props.renderType=="mask" || node.props.name=="mask"){
@@ -4758,8 +4764,7 @@
 	*<code>CheckBox</code> 组件还可以显示可选的文本标签，默认该标签位于 CheckBox 右侧。
 	*<p><code>CheckBox</code> 使用 <code>dataSource</code>赋值时的的默认属性是：<code>selected</code>。</p>
 	*
-	*@example 以下示例代码，创建了一个 <code>CheckBox</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>CheckBox</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.CheckBox;
@@ -4787,8 +4792,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*Laya.loader.load("resource/ui/check.png",laya.utils.Handler.create(this,loadComplete));//加载资源
@@ -4805,8 +4809,7 @@
 	*{
 		*console.log("checkBox.selected = ",checkBox.selected);
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import CheckBox=laya.ui.CheckBox;
 	*import Handler=laya.utils.Handler;
 	*class CheckBox_Example{
@@ -4829,7 +4832,6 @@
 			*console.log("输出选中状态: checkBox.selected = "+checkBox.selected);
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.CheckBox extends laya.ui.Button
 	var CheckBox=(function(_super){
@@ -5004,6 +5006,7 @@
 		/**渲染数值*/
 		__proto.changeValue=function(){
 			if (!this._sources)return;
+			if (!this._valueArr)return;
 			this.graphics.clear();
 			var texture;
 			var isHorizontal=(this._direction==="horizontal");
@@ -5045,7 +5048,7 @@
 			for (var i=0;i < this._clipY;i++){
 				var line=arr[i].split("");
 				for (var j=0,n=line.length;j < n;j++){
-					this._indexMap[line[j]]=i *this._clipY+j;
+					this._indexMap[line[j]]=i *this._clipX+j;
 				}
 			}
 		});
@@ -5100,8 +5103,7 @@
 	/**
 	*<code>List</code> 控件可显示项目列表。默认为垂直方向列表。可通过UI编辑器自定义列表。
 	*
-	*@example 以下示例代码，创建了一个 <code>List</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>List</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.List;
@@ -5152,8 +5154,7 @@
 			*addChild(label);
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*(function (_super){
 		*function Item(){
 			*Item.__super.call(this);//初始化父类
@@ -5191,8 +5192,7 @@
 		*console.log("当前选择的项目索引： index= ",index);
 		*}
 	*
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import List=laya.ui.List;
 	*import Handler=laya.utils.Handler;
 	*public class List_Example {
@@ -5234,7 +5234,6 @@
 			*this.addChild(label);
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.List extends laya.ui.Box
 	var List=(function(_super){
@@ -5427,9 +5426,11 @@
 		__proto.setContentSize=function(width,height){
 			this._content.width=width;
 			this._content.height=height;
-			this._content.scrollRect || (this._content.scrollRect=new Rectangle());
-			this._content.scrollRect.setTo(-this._offset.x,-this._offset.y,width,height);
-			this._content.conchModel && this._content.conchModel.scrollRect(-this._offset.x,-this._offset.y,width,height);
+			if (this._scrollBar||this._offset.x!=0||this._offset.y!=0){
+				this._content.scrollRect || (this._content.scrollRect=new Rectangle());
+				this._content.scrollRect.setTo(-this._offset.x,-this._offset.y,width,height);
+				this._content.conchModel && this._content.conchModel.scrollRect(-this._offset.x,-this._offset.y,width,height);
+			}
 			this.event(/*laya.events.Event.RESIZE*/"resize");
 		}
 
@@ -5559,7 +5560,7 @@
 		__proto.renderItems=function(from,to){
 			(from===void 0)&& (from=0);
 			(to===void 0)&& (to=0);
-			for (var i=0,n=to || this._cells.length;i < n;i++){
+			for (var i=from,n=to || this._cells.length;i < n;i++){
 				this.renderItem(this._cells[i],this._startIndex+i);
 			}
 			this.changeSelectStatus();
@@ -5571,7 +5572,7 @@
 		*@param index 单元格索引。
 		*/
 		__proto.renderItem=function(cell,index){
-			if (index >=0 && index < this._array.length){
+			if (this._array&&index >=0 && index < this._array.length){
 				cell.visible=true;
 				cell.dataSource=this._array[index];
 				if (!this.cacheContent){
@@ -5873,9 +5874,9 @@
 				this._selectedIndex=value;
 				this.changeSelectStatus();
 				this.event(/*laya.events.Event.CHANGE*/"change");
+				this.selectHandler && this.selectHandler.runWith(value);
+				this.startIndex=this._startIndex;
 			}
-			this.selectHandler && this.selectHandler.runWith(value);
-			this.startIndex=this._startIndex;
 		});
 
 		/**
@@ -6282,8 +6283,7 @@
 
 	/**
 	*使用 <code>HScrollBar</code> （水平 <code>ScrollBar</code> ）控件，可以在因数据太多而不能在显示区域完全显示时控制显示的数据部分。
-	*@example 以下示例代码，创建了一个 <code>HScrollBar</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>HScrollBar</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.HScrollBar;
@@ -6312,8 +6312,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*var hScrollBar;
@@ -6332,8 +6331,7 @@
 	*{
 		*console.log("滚动条的位置： value="+value);
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import HScrollBar=laya.ui.HScrollBar;
 	*import Handler=laya.utils.Handler;
 	*class HScrollBar_Example {
@@ -6355,7 +6353,6 @@
 			*console.log("滚动条的位置： value="+value);
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.HScrollBar extends laya.ui.ScrollBar
 	var HScrollBar=(function(_super){
@@ -6372,6 +6369,111 @@
 
 		return HScrollBar;
 	})(ScrollBar)
+
+
+	/**
+	*使用 <code>HSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>HSlider</code> 控件采用水平方向。滑块轨道从左向右扩展，而标签位于轨道的顶部或底部。</p>
+	*
+	*@example <caption>以下示例代码，创建了一个 <code>HSlider</code> 实例。</caption>
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.utils.Handler;
+		*public class HSlider_Example
+		*{
+			*private var hSlider:HSlider;
+			*public function HSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/hslider.png","resource/ui/hslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*hSlider=new HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
+				*hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
+				*hSlider.min=0;//设置 hSlider 最低位置值。
+				*hSlider.max=10;//设置 hSlider 最高位置值。
+				*hSlider.value=2;//设置 hSlider 当前位置值。
+				*hSlider.tick=1;//设置 hSlider 刻度值。
+				*hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
+				*hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
+				*hSlider.changeHandler=new Handler(this,onChange);//设置 hSlider 位置变化处理器。
+				*Laya.stage.addChild(hSlider);//把 hSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*@example
+	*Laya.init(640,800,"canvas");//设置游戏画布宽高、渲染模式
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var hSlider;
+	*var res=["resource/ui/hslider.png","resource/ui/hslider$bar.png"];
+	*Laya.loader.load(res,laya.utils.Handler.create(this,onLoadComplete));
+	*function onLoadComplete(){
+		*console.log("资源加载完成！");
+		*hSlider=new laya.ui.HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
+		*hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
+		*hSlider.min=0;//设置 hSlider 最低位置值。
+		*hSlider.max=10;//设置 hSlider 最高位置值。
+		*hSlider.value=2;//设置 hSlider 当前位置值。
+		*hSlider.tick=1;//设置 hSlider 刻度值。
+		*hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
+		*hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
+		*hSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 hSlider 位置变化处理器。
+		*Laya.stage.addChild(hSlider);//把 hSlider 添加到显示列表。
+		*}
+	*function onChange(value)
+	*{
+		*console.log("滑块的位置： value="+value);
+		*}
+	*@example
+	*import Handler=laya.utils.Handler;
+	*import HSlider=laya.ui.HSlider;
+	*class HSlider_Example {
+		*private hSlider:HSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/hslider.png","resource/ui/hslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.hSlider=new HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
+			*this.hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
+			*this.hSlider.min=0;//设置 hSlider 最低位置值。
+			*this.hSlider.max=10;//设置 hSlider 最高位置值。
+			*this.hSlider.value=2;//设置 hSlider 当前位置值。
+			*this.hSlider.tick=1;//设置 hSlider 刻度值。
+			*this.hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
+			*this.hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
+			*this.hSlider.changeHandler=new Handler(this,this.onChange);//设置 hSlider 位置变化处理器。
+			*Laya.stage.addChild(this.hSlider);//把 hSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.HSlider extends laya.ui.Slider
+	var HSlider=(function(_super){
+		/**
+		*创建一个 <code>HSlider</code> 类实例。
+		*@param skin 皮肤。
+		*/
+		function HSlider(skin){
+			HSlider.__super.call(this,skin);
+			this.isVertical=false;
+		}
+
+		__class(HSlider,'laya.ui.HSlider',_super);
+		return HSlider;
+	})(Slider)
 
 
 	/**
@@ -6795,115 +6897,6 @@
 
 
 	/**
-	*使用 <code>HSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>HSlider</code> 控件采用水平方向。滑块轨道从左向右扩展，而标签位于轨道的顶部或底部。</p>
-	*
-	*@example 以下示例代码，创建了一个 <code>HSlider</code> 实例。
-	*<listing version="3.0">
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.utils.Handler;
-		*public class HSlider_Example
-		*{
-			*private var hSlider:HSlider;
-			*public function HSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/hslider.png","resource/ui/hslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*hSlider=new HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
-				*hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
-				*hSlider.min=0;//设置 hSlider 最低位置值。
-				*hSlider.max=10;//设置 hSlider 最高位置值。
-				*hSlider.value=2;//设置 hSlider 当前位置值。
-				*hSlider.tick=1;//设置 hSlider 刻度值。
-				*hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
-				*hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
-				*hSlider.changeHandler=new Handler(this,onChange);//设置 hSlider 位置变化处理器。
-				*Laya.stage.addChild(hSlider);//把 hSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*Laya.init(640,800,"canvas");//设置游戏画布宽高、渲染模式
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var hSlider;
-	*var res=["resource/ui/hslider.png","resource/ui/hslider$bar.png"];
-	*Laya.loader.load(res,laya.utils.Handler.create(this,onLoadComplete));
-	*function onLoadComplete(){
-		*console.log("资源加载完成！");
-		*hSlider=new laya.ui.HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
-		*hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
-		*hSlider.min=0;//设置 hSlider 最低位置值。
-		*hSlider.max=10;//设置 hSlider 最高位置值。
-		*hSlider.value=2;//设置 hSlider 当前位置值。
-		*hSlider.tick=1;//设置 hSlider 刻度值。
-		*hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
-		*hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
-		*hSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 hSlider 位置变化处理器。
-		*Laya.stage.addChild(hSlider);//把 hSlider 添加到显示列表。
-		*}
-	*function onChange(value)
-	*{
-		*console.log("滑块的位置： value="+value);
-		*}
-	*</listing>
-	*<listing version="3.0">
-	*import Handler=laya.utils.Handler;
-	*import HSlider=laya.ui.HSlider;
-	*class HSlider_Example {
-		*private hSlider:HSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/hslider.png","resource/ui/hslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.hSlider=new HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
-			*this.hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
-			*this.hSlider.min=0;//设置 hSlider 最低位置值。
-			*this.hSlider.max=10;//设置 hSlider 最高位置值。
-			*this.hSlider.value=2;//设置 hSlider 当前位置值。
-			*this.hSlider.tick=1;//设置 hSlider 刻度值。
-			*this.hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
-			*this.hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
-			*this.hSlider.changeHandler=new Handler(this,this.onChange);//设置 hSlider 位置变化处理器。
-			*Laya.stage.addChild(this.hSlider);//把 hSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*</listing>
-	*
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.HSlider extends laya.ui.Slider
-	var HSlider=(function(_super){
-		/**
-		*创建一个 <code>HSlider</code> 类实例。
-		*@param skin 皮肤。
-		*/
-		function HSlider(skin){
-			HSlider.__super.call(this,skin);
-			this.isVertical=false;
-		}
-
-		__class(HSlider,'laya.ui.HSlider',_super);
-		return HSlider;
-	})(Slider)
-
-
-	/**
 	*<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
 	*用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
 	*@see laya.ui.RadioGroup
@@ -6966,8 +6959,7 @@
 	/**
 	*<code>Tree</code> 控件使用户可以查看排列为可扩展树的层次结构数据。
 	*
-	*@example 以下示例代码，创建了一个 <code>Tree</code> 实例。
-	*<listing version="3.0">
+	*@example
 	*package
 	*{
 		*import laya.ui.Tree;
@@ -7038,8 +7030,7 @@
 			*addChild(arrow);
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高、渲染模式
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*var res=["resource/ui/vscroll.png","resource/ui/vscroll$bar.png","resource/ui/vscroll$down.png","resource/ui/vscroll$up.png","resource/ui/clip_selectBox.png","resource/ui/clip_tree_folder.png","resource/ui/clip_tree_arrow.png"];
@@ -7094,8 +7085,7 @@
 			*};
 		*Laya.class(Item,"mypackage.treeExample.Item",_super);//注册类 Item 。
 		*})(laya.ui.Box);
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import Tree=laya.ui.Tree;
 	*import Browser=laya.utils.Browser;
 	*import Handler=laya.utils.Handler;
@@ -7159,7 +7149,6 @@
 			*this.addChild(arrow);
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.Tree extends laya.ui.Box
 	var Tree=(function(_super){
@@ -7716,8 +7705,7 @@
 	*
 	*使用 <code>VScrollBar</code> （垂直 <code>ScrollBar</code> ）控件，可以在因数据太多而不能在显示区域完全显示时控制显示的数据部分。
 	*
-	*@example 以下示例代码，创建了一个 <code>VScrollBar</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>VScrollBar</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.vScrollBar;
@@ -7747,8 +7735,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*var vScrollBar;
@@ -7765,8 +7752,7 @@
 	*function onChange(value){
 		*console.log("滚动条的位置： value="+value);
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import VScrollBar=laya.ui.VScrollBar;
 	*import Handler=laya.utils.Handler;
 	*class VScrollBar_Example {
@@ -7788,7 +7774,6 @@
 			*console.log("滚动条的位置： value="+value);
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.VScrollBar extends laya.ui.ScrollBar
 	var VScrollBar=(function(_super){
@@ -7803,8 +7788,7 @@
 	/**
 	*<code>TextInput</code> 类用于创建显示对象以显示和输入文本。
 	*
-	*@example 以下示例代码，创建了一个 <code>TextInput</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>TextInput</code> 实例。</caption>
 	*package
 	*{
 		*import laya.display.Stage;
@@ -7836,8 +7820,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*Laya.loader.load(["resource/ui/input.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
@@ -7856,8 +7839,7 @@
 		*textInput.height=200;//设置 textInput 的高度。
 		*Laya.stage.addChild(textInput);//将 textInput 添加到显示列表。
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import Stage=laya.display.Stage;
 	*import TextInput=laya.ui.TextInput;
 	*import Handler=laya.utils.Handler;
@@ -7883,7 +7865,6 @@
 			*Laya.stage.addChild(textInput);//将 textInput 添加到显示列表。
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.TextInput extends laya.ui.Label
 	var TextInput=(function(_super){
@@ -8131,8 +8112,7 @@
 	*使用 <code>VSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
 	*<p> <code>VSlider</code> 控件采用垂直方向。滑块轨道从下往上扩展，而标签位于轨道的左右两侧。</p>
 	*
-	*@example 以下示例代码，创建了一个 <code>VSlider</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>VSlider</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.HSlider;
@@ -8166,8 +8146,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*var vSlider;
@@ -8187,8 +8166,7 @@
 	*function onChange(value){
 		*console.log("滑块的位置： value="+value);
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import HSlider=laya.ui.HSlider;
 	*import VSlider=laya.ui.VSlider;
 	*import Handler=laya.utils.Handler;
@@ -8215,7 +8193,6 @@
 			*console.log("滑块的位置： value="+value);
 			*}
 		*}
-	*</listing>
 	*@see laya.ui.Slider
 	*/
 	//class laya.ui.VSlider extends laya.ui.Slider
@@ -8234,8 +8211,7 @@
 	*通过设置zOrder属性，可以更改弹出的层次
 	*通过设置popupEffect和closeEffect可以设置弹出效果和关闭效果，如果不想有任何弹出关闭效果，可以设置前述属性为空
 	*
-	*@example 以下示例代码，创建了一个 <code>Dialog</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>Dialog</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.Dialog;
@@ -8286,8 +8262,7 @@
 			*addChild(button);
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高、渲染模式
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*var dialog;
@@ -8322,8 +8297,7 @@
 			*console.log("通过点击 name 为"+name+"的组件，关闭了dialog。");
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import Dialog=laya.ui.Dialog;
 	*import Handler=laya.utils.Handler;
 	*class Dialog_Example {
@@ -8362,7 +8336,6 @@
 			*this.addChild(button);
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.Dialog extends laya.ui.View
 	var Dialog=(function(_super){
@@ -8520,8 +8493,8 @@
 			return Dialog.manager.getDialogsByGroup(group);
 		}
 
-		Dialog.closeByGround=function(group){
-			return Dialog.manager.closeByGround(group);
+		Dialog.closeByGroup=function(group){
+			return Dialog.manager.closeByGroup(group);
 		}
 
 		Dialog.CLOSE="close";
@@ -8652,8 +8625,7 @@
 	*<code>RadioGroup</code> 控件定义一组 <code>Radio</code> 控件，这些控件相互排斥；
 	*因此，用户每次只能选择一个 <code>Radio</code> 控件。
 	*
-	*@example 以下示例代码，创建了一个 <code>RadioGroup</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>RadioGroup</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.Radio;
@@ -8683,8 +8655,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高、渲染模式
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*Laya.loader.load(["resource/ui/radio.png"],laya.utils.Handler.create(this,onLoadComplete));
@@ -8700,8 +8671,7 @@
 	*function onSelect(index){
 		*console.log("当前选择的单选按钮索引: index= ",index);
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import Radio=laya.ui.Radio;
 	*import RadioGroup=laya.ui.RadioGroup;
 	*import Handler=laya.utils.Handler;
@@ -8724,7 +8694,6 @@
 			*console.log("当前选择的单选按钮索引: index= ",index);
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.RadioGroup extends laya.ui.UIGroup
 	var RadioGroup=(function(_super){
@@ -8746,8 +8715,7 @@
 	*<code>Tab</code> 组件用来定义选项卡按钮组。 *
 	*@internal <p>属性：<code>selectedIndex</code> 的默认值为-1。</p>
 	*
-	*@example 以下示例代码，创建了一个 <code>Tab</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>Tab</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.Tab;
@@ -8776,8 +8744,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*Laya.loader.load(["resource/ui/tab.png"],laya.utils.Handler.create(this,onLoadComplete));
@@ -8793,8 +8760,7 @@
 	*function onSelect(index){
 		*console.log("当前选择的标签页索引: index= ",index);
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import Tab=laya.ui.Tab;
 	*import Handler=laya.utils.Handler;
 	*class Tab_Example {
@@ -8816,7 +8782,6 @@
 			*console.log("当前选择的表情页索引: index= ",index);
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.Tab extends laya.ui.UIGroup
 	var Tab=(function(_super){
@@ -8839,8 +8804,7 @@
 
 	/**
 	*<code>TextArea</code> 类用于创建显示对象以显示和输入文本。
-	*@example 以下示例代码，创建了一个 <code>TextArea</code> 实例。
-	*<listing version="3.0">
+	*@example <caption>以下示例代码，创建了一个 <code>TextArea</code> 实例。</caption>
 	*package
 	*{
 		*import laya.ui.TextArea;
@@ -8871,8 +8835,7 @@
 				*}
 			*}
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*Laya.init(640,800);//设置游戏画布宽高、渲染模式
 	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
 	*Laya.loader.load(["resource/ui/input.png"],laya.utils.Handler.create(this,onLoadComplete));//加载资源。
@@ -8891,8 +8854,7 @@
 		*textArea.height=200;//设置 textArea 的高度。
 		*Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
 		*}
-	*</listing>
-	*<listing version="3.0">
+	*@example
 	*import TextArea=laya.ui.TextArea;
 	*import Handler=laya.utils.Handler;
 	*class TextArea_Example {
@@ -8917,7 +8879,6 @@
 			*Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
 			*}
 		*}
-	*</listing>
 	*/
 	//class laya.ui.TextArea extends laya.ui.TextInput
 	var TextArea=(function(_super){

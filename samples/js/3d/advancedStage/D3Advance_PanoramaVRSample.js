@@ -3,7 +3,7 @@ Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
 Laya.stage.screenMode = Laya.Stage.SCREEN_HORIZONTAL;
 Laya.Stat.show();
 
-var scene = Laya.stage.addChild(new Laya.VRScene());
+var scene = Laya.stage.addChild(new Laya.Scene());
 var leftViewport = new Laya.Viewport(0, 0, Laya.RenderState.clientWidth / 2, Laya.RenderState.clientHeight);
 var rightViewport = new Laya.Viewport(Laya.RenderState.clientWidth / 2, 0, Laya.RenderState.clientWidth / 2, Laya.RenderState.clientHeight);
 

@@ -4,7 +4,7 @@ package threeDimen.common {
 	import laya.d3.core.Camera;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.BaseScene;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
@@ -64,13 +64,13 @@ package threeDimen.common {
 		
 		protected function updateCamera(elapsedTime:Number):void {
 			if (!isNaN(lastMouseX) && !isNaN(lastMouseY)) {
-				var scene:BaseScene = owner.scene;
-				KeyBoardManager.hasKeyDown(87) && camera.moveForward(-0.001 * elapsedTime);//W
-				KeyBoardManager.hasKeyDown(83) && camera.moveForward(0.001 * elapsedTime);//S
-				KeyBoardManager.hasKeyDown(65) && camera.moveRight(-0.001 * elapsedTime);//A
-				KeyBoardManager.hasKeyDown(68) && camera.moveRight(0.001 * elapsedTime);//D
-				KeyBoardManager.hasKeyDown(81) && camera.moveVertical(0.001 * elapsedTime);//Q
-				KeyBoardManager.hasKeyDown(69) && camera.moveVertical(-0.001 * elapsedTime);//E
+				var scene:Scene = owner.scene;
+				KeyBoardManager.hasKeyDown(87) && camera.moveForward(-0.003 * elapsedTime);//W
+				KeyBoardManager.hasKeyDown(83) && camera.moveForward(0.003 * elapsedTime);//S
+				KeyBoardManager.hasKeyDown(65) && camera.moveRight(-0.003 * elapsedTime);//A
+				KeyBoardManager.hasKeyDown(68) && camera.moveRight(0.003 * elapsedTime);//D
+				KeyBoardManager.hasKeyDown(81) && camera.moveVertical(0.003 * elapsedTime);//Q
+				KeyBoardManager.hasKeyDown(69) && camera.moveVertical(-0.003 * elapsedTime);//E
 				
 				if (isMouseDown) {
 					var offsetX:Number = Laya.stage.mouseX - lastMouseX;
@@ -90,7 +90,8 @@ package threeDimen.common {
 			var yprElem:Float32Array = yawPitchRoll.elements;
 			if (Math.abs(yprElem[1]) < 1.50) {
 				Quaternion.createFromYawPitchRoll(yprElem[0], yprElem[1], yprElem[2], tempRotationZ);
-				camera.transform.localRotation = tempRotationZ;
+				 tempRotationZ.cloneTo(camera.transform.localRotation);
+				 camera.transform.localRotation = camera.transform.localRotation;
 			}
 		}
 	

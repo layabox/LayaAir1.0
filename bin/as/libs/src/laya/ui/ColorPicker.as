@@ -15,8 +15,7 @@ package laya.ui {
 	/**
 	 * <code>ColorPicker</code> 组件将显示包含多个颜色样本的列表，用户可以从中选择颜色。
 	 *
-	 * @example 以下示例代码，创建了一个 <code>ColorPicker</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>ColorPicker</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.ColorPicker;
@@ -45,8 +44,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * Laya.loader.load("resource/ui/color.png",laya.utils.Handler.create(this,loadComplete));//加载资源
@@ -64,8 +62,7 @@ package laya.ui {
 	 * {
 	 *     console.log("当前选择的颜色： " + colorPicket.selectedColor);
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import ColorPicker = laya.ui.ColorPicker;
 	 * import Handler = laya.utils.Handler;
 	 * class ColorPicker_Example {
@@ -87,7 +84,6 @@ package laya.ui {
 	 *         console.log("当前选择的颜色： " + colorPicket.selectedColor);
 	 *     }
 	 * }
-	 * </listing>
 	 */
 	public class ColorPicker extends Component {
 		

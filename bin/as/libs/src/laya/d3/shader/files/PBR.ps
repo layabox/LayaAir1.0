@@ -66,6 +66,10 @@ vec2 frexp(float value) {
 }
 */
 
+vec3 gamma(vec3 col){
+	return pow(col,vec3(0.45455));
+}
+
 vec2 frexp(float x){
    float e = ceil(log2(x));
    return vec2(x * exp2(-e),e);
@@ -88,6 +92,17 @@ vec4 _RGBtoRGBE(vec3 rgb){
 
 float saturate(float v){
     return min(max(v,0.),1.);
+}
+
+vec3 ACESToneMapping(vec3 color, float adapted_lum){
+	const float A = 2.51;
+	const float B = 0.03;
+	const float C = 2.43;
+	const float D = 0.59;
+	const float E = 0.14;
+
+	color *= adapted_lum;
+	return (color * (A * color + B)) / (color * (C * color + D) + E);
 }
 
 vec4 tex2dLod(sampler2D tex, float u, float v, float lod){
@@ -279,12 +294,13 @@ vec4 pbrlight(vec3 normal, float rough, float NoV, vec3 R){
 	speccontrib =  F0 * EnvBRDF.x + EnvBRDF.y;
 	vec3 color_spec = PrefilteredColor * speccontrib;
 	vec3 color_diff=diff_sh9(normal);//testDiff(normal);//
-	vec3 outc = color_diff*mix(basecolor.rgb,vec3(0.),metaless)*(vec3(1.0)-speccontrib)+color_spec*u_hdrexposure;
+	vec3 outc = color_diff*mix(basecolor.rgb,vec3(0.),metaless)*(vec3(1.0)-speccontrib)+color_spec;
     return vec4(outc,basecolor.a);//TODO 这里应该没有括号
 }
 #else
 vec4 pbrlight(vec3 normal, float rough, float NoV, vec3 R){
     vec4 basecolor = texture2D(texBaseColor,vUv);
+	basecolor.rgb = pow(basecolor.rgb,vec3(2.2));
 	float metaless = 1.0; 	
 	const float ismetalinfov = (128./255.);
 	if(basecolor.a>=ismetalinfov){//这时候表示金属度
@@ -301,7 +317,7 @@ vec4 pbrlight(vec3 normal, float rough, float NoV, vec3 R){
 	vec4 pbrinfo = texture2D(texPbrInfo, vUv);
 	#endif
     //vec4 pbrinfo = texture2D(texORM,vUv);
-    const vec3 nonmetalF0 =vec3(0.05);
+    const vec3 nonmetalF0 =vec3(0.02);
     vec3 F0 =  mix(nonmetalF0, basecolor.rgb, metaless);
     //vec4 color_spec = ApproximateSpecularIBL(F0,rough, NoV, R);
 	
@@ -315,15 +331,14 @@ vec4 pbrlight(vec3 normal, float rough, float NoV, vec3 R){
 	
 	vec3 color_diff=diff_sh9(normal);//testDiff(normal);//
 	//return vec4(color_diff,basecolor.a);
-	//一起控制的话，diff总也不好
-	//vec3 outc = (color_diff*mix(basecolor.rgb,vec3(0.),metaless)+color_spec)*u_hdrexposure;
 	#ifdef HAS_PBRINFO
 	float ao = pbrinfo.r;
-	vec3 outc = (color_diff*mix(basecolor.rgb,vec3(0.),metaless)+color_spec*u_hdrexposure)*ao;
+	vec3 outc = (color_diff*mix(basecolor.rgb,vec3(0.),metaless)+color_spec)*ao;
 	#else
-	vec3 outc = color_diff*mix(basecolor.rgb,vec3(0.),metaless)*(vec3(1.0)-speccontrib)+color_spec*u_hdrexposure;
+	vec3 outc = color_diff*mix(basecolor.rgb,vec3(0.),metaless)*(vec3(1.0)-speccontrib)+color_spec;
 	#endif
-    return vec4(outc, basecolor.a);
+	//outc = ACESToneMapping(outc,.6);
+	return vec4(outc, basecolor.a);
 }
 #endif
 
@@ -413,8 +428,8 @@ void main() {
 	if(vWorldPos.z>2.0 || vWorldPos.z<-2.0)
 		discard;
 	#endif
-	vec4 pbrl = pbrlight(normal,roughness,NoV,R);
-    gl_FragColor.rgb =  pbrl.rgb;
+	vec4 pbrl = pbrlight(normal,roughness,NoV,R)*u_hdrexposure;
+    gl_FragColor.rgb =  gamma(pbrl.rgb);
 	//gl_FragColor.rgb = oldlight(normtex,NoV,R);
 	#ifdef RECEIVESHADOW
 	gl_FragColor.rgb *= max(shadowValue,0.7);

@@ -125,10 +125,10 @@ package laya.ui {
 					} else {
 						var tChild:* = createComp(node, null, view);
 						if (node.type == "Script") {
-							if (tChild.hasOwnProperty("owner"))
+							if ("owner" in tChild)
 							{
 								tChild["owner"] = comp;
-							}else if (tChild.hasOwnProperty("target"))
+							}else if ("target" in tChild)
 							{
 								tChild["target"] = comp;
 							}	

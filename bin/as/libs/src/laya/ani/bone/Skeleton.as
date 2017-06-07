@@ -202,17 +202,15 @@ package laya.ani.bone {
 			_aniPath = path;
 			_complete = complete;
 			_loadAniMode = aniMode;
-			_texturePath = path.replace(".sk", ".png").replace(".bin", ".png");
-			Laya.loader.load([{url: path, type: Loader.BUFFER}, {url: _texturePath, type: Loader.IMAGE}], Handler.create(this, _onLoaded));
+			Laya.loader.load([{url: path, type: Loader.BUFFER}], Handler.create(this, _onLoaded));
 		}
 		
 		/**
 		 * 加载完成
 		 */
 		private function _onLoaded():void {
-			var tTexture:Texture = Loader.getRes(_texturePath);
 			var arraybuffer:ArrayBuffer = Loader.getRes(_aniPath);
-			if (tTexture == null || arraybuffer == null) return;
+			if (arraybuffer == null) return;
 			if (Templet.TEMPLET_DICTIONARY == null) {
 				Templet.TEMPLET_DICTIONARY = {};
 			}
@@ -226,7 +224,7 @@ package laya.ani.bone {
 				Templet.TEMPLET_DICTIONARY[_aniPath] = tFactory;
 				tFactory.on(Event.COMPLETE, this, _parseComplete);
 				tFactory.on(Event.ERROR, this, _parseFail);
-				tFactory.parseData(tTexture, arraybuffer);
+				tFactory.parseData(null, arraybuffer);
 			}
 		}
 		

@@ -32,20 +32,30 @@ package laya.debug.tools
 		}
 		
 		
-		
+		public static var _deep:int=0;
 		public static function runAllCallLater():void
 		{
+			if(_deep>0) debugger;
+			_deep++;
 			var timer:Timer;
 			timer=Laya.timer;
 			//处理callLater
 			var laters:Array = timer["_laters"];
 			for (var i:int = 0, n:int = laters.length - 1; i <= n; i++) {
 				var handler:* = laters[i];
-				handler.method !== null && handler.run(false);
-				timer["_recoverHandler"](handler);
+				if(handler)
+				{
+					handler.method !== null && handler.run(false);
+					timer["_recoverHandler"](handler);
+				}else
+				{
+					debugger;
+				}
+				
 				i === n && (n = laters.length - 1);
 			}
 			laters.length = 0;
+			_deep--;
 		}
 		
 	}

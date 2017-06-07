@@ -38,7 +38,10 @@ package laya.html.dom {
 		}
 		override public function set width(value:Number):void 
 		{
+			var changed:Boolean;
+			changed = value != width;
 			super.width = value;
+			if(changed)
 			layout();
 		}
 		/**

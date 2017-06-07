@@ -2,13 +2,14 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var AnimationContent=laya.ani.AnimationContent,AnimationPlayer=laya.ani.AnimationPlayer,AnimationState=laya.ani.AnimationState;
-	var AnimationTemplet=laya.ani.AnimationTemplet,Arith=laya.maths.Arith,BaseShader=laya.webgl.shader.BaseShader;
-	var Browser=laya.utils.Browser,Buffer=laya.webgl.utils.Buffer,Buffer2D=laya.webgl.utils.Buffer2D,Byte=laya.utils.Byte;
-	var ClassUtils=laya.utils.ClassUtils,Config=Laya.Config,EmitterBase=laya.particle.emitter.EmitterBase,Event=laya.events.Event;
-	var EventDispatcher=laya.events.EventDispatcher,Handler=laya.utils.Handler,IndexBuffer2D=laya.webgl.utils.IndexBuffer2D;
-	var Loader=laya.net.Loader,LoaderManager=laya.net.LoaderManager,MathUtil=laya.maths.MathUtil,Node=laya.display.Node;
-	var ParticleSetting=laya.particle.ParticleSetting,ParticleShader=laya.particle.shader.ParticleShader,ParticleTemplateWebGL=laya.particle.ParticleTemplateWebGL;
+	var AnimationContent=laya.ani.AnimationContent,AnimationNodeContent=laya.ani.AnimationNodeContent;
+	var AnimationPlayer=laya.ani.AnimationPlayer,AnimationState=laya.ani.AnimationState,AnimationTemplet=laya.ani.AnimationTemplet;
+	var Arith=laya.maths.Arith,BaseShader=laya.webgl.shader.BaseShader,BezierLerp=laya.ani.math.BezierLerp,Browser=laya.utils.Browser;
+	var Buffer=laya.webgl.utils.Buffer,Buffer2D=laya.webgl.utils.Buffer2D,Byte=laya.utils.Byte,ClassUtils=laya.utils.ClassUtils;
+	var Config=Laya.Config,EmitterBase=laya.particle.emitter.EmitterBase,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher;
+	var Handler=laya.utils.Handler,IndexBuffer2D=laya.webgl.utils.IndexBuffer2D,Loader=laya.net.Loader,LoaderManager=laya.net.LoaderManager;
+	var MathUtil=laya.maths.MathUtil,Matrix=laya.maths.Matrix,Node=laya.display.Node,ParticleSetting=laya.particle.ParticleSetting;
+	var ParticleShader=laya.particle.shader.ParticleShader,ParticleTemplateWebGL=laya.particle.ParticleTemplateWebGL;
 	var Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
 	var RenderState2D=laya.webgl.utils.RenderState2D,Resource=laya.resource.Resource,RunDriver=laya.utils.RunDriver;
 	var Shader=laya.webgl.shader.Shader,ShaderCompile=laya.webgl.utils.ShaderCompile,ShaderValue=laya.webgl.shader.ShaderValue;
@@ -20,6 +21,216 @@
 	Laya.interface('laya.d3.core.render.IUpdate');
 	Laya.interface('laya.d3.core.scene.ITreeNode');
 	Laya.interface('laya.d3.core.render.IRenderable');
+	/**
+	*@private
+	*/
+	//class laya.d3.animation.AnimationNode
+	var AnimationNode=(function(){
+		function AnimationNode(){
+			this.path=null;
+			this.componentType=null;
+			this.propertyName=null;
+			this.keyFrames=null;
+		}
+
+		__class(AnimationNode,'laya.d3.animation.AnimationNode');
+		return AnimationNode;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.d3.animation.AnimationParser01
+	var AnimationParser011=(function(){
+		function AnimationParser01(){};
+		__class(AnimationParser01,'laya.d3.animation.AnimationParser01',null,'AnimationParser011');
+		AnimationParser01.READ_DATA=function(){
+			AnimationParser01._DATA.offset=AnimationParser01._reader.getUint32();
+			AnimationParser01._DATA.size=AnimationParser01._reader.getUint32();
+		}
+
+		AnimationParser01.READ_BLOCK=function(){
+			var count=AnimationParser01._BLOCK.count=AnimationParser01._reader.getUint16();
+			var blockStarts=AnimationParser01._BLOCK.blockStarts=[];
+			var blockLengths=AnimationParser01._BLOCK.blockLengths=[];
+			for (var i=0;i < count;i++){
+				blockStarts.push(AnimationParser01._reader.getUint32());
+				blockLengths.push(AnimationParser01._reader.getUint32());
+			}
+		}
+
+		AnimationParser01.READ_STRINGS=function(){
+			var offset=AnimationParser01._reader.getUint32();
+			var count=AnimationParser01._reader.getUint16();
+			var prePos=AnimationParser01._reader.pos;
+			AnimationParser01._reader.pos=offset+AnimationParser01._DATA.offset;
+			for (var i=0;i < count;i++)
+			AnimationParser01._strings[i]=AnimationParser01._reader.readUTFString();
+			AnimationParser01._reader.pos=prePos;
+		}
+
+		AnimationParser01.parse=function(clip,reader){
+			AnimationParser01._animationClip=clip;
+			AnimationParser01._reader=reader;
+			var arrayBuffer=reader.__getBuffer();
+			AnimationParser01.READ_DATA();
+			AnimationParser01.READ_BLOCK();
+			AnimationParser01.READ_STRINGS();
+			for (var i=0,n=AnimationParser01._BLOCK.count;i < n;i++){
+				var index=reader.getUint16();
+				var blockName=AnimationParser01._strings[index];
+				var fn=AnimationParser01["READ_"+blockName];
+				if (fn==null)
+					throw new Error("model file err,no this function:"+index+" "+blockName);
+				else
+				fn.call();
+			}
+		}
+
+		AnimationParser01.READ_ANIMATIONS=function(){
+			var i=0,j=0;
+			var reader=AnimationParser01._reader;
+			var buffer=reader.__getBuffer();
+			var lengthTypes=[];
+			var lenghthTypeCount=reader.getUint8();
+			lengthTypes.length=lenghthTypeCount;
+			for (i=0;i < lenghthTypeCount;i++)
+			lengthTypes[i]=reader.getUint16();
+			var startTimeTypes=[];
+			var startTimeTypeCount=reader.getUint16();
+			startTimeTypes.length=startTimeTypeCount;
+			for (i=0;i < startTimeTypeCount;i++)
+			startTimeTypes[i]=reader.getFloat32();
+			var clip=AnimationParser01._animationClip;
+			var nodes=clip._nodes=new Array;
+			clip.name=AnimationParser01._strings[reader.getUint16()];
+			clip._duration=reader.getFloat32();
+			clip._frameRate=reader.getInt16();
+			var nodeCount=clip._nodes.length=reader.getInt16();
+			for (i=0;i < nodeCount;i++){
+				var node=nodes[i]=new AnimationNode();
+				var pathLength=reader.getUint16();
+				var path=node.path=[];
+				path.length=pathLength;
+				for (j=0;j < pathLength;j++)
+				path[i]=AnimationParser01._strings[reader.getUint16()];
+				node.componentType=AnimationParser01._strings[reader.getUint16()];
+				node.propertyName=AnimationParser01._strings[reader.getUint16()];
+				var dataLength=lengthTypes[reader.getUint8()];
+				var keyFrames=node.keyFrames=[];
+				var keyframeCount=keyFrames.length=reader.getUint16();
+				var lastKeyFrame=null;
+				for (j=0;j < keyframeCount;j++){
+					var keyFrame=keyFrames[j]=new Keyframe();
+					var startTime=keyFrame.startTime=startTimeTypes[reader.getUint16()];
+					keyFrame.inTangent=reader.getFloat32();
+					keyFrame.outTangent=reader.getFloat32();
+					var offset=reader.pos;
+					keyFrame.data=new Float32Array(buffer.slice(offset,offset+dataLength));
+					reader.pos+=dataLength;
+					if (lastKeyFrame){
+						lastKeyFrame.next=keyFrame;
+						lastKeyFrame.duration=startTime-lastKeyFrame.startTime;
+					}
+					lastKeyFrame=keyFrame;
+				}
+				keyFrame.next=keyFrame;
+				keyFrame.duration=0;
+			}
+		}
+
+		AnimationParser01._animationClip=null
+		AnimationParser01._reader=null
+		AnimationParser01._strings=[];
+		__static(AnimationParser01,
+		['_BLOCK',function(){return this._BLOCK={count:0};},'_DATA',function(){return this._DATA={offset:0,size:0};}
+		]);
+		return AnimationParser01;
+	})()
+
+
+	/**
+	*<code>BoneNode</code> 类用于实现骨骼节点。
+	*/
+	//class laya.d3.animation.BoneNode
+	var BoneNode=(function(){
+		function BoneNode(name){
+			this._name=null;
+			this._childs=null;
+			this._attchSprite3Ds=null;
+			this._transform=null;
+			this._childs=[];
+			this._attchSprite3Ds=[];
+			this._transform=new Matrix();
+			this._name=name;
+		}
+
+		__class(BoneNode,'laya.d3.animation.BoneNode');
+		var __proto=BoneNode.prototype;
+		/**
+		*添加子节点。
+		*@param child 子节点。
+		*/
+		__proto.addChild=function(child){
+			this._childs.push(child);
+		}
+
+		/**
+		*移除子节点。
+		*@param child 子节点。
+		*/
+		__proto.removeChild=function(child){
+			var index=this._childs.indexOf(child);
+			(index!==-1)&& (this._childs.splice(index,1));
+		}
+
+		/**
+		*获取挂点精灵集合。
+		*@return 挂点精灵集合。
+		*/
+		__getset(0,__proto,'attchSprite3Ds',function(){
+			return this._attchSprite3Ds;
+		});
+
+		return BoneNode;
+	})()
+
+
+	/**
+	*@private
+	*/
+	//class laya.d3.animation.Keyframe
+	var Keyframe=(function(){
+		function Keyframe(){
+			this.startTime=NaN;
+			this.inTangent=NaN;
+			this.outTangent=NaN;
+			this.data=null;
+			this.duration=NaN;
+			this.next=null;
+		}
+
+		__class(Keyframe,'laya.d3.animation.Keyframe');
+		return Keyframe;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.d3.core.Avatar
+	var Avatar=(function(){
+		function Avatar(){
+			this._bones=null;
+		}
+
+		__class(Avatar,'laya.d3.core.Avatar');
+		return Avatar;
+	})()
+
+
 	/**
 	*<code>SplineCurvePositionVelocity</code> 类用于通过顶点和速度创建闪光插值。
 	*/
@@ -841,6 +1052,7 @@
 			this._gradientX=null;
 			this._gradientY=null;
 			this._gradientZ=null;
+			this._gradientW=null;
 			this._constantMin=NaN;
 			this._constantMax=NaN;
 			this._constantMinSeparate=null;
@@ -853,6 +1065,8 @@
 			this._gradientYMax=null;
 			this._gradientZMin=null;
 			this._gradientZMax=null;
+			this._gradientWMin=null;
+			this._gradientWMax=null;
 		}
 
 		__class(GradientAngularVelocity,'laya.d3.core.particleShuriKen.module.GradientAngularVelocity');
@@ -939,20 +1153,6 @@
 		});
 
 		/**
-		*最小渐变角速度。
-		*/
-		__getset(0,__proto,'gradientMin',function(){
-			return this._gradientMin;
-		});
-
-		/**
-		*最小随机双固定角速度。
-		*/
-		__getset(0,__proto,'constantMin',function(){
-			return this._constantMin;
-		});
-
-		/**
 		*渐变角角速度X。
 		*/
 		__getset(0,__proto,'gradientX',function(){
@@ -967,6 +1167,27 @@
 		});
 
 		/**
+		*渐变角速度Z。
+		*/
+		__getset(0,__proto,'gradientW',function(){
+			return this._gradientW;
+		});
+
+		/**
+		*最小渐变角速度。
+		*/
+		__getset(0,__proto,'gradientMin',function(){
+			return this._gradientMin;
+		});
+
+		/**
+		*最小随机双固定角速度。
+		*/
+		__getset(0,__proto,'constantMin',function(){
+			return this._constantMin;
+		});
+
+		/**
 		*最大渐变角速度。
 		*/
 		__getset(0,__proto,'gradientMax',function(){
@@ -978,6 +1199,13 @@
 		*/
 		__getset(0,__proto,'constantMax',function(){
 			return this._constantMax;
+		});
+
+		/**
+		*最小渐变角速度Z。
+		*/
+		__getset(0,__proto,'gradientWMin',function(){
+			return this._gradientWMin;
 		});
 
 		/**
@@ -1006,6 +1234,13 @@
 		*/
 		__getset(0,__proto,'gradientXMax',function(){
 			return this._gradientXMax;
+		});
+
+		/**
+		*最大渐变角速度Z。
+		*/
+		__getset(0,__proto,'gradientWMax',function(){
+			return this._gradientWMax;
 		});
 
 		/**
@@ -1060,13 +1295,14 @@
 			return gradientAngularVelocity;
 		}
 
-		GradientAngularVelocity.createByGradientSeparate=function(gradientX,gradientY,gradientZ){
+		GradientAngularVelocity.createByGradientSeparate=function(gradientX,gradientY,gradientZ,gradientW){
 			var gradientAngularVelocity=new GradientAngularVelocity();
 			gradientAngularVelocity._type=1;
 			gradientAngularVelocity._separateAxes=true;
 			gradientAngularVelocity._gradientX=gradientX;
 			gradientAngularVelocity._gradientY=gradientY;
 			gradientAngularVelocity._gradientZ=gradientZ;
+			gradientAngularVelocity._gradientW=gradientW;
 			return gradientAngularVelocity;
 		}
 
@@ -1097,7 +1333,7 @@
 			return gradientAngularVelocity;
 		}
 
-		GradientAngularVelocity.createByRandomTwoGradientSeparate=function(gradientXMin,gradientXMax,gradientYMin,gradientYMax,gradientZMin,gradientZMax){
+		GradientAngularVelocity.createByRandomTwoGradientSeparate=function(gradientXMin,gradientXMax,gradientYMin,gradientYMax,gradientZMin,gradientZMax,gradientWMin,gradientWMax){
 			var gradientAngularVelocity=new GradientAngularVelocity();
 			gradientAngularVelocity._type=3;
 			gradientAngularVelocity._separateAxes=true;
@@ -1107,6 +1343,8 @@
 			gradientAngularVelocity._gradientYMax=gradientYMax;
 			gradientAngularVelocity._gradientZMin=gradientZMin;
 			gradientAngularVelocity._gradientZMax=gradientZMax;
+			gradientAngularVelocity._gradientWMin=gradientWMin;
+			gradientAngularVelocity._gradientWMax=gradientWMax;
 			return gradientAngularVelocity;
 		}
 
@@ -2084,7 +2322,7 @@
 					break ;
 				case 1:
 					if (this._angularVelocity.separateAxes)
-						destAngularVelocity=GradientAngularVelocity.createByGradientSeparate(this._angularVelocity.gradientX.clone(),this._angularVelocity.gradientY.clone(),this._angularVelocity.gradientZ.clone());
+						destAngularVelocity=GradientAngularVelocity.createByGradientSeparate(this._angularVelocity.gradientX.clone(),this._angularVelocity.gradientY.clone(),this._angularVelocity.gradientZ.clone(),this._angularVelocity.gradientW.clone());
 					else
 					destAngularVelocity=GradientAngularVelocity.createByGradient(this._angularVelocity.gradient.clone());
 					break ;
@@ -2096,7 +2334,7 @@
 					break ;
 				case 3:
 					if (this._angularVelocity.separateAxes)
-						destAngularVelocity=GradientAngularVelocity.createByRandomTwoGradientSeparate(this._angularVelocity.gradientXMin.clone(),this._angularVelocity.gradientYMin.clone(),this._angularVelocity.gradientZMin.clone(),this._angularVelocity.gradientXMax.clone(),this._angularVelocity.gradientYMax.clone(),this._angularVelocity.gradientZMax.clone());
+						destAngularVelocity=GradientAngularVelocity.createByRandomTwoGradientSeparate(this._angularVelocity.gradientXMin.clone(),this._angularVelocity.gradientYMin.clone(),this._angularVelocity.gradientZMin.clone(),this._angularVelocity.gradientWMin.clone(),this._angularVelocity.gradientXMax.clone(),this._angularVelocity.gradientYMax.clone(),this._angularVelocity.gradientZMax.clone(),this._angularVelocity.gradientWMax.clone());
 					else
 					destAngularVelocity=GradientAngularVelocity.createByRandomTwoGradient(this._angularVelocity.gradientMin.clone(),this._angularVelocity.gradientMax.clone());
 					break ;
@@ -2622,21 +2860,7 @@
 	*/
 	//class laya.d3.core.particleShuriKen.ShurikenParticleData
 	var ShurikenParticleData=(function(){
-		function ShurikenParticleData(){
-			this.startLifeTime=NaN;
-			this.position=null;
-			this.direction=null;
-			this.startColor=null;
-			this.startSize=null;
-			this.startRotation0=null;
-			this.startRotation1=null;
-			this.startRotation2=null;
-			this.time=NaN;
-			this.startSpeed=NaN;
-			this.startUVInfo=null;
-			this.simulationWorldPostion=null;
-		}
-
+		function ShurikenParticleData(){}
 		__class(ShurikenParticleData,'laya.d3.core.particleShuriKen.ShurikenParticleData');
 		ShurikenParticleData._getStartLifetimeFromGradient=function(startLifeTimeGradient,emissionTime){
 			for (var i=1,n=startLifeTimeGradient.gradientCount;i < n;i++){
@@ -2650,43 +2874,71 @@
 			throw new Error("ShurikenParticleData: can't get value foam startLifeTimeGradient.");
 		}
 
-		ShurikenParticleData.create=function(particleSystem,particleRender,position,direction,time,transform){
+		ShurikenParticleData._randomInvertRoationArray=function(rotatonE,outE,randomizeRotationDirection,rand,randomSeeds){
+			var randDic=NaN;
+			if (rand){
+				rand.seed=randomSeeds[6];
+				randDic=rand.getFloat();
+				randomSeeds[6]=rand.seed;
+				}else {
+				randDic=Math.random();
+			}
+			if (randDic < randomizeRotationDirection){
+				outE[0]=-rotatonE[0];
+				outE[1]=-rotatonE[1];
+				outE[2]=-rotatonE[2];
+				}else {
+				outE[0]=rotatonE[0];
+				outE[1]=rotatonE[1];
+				outE[2]=rotatonE[2];
+			}
+		}
+
+		ShurikenParticleData._randomInvertRoation=function(rotaton,randomizeRotationDirection,rand,randomSeeds){
+			var randDic=NaN;
+			if (rand){
+				rand.seed=randomSeeds[6];
+				randDic=rand.getFloat();
+				randomSeeds[6]=rand.seed;
+				}else {
+				randDic=Math.random();
+			}
+			if (randDic < randomizeRotationDirection)
+				rotaton=-rotaton;
+			return rotaton;
+		}
+
+		ShurikenParticleData.create=function(particleSystem,particleRender,transform){
 			var autoRandomSeed=particleSystem.autoRandomSeed;
 			var rand=particleSystem._rand;
 			var randomSeeds=particleSystem._randomSeeds;
-			var particleData=new ShurikenParticleData();
-			particleData.position=position;
-			particleData.direction=direction;
-			particleData.startColor=ShurikenParticleData._tempStartColor;
 			switch (particleSystem.startColorType){
 				case 0:;
-					var startColorE=particleData.startColor;
 					var constantStartColorE=particleSystem.startColorConstant.elements;
-					startColorE[0]=constantStartColorE[0];
-					startColorE[1]=constantStartColorE[1];
-					startColorE[2]=constantStartColorE[2];
-					startColorE[3]=constantStartColorE[3];
+					ShurikenParticleData.startColor[0]=constantStartColorE[0];
+					ShurikenParticleData.startColor[1]=constantStartColorE[1];
+					ShurikenParticleData.startColor[2]=constantStartColorE[2];
+					ShurikenParticleData.startColor[3]=constantStartColorE[3];
 					break ;
 				case 2:
 					if (autoRandomSeed){
-						MathUtil.lerpVector4(particleSystem.startColorConstantMin.elements,particleSystem.startColorConstantMax.elements,Math.random(),particleData.startColor);
+						MathUtil.lerpVector4(particleSystem.startColorConstantMin.elements,particleSystem.startColorConstantMax.elements,Math.random(),ShurikenParticleData.startColor);
 						}else {
 						rand.seed=randomSeeds[3];
-						MathUtil.lerpVector4(particleSystem.startColorConstantMin.elements,particleSystem.startColorConstantMax.elements,rand.getFloat(),particleData.startColor);
+						MathUtil.lerpVector4(particleSystem.startColorConstantMin.elements,particleSystem.startColorConstantMax.elements,rand.getFloat(),ShurikenParticleData.startColor);
 						randomSeeds[3]=rand.seed;
 					}
 					break ;
 				};
 			var colorOverLifetime=particleSystem.colorOverLifetime;
 			if (colorOverLifetime && colorOverLifetime.enbale){
-				var startColor=particleData.startColor;
 				var color=colorOverLifetime.color;
 				switch (color.type){
 					case 0:
-						startColor[0]=startColor[0] *color.constant.x;
-						startColor[1]=startColor[1] *color.constant.y;
-						startColor[2]=startColor[2] *color.constant.z;
-						startColor[3]=startColor[3] *color.constant.w;
+						ShurikenParticleData.startColor[0]=ShurikenParticleData.startColor[0] *color.constant.x;
+						ShurikenParticleData.startColor[1]=ShurikenParticleData.startColor[1] *color.constant.y;
+						ShurikenParticleData.startColor[2]=ShurikenParticleData.startColor[2] *color.constant.z;
+						ShurikenParticleData.startColor[3]=ShurikenParticleData.startColor[3] *color.constant.w;
 						break ;
 					case 2:;
 						var colorRandom=NaN;
@@ -2699,15 +2951,14 @@
 						};
 						var minConstantColor=color.constantMin;
 						var maxConstantColor=color.constantMax;
-						startColor[0]=startColor[0] *MathUtil.lerp(minConstantColor.x,maxConstantColor.x,colorRandom);
-						startColor[1]=startColor[1] *MathUtil.lerp(minConstantColor.y,maxConstantColor.y,colorRandom);
-						startColor[2]=startColor[2] *MathUtil.lerp(minConstantColor.z,maxConstantColor.z,colorRandom);
-						startColor[3]=startColor[3] *MathUtil.lerp(minConstantColor.w,maxConstantColor.w,colorRandom);
+						ShurikenParticleData.startColor[0]=ShurikenParticleData.startColor[0] *MathUtil.lerp(minConstantColor.x,maxConstantColor.x,colorRandom);
+						ShurikenParticleData.startColor[1]=ShurikenParticleData.startColor[1] *MathUtil.lerp(minConstantColor.y,maxConstantColor.y,colorRandom);
+						ShurikenParticleData.startColor[2]=ShurikenParticleData.startColor[2] *MathUtil.lerp(minConstantColor.z,maxConstantColor.z,colorRandom);
+						ShurikenParticleData.startColor[3]=ShurikenParticleData.startColor[3] *MathUtil.lerp(minConstantColor.w,maxConstantColor.w,colorRandom);
 						break ;
 					}
-			}
-			particleData.startSize=ShurikenParticleData._tempStartSize;
-			var particleSize=particleData.startSize;
+			};
+			var particleSize=ShurikenParticleData.startSize;
 			switch (particleSystem.startSizeType){
 				case 0:
 					if (particleSystem.threeDStartSize){
@@ -2756,7 +3007,7 @@
 						}else {
 						rand.seed=randomSeeds[11];
 						particleSize[0]=particleSize[0] *MathUtil.lerp(size.constantMinSeparate.x,size.constantMaxSeparate.x,rand.getFloat());
-						particleSize[1]=particleSize[1] *MathUtil.lerp(size.constantMinSeparate.y,size.constantMaxSeparate.y,rand.getFloat());;
+						particleSize[1]=particleSize[1] *MathUtil.lerp(size.constantMinSeparate.y,size.constantMaxSeparate.y,rand.getFloat());
 						particleSize[2]=particleSize[2] *MathUtil.lerp(size.constantMinSeparate.z,size.constantMaxSeparate.z,rand.getFloat());
 						randomSeeds[11]=rand.seed;
 					}
@@ -2774,139 +3025,162 @@
 					particleSize[2]=particleSize[2] *randomSize;
 				}
 			};
-			var particleRotation0;
-			var particleRotation1;
-			var particleRotation2;
-			var rotationMatrixE;
-			switch (particleSystem.startRotationType){
-				case 0:
-					if (particleSystem.threeDStartRotation && (particleRender.renderMode!==1)&& (particleRender.renderMode!==1)){
-						var startRotationConstantSeparate=particleSystem.startRotationConstantSeparate;
-						Matrix4x4.createRotationYawPitchRoll(startRotationConstantSeparate.y,startRotationConstantSeparate.x,startRotationConstantSeparate.z,ShurikenParticleData._tempRotationMatrix);
-						rotationMatrixE=ShurikenParticleData._tempRotationMatrix.elements;
-						particleData.startRotation0=ShurikenParticleData._tempStartRotation0;
-						particleRotation0=particleData.startRotation0;
-						particleRotation0[0]=rotationMatrixE[0];
-						particleRotation0[1]=rotationMatrixE[1];
-						particleRotation0[2]=rotationMatrixE[2];
-						particleData.startRotation1=ShurikenParticleData._tempStartRotation1;
-						particleRotation1=particleData.startRotation1;
-						particleRotation1[0]=rotationMatrixE[4];
-						particleRotation1[1]=rotationMatrixE[5];
-						particleRotation1[2]=rotationMatrixE[6];
-						particleData.startRotation2=ShurikenParticleData._tempStartRotation2;
-						particleRotation2=particleData.startRotation2;
-						particleRotation2[0]=rotationMatrixE[8];
-						particleRotation2[1]=rotationMatrixE[9];
-						particleRotation2[2]=rotationMatrixE[10];
-						}else {
-						particleData.startRotation0=ShurikenParticleData._tempStartRotation0;
-						particleRotation0=particleData.startRotation0;
-						particleRotation0[0]=particleRotation0[1]=particleRotation0[2]=particleSystem.startRotationConstant;
-					}
-					break ;
-				case 2:
-					if (particleSystem.threeDStartRotation && (particleRender.renderMode!==1)&& (particleRender.renderMode!==2)){
-						particleData.startRotation0=ShurikenParticleData._tempStartRotation0;
-						particleRotation0=particleData.startRotation0;
-						var startRotationConstantMinSeparate=particleSystem.startRotationConstantMinSeparate;
-						var startRotationConstantMaxSeparate=particleSystem.startRotationConstantMaxSeparate;
-						if (autoRandomSeed){
-							Matrix4x4.createRotationYawPitchRoll(MathUtil.lerp(startRotationConstantMinSeparate.y,startRotationConstantMaxSeparate.y,Math.random()),MathUtil.lerp(startRotationConstantMinSeparate.x,startRotationConstantMaxSeparate.x,Math.random()),MathUtil.lerp(startRotationConstantMinSeparate.z,startRotationConstantMaxSeparate.z,Math.random()),ShurikenParticleData._tempRotationMatrix);
+			var renderMode=particleRender.renderMode;
+			if (renderMode!==1){
+				var rotationE,axis,axisE;
+				switch (particleSystem.startRotationType){
+					case 0:
+						if (particleSystem.threeDStartRotation){
+							var startRotationConstantSeparate=particleSystem.startRotationConstantSeparate;
+							var randomRotationE=ShurikenParticleData._tempVector30.elements;
+							ShurikenParticleData._randomInvertRoationArray(startRotationConstantSeparate.elements,randomRotationE,particleSystem.randomizeRotationDirection,autoRandomSeed ? null :rand,randomSeeds);
+							if (renderMode!==4)
+								Quaternion.createFromYawPitchRoll(randomRotationE[1],randomRotationE[0],-randomRotationE[2],ShurikenParticleData._tempQuaternion);
+							else
+							Quaternion.createFromYawPitchRoll(randomRotationE[1],randomRotationE[0],randomRotationE[2],ShurikenParticleData._tempQuaternion);
+							rotationE=ShurikenParticleData._tempQuaternion.elements;
+							ShurikenParticleData.startRotation[0]=rotationE[0];
+							ShurikenParticleData.startRotation[1]=rotationE[1];
+							ShurikenParticleData.startRotation[2]=rotationE[2];
+							ShurikenParticleData.startRotation[3]=rotationE[3];
 							}else {
-							rand.seed=randomSeeds[5];
-							Matrix4x4.createRotationYawPitchRoll(MathUtil.lerp(startRotationConstantMinSeparate.y,startRotationConstantMaxSeparate.y,rand.getFloat()),MathUtil.lerp(startRotationConstantMinSeparate.x,startRotationConstantMaxSeparate.x,rand.getFloat()),MathUtil.lerp(startRotationConstantMinSeparate.z,startRotationConstantMaxSeparate.z,rand.getFloat()),ShurikenParticleData._tempRotationMatrix);
-							randomSeeds[5]=rand.seed;
+							if (renderMode!==4){
+								ShurikenParticleData.startRotation[0]=ShurikenParticleData._randomInvertRoation(particleSystem.startRotationConstant,particleSystem.randomizeRotationDirection,autoRandomSeed ? null :rand,randomSeeds);
+								}else {
+								axis=ShurikenParticleData._tempVector30;
+								axisE=axis.elements;
+								if (autoRandomSeed){
+									axisE[0]=Math.random()-0.5;
+									axisE[1]=Math.random()-0.5;
+									axisE[2]=Math.random()-0.5;
+									}else {
+									rand.seed=randomSeeds[18];
+									axisE[0]=rand.getFloat()-0.5;
+									randomSeeds[18]=rand.seed;
+									rand.seed=randomSeeds[19];
+									axisE[1]=rand.getFloat()-0.5;
+									randomSeeds[19]=rand.seed;
+									rand.seed=randomSeeds[20];
+									axisE[2]=rand.getFloat()-0.5;
+									randomSeeds[20]=rand.seed;
+								}
+								Vector3.normalize(axis,axis);
+								ShurikenParticleData.startRotation[0]=axisE[0];
+								ShurikenParticleData.startRotation[1]=axisE[1];
+								ShurikenParticleData.startRotation[2]=axisE[2];
+								ShurikenParticleData.startRotation[3]=ShurikenParticleData._randomInvertRoation(particleSystem.startRotationConstant,particleSystem.randomizeRotationDirection,autoRandomSeed ? null :rand,randomSeeds);
+							}
 						}
-						rotationMatrixE=ShurikenParticleData._tempRotationMatrix.elements;
-						particleData.startRotation0=ShurikenParticleData._tempStartRotation0;
-						particleRotation0=particleData.startRotation0;
-						particleRotation0[0]=rotationMatrixE[0];
-						particleRotation0[1]=rotationMatrixE[1];
-						particleRotation0[2]=rotationMatrixE[2];
-						particleData.startRotation1=ShurikenParticleData._tempStartRotation1;
-						particleRotation1=particleData.startRotation1;
-						particleRotation1[0]=rotationMatrixE[4];
-						particleRotation1[1]=rotationMatrixE[5];
-						particleRotation1[2]=rotationMatrixE[6];
-						particleData.startRotation2=ShurikenParticleData._tempStartRotation2;
-						particleRotation2=particleData.startRotation2;
-						particleRotation2[0]=rotationMatrixE[8];
-						particleRotation2[1]=rotationMatrixE[9];
-						particleRotation2[2]=rotationMatrixE[10];
-						}else {
-						particleData.startRotation0=ShurikenParticleData._tempStartRotation0;
-						particleRotation0=particleData.startRotation0;
-						if (autoRandomSeed){
-							particleRotation0[0]=particleRotation0[1]=particleRotation0[2]=MathUtil.lerp(particleSystem.startRotationConstantMin,particleSystem.startRotationConstantMax,Math.random());
+						break ;
+					case 2:
+						if (particleSystem.threeDStartRotation){
+							var startRotationConstantMinSeparate=particleSystem.startRotationConstantMinSeparate;
+							var startRotationConstantMaxSeparate=particleSystem.startRotationConstantMaxSeparate;
+							var lerpRoationE=ShurikenParticleData._tempVector30.elements;
+							if (autoRandomSeed){
+								lerpRoationE[0]=MathUtil.lerp(startRotationConstantMinSeparate.x,startRotationConstantMaxSeparate.x,Math.random());
+								lerpRoationE[1]=MathUtil.lerp(startRotationConstantMinSeparate.y,startRotationConstantMaxSeparate.y,Math.random());
+								lerpRoationE[2]=MathUtil.lerp(startRotationConstantMinSeparate.z,startRotationConstantMaxSeparate.z,Math.random());
+								}else {
+								rand.seed=randomSeeds[5];
+								lerpRoationE[0]=MathUtil.lerp(startRotationConstantMinSeparate.x,startRotationConstantMaxSeparate.x,rand.getFloat());
+								lerpRoationE[1]=MathUtil.lerp(startRotationConstantMinSeparate.y,startRotationConstantMaxSeparate.y,rand.getFloat());
+								lerpRoationE[2]=MathUtil.lerp(startRotationConstantMinSeparate.z,startRotationConstantMaxSeparate.z,rand.getFloat());
+								randomSeeds[5]=rand.seed;
+							}
+							ShurikenParticleData._randomInvertRoationArray(lerpRoationE,lerpRoationE,particleSystem.randomizeRotationDirection,autoRandomSeed ? null :rand,randomSeeds);
+							Quaternion.createFromYawPitchRoll(lerpRoationE[1],lerpRoationE[0],lerpRoationE[2],ShurikenParticleData._tempQuaternion);
+							rotationE=ShurikenParticleData._tempQuaternion.elements;
+							ShurikenParticleData.startRotation[0]=rotationE[0];
+							ShurikenParticleData.startRotation[1]=rotationE[1];
+							ShurikenParticleData.startRotation[2]=rotationE[2];
+							ShurikenParticleData.startRotation[3]=rotationE[3];
 							}else {
-							rand.seed=randomSeeds[5];
-							particleRotation0[0]=particleRotation0[1]=particleRotation0[2]=MathUtil.lerp(particleSystem.startRotationConstantMin,particleSystem.startRotationConstantMax,rand.getFloat());
-							randomSeeds[5]=rand.seed;
+							if (renderMode!==4){
+								if (autoRandomSeed){
+									ShurikenParticleData.startRotation[0]=ShurikenParticleData._randomInvertRoation(MathUtil.lerp(particleSystem.startRotationConstantMin,particleSystem.startRotationConstantMax,Math.random()),particleSystem.randomizeRotationDirection,autoRandomSeed ? null :rand,randomSeeds);
+									}else {
+									rand.seed=randomSeeds[5];
+									ShurikenParticleData.startRotation[0]=ShurikenParticleData._randomInvertRoation(MathUtil.lerp(particleSystem.startRotationConstantMin,particleSystem.startRotationConstantMax,rand.getFloat()),particleSystem.randomizeRotationDirection,autoRandomSeed ? null :rand,randomSeeds);
+									randomSeeds[5]=rand.seed;
+								}
+								}else {
+								axis=ShurikenParticleData._tempVector30;
+								axisE=axis.elements;
+								if (autoRandomSeed){
+									axisE[0]=Math.random()-0.5;
+									axisE[1]=Math.random()-0.5;
+									axisE[2]=Math.random()-0.5;
+									}else {
+									rand.seed=randomSeeds[18];
+									axisE[0]=rand.getFloat()-0.5;
+									randomSeeds[18]=rand.seed;
+									rand.seed=randomSeeds[19];
+									axisE[1]=rand.getFloat()-0.5;
+									randomSeeds[19]=rand.seed;
+									rand.seed=randomSeeds[20];
+									axisE[2]=rand.getFloat()-0.5;
+									randomSeeds[20]=rand.seed;
+								}
+								Vector3.normalize(axis,axis);
+								ShurikenParticleData.startRotation[0]=axisE[0];
+								ShurikenParticleData.startRotation[1]=axisE[1];
+								ShurikenParticleData.startRotation[2]=axisE[2];
+								if (autoRandomSeed){
+									ShurikenParticleData.startRotation[3]=ShurikenParticleData._randomInvertRoation(MathUtil.lerp(particleSystem.startRotationConstantMin,particleSystem.startRotationConstantMax,Math.random()),particleSystem.randomizeRotationDirection,autoRandomSeed ? null :rand,randomSeeds);
+									}else {
+									rand.seed=randomSeeds[5];
+									ShurikenParticleData.startRotation[3]=ShurikenParticleData._randomInvertRoation(MathUtil.lerp(particleSystem.startRotationConstantMin,particleSystem.startRotationConstantMax,rand.getFloat()),particleSystem.randomizeRotationDirection,autoRandomSeed ? null :rand,randomSeeds);
+									randomSeeds[5]=rand.seed;
+								}
+							}
 						}
+						break ;
 					}
-					break ;
-				};
-			var randDic=NaN;
-			if (autoRandomSeed){
-				randDic=Math.random();
-				}else {
-				rand.seed=randomSeeds[6];
-				randDic=rand.getFloat();
-				randomSeeds[6]=rand.seed;
 			}
-			if (randDic < particleSystem.randomizeRotationDirection){
-				particleRotation0[0]=-particleRotation0[0];
-				particleRotation0[1]=-particleRotation0[1];
-				particleRotation0[2]=-particleRotation0[2];
-			}
-			particleData.startRotation1=ShurikenParticleData._tempStartRotation1;
-			particleData.startRotation2=ShurikenParticleData._tempStartRotation2;
 			switch (particleSystem.startLifetimeType){
 				case 0:
-					particleData.startLifeTime=particleSystem.startLifetimeConstant;
+					ShurikenParticleData.startLifeTime=particleSystem.startLifetimeConstant;
 					break ;
 				case 1:
-					particleData.startLifeTime=ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradient,particleSystem.emissionTime);
+					ShurikenParticleData.startLifeTime=ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradient,particleSystem.emissionTime);
 					break ;
 				case 2:
 					if (autoRandomSeed){
-						particleData.startLifeTime=MathUtil.lerp(particleSystem.startLifetimeConstantMin,particleSystem.startLifetimeConstantMax,Math.random());
+						ShurikenParticleData.startLifeTime=MathUtil.lerp(particleSystem.startLifetimeConstantMin,particleSystem.startLifetimeConstantMax,Math.random());
 						}else {
 						rand.seed=randomSeeds[7];
-						particleData.startLifeTime=MathUtil.lerp(particleSystem.startLifetimeConstantMin,particleSystem.startLifetimeConstantMax,rand.getFloat());
+						ShurikenParticleData.startLifeTime=MathUtil.lerp(particleSystem.startLifetimeConstantMin,particleSystem.startLifetimeConstantMax,rand.getFloat());
 						randomSeeds[7]=rand.seed;
 					}
 					break ;
 				case 3:;
 					var emissionTime=particleSystem.emissionTime;
 					if (autoRandomSeed){
-						particleData.startLifeTime=MathUtil.lerp(ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMin,emissionTime),ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMax,emissionTime),Math.random());
+						ShurikenParticleData.startLifeTime=MathUtil.lerp(ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMin,emissionTime),ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMax,emissionTime),Math.random());
 						}else {
 						rand.seed=randomSeeds[7];
-						particleData.startLifeTime=MathUtil.lerp(ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMin,emissionTime),ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMax,emissionTime),rand.getFloat());
+						ShurikenParticleData.startLifeTime=MathUtil.lerp(ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMin,emissionTime),ShurikenParticleData._getStartLifetimeFromGradient(particleSystem.startLifeTimeGradientMax,emissionTime),rand.getFloat());
 						randomSeeds[7]=rand.seed;
 					}
 					break ;
 				}
 			switch (particleSystem.startSpeedType){
 				case 0:
-					particleData.startSpeed=particleSystem.startSpeedConstant;
+					ShurikenParticleData.startSpeed=particleSystem.startSpeedConstant;
 					break ;
 				case 2:
 					if (autoRandomSeed){
-						particleData.startSpeed=MathUtil.lerp(particleSystem.startSpeedConstantMin,particleSystem.startSpeedConstantMax,Math.random());
+						ShurikenParticleData.startSpeed=MathUtil.lerp(particleSystem.startSpeedConstantMin,particleSystem.startSpeedConstantMax,Math.random());
 						}else {
 						rand.seed=randomSeeds[8];
-						particleData.startSpeed=MathUtil.lerp(particleSystem.startSpeedConstantMin,particleSystem.startSpeedConstantMax,rand.getFloat());
+						ShurikenParticleData.startSpeed=MathUtil.lerp(particleSystem.startSpeedConstantMin,particleSystem.startSpeedConstantMax,rand.getFloat());
 						randomSeeds[8]=rand.seed;
 					}
 					break ;
-				}
-			particleData.startUVInfo=ShurikenParticleData._tempStartUVInfo;
+				};
 			var textureSheetAnimation=particleSystem.textureSheetAnimation;
 			var enableSheetAnimation=textureSheetAnimation && textureSheetAnimation.enbale;
-			var startUVInfo;
 			if (enableSheetAnimation){
 				var title=textureSheetAnimation.tiles;
 				var titleX=title.x,titleY=title.y;
@@ -2967,21 +3241,19 @@
 				if (!randomRow)
 					startRow=Math.floor(startFrameCount / titleX);
 				var startCol=startFrameCount % titleX;
-				startUVInfo=particleData.startUVInfo;
-				startUVInfo[0]=subU;
-				startUVInfo[1]=subV;
-				startUVInfo[2]=startCol *subU;
-				startUVInfo[3]=startRow *subV;
+				ShurikenParticleData.startUVInfo=ShurikenParticleData.startUVInfo;
+				ShurikenParticleData.startUVInfo[0]=subU;
+				ShurikenParticleData.startUVInfo[1]=subV;
+				ShurikenParticleData.startUVInfo[2]=startCol *subU;
+				ShurikenParticleData.startUVInfo[3]=startRow *subV;
 				}else {
-				startUVInfo=particleData.startUVInfo;
-				startUVInfo[0]=1.0;
-				startUVInfo[1]=1.0;
-				startUVInfo[2]=0.0;
-				startUVInfo[3]=0.0;
-			}
-			particleData.time=time;
-			particleData.simulationWorldPostion=ShurikenParticleData._tempSimulationWorldPostion;
-			var particleSimulationWorldPostion=particleData.simulationWorldPostion;
+				ShurikenParticleData.startUVInfo=ShurikenParticleData.startUVInfo;
+				ShurikenParticleData.startUVInfo[0]=1.0;
+				ShurikenParticleData.startUVInfo[1]=1.0;
+				ShurikenParticleData.startUVInfo[2]=0.0;
+				ShurikenParticleData.startUVInfo[3]=0.0;
+			};
+			var particleSimulationWorldPostion=ShurikenParticleData.simulationWorldPostion;
 			if (particleSystem.simulationSpace===0){
 				var positionE=transform.position.elements;
 				particleSimulationWorldPostion[0]=positionE[0];
@@ -2992,11 +3264,12 @@
 				particleSimulationWorldPostion[1]=0;
 				particleSimulationWorldPostion[2]=0;
 			}
-			return particleData;
 		}
 
+		ShurikenParticleData.startLifeTime=NaN
+		ShurikenParticleData.startSpeed=NaN
 		__static(ShurikenParticleData,
-		['_tempRotationMatrix',function(){return this._tempRotationMatrix=new Matrix4x4();},'_tempStartColor',function(){return this._tempStartColor=new Float32Array(4);},'_tempStartSize',function(){return this._tempStartSize=new Float32Array(3);},'_tempStartRotation0',function(){return this._tempStartRotation0=new Float32Array(3);},'_tempStartRotation1',function(){return this._tempStartRotation1=new Float32Array(3);},'_tempStartRotation2',function(){return this._tempStartRotation2=new Float32Array(3);},'_tempStartUVInfo',function(){return this._tempStartUVInfo=new Float32Array(4);},'_tempSimulationWorldPostion',function(){return this._tempSimulationWorldPostion=new Float32Array(3);}
+		['_tempVector30',function(){return this._tempVector30=new Vector3();},'_tempQuaternion',function(){return this._tempQuaternion=new Quaternion();},'startColor',function(){return this.startColor=new Float32Array(4);},'startSize',function(){return this.startSize=new Float32Array(3);},'startRotation',function(){return this.startRotation=new Float32Array(4);},'startUVInfo',function(){return this.startUVInfo=new Float32Array(4);},'simulationWorldPostion',function(){return this.simulationWorldPostion=new Float32Array(3);}
 		]);
 		return ShurikenParticleData;
 	})()
@@ -3871,7 +4144,7 @@
 							staticBatch._addBatchRenderElement(renderElement);
 							}else {
 							var renderObj=renderElement.renderObj;
-							if ((renderObj.triangleCount < /*laya.d3.graphics.DynamicBatch.maxCombineTriangleCount*/50)&& (renderObj._vertexBufferCount===1)&& (renderObj._getIndexBuffer())&& (renderElement._material.renderQueue < 2)&& renderElement._canDynamicBatch && (!render._owner.isStatic))
+							if ((renderObj.triangleCount < /*laya.d3.graphics.DynamicBatch.maxCombineTriangleCount*/20)&& (renderObj._vertexBufferCount===1)&& (renderObj._getIndexBuffer())&& (renderElement._material.renderQueue < 2)&& renderElement._canDynamicBatch && (!render._owner.isStatic))
 								dynamicBatchManager._addPrepareRenderElement(renderElement);
 							else
 							this._scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);
@@ -4018,6 +4291,18 @@
 		function SceneManager(){}
 		__class(SceneManager,'laya.d3.core.scene.SceneManager');
 		return SceneManager;
+	})()
+
+
+	/**
+	*...
+	*@author ...
+	*/
+	//class laya.d3.core.SkinMeshSprite3D
+	var SkinMeshSprite3D=(function(){
+		function SkinMeshSprite3D(){}
+		__class(SkinMeshSprite3D,'laya.d3.core.SkinMeshSprite3D');
+		return SkinMeshSprite3D;
 	})()
 
 
@@ -4203,7 +4488,7 @@
 
 		DynamicBatch.maxVertexCount=20000;
 		DynamicBatch.maxIndexCount=40000;
-		DynamicBatch.maxCombineTriangleCount=50;
+		DynamicBatch.maxCombineTriangleCount=20;
 		return DynamicBatch;
 	})()
 
@@ -4453,7 +4738,7 @@
 							staticBatch._addBatchRenderElement(renderElement);
 							}else {
 							var renderObj=renderElement.renderObj;
-							if ((renderObj.triangleCount < /*laya.d3.graphics.DynamicBatch.maxCombineTriangleCount*/50)&& (renderObj._vertexBufferCount===1)&& (renderObj._getIndexBuffer())&& (renderElement._material.renderQueue < 2)&& renderElement._canDynamicBatch && (!baseRender._owner.isStatic))
+							if ((renderObj.triangleCount < /*laya.d3.graphics.DynamicBatch.maxCombineTriangleCount*/20)&& (renderObj._vertexBufferCount===1)&& (renderObj._getIndexBuffer())&& (renderElement._material.renderQueue < 2)&& renderElement._canDynamicBatch && (!baseRender._owner.isStatic))
 								dynamicBatchManager._addPrepareRenderElement(renderElement);
 							else
 							scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);
@@ -4514,7 +4799,7 @@
 							staticBatch._addBatchRenderElement(renderElement);
 							}else {
 							var renderObj=renderElement.renderObj;
-							if ((renderObj.triangleCount < /*laya.d3.graphics.DynamicBatch.maxCombineTriangleCount*/50)&& (renderObj._vertexBufferCount===1)&& (renderObj._getIndexBuffer())&& (renderElement._material.renderQueue < 2)&& renderElement._canDynamicBatch && (!baseRender._owner.isStatic))
+							if ((renderObj.triangleCount < /*laya.d3.graphics.DynamicBatch.maxCombineTriangleCount*/20)&& (renderObj._vertexBufferCount===1)&& (renderObj._getIndexBuffer())&& (renderElement._material.renderQueue < 2)&& renderElement._canDynamicBatch && (!baseRender._owner.isStatic))
 								dynamicBatchManager._addPrepareRenderElement(renderElement);
 							else
 							scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);
@@ -4612,7 +4897,6 @@
 		}
 
 		StaticBatchManager.combine=function(staticBatchRoot,renderableSprite3Ds){
-			debugger;
 			var i=0,n=0,staticBatchManager;
 			if (renderableSprite3Ds){
 				for (i=0,n=renderableSprite3Ds.length;i < n;i++){
@@ -5023,11 +5307,9 @@
 		VertexElementUsage.STARTCOLOR0=19;
 		VertexElementUsage.STARTSIZE=20;
 		VertexElementUsage.AGEADDSCALE0=21;
-		VertexElementUsage.STARTROTATION0=22;
-		VertexElementUsage.STARTROTATION1=23;
-		VertexElementUsage.STARTROTATION2=24;
-		VertexElementUsage.ENDCOLOR0=25;
-		VertexElementUsage.STARTLIFETIME=26;
+		VertexElementUsage.STARTROTATION=22;
+		VertexElementUsage.ENDCOLOR0=23;
+		VertexElementUsage.STARTLIFETIME=24;
 		VertexElementUsage.TIME0=33;
 		VertexElementUsage.POSITIONSTARTLIFETIME=30;
 		VertexElementUsage.DIRECTIONTIME=32;
@@ -5174,136 +5456,14 @@
 			new VertexElement(16,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.POSITION0*/0),
 			new VertexElement(28,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.VELOCITY0*/18),
 			new VertexElement(40,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.STARTCOLOR0*/19),
-			new VertexElement(56,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.ENDCOLOR0*/25),
+			new VertexElement(56,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.ENDCOLOR0*/23),
 			new VertexElement(72,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.SIZEROTATION0*/27),
 			new VertexElement(84,/*laya.d3.graphics.VertexElementFormat.Vector2*/"vector2",/*laya.d3.graphics.VertexElementUsage.RADIUS0*/28),
 			new VertexElement(92,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.RADIAN0*/29),
-			new VertexElement(108,/*laya.d3.graphics.VertexElementFormat.Single*/"single",/*laya.d3.graphics.VertexElementUsage.STARTLIFETIME*/26),
+			new VertexElement(108,/*laya.d3.graphics.VertexElementFormat.Single*/"single",/*laya.d3.graphics.VertexElementUsage.STARTLIFETIME*/24),
 			new VertexElement(112,/*laya.d3.graphics.VertexElementFormat.Single*/"single",/*laya.d3.graphics.VertexElementUsage.TIME0*/33)]);}
 		]);
 		return VertexParticle;
-	})()
-
-
-	/**
-	*<code>VertexPositionNormalColorTangent</code> 类用于创建粒子顶点结构。
-	*/
-	//class laya.d3.graphics.VertexParticleShuriken
-	var VertexParticleShuriken=(function(){
-		function VertexParticleShuriken(cornerTextureCoordinate,position,velocity,startColor,startSize,startRotation0,startRotation1,startRotation2,ageAddScale,time,startSpeed,randoms0,randoms1,simulationWorldPostion){
-			this._cornerTextureCoordinate=null;
-			this._position=null;
-			this._velocity=null;
-			this._startColor=null;
-			this._startSize=null;
-			this._startRotation0=null;
-			this._startRotation1=null;
-			this._startRotation2=null;
-			this._startLifeTime=NaN;
-			this._time=NaN;
-			this._startSpeed=NaN;
-			this._randoms0=null;
-			this._randoms1=null;
-			this._simulationWorldPostion=null;
-			this._cornerTextureCoordinate=cornerTextureCoordinate;
-			this._position=position;
-			this._velocity=velocity;
-			this._startColor=startColor;
-			this._startSize=startSize;
-			this._startRotation0=startRotation0;
-			this._startRotation1=startRotation1;
-			this._startRotation2=startRotation2;
-			this._startLifeTime=ageAddScale;
-			this._time=time;
-			this._startSpeed=startSpeed;
-			this._randoms0=this.random0;
-			this._randoms1=this.random1;
-			this._simulationWorldPostion=simulationWorldPostion;
-		}
-
-		__class(VertexParticleShuriken,'laya.d3.graphics.VertexParticleShuriken');
-		var __proto=VertexParticleShuriken.prototype;
-		Laya.imps(__proto,{"laya.d3.graphics.IVertex":true})
-		__getset(0,__proto,'cornerTextureCoordinate',function(){
-			return this._cornerTextureCoordinate;
-		});
-
-		__getset(0,__proto,'velocity',function(){
-			return this._velocity;
-		});
-
-		__getset(0,__proto,'position',function(){
-			return this._position;
-		});
-
-		__getset(0,__proto,'random0',function(){
-			return this._randoms0;
-		});
-
-		__getset(0,__proto,'startSize',function(){
-			return this._startSize;
-		});
-
-		__getset(0,__proto,'startColor',function(){
-			return this._startColor;
-		});
-
-		__getset(0,__proto,'startRotation0',function(){
-			return this._startRotation0;
-		});
-
-		__getset(0,__proto,'startRotation1',function(){
-			return this._startRotation1;
-		});
-
-		__getset(0,__proto,'random1',function(){
-			return this._randoms1;
-		});
-
-		__getset(0,__proto,'startRotation2',function(){
-			return this._startRotation2;
-		});
-
-		__getset(0,__proto,'startLifeTime',function(){
-			return this._startLifeTime;
-		});
-
-		__getset(0,__proto,'time',function(){
-			return this._time;
-		});
-
-		__getset(0,__proto,'startSpeed',function(){
-			return this._startSpeed;
-		});
-
-		__getset(0,__proto,'simulationWorldPostion',function(){
-			return this._simulationWorldPostion;
-		});
-
-		__getset(0,__proto,'vertexDeclaration',function(){
-			return VertexParticleShuriken._vertexDeclaration;
-		});
-
-		__getset(1,VertexParticleShuriken,'vertexDeclaration',function(){
-			return VertexParticleShuriken._vertexDeclaration;
-		});
-
-		__static(VertexParticleShuriken,
-		['_vertexDeclaration',function(){return this._vertexDeclaration=new VertexDeclaration(160,[
-			new VertexElement(0,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.CORNERTEXTURECOORDINATE0*/17),
-			new VertexElement(16,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.POSITIONSTARTLIFETIME*/30),
-			new VertexElement(32,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.DIRECTIONTIME*/32),
-			new VertexElement(48,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.STARTCOLOR0*/19),
-			new VertexElement(64,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.STARTSIZE*/20),
-			new VertexElement(76,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.STARTROTATION0*/22),
-			new VertexElement(88,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.STARTROTATION1*/23),
-			new VertexElement(100,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.STARTROTATION2*/24),
-			new VertexElement(112,/*laya.d3.graphics.VertexElementFormat.Single*/"single",/*laya.d3.graphics.VertexElementUsage.STARTSPEED*/31),
-			new VertexElement(116,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.RANDOM0*/34),
-			new VertexElement(132,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.RANDOM1*/35),
-			new VertexElement(148,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.SIMULATIONWORLDPOSTION*/36)]);}
-		]);
-		return VertexParticleShuriken;
 	})()
 
 
@@ -6736,6 +6896,247 @@
 
 
 	/**
+	*<code>VertexShurikenParticle</code> 类用于创建粒子顶点结构。
+	*/
+	//class laya.d3.graphics.VertexShurikenParticleBillboard
+	var VertexShurikenParticleBillboard=(function(){
+		function VertexShurikenParticleBillboard(cornerTextureCoordinate,positionStartLifeTime,velocity,startColor,startSize,startRotation0,startRotation1,startRotation2,ageAddScale,time,startSpeed,randoms0,randoms1,simulationWorldPostion){
+			this._cornerTextureCoordinate=null;
+			this._positionStartLifeTime=null;
+			this._velocity=null;
+			this._startColor=null;
+			this._startSize=null;
+			this._startRotation0=null;
+			this._startRotation1=null;
+			this._startRotation2=null;
+			this._startLifeTime=NaN;
+			this._time=NaN;
+			this._startSpeed=NaN;
+			this._randoms0=null;
+			this._randoms1=null;
+			this._simulationWorldPostion=null;
+			this._cornerTextureCoordinate=cornerTextureCoordinate;
+			this._positionStartLifeTime=positionStartLifeTime;
+			this._velocity=velocity;
+			this._startColor=startColor;
+			this._startSize=startSize;
+			this._startRotation0=startRotation0;
+			this._startRotation1=startRotation1;
+			this._startRotation2=startRotation2;
+			this._startLifeTime=ageAddScale;
+			this._time=time;
+			this._startSpeed=startSpeed;
+			this._randoms0=this.random0;
+			this._randoms1=this.random1;
+			this._simulationWorldPostion=simulationWorldPostion;
+		}
+
+		__class(VertexShurikenParticleBillboard,'laya.d3.graphics.VertexShurikenParticleBillboard');
+		var __proto=VertexShurikenParticleBillboard.prototype;
+		Laya.imps(__proto,{"laya.d3.graphics.IVertex":true})
+		__getset(0,__proto,'cornerTextureCoordinate',function(){
+			return this._cornerTextureCoordinate;
+		});
+
+		__getset(0,__proto,'random1',function(){
+			return this._randoms1;
+		});
+
+		__getset(0,__proto,'startRotation2',function(){
+			return this._startRotation2;
+		});
+
+		__getset(0,__proto,'positionStartLifeTime',function(){
+			return this._positionStartLifeTime;
+		});
+
+		__getset(0,__proto,'velocity',function(){
+			return this._velocity;
+		});
+
+		__getset(0,__proto,'random0',function(){
+			return this._randoms0;
+		});
+
+		__getset(0,__proto,'startSize',function(){
+			return this._startSize;
+		});
+
+		__getset(0,__proto,'startColor',function(){
+			return this._startColor;
+		});
+
+		__getset(0,__proto,'startRotation0',function(){
+			return this._startRotation0;
+		});
+
+		__getset(0,__proto,'startRotation1',function(){
+			return this._startRotation1;
+		});
+
+		__getset(0,__proto,'startLifeTime',function(){
+			return this._startLifeTime;
+		});
+
+		__getset(0,__proto,'time',function(){
+			return this._time;
+		});
+
+		__getset(0,__proto,'startSpeed',function(){
+			return this._startSpeed;
+		});
+
+		__getset(0,__proto,'simulationWorldPostion',function(){
+			return this._simulationWorldPostion;
+		});
+
+		__getset(0,__proto,'vertexDeclaration',function(){
+			return VertexShurikenParticleBillboard._vertexDeclaration;
+		});
+
+		__getset(1,VertexShurikenParticleBillboard,'vertexDeclaration',function(){
+			return VertexShurikenParticleBillboard._vertexDeclaration;
+		});
+
+		__static(VertexShurikenParticleBillboard,
+		['_vertexDeclaration',function(){return this._vertexDeclaration=new VertexDeclaration(140,[
+			new VertexElement(0,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.CORNERTEXTURECOORDINATE0*/17),
+			new VertexElement(16,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.POSITIONSTARTLIFETIME*/30),
+			new VertexElement(32,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.DIRECTIONTIME*/32),
+			new VertexElement(48,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.STARTCOLOR0*/19),
+			new VertexElement(64,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.STARTSIZE*/20),
+			new VertexElement(76,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.STARTROTATION*/22),
+			new VertexElement(92,/*laya.d3.graphics.VertexElementFormat.Single*/"single",/*laya.d3.graphics.VertexElementUsage.STARTSPEED*/31),
+			new VertexElement(96,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.RANDOM0*/34),
+			new VertexElement(112,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.RANDOM1*/35),
+			new VertexElement(128,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.SIMULATIONWORLDPOSTION*/36)]);}
+		]);
+		return VertexShurikenParticleBillboard;
+	})()
+
+
+	/**
+	*<code>VertexShurikenParticle</code> 类用于创建粒子顶点结构。
+	*/
+	//class laya.d3.graphics.VertexShurikenParticleMesh
+	var VertexShurikenParticleMesh=(function(){
+		function VertexShurikenParticleMesh(cornerTextureCoordinate,positionStartLifeTime,velocity,startColor,startSize,startRotation0,startRotation1,startRotation2,ageAddScale,time,startSpeed,randoms0,randoms1,simulationWorldPostion){
+			this._cornerTextureCoordinate=null;
+			this._positionStartLifeTime=null;
+			this._velocity=null;
+			this._startColor=null;
+			this._startSize=null;
+			this._startRotation0=null;
+			this._startRotation1=null;
+			this._startRotation2=null;
+			this._startLifeTime=NaN;
+			this._time=NaN;
+			this._startSpeed=NaN;
+			this._randoms0=null;
+			this._randoms1=null;
+			this._simulationWorldPostion=null;
+			this._cornerTextureCoordinate=cornerTextureCoordinate;
+			this._positionStartLifeTime=positionStartLifeTime;
+			this._velocity=velocity;
+			this._startColor=startColor;
+			this._startSize=startSize;
+			this._startRotation0=startRotation0;
+			this._startRotation1=startRotation1;
+			this._startRotation2=startRotation2;
+			this._startLifeTime=ageAddScale;
+			this._time=time;
+			this._startSpeed=startSpeed;
+			this._randoms0=this.random0;
+			this._randoms1=this.random1;
+			this._simulationWorldPostion=simulationWorldPostion;
+		}
+
+		__class(VertexShurikenParticleMesh,'laya.d3.graphics.VertexShurikenParticleMesh');
+		var __proto=VertexShurikenParticleMesh.prototype;
+		Laya.imps(__proto,{"laya.d3.graphics.IVertex":true})
+		__getset(0,__proto,'cornerTextureCoordinate',function(){
+			return this._cornerTextureCoordinate;
+		});
+
+		__getset(0,__proto,'velocity',function(){
+			return this._velocity;
+		});
+
+		__getset(0,__proto,'position',function(){
+			return this._positionStartLifeTime;
+		});
+
+		__getset(0,__proto,'random0',function(){
+			return this._randoms0;
+		});
+
+		__getset(0,__proto,'startSize',function(){
+			return this._startSize;
+		});
+
+		__getset(0,__proto,'startColor',function(){
+			return this._startColor;
+		});
+
+		__getset(0,__proto,'startRotation0',function(){
+			return this._startRotation0;
+		});
+
+		__getset(0,__proto,'startRotation1',function(){
+			return this._startRotation1;
+		});
+
+		__getset(0,__proto,'random1',function(){
+			return this._randoms1;
+		});
+
+		__getset(0,__proto,'startRotation2',function(){
+			return this._startRotation2;
+		});
+
+		__getset(0,__proto,'startLifeTime',function(){
+			return this._startLifeTime;
+		});
+
+		__getset(0,__proto,'time',function(){
+			return this._time;
+		});
+
+		__getset(0,__proto,'startSpeed',function(){
+			return this._startSpeed;
+		});
+
+		__getset(0,__proto,'simulationWorldPostion',function(){
+			return this._simulationWorldPostion;
+		});
+
+		__getset(0,__proto,'vertexDeclaration',function(){
+			return VertexShurikenParticleMesh._vertexDeclaration;
+		});
+
+		__getset(1,VertexShurikenParticleMesh,'vertexDeclaration',function(){
+			return VertexShurikenParticleMesh._vertexDeclaration;
+		});
+
+		__static(VertexShurikenParticleMesh,
+		['_vertexDeclaration',function(){return this._vertexDeclaration=new VertexDeclaration(144,[
+			new VertexElement(0,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.POSITION0*/0),
+			new VertexElement(12,/*laya.d3.graphics.VertexElementFormat.Vector2*/"vector2",/*laya.d3.graphics.VertexElementUsage.TEXTURECOORDINATE0*/2),
+			new VertexElement(20,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.POSITIONSTARTLIFETIME*/30),
+			new VertexElement(36,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.DIRECTIONTIME*/32),
+			new VertexElement(52,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.STARTCOLOR0*/19),
+			new VertexElement(68,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.STARTSIZE*/20),
+			new VertexElement(80,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.STARTROTATION*/22),
+			new VertexElement(96,/*laya.d3.graphics.VertexElementFormat.Single*/"single",/*laya.d3.graphics.VertexElementUsage.STARTSPEED*/31),
+			new VertexElement(100,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.RANDOM0*/34),
+			new VertexElement(116,/*laya.d3.graphics.VertexElementFormat.Vector4*/"vector4",/*laya.d3.graphics.VertexElementUsage.RANDOM1*/35),
+			new VertexElement(132,/*laya.d3.graphics.VertexElementFormat.Vector3*/"vector3",/*laya.d3.graphics.VertexElementUsage.SIMULATIONWORLDPOSTION*/36)]);}
+		]);
+		return VertexShurikenParticleMesh;
+	})()
+
+
+	/**
 	*@private
 	*<code>LoadModel</code> 类用于模型加载。
 	*/
@@ -7329,7 +7730,7 @@
 		*@return 克隆副本。
 		*/
 		__proto.clone=function(){
-			var dest=/*__JS__ */new this.constructor();
+			var dest=/*__JS__ */new this.constructor(new Vector3(),new Vector3());
 			this.cloneTo(dest);
 			return dest;
 		}
@@ -7765,11 +8166,11 @@
 		/**
 		*判断射线是否与碰撞球交叉，并返回交叉点。
 		*@param ray 射线。
-		*@param point 交叉点。
+		*@param outPoint 交叉点。
 		*@return 距离交叉点的距离，-1表示不交叉。
 		*/
-		__proto.intersectsRayPoint=function(ray,point){
-			return Collision.intersectsRayAndSphereRP(ray,this,point);
+		__proto.intersectsRayPoint=function(ray,outPoint){
+			return Collision.intersectsRayAndSphereRP(ray,this,outPoint);
 		}
 
 		/**
@@ -7787,7 +8188,7 @@
 		*@return 克隆副本。
 		*/
 		__proto.clone=function(){
-			var dest=/*__JS__ */new this.constructor();
+			var dest=/*__JS__ */new this.constructor(new Vector3(),new Vector3());
 			this.cloneTo(dest);
 			return dest;
 		}
@@ -9313,6 +9714,33 @@
 			Matrix4x4.createRotationQuaternion(Matrix4x4._tempQuaternion,result);
 		}
 
+		Matrix4x4.createRotationAxis=function(axis,angle,result){
+			var axisE=axis.elements;
+			var x=axisE[0];
+			var y=axisE[1];
+			var z=axisE[2];
+			var cos=Math.cos(angle);
+			var sin=Math.sin(angle);
+			var xx=x *x;
+			var yy=y *y;
+			var zz=z *z;
+			var xy=x *y;
+			var xz=x *z;
+			var yz=y *z;
+			var resultE=result.elements;
+			resultE[3]=resultE[7]=resultE[11]=resultE[12]=resultE[13]=resultE[14]=0;
+			resultE[15]=1.0;
+			resultE[0]=xx+(cos *(1.0-xx));
+			resultE[1]=(xy-(cos *xy))+(sin *z);
+			resultE[2]=(xz-(cos *xz))-(sin *y);
+			resultE[4]=(xy-(cos *xy))-(sin *z);
+			resultE[5]=yy+(cos *(1.0-yy));
+			resultE[6]=(yz-(cos *yz))+(sin *x);
+			resultE[8]=(xz-(cos *xz))+(sin *y);
+			resultE[9]=(yz-(cos *yz))-(sin *x);
+			resultE[10]=zz+(cos *(1.0-zz));
+		}
+
 		Matrix4x4.createRotationQuaternion=function(rotation,result){
 			var rotationE=rotation.elements;
 			var resultE=result.elements;
@@ -9456,9 +9884,15 @@
 			Vector3.normalize(xaxis,xaxis);
 			Vector3.cross(zaxis,xaxis,yaxis);
 			out.identity();
-			oE[0]=xaxis.x;oE[4]=xaxis.y;oE[8]=xaxis.z;
-			oE[1]=yaxis.x;oE[5]=yaxis.y;oE[9]=yaxis.z;
-			oE[2]=zaxis.x;oE[6]=zaxis.y;oE[10]=zaxis.z;
+			oE[0]=xaxis.x;
+			oE[4]=xaxis.y;
+			oE[8]=xaxis.z;
+			oE[1]=yaxis.x;
+			oE[5]=yaxis.y;
+			oE[9]=yaxis.z;
+			oE[2]=zaxis.x;
+			oE[6]=zaxis.y;
+			oE[10]=zaxis.z;
 			oE[12]=-Vector3.dot(xaxis,eye);
 			oE[13]=-Vector3.dot(yaxis,eye);
 			oE[14]=-Vector3.dot(zaxis,eye);
@@ -11138,7 +11572,7 @@
 		}
 
 		Vector3.transformV3ToV3=function(vector,transform,result){
-			var intermediate=new Vector4();
+			var intermediate=Vector3._tempVector4;
 			Vector3.transformV3ToV4(vector,transform,intermediate);
 			var intermediateElem=intermediate.elements;
 			var resultElem=result.elements;
@@ -11258,7 +11692,7 @@
 		}
 
 		__static(Vector3,
-		['ZERO',function(){return this.ZERO=new Vector3(0.0,0.0,0.0);},'ONE',function(){return this.ONE=new Vector3(1.0,1.0,1.0);},'NegativeUnitX',function(){return this.NegativeUnitX=new Vector3(-1,0,0);},'UnitX',function(){return this.UnitX=new Vector3(1,0,0);},'UnitY',function(){return this.UnitY=new Vector3(0,1,0);},'UnitZ',function(){return this.UnitZ=new Vector3(0,0,1);},'ForwardRH',function(){return this.ForwardRH=new Vector3(0,0,-1);},'ForwardLH',function(){return this.ForwardLH=new Vector3(0,0,1);},'Up',function(){return this.Up=new Vector3(0,1,0);},'TEMPVec4',function(){return this.TEMPVec4=new Vector4();}
+		['_tempVector4',function(){return this._tempVector4=new Vector4();},'ZERO',function(){return this.ZERO=new Vector3(0.0,0.0,0.0);},'ONE',function(){return this.ONE=new Vector3(1.0,1.0,1.0);},'NegativeUnitX',function(){return this.NegativeUnitX=new Vector3(-1,0,0);},'UnitX',function(){return this.UnitX=new Vector3(1,0,0);},'UnitY',function(){return this.UnitY=new Vector3(0,1,0);},'UnitZ',function(){return this.UnitZ=new Vector3(0,0,1);},'ForwardRH',function(){return this.ForwardRH=new Vector3(0,0,-1);},'ForwardLH',function(){return this.ForwardLH=new Vector3(0,0,1);},'Up',function(){return this.Up=new Vector3(0,1,0);},'TEMPVec4',function(){return this.TEMPVec4=new Vector4();}
 		]);
 		return Vector3;
 	})()
@@ -11714,7 +12148,6 @@
 					bakedVertexes=new Float32Array(vertexBuffer.vertexCount *(vertexBuffer.vertexDeclaration.vertexStride / byteSizeInFloat+2));
 					uv0Offset=vertexDeclaration.getVertexElementByUsage(/*laya.d3.graphics.VertexElementUsage.TEXTURECOORDINATE0*/2).offset / byteSizeInFloat;
 					lightingMapTexcoordOffset=uv0Offset+2;
-					debugger;
 					var oriVertexes=vertexBuffer.getData();
 					for (i=0,n=oriVertexes.length / oriVertexFloatCount;i < n;i++){
 						var oriVertexOffset=0;
@@ -12203,7 +12636,7 @@
 		ShaderCompile3D.SHADERDEFINE_UV0=0x40;
 		ShaderCompile3D.SHADERDEFINE_COLOR=0x80;
 		ShaderCompile3D.SHADERDEFINE_UV1=0x100;
-		ShaderCompile3D.SAHDERDEFINE_DEPTHFOG=0x10000;
+		ShaderCompile3D.SAHDERDEFINE_DEPTHFOG=0x20000;
 		ShaderCompile3D._globalInt2name=[];
 		ShaderCompile3D._preCompileShader={};
 		ShaderCompile3D.IFDEF_NO=0;
@@ -12282,10 +12715,10 @@
 		function ShaderInit3D(){}
 		__class(ShaderInit3D,'laya.d3.shader.ShaderInit3D');
 		ShaderInit3D.__init__=function(){
-			Shader3D.addInclude("LightHelper.glsl","\nstruct DirectionLight\n{\n vec3 Direction;\n vec3 Diffuse;\n vec3 Ambient;\n vec3 Specular;\n};\n\nstruct PointLight\n{\n vec3 Diffuse;\n vec3 Ambient;\n vec3 Specular;\n vec3 Attenuation;\n vec3 Position;\n float Range;\n};\n\nstruct SpotLight\n{\n vec3 Diffuse;\n vec3 Ambient;\n vec3 Specular;\n vec3 Attenuation;\n vec3 Position;\n vec3 Direction;\n float Spot;\n float Range;\n};\n\n\nvoid  computeDirectionLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in DirectionLight dirLight,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)\n{\n	dif=vec3(0.0);//不初始化在IOS中闪烁，PC中不会闪烁\n	amb=vec3(0.0);\n	spec=vec3(0.0);\n	vec3 lightVec=-normalize(dirLight.Direction);\n	\n	amb=matAmb*dirLight.Ambient;\n	\n	float  diffuseFactor=dot(lightVec, normal);\n	\n	if(diffuseFactor>0.0)\n	{\n	   vec3 v = reflect(-lightVec, normal);\n	   float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);\n	   \n	   dif = diffuseFactor * matDif * dirLight.Diffuse;\n	   spec = specFactor * matSpe.rgb * dirLight.Specular;\n	}\n	\n}\n\nvoid computePointLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in PointLight poiLight, in vec3 pos,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)\n{\n	dif=vec3(0.0);\n	amb=vec3(0.0);\n	spec=vec3(0.0);\n	vec3 lightVec = poiLight.Position - pos;\n		\n	float d = length(lightVec);\n	\n	if( d > poiLight.Range )\n		return;\n		\n	lightVec /= d; \n	\n	amb = matAmb * poiLight.Ambient;	\n\n	float diffuseFactor = dot(lightVec, normal);\n\n	if( diffuseFactor > 0.0 )\n	{\n		vec3 v= reflect(-lightVec, normal);\n		float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);\n					\n		dif = diffuseFactor * matDif * poiLight.Diffuse;\n		spec = specFactor * matSpe.rgb * poiLight.Specular;\n	}\n\n	float attenuate = 1.0 / dot(poiLight.Attenuation, vec3(1.0, d, d*d));\n\n	dif *= attenuate;\n	spec*= attenuate;\n}\n\nvoid ComputeSpotLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in SpotLight spoLight,in vec3 pos, in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)\n{\n	amb = vec3(0.0);\n	dif =vec3(0.0);\n	spec= vec3(0.0);\n	vec3 lightVec = spoLight.Position - pos;\n		\n	float d = length(lightVec);\n	\n	if( d > spoLight.Range)\n		return;\n		\n	lightVec /= d; \n	\n	amb = matAmb * spoLight.Ambient;	\n\n	float diffuseFactor = dot(lightVec, normal);\n\n	if(diffuseFactor > 0.0)\n	{\n		vec3 v= reflect(-lightVec, normal);\n		float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);\n					\n		dif = diffuseFactor * matDif * spoLight.Diffuse;\n		spec = specFactor * matSpe.rgb * spoLight.Specular;\n	}\n	\n	float spot = pow(max(dot(-lightVec, normalize(spoLight.Direction)), 0.0), spoLight.Spot);\n\n	float attenuate = spot/dot(spoLight.Attenuation, vec3(1.0, d, d*d));\n\n	amb *= spot;\n	dif *= attenuate;\n	spec*= attenuate;\n}\n\nvec3 NormalSampleToWorldSpace(vec3 normalMapSample, vec3 unitNormal, vec3 tangent)\n{\n	vec3 normalT = 2.0*normalMapSample - 1.0;\n\n	// Build orthonormal basis.\n	vec3 N = normalize(unitNormal);\n	vec3 T = normalize(tangent- dot(tangent, N)*N);\n	vec3 B = cross(T, N);\n\n	mat3 TBN = mat3(T, B, N);\n\n	// Transform from tangent space to world space.\n	vec3 bumpedNormal = TBN*normalT;\n\n	return bumpedNormal;\n}\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/LightHelper.glsl*/);
-			Shader3D.addInclude("VRHelper.glsl","\nvec4 DistortFishEye(vec4 p)\n{\n    vec2 v = p.xy / p.w;\n    float radius = length(v);// Convert to polar coords\n    if (radius > 0.0)\n    {\n      float theta = atan(v.y,v.x);\n      \n      radius = pow(radius, 0.93);// Distort:\n\n      v.x = radius * cos(theta);// Convert back to Cartesian\n      v.y = radius * sin(theta);\n      p.xy = v.xy * p.w;\n    }\n    return p;\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/VRHelper.glsl*/);
-			Shader3D.addInclude("ShadowHelper.glsl","uniform sampler2D u_shadowMap1;\nuniform sampler2D u_shadowMap2;\nuniform sampler2D u_shadowMap3;\nuniform vec2	  u_shadowPCFoffset;\nuniform vec4     u_shadowPSSMDistance;\nvec4 packDepth(const in float depth)\n{\n	const vec4 bitShift = vec4(256.0*256.0*256.0, 256.0*256.0, 256.0, 1.0);\n	const vec4 bitMask	= vec4(0.0, 1.0/256.0, 1.0/256.0, 1.0/256.0);\n	vec4 res = mod(depth*bitShift*vec4(255), vec4(256))/vec4(255);\n	res -= res.xxyz * bitMask;\n	return res;\n}\nfloat unpackDepth(const in vec4 rgbaDepth)\n{\n	const vec4 bitShift = vec4(1.0/(256.0*256.0*256.0), 1.0/(256.0*256.0), 1.0/256.0, 1.0);\n	float depth = dot(rgbaDepth, bitShift);\n	return depth;\n}\nfloat tex2DPCF( sampler2D shadowMap,vec2 texcoord,vec2 invsize,float zRef )\n{\n	vec2 texelpos =texcoord / invsize;\n	vec2 lerps = fract( texelpos );\n	float sourcevals[4];\n	sourcevals[0] = float( unpackDepth(texture2D(shadowMap,texcoord)) > zRef );\n	sourcevals[1] = float( unpackDepth(texture2D(shadowMap,texcoord + vec2(invsize.x,0))) > zRef );\n	sourcevals[2] = float( unpackDepth(texture2D(shadowMap,texcoord + vec2(0,invsize.y))) > zRef );\n	sourcevals[3] = float( unpackDepth(texture2D(shadowMap,texcoord + vec2(invsize.x, invsize.y) )) > zRef );\n	return mix( mix(sourcevals[0],sourcevals[2],lerps.y),mix(sourcevals[1],sourcevals[3],lerps.y),lerps.x );\n}\nfloat getShadowPSSM3( sampler2D shadowMap1,sampler2D shadowMap2,sampler2D shadowMap3,mat4 lightShadowVP[4],vec4 pssmDistance,vec2 shadowPCFOffset,vec3 worldPos,float posViewZ,float zBias )\n{\n	float value = 1.0;\n	int nPSNum = int(posViewZ>pssmDistance.x);\n	nPSNum += int(posViewZ>pssmDistance.y);\n	nPSNum += int(posViewZ>pssmDistance.z);\n	//真SB,webgl不支持在PS中直接访问数组\n	mat4 lightVP;\n	if( nPSNum == 0 )\n	{\n		lightVP = lightShadowVP[1];\n	}\n	else if( nPSNum == 1 )\n	{\n		lightVP = lightShadowVP[2];\n	}\n	else if( nPSNum == 2 )\n	{\n		lightVP = lightShadowVP[3];\n	}\n	vec4 vLightMVPPos = lightVP * vec4(worldPos,1.0);\n	//为了效率，在CPU计算/2.0 + 0.5\n	//vec3 vText = (vLightMVPPos.xyz / vLightMVPPos.w)/2.0 + 0.5;\n	vec3 vText = vLightMVPPos.xyz / vLightMVPPos.w;\n	float fMyZ = vText.z - zBias;\n	/*\n	bvec4 bInFrustumVec = bvec4 ( vText.x >= 0.0, vText.x <= 1.0, vText.y >= 0.0, vText.y <= 1.0 );\n	bool bInFrustum = all( bInFrustumVec );\n	bvec2 bFrustumTestVec = bvec2( bInFrustum, fMyZ <= 1.0 );\n	bool bFrustumTest = all( bFrustumTestVec );\n	if ( bFrustumTest ) \n	*/\n	if( fMyZ <= 1.0 )\n	{\n		float zdepth=0.0;\n#ifdef SHADOWMAP_PCF3\n		if ( nPSNum == 0 )\n		{\n			value =  tex2DPCF( shadowMap1, vText.xy,shadowPCFOffset,fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.xy),shadowPCFOffset,	fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.x,0),shadowPCFOffset,	fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(0,shadowPCFOffset.y),shadowPCFOffset,	fMyZ );\n			value = value/4.0;\n		} \n		else if( nPSNum == 1 )\n		{\n			value = tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);\n		}\n		else if( nPSNum == 2 )\n		{\n			vec4 color = texture2D( shadowMap3,vText.xy );\n			zdepth = unpackDepth(color);\n			value = float(fMyZ < zdepth);\n		}\n#endif\n#ifdef SHADOWMAP_PCF2\n		if ( nPSNum == 0 )\n		{\n			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);\n		}\n		else if( nPSNum == 1 )\n		{\n			value = tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);\n		}\n		else if( nPSNum == 2 )\n		{\n			vec4 color = texture2D( shadowMap3,vText.xy );\n			zdepth = unpackDepth(color);\n			value = float(fMyZ < zdepth);\n		}\n\n#endif\n#ifdef SHADOWMAP_PCF1\n		if ( nPSNum == 0 )\n		{\n			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);\n		}\n		else if( nPSNum == 1 )\n		{\n			vec4 color = texture2D( shadowMap2,vText.xy );\n			zdepth = unpackDepth(color);\n			value = float(fMyZ < zdepth);\n		}\n		else if( nPSNum == 2 )\n		{\n			vec4 color = texture2D( shadowMap3,vText.xy );\n			zdepth = unpackDepth(color);\n			value = float(fMyZ < zdepth);\n		}\n#endif\n#ifdef SHADOWMAP_PCF_NO\n		vec4 color;\n		if ( nPSNum == 0 )\n		{\n			color = texture2D( shadowMap1,vText.xy );\n		}\n		else if( nPSNum == 1 )\n		{\n			color = texture2D( shadowMap2,vText.xy );\n		}\n		else if( nPSNum == 2 )\n		{\n			color = texture2D( shadowMap3,vText.xy );\n		}\n		zdepth = unpackDepth(color);\n		value = float(fMyZ < zdepth);\n#endif\n	}\n	return value;\n}\nfloat getShadowPSSM2( sampler2D shadowMap1,sampler2D shadowMap2,mat4 lightShadowVP[4],vec4 pssmDistance,vec2 shadowPCFOffset,vec3 worldPos,float posViewZ,float zBias )\n{\n	float value = 1.0;\n	int nPSNum = int(posViewZ>pssmDistance.x);\n	nPSNum += int(posViewZ>pssmDistance.y);\n	//真SB,webgl不支持在PS中直接访问数组\n	mat4 lightVP;\n	if( nPSNum == 0 )\n	{\n		lightVP = lightShadowVP[1];\n	}\n	else if( nPSNum == 1 )\n	{\n		lightVP = lightShadowVP[2];\n	}\n	vec4 vLightMVPPos = lightVP * vec4(worldPos,1.0);\n	//为了效率，在CPU计算/2.0 + 0.5\n	//vec3 vText = (vLightMVPPos.xyz / vLightMVPPos.w)/2.0 + 0.5;\n	vec3 vText = vLightMVPPos.xyz / vLightMVPPos.w;\n	float fMyZ = vText.z - zBias;\n	/*\n	bvec4 bInFrustumVec = bvec4 ( vText.x >= 0.0, vText.x <= 1.0, vText.y >= 0.0, vText.y <= 1.0 );\n	bool bInFrustum = all( bInFrustumVec );\n	bvec2 bFrustumTestVec = bvec2( bInFrustum, fMyZ <= 1.0 );\n	bool bFrustumTest = all( bFrustumTestVec );\n	if ( bFrustumTest ) \n	*/\n	if( fMyZ <= 1.0 )\n	{\n		float zdepth=0.0;\n#ifdef SHADOWMAP_PCF3\n		if ( nPSNum == 0 )\n		{\n			value =  tex2DPCF( shadowMap1, vText.xy,shadowPCFOffset,fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.xy),shadowPCFOffset,	fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.x,0),shadowPCFOffset,	fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(0,shadowPCFOffset.y),shadowPCFOffset,	fMyZ );\n			value = value/4.0;\n		}\n		else if( nPSNum == 1 )\n		{\n			value = tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);\n		}\n#endif\n#ifdef SHADOWMAP_PCF2\n		if ( nPSNum == 0 )\n		{\n			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);\n		}\n		else if( nPSNum == 1 )\n		{\n			value = tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);\n		}\n#endif\n#ifdef SHADOWMAP_PCF1\n		if ( nPSNum == 0 )\n		{\n			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);\n		}\n		else if( nPSNum == 1 )\n		{\n			vec4 color = texture2D( shadowMap2,vText.xy );\n			zdepth = unpackDepth(color);\n			value = float(fMyZ < zdepth);\n		}\n#endif\n#ifdef SHADOWMAP_PCF_NO\n		vec4 color;\n		if ( nPSNum == 0 )\n		{\n			color = texture2D( shadowMap1,vText.xy );\n		}\n		else if( nPSNum == 1 )\n		{\n			color = texture2D( shadowMap2,vText.xy );\n		}\n		zdepth = unpackDepth(color);\n		value = float(fMyZ < zdepth);\n#endif\n	}\n	return value;\n}\nfloat getShadowPSSM1( sampler2D shadowMap1,vec4 lightMVPPos,vec4 pssmDistance,vec2 shadowPCFOffset,float posViewZ,float zBias )\n{\n	float value = 1.0;\n	if( posViewZ < pssmDistance.x )\n	{\n		vec3 vText = lightMVPPos.xyz / lightMVPPos.w;\n		float fMyZ = vText.z - zBias;\n		/*\n		bvec4 bInFrustumVec = bvec4 ( vText.x >= 0.0, vText.x <= 1.0, vText.y >= 0.0, vText.y <= 1.0 );\n		bool bInFrustum = all( bInFrustumVec );\n		bvec2 bFrustumTestVec = bvec2( bInFrustum, fMyZ <= 1.0 );\n		bool bFrustumTest = all( bFrustumTestVec );\n		*/\n		if ( fMyZ <= 1.0 ) \n		{\n			float zdepth=0.0;\n#ifdef SHADOWMAP_PCF3\n			value =  tex2DPCF( shadowMap1, vText.xy,shadowPCFOffset,fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.xy),shadowPCFOffset,fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.x,0),shadowPCFOffset,fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(0,shadowPCFOffset.y),shadowPCFOffset,fMyZ );\n			value = value/4.0;\n#endif\n#ifdef SHADOWMAP_PCF2		\n			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);\n#endif\n#ifdef SHADOWMAP_PCF1\n			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);\n#endif\n#ifdef SHADOWMAP_PCF_NO		\n			vec4 color = texture2D( shadowMap1,vText.xy );\n			zdepth = unpackDepth(color);\n			value = float(fMyZ < zdepth);\n#endif\n		}\n	}\n	return value;\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/ShadowHelper.glsl*/);
-			Shader3D.addInclude("WaveFunction.glsl","\nuniform vec2 u_WaveInfoD[20];\nuniform vec4 u_WaveInfo[20];\n\nuniform float TEXWAVE_UV_SCALE ;//= 20.0; //每texwidth像素代表的实际距离\n/**\n	这里的计算都是\n*/\n\n/**\n* 计算一个波形\n*  开始计算的时候都按照z向上，最后输出的时候，颠倒一下。\n* @param tm {float} 毫秒\n*/\nvoid calcGerstnerWave(float curtm, vec3 pos, float deep, vec2 uvpos, out vec3 opos, out vec3 B, out vec3 T, out vec3 N, out float foamS){\n	float tm = curtm/1000.;\n	opos = pos;\n	vec3 wpos=vec3(0.);		//累加的位置\n	N=vec3(0.,0.,0.);	//输出的法线初始化一下\n	T=vec3(0.,0.,0.);\n	B=vec3(0.,0.,0.);\n	vec2 cD ;//= D;\n	//float deepAtt = max(0.,min(deep,1.0));\n	//A*=deepAtt; //TODO\n	\n	for( int i=0; i<4; i++){\n		cD = u_WaveInfoD[i];//vec2(wi.winfo[0],wi.winfo[1]);// wi.vDir;\n		float Q = u_WaveInfo[i].x;//wi.QorK;\n		float A = u_WaveInfo[i].y;//wi.A;\n		float W = u_WaveInfo[i].z;//wi.omega;\n		float P = u_WaveInfo[i].w;//wi.phi;\n		float dop = dot(cD,uvpos);\n		float c = cos(dop*W - tm*P);//TODO 优化\n		float s = sin(dop*W - tm*P);\n		float AWs = A*W*s;\n		float AWc = A*W*c;\n		float _QxyAWs = -Q*cD.x*cD.y*AWs;\n		\n		wpos += vec3(Q*A*cD.x*c,\n					Q*A*cD.y*c,\n					A*s);\n		N += vec3(-cD.x*AWc,\n				-cD.y*AWc,\n				Q*AWs);//记得最后1-\n		T += vec3(_QxyAWs,\n				Q*cD.y*cD.y*AWs,//记得1-\n				cD.y*AWc\n			);\n		B += vec3(Q*cD.x*cD.x*AWs,//记得1-\n				_QxyAWs,\n				cD.x*AWc\n			);\n		//float v1 = exp(-tan((dop*W - tm*P)/2.+1.07));//除2，+pi/2 这样正好能对齐\n#ifdef USE_FOAM		\n		float v1 = 0.5-sin((dop*W - tm*P)/1.+2.0)/2.;\n		foamS += pow(v1,9.)/4.;\n#endif\n	}\n	T.y=1.-T.y; B.x=1.-B.x;N.z=1.-N.z;\n	opos += vec3(wpos.x,wpos.z*min(deep/10.,1.),wpos.y);\n	//y和z交换一下。现在根据uv计算的位置，所以直接交换yz就行。其他情况下有问题么\n	T.xyz=T.xzy;\n	B.xyz=B.xzy;\n	N.xyz=N.xzy;\n}\n\n\nvoid calcWave(float curtm, vec2 uv, out vec3 B, out vec3 T, out vec3 N){\n	float tm = curtm/1000.;\n	N=vec3(0.,0.,0.);	//输出的法线初始化一下\n	vec2 uvpos = uv*TEXWAVE_UV_SCALE; //TODO 这个范围是什么 就是1？\n	uvpos.y*=-1.;\n	vec2 cD;// = D;\n	const int NumWaves = 4;\n	float scale = 1./float(NumWaves);\n	for( int i=0; i<NumWaves; i++){\n		cD = u_WaveInfoD[i];//vec2(wi.winfo[0],wi.winfo[1]);// wi.vDir;\n		float k = 1.5;//u_WaveInfo[i].x;//wi.QorK; TODO  不知道为什么，这个取u_WaveInfo[i].x，在mi3w上就会闪。测试发现实际值也传过来了，就是1.5\n		float A = u_WaveInfo[i].y;//wi.A;\n		float W = u_WaveInfo[i].z;//wi.omega;\n		float P = u_WaveInfo[i].w;//wi.phi;\n		\n		float dop = dot(cD,uvpos);\n		float c = cos(dop*W - tm*P);//TODO 优化\n		float s = sin(dop*W - tm*P);\n		/*\n		float AWs = A*W*s;\n		float AWc = A*W*c;\n		float _QxyAWs = -Q*cD.x*cD.y*AWs;\n		\n		N += vec3(-cD.x*AWc,\n				-cD.y*AWc,\n				Q*AWs);//记得最后1-\n		*/\n		float kWAc = scale*c;//k*W*A*c;  为了提高精度，这里只保留sin，cos部分，实际使用的时候再乘回来。\n		//float kWAc = k*W*A*c;  \n		N += vec3(\n			-kWAc*cD.x*pow((s+1.)/2.,k-1.),\n			-kWAc*cD.y*pow((s+1.)/2.,k-1.),\n			1.\n		);\n	}\n	//N.z=1.-N.z;\n	//y和z交换一下。现在根据uv计算的位置，所以直接交换yz就行。其他情况下有问题么\n	N.xyz=N.xzy;\n}\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/WaveFunction.glsl*/);
+			Shader3D.addInclude("LightHelper.glsl","\nstruct DirectionLight\n{\n vec3 Direction;\n vec3 Diffuse;\n vec3 Ambient;\n vec3 Specular;\n};\n\nstruct PointLight\n{\n vec3 Diffuse;\n vec3 Ambient;\n vec3 Specular;\n vec3 Attenuation;\n vec3 Position;\n float Range;\n};\n\nstruct SpotLight\n{\n vec3 Diffuse;\n vec3 Ambient;\n vec3 Specular;\n vec3 Attenuation;\n vec3 Position;\n vec3 Direction;\n float Spot;\n float Range;\n};\n\n\nvoid  computeDirectionLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in DirectionLight dirLight,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)\n{\n	dif=vec3(0.0);//不初始化在IOS中闪烁，PC中不会闪烁\n	amb=vec3(0.0);\n	spec=vec3(0.0);\n	vec3 lightVec=-normalize(dirLight.Direction);\n	\n	amb=matAmb*dirLight.Ambient;\n	\n	float  diffuseFactor=dot(lightVec, normal);\n	\n	if(diffuseFactor>0.0)\n	{\n	   vec3 v = reflect(-lightVec, normal);\n	   float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);\n	   \n	   dif = diffuseFactor * matDif * dirLight.Diffuse;\n	   spec = specFactor * matSpe.rgb * dirLight.Specular;\n	}\n	\n}\n\nvoid computePointLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in PointLight poiLight, in vec3 pos,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)\n{\n	dif=vec3(0.0);\n	amb=vec3(0.0);\n	spec=vec3(0.0);\n	vec3 lightVec = poiLight.Position - pos;\n		\n	float d = length(lightVec);\n	\n	if( d > poiLight.Range )\n		return;\n		\n	lightVec /= d; \n	\n	amb = matAmb * poiLight.Ambient;	\n\n	float diffuseFactor = dot(lightVec, normal);\n\n	if( diffuseFactor > 0.0 )\n	{\n		vec3 v= reflect(-lightVec, normal);\n		float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);\n					\n		dif = diffuseFactor * matDif * poiLight.Diffuse;\n		spec = specFactor * matSpe.rgb * poiLight.Specular;\n	}\n\n	float attenuate = 1.0 / dot(poiLight.Attenuation, vec3(1.0, d, d*d));\n\n	dif *= attenuate;\n	spec*= attenuate;\n}\n\nvoid ComputeSpotLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in SpotLight spoLight,in vec3 pos, in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)\n{\n	amb = vec3(0.0);\n	dif =vec3(0.0);\n	spec= vec3(0.0);\n	vec3 lightVec = spoLight.Position - pos;\n		\n	float d = length(lightVec);\n	\n	if( d > spoLight.Range)\n		return;\n		\n	lightVec /= d; \n	\n	amb = matAmb * spoLight.Ambient;	\n\n	float diffuseFactor = dot(lightVec, normal);\n\n	if(diffuseFactor > 0.0)\n	{\n		vec3 v= reflect(-lightVec, normal);\n		float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);\n					\n		dif = diffuseFactor * matDif * spoLight.Diffuse;\n		spec = specFactor * matSpe.rgb * spoLight.Specular;\n	}\n	\n	float spot = pow(max(dot(-lightVec, normalize(spoLight.Direction)), 0.0), spoLight.Spot);\n\n	float attenuate = spot/dot(spoLight.Attenuation, vec3(1.0, d, d*d));\n\n	amb *= spot;\n	dif *= attenuate;\n	spec*= attenuate;\n}\n\nvec3 NormalSampleToWorldSpace(vec3 normalMapSample, vec3 unitNormal, vec3 tangent)\n{\n	vec3 normalT = 2.0*normalMapSample - 1.0;\n\n	// Build orthonormal basis.\n	vec3 N = normalize(unitNormal);\n	vec3 T = normalize(tangent- dot(tangent, N)*N);\n	vec3 B = cross(T, N);\n\n	mat3 TBN = mat3(T, B, N);\n\n	// Transform from tangent space to world space.\n	vec3 bumpedNormal = TBN*normalT;\n\n	return bumpedNormal;\n}\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/LightHelper.glsl*/);
+			Shader3D.addInclude("VRHelper.glsl","\nvec4 DistortFishEye(vec4 p)\n{\n    vec2 v = p.xy / p.w;\n    float radius = length(v);// Convert to polar coords\n    if (radius > 0.0)\n    {\n      float theta = atan(v.y,v.x);\n      \n      radius = pow(radius, 0.93);// Distort:\n\n      v.x = radius * cos(theta);// Convert back to Cartesian\n      v.y = radius * sin(theta);\n      p.xy = v.xy * p.w;\n    }\n    return p;\n}"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/VRHelper.glsl*/);
+			Shader3D.addInclude("ShadowHelper.glsl","uniform sampler2D u_shadowMap1;\nuniform sampler2D u_shadowMap2;\nuniform sampler2D u_shadowMap3;\nuniform vec2	  u_shadowPCFoffset;\nuniform vec4     u_shadowPSSMDistance;\nvec4 packDepth(const in float depth)\n{\n	const vec4 bitShift = vec4(256.0*256.0*256.0, 256.0*256.0, 256.0, 1.0);\n	const vec4 bitMask	= vec4(0.0, 1.0/256.0, 1.0/256.0, 1.0/256.0);\n	vec4 res = mod(depth*bitShift*vec4(255), vec4(256))/vec4(255);\n	res -= res.xxyz * bitMask;\n	return res;\n}\nfloat unpackDepth(const in vec4 rgbaDepth)\n{\n	const vec4 bitShift = vec4(1.0/(256.0*256.0*256.0), 1.0/(256.0*256.0), 1.0/256.0, 1.0);\n	float depth = dot(rgbaDepth, bitShift);\n	return depth;\n}\nfloat tex2DPCF( sampler2D shadowMap,vec2 texcoord,vec2 invsize,float zRef )\n{\n	vec2 texelpos =texcoord / invsize;\n	vec2 lerps = fract( texelpos );\n	float sourcevals[4];\n	sourcevals[0] = float( unpackDepth(texture2D(shadowMap,texcoord)) > zRef );\n	sourcevals[1] = float( unpackDepth(texture2D(shadowMap,texcoord + vec2(invsize.x,0))) > zRef );\n	sourcevals[2] = float( unpackDepth(texture2D(shadowMap,texcoord + vec2(0,invsize.y))) > zRef );\n	sourcevals[3] = float( unpackDepth(texture2D(shadowMap,texcoord + vec2(invsize.x, invsize.y) )) > zRef );\n	return mix( mix(sourcevals[0],sourcevals[2],lerps.y),mix(sourcevals[1],sourcevals[3],lerps.y),lerps.x );\n}\nfloat getShadowPSSM3( sampler2D shadowMap1,sampler2D shadowMap2,sampler2D shadowMap3,mat4 lightShadowVP[4],vec4 pssmDistance,vec2 shadowPCFOffset,vec3 worldPos,float posViewZ,float zBias )\n{\n	float value = 1.0;\n	int nPSNum = int(posViewZ>pssmDistance.x);\n	nPSNum += int(posViewZ>pssmDistance.y);\n	nPSNum += int(posViewZ>pssmDistance.z);\n	//真SB,webgl不支持在PS中直接访问数组\n	mat4 lightVP;\n	if( nPSNum == 0 )\n	{\n		lightVP = lightShadowVP[1];\n	}\n	else if( nPSNum == 1 )\n	{\n		lightVP = lightShadowVP[2];\n	}\n	else if( nPSNum == 2 )\n	{\n		lightVP = lightShadowVP[3];\n	}\n	vec4 vLightMVPPos = lightVP * vec4(worldPos,1.0);\n	//为了效率，在CPU计算/2.0 + 0.5\n	//vec3 vText = (vLightMVPPos.xyz / vLightMVPPos.w)/2.0 + 0.5;\n	vec3 vText = vLightMVPPos.xyz / vLightMVPPos.w;\n	float fMyZ = vText.z - zBias;\n	/*\n	bvec4 bInFrustumVec = bvec4 ( vText.x >= 0.0, vText.x <= 1.0, vText.y >= 0.0, vText.y <= 1.0 );\n	bool bInFrustum = all( bInFrustumVec );\n	bvec2 bFrustumTestVec = bvec2( bInFrustum, fMyZ <= 1.0 );\n	bool bFrustumTest = all( bFrustumTestVec );\n	if ( bFrustumTest ) \n	*/\n	if( fMyZ <= 1.0 )\n	{\n		float zdepth=0.0;\n#ifdef SHADOWMAP_PCF3\n		if ( nPSNum == 0 )\n		{\n			value =  tex2DPCF( shadowMap1, vText.xy,shadowPCFOffset,fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.xy),shadowPCFOffset,	fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.x,0),shadowPCFOffset,	fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(0,shadowPCFOffset.y),shadowPCFOffset,	fMyZ );\n			value = value/4.0;\n		} \n		else if( nPSNum == 1 )\n		{\n			value = tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);\n		}\n		else if( nPSNum == 2 )\n		{\n			vec4 color = texture2D( shadowMap3,vText.xy );\n			zdepth = unpackDepth(color);\n			value = float(fMyZ < zdepth);\n		}\n#endif\n#ifdef SHADOWMAP_PCF2\n		if ( nPSNum == 0 )\n		{\n			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);\n		}\n		else if( nPSNum == 1 )\n		{\n			value = tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);\n		}\n		else if( nPSNum == 2 )\n		{\n			vec4 color = texture2D( shadowMap3,vText.xy );\n			zdepth = unpackDepth(color);\n			value = float(fMyZ < zdepth);\n		}\n\n#endif\n#ifdef SHADOWMAP_PCF1\n		if ( nPSNum == 0 )\n		{\n			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);\n		}\n		else if( nPSNum == 1 )\n		{\n			vec4 color = texture2D( shadowMap2,vText.xy );\n			zdepth = unpackDepth(color);\n			value = float(fMyZ < zdepth);\n		}\n		else if( nPSNum == 2 )\n		{\n			vec4 color = texture2D( shadowMap3,vText.xy );\n			zdepth = unpackDepth(color);\n			value = float(fMyZ < zdepth);\n		}\n#endif\n#ifdef SHADOWMAP_PCF_NO\n		vec4 color;\n		if ( nPSNum == 0 )\n		{\n			color = texture2D( shadowMap1,vText.xy );\n		}\n		else if( nPSNum == 1 )\n		{\n			color = texture2D( shadowMap2,vText.xy );\n		}\n		else if( nPSNum == 2 )\n		{\n			color = texture2D( shadowMap3,vText.xy );\n		}\n		zdepth = unpackDepth(color);\n		value = float(fMyZ < zdepth);\n#endif\n	}\n	return value;\n}\nfloat getShadowPSSM2( sampler2D shadowMap1,sampler2D shadowMap2,mat4 lightShadowVP[4],vec4 pssmDistance,vec2 shadowPCFOffset,vec3 worldPos,float posViewZ,float zBias )\n{\n	float value = 1.0;\n	int nPSNum = int(posViewZ>pssmDistance.x);\n	nPSNum += int(posViewZ>pssmDistance.y);\n	//真SB,webgl不支持在PS中直接访问数组\n	mat4 lightVP;\n	if( nPSNum == 0 )\n	{\n		lightVP = lightShadowVP[1];\n	}\n	else if( nPSNum == 1 )\n	{\n		lightVP = lightShadowVP[2];\n	}\n	vec4 vLightMVPPos = lightVP * vec4(worldPos,1.0);\n	//为了效率，在CPU计算/2.0 + 0.5\n	//vec3 vText = (vLightMVPPos.xyz / vLightMVPPos.w)/2.0 + 0.5;\n	vec3 vText = vLightMVPPos.xyz / vLightMVPPos.w;\n	float fMyZ = vText.z - zBias;\n	/*\n	bvec4 bInFrustumVec = bvec4 ( vText.x >= 0.0, vText.x <= 1.0, vText.y >= 0.0, vText.y <= 1.0 );\n	bool bInFrustum = all( bInFrustumVec );\n	bvec2 bFrustumTestVec = bvec2( bInFrustum, fMyZ <= 1.0 );\n	bool bFrustumTest = all( bFrustumTestVec );\n	if ( bFrustumTest ) \n	*/\n	if( fMyZ <= 1.0 )\n	{\n		float zdepth=0.0;\n#ifdef SHADOWMAP_PCF3\n		if ( nPSNum == 0 )\n		{\n			value =  tex2DPCF( shadowMap1, vText.xy,shadowPCFOffset,fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.xy),shadowPCFOffset,	fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.x,0),shadowPCFOffset,	fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(0,shadowPCFOffset.y),shadowPCFOffset,	fMyZ );\n			value = value/4.0;\n		}\n		else if( nPSNum == 1 )\n		{\n			value = tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);\n		}\n#endif\n#ifdef SHADOWMAP_PCF2\n		if ( nPSNum == 0 )\n		{\n			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);\n		}\n		else if( nPSNum == 1 )\n		{\n			value = tex2DPCF( shadowMap2,vText.xy,shadowPCFOffset,fMyZ);\n		}\n#endif\n#ifdef SHADOWMAP_PCF1\n		if ( nPSNum == 0 )\n		{\n			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);\n		}\n		else if( nPSNum == 1 )\n		{\n			vec4 color = texture2D( shadowMap2,vText.xy );\n			zdepth = unpackDepth(color);\n			value = float(fMyZ < zdepth);\n		}\n#endif\n#ifdef SHADOWMAP_PCF_NO\n		vec4 color;\n		if ( nPSNum == 0 )\n		{\n			color = texture2D( shadowMap1,vText.xy );\n		}\n		else if( nPSNum == 1 )\n		{\n			color = texture2D( shadowMap2,vText.xy );\n		}\n		zdepth = unpackDepth(color);\n		value = float(fMyZ < zdepth);\n#endif\n	}\n	return value;\n}\nfloat getShadowPSSM1( sampler2D shadowMap1,vec4 lightMVPPos,vec4 pssmDistance,vec2 shadowPCFOffset,float posViewZ,float zBias )\n{\n	float value = 1.0;\n	if( posViewZ < pssmDistance.x )\n	{\n		vec3 vText = lightMVPPos.xyz / lightMVPPos.w;\n		float fMyZ = vText.z - zBias;\n		/*\n		bvec4 bInFrustumVec = bvec4 ( vText.x >= 0.0, vText.x <= 1.0, vText.y >= 0.0, vText.y <= 1.0 );\n		bool bInFrustum = all( bInFrustumVec );\n		bvec2 bFrustumTestVec = bvec2( bInFrustum, fMyZ <= 1.0 );\n		bool bFrustumTest = all( bFrustumTestVec );\n		*/\n		if ( fMyZ <= 1.0 ) \n		{\n			float zdepth=0.0;\n#ifdef SHADOWMAP_PCF3\n			value =  tex2DPCF( shadowMap1, vText.xy,shadowPCFOffset,fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.xy),shadowPCFOffset,fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(shadowPCFOffset.x,0),shadowPCFOffset,fMyZ );\n			value += tex2DPCF( shadowMap1, vText.xy+vec2(0,shadowPCFOffset.y),shadowPCFOffset,fMyZ );\n			value = value/4.0;\n#endif\n#ifdef SHADOWMAP_PCF2		\n			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);\n#endif\n#ifdef SHADOWMAP_PCF1\n			value = tex2DPCF( shadowMap1,vText.xy,shadowPCFOffset,fMyZ);\n#endif\n#ifdef SHADOWMAP_PCF_NO		\n			vec4 color = texture2D( shadowMap1,vText.xy );\n			zdepth = unpackDepth(color);\n			value = float(fMyZ < zdepth);\n#endif\n		}\n	}\n	return value;\n}"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/ShadowHelper.glsl*/);
+			Shader3D.addInclude("WaveFunction.glsl","\nuniform vec2 u_WaveInfoD[20];\nuniform vec4 u_WaveInfo[20];\n\nuniform float TEXWAVE_UV_SCALE ;//= 20.0; //每texwidth像素代表的实际距离\n/**\n	这里的计算都是\n*/\n\n/**\n* 计算一个波形\n*  开始计算的时候都按照z向上，最后输出的时候，颠倒一下。\n* @param tm {float} 毫秒\n*/\nvoid calcGerstnerWave(float curtm, vec3 pos, float deep, vec2 uvpos, out vec3 opos, out vec3 B, out vec3 T, out vec3 N, out float foamS){\n	float tm = curtm/1000.;\n	opos = pos;\n	vec3 wpos=vec3(0.);		//累加的位置\n	N=vec3(0.,0.,0.);	//输出的法线初始化一下\n	T=vec3(0.,0.,0.);\n	B=vec3(0.,0.,0.);\n	vec2 cD ;//= D;\n	//float deepAtt = max(0.,min(deep,1.0));\n	//A*=deepAtt; //TODO\n	\n	for( int i=0; i<4; i++){\n		cD = u_WaveInfoD[i];//vec2(wi.winfo[0],wi.winfo[1]);// wi.vDir;\n		float Q = u_WaveInfo[i].x;//wi.QorK;\n		float A = u_WaveInfo[i].y;//wi.A;\n		float W = u_WaveInfo[i].z;//wi.omega;\n		float P = u_WaveInfo[i].w;//wi.phi;\n		float dop = dot(cD,uvpos);\n		float c = cos(dop*W - tm*P);//TODO 优化\n		float s = sin(dop*W - tm*P);\n		float AWs = A*W*s;\n		float AWc = A*W*c;\n		float _QxyAWs = -Q*cD.x*cD.y*AWs;\n		\n		wpos += vec3(Q*A*cD.x*c,\n					Q*A*cD.y*c,\n					A*s);\n		N += vec3(-cD.x*AWc,\n				-cD.y*AWc,\n				Q*AWs);//记得最后1-\n		T += vec3(_QxyAWs,\n				Q*cD.y*cD.y*AWs,//记得1-\n				cD.y*AWc\n			);\n		B += vec3(Q*cD.x*cD.x*AWs,//记得1-\n				_QxyAWs,\n				cD.x*AWc\n			);\n		//float v1 = exp(-tan((dop*W - tm*P)/2.+1.07));//除2，+pi/2 这样正好能对齐\n#ifdef USE_FOAM		\n		float v1 = 0.5-sin((dop*W - tm*P)/1.+2.0)/2.;\n		foamS += pow(v1,9.)/4.;\n#endif\n	}\n	T.y=1.-T.y; B.x=1.-B.x;N.z=1.-N.z;\n	opos += vec3(wpos.x,wpos.z*min(deep/10.,1.),wpos.y);\n	//y和z交换一下。现在根据uv计算的位置，所以直接交换yz就行。其他情况下有问题么\n	T.xyz=T.xzy;\n	B.xyz=B.xzy;\n	N.xyz=N.xzy;\n}\n\n\nvoid calcWave(float curtm, vec2 uv, out vec3 B, out vec3 T, out vec3 N){\n	float tm = curtm/1000.;\n	N=vec3(0.,0.,0.);	//输出的法线初始化一下\n	vec2 uvpos = uv*TEXWAVE_UV_SCALE; //TODO 这个范围是什么 就是1？\n	uvpos.y*=-1.;\n	vec2 cD;// = D;\n	const int NumWaves = 4;\n	float scale = 1./float(NumWaves);\n	for( int i=0; i<NumWaves; i++){\n		cD = u_WaveInfoD[i];//vec2(wi.winfo[0],wi.winfo[1]);// wi.vDir;\n		float k = 1.5;//u_WaveInfo[i].x;//wi.QorK; TODO  不知道为什么，这个取u_WaveInfo[i].x，在mi3w上就会闪。测试发现实际值也传过来了，就是1.5\n		float A = u_WaveInfo[i].y;//wi.A;\n		float W = u_WaveInfo[i].z;//wi.omega;\n		float P = u_WaveInfo[i].w;//wi.phi;\n		\n		float dop = dot(cD,uvpos);\n		float c = cos(dop*W - tm*P);//TODO 优化\n		float s = sin(dop*W - tm*P);\n		/*\n		float AWs = A*W*s;\n		float AWc = A*W*c;\n		float _QxyAWs = -Q*cD.x*cD.y*AWs;\n		\n		N += vec3(-cD.x*AWc,\n				-cD.y*AWc,\n				Q*AWs);//记得最后1-\n		*/\n		float kWAc = scale*c;//k*W*A*c;  为了提高精度，这里只保留sin，cos部分，实际使用的时候再乘回来。\n		//float kWAc = k*W*A*c;  \n		N += vec3(\n			-kWAc*cD.x*pow((s+1.)/2.,k-1.),\n			-kWAc*cD.y*pow((s+1.)/2.,k-1.),\n			1.\n		);\n	}\n	//N.z=1.-N.z;\n	//y和z交换一下。现在根据uv计算的位置，所以直接交换yz就行。其他情况下有问题么\n	N.xyz=N.xzy;\n}\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/WaveFunction.glsl*/);
 			var vs,ps;
 			var attributeMap={
 				'a_Position':/*laya.d3.graphics.VertexElementUsage.POSITION0*/0,
@@ -12346,8 +12779,8 @@
 				'u_lightShadowVP':[ /*laya.d3.core.scene.Scene.SHADOWLIGHTVIEWPROJECT*/22,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4],
 				'u_shadowPCFoffset':[ /*laya.d3.core.scene.Scene.SHADOWMAPPCFOFFSET*/23,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4]};
 			var SIMPLE=Shader3D.nameKey.add("SIMPLE");
-			vs="#include?VR \"VRHelper.glsl\";\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n\n\n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))\nattribute vec2 a_Texcoord0;\nvarying vec2 v_Texcoord0;\n  #ifdef MIXUV\n  attribute vec2 a_TexcoordNext0;\n  uniform float  u_UVAge;\n  #endif\n  #ifdef UVTRANSFORM \n  uniform mat4 u_UVMatrix;\n  #endif\n#endif\n\n#ifdef defined(AMBIENTMAP)||defined(LIGHTMAP)\nattribute vec2 a_Texcoord1;\nuniform vec4 u_LightmapScaleOffset;\nvarying vec2 v_LightMapUV;\n#endif\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n#ifdef BONE\nattribute vec4 a_BoneIndices;\nattribute vec4 a_BoneWeights;\nconst int c_MaxBoneCount = 24;\nuniform mat4 u_Bones[c_MaxBoneCount];\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\nattribute vec3 a_Normal;\nvarying vec3 v_Normal;\n#endif\n\n#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP))&&defined(NORMALMAP)\nattribute vec3 a_Tangent0;\nvarying vec3 v_Tangent0;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(REFLECTMAP)||defined(RECEIVESHADOW)\nuniform mat4 u_WorldMat;\nvarying vec3 v_PositionWorld;\n#endif\n\nvarying float v_posViewZ;\n#ifdef RECEIVESHADOW\n  #ifdef SHADOWMAP_PSSM1 \n  varying vec4 v_lightMVPPos;\n  uniform mat4 u_lightShadowVP[4];\n  #endif\n#endif\n\nvoid main_castShadow()\n{\n#ifdef BONE\n	mat4 skinTransform=mat4(0.0);\n	skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n	skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n	skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n	skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n	vec4 position=skinTransform*a_Position;\n	#ifdef VR\n		gl_Position = DistortFishEye(u_MvpMatrix * position);\n	#else\n		gl_Position = u_MvpMatrix * position;\n	#endif\n#else\n	#ifdef VR\n		gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n	#else\n		gl_Position = u_MvpMatrix * a_Position;\n	#endif\n#endif\n \n//TODO没考虑UV动画呢\n#if defined(DIFFUSEMAP)&&defined(ALPHATEST)\n	v_Texcoord0=a_Texcoord0;\n#endif\n	v_posViewZ = gl_Position.z;\n}\n\nvoid main_normal()\n{\n#ifdef BONE\n	mat4 skinTransform=mat4(0.0);\n	skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n	skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n	skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n	skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n	vec4 position=skinTransform*a_Position;\n	#ifdef VR\n		gl_Position = DistortFishEye(u_MvpMatrix * position);\n	#else\n		gl_Position = u_MvpMatrix * position;\n	#endif\n#else\n	#ifdef VR\n		gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n	#else\n		gl_Position = u_MvpMatrix * a_Position;\n	#endif\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\n	mat3 worldMat;\n	#ifdef BONE\n		worldMat=mat3(u_WorldMat*skinTransform);\n	#else\n		worldMat=mat3(u_WorldMat);\n	#endif  \n	v_Normal=worldMat*a_Normal;\n	#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)\n		v_Tangent0=worldMat*a_Tangent0;\n	#endif\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(RECEIVESHADOW)\n	#ifdef BONE\n		v_PositionWorld=(u_WorldMat*position).xyz;\n	#else\n		v_PositionWorld=(u_WorldMat*a_Position).xyz;\n	#endif\n#endif\n\n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))\n	#ifdef MIXUV\n		v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n	#else\n		v_Texcoord0=a_Texcoord0;\n	#endif\n	#ifdef UVTRANSFORM\n		v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;\n	#endif\n#endif\n\n#ifdef defined(AMBIENTMAP)||defined(LIGHTMAP)\n	#ifdef SCALEOFFSETLIGHTINGMAPUV\n		#ifdef UV1\n			v_LightMapUV=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,1.0+a_Texcoord1.y*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);\n		#else\n			v_LightMapUV=vec2(a_Texcoord0.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,(a_Texcoord0.y-1.0)*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);\n		#endif \n	#else\n		#ifdef UV1\n			v_LightMapUV=a_Texcoord1;\n		#else\n			v_LightMapUV=a_Texcoord0;\n		#endif \n	#endif \n#endif\n\n#ifdef COLOR\n	v_Color=a_Color;\n#endif\n\n#ifdef RECEIVESHADOW\n	v_posViewZ = gl_Position.w;\n	#ifdef SHADOWMAP_PSSM1 \n		v_lightMVPPos = u_lightShadowVP[0] * vec4(v_PositionWorld,1.0);\n	#endif\n#endif\n}\n\nvoid main()\n{\n#ifdef CASTSHADOW\n	main_castShadow();\n#else\n	main_normal();\n#endif\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\n#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT \"LightHelper.glsl\";\n\nuniform vec4 u_Albedo;\n\n#ifdef ALPHATEST\nuniform float u_AlphaTestValue;\n#endif\n\n#ifdef DIFFUSEMAP\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef REFLECTMAP\nuniform samplerCube u_ReflectTexture;\nuniform vec3 u_MaterialReflect;\n#endif\n\n#if   defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))\nvarying vec2 v_Texcoord0;\n#endif\n\n#ifdef defined(AMBIENTMAP)||defined(LIGHTMAP)\nvarying vec2 v_LightMapUV;\n#endif\n#ifdef AMBIENTMAP\nuniform sampler2D u_AmbientTexture;\n#endif\n#ifdef LIGHTMAP\nuniform sampler2D u_LightMap;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\nuniform vec3 u_MaterialDiffuse;\nuniform vec4 u_MaterialSpecular;\n  #if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP) \n  uniform sampler2D u_SpecularTexture;\n  #endif\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(AMBIENTMAP)||defined(LIGHTMAP)\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#if defined(FOG)||defined(DEPTHFOG)\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\n#ifdef MIXUV\nuniform float  u_UVAniAge;\n#endif\n\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\nvarying vec3 v_Normal;\n#endif\n\n#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)\nuniform sampler2D u_NormalTexture;\nvarying vec3 v_Tangent0;\n#endif\n\n#ifdef DIRECTIONLIGHT\nuniform DirectionLight u_DirectionLight;\n#endif\n\n#ifdef POINTLIGHT\nuniform PointLight u_PointLight;\n#endif\n\n#ifdef SPOTLIGHT\nuniform SpotLight u_SpotLight;\n#endif\n\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(REFLECTMAP)||(defined(RECEIVESHADOW)&&(defined(SHADOWMAP_PSM2)||defined(SHADOWMAP_PSM3)))\nuniform vec3 u_CameraPos;\n#endif\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(REFLECTMAP)\nvarying vec3 v_PositionWorld;\n#endif\n\n#include \"ShadowHelper.glsl\"\n#ifdef RECEIVESHADOW\n	#if defined(SHADOWMAP_PSSM2)||defined(SHADOWMAP_PSSM3)\n	uniform mat4 u_lightShadowVP[4];\n	#endif\n	#ifdef SHADOWMAP_PSSM1 \n	varying vec4 v_lightMVPPos;\n	#endif\n#endif\nvarying float v_posViewZ;\n\nvoid main_castShadow()\n{\n	//gl_FragColor=vec4(v_posViewZ,0.0,0.0,1.0);\n	gl_FragColor=packDepth(v_posViewZ);\n	#if defined(DIFFUSEMAP)&&defined(ALPHATEST)\n		float alpha = texture2D(u_DiffuseTexture,v_Texcoord0).w;\n		if( alpha < u_AlphaTestValue )\n		{\n			discard;\n		}\n	#endif\n}\nvoid main_normal()\n{\n#if defined(DIFFUSEMAP)&&!defined(COLOR)\n	gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n#endif \n  \n#if defined(COLOR)&&!defined(DIFFUSEMAP)\n	gl_FragColor=v_Color;\n#endif \n  \n#if defined(DIFFUSEMAP)&&defined(COLOR)\n	vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n	gl_FragColor=texColor*v_Color;\n#endif\n  \n#if !defined(DIFFUSEMAP)&&!defined(COLOR)\n	gl_FragColor=vec4(1.0,1.0,1.0,1.0);\n#endif \n    \n#ifdef ALPHATEST\n	if(gl_FragColor.a-u_AlphaTestValue<0.0)\n		discard;\n#endif\n  \n  \n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\n	vec3 normal;\n    #if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)\n		vec3 normalMapSample = texture2D(u_NormalTexture, v_Texcoord0).rgb;\n		normal = normalize(NormalSampleToWorldSpace(normalMapSample, v_Normal, v_Tangent0));\n	#else\n		normal = normalize(v_Normal);\n    #endif\n#endif\n	\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n	vec3 diffuse = vec3(0.0);\n	vec3 ambient = vec3(0.0);\n	vec3 specular= vec3(0.0);\n	vec3 dif, amb, spe;\n#endif\n  \n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\n	vec3 toEye;\n	#ifdef FOG\n		toEye=u_CameraPos-v_PositionWorld;\n		float toEyeLength=length(toEye);\n		toEye/=toEyeLength;\n	#else\n		toEye=normalize(u_CameraPos-v_PositionWorld);\n	#endif\n#endif\n	\n#ifdef DIRECTIONLIGHT\n	computeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);\n	diffuse+=dif;\n	ambient+=amb;\n	specular+=spe;\n#endif\n \n#ifdef POINTLIGHT\n	computePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n	diffuse+=dif;\n	ambient+=amb;\n	specular+=spe;\n#endif\n\n#ifdef SPOTLIGHT\n	ComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n	diffuse+=dif;\n	ambient+=amb;\n	specular+=spe;\n#endif\n\n#ifdef RECEIVESHADOW\n	float shadowValue = 1.0;\n	#ifdef SHADOWMAP_PSSM3\n		shadowValue = getShadowPSSM3( u_shadowMap1,u_shadowMap2,u_shadowMap3,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,v_PositionWorld,v_posViewZ,0.001);\n	#endif\n	#ifdef SHADOWMAP_PSSM2\n		shadowValue = getShadowPSSM2( u_shadowMap1,u_shadowMap2,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,v_PositionWorld,v_posViewZ,0.001);\n	#endif \n	#ifdef SHADOWMAP_PSSM1\n		shadowValue = getShadowPSSM1( u_shadowMap1,v_lightMVPPos,u_shadowPSSMDistance,u_shadowPCFoffset,v_posViewZ,0.001);\n	#endif\n#endif\n\n#ifdef AMBIENTMAP\n	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n		gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb); \n	#else\n		#if defined(RECEIVESHADOW)\n			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb * shadowValue );\n		#else\n			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb); \n		#endif\n	#endif\n#endif\n\n#ifdef LIGHTMAP\n	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n		gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb); \n	#else\n		#if defined(RECEIVESHADOW)\n			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb * shadowValue );\n		#else\n			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb); \n		#endif\n	#endif\n#endif\n\ngl_FragColor=gl_FragColor*u_Albedo;\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n	#if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP)\n		specular =specular*texture2D(u_SpecularTexture, v_Texcoord0).rgb;\n    #endif\n	#ifdef RECEIVESHADOW\n		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse*shadowValue) + specular*shadowValue,gl_FragColor.a);\n	#else\n		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse) + specular,gl_FragColor.a);\n	#endif\n#endif\n  \n#ifdef REFLECTMAP\n	vec3 incident = -toEye;\n	vec3 reflectionVector = reflect(incident,normal);\n	vec3 reflectionColor  = textureCube(u_ReflectTexture,reflectionVector).rgb;\n	gl_FragColor.rgb += u_MaterialReflect*reflectionColor;\n#endif\n  \n#ifdef FOG\n	float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n	gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n#endif\n#ifdef DEPTHFOG\n	float lerpFact = (-v_PositionWorld.y-u_FogStart)/u_FogRange;\n	gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n#endif\n}\n\nvoid main()\n{\n#ifdef CASTSHADOW		\n	main_castShadow();\n#else\n  main_normal();\n#endif  \n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.ps*/;
+			vs="#include?VR \"VRHelper.glsl\";\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\n\n\n\n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))||(defined(LIGHTMAP)&&defined(UV))\nattribute vec2 a_Texcoord0;\nvarying vec2 v_Texcoord0;\n  #ifdef MIXUV\n  attribute vec2 a_TexcoordNext0;\n  uniform float  u_UVAge;\n  #endif\n  #ifdef UVTRANSFORM \n  uniform mat4 u_UVMatrix;\n  #endif\n#endif\n\n#ifdef defined(AMBIENTMAP)||(defined(LIGHTMAP)&&defined(UV1))\nattribute vec2 a_Texcoord1;\n#endif\n\n#ifdef defined(AMBIENTMAP)||defined(LIGHTMAP)\nuniform vec4 u_LightmapScaleOffset;\nvarying vec2 v_LightMapUV;\n#endif\n\n\n#ifdef COLOR\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n#endif\n\n#ifdef BONE\nattribute vec4 a_BoneIndices;\nattribute vec4 a_BoneWeights;\nconst int c_MaxBoneCount = 24;\nuniform mat4 u_Bones[c_MaxBoneCount];\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\nattribute vec3 a_Normal;\nvarying vec3 v_Normal;\n#endif\n\n#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP))&&defined(NORMALMAP)\nattribute vec3 a_Tangent0;\nvarying vec3 v_Tangent0;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(REFLECTMAP)||defined(RECEIVESHADOW)\nuniform mat4 u_WorldMat;\nvarying vec3 v_PositionWorld;\n#endif\n\nvarying float v_posViewZ;\n#ifdef RECEIVESHADOW\n  #ifdef SHADOWMAP_PSSM1 \n  varying vec4 v_lightMVPPos;\n  uniform mat4 u_lightShadowVP[4];\n  #endif\n#endif\n\nvoid main_castShadow()\n{\n#ifdef BONE\n	mat4 skinTransform=mat4(0.0);\n	skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n	skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n	skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n	skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n	vec4 position=skinTransform*a_Position;\n	#ifdef VR\n		gl_Position = DistortFishEye(u_MvpMatrix * position);\n	#else\n		gl_Position = u_MvpMatrix * position;\n	#endif\n#else\n	#ifdef VR\n		gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n	#else\n		gl_Position = u_MvpMatrix * a_Position;\n	#endif\n#endif\n \n//TODO没考虑UV动画呢\n#if defined(DIFFUSEMAP)&&defined(ALPHATEST)\n	v_Texcoord0=a_Texcoord0;\n#endif\n	v_posViewZ = gl_Position.z;\n}\n\nvoid main_normal()\n{\n#ifdef BONE\n	mat4 skinTransform=mat4(0.0);\n	skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n	skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n	skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n	skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n	vec4 position=skinTransform*a_Position;\n	#ifdef VR\n		gl_Position = DistortFishEye(u_MvpMatrix * position);\n	#else\n		gl_Position = u_MvpMatrix * position;\n	#endif\n#else\n	#ifdef VR\n		gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n	#else\n		gl_Position = u_MvpMatrix * a_Position;\n	#endif\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\n	mat3 worldMat;\n	#ifdef BONE\n		worldMat=mat3(u_WorldMat*skinTransform);\n	#else\n		worldMat=mat3(u_WorldMat);\n	#endif  \n	v_Normal=worldMat*a_Normal;\n	#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)\n		v_Tangent0=worldMat*a_Tangent0;\n	#endif\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(RECEIVESHADOW)\n	#ifdef BONE\n		v_PositionWorld=(u_WorldMat*position).xyz;\n	#else\n		v_PositionWorld=(u_WorldMat*a_Position).xyz;\n	#endif\n#endif\n\n#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))\n	#ifdef MIXUV\n		v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);\n	#else\n		v_Texcoord0=a_Texcoord0;\n	#endif\n	#ifdef UVTRANSFORM\n		v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;\n	#endif\n#endif\n\n#ifdef defined(AMBIENTMAP)||defined(LIGHTMAP)\n	#ifdef SCALEOFFSETLIGHTINGMAPUV\n		#ifdef UV1\n			v_LightMapUV=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,1.0+a_Texcoord1.y*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);\n		#else\n			v_LightMapUV=vec2(a_Texcoord0.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,(a_Texcoord0.y-1.0)*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);\n		#endif \n	#else\n		#ifdef UV1\n			v_LightMapUV=a_Texcoord1;\n		#else\n			v_LightMapUV=a_Texcoord0;\n		#endif \n	#endif \n#endif\n\n#ifdef COLOR\n	v_Color=a_Color;\n#endif\n\n#ifdef RECEIVESHADOW\n	v_posViewZ = gl_Position.w;\n	#ifdef SHADOWMAP_PSSM1 \n		v_lightMVPPos = u_lightShadowVP[0] * vec4(v_PositionWorld,1.0);\n	#endif\n#endif\n}\n\nvoid main()\n{\n#ifdef CASTSHADOW\n	main_castShadow();\n#else\n	main_normal();\n#endif\n}"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\n#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT \"LightHelper.glsl\";\n\nuniform vec4 u_Albedo;\n\n#ifdef ALPHATEST\nuniform float u_AlphaTestValue;\n#endif\n\n#ifdef DIFFUSEMAP\nuniform sampler2D u_DiffuseTexture;\n#endif\n\n#ifdef REFLECTMAP\nuniform samplerCube u_ReflectTexture;\nuniform vec3 u_MaterialReflect;\n#endif\n\n#if   defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))\nvarying vec2 v_Texcoord0;\n#endif\n\n#ifdef defined(AMBIENTMAP)||defined(LIGHTMAP)\nvarying vec2 v_LightMapUV;\n#endif\n#ifdef AMBIENTMAP\nuniform sampler2D u_AmbientTexture;\n#endif\n#ifdef LIGHTMAP\nuniform sampler2D u_LightMap;\n#endif\n\n#ifdef COLOR\nvarying vec4 v_Color;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\nuniform vec3 u_MaterialDiffuse;\nuniform vec4 u_MaterialSpecular;\n  #if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP) \n  uniform sampler2D u_SpecularTexture;\n  #endif\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(AMBIENTMAP)||defined(LIGHTMAP)\nuniform vec3 u_MaterialAmbient;\n#endif\n\n#if defined(FOG)||defined(DEPTHFOG)\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\n#ifdef MIXUV\nuniform float  u_UVAniAge;\n#endif\n\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\nvarying vec3 v_Normal;\n#endif\n\n#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)\nuniform sampler2D u_NormalTexture;\nvarying vec3 v_Tangent0;\n#endif\n\n#ifdef DIRECTIONLIGHT\nuniform DirectionLight u_DirectionLight;\n#endif\n\n#ifdef POINTLIGHT\nuniform PointLight u_PointLight;\n#endif\n\n#ifdef SPOTLIGHT\nuniform SpotLight u_SpotLight;\n#endif\n\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(REFLECTMAP)||(defined(RECEIVESHADOW)&&(defined(SHADOWMAP_PSM2)||defined(SHADOWMAP_PSM3)))\nuniform vec3 u_CameraPos;\n#endif\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(REFLECTMAP)\nvarying vec3 v_PositionWorld;\n#endif\n\n#include \"ShadowHelper.glsl\"\n#ifdef RECEIVESHADOW\n	#if defined(SHADOWMAP_PSSM2)||defined(SHADOWMAP_PSSM3)\n	uniform mat4 u_lightShadowVP[4];\n	#endif\n	#ifdef SHADOWMAP_PSSM1 \n	varying vec4 v_lightMVPPos;\n	#endif\n#endif\nvarying float v_posViewZ;\n\nvoid main_castShadow()\n{\n	//gl_FragColor=vec4(v_posViewZ,0.0,0.0,1.0);\n	gl_FragColor=packDepth(v_posViewZ);\n	#if defined(DIFFUSEMAP)&&defined(ALPHATEST)\n		float alpha = texture2D(u_DiffuseTexture,v_Texcoord0).w;\n		if( alpha < u_AlphaTestValue )\n		{\n			discard;\n		}\n	#endif\n}\nvoid main_normal()\n{\n#if defined(DIFFUSEMAP)&&!defined(COLOR)\n	gl_FragColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n#endif \n  \n#if defined(COLOR)&&!defined(DIFFUSEMAP)\n	gl_FragColor=v_Color;\n#endif \n  \n#if defined(DIFFUSEMAP)&&defined(COLOR)\n	vec4 texColor=texture2D(u_DiffuseTexture, v_Texcoord0);\n	gl_FragColor=texColor*v_Color;\n#endif\n  \n#if !defined(DIFFUSEMAP)&&!defined(COLOR)\n	gl_FragColor=vec4(1.0,1.0,1.0,1.0);\n#endif \n    \n#ifdef ALPHATEST\n	if(gl_FragColor.a-u_AlphaTestValue<0.0)\n		discard;\n#endif\n  \n  \n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)\n	vec3 normal;\n    #if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)\n		vec3 normalMapSample = texture2D(u_NormalTexture, v_Texcoord0).rgb;\n		normal = normalize(NormalSampleToWorldSpace(normalMapSample, v_Normal, v_Tangent0));\n	#else\n		normal = normalize(v_Normal);\n    #endif\n#endif\n	\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n	vec3 diffuse = vec3(0.0);\n	vec3 ambient = vec3(0.0);\n	vec3 specular= vec3(0.0);\n	vec3 dif, amb, spe;\n#endif\n  \n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(REFLECTMAP)\n	vec3 toEye;\n	#ifdef FOG\n		toEye=u_CameraPos-v_PositionWorld;\n		float toEyeLength=length(toEye);\n		toEye/=toEyeLength;\n	#else\n		toEye=normalize(u_CameraPos-v_PositionWorld);\n	#endif\n#endif\n	\n#ifdef DIRECTIONLIGHT\n	computeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);\n	diffuse+=dif;\n	ambient+=amb;\n	specular+=spe;\n#endif\n \n#ifdef POINTLIGHT\n	computePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n	diffuse+=dif;\n	ambient+=amb;\n	specular+=spe;\n#endif\n\n#ifdef SPOTLIGHT\n	ComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n	diffuse+=dif;\n	ambient+=amb;\n	specular+=spe;\n#endif\n\n#ifdef RECEIVESHADOW\n	float shadowValue = 1.0;\n	#ifdef SHADOWMAP_PSSM3\n		shadowValue = getShadowPSSM3( u_shadowMap1,u_shadowMap2,u_shadowMap3,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,v_PositionWorld,v_posViewZ,0.001);\n	#endif\n	#ifdef SHADOWMAP_PSSM2\n		shadowValue = getShadowPSSM2( u_shadowMap1,u_shadowMap2,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,v_PositionWorld,v_posViewZ,0.001);\n	#endif \n	#ifdef SHADOWMAP_PSSM1\n		shadowValue = getShadowPSSM1( u_shadowMap1,v_lightMVPPos,u_shadowPSSMDistance,u_shadowPCFoffset,v_posViewZ,0.001);\n	#endif\n#endif\n\n#ifdef AMBIENTMAP\n	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n		gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb); \n	#else\n		#if defined(RECEIVESHADOW)\n			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb * shadowValue );\n		#else\n			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb); \n		#endif\n	#endif\n#endif\n\n#ifdef LIGHTMAP\n	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n		gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb); \n	#else\n		#if defined(RECEIVESHADOW)\n			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb * shadowValue );\n		#else\n			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb); \n		#endif\n	#endif\n#endif\n\ngl_FragColor=gl_FragColor*u_Albedo;\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n	#if (defined(DIFFUSEMAP)||defined(COLOR))&&defined(SPECULARMAP)\n		specular =specular*texture2D(u_SpecularTexture, v_Texcoord0).rgb;\n    #endif\n	#ifdef RECEIVESHADOW\n		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse*shadowValue) + specular*shadowValue,gl_FragColor.a);\n	#else\n		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse) + specular,gl_FragColor.a);\n	#endif\n#endif\n  \n#ifdef REFLECTMAP\n	vec3 incident = -toEye;\n	vec3 reflectionVector = reflect(incident,normal);\n	vec3 reflectionColor  = textureCube(u_ReflectTexture,reflectionVector).rgb;\n	gl_FragColor.rgb += u_MaterialReflect*reflectionColor;\n#endif\n  \n#ifdef FOG\n	float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n	gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n#endif\n#ifdef DEPTHFOG\n	float lerpFact = (-v_PositionWorld.y-u_FogStart)/u_FogRange;\n	gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n#endif\n}\n\nvoid main()\n{\n#ifdef CASTSHADOW		\n	main_castShadow();\n#else\n  main_normal();\n#endif  \n}\n\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/PixelSimpleTextureSkinnedMesh.ps*/;
 			var shaderCompile=ShaderCompile3D.add(SIMPLE,vs,ps,attributeMap,uniformMap);
 			StandardMaterial.SHADERDEFINE_DIFFUSEMAP=shaderCompile.registerMaterialDefine("DIFFUSEMAP");
 			StandardMaterial.SHADERDEFINE_NORMALMAP=shaderCompile.registerMaterialDefine("NORMALMAP");
@@ -12362,8 +12795,8 @@
 			uniformMap={
 				'u_MvpMatrix':[ /*laya.d3.core.Sprite3D.MVPMATRIX*/1,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2]};
 			var LINE=Shader3D.nameKey.add("LINE");
-			vs="#include?VR \"VRHelper.glsl\";\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n\n\nvoid main()\n{\n  gl_Position = u_MvpMatrix * a_Position;\n  v_Color=a_Color;\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/line.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n  gl_FragColor=v_Color; \n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/line.ps*/;
+			vs="#include?VR \"VRHelper.glsl\";\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\nattribute vec4 a_Color;\nvarying vec4 v_Color;\n\n\nvoid main()\n{\n  gl_Position = u_MvpMatrix * a_Position;\n  v_Color=a_Color;\n}"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/line.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n  gl_FragColor=v_Color; \n}\n\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/line.ps*/;
 			ShaderCompile3D.add(LINE,vs,ps,attributeMap,uniformMap);
 			attributeMap={
 				'a_position':/*laya.d3.graphics.VertexElementUsage.POSITION0*/0,
@@ -12428,8 +12861,8 @@
 				'u_lightShadowVP':[ /*laya.d3.core.scene.Scene.SHADOWLIGHTVIEWPROJECT*/22,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4],
 				'u_shadowPCFoffset':[ /*laya.d3.core.scene.Scene.SHADOWMAPPCFOFFSET*/23,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4]};
 			var PBR=Shader3D.nameKey.add("PBR");
-			vs="\nuniform mat4 modelMatrix;\n//uniform mat4 modelViewMatrix;\n//uniform mat4 projectionMatrix;\nuniform mat4 u_View;\nuniform mat4 u_Project;\nuniform mat4 mvp;\n//uniform mat4 viewMatrix;\nuniform vec3 cameraPosition;\n\nattribute vec3 a_position;\nattribute vec3 a_normal;\n#ifdef HAS_TANGENT\nattribute vec3 tangent;\nattribute vec3 binormal;\n#endif\nattribute vec2 uv;\n#ifdef BONE\nattribute vec4 a_BoneIndices;\nattribute vec4 a_BoneWeights;\nconst int c_MaxBoneCount = 24;\nuniform mat4 u_Bones[c_MaxBoneCount];\n#endif\n\nvarying vec2 vUv;\nvarying vec3 vWorldNorm;\nvarying vec4 vViewPos;\nvarying vec4 vWorldPos;\nvarying vec3 vLightDir;\nvarying vec3 vViewDir;\n#ifdef HAS_TANGENT\nvarying vec3 vWorldTangent;\nvarying vec3 vWorldBinormal;\n#endif\n\n#ifdef RECEIVESHADOW\nvarying float v_posViewZ;\n  #ifdef SHADOWMAP_PSSM1 \n  varying vec4 v_lightMVPPos;\n  uniform mat4 u_lightShadowVP[4];\n  #endif\n#endif\n\nvoid main() {\n#ifdef BONE\n	mat4 skinTransform=mat4(0.0);\n	skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n	skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n	skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n	skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n	gl_Position = mvp*skinTransform*vec4(a_position,1.);\n	mat4 modelMat = modelMatrix*skinTransform;\n#else\n	gl_Position = mvp*vec4(a_position,1.);\n	mat4 modelMat = modelMatrix;\n#endif	\n	vWorldPos = modelMat*vec4(a_position,1.);\n\n#ifdef CASTSHADOW \n	#if defined(DIFFUSEMAP)&&defined(ALPHATEST)\n		vUv = uv;\n	#endif	\n#else\n    vUv = uv;\n	vWorldNorm = normalize((modelMat*vec4(a_normal,0.0)).xyz);\n	#ifdef HAS_TANGENT\n	vWorldTangent = normalize((modelMat*vec4(tangent,0.0)).xyz);\n	vWorldBinormal = normalize((modelMat*vec4(binormal,0.0)).xyz);\n	#endif\n    \n    vViewDir = (vWorldPos.xyz-cameraPosition);//这个不能normalize。否则无法线性差值了\n#ifdef RECEIVESHADOW\n	v_posViewZ = gl_Position.z;\n	#ifdef SHADOWMAP_PSSM1 \n		v_lightMVPPos = u_lightShadowVP[0] * vWorldPos;\n	#endif\n#endif	\n#endif\n}\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/PBR.vs*/;
-			ps="//#version 300 es\n\nprecision highp float;\nprecision lowp int;\n\nconst float PI = 3.14159265358979323846264;\nconst float _2PI = 6.2831853071796;\nvarying vec2 vUv;\nvarying vec3 vWorldNorm;\n#ifdef HAS_TANGENT\nvarying vec3 vWorldTangent;\nvarying vec3 vWorldBinormal;\n#endif\nvarying vec3 vViewDir;\nvarying vec4 vViewPos;\nvarying vec4 vWorldPos;\n//\nuniform sampler2D texBaseColor;\nuniform sampler2D texNormal;\n//预计算的贴图\nuniform sampler2D texPrefilterdEnv;\nuniform sampler2D texBRDFLUT;\nuniform sampler2D texPrefilterDiff;\n#ifdef HAS_PBRINFO\nuniform sampler2D texPbrInfo;   //Ao, Roughness, Metallic\n#endif\n#ifdef USE_GROUNDTRUTH\nuniform sampler2D texHSNoise;\n#endif\nuniform float u_hdrexposure;\nuniform float u_AlphaTestValue;\n\nuniform float u_roughness;\nuniform float u_metaless;\nconst float maxlv = 7.;	//现在只支持512分辨率的环境贴图\nconst int nmaxlv = 9;//\n//atlas\n//uniform vec4 u_lodRect[10];//现在只支持512分辨率的环境贴图，所以只有10个，[0]是原始， [9]是1x1.\n							//[u,v,w,h]。w,h都是0到1\n							\nuniform mat4 irrad_mat_red;\nuniform mat4 irrad_mat_green;\nuniform mat4 irrad_mat_blue;							\n\nuniform vec4 u_aoObjPos[2];\n\nvec3 u_lightColor = vec3(1.,1.,1.);\nvec3 u_diffuseColor = vec3(0.1,0.1,0.1);\nvec3 speccontrib = vec3(0.);\n\nconst float _maxu8 = 255.0;\nconst float _maxu16 = 65535.0;\nconst float _shift8 = 256.0;    //平移的话是*256而不是255\nvec2 _RGBAToU16(const in vec4 rgba){\n    return vec2((rgba.r*_maxu8+rgba.g*_maxu8*_shift8)/_maxu16, (rgba.b*_maxu8+rgba.a*_maxu8*_shift8)/_maxu16);\n}\nvec3 _RGBEToRGB( const in vec4 rgba ){\n    float f = pow(2.0, rgba.w * 255.0 - (128.0 + 8.0));\n    return rgba.rgb * (255.0 * f);\n}\n/*\nvec2 frexp(float value) {\n	float e = floor(log2(value));\n	float s = value/pow(2.,e);\n	return vec2(s,e);\n}\n*/\n\nvec2 frexp(float x){\n   float e = ceil(log2(x));\n   return vec2(x * exp2(-e),e);\n}\n\nvec4 _RGBtoRGBE(vec3 rgb){\n    float v = rgb.x;\n    if (rgb.y > v) v = rgb.y;  \n    if (rgb.z > v) v = rgb.z;  \n    if (v < 1e-32) {  \n        return vec4(0.0);\n    }  \n    else {\n        vec2 e = frexp(v);\n        v = e.x /v; //当某个值为v的时候，其尾数就是e[0]。 这里*256了，所以反向的时候有个/256即-(128+8)里的8\n                            //e[0]永远不会为1所以结果<256\n		return vec4(rgb.xyz*v, e.y+0.5);\n    }\n}\n\nfloat saturate(float v){\n    return min(max(v,0.),1.);\n}\n\nvec4 tex2dLod(sampler2D tex, float u, float v, float lod){\n	vec2 uv = vec2(u,v);\n	uv+=mod(gl_FragCoord.xy-vec2(0.5),2.0)*vec2(128.,0.);\n	return texture2D(tex,uv,lod-16.);//16=log(512)+log(128)\n}\n\n/*\n* 对一个全景图进行采样。假设x轴指向中心。\n*/\nvec4 texPanorama(sampler2D tex, const in vec3 dir){\n	float envu = atan(dir.z,dir.x)/_2PI+0.5; 	\n	float envv = acos(dir.y)/PI;//(1.0-dir.y)/2.0;\n	return texture2D(tex,vec2(envu,envv));\n}\n\nvec4 texPanoramaLod(sampler2D tex, const in vec3 dir, float lod){\n	float envu = atan(dir.z,dir.x)/_2PI+0.5; 	\n	float envv = acos(dir.y)/PI;//(1.0-dir.y)/2.0;\n	return tex2dLod(tex,envu,envv,lod);\n}\n\nvec4 ApproximateSpecularIBL( vec3 SpecularColor , float Roughness , float NoV, vec3 R){\n    vec4 PrefilteredColor = texPanoramaLod(texPrefilterdEnv, R, Roughness*maxlv);\n    PrefilteredColor.rgb = _RGBEToRGB(PrefilteredColor);\n    vec4 EnvBRDF = texture2D(texBRDFLUT,vec2(Roughness , NoV));//TODO lod\n    vec2 rg = _RGBAToU16(EnvBRDF);    \n    //原来的括号不对\n    speccontrib = (SpecularColor* rg.x + saturate( 50.0 * PrefilteredColor.g ) * rg.y);\n    return vec4(PrefilteredColor.rgb, speccontrib);\n}\n\nvec3 testDiff(vec3 dir){\n	return texPanorama(texPrefilterDiff, dir).rgb;\n}\n/*\n    计算sh光照。\n    使用level=2，所以需要9个系数。\n    https://cseweb.ucsd.edu/~ravir/papers/envmap/envmap.pdf\n*/\nfloat environment_exposure = 1.0;\nvec3 diff_sh9(vec3 dir){\n	vec4 shDir = vec4(dir.x,-dir.z,dir.y,1.0);\n  return max(vec3(0.0), vec3(\n	dot(shDir, irrad_mat_red * shDir),\n	dot(shDir, irrad_mat_green * shDir),\n	dot(shDir, irrad_mat_blue * shDir)\n	)) * environment_exposure;	\n}\n\n#ifdef HAS_TANGENT\nvec3 applyNormalTex( vec3 norm, vec3 surf_norm ) {\n    vec3 mapN = norm * 2.0 - 1.0;\n    //mapN.xy = normalScale * mapN.xy;\n    mat3 tsn = mat3( vWorldTangent, vWorldBinormal, surf_norm );\n    return normalize( tsn * mapN );\n}\n#endif\n\n#ifdef USE_GROUNDTRUTH\n\nfloat G_Smith( float Roughness, float NoV, float NoL ){\n    float k= Roughness * sqrt(2.0/3.14159265);\n    float one_minus_k= 1.0 -k;\n    return ( NoL / (NoL * one_minus_k + k) ) * ( NoV / (NoV * one_minus_k + k));\n}\n/*\nvec2 Hammersley(int i, int NumSamples){\n    return hammersley2d(i,NumSamples);\n}\n*/\n//https://de45xmedrsdbp.cloudfront.net/Resources/files/2013SiggraphPresentationsNotes-26915738.pdf\n//Image-Based Lighting\n//P4\n// N的作用是用来把生成的H转换到世界空间用。\nvec3 ImportanceSampleGGX( vec2 Xi, float Roughness, vec3 N ){\n    float a = Roughness * Roughness;\n    float Phi = 2. * PI * Xi.x;//与水平面x轴的夹角\n    float CosTheta = sqrt( (1. - Xi.y) / ( 1. + (a*a - 1.) * Xi.y ) );\n    float SinTheta = sqrt( 1. - CosTheta * CosTheta );\n    vec3 H;\n    //TODO 这里需要修改朝向么，坐标系\n    H.x = SinTheta * cos( Phi );\n    H.y = SinTheta * sin( Phi );\n    H.z = CosTheta;//Z向上，应该对应N\n    vec3 UpVector = abs(N.z) < 0.9999 ? vec3(0.,0.,1.) : vec3(1.,0.,0.);\n    vec3 TangentX = normalize( cross( UpVector,N ) );\n    vec3 TangentY = cross( N, TangentX );\n    // Tangent to world space\n    return TangentX * H.x + TangentY * H.y + N * H.z;\n}\n\n/*\n    环境贴图的预处理。\n    R 是入射灯光的朝向。\n    实际计算的时候用这个作为N来转换返回的H\n	TODO 以后换成SP的方式。\n*/\nvec3 PrefilterEnvMap( float Roughness , vec3 R ){\n    vec3 N = R;//TODO 用优化么\n    vec3 V = R;\n    vec3 PrefilteredColor = vec3(0.,0.,0.);\n    float TotalWeight = 0.;\n	float tx = 0.;\n	float ty = 0.;\n    const int NumSamples = 1024;\n	const float fNumSamples = 1024.0;\n    for( int i = 0; i < NumSamples; i++ ) {\n		float fi = float(i);\n        ty = floor(fi/32.0)/32.0;\n        tx = mod(fi,32.0)/32.0;\n        vec2 Xi = vec2(fi/fNumSamples,texture2D(texHSNoise,vec2(tx,ty)).r);// Hammersley( i, NumSamples );\n        vec3 H = ImportanceSampleGGX( Xi, Roughness , N );\n        vec3 L = 2. * dot( V, H ) * H - V;\n        float NoL = max( dot( N, L ),0. );\n        if( NoL > 0. ){\n            //vec4 SampleColor=texPanorama(texEnv, L);\n			vec4 SampleColor = texPanoramaLod(texPrefilterdEnv, L,0.);\n            SampleColor.rgb = _RGBEToRGB(SampleColor);\n            PrefilteredColor += SampleColor.rgb * NoL;\n            TotalWeight += NoL;\n        }\n    }\n    return PrefilteredColor / TotalWeight;\n}\n\n/*\n    BRDF部分的积分的预处理。\n    在排除F0以后，剩下的可以预计算了。\n    输入为 Roughness 和 cosθ。\n*/\nvec2 IntegrateBRDF( float Roughness , float NoV ){\n    vec3 N=vec3(0.,0.,1.);//TODO 为什么是 001呢\n    vec3 V;\n    V.x = sqrt( 1.0 - NoV * NoV ); // sin\n    V.y = 0.;\n    V.z = NoV; // cos\n    float A = 0.;\n    float B = 0.;\n	float tx = 0.;\n	float ty = 0.;\n    const int NumSamples = 1024;\n	const float fNumSamples = 1024.0;\n    for( int i = 0; i < NumSamples; i++ ){\n		float fi = float(i);\n        ty = floor(fi/32.0)/32.0;\n        tx = mod(fi,32.0)/32.0;\n        vec2 Xi = vec2(fi/fNumSamples,texture2D(texHSNoise,vec2(tx,ty)).r);// Hammersley( i, NumSamples );\n        vec3 H = ImportanceSampleGGX( Xi, Roughness , N );\n        vec3 L = 2. * dot( V, H ) * H - V;\n        float NoL = saturate( L.z );\n        float NoH = saturate( H.z );\n        float VoH = saturate( dot( V, H ) );\n        if( NoL > 0. ){\n            float G = G_Smith( Roughness , NoV, NoL );\n            float G_Vis = G * VoH / (NoH * NoV);\n            float Fc = pow( 1. - VoH, 5. );\n            A += (1. - Fc) * G_Vis; //F0的缩放部分 A*F0+B\n            B += Fc * G_Vis;        //F0的偏移部分\n        }\n    }\n    return vec2( A, B ) / fNumSamples;\n}\n\nvec4 pbrlight(vec3 normal, float rough, float NoV, vec3 R){\n    vec4 basecolor = texture2D(texBaseColor,vUv);\n	float metaless = 1.0; 	\n	const float ismetalinfov = (128./255.);\n	if(basecolor.a>=ismetalinfov){//这时候表示金属度\n		metaless = (basecolor.a-ismetalinfov)*2.;\n		basecolor.a = 1.0;\n	}else{\n		metaless = 0.;\n		basecolor.a = basecolor.a*2.0;\n	}\n	#ifdef FIX_METALESS\n	metaless = u_metaless;\n	#endif\n	#ifdef HAS_PBRINFO	\n	vec4 pbrinfo = texture2D(texPbrInfo, vUv);\n	#endif\n    //vec4 pbrinfo = texture2D(texORM,vUv);\n    const vec3 nonmetalF0 =vec3(0.05);\n    vec3 F0 =  mix(nonmetalF0, basecolor.rgb, metaless);\n    //vec4 color_spec = ApproximateSpecularIBL(F0,rough, NoV, R);\n    vec3 PrefilteredColor = PrefilterEnvMap( rough , R );\n    vec2 EnvBRDF = IntegrateBRDF( rough , NoV );\n	speccontrib =  F0 * EnvBRDF.x + EnvBRDF.y;\n	vec3 color_spec = PrefilteredColor * speccontrib;\n	vec3 color_diff=diff_sh9(normal);//testDiff(normal);//\n	vec3 outc = color_diff*mix(basecolor.rgb,vec3(0.),metaless)*(vec3(1.0)-speccontrib)+color_spec*u_hdrexposure;\n    return vec4(outc,basecolor.a);//TODO 这里应该没有括号\n}\n#else\nvec4 pbrlight(vec3 normal, float rough, float NoV, vec3 R){\n    vec4 basecolor = texture2D(texBaseColor,vUv);\n	float metaless = 1.0; 	\n	const float ismetalinfov = (128./255.);\n	if(basecolor.a>=ismetalinfov){//这时候表示金属度\n		metaless = (basecolor.a-ismetalinfov)*2.;\n		basecolor.a = 1.0;\n	}else{\n		metaless = 0.;\n		basecolor.a = basecolor.a*2.0;\n	}\n	#ifdef FIX_METALESS\n	metaless = u_metaless;\n	#endif\n	#ifdef HAS_PBRINFO	\n	vec4 pbrinfo = texture2D(texPbrInfo, vUv);\n	#endif\n    //vec4 pbrinfo = texture2D(texORM,vUv);\n    const vec3 nonmetalF0 =vec3(0.05);\n    vec3 F0 =  mix(nonmetalF0, basecolor.rgb, metaless);\n    //vec4 color_spec = ApproximateSpecularIBL(F0,rough, NoV, R);\n	\n    vec4 PrefilteredColor = texPanoramaLod(texPrefilterdEnv, R, rough*maxlv);\n    PrefilteredColor.rgb = _RGBEToRGB(PrefilteredColor);\n    vec4 EnvBRDF = texture2D(texBRDFLUT,vec2(rough , NoV));//TODO lod\n    vec2 rg = _RGBAToU16(EnvBRDF);    \n    //原来的括号不对\n    speccontrib = (F0* rg.x + saturate( 50.0 * PrefilteredColor.g ) * rg.y);\n	vec3 color_spec = PrefilteredColor.rgb*speccontrib;\n	\n	vec3 color_diff=diff_sh9(normal);//testDiff(normal);//\n	//return vec4(color_diff,basecolor.a);\n	//一起控制的话，diff总也不好\n	//vec3 outc = (color_diff*mix(basecolor.rgb,vec3(0.),metaless)+color_spec)*u_hdrexposure;\n	#ifdef HAS_PBRINFO\n	float ao = pbrinfo.r;\n	vec3 outc = (color_diff*mix(basecolor.rgb,vec3(0.),metaless)+color_spec*u_hdrexposure)*ao;\n	#else\n	vec3 outc = color_diff*mix(basecolor.rgb,vec3(0.),metaless)*(vec3(1.0)-speccontrib)+color_spec*u_hdrexposure;\n	#endif\n    return vec4(outc, basecolor.a);\n}\n#endif\n\nvec3 oldlight(vec4 normal, float NoV, vec3 R){\n    vec4 basecolor = texture2D(texBaseColor,vUv);\n    //vec4 pbrinfo = texture2D(texORM,vUv);\n	const vec3 lightdir=normalize(vec3(1.,1.,0.));\n	const vec3 spcecol = vec3(1.,0.8,0.8);\n	const vec3 amb = vec3(0.5);\n	vec3 diffv =  (vec3(saturate(dot(lightdir,normal.xyz)))+amb);\n	//vec3 spec = spcecol* pow(saturate(dot(R,lightdir)),(1.-pbrinfo.g)*5.);\n	return diffv*basecolor.rgb;//+spec;\n}\n\n#include \"ShadowHelper.glsl\"\n#ifdef RECEIVESHADOW\nvarying float v_posViewZ;\n	#if defined(SHADOWMAP_PSSM2)||defined(SHADOWMAP_PSSM3)\n	uniform mat4 u_lightShadowVP[4];\n	#endif\n	#ifdef SHADOWMAP_PSSM1 \n	varying vec4 v_lightMVPPos;\n	#endif\n#endif\n\nfloat calcAO(vec3 worldpos,vec3 normal, vec3 surfacenorm){\n	//const vec4 u_aoObjPos = vec4(-0.2,0.11,0.0,.1);\n	float k = 1.;\n	for( int i=0; i<2; i++){\n		float r = u_aoObjPos[i].w;\n		float d = max(length(u_aoObjPos[i].xyz-worldpos),r);\n		k *= sqrt(d*d-r*r)/d;\n	}\n	return k;\n}\n\nvec2 packf(float v){\n	float iv = v*255.;\n	float l = mod(iv,256.)/255.;\n	float h = floor(iv/256.)/255.;\n	return vec2(h,l);\n}\n\nfloat unpackf(vec2 v){\n	return (v.x*255.*256.+v.y*255.)/255.;\n}\n\nvoid main() {\n#ifdef CASTSHADOW\n	gl_FragColor=packDepth(gl_FragCoord.w);\n	#if defined(DIFFUSEMAP)&&defined(ALPHATEST)\n		float alpha = texture2D(texBaseColor,vUv).w;\n		if( alpha < u_AlphaTestValue ){\n			discard;\n		}\n	#endif\n#else\n\n	#ifdef RECEIVESHADOW\n		float shadowValue = 1.0;\n		#ifdef SHADOWMAP_PSSM3\n			shadowValue = getShadowPSSM3( u_shadowMap1,u_shadowMap2,u_shadowMap3,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,vWorldPos.xyz,v_posViewZ,0.0001);\n		#endif\n		#ifdef SHADOWMAP_PSSM2\n			shadowValue = getShadowPSSM2( u_shadowMap1,u_shadowMap2,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,vWorldPos.xyz,v_posViewZ,0.0001);\n		#endif \n		#ifdef SHADOWMAP_PSSM1\n			shadowValue = getShadowPSSM1( u_shadowMap1,v_lightMVPPos,u_shadowPSSMDistance,u_shadowPCFoffset,v_posViewZ,0.0001);\n		#endif\n	#endif	\n	\n    vec3 normal =  normalize(vWorldNorm);\n	vec3 smoothnorm = normal;\n	vec4 normtex = texture2D( texNormal, vUv );\n	#ifdef HAS_TANGENT	\n	normal = applyNormalTex(normtex.xyz, normal);\n	#endif\n    vec3 view   = -normalize(vViewDir);\n    float NoV = saturate(dot( view, normal ));\n    vec3 R = 2. * NoV * normal - view;\n	float roughness = normtex.a;\n	#ifdef FIX_ROUGHNESS\n	roughness = u_roughness;\n	#endif\n	\n	#ifdef CLIPZ\n	if(vWorldPos.z>2.0 || vWorldPos.z<-2.0)\n		discard;\n	#endif\n	vec4 pbrl = pbrlight(normal,roughness,NoV,R);\n    gl_FragColor.rgb =  pbrl.rgb;\n	//gl_FragColor.rgb = oldlight(normtex,NoV,R);\n	#ifdef RECEIVESHADOW\n	gl_FragColor.rgb *= max(shadowValue,0.7);\n	#endif\n	\n	//gl_FragColor.rgb *= calcAO(vWorldPos.xyz, normal, smoothnorm);\n    gl_FragColor.a = pbrl.a;\n\n#endif\n}\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/PBR.ps*/;
+			vs="\nuniform mat4 modelMatrix;\n//uniform mat4 modelViewMatrix;\n//uniform mat4 projectionMatrix;\nuniform mat4 u_View;\nuniform mat4 u_Project;\nuniform mat4 mvp;\n//uniform mat4 viewMatrix;\nuniform vec3 cameraPosition;\n\nattribute vec3 a_position;\nattribute vec3 a_normal;\n#ifdef HAS_TANGENT\nattribute vec3 tangent;\nattribute vec3 binormal;\n#endif\nattribute vec2 uv;\n#ifdef BONE\nattribute vec4 a_BoneIndices;\nattribute vec4 a_BoneWeights;\nconst int c_MaxBoneCount = 24;\nuniform mat4 u_Bones[c_MaxBoneCount];\n#endif\n\nvarying vec2 vUv;\nvarying vec3 vWorldNorm;\nvarying vec4 vViewPos;\nvarying vec4 vWorldPos;\nvarying vec3 vLightDir;\nvarying vec3 vViewDir;\n#ifdef HAS_TANGENT\nvarying vec3 vWorldTangent;\nvarying vec3 vWorldBinormal;\n#endif\n\n#ifdef RECEIVESHADOW\nvarying float v_posViewZ;\n  #ifdef SHADOWMAP_PSSM1 \n  varying vec4 v_lightMVPPos;\n  uniform mat4 u_lightShadowVP[4];\n  #endif\n#endif\n\nvoid main() {\n#ifdef BONE\n	mat4 skinTransform=mat4(0.0);\n	skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;\n	skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;\n	skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;\n	skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;\n	gl_Position = mvp*skinTransform*vec4(a_position,1.);\n	mat4 modelMat = modelMatrix*skinTransform;\n#else\n	gl_Position = mvp*vec4(a_position,1.);\n	mat4 modelMat = modelMatrix;\n#endif	\n	vWorldPos = modelMat*vec4(a_position,1.);\n\n#ifdef CASTSHADOW \n	#if defined(DIFFUSEMAP)&&defined(ALPHATEST)\n		vUv = uv;\n	#endif	\n#else\n    vUv = uv;\n	vWorldNorm = normalize((modelMat*vec4(a_normal,0.0)).xyz);\n	#ifdef HAS_TANGENT\n	vWorldTangent = normalize((modelMat*vec4(tangent,0.0)).xyz);\n	vWorldBinormal = normalize((modelMat*vec4(binormal,0.0)).xyz);\n	#endif\n    \n    vViewDir = (vWorldPos.xyz-cameraPosition);//这个不能normalize。否则无法线性差值了\n#ifdef RECEIVESHADOW\n	v_posViewZ = gl_Position.z;\n	#ifdef SHADOWMAP_PSSM1 \n		v_lightMVPPos = u_lightShadowVP[0] * vWorldPos;\n	#endif\n#endif	\n#endif\n}\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/PBR.vs*/;
+			ps="//#version 300 es\n\nprecision highp float;\nprecision lowp int;\n\nconst float PI = 3.14159265358979323846264;\nconst float _2PI = 6.2831853071796;\nvarying vec2 vUv;\nvarying vec3 vWorldNorm;\n#ifdef HAS_TANGENT\nvarying vec3 vWorldTangent;\nvarying vec3 vWorldBinormal;\n#endif\nvarying vec3 vViewDir;\nvarying vec4 vViewPos;\nvarying vec4 vWorldPos;\n//\nuniform sampler2D texBaseColor;\nuniform sampler2D texNormal;\n//预计算的贴图\nuniform sampler2D texPrefilterdEnv;\nuniform sampler2D texBRDFLUT;\nuniform sampler2D texPrefilterDiff;\n#ifdef HAS_PBRINFO\nuniform sampler2D texPbrInfo;   //Ao, Roughness, Metallic\n#endif\n#ifdef USE_GROUNDTRUTH\nuniform sampler2D texHSNoise;\n#endif\nuniform float u_hdrexposure;\nuniform float u_AlphaTestValue;\n\nuniform float u_roughness;\nuniform float u_metaless;\nconst float maxlv = 7.;	//现在只支持512分辨率的环境贴图\nconst int nmaxlv = 9;//\n//atlas\n//uniform vec4 u_lodRect[10];//现在只支持512分辨率的环境贴图，所以只有10个，[0]是原始， [9]是1x1.\n							//[u,v,w,h]。w,h都是0到1\n							\nuniform mat4 irrad_mat_red;\nuniform mat4 irrad_mat_green;\nuniform mat4 irrad_mat_blue;							\n\nuniform vec4 u_aoObjPos[2];\n\nvec3 u_lightColor = vec3(1.,1.,1.);\nvec3 u_diffuseColor = vec3(0.1,0.1,0.1);\nvec3 speccontrib = vec3(0.);\n\nconst float _maxu8 = 255.0;\nconst float _maxu16 = 65535.0;\nconst float _shift8 = 256.0;    //平移的话是*256而不是255\nvec2 _RGBAToU16(const in vec4 rgba){\n    return vec2((rgba.r*_maxu8+rgba.g*_maxu8*_shift8)/_maxu16, (rgba.b*_maxu8+rgba.a*_maxu8*_shift8)/_maxu16);\n}\nvec3 _RGBEToRGB( const in vec4 rgba ){\n    float f = pow(2.0, rgba.w * 255.0 - (128.0 + 8.0));\n    return rgba.rgb * (255.0 * f);\n}\n/*\nvec2 frexp(float value) {\n	float e = floor(log2(value));\n	float s = value/pow(2.,e);\n	return vec2(s,e);\n}\n*/\n\nvec3 gamma(vec3 col){\n	return pow(col,vec3(0.45455));\n}\n\nvec2 frexp(float x){\n   float e = ceil(log2(x));\n   return vec2(x * exp2(-e),e);\n}\n\nvec4 _RGBtoRGBE(vec3 rgb){\n    float v = rgb.x;\n    if (rgb.y > v) v = rgb.y;  \n    if (rgb.z > v) v = rgb.z;  \n    if (v < 1e-32) {  \n        return vec4(0.0);\n    }  \n    else {\n        vec2 e = frexp(v);\n        v = e.x /v; //当某个值为v的时候，其尾数就是e[0]。 这里*256了，所以反向的时候有个/256即-(128+8)里的8\n                            //e[0]永远不会为1所以结果<256\n		return vec4(rgb.xyz*v, e.y+0.5);\n    }\n}\n\nfloat saturate(float v){\n    return min(max(v,0.),1.);\n}\n\nvec3 ACESToneMapping(vec3 color, float adapted_lum){\n	const float A = 2.51;\n	const float B = 0.03;\n	const float C = 2.43;\n	const float D = 0.59;\n	const float E = 0.14;\n\n	color *= adapted_lum;\n	return (color * (A * color + B)) / (color * (C * color + D) + E);\n}\n\nvec4 tex2dLod(sampler2D tex, float u, float v, float lod){\n	vec2 uv = vec2(u,v);\n	uv+=mod(gl_FragCoord.xy-vec2(0.5),2.0)*vec2(128.,0.);\n	return texture2D(tex,uv,lod-16.);//16=log(512)+log(128)\n}\n\n/*\n* 对一个全景图进行采样。假设x轴指向中心。\n*/\nvec4 texPanorama(sampler2D tex, const in vec3 dir){\n	float envu = atan(dir.z,dir.x)/_2PI+0.5; 	\n	float envv = acos(dir.y)/PI;//(1.0-dir.y)/2.0;\n	return texture2D(tex,vec2(envu,envv));\n}\n\nvec4 texPanoramaLod(sampler2D tex, const in vec3 dir, float lod){\n	float envu = atan(dir.z,dir.x)/_2PI+0.5; 	\n	float envv = acos(dir.y)/PI;//(1.0-dir.y)/2.0;\n	return tex2dLod(tex,envu,envv,lod);\n}\n\nvec4 ApproximateSpecularIBL( vec3 SpecularColor , float Roughness , float NoV, vec3 R){\n    vec4 PrefilteredColor = texPanoramaLod(texPrefilterdEnv, R, Roughness*maxlv);\n    PrefilteredColor.rgb = _RGBEToRGB(PrefilteredColor);\n    vec4 EnvBRDF = texture2D(texBRDFLUT,vec2(Roughness , NoV));//TODO lod\n    vec2 rg = _RGBAToU16(EnvBRDF);    \n    //原来的括号不对\n    speccontrib = (SpecularColor* rg.x + saturate( 50.0 * PrefilteredColor.g ) * rg.y);\n    return vec4(PrefilteredColor.rgb, speccontrib);\n}\n\nvec3 testDiff(vec3 dir){\n	return texPanorama(texPrefilterDiff, dir).rgb;\n}\n/*\n    计算sh光照。\n    使用level=2，所以需要9个系数。\n    https://cseweb.ucsd.edu/~ravir/papers/envmap/envmap.pdf\n*/\nfloat environment_exposure = 1.0;\nvec3 diff_sh9(vec3 dir){\n	vec4 shDir = vec4(dir.x,-dir.z,dir.y,1.0);\n  return max(vec3(0.0), vec3(\n	dot(shDir, irrad_mat_red * shDir),\n	dot(shDir, irrad_mat_green * shDir),\n	dot(shDir, irrad_mat_blue * shDir)\n	)) * environment_exposure;	\n}\n\n#ifdef HAS_TANGENT\nvec3 applyNormalTex( vec3 norm, vec3 surf_norm ) {\n    vec3 mapN = norm * 2.0 - 1.0;\n    //mapN.xy = normalScale * mapN.xy;\n    mat3 tsn = mat3( vWorldTangent, vWorldBinormal, surf_norm );\n    return normalize( tsn * mapN );\n}\n#endif\n\n#ifdef USE_GROUNDTRUTH\n\nfloat G_Smith( float Roughness, float NoV, float NoL ){\n    float k= Roughness * sqrt(2.0/3.14159265);\n    float one_minus_k= 1.0 -k;\n    return ( NoL / (NoL * one_minus_k + k) ) * ( NoV / (NoV * one_minus_k + k));\n}\n/*\nvec2 Hammersley(int i, int NumSamples){\n    return hammersley2d(i,NumSamples);\n}\n*/\n//https://de45xmedrsdbp.cloudfront.net/Resources/files/2013SiggraphPresentationsNotes-26915738.pdf\n//Image-Based Lighting\n//P4\n// N的作用是用来把生成的H转换到世界空间用。\nvec3 ImportanceSampleGGX( vec2 Xi, float Roughness, vec3 N ){\n    float a = Roughness * Roughness;\n    float Phi = 2. * PI * Xi.x;//与水平面x轴的夹角\n    float CosTheta = sqrt( (1. - Xi.y) / ( 1. + (a*a - 1.) * Xi.y ) );\n    float SinTheta = sqrt( 1. - CosTheta * CosTheta );\n    vec3 H;\n    //TODO 这里需要修改朝向么，坐标系\n    H.x = SinTheta * cos( Phi );\n    H.y = SinTheta * sin( Phi );\n    H.z = CosTheta;//Z向上，应该对应N\n    vec3 UpVector = abs(N.z) < 0.9999 ? vec3(0.,0.,1.) : vec3(1.,0.,0.);\n    vec3 TangentX = normalize( cross( UpVector,N ) );\n    vec3 TangentY = cross( N, TangentX );\n    // Tangent to world space\n    return TangentX * H.x + TangentY * H.y + N * H.z;\n}\n\n/*\n    环境贴图的预处理。\n    R 是入射灯光的朝向。\n    实际计算的时候用这个作为N来转换返回的H\n	TODO 以后换成SP的方式。\n*/\nvec3 PrefilterEnvMap( float Roughness , vec3 R ){\n    vec3 N = R;//TODO 用优化么\n    vec3 V = R;\n    vec3 PrefilteredColor = vec3(0.,0.,0.);\n    float TotalWeight = 0.;\n	float tx = 0.;\n	float ty = 0.;\n    const int NumSamples = 1024;\n	const float fNumSamples = 1024.0;\n    for( int i = 0; i < NumSamples; i++ ) {\n		float fi = float(i);\n        ty = floor(fi/32.0)/32.0;\n        tx = mod(fi,32.0)/32.0;\n        vec2 Xi = vec2(fi/fNumSamples,texture2D(texHSNoise,vec2(tx,ty)).r);// Hammersley( i, NumSamples );\n        vec3 H = ImportanceSampleGGX( Xi, Roughness , N );\n        vec3 L = 2. * dot( V, H ) * H - V;\n        float NoL = max( dot( N, L ),0. );\n        if( NoL > 0. ){\n            //vec4 SampleColor=texPanorama(texEnv, L);\n			vec4 SampleColor = texPanoramaLod(texPrefilterdEnv, L,0.);\n            SampleColor.rgb = _RGBEToRGB(SampleColor);\n            PrefilteredColor += SampleColor.rgb * NoL;\n            TotalWeight += NoL;\n        }\n    }\n    return PrefilteredColor / TotalWeight;\n}\n\n/*\n    BRDF部分的积分的预处理。\n    在排除F0以后，剩下的可以预计算了。\n    输入为 Roughness 和 cosθ。\n*/\nvec2 IntegrateBRDF( float Roughness , float NoV ){\n    vec3 N=vec3(0.,0.,1.);//TODO 为什么是 001呢\n    vec3 V;\n    V.x = sqrt( 1.0 - NoV * NoV ); // sin\n    V.y = 0.;\n    V.z = NoV; // cos\n    float A = 0.;\n    float B = 0.;\n	float tx = 0.;\n	float ty = 0.;\n    const int NumSamples = 1024;\n	const float fNumSamples = 1024.0;\n    for( int i = 0; i < NumSamples; i++ ){\n		float fi = float(i);\n        ty = floor(fi/32.0)/32.0;\n        tx = mod(fi,32.0)/32.0;\n        vec2 Xi = vec2(fi/fNumSamples,texture2D(texHSNoise,vec2(tx,ty)).r);// Hammersley( i, NumSamples );\n        vec3 H = ImportanceSampleGGX( Xi, Roughness , N );\n        vec3 L = 2. * dot( V, H ) * H - V;\n        float NoL = saturate( L.z );\n        float NoH = saturate( H.z );\n        float VoH = saturate( dot( V, H ) );\n        if( NoL > 0. ){\n            float G = G_Smith( Roughness , NoV, NoL );\n            float G_Vis = G * VoH / (NoH * NoV);\n            float Fc = pow( 1. - VoH, 5. );\n            A += (1. - Fc) * G_Vis; //F0的缩放部分 A*F0+B\n            B += Fc * G_Vis;        //F0的偏移部分\n        }\n    }\n    return vec2( A, B ) / fNumSamples;\n}\n\nvec4 pbrlight(vec3 normal, float rough, float NoV, vec3 R){\n    vec4 basecolor = texture2D(texBaseColor,vUv);\n	float metaless = 1.0; 	\n	const float ismetalinfov = (128./255.);\n	if(basecolor.a>=ismetalinfov){//这时候表示金属度\n		metaless = (basecolor.a-ismetalinfov)*2.;\n		basecolor.a = 1.0;\n	}else{\n		metaless = 0.;\n		basecolor.a = basecolor.a*2.0;\n	}\n	#ifdef FIX_METALESS\n	metaless = u_metaless;\n	#endif\n	#ifdef HAS_PBRINFO	\n	vec4 pbrinfo = texture2D(texPbrInfo, vUv);\n	#endif\n    //vec4 pbrinfo = texture2D(texORM,vUv);\n    const vec3 nonmetalF0 =vec3(0.05);\n    vec3 F0 =  mix(nonmetalF0, basecolor.rgb, metaless);\n    //vec4 color_spec = ApproximateSpecularIBL(F0,rough, NoV, R);\n    vec3 PrefilteredColor = PrefilterEnvMap( rough , R );\n    vec2 EnvBRDF = IntegrateBRDF( rough , NoV );\n	speccontrib =  F0 * EnvBRDF.x + EnvBRDF.y;\n	vec3 color_spec = PrefilteredColor * speccontrib;\n	vec3 color_diff=diff_sh9(normal);//testDiff(normal);//\n	vec3 outc = color_diff*mix(basecolor.rgb,vec3(0.),metaless)*(vec3(1.0)-speccontrib)+color_spec;\n    return vec4(outc,basecolor.a);//TODO 这里应该没有括号\n}\n#else\nvec4 pbrlight(vec3 normal, float rough, float NoV, vec3 R){\n    vec4 basecolor = texture2D(texBaseColor,vUv);\n	basecolor.rgb = pow(basecolor.rgb,vec3(2.2));\n	float metaless = 1.0; 	\n	const float ismetalinfov = (128./255.);\n	if(basecolor.a>=ismetalinfov){//这时候表示金属度\n		metaless = (basecolor.a-ismetalinfov)*2.;\n		basecolor.a = 1.0;\n	}else{\n		metaless = 0.;\n		basecolor.a = basecolor.a*2.0;\n	}\n	#ifdef FIX_METALESS\n	metaless = u_metaless;\n	#endif\n	#ifdef HAS_PBRINFO	\n	vec4 pbrinfo = texture2D(texPbrInfo, vUv);\n	#endif\n    //vec4 pbrinfo = texture2D(texORM,vUv);\n    const vec3 nonmetalF0 =vec3(0.02);\n    vec3 F0 =  mix(nonmetalF0, basecolor.rgb, metaless);\n    //vec4 color_spec = ApproximateSpecularIBL(F0,rough, NoV, R);\n	\n    vec4 PrefilteredColor = texPanoramaLod(texPrefilterdEnv, R, rough*maxlv);\n    PrefilteredColor.rgb = _RGBEToRGB(PrefilteredColor);\n    vec4 EnvBRDF = texture2D(texBRDFLUT,vec2(rough , NoV));//TODO lod\n    vec2 rg = _RGBAToU16(EnvBRDF);    \n    //原来的括号不对\n    speccontrib = (F0* rg.x + saturate( 50.0 * PrefilteredColor.g ) * rg.y);\n	vec3 color_spec = PrefilteredColor.rgb*speccontrib;\n	\n	vec3 color_diff=diff_sh9(normal);//testDiff(normal);//\n	//return vec4(color_diff,basecolor.a);\n	#ifdef HAS_PBRINFO\n	float ao = pbrinfo.r;\n	vec3 outc = (color_diff*mix(basecolor.rgb,vec3(0.),metaless)+color_spec)*ao;\n	#else\n	vec3 outc = color_diff*mix(basecolor.rgb,vec3(0.),metaless)*(vec3(1.0)-speccontrib)+color_spec;\n	#endif\n	//outc = ACESToneMapping(outc,.6);\n	return vec4(outc, basecolor.a);\n}\n#endif\n\nvec3 oldlight(vec4 normal, float NoV, vec3 R){\n    vec4 basecolor = texture2D(texBaseColor,vUv);\n    //vec4 pbrinfo = texture2D(texORM,vUv);\n	const vec3 lightdir=normalize(vec3(1.,1.,0.));\n	const vec3 spcecol = vec3(1.,0.8,0.8);\n	const vec3 amb = vec3(0.5);\n	vec3 diffv =  (vec3(saturate(dot(lightdir,normal.xyz)))+amb);\n	//vec3 spec = spcecol* pow(saturate(dot(R,lightdir)),(1.-pbrinfo.g)*5.);\n	return diffv*basecolor.rgb;//+spec;\n}\n\n#include \"ShadowHelper.glsl\"\n#ifdef RECEIVESHADOW\nvarying float v_posViewZ;\n	#if defined(SHADOWMAP_PSSM2)||defined(SHADOWMAP_PSSM3)\n	uniform mat4 u_lightShadowVP[4];\n	#endif\n	#ifdef SHADOWMAP_PSSM1 \n	varying vec4 v_lightMVPPos;\n	#endif\n#endif\n\nfloat calcAO(vec3 worldpos,vec3 normal, vec3 surfacenorm){\n	//const vec4 u_aoObjPos = vec4(-0.2,0.11,0.0,.1);\n	float k = 1.;\n	for( int i=0; i<2; i++){\n		float r = u_aoObjPos[i].w;\n		float d = max(length(u_aoObjPos[i].xyz-worldpos),r);\n		k *= sqrt(d*d-r*r)/d;\n	}\n	return k;\n}\n\nvec2 packf(float v){\n	float iv = v*255.;\n	float l = mod(iv,256.)/255.;\n	float h = floor(iv/256.)/255.;\n	return vec2(h,l);\n}\n\nfloat unpackf(vec2 v){\n	return (v.x*255.*256.+v.y*255.)/255.;\n}\n\nvoid main() {\n#ifdef CASTSHADOW\n	gl_FragColor=packDepth(gl_FragCoord.w);\n	#if defined(DIFFUSEMAP)&&defined(ALPHATEST)\n		float alpha = texture2D(texBaseColor,vUv).w;\n		if( alpha < u_AlphaTestValue ){\n			discard;\n		}\n	#endif\n#else\n\n	#ifdef RECEIVESHADOW\n		float shadowValue = 1.0;\n		#ifdef SHADOWMAP_PSSM3\n			shadowValue = getShadowPSSM3( u_shadowMap1,u_shadowMap2,u_shadowMap3,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,vWorldPos.xyz,v_posViewZ,0.0001);\n		#endif\n		#ifdef SHADOWMAP_PSSM2\n			shadowValue = getShadowPSSM2( u_shadowMap1,u_shadowMap2,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,vWorldPos.xyz,v_posViewZ,0.0001);\n		#endif \n		#ifdef SHADOWMAP_PSSM1\n			shadowValue = getShadowPSSM1( u_shadowMap1,v_lightMVPPos,u_shadowPSSMDistance,u_shadowPCFoffset,v_posViewZ,0.0001);\n		#endif\n	#endif	\n	\n    vec3 normal =  normalize(vWorldNorm);\n	vec3 smoothnorm = normal;\n	vec4 normtex = texture2D( texNormal, vUv );\n	#ifdef HAS_TANGENT	\n	normal = applyNormalTex(normtex.xyz, normal);\n	#endif\n    vec3 view   = -normalize(vViewDir);\n    float NoV = saturate(dot( view, normal ));\n    vec3 R = 2. * NoV * normal - view;\n	float roughness = normtex.a;\n	#ifdef FIX_ROUGHNESS\n	roughness = u_roughness;\n	#endif\n	\n	#ifdef CLIPZ\n	if(vWorldPos.z>2.0 || vWorldPos.z<-2.0)\n		discard;\n	#endif\n	vec4 pbrl = pbrlight(normal,roughness,NoV,R)*u_hdrexposure;\n    gl_FragColor.rgb =  gamma(pbrl.rgb);\n	//gl_FragColor.rgb = oldlight(normtex,NoV,R);\n	#ifdef RECEIVESHADOW\n	gl_FragColor.rgb *= max(shadowValue,0.7);\n	#endif\n	\n	//gl_FragColor.rgb *= calcAO(vWorldPos.xyz, normal, smoothnorm);\n    gl_FragColor.a = pbrl.a;\n\n#endif\n}\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/PBR.ps*/;
 			shaderCompile=ShaderCompile3D.add(PBR,vs,ps,attributeMap,uniformMap);
 			PBRMaterial.SHADERDEFINE_FIX_METALESS=shaderCompile.registerMaterialDefine("FIX_METALESS");
 			PBRMaterial.SHADERDEFINE_FIX_ROUGHNESS=shaderCompile.registerMaterialDefine("FIX_ROUGHNESS");
@@ -12492,8 +12925,8 @@
 				'u_SpotLight.Ambient':[ /*laya.d3.core.scene.Scene.SPOTLIGHTAMBIENT*/19,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4],
 				'u_SpotLight.Specular':[ /*laya.d3.core.scene.Scene.SPOTLIGHTSPECULAR*/20,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4]};
 			var Water=Shader3D.nameKey.add("Water");
-			vs="\nuniform mat4 modelMatrix;\n//uniform mat4 modelViewMatrix;\n//uniform mat4 projectionMatrix;\nuniform mat4 u_View;\nuniform mat4 u_Project;\nuniform mat4 mvp;\n//uniform mat4 viewMatrix;\nuniform vec3 cameraPosition;\nuniform float u_curTm;\n\nattribute vec3 a_position;\nattribute vec3 a_normal;\nattribute vec2 uv;\n//uniform sampler2D texWaterDisp;\n#ifdef USE_VERTEX_DEEPINFO\n#else\nuniform sampler2D texWaterInfo;\nvarying vec4 vWaterInfo;\nuniform float u_DeepScale;//texWaterInfo.r*vDeepScale\n#endif\nuniform float u_WaveMainDir;	//主波方向\nuniform float GEOWAVE_UV_SCALE ;//= 100.0;\n\n\nvarying vec2 vUv;\nvarying vec3 vWorldNorm;\nvarying vec3 vWorldTan;\nvarying vec3 vWorldBin;\nvarying vec4 vViewPos;\nvarying vec4 vWorldPos;\nvarying vec3 vLightDir;\nvarying vec3 vViewDir;\nvarying vec3 vDisp;\nvarying float fDeep;\nvarying mat2 matUVTrans;\nvarying float fFoam;\n\nconst float PI = 3.14159265358979323846264;\n\n#include \"WaveFunction.glsl\"\n\nvec2 getPosFromUV(vec2 uv){\n	return uv*50.;\n}\n\nvoid main() {\n	vec3 pos = a_position;\n    vUv = uv;\n	\n	//vDisp = texture2D(texWaterDisp,uv).rgb;\n	//vec3 disp = vDisp;\n	\n	//TODO 这里有个潜规则。\n	float tt = pos.y; pos.y=pos.z; pos.z=-tt;\n	\n	#ifdef USE_VERTEX_DEEPINFO\n	fDeep = -pos.y;\n	pos.y=0.0;\n	#else\n	vWaterInfo = texture2D(texWaterInfo,uv);\n	fDeep = vWaterInfo.r*u_DeepScale;\n	#endif\n	\n	\n	//计算波形\n	mat4 modelMat = modelMatrix;\n	vec3 opos, T,B,N;\n	float foams=0.;\n	vec2 uvpos = uv*GEOWAVE_UV_SCALE+vec2(modelMat[3][0],0.);//TODO 如果有旋转缩放怎么办\n	calcGerstnerWave(u_curTm, pos,fDeep, uvpos,opos,B,T,N,foams);\n	fFoam = foams;\n	gl_Position = mvp*vec4(opos,1.);\n	vWorldPos = modelMat*vec4(opos,1.);\n\n	vWorldNorm = normalize((modelMatrix*vec4(N,0.0)).xyz);\n	vWorldTan = normalize((modelMatrix*vec4(T,0.0)).xyz);\n	vWorldBin = normalize((modelMatrix*vec4(B,0.0)).xyz);\n    vViewDir = vWorldPos.xyz-cameraPosition; //这个不能取normalize，否则会引入非线性\n	\n	float s = sin(u_WaveMainDir);\n	float c = cos(u_WaveMainDir);\n	matUVTrans = mat2(c,-s,s,c);\n}\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/water.vs*/;
-			ps="//#version 300 es\n\nprecision highp float;\nprecision lowp int;\n\nconst float PI = 3.14159265358979323846264;\nconst float _2PI = 6.2831853071796;\nvarying vec2 vUv;\nvarying vec3 vWorldNorm;\nvarying vec3 vWorldTan;\nvarying vec3 vWorldBin;\nvarying vec3 vViewDir;//入射。pos-cam\nvarying vec4 vViewPos;\nvarying vec4 vWorldPos;\nvarying float fDeep;\nvarying mat2 matUVTrans;\n#ifdef USE_VERTEX_DEEPINFO\n#else\nvarying vec4 vWaterInfo;\n#endif\nmat3 matTBNOff;//\n\n//\nuniform sampler2D texBaseColor;\nuniform sampler2D texNormal;\n#ifdef CUBE_ENV\nuniform samplerCube texSky;\n#else\nuniform sampler2D texSky;\n#endif\nuniform sampler2D texUnderWater;\nuniform sampler2D texWaveDetail;\n//uniform sampler2D texDeepColor;\nuniform sampler2D texFoam;\nvarying float fFoam;\nuniform float u_curTm;\nuniform vec2 u_scrsize;\nuniform vec3 u_SeaColor;//\n\nconst int NumTexWaves=4;\nconst float Amp_over_L = 0.01;\n//const vec3 SEA_COLOR1 = vec3(0.0292,0.672,0.7467);//大洋\n//const vec3 SEA_COLOR2 = vec3(0,0.927,0.43);//近海\n\nconst float _maxu8 = 255.0;\nconst float _maxu16 = 65535.0;\nconst float _shift8 = 256.0;    //平移的话是*256而不是255\nvec2 _RGBAToU16(const in vec4 rgba){\n    return vec2((rgba.r*_maxu8+rgba.g*_maxu8*_shift8)/_maxu16, (rgba.b*_maxu8+rgba.a*_maxu8*_shift8)/_maxu16);\n}\nvec3 _RGBEToRGB( const in vec4 rgba ){\n    float f = pow(2.0, rgba.w * 255.0 - (128.0 + 8.0));\n    return rgba.rgb * (255.0 * f);\n}\n\nfloat saturate(float v){\n    return min(max(v,0.),1.);\n}\n\n/*\n	各种 ToneMap\n*/\n//Reinhard\nvec3 ReinhardToneMapping(vec3 color, float adapted_lum) {\n    const float MIDDLE_GREY = 1.;\n    color *= MIDDLE_GREY / adapted_lum;\n    return color / (1.0 + color);\n}\n\n//CE2\nvec3 CEToneMapping(vec3 color, float adapted_lum){\n    return 1. - exp(-adapted_lum * color);\n}\n\n//UC2\nvec3 F1(vec3 x){\n	const float A = 0.22;\n	const float B = 0.30;\n	const float C = 0.10;\n	const float D = 0.20;\n	const float E = 0.01;\n	const float F = 0.30;\n \n	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;\n}\n\nvec3 Uncharted2ToneMapping(vec3 color, float adapted_lum){\n	const vec3 WHITE = vec3(11.2);\n	return F1(1.6 * adapted_lum * color) / F1(WHITE);\n}\n\n//ACES\nvec3 ACESToneMapping(vec3 color, float adapted_lum){\n	const float A = 2.51;\n	const float B = 0.03;\n	const float C = 2.43;\n	const float D = 0.59;\n	const float E = 0.14;\n\n	color *= adapted_lum;\n	return (color * (A * color + B)) / (color * (C * color + D) + E);\n}\n\n/*\n* 对一个全景图进行采样。假设x轴指向中心。\n*/\nvec4 texPanorama(sampler2D tex, const in vec3 dir){\n	float envu = atan(dir.z,dir.x)/_2PI+0.5; 	\n	float envv = acos(dir.y)/PI;//(1.0-dir.y)/2.0;\n	return texture2D(tex,vec2(envu,envv));\n}\n\n/*\n	与位于0点的测试棒的相交测试交点\n	这个是瞎写的，只是为了测试\n*/\nbool hitClydiner(vec3 pos, vec3 dir, out vec3 hitpos, out vec3 hitnormal){\n	const float r = 0.5;\n	float a = dir.x*dir.x+dir.z*dir.z;\n	float b = 2.*dir.x*pos.x+2.*dir.z*pos.z;\n	float c = pos.x*pos.x+pos.z*pos.z-r*r;\n	float d = b*b-4.*a*c;\n	if(d>=0.0){\n		float t = (-b+sqrt(d))/2./a;\n		t =min(t, (-b-sqrt(d))/2./a);\n		hitpos = pos+dir*t;\n		return true;\n	}\n	/*\n	vec3 v1 = normalize(cross(dir,vec3(0.,1.,0.)));//公垂线\n	float dist = dot(pos,v1);//最短距离\n	if(abs(dist)<r){\n		return true;\n	}\n	*/\n	return false;\n}\n\n///* 根据散射公式来计算某个方向的颜色 *///\n//\nfloat phase_function(float costheta, float g, float g2){\n	return 1.5*( (1.0-g2) / (2.0+g2) ) * (1.0+costheta*costheta) / pow(1.0+g2-2.0*g*costheta, 1.5);	\n}\n\nconst float _density = .2;\nconst vec3 _vLightDir=vec3(0.,-1.,0.);//必须是规格化的\nconst int _SAMPLENUM = 20;\nconst float _K1 = 1.0;\nconst float _g = -0.93;\n//\nvec3 calcScatter(vec3 start, vec3 dir, vec3 end){\n	float len = length(end-start);\n	float costheta = dot(dir,_vLightDir);\n	float g2 = _g*_g;\n	float K = _K1*len*_density*phase_function(costheta,_g,g2);\n	//用分段的方式来积分\n	float dlen = len/float(_SAMPLENUM);//距离平分\n	float ddeep = (start.y-end.y)/float(_SAMPLENUM);//深度平分\n	float sum=0.;\n	for( int i=0; i<_SAMPLENUM; i++){\n		float fi = float(i);\n		float v1 = exp(-_density*(dlen+ddeep)*fi);//TODO 应该可以用分析法计算出来\n		sum += v1;\n	}\n	return vec3(K*sum);\n}\n///* 根据散射公式来计算某个方向的亮度  END *///\n\nconst float cDeep = -2.;	//假设水的深度\nvec3 getShuiDiColor(vec3 pos, vec3 dir, vec3 normal){\n	//一个无限大的水底，黑白格纹理。纹理长度为1米\n	float t = ( cDeep-pos.y )/dir.y;\n	if(t<0.) return vec3(1.,0.,0.);//TEST\n	bool bhit = false;\n	vec3 hitpos;\n	vec3 hitcolor;\n	vec3 hn;\n	if(hitClydiner(pos,dir,hitpos,hn) && hitpos.y>cDeep && hitpos.y<pos.y){\n		bhit=true;\n		hitcolor = vec3(.8,.8,.8);\n\n	}else\n	{\n		hitpos = pos+dir*t;\n		vec3 hp = floor(hitpos);\n		float a = mod((hp.x+hp.z),2.);\n		hitcolor = (a<.9)?vec3(0.,0.,0.):vec3(1.,1.,1.);\n		//hitcolor = texture2D(texUnderWater,hitpos.xz/10.).rgb;\n	}\n	\n	float l = length(hitpos-pos);\n	//return texture2D(texDeepColor,vec2(min(max(l/400.,0.),1.),0.5)).rgb;\n	//return SEA_COLOR1*calcScatter(pos,dir,hitpos);\n	float left = pow(0.8,l);//假设透过率为80%，则到达水底的时候的光强。\n	return mix(hitcolor,u_SeaColor,1.-left);\n}\n\n/*\n	view已经normalize了\n*/\nvec3 getRefractColor(vec3 view,vec3 normal){\n	vec3 T = refract(-view, normal, 0.7);\n	return getShuiDiColor(vWorldPos.xyz,T,normal); \n}\n\nvec4 calcWaterC(vec3 view, vec3 normal, float von, vec3 R, float rough){\n	/*\n	只有浪顶的法线向下，也就是波形形成了交叠的时候，才会这样，所以要通过参数控制避免出现这种情况，而不是在这里保护。\n	if(dot(R,vec3(0.,1.,0.))<0.){\n		R = -R;\n	}\n	*/\n	//vec3 refr = getRefractColor(-view,normal);\n#ifdef USE_REFR_TEX	\n	vec3 refr = texture2D(texUnderWater, gl_FragCoord.xy/u_scrsize+normal.xz/8.).rgb;\n#else\n	vec3 refr = u_SeaColor;\n#endif\n	float F0=0.02;\n	//菲涅尔，越大反射越强\n	float f =  F0+(1.0-F0)*exp2((-5.55473*von-6.98316)*von);\n	//float f = F0+(1.0-F0)*pow(1.-von,5.);\n	//能看到水底的程度。反射剩余的*水中的衰减\n	//float a = (1.-f)*(1.-deepk);\n#ifdef CUBE_ENV\n	vec4 reflc = textureCube(texSky,R);\n#else\n	vec4 reflc = texPanorama(texSky, R);\n#endif\n#ifdef HDR_ENV\n	vec3 refl = _RGBEToRGB(reflc)*f;\n#else\n	vec3 refl = reflc.rgb*f;\n#endif\n	//return vec4(refl*(1.-rough),1.);\n	\n	//vec3 refl = reflc.rgb*f;\n	vec3 final = mix(refr, u_SeaColor, min(fDeep/10.,1.))+refl*(max(0.,1.-rough));\n#ifdef HDR_ENV\n	final = ACESToneMapping(final,1.);//TODO 这个要uniform传入\n#endif\n	return vec4(final,f);\n}\n\nvoid main() {\n    vec3 normal =  normalize(vWorldNorm);\n	//如果uv=1为100米，希望每个细节纹理表示20米的小波形，则uv缩放是 100/20。细节纹理内部也要用这个值，即pos=uv*20\n	vec2 ruv = matUVTrans*vUv;\n	vec3 detailNorm = texture2D(texWaveDetail,fract(ruv*5.)).rgb*2.-vec3(1.);//TODO uv怎么算\n	float texNormScale = 2.*PI*float(NumTexWaves)*Amp_over_L*2.5;\n	detailNorm *= vec3(texNormScale,1.,texNormScale);\n	//旋转\n	//细节纹理来自rendertarget，因此需要颠倒z\n	\n	matTBNOff = mat3(matUVTrans[0][0],0.,matUVTrans[1][0],\n	0.,1.,0.,\n	matUVTrans[0][1],0.,matUVTrans[1][1]\n	);\n	\n	/*\n	matTBNOff = mat3(0.,0.,1.,\n	0.,1.,0.,\n	-1.,0.,0.\n	);\n	*/\n\n    mat3 tsn = mat3( vWorldBin, normal, vWorldTan);	\n    //normal = normalize(tsn * matTBNOff * detailNorm);\n	normal = normalize(tsn * detailNorm); //这个应该更正确。因为本身方向就是根据uv算的，如果是静态图片才需要转换。\n	//vec4 normtex = texture2D( texNormal, vUv );\n    vec3 view   = -normalize(vViewDir);//view 是指向camera的\n    float NoV = saturate(dot( view, normal ));\n    //vec3 R = 2. * NoV * normal - view;\n	\n#ifdef USE_FOAM	\n	vec4 foamc = (texture2D(texFoam,vUv*50.)+texture2D(texFoam,vUv*20.))/2.;\n	float nearcoast = 1.-min(fDeep/10.,1.);// 1.-vWaterInfo.r;\n	float foams = (nearcoast/4.+fFoam)*2.*nearcoast;\n#else\n	float foams =0.;\n#endif\n	\n	vec3 R = reflect(-view,normal);\n	vec4 wc = calcWaterC(view, normal,NoV,R, foams);\n\n	gl_FragColor.rgb = wc.rgb;//normalize(detailNorm).rrr;//((normal)+vec3(0.0))/1.;//normalize(normal).rgb;//texture2D(texWaveDetail,vUv).rgb;// fracColor * texture2D(texUnderWater, vUv*20.0).rgb;// vec3(1.0);//pbrl.rgb;\n    gl_FragColor.a = 1.0;//wc.a;\n#ifdef USE_FOAM\n	gl_FragColor.rgb = mix(gl_FragColor.rgb,vec3(1.),foamc.a*foams);\n	gl_FragColor.a = foamc.r;\n#endif\n	//if(mod(vUv.x*100.,1.0)<0.02 || mod(vUv.y*100.,1.0)<0.02) gl_FragColor.rgb=vec3(0.5,.5,.5);\n	//gl_FragColor.rgb = detailNorm;\n}\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/water.ps*/;
+			vs="\nuniform mat4 modelMatrix;\n//uniform mat4 modelViewMatrix;\n//uniform mat4 projectionMatrix;\nuniform mat4 u_View;\nuniform mat4 u_Project;\nuniform mat4 mvp;\n//uniform mat4 viewMatrix;\nuniform vec3 cameraPosition;\nuniform float u_curTm;\n\nattribute vec3 a_position;\nattribute vec3 a_normal;\nattribute vec2 uv;\n//uniform sampler2D texWaterDisp;\n#ifdef USE_VERTEX_DEEPINFO\n#else\nuniform sampler2D texWaterInfo;\nvarying vec4 vWaterInfo;\nuniform float u_DeepScale;//texWaterInfo.r*vDeepScale\n#endif\nuniform float u_WaveMainDir;	//主波方向\nuniform float GEOWAVE_UV_SCALE ;//= 100.0;\n\n\nvarying vec2 vUv;\nvarying vec3 vWorldNorm;\nvarying vec3 vWorldTan;\nvarying vec3 vWorldBin;\nvarying vec4 vViewPos;\nvarying vec4 vWorldPos;\nvarying vec3 vLightDir;\nvarying vec3 vViewDir;\nvarying vec3 vDisp;\nvarying float fDeep;\nvarying mat2 matUVTrans;\nvarying float fFoam;\n\nconst float PI = 3.14159265358979323846264;\n\n#include \"WaveFunction.glsl\"\n\nvec2 getPosFromUV(vec2 uv){\n	return uv*50.;\n}\n\nvoid main() {\n	vec3 pos = a_position;\n    vUv = uv;\n	\n	//vDisp = texture2D(texWaterDisp,uv).rgb;\n	//vec3 disp = vDisp;\n	\n	//TODO 这里有个潜规则。\n	float tt = pos.y; pos.y=pos.z; pos.z=-tt;\n	\n	#ifdef USE_VERTEX_DEEPINFO\n	fDeep = -pos.y;\n	pos.y=0.0;\n	#else\n	vWaterInfo = texture2D(texWaterInfo,uv);\n	fDeep = vWaterInfo.r*u_DeepScale;\n	#endif\n	\n	\n	//计算波形\n	mat4 modelMat = modelMatrix;\n	vec3 opos, T,B,N;\n	float foams=0.;\n	vec2 uvpos = uv*GEOWAVE_UV_SCALE+vec2(modelMat[3][0],0.);//TODO 如果有旋转缩放怎么办\n	calcGerstnerWave(u_curTm, pos,fDeep, uvpos,opos,B,T,N,foams);\n	fFoam = foams;\n	gl_Position = mvp*vec4(opos,1.);\n	vWorldPos = modelMat*vec4(opos,1.);\n\n	vWorldNorm = normalize((modelMatrix*vec4(N,0.0)).xyz);\n	vWorldTan = normalize((modelMatrix*vec4(T,0.0)).xyz);\n	vWorldBin = normalize((modelMatrix*vec4(B,0.0)).xyz);\n    vViewDir = vWorldPos.xyz-cameraPosition; //这个不能取normalize，否则会引入非线性\n	\n	float s = sin(u_WaveMainDir);\n	float c = cos(u_WaveMainDir);\n	matUVTrans = mat2(c,-s,s,c);\n}\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/water.vs*/;
+			ps="//#version 300 es\n\nprecision highp float;\nprecision lowp int;\n\nconst float PI = 3.14159265358979323846264;\nconst float _2PI = 6.2831853071796;\nvarying vec2 vUv;\nvarying vec3 vWorldNorm;\nvarying vec3 vWorldTan;\nvarying vec3 vWorldBin;\nvarying vec3 vViewDir;//入射。pos-cam\nvarying vec4 vViewPos;\nvarying vec4 vWorldPos;\nvarying float fDeep;\nvarying mat2 matUVTrans;\n#ifdef USE_VERTEX_DEEPINFO\n#else\nvarying vec4 vWaterInfo;\n#endif\nmat3 matTBNOff;//\n\n//\nuniform sampler2D texBaseColor;\nuniform sampler2D texNormal;\n#ifdef CUBE_ENV\nuniform samplerCube texSky;\n#else\nuniform sampler2D texSky;\n#endif\nuniform sampler2D texUnderWater;\nuniform sampler2D texWaveDetail;\n//uniform sampler2D texDeepColor;\nuniform sampler2D texFoam;\nvarying float fFoam;\nuniform float u_curTm;\nuniform vec2 u_scrsize;\nuniform vec3 u_SeaColor;//\n\nconst int NumTexWaves=4;\nconst float Amp_over_L = 0.01;\n//const vec3 SEA_COLOR1 = vec3(0.0292,0.672,0.7467);//大洋\n//const vec3 SEA_COLOR2 = vec3(0,0.927,0.43);//近海\n\nconst float _maxu8 = 255.0;\nconst float _maxu16 = 65535.0;\nconst float _shift8 = 256.0;    //平移的话是*256而不是255\nvec2 _RGBAToU16(const in vec4 rgba){\n    return vec2((rgba.r*_maxu8+rgba.g*_maxu8*_shift8)/_maxu16, (rgba.b*_maxu8+rgba.a*_maxu8*_shift8)/_maxu16);\n}\nvec3 _RGBEToRGB( const in vec4 rgba ){\n    float f = pow(2.0, rgba.w * 255.0 - (128.0 + 8.0));\n    return rgba.rgb * (255.0 * f);\n}\n\nfloat saturate(float v){\n    return min(max(v,0.),1.);\n}\n\n/*\n	各种 ToneMap\n*/\n//Reinhard\nvec3 ReinhardToneMapping(vec3 color, float adapted_lum) {\n    const float MIDDLE_GREY = 1.;\n    color *= MIDDLE_GREY / adapted_lum;\n    return color / (1.0 + color);\n}\n\n//CE2\nvec3 CEToneMapping(vec3 color, float adapted_lum){\n    return 1. - exp(-adapted_lum * color);\n}\n\n//UC2\nvec3 F1(vec3 x){\n	const float A = 0.22;\n	const float B = 0.30;\n	const float C = 0.10;\n	const float D = 0.20;\n	const float E = 0.01;\n	const float F = 0.30;\n \n	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;\n}\n\nvec3 Uncharted2ToneMapping(vec3 color, float adapted_lum){\n	const vec3 WHITE = vec3(11.2);\n	return F1(1.6 * adapted_lum * color) / F1(WHITE);\n}\n\n//ACES\nvec3 ACESToneMapping(vec3 color, float adapted_lum){\n	const float A = 2.51;\n	const float B = 0.03;\n	const float C = 2.43;\n	const float D = 0.59;\n	const float E = 0.14;\n\n	color *= adapted_lum;\n	return (color * (A * color + B)) / (color * (C * color + D) + E);\n}\n\n/*\n* 对一个全景图进行采样。假设x轴指向中心。\n*/\nvec4 texPanorama(sampler2D tex, const in vec3 dir){\n	float envu = atan(dir.z,dir.x)/_2PI+0.5; 	\n	float envv = acos(dir.y)/PI;//(1.0-dir.y)/2.0;\n	return texture2D(tex,vec2(envu,envv));\n}\n\n/*\n	与位于0点的测试棒的相交测试交点\n	这个是瞎写的，只是为了测试\n*/\nbool hitClydiner(vec3 pos, vec3 dir, out vec3 hitpos, out vec3 hitnormal){\n	const float r = 0.5;\n	float a = dir.x*dir.x+dir.z*dir.z;\n	float b = 2.*dir.x*pos.x+2.*dir.z*pos.z;\n	float c = pos.x*pos.x+pos.z*pos.z-r*r;\n	float d = b*b-4.*a*c;\n	if(d>=0.0){\n		float t = (-b+sqrt(d))/2./a;\n		t =min(t, (-b-sqrt(d))/2./a);\n		hitpos = pos+dir*t;\n		return true;\n	}\n	/*\n	vec3 v1 = normalize(cross(dir,vec3(0.,1.,0.)));//公垂线\n	float dist = dot(pos,v1);//最短距离\n	if(abs(dist)<r){\n		return true;\n	}\n	*/\n	return false;\n}\n\n///* 根据散射公式来计算某个方向的颜色 *///\n//\nfloat phase_function(float costheta, float g, float g2){\n	return 1.5*( (1.0-g2) / (2.0+g2) ) * (1.0+costheta*costheta) / pow(1.0+g2-2.0*g*costheta, 1.5);	\n}\n\nconst float _density = .2;\nconst vec3 _vLightDir=vec3(0.,-1.,0.);//必须是规格化的\nconst int _SAMPLENUM = 20;\nconst float _K1 = 1.0;\nconst float _g = -0.93;\n//\nvec3 calcScatter(vec3 start, vec3 dir, vec3 end){\n	float len = length(end-start);\n	float costheta = dot(dir,_vLightDir);\n	float g2 = _g*_g;\n	float K = _K1*len*_density*phase_function(costheta,_g,g2);\n	//用分段的方式来积分\n	float dlen = len/float(_SAMPLENUM);//距离平分\n	float ddeep = (start.y-end.y)/float(_SAMPLENUM);//深度平分\n	float sum=0.;\n	for( int i=0; i<_SAMPLENUM; i++){\n		float fi = float(i);\n		float v1 = exp(-_density*(dlen+ddeep)*fi);//TODO 应该可以用分析法计算出来\n		sum += v1;\n	}\n	return vec3(K*sum);\n}\n///* 根据散射公式来计算某个方向的亮度  END *///\n\nconst float cDeep = -2.;	//假设水的深度\nvec3 getShuiDiColor(vec3 pos, vec3 dir, vec3 normal){\n	//一个无限大的水底，黑白格纹理。纹理长度为1米\n	float t = ( cDeep-pos.y )/dir.y;\n	if(t<0.) return vec3(1.,0.,0.);//TEST\n	bool bhit = false;\n	vec3 hitpos;\n	vec3 hitcolor;\n	vec3 hn;\n	if(hitClydiner(pos,dir,hitpos,hn) && hitpos.y>cDeep && hitpos.y<pos.y){\n		bhit=true;\n		hitcolor = vec3(.8,.8,.8);\n\n	}else\n	{\n		hitpos = pos+dir*t;\n		vec3 hp = floor(hitpos);\n		float a = mod((hp.x+hp.z),2.);\n		hitcolor = (a<.9)?vec3(0.,0.,0.):vec3(1.,1.,1.);\n		//hitcolor = texture2D(texUnderWater,hitpos.xz/10.).rgb;\n	}\n	\n	float l = length(hitpos-pos);\n	//return texture2D(texDeepColor,vec2(min(max(l/400.,0.),1.),0.5)).rgb;\n	//return SEA_COLOR1*calcScatter(pos,dir,hitpos);\n	float left = pow(0.8,l);//假设透过率为80%，则到达水底的时候的光强。\n	return mix(hitcolor,u_SeaColor,1.-left);\n}\n\n/*\n	view已经normalize了\n*/\nvec3 getRefractColor(vec3 view,vec3 normal){\n	vec3 T = refract(-view, normal, 0.7);\n	return getShuiDiColor(vWorldPos.xyz,T,normal); \n}\n\nvec4 calcWaterC(vec3 view, vec3 normal, float von, vec3 R, float rough){\n	/*\n	只有浪顶的法线向下，也就是波形形成了交叠的时候，才会这样，所以要通过参数控制避免出现这种情况，而不是在这里保护。\n	if(dot(R,vec3(0.,1.,0.))<0.){\n		R = -R;\n	}\n	*/\n	//vec3 refr = getRefractColor(-view,normal);\n#ifdef USE_REFR_TEX	\n	vec3 refr = texture2D(texUnderWater, gl_FragCoord.xy/u_scrsize+normal.xz/8.).rgb;\n#else\n	vec3 refr = u_SeaColor;\n#endif\n	float F0=0.02;\n	//菲涅尔，越大反射越强\n	float f =  F0+(1.0-F0)*exp2((-5.55473*von-6.98316)*von);\n	//float f = F0+(1.0-F0)*pow(1.-von,5.);\n	//能看到水底的程度。反射剩余的*水中的衰减\n	//float a = (1.-f)*(1.-deepk);\n#ifdef CUBE_ENV\n	vec4 reflc = textureCube(texSky,R);\n#else\n	vec4 reflc = texPanorama(texSky, R);\n#endif\n#ifdef HDR_ENV\n	vec3 refl = _RGBEToRGB(reflc)*f;\n#else\n	vec3 refl = reflc.rgb*f;\n#endif\n	//return vec4(refl*(1.-rough),1.);\n	\n	//vec3 refl = reflc.rgb*f;\n	vec3 final = mix(refr, u_SeaColor, min(fDeep/10.,1.))+refl*(max(0.,1.-rough));\n#ifdef HDR_ENV\n	final = ACESToneMapping(final,1.);//TODO 这个要uniform传入\n#endif\n	return vec4(final,f);\n}\n\nvoid main() {\n    vec3 normal =  normalize(vWorldNorm);\n	//如果uv=1为100米，希望每个细节纹理表示20米的小波形，则uv缩放是 100/20。细节纹理内部也要用这个值，即pos=uv*20\n	vec2 ruv = matUVTrans*vUv;\n	vec3 detailNorm = texture2D(texWaveDetail,fract(ruv*5.)).rgb*2.-vec3(1.);//TODO uv怎么算\n	float texNormScale = 2.*PI*float(NumTexWaves)*Amp_over_L*2.5;\n	detailNorm *= vec3(texNormScale,1.,texNormScale);\n	//旋转\n	//细节纹理来自rendertarget，因此需要颠倒z\n	\n	matTBNOff = mat3(matUVTrans[0][0],0.,matUVTrans[1][0],\n	0.,1.,0.,\n	matUVTrans[0][1],0.,matUVTrans[1][1]\n	);\n	\n	/*\n	matTBNOff = mat3(0.,0.,1.,\n	0.,1.,0.,\n	-1.,0.,0.\n	);\n	*/\n\n    mat3 tsn = mat3( vWorldBin, normal, vWorldTan);	\n    //normal = normalize(tsn * matTBNOff * detailNorm);\n	normal = normalize(tsn * detailNorm); //这个应该更正确。因为本身方向就是根据uv算的，如果是静态图片才需要转换。\n	//vec4 normtex = texture2D( texNormal, vUv );\n    vec3 view   = -normalize(vViewDir);//view 是指向camera的\n    float NoV = saturate(dot( view, normal ));\n    //vec3 R = 2. * NoV * normal - view;\n	\n#ifdef USE_FOAM	\n	vec4 foamc = (texture2D(texFoam,vUv*50.)+texture2D(texFoam,vUv*20.))/2.;\n	float nearcoast = 1.-min(fDeep/10.,1.);// 1.-vWaterInfo.r;\n	float foams = (nearcoast/4.+fFoam)*2.*nearcoast;\n#else\n	float foams =0.;\n#endif\n	\n	vec3 R = reflect(-view,normal);\n	vec4 wc = calcWaterC(view, normal,NoV,R, foams);\n\n	gl_FragColor.rgb = wc.rgb;//normalize(detailNorm).rrr;//((normal)+vec3(0.0))/1.;//normalize(normal).rgb;//texture2D(texWaveDetail,vUv).rgb;// fracColor * texture2D(texUnderWater, vUv*20.0).rgb;// vec3(1.0);//pbrl.rgb;\n    gl_FragColor.a = 1.0;//wc.a;\n#ifdef USE_FOAM\n	gl_FragColor.rgb = mix(gl_FragColor.rgb,vec3(1.),foamc.a*foams);\n	gl_FragColor.a = foamc.r;\n#endif\n	//if(mod(vUv.x*100.,1.0)<0.02 || mod(vUv.y*100.,1.0)<0.02) gl_FragColor.rgb=vec3(0.5,.5,.5);\n	//gl_FragColor.rgb = detailNorm;\n}\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/water.ps*/;
 			shaderCompile=ShaderCompile3D.add(Water,vs,ps,attributeMap,uniformMap);
 			WaterMaterial.SHADERDEFINE_CUBE_ENV=shaderCompile.registerMaterialDefine("CUBE_ENV");
 			WaterMaterial.SHADERDEFINE_HDR_ENV=shaderCompile.registerMaterialDefine("HDR_ENV");
@@ -12520,8 +12953,8 @@
 				'u_FogRange':[ /*laya.d3.core.scene.Scene.FOGRANGE*/2,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4],
 				'u_FogColor':[ /*laya.d3.core.scene.Scene.FOGCOLOR*/0,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4]};
 			var TERRAIN=Shader3D.nameKey.add("TERRAIN");
-			vs="#include?VR \"VRHelper.glsl\";\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\nuniform mat4 u_UVMatrix;\n\n#if defined(DIFFUSEMAP)&&defined(NORMALMAP)&&defined(SPECULARMAP)&&defined(EMISSIVEMAP)&&defined(AMBIENTMAP)\nattribute vec2 a_Texcoord;\nvarying vec2 v_Texcoord;\nvarying vec2 v_TiledTexcoord;\n#endif\n\n#ifdef FOG\nuniform mat4 u_WorldMat;\nvarying vec3 v_PositionWorld;\n#endif\n\n\nvoid main()\n{\n #ifdef VR\n gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n #else\n gl_Position = u_MvpMatrix * a_Position;\n #endif\n \n #ifdef FOG\n v_PositionWorld=(u_WorldMat*a_Position).xyz;\n #endif\n \n #if defined(DIFFUSEMAP)&&defined(NORMALMAP)&&defined(SPECULARMAP)&&defined(EMISSIVEMAP)&&defined(AMBIENTMAP)\n v_Texcoord=a_Texcoord;\n v_TiledTexcoord=(u_UVMatrix*vec4(a_Texcoord,0.0,1.0)).xy;\n #endif\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/modelTerrain.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform vec4 u_Albedo;\nuniform vec3 u_Ambient;\n\n#ifdef FOG\nuniform vec3 u_CameraPos;\nvarying vec3 v_PositionWorld;\n\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\n#if defined(DIFFUSEMAP)&&defined(NORMALMAP)&&defined(SPECULARMAP)&&defined(EMISSIVEMAP)&&defined(AMBIENTMAP)\n  varying vec2 v_Texcoord;\n  varying vec2 v_TiledTexcoord;\n  uniform sampler2D u_BlendTexture;\n  uniform sampler2D u_LayerTexture0;\n  uniform sampler2D u_LayerTexture1;\n  uniform sampler2D u_LayerTexture2;\n  uniform sampler2D u_LayerTexture3;\n#endif\n\nvoid main()\n{	\n  #if defined(DIFFUSEMAP)&&defined(NORMALMAP)&&defined(SPECULARMAP)&&defined(EMISSIVEMAP)&&defined(AMBIENTMAP)\n  vec4 blend=texture2D(u_BlendTexture, v_Texcoord);\n  vec4 c0=texture2D(u_LayerTexture0, v_TiledTexcoord);\n  vec4 c1=texture2D(u_LayerTexture1, v_TiledTexcoord);\n  vec4 c2=texture2D(u_LayerTexture2, v_TiledTexcoord);\n  vec4 c3=texture2D(u_LayerTexture3, v_TiledTexcoord);\n  vec4 texColor = c0;\n  texColor = mix(texColor, c1, blend.r);\n  texColor = mix(texColor, c2, blend.g);\n  texColor = mix(texColor, c3, blend.b);\n  gl_FragColor=vec4(texColor.rgb*u_Ambient.rgb*blend.a,1.0);\n  gl_FragColor=gl_FragColor*u_Albedo;\n  #endif \n  \n  #ifdef FOG\n  vec3 toEye=u_CameraPos-v_PositionWorld;\n  float toEyeLength=length(toEye);\n  \n  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n  #endif\n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/modelTerrain.ps*/;
+			vs="#include?VR \"VRHelper.glsl\";\nattribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\nuniform mat4 u_UVMatrix;\n\n#if defined(DIFFUSEMAP)&&defined(NORMALMAP)&&defined(SPECULARMAP)&&defined(EMISSIVEMAP)&&defined(AMBIENTMAP)\nattribute vec2 a_Texcoord;\nvarying vec2 v_Texcoord;\nvarying vec2 v_TiledTexcoord;\n#endif\n\n#ifdef FOG\nuniform mat4 u_WorldMat;\nvarying vec3 v_PositionWorld;\n#endif\n\n\nvoid main()\n{\n #ifdef VR\n gl_Position = DistortFishEye(u_MvpMatrix * a_Position);\n #else\n gl_Position = u_MvpMatrix * a_Position;\n #endif\n \n #ifdef FOG\n v_PositionWorld=(u_WorldMat*a_Position).xyz;\n #endif\n \n #if defined(DIFFUSEMAP)&&defined(NORMALMAP)&&defined(SPECULARMAP)&&defined(EMISSIVEMAP)&&defined(AMBIENTMAP)\n v_Texcoord=a_Texcoord;\n v_TiledTexcoord=(u_UVMatrix*vec4(a_Texcoord,0.0,1.0)).xy;\n #endif\n}"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/modelTerrain.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform vec4 u_Albedo;\nuniform vec3 u_Ambient;\n\n#ifdef FOG\nuniform vec3 u_CameraPos;\nvarying vec3 v_PositionWorld;\n\nuniform float u_FogStart;\nuniform float u_FogRange;\nuniform vec3 u_FogColor;\n#endif\n\n#if defined(DIFFUSEMAP)&&defined(NORMALMAP)&&defined(SPECULARMAP)&&defined(EMISSIVEMAP)&&defined(AMBIENTMAP)\n  varying vec2 v_Texcoord;\n  varying vec2 v_TiledTexcoord;\n  uniform sampler2D u_BlendTexture;\n  uniform sampler2D u_LayerTexture0;\n  uniform sampler2D u_LayerTexture1;\n  uniform sampler2D u_LayerTexture2;\n  uniform sampler2D u_LayerTexture3;\n#endif\n\nvoid main()\n{	\n  #if defined(DIFFUSEMAP)&&defined(NORMALMAP)&&defined(SPECULARMAP)&&defined(EMISSIVEMAP)&&defined(AMBIENTMAP)\n  vec4 blend=texture2D(u_BlendTexture, v_Texcoord);\n  vec4 c0=texture2D(u_LayerTexture0, v_TiledTexcoord);\n  vec4 c1=texture2D(u_LayerTexture1, v_TiledTexcoord);\n  vec4 c2=texture2D(u_LayerTexture2, v_TiledTexcoord);\n  vec4 c3=texture2D(u_LayerTexture3, v_TiledTexcoord);\n  vec4 texColor = c0;\n  texColor = mix(texColor, c1, blend.r);\n  texColor = mix(texColor, c2, blend.g);\n  texColor = mix(texColor, c3, blend.b);\n  gl_FragColor=vec4(texColor.rgb*u_Ambient.rgb*blend.a,1.0);\n  gl_FragColor=gl_FragColor*u_Albedo;\n  #endif \n  \n  #ifdef FOG\n  vec3 toEye=u_CameraPos-v_PositionWorld;\n  float toEyeLength=length(toEye);\n  \n  float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n  gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n  #endif\n}\n\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/modelTerrain.ps*/;
 			shaderCompile=ShaderCompile3D.add(TERRAIN,vs,ps,attributeMap,uniformMap);
 			StandardMaterial.SHADERDEFINE_DIFFUSEMAP=shaderCompile.registerMaterialDefine("DIFFUSEMAP");
 			StandardMaterial.SHADERDEFINE_NORMALMAP=shaderCompile.registerMaterialDefine("NORMALMAP");
@@ -12535,11 +12968,11 @@
 				'a_Position':/*laya.d3.graphics.VertexElementUsage.POSITION0*/0,
 				'a_Velocity':/*laya.d3.graphics.VertexElementUsage.VELOCITY0*/18,
 				'a_StartColor':/*laya.d3.graphics.VertexElementUsage.STARTCOLOR0*/19,
-				'a_EndColor':/*laya.d3.graphics.VertexElementUsage.ENDCOLOR0*/25,
+				'a_EndColor':/*laya.d3.graphics.VertexElementUsage.ENDCOLOR0*/23,
 				'a_SizeRotation':/*laya.d3.graphics.VertexElementUsage.SIZEROTATION0*/27,
 				'a_Radius':/*laya.d3.graphics.VertexElementUsage.RADIUS0*/28,
 				'a_Radian':/*laya.d3.graphics.VertexElementUsage.RADIAN0*/29,
-				'a_AgeAddScale':/*laya.d3.graphics.VertexElementUsage.STARTLIFETIME*/26,
+				'a_AgeAddScale':/*laya.d3.graphics.VertexElementUsage.STARTLIFETIME*/24,
 				'a_Time':/*laya.d3.graphics.VertexElementUsage.TIME0*/33};
 			uniformMap={
 				'u_CurrentTime':[ /*laya.d3.core.material.ParticleMaterial.CURRENTTIME*/2,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
@@ -12556,82 +12989,85 @@
 			ParticleMaterial.SHADERDEFINE_PARTICLE3D=shaderCompile.registerMaterialDefine("PARTICLE3D");
 			attributeMap={
 				'a_CornerTextureCoordinate':/*laya.d3.graphics.VertexElementUsage.CORNERTEXTURECOORDINATE0*/17,
+				'a_MeshPosition':/*laya.d3.graphics.VertexElementUsage.POSITION0*/0,
+				'a_MeshTextureCoordinate':/*laya.d3.graphics.VertexElementUsage.TEXTURECOORDINATE0*/2,
 				'a_PositionStartLifeTime':/*laya.d3.graphics.VertexElementUsage.POSITIONSTARTLIFETIME*/30,
 				'a_DirectionTime':/*laya.d3.graphics.VertexElementUsage.DIRECTIONTIME*/32,
 				'a_StartColor':/*laya.d3.graphics.VertexElementUsage.STARTCOLOR0*/19,
-				'a_EndColor':/*laya.d3.graphics.VertexElementUsage.ENDCOLOR0*/25,
+				'a_EndColor':/*laya.d3.graphics.VertexElementUsage.ENDCOLOR0*/23,
 				'a_StartSize':/*laya.d3.graphics.VertexElementUsage.STARTSIZE*/20,
-				'a_StartRotation0':/*laya.d3.graphics.VertexElementUsage.STARTROTATION0*/22,
-				'a_StartRotation1':/*laya.d3.graphics.VertexElementUsage.STARTROTATION1*/23,
-				'a_StartRotation2':/*laya.d3.graphics.VertexElementUsage.STARTROTATION2*/24,
+				'a_StartRotation0':/*laya.d3.graphics.VertexElementUsage.STARTROTATION*/22,
 				'a_StartSpeed':/*laya.d3.graphics.VertexElementUsage.STARTSPEED*/31,
 				'a_Random0':/*laya.d3.graphics.VertexElementUsage.RANDOM0*/34,
 				'a_Random1':/*laya.d3.graphics.VertexElementUsage.RANDOM1*/35,
 				'a_SimulationWorldPostion':/*laya.d3.graphics.VertexElementUsage.SIMULATIONWORLDPOSTION*/36};
 			uniformMap={
-				'u_SimulationSpace':[ /*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.SIMULATIONSPACE*/8,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
-				'u_Tintcolor':[ /*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.TINTCOLOR*/9,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
-				'u_ThreeDStartRotation':[ /*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.THREEDSTARTROTATION*/1,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
-				'u_ScalingMode':[ /*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.SCALINGMODE*/2,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
-				'u_CurrentTime':[ /*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.CURRENTTIME*/3,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
-				'u_Gravity':[ /*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.GRAVITY*/4,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
-				'u_texture':[ /*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.DIFFUSETEXTURE*/5,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
-				'u_StretchedBillboardLengthScale':[ /*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.STRETCHEDBILLBOARDLENGTHSCALE*/6,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
-				'u_StretchedBillboardSpeedScale':[ /*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.STRETCHEDBILLBOARDSPEEDSCALE*/7,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
+				'u_Tintcolor':[ /*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.TINTCOLOR*/2,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
+				'u_texture':[ /*laya.d3.core.particleShuriKen.ShurikenParticleMaterial.DIFFUSETEXTURE*/1,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
 				'u_WorldPosition':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.WORLDPOSITION*/0,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
 				'u_WorldRotationMat':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.WORLDROTATIONMATRIX*/1,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
 				'u_PositionScale':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.POSITIONSCALE*/4,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
 				'u_SizeScale':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SIZESCALE*/5,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ColorOverLifeGradientAlphas':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS*/15,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ColorOverLifeGradientColors':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS*/16,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_MaxColorOverLifeGradientAlphas':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS*/17,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_MaxColorOverLifeGradientColors':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS*/18,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_VOLVelocityConst':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONST*/6,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_VOLVelocityGradientX':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTX*/7,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_VOLVelocityGradientY':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTY*/8,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_VOLVelocityGradientZ':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZ*/9,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_VOLVelocityConstMax':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONSTMAX*/10,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_VOLVelocityGradientMaxX':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX*/11,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_VOLVelocityGradientMaxY':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX*/12,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_VOLVelocityGradientMaxZ':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX*/13,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_VOLSpaceType':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLSPACETYPE*/14,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_SOLSizeGradient':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENT*/19,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_SOLSizeGradientX':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTX*/20,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_SOLSizeGradientY':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTY*/21,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_SOLSizeGradientZ':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZ*/22,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_SOLSizeGradientMax':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientMax*/23,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_SOLSizeGradientMaxX':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTXMAX*/24,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_SOLSizeGradientMaxY':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTYMAX*/25,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_SOLSizeGradientMaxZ':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZMAX*/26,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ROLAngularVelocityConst':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONST*/27,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ROLAngularVelocityConstSeprarate':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE*/28,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ROLAngularVelocityGradient':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT*/29,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ROLAngularVelocityGradientX':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX*/30,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ROLAngularVelocityGradientY':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY*/31,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ROLAngularVelocityGradientZ':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ*/32,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ROLAngularVelocityConstMax':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX*/33,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ROLAngularVelocityConstMaxSeprarate':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE*/34,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ROLAngularVelocityGradientMax':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX*/35,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ROLAngularVelocityGradientMaxX':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX*/36,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ROLAngularVelocityGradientMaxY':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX*/37,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_ROLAngularVelocityGradientMaxZ':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX*/38,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_TSACycles':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES*/39,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_TSASubUVLength':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH*/40,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_TSAGradientUVs':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS*/41,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
-				'u_TSAMaxGradientUVs':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS*/42,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ScalingMode':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SCALINGMODE*/6,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_Gravity':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.GRAVITY*/7,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ThreeDStartRotation':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.THREEDSTARTROTATION*/8,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_StretchedBillboardLengthScale':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.STRETCHEDBILLBOARDLENGTHSCALE*/9,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_StretchedBillboardSpeedScale':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.STRETCHEDBILLBOARDSPEEDSCALE*/10,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_SimulationSpace':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SIMULATIONSPACE*/11,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_CurrentTime':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.CURRENTTIME*/12,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ColorOverLifeGradientAlphas':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS*/22,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ColorOverLifeGradientColors':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS*/23,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_MaxColorOverLifeGradientAlphas':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS*/24,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_MaxColorOverLifeGradientColors':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS*/25,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_VOLVelocityConst':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONST*/13,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_VOLVelocityGradientX':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTX*/14,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_VOLVelocityGradientY':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTY*/15,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_VOLVelocityGradientZ':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZ*/16,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_VOLVelocityConstMax':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONSTMAX*/17,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_VOLVelocityGradientMaxX':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX*/18,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_VOLVelocityGradientMaxY':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX*/19,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_VOLVelocityGradientMaxZ':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX*/20,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_VOLSpaceType':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLSPACETYPE*/21,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_SOLSizeGradient':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENT*/26,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_SOLSizeGradientX':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTX*/27,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_SOLSizeGradientY':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTY*/28,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_SOLSizeGradientZ':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZ*/29,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_SOLSizeGradientMax':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientMax*/30,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_SOLSizeGradientMaxX':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTXMAX*/31,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_SOLSizeGradientMaxY':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTYMAX*/32,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_SOLSizeGradientMaxZ':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZMAX*/33,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityConst':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONST*/34,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityConstSeprarate':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE*/35,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityGradient':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT*/36,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityGradientX':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX*/37,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityGradientY':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY*/38,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityGradientZ':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ*/39,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityGradientW':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTW*/40,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityConstMax':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX*/41,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityConstMaxSeprarate':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE*/42,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityGradientMax':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX*/43,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityGradientMaxX':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX*/44,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityGradientMaxY':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX*/45,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityGradientMaxZ':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX*/46,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_ROLAngularVelocityGradientMaxW':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTWMAX*/47,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_TSACycles':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES*/48,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_TSASubUVLength':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH*/49,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_TSAGradientUVs':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS*/50,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
+				'u_TSAMaxGradientUVs':[ /*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS*/51,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2],
 				'u_CameraDirection':[ /*laya.d3.core.BaseCamera.CAMERADIRECTION*/5,/*laya.d3.shader.Shader3D.PERIOD_CAMERA*/3],
 				'u_CameraUp':[ /*laya.d3.core.BaseCamera.CAMERAUP*/6,/*laya.d3.shader.Shader3D.PERIOD_CAMERA*/3],
 				'u_View':[ /*laya.d3.core.BaseCamera.VIEWMATRIX*/1,/*laya.d3.shader.Shader3D.PERIOD_CAMERA*/3],
 				'u_Projection':[ /*laya.d3.core.BaseCamera.PROJECTMATRIX*/2,/*laya.d3.shader.Shader3D.PERIOD_CAMERA*/3]};
 			var PARTICLESHURIKEN=Shader3D.nameKey.add("PARTICLESHURIKEN");
-			vs="attribute vec4 a_CornerTextureCoordinate;\nattribute vec4 a_PositionStartLifeTime;\nattribute vec4 a_DirectionTime;\nattribute vec4 a_StartColor;\nattribute vec3 a_StartSize;\nattribute vec3 a_StartRotation0;\nattribute vec3 a_StartRotation1;\nattribute vec3 a_StartRotation2;\nattribute float a_StartSpeed;\n#ifdef defined(COLOROVERLIFETIME)||defined(RANDOMCOLOROVERLIFETIME)||defined(SIZEOVERLIFETIMERANDOMCURVES)||definedSIZEOVERLIFETIMERANDOMCURVESSEPERATE||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)\n  attribute vec4 a_Random0;\n#endif\n#ifdef TEXTURESHEETANIMATIONRANDOMCURVE||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\n  attribute vec4 a_Random1;\n#endif\nattribute vec3 a_SimulationWorldPostion;\n\nvarying float v_Discard;\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\n\nuniform float u_CurrentTime;\nuniform vec3 u_Gravity;\n\nuniform vec3 u_WorldPosition;\nuniform mat4 u_WorldRotationMat;\nuniform bool u_ThreeDStartRotation;\nuniform int u_ScalingMode;\nuniform vec3 u_PositionScale;\nuniform vec3 u_SizeScale;\nuniform mat4 u_View;\nuniform mat4 u_Projection;\n\nuniform vec3 u_CameraDirection;//TODO:只有几种广告牌模式需要用\nuniform vec3 u_CameraUp;\n\nuniform  float u_StretchedBillboardLengthScale;\nuniform  float u_StretchedBillboardSpeedScale;\nuniform int u_SimulationSpace;\n\n#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\n  uniform  int  u_VOLSpaceType;\n#endif\n#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)\n  uniform  vec3 u_VOLVelocityConst;\n#endif\n#ifdef defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\n  uniform  vec2 u_VOLVelocityGradientX[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientY[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientZ[4];//x为key,y为速度\n#endif\n#ifdef VELOCITYOVERLIFETIMERANDOMCONSTANT\n  uniform  vec3 u_VOLVelocityConstMax;\n#endif\n#ifdef VELOCITYOVERLIFETIMERANDOMCURVE\n  uniform  vec2 u_VOLVelocityGradientMaxX[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientMaxY[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientMaxZ[4];//x为key,y为速度\n#endif\n\n#ifdef COLOROVERLIFETIME\n  uniform  vec4 u_ColorOverLifeGradientColors[4];//x为key,yzw为Color\n  uniform  vec2 u_ColorOverLifeGradientAlphas[4];//x为key,y为Alpha\n#endif\n#ifdef RANDOMCOLOROVERLIFETIME\n  uniform  vec4 u_ColorOverLifeGradientColors[4];//x为key,yzw为Color\n  uniform  vec2 u_ColorOverLifeGradientAlphas[4];//x为key,y为Alpha\n  uniform  vec4 u_MaxColorOverLifeGradientColors[4];//x为key,yzw为Color\n  uniform  vec2 u_MaxColorOverLifeGradientAlphas[4];//x为key,y为Alpha\n#endif\n\n\n#ifdef defined(SIZEOVERLIFETIMECURVE)||defined(SIZEOVERLIFETIMERANDOMCURVES)\n  uniform  vec2 u_SOLSizeGradient[4];//x为key,y为尺寸\n#endif\n#ifdef SIZEOVERLIFETIMERANDOMCURVES\n  uniform  vec2 u_SOLSizeGradientMax[4];//x为key,y为尺寸\n#endif\n#ifdef defined(SIZEOVERLIFETIMECURVESEPERATE)||defined(SIZEOVERLIFETIMERANDOMCURVESSEPERATE)\n  uniform  vec2 u_SOLSizeGradientX[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientY[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientZ[4];//x为key,y为尺寸\n#endif\n#ifdef SIZEOVERLIFETIMERANDOMCURVESSEPERATE\n  uniform  vec2 u_SOLSizeGradientMaxX[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientMaxY[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientMaxZ[4];//x为key,y为尺寸\n#endif\n\n\n#ifdef ROTATIONOVERLIFETIME\n  #ifdef defined(ROTATIONOVERLIFETIMECONSTANT)||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)\n    uniform  float u_ROLAngularVelocityConst;\n  #endif\n  #ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS\n    uniform  float u_ROLAngularVelocityConstMax;\n  #endif\n  #ifdef defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)\n    uniform  vec2 u_ROLAngularVelocityGradient[4];//x为key,y为旋转\n  #endif\n  #ifdef ROTATIONOVERLIFETIMERANDOMCURVES\n    uniform  vec2 u_ROLAngularVelocityGradientMax[4];//x为key,y为旋转\n  #endif\n#endif\n#ifdef ROTATIONOVERLIFETIMESEPERATE\n  #ifdef defined(ROTATIONOVERLIFETIMECONSTANT)||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)\n    uniform  vec3 u_ROLAngularVelocityConstSeprarate;\n  #endif\n  #ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS\n    uniform  vec3 u_ROLAngularVelocityConstMaxSeprarate;\n  #endif\n  #ifdef defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)\n    uniform  vec2 u_ROLAngularVelocityGradientX[4];//x为key,y为旋转\n    uniform  vec2 u_ROLAngularVelocityGradientY[4];//x为key,y为旋转\n    uniform  vec2 u_ROLAngularVelocityGradientZ[4];//x为key,y为旋转\n  #endif\n  #ifdef ROTATIONOVERLIFETIMERANDOMCURVES\n    uniform  vec2 u_ROLAngularVelocityGradientMaxX[4];//x为key,y为旋转\n    uniform  vec2 u_ROLAngularVelocityGradientMaxY[4];//x为key,y为旋转\n    uniform  vec2 u_ROLAngularVelocityGradientMaxZ[4];//x为key,y为旋转\n  #endif\n#endif\n\n#ifdef defined(TEXTURESHEETANIMATIONCURVE)||defined(TEXTURESHEETANIMATIONRANDOMCURVE)\n  uniform  float u_TSACycles;\n  uniform  vec2 u_TSASubUVLength;\n  uniform  vec2 u_TSAGradientUVs[4];//x为key,y为frame\n#endif\n#ifdef TEXTURESHEETANIMATIONRANDOMCURVE\n  uniform  vec2 u_TSAMaxGradientUVs[4];//x为key,y为frame\n#endif\n\n \n#ifdef defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)||defined(SIZEOVERLIFETIMECURVE)||defined(SIZEOVERLIFETIMECURVESEPERATE)||defined(SIZEOVERLIFETIMERANDOMCURVES)||defined(SIZEOVERLIFETIMERANDOMCURVESSEPERATE)\nfloat getCurValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)\n{\n	float curValue;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientNumber=gradientNumbers[i];\n		float key=gradientNumber.x;\n		if(key>=normalizedAge)\n		{\n			vec2 lastGradientNumber=gradientNumbers[i-1];\n			float lastKey=lastGradientNumber.x;\n			float age=(normalizedAge-lastKey)/(key-lastKey);\n			curValue=mix(lastGradientNumber.y,gradientNumber.y,age);\n			break;\n		}\n	}\n	return curValue;\n}\n#endif\n\n#ifdef VELOCITYOVERLIFETIME\n//float getTotalPositionFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)\n//{\n//	float totalPosition=0.0;\n//	for(int i=1;i<4;i++)\n//	{\n//		vec2 gradientNumber=gradientNumbers[i];\n//		float key=gradientNumber.x;\n//		vec2 lastGradientNumber=gradientNumbers[i-1];\n//		float lastValue=lastGradientNumber.y;\n//		\n//		if(key>=normalizedAge){\n//			float lastKey=lastGradientNumber.x;\n//			float age=(normalizedAge-lastKey)/(key-lastKey);\n//			\n//			float velocity=(lastValue+mix(lastValue,gradientNumber.y,age))/2.0;\n//			totalPosition+=velocity*a_PositionStartLifeTime.w*(normalizedAge-lastKey);//TODO:计算POSITION时可用优化，用已计算好速度\n//			break;\n//		}\n//		else{\n//			float velocity=(lastValue+gradientNumber.y)/2.0;\n//			totalPosition+=velocity*a_PositionStartLifeTime.w*(key-lastGradientNumber.x);\n//		}\n//	}\n//	return totalPosition;\n//}\n#endif\n\n#ifdef defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)||defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)\nfloat getTotalValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)\n{\n	float totalValue=0.0;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientNumber=gradientNumbers[i];\n		float key=gradientNumber.x;\n		vec2 lastGradientNumber=gradientNumbers[i-1];\n		float lastValue=lastGradientNumber.y;\n		\n		if(key>=normalizedAge){\n			float lastKey=lastGradientNumber.x;\n			float age=(normalizedAge-lastKey)/(key-lastKey);\n			totalValue+=(lastValue+mix(lastValue,gradientNumber.y,age))/2.0*a_PositionStartLifeTime.w*(normalizedAge-lastKey);\n			break;\n		}\n		else{\n			totalValue+=(lastValue+gradientNumber.y)/2.0*a_PositionStartLifeTime.w*(key-lastGradientNumber.x);\n		}\n	}\n	return totalValue;\n}\n#endif\n\n#ifdef defined(COLOROVERLIFETIME)||defined(RANDOMCOLOROVERLIFETIME)\nvec4 getColorFromGradient(in vec2 gradientAlphas[4],in vec4 gradientColors[4],in float normalizedAge)\n{\n	vec4 overTimeColor;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientAlpha=gradientAlphas[i];\n		float alphaKey=gradientAlpha.x;\n		if(alphaKey>=normalizedAge)\n		{\n			vec2 lastGradientAlpha=gradientAlphas[i-1];\n			float lastAlphaKey=lastGradientAlpha.x;\n			float age=(normalizedAge-lastAlphaKey)/(alphaKey-lastAlphaKey);\n			overTimeColor.a=mix(lastGradientAlpha.y,gradientAlpha.y,age);\n			break;\n		}\n	}\n	\n	for(int i=1;i<4;i++)\n	{\n		vec4 gradientColor=gradientColors[i];\n		float colorKey=gradientColor.x;\n		if(colorKey>=normalizedAge)\n		{\n			vec4 lastGradientColor=gradientColors[i-1];\n			float lastColorKey=lastGradientColor.x;\n			float age=(normalizedAge-lastColorKey)/(colorKey-lastColorKey);\n			overTimeColor.rgb=mix(gradientColors[i-1].yzw,gradientColor.yzw,age);\n			break;\n		}\n	}\n	return overTimeColor;\n}\n#endif\n\n\n#ifdef defined(TEXTURESHEETANIMATIONCURVE)||defined(TEXTURESHEETANIMATIONRANDOMCURVE)\nfloat getFrameFromGradient(in vec2 gradientFrames[4],in float normalizedAge)\n{\n	float overTimeFrame;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientFrame=gradientFrames[i];\n		float key=gradientFrame.x;\n		if(key>=normalizedAge)\n		{\n			vec2 lastGradientFrame=gradientFrames[i-1];\n			float lastKey=lastGradientFrame.x;\n			float age=(normalizedAge-lastKey)/(key-lastKey);\n			overTimeFrame=mix(lastGradientFrame.y,gradientFrame.y,age);\n			break;\n		}\n	}\n	return floor(overTimeFrame);\n}\n#endif\n\n#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\nvec3 computeParticleLifeVelocity(in float normalizedAge)\n{\n  vec3 outLifeVelocity;\n  #ifdef VELOCITYOVERLIFETIMECONSTANT\n	 outLifeVelocity=u_VOLVelocityConst; \n  #endif\n  #ifdef VELOCITYOVERLIFETIMECURVE\n     outLifeVelocity= vec3(getCurValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge));\n  #endif\n  #ifdef VELOCITYOVERLIFETIMERANDOMCONSTANT\n	 outLifeVelocity=mix(u_VOLVelocityConst,u_VOLVelocityConstMax,vec3(a_Random1.y,a_Random1.z,a_Random1.w)); \n  #endif\n  #ifdef VELOCITYOVERLIFETIMERANDOMCURVE\n     outLifeVelocity=vec3(mix(getCurValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientMaxX,normalizedAge),a_Random1.y),\n	                 mix(getCurValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientMaxY,normalizedAge),a_Random1.z),\n					 mix(getCurValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientMaxZ,normalizedAge),a_Random1.w));\n  #endif\n					\n  return outLifeVelocity;\n} \n#endif\n\nvec3 computeParticlePosition(in vec3 startVelocity, in vec3 lifeVelocity,in float age,in float normalizedAge)\n{\n   vec3 startPosition;\n   vec3 lifePosition;\n   #ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\n	#ifdef VELOCITYOVERLIFETIMECONSTANT\n		  startPosition=startVelocity*age;\n		  lifePosition=lifeVelocity*age;\n	#endif\n	#ifdef VELOCITYOVERLIFETIMECURVE\n		  startPosition=startVelocity*age;\n		  lifePosition=vec3(getTotalValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge));\n	#endif\n	#ifdef VELOCITYOVERLIFETIMERANDOMCONSTANT\n		  startPosition=startVelocity*age;\n		  lifePosition=lifeVelocity*age;\n	#endif\n	#ifdef VELOCITYOVERLIFETIMERANDOMCURVE\n		  startPosition=startVelocity*age;\n		  lifePosition=vec3(mix(getTotalValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientMaxX,normalizedAge),a_Random1.y)\n	      ,mix(getTotalValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientMaxY,normalizedAge),a_Random1.z)\n	      ,mix(getTotalValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientMaxZ,normalizedAge),a_Random1.w));\n	#endif\n	\n	vec3 finalPosition;\n	if(u_VOLSpaceType==0){\n	  if(u_ScalingMode!=2)\n	   finalPosition =mat3(u_WorldRotationMat)*(u_PositionScale*(a_PositionStartLifeTime.xyz+startPosition+lifePosition));\n	  else\n	   finalPosition =mat3(u_WorldRotationMat)*(u_PositionScale*a_PositionStartLifeTime.xyz+startPosition+lifePosition);\n	}\n	else{\n	  if(u_ScalingMode!=2)\n	    finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*(a_PositionStartLifeTime.xyz+startPosition))+lifePosition;\n	  else\n	    finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*a_PositionStartLifeTime.xyz+startPosition)+lifePosition;\n	}\n  #else\n	 startPosition=startVelocity*age;\n	 vec3 finalPosition;\n	 if(u_ScalingMode!=2)\n	   finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*(a_PositionStartLifeTime.xyz+startPosition));\n	 else\n	   finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*a_PositionStartLifeTime.xyz+startPosition);\n  #endif\n  \n  if(u_SimulationSpace==0)\n    finalPosition=finalPosition+a_SimulationWorldPostion;\n  else if(u_SimulationSpace==1) \n    finalPosition=finalPosition+u_WorldPosition;\n  \n  finalPosition+=u_Gravity*age*normalizedAge;//计算受重力影响的位置//TODO:移除\n \n  return  finalPosition;\n}\n\n\nvec4 computeParticleColor(in vec4 color,in float normalizedAge)\n{\n	#ifdef COLOROVERLIFETIME\n	  color*=getColorFromGradient(u_ColorOverLifeGradientAlphas,u_ColorOverLifeGradientColors,normalizedAge);\n	#endif\n	\n	#ifdef RANDOMCOLOROVERLIFETIME\n	  color*=mix(getColorFromGradient(u_ColorOverLifeGradientAlphas,u_ColorOverLifeGradientColors,normalizedAge),getColorFromGradient(u_MaxColorOverLifeGradientAlphas,u_MaxColorOverLifeGradientColors,normalizedAge),a_Random0.y);\n	#endif\n\n    return color;\n}\n\nvec2 computeParticleSize(in vec2 size,in float normalizedAge)\n{\n	#ifdef SIZEOVERLIFETIMECURVE\n		size*=getCurValueFromGradientFloat(u_SOLSizeGradient,normalizedAge);\n	#endif\n	#ifdef SIZEOVERLIFETIMERANDOMCURVES\n	    size*=mix(getCurValueFromGradientFloat(u_SOLSizeGradient,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMax,normalizedAge),a_Random0.z); \n	#endif\n	#ifdef SIZEOVERLIFETIMECURVESEPERATE\n		size*=vec2(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge));\n	#endif\n	#ifdef SIZEOVERLIFETIMERANDOMCURVESSEPERATE\n	    size*=vec2(mix(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxX,normalizedAge),a_Random0.z)\n	    ,mix(getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxY,normalizedAge),a_Random0.z));\n	#endif\n	return size;\n}\n\nvec3 computeParticleRotation(in vec3 rotation,in float age,in float normalizedAge)//TODO:不分轴是否无需计算XY，Billboard模式下好像是,待确认。\n{ \n	#ifdef ROTATIONOVERLIFETIME\n	#ifdef ROTATIONOVERLIFETIMECONSTANT\n			float ageRot=u_ROLAngularVelocityConst*age;\n	        rotation+=ageRot;\n		#endif\n		#ifdef ROTATIONOVERLIFETIMECURVE\n			rotation+=getTotalValueFromGradientFloat(u_ROLAngularVelocityGradient,normalizedAge);\n		#endif\n		#ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS\n			float ageRot=mix(u_ROLAngularVelocityConst,u_ROLAngularVelocityConstMax,a_Random0.w)*age;\n	        rotation+=ageRot;\n	    #endif\n		#ifdef ROTATIONOVERLIFETIMERANDOMCURVES\n			rotation+=mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradient,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMax,normalizedAge),a_Random0.w);\n		#endif\n	#endif\n	#ifdef ROTATIONOVERLIFETIMESEPERATE\n	#ifdef ROTATIONOVERLIFETIMECONSTANT\n			vec3 ageRot=u_ROLAngularVelocityConstSeprarate*age;\n	        rotation+=ageRot;\n		#endif\n		#ifdef ROTATIONOVERLIFETIMECURVE\n			rotation+=vec3(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientZ,normalizedAge));\n		#endif\n		#ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS\n			vec3 ageRot=mix(u_ROLAngularVelocityConstSeprarate,u_ROLAngularVelocityConstMaxSeprarate,a_Random0.w)*age;\n	        rotation+=ageRot;\n	    #endif\n		#ifdef ROTATIONOVERLIFETIMERANDOMCURVES\n			rotation+=vec3(mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxX,normalizedAge),a_Random0.w)\n	        ,mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxY,normalizedAge),a_Random0.w)\n	        ,mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientZ,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxZ,normalizedAge),a_Random0.w));\n		#endif\n	#endif\n	return rotation;\n}\n\nvec2 computeParticleUV(in vec2 uv,in float normalizedAge)\n{ \n	#ifdef TEXTURESHEETANIMATIONCURVE\n		float cycleNormalizedAge=normalizedAge*u_TSACycles;\n		float frame=getFrameFromGradient(u_TSAGradientUVs,cycleNormalizedAge-floor(cycleNormalizedAge));\n		float totalULength=frame*u_TSASubUVLength.x;\n		float floorTotalULength=floor(totalULength);\n	    uv.x=uv.x+totalULength-floorTotalULength;\n		uv.y=uv.y+floorTotalULength*u_TSASubUVLength.y;\n    #endif\n	#ifdef TEXTURESHEETANIMATIONRANDOMCURVE\n		float cycleNormalizedAge=normalizedAge*u_TSACycles;\n		float uvNormalizedAge=cycleNormalizedAge-floor(cycleNormalizedAge);\n	    float frame=floor(mix(getFrameFromGradient(u_TSAGradientUVs,uvNormalizedAge),getFrameFromGradient(u_TSAMaxGradientUVs,uvNormalizedAge),a_Random1.x));\n		float totalULength=frame*u_TSASubUVLength.x;\n		float floorTotalULength=floor(totalULength);\n	    uv.x=uv.x+totalULength-floorTotalULength;\n		uv.y=uv.y+floorTotalULength*u_TSASubUVLength.y;\n    #endif\n	return uv;\n}\n\nvoid main()\n{\n   float age = u_CurrentTime - a_DirectionTime.w;\n   float normalizedAge = age/a_PositionStartLifeTime.w;\n   vec3 lifeVelocity;\n   if(normalizedAge<1.0){ \n	  vec3 startVelocity=a_DirectionTime.xyz*a_StartSpeed;\n   #ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\n	  lifeVelocity= computeParticleLifeVelocity(normalizedAge);//计算粒子生命周期速度\n   #endif \n	  \n   vec3 center=computeParticlePosition(startVelocity, lifeVelocity, age, normalizedAge);//计算粒子位置\n   vec2 corner=a_CornerTextureCoordinate.xy;//Billboard模式z轴无效\n   \n   #ifdef SPHERHBILLBOARD\n        vec3 cameraUpVector =normalize(u_CameraUp);//TODO:是否外面归一化\n        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));\n        vec3 upVector = normalize(cross(sideVector,u_CameraDirection));\n	    corner*=computeParticleSize(a_StartSize.xy,normalizedAge);\n		if(u_ThreeDStartRotation){\n		  center += u_SizeScale.xzy*(mat3(a_StartRotation0,a_StartRotation1,a_StartRotation2)*(corner.x*sideVector+corner.y*upVector));\n		}\n		else{\n		  vec3 rotationAng = computeParticleRotation(a_StartRotation0, age,normalizedAge);\n		  float rot=rotationAng.z;\n          float c = cos(rot);\n          float s = sin(rot);\n          mat2 rotation= mat2(c, -s, s, c);\n		  corner=rotation*corner;\n		  center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);\n		}\n       \n   #endif\n   \n   #ifdef STRETCHEDBILLBOARD\n	vec3 velocity;\n	#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\n	    if(u_VOLSpaceType==0)\n		  velocity=mat3(u_WorldRotationMat)*(u_SizeScale*(startVelocity+lifeVelocity));\n	    else\n		  velocity=mat3(u_WorldRotationMat)*(u_SizeScale*startVelocity)+lifeVelocity;\n    #else\n	    velocity= mat3(u_WorldRotationMat)*(u_SizeScale*startVelocity);\n    #endif   \n        vec3 cameraUpVector =normalize(velocity);\n        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));\n	    vec2 size=computeParticleSize(a_StartSize.xy,normalizedAge);\n	    const mat2 rotaionZHalfPI=mat2(0.0, -1.0, 1.0, 0.0);\n	    corner=rotaionZHalfPI*corner;\n	    corner.y=corner.y-abs(corner.y);\n	    float speed=length(velocity);//TODO:\n	    center +=u_SizeScale.xzy*(size.x*corner.x*sideVector+(speed*u_StretchedBillboardSpeedScale+size.y*u_StretchedBillboardLengthScale)*corner.y*cameraUpVector);\n   #endif\n   \n   #ifdef HORIZONTALBILLBOARD\n        const vec3 cameraUpVector=vec3(0.0,0.0,-1.0);\n	    const vec3 sideVector = vec3(1.0,0.0,0.0);\n		corner*=computeParticleSize(a_StartSize.xy,normalizedAge);\n		vec3 rotationAng = computeParticleRotation(a_StartRotation0, age,normalizedAge);\n	    float rot=rotationAng.z;\n        float c = cos(rot);\n        float s = sin(rot);\n        mat2 rotation= mat2(c, -s, s, c);\n	    corner=rotation*corner*cos(0.78539816339744830961566084581988);//TODO:临时缩小cos45,不确定U3D原因\n        center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*cameraUpVector);\n   #endif\n   \n   #ifdef VERTICALBILLBOARD\n        const vec3 cameraUpVector =vec3(0.0,1.0,0.0);\n        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));\n		corner*=computeParticleSize(a_StartSize.xy,normalizedAge);\n		vec3 rotationAng = computeParticleRotation(a_StartRotation0, age,normalizedAge);\n		float rot=rotationAng.z;\n        float c = cos(rot);\n        float s = sin(rot);\n        mat2 rotation= mat2(c, -s, s, c);\n	    corner=rotation*corner*cos(0.78539816339744830961566084581988);//TODO:临时缩小cos45,不确定U3D原因\n        center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*cameraUpVector);\n   #endif\n   \n      gl_Position=u_Projection*u_View*vec4(center,1.0);\n      v_Color = computeParticleColor(a_StartColor, normalizedAge);\n      v_TextureCoordinate =computeParticleUV(a_CornerTextureCoordinate.zw, normalizedAge);\n      v_Discard=0.0;\n   }\n   else\n   {\n      v_Discard=1.0;\n   }\n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/ParticleShuriKen.vs*/;
-			ps="#ifdef FSHIGHPRECISION\n  precision highp float;\n#else\n  precision mediump float;\n#endif\n\nvarying float v_Discard;\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\nuniform sampler2D u_texture;\nuniform vec4 u_Tintcolor;\n\n\nvoid main()\n{	\n	#ifdef DIFFUSEMAP\n	  if(v_Discard!=0.0)\n         discard;\n	  gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*u_Tintcolor*2.0*v_Color;\n	#else\n	  gl_FragColor=vec4(0.0);\n	#endif\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/ParticleShuriKen.ps*/;
+			vs="#ifdef defined(SPHERHBILLBOARD)||defined(STRETCHEDBILLBOARD)||defined(HORIZONTALBILLBOARD)||defined(VERTICALBILLBOARD)\n	attribute vec4 a_CornerTextureCoordinate;\n#endif\n#ifdef RENDERMODE_MESH\n	attribute vec3 a_MeshPosition;\n	attribute vec2 a_MeshTextureCoordinate;\n#endif\n\nattribute vec4 a_PositionStartLifeTime;\nattribute vec4 a_DirectionTime;\nattribute vec4 a_StartColor;\nattribute vec3 a_StartSize;\nattribute vec4 a_StartRotation0;\nattribute float a_StartSpeed;\n#ifdef defined(COLOROVERLIFETIME)||defined(RANDOMCOLOROVERLIFETIME)||defined(SIZEOVERLIFETIMERANDOMCURVES)||definedSIZEOVERLIFETIMERANDOMCURVESSEPERATE||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)\n  attribute vec4 a_Random0;\n#endif\n#ifdef TEXTURESHEETANIMATIONRANDOMCURVE||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\n  attribute vec4 a_Random1;\n#endif\nattribute vec3 a_SimulationWorldPostion;\n\nvarying float v_Discard;\nvarying vec4 v_Color;\n#ifdef DIFFUSEMAP\n	varying vec2 v_TextureCoordinate;\n#endif\n\nuniform float u_CurrentTime;\nuniform vec3 u_Gravity;\n\nuniform vec3 u_WorldPosition;\nuniform mat4 u_WorldRotationMat;\nuniform bool u_ThreeDStartRotation;\nuniform int u_ScalingMode;\nuniform vec3 u_PositionScale;\nuniform vec3 u_SizeScale;\nuniform mat4 u_View;\nuniform mat4 u_Projection;\n\nuniform vec3 u_CameraDirection;//TODO:只有几种广告牌模式需要用\nuniform vec3 u_CameraUp;\n\nuniform  float u_StretchedBillboardLengthScale;\nuniform  float u_StretchedBillboardSpeedScale;\nuniform int u_SimulationSpace;\n\n#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\n  uniform  int  u_VOLSpaceType;\n#endif\n#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)\n  uniform  vec3 u_VOLVelocityConst;\n#endif\n#ifdef defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\n  uniform  vec2 u_VOLVelocityGradientX[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientY[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientZ[4];//x为key,y为速度\n#endif\n#ifdef VELOCITYOVERLIFETIMERANDOMCONSTANT\n  uniform  vec3 u_VOLVelocityConstMax;\n#endif\n#ifdef VELOCITYOVERLIFETIMERANDOMCURVE\n  uniform  vec2 u_VOLVelocityGradientMaxX[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientMaxY[4];//x为key,y为速度\n  uniform  vec2 u_VOLVelocityGradientMaxZ[4];//x为key,y为速度\n#endif\n\n#ifdef COLOROVERLIFETIME\n  uniform  vec4 u_ColorOverLifeGradientColors[4];//x为key,yzw为Color\n  uniform  vec2 u_ColorOverLifeGradientAlphas[4];//x为key,y为Alpha\n#endif\n#ifdef RANDOMCOLOROVERLIFETIME\n  uniform  vec4 u_ColorOverLifeGradientColors[4];//x为key,yzw为Color\n  uniform  vec2 u_ColorOverLifeGradientAlphas[4];//x为key,y为Alpha\n  uniform  vec4 u_MaxColorOverLifeGradientColors[4];//x为key,yzw为Color\n  uniform  vec2 u_MaxColorOverLifeGradientAlphas[4];//x为key,y为Alpha\n#endif\n\n\n#ifdef defined(SIZEOVERLIFETIMECURVE)||defined(SIZEOVERLIFETIMERANDOMCURVES)\n  uniform  vec2 u_SOLSizeGradient[4];//x为key,y为尺寸\n#endif\n#ifdef SIZEOVERLIFETIMERANDOMCURVES\n  uniform  vec2 u_SOLSizeGradientMax[4];//x为key,y为尺寸\n#endif\n#ifdef defined(SIZEOVERLIFETIMECURVESEPERATE)||defined(SIZEOVERLIFETIMERANDOMCURVESSEPERATE)\n  uniform  vec2 u_SOLSizeGradientX[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientY[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientZ[4];//x为key,y为尺寸\n#endif\n#ifdef SIZEOVERLIFETIMERANDOMCURVESSEPERATE\n  uniform  vec2 u_SOLSizeGradientMaxX[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientMaxY[4];//x为key,y为尺寸\n  uniform  vec2 u_SOLSizeGradientMaxZ[4];//x为key,y为尺寸\n#endif\n\n\n#ifdef ROTATIONOVERLIFETIME\n  #ifdef defined(ROTATIONOVERLIFETIMECONSTANT)||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)\n    uniform  float u_ROLAngularVelocityConst;\n  #endif\n  #ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS\n    uniform  float u_ROLAngularVelocityConstMax;\n  #endif\n  #ifdef defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)\n    uniform  vec2 u_ROLAngularVelocityGradient[4];//x为key,y为旋转\n  #endif\n  #ifdef ROTATIONOVERLIFETIMERANDOMCURVES\n    uniform  vec2 u_ROLAngularVelocityGradientMax[4];//x为key,y为旋转\n  #endif\n#endif\n#ifdef ROTATIONOVERLIFETIMESEPERATE\n  #ifdef defined(ROTATIONOVERLIFETIMECONSTANT)||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)\n    uniform  vec4 u_ROLAngularVelocityConstSeprarate;\n  #endif\n  #ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS\n    uniform  vec4 u_ROLAngularVelocityConstMaxSeprarate;\n  #endif\n  #ifdef defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)\n    uniform  vec2 u_ROLAngularVelocityGradientX[4];\n    uniform  vec2 u_ROLAngularVelocityGradientY[4];\n    uniform  vec2 u_ROLAngularVelocityGradientZ[4];\n	uniform  vec2 u_ROLAngularVelocityGradientW[4];\n  #endif\n  #ifdef ROTATIONOVERLIFETIMERANDOMCURVES\n    uniform  vec2 u_ROLAngularVelocityGradientMaxX[4];\n    uniform  vec2 u_ROLAngularVelocityGradientMaxY[4];\n    uniform  vec2 u_ROLAngularVelocityGradientMaxZ[4];\n	uniform  vec2 u_ROLAngularVelocityGradientMaxW[4];\n  #endif\n#endif\n\n#ifdef defined(TEXTURESHEETANIMATIONCURVE)||defined(TEXTURESHEETANIMATIONRANDOMCURVE)\n  uniform  float u_TSACycles;\n  uniform  vec2 u_TSASubUVLength;\n  uniform  vec2 u_TSAGradientUVs[4];//x为key,y为frame\n#endif\n#ifdef TEXTURESHEETANIMATIONRANDOMCURVE\n  uniform  vec2 u_TSAMaxGradientUVs[4];//x为key,y为frame\n#endif\n\n\n\nvec3  rotationByQuaternion(in vec3 vector,in vec4 qua)\n{\n	float x = qua.x + qua.x;\n    float y = qua.y + qua.y;\n    float z = qua.z + qua.z;\n    float wx = qua.w * x;\n    float wy = qua.w * y;\n    float wz = qua.w * z;\n	float xx = qua.x * x;\n    float xy = qua.x * y;\n	float xz = qua.x * z;\n    float yy = qua.y * y;\n    float yz = qua.y * z;\n    float zz = qua.z * z;\n\n    return vec3(((vector.x * ((1.0 - yy) - zz)) + (vector.y * (xy - wz))) + (vector.z * (xz + wy)),\n                ((vector.x * (xy + wz)) + (vector.y * ((1.0 - xx) - zz))) + (vector.z * (yz - wx)),\n                ((vector.x * (xz - wy)) + (vector.y * (yz + wx))) + (vector.z * ((1.0 - xx) - yy)));\n	\n}\n\n//假定axis已经归一化\nvec4 createQuaternionByAxis(in vec3 axis, in float angle)\n{\n	float halfAngle = angle * 0.5;\n	float sin = sin(halfAngle);\n\n	return vec4(axis.x * sin,axis.y * sin,axis.z * sin,cos(halfAngle));\n}\n\n\n \n#ifdef defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)||defined(SIZEOVERLIFETIMECURVE)||defined(SIZEOVERLIFETIMECURVESEPERATE)||defined(SIZEOVERLIFETIMERANDOMCURVES)||defined(SIZEOVERLIFETIMERANDOMCURVESSEPERATE)\nfloat getCurValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)\n{\n	float curValue;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientNumber=gradientNumbers[i];\n		float key=gradientNumber.x;\n		if(key>=normalizedAge)\n		{\n			vec2 lastGradientNumber=gradientNumbers[i-1];\n			float lastKey=lastGradientNumber.x;\n			float age=(normalizedAge-lastKey)/(key-lastKey);\n			curValue=mix(lastGradientNumber.y,gradientNumber.y,age);\n			break;\n		}\n	}\n	return curValue;\n}\n#endif\n\n#ifdef VELOCITYOVERLIFETIME\n//float getTotalPositionFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)\n//{\n//	float totalPosition=0.0;\n//	for(int i=1;i<4;i++)\n//	{\n//		vec2 gradientNumber=gradientNumbers[i];\n//		float key=gradientNumber.x;\n//		vec2 lastGradientNumber=gradientNumbers[i-1];\n//		float lastValue=lastGradientNumber.y;\n//		\n//		if(key>=normalizedAge){\n//			float lastKey=lastGradientNumber.x;\n//			float age=(normalizedAge-lastKey)/(key-lastKey);\n//			\n//			float velocity=(lastValue+mix(lastValue,gradientNumber.y,age))/2.0;\n//			totalPosition+=velocity*a_PositionStartLifeTime.w*(normalizedAge-lastKey);//TODO:计算POSITION时可用优化，用已计算好速度\n//			break;\n//		}\n//		else{\n//			float velocity=(lastValue+gradientNumber.y)/2.0;\n//			totalPosition+=velocity*a_PositionStartLifeTime.w*(key-lastGradientNumber.x);\n//		}\n//	}\n//	return totalPosition;\n//}\n#endif\n\n#ifdef defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)||defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)\nfloat getTotalValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)\n{\n	float totalValue=0.0;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientNumber=gradientNumbers[i];\n		float key=gradientNumber.x;\n		vec2 lastGradientNumber=gradientNumbers[i-1];\n		float lastValue=lastGradientNumber.y;\n		\n		if(key>=normalizedAge){\n			float lastKey=lastGradientNumber.x;\n			float age=(normalizedAge-lastKey)/(key-lastKey);\n			totalValue+=(lastValue+mix(lastValue,gradientNumber.y,age))/2.0*a_PositionStartLifeTime.w*(normalizedAge-lastKey);\n			break;\n		}\n		else{\n			totalValue+=(lastValue+gradientNumber.y)/2.0*a_PositionStartLifeTime.w*(key-lastGradientNumber.x);\n		}\n	}\n	return totalValue;\n}\n#endif\n\n#ifdef defined(COLOROVERLIFETIME)||defined(RANDOMCOLOROVERLIFETIME)\nvec4 getColorFromGradient(in vec2 gradientAlphas[4],in vec4 gradientColors[4],in float normalizedAge)\n{\n	vec4 overTimeColor;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientAlpha=gradientAlphas[i];\n		float alphaKey=gradientAlpha.x;\n		if(alphaKey>=normalizedAge)\n		{\n			vec2 lastGradientAlpha=gradientAlphas[i-1];\n			float lastAlphaKey=lastGradientAlpha.x;\n			float age=(normalizedAge-lastAlphaKey)/(alphaKey-lastAlphaKey);\n			overTimeColor.a=mix(lastGradientAlpha.y,gradientAlpha.y,age);\n			break;\n		}\n	}\n	\n	for(int i=1;i<4;i++)\n	{\n		vec4 gradientColor=gradientColors[i];\n		float colorKey=gradientColor.x;\n		if(colorKey>=normalizedAge)\n		{\n			vec4 lastGradientColor=gradientColors[i-1];\n			float lastColorKey=lastGradientColor.x;\n			float age=(normalizedAge-lastColorKey)/(colorKey-lastColorKey);\n			overTimeColor.rgb=mix(gradientColors[i-1].yzw,gradientColor.yzw,age);\n			break;\n		}\n	}\n	return overTimeColor;\n}\n#endif\n\n\n#ifdef defined(TEXTURESHEETANIMATIONCURVE)||defined(TEXTURESHEETANIMATIONRANDOMCURVE)\nfloat getFrameFromGradient(in vec2 gradientFrames[4],in float normalizedAge)\n{\n	float overTimeFrame;\n	for(int i=1;i<4;i++)\n	{\n		vec2 gradientFrame=gradientFrames[i];\n		float key=gradientFrame.x;\n		if(key>=normalizedAge)\n		{\n			vec2 lastGradientFrame=gradientFrames[i-1];\n			float lastKey=lastGradientFrame.x;\n			float age=(normalizedAge-lastKey)/(key-lastKey);\n			overTimeFrame=mix(lastGradientFrame.y,gradientFrame.y,age);\n			break;\n		}\n	}\n	return floor(overTimeFrame);\n}\n#endif\n\n#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\nvec3 computeParticleLifeVelocity(in float normalizedAge)\n{\n  vec3 outLifeVelocity;\n  #ifdef VELOCITYOVERLIFETIMECONSTANT\n	 outLifeVelocity=u_VOLVelocityConst; \n  #endif\n  #ifdef VELOCITYOVERLIFETIMECURVE\n     outLifeVelocity= vec3(getCurValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge));\n  #endif\n  #ifdef VELOCITYOVERLIFETIMERANDOMCONSTANT\n	 outLifeVelocity=mix(u_VOLVelocityConst,u_VOLVelocityConstMax,vec3(a_Random1.y,a_Random1.z,a_Random1.w)); \n  #endif\n  #ifdef VELOCITYOVERLIFETIMERANDOMCURVE\n     outLifeVelocity=vec3(mix(getCurValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientMaxX,normalizedAge),a_Random1.y),\n	                 mix(getCurValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientMaxY,normalizedAge),a_Random1.z),\n					 mix(getCurValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge),getCurValueFromGradientFloat(u_VOLVelocityGradientMaxZ,normalizedAge),a_Random1.w));\n  #endif\n					\n  return outLifeVelocity;\n} \n#endif\n\nvec3 computeParticlePosition(in vec3 startVelocity, in vec3 lifeVelocity,in float age,in float normalizedAge)\n{\n   vec3 startPosition;\n   vec3 lifePosition;\n   #ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\n	#ifdef VELOCITYOVERLIFETIMECONSTANT\n		  startPosition=startVelocity*age;\n		  lifePosition=lifeVelocity*age;\n	#endif\n	#ifdef VELOCITYOVERLIFETIMECURVE\n		  startPosition=startVelocity*age;\n		  lifePosition=vec3(getTotalValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge));\n	#endif\n	#ifdef VELOCITYOVERLIFETIMERANDOMCONSTANT\n		  startPosition=startVelocity*age;\n		  lifePosition=lifeVelocity*age;\n	#endif\n	#ifdef VELOCITYOVERLIFETIMERANDOMCURVE\n		  startPosition=startVelocity*age;\n		  lifePosition=vec3(mix(getTotalValueFromGradientFloat(u_VOLVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientMaxX,normalizedAge),a_Random1.y)\n	      ,mix(getTotalValueFromGradientFloat(u_VOLVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientMaxY,normalizedAge),a_Random1.z)\n	      ,mix(getTotalValueFromGradientFloat(u_VOLVelocityGradientZ,normalizedAge),getTotalValueFromGradientFloat(u_VOLVelocityGradientMaxZ,normalizedAge),a_Random1.w));\n	#endif\n	\n	vec3 finalPosition;\n	if(u_VOLSpaceType==0){\n	  if(u_ScalingMode!=2)\n	   finalPosition =mat3(u_WorldRotationMat)*(u_PositionScale*(a_PositionStartLifeTime.xyz+startPosition+lifePosition));\n	  else\n	   finalPosition =mat3(u_WorldRotationMat)*(u_PositionScale*a_PositionStartLifeTime.xyz+startPosition+lifePosition);\n	}\n	else{\n	  if(u_ScalingMode!=2)\n	    finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*(a_PositionStartLifeTime.xyz+startPosition))+lifePosition;\n	  else\n	    finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*a_PositionStartLifeTime.xyz+startPosition)+lifePosition;\n	}\n  #else\n	 startPosition=startVelocity*age;\n	 vec3 finalPosition;\n	 if(u_ScalingMode!=2)\n	   finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*(a_PositionStartLifeTime.xyz+startPosition));\n	 else\n	   finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*a_PositionStartLifeTime.xyz+startPosition);\n  #endif\n  \n  if(u_SimulationSpace==0)\n    finalPosition=finalPosition+a_SimulationWorldPostion;\n  else if(u_SimulationSpace==1) \n    finalPosition=finalPosition+u_WorldPosition;\n  \n  finalPosition+=u_Gravity*age*normalizedAge;//计算受重力影响的位置//TODO:移除\n \n  return  finalPosition;\n}\n\n\nvec4 computeParticleColor(in vec4 color,in float normalizedAge)\n{\n	#ifdef COLOROVERLIFETIME\n	  color*=getColorFromGradient(u_ColorOverLifeGradientAlphas,u_ColorOverLifeGradientColors,normalizedAge);\n	#endif\n	\n	#ifdef RANDOMCOLOROVERLIFETIME\n	  color*=mix(getColorFromGradient(u_ColorOverLifeGradientAlphas,u_ColorOverLifeGradientColors,normalizedAge),getColorFromGradient(u_MaxColorOverLifeGradientAlphas,u_MaxColorOverLifeGradientColors,normalizedAge),a_Random0.y);\n	#endif\n\n    return color;\n}\n\nvec2 computeParticleSizeBillbard(in vec2 size,in float normalizedAge)\n{\n	#ifdef SIZEOVERLIFETIMECURVE\n		size*=getCurValueFromGradientFloat(u_SOLSizeGradient,normalizedAge);\n	#endif\n	#ifdef SIZEOVERLIFETIMERANDOMCURVES\n	    size*=mix(getCurValueFromGradientFloat(u_SOLSizeGradient,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMax,normalizedAge),a_Random0.z); \n	#endif\n	#ifdef SIZEOVERLIFETIMECURVESEPERATE\n		size*=vec2(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge));\n	#endif\n	#ifdef SIZEOVERLIFETIMERANDOMCURVESSEPERATE\n	    size*=vec2(mix(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxX,normalizedAge),a_Random0.z)\n	    ,mix(getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxY,normalizedAge),a_Random0.z));\n	#endif\n	return size;\n}\n\n#ifdef RENDERMODE_MESH\nvec3 computeParticleSizeMesh(in vec3 size,in float normalizedAge)\n{\n	#ifdef SIZEOVERLIFETIMECURVE\n		size*=getCurValueFromGradientFloat(u_SOLSizeGradient,normalizedAge);\n	#endif\n	#ifdef SIZEOVERLIFETIMERANDOMCURVES\n	    size*=mix(getCurValueFromGradientFloat(u_SOLSizeGradient,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMax,normalizedAge),a_Random0.z); \n	#endif\n	#ifdef SIZEOVERLIFETIMECURVESEPERATE\n		size*=vec2(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge));\n	#endif\n	#ifdef SIZEOVERLIFETIMERANDOMCURVESSEPERATE\n	    size*=vec2(mix(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxX,normalizedAge),a_Random0.z)\n	    ,mix(getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxY,normalizedAge),a_Random0.z));\n	#endif\n	return size;\n}\n#endif\n\nfloat computeParticleRotationFloat(in float rotation,in float age,in float normalizedAge)\n{ \n	#ifdef ROTATIONOVERLIFETIME\n	#ifdef ROTATIONOVERLIFETIMECONSTANT\n			float ageRot=u_ROLAngularVelocityConst*age;\n	        rotation+=ageRot;\n		#endif\n		#ifdef ROTATIONOVERLIFETIMECURVE\n			rotation+=getTotalValueFromGradientFloat(u_ROLAngularVelocityGradient,normalizedAge);\n		#endif\n		#ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS\n			float ageRot=mix(u_ROLAngularVelocityConst,u_ROLAngularVelocityConstMax,a_Random0.w)*age;\n	        rotation+=ageRot;\n	    #endif\n		#ifdef ROTATIONOVERLIFETIMERANDOMCURVES\n			rotation+=mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradient,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMax,normalizedAge),a_Random0.w);\n		#endif\n	#endif\n	#ifdef ROTATIONOVERLIFETIMESEPERATE\n	#ifdef ROTATIONOVERLIFETIMECONSTANT\n			float ageRot=u_ROLAngularVelocityConstSeprarate.z*age;\n	        rotation+=ageRot;\n		#endif\n		#ifdef ROTATIONOVERLIFETIMECURVE\n			rotation+=getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientZ,normalizedAge);\n		#endif\n		#ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS\n			float ageRot=mix(u_ROLAngularVelocityConstSeprarate.z,u_ROLAngularVelocityConstMaxSeprarate.z,a_Random0.w)*age;\n	        rotation+=ageRot;\n	    #endif\n		#ifdef ROTATIONOVERLIFETIMERANDOMCURVES\n			rotation+=mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientZ,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxZ,normalizedAge),a_Random0.w));\n		#endif\n	#endif\n	return rotation;\n}\n\n#ifdef defined(RENDERMODE_MESH)&&(defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE))\nvec3 computeParticleRotationMesh(in vec3 rotation,in float age,in float normalizedAge)\n{ \n	#ifdef ROTATIONOVERLIFETIME\n	#ifdef ROTATIONOVERLIFETIMECONSTANT\n			float ageRot=u_ROLAngularVelocityConst*age;\n	        rotation+=ageRot;\n		#endif\n		#ifdef ROTATIONOVERLIFETIMECURVE\n			rotation+=getTotalValueFromGradientFloat(u_ROLAngularVelocityGradient,normalizedAge);\n		#endif\n		#ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS\n			float ageRot=mix(u_ROLAngularVelocityConst,u_ROLAngularVelocityConstMax,a_Random0.w)*age;\n	        rotation+=ageRot;\n	    #endif\n		#ifdef ROTATIONOVERLIFETIMERANDOMCURVES\n			rotation+=mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradient,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMax,normalizedAge),a_Random0.w);\n		#endif\n	#endif\n	#ifdef ROTATIONOVERLIFETIMESEPERATE\n	#ifdef ROTATIONOVERLIFETIMECONSTANT\n			vec3 ageRot=u_ROLAngularVelocityConstSeprarate*age;\n	        rotation+=ageRot;\n		#endif\n		#ifdef ROTATIONOVERLIFETIMECURVE\n			rotation+=vec3(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientZ,normalizedAge));\n		#endif\n		#ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS\n			vec3 ageRot=mix(u_ROLAngularVelocityConstSeprarate,u_ROLAngularVelocityConstMaxSeprarate,a_Random0.w)*age;\n	        rotation+=ageRot;\n	    #endif\n		#ifdef ROTATIONOVERLIFETIMERANDOMCURVES\n			rotation+=vec3(mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientX,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxX,normalizedAge),a_Random0.w)\n	        ,mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientY,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxY,normalizedAge),a_Random0.w)\n	        ,mix(getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientZ,normalizedAge),getTotalValueFromGradientFloat(u_ROLAngularVelocityGradientMaxZ,normalizedAge),a_Random0.w));\n		#endif\n	#endif\n	return rotation;\n}\n#endif\n\nvec2 computeParticleUV(in vec2 uv,in float normalizedAge)\n{ \n	#ifdef TEXTURESHEETANIMATIONCURVE\n		float cycleNormalizedAge=normalizedAge*u_TSACycles;\n		float frame=getFrameFromGradient(u_TSAGradientUVs,cycleNormalizedAge-floor(cycleNormalizedAge));\n		float totalULength=frame*u_TSASubUVLength.x;\n		float floorTotalULength=floor(totalULength);\n	    uv.x=uv.x+totalULength-floorTotalULength;\n		uv.y=uv.y+floorTotalULength*u_TSASubUVLength.y;\n    #endif\n	#ifdef TEXTURESHEETANIMATIONRANDOMCURVE\n		float cycleNormalizedAge=normalizedAge*u_TSACycles;\n		float uvNormalizedAge=cycleNormalizedAge-floor(cycleNormalizedAge);\n	    float frame=floor(mix(getFrameFromGradient(u_TSAGradientUVs,uvNormalizedAge),getFrameFromGradient(u_TSAMaxGradientUVs,uvNormalizedAge),a_Random1.x));\n		float totalULength=frame*u_TSASubUVLength.x;\n		float floorTotalULength=floor(totalULength);\n	    uv.x=uv.x+totalULength-floorTotalULength;\n		uv.y=uv.y+floorTotalULength*u_TSASubUVLength.y;\n    #endif\n	return uv;\n}\n\nvoid main()\n{\n   float age = u_CurrentTime - a_DirectionTime.w;\n   float normalizedAge = age/a_PositionStartLifeTime.w;\n   vec3 lifeVelocity;\n   if(normalizedAge<1.0){ \n	  vec3 startVelocity=a_DirectionTime.xyz*a_StartSpeed;\n   #ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\n	  lifeVelocity= computeParticleLifeVelocity(normalizedAge);//计算粒子生命周期速度\n   #endif \n	  \n   vec3 center=computeParticlePosition(startVelocity, lifeVelocity, age, normalizedAge);//计算粒子位置\n   \n   #ifdef SPHERHBILLBOARD\n		vec2 corner=a_CornerTextureCoordinate.xy;//Billboard模式z轴无效\n        vec3 cameraUpVector =normalize(u_CameraUp);//TODO:是否外面归一化\n        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));\n        vec3 upVector = normalize(cross(sideVector,u_CameraDirection));\n	    corner*=computeParticleSizeBillbard(a_StartSize.xy,normalizedAge);\n		if(u_ThreeDStartRotation){\n			center += u_SizeScale.xzy*rotationByQuaternion(corner.x*sideVector+corner.y*upVector,a_StartRotation0);\n		}\n		else{\n		  float rot = computeParticleRotationFloat(a_StartRotation0.x, age,normalizedAge);\n          float c = cos(rot);\n          float s = sin(rot);\n          mat2 rotation= mat2(c, -s, s, c);\n		  corner=rotation*corner;\n		  center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);\n		}\n   #endif\n   \n   #ifdef STRETCHEDBILLBOARD\n	vec2 corner=a_CornerTextureCoordinate.xy;//Billboard模式z轴无效\n	vec3 velocity;\n	#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)\n	    if(u_VOLSpaceType==0)\n		  velocity=mat3(u_WorldRotationMat)*(u_SizeScale*(startVelocity+lifeVelocity));\n	    else\n		  velocity=mat3(u_WorldRotationMat)*(u_SizeScale*startVelocity)+lifeVelocity;\n    #else\n	    velocity= mat3(u_WorldRotationMat)*(u_SizeScale*startVelocity);\n    #endif   \n        vec3 cameraUpVector =normalize(velocity);\n        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));\n	    vec2 size=computeParticleSizeBillbard(a_StartSize.xy,normalizedAge);\n	    const mat2 rotaionZHalfPI=mat2(0.0, -1.0, 1.0, 0.0);\n	    corner=rotaionZHalfPI*corner;\n	    corner.y=corner.y-abs(corner.y);\n	    float speed=length(velocity);//TODO:\n	    center +=u_SizeScale.xzy*(size.x*corner.x*sideVector+(speed*u_StretchedBillboardSpeedScale+size.y*u_StretchedBillboardLengthScale)*corner.y*cameraUpVector);\n   #endif\n   \n   #ifdef HORIZONTALBILLBOARD\n		vec2 corner=a_CornerTextureCoordinate.xy;//Billboard模式z轴无效\n        const vec3 cameraUpVector=vec3(0.0,0.0,-1.0);\n	    const vec3 sideVector = vec3(1.0,0.0,0.0);\n		corner*=computeParticleSizeBillbard(a_StartSize.xy,normalizedAge);\n		float rot = computeParticleRotationFloat(a_StartRotation0.x, age,normalizedAge);\n        float c = cos(rot);\n        float s = sin(rot);\n        mat2 rotation= mat2(c, -s, s, c);\n	    corner=rotation*corner*cos(0.78539816339744830961566084581988);//TODO:临时缩小cos45,不确定U3D原因\n        center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*cameraUpVector);\n   #endif\n   \n   #ifdef VERTICALBILLBOARD\n		vec2 corner=a_CornerTextureCoordinate.xy;//Billboard模式z轴无效\n        const vec3 cameraUpVector =vec3(0.0,1.0,0.0);\n        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));\n		corner*=computeParticleSizeBillbard(a_StartSize.xy,normalizedAge);\n		float rot = computeParticleRotationFloat(a_StartRotation0.x, age,normalizedAge);\n        float c = cos(rot);\n        float s = sin(rot);\n        mat2 rotation= mat2(c, -s, s, c);\n	    corner=rotation*corner*cos(0.78539816339744830961566084581988);//TODO:临时缩小cos45,不确定U3D原因\n        center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*cameraUpVector);\n   #endif\n   \n   #ifdef RENDERMODE_MESH\n	    vec3 size=computeParticleSizeMesh(a_StartSize,normalizedAge);\n		#ifdef defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE)\n			float angle=computeParticleRotationFloat(a_StartRotation0.w, age,normalizedAge);\n			vec4 qua=createQuaternionByAxis(a_StartRotation0.xyz,angle);\n			center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByQuaternion(a_MeshPosition*size,qua));\n		#else\n			if(u_ThreeDStartRotation){\n				center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByQuaternion(a_MeshPosition*size,a_StartRotation0));\n			}\n			else{\n				vec4 qua=createQuaternionByAxis(a_StartRotation0.xyz,a_StartRotation0.w);\n				center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByQuaternion(a_MeshPosition*size,qua));\n			}\n		#endif\n   #endif\n   \n      gl_Position=u_Projection*u_View*vec4(center,1.0);\n      v_Color = computeParticleColor(a_StartColor, normalizedAge);\n	#ifdef DIFFUSEMAP\n		#ifdef defined(SPHERHBILLBOARD)||defined(STRETCHEDBILLBOARD)||defined(HORIZONTALBILLBOARD)||defined(VERTICALBILLBOARD)\n			v_TextureCoordinate =computeParticleUV(a_CornerTextureCoordinate.zw, normalizedAge);\n		#endif\n		#ifdef RENDERMODE_MESH\n			v_TextureCoordinate =computeParticleUV(a_MeshTextureCoordinate, normalizedAge);\n		#endif\n	#endif\n      v_Discard=0.0;\n   }\n   else\n   {\n      v_Discard=1.0;\n   }\n}\n\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/ParticleShuriKen.vs*/;
+			ps="#ifdef FSHIGHPRECISION\n  precision highp float;\n#else\n  precision mediump float;\n#endif\n\nvarying float v_Discard;\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\nuniform sampler2D u_texture;\nuniform vec4 u_Tintcolor;\n\n\nvoid main()\n{	\n	#ifdef DIFFUSEMAP\n		if(v_Discard!=0.0)\n			discard;\n		#ifdef TINTCOLOR\n			gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*u_Tintcolor*2.0*v_Color;\n		#else\n			gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*v_Color;\n		#endif\n	#else\n		#ifdef TINTCOLOR\n			gl_FragColor=u_Tintcolor*2.0*v_Color;\n		#else\n			gl_FragColor=v_Color;\n		#endif\n	#endif\n}"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/ParticleShuriKen.ps*/;
 			shaderCompile=ShaderCompile3D.add(PARTICLESHURIKEN,vs,ps,attributeMap,uniformMap);
 			ShurikenParticleMaterial.SHADERDEFINE_DIFFUSEMAP=shaderCompile.registerMaterialDefine("DIFFUSEMAP");
-			ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD=shaderCompile.registerSpriteDefine("SPHERHBILLBOARD");
-			ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD=shaderCompile.registerSpriteDefine("STRETCHEDBILLBOARD");
-			ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD=shaderCompile.registerSpriteDefine("HORIZONTALBILLBOARD");
-			ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD=shaderCompile.registerSpriteDefine("VERTICALBILLBOARD");
+			ShurikenParticleMaterial.SHADERDEFINE_TINTCOLOR=shaderCompile.registerMaterialDefine("TINTCOLOR");
+			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_BILLBOARD=shaderCompile.registerSpriteDefine("SPHERHBILLBOARD");
+			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_STRETCHEDBILLBOARD=shaderCompile.registerSpriteDefine("STRETCHEDBILLBOARD");
+			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_HORIZONTALBILLBOARD=shaderCompile.registerSpriteDefine("HORIZONTALBILLBOARD");
+			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_VERTICALBILLBOARD=shaderCompile.registerSpriteDefine("VERTICALBILLBOARD");
 			ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME=shaderCompile.registerSpriteDefine("COLOROVERLIFETIME");
 			ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME=shaderCompile.registerSpriteDefine("RANDOMCOLOROVERLIFETIME");
 			ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT=shaderCompile.registerSpriteDefine("VELOCITYOVERLIFETIMECONSTANT");
@@ -12650,6 +13086,7 @@
 			ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE=shaderCompile.registerSpriteDefine("SIZEOVERLIFETIMECURVESEPERATE");
 			ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES=shaderCompile.registerSpriteDefine("SIZEOVERLIFETIMERANDOMCURVES");
 			ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE=shaderCompile.registerSpriteDefine("SIZEOVERLIFETIMERANDOMCURVESSEPERATE");
+			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_MESH=shaderCompile.registerSpriteDefine("RENDERMODE_MESH");
 			attributeMap={
 				'a_Position':/*laya.d3.graphics.VertexElementUsage.POSITION0*/0,
 				'a_Texcoord0':/*laya.d3.graphics.VertexElementUsage.TEXTURECOORDINATE0*/2,
@@ -12662,8 +13099,8 @@
 				'u_Duration':[ /*laya.d3.core.material.GlitterMaterial.DURATION*/5,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
 				'u_MvpMatrix':[ /*laya.d3.core.Sprite3D.MVPMATRIX*/1,/*laya.d3.shader.Shader3D.PERIOD_SPRITE*/2]};
 			var GLITTER=Shader3D.nameKey.add("GLITTER");
-			vs="attribute vec4 a_Position;\nattribute vec2 a_Texcoord0;\nattribute float a_Time;\n\nuniform mat4 u_MvpMatrix;\nuniform  float u_CurrentTime;\nuniform  vec4 u_Color;\nuniform float u_Duration;\n\nvarying vec2 v_Texcoord;\nvarying vec4 v_Color;\n\n\nvoid main()\n{\n  gl_Position = u_MvpMatrix * a_Position;\n  \n  float age = u_CurrentTime-a_Time;\n  float normalizedAge = clamp(age / u_Duration,0.0,1.0);\n   \n  v_Texcoord=a_Texcoord0;\n  \n  v_Color=u_Color;\n  v_Color.a*=1.0-normalizedAge;\n}\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/Glitter.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform vec4 u_Albedo;\nuniform sampler2D u_Texture;\n\nvarying vec2 v_Texcoord;\nvarying vec4 v_Color;\n\n\nvoid main()\n{	\n  gl_FragColor=texture2D(u_Texture, v_Texcoord)*v_Color;\n  gl_FragColor=gl_FragColor*u_Albedo;\n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/Glitter.ps*/;
+			vs="attribute vec4 a_Position;\nattribute vec2 a_Texcoord0;\nattribute float a_Time;\n\nuniform mat4 u_MvpMatrix;\nuniform  float u_CurrentTime;\nuniform  vec4 u_Color;\nuniform float u_Duration;\n\nvarying vec2 v_Texcoord;\nvarying vec4 v_Color;\n\n\nvoid main()\n{\n  gl_Position = u_MvpMatrix * a_Position;\n  \n  float age = u_CurrentTime-a_Time;\n  float normalizedAge = clamp(age / u_Duration,0.0,1.0);\n   \n  v_Texcoord=a_Texcoord0;\n  \n  v_Color=u_Color;\n  v_Color.a*=1.0-normalizedAge;\n}\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/Glitter.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform vec4 u_Albedo;\nuniform sampler2D u_Texture;\n\nvarying vec2 v_Texcoord;\nvarying vec4 v_Color;\n\n\nvoid main()\n{	\n  gl_FragColor=texture2D(u_Texture, v_Texcoord)*v_Color;\n  gl_FragColor=gl_FragColor*u_Albedo;\n}\n\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/Glitter.ps*/;
 			shaderCompile=ShaderCompile3D.add(GLITTER,vs,ps,attributeMap,uniformMap);
 			attributeMap={
 				'a_Position':/*laya.d3.graphics.VertexElementUsage.POSITION0*/0};
@@ -12673,8 +13110,8 @@
 				'u_CubeTexture':[ /*laya.d3.resource.models.Sky.DIFFUSETEXTURE*/3,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
 				'u_MvpMatrix':[ /*laya.d3.core.BaseCamera.VPMATRIX_NO_TRANSLATE*/4,/*laya.d3.shader.Shader3D.PERIOD_CAMERA*/3]};
 			var skyBox=Shader3D.nameKey.add("SkyBox");
-			vs="attribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\nvarying vec3 v_Texcoord;\n\n\nvoid main()\n{\n  gl_Position = (u_MvpMatrix*a_Position).xyww;\n  v_Texcoord=a_Position.xyz;\n}\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/SkyBox.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Intensity;\nuniform float u_AlphaBlending;\nuniform samplerCube u_CubeTexture;\n\nvarying vec3 v_Texcoord;\n\n\nvoid main()\n{	\n  gl_FragColor=vec4(textureCube(u_CubeTexture, v_Texcoord).rgb*u_Intensity,u_AlphaBlending);\n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/SkyBox.ps*/;
+			vs="attribute vec4 a_Position;\nuniform mat4 u_MvpMatrix;\nvarying vec3 v_Texcoord;\n\n\nvoid main()\n{\n  gl_Position = (u_MvpMatrix*a_Position).xyww;\n  v_Texcoord=a_Position.xyz;\n}\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/SkyBox.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Intensity;\nuniform float u_AlphaBlending;\nuniform samplerCube u_CubeTexture;\n\nvarying vec3 v_Texcoord;\n\n\nvoid main()\n{	\n  gl_FragColor=vec4(textureCube(u_CubeTexture, v_Texcoord).rgb*u_Intensity,u_AlphaBlending);\n}\n\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/SkyBox.ps*/;
 			ShaderCompile3D.add(skyBox,vs,ps,attributeMap,uniformMap);
 			attributeMap={
 				'a_Position':/*laya.d3.graphics.VertexElementUsage.POSITION0*/0,
@@ -12685,8 +13122,8 @@
 				'u_texture':[ /*laya.d3.resource.models.Sky.DIFFUSETEXTURE*/3,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1],
 				'u_MvpMatrix':[ /*laya.d3.core.BaseCamera.VPMATRIX_NO_TRANSLATE*/4,/*laya.d3.shader.Shader3D.PERIOD_CAMERA*/3]};
 			var skyDome=Shader3D.nameKey.add("SkyDome");
-			vs="attribute vec4 a_Position;\nattribute vec2 a_Texcoord0;\nuniform mat4 u_MvpMatrix;\nvarying vec2 v_Texcoord;\n\n\nvoid main()\n{\n  gl_Position = (u_MvpMatrix*a_Position).xyww;\n  v_Texcoord = a_Texcoord0;\n}\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/SkyDome.vs*/;
-			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Intensity;\nuniform float u_AlphaBlending;\nuniform sampler2D u_texture;\n\nvarying vec2 v_Texcoord;\n\n\nvoid main()\n{	\n  gl_FragColor=vec4(texture2D(u_texture, v_Texcoord).rgb*u_Intensity,u_AlphaBlending);\n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/SkyDome.ps*/;
+			vs="attribute vec4 a_Position;\nattribute vec2 a_Texcoord0;\nuniform mat4 u_MvpMatrix;\nvarying vec2 v_Texcoord;\n\n\nvoid main()\n{\n  gl_Position = (u_MvpMatrix*a_Position).xyww;\n  v_Texcoord = a_Texcoord0;\n}\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/SkyDome.vs*/;
+			ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nuniform float u_Intensity;\nuniform float u_AlphaBlending;\nuniform sampler2D u_texture;\n\nvarying vec2 v_Texcoord;\n\n\nvoid main()\n{	\n  gl_FragColor=vec4(texture2D(u_texture, v_Texcoord).rgb*u_Intensity,u_AlphaBlending);\n}\n\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/SkyDome.ps*/;
 			ShaderCompile3D.add(skyDome,vs,ps,attributeMap,uniformMap);
 			attributeMap={
 				'a_Position':/*laya.d3.graphics.VertexElementUsage.POSITION0*/0,
@@ -12740,8 +13177,8 @@
 				'u_lightShadowVP':[ /*laya.d3.core.scene.Scene.SHADOWLIGHTVIEWPROJECT*/22,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4],
 				'u_shadowPCFoffset':[ /*laya.d3.core.scene.Scene.SHADOWMAPPCFOFFSET*/23,/*laya.d3.shader.Shader3D.PERIOD_SCENE*/4]};
 			var terrain=Shader3D.nameKey.add("Terrain");
-			vs="attribute vec4 a_Position;\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(LIGHTMAP)\n	attribute vec3 a_Normal;\n	varying vec3 v_Normal;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||(defined(RECEIVESHADOW)&&defined(SHADOWMAP_PSSM1))\n	uniform mat4 u_WorldMat;\n	varying vec3 v_PositionWorld;\n#endif\n\nvarying float v_posViewZ;\n#ifdef RECEIVESHADOW\n  #ifdef SHADOWMAP_PSSM1 \n  varying vec4 v_lightMVPPos;\n  uniform mat4 u_lightShadowVP[4];\n  #endif\n#endif\n\n#ifdef LIGHTMAP\n	uniform vec4 u_LightmapScaleOffset;\n	varying vec2 v_LightMapUV;\n#endif\n\nattribute vec2 a_Texcoord0;\nattribute vec2 a_Texcoord1;\nvarying vec2 v_Texcoord0;\nvarying vec2 v_Texcoord1;\nuniform mat4 u_MvpMatrix;\n\nvoid main()\n{\n	gl_Position = u_MvpMatrix * a_Position;\n	v_Texcoord0=a_Texcoord0;\n	v_Texcoord1=a_Texcoord1;\n	\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n	v_Normal=a_Normal;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||(defined(RECEIVESHADOW)&&defined(SHADOWMAP_PSSM1))\n	v_PositionWorld=(u_WorldMat*a_Position).xyz;\n#endif\n\n#ifdef LIGHTMAP\n	//这个地方使用a_Normal 并不是真的代表normal，其实凑巧法线图的uv正好是符合 light_Map的UV\n	v_LightMapUV=vec2(a_Normal.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,(a_Normal.y-1.0)*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);\n#endif\n\n#ifdef RECEIVESHADOW\n	v_posViewZ = gl_Position.w;\n	#ifdef SHADOWMAP_PSSM1\n		v_lightMVPPos = u_lightShadowVP[0] * vec4(v_PositionWorld,1.0);\n	#endif\n#endif\n\n}"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/Terrain.vs*/;
-			ps="#ifdef FSHIGHPRECISION\n	precision highp float;\n#else\n	precision mediump float;\n#endif\n\n#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT \"LightHelper.glsl\";\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n	uniform vec3 u_MaterialDiffuse;\n	uniform vec4 u_MaterialSpecular;\n	uniform vec3 u_CameraPos;\n	varying vec3 v_Normal;\n	varying vec3 v_PositionWorld;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(LIGHTMAP)\n	uniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef FOG\n	uniform float u_FogStart;\n	uniform float u_FogRange;\n	uniform vec3 u_FogColor;\n#endif\n\n\n#ifdef DIRECTIONLIGHT\n	uniform DirectionLight u_DirectionLight;\n#endif\n\n#ifdef POINTLIGHT\n	uniform PointLight u_PointLight;\n#endif\n\n#ifdef SPOTLIGHT\n	uniform SpotLight u_SpotLight;\n#endif\n\n#include \"ShadowHelper.glsl\"\n#ifdef RECEIVESHADOW\n	#if defined(SHADOWMAP_PSSM2)||defined(SHADOWMAP_PSSM3)\n	uniform mat4 u_lightShadowVP[4];\n	#endif\n	#ifdef SHADOWMAP_PSSM1 \n	varying vec4 v_lightMVPPos;\n	#endif\n#endif\nvarying float v_posViewZ;\n\n\nuniform sampler2D u_SplatAlphaTexture;\nuniform sampler2D u_NormalTexture;\nuniform sampler2D u_DiffuseTexture1;\nuniform sampler2D u_DiffuseTexture2;\nuniform sampler2D u_DiffuseTexture3;\nuniform sampler2D u_DiffuseTexture4;\nuniform vec2 u_DiffuseScale1;\nuniform vec2 u_DiffuseScale2;\nuniform vec2 u_DiffuseScale3;\nuniform vec2 u_DiffuseScale4;\nvarying vec2 v_Texcoord0;\nvarying vec2 v_Texcoord1;\n\n#ifdef LIGHTMAP\n	uniform sampler2D u_LightMap;\n	varying vec2 v_LightMapUV;\n#endif\n\nvoid main()\n{\n#ifdef DETAIL_NUM1\n	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);\n	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);\n	gl_FragColor.xyz = color1.xyz;\n#endif\n#ifdef DETAIL_NUM2\n	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);\n	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);\n	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);\n	gl_FragColor.xyz = color1.xyz * (1.0-splatAlpha.r) + color2.xyz * splatAlpha.r;\n#endif\n#ifdef DETAIL_NUM3\n	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);\n	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);\n	vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1/u_DiffuseScale3);\n	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);\n	gl_FragColor.xyz = color1.xyz * (1.0-(splatAlpha.r+splatAlpha.g)) + color2.xyz * splatAlpha.r + color3.xyz * splatAlpha.g;\n#endif\n#ifdef DETAIL_NUM4\n	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);\n	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);\n	vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1/u_DiffuseScale3);\n	vec4 color4 = texture2D(u_DiffuseTexture4, v_Texcoord1/u_DiffuseScale4);\n	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);\n	gl_FragColor.xyz = color1.xyz * (1.0-(splatAlpha.r+splatAlpha.g+splatAlpha.b))+ color2.xyz * splatAlpha.r + color3.xyz * splatAlpha.g + color4.xyz * splatAlpha.b;\n#endif\n	gl_FragColor.w = splatAlpha.a;\n		\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n    vec3 normal = texture2D(u_NormalTexture,v_Normal.xy).xyz;\n	normal = normal*2.0 - vec3(1.0);\n	vec3 diffuse = vec3(0.0);\n	vec3 ambient = vec3(0.0);\n	vec3 specular= vec3(0.0);\n	vec3 dif, amb, spe;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)\n	vec3 toEye;\n	#ifdef FOG\n		toEye=u_CameraPos-v_PositionWorld;\n		float toEyeLength=length(toEye);\n		toEye/=toEyeLength;\n	#else\n		toEye=normalize(u_CameraPos-v_PositionWorld);\n	#endif\n#endif\n\n#ifdef DIRECTIONLIGHT\n	computeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);\n	diffuse+=dif;\n	ambient+=amb;\n	specular+=spe;\n#endif\n \n#ifdef POINTLIGHT\n	computePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n	diffuse+=dif;\n	ambient+=amb;\n	specular+=spe;\n#endif\n\n#ifdef SPOTLIGHT\n	ComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n	diffuse+=dif;\n	ambient+=amb;\n	specular+=spe;\n#endif\n\n#ifdef RECEIVESHADOW\n	float shadowValue = 1.0;\n	#ifdef SHADOWMAP_PSSM3\n		shadowValue = getShadowPSSM3( u_shadowMap1,u_shadowMap2,u_shadowMap3,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,v_PositionWorld,v_posViewZ,0.001);\n	#endif\n	#ifdef SHADOWMAP_PSSM2\n		shadowValue = getShadowPSSM2( u_shadowMap1,u_shadowMap2,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,v_PositionWorld,v_posViewZ,0.001);\n	#endif \n	#ifdef SHADOWMAP_PSSM1\n		shadowValue = getShadowPSSM1( u_shadowMap1,v_lightMVPPos,u_shadowPSSMDistance,u_shadowPCFoffset,v_posViewZ,0.001);\n	#endif\n#endif\n\n#ifdef LIGHTMAP\n	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n		gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient + texture2D(u_LightMap, v_LightMapUV).rgb);\n	#else\n		#if defined(RECEIVESHADOW)\n			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient + texture2D(u_LightMap, v_LightMapUV).rgb * shadowValue);\n		#else\n			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient + texture2D(u_LightMap, v_LightMapUV).rgb);\n		#endif\n	#endif\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n	#ifdef RECEIVESHADOW\n		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse*shadowValue) + specular * shadowValue,gl_FragColor.a);\n	#else\n		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse) + specular, gl_FragColor.a);\n	#endif\n#endif\n\n#ifdef FOG\n	float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n	gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n#endif\n}\n\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/Terrain.ps*/;
+			vs="attribute vec4 a_Position;\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(LIGHTMAP)\n	attribute vec3 a_Normal;\n	varying vec3 v_Normal;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||(defined(RECEIVESHADOW)&&defined(SHADOWMAP_PSSM1))\n	uniform mat4 u_WorldMat;\n	varying vec3 v_PositionWorld;\n#endif\n\nvarying float v_posViewZ;\n#ifdef RECEIVESHADOW\n  #ifdef SHADOWMAP_PSSM1 \n  varying vec4 v_lightMVPPos;\n  uniform mat4 u_lightShadowVP[4];\n  #endif\n#endif\n\n#ifdef LIGHTMAP\n	uniform vec4 u_LightmapScaleOffset;\n	varying vec2 v_LightMapUV;\n#endif\n\nattribute vec2 a_Texcoord0;\nattribute vec2 a_Texcoord1;\nvarying vec2 v_Texcoord0;\nvarying vec2 v_Texcoord1;\nuniform mat4 u_MvpMatrix;\n\nvoid main()\n{\n	gl_Position = u_MvpMatrix * a_Position;\n	v_Texcoord0=a_Texcoord0;\n	v_Texcoord1=a_Texcoord1;\n	\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n	v_Normal=a_Normal;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||(defined(RECEIVESHADOW)&&defined(SHADOWMAP_PSSM1))\n	v_PositionWorld=(u_WorldMat*a_Position).xyz;\n#endif\n\n#ifdef LIGHTMAP\n	//这个地方使用a_Normal 并不是真的代表normal，其实凑巧法线图的uv正好是符合 light_Map的UV\n	v_LightMapUV=vec2(a_Normal.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,(a_Normal.y-1.0)*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);\n#endif\n\n#ifdef RECEIVESHADOW\n	v_posViewZ = gl_Position.w;\n	#ifdef SHADOWMAP_PSSM1\n		v_lightMVPPos = u_lightShadowVP[0] * vec4(v_PositionWorld,1.0);\n	#endif\n#endif\n\n}"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/Terrain.vs*/;
+			ps="#ifdef FSHIGHPRECISION\n	precision highp float;\n#else\n	precision mediump float;\n#endif\n\n#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT \"LightHelper.glsl\";\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n	uniform vec3 u_MaterialDiffuse;\n	uniform vec4 u_MaterialSpecular;\n	uniform vec3 u_CameraPos;\n	varying vec3 v_Normal;\n	varying vec3 v_PositionWorld;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(LIGHTMAP)\n	uniform vec3 u_MaterialAmbient;\n#endif\n\n#ifdef FOG\n	uniform float u_FogStart;\n	uniform float u_FogRange;\n	uniform vec3 u_FogColor;\n#endif\n\n\n#ifdef DIRECTIONLIGHT\n	uniform DirectionLight u_DirectionLight;\n#endif\n\n#ifdef POINTLIGHT\n	uniform PointLight u_PointLight;\n#endif\n\n#ifdef SPOTLIGHT\n	uniform SpotLight u_SpotLight;\n#endif\n\n#include \"ShadowHelper.glsl\"\n#ifdef RECEIVESHADOW\n	#if defined(SHADOWMAP_PSSM2)||defined(SHADOWMAP_PSSM3)\n	uniform mat4 u_lightShadowVP[4];\n	#endif\n	#ifdef SHADOWMAP_PSSM1 \n	varying vec4 v_lightMVPPos;\n	#endif\n#endif\nvarying float v_posViewZ;\n\n\nuniform sampler2D u_SplatAlphaTexture;\nuniform sampler2D u_NormalTexture;\nuniform sampler2D u_DiffuseTexture1;\nuniform sampler2D u_DiffuseTexture2;\nuniform sampler2D u_DiffuseTexture3;\nuniform sampler2D u_DiffuseTexture4;\nuniform vec2 u_DiffuseScale1;\nuniform vec2 u_DiffuseScale2;\nuniform vec2 u_DiffuseScale3;\nuniform vec2 u_DiffuseScale4;\nvarying vec2 v_Texcoord0;\nvarying vec2 v_Texcoord1;\n\n#ifdef LIGHTMAP\n	uniform sampler2D u_LightMap;\n	varying vec2 v_LightMapUV;\n#endif\n\nvoid main()\n{\n#ifdef DETAIL_NUM1\n	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);\n	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);\n	gl_FragColor.xyz = color1.xyz;\n#endif\n#ifdef DETAIL_NUM2\n	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);\n	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);\n	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);\n	gl_FragColor.xyz = color1.xyz * (1.0-splatAlpha.r) + color2.xyz * splatAlpha.r;\n#endif\n#ifdef DETAIL_NUM3\n	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);\n	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);\n	vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1/u_DiffuseScale3);\n	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);\n	gl_FragColor.xyz = color1.xyz * (1.0-(splatAlpha.r+splatAlpha.g)) + color2.xyz * splatAlpha.r + color3.xyz * splatAlpha.g;\n#endif\n#ifdef DETAIL_NUM4\n	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);\n	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);\n	vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1/u_DiffuseScale3);\n	vec4 color4 = texture2D(u_DiffuseTexture4, v_Texcoord1/u_DiffuseScale4);\n	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);\n	gl_FragColor.xyz = color1.xyz * (1.0-(splatAlpha.r+splatAlpha.g+splatAlpha.b))+ color2.xyz * splatAlpha.r + color3.xyz * splatAlpha.g + color4.xyz * splatAlpha.b;\n#endif\n	gl_FragColor.w = splatAlpha.a;\n		\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n    vec3 normal = texture2D(u_NormalTexture,v_Normal.xy).xyz;\n	normal = normal*2.0 - vec3(1.0);\n	vec3 diffuse = vec3(0.0);\n	vec3 ambient = vec3(0.0);\n	vec3 specular= vec3(0.0);\n	vec3 dif, amb, spe;\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)\n	vec3 toEye;\n	#ifdef FOG\n		toEye=u_CameraPos-v_PositionWorld;\n		float toEyeLength=length(toEye);\n		toEye/=toEyeLength;\n	#else\n		toEye=normalize(u_CameraPos-v_PositionWorld);\n	#endif\n#endif\n\n#ifdef DIRECTIONLIGHT\n	computeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);\n	diffuse+=dif;\n	ambient+=amb;\n	specular+=spe;\n#endif\n \n#ifdef POINTLIGHT\n	computePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n	diffuse+=dif;\n	ambient+=amb;\n	specular+=spe;\n#endif\n\n#ifdef SPOTLIGHT\n	ComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,v_PositionWorld,normal,toEye, dif, amb, spe);\n	diffuse+=dif;\n	ambient+=amb;\n	specular+=spe;\n#endif\n\n#ifdef RECEIVESHADOW\n	float shadowValue = 1.0;\n	#ifdef SHADOWMAP_PSSM3\n		shadowValue = getShadowPSSM3( u_shadowMap1,u_shadowMap2,u_shadowMap3,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,v_PositionWorld,v_posViewZ,0.001);\n	#endif\n	#ifdef SHADOWMAP_PSSM2\n		shadowValue = getShadowPSSM2( u_shadowMap1,u_shadowMap2,u_lightShadowVP,u_shadowPSSMDistance,u_shadowPCFoffset,v_PositionWorld,v_posViewZ,0.001);\n	#endif \n	#ifdef SHADOWMAP_PSSM1\n		shadowValue = getShadowPSSM1( u_shadowMap1,v_lightMVPPos,u_shadowPSSMDistance,u_shadowPCFoffset,v_posViewZ,0.001);\n	#endif\n#endif\n\n#ifdef LIGHTMAP\n	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n		gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient + texture2D(u_LightMap, v_LightMapUV).rgb);\n	#else\n		#if defined(RECEIVESHADOW)\n			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient + texture2D(u_LightMap, v_LightMapUV).rgb * shadowValue);\n		#else\n			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient + texture2D(u_LightMap, v_LightMapUV).rgb);\n		#endif\n	#endif\n#endif\n\n#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)\n	#ifdef RECEIVESHADOW\n		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse*shadowValue) + specular * shadowValue,gl_FragColor.a);\n	#else\n		gl_FragColor =vec4( gl_FragColor.rgb*(ambient + diffuse) + specular, gl_FragColor.a);\n	#endif\n#endif\n\n#ifdef FOG\n	float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);\n	gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);\n#endif\n}\n\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/shader/files/Terrain.ps*/;
 			var terrainCompile3D=ShaderCompile3D.add(terrain,vs,ps,attributeMap,uniformMap);
 			TerrainMaterial.SHADERDEFINE_DETAIL_NUM1=terrainCompile3D.registerMaterialDefine("DETAIL_NUM1");
 			TerrainMaterial.SHADERDEFINE_DETAIL_NUM2=terrainCompile3D.registerMaterialDefine("DETAIL_NUM2");
@@ -13956,7 +14393,7 @@
 
 		Physics._outHitAllInfo=[];
 		__static(Physics,
-		['_outHitInfo',function(){return this._outHitInfo=new RaycastHit();}
+		['_outHitInfo',function(){return this._outHitInfo=new RaycastHit();},'gravity',function(){return this.gravity=new Vector3(0,-9.81,0);}
 		]);
 		return Physics;
 	})()
@@ -14311,6 +14748,7 @@
 		Utils3D._loadParticle=function(settting,particle,innerResouMap){
 			var anglelToRad=Math.PI / 180.0;
 			var i=0,n=0;
+			var particleRender=particle.particleRender;
 			var material;
 			var materialPath=settting.materialPath;
 			if (materialPath){
@@ -14319,7 +14757,14 @@
 				material=new ShurikenParticleMaterial();
 				material.diffuseTexture=innerResouMap ? Loader.getRes(innerResouMap[settting.texturePath]):Texture2D.load(settting.texturePath);
 			}
-			particle.particleRender.sharedMaterial=material;
+			particleRender.sharedMaterial=material;
+			var meshPath=settting.meshPath;
+			(meshPath)&& (particleRender.mesh=Loader.getRes(innerResouMap[meshPath]));
+			particleRender.renderMode=settting.renderMode;
+			particleRender.stretchedBillboardCameraSpeedScale=settting.stretchedBillboardCameraSpeedScale;
+			particleRender.stretchedBillboardSpeedScale=settting.stretchedBillboardSpeedScale;
+			particleRender.stretchedBillboardLengthScale=settting.stretchedBillboardLengthScale;
+			particleRender.sortingFudge=settting.sortingFudge ? settting.sortingFudge :0.0;
 			var particleSystem=particle.particleSystem;
 			particleSystem.isPerformanceMode=settting.isPerformanceMode;
 			particleSystem.duration=settting.duration;
@@ -14400,11 +14845,6 @@
 			startColorConstantMaxElement[1]=startColorConstantMaxArray[1];
 			startColorConstantMaxElement[2]=startColorConstantMaxArray[2];
 			startColorConstantMaxElement[3]=startColorConstantMaxArray[3];
-			var gravityArray=settting.gravity;
-			var gravityE=particleSystem.gravity.elements;
-			gravityE[0]=gravityArray[0];
-			gravityE[1]=gravityArray[1];
-			gravityE[2]=gravityArray[2];
 			particleSystem.gravityModifier=settting.gravityModifier;
 			particleSystem.simulationSpace=settting.simulationSpace;
 			particleSystem.scaleMode=settting.scaleMode;
@@ -14632,13 +15072,7 @@
 				textureSheetAnimation.randomRow=textureSheetAnimationData.randomRow;
 				textureSheetAnimation.cycles=textureSheetAnimationData.cycles;
 				particleSystem.textureSheetAnimation=textureSheetAnimation;
-			};
-			var particleRender=particle.particleRender;
-			particleRender.renderMode=settting.renderMode;
-			particleRender.stretchedBillboardCameraSpeedScale=settting.stretchedBillboardCameraSpeedScale;
-			particleRender.stretchedBillboardSpeedScale=settting.stretchedBillboardSpeedScale;
-			particleRender.stretchedBillboardLengthScale=settting.stretchedBillboardLengthScale;
-			particleRender.sortingFudge=settting.sortingFudge ? settting.sortingFudge :0.0;
+			}
 			(particleSystem.playOnAwake)&& (particleSystem.play());
 		}
 
@@ -15156,7 +15590,8 @@
 
 		Laya3D._initResourceLoad=function(){
 			var createMap=LoaderManager.createMap;
-			createMap["lh"]=[Sprite3D,/*CLASS CONST:Laya3D.SPRITE3DHIERARCHY*/"SPRITE3DHIERARCHY"];
+			createMap["lh"]=[Sprite3D,/*CLASS CONST:Laya3D.HIERARCHY*/"SPRITE3DHIERARCHY"];
+			createMap["ls"]=[Scene,/*CLASS CONST:Laya3D.HIERARCHY*/"SPRITE3DHIERARCHY"];
 			createMap["lm"]=[Mesh,/*CLASS CONST:Laya3D.MESH*/"MESH"];
 			createMap["lmat"]=[StandardMaterial,/*CLASS CONST:Laya3D.MATERIAL*/"MATERIAL"];
 			createMap["lpbr"]=[PBRMaterial,/*CLASS CONST:Laya3D.MATERIAL*/"MATERIAL"];
@@ -15170,9 +15605,9 @@
 			createMap["mipmaps"]=[DataTexture2D,/*laya.net.Loader.BUFFER*/"arraybuffer"];
 			createMap["thdata"]=[TerrainHeightData,/*laya.net.Loader.BUFFER*/"arraybuffer"];
 			createMap["lt"]=[TerrainRes,/*CLASS CONST:Laya3D.TERRAIN*/"TERRAIN"];
+			createMap["lani"]=[AnimationClip,/*laya.net.Loader.BUFFER*/"arraybuffer"];
 			createMap["ani"]=[AnimationTemplet,/*laya.net.Loader.BUFFER*/"arraybuffer"];
-			createMap["lani"]=[AnimationTemplet,/*laya.net.Loader.BUFFER*/"arraybuffer"];
-			Loader.parserMap[ /*CLASS CONST:Laya3D.SPRITE3DHIERARCHY*/"SPRITE3DHIERARCHY"]=Laya3D._loadSprite3DHierarchy;
+			Loader.parserMap[ /*CLASS CONST:Laya3D.HIERARCHY*/"SPRITE3DHIERARCHY"]=Laya3D._loadHierarchy;
 			Loader.parserMap[ /*CLASS CONST:Laya3D.MESH*/"MESH"]=Laya3D._loadMesh;
 			Loader.parserMap[ /*CLASS CONST:Laya3D.MATERIAL*/"MATERIAL"]=Laya3D._loadMaterial;
 			Loader.parserMap[ /*CLASS CONST:Laya3D.TEXTURECUBE*/"TEXTURECUBE"]=Laya3D._loadTextureCube;
@@ -15227,11 +15662,14 @@
 					(meshPath)&& (Laya3D._addHierarchyInnerUrls(urls,urlMap,urlVersion,hierarchyBasePath,meshPath,Mesh));
 					break ;
 				case "ShuriKenParticle3D":;
-					var materialPath=node.customProps.materialPath;
+					var customProps=node.customProps;
+					var parMeshPath=customProps.meshPath;
+					(parMeshPath)&& (Laya3D._addHierarchyInnerUrls(urls,urlMap,urlVersion,hierarchyBasePath,parMeshPath,Mesh));
+					var materialPath=customProps.materialPath;
 					if (materialPath)
 						Laya3D._addHierarchyInnerUrls(urls,urlMap,urlVersion,hierarchyBasePath,materialPath,ShurikenParticleMaterial);
 					else
-					Laya3D._addHierarchyInnerUrls(urls,urlMap,urlVersion,hierarchyBasePath,node.customProps.texturePath,Texture2D);
+					Laya3D._addHierarchyInnerUrls(urls,urlMap,urlVersion,hierarchyBasePath,customProps.texturePath,Texture2D);
 					break ;
 				case "Terrain":
 					Laya3D._addHierarchyInnerUrls(urls,urlMap,urlVersion,hierarchyBasePath,node.instanceParams.loadPath,TerrainRes);
@@ -15242,13 +15680,13 @@
 			Laya3D._getSprite3DHierarchyInnerUrls(children[i],urls,urlMap,urlVersion,hierarchyBasePath);
 		}
 
-		Laya3D._loadSprite3DHierarchy=function(loader){
+		Laya3D._loadHierarchy=function(loader){
 			var lmLoader=new Loader();
-			lmLoader.on(/*laya.events.Event.COMPLETE*/"complete",null,Laya3D._onSprite3DHierarchylhLoaded,[loader]);
+			lmLoader.on(/*laya.events.Event.COMPLETE*/"complete",null,Laya3D._onHierarchylhLoaded,[loader]);
 			lmLoader.load(loader.url,/*laya.net.Loader.TEXT*/"text",false,null,true);
 		}
 
-		Laya3D._onSprite3DHierarchylhLoaded=function(loader,lhData){
+		Laya3D._onHierarchylhLoaded=function(loader,lhData){
 			var url=loader.url;
 			var urlVersion=Utils3D.getURLVerion(url);
 			var hierarchyBasePath=URL.getPath(URL.formatURL(url));
@@ -15262,13 +15700,13 @@
 			Laya3D._onProcessChange(loader,0,lhWeight,1.0);
 			if (urlCount > 0){
 				var processHandler=Handler.create(null,Laya3D._onProcessChange,[loader,lhWeight,urlCount / totalProcessCount],false);
-				Laya3D._innerSprite3DHierarchyLoaderManager.create(urls,Handler.create(null,Laya3D._onSprite3DMeshsLoaded,[loader,processHandler,lhData,urlMap]),processHandler);
+				Laya3D._innerHierarchyLoaderManager.create(urls,Handler.create(null,Laya3D._onInnerHierarchyResourcesLoaded,[loader,processHandler,lhData,urlMap]),processHandler);
 				}else {
-				Laya3D._onSprite3DMeshsLoaded(loader,null,lhData,null);
+				Laya3D._onInnerHierarchyResourcesLoaded(loader,null,lhData,null);
 			}
 		}
 
-		Laya3D._onSprite3DMeshsLoaded=function(loader,processHandler,lhData,urlMap){
+		Laya3D._onInnerHierarchyResourcesLoaded=function(loader,processHandler,lhData,urlMap){
 			loader.endLoad([lhData,urlMap]);
 			(processHandler)&& (processHandler.recover());
 		}
@@ -15560,7 +15998,7 @@
 			Laya3D._innerTextureCubeLoaderManager.maxLoader=1;
 			Laya3D._innerMaterialLoaderManager.maxLoader=1;
 			Laya3D._innerMeshLoaderManager.maxLoader=1;
-			Laya3D._innerSprite3DHierarchyLoaderManager.maxLoader=1;
+			Laya3D._innerHierarchyLoaderManager.maxLoader=1;
 			Laya.init(width,height);
 			Layer.__init__();
 			ShaderCompile3D.__init__();
@@ -15571,7 +16009,7 @@
 				Laya3D._debugPhasorSprite=new PhasorSpriter3D();
 		}
 
-		Laya3D.SPRITE3DHIERARCHY="SPRITE3DHIERARCHY";
+		Laya3D.HIERARCHY="SPRITE3DHIERARCHY";
 		Laya3D.MESH="MESH";
 		Laya3D.MATERIAL="MATERIAL";
 		Laya3D.PBRMATERIAL="PBRMTL";
@@ -15581,7 +16019,7 @@
 		Laya3D._debugPhasorSprite=null
 		Laya3D.debugMode=false;
 		__static(Laya3D,
-		['_DATA',function(){return this._DATA={offset:0,size:0};},'_strings',function(){return this._strings=['BLOCK','DATA',"STRINGS"];},'_innerTextureCubeLoaderManager',function(){return this._innerTextureCubeLoaderManager=new LoaderManager();},'_innerHeightMapLoaderManager',function(){return this._innerHeightMapLoaderManager=new LoaderManager();},'_innerMaterialLoaderManager',function(){return this._innerMaterialLoaderManager=new LoaderManager();},'_innerMeshLoaderManager',function(){return this._innerMeshLoaderManager=new LoaderManager();},'_innerSprite3DHierarchyLoaderManager',function(){return this._innerSprite3DHierarchyLoaderManager=new LoaderManager();}
+		['_DATA',function(){return this._DATA={offset:0,size:0};},'_strings',function(){return this._strings=['BLOCK','DATA',"STRINGS"];},'_innerTextureCubeLoaderManager',function(){return this._innerTextureCubeLoaderManager=new LoaderManager();},'_innerHeightMapLoaderManager',function(){return this._innerHeightMapLoaderManager=new LoaderManager();},'_innerMaterialLoaderManager',function(){return this._innerMaterialLoaderManager=new LoaderManager();},'_innerMeshLoaderManager',function(){return this._innerMeshLoaderManager=new LoaderManager();},'_innerHierarchyLoaderManager',function(){return this._innerHierarchyLoaderManager=new LoaderManager();}
 		]);
 		return Laya3D;
 	})()
@@ -15811,7 +16249,7 @@
 
 
 	/**
-	*<code>Render</code> 类用于渲染器的父类，抽象类不允许示例。
+	*<code>Render</code> 类用于渲染器的父类，抽象类不允许实例。
 	*/
 	//class laya.d3.core.render.BaseRender extends laya.events.EventDispatcher
 	var BaseRender=(function(_super){
@@ -15839,9 +16277,6 @@
 			this.sortingFudge=NaN;
 			this.castShadow=false;
 			BaseRender.__super.call(this);
-			this._destroyed=false;
-			this._owner=owner;
-			this._enable=true;
 			this._boundingBox=new BoundBox(new Vector3(),new Vector3());
 			this._boundingBoxCenter=new Vector3();
 			this._boundingSphere=new BoundSphere(new Vector3(),0);
@@ -15850,9 +16285,15 @@
 			this._boundingBoxCenterNeedChange=true;
 			this._octreeNodeNeedChange=true;
 			this._materials=[];
-			this.sortingFudge=0.0;
 			this._renderElements=[];
 			this._isPartOfStaticBatch=false;
+			this._destroyed=false;
+			this._owner=owner;
+			this._enable=true;
+			this.lightmapIndex=-1;
+			this.castShadow=false;
+			this.receiveShadow=false;
+			this.sortingFudge=0.0;
 			this._owner.transform.on(/*laya.events.Event.WORLDMATRIX_NEEDCHANGE*/"worldmatrixneedchanged",this,this._onWorldMatNeedChange);
 		}
 
@@ -18076,24 +18517,24 @@
 					merageElement._material=this._material;
 					merageElement._batchIndexStart=(renderElement)._batchIndexStart;
 					merageElement._batchIndexEnd=(renderElement)._batchIndexEnd;
-					var lightMapIndex=renderElement._render.lightmapIndex;
+					var lightMapIndex=render.lightmapIndex;
 					var cacheLightMapIndex=lightMapIndex+1;
 					var lightMapBatchOwnerIndices=this._batchOwnerIndices[cacheLightMapIndex];
 					(lightMapBatchOwnerIndices)|| (lightMapBatchOwnerIndices=this._batchOwnerIndices[cacheLightMapIndex]=[]);
 					var batchOwnerIndex=lightMapBatchOwnerIndices[renderElement._render.receiveShadow ? 1 :0];
 					var batchOwner;
 					if (batchOwnerIndex===undefined){
-						lightMapBatchOwnerIndices[renderElement._render.receiveShadow ? 1 :0]=this._batchOwners.length;
+						lightMapBatchOwnerIndices[render.receiveShadow ? 1 :0]=this._batchOwners.length;
 						batchOwner=new MeshSprite3D(null,"StaticBatchMeshSprite3D");
 						batchOwner._scene=scene;
 						batchOwner._transform=this._rootOwner ? this._rootOwner._transform :null;
 						batchOwner._render.lightmapIndex=lightMapIndex;
 						batchOwner._render.receiveShadow=renderElement._render.receiveShadow;
-						batchOwner._render._renderUpdate(projectionView);
 						this._batchOwners.push(batchOwner);
 						}else {
 						batchOwner=this._batchOwners[batchOwnerIndex];
 					}
+					batchOwner._render._renderUpdate(projectionView);
 					merageElement._sprite3D=batchOwner;
 					renderQueueElements.push(merageElement);
 					}else {
@@ -18374,14 +18815,35 @@
 		__proto.addChildAt=function(node,index){
 			if (!((node instanceof laya.d3.core.Sprite3D )))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
-			var returnNode=_super.prototype.addChildAt.call(this,node,index);
-			var sprite3D=node;
-			sprite3D.transform.parent=this.transform;
-			if (this._belongScene){
-				sprite3D._setBelongScene(this._scene);
-				(this._activeInHierarchy && sprite3D._active)&& (sprite3D._activeHierarchy());
+			if (!node || this.destroyed || node===this)return node;
+			if ((node).zOrder)this._set$P("hasZorder",true);
+			if (index >=0 && index <=this._childs.length){
+				if (node._parent===this){
+					var oldIndex=this.getChildIndex(node);
+					this._childs.splice(oldIndex,1);
+					this._childs.splice(index,0,node);
+					if (this.conchModel){
+						this.conchModel.removeChild(node.conchModel);
+						this.conchModel.addChildAt(node.conchModel,index);
+					}
+					this._childChanged();
+					}else {
+					node.parent && node.parent.removeChild(node);
+					this._childs===Node.ARRAY_EMPTY && (this._childs=[]);
+					this._childs.splice(index,0,node);
+					this.conchModel && this.conchModel.addChildAt(node.conchModel,index);
+					node.parent=this;
+					var sprite3D=node;
+					sprite3D.transform.parent=this.transform;
+					if (this._belongScene){
+						sprite3D._setBelongScene(this._scene);
+						(this._activeInHierarchy && sprite3D._active)&& (sprite3D._activeHierarchy());
+					}
+				}
+				return node;
+				}else {
+				throw new Error("appendChildAt:The index is out of bounds");
 			}
-			return returnNode;
 		}
 
 		/**
@@ -18390,14 +18852,34 @@
 		__proto.addChild=function(node){
 			if (!((node instanceof laya.d3.core.Sprite3D )))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
-			var returnNode=_super.prototype.addChild.call(this,node);
-			var sprite3D=node;
-			sprite3D.transform.parent=this.transform;
-			if (this._belongScene){
-				sprite3D._setBelongScene(this._scene);
-				(this._activeInHierarchy && sprite3D._active)&& (sprite3D._activeHierarchy());
+			if (!node || this.destroyed || node===this)return node;
+			if ((node).zOrder)this._set$P("hasZorder",true);
+			if (node._parent===this){
+				var index=this.getChildIndex(node);
+				if (index!==this._childs.length-1){
+					this._childs.splice(index,1);
+					this._childs.push(node);
+					if (this.conchModel){
+						this.conchModel.removeChild(node.conchModel);
+						this.conchModel.addChildAt(node.conchModel,this._childs.length-1);
+					}
+					this._childChanged();
+				}
+				}else {
+				node.parent && node.parent.removeChild(node);
+				this._childs===Node.ARRAY_EMPTY && (this._childs=[]);
+				this._childs.push(node);
+				this.conchModel && this.conchModel.addChildAt(node.conchModel,this._childs.length-1);
+				node.parent=this;
+				this._childChanged();
+				var sprite3D=node;
+				sprite3D.transform.parent=this.transform;
+				if (this._belongScene){
+					sprite3D._setBelongScene(this._scene);
+					(this._activeInHierarchy && sprite3D._active)&& (sprite3D._activeHierarchy());
+				}
 			}
-			return returnNode;
+			return node;
 		}
 
 		/**
@@ -18555,12 +19037,11 @@
 		__proto.onAsynLoaded=function(url,data,params){
 			if (this.destroyed)
 				return;
-			var oriData=data[0];
-			var json=JSON.parse(oriData);
+			var json=JSON.parse(data [0]);
 			if (json.type!=="Sprite3D")
-				throw new Error("Sprite3D: the .lh file root type must be Sprite3D,please use other function to  load  this file.");
+				throw new Error("Sprite3D: The .lh file root type must be Sprite3D,please use other function to  load  this file.");
 			var innerResouMap=data[1];
-			ClassUtils.createByJson(oriData,this,this,Handler.create(null,Utils3D._parseHierarchyProp,[innerResouMap],false),Handler.create(null,Utils3D._parseHierarchyNode,null,false));
+			ClassUtils.createByJson(json,this,this,Handler.create(null,Utils3D._parseHierarchyProp,[innerResouMap],false),Handler.create(null,Utils3D._parseHierarchyNode,null,false));
 			this.event(/*laya.events.Event.HIERARCHY_LOADED*/"hierarchyloaded",[this]);
 		}
 
@@ -18569,6 +19050,8 @@
 		*@param destObject 克隆源。
 		*/
 		__proto.cloneTo=function(destObject){
+			if (this.destroyed)
+				throw new Error("Sprite3D: Can't be cloned if the Spriote3D has destroyed.");
 			var destSprite3D=destObject;
 			destSprite3D.name=this.name;
 			destSprite3D.destroyed=this.destroyed;
@@ -18639,44 +19122,6 @@
 		});
 
 		/**
-		*获取在层级中是否激活。
-		*@return 在层级中是否激活。
-		*/
-		__getset(0,__proto,'activeInHierarchy',function(){
-			return this._activeInHierarchy;
-		});
-
-		/**
-		*设置是否激活。
-		*@param value 是否激活。
-		*/
-		/**
-		*获取自身是否激活。
-		*@return 自身是否激活。
-		*/
-		__getset(0,__proto,'active',function(){
-			return this._active;
-			},function(value){
-			if (this._active!==value){
-				this._active=value;
-				if (this._belongScene){
-					if (value)
-						this._activeHierarchy();
-					else
-					this._inActiveHierarchy();
-				}
-			}
-		});
-
-		/**
-		*获取是否属于场景。
-		*@return 是否属于场景。
-		*/
-		__getset(0,__proto,'belongScene',function(){
-			return this._belongScene;
-		});
-
-		/**
 		*色湖之资源的URL地址。
 		*@param value URL地址。
 		*/
@@ -18715,6 +19160,44 @@
 				this.event(/*laya.events.Event.LAYER_CHANGED*/"layerchanged",value);
 				}else {
 				throw new Error("Layer value can be null.");
+			}
+		});
+
+		/**
+		*获取是否属于场景。
+		*@return 是否属于场景。
+		*/
+		__getset(0,__proto,'belongScene',function(){
+			return this._belongScene;
+		});
+
+		/**
+		*获取在层级中是否激活。
+		*@return 在层级中是否激活。
+		*/
+		__getset(0,__proto,'activeInHierarchy',function(){
+			return this._activeInHierarchy;
+		});
+
+		/**
+		*设置是否激活。
+		*@param value 是否激活。
+		*/
+		/**
+		*获取自身是否激活。
+		*@return 自身是否激活。
+		*/
+		__getset(0,__proto,'active',function(){
+			return this._active;
+			},function(value){
+			if (this._active!==value){
+				this._active=value;
+				if (this._belongScene){
+					if (value)
+						this._activeHierarchy();
+					else
+					this._inActiveHierarchy();
+				}
 			}
 		});
 
@@ -18771,6 +19254,170 @@
 		Sprite3D._nameNumberCounter=0;
 		return Sprite3D;
 	})(Node)
+
+
+	/**
+	*<code>AnimationTemplet</code> 类用于动画模板资源。
+	*/
+	//class laya.d3.animation.AnimationClip extends laya.resource.Resource
+	var AnimationClip=(function(_super){
+		function AnimationClip(){
+			//this._aniVersion=null;
+			//this._nodes=null;
+			//this._duration=NaN;
+			//this._frameRate=0;
+			//this._publicExtData=null;
+			//this._useParent=false;
+			//this.unfixedCurrentFrameIndexes=null;
+			//this.unfixedCurrentTimes=null;
+			//this.unfixedKeyframes=null;
+			//this._aniClassName=null;
+			//this._animationDatasCache=null;
+			AnimationClip.__super.call(this);
+			this._animationDatasCache=[];
+		}
+
+		__class(AnimationClip,'laya.d3.animation.AnimationClip',_super);
+		var __proto=AnimationClip.prototype;
+		/**
+		*@private
+		*/
+		__proto._hermiteInterpolate=function(t,p0,m0,m1,p1,out){
+			var t2=t *t;
+			var t3=t2 *t;
+			var a=2.0 *t3-3.0 *t2+1.0;
+			var b=t3-2.0 *t2+t;
+			var c=t3-t2;
+			var d=-2.0 *t3+3.0 *t2;
+			var e=b *m0+c *m1;
+			for (var i=0,n=out.length;i < n;i++)
+			out[i]=a *p0[i]+e+d *p1[i];
+		}
+
+		/**
+		*@private
+		*/
+		__proto._getAnimationDataWithCache=function(cacheRate,frameIndex){
+			var keyDatas=this._animationDatasCache[cacheRate];
+			if (!keyDatas)
+				return null;
+			else {
+				return keyDatas[frameIndex];
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._cacheAnimationData=function(cacheRate,frameIndex,datas){
+			var aniDatasCache=(this._animationDatasCache[cacheRate])|| (this._animationDatasCache[cacheRate]=[]);
+			aniDatasCache[frameIndex]=datas;
+		}
+
+		/**
+		*@private
+		*/
+		__proto._evaluateAnimationlDatas=function(nodesFrameIndices,frameIndex,playCurTime,outAnimationDatas){
+			var nodes=this._nodes;
+			for (var i=0,n=nodes.length;i < n;i++){
+				var frame=nodes[i].keyFrames[nodesFrameIndices[i][frameIndex]];
+				var t=NaN,m1=NaN,m2=NaN;
+				var d=frame.duration;
+				var nextKeyFrame=frame.next;
+				if (d!==0){
+					t=(playCurTime-frame.startTime)/ d;
+					m1=frame.outTangent *d;
+					m2=nextKeyFrame.inTangent *d;
+					}else {
+					t=m1=m2=0;
+				}
+				this._hermiteInterpolate(t,frame.data,m1,m2,nextKeyFrame.data,outAnimationDatas[i]);
+			}
+		}
+
+		__proto._evaluateAnimationlDatasUnfixedRate=function(playCurTime,outAnimationDatas){
+			var nodes=this._nodes;
+			if (!this.unfixedCurrentFrameIndexes){
+				this.unfixedCurrentFrameIndexes=new Uint32Array(nodes.length);
+				this.unfixedCurrentTimes=new Float32Array(nodes.length);
+				this.unfixedKeyframes=__newvec(nodes.length);
+			};
+			var j=0;
+			for (var i=0,n=nodes.length;i < n;i++){
+				var node=nodes[i];
+				if (playCurTime < this.unfixedCurrentTimes[i])
+					this.unfixedCurrentFrameIndexes[i]=0;
+				this.unfixedCurrentTimes[i]=playCurTime;
+				while (this.unfixedCurrentFrameIndexes[i] < node.keyFrames.length){
+					if (node.keyFrames[this.unfixedCurrentFrameIndexes[i]].startTime > this.unfixedCurrentTimes[i])
+						break ;
+					this.unfixedKeyframes[i]=node.keyFrames[this.unfixedCurrentFrameIndexes[i]];
+					this.unfixedCurrentFrameIndexes[i]++;
+				};
+				var frame=this.unfixedKeyframes[i];
+				var t=NaN,m1=NaN,m2=NaN;
+				var d=frame.duration;
+				var nextKeyFrame=frame.next;
+				if (d!==0){
+					t=(playCurTime-frame.startTime)/ d;
+					m1=frame.outTangent *d;
+					m2=nextKeyFrame.inTangent *d;
+					}else {
+					t=m1=m2=0;
+				}
+				this._hermiteInterpolate(t,frame.data,m1,m2,nextKeyFrame.data,outAnimationDatas[i]);
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._endLoaded=function(){
+			this._loaded=true;
+			this.event(/*laya.events.Event.LOADED*/"loaded",this);
+		}
+
+		/**
+		*@inheritDoc
+		*/
+		__proto.onAsynLoaded=function(url,data,params){
+			var reader=new Byte(data);
+			this._aniVersion=reader.readUTFString();
+			switch (this._aniVersion){
+				case "LAYAANIMATION:01":
+					AnimationParser011.parse(this,reader);
+					break ;
+				}
+			this._endLoaded();
+		}
+
+		/**
+		*@inheritDoc
+		*/
+		__proto.dispose=function(){
+			if (this.resourceManager)
+				this.resourceManager.removeResource(this);
+			_super.prototype.dispose.call(this);
+		}
+
+		AnimationClip._LinearInterpolation_0=function(bone,index,out,outOfs,data,dt,dData,duration,nextData,interData){
+			out[outOfs]=data[index]+dt *dData[index];
+			return 1;
+		}
+
+		AnimationClip._QuaternionInterpolation_1=function(bone,index,out,outOfs,data,dt,dData,duration,nextData,interData){
+			var amount=duration===0 ? 0 :dt / duration;
+			MathUtil.slerpQuaternionArray(data,index,nextData,index,amount,out,outOfs);
+			return 4;
+		}
+
+		AnimationClip.load=function(url){
+			return Laya.loader.create(url,null,null,AnimationClip);
+		}
+
+		AnimationClip.interpolation=[AnimationClip._LinearInterpolation_0,AnimationClip._QuaternionInterpolation_1];
+		return AnimationClip;
+	})(Resource)
 
 
 	/**
@@ -19511,7 +20158,7 @@
 		*获取纹理资源。
 		*/
 		__getset(0,__proto,'defaulteTexture',function(){
-			return BaseTexture.grayTexture;
+			return SolidColorTexture2D.grayTexture;
 		});
 
 		/**
@@ -19522,9 +20169,6 @@
 			return this._source;
 		});
 
-		__static(BaseTexture,
-		['grayTexture',function(){return this.grayTexture=new SolidColorTexture2D(new Vector4(0.5,0.5,0.5,1.0));}
-		]);
 		return BaseTexture;
 	})(Resource)
 
@@ -20137,6 +20781,605 @@
 
 
 	/**
+	*<code>Animation</code> 类用于创建动画组件。
+	*/
+	//class laya.d3.component.Animation extends laya.d3.component.Component3D
+	var Animation1=(function(_super){
+		function Animation(){
+			this._clipNames=null;
+			this._clips=null;
+			this._clipNodesOwners=null;
+			this._clip=null;
+			this._cacheFrameRateInterval=NaN;
+			this._cacheFrameRate=0;
+			this._cachePlayRate=NaN;
+			this._playStart=NaN;
+			this._playEnd=NaN;
+			this._playDuration=NaN;
+			this._overallDuration=NaN;
+			this._currentPlayClip=null;
+			this._currentPlayClipIndex=0;
+			this._paused=false;
+			this._currentTime=NaN;
+			this._currentFrameTime=NaN;
+			this._currentKeyframeIndex=0;
+			this._stopWhenCircleFinish=false;
+			this._elapsedPlaybackTime=NaN;
+			this._startUpdateLoopCount=NaN;
+			this._destroyed=false;
+			this._curAnimationDatas=null;
+			this._tempCurAnimationDatas=null;
+			this._cacheFullFrames=null;
+			this.avatar=null;
+			this.isCache=false;
+			this.returnToZeroStopped=false;
+			this.playbackRate=NaN;
+			this._lastFrameIndex=-1;
+			Animation.__super.call(this);
+			this._clipNames=[];
+			this._clips=[];
+			this._clipNodesOwners=[];
+			this._cacheFullFrames=[];
+			this._cachePlayRate=1.0;
+			this._playStart=0;
+			this._playEnd=0;
+			this._playDuration=0;
+			this._overallDuration=Number.MAX_VALUE;
+			this._currentPlayClip=null;
+			this._currentKeyframeIndex=-1;
+			this._currentTime=0.0;
+			this._stopWhenCircleFinish=false;
+			this._elapsedPlaybackTime=0;
+			this._startUpdateLoopCount=-1;
+			this._$2__destroyed=false;
+			this.isCache=true;
+			this.cacheFrameRate=60;
+			this.returnToZeroStopped=false;
+			this.playbackRate=1.0;
+		}
+
+		__class(Animation,'laya.d3.component.Animation',_super,'Animation1');
+		var __proto=Animation.prototype;
+		Laya.imps(__proto,{"laya.resource.IDestroy":true})
+		/**
+		*@private
+		*/
+		__proto._computeCacheFullKeyframeIndices=function(clip){
+			var index=this._clips.indexOf(clip);
+			var clipCacheFullFrames=this._cacheFullFrames[index];
+			(clipCacheFullFrames)|| (clipCacheFullFrames=this._cacheFullFrames[index]=[]);
+			var cacheInterval=this._cacheFrameRateInterval *this._cachePlayRate;
+			var nodes=clip._nodes;
+			var nodeCount=nodes.length;
+			clipCacheFullFrames.length=nodeCount;
+			var frameCount=Math.floor(clip._duration / cacheInterval+0.01)+1;
+			for (var i=0;i < nodeCount;i++){
+				var node=nodes[i];
+				var nodeFullFrames=new Uint16Array(frameCount);
+				var lastFrameIndex=-1;
+				var keyFrames=node.keyFrames;
+				for (var j=0,n=keyFrames.length;j < n;j++){
+					var keyFrame=keyFrames[j];
+					var tim=keyFrame.startTime;
+					var endTim=tim+keyFrame.duration+cacheInterval;
+					do {
+						var frameIndex=Math.floor(tim / cacheInterval+0.5);
+						for (var k=lastFrameIndex+1;k < frameIndex;k++)
+						nodeFullFrames[k]=j;
+						lastFrameIndex=frameIndex;
+						nodeFullFrames[frameIndex]=j;
+						tim+=cacheInterval;
+					}while (tim <=endTim);
+				}
+				clipCacheFullFrames[i]=nodeFullFrames;
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._calculatePlayDuration=function(){
+			if (this.playState!==/*laya.ani.AnimationState.stopped*/0){
+				var oriDuration=this._currentPlayClip._duration;
+				(this._playEnd===0)&& (this._playEnd=oriDuration);
+				if (this._playEnd > oriDuration)
+					this._playEnd=oriDuration;
+				this._playDuration=this._playEnd-this._playStart;
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._setPlayParams=function(time,cacheFrameInterval){
+			this._currentTime=time;
+			this._currentKeyframeIndex=Math.floor((this.currentPlayTime)/ cacheFrameInterval+0.01);
+			this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
+		}
+
+		/**
+		*@private
+		*/
+		__proto._setPlayParamsWhenStop=function(currentAniClipPlayDuration,cacheFrameInterval){
+			this._currentTime=currentAniClipPlayDuration;
+			this._currentKeyframeIndex=Math.floor(currentAniClipPlayDuration / cacheFrameInterval+0.01);
+			this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
+			this._currentPlayClip=null;
+		}
+
+		/**
+		*@private
+		*/
+		__proto._onClipLoaded=function(){
+			(this.destroyed)|| (this._calculatePlayDuration());
+		}
+
+		/**
+		*@private
+		*/
+		__proto._addClipNodesOwners=function(clip){
+			var nodes=clip._nodes;
+			var nodeCount=nodes.length;
+			var pathSprite=this._owner;
+			for (var i=0;i < nodeCount;i++){
+				var node=nodes[i];
+				var path=node.path;
+				for (var j=0;j < path.length;j++){
+					pathSprite=pathSprite.getChildByName(path[j]);
+					if (pathSprite)
+						break ;
+				}
+				if (node.componentType)
+					var component=pathSprite.getComponentByType(node.componentType);
+				node.propertyName;
+				pathSprite=this._owner;
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._onClipLoadedComputeCacheFullKeyframeIndices=function(clip,cachePlayRate,cacheFrameRate){
+			if (this._clips.indexOf(clip)!==-1 && this._cachePlayRate===cachePlayRate && this._cacheFrameRate===cacheFrameRate)
+				this._computeCacheFullKeyframeIndices(clip);
+		}
+
+		/**@private */
+		__proto._onAnimationStop=function(){
+			this._lastFrameIndex=-1;
+			if (this.returnToZeroStopped){
+				this._curAnimationDatas=null;
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._updatePlayer=function(elapsedTime){
+			if (this._currentPlayClip==null || this._paused || !this._currentPlayClip.loaded)
+				return;
+			var cacheFrameInterval=this._cacheFrameRateInterval *this._cachePlayRate;
+			var time=0;
+			(this._startUpdateLoopCount!==Stat.loopCount)&& (time=elapsedTime *this.playbackRate,this._elapsedPlaybackTime+=time);
+			var currentAniClipPlayDuration=this.playDuration;
+			if ((this._overallDuration!==0 && this._elapsedPlaybackTime >=this._overallDuration)|| (this._overallDuration===0 && this._elapsedPlaybackTime >=currentAniClipPlayDuration)){
+				this._setPlayParamsWhenStop(currentAniClipPlayDuration,cacheFrameInterval);
+				this._onAnimationStop();
+				this.event(/*laya.events.Event.STOPPED*/"stopped");
+				return;
+			}
+			time+=this._currentTime;
+			if (currentAniClipPlayDuration > 0){
+				if (time >=currentAniClipPlayDuration){
+					do {
+						time-=currentAniClipPlayDuration;
+						if (this._stopWhenCircleFinish){
+							this._setPlayParamsWhenStop(currentAniClipPlayDuration,cacheFrameInterval);
+							this._stopWhenCircleFinish=false;
+							this._onAnimationStop();
+							this.event(/*laya.events.Event.STOPPED*/"stopped");
+							return;
+						}
+						if (time < currentAniClipPlayDuration){
+							this._setPlayParams(time,cacheFrameInterval);
+							this.event(/*laya.events.Event.COMPLETE*/"complete");
+						}
+					}while (time >=currentAniClipPlayDuration)
+					}else {
+					this._setPlayParams(time,cacheFrameInterval);
+				}
+				}else {
+				if (this._stopWhenCircleFinish){
+					this._setPlayParamsWhenStop(currentAniClipPlayDuration,cacheFrameInterval);
+					this._stopWhenCircleFinish=false;
+					this._onAnimationStop();
+					this.event(/*laya.events.Event.STOPPED*/"stopped");
+					return;
+				}
+				this._currentTime=this._currentFrameTime=this._currentKeyframeIndex=0;
+				this.event(/*laya.events.Event.COMPLETE*/"complete");
+			}
+		}
+
+		/**
+		*@private
+		*更新蒙皮动画组件。
+		*@param state 渲染状态参数。
+		*/
+		__proto._update=function(state){
+			var clip=this._currentPlayClip;
+			if (this.playState!==/*laya.ani.AnimationState.playing*/2 || !clip || !clip.loaded)
+				return;
+			var rate=this.playbackRate *Laya.timer.scale;
+			var cacheRate=this._cachePlayRate;
+			var canCache=this.isCache && rate >=cacheRate;
+			var frameIndex=-1;
+			if (canCache){
+				frameIndex=this._currentKeyframeIndex;
+				if (this._lastFrameIndex===frameIndex)
+					return;
+				var cachedAniDatas=clip._getAnimationDataWithCache(cacheRate,frameIndex);
+				if (cachedAniDatas){
+					this._curAnimationDatas=cachedAniDatas;
+					this._lastFrameIndex=frameIndex;
+					return;
+				}
+			};
+			var nodes=clip._nodes;
+			if (canCache){
+				this._curAnimationDatas=[];
+				this._curAnimationDatas.length=nodes.length;
+				}else {
+				(this._tempCurAnimationDatas)|| (this._tempCurAnimationDatas=[],this._tempCurAnimationDatas.length=nodes.length);
+				this._curAnimationDatas=this._tempCurAnimationDatas;
+			}
+			if (canCache){
+				clip._evaluateAnimationlDatas(this._cacheFullFrames[this._currentPlayClipIndex],frameIndex,this._currentFrameTime,this._curAnimationDatas);
+				this._currentPlayClip._cacheAnimationData(cacheRate,frameIndex,this._curAnimationDatas);
+				}else {
+				clip._evaluateAnimationlDatasUnfixedRate(this.currentPlayTime,this._curAnimationDatas);
+			}
+			this._lastFrameIndex=frameIndex;
+		}
+
+		/**
+		*@private
+		*初始化载入蒙皮动画组件。
+		*@param owner 所属精灵对象。
+		*/
+		__proto._load=function(owner){
+			_super.prototype._load.call(this,owner);
+		}
+
+		/**
+		*@private
+		*卸载组件时执行
+		*/
+		__proto._unload=function(owner){
+			_super.prototype._unload.call(this,owner);
+			this._tempCurAnimationDatas=null;
+			this._curAnimationDatas=null;
+		}
+
+		/**
+		*@private
+		*/
+		__proto._destroy=function(){
+			_super.prototype._destroy.call(this);
+			this.offAll();
+			this._clip=null;
+			this._clipNames=null;
+			this._clipNodesOwners=null;
+			this._clips=null;
+			this._cacheFullFrames=null;
+		}
+
+		/**
+		*添加动画片段。
+		*@param clip 动画片段。
+		*@param playName 动画片段播放名称，如果为null,则使用clip.name作为播放名称。
+		*/
+		__proto.addClip=function(clip,playName){
+			playName=playName || clip.name;
+			var index=this._clipNames.indexOf(playName);
+			if (index!==-1){
+				if (this._clips[index]!==clip)
+					throw new Error("Animation:this playName has exist with another clip.");
+				}else {
+				var clipIndex=this._clips.indexOf(clip);
+				if (clipIndex!==-1)
+					throw new Error("Animation:this clip has exist with another playName.");
+				this._clipNames.push(playName);
+				this._clips.push(clip);
+				this._addClipNodesOwners(clip);
+			}
+		}
+
+		/**
+		*移除动画片段。
+		*@param clip 动画片段。
+		*/
+		__proto.removeClip=function(clip){
+			var index=this._clips.indexOf(clip);
+			if (index!==-1){
+				this._clipNames.splice(index,1);
+				this._clips.splice(index,1);
+				this._clipNodesOwners.splice(index,1);
+			}
+		}
+
+		/**
+		*通过动画播放名字移除动画。
+		*@param clipPlayName 动画播放名字。
+		*/
+		__proto.removeClipByName=function(playName){
+			var index=this._clipNames.indexOf(playName);
+			if (index!==-1){
+				this._clipNames.splice(index,1);
+				this._clips.splice(index,1);
+				this._clipNodesOwners.splice(index,1);
+			}
+		}
+
+		/**
+		*播放动画。
+		*@param index 动画索引。
+		*@param playbackRate 播放速率。
+		*@param duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
+		*@param playStart 播放的起始时间位置。
+		*@param playEnd 播放的结束时间位置。（0为动画一次循环的最长结束时间位置）。
+		*/
+		__proto.play=function(playbackRate,overallDuration,playStart,playEnd){
+			(playbackRate===void 0)&& (playbackRate=1.0);
+			(overallDuration===void 0)&& (overallDuration=2147483647);
+			(playStart===void 0)&& (playStart=0);
+			(playEnd===void 0)&& (playEnd=0);
+			if (!this._clip)
+				throw new Error("AnimationPlayer:templet must not be null,maybe you need to set url.");
+			if (overallDuration < 0 || playStart < 0 || playEnd < 0)
+				throw new Error("AnimationPlayer:overallDuration,playStart and playEnd must large than zero.");
+			if ((playEnd!==0)&& (playStart > playEnd))
+				throw new Error("AnimationPlayer:start must less than end.");
+			this._currentTime=0;
+			this._currentFrameTime=0;
+			this._elapsedPlaybackTime=0;
+			this.playbackRate=playbackRate;
+			this._overallDuration=overallDuration;
+			this._playStart=playStart;
+			this._playEnd=playEnd;
+			this._paused=false;
+			this._currentPlayClip=this._clip;
+			this._currentPlayClipIndex=this._clips.indexOf(this._clips);
+			this._currentKeyframeIndex=0;
+			this._startUpdateLoopCount=Stat.loopCount;
+			this.event(/*laya.events.Event.PLAYED*/"played");
+			if (this._clip.loaded)
+				this._calculatePlayDuration();
+			else
+			this._clip.once(/*laya.events.Event.LOADED*/"loaded",this,this._onClipLoaded);
+			this._updatePlayer(0);
+		}
+
+		/**
+		*停止播放当前动画
+		*@param immediate 是否立即停止
+		*/
+		__proto.stop=function(immediate){
+			(immediate===void 0)&& (immediate=true);
+			if (immediate){
+				this._currentTime=this._currentFrameTime=this._currentKeyframeIndex=0;
+				this._currentPlayClip=null;
+				this._onAnimationStop();
+				this.event(/*laya.events.Event.STOPPED*/"stopped");
+				}else {
+				this._stopWhenCircleFinish=true;
+			}
+		}
+
+		/**
+		*播放动画。
+		*@param index 动画索引。
+		*@param playbackRate 播放速率。
+		*@param duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
+		*@param playStartFrame 播放的原始起始帧率位置。
+		*@param playEndFrame 播放的原始结束帧率位置。（0为动画一次循环的最长结束时间位置）。
+		*/
+		__proto.playByFrame=function(playbackRate,overallDuration,playStartFrame,playEndFrame){
+			(playbackRate===void 0)&& (playbackRate=1.0);
+			(overallDuration===void 0)&& (overallDuration=2147483647);
+			(playStartFrame===void 0)&& (playStartFrame=0);
+			(playEndFrame===void 0)&& (playEndFrame=0);
+			var interval=1000.0 / this._currentPlayClip._frameRate;
+			this.play(playbackRate,overallDuration,playStartFrame *interval,playEndFrame *interval);
+		}
+
+		/**
+		*设置当前播放位置
+		*@param value 当前时间
+		*/
+		__getset(0,__proto,'currentTime',null,function(value){
+			if (this._currentPlayClip==null || !this._currentPlayClip || !this._currentPlayClip.loaded)
+				return;
+			if (value < this._playStart || value > this._playEnd)
+				throw new Error("AnimationPlayer:value must large than playStartTime,small than playEndTime.");
+			this._startUpdateLoopCount=Stat.loopCount;
+			var cacheFrameInterval=this._cacheFrameRateInterval *this._cachePlayRate;
+			this._currentTime=value;
+			this._currentKeyframeIndex=Math.floor(this.currentPlayTime / cacheFrameInterval);
+			this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
+		});
+
+		/**
+		*设置默认动画片段,AnimationClip名称为默认playName。
+		*@param value 默认动画片段。
+		*/
+		/**
+		*获取默认动画片段。
+		*@return 默认动画片段。
+		*/
+		__getset(0,__proto,'clip',function(){
+			return this._clip;
+			},function(value){
+			if (this._clip!==value){
+				(this._clip)&& (this.removeClip(this._clip));
+				(value)&& (this.addClip(value,value.name));
+				this._clip=value;
+			}
+		});
+
+		/**
+		*设置缓存播放帧率，缓存模式下生效。注意：修改此值会有计算开销。*
+		*@return value 缓存播放帧率
+		*/
+		/**
+		*获取缓存播放帧，缓存模式下生效。
+		*@return value 缓存播放帧率。
+		*/
+		__getset(0,__proto,'cacheFrameRate',function(){
+			return this._cacheFrameRate;
+			},function(value){
+			if (this._cacheFrameRate!==value){
+				this._cacheFrameRate=value;
+				this._cacheFrameRateInterval=1000.0 / this._cacheFrameRate;
+				for (var key in this._clips){
+					var clip=this._clips[key];
+					if (clip.loaded)
+						this._computeCacheFullKeyframeIndices(clip);
+					else
+					clip.once(/*laya.events.Event.LOADED*/"loaded",this,this._onClipLoadedComputeCacheFullKeyframeIndices[this._cachePlayRate,value]);
+				}
+			}
+		});
+
+		/**
+		*动画播放的起始时间位置。
+		*@return 起始时间位置。
+		*/
+		__getset(0,__proto,'playStart',function(){
+			return this._playStart;
+		});
+
+		/**
+		*设置缓存播放速率，缓存模式下生效。注意：修改此值会有计算开销。*
+		*@return value 缓存播放速率。
+		*/
+		/**
+		*获取缓存播放速率，缓存模式下生效。*
+		*@return 缓存播放速率。
+		*/
+		__getset(0,__proto,'cachePlayRate',function(){
+			return this._cachePlayRate;
+			},function(value){
+			if (this._cachePlayRate!==value){
+				this._cachePlayRate=value;
+				for (var key in this._clips){
+					var clip=this._clips[key];
+					if (clip.loaded)
+						this._computeCacheFullKeyframeIndices(clip);
+					else
+					clip.once(/*laya.events.Event.LOADED*/"loaded",this,this._onClipLoadedComputeCacheFullKeyframeIndices[value,this._cacheFrameRate]);
+				}
+			}
+		});
+
+		/**
+		*动画播放的结束时间位置。
+		*@return 结束时间位置。
+		*/
+		__getset(0,__proto,'playEnd',function(){
+			return this._playEnd;
+		});
+
+		/**
+		*获取动画播放一次的总时间
+		*@return 动画播放一次的总时间
+		*/
+		__getset(0,__proto,'playDuration',function(){
+			return this._playDuration;
+		});
+
+		/**
+		*获取当前帧数
+		*@return 当前帧数
+		*/
+		__getset(0,__proto,'currentKeyframeIndex',function(){
+			return this._currentKeyframeIndex;
+		});
+
+		/**
+		*获取动画播放的总总时间
+		*@return 动画播放的总时间
+		*/
+		__getset(0,__proto,'overallDuration',function(){
+			return this._overallDuration;
+		});
+
+		/**
+		*获取当前动画索引
+		*@return value 当前动画索引
+		*/
+		__getset(0,__proto,'currentPlayClip',function(){
+			return this._currentPlayClip;
+		});
+
+		/**
+		*获取当前精确时间，不包括重播时间
+		*@return value 当前时间
+		*/
+		__getset(0,__proto,'currentPlayTime',function(){
+			return this._currentTime+this._playStart;
+		});
+
+		/**
+		*获取当前帧时间，不包括重播时间
+		*@return value 当前时间
+		*/
+		__getset(0,__proto,'currentFrameTime',function(){
+			return this._currentFrameTime;
+		});
+
+		/**
+		*设置是否暂停
+		*@param value 是否暂停
+		*/
+		/**
+		*获取当前是否暂停
+		*@return 是否暂停
+		*/
+		__getset(0,__proto,'paused',function(){
+			return this._paused;
+			},function(value){
+			this._paused=value;
+			value && this.event(/*laya.events.Event.PAUSED*/"paused");
+		});
+
+		/**
+		*获取当前播放状态
+		*@return 当前播放状态
+		*/
+		__getset(0,__proto,'playState',function(){
+			if (this._currentPlayClip==null)
+				return /*laya.ani.AnimationState.stopped*/0;
+			if (this._paused)
+				return /*laya.ani.AnimationState.paused*/1;
+			return /*laya.ani.AnimationState.playing*/2;
+		});
+
+		/**
+		*获取骨骼数据。
+		*@return 骨骼数据。
+		*/
+		__getset(0,__proto,'curAnimationDatas',function(){
+			return this._curAnimationDatas;
+		});
+
+		Animation.BONES=0;
+		Animation.SHADERDEFINE_BONE=0x8;
+		return Animation;
+	})(Component3D)
+
+
+	/**
 	*<code>AttachPoint</code> 类用于创建挂点组件。
 	*/
 	//class laya.d3.component.AttachPoint extends laya.d3.component.Component3D
@@ -20377,14 +21620,9 @@
 	*/
 	//class laya.d3.core.MeshRender extends laya.d3.core.render.BaseRender
 	var MeshRender=(function(_super){
-		/**
-		*创建一个新的 <code>MeshRender</code> 实例。
-		*/
 		function MeshRender(owner){
+			this._belongAvatar=null;
 			MeshRender.__super.call(this,owner);
-			this.lightmapIndex=-1;
-			this.castShadow=false;
-			this.receiveShadow=false;
 			owner.meshFilter.on(/*laya.events.Event.MESH_CHANGED*/"meshchanged",this,this._onMeshChanged);
 		}
 
@@ -20514,11 +21752,15 @@
 	//class laya.d3.core.particleShuriKen.ShurikenParticleSystem extends laya.d3.core.GeometryFilter
 	var ShurikenParticleSystem=(function(_super){
 		function ShurikenParticleSystem(owner){
-			this.halfKSqrtOf2=1.42 *0.5;
+			this._boundingSphere=null;
+			this._boundingBox=null;
 			this._boundingBoxCorners=null;
 			this._owner=null;
+			this._ownerRender=null;
 			this._vertices=null;
 			this._floatCountPerVertex=0;
+			this._startLifeTimeIndex=0;
+			this._timeIndex=0;
 			this._firstActiveElement=0;
 			this._firstNewElement=0;
 			this._firstFreeElement=0;
@@ -20542,6 +21784,8 @@
 			this._sizeOverLifetime=null;
 			this._rotationOverLifetime=null;
 			this._textureSheetAnimation=null;
+			this._vertexStride=0;
+			this._indexStride=0;
 			this._startUpdateLoopCount=0;
 			this._rand=null;
 			this._randomSeeds=null;
@@ -20584,7 +21828,6 @@
 			this.startColorConstant=null;
 			this.startColorConstantMin=null;
 			this.startColorConstantMax=null;
-			this.gravity=null;
 			this.gravityModifier=NaN;
 			this.simulationSpace=0;
 			this.scaleMode=0;
@@ -20594,20 +21837,20 @@
 			this.isPerformanceMode=false;
 			ShurikenParticleSystem.__super.call(this);
 			this._tempRotationMatrix=new Matrix4x4();
-			this._boundingSphere=new BoundSphere(new Vector3(),0);
-			this._boundingBox=new BoundBox(new Vector3(),new Vector3());
 			this._uvLength=new Vector2();
 			this._owner=owner;
+			this._ownerRender=owner.particleRender;
 			this._boundingBoxCorners=__newvec(8,null);
+			this._boundingSphere=new BoundSphere(new Vector3(),0);
+			this._boundingBox=new BoundBox(new Vector3(),new Vector3());
 			this._currentTime=0;
-			this._floatCountPerVertex=40;
 			this._isPlaying=false;
 			this._isPaused=false;
 			this._burstsIndex=0;
 			this._frameTime=0;
 			this._emissionTime=0;
 			this._playbackTime=0;
-			this._bufferMaxParticles=1000;
+			this._bufferMaxParticles=1;
 			this.duration=5.0;
 			this.looping=true;
 			this.prewarm=false;
@@ -20647,7 +21890,6 @@
 			this.startColorConstant=new Vector4(1,1,1,1);
 			this.startColorConstantMin=new Vector4(1,1,1,1);
 			this.startColorConstantMax=new Vector4(1,1,1,1);
-			this.gravity=new Vector3(0,-9.81,0);
 			this.gravityModifier=0.0;
 			this.simulationSpace=1;
 			this.scaleMode=0;
@@ -20859,7 +22101,7 @@
 			var rotSize=NaN,nonRotSize=NaN;
 			switch (renderMode){
 				case 0:
-					rotSize=maxSize *this.halfKSqrtOf2;
+					rotSize=maxSize *ShurikenParticleSystem.halfKSqrtOf2;
 					Vector3.scale(sizeScale,maxSize,threeDMaxSize);
 					Vector3.subtract(boundMin,threeDMaxSize,boundMin);
 					Vector3.add(boundMax,threeDMaxSize,boundMax);
@@ -20885,8 +22127,7 @@
 					Vector3.normalize(minStretchVelocity,norMinStretchVelocity);
 					Vector3.scale(norMinStretchVelocity,minStretchLength,maxStretchPosition);
 					Vector3.add(minStratPosition,maxStretchPosition,maxStretchPosition);
-					debugger;
-					rotSize=maxSize *this.halfKSqrtOf2;
+					rotSize=maxSize *ShurikenParticleSystem.halfKSqrtOf2;
 					Vector3.scale(sizeScale,rotSize,threeDMaxSize);
 					var halfNorMaxStretchVelocity=ShurikenParticleSystem._tempVector37;
 					var halfNorMinStretchVelocity=ShurikenParticleSystem._tempVector38;
@@ -20983,10 +22224,10 @@
 		__proto._retireActiveParticles=function(){
 			var epsilon=0.0001;
 			while (this._firstActiveElement !=this._firstNewElement){
-				var index=this._firstActiveElement *this._floatCountPerVertex *4;
-				var timeIndex=index+11;
+				var index=this._firstActiveElement *this._floatCountPerVertex *this._vertexStride;
+				var timeIndex=index+this._timeIndex;
 				var particleAge=this._currentTime-this._vertices[timeIndex];
-				if (particleAge+epsilon < this._vertices[index+7])
+				if (particleAge+epsilon < this._vertices[index+this._startLifeTimeIndex])
 					break ;
 				this._vertices[timeIndex]=this._drawCounter;
 				this._firstActiveElement++;
@@ -21000,7 +22241,7 @@
 		*/
 		__proto._freeRetiredParticles=function(){
 			while (this._firstRetiredElement !=this._firstActiveElement){
-				var age=this._drawCounter-this._vertices[this._firstRetiredElement *this._floatCountPerVertex *4+11];
+				var age=this._drawCounter-this._vertices[this._firstRetiredElement *this._floatCountPerVertex *this._vertexStride+this._timeIndex];
 				if (this.isPerformanceMode)
 					if (age < 3)
 				break ;
@@ -21008,51 +22249,6 @@
 				if (this._firstRetiredElement >=this._bufferMaxParticles)
 					this._firstRetiredElement=0;
 			}
-		}
-
-		/**
-		*@private
-		*/
-		__proto._setPartVertexDatas=function(){
-			for (var i=0;i < this._bufferMaxParticles;i++){
-				var particleOffset=i *this._floatCountPerVertex *4;
-				this._vertices[particleOffset+this._floatCountPerVertex *0+0]=-0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *0+1]=-0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *1+0]=0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *1+1]=-0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *2+0]=0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *2+1]=0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *3+0]=-0.5;
-				this._vertices[particleOffset+this._floatCountPerVertex *3+1]=0.5;
-			}
-		}
-
-		/**
-		*@private
-		*/
-		__proto._initPartVertexDatas=function(){
-			this._vertexBuffer=VertexBuffer3D.create(VertexParticleShuriken.vertexDeclaration,this._bufferMaxParticles *4,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
-			this._vertices=new Float32Array(this._bufferMaxParticles *this._floatCountPerVertex *4);
-			this._setPartVertexDatas();
-		}
-
-		/**
-		*@private
-		*/
-		__proto._initIndexDatas=function(){
-			this._indexBuffer=IndexBuffer3D.create(/*laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort",this._bufferMaxParticles *6,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
-			var indexes=new Uint16Array(this._bufferMaxParticles *6);
-			for (var i=0;i < this._bufferMaxParticles;i++){
-				var indexOffset=i *6;
-				var vertexOffset=i *4;
-				indexes[indexOffset+0]=(vertexOffset+0);
-				indexes[indexOffset+1]=(vertexOffset+2);
-				indexes[indexOffset+2]=(vertexOffset+1);
-				indexes[indexOffset+3]=(vertexOffset+0);
-				indexes[indexOffset+4]=(vertexOffset+3);
-				indexes[indexOffset+5]=(vertexOffset+2);
-			}
-			this._indexBuffer.setData(indexes);
 		}
 
 		/**
@@ -21131,6 +22327,92 @@
 		/**
 		*@private
 		*/
+		__proto._initBufferDatas=function(){
+			var render=this._ownerRender;
+			var renderMode=render.renderMode;
+			var indices,i=0,j=0,m=0,indexOffset=0,perPartOffset=0;
+			if (renderMode!==-1 && this.maxParticles > 0){
+				var mesh=render.mesh;
+				if (renderMode===4 && mesh){
+					var vertexBufferCount=mesh._vertexBuffers.length;
+					if (vertexBufferCount > 1){
+						throw new Error("ShurikenParticleSystem: submesh Count mesh be One or all subMeshes have the same vertexDeclaration.");
+						}else {
+						this._floatCountPerVertex=36;
+						this._startLifeTimeIndex=8;
+						this._timeIndex=12;
+						this._vertexStride=mesh._vertexBuffers[0].vertexCount;
+						var totalVertexCount=this._bufferMaxParticles *this._vertexStride;
+						var vbCount=Math.floor(totalVertexCount / 65535)+1;
+						var lastVBVertexCount=totalVertexCount % 65535;
+						if (vbCount > 1){
+							throw new Error("ShurikenParticleSystem:the maxParticleCount multiply mesh vertexCount is large than 65535.");
+						}
+						this._vertexBuffer=VertexBuffer3D.create(VertexShurikenParticleMesh.vertexDeclaration,lastVBVertexCount,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
+						this._vertices=new Float32Array(this._floatCountPerVertex *lastVBVertexCount);
+						this._indexStride=mesh._indexBuffer.indexCount;
+						var indexDatas=mesh._indexBuffer.getData();
+						var indexCount=this._bufferMaxParticles *this._indexStride;
+						this._indexBuffer=IndexBuffer3D.create(/*laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort",indexCount,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
+						indices=new Uint16Array(indexCount);
+						indexOffset=0;
+						for (i=0;i < this._bufferMaxParticles;i++){
+							var indexValueOffset=i *this._vertexStride;
+							for (j=0,m=indexDatas.length;j < m;j++)
+							indices[indexOffset++]=indexValueOffset+indexDatas[j];
+						}
+						this._indexBuffer.setData(indices);
+					}
+					}else {
+					this._floatCountPerVertex=35;
+					this._startLifeTimeIndex=7;
+					this._timeIndex=11;
+					this._vertexStride=4;
+					this._vertexBuffer=VertexBuffer3D.create(VertexShurikenParticleBillboard.vertexDeclaration,this._bufferMaxParticles *this._vertexStride,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
+					this._vertices=new Float32Array(this._floatCountPerVertex *this._bufferMaxParticles *this._vertexStride);
+					for (i=0;i < this._bufferMaxParticles;i++){
+						perPartOffset=i *this._floatCountPerVertex *this._vertexStride;
+						this._vertices[perPartOffset]=-0.5;
+						this._vertices[perPartOffset+1]=-0.5;
+						this._vertices[perPartOffset+2]=0;
+						this._vertices[perPartOffset+3]=1;
+						perPartOffset+=this._floatCountPerVertex;
+						this._vertices[perPartOffset]=0.5;
+						this._vertices[perPartOffset+1]=-0.5;
+						this._vertices[perPartOffset+2]=1;
+						this._vertices[perPartOffset+3]=1;
+						perPartOffset+=this._floatCountPerVertex
+						this._vertices[perPartOffset]=0.5;
+						this._vertices[perPartOffset+1]=0.5;
+						this._vertices[perPartOffset+2]=1;
+						this._vertices[perPartOffset+3]=0;
+						perPartOffset+=this._floatCountPerVertex
+						this._vertices[perPartOffset]=-0.5;
+						this._vertices[perPartOffset+1]=0.5;
+						this._vertices[perPartOffset+2]=0;
+						this._vertices[perPartOffset+3]=0;
+					}
+					this._indexStride=6;
+					this._indexBuffer=IndexBuffer3D.create(/*laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort",this._bufferMaxParticles *6,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
+					indices=new Uint16Array(this._bufferMaxParticles *6);
+					for (i=0;i < this._bufferMaxParticles;i++){
+						indexOffset=i *6;
+						var firstVertex=i *this._vertexStride,secondVertex=firstVertex+2;
+						indices[indexOffset++]=firstVertex;
+						indices[indexOffset++]=secondVertex;
+						indices[indexOffset++]=firstVertex+1;
+						indices[indexOffset++]=firstVertex;
+						indices[indexOffset++]=firstVertex+3;
+						indices[indexOffset++]=secondVertex;
+					}
+					this._indexBuffer.setData(indices);
+				}
+			}
+		}
+
+		/**
+		*@private
+		*/
 		__proto._destroy=function(){
 			_super.prototype._destroy.call(this);
 			(this._owner.displayedInStage && this._owner.activeInHierarchy)&& (this._removeUpdateEmissionToTimer());
@@ -21155,7 +22437,6 @@
 			this.startColorConstant=null;
 			this.startColorConstantMin=null;
 			this.startColorConstantMax=null;
-			this.gravity=null;
 			this._velocityOverLifetime=null;
 			this._colorOverLifetime=null;
 			this._sizeOverLifetime=null;
@@ -21187,27 +22468,12 @@
 		//TODO:提前判断优化
 		__proto.addParticle=function(position,direction){
 			Vector3.normalize(direction,direction);
-			var positionE=position.elements;
-			var directionE=direction.elements;
 			var nextFreeParticle=this._firstFreeElement+1;
 			if (nextFreeParticle >=this._bufferMaxParticles)
 				nextFreeParticle=0;
 			if (nextFreeParticle===this._firstRetiredElement)
 				return false;
-			var particleData=ShurikenParticleData.create(this,this._owner.particleRender,positionE,directionE,this._currentTime,this._owner.transform);
-			var startIndex=this._firstFreeElement *this._floatCountPerVertex *4;
-			var subU=particleData.startUVInfo[0];
-			var subV=particleData.startUVInfo[1];
-			var startU=particleData.startUVInfo[2];
-			var startV=particleData.startUVInfo[3];
-			this._vertices[startIndex+2]=startU;
-			this._vertices[startIndex+3]=startV+subV;
-			this._vertices[startIndex+this._floatCountPerVertex+2]=startU+subU;
-			this._vertices[startIndex+this._floatCountPerVertex+3]=startV+subV;
-			this._vertices[startIndex+this._floatCountPerVertex *2+2]=startU+subU;
-			this._vertices[startIndex+this._floatCountPerVertex *2+3]=startV;
-			this._vertices[startIndex+this._floatCountPerVertex *3+2]=startU;
-			this._vertices[startIndex+this._floatCountPerVertex *3+3]=startV;
+			ShurikenParticleData.create(this,this._ownerRender,this._owner.transform);
 			var randomVelocityX=NaN,randomVelocityY=NaN,randomVelocityZ=NaN,randomColor=NaN,randomSize=NaN,randomRotation=NaN,randomTextureAnimation=NaN;
 			var needRandomVelocity=this._velocityOverLifetime && this._velocityOverLifetime.enbale;
 			if (needRandomVelocity){
@@ -21297,38 +22563,76 @@
 				}
 				}else {
 				needRandomTextureAnimation=false;
+			};
+			var startIndex=this._firstFreeElement *this._floatCountPerVertex *this._vertexStride;
+			var subU=ShurikenParticleData.startUVInfo[0];
+			var subV=ShurikenParticleData.startUVInfo[1];
+			var startU=ShurikenParticleData.startUVInfo[2];
+			var startV=ShurikenParticleData.startUVInfo[3];
+			var positionE=position.elements;
+			var directionE=direction.elements;
+			var meshVertices,meshVertexStride=0,meshUVOffset=0,meshPosOffset=0,meshVertexIndex=0;
+			var render=this._ownerRender;
+			if (render.renderMode===4){
+				var meshVB=render.mesh._vertexBuffers[0];
+				meshVertices=meshVB.getData();
+				var meshVertexDeclaration=meshVB.vertexDeclaration;
+				meshPosOffset=meshVertexDeclaration.getVertexElementByUsage(/*laya.d3.graphics.VertexElementUsage.POSITION0*/0).offset / 4;
+				meshUVOffset=meshVertexDeclaration.getVertexElementByUsage(/*laya.d3.graphics.VertexElementUsage.TEXTURECOORDINATE0*/2).offset / 4;
+				meshVertexStride=meshVertexDeclaration.vertexStride / 4;
+				meshVertexIndex=0;
+				}else {
+				this._vertices[startIndex+2]=startU;
+				this._vertices[startIndex+3]=startV+subV;
+				var secondOffset=startIndex+this._floatCountPerVertex;
+				this._vertices[secondOffset+2]=startU+subU;
+				this._vertices[secondOffset+3]=startV+subV;
+				var thirdOffset=secondOffset+this._floatCountPerVertex;
+				this._vertices[thirdOffset+2]=startU+subU;
+				this._vertices[thirdOffset+3]=startV;
+				var fourthOffset=thirdOffset+this._floatCountPerVertex;
+				this._vertices[fourthOffset+2]=startU;
+				this._vertices[fourthOffset+3]=startV;
 			}
-			for (var i=0;i < 4;i++){
-				var vertexStart=startIndex+i *this._floatCountPerVertex;
+			for (var i=startIndex,n=startIndex+this._floatCountPerVertex *this._vertexStride;i < n;i+=this._floatCountPerVertex){
 				var j=0,offset=0;
-				for (j=0,offset=4;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.position[j];
-				this._vertices[vertexStart+7]=particleData.startLifeTime;
-				for (j=0,offset=8;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.direction[j];
-				this._vertices[vertexStart+11]=particleData.time;
-				for (j=0,offset=12;j < 4;j++)
-				this._vertices[vertexStart+offset+j]=particleData.startColor[j];
-				for (j=0,offset=16;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.startSize[j];
-				for (j=0,offset=19;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.startRotation0[j];
-				for (j=0,offset=22;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.startRotation1[j];
-				for (j=0,offset=25;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.startRotation2[j];
-				this._vertices[vertexStart+28]=particleData.startSpeed;
-				needRandomColor && (this._vertices[vertexStart+30]=randomColor);
-				needRandomSize && (this._vertices[vertexStart+31]=randomSize);
-				needRandomRotation && (this._vertices[vertexStart+32]=randomRotation);
-				needRandomTextureAnimation && (this._vertices[vertexStart+33]=randomTextureAnimation);
-				if (needRandomVelocity){
-					this._vertices[vertexStart+34]=randomVelocityX;
-					this._vertices[vertexStart+35]=randomVelocityY;
-					this._vertices[vertexStart+36]=randomVelocityZ;
+				if (render.renderMode===4){
+					offset=i;
+					var vertexOffset=meshVertexStride *(meshVertexIndex++);
+					var oriMeshOffset=vertexOffset+meshPosOffset;
+					for (j=0;j < 3;j++)
+					this._vertices[offset++]=meshVertices[oriMeshOffset+j];
+					var meshVertexOffset=vertexOffset+meshUVOffset;
+					this._vertices[offset++]=startU+meshVertices[meshVertexOffset] *subU;
+					this._vertices[offset++]=startV+meshVertices[++meshVertexOffset] *subV;
+					}else {
+					offset=i+4;
 				}
-				for (j=0,offset=37;j < 3;j++)
-				this._vertices[vertexStart+offset+j]=particleData.simulationWorldPostion[j];
+				for (j=0;j < 3;j++)
+				this._vertices[offset++]=positionE[j];
+				this._vertices[offset++]=ShurikenParticleData.startLifeTime;
+				for (j=0;j < 3;j++)
+				this._vertices[offset++]=directionE[j];
+				this._vertices[offset++]=this._currentTime;
+				for (j=0;j < 4;j++)
+				this._vertices[offset++]=ShurikenParticleData.startColor[j];
+				for (j=0;j < 3;j++)
+				this._vertices[offset++]=ShurikenParticleData.startSize[j];
+				for (j=0;j < 4;j++)
+				this._vertices[offset++]=ShurikenParticleData.startRotation[j];
+				this._vertices[offset++]=ShurikenParticleData.startSpeed;
+				needRandomColor && (this._vertices[offset+1]=randomColor);
+				needRandomSize && (this._vertices[offset+2]=randomSize);
+				needRandomRotation && (this._vertices[offset+3]=randomRotation);
+				needRandomTextureAnimation && (this._vertices[offset+4]=randomTextureAnimation);
+				if (needRandomVelocity){
+					this._vertices[offset+5]=randomVelocityX;
+					this._vertices[offset+6]=randomVelocityY;
+					this._vertices[offset+7]=randomVelocityZ;
+				}
+				offset=offset+8;
+				for (j=0;j < 3;j++)
+				this._vertices[offset++]=ShurikenParticleData.simulationWorldPostion[j];
 			}
 			this._firstFreeElement=nextFreeParticle;
 			return true;
@@ -21337,13 +22641,13 @@
 		__proto.addNewParticlesToVertexBuffer=function(){
 			var start=0;
 			if (this._firstNewElement < this._firstFreeElement){
-				start=this._firstNewElement *4 *this._floatCountPerVertex;
-				this._vertexBuffer.setData(this._vertices,start,start,(this._firstFreeElement-this._firstNewElement)*4 *this._floatCountPerVertex);
+				start=this._firstNewElement *this._vertexStride *this._floatCountPerVertex;
+				this._vertexBuffer.setData(this._vertices,start,start,(this._firstFreeElement-this._firstNewElement)*this._vertexStride *this._floatCountPerVertex);
 				}else {
-				start=this._firstNewElement *4 *this._floatCountPerVertex;
-				this._vertexBuffer.setData(this._vertices,start,start,(this._bufferMaxParticles-this._firstNewElement)*4 *this._floatCountPerVertex);
+				start=this._firstNewElement *this._vertexStride *this._floatCountPerVertex;
+				this._vertexBuffer.setData(this._vertices,start,start,(this._bufferMaxParticles-this._firstNewElement)*this._vertexStride *this._floatCountPerVertex);
 				if (this._firstFreeElement > 0){
-					this._vertexBuffer.setData(this._vertices,0,0,this._firstFreeElement *4 *this._floatCountPerVertex);
+					this._vertexBuffer.setData(this._vertices,0,0,this._firstFreeElement *this._vertexStride *this._floatCountPerVertex);
 				}
 			}
 			this._firstNewElement=this._firstFreeElement;
@@ -21362,23 +22666,26 @@
 			return false;
 		}
 
+		/**
+		*@private
+		*/
 		__proto._render=function(state){
-			var drawVertexCount=0;
-			var glContext=WebGL.mainContext;
+			var indexCount=0;
+			var gl=WebGL.mainContext;
 			if (this._firstActiveElement < this._firstFreeElement){
-				drawVertexCount=(this._firstFreeElement-this._firstActiveElement)*6;
-				glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
-				Stat.trianglesFaces+=drawVertexCount / 3;
+				indexCount=(this._firstFreeElement-this._firstActiveElement)*this._indexStride;
+				gl.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,indexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,2 *this._firstActiveElement *this._indexStride);
+				Stat.trianglesFaces+=indexCount / 3;
 				Stat.drawCall++;
 				}else {
-				drawVertexCount=(this._bufferMaxParticles-this._firstActiveElement)*6;
-				glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
-				Stat.trianglesFaces+=drawVertexCount / 3;
+				indexCount=(this._bufferMaxParticles-this._firstActiveElement)*this._indexStride;
+				gl.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,indexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,2 *this._firstActiveElement *this._indexStride);
+				Stat.trianglesFaces+=indexCount / 3;
 				Stat.drawCall++;
 				if (this._firstFreeElement > 0){
-					drawVertexCount=this._firstFreeElement *6;
-					glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,0);
-					Stat.trianglesFaces+=drawVertexCount / 3;
+					indexCount=this._firstFreeElement *this._indexStride;
+					gl.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,indexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,0);
+					Stat.trianglesFaces+=indexCount / 3;
 					Stat.drawCall++;
 				}
 			}
@@ -21484,7 +22791,6 @@
 			this.startColorConstant.cloneTo(dest.startColorConstant);
 			this.startColorConstantMin.cloneTo(dest.startColorConstantMin);
 			this.startColorConstantMax.cloneTo(dest.startColorConstantMax);
-			this.gravity.cloneTo(dest.gravity);
 			dest.gravityModifier=this.gravityModifier;
 			dest.simulationSpace=this.simulationSpace;
 			dest.scaleMode=this.scaleMode;
@@ -21540,8 +22846,7 @@
 					this._vertexBuffer.dispose();
 					this._indexBuffer.dispose();
 				}
-				this._initPartVertexDatas();
-				this._initIndexDatas();
+				this._initBufferDatas();
 			}
 		});
 
@@ -21578,7 +22883,7 @@
 		__getset(0,__proto,'rotationOverLifetime',function(){
 			return this._rotationOverLifetime;
 			},function(value){
-			var render=this._owner._render;
+			var render=this._ownerRender;
 			if (value){
 				var rotation=value.angularVelocity;
 				var rotationSeparate=rotation.separateAxes;
@@ -21613,40 +22918,43 @@
 				switch (rotationType){
 					case 0:
 						if (rotationSeparate){
-							render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE*/28,rotation.constantSeparate);
+							render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE*/35,rotation.constantSeparate);
 							}else {
-							render._setShaderValueNumber(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONST*/27,rotation.constant);
+							render._setShaderValueNumber(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONST*/34,rotation.constant);
 						}
 						break ;
 					case 1:
 						if (rotationSeparate){
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX*/30,rotation.gradientX._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY*/31,rotation.gradientY._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ*/32,rotation.gradientZ._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX*/37,rotation.gradientX._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY*/38,rotation.gradientY._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ*/39,rotation.gradientZ._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTW*/40,rotation.gradientW._elements);
 							}else {
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT*/29,rotation.gradient._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT*/36,rotation.gradient._elements);
 						}
 						break ;
 					case 2:
 						if (rotationSeparate){
-							render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE*/28,rotation.constantMinSeparate);
-							render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE*/34,rotation.constantMaxSeparate);
+							render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE*/35,rotation.constantMinSeparate);
+							render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE*/42,rotation.constantMaxSeparate);
 							}else {
-							render._setShaderValueNumber(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONST*/27,rotation.constantMin);
-							render._setShaderValueNumber(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX*/33,rotation.constantMax);
+							render._setShaderValueNumber(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONST*/34,rotation.constantMin);
+							render._setShaderValueNumber(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX*/41,rotation.constantMax);
 						}
 						break ;
 					case 3:
 						if (rotationSeparate){
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX*/30,rotation.gradientXMin._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX*/36,rotation.gradientXMax._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY*/31,rotation.gradientYMin._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX*/37,rotation.gradientYMax._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ*/32,rotation.gradientZMin._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX*/38,rotation.gradientZMax._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX*/37,rotation.gradientXMin._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX*/44,rotation.gradientXMax._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY*/38,rotation.gradientYMin._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX*/45,rotation.gradientYMax._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ*/39,rotation.gradientZMin._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX*/46,rotation.gradientZMax._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTW*/40,rotation.gradientWMin._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTWMAX*/47,rotation.gradientWMax._elements);
 							}else {
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT*/29,rotation.gradientMin._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX*/35,rotation.gradientMax._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT*/36,rotation.gradientMin._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX*/43,rotation.gradientMax._elements);
 						}
 						break ;
 					}
@@ -21657,18 +22965,20 @@
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE);
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS);
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES);
-				render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE*/28,null);
-				render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE*/34,null);
-				render._setShaderValueNumber(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONST*/27,undefined);
-				render._setShaderValueNumber(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX*/33,undefined);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX*/30,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX*/36,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY*/31,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX*/37,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ*/32,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX*/38,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT*/29,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX*/35,null);
+				render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE*/35,null);
+				render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE*/42,null);
+				render._setShaderValueNumber(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONST*/34,undefined);
+				render._setShaderValueNumber(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX*/41,undefined);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX*/37,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX*/44,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY*/38,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX*/45,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ*/39,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX*/46,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTW*/40,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTWMAX*/47,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT*/36,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX*/43,null);
 			}
 			this._rotationOverLifetime=value;
 		});
@@ -21729,7 +23039,7 @@
 		__getset(0,__proto,'velocityOverLifetime',function(){
 			return this._velocityOverLifetime;
 			},function(value){
-			var render=this._owner._render;
+			var render=this._ownerRender;
 			if (value){
 				var velocity=value.velocity;
 				var velocityType=velocity.type;
@@ -21756,45 +23066,45 @@
 				}
 				switch (velocityType){
 					case 0:
-						render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONST*/6,velocity.constant);
+						render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONST*/13,velocity.constant);
 						break ;
 					case 1:
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTX*/7,velocity.gradientX._elements);
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTY*/8,velocity.gradientY._elements);
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZ*/9,velocity.gradientZ._elements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTX*/14,velocity.gradientX._elements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTY*/15,velocity.gradientY._elements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZ*/16,velocity.gradientZ._elements);
 						break ;
 					case 2:
-						render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONST*/6,velocity.constantMin);
-						render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONSTMAX*/10,velocity.constantMax);
+						render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONST*/13,velocity.constantMin);
+						render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONSTMAX*/17,velocity.constantMax);
 						break ;
 					case 3:
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTX*/7,velocity.gradientXMin._elements);
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX*/11,velocity.gradientXMax._elements);
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTY*/8,velocity.gradientYMin._elements);
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX*/12,velocity.gradientYMax._elements);
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZ*/9,velocity.gradientZMin._elements);
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX*/13,velocity.gradientZMax._elements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTX*/14,velocity.gradientXMin._elements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX*/18,velocity.gradientXMax._elements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTY*/15,velocity.gradientYMin._elements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX*/19,velocity.gradientYMax._elements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZ*/16,velocity.gradientZMin._elements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX*/20,velocity.gradientZMax._elements);
 						break ;
 					}
-				render._setShaderValueInt(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLSPACETYPE*/14,value.space);
+				render._setShaderValueInt(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLSPACETYPE*/21,value.space);
 				}else {
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT);
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE);
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT);
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE);
-				render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONST*/6,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTX*/7,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTY*/8,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZ*/9,null);
-				render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONST*/6,null);
-				render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONSTMAX*/10,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTX*/7,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX*/11,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTY*/8,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX*/12,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZ*/9,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX*/13,null);
-				render._setShaderValueInt(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLSPACETYPE*/14,undefined);
+				render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONST*/13,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTX*/14,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTY*/15,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZ*/16,null);
+				render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONST*/13,null);
+				render._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYCONSTMAX*/17,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTX*/14,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX*/18,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTY*/15,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX*/19,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZ*/16,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX*/20,null);
+				render._setShaderValueInt(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.VOLSPACETYPE*/21,undefined);
 			}
 			this._velocityOverLifetime=value;
 		});
@@ -21810,7 +23120,7 @@
 		__getset(0,__proto,'colorOverLifetime',function(){
 			return this._colorOverLifetime;
 			},function(value){
-			var render=this._owner._render;
+			var render=this._ownerRender;
 			if (value){
 				var color=value.color;
 				if (value.enbale){
@@ -21829,27 +23139,27 @@
 				switch (color.type){
 					case 1:;
 						var gradientColor=color.gradient;
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS*/15,gradientColor._alphaElements);
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS*/16,gradientColor._rgbElements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS*/22,gradientColor._alphaElements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS*/23,gradientColor._rgbElements);
 						break ;
 					case 3:;
 						var minGradientColor=color.gradientMin;
 						var maxGradientColor=color.gradientMax;
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS*/15,minGradientColor._alphaElements);
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS*/16,minGradientColor._rgbElements);
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS*/17,maxGradientColor._alphaElements);
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS*/18,maxGradientColor._rgbElements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS*/22,minGradientColor._alphaElements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS*/23,minGradientColor._rgbElements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS*/24,maxGradientColor._alphaElements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS*/25,maxGradientColor._rgbElements);
 						break ;
 					}
 				}else {
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME);
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS*/15,gradientColor._alphaElements);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS*/16,gradientColor._rgbElements);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS*/15,minGradientColor._alphaElements);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS*/16,minGradientColor._rgbElements);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS*/17,maxGradientColor._alphaElements);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS*/18,maxGradientColor._rgbElements);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS*/22,gradientColor._alphaElements);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS*/23,gradientColor._rgbElements);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS*/22,minGradientColor._alphaElements);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS*/23,minGradientColor._rgbElements);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS*/24,maxGradientColor._alphaElements);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS*/25,maxGradientColor._rgbElements);
 			}
 			this._colorOverLifetime=value;
 		});
@@ -21865,7 +23175,7 @@
 		__getset(0,__proto,'sizeOverLifetime',function(){
 			return this._sizeOverLifetime;
 			},function(value){
-			var render=this._owner._render;
+			var render=this._ownerRender;
 			if (value){
 				var size=value.size;
 				var sizeSeparate=size.separateAxes;
@@ -21894,24 +23204,24 @@
 				switch (sizeType){
 					case 0:
 						if (sizeSeparate){
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTX*/20,size.gradientX._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTY*/21,size.gradientY._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZ*/22,size.gradientZ._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTX*/27,size.gradientX._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTY*/28,size.gradientY._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZ*/29,size.gradientZ._elements);
 							}else {
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENT*/19,size.gradient._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENT*/26,size.gradient._elements);
 						}
 						break ;
 					case 2:
 						if (sizeSeparate){
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTX*/20,size.gradientXMin._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTXMAX*/24,size.gradientXMax._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTY*/21,size.gradientYMin._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTYMAX*/25,size.gradientYMax._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZ*/22,size.gradientZMin._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZMAX*/26,size.gradientZMax._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTX*/27,size.gradientXMin._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTXMAX*/31,size.gradientXMax._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTY*/28,size.gradientYMin._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTYMAX*/32,size.gradientYMax._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZ*/29,size.gradientZMin._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZMAX*/33,size.gradientZMax._elements);
 							}else {
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENT*/19,size.gradientMin._elements);
-							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientMax*/23,size.gradientMax._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENT*/26,size.gradientMin._elements);
+							render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientMax*/30,size.gradientMax._elements);
 						}
 						break ;
 					}
@@ -21920,14 +23230,14 @@
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE);
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES);
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTX*/20,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTXMAX*/24,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTY*/21,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTYMAX*/25,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZ*/22,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZMAX*/26,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENT*/19,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientMax*/23,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTX*/27,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTXMAX*/31,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTY*/28,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENTYMAX*/32,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZ*/29,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientZMAX*/33,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSIZEGRADIENT*/26,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SOLSizeGradientMax*/30,null);
 			}
 			this._sizeOverLifetime=value;
 		});
@@ -21943,7 +23253,7 @@
 		__getset(0,__proto,'textureSheetAnimation',function(){
 			return this._textureSheetAnimation;
 			},function(value){
-			var render=this._owner._render;
+			var render=this._ownerRender;
 			if (value){
 				var frameOverTime=value.frame;
 				var textureAniType=frameOverTime.type;
@@ -21961,29 +23271,29 @@
 					render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
 				}
 				if (textureAniType===1 || textureAniType===3){
-					render._setShaderValueInt(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES*/39,value.cycles);
+					render._setShaderValueInt(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES*/48,value.cycles);
 					var title=value.tiles;
 					var _uvLengthE=this._uvLength.elements;
 					_uvLengthE[0]=1.0 / title.x;
 					_uvLengthE[1]=1.0 / title.y;
-					render._setShaderValueVector2(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH*/40,this._uvLength);
+					render._setShaderValueVector2(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH*/49,this._uvLength);
 				}
 				switch (textureAniType){
 					case 1:
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS*/41,frameOverTime.frameOverTimeData._elements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS*/50,frameOverTime.frameOverTimeData._elements);
 						break ;
 					case 3:
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS*/41,frameOverTime.frameOverTimeDataMin._elements);
-						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS*/42,frameOverTime.frameOverTimeDataMax._elements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS*/50,frameOverTime.frameOverTimeDataMin._elements);
+						render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS*/51,frameOverTime.frameOverTimeDataMax._elements);
 						break ;
 					}
 				}else {
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE);
 				render._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE);
-				render._setShaderValueInt(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES*/39,undefined);
-				render._setShaderValueVector2(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH*/40,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS*/41,null);
-				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS*/42,null);
+				render._setShaderValueInt(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES*/48,undefined);
+				render._setShaderValueVector2(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH*/49,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS*/50,null);
+				render._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS*/51,null);
 			}
 			this._textureSheetAnimation=value;
 		});
@@ -22017,8 +23327,9 @@
 			return this._boundingBoxCorners;
 		});
 
+		ShurikenParticleSystem.halfKSqrtOf2=1.42 *0.5;
 		__static(ShurikenParticleSystem,
-		['_maxElapsedTime',function(){return this._maxElapsedTime=1.0 / 3.0;},'_RANDOMOFFSET',function(){return this._RANDOMOFFSET=new Uint32Array([0x23571a3e,0xc34f56fe,0x13371337,0x12460f3b,0x6aed452e,0xdec4aea1,0x96aa4de3,0x8d2c8431,0xf3857f6f,0xe0fbd834,0x13740583,0x591bc05c,0x40eb95e4,0xbc524e5f,0xaf502044,0xa614b381,0x1034e524,0xfc524e5f]);},'_tempVector30',function(){return this._tempVector30=new Vector3();},'_tempVector31',function(){return this._tempVector31=new Vector3();},'_tempVector32',function(){return this._tempVector32=new Vector3();},'_tempVector33',function(){return this._tempVector33=new Vector3();},'_tempVector34',function(){return this._tempVector34=new Vector3();},'_tempVector35',function(){return this._tempVector35=new Vector3();},'_tempVector36',function(){return this._tempVector36=new Vector3();},'_tempVector37',function(){return this._tempVector37=new Vector3();},'_tempVector38',function(){return this._tempVector38=new Vector3();},'_tempVector39',function(){return this._tempVector39=new Vector3();},'_tempPosition',function(){return this._tempPosition=new Vector3();},'_tempDirection',function(){return this._tempDirection=new Vector3();}
+		['_RANDOMOFFSET',function(){return this._RANDOMOFFSET=new Uint32Array([0x23571a3e,0xc34f56fe,0x13371337,0x12460f3b,0x6aed452e,0xdec4aea1,0x96aa4de3,0x8d2c8431,0xf3857f6f,0xe0fbd834,0x13740583,0x591bc05c,0x40eb95e4,0xbc524e5f,0xaf502044,0xa614b381,0x1034e524,0xfc524e5f,0xec17ee0f,0xac5483ef,0x5ce24e5f]);},'_maxElapsedTime',function(){return this._maxElapsedTime=1.0 / 3.0;},'_tempVector30',function(){return this._tempVector30=new Vector3();},'_tempVector31',function(){return this._tempVector31=new Vector3();},'_tempVector32',function(){return this._tempVector32=new Vector3();},'_tempVector33',function(){return this._tempVector33=new Vector3();},'_tempVector34',function(){return this._tempVector34=new Vector3();},'_tempVector35',function(){return this._tempVector35=new Vector3();},'_tempVector36',function(){return this._tempVector36=new Vector3();},'_tempVector37',function(){return this._tempVector37=new Vector3();},'_tempVector38',function(){return this._tempVector38=new Vector3();},'_tempVector39',function(){return this._tempVector39=new Vector3();},'_tempPosition',function(){return this._tempPosition=new Vector3();},'_tempDirection',function(){return this._tempDirection=new Vector3();}
 		]);
 		return ShurikenParticleSystem;
 	})(GeometryFilter)
@@ -22032,14 +23343,15 @@
 		function ShurikenParticleRender(owner){
 			this._defaultBoundBox=null;
 			this._renderMode=0;
+			this._mesh=null;
 			this.stretchedBillboardCameraSpeedScale=NaN;
 			this.stretchedBillboardSpeedScale=NaN;
 			this.stretchedBillboardLengthScale=NaN;
+			this._finalGravity=new Vector3();
 			this._tempRotationMatrix=new Matrix4x4();
 			ShurikenParticleRender.__super.call(this,owner);
 			this._defaultBoundBox=new BoundBox(new Vector3(),new Vector3());
-			this._renderMode=0;
-			this._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
+			this._renderMode=-1;
 			this.stretchedBillboardCameraSpeedScale=0.0;
 			this.stretchedBillboardSpeedScale=0.0;
 			this.stretchedBillboardLengthScale=1.0;
@@ -22105,7 +23417,20 @@
 					this._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.POSITIONSCALE*/4,transform.scale);
 					this._setShaderValueColor(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SIZESCALE*/5,Vector3.ONE);
 					break ;
-				}
+				};
+			var finalGravityE=this._finalGravity.elements;
+			var gravityE=Physics.gravity.elements;
+			var gravityModifier=particleSystem.gravityModifier;
+			finalGravityE[0]=gravityE[0] *gravityModifier;
+			finalGravityE[1]=gravityE[1] *gravityModifier;
+			finalGravityE[2]=gravityE[2] *gravityModifier;
+			this._setShaderValueBuffer(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.GRAVITY*/7,finalGravityE);
+			this._setShaderValueInt(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SIMULATIONSPACE*/11,particleSystem.simulationSpace);
+			this._setShaderValueBool(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.THREEDSTARTROTATION*/8,particleSystem.threeDStartRotation);
+			this._setShaderValueInt(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.SCALINGMODE*/6,particleSystem.scaleMode);
+			this._setShaderValueInt(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.STRETCHEDBILLBOARDLENGTHSCALE*/9,this.stretchedBillboardLengthScale);
+			this._setShaderValueInt(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.STRETCHEDBILLBOARDSPEEDSCALE*/10,this.stretchedBillboardSpeedScale);
+			this._setShaderValueNumber(/*laya.d3.core.particleShuriKen.ShuriKenParticle3D.CURRENTTIME*/12,particleSystem.currentTime);
 			if (Laya3D.debugMode)
 				this._renderRenderableBoundBox();
 		}
@@ -22126,7 +23451,7 @@
 		});
 
 		/**
-		*设置渲染模式。
+		*设置渲染模式,0为BILLBOARD、1为STRETCHEDBILLBOARD、2为HORIZONTALBILLBOARD、3为VERTICALBILLBOARD、4为MESH。
 		*@param value 渲染模式。
 		*/
 		/**
@@ -22139,40 +23464,177 @@
 			if (this._renderMode!==value){
 				switch (this._renderMode){
 					case 0:
-						this._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
+						this._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_BILLBOARD);
 						break ;
 					case 1:
-						this._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD);
+						this._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_STRETCHEDBILLBOARD);
 						break ;
 					case 2:
-						this._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD);
+						this._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_HORIZONTALBILLBOARD);
 						break ;
 					case 3:
-						this._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD);
+						this._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_VERTICALBILLBOARD);
+						break ;
+					case 4:
+						this._removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_MESH);
 						break ;
 					}
 				this._renderMode=value;
 				switch (value){
 					case 0:
-						this._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
+						this._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_BILLBOARD);
 						break ;
 					case 1:
-						this._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD);
+						this._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_STRETCHEDBILLBOARD);
 						break ;
 					case 2:
-						this._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD);
+						this._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_HORIZONTALBILLBOARD);
 						break ;
 					case 3:
-						this._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD);
+						this._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_VERTICALBILLBOARD);
+						break ;
+					case 4:
+						this._addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_MESH);
 						break ;
 					default :
 						throw new Error("ShurikenParticleRender: unknown renderMode Value.");
 					}
+				(this._owner).particleSystem._initBufferDatas();
+			}
+		});
+
+		/**
+		*设置网格渲染模式所使用的Mesh,rendderMode为4时生效。
+		*@param value 网格模式所使用Mesh。
+		*/
+		/**
+		*获取网格渲染模式所使用的Mesh,rendderMode为4时生效。
+		*@return 网格模式所使用Mesh。
+		*/
+		__getset(0,__proto,'mesh',function(){
+			return this._mesh
+			},function(value){
+			if (this._mesh!==value){
+				this._mesh=value;
+				(this._owner).particleSystem._initBufferDatas();
 			}
 		});
 
 		return ShurikenParticleRender;
 	})(BaseRender)
+
+
+	/**
+	*@private
+	*<code>ParticleTemplet3D</code> 类用于创建3D粒子数据模板。
+	*/
+	//class laya.d3.resource.tempelet.ParticleTemplet3D extends laya.particle.ParticleTemplateWebGL
+	var ParticleTemplet3D=(function(_super){
+		function ParticleTemplet3D(owner,setting){
+			this._owner=null;
+			this._vertexBuffer3D=null;
+			this._indexBuffer3D=null;
+			ParticleTemplet3D.__super.call(this,setting);
+			this._owner=owner;
+			this.initialize();
+			this._vertexBuffer=this._vertexBuffer3D=VertexBuffer3D.create(VertexParticle.vertexDeclaration,setting.maxPartices *4,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
+			this._indexBuffer=this._indexBuffer3D=IndexBuffer3D.create(/*laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort",setting.maxPartices *6,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4,true);
+			this.loadContent();
+		}
+
+		__class(ParticleTemplet3D,'laya.d3.resource.tempelet.ParticleTemplet3D',_super);
+		var __proto=ParticleTemplet3D.prototype;
+		Laya.imps(__proto,{"laya.d3.core.render.IRenderable":true})
+		__proto._getVertexBuffer=function(index){
+			(index===void 0)&& (index=0);
+			if (index===0)
+				return this._vertexBuffer3D;
+			else
+			return null;
+		}
+
+		__proto._getIndexBuffer=function(){
+			return this._indexBuffer3D;
+		}
+
+		__proto.addParticle=function(position,velocity){
+			this.addParticleArray(position.elements,velocity.elements);
+		}
+
+		__proto.loadContent=function(){
+			var indexes=new Uint16Array(this.settings.maxPartices *6);
+			for (var i=0;i < this.settings.maxPartices;i++){
+				indexes[i *6+0]=(i *4+0);
+				indexes[i *6+1]=(i *4+1);
+				indexes[i *6+2]=(i *4+2);
+				indexes[i *6+3]=(i *4+0);
+				indexes[i *6+4]=(i *4+2);
+				indexes[i *6+5]=(i *4+3);
+			}
+			this._indexBuffer3D.setData(indexes);
+		}
+
+		__proto.addNewParticlesToVertexBuffer=function(){
+			var start=0;
+			if (this._firstNewElement < this._firstFreeElement){
+				start=this._firstNewElement *4 *this._floatCountPerVertex;
+				this._vertexBuffer3D.setData(this._vertices,start,start,(this._firstFreeElement-this._firstNewElement)*4 *this._floatCountPerVertex);
+				}else {
+				start=this._firstNewElement *4 *this._floatCountPerVertex;
+				this._vertexBuffer3D.setData(this._vertices,start,start,(this.settings.maxPartices-this._firstNewElement)*4 *this._floatCountPerVertex);
+				if (this._firstFreeElement > 0){
+					this._vertexBuffer3D.setData(this._vertices,0,0,this._firstFreeElement *4 *this._floatCountPerVertex);
+				}
+			}
+			this._firstNewElement=this._firstFreeElement;
+		}
+
+		__proto._beforeRender=function(state){
+			if (this._firstNewElement !=this._firstFreeElement){
+				this.addNewParticlesToVertexBuffer();
+			}
+			this._drawCounter++;
+			if (this._firstActiveElement !=this._firstFreeElement){
+				this._vertexBuffer3D._bind();
+				this._indexBuffer._bind();
+				return true;
+			}
+			return false;
+		}
+
+		__proto._render=function(state){
+			var drawVertexCount=0;
+			var glContext=WebGL.mainContext;
+			if (this._firstActiveElement < this._firstFreeElement){
+				drawVertexCount=(this._firstFreeElement-this._firstActiveElement)*6;
+				glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
+				Stat.trianglesFaces+=drawVertexCount / 3;
+				Stat.drawCall++;
+				}else {
+				drawVertexCount=(this.settings.maxPartices-this._firstActiveElement)*6;
+				glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
+				Stat.trianglesFaces+=drawVertexCount / 3;
+				Stat.drawCall++;
+				if (this._firstFreeElement > 0){
+					drawVertexCount=this._firstFreeElement *6;
+					glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,0);
+					Stat.trianglesFaces+=drawVertexCount / 3;
+					Stat.drawCall++;
+				}
+			}
+		}
+
+		__proto._renderRuntime=function(conchGraphics3D,renderElement,state){}
+		__getset(0,__proto,'_vertexBufferCount',function(){
+			return 1;
+		});
+
+		__getset(0,__proto,'triangleCount',function(){
+			return this._indexBuffer3D.indexCount / 3;
+		});
+
+		return ParticleTemplet3D;
+	})(ParticleTemplateWebGL)
 
 
 	/**
@@ -22609,119 +24071,6 @@
 
 		return GlitterTemplet;
 	})(GeometryFilter)
-
-
-	/**
-	*@private
-	*<code>ParticleTemplet3D</code> 类用于创建3D粒子数据模板。
-	*/
-	//class laya.d3.resource.tempelet.ParticleTemplet3D extends laya.particle.ParticleTemplateWebGL
-	var ParticleTemplet3D=(function(_super){
-		function ParticleTemplet3D(owner,setting){
-			this._owner=null;
-			this._vertexBuffer3D=null;
-			this._indexBuffer3D=null;
-			ParticleTemplet3D.__super.call(this,setting);
-			this._owner=owner;
-			this.initialize();
-			this._vertexBuffer=this._vertexBuffer3D=VertexBuffer3D.create(VertexParticle.vertexDeclaration,setting.maxPartices *4,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
-			this._indexBuffer=this._indexBuffer3D=IndexBuffer3D.create(/*laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort",setting.maxPartices *6,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4,true);
-			this.loadContent();
-		}
-
-		__class(ParticleTemplet3D,'laya.d3.resource.tempelet.ParticleTemplet3D',_super);
-		var __proto=ParticleTemplet3D.prototype;
-		Laya.imps(__proto,{"laya.d3.core.render.IRenderable":true})
-		__proto._getVertexBuffer=function(index){
-			(index===void 0)&& (index=0);
-			if (index===0)
-				return this._vertexBuffer3D;
-			else
-			return null;
-		}
-
-		__proto._getIndexBuffer=function(){
-			return this._indexBuffer3D;
-		}
-
-		__proto.addParticle=function(position,velocity){
-			this.addParticleArray(position.elements,velocity.elements);
-		}
-
-		__proto.loadContent=function(){
-			var indexes=new Uint16Array(this.settings.maxPartices *6);
-			for (var i=0;i < this.settings.maxPartices;i++){
-				indexes[i *6+0]=(i *4+0);
-				indexes[i *6+1]=(i *4+1);
-				indexes[i *6+2]=(i *4+2);
-				indexes[i *6+3]=(i *4+0);
-				indexes[i *6+4]=(i *4+2);
-				indexes[i *6+5]=(i *4+3);
-			}
-			this._indexBuffer3D.setData(indexes);
-		}
-
-		__proto.addNewParticlesToVertexBuffer=function(){
-			var start=0;
-			if (this._firstNewElement < this._firstFreeElement){
-				start=this._firstNewElement *4 *this._floatCountPerVertex;
-				this._vertexBuffer3D.setData(this._vertices,start,start,(this._firstFreeElement-this._firstNewElement)*4 *this._floatCountPerVertex);
-				}else {
-				start=this._firstNewElement *4 *this._floatCountPerVertex;
-				this._vertexBuffer3D.setData(this._vertices,start,start,(this.settings.maxPartices-this._firstNewElement)*4 *this._floatCountPerVertex);
-				if (this._firstFreeElement > 0){
-					this._vertexBuffer3D.setData(this._vertices,0,0,this._firstFreeElement *4 *this._floatCountPerVertex);
-				}
-			}
-			this._firstNewElement=this._firstFreeElement;
-		}
-
-		__proto._beforeRender=function(state){
-			if (this._firstNewElement !=this._firstFreeElement){
-				this.addNewParticlesToVertexBuffer();
-			}
-			this._drawCounter++;
-			if (this._firstActiveElement !=this._firstFreeElement){
-				this._vertexBuffer3D._bind();
-				this._indexBuffer._bind();
-				return true;
-			}
-			return false;
-		}
-
-		__proto._render=function(state){
-			var drawVertexCount=0;
-			var glContext=WebGL.mainContext;
-			if (this._firstActiveElement < this._firstFreeElement){
-				drawVertexCount=(this._firstFreeElement-this._firstActiveElement)*6;
-				glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
-				Stat.trianglesFaces+=drawVertexCount / 3;
-				Stat.drawCall++;
-				}else {
-				drawVertexCount=(this.settings.maxPartices-this._firstActiveElement)*6;
-				glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
-				Stat.trianglesFaces+=drawVertexCount / 3;
-				Stat.drawCall++;
-				if (this._firstFreeElement > 0){
-					drawVertexCount=this._firstFreeElement *6;
-					glContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,drawVertexCount,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,0);
-					Stat.trianglesFaces+=drawVertexCount / 3;
-					Stat.drawCall++;
-				}
-			}
-		}
-
-		__proto._renderRuntime=function(conchGraphics3D,renderElement,state){}
-		__getset(0,__proto,'_vertexBufferCount',function(){
-			return 1;
-		});
-
-		__getset(0,__proto,'triangleCount',function(){
-			return this._indexBuffer3D.indexCount / 3;
-		});
-
-		return ParticleTemplet3D;
-	})(ParticleTemplateWebGL)
 
 
 	/**
@@ -23496,12 +24845,33 @@
 		__proto.addChildAt=function(node,index){
 			if (!((node instanceof laya.d3.core.Sprite3D )))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
-			var returnNode=laya.display.Node.prototype.addChildAt.call(this,node,index);
-			var sprite3D=node;
-			sprite3D.transform._onWorldTransform();
-			sprite3D._setBelongScene(this);
-			(sprite3D.active)&& (sprite3D._activeHierarchy());
-			return returnNode;
+			if (!node || this.destroyed || node===this)return node;
+			if ((node).zOrder)this._set$P("hasZorder",true);
+			if (index >=0 && index <=this._childs.length){
+				if (node._parent===this){
+					var oldIndex=this.getChildIndex(node);
+					this._childs.splice(oldIndex,1);
+					this._childs.splice(index,0,node);
+					if (this.conchModel){
+						this.conchModel.removeChild(node.conchModel);
+						this.conchModel.addChildAt(node.conchModel,index);
+					}
+					this._childChanged();
+					}else {
+					node.parent && node.parent.removeChild(node);
+					this._childs===Node.ARRAY_EMPTY && (this._childs=[]);
+					this._childs.splice(index,0,node);
+					this.conchModel && this.conchModel.addChildAt(node.conchModel,index);
+					node.parent=this;
+					var sprite3D=node;
+					sprite3D.transform._onWorldTransform();
+					sprite3D._setBelongScene(this);
+					(sprite3D.active)&& (sprite3D._activeHierarchy());
+				}
+				return node;
+				}else {
+				throw new Error("appendChildAt:The index is out of bounds");
+			}
 		}
 
 		/**
@@ -23510,12 +24880,32 @@
 		__proto.addChild=function(node){
 			if (!((node instanceof laya.d3.core.Sprite3D )))
 				throw new Error("Sprite3D:Node type must Sprite3D.");
-			var returnNode=laya.display.Node.prototype.addChild.call(this,node);
-			var sprite3D=node;
-			sprite3D.transform._onWorldTransform();
-			sprite3D._setBelongScene(this);
-			(sprite3D.active)&& (sprite3D._activeHierarchy());
-			return returnNode;
+			if (!node || this.destroyed || node===this)return node;
+			if ((node).zOrder)this._set$P("hasZorder",true);
+			if (node._parent===this){
+				var index=this.getChildIndex(node);
+				if (index!==this._childs.length-1){
+					this._childs.splice(index,1);
+					this._childs.push(node);
+					if (this.conchModel){
+						this.conchModel.removeChild(node.conchModel);
+						this.conchModel.addChildAt(node.conchModel,this._childs.length-1);
+					}
+					this._childChanged();
+				}
+				}else {
+				node.parent && node.parent.removeChild(node);
+				this._childs===Node.ARRAY_EMPTY && (this._childs=[]);
+				this._childs.push(node);
+				this.conchModel && this.conchModel.addChildAt(node.conchModel,this._childs.length-1);
+				node.parent=this;
+				this._childChanged();
+				var sprite3D=node;
+				sprite3D.transform._onWorldTransform();
+				sprite3D._setBelongScene(this);
+				(sprite3D.active)&& (sprite3D._activeHierarchy());
+			}
+			return node;
 		}
 
 		/**
@@ -23678,10 +25068,9 @@
 		__proto.onAsynLoaded=function(url,data,params){
 			if (this.destroyed)
 				return;
-			var oriData=data[0];
-			var json=JSON.parse(oriData);
+			var json=JSON.parse(data [0]);
 			if (json.type!=="Scene")
-				throw new Error("BaseScene: the .lh file root type must be Scene,please use other function to  load  this file.");
+				throw new Error("Scene: the .lh file root type must be Scene,please use other function to  load  this file.");
 			var innerResouMap=data[1];
 			ClassUtils.createByJson(json,this,this,Handler.create(null,Utils3D._parseHierarchyProp,[innerResouMap],false),Handler.create(null,Utils3D._parseHierarchyNode,null,false));
 			this.event(/*laya.events.Event.HIERARCHY_LOADED*/"hierarchyloaded",[this]);
@@ -27247,35 +28636,11 @@
 			this._renderMode=0;
 			ShurikenParticleMaterial.__super.call(this);
 			this.setShaderName("PARTICLESHURIKEN");
-			this._setColor(9,new Vector4(0.5,0.5,0.5,0.5));
 			this.renderMode=8;
 		}
 
 		__class(ShurikenParticleMaterial,'laya.d3.core.particleShuriKen.ShurikenParticleMaterial',_super);
 		var __proto=ShurikenParticleMaterial.prototype;
-		/**
-		*@inheritDoc
-		*/
-		__proto._setMaterialShaderParams=function(state){
-			var particle=state.owner;
-			var particleSystem=particle.particleSystem;
-			var particleRender=particle.particleRender;
-			var transform=particle.transform;
-			var finalGravityE=ShurikenParticleMaterial._tempGravity.elements;
-			var gravityE=particleSystem.gravity.elements;
-			var gravityModifier=particleSystem.gravityModifier;
-			finalGravityE[0]=gravityE[0] *gravityModifier;
-			finalGravityE[1]=gravityE[1] *gravityModifier;
-			finalGravityE[2]=gravityE[2] *gravityModifier;
-			this._setBuffer(4,finalGravityE);
-			this._setInt(8,particleSystem.simulationSpace);
-			this._setBool(1,particleSystem.threeDStartRotation);
-			this._setInt(2,particleSystem.scaleMode);
-			this._setInt(6,particleRender.stretchedBillboardLengthScale);
-			this._setInt(7,particleRender.stretchedBillboardSpeedScale);
-			this._setNumber(3,particleSystem.currentTime);
-		}
-
 		/**
 		*@private
 		*/
@@ -27455,9 +28820,13 @@
 		*@return 颜色。
 		*/
 		__getset(0,__proto,'tintColor',function(){
-			return this._getColor(9);
+			return this._getColor(2);
 			},function(value){
-			this._setColor(9,value);
+			if (value)
+				this._addShaderDefine(laya.d3.core.particleShuriKen.ShurikenParticleMaterial.SHADERDEFINE_TINTCOLOR);
+			else
+			this._removeShaderDefine(laya.d3.core.particleShuriKen.ShurikenParticleMaterial.SHADERDEFINE_TINTCOLOR);
+			this._setColor(2,value);
 		});
 
 		/**
@@ -27475,7 +28844,7 @@
 				this._addShaderDefine(laya.d3.core.particleShuriKen.ShurikenParticleMaterial.SHADERDEFINE_DIFFUSEMAP);
 			else
 			this._removeShaderDefine(laya.d3.core.particleShuriKen.ShurikenParticleMaterial.SHADERDEFINE_DIFFUSEMAP);
-			this._setTexture(5,value);
+			this._setTexture(1,value);
 		});
 
 		ShurikenParticleMaterial.load=function(url){
@@ -27505,18 +28874,12 @@
 		ShurikenParticleMaterial.RENDERMODE_NONDEPTH_ADDTIVE=11;
 		ShurikenParticleMaterial.RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE=12;
 		ShurikenParticleMaterial.SHADERDEFINE_DIFFUSEMAP=0;
-		ShurikenParticleMaterial.THREEDSTARTROTATION=1;
-		ShurikenParticleMaterial.SCALINGMODE=2;
-		ShurikenParticleMaterial.CURRENTTIME=3;
-		ShurikenParticleMaterial.GRAVITY=4;
-		ShurikenParticleMaterial.DIFFUSETEXTURE=5;
-		ShurikenParticleMaterial.STRETCHEDBILLBOARDLENGTHSCALE=6;
-		ShurikenParticleMaterial.STRETCHEDBILLBOARDSPEEDSCALE=7;
-		ShurikenParticleMaterial.SIMULATIONSPACE=8;
-		ShurikenParticleMaterial.TINTCOLOR=9;
+		ShurikenParticleMaterial.SHADERDEFINE_TINTCOLOR=0;
+		ShurikenParticleMaterial.DIFFUSETEXTURE=1;
+		ShurikenParticleMaterial.TINTCOLOR=2;
 		ShurikenParticleMaterial._diffuseTextureIndex=0;
 		__static(ShurikenParticleMaterial,
-		['_tempGravity',function(){return this._tempGravity=new Vector3();},'defaultMaterial',function(){return this.defaultMaterial=new ShurikenParticleMaterial();}
+		['defaultMaterial',function(){return this.defaultMaterial=new ShurikenParticleMaterial();}
 		]);
 		return ShurikenParticleMaterial;
 	})(BaseMaterial)
@@ -27741,8 +29104,8 @@
 				'TEXWAVE_UV_SCALE':[15,/*laya.d3.shader.Shader3D.PERIOD_MATERIAL*/1]
 			};
 			var WaterDetail=Shader3D.nameKey.add("WaterDetail");
-			var vs="\nattribute vec3 a_position;\nattribute vec3 a_normal;\nattribute vec2 uv;\n\nvarying vec2 vUv;\nvarying vec3 vWorldNorm;\nvarying vec3 vWorldTangent;\nvarying vec3 vWorldBinormal;\n\n\nvoid main() {\n	vec3 pos = a_position;\n	if(pos.z!=0.)pos.y=pos.z;\n	pos.z=0.5;\n	gl_Position = vec4(pos,1.);\n    vUv = uv;\n	//vWorldNorm = normalize((modelMat*vec4(a_normal,0.0)).xyz);\n	//vWorldTangent = normalize((modelMat*vec4(tangent,0.0)).xyz);\n	//vWorldBinormal = normalize((modelMat*vec4(binormal,0.0)).xyz);\n}\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/water/WaterDetailVS.glsl*/;
-			var ps="precision highp float;\nprecision lowp int;\n\nconst float PI = 3.14159265358979323846264;\nconst float _2PI = 6.2831853071796;\nvarying vec2 vUv;\nvarying vec3 vWorldNorm;\nvarying vec3 vWorldTangent;\nvarying vec3 vWorldBinormal;\n\nuniform float u_curTm;\n\n#include \"WaveFunction.glsl\"\n\nvoid main() {\n	vec3 wave_N,wave_B,wave_T;\n	calcWave(u_curTm, vUv,wave_B,wave_T,wave_N);\n	gl_FragColor.rgb = normalize(wave_N)*0.5+vec3(0.5);// vec3(0.1,.4,0.1);\n    gl_FragColor.a = 1.0;\n}\n"/*__INCLUDESTR__E:/trank/libs/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/water/WaterDetailFS.glsl*/;
+			var vs="\nattribute vec3 a_position;\nattribute vec3 a_normal;\nattribute vec2 uv;\n\nvarying vec2 vUv;\nvarying vec3 vWorldNorm;\nvarying vec3 vWorldTangent;\nvarying vec3 vWorldBinormal;\n\n\nvoid main() {\n	vec3 pos = a_position;\n	if(pos.z!=0.)pos.y=pos.z;\n	pos.z=0.5;\n	gl_Position = vec4(pos,1.);\n    vUv = uv;\n	//vWorldNorm = normalize((modelMat*vec4(a_normal,0.0)).xyz);\n	//vWorldTangent = normalize((modelMat*vec4(tangent,0.0)).xyz);\n	//vWorldBinormal = normalize((modelMat*vec4(binormal,0.0)).xyz);\n}\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/water/WaterDetailVS.glsl*/;
+			var ps="precision highp float;\nprecision lowp int;\n\nconst float PI = 3.14159265358979323846264;\nconst float _2PI = 6.2831853071796;\nvarying vec2 vUv;\nvarying vec3 vWorldNorm;\nvarying vec3 vWorldTangent;\nvarying vec3 vWorldBinormal;\n\nuniform float u_curTm;\n\n#include \"WaveFunction.glsl\"\n\nvoid main() {\n	vec3 wave_N,wave_B,wave_T;\n	calcWave(u_curTm, vUv,wave_B,wave_T,wave_N);\n	gl_FragColor.rgb = normalize(wave_N)*0.5+vec3(0.5);// vec3(0.1,.4,0.1);\n    gl_FragColor.a = 1.0;\n}\n"/*__INCLUDESTR__D:/LayaPublishWork/LayaWorkDir/LayaAir/publish/LayaAirPublish/src/d3/src/laya/d3/water/WaterDetailFS.glsl*/;
 			var shaderCompile=ShaderCompile3D.add(WaterDetail,vs,ps,attributeMap,uniformMap);
 		}
 
@@ -30345,16 +31708,13 @@
 		*@inheritDoc
 		*/
 		__getset(0,__proto,'defaulteTexture',function(){
-			return TextureCube.grayTexture;
+			return SolidColorTextureCube.grayTexture;
 		});
 
 		TextureCube.load=function(url){
 			return Laya.loader.create(url,null,null,TextureCube);
 		}
 
-		__static(TextureCube,
-		['grayTexture',function(){return this.grayTexture=new SolidColorTextureCube(new Vector4(0.5,0.5,0.5,1.0));}
-		]);
 		return TextureCube;
 	})(BaseTexture)
 
@@ -30499,6 +31859,23 @@
 
 
 	/**
+	*<code>SkinMeshRender</code> 类用于蒙皮渲染器。
+	*/
+	//class laya.d3.core.SkinMeshRender extends laya.d3.core.MeshRender
+	var SkinMeshRender=(function(_super){
+		/**
+		*创建一个新的 <code>SkinMeshRender</code> 实例。
+		*/
+		function SkinMeshRender(){
+			SkinMeshRender.__super.call(this);
+		}
+
+		__class(SkinMeshRender,'laya.d3.core.SkinMeshRender',_super);
+		return SkinMeshRender;
+	})(MeshRender)
+
+
+	/**
 	*<code>Camera</code> 类用于创建摄像机。
 	*/
 	//class laya.d3.core.Camera extends laya.d3.core.BaseCamera
@@ -30626,9 +32003,13 @@
 		__proto.worldToViewportPoint=function(position,out){
 			Matrix4x4.multiply(this._projectionMatrix,this._viewMatrix,this._projectionViewMatrix);
 			this.viewport.project(position,this._projectionViewMatrix,out);
+			var outE=out.elements;
 			if (out.z < 0.0 || out.z > 1.0){
-				var outE=out.elements;
 				outE[0]=outE[1]=outE[2]=NaN;
+			}
+			else{
+				outE[0]=outE[0] / Laya.stage.clientScaleX;
+				outE[1]=outE[1] / Laya.stage.clientScaleY;
 			}
 		}
 
@@ -30640,9 +32021,13 @@
 		__proto.worldToNormalizedViewportPoint=function(position,out){
 			Matrix4x4.multiply(this._projectionMatrix,this._viewMatrix,this._projectionViewMatrix);
 			this.normalizedViewport.project(position,this._projectionViewMatrix,out);
+			var outE=out.elements;
 			if (out.z < 0.0 || out.z > 1.0){
-				var outE=out.elements;
 				outE[0]=outE[1]=outE[2]=NaN;
+			}
+			else{
+				outE[0]=outE[0] / Laya.stage.clientScaleX;
+				outE[1]=outE[1] / Laya.stage.clientScaleY;
 			}
 		}
 
@@ -31689,69 +33074,79 @@
 			return this._render;
 		});
 
-		ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD=0x2;
-		ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD=0x4;
-		ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD=0x8;
-		ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD=0x10;
-		ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME=0x20;
-		ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME=0x40;
-		ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT=0x80;
-		ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE=0x100;
-		ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT=0x200;
-		ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE=0x400;
-		ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE=0x800;
-		ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE=0x1000;
-		ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIME=0x2000;
-		ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE=0x4000;
-		ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT=0x8000;
-		ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE=0x10000;
-		ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS=0x20000;
-		ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES=0x40000;
-		ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVE=0x80000;
-		ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE=0x100000;
-		ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES=0x200000;
-		ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE=0x400000;
+		ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_BILLBOARD=0;
+		ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_STRETCHEDBILLBOARD=0;
+		ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_HORIZONTALBILLBOARD=0;
+		ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_VERTICALBILLBOARD=0;
+		ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_MESH=0;
+		ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME=0;
+		ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME=0;
+		ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT=0;
+		ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECURVE=0;
+		ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT=0;
+		ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE=0;
+		ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONCURVE=0;
+		ShuriKenParticle3D.SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE=0;
+		ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIME=0;
+		ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE=0;
+		ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT=0;
+		ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMECURVE=0;
+		ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS=0;
+		ShuriKenParticle3D.SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES=0;
+		ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVE=0;
+		ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE=0;
+		ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES=0;
+		ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE=0;
 		ShuriKenParticle3D.WORLDPOSITION=0;
 		ShuriKenParticle3D.WORLDROTATIONMATRIX=1;
 		ShuriKenParticle3D.POSITIONSCALE=4;
 		ShuriKenParticle3D.SIZESCALE=5;
-		ShuriKenParticle3D.VOLVELOCITYCONST=6;
-		ShuriKenParticle3D.VOLVELOCITYGRADIENTX=7;
-		ShuriKenParticle3D.VOLVELOCITYGRADIENTY=8;
-		ShuriKenParticle3D.VOLVELOCITYGRADIENTZ=9;
-		ShuriKenParticle3D.VOLVELOCITYCONSTMAX=10;
-		ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX=11;
-		ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX=12;
-		ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX=13;
-		ShuriKenParticle3D.VOLSPACETYPE=14;
-		ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS=15;
-		ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS=16;
-		ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS=17;
-		ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS=18;
-		ShuriKenParticle3D.SOLSIZEGRADIENT=19;
-		ShuriKenParticle3D.SOLSIZEGRADIENTX=20;
-		ShuriKenParticle3D.SOLSIZEGRADIENTY=21;
-		ShuriKenParticle3D.SOLSizeGradientZ=22;
-		ShuriKenParticle3D.SOLSizeGradientMax=23;
-		ShuriKenParticle3D.SOLSIZEGRADIENTXMAX=24;
-		ShuriKenParticle3D.SOLSIZEGRADIENTYMAX=25;
-		ShuriKenParticle3D.SOLSizeGradientZMAX=26;
-		ShuriKenParticle3D.ROLANGULARVELOCITYCONST=27;
-		ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE=28;
-		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT=29;
-		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX=30;
-		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY=31;
-		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ=32;
-		ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX=33;
-		ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE=34;
-		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX=35;
-		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX=36;
-		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX=37;
-		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX=38;
-		ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES=39;
-		ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH=40;
-		ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS=41;
-		ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS=42;
+		ShuriKenParticle3D.SCALINGMODE=6;
+		ShuriKenParticle3D.GRAVITY=7;
+		ShuriKenParticle3D.THREEDSTARTROTATION=8;
+		ShuriKenParticle3D.STRETCHEDBILLBOARDLENGTHSCALE=9;
+		ShuriKenParticle3D.STRETCHEDBILLBOARDSPEEDSCALE=10;
+		ShuriKenParticle3D.SIMULATIONSPACE=11;
+		ShuriKenParticle3D.CURRENTTIME=12;
+		ShuriKenParticle3D.VOLVELOCITYCONST=13;
+		ShuriKenParticle3D.VOLVELOCITYGRADIENTX=14;
+		ShuriKenParticle3D.VOLVELOCITYGRADIENTY=15;
+		ShuriKenParticle3D.VOLVELOCITYGRADIENTZ=16;
+		ShuriKenParticle3D.VOLVELOCITYCONSTMAX=17;
+		ShuriKenParticle3D.VOLVELOCITYGRADIENTXMAX=18;
+		ShuriKenParticle3D.VOLVELOCITYGRADIENTYMAX=19;
+		ShuriKenParticle3D.VOLVELOCITYGRADIENTZMAX=20;
+		ShuriKenParticle3D.VOLSPACETYPE=21;
+		ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS=22;
+		ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS=23;
+		ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS=24;
+		ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTCOLORS=25;
+		ShuriKenParticle3D.SOLSIZEGRADIENT=26;
+		ShuriKenParticle3D.SOLSIZEGRADIENTX=27;
+		ShuriKenParticle3D.SOLSIZEGRADIENTY=28;
+		ShuriKenParticle3D.SOLSizeGradientZ=29;
+		ShuriKenParticle3D.SOLSizeGradientMax=30;
+		ShuriKenParticle3D.SOLSIZEGRADIENTXMAX=31;
+		ShuriKenParticle3D.SOLSIZEGRADIENTYMAX=32;
+		ShuriKenParticle3D.SOLSizeGradientZMAX=33;
+		ShuriKenParticle3D.ROLANGULARVELOCITYCONST=34;
+		ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE=35;
+		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENT=36;
+		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX=37;
+		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY=38;
+		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ=39;
+		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTW=40;
+		ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX=41;
+		ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE=42;
+		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX=43;
+		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX=44;
+		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX=45;
+		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX=46;
+		ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTWMAX=47;
+		ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES=48;
+		ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH=49;
+		ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS=50;
+		ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS=51;
 		return ShuriKenParticle3D;
 	})(RenderableSprite3D)
 
@@ -32756,7 +34151,6 @@
 				indices[ic++]=bi+1+verticeCount;
 			}
 			verticeCount+=this._slices+1+1;
-			debugger;
 			this._vertexBuffer=new VertexBuffer3D(vertexDeclaration,this._numberVertices,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4,true);
 			this._indexBuffer=new IndexBuffer3D(/*laya.d3.graphics.IndexBuffer3D.INDEXTYPE_USHORT*/"ushort",this._numberIndices,/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4,true);
 			this._vertexBuffer.setData(vertices);

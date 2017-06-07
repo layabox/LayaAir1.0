@@ -8,11 +8,10 @@ package threeDimen.primaryStage {
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.Mesh;
 	import laya.display.Stage;
+	import laya.events.Event;
 	import laya.utils.Stat;
 	
 	public class D3Base_SkinAnimation_MultiSubMeshSample {
-		private var skinMesh:MeshSprite3D;
-		private var skinAni:SkinAnimations;
 		
 		public function D3Base_SkinAnimation_MultiSubMeshSample() {
 			Laya3D.init(0, 0, true);
@@ -33,12 +32,18 @@ package threeDimen.primaryStage {
 			directionLight.specularColor = new Vector3(2.0, 2.0, 1.6);
 			directionLight.diffuseColor = new Vector3(1, 1, 1);
 			
-			skinMesh = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
+			var skinMesh:MeshSprite3D = scene.addChild(new MeshSprite3D(Mesh.load("../../../../res/threeDimen/skinModel/dude/dude-him.lm"))) as MeshSprite3D;
 			skinMesh.transform.localRotationEuler = new Vector3(0, 3.14, 0);
-			skinAni = skinMesh.addComponent(SkinAnimations) as SkinAnimations;
+			var skinAni:SkinAnimations = skinMesh.addComponent(SkinAnimations) as SkinAnimations;
 			skinAni.templet = AnimationTemplet.load("../../../../res/threeDimen/skinModel/dude/dude-Take 001.lsani");
 			skinAni.player.play();
-		
+			
+			skinAni.player.on(Event.COMPLETE, this, function():void{
+				trace("aaa");
+			});
+			skinAni.player.on(Event.STOPPED, this, function():void{
+				trace("bbb");
+			});
 		}
 	}
 }

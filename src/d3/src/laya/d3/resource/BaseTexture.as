@@ -8,8 +8,6 @@ package laya.d3.resource {
 	 * <code>BaseTexture</code> 纹理的父类，抽象类，不允许实例。
 	 */
 	public class BaseTexture extends Resource {
-		/**灰色纯色纹理。*/
-		public static var grayTexture:SolidColorTexture2D = new SolidColorTexture2D(new Vector4(0.5, 0.5, 0.5, 1.0));
 		
 		/** @private */
 		protected var _width:int;
@@ -128,7 +126,7 @@ package laya.d3.resource {
 		 * 获取纹理资源。
 		 */
 		public function get defaulteTexture():BaseTexture {
-			return grayTexture;
+			return SolidColorTexture2D.grayTexture;
 		}
 		
 		

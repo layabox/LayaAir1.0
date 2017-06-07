@@ -19,7 +19,7 @@ package laya.d3.shader {
 		public static var SHADERDEFINE_UV0:int = 0x40;
 		public static var SHADERDEFINE_COLOR:int = 0x80;
 		public static var SHADERDEFINE_UV1:int = 0x100;
-		public static var SAHDERDEFINE_DEPTHFOG:int = 0x10000;
+		public static var SAHDERDEFINE_DEPTHFOG:int = 0x20000;
 		
 		private static var DEFINEREG:RegExp = new RegExp("defined(?=\\((.*?)\\))", "g");
 		private static var INCLUDE:RegExp = new RegExp("\\w+", "g");

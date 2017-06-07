@@ -1,7 +1,8 @@
 package laya.maths {
 	
 	/**
-	 * <code>Rectangle</code> 对象是按其位置（由它左上角的点 (x, y) 确定）以及宽度和高度定义的区域。
+	 * <p><code>Rectangle</code> 对象是按其位置（由它左上角的点 (x, y) 确定）以及宽度和高度定义的区域。</p>
+	 * <p>Rectangle 类的 x、y、width 和 height 属性相互独立；更改一个属性的值不会影响其他属性。</p>
 	 */
 	public class Rectangle {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
@@ -38,12 +39,12 @@ package laya.maths {
 			this.height = height;
 		}
 		
-		/** 此矩形的右边距。 x 和 width 属性的和。*/
+		/** 此矩形右侧的 X 轴坐标。 x 和 width 属性的和。*/
 		public function get right():Number {
 			return x + width;
 		}
 		
-		/** 此矩形的底边距。y 和 height 属性的和。*/
+		/** 此矩形底端的 Y 轴坐标。y 和 height 属性的和。*/
 		public function get bottom():Number {
 			return y + height;
 		}
@@ -78,9 +79,9 @@ package laya.maths {
 		}
 		
 		/**
-		 * 检测此矩形对象是否包含指定的点。
-		 * @param	x	点的 X 轴坐标值（水平位置）。
-		 * @param	y	点的 Y 轴坐标值（垂直位置）。
+		 * 确定由此 Rectangle 对象定义的矩形区域内是否包含指定的点。
+		 * @param x	点的 X 轴坐标值（水平位置）。
+		 * @param y	点的 Y 轴坐标值（垂直位置）。
 		 * @return	如果 Rectangle 对象包含指定的点，则值为 true；否则为 false。
 		 */
 		public function contains(x:Number, y:Number):Boolean {
@@ -95,7 +96,7 @@ package laya.maths {
 		}
 		
 		/**
-		 * 检测传入的矩形对象是否与此对象相交。
+		 * 确定在 rect 参数中指定的对象是否与此 Rectangle 对象相交。此方法检查指定的 Rectangle 对象的 x、y、width 和 height 属性，以查看它是否与此 Rectangle 对象相交。
 		 * @param	rect Rectangle 对象。
 		 * @return	如果传入的矩形对象与此对象相交，则返回 true 值，否则返回 false。
 		 */
@@ -104,9 +105,9 @@ package laya.maths {
 		}
 		
 		/**
-		 * 获取此对象与传入的矩形对象的相交区域。并将相交区域赋值给传入的输出矩形对象。
-		 * @param	rect 待比较的矩形区域。
-		 * @param	out	待输出的矩形区域。如果为空则创建一个新的。建议：尽量复用对象，减少对象创建消耗。
+		 * 如果在 rect 参数中指定的 Rectangle 对象与此 Rectangle 对象相交，则返回交集区域作为 Rectangle 对象。如果矩形不相交，则此方法返回null。
+		 * @param rect	待比较的矩形区域。
+		 * @param out	（可选）待输出的矩形区域。如果为空则创建一个新的。建议：尽量复用对象，减少对象创建消耗。
 		 * @return	返回相交的矩形区域对象。
 		 */
 		public function intersection(rect:Rectangle, out:Rectangle = null):Rectangle {
@@ -120,10 +121,11 @@ package laya.maths {
 		}
 		
 		/**
-		 * 矩形联合，通过填充两个矩形之间的水平和垂直空间，将这两个矩形组合在一起以创建一个新的 Rectangle 对象。
-		 * @param	目标矩形对象。
-		 * @param	out	待输出结果的矩形对象。如果为空则创建一个新的。建议：尽量复用对象，减少对象创建消耗。
-		 * @return	两个矩形后联合的 Rectangle 对象 out 。
+		 * <p>矩形联合，通过填充两个矩形之间的水平和垂直空间，将这两个矩形组合在一起以创建一个新的 Rectangle 对象。</p>
+		 * <p>注意：union() 方法忽略高度或宽度值为 0 的矩形，如：var rect2:Rectangle = new Rectangle(300,300,50,0);</p>
+		 * @param	要添加到此 Rectangle 对象的 Rectangle 对象。
+		 * @param	out	用于存储输出结果的矩形对象。如果为空，则创建一个新的。建议：尽量复用对象，减少对象创建消耗。Rectangle.TEMP对象用于对象复用。
+		 * @return	充当两个矩形的联合的新 Rectangle 对象。
 		 */
 		public function union(source:Rectangle, out:Rectangle = null):Rectangle {
 			out || (out = new Rectangle());
@@ -136,8 +138,8 @@ package laya.maths {
 		
 		/**
 		 * 返回一个 Rectangle 对象，其 x、y、width 和 height 属性的值与当前 Rectangle 对象的对应值相同。
-		 * @param	out	待输出的矩形对象。如果为空则创建一个新的。建议：尽量复用对象，减少对象创建消耗。
-		 * @return	Rectangle 对象 out ，其 x、y、width 和 height 属性的值与当前 Rectangle 对象的对应值相同。
+		 * @param out	（可选）用于存储结果的矩形对象。如果为空，则创建一个新的。建议：尽量复用对象，减少对象创建消耗。。Rectangle.TEMP对象用于对象复用。
+		 * @return Rectangle 对象，其 x、y、width 和 height 属性的值与当前 Rectangle 对象的对应值相同。
 		 */
 		public function clone(out:Rectangle = null):Rectangle {
 			out || (out = new Rectangle());
@@ -166,7 +168,8 @@ package laya.maths {
 		}
 		
 		/**
-		 * 在当前矩形区域中加一个点。
+		 * <p>为当前矩形对象加一个点，以使当前矩形扩展为包含当前矩形和此点的最小矩形。</p>
+		 * <p>此方法会修改本对象。</p>
 		 * @param x	点的 X 坐标。
 		 * @param y	点的 Y 坐标。
 		 * @return 返回此 Rectangle 对象。
@@ -228,7 +231,10 @@ package laya.maths {
 			return rst.setTo(minX, minY, maxX - minX, maxY - minY);
 		}
 		
-		/**确定此 Rectangle 对象是否为空。*/
+		/**
+		 * 确定此 Rectangle 对象是否为空。
+		 * @return 如果 Rectangle 对象的宽度或高度小于等于 0，则返回 true 值，否则返回 false。
+		 */
 		public function isEmpty():Boolean {
 			if (width <= 0 || height <= 0) return true;
 			return false;

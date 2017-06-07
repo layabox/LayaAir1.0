@@ -3,7 +3,6 @@ module Materil_Reflect {
     import Vector4 = Laya.Vector4;
 
     export class Materil_Reflect {
-        private cubeTexture: Laya.TextureCube;
         private material: Laya.StandardMaterial;
 
         constructor() {

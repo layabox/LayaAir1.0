@@ -80,8 +80,12 @@ package laya.debug.tools
 			if (tTexture)
 			{
 				mSprite.graphics.clear();
+				mSprite.graphics.save();
+				mSprite.graphics.alpha(0.9);
+				mSprite.graphics.drawRect(0, 0, 1024, 1024, "#efefefe");
+				mSprite.graphics.restore();
 				mSprite.graphics.drawTexture(tTexture, 0, 0, 1024, 1024);
-				mSprite.graphics.fillText((mIndex + 1).toString() +"/" + tCount.toString(),50,50,"40px Arial","#ff0000","left");
+				mSprite.graphics.fillText((mIndex + 1).toString() +"/" + tCount.toString(),25,100,"40px Arial","#ff0000","left");
 			}
 		}
 		

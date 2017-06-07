@@ -233,7 +233,7 @@
     "enableUVChannels":0,"enableUVChannelsTip":"暂时只支持UV0"},
 
 
-     "renderMode": 1,"renderModeTip":"目前不支持mesh",
+     "renderMode": 1,
      "stretchedBillboardCameraSpeedScale":0,
      "stretchedBillboardSpeedScale":2,
      "stretchedBillboardLengthScale":4,

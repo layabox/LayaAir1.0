@@ -17,8 +17,7 @@ package laya.ui {
 	 * <code>Image</code> 类是用于表示位图图像或绘制图形的显示对象。
 	 * Image和Clip组件是唯一支持异步加载的两个组件，比如img.skin = "abc/xxx.png"，其他UI组件均不支持异步加载。
 	 * 
-	 * @example 以下示例代码，创建了一个新的 <code>Image</code> 实例，设置了它的皮肤、位置信息，并添加到舞台上。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个新的 <code>Image</code> 实例，设置了它的皮肤、位置信息，并添加到舞台上。</caption>
 	 *	package
 	 *	 {
 	 *		import laya.ui.Image;
@@ -46,8 +45,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	 }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * onInit();
@@ -64,8 +62,7 @@ package laya.ui {
 	 *     image.y = 100;//设置 image 对象的属性 y 的值，用于控制 image 对象的显示位置。
 	 *     Laya.stage.addChild(image);//将此 image 对象添加到显示列表。
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * class Image_Example {
 	 *     constructor() {
 	 *         Laya.init(640, 800);//设置游戏画布宽高。
@@ -86,7 +83,6 @@ package laya.ui {
 	 *         Laya.stage.addChild(image);//将此 image 对象添加到显示列表。
 	 *     }
 	 * }
-	 * </listing>
 	 * @see laya.ui.AutoBitmap
 	 */
 	public class Image extends Component {

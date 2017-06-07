@@ -34,6 +34,8 @@ package laya.media {
 		/**@private */
 		private static var _blurPaused:Boolean = false;
 		/**@private */
+		private static var _isActive:Boolean = true;
+		/**@private */
 		private static var _musicLoops:int = 0;
 		/**@private */
 		private static var _musicPosition:Number = 0;
@@ -97,6 +99,7 @@ package laya.media {
 		}
 		
 		private static function _stageOnBlur():void {
+			_isActive = false;
 			if (_musicChannel) {
 				if (!_musicChannel.isStopped) {
 					_blurPaused = true;
@@ -108,9 +111,11 @@ package laya.media {
 				}
 				
 			}
+			stopAllSound();
 		}
 		
 		private static function _stageOnFocus():void {
+			_isActive = true;
 			Laya.stage.off(Event.MOUSE_DOWN, null, _stageOnFocus);
 			if (_blurPaused) {
 				if (_tMusic) {
@@ -173,6 +178,7 @@ package laya.media {
 		 * @return SoundChannel对象。
 		 */
 		public static function playSound(url:String, loops:int = 1, complete:Handler = null, soundClass:Class = null, startTime:Number = 0):SoundChannel {
+			if (!_isActive) return null;
 			if (_muted) return null;
 			if (url == _tMusic) {
 				if (_musicMuted) return null;
@@ -283,7 +289,7 @@ package laya.media {
 		/**
 		 * 设置声音音量
 		 * @param volume 音量 标准值为1
-		 * @param url  声音文件地址。为null(默认值)时对所有音效起作用，不为空时仅对对于声音生效
+		 * @param url  声音文件地址。为null(默认值)时对所有音效起作用，不为空时仅对此声音生效
 		 */
 		public static function setSoundVolume(volume:Number, url:String = null):void {
 			if (url) {

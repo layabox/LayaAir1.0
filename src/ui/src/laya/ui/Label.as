@@ -14,8 +14,7 @@ package laya.ui {
 	/**
 	 * <p> <code>Label</code> 类用于创建显示对象以显示文本。</p>
 	 *
-	 * @example 以下示例代码，创建了一个 <code>Label</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>Label</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.Label;
@@ -54,8 +53,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * onInit();
@@ -83,8 +81,7 @@ package laya.ui {
 	 *     passwordLabel.fontSize = 20;//设置 passwordLabel 的文本字体大小。
 	 *     Laya.stage.addChild(passwordLabel);//将 passwordLabel 添加到显示列表。
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import Label = laya.ui.Label;
 	 * class Label_Example {
 	 *     constructor() {
@@ -117,7 +114,6 @@ package laya.ui {
 	 *         Laya.stage.addChild(passwordLabel);//将 passwordLabel 添加到显示列表。
 	 *     }
 	 * }
-	 * </listing>
 	 * @see laya.display.Text
 	 */
 	public class Label extends Component {

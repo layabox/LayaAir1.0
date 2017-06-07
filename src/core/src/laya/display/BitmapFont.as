@@ -24,9 +24,9 @@ package laya.display {
 		public var letterSpacing:Number = 0;
 		
 		/**
-		 * 通过指定位图字体文件路径，加载位图字体文件。
+		 * 通过指定位图字体文件路径，加载位图字体文件，加载完成后会自动解析。
 		 * @param	path		位图字体文件的路径。
-		 * @param	complete	加载完成的回调，通知上层字体文件已经完成加载并解析。
+		 * @param	complete	加载并解析完成的回调。
 		 */
 		public function loadFont(path:String, complete:Handler):void {
 			_path = path;
@@ -171,7 +171,7 @@ package laya.display {
 			for (var i:int = 0, n:int = text.length; i < n; i++) {
 				tTexture = getCharTexture(text.charAt(i));
 				if (tTexture) {
-					sprite.graphics.drawTexture(tTexture, drawX + tX + dx, drawY );
+					sprite.graphics.drawTexture(tTexture, drawX + tX + dx, drawY);
 					tX += getCharWidth(text.charAt(i));
 				}
 			}

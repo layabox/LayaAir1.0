@@ -4,8 +4,7 @@ package laya.ui {
 	 *
 	 * 使用 <code>VScrollBar</code> （垂直 <code>ScrollBar</code> ）控件，可以在因数据太多而不能在显示区域完全显示时控制显示的数据部分。
 	 *
-	 * @example 以下示例代码，创建了一个 <code>VScrollBar</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>VScrollBar</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.vScrollBar;
@@ -35,8 +34,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * var vScrollBar;
@@ -53,8 +51,7 @@ package laya.ui {
 	 * function onChange(value) {
 	 *     console.log("滚动条的位置： value=" + value);
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import VScrollBar = laya.ui.VScrollBar;
 	 * import Handler = laya.utils.Handler;
 	 * class VScrollBar_Example {
@@ -76,7 +73,6 @@ package laya.ui {
 	 *         console.log("滚动条的位置： value=" + value);
 	 *     }
 	 * }
-	 * </listing>
 	 */
 	public class VScrollBar extends ScrollBar {
 	

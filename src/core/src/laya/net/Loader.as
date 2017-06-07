@@ -50,14 +50,14 @@ package laya.net {
 		
 		/** 文件后缀和类型对应表。*/
 		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "atlas": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json", "fnt": "font"};
-		/**资源解析函数对应表，用来扩展更多类型的资源加载解析*/
+		/**资源解析函数对应表，用来扩展更多类型的资源加载解析。*/
 		public static var parserMap:Object = /*[STATIC SAFE]*/ {};
-		/** 已加载的资源池。*/
-		public static const loadedMap:Object = {};
-		/** 资源分组。*/
+		/** 资源分组对应表。*/
 		public static const groupMap:Object = {};
 		/** 每帧回调最大超时时间，如果超时，则下帧再处理。*/
 		public static var maxTimeOut:int = 100;
+		/** @private 已加载的资源池。*/
+		public static const loadedMap:Object = {};
 		/**@private 已加载的图集资源池。*/
 		protected static const atlasMap:Object = {};
 		/**@private */
@@ -87,11 +87,13 @@ package laya.net {
 		 * @param	ignoreCache 是否忽略缓存，强制重新加载
 		 */
 		public function load(url:String, type:String = null, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):void {
-			if (url.indexOf("data:image") === 0) type = IMAGE;
 			this._url = url;
+			if (url.indexOf("data:image") === 0) type = IMAGE;
+			else url = URL.formatURL(url);
 			this._type = type || (type = getTypeFromUrl(url));
 			this._cache = cache;
 			this._data = null;
+			
 			if (!ignoreCache && loadedMap[url]) {
 				this._data = loadedMap[url];
 				event(Event.PROGRESS, 1);
@@ -127,7 +129,7 @@ package laya.net {
 			default: 
 				contentType = type;
 			}
-			_http.send(URL.formatURL(url), null, "get", contentType);
+			_http.send(url, null, "get", contentType);
 		}
 		
 		/**
@@ -148,6 +150,7 @@ package laya.net {
 		 * @param	url 资源地址。
 		 */
 		protected function _loadImage(url:String):void {
+			url = URL.formatURL(url);
 			var _this:Loader = this;
 			var image:*;
 			function clear():void {
@@ -169,7 +172,7 @@ package laya.net {
 				image.crossOrigin = "";
 				image.onload = onload;
 				image.onerror = onerror;
-				image.src = URL.formatURL(url);
+				image.src = url;
 			} else {
 				new HTMLImage.create(url, {onload: onload, onerror: onerror, onCreate: function(img:*):void {
 					image = img;
@@ -268,12 +271,13 @@ package laya.net {
 					var cleanUrl:String = this._url.split("?")[0];
 					var directory:String = (this._data.meta && this._data.meta.prefix) ? this._data.meta.prefix : cleanUrl.substring(0, cleanUrl.lastIndexOf(".")) + "/";
 					var pics:Array = _data.pics;
-					var map:Array = atlasMap[this._url] || (atlasMap[this._url] = []);
+					var atlasURL:String = URL.formatURL(this._url);
+					var map:Array = atlasMap[atlasURL] || (atlasMap[atlasURL] = []);
 					map.dir = directory;
 					for (var name:String in frames) {
 						var obj:Object = frames[name];//取对应的图
 						var tPic:Object = pics[obj.frame.idx ? obj.frame.idx : 0];//是否释放
-						var url:String = directory + name;
+						var url:String = URL.formatURL(directory + name);
 						
 						cacheRes(url, Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h));
 						loadedMap[url].url = url;
@@ -291,8 +295,7 @@ package laya.net {
 					event(Event.PROGRESS, 0.5);
 					return _loadImage(_url.replace(".fnt", ".png"));
 				} else {
-					var bFont:BitmapFont;
-					bFont = new BitmapFont();
+					var bFont:BitmapFont = new BitmapFont();
 					bFont.parseFont(_data, data);
 					var tArr:Array = this._url.split(".fnt")[0].split("/");
 					var fontName:String = tArr[tArr.length - 1];
@@ -375,8 +378,9 @@ package laya.net {
 		 * @param	forceDispose 是否强制销毁，有些资源是采用引用计数方式销毁，如果forceDispose=true，则忽略引用计数，直接销毁，比如Texture，默认为false
 		 */
 		public static function clearRes(url:String, forceDispose:Boolean = false):void {
+			url = URL.formatURL(url);
 			//删除图集
-			var arr:Array = atlasMap[url];
+			var arr:Array = getAtlas(url);
 			if (arr) {
 				for (var i:int = 0, n:int = arr.length; i < n; i++) {
 					var resUrl:String = arr[i];
@@ -402,7 +406,7 @@ package laya.net {
 		 * @return	返回资源。
 		 */
 		public static function getRes(url:String):* {
-			return loadedMap[url];
+			return loadedMap[URL.formatURL(url)];
 		}
 		
 		/**
@@ -411,7 +415,7 @@ package laya.net {
 		 * @return	返回地址集合。
 		 */
 		public static function getAtlas(url:String):Array {
-			return atlasMap[url];
+			return atlasMap[URL.formatURL(url)];
 		}
 		
 		/**
@@ -420,6 +424,7 @@ package laya.net {
 		 * @param	data 要缓存的内容。
 		 */
 		public static function cacheRes(url:String, data:*):void {
+			url = URL.formatURL(url);
 			if (loadedMap[url] != null) {
 				console.warn("Resources already exist,is repeated loading:", url);
 			} else {

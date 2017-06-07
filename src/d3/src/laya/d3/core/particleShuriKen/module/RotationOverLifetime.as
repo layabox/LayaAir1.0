@@ -51,7 +51,7 @@ package laya.d3.core.particleShuriKen.module {
 				break;
 			case 1: 
 				if (_angularVelocity.separateAxes)
-					destAngularVelocity = GradientAngularVelocity.createByGradientSeparate(_angularVelocity.gradientX.clone(), _angularVelocity.gradientY.clone(), _angularVelocity.gradientZ.clone());
+					destAngularVelocity = GradientAngularVelocity.createByGradientSeparate(_angularVelocity.gradientX.clone(), _angularVelocity.gradientY.clone(), _angularVelocity.gradientZ.clone(), _angularVelocity.gradientW.clone());
 				else
 					destAngularVelocity = GradientAngularVelocity.createByGradient(_angularVelocity.gradient.clone());
 				break;
@@ -63,7 +63,7 @@ package laya.d3.core.particleShuriKen.module {
 				break;
 			case 3: 
 				if (_angularVelocity.separateAxes)
-					destAngularVelocity = GradientAngularVelocity.createByRandomTwoGradientSeparate(_angularVelocity.gradientXMin.clone(), _angularVelocity.gradientYMin.clone(), _angularVelocity.gradientZMin.clone(), _angularVelocity.gradientXMax.clone(), _angularVelocity.gradientYMax.clone(), _angularVelocity.gradientZMax.clone());
+					destAngularVelocity = GradientAngularVelocity.createByRandomTwoGradientSeparate(_angularVelocity.gradientXMin.clone(), _angularVelocity.gradientYMin.clone(), _angularVelocity.gradientZMin.clone(),_angularVelocity.gradientWMin.clone(), _angularVelocity.gradientXMax.clone(), _angularVelocity.gradientYMax.clone(), _angularVelocity.gradientZMax.clone(),_angularVelocity.gradientWMax.clone());
 				else
 					destAngularVelocity = GradientAngularVelocity.createByRandomTwoGradient(_angularVelocity.gradientMin.clone(), _angularVelocity.gradientMax.clone());
 				break;

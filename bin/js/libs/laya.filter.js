@@ -145,7 +145,7 @@
 				WebGLFilter.enable();
 			}
 			this._color=new Color(color);
-			this.blur=blur;
+			this.blur=Math.min(blur,20);
 			this.offX=offX;
 			this.offY=offY;
 			this._action=RunDriver.createFilterAction(0x08);

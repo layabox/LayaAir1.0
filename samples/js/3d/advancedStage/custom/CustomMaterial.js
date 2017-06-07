@@ -1,7 +1,8 @@
 function CustomMaterial() {
     CustomMaterial.__super.call(this);
     this.setShaderName("CustomShader");
-    this._DIFFUSETEXTURE_ID = 0;
+    this._DIFFUSETEXTURE_ID = 1;
+
 }
 
 Laya.class(CustomMaterial, "CustomMaterial", Laya.BaseMaterial);
@@ -13,3 +14,5 @@ CustomMaterial.prototype.getDiffuseTexture = function () {
 CustomMaterial.prototype.setDiffuseTexture = function (value) {
     this._setTexture(this._DIFFUSETEXTURE_ID,value);
 }
+CustomMaterial.DIFFUSETEXTURE=1;
+

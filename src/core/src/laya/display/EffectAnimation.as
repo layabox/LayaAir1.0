@@ -3,13 +3,14 @@ package laya.display {
 	import laya.utils.Ease;
 	
 	/**
-	 * 动效类
+	 * <p> 动效模板。用于为指定目标对象添加动画效果。每个动效有唯一的目标对象，而同一个对象可以添加多个动效。 当一个动效开始播放时，其他动效会自动停止播放。</p>
+	 * <p> 可以通过LayaAir IDE创建。 </p>
 	 */
 	public class EffectAnimation extends FrameAnimation {
 		/**
-		 * 动效开始事件 
+		 * 动效开始事件。
 		 */
-		public static const EffectAnimationBegin:String = "effectanimationbegin";	
+		public static const EffectAnimationBegin:String = "effectanimationbegin";
 		
 		/**@private */
 		private var _target:*;
@@ -23,9 +24,8 @@ package laya.display {
 		private var _effectClass:Class;
 		
 		/**
-		 * 控制对象 
-		 * @param v
-		 * 
+		 * 本实例的目标对象。通过本实例控制目标对象的属性变化。
+		 * @param v 指定的目标对象。
 		 */
 		public function set target(v:*):void {
 			if (_target) {
@@ -38,9 +38,6 @@ package laya.display {
 			addEvent();
 		}
 		
-		/**
-		 * 控制对象 
-		 */		
 		public function get target():* {
 			return _target;
 		}
@@ -52,12 +49,10 @@ package laya.display {
 			this.stop();
 		}
 		
-		
 		/**
-		 * 设置开始播放的事件 
+		 * 设置开始播放的事件。本实例会侦听目标对象的指定事件，触发后播放相应动画效果。
 		 * @param event
-		 * 
-		 */		
+		 */
 		public function set playEvent(event:String):void {
 			_playEvents = event;
 			if (!event)
@@ -96,10 +91,9 @@ package laya.display {
 		}
 		
 		/**
-		 * 设置提供数据的类 
+		 * 设置提供数据的类。
 		 * @param classStr 类路径
-		 * 
-		 */		
+		 */
 		public function set effectClass(classStr:String):void {
 			_effectClass = ClassUtils.getClass(classStr);
 			if (_effectClass) {
@@ -119,13 +113,11 @@ package laya.display {
 		}
 		
 		/**
-		 * 设置动画数据 
+		 * 设置动画数据。
 		 * @param uiData
-		 * 
-		 */		
+		 */
 		public function set effectData(uiData:Object):void {
-			if (uiData)
-			{
+			if (uiData) {
 				var aniData:Array;
 				aniData = uiData["animations"];
 				if (aniData && aniData[0]) {
@@ -173,8 +165,7 @@ package laya.display {
 				tSecondFrame = secondFrames[key];
 				if (tSecondFrame == -1) {
 					value = _initData[key];
-				}
-				else {
+				} else {
 					if (frame < tSecondFrame) {
 						tKeyFrames = node.keyframes[key];
 						startFrame = tKeyFrames[0];
@@ -184,18 +175,15 @@ package laya.display {
 								easeFun = Ease.linearNone;
 							}
 							endFrame = tKeyFrames[1];
-							value= easeFun(frame, _initData[key], endFrame.value-_initData[key], endFrame.index);
-						}
-						else {
+							value = easeFun(frame, _initData[key], endFrame.value - _initData[key], endFrame.index);
+						} else {
 							value = _initData[key];
 						}
 						
-					}
-					else {
+					} else {
 						if (propFrames.length > frame) {
 							value = propFrames[frame];
-						}
-						else {
+						} else {
 							value = propFrames[propFrames.length - 1];
 						}
 					}
@@ -217,8 +205,7 @@ package laya.display {
 				tKeyFrames = keyFrames[key];
 				if (tKeyFrames.length <= 1) {
 					secondFrames[key] = -1;
-				}
-				else {
+				} else {
 					secondFrames[key] = tKeyFrames[1].index;
 				}
 			}

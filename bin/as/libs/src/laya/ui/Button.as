@@ -19,8 +19,7 @@ package laya.ui {
 	 * <code>Button</code> 组件用来表示常用的多态按钮。 <code>Button</code> 组件可显示文本标签、图标或同时显示两者。	 *
 	 * <p>可以是单态，两态和三态，默认三态(up,over,down)。</p>
 	 *
-	 * @example 以下示例代码，创建了一个 <code>Button</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>Button</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.Button;
@@ -48,8 +47,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高、渲染模式。
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色。
 	 * Laya.loader.load("resource/ui/button.png",laya.utils.Handler.create(this,loadComplete));//加载资源
@@ -66,8 +64,7 @@ package laya.ui {
 	 * {
 	 *     console.log("按钮被点击了。",button);
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import Button=laya.ui.Button;
 	 * import Handler=laya.utils.Handler;
 	 * class Button_Example{
@@ -90,7 +87,6 @@ package laya.ui {
 	 *         console.log("按钮button被点击了！")
 	 *     }
 	 * }
-	 * </listing>
 	 */
 	public class Button extends Component implements ISelect {
 		/**
@@ -102,7 +98,7 @@ package laya.ui {
 		 * 指定按钮按下时是否是切换按钮的显示状态。
 		 *
 		 * @example 以下示例代码，创建了一个 <code>Button</code> 实例，并设置为切换按钮。
-		 * <listing version="3.0">
+		 * @example
 		 * package
 		 *	{
 		 *		import laya.ui.Button;
@@ -131,8 +127,7 @@ package laya.ui {
 		 *			}
 		 *		}
 		 *	}
-		 * </listing>
-		 * <listing version="3.0">
+		 * @example
 		 * Laya.init(640, 800);//设置游戏画布宽高、渲染模式。
 		 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色。
 		 * Laya.loader.load("resource/ui/button.png",laya.utils.Handler.create(this,loadComplete));//加载资源
@@ -150,8 +145,7 @@ package laya.ui {
 		 * {
 		 *     console.log("button.selected = ",button.selected);
 		 * }
-		 * </listing>
-		 * <listing version="3.0">
+		 * @example
 		 * Laya.init(640, 800);//设置游戏画布宽高、渲染模式。
 		 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色。
 		 * Laya.loader.load("button.png", null,null, null, null, null);//加载资源
@@ -167,7 +161,6 @@ package laya.ui {
 		 * function onClickButton(button) {
 		 *     console.log("button.selected = ", button.selected);
 		 * }
-		 * </listing>
 		 */
 		public var toggle:Boolean;
 		/**

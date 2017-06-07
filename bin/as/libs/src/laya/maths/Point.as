@@ -17,8 +17,8 @@ package laya.maths {
 		
 		/**
 		 * 根据指定坐标，创建一个新的 <code>Point</code> 对象。
-		 * @param	x 水平坐标。
-		 * @param	y 垂直坐标。
+		 * @param x	（可选）水平坐标。
+		 * @param y	（可选）垂直坐标。
 		 */
 		public function Point(x:Number = 0, y:Number = 0) {
 			this.x = x;
@@ -38,10 +38,10 @@ package laya.maths {
 		}
 		
 		/**
-		 * 计算当前点和目标x，y点的距离
+		 * 计算当前点和目标点(x，y)的距离。
 		 * @param	x 水平坐标。
 		 * @param	y 垂直坐标。
-		 * @return	返回之间的距离
+		 * @return	返回当前点和目标点之间的距离。
 		 */
 		public function distance(x:Number, y:Number):Number {
 			return Math.sqrt((this.x - x) * (this.x - x) + (this.y - y) * (this.y - y));
@@ -53,10 +53,9 @@ package laya.maths {
 		}
 		
 		/**
-		 * 标准化向量
+		 * 标准化向量。
 		 */
-		public function normalize():void
-		{
+		public function normalize():void {
 			var d:Number = Math.sqrt(x * x + y * y);
 			if (d > 0) {
 				var id:Number = 1.0 / d;

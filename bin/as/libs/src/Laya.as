@@ -34,7 +34,7 @@ package {
 		/** 加载管理器的引用。*/
 		public static var loader:LoaderManager = null;
 		/** 当前引擎版本。*/
-		public static var version:String = "1.7.5beta";
+		public static var version:String = "1.7.6beta";
 		/**@private Render 类的引用。*/
 		public static var render:Render;
 		/**@private */
@@ -55,6 +55,7 @@ package {
 		 */
 		public static function init(width:Number, height:Number, ... plugins):* {
 			if (_isinit) return;
+			ArrayBuffer.prototype.slice || (ArrayBuffer.prototype.slice = _arrayBufferSlice);
 			_isinit = true;
 			Browser.__init__();
 			Context.__init__();
@@ -92,6 +93,15 @@ package {
 			SoundManager.autoStopMusic = true;
 			LocalStorage.__init__();
 			return Render.canvas;
+		}
+		
+		/**@private */
+		private static function _arrayBufferSlice(start:int, end:int):ArrayBuffer {
+			var arr:*= __JS__("this");
+			var arrU8List:Uint8Array = new Uint8Array(arr,start,end-start);
+			var newU8List:Uint8Array=new Uint8Array(arrU8List.length);
+			newU8List.set(arrU8List);
+			return newU8List.buffer;	
 		}
 		
 		/**

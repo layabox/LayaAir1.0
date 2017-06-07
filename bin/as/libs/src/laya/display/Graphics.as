@@ -51,7 +51,7 @@ package laya.display {
 		/**@private */
 		private var _vectorgraphArray:Array;
 		/**@private */
-		private var _cacheBoundsType:Boolean=false;
+		private var _cacheBoundsType:Boolean = false;
 		
 		/**@private */
 		public static function __init__():void {
@@ -76,11 +76,10 @@ package laya.display {
 						this.drawImageS(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, tex.offsetX, tex.offsetY, tex.width, tex.height, pos);
 					}
 				}
-				from.drawTexture = function(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null,alpha:Number=1):void {
+				from.drawTexture = function(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null, alpha:Number = 1):void {
 					if (!tex) return;
-					if (!tex.loaded)
-					{
-						tex.once(Event.LOADED, this, function():void{
+					if (!tex.loaded) {
+						tex.once(Event.LOADED, this, function():void {
 							this.drawTexture(tex, x, y, width, height, m);
 						});
 						return;
@@ -100,7 +99,7 @@ package laya.display {
 					x += tex.offsetX;
 					y += tex.offsetY;
 					var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
-					this.drawImageM(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x, y, width, height, m);
+					this.drawImageM(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x, y, width, height, m, alpha);
 					this._repaint();
 				}
 				from.fillTexture = function(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, type:String = "repeat", offset:Point = null):void {
@@ -166,7 +165,7 @@ package laya.display {
 					VectorGraphManager.getInstance().deleteShape(_vectorgraphArray[i]);
 				}
 				_vectorgraphArray.length = 0;
-			}		
+			}
 		}
 		
 		/**
@@ -199,12 +198,12 @@ package laya.display {
 		}
 		
 		/**
-		 * 获取位置及宽高信息矩阵(比较耗，尽量少用)。
-		 * @param realSize 使用图片的真实大小，默认为false
+		 * 获取位置及宽高信息矩阵(比较耗CPU，频繁使用会造成卡顿，尽量少用)。
+		 * @param realSize	（可选）使用图片的真实大小，默认为false
 		 * @return 位置与宽高组成的 一个 Rectangle 对象。
 		 */
 		public function getBounds(realSize:Boolean = false):Rectangle {
-			if (!_bounds || !_temp || _temp.length < 1||realSize!=_cacheBoundsType) {
+			if (!_bounds || !_temp || _temp.length < 1 || realSize != _cacheBoundsType) {
 				_bounds = Rectangle._getWrapRec(getBoundPoints(realSize), _bounds)
 			}
 			_cacheBoundsType = realSize;
@@ -213,11 +212,11 @@ package laya.display {
 		
 		/**
 		 * @private
-		 * @param realSize 使用图片的真实大小，默认为false
+		 * @param realSize	（可选）使用图片的真实大小，默认为false
 		 * 获取端点列表。
 		 */
-		public function getBoundPoints(realSize:Boolean=false):Array {
-			if (!_temp || _temp.length < 1||realSize!=_cacheBoundsType)
+		public function getBoundPoints(realSize:Boolean = false):Array {
+			if (!_temp || _temp.length < 1 || realSize != _cacheBoundsType)
 				_temp = _getCmdPoints(realSize);
 			_cacheBoundsType = realSize;
 			return _rstBoundPoints = Utils.copyArray(_rstBoundPoints, _temp);
@@ -229,7 +228,7 @@ package laya.display {
 			this._cmds.push(a);
 		}
 		
-		private function _getCmdPoints(realSize:Boolean=false):Array {
+		private function _getCmdPoints(realSize:Boolean = false):Array {
 			var context:RenderContext = Render._context;
 			var cmds:Array = this._cmds;
 			var rst:Array;
@@ -309,24 +308,22 @@ package laya.display {
 					break;
 				case context._drawTexture: 
 					//width = width - tex.sourceWidth + tex.width;
-			        //height = height - tex.sourceHeight + tex.height;
+					//height = height - tex.sourceHeight + tex.height;
 					tex = cmd[0];
-					if (realSize)
-					{
+					if (realSize) {
 						if (cmd[3] && cmd[4]) {
 							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
 						} else {
 							tex = cmd[0];
 							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), tMatrix);
 						}
-					}else
-					{
-						var offX:Number=tex.offsetX>0?tex.offsetX:0;
-						var offY:Number=tex.offsetY>0?tex.offsetY:0;
+					} else {
+						var offX:Number = tex.offsetX > 0 ? tex.offsetX : 0;
+						var offY:Number = tex.offsetY > 0 ? tex.offsetY : 0;
 						if (cmd[3] && cmd[4]) {
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, cmd[3]+tex.sourceWidth-tex.width, cmd[4]+tex.sourceHeight-tex.height), tMatrix);
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, cmd[3] + tex.sourceWidth - tex.width, cmd[4] + tex.sourceHeight - tex.height), tMatrix);
 						} else {
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, tex.width+tex.sourceWidth-tex.width, tex.height+tex.sourceHeight-tex.height), tMatrix);
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, tex.width + tex.sourceWidth - tex.width, tex.height + tex.sourceHeight - tex.height), tMatrix);
 						}
 					}
 					
@@ -348,23 +345,21 @@ package laya.display {
 					} else {
 						drawMatrix = tMatrix;
 					}
-					if (realSize)
-					{
+					if (realSize) {
 						if (cmd[3] && cmd[4]) {
 							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), drawMatrix);
 						} else {
 							tex = cmd[0];
 							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), drawMatrix);
 						}
-					}else
-					{
+					} else {
 						tex = cmd[0];
-						offX=tex.offsetX>0?tex.offsetX:0;
-						offY=tex.offsetY>0?tex.offsetY:0;
+						offX = tex.offsetX > 0 ? tex.offsetX : 0;
+						offY = tex.offsetY > 0 ? tex.offsetY : 0;
 						if (cmd[3] && cmd[4]) {
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, cmd[3]+tex.sourceWidth-tex.width, cmd[4]+tex.sourceHeight-tex.height), tMatrix);
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, cmd[3] + tex.sourceWidth - tex.width, cmd[4] + tex.sourceHeight - tex.height), drawMatrix);
 						} else {
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1]-offX, cmd[2]-offY, tex.width+tex.sourceWidth-tex.width, tex.height+tex.sourceHeight-tex.height), tMatrix);
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, tex.width + tex.sourceWidth - tex.width, tex.height + tex.sourceHeight - tex.height), drawMatrix);
 						}
 					}
 					
@@ -446,12 +441,13 @@ package laya.display {
 		
 		/**
 		 * 绘制纹理。
-		 * @param	tex 纹理。
-		 * @param	x X 轴偏移量。
-		 * @param	y Y 轴偏移量。
-		 * @param	width 宽度。
-		 * @param	height 高度。
-		 * @param	m 矩阵信息。
+		 * @param tex		纹理。
+		 * @param x X		（可选）轴偏移量。
+		 * @param y Y		（可选）轴偏移量。
+		 * @param width		（可选）宽度。
+		 * @param height	（可选）高度。
+		 * @param m			（可选）矩阵信息。
+		 * @param alpha		（可选）透明度。
 		 */
 		public function drawTexture(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null, alpha:Number = 1):void {
 			if (!tex || alpha < 0.01) return;
@@ -484,7 +480,7 @@ package laya.display {
 		
 		/**
 		 * @private 清理贴图并替换为最新的
-		 * @param	tex
+		 * @param tex
 		 */
 		public function cleanByTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0):void {
 			if (!tex) return clear();
@@ -510,8 +506,8 @@ package laya.display {
 		
 		/**
 		 * 批量绘制同样纹理。
-		 * @param	tex 纹理。
-		 * @param	pos 绘制次数和坐标。
+		 * @param tex 纹理。
+		 * @param pos 绘制次数和坐标。
 		 */
 		public function drawTextures(tex:Texture, pos:Array):void {
 			if (!tex) return;
@@ -519,14 +515,14 @@ package laya.display {
 		}
 		
 		/**
-		 * 用texture填充
-		 * @param	tex 纹理。
-		 * @param	x X 轴偏移量。
-		 * @param	y Y 轴偏移量。
-		 * @param	width 宽度。
-		 * @param	height 高度。
-		 * @param 	type 填充类型 repeat|repeat-x|repeat-y|no-repeat
-		 * @param	offset 贴图纹理偏移
+		 * 用texture填充。
+		 * @param tex		纹理。
+		 * @param x			X轴偏移量。
+		 * @param y			Y轴偏移量。
+		 * @param width		（可选）宽度。
+		 * @param height	（可选）高度。
+		 * @param type		（可选）填充类型 repeat|repeat-x|repeat-y|no-repeat
+		 * @param offset	（可选）贴图纹理偏移
 		 *
 		 */
 		public function fillTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, type:String = "repeat", offset:Point = null):void {
@@ -567,10 +563,10 @@ package laya.display {
 		
 		/**
 		 * 设置剪裁区域，超出剪裁区域的坐标不显示。
-		 * @param	x X 轴偏移量。
-		 * @param	y Y 轴偏移量。
-		 * @param	width 宽度。
-		 * @param	height 高度。
+		 * @param x X 轴偏移量。
+		 * @param y Y 轴偏移量。
+		 * @param width 宽度。
+		 * @param height 高度。
 		 */
 		public function clipRect(x:Number, y:Number, width:Number, height:Number):void {
 			_saveToCmd(Render._context._clipRect, [x, y, width, height]);
@@ -578,12 +574,12 @@ package laya.display {
 		
 		/**
 		 * 在画布上绘制文本。
-		 * @param	text 在画布上输出的文本。
-		 * @param	x 开始绘制文本的 x 坐标位置（相对于画布）。
-		 * @param	y 开始绘制文本的 y 坐标位置（相对于画布）。
-		 * @param	font 定义字号和字体，比如"20px Arial"。
-		 * @param	color 定义文本颜色，比如"#ff0000"。
-		 * @param	textAlign 文本对齐方式，可选值："left"，"center"，"right"。
+		 * @param text 在画布上输出的文本。
+		 * @param x 开始绘制文本的 x 坐标位置（相对于画布）。
+		 * @param y 开始绘制文本的 y 坐标位置（相对于画布）。
+		 * @param font 定义字号和字体，比如"20px Arial"。
+		 * @param color 定义文本颜色，比如"#ff0000"。
+		 * @param textAlign 文本对齐方式，可选值："left"，"center"，"right"。
 		 */
 		public function fillText(text:String, x:Number, y:Number, font:String, color:String, textAlign:String):void {
 			_saveToCmd(Render._context._fillText, [text, x, y, font || Font.defaultFont, color, textAlign]);
@@ -591,14 +587,14 @@ package laya.display {
 		
 		/**
 		 * 在画布上绘制“被填充且镶边的”文本。
-		 * @param	text 在画布上输出的文本。
-		 * @param	x 开始绘制文本的 x 坐标位置（相对于画布）。
-		 * @param	y 开始绘制文本的 y 坐标位置（相对于画布）。
-		 * @param	font 定义字体和字号，比如"20px Arial"。
-		 * @param	fillColor 定义文本颜色，比如"#ff0000"。
-		 * @param	borderColor 定义镶边文本颜色。
-		 * @param	lineWidth 镶边线条宽度。
-		 * @param	textAlign 文本对齐方式，可选值："left"，"center"，"right"。
+		 * @param text			在画布上输出的文本。
+		 * @param x				开始绘制文本的 x 坐标位置（相对于画布）。
+		 * @param y				开始绘制文本的 y 坐标位置（相对于画布）。
+		 * @param font			定义字体和字号，比如"20px Arial"。
+		 * @param fillColor		定义文本颜色，比如"#ff0000"。
+		 * @param borderColor	定义镶边文本颜色。
+		 * @param lineWidth		镶边线条宽度。
+		 * @param textAlign		文本对齐方式，可选值："left"，"center"，"right"。
 		 */
 		public function fillBorderText(text:*, x:Number, y:Number, font:String, fillColor:String, borderColor:String, lineWidth:Number, textAlign:String):void {
 			_saveToCmd(Render._context._fillBorderText, [text, x, y, font || Font.defaultFont, fillColor, borderColor, lineWidth, textAlign]);
@@ -606,13 +602,13 @@ package laya.display {
 		
 		/**
 		 * 在画布上绘制文本（没有填色）。文本的默认颜色是黑色。
-		 * @param	text 在画布上输出的文本。
-		 * @param	x 开始绘制文本的 x 坐标位置（相对于画布）。
-		 * @param	y 开始绘制文本的 y 坐标位置（相对于画布）。
-		 * @param	font 定义字体和字号，比如"20px Arial"。
-		 * @param	color 定义文本颜色，比如"#ff0000"。
-		 * @param	lineWidth 线条宽度。
-		 * @param	textAlign 文本对齐方式，可选值："left"，"center"，"right"。
+		 * @param text		在画布上输出的文本。
+		 * @param x			开始绘制文本的 x 坐标位置（相对于画布）。
+		 * @param y			开始绘制文本的 y 坐标位置（相对于画布）。
+		 * @param font		定义字体和字号，比如"20px Arial"。
+		 * @param color		定义文本颜色，比如"#ff0000"。
+		 * @param lineWidth	线条宽度。
+		 * @param textAlign	文本对齐方式，可选值："left"，"center"，"right"。
 		 */
 		public function strokeText(text:*, x:Number, y:Number, font:String, color:String, lineWidth:Number, textAlign:String):void {
 			_saveToCmd(Render._context._strokeText, [text, x, y, font || Font.defaultFont, color, lineWidth, textAlign]);
@@ -620,7 +616,7 @@ package laya.display {
 		
 		/**
 		 * 设置透明度。
-		 * @param	value 透明度。
+		 * @param value 透明度。
 		 */
 		public function alpha(value:Number):void {
 			_saveToCmd(Render._context._alpha, [value]);
@@ -628,9 +624,9 @@ package laya.display {
 		
 		/**
 		 * 替换绘图的当前转换矩阵。
-		 * @param	mat 矩阵。
-		 * @param	pivotX 水平方向轴心点坐标。
-		 * @param	pivotY 垂直方向轴心点坐标。
+		 * @param mat 矩阵。
+		 * @param pivotX	（可选）水平方向轴心点坐标。
+		 * @param pivotY	（可选）垂直方向轴心点坐标。
 		 */
 		public function transform(matrix:Matrix, pivotX:Number = 0, pivotY:Number = 0):void {
 			_saveToCmd(Render._context._transform, [matrix, pivotX, pivotY]);
@@ -638,9 +634,9 @@ package laya.display {
 		
 		/**
 		 * 旋转当前绘图。(推荐使用transform，性能更高)
-		 * @param	angle 旋转角度，以弧度计。
-		 * @param	pivotX 水平方向轴心点坐标。
-		 * @param	pivotY 垂直方向轴心点坐标。
+		 * @param angle		旋转角度，以弧度计。
+		 * @param pivotX	（可选）水平方向轴心点坐标。
+		 * @param pivotY	（可选）垂直方向轴心点坐标。
 		 */
 		public function rotate(angle:Number, pivotX:Number = 0, pivotY:Number = 0):void {
 			_saveToCmd(Render._context._rotate, [angle, pivotX, pivotY]);
@@ -648,10 +644,10 @@ package laya.display {
 		
 		/**
 		 * 缩放当前绘图至更大或更小。(推荐使用transform，性能更高)
-		 * @param	scaleX 水平方向缩放值。
-		 * @param	scaleY 垂直方向缩放值。
-		 * @param	pivotX 水平方向轴心点坐标。
-		 * @param	pivotY 垂直方向轴心点坐标。
+		 * @param scaleX	水平方向缩放值。
+		 * @param scaleY	垂直方向缩放值。
+		 * @param pivotX	（可选）水平方向轴心点坐标。
+		 * @param pivotY	（可选）垂直方向轴心点坐标。
 		 */
 		public function scale(scaleX:Number, scaleY:Number, pivotX:Number = 0, pivotY:Number = 0):void {
 			_saveToCmd(Render._context._scale, [scaleX, scaleY, pivotX, pivotY]);
@@ -659,8 +655,8 @@ package laya.display {
 		
 		/**
 		 * 重新映射画布上的 (0,0) 位置。
-		 * @param	x 添加到水平坐标（x）上的值。
-		 * @param	y 添加到垂直坐标（y）上的值。
+		 * @param x 添加到水平坐标（x）上的值。
+		 * @param y 添加到垂直坐标（y）上的值。
 		 */
 		public function translate(x:Number, y:Number):void {
 			_saveToCmd(Render._context._translate, [x, y]);
@@ -683,7 +679,7 @@ package laya.display {
 		/**
 		 * @private
 		 * 替换文本内容。
-		 * @param	text 文本内容。
+		 * @param text 文本内容。
 		 * @return 替换成功则值为true，否则值为flase。
 		 */
 		public function replaceText(text:String):Boolean {
@@ -715,7 +711,7 @@ package laya.display {
 		/**
 		 * @private
 		 * 替换文本颜色。
-		 * @param	color 颜色。
+		 * @param color 颜色。
 		 */
 		public function replaceTextColor(color:String):void {
 			_repaint();
@@ -737,12 +733,12 @@ package laya.display {
 		
 		/**
 		 * 加载并显示一个图片。
-		 * @param	url 图片地址。
-		 * @param	x 显示图片的x位置。
-		 * @param	y 显示图片的y位置。
-		 * @param	width 显示图片的宽度，设置为0表示使用图片默认宽度。
-		 * @param	height 显示图片的高度，设置为0表示使用图片默认高度。
-		 * @param	complete 加载完成回调。
+		 * @param url		图片地址。
+		 * @param x			（可选）显示图片的x位置。
+		 * @param y			（可选）显示图片的y位置。
+		 * @param width		（可选）显示图片的宽度，设置为0表示使用图片默认宽度。
+		 * @param height	（可选）显示图片的高度，设置为0表示使用图片默认高度。
+		 * @param complete	（可选）加载完成回调。
 		 */
 		public function loadImage(url:String, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, complete:Function = null):void {
 			var tex:Texture = Loader.getRes(url);
@@ -794,12 +790,12 @@ package laya.display {
 		
 		/**
 		 * 绘制一条线。
-		 * @param	fromX X 轴开始位置。
-		 * @param	fromY Y 轴开始位置。
-		 * @param	toX	X 轴结束位置。
-		 * @param	toY	Y 轴结束位置。
-		 * @param	lineColor 颜色。
-		 * @param	lineWidth 线条宽度。
+		 * @param fromX		X轴开始位置。
+		 * @param fromY		Y轴开始位置。
+		 * @param toX		X轴结束位置。
+		 * @param toY		Y轴结束位置。
+		 * @param lineColor	颜色。
+		 * @param lineWidth	（可选）线条宽度。
 		 */
 		public function drawLine(fromX:Number, fromY:Number, toX:Number, toY:Number, lineColor:String, lineWidth:Number = 1):void {
 			var tId:uint = 0;
@@ -816,11 +812,11 @@ package laya.display {
 		
 		/**
 		 * 绘制一系列线段。
-		 * @param	x 开始绘制的 X 轴位置。
-		 * @param	y 开始绘制的 Y 轴位置。
-		 * @param	points 线段的点集合。格式:[x1,y1,x2,y2,x3,y3...]。
-		 * @param	lineColor 线段颜色，或者填充绘图的渐变对象。
-		 * @param	lineWidth 线段宽度。
+		 * @param x			开始绘制的X轴位置。
+		 * @param y			开始绘制的Y轴位置。
+		 * @param points	线段的点集合。格式:[x1,y1,x2,y2,x3,y3...]。
+		 * @param lineColor	线段颜色，或者填充绘图的渐变对象。
+		 * @param lineWidth	（可选）线段宽度。
 		 */
 		public function drawLines(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):void {
 			var tId:uint = 0;
@@ -837,11 +833,11 @@ package laya.display {
 		
 		/**
 		 * 绘制一系列曲线。
-		 * @param	x 开始绘制的 X 轴位置。
-		 * @param	y 开始绘制的 Y 轴位置。
-		 * @param	points 线段的点集合，格式[startx,starty,ctrx,ctry,startx,starty...]。
-		 * @param	lineColor 线段颜色，或者填充绘图的渐变对象。
-		 * @param	lineWidth 线段宽度。
+		 * @param x			开始绘制的 X 轴位置。
+		 * @param y			开始绘制的 Y 轴位置。
+		 * @param points	线段的点集合，格式[startx,starty,ctrx,ctry,startx,starty...]。
+		 * @param lineColor	线段颜色，或者填充绘图的渐变对象。
+		 * @param lineWidth	（可选）线段宽度。
 		 */
 		public function drawCurves(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):void {
 			var arr:Array = [x, y, points, lineColor, lineWidth];
@@ -850,13 +846,13 @@ package laya.display {
 		
 		/**
 		 * 绘制矩形。
-		 * @param	x 开始绘制的 X 轴位置。
-		 * @param	y 开始绘制的 Y 轴位置。
-		 * @param	width 矩形宽度。
-		 * @param	height 矩形高度。
-		 * @param	fillColor 填充颜色，或者填充绘图的渐变对象。
-		 * @param	lineColor 边框颜色，或者填充绘图的渐变对象。
-		 * @param	lineWidth 边框宽度。
+		 * @param x			开始绘制的 X 轴位置。
+		 * @param y			开始绘制的 Y 轴位置。
+		 * @param width		矩形宽度。
+		 * @param height	矩形高度。
+		 * @param fillColor	填充颜色，或者填充绘图的渐变对象。
+		 * @param lineColor	（可选）边框颜色，或者填充绘图的渐变对象。
+		 * @param lineWidth	（可选）边框宽度。
 		 */
 		public function drawRect(x:Number, y:Number, width:Number, height:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? lineWidth / 2 : 0;
@@ -867,12 +863,12 @@ package laya.display {
 		
 		/**
 		 * 绘制圆形。
-		 * @param	x 圆点X 轴位置。
-		 * @param	y 圆点Y 轴位置。
-		 * @param	radius 半径。
-		 * @param	fillColor 填充颜色，或者填充绘图的渐变对象。
-		 * @param	lineColor 边框颜色，或者填充绘图的渐变对象。
-		 * @param	lineWidth 边框宽度。
+		 * @param x			圆点X 轴位置。
+		 * @param y			圆点Y 轴位置。
+		 * @param radius	半径。
+		 * @param fillColor	填充颜色，或者填充绘图的渐变对象。
+		 * @param lineColor	（可选）边框颜色，或者填充绘图的渐变对象。
+		 * @param lineWidth	（可选）边框宽度。
 		 */
 		public function drawCircle(x:Number, y:Number, radius:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? lineWidth / 2 : 0;
@@ -889,14 +885,14 @@ package laya.display {
 		
 		/**
 		 * 绘制扇形。
-		 * @param	x 开始绘制的 X 轴位置。
-		 * @param	y 开始绘制的 Y 轴位置。
-		 * @param	radius 扇形半径。
-		 * @param	startAngle 开始角度。
-		 * @param	endAngle 结束角度。
-		 * @param	fillColor 填充颜色，或者填充绘图的渐变对象。
-		 * @param	lineColor 边框颜色，或者填充绘图的渐变对象。
-		 * @param	lineWidth 边框宽度。
+		 * @param x				开始绘制的 X 轴位置。
+		 * @param y				开始绘制的 Y 轴位置。
+		 * @param radius		扇形半径。
+		 * @param startAngle	开始角度。
+		 * @param endAngle		结束角度。
+		 * @param fillColor		填充颜色，或者填充绘图的渐变对象。
+		 * @param lineColor		（可选）边框颜色，或者填充绘图的渐变对象。
+		 * @param lineWidth		（可选）边框宽度。
 		 */
 		public function drawPie(x:Number, y:Number, radius:Number, startAngle:Number, endAngle:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var offset:Number = lineColor ? lineWidth / 2 : 0;
@@ -931,12 +927,12 @@ package laya.display {
 		
 		/**
 		 * 绘制多边形。
-		 * @param	x 开始绘制的 X 轴位置。
-		 * @param	y 开始绘制的 Y 轴位置。
-		 * @param	points 多边形的点集合。
-		 * @param	fillColor 填充颜色，或者填充绘图的渐变对象。
-		 * @param	lineColor 边框颜色，或者填充绘图的渐变对象。
-		 * @param	lineWidth 边框宽度。
+		 * @param x			开始绘制的 X 轴位置。
+		 * @param y			开始绘制的 Y 轴位置。
+		 * @param points	多边形的点集合。
+		 * @param fillColor	填充颜色，或者填充绘图的渐变对象。
+		 * @param lineColor	（可选）边框颜色，或者填充绘图的渐变对象。
+		 * @param lineWidth	（可选）边框宽度。
 		 */
 		public function drawPoly(x:Number, y:Number, points:Array, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var tId:uint = 0;
@@ -977,11 +973,11 @@ package laya.display {
 		
 		/**
 		 * 绘制路径。
-		 * @param	x 开始绘制的 X 轴位置。
-		 * @param	y 开始绘制的 Y 轴位置。
-		 * @param	paths 路径集合，路径支持以下格式：[["moveTo",x,y],["lineTo",x,y,x,y,x,y],["arcTo",x1,y1,x2,y2,r],["closePath"]]。
-		 * @param	brush 刷子定义，支持以下设置{fillStyle}。
-		 * @param	pen 画笔定义，支持以下设置{strokeStyle,lineWidth,lineJoin,lineCap,miterLimit}。
+		 * @param x		开始绘制的 X 轴位置。
+		 * @param y		开始绘制的 Y 轴位置。
+		 * @param paths	路径集合，路径支持以下格式：[["moveTo",x,y],["lineTo",x,y,x,y,x,y],["arcTo",x1,y1,x2,y2,r],["closePath"]]。
+		 * @param brush	（可选）刷子定义，支持以下设置{fillStyle}。
+		 * @param pen	（可选）画笔定义，支持以下设置{strokeStyle,lineWidth,lineJoin,lineCap,miterLimit}。
 		 */
 		public function drawPath(x:Number, y:Number, paths:Array, brush:Object = null, pen:Object = null):void {
 			var arr:Array = [x, y, paths, brush, pen];

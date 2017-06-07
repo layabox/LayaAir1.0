@@ -14,6 +14,7 @@ package threeDimen.advancedStage {
 	import laya.d3.resource.TextureCube;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.SkyBox;
+	import laya.d3.shader.ShaderCompile3D;
 	import laya.display.Stage;
 	import laya.events.Event;
 	import laya.net.Loader;
@@ -26,6 +27,8 @@ package threeDimen.advancedStage {
 	public class D3Advance_SimpleSceneSample {
 		
 		public function D3Advance_SimpleSceneSample() {
+			ShaderCompile3D.debugMode = true;
+			//Laya3D.shaderCompileDebug = true;
 			Laya3D.init(0, 0, true);
 			Laya.stage.scaleMode = Stage.SCALE_FULL;
 			Laya.stage.screenMode = Stage.SCREEN_NONE;

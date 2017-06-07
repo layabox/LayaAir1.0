@@ -100,7 +100,7 @@ package laya.webgl.resource {
 					def.onCreate && def.onCreate(this);
 				}
 				_image.crossOrigin = (src && (src.indexOf("data:") == 0)) ? null : "";
-				(src) && (_image.src = URL.formatURL(src));
+				(src) && (_image.src = src);
 				
 			} else {
 				_src = def;
@@ -186,7 +186,7 @@ package laya.webgl.resource {
 					(!(_this._allowMerageInAtlas && _this._enableMerageInAtlas)) ? (_this._createWebGlTexture()) : (memorySize = 0, _recreateLock = false);
 					_this.completeCreate();//处理创建完成后相关操作
 				};
-				_image.src = URL.formatURL(_src);
+				_image.src = _src;
 			} else {
 				if (_recreateLock) {
 					return;

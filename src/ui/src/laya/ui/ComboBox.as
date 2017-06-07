@@ -14,8 +14,7 @@ package laya.ui {
 	/**
 	 * <code>ComboBox</code> 组件包含一个下拉列表，用户可以从该列表中选择单个值。
 	 *
-	 * @example 以下示例代码，创建了一个 <code>ComboBox</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>ComboBox</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.ComboBox;
@@ -43,8 +42,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高。
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色。
 	 * Laya.loader.load("resource/ui/button.png",laya.utils.Handler.create(this,loadComplete));//加载资源
@@ -60,8 +58,7 @@ package laya.ui {
 	 * {
 	 *     console.log("当前选中的项对象索引： ",index);
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import ComboBox = laya.ui.ComboBox;
 	 * import Handler = laya.utils.Handler;
 	 * class ComboBox_Example {
@@ -83,7 +80,6 @@ package laya.ui {
 	 *     }
 	 * }
 	 *
-	 * </listing>
 	 */
 	public class ComboBox extends Component {
 		/**@private */
@@ -100,10 +96,6 @@ package laya.ui {
 		 * @private
 		 */
 		protected var _isOpen:Boolean;
-		/**
-		 * @private
-		 */
-		protected var _scrollBar:VScrollBar;
 		/**
 		 * @private
 		 */
@@ -145,6 +137,10 @@ package laya.ui {
 		 */
 		protected var _scrollBarSkin:String;
 		/**
+		 * @private
+		 */
+		protected var _isCustomList:Boolean;
+		/**
 		 * 渲染项，用来显示下拉列表展示对象
 		 */
 		public var itemRender:* = null;
@@ -164,10 +160,8 @@ package laya.ui {
 			super.destroy(destroyChild);
 			_button && _button.destroy(destroyChild);
 			_list && _list.destroy(destroyChild);
-			_scrollBar && _scrollBar.destroy(destroyChild);
 			_button = null;
 			_list = null;
-			_scrollBar = null;
 			_itemColors = null;
 			_labels = null;
 			_selectHandler = null;
@@ -183,17 +177,15 @@ package laya.ui {
 		
 		private function _createList():void {
 			_list = new List();
+			if (_scrollBarSkin) _list.vScrollBarSkin = _scrollBarSkin;
+			_setListEvent(_list);
+		}
+		
+		private function _setListEvent(list:List):void {
 			_list.selectEnable = true;
 			_list.on(Event.MOUSE_DOWN, this, onListDown);
 			_list.mouseHandler = Handler.create(this, onlistItemMouse, null, false);
-			
-			if (_scrollBarSkin) {
-				_list.addChild(_scrollBar = new VScrollBar());
-				_scrollBar.skin = _scrollBarSkin;
-				_scrollBar.name = "scrollBar";
-				_scrollBar.y = 1;
-				_scrollBar.on(Event.MOUSE_DOWN, this, onScrollBarDown);
-			}
+			if (_list.scrollBar) _list.scrollBar.on(Event.MOUSE_DOWN, this, onScrollBarDown);
 		}
 		
 		/**
@@ -245,7 +237,6 @@ package laya.ui {
 			_itemHeight = _itemSize + 6;
 			_list.itemRender = itemRender || {type: "Box", child: [{type: "Label", props: {name: "label", x: 1, padding: "3,3,3,3", width: labelWidth, height: _itemHeight, fontSize: _itemSize, color: labelColor}}]};
 			_list.repeatY = _visibleNum;
-			if (_scrollBar) _scrollBar.x = width - _scrollBar.width - 1;
 			_list.refresh();
 		}
 		
@@ -256,6 +247,7 @@ package laya.ui {
 		protected function onlistItemMouse(e:Event, index:int):void {
 			var type:String = e.type;
 			if (type === Event.MOUSE_OVER || type === Event.MOUSE_OUT) {
+				if (_isCustomList) return;
 				var box:Box = _list.getCell(index);
 				if (!box) return;
 				var label:Label = box.getChildByName("label") as Label;
@@ -321,27 +313,29 @@ package laya.ui {
 		 */
 		protected function changeItem():void {
 			_itemChanged = false;
-			//赋值之前需要先初始化列表
-			runCallLater(changeList);
 			//显示边框
 			_listHeight = _labels.length > 0 ? Math.min(_visibleNum, _labels.length) * _itemHeight : _itemHeight;
-			if (_scrollBar) _scrollBar.height = _listHeight - 2;
-			//填充背景
-			var g:Graphics = _list.graphics;
-			g.clear();
-			g.drawRect(0, 0, width - 1, _listHeight, _itemColors[4], _itemColors[3]);
+			if (!_isCustomList) {
+				//填充背景
+				var g:Graphics = _list.graphics;
+				g.clear();
+				g.drawRect(0, 0, width - 1, _listHeight, _itemColors[4], _itemColors[3]);
+			}
+			
 			//填充数据			
 			var a:Array = _list.array || [];
 			a.length = 0;
 			for (var i:int = 0, n:int = _labels.length; i < n; i++) {
 				a.push({label: _labels[i]});
 			}
+			_list.height = _listHeight;
 			_list.array = a;
-			if (_visibleNum > a.length) {
-				_list.height = _listHeight;
-			} else {
-				_list.height = 0;
-			}
+		
+			//if (_visibleNum > a.length) {
+			//_list.height = _listHeight;
+			//} else {
+			//_list.height = 0;
+			//}
 		}
 		
 		/**
@@ -439,10 +433,10 @@ package laya.ui {
 				_button.selected = _isOpen;
 				if (_isOpen) {
 					_list || _createList();
-					_listChanged && changeList();
+					_listChanged && !_isCustomList && changeList();
 					_itemChanged && changeItem();
 					
-					var p:Point = localToGlobal(Point.TEMP.setTo(0,0));
+					var p:Point = localToGlobal(Point.TEMP.setTo(0, 0));
 					var py:Number = p.y + _button.height;
 					py = py + _listHeight <= Laya.stage.height ? py : p.y - _listHeight;
 					
@@ -493,7 +487,7 @@ package laya.ui {
 		 * 获取对 <code>ComboBox</code> 组件所包含的 <code>VScrollBar</code> 滚动条组件的引用。
 		 */
 		public function get scrollBar():VScrollBar {
-			return _scrollBar;
+			return list.scrollBar as VScrollBar;
 		}
 		
 		/**
@@ -509,6 +503,16 @@ package laya.ui {
 		public function get list():List {
 			_list || _createList();
 			return _list;
+		}
+		
+		public function set list(value:List):void {
+			if (value) {
+				value.removeSelf();
+				_isCustomList = true;
+				_list = value;
+				_setListEvent(value);
+				_itemHeight = value.getCell(0).height + value.spaceY;
+			}
 		}
 		
 		/**@inheritDoc */

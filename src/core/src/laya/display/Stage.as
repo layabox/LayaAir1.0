@@ -18,7 +18,7 @@ package laya.display {
 	 */
 	[Event(name = "resize", type = "laya.events.Event")]
 	/**
-	 * 舞台获得焦点时调度。比如浏览器或者当前标签被切换到后台后，重新切换回来时。
+	 * 舞台获得焦点时调度。比如浏览器或者当前标签处于后台，重新切换回来时进行调度。
 	 * @eventType Event.FOCUS
 	 */
 	[Event(name = "focus", type = "laya.events.Event")]
@@ -45,8 +45,8 @@ package laya.display {
 	
 	/**
 	 * <p> <code>Stage</code> 是舞台类，显示列表的根节点，所有显示对象都在舞台上显示。通过 Laya.stage 单例访问。</p>
-	 * Stage提供几种适配模式，不同的适配模式会产生不同的画布大小，画布越大，渲染压力越大，所以要选择合适的适配方案。
-	 * Stage提供不同的帧率模式，帧率越高，渲染压力越大，越费电，合理使用帧率甚至动态更改帧率有利于改进手机耗电。
+	 * <p>Stage提供几种适配模式，不同的适配模式会产生不同的画布大小，画布越大，渲染压力越大，所以要选择合适的适配方案。<p>
+	 * <p>Stage提供不同的帧率模式，帧率越高，渲染压力越大，越费电，合理使用帧率甚至动态更改帧率有利于改进手机耗电。<p>
 	 */
 	public class Stage extends Sprite {
 		/**应用保持设计宽高不变，不缩放不变型，stage的宽高等于设计宽高。*/
@@ -109,8 +109,10 @@ package laya.display {
 		public var canvasRotation:Boolean = false;
 		/**画布的旋转角度。*/
 		public var canvasDegree:int = 0;
-		/**设置是否渲染，设置为false，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟
-		 * 比如非激活状态，可以设置renderingEnabled=true以节省消耗。*/
+		/**
+		 * <p>设置是否渲染，设置为false，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟。<p>
+		 * <p>比如非激活状态，可以设置renderingEnabled=true以节省消耗。<p>
+		 * */
 		public var renderingEnabled:Boolean = true;
 		/**是否启用屏幕适配，可以适配后，在某个时候关闭屏幕适配，防止某些操作导致的屏幕以外改变*/
 		public var screenAdaptationEnabled:Boolean = true;
@@ -291,7 +293,7 @@ package laya.display {
 			var canvas:HTMLCanvas = Render._mainCanvas;
 			var canvasStyle:* = canvas.source.style;
 			//canvas.size(1, 1);
-			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "";
+			//canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "";
 			//visible = false;
 			Laya.timer.once(100, this, this._changeCanvasSize);
 			//_changeCanvasSize();
@@ -442,7 +444,7 @@ package laya.display {
 		}
 		
 		/**
-		 * <p>缩放模式。</p>
+		 * <p>缩放模式。默认值为 "noscale"。</p>
 		 * <p><ul>取值范围：
 		 * <li>"noscale" ：不缩放；</li>
 		 * <li>"exactfit" ：全屏不等比缩放；</li>
@@ -451,8 +453,8 @@ package laya.display {
 		 * <li>"full" ：不缩放，stage的宽高等于屏幕宽高；</li>
 		 * <li>"fixedwidth" ：宽度不变，高度根据屏幕比缩放；</li>
 		 * <li>"fixedheight" ：高度不变，宽度根据屏幕比缩放；</li>
+		 * <li>"fixedauto" ：根据宽高比，自动选择使用fixedwidth或fixedheight；</li>
 		 * </ul></p>
-		 * 默认值为 "noscale"。
 		 */
 		public function get scaleMode():String {
 			return _scaleMode;
@@ -464,13 +466,12 @@ package laya.display {
 		}
 		
 		/**
-		 * 水平对齐方式。
+		 * <p>水平对齐方式。默认值为"left"。</p>
 		 * <p><ul>取值范围：
 		 * <li>"left" ：居左对齐；</li>
 		 * <li>"center" ：居中对齐；</li>
 		 * <li>"right" ：居右对齐；</li>
 		 * </ul></p>
-		 * 默认值为"left"。
 		 */
 		public function get alignH():String {
 			return _alignH;
@@ -482,13 +483,12 @@ package laya.display {
 		}
 		
 		/**
-		 * 垂直对齐方式。
+		 * <p>垂直对齐方式。默认值为"top"。</p>
 		 * <p><ul>取值范围：
 		 * <li>"top" ：居顶部对齐；</li>
 		 * <li>"middle" ：居中对齐；</li>
 		 * <li>"bottom" ：居底部对齐；</li>
 		 * </ul></p>
-		 * 默认值为"top"。
 		 */
 		public function get alignV():String {
 			return _alignV;
@@ -551,7 +551,7 @@ package laya.display {
 		}
 		
 		/**
-		 * 场景布局类型。
+		 * <p>场景布局类型。</p>
 		 * <p><ul>取值范围：
 		 * <li>"none" ：不更改屏幕</li>
 		 * <li>"horizontal" ：自动横屏</li>
@@ -586,8 +586,10 @@ package laya.display {
 			_mouseMoveTime = Browser.now();
 		}
 		
-		/**获得距当前帧开始后，过了多少时间，单位为毫秒
-		 * 可以用来判断函数内时间消耗，通过合理控制每帧函数处理消耗时长，避免一帧做事情太多，对复杂计算分帧处理，能有效降低帧率波动。*/
+		/**
+		 * <p>获得距当前帧开始后，过了多少时间，单位为毫秒。</p>
+		 * <p>可以用来判断函数内时间消耗，通过合理控制每帧函数处理消耗时长，避免一帧做事情太多，对复杂计算分帧处理，能有效降低帧率波动。</p>
+		 */
 		public function getTimeFromFrameStart():Number {
 			return Browser.now() - _frameStartTime;
 		}
@@ -674,8 +676,10 @@ package laya.display {
 			}
 		}
 		
-		/**是否开启全屏，用户点击后进入全屏。
-		 * 兼容性提示：部分浏览器不允许点击进入全屏，比如Iphone等*/
+		/**
+		 * <p>是否开启全屏，用户点击后进入全屏。</p>
+		 * <p>兼容性提示：部分浏览器不允许点击进入全屏，比如Iphone等。</p>
+		 */
 		public function set fullScreenEnabled(value:Boolean):void {
 			var document:* = Browser.document;
 			var canvas:* = Render.canvas;

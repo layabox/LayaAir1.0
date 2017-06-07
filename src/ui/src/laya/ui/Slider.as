@@ -1,6 +1,7 @@
 package laya.ui {
 	import laya.events.Event;
 	import laya.maths.Point;
+	import laya.net.Loader;
 	import laya.utils.Handler;
 	
 	/**
@@ -62,6 +63,8 @@ package laya.ui {
 		/**@private */
 		protected var _bg:Image;
 		/**@private */
+		protected var _progress:Image;
+		/**@private */
 		protected var _bar:Button;
 		/**@private */
 		protected var _tx:Number;
@@ -87,8 +90,10 @@ package laya.ui {
 			super.destroy(destroyChild);
 			_bg && _bg.destroy(destroyChild);
 			_bar && _bar.destroy(destroyChild);
+			_progress && _progress.destroy(destroyChild);
 			_bg = null;
 			_bar = null;
+			_progress = null;
 			changeHandler = null;
 		}
 		
@@ -102,6 +107,7 @@ package laya.ui {
 		override protected function initialize():void {
 			_bar.on(Event.MOUSE_DOWN, this, onBarMouseDown);
 			_bg.sizeGrid = _bar.sizeGrid = "4,4,4,4,0";
+			if (_progress) _progress.sizeGrid = _bar.sizeGrid;
 			allowClickBack = true;
 		}
 		
@@ -169,11 +175,13 @@ package laya.ui {
 				if (_bar.y > _maxMove) _bar.y = _maxMove;
 				else if (_bar.y < 0) _bar.y = 0;
 				_value = _bar.y / _maxMove * (_max - _min) + _min;
+				if(_progress) _progress.height = _bar.y+0.5*_bar.height;
 			} else {
 				_bar.x += (Laya.stage.mouseX - _tx) / _globalSacle.x;
 				if (_bar.x > _maxMove) _bar.x = _maxMove;
 				else if (_bar.x < 0) _bar.x = 0;
 				_value = _bar.x / _maxMove * (_max - _min) + _min;
+				if(_progress) _progress.width = _bar.x+0.5*_bar.width;
 			}
 			
 			_tx = Laya.stage.mouseX;
@@ -207,7 +215,19 @@ package laya.ui {
 				_skin = value;
 				_bg.skin = _skin;
 				_bar.skin = _skin.replace(".png", "$bar.png");
+				var progressSkin:String = _skin.replace(".png", "$progress.png");
+				if (Loader.getRes(progressSkin))
+				{
+					if (!_progress)
+					{
+						addChild(_progress = new Image());
+						_progress.sizeGrid = _bar.sizeGrid;
+						setChildIndex(_progress, 1);
+					}
+					_progress.skin = progressSkin;
+				} 
 				setBarPoint();
+				callLater(changeValue);
 			}
 		}
 		
@@ -293,8 +313,17 @@ package laya.ui {
 			_value = _value > _max ? _max : _value < _min ? _min : _value;
 			var num:Number = _max - _min;
 			if (num === 0) num = 1;
-			if (isVertical) _bar.y = (_value - _min) / num * (height - _bar.height);
-			else _bar.x = (_value - _min) / num * (width - _bar.width);
+			if (isVertical)
+			{
+				_bar.y = (_value - _min) / num * (height - _bar.height);
+				if(_progress) _progress.height = _bar.y+0.5*_bar.height;
+			} 
+			else
+			{
+				_bar.x = (_value - _min) / num * (width - _bar.width);
+				if(_progress) _progress.width = _bar.x+0.5*_bar.width;
+			}
+			
 		}
 		
 		/**

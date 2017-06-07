@@ -205,6 +205,6 @@ package laya.events {
 		/** 与 Tab 的键控代码值 (9) 关联的常数。*/
 		public static const TAB:int = 9;
 		/** 与 Insert 的键控代码值 (45) 关联的常数。*/
-		public static const INSERT:int = 45;	
+		public static const INSERT:int = 45;
 	}
 }

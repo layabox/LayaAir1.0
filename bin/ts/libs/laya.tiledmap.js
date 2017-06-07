@@ -61,6 +61,8 @@
 			this._resPath=null;
 			this._pathArray=null;
 			this._limitRange=false;
+			this.autoCache=true;
+			this.autoCacheType="bitmap";
 			this._rect=new Rectangle();
 			this._paddingRect=new Rectangle();
 			this._mapRect=new GRect();
@@ -239,7 +241,7 @@
 					tTileTexSet=new TileTexSet();
 					tTileTexSet.offX=tTileSet.titleoffsetX;
 					tTileTexSet.offY=tTileSet.titleoffsetY-(tTileTextureH-this._mapTileH);
-					tTileTexSet.texture=Texture.create(tTexture,tTileSet.margin+(tTileTextureW+tTileSet.spacing)*j,tTileSet.margin+(tTileTextureH+tTileSet.spacing)*i,tTileTextureW,tTileTextureH);
+					tTileTexSet.texture=Texture.createFromTexture(tTexture,tTileSet.margin+(tTileTextureW+tTileSet.spacing)*j,tTileSet.margin+(tTileTextureH+tTileSet.spacing)*i,tTileTextureW,tTileTextureH);
 					this._tileTexSetArr.push(tTileTexSet);
 					tTileTexSet.gid=this._tileTexSetArr.length;
 				}
@@ -282,8 +284,8 @@
 			if (this._gridWidth < this._mapTileW){
 				this._gridWidth=this._mapTileW;
 			}
-			if (this._gridWidth < this._mapTileH){
-				this._gridWidth=this._mapTileH;
+			if (this._gridHeight < this._mapTileH){
+				this._gridHeight=this._mapTileH;
 			}
 			this._gridW=Math.ceil(this._width / this._gridWidth);
 			this._gridH=Math.ceil(this._height / this._gridHeight);
@@ -724,7 +726,8 @@
 					}
 					if (!tGridSprite.isHaveAnimation){
 						tGridSprite.autoSize=true;
-						tGridSprite.cacheAs="bitmap";
+						if(this.autoCache)
+							tGridSprite.cacheAs=this.autoCacheType;
 						tGridSprite.autoSize=false;
 					}
 					if (tGridSprite.drawImageNum > 0){
@@ -1209,7 +1212,7 @@
 
 		__proto.drawTexture=function(sprite,tileTextSet){
 			sprite.graphics.clear();
-			sprite.graphics.drawTexture(tileTextSet.texture,tileTextSet.offX,tileTextSet.offY,tileTextSet.texture.width,tileTextSet.texture.height);
+			sprite.graphics.drawTexture(tileTextSet.texture,tileTextSet.offX,tileTextSet.offY);
 		}
 
 		/**
@@ -1405,6 +1408,7 @@
 			this._mapHeightHalf=0;
 			this._gridSpriteArray=[];
 			this._objDic=null;
+			this._dataDic=null;
 			this._properties=null;
 			this.layerName=null;
 			MapLayer.__super.call(this);
@@ -1440,12 +1444,14 @@
 					var tArray=layerData.objects;
 					if (tArray.length > 0){
 						this._objDic={};
+						this._dataDic={};
 					};
 					var tObjectData;
 					var tObjWidth=NaN;
 					var tObjHeight=NaN;
 					for (var i=0;i < tArray.length;i++){
 						tObjectData=tArray[i];
+						this._dataDic[tObjectData.name]=tObjectData;
 						if (tObjectData.visible==true){
 							tObjWidth=tObjectData.width;
 							tObjHeight=tObjectData.height;
@@ -1494,6 +1500,18 @@
 		__proto.getObjectByName=function(objName){
 			if (this._objDic){
 				return this._objDic[objName];
+			}
+			return null;
+		}
+
+		/**
+		*通过名字获取数据，如果找不到返回为null
+		*@param objName 所要获取对象的名字
+		*@return
+		*/
+		__proto.getObjectDataByName=function(objName){
+			if (this._dataDic){
+				return this._dataDic[objName];
 			}
 			return null;
 		}
@@ -1722,7 +1740,7 @@
 								gridSprite.addChild(tAnimationSprite);
 								gridSprite.isHaveAnimation=true;
 								}else {
-								gridSprite.graphics.drawTexture(tTileTexSet.texture,tX+tTileTexSet.offX,tY+tTileTexSet.offY,tTexture.width,tTexture.height);
+								gridSprite.graphics.drawTexture(tTileTexSet.texture,tX+tTileTexSet.offX,tY+tTileTexSet.offY);
 							}
 							return true;
 						}
@@ -1750,6 +1768,12 @@
 					delete this._objDic[p];
 				}
 				this._objDic=null;
+			}
+			if (this._dataDic){
+				for (var p in this._dataDic){
+					delete this._dataDic[p];
+				}
+				this._dataDic=null;
 			};
 			var tGridSprite;
 			for (i=0;i < this._gridSpriteArray.length;i++){

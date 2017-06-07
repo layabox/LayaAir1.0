@@ -7,7 +7,6 @@ package laya.ani.bone.canvasmesh {
 	/**
 	 * @private
 	 * 简化mesh绘制，多顶点mesh改为四顶点mesh，只绘制矩形不绘制三角形
-	 * @author ww
 	 */
 	public class SimpleSkinMeshCanvas extends SkinMeshCanvas {
 		

@@ -4,6 +4,7 @@ package laya.media.h5audio {
 	import laya.media.SoundChannel;
 	import laya.media.SoundManager;
 	import laya.net.URL;
+	import laya.renders.Render;
 	import laya.utils.Browser;
 	import laya.utils.Pool;
 	
@@ -45,6 +46,7 @@ package laya.media.h5audio {
 		 *
 		 */
 		public function load(url:String):void {
+			url = URL.formatURL(url);
 			this.url = url;
 			var ad:Audio = _audioCache[url];
 			if (ad && ad.readyState >= 2) {
@@ -53,7 +55,7 @@ package laya.media.h5audio {
 			}
 			if (!ad) {
 				ad = Browser.createElement("audio") as Audio;
-				ad.src = URL.formatURL(url);
+				ad.src = url;
 				_audioCache[url] = ad;
 			}
 			
@@ -101,7 +103,15 @@ package laya.media.h5audio {
 			if (!ad) return null;
 			var tAd:Audio;
 			tAd = Pool.getItem("audio:" + url);
-			tAd = tAd ? tAd : ad.cloneNode(true);
+			if ( Render.isConchApp ){
+				if ( !tAd ){
+					tAd = Browser.createElement("audio") as Audio;
+					tAd.src = ad.src;
+				}
+			}
+			else{
+				tAd = tAd ? tAd : ad.cloneNode(true);
+			}
 			var channel:AudioSoundChannel = new AudioSoundChannel(tAd);
 			channel.url = this.url;
 			channel.loops = loops;

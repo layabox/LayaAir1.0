@@ -68,19 +68,10 @@ package laya.d3.core.particleShuriKen {
 		public static const RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE:int = 12;
 		
 		public static var SHADERDEFINE_DIFFUSEMAP:int;
+		public static var SHADERDEFINE_TINTCOLOR:int;
 		
-		public static const THREEDSTARTROTATION:int = 1;
-		public static const SCALINGMODE:int = 2;
-		public static const CURRENTTIME:int = 3;
-		public static const GRAVITY:int = 4;
-		public static const DIFFUSETEXTURE:int = 5;
-		public static const STRETCHEDBILLBOARDLENGTHSCALE:int = 6;
-		public static const STRETCHEDBILLBOARDSPEEDSCALE:int = 7;
-		public static const SIMULATIONSPACE:int = 8;
-		public static const TINTCOLOR:int = 9;
-		
-		/** @private */
-		private static var _tempGravity:Vector3 = new Vector3();
+		public static const DIFFUSETEXTURE:int = 1;
+		public static const TINTCOLOR:int = 2;
 		
 		/** @private */
 		private static const _diffuseTextureIndex:int = 0;
@@ -286,6 +277,11 @@ package laya.d3.core.particleShuriKen {
 		 * @param value 颜色。
 		 */
 		public function set tintColor(value:Vector4):void {
+			if (value)
+				_addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TINTCOLOR);
+			else
+				_removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TINTCOLOR);
+			
 			_setColor(TINTCOLOR, value);
 		}
 		
@@ -313,7 +309,6 @@ package laya.d3.core.particleShuriKen {
 		public function ShurikenParticleMaterial() {
 			super();
 			setShaderName("PARTICLESHURIKEN");
-			_setColor(TINTCOLOR, new Vector4(0.5, 0.5, 0.5, 0.5));
 			renderMode = RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
 		}
 		
@@ -326,36 +321,6 @@ package laya.d3.core.particleShuriKen {
 			(diffuseTexture) && (material.diffuseTexture = Loader.getRes(textureMap[diffuseTexture]));
 			var tintColorValue:Array = customProps.tintColor;
 			(tintColorValue) && (material.tintColor = new Vector4(tintColorValue[0], tintColorValue[1], tintColorValue[2], tintColorValue[3]));
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function _setMaterialShaderParams(state:RenderState):void {
-			var particle:ShuriKenParticle3D = state.owner as ShuriKenParticle3D;
-			var particleSystem:ShurikenParticleSystem = particle.particleSystem;
-			var particleRender:ShurikenParticleRender = particle.particleRender;
-			var transform:Transform3D = particle.transform;
-			
-			var finalGravityE:Float32Array = _tempGravity.elements;
-			var gravityE:Float32Array = particleSystem.gravity.elements;
-			var gravityModifier:Number = particleSystem.gravityModifier;
-			finalGravityE[0] = gravityE[0] * gravityModifier;
-			finalGravityE[1] = gravityE[1] * gravityModifier;
-			finalGravityE[2] = gravityE[2] * gravityModifier;
-			
-			_setBuffer(GRAVITY, finalGravityE);
-			
-			_setInt(SIMULATIONSPACE, particleSystem.simulationSpace);
-			
-			_setBool(THREEDSTARTROTATION, particleSystem.threeDStartRotation);
-			_setInt(SCALINGMODE, particleSystem.scaleMode);
-			
-			_setInt(STRETCHEDBILLBOARDLENGTHSCALE, particleRender.stretchedBillboardLengthScale);
-			_setInt(STRETCHEDBILLBOARDSPEEDSCALE, particleRender.stretchedBillboardSpeedScale);
-			
-			//设置粒子的时间参数，可通过此参数停止粒子动画
-			_setNumber(CURRENTTIME, particleSystem.currentTime);
 		}
 		
 		/**

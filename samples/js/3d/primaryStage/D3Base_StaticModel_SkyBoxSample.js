@@ -4,7 +4,6 @@ Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
 Laya.Stat.show();
 
 var scene = Laya.stage.addChild(new Laya.Scene());
-scene.shadingMode = Laya.BaseScene.VERTEX_SHADING;
 
 var camera = scene.addChild(new Laya.Camera(0, 0.1, 100));
 camera.transform.translate(new Laya.Vector3(0, 0.8, 1.5));

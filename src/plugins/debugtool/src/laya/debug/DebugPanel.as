@@ -81,12 +81,29 @@ package laya.debug {
 		public static var tObjKeys:Array = [];
 		public var tShowObj:Object;
 		public var preValueO:Object = {};
+		public static var noDisplayKeys:Object = { "desginWidth":true, "desginHeight":true };
 		
+		private function removeNoDisplayKeys(arr:Array):void
+		{
+			var i:int;
+			for (i = arr.length - 1; i >= 0; i--)
+			{
+				if (noDisplayKeys[arr[i]])
+				{
+					arr.splice(i, 1);
+				}
+			}
+		}
 		public function updateShowKeys():void {
 			tObjKeys.length = 0;
 			if (!tShowObj)
 				return;
 			tObjKeys = ClassTool.getObjectDisplayAbleKeys(tShowObj, tObjKeys);
+			if (tShowObj == Laya.stage)
+			{
+				removeNoDisplayKeys(tObjKeys);
+			}
+			
 			tObjKeys.sort(MathUtil.sortSmallFirst);
 		}
 		

@@ -1,5 +1,6 @@
 package {
 	import laya.ani.AnimationTemplet;
+	import laya.d3.animation.AnimationClip;
 	import laya.d3.core.Layer;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.PhasorSpriter3D;
@@ -9,6 +10,7 @@ package {
 	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.OctreeNode;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.resource.DataTexture2D;
 	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.TextureCube;
@@ -33,7 +35,7 @@ package {
 	 */
 	public class Laya3D {
 		/**@private 层级文件资源标记。*/
-		private static const SPRITE3DHIERARCHY:String = "SPRITE3DHIERARCHY";
+		private static const HIERARCHY:String = "SPRITE3DHIERARCHY";
 		/**@private 网格的原始资源标记。*/
 		private static const MESH:String = "MESH";
 		/**@private 材质的原始资源标记。*/
@@ -61,7 +63,7 @@ package {
 		/**@private */
 		private static const _innerMeshLoaderManager:LoaderManager = new LoaderManager();
 		/**@private */
-		private static const _innerSprite3DHierarchyLoaderManager:LoaderManager = new LoaderManager();
+		private static const _innerHierarchyLoaderManager:LoaderManager = new LoaderManager();
 		/**@private */
 		public static var _debugPhasorSprite:PhasorSpriter3D;
 		
@@ -92,7 +94,8 @@ package {
 			//ClassUtils.regClass("Material", BaseMaterial);
 			
 			var createMap:Object = LoaderManager.createMap;
-			createMap["lh"] = [Sprite3D, Laya3D.SPRITE3DHIERARCHY];
+			createMap["lh"] = [Sprite3D, Laya3D.HIERARCHY];
+			createMap["ls"] = [Scene, Laya3D.HIERARCHY];
 			createMap["lm"] = [Mesh, Laya3D.MESH];
 			createMap["lmat"] = [StandardMaterial, Laya3D.MATERIAL];
 			createMap["lpbr"] = [PBRMaterial, Laya3D.MATERIAL];
@@ -105,12 +108,11 @@ package {
 			createMap["raw"] = [DataTexture2D, Loader.BUFFER];
 			createMap["mipmaps"] = [DataTexture2D, Loader.BUFFER];
 			createMap["thdata"] = [TerrainHeightData, Loader.BUFFER];
-			//createMap["lt"] = [TerrainRes, Loader.JSON];
 			createMap["lt"] = [TerrainRes, Laya3D.TERRAIN];
+			createMap["lani"] = [AnimationClip, Loader.BUFFER];
 			createMap["ani"] = [AnimationTemplet, Loader.BUFFER];//兼容接口
-			createMap["lani"] = [AnimationTemplet, Loader.BUFFER];//兼容接口
 			
-			Loader.parserMap[Laya3D.SPRITE3DHIERARCHY] = _loadSprite3DHierarchy;
+			Loader.parserMap[Laya3D.HIERARCHY] = _loadHierarchy;
 			Loader.parserMap[Laya3D.MESH] = _loadMesh;
 			Loader.parserMap[Laya3D.MATERIAL] = _loadMaterial;
 			Loader.parserMap[Laya3D.TEXTURECUBE] = _loadTextureCube;
@@ -181,11 +183,14 @@ package {
 				(meshPath) && (_addHierarchyInnerUrls(urls, urlMap, urlVersion, hierarchyBasePath, meshPath, Mesh));
 				break;
 			case "ShuriKenParticle3D": 
-				var materialPath:String = node.customProps.materialPath;
+				var customProps:Object = node.customProps;
+				var parMeshPath:String = customProps.meshPath;
+				(parMeshPath) && (_addHierarchyInnerUrls(urls, urlMap, urlVersion, hierarchyBasePath, parMeshPath, Mesh));
+				var materialPath:String = customProps.materialPath;
 				if (materialPath)
 					_addHierarchyInnerUrls(urls, urlMap, urlVersion, hierarchyBasePath, materialPath, ShurikenParticleMaterial);
-				else
-					_addHierarchyInnerUrls(urls, urlMap, urlVersion, hierarchyBasePath, node.customProps.texturePath, Texture2D);
+				else//兼容代码
+					_addHierarchyInnerUrls(urls, urlMap, urlVersion, hierarchyBasePath, customProps.texturePath, Texture2D);
 				break;
 			case "Terrain": 
 				_addHierarchyInnerUrls(urls, urlMap, urlVersion, hierarchyBasePath, node.instanceParams.loadPath, TerrainRes);
@@ -199,16 +204,16 @@ package {
 		/**
 		 *@private
 		 */
-		private static function _loadSprite3DHierarchy(loader:Loader):void {
+		private static function _loadHierarchy(loader:Loader):void {
 			var lmLoader:Loader = new Loader();
-			lmLoader.on(Event.COMPLETE, null, _onSprite3DHierarchylhLoaded, [loader]);
+			lmLoader.on(Event.COMPLETE, null, _onHierarchylhLoaded, [loader]);
 			lmLoader.load(loader.url, Loader.TEXT, false, null, true);
 		}
 		
 		/**
 		 *@private
 		 */
-		private static function _onSprite3DHierarchylhLoaded(loader:Loader, lhData:String):void {
+		private static function _onHierarchylhLoaded(loader:Loader, lhData:String):void {
 			var url:String = loader.url;
 			var urlVersion:String = Utils3D.getURLVerion(url);
 			var hierarchyBasePath:String = URL.getPath(URL.formatURL(url));
@@ -223,16 +228,16 @@ package {
 			_onProcessChange(loader, 0, lhWeight, 1.0);
 			if (urlCount > 0) {
 				var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, lhWeight, urlCount / totalProcessCount], false);
-				_innerSprite3DHierarchyLoaderManager.create(urls, Handler.create(null, _onSprite3DMeshsLoaded, [loader, processHandler, lhData, urlMap]), processHandler);
+				_innerHierarchyLoaderManager.create(urls, Handler.create(null, _onInnerHierarchyResourcesLoaded, [loader, processHandler, lhData, urlMap]), processHandler);
 			} else {
-				_onSprite3DMeshsLoaded(loader, null, lhData, null);
+				_onInnerHierarchyResourcesLoaded(loader, null, lhData, null);
 			}
 		}
 		
 		/**
 		 *@private
 		 */
-		private static function _onSprite3DMeshsLoaded(loader:Loader, processHandler:Handler, lhData:Object, urlMap:Object):void {
+		private static function _onInnerHierarchyResourcesLoaded(loader:Loader, processHandler:Handler, lhData:Object, urlMap:Object):void {
 			loader.endLoad([lhData, urlMap]);
 			(processHandler) && (processHandler.recover());
 		}
@@ -599,7 +604,7 @@ package {
 			_innerTextureCubeLoaderManager.maxLoader = 1;
 			_innerMaterialLoaderManager.maxLoader = 1;
 			_innerMeshLoaderManager.maxLoader = 1;
-			_innerSprite3DHierarchyLoaderManager.maxLoader = 1;
+			_innerHierarchyLoaderManager.maxLoader = 1;
 			Laya.init(width, height);
 			Layer.__init__();
 			ShaderCompile3D.__init__();

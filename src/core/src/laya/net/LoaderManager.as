@@ -129,6 +129,7 @@ package laya.net {
 						if (complete) complete.run();
 					}
 					if (cache) {
+						
 						cacheRes(url, item);
 						item.url = url;
 					}

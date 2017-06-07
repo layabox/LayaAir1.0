@@ -1,0 +1,171 @@
+{
+"isPerformanceMode":true,
+"duration":0.3,
+    "looping":true,
+    "prewarm":false,"prewarmTip":"暂不支持。",
+
+    "startDelayType":0,
+    "startDelay":0.0,
+    "startDelayMin":2.0,
+    "startDelayMax":5.0,
+
+    "startLifetimeType":2,
+    "startLifetimeConstant":0.8,  
+    "startLifetimeGradient":{ "startLifetimes":[{"key":0.0,"value":1.0},{"key":0.3,"value":0.0}]},
+    "startLifetimeConstantMin":0.6, 
+    "startLifetimeConstantMax":0.8,
+    "startLifetimeGradientMin":{ "startLifetimes":[{"key":0.0,"value":0.2},{"key":0.3,"value":0.0}]},
+    "startLifetimeGradientMax":{ "startLifetimes":[{"key":0.0,"value":1.0},{"key":0.3,"value":0.0}]},
+
+    "startSpeedType":0,"startSpeedTypeTip":"暂不支持1、3模式",
+    "startSpeedConstant":10.0,  
+    "startSpeedConstantMin":10.0, 
+    "startSpeedConstantMax":10.0,
+
+    "threeDStartSize":false,
+    "startSizeType":0,"startSizeTypeTip":"暂不支持1、3模式",
+    "startSizeConstant":5.0,
+    "startSizeConstantSeparate":[8.0,2.0,3.0],
+    "startSizeConstantMin":5.0,
+    "startSizeConstantMax":5.0,
+    "startSizeConstantMinSeparate":[1.0,1.0,1.0],
+    "startSizeConstantMaxSeparate":[5.0,5.0,5.0],
+
+    "threeDStartRotation":false,"threeDStartRotationTip":"暂不支持",
+    "startRotationType":0,"startRotationTypeTip":"暂不支持1、3模式",
+    "startRotationConstant":0,
+	"startRotationConstantSeparate":[90.0,90.0,90.0],
+    "startRotationConstantMin":90,
+    "startRotationConstantMax":90,
+	 "startRotationConstantMinSeparate":[0.0,0.0,0.0],
+    "startRotationConstantMaxSeparate":[90.0,90.0,90.0],
+
+    "randomizeRotationDirection":0,
+
+    "startColorType":0,"startColorTypeTip":"暂不支持1、3模式",
+    "startColorConstant":[1.0,1.0,1.0,1.0],  
+    "startColorConstantMin":[1.0,1.0,1.0,1.0], 
+    "startColorConstantMax":[1.0,1.0,1.0,1.0],
+
+    "gravity":[0.0,-9.81,0.0],
+    "gravityModifier":0,
+
+    "simulationSpace":1,
+
+    "scaleMode":0,
+
+    "playOnAwake":true,
+    "maxParticles":10,
+	"autoRandomSeed":true,
+	"randomSeed":111111111,
+	
+	"emission":{"enable":true,
+	    "emissionRate":1,"emissionRateTip":"暂不支持距离模式",
+        "bursts":[{"time":0.0,"min":15,"max":15}]
+	},
+
+	"shape":{"enable":true,"shapeType":0,"shapeTypeTip":"目前支持0、1、2、3",
+	    "sphereRadius":30,
+	    "sphereEmitFromShell": true,
+	    "sphereRandomDirection":false,
+        "hemiSphereRadius":30,
+	    "hemiSphereEmitFromShell": true,
+	    "hemiSphereRandomDirection":false,
+        "coneAngle": 25.0,
+        "coneRadius": 30.0,
+        "coneLength": 5.0,
+        "coneEmitType": 0,
+        "coneRandomDirection":true,
+        "boxX": 1,
+	    "boxY": 1,
+        "boxZ": 1,
+	    "boxRandomDirection":false,
+        "circleRadius":30,
+        "circleArc":30,
+	    "circleEmitFromEdge": true,
+	    "circleRandomDirection":true
+	},
+
+    "velocityOverLifetime":{"enable":false,"space":0,"velocity":{
+        "type":0,
+        "constant":[60.0,10.0,0.0],
+        "gradientX":{ "velocitys":[{"key":0.0,"value":0.0},{"key":1.0,"value":0.0}]},
+        "gradientY":{ "velocitys":[{"key":0.0,"value":0.0},{"key":0.5,"value":100.0},{"key":1.0,"value":-100.0}]},
+        "gradientZ":{ "velocitys":[{"key":0.0,"value":0.0},{"key":1.0,"value":0.0}]},
+        "constantMin":[102.0,100.0,1.0],
+        "constantMax":[6.0,1.0,1.0],
+        "gradientXMin":{ "velocitys":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]},
+        "gradientXMax":{ "velocitys":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]},
+        "gradientYMin":{ "velocitys":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]},
+        "gradientYMax":{ "velocitys":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]},
+        "gradientZMin":{ "velocitys":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]},
+        "gradientZMax":{ "velocitys":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]}}},
+
+    "colorOverLifetime":{"enable":true,"color":{
+        "type":1,
+        "constant":[1.0,1.0,1.0,1.0],
+        "gradient":{
+            "alphas":[{"key":0.0,"value":1.0},{"key":0.294,"value":1.0},{"key":1.0,"value":0.0} ],
+            "rgbs":[{"key":0.0,"value":[1.0,1.0,1.0]},{"key":1.0,"value":[1.0,1.0,1.0]}]},
+        "constantMin":[1.0,1.0,1.0,1.0],
+        "constantMax":[1.0,1.0,1.0,1.0],
+        "gradientMin":{
+            "alphas":[{"key":0.0,"value":1.0},{"key":0.294,"value":1.0},{"key":1.0,"value":0.0} ],
+            "rgbs":[{"key":0.0,"value":[1.0,1.0,1.0]},{"key":1.0,"value":[1.0,1.0,1.0]}]},
+        "gradientMax":{
+            "alphas":[{"key":0.0,"value":1.0},{"key":0.294,"value":1.0},{"key":1.0,"value":0.0} ],
+            "rgbs":[{"key":0.0,"value":[1.0,1.0,1.0]},{"key":1.0,"value":[1.0,1.0,1.0]}]} }},
+        
+
+
+    "sizeOverLifetime":{"enable":true,"size":{
+        "type":0,
+        "separateAxes":true,
+        "gradient":{ "sizes":[{"key":0.0,"value":4.0},{"key":1.0,"value":0.0}]},
+        "gradientX":{ "sizes":[{"key":0.0,"value":4.0},{"key":1.0,"value":0.0}]},
+        "gradientY":{ "sizes":[{"key":0.0,"value":1.0},{"key":0.67,"value":1.0},{"key":1.0,"value":0.6}]},
+        "gradientZ":{ "sizes":[{"key":0.0,"value":1.0},{"key":1.0,"value":1.0}]},
+        "constantMin":1.0,
+        "constantMax":1.0,
+        "constantMinSeparate":[1.0,1.0,1.0],
+        "constantMaxSeparate":[1.0,1.0,1.0],
+        "gradientMin":{ "sizes":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]},
+        "gradientMax":{ "sizes":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]},
+        "gradientXMin":{ "sizes":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]},
+        "gradientXMax":{ "sizes":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]},
+        "gradientYMin":{ "sizes":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]},
+        "gradientYMax":{ "sizes":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]},
+        "gradientZMin":{ "sizes":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]},
+        "gradientZMax":{ "sizes":[{"key":0.0,"value":4.0},{"key":1.0,"value":1.0}]}}},
+
+    "rotationOverLifetime":{"enable":false,"angularVelocity":{
+        "type":2,
+        "separateAxes":false,"separateAxesTip":"暂不支持分轴。",
+        "constant":90.0,
+        "gradient":{ "angularVelocitys":[{"key":0.0,"value":0.0},{"key":1.0,"value":180.0}]},
+        "constantMin":0.0,
+        "constantMax":180.0,
+        "gradientMin":{ "angularVelocitys":[{"key":0.0,"value":0.0},{"key":1.0,"value":180.0}]},
+        "gradientMax":{ "angularVelocitys":[{"key":0.0,"value":6.0},{"key":1.0,"value":360.0}]}}},
+
+
+    "textureSheetAnimation":{"enable":false,"tiles":[2,2],"type":0,"randomRow":false,"frame":{
+      "type":1,
+      "constant":3,
+      "overTime":{ "frames":[{"key":0.0,"value":0},{"key":0.47,"value":1},{"key":1.0,"value":3}]},
+      "constantMin":0,
+      "constantMax":4,
+      "overTimeMin":{ "frames":[{"key":0.0,"value":0},{"key":1.0,"value":2}]},
+      "overTimeMax":{ "frames":[{"key":0.0,"value":0},{"key":1.0,"value":3}]}},
+    "startFrame":{"type":0,"constant":0,"constantMin":0,"constantMax":1},
+    "cycles":1,
+    "enableUVChannels":0,"enableUVChannelsTip":"暂时只支持UV0"},
+
+
+     "renderMode": 1,"renderModeTip":"目前不支持mesh",
+     "stretchedBillboardCameraSpeedScale":0,
+     "stretchedBillboardSpeedScale":2,
+     "stretchedBillboardLengthScale":4,
+    
+     "texturePath":"a_00.png"
+}

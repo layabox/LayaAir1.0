@@ -29,11 +29,9 @@ package laya.d3.graphics {
 		public static const STARTCOLOR0:int = 19;
 		public static const STARTSIZE:int = 20;
 		public static const AGEADDSCALE0:int = 21;
-		public static const STARTROTATION0:int = 22;
-		public static const STARTROTATION1:int = 23;
-		public static const STARTROTATION2:int = 24;
-		public static const ENDCOLOR0:int = 25;
-		public static const STARTLIFETIME:int = 26;
+		public static const STARTROTATION:int = 22;
+		public static const ENDCOLOR0:int = 23;
+		public static const STARTLIFETIME:int = 24;
 		public static const TIME0:int = 33;
 		
 		

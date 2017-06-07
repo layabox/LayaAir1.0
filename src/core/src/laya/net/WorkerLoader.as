@@ -203,7 +203,6 @@ package laya.net
 				_preLoadFun.call(_this, url);
 				return;
 			}
-			url = URL.formatURL(url);
 			function clear():void {
 				WorkerLoader.I.off(url, _this, onload);
 			}

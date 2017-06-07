@@ -182,13 +182,15 @@ package laya.ui {
 		/**
 		 * 根据组关闭所有弹出框
 		 * @param	group 需要关闭的组名称
+		 * @return	需要关闭的对话框数组
 		 */
-		public function closeByGround(group:String):Array {
+		public function closeByGroup(group:String):Array {
 			var arr:Array = [];
 			for (var i:int = numChildren - 1; i > -1; i--) {
 				var item:Dialog = getChildAt(i) as Dialog;
 				if (item.group === group) {
 					item.close();
+					arr.push(item);
 				}
 			}
 			return arr;

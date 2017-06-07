@@ -8,7 +8,7 @@ var Vector3 = Laya.Vector3;
 var Vector4 = Laya.Vector4;
 var Sprite3D = Laya.Sprite3D;
 
-var scene = Laya.stage.addChild(new Laya.VRScene());
+var scene = Laya.stage.addChild(new Laya.Scene());
 var camera = scene.addChild(new Laya.VRCamera( 0.03,0, 0, 0.1, 100));
 camera.transform.translate(new Vector3(0.3, 0.3, 0.6));
 camera.transform.rotate(new Vector3(-12, 0, 0), true, false);

@@ -30,12 +30,11 @@ module AttchPointSample {
             pointLight.ambientColor = new Vector3(0.2, 0.2, 0.0);
             pointLight.specularColor = new Vector3(2.0, 2.0, 2.0);
             pointLight.diffuseColor = new Vector3(1, 1, 1);
-            scene.shadingMode = Laya.BaseScene.PIXEL_SHADING;
 
             this.skinMesh = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/dude/dude-him.lm"))) as Laya.MeshSprite3D;
             this.skinMesh.transform.localRotationEuler = this.rotation;
             this.skinAni = this.skinMesh.addComponent(Laya.SkinAnimations) as Laya.SkinAnimations;
-            this.skinAni.templet = Laya.AnimationTemplet.load("../../res/threeDimen/skinModel/dude/dude.ani");
+            this.skinAni.templet = Laya.AnimationTemplet.load("../../res/threeDimen/skinModel/dude/dude-Take 001.lsani");
             this.skinAni.player.play();
 
             this.attacthPoint = this.skinMesh.addComponent(Laya.AttachPoint) as Laya.AttachPoint;

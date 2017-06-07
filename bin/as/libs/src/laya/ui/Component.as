@@ -207,13 +207,11 @@ package laya.ui {
 		/**
 		 * <p>数据赋值，通过对UI赋值来控制UI显示逻辑。</p>
 		 * <p>简单赋值会更改组件的默认属性，使用大括号可以指定组件的任意属性进行赋值。</p>
-		 * @example 以下示例中， <code>label1、checkbox1</code> 分别为示例的name属性值。
-		   <listing version="3.0">
+		 * @example
 		   //默认属性赋值
 		   dataSource = {label1: "改变了label", checkbox1: true};//(更改了label1的text属性值，更改checkbox1的selected属性)。
 		   //任意属性赋值
 		   dataSource = {label2: {text:"改变了label",size:14}, checkbox2: {selected:true,x:10}};
-		   </listing>
 		 */
 		public function get dataSource():* {
 			return _dataSource;
@@ -245,9 +243,11 @@ package laya.ui {
 		}
 		
 		public function set top(value:Number):void {
-			getLayout().top = value;
-			_setLayoutEnabled(true);
-			resetLayoutY();
+			if (value != _layout.top) {
+				getLayout().top = value;
+				_setLayoutEnabled(true);
+				resetLayoutY();
+			}
 		}
 		
 		/**
@@ -258,9 +258,11 @@ package laya.ui {
 		}
 		
 		public function set bottom(value:Number):void {
-			getLayout().bottom = value;
-			_setLayoutEnabled(true);
-			resetLayoutY();
+			if (value != _layout.bottom) {
+				getLayout().bottom = value;
+				_setLayoutEnabled(true);
+				resetLayoutY();
+			}
 		}
 		
 		/**
@@ -271,9 +273,11 @@ package laya.ui {
 		}
 		
 		public function set left(value:Number):void {
-			getLayout().left = value;
-			_setLayoutEnabled(true);
-			resetLayoutX();
+			if (value != _layout.left) {
+				getLayout().left = value;
+				_setLayoutEnabled(true);
+				resetLayoutX();
+			}
 		}
 		
 		/**
@@ -284,9 +288,11 @@ package laya.ui {
 		}
 		
 		public function set right(value:Number):void {
-			getLayout().right = value;
-			_setLayoutEnabled(true);
-			resetLayoutX();
+			if (value != _layout.right) {
+				getLayout().right = value;
+				_setLayoutEnabled(true);
+				resetLayoutX();
+			}
 		}
 		
 		/**
@@ -297,9 +303,11 @@ package laya.ui {
 		}
 		
 		public function set centerX(value:Number):void {
-			getLayout().centerX = value;
-			_setLayoutEnabled(true);
-			resetLayoutX();
+			if (value != _layout.centerX) {
+				getLayout().centerX = value;
+				_setLayoutEnabled(true);
+				resetLayoutX();
+			}
 		}
 		
 		/**
@@ -310,9 +318,11 @@ package laya.ui {
 		}
 		
 		public function set centerY(value:Number):void {
-			getLayout().centerY = value;
-			_setLayoutEnabled(true);
-			resetLayoutY();
+			if (value != _layout.centerY) {
+				getLayout().centerY = value;
+				_setLayoutEnabled(true);
+				resetLayoutY();
+			}
 		}
 		
 		/**X轴锚点，值为0-1*/
@@ -321,9 +331,11 @@ package laya.ui {
 		}
 		
 		public function set anchorX(value:Number):void {
-			getLayout().anchorX = value;
-			_setLayoutEnabled(true);
-			resetLayoutX();
+			if (value != _layout.anchorX) {
+				getLayout().anchorX = value;
+				_setLayoutEnabled(true);
+				resetLayoutX();
+			}
 		}
 		
 		/**Y轴锚点，值为0-1*/
@@ -332,9 +344,11 @@ package laya.ui {
 		}
 		
 		public function set anchorY(value:Number):void {
-			getLayout().anchorY = value;
-			_setLayoutEnabled(true);
-			resetLayoutY();
+			if (value != _layout.anchorY) {
+				getLayout().anchorY = value;
+				_setLayoutEnabled(true);
+				resetLayoutY();
+			}
 		}
 		
 		/**
@@ -355,8 +369,7 @@ package laya.ui {
 		 * <p>如果值为true,则此对象可以使用布局样式，否则不使用布局样式。</p>
 		 * @param value 一个 Boolean 值，指定对象是否可使用布局。
 		 */
-		private function _setLayoutEnabled(value:Boolean):void
-		{
+		private function _setLayoutEnabled(value:Boolean):void {
 			if (_layout && _layout.enable != value) {
 				_layout.enable = value;
 				on(Event.ADDED, this, onAdded);
@@ -442,26 +455,24 @@ package laya.ui {
 		/**
 		 * <p>鼠标悬停提示。</p>
 		 * <p>可以赋值为文本 <code>String</code> 或函数 <code>Handler</code> ，用来实现自定义样式的鼠标提示和参数携带等。</p>
-		 * @example 以下例子展示了三种鼠标提示：
-		   <listing version="3.0">
-		   private var _testTips:TestTipsUI = new TestTipsUI();
-		   private function testTips():void {
-		   //简单鼠标提示
-		   btn2.toolTip = "这里是鼠标提示&lt;b&gt;粗体&lt;/b&gt;&lt;br&gt;换行";
-		   //自定义的鼠标提示
-		   btn1.toolTip = showTips1;
-		   //带参数的自定义鼠标提示
-		   clip.toolTip = new Handler(this,showTips2, ["clip"]);
-		   }
-		   private function showTips1():void {
-		   _testTips.label.text = "这里是按钮[" + btn1.label + "]";
-		   tip.addChild(_testTips);
-		   }
-		   private function showTips2(name:String):void {
-		   _testTips.label.text = "这里是" + name;
-		   tip.addChild(_testTips);
-		   }
-		   </listing>
+		 * @example
+		 * private var _testTips:TestTipsUI = new TestTipsUI();
+		 * private function testTips():void {
+		  //简单鼠标提示
+		 * btn2.toolTip = "这里是鼠标提示&lt;b&gt;粗体&lt;/b&gt;&lt;br&gt;换行";
+		  //自定义的鼠标提示
+		 * btn1.toolTip = showTips1;
+		  //带参数的自定义鼠标提示
+		 * clip.toolTip = new Handler(this,showTips2, ["clip"]);
+		 * }
+		 * private function showTips1():void {
+		 * _testTips.label.text = "这里是按钮[" + btn1.label + "]";
+		 * tip.addChild(_testTips);
+		 * }
+		 * private function showTips2(name:String):void {
+		 * _testTips.label.text = "这里是" + name;
+		 * tip.addChild(_testTips);
+		 * }
 		 */
 		public function get toolTip():* {
 			return _toolTip;

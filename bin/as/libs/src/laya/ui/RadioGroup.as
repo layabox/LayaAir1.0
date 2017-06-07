@@ -6,8 +6,7 @@ package laya.ui {
 	 * <code>RadioGroup</code> 控件定义一组 <code>Radio</code> 控件，这些控件相互排斥；
 	 * 因此，用户每次只能选择一个 <code>Radio</code> 控件。
 	 *
-	 * @example 以下示例代码，创建了一个 <code>RadioGroup</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>RadioGroup</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.Radio;
@@ -37,8 +36,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高、渲染模式
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * Laya.loader.load(["resource/ui/radio.png"], laya.utils.Handler.create(this, onLoadComplete));
@@ -54,8 +52,7 @@ package laya.ui {
 	 * function onSelect(index) {
 	 *     console.log("当前选择的单选按钮索引: index= ", index);
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import Radio = laya.ui.Radio;
 	 * import RadioGroup = laya.ui.RadioGroup;
 	 * import Handler = laya.utils.Handler;
@@ -78,7 +75,6 @@ package laya.ui {
 	 *         console.log("当前选择的单选按钮索引: index= ", index);
 	 *     }
 	 * }
-	 * </listing>
 	 */
 	public class RadioGroup extends UIGroup {
 		/**@inheritDoc */

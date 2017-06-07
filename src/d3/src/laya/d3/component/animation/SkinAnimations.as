@@ -2,6 +2,7 @@ package laya.d3.component.animation {
 	import laya.ani.AnimationContent;
 	import laya.ani.AnimationState;
 	import laya.ani.AnimationTemplet;
+	import laya.d3.animation.AnimationClip;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.StandardMaterial;

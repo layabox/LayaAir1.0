@@ -3,14 +3,11 @@ class StaticModel_MeshTerrainSample {
     private back: Laya.Vector3 = new Laya.Vector3(0, 0, 0.01);
     private left: Laya.Vector3 = new Laya.Vector3(-0.01, 0, 0);
     private right: Laya.Vector3 = new Laya.Vector3(0.01, 0, 0);
-    private skinMesh: Laya.MeshSprite3D;
-    private skinAni: Laya.SkinAnimations;
     private scene: Laya.Scene;
     private terrain: Laya.Mesh;
     private terrainSprite: Laya.MeshTerrainSprite3D;
     private sphere: Laya.Mesh;
     private sphereSprite: Laya.MeshSprite3D;
-    private pathFingding: Laya.PathFind;
 
     constructor() {
 
@@ -31,10 +28,6 @@ class StaticModel_MeshTerrainSample {
         this.terrainSprite.transform.position = new Laya.Vector3(0, 2.6, 1.5);
         this.terrainSprite.transform.rotationEuler = new Laya.Vector3(0, 0.3, 0.4);
         this.setMeshParams(this.terrainSprite, Laya.StandardMaterial.RENDERMODE_OPAQUE, new Laya.Vector4(3.5,3.5,3.5,1.0), new Laya.Vector3(0.6823, 0.6549, 0.6352), new Laya.Vector2(25.0, 25.0), "TERRAIN");
-
-        this.pathFingding = this.terrainSprite.addComponent(Laya.PathFind) as Laya.PathFind;
-        this.pathFingding.setting = { allowDiagonal: true, dontCrossCorners: false, heuristic: PathFinding.core.Heuristic.manhattan, weight: 1 };
-        this.pathFingding.grid = new PathFinding.core.Grid(64, 36);
 
         this.sphere = Laya.Mesh.load("../../res/threeDimen/staticModel/sphere/sphere-Sphere001.lm");
         this.sphereSprite = this.scene.addChild(new Laya.MeshSprite3D(this.sphere)) as Laya.MeshSprite3D;
@@ -59,9 +52,6 @@ class StaticModel_MeshTerrainSample {
         position.elements[1] = height + 0.05;//0.05为球半径
         position.elements[2] = position.z;
         this.sphereSprite.transform.position = position;
-
-        var array = this.pathFingding.findPath(0, 0, position.x, position.z);
-        // console.log("start:", 0, 0, " end:", position.x, position.z, "path:", array.toString());
     }
 
 

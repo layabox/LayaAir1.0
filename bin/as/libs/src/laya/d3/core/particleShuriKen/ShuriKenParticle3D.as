@@ -33,82 +33,90 @@ package laya.d3.core.particleShuriKen {
 	 * <code>ShuriKenParticle3D</code> 3D粒子。
 	 */
 	public class ShuriKenParticle3D extends RenderableSprite3D {
-		public static var SHADERDEFINE_SPHERHBILLBOARD:int = 0x2;
-		public static var SHADERDEFINE_STRETCHEDBILLBOARD:int = 0x4;
-		public static var SHADERDEFINE_HORIZONTALBILLBOARD:int = 0x8;
-		public static var SHADERDEFINE_VERTICALBILLBOARD:int = 0x10;
-		public static var SHADERDEFINE_RANDOMCOLOROVERLIFETIME:int = 0x20;
-		public static var SHADERDEFINE_COLOROVERLIFETIME:int = 0x40;
-		public static var SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT:int = 0x80;
-		public static var SHADERDEFINE_VELOCITYOVERLIFETIMECURVE:int = 0x100;
-		public static var SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT:int = 0x200;
-		public static var SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE:int = 0x400;
-		public static var SHADERDEFINE_TEXTURESHEETANIMATIONCURVE:int = 0x800;
-		public static var SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE:int = 0x1000;
-		public static var SHADERDEFINE_ROTATIONOVERLIFETIME:int = 0x2000;
-		public static var SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE:int = 0x4000;
-		public static var SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT:int = 0x8000;
-		public static var SHADERDEFINE_ROTATIONOVERLIFETIMECURVE:int = 0x10000;
-		public static var SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS:int = 0x20000;
-		public static var SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES:int = 0x40000;
-		public static var SHADERDEFINE_SIZEOVERLIFETIMECURVE:int = 0x80000;
-		public static var SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE:int = 0x100000;
-		public static var SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES:int = 0x200000;
-		public static var SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE:int = 0x400000;
+		public static var SHADERDEFINE_RENDERMODE_BILLBOARD:int;
+		public static var SHADERDEFINE_RENDERMODE_STRETCHEDBILLBOARD:int;
+		public static var SHADERDEFINE_RENDERMODE_HORIZONTALBILLBOARD:int;
+		public static var SHADERDEFINE_RENDERMODE_VERTICALBILLBOARD:int;
+		public static var SHADERDEFINE_RENDERMODE_MESH:int;
+		public static var SHADERDEFINE_RANDOMCOLOROVERLIFETIME:int;
+		public static var SHADERDEFINE_COLOROVERLIFETIME:int;
+		public static var SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT:int;
+		public static var SHADERDEFINE_VELOCITYOVERLIFETIMECURVE:int;
+		public static var SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT:int;
+		public static var SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE:int;
+		public static var SHADERDEFINE_TEXTURESHEETANIMATIONCURVE:int;
+		public static var SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE:int;
+		public static var SHADERDEFINE_ROTATIONOVERLIFETIME:int;
+		public static var SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE:int;
+		public static var SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT:int;
+		public static var SHADERDEFINE_ROTATIONOVERLIFETIMECURVE:int;
+		public static var SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS:int;
+		public static var SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES:int;
+		public static var SHADERDEFINE_SIZEOVERLIFETIMECURVE:int;
+		public static var SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE:int;
+		public static var SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES:int;
+		public static var SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE:int;
 		
 		public static const WORLDPOSITION:int = 0;
 		public static const WORLDROTATIONMATRIX:int = 1;
 		public static const POSITIONSCALE:int = 4;//TODO:是否可以从2开始
 		public static const SIZESCALE:int = 5;
+		public static const SCALINGMODE:int = 6;
+		public static const GRAVITY:int = 7;
+		public static const THREEDSTARTROTATION:int = 8;
+		public static const STRETCHEDBILLBOARDLENGTHSCALE:int = 9;
+		public static const STRETCHEDBILLBOARDSPEEDSCALE:int = 10;
+		public static const SIMULATIONSPACE:int = 11;
+		public static const CURRENTTIME:int = 12;
 		
 		//VelocityOverLifetime
-		public static const VOLVELOCITYCONST:int = 6;
-		public static const VOLVELOCITYGRADIENTX:int = 7;
-		public static const VOLVELOCITYGRADIENTY:int = 8;
-		public static const VOLVELOCITYGRADIENTZ:int = 9;
-		public static const VOLVELOCITYCONSTMAX:int = 10;
-		public static const VOLVELOCITYGRADIENTXMAX:int = 11;
-		public static const VOLVELOCITYGRADIENTYMAX:int = 12;
-		public static const VOLVELOCITYGRADIENTZMAX:int = 13;
-		public static const VOLSPACETYPE:int = 14;
+		public static const VOLVELOCITYCONST:int = 13;
+		public static const VOLVELOCITYGRADIENTX:int = 14;
+		public static const VOLVELOCITYGRADIENTY:int = 15;
+		public static const VOLVELOCITYGRADIENTZ:int = 16;
+		public static const VOLVELOCITYCONSTMAX:int = 17;
+		public static const VOLVELOCITYGRADIENTXMAX:int = 18;
+		public static const VOLVELOCITYGRADIENTYMAX:int = 19;
+		public static const VOLVELOCITYGRADIENTZMAX:int = 20;
+		public static const VOLSPACETYPE:int = 21;
 		
 		//ColorOverLifetime
-		public static const COLOROVERLIFEGRADIENTALPHAS:int = 15;
-		public static const COLOROVERLIFEGRADIENTCOLORS:int = 16;
-		public static const MAXCOLOROVERLIFEGRADIENTALPHAS:int = 17;
-		public static const MAXCOLOROVERLIFEGRADIENTCOLORS:int = 18;
+		public static const COLOROVERLIFEGRADIENTALPHAS:int = 22;
+		public static const COLOROVERLIFEGRADIENTCOLORS:int = 23;
+		public static const MAXCOLOROVERLIFEGRADIENTALPHAS:int = 24;
+		public static const MAXCOLOROVERLIFEGRADIENTCOLORS:int = 25;
 		
 		//SizeOverLifetime
-		public static const SOLSIZEGRADIENT:int = 19;
-		public static const SOLSIZEGRADIENTX:int = 20;
-		public static const SOLSIZEGRADIENTY:int = 21;
-		public static const SOLSizeGradientZ:int = 22;
-		public static const SOLSizeGradientMax:int = 23;
-		public static const SOLSIZEGRADIENTXMAX:int = 24;
-		public static const SOLSIZEGRADIENTYMAX:int = 25;
-		public static const SOLSizeGradientZMAX:int = 26;
+		public static const SOLSIZEGRADIENT:int = 26;
+		public static const SOLSIZEGRADIENTX:int = 27;
+		public static const SOLSIZEGRADIENTY:int = 28;
+		public static const SOLSizeGradientZ:int = 29;
+		public static const SOLSizeGradientMax:int = 30;
+		public static const SOLSIZEGRADIENTXMAX:int = 31;
+		public static const SOLSIZEGRADIENTYMAX:int = 32;
+		public static const SOLSizeGradientZMAX:int = 33;
 		
 		//RotationOverLifetime
-		public static const ROLANGULARVELOCITYCONST:int = 27;
-		public static const ROLANGULARVELOCITYCONSTSEPRARATE:int = 28;
-		public static const ROLANGULARVELOCITYGRADIENT:int = 29;
-		public static const ROLANGULARVELOCITYGRADIENTX:int = 30;
-		public static const ROLANGULARVELOCITYGRADIENTY:int = 31;
-		public static const ROLANGULARVELOCITYGRADIENTZ:int = 32;
-		public static const ROLANGULARVELOCITYCONSTMAX:int = 33;
-		public static const ROLANGULARVELOCITYCONSTMAXSEPRARATE:int = 34;
-		public static const ROLANGULARVELOCITYGRADIENTMAX:int = 35;
-		public static const ROLANGULARVELOCITYGRADIENTXMAX:int = 36;
-		public static const ROLANGULARVELOCITYGRADIENTYMAX:int = 37;
-		public static const ROLANGULARVELOCITYGRADIENTZMAX:int = 38;
+		public static const ROLANGULARVELOCITYCONST:int = 34;
+		public static const ROLANGULARVELOCITYCONSTSEPRARATE:int = 35;
+		public static const ROLANGULARVELOCITYGRADIENT:int = 36;
+		public static const ROLANGULARVELOCITYGRADIENTX:int = 37;
+		public static const ROLANGULARVELOCITYGRADIENTY:int = 38;
+		public static const ROLANGULARVELOCITYGRADIENTZ:int = 39;
+		public static const ROLANGULARVELOCITYGRADIENTW:int = 40;
+		public static const ROLANGULARVELOCITYCONSTMAX:int = 41;
+		public static const ROLANGULARVELOCITYCONSTMAXSEPRARATE:int = 42;
+		public static const ROLANGULARVELOCITYGRADIENTMAX:int = 43;
+		public static const ROLANGULARVELOCITYGRADIENTXMAX:int = 44;
+		public static const ROLANGULARVELOCITYGRADIENTYMAX:int = 45;
+		public static const ROLANGULARVELOCITYGRADIENTZMAX:int = 46;
+		public static const ROLANGULARVELOCITYGRADIENTWMAX:int = 47;
 		
 		//TextureSheetAnimation
-		public static const TEXTURESHEETANIMATIONCYCLES:int = 39;
-		public static const TEXTURESHEETANIMATIONSUBUVLENGTH:int = 40;
-		public static const TEXTURESHEETANIMATIONGRADIENTUVS:int = 41;
-		public static const TEXTURESHEETANIMATIONGRADIENTMAXUVS:int = 42;
-		
-		
+		public static const TEXTURESHEETANIMATIONCYCLES:int = 48;
+		public static const TEXTURESHEETANIMATIONSUBUVLENGTH:int = 49;
+		public static const TEXTURESHEETANIMATIONGRADIENTUVS:int = 50;
+		public static const TEXTURESHEETANIMATIONGRADIENTMAXUVS:int = 51;
 		
 		/**
 		 * 获取粒子系统。
@@ -176,8 +184,6 @@ package laya.d3.core.particleShuriKen {
 		override protected function _addSelfRenderObjects():void {
 			scene.addFrustumCullingObject(_render);
 		}
-		
-		
 		
 		/**
 		 * @private

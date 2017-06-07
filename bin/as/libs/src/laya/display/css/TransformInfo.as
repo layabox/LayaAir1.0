@@ -3,7 +3,7 @@ package laya.display.css {
 	/**
 	 * @private
 	 */
-	public class TransformInfo {		
+	public class TransformInfo {
 		public var translateX:Number = 0;
 		public var translateY:Number = 0;
 		public var scaleX:Number = 1;

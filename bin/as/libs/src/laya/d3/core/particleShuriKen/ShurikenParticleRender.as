@@ -11,11 +11,16 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
+	import laya.d3.resource.models.Mesh;
+	import laya.d3.utils.Physics;
 	
 	/**
 	 * <code>ShurikenParticleRender</code> 类用于创建3D粒子渲染器。
 	 */
 	public class ShurikenParticleRender extends BaseRender {
+		/** @private */
+		private var _finalGravity:Vector3 = new Vector3();
+		
 		/** @private */
 		private var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
 		
@@ -33,12 +38,14 @@ package laya.d3.core.particleShuriKen {
 		
 		/**@private */
 		private var _renderMode:int;
+		/**@private */
+		private var _mesh:Mesh;
 		
-		/**拉伸广告牌模式摄像机速度缩放,暂不支持*/
+		/**拉伸广告牌模式摄像机速度缩放,暂不支持。*/
 		public var stretchedBillboardCameraSpeedScale:Number;
-		/**拉伸广告牌模式速度缩放*/
+		/**拉伸广告牌模式速度缩放。*/
 		public var stretchedBillboardSpeedScale:Number;
-		/**拉伸广告牌模式长度缩放*/
+		/**拉伸广告牌模式长度缩放。*/
 		public var stretchedBillboardLengthScale:Number;
 		
 		///**排序模式。*/
@@ -53,42 +60,68 @@ package laya.d3.core.particleShuriKen {
 		}
 		
 		/**
-		 * 设置渲染模式。
+		 * 获取网格渲染模式所使用的Mesh,rendderMode为4时生效。
+		 * @return 网格模式所使用Mesh。
+		 */
+		public function get mesh():Mesh {
+			return _mesh
+		}
+		
+		/**
+		 * 设置网格渲染模式所使用的Mesh,rendderMode为4时生效。
+		 * @param value 网格模式所使用Mesh。
+		 */
+		public function set mesh(value:Mesh):void {
+			if (_mesh !== value) {
+				_mesh = value;
+				(_owner as ShuriKenParticle3D).particleSystem._initBufferDatas();
+			}
+		}
+		
+		/**
+		 * 设置渲染模式,0为BILLBOARD、1为STRETCHEDBILLBOARD、2为HORIZONTALBILLBOARD、3为VERTICALBILLBOARD、4为MESH。
 		 * @param value 渲染模式。
 		 */
 		public function set renderMode(value:int):void {
 			if (_renderMode !== value) {
 				switch (_renderMode) {
 				case 0: 
-					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
+					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_BILLBOARD);
 					break;
 				case 1: 
-					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD);
+					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_STRETCHEDBILLBOARD);
 					break;
 				case 2: 
-					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD);
+					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_HORIZONTALBILLBOARD);
 					break;
 				case 3: 
-					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD);
+					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_VERTICALBILLBOARD);
+					break;
+				case 4: 
+					_removeShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_MESH);
 					break;
 				}
 				_renderMode = value;
 				switch (value) {
 				case 0: 
-					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
+					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_BILLBOARD);
 					break;
 				case 1: 
-					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD);
+					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_STRETCHEDBILLBOARD);
 					break;
 				case 2: 
-					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD);
+					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_HORIZONTALBILLBOARD);
 					break;
 				case 3: 
-					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD);
+					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_VERTICALBILLBOARD);
+					break;
+				case 4: 
+					_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_MESH);
 					break;
 				default: 
 					throw new Error("ShurikenParticleRender: unknown renderMode Value.");
 				}
+				(_owner as ShuriKenParticle3D).particleSystem._initBufferDatas();
 			}
 		}
 		
@@ -98,8 +131,7 @@ package laya.d3.core.particleShuriKen {
 		public function ShurikenParticleRender(owner:ShuriKenParticle3D) {
 			super(owner);
 			_defaultBoundBox = new BoundBox(new Vector3(), new Vector3());
-			_renderMode = 0;
-			_addShaderDefine(ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD);
+			_renderMode = -1;
 			stretchedBillboardCameraSpeedScale = 0.0;
 			stretchedBillboardSpeedScale = 0.0;
 			stretchedBillboardLengthScale = 1.0;
@@ -175,6 +207,20 @@ package laya.d3.core.particleShuriKen {
 				_setShaderValueColor(ShuriKenParticle3D.SIZESCALE, Vector3.ONE);
 				break;
 			}
+			
+			var finalGravityE:Float32Array = _finalGravity.elements;
+			var gravityE:Float32Array = Physics.gravity.elements;
+			var gravityModifier:Number = particleSystem.gravityModifier;
+			finalGravityE[0] = gravityE[0] * gravityModifier;
+			finalGravityE[1] = gravityE[1] * gravityModifier;
+			finalGravityE[2] = gravityE[2] * gravityModifier;
+			_setShaderValueBuffer(ShuriKenParticle3D.GRAVITY, finalGravityE);
+			_setShaderValueInt(ShuriKenParticle3D.SIMULATIONSPACE, particleSystem.simulationSpace);
+			_setShaderValueBool(ShuriKenParticle3D.THREEDSTARTROTATION, particleSystem.threeDStartRotation);
+			_setShaderValueInt(ShuriKenParticle3D.SCALINGMODE, particleSystem.scaleMode);
+			_setShaderValueInt(ShuriKenParticle3D.STRETCHEDBILLBOARDLENGTHSCALE, stretchedBillboardLengthScale);
+			_setShaderValueInt(ShuriKenParticle3D.STRETCHEDBILLBOARDSPEEDSCALE, stretchedBillboardSpeedScale);
+			_setShaderValueNumber(ShuriKenParticle3D.CURRENTTIME, particleSystem.currentTime);
 			
 			if (Laya3D.debugMode)
 				_renderRenderableBoundBox();

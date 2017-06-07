@@ -60,15 +60,7 @@ package laya.webgl {
 		public static var frameShaderHighPrecision:Boolean;
 		
 		private static var _bg_null:Array =/*[STATIC SAFE]*/ [0, 0, 0, 0];
-		private static var _isExperimentalWebgl:Boolean = false;
-		
-		private static function _arrayBufferSlice():ArrayBuffer {
-			var _this:* = __JS__("this");
-			var sz:int = _this.length;
-			var dec:ArrayBuffer = new ArrayBuffer(_this.length);
-			for (var i:int = 0; i < sz; i++) dec[i] = _this[i];
-			return dec;
-		}
+		private static var _isExperimentalWebgl:Boolean = false;		
 		
 		private static function _uint8ArraySlice():Uint8Array {
 			var _this:* = __JS__("this");
@@ -249,6 +241,8 @@ package laya.webgl {
 			}
 			
 			RunDriver.drawToCanvas = function(sprite:Sprite, _renderType:int, canvasWidth:Number, canvasHeight:Number, offsetX:Number, offsetY:Number):* {
+				offsetX -= sprite.x;
+				offsetY -= sprite.y;
 				var renderTarget:RenderTarget2D = new RenderTarget2D(canvasWidth, canvasHeight, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, 0, false);
 				renderTarget.start();
 				Render.context.clear();
@@ -526,7 +520,6 @@ package laya.webgl {
 			Float32Array.prototype.slice || (Float32Array.prototype.slice = _float32ArraySlice);
 			Uint16Array.prototype.slice || (Uint16Array.prototype.slice = _uint16ArraySlice);
 			Uint8Array.prototype.slice || (Uint8Array.prototype.slice = _uint8ArraySlice);
-			ArrayBuffer.prototype.slice || (ArrayBuffer.prototype.slice = _arrayBufferSlice);
 			return true;
 		}
 		

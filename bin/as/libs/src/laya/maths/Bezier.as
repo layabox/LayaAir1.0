@@ -11,9 +11,10 @@ package laya.maths {
 		 */
 		public static var I:Bezier = new Bezier();
 		/** @private */
-		private var _controlPoints:Array = [new Point(), new Point(), new Point()];		
+		private var _controlPoints:Array = [new Point(), new Point(), new Point()];
 		/** @private */
 		private var _calFun:Function = getPoint2;
+		
 		/** @private */
 		private function _switchPoint(x:Number, y:Number):void {
 			var tPoint:Point = _controlPoints.shift();
@@ -53,6 +54,7 @@ package laya.maths {
 			var lineY:Number = Math.pow((1 - t), 3) * p1.y + 3 * p2.y * t * (1 - t) * (1 - t) + 3 * p3.y * t * t * (1 - t) + p4.y * Math.pow(t, 3);
 			rst.push(lineX, lineY);
 		}
+		
 		/**
 		 * 计算贝塞尔点序列
 		 * @param count
@@ -93,8 +95,7 @@ package laya.maths {
 			default: 
 				return [];
 			}
-			while(_controlPoints.length<=count)
-			{
+			while (_controlPoints.length <= count) {
 				_controlPoints.push(new Point());
 			}
 			for (i = 0; i < count * 2; i += 2) {

@@ -197,7 +197,7 @@ package laya.renders {
 				if (mask.numChildren > 0 || !mask.graphics._isOnlyOne()) {
 					mask.cacheAsBitmap = true;
 				}
-				mask.render(context, x, y);
+				mask.render(context, x-sprite.pivotX, y-sprite.pivotY);
 			}
 			context.ctx.globalCompositeOperation = "source-over";
 		}

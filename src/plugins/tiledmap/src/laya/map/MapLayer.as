@@ -23,9 +23,11 @@ package laya.map {
 		
 		private var _gridSpriteArray:Array = [];
 		private var _objDic:Object = null;//用来做字典，方便查询
+		private var _dataDic:Object = null;
 		
 		private var _tempMapPos:Point = new Point();//临时变量
 		private var _properties:*;
+		
 		/**当前Layer的名称*/
 		public var layerName:String = null;
 		
@@ -63,13 +65,15 @@ package laya.map {
 				var tObjectGid:int = 0;
 				var tArray:Array = layerData.objects;
 				if (tArray.length > 0) {
-					_objDic = {};
+					_objDic = { };
+					_dataDic = { };
 				}
 				var tObjectData:*;
 				var tObjWidth:Number;
 				var tObjHeight:Number;
 				for (var i:int = 0; i < tArray.length; i++) {
 					tObjectData = tArray[i];
+					_dataDic[tObjectData.name] = tObjectData;
 					//这里要看具体需求，看是不是要开放
 					if (tObjectData.visible == true) {
 						tObjWidth = tObjectData.width;
@@ -120,6 +124,19 @@ package laya.map {
 		public function getObjectByName(objName:String):GridSprite {
 			if (_objDic) {
 				return _objDic[objName];
+			}
+			return null;
+		}
+		
+		
+		/**
+		 * 通过名字获取数据，如果找不到返回为null
+		 * @param	objName 所要获取对象的名字
+		 * @return
+		 */
+		public function getObjectDataByName(objName:String):GridSprite {
+			if (_dataDic) {
+				return _dataDic[objName];
 			}
 			return null;
 		}
@@ -356,7 +373,8 @@ package laya.map {
 								gridSprite.addChild(tAnimationSprite);
 								gridSprite.isHaveAnimation = true;
 							} else {
-								gridSprite.graphics.drawTexture(tTileTexSet.texture, tX + tTileTexSet.offX, tY + tTileTexSet.offY, tTexture.width, tTexture.height);
+								//gridSprite.graphics.drawTexture(tTileTexSet.texture, tX + tTileTexSet.offX, tY + tTileTexSet.offY, tTexture.width, tTexture.height);
+								gridSprite.graphics.drawTexture(tTileTexSet.texture, tX + tTileTexSet.offX, tY + tTileTexSet.offY);
 							}
 							return true;
 						}
@@ -384,6 +402,12 @@ package laya.map {
 					delete _objDic[p];
 				}
 				_objDic = null;
+			}
+			if (_dataDic) {
+				for (var p:* in _dataDic) {
+					delete _dataDic[p];
+				}
+				_dataDic = null;
 			}
 			var tGridSprite:GridSprite;
 			for (i = 0; i < _gridSpriteArray.length; i++) {

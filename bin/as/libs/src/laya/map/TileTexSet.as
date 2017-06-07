@@ -99,7 +99,8 @@ package laya.map {
 		
 		private function drawTexture(sprite:TileAniSprite, tileTextSet:TileTexSet):void {
 			sprite.graphics.clear();
-			sprite.graphics.drawTexture(tileTextSet.texture, tileTextSet.offX, tileTextSet.offY, tileTextSet.texture.width, tileTextSet.texture.height);
+			//sprite.graphics.drawTexture(tileTextSet.texture, tileTextSet.offX, tileTextSet.offY, tileTextSet.texture.width, tileTextSet.texture.height);
+			sprite.graphics.drawTexture(tileTextSet.texture, tileTextSet.offX, tileTextSet.offY);
 		}
 		
 		/**

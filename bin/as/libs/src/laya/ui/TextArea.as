@@ -3,8 +3,7 @@ package laya.ui {
 	
 	/**
 	 * <code>TextArea</code> 类用于创建显示对象以显示和输入文本。
-	 * @example 以下示例代码，创建了一个 <code>TextArea</code> 实例。
-	 * <listing version="3.0">
+	 * @example <caption>以下示例代码，创建了一个 <code>TextArea</code> 实例。</caption>
 	 * package
 	 *	{
 	 *		import laya.ui.TextArea;
@@ -35,8 +34,7 @@ package laya.ui {
 	 *			}
 	 *		}
 	 *	}
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * Laya.init(640, 800);//设置游戏画布宽高、渲染模式
 	 * Laya.stage.bgColor = "#efefef";//设置画布的背景颜色
 	 * Laya.loader.load(["resource/ui/input.png"], laya.utils.Handler.create(this, onLoadComplete));//加载资源。
@@ -55,8 +53,7 @@ package laya.ui {
 	 *     textArea.height = 200;//设置 textArea 的高度。
 	 *     Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
 	 * }
-	 * </listing>
-	 * <listing version="3.0">
+	 * @example
 	 * import TextArea = laya.ui.TextArea;
 	 * import Handler = laya.utils.Handler;
 	 * class TextArea_Example {
@@ -82,7 +79,6 @@ package laya.ui {
 	 *         Laya.stage.addChild(textArea);//将 textArea 添加到显示列表。
 	 *     }
 	 * }
-	 * </listing>
 	 */
 	public class TextArea extends TextInput {
 		/**@private */

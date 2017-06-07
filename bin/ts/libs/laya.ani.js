@@ -119,8 +119,9 @@
 					var keyframeCount=reader.getUint16();
 					node.keyFrame.length=keyframeCount;
 					var startTime=0;
+					var keyFrame;
 					for (k=0,n=keyframeCount;k < n;k++){
-						var keyFrame=node.keyFrame[k]=new KeyFramesContent();
+						keyFrame=node.keyFrame[k]=new KeyFramesContent();
 						{};
 						keyFrame.duration=reader.getFloat32();
 						keyFrame.startTime=startTime;
@@ -156,6 +157,7 @@
 						}
 						startTime+=keyFrame.duration;
 					}
+					keyFrame.startTime=ani.playTime;
 					node.playTime=ani.playTime;
 					templet._calculateKeyFrame(node,keyframeCount,keyframeDataCount);
 				}
@@ -1559,7 +1561,6 @@
 	/**
 	*@private
 	*Mesh数据处理工具
-	*@author ww
 	*@version 1.0
 	*
 	*@created 2017-4-28 下午2:46:23
@@ -1753,10 +1754,12 @@
 					var x=length *bone.resultMatrix.a;
 					var y=length *bone.resultMatrix.b;
 					length=Math.sqrt(x *x+y *y);
-					if (tScale)lengths[i]=length;
+					if (tScale)
+						lengths[i]=length;
 					spaces[++i]=tLengthSpacing ? Math.max(0,length+spacing):spacing;
 				}
-				}else {
+			}
+			else {
 				for (i=1;i < spacesCount;i++){
 					spaces[i]=spacing;
 				}
@@ -1806,9 +1809,11 @@
 					var sin=NaN;
 					if (tTangents){
 						r=positions[p-1];
-						}else if (spaces[i+1]==0){
+					}
+					else if (spaces[i+1]==0){
 						r=positions[p+2];
-						}else {
+					}
+					else {
 						r=Math.atan2(dy,dx);
 					}
 					r-=Math.atan2(c,a)-offsetRotation / 180 *Math.PI;
@@ -1821,7 +1826,8 @@
 					}
 					if (r > Math.PI){
 						r-=(Math.PI *2);
-						}else if (r <-Math.PI){
+					}
+					else if (r <-Math.PI){
 						r+=(Math.PI *2);
 					}
 					r *=tRotateMix;
@@ -1859,6 +1865,25 @@
 			var wy=0;
 			var vx=0;
 			var vy=0;
+			var bone;
+			if (tBones==null){
+				if (!tTriangles)tTriangles=tWeights;
+				if (boneSlot.deformData)
+					tTriangles=boneSlot.deformData;
+				bone=boneSlot.parent;
+				var tBoneMt;
+				tBoneMt=bone.resultMatrix;
+				if (!tBoneMt)tBoneMt=PathConstraint._tempMt;
+				var x=tBoneMt.tx;
+				var y=tBoneMt.ty;
+				var a=tBoneMt.a,bb=tBoneMt.b,c=tBoneMt.c,d=tBoneMt.d;
+				for (v=start,w=offset;w < count;v+=2,w+=2){
+					vx=tTriangles[v],vy=tTriangles[v+1];
+					worldVertices[w]=vx *a+vy *bb+x;
+					worldVertices[w+1]=-(vx *c+vy *d+y);
+				}
+				return;
+			}
 			for (i=0;i < start;i+=2){
 				n=tBones[v];
 				v+=n+1;
@@ -1926,7 +1951,8 @@
 				var lengths=boneSlot.currDisplayData.lengths;
 				curveCount-=closed ? 1 :2;
 				pathLength=lengths[curveCount];
-				if (percentPosition)position *=pathLength;
+				if (percentPosition)
+					position *=pathLength;
 				if (percentSpacing){
 					for (i=0;i < spacesCount;i++)
 					spaces[i] *=pathLength;
@@ -1938,16 +1964,19 @@
 					p=position;
 					if (closed){
 						p %=pathLength;
-						if (p < 0)p+=pathLength;
+						if (p < 0)
+							p+=pathLength;
 						curve=0;
-						}else if (p < 0){
+					}
+					else if (p < 0){
 						if (prevCurve !=PathConstraint.BEFORE){
 							prevCurve=PathConstraint.BEFORE;
 							this.computeWorldVertices2(target,boneList,2,4,world,0);
 						}
 						this.addBeforePosition(p,world,0,out,o);
 						continue ;
-						}else if (p > pathLength){
+					}
+					else if (p > pathLength){
 						if (prevCurve !=PathConstraint.AFTER){
 							prevCurve=PathConstraint.AFTER;
 							this.computeWorldVertices2(target,boneList,verticesLength-6,4,world,0);
@@ -1957,7 +1986,8 @@
 					}
 					for (;;curve++){
 						length=lengths[curve];
-						if (p > length)continue ;
+						if (p > length)
+							continue ;
 						if (curve==0)
 							p /=length;
 						else {
@@ -1971,7 +2001,8 @@
 						if (closed && curve==curveCount){
 							this.computeWorldVertices2(target,boneList,verticesLength-4,4,world,0);
 							this.computeWorldVertices2(target,boneList,0,4,world,4);
-						}else
+						}
+						else
 						this.computeWorldVertices2(target,boneList,curve *6+2,8,world,0);
 					}
 					this.addCurvePosition(p,world[0],world[1],world[2],world[3],world[4],world[5],world[6],world[7],out,o,tangents || (i > 0 && space==0));
@@ -1982,7 +2013,8 @@
 				verticesLength+=2;
 				world[verticesLength-2]=world[0];
 				world[verticesLength-1]=world[1];
-				}else {
+			}
+			else {
 				curveCount--;
 				verticesLength-=4;
 				this.computeWorldVertices2(boneSlot,boneList,2,verticesLength,tVertices,0);
@@ -2030,7 +2062,8 @@
 				x1=x2;
 				y1=y2;
 			}
-			if (percentPosition)position *=pathLength;
+			if (percentPosition)
+				position *=pathLength;
 			if (percentSpacing){
 				for (i=0;i < spacesCount;i++)
 				spaces[i] *=pathLength;
@@ -2044,18 +2077,22 @@
 				p=position;
 				if (closed){
 					p %=pathLength;
-					if (p < 0)p+=pathLength;
+					if (p < 0)
+						p+=pathLength;
 					curve=0;
-					}else if (p < 0){
+				}
+				else if (p < 0){
 					this.addBeforePosition(p,world,0,out,o);
 					continue ;
-					}else if (p > pathLength){
+				}
+				else if (p > pathLength){
 					this.addAfterPosition(p-pathLength,world,verticesLength-4,out,o);
 					continue ;
 				}
 				for (;;curve++){
 					length=curves[curve];
-					if (p > length)continue ;
+					if (p > length)
+						continue ;
 					if (curve==0)
 						p /=length;
 					else {
@@ -2106,7 +2143,8 @@
 				p *=curveLength;
 				for (;;segment++){
 					length=segments[segment];
-					if (p > length)continue ;
+					if (p > length)
+						continue ;
 					if (segment==0)
 						p /=length;
 					else {
@@ -2135,7 +2173,8 @@
 		}
 
 		__proto.addCurvePosition=function(p,x1,y1,cx1,cy1,cx2,cy2,x2,y2,out,o,tangents){
-			if (p==0)p=0.0001;
+			if (p==0)
+				p=0.0001;
 			var tt=p *p,ttt=tt *p,u=1-p,uu=u *u,uuu=uu *u;
 			var ut=u *p,ut3=ut *3,uut3=u *ut3,utt3=ut3 *p;
 			var x=x1 *uuu+cx1 *uut3+cx2 *utt3+x2 *ttt,y=y1 *uuu+cy1 *uut3+cy2 *utt3+y2 *ttt;
@@ -2143,7 +2182,8 @@
 			out[o+1]=y;
 			if (tangents){
 				out[o+2]=Math.atan2(y-(y1 *uu+cy1 *ut *2+cy2 *tt),x-(x1 *uu+cx1 *ut *2+cx2 *tt));
-				}else {
+			}
+			else {
 				out[o+2]=0;
 			}
 		}
@@ -2151,6 +2191,9 @@
 		PathConstraint.NONE=-1;
 		PathConstraint.BEFORE=-2;
 		PathConstraint.AFTER=-3;
+		__static(PathConstraint,
+		['_tempMt',function(){return this._tempMt=new Matrix();}
+		]);
 		return PathConstraint;
 	})()
 
@@ -3427,7 +3470,6 @@
 	/**
 	*@private
 	*将mesh元素缓存到canvas中并进行绘制
-	*@author ww
 	*/
 	//class laya.ani.bone.canvasmesh.CacheAbleSkinMesh extends laya.ani.bone.canvasmesh.SkinMeshCanvas
 	var CacheAbleSkinMesh=(function(_super){
@@ -3503,7 +3545,6 @@
 	/**
 	*@private
 	*简化mesh绘制，多顶点mesh改为四顶点mesh，只绘制矩形不绘制三角形
-	*@author ww
 	*/
 	//class laya.ani.bone.canvasmesh.SimpleSkinMeshCanvas extends laya.ani.bone.canvasmesh.SkinMeshCanvas
 	var SimpleSkinMeshCanvas=(function(_super){
@@ -3799,17 +3840,15 @@
 			this._aniPath=path;
 			this._complete=complete;
 			this._loadAniMode=aniMode;
-			this._texturePath=path.replace(".sk",".png").replace(".bin",".png");
-			Laya.loader.load([{url:path,type:/*laya.net.Loader.BUFFER*/"arraybuffer"},{url:this._texturePath,type:/*laya.net.Loader.IMAGE*/"image"}],Handler.create(this,this._onLoaded));
+			Laya.loader.load([{url:path,type:/*laya.net.Loader.BUFFER*/"arraybuffer"}],Handler.create(this,this._onLoaded));
 		}
 
 		/**
 		*加载完成
 		*/
 		__proto._onLoaded=function(){
-			var tTexture=Loader.getRes(this._texturePath);
 			var arraybuffer=Loader.getRes(this._aniPath);
-			if (tTexture==null || arraybuffer==null)return;
+			if (arraybuffer==null)return;
 			if (Templet.TEMPLET_DICTIONARY==null){
 				Templet.TEMPLET_DICTIONARY={};
 			};
@@ -3823,7 +3862,7 @@
 				Templet.TEMPLET_DICTIONARY[this._aniPath]=tFactory;
 				tFactory.on(/*laya.events.Event.COMPLETE*/"complete",this,this._parseComplete);
 				tFactory.on(/*laya.events.Event.ERROR*/"error",this,this._parseFail);
-				tFactory.parseData(tTexture,arraybuffer);
+				tFactory.parseData(null,arraybuffer);
 			}
 		}
 
@@ -4802,6 +4841,9 @@
 						this._movieClipList[i]._clear();
 				}
 				this._movieClipList.length=0;
+			}
+			if (this._atlasPath){
+				Loader.clearRes(this._atlasPath);
 			};
 			var key;
 			for (key in this._loadedImage){
@@ -5135,6 +5177,7 @@
 		*/
 		__proto.parseData=function(texture,skeletonData,playbackRate){
 			(playbackRate===void 0)&& (playbackRate=30);
+			if(!this._path&&this.url)this._path=this.url.slice(0,this.url.lastIndexOf("/"))+"/";
 			this._mainTexture=texture;
 			if (this._mainTexture){
 				if (Render.isWebGL && texture.bitmap){

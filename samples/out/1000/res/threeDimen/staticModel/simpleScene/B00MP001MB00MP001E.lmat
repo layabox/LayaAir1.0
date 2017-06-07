@@ -1,0 +1,49 @@
+{
+  "type": "Material",
+  "props": {
+    "name": "B00MP001MB00MP001E",
+    "transparent": false,
+    "cullFace": true
+  },
+  "customProps": {
+    "ambientColor": [
+      0.6,
+      0.6,
+      0.6
+    ],
+    "diffuseColor": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "specularColor": [
+      1.0,
+      1.0,
+      1.0,
+      8.0
+    ],
+    "reflectColor": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "diffuseTexture": {
+      "texture2D": "map\\01Jokul\\Texture\\B00MP001E.dds"
+    },
+    "normalTexture": {
+      "texture2D": "map\\01Jokul\\Texture\\B00MP507A.dds"
+    },
+    "specularTexture": {
+      "texture2D": "map\\01Jokul\\Texture\\B00MP505A.dds"
+    },
+    "emissiveTexture": {
+      "texture2D": "map\\01Jokul\\Texture\\B00MP503A.dds"
+    },
+    "ambientTexture": {
+      "texture2D": "map\\01Jokul\\Texture\\B00MP504A.dds"
+    },
+    "reflectTexture": {
+      "texture2D": ""
+    }
+  }
+}

@@ -22,7 +22,6 @@ package laya.d3.shader {
 	 * <code>ShaderInit</code> 类用于初始化内置Shader。
 	 */
 	public class ShaderInit3D {
-		
 		/**
 		 * 创建一个 <code>ShaderInit</code> 实例。
 		 */
@@ -319,32 +318,32 @@ package laya.d3.shader {
 			
 			attributeMap = {
 				'a_CornerTextureCoordinate': VertexElementUsage.CORNERTEXTURECOORDINATE0, 
+				'a_MeshPosition': VertexElementUsage.POSITION0,
+				'a_MeshTextureCoordinate': VertexElementUsage.TEXTURECOORDINATE0,
 				'a_PositionStartLifeTime': VertexElementUsage.POSITIONSTARTLIFETIME, 
 				'a_DirectionTime': VertexElementUsage.DIRECTIONTIME, 
 				'a_StartColor': VertexElementUsage.STARTCOLOR0, 
 				'a_EndColor': VertexElementUsage.ENDCOLOR0, 
 				'a_StartSize': VertexElementUsage.STARTSIZE, 
-				'a_StartRotation0': VertexElementUsage.STARTROTATION0, 
-				'a_StartRotation1': VertexElementUsage.STARTROTATION1, 
-				'a_StartRotation2': VertexElementUsage.STARTROTATION2, 
+				'a_StartRotation0': VertexElementUsage.STARTROTATION, 
 				'a_StartSpeed': VertexElementUsage.STARTSPEED, 
 				'a_Random0': VertexElementUsage.RANDOM0, 
 				'a_Random1': VertexElementUsage.RANDOM1, 
 				'a_SimulationWorldPostion': VertexElementUsage.SIMULATIONWORLDPOSTION};
 			uniformMap = {
-				'u_SimulationSpace': [ShurikenParticleMaterial.SIMULATIONSPACE, Shader3D.PERIOD_MATERIAL], 
 				'u_Tintcolor': [ShurikenParticleMaterial.TINTCOLOR, Shader3D.PERIOD_MATERIAL], 
-				'u_ThreeDStartRotation': [ShurikenParticleMaterial.THREEDSTARTROTATION, Shader3D.PERIOD_MATERIAL], 
-				'u_ScalingMode': [ShurikenParticleMaterial.SCALINGMODE, Shader3D.PERIOD_MATERIAL], 
-				'u_CurrentTime': [ShurikenParticleMaterial.CURRENTTIME, Shader3D.PERIOD_MATERIAL], 
-				'u_Gravity': [ShurikenParticleMaterial.GRAVITY, Shader3D.PERIOD_MATERIAL], 
 				'u_texture': [ShurikenParticleMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL], 
-				'u_StretchedBillboardLengthScale': [ShurikenParticleMaterial.STRETCHEDBILLBOARDLENGTHSCALE, Shader3D.PERIOD_MATERIAL], 
-				'u_StretchedBillboardSpeedScale': [ShurikenParticleMaterial.STRETCHEDBILLBOARDSPEEDSCALE, Shader3D.PERIOD_MATERIAL], 
 				'u_WorldPosition': [ShuriKenParticle3D.WORLDPOSITION, Shader3D.PERIOD_SPRITE], 
 				'u_WorldRotationMat': [ShuriKenParticle3D.WORLDROTATIONMATRIX, Shader3D.PERIOD_SPRITE], 
 				'u_PositionScale': [ShuriKenParticle3D.POSITIONSCALE, Shader3D.PERIOD_SPRITE], 
 				'u_SizeScale': [ShuriKenParticle3D.SIZESCALE, Shader3D.PERIOD_SPRITE], 
+				'u_ScalingMode': [ShuriKenParticle3D.SCALINGMODE, Shader3D.PERIOD_SPRITE], 
+				'u_Gravity': [ShuriKenParticle3D.GRAVITY, Shader3D.PERIOD_SPRITE], 
+				'u_ThreeDStartRotation': [ShuriKenParticle3D.THREEDSTARTROTATION, Shader3D.PERIOD_SPRITE], 
+				'u_StretchedBillboardLengthScale': [ShuriKenParticle3D.STRETCHEDBILLBOARDLENGTHSCALE, Shader3D.PERIOD_SPRITE], 
+				'u_StretchedBillboardSpeedScale': [ShuriKenParticle3D.STRETCHEDBILLBOARDSPEEDSCALE, Shader3D.PERIOD_SPRITE], 
+				'u_SimulationSpace': [ShuriKenParticle3D.SIMULATIONSPACE, Shader3D.PERIOD_SPRITE], 
+				'u_CurrentTime': [ShuriKenParticle3D.CURRENTTIME, Shader3D.PERIOD_SPRITE], 
 				'u_ColorOverLifeGradientAlphas': [ShuriKenParticle3D.COLOROVERLIFEGRADIENTALPHAS, Shader3D.PERIOD_SPRITE], 
 				'u_ColorOverLifeGradientColors': [ShuriKenParticle3D.COLOROVERLIFEGRADIENTCOLORS, Shader3D.PERIOD_SPRITE], 
 				'u_MaxColorOverLifeGradientAlphas': [ShuriKenParticle3D.MAXCOLOROVERLIFEGRADIENTALPHAS, Shader3D.PERIOD_SPRITE], 
@@ -372,12 +371,14 @@ package laya.d3.shader {
 				'u_ROLAngularVelocityGradientX': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTX, Shader3D.PERIOD_SPRITE], 
 				'u_ROLAngularVelocityGradientY': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTY, Shader3D.PERIOD_SPRITE], 
 				'u_ROLAngularVelocityGradientZ': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZ, Shader3D.PERIOD_SPRITE], 
+				'u_ROLAngularVelocityGradientW': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTW, Shader3D.PERIOD_SPRITE],
 				'u_ROLAngularVelocityConstMax': [ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX, Shader3D.PERIOD_SPRITE], 
 				'u_ROLAngularVelocityConstMaxSeprarate': [ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE, Shader3D.PERIOD_SPRITE], 
 				'u_ROLAngularVelocityGradientMax': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTMAX, Shader3D.PERIOD_SPRITE], 
 				'u_ROLAngularVelocityGradientMaxX': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTXMAX, Shader3D.PERIOD_SPRITE], 
 				'u_ROLAngularVelocityGradientMaxY': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTYMAX, Shader3D.PERIOD_SPRITE], 
-				'u_ROLAngularVelocityGradientMaxZ': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX, Shader3D.PERIOD_SPRITE], 
+				'u_ROLAngularVelocityGradientMaxZ': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTZMAX, Shader3D.PERIOD_SPRITE],
+				'u_ROLAngularVelocityGradientMaxW': [ShuriKenParticle3D.ROLANGULARVELOCITYGRADIENTWMAX, Shader3D.PERIOD_SPRITE], 
 				'u_TSACycles': [ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES, Shader3D.PERIOD_SPRITE], 
 				'u_TSASubUVLength': [ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, Shader3D.PERIOD_SPRITE], 
 				'u_TSAGradientUVs': [ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, Shader3D.PERIOD_SPRITE], 
@@ -391,11 +392,11 @@ package laya.d3.shader {
 			ps = __INCLUDESTR__("files/ParticleShuriKen.ps");
 			shaderCompile = ShaderCompile3D.add(PARTICLESHURIKEN, vs, ps, attributeMap, uniformMap);
 			ShurikenParticleMaterial.SHADERDEFINE_DIFFUSEMAP = shaderCompile.registerMaterialDefine("DIFFUSEMAP");
-			
-			ShuriKenParticle3D.SHADERDEFINE_SPHERHBILLBOARD = shaderCompile.registerSpriteDefine("SPHERHBILLBOARD");
-			ShuriKenParticle3D.SHADERDEFINE_STRETCHEDBILLBOARD = shaderCompile.registerSpriteDefine("STRETCHEDBILLBOARD");
-			ShuriKenParticle3D.SHADERDEFINE_HORIZONTALBILLBOARD = shaderCompile.registerSpriteDefine("HORIZONTALBILLBOARD");
-			ShuriKenParticle3D.SHADERDEFINE_VERTICALBILLBOARD = shaderCompile.registerSpriteDefine("VERTICALBILLBOARD");
+			ShurikenParticleMaterial.SHADERDEFINE_TINTCOLOR = shaderCompile.registerMaterialDefine("TINTCOLOR");
+			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_BILLBOARD = shaderCompile.registerSpriteDefine("SPHERHBILLBOARD");
+			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_STRETCHEDBILLBOARD = shaderCompile.registerSpriteDefine("STRETCHEDBILLBOARD");
+			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_HORIZONTALBILLBOARD = shaderCompile.registerSpriteDefine("HORIZONTALBILLBOARD");
+			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_VERTICALBILLBOARD = shaderCompile.registerSpriteDefine("VERTICALBILLBOARD");
 			ShuriKenParticle3D.SHADERDEFINE_COLOROVERLIFETIME = shaderCompile.registerSpriteDefine("COLOROVERLIFETIME");
 			ShuriKenParticle3D.SHADERDEFINE_RANDOMCOLOROVERLIFETIME = shaderCompile.registerSpriteDefine("RANDOMCOLOROVERLIFETIME");
 			ShuriKenParticle3D.SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT = shaderCompile.registerSpriteDefine("VELOCITYOVERLIFETIMECONSTANT");
@@ -414,6 +415,7 @@ package laya.d3.shader {
 			ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE = shaderCompile.registerSpriteDefine("SIZEOVERLIFETIMECURVESEPERATE");
 			ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES = shaderCompile.registerSpriteDefine("SIZEOVERLIFETIMERANDOMCURVES");
 			ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE = shaderCompile.registerSpriteDefine("SIZEOVERLIFETIMERANDOMCURVESSEPERATE");
+			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_MESH = shaderCompile.registerSpriteDefine("RENDERMODE_MESH");
 			
 			attributeMap = {
 				'a_Position': VertexElementUsage.POSITION0, 

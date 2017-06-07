@@ -37,7 +37,6 @@ package laya.d3.graphics {
 		 * @param renderableSprite3Ds 静态批处理子节点队列。
 		 */
 		public static function combine(staticBatchRoot:Sprite3D, renderableSprite3Ds:Vector.<RenderableSprite3D> = null):void {
-			debugger;
 			var i:int, n:int, staticBatchManager:StaticBatchManager;
 			if (renderableSprite3Ds) {
 				for (i = 0, n = renderableSprite3Ds.length; i < n; i++) {
