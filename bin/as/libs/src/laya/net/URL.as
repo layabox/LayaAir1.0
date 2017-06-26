@@ -67,7 +67,7 @@ package laya.net {
 		}
 		
 		/**
-		 * 格式化相对路径
+		 * 格式化相对路径。
 		 * @param	value
 		 * @return
 		 */

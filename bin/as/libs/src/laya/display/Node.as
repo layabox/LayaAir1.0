@@ -26,7 +26,7 @@ package laya.display {
 	[Event(name = "undisplay", type = "laya.events.Event")]
 	
 	/**
-	 * <code>Node</code> 类用于创建节点对象，节点是最基本的元素。
+	 *  <code>Node</code> 类是可放在显示列表中的所有对象的基类。该显示列表管理 Laya 运行时中显示的所有对象。使用 Node 类排列显示列表中的显示对象。Node 对象可以有子显示对象。
 	 */
 	public class Node extends EventDispatcher {
 		/**@private */
@@ -540,9 +540,10 @@ package laya.display {
 		 * @param	method		结束时的回调方法。
 		 * @param	args		（可选）回调参数。
 		 * @param	coverBefore	（可选）是否覆盖之前的延迟执行，默认为true。
+		 * @param	jumpFrame 时钟是否跳帧。基于时间的循环回调，单位时间间隔内，如能执行多次回调，出于性能考虑，引擎默认只执行一次，设置jumpFrame=true后，则回调会连续执行多次
 		 */
-		public function timerLoop(delay:int, caller:*, method:Function, args:Array = null, coverBefore:Boolean = true):void {
-			timer._create(false, true, delay, caller, method, args, coverBefore);
+		public function timerLoop(delay:int, caller:*, method:Function, args:Array = null, coverBefore:Boolean = true, jumpFrame:Boolean = false):void {
+			timer.loop(delay, caller, method, args, coverBefore, jumpFrame);
 		}
 		
 		/**

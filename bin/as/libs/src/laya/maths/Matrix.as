@@ -466,8 +466,7 @@ package laya.maths {
 		 * @return 与原始实例具有完全相同的属性的新 Matrix 实例。
 		 */
 		public function clone():Matrix {
-			var no:* = _cache;
-			var dec:Matrix = !no._length ? (new Matrix()) : no[--no._length];
+			var dec:Matrix = create();
 			dec.a = a;
 			dec.b = b;
 			dec.c = c;

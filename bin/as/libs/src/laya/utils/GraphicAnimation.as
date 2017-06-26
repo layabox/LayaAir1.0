@@ -87,8 +87,7 @@ package laya.utils {
 			if (!animationDataNew) animationDataNew = [];
 			var preGraphic:Graphics;
 			for (i = 0; i < len; i++) {
-				if (animationDataNew[i] || !preGraphic)
-				{
+				if (animationDataNew[i] || !preGraphic) {
 					preGraphic = _createFrameGraphic(i);
 				}
 				gList.push(preGraphic);
@@ -128,9 +127,8 @@ package laya.utils {
 					if (tResultTransform._checkTransform()) {
 						g.drawTexture(tTex, 0, 0, tNodeG.width, tNodeG.height, tResultTransform, tGraphicAlpha);
 						tNodeG.resultTransform = null;
-					}
-					else {
-						g.drawTexture(tTex, tResultTransform.tx, tResultTransform.ty, tNodeG.width, tNodeG.height, null,tGraphicAlpha);
+					} else {
+						g.drawTexture(tTex, tResultTransform.tx, tResultTransform.ty, tNodeG.width, tNodeG.height, null, tGraphicAlpha);
 					}
 				}
 			}
@@ -157,8 +155,7 @@ package laya.utils {
 			onlyTranslate = !tTransform.bTransform;
 			if (!onlyTranslate) {
 				g.drawTexture(tTex, 0, 0, tNodeG.width, tNodeG.height, tTransform.clone(), tNodeG.alpha);
-			}
-			else {
+			} else {
 				g.drawTexture(tTex, tTransform.tx, tTransform.ty, tNodeG.width, tNodeG.height, null, tNodeG.alpha);
 			}
 		}
@@ -186,8 +183,7 @@ package laya.utils {
 			}
 			if (!onlyTranslate) {
 				g.transform(tTransform.clone());
-			}
-			else if (hasTrans) {
+			} else if (hasTrans) {
 				g.translate(tTransform.tx, tTransform.ty);
 			}
 			
@@ -211,12 +207,10 @@ package laya.utils {
 			
 			if (ifSave) {
 				g.restore();
-			}
-			else {
+			} else {
 				if (!onlyTranslate) {
 					g.transform(tTransform.clone().invert());
-				}
-				else if (hasTrans) {
+				} else if (hasTrans) {
 					g.translate(-tTransform.tx, -tTransform.ty);
 				}
 			}
@@ -272,8 +266,7 @@ package laya.utils {
 				rst = new GraphicNode();
 			if (!rst.transform) {
 				rst.transform = new Matrix();
-			}
-			else {
+			} else {
 				rst.transform.identity();
 			}
 			
@@ -299,11 +292,10 @@ package laya.utils {
 				tex = _getTextureByUrl(url);
 				if (tex) {
 					if (!width)
-						width = tex.width;
+						width = tex.sourceWidth;
 					if (!height)
-						height = tex.height;
-				}
-				else {
+						height = tex.sourceHeight;
+				} else {
 					console.warn("lost skin:", url, ",you may load pics first");
 				}
 			}
@@ -382,8 +374,7 @@ package laya.utils {
 						continue;
 					try {
 						_calGraphicData(tAniO);
-					}
-					catch (e:*) {
+					} catch (e:*) {
 						console.warn("parse animation fail:" + tAniO.name + ",empty animation created");
 						_gList = [];
 					}
@@ -418,8 +409,7 @@ package laya.utils {
 			_labels = null;
 			try {
 				_calGraphicData(aniO);
-			}
-			catch (e:*) {
+			} catch (e:*) {
 				console.warn("parse animation fail:" + aniO.name + ",empty animation created");
 				_gList = [];
 			}
@@ -466,9 +456,8 @@ package laya.utils {
 			_gList = null;
 			_nodeGDic = null;
 		}
-				
-		public static function parseAnimationByData(animationObject:Object):Object
-		{
+		
+		public static function parseAnimationByData(animationObject:Object):Object {
 			if (!_I)
 				_I = new GraphicAnimation();
 			var rst:Object;
@@ -476,6 +465,7 @@ package laya.utils {
 			_I._clear();
 			return rst;
 		}
+		
 		public static function parseAnimationData(aniData:Object):Object {
 			if (!_I)
 				_I = new GraphicAnimation();

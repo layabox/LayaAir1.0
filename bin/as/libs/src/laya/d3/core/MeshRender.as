@@ -19,21 +19,19 @@ package laya.d3.core {
 	 * <code>MeshRender</code> 类用于网格渲染器。
 	 */
 	public class MeshRender extends BaseRender {
-		/**@private */
-		public var _belongAvatar:Avatar;
 		
 		/**
 		 * 创建一个新的 <code>MeshRender</code> 实例。
 		 */
-		public function MeshRender(owner:MeshSprite3D) {
+		public function MeshRender(owner:RenderableSprite3D) {
 			super(owner);
-			owner.meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
+			(owner as MeshSprite3D).meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _onMeshChanged(sender:MeshFilter, oldMesh:BaseMesh, mesh:BaseMesh):void {
+		private function _onMeshChanged(meshFilter:MeshFilter,oldMesh:BaseMesh, mesh:BaseMesh):void {
 			if (mesh.loaded) {
 				_boundingSphereNeedChange = _boundingBoxNeedChange = _boundingBoxCenterNeedChange = _octreeNodeNeedChange = true;
 			} else {

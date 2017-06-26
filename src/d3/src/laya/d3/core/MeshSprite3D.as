@@ -65,6 +65,7 @@ package laya.d3.core {
 		 * @param name 名字。
 		 */
 		public function MeshSprite3D(mesh:BaseMesh = null, name:String = null) {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super(name);
 			_geometryFilter = new MeshFilter(this);
 			_render = new MeshRender(this);

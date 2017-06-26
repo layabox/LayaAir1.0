@@ -96,6 +96,8 @@ package laya.d3.core.scene {
 		}
 		
 		/**@private */
+		private var __loaded:Boolean;
+		/**@private */
 		private var _url:String;
 		
 		/** @private */
@@ -131,7 +133,9 @@ package laya.d3.core.scene {
 		public var _shaderDefineValue:int;
 		
 		/** @private */
-		public var _frustumCullingObjects:Vector.<BaseRender> = new Vector.<BaseRender>();
+		public var _cullingRendersLength:int;
+		/** @private */
+		public var _cullingRenders:Vector.<BaseRender>;
 		/** @private */
 		public var _dynamicBatchManager:DynamicBatchManager;
 		/** @private */
@@ -154,6 +158,13 @@ package laya.d3.core.scene {
 		public var parallelSplitShadowMaps:Vector.<ParallelSplitShadowMap>;
 		
 		/**
+		 * @private
+		 */
+		public function set _loaded(value:Boolean):void {
+			__loaded = value;
+		}
+		
+		/**
 		 * 获取资源的URL地址。
 		 * @return URL地址。
 		 */
@@ -167,6 +178,13 @@ package laya.d3.core.scene {
 		 */
 		public function set url(value:String):void {
 			_url = value;
+		}
+		
+		/**
+		 * 获取是否已加载完成。
+		 */
+		public function get loaded():Boolean {
+			return __loaded;
 		}
 		
 		/**
@@ -278,10 +296,13 @@ package laya.d3.core.scene {
 		 * 创建一个 <code>Scene</code> 实例。
 		 */
 		public function Scene() {
+			__loaded = true;
 			_lightmaps = new Vector.<Texture2D>();
 			_shaderValues = new ValusArray();
 			parallelSplitShadowMaps = new Vector.<ParallelSplitShadowMap>();
 			_dynamicBatchManager = new DynamicBatchManager();
+			_cullingRenders = new Vector.<BaseRender>();
+			_cullingRendersLength = 0;
 			enableFog = false;
 			fogStart = 300;
 			fogRange = 1000;
@@ -785,11 +806,15 @@ package laya.d3.core.scene {
 		 * @inheritDoc
 		 */
 		public function addFrustumCullingObject(renderObject:BaseRender):void {
-			if (treeRoot)
+			if (treeRoot) {
 				addTreeNode(renderObject);
-			else
-				_frustumCullingObjects.push(renderObject);
-		
+			} else {
+				if (_cullingRendersLength === _cullingRenders.length)
+					_cullingRenders.push(renderObject);
+				else
+					_cullingRenders[_cullingRendersLength] = renderObject;
+				renderObject._indexInSceneFrustumCullingObjects = _cullingRendersLength++;
+			}
 		}
 		
 		/**
@@ -799,8 +824,14 @@ package laya.d3.core.scene {
 			if (treeRoot) {
 				removeTreeNode(renderObject);
 			} else {
-				var index:int = _frustumCullingObjects.indexOf(renderObject);
-				(index !== -1) && (_frustumCullingObjects.splice(index, 1));
+				_cullingRendersLength--;
+				var indexInSceneFrustumCullingObjects:int = renderObject._indexInSceneFrustumCullingObjects;
+				if (indexInSceneFrustumCullingObjects !== _cullingRendersLength) {
+					var endRender:BaseRender = _cullingRenders[_cullingRendersLength];
+					_cullingRenders[indexInSceneFrustumCullingObjects] = endRender;
+					endRender._indexInSceneFrustumCullingObjects = indexInSceneFrustumCullingObjects;
+					renderObject._indexInSceneFrustumCullingObjects = -1;
+				}
 			}
 		}
 		
@@ -917,6 +948,7 @@ package laya.d3.core.scene {
 			var innerResouMap:Object = data[1];
 			ClassUtils.createByJson(json, this, this, Handler.create(null, Utils3D._parseHierarchyProp, [innerResouMap], false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
 			event(Event.HIERARCHY_LOADED, [this]);
+			__loaded = true;
 		}
 		
 		/**

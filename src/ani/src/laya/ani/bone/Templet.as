@@ -72,7 +72,7 @@ package laya.ani.bone {
 		
 		private var _isDestroyed:Boolean = false;
 		private var _rate:int = 30;
-		
+		public var isParserComplete:Boolean = false;
 		public var aniSectionDic:Object = {};
 		private var _skBufferUrl:String;
 		private var _textureDic:Object = {};
@@ -151,7 +151,7 @@ package laya.ani.bone {
 				_loaded = false;
 			}
 			//解析公共数据
-			if (_loaded) {
+			if (loaded) {
 				//这里后面要改成一个状态，直接确认是不是要不要加载外部图片
 				if (_mainTexture) {
 					_parsePublicExtData();
@@ -247,6 +247,12 @@ package laya.ani.bone {
 				tTextureName = tTextureNameArr[i * 2 + 1];
 				if (_mainTexture == null) {
 					tTexture = _textureDic[tSrcTexturePath];
+				}
+				if (!tTexture)
+				{
+					this.event(Event.ERROR, this);
+					this.isParseFail = true;
+					return;
 				}
 				tX = tByte.getFloat32();
 				tY = tByte.getFloat32();
@@ -620,6 +626,7 @@ package laya.ani.bone {
 				}
 			}
 			showSkinByIndex(boneSlotDic, 0);
+			this.isParserComplete = true;
 			this.event(Event.COMPLETE, this);
 		}
 		
@@ -713,9 +720,11 @@ package laya.ani.bone {
 		public function destroy():void {
 			_isDestroyed = true;
 			for each (var tTexture:Texture in subTextureDic) {
+				if(tTexture)
 				tTexture.destroy();
 			}
 			for each (tTexture in _textureDic) {
+				if(tTexture)
 				tTexture.destroy();
 			}
 			var tSkinSlotDisplayData:SkinSlotDisplayData;

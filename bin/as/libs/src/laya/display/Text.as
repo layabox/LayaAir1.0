@@ -17,6 +17,9 @@ package laya.display {
 	
 	/**
 	 * <p> <code>Text</code> 类用于创建显示对象以显示文本。</p>
+	 * <p>
+	 * 注意：如果运行时系统找不到设定的字体，则用系统默认的字体渲染文字，从而导致显示异常。(通常电脑上显示正常，在一些移动端因缺少设置的字体而显示异常)。
+	 * </p>
 	 * @example
 	 * package
 	 * {
@@ -310,6 +313,7 @@ package laya.display {
 		/**
 		 * <p>文本的字体名称，以字符串形式表示。</p>
 		 * <p>默认值为："Arial"，可以通过Font.defaultFont设置默认字体。</p>
+		 * <p>如果运行时系统找不到设定的字体，则用系统默认的字体渲染文字，从而导致显示异常。(通常电脑上显示正常，在一些移动端因缺少设置的字体而显示异常)。</p>
 		 * @see laya.display.css.Font#defaultFamily
 		 */
 		public function get font():String {
@@ -485,7 +489,7 @@ package laya.display {
 		
 		/**
 		 * <p>描边宽度（以像素为单位）。</p>
-		 * <p>默认值0，表示不描边。<p>q
+		 * <p>默认值0，表示不描边。</p>
 		 */
 		public function get stroke():Number {
 			return this._getCSSStyle().stroke;
@@ -526,7 +530,7 @@ package laya.display {
 		 */
 		protected function renderText(begin:int, visibleLineCount:int):void {
 			var graphics:Graphics = this.graphics;
-			graphics.clear();
+			graphics.clear(true);
 			
 			var ctxFont:String = (italic ? "italic " : "") + (bold ? "bold " : "") + fontSize + "px " + font;
 			Browser.context.font = ctxFont;
@@ -672,7 +676,7 @@ package laya.display {
 			if (!this._text) {
 				_clipPoint = null;
 				_textWidth = _textHeight = 0;
-				graphics.clear();
+				graphics.clear(true);
 				return;
 			}
 			

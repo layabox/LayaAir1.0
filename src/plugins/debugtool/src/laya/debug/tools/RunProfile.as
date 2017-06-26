@@ -7,6 +7,7 @@
 
 package laya.debug.tools
 {
+	import laya.utils.Browser;
 	
 	/**
 	 * 类实例创建分析工具
@@ -67,6 +68,18 @@ package laya.debug.tools
 				fun();
 			}
 			DTrace.timeEnd(sign);
+		}
+		
+		public static function runTest2(fun:Function,count:int,sign:String="runTest"):int
+		{
+			var preTime:Number;
+			preTime = Browser.now();
+			var i:int;
+			for(i=0;i<count;i++)
+			{
+				fun();
+			}
+			return Browser.now() - preTime;
 		}
 	}
 }

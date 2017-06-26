@@ -1,16 +1,17 @@
 package laya.utils {
-	/*[IF-FLASH]*/import flash.utils.Dictionary;
+	/*[IF-FLASH]*/
+	import flash.utils.Dictionary;
 	import laya.display.Node;
 	
-	
 	/**
-	 * <code>Tween</code>  是一个缓动类。使用实现目标对象属性的渐变。
+	 * <code>Tween</code>  是一个缓动类。使用此类能够实现对目标对象属性的渐变。
 	 */
 	public class Tween {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
 		/**@private */
-		/*[IF-FLASH]*/ private static var tweenMap:flash.utils.Dictionary = new flash.utils.Dictionary(true);
+		/*[IF-FLASH]*/
+		private static var tweenMap:flash.utils.Dictionary = new flash.utils.Dictionary(true);
 		//[IF-JS] private static var tweenMap:Array = {};
 		/**@private */
 		private var _complete:Handler;
@@ -113,7 +114,8 @@ package laya.utils {
 			
 			//判断是否覆盖			
 			//[IF-JS]var gid:int = (target.$_GID || (target.$_GID = Utils.getGID()));
-			/*[IF-FLASH]*/var gid:* = target;
+			/*[IF-FLASH]*/
+			var gid:* = target;
 			if (!tweenMap[gid]) {
 				tweenMap[gid] = [this];
 			} else {
@@ -166,7 +168,8 @@ package laya.utils {
 			if (!target) return;
 			
 			//如果对象被销毁，则立即停止缓动
-			/*[IF-FLASH]*/if (target is Node && target.destroyed) return clearTween(target);
+			/*[IF-FLASH]*/
+			if (target is Node && target.destroyed) return clearTween(target);
 			//[IF-JS]if (target.destroyed) return clearTween(target);
 			
 			var usedTimer:Number = this._usedTimer = time - this._startTimer - this._delay;
@@ -234,9 +237,11 @@ package laya.utils {
 		 * @param	target 目标对象。
 		 */
 		public static function clearAll(target:Object):void {
-			/*[IF-FLASH]*/if (!target)return;
+			/*[IF-FLASH]*/
+			if (!target) return;
 			//[IF-JS]if (!target || !target.$_GID) return;
-			/*[IF-FLASH]*/var tweens:Array = tweenMap[target];
+			/*[IF-FLASH]*/
+			var tweens:Array = tweenMap[target];
 			//[IF-JS]var tweens:Array = tweenMap[target.$_GID];
 			if (tweens) {
 				for (var i:int, n:int = tweens.length; i < n; i++) {
@@ -293,7 +298,8 @@ package laya.utils {
 		}
 		
 		private function _remove():void {
-			/*[IF-FLASH]*/var tweens:Array = tweenMap[this._target];
+			/*[IF-FLASH]*/
+			var tweens:Array = tweenMap[this._target];
 			//[IF-JS]var tweens:Array = tweenMap[this._target.$_GID];
 			if (tweens) {
 				for (var i:int, n:int = tweens.length; i < n; i++) {

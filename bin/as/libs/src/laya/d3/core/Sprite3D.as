@@ -1,4 +1,5 @@
 package laya.d3.core {
+	import laya.d3.animation.AnimationNode;
 	import laya.d3.component.Component3D;
 	import laya.d3.component.physics.Collider;
 	import laya.d3.core.material.BaseMaterial;
@@ -96,6 +97,8 @@ package laya.d3.core {
 		/** @private */
 		private var _id:int;
 		/** @private */
+		private var __loaded:Boolean;
+		/** @private */
 		private var _componentsMap:Array;
 		/** @private */
 		private var _typeComponentsIndices:Vector.<Vector.<int>>;
@@ -133,6 +136,13 @@ package laya.d3.core {
 		 */
 		public function get id():int {
 			return _id;
+		}
+		
+		/**
+		 * 获取是否已加载完成。
+		 */
+		public function get loaded():Boolean {
+			return __loaded;
 		}
 		
 		/**
@@ -249,6 +259,8 @@ package laya.d3.core {
 		 * 创建一个 <code>Sprite3D</code> 实例。
 		 */
 		public function Sprite3D(name:String = null) {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			__loaded = true;
 			_projectionViewWorldUpdateLoopCount = -1;
 			_projectionViewWorldMatrix = new Matrix4x4();
 			_shaderValues = new ValusArray();
@@ -264,6 +276,13 @@ package laya.d3.core {
 			layer = Layer.currentCreationLayer;
 			_transform = new Transform3D(this);
 			active = true;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _loaded(value:Boolean):void {
+			__loaded = value;
 		}
 		
 		/**
@@ -708,6 +727,7 @@ package laya.d3.core {
 			var innerResouMap:Object = data[1];
 			ClassUtils.createByJson(json, this, this, Handler.create(null, Utils3D._parseHierarchyProp, [innerResouMap], false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
 			event(Event.HIERARCHY_LOADED, [this]);
+			__loaded = true;
 		}
 		
 		/**
@@ -717,7 +737,7 @@ package laya.d3.core {
 		public function cloneTo(destObject:*):void {
 			if (destroyed)
 				throw new Error("Sprite3D: Can't be cloned if the Spriote3D has destroyed.");
-				
+			
 			var destSprite3D:Sprite3D = destObject as Sprite3D;
 			
 			destSprite3D.name = name/* + "(clone)"*/;//TODO:克隆后不能播放刚体动画，找不到名字

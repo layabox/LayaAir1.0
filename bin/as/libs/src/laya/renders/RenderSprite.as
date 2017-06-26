@@ -246,8 +246,9 @@ package laya.renders {
 		public function _childs(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			//'use strict';
 			var style:* = sprite._style;
-			x += -style._tf.translateX + style.paddingLeft;
-			y += -style._tf.translateY + style.paddingTop;
+			var _tf:*= style._tf;
+			x = x - _tf.translateX + style.paddingLeft;	
+			y = y - _tf.translateY + style.paddingTop;
 			/*[IF-FLASH]*/if (style.hasOwnProperty("_calculation")) {
 			//[IF-JS]if (style._calculation) {
 				var words:Vector.<HTMLChar> = sprite._getWords();
@@ -294,32 +295,60 @@ package laya.renders {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var _cacheCanvas:* = sprite._$P.cacheCanvas;
 			var _next:RenderSprite = this._next;
+			
 			if (!_cacheCanvas) {
-				_next._fun.call(_next, sprite, tx, x, y);
+				_next._fun.call(_next, sprite, context, x, y);
 				return;
 			}
 			var tx:RenderContext = _cacheCanvas.ctx;
+			var _realRepaint:Boolean = sprite._needRepaint();
 			var _repaint:Boolean = sprite._needRepaint() || (!tx);
 			var canvas:HTMLCanvas;
 			var left:Number;
 			var top:Number;
 			var tRec:Rectangle;
+			var tCacheType:String = _cacheCanvas.type;
 			
-			_cacheCanvas.type === 'bitmap' ? (Stat.canvasBitmap++) : (Stat.canvasNormal++);
+			//以下注释部分为实验性自动cache,勿删
+			//if (Render.isWebGL&&tCacheType == "normal"&&1)
+			//{
+				//if (_realRepaint)
+				//{
+					//_cacheCanvas.waitCount = 0;
+					//_cacheCanvas.cached = false;
+				//}else
+				//{
+					//_cacheCanvas.waitCount++;
+					//
+				//}
+				//if (_cacheCanvas.waitCount < 10)
+				//{
+					//_next._fun.call(_next, sprite, context, x, y);
+					//return;
+				//}else
+				//{
+					//if(_cacheCanvas.waitCount==10)
+						//if (!_repaint) _repaint = true;
+				//}
+			//}
 			
+			
+			tCacheType === 'bitmap' ? (Stat.canvasBitmap++) : (Stat.canvasNormal++);
+
 			if (_repaint) {
 				if (!_cacheCanvas._cacheRec)
 					_cacheCanvas._cacheRec = new Rectangle();
 				var w:Number, h:Number;
-				if (!Render.isWebGL || _cacheCanvas.type === "bitmap")
+				if (!Render.isWebGL || tCacheType === "bitmap")
 				{
 					tRec = sprite.getSelfBounds();
-					tRec.x -= sprite.pivotX;
-					tRec.y -= sprite.pivotY;
-					tRec.x -= 16;
-					tRec.y -= 16;
-					tRec.width += 32;
-					tRec.height += 32;
+					tRec.x = tRec.x - sprite.pivotX;				
+					tRec.y = tRec.y - sprite.pivotY;
+					tRec.x = tRec.x - 16;
+					tRec.y = tRec.y - 16;
+					tRec.width = tRec.width + 32;
+					tRec.height = tRec.height + 32;
+					
 					tRec.x = Math.floor(tRec.x + x) - x;
 					tRec.y = Math.floor(tRec.y + y) - y;
 					tRec.width = Math.floor(tRec.width);
@@ -353,12 +382,19 @@ package laya.renders {
 					}
 					
 				}
+				if (sprite.scrollRect)
+				{
+					var scrollRect:Rectangle = sprite.scrollRect;
+					tRec.x -= scrollRect.x;
+					tRec.y -= scrollRect.y;
+				}
+				
 				w = tRec.width * scaleX;
 				h = tRec.height * scaleY;
 				left = tRec.x;
 				top = tRec.y;
 				
-				if (Render.isWebGL && _cacheCanvas.type === 'bitmap' && (w > 2048 || h > 2048)) {
+				if (Render.isWebGL && tCacheType === 'bitmap' && (w > 2048 || h > 2048)) {
 					console.warn("cache bitmap size larger than 2048,cache ignored");
 					if (_cacheCanvas.ctx) {
 						Pool.recover("RenderContext", _cacheCanvas.ctx);
@@ -377,8 +413,8 @@ package laya.renders {
 				canvas = tx.canvas;
 				canvas.clear();
 				(canvas.width != w || canvas.height != h) && canvas.size(w, h);
-				if (_cacheCanvas.type === 'bitmap') canvas.context.asBitmap = true;
-				else if(_cacheCanvas.type === 'normal')canvas.context.asBitmap = false;
+				if (tCacheType === 'bitmap') canvas.context.asBitmap = true;
+				else if(tCacheType === 'normal')canvas.context.asBitmap = false;
 				
 				var t:*;
 				//TODO:测试webgl下是否有缓存模糊问题
@@ -399,6 +435,7 @@ package laya.renders {
 						t = sprite._$P.cf;
 						t && ctx.setFilterMatrix && ctx.setFilterMatrix(t._mat, t._alpha);
 					}
+					
 					_next._fun.call(_next, sprite, tx, -left, -top);
 					if (!Render.isConchApp || Render.isConchWebGL) sprite._applyFilters();
 				}

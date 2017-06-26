@@ -246,8 +246,8 @@ package laya.ui {
 			if (value != _layout.top) {
 				getLayout().top = value;
 				_setLayoutEnabled(true);
-				resetLayoutY();
 			}
+			resetLayoutY();
 		}
 		
 		/**
@@ -261,8 +261,8 @@ package laya.ui {
 			if (value != _layout.bottom) {
 				getLayout().bottom = value;
 				_setLayoutEnabled(true);
-				resetLayoutY();
 			}
+			resetLayoutY();
 		}
 		
 		/**
@@ -276,8 +276,8 @@ package laya.ui {
 			if (value != _layout.left) {
 				getLayout().left = value;
 				_setLayoutEnabled(true);
-				resetLayoutX();
 			}
+			resetLayoutX();
 		}
 		
 		/**
@@ -290,9 +290,9 @@ package laya.ui {
 		public function set right(value:Number):void {
 			if (value != _layout.right) {
 				getLayout().right = value;
-				_setLayoutEnabled(true);
-				resetLayoutX();
+				_setLayoutEnabled(true);		
 			}
+			resetLayoutX();
 		}
 		
 		/**
@@ -305,9 +305,9 @@ package laya.ui {
 		public function set centerX(value:Number):void {
 			if (value != _layout.centerX) {
 				getLayout().centerX = value;
-				_setLayoutEnabled(true);
-				resetLayoutX();
+				_setLayoutEnabled(true);	
 			}
+			resetLayoutX();
 		}
 		
 		/**
@@ -321,8 +321,8 @@ package laya.ui {
 			if (value != _layout.centerY) {
 				getLayout().centerY = value;
 				_setLayoutEnabled(true);
-				resetLayoutY();
 			}
+			resetLayoutY();
 		}
 		
 		/**X轴锚点，值为0-1*/
@@ -333,9 +333,9 @@ package laya.ui {
 		public function set anchorX(value:Number):void {
 			if (value != _layout.anchorX) {
 				getLayout().anchorX = value;
-				_setLayoutEnabled(true);
-				resetLayoutX();
+				_setLayoutEnabled(true);	
 			}
+			resetLayoutX();
 		}
 		
 		/**Y轴锚点，值为0-1*/
@@ -347,8 +347,8 @@ package laya.ui {
 			if (value != _layout.anchorY) {
 				getLayout().anchorY = value;
 				_setLayoutEnabled(true);
-				resetLayoutY();
 			}
+			resetLayoutY();
 		}
 		
 		/**

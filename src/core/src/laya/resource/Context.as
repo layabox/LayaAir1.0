@@ -13,6 +13,11 @@ package laya.resource {
 		/*** @private */
 		private static var _default:Context =/*[STATIC SAFE]*/ new Context();
 		/*** @private */
+		private static var replaceKeys:Array = ["font", "fillStyle", "textBaseline"];
+		/*** @private */
+		private static var newKeys:Array = [];
+		
+		/*** @private */
 		public var _canvas:HTMLCanvas;
 		public var _repaint:Boolean = false;
 		
@@ -29,7 +34,99 @@ package laya.resource {
 			funs.forEach(function(i:String):void {
 				to[i] = from[i];
 			});
+			//return;
+			
+			var canvasO:*= __JS__("HTMLCanvasElement.prototype");
+			if (!replaceCanvasGetSet(canvasO, "width")) return;
+			if (!replaceCanvasGetSet(canvasO, "height")) return;
+			
+			var i:int, len:int;
+			len = replaceKeys.length;
+			for (i = 0; i < len; i++)
+			{
+				if(!replaceGetSet(to,replaceKeys[i])) return;
+			}
+				
+			to.__reset = from.replaceReset;
+			to.__restore = to.restore;
+			to.restore = from.replaceResotre;
 		}
+		
+		private static function replaceCanvasGetSet(tar:Object, key:String):Boolean
+		{
+			var oldO:Object = __JS__("Object.getOwnPropertyDescriptor(tar, key);")
+			if (!oldO) return false;
+			var newO:Object= { };
+			var tkey:String;
+			for (tkey in oldO)
+			{
+				if (tkey != "set")
+				{
+					newO[tkey] = oldO[tkey];
+				}
+			}
+			var preFun:Function = oldO["set"];
+			newO["set"] = function(v:*):void
+			{
+				var _self:*= __JS__("this");
+				preFun.call(_self, v);
+				var _ct:*= _self.getContext("2d");
+				if (_ct && "__reset" in _ct)
+				{
+					_ct.__reset();
+				}
+			}
+			__JS__("Object.defineProperty(tar, key, newO);")
+			return true;
+		}
+		
+		private function replaceReset():void
+		{
+			var i:int, len:int;
+			len = replaceKeys.length;
+			var key:String;
+			for (i = 0; i < len; i++)
+			{
+				key = replaceKeys[i];
+				this[newKeys[i]]=this[key];
+			}
+		}
+		
+		private function replaceResotre():void
+		{
+			__JS__("this.__restore();")
+			__JS__("this.__reset();")
+		}
+		
+		private static function replaceGetSet(tar:Object, key:String):Boolean
+		{
+			var oldO:Object = __JS__("Object.getOwnPropertyDescriptor(tar, key);")
+			if (!oldO) return false;
+			var newO:Object= { };
+			var tkey:String;
+			for (tkey in oldO)
+			{
+				if (tkey != "set")
+				{
+					newO[tkey] = oldO[tkey];
+				}
+			}
+			var preFun:Function = oldO["set"];
+			var dataKey:String = "___" + key + "__";
+			newKeys.push(dataKey);
+			newO["set"] = function(v:*):void
+			{
+				var _self:*= __JS__("this");
+				if (v != _self[dataKey])
+				{
+					_self[dataKey] = v;
+					preFun.call(_self, v);
+				}
+			}
+			__JS__("Object.defineProperty(tar, key, newO);")
+			return true;
+		}
+
 		
 		public function setIsMainContext():void
 		{

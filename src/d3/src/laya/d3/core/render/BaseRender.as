@@ -31,6 +31,11 @@ package laya.d3.core.render {
 		/**@private */
 		public static var _tempBoundBoxCorners:Array = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		
+		/**唯一标识ID计数器*/
+		private static var _uniqueIDCounter:int = 0;
+		
+		/**@private */
+		private var _id:int;
 		/**@private */
 		private var _destroyed:Boolean;
 		/** @private */
@@ -57,6 +62,8 @@ package laya.d3.core.render {
 		protected var _octreeNodeNeedChange:Boolean;
 		
 		/** @private */
+		public var _indexInSceneFrustumCullingObjects:int;
+		/** @private */
 		public var _materials:Vector.<BaseMaterial>;
 		/** @private */
 		public var _owner:RenderableSprite3D;
@@ -67,7 +74,7 @@ package laya.d3.core.render {
 		/** @private */
 		public var _treeNode:ITreeNode;
 		/**@private */
-		public var  _isPartOfStaticBatch:Boolean;
+		public var _isPartOfStaticBatch:Boolean;
 		/**@private */
 		public var _staticBatchRootSprite3D:Sprite3D;
 		/**@private */
@@ -77,6 +84,13 @@ package laya.d3.core.render {
 		public var sortingFudge:Number;
 		/** 是否产生阴影。 */
 		public var castShadow:Boolean;
+		
+		/**
+		 * 获取唯一标识ID,通常用于识别。
+		 */
+		public function get id():int {
+			return _id;
+		}
 		
 		/**
 		 * 获取光照贴图的索引。
@@ -299,6 +313,8 @@ package laya.d3.core.render {
 		 * 创建一个新的 <code>BaseRender</code> 实例。
 		 */
 		public function BaseRender(owner:RenderableSprite3D) {
+			_id = ++_uniqueIDCounter;
+			_indexInSceneFrustumCullingObjects =-1;
 			_boundingBox = new BoundBox(new Vector3(), new Vector3());
 			_boundingBoxCenter = new Vector3();
 			_boundingSphere = new BoundSphere(new Vector3(), 0);

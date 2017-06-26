@@ -92,7 +92,6 @@ package laya.d3.resource {
 			_magFifter = magFifter;
 			
 			activeResource();
-			_loaded = true;
 			_alreadyResolved = true;
 		}
 		

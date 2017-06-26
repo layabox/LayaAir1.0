@@ -1,4 +1,6 @@
 package laya.d3.core {
+	import laya.d3.animation.AnimationNode;
+	import laya.d3.animation.AnimationTransform3D;
 	import laya.d3.math.MathUtils3D;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
@@ -24,49 +26,60 @@ package laya.d3.core {
 		/** @private */
 		private static var _tempMatrix0:Matrix4x4 = new Matrix4x4();
 		
-		/** @private */
-		protected var _localPosition:Vector3 = new Vector3();
-		/** @private */
-		protected var _localRotation:Quaternion = new Quaternion(0, 0, 0, 1);
-		/** @private */
-		protected var _localScale:Vector3 = new Vector3(1, 1, 1);
-		/** @private */
-		protected var _localMatrix:Matrix4x4 = new Matrix4x4();
+		/**@private */
+		private static const _angleToRandin:Number = 180 / Math.PI;
+		/**@private */
+		private static const _randinToAngle:Number = 180 * Math.PI;
 		
 		/** @private */
-		protected var _position:Vector3 = new Vector3();
+		private var _owner:Sprite3D;
 		/** @private */
-		protected var _rotation:Quaternion = new Quaternion(0, 0, 0, 1);
+		private var _localPosition:Vector3 = new Vector3();
 		/** @private */
-		protected var _scale:Vector3 = new Vector3(1, 1, 1);
+		private var _localRotation:Quaternion = new Quaternion(0, 0, 0, 1);
 		/** @private */
-		protected var _worldMatrix:Matrix4x4 = new Matrix4x4();
+		private var _localScale:Vector3 = new Vector3(1, 1, 1);
+		/**@private */
+		private var _localRotationEuler:Vector3 = new Vector3();
+		/** @private */
+		private var _localMatrix:Matrix4x4 = new Matrix4x4();
 		
 		/** @private */
-		protected var _owner:Sprite3D;
+		private var _position:Vector3 = new Vector3();
+		/** @private */
+		private var _rotation:Quaternion = new Quaternion(0, 0, 0, 1);
+		/** @private */
+		private var _scale:Vector3 = new Vector3(1, 1, 1);
+		/** @private */
+		private var _worldMatrix:Matrix4x4 = new Matrix4x4();
 		
 		/** @private */
-		protected var _forward:Vector3 = new Vector3();
+		private var _forward:Vector3 = new Vector3();
 		/** @private */
-		protected var _up:Vector3 = new Vector3();
+		private var _up:Vector3 = new Vector3();
 		/** @private */
-		protected var _right:Vector3 = new Vector3();
+		private var _right:Vector3 = new Vector3();
 		
 		/** @private */
-		protected var _preWorldTransformModifyID:Number = -1;
-		
+		private var _localQuaternionUpdate:Boolean = false;
 		/** @private */
-		protected var _localUpdate:Boolean = false;
+		private var _locaEulerlUpdate:Boolean = false;
 		/** @private */
-		protected var _worldUpdate:Boolean = true;
+		private var _localUpdate:Boolean = false;
 		/** @private */
-		protected var _positionUpdate:Boolean = true;
+		private var _worldUpdate:Boolean = true;
 		/** @private */
-		protected var _rotationUpdate:Boolean = true;
+		private var _positionUpdate:Boolean = true;
 		/** @private */
-		protected var _scaleUpdate:Boolean = true;
+		private var _rotationUpdate:Boolean = true;
 		/** @private */
-		protected var _parent:Transform3D;
+		private var _scaleUpdate:Boolean = true;
+		/** @private */
+		private var _parent:Transform3D;
+		/** @private */
+		private var _childs:Vector.<Transform3D>;
+		/**@private */
+		private var _dummy:AnimationTransform3D;
 		
 		/** 变换中心点,注意:该中心点不受变换的影响。*/
 		public var pivot:Vector3;
@@ -80,6 +93,13 @@ package laya.d3.core {
 			(scale.y < 0) && (isInvert = !isInvert);
 			(scale.z < 0) && (isInvert = !isInvert);
 			return isInvert;
+		}
+		
+		/**
+		 * 获取所属精灵。
+		 */
+		public function get owner():Sprite3D {
+			return _owner;
 		}
 		
 		/**
@@ -110,6 +130,7 @@ package laya.d3.core {
 		public function set localMatrix(value:Matrix4x4):void {
 			_localMatrix = value;
 			_localMatrix.decomposeTransRotScale(_localPosition, _localRotation, _localScale);
+			_localUpdate = false;
 			_onWorldTransform();
 		}
 		
@@ -134,7 +155,7 @@ package laya.d3.core {
 		 * 设置世界矩阵。
 		 * @param	value 世界矩阵。
 		 */
-		public function set worldMatrix(value:Matrix4x4):void {//TODO:待研究是否可直接保存world矩阵，无需重复更新。
+		public function set worldMatrix(value:Matrix4x4):void {
 			if (_parent === null) {
 				value.cloneTo(_localMatrix);
 			} else {
@@ -142,6 +163,9 @@ package laya.d3.core {
 				Matrix4x4.multiply(_localMatrix, value, _localMatrix);
 			}
 			localMatrix = _localMatrix;
+			_worldMatrix = value;
+			
+			_worldUpdate = false;
 		}
 		
 		/**
@@ -167,6 +191,10 @@ package laya.d3.core {
 		 * @return	局部旋转。
 		 */
 		public function get localRotation():Quaternion {
+			if (_localQuaternionUpdate) {
+				var eulerE:Float32Array = _localRotationEuler.elements;
+				Quaternion.createFromYawPitchRoll(eulerE[1] / _angleToRandin, eulerE[0] / _angleToRandin, eulerE[2] / _angleToRandin, _localRotation);
+			}
 			return _localRotation;
 		}
 		
@@ -177,6 +205,8 @@ package laya.d3.core {
 		public function set localRotation(value:Quaternion):void {
 			_localRotation = value;
 			_localRotation.normalize(_localRotation);
+			_locaEulerlUpdate = true;
+			_localQuaternionUpdate = false;
 			_onLocalTransform();
 			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
 				_onWorldPositionRotationTransform();
@@ -210,12 +240,30 @@ package laya.d3.core {
 		 * @param	value 欧拉角的旋转值，顺序为x、y、z。
 		 */
 		public function set localRotationEuler(value:Vector3):void {
-			Quaternion.createFromYawPitchRoll(value.y, value.x, value.z, _localRotation);
+			_localRotationEuler = value;
+			_locaEulerlUpdate = false;
+			_localQuaternionUpdate = true;
 			_onLocalTransform();
 			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
 				_onWorldPositionRotationTransform();
 			else
 				_onWorldRotationTransform();
+		}
+		
+		/**
+		 * 获取局部空间的旋转角度。
+		 * @return	欧拉角的旋转值，顺序为x、y、z。
+		 */
+		public function get localRotationEuler():Vector3 {
+			if (_locaEulerlUpdate) {
+				_localRotation.getYawPitchRoll(_tempVector30);
+				var eulerE:Float32Array = _tempVector30.elements;
+				var localRotationEulerE:Float32Array = _localRotationEuler.elements;
+				localRotationEulerE[0] = eulerE[1] / _randinToAngle;
+				localRotationEulerE[1] = eulerE[0] / _randinToAngle;
+				localRotationEulerE[2] = eulerE[2] / _randinToAngle;
+			}
+			return _localRotationEuler;
 		}
 		
 		/**
@@ -262,11 +310,10 @@ package laya.d3.core {
 			if (!_rotationUpdate)
 				return _rotation;
 			
-			if (_parent !== null) {
+			if (_parent !== null) 
 				worldMatrix.decomposeTransRotScale(_position, _rotation, _scale);//可不计算_position和_scale,数学库有优化
-			} else {
+			 else 
 				_localRotation.cloneTo(_rotation);
-			}
 			
 			_rotationUpdate = false;
 			return _rotation;
@@ -350,12 +397,50 @@ package laya.d3.core {
 		}
 		
 		/**
+		 * 获取父3D变换。
+		 * @return 父3D变换。
+		 */
+		public function get parent():Transform3D {
+			return _parent;
+		}
+		
+		/**
 		 * 设置父3D变换。
 		 * @param	value 父3D变换。
 		 */
 		public function set parent(value:Transform3D):void {
-			_parent = value;
-			(value) && (_onWorldTransform());
+			if (_parent !== value) {
+				if (_parent) {
+					var parentChilds:Vector.<Transform3D> = _parent._childs;
+					var index:int = parentChilds.indexOf(this);
+					parentChilds.splice(index, 1);
+				}
+				if (value) {
+					value._childs.push(this);
+					(value) && (_onWorldTransform());
+				}
+				_parent = value;
+			}
+		}
+		
+		/**
+		 *设置关联虚拟变换。
+		 * @param value 虚拟变换。
+		 */
+		public function set dummy(value:AnimationTransform3D):void {
+			if (_dummy !== value) {
+				(_dummy) && (_dummy._entity = null);
+				(value) && (value._entity = this);
+				_dummy = value;
+			}
+		}
+		
+		/**
+		 *获取关联虚拟变换。
+		 * @return 虚拟变换。
+		 */
+		public function get dummy():AnimationTransform3D {
+			return _dummy;
 		}
 		
 		/**
@@ -364,94 +449,96 @@ package laya.d3.core {
 		 */
 		public function Transform3D(owner:Sprite3D) {
 			_owner = owner;
+			_childs = new Vector.<Transform3D>();
 		}
 		
 		/**
 		 * @private
 		 */
-		protected function _updateLocalMatrix():void {
+		private function _updateLocalMatrix():void {
 			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0)) {
 				var scalePivot:Vector3 = _tempVector30;
 				Vector3.multiply(pivot, _localScale, scalePivot);
 				var scaleOffsetPosition:Vector3 = _tempVector31;
 				Vector3.subtract(scalePivot, pivot, scaleOffsetPosition);
 				var rotationOffsetPosition:Vector3 = _tempVector32;
-				Vector3.transformQuat(scalePivot, _localRotation, rotationOffsetPosition);
+				var localRot:Quaternion = localRotation;
+				Vector3.transformQuat(scalePivot, localRot, rotationOffsetPosition);
 				Vector3.subtract(rotationOffsetPosition, scalePivot, rotationOffsetPosition);
 				
 				var resultLocalPosition:Vector3 = _tempVector33;
 				Vector3.subtract(_localPosition, scaleOffsetPosition, resultLocalPosition);
 				Vector3.subtract(resultLocalPosition, rotationOffsetPosition, resultLocalPosition);
-				Matrix4x4.createAffineTransformation(resultLocalPosition, _localRotation, _localScale, _localMatrix);
+				Matrix4x4.createAffineTransformation(resultLocalPosition, localRot, _localScale, _localMatrix);
 			} else {
-				Matrix4x4.createAffineTransformation(_localPosition, _localRotation, _localScale, _localMatrix);
+				Matrix4x4.createAffineTransformation(_localPosition, localRotation, _localScale, _localMatrix);
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		protected function _onLocalTransform():void {
+		private function _onLocalTransform():void {
 			_localUpdate = true;
 		}
 		
 		/**
 		 * @private
 		 */
-		protected function _onWorldPositionRotationTransform():void {
+		private function _onWorldPositionRotationTransform():void {
 			if (!_worldUpdate || !_positionUpdate || !_rotationUpdate) {
 				_worldUpdate = _positionUpdate = _rotationUpdate = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
-					(_owner._childs[i] as Sprite3D).transform._onWorldPositionRotationTransform();
+				for (var i:int = 0, n:int = _childs.length; i < n; i++)
+					_childs[i]._onWorldPositionRotationTransform();
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		protected function _onWorldPositionScaleTransform():void {
+		private function _onWorldPositionScaleTransform():void {
 			if (!_worldUpdate || !_positionUpdate || !_scaleUpdate) {
 				_worldUpdate = _positionUpdate = _scaleUpdate = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
-					(_owner._childs[i] as Sprite3D).transform._onWorldPositionScaleTransform();
+				for (var i:int = 0, n:int = _childs.length; i < n; i++)
+					_childs[i]._onWorldPositionScaleTransform();
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		protected function _onWorldPositionTransform():void {
+		private function _onWorldPositionTransform():void {
 			if (!_worldUpdate || !_positionUpdate) {
 				_worldUpdate = _positionUpdate = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
-					(_owner._childs[i] as Sprite3D).transform._onWorldPositionTransform();
+				for (var i:int = 0, n:int = _childs.length; i < n; i++)
+					_childs[i]._onWorldPositionTransform();
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		protected function _onWorldRotationTransform():void {
+		private function _onWorldRotationTransform():void {
 			if (!_worldUpdate || !_rotationUpdate) {
 				_worldUpdate = _rotationUpdate = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
-					(_owner._childs[i] as Sprite3D).transform._onWorldRotationTransform();
+				for (var i:int = 0, n:int = _childs.length; i < n; i++)
+					_childs[i]._onWorldRotationTransform();
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		protected function _onWorldScaleTransform():void {
+		private function _onWorldScaleTransform():void {
 			if (!_worldUpdate || !_scaleUpdate) {
 				_worldUpdate = _scaleUpdate = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
-					(_owner._childs[i] as Sprite3D).transform._onWorldScaleTransform();
+				for (var i:int = 0, n:int = _childs.length; i < n; i++)
+					_childs[i]._onWorldScaleTransform();
 			}
 		}
 		
@@ -462,8 +549,8 @@ package laya.d3.core {
 			if (!_worldUpdate || !_positionUpdate || !_rotationUpdate || !_scaleUpdate) {
 				_worldUpdate = _positionUpdate = _rotationUpdate = _scaleUpdate = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _owner._childs.length; i < n; i++)
-					(_owner._childs[i] as Sprite3D).transform._onWorldTransform();
+				for (var i:int = 0, n:int = _childs.length; i < n; i++)
+					_childs[i]._onWorldTransform();
 			}
 		}
 		
@@ -493,7 +580,7 @@ package laya.d3.core {
 		public function rotate(rotation:Vector3, isLocal:Boolean = true, isRadian:Boolean = true):void {
 			var rot:Vector3;
 			if (!isRadian) {
-				Vector3.scale(rotation, Math.PI / 180, _tempVector30);
+				Vector3.scale(rotation, Math.PI / 180.0, _tempVector30);
 				rot = _tempVector30;
 			} else {
 				rot = rotation;

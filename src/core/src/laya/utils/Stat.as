@@ -5,7 +5,14 @@ package laya.utils {
 	import laya.resource.ResourceManager;
 	
 	/**
-	 * <code>Stat</code> 用于显示帧率统计信息。
+	 * <p> <code>Stat</code> 是一个性能统计面板，可以实时更新相关的性能参数。</p>
+	 * <p>参与统计的性能参数如下（所有参数都是每大约1秒进行更新）：<br/>
+	 * FPS(Canvas)/FPS(WebGL)：Canvas 模式或者 WebGL 模式下的帧频，也就是每秒显示的帧数，值越高、越稳定，感觉越流畅；<br/>
+	 * Sprite：统计所有渲染节点（包括容器）数量，它的大小会影响引擎进行节点遍历、数据组织和渲染的效率。其值越小，游戏运行效率越高；<br/>
+	 * DrawCall：此值是决定性能的重要指标，其值越小，游戏运行效率越高。Canvas模式下表示每大约1秒的图像绘制次数；WebGL模式下表示每大约1秒的渲染提交批次，每次准备数据并通知GPU渲染绘制的过程称为1次DrawCall，在每次DrawCall中除了在通知GPU的渲染上比较耗时之外，切换材质与shader也是非常耗时的操作；<br/>
+	 * CurMem：Canvas模式下，表示内存占用大小，值越小越好，过高会导致游戏闪退；WebGL模式下，表示内存与显存的占用，值越小越好；<br/>
+	 * Shader：是 WebGL 模式独有的性能指标，表示每大约1秒 Shader 提交次数，值越小越好；<br/>
+	 * Canvas：由三个数值组成，只有设置 CacheAs 后才会有值，默认为0/0/0。从左到右数值的意义分别为：每帧重绘的画布数量 / 缓存类型为"normal"类型的画布数量 / 缓存类型为"bitmap"类型的画布数量。</p>
 	 */
 	public class Stat {
 		/** 每秒帧数。*/
@@ -50,7 +57,7 @@ package laya.utils {
 		private static var _vx:Number;
 		
 		/**
-		 * 显示帧频信息。
+		 * 显示性能统计信息。
 		 * @param	x X轴显示位置。
 		 * @param	y Y轴显示位置。
 		 */
@@ -88,8 +95,8 @@ package laya.utils {
 				_view[i].x = 4;
 				_view[i].y = i * _fontSize + 2 * pixel;
 			}
-		    
-			_height = pixel * (_view.length * 12 + 3 * pixel)+4;
+			
+			_height = pixel * (_view.length * 12 + 3 * pixel) + 4;
 			
 			if (!_canvas) {
 				_canvas = new HTMLCanvas('2D');
@@ -107,13 +114,13 @@ package laya.utils {
 			enable();
 		}
 		
-		/**激活帧率统计*/
+		/**激活性能统计*/
 		public static function enable():void {
 			Laya.timer.frameLoop(1, Stat, loop);
 		}
 		
 		/**
-		 * 隐藏帧频信息。
+		 * 隐藏性能统计信息。
 		 */
 		public static function hide():void {
 			if (_canvas) {
@@ -124,14 +131,14 @@ package laya.utils {
 		
 		/**
 		 * @private
-		 * 清除帧频计算相关的数据。
+		 * 清零性能统计计算相关的数据。
 		 */
 		public static function clear():void {
-			trianglesFaces = drawCall = shaderCall = spriteCount=treeNodeCollision=treeSpriteCollision = canvasNormal = canvasBitmap = canvasReCache = 0;
+			trianglesFaces = drawCall = shaderCall = spriteCount = treeNodeCollision = treeSpriteCollision = canvasNormal = canvasBitmap = canvasReCache = 0;
 		}
 		
 		/**
-		 * 点击帧频显示区域的处理函数。
+		 * 点击性能统计显示区域的处理函数。
 		 */
 		public static function set onclick(fn:Function):void {
 			_canvas.source.onclick = fn;
@@ -140,7 +147,7 @@ package laya.utils {
 		
 		/**
 		 * @private
-		 * 帧频计算循环处理函数。
+		 * 性能统计参数计算循环处理函数。
 		 */
 		public static function loop():void {
 			_count++;
@@ -163,8 +170,8 @@ package laya.utils {
 				treeNodeCollision = Math.round(treeNodeCollision / count);
 				treeSpriteCollision = Math.round(treeSpriteCollision / count);
 				
-				var delay:String = FPS > 0?Math.floor(1000 / FPS).toString():" ";
-				_fpsStr = FPS + (renderSlow ? " slow" : "")+" "+delay;
+				var delay:String = FPS > 0 ? Math.floor(1000 / FPS).toString() : " ";
+				_fpsStr = FPS + (renderSlow ? " slow" : "") + " " + delay;
 				_canvasStr = canvasReCache + "/" + canvasNormal + "/" + canvasBitmap;
 				currentMemorySize = ResourceManager.systemResourceManager.memorySize;
 				

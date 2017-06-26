@@ -1,4 +1,5 @@
 package laya.ui {
+	import laya.display.Node;
 	import laya.events.Event;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
@@ -267,7 +268,7 @@ package laya.ui {
 		}
 		
 		public function set vScrollBarSkin(value:String):void {
-			removeChildByName("scrollBar");
+			_removePreScrollBar();
 			var scrollBar:VScrollBar = new VScrollBar();
 			scrollBar.name = "scrollBar";
 			scrollBar.right = 0;
@@ -278,6 +279,12 @@ package laya.ui {
 			_setCellChanged();
 		}
 		
+		private function _removePreScrollBar():void
+		{
+			var preNode:Node = removeChildByName("scrollBar");
+			if (preNode) preNode.destroy(true);
+		}
+		
 		/**
 		 * 水平方向滚动条皮肤。
 		 */
@@ -286,7 +293,7 @@ package laya.ui {
 		}
 		
 		public function set hScrollBarSkin(value:String):void {
-			removeChildByName("scrollBar");
+			_removePreScrollBar();
 			var scrollBar:HScrollBar = new HScrollBar();
 			scrollBar.name = "scrollBar";
 			scrollBar.bottom = 0;
@@ -341,14 +348,18 @@ package laya.ui {
 		
 		/**@inheritDoc */
 		override public function set width(value:Number):void {
-			super.width = value;
-			_setCellChanged();
+			if (value != _width) {
+				super.width = value;
+				_setCellChanged();
+			}
 		}
 		
 		/**@inheritDoc */
 		override public function set height(value:Number):void {
-			super.height = value;
-			_setCellChanged();
+			if (value != _height) {
+				super.height = value;
+				_setCellChanged();
+			}
 		}
 		
 		/**

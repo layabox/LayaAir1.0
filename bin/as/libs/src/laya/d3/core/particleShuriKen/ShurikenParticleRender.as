@@ -13,6 +13,7 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.utils.Physics;
+	import laya.utils.Stat;
 	
 	/**
 	 * <code>ShurikenParticleRender</code> 类用于创建3D粒子渲染器。
@@ -129,6 +130,7 @@ package laya.d3.core.particleShuriKen {
 		 * 创建一个 <code>ShurikenParticleRender</code> 实例。
 		 */
 		public function ShurikenParticleRender(owner:ShuriKenParticle3D) {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super(owner);
 			_defaultBoundBox = new BoundBox(new Vector3(), new Vector3());
 			_renderMode = -1;
@@ -214,6 +216,7 @@ package laya.d3.core.particleShuriKen {
 			finalGravityE[0] = gravityE[0] * gravityModifier;
 			finalGravityE[1] = gravityE[1] * gravityModifier;
 			finalGravityE[2] = gravityE[2] * gravityModifier;
+			
 			_setShaderValueBuffer(ShuriKenParticle3D.GRAVITY, finalGravityE);
 			_setShaderValueInt(ShuriKenParticle3D.SIMULATIONSPACE, particleSystem.simulationSpace);
 			_setShaderValueBool(ShuriKenParticle3D.THREEDSTARTROTATION, particleSystem.threeDStartRotation);

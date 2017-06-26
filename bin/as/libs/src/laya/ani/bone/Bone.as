@@ -80,6 +80,10 @@ package laya.ani.bone {
 							Matrix.TEMP.copyTo(tTestMatrix);
 							tResultMatrix = resultTransform.getMatrix();
 							Matrix.mul(tResultMatrix, tTestMatrix, resultMatrix);
+							if (resultTransform.scX * resultTransform.scY < 0)
+							{
+								resultMatrix.rotate(Math.PI*0.5);
+							}
 							resultMatrix.tx = worldX;
 							resultMatrix.ty = worldY;
 						}

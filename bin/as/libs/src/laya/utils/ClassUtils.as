@@ -123,7 +123,7 @@ package laya.utils {
 							if (data.type == "Script") {
 								if (tChild.hasOwnProperty("owner")) {
 									tChild["owner"] = node;
-								}else if (tChild.hasOwnProperty("target")) {
+								} else if (tChild.hasOwnProperty("target")) {
 									tChild["target"] = node;
 								}
 								
@@ -136,7 +136,7 @@ package laya.utils {
 					}
 				}
 			}
-
+			
 			if (props) {
 				for (var prop:String in props) {
 					var value:* = props[prop];

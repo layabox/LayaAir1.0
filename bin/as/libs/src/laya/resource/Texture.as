@@ -150,13 +150,13 @@ package laya.resource {
 		}
 		
 		/**
-		 * 截取Texture的一部分区域，生成新的Texture，如果两个区域没有相交，则返回null
-		 * @param	texture 目标Texture
-		 * @param	x 相对于目标Texture的x位置
-		 * @param	y 相对于目标Texture的y位置
-		 * @param	width 截取的宽度
-		 * @param	height 截取的高度
-		 * @return	返回一个新的Texture
+		 * 截取Texture的一部分区域，生成新的Texture，如果两个区域没有相交，则返回null。
+		 * @param	texture	目标Texture。
+		 * @param	x		相对于目标Texture的x位置。
+		 * @param	y		相对于目标Texture的y位置。
+		 * @param	width	截取的宽度。
+		 * @param	height	截取的高度。
+		 * @return 返回一个新的Texture。
 		 */
 		public static function createFromTexture(texture:Texture, x:Number, y:Number, width:Number, height:Number):Texture {
 			var rect:Rectangle = Rectangle.TEMP.setTo(x - texture.offsetX, y - texture.offsetY, width, height);
@@ -179,23 +179,25 @@ package laya.resource {
 		 * 表示资源是否已释放。
 		 */
 		public function get released():Boolean {
+			if (!bitmap) return true;
 			return bitmap.released;
 		}
 		
 		/** @private 激活资源。*/
 		public function active():void {
-			bitmap.activeResource();
+			if(bitmap)	bitmap.activeResource();
 		}
 		
 		/** 激活并获取资源。*/
 		public function get source():* {
+			if (!bitmap) return null;
 			bitmap.activeResource();
 			return bitmap.source;
 		}
 		
 		/**
-		 * 销毁纹理（分直接销毁，跟计数销毁两种）
-		 * @param	forceDispose	true为强制销毁主纹理，false是通过计数销毁纹理
+		 * 销毁纹理（分直接销毁，跟计数销毁两种）。
+		 * @param	forceDispose	(default = false)true为强制销毁主纹理，false是通过计数销毁纹理。
 		 */
 		public function destroy(forceDispose:Boolean = false):void {
 			if (bitmap && (bitmap as Bitmap).useNum > 0) {
@@ -237,14 +239,14 @@ package laya.resource {
 		}
 		
 		/**
-		 * 获取当前纹理是否启用了线性采样
+		 * 获取当前纹理是否启用了线性采样。
 		 */
 		public function get isLinearSampling():Boolean {
 			return Render.isWebGL ? (bitmap.minFifter != 0x2600) : true;
 		}
 		
 		/**
-		 * 设置线性采样的状态（目前只能第一次绘制前设置false生效,来关闭线性采样）
+		 * 设置线性采样的状态（目前只能第一次绘制前设置false生效,来关闭线性采样）。
 		 */
 		public function set isLinearSampling(value:Boolean):void {
 			if (!value && Render.isWebGL) {

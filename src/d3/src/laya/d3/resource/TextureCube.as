@@ -190,8 +190,7 @@ package laya.d3.resource {
 				_conchTexture.setTextureCubeImages(_images);
 			else
 				activeResource();
-			_loaded = true;
-			event(Event.LOADED, this);
+			_endLoaded();
 		}
 		
 		override protected function detoryResource():void {

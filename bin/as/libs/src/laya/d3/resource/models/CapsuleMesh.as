@@ -116,7 +116,6 @@ package laya.d3.resource.models {
 			_stacks = stacks;
 			_slices = slices;
 			recreateResource();
-			_loaded = true;
 			_generateBoundingObject();
 		
 		}
@@ -167,7 +166,7 @@ package laya.d3.resource.models {
 					vertices[vc++] = posX;
 					vertices[vc++] = posY + hcHeight;
 					vertices[vc++] = posZ;
-
+					
 					//normal
 					vertices[vc++] = posX;
 					vertices[vc++] = posY;
@@ -175,7 +174,7 @@ package laya.d3.resource.models {
 					
 					//uv
 					vertices[vc++] = 1 - slice / _slices;
-					vertices[vc++] = (1 - stack / _stacks) * ((Math.PI *_radius / 2) / (_height + Math.PI * _radius));
+					vertices[vc++] = (1 - stack / _stacks) * ((Math.PI * _radius / 2) / (_height + Math.PI * _radius));
 					
 					if (stack < _stacks) {
 						
@@ -216,7 +215,7 @@ package laya.d3.resource.models {
 					
 					//uv
 					vertices[vc++] = 1 - slice / _slices;
-					vertices[vc++] = ((stack / _stacks) * (Math.PI *_radius / 2)  + (_height + Math.PI * _radius / 2)) /  (_height + Math.PI * _radius);
+					vertices[vc++] = ((stack / _stacks) * (Math.PI * _radius / 2) + (_height + Math.PI * _radius / 2)) / (_height + Math.PI * _radius);
 					
 					if (stack < _stacks) {
 						
@@ -258,8 +257,8 @@ package laya.d3.resource.models {
 				//uv    
 				vertices[vc++] = 1 - slice * 1 / _slices;
 				vertices[vc + (_slices + 1) * 8 - 1] = 1 - slice * 1 / _slices;
-				vertices[vc++] = (Math.PI * _radius / 2) /  (_height + Math.PI * _radius);
-				vertices[vc + (_slices + 1) * 8 - 1] = (Math.PI * _radius / 2 + _height) /  (_height + Math.PI * _radius);
+				vertices[vc++] = (Math.PI * _radius / 2) / (_height + Math.PI * _radius);
+				vertices[vc + (_slices + 1) * 8 - 1] = (Math.PI * _radius / 2 + _height) / (_height + Math.PI * _radius);
 			}
 			
 			for (slice = 0; slice < _slices; slice++) {

@@ -10,12 +10,10 @@ package laya.events {
 	
 	/**
 	 * <p><code>MouseManager</code> 是鼠标、触摸交互管理器。</p>
-	 * <p>
-	 * 鼠标事件流包括捕获阶段、目标阶段、冒泡阶段。<br/>
+	 * <p>鼠标事件流包括捕获阶段、目标阶段、冒泡阶段。<br/>
 	 * 捕获阶段：此阶段引擎会从stage开始递归检测stage及其子对象，直到找到命中的目标对象或者未命中任何对象；<br/>
 	 * 目标阶段：找到命中的目标对象；<br/>
-	 * 冒泡阶段：事件离开目标对象，按节点层级向上逐层通知，直到到达舞台的过程。
-	 * <p>
+	 * 冒泡阶段：事件离开目标对象，按节点层级向上逐层通知，直到到达舞台的过程。</p>
 	 */
 	public class MouseManager {
 		/**
@@ -68,7 +66,7 @@ package laya.events {
 			}
 			canvas.addEventListener('mousedown', function(e:*):void {
 				if (enabled) {
-					e.preventDefault();
+					if(!Browser.onIE) e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = Browser.now();
 				}
@@ -201,6 +199,8 @@ package laya.events {
 			//先判定子对象是否命中
 			if (!disableMouseEvent) {
 				//优先判断父对象
+				//默认情况下，hitTestPrior=mouseThrough=false，也就是优先check子对象
+				//$NEXTBIG:下个重大版本将sp.mouseThrough从此逻辑中去除，从而使得sp.mouseThrough只负责目标对象的穿透
 				if (sp.hitTestPrior && !sp.mouseThrough && !hitTest(sp, mouseX, mouseY)) {
 					return false;
 				}
@@ -213,8 +213,8 @@ package laya.events {
 				}
 			}
 			
-			//避免重复进行碰撞检测，考虑了判断的命中率，一般hitTestPrior和disableMouseEvent都为false，而hitTestPrior为true的概率更高。
-			var isHit:Boolean = (sp.hitTestPrior && !sp.mouseThrough &&  !disableMouseEvent) ? true : hitTest(sp, mouseX, mouseY);
+			//避免重复进行碰撞检测，考虑了判断条件的命中率。
+			var isHit:Boolean = (sp.hitTestPrior && !sp.mouseThrough && !disableMouseEvent) ? true : hitTest(sp, mouseX, mouseY);
 			
 			if (isHit) {
 				_target = sp;
@@ -230,6 +230,10 @@ package laya.events {
 		
 		private function hitTest(sp:Sprite, mouseX:Number, mouseY:Number):Boolean {
 			var isHit:Boolean = false;
+			if (sp.scrollRect) {
+				mouseX -= sp.scrollRect.x;
+				mouseY -= sp.scrollRect.y;
+			}
 			if (sp.hitArea is HitArea) {
 				return sp.hitArea.isHit(mouseX, mouseY);
 			}
@@ -314,7 +318,12 @@ package laya.events {
 						if (multiTouchEnabled || touch.identifier == _curTouchID) {
 							_curTouchID = NaN;
 							_this.initEvent(touch, evt);
-							_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseUp);
+							var isChecked:Boolean;
+							isChecked = _this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseUp);
+							if (!isChecked)
+							{
+								_this.onMouseUp(null);
+							}
 						}
 					}
 					

@@ -28,7 +28,7 @@
 		inputText.y = Laya.stage.height - inputText.height >> 1;
 
 		// 移动端输入提示符
-		inputText.prompt = "Type some word...";
+		inputText.text = "يرب";
 
 		// 设置字体样式
 		inputText.bold = true;

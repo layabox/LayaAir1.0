@@ -79,12 +79,12 @@ package laya.net {
 		protected var _http:HttpRequest;
 		
 		/**
-		 * 加载资源。
-		 * @param	url 地址
-		 * @param	type 类型，如果为null，则根据文件后缀，自动分析类型。
-		 * @param	cache 是否缓存数据。
-		 * @param	group 分组。
-		 * @param	ignoreCache 是否忽略缓存，强制重新加载
+		 * 加载资源。加载错误会派发 Event.ERROR 事件，参数为错误信息。
+		 * @param	url			资源地址。
+		 * @param	type		(default = null)资源类型。可选值为：Loader.TEXT、Loader.JSON、Loader.XML、Loader.BUFFER、Loader.IMAGE、Loader.SOUND、Loader.ATLAS、Loader.FONT。如果为null，则根据文件后缀分析类型。
+		 * @param	cache		(default = true)是否缓存数据。
+		 * @param	group		(default = null)分组名称。
+		 * @param	ignoreCache (default = false)是否忽略缓存，强制重新加载。
 		 */
 		public function load(url:String, type:String = null, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):void {
 			this._url = url;
@@ -435,7 +435,7 @@ package laya.net {
 		/**
 		 * 设置资源分组。
 		 * @param url 资源地址。
-		 * @param group 分组名
+		 * @param group 分组名。
 		 */
 		public static function setGroup(url:String, group:String):void {
 			if (!groupMap[group]) groupMap[group] = [];
@@ -443,8 +443,8 @@ package laya.net {
 		}
 		
 		/**
-		 * 根据分组清理资源
-		 * @param group 分组名
+		 * 根据分组清理资源。
+		 * @param group 分组名。
 		 */
 		public static function clearResByGroup(group:String):void {
 			if (!groupMap[group]) return;

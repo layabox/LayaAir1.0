@@ -75,7 +75,7 @@ package laya.d3.core.particleShuriKen.module.shape {
 					ShapeUtils._randomPointInsideUnitArcCircle(arc, _tempPositionPoint);
 			}
 			
-			rpE[0] = positionPointE[0];
+			rpE[0] = -positionPointE[0];
 			rpE[1] = positionPointE[1];
 			rpE[2] = 0;
 			

@@ -13,7 +13,7 @@ package laya.ui {
 	 */
 	public class FontClip extends Clip {
 		/**数值*/
-		protected var _valueArr:Array;
+		protected var _valueArr:String;
 		/**文字内容数组**/
 		protected var _indexMap:Object;
 		/**位图字体内容**/
@@ -24,6 +24,12 @@ package laya.ui {
 		protected var _spaceX:int;
 		/**Y方向间隙*/
 		protected var _spaceY:int;
+		/**@private水平对齐方式*/
+		private var _align:String = "left";
+		/**@private显示文字宽*/
+		private var _wordsW:Number = 0;
+		/**@private显示文字高*/
+		private var _wordsH:Number=0;
 		
 		/**
 		 * @param skin 位图字体皮肤
@@ -75,12 +81,12 @@ package laya.ui {
 		 */
 		public function get value():String {
 			if (!_valueArr) return "";
-			return _valueArr.join("");
+			return _valueArr;
 		}
 		
 		public function set value(value:String):void {
 			value += "";
-			_valueArr = value.split("");
+			_valueArr = value;
 			callLater(changeValue);
 		}
 		
@@ -121,31 +127,98 @@ package laya.ui {
 			if (!(_direction === "horizontal")) callLater(changeValue);
 		}
 		
+		
+		public function set align(v:String):void
+		{
+			this._align = v;
+			callLater(changeValue);
+		}
+		
+		/**水平对齐方式*/
+		public function get align():String
+		{
+			return _align;
+		}
+		
+			
 		/**渲染数值*/
 		protected function changeValue():void {
 			if (!this._sources) return;
 			if (!_valueArr) return;
-			this.graphics.clear();
+			this.graphics.clear(true);
 			var texture:Texture;
-			
+			texture = this._sources[0];
+			if (!texture) return;
 			var isHorizontal:Boolean = (_direction === "horizontal");
+			if (isHorizontal)
+			{
+				_wordsW = _valueArr.length * (texture.width + spaceX);
+				_wordsH = texture.height;
+			}else
+			{
+				_wordsW = texture.width;
+				_wordsH = (texture.height + spaceY) * _valueArr.length;
+			}
+			var dX:Number=0;
+			if (_width)
+			{
+				switch(_align)
+				{
+					case "center":
+						dX = 0.5 * (_width - _wordsW);
+						break;
+					case "right":
+						dX=_width - _wordsW;
+						break;
+					default:
+						dX = 0;
+				}
+			}
+			
 			for (var i:int = 0, sz:int = _valueArr.length; i < sz; i++) {
-				var index:int = _indexMap[_valueArr[i]];
+				var index:int = _indexMap[_valueArr.charAt(i)];
 				if (!this.sources[index]) continue;
 				texture = this.sources[index];
-				if (isHorizontal) this.graphics.drawTexture(texture, i * (texture.width + spaceX), 0, texture.width, texture.height);
-				else this.graphics.drawTexture(texture, 0, i * (texture.height + spaceY), texture.width, texture.height);
+				if (isHorizontal) this.graphics.drawTexture(texture, dX+i * (texture.width + spaceX), 0, texture.width, texture.height);
+				else this.graphics.drawTexture(texture, 0+dX, i * (texture.height + spaceY), texture.width, texture.height);
 			}
-			if (!texture) return;
-			if (isHorizontal) this.size(_valueArr.length * (texture.width + spaceX), texture.height);
-			else this.size(texture.width, (texture.height + spaceY) * _valueArr.length);
+			if (!_width)
+			{
+				resetLayoutX();
+				callLater(changeSize);
+			}
+			if (!_height)
+			{
+				resetLayoutY();
+				callLater(changeSize);
+			}
+		}
+		override public function set width(value:Number):void 
+		{
+			super.width = value;
+			callLater(changeValue);
+		}
+		
+		override public function set height(value:Number):void 
+		{
+			super.height = value;
+			callLater(changeValue);
+		}
+		
+		override protected function get measureWidth():Number 
+		{
+			return _wordsW;
+		}
+		
+		override protected function get measureHeight():Number 
+		{
+			return _wordsH;
 		}
 		
 		override public function destroy(destroyChild:Boolean = true):void {
 			_valueArr = null;
 			_indexMap = null;
-			_indexMap = null;
-			this.graphics.clear();
+			this.graphics.clear(true);
 			this.removeSelf();
 			this.off(Event.LOADED, this, _onClipLoaded);
 			super.destroy(destroyChild);

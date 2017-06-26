@@ -1,5 +1,4 @@
-package laya.d3.resource.models
-{
+package laya.d3.resource.models {
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -9,8 +8,7 @@ package laya.d3.resource.models
 	/**
 	 * <code>CylinderMesh</code> 类用于创建圆柱体。
 	 */
-	public class CylinderMesh extends PrimitiveMesh
-	{
+	public class CylinderMesh extends PrimitiveMesh {
 		/** @private */
 		private var _radius:Number;
 		/** @private */
@@ -22,8 +20,7 @@ package laya.d3.resource.models
 		 * 返回半径
 		 * @return 半径
 		 */
-		public function get radius():Number
-		{
+		public function get radius():Number {
 			return _radius;
 		}
 		
@@ -31,8 +28,7 @@ package laya.d3.resource.models
 		 * 设置半径（改变此属性会重新生成顶点和索引）
 		 * @param  value 半径
 		 */
-		public function set radius(value:Number):void
-		{
+		public function set radius(value:Number):void {
 			if (_radius !== value) {
 				_radius = value;
 				releaseResource();
@@ -44,8 +40,7 @@ package laya.d3.resource.models
 		 * 返回高度
 		 * @return 高度
 		 */
-		public function get height():Number
-		{
+		public function get height():Number {
 			return _height;
 		}
 		
@@ -53,8 +48,7 @@ package laya.d3.resource.models
 		 * 设置高度（改变此属性会重新生成顶点和索引）
 		 * @param  value 高度
 		 */
-		public function set height(value:Number):void
-		{
+		public function set height(value:Number):void {
 			if (_height !== value) {
 				_height = value;
 				releaseResource();
@@ -66,8 +60,7 @@ package laya.d3.resource.models
 		 * 获取宽度分段
 		 * @return 宽度分段
 		 */
-		public function get slices():int
-		{
+		public function get slices():int {
 			return _slices;
 		}
 		
@@ -75,8 +68,7 @@ package laya.d3.resource.models
 		 * 设置宽度分段（改变此属性会重新生成顶点和索引）
 		 * @param  value 宽度分段
 		 */
-		public function set slices(value:int):void
-		{
+		public function set slices(value:int):void {
 			if (_slices !== value) {
 				_slices = value;
 				releaseResource();
@@ -90,19 +82,16 @@ package laya.d3.resource.models
 		 * @param height 高度
 		 * @param slices 垂直层数
 		 */
-		public function CylinderMesh(radius:Number = 0.5, height:Number = 2, slices:int = 32)
-		{
+		public function CylinderMesh(radius:Number = 0.5, height:Number = 2, slices:int = 32) {
 			super();
 			_radius = radius;
 			_height = height;
 			_slices = slices;
 			recreateResource();
-			_loaded = true;
 			_generateBoundingObject();
 		}
 		
-		override protected function recreateResource():void
-		{
+		override protected function recreateResource():void {
 			
 			//(this._released) || (dispose());//如果已存在，则释放资源
 			startCreate();
@@ -132,11 +121,9 @@ package laya.d3.resource.models
 			var ic:int = 0;
 			
 			//顶
-			for (var tv:int = 0; tv <= _slices; tv++)
-			{
+			for (var tv:int = 0; tv <= _slices; tv++) {
 				
-				if (tv === 0)
-				{
+				if (tv === 0) {
 					//pos
 					vertices[vc++] = 0;
 					vertices[vc++] = halfHeight;
@@ -170,8 +157,7 @@ package laya.d3.resource.models
 				vertices[vc++] = 0.5 + Math.sin(curAngle) * 0.5;
 			}
 			
-			for (var ti:int = 0; ti < _slices; ti++)
-			{
+			for (var ti:int = 0; ti < _slices; ti++) {
 				indices[ic++] = 0;
 				indices[ic++] = ti + 1;
 				indices[ic++] = ti + 2;
@@ -179,8 +165,7 @@ package laya.d3.resource.models
 			verticeCount += _slices + 1 + 1;
 			
 			//壁
-			for (var rv:int = 0; rv <= _slices; rv++)
-			{
+			for (var rv:int = 0; rv <= _slices; rv++) {
 				curAngle = rv * sliceAngle;
 				posX = Math.cos(curAngle + Math.PI) * _radius;
 				posY = halfHeight;
@@ -210,8 +195,7 @@ package laya.d3.resource.models
 			
 			vc += (_slices + 1) * 8;
 			
-			for (var ri:int = 0; ri < _slices; ri++)
-			{
+			for (var ri:int = 0; ri < _slices; ri++) {
 				indices[ic++] = ri + verticeCount + (_slices + 1);
 				indices[ic++] = ri + verticeCount + 1;
 				indices[ic++] = ri + verticeCount;
@@ -225,10 +209,8 @@ package laya.d3.resource.models
 			verticeCount += 2 * (_slices + 1);
 			
 			//底
-			for (var bv:int = 0; bv <= _slices; bv++)
-			{
-				if (bv === 0)
-				{
+			for (var bv:int = 0; bv <= _slices; bv++) {
+				if (bv === 0) {
 					//pos
 					vertices[vc++] = 0;
 					vertices[vc++] = -halfHeight;
@@ -262,8 +244,7 @@ package laya.d3.resource.models
 				
 			}
 			
-			for (var bi:int = 0; bi < _slices; bi++)
-			{
+			for (var bi:int = 0; bi < _slices; bi++) {
 				indices[ic++] = 0 + verticeCount;
 				indices[ic++] = bi + 2 + verticeCount;
 				indices[ic++] = bi + 1 + verticeCount;

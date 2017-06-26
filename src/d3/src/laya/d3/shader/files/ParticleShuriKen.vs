@@ -10,7 +10,7 @@ attribute vec4 a_PositionStartLifeTime;
 attribute vec4 a_DirectionTime;
 attribute vec4 a_StartColor;
 attribute vec3 a_StartSize;
-attribute vec4 a_StartRotation0;
+attribute vec3 a_StartRotation0;
 attribute float a_StartSpeed;
 #ifdef defined(COLOROVERLIFETIME)||defined(RANDOMCOLOROVERLIFETIME)||defined(SIZEOVERLIFETIMERANDOMCURVES)||definedSIZEOVERLIFETIMERANDOMCURVESSEPERATE||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)
   attribute vec4 a_Random0;
@@ -141,20 +141,40 @@ uniform int u_SimulationSpace;
 
 
 
-vec3  rotationByQuaternion(in vec3 vector,in vec4 qua)
+vec3 rotationByEuler(in vec3 vector,in vec3 rot)
 {
-	float x = qua.x + qua.x;
-    float y = qua.y + qua.y;
-    float z = qua.z + qua.z;
-    float wx = qua.w * x;
-    float wy = qua.w * y;
-    float wz = qua.w * z;
-	float xx = qua.x * x;
-    float xy = qua.x * y;
-	float xz = qua.x * z;
-    float yy = qua.y * y;
-    float yz = qua.y * z;
-    float zz = qua.z * z;
+	float halfRoll = rot.z * 0.5;
+    float halfPitch = rot.x * 0.5;
+	float halfYaw = rot.y * 0.5;
+
+	float sinRoll = sin(halfRoll);
+	float cosRoll = cos(halfRoll);
+	float sinPitch = sin(halfPitch);
+	float cosPitch = cos(halfPitch);
+	float sinYaw = sin(halfYaw);
+	float cosYaw = cos(halfYaw);
+
+	float quaX = (cosYaw * sinPitch * cosRoll) + (sinYaw * cosPitch * sinRoll);
+	float quaY = (sinYaw * cosPitch * cosRoll) - (cosYaw * sinPitch * sinRoll);
+	float quaZ = (cosYaw * cosPitch * sinRoll) - (sinYaw * sinPitch * cosRoll);
+	float quaW = (cosYaw * cosPitch * cosRoll) + (sinYaw * sinPitch * sinRoll);
+	
+	//vec4 q=vec4(quaX,quaY,quaZ,quaW);
+	//vec3 temp = cross(q.xyz, vector) + q.w * vector;
+	//return (cross(temp, -q.xyz) + dot(q.xyz,vector) * q.xyz + q.w * temp);
+	
+	float x = quaX + quaX;
+    float y = quaY + quaY;
+    float z = quaZ + quaZ;
+    float wx = quaW * x;
+    float wy = quaW * y;
+    float wz = quaW * z;
+	float xx = quaX * x;
+    float xy = quaX * y;
+	float xz = quaX * z;
+    float yy = quaY * y;
+    float yz = quaY * z;
+    float zz = quaZ * z;
 
     return vec3(((vector.x * ((1.0 - yy) - zz)) + (vector.y * (xy - wz))) + (vector.z * (xz + wy)),
                 ((vector.x * (xy + wz)) + (vector.y * ((1.0 - xx) - zz))) + (vector.z * (yz - wx)),
@@ -163,13 +183,45 @@ vec3  rotationByQuaternion(in vec3 vector,in vec4 qua)
 }
 
 //假定axis已经归一化
-vec4 createQuaternionByAxis(in vec3 axis, in float angle)
+vec3 rotationByAxis(in vec3 vector,in vec3 axis, in float angle)
 {
 	float halfAngle = angle * 0.5;
 	float sin = sin(halfAngle);
+	
+	float quaX = axis.x * sin;
+	float quaY = axis.y * sin;
+	float quaZ = axis.z * sin;
+	float quaW = cos(halfAngle);
+	
+	//vec4 q=vec4(quaX,quaY,quaZ,quaW);
+	//vec3 temp = cross(q.xyz, vector) + q.w * vector;
+	//return (cross(temp, -q.xyz) + dot(q.xyz,vector) * q.xyz + q.w * temp);
+	
+	float x = quaX + quaX;
+    float y = quaY + quaY;
+    float z = quaZ + quaZ;
+    float wx = quaW * x;
+    float wy = quaW * y;
+    float wz = quaW * z;
+	float xx = quaX * x;
+    float xy = quaX * y;
+	float xz = quaX * z;
+    float yy = quaY * y;
+    float yz = quaY * z;
+    float zz = quaZ * z;
 
-	return vec4(axis.x * sin,axis.y * sin,axis.z * sin,cos(halfAngle));
+    return vec3(((vector.x * ((1.0 - yy) - zz)) + (vector.y * (xy - wz))) + (vector.z * (xz + wy)),
+                ((vector.x * (xy + wz)) + (vector.y * ((1.0 - xx) - zz))) + (vector.z * (yz - wx)),
+                ((vector.x * (xz - wy)) + (vector.y * (yz + wx))) + (vector.z * ((1.0 - xx) - yy)));
+	
 }
+
+
+vec4 quaternionMultiply(in vec4 left, in vec4 right)
+{
+	return vec4((left.x * right.w + right.x * left.w) + (left.y * right.z - left.z * right.y),(left.y * right.w + right.y * left.w) + (left.z * right.x - left.x * right.z),(left.z * right.w + right.z * left.w) + (left.x * right.y - left.y * right.x),left.w * right.w - (left.x * right.x + left.y * right.y + left.z * right.z));
+}
+
 
 
  
@@ -378,7 +430,7 @@ vec3 computeParticlePosition(in vec3 startVelocity, in vec3 lifeVelocity,in floa
   else if(u_SimulationSpace==1) 
     finalPosition=finalPosition+u_WorldPosition;
   
-  finalPosition+=u_Gravity*age*normalizedAge;//计算受重力影响的位置//TODO:移除
+  finalPosition+=0.5*u_Gravity*pow(age,2.0);
  
   return  finalPosition;
 }
@@ -425,11 +477,12 @@ vec3 computeParticleSizeMesh(in vec3 size,in float normalizedAge)
 	    size*=mix(getCurValueFromGradientFloat(u_SOLSizeGradient,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMax,normalizedAge),a_Random0.z); 
 	#endif
 	#ifdef SIZEOVERLIFETIMECURVESEPERATE
-		size*=vec2(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge));
+		size*=vec3(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientZ,normalizedAge));
 	#endif
 	#ifdef SIZEOVERLIFETIMERANDOMCURVESSEPERATE
-	    size*=vec2(mix(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxX,normalizedAge),a_Random0.z)
-	    ,mix(getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxY,normalizedAge),a_Random0.z));
+	    size*=vec3(mix(getCurValueFromGradientFloat(u_SOLSizeGradientX,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxX,normalizedAge),a_Random0.z)
+	    ,mix(getCurValueFromGradientFloat(u_SOLSizeGradientY,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxY,normalizedAge),a_Random0.z)
+		,mix(getCurValueFromGradientFloat(u_SOLSizeGradientZ,normalizedAge),getCurValueFromGradientFloat(u_SOLSizeGradientMaxZ,normalizedAge),a_Random0.z));
 	#endif
 	return size;
 }
@@ -554,17 +607,31 @@ void main()
         vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));
         vec3 upVector = normalize(cross(sideVector,u_CameraDirection));
 	    corner*=computeParticleSizeBillbard(a_StartSize.xy,normalizedAge);
-		if(u_ThreeDStartRotation){
-			center += u_SizeScale.xzy*rotationByQuaternion(corner.x*sideVector+corner.y*upVector,a_StartRotation0);
-		}
-		else{
-		  float rot = computeParticleRotationFloat(a_StartRotation0.x, age,normalizedAge);
-          float c = cos(rot);
-          float s = sin(rot);
-          mat2 rotation= mat2(c, -s, s, c);
-		  corner=rotation*corner;
-		  center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);
-		}
+		#ifdef defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE)
+			if(u_ThreeDStartRotation){
+				vec3 rotation=vec3(a_StartRotation0.xy,computeParticleRotationFloat(a_StartRotation0.z,age,normalizedAge));
+				center += u_SizeScale.xzy*rotationByEuler(corner.x*sideVector+corner.y*upVector,rotation);
+			}
+			else{
+				float rot = computeParticleRotationFloat(a_StartRotation0.x, age,normalizedAge);
+				float c = cos(rot);
+				float s = sin(rot);
+				mat2 rotation= mat2(c, -s, s, c);
+				corner=rotation*corner;
+				center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);
+			}
+		#else
+			if(u_ThreeDStartRotation){
+				center += u_SizeScale.xzy*rotationByEuler(corner.x*sideVector+corner.y*upVector,a_StartRotation0);
+			}
+			else{
+				float c = cos(a_StartRotation0.x);
+				float s = sin(a_StartRotation0.x);
+				mat2 rotation= mat2(c, -s, s, c);
+				corner=rotation*corner;
+				center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);
+			}
+		#endif
    #endif
    
    #ifdef STRETCHEDBILLBOARD
@@ -617,16 +684,55 @@ void main()
    #ifdef RENDERMODE_MESH
 	    vec3 size=computeParticleSizeMesh(a_StartSize,normalizedAge);
 		#ifdef defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE)
-			float angle=computeParticleRotationFloat(a_StartRotation0.w, age,normalizedAge);
-			vec4 qua=createQuaternionByAxis(a_StartRotation0.xyz,angle);
-			center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByQuaternion(a_MeshPosition*size,qua));
-		#else
 			if(u_ThreeDStartRotation){
-				center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByQuaternion(a_MeshPosition*size,a_StartRotation0));
+				float angle=computeParticleRotationFloat(a_StartRotation0.z, age,normalizedAge);
+				center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByEuler(a_MeshPosition*size,vec3(a_StartRotation0.xy,angle)));
 			}
 			else{
-				vec4 qua=createQuaternionByAxis(a_StartRotation0.xyz,a_StartRotation0.w);
-				center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByQuaternion(a_MeshPosition*size,qua));
+				float angle=computeParticleRotationFloat(a_StartRotation0.x, age,normalizedAge);
+				if(a_PositionStartLifeTime.x!=0.0||a_PositionStartLifeTime.y!=0.0)
+				{
+					center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByAxis(a_MeshPosition*size,normalize(cross(vec3(0.0,0.0,1.0),vec3(a_PositionStartLifeTime.xy,0.0))),angle));
+				}
+				else
+				{
+					#ifdef SHAPE
+						center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByAxis(a_MeshPosition*size,vec3(0.0,-1.0,0.0),angle));
+					#else
+						center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByAxis(a_MeshPosition*size,vec3(0.0,0.0,-1.0),angle));
+					#endif
+				}
+					
+			}
+		#else
+			if(u_ThreeDStartRotation){
+				center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByEuler(a_MeshPosition*size,a_StartRotation0));
+			}
+			else{
+				if(a_PositionStartLifeTime.x!=0.0||a_PositionStartLifeTime.y!=0.0)
+				{
+					if(u_SimulationSpace==0)
+						center+= u_SizeScale.xzy*rotationByAxis(a_MeshPosition*size,normalize(cross(vec3(0.0,0.0,1.0),vec3(a_PositionStartLifeTime.xy,0.0))),a_StartRotation0.x);
+					else if(u_SimulationSpace==1)
+						center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByAxis(a_MeshPosition*size,normalize(cross(vec3(0.0,0.0,1.0),vec3(a_PositionStartLifeTime.xy,0.0))),a_StartRotation0.x));
+						
+				}
+				else
+				{
+					#ifdef SHAPE
+						if(u_SimulationSpace==0)
+							center+= u_SizeScale.xzy*rotationByAxis(a_MeshPosition*size,vec3(0.0,-1.0,0.0),a_StartRotation0.x);
+						else if(u_SimulationSpace==1)
+							center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByAxis(a_MeshPosition*size,vec3(0.0,-1.0,0.0),a_StartRotation0.x));
+							
+					#else
+						if(u_SimulationSpace==0)
+							center+= u_SizeScale.xzy*(rotationByAxis(a_MeshPosition*size,vec3(0.0,0.0,-1.0),a_StartRotation0.x));
+						else if(u_SimulationSpace==1)
+							center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByAxis(a_MeshPosition*size,vec3(0.0,0.0,-1.0),a_StartRotation0.x));
+					#endif
+					
+				}
 			}
 		#endif
    #endif

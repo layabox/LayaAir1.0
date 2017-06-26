@@ -217,13 +217,28 @@ package laya.ani.bone {
 			var tFactory:Templet;
 			tFactory = Templet.TEMPLET_DICTIONARY[_aniPath];
 			if (tFactory) {
-				tFactory.isParseFail ? _parseFail() : _parseComplete();
+				if (tFactory.isParseFail)
+				{
+					_parseFail();
+				}else
+				{
+					if (tFactory.isParserComplete)
+					{
+						_parseComplete();
+					}else
+					{
+						tFactory.on(Event.COMPLETE, this, _parseComplete);
+						tFactory.on(Event.ERROR, this, _parseFail);
+					}
+				}
+				 
 			} else {
 				tFactory = new Templet();
 				tFactory.url = _aniPath;
 				Templet.TEMPLET_DICTIONARY[_aniPath] = tFactory;
 				tFactory.on(Event.COMPLETE, this, _parseComplete);
 				tFactory.on(Event.ERROR, this, _parseFail);
+				tFactory.isParserComplete = false;
 				tFactory.parseData(null, arraybuffer);
 			}
 		}

@@ -1,12 +1,14 @@
 package laya.d3.resource.models {
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.MeshSprite3D;
+	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.core.render.SubMeshRenderElement;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -220,22 +222,25 @@ package laya.d3.resource.models {
 		 * @param	state 渲染状态。
 		 */
 		public function _render(state:RenderState):void {
+			var skinAnimationDatas:Vector.<Float32Array>;
 			var indexCount:int = 0;
-			var renderElement:RenderElement = state.renderElement;
+			var renderElement:SubMeshRenderElement = state.renderElement as SubMeshRenderElement;
 			if (_indexCount > 1) {
 				var boneIndicesListCount:int = _boneIndicesList.length;
 				if (boneIndicesListCount > 1) {
 					for (var i:int = 0; i < boneIndicesListCount; i++) {
-						if (_skinAnimationDatas) {
-							renderElement._shaderValue.setValue(SkinAnimations.BONES, _skinAnimationDatas[i]);
+						skinAnimationDatas = renderElement._skinAnimationDatas || _skinAnimationDatas;//逻辑或后为兼容代码
+						if (skinAnimationDatas) {
+							renderElement._shaderValue.setValue(SkinnedMeshSprite3D.BONES, skinAnimationDatas[i]);
 							state._shader.uploadRenderElementUniforms(renderElement._shaderValue.data);//TODO:如果未来有其它RenderElementUniforms是否会重复上传
 						}
 						WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, _subIndexBufferCount[i], WebGLContext.UNSIGNED_SHORT, _subIndexBufferStart[i] * 2);
 					}
 					Stat.drawCall += boneIndicesListCount;
 				} else {
-					if (_skinAnimationDatas) {
-						renderElement._shaderValue.setValue(SkinAnimations.BONES, _skinAnimationDatas[0]);
+					skinAnimationDatas = renderElement._skinAnimationDatas || _skinAnimationDatas;//逻辑或后为兼容代码
+					if (skinAnimationDatas) {
+						renderElement._shaderValue.setValue(SkinnedMeshSprite3D.BONES, skinAnimationDatas[0]);
 						state._shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
 					}
 					WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, _indexCount, WebGLContext.UNSIGNED_SHORT, _indexStart * 2);
@@ -244,8 +249,9 @@ package laya.d3.resource.models {
 				indexCount = _indexCount;
 			} else {//TODO:兼容旧格式
 				indexCount = _indexBuffer.indexCount;
-				if (_skinAnimationDatas) {
-					renderElement._shaderValue.setValue(SkinAnimations.BONES, _skinAnimationDatas[0]);
+				skinAnimationDatas = renderElement._skinAnimationDatas || _skinAnimationDatas;//逻辑或后为兼容代码
+				if (skinAnimationDatas) {
+					renderElement._shaderValue.setValue(SkinnedMeshSprite3D.BONES, skinAnimationDatas[0]);
 					state._shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
 				}
 				WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 0);

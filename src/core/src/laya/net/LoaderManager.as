@@ -2,7 +2,6 @@ package laya.net {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.net.Loader;
-	import laya.resource.ICreateResource;
 	import laya.resource.Texture;
 	import laya.utils.Handler;
 	import laya.utils.Utils;
@@ -20,14 +19,14 @@ package laya.net {
 	[Event(name = "error", type = "laya.events.Event")]
 	
 	/**
-	 * <p> <code>LoaderManager</code> 类用于用于批量加载资源、数据。</p>
-	 * <p>批量加载器，单例，可以通过Laya.loader访问，注意大小写。</p>
-	 * 多线程：默认5个线程，可以通过maxLoader属性修改线程数量
-	 * 多优先级：默认5个优先级，0最快，4最慢，默认为1
-	 * 重复过滤：自动过滤重复加载以及已经加载过的地址，防止重复加载
-	 * 错误重试：资源加载失败后，会重试加载（按照最低优先级），retryNum设定加载失败后重试次数，retryDelay设定加载重试的时间间隔
-	 * 如果单个地址加载方式，加载重试后仍然失败，则调用complete回调，并返回null。如果多地址加载方式，重试后仍然失败，则调用complete回调，返回为success=false
-	 * 全部队列加载完成，会派发complete事件，如果队列中任意一个加载失败，会派发error事件
+	 * <p> <code>LoaderManager</code> 类用于用于批量加载资源。此类是单例，不要手动实例化此类，请通过Laya.loader访问。</p>
+	 * <p>全部队列加载完成，会派发 Event.COMPLETE 事件；如果队列中任意一个加载失败，会派发 Event.ERROR 事件，事件回调参数值为加载出错的资源地址。</p>
+	 * <p> <code>LoaderManager</code> 类提供了以下几种功能：<br/>
+	 * 多线程：默认5个加载线程，可以通过maxLoader属性修改线程数量；<br/>
+	 * 多优先级：有0-4共5个优先级，优先级高的优先加载。0最高，4最低；<br/>
+	 * 重复过滤：自动过滤重复加载（不会有多个相同地址的资源同时加载）以及复用缓存资源，防止重复加载；<br/>
+	 * 错误重试：资源加载失败后，会重试加载（以最低优先级插入加载队列），retryNum设定加载失败后重试次数，retryDelay设定加载重试的时间间隔。</p>
+	 * @see laya.net.Loader
 	 */
 	public class LoaderManager extends EventDispatcher {
 		/**@private */
@@ -57,21 +56,24 @@ package laya.net {
 		private var _failRes:Object = {};
 		
 		/**
-		 * 创建一个新的 <code>LoaderManager</code> 实例。
+		 * <p>创建一个新的 <code>LoaderManager</code> 实例。</p>
+		 * <p><b>注意：</b>请使用Laya.loader加载资源，这是一个单例，不要手动实例化此类，否则会导致不可预料的问题。</p>
 		 */
 		public function LoaderManager() {
 			for (var i:int = 0; i < this._maxPriority; i++) this._resInfos[i] = [];
 		}
 		
 		/**
-		 * 根据clas定义创建一个资源空壳，随后进行异步加载，资源加载完成后，会调用资源类的onAsynLoaded方法回调真正的数据,套嵌资源的子资源会保留资源路径"?"后的部分
-		 * @param	url 资源地址或者数组，比如[{url:xx,clas:xx,priority:xx,params:xx},{url:xx,clas:xx,priority:xx,params:xx}]
-		 * @param	progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
-		 * @param	clas 资源类名，比如Texture
-		 * @param	type 资源类型，比如：Loader.IMAGE
-		 * @param	priority 优先级，默认5个优先级，0最快，4最慢，默认为1
-		 * @param	cache 是否缓存
-		 * @return	返回资源对象
+		 * <p>根据clas类型创建一个未初始化资源的对象，随后进行异步加载，资源加载完成后，初始化对象的资源，并通过此对象派发 Event.LOADED 事件，事件回调参数值为此对象本身。套嵌资源的子资源会保留资源路径"?"后的部分。</p>
+		 * <p>如果url为数组，返回true；否则返回指定的资源类对象，可以通过侦听此对象的 Event.LOADED 事件来判断资源是否已经加载完毕。</p>
+		 * <p><b>注意：</b>cache参数只能对文件后缀为atlas的资源进行缓存控制，其他资源会忽略缓存，强制重新加载。</p>
+		 * @param	url			资源地址或者数组。如果url和clas同时指定了资源类型，优先使用url指定的资源类型。参数形如：[{url:xx,clas:xx,priority:xx,params:xx},{url:xx,clas:xx,priority:xx,params:xx}]。
+		 * @param	progress	资源加载进度回调，回调参数值为当前资源加载的进度信息(0-1)。
+		 * @param	clas		资源类名。如果url和clas同时指定了资源类型，优先使用url指定的资源类型。参数形如：Texture。
+		 * @param	type		资源类型。参数形如：Loader.IMAGE。
+		 * @param	priority	(default = 1)加载的优先级，优先级高的优先加载。有0-4共5个优先级，0最高，4最低。
+		 * @param	cache		是否缓存加载的资源。
+		 * @return	如果url为数组，返回true；否则返回指定的资源类对象。
 		 */
 		public function create(url:*, complete:Handler = null, progress:Handler = null, clas:Class = null, params:Array = null, priority:int = 1, cache:Boolean = true):* {
 			if (url is Array) {
@@ -112,7 +114,8 @@ package laya.net {
 		}
 		
 		private function _create(url:String, complete:Handler = null, progress:Handler = null, clas:Class = null, params:Array = null, priority:int = 1, cache:Boolean = true):* {
-			var item:ICreateResource = getRes(url);
+			url = URL.formatURL(url)
+			var item:* = getRes(url);
 			if (!item) {
 				var extension:String = Utils.getFileExtension(url);
 				var creatItem:Array = createMap[extension];
@@ -123,35 +126,42 @@ package laya.net {
 				} else {
 					if (clas === Texture) type = "htmlimage";
 					item = clas ? new clas() : null;
+					if (item.hasOwnProperty("_loaded"))
+						item._loaded=false;
 					load(url, Handler.create(null, onLoaded), progress, type, priority, false, null, true);
 					function onLoaded(data:*):void {
 						item && item.onAsynLoaded.call(item, url, data, params);
 						if (complete) complete.run();
+						Laya.loader.event(url);
 					}
 					if (cache) {
-						
 						cacheRes(url, item);
 						item.url = url;
 					}
 				}
 			} else {
-				progress && progress.runWith(1);
-				complete && complete.run();
+				if (!item.hasOwnProperty("loaded") || item.loaded) {
+					progress && progress.runWith(1);
+					complete && complete.run();
+				} else if (complete) {
+					Laya.loader._createListener(url, complete.caller, complete.method, complete.args, true, false);
+				}
 			}
 			return item;
 		}
 		
 		/**
-		 * 加载资源。
-		 * @param	url 单个资源地址，或者资源地址数组(简单数组：["a.png","b.png"]，复杂数组[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}])。
-		 * @param	complete 结束回调，如果加载失败，则返回 null 。
-		 * @param	progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
-		 * @param	type 资源类型。比如：Loader.IMAGE
-		 * @param	priority 优先级，0-4，5个优先级，0优先级最高，默认为1。
-		 * @param	cache 是否缓存加载结果。
-		 * @param	group 分组，方便对资源进行管理。
-		 * @param	ignoreCache 是否忽略缓存，强制重新加载
-		 * @return 此 LoaderManager 对象。
+		 * <p>加载资源。资源加载错误时，本对象会派发 Event.ERROR 事件，事件回调参数值为加载出错的资源地址。</p>
+		 * <p>因为返回值为 LoaderManager 对象本身，所以可以使用如下语法：loaderManager.load(...).load(...);</p>
+		 * @param	url			要加载的单个资源地址或资源信息数组。比如：简单数组：["a.png","b.png"]；复杂数组[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}]。
+		 * @param	complete	加载结束回调。根据url类型不同分为2种情况：1. url为String类型，也就是单个资源地址，如果加载成功，则回调参数值为加载完成的资源，否则为null；2. url为数组类型，指定了一组要加载的资源，如果全部加载成功，则回调参数值为true，否则为false。
+		 * @param	progress	加载进度回调。回调参数值为当前资源的加载进度信息(0-1)。
+		 * @param	type		资源类型。比如：Loader.IMAGE。
+		 * @param	priority	(default = 1)加载的优先级，优先级高的优先加载。有0-4共5个优先级，0最高，4最低。
+		 * @param	cache		是否缓存加载结果。
+		 * @param	group		分组，方便对资源进行管理。
+		 * @param	ignoreCache	是否忽略缓存，强制重新加载。
+		 * @return 此 LoaderManager 对象本身。
 		 */
 		public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):LoaderManager {
 			if (url is Array) return _loadAssets(url as Array, complete, progress, type, priority, cache, group);
@@ -221,19 +231,21 @@ package laya.net {
 		
 		private function _endLoad(resInfo:ResInfo, content:*):void {
 			//如果加载后为空，放入队列末尾重试
+			var url:String = resInfo.url;
 			if (content == null) {
-				var errorCount:int = this._failRes[resInfo.url] || 0;
+				var errorCount:int = this._failRes[url] || 0;
 				if (errorCount < this.retryNum) {
-					console.warn("[warn]Retry to load:", resInfo.url);
-					this._failRes[resInfo.url] = errorCount + 1;
+					console.warn("[warn]Retry to load:", url);
+					this._failRes[url] = errorCount + 1;
 					Laya.timer.once(retryDelay, this, _addReTry, [resInfo], false);
 					return;
 				} else {
-					console.warn("[error]Failed to load:", resInfo.url);
-					event(Event.ERROR, resInfo.url);
+					console.warn("[error]Failed to load:", url);
+					event(Event.ERROR, url);
 				}
 			}
-			delete _resMap[resInfo.url];
+			if (_failRes[url]) _failRes[url] = 0;
+			delete _resMap[url];
 			resInfo.event(Event.COMPLETE, content);
 			resInfo.offAll();
 			_infoPool.push(resInfo);
@@ -281,7 +293,7 @@ package laya.net {
 		}
 		
 		/**
-		 * 根据分组清理资源
+		 * 根据分组清理资源。
 		 * @param group 分组名
 		 */
 		public function clearResByGroup(group:String):void {

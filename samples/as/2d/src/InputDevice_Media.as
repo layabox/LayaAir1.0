@@ -12,64 +12,40 @@ package
 	 */
 	public class InputDevice_Media
 	{
-		private var video:Video;
-		
 		public function InputDevice_Media()
 		{
-			Laya.init(Browser.width, Browser.height);
-			
 			if (Media.supported() === false)
 				alert("当前浏览器不支持");
 			else
 			{
-				showMessage();
-				
 				var options:Object = {
-					audio: true,
-					video: { 
-						facingMode: { exact: "environment" },	// 后置摄像头，默认值就是，不设至也可以。
-						width: Laya.stage.width,
-						height:Laya.stage.height
-					}
+					audio: false,
+					video: 
+						{
+							width: Browser.width,
+							height: Browser.height
+						}
 				};
 				
 				Media.getMedia(options, Handler.create(this, onSuccess), Handler.create(this, onError));
 			}
 		}
 		
-		private function showMessage():void 
-		{
-			var text:Text = new Text();
-			Laya.stage.addChild(text);
-			text.text = "单击舞台播放和暂停";
-			text.color = "#FFFFFF";
-			text.fontSize = 100;
-			text.valign = "middle";
-			text.align = "center";
-			text.size(Laya.stage.width, Laya.stage.height);
-		}
-		
 		private function onSuccess(url:String):void
 		{
-			video = new Video(Laya.stage.width, Laya.stage.height);
-			video.load(url);
-			Laya.stage.addChild(video);
-			
-			Laya.stage.on('click', this, onStageClick);
+			var video = Browser.document.createElement("video");
+			video.width = Browser.clientWidth;
+			video.height = Browser.clientHeight;
+			video.style.zIndex = 1E5;
+			Browser.document.body.appendChild(video);
+			video.controls = true;
+			video.src = url;
+			video.play();
 		}
 		
 		private function onError(error:Error):void
 		{
 			alert(error.message);
-		}
-		
-		private function onStageClick():void
-		{
-			// 切换播放和暂停。
-			if (!video.paused)
-				video.pause();
-			else
-				video.play();
 		}
 	}
 }

@@ -46,7 +46,7 @@ package laya.net {
 		}
 		
 		/**
-		 * 存储指定键名和它的 <code>Object</code> 类型值。
+		 * 存储指定键名及其对应的 <code>Object</code> 类型值。
 		 * @param key 键名。
 		 * @param value 键值。是 <code>Object</code> 类型，此致会被转化为 JSON 字符串存储。
 		 */
@@ -55,7 +55,7 @@ package laya.net {
 		}
 		
 		/**
-		 * 获取指定键名的 <code>Object</code> 类型值。
+		 * 获取指定键名对应的 <code>Object</code> 类型值。
 		 * @param key 键名。
 		 * @return <code>Object</code> 类型值
 		 */
@@ -89,7 +89,7 @@ class Storage {
 	/**
 	 * 表示是否支持  <code>LocalStorage</code>。
 	 */
-	public static var support:Boolean = true;
+	public static var support:Boolean = false;
 	
 	public static function init():void {
 		__JS__("try{Storage.items=window.localStorage;Storage.setItem('laya', '1');Storage.removeItem('laya');Storage.support = true;} catch(e){}if(!Storage.support)console.log('LocalStorage is not supprot or browser is private mode.')");

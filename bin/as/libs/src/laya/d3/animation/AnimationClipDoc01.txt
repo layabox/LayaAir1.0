@@ -38,15 +38,17 @@
 		    uint16 pathLength;
 			for(int j=0;j<pathLength;j++)
 				uint16 path;
-			uint16 compomentTypeStrIndex;
+			int16 compomentTypeStrIndex;
 			uint16 propertyNameStrIndex;(用'.'隔开)
 			byte frameDataLengthTypeIndex;
 
 			uint16 帧个数;
 			for(int j=0;j<帧个数;j++){
 				uint16 startTimeIndex;
-				float32 inTangent;
-				float32 outTangent;
+				for(int j=0;j<dataFloatCount;j++)
+					float32 inTangent;
+				for(int j=0;j<dataFloatCount;j++)
+					float32 outTangent;
 				for(int j=0;j<dataFloatCount;j++)
 					float32 data;
 			}

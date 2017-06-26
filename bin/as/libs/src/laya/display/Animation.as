@@ -121,20 +121,19 @@ package laya.display {
 		 * @param	name	（可选）动画模板在动画模版缓存池中的key，也可认为是动画名称。如果name为空，则播放当前动画序列帧；如果不为空，则在动画模版缓存池中寻找key值为name的动画模版，如果存在则用此动画模版初始化当前序列帧并播放，如果不存在，则仍然播放当前动画序列帧；如果没有当前动画的帧数据，则不播放，但该实例仍然处于播放状态。
 		 */
 		override public function play(start:* = 0, loop:Boolean = true, name:String = ""):void {
-			if (name) _setFramesFromCache(name);
+			if (name) _setFramesFromCache(name, true);
 			this._isPlaying = true;
 			this.index = (start is String) ? _getFrameByLabel(start) : start;
 			this.loop = loop;
 			this._actionName = name;
 			_isReverse = wrapMode == WRAP_REVERSE;
 			if (this._frames && this.interval > 0) {
-				timerLoop(this.interval, this, _frameLoop, null, true);
+				timerLoop(this.interval, this, _frameLoop, null, true, true);
 			}
 		}
 		
 		/**@private */
-		protected function _setFramesFromCache(name:String):Boolean {
-			var showWarn:Boolean = name != "";
+		protected function _setFramesFromCache(name:String, showWarn:Boolean = false):Boolean {
 			if (_url) name = _url + "#" + name;
 			if (name && framesMap[name]) {
 				var tAniO:*;
@@ -203,12 +202,10 @@ package laya.display {
 		
 		/**
 		 * <p>动画数据源。</p>
-		 * <p>
-		 * 类型如下：<br/>
+		 * <p>类型如下：<br/>
 		 * 1. LayaAir IDE动画文件路径：使用此类型需要预加载所需的图集资源，否则会创建失败，如果不想预加载或者需要创建完毕的回调，请使用loadAnimation(...)方法；<br/>
 		 * 2. 图集路径：使用此类型创建的动画模版不会被缓存到动画模版缓存池中，如果需要缓存或者创建完毕的回调，请使用loadAtlas(...)方法；<br/>
-		 * 3. 图片路径集合：使用此类型创建的动画模版不会被缓存到动画模版缓存池中，如果需要缓存，请使用loadImages(...)方法。
-		 * </p>
+		 * 3. 图片路径集合：使用此类型创建的动画模版不会被缓存到动画模版缓存池中，如果需要缓存，请使用loadImages(...)方法。</p>
 		 * @param value	数据源。比如：图集："xx/a1.atlas"；图片集合："a1.png,a2.png,a3.png"；LayaAir IDE动画"xx/a1.ani"。
 		 */
 		public function set source(value:String):void {
@@ -243,7 +240,7 @@ package laya.display {
 		}
 		
 		/**
-		 * <p>根据指定的动画模版初始化当前动画序列帧。选择动画模版的过程如下：1. 动画模版缓存池中key为cacheName的动画模版；2. 如果不存在，则加载指定的图片集合并创建动画模版。注意：只有指定不为空的cacheName，才能将创建好的动画模版以此为key缓存到动画模版缓存池，否则不进行缓存。<p/>
+		 * <p>根据指定的动画模版初始化当前动画序列帧。选择动画模版的过程如下：1. 动画模版缓存池中key为cacheName的动画模版；2. 如果不存在，则加载指定的图片集合并创建动画模版。注意：只有指定不为空的cacheName，才能将创建好的动画模版以此为key缓存到动画模版缓存池，否则不进行缓存。</p>
 		 * <p>动画模版缓存池是以一定的内存开销来节省CPU开销，当相同的动画模版被多次使用时，相比于每次都创建新的动画模版，使用动画模版缓存池，只需创建一次，缓存之后多次复用，从而节省了动画模版创建的开销。</p>
 		 * <p>因为返回值为Animation对象本身，所以可以使用如下语法：loadImages(...).loadImages(...).play(...);。</p>
 		 * @param	urls		图片路径集合。需要创建动画模版时，会以此为数据源。参数形如：[url1,url2,url3,...]。
@@ -260,7 +257,7 @@ package laya.display {
 		
 		/**
 		 * <p>根据指定的动画模版初始化当前动画序列帧。选择动画模版的过程如下：1. 动画模版缓存池中key为cacheName的动画模版；2. 如果不存在，则加载指定的图集并创建动画模版。</p>
-		 * <p>注意：只有指定不为空的cacheName，才能将创建好的动画模版以此为key缓存到动画模版缓存池，否则不进行缓存。<p/>
+		 * <p>注意：只有指定不为空的cacheName，才能将创建好的动画模版以此为key缓存到动画模版缓存池，否则不进行缓存。</p>
 		 * <p>动画模版缓存池是以一定的内存开销来节省CPU开销，当相同的动画模版被多次使用时，相比于每次都创建新的动画模版，使用动画模版缓存池，只需创建一次，缓存之后多次复用，从而节省了动画模版创建的开销。</p>
 		 * <p>因为返回值为Animation对象本身，所以可以使用如下语法：loadAtlas(...).loadAtlas(...).play(...);。</p>
 		 * @param	url			图集路径。需要创建动画模版时，会以此为数据源。
@@ -305,7 +302,7 @@ package laya.display {
 					Laya.loader.load(atlas, Handler.create(this, _loadAnimationData, [url, loaded, atlas]), null, Loader.ATLAS)
 				}
 			} else {
-				_this._setFramesFromCache(_actionName);
+				_this._setFramesFromCache(_actionName, true);
 				if (loaded) loaded.run();
 			}
 			return this;
@@ -340,12 +337,12 @@ package laya.display {
 						}
 						if (defaultO) {
 							framesMap[url + "#"] = defaultO;
-							_this._setFramesFromCache(_actionName);
+							_this._setFramesFromCache(_actionName, true);
 							index = 0;
 						}
 						_checkResumePlaying();
 					} else {
-						_this._setFramesFromCache(_actionName);
+						_this._setFramesFromCache(_actionName, true);
 						index = 0;
 						_checkResumePlaying();
 					}
@@ -361,7 +358,7 @@ package laya.display {
 		
 		/**@private */
 		protected function _parseGraphicAnimation(animationData:Object):Object {
-			return GraphicAnimation.parseAnimationData(animationData)
+			return GraphicAnimation.parseAnimationData(animationData);
 		}
 		
 		/**@private */

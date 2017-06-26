@@ -71,21 +71,20 @@ package laya.d3.core {
 			var rayY:Number = maxY + heightOffset;
 			ray.origin.elements[1] = rayY;
 			
-			for (var w:int = 0; w < width; w++) {
-				var posZ:Number = minZ + w * cellHeight;
-				heightMap._datas[w] = [];
-				for (var h:int = 0; h < height; h++) {
-					var posX:Number = minX + h * cellWidth;
+			for (var h:int = 0; h < height; h++) {
+				var posZ:Number = minZ + h * cellHeight;
+				heightMap._datas[h] = [];
+				for (var w:int = 0; w < width; w++) {
+					var posX:Number = minX + w * cellWidth;
 					
 					var rayOriE:Float32Array = ray.origin.elements;
 					rayOriE[0] = posX;
 					rayOriE[2] = posZ;
 					
 					var closestIntersection:Number = _getPosition(ray, vertices, indexs);
-					heightMap._datas[w][h] = (closestIntersection === Number.MAX_VALUE) ? NaN : rayY - closestIntersection;
+					heightMap._datas[h][w] = (closestIntersection === Number.MAX_VALUE) ? NaN : rayY - closestIntersection;
 				}
 			}
-			
 			return heightMap;
 		}
 		
@@ -103,18 +102,18 @@ package laya.d3.core {
 			var pixelsInfo:Uint8Array = texture.getPixels();
 			
 			var index:int = 0;
-			for (var w:int = 0; w < textureWidth; w++) {
-				var colDatas:Array= heightMap._datas[w] = [];
-				for (var h:int = 0; h < textureHeight; h++) {
+			for (var h:int = 0; h <textureHeight ; h++) {
+				var colDatas:Array= heightMap._datas[h] = [];
+				for (var w:int = 0; w < textureWidth; w++) {
 					var r:Number = pixelsInfo[index++];
 					var g:Number = pixelsInfo[index++];
 					var b:Number = pixelsInfo[index++];
 					var a:Number = pixelsInfo[index++];
 					
 					if (r == 255 && g == 255 && b == 255 && a == 255)
-						colDatas[h] = NaN;
+						colDatas[w] = NaN;
 					else {
-						colDatas[h] = (r + g + b) / 3 * compressionRatio + minHeight;
+						colDatas[w] = (r + g + b) / 3 * compressionRatio + minHeight;
 					}
 				}
 			}

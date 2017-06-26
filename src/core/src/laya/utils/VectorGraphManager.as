@@ -34,7 +34,7 @@ package laya.utils {
 		 */
 		public function getId():uint {
 			//if (_freeIdArray.length > 0) {
-				//return _freeIdArray.pop();
+			//return _freeIdArray.pop();
 			//}
 			return _id++;
 		}

@@ -152,7 +152,7 @@ package laya.d3.core.render {
 		 * @param	state 渲染状态。
 		 */
 		public function _preRender(state:RenderState):void {
-			_finalElements = _renderElements.concat(/*_staticBatchCombineRenderElements, */_dynamicBatchCombineRenderElements);
+			_finalElements = _renderElements.concat(_dynamicBatchCombineRenderElements);
 			//_needSort && (_finalElements.sort(_sort)，_needSort=false);//排序函数如果改变，仍需重新排列。//TODO:不排序面变多
 		}
 		
@@ -176,6 +176,7 @@ package laya.d3.core.render {
 				if (renderElement._onPreRenderFunction != null) {
 					renderElement._onPreRenderFunction.call(renderElement._sprite3D, state);
 				}
+				
 				if (renderElement._type === 0) {
 					state.owner = owner = renderElement._sprite3D;
 					state.renderElement = renderElement;

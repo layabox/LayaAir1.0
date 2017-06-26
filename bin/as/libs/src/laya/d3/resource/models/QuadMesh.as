@@ -64,7 +64,6 @@ package laya.d3.resource.models {
 			_long = long;
 			_width = width;
 			activeResource();
-			_loaded = true;
 			_generateBoundingObject();
 		}
 		
@@ -82,18 +81,12 @@ package laya.d3.resource.models {
 			var halfWidth:Number = _width / 2;
 			
 			var vertices:Float32Array = new Float32Array([
-				
-				-halfLong,   halfWidth,  0,   0, 0, 1, 0, 0,
-				 halfLong,   halfWidth,  0,   0, 0, 1, 1, 0,
-				-halfLong,  -halfWidth,  0,   0, 0, 1, 0, 1,
-				 halfLong,  -halfWidth,  0,   0, 0, 1, 1, 1,
-			]);
+			
+			-halfLong, halfWidth, 0, 0, 0, 1, 0, 0, halfLong, halfWidth, 0, 0, 0, 1, 1, 0, -halfLong, -halfWidth, 0, 0, 0, 1, 0, 1, halfLong, -halfWidth, 0, 0, 0, 1, 1, 1,]);
 			
 			var indices:Uint16Array = new Uint16Array([
 			
-				0,  1,  2,
-				3,  2,  1,
-			]);
+			0, 1, 2, 3, 2, 1,]);
 			
 			//初始化顶点缓冲
 			_vertexBuffer = new VertexBuffer3D(vertexDeclaration, _numberVertices, WebGLContext.STATIC_DRAW, true);

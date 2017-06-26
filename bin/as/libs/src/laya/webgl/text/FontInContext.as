@@ -18,20 +18,30 @@ package laya.webgl.text {
 		private var _index:int = 0;
 		private var _size:int = 14;
 		private var _italic:int = -2;
+		private static var _cache2:Object;
 		
 		public function FontInContext(font:String = null) {
+			_cache2 ||= [];
 			setFont(font || "14px Arial");
 		}
 		
 		public function setFont(value:String):void {
-			_words = value.split(' ');
-			for (var i:int = 0, n:int = _words.length; i < n; i++) {
-				if (_words[i].indexOf('px') > 0) {
-					_index = i;
-					break;
+			var arr:Array = _cache2[value];
+			if (!arr) {
+				_words = value.split(' ');
+				for (var i:int = 0, n:int = _words.length; i < n; i++) {
+					if (_words[i].indexOf('px') > 0) {
+						_index = i;
+						break;
+					}
 				}
+				_size = parseInt(_words[_index]);
+				_cache2[value] = [_words, _size];
+			} else {
+				_words = arr[0];
+				_size = arr[1];
 			}
-			_size = parseInt(_words[_index]);
+			
 			_text = null;
 			_italic = -2;
 		}

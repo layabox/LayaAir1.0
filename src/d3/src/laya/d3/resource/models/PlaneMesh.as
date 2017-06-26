@@ -58,7 +58,6 @@ package laya.d3.resource.models {
 			}
 		}
 		
-		
 		/**
 		 * 获取长度分段
 		 * @return 长度分段
@@ -111,7 +110,6 @@ package laya.d3.resource.models {
 			_stacks = stacks;
 			_slices = slices;
 			activeResource();
-			_loaded = true;
 			_generateBoundingObject();
 		}
 		
@@ -136,9 +134,9 @@ package laya.d3.resource.models {
 			
 			var verticeCount:int = 0;
 			
-			for (var i:int = 0; i <= _slices; i++ ){
+			for (var i:int = 0; i <= _slices; i++) {
 				
-				for (var j:int = 0; j <= _stacks; j ++ ){
+				for (var j:int = 0; j <= _stacks; j++) {
 					
 					vertices[verticeCount++] = j * stacksLong - halfLong;
 					vertices[verticeCount++] = 0;
@@ -153,9 +151,9 @@ package laya.d3.resource.models {
 			
 			var indiceIndex:int = 0;
 			
-			for (i = 0; i < _slices; i++ ){
+			for (i = 0; i < _slices; i++) {
 				
-				for (j = 0; j < _stacks; j ++ ){
+				for (j = 0; j < _stacks; j++) {
 					
 					indices[indiceIndex++] = (i + 1) * (_stacks + 1) + j;
 					indices[indiceIndex++] = i * (_stacks + 1) + j;
@@ -165,7 +163,7 @@ package laya.d3.resource.models {
 					indices[indiceIndex++] = i * (_stacks + 1) + j + 1;
 					indices[indiceIndex++] = (i + 1) * (_stacks + 1) + j + 1;
 				}
-			}	
+			}
 			
 			//初始化顶点缓冲
 			_vertexBuffer = new VertexBuffer3D(vertexDeclaration, _numberVertices, WebGLContext.STATIC_DRAW, true);

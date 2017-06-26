@@ -1,6 +1,7 @@
 package laya.d3.core.material {
 	import laya.d3.core.IClone;
 	import laya.d3.core.Transform3D;
+	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector2;
@@ -203,14 +204,16 @@ package laya.d3.core.material {
 		 * 创建一个 <code>BaseMaterial</code> 实例。
 		 */
 		public function BaseMaterial() {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
-			_loaded = true;
 			_isInstance = false;
 			_shaderDefineValue = 0;
 			_disablePublicShaderDefine = 0;
 			_shaderValues = new ValusArray();
 			_values = [];
 			_textureSharderIndices = new Vector.<int>();
+			_renderQueue = RenderQueue.OPAQUE;
+			_alphaTest = false;
 			cull = CULL_BACK;
 			blend = BLEND_DISABLE;
 			srcBlend = BLENDPARAM_ONE;
@@ -632,8 +635,7 @@ package laya.d3.core.material {
 				throw new Error("BaseMaterial:unkonwn version.");
 			}
 			
-			//_loaded = true;
-			event(Event.LOADED, this);
+			_endLoaded();
 		}
 		
 		/**
@@ -659,7 +661,6 @@ package laya.d3.core.material {
 			destBaseMaterial.depthFunc = depthFunc;
 			destBaseMaterial.depthWrite = depthWrite;
 			
-			destBaseMaterial._loaded = _loaded;
 			destBaseMaterial._renderQueue = _renderQueue;
 			destBaseMaterial._shader = _shader;
 			destBaseMaterial._sharderNameID = _sharderNameID;

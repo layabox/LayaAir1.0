@@ -1,8 +1,6 @@
 package laya.display {
 	import laya.display.css.Font;
 	import laya.events.Event;
-	import laya.maths.Bezier;
-	import laya.maths.GrahamScan;
 	import laya.maths.Matrix;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
@@ -22,16 +20,6 @@ package laya.display {
 	 */
 	public class Graphics {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		/**@private */
-		private static var _tempMatrix:Matrix = new Matrix();
-		/**@private */
-		private static var _initMatrix:Matrix = new Matrix();
-		/**@private */
-		private static var _tempPoints:Array = [];
-		/**@private */
-		private static var _tempMatrixArrays:Array = [];
-		/**@private */
-		private static var _tempCmds:Array = [];
 		
 		/**@private */
 		public var _sp:Sprite;
@@ -41,17 +29,11 @@ package laya.display {
 		public var _render:Function = _renderEmpty;
 		/**@private */
 		private var _cmds:Array = null;
-		
-		/**@private */
-		private var _temp:Array;
-		/**@private */
-		private var _bounds:Rectangle;
-		/**@private */
-		private var _rstBoundPoints:Array;
 		/**@private */
 		private var _vectorgraphArray:Array;
 		/**@private */
-		private var _cacheBoundsType:Boolean = false;
+		private var _graphicBounds:GraphicsBounds;
+		private static var _cache:Array = [];
 		
 		/**@private */
 		public static function __init__():void {
@@ -141,9 +123,8 @@ package laya.display {
 		 */
 		public function destroy():void {
 			clear();
-			_temp = null;
-			_bounds = null;
-			_rstBoundPoints = null;
+			if (_graphicBounds) _graphicBounds.destroy();
+			_graphicBounds = null;
 			_vectorgraphArray = null;
 			_sp && (_sp._renderType = 0);
 			_sp = null;
@@ -151,20 +132,55 @@ package laya.display {
 		
 		/**
 		 * <p>清空绘制命令。</p>
-		 */
-		public function clear():void {
+		 * @param recoverCmds 是否回收绘图指令
+		 */	
+		public function clear(recoverCmds:Boolean = false):void {
+			if (recoverCmds) {
+				var tCmd:* = _one;
+				if (_cmds) {
+					var i:int, len:int = _cmds.length;
+					for (i = 0; i < len; i++) {
+						tCmd = _cmds[i];
+						if (tCmd && (tCmd.callee === Render._context._drawTexture || tCmd.callee === Render._context._drawTextureWithTransform)) {
+							tCmd[0] = null;
+							_cache.push(tCmd);
+						}
+					}
+					_cmds.length = 0;
+				} else if (tCmd) {
+					if (tCmd && (tCmd.callee === Render._context._drawTexture || tCmd.callee === Render._context._drawTextureWithTransform)) {
+						tCmd[0] = null;
+						_cache.push(tCmd);
+					}
+				}
+			} else {
+				_cmds = null;
+			}
+			
 			_one = null;
 			_render = _renderEmpty;
-			_cmds = null;
-			_temp && (_temp.length = 0);
+			
 			_sp && (_sp._renderType &= ~RenderSprite.IMAGE);
 			_sp && (_sp._renderType &= ~RenderSprite.GRAPHICS);
 			_repaint();
 			if (_vectorgraphArray) {
-				for (var i:int = 0, n:int = _vectorgraphArray.length; i < n; i++) {
+				for (i = 0, len = _vectorgraphArray.length; i < len; i++) {
 					VectorGraphManager.getInstance().deleteShape(_vectorgraphArray[i]);
 				}
 				_vectorgraphArray.length = 0;
+			}
+		}
+		
+		/**@private */
+		private function _clearBoundsCache():void {
+			if (_graphicBounds) _graphicBounds.reset();
+		}
+		
+		/**@private */
+		private function _initGraphicBounds():void {
+			if (!_graphicBounds) {
+				_graphicBounds = new GraphicsBounds();
+				_graphicBounds._graphics = this;
 			}
 		}
 		
@@ -173,7 +189,7 @@ package laya.display {
 		 * 重绘此对象。
 		 */
 		public function _repaint():void {
-			_temp && (_temp.length = 0);
+			_clearBoundsCache();
 			_sp && _sp.repaint();
 		}
 		
@@ -203,11 +219,8 @@ package laya.display {
 		 * @return 位置与宽高组成的 一个 Rectangle 对象。
 		 */
 		public function getBounds(realSize:Boolean = false):Rectangle {
-			if (!_bounds || !_temp || _temp.length < 1 || realSize != _cacheBoundsType) {
-				_bounds = Rectangle._getWrapRec(getBoundPoints(realSize), _bounds)
-			}
-			_cacheBoundsType = realSize;
-			return _bounds;
+			_initGraphicBounds();
+			return _graphicBounds.getBounds(realSize);
 		}
 		
 		/**
@@ -216,10 +229,8 @@ package laya.display {
 		 * 获取端点列表。
 		 */
 		public function getBoundPoints(realSize:Boolean = false):Array {
-			if (!_temp || _temp.length < 1 || realSize != _cacheBoundsType)
-				_temp = _getCmdPoints(realSize);
-			_cacheBoundsType = realSize;
-			return _rstBoundPoints = Utils.copyArray(_rstBoundPoints, _temp);
+			_initGraphicBounds();
+			return _graphicBounds.getBoundPoints(realSize);
 		}
 		
 		private function _addCmd(a:Array):void {
@@ -228,222 +239,11 @@ package laya.display {
 			this._cmds.push(a);
 		}
 		
-		private function _getCmdPoints(realSize:Boolean = false):Array {
-			var context:RenderContext = Render._context;
-			var cmds:Array = this._cmds;
-			var rst:Array;
-			rst = _temp || (_temp = []);
-			
-			rst.length = 0;
-			if (!cmds && _one != null) {
-				_tempCmds.length = 0;
-				_tempCmds.push(_one);
-				cmds = _tempCmds;
-			}
-			if (!cmds)
-				return rst;
-			
-			var matrixs:Array;
-			matrixs = _tempMatrixArrays;
-			matrixs.length = 0;
-			var tMatrix:Matrix = _initMatrix;
-			tMatrix.identity();
-			var tempMatrix:Matrix = _tempMatrix;
-			var cmd:Object;
-			var tex:Texture
-			for (var i:int = 0, n:int = cmds.length; i < n; i++) {
-				cmd = cmds[i];
-				switch (cmd.callee) {
-				case context._save: 
-				case 7: //save
-					matrixs.push(tMatrix);
-					tMatrix = tMatrix.clone();
-					break;
-				case context._restore: 
-				case 8: //restore
-					tMatrix = matrixs.pop();
-					break;
-				case context._scale: 
-				case 5://scale
-					tempMatrix.identity();
-					tempMatrix.translate(-cmd[2], -cmd[3]);
-					tempMatrix.scale(cmd[0], cmd[1]);
-					tempMatrix.translate(cmd[2], cmd[3]);
-					
-					_switchMatrix(tMatrix, tempMatrix);
-					break;
-				case context._rotate: 
-				case 3://case context._rotate: 
-					tempMatrix.identity();
-					tempMatrix.translate(-cmd[1], -cmd[2]);
-					tempMatrix.rotate(cmd[0]);
-					tempMatrix.translate(cmd[1], cmd[2]);
-					
-					_switchMatrix(tMatrix, tempMatrix);
-					break;
-				case context._translate: 
-				case 6://translate
-					tempMatrix.identity();
-					tempMatrix.translate(cmd[0], cmd[1]);
-					
-					_switchMatrix(tMatrix, tempMatrix);
-					break;
-				case context._transform: 
-				case 4://context._transform:
-					tempMatrix.identity();
-					tempMatrix.translate(-cmd[1], -cmd[2]);
-					tempMatrix.concat(cmd[0]);
-					tempMatrix.translate(cmd[1], cmd[2]);
-					
-					_switchMatrix(tMatrix, tempMatrix);
-					break;
-				case 16://case context._drawTexture: 
-				case 24://case context._fillTexture
-					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0], cmd[1], cmd[2], cmd[3]), tMatrix);
-					break;
-				case 17://case context._drawTextureTransform: 
-					tMatrix.copyTo(tempMatrix);
-					tempMatrix.concat(cmd[4]);
-					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0], cmd[1], cmd[2], cmd[3]), tempMatrix);
-					break;
-				case context._drawTexture: 
-					//width = width - tex.sourceWidth + tex.width;
-					//height = height - tex.sourceHeight + tex.height;
-					tex = cmd[0];
-					if (realSize) {
-						if (cmd[3] && cmd[4]) {
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
-						} else {
-							tex = cmd[0];
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), tMatrix);
-						}
-					} else {
-						var offX:Number = tex.offsetX > 0 ? tex.offsetX : 0;
-						var offY:Number = tex.offsetY > 0 ? tex.offsetY : 0;
-						if (cmd[3] && cmd[4]) {
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, cmd[3] + tex.sourceWidth - tex.width, cmd[4] + tex.sourceHeight - tex.height), tMatrix);
-						} else {
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, tex.width + tex.sourceWidth - tex.width, tex.height + tex.sourceHeight - tex.height), tMatrix);
-						}
-					}
-					
-					break;
-				case context._fillTexture: 
-					if (cmd[3] && cmd[4]) {
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
-					} else {
-						tex = cmd[0];
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), tMatrix);
-					}
-					break;
-				case context._drawTextureWithTransform: 
-					var drawMatrix:Matrix;
-					if (cmd[5]) {
-						tMatrix.copyTo(tempMatrix);
-						tempMatrix.concat(cmd[5]);
-						drawMatrix = tempMatrix;
-					} else {
-						drawMatrix = tMatrix;
-					}
-					if (realSize) {
-						if (cmd[3] && cmd[4]) {
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), drawMatrix);
-						} else {
-							tex = cmd[0];
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), drawMatrix);
-						}
-					} else {
-						tex = cmd[0];
-						offX = tex.offsetX > 0 ? tex.offsetX : 0;
-						offY = tex.offsetY > 0 ? tex.offsetY : 0;
-						if (cmd[3] && cmd[4]) {
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, cmd[3] + tex.sourceWidth - tex.width, cmd[4] + tex.sourceHeight - tex.height), drawMatrix);
-						} else {
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, tex.width + tex.sourceWidth - tex.width, tex.height + tex.sourceHeight - tex.height), drawMatrix);
-						}
-					}
-					
-					break;
-				case context._drawRect: 
-				case 13://case context._drawRect:
-					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0], cmd[1], cmd[2], cmd[3]), tMatrix);
-					break;
-				case context._drawCircle: 
-				case context._fillCircle: 
-				case 14://case context._drawCircle
-					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0] - cmd[2], cmd[1] - cmd[2], cmd[2] + cmd[2], cmd[2] + cmd[2]), tMatrix);
-					break;
-				case context._drawLine: 
-				case 20://drawLine
-					_tempPoints.length = 0;
-					var lineWidth:Number;
-					lineWidth = cmd[5] * 0.5;
-					if (cmd[0] == cmd[2]) {
-						_tempPoints.push(cmd[0] + lineWidth, cmd[1], cmd[2] + lineWidth, cmd[3], cmd[0] - lineWidth, cmd[1], cmd[2] - lineWidth, cmd[3]);
-					} else if (cmd[1] == cmd[3]) {
-						_tempPoints.push(cmd[0], cmd[1] + lineWidth, cmd[2], cmd[3] + lineWidth, cmd[0], cmd[1] - lineWidth, cmd[2], cmd[3] - lineWidth);
-					} else {
-						_tempPoints.push(cmd[0], cmd[1], cmd[2], cmd[3]);
-					}
-					
-					_addPointArrToRst(rst, _tempPoints, tMatrix);
-					break;
-				case context._drawCurves: 
-				case 22://context._drawCurves: 
-					//addPointArrToRst(rst, [cmd[0], cmd[1]], tMatrix);
-					//addPointArrToRst(rst, cmd[2], tMatrix, cmd[0], cmd[1]);
-					_addPointArrToRst(rst, Bezier.I.getBezierPoints(cmd[2]), tMatrix, cmd[0], cmd[1]);
-					break;
-				case context._drawPoly: 
-				case context._drawLines: 
-				case 18://drawpoly
-					//addPointArrToRst(rst, [cmd[0], cmd[1]], tMatrix);
-					_addPointArrToRst(rst, cmd[2], tMatrix, cmd[0], cmd[1]);
-					break;
-				case context._drawPath: 
-				case 19://drawPath
-					//addPointArrToRst(rst, [cmd[0], cmd[1]], tMatrix);
-					_addPointArrToRst(rst, _getPathPoints(cmd[2]), tMatrix, cmd[0], cmd[1]);
-					break;
-				case context._drawPie: 
-				case 15://drawPie
-					_addPointArrToRst(rst, _getPiePoints(cmd[0], cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
-					break;
-					
-				}
-			}
-			if (rst.length > 200) {
-				rst = Utils.copyArray(rst, Rectangle._getWrapRec(rst)._getBoundPoints());
-			} else if (rst.length > 8)
-				rst = GrahamScan.scanPList(rst);
-			return rst;
-		}
-		
-		private function _switchMatrix(tMatix:Matrix, tempMatrix:Matrix):void {
-			tempMatrix.concat(tMatix);
-			tempMatrix.copyTo(tMatix);
-		}
-		
-		private static function _addPointArrToRst(rst:Array, points:Array, matrix:Matrix, dx:Number = 0, dy:Number = 0):void {
-			var i:int, len:int;
-			len = points.length;
-			for (i = 0; i < len; i += 2) {
-				_addPointToRst(rst, points[i] + dx, points[i + 1] + dy, matrix);
-			}
-		}
-		
-		private static function _addPointToRst(rst:Array, x:Number, y:Number, matrix:Matrix):void {
-			var _tempPoint:Point = Point.TEMP;
-			_tempPoint.setTo(x ? x : 0, y ? y : 0);
-			matrix.transformPoint(_tempPoint);
-			rst.push(_tempPoint.x, _tempPoint.y);
-		}
-		
 		/**
 		 * 绘制纹理。
 		 * @param tex		纹理。
-		 * @param x X		（可选）轴偏移量。
-		 * @param y Y		（可选）轴偏移量。
+		 * @param x 		（可选）X轴偏移量。
+		 * @param y 		（可选）Y轴偏移量。
 		 * @param width		（可选）宽度。
 		 * @param height	（可选）高度。
 		 * @param m			（可选）矩阵信息。
@@ -454,17 +254,37 @@ package laya.display {
 			if (!width) width = tex.sourceWidth;
 			if (!height) height = tex.sourceHeight;
 			
-			width = width - tex.sourceWidth + tex.width;
-			height = height - tex.sourceHeight + tex.height;
+			var wRate:Number = width / tex.sourceWidth;
+			var hRate:Number = height / tex.sourceHeight;
+			width = tex.width * wRate;
+			height = tex.height * hRate;
+			//width = width - tex.sourceWidth + tex.width;
+			//height = height - tex.sourceHeight + tex.height;
 			if (tex.loaded && (width <= 0 || height <= 0)) return;
 			
 			//处理透明区域裁剪
-			x += tex.offsetX;
-			y += tex.offsetY;
+			//x += tex.offsetX;
+			//y += tex.offsetY;
+			
+			x += tex.offsetX * wRate;
+			y += tex.offsetY * hRate;
 			
 			_sp && (_sp._renderType |= RenderSprite.GRAPHICS);
 			
-			var args:* = [tex, x, y, width, height, m, alpha];
+			//var args:* = [tex, x, y, width, height, m, alpha];
+			if (_cache.length) {
+				var args:Array = _cache.pop();
+				args[0] = tex;
+				args[1] = x;
+				args[2] = y;
+				args[3] = width;
+				args[4] = height;
+				args[5] = m;
+				args[6] = alpha;
+			} else {
+				args = [tex, x, y, width, height, m, alpha];
+			}
+			
 			args.callee = (m || alpha != 1) ? Render._context._drawTextureWithTransform : Render._context._drawTexture;
 			if (_one == null && !m && alpha == 1) {
 				_one = args;
@@ -487,11 +307,18 @@ package laya.display {
 			if (_one && _render === _renderOneImg) {
 				if (!width) width = tex.sourceWidth;
 				if (!height) height = tex.sourceHeight;
-				width = width - tex.sourceWidth + tex.width;
-				height = height - tex.sourceHeight + tex.height;
+				//				width = width - tex.sourceWidth + tex.width;
+				//				height = height - tex.sourceHeight + tex.height;
+				var wRate:Number = width / tex.sourceWidth;
+				var hRate:Number = height / tex.sourceHeight;
+				width = tex.width * wRate;
+				height = tex.height * hRate;
 				
-				x += tex.offsetX;
-				y += tex.offsetY;
+				//				x += tex.offsetX;
+				//				y += tex.offsetY;
+				
+				x += tex.offsetX * wRate;
+				y += tex.offsetY * hRate;
 				
 				_one[0] = tex;
 				_one[1] = x;
@@ -556,7 +383,6 @@ package laya.display {
 				_cmds.push(args);
 			}
 			args.callee = fun;
-			_temp && (_temp.length = 0);
 			_repaint();
 			return args;
 		}
@@ -910,21 +736,6 @@ package laya.display {
 			_saveToCmd(Render._context._drawPie, arr);
 		}
 		
-		private function _getPiePoints(x:Number, y:Number, radius:Number, startAngle:Number, endAngle:Number):Array {
-			var rst:Array = _tempPoints;
-			_tempPoints.length = 0;
-			rst.push(x, y);
-			var dP:Number = Math.PI / 10;
-			var i:Number;
-			for (i = startAngle; i < endAngle; i += dP) {
-				rst.push(x + radius * Math.cos(i), y + radius * Math.sin(i));
-			}
-			if (endAngle != i) {
-				rst.push(x + radius * Math.cos(endAngle), y + radius * Math.sin(endAngle));
-			}
-			return rst;
-		}
-		
 		/**
 		 * 绘制多边形。
 		 * @param x			开始绘制的 X 轴位置。
@@ -951,24 +762,6 @@ package laya.display {
 			var offset:Number = lineColor ? (lineWidth % 2 === 0 ? 0 : 0.5) : 0;
 			var arr:Array = [x + offset, y + offset, points, fillColor, lineColor, lineWidth, tId, tIsConvexPolygon];
 			_saveToCmd(Render._context._drawPoly, arr);
-		}
-		
-		private function _getPathPoints(paths:Array):Array {
-			var i:int, len:int;
-			var rst:Array = _tempPoints;
-			rst.length = 0;
-			len = paths.length;
-			var tCMD:Array;
-			for (i = 0; i < len; i++) {
-				tCMD = paths[i];
-				if (tCMD.length > 1) {
-					rst.push(tCMD[1], tCMD[2]);
-					if (tCMD.length > 3) {
-						rst.push(tCMD[3], tCMD[4]);
-					}
-				}
-			}
-			return rst;
 		}
 		
 		/**

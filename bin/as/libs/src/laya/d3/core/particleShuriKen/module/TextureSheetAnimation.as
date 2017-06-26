@@ -22,7 +22,7 @@ package laya.d3.core.particleShuriKen.module {
 		/**UV通道类型,0为Noting,1为Everything,待补充,暂不支持。*/
 		public var enableUVChannels:int;
 		/**是否启用*/
-		public var enbale:Boolean;
+		public var enable:Boolean;
 		
 		/**获取时间帧率。*/
 		public function get frame():FrameOverTime {
@@ -62,7 +62,7 @@ package laya.d3.core.particleShuriKen.module {
 			_startFrame.cloneTo(destTextureSheetAnimation._startFrame);
 			destTextureSheetAnimation.cycles = cycles;
 			destTextureSheetAnimation.enableUVChannels = enableUVChannels;
-			destTextureSheetAnimation.enbale = enbale;
+			destTextureSheetAnimation.enable = enable;
 		}
 		
 		/**
@@ -102,7 +102,7 @@ package laya.d3.core.particleShuriKen.module {
 			destTextureSheetAnimation.randomRow = randomRow;
 			destTextureSheetAnimation.cycles = cycles;
 			destTextureSheetAnimation.enableUVChannels = enableUVChannels;
-			destTextureSheetAnimation.enbale = enbale;
+			destTextureSheetAnimation.enable = enable;
 			return destTextureSheetAnimation;
 		}
 	

@@ -68,6 +68,7 @@ package laya.d3.core.material {
 		public static var SHADERDEFINE_AMBIENTMAP:int;
 		public static var SHADERDEFINE_REFLECTMAP:int;
 		public static var SHADERDEFINE_UVTRANSFORM:int;
+		public static var SHADERDEFINE_TILINGOFFSET:int;
 		//public static var MIXUV:int;//TODO：
 		
 		public static const DIFFUSETEXTURE:int = 1;
@@ -84,6 +85,7 @@ package laya.d3.core.material {
 		public static const MATERIALREFLECT:int = 12;
 		public static const UVMATRIX:int = 13;
 		public static const UVAGE:int = 14;
+		public static const TILINGOFFSET:int = 15;
 		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:StandardMaterial = new StandardMaterial();
@@ -96,8 +98,9 @@ package laya.d3.core.material {
 			return Laya.loader.create(url, null, null, StandardMaterial);
 		}
 		
-		/**@private 渲染模式。*/
+		/**@private */
 		private var _renderMode:int;
+		
 		/** @private */
 		protected var _transformUV:TransformUV = null;
 		
@@ -273,6 +276,31 @@ package laya.d3.core.material {
 			}
 			
 			_conchMaterial && _conchMaterial.setRenderMode(value);//NATIVE
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移。
+		 * @return 纹理平铺和偏移。
+		 */
+		public function get tilingOffset():Vector4 {
+			return _getColor(TILINGOFFSET);
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移。
+		 * @param value 纹理平铺和偏移。
+		 */
+		public function set tilingOffset(value:Vector4):void {
+			if (value) {
+				var valueE:Float32Array = value.elements;
+				if (valueE[0] != 1 || valueE[1] != 1 || valueE[2] != 0 || valueE[3] != 0)
+					_addShaderDefine(StandardMaterial.SHADERDEFINE_TILINGOFFSET);
+				else
+					_removeShaderDefine(StandardMaterial.SHADERDEFINE_TILINGOFFSET);
+			} else {
+				_removeShaderDefine(StandardMaterial.SHADERDEFINE_TILINGOFFSET);
+			}
+			_setColor(TILINGOFFSET, value);
 		}
 		
 		public function get ambientColor():Vector3 {
@@ -487,6 +515,7 @@ package laya.d3.core.material {
 		}
 		
 		public function StandardMaterial() {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
 			setShaderName("SIMPLE");
 			_setColor(MATERIALAMBIENT, new Vector3(0.6, 0.6, 0.6));
@@ -495,6 +524,7 @@ package laya.d3.core.material {
 			_setColor(MATERIALREFLECT, new Vector3(1.0, 1.0, 1.0));
 			_setColor(ALBEDO, new Vector4(1.0, 1.0, 1.0, 1.0));
 			_setNumber(ALPHATESTVALUE, 0.5);
+			_setColor(TILINGOFFSET, new Vector4(1.0, 1.0, 0.0, 0.0));
 			renderMode = RENDERMODE_OPAQUE;
 		}
 		
@@ -511,6 +541,8 @@ package laya.d3.core.material {
 			material.specularColor = new Vector4(specularColorValue[0], specularColorValue[1], specularColorValue[2], specularColorValue[3]);
 			var reflectColorValue:Array = customProps.reflectColor;
 			material.reflectColor = new Vector3(reflectColorValue[0], reflectColorValue[1], reflectColorValue[2]);
+			var albedoColorValue:Array = customProps.albedoColor;
+			(albedoColorValue) && (material.albedo = new Vector4(albedoColorValue[0], albedoColorValue[1], albedoColorValue[2], albedoColorValue[3]));
 			
 			var diffuseTexture:String = customProps.diffuseTexture.texture2D;
 			(diffuseTexture) && (material.diffuseTexture = Loader.getRes(textureMap[diffuseTexture]));
@@ -559,8 +591,7 @@ package laya.d3.core.material {
 					this[prop] = props[prop];
 				_parseStandardMaterial(textureMap, this, jsonData);
 				
-				//_loaded = true;
-				event(Event.LOADED, this);
+				_endLoaded();
 			}
 		}
 		

@@ -61,6 +61,10 @@ varying float v_posViewZ;
   #endif
 #endif
 
+#ifdef TILINGOFFSET
+	uniform vec4 u_TilingOffset;
+#endif
+
 void main_castShadow()
 {
 #ifdef BONE
@@ -125,7 +129,7 @@ void main_normal()
 	#endif
 #endif
 
-#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(RECEIVESHADOW)
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)||defined(DEPTHFOG)||defined(REFLECTMAP)||defined(RECEIVESHADOW)
 	#ifdef BONE
 		v_PositionWorld=(u_WorldMat*position).xyz;
 	#else
@@ -138,6 +142,9 @@ void main_normal()
 		v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);
 	#else
 		v_Texcoord0=a_Texcoord0;
+	#endif
+	#ifdef TILINGOFFSET
+		v_Texcoord0=(v_Texcoord0*u_TilingOffset.xy)+u_TilingOffset.zw;
 	#endif
 	#ifdef UVTRANSFORM
 		v_Texcoord0=(u_UVMatrix*vec4(v_Texcoord0,0.0,1.0)).xy;

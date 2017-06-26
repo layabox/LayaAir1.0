@@ -114,6 +114,8 @@ package laya.media.h5audio {
 			_audio.pause();
 			_audio.removeEventListener("ended", _onEnd);
 			_audio.removeEventListener("canplay", _resumePlay);
+			//ie下使用对象池可能会导致后面的声音播放不出来
+			if(!Browser.onIE)
 			Pool.recover("audio:" + url, _audio);
 			Browser.removeElement(_audio);
 			_audio = null;

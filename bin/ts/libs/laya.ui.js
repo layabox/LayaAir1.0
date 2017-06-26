@@ -9,8 +9,8 @@
 	var Sprite=laya.display.Sprite,Text=laya.display.Text,Texture=laya.resource.Texture,Tween=laya.utils.Tween;
 	var Utils=laya.utils.Utils;
 	Laya.interface('laya.ui.IItem');
-	Laya.interface('laya.ui.ISelect');
 	Laya.interface('laya.ui.IRender');
+	Laya.interface('laya.ui.ISelect');
 	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
@@ -231,6 +231,11 @@
 			if (width < 0.1 || height < 0.1)return;
 			if (repeat && (tex.width!=width || tex.height !=height))this.fillTexture(tex,x,y,width,height);
 			else this.drawTexture(tex,x,y,width,height);
+		}
+
+		__proto.clear=function(recoverCmds){
+			(recoverCmds===void 0)&& (recoverCmds=true);
+			_super.prototype.clear.call(this,false);
 		}
 
 		/**
@@ -676,8 +681,8 @@
 			if (value !=this._layout.top){
 				this.getLayout().top=value;
 				this._setLayoutEnabled(true);
-				this.resetLayoutY();
 			}
+			this.resetLayoutY();
 		});
 
 		/**
@@ -689,8 +694,8 @@
 			if (value !=this._layout.bottom){
 				this.getLayout().bottom=value;
 				this._setLayoutEnabled(true);
-				this.resetLayoutY();
 			}
+			this.resetLayoutY();
 		});
 
 		/**
@@ -702,8 +707,8 @@
 			if (value !=this._layout.left){
 				this.getLayout().left=value;
 				this._setLayoutEnabled(true);
-				this.resetLayoutX();
 			}
+			this.resetLayoutX();
 		});
 
 		/**
@@ -715,8 +720,8 @@
 			if (value !=this._layout.right){
 				this.getLayout().right=value;
 				this._setLayoutEnabled(true);
-				this.resetLayoutX();
 			}
+			this.resetLayoutX();
 		});
 
 		/**
@@ -728,8 +733,8 @@
 			if (value !=this._layout.centerX){
 				this.getLayout().centerX=value;
 				this._setLayoutEnabled(true);
-				this.resetLayoutX();
 			}
+			this.resetLayoutX();
 		});
 
 		/**
@@ -741,8 +746,8 @@
 			if (value !=this._layout.centerY){
 				this.getLayout().centerY=value;
 				this._setLayoutEnabled(true);
-				this.resetLayoutY();
 			}
+			this.resetLayoutY();
 		});
 
 		/**X轴锚点，值为0-1*/
@@ -752,8 +757,8 @@
 			if (value !=this._layout.anchorX){
 				this.getLayout().anchorX=value;
 				this._setLayoutEnabled(true);
-				this.resetLayoutX();
 			}
+			this.resetLayoutX();
 		});
 
 		/**Y轴锚点，值为0-1*/
@@ -763,8 +768,8 @@
 			if (value !=this._layout.anchorY){
 				this.getLayout().anchorY=value;
 				this._setLayoutEnabled(true);
-				this.resetLayoutY();
 			}
+			this.resetLayoutY();
 		});
 
 		/**
@@ -958,7 +963,7 @@
 		*/
 		__proto.close=function(dialog,type){
 			if (dialog.closeEffect !=null)dialog.closeEffect.runWith([dialog,type]);
-			else this.doClose(dialog);
+			else this.doClose(dialog,type);
 			this.event(/*laya.events.Event.CLOSE*/"close");
 		}
 
@@ -2858,6 +2863,7 @@
 		__proto.destroy=function(destroyChild){
 			(destroyChild===void 0)&& (destroyChild=true);
 			this.stopScroll();
+			this.target=null;
 			_super.prototype.destroy.call(this,destroyChild);
 			this.upButton && this.upButton.destroy(destroyChild);
 			this.downButton && this.downButton.destroy(destroyChild);
@@ -3070,7 +3076,8 @@
 					return;
 				}
 				if (offset > 60)this._lastOffset=this._lastOffset > 0 ? 60 :-60;
-				Laya.timer.frameLoop(1,this,this.tweenMove);
+				var dis=Math.round(Math.abs(this.elasticDistance *(this._lastOffset / 240)));
+				Laya.timer.frameLoop(1,this,this.tweenMove,[dis]);
 			}
 		}
 
@@ -3084,17 +3091,17 @@
 		}
 
 		/**@private */
-		__proto.tweenMove=function(){
+		__proto.tweenMove=function(maxDistance){
 			this._lastOffset *=this.rollRatio;
 			var tarSpeed=NaN;
-			if (this.elasticDistance > 0){
+			if (maxDistance > 0){
 				if (this._lastOffset > 0 && this.value <=this.min){
 					this._isElastic=true;
-					tarSpeed=-(this.min-this.elasticDistance-this.value)*0.5;
+					tarSpeed=-(this.min-maxDistance-this.value)*0.5;
 					if (this._lastOffset > tarSpeed)this._lastOffset=tarSpeed;
-					}else if (this._lastOffset<0&&this.value>=this.max){
+					}else if (this._lastOffset < 0 && this.value >=this.max){
 					this._isElastic=true;
-					tarSpeed=-(this.max+this.elasticDistance-this.value)*0.5;
+					tarSpeed=-(this.max+maxDistance-this.value)*0.5;
 					if (this._lastOffset < tarSpeed)this._lastOffset=tarSpeed;
 				}
 			}
@@ -3106,7 +3113,7 @@
 						Tween.to(this,{value:this.min},this.elasticBackTime,Ease.sineOut,Handler.create(this,this.elasticOver));
 						}else if (this._value > this.max){
 						Tween.to(this,{value:this.max},this.elasticBackTime,Ease.sineOut,Handler.create(this,this.elasticOver));
-						}else{
+						}else {
 						this.elasticOver();
 					}
 					return;
@@ -4984,6 +4991,9 @@
 			this._direction="horizontal";
 			this._spaceX=0;
 			this._spaceY=0;
+			this._align="left";
+			this._wordsW=0;
+			this._wordsH=0;
 			FontClip.__super.call(this);
 			if (skin)this.skin=skin;
 			if (sheet)this.sheet=sheet;
@@ -5007,27 +5017,53 @@
 		__proto.changeValue=function(){
 			if (!this._sources)return;
 			if (!this._valueArr)return;
-			this.graphics.clear();
+			this.graphics.clear(true);
 			var texture;
+			texture=this._sources[0];
+			if (!texture)return;
 			var isHorizontal=(this._direction==="horizontal");
+			if (isHorizontal){
+				this._wordsW=this._valueArr.length *(texture.width+this.spaceX);
+				this._wordsH=texture.height;
+				}else{
+				this._wordsW=texture.width;
+				this._wordsH=(texture.height+this.spaceY)*this._valueArr.length;
+			};
+			var dX=0;
+			if (this._width){
+				switch(this._align){
+					case "center":
+						dX=0.5 *(this._width-this._wordsW);
+						break ;
+					case "right":
+						dX=this._width-this._wordsW;
+						break ;
+					default :
+						dX=0;
+					}
+			}
 			for (var i=0,sz=this._valueArr.length;i < sz;i++){
-				var index=this._indexMap[this._valueArr[i]];
+				var index=this._indexMap[this._valueArr.charAt(i)];
 				if (!this.sources[index])continue ;
 				texture=this.sources[index];
-				if (isHorizontal)this.graphics.drawTexture(texture,i *(texture.width+this.spaceX),0,texture.width,texture.height);
-				else this.graphics.drawTexture(texture,0,i *(texture.height+this.spaceY),texture.width,texture.height);
+				if (isHorizontal)this.graphics.drawTexture(texture,dX+i *(texture.width+this.spaceX),0,texture.width,texture.height);
+				else this.graphics.drawTexture(texture,0+dX,i *(texture.height+this.spaceY),texture.width,texture.height);
 			}
-			if (!texture)return;
-			if (isHorizontal)this.size(this._valueArr.length *(texture.width+this.spaceX),texture.height);
-			else this.size(texture.width,(texture.height+this.spaceY)*this._valueArr.length);
+			if (!this._width){
+				this.resetLayoutX();
+				this.callLater(this.changeSize);
+			}
+			if (!this._height){
+				this.resetLayoutY();
+				this.callLater(this.changeSize);
+			}
 		}
 
 		__proto.destroy=function(destroyChild){
 			(destroyChild===void 0)&& (destroyChild=true);
 			this._valueArr=null;
 			this._indexMap=null;
-			this._indexMap=null;
-			this.graphics.clear();
+			this.graphics.clear(true);
 			this.removeSelf();
 			this.off(/*laya.events.Event.LOADED*/"loaded",this,this._onClipLoaded);
 			_super.prototype.destroy.call(this,destroyChild);
@@ -5053,6 +5089,11 @@
 			}
 		});
 
+		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
+			_super.prototype._$set_height.call(this,value);
+			this.callLater(this.changeValue);
+		});
+
 		/**
 		*布局方向。
 		*<p>默认值为"horizontal"。</p>
@@ -5073,10 +5114,15 @@
 		*/
 		__getset(0,__proto,'value',function(){
 			if (!this._valueArr)return "";
-			return this._valueArr.join("");
+			return this._valueArr;
 			},function(value){
 			value+="";
-			this._valueArr=value.split("");
+			this._valueArr=value;
+			this.callLater(this.changeValue);
+		});
+
+		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
+			_super.prototype._$set_width.call(this,value);
 			this.callLater(this.changeValue);
 		});
 
@@ -5094,6 +5140,22 @@
 			},function(value){
 			this._spaceY=value;
 			if (!(this._direction==="horizontal"))this.callLater(this.changeValue);
+		});
+
+		/**水平对齐方式*/
+		__getset(0,__proto,'align',function(){
+			return this._align;
+			},function(v){
+			this._align=v;
+			this.callLater(this.changeValue);
+		});
+
+		__getset(0,__proto,'measureWidth',function(){
+			return this._wordsW;
+		});
+
+		__getset(0,__proto,'measureHeight',function(){
+			return this._wordsH;
 		});
 
 		return FontClip;
@@ -5298,6 +5360,11 @@
 
 		__proto.onScrollEnd=function(){
 			_super.prototype._$set_cacheAs.call(this,this._$P.cacheAs);
+		}
+
+		__proto._removePreScrollBar=function(){
+			var preNode=this.removeChildByName("scrollBar");
+			if (preNode)preNode.destroy(true);
 		}
 
 		/**
@@ -5729,8 +5796,10 @@
 
 		/**@inheritDoc */
 		__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
-			_super.prototype._$set_height.call(this,value);
-			this._setCellChanged();
+			if (value !=this._height){
+				_super.prototype._$set_height.call(this,value);
+				this._setCellChanged();
+			}
 		});
 
 		/**
@@ -5760,7 +5829,7 @@
 		__getset(0,__proto,'vScrollBarSkin',function(){
 			return this._scrollBar ? this._scrollBar.skin :null;
 			},function(value){
-			this.removeChildByName("scrollBar");
+			this._removePreScrollBar();
 			var scrollBar=new VScrollBar();
 			scrollBar.name="scrollBar";
 			scrollBar.right=0;
@@ -5791,7 +5860,7 @@
 		__getset(0,__proto,'hScrollBarSkin',function(){
 			return this._scrollBar ? this._scrollBar.skin :null;
 			},function(value){
-			this.removeChildByName("scrollBar");
+			this._removePreScrollBar();
 			var scrollBar=new HScrollBar();
 			scrollBar.name="scrollBar";
 			scrollBar.bottom=0;
@@ -5830,8 +5899,10 @@
 
 		/**@inheritDoc */
 		__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
-			_super.prototype._$set_width.call(this,value);
-			this._setCellChanged();
+			if (value !=this._width){
+				_super.prototype._$set_width.call(this,value);
+				this._setCellChanged();
+			}
 		});
 
 		/**
@@ -6372,111 +6443,6 @@
 
 
 	/**
-	*使用 <code>HSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
-	*<p> <code>HSlider</code> 控件采用水平方向。滑块轨道从左向右扩展，而标签位于轨道的顶部或底部。</p>
-	*
-	*@example <caption>以下示例代码，创建了一个 <code>HSlider</code> 实例。</caption>
-	*package
-	*{
-		*import laya.ui.HSlider;
-		*import laya.utils.Handler;
-		*public class HSlider_Example
-		*{
-			*private var hSlider:HSlider;
-			*public function HSlider_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/hslider.png","resource/ui/hslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*hSlider=new HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
-				*hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
-				*hSlider.min=0;//设置 hSlider 最低位置值。
-				*hSlider.max=10;//设置 hSlider 最高位置值。
-				*hSlider.value=2;//设置 hSlider 当前位置值。
-				*hSlider.tick=1;//设置 hSlider 刻度值。
-				*hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
-				*hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
-				*hSlider.changeHandler=new Handler(this,onChange);//设置 hSlider 位置变化处理器。
-				*Laya.stage.addChild(hSlider);//把 hSlider 添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滑块的位置： value="+value);
-				*}
-			*}
-		*}
-	*@example
-	*Laya.init(640,800,"canvas");//设置游戏画布宽高、渲染模式
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var hSlider;
-	*var res=["resource/ui/hslider.png","resource/ui/hslider$bar.png"];
-	*Laya.loader.load(res,laya.utils.Handler.create(this,onLoadComplete));
-	*function onLoadComplete(){
-		*console.log("资源加载完成！");
-		*hSlider=new laya.ui.HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
-		*hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
-		*hSlider.min=0;//设置 hSlider 最低位置值。
-		*hSlider.max=10;//设置 hSlider 最高位置值。
-		*hSlider.value=2;//设置 hSlider 当前位置值。
-		*hSlider.tick=1;//设置 hSlider 刻度值。
-		*hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
-		*hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
-		*hSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 hSlider 位置变化处理器。
-		*Laya.stage.addChild(hSlider);//把 hSlider 添加到显示列表。
-		*}
-	*function onChange(value)
-	*{
-		*console.log("滑块的位置： value="+value);
-		*}
-	*@example
-	*import Handler=laya.utils.Handler;
-	*import HSlider=laya.ui.HSlider;
-	*class HSlider_Example {
-		*private hSlider:HSlider;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/hslider.png","resource/ui/hslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.hSlider=new HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
-			*this.hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
-			*this.hSlider.min=0;//设置 hSlider 最低位置值。
-			*this.hSlider.max=10;//设置 hSlider 最高位置值。
-			*this.hSlider.value=2;//设置 hSlider 当前位置值。
-			*this.hSlider.tick=1;//设置 hSlider 刻度值。
-			*this.hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
-			*this.hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
-			*this.hSlider.changeHandler=new Handler(this,this.onChange);//设置 hSlider 位置变化处理器。
-			*Laya.stage.addChild(this.hSlider);//把 hSlider 添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滑块的位置： value="+value);
-			*}
-		*}
-	*
-	*@see laya.ui.Slider
-	*/
-	//class laya.ui.HSlider extends laya.ui.Slider
-	var HSlider=(function(_super){
-		/**
-		*创建一个 <code>HSlider</code> 类实例。
-		*@param skin 皮肤。
-		*/
-		function HSlider(skin){
-			HSlider.__super.call(this,skin);
-			this.isVertical=false;
-		}
-
-		__class(HSlider,'laya.ui.HSlider',_super);
-		return HSlider;
-	})(Slider)
-
-
-	/**
 	*<code>Group</code> 是一个可以自动布局的项集合控件。
 	*<p> <code>Group</code> 的默认项对象为 <code>Button</code> 类实例。
 	*<code>Group</code> 是 <code>Tab</code> 和 <code>RadioGroup</code> 的基类。</p>
@@ -6894,6 +6860,111 @@
 
 		return UIGroup;
 	})(Box)
+
+
+	/**
+	*使用 <code>HSlider</code> 控件，用户可以通过在滑块轨道的终点之间移动滑块来选择值。
+	*<p> <code>HSlider</code> 控件采用水平方向。滑块轨道从左向右扩展，而标签位于轨道的顶部或底部。</p>
+	*
+	*@example <caption>以下示例代码，创建了一个 <code>HSlider</code> 实例。</caption>
+	*package
+	*{
+		*import laya.ui.HSlider;
+		*import laya.utils.Handler;
+		*public class HSlider_Example
+		*{
+			*private var hSlider:HSlider;
+			*public function HSlider_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/hslider.png","resource/ui/hslider$bar.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*hSlider=new HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
+				*hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
+				*hSlider.min=0;//设置 hSlider 最低位置值。
+				*hSlider.max=10;//设置 hSlider 最高位置值。
+				*hSlider.value=2;//设置 hSlider 当前位置值。
+				*hSlider.tick=1;//设置 hSlider 刻度值。
+				*hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
+				*hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
+				*hSlider.changeHandler=new Handler(this,onChange);//设置 hSlider 位置变化处理器。
+				*Laya.stage.addChild(hSlider);//把 hSlider 添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滑块的位置： value="+value);
+				*}
+			*}
+		*}
+	*@example
+	*Laya.init(640,800,"canvas");//设置游戏画布宽高、渲染模式
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var hSlider;
+	*var res=["resource/ui/hslider.png","resource/ui/hslider$bar.png"];
+	*Laya.loader.load(res,laya.utils.Handler.create(this,onLoadComplete));
+	*function onLoadComplete(){
+		*console.log("资源加载完成！");
+		*hSlider=new laya.ui.HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
+		*hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
+		*hSlider.min=0;//设置 hSlider 最低位置值。
+		*hSlider.max=10;//设置 hSlider 最高位置值。
+		*hSlider.value=2;//设置 hSlider 当前位置值。
+		*hSlider.tick=1;//设置 hSlider 刻度值。
+		*hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
+		*hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
+		*hSlider.changeHandler=new laya.utils.Handler(this,onChange);//设置 hSlider 位置变化处理器。
+		*Laya.stage.addChild(hSlider);//把 hSlider 添加到显示列表。
+		*}
+	*function onChange(value)
+	*{
+		*console.log("滑块的位置： value="+value);
+		*}
+	*@example
+	*import Handler=laya.utils.Handler;
+	*import HSlider=laya.ui.HSlider;
+	*class HSlider_Example {
+		*private hSlider:HSlider;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/hslider.png","resource/ui/hslider$bar.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.hSlider=new HSlider();//创建一个 HSlider 类的实例对象 hSlider 。
+			*this.hSlider.skin="resource/ui/hslider.png";//设置 hSlider 的皮肤。
+			*this.hSlider.min=0;//设置 hSlider 最低位置值。
+			*this.hSlider.max=10;//设置 hSlider 最高位置值。
+			*this.hSlider.value=2;//设置 hSlider 当前位置值。
+			*this.hSlider.tick=1;//设置 hSlider 刻度值。
+			*this.hSlider.x=100;//设置 hSlider 对象的属性 x 的值，用于控制 hSlider 对象的显示位置。
+			*this.hSlider.y=100;//设置 hSlider 对象的属性 y 的值，用于控制 hSlider 对象的显示位置。
+			*this.hSlider.changeHandler=new Handler(this,this.onChange);//设置 hSlider 位置变化处理器。
+			*Laya.stage.addChild(this.hSlider);//把 hSlider 添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滑块的位置： value="+value);
+			*}
+		*}
+	*
+	*@see laya.ui.Slider
+	*/
+	//class laya.ui.HSlider extends laya.ui.Slider
+	var HSlider=(function(_super){
+		/**
+		*创建一个 <code>HSlider</code> 类实例。
+		*@param skin 皮肤。
+		*/
+		function HSlider(skin){
+			HSlider.__super.call(this,skin);
+			this.isVertical=false;
+		}
+
+		__class(HSlider,'laya.ui.HSlider',_super);
+		return HSlider;
+	})(Slider)
 
 
 	/**

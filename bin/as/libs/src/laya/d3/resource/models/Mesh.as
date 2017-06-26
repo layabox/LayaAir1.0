@@ -123,35 +123,21 @@ package laya.d3.resource.models {
 			_subMeshes = new Vector.<SubMesh>();
 			_materials = new Vector.<BaseMaterial>();
 			_vertexBuffers = new Vector.<VertexBuffer3D>();
-			
-			if (_loaded)
-				_generateBoundingObject();
-			else
-				once(Event.LOADED, this, _generateBoundingObject);
 		}
 		
 		/**
 		 * 添加子网格（开发者禁止修改）。
 		 * @param subMesh 子网格。
 		 */
-		public function _add(subMesh:SubMesh):void {
+		public function _setSubMeshes(subMeshes:Vector.<SubMesh>):void {
 			//TODO：SubMesh为私有问题。
-			subMesh._indexInMesh = _subMeshes.length;
-			_subMeshes.push(subMesh);
-			_subMeshCount++;
-		}
-		
-		/**
-		 * 移除子网格（开发者禁止修改）。
-		 * @param subMesh 子网格。
-		 * @return  是否成功。
-		 */
-		public function _remove(subMesh:SubMesh):Boolean {
-			var index:int = _subMeshes.indexOf(subMesh);
-			if (index < 0) return false;
-			_subMeshes.splice(index, 1);
-			_subMeshCount--;
-			return true;
+			_subMeshes = subMeshes
+			_subMeshCount = subMeshes.length;
+			
+			for (var i:int = 0; i < _subMeshCount; i++)
+				subMeshes[i]._indexInMesh = i;
+			
+			_generateBoundingObject();
 		}
 		
 		/**
@@ -160,9 +146,8 @@ package laya.d3.resource.models {
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			var bufferData:Object = data[0];
 			var textureMap:Object = data[1];
-			MeshReader.read(bufferData as ArrayBuffer, this, _materials, textureMap);
-			_loaded = true;
-			event(Event.LOADED, this);
+			MeshReader.read(bufferData as ArrayBuffer, this, _materials, _subMeshes, textureMap);
+			_endLoaded();
 		}
 		
 		/**

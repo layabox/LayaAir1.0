@@ -193,20 +193,40 @@ package laya.ani.bone {
 			var vx:Number = 0;
 			var vy:Number = 0;
 			var bone:Bone;
+			var len:int;
 			//if (!tTriangles) tTriangles = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 			
 			if (tBones == null) {
 				if (!tTriangles) tTriangles = tWeights;
 				if (boneSlot.deformData)
 					tTriangles = boneSlot.deformData;
-					
-				bone = boneSlot.parent;
+				var parentName:String;
+				parentName = boneSlot.parent;
+				if (boneList)
+				{
+					len = boneList.length;
+					for (i = 0; i < len; i++)
+					{
+						if (boneList[i].name = parentName)
+						{
+							bone = boneList[i];
+							break;
+						}
+					}
+				}
 				var tBoneMt:Matrix;
-				tBoneMt = bone.resultMatrix;
+				if (bone)
+				{
+					tBoneMt = bone.resultMatrix;
+				}
+				//bone = boneSlot.parent;
+				
+				
 				if (!tBoneMt) tBoneMt = _tempMt;
 				var x:Number = tBoneMt.tx;
 				var y:Number = tBoneMt.ty;
 				var a:Number = tBoneMt.a, bb:Number = tBoneMt.b, c:Number = tBoneMt.c, d:Number = tBoneMt.d;
+				if(bone) d*=bone.d;
 				for (v = start, w = offset; w < count; v += 2, w += 2) {
 					vx = tTriangles[v], vy = tTriangles[v + 1];
 					worldVertices[w] = vx * a + vy * bb + x;

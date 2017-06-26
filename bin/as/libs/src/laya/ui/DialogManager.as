@@ -139,7 +139,7 @@ package laya.ui {
 		 */
 		public function close(dialog:Dialog, type:String = null):void {
 			if (dialog.closeEffect != null) dialog.closeEffect.runWith([dialog, type]);
-			else doClose(dialog);
+			else doClose(dialog,type);
 			event(Event.CLOSE);
 		}
 		

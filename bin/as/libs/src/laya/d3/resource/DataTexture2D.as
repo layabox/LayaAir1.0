@@ -42,8 +42,7 @@ package laya.d3.resource {
 			if (ret._conchTexture){
 				alert('怎么给runtime传递datatexture数据');
 			}else
-				ret.activeResource();
-			ret._loaded=true;				
+				ret.activeResource();			
 			return ret;
 		}
 		
@@ -314,8 +313,7 @@ package laya.d3.resource {
 			} else
 				activeResource();
 			
-			_loaded = true;
-			event(Event.LOADED, this);
+			_endLoaded();
 		}
 		
 		/**

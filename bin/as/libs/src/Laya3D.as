@@ -1,6 +1,8 @@
 package {
 	import laya.ani.AnimationTemplet;
 	import laya.d3.animation.AnimationClip;
+	import laya.d3.animation.AnimationNode;
+	import laya.d3.core.Avatar;
 	import laya.d3.core.Layer;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.PhasorSpriter3D;
@@ -28,6 +30,7 @@ package {
 	import laya.utils.Byte;
 	import laya.utils.Handler;
 	import laya.utils.RunDriver;
+	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	
 	/**
@@ -55,15 +58,14 @@ package {
 		private static var _readData:Byte;
 		
 		/**@private */
-		private static const _innerTextureCubeLoaderManager:LoaderManager = new LoaderManager();
+		private static const _innerFirstLevelLoaderManager:LoaderManager = new LoaderManager();//Mesh 
 		/**@private */
-		private static const _innerHeightMapLoaderManager:LoaderManager = new LoaderManager();
+		private static const _innerSecondLevelLoaderManager:LoaderManager = new LoaderManager();//Material
 		/**@private */
-		private static const _innerMaterialLoaderManager:LoaderManager = new LoaderManager();
+		private static const _innerThirdLevelLoaderManager:LoaderManager = new LoaderManager();//TextureCube、TerrainResou
 		/**@private */
-		private static const _innerMeshLoaderManager:LoaderManager = new LoaderManager();
-		/**@private */
-		private static const _innerHierarchyLoaderManager:LoaderManager = new LoaderManager();
+		private static const _innerFourthLevelLoaderManager:LoaderManager = new LoaderManager();//Texture2D、Image、Avatar、AnimationClip
+		
 		/**@private */
 		public static var _debugPhasorSprite:PhasorSpriter3D;
 		
@@ -110,6 +112,7 @@ package {
 			createMap["thdata"] = [TerrainHeightData, Loader.BUFFER];
 			createMap["lt"] = [TerrainRes, Laya3D.TERRAIN];
 			createMap["lani"] = [AnimationClip, Loader.BUFFER];
+			createMap["lav"] = [Avatar, Loader.JSON];
 			createMap["ani"] = [AnimationTemplet, Loader.BUFFER];//兼容接口
 			
 			Loader.parserMap[Laya3D.HIERARCHY] = _loadHierarchy;
@@ -168,37 +171,53 @@ package {
 		/**
 		 *@private
 		 */
-		private static function _getSprite3DHierarchyInnerUrls(node:Object, urls:Array, urlMap:Object, urlVersion:String, hierarchyBasePath:String):void {
+		private static function _getSprite3DHierarchyInnerUrls(node:Object, firstLevelUrls:Array, secondLevelUrls:Array, fourthLelUrls:Array, urlMap:Object, urlVersion:String, hierarchyBasePath:String):void {
 			var i:int, n:int;
 			switch (node.type) {
-			case "Scene": 
+			case "Scene": //TODO:应该自动序列化类型
 				var lightmaps:Array = node.customProps.lightmaps;
 				for (i = 0, n = lightmaps.length; i < n; i++) {
 					var lightMap:String = lightmaps[i].replace("exr", "png");
-					_addHierarchyInnerUrls(urls, urlMap, urlVersion, hierarchyBasePath, lightMap, Texture2D);//TODO:应该自动序列化类型
+					_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, lightMap, Texture2D);
 				}
 				break;
 			case "MeshSprite3D": 
+			case "SkinnedMeshSprite3D": 
 				var meshPath:String = node.instanceParams.loadPath;
-				(meshPath) && (_addHierarchyInnerUrls(urls, urlMap, urlVersion, hierarchyBasePath, meshPath, Mesh));
+				(meshPath) && (_addHierarchyInnerUrls(firstLevelUrls, urlMap, urlVersion, hierarchyBasePath, meshPath, Mesh));
 				break;
 			case "ShuriKenParticle3D": 
 				var customProps:Object = node.customProps;
 				var parMeshPath:String = customProps.meshPath;
-				(parMeshPath) && (_addHierarchyInnerUrls(urls, urlMap, urlVersion, hierarchyBasePath, parMeshPath, Mesh));
+				(parMeshPath) && (_addHierarchyInnerUrls(firstLevelUrls, urlMap, urlVersion, hierarchyBasePath, parMeshPath, Mesh));
 				var materialPath:String = customProps.materialPath;
 				if (materialPath)
-					_addHierarchyInnerUrls(urls, urlMap, urlVersion, hierarchyBasePath, materialPath, ShurikenParticleMaterial);
+					_addHierarchyInnerUrls(secondLevelUrls, urlMap, urlVersion, hierarchyBasePath, materialPath, ShurikenParticleMaterial);
 				else//兼容代码
-					_addHierarchyInnerUrls(urls, urlMap, urlVersion, hierarchyBasePath, customProps.texturePath, Texture2D);
+					_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, customProps.texturePath, Texture2D);
 				break;
 			case "Terrain": 
-				_addHierarchyInnerUrls(urls, urlMap, urlVersion, hierarchyBasePath, node.instanceParams.loadPath, TerrainRes);
+				_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, node.instanceParams.loadPath, TerrainRes);
 				break;
 			}
+			
+			var components:Object = node.components;
+			for (var k:String in components) {
+				var component:Object = components[k];
+				switch (k) {
+				case "Animator": 
+					_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, component.avatarPath, Avatar);
+					var clipPaths:Vector.<String> = component.clipPaths;
+					for (i = 0, n = clipPaths.length; i < n; i++)
+						_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, clipPaths[i], AnimationClip);
+					break;
+				default: 
+				}
+			}
+			
 			var children:Array = node.child;
 			for (i = 0, n = children.length; i < n; i++)
-				_getSprite3DHierarchyInnerUrls(children[i], urls, urlMap, urlVersion, hierarchyBasePath);
+				_getSprite3DHierarchyInnerUrls(children[i], firstLevelUrls, secondLevelUrls, fourthLelUrls, urlMap, urlVersion, hierarchyBasePath);
 		}
 		
 		/**
@@ -217,29 +236,59 @@ package {
 			var url:String = loader.url;
 			var urlVersion:String = Utils3D.getURLVerion(url);
 			var hierarchyBasePath:String = URL.getPath(URL.formatURL(url));
-			var urls:Array = [];
+			var firstLevUrls:Array = [];
+			var secondLevUrls:Array = [];
+			var forthLevUrls:Array = [];
 			var urlMap:Object = {};
 			var hierarchyData:Object = JSON.parse(lhData);
-			
-			_getSprite3DHierarchyInnerUrls(hierarchyData, urls, urlMap, urlVersion, hierarchyBasePath);
-			var urlCount:int = urls.length;
+			_getSprite3DHierarchyInnerUrls(hierarchyData, firstLevUrls, secondLevUrls, forthLevUrls, urlMap, urlVersion, hierarchyBasePath);
+			var urlCount:int = firstLevUrls.length + secondLevUrls.length + forthLevUrls.length;
 			var totalProcessCount:int = urlCount + 1;
-			var lhWeight:Number = 1 / totalProcessCount;
-			_onProcessChange(loader, 0, lhWeight, 1.0);
-			if (urlCount > 0) {
-				var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, lhWeight, urlCount / totalProcessCount], false);
-				_innerHierarchyLoaderManager.create(urls, Handler.create(null, _onInnerHierarchyResourcesLoaded, [loader, processHandler, lhData, urlMap]), processHandler);
+			var weight:Number = 1 / totalProcessCount;
+			_onProcessChange(loader, 0, weight, 1.0);
+			if (forthLevUrls.length > 0) {
+				var processCeil:Number = urlCount / totalProcessCount;
+				var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, weight, processCeil], false);
+				_innerFourthLevelLoaderManager.create(forthLevUrls, Handler.create(null, _onHierarchyInnerForthLevResouLoaded, [loader, processHandler, lhData, urlMap, firstLevUrls, secondLevUrls, weight + processCeil * forthLevUrls.length, processCeil]), processHandler);
 			} else {
-				_onInnerHierarchyResourcesLoaded(loader, null, lhData, null);
+				_onHierarchyInnerForthLevResouLoaded(loader, null, lhData, urlMap, firstLevUrls, secondLevUrls, weight, processCeil);
 			}
 		}
 		
 		/**
 		 *@private
 		 */
-		private static function _onInnerHierarchyResourcesLoaded(loader:Loader, processHandler:Handler, lhData:Object, urlMap:Object):void {
-			loader.endLoad([lhData, urlMap]);
+		private static function _onHierarchyInnerForthLevResouLoaded(loader:Loader, processHandler:Handler, lhData:Object, urlMap:Object, firstLevUrls:Array, secondLevUrls:Array, processOffset:Number, processCeil:Number):void {
 			(processHandler) && (processHandler.recover());
+			if (secondLevUrls.length > 0) {
+				var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, processOffset, processCeil], false);
+				_innerSecondLevelLoaderManager.create(secondLevUrls, Handler.create(null, _onHierarchyInnerSecondLevResouLoaded, [loader, processHandler, lhData, urlMap, firstLevUrls, processOffset + processCeil * secondLevUrls.length, processCeil]), processHandler);
+				
+			} else {
+				_onHierarchyInnerSecondLevResouLoaded(loader, null, lhData, urlMap, firstLevUrls, processOffset, processCeil);
+			}
+		}
+		
+		/**
+		 *@private
+		 */
+		private static function _onHierarchyInnerSecondLevResouLoaded(loader:Loader, processHandler:Handler, lhData:Object, urlMap:Object, firstLevUrls:Array, processOffset:Number, processCeil:Number):void {
+			(processHandler) && (processHandler.recover());
+			if (firstLevUrls.length > 0) {
+				var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, processOffset, processCeil], false);
+				_innerFirstLevelLoaderManager.create(firstLevUrls, Handler.create(null, _onHierarchyInnerFirstLevResouLoaded, [loader, processHandler, lhData, urlMap, /*processOffset + processCeil * firstLevUrls.length, processCeil*/]), processHandler);
+				
+			} else {
+				_onHierarchyInnerFirstLevResouLoaded(loader, processHandler, lhData, urlMap);
+			}
+		}
+		
+		/**
+		 *@private
+		 */
+		private static function _onHierarchyInnerFirstLevResouLoaded(loader:Loader, processHandler:Handler, lhData:Object, urlMap:Object):void {
+			(processHandler) && (processHandler.recover());
+			loader.endLoad([lhData, urlMap]);
 		}
 		
 		/**
@@ -286,7 +335,6 @@ package {
 				textureURLs.push(alphaMaps[i]);
 			}
 			
-			
 			for (i = 0, n = textureURLs.length; i < n; i++) {
 				var subUrl:String = textureURLs[i];
 				formatUrl = URL.formatURL(subUrl, terrainBasePath);
@@ -300,12 +348,12 @@ package {
 			var weight:Number = 1 / totalProcessCount;
 			_onProcessChange(loader, 0, weight, 1.0);
 			
-			var loadInfo:Object = {heightMapLoaded: false, texturesLoaded: false};
+			var loadInfo:Object = {heightMapLoaded: false, texturesLoaded: false};//TODO:
 			var hmProcessHandler:Handler = Handler.create(null, _onProcessChange, [loader, weight, weight], false);
-			_innerHeightMapLoaderManager.create(heightMapURL, Handler.create(null, _onTerrainHeightMapLoaded, [loader, hmProcessHandler, ltData, urlMap, loadInfo]), hmProcessHandler, null, [heightData.numX, heightData.numZ, heightData.bitType, heightData.value]);
+			_innerFourthLevelLoaderManager.create(heightMapURL, Handler.create(null, _onTerrainHeightMapLoaded, [loader, hmProcessHandler, ltData, urlMap, loadInfo]), hmProcessHandler, null, [heightData.numX, heightData.numZ, heightData.bitType, heightData.value]);
 			
-			var texsProcessHandler:Handler = Handler.create(null, _onProcessChange, [loader, weight * 2, texsUrlCount / totalProcessCount], false);
-			_innerTextureCubeLoaderManager.create(textureURLs, Handler.create(null, _onTerrainTexturesLoaded, [loader, texsProcessHandler, ltData, urlMap, loadInfo]), texsProcessHandler);
+			var texsProcessHandler:Handler = Handler.create(null, _onProcessChange, [loader, weight * 2, texsUrlCount / totalProcessCount], false);//TODO:
+			_innerFourthLevelLoaderManager.create(textureURLs, Handler.create(null, _onTerrainTexturesLoaded, [loader, texsProcessHandler, ltData, urlMap, loadInfo]), texsProcessHandler);
 		}
 		
 		/**
@@ -398,12 +446,16 @@ package {
 				urlMap[subUrl] = formatSubUrl;
 			}
 			
-			var urlCount:int = 1;
-			var totalProcessCount:int = urlCount + 1;
-			var lmatWeight:Number = 1 / totalProcessCount;
-			_onProcessChange(loader, 0, lmatWeight, 1.0);
-			var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, lmatWeight, urlCount / totalProcessCount], false);
-			_innerMeshLoaderManager.create(urls, Handler.create(null, _onMeshMateialLoaded, [loader, processHandler, lmData, urlMap]), processHandler/*, StandardMaterial*/);
+			if (urls.length > 0) {
+				var urlCount:int = 1;
+				var totalProcessCount:int = urlCount + 1;
+				var lmatWeight:Number = 1 / totalProcessCount;
+				_onProcessChange(loader, 0, lmatWeight, 1.0);
+				var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, lmatWeight, urlCount / totalProcessCount], false);
+				_innerSecondLevelLoaderManager.create(urls, Handler.create(null, _onMeshMateialLoaded, [loader, processHandler, lmData, urlMap]), processHandler/*, StandardMaterial*/);
+			} else {
+				loader.endLoad([lmData, urlMap]);
+			}
 		}
 		
 		/**
@@ -421,7 +473,7 @@ package {
 			var extenIndex:int = path.length - 4;
 			if (path.indexOf(".dds") == extenIndex || path.indexOf(".tga") == extenIndex || path.indexOf(".exr") == extenIndex || path.indexOf(".DDS") == extenIndex || path.indexOf(".TGA") == extenIndex || path.indexOf(".EXR") == extenIndex)
 				path = path.substr(0, extenIndex) + ".png";
-		
+			
 			path = URL.formatURL(path, materialBath);
 			(urlVersion) && (path = path + urlVersion);
 			return path;
@@ -508,7 +560,7 @@ package {
 					}
 				}
 				
-				if (customProps.reflectTexture) {
+				if (customProps.reflectTexture) {//TODO:区分三、四级
 					var reflectTexture:String = customProps.reflectTexture.texture2D;
 					if (reflectTexture) {
 						formatSubUrl = _getMaterialTexturePath(reflectTexture, urlVersion, materialBasePath);
@@ -524,7 +576,7 @@ package {
 			_onProcessChange(loader, 0, lmatWeight, 1.0);
 			if (urlCount > 0) {
 				var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, lmatWeight, urlCount / totalProcessCount], false);
-				_innerMaterialLoaderManager.create(urls, Handler.create(null, _onMateialTexturesLoaded, [loader, processHandler, lmatData, urlMap]), processHandler, Texture2D);//TODO:还有可能是TextureCube
+				_innerFourthLevelLoaderManager.create(urls, Handler.create(null, _onMateialTexturesLoaded, [loader, processHandler, lmatData, urlMap]), processHandler, Texture2D);//TODO:还有可能是TextureCube,使用三级
 			} else {
 				_onMateialTexturesLoaded(loader, null, lmatData, null);
 			}
@@ -557,7 +609,7 @@ package {
 			var ltcWeight:Number = 1.0 / 7.0;
 			_onProcessChange(loader, 0, ltcWeight, 1.0);
 			var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, ltcWeight, 6 / 7], false);
-			_innerTextureCubeLoaderManager.load(urls, Handler.create(null, _onTextureCubeImagesLoaded, [loader, urls, processHandler]), processHandler, "nativeimage");
+			_innerFourthLevelLoaderManager.load(urls, Handler.create(null, _onTextureCubeImagesLoaded, [loader, urls, processHandler]), processHandler, "nativeimage");
 		}
 		
 		/**
@@ -601,15 +653,12 @@ package {
 			
 			RunDriver.changeWebGLSize = _changeWebGLSize;
 			Render.is3DMode = true;
-			_innerTextureCubeLoaderManager.maxLoader = 1;
-			_innerMaterialLoaderManager.maxLoader = 1;
-			_innerMeshLoaderManager.maxLoader = 1;
-			_innerHierarchyLoaderManager.maxLoader = 1;
 			Laya.init(width, height);
 			Layer.__init__();
 			ShaderCompile3D.__init__();
 			ShaderInit3D.__init__();
 			MeshSprite3D.__init__();
+			AnimationNode.__init__();
 			_initResourceLoad();
 			
 			if (Laya3D.debugMode || OctreeNode.debugMode)

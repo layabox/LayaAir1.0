@@ -70,7 +70,7 @@ package laya.d3.core.particleShuriKen.module.shape {
 			Vector3.scale(position, radius, position);
 			
 			var z:Number = rpE[2];
-			(z > 0.0) && (rpE[2] = z * -1.0);
+			(z < 0.0) && (rpE[2] = z * -1.0);
 			
 			if (randomDirection) {
 				if (rand) {

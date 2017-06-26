@@ -1,6 +1,7 @@
 package laya.d3.shader {
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.RenderableSprite3D;
+	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	import laya.renders.Render;
@@ -116,7 +117,7 @@ package laya.d3.shader {
 			_spriteInt2name[ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW] = "RECEIVESHADOW";
 			_spriteInt2name[RenderableSprite3D.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV] = "SCALEOFFSETLIGHTINGMAPUV";
 			_spriteInt2name[RenderableSprite3D.SAHDERDEFINE_LIGHTMAP] = "LIGHTMAP";
-			_spriteInt2name[SkinAnimations.SHADERDEFINE_BONE] = "BONE";
+			_spriteInt2name[SkinnedMeshSprite3D.SHADERDEFINE_BONE] = "BONE";
 			
 			_materialInt2name[BaseMaterial.SHADERDEFINE_ALPHATEST] = "ALPHATEST";
 			

@@ -197,12 +197,13 @@ package laya.net
 		 * @param	url 资源地址。
 		 */
 		protected function _loadImage(url:String):void {
-			var _this:Loader = this as Loader;
+			var _this:Loader = this as Loader;	
 			if (!_enable||url.toLowerCase().indexOf(".png") < 0)
 			{
 				_preLoadFun.call(_this, url);
 				return;
 			}
+			url = URL.formatURL(url);
 			function clear():void {
 				WorkerLoader.I.off(url, _this, onload);
 			}

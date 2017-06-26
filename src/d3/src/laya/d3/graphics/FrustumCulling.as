@@ -30,10 +30,10 @@ package laya.d3.graphics {
 				var quene:RenderQueue = shadowQueues[i];
 				(quene) && (quene._clearRenderElements());
 			}
-			var frustumCullingObjects:Vector.<BaseRender> = scene._frustumCullingObjects;
+			var frustumCullingObjects:Vector.<BaseRender> = scene._cullingRenders;
 			var baseRender:BaseRender, shadowQueue:RenderQueue, renderElements:Vector.<RenderElement>;
 			if (nPSSMNum > 1) {
-				for (i = 0, n = frustumCullingObjects.length; i < n; i++) {
+				for (i = 0, n = scene._cullingRendersLength; i < n; i++) {
 					baseRender = frustumCullingObjects[i];
 					if (baseRender.castShadow && Layer.isVisible(baseRender._owner.layer.mask) && baseRender.enable) {
 						for (var k:int = 1, kNum:int = lightFrustum.length; k < kNum; k++) {
@@ -48,7 +48,7 @@ package laya.d3.graphics {
 					}
 				}
 			} else {
-				for (i = 0, n = frustumCullingObjects.length; i < n; i++) {
+				for (i = 0, n = scene._cullingRendersLength; i < n; i++) {
 					baseRender = frustumCullingObjects[i];
 					if (baseRender.castShadow && Layer.isVisible(baseRender._owner.layer.mask) && baseRender.enable) {
 						if (lightFrustum[0].containsBoundSphere(baseRender.boundingSphere) !== ContainmentType.Disjoint) {
@@ -88,7 +88,7 @@ package laya.d3.graphics {
 			var i:int, n:int, j:int, m:int;
 			var queues:Vector.<RenderQueue> = scene._quenes;
 			var dynamicBatchManager:DynamicBatchManager = scene._dynamicBatchManager;
-			var frustumCullingObjects:Vector.<BaseRender> = scene._frustumCullingObjects;
+			var frustumCullingObjects:Vector.<BaseRender> = scene._cullingRenders;
 			
 			for (i = 0, n = queues.length; i < n; i++) {
 				var queue:RenderQueue = queues[i];
@@ -100,7 +100,7 @@ package laya.d3.graphics {
 			dynamicBatchManager._clearRenderElements();
 			
 			var cameraPosition:Vector3 = camera.transform.position;
-			for (i = 0, n = frustumCullingObjects.length; i < n; i++) {
+			for (i = 0, n = scene._cullingRendersLength; i < n; i++) {
 				var baseRender:BaseRender = frustumCullingObjects[i];
 				if (Layer.isVisible(baseRender._owner.layer.mask) && baseRender.enable && (boundFrustum.containsBoundSphere(baseRender.boundingSphere) !== ContainmentType.Disjoint)) {
 					baseRender._renderUpdate(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
@@ -144,7 +144,7 @@ package laya.d3.graphics {
 				staticBatchManagers[i]._clearRenderElements();
 			dynamicBatchManager._clearRenderElements();
 			
-			scene._frustumCullingObjects.length = 0;
+			scene._cullingRenders.length = 0;//TODO:优化
 			scene.treeRoot.cullingObjects(boundFrustum, true, 0, camera.transform.position, projectionView);
 			
 			for (i = 0, n = staticBatchManagers.length; i < n; i++)
@@ -160,7 +160,7 @@ package laya.d3.graphics {
 			var i:int, n:int, j:int, m:int;
 			var queues:Vector.<RenderQueue> = scene._quenes;
 			var dynamicBatchManager:DynamicBatchManager = scene._dynamicBatchManager;
-			var frustumCullingObjects:Vector.<BaseRender> = scene._frustumCullingObjects;
+			var frustumCullingObjects:Vector.<BaseRender> = scene._cullingRenders;
 			for (i = 0, n = queues.length; i < n; i++) {
 				var queue:RenderQueue = queues[i];
 				(queue) && (queue._clearRenderElements());
@@ -171,7 +171,7 @@ package laya.d3.graphics {
 			dynamicBatchManager._clearRenderElements();
 			
 			var cameraPosition:Vector3 = camera.transform.position;
-			for (i = 0, n = frustumCullingObjects.length; i < n; i++) {
+			for (i = 0, n = scene._cullingRendersLength; i < n; i++) {
 				var baseRender:BaseRender = frustumCullingObjects[i];
 				if (Layer.isVisible(baseRender._owner.layer.mask) && baseRender.enable) {
 					baseRender._renderUpdate(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费

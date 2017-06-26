@@ -3,14 +3,16 @@ package laya.resource {
 	import laya.utils.Browser;
 	
 	/**
-	 * <code>HTMLImage</code> 用于创建 HTML Image 元素。
 	 * @private
+	 * <p> <code>HTMLImage</code> 用于创建 HTML Image 元素。</p>
+	 * <p>请使用 <code>HTMLImage.create()<code>获取新实例，不要直接使用 <code>new HTMLImage<code> 。</p>
 	 */
 	public class HTMLImage extends FileBitmap {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
 		/**
-		 * 创建一个 <code>HTMLImage</code> 实例。请不要直接使用 new HTMLImage
+		 * <p>创建一个 <code>HTMLImage</code> 实例。</p>
+		 * <p>请使用 <code>HTMLImage.create()<code>创建实例，不要直接使用 <code>new HTMLImage<code> 。</p>
 		 */
 		public static var create:Function = function(src:String, def:* = null):HTMLImage {
 			return new HTMLImage(src, def);
@@ -43,7 +45,8 @@ package laya.resource {
 		}
 		
 		/**
-		 * 创建一个 <code>HTMLImage</code> 实例。请不要直接使用 new HTMLImage
+		 * <p>创建一个 <code>HTMLImage</code> 实例。</p>
+		 * <p>请使用 <code>HTMLImage.create()<code>创建实例，不要直接使用 <code>new HTMLImage<code> 。</p>
 		 */
 		public function HTMLImage(src:String, def:* = null) {
 			super();

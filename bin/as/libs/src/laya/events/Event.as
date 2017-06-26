@@ -5,7 +5,7 @@ package laya.events {
 	import laya.maths.Point;
 	
 	/**
-	 * <code>Event</code> 是事件类型的集合。
+	 * <code>Event</code> 是事件类型的集合。一般当发生事件时，<code>Event</code> 对象将作为参数传递给事件侦听器。
 	 */
 	public dynamic class Event {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
@@ -176,7 +176,7 @@ package laya.events {
 		}
 		
 		/**
-		 * 防止对事件流中当前节点的后续节点中的所有事件侦听器进行处理。
+		 * 阻止对事件流中当前节点的后续节点中的所有事件侦听器进行处理。此方法不会影响当前节点 (currentTarget) 中的任何事件侦听器。
 		 */
 		public function stopPropagation():void {
 			this._stoped = true;

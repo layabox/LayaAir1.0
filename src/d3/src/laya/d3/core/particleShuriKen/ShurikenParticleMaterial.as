@@ -38,10 +38,10 @@ package laya.d3.core.particleShuriKen {
 		public static const RENDERMODE_OPAQUE:int = 1;
 		/**渲染状态_不透明_双面。*/
 		public static const RENDERMODE_OPAQUEDOUBLEFACE:int = 2;
-		///**渲染状态_透明测试。*/
-		//public static const RENDERMODE_CUTOUT:int = 3;
-		///**渲染状态_透明测试_双面。*/
-		//public static const RENDERMODE_CUTOUTDOUBLEFACE:int = 4;
+		/**渲染状态_透明测试。*/
+		public static const RENDERMODE_CUTOUT:int = 3;
+		/**渲染状态_透明测试_双面。*/
+		public static const RENDERMODE_CUTOUTDOUBLEFACE:int = 4;
 		/**渲染状态_透明混合。*/
 		public static const RENDERMODE_TRANSPARENT:int = 13;
 		/**渲染状态_透明混合_双面。*/
@@ -110,7 +110,7 @@ package laya.d3.core.particleShuriKen {
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_OPAQUEDOUBLEFACE: 
@@ -118,23 +118,23 @@ package laya.d3.core.particleShuriKen {
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_DISABLE;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
-				//case RENDERMODE_CUTOUT: 
-				//depthWrite = true;
-				//cull = CULL_BACK;
-				//blend = BLEND_DISABLE;
-				//_renderQueue = RenderQueue.OPAQUE;
-				//_addShaderDefine(ShaderDefines3D.ALPHATEST);
-				//event(Event.RENDERQUEUE_CHANGED, this);
+			case RENDERMODE_CUTOUT: 
+				depthWrite = true;
+				cull = CULL_BACK;
+				blend = BLEND_DISABLE;
+				_renderQueue = RenderQueue.OPAQUE;
+				alphaTest = true;
+				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
-				//case RENDERMODE_CUTOUTDOUBLEFACE: 
-				//_renderQueue = RenderQueue.OPAQUE;
-				//depthWrite = true;
-				//cull = CULL_NONE;
-				//blend = BLEND_DISABLE;
-				//_addShaderDefine(ShaderDefines3D.ALPHATEST);
+			case RENDERMODE_CUTOUTDOUBLEFACE: 
+				_renderQueue = RenderQueue.OPAQUE;
+				depthWrite = true;
+				cull = CULL_NONE;
+				blend = BLEND_DISABLE;
+				alphaTest = true;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENT: 
@@ -144,7 +144,7 @@ package laya.d3.core.particleShuriKen {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENTDOUBLEFACE: 
@@ -154,7 +154,7 @@ package laya.d3.core.particleShuriKen {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_ADDTIVE: 
@@ -164,7 +164,7 @@ package laya.d3.core.particleShuriKen {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_ADDTIVEDOUBLEFACE: 
@@ -174,7 +174,7 @@ package laya.d3.core.particleShuriKen {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_TRANSPARENT: 
@@ -184,7 +184,7 @@ package laya.d3.core.particleShuriKen {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_TRANSPARENTDOUBLEFACE: 
@@ -194,7 +194,7 @@ package laya.d3.core.particleShuriKen {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_ADDTIVE: 
@@ -204,7 +204,7 @@ package laya.d3.core.particleShuriKen {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE: 
@@ -214,7 +214,7 @@ package laya.d3.core.particleShuriKen {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENT: 
@@ -224,7 +224,7 @@ package laya.d3.core.particleShuriKen {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENTDOUBLEFACE: 
@@ -234,7 +234,7 @@ package laya.d3.core.particleShuriKen {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVE: 
@@ -244,7 +244,7 @@ package laya.d3.core.particleShuriKen {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE: 
@@ -254,7 +254,7 @@ package laya.d3.core.particleShuriKen {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
+				alphaTest = false;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			default: 
@@ -307,6 +307,7 @@ package laya.d3.core.particleShuriKen {
 		}
 		
 		public function ShurikenParticleMaterial() {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
 			setShaderName("PARTICLESHURIKEN");
 			renderMode = RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE;
@@ -337,8 +338,7 @@ package laya.d3.core.particleShuriKen {
 					this[prop] = props[prop];
 				_parseShurikenParticleMaterial(textureMap, this, jsonData);
 				
-				//_loaded = true;
-				event(Event.LOADED, this);
+				_endLoaded();
 			}
 		}
 		

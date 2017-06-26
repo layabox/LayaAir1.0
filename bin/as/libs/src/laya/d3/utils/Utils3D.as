@@ -1,6 +1,9 @@
 package laya.d3.utils {
+	import laya.d3.component.Animator;
 	import laya.d3.core.MeshRender;
 	import laya.d3.core.MeshSprite3D;
+	import laya.d3.core.SkinnedMeshRender;
+	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
@@ -164,7 +167,6 @@ package laya.d3.utils {
 			se[10] = sz;
 			
 			var i:int, a:Float32Array, b:Float32Array, e:Float32Array, ai0:Number, ai1:Number, ai2:Number, ai3:Number;
-			
 			//mul(rMat, tMat, tsMat)......................................
 			for (i = 0; i < 4; i++) {
 				ai0 = re[i];
@@ -561,7 +563,7 @@ package laya.d3.utils {
 					break;
 				}
 				var textureSheetAnimation:TextureSheetAnimation = new TextureSheetAnimation(frameOverTime, startFrame);
-				textureSheetAnimation.enbale = textureSheetAnimationData.enable;
+				textureSheetAnimation.enable = textureSheetAnimationData.enable;
 				var tilesData:Array = textureSheetAnimationData.tiles;
 				textureSheetAnimation.tiles = new Vector2(tilesData[0], tilesData[1]);
 				textureSheetAnimation.type = textureSheetAnimationData.type;
@@ -569,8 +571,6 @@ package laya.d3.utils {
 				textureSheetAnimation.cycles = textureSheetAnimationData.cycles;
 				particleSystem.textureSheetAnimation = textureSheetAnimation;
 			}
-			
-			
 			
 			(particleSystem.playOnAwake) && (particleSystem.play());
 		}
@@ -644,6 +644,25 @@ package laya.d3.utils {
 						mesh.once(Event.LOADED, meshSprite3D, meshSprite3D._applyMeshMaterials);
 				}
 				break;
+			case "SkinnedMeshSprite3D": 
+				_parseHierarchyTRS(node as SkinnedMeshSprite3D, customProps);
+				var skinnedMeshSprite3D:SkinnedMeshSprite3D = (node as SkinnedMeshSprite3D);
+				var skinMeshRender:SkinnedMeshRender = skinnedMeshSprite3D.skinnedMeshRender;
+				lightmapIndex = customProps.lightmapIndex;
+				(lightmapIndex != null) && (skinMeshRender.lightmapIndex = lightmapIndex);
+				lightmapScaleOffsetArray = customProps.lightmapScaleOffset;
+				(lightmapScaleOffsetArray) && (skinMeshRender.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
+				
+				var skinMeshPath:String = json.instanceParams.loadPath;
+				if (skinMeshPath) {
+					var skinMesh:Mesh = Loader.getRes(innerResouMap[skinMeshPath]);
+					skinnedMeshSprite3D.meshFilter.sharedMesh = skinMesh;
+					if (skinMesh.loaded)
+						skinMeshRender.sharedMaterials = skinMesh.materials;
+					else
+						skinMesh.once(Event.LOADED, skinnedMeshSprite3D, skinnedMeshSprite3D._applyMeshMaterials);
+				}
+				break;
 			case "ShuriKenParticle3D": 
 				_parseHierarchyTRS(node as Sprite3D, customProps);
 				var shuriKenParticle3D:ShuriKenParticle3D = (node as ShuriKenParticle3D);
@@ -663,6 +682,28 @@ package laya.d3.utils {
 					terrain.setLightmapScaleOffset(new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
 				break;
 			}
+			var components:Object = json.components;
+			for (var k:String in components) {
+				var component:Object = components[k];
+				switch (k) {
+				case "Animator": 
+					var animator:Animator = (node as Sprite3D).addComponent(Animator) as Animator;
+					animator.avatar = Loader.getRes(innerResouMap[component.avatarPath]);
+					var clipPaths:Vector.<String> = component.clipPaths;
+					var clipCount:int = clipPaths.length;
+					for (i = 0; i < clipCount; i++)
+						animator.addClip(Loader.getRes(innerResouMap[clipPaths[i]]));
+					animator.clip = Loader.getRes(innerResouMap[clipPaths[0]]);//TODO:单处存储模型动画路径
+					
+					var entryPlayIndex:int = component.entryPlayIndex;
+					if (entryPlayIndex >= 0)
+						animator.play(Loader.getRes(innerResouMap[clipPaths[entryPlayIndex]]).name);
+					
+					break;
+				default: 
+				}
+			}
+		
 		}
 		
 		/** @private */
@@ -673,6 +714,8 @@ package laya.d3.utils {
 				break;
 			case "MeshSprite3D": 
 				return new MeshSprite3D();
+			case "SkinnedMeshSprite3D": 
+				return new SkinnedMeshSprite3D();
 				break;
 			case "ShuriKenParticle3D": 
 				return new ShuriKenParticle3D();
@@ -1206,6 +1249,87 @@ package laya.d3.utils {
 		public static function getURLVerion(url:String):String {
 			var index:int = url.indexOf("?");
 			return index >= 0 ? url.substr(index) : null;
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _quaternionCreateFromYawPitchRollArray(yaw:Number, pitch:Number, roll:Number, out:Float32Array):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var halfRoll:Number = roll * 0.5;
+			var halfPitch:Number = pitch * 0.5;
+			var halfYaw:Number = yaw * 0.5;
+			
+			var sinRoll:Number = Math.sin(halfRoll);
+			var cosRoll:Number = Math.cos(halfRoll);
+			var sinPitch:Number = Math.sin(halfPitch);
+			var cosPitch:Number = Math.cos(halfPitch);
+			var sinYaw:Number = Math.sin(halfYaw);
+			var cosYaw:Number = Math.cos(halfYaw);
+			
+			out[0] = (cosYaw * sinPitch * cosRoll) + (sinYaw * cosPitch * sinRoll);
+			out[1] = (sinYaw * cosPitch * cosRoll) - (cosYaw * sinPitch * sinRoll);
+			out[2] = (cosYaw * cosPitch * sinRoll) - (sinYaw * sinPitch * cosRoll);
+			out[3] = (cosYaw * cosPitch * cosRoll) + (sinYaw * sinPitch * sinRoll);
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _createAffineTransformationArray(trans:Float32Array, rot:Float32Array, scale:Float32Array, out:Matrix4x4):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var outE:Float32Array = out.elements
+			
+			var x:Number = rot[0], y:Number = rot[1], z:Number = rot[2], w:Number = rot[3], x2:Number = x + x, y2:Number = y + y, z2:Number = z + z;
+			var xx:Number = x * x2, xy:Number = x * y2, xz:Number = x * z2, yy:Number = y * y2, yz:Number = y * z2, zz:Number = z * z2;
+			var wx:Number = w * x2, wy:Number = w * y2, wz:Number = w * z2, sx:Number = scale[0], sy:Number = scale[1], sz:Number = scale[2];
+			
+			outE[0] = (1 - (yy + zz)) * sx;
+			outE[1] = (xy + wz) * sx;
+			outE[2] = (xz - wy) * sx;
+			outE[3] = 0;
+			outE[4] = (xy - wz) * sy;
+			outE[5] = (1 - (xx + zz)) * sy;
+			outE[6] = (yz + wx) * sy;
+			outE[7] = 0;
+			outE[8] = (xz + wy) * sz;
+			outE[9] = (yz - wx) * sz;
+			outE[10] = (1 - (xx + yy)) * sz;
+			outE[11] = 0;
+			outE[12] = trans[0];
+			outE[13] = trans[1];
+			outE[14] = trans[2];
+			outE[15] = 1;
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _mulMatrixArray(leftMatrix:Matrix4x4, rightMatrix:Matrix4x4, outArray:Float32Array, outOffset:int):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var i:int, ai0:Number, ai1:Number, ai2:Number, ai3:Number;
+			var rightMatrixE:Float32Array = rightMatrix.elements;
+			var leftMatrixE:Float32Array = leftMatrix.elements;
+			var m11:Number = rightMatrixE[0], m12:Number = rightMatrixE[1], m13:Number = rightMatrixE[2], m14:Number = rightMatrixE[3];
+			var m21:Number = rightMatrixE[4], m22:Number = rightMatrixE[5], m23:Number = rightMatrixE[6], m24:Number = rightMatrixE[7];
+			var m31:Number = rightMatrixE[8], m32:Number = rightMatrixE[9], m33:Number = rightMatrixE[10], m34:Number = rightMatrixE[11];
+			var m41:Number = rightMatrixE[12], m42:Number = rightMatrixE[13], m43:Number = rightMatrixE[14], m44:Number = rightMatrixE[15];
+			
+			var ai0OutOffset:Number = outOffset;
+			var ai1OutOffset:Number = outOffset + 4;
+			var ai2OutOffset:Number = outOffset + 8;
+			var ai3OutOffset:Number = outOffset + 12;
+			
+			for (i = 0; i < 4; i++) {
+				ai0 = leftMatrixE[i];
+				ai1 = leftMatrixE[i + 4];
+				ai2 = leftMatrixE[i + 8];
+				ai3 = leftMatrixE[i + 12];
+				outArray[ai0OutOffset + i] = ai0 * m11 + ai1 * m12 + ai2 * m13 + ai3 * m14;
+				outArray[ai1OutOffset + i] = ai0 * m21 + ai1 * m22 + ai2 * m23 + ai3 * m24;
+				outArray[ai2OutOffset + i] = ai0 * m31 + ai1 * m32 + ai2 * m33 + ai3 * m34;
+				outArray[ai3OutOffset + i] = ai0 * m41 + ai1 * m42 + ai2 * m43 + ai3 * m44;
+			}
 		}
 	}
 

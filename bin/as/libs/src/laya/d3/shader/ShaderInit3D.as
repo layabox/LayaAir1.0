@@ -2,6 +2,7 @@ package laya.d3.shader {
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.RenderableSprite3D;
+	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.GlitterMaterial;
@@ -49,7 +50,7 @@ package laya.d3.shader {
 				'a_BoneIndices': VertexElementUsage.BLENDINDICES0, 
 				'a_Tangent0': VertexElementUsage.TANGENT0};
 			var uniformMap:Object = {
-				'u_Bones': [SkinAnimations.BONES, Shader3D.PERIOD_RENDERELEMENT], 
+				'u_Bones': [SkinnedMeshSprite3D.BONES, Shader3D.PERIOD_RENDERELEMENT], 
 				'u_DiffuseTexture': [StandardMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL], 
 				'u_SpecularTexture': [StandardMaterial.SPECULARTEXTURE, Shader3D.PERIOD_MATERIAL], 
 				'u_NormalTexture': [StandardMaterial.NORMALTEXTURE, Shader3D.PERIOD_MATERIAL], 
@@ -64,6 +65,7 @@ package laya.d3.shader {
 				'u_MaterialAmbient': [StandardMaterial.MATERIALAMBIENT, Shader3D.PERIOD_MATERIAL], 
 				'u_MaterialSpecular': [StandardMaterial.MATERIALSPECULAR, Shader3D.PERIOD_MATERIAL], 
 				'u_MaterialReflect': [StandardMaterial.MATERIALREFLECT, Shader3D.PERIOD_MATERIAL], 
+				'u_TilingOffset': [StandardMaterial.TILINGOFFSET, Shader3D.PERIOD_MATERIAL],
 				'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE], 
 				'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE], 
 				'u_LightmapScaleOffset': [RenderableSprite3D.LIGHTMAPSCALEOFFSET, Shader3D.PERIOD_SPRITE], 
@@ -108,6 +110,7 @@ package laya.d3.shader {
 			StandardMaterial.SHADERDEFINE_AMBIENTMAP = shaderCompile.registerMaterialDefine("AMBIENTMAP");
 			StandardMaterial.SHADERDEFINE_REFLECTMAP = shaderCompile.registerMaterialDefine("REFLECTMAP");
 			StandardMaterial.SHADERDEFINE_UVTRANSFORM = shaderCompile.registerMaterialDefine("UVTRANSFORM");
+			StandardMaterial.SHADERDEFINE_TILINGOFFSET = shaderCompile.registerMaterialDefine("TILINGOFFSET");
 			
 			attributeMap = {
 				'a_Position': VertexElementUsage.POSITION0, 
@@ -129,7 +132,7 @@ package laya.d3.shader {
 				'a_BoneIndices': VertexElementUsage.BLENDINDICES0, 
 				'a_Tangent0': VertexElementUsage.TANGENT0};
 			uniformMap = {
-				'u_Bones': [SkinAnimations.BONES, Shader3D.PERIOD_RENDERELEMENT], 
+				'u_Bones': [SkinnedMeshSprite3D.BONES, Shader3D.PERIOD_RENDERELEMENT], 
 				'u_lodRect': [BaseCamera.SIMLODINFO, Shader3D.PERIOD_CAMERA], 
 				'irrad_mat_red': [BaseCamera.DIFFUSEIRRADMATR, Shader3D.PERIOD_CAMERA], 
 				'irrad_mat_green': [BaseCamera.DIFFUSEIRRADMATG, Shader3D.PERIOD_CAMERA], 
@@ -416,6 +419,7 @@ package laya.d3.shader {
 			ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES = shaderCompile.registerSpriteDefine("SIZEOVERLIFETIMERANDOMCURVES");
 			ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE = shaderCompile.registerSpriteDefine("SIZEOVERLIFETIMERANDOMCURVESSEPERATE");
 			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_MESH = shaderCompile.registerSpriteDefine("RENDERMODE_MESH");
+			ShuriKenParticle3D.SHADERDEFINE_SHAPE = shaderCompile.registerSpriteDefine("SHAPE");
 			
 			attributeMap = {
 				'a_Position': VertexElementUsage.POSITION0, 

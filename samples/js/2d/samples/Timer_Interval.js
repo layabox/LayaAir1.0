@@ -10,7 +10,7 @@
 	(function()
 	{
 		// 不支持WebGL时自动切换至Canvas
-		Laya.init(Browser.clientWidth, Browser.clientHeight, WebGL);
+		Laya.init(Browser.clientWidth, Browser.clientHeight);
 
 		Laya.stage.alignV = Stage.ALIGN_MIDDLE;
 		Laya.stage.alignH = Stage.ALIGN_CENTER;
@@ -37,7 +37,7 @@
 		var t = new Text();
 		t.text = text;
 		t.fontSize = 30;
-		t.color = "white";
+		t.color = "white";	
 		t.bold = true;
 		t.pivot(t.width / 2, t.height / 2);
 		t.pos(x, y);

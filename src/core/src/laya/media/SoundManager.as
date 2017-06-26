@@ -1,21 +1,31 @@
 package laya.media {
 	import laya.events.Event;
 	import laya.net.Loader;
+	import laya.net.URL;
 	import laya.renders.Render;
 	import laya.utils.Handler;
 	import laya.utils.Utils;
 	
 	/**
-	 * <code>SoundManager</code> 是一个声音管理类。
+	 * <code>SoundManager</code> 是一个声音管理类。提供了对背景音乐、音效的播放控制方法。
 	 */
 	public class SoundManager {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
-		/** 背景音乐音量。*/
+		/**
+		 * 背景音乐音量。
+		 * @default 1
+		 */
 		public static var musicVolume:Number = 1;
-		/** 音效音量。*/
+		/**
+		 * 音效音量。
+		 * @default 1
+		 */
 		public static var soundVolume:Number = 1;
-		/** 声音播放速率。*/
+		/**
+		 * 声音播放速率。
+		 * @default 1
+		 */
 		public static var playbackRate:Number = 1;
 		/**@private 是否静音，默认为false。*/
 		private static var _muted:Boolean = false;
@@ -67,8 +77,8 @@ package laya.media {
 		}
 		
 		/**
-		 * 设置是否失去焦点后自动停止背景音乐。
-		 * @param v Boolean 值。
+		 * 失去焦点后是否自动停止背景音乐。
+		 * @param v Boolean 失去焦点后是否自动停止背景音乐。
 		 *
 		 */
 		public static function set autoStopMusic(v:Boolean):void {
@@ -84,7 +94,7 @@ package laya.media {
 		}
 		
 		/**
-		 * 表示是否失去焦点后自动停止背景音乐。
+		 * 失去焦点后是否自动停止背景音乐。
 		 */
 		public static function get autoStopMusic():Boolean {
 			return _autoStopMusic;
@@ -125,6 +135,9 @@ package laya.media {
 			}
 		}
 		
+		/**
+		 * 背景音乐和所有音效是否静音。
+		 */
 		public static function set muted(value:Boolean):void {
 			if (value) {
 				stopAllSound();
@@ -133,22 +146,24 @@ package laya.media {
 			_muted = value;
 		}
 		
-		/**
-		 * 表示是否静音。
-		 */
 		public static function get muted():Boolean {
 			return _muted;
 		}
 		
+		/**
+		 * 所有音效（不包括背景音乐）是否静音。
+		 */
 		public static function set soundMuted(value:Boolean):void {
 			_soundMuted = value;
 		}
 		
-		/** 表示是否使音效静音。*/
 		public static function get soundMuted():Boolean {
 			return _soundMuted;
 		}
 		
+		/**
+		 * 背景音乐（不包括音效）是否静音。
+		 */
 		public static function set musicMuted(value:Boolean):void {
 			if (value) {
 				if (_tMusic)
@@ -163,31 +178,29 @@ package laya.media {
 		
 		}
 		
-		/** 表示是否使背景音乐静音。*/
 		public static function get musicMuted():Boolean {
 			return _musicMuted;
 		}
 		
 		/**
-		 * 播放音效。
-		 * @param url 声音文件地址。
-		 * @param loops 循环次数,0表示无限循环。
-		 * @param complete 声音播放完成回调  Handler对象。
-		 * @param soundClass 使用哪个声音类进行播放，null表示自动选择。
-		 * @param startTime  声音播放起始时间。
-		 * @return SoundChannel对象。
+		 * 播放音效。音效可以同时播放多个。
+		 * @param url			声音文件地址。
+		 * @param loops			循环次数,0表示无限循环。
+		 * @param complete		声音播放完成回调  Handler对象。
+		 * @param soundClass	使用哪个声音类进行播放，null表示自动选择。
+		 * @param startTime		声音播放起始时间。
+		 * @return SoundChannel对象，通过此对象可以对声音进行控制，以及获取声音信息。
 		 */
 		public static function playSound(url:String, loops:int = 1, complete:Handler = null, soundClass:Class = null, startTime:Number = 0):SoundChannel {
 			if (!_isActive) return null;
 			if (_muted) return null;
+			url = URL.formatURL(url);
 			if (url == _tMusic) {
 				if (_musicMuted) return null;
 			} else {
-				if ( Render.isConchApp )
-				{
+				if (Render.isConchApp) {
 					var ext:String = Utils.getFileExtension(url);
-					if ( ext != "wav" && ext != "ogg")
-					{
+					if (ext != "wav" && ext != "ogg") {
 						alert("The sound only supports wav or ogg format,for optimal performance reason,please refer to the official website document.");
 						return null;
 					}
@@ -211,7 +224,7 @@ package laya.media {
 		
 		/**
 		 * 释放声音资源。
-		 * @param url 声音文件地址。
+		 * @param url	声音播放地址。
 		 */
 		public static function destroySound(url:String):void {
 			var tSound:Sound = Laya.loader.getRes(url);
@@ -222,24 +235,26 @@ package laya.media {
 		}
 		
 		/**
-		 * 播放背景音乐。
-		 * @param url 声音文件地址。
-		 * @param loops 循环次数,0表示无限循环。
-		 * @param complete  声音播放完成回调。
-		 * @param startTime  声音播放起始时间。
-		 * @return audio对象。
+		 * 播放背景音乐。背景音乐同时只能播放一个，如果在播放背景音乐时再次调用本方法，会先停止之前的背景音乐，再播发当前的背景音乐。
+		 * @param url		声音文件地址。
+		 * @param loops		循环次数,0表示无限循环。
+		 * @param complete	声音播放完成回调。
+		 * @param startTime	声音播放起始时间。
+		 * @return SoundChannel对象，通过此对象可以对声音进行控制，以及获取声音信息。
 		 */
 		public static function playMusic(url:String, loops:int = 0, complete:Handler = null, startTime:Number = 0):SoundChannel {
+			url = URL.formatURL(url);
 			_tMusic = url;
 			if (_musicChannel) _musicChannel.stop();
 			return _musicChannel = playSound(url, loops, complete, null, startTime);
 		}
 		
 		/**
-		 * 停止声音播放。
+		 * 停止声音播放。此方法能够停止任意声音的播放（包括背景音乐和音效），只需传入对应的声音播放地址。
 		 * @param url  声音文件地址。
 		 */
 		public static function stopSound(url:String):void {
+			url = URL.formatURL(url);
 			var i:int;
 			var channel:SoundChannel;
 			for (i = _channels.length - 1; i >= 0; i--) {
@@ -251,7 +266,7 @@ package laya.media {
 		}
 		
 		/**
-		 * 停止所有声音播放。
+		 * 停止播放所有声音（包括背景音乐和音效）。
 		 */
 		public static function stopAll():void {
 			_tMusic = null;
@@ -264,7 +279,7 @@ package laya.media {
 		}
 		
 		/**
-		 * 停止所有音效,不包括背景音乐。
+		 * 停止播放所有音效（不包括背景音乐）。
 		 */
 		public static function stopAllSound():void {
 			var i:int;
@@ -278,7 +293,7 @@ package laya.media {
 		}
 		
 		/**
-		 * 停止背景音乐播放。
+		 * 停止播放背景音乐（不包括音效）。
 		 * @param url  声音文件地址。
 		 */
 		public static function stopMusic():void {
@@ -287,12 +302,13 @@ package laya.media {
 		}
 		
 		/**
-		 * 设置声音音量
-		 * @param volume 音量 标准值为1
-		 * @param url  声音文件地址。为null(默认值)时对所有音效起作用，不为空时仅对此声音生效
+		 * 设置声音音量。根据参数不同，可以分别设置指定声音（背景音乐或音效）音量或者所有音效（不包括背景音乐）音量。
+		 * @param volume	音量。初始值为1。音量范围从 0（静音）至 1（最大音量）。
+		 * @param url		(default = null)声音播放地址。默认为null。为空表示设置所有音效（不包括背景音乐）的音量，不为空表示设置指定声音（背景音乐或音效）的音量。
 		 */
 		public static function setSoundVolume(volume:Number, url:String = null):void {
 			if (url) {
+				url = URL.formatURL(url);
 				_setVolume(url, volume);
 			} else {
 				soundVolume = volume;
@@ -308,8 +324,8 @@ package laya.media {
 		}
 		
 		/**
-		 * 设置背景音乐音量。
-		 * @param volume 音量，标准值为1。
+		 * 设置背景音乐音量。音量范围从 0（静音）至 1（最大音量）。
+		 * @param volume	音量。初始值为1。音量范围从 0（静音）至 1（最大音量）。
 		 */
 		public static function setMusicVolume(volume:Number):void {
 			musicVolume = volume;
@@ -318,10 +334,11 @@ package laya.media {
 		
 		/**
 		 * 设置指定声音的音量。
-		 * @param url  声音文件url
-		 * @param volume 音量，标准值为1。
+		 * @param url		声音文件url
+		 * @param volume	音量。初始值为1。
 		 */
 		private static function _setVolume(url:String, volume:Number):void {
+			url = URL.formatURL(url);
 			var i:int;
 			var channel:SoundChannel;
 			for (i = _channels.length - 1; i >= 0; i--) {

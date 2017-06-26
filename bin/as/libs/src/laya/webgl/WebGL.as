@@ -161,7 +161,7 @@ package laya.webgl {
 				var names:Array = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
 				for (var i:int = 0; i < names.length; i++) {
 					try {						
-						gl = canvas.getContext(names[i], {stencil: Config.isStencil, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha, preserveDrawingBuffer: Config.preserveDrawingBuffer});
+						gl = canvas.getContext(names[i], {stencil: Config.isStencil, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha, preserveDrawingBuffer: Config.preserveDrawingBuffer});//antialias为true,premultipliedAlpha为false,IOS和部分安卓QQ浏览器有黑屏或者白屏底色BUG
 					} catch (e:*) {
 					}
 					if (gl) {

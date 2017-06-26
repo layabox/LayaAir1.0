@@ -53,8 +53,7 @@ package laya.d3.terrain {
 			{
 				_terrainHeightData[i] = (buffer[i] * ratio * _value)/2;
 			}
-			_loaded = true;
-			event(Event.LOADED, this);
+			_endLoaded();
 		}
 	}
 }

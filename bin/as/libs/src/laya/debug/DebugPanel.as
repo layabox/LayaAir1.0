@@ -166,14 +166,13 @@ package laya.debug {
 					ClickSelectTool.I.beginClickSelect(clickedHandler);
 				});
 			debug_view.onLogInfo(function():void {
-					trace("Target:");
 					trace(tShowObj);
 				});
 			debug_view.onPrintEnabledNodeChain(function():void {
-					trace(DebugTool.traceDisMouseEnable(tShowObj));
+					DebugTool.traceDisMouseEnable(tShowObj);
 				});
 			debug_view.onPrintSizeChain(function():void {
-					trace(DebugTool.traceDisSizeChain(tShowObj));
+					DebugTool.traceDisSizeChain(tShowObj);
 				});
 			debug_view.onToggleVisibility(function(selectd):void {
 					if (tShowObj) {
@@ -212,6 +211,7 @@ package laya.debug {
 			if (!_treeDataList)
 				return;
 			debug_view.tree.selectItem(IDTools.getObjID(target));
+			//debug_view.tree.focusItem(IDTools.getObjID(target));
 			debug_view.bounceUpInspectButton();
 		}
 		

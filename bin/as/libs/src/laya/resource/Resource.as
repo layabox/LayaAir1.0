@@ -96,7 +96,7 @@ package laya.resource {
 			}
 		}
 		
-		/**唯一标识ID(通常用于优化或识别)。*/
+		/**@private */
 		private var _id:int;
 		/**上次使用帧数。*/
 		private var _lastUseFrameCount:int;
@@ -108,7 +108,7 @@ package laya.resource {
 		private var _url:String;
 		
 		/**是否已加载,限于首次加载。*/
-		protected var _loaded:Boolean = false;
+		private var __loaded:Boolean;
 		/**是否已释放。*/
 		private var _released:Boolean;
 		/**是否已处理。*/
@@ -119,7 +119,14 @@ package laya.resource {
 		public var lock:Boolean;
 		
 		/**
-		 * 获取唯一标识ID(通常用于优化或识别)。
+		 * @private
+		 */
+		public function set _loaded(value:Boolean):void {
+			__loaded=value;
+		}
+		
+		/**
+		 * 获取唯一标识ID,通常用于识别。
 		 */
 		public function get id():int {
 			return _id;
@@ -177,9 +184,14 @@ package laya.resource {
 			return _disposed;
 		}
 		
+		/**
+		 * 获取是否已加载完成。
+		 */
 		public function get loaded():Boolean {
-			return _loaded;
+			return __loaded;
 		}
+		
+		
 		
 		public function set memorySize(value:int):void {
 			var offsetValue:int = value - _memorySize;
@@ -207,7 +219,10 @@ package laya.resource {
 		 * 创建一个 <code>Resource</code> 实例。
 		 */
 		public function Resource() {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			_id = ++_uniqueIDCounter;
+			__loaded = true;
+			_disposed = false;
 			_loadedResources.push(this);
 			_isLoadedResourcesSorted = false;
 			_released = true;
@@ -215,6 +230,14 @@ package laya.resource {
 			_memorySize = 0;
 			_lastUseFrameCount = -1;
 			(ResourceManager.currentResourceManager) && (ResourceManager.currentResourceManager.addResource(this));//资源管理器为空不加入资源管理队列，如受大图合集资源管理
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _endLoaded():void {
+			__loaded = true;
+			event(Event.LOADED, this);
 		}
 		
 		/** 重新创建资源,override it，同时修改memorySize属性、处理startCreate()和compoleteCreate() 方法。*/

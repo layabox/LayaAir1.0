@@ -13,7 +13,7 @@ package laya.map {
 	public class MapLayer extends Sprite {
 		
 		private var _map:TiledMap;
-		private var _mapData:Array = null;
+		public var _mapData:Array = null;
 		
 		private var _tileWidthHalf:Number = 0;
 		private var _tileHeightHalf:Number = 0;
@@ -21,12 +21,18 @@ package laya.map {
 		private var _mapWidthHalf:Number = 0;
 		private var _mapHeightHalf:Number = 0;
 		
-		private var _gridSpriteArray:Array = [];
+		/**
+		 * @private
+		 */
+		public var _gridSpriteArray:Array = [];
 		private var _objDic:Object = null;//用来做字典，方便查询
 		private var _dataDic:Object = null;
 		
 		private var _tempMapPos:Point = new Point();//临时变量
 		private var _properties:*;
+		
+		/**被合到的层*/
+		public var tarLayer:MapLayer;
 		
 		/**当前Layer的名称*/
 		public var layerName:String = null;
@@ -416,6 +422,7 @@ package laya.map {
 			}
 			_properties = null;
 			_tempMapPos = null;
+			tarLayer = null;
 		}
 	}
 }

@@ -23,6 +23,11 @@ package laya.d3.core.render {
 	 * <code>RenderElement</code> 类用于实现渲染物体。
 	 */
 	public class RenderElement {
+		/**唯一标识ID计数器*/
+		private static var _uniqueIDCounter:int = 0;
+		
+		/**@private */
+		private var _id:int;
 		/** @private 类型0为默认，2为DynamicBatch。*/
 		public var _type:int = 0;
 		/** @private 排序ID。*/
@@ -38,7 +43,6 @@ package laya.d3.core.render {
 		
 		/** @private */
 		public var _staticBatch:StaticBatch;
-	 
 		
 		//...............临时...........................
 		public var _tempBatchIndexStart:int;//TODO:
@@ -56,6 +60,13 @@ package laya.d3.core.render {
 		/** @private */
 		public var _conchSubmesh:*;/**NATIVE*/
 		
+		/**
+		 * 获取唯一标识ID,通常用于识别。
+		 */
+		public function get id():int {
+			return _id;
+		}
+		
 		public function set renderObj(value:IRenderable):void {
 			if (_renderObj !== value) {
 				_renderObj = value;
@@ -70,6 +81,7 @@ package laya.d3.core.render {
 		 * 创建一个 <code>RenderElement</code> 实例。
 		 */
 		public function RenderElement() {
+			_id = ++_uniqueIDCounter;
 			_canDynamicBatch = true;
 			_shaderValue = new ValusArray();
 			if (Render.isConchNode) {//NATIVE

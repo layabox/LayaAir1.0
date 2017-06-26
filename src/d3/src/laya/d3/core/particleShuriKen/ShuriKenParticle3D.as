@@ -56,6 +56,7 @@ package laya.d3.core.particleShuriKen {
 		public static var SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE:int;
 		public static var SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES:int;
 		public static var SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE:int;
+		public static var SHADERDEFINE_SHAPE:int;
 		
 		public static const WORLDPOSITION:int = 0;
 		public static const WORLDROTATIONMATRIX:int = 1;
@@ -119,6 +120,14 @@ package laya.d3.core.particleShuriKen {
 		public static const TEXTURESHEETANIMATIONGRADIENTMAXUVS:int = 51;
 		
 		/**
+		 * 加载网格模板,注意:不缓存。
+		 * @param url 模板地址。
+		 */
+		public static function load(url:String):ShuriKenParticle3D {
+			return Laya.loader.create(url, null, null, ShuriKenParticle3D, null, 1, false);
+		}
+		
+		/**
 		 * 获取粒子系统。
 		 * @return  粒子系统。
 		 */
@@ -139,6 +148,7 @@ package laya.d3.core.particleShuriKen {
 		 * @param settings value 粒子配置。
 		 */
 		public function ShuriKenParticle3D(material:ShurikenParticleMaterial = null) {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			_render = new ShurikenParticleRender(this);
 			_render.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
@@ -199,6 +209,7 @@ package laya.d3.core.particleShuriKen {
 			destParticleRender.sharedMaterials = particleRender.sharedMaterials;
 			destParticleRender.enable = particleRender.enable;
 			destParticleRender.renderMode = particleRender.renderMode;
+			destParticleRender.mesh = particleRender.mesh;
 			destParticleRender.stretchedBillboardCameraSpeedScale = particleRender.stretchedBillboardCameraSpeedScale;
 			destParticleRender.stretchedBillboardSpeedScale = particleRender.stretchedBillboardSpeedScale;
 			destParticleRender.stretchedBillboardLengthScale = particleRender.stretchedBillboardLengthScale;

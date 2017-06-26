@@ -5,33 +5,42 @@ package laya.net {
 	import laya.utils.Browser;
 	import laya.utils.Byte;
 	
-	/**连接建立成功后调度。
+	/**
+	 * 连接建立成功后调度。
 	 * @eventType Event.OPEN
 	 * */
 	[Event(name = "open", type = "laya.events.Event")]
-	/**接收到数据后调度。
+	/**
+	 * 接收到数据后调度。
 	 * @eventType Event.MESSAGE
 	 * */
 	[Event(name = "message", type = "laya.events.Event")]
-	/**连接被关闭后调度。
+	/**
+	 * 连接被关闭后调度。
 	 * @eventType Event.CLOSE
 	 * */
 	[Event(name = "close", type = "laya.events.Event")]
-	/**出现异常后调度。
+	/**
+	 * 出现异常后调度。
 	 * @eventType Event.ERROR
 	 * */
 	[Event(name = "error", type = "laya.events.Event")]
 	
 	/**
-	 * <code>Socket</code> 是一种双向通信协议，在建立连接后，服务器和 Browser/Client Agent 都能主动的向对方发送或接收数据。
+	 * <p> <code>Socket</code> 封装了 HTML5 WebSocket ，允许服务器端与客户端进行全双工（full-duplex）的实时通信，并且允许跨域通信。在建立连接后，服务器和 Browser/Client Agent 都能主动的向对方发送或接收文本和二进制数据。</p>
+	 * <p>要使用 <code>Socket</code> 类的方法，请先使用构造函数 <code>new Socket</code> 创建一个 <code>Socket</code> 对象。 <code>Socket</code> 以异步方式传输和接收数据。</p>
 	 */
 	public class Socket extends EventDispatcher {
 		/**
-		 * 表示多字节数字的最低有效字节位于字节序列的最前面。
+		 * <p>主机字节序，是 CPU 存放数据的两种不同顺序，包括小端字节序和大端字节序。</p>
+		 * <p> LITTLE_ENDIAN ：小端字节序，地址低位存储值的低位，地址高位存储值的高位。</p>
+		 * <p> BIG_ENDIAN ：大端字节序，地址低位存储值的高位，地址高位存储值的低位。有时也称之为网络字节序。</p>
 		 */
 		public static const LITTLE_ENDIAN:String = "littleEndian";
 		/**
-		 * 表示多字节数字的最高有效字节位于字节序列的最前面。
+		 * <p>主机字节序，是 CPU 存放数据的两种不同顺序，包括小端字节序和大端字节序。</p>
+		 * <p> BIG_ENDIAN ：大端字节序，地址低位存储值的高位，地址高位存储值的低位。有时也称之为网络字节序。</p>
+		 * <p> LITTLE_ENDIAN ：小端字节序，地址低位存储值的低位，地址高位存储值的高位。</p>
 		 */
 		public static const BIG_ENDIAN:String = "bigEndian";
 		/**@private */
@@ -49,28 +58,32 @@ package laya.net {
 		/**@private */
 		private var _output:*;
 		/**
+		 * @private
 		 * 表示建立连接时需等待的毫秒数。
 		 */
 		public var timeout:int;
 		/**
+		 * @private
 		 * 在写入或读取对象时，控制所使用的 AMF 的版本。
 		 */
 		public var objectEncoding:int;
 		/**
-		 * 不使用socket提供的 input封装
+		 * 不再缓存服务端发来的数据。
 		 */
-		public var disableInput:Boolean=false;
+		public var disableInput:Boolean = false;
 		/**
-		 * 用来发送接收数据的Byte类
+		 * 用来发送和接收数据的 <code>Byte</code> 类。
 		 */
 		private var _byteClass:Class;
 		/**
-		 * 用的子协议，字符串或数组
+		 * <p>子协议名称。子协议名称字符串，或由多个子协议名称字符串构成的数组。必须在调用 connect 或者 connectByUrl 之前进行赋值，否则无效。</p>
+		 * <p>指定后，只有当服务器选择了其中的某个子协议，连接才能建立成功，否则建立失败，派发 Event.ERROR 事件。</p>
+		 * @see https://html.spec.whatwg.org/multipage/comms.html#dom-websocket
 		 */
-		public var protocols:*=[];
+		public var protocols:* = [];
 		
 		/**
-		 * 表示服务端发来的数据。
+		 * 缓存的服务端发来的数据。
 		 */
 		public function get input():* {
 			return _input;
@@ -91,7 +104,9 @@ package laya.net {
 		}
 		
 		/**
-		 * 表示数据的字节顺序。
+		 * <p>主机字节序，是 CPU 存放数据的两种不同顺序，包括小端字节序和大端字节序。</p>
+		 * <p> LITTLE_ENDIAN ：小端字节序，地址低位存储值的低位，地址高位存储值的高位。</p>
+		 * <p> BIG_ENDIAN ：大端字节序，地址低位存储值的高位，地址高位存储值的低位。</p>
 		 */
 		public function get endian():String {
 			return _endian;
@@ -104,49 +119,49 @@ package laya.net {
 		}
 		
 		/**
-		 * <p>创建一个新的 <code>Socket</code> 实例。</p>
-		 * 创建 websocket ,如果host port有效直接连接。		 *
-		 * @param host 服务器地址。
-		 * @param port 服务器端口。
-		 * @param byteClass 用来接收和发送数据的Byte类，默认使用Byte类，也可传入Byte类的子类。
-		 *
+		 * <p>创建新的 Socket 对象。默认字节序为 Socket.BIG_ENDIAN 。若未指定参数，将创建一个最初处于断开状态的套接字。若指定了有效参数，则尝试连接到指定的主机和端口。</p>
+		 * <p><b>注意：</b>强烈建议使用<b>不带参数</b>的构造函数形式，并添加任意事件侦听器和设置 protocols 等属性，然后使用 host 和 port 参数调用 connect 方法。此顺序将确保所有事件侦听器和其他相关流程工作正常。</p>
+		 * @param host		服务器地址。
+		 * @param port		服务器端口。
+		 * @param byteClass	用于接收和发送数据的 Byte 类。如果为 null ，则使用 Byte 类，也可传入 Byte 类的子类。
+		 * @see laya.utils.Byte
 		 */
 		public function Socket(host:String = null, port:int = 0, byteClass:Class = null) {
 			super();
-			_byteClass = byteClass;
-			_byteClass = _byteClass ? _byteClass : Byte;
+			_byteClass = byteClass ? byteClass : Byte;
 			endian = BIG_ENDIAN;
 			timeout = 20000;
 			_addInputPosition = 0;
-			if (host&&port > 0 && port < 65535)
+			if (host && port > 0 && port < 65535)
 				connect(host, port);
 		}
 		
 		/**
-		 * 连接到指定的主机和端口。
-		 * @param host 服务器地址。
-		 * @param port 服务器端口。
+		 * <p>连接到指定的主机和端口。</p>
+		 * <p>连接成功派发 Event.OPEN 事件；连接失败派发 Event.ERROR 事件；连接被关闭派发 Event.CLOSE 事件；接收到数据派发 Event.MESSAGE 事件； 除了 Event.MESSAGE 事件参数为数据内容，其他事件参数都是原生的 HTML DOM Event 对象。</p>
+		 * @param host	服务器地址。
+		 * @param port	服务器端口。
 		 */
-		public function connect(host:String, port:int):void {		
+		public function connect(host:String, port:int):void {
 			var url:String = "ws://" + host + ":" + port;
-			connectByUrl(url);		
+			connectByUrl(url);
 		}
+		
 		/**
-		 * 连接到指定的url
-		 * @param url 连接目标
+		 * <p>连接到指定的服务端 WebSocket URL。 URL 类似 ws://yourdomain:port。</p>
+		 * <p>连接成功派发 Event.OPEN 事件；连接失败派发 Event.ERROR 事件；连接被关闭派发 Event.CLOSE 事件；接收到数据派发 Event.MESSAGE 事件； 除了 Event.MESSAGE 事件参数为数据内容，其他事件参数都是原生的 HTML DOM Event 对象。</p>
+		 * @param url	要连接的服务端 WebSocket URL。 URL 类似 ws://yourdomain:port。
 		 */
 		public function connectByUrl(url:String):void {
 			if (_socket != null)
-				close();	
+				close();
 			
-			_socket && _cleanSocket();
+			_socket && cleanSocket();
 			
-			if (!protocols || protocols.length == 0)
-			{
-				_socket = new Browser.window.WebSocket( url );
-			}else
-			{
-				_socket = new Browser.window.WebSocket( url, protocols );
+			if (!protocols || protocols.length == 0) {
+				_socket = new Browser.window.WebSocket(url);
+			} else {
+				_socket = new Browser.window.WebSocket(url, protocols);
 			}
 			
 			_socket.binaryType = "arraybuffer";
@@ -168,15 +183,18 @@ package laya.net {
 			};
 			_socket.onerror = function(e:*):void {
 				_onError(e);
-			};	
-			
+			};
 		}
-		private function _cleanSocket():void {
+		
+		/**
+		 * 清理socket。
+		 */
+		public function cleanSocket():void {
 			try {
 				_socket.close();
 			} catch (e:*) {
 			}
-			_connected=false;
+			_connected = false;
 			_socket.onopen = null;
 			_socket.onmessage = null;
 			_socket.onclose = null;
@@ -189,7 +207,10 @@ package laya.net {
 		 */
 		public function close():void {
 			if (_socket != null) {
-				_cleanSocket();
+				try {
+					_socket.close();
+				} catch (e:*) {
+				}
 			}
 		}
 		
@@ -199,7 +220,7 @@ package laya.net {
 		 */
 		protected function _onOpen(e:*):void {
 			_connected = true;
-			event(Event.OPEN,e);
+			event(Event.OPEN, e);
 		}
 		
 		/**
@@ -210,8 +231,7 @@ package laya.net {
 		protected function _onMessage(msg:*):void {
 			if (!msg || !msg.data) return;
 			var data:* = msg.data;
-			if(disableInput&&data)
-			{
+			if (disableInput && data) {
 				event(Event.MESSAGE, data);
 				return;
 			}
@@ -240,8 +260,8 @@ package laya.net {
 		 * 连接被关闭处理方法。
 		 */
 		protected function _onClose(e:*):void {
-			_connected=false;
-			event(Event.CLOSE,e)
+			_connected = false;
+			event(Event.CLOSE, e)
 		}
 		
 		/**
@@ -249,7 +269,7 @@ package laya.net {
 		 * 出现异常处理方法。
 		 */
 		protected function _onError(e:*):void {
-			event(Event.ERROR,e)
+			event(Event.ERROR, e)
 		}
 		
 		/**
@@ -267,13 +287,13 @@ package laya.net {
 			if (_output && _output.length > 0) {
 				var evt:*;
 				try {
-					this._socket && this._socket.send(this._output.__getBuffer().slice(0, this._output.length));		
+					this._socket && this._socket.send(this._output.__getBuffer().slice(0, this._output.length));
 				} catch (e:*) {
-					evt = e;          
+					evt = e;
 				}
 				_output.endian = endian;
 				_output.clear();
-				if(evt) event(Event.ERROR,evt);
+				if (evt) event(Event.ERROR, evt);
 			}
 		}
 	}

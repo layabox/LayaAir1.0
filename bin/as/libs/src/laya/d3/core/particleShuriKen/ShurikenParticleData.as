@@ -28,7 +28,7 @@ package laya.d3.core.particleShuriKen {
 		public static var startLifeTime:Number;
 		public static var startColor:Float32Array = new Float32Array(4);
 		public static var startSize:Float32Array = new Float32Array(3);
-		public static var startRotation:Float32Array = new Float32Array(4);
+		public static var startRotation:Float32Array = new Float32Array(3);
 		public static var startSpeed:Number;
 		public static var startUVInfo:Float32Array = new Float32Array(4);
 		public static var simulationWorldPostion:Float32Array = new Float32Array(3);
@@ -220,49 +220,20 @@ package laya.d3.core.particleShuriKen {
 			//StartRotation//TODO:renderMode2、3模式都不需要旋转，是否移除。
 			var renderMode:int = particleRender.renderMode;
 			if (renderMode !== 1) {
-				var rotationE:Float32Array, axis:Vector3, axisE:Float32Array;
 				switch (particleSystem.startRotationType) {
 				case 0: 
 					if (particleSystem.threeDStartRotation) {
 						var startRotationConstantSeparate:Vector3 = particleSystem.startRotationConstantSeparate;
 						var randomRotationE:Float32Array = _tempVector30.elements;
 						_randomInvertRoationArray(startRotationConstantSeparate.elements, randomRotationE, particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
-						if (renderMode !== 4) 
-							Quaternion.createFromYawPitchRoll(randomRotationE[1], randomRotationE[0], -randomRotationE[2], _tempQuaternion);
+						startRotation[0] = randomRotationE[0];
+						startRotation[1] = randomRotationE[1];
+						if (renderMode !== 4)
+							startRotation[2] = -randomRotationE[2];
 						else
-							Quaternion.createFromYawPitchRoll(randomRotationE[1], randomRotationE[0], randomRotationE[2], _tempQuaternion);
-						rotationE = _tempQuaternion.elements;
-						startRotation[0] = rotationE[0];
-						startRotation[1] = rotationE[1];
-						startRotation[2] = rotationE[2];
-						startRotation[3] = rotationE[3];
+							startRotation[2] = randomRotationE[2];
 					} else {
-						if (renderMode !== 4) {
-							startRotation[0] = _randomInvertRoation(particleSystem.startRotationConstant, particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
-						} else {
-							axis = _tempVector30;
-							axisE = axis.elements;
-							if (autoRandomSeed) {
-								axisE[0] = Math.random() - 0.5;
-								axisE[1] = Math.random() - 0.5;
-								axisE[2] = Math.random() - 0.5;
-							} else {
-								rand.seed = randomSeeds[18];
-								axisE[0] = rand.getFloat() - 0.5;
-								randomSeeds[18] = rand.seed;
-								rand.seed = randomSeeds[19];
-								axisE[1] = rand.getFloat() - 0.5;
-								randomSeeds[19] = rand.seed;
-								rand.seed = randomSeeds[20];
-								axisE[2] = rand.getFloat() - 0.5;
-								randomSeeds[20] = rand.seed;
-							}
-							Vector3.normalize(axis, axis);
-							startRotation[0] = axisE[0];
-							startRotation[1] = axisE[1];
-							startRotation[2] = axisE[2];
-							startRotation[3] = _randomInvertRoation(particleSystem.startRotationConstant, particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
-						}
+						startRotation[0] = _randomInvertRoation(particleSystem.startRotationConstant, particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
 					}
 					break;
 				case 2: 
@@ -282,51 +253,19 @@ package laya.d3.core.particleShuriKen {
 							randomSeeds[5] = rand.seed;
 						}
 						_randomInvertRoationArray(lerpRoationE, lerpRoationE, particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
-						Quaternion.createFromYawPitchRoll(lerpRoationE[1], lerpRoationE[0], lerpRoationE[2], _tempQuaternion);
-						
-						rotationE = _tempQuaternion.elements;
-						startRotation[0] = rotationE[0];
-						startRotation[1] = rotationE[1];
-						startRotation[2] = rotationE[2];
-						startRotation[3] = rotationE[3];
+						startRotation[0] = lerpRoationE[0];
+						startRotation[1] = lerpRoationE[1];
+						if (renderMode !== 4)
+							startRotation[2] = -lerpRoationE[2];
+						else
+							startRotation[2] = lerpRoationE[2];
 					} else {
-						if (renderMode !== 4) {
-							if (autoRandomSeed) {
-								startRotation[0] = _randomInvertRoation(MathUtil.lerp(particleSystem.startRotationConstantMin, particleSystem.startRotationConstantMax, Math.random()), particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
-							} else {
-								rand.seed = randomSeeds[5];
-								startRotation[0] = _randomInvertRoation(MathUtil.lerp(particleSystem.startRotationConstantMin, particleSystem.startRotationConstantMax, rand.getFloat()), particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
-								randomSeeds[5] = rand.seed;
-							}
+						if (autoRandomSeed) {
+							startRotation[0] = _randomInvertRoation(MathUtil.lerp(particleSystem.startRotationConstantMin, particleSystem.startRotationConstantMax, Math.random()), particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
 						} else {
-							axis = _tempVector30;
-							axisE = axis.elements;
-							if (autoRandomSeed) {
-								axisE[0] = Math.random() - 0.5;
-								axisE[1] = Math.random() - 0.5;
-								axisE[2] = Math.random() - 0.5;
-							} else {
-								rand.seed = randomSeeds[18];
-								axisE[0] = rand.getFloat() - 0.5;
-								randomSeeds[18] = rand.seed;
-								rand.seed = randomSeeds[19];
-								axisE[1] = rand.getFloat() - 0.5;
-								randomSeeds[19] = rand.seed;
-								rand.seed = randomSeeds[20];
-								axisE[2] = rand.getFloat() - 0.5;
-								randomSeeds[20] = rand.seed;
-							}
-							Vector3.normalize(axis, axis);
-							startRotation[0] = axisE[0];
-							startRotation[1] = axisE[1];
-							startRotation[2] = axisE[2];
-							if (autoRandomSeed) {
-								startRotation[3] = _randomInvertRoation(MathUtil.lerp(particleSystem.startRotationConstantMin, particleSystem.startRotationConstantMax, Math.random()), particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
-							} else {
-								rand.seed = randomSeeds[5];
-								startRotation[3] = _randomInvertRoation(MathUtil.lerp(particleSystem.startRotationConstantMin, particleSystem.startRotationConstantMax, rand.getFloat()), particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
-								randomSeeds[5] = rand.seed;
-							}
+							rand.seed = randomSeeds[5];
+							startRotation[0] = _randomInvertRoation(MathUtil.lerp(particleSystem.startRotationConstantMin, particleSystem.startRotationConstantMax, rand.getFloat()), particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
+							randomSeeds[5] = rand.seed;
 						}
 					}
 					break;
@@ -380,7 +319,7 @@ package laya.d3.core.particleShuriKen {
 			
 			//StartUV
 			var textureSheetAnimation:TextureSheetAnimation = particleSystem.textureSheetAnimation;
-			var enableSheetAnimation:Boolean = textureSheetAnimation && textureSheetAnimation.enbale;
+			var enableSheetAnimation:Boolean = textureSheetAnimation && textureSheetAnimation.enable;
 			if (enableSheetAnimation) {
 				var title:Vector2 = textureSheetAnimation.tiles;
 				var titleX:int = title.x, titleY:int = title.y;

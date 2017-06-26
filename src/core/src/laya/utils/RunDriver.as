@@ -17,7 +17,7 @@ package laya.utils {
 		 * 滤镜动作集。
 		 */
 		public static var FILTER_ACTIONS:Array = [];
-		private static var pixelRatio:int =-1;
+		private static var pixelRatio:int = -1;
 		
 		/*[FILEINDEX:10000000]*/
 		private static var _charSizeTestDiv:*;
@@ -35,8 +35,8 @@ package laya.utils {
 				var ctx:* = Browser.context;
 				var backingStore:Number = ctx.backingStorePixelRatio || ctx.webkitBackingStorePixelRatio || ctx.mozBackingStorePixelRatio || ctx.msBackingStorePixelRatio || ctx.oBackingStorePixelRatio || ctx.backingStorePixelRatio || 1;
 				pixelRatio = (Browser.window.devicePixelRatio || 1) / backingStore;
-				if(pixelRatio<1) pixelRatio=1;
-			}	
+				if (pixelRatio < 1) pixelRatio = 1;
+			}
 			return pixelRatio;
 		}
 		
@@ -52,18 +52,18 @@ package laya.utils {
 		private static var fontMap:Array = [];
 		public static var measureText:Function = function(txt:String, font:String):* {
 			var isChinese:Boolean = hanzi.test(txt);
-			if (isChinese && fontMap[font]){
+			if (isChinese && fontMap[font]) {
 				return fontMap[font];
 			}
 			
 			var ctx:* = Browser.context;
 			ctx.font = font;
+			
 			var r:* = ctx.measureText(txt);
 			if (isChinese) fontMap[font] = r;
 			return r;
 		}
 		
-
 		/**
 		 * @private
 		 */
@@ -160,7 +160,7 @@ package laya.utils {
 		};
 		
 		/** @private */
-		public static var skinAniSprite:Function = function():*{
+		public static var skinAniSprite:Function = function():* {
 			return null;
 		}
 	

@@ -54,14 +54,17 @@ package laya.d3.loaders {
 		/**@private */
 		private static var _materials:Vector.<BaseMaterial>;
 		/**@private */
+		private static var _subMeshes:Vector.<SubMesh>;
+		/**@private */
 		private static var _materialMap:Object;
 		
 		/**
 		 * @private
 		 */
-		public static function parse(readData:Byte, version:String, mesh:Mesh, materials:Vector.<BaseMaterial>, materialMap:Object):void {
+		public static function parse(readData:Byte, version:String, mesh:Mesh, materials:Vector.<BaseMaterial>,subMeshes:Vector.<SubMesh>, materialMap:Object):void {
 			_mesh = mesh;
 			_materials = materials;
+			_subMeshes = subMeshes;
 			_materialMap = materialMap;
 			_version = version;
 			_readData = readData;
@@ -83,6 +86,7 @@ package laya.d3.loaders {
 			_version = null;
 			_mesh = null;
 			_materials = null;
+			_subMeshes = null;
 			_materialMap = null;
 		}
 		
@@ -137,10 +141,8 @@ package laya.d3.loaders {
 			var clasName:String = _readString();//TODO:
 			var shaderName:String = _readString();
 			var url:String = _readString();
-			if (url !== "null")
+			if (url !== "")
 				_materials.push(Loader.getRes(_materialMap[url]));
-			else
-				_materials.push(__JS__("new windows[clasName]()"));//TODO:
 			return true;
 		}
 		
@@ -238,7 +240,7 @@ package laya.d3.loaders {
 				submesh._boneIndicesList[i] = new Uint8Array(arrayBuffer.slice(offset + boneDicofs, offset + boneDicofs + boneDicsize));
 			}
 			
-			_mesh._add(submesh);
+			_subMeshes.push(submesh);
 			return true;
 		}
 		

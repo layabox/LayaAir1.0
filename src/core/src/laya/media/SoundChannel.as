@@ -3,7 +3,8 @@ package laya.media {
 	import laya.utils.Handler;
 	
 	/**
-	 * <code>SoundChannel</code> 用来控制程序中的声音。
+	 * <p> <code>SoundChannel</code> 用来控制程序中的声音。每个声音均分配给一个声道，而且应用程序可以具有混合在一起的多个声道。</p>
+	 * <p> <code>SoundChannel</code> 类包含控制声音的播放、暂停、停止、音量的方法，以及获取声音的播放状态、总时间、当前播放时间、总循环次数、播放地址等信息的方法。</p>
 	 */
 	public class SoundChannel extends EventDispatcher {
 		/**
@@ -27,13 +28,13 @@ package laya.media {
 		 */
 		public var completeHandler:Handler;
 		
+		/**
+		 * 音量范围从 0（静音）至 1（最大音量）。
+		 */
 		public function set volume(v:Number):void {
 		
 		}
 		
-		/**
-		 * 音量。
-		 */
 		public function get volume():Number {
 			return 1;
 		}
@@ -81,10 +82,8 @@ package laya.media {
 		/**
 		 * private
 		 */
-		protected function __runComplete(handler:Handler):void
-		{
-			if (handler)
-			{
+		protected function __runComplete(handler:Handler):void {
+			if (handler) {
 				handler.run();
 			}
 		}

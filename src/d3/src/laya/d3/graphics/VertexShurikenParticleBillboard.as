@@ -8,17 +8,17 @@ package laya.d3.graphics {
 	 */
 	public class VertexShurikenParticleBillboard implements IVertex {
 		
-		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(140, [
+		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(136, [
 		new VertexElement(0, VertexElementFormat.Vector4, VertexElementUsage.CORNERTEXTURECOORDINATE0), 
 		new VertexElement(16, VertexElementFormat.Vector4, VertexElementUsage.POSITIONSTARTLIFETIME), 
 		new VertexElement(32, VertexElementFormat.Vector4, VertexElementUsage.DIRECTIONTIME), 
 		new VertexElement(48, VertexElementFormat.Vector4, VertexElementUsage.STARTCOLOR0), 
 		new VertexElement(64, VertexElementFormat.Vector3, VertexElementUsage.STARTSIZE), 
-		new VertexElement(76, VertexElementFormat.Vector4, VertexElementUsage.STARTROTATION), 
-		new VertexElement(92, VertexElementFormat.Single, VertexElementUsage.STARTSPEED), 
-		new VertexElement(96, VertexElementFormat.Vector4, VertexElementUsage.RANDOM0), 
-		new VertexElement(112, VertexElementFormat.Vector4, VertexElementUsage.RANDOM1), 
-		new VertexElement(128, VertexElementFormat.Vector3, VertexElementUsage.SIMULATIONWORLDPOSTION)]);
+		new VertexElement(76, VertexElementFormat.Vector3, VertexElementUsage.STARTROTATION), 
+		new VertexElement(88, VertexElementFormat.Single, VertexElementUsage.STARTSPEED), 
+		new VertexElement(92, VertexElementFormat.Vector4, VertexElementUsage.RANDOM0), 
+		new VertexElement(108, VertexElementFormat.Vector4, VertexElementUsage.RANDOM1), 
+		new VertexElement(124, VertexElementFormat.Vector3, VertexElementUsage.SIMULATIONWORLDPOSTION)]);
 		
 		public static function get vertexDeclaration():VertexDeclaration {
 			return _vertexDeclaration;

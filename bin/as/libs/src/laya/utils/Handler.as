@@ -2,7 +2,7 @@ package laya.utils {
 	
 	/**
 	 * <p><code>Handler</code> 是事件处理器类。</p>
-	 * <p>推荐使用 Handler.create() 方法从对象池创建，减少对象创建消耗。</p>
+	 * <p>推荐使用 Handler.create() 方法从对象池创建，减少对象创建消耗。创建的 Handler 对象不再使用后，可以使用 Handler.recover() 将其回收到对象池，回收后不要再使用此对象，否则会导致不可预料的错误。</p>
 	 * <p><b>注意：</b>由于鼠标事件也用本对象池，不正确的回收及调用，可能会影响鼠标事件的执行。</p>
 	 */
 	public class Handler {

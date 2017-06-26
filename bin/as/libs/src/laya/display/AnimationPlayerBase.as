@@ -29,7 +29,7 @@ package laya.display {
 		 */
 		public var loop:Boolean;
 		/**
-		 * <p>播放顺序类型：0为正序播放，1为倒序播放，2为pingpong播放(当按指定顺序播放完结尾后，如果继续播发，则会改变播放顺序)。</p>
+		 * <p>播放顺序类型：AnimationPlayerBase.WRAP_POSITIVE为正序播放，AnimationPlayerBase.WRAP_REVERSE为倒序播放，AnimationPlayerBase.WRAP_PINGPONG为pingpong播放(当按指定顺序播放完结尾后，如果继续播发，则会改变播放顺序)。</p>
 		 * <p>默认为正序播放。</p>
 		 */
 		public var wrapMode:int = 0;
@@ -73,7 +73,7 @@ package laya.display {
 			this._actionName = name;
 			_isReverse = wrapMode == WRAP_REVERSE;
 			if (this.interval > 0) {
-				timerLoop(this.interval, this, _frameLoop, null, true);
+				timerLoop(this.interval, this, _frameLoop, null, true, true);
 			}
 		}
 		
@@ -90,7 +90,7 @@ package laya.display {
 				_frameRateChanged = true;
 				_interval = value;
 				if (_isPlaying && value > 0) {
-					timerLoop(value, this, _frameLoop, null, true);
+					timerLoop(value, this, _frameLoop, null, true, true);
 				}
 			}
 		}

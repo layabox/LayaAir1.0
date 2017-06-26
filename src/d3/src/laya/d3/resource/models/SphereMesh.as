@@ -88,7 +88,6 @@ package laya.d3.resource.models {
 			_stacks = stacks;
 			_slices = slices;
 			activeResource();
-			_loaded = true;
 			_generateBoundingObject();
 		}
 		
@@ -116,8 +115,8 @@ package laya.d3.resource.models {
 				
 				// Generate the group of segments for the current Stack  
 				for (var slice:int = 0; slice < (_slices + 1); slice++) {
-					var x:Number = r * Math.sin(slice * sliceAngle + Math.PI * 1/2);
-					var z:Number = r * Math.cos(slice * sliceAngle + Math.PI * 1/2);
+					var x:Number = r * Math.sin(slice * sliceAngle + Math.PI * 1 / 2);
+					var z:Number = r * Math.cos(slice * sliceAngle + Math.PI * 1 / 2);
 					vertices[vertexCount + 0] = x * _radius;
 					vertices[vertexCount + 1] = y * _radius;
 					vertices[vertexCount + 2] = z * _radius;

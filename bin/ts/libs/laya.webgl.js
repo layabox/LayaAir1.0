@@ -2477,20 +2477,28 @@
 			this._index=0;
 			this._size=14;
 			this._italic=-2;
+			FontInContext._cache2=FontInContext._cache2|| [];
 			this.setFont(font || "14px Arial");
 		}
 
 		__class(FontInContext,'laya.webgl.text.FontInContext');
 		var __proto=FontInContext.prototype;
 		__proto.setFont=function(value){
-			this._words=value.split(' ');
-			for (var i=0,n=this._words.length;i < n;i++){
-				if (this._words[i].indexOf('px')> 0){
-					this._index=i;
-					break ;
+			var arr=FontInContext._cache2[value];
+			if (!arr){
+				this._words=value.split(' ');
+				for (var i=0,n=this._words.length;i < n;i++){
+					if (this._words[i].indexOf('px')> 0){
+						this._index=i;
+						break ;
+					}
 				}
+				this._size=parseInt(this._words[this._index]);
+				FontInContext._cache2[value]=[this._words,this._size];
+				}else {
+				this._words=arr[0];
+				this._size=arr[1];
 			}
-			this._size=parseInt(this._words[this._index]);
 			this._text=null;
 			this._italic=-2;
 		}
@@ -2547,6 +2555,7 @@
 
 		FontInContext.EMPTY=new FontInContext();
 		FontInContext._cache={};
+		FontInContext._cache2=null
 		return FontInContext;
 	})()
 

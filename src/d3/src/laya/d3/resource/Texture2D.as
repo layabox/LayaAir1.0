@@ -175,8 +175,7 @@ package laya.d3.resource {
 			else
 				activeResource();
 			
-			_loaded = true;
-			event(Event.LOADED, this);
+			_endLoaded();
 		}
 		
 		/**

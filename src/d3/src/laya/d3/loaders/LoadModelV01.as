@@ -48,6 +48,8 @@ package laya.d3.loaders {
 		/**@private */
 		private var _materials:Vector.<BaseMaterial>;
 		/**@private */
+		private var _subMeshes:Vector.<SubMesh>;
+		/**@private */
 		private var _materialMap:Object;
 		/**@private */
 		private var _readData:Byte;
@@ -69,9 +71,10 @@ package laya.d3.loaders {
 		/**
 		 * 创建一个 <code>LoadModel</code> 实例。
 		 */
-		public function LoadModelV01(readData:Byte, version:String, mesh:Mesh, materials:Vector.<BaseMaterial>, materialMap:Object) {
+		public function LoadModelV01(readData:Byte, version:String, mesh:Mesh, materials:Vector.<BaseMaterial>,subMeshes:Vector.<SubMesh>, materialMap:Object) {
 			_mesh = mesh;
 			_materials = materials;
+			_subMeshes = subMeshes;
 			_materialMap = materialMap;
 			_version = version;
 			_onLoaded(readData);
@@ -222,7 +225,7 @@ package laya.d3.loaders {
 			var boneDicArrayBuffer:ArrayBuffer = arrayBuffer.slice(boneDicofs + _DATA.offset, boneDicofs + _DATA.offset + boneDicsize);
 			submesh._boneIndicesList[0] = new Uint8Array(boneDicArrayBuffer);//兼容性代码
 			
-			_mesh._add(submesh);
+			_subMeshes.push(submesh);
 			
 			return true;
 		}

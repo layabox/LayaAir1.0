@@ -136,8 +136,7 @@ package laya.d3.terrain {
 		}
 		
 		public function onLoadTerrainComplete(heightData:TerrainHeightData):void {
-			_loaded = true;
-			event(Event.LOADED, this);
+			_endLoaded();
 		}
 		
 		/**

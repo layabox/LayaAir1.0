@@ -62,7 +62,6 @@ package laya.d3.resource.models {
 		 * 创建一个 <code>BaseMesh</code> 实例。
 		 */
 		public function BaseMesh() {
-			_loaded = false;
 			_boundingBoxCorners = new Vector.<Vector3>(8);
 		}
 		

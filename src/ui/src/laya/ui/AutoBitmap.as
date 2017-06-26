@@ -257,5 +257,9 @@ package laya.ui {
 		public static function getCache(key:String):* {
 			return textureCache[key];
 		}
+		
+		override public function clear(recoverCmds:Boolean = true):void {
+			super.clear(false);
+		}
 	}
 }
