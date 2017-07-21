@@ -123,14 +123,6 @@ package laya.ani {
 		/**
 		 * @private
 		 */
-		public function _endLoaded():void {
-			_loaded = true;
-			event(Event.LOADED, this);
-		}
-		
-		/**
-		 * @private
-		 */
 		public function _calculateKeyFrame(node:AnimationNodeContent, keyframeCount:int, keyframeDataCount:int):void {
 			var keyFrames:Vector.<KeyFramesContent> = node.keyFrame;
 			keyFrames[keyframeCount] = keyFrames[0];

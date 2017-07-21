@@ -68,7 +68,7 @@ package laya.filters.webgl{
 			var tmpTarget:*= scope.getValue("tmpTarget");
 			tmpTarget.recycle();
 		}
-		
+		                
 		override public function apply3d(scope:SubmitCMDScope, sprite:Sprite, context:RenderContext, x:Number, y:Number):*{
 			var b:Rectangle = scope.getValue("bounds");
 			scope.addValue("color", data.getColor());

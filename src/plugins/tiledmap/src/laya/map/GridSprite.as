@@ -1,5 +1,6 @@
 package laya.map {
 	import laya.display.Sprite;
+	import laya.renders.Render;
 	import laya.utils.Browser;
 	
 	/**
@@ -34,6 +35,28 @@ package laya.map {
 			isAloneObject = objectKey;
 		}
 		
+		/**@private */
+		override public function _setDisplay(value:Boolean):void {
+			if (!value) {
+				var cc:* = _$P.cacheCanvas;
+				//如果从显示列表移除，则销毁cache缓存
+				if (cc && cc.ctx) {
+					cc.ctx.canvas.destroy();
+					//cc.ctx.canvas.clear();
+					cc.ctx = null;
+				}
+				var fc:* = _$P._filterCache;
+				//fc && (fc.destroy(), fc.recycle(), this._set$P('_filterCache', null));
+				if (fc) {
+					fc.destroy();
+					fc.recycle();
+					this._set$P('_filterCache', null);
+				}
+				_$P._isHaveGlowFilter && this._set$P('_isHaveGlowFilter', false);
+			}
+			super._setDisplay(value);
+		}
+		
 		/**
 		 * 把一个动画对象绑定到当前GridSprite
 		 * @param	sprite 动画的显示对象
@@ -51,6 +74,19 @@ package laya.map {
 		public function show():void {
 			if (!this.visible) {
 				this.visible = true;
+				if (!isAloneObject)
+				{
+					var tParent:MapLayer;
+					tParent = parent as MapLayer;
+					if (tParent)
+					{
+						tParent.showGridSprite(this);
+					}
+				}
+				if (!Render.isWebGL&&_map.autoCache)
+				{
+					this.cacheAs = _map.autoCacheType;
+				}
 				if (aniSpriteArray == null) {
 					return;
 				}
@@ -68,6 +104,19 @@ package laya.map {
 		public function hide():void {
 			if (this.visible) {
 				this.visible = false;
+				if (!isAloneObject)
+				{
+					var tParent:MapLayer;
+					tParent = parent as MapLayer;
+					if (tParent)
+					{
+						tParent.hideGridSprite(this);
+					}
+				}
+				if (!Render.isWebGL&&_map.autoCache)
+				{
+					this.cacheAs = "none";
+				}
 				if (aniSpriteArray == null) {
 					return;
 				}
@@ -85,8 +134,8 @@ package laya.map {
 		public function updatePos():void {
 			if (isAloneObject) {
 				if (_map) {
-					this.x = this.relativeX + _map.viewPortX;
-					this.y = this.relativeY + _map.viewPortY;
+					this.x = this.relativeX;
+					this.y = this.relativeY;
 				}
 				if (this.x < 0 || this.x > _map.viewPortWidth || this.y < 0 || this.y > _map.viewPortHeight) {
 					hide();
@@ -95,8 +144,8 @@ package laya.map {
 				}
 			} else {
 				if (_map) {
-					this.x = this.relativeX + _map.viewPortX;
-					this.y = this.relativeY + _map.viewPortY;
+					this.x = this.relativeX;
+					this.y = this.relativeY;
 				}
 			}
 		}

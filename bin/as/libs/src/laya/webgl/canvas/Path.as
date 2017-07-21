@@ -91,6 +91,22 @@ package laya.webgl.canvas {
 			offset = count = geoStart = 0;
 			geomatrys.length = 0;
 		}
+		
+		public function recover():void
+		{
+			_curGeomatry = null;
+			vb.destory();
+			vb = null;
+			ib.destory();
+			ib = null;
+			//tempArray.length = 0;
+			//dirty=closePath = false;
+			//_x = _y = 0;
+			//ib = IndexBuffer2D.create(WebGLContext.DYNAMIC_DRAW);
+			//vb = VertexBuffer2D.create(5);
+			//debugger
+			//Pool.recover("path", this);
+		}
 	
 	}
 

@@ -1,4 +1,4 @@
- package laya.d3.core {
+package laya.d3.core {
 	import laya.d3.component.Animator;
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.material.BaseMaterial;
@@ -22,7 +22,6 @@
 	import laya.events.Event;
 	import laya.renders.Render;
 	import laya.utils.Stat;
-	import laya.webgl.shader.d2.skinAnishader.SkinMesh;
 	
 	/**
 	 * <code>MeshSprite3D</code> 类用于创建网格。
@@ -126,10 +125,6 @@
 		 * @private
 		 */
 		private function _changeRenderObjectsByMesh():void {
-			if (Render.isConchNode) {//NATIVE
-				//var box:BoundBox = (_geometryFilter as MeshFilter).sharedMesh.boundingBox;
-				//_render._conchRenderObject.boundingBox(box.min.elements, box.max.elements);
-			}
 			var renderElementsCount:int = (_geometryFilter as MeshFilter).sharedMesh.getRenderElementsCount();
 			_render._renderElements.length = renderElementsCount;
 			for (var i:int = 0; i < renderElementsCount; i++)
@@ -159,26 +154,21 @@
 		 * @private
 		 */
 		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_render);
-			if (scene.conchModel) {//NATIVE
-				//scene.conchModel.removeChild(_render._conchRenderObject);
-			}
+			_scene.removeFrustumCullingObject(_render);
 		}
 		
 		/**
 		 * @private
 		 */
 		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_render);
-			if (scene.conchModel) {//NATIVE
-				//scene.conchModel.addChildAt(_render._conchRenderObject); 
-			}
+			_scene.addFrustumCullingObject(_render);
+			_getAvatar(this);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _getAvatar(sprite:Sprite3D):void {//TODO:还未使用
+		private function _getAvatar(sprite:Sprite3D):void {
 			var animations:Animator = sprite.getComponentByType(Animator) as Animator;
 			if (animations) {
 				skinnedMeshRender._cacheAnimator = animations;
@@ -187,14 +177,6 @@
 			
 			if (sprite._parent)
 				_getAvatar(sprite._parent as Sprite3D);
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function _activeHierarchy():void {
-			super._activeHierarchy();
-		
 		}
 		
 		/**

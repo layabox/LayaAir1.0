@@ -24,11 +24,11 @@ package laya.ui {
 		protected var _spaceX:int;
 		/**Y方向间隙*/
 		protected var _spaceY:int;
-		/**@private水平对齐方式*/
+		/**@private 水平对齐方式*/
 		private var _align:String = "left";
-		/**@private显示文字宽*/
+		/**@private 显示文字宽*/
 		private var _wordsW:Number = 0;
-		/**@private显示文字高*/
+		/**@private 显示文字高*/
 		private var _wordsH:Number=0;
 		
 		/**
@@ -152,12 +152,12 @@ package laya.ui {
 			var isHorizontal:Boolean = (_direction === "horizontal");
 			if (isHorizontal)
 			{
-				_wordsW = _valueArr.length * (texture.width + spaceX);
-				_wordsH = texture.height;
+				_wordsW = _valueArr.length * (texture.sourceWidth + spaceX);
+				_wordsH = texture.sourceHeight;
 			}else
 			{
-				_wordsW = texture.width;
-				_wordsH = (texture.height + spaceY) * _valueArr.length;
+				_wordsW = texture.sourceWidth;
+				_wordsH = (texture.sourceHeight + spaceY) * _valueArr.length;
 			}
 			var dX:Number=0;
 			if (_width)
@@ -179,8 +179,8 @@ package laya.ui {
 				var index:int = _indexMap[_valueArr.charAt(i)];
 				if (!this.sources[index]) continue;
 				texture = this.sources[index];
-				if (isHorizontal) this.graphics.drawTexture(texture, dX+i * (texture.width + spaceX), 0, texture.width, texture.height);
-				else this.graphics.drawTexture(texture, 0+dX, i * (texture.height + spaceY), texture.width, texture.height);
+				if (isHorizontal) this.graphics.drawTexture(texture, dX+i * (texture.sourceWidth + spaceX), 0, texture.sourceWidth, texture.sourceHeight);
+				else this.graphics.drawTexture(texture, 0+dX, i * (texture.sourceHeight + spaceY), texture.sourceWidth, texture.sourceHeight);
 			}
 			if (!_width)
 			{

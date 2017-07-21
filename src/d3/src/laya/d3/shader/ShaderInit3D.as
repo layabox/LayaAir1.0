@@ -1,13 +1,12 @@
 package laya.d3.shader {
-	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
+	import laya.d3.core.glitter.Glitter;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.GlitterMaterial;
 	import laya.d3.core.material.PBRMaterial;
-	import laya.d3.core.material.ParticleMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.material.TerrainMaterial;
 	import laya.d3.core.material.WaterMaterial;
@@ -16,7 +15,6 @@ package laya.d3.shader {
 	import laya.d3.core.scene.Scene;
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.resource.models.Sky;
-	import laya.particle.shader.ParticleShader;
 	
 	/**
 	 * @private
@@ -264,62 +262,6 @@ package laya.d3.shader {
 			WaterMaterial.SHADERDEFINE_USE_REFRACT_TEX = shaderCompile.registerMaterialDefine("USE_REFR_TEX");
 			
 			attributeMap = {
-				'a_Position': VertexElementUsage.POSITION0, 
-				'a_Texcoord': VertexElementUsage.TEXTURECOORDINATE0};
-			uniformMap = {
-				'u_BlendTexture': [StandardMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL], 
-				'u_LayerTexture0': [StandardMaterial.NORMALTEXTURE, Shader3D.PERIOD_MATERIAL], 
-				'u_LayerTexture1': [StandardMaterial.SPECULARTEXTURE, Shader3D.PERIOD_MATERIAL], 
-				'u_LayerTexture2': [StandardMaterial.EMISSIVETEXTURE, Shader3D.PERIOD_MATERIAL], 
-				'u_LayerTexture3': [StandardMaterial.AMBIENTTEXTURE, Shader3D.PERIOD_MATERIAL], 
-				'u_Albedo': [StandardMaterial.ALBEDO, Shader3D.PERIOD_MATERIAL], 
-				'u_Ambient': [StandardMaterial.MATERIALAMBIENT, Shader3D.PERIOD_MATERIAL], 
-				'u_UVMatrix': [StandardMaterial.UVMATRIX, Shader3D.PERIOD_MATERIAL], 
-				'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE], 
-				'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE], 
-				'u_CameraPos': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA], 
-				'u_FogStart': [Scene.FOGSTART, Shader3D.PERIOD_SCENE], 
-				'u_FogRange': [Scene.FOGRANGE, Shader3D.PERIOD_SCENE], 
-				'u_FogColor': [Scene.FOGCOLOR, Shader3D.PERIOD_SCENE]};
-			var TERRAIN:int = Shader3D.nameKey.add("TERRAIN");
-			vs = __INCLUDESTR__("files/modelTerrain.vs");
-			ps = __INCLUDESTR__("files/modelTerrain.ps");
-			shaderCompile = ShaderCompile3D.add(TERRAIN, vs, ps, attributeMap, uniformMap);
-			StandardMaterial.SHADERDEFINE_DIFFUSEMAP = shaderCompile.registerMaterialDefine("DIFFUSEMAP");
-			StandardMaterial.SHADERDEFINE_NORMALMAP = shaderCompile.registerMaterialDefine("NORMALMAP");
-			StandardMaterial.SHADERDEFINE_SPECULARMAP = shaderCompile.registerMaterialDefine("SPECULARMAP");
-			StandardMaterial.SHADERDEFINE_EMISSIVEMAP = shaderCompile.registerMaterialDefine("EMISSIVEMAP");
-			StandardMaterial.SHADERDEFINE_AMBIENTMAP = shaderCompile.registerMaterialDefine("AMBIENTMAP");
-			StandardMaterial.SHADERDEFINE_REFLECTMAP = shaderCompile.registerMaterialDefine("REFLECTMAP");
-			StandardMaterial.SHADERDEFINE_UVTRANSFORM = shaderCompile.registerMaterialDefine("UVTRANSFORM");
-			//shaderCompile.reg("MIXUV", StandardMaterial.MIXUV);
-			
-			attributeMap = {
-				'a_CornerTextureCoordinate': VertexElementUsage.CORNERTEXTURECOORDINATE0, 
-				'a_Position': VertexElementUsage.POSITION0, 
-				'a_Velocity': VertexElementUsage.VELOCITY0, 
-				'a_StartColor': VertexElementUsage.STARTCOLOR0, 
-				'a_EndColor': VertexElementUsage.ENDCOLOR0, 
-				'a_SizeRotation': VertexElementUsage.SIZEROTATION0, 
-				'a_Radius': VertexElementUsage.RADIUS0, 
-				'a_Radian': VertexElementUsage.RADIAN0, 
-				'a_AgeAddScale': VertexElementUsage.STARTLIFETIME, 
-				'a_Time': VertexElementUsage.TIME0};
-			uniformMap = {
-				'u_CurrentTime': [ParticleMaterial.CURRENTTIME, Shader3D.PERIOD_MATERIAL], 
-				'u_Duration': [ParticleMaterial.DURATION, Shader3D.PERIOD_MATERIAL], 
-				'u_Gravity': [ParticleMaterial.GRAVITY, Shader3D.PERIOD_MATERIAL], 
-				'u_EndVelocity': [ParticleMaterial.ENDVELOCITY, Shader3D.PERIOD_MATERIAL], 
-				'u_texture': [ParticleMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL], 
-				'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE], 
-				'u_View': [BaseCamera.VIEWMATRIX, Shader3D.PERIOD_CAMERA], 
-				'u_Projection': [BaseCamera.PROJECTMATRIX, Shader3D.PERIOD_CAMERA], 
-				'u_ViewportScale': [ParticleMaterial.VIEWPORTSCALE, Shader3D.PERIOD_MATERIAL]};//TODO:
-			var PARTICLE:int = Shader3D.nameKey.add("PARTICLE");
-			shaderCompile = ShaderCompile3D.add(PARTICLE, ParticleShader.vs, ParticleShader.ps, attributeMap, uniformMap);
-			ParticleMaterial.SHADERDEFINE_PARTICLE3D = shaderCompile.registerMaterialDefine("PARTICLE3D");
-			
-			attributeMap = {
 				'a_CornerTextureCoordinate': VertexElementUsage.CORNERTEXTURECOORDINATE0, 
 				'a_MeshPosition': VertexElementUsage.POSITION0,
 				'a_MeshTextureCoordinate': VertexElementUsage.TEXTURECOORDINATE0,
@@ -386,6 +328,7 @@ package laya.d3.shader {
 				'u_TSASubUVLength': [ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, Shader3D.PERIOD_SPRITE], 
 				'u_TSAGradientUVs': [ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTUVS, Shader3D.PERIOD_SPRITE], 
 				'u_TSAMaxGradientUVs': [ShuriKenParticle3D.TEXTURESHEETANIMATIONGRADIENTMAXUVS, Shader3D.PERIOD_SPRITE], 
+				'u_CameraPosition': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA], 
 				'u_CameraDirection': [BaseCamera.CAMERADIRECTION, Shader3D.PERIOD_CAMERA], 
 				'u_CameraUp': [BaseCamera.CAMERAUP, Shader3D.PERIOD_CAMERA], 
 				'u_View': [BaseCamera.VIEWMATRIX, Shader3D.PERIOD_CAMERA], 
@@ -428,9 +371,9 @@ package laya.d3.shader {
 			uniformMap = {
 				'u_Texture': [GlitterMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL], 
 				'u_Albedo': [GlitterMaterial.ALBEDO, Shader3D.PERIOD_MATERIAL], 
-				'u_CurrentTime': [GlitterMaterial.CURRENTTIME, Shader3D.PERIOD_MATERIAL], 
 				'u_Color': [GlitterMaterial.UNICOLOR, Shader3D.PERIOD_MATERIAL], 
-				'u_Duration': [GlitterMaterial.DURATION, Shader3D.PERIOD_MATERIAL], 
+				'u_CurrentTime': [Glitter.CURRENTTIME, Shader3D.PERIOD_SPRITE], 
+				'u_Duration': [Glitter.DURATION, Shader3D.PERIOD_SPRITE], 
 				'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE]};
 			var GLITTER:int = Shader3D.nameKey.add("GLITTER");
 			vs = __INCLUDESTR__("files/Glitter.vs");

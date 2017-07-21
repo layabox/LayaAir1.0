@@ -1,4 +1,5 @@
 package laya.webgl.text {
+	import laya.display.Text;
 	import laya.maths.Matrix;
 	import laya.resource.Texture;
 	import laya.utils.HTMLChar;
@@ -43,7 +44,10 @@ package laya.webgl.text {
 		
 		public static function getChar(char:String, id:Number, drawValue:CharValue):WebGLCharImage {
 			//_charsCacheCount ++;
-			return _charsCache[id] =  WebGLCharImage.createOneChar(char, drawValue);
+			var result:WebGLCharImage = WebGLCharImage.createOneChar(char, drawValue);
+			if(id!=-1)
+				_charsCache[id] = result;
+			return result;
 		}
 		
 		private static function _drawSlow(save:Array, ctx:WebGLContext2D, txt:String, words:Vector.<HTMLChar>, curMat:Matrix, font:FontInContext, textAlign:String, fillColor:String, borderColor:String, lineWidth:int, x:Number, y:Number, sx:Number, sy:Number):void {
@@ -69,19 +73,25 @@ package laya.webgl.text {
 					oneChar.active();
 				}
 			} else {
-				// River: 使用新的分词模式来解决类似于泰文的问题
-				if (txt is WordText)
-					_charSeg.textToSpit((txt as WordText).toString());
-				else
-					_charSeg.textToSpit(txt);
-				
-				var len:int = _charSeg.length();
-				chars.length = len;
-				for (i = 0, n = len; i < n; i++) {
-					id = _charSeg.getCharCode(i) + drawValue.txtID;
-					chars[i] = oneChar = _charsCache[id] || getChar(_charSeg.getChar(i), id, drawValue);
+				var text:String = (txt is WordText) ? txt.toString() : txt;
+				if (Text.CharacterCache)
+				{
+					// River: 使用新的分词模式来解决类似于泰文的问题
+					_charSeg.textToSpit(text);
+					var len:int = _charSeg.length();
+					chars.length = len;
+					for (i = 0, n = len; i < n; i++) {
+						id = _charSeg.getCharCode(i) + drawValue.txtID;
+						chars[i] = oneChar = _charsCache[id] || getChar(_charSeg.getChar(i), id, drawValue);
+						oneChar.active();
+						width += oneChar.cw;
+					}
+				}
+				else {
+					oneChar = getChar(text, -1, drawValue);
 					oneChar.active();
 					width += oneChar.cw;
+					chars[0] = oneChar;
 				}
 			}
 			
@@ -166,21 +176,27 @@ package laya.webgl.text {
 				
 				var cache:Array = _textsCache[id];
 				
-				if (cache) {
-					_drawFast(cache, ctx, curMat, x, y);
-				} else {
-					_textsCache.__length || (_textsCache.__length = 0);
-					if (_textsCache.__length > Config.WebGLTextCacheCount) {
-						_textsCache = {};
-						_textsCache.__length = 0;
-						_curPoolIndex = 0;
+				if (Text.CharacterCache)
+				{
+					if (cache) {
+						_drawFast(cache, ctx, curMat, x, y);
+					} else {
+						_textsCache.__length || (_textsCache.__length = 0);
+						if (_textsCache.__length > Config.WebGLTextCacheCount) {
+							_textsCache = {};
+							_textsCache.__length = 0;
+							_curPoolIndex = 0;
+						}
+						
+						_textCachesPool[_curPoolIndex] ? (cache = _textsCache[id] = _textCachesPool[_curPoolIndex], cache.length = 0) : (_textCachesPool[_curPoolIndex] = cache = _textsCache[id] = []);
+						_textsCache.__length++
+						_curPoolIndex++;
+						
+						_drawSlow(cache, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy);
 					}
-					
-					_textCachesPool[_curPoolIndex] ? (cache = _textsCache[id] = _textCachesPool[_curPoolIndex], cache.length = 0) : (_textCachesPool[_curPoolIndex] = cache = _textsCache[id] = []);
-					_textsCache.__length++
-					_curPoolIndex++;
-					
-					_drawSlow(cache, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy);
+				}
+				else{
+						_drawSlow(cache, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy);
 				}
 			}
 		}

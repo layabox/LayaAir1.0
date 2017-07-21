@@ -209,7 +209,7 @@ package laya.webgl {
 				return new ColorFilterActionGL()
 			}
 			
-			RunDriver.clear = function(color:String):void {
+			RunDriver.clear = function(color:String):void {				
 				RenderState2D.worldScissorTest && WebGL.mainContext.disable(WebGLContext.SCISSOR_TEST);
 				var ctx:* = Render.context.ctx;
 				//兼容浏览器

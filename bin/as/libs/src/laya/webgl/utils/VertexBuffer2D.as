@@ -56,6 +56,12 @@ package laya.webgl.utils {
 				WebGL.mainContext.disableVertexAttribArray(i);//临时修复警告和闪屏
 			//}
 		}
+		public function destory():void {
+			_byteLength = 0;
+			_upload = true;
+			_buffer = null;
+			_floatArray32 = null;
+		}
 	
 	}
 

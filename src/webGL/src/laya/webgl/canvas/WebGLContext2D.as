@@ -153,11 +153,26 @@ package laya.webgl.canvas
 		
 		override public function destroy():void
 		{
+			sprite = null;
 			_curMat && _curMat.destroy();
 			
 			_targets && _targets.destroy();
-			
-			_vb && _vb.releaseResource();
+			_targets = null;
+			for (var i:int = 0, n:int = _submits._length; i < n; i++)
+			_submits[i].releaseRender();
+			_submits.length = 0;
+			_submits._length = 0;
+			_curSubmit = null;
+			_path && _path.recover();
+			_path = null;
+			if (_vb)
+			{
+				_vb.releaseResource();
+				_vb.dispose();
+				_vb.destory();
+				_vb = null;
+			}
+			_canvas = null;
 			_ib && (_ib != IndexBuffer2D.QuadrangleIB) && _ib.releaseResource();
 		}
 		
@@ -200,10 +215,36 @@ package laya.webgl.canvas
 		
 		public function size(w:Number, h:Number):void
 		{
-			_width = w;
-			_height = h;
-			_targets && (_targets.size(w, h));
-			_canvas.memorySize -=_canvas.memorySize;//webGLCanvas为0;
+			if (_width != w || _height != h)
+			{
+				if (w == 0 || h == 0)
+				{
+					if (_vb._byteLength != 0)
+					{
+						_width = w;
+						_height = h;
+						_vb.clear();
+						_vb.upload();
+					}
+					for (var i:int = 0, n:int = _submits._length; i < n; i++)
+					_submits[i].releaseRender();
+					_submits.length = 0;
+					_submits._length = 0;
+					_curSubmit = null;
+					_path && _path.recover();
+					_path = null;
+					sprite = null;
+					_targets && (_targets.destroy());
+					_targets = null;
+				}
+				else
+				{
+					_width = w;
+					_height = h;
+					_targets && (_targets.size(w, h));
+					_canvas.memorySize -= _canvas.memorySize;//webGLCanvas为0;
+				}
+			}
 		}
 		
 		public function set asBitmap(value:Boolean):void
@@ -672,7 +713,7 @@ package laya.webgl.canvas
 			
 			_clipRect = pre;
 			
-			Stat.drawCall += pos.length / 2;
+			Stat.drawCall ++;//= pos.length / 2;
 			
 			if (pos.length < 4)
 				return;
@@ -689,7 +730,7 @@ package laya.webgl.canvas
 		
 		private function _drawTextureM(tex:Texture, x:Number, y:Number, width:Number, height:Number, tx:Number, ty:Number, m:Matrix, alpha:Number):Boolean
 		{
-			if (!(tex.loaded && tex.bitmap && tex.source)) //source内调用tex.active();
+			if (!(tex.loaded && tex.source)) //source内调用tex.active();
 			{
 				if (sprite)
 				{

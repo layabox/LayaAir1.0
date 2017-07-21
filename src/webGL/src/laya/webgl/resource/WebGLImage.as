@@ -90,8 +90,10 @@ package laya.webgl.resource {
 			mipmap = false;
 			minFifter = -1;
 			magFifter = -1;
-			
+		
 			if (src is String) {
+					
+				url = src;
 				_src = src;
 				_image = new Browser.window.Image();
 				if (def) {
@@ -104,6 +106,7 @@ package laya.webgl.resource {
 				
 			} else {
 				_src = def;
+				url = _src;
 				_image = src["source"];
 				onresize();
 			}

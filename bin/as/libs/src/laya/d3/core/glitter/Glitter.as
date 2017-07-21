@@ -23,6 +23,11 @@ package laya.d3.core.glitter {
 	 * <code>Glitter</code> 类用于创建闪光。
 	 */
 	public class Glitter extends RenderableSprite3D {
+		/**@private 着色器变量名，当前时间。*/
+		public static const CURRENTTIME:int = 2;
+		/**@private 着色器变量名，声明周期。*/
+		public static const DURATION:int = 3;
+		
 		/**
 		 * 获取闪光模板。
 		 * @return  闪光模板。
@@ -129,7 +134,6 @@ package laya.d3.core.glitter {
 			destTemplet.minSegmentDistance = templet.minSegmentDistance;
 			destTemplet.minInterpDistance = templet.minInterpDistance;
 			destTemplet.maxSlerpCount = templet.maxSlerpCount;
-			templet.color.cloneTo(destTemplet.color);
 			destTemplet._maxSegments = templet._maxSegments;
 			var destGlitterRender:GlitterRender = destGlitter._render as GlitterRender;
 			var glitterRender:GlitterRender = _render as GlitterRender;

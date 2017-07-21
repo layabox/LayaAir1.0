@@ -114,6 +114,12 @@ package laya.events {
 					list.push(e);
 				}
 			}, true);
+			canvas.addEventListener("touchcancel", function(e:*):void {
+				if (enabled) {
+					e.preventDefault();
+					list.push(e);
+				}
+			}, true);
 			canvas.addEventListener('mousewheel', function(e:*):void {
 				if (enabled) list.push(e);
 			});
@@ -309,6 +315,7 @@ package laya.events {
 					
 					break;
 				case "touchend": 
+				case "touchcancel":
 					_isTouchRespond = true;
 					_this._isLeftMouse = true;
 					var touchends:Array = evt.changedTouches;

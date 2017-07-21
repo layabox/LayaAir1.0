@@ -9,7 +9,7 @@ package laya.d3.core.render {
 		/** @private */
 		public var _batchIndexEnd:int;
 		/** @private */
-		public var _skinAnimationDatas:Vector.<Float32Array>;//TODO:¡Ÿ ±
+		public var _skinAnimationDatas:Vector.<Float32Array>;//TODO:
 		
 		public function SubMeshRenderElement() {
 			super();

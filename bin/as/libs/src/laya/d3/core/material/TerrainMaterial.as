@@ -55,17 +55,6 @@ package laya.d3.core.material {
 			return Laya.loader.create(url, null, null, TerrainMaterial);
 		}
 		
-		/**@private 渲染模式。*/
-		private var _renderMode:int;
-		
-		/**
-		 * 获取渲染状态。
-		 * @return 渲染状态。
-		 */
-		public function get renderMode():int {
-			return _renderMode;
-		}
-		
 		public function setDiffuseScale1(x:Number, y:Number):void {
 			_diffuseScale1.x = x;
 			_diffuseScale1.y = y;
@@ -148,10 +137,9 @@ package laya.d3.core.material {
 		 * @return 渲染模式。
 		 */
 		public function set renderMode(value:int):void {
-			_renderMode = value;
 			switch (value) {
 			case RENDERMODE_OPAQUE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				depthTest = true;
 				cull = CULL_BACK;
@@ -160,7 +148,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENT: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = false;
 				depthTest = true;
 				cull = CULL_BACK;
@@ -286,22 +274,6 @@ package laya.d3.core.material {
 			ambientColor = new Vector3(0.6, 0.6, 0.6);
 			diffuseColor = new Vector3(1.0, 1.0, 1.0);
 			specularColor = new Vector4(0.2, 0.2, 0.2, 32.0);
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function _setMaterialShaderParams(state:RenderState):void {
-		
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function cloneTo(destObject:*):void {
-			super.cloneTo(destObject);
-			var dest:TerrainMaterial = destObject as TerrainMaterial;
-			dest._renderMode = _renderMode;
 		}
 	
 	}

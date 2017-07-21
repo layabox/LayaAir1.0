@@ -27,7 +27,6 @@ package laya.d3.core.material {
 		public static const AOOBJPOS:int = 14;
 		public static const HSNOISETEXTURE:int = 15;
 		
-		
 		public static var SHADERDEFINE_FIX_ROUGHNESS:int = 0;
 		public static var SHADERDEFINE_FIX_METALESS:int = 0;
 		public static var SHADERDEFINE_HAS_TANGENT:int = 0;
@@ -54,9 +53,6 @@ package laya.d3.core.material {
 		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:PBRMaterial = new PBRMaterial();
-		
-		/**@private 渲染模式。*/
-		private var _renderMode:int;
 		
 		/**
 		 * 加载标准材质。
@@ -100,12 +96,12 @@ package laya.d3.core.material {
 			if (v) {
 				_addShaderDefine(SHADERDEFINE_USE_GROUNDTRUTH);
 				//创建随机值查找表
-				if ( !PBRMaterial.HammersleyNoiseTex) {
+				if (!PBRMaterial.HammersleyNoiseTex) {
 					var texdata:Uint8Array = createHammersleyTex(32, 32);
 					PBRMaterial.HammersleyNoiseTex = DataTexture2D.create(texdata.buffer, 32, 32, WebGLContext.NEAREST, WebGLContext.NEAREST, false);
 				}
 				_setTexture(HSNOISETEXTURE, HammersleyNoiseTex);
-			}else {
+			} else {
 				PBRMaterial.HammersleyNoiseTex = null;
 				_removeShaderDefine(SHADERDEFINE_USE_GROUNDTRUTH);
 			}
@@ -227,19 +223,10 @@ package laya.d3.core.material {
 			_addDisablePublicShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
 		}
 		
-		/**
-		 * 获取渲染状态。
-		 * @return 渲染状态。
-		 */
-		public function get renderMode():int {
-			return _renderMode;
-		}
-		
 		public function set renderMode(value:int):void {
-			_renderMode = value;
 			switch (value) {
 			case RENDERMODE_OPAQUE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
@@ -247,7 +234,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_OPAQUEDOUBLEFACE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_DISABLE;
@@ -258,11 +245,11 @@ package laya.d3.core.material {
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENT: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -279,13 +266,6 @@ package laya.d3.core.material {
 			_addShaderDefine(SHADERDEFINE_TEST_CLIPZ);
 		}
 		
-		/**
-		 * @private
-		 */
-		override public function _setMaterialShaderParams(state:RenderState):void {
-			(_transformUV) && (_transformUV.matrix);//触发UV矩阵更新TODO:临时
-		}
-		
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			super.onAsynLoaded(url, data, params);
 		}
@@ -295,7 +275,7 @@ package laya.d3.core.material {
 		 */
 		public function radicalInverse_VdC(bits:int):Number {
 			var tmpUint:Uint32Array = new Uint32Array(1);
-			return (function(bits:Number):Number{
+			return (function(bits:Number):Number {
 				//先颠倒前后16位
 				bits = (bits << 16) | (bits >>> 16);
 				//下面颠倒16位中的前后8位
@@ -304,25 +284,26 @@ package laya.d3.core.material {
 				bits = ((bits & 0x0F0F0F0F) << 4) | ((bits & 0xF0F0F0F0) >>> 4);
 				bits = ((bits & 0x00FF00FF) << 8) | ((bits & 0xFF00FF00) >>> 8);
 				//必须是uint的
-				tmpUint[0]=bits;
+				tmpUint[0] = bits;
 				return tmpUint[0] * 2.3283064365386963e-10; // / 0x100000000
 			})(bits);
-		 }		
+		}
+		
 		/**
-		 * 
+		 *
 		 */
-		public function createHammersleyTex(w:int, h:int):Uint8Array{
-			var ret:Uint8Array = new Uint8Array(w*h*4);
-			var ri:int=0;
-			var ci:int=0;
-			for(ci=0; ci<w*h; ci++){
+		public function createHammersleyTex(w:int, h:int):Uint8Array {
+			var ret:Uint8Array = new Uint8Array(w * h * 4);
+			var ri:int = 0;
+			var ci:int = 0;
+			for (ci = 0; ci < w * h; ci++) {
 				var v:Number = radicalInverse_VdC(ci);
-				ret[ri++] = v*255;
-				ret[ri++]=0;
-				ret[ri++]=0;
-				ret[ri++]=255;
+				ret[ri++] = v * 255;
+				ret[ri++] = 0;
+				ret[ri++] = 0;
+				ret[ri++] = 255;
 			}
 			return ret;
-		}		
+		}
 	}
 }

@@ -1,7 +1,7 @@
 package laya.ui {
 	
 	/**
-	 * <code>VBox</code> 是一个垂直布局容器类。
+	 * <code>HBox</code> 是一个水平布局容器类。
 	 */
 	public class HBox extends LayoutBox {
 		/**

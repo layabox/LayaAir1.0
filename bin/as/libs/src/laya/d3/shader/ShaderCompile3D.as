@@ -1,5 +1,4 @@
 package laya.d3.shader {
-	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.material.BaseMaterial;
@@ -269,27 +268,22 @@ package laya.d3.shader {
 		 * @param	define 宏定义，格式:{name:value...}
 		 * @return
 		 */
-		public function withCompile(nameID:int, publicDefine:int, spriteDefine:int, materialDefine:int):Shader3D {
+		public function withCompile(publicDefine:int, spriteDefine:int, materialDefine:int):Shader3D {
 			var shader:Shader3D;
-			var publicDefShaders:Array = sharders[nameID],spriteDefShaders:Array,materialDefShaders:Array;
-			if (publicDefShaders) {
-				spriteDefShaders = publicDefShaders[publicDefine];
-				if (spriteDefShaders) {
-					materialDefShaders = spriteDefShaders[spriteDefine];
-					if (materialDefShaders) {
-						shader = materialDefShaders[materialDefine];
-						if (shader)
-							return shader;
-					} else {
-						materialDefShaders = spriteDefShaders[spriteDefine] = [];
-					}
+			var spriteDefShaders:Array, materialDefShaders:Array;
+			
+			spriteDefShaders = sharders[publicDefine];
+			if (spriteDefShaders) {
+				materialDefShaders = spriteDefShaders[spriteDefine];
+				if (materialDefShaders) {
+					shader = materialDefShaders[materialDefine];
+					if (shader)
+						return shader;
 				} else {
-					spriteDefShaders = publicDefShaders[publicDefine] = [];
 					materialDefShaders = spriteDefShaders[spriteDefine] = [];
 				}
 			} else {
-				publicDefShaders = sharders[nameID] = [];
-				spriteDefShaders = publicDefShaders[publicDefine] = [];
+				spriteDefShaders = sharders[publicDefine] = [];
 				materialDefShaders = spriteDefShaders[spriteDefine] = [];
 			}
 			
@@ -309,7 +303,7 @@ package laya.d3.shader {
 				for (key in materialDefGroup)
 					materialDefGroupStr += key + " ";
 				
-				trace("ShaderCompile3DDebugMode---(Name:" + Shader3D.nameKey.getName(nameID) + " PublicDefine:" + publicDefine + " SpriteDefine:" + spriteDefine + " MaterialDefine:" + materialDefine + " PublicDefineGroup:" + publicDefGroupStr + " SpriteDefineGroup:" + spriteDefGroupStr + "MaterialDefineGroup: " + materialDefGroupStr + ")---ShaderCompile3DDebugMode");
+				trace("ShaderCompile3DDebugMode---(Name:" + Shader3D.nameKey.getName(_name) + " PublicDefine:" + publicDefine + " SpriteDefine:" + spriteDefine + " MaterialDefine:" + materialDefine + " PublicDefineGroup:" + publicDefGroupStr + " SpriteDefineGroup:" + spriteDefGroupStr + "MaterialDefineGroup: " + materialDefGroupStr + ")---ShaderCompile3DDebugMode");
 			}
 			
 			shader = createShader(publicDefGroup, spriteDefGroup, materialDefGroup);
@@ -355,7 +349,7 @@ package laya.d3.shader {
 		 * @param	materialDefine 材质宏定义值。
 		 */
 		public function precompileShaderWithShaderDefine(publicDefine:int, spriteDefine:int, materialDefine:int):void {
-			withCompile(_name, publicDefine, spriteDefine, materialDefine);
+			withCompile(publicDefine, spriteDefine, materialDefine);
 		}
 		
 		/**

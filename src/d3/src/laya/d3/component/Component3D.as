@@ -72,7 +72,7 @@ package laya.d3.component {
 				this.event(Event.ENABLE_CHANGED, _enable);
 			}
 		}
-
+		
 		/**
 		 * 获取是否为单实例组件。
 		 * @return  是否为单实例组件。
@@ -93,7 +93,7 @@ package laya.d3.component {
 		 * 创建一个新的 <code>Component3D</code> 实例。
 		 */
 		public function Component3D() {
-			_destroyed = false; 
+			_destroyed = false;
 			_id = _uniqueIDCounter;
 			_uniqueIDCounter++;
 		}
@@ -195,10 +195,16 @@ package laya.d3.component {
 		public function _unload(owner:Sprite3D):void {
 			this.offAll();
 		}
-	
+		
 		////日后添加，物理相关函数
 		//public  function onCollisionEnter():void{}
 		//public  function onCollisionExit():void {}
 		//public  function onCollisionStay():void{}	
+		
+		/**
+		 * @private
+		 */
+		public function _cloneTo(dest:Component3D):void {
+		}
 	}
 }

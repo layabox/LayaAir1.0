@@ -17,17 +17,6 @@ VRCameraMoveScript.prototype._initialize = function (owner) {
 	VRCameraMoveScript.__super.prototype._initialize.call(this, owner);
 	this.camera = owner;
 
-	this.camera.on(Laya.Event.COMPONENT_ADDED, this, function (component) {
-		if (component instanceof laya.d3.component.animation.CameraAnimations)
-			this.mainCameraAnimation = component ;
-	});
-
-	this.camera.on(Laya.Event.COMPONENT_REMOVED, this, function (component) {
-		if (component instanceof laya.d3.component.animation.CameraAnimations)
-			this.mainCameraAnimation = null;
-	});
-
-
 	Laya.Browser.window.addEventListener('deviceorientation', function (e) {
 		this.orientation = (Laya.Browser.window.orientation || 0);
 		if (Laya.stage.canvasRotation) {

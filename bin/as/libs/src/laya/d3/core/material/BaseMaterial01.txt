@@ -1,0 +1,22 @@
+{
+	"version":"LAYAMATERIAL:01",
+	"props":
+		{
+			"shaderName":"SIMPLE",
+			"cull":
+			"blend":
+			"srcBlend":
+			"dstBlend":
+			"alphaTest":
+			depthTest:
+			"renderQueue":
+			"textures":[
+				{"name":"diffuseTexture","path":"aa/bb/x.png"},
+				{"name":"xxTexture","path":"aa/bb/y.png"}
+			],
+			"vectors":[
+				{"name":"albedo","value":[1,1,1,1]},
+				{"name":"xxColor","value":[1,1,1,1]},
+			]
+		}
+}

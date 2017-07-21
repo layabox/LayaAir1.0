@@ -30,7 +30,6 @@ package laya.d3.resource.tempelet {
 		private const _floatCountPerVertex:int = 6;//顶点结构为Position(3个float)+UV(2个float)+Time(1个float)
 		
 		private var _owner:Glitter;
-		public var _albedo:Vector4 = new Vector4(1.0, 1.0, 1.0, 1.0);//TODO:
 		private var _vertices:Float32Array;
 		private var _vertexBuffer:VertexBuffer3D;
 		
@@ -71,8 +70,6 @@ package laya.d3.resource.tempelet {
 		public var minInterpDistance:Number;
 		/** 最大插值数量。 */
 		public var maxSlerpCount:int;
-		/** 颜色。 */
-		public var color:Vector4;
 		/** 最大段数。 */
 		public var _maxSegments:int;
 		
@@ -154,7 +151,7 @@ package laya.d3.resource.tempelet {
 			minSegmentDistance = 0.1;
 			minInterpDistance = 0.6;
 			maxSlerpCount = 128;
-			color = new Vector4(1.0, 1.0, 1.0, 1.0);
+			
 			_maxSegments = 200;
 			
 			_owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onActiveHierarchyChanged);
@@ -480,7 +477,6 @@ package laya.d3.resource.tempelet {
 			_tempVector2 = null;
 			_tempVector3 = null;
 			_owner = null;
-			_albedo = null;
 			_vertices = null;
 			_vertexBuffer.dispose();
 			_vertexBuffer = null;
@@ -498,8 +494,7 @@ package laya.d3.resource.tempelet {
 			
 			_lastPatchAddPos0 = null;
 			_lastPatchAddPos1 = null;
-			
-			color = null;
+		
 		}
 		
 		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void//NATIVE

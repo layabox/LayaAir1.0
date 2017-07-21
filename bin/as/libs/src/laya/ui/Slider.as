@@ -124,7 +124,7 @@ package laya.ui {
 			_ty = Laya.stage.mouseY;
 			Laya.stage.on(Event.MOUSE_MOVE, this, mouseMove);
 			Laya.stage.once(Event.MOUSE_UP, this, mouseUp);
-			
+			Laya.stage.once(Event.MOUSE_OUT, this, mouseUp);
 			//显示提示
 			showValueText();
 		}
@@ -161,6 +161,8 @@ package laya.ui {
 		 */
 		private function mouseUp(e:Event):void {
 			Laya.stage.off(Event.MOUSE_MOVE, this, mouseMove);
+			Laya.stage.off(Event.MOUSE_UP, this, mouseUp);
+			Laya.stage.off(Event.MOUSE_OUT, this, mouseUp);
 			sendChangeEvent(Event.CHANGED);
 			hideValueText();
 		}
@@ -272,6 +274,7 @@ package laya.ui {
 		public function set sizeGrid(value:String):void {
 			_bg.sizeGrid = value;
 			_bar.sizeGrid = value;
+			if (_progress) _progress.sizeGrid = _bar.sizeGrid;
 		}
 		
 		/**

@@ -22,6 +22,7 @@ package laya.d3.core.material {
 	 * <code>BaseMaterial</code> 类用于创建材质,抽象类,不允许实例。
 	 */
 	public class BaseMaterial extends Resource implements IClone {
+		
 		/**剔除枚举_不剔除。*/
 		public static const CULL_NONE:int = 0;
 		/**剔除枚举_剔除正面。*/
@@ -92,32 +93,27 @@ package laya.d3.core.material {
 		public static const DEPTHFUNC_ALWAYS:int = 0x0207/*WebGLContext.ALWAYS*/;
 		
 		/**@private 材质级着色器宏定义,接收阴影。*/
-		public static var SHADERDEFINE_ALPHATEST:int = 0x1;
+		public static const SHADERDEFINE_ALPHATEST:int = 0x1;
 		
 		/**@private 着色器变量,透明测试值。*/
 		public static const ALPHATESTVALUE:int = 0;
 		
 		/** @private */
-		private var _sharderNameID:int;
+		private var _shader:Shader3D;
+		/** @private */
+		private var _shaderCompile:ShaderCompile3D;
 		/** @private */
 		private var _shaderDefineValue:int;
 		/** @private */
 		private var _disablePublicShaderDefine:int;
 		/** @private */
-		public var _shaderValues:ValusArray;
+		private var _alphaTest:Boolean;
+		/** @private */
+		private var _shaderValues:ValusArray;
 		/** @private */
 		private var _values:Array;
 		/** @private */
 		private var _textureSharderIndices:Vector.<int>;
-		/** @private */
-		private var _shader:Shader3D;
-		/** @private */
-		private var _alphaTest:Boolean;
-		
-		/** @private */
-		protected var _renderQueue:int;
-		/** @private */
-		protected var _shaderCompile:ShaderCompile3D;
 		
 		/** @private */
 		public var _isInstance:Boolean;
@@ -152,17 +148,11 @@ package laya.d3.core.material {
 		public var depthFunc:int;
 		/**是否深度写入。*/
 		public var depthWrite:Boolean;
+		/** 所属渲染队列. */
+		public var renderQueue:int;
 		
 		/** @private */
 		public var _conchMaterial:*;//NATIVE
-		
-		/**
-		 * 获取所属渲染队列。
-		 * @return 渲染队列。
-		 */
-		public function get renderQueue():int {
-			return _renderQueue;
-		}
 		
 		/**
 		 * 获取透明测试模式裁剪值。
@@ -212,7 +202,7 @@ package laya.d3.core.material {
 			_shaderValues = new ValusArray();
 			_values = [];
 			_textureSharderIndices = new Vector.<int>();
-			_renderQueue = RenderQueue.OPAQUE;
+			renderQueue = RenderQueue.OPAQUE;
 			_alphaTest = false;
 			cull = CULL_BACK;
 			blend = BLEND_DISABLE;
@@ -250,15 +240,6 @@ package laya.d3.core.material {
 		/**
 		 * @private
 		 */
-		public function _getShader(sceneDefineValue:int, vertexDefineValue:int, spriteDefineValue:int):Shader3D {
-			var publicDefineValue:int = (sceneDefineValue | vertexDefineValue) & (~_disablePublicShaderDefine);
-			_shader = _shaderCompile.withCompile(_sharderNameID, publicDefineValue, spriteDefineValue, _shaderDefineValue);
-			return _shader;
-		}
-		
-		/**
-		 * @private
-		 */
 		private function _uploadTexture(shaderIndex:int, textureSource:*):void {
 			_shaderValues.data[shaderIndex] = textureSource;
 		}
@@ -267,7 +248,7 @@ package laya.d3.core.material {
 		 * 增加Shader宏定义。
 		 * @param value 宏定义。
 		 */
-		public function _addShaderDefine(value:int):void {
+		protected function _addShaderDefine(value:int):void {
 			_shaderDefineValue |= value;
 			if (_conchMaterial) {//NATIVE
 				_conchMaterial.addShaderDefine(value);
@@ -278,7 +259,7 @@ package laya.d3.core.material {
 		 * 移除Shader宏定义。
 		 * @param value 宏定义。
 		 */
-		public function _removeShaderDefine(value:int):void {
+		protected function _removeShaderDefine(value:int):void {
 			_shaderDefineValue &= ~value;
 			if (_conchMaterial) {//NATIVE
 				_conchMaterial.removeShaderDefine(value);
@@ -374,7 +355,7 @@ package laya.d3.core.material {
 		 * @param	shaderIndex shader索引。
 		 * @param	i 浮点。
 		 */
-		public function _setNumber(shaderIndex:int, number:Number):void {
+		protected function _setNumber(shaderIndex:int, number:Number):void {
 			var shaderValue:ValusArray = _shaderValues;
 			shaderValue.setValue(shaderIndex, number);
 			_values[shaderIndex] = number;
@@ -411,7 +392,7 @@ package laya.d3.core.material {
 		 * @param	shaderIndex shader索引。
 		 * @return  布尔。
 		 */
-		protected function _getBool(shaderIndex:Boolean):* {
+		protected function _getBool(shaderIndex:int):* {
 			return _values[shaderIndex];
 		}
 		
@@ -502,7 +483,13 @@ package laya.d3.core.material {
 			_shader.uploadMaterialUniforms(_shaderValues.data);
 		}
 		
-		public function _setMaterialShaderParams(state:RenderState):void {
+		/**
+		 * @private
+		 */
+		public function _getShader(sceneDefineValue:int, vertexDefineValue:int, spriteDefineValue:int):Shader3D {
+			var publicDefineValue:int = (sceneDefineValue | vertexDefineValue) & (~_disablePublicShaderDefine);
+			_shader = _shaderCompile.withCompile(publicDefineValue, spriteDefineValue, _shaderDefineValue);
+			return _shader;
 		}
 		
 		/**
@@ -576,8 +563,7 @@ package laya.d3.core.material {
 		 * @param name 名称。
 		 */
 		public function setShaderName(name:String):void {
-			_sharderNameID = Shader3D.nameKey.getID(name);
-			_shaderCompile = ShaderCompile3D._preCompileShader[_sharderNameID];
+			_shaderCompile = ShaderCompile3D._preCompileShader[Shader3D.nameKey.getID(name)];
 			if (_conchMaterial) {//NATIVE
 				_conchMaterial.setShader(_shaderCompile._conchShader);
 			}
@@ -591,50 +577,46 @@ package laya.d3.core.material {
 			var textureMap:Object = data[1];
 			switch (jsonData.version) {
 			case "LAYAMATERIAL:01": 
-				var props:Object = jsonData.props;
 				var i:int, n:int;
-				for (var prop:String in props) {
-					switch (prop) {
-					case "colors": 
-						var colors:Array = props[prop];
-						for (i = 0, n = colors.length; i < n; i++) {
-							var color:Object = colors[i];
-							var colorValue:Array = color.value;
-							switch (colorValue.length) {
+				var props:Object = jsonData.props;//TODO:ShaderName
+				for (var key:String in props) {
+					switch (key) {
+					case "vectors": 
+						var vectors:Array = props[key];
+						for (i = 0, n = vectors.length; i < n; i++) {
+							var vector:Object = vectors[i];
+							var vectorValue:Array = vector.value;
+							switch (vectorValue.length) {
 							case 2: 
-								this[color.name] = new Vector2(colorValue[0], colorValue[1]);
+								this[vector.name] = new Vector2(vectorValue[0], vectorValue[1]);
 								break;
 							case 3: 
-								this[color.name] = new Vector3(colorValue[0], colorValue[1], colorValue[2]);
+								this[vector.name] = new Vector3(vectorValue[0], vectorValue[1], vectorValue[2]);
 								break;
 							case 4: 
-								this[color.name] = new Vector4(colorValue[0], colorValue[1], colorValue[2], colorValue[3]);
+								this[vector.name] = new Vector4(vectorValue[0], vectorValue[1], vectorValue[2], vectorValue[3]);
 								break;
 							default: 
 								throw new Error("BaseMaterial:unkonwn color length.");
-								
 							}
-							
 						}
 						break;
 					case "textures": 
-						var textures:Array = props[prop];
+						var textures:Array = props[key];
 						for (i = 0, n = textures.length; i < n; i++) {
 							var texture:Object = textures[i];
 							var path:String = texture.path;
 							(path) && (this[texture.name] = Loader.getRes(textureMap[path]));
-								//break;
 						}
 						break;
 					default: 
-						this[prop] = props[prop];
+						this[key] = props[key];
 					}
 				}
 				break;
 			default: 
 				throw new Error("BaseMaterial:unkonwn version.");
 			}
-			
 			_endLoaded();
 		}
 		
@@ -661,9 +643,8 @@ package laya.d3.core.material {
 			destBaseMaterial.depthFunc = depthFunc;
 			destBaseMaterial.depthWrite = depthWrite;
 			
-			destBaseMaterial._renderQueue = _renderQueue;
+			destBaseMaterial.renderQueue = renderQueue;
 			destBaseMaterial._shader = _shader;
-			destBaseMaterial._sharderNameID = _sharderNameID;
 			destBaseMaterial._disablePublicShaderDefine = _disablePublicShaderDefine;
 			destBaseMaterial._shaderDefineValue = _shaderDefineValue;
 			
@@ -674,7 +655,7 @@ package laya.d3.core.material {
 			var valueCount:int = _values.length;
 			var destValues:Array = destBaseMaterial._values;
 			destValues.length = valueCount;
-			for (i = 0, n = valueCount; i < n; i++) {
+			for (i = 0, n = valueCount; i < n; i++) {//TODO:需要优化,杜绝is判断，慢
 				var value:* = _values[i];
 				if (value) {
 					if (value is Number) {

@@ -44,37 +44,23 @@ package laya.d3.core {
 		/**
 		 * 创建精灵的克隆实例。
 		 * @param	original  原始精灵。
-		 * @param	position  世界位置。
-		 * @param	rotation  世界旋转。
 		 * @param   parent    父节点。
-		 * @param   worldPositionStays 是否保持自身世界变换,注意:在position，rotation均为空时有效。
+		 * @param   worldPositionStays 是否保持自身世界变换。
+		 * @param	position  世界位置,worldPositionStays为false时生效。
+		 * @param	rotation  世界旋转,worldPositionStays为false时生效。
 		 * @return  克隆实例。
 		 */
-		public static function instantiate(original:Sprite3D, position:Vector3 = null, rotation:Quaternion = null, parent:Node = null, worldPositionStays:Boolean = true):Sprite3D {
+		public static function instantiate(original:Sprite3D, parent:Node = null, worldPositionStays:Boolean = true, position:Vector3 = null, rotation:Quaternion = null):Sprite3D {
 			var destSprite3D:Sprite3D = original.clone();
-			
-			var transform:Transform3D;
-			if (position || rotation) {
-				(parent) && (parent.addChild(destSprite3D));
-				transform = destSprite3D.transform;
+			(parent) && (parent.addChild(destSprite3D));
+			var transform:Transform3D = destSprite3D.transform;
+			if (worldPositionStays) {
+				var worldMatrix:Matrix4x4 = transform.worldMatrix;
+				original.transform.worldMatrix.cloneTo(worldMatrix);
+				transform.worldMatrix = worldMatrix;
+			} else {
 				(position) && (transform.position = position);
 				(rotation) && (transform.rotation = rotation);
-			} else {
-				if (worldPositionStays) {
-					transform = destSprite3D.transform;
-					
-					if (parent) {
-						var oriPosition:Vector3 = transform.position;
-						var oriRotation:Quaternion = transform.rotation;
-						parent.addChild(destSprite3D);
-						transform.position = oriPosition;
-						transform.rotation = oriRotation;
-					}
-				} else {
-					if (parent) {
-						parent.addChild(destSprite3D);
-					}
-				}
 			}
 			return destSprite3D;
 		}
@@ -84,7 +70,7 @@ package laya.d3.core {
 		 * @param url 模板地址。
 		 */
 		public static function load(url:String):Sprite3D {
-			return Laya.loader.create(url, null, null, Sprite3D, null, 1, false);
+			return Laya.loader.create(url, null, null, Sprite3D);
 		}
 		
 		/** @private */
@@ -661,8 +647,10 @@ package laya.d3.core {
 		 */
 		public function getComponentsByType(type:*, components:Vector.<Component3D>):void {
 			var index:int = _componentsMap.indexOf(type);
-			if (index === -1)
+			if (index === -1) {
 				components.length = 0;
+				return;
+			}
 			
 			var typeComponents:Vector.<int> = _typeComponentsIndices[index];
 			var count:int = typeComponents.length;
@@ -761,8 +749,10 @@ package laya.d3.core {
 			
 			destSprite3D.isStatic = isStatic;
 			var i:int, n:int;
-			for (i = 0, n = _componentsMap.length; i < n; i++)
-				destSprite3D.addComponent(_componentsMap[i]);
+			for (i = 0, n = _componentsMap.length; i < n; i++){
+				var destComponent:Component3D = destSprite3D.addComponent(_componentsMap[i]);
+				_components[i]._cloneTo(destComponent);
+			}
 			
 			for (i = 0, n = _childs.length; i < n; i++)
 				destSprite3D.addChild(_childs[i].clone());

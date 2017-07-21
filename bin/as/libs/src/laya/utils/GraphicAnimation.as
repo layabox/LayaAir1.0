@@ -113,14 +113,18 @@ package laya.utils {
 		protected function _updateNodeGraphic(node:Object, frame:int, parentTransfrom:Matrix, g:Graphics, alpha:Number = 1):void {
 			var tNodeG:GraphicNode;
 			tNodeG = _nodeGDic[node.compId] = _getNodeGraphicData(node.compId, frame, _nodeGDic[node.compId]);
+			var tGraphicAlpha:Number = tNodeG.alpha * alpha;
+			if (tGraphicAlpha < 0.01) return;
 			if (!tNodeG.resultTransform)
-				tNodeG.resultTransform = new Matrix();
+			{
+				tNodeG.resultTransform = Matrix.create();
+			}
+		
 			var tResultTransform:Matrix;
 			tResultTransform = tNodeG.resultTransform;
 			Matrix.mul(tNodeG.transform, parentTransfrom, tResultTransform);
 			var tTex:Texture;
-			var tGraphicAlpha:Number = tNodeG.alpha * alpha;
-			if (tGraphicAlpha < 0.01) return;
+			
 			if (tNodeG.skin) {
 				tTex = _getTextureByUrl(tNodeG.skin);
 				if (tTex) {
@@ -263,13 +267,14 @@ package laya.utils {
 		
 		protected function _getNodeGraphicData(nodeID:int, frame:int, rst:GraphicNode):GraphicNode {
 			if (!rst)
-				rst = new GraphicNode();
+				rst = GraphicNode.create();
 			if (!rst.transform) {
-				rst.transform = new Matrix();
-			} else {
+				rst.transform = Matrix.create();
+			}else
+			{
 				rst.transform.identity();
 			}
-			
+				
 			var node:Object = getNodeDataByID(nodeID);
 			if (!node)
 				return rst;
@@ -454,6 +459,16 @@ package laya.utils {
 			animationList = null;
 			animationDic = null;
 			_gList = null;
+			if (_nodeGDic)
+			{
+				var key:String;
+				var tGNode:GraphicNode;
+				for (key in _nodeGDic)
+				{
+					tGNode = _nodeGDic[key];
+					if (tGNode) tGNode.recover();
+				}
+			}
 			_nodeGDic = null;
 		}
 		
@@ -482,6 +497,7 @@ package laya.utils {
 
 }
 import laya.maths.Matrix;
+import laya.utils.Pool;
 
 class GraphicNode {
 	public var skin:String;
@@ -490,4 +506,26 @@ class GraphicNode {
 	public var width:Number;
 	public var height:Number;
 	public var alpha:Number = 1;
+	public function recover():void
+	{
+		skin = null;
+		width = 0;
+		height = 0;
+		alpha = 1;
+		if (transform)
+		{
+			transform.destroy();
+			transform = null;
+		}
+		if (resultTransform)
+		{
+			resultTransform.destroy();
+			resultTransform = null;
+		}
+		Pool.recover("GraphicNode", this);
+	}
+	public static function create():GraphicNode
+	{
+		return Pool.getItemByClass("GraphicNode", GraphicNode);
+	}
 }

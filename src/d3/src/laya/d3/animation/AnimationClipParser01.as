@@ -98,11 +98,12 @@ package laya.d3.animation {
 			var clip:AnimationClip = _animationClip;
 			clip.name = _strings[reader.getUint16()];
 			var clipDur:Number = clip._duration = reader.getFloat32();
+			clip.islooping = ! !reader.getByte();
 			clip._frameRate = reader.getInt16();
 			var nodeCount:int = reader.getInt16();
 			var nodes:Vector.<KeyframeNode> = clip._nodes = new Vector.<KeyframeNode>;
 			nodes.length = nodeCount;
-			var unTransformPropertyToNodeIndex:int = 0;
+			var cachePropertyToNodeIndex:int = 0;
 			for (i = 0; i < nodeCount; i++) {
 				node = nodes[i] = new KeyframeNode();
 				var pathLength:int = reader.getUint16();
@@ -116,9 +117,10 @@ package laya.d3.animation {
 				
 				var propertyNameID:* = AnimationNode._propertyIndexDic[_strings[reader.getUint16()]];
 				if (propertyNameID != null) {
-					var isTransformproperty:Boolean = propertyNameID < 4;
-					node.isTransformproperty = isTransformproperty;
-					(isTransformproperty) || (unTransformPropertyToNodeIndex++);
+					var isTransformProperty:Boolean = propertyNameID < 4;
+					var cacheProperty:Boolean = !isTransformProperty || (isTransformProperty && path[0] === "");
+					node._cacheProperty = cacheProperty;
+					(cacheProperty) && (cachePropertyToNodeIndex++);
 					node.propertyNameID = propertyNameID;
 				} else {
 					throw new Error("AnimationClipParser01:unknown property name.");
@@ -157,14 +159,15 @@ package laya.d3.animation {
 				keyFrame.duration = clipDur - startTime;
 			}
 			
-			var nodeToUnTransformPropertyMap:Int32Array = clip._cacheNodeToUnTransformPropertyMap = new Int32Array(nodeCount);
-			var unTransformPropertyToNodeMap:Int32Array = clip._cacheUnTransformPropertyToNodeMap = new Int32Array(unTransformPropertyToNodeIndex);
-			unTransformPropertyToNodeIndex = 0;
+			
+			var nodeToCachePropertyMap:Int32Array = clip._nodeToCachePropertyMap = new Int32Array(nodeCount);
+			var cachePropertyToNodeMap:Int32Array = clip._cachePropertyToNodeMap = new Int32Array(cachePropertyToNodeIndex);
+			cachePropertyToNodeIndex = 0;
 			for (i = 0; i < nodeCount; i++) {
 				node = nodes[i];
-				if (!node.isTransformproperty) {
-					nodeToUnTransformPropertyMap[i] = unTransformPropertyToNodeIndex;
-					unTransformPropertyToNodeMap[unTransformPropertyToNodeIndex++] = i;
+				if (node._cacheProperty) {
+					nodeToCachePropertyMap[i] = cachePropertyToNodeIndex;
+					cachePropertyToNodeMap[cachePropertyToNodeIndex++] = i;
 				}
 			}
 		}

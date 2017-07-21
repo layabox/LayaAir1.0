@@ -31,8 +31,10 @@ package laya.d3.core.render {
 		/**@private */
 		public static var _tempBoundBoxCorners:Array = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		
-		/**唯一标识ID计数器*/
+		/**@private */
 		private static var _uniqueIDCounter:int = 0;
+		/**@private */
+		private static var _greenColor:Vector4 = new Vector4(0.0, 1.0, 0.0, 1.0);
 		
 		/**@private */
 		private var _id:int;
@@ -314,7 +316,7 @@ package laya.d3.core.render {
 		 */
 		public function BaseRender(owner:RenderableSprite3D) {
 			_id = ++_uniqueIDCounter;
-			_indexInSceneFrustumCullingObjects =-1;
+			_indexInSceneFrustumCullingObjects = -1;
 			_boundingBox = new BoundBox(new Vector3(), new Vector3());
 			_boundingBoxCenter = new Vector3();
 			_boundingSphere = new BoundSphere(new Vector3(), 0);
@@ -360,20 +362,20 @@ package laya.d3.core.render {
 			var boundBox:BoundBox = boundingBox;
 			var corners:Array = _tempBoundBoxCorners;
 			boundBox.getCorners(corners);
-			linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 0.0, 1.0, 0.0, 1.0, corners[1].x, corners[1].y, corners[1].z, 0.0, 1.0, 0.0, 1.0);
-			linePhasor.line(corners[2].x, corners[2].y, corners[2].z, 0.0, 1.0, 0.0, 1.0, corners[3].x, corners[3].y, corners[3].z, 0.0, 1.0, 0.0, 1.0);
-			linePhasor.line(corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0, corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0);
-			linePhasor.line(corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
+			linePhasor.line(corners[0], _greenColor, corners[1], _greenColor);
+			linePhasor.line(corners[2], _greenColor, corners[3], _greenColor);
+			linePhasor.line(corners[4], _greenColor, corners[5], _greenColor);
+			linePhasor.line(corners[6], _greenColor, corners[7], _greenColor);
 			
-			linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 0.0, 1.0, 0.0, 1.0, corners[3].x, corners[3].y, corners[3].z, 0.0, 1.0, 0.0, 1.0);
-			linePhasor.line(corners[1].x, corners[1].y, corners[1].z, 0.0, 1.0, 0.0, 1.0, corners[2].x, corners[2].y, corners[2].z, 0.0, 1.0, 0.0, 1.0);
-			linePhasor.line(corners[2].x, corners[2].y, corners[2].z, 0.0, 1.0, 0.0, 1.0, corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0);
-			linePhasor.line(corners[3].x, corners[3].y, corners[3].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
+			linePhasor.line(corners[0], _greenColor, corners[3], _greenColor);
+			linePhasor.line(corners[1], _greenColor, corners[2], _greenColor);
+			linePhasor.line(corners[2], _greenColor, corners[6], _greenColor);
+			linePhasor.line(corners[3], _greenColor, corners[7], _greenColor);
 			
-			linePhasor.line(corners[0].x, corners[0].y, corners[0].z, 0.0, 1.0, 0.0, 1.0, corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0);
-			linePhasor.line(corners[1].x, corners[1].y, corners[1].z, 0.0, 1.0, 0.0, 1.0, corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0);
-			linePhasor.line(corners[4].x, corners[4].y, corners[4].z, 0.0, 1.0, 0.0, 1.0, corners[7].x, corners[7].y, corners[7].z, 0.0, 1.0, 0.0, 1.0);
-			linePhasor.line(corners[5].x, corners[5].y, corners[5].z, 0.0, 1.0, 0.0, 1.0, corners[6].x, corners[6].y, corners[6].z, 0.0, 1.0, 0.0, 1.0);
+			linePhasor.line(corners[0], _greenColor, corners[4], _greenColor);
+			linePhasor.line(corners[1], _greenColor, corners[5], _greenColor);
+			linePhasor.line(corners[4], _greenColor, corners[7], _greenColor);
+			linePhasor.line(corners[5], _greenColor, corners[6], _greenColor);
 		}
 		
 		/**

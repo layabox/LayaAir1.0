@@ -626,7 +626,7 @@ void main()
 			}
 			else{
 				float c = cos(a_StartRotation0.x);
-				float s = sin(a_StartRotation0.x);
+				float s = sin(a_StartRotation0.x); 
 				mat2 rotation= mat2(c, -s, s, c);
 				corner=rotation*corner;
 				center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);

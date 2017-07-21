@@ -2,6 +2,7 @@ package laya.resource {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.maths.Rectangle;
+	import laya.net.URL;
 	import laya.renders.Render;
 	import laya.utils.Browser;
 	import laya.utils.RunDriver;
@@ -41,7 +42,7 @@ package laya.resource {
 		/**原始高度（包括被裁剪的透明区域）。*/
 		public var sourceHeight:Number = 0;
 		/** @private */
-		protected var _loaded:Boolean;
+		public var _loaded:Boolean;
 		/** @private */
 		protected var _w:Number = 0;
 		/** @private */
@@ -199,18 +200,21 @@ package laya.resource {
 		 * 销毁纹理（分直接销毁，跟计数销毁两种）。
 		 * @param	forceDispose	(default = false)true为强制销毁主纹理，false是通过计数销毁纹理。
 		 */
-		public function destroy(forceDispose:Boolean = false):void {
+		public function destroy(forceDispose:Boolean = false):void {			
 			if (bitmap && (bitmap as Bitmap).useNum > 0) {
+				var temp:* = this.bitmap;
 				if (forceDispose) {
-					bitmap.dispose();
-					(bitmap as Bitmap).useNum = 0;
+					this.bitmap = null;
+					temp.dispose();
+					(temp as Bitmap).useNum = 0;
 				} else {
-					(bitmap as Bitmap).useNum--;
-					if ((bitmap as Bitmap).useNum == 0) {
-						bitmap.dispose();
+					(temp as Bitmap).useNum--;
+					if ((temp as Bitmap).useNum == 0) {
+						this.bitmap = null;
+						temp.dispose();
 					}
 				}
-				bitmap = null;
+				
 				if (url && this === Laya.loader.getRes(url)) Laya.loader.clearRes(url, forceDispose);
 				_loaded = false;
 			}
@@ -288,6 +292,7 @@ package laya.resource {
 		 */
 		public function load(url:String):void {
 			_loaded = false;
+			url = URL.customFormat(url);
 			var fileBitmap:FileBitmap = (this.bitmap || (this.bitmap = HTMLImage.create(url))) as FileBitmap;//WebGl模式被自动替换为WebGLImage
 			if (fileBitmap) fileBitmap.useNum++;
 			var _this:Texture = this;

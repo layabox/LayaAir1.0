@@ -1,6 +1,7 @@
 package laya.d3.terrain {
 	import laya.d3.core.Camera;
 	import laya.d3.core.GeometryFilter;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.TerrainMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
@@ -281,7 +282,7 @@ package laya.d3.terrain {
 			_vertexBuffer._bind();
 			_indexBuffer._bind();
 			var terrainMaterial:TerrainMaterial = state.renderElement._material as TerrainMaterial;
-			if ( terrainMaterial.renderMode == TerrainMaterial.RENDERMODE_OPAQUE )
+			if ( terrainMaterial.blend == BaseMaterial.BLEND_DISABLE)
 			{				
 				var camera:Camera = state.camera as Camera;
 				if ( assembleIndex(camera,camera.position) )

@@ -330,6 +330,7 @@
 			this._href=null;
 			HTMLElement.__super.call(this);
 			this._text=HTMLElement._EMPTYTEXT;
+			this._childRenderMax=true;
 			this.setStyle(new CSSStyle(this));
 			this._getCSSStyle().valign="middle";
 			this.mouseEnabled=true;

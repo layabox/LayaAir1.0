@@ -30,8 +30,6 @@ package laya.d3.core {
 		private var _nodeMap:Object;
 		/**@private	*/
 		private var _nodes:Vector.<AnimationNode>;
-		/**@private	*/
-		private var _nodesWorldMatrixs:Vector.<Matrix4x4>;
 		
 		/**
 		 * @private
@@ -68,8 +66,6 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _parseNode(nodaData:Object, node:AnimationNode):void {
-			var worldMatrix:Matrix4x4 = new Matrix4x4();
-			_nodesWorldMatrixs.push(worldMatrix);
 			var name:String = nodaData.props.name;
 			node.name = name;
 			_nodes.push(node);
@@ -103,7 +99,6 @@ package laya.d3.core {
 			scaE[2] = scaData[2];
 			transform.localScale = localScale;
 			
-			transform._setWorldMatrixAndUpdate(worldMatrix);
 			var childrenData:Array = nodaData.child;
 			for (var i:int = 0, n:int = childrenData.length; i < n; i++) {
 				var childData:Object = childrenData[i];
@@ -119,7 +114,6 @@ package laya.d3.core {
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			_nodeMap = {};
 			_nodes = new Vector.<AnimationNode>();
-			_nodesWorldMatrixs = new Vector.<Matrix4x4>();
 			_rootNode = new AnimationNode();
 			_parseNode(data, _rootNode);
 			_endLoaded();
@@ -139,7 +133,10 @@ package laya.d3.core {
 			_initCloneToAnimator(destRoot, destAnimator);
 			for (var i:int = 0, n:int = avatarNodes.length; i < n; i++) {
 				var avatarNode:AnimationNode = avatarNodes[i];
-				avatarNode._transform._setWorldMatrixNoUpdate(_nodesWorldMatrixs[i]);
+				if (avatarNode._parent)
+					avatarNode._transform._setWorldMatrixAndUpdate(new Matrix4x4());
+				else
+					avatarNode._transform._setWorldMatrixNoUpdate(null);
 			}
 		}
 		

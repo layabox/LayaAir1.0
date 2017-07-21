@@ -230,15 +230,17 @@ package laya.events {
 			var preO:Object;
 			preO = getTouchFromArr(touchID, preOvers);
 			var arrs:Array;
-			arrs = getEles(ele, null, _tEleArr);
+			
 			var tO:Object;
 			if (!preO) {
 				//理论上不会发生，因为必然先有touchstart再有touchMove
+				arrs = getEles(ele, null, _tEleArr);
 				sendEvents(arrs, Event.MOUSE_OVER, touchID);
 				preOvers.push(createTouchO(ele, touchID));
 			} else {
 				checkMouseOutAndOverOfMove(ele, preO.tar);
 				preO.tar = ele;
+				arrs = getEles(ele, null, _tEleArr);
 			}
 			
 			sendEvents(arrs, Event.MOUSE_MOVE, touchID);

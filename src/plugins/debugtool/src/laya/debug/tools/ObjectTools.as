@@ -400,7 +400,12 @@ package laya.debug.tools
 		}
 		public static function getAutoValue(value:*):*
 		{
-			if (parseFloat(value)==value) return parseFloat(value);
+			var tFloat:Number=parseFloat(value);
+			if(typeof(value)=="string")
+			{
+				if(tFloat+""===StringTool.trimSide(value)) return tFloat;
+			}
+//			if (parseFloat(value)==value) return parseFloat(value);
 			return value;
 		}
 		public static function isNumber(value:*):Boolean

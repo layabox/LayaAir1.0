@@ -2,13 +2,9 @@ package laya.d3.component.animation {
 	import laya.ani.AnimationPlayer;
 	import laya.ani.AnimationState;
 	import laya.ani.AnimationTemplet;
-	import laya.d3.animation.AnimationClip;
 	import laya.d3.component.Component3D;
 	import laya.d3.core.Sprite3D;
 	import laya.events.Event;
-	import laya.net.Loader;
-	import laya.net.URL;
-	import laya.resource.Resource;
 	
 	/**
 	 * 在动画切换时调度调度。

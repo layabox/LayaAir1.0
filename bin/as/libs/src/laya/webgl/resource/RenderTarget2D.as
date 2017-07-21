@@ -219,7 +219,10 @@ package laya.webgl.resource {
 		override public function destroy(foreDiposeTexture:Boolean = false):void {//待优化
 			if (!_destroy) {
 				_loaded = false;
+				bitmap.offAll();
+				bitmap.detoryResource();
 				bitmap.dispose();
+				this.offAll();
 				bitmap = null;
 				_alreadyResolved = false;
 				_destroy = true;

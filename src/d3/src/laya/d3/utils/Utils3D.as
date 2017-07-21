@@ -211,13 +211,20 @@ package laya.d3.utils {
 			//Render
 			var particleRender:ShurikenParticleRender = particle.particleRender;
 			var material:ShurikenParticleMaterial;
-			var materialPath:String = settting.materialPath;
-			if (materialPath) {
-				material = Loader.getRes(innerResouMap[materialPath]);
+			
+			var materialData:Object = settting.material;
+			if (materialData) {
+				material = Loader.getRes(innerResouMap[materialData.path]);
 			} else {//TODO:兼容性代码
-				material = new ShurikenParticleMaterial();
-				material.diffuseTexture = innerResouMap ? Loader.getRes(innerResouMap[settting.texturePath]) : Texture2D.load(settting.texturePath);
+				var materialPath:String = settting.materialPath;
+				if (materialPath) {//TODO:兼容性代码
+					material = Loader.getRes(innerResouMap[materialPath]);
+				} else {//TODO:兼容性代码
+					material = new ShurikenParticleMaterial();
+					material.diffuseTexture = innerResouMap ? Loader.getRes(innerResouMap[settting.texturePath]) : Texture2D.load(settting.texturePath);
+				}
 			}
+			
 			particleRender.sharedMaterial = material;
 			var meshPath:String = settting.meshPath;
 			(meshPath) && (particleRender.mesh = Loader.getRes(innerResouMap[meshPath]));
@@ -605,7 +612,9 @@ package laya.d3.utils {
 		 * @private
 		 */
 		public static function _parseHierarchyProp(innerResouMap:Object, node:Node, json:Object):void {
+			var i:int;
 			var lightmapScaleOffsetArray:Array, lightmapIndex:*;
+			var meshPath:String, mesh:Mesh, materials:Array, sharedMaterials:Vector.<BaseMaterial>, materialCount:int;
 			var type:String = json.type;
 			var customProps:Object = json.customProps;
 			switch (type) {
@@ -615,7 +624,7 @@ package laya.d3.utils {
 				var lightMapCount:int = lightMapsData.length;
 				var lightmaps:Vector.<Texture2D> = scene.getlightmaps();
 				lightmaps.length = lightMapCount;
-				for (var i:int = 0; i < lightMapCount; i++)
+				for (i = 0; i < lightMapCount; i++)
 					lightmaps[i] = Loader.getRes(innerResouMap[lightMapsData[i].replace("exr", "png")]);
 				
 				scene.setlightmaps(lightmaps);
@@ -634,14 +643,31 @@ package laya.d3.utils {
 				lightmapScaleOffsetArray = customProps.lightmapScaleOffset;
 				(lightmapScaleOffsetArray) && (meshRender.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
 				
-				var meshPath:String = json.instanceParams.loadPath;
-				if (meshPath) {
-					var mesh:Mesh = Loader.getRes(innerResouMap[meshPath]);
-					meshSprite3D.meshFilter.sharedMesh = mesh;
-					if (mesh.loaded)
-						meshRender.sharedMaterials = mesh.materials;
-					else
-						mesh.once(Event.LOADED, meshSprite3D, meshSprite3D._applyMeshMaterials);
+				if (json.instanceParams) {//兼容代码
+					meshPath = json.instanceParams.loadPath;
+					if (meshPath) {
+						mesh = Loader.getRes(innerResouMap[meshPath]);
+						meshSprite3D.meshFilter.sharedMesh = mesh;
+						if (mesh.loaded)
+							meshRender.sharedMaterials = mesh.materials;
+						else
+							mesh.once(Event.LOADED, meshSprite3D, meshSprite3D._applyMeshMaterials);
+					}
+				} else {
+					meshPath = customProps.meshPath;
+					if (meshPath) {
+						mesh = Loader.getRes(innerResouMap[meshPath]);
+						meshSprite3D.meshFilter.sharedMesh = mesh;
+					}
+					materials = customProps.materials;
+					if (materials) {
+						sharedMaterials = meshRender.sharedMaterials;
+						materialCount = materials.length;
+						sharedMaterials.length = materialCount;
+						for (i = 0; i < materialCount; i++)
+							sharedMaterials[i] = Loader.getRes(innerResouMap[materials[i].path]);
+						meshRender.sharedMaterials = sharedMaterials;
+					}
 				}
 				break;
 			case "SkinnedMeshSprite3D": 
@@ -652,15 +678,32 @@ package laya.d3.utils {
 				(lightmapIndex != null) && (skinMeshRender.lightmapIndex = lightmapIndex);
 				lightmapScaleOffsetArray = customProps.lightmapScaleOffset;
 				(lightmapScaleOffsetArray) && (skinMeshRender.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
-				
-				var skinMeshPath:String = json.instanceParams.loadPath;
-				if (skinMeshPath) {
-					var skinMesh:Mesh = Loader.getRes(innerResouMap[skinMeshPath]);
-					skinnedMeshSprite3D.meshFilter.sharedMesh = skinMesh;
-					if (skinMesh.loaded)
-						skinMeshRender.sharedMaterials = skinMesh.materials;
-					else
-						skinMesh.once(Event.LOADED, skinnedMeshSprite3D, skinnedMeshSprite3D._applyMeshMaterials);
+				if (json.instanceParams) {//兼容代码
+					meshPath = json.instanceParams.loadPath;
+					if (meshPath) {
+						mesh = Loader.getRes(innerResouMap[meshPath]);
+						skinnedMeshSprite3D.meshFilter.sharedMesh = mesh;
+						if (mesh.loaded)
+							skinMeshRender.sharedMaterials = mesh.materials;
+						else
+							mesh.once(Event.LOADED, skinnedMeshSprite3D, skinnedMeshSprite3D._applyMeshMaterials);
+					}
+					
+				} else {
+					meshPath = customProps.meshPath;
+					if (meshPath) {
+						mesh = Loader.getRes(innerResouMap[meshPath]);
+						skinnedMeshSprite3D.meshFilter.sharedMesh = mesh;
+					}
+					materials = customProps.materials;
+					if (materials) {
+						sharedMaterials = skinMeshRender.sharedMaterials;
+						materialCount = materials.length;
+						sharedMaterials.length = materialCount;
+						for (i = 0; i < materialCount; i++)
+							sharedMaterials[i] = Loader.getRes(innerResouMap[materials[i].path]);
+						skinMeshRender.sharedMaterials = sharedMaterials;
+					}
 				}
 				break;
 			case "ShuriKenParticle3D": 
@@ -671,7 +714,7 @@ package laya.d3.utils {
 			case "Terrain": 
 				_parseHierarchyTRS(node as Sprite3D, customProps);
 				var terrain:Terrain = (node as Terrain);
-				terrain.terrainRes = Loader.getRes(innerResouMap[json.instanceParams.loadPath]);
+				terrain.terrainRes = Loader.getRes(innerResouMap[customProps.dataPath]);
 				
 				lightmapIndex = customProps.lightmapIndex;
 				if (lightmapIndex != null)

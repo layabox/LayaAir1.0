@@ -68,10 +68,10 @@ package laya.d3.core {
 		private var _localUpdate:Boolean = false;
 		/** @private */
 		private var _worldUpdate:Boolean = true;
-		/** @private */
-		private var _positionUpdate:Boolean = true;
-		/** @private */
-		private var _rotationUpdate:Boolean = true;
+		///** @private */
+		//private var _positionUpdate:Boolean = true;
+		///** @private */
+		//private var _rotationUpdate:Boolean = true;
 		/** @private */
 		private var _scaleUpdate:Boolean = true;
 		/** @private */
@@ -271,19 +271,15 @@ package laya.d3.core {
 		 * @return	世界位置。
 		 */
 		public function get position():Vector3 {
-			if (!_positionUpdate)
-				return _position;
-			
 			if (_parent !== null) {
-				var worldMatElem:Float32Array = worldMatrix.elements;
-				_position.elements[0] = worldMatElem[12];
-				_position.elements[1] = worldMatElem[13];
-				_position.elements[2] = worldMatElem[14];
+				var worldMatE:Float32Array = worldMatrix.elements;
+				_position.elements[0] = worldMatE[12];
+				_position.elements[1] = worldMatE[13];
+				_position.elements[2] = worldMatE[14];
 			} else {
 				_localPosition.cloneTo(_position);
 			}
 			
-			_positionUpdate = false;
 			return _position;
 		}
 		
@@ -307,15 +303,19 @@ package laya.d3.core {
 		 * @return	世界旋转。
 		 */
 		public function get rotation():Quaternion {
-			if (!_rotationUpdate)
-				return _rotation;
-			
-			if (_parent !== null) 
-				worldMatrix.decomposeTransRotScale(_position, _rotation, _scale);//可不计算_position和_scale,数学库有优化
-			 else 
+			if (_parent !== null) {
+				worldMatrix.decomposeTransRotScale(_position, _rotation, _scale);//TODO:_Scale会变,导致localScale错误
+				var localScaleE:Float32Array = _localScale.elements;
+				var scaleE:Float32Array = _scale.elements;
+				var parentScaleE:Float32Array = _parent.scale.elements;
+				
+				localScaleE[0] = scaleE[0] / parentScaleE[0];
+				localScaleE[1] = scaleE[1] / parentScaleE[1];
+				localScaleE[2] = scaleE[2] / parentScaleE[2];
+				_localScale = _localScale;
+			} else
 				_localRotation.cloneTo(_rotation);
 			
-			_rotationUpdate = false;
 			return _rotation;
 		}
 		
@@ -486,8 +486,8 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _onWorldPositionRotationTransform():void {
-			if (!_worldUpdate || !_positionUpdate || !_rotationUpdate) {
-				_worldUpdate = _positionUpdate = _rotationUpdate = true;
+			if (!_worldUpdate /*|| !_positionUpdate || !_rotationUpdate*/) {
+				_worldUpdate /*= _positionUpdate = _rotationUpdate*/ = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
 				for (var i:int = 0, n:int = _childs.length; i < n; i++)
 					_childs[i]._onWorldPositionRotationTransform();
@@ -498,8 +498,8 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _onWorldPositionScaleTransform():void {
-			if (!_worldUpdate || !_positionUpdate || !_scaleUpdate) {
-				_worldUpdate = _positionUpdate = _scaleUpdate = true;
+			if (!_worldUpdate || !_scaleUpdate/* || !_positionUpdate */) {
+				_worldUpdate = _scaleUpdate /*= _positionUpdate */ = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
 				for (var i:int = 0, n:int = _childs.length; i < n; i++)
 					_childs[i]._onWorldPositionScaleTransform();
@@ -510,8 +510,8 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _onWorldPositionTransform():void {
-			if (!_worldUpdate || !_positionUpdate) {
-				_worldUpdate = _positionUpdate = true;
+			if (!_worldUpdate /*|| !_positionUpdate*/) {
+				_worldUpdate /*= _positionUpdate*/ = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
 				for (var i:int = 0, n:int = _childs.length; i < n; i++)
 					_childs[i]._onWorldPositionTransform();
@@ -522,8 +522,8 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _onWorldRotationTransform():void {
-			if (!_worldUpdate || !_rotationUpdate) {
-				_worldUpdate = _rotationUpdate = true;
+			if (!_worldUpdate /*|| !_rotationUpdate*/) {
+				_worldUpdate /*= _rotationUpdate*/ = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
 				for (var i:int = 0, n:int = _childs.length; i < n; i++)
 					_childs[i]._onWorldRotationTransform();
@@ -546,8 +546,8 @@ package laya.d3.core {
 		 * @private
 		 */
 		public function _onWorldTransform():void {
-			if (!_worldUpdate || !_positionUpdate || !_rotationUpdate || !_scaleUpdate) {
-				_worldUpdate = _positionUpdate = _rotationUpdate = _scaleUpdate = true;
+			if (!_worldUpdate || !_scaleUpdate /*|| !_positionUpdate || !_rotationUpdate */) {
+				_worldUpdate = _scaleUpdate/*= _positionUpdate = _rotationUpdate */ = true;
 				event(Event.WORLDMATRIX_NEEDCHANGE);
 				for (var i:int = 0, n:int = _childs.length; i < n; i++)
 					_childs[i]._onWorldTransform();

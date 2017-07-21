@@ -169,7 +169,6 @@ package laya.d3.core.render {
 			var vertexBuffer:VertexBuffer3D, vertexDeclaration:VertexDeclaration, shader:Shader3D;
 			var forceUploadParams:Boolean;
 			var lastStateMaterial:BaseMaterial, lastStateOwner:Sprite3D;
-			
 			for (var i:int = 0, n:int = _finalElements.length; i < n; i++) {
 				var renderElement:RenderElement = _finalElements[i];
 				var renderObj:IRenderable, material:BaseMaterial, owner:Sprite3D;
@@ -210,7 +209,6 @@ package laya.d3.core.render {
 						}
 						
 						if (shader._uploadMaterial !== material || forceUploadParams) {
-							material._setMaterialShaderParams(state);//TODO:或许可以取消
 							material._upload();
 							shader._uploadMaterial = material;
 						}
@@ -267,7 +265,6 @@ package laya.d3.core.render {
 						}
 						
 						if (shader._uploadMaterial !== material || forceUploadParams) {
-							material._setMaterialShaderParams(state);//TODO:或许可以取消
 							material._upload();
 							shader._uploadMaterial = material;
 						}
@@ -344,7 +341,6 @@ package laya.d3.core.render {
 						}
 						
 						if (shader._uploadMaterial !== material || forceUploadParams) {
-							material._setMaterialShaderParams(state);//TODO:或许可以取消
 							material._upload();
 							shader._uploadMaterial = material;
 						}

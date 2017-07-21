@@ -68,6 +68,7 @@ package laya.resource {
 		public function destroy():void {
 			_ctx && _ctx.destroy();
 			_ctx = null;
+			dispose();
 		}
 		
 		/**

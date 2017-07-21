@@ -26,16 +26,16 @@ package laya.d3.shader {
 		/**shader变量提交周期，逐场景。*/
 		public static const PERIOD_SCENE:int = 4;
 		
-		private static var _TEXTURES:Array = /*[STATIC SAFE]*/ [WebGLContext.TEXTURE0, WebGLContext.TEXTURE1, WebGLContext.TEXTURE2, WebGLContext.TEXTURE3, WebGLContext.TEXTURE4, WebGLContext.TEXTURE5, WebGLContext.TEXTURE6,WebGLContext.TEXTURE7, WebGLContext.TEXTURE8];
+		private static var _TEXTURES:Array = /*[STATIC SAFE]*/ [WebGLContext.TEXTURE0, WebGLContext.TEXTURE1, WebGLContext.TEXTURE2, WebGLContext.TEXTURE3, WebGLContext.TEXTURE4, WebGLContext.TEXTURE5, WebGLContext.TEXTURE6, WebGLContext.TEXTURE7];
 		public static var _includeFiles:* = {}; //shader里面inlcude的小文件
 		private static var _count:int = 0;
 		
 		protected static var shaderParamsMap:Object = {"float": WebGLContext.FLOAT, "int": WebGLContext.INT, "bool": WebGLContext.BOOL, "vec2": WebGLContext.FLOAT_VEC2, "vec3": WebGLContext.FLOAT_VEC3, "vec4": WebGLContext.FLOAT_VEC4, "ivec2": WebGLContext.INT_VEC2, "ivec3": WebGLContext.INT_VEC3, "ivec4": WebGLContext.INT_VEC4, "bvec2": WebGLContext.BOOL_VEC2, "bvec3": WebGLContext.BOOL_VEC3, "bvec4": WebGLContext.BOOL_VEC4, "mat2": WebGLContext.FLOAT_MAT2, "mat3": WebGLContext.FLOAT_MAT3, "mat4": WebGLContext.FLOAT_MAT4, "sampler2D": WebGLContext.SAMPLER_2D, "samplerCube": WebGLContext.SAMPLER_CUBE};
-	
+		
 		public static var nameKey:StringKey = new StringKey();
 		
-		public static function create(vs:String, ps:String, attributeMap:Object , sceneUniformMap:Object, cameraUniformMap:Object, spriteUniformMap:Object, materialUniformMap:Object, renderElementUniformMap:Object):Shader3D {
-			return new Shader3D(vs, ps,attributeMap, sceneUniformMap,cameraUniformMap,spriteUniformMap,materialUniformMap,renderElementUniformMap);
+		public static function create(vs:String, ps:String, attributeMap:Object, sceneUniformMap:Object, cameraUniformMap:Object, spriteUniformMap:Object, materialUniformMap:Object, renderElementUniformMap:Object):Shader3D {
+			return new Shader3D(vs, ps, attributeMap, sceneUniformMap, cameraUniformMap, spriteUniformMap, materialUniformMap, renderElementUniformMap);
 		}
 		
 		public static function addInclude(fileName:String, txt:String):void {
@@ -45,12 +45,10 @@ package laya.d3.shader {
 				throw new Error("add shader include file err, has add:" + fileName);
 			_includeFiles[fileName] = txt;
 		}
-	
-		
 		
 		private var customCompile:Boolean = false;
 		
-		private var _attributeMap:Object; 
+		private var _attributeMap:Object;
 		private var _sceneUniformMap:Object;
 		private var _cameraUniformMap:Object;
 		private var _spriteUniformMap:Object;
@@ -77,19 +75,19 @@ package laya.d3.shader {
 		
 		public var _id:int;
 		/**@private */
-		public  var _uploadLoopCount:int;
+		public var _uploadLoopCount:int;
 		/**@private */
-		public  var _uploadRenderElement:RenderElement;//TODO:是否会被篡改
+		public var _uploadRenderElement:RenderElement;//TODO:是否会被篡改
 		/**@private */
-		public  var _uploadMaterial:BaseMaterial;
+		public var _uploadMaterial:BaseMaterial;
 		/**@private */
-		public  var _uploadSprite3D:Sprite3D;
+		public var _uploadSprite3D:Sprite3D;
 		/**@private */
-		public  var _uploadCamera:BaseCamera;
+		public var _uploadCamera:BaseCamera;
 		/**@private */
-		public  var _uploadScene:Scene;
+		public var _uploadScene:Scene;
 		/**@private */
-		public  var _uploadVertexBuffer:VertexBuffer3D;
+		public var _uploadVertexBuffer:VertexBuffer3D;
 		
 		/**
 		 * 根据vs和ps信息生成shader对象
@@ -98,7 +96,7 @@ package laya.d3.shader {
 		 * @param	name:
 		 * @param	nameMap 帮助里要详细解释为什么需要nameMap
 		 */
-		public function Shader3D(vs:String, ps:String, attributeMap:Object, sceneUniformMap:Object, cameraUniformMap:Object, spriteUniformMap:Object,materialUniformMap:Object,renderElementUniformMap:Object) {
+		public function Shader3D(vs:String, ps:String, attributeMap:Object, sceneUniformMap:Object, cameraUniformMap:Object, spriteUniformMap:Object, materialUniformMap:Object, renderElementUniformMap:Object) {
 			if ((!vs) || (!ps)) throw "Shader Error";
 			if (Render.isConchApp || Render.isFlash) {
 				customCompile = true;
@@ -134,7 +132,7 @@ package laya.d3.shader {
 		}
 		
 		private function _compile():void {
-			if (!_vs || !_ps || _attributeParams|| _uniformParams)
+			if (!_vs || !_ps || _attributeParams || _uniformParams)
 				return;
 			
 			_reCompile = true;
@@ -150,7 +148,6 @@ package laya.d3.shader {
 			_vshader = _createShader(gl, text[0], WebGLContext.VERTEX_SHADER);
 			_pshader = _createShader(gl, text[1], WebGLContext.FRAGMENT_SHADER);
 			
-
 			gl.attachShader(_program, _vshader);
 			gl.attachShader(_program, _pshader);
 			gl.linkProgram(_program);
@@ -197,7 +194,6 @@ package laya.d3.shader {
 				one.fun = _attribute;
 			}
 			
-			
 			for (i = 0, n = _uniformParams.length; i < n; i++) {
 				one = _uniformParams[i];
 				one.indexOfParams = i;
@@ -205,34 +201,28 @@ package laya.d3.shader {
 				one.value = [one.location, null];
 				one.codename = one.name;
 				
-				if (_sceneUniformMap[one.codename] != null){
+				if (_sceneUniformMap[one.codename] != null) {
 					one.name = _sceneUniformMap[one.codename];
 					_sceneUniformParamsMap.push(one.name);
-				   _sceneUniformParamsMap.push(one);
-				}
-				else if  (_cameraUniformMap[one.codename] != null){
+					_sceneUniformParamsMap.push(one);
+				} else if (_cameraUniformMap[one.codename] != null) {
 					one.name = _cameraUniformMap[one.codename];
 					_cameraUniformParamsMap.push(one.name);
-				   _cameraUniformParamsMap.push(one);
-				}
-				else if  (_spriteUniformMap[one.codename] != null){
+					_cameraUniformParamsMap.push(one);
+				} else if (_spriteUniformMap[one.codename] != null) {
 					one.name = _spriteUniformMap[one.codename];
 					_spriteUniformParamsMap.push(one.name);
-				   _spriteUniformParamsMap.push(one);
-				}
-				else if  (_materialUniformMap[one.codename] != null){
+					_spriteUniformParamsMap.push(one);
+				} else if (_materialUniformMap[one.codename] != null) {
 					one.name = _materialUniformMap[one.codename];
 					_materialUniformParamsMap.push(one.name);
-				   _materialUniformParamsMap.push(one);
-				}
-				else if  (_renderElementUniformMap[one.codename] != null){
+					_materialUniformParamsMap.push(one);
+				} else if (_renderElementUniformMap[one.codename] != null) {
 					one.name = _renderElementUniformMap[one.codename];
 					_renderElementUniformParamsMap.push(one.name);
-				   _renderElementUniformParamsMap.push(one);
-				}
-				else
-				{
-					trace("Shader:can't find uinform name:"+ one.codename+"in shader file.");
+					_renderElementUniformParamsMap.push(one);
+				} else {
+					trace("Shader:can't find uinform name:" + one.codename + "in shader file.");
 				}
 				
 				one._this = this;
@@ -246,13 +236,13 @@ package laya.d3.shader {
 					one.fun = one.isArray ? this._uniform1fv : this._uniform1f;
 					break;
 				case WebGLContext.FLOAT_VEC2: 
-					one.fun =one.isArray ? this._uniform_vec2v:this._uniform_vec2;
+					one.fun = one.isArray ? this._uniform_vec2v : this._uniform_vec2;
 					break;
 				case WebGLContext.FLOAT_VEC3: 
-					one.fun =one.isArray ?  this._uniform_vec3v:this._uniform_vec3;
+					one.fun = one.isArray ? this._uniform_vec3v : this._uniform_vec3;
 					break;
 				case WebGLContext.FLOAT_VEC4: 
-					one.fun =one.isArray ?  this._uniform_vec4v:this._uniform_vec4;
+					one.fun = one.isArray ? this._uniform_vec4v : this._uniform_vec4;
 					break;
 				case WebGLContext.SAMPLER_2D: 
 					one.fun = this._uniform_sampler2D;
@@ -399,7 +389,7 @@ package laya.d3.shader {
 			WebGL.mainContext.uniformMatrix2fv(one.location, false, value);
 			return 1;
 		}
-
+		
 		private function _uinformMatrix3fv(one:*, value:*):int {
 			WebGL.mainContext.uniformMatrix3fv(one.location, false, value);
 			return 1;
@@ -465,18 +455,21 @@ package laya.d3.shader {
 			var gl:WebGLContext = WebGL.mainContext;
 			var uploadedValue:Array = one.uploadedValue;
 			if (uploadedValue[0] == null) {
+				if (_curActTexIndex > 7)
+					throw new Error("Shader3D: shader support textures max count is 8,can't large than it.");
+				
 				uploadedValue[0] = _curActTexIndex;
 				gl.uniform1i(one.location, _curActTexIndex);
 				gl.activeTexture(_TEXTURES[_curActTexIndex]);
 				
-				if(value)
-				   WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
+				if (value)
+					WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
 				_curActTexIndex++;
 				return 1;
 			} else {
 				gl.activeTexture(_TEXTURES[uploadedValue[0]]);
-				if(value)
-				   WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
+				if (value)
+					WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
 				return 0;
 			}
 		}
@@ -485,21 +478,25 @@ package laya.d3.shader {
 			var gl:WebGLContext = WebGL.mainContext;
 			var uploadedValue:Array = one.uploadedValue;
 			if (uploadedValue[0] == null) {
+				if (_curActTexIndex > 7)
+					throw new Error("Shader3D: shader support textures max count is 8,can't large than it.");
+				
 				uploadedValue[0] = _curActTexIndex;
 				gl.uniform1i(one.location, _curActTexIndex);
 				gl.activeTexture(_TEXTURES[_curActTexIndex]);
-				if(value)
-				   WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
+				if (value)
+					WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
 				else
-			 	   WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, SolidColorTextureCube.grayTexture.source);
+					WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, SolidColorTextureCube.grayTexture.source);
 				_curActTexIndex++;
+				
 				return 1;
 			} else {
 				gl.activeTexture(_TEXTURES[uploadedValue[0]]);
-				if(value)
-				   WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
+				if (value)
+					WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
 				else
-				   WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, SolidColorTextureCube.grayTexture.source);
+					WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, SolidColorTextureCube.grayTexture.source);
 				return 0;
 			}
 		}
@@ -516,14 +513,12 @@ package laya.d3.shader {
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
 		}
 		
-		
-		public function bind():Boolean{
+		public function bind():Boolean {
 			BaseShader.activeShader = this;
 			BaseShader.bindShader = this;
 			activeResource();
 			return WebGLContext.UseProgram(_program);
 		}
-		
 		
 		/**
 		 * 按数组的定义提交
@@ -532,8 +527,8 @@ package laya.d3.shader {
 		public function uploadAttributes(attributeShaderValue:Array, _bufferUsage:*):void {
 			var value:*;
 			var one:*, shaderCall:int = 0;
-			for (var i:int =0,n:int=_attributeParamsMap.length; i < n; i += 2) {
-				one = _attributeParamsMap[i+1];
+			for (var i:int = 0, n:int = _attributeParamsMap.length; i < n; i += 2) {
+				one = _attributeParamsMap[i + 1];
 				value = attributeShaderValue[_attributeParamsMap[i]];
 				if (value != null) {
 					_bufferUsage && _bufferUsage[one.name] && _bufferUsage[one.name].bind();
@@ -543,8 +538,6 @@ package laya.d3.shader {
 			Stat.shaderCall += shaderCall;
 		}
 		
-		
-		
 		/**
 		 * 按数组的定义提交
 		 * @param	shaderValue 数组格式[name,value,...]
@@ -552,8 +545,8 @@ package laya.d3.shader {
 		public function uploadSceneUniforms(shaderValue:Array):void {
 			var value:*;
 			var one:*, shaderCall:int = 0;
-			for (var i:int =0,n:int=_sceneUniformParamsMap.length; i < n; i += 2) {
-				one = _sceneUniformParamsMap[i+1];
+			for (var i:int = 0, n:int = _sceneUniformParamsMap.length; i < n; i += 2) {
+				one = _sceneUniformParamsMap[i + 1];
 				value = shaderValue[_sceneUniformParamsMap[i]];
 				if (value != null)
 					shaderCall += one.fun.call(this, one, value);
@@ -568,8 +561,8 @@ package laya.d3.shader {
 		public function uploadCameraUniforms(shaderValue:Array):void {
 			var value:*;
 			var one:*, shaderCall:int = 0;
-			for (var i:int =0,n:int=_cameraUniformParamsMap.length; i < n; i += 2) {
-				one = _cameraUniformParamsMap[i+1];
+			for (var i:int = 0, n:int = _cameraUniformParamsMap.length; i < n; i += 2) {
+				one = _cameraUniformParamsMap[i + 1];
 				value = shaderValue[_cameraUniformParamsMap[i]];
 				if (value != null)
 					shaderCall += one.fun.call(this, one, value);
@@ -584,8 +577,8 @@ package laya.d3.shader {
 		public function uploadSpriteUniforms(shaderValue:Array):void {
 			var value:*;
 			var one:*, shaderCall:int = 0;
-		    for (var i:int =0,n:int=_spriteUniformParamsMap.length; i < n; i += 2) {
-				one = _spriteUniformParamsMap[i+1];
+			for (var i:int = 0, n:int = _spriteUniformParamsMap.length; i < n; i += 2) {
+				one = _spriteUniformParamsMap[i + 1];
 				value = shaderValue[_spriteUniformParamsMap[i]];
 				if (value != null)
 					shaderCall += one.fun.call(this, one, value);
@@ -600,8 +593,8 @@ package laya.d3.shader {
 		public function uploadMaterialUniforms(shaderValue:Array):void {
 			var value:*;
 			var one:*, shaderCall:int = 0;
-			for (var i:int =0,n:int=_materialUniformParamsMap.length; i < n; i += 2) {
-				one = _materialUniformParamsMap[i+1];
+			for (var i:int = 0, n:int = _materialUniformParamsMap.length; i < n; i += 2) {
+				one = _materialUniformParamsMap[i + 1];
 				value = shaderValue[_materialUniformParamsMap[i]];
 				if (value != null)
 					shaderCall += one.fun.call(this, one, value);
@@ -616,16 +609,14 @@ package laya.d3.shader {
 		public function uploadRenderElementUniforms(shaderValue:Array):void {
 			var value:*;
 			var one:*, shaderCall:int = 0;
-			for (var i:int =0,n:int=_renderElementUniformParamsMap.length; i < n; i += 2) {
-				one = _renderElementUniformParamsMap[i+1];
+			for (var i:int = 0, n:int = _renderElementUniformParamsMap.length; i < n; i += 2) {
+				one = _renderElementUniformParamsMap[i + 1];
 				value = shaderValue[_renderElementUniformParamsMap[i]];
 				if (value != null)
 					shaderCall += one.fun.call(this, one, value);
 			}
 			Stat.shaderCall += shaderCall;
 		}
-
-		
 		
 		protected function _preGetParams(vs:String, ps:String):Object {
 			var text:Array = [vs, ps];

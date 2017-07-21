@@ -1,22 +1,16 @@
 package laya.d3.core.render {
-	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.RenderableSprite3D;
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.graphics.StaticBatch;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
-	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
-	import laya.d3.math.Vector3;
-	import laya.d3.math.Vector4;
 	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
 	import laya.renders.Render;
-	import laya.webgl.shader.ShaderValue;
 	
 	/**
 	 * @private

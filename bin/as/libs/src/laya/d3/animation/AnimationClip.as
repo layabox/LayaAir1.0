@@ -1,14 +1,10 @@
 package laya.d3.animation {
-	import laya.ani.math.BezierLerp;
-	import laya.d3.animation.AnimationClipParser01;
+	import laya.d3.component.Animator;
 	import laya.d3.core.Avatar;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.models.Mesh;
-	import laya.events.Event;
-	import laya.maths.MathUtil;
 	import laya.resource.Resource;
 	import laya.utils.Byte;
-	import laya.utils.Stat;
 	
 	/**
 	 * <code>AnimationClip</code> 类用于动画片段资源。
@@ -36,16 +32,20 @@ package laya.d3.animation {
 		private var _skinnedDatasCache:Array
 		/**@private */
 		public var _nodes:Vector.<KeyframeNode>;
+		/**@private */
+		public var _rootTransformNodes:Vector.<KeyframeNode>;
 		
 		/**@private */
-		public var _cacheUnTransformPropertyToNodeMap:Int32Array;
+		public var _cachePropertyToNodeMap:Int32Array;
 		/**@private */
-		public var _cacheNodeToUnTransformPropertyMap:Int32Array;
+		public var _nodeToCachePropertyMap:Int32Array;
 		
 		/**@private */
 		public var _duration:Number;
 		/**@private */
 		public var _frameRate:int;
+		/**是否循环。*/
+		public var islooping:Boolean;
 		
 		/**
 		 * 创建一个 <code>AnimationClip</code> 实例。
@@ -67,14 +67,24 @@ package laya.d3.animation {
 			var p1:Float32Array = nextFrame.data;
 			var tan1:Float32Array = nextFrame.inTangent;
 			
-			var t2:Number = t * t;
-			var t3:Number = t2 * t;
-			var a:Number = 2.0 * t3 - 3.0 * t2 + 1.0;
-			var b:Number = t3 - 2.0 * t2 + t;
-			var c:Number = t3 - t2;
-			var d:Number = -2.0 * t3 + 3.0 * t2;
-			for (var i:int = 0, n:int = out.length; i < n; i++)
-				out[i] = a * p0[i] + b * tan0[i] * dur + c * tan1[i] * dur + d * p1[i];
+			var isComputeParams:Boolean = false;
+			var a:Number, b:Number, c:Number, d:Number;
+			for (var i:int = 0, n:int = out.length; i < n; i++) {
+				var t0:Number = tan0[i], t1:Number = tan1[i];
+				if (__JS__("Number.isFinite(t0) && Number.isFinite(t1)")) {//TODO:是否可以优化不计算
+					if (!isComputeParams) {
+						var t2:Number = t * t;
+						var t3:Number = t2 * t;
+						a = 2.0 * t3 - 3.0 * t2 + 1.0;
+						b = t3 - 2.0 * t2 + t;
+						c = t3 - t2;
+						d = -2.0 * t3 + 3.0 * t2;
+						isComputeParams = true;
+					}
+					out[i] = a * p0[i] + b * t0 * dur + c * t1 * dur + d * p1[i];
+				} else
+					out[i] = p0[i];
+			}
 		}
 		
 		/**
@@ -168,46 +178,73 @@ package laya.d3.animation {
 		/**
 		 * @private
 		 */
-		public function _evaluateAnimationlDatasCacheFrame(nodesFrameIndices:Array, frameIndex:int, playCurTime:Number, cacheNodesOriginalValue:Vector.<Float32Array>, publicAnimationDatas:Vector.<Float32Array>, cacheAnimationDatas:Vector.<Float32Array>):void {
-			var nodes:Vector.<KeyframeNode> = _nodes;
+		public function _evaluateAnimationlDatasCacheFrame(nodesFrameIndices:Array, animator:Animator, cacheNodesOriginalValue:Vector.<Float32Array>, publicAnimationDatas:Vector.<Float32Array>, cacheAnimationDatas:Vector.<Float32Array>, nodeOwners:Vector.<AnimationNode>):void {
 			var j:int, m:int;
-			for (var i:int = 0, n:int = nodes.length; i < n; i++) {
-				var node:KeyframeNode = nodes[i];
-				var realFrameIndex:int = nodesFrameIndices[i][frameIndex];
-				var isTransformproperty:Boolean = node.isTransformproperty;
+			for (var i:int = 0, n:int = _nodes.length; i < n; i++) {
+				if (!nodeOwners[i])//动画节点丢失时，忽略该节点动画
+					continue;
 				
+				var node:KeyframeNode = _nodes[i];
+				var frmaeIndices:Int32Array = nodesFrameIndices[i];
+				var realFrameIndex:int = frmaeIndices[animator.currentFrameIndex];
+				var cacheProperty:Boolean = node._cacheProperty;
 				var outDatas:Float32Array;
+				var lastFrameIndex:int;
 				if (realFrameIndex !== -1) {
-					if (isTransformproperty) {
-						outDatas = publicAnimationDatas[i];
-					} else {
-						outDatas = new Float32Array(node.keyFrameWidth);
-						cacheAnimationDatas[_cacheNodeToUnTransformPropertyMap[i]] = outDatas;
-					}
-					
 					var frame:Keyframe = node.keyFrames[realFrameIndex];
 					var nextKeyFrame:Keyframe = frame.next;
 					if (nextKeyFrame) {
+						if (cacheProperty) {
+							if (!cacheAnimationDatas)//TODO:
+								continue;
+							outDatas = new Float32Array(node.keyFrameWidth);
+							cacheAnimationDatas[_nodeToCachePropertyMap[i]] = outDatas;
+						} else {
+							outDatas = publicAnimationDatas[i];
+						}
+						
 						var t:Number;
 						var d:Number = frame.duration;
-						
 						if (d !== 0)
-							t = (playCurTime - frame.startTime) / d;
+							t = (animator.currentFrameTime - frame.startTime) / d;
 						else
 							t = 0;
 						_hermiteInterpolate(frame, t, d, outDatas);
 					} else {
+						if (cacheProperty) {
+							lastFrameIndex = animator._lastFrameIndex;
+							if (lastFrameIndex !== -1 && frmaeIndices[lastFrameIndex] === realFrameIndex)//只有非公共数据可以跳过，否则公共数据会错乱
+								continue;
+							
+							if (!cacheAnimationDatas)//TODO:
+								continue;
+							outDatas = new Float32Array(node.keyFrameWidth);
+							cacheAnimationDatas[_nodeToCachePropertyMap[i]] = outDatas;
+						} else {
+							outDatas = publicAnimationDatas[i];
+						}
+						
+						var frameData:Float32Array = frame.data;
 						for (j = 0, m = outDatas.length; j < m; j++)
-							outDatas[j] = frame.data[j];//设置当前帧数据，不能设为null，会造成跳过当前帧数据
+							outDatas[j] = frameData[j];//不能设为null，会造成跳过当前帧数据
 					}
 				} else {
-					if (isTransformproperty) {
-						outDatas = publicAnimationDatas[i];
-						for (j = 0, m = outDatas.length; j < m; j++)
-							outDatas[j] = cacheNodesOriginalValue[i][j];
+					if (cacheProperty) {
+						lastFrameIndex = animator._lastFrameIndex;
+						if (lastFrameIndex !== -1 && frmaeIndices[lastFrameIndex] === realFrameIndex)//只有非公共数据可以跳过，否则公共数据会错乱
+							continue;
+						
+						if (!cacheAnimationDatas)//TODO:
+							continue;
+						outDatas = new Float32Array(node.keyFrameWidth);
+						cacheAnimationDatas[_nodeToCachePropertyMap[i]] = outDatas;
 					} else {
-						//cacheAnimationDatas[_cacheNodeToUnTransformPropertyMap[i]] = null;
+						outDatas = publicAnimationDatas[i];
 					}
+					
+					var firstFrameDatas:Float32Array = node.keyFrames[0].data;
+					for (j = 0, m = outDatas.length; j < m; j++)
+						outDatas[j] = firstFrameDatas[j];
 				}
 			}
 		}

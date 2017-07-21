@@ -32,6 +32,13 @@ package laya.webgl.utils {
 		public function getUint16Array():Uint16Array {
 			return _uint16Array || (_uint16Array = new Uint16Array(_buffer));
 		}
+		
+		public function destory():void
+		{
+			_uint16Array = null;
+			_uint8Array = null;
+			_buffer = null;
+		}
 	
 	}
 

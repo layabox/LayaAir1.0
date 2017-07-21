@@ -1,7 +1,7 @@
 package laya.d3.water 
 {
+	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.render.BaseRender;
-	import laya.d3.core.Sprite3D;
 	
 	/**
 	 * ...
@@ -9,7 +9,7 @@ package laya.d3.water
 	 */
 	public class WaterRender extends BaseRender {
 		
-		public function WaterRender(owner:Sprite3D) {
+		public function WaterRender(owner:RenderableSprite3D) {
 			super(owner);
 		}
 		

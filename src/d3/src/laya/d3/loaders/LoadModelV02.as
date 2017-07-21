@@ -72,6 +72,7 @@ package laya.d3.loaders {
 			READ_BLOCK();
 			READ_STRINGS();
 			for (var i:int = 0, n:int = _BLOCK.count; i < n; i++) {
+				_readData.pos = _BLOCK.blockStarts[i] ;
 				var index:int = _readData.getUint16();
 				var blockName:String = _strings[index];
 				var fn:Function = LoadModelV02["READ_" + blockName];

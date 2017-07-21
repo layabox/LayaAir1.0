@@ -1,5 +1,6 @@
 package laya.media {
 	import laya.events.Event;
+	import laya.media.h5audio.AudioSound;
 	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.renders.Render;
@@ -34,7 +35,7 @@ package laya.media {
 		/**@private 是否背景音乐静音，默认为false。*/
 		private static var _musicMuted:Boolean = false;
 		/**@private 当前背景音乐url。*/
-		private static var _tMusic:String = null;
+		public static var _tMusic:String = null;
 		/**@private 当前背景音乐声道。*/
 		private static var _musicChannel:SoundChannel = null;
 		/**@private 当前播放的Channel列表。*/
@@ -53,6 +54,11 @@ package laya.media {
 		private static var _musicCompleteHandler:Handler = null;
 		/**@private */
 		public static var _soundClass:Class;
+		/**
+		 * 音效播放后自动删除。
+		 * @default true
+		 */
+		public static var autoReleaseSound:Boolean = true;
 		
 		/**
 		 * 添加播放的声音实例。
@@ -74,6 +80,18 @@ package laya.media {
 					_channels.splice(i, 1);
 				}
 			}
+		}
+		
+		/**@private */
+		public static function disposeSoundIfNotUsed(url:String):void
+		{
+			var i:int;
+			for (i = _channels.length - 1; i >= 0; i--) {
+				if (_channels[i].url==url) {
+					return;
+				}
+			}
+			destroySound(url);
 		}
 		
 		/**
@@ -192,7 +210,7 @@ package laya.media {
 		 * @return SoundChannel对象，通过此对象可以对声音进行控制，以及获取声音信息。
 		 */
 		public static function playSound(url:String, loops:int = 1, complete:Handler = null, soundClass:Class = null, startTime:Number = 0):SoundChannel {
-			if (!_isActive) return null;
+			if (!_isActive || !url) return null;
 			if (_muted) return null;
 			url = URL.formatURL(url);
 			if (url == _tMusic) {
@@ -216,6 +234,7 @@ package laya.media {
 			}
 			var channel:SoundChannel;
 			channel = tSound.play(startTime, loops);
+			if (!channel) return null;
 			channel.url = url;
 			channel.volume = (url == _tMusic) ? musicVolume : soundVolume;
 			channel.completeHandler = complete;
@@ -246,7 +265,7 @@ package laya.media {
 			url = URL.formatURL(url);
 			_tMusic = url;
 			if (_musicChannel) _musicChannel.stop();
-			return _musicChannel = playSound(url, loops, complete, null, startTime);
+			return _musicChannel = playSound(url, loops, complete, AudioSound, startTime);
 		}
 		
 		/**
@@ -297,8 +316,8 @@ package laya.media {
 		 * @param url  声音文件地址。
 		 */
 		public static function stopMusic():void {
-			_tMusic = null;
 			if (_musicChannel) _musicChannel.stop();
+			_tMusic = null;
 		}
 		
 		/**

@@ -160,8 +160,7 @@ package laya.display {
 			_one = null;
 			_render = _renderEmpty;
 			
-			_sp && (_sp._renderType &= ~RenderSprite.IMAGE);
-			_sp && (_sp._renderType &= ~RenderSprite.GRAPHICS);
+			_sp && (_sp._renderType &= ~RenderSprite.IMAGE & ~RenderSprite.GRAPHICS);
 			_repaint();
 			if (_vectorgraphArray) {
 				for (i = 0, len = _vectorgraphArray.length; i < len; i++) {
@@ -249,8 +248,8 @@ package laya.display {
 		 * @param m			（可选）矩阵信息。
 		 * @param alpha		（可选）透明度。
 		 */
-		public function drawTexture(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null, alpha:Number = 1):void {
-			if (!tex || alpha < 0.01) return;
+		public function drawTexture(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null, alpha:Number = 1):Array {
+			if (!tex || alpha < 0.01) return null;
 			if (!width) width = tex.sourceWidth;
 			if (!height) height = tex.sourceHeight;
 			
@@ -260,7 +259,7 @@ package laya.display {
 			height = tex.height * hRate;
 			//width = width - tex.sourceWidth + tex.width;
 			//height = height - tex.sourceHeight + tex.height;
-			if (tex.loaded && (width <= 0 || height <= 0)) return;
+			if (tex.loaded && (width <= 0 || height <= 0)) return null;
 			
 			//处理透明区域裁剪
 			//x += tex.offsetX;
@@ -296,6 +295,7 @@ package laya.display {
 				tex.once(Event.LOADED, this, _textureLoaded, [tex, args]);
 			}
 			_repaint();
+			return args;
 		}
 		
 		/**
@@ -446,6 +446,14 @@ package laya.display {
 		 */
 		public function alpha(value:Number):void {
 			_saveToCmd(Render._context._alpha, [value]);
+		}
+		
+		/**
+		 * 设置当前透明度。
+		 * @param	value 透明度。
+		 */
+		public function setAlpha(value:Number):void {
+			_saveToCmd(Render._context._setAlpha, [value]);
 		}
 		
 		/**

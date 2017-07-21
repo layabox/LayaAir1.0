@@ -243,12 +243,13 @@ package laya.renders {
 				_next._fun.call(_next, sprite, context, x, y);
 		}
 		
-		public function _childs(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+		
+		private function _childs_max(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			//'use strict';
 			var style:* = sprite._style;
-			var _tf:*= style._tf;
-			x = x - _tf.translateX + style.paddingLeft;	
-			y = y - _tf.translateY + style.paddingTop;
+			var tf:*= style._tf;
+			x = x -tf.translateX + style.paddingLeft;
+			y = y -tf.translateY + style.paddingTop;
 			/*[IF-FLASH]*/if (style.hasOwnProperty("_calculation")) {
 			//[IF-JS]if (style._calculation) {
 				var words:Vector.<HTMLChar> = sprite._getWords();
@@ -288,20 +289,52 @@ package laya.renders {
 			} else {
 				for (var i:int = 0; i < n; ++i)
 					(ele = (childs[i] as Sprite))._style.visible && ele.render(context, x, y);
+			}			
+		}
+		
+		public function _childs(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+			if (sprite._childRenderMax)
+			{
+				_childs_max(sprite, context, x, y);
+				return;
 			}
+			var childs:Array = sprite._childs, n:int = childs.length, ele:*;
+			
+			for (var i:int = 0; i < n; ++i)			
+				(ele = (childs[i] as Sprite))._style.visible && ele.render(context, x, y);
 		}
 		
 		public function _canvas(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var _cacheCanvas:* = sprite._$P.cacheCanvas;
-			var _next:RenderSprite = this._next;
-			
 			if (!_cacheCanvas) {
-				_next._fun.call(_next, sprite, context, x, y);
+				this._next._fun.call(this._next, sprite, context, x, y);
+				return;
+			}
+			
+			_cacheCanvas.type === 'bitmap' ? (Stat.canvasBitmap++) : (Stat.canvasNormal++);
+			var tx:RenderContext = _cacheCanvas.ctx;
+			
+			if (sprite._needRepaint() || !tx)
+			{
+				_canvas_repaint(sprite,context, x, y);
+			}
+			else
+			{
+				var tRec:Rectangle = _cacheCanvas._cacheRec;
+				context.drawCanvas(tx.canvas, x + tRec.x, y + tRec.y, tRec.width, tRec.height);
+			}
+		}
+		
+		private function _canvas_repaint(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var _cacheCanvas:* = sprite._$P.cacheCanvas;
+			var _next:RenderSprite = this._next;
+			if (!_cacheCanvas) {
+				_next._fun.call(_next, sprite, tx, x, y);
 				return;
 			}
 			var tx:RenderContext = _cacheCanvas.ctx;
-			var _realRepaint:Boolean = sprite._needRepaint();
 			var _repaint:Boolean = sprite._needRepaint() || (!tx);
 			var canvas:HTMLCanvas;
 			var left:Number;
@@ -309,32 +342,7 @@ package laya.renders {
 			var tRec:Rectangle;
 			var tCacheType:String = _cacheCanvas.type;
 			
-			//以下注释部分为实验性自动cache,勿删
-			//if (Render.isWebGL&&tCacheType == "normal"&&1)
-			//{
-				//if (_realRepaint)
-				//{
-					//_cacheCanvas.waitCount = 0;
-					//_cacheCanvas.cached = false;
-				//}else
-				//{
-					//_cacheCanvas.waitCount++;
-					//
-				//}
-				//if (_cacheCanvas.waitCount < 10)
-				//{
-					//_next._fun.call(_next, sprite, context, x, y);
-					//return;
-				//}else
-				//{
-					//if(_cacheCanvas.waitCount==10)
-						//if (!_repaint) _repaint = true;
-				//}
-			//}
-			
-			
 			tCacheType === 'bitmap' ? (Stat.canvasBitmap++) : (Stat.canvasNormal++);
-
 			if (_repaint) {
 				if (!_cacheCanvas._cacheRec)
 					_cacheCanvas._cacheRec = new Rectangle();
@@ -348,7 +356,6 @@ package laya.renders {
 					tRec.y = tRec.y - 16;
 					tRec.width = tRec.width + 32;
 					tRec.height = tRec.height + 32;
-					
 					tRec.x = Math.floor(tRec.x + x) - x;
 					tRec.y = Math.floor(tRec.y + y) - y;
 					tRec.width = Math.floor(tRec.width);
@@ -388,7 +395,6 @@ package laya.renders {
 					tRec.x -= scrollRect.x;
 					tRec.y -= scrollRect.y;
 				}
-				
 				w = tRec.width * scaleX;
 				h = tRec.height * scaleY;
 				left = tRec.x;
@@ -435,7 +441,6 @@ package laya.renders {
 						t = sprite._$P.cf;
 						t && ctx.setFilterMatrix && ctx.setFilterMatrix(t._mat, t._alpha);
 					}
-					
 					_next._fun.call(_next, sprite, tx, -left, -top);
 					if (!Render.isConchApp || Render.isConchWebGL) sprite._applyFilters();
 				}

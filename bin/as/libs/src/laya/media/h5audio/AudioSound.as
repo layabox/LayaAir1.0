@@ -27,7 +27,8 @@ package laya.media.h5audio {
 		 * 是否已加载完成
 		 */
 		public var loaded:Boolean = false;
-		
+		/**@private */
+		public static var _musicAudio:Audio;
 		/**
 		 * 释放声音
 		 *
@@ -36,9 +37,32 @@ package laya.media.h5audio {
 			var ad:Audio = _audioCache[url];
 			if (ad) {
 				ad.src = "";
-				delete _audioCache[url];
+				delete _audioCache[url];	
 			}
 		}
+		
+		/**@private */
+		private static function _initMusicAudio():void
+		{
+			if (_musicAudio) return;
+			if (!_musicAudio) _musicAudio = Browser.createElement("audio") as Audio;
+			Browser.document.addEventListener("touchstart", _makeMusicOK);
+		}
+		
+		/**@private */
+		private static function _makeMusicOK():void
+		{
+			Browser.document.removeEventListener("touchstart", _makeMusicOK);
+			if (!_musicAudio.src)
+			{
+				_musicAudio.src = "";
+				_musicAudio.load();
+			}else
+			{
+				_musicAudio.play();
+			}
+		}
+		
 		
 		/**
 		 * 加载声音
@@ -48,15 +72,35 @@ package laya.media.h5audio {
 		public function load(url:String):void {
 			url = URL.formatURL(url);
 			this.url = url;
-			var ad:Audio = _audioCache[url];
+			var ad:Audio;
+			if (url == SoundManager._tMusic)
+			{
+				_initMusicAudio();
+				ad = _musicAudio;
+				if (ad.src != url)
+				{
+					_audioCache[ad.src] = null;
+					ad = null;
+				}
+			}else
+			{
+				ad = _audioCache[url];
+			}
 			if (ad && ad.readyState >= 2) {
 				event(Event.COMPLETE);
 				return;
 			}
 			if (!ad) {
-				ad = Browser.createElement("audio") as Audio;
-				ad.src = url;
+				if (url == SoundManager._tMusic)
+				{
+					_initMusicAudio();
+					ad = _musicAudio;
+				}else
+				{
+					ad = Browser.createElement("audio") as Audio;		
+				}
 				_audioCache[url] = ad;
+				ad.src = url;		
 			}
 			
 			ad.addEventListener("canplaythrough", onLoaded);
@@ -99,18 +143,34 @@ package laya.media.h5audio {
 			//trace("playAudioSound");
 			if (!url) return null;
 			var ad:Audio;
-			ad = _audioCache[url];
+			if (url == SoundManager._tMusic)
+			{
+				ad = _musicAudio;
+			}else
+			{
+				ad = _audioCache[url];
+			}
+			
 			if (!ad) return null;
 			var tAd:Audio;
+
 			tAd = Pool.getItem("audio:" + url);
+			
 			if ( Render.isConchApp ){
 				if ( !tAd ){
 					tAd = Browser.createElement("audio") as Audio;
 					tAd.src = ad.src;
 				}
 			}
-			else{
-				tAd = tAd ? tAd : ad.cloneNode(true);
+			else {
+				if (url == SoundManager._tMusic)
+				{
+					_initMusicAudio();
+					tAd = _musicAudio;		
+				}else
+				{
+					tAd = tAd ? tAd : ad.cloneNode(true);
+				}			
 			}
 			var channel:AudioSoundChannel = new AudioSoundChannel(tAd);
 			channel.url = this.url;

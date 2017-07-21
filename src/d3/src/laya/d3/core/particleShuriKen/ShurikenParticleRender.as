@@ -1,7 +1,6 @@
 package laya.d3.core.particleShuriKen {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
-	import laya.d3.core.particle.Particle3D;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
 	import laya.d3.core.particleShuriKen.module.GradientDataNumber;
 	import laya.d3.core.particleShuriKen.module.SizeOverLifetime;
@@ -19,6 +18,13 @@ package laya.d3.core.particleShuriKen {
 	 * <code>ShurikenParticleRender</code> 类用于创建3D粒子渲染器。
 	 */
 	public class ShurikenParticleRender extends BaseRender {
+		/** @private */
+		private var _position:Vector3 = new Vector3();
+		/** @private */
+		private var _rotation:Quaternion = new Quaternion();
+		/** @private */
+		private var _scale:Vector3 = new Vector3();
+		
 		/** @private */
 		private var _finalGravity:Vector3 = new Vector3();
 		
@@ -179,25 +185,26 @@ package laya.d3.core.particleShuriKen {
 		override public function _renderUpdate(projectionView:Matrix4x4):void {
 			var particleSystem:ShurikenParticleSystem = (_owner as ShuriKenParticle3D).particleSystem;
 			var transform:Transform3D = _owner.transform;
+			transform.worldMatrix.decomposeTransRotScale(_position, _rotation, _scale);
+			
 			switch (particleSystem.simulationSpace) {
 			case 0: //World
 				_setShaderValueColor(ShuriKenParticle3D.WORLDPOSITION, Vector3.ZERO);//TODO:是否可不传
 				break;
 			case 1: //Local
-				_setShaderValueColor(ShuriKenParticle3D.WORLDPOSITION, transform.position);
+				_setShaderValueColor(ShuriKenParticle3D.WORLDPOSITION, _position);
 				break;
 			default: 
 				throw new Error("ShurikenParticleMaterial: SimulationSpace value is invalid.");
 			}
 			
-			Matrix4x4.createFromQuaternion(transform.rotation, _tempRotationMatrix);
+			Matrix4x4.createFromQuaternion(_rotation, _tempRotationMatrix);
 			_setShaderValueMatrix4x4(ShuriKenParticle3D.WORLDROTATIONMATRIX, _tempRotationMatrix);
 			
 			switch (particleSystem.scaleMode) {
 			case 0: 
-				var scale:Vector3 = transform.scale;
-				_setShaderValueColor(ShuriKenParticle3D.POSITIONSCALE, scale);
-				_setShaderValueColor(ShuriKenParticle3D.SIZESCALE, scale);
+				_setShaderValueColor(ShuriKenParticle3D.POSITIONSCALE, _scale);
+				_setShaderValueColor(ShuriKenParticle3D.SIZESCALE, _scale);
 				break;
 			case 1: 
 				var localScale:Vector3 = transform.localScale;
@@ -205,7 +212,7 @@ package laya.d3.core.particleShuriKen {
 				_setShaderValueColor(ShuriKenParticle3D.SIZESCALE, localScale);
 				break;
 			case 2: 
-				_setShaderValueColor(ShuriKenParticle3D.POSITIONSCALE, transform.scale);
+				_setShaderValueColor(ShuriKenParticle3D.POSITIONSCALE, _scale);
 				_setShaderValueColor(ShuriKenParticle3D.SIZESCALE, Vector3.ONE);
 				break;
 			}

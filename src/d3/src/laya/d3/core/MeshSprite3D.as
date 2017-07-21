@@ -1,25 +1,17 @@
 package laya.d3.core {
-	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.RenderQueue;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.core.render.SubMeshRenderElement;
 	import laya.d3.graphics.MeshSprite3DStaticBatchManager;
 	import laya.d3.graphics.StaticBatchManager;
 	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.math.BoundBox;
-	import laya.d3.math.BoundSphere;
-	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
-	import laya.display.Node;
 	import laya.events.Event;
 	import laya.renders.Render;
-	import laya.utils.Stat;
 	
 	/**
 	 * <code>MeshSprite3D</code> 类用于创建网格。

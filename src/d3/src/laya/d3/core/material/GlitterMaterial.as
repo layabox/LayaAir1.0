@@ -1,10 +1,10 @@
 package laya.d3.core.material {
 	import laya.d3.core.glitter.Glitter;
-	import laya.d3.core.particle.Particle3D;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.tempelet.GlitterTemplet;
@@ -53,9 +53,7 @@ package laya.d3.core.material {
 		
 		public static const DIFFUSETEXTURE:int = 1;
 		public static const ALBEDO:int = 2;
-		public static const CURRENTTIME:int = 3;
-		public static const UNICOLOR:int = 4;
-		public static const DURATION:int = 5;
+		public static const UNICOLOR:int = 3;
 		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:GlitterMaterial = new GlitterMaterial();
@@ -68,26 +66,14 @@ package laya.d3.core.material {
 			return Laya.loader.create(url, null, null, GlitterMaterial);
 		}
 		
-		/**@private 渲染模式。*/
-		private var _renderMode:int;
-		
-		/**
-		 * 获取渲染状态。
-		 * @return 渲染状态。
-		 */
-		public function get renderMode():int {
-			return _renderMode;
-		}
-		
 		/**
 		 * 设置渲染模式。
 		 * @return 渲染模式。
 		 */
 		public function set renderMode(value:int):void {
-			_renderMode = value;
 			switch (value) {
 			case RENDERMODE_OPAQUE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
@@ -95,7 +81,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_OPAQUEDOUBLEFACE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_DISABLE;
@@ -119,7 +105,7 @@ package laya.d3.core.material {
 			//event(Event.RENDERQUEUE_CHANGED, this);
 			//break;
 			case RENDERMODE_TRANSPARENT: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -129,7 +115,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENTDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -139,7 +125,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_ADDTIVE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -149,7 +135,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_ADDTIVEDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -159,7 +145,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_TRANSPARENT: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = false;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -169,7 +155,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_TRANSPARENTDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = false;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -179,7 +165,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_ADDTIVE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = false;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -189,7 +175,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = false;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -199,7 +185,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENT: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthTest = false;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -209,7 +195,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENTDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthTest = false;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -219,7 +205,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthTest = false;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -229,7 +215,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthTest = false;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -262,6 +248,38 @@ package laya.d3.core.material {
 		}
 		
 		/**
+		 * 获取颜色。
+		 * @return 漫反射颜色。
+		 */
+		public function get color():Vector4 {
+			return _getColor(UNICOLOR);
+		}
+		
+		/**
+		 * 设置颜色。
+		 * @param value 颜色。
+		 */
+		public function set color(value:Vector4):void {
+			_setColor(UNICOLOR, value);
+		}
+		
+		/**
+		 * 获取反射率。
+		 * @return 反射率。
+		 */
+		public function get albedo():Vector4 {
+			return _getColor(ALBEDO);
+		}
+		
+		/**
+		 * 设置反射率。
+		 * @param value 反射率。
+		 */
+		public function set albedo(value:Vector4):void {
+			_setColor(ALBEDO, value);
+		}
+		
+		/**
 		 * @inheritDoc
 		 */
 		override public function setShaderName(name:String):void {
@@ -272,28 +290,8 @@ package laya.d3.core.material {
 			super();
 			setShaderName("GLITTER");
 			renderMode = RENDERMODE_OPAQUE;
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function _setMaterialShaderParams(state:RenderState):void {
-			var glitter:Glitter = state.owner as Glitter;
-			var templet:GlitterTemplet = glitter.templet;
-			
-			_setColor(UNICOLOR, templet.color);
-			_setNumber(DURATION, templet.lifeTime);
-			_setColor(ALBEDO, templet._albedo);
-			_setNumber(CURRENTTIME, templet._currentTime);//设置粒子的时间参数，可通过此参数停止粒子动画
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function cloneTo(destObject:*):void {
-			super.cloneTo(destObject);
-			var dest:GlitterMaterial = destObject as GlitterMaterial;
-			dest._renderMode = _renderMode;
+			_setColor(UNICOLOR, new Vector4(1.0, 1.0, 1.0, 1.0));
+			_setColor(ALBEDO, new Vector4(1.0, 1.0, 1.0, 1.0));
 		}
 	
 	}

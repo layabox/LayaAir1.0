@@ -98,29 +98,17 @@ package laya.d3.core.material {
 			return Laya.loader.create(url, null, null, StandardMaterial);
 		}
 		
-		/**@private */
-		private var _renderMode:int;
-		
 		/** @private */
 		protected var _transformUV:TransformUV = null;
-		
-		/**
-		 * 获取渲染状态。
-		 * @return 渲染状态。
-		 */
-		public function get renderMode():int {
-			return _renderMode;
-		}
 		
 		/**
 		 * 设置渲染模式。
 		 * @return 渲染模式。
 		 */
 		public function set renderMode(value:int):void {
-			_renderMode = value;
 			switch (value) {
 			case RENDERMODE_OPAQUE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
@@ -128,7 +116,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_OPAQUEDOUBLEFACE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_DISABLE;
@@ -139,12 +127,12 @@ package laya.d3.core.material {
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				alphaTest = true;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_CUTOUTDOUBLEFACE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_DISABLE;
@@ -152,7 +140,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENT: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -162,7 +150,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENTDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -172,7 +160,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_ADDTIVE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -182,7 +170,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_ADDTIVEDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -192,7 +180,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_TRANSPARENT: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = false;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -202,7 +190,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_TRANSPARENTDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = false;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -212,7 +200,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_ADDTIVE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = false;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -222,7 +210,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = false;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -232,7 +220,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENT: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthTest = false;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -242,7 +230,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENTDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthTest = false;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -252,7 +240,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthTest = false;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -262,7 +250,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthTest = false;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -596,19 +584,11 @@ package laya.d3.core.material {
 		}
 		
 		/**
-		 * @private
-		 */
-		override public function _setMaterialShaderParams(state:RenderState):void {
-			(_transformUV) && (_transformUV.matrix);//触发UV矩阵更新TODO:临时
-		}
-		
-		/**
 		 * @inheritDoc
 		 */
 		override public function cloneTo(destObject:*):void {
 			super.cloneTo(destObject);
 			var dest:StandardMaterial = destObject as StandardMaterial;
-			dest._renderMode = _renderMode;
 			(_transformUV) && (dest._transformUV = _transformUV.clone());
 		}
 	}

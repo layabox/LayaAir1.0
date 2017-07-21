@@ -32,6 +32,7 @@
 
 		uint16 动画名字符索引;
 		float32 动画总时长;
+		bool islooping;
 		uint16 frameRate;
 		int16 节点个数;
 		for(int i=0;i<节点个数;i++){

@@ -1,19 +1,16 @@
 package laya.d3.component {
-	import laya.ani.AnimationContent;
-	import laya.ani.AnimationNodeContent;
 	import laya.ani.AnimationState;
 	import laya.d3.animation.AnimationClip;
-	import laya.d3.animation.KeyframeNode;
 	import laya.d3.animation.AnimationNode;
-	import laya.d3.animation.Keyframe;
 	import laya.d3.animation.AnimationTransform3D;
+	import laya.d3.animation.Keyframe;
+	import laya.d3.animation.KeyframeNode;
 	import laya.d3.core.Avatar;
 	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.resource.IDestroy;
 	import laya.utils.Stat;
@@ -23,15 +20,13 @@ package laya.d3.component {
 	 */
 	public class Animator extends Component3D implements IDestroy {
 		/** @private */
-		private var _lastFrameIndex:int;
+		private var _updateTransformPropertyLoopCount:int;
 		/**@private */
 		private var _cacheFrameRateInterval:Number;
 		/**@private */
 		private var _cacheFrameRate:int;
 		/**@private */
 		private var _cachePlayRate:Number;
-		/**@private */
-		private var _playLoop:Boolean;
 		/**@private */
 		private var _playStart:Number;
 		/**@private */
@@ -49,7 +44,7 @@ package laya.d3.component {
 		/**@private */
 		private var _currentFrameTime:Number;
 		/**@private */
-		private var _currentKeyframeIndex:int;
+		private var _currentFrameIndex:int;
 		/**@private */
 		private var _stopWhenCircleFinish:Boolean;
 		/**@private */
@@ -92,6 +87,8 @@ package laya.d3.component {
 		public var _avatarNodes:Vector.<AnimationNode>;
 		/**@private	*/
 		public var _canCache:Boolean;
+		/** @private */
+		public var _lastFrameIndex:int;
 		
 		/**是否为缓存模式。*/
 		public var isCache:Boolean;
@@ -223,8 +220,8 @@ package laya.d3.component {
 		 * 获取当前帧数
 		 * @return	 当前帧数
 		 */
-		public function get currentKeyframeIndex():int {
-			return _currentKeyframeIndex;
+		public function get currentFrameIndex():int {
+			return _currentFrameIndex;
 		}
 		
 		/**
@@ -294,8 +291,8 @@ package laya.d3.component {
 			_startUpdateLoopCount = Stat.loopCount;
 			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
 			_currentTime = value /*% playDuration*/;
-			_currentKeyframeIndex = Math.floor(currentPlayTime / cacheFrameInterval);
-			_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
+			_currentFrameIndex = Math.floor(currentPlayTime / cacheFrameInterval);
+			_currentFrameTime = _currentFrameIndex * cacheFrameInterval;
 		}
 		
 		/**
@@ -306,13 +303,14 @@ package laya.d3.component {
 			super();
 			_clipNames = new Vector.<String>();
 			_clips = new Vector.<AnimationClip>();
-			_cacheNodesOwners = new Vector.<Vector.<Sprite3D>>();
+			_cacheNodesOwners = new Vector.<Vector.<AnimationNode>>();
 			_cacheNodesOriginalValue = new Vector.<Vector.<Float32Array>>();
 			_cacheNodesToSpriteMap = new Vector.<int>();
 			_cacheSpriteToNodesMap = new Vector.<int>();
 			_cacheFullFrames = new Vector.<Array>();
 			_publicClipAnimationDatas = new Vector.<Vector.<Float32Array>>();
 			
+			_updateTransformPropertyLoopCount = -1;
 			_lastFrameIndex = -1;
 			_defaultClipIndex = -1;
 			_cachePlayRate = 1.0;
@@ -320,7 +318,7 @@ package laya.d3.component {
 			_playEnd = 0;
 			_playDuration = 0;
 			_currentPlayClip = null;
-			_currentKeyframeIndex = -1;
+			_currentFrameIndex = -1;
 			_currentTime = 0.0;
 			_stopWhenCircleFinish = false;
 			_elapsedPlaybackTime = 0;
@@ -339,11 +337,12 @@ package laya.d3.component {
 			var frameNodesCount:int = frameNodes.length;
 			var owners:Vector.<AnimationNode> = _cacheNodesOwners[clipIndex];
 			var originalValues:Vector.<Float32Array> = _cacheNodesOriginalValue[clipIndex];
-			var animationDatas:Vector.<Float32Array> = _publicClipAnimationDatas[clipIndex];
+			var publicDatas:Vector.<Float32Array> = _publicClipAnimationDatas[clipIndex];
 			owners.length = frameNodesCount;
 			originalValues.length = frameNodesCount;
-			animationDatas.length = frameNodesCount;
+			publicDatas.length = frameNodesCount;
 			var rootBone:AnimationNode = _avatarRootNode;
+			
 			for (var i:int = 0; i < frameNodesCount; i++) {
 				var nodeOwner:AnimationNode = rootBone;
 				var node:KeyframeNode = frameNodes[i];
@@ -362,7 +361,7 @@ package laya.d3.component {
 					continue;
 				owners[i] = nodeOwner;
 				originalValues[i] = new Float32Array(node.keyFrameWidth);
-				animationDatas[i] = new Float32Array(node.keyFrameWidth);
+				(node._cacheProperty) || (publicDatas[i] = new Float32Array(node.keyFrameWidth));//TODO:是否可以缩减队列，减少空循环
 			}
 		}
 		
@@ -510,10 +509,10 @@ package laya.d3.component {
 		 * @private
 		 */
 		private function _onOwnerActiveHierarchyChanged():void {
-				if (_owner.displayedInStage&&_owner.activeInHierarchy)
-					Laya.timer.frameLoop(1, this, _updateAnimtionPlayer);//TODO:当前帧注册，下一帧执行
-				else
-					Laya.timer.clear(this, _updateAnimtionPlayer);
+			if (_owner.displayedInStage && _owner.activeInHierarchy)
+				Laya.timer.frameLoop(1, this, _updateAnimtionPlayer);//TODO:当前帧注册，下一帧执行
+			else
+				Laya.timer.clear(this, _updateAnimtionPlayer);
 		}
 		
 		/**
@@ -536,8 +535,8 @@ package laya.d3.component {
 		 */
 		private function _setPlayParams(time:Number, cacheFrameInterval:Number):void {
 			_currentTime = time;
-			_currentKeyframeIndex = Math.floor(currentPlayTime / cacheFrameInterval + 0.00001);
-			_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
+			_currentFrameIndex = Math.floor(currentPlayTime / cacheFrameInterval + 0.00001);
+			_currentFrameTime = _currentFrameIndex * cacheFrameInterval;
 		}
 		
 		/**
@@ -545,27 +544,27 @@ package laya.d3.component {
 		 */
 		private function _setPlayParamsWhenStop(currentAniClipPlayDuration:Number, cacheFrameInterval:Number):void {
 			_currentTime = currentAniClipPlayDuration;
-			_currentKeyframeIndex = Math.floor(currentAniClipPlayDuration / cacheFrameInterval + 0.00001);
-			_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
+			_currentFrameIndex = Math.floor(currentAniClipPlayDuration / cacheFrameInterval + 0.00001);
+			_currentFrameTime = _currentFrameIndex * cacheFrameInterval;
 			_currentPlayClip = null;//动画结束	
 		}
 		
 		/** @private */
 		private function _onAnimationStop():void {
 			_lastFrameIndex = -1;
-			(returnToZeroStopped) && (_revertKeyframeNodes());
+			(returnToZeroStopped) && (_revertKeyframeNodes(_currentPlayClip, _currentPlayClipIndex));
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _setAnimationProperty(nodeOwners:Vector.<AnimationNode>, publicClipAnimatioDatas:Vector.<Float32Array>):void {
-			var nodeToUnTransformPropertyMap:Int32Array = _currentPlayClip._cacheNodeToUnTransformPropertyMap;
+		private function _setAnimationClipProperty(nodeOwners:Vector.<AnimationNode>, publicClipAnimatioDatas:Vector.<Float32Array>):void {
+			var nodeToCachePropertyMap:Int32Array = _currentPlayClip._nodeToCachePropertyMap;
 			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
 				var owner:AnimationNode = nodeOwners[i];
 				if (owner) {
 					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[i];
-					var datas:Float32Array = ketframeNode.isTransformproperty ? publicClipAnimatioDatas[i] : _curClipAnimationDatas[nodeToUnTransformPropertyMap[i]];
+					var datas:Float32Array = (ketframeNode._cacheProperty) ? _curClipAnimationDatas[nodeToCachePropertyMap[i]] : publicClipAnimatioDatas[i];
 					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, datas));
 				}
 			}
@@ -574,12 +573,27 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _setAnimationPropertyCache(nodeOwners:Vector.<AnimationNode>):void {
-			var cacheUnTransformPropertyToNodeMap:Int32Array = _currentPlayClip._cacheUnTransformPropertyToNodeMap;
-			for (var i:int = 0, n:int = cacheUnTransformPropertyToNodeMap.length; i < n; i++) {
-				var owner:AnimationNode = nodeOwners[cacheUnTransformPropertyToNodeMap[i]];
+		private function _setAnimationClipTransformProperty(nodeOwners:Vector.<AnimationNode>, publicClipAnimatioDatas:Vector.<Float32Array>):void {
+			var nodeToUnTransformPropertyMap:Int32Array = _currentPlayClip._nodeToCachePropertyMap;
+			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
+				var owner:AnimationNode = nodeOwners[i];
 				if (owner) {
-					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[cacheUnTransformPropertyToNodeMap[i]];
+					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[i];
+					var datas:Float32Array = ketframeNode._cacheProperty ? null : publicClipAnimatioDatas[i];//TODO:遍历优化
+					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, datas));
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _setAnimationClipPropertyCache(nodeOwners:Vector.<AnimationNode>):void {
+			var cachePropertyToNodeMap:Int32Array = _currentPlayClip._cachePropertyToNodeMap;
+			for (var i:int = 0, n:int = cachePropertyToNodeMap.length; i < n; i++) {
+				var owner:AnimationNode = nodeOwners[cachePropertyToNodeMap[i]];
+				if (owner) {
+					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[cachePropertyToNodeMap[i]];
 					var datas:Float32Array = _curClipAnimationDatas[i];
 					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, datas));
 				}
@@ -589,10 +603,10 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _revertKeyframeNodes():void {
-			var originalValues:Vector.<Float32Array> = _cacheNodesOriginalValue[_currentPlayClipIndex];
-			var frameNodes:Vector.<KeyframeNode> = _currentPlayClip._nodes;
-			var nodeOwners:Vector.<AnimationNode> = _cacheNodesOwners[_currentPlayClipIndex];
+		private function _revertKeyframeNodes(clip:AnimationClip, clipIndex:int):void {
+			var originalValues:Vector.<Float32Array> = _cacheNodesOriginalValue[clipIndex];
+			var frameNodes:Vector.<KeyframeNode> = clip._nodes;
+			var nodeOwners:Vector.<AnimationNode> = _cacheNodesOwners[clipIndex];
 			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
 				var owner:AnimationNode = nodeOwners[i];
 				(owner) && (AnimationNode._propertySetFuncs[frameNodes[i].propertyNameID](owner, originalValues[i]));
@@ -602,7 +616,7 @@ package laya.d3.component {
 		/**
 		 *@private
 		 */
-		public function _updateAnimation(avatarAnimationDatas:Vector.<Matrix4x4>):void {//TODO:根节点是否缓存local
+		public function _updateAvatarNodes(avatarAnimationDatas:Vector.<Matrix4x4>):void {
 			for (var i:int = 0, n:int = _cacheSpriteToNodesMap.length; i < n; i++) {
 				var node:AnimationNode = _avatarNodes[_cacheSpriteToNodesMap[i]];
 				var spriteTransform:Transform3D = node._transform._entity;
@@ -611,7 +625,6 @@ package laya.d3.component {
 					var avatarWorldMatrix:Matrix4x4 = new Matrix4x4();
 					avatarAnimationDatas[i] = avatarWorldMatrix;
 					nodeTransform._setWorldMatrixAndUpdate(avatarWorldMatrix);
-					
 					var spriteWorldMatrix:Matrix4x4 = spriteTransform.worldMatrix;
 					Matrix4x4.multiply(_owner._transform.worldMatrix, avatarWorldMatrix, spriteWorldMatrix);
 					spriteTransform.worldMatrix = spriteWorldMatrix;
@@ -622,7 +635,7 @@ package laya.d3.component {
 		/**
 		 *@private
 		 */
-		public function _updateAnimationCache(avatarAnimationDatas:Vector.<Matrix4x4>):void {//TODO:根节点是否缓存local
+		public function _updateAvatarNodesCache(avatarAnimationDatas:Vector.<Matrix4x4>):void {//TODO:if (avatarWorldMatrix)判断浪费
 			for (var i:int = 0, n:int = _cacheSpriteToNodesMap.length; i < n; i++) {
 				var node:AnimationNode = _avatarNodes[_cacheSpriteToNodesMap[i]];
 				var spriteTransform:Transform3D = node._transform._entity;
@@ -648,7 +661,7 @@ package laya.d3.component {
 			(_startUpdateLoopCount !== Stat.loopCount) && (time = elapsedTime * playbackRate, _elapsedPlaybackTime += time);
 			
 			var currentAniClipPlayDuration:Number = playDuration;
-			if ((!_playLoop && _elapsedPlaybackTime >= currentAniClipPlayDuration)) {
+			if ((!_currentPlayClip.islooping && _elapsedPlaybackTime >= currentAniClipPlayDuration)) {
 				_setPlayParamsWhenStop(currentAniClipPlayDuration, cacheFrameInterval);
 				_onAnimationStop();
 				this.event(Event.STOPPED);
@@ -669,7 +682,7 @@ package laya.d3.component {
 						
 						if (time < currentAniClipPlayDuration) {
 							_setPlayParams(time, cacheFrameInterval);
-							_revertKeyframeNodes();
+							//_revertKeyframeNodes(_currentPlayClip, _currentPlayClipIndex);
 							this.event(Event.COMPLETE);
 						}
 						
@@ -685,10 +698,25 @@ package laya.d3.component {
 					this.event(Event.STOPPED);
 					return;
 				}
-				_currentTime = _currentFrameTime = _currentKeyframeIndex = 0;
-				_revertKeyframeNodes();
+				_currentTime = _currentFrameTime = _currentFrameIndex = 0;
+				//_revertKeyframeNodes(_currentPlayClip, _currentPlayClipIndex);
 				this.event(Event.COMPLETE);
 			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _updateTansformProperty():void {
+			//if (_lastFrameIndex === frameIndex)
+			//return;
+			
+			if (_updateTransformPropertyLoopCount === Stat.loopCount)
+				return;
+			
+			var publicDatas:Vector.<Float32Array> = _publicClipAnimationDatas[_currentPlayClipIndex];
+			currentPlayClip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, _cacheNodesOriginalValue[_currentPlayClipIndex], publicDatas, null, _cacheNodesOwners[_currentPlayClipIndex]);
+			_setAnimationClipTransformProperty(_cacheNodesOwners[_currentPlayClipIndex], publicDatas);
 		}
 		
 		/**
@@ -707,41 +735,40 @@ package laya.d3.component {
 			_canCache = isCache && rate >= cacheRate;
 			var frameIndex:int = -1;
 			if (_canCache) {
-				frameIndex = _currentKeyframeIndex;
+				frameIndex = _currentFrameIndex;
 				if (_lastFrameIndex === frameIndex)
 					return;
 				
 				var cachedClipAniDatas:Vector.<Float32Array> = clip._getAnimationDataWithCache(cacheRate, frameIndex);
-				var cachedAvatarAniDatas:Vector.<Matrix4x4> = clip._getAvatarDataWithCache(_avatar, _cachePlayRate, _currentKeyframeIndex);//TODO:
+				var cachedAvatarAniDatas:Vector.<Matrix4x4> = clip._getAvatarDataWithCache(_avatar, _cachePlayRate, _currentFrameIndex);//TODO:
 				if (cachedClipAniDatas || cachedAvatarAniDatas) {
 					_curClipAnimationDatas = cachedClipAniDatas;
-					_setAnimationPropertyCache(_cacheNodesOwners[_currentPlayClipIndex]);
-					_updateAnimationCache(cachedAvatarAniDatas);
+					_setAnimationClipPropertyCache(_cacheNodesOwners[_currentPlayClipIndex]);
+					_updateAvatarNodesCache(cachedAvatarAniDatas);
 					_lastFrameIndex = frameIndex;
 					return;
 				}
 				
 				var nodes:Vector.<KeyframeNode> = clip._nodes;
-				var unTransformPropertyMap:Int32Array = clip._cacheUnTransformPropertyToNodeMap;
+				var unTransformPropertyMap:Int32Array = clip._cachePropertyToNodeMap;
 				_curClipAnimationDatas = new Vector.<Float32Array>();
 				_curClipAnimationDatas.length = unTransformPropertyMap.length;
-				
 				_curAvatarAnimationDatas = new Vector.<Matrix4x4>();
 				_curAvatarAnimationDatas.length = _cacheSpriteToNodesMap.length;
-				
+				var nodeOwners:Vector.<AnimationNode> = _cacheNodesOwners[_currentPlayClipIndex];
 				var publicClipAnimationDatas:Vector.<Float32Array> = _publicClipAnimationDatas[_currentPlayClipIndex];
-				clip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], frameIndex, _currentFrameTime, _cacheNodesOriginalValue[_currentPlayClipIndex], publicClipAnimationDatas, _curClipAnimationDatas);
-				_setAnimationProperty(_cacheNodesOwners[_currentPlayClipIndex], publicClipAnimationDatas);
-				_updateAnimation(_curAvatarAnimationDatas);
-				
+				clip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, _cacheNodesOriginalValue[_currentPlayClipIndex], publicClipAnimationDatas, _curClipAnimationDatas, nodeOwners);
+				_setAnimationClipProperty(nodeOwners, publicClipAnimationDatas);
+				_updateAvatarNodes(_curAvatarAnimationDatas);
 				clip._cacheAnimationData(cacheRate, frameIndex, _curClipAnimationDatas);
 				clip._cacheAvatarData(_avatar, cacheRate, frameIndex, _curAvatarAnimationDatas);
+				_updateTransformPropertyLoopCount = Stat.loopCount;
 			} else {
 				_curClipAnimationDatas = _publicClipAnimationDatas[_currentPlayClipIndex];
 				_curAvatarAnimationDatas = _publicAvatarAnimationDatas;
 				clip._evaluateAnimationlDatasRealTime(currentPlayTime, _curClipAnimationDatas);
-				_setAnimationProperty(_cacheNodesOwners[_currentPlayClipIndex], _curClipAnimationDatas);
-				_updateAnimation(_curAvatarAnimationDatas);
+				_setAnimationClipProperty(_cacheNodesOwners[_currentPlayClipIndex], _curClipAnimationDatas);
+				_updateAvatarNodes(_curAvatarAnimationDatas);
 			}
 			
 			_lastFrameIndex = frameIndex;
@@ -754,7 +781,7 @@ package laya.d3.component {
 			for (var i:int = 0, n:int = _avatarNodes.length; i < n; i++)
 				_checkAnimationNode(_avatarNodes[i], _owner);
 			
-			_setAvatarToChild(_owner);
+			_setAnimatorToChild(_owner);
 		}
 		
 		/**
@@ -777,13 +804,13 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _setAvatarToChild(sprite:Sprite3D):void {
+		private function _setAnimatorToChild(sprite:Sprite3D):void {
 			if (sprite is SkinnedMeshSprite3D)
 				(sprite as SkinnedMeshSprite3D).skinnedMeshRender._cacheAnimator = this;
 			
 			var childs:Array = sprite._childs;
 			for (var i:int = 0, n:int = childs.length; i < n; i++)
-				_setAvatarToChild(childs[i]);
+				_setAnimatorToChild(childs[i]);
 		}
 		
 		/**
@@ -824,6 +851,19 @@ package laya.d3.component {
 			_publicClipAnimationDatas = null;
 			_clips = null;
 			_cacheFullFrames = null;
+		}
+		
+		/**
+		 * @private
+		 */
+		override public function _cloneTo(dest:Component3D):void {
+			var animator:Animator = dest as Animator;
+			animator.avatar = avatar;
+			var clipCount:int = _clips.length;
+			for (var i:int = 0, n:int = _clips.length; i < n; i++)
+				animator.addClip(_clips[i]);
+			animator.clip = clip;
+			animator.play();//TODO:
 		}
 		
 		/**
@@ -904,12 +944,11 @@ package laya.d3.component {
 		/**
 		 * 播放动画。
 		 * @param	name 如果为null则播放默认动画，否则按名字播放动画片段。
-		 * @param	loop 是否循环播放。
 		 * @param	playbackRate 播放速率。
 		 * @param	startFrame 开始帧率。
 		 * @param	endFrame 结束帧率.-1表示为最大结束帧率。
 		 */
-		public function play(name:String = null, loop:Boolean = true, playbackRate:Number = 1.0, startFrame:int = 0, endFrame:int = -1):void {
+		public function play(name:String = null, playbackRate:Number = 1.0, startFrame:int = 0, endFrame:int = -1):void {
 			if (!name && _defaultClipIndex == -1)
 				throw new Error("Animator:must have  default clip value,please set clip property.");
 			
@@ -920,27 +959,32 @@ package laya.d3.component {
 				throw new Error("Animator:start must less than end.");
 			
 			var lastPlayClip:AnimationClip = _currentPlayClip;
-			if (name)
-				_currentPlayClip = _clips[_clipNames.indexOf(name)];
-			else
+			var lastPlayClipIndex:int = _currentPlayClipIndex;
+			if (name) {
+				_currentPlayClipIndex = _clipNames.indexOf(name);
+				_currentPlayClip = _clips[_currentPlayClipIndex];
+			} else {
+				_currentPlayClipIndex = _defaultClipIndex;
 				_currentPlayClip = _clips[_defaultClipIndex];
+			}
 			
 			_currentTime = 0;
 			_currentFrameTime = 0;
 			_elapsedPlaybackTime = 0;
-			_playLoop = loop;
 			this.playbackRate = playbackRate;
 			_playStart = startFrame * 1.0 / _currentPlayClip._frameRate;
 			_playEnd = (endFrame === -1) ? _currentPlayClip._duration : endFrame * 1.0 / _currentPlayClip._frameRate;
 			_paused = false;
 			
-			_currentPlayClipIndex = _defaultClipIndex;
-			_currentKeyframeIndex = 0;
+			_currentFrameIndex = 0;
 			_startUpdateLoopCount = Stat.loopCount;
 			
 			this.event(Event.PLAYED);
 			
-			(lastPlayClip) && (_offGetOriginalValuesEvent(_avatar, lastPlayClip));
+			if (lastPlayClip) {
+				(lastPlayClip !== _currentPlayClip) && (_revertKeyframeNodes(lastPlayClip, lastPlayClipIndex));//TODO:还原动画节点，防止切换动作时跳帧，如果是从stop而来是否无需设置
+				_offGetOriginalValuesEvent(_avatar, lastPlayClip);
+			}
 			if (_avatar) {
 				if (_avatar.loaded)
 					_getOriginalValuesAsync(_currentPlayClipIndex, _currentPlayClip);
@@ -962,7 +1006,7 @@ package laya.d3.component {
 		 */
 		public function stop(immediate:Boolean = true):void {
 			if (immediate) {
-				_currentTime = _currentFrameTime = _currentKeyframeIndex = 0;
+				_currentTime = _currentFrameTime = _currentFrameIndex = 0;
 				_currentPlayClip = null;
 				_onAnimationStop();
 				this.event(Event.STOPPED);

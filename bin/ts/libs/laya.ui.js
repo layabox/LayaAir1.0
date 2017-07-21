@@ -9,8 +9,8 @@
 	var Sprite=laya.display.Sprite,Text=laya.display.Text,Texture=laya.resource.Texture,Tween=laya.utils.Tween;
 	var Utils=laya.utils.Utils;
 	Laya.interface('laya.ui.IItem');
-	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.ISelect');
+	Laya.interface('laya.ui.IRender');
 	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
@@ -3380,6 +3380,7 @@
 			this._ty=Laya.stage.mouseY;
 			Laya.stage.on(/*laya.events.Event.MOUSE_MOVE*/"mousemove",this,this.mouseMove);
 			Laya.stage.once(/*laya.events.Event.MOUSE_UP*/"mouseup",this,this.mouseUp);
+			Laya.stage.once(/*laya.events.Event.MOUSE_OUT*/"mouseout",this,this.mouseUp);
 			this.showValueText();
 		}
 
@@ -3415,6 +3416,8 @@
 		*/
 		__proto.mouseUp=function(e){
 			Laya.stage.off(/*laya.events.Event.MOUSE_MOVE*/"mousemove",this,this.mouseMove);
+			Laya.stage.off(/*laya.events.Event.MOUSE_UP*/"mouseup",this,this.mouseUp);
+			Laya.stage.off(/*laya.events.Event.MOUSE_OUT*/"mouseout",this,this.mouseUp);
 			this.sendChangeEvent(/*laya.events.Event.CHANGED*/"changed");
 			this.hideValueText();
 		}
@@ -3599,6 +3602,7 @@
 			},function(value){
 			this._bg.sizeGrid=value;
 			this._bar.sizeGrid=value;
+			if (this._progress)this._progress.sizeGrid=this._bar.sizeGrid;
 		});
 
 		/**
@@ -5023,11 +5027,11 @@
 			if (!texture)return;
 			var isHorizontal=(this._direction==="horizontal");
 			if (isHorizontal){
-				this._wordsW=this._valueArr.length *(texture.width+this.spaceX);
-				this._wordsH=texture.height;
+				this._wordsW=this._valueArr.length *(texture.sourceWidth+this.spaceX);
+				this._wordsH=texture.sourceHeight;
 				}else{
-				this._wordsW=texture.width;
-				this._wordsH=(texture.height+this.spaceY)*this._valueArr.length;
+				this._wordsW=texture.sourceWidth;
+				this._wordsH=(texture.sourceHeight+this.spaceY)*this._valueArr.length;
 			};
 			var dX=0;
 			if (this._width){
@@ -5046,8 +5050,8 @@
 				var index=this._indexMap[this._valueArr.charAt(i)];
 				if (!this.sources[index])continue ;
 				texture=this.sources[index];
-				if (isHorizontal)this.graphics.drawTexture(texture,dX+i *(texture.width+this.spaceX),0,texture.width,texture.height);
-				else this.graphics.drawTexture(texture,0+dX,i *(texture.height+this.spaceY),texture.width,texture.height);
+				if (isHorizontal)this.graphics.drawTexture(texture,dX+i *(texture.sourceWidth+this.spaceX),0,texture.sourceWidth,texture.sourceHeight);
+				else this.graphics.drawTexture(texture,0+dX,i *(texture.sourceHeight+this.spaceY),texture.sourceWidth,texture.sourceHeight);
 			}
 			if (!this._width){
 				this.resetLayoutX();
@@ -8580,7 +8584,7 @@
 
 
 	/**
-	*<code>VBox</code> 是一个垂直布局容器类。
+	*<code>HBox</code> 是一个水平布局容器类。
 	*/
 	//class laya.ui.HBox extends laya.ui.LayoutBox
 	var HBox=(function(_super){

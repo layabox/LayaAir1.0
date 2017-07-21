@@ -1734,6 +1734,8 @@
 		*@param graphics
 		*/
 		__proto.apply=function(boneList,graphics){
+			if (!this.target)
+				return;
 			var tTranslateMix=this.translateMix;
 			var tRotateMix=this.translateMix;
 			var tTranslate=tTranslateMix > 0;
@@ -1879,7 +1881,7 @@
 				if (boneList){
 					len=boneList.length;
 					for (i=0;i < len;i++){
-						if (boneList[i].name=parentName){
+						if (boneList[i].name==parentName){
 							bone=boneList[i];
 							break ;
 						}
@@ -3209,14 +3211,6 @@
 		/**
 		*@private
 		*/
-		__proto._endLoaded=function(){
-			this._loaded=true;
-			this.event(/*laya.events.Event.LOADED*/"loaded",this);
-		}
-
-		/**
-		*@private
-		*/
 		__proto._calculateKeyFrame=function(node,keyframeCount,keyframeDataCount){
 			var keyFrames=node.keyFrame;
 			keyFrames[keyframeCount]=keyFrames[0];
@@ -3776,7 +3770,7 @@
 		*初始化动画
 		*@param templet 模板
 		*@param aniMode 动画模式
-		*<table border=1>
+		*<table>
 		*<tr><th>模式</th><th>描述</th></tr>
 		*<tr>
 		*<td>0</td> <td>使用模板缓冲的数据，模板缓冲的数据，不允许修改（内存开销小，计算开销小，不支持换装）</td>

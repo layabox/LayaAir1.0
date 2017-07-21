@@ -2,6 +2,7 @@ package laya.d3.core {
 	import laya.d3.core.glitter.Glitter;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.resource.tempelet.GlitterTemplet;
 	
 	/**
 	 * ...
@@ -39,6 +40,10 @@ package laya.d3.core {
 			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, _owner.transform.worldMatrix);
 			var projViewWorld:Matrix4x4 = _owner.getProjectionViewWorldMatrix(projectionView);
 			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
+			
+			var templet:GlitterTemplet = (_owner as Glitter).templet;
+			_setShaderValueNumber(Glitter.DURATION, templet.lifeTime);
+			_setShaderValueNumber(Glitter.CURRENTTIME, templet._currentTime);//设置粒子的时间参数，可通过此参数停止粒子动画
 		}
 	
 	}

@@ -76,6 +76,7 @@ package laya.webgl.submit {
 		
 		public override function releaseRender():void {
 			var cache:Array = _cache;
+			this._ctx_src = null;
 			cache[cache._length++] = this;
 		}
 		

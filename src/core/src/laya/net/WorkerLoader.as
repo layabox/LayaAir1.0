@@ -42,6 +42,11 @@ package laya.net
 		public static var workerPath:String = "libs/worker.js";
 		
 		/**
+		 * 是否禁用js解码，如果禁用则如果浏览器不支持解码接口自动关闭WorkerLoader
+		 */
+		public static var disableJSDecode:Boolean = true;
+		
+		/**
 		 * 尝试使用Work加载Image
 		 * @return 是否启动成功
 		 */
@@ -68,8 +73,9 @@ package laya.net
 		 */
 		public static function set enable(v:Boolean):void
 		{
+			if (disableJSDecode && (!Browser.window.createImageBitmap)) return;
 			_enable = v;
-			if (_enable && _preLoadFun == null) __init__();
+			if (_enable && _preLoadFun == null) _enable=__init__();
 		}
 		
 		public static function get enable():Boolean
@@ -203,7 +209,7 @@ package laya.net
 				_preLoadFun.call(_this, url);
 				return;
 			}
-			url = URL.formatURL(url);
+			url = URL.formatURL(url);	
 			function clear():void {
 				WorkerLoader.I.off(url, _this, onload);
 			}

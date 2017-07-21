@@ -94,7 +94,7 @@ package laya.d3.resource.models {
 		 * 获取材质队列的浅拷贝。
 		 * @return  材质队列的浅拷贝。
 		 */
-		public function get materials():Vector.<BaseMaterial> {
+		public function get materials():Vector.<BaseMaterial> {//兼容代码
 			return _materials.slice();
 		}
 		

@@ -500,6 +500,10 @@ package laya.utils {
 			writeUTFBytes(value);
 			var dPos:int = pos - tPos - 2;
 			//trace("writeLen:",dPos,"pos:",tPos);
+			if (dPos >= 65536)
+			{
+				throw "writeUTFString byte len more than 65536";
+			}
 			_d_.setUint16(tPos, dPos, _xd_);
 		}
 		

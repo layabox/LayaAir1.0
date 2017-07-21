@@ -1,5 +1,6 @@
 package laya.d3.core {
 	import laya.ani.AnimationContent;
+	import laya.ani.AnimationState;
 	import laya.d3.animation.AnimationNode;
 	import laya.d3.component.Animator;
 	import laya.d3.component.animation.SkinAnimations;
@@ -38,7 +39,10 @@ package laya.d3.core {
 				if (_cacheMesh) {
 					(_cacheAvatar) && (_offComputeBoneIndexToMeshEvent(_cacheAvatar, _cacheMesh));
 					_cacheAvatar = avatar;
-					(avatar) && (_computeBoneIndexToMeshWithAsyncAvatar());
+					if (avatar) {
+						_addShaderDefine(SkinnedMeshSprite3D.SHADERDEFINE_BONE);
+						_computeBoneIndexToMeshWithAsyncAvatar();
+					}
 				} else
 					_cacheAvatar = avatar;
 			}
@@ -49,7 +53,7 @@ package laya.d3.core {
 		 */
 		public function SkinnedMeshRender(owner:RenderableSprite3D) {
 			super(owner);
-			_addShaderDefine(SkinnedMeshSprite3D.SHADERDEFINE_BONE);
+			
 			_cacheAnimationNode = new Vector.<AnimationNode>();
 			(_owner as SkinnedMeshSprite3D).meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
 		}
@@ -134,63 +138,64 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override public function _renderUpdate(projectionView:Matrix4x4):void {
+			var i:int;
 			var projViewWorld:Matrix4x4;
+			var subMeshCount:int = _cacheMesh.subMeshCount;
 			if (__cacheAnimator) {
 				var animatorOwner:Sprite3D = __cacheAnimator.owner as Sprite3D;//根节点不缓存
 				_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, animatorOwner._transform.worldMatrix);
 				projViewWorld = animatorOwner.getProjectionViewWorldMatrix(projectionView);
 				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
+				
+				if (_cacheMesh && _cacheMesh.loaded && _cacheAvatar && _cacheAvatar.loaded) {
+					var n:int, j:int;
+					var subSkinnedDatas:Vector.<Vector.<Float32Array>>, subMesh:SubMesh, boneIndicesCount:int, inverseBindPoses:Vector.<Matrix4x4>, boneIndicesList:Vector.<Uint8Array>, subMeshDatas:Vector.<Float32Array>;
+					if (__cacheAnimator.playState !== AnimationState.stopped && __cacheAnimator._canCache) {//__cacheAnimator.playState !== AnimationState.stopped 强制使用非缓存 是否合理
+						subSkinnedDatas = __cacheAnimator.currentPlayClip._getSkinnedDatasWithCache(_cacheMesh, _cacheAvatar, __cacheAnimator.cachePlayRate, __cacheAnimator.currentFrameIndex);
+						if (subSkinnedDatas) {
+							for (i = 0; i < subMeshCount; i++)
+								(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subSkinnedDatas[i];//TODO:日后确认是否合理
+							return;
+						}
+						__cacheAnimator._updateTansformProperty();//避免Animator数据已缓存，无法更新
+						inverseBindPoses = _cacheMesh._inverseBindPoses;
+						for (i = 0, n = inverseBindPoses.length; i < n; i++)
+							Utils3D._mulMatrixArray(_cacheAnimationNode[i]._transform._getWorldMatrix(), inverseBindPoses[i], _skinnedDatas, i * 16);
+						
+						subSkinnedDatas = new Vector.<Vector.<Float32Array>>();
+						subSkinnedDatas.length = subMeshCount;
+						for (i = 0; i < subMeshCount; i++) {
+							subMeshDatas = subSkinnedDatas[i] = new Vector.<Float32Array>();
+							boneIndicesList = _cacheMesh.getSubMesh(i)._boneIndicesList;
+							boneIndicesCount = boneIndicesList.length;
+							subMeshDatas.length = boneIndicesCount;
+							for (j = 0; j < boneIndicesCount; j++) {
+								subMeshDatas[j] = new Float32Array(boneIndicesList[j].length * 16);
+								_splitAnimationDatas(boneIndicesList[j], _skinnedDatas, subMeshDatas[j]);
+							}
+							(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subMeshDatas;//TODO:日后确认是否合理
+						}
+						__cacheAnimator.currentPlayClip._cacheSkinnedDatasWithCache(_cacheMesh, _cacheAvatar, __cacheAnimator.cachePlayRate, __cacheAnimator.currentFrameIndex, subSkinnedDatas);
+					} else {
+						inverseBindPoses = _cacheMesh._inverseBindPoses;
+						for (i = 0, n = inverseBindPoses.length; i < n; i++)
+							Utils3D._mulMatrixArray(_cacheAnimationNode[i]._transform._getWorldMatrix(), inverseBindPoses[i], _skinnedDatas, i * 16);
+						
+						for (i = 0; i < subMeshCount; i++) {
+							subMesh = _cacheMesh.getSubMesh(i);
+							boneIndicesList = subMesh._boneIndicesList;
+							boneIndicesCount = boneIndicesList.length;
+							subMeshDatas = _publicSubSkinnedDatas[i]
+							for (j = 0; j < boneIndicesCount; j++)
+								_splitAnimationDatas(boneIndicesList[j], _skinnedDatas, subMeshDatas[j]);
+							(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subMeshDatas;//TODO:日后确认是否合理
+						}
+					}
+				}
 			} else {
 				_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, _owner.transform.worldMatrix);
 				projViewWorld = _owner.getProjectionViewWorldMatrix(projectionView);
 				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
-			}
-			
-			if (_cacheMesh && _cacheMesh.loaded && _cacheAvatar && _cacheAvatar.loaded) {
-				var i:int, n:int, j:int;
-				var subSkinnedDatas:Vector.<Vector.<Float32Array>>, subMesh:SubMesh, boneIndicesCount:int, inverseBindPoses:Vector.<Matrix4x4>, boneIndicesList:Vector.<Uint8Array>, subMeshDatas:Vector.<Float32Array>;
-				var subMeshCount:int = _cacheMesh.subMeshCount;
-				if (__cacheAnimator._canCache) {
-					subSkinnedDatas = __cacheAnimator.currentPlayClip._getSkinnedDatasWithCache(_cacheMesh, _cacheAvatar, __cacheAnimator.cachePlayRate, __cacheAnimator.currentKeyframeIndex);
-					if (subSkinnedDatas) {
-						for (i = 0; i < subMeshCount; i++)
-							(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subSkinnedDatas[i];//TODO:日后确认是否合理
-						return;
-					}
-					
-					inverseBindPoses = _cacheMesh._inverseBindPoses;
-					for (i = 0, n = inverseBindPoses.length; i < n; i++)
-						Utils3D._mulMatrixArray(_cacheAnimationNode[i]._transform._getWorldMatrix(), inverseBindPoses[i], _skinnedDatas, i * 16);
-					
-					subSkinnedDatas = new Vector.<Vector.<Float32Array>>();
-					subSkinnedDatas.length = subMeshCount;
-					for (i = 0; i < subMeshCount; i++) {
-						subMeshDatas = subSkinnedDatas[i] = new Vector.<Float32Array>();
-						boneIndicesList = _cacheMesh.getSubMesh(i)._boneIndicesList;
-						boneIndicesCount = boneIndicesList.length;
-						subMeshDatas.length = boneIndicesCount;
-						for (j = 0; j < boneIndicesCount; j++) {
-							subMeshDatas[j] = new Float32Array(boneIndicesList[j].length * 16);
-							_splitAnimationDatas(boneIndicesList[j], _skinnedDatas, subMeshDatas[j]);
-						}
-						(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subMeshDatas;//TODO:日后确认是否合理
-					}
-					__cacheAnimator.currentPlayClip._cacheSkinnedDatasWithCache(_cacheMesh, _cacheAvatar, __cacheAnimator.cachePlayRate, __cacheAnimator.currentKeyframeIndex, subSkinnedDatas);
-				} else {
-					inverseBindPoses = _cacheMesh._inverseBindPoses;
-					for (i = 0, n = inverseBindPoses.length; i < n; i++)
-						Utils3D._mulMatrixArray(_cacheAnimationNode[i]._transform._getWorldMatrix(), inverseBindPoses[i], _skinnedDatas, i * 16);
-					
-					for (i = 0; i < subMeshCount; i++) {
-						subMesh = _cacheMesh.getSubMesh(i);
-						boneIndicesList = subMesh._boneIndicesList;
-						boneIndicesCount = boneIndicesList.length;
-						subMeshDatas = _publicSubSkinnedDatas[i]
-						for (j = 0; j < boneIndicesCount; j++)
-							_splitAnimationDatas(boneIndicesList[j], _skinnedDatas, subMeshDatas[j]);
-						(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subMeshDatas;//TODO:日后确认是否合理
-					}
-				}
 			}
 		}
 	}

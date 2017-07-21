@@ -98,7 +98,8 @@ package laya.webgl.resource {
 				__JS__("pCanvas._source = ConchTextCanvas");
 				__JS__("pCanvas._source.canvas = ConchTextCanvas");
 			} else {
-				pCanvas = Browser.canvas.source;			
+				pCanvas = Browser.canvas.source;
+			
 			}
 			
 			

@@ -1,14 +1,10 @@
 package laya.d3.animation {
-	import laya.d3.animation.AnimationNode;
 	import laya.d3.core.Transform3D;
-	import laya.d3.math.MathUtils3D;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
-	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
-	import laya.utils.Stat;
 	
 	/**
 	 * <code>Transform3D</code> 类用于实现3D变换。
@@ -22,14 +18,6 @@ package laya.d3.animation {
 		/**@private */
 		private static const _randinToAngle:Number = 180 * Math.PI;
 		
-		/** @private */
-		private var _localPosition:Vector3 = new Vector3();
-		/** @private */
-		private var _localRotation:Quaternion = new Quaternion(0, 0, 0, 1);
-		/** @private */
-		private var _localScale:Vector3 = new Vector3(1, 1, 1);
-		/**@private */
-		private var _localRotationEuler:Vector3 = new Vector3();
 		/** @private */
 		private var _localMatrix:Matrix4x4 = new Matrix4x4();
 		/** @private */
@@ -55,6 +43,15 @@ package laya.d3.animation {
 		private var _associatedAnimationNode:AnimationNode;
 		/** @private */
 		public var _worldUpdate:Boolean = true;
+		
+		/** @private */
+		public var _localPosition:Vector3 = new Vector3();
+		/** @private */
+		public var _localRotation:Quaternion = new Quaternion(0, 0, 0, 1);
+		/** @private */
+		public var _localScale:Vector3 = new Vector3(1, 1, 1);
+		/**@private */
+		public var _localRotationEuler:Vector3 = new Vector3();
 		
 		/**@private */
 		public var _entity:Transform3D;
@@ -98,6 +95,7 @@ package laya.d3.animation {
 			if (_localQuaternionUpdate) {
 				var eulerE:Float32Array = _localRotationEuler.elements;
 				Quaternion.createFromYawPitchRoll(eulerE[1] / _angleToRandin, eulerE[0] / _angleToRandin, eulerE[2] / _angleToRandin, _localRotation);
+				_localQuaternionUpdate = false;
 			}
 			return _localRotation;
 		}
@@ -139,7 +137,6 @@ package laya.d3.animation {
 		 */
 		public function set localRotationEuler(value:Vector3):void {
 			var valueE:Float32Array = value.elements;
-			Quaternion.createFromYawPitchRoll(valueE[1] / _angleToRandin, valueE[0] / _angleToRandin, valueE[2] / _angleToRandin, _localRotation);
 			_localRotationEuler = value;
 			_locaEulerlUpdate = false;
 			_localQuaternionUpdate = true;
@@ -159,6 +156,7 @@ package laya.d3.animation {
 				localRotationEulerE[0] = eulerE[1] / _randinToAngle;
 				localRotationEulerE[1] = eulerE[0] / _randinToAngle;
 				localRotationEulerE[2] = eulerE[2] / _randinToAngle;
+				_locaEulerlUpdate = false;
 			}
 			return _localRotationEuler;
 		}
@@ -276,11 +274,14 @@ package laya.d3.animation {
 		 */
 		public function _setWorldMatrixAndUpdate(matrix:Matrix4x4):void {
 			_worldMatrix = matrix;
-			if (_parent != null)
-				Matrix4x4.multiply(_parent._getWorldMatrix(), localMatrix, _worldMatrix);
-			else
-				_worldMatrix.identity();
-			
+			if (_parent == null) {
+				throw new Error("don't need to set worldMatrix to root Node.");
+			} else {
+				if (_parent._parent == null)
+					localMatrix.cloneTo(_worldMatrix);
+				else
+					Matrix4x4.multiply(_parent._getWorldMatrix(), localMatrix, _worldMatrix);
+			}
 			_worldUpdate = false;
 		}
 		
@@ -354,7 +355,7 @@ package laya.d3.animation {
 				Quaternion.createFromYawPitchRoll(valueE[1] / _angleToRandin, valueE[0] / _angleToRandin, valueE[2] / _angleToRandin, _localRotation);
 				_localRotationEuler = value;
 				_locaEulerlUpdate = false;
-				_localQuaternionUpdate = true;
+				_localQuaternionUpdate = false;
 				_onLocalTransform();
 				_onWorldRotationTransform();
 			} else {
@@ -373,12 +374,13 @@ package laya.d3.animation {
 			if (!_worldUpdate)
 				return _worldMatrix;
 			
-			if (_parent != null)
+			if (_parent._parent != null) {
 				Matrix4x4.multiply(_parent._getWorldMatrix(), localMatrix, _worldMatrix);
-			else
-				_worldMatrix.identity();
-			
-			_worldUpdate = false;
+				_worldUpdate = false;
+			} else {
+				localMatrix.cloneTo(_worldMatrix);
+				_worldUpdate = false;
+			}
 			return _worldMatrix;
 		}
 	

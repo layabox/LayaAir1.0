@@ -248,10 +248,6 @@ declare module laya.ani {
         /**
          * @private
          */
-        _endLoaded(): void;
-        /**
-         * @private
-         */
         _calculateKeyFrame(node: AnimationNodeContent, keyframeCount: number, keyframeDataCount: number): void;
         /**
          * @inheritDoc
@@ -796,9 +792,9 @@ declare module laya.ani.bone {
 }
 declare module laya.ani.bone {
     import AnimationPlayer = laya.ani.AnimationPlayer;
-    import Sprite = laya.display.Sprite;
     import Texture = laya.resource.Texture;
     import Handler = laya.utils.Handler;
+    import Sprite = laya.display.Sprite;
     /**
      * 骨骼动画由<code>Templet</code>，<code>AnimationPlayer</code>，<code>Skeleton</code>三部分组成。
      */
@@ -1052,6 +1048,7 @@ declare module laya.ani.bone {
         deformAniArr: Array<any>;
         /** 实际显示对象列表，用于销毁用 */
         skinSlotDisplayDataArr: Array<any>;
+        isParserComplete: boolean;
         aniSectionDic: any;
         tMatrixDataLen: number;
         mRootBone: Bone;
@@ -1344,29 +1341,39 @@ declare module laya.ani.swf {
     }
 }
 declare module laya.d3.animation {
+    import Animator = laya.d3.component.Animator;
+    import Avatar = laya.d3.core.Avatar;
+    import Mesh = laya.d3.resource.models.Mesh;
     import Resource = laya.resource.Resource;
     /**
-     * <code>AnimationTemplet</code> 类用于动画模板资源。
+     * <code>AnimationClip</code> 类用于动画片段资源。
      */
     class AnimationClip extends Resource {
-        static interpolation: Array<any>;
         /**
          * 加载动画模板。
          * @param url 动画模板地址。
          */
         static load(url: string): AnimationClip;
-        _aniVersion: string;
         _nodes: Array<any>;
+        _rootTransformNodes: Array<any>;
+        _cachePropertyToNodeMap: Int32Array;
+        _nodeToCachePropertyMap: Int32Array;
         _duration: number;
         _frameRate: number;
-        _publicExtData: ArrayBuffer;
-        _useParent: boolean;
-        protected unfixedCurrentFrameIndexes: Uint32Array;
-        protected unfixedCurrentTimes: Float32Array;
-        protected unfixedKeyframes: Array<any>;
-        _aniClassName: string;
-        _animationDatasCache: Array<any>;
+        /**是否循环。*/
+        islooping: boolean;
+        /**
+         * 创建一个 <code>AnimationClip</code> 实例。
+         */
         constructor();
+        /**
+         * @private
+         */
+        _getFullKeyframeIndicesWithCache(cacheInterval: number): Array<any>;
+        /**
+         * @private
+         */
+        _cacheFullKeyframeIndices(cacheInterval: number, datas: Array<any>): void;
         /**
          * @private
          */
@@ -1378,12 +1385,21 @@ declare module laya.d3.animation {
         /**
          * @private
          */
-        _evaluateAnimationlDatas(nodesFrameIndices: Array<any>, frameIndex: number, playCurTime: number, outAnimationDatas: Array<any>): void;
-        _evaluateAnimationlDatasUnfixedRate(playCurTime: number, outAnimationDatas: Array<any>): void;
+        _getAvatarDataWithCache(avatar: Avatar, cacheRate: number, frameIndex: number): Array<any>;
         /**
          * @private
          */
-        _endLoaded(): void;
+        _cacheAvatarData(avatar: Avatar, cacheRate: number, frameIndex: number, datas: Array<any>): void;
+        _getSkinnedDatasWithCache(mesh: Mesh, avatar: Avatar, cacheRate: number, frameIndex: number): Array<any>;
+        _cacheSkinnedDatasWithCache(mesh: Mesh, avatar: Avatar, cacheRate: number, frameIndex: number, datas: Array<any>): void;
+        /**
+         * @private
+         */
+        _evaluateAnimationlDatasCacheFrame(nodesFrameIndices: Array<any>, animator: Animator, cacheNodesOriginalValue: Array<any>, publicAnimationDatas: Array<any>, cacheAnimationDatas: Array<any>, nodeOwners: Array<any>): void;
+        /**
+         * @private
+         */
+        _evaluateAnimationlDatasRealTime(playCurTime: number, outAnimationDatas: Array<any>): void;
         /**
          * @inheritDoc
          */
@@ -1395,36 +1411,47 @@ declare module laya.d3.animation {
     }
 }
 declare module laya.d3.animation {
-    /**
-     * @private
-     */
-    class AnimationNode {
-        path: Array<any>;
-        componentType: string;
-        propertyName: string;
-        keyFrames: Array<any>;
-    }
-}
-declare module laya.d3.animation {
     import Byte = laya.utils.Byte;
     /**
      * @private
      */
-    class AnimationParser01 {
+    class AnimationClipParser01 {
         /**
          * @private
          */
         static parse(clip: AnimationClip, reader: Byte): void;
+        /**
+         * @private
+         */
         static READ_ANIMATIONS(): void;
     }
 }
 declare module laya.d3.animation {
-    import Matrix = laya.maths.Matrix;
+    import IClone = laya.d3.core.IClone;
     /**
      * <code>BoneNode</code> 类用于实现骨骼节点。
      */
-    class BoneNode {
-        _transform: Matrix;
+    class AnimationNode implements IClone {
+        static _propertyIndexDic: any;
+        static _propertySetFuncs: Array<any>;
+        static _propertyGetFuncs: Array<any>;
+        /**
+         *@private
+         */
+        static __init__(): void;
+        /**
+         *注册Animator动画。
+         */
+        static registerAnimationNodeProperty(propertyName: string, getFunc: Function, setFunc: Function): void;
+        _parent: AnimationNode;
+        _transform: AnimationTransform3D;
+        /**节点名称。 */
+        name: string;
+        /**
+         * 获取变换。
+         * @return 变换。
+         */
+        transform(): AnimationTransform3D;
         /**
          * 获取挂点精灵集合。
          * @return 挂点精灵集合。
@@ -1433,17 +1460,157 @@ declare module laya.d3.animation {
         /**
          * 创建一个新的 <code>BoneNode</code> 实例。
          */
-        constructor(name: string);
+        constructor();
         /**
          * 添加子节点。
          * @param	child  子节点。
          */
-        addChild(child: BoneNode): void;
+        addChild(child: AnimationNode): void;
         /**
          * 移除子节点。
          * @param	child 子节点。
          */
-        removeChild(child: BoneNode): void;
+        removeChild(child: AnimationNode): void;
+        /**
+         * 根据名字获取子节点。
+         * @param	name 名字。
+         */
+        getChildByName(name: string): AnimationNode;
+        /**
+         * 根据索引获取子节点。
+         * @param	index 索引。
+         */
+        getChildByIndex(index: number): AnimationNode;
+        /**
+         * 获取子节点的个数。
+         */
+        getChildCount(): number;
+        /**
+         * 克隆。
+         * @param	destObject 克隆源。
+         */
+        cloneTo(destObject: any): void;
+        /**
+         * 克隆。
+         * @return	 克隆副本。
+         */
+        clone(): any;
+    }
+}
+declare module laya.d3.animation {
+    import AnimationNode = laya.d3.animation.AnimationNode;
+    import Transform3D = laya.d3.core.Transform3D;
+    import Matrix4x4 = laya.d3.math.Matrix4x4;
+    import Quaternion = laya.d3.math.Quaternion;
+    import Vector3 = laya.d3.math.Vector3;
+    import EventDispatcher = laya.events.EventDispatcher;
+    /**
+     * <code>Transform3D</code> 类用于实现3D变换。
+     */
+    class AnimationTransform3D extends EventDispatcher {
+        _worldUpdate: boolean;
+        _localPosition: Vector3;
+        _localRotation: Quaternion;
+        _localScale: Vector3;
+        _localRotationEuler: Vector3;
+        _entity: Transform3D;
+        /**
+         * 获取局部矩阵。
+         * @return	局部矩阵。
+         */
+        readonly localMatrix: Matrix4x4;
+        /**
+         * 获取局部位置。
+         * @return	局部位置。
+         */
+        /**
+         * 设置局部位置。
+         * @param value	局部位置。
+         */
+        localPosition: Vector3;
+        /**
+         * 获取局部旋转。
+         * @return	局部旋转。
+         */
+        /**
+         * 设置局部旋转。
+         * @param value	局部旋转。
+         */
+        localRotation: Quaternion;
+        /**
+         * 获取局部缩放。
+         * @return	局部缩放。
+         */
+        /**
+         * 设置局部缩放。
+         * @param	value 局部缩放。
+         */
+        localScale: Vector3;
+        /**
+         * 获取局部空间的旋转角度。
+         * @return	欧拉角的旋转值，顺序为x、y、z。
+         */
+        /**
+         * 设置局部空间的旋转角度。
+         * @param	value 欧拉角的旋转值，顺序为x、y、z。
+         */
+        localRotationEuler: Vector3;
+        /**
+         * 获取父3D变换。
+         * @return 父3D变换。
+         */
+        /**
+         * 设置父3D变换。
+         * @param	value 父3D变换。
+         */
+        parent: AnimationTransform3D;
+        /**
+         *获取关联虚拟节点。
+         * @return 虚拟节点。
+         */
+        readonly associatedAnimationNode: AnimationNode;
+        /**
+         * 创建一个 <code>Transform3D</code> 实例。
+         * @param owner 所属精灵。
+         */
+        constructor();
+        /**
+         * @private
+         */
+        _onWorldTransform(): void;
+        /**
+         * @private
+         * 设置世界矩阵，并需要更新。
+         * @return	世界矩阵。
+         */
+        _setWorldMatrixAndUpdate(matrix: Matrix4x4): void;
+        /**
+         * @private
+         * 设置世界矩阵，不需要更新，再次修改相关位置才会更新。
+         * @return	世界矩阵。
+         */
+        _setWorldMatrixNoUpdate(matrix: Matrix4x4): void;
+        _setLocalPosition(value: Vector3): void;
+        /**
+         * 设置局部旋转。
+         * @param value	局部旋转。
+         */
+        _setLocalRotation(value: Quaternion): void;
+        /**
+         * 设置局部缩放。
+         * @param	value 局部缩放。
+         */
+        _setLocalScale(value: Vector3): void;
+        /**
+         * 设置局部空间的旋转角度。
+         * @param	value 欧拉角的旋转值，顺序为x、y、z。
+         */
+        _setLocalRotationEuler(value: Vector3): void;
+        /**
+         * 获取世界矩阵。
+         * @return	世界矩阵。
+         */
+        _getWorldMatrix(): Matrix4x4;
     }
 }
 declare module laya.d3.animation {
@@ -1452,41 +1619,24 @@ declare module laya.d3.animation {
      */
     class Keyframe {
         startTime: number;
-        inTangent: number;
-        outTangent: number;
+        inTangent: Float32Array;
+        outTangent: Float32Array;
         data: Float32Array;
         duration: number;
         next: Keyframe;
     }
 }
-declare module laya.d3.component.animation {
-    import Sprite3D = laya.d3.core.Sprite3D;
-    import RenderState = laya.d3.core.render.RenderState;
+declare module laya.d3.animation {
     /**
-     * <code>CameraAnimations</code> 类用于创建摄像机动画组件。
+     * @private
      */
-    class CameraAnimations extends KeyframeAnimations {
-        protected _cacheAnimationDatas: Array<any>;
-        /**变换模式。*/
-        localMode: boolean;
-        /**叠加模式。*/
-        addMode: boolean;
-        /**
-         * 创建一个新的 <code>CameraAnimations</code> 实例。
-         */
-        constructor();
-        /**
-         * @private
-         * 初始化载入摄像机动画组件。
-         * @param	owner 所属精灵对象。
-         */
-        _load(owner: Sprite3D): void;
-        /**
-         * @private
-         * 更新摄像机动画组件。
-         * @param	state 渲染状态。
-         */
-        _update(state: RenderState): void;
+    class KeyframeNode {
+        _cacheProperty: boolean;
+        path: Array<any>;
+        componentType: string;
+        propertyNameID: number;
+        keyFrameWidth: number;
+        keyFrames: Array<any>;
     }
 }
 declare module laya.d3.component.animation {
@@ -1596,8 +1746,6 @@ declare module laya.d3.component.animation {
      * <code>SkinAnimations</code> 类用于创建蒙皮动画组件。
      */
     class SkinAnimations extends KeyframeAnimations {
-        static BONES: number;
-        static SHADERDEFINE_BONE: number;
         protected static _splitAnimationDatas(indices: Uint8Array, bonesData: Float32Array, subAnimationDatas: Float32Array): void;
         protected _tempCurAnimationData: Array<any>;
         protected _tempCurBonesData: Float32Array;
@@ -1644,55 +1792,41 @@ declare module laya.d3.component.animation {
         _unload(owner: Sprite3D): void;
     }
 }
-declare module laya.d3.component.animation {
-    import Sprite3D = laya.d3.core.Sprite3D;
-    import RenderState = laya.d3.core.render.RenderState;
-    /**
-     * <code>UVAnimations</code> 类用于创建UV动画组件。
-     */
-    class UVAnimations extends KeyframeAnimations {
-        /**
-         * 创建一个新的 <code>UVAnimations</code> 实例。
-         */
-        constructor();
-        /**
-         * @private
-         * 初始化载入UV动画组件。
-         * @param	owner 所属精灵对象。
-         */
-        _load(owner: Sprite3D): void;
-        /**
-         * @private
-         * 更新UV动画组件。
-         * @param	state 渲染状态参数。
-         */
-        _update(state: RenderState): void;
-        /**
-         * @private
-         *在渲染前更新UV动画组件渲染参数。
-         * @param	state 渲染状态参数。
-         */
-        _preRenderUpdate(state: RenderState): void;
-    }
-}
 declare module laya.d3.component {
     import AnimationClip = laya.d3.animation.AnimationClip;
+    import AnimationNode = laya.d3.animation.AnimationNode;
     import Avatar = laya.d3.core.Avatar;
     import Sprite3D = laya.d3.core.Sprite3D;
     import RenderState = laya.d3.core.render.RenderState;
     import IDestroy = laya.resource.IDestroy;
     /**
-     * <code>Animation</code> 类用于创建动画组件。
+     * <code>Animations</code> 类用于创建动画组件。
      */
-    class Animation extends Component3D implements IDestroy {
+    class Animator extends Component3D implements IDestroy {
         _cacheFullFrames: Array<any>;
-        avatar: Avatar;
+        _avatarRootNode: AnimationNode;
+        /**@private	*/
+        _avatarNodeMap: any;
+        /**@private	*/
+        _avatarNodes: Array<any>;
+        /**@private	*/
+        _canCache: boolean;
+        _lastFrameIndex: number;
         /**是否为缓存模式。*/
         isCache: boolean;
         /** 停止时是否归零*/
         returnToZeroStopped: boolean;
         /** 播放速率*/
         playbackRate: number;
+        /**
+         * 获取avatar。
+         * @return avator。
+         */
+        /**
+         * 设置avatar。
+         * @param value avatar。
+         */
+        avatar: Avatar;
         /**
          * 获取默认动画片段。
          * @return  默认动画片段。
@@ -1721,25 +1855,10 @@ declare module laya.d3.component {
          */
         cachePlayRate: number;
         /**
-         * 动画播放的起始时间位置。
-         * @return	 起始时间位置。
-         */
-        readonly playStart: number;
-        /**
-         * 动画播放的结束时间位置。
-         * @return	 结束时间位置。
-         */
-        readonly playEnd: number;
-        /**
          * 获取动画播放一次的总时间
          * @return	 动画播放一次的总时间
          */
         readonly playDuration: number;
-        /**
-         * 获取动画播放的总总时间
-         * @return	 动画播放的总时间
-         */
-        readonly overallDuration: number;
         /**
          * 获取当前动画索引
          * @return	value 当前动画索引
@@ -1749,7 +1868,7 @@ declare module laya.d3.component {
          * 获取当前帧数
          * @return	 当前帧数
          */
-        readonly currentKeyframeIndex: number;
+        readonly currentFrameIndex: number;
         /**
          *  获取当前精确时间，不包括重播时间
          * @return	value 当前时间
@@ -1788,14 +1907,24 @@ declare module laya.d3.component {
          * 创建一个 <code>Animation</code> 实例。
          */
         constructor();
+        private _setAnimationClipProperty(nodeOwners, publicClipAnimatioDatas);
+        private _setAnimationClipTransformProperty(nodeOwners, publicClipAnimatioDatas);
         /**
-         * @private
+         *@private
          */
-        _onClipLoadedComputeCacheFullKeyframeIndices(clip: AnimationClip, cachePlayRate: number, cacheFrameRate: number): void;
+        _updateAvatarNodes(avatarAnimationDatas: Array<any>): void;
+        /**
+         *@private
+         */
+        _updateAvatarNodesCache(avatarAnimationDatas: Array<any>): void;
         /**
          * @private
          */
         _updatePlayer(elapsedTime: number): void;
+        /**
+         * @private
+         */
+        _updateTansformProperty(): void;
         /**
          * @private
          * 更新蒙皮动画组件。
@@ -1818,6 +1947,10 @@ declare module laya.d3.component {
          */
         _destroy(): void;
         /**
+         * @private
+         */
+        _cloneTo(dest: Component3D): any;
+        /**
          * 添加动画片段。
          * @param	clip 动画片段。
          * @param	playName 动画片段播放名称，如果为null,则使用clip.name作为播放名称。
@@ -1829,36 +1962,23 @@ declare module laya.d3.component {
          */
         removeClip(clip: AnimationClip): void;
         /**
-         * 通过动画播放名字移除动画。
-         * @param	clipPlayName 动画播放名字。
+         * 通过播放名字移除动画片段。
+         * @param	playName 播放名字。
          */
         removeClipByName(playName: string): void;
         /**
          * 播放动画。
-         * @param	index 动画索引。
+         * @param	name 如果为null则播放默认动画，否则按名字播放动画片段。
          * @param	playbackRate 播放速率。
-         * @param	duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
-         * @param	playStart 播放的起始时间位置。
-         * @param	playEnd 播放的结束时间位置。（0为动画一次循环的最长结束时间位置）。
+         * @param	startFrame 开始帧率。
+         * @param	endFrame 结束帧率.-1表示为最大结束帧率。
          */
-        play(playbackRate?: number, overallDuration?: number, playStart?: number, playEnd?: number): void;
+        play(name?: string, playbackRate?: number, startFrame?: number, endFrame?: number): void;
         /**
          * 停止播放当前动画
          * @param	immediate 是否立即停止
          */
         stop(immediate?: boolean): void;
-        /**
-         * 播放动画。
-         * @param	index 动画索引。
-         * @param	playbackRate 播放速率。
-         * @param	duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
-         * @param	playStartFrame 播放的原始起始帧率位置。
-         * @param	playEndFrame 播放的原始结束帧率位置。（0为动画一次循环的最长结束时间位置）。
-         */
-        playByFrame(playbackRate?: number, overallDuration?: number, playStartFrame?: number, playEndFrame?: number): void;
-        static BONES: number;
-        static SHADERDEFINE_BONE: number;
-        protected _lastFrameIndex: number;
     }
 }
 declare module laya.d3.component {
@@ -1997,6 +2117,10 @@ declare module laya.d3.component {
          * 卸载组件时执行,可重写此函数。
          */
         _unload(owner: Sprite3D): void;
+        /**
+         * @private
+         */
+        _cloneTo(dest: Component3D): any;
     }
 }
 declare module laya.d3.component {
@@ -2201,13 +2325,41 @@ declare module laya.d3.component {
     }
 }
 declare module laya.d3.core {
+    import Animator = laya.d3.component.Animator;
+    import Resource = laya.resource.Resource;
     /**
-     * ...
-     * @author ...
+     * <code>Avatar</code> 类用于创建Avatar。
      */
-    class Avatar {
-        _bones: Array<any>;
+    class Avatar extends Resource implements IClone {
+        /**
+         * 加载Avatar文件。
+         * @param url Avatar文件。
+         */
+        static load(url: string): Avatar;
+        /**
+         * @private
+         * 创建一个 <code>Avatar</code> 实例。
+         */
         constructor();
+        /**
+         * @inheritDoc
+         */
+        onAsynLoaded(url: string, data: any, params: Array<any>): void;
+        /**
+         * 克隆数据到Avatr。
+         * @param	destObject 克隆源。
+         */
+        _cloneDatasToAnimator(destAnimator: Animator): void;
+        /**
+         * 克隆。
+         * @param	destObject 克隆源。
+         */
+        cloneTo(destObject: any): void;
+        /**
+         * 克隆。
+         * @return	 克隆副本。
+         */
+        clone(): any;
     }
 }
 declare module laya.d3.core {
@@ -2558,6 +2710,8 @@ declare module laya.d3.core.glitter {
      * <code>Glitter</code> 类用于创建闪光。
      */
     class Glitter extends RenderableSprite3D {
+        static CURRENTTIME: number;
+        static DURATION: number;
         /**
          * 获取闪光模板。
          * @return  闪光模板。
@@ -3107,14 +3261,11 @@ declare module laya.d3.core.light {
 declare module laya.d3.core.material {
     import IClone = laya.d3.core.IClone;
     import Transform3D = laya.d3.core.Transform3D;
-    import RenderState = laya.d3.core.render.RenderState;
     import Matrix4x4 = laya.d3.math.Matrix4x4;
     import Vector2 = laya.d3.math.Vector2;
     import Vector4 = laya.d3.math.Vector4;
     import BaseTexture = laya.d3.resource.BaseTexture;
     import Shader3D = laya.d3.shader.Shader3D;
-    import ShaderCompile3D = laya.d3.shader.ShaderCompile3D;
-    import ValusArray = laya.d3.shader.ValusArray;
     import Resource = laya.resource.Resource;
     /**
      * <code>BaseMaterial</code> 类用于创建材质,抽象类,不允许实例。
@@ -3186,9 +3337,6 @@ declare module laya.d3.core.material {
         static DEPTHFUNC_ALWAYS: number;
         static SHADERDEFINE_ALPHATEST: number;
         static ALPHATESTVALUE: number;
-        _shaderValues: ValusArray;
-        protected _renderQueue: number;
-        protected _shaderCompile: ShaderCompile3D;
         _isInstance: boolean;
         /**渲染剔除。*/
         cull: number;
@@ -3220,12 +3368,9 @@ declare module laya.d3.core.material {
         depthFunc: number;
         /**是否深度写入。*/
         depthWrite: boolean;
+        /** 所属渲染队列. */
+        renderQueue: number;
         _conchMaterial: any;
-        /**
-         * 获取所属渲染队列。
-         * @return 渲染队列。
-         */
-        readonly renderQueue: number;
         /**
          * 获取透明测试模式裁剪值。
          * @return 透明测试模式裁剪值。
@@ -3248,20 +3393,8 @@ declare module laya.d3.core.material {
          * 创建一个 <code>BaseMaterial</code> 实例。
          */
         constructor();
-        /**
-         * @private
-         */
-        _getShader(sceneDefineValue: number, vertexDefineValue: number, spriteDefineValue: number): Shader3D;
-        /**
-         * 增加Shader宏定义。
-         * @param value 宏定义。
-         */
-        _addShaderDefine(value: number): void;
-        /**
-         * 移除Shader宏定义。
-         * @param value 宏定义。
-         */
-        _removeShaderDefine(value: number): void;
+        protected _addShaderDefine(value: number): void;
+        protected _removeShaderDefine(value: number): void;
         protected _addDisablePublicShaderDefine(value: number): void;
         protected _removeDisablePublicShaderDefine(value: number): void;
         protected _setBuffer(shaderIndex: number, buffer: Float32Array): void;
@@ -3270,15 +3403,10 @@ declare module laya.d3.core.material {
         protected _getMatrix4x4(shaderIndex: number): any;
         protected _setInt(shaderIndex: number, i: number): void;
         protected _getInt(shaderIndex: number): any;
-        /**
-         * 设置浮点。
-         * @param	shaderIndex shader索引。
-         * @param	i 浮点。
-         */
-        _setNumber(shaderIndex: number, number: number): void;
+        protected _setNumber(shaderIndex: number, number: number): void;
         protected _getNumber(shaderIndex: number): any;
         protected _setBool(shaderIndex: number, b: boolean): void;
-        protected _getBool(shaderIndex: boolean): any;
+        protected _getBool(shaderIndex: number): any;
         protected _setVector2(shaderIndex: number, vector2: Vector2): void;
         protected _getVector2(shaderIndex: number): any;
         protected _setColor(shaderIndex: number, color: any): void;
@@ -3293,7 +3421,10 @@ declare module laya.d3.core.material {
          * @return  是否成功。
          */
         _upload(): void;
-        _setMaterialShaderParams(state: RenderState): void;
+        /**
+         * @private
+         */
+        _getShader(sceneDefineValue: number, vertexDefineValue: number, spriteDefineValue: number): Shader3D;
         /**
          * 设置渲染相关状态。
          */
@@ -3328,7 +3459,7 @@ declare module laya.d3.core.material {
     }
 }
 declare module laya.d3.core.material {
-    import RenderState = laya.d3.core.render.RenderState;
+    import Vector4 = laya.d3.math.Vector4;
     import BaseTexture = laya.d3.resource.BaseTexture;
     /**
      * ...
@@ -3365,9 +3496,7 @@ declare module laya.d3.core.material {
         static RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE: number;
         static DIFFUSETEXTURE: number;
         static ALBEDO: number;
-        static CURRENTTIME: number;
         static UNICOLOR: number;
-        static DURATION: number;
         /** 默认材质，禁止修改*/
         static defaultMaterial: GlitterMaterial;
         /**
@@ -3376,10 +3505,6 @@ declare module laya.d3.core.material {
          */
         static load(url: string): GlitterMaterial;
         /**
-         * 获取渲染状态。
-         * @return 渲染状态。
-         */
-        /**
          * 设置渲染模式。
          * @return 渲染模式。
          */
@@ -3393,97 +3518,33 @@ declare module laya.d3.core.material {
          * @param value 漫反射贴图。
          */
         diffuseTexture: BaseTexture;
+        /**
+         * 获取颜色。
+         * @return 漫反射颜色。
+         */
+        /**
+         * 设置颜色。
+         * @param value 颜色。
+         */
+        color: Vector4;
+        /**
+         * 获取反射率。
+         * @return 反射率。
+         */
+        /**
+         * 设置反射率。
+         * @param value 反射率。
+         */
+        albedo: Vector4;
         /**
          * @inheritDoc
          */
         setShaderName(name: string): void;
         constructor();
-        /**
-         * @inheritDoc
-         */
-        _setMaterialShaderParams(state: RenderState): void;
-        /**
-         * @inheritDoc
-         */
-        cloneTo(destObject: any): void;
-    }
-}
-declare module laya.d3.core.material {
-    import RenderState = laya.d3.core.render.RenderState;
-    import BaseTexture = laya.d3.resource.BaseTexture;
-    /**
-     * ...
-     * @author ...
-     */
-    class ParticleMaterial extends BaseMaterial {
-        /**渲染状态_不透明。*/
-        static RENDERMODE_OPAQUE: number;
-        /**渲染状态_不透明_双面。*/
-        static RENDERMODE_OPAQUEDOUBLEFACE: number;
-        /**渲染状态_透明混合。*/
-        static RENDERMODE_TRANSPARENT: number;
-        /**渲染状态_透明混合_双面。*/
-        static RENDERMODE_TRANSPARENTDOUBLEFACE: number;
-        /**渲染状态_加色法混合。*/
-        static RENDERMODE_ADDTIVE: number;
-        /**渲染状态_加色法混合_双面。*/
-        static RENDERMODE_ADDTIVEDOUBLEFACE: number;
-        /**渲染状态_只读深度_透明混合。*/
-        static RENDERMODE_DEPTHREAD_TRANSPARENT: number;
-        /**渲染状态_只读深度_透明混合_双面。*/
-        static RENDERMODE_DEPTHREAD_TRANSPARENTDOUBLEFACE: number;
-        /**渲染状态_只读深度_加色法混合。*/
-        static RENDERMODE_DEPTHREAD_ADDTIVE: number;
-        /**渲染状态_只读深度_加色法混合_双面。*/
-        static RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE: number;
-        /**渲染状态_无深度_透明混合。*/
-        static RENDERMODE_NONDEPTH_TRANSPARENT: number;
-        /**渲染状态_无深度_透明混合_双面。*/
-        static RENDERMODE_NONDEPTH_TRANSPARENTDOUBLEFACE: number;
-        /**渲染状态_无深度_加色法混合。*/
-        static RENDERMODE_NONDEPTH_ADDTIVE: number;
-        /**渲染状态_无深度_加色法混合_双面。*/
-        static RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE: number;
-        static SHADERDEFINE_PARTICLE3D: number;
-        static VIEWPORTSCALE: number;
-        static CURRENTTIME: number;
-        static DURATION: number;
-        static GRAVITY: number;
-        static ENDVELOCITY: number;
-        static DIFFUSETEXTURE: number;
-        /** 默认材质，禁止修改*/
-        static defaultMaterial: ParticleMaterial;
-        /**
-         * 加载粒子材质。
-         * @param url 粒子材质地址。
-         */
-        static load(url: string): ParticleMaterial;
-        /**
-         * 获取渲染状态。
-         * @return 渲染状态。
-         */
-        /**
-         * 设置渲染模式。
-         * @return 渲染模式。
-         */
-        renderMode: number;
-        /**
-         * 获取漫反射贴图。
-         * @return 漫反射贴图。
-         */
-        /**
-         * 设置漫反射贴图。
-         * @param value 漫反射贴图。
-         */
-        diffuseTexture: BaseTexture;
-        constructor();
-        _setMaterialShaderParams(state: RenderState): void;
-        cloneTo(destObject: any): void;
     }
 }
 declare module laya.d3.core.material {
     import TransformUV = laya.d3.core.TransformUV;
-    import RenderState = laya.d3.core.render.RenderState;
     import BaseTexture = laya.d3.resource.BaseTexture;
     import DataTexture2D = laya.d3.resource.DataTexture2D;
     class PBRMaterial extends BaseMaterial {
@@ -3590,16 +3651,8 @@ declare module laya.d3.core.material {
          * 禁用雾化。
          */
         disableFog(): void;
-        /**
-         * 获取渲染状态。
-         * @return 渲染状态。
-         */
         renderMode: number;
         testClipZ: boolean;
-        /**
-         * @private
-         */
-        _setMaterialShaderParams(state: RenderState): void;
         onAsynLoaded(url: string, data: any, params: Array<any>): void;
         /**
          * vdc算法产生的序列。这个比random要均匀一些。
@@ -3613,7 +3666,6 @@ declare module laya.d3.core.material {
 }
 declare module laya.d3.core.material {
     import TransformUV = laya.d3.core.TransformUV;
-    import RenderState = laya.d3.core.render.RenderState;
     import Vector3 = laya.d3.math.Vector3;
     import Vector4 = laya.d3.math.Vector4;
     import BaseTexture = laya.d3.resource.BaseTexture;
@@ -3661,6 +3713,7 @@ declare module laya.d3.core.material {
         static SHADERDEFINE_AMBIENTMAP: number;
         static SHADERDEFINE_REFLECTMAP: number;
         static SHADERDEFINE_UVTRANSFORM: number;
+        static SHADERDEFINE_TILINGOFFSET: number;
         static DIFFUSETEXTURE: number;
         static NORMALTEXTURE: number;
         static SPECULARTEXTURE: number;
@@ -3675,6 +3728,7 @@ declare module laya.d3.core.material {
         static MATERIALREFLECT: number;
         static UVMATRIX: number;
         static UVAGE: number;
+        static TILINGOFFSET: number;
         /** 默认材质，禁止修改*/
         static defaultMaterial: StandardMaterial;
         /**
@@ -3684,14 +3738,19 @@ declare module laya.d3.core.material {
         static load(url: string): StandardMaterial;
         protected _transformUV: TransformUV;
         /**
-         * 获取渲染状态。
-         * @return 渲染状态。
-         */
-        /**
          * 设置渲染模式。
          * @return 渲染模式。
          */
         renderMode: number;
+        /**
+         * 获取纹理平铺和偏移。
+         * @return 纹理平铺和偏移。
+         */
+        /**
+         * 获取纹理平铺和偏移。
+         * @param value 纹理平铺和偏移。
+         */
+        tilingOffset: Vector4;
         /**
          * 设置环境光颜色。
          * @param value 环境光颜色。
@@ -3798,17 +3857,12 @@ declare module laya.d3.core.material {
          */
         onAsynLoaded(url: string, data: any, params: Array<any>): void;
         /**
-         * @private
-         */
-        _setMaterialShaderParams(state: RenderState): void;
-        /**
          * @inheritDoc
          */
         cloneTo(destObject: any): void;
     }
 }
 declare module laya.d3.core.material {
-    import RenderState = laya.d3.core.render.RenderState;
     import Vector3 = laya.d3.math.Vector3;
     import Vector4 = laya.d3.math.Vector4;
     import BaseTexture = laya.d3.resource.BaseTexture;
@@ -3847,15 +3901,6 @@ declare module laya.d3.core.material {
          * @param url 闪光材质地址。
          */
         static load(url: string): TerrainMaterial;
-        /**
-         * 获取渲染状态。
-         * @return 渲染状态。
-         */
-        /**
-         * 设置渲染模式。
-         * @return 渲染模式。
-         */
-        renderMode: number;
         setDiffuseScale1(x: number, y: number): void;
         setDiffuseScale2(x: number, y: number): void;
         setDiffuseScale3(x: number, y: number): void;
@@ -3864,6 +3909,11 @@ declare module laya.d3.core.material {
         ambientColor: Vector3;
         diffuseColor: Vector3;
         specularColor: Vector4;
+        /**
+         * 设置渲染模式。
+         * @return 渲染模式。
+         */
+        renderMode: number;
         /**
          * 获取第一层贴图。
          * @return 第一层贴图。
@@ -3916,18 +3966,9 @@ declare module laya.d3.core.material {
          */
         setShaderName(name: string): void;
         constructor();
-        /**
-         * @inheritDoc
-         */
-        _setMaterialShaderParams(state: RenderState): void;
-        /**
-         * @inheritDoc
-         */
-        cloneTo(destObject: any): void;
     }
 }
 declare module laya.d3.core.material {
-    import RenderState = laya.d3.core.render.RenderState;
     import BaseTexture = laya.d3.resource.BaseTexture;
     class WaterMaterial extends BaseMaterial {
         static DIFFUSETEXTURE: number;
@@ -4022,15 +4063,7 @@ declare module laya.d3.core.material {
          * 禁用雾化。
          */
         disableFog(): void;
-        /**
-         * 获取渲染状态。
-         * @return 渲染状态。
-         */
         renderMode: number;
-        /**
-         * @private
-         */
-        _setMaterialShaderParams(state: RenderState): void;
         onAsynLoaded(url: string, data: any, params: Array<any>): void;
     }
 }
@@ -4085,11 +4118,10 @@ declare module laya.d3.core {
      * <code>MeshRender</code> 类用于网格渲染器。
      */
     class MeshRender extends BaseRender {
-        _belongAvatar: Avatar;
         /**
          * 创建一个新的 <code>MeshRender</code> 实例。
          */
-        constructor(owner: MeshSprite3D);
+        constructor(owner: RenderableSprite3D);
         protected _calculateBoundingSphere(): void;
         protected _calculateBoundingBox(): void;
         /**
@@ -4214,226 +4246,6 @@ declare module laya.d3.core {
          * @param z Z轴坐标。
          */
         getHeight(x: number, z: number): number;
-    }
-}
-declare module laya.d3.core.particle {
-    import RenderState = laya.d3.core.render.RenderState;
-    import Vector3 = laya.d3.math.Vector3;
-    import ParticleSetting = laya.particle.ParticleSetting;
-    import EmitterBase = laya.particle.emitter.EmitterBase;
-    /**
-     * <code>EmitterBox</code> 类用于盒发射器。
-     */
-    class EmitterBox extends EmitterBase {
-        protected _settings: ParticleSetting;
-        protected _particle3D: Particle3D;
-        protected _resultPosition: Vector3;
-        protected _resultVelocity: Vector3;
-        /**发射器中心位置。*/
-        centerPosition: Vector3;
-        /**发射器尺寸。*/
-        size: Vector3;
-        /**发射器速度。*/
-        velocity: Vector3;
-        /**发射器速度随机值。*/
-        velocityAddVariance: Vector3;
-        /**
-         * 创建一个 <code>EmitterBox</code> 实例。
-         * @param particle3D 粒子。
-         */
-        constructor(particle3D: Particle3D);
-        protected _randomPositionOnBox(): Vector3;
-        protected _randomVelocityOnBox(): Vector3;
-        /**
-         * 盒发射器发射函数。
-         */
-        emit(): void;
-        /**
-         * 更新盒粒子发射器。
-         * @param state 渲染相关状态参数。
-         */
-        update(state: RenderState): void;
-    }
-}
-declare module laya.d3.core.particle {
-    import RenderState = laya.d3.core.render.RenderState;
-    import Vector3 = laya.d3.math.Vector3;
-    import ParticleSetting = laya.particle.ParticleSetting;
-    import EmitterBase = laya.particle.emitter.EmitterBase;
-    /**
-     * <code>EmitterPoint</code> 类用于点发射器。
-     */
-    class EmitterPoint extends EmitterBase {
-        protected _settings: ParticleSetting;
-        protected _particle3D: Particle3D;
-        protected _resultPosition: Vector3;
-        protected _resultVelocity: Vector3;
-        /**发射器位置。*/
-        position: Vector3;
-        /**发射器位置随机值。*/
-        positionVariance: Vector3;
-        /**发射器速度。*/
-        velocity: Vector3;
-        /**发射器速度随机值。*/
-        velocityAddVariance: Vector3;
-        /**
-         * 创建一个 <code>EmitterPoint</code> 实例。
-         * @param particle3D 粒子。
-         */
-        constructor(particle3D: Particle3D);
-        protected _randomPositionOnPoint(): Vector3;
-        protected _randomVelocityOnPoint(): Vector3;
-        /**
-         * 点发射器发射函数。
-         */
-        emit(): void;
-        /**
-         * 更新点粒子发射器。
-         * @param state 渲染相关状态参数。
-         */
-        update(state: RenderState): void;
-    }
-}
-declare module laya.d3.core.particle {
-    import Vector3 = laya.d3.math.Vector3;
-    import ParticleSetting = laya.particle.ParticleSetting;
-    import EmitterBase = laya.particle.emitter.EmitterBase;
-    /**
-     * <code>EmitterRing</code> 类用于环发射器。
-     */
-    class EmitterRing extends EmitterBase {
-        protected _settings: ParticleSetting;
-        protected _particle3D: Particle3D;
-        protected _resultPosition: Vector3;
-        protected _resultVelocity: Vector3;
-        protected _direction: Vector3;
-        /**发射器中心位置。*/
-        centerPosition: Vector3;
-        /**发射器半径。*/
-        radius: number;
-        /**发射器速度。*/
-        velocity: number;
-        /**发射器速度随机值。*/
-        velocityAddVariance: number;
-        /**发射器up向量，0代表X轴,1代表Y轴,2代表Z轴。*/
-        up: number;
-        /**
-         * 创建一个 <code>EmitterRing</code> 实例。
-         * @param particle3D 粒子。
-         */
-        constructor(particle3D: Particle3D);
-        protected _randomPointOnRing(): Vector3;
-        protected _randomVelocityOnRing(): Vector3;
-        /**
-         * 环发射器发射函数。
-         */
-        emit(): void;
-        /**
-         * 更新环粒子发射器。
-         * @param state 渲染相关状态参数。
-         */
-        update(elapsedTime: number): void;
-    }
-}
-declare module laya.d3.core.particle {
-    import RenderState = laya.d3.core.render.RenderState;
-    import Vector3 = laya.d3.math.Vector3;
-    import ParticleSetting = laya.particle.ParticleSetting;
-    import EmitterBase = laya.particle.emitter.EmitterBase;
-    /**
-     * <code>EmitterSphere</code> 类用于球发射器。
-     */
-    class EmitterSphere extends EmitterBase {
-        protected _settings: ParticleSetting;
-        protected _particle3D: Particle3D;
-        protected _reultPosition: Vector3;
-        protected _resultVelocity: Vector3;
-        protected _direction: Vector3;
-        /**发射器中心位置。*/
-        centerPosition: Vector3;
-        /**发射器半径。*/
-        radius: number;
-        /**发射器速度。*/
-        velocity: number;
-        /**发射器速度随机值。*/
-        velocityAddVariance: number;
-        /**
-         * 创建一个 <code>EmitterSphere</code> 实例。
-         * @param particle3D 粒子。
-         */
-        constructor(particle3D: Particle3D);
-        protected _randomPositionOnSphere(): Vector3;
-        protected _randomVelocityOnSphere(): Vector3;
-        /**
-         * 球发射器发射函数。
-         */
-        emit(): void;
-        /**
-         * 更新球粒子发射器。
-         * @param state 渲染相关状态参数。
-         */
-        update(state: RenderState): void;
-    }
-}
-declare module laya.d3.core.particle {
-    import ParticleRender = laya.d3.core.ParticleRender;
-    import RenderableSprite3D = laya.d3.core.RenderableSprite3D;
-    import RenderState = laya.d3.core.render.RenderState;
-    import Vector3 = laya.d3.math.Vector3;
-    import ParticleTemplet3D = laya.d3.resource.tempelet.ParticleTemplet3D;
-    import ParticleSetting = laya.particle.ParticleSetting;
-    /**
-     * <code>Particle3D</code> 3D粒子。
-     */
-    class Particle3D extends RenderableSprite3D {
-        /**
-         * 获取粒子模板。
-         * @return  粒子模板。
-         */
-        readonly templet: ParticleTemplet3D;
-        /**
-         * 获取粒子渲染器。
-         * @return  粒子渲染器。
-         */
-        readonly particleRender: ParticleRender;
-        /**
-         * 创建一个 <code>Particle3D</code> 实例。
-         * @param settings value 粒子配置。
-         */
-        constructor(setting: ParticleSetting);
-        protected _clearSelfRenderObjects(): void;
-        protected _addSelfRenderObjects(): void;
-        _update(state: RenderState): void;
-        /**
-         * 添加粒子。
-         * @param position 粒子位置。
-         *  @param velocity 粒子速度。
-         */
-        addParticle(position: Vector3, velocity: Vector3): void;
-        cloneTo(destObject: any): void;
-        /**
-         * <p>销毁此对象。</p>
-         * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
-         */
-        destroy(destroyChild?: boolean): void;
-    }
-}
-declare module laya.d3.core {
-    import Particle3D = laya.d3.core.particle.Particle3D;
-    import BaseRender = laya.d3.core.render.BaseRender;
-    import Matrix4x4 = laya.d3.math.Matrix4x4;
-    /**
-     * ...
-     * @author ...
-     */
-    class ParticleRender extends BaseRender {
-        constructor(owner: Particle3D);
-        protected _calculateBoundingBox(): void;
-        protected _calculateBoundingSphere(): void;
-        /**
-         * @private
-         */
-        _renderUpdate(projectionView: Matrix4x4): void;
     }
 }
 declare module laya.d3.core.particleShuriKen.module {
@@ -4660,7 +4472,7 @@ declare module laya.d3.core.particleShuriKen.module {
 }
 declare module laya.d3.core.particleShuriKen.module {
     import IClone = laya.d3.core.IClone;
-    import Vector3 = laya.d3.math.Vector3;
+    import Vector4 = laya.d3.math.Vector4;
     /**
      * <code>GradientRotation</code> 类用于创建渐变角速度。
      */
@@ -4676,7 +4488,7 @@ declare module laya.d3.core.particleShuriKen.module {
          * @param	separateConstant 分轴固定角速度。
          * @return 渐变角速度。
          */
-        static createByConstantSeparate(separateConstant: Vector3): GradientAngularVelocity;
+        static createByConstantSeparate(separateConstant: Vector4): GradientAngularVelocity;
         /**
          * 通过渐变角速度创建一个 <code>GradientAngularVelocity</code> 实例。
          * @param	gradient 渐变角速度。
@@ -4690,7 +4502,7 @@ declare module laya.d3.core.particleShuriKen.module {
          * @param	gradientZ Z轴渐变角速度。
          * @return  渐变角速度。
          */
-        static createByGradientSeparate(gradientX: GradientDataNumber, gradientY: GradientDataNumber, gradientZ: GradientDataNumber): GradientAngularVelocity;
+        static createByGradientSeparate(gradientX: GradientDataNumber, gradientY: GradientDataNumber, gradientZ: GradientDataNumber, gradientW: GradientDataNumber): GradientAngularVelocity;
         /**
          * 通过随机双固定角速度创建一个 <code>GradientAngularVelocity</code> 实例。
          * @param	constantMin 最小固定角速度。
@@ -4704,7 +4516,7 @@ declare module laya.d3.core.particleShuriKen.module {
          * @param	separateConstantMax  最大分轴固定角速度。
          * @return  渐变角速度。
          */
-        static createByRandomTwoConstantSeparate(separateConstantMin: Vector3, separateConstantMax: Vector3): GradientAngularVelocity;
+        static createByRandomTwoConstantSeparate(separateConstantMin: Vector4, separateConstantMax: Vector4): GradientAngularVelocity;
         /**
          * 通过随机双渐变角速度创建一个 <code>GradientAngularVelocity</code> 实例。
          * @param	gradientMin 最小渐变角速度。
@@ -4722,7 +4534,7 @@ declare module laya.d3.core.particleShuriKen.module {
          * @param	gradientZMax  最大Z轴渐变角速度。
          * @return  渐变角速度。
          */
-        static createByRandomTwoGradientSeparate(gradientXMin: GradientDataNumber, gradientXMax: GradientDataNumber, gradientYMin: GradientDataNumber, gradientYMax: GradientDataNumber, gradientZMin: GradientDataNumber, gradientZMax: GradientDataNumber): GradientAngularVelocity;
+        static createByRandomTwoGradientSeparate(gradientXMin: GradientDataNumber, gradientXMax: GradientDataNumber, gradientYMin: GradientDataNumber, gradientYMax: GradientDataNumber, gradientZMin: GradientDataNumber, gradientZMax: GradientDataNumber, gradientWMin: GradientDataNumber, gradientWMax: GradientDataNumber): GradientAngularVelocity;
         /**
          *生命周期角速度类型,0常量模式，1曲线模式，2随机双常量模式，3随机双曲线模式。
          */
@@ -4738,7 +4550,7 @@ declare module laya.d3.core.particleShuriKen.module {
         /**
          * 分轴固定角速度。
          */
-        readonly constantSeparate: Vector3;
+        readonly constantSeparate: Vector4;
         /**
          * 渐变角速度。
          */
@@ -4756,6 +4568,10 @@ declare module laya.d3.core.particleShuriKen.module {
          */
         readonly gradientZ: GradientDataNumber;
         /**
+         *渐变角速度Z。
+         */
+        readonly gradientW: GradientDataNumber;
+        /**
          * 最小随机双固定角速度。
          */
         readonly constantMin: number;
@@ -4766,11 +4582,11 @@ declare module laya.d3.core.particleShuriKen.module {
         /**
          * 最小分轴随机双固定角速度。
          */
-        readonly constantMinSeparate: Vector3;
+        readonly constantMinSeparate: Vector4;
         /**
          * 最大分轴随机双固定角速度。
          */
-        readonly constantMaxSeparate: Vector3;
+        readonly constantMaxSeparate: Vector4;
         /**
          *最小渐变角速度。
          */
@@ -4803,6 +4619,14 @@ declare module laya.d3.core.particleShuriKen.module {
          * 最大渐变角速度Z。
          */
         readonly gradientZMax: GradientDataNumber;
+        /**
+         * 最小渐变角速度Z。
+         */
+        readonly gradientWMin: GradientDataNumber;
+        /**
+         * 最大渐变角速度Z。
+         */
+        readonly gradientWMax: GradientDataNumber;
         /**
          * 创建一个 <code>GradientAngularVelocity,不允许new，请使用静态创建函数。</code> 实例。
          */
@@ -5623,7 +5447,7 @@ declare module laya.d3.core.particleShuriKen.module {
         /**UV通道类型,0为Noting,1为Everything,待补充,暂不支持。*/
         enableUVChannels: number;
         /**是否启用*/
-        enbale: boolean;
+        enable: boolean;
         /**获取时间帧率。*/
         readonly frame: FrameOverTime;
         /**获取开始帧率。*/
@@ -5707,6 +5531,7 @@ declare module laya.d3.core.particleShuriKen {
         static SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE: number;
         static SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES: number;
         static SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE: number;
+        static SHADERDEFINE_SHAPE: number;
         static WORLDPOSITION: number;
         static WORLDROTATIONMATRIX: number;
         static POSITIONSCALE: number;
@@ -5745,16 +5570,23 @@ declare module laya.d3.core.particleShuriKen {
         static ROLANGULARVELOCITYGRADIENTX: number;
         static ROLANGULARVELOCITYGRADIENTY: number;
         static ROLANGULARVELOCITYGRADIENTZ: number;
+        static ROLANGULARVELOCITYGRADIENTW: number;
         static ROLANGULARVELOCITYCONSTMAX: number;
         static ROLANGULARVELOCITYCONSTMAXSEPRARATE: number;
         static ROLANGULARVELOCITYGRADIENTMAX: number;
         static ROLANGULARVELOCITYGRADIENTXMAX: number;
         static ROLANGULARVELOCITYGRADIENTYMAX: number;
         static ROLANGULARVELOCITYGRADIENTZMAX: number;
+        static ROLANGULARVELOCITYGRADIENTWMAX: number;
         static TEXTURESHEETANIMATIONCYCLES: number;
         static TEXTURESHEETANIMATIONSUBUVLENGTH: number;
         static TEXTURESHEETANIMATIONGRADIENTUVS: number;
         static TEXTURESHEETANIMATIONGRADIENTMAXUVS: number;
+        /**
+         * 加载网格模板,注意:不缓存。
+         * @param url 模板地址。
+         */
+        static load(url: string): ShuriKenParticle3D;
         /**
          * 获取粒子系统。
          * @return  粒子系统。
@@ -5792,9 +5624,7 @@ declare module laya.d3.core.particleShuriKen {
         static startLifeTime: number;
         static startColor: Float32Array;
         static startSize: Float32Array;
-        static startRotation0: Float32Array;
-        static startRotation1: Float32Array;
-        static startRotation2: Float32Array;
+        static startRotation: Float32Array;
         static startSpeed: number;
         static startUVInfo: Float32Array;
         static simulationWorldPostion: Float32Array;
@@ -5818,6 +5648,10 @@ declare module laya.d3.core.particleShuriKen {
         static RENDERMODE_OPAQUE: number;
         /**渲染状态_不透明_双面。*/
         static RENDERMODE_OPAQUEDOUBLEFACE: number;
+        /**渲染状态_透明测试。*/
+        static RENDERMODE_CUTOUT: number;
+        /**渲染状态_透明测试_双面。*/
+        static RENDERMODE_CUTOUTDOUBLEFACE: number;
         /**渲染状态_透明混合。*/
         static RENDERMODE_TRANSPARENT: number;
         /**渲染状态_透明混合_双面。*/
@@ -5854,10 +5688,6 @@ declare module laya.d3.core.particleShuriKen {
          */
         static load(url: string): ShurikenParticleMaterial;
         /**
-         * 获取渲染状态。
-         * @return 渲染状态。
-         */
-        /**
          * 设置渲染模式。
          * @return 渲染模式。
          */
@@ -5889,10 +5719,6 @@ declare module laya.d3.core.particleShuriKen {
          *@private
          */
         onAsynLoaded(url: string, data: any, params: Array<any>): void;
-        /**
-         * @inheritDoc
-         */
-        cloneTo(destObject: any): void;
     }
 }
 declare module laya.d3.core.particleShuriKen {
@@ -6058,7 +5884,7 @@ declare module laya.d3.core.particleShuriKen {
         startColorConstantMax: Vector4;
         /**重力敏感度。*/
         gravityModifier: number;
-        /**模拟器空间,0为World,1为Local。暂不支持*/
+        /**模拟器空间,0为World,1为Local。暂不支持Custom。*/
         simulationSpace: number;
         /**缩放模式，0为Hiercachy,1为Local,2为World。暂不支持1,2*/
         scaleMode: number;
@@ -6226,8 +6052,8 @@ declare module laya.d3.core.particleShuriKen {
     }
 }
 declare module laya.d3.core {
-    import RenderState = laya.d3.core.render.RenderState;
-    import Shader3D = laya.d3.shader.Shader3D;
+    import Vector3 = laya.d3.math.Vector3;
+    import Vector4 = laya.d3.math.Vector4;
     import ShaderCompile3D = laya.d3.shader.ShaderCompile3D;
     /**
      * @private
@@ -6236,15 +6062,14 @@ declare module laya.d3.core {
     class PhasorSpriter3D {
         protected _shaderCompile: ShaderCompile3D;
         constructor();
-        line(startX: number, startY: number, startZ: number, startR: number, startG: number, startB: number, startA: number, endX: number, endY: number, endZ: number, endR: number, endG: number, endB: number, endA: number): PhasorSpriter3D;
+        line(startPosition: Vector3, startColor: Vector4, endPosition: Vector3, endColor: Vector4): PhasorSpriter3D;
         circle(radius: number, numberOfPoints: number, r: number, g: number, b: number, a: number): PhasorSpriter3D;
         plane(positionX: number, positionY: number, positionZ: number, width: number, height: number, r: number, g: number, b: number, a: number): PhasorSpriter3D;
         box(positionX: number, positionY: number, positionZ: number, width: number, height: number, depth: number, r: number, g: number, b: number, a: number): PhasorSpriter3D;
         cone(radius: number, length: number, Slices: number, r: number, g: number, b: number, a: number): PhasorSpriter3D;
         boundingBoxLine(minX: number, minY: number, minZ: number, maxX: number, maxY: number, maxZ: number, r: number, g: number, b: number, a: number): PhasorSpriter3D;
-        begin(primitive: number, state: RenderState): PhasorSpriter3D;
+        begin(primitive: number, camera: BaseCamera): PhasorSpriter3D;
         end(): PhasorSpriter3D;
-        protected _getShader(state: RenderState): Shader3D;
     }
 }
 declare module laya.d3.core.render {
@@ -6273,6 +6098,7 @@ declare module laya.d3.core.render {
         protected _boundingBoxNeedChange: boolean;
         protected _boundingBoxCenterNeedChange: boolean;
         protected _octreeNodeNeedChange: boolean;
+        _indexInSceneFrustumCullingObjects: number;
         _materials: Array<any>;
         _owner: RenderableSprite3D;
         _renderElements: Array<any>;
@@ -6285,6 +6111,10 @@ declare module laya.d3.core.render {
         sortingFudge: number;
         /** 是否产生阴影。 */
         castShadow: boolean;
+        /**
+         * 获取唯一标识ID,通常用于识别。
+         */
+        readonly id: number;
         /**
          * 获取光照贴图的索引。
          * @return 光照贴图的索引。
@@ -6499,6 +6329,10 @@ declare module laya.d3.core.render {
         _shaderValue: ValusArray;
         _onPreRenderFunction: Function;
         _conchSubmesh: any;
+        /**
+         * 获取唯一标识ID,通常用于识别。
+         */
+        readonly id: number;
         renderObj: IRenderable;
         /**
          * 创建一个 <code>RenderElement</code> 实例。
@@ -6631,6 +6465,7 @@ declare module laya.d3.core.render {
     class SubMeshRenderElement extends RenderElement {
         _batchIndexStart: number;
         _batchIndexEnd: number;
+        _skinAnimationDatas: Array<any>;
         constructor();
     }
 }
@@ -6807,7 +6642,8 @@ declare module laya.d3.core.scene {
         protected _fogColor: Vector3;
         _shaderValues: ValusArray;
         _shaderDefineValue: number;
-        _frustumCullingObjects: Array<any>;
+        _cullingRendersLength: number;
+        _cullingRenders: Array<any>;
         _dynamicBatchManager: DynamicBatchManager;
         _quenes: Array<any>;
         _cameraPool: Array<any>;
@@ -6822,6 +6658,10 @@ declare module laya.d3.core.scene {
         treeLevel: number;
         parallelSplitShadowMaps: Array<any>;
         /**
+         * @private
+         */
+        _loaded: boolean;
+        /**
          * 获取资源的URL地址。
          * @return URL地址。
          */
@@ -6830,6 +6670,10 @@ declare module laya.d3.core.scene {
          * @param value URL地址。
          */
         url: string;
+        /**
+         * 获取是否已加载完成。
+         */
+        readonly loaded: boolean;
         /**
          * 获取是否允许雾化。
          * @return 是否允许雾化。
@@ -7047,23 +6891,75 @@ declare module laya.d3.core.scene {
     }
 }
 declare module laya.d3.core {
+    import Animator = laya.d3.component.Animator;
+    import Matrix4x4 = laya.d3.math.Matrix4x4;
     /**
      * <code>SkinMeshRender</code> 类用于蒙皮渲染器。
      */
-    class SkinMeshRender extends MeshRender {
+    class SkinnedMeshRender extends MeshRender {
+        /**
+         * @private
+         */
+        _cacheAnimator: Animator;
         /**
          * 创建一个新的 <code>SkinMeshRender</code> 实例。
          */
-        constructor();
+        constructor(owner: RenderableSprite3D);
+        /**
+         * @inheritDoc
+         */
+        _renderUpdate(projectionView: Matrix4x4): void;
     }
 }
 declare module laya.d3.core {
+    import BaseMesh = laya.d3.resource.models.BaseMesh;
+    import Mesh = laya.d3.resource.models.Mesh;
     /**
-     * ...
-     * @author ...
+     * <code>MeshSprite3D</code> 类用于创建网格。
      */
-    class SkinMeshSprite3D {
-        constructor();
+    class SkinnedMeshSprite3D extends RenderableSprite3D {
+        /**着色器变量名，蒙皮动画。*/
+        static BONES: number;
+        static SHADERDEFINE_BONE: number;
+        /**
+         * 加载网格模板,注意:不缓存。
+         * @param url 模板地址。
+         */
+        static load(url: string): MeshSprite3D;
+        /**
+         * 获取网格过滤器。
+         * @return  网格过滤器。
+         */
+        readonly meshFilter: MeshFilter;
+        /**
+         * 获取网格渲染器。
+         * @return  网格渲染器。
+         */
+        readonly skinnedMeshRender: SkinnedMeshRender;
+        /**
+         * 创建一个 <code>MeshSprite3D</code> 实例。
+         * @param mesh 网格,同时会加载网格所用默认材质。
+         * @param name 名字。
+         */
+        constructor(mesh?: BaseMesh, name?: string);
+        protected _clearSelfRenderObjects(): void;
+        protected _addSelfRenderObjects(): void;
+        /**
+         * @private
+         */
+        _applyMeshMaterials(mesh: Mesh): void;
+        /**
+         * @inheritDoc
+         */
+        cloneTo(destObject: any): void;
+        /**
+         * @inheritDoc
+         */
+        destroy(destroyChild?: boolean): void;
+        /**
+         * @private
+         */
+        createConchModel(): any;
     }
 }
 declare module laya.d3.core {
@@ -7090,13 +6986,13 @@ declare module laya.d3.core {
         /**
          * 创建精灵的克隆实例。
          * @param	original  原始精灵。
-         * @param	position  世界位置。
-         * @param	rotation  世界旋转。
          * @param   parent    父节点。
-         * @param   worldPositionStays 是否保持自身世界变换,注意:在position，rotation均为空时有效。
+         * @param   worldPositionStays 是否保持自身世界变换。
+         * @param	position  世界位置,worldPositionStays为false时生效。
+         * @param	rotation  世界旋转,worldPositionStays为false时生效。
          * @return  克隆实例。
          */
-        static instantiate(original: Sprite3D, position?: Vector3, rotation?: Quaternion, parent?: Node, worldPositionStays?: boolean): Sprite3D;
+        static instantiate(original: Sprite3D, parent?: Node, worldPositionStays?: boolean, position?: Vector3, rotation?: Quaternion): Sprite3D;
         /**
          * 加载网格模板,注意:不缓存。
          * @param url 模板地址。
@@ -7119,6 +7015,10 @@ declare module laya.d3.core {
          *   @return	唯一标识ID。
          */
         readonly id: number;
+        /**
+         * 获取是否已加载完成。
+         */
+        readonly loaded: boolean;
         /**
          * 获取是否属于场景。
          * @return  是否属于场景。
@@ -7174,6 +7074,10 @@ declare module laya.d3.core {
          * 创建一个 <code>Sprite3D</code> 实例。
          */
         constructor(name?: string);
+        /**
+         * @private
+         */
+        _loaded: boolean;
         /**
          * @private
          */
@@ -7303,6 +7207,7 @@ declare module laya.d3.core {
     }
 }
 declare module laya.d3.core {
+    import AnimationTransform3D = laya.d3.animation.AnimationTransform3D;
     import Matrix4x4 = laya.d3.math.Matrix4x4;
     import Quaternion = laya.d3.math.Quaternion;
     import Vector3 = laya.d3.math.Vector3;
@@ -7311,31 +7216,16 @@ declare module laya.d3.core {
      * <code>Transform3D</code> 类用于实现3D变换。
      */
     class Transform3D extends EventDispatcher {
-        protected _localPosition: Vector3;
-        protected _localRotation: Quaternion;
-        protected _localScale: Vector3;
-        protected _localMatrix: Matrix4x4;
-        protected _position: Vector3;
-        protected _rotation: Quaternion;
-        protected _scale: Vector3;
-        protected _worldMatrix: Matrix4x4;
-        protected _owner: Sprite3D;
-        protected _forward: Vector3;
-        protected _up: Vector3;
-        protected _right: Vector3;
-        protected _preWorldTransformModifyID: number;
-        protected _localUpdate: boolean;
-        protected _worldUpdate: boolean;
-        protected _positionUpdate: boolean;
-        protected _rotationUpdate: boolean;
-        protected _scaleUpdate: boolean;
-        protected _parent: Transform3D;
         /** 变换中心点,注意:该中心点不受变换的影响。*/
         pivot: Vector3;
         /**
          * @private
          */
         readonly _isFrontFaceInvert: boolean;
+        /**
+         * 获取所属精灵。
+         */
+        readonly owner: Sprite3D;
         /**
          * 获取世界矩阵是否需要更新。
          * @return	世界矩阵是否需要更新。
@@ -7387,6 +7277,10 @@ declare module laya.d3.core {
          */
         localScale: Vector3;
         /**
+         * 获取局部空间的旋转角度。
+         * @return	欧拉角的旋转值，顺序为x、y、z。
+         */
+        /**
          * 设置局部空间的旋转角度。
          * @param	value 欧拉角的旋转值，顺序为x、y、z。
          */
@@ -7435,22 +7329,28 @@ declare module laya.d3.core {
          */
         readonly right: Vector3;
         /**
+         * 获取父3D变换。
+         * @return 父3D变换。
+         */
+        /**
          * 设置父3D变换。
          * @param	value 父3D变换。
          */
         parent: Transform3D;
         /**
+         *获取关联虚拟变换。
+         * @return 虚拟变换。
+         */
+        /**
+         *设置关联虚拟变换。
+         * @param value 虚拟变换。
+         */
+        dummy: AnimationTransform3D;
+        /**
          * 创建一个 <code>Transform3D</code> 实例。
          * @param owner 所属精灵。
          */
         constructor(owner: Sprite3D);
-        protected _updateLocalMatrix(): void;
-        protected _onLocalTransform(): void;
-        protected _onWorldPositionRotationTransform(): void;
-        protected _onWorldPositionScaleTransform(): void;
-        protected _onWorldPositionTransform(): void;
-        protected _onWorldRotationTransform(): void;
-        protected _onWorldScaleTransform(): void;
         /**
          * @private
          */
@@ -8135,9 +8035,7 @@ declare module laya.d3.graphics {
         static STARTCOLOR0: number;
         static STARTSIZE: number;
         static AGEADDSCALE0: number;
-        static STARTROTATION0: number;
-        static STARTROTATION1: number;
-        static STARTROTATION2: number;
+        static STARTROTATION: number;
         static ENDCOLOR0: number;
         static STARTLIFETIME: number;
         static TIME0: number;
@@ -8566,6 +8464,27 @@ declare module laya.d3.graphics {
 declare module laya.d3.graphics {
     import Vector2 = laya.d3.math.Vector2;
     import Vector3 = laya.d3.math.Vector3;
+    import Vector4 = laya.d3.math.Vector4;
+    /**
+     * <code>VertexPositionNormalTextureSkin</code> 类用于创建位置、法线、纹理、骨骼索引、骨骼权重顶点结构。
+     */
+    class VertexPositionNTBTexture0Texture1Skin implements IVertex {
+        static readonly vertexDeclaration: VertexDeclaration;
+        binormal: Vector3;
+        readonly position: Vector3;
+        readonly normal: Vector3;
+        readonly textureCoordinate0: Vector2;
+        readonly textureCoordinate1: Vector2;
+        readonly blendIndex: Vector4;
+        readonly blendWeight: Vector4;
+        readonly tangent: Vector3;
+        readonly vertexDeclaration: VertexDeclaration;
+        constructor(position: Vector3, normal: Vector3, binormal: Vector3, textureCoordinate0: Vector2, textureCoordinate1: Vector2, tangent: Vector3, blendIndex: Vector4, blendWeight: Vector4);
+    }
+}
+declare module laya.d3.graphics {
+    import Vector2 = laya.d3.math.Vector2;
+    import Vector3 = laya.d3.math.Vector3;
     /**
      * <code>VertexPositionNormalTexture</code> 类用于创建位置、法线、纹理顶点结构。
      */
@@ -8658,7 +8577,7 @@ declare module laya.d3.loaders {
         /**
          * 创建一个 <code>LoadModel</code> 实例。
          */
-        constructor(readData: Byte, version: string, mesh: Mesh, materials: Array<any>, materialMap: any);
+        constructor(readData: Byte, version: string, mesh: Mesh, materials: Array<any>, subMeshes: Array<any>, materialMap: any);
         onError(): void;
         READ_BLOCK(): boolean;
         READ_DATA(): boolean;
@@ -8680,7 +8599,21 @@ declare module laya.d3.loaders {
         /**
          * @private
          */
-        static parse(readData: Byte, version: string, mesh: Mesh, materials: Array<any>, materialMap: any): void;
+        static parse(readData: Byte, version: string, mesh: Mesh, materials: Array<any>, subMeshes: Array<any>, materialMap: any): void;
+    }
+}
+declare module laya.d3.loaders {
+    import Mesh = laya.d3.resource.models.Mesh;
+    import Byte = laya.utils.Byte;
+    /**
+     * @private
+     * <code>LoadModel</code> 类用于模型加载。
+     */
+    class LoadModelV03 {
+        /**
+         * @private
+         */
+        static parse(readData: Byte, version: string, mesh: Mesh, subMeshes: Array<any>, materialMap: any): void;
     }
 }
 declare module laya.d3.loaders {
@@ -8691,7 +8624,7 @@ declare module laya.d3.loaders {
      */
     class MeshReader {
         constructor();
-        static read(data: ArrayBuffer, mesh: Mesh, materials: Array<any>, materialMap: any): void;
+        static read(data: ArrayBuffer, mesh: Mesh, materials: Array<any>, subMeshes: Array<any>, materialMap: any): void;
     }
 }
 declare module laya.d3.math {
@@ -9448,6 +9381,14 @@ declare module laya.d3.math {
          * @return 是否分解成功。
          */
         decomposeTransRotMatScale(translation: Vector3, rotationMatrix: Matrix4x4, scale: Vector3): boolean;
+        /**
+         * 分解旋转矩阵的旋转为YawPitchRoll欧拉角。
+         * @param	out float yaw
+         * @param	out float pitch
+         * @param	out float roll
+         * @return
+         */
+        decomposeYawPitchRoll(yawPitchRoll: Vector3): void;
         /**归一化矩阵 */
         normalize(): void;
         /**计算矩阵的转置矩阵*/
@@ -10793,13 +10734,7 @@ declare module laya.d3.resource.models {
          * 添加子网格（开发者禁止修改）。
          * @param subMesh 子网格。
          */
-        _add(subMesh: SubMesh): void;
-        /**
-         * 移除子网格（开发者禁止修改）。
-         * @param subMesh 子网格。
-         * @return  是否成功。
-         */
-        _remove(subMesh: SubMesh): boolean;
+        _setSubMeshes(subMeshes: Array<any>): void;
         /**
          *@private
          */
@@ -11293,13 +11228,11 @@ declare module laya.d3.resource.tempelet {
     import BoundBox = laya.d3.math.BoundBox;
     import BoundSphere = laya.d3.math.BoundSphere;
     import Vector3 = laya.d3.math.Vector3;
-    import Vector4 = laya.d3.math.Vector4;
     /**
      * @private
      * <code>GlitterTemplet</code> 类用于创建闪光数据模板。
      */
     class GlitterTemplet extends GeometryFilter implements IRenderable {
-        _albedo: Vector4;
         _currentTime: number;
         /** 声明周期。 */
         lifeTime: number;
@@ -11309,8 +11242,6 @@ declare module laya.d3.resource.tempelet {
         minInterpDistance: number;
         /** 最大插值数量。 */
         maxSlerpCount: number;
-        /** 颜色。 */
-        color: Vector4;
         /** 最大段数。 */
         _maxSegments: number;
         /**获取最大分段数。*/
@@ -11361,34 +11292,6 @@ declare module laya.d3.resource.tempelet {
         _renderRuntime(conchGraphics3D: any, renderElement: RenderElement, state: RenderState): void;
     }
 }
-declare module laya.d3.resource.tempelet {
-    import Particle3D = laya.d3.core.particle.Particle3D;
-    import IRenderable = laya.d3.core.render.IRenderable;
-    import RenderElement = laya.d3.core.render.RenderElement;
-    import RenderState = laya.d3.core.render.RenderState;
-    import IndexBuffer3D = laya.d3.graphics.IndexBuffer3D;
-    import VertexBuffer3D = laya.d3.graphics.VertexBuffer3D;
-    import Vector3 = laya.d3.math.Vector3;
-    import ParticleSetting = laya.particle.ParticleSetting;
-    import ParticleTemplateWebGL = laya.particle.ParticleTemplateWebGL;
-    /**
-     * @private
-     * <code>ParticleTemplet3D</code> 类用于创建3D粒子数据模板。
-     */
-    class ParticleTemplet3D extends ParticleTemplateWebGL implements IRenderable {
-        readonly _vertexBufferCount: number;
-        readonly triangleCount: number;
-        _getVertexBuffer(index?: number): VertexBuffer3D;
-        _getIndexBuffer(): IndexBuffer3D;
-        constructor(owner: Particle3D, setting: ParticleSetting);
-        addParticle(position: Vector3, velocity: Vector3): void;
-        protected loadContent(): void;
-        addNewParticlesToVertexBuffer(): void;
-        _beforeRender(state: RenderState): boolean;
-        _render(state: RenderState): void;
-        _renderRuntime(conchGraphics3D: any, renderElement: RenderElement, state: RenderState): void;
-    }
-}
 declare module laya.d3.resource {
     /**
      * <code>Texture2D</code> 二维纹理。
@@ -11406,7 +11309,7 @@ declare module laya.d3.resource {
         /**
          * 创建一个 <code>Texture2D</code> 实例。
          */
-        constructor(canRead?: boolean);
+        constructor(canRead?: boolean, reapeat?: boolean);
         protected recreateResource(): void;
         /**
          *@private
@@ -11585,7 +11488,7 @@ declare module laya.d3.shader {
          * @param	define 宏定义，格式:
          * @return
          */
-        withCompile(nameID: number, publicDefine: number, spriteDefine: number, materialDefine: number): Shader3D;
+        withCompile(publicDefine: number, spriteDefine: number, materialDefine: number): Shader3D;
         createShader(publicDefine: any, spriteDefine: any, materialDefine: any): Shader3D;
         /**
          * 通过宏定义预编译shader。
@@ -12258,6 +12161,18 @@ declare module laya.d3.utils {
          * @return
          */
         static getURLVerion(url: string): string;
+        /**
+         * @private
+         */
+        static _quaternionCreateFromYawPitchRollArray(yaw: number, pitch: number, roll: number, out: Float32Array): void;
+        /**
+         * @private
+         */
+        static _createAffineTransformationArray(trans: Float32Array, rot: Float32Array, scale: Float32Array, out: Matrix4x4): void;
+        /**
+         * @private
+         */
+        static _mulMatrixArray(leftMatrix: Matrix4x4, rightMatrix: Matrix4x4, outArray: Float32Array, outOffset: number): void;
     }
 }
 declare module laya.d3.water {
@@ -12848,7 +12763,7 @@ declare module laya.display {
          * @param	name	（可选）动画模板在动画模版缓存池中的key，也可认为是动画名称。如果name为空，则播放当前动画序列帧；如果不为空，则在动画模版缓存池中寻找key值为name的动画模版，如果存在则用此动画模版初始化当前序列帧并播放，如果不存在，则仍然播放当前动画序列帧；如果没有当前动画的帧数据，则不播放，但该实例仍然处于播放状态。
          */
         play(start?: any, loop?: boolean, name?: string): void;
-        protected _setFramesFromCache(name: string): boolean;
+        protected _setFramesFromCache(name: string, showWarn?: boolean): boolean;
         protected _frameLoop(): void;
         protected _displayToIndex(value: number): void;
         /**
@@ -12857,12 +12772,10 @@ declare module laya.display {
         frames: Array<any>;
         /**
          * <p>动画数据源。</p>
-         * <p>
-         * 类型如下：<br/>
+         * <p>类型如下：<br/>
          * 1. LayaAir IDE动画文件路径：使用此类型需要预加载所需的图集资源，否则会创建失败，如果不想预加载或者需要创建完毕的回调，请使用loadAnimation(...)方法；<br/>
          * 2. 图集路径：使用此类型创建的动画模版不会被缓存到动画模版缓存池中，如果需要缓存或者创建完毕的回调，请使用loadAtlas(...)方法；<br/>
-         * 3. 图片路径集合：使用此类型创建的动画模版不会被缓存到动画模版缓存池中，如果需要缓存，请使用loadImages(...)方法。
-         * </p>
+         * 3. 图片路径集合：使用此类型创建的动画模版不会被缓存到动画模版缓存池中，如果需要缓存，请使用loadImages(...)方法。</p>
          * @param value	数据源。比如：图集："xx/a1.atlas"；图片集合："a1.png,a2.png,a3.png"；LayaAir IDE动画"xx/a1.ani"。
          */
         source: string;
@@ -12879,9 +12792,9 @@ declare module laya.display {
          */
         clear(): void;
         /**
-         * <p>根据指定的动画模版初始化当前动画序列帧。选择动画模版的过程如下：1. 动画模版缓存池中key为cacheName的动画模版；2. 如果不存在，则加载指定的图片集合并创建动画模版。注意：只有指定不为空的cacheName，才能将创建好的动画模版以此为key缓存到动画模版缓存池，否则不进行缓存。<p/>
+         * <p>根据指定的动画模版初始化当前动画序列帧。选择动画模版的过程如下：1. 动画模版缓存池中key为cacheName的动画模版；2. 如果不存在，则加载指定的图片集合并创建动画模版。注意：只有指定不为空的cacheName，才能将创建好的动画模版以此为key缓存到动画模版缓存池，否则不进行缓存。</p>
          * <p>动画模版缓存池是以一定的内存开销来节省CPU开销，当相同的动画模版被多次使用时，相比于每次都创建新的动画模版，使用动画模版缓存池，只需创建一次，缓存之后多次复用，从而节省了动画模版创建的开销。</p>
-         * <p>因为返回值为Animation对象本身，所以可以使用如下语法：loadImages(...).loadImages(...).play(...);。</p>
+         * <p>因为返回值为Animation对象本身，所以可以使用如下语法：ani.loadImages(...).loadImages(...).play(...);。</p>
          * @param	urls		图片路径集合。需要创建动画模版时，会以此为数据源。参数形如：[url1,url2,url3,...]。
          * @param	cacheName	（可选）动画模板在动画模版缓存池中的key。如果此参数不为空，表示使用动画模版缓存池。如果动画模版缓存池中存在key为cacheName的动画模版，则使用此模版。否则，创建新的动画模版，如果cacheName不为空，则以cacheName为key缓存到动画模版缓存池中，如果cacheName为空，不进行缓存。
          * @return 	返回Animation对象本身。
@@ -12889,9 +12802,9 @@ declare module laya.display {
         loadImages(urls: Array<any>, cacheName?: string): Animation;
         /**
          * <p>根据指定的动画模版初始化当前动画序列帧。选择动画模版的过程如下：1. 动画模版缓存池中key为cacheName的动画模版；2. 如果不存在，则加载指定的图集并创建动画模版。</p>
-         * <p>注意：只有指定不为空的cacheName，才能将创建好的动画模版以此为key缓存到动画模版缓存池，否则不进行缓存。<p/>
+         * <p>注意：只有指定不为空的cacheName，才能将创建好的动画模版以此为key缓存到动画模版缓存池，否则不进行缓存。</p>
          * <p>动画模版缓存池是以一定的内存开销来节省CPU开销，当相同的动画模版被多次使用时，相比于每次都创建新的动画模版，使用动画模版缓存池，只需创建一次，缓存之后多次复用，从而节省了动画模版创建的开销。</p>
-         * <p>因为返回值为Animation对象本身，所以可以使用如下语法：loadAtlas(...).loadAtlas(...).play(...);。</p>
+         * <p>因为返回值为Animation对象本身，所以可以使用如下语法：ani.loadAtlas(...).loadAtlas(...).play(...);。</p>
          * @param	url			图集路径。需要创建动画模版时，会以此为数据源。
          * @param	loaded		（可选）使用指定图集初始化动画完毕的回调。
          * @param	cacheName	（可选）动画模板在动画模版缓存池中的key。如果此参数不为空，表示使用动画模版缓存池。如果动画模版缓存池中存在key为cacheName的动画模版，则使用此模版。否则，创建新的动画模版，如果cacheName不为空，则以cacheName为key缓存到动画模版缓存池中，如果cacheName为空，不进行缓存。
@@ -12902,7 +12815,7 @@ declare module laya.display {
          * <p>加载并解析由LayaAir IDE制作的动画文件，此文件中可能包含多个动画。默认帧率为在IDE中设计的帧率，如果调用过set interval，则使用此帧间隔对应的帧率。加载后创建动画模版，并缓存到动画模版缓存池，key "url#动画名称" 对应相应动画名称的动画模板，key "url#" 对应动画模版集合的默认动画模版。</p>
          * <p>注意：如果调用本方法前，还没有预加载动画使用的图集，请将atlas参数指定为对应的图集路径，否则会导致动画创建失败。</p>
          * <p>动画模版缓存池是以一定的内存开销来节省CPU开销，当相同的动画模版被多次使用时，相比于每次都创建新的动画模版，使用动画模版缓存池，只需创建一次，缓存之后多次复用，从而节省了动画模版创建的开销。</p>
-         * <p>因为返回值为Animation对象本身，所以可以使用如下语法：loadAnimation(...).loadAnimation(...).play(...);。</p>
+         * <p>因为返回值为Animation对象本身，所以可以使用如下语法：ani.loadAnimation(...).loadAnimation(...).play(...);。</p>
          * @param	url 	动画文件路径。可由LayaAir IDE创建并发布。
          * @param	loaded	（可选）使用指定动画资源初始化动画完毕的回调。
          * @param	atlas	（可选）动画用到的图集地址（可选）。
@@ -12943,7 +12856,7 @@ declare module laya.display {
          */
         loop: boolean;
         /**
-         * <p>播放顺序类型：0为正序播放，1为倒序播放，2为pingpong播放(当按指定顺序播放完结尾后，如果继续播发，则会改变播放顺序)。</p>
+         * <p>播放顺序类型：AnimationPlayerBase.WRAP_POSITIVE为正序播放，AnimationPlayerBase.WRAP_REVERSE为倒序播放，AnimationPlayerBase.WRAP_PINGPONG为pingpong播放(当按指定顺序播放完结尾后，如果继续播发，则会改变播放顺序)。</p>
          * <p>默认为正序播放。</p>
          */
         wrapMode: number;
@@ -13589,8 +13502,9 @@ declare module laya.display {
         destroy(): void;
         /**
          * <p>清空绘制命令。</p>
+         * @param recoverCmds 是否回收绘图指令
          */
-        clear(): void;
+        clear(recoverCmds?: boolean): void;
         /**
          * @private
          * 重绘此对象。
@@ -13617,14 +13531,14 @@ declare module laya.display {
         /**
          * 绘制纹理。
          * @param tex		纹理。
-         * @param x X		（可选）轴偏移量。
-         * @param y Y		（可选）轴偏移量。
+         * @param x 		（可选）X轴偏移量。
+         * @param y 		（可选）Y轴偏移量。
          * @param width		（可选）宽度。
          * @param height	（可选）高度。
          * @param m			（可选）矩阵信息。
          * @param alpha		（可选）透明度。
          */
-        drawTexture(tex: Texture, x?: number, y?: number, width?: number, height?: number, m?: Matrix, alpha?: number): void;
+        drawTexture(tex: Texture, x?: number, y?: number, width?: number, height?: number, m?: Matrix, alpha?: number): Array<any>;
         /**
          * @private 清理贴图并替换为最新的
          * @param tex
@@ -13699,6 +13613,11 @@ declare module laya.display {
          * @param value 透明度。
          */
         alpha(value: number): void;
+        /**
+         * 设置当前透明度。
+         * @param	value 透明度。
+         */
+        setAlpha(value: number): void;
         /**
          * 替换绘图的当前转换矩阵。
          * @param mat 矩阵。
@@ -13857,6 +13776,36 @@ declare module laya.display {
     }
 }
 declare module laya.display {
+    import Rectangle = laya.maths.Rectangle;
+    /**
+     * @private
+     * Graphic bounds数据类
+     */
+    class GraphicsBounds {
+        _graphics: Graphics;
+        /**
+         * 销毁
+         */
+        destroy(): void;
+        /**
+         * 重置数据
+         */
+        reset(): void;
+        /**
+         * 获取位置及宽高信息矩阵(比较耗CPU，频繁使用会造成卡顿，尽量少用)。
+         * @param realSize	（可选）使用图片的真实大小，默认为false
+         * @return 位置与宽高组成的 一个 Rectangle 对象。
+         */
+        getBounds(realSize?: boolean): Rectangle;
+        /**
+         * @private
+         * @param realSize	（可选）使用图片的真实大小，默认为false
+         * 获取端点列表。
+         */
+        getBoundPoints(realSize?: boolean): Array<any>;
+    }
+}
+declare module laya.display {
     import CSSStyle = laya.display.css.CSSStyle;
     /**
      * @private
@@ -13999,7 +13948,7 @@ declare module laya.display {
     import EventDispatcher = laya.events.EventDispatcher;
     import Timer = laya.utils.Timer;
     /**
-     * <code>Node</code> 类用于创建节点对象，节点是最基本的元素。
+     *  <code>Node</code> 类是可放在显示列表中的所有对象的基类。该显示列表管理 Laya 运行时中显示的所有对象。使用 Node 类排列显示列表中的显示对象。Node 对象可以有子显示对象。
      */
     class Node extends EventDispatcher {
         static NOTICE_DISPLAY: number;
@@ -14160,8 +14109,9 @@ declare module laya.display {
          * @param	method		结束时的回调方法。
          * @param	args		（可选）回调参数。
          * @param	coverBefore	（可选）是否覆盖之前的延迟执行，默认为true。
+         * @param	jumpFrame 时钟是否跳帧。基于时间的循环回调，单位时间间隔内，如能执行多次回调，出于性能考虑，引擎默认只执行一次，设置jumpFrame=true后，则回调会连续执行多次
          */
-        timerLoop(delay: number, caller: any, method: Function, args?: Array<any>, coverBefore?: boolean): void;
+        timerLoop(delay: number, caller: any, method: Function, args?: Array<any>, coverBefore?: boolean, jumpFrame?: boolean): void;
         /**
          * 定时执行某函数一次。功能同Laya.timer.timerOnce()。
          * @param	delay		延迟时间(单位毫秒)。
@@ -14209,10 +14159,10 @@ declare module laya.display {
     import Texture = laya.resource.Texture;
     import Handler = laya.utils.Handler;
     /**
-     * <p> <code>Sprite</code> 是基本显示列表构造块：一个可显示图形的显示列表节点。通过<code>graphics</code>可以绘制图片或者矢量图，支持旋转，缩放，位移等操作。<code>Sprite</code>同时也是容器类，用来添加多个子节点。</p>
+     * <p> <code>Sprite</code> 是基本的显示图形的显示列表节点。 <code>Sprite</code> 默认没有宽高，默认不接受鼠标事件。通过 <code>graphics</code> 可以绘制图片或者矢量图，支持旋转，缩放，位移等操作。<code>Sprite</code>同时也是容器类，可用来添加多个子节点。</p>
+     * <p>注意： <code>Sprite</code> 默认没有宽高，可以通过<code>getBounds</code>函数获取；也可手动设置宽高；还可以设置<code>autoSize=true</code>，然后再获取宽高。<code>Sprite</code>的宽高一般用于进行碰撞检测和排版，并不影响显示图像大小，如果需要更改显示图像大小，请使用 <code>scaleX</code> ， <code>scaleY</code> ， <code>scale</code>。</p>
+     * <p> <code>Sprite</code> 默认不接受鼠标事件，即<code>mouseEnabled=false</code>，但是只要对其监听任意鼠标事件，会自动打开自己以及所有父对象的<code>mouseEnabled=true</code>。所以一般也无需手动设置<code>mouseEnabled</code>。</p>
      * <p>LayaAir引擎API设计精简巧妙。核心显示类只有一个<code>Sprite</code>。<code>Sprite</code>针对不同的情况做了渲染优化，所以保证一个类实现丰富功能的同时，又达到高性能。</p>
-     * <p><code>Sprite</code>默认没有宽高，可以手动设置宽高，或者通过<code>getbounds</code>函数获取，还可以设置<code>autoSize=true</code>，然后再获取宽高。<code>Sprite</code>的宽高只是用来做碰撞使用，并不影响显示大小，如果更改显示大小，需要使用<code>scaleX</code>，<code>scaleY</code>。</p>
-     * <p><code>Sprite</code>默认不接受鼠标事件，即<code>mouseEnabled=false</code>，但是只要对其监听任意鼠标事件，会自动打开自己以及所有父对象的<code>mouseEnabled=true</code>。所以一般也无需手动设置<code>mouseEnabled</code>。</p>
      *
      * @example <caption>创建了一个 <code>Sprite</code> 实例。</caption>
      * package
@@ -14362,6 +14312,7 @@ declare module laya.display {
         _style: Style;
         _graphics: Graphics;
         _renderType: number;
+        _childRenderMax: boolean;
         /**
          * <p>鼠标事件与此对象的碰撞检测是否可穿透。碰撞检测发生在鼠标事件的捕获阶段，此阶段引擎会从stage开始递归检测stage及其子对象，直到找到命中的目标对象或者未命中任何对象。</p>
          * <p>穿透表示鼠标事件发生的位置处于本对象绘图区域内时，才算命中，而与对象宽高和值为Rectangle对象的hitArea属性无关。如果sprite.hitArea值是HitArea对象，表示显式声明了此对象的鼠标事件响应区域，而忽略对象的宽高、mouseThrough属性。</p>
@@ -14384,11 +14335,9 @@ declare module laya.display {
         hitTestPrior: boolean;
         /**
          * <p>视口大小，视口外的子对象，将不被渲染(如果想实现裁剪效果，请使用srollRect)，合理使用能提高渲染性能。比如由一个个小图片拼成的地图块，viewport外面的小图片将不渲染</p>
-         * <p>
-         * srollRect和viewport的区别：<br/>
-         * 1.srollRect自带裁剪效果，viewport只影响子对象渲染是否渲染，不具有裁剪效果（性能更高）。<br/>
-         * 2.设置rect的x,y属性均能实现区域滚动效果，但scrollRect会保持0,0点位置不变。
-         * </p>
+         * <p>srollRect和viewport的区别：<br/>
+         * 1. srollRect自带裁剪效果，viewport只影响子对象渲染是否渲染，不具有裁剪效果（性能更高）。<br/>
+         * 2. 设置rect的x,y属性均能实现区域滚动效果，但scrollRect会保持0,0点位置不变。</p>
          * @default null
          */
         viewport: Rectangle;
@@ -14412,19 +14361,18 @@ declare module laya.display {
         customRenderEnable: boolean;
         /**
          * <p>指定显示对象是否缓存为静态图像，cacheAs时，子对象发生变化，会自动重新缓存，同时也可以手动调用reCache方法更新缓存。</p>
-         * <p>
-         * 建议把不经常变化的“复杂内容”缓存为静态图像，能极大提高渲染性能。cacheAs有"none"，"normal"和"bitmap"三个值可选。
+         * <p>建议把不经常变化的“复杂内容”缓存为静态图像，能极大提高渲染性能。cacheAs有"none"，"normal"和"bitmap"三个值可选。
          * <li>默认为"none"，不做任何缓存。</li>
          * <li>当值为"normal"时，canvas模式下进行画布缓存，webgl模式下进行命令缓存。</li>
-         * <li>当值为"bitmap"时，canvas模式下进行依然是画布缓存，webgl模式下使用renderTarget缓存。</li>
-         * </p>
-         * <p>
-         * webgl下renderTarget缓存模式缺点：会额外创建renderTarget对象，增加内存开销，缓存面积有最大2048限制，不断重绘时会增加CPU开销。优点：大幅减少drawcall，渲染性能最高。
-         * webgl下命令缓存模式缺点：只会减少节点遍历及命令组织，不会减少drawcall数，性能中等。优点：没有额外内存开销，无需renderTarget支持。
-         * </p>
+         * <li>当值为"bitmap"时，canvas模式下进行依然是画布缓存，webgl模式下使用renderTarget缓存。</li></p>
+         * <p>webgl下renderTarget缓存模式缺点：会额外创建renderTarget对象，增加内存开销，缓存面积有最大2048限制，不断重绘时会增加CPU开销。优点：大幅减少drawcall，渲染性能最高。
+         * webgl下命令缓存模式缺点：只会减少节点遍历及命令组织，不会减少drawcall数，性能中等。优点：没有额外内存开销，无需renderTarget支持。</p>
          */
         cacheAs: string;
-        /**设置cacheAs为非空时此值才有效，staticCache=true时，子对象变化时不会自动更新缓存，只能通过调用reCache方法手动刷新。*/
+        /**
+         * 是否静态缓存此对象的当前帧的最终属性。为 true 时，子对象变化时不会自动更新缓存，但是可以通过调用 reCache 方法手动刷新。
+         * <b>注意：</b> 1. 设置 cacheAs 为非空和非"none"时才有效。 2. 由于渲染的时机在脚本执行之后，也就是说当前帧渲染的是对象的最终属性，所以如果在当前帧渲染之前、设置静态缓存之后改变对象属性，则最终渲染结果表现的是对象的最终属性。
+         */
         staticCache: boolean;
         /**在设置cacheAs的情况下，调用此方法会重新刷新缓存。*/
         reCache(): void;
@@ -14445,19 +14393,20 @@ declare module laya.display {
          */
         height: number;
         /**
-         * 设置对象bounds大小，如果有设置，则不再通过getBounds计算，合理使用能提高性能。
+         * <p>设置对象在自身坐标系下的边界范围。与 <code>getSelfBounds</code> 对应。当 autoSize==true 时，会影响对象宽高。设置后，当需要获取自身边界范围时，就不再需要计算，合理使用能提高性能。比如 <code>getBounds</code> 会优先使用 <code>setBounds</code> 指定的值，如果没有指定则进行计算，此计算会对性能消耗比较大。</p>
+         * <p><b>注意：</b> <code>setBounds</code> 与 <code>getBounds</code> 并非对应相等关系， <code>getBounds</code> 获取的是本对象在父容器坐标系下的边界范围，通过设置 <code>setBounds</code> 会影响 <code>getBounds</code> 的结果。</p>
          * @param	bound bounds矩形区域
          */
         setBounds(bound: Rectangle): void;
         /**
          * <p>获取本对象在父容器坐标系的矩形显示区域。</p>
-         * <p><b>注意：</b>计算量较大，尽量少用。</p>
+         * <p><b>注意：</b> 1.计算量较大，尽量少用，如果需要频繁使用，可以通过手动设置 <code>setBounds</code> 来缓存自身边界信息，从而避免比较消耗性能的计算。2. <code>setBounds</code> 与 <code>getBounds</code> 并非对应相等关系， <code>getBounds</code> 获取的是本对象在父容器坐标系下的边界范围，通过设置 <code>setBounds</code> 会影响 <code>getBounds</code> 的结果。</p>
          * @return 矩形区域。
          */
         getBounds(): Rectangle;
         /**
-         * 获取本对象在自己坐标系的矩形显示区域。
-         * <p><b>注意：</b>计算量较大，尽量少用。</p>
+         * 获取对象在自身坐标系的边界范围。与 <code>setBounds</code> 对应。
+         * <p><b>注意：</b>计算量较大，尽量少用，如果需要频繁使用，可以提前手动设置 <code>setBounds</code> 来缓存自身边界信息，从而避免比较消耗性能的计算。</p>
          * @return 矩形区域。
          */
         getSelfBounds(): Rectangle;
@@ -14524,11 +14473,9 @@ declare module laya.display {
         graphics: Graphics;
         /**
          * <p>显示对象的滚动矩形范围，具有裁剪效果(如果只想限制子对象渲染区域，请使用viewport)，设置optimizeScrollRect=true，可以优化裁剪区域外的内容不进行渲染。</p>
-         * <p>
-         * srollRect和viewport的区别：<br/>
+         * <p> srollRect和viewport的区别：<br/>
          * 1.srollRect自带裁剪效果，viewport只影响子对象渲染是否渲染，不具有裁剪效果（性能更高）。<br/>
-         * 2.设置rect的x,y属性均能实现区域滚动效果，但scrollRect会保持0,0点位置不变。
-         * </p>
+         * 2.设置rect的x,y属性均能实现区域滚动效果，但scrollRect会保持0,0点位置不变。</p>
          */
         scrollRect: Rectangle;
         /**
@@ -14542,7 +14489,7 @@ declare module laya.display {
         pos(x: number, y: number, speedMode?: boolean): Sprite;
         /**
          * <p>设置轴心点。相当于分别设置pivotX和pivotY属性。</p>
-         * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.pivot(...).pos(50, 100);</p>
+         * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.pivot(...).pos(...);</p>
          * @param	x X轴心点。
          * @param	y Y轴心点。
          * @return	返回对象本身。
@@ -14550,7 +14497,7 @@ declare module laya.display {
         pivot(x: number, y: number): Sprite;
         /**
          * <p>设置宽高。相当于分别设置width和height属性。</p>
-         * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.size(...).pos(50, 100);</p>
+         * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.size(...).pos(...);</p>
          * @param	width 宽度值。
          * @param	hegiht 高度值。
          * @return	返回对象本身。
@@ -14558,7 +14505,7 @@ declare module laya.display {
         size(width: number, height: number): Sprite;
         /**
          * <p>设置缩放。相当于分别设置scaleX和scaleY属性。</p>
-         * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.scale(...).pos(50, 100);</p>
+         * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.scale(...).pos(...);</p>
          * @param	scaleX		X轴缩放比例。
          * @param	scaleY		Y轴缩放比例。
          * @param 	speedMode	（可选）是否极速模式，正常是调用this.scaleX=value进行赋值，极速模式直接调用内部函数处理，如果未重写scaleX,scaleY属性，建议设置为急速模式性能更高。
@@ -14567,7 +14514,7 @@ declare module laya.display {
         scale(scaleX: number, scaleY: number, speedMode?: boolean): Sprite;
         /**
          * <p>设置倾斜角度。相当于分别设置skewX和skewY属性。</p>
-         * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.skew(...).pos(50, 100);</p>
+         * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.skew(...).pos(...);</p>
          * @param	skewX 水平倾斜角度。
          * @param	skewY 垂直倾斜角度。
          * @return	返回对象本身
@@ -14784,8 +14731,8 @@ declare module laya.display {
     import RenderContext = laya.renders.RenderContext;
     /**
      * <p> <code>Stage</code> 是舞台类，显示列表的根节点，所有显示对象都在舞台上显示。通过 Laya.stage 单例访问。</p>
-     * <p>Stage提供几种适配模式，不同的适配模式会产生不同的画布大小，画布越大，渲染压力越大，所以要选择合适的适配方案。<p>
-     * <p>Stage提供不同的帧率模式，帧率越高，渲染压力越大，越费电，合理使用帧率甚至动态更改帧率有利于改进手机耗电。<p>
+     * <p>Stage提供几种适配模式，不同的适配模式会产生不同的画布大小，画布越大，渲染压力越大，所以要选择合适的适配方案。</p>
+     * <p>Stage提供不同的帧率模式，帧率越高，渲染压力越大，越费电，合理使用帧率甚至动态更改帧率有利于改进手机耗电。</p>
      */
     class Stage extends Sprite {
         /**应用保持设计宽高不变，不缩放不变型，stage的宽高等于设计宽高。*/
@@ -14844,8 +14791,8 @@ declare module laya.display {
         /**画布的旋转角度。*/
         canvasDegree: number;
         /**
-         * <p>设置是否渲染，设置为false，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟。<p>
-         * <p>比如非激活状态，可以设置renderingEnabled=true以节省消耗。<p>
+         * <p>设置是否渲染，设置为false，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟。</p>
+         * <p>比如非激活状态，可以设置renderingEnabled=true以节省消耗。</p>
          * */
         renderingEnabled: boolean;
         /**是否启用屏幕适配，可以适配后，在某个时候关闭屏幕适配，防止某些操作导致的屏幕以外改变*/
@@ -14956,6 +14903,9 @@ declare module laya.display {
     import Rectangle = laya.maths.Rectangle;
     /**
      * <p> <code>Text</code> 类用于创建显示对象以显示文本。</p>
+     * <p>
+     * 注意：如果运行时系统找不到设定的字体，则用系统默认的字体渲染文字，从而导致显示异常。(通常电脑上显示正常，在一些移动端因缺少设置的字体而显示异常)。
+     * </p>
      * @example
      * package
      * {
@@ -15047,6 +14997,11 @@ declare module laya.display {
         static SCROLL: string;
         /**hidden 不显示超出文本域的字符。*/
         static HIDDEN: string;
+        /**
+         * WebGL渲染文字时是否启用字符缓存，对于字形多的语种，禁用缓存。<br>
+         * 对于字形随字母组合变化的语种，如阿拉伯文，启用将使显示错误。但是即使禁用，自动换行也会在错误的地方截断。
+         */
+        static CharacterCache: boolean;
         protected _text: string;
         protected _isChanged: boolean;
         protected _textWidth: number;
@@ -15058,6 +15013,7 @@ declare module laya.display {
         protected _lastVisibleLineIndex: number;
         protected _words: Array<any>;
         protected _charSize: any;
+        protected static _fontFamilyMap: any;
         /**
          * <p>overflow 指定文本超出文本域后的行为。其值为"hidden"、"visible"和"scroll"之一。</p>
          * <p>性能从高到低依次为：hidden > visible > scroll。</p>
@@ -15134,6 +15090,7 @@ declare module laya.display {
         /**
          * <p>文本的字体名称，以字符串形式表示。</p>
          * <p>默认值为："Arial"，可以通过Font.defaultFont设置默认字体。</p>
+         * <p>如果运行时系统找不到设定的字体，则用系统默认的字体渲染文字，从而导致显示异常。(通常电脑上显示正常，在一些移动端因缺少设置的字体而显示异常)。</p>
          * @see laya.display.css.Font#defaultFamily
          */
         font: string;
@@ -15199,7 +15156,7 @@ declare module laya.display {
         borderColor: string;
         /**
          * <p>描边宽度（以像素为单位）。</p>
-         * <p>默认值0，表示不描边。<p>q
+         * <p>默认值0，表示不描边。</p>
          */
         stroke: number;
         /**
@@ -15254,12 +15211,19 @@ declare module laya.display {
         readonly maxScrollY: number;
         readonly lines: Array<any>;
         underlineColor: string;
+        /**
+         * 判断系统是否支持指定的font。
+         *
+         * @param	font	对font进行支持测试
+         * @return	true表示系统支持
+         */
+        static supportFont(font: string): boolean;
     }
 }
 declare module laya.events {
     import Sprite = laya.display.Sprite;
     /**
-     * <code>Event</code> 是事件类型的集合。
+     * <code>Event</code> 是事件类型的集合。一般当发生事件时，<code>Event</code> 对象将作为参数传递给事件侦听器。
      */
     class Event {
         /** 一个空的 Event 对象。用于事件派发中转使用。*/
@@ -15418,7 +15382,7 @@ declare module laya.events {
          */
         setTo(type: string, currentTarget: Sprite, target: Sprite): Event;
         /**
-         * 防止对事件流中当前节点的后续节点中的所有事件侦听器进行处理。
+         * 阻止对事件流中当前节点的后续节点中的所有事件侦听器进行处理。此方法不会影响当前节点 (currentTarget) 中的任何事件侦听器。
          */
         stopPropagation(): void;
         /**
@@ -15468,7 +15432,7 @@ declare module laya.events {
         /**
          * 派发事件。
          * @param type	事件类型。
-         * @param data	（可选）回调数据。<b>注意：</b>如果是需要传递多个参数 p1,p2,p3,...可以使用数组结构如：[p1,p2,p3,...] ；如果需要回调单个参数 p 是一个数组，则需要使用结构如：[p]，其他的单个参数 p ，可以直接传入参数 p。
+         * @param data	（可选）回调数据。<b>注意：</b>如果是需要传递多个参数 p1,p2,p3,...可以使用数组结构如：[p1,p2,p3,...] ；如果需要回调单个参数 p ，且 p 是一个数组，则需要使用结构如：[p]，其他的单个参数 p ，可以直接传入参数 p。
          * @return 此事件类型是否有侦听者，如果有侦听者则值为 true，否则值为 false。
          */
         event(type: string, data?: any): boolean;
@@ -15781,12 +15745,10 @@ declare module laya.events {
     import Stage = laya.display.Stage;
     /**
      * <p><code>MouseManager</code> 是鼠标、触摸交互管理器。</p>
-     * <p>
-     * 鼠标事件流包括捕获阶段、目标阶段、冒泡阶段。<br/>
+     * <p>鼠标事件流包括捕获阶段、目标阶段、冒泡阶段。<br/>
      * 捕获阶段：此阶段引擎会从stage开始递归检测stage及其子对象，直到找到命中的目标对象或者未命中任何对象；<br/>
      * 目标阶段：找到命中的目标对象；<br/>
-     * 冒泡阶段：事件离开目标对象，按节点层级向上逐层通知，直到到达舞台的过程。
-     * <p>
+     * 冒泡阶段：事件离开目标对象，按节点层级向上逐层通知，直到到达舞台的过程。</p>
      */
     class MouseManager {
         /**
@@ -16328,6 +16290,7 @@ declare module laya.map {
          * @param	objectKey true:表示当前GridSprite是个活动对象，可以控制，false:地图层的组成块
          */
         initData(map: TiledMap, objectKey?: boolean): void;
+        _setDisplay(value: boolean): void;
         /**
          * 把一个动画对象绑定到当前GridSprite
          * @param	sprite 动画的显示对象
@@ -16355,12 +16318,20 @@ declare module laya.map {
     import Sprite = laya.display.Sprite;
     import GridSprite = laya.map.GridSprite;
     import Point = laya.maths.Point;
+    import RenderContext = laya.renders.RenderContext;
     /**
      * 地图支持多层渲染（例如，地表层，植被层，建筑层等）
      * 本类就是层级类
      * @author ...
      */
     class MapLayer extends Sprite {
+        _mapData: Array<any>;
+        /**
+         * @private
+         */
+        _gridSpriteArray: Array<any>;
+        /**被合到的层*/
+        tarLayer: MapLayer;
         /**当前Layer的名称*/
         layerName: string;
         /**
@@ -16424,10 +16395,33 @@ declare module laya.map {
          */
         getDrawSprite(gridX: number, gridY: number): GridSprite;
         /**
+         * 将gridSprite设为显示状态
+         * @param gridSprite
+         */
+        showGridSprite(gridSprite: GridSprite): void;
+        /**
+         * 将gridSprite设为隐藏状态
+         * @param gridSprite
+         *
+         */
+        hideGridSprite(gridSprite: GridSprite): void;
+        /**
          * 更新此层中块的坐标
          * 手动刷新的目的是，保持层级的宽和高保持最小，加快渲染
          */
         updateGridPos(): void;
+        /**
+         * 更新此层中的活动对象
+         */
+        updateAloneObject(): void;
+        /**
+         * 渲染时使用需要更新的列表进行渲染，减少遍历
+         * @param context
+         * @param x
+         * @param y
+         *
+         */
+        render(context: RenderContext, x: number, y: number): void;
         /**
          * @private
          * 把tile画到指定的显示对象上
@@ -16503,14 +16497,36 @@ declare module laya.map {
         static RENDERORDER_LEFTDOWN: string;
         /**地图格子右下角开始渲染*/
         static RENDERORDER_LEFTUP: string;
+        _viewPortX: number;
+        _viewPortY: number;
         /**
          * 是否自动缓存没有动画的地块
          */
         autoCache: boolean;
         /**
-         * 自动缓存类型
+         * 自动缓存类型,地图较大时建议使用normal
          */
         autoCacheType: string;
+        /**
+         * 是否合并图层,开启合并图层时，图层属性内可添加layer属性，运行时将会将相邻的layer属性相同的图层进行合并以提高性能
+         */
+        enableMergeLayer: boolean;
+        /**
+         * 是否移除被覆盖的格子,地块可添加type属性，type不为0时表示不透明，被不透明地块遮挡的地块将会被剔除以提高性能
+         */
+        removeCoveredTile: boolean;
+        /**
+         * 是否显示大格子里显示的贴图数量
+         */
+        showGridTextureCount: boolean;
+        /**
+         * 是否调整地块边缘消除缩放导致的缝隙
+         */
+        antiCrack: boolean;
+        /**
+         * 是否在加载完成之后cache所有大格子
+         */
+        cacheAllAfterInit: boolean;
         constructor();
         /**
          * 创建地图
@@ -16523,6 +16539,7 @@ declare module laya.map {
          * @param	limitRange		把地图限制在显示区域
          */
         createMap(mapName: string, viewRect: Rectangle, completeHandler: Handler, viewRectPadding?: Rectangle, gridSize?: Point, enableLinear?: boolean, limitRange?: boolean): void;
+        getTileUserData(id: number, sign: string, defaultV?: any): any;
         /**
          * 得到一块指定的地图纹理
          * @param	index 纹理的索引值，默认从1开始
@@ -16596,9 +16613,6 @@ declare module laya.map {
          * 销毁地图
          */
         destroy(): void;
-        /**
-         * 格子的宽度
-         */
         readonly tileWidth: number;
         /**
          * 格子的高度
@@ -17313,6 +17327,7 @@ declare module laya.media.h5audio {
          * 是否已加载完成
          */
         loaded: boolean;
+        static _musicAudio: any;
         /**
          * 释放声音
          *
@@ -17415,7 +17430,8 @@ declare module laya.media {
     import EventDispatcher = laya.events.EventDispatcher;
     import Handler = laya.utils.Handler;
     /**
-     * <code>SoundChannel</code> 用来控制程序中的声音。
+     * <p> <code>SoundChannel</code> 用来控制程序中的声音。每个声音均分配给一个声道，而且应用程序可以具有混合在一起的多个声道。</p>
+     * <p> <code>SoundChannel</code> 类包含控制声音的播放、暂停、停止、音量的方法，以及获取声音的播放状态、总时间、当前播放时间、总循环次数、播放地址等信息的方法。</p>
      */
     class SoundChannel extends EventDispatcher {
         /**
@@ -17439,7 +17455,7 @@ declare module laya.media {
          */
         completeHandler: Handler;
         /**
-         * 音量。
+         * 音量范围从 0（静音）至 1（最大音量）。
          */
         volume: number;
         /**
@@ -17472,16 +17488,31 @@ declare module laya.media {
 declare module laya.media {
     import Handler = laya.utils.Handler;
     /**
-     * <code>SoundManager</code> 是一个声音管理类。
+     * <code>SoundManager</code> 是一个声音管理类。提供了对背景音乐、音效的播放控制方法。
      */
     class SoundManager {
-        /** 背景音乐音量。*/
+        /**
+         * 背景音乐音量。
+         * @default 1
+         */
         static musicVolume: number;
-        /** 音效音量。*/
+        /**
+         * 音效音量。
+         * @default 1
+         */
         static soundVolume: number;
-        /** 声音播放速率。*/
+        /**
+         * 声音播放速率。
+         * @default 1
+         */
         static playbackRate: number;
+        static _tMusic: string;
         static _soundClass: any;
+        /**
+         * 音效播放后自动删除。
+         * @default true
+         */
+        static autoReleaseSound: boolean;
         /**
          * 添加播放的声音实例。
          * @param channel <code>SoundChannel</code> 对象。
@@ -17492,74 +17523,79 @@ declare module laya.media {
          * @param channel <code>SoundChannel</code> 对象。
          */
         static removeChannel(channel: SoundChannel): void;
+        static disposeSoundIfNotUsed(url: string): void;
         /**
-         * 表示是否失去焦点后自动停止背景音乐。
+         * 失去焦点后是否自动停止背景音乐。
          */
         /**
-         * 设置是否失去焦点后自动停止背景音乐。
-         * @param v Boolean 值。
+         * 失去焦点后是否自动停止背景音乐。
+         * @param v Boolean 失去焦点后是否自动停止背景音乐。
          *
          */
         static autoStopMusic: boolean;
         /**
-         * 表示是否静音。
+         * 背景音乐和所有音效是否静音。
          */
         static muted: boolean;
-        /** 表示是否使音效静音。*/
+        /**
+         * 所有音效（不包括背景音乐）是否静音。
+         */
         static soundMuted: boolean;
-        /** 表示是否使背景音乐静音。*/
+        /**
+         * 背景音乐（不包括音效）是否静音。
+         */
         static musicMuted: boolean;
         /**
-         * 播放音效。
-         * @param url 声音文件地址。
-         * @param loops 循环次数,0表示无限循环。
-         * @param complete 声音播放完成回调  Handler对象。
-         * @param soundClass 使用哪个声音类进行播放，null表示自动选择。
-         * @param startTime  声音播放起始时间。
-         * @return SoundChannel对象。
+         * 播放音效。音效可以同时播放多个。
+         * @param url			声音文件地址。
+         * @param loops			循环次数,0表示无限循环。
+         * @param complete		声音播放完成回调  Handler对象。
+         * @param soundClass	使用哪个声音类进行播放，null表示自动选择。
+         * @param startTime		声音播放起始时间。
+         * @return SoundChannel对象，通过此对象可以对声音进行控制，以及获取声音信息。
          */
         static playSound(url: string, loops?: number, complete?: Handler, soundClass?: any, startTime?: number): SoundChannel;
         /**
          * 释放声音资源。
-         * @param url 声音文件地址。
+         * @param url	声音播放地址。
          */
         static destroySound(url: string): void;
         /**
-         * 播放背景音乐。
-         * @param url 声音文件地址。
-         * @param loops 循环次数,0表示无限循环。
-         * @param complete  声音播放完成回调。
-         * @param startTime  声音播放起始时间。
-         * @return audio对象。
+         * 播放背景音乐。背景音乐同时只能播放一个，如果在播放背景音乐时再次调用本方法，会先停止之前的背景音乐，再播发当前的背景音乐。
+         * @param url		声音文件地址。
+         * @param loops		循环次数,0表示无限循环。
+         * @param complete	声音播放完成回调。
+         * @param startTime	声音播放起始时间。
+         * @return SoundChannel对象，通过此对象可以对声音进行控制，以及获取声音信息。
          */
         static playMusic(url: string, loops?: number, complete?: Handler, startTime?: number): SoundChannel;
         /**
-         * 停止声音播放。
+         * 停止声音播放。此方法能够停止任意声音的播放（包括背景音乐和音效），只需传入对应的声音播放地址。
          * @param url  声音文件地址。
          */
         static stopSound(url: string): void;
         /**
-         * 停止所有声音播放。
+         * 停止播放所有声音（包括背景音乐和音效）。
          */
         static stopAll(): void;
         /**
-         * 停止所有音效,不包括背景音乐。
+         * 停止播放所有音效（不包括背景音乐）。
          */
         static stopAllSound(): void;
         /**
-         * 停止背景音乐播放。
+         * 停止播放背景音乐（不包括音效）。
          * @param url  声音文件地址。
          */
         static stopMusic(): void;
         /**
-         * 设置声音音量
-         * @param volume 音量 标准值为1
-         * @param url  声音文件地址。为null(默认值)时对所有音效起作用，不为空时仅对此声音生效
+         * 设置声音音量。根据参数不同，可以分别设置指定声音（背景音乐或音效）音量或者所有音效（不包括背景音乐）音量。
+         * @param volume	音量。初始值为1。音量范围从 0（静音）至 1（最大音量）。
+         * @param url		(default = null)声音播放地址。默认为null。为空表示设置所有音效（不包括背景音乐）的音量，不为空表示设置指定声音（背景音乐或音效）的音量。
          */
         static setSoundVolume(volume: number, url?: string): void;
         /**
-         * 设置背景音乐音量。
-         * @param volume 音量，标准值为1。
+         * 设置背景音乐音量。音量范围从 0（静音）至 1（最大音量）。
+         * @param volume	音量。初始值为1。音量范围从 0（静音）至 1（最大音量）。
          */
         static setMusicVolume(volume: number): void;
     }
@@ -17721,19 +17757,20 @@ declare module laya.media.webaudio {
 declare module laya.net {
     import EventDispatcher = laya.events.EventDispatcher;
     /**
-     * <code>HttpRequest</code> 通过 HTTP 协议传送或接收 XML 及其他数据。
+     * <p> <code>HttpRequest</code> 通过封装 HTML <code>XMLHttpRequest</code> 对象提供了对 HTTP 协议的完全的访问，包括做出 POST 和 HEAD 请求以及普通的 GET 请求的能力。 <code>HttpRequest</code> 只提供以异步的形式返回 Web 服务器的响应，并且能够以文本或者二进制的形式返回内容。</p>
+     * <p><b>注意：</b>建议每次请求都使用新的 <code>HttpRequest</code> 对象，因为每次调用该对象的send方法时，都会清空之前设置的数据，并重置 HTTP 请求的状态，这会导致之前还未返回响应的请求被重置，从而得不到之前请求的响应结果。
      */
     class HttpRequest extends EventDispatcher {
         protected _http: any;
         protected _responseType: string;
         protected _data: any;
         /**
-         * 发送请求。
-         * @param	url 请求的地址。
-         * @param	data 发送的数据，可选。
-         * @param	method 发送数据方式，值为“get”或“post”，默认为 “get”方式。
-         * @param	responseType 返回消息类型，可设置为"text"，"json"，"xml","arraybuffer"。
-         * @param	headers 头信息，key value数组，比如["Content-Type", "application/json"]。
+         * 发送 HTTP 请求。
+         * @param	url				请求的地址。大多数浏览器实施了一个同源安全策略，并且要求这个 URL 与包含脚本的文本具有相同的主机名和端口。
+         * @param	data			(default = null)发送的数据。
+         * @param	method			(default = "get")用于请求的 HTTP 方法。值包括 "get"、"post"、"head"。
+         * @param	responseType	(default = "text")Web 服务器的响应类型，可设置为 "text"、"json"、"xml"、"arraybuffer"。
+         * @param	headers			(default = null) HTTP 请求的头部信息。参数形如key-value数组：key是头部的名称，不应该包括空白、冒号或换行；value是头部的值，不应该包括换行。比如["Content-Type", "application/json"]。
          */
         send(url: string, data?: any, method?: string, responseType?: string, headers?: Array<any>): void;
         protected _onProgress(e: any): void;
@@ -17747,7 +17784,9 @@ declare module laya.net {
         readonly url: string;
         /** 返回的数据。*/
         readonly data: any;
-        /**原生XMLHttpRequest引用*/
+        /**
+         * 本对象所封装的原生 XMLHttpRequest 引用。
+         */
         readonly http: any;
     }
 }
@@ -17782,6 +17821,7 @@ declare module laya.net {
         /** 每帧回调最大超时时间，如果超时，则下帧再处理。*/
         static maxTimeOut: number;
         static loadedMap: any;
+        static preLoadedAtlasConfigMap: any;
         protected static _loaders: Array<any>;
         protected static _isWorking: boolean;
         protected static _startIndex: number;
@@ -17791,12 +17831,12 @@ declare module laya.net {
         protected _cache: boolean;
         protected _http: HttpRequest;
         /**
-         * 加载资源。
-         * @param	url 地址
-         * @param	type 类型，如果为null，则根据文件后缀，自动分析类型。
-         * @param	cache 是否缓存数据。
-         * @param	group 分组。
-         * @param	ignoreCache 是否忽略缓存，强制重新加载
+         * 加载资源。加载错误会派发 Event.ERROR 事件，参数为错误信息。
+         * @param	url			资源地址。
+         * @param	type		(default = null)资源类型。可选值为：Loader.TEXT、Loader.JSON、Loader.XML、Loader.BUFFER、Loader.IMAGE、Loader.SOUND、Loader.ATLAS、Loader.FONT。如果为null，则根据文件后缀分析类型。
+         * @param	cache		(default = true)是否缓存数据。
+         * @param	group		(default = null)分组名称。
+         * @param	ignoreCache (default = false)是否忽略缓存，强制重新加载。
          */
         load(url: string, type?: string, cache?: boolean, group?: string, ignoreCache?: boolean): void;
         protected getTypeFromUrl(url: string): string;
@@ -17826,6 +17866,12 @@ declare module laya.net {
          */
         static clearRes(url: string, forceDispose?: boolean): void;
         /**
+         * 设置预加载的图集配置文件
+         * @param	url 资源地址。
+         * @param	configO 配置数据
+         */
+        static setAtlasConfigs(url: string, config: any): void;
+        /**
          * 获取指定资源地址的资源。
          * @param	url 资源地址。
          * @return	返回资源。
@@ -17846,12 +17892,12 @@ declare module laya.net {
         /**
          * 设置资源分组。
          * @param url 资源地址。
-         * @param group 分组名
+         * @param group 分组名。
          */
         static setGroup(url: string, group: string): void;
         /**
-         * 根据分组清理资源
-         * @param group 分组名
+         * 根据分组清理资源。
+         * @param group 分组名。
          */
         static clearResByGroup(group: string): void;
     }
@@ -17860,14 +17906,14 @@ declare module laya.net {
     import EventDispatcher = laya.events.EventDispatcher;
     import Handler = laya.utils.Handler;
     /**
-     * <p> <code>LoaderManager</code> 类用于用于批量加载资源、数据。</p>
-     * <p>批量加载器，单例，可以通过Laya.loader访问，注意大小写。</p>
-     * 多线程：默认5个线程，可以通过maxLoader属性修改线程数量
-     * 多优先级：默认5个优先级，0最快，4最慢，默认为1
-     * 重复过滤：自动过滤重复加载以及已经加载过的地址，防止重复加载
-     * 错误重试：资源加载失败后，会重试加载（按照最低优先级），retryNum设定加载失败后重试次数，retryDelay设定加载重试的时间间隔
-     * 如果单个地址加载方式，加载重试后仍然失败，则调用complete回调，并返回null。如果多地址加载方式，重试后仍然失败，则调用complete回调，返回为success=false
-     * 全部队列加载完成，会派发complete事件，如果队列中任意一个加载失败，会派发error事件
+     * <p> <code>LoaderManager</code> 类用于用于批量加载资源。此类是单例，不要手动实例化此类，请通过Laya.loader访问。</p>
+     * <p>全部队列加载完成，会派发 Event.COMPLETE 事件；如果队列中任意一个加载失败，会派发 Event.ERROR 事件，事件回调参数值为加载出错的资源地址。</p>
+     * <p> <code>LoaderManager</code> 类提供了以下几种功能：<br/>
+     * 多线程：默认5个加载线程，可以通过maxLoader属性修改线程数量；<br/>
+     * 多优先级：有0-4共5个优先级，优先级高的优先加载。0最高，4最低；<br/>
+     * 重复过滤：自动过滤重复加载（不会有多个相同地址的资源同时加载）以及复用缓存资源，防止重复加载；<br/>
+     * 错误重试：资源加载失败后，会重试加载（以最低优先级插入加载队列），retryNum设定加载失败后重试次数，retryDelay设定加载重试的时间间隔。</p>
+     * @see laya.net.Loader
      */
     class LoaderManager extends EventDispatcher {
         static createMap: any;
@@ -17878,31 +17924,35 @@ declare module laya.net {
         /** 最大下载线程，默认为5个*/
         maxLoader: number;
         /**
-         * 创建一个新的 <code>LoaderManager</code> 实例。
+         * <p>创建一个新的 <code>LoaderManager</code> 实例。</p>
+         * <p><b>注意：</b>请使用Laya.loader加载资源，这是一个单例，不要手动实例化此类，否则会导致不可预料的问题。</p>
          */
         constructor();
         /**
-         * 根据clas定义创建一个资源空壳，随后进行异步加载，资源加载完成后，会调用资源类的onAsynLoaded方法回调真正的数据,套嵌资源的子资源会保留资源路径"?"后的部分
-         * @param	url 资源地址或者数组，比如[
-         * @param	progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
-         * @param	clas 资源类名，比如Texture
-         * @param	type 资源类型，比如：Loader.IMAGE
-         * @param	priority 优先级，默认5个优先级，0最快，4最慢，默认为1
-         * @param	cache 是否缓存
-         * @return	返回资源对象
+         * <p>根据clas类型创建一个未初始化资源的对象，随后进行异步加载，资源加载完成后，初始化对象的资源，并通过此对象派发 Event.LOADED 事件，事件回调参数值为此对象本身。套嵌资源的子资源会保留资源路径"?"后的部分。</p>
+         * <p>如果url为数组，返回true；否则返回指定的资源类对象，可以通过侦听此对象的 Event.LOADED 事件来判断资源是否已经加载完毕。</p>
+         * <p><b>注意：</b>cache参数只能对文件后缀为atlas的资源进行缓存控制，其他资源会忽略缓存，强制重新加载。</p>
+         * @param	url			资源地址或者数组。如果url和clas同时指定了资源类型，优先使用url指定的资源类型。参数形如：[
+         * @param	progress	资源加载进度回调，回调参数值为当前资源加载的进度信息(0-1)。
+         * @param	clas		资源类名。如果url和clas同时指定了资源类型，优先使用url指定的资源类型。参数形如：Texture。
+         * @param	type		资源类型。参数形如：Loader.IMAGE。
+         * @param	priority	(default = 1)加载的优先级，优先级高的优先加载。有0-4共5个优先级，0最高，4最低。
+         * @param	cache		是否缓存加载的资源。
+         * @return	如果url为数组，返回true；否则返回指定的资源类对象。
          */
         create(url: any, complete?: Handler, progress?: Handler, clas?: any, params?: Array<any>, priority?: number, cache?: boolean): any;
         /**
-         * 加载资源。
-         * @param	url 单个资源地址，或者资源地址数组(简单数组：["a.png","b.png"]，复杂数组[
-         * @param	complete 结束回调，如果加载失败，则返回 null 。
-         * @param	progress 进度回调，回调参数为当前文件加载的进度信息(0-1)。
-         * @param	type 资源类型。比如：Loader.IMAGE
-         * @param	priority 优先级，0-4，5个优先级，0优先级最高，默认为1。
-         * @param	cache 是否缓存加载结果。
-         * @param	group 分组，方便对资源进行管理。
-         * @param	ignoreCache 是否忽略缓存，强制重新加载
-         * @return 此 LoaderManager 对象。
+         * <p>加载资源。资源加载错误时，本对象会派发 Event.ERROR 事件，事件回调参数值为加载出错的资源地址。</p>
+         * <p>因为返回值为 LoaderManager 对象本身，所以可以使用如下语法：Laya.loader.load(...).load(...);</p>
+         * @param	url			要加载的单个资源地址或资源信息数组。比如：简单数组：["a.png","b.png"]；复杂数组[
+         * @param	complete	加载结束回调。根据url类型不同分为2种情况：1. url为String类型，也就是单个资源地址，如果加载成功，则回调参数值为加载完成的资源，否则为null；2. url为数组类型，指定了一组要加载的资源，如果全部加载成功，则回调参数值为true，否则为false。
+         * @param	progress	加载进度回调。回调参数值为当前资源的加载进度信息(0-1)。
+         * @param	type		资源类型。比如：Loader.IMAGE。
+         * @param	priority	(default = 1)加载的优先级，优先级高的优先加载。有0-4共5个优先级，0最高，4最低。
+         * @param	cache		是否缓存加载结果。
+         * @param	group		分组，方便对资源进行管理。
+         * @param	ignoreCache	是否忽略缓存，强制重新加载。
+         * @return 此 LoaderManager 对象本身。
          */
         load(url: any, complete?: Handler, progress?: Handler, type?: string, priority?: number, cache?: boolean, group?: string, ignoreCache?: boolean): LoaderManager;
         /**
@@ -17930,7 +17980,7 @@ declare module laya.net {
          */
         setGroup(url: string, group: string): void;
         /**
-         * 根据分组清理资源
+         * 根据分组清理资源。
          * @param group 分组名
          */
         clearResByGroup(group: string): void;
@@ -17990,13 +18040,13 @@ declare module laya.net {
          */
         static getItem(key: string): string;
         /**
-         * 存储指定键名和它的 <code>Object</code> 类型值。
+         * 存储指定键名及其对应的 <code>Object</code> 类型值。
          * @param key 键名。
          * @param value 键值。是 <code>Object</code> 类型，此致会被转化为 JSON 字符串存储。
          */
         static setJSON(key: string, value: any): void;
         /**
-         * 获取指定键名的 <code>Object</code> 类型值。
+         * 获取指定键名对应的 <code>Object</code> 类型值。
          * @param key 键名。
          * @return <code>Object</code> 类型值
          */
@@ -18059,24 +18109,22 @@ declare module laya.net {
 declare module laya.net {
     import Handler = laya.utils.Handler;
     /**
-     * 资源版本的生成由layacmd或IDE完成，使用ResourceVersion简化使用过程。
-     * 调用enable启用资源版本管理。
+     * <p>资源版本的生成由layacmd或IDE完成，使用 <code>ResourceVersion</code> 简化使用过程。</p>
+     * <p>调用 <code>enable</code> 启用资源版本管理。</p>
      */
     class ResourceVersion {
         static manifest: any;
         /**
-         * 启用资源版本管理。
-         * <p>
-         * 由于只有发布版本需要资源管理。因此没有资源管理文件时，可以设置manifestFile为null或者不存在的路径。
-         * </p>
-         * @param	manifestFile	清单（json）文件的路径
-         * @param   callback		清单（json）文件加载完成后执行
+         * <p>启用资源版本管理。</p>
+         * <p>由于只有发布版本需要资源管理。因此没有资源管理文件时，可以设置manifestFile为null或者不存在的路径。</p>
+         * @param	manifestFile	清单（json）文件的路径。
+         * @param   callback		清单（json）文件加载完成后执行。
          */
         static enable(manifestFile: string, callback: Handler): void;
         /**
-         * 为加载路径添加版本前缀
-         * @param	originURL	源路径
-         * @return				格式化后的新路径
+         * 为加载路径添加版本前缀。
+         * @param	originURL	源路径。
+         * @return 格式化后的新路径。
          */
         static addVersionPrefix(originURL: string): string;
     }
@@ -18084,37 +18132,46 @@ declare module laya.net {
 declare module laya.net {
     import EventDispatcher = laya.events.EventDispatcher;
     /**
-     * <code>Socket</code> 是一种双向通信协议，在建立连接后，服务器和 Browser/Client Agent 都能主动的向对方发送或接收数据。
+     * <p> <code>Socket</code> 封装了 HTML5 WebSocket ，允许服务器端与客户端进行全双工（full-duplex）的实时通信，并且允许跨域通信。在建立连接后，服务器和 Browser/Client Agent 都能主动的向对方发送或接收文本和二进制数据。</p>
+     * <p>要使用 <code>Socket</code> 类的方法，请先使用构造函数 <code>new Socket</code> 创建一个 <code>Socket</code> 对象。 <code>Socket</code> 以异步方式传输和接收数据。</p>
      */
     class Socket extends EventDispatcher {
         /**
-         * 表示多字节数字的最低有效字节位于字节序列的最前面。
+         * <p>主机字节序，是 CPU 存放数据的两种不同顺序，包括小端字节序和大端字节序。</p>
+         * <p> LITTLE_ENDIAN ：小端字节序，地址低位存储值的低位，地址高位存储值的高位。</p>
+         * <p> BIG_ENDIAN ：大端字节序，地址低位存储值的高位，地址高位存储值的低位。有时也称之为网络字节序。</p>
          */
         static LITTLE_ENDIAN: string;
         /**
-         * 表示多字节数字的最高有效字节位于字节序列的最前面。
+         * <p>主机字节序，是 CPU 存放数据的两种不同顺序，包括小端字节序和大端字节序。</p>
+         * <p> BIG_ENDIAN ：大端字节序，地址低位存储值的高位，地址高位存储值的低位。有时也称之为网络字节序。</p>
+         * <p> LITTLE_ENDIAN ：小端字节序，地址低位存储值的低位，地址高位存储值的高位。</p>
          */
         static BIG_ENDIAN: string;
         _endian: string;
         protected _socket: any;
         /**
+         * @private
          * 表示建立连接时需等待的毫秒数。
          */
         timeout: number;
         /**
+         * @private
          * 在写入或读取对象时，控制所使用的 AMF 的版本。
          */
         objectEncoding: number;
         /**
-         * 不使用socket提供的 input封装
+         * 不再缓存服务端发来的数据。
          */
         disableInput: boolean;
         /**
-         * 用的子协议，字符串或数组
+         * <p>子协议名称。子协议名称字符串，或由多个子协议名称字符串构成的数组。必须在调用 connect 或者 connectByUrl 之前进行赋值，否则无效。</p>
+         * <p>指定后，只有当服务器选择了其中的某个子协议，连接才能建立成功，否则建立失败，派发 Event.ERROR 事件。</p>
+         * @see https://html.spec.whatwg.org/multipage/comms.html#dom-websocket
          */
         protocols: any;
         /**
-         * 表示服务端发来的数据。
+         * 缓存的服务端发来的数据。
          */
         readonly input: any;
         /**
@@ -18126,29 +18183,37 @@ declare module laya.net {
          */
         readonly connected: boolean;
         /**
-         * 表示数据的字节顺序。
+         * <p>主机字节序，是 CPU 存放数据的两种不同顺序，包括小端字节序和大端字节序。</p>
+         * <p> LITTLE_ENDIAN ：小端字节序，地址低位存储值的低位，地址高位存储值的高位。</p>
+         * <p> BIG_ENDIAN ：大端字节序，地址低位存储值的高位，地址高位存储值的低位。</p>
          */
         endian: string;
         /**
-         * <p>创建一个新的 <code>Socket</code> 实例。</p>
-         * 创建 websocket ,如果host port有效直接连接。		 *
-         * @param host 服务器地址。
-         * @param port 服务器端口。
-         * @param byteClass 用来接收和发送数据的Byte类，默认使用Byte类，也可传入Byte类的子类。
-         *
+         * <p>创建新的 Socket 对象。默认字节序为 Socket.BIG_ENDIAN 。若未指定参数，将创建一个最初处于断开状态的套接字。若指定了有效参数，则尝试连接到指定的主机和端口。</p>
+         * <p><b>注意：</b>强烈建议使用<b>不带参数</b>的构造函数形式，并添加任意事件侦听器和设置 protocols 等属性，然后使用 host 和 port 参数调用 connect 方法。此顺序将确保所有事件侦听器和其他相关流程工作正常。</p>
+         * @param host		服务器地址。
+         * @param port		服务器端口。
+         * @param byteClass	用于接收和发送数据的 Byte 类。如果为 null ，则使用 Byte 类，也可传入 Byte 类的子类。
+         * @see laya.utils.Byte
          */
         constructor(host?: string, port?: number, byteClass?: any);
         /**
-         * 连接到指定的主机和端口。
-         * @param host 服务器地址。
-         * @param port 服务器端口。
+         * <p>连接到指定的主机和端口。</p>
+         * <p>连接成功派发 Event.OPEN 事件；连接失败派发 Event.ERROR 事件；连接被关闭派发 Event.CLOSE 事件；接收到数据派发 Event.MESSAGE 事件； 除了 Event.MESSAGE 事件参数为数据内容，其他事件参数都是原生的 HTML DOM Event 对象。</p>
+         * @param host	服务器地址。
+         * @param port	服务器端口。
          */
         connect(host: string, port: number): void;
         /**
-         * 连接到指定的url
-         * @param url 连接目标
+         * <p>连接到指定的服务端 WebSocket URL。 URL 类似 ws://yourdomain:port。</p>
+         * <p>连接成功派发 Event.OPEN 事件；连接失败派发 Event.ERROR 事件；连接被关闭派发 Event.CLOSE 事件；接收到数据派发 Event.MESSAGE 事件； 除了 Event.MESSAGE 事件参数为数据内容，其他事件参数都是原生的 HTML DOM Event 对象。</p>
+         * @param url	要连接的服务端 WebSocket URL。 URL 类似 ws://yourdomain:port。
          */
         connectByUrl(url: string): void;
+        /**
+         * 清理socket。
+         */
+        cleanSocket(): void;
         /**
          * 关闭连接。
          */
@@ -18237,6 +18302,10 @@ declare module laya.net {
          * worker.js的路径
          */
         static workerPath: string;
+        /**
+         * 是否禁用js解码，如果禁用则如果浏览器不支持解码接口自动关闭WorkerLoader
+         */
+        static disableJSDecode: boolean;
         /**
          * 尝试使用Work加载Image
          * @return 是否启动成功
@@ -18807,11 +18876,6 @@ declare module laya.renders {
         /** 表示是否是 3D 模式。*/
         static is3DMode: boolean;
         static optimizeTextureMemory: Function;
-        /**
-         * 初始化引擎。
-         * @param	width 游戏窗口宽度。
-         * @param	height	游戏窗口高度。
-         */
         constructor(width: number, height: number);
         /** 目前使用的渲染器。*/
         static readonly context: RenderContext;
@@ -19140,12 +19204,14 @@ declare module laya.resource {
 }
 declare module laya.resource {
     /**
-     * <code>HTMLImage</code> 用于创建 HTML Image 元素。
      * @private
+     * <p> <code>HTMLImage</code> 用于创建 HTML Image 元素。</p>
+     * <p>请使用 <code>HTMLImage.create()<code>获取新实例，不要直接使用 <code>new HTMLImage<code> 。</p>
      */
     class HTMLImage extends FileBitmap {
         /**
-         * 创建一个 <code>HTMLImage</code> 实例。请不要直接使用 new HTMLImage
+         * <p>创建一个 <code>HTMLImage</code> 实例。</p>
+         * <p>请使用 <code>HTMLImage.create()<code>创建实例，不要直接使用 <code>new HTMLImage<code> 。</p>
          */
         static create: Function;
         protected _recreateLock: boolean;
@@ -19159,7 +19225,8 @@ declare module laya.resource {
          */
         onerror: Function;
         /**
-         * 创建一个 <code>HTMLImage</code> 实例。请不要直接使用 new HTMLImage
+         * <p>创建一个 <code>HTMLImage</code> 实例。</p>
+         * <p>请使用 <code>HTMLImage.create()<code>创建实例，不要直接使用 <code>new HTMLImage<code> 。</p>
          */
         constructor(src: string, def?: any);
         protected _init_(src: string, def: any): void;
@@ -19225,12 +19292,15 @@ declare module laya.resource {
          * 本类型排序后的已载入资源。
          */
         static readonly sortedLoadedResourcesByName: Array<any>;
-        protected _loaded: boolean;
         _resourceManager: ResourceManager;
         /**是否加锁，true为不能使用自动释放机制。*/
         lock: boolean;
         /**
-         * 获取唯一标识ID(通常用于优化或识别)。
+         * @private
+         */
+        _loaded: boolean;
+        /**
+         * 获取唯一标识ID,通常用于识别。
          */
         readonly id: number;
         /**
@@ -19260,6 +19330,9 @@ declare module laya.resource {
          * 是否已处理。
          */
         readonly disposed: boolean;
+        /**
+         * 获取是否已加载完成。
+         */
         readonly loaded: boolean;
         /**
          * 获取资源的URL地址。
@@ -19274,6 +19347,10 @@ declare module laya.resource {
          * 创建一个 <code>Resource</code> 实例。
          */
         constructor();
+        /**
+         * @private
+         */
+        _endLoaded(): void;
         protected recreateResource(): void;
         protected detoryResource(): void;
         /**
@@ -19425,7 +19502,7 @@ declare module laya.resource {
         sourceWidth: number;
         /**原始高度（包括被裁剪的透明区域）。*/
         sourceHeight: number;
-        protected _loaded: boolean;
+        _loaded: boolean;
         protected _w: number;
         protected _h: number;
         $_GID: number;
@@ -19467,13 +19544,13 @@ declare module laya.resource {
          */
         static create(source: any, x: number, y: number, width: number, height: number, offsetX?: number, offsetY?: number, sourceWidth?: number, sourceHeight?: number): Texture;
         /**
-         * 截取Texture的一部分区域，生成新的Texture，如果两个区域没有相交，则返回null
-         * @param	texture 目标Texture
-         * @param	x 相对于目标Texture的x位置
-         * @param	y 相对于目标Texture的y位置
-         * @param	width 截取的宽度
-         * @param	height 截取的高度
-         * @return	返回一个新的Texture
+         * 截取Texture的一部分区域，生成新的Texture，如果两个区域没有相交，则返回null。
+         * @param	texture	目标Texture。
+         * @param	x		相对于目标Texture的x位置。
+         * @param	y		相对于目标Texture的y位置。
+         * @param	width	截取的宽度。
+         * @param	height	截取的高度。
+         * @return 返回一个新的Texture。
          */
         static createFromTexture(texture: Texture, x: number, y: number, width: number, height: number): Texture;
         /**
@@ -19488,8 +19565,8 @@ declare module laya.resource {
         /** 激活并获取资源。*/
         readonly source: any;
         /**
-         * 销毁纹理（分直接销毁，跟计数销毁两种）
-         * @param	forceDispose	true为强制销毁主纹理，false是通过计数销毁纹理
+         * 销毁纹理（分直接销毁，跟计数销毁两种）。
+         * @param	forceDispose	(default = false)true为强制销毁主纹理，false是通过计数销毁纹理。
          */
         destroy(forceDispose?: boolean): void;
         /** 实际宽度。*/
@@ -19497,10 +19574,10 @@ declare module laya.resource {
         /** 实际高度。*/
         height: number;
         /**
-         * 获取当前纹理是否启用了线性采样
+         * 获取当前纹理是否启用了线性采样。
          */
         /**
-         * 设置线性采样的状态（目前只能第一次绘制前设置false生效,来关闭线性采样）
+         * 设置线性采样的状态（目前只能第一次绘制前设置false生效,来关闭线性采样）。
          */
         isLinearSampling: boolean;
         /**
@@ -19869,6 +19946,7 @@ declare module laya.ui {
         static clearCache(): void;
         static setCache(key: string, value: any): void;
         static getCache(key: string): any;
+        clear(recoverCmds?: boolean): void;
     }
 }
 declare module laya.ui {
@@ -21272,7 +21350,7 @@ declare module laya.ui {
      * fontClip.value = "a1326";//显示"a1326"文字
      */
     class FontClip extends Clip {
-        protected _valueArr: Array<any>;
+        protected _valueArr: string;
         protected _indexMap: any;
         protected _sheet: string;
         protected _direction: string;
@@ -21305,13 +21383,19 @@ declare module laya.ui {
         spaceX: number;
         /**Y方向文字间隙*/
         spaceY: number;
+        /**水平对齐方式*/
+        align: string;
         protected changeValue(): void;
+        width: number;
+        height: number;
+        protected readonly measureWidth: number;
+        protected readonly measureHeight: number;
         destroy(destroyChild?: boolean): void;
     }
 }
 declare module laya.ui {
     /**
-     * <code>VBox</code> 是一个垂直布局容器类。
+     * <code>HBox</code> 是一个水平布局容器类。
      */
     class HBox extends LayoutBox {
         /**
@@ -22136,6 +22220,7 @@ declare module laya.ui {
         protected _offset: Point;
         /**@inheritDoc */
         destroy(destroyChild?: boolean): void;
+        protected createChildren(): void;
         /**@inheritDoc */
         cacheAs: string;
         /**
@@ -22775,7 +22860,7 @@ declare module laya.ui {
         protected onTargetMouseDown(e: Event): void;
         protected loop(): void;
         protected onStageMouseUp2(e: Event): void;
-        protected tweenMove(): void;
+        protected tweenMove(maxDistance: number): void;
         /**
          * 停止滑动。
          */
@@ -24176,8 +24261,10 @@ declare module laya.utils {
         static onIPhone: boolean;
         /** 表示是否在 ipad 设备。*/
         static onIPad: boolean;
-        /** 表示是否在 andriod设备。*/
+        /** 表示是否在 Android设备。*/
         static onAndriod: boolean;
+        /** 表示是否在 Android设备。*/
+        static onAndroid: boolean;
         /** 表示是否在 Windows Phone 设备。*/
         static onWP: boolean;
         /** 表示是否在 QQ 浏览器。*/
@@ -24186,6 +24273,8 @@ declare module laya.utils {
         static onMQQBrowser: boolean;
         /** 表示是否在移动端 Safari。*/
         static onSafari: boolean;
+        /** 表示是否在IE浏览器内*/
+        static onIE: boolean;
         /** 微信内*/
         static onWeiXin: boolean;
         /** 表示是否在 PC 端。*/
@@ -24207,13 +24296,13 @@ declare module laya.utils {
          */
         static createElement(type: string): any;
         /**
-         * 返回对拥有指定 id 的第一个对象的引用。
+         * 返回 Document 对象中拥有指定 id 的第一个对象的引用。
          * @param	type 节点id。
          * @return	节点对象。
          */
         static getElementById(type: string): any;
         /**
-         * 移除浏览器原生节点对象。
+         * 移除指定的浏览器原生节点对象。
          * @param	type 节点对象。
          */
         static removeElement(ele: any): void;
@@ -24221,13 +24310,19 @@ declare module laya.utils {
          * 获取浏览器当前时间戳，单位为毫秒。
          */
         static now(): number;
-        /** 浏览器可视宽度。*/
+        /**
+         * 浏览器窗口可视宽度。
+         * 通过分析浏览器信息获得。浏览器多个属性值优先级为：window.innerWidth(包含滚动条宽度) > document.body.clientWidth(不包含滚动条宽度)，如果前者为0或为空，则选择后者。
+         */
         static readonly clientWidth: number;
-        /** 浏览器可视高度。*/
+        /**
+         * 浏览器窗口可视高度。
+         * 通过分析浏览器信息获得。浏览器多个属性值优先级为：window.innerHeight(包含滚动条高度) > document.body.clientHeight(不包含滚动条高度) > document.documentElement.clientHeight(不包含滚动条高度)，如果前者为0或为空，则选择后者。
+         */
         static readonly clientHeight: number;
-        /** 浏览器物理宽度，。*/
+        /** 浏览器窗口物理宽度。考虑了设备像素比。*/
         static readonly width: number;
-        /** 浏览器物理高度。*/
+        /** 浏览器窗口物理高度。考虑了设备像素比。*/
         static readonly height: number;
         /** 设备像素比。*/
         static readonly pixelRatio: number;
@@ -24242,16 +24337,20 @@ declare module laya.utils {
 declare module laya.utils {
     import Matrix = laya.maths.Matrix;
     /**
-     *
-     * <code>Byte</code> 类提供用于优化读取、写入以及处理二进制数据的方法和属性。
+     * <p> <code>Byte</code> 类提供用于优化读取、写入以及处理二进制数据的方法和属性。</p>
+     * <p><b>注意：</b> <code>Byte</code> 类适用于需要在字节层访问数据的高级开发人员。</p>
      */
     class Byte {
         /**
-         * 表示多字节数字的最高有效字节位于字节序列的最前面。
+         * <p>主机字节序，是 CPU 存放数据的两种不同顺序，包括小端字节序和大端字节序。通过 <code>getSystemEndian</code> 可以获取当前系统的字节序。</p>
+         * <p> <code>BIG_ENDIAN</code> ：大端字节序，地址低位存储值的高位，地址高位存储值的低位。有时也称之为网络字节序。<br/>
+         *  <code>LITTLE_ENDIAN</code> ：小端字节序，地址低位存储值的低位，地址高位存储值的高位。</p>
          */
         static BIG_ENDIAN: string;
         /**
-         * 表示多字节数字的最低有效字节位于字节序列的最前面。
+         * <p>主机字节序，是 CPU 存放数据的两种不同顺序，包括小端字节序和大端字节序。通过 <code>getSystemEndian</code> 可以获取当前系统的字节序。</p>
+         * <p> <code>LITTLE_ENDIAN</code> ：小端字节序，地址低位存储值的低位，地址高位存储值的高位。<br/>
+         *  <code>BIG_ENDIAN</code> ：大端字节序，地址低位存储值的高位，地址高位存储值的低位。有时也称之为网络字节序。</p>
          */
         static LITTLE_ENDIAN: string;
         protected _xd_: boolean;
@@ -24260,126 +24359,143 @@ declare module laya.utils {
         protected _pos_: number;
         protected _length: number;
         /**
-         * 获取系统的字节存储顺序。
-         * @return 字节存储顺序。
+         * <p>获取当前主机的字节序。</p>
+         * <p>主机字节序，是 CPU 存放数据的两种不同顺序，包括小端字节序和大端字节序。</p>
+         * <p> <code>BIG_ENDIAN</code> ：大端字节序，地址低位存储值的高位，地址高位存储值的低位。有时也称之为网络字节序。<br/>
+         *  <code>LITTLE_ENDIAN</code> ：小端字节序，地址低位存储值的低位，地址高位存储值的高位。</p>
+         * @return 当前系统的字节序。
          */
         static getSystemEndian(): string;
         /**
          * 创建一个 <code>Byte</code> 类的实例。
-         * @param	data 用于指定元素的数目、类型化数组、ArrayBuffer。
+         * @param	data	用于指定初始化的元素数目，或者用于初始化的TypedArray对象、ArrayBuffer对象。如果为 null ，则预分配一定的内存空间，当可用空间不足时，优先使用这部分内存，如果还不够，则重新分配所需内存。
          */
         constructor(data?: any);
         /**
-         * 获取此对象的 ArrayBuffer数据,数据只包含有效数据部分 。
+         * 获取此对象的 ArrayBuffer 数据，数据只包含有效数据部分。
          */
         readonly buffer: ArrayBuffer;
         /**
-         * 字节顺序。
+         * <p> <code>Byte</code> 实例的字节序。取值为：<code>BIG_ENDIAN</code> 或 <code>BIG_ENDIAN</code> 。</p>
+         * <p>主机字节序，是 CPU 存放数据的两种不同顺序，包括小端字节序和大端字节序。通过 <code>getSystemEndian</code> 可以获取当前系统的字节序。</p>
+         * <p> <code>BIG_ENDIAN</code> ：大端字节序，地址低位存储值的高位，地址高位存储值的低位。有时也称之为网络字节序。<br/>
+         *  <code>LITTLE_ENDIAN</code> ：小端字节序，地址低位存储值的低位，地址高位存储值的高位。</p>
          */
         endian: string;
         /**
-         * 字节长度。
+         * <p> <code>Byte</code> 对象的长度（以字节为单位）。</p>
+         * <p>如果将长度设置为大于当前长度的值，则用零填充字节数组的右侧；如果将长度设置为小于当前长度的值，将会截断该字节数组。</p>
+         * <p>如果要设置的长度大于当前已分配的内存空间的字节长度，则重新分配内存空间，大小为以下两者较大者：要设置的长度、当前已分配的长度的2倍，并将原有数据拷贝到新的内存空间中；如果要设置的长度小于当前已分配的内存空间的字节长度，也会重新分配内存空间，大小为要设置的长度，并将原有数据从头截断为要设置的长度存入新的内存空间中。</p>
          */
         length: number;
         /**
-         * 读取字符型值。
-         * @return
+         * <p>常用于解析固定格式的字节流。</p>
+         * <p>先从字节流的当前字节偏移位置处读取一个 <code>Uint16</code> 值，然后以此值为长度，读取此长度的字符串。</p>
+         * @return 读取的字符串。
          */
         getString(): string;
         /**
-         * 从指定的位置读取指定长度的数据用于创建一个 Float32Array 对象并返回此对象。
-         * @param	start 开始位置。
-         * @param	len 需要读取的字节长度。
-         * @return  读出的 Float32Array 对象。
+         * 从字节流中 <code>start</code> 参数指定的位置开始，读取 <code>len</code> 参数指定的字节数的数据，用于创建一个 <code>Float32Array</code> 对象并返回此对象。
+         * @param	start	开始位置。
+         * @param	len		需要读取的字节长度。如果要读取的长度超过可读取范围，则只返回可读范围内的值。
+         * @return  读取的 Float32Array 对象。
          */
         getFloat32Array(start: number, len: number): any;
         /**
-         * 从指定的位置读取指定长度的数据用于创建一个 Uint8Array 对象并返回此对象。
-         * @param	start 开始位置。
-         * @param	len 需要读取的字节长度。
-         * @return  读出的 Uint8Array 对象。
+         * 从字节流中 <code>start</code> 参数指定的位置开始，读取 <code>len</code> 参数指定的字节数的数据，用于创建一个 <code>Uint8Array</code> 对象并返回此对象。
+         * @param	start	开始位置。
+         * @param	len		需要读取的字节长度。如果要读取的长度超过可读取范围，则只返回可读范围内的值。
+         * @return  读取的 Uint8Array 对象。
          */
         getUint8Array(start: number, len: number): Uint8Array;
         /**
-         * 从指定的位置读取指定长度的数据用于创建一个 Int16Array 对象并返回此对象。
-         * @param	start 开始位置。
-         * @param	len 需要读取的字节长度。
-         * @return  读出的 Uint8Array 对象。
+         * 从字节流中 <code>start</code> 参数指定的位置开始，读取 <code>len</code> 参数指定的字节数的数据，用于创建一个 <code>Int16Array</code> 对象并返回此对象。
+         * @param	start	开始读取的字节偏移量位置。
+         * @param	len		需要读取的字节长度。如果要读取的长度超过可读取范围，则只返回可读范围内的值。
+         * @return  读取的 Uint8Array 对象。
          */
         getInt16Array(start: number, len: number): any;
         /**
-         * 在指定字节偏移量位置处读取 Float32 值。
-         * @return Float32 值。
+         * 从字节流的当前字节偏移位置处读取一个 IEEE 754 单精度（32 位）浮点数。
+         * @return 单精度（32 位）浮点数。
          */
         getFloat32(): number;
+        /**
+         * 从字节流的当前字节偏移量位置处读取一个 IEEE 754 双精度（64 位）浮点数。
+         * @return 双精度（64 位）浮点数。
+         */
         getFloat64(): number;
         /**
-         * 在当前字节偏移量位置处写入 Float32 值。
-         * @param	value 需要写入的 Float32 值。
+         * 在字节流的当前字节偏移量位置处写入一个 IEEE 754 单精度（32 位）浮点数。
+         * @param	value	单精度（32 位）浮点数。
          */
         writeFloat32(value: number): void;
+        /**
+         * 在字节流的当前字节偏移量位置处写入一个 IEEE 754 双精度（64 位）浮点数。
+         * @param	value	双精度（64 位）浮点数。
+         */
         writeFloat64(value: number): void;
         /**
-         * 在当前字节偏移量位置处读取 Int32 值。
+         * 从字节流的当前字节偏移量位置处读取一个 Int32 值。
          * @return Int32 值。
          */
         getInt32(): number;
         /**
-         * 在当前字节偏移量位置处读取 Uint32 值。
+         * 从字节流的当前字节偏移量位置处读取一个 Uint32 值。
          * @return Uint32 值。
          */
         getUint32(): number;
         /**
-         * 在当前字节偏移量位置处写入 Int32 值。
-         * @param	value 需要写入的 Int32 值。
+         * 在字节流的当前字节偏移量位置处写入指定的 Int32 值。
+         * @param	value	需要写入的 Int32 值。
          */
         writeInt32(value: number): void;
         /**
-         * 在当前字节偏移量位置处写入 Uint32 值。
-         * @param	value 需要写入的 Uint32 值。
+         * 在字节流的当前字节偏移量位置处写入 Uint32 值。
+         * @param	value	需要写入的 Uint32 值。
          */
         writeUint32(value: number): void;
         /**
-         * 在当前字节偏移量位置处读取 Int16 值。
+         * 从字节流的当前字节偏移量位置处读取一个 Int16 值。
          * @return Int16 值。
          */
         getInt16(): number;
         /**
-         * 在当前字节偏移量位置处读取 Uint16 值。
+         * 从字节流的当前字节偏移量位置处读取一个 Uint16 值。
          * @return Uint16 值。
          */
         getUint16(): number;
         /**
-         * 在当前字节偏移量位置处写入 Uint16 值。
-         * @param	value 需要写入的Uint16 值。
+         * 在字节流的当前字节偏移量位置处写入指定的 Uint16 值。
+         * @param	value	需要写入的Uint16 值。
          */
         writeUint16(value: number): void;
         /**
-         * 在当前字节偏移量位置处写入 Int16 值。
-         * @param	value 需要写入的 Int16 值。
+         * 在字节流的当前字节偏移量位置处写入指定的 Int16 值。
+         * @param	value	需要写入的 Int16 值。
          */
         writeInt16(value: number): void;
         /**
-         * 在当前字节偏移量位置处读取 Uint8 值。
+         * 从字节流的当前字节偏移量位置处读取一个 Uint8 值。
          * @return Uint8 值。
          */
         getUint8(): number;
         /**
-         * 在当前字节偏移量位置处写入 Uint8 值。
-         * @param	value 需要写入的 Uint8 值。
+         * 在字节流的当前字节偏移量位置处写入指定的 Uint8 值。
+         * @param	value	需要写入的 Uint8 值。
          */
         writeUint8(value: number): void;
         /**
          * @private
-         * 在指定位置处读取 Uint8 值。
-         * @param	pos 字节读取位置。
+         * 从字节流的指定字节偏移量位置处读取一个 Uint8 值。
+         * @param	pos	字节读取位置。
          * @return Uint8 值。
          */
         _getUInt8(pos: number): number;
         /**
          * @private
-         * 在指定位置处读取 Uint16 值。
-         * @param	pos 字节读取位置。
+         * 从字节流的指定字节偏移量位置处读取一个 Uint16 值。
+         * @param	pos	字节读取位置。
          * @return Uint16 值。
          */
         _getUint16(pos: number): number;
@@ -24390,13 +24506,14 @@ declare module laya.utils {
          */
         _getMatrix(): Matrix;
         /**
-         * 字符串读取。
-         * @param	len
-         * @return
+         * @private
+         * 读取 <code>len</code> 参数指定的长度的字符串。
+         * @param	len	要读取的字符串的长度。
+         * @return 指定长度的字符串。
          */
         getCustomString(len: number): string;
         /**
-         * 当前读取到的位置。
+         * 移动或返回 Byte 对象的读写指针的当前位置（以字节为单位）。下一次调用读取方法时将在此位置开始读取，或者下一次调用写入方法时将在此位置开始写入。
          */
         pos: number;
         /**
@@ -24404,7 +24521,7 @@ declare module laya.utils {
          */
         readonly bytesAvailable: number;
         /**
-         * 清除数据。
+         * 清除字节数组的内容，并将 length 和 pos 属性重置为 0。调用此方法将释放 Byte 实例占用的内存。
          */
         clear(): void;
         /**
@@ -24414,63 +24531,73 @@ declare module laya.utils {
          */
         __getBuffer(): ArrayBuffer;
         /**
-         * 写入字符串，该方法写的字符串要使用 readUTFBytes 方法读取。
+         * <p>将 UTF-8 字符串写入字节流。类似于 writeUTF() 方法，但 writeUTFBytes() 不使用 16 位长度的字为字符串添加前缀。</p>
+         * <p>对应的读取方法为： getUTFBytes 。</p>
          * @param value 要写入的字符串。
          */
         writeUTFBytes(value: string): void;
         /**
-         * 将 UTF-8 字符串写入字节流。
+         * <p>将 UTF-8 字符串写入字节流。先写入以字节表示的 UTF-8 字符串长度（作为 16 位整数），然后写入表示字符串字符的字节。</p>
+         * <p>对应的读取方法为： getUTFString 。</p>
          * @param	value 要写入的字符串值。
          */
         writeUTFString(value: string): void;
         /**
          * @private
          * 读取 UTF-8 字符串。
-         * @return 读出的字符串。
+         * @return 读取的字符串。
          */
         readUTFString(): string;
         /**
-         * 读取 UTF-8 字符串。
-         * @return 读出的字符串。
+         * <p>从字节流中读取一个 UTF-8 字符串。假定字符串的前缀是一个无符号的短整型（以此字节表示要读取的长度）。</p>
+         * <p>对应的写入方法为： writeUTFString 。</p>
+         * @return 读取的字符串。
          */
         getUTFString(): string;
         /**
          * @private
          * 读字符串，必须是 writeUTFBytes 方法写入的字符串。
-         * @param len 要读的buffer长度,默认将读取缓冲区全部数据。
+         * @param len	要读的buffer长度，默认将读取缓冲区全部数据。
          * @return 读取的字符串。
          */
         readUTFBytes(len?: number): string;
         /**
-         * 读字符串，必须是 writeUTFBytes 方法写入的字符串。
-         * @param len 要读的buffer长度,默认将读取缓冲区全部数据。
+         * <p>从字节流中读取一个由 length 参数指定的长度的 UTF-8 字节序列，并返回一个字符串。</p>
+         * <p>一般读取的是由 writeUTFBytes 方法写入的字符串。</p>
+         * @param len	要读的buffer长度，默认将读取缓冲区全部数据。
          * @return 读取的字符串。
          */
         getUTFBytes(len?: number): string;
         /**
-         * 在字节流中写入一个字节。
+         * <p>在字节流中写入一个字节。</p>
+         * <p>使用参数的低 8 位。忽略高 24 位。</p>
          * @param	value
          */
         writeByte(value: number): void;
         /**
          * @private
-         * 在字节流中读一个字节。
+         * 从字节流中读取带符号的字节。
          */
         readByte(): number;
         /**
-         * 在字节流中读一个字节。
+         * <p>从字节流中读取带符号的字节。</p>
+         * <p>返回值的范围是从 -128 到 127。</p>
+         * @return 介于 -128 和 127 之间的整数。
          */
         getByte(): number;
         /**
-         * 指定该字节流的长度。
-         * @param	lengthToEnsure 指定的长度。
+         * <p>保证该字节流的可用长度不小于 <code>lengthToEnsure</code> 参数指定的值。</p>
+         * @param	lengthToEnsure	指定的长度。
          */
         ensureWrite(lengthToEnsure: number): void;
         /**
-         * 写入指定的 Arraybuffer 对象。
-         * @param	arraybuffer 需要写入的 Arraybuffer 对象。
-         * @param	offset 偏移量（以字节为单位）
-         * @param	length 长度（以字节为单位）
+         * <p>将指定 arraybuffer 对象中的以 offset 为起始偏移量， length 为长度的字节序列写入字节流。</p>
+         * <p>如果省略 length 参数，则使用默认长度 0，该方法将从 offset 开始写入整个缓冲区；如果还省略了 offset 参数，则写入整个缓冲区。</p>
+         * <p>如果 offset 或 length 小于0，本函数将抛出异常。</p>
+         * $NEXTBIG 由于没有判断length和arraybuffer的合法性，当开发者填写了错误的length值时，会导致写入多余的空白数据甚至内存溢出，为了避免影响开发者正在使用此方法的功能，下个重大版本会修复这些问题。
+         * @param	arraybuffer	需要写入的 Arraybuffer 对象。
+         * @param	offset		Arraybuffer 对象的索引的偏移量（以字节为单位）
+         * @param	length		从 Arraybuffer 对象写入到 Byte 对象的长度（以字节为单位）
          */
         writeArrayBuffer(arraybuffer: any, offset?: number, length?: number): void;
     }
@@ -24482,7 +24609,7 @@ declare module laya.utils {
      */
     class CacheManger {
         /**
-         * 单次清理检测允许执行的时间，单位ms
+         * 单次清理检测允许执行的时间，单位ms。
          */
         static loopTimeLimit: number;
         constructor();
@@ -25148,12 +25275,14 @@ declare module laya.utils {
         width: number;
         height: number;
         alpha: number;
+        recover(): void;
+        static create(): GraphicNode;
     }
 }
 declare module laya.utils {
     /**
      * <p><code>Handler</code> 是事件处理器类。</p>
-     * <p>推荐使用 Handler.create() 方法从对象池创建，减少对象创建消耗。</p>
+     * <p>推荐使用 Handler.create() 方法从对象池创建，减少对象创建消耗。创建的 Handler 对象不再使用后，可以使用 Handler.recover() 将其回收到对象池，回收后不要再使用此对象，否则会导致不可预料的错误。</p>
      * <p><b>注意：</b>由于鼠标事件也用本对象池，不正确的回收及调用，可能会影响鼠标事件的执行。</p>
      */
     class Handler {
@@ -25369,7 +25498,8 @@ declare module laya.utils {
 }
 declare module laya.utils {
     /**
-     * <code>Pool</code> 是对象池类，用于对象的存贮、重复使用。
+     * <p> <code>Pool</code> 是对象池类，用于对象的存贮、重复使用。</p>
+     * <p>合理使用对象池，可以有效减少对象创建的开销，避免频繁的垃圾回收，从而优化游戏流畅度。</p>
      */
     class Pool {
         /**
@@ -25390,16 +25520,16 @@ declare module laya.utils {
          */
         static recover(sign: string, item: any): void;
         /**
-         * 根据传入的对象类型标识字符，获取对象池中此类型标识的一个对象实例。
-         * 当对象池中无此类型标识的对象时，则根据传入的类型，创建一个新的对象返回。
+         * <p>根据传入的对象类型标识字符，获取对象池中此类型标识的一个对象实例。</p>
+         * <p>当对象池中无此类型标识的对象时，则根据传入的类型，创建一个新的对象返回。</p>
          * @param sign 对象类型标识字符。
          * @param cls 用于创建该类型对象的类。
          * @return 此类型标识的一个对象。
          */
         static getItemByClass(sign: string, cls: any): any;
         /**
-         * 根据传入的对象类型标识字符，获取对象池中此类型标识的一个对象实例。
-         * 当对象池中无此类型标识的对象时，则使用传入的创建此类型对象的函数，新建一个对象返回。
+         * <p>根据传入的对象类型标识字符，获取对象池中此类型标识的一个对象实例。</p>
+         * <p>当对象池中无此类型标识的对象时，则使用传入的创建此类型对象的函数，新建一个对象返回。</p>
          * @param sign 对象类型标识字符。
          * @param createFun 用于创建该类型对象的方法。
          * @return 此类型标识的一个对象。
@@ -25521,7 +25651,14 @@ declare module laya.utils {
 }
 declare module laya.utils {
     /**
-     * <code>Stat</code> 用于显示帧率统计信息。
+     * <p> <code>Stat</code> 是一个性能统计面板，可以实时更新相关的性能参数。</p>
+     * <p>参与统计的性能参数如下（所有参数都是每大约1秒进行更新）：<br/>
+     * FPS(Canvas)/FPS(WebGL)：Canvas 模式或者 WebGL 模式下的帧频，也就是每秒显示的帧数，值越高、越稳定，感觉越流畅；<br/>
+     * Sprite：统计所有渲染节点（包括容器）数量，它的大小会影响引擎进行节点遍历、数据组织和渲染的效率。其值越小，游戏运行效率越高；<br/>
+     * DrawCall：此值是决定性能的重要指标，其值越小，游戏运行效率越高。Canvas模式下表示每大约1秒的图像绘制次数；WebGL模式下表示每大约1秒的渲染提交批次，每次准备数据并通知GPU渲染绘制的过程称为1次DrawCall，在每次DrawCall中除了在通知GPU的渲染上比较耗时之外，切换材质与shader也是非常耗时的操作；<br/>
+     * CurMem：Canvas模式下，表示内存占用大小，值越小越好，过高会导致游戏闪退；WebGL模式下，表示内存与显存的占用，值越小越好；<br/>
+     * Shader：是 WebGL 模式独有的性能指标，表示每大约1秒 Shader 提交次数，值越小越好；<br/>
+     * Canvas：由三个数值组成，只有设置 CacheAs 后才会有值，默认为0/0/0。从左到右数值的意义分别为：每帧重绘的画布数量 / 缓存类型为"normal"类型的画布数量 / 缓存类型为"bitmap"类型的画布数量。</p>
      */
     class Stat {
         /** 每秒帧数。*/
@@ -25551,29 +25688,29 @@ declare module laya.utils {
         /** 资源管理器所管理资源的累计内存,以字节为单位。*/
         static currentMemorySize: number;
         /**
-         * 显示帧频信息。
+         * 显示性能统计信息。
          * @param	x X轴显示位置。
          * @param	y Y轴显示位置。
          */
         static show(x?: number, y?: number): void;
-        /**激活帧率统计*/
+        /**激活性能统计*/
         static enable(): void;
         /**
-         * 隐藏帧频信息。
+         * 隐藏性能统计信息。
          */
         static hide(): void;
         /**
          * @private
-         * 清除帧频计算相关的数据。
+         * 清零性能统计计算相关的数据。
          */
         static clear(): void;
         /**
-         * 点击帧频显示区域的处理函数。
+         * 点击性能统计显示区域的处理函数。
          */
         static onclick: Function;
         /**
          * @private
-         * 帧频计算循环处理函数。
+         * 性能统计参数计算循环处理函数。
          */
         static loop(): void;
     }
@@ -25693,7 +25830,7 @@ declare module laya.utils {
          */
         index: number;
         /**
-         * 得到总帧数据
+         * 得到总帧数。
          */
         readonly total: number;
         /**
@@ -25714,16 +25851,17 @@ declare module laya.utils {
         duration: number;
         ease: Function;
         data: any;
+        destroy(): void;
     }
 }
 declare module laya.utils {
     /**
-     * <code>Timer</code> 是时钟管理类。它是一个单例，可以通过 Laya.timer 访问。
+     * <code>Timer</code> 是时钟管理类。它是一个单例，不要手动实例化此类，应该通过 Laya.timer 访问。
      */
     class Timer {
         /** 时针缩放。*/
         scale: number;
-        /** 当前时间。*/
+        /** 当前帧开始的时间。*/
         currTimer: number;
         /** 当前的帧数。*/
         currFrame: number;
@@ -25740,7 +25878,7 @@ declare module laya.utils {
          * 帧循环处理函数。
          */
         _update(): void;
-        _create(useFrame: boolean, repeat: boolean, delay: number, caller: any, method: Function, args: Array<any>, coverBefore: boolean): void;
+        _create(useFrame: boolean, repeat: boolean, delay: number, caller: any, method: Function, args: Array<any>, coverBefore: boolean): TimerHandler;
         /**
          * 定时执行一次。
          * @param	delay	延迟时间(单位为毫秒)。
@@ -25757,8 +25895,9 @@ declare module laya.utils {
          * @param	method	定时器回调函数。
          * @param	args	回调参数。
          * @param	coverBefore	是否覆盖之前的延迟执行，默认为 true 。
+         * @param	jumpFrame 时钟是否跳帧。基于时间的循环回调，单位时间间隔内，如能执行多次回调，出于性能考虑，引擎默认只执行一次，设置jumpFrame=true后，则回调会连续执行多次
          */
-        loop(delay: number, caller: any, method: Function, args?: Array<any>, coverBefore?: boolean): void;
+        loop(delay: number, caller: any, method: Function, args?: Array<any>, coverBefore?: boolean, jumpFrame?: boolean): void;
         /**
          * 定时执行一次(基于帧率)。
          * @param	delay	延迟几帧(单位为帧)。
@@ -25819,13 +25958,14 @@ declare module laya.utils {
         caller: any;
         method: Function;
         args: Array<any>;
+        jumpFrame: boolean;
         clear(): void;
         run(withClear: boolean): void;
     }
 }
 declare module laya.utils {
     /**
-     * <code>Tween</code>  是一个缓动类。使用实现目标对象属性的渐变。
+     * <code>Tween</code>  是一个缓动类。使用此类能够实现对目标对象属性的渐变。
      */
     class Tween {
         gid: number;
@@ -26034,16 +26174,15 @@ declare module laya.utils {
          */
         static transPointList(points: Array<any>, x: number, y: number): void;
         /**
-         * 解析一个字符串，并返回一个整数。和JS原生的parseInt不同：如果str为空或者非数字，原生返回NaN，这里返回0
-         * @param	str 要被解析的字符串
-         * @param	radix 表示要解析的数字的基数。该值介于 2 ~ 36 之间。如果它以 “0x” 或 “0X” 开头，将以 16 为基数。如果该参数小于 2 或者大于 36，则 parseInt() 将返回 NaN。
-         * @return	返回解析后的数字
+         * 解析一个字符串，并返回一个整数。和JS原生的parseInt不同：如果str为空或者非数字，原生返回NaN，这里返回0。
+         * @param	str		要被解析的字符串。
+         * @param	radix	表示要解析的数字的基数。默认值为0，表示10进制，其他值介于 2 ~ 36 之间。如果它以 “0x” 或 “0X” 开头，将以 16 为基数。如果该参数不在上述范围内，则此方法返回 0。
+         * @return	返回解析后的数字。
          */
         static parseInt(str: string, radix?: number): number;
         static getFileExtension(path: string): string;
         /**
          * 获取指定区域内相对于窗口左上角的transform。
-         *
          * @param	coordinateSpace	坐标空间，不能是Stage引用
          * @param	x				相对于coordinateSpace的x坐标
          * @param	y				相对于coordinateSpace的y坐标
@@ -26307,6 +26446,7 @@ declare module laya.webgl.canvas {
         drawLine(x: number, y: number, points: Array<any>, width: number, color: number): IShape;
         update(): void;
         reset(): void;
+        recover(): void;
     }
 }
 declare module laya.webgl.canvas.save {
@@ -27233,6 +27373,7 @@ declare module laya.webgl.submit {
         releaseRender(): void;
         getRenderType(): number;
         renderSubmit(): number;
+        static create(context: WebGLContext2D, ib: IndexBuffer2D, vb: VertexBuffer2D, pos: number, sv: Value2D): Submit;
         static createShape(ctx: WebGLContext2D, ib: IndexBuffer2D, vb: VertexBuffer2D, numEle: number, offset: number, sv: Value2D): Submit;
     }
 }
@@ -27532,6 +27673,7 @@ declare module laya.webgl.utils {
         protected _checkArrayUse(): void;
         getUint8Array(): Uint8Array;
         getUint16Array(): Uint16Array;
+        destory(): void;
     }
 }
 declare module laya.webgl.utils {
@@ -27620,6 +27762,7 @@ declare module laya.webgl.utils {
         bind_upload(ibBuffer: IndexBuffer2D): void;
         protected _checkArrayUse(): void;
         protected detoryResource(): void;
+        destory(): void;
     }
 }
 declare module laya.webgl {
@@ -28185,13 +28328,15 @@ declare module Laya {
     }
     class AnimationClip extends laya.d3.animation.AnimationClip {
     }
+    class AnimationClipParser01 extends laya.d3.animation.AnimationClipParser01 {
+    }
     class AnimationNode extends laya.d3.animation.AnimationNode {
     }
-    class BoneNode extends laya.d3.animation.BoneNode {
+    class AnimationTransform3D extends laya.d3.animation.AnimationTransform3D {
     }
     class Keyframe extends laya.d3.animation.Keyframe {
     }
-    class CameraAnimations extends laya.d3.component.animation.CameraAnimations {
+    class KeyframeNode extends laya.d3.animation.KeyframeNode {
     }
     class KeyframeAnimations extends laya.d3.component.animation.KeyframeAnimations {
     }
@@ -28199,7 +28344,7 @@ declare module Laya {
     }
     class SkinAnimations extends laya.d3.component.animation.SkinAnimations {
     }
-    class UVAnimations extends laya.d3.component.animation.UVAnimations {
+    class Animator extends laya.d3.component.Animator {
     }
     class AttachPoint extends laya.d3.component.AttachPoint {
     }
@@ -28251,8 +28396,6 @@ declare module Laya {
     }
     class GlitterMaterial extends laya.d3.core.material.GlitterMaterial {
     }
-    class ParticleMaterial extends laya.d3.core.material.ParticleMaterial {
-    }
     class PBRMaterial extends laya.d3.core.material.PBRMaterial {
     }
     class StandardMaterial extends laya.d3.core.material.StandardMaterial {
@@ -28268,18 +28411,6 @@ declare module Laya {
     class MeshSprite3D extends laya.d3.core.MeshSprite3D {
     }
     class MeshTerrainSprite3D extends laya.d3.core.MeshTerrainSprite3D {
-    }
-    class EmitterBox extends laya.d3.core.particle.EmitterBox {
-    }
-    class EmitterPoint extends laya.d3.core.particle.EmitterPoint {
-    }
-    class EmitterRing extends laya.d3.core.particle.EmitterRing {
-    }
-    class EmitterSphere extends laya.d3.core.particle.EmitterSphere {
-    }
-    class Particle3D extends laya.d3.core.particle.Particle3D {
-    }
-    class ParticleRender extends laya.d3.core.ParticleRender {
     }
     class Burst extends laya.d3.core.particleShuriKen.module.Burst {
     }
@@ -28365,9 +28496,9 @@ declare module Laya {
     }
     class SceneManager extends laya.d3.core.scene.SceneManager {
     }
-    class SkinMeshRender extends laya.d3.core.SkinMeshRender {
+    class SkinnedMeshRender extends laya.d3.core.SkinnedMeshRender {
     }
-    class SkinMeshSprite3D extends laya.d3.core.SkinMeshSprite3D {
+    class SkinnedMeshSprite3D extends laya.d3.core.SkinnedMeshSprite3D {
     }
     class Sprite3D extends laya.d3.core.Sprite3D {
     }
@@ -28451,6 +28582,8 @@ declare module Laya {
     }
     class VertexPositionNTBTexture extends laya.d3.graphics.VertexPositionNTBTexture {
     }
+    class VertexPositionNTBTexture0Texture1Skin extends laya.d3.graphics.VertexPositionNTBTexture0Texture1Skin {
+    }
     class VertexPositionNTBTextureSkin extends laya.d3.graphics.VertexPositionNTBTextureSkin {
     }
     class VertexPositionTerrain extends laya.d3.graphics.VertexPositionTerrain {
@@ -28462,6 +28595,8 @@ declare module Laya {
     class LoadModelV01 extends laya.d3.loaders.LoadModelV01 {
     }
     class LoadModelV02 extends laya.d3.loaders.LoadModelV02 {
+    }
+    class LoadModelV03 extends laya.d3.loaders.LoadModelV03 {
     }
     class MeshReader extends laya.d3.loaders.MeshReader {
     }
@@ -28538,8 +28673,6 @@ declare module Laya {
     class SolidColorTextureCube extends laya.d3.resource.SolidColorTextureCube {
     }
     class GlitterTemplet extends laya.d3.resource.tempelet.GlitterTemplet {
-    }
-    class ParticleTemplet3D extends laya.d3.resource.tempelet.ParticleTemplet3D {
     }
     class Texture2D extends laya.d3.resource.Texture2D {
     }
@@ -28632,6 +28765,8 @@ declare module Laya {
     class FrameAnimation extends laya.display.FrameAnimation {
     }
     class Graphics extends laya.display.Graphics {
+    }
+    class GraphicsBounds extends laya.display.GraphicsBounds {
     }
     interface ILayout extends laya.display.ILayout {
     }

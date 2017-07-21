@@ -10,7 +10,7 @@ import laya.display.Animation;
 
 	public class Animation_Altas
 	{
-		private const AniConfPath:String = "../../../../res/fighter/fighter.atlas";
+		private const AniConfPath:String = "../../../../res/fighter/fighter.json";
 		
 		public function Animation_Altas()
 		{
@@ -22,8 +22,8 @@ import laya.display.Animation;
 
 			Laya.stage.scaleMode = "showall";
 			Laya.stage.bgColor = "#232628";
-createAnimation();
-			//Laya.loader.load(AniConfPath, Handler.create(this, createAnimation), null, Loader.ATLAS);
+
+			Laya.loader.load(AniConfPath, Handler.create(this, createAnimation), null, Loader.ATLAS);
 		}
 		
 		private function createAnimation(_e:*=null):void

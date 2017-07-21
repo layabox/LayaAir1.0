@@ -55,7 +55,7 @@ package laya.resource {
 		private static function replaceCanvasGetSet(tar:Object, key:String):Boolean
 		{
 			var oldO:Object = __JS__("Object.getOwnPropertyDescriptor(tar, key);")
-			if (!oldO) return false;
+			if (!oldO||!oldO.configurable) return false;
 			var newO:Object= { };
 			var tkey:String;
 			for (tkey in oldO)
@@ -101,7 +101,7 @@ package laya.resource {
 		private static function replaceGetSet(tar:Object, key:String):Boolean
 		{
 			var oldO:Object = __JS__("Object.getOwnPropertyDescriptor(tar, key);")
-			if (!oldO) return false;
+			if (!oldO||!oldO.configurable) return false;
 			var newO:Object= { };
 			var tkey:String;
 			for (tkey in oldO)

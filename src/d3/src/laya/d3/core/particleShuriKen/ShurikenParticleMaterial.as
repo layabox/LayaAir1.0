@@ -87,26 +87,14 @@ package laya.d3.core.particleShuriKen {
 			return Laya.loader.create(url, null, null, ShurikenParticleMaterial);
 		}
 		
-		/**@private 渲染模式。*/
-		private var _renderMode:int;
-		
-		/**
-		 * 获取渲染状态。
-		 * @return 渲染状态。
-		 */
-		public function get renderMode():int {
-			return _renderMode;
-		}
-		
 		/**
 		 * 设置渲染模式。
 		 * @return 渲染模式。
 		 */
 		public function set renderMode(value:int):void {
-			_renderMode = value;
 			switch (value) {
 			case RENDERMODE_OPAQUE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
@@ -114,7 +102,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_OPAQUEDOUBLEFACE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_DISABLE;
@@ -125,12 +113,12 @@ package laya.d3.core.particleShuriKen {
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				alphaTest = true;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_CUTOUTDOUBLEFACE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_DISABLE;
@@ -138,7 +126,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENT: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -148,7 +136,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENTDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -158,7 +146,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_ADDTIVE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -168,7 +156,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_ADDTIVEDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -178,7 +166,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_TRANSPARENT: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = false;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -188,7 +176,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_TRANSPARENTDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = false;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -198,7 +186,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_ADDTIVE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = false;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -208,7 +196,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = false;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -218,7 +206,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENT: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthTest = false;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -228,7 +216,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENTDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthTest = false;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -238,7 +226,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthTest = false;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -248,7 +236,7 @@ package laya.d3.core.particleShuriKen {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthTest = false;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
@@ -340,15 +328,6 @@ package laya.d3.core.particleShuriKen {
 				
 				_endLoaded();
 			}
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function cloneTo(destObject:*):void {
-			super.cloneTo(destObject);
-			var dest:ShurikenParticleMaterial = destObject as ShurikenParticleMaterial;
-			dest._renderMode = _renderMode;
 		}
 	
 	}

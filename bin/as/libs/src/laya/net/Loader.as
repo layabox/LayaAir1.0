@@ -58,6 +58,8 @@ package laya.net {
 		public static var maxTimeOut:int = 100;
 		/** @private 已加载的资源池。*/
 		public static const loadedMap:Object = {};
+		/** @private 已加载的图集配置文件。*/
+		public static const preLoadedAtlasConfigMap:Object = {};
 		/**@private 已加载的图集资源池。*/
 		protected static const atlasMap:Object = {};
 		/**@private */
@@ -66,6 +68,8 @@ package laya.net {
 		protected static var _isWorking:Boolean = false;
 		/**@private */
 		protected static var _startIndex:int = 0;
+		/**@private */
+		protected static const imgCache:Object = {};
 		
 		/**@private 加载后的数据对象，只读*/
 		public var _data:*;
@@ -112,6 +116,13 @@ package laya.net {
 			if (type === IMAGE || type === "htmlimage" || type === "nativeimage") return _loadImage(url);
 			if (type === SOUND) return _loadSound(url);
 			
+			if (type == ATLAS) {
+				if (preLoadedAtlasConfigMap[url]) {
+					onLoaded(preLoadedAtlasConfigMap[url]);
+					delete preLoadedAtlasConfigMap[url];
+					return;
+				}
+			}
 			if (!_http) {
 				_http = new HttpRequest();
 				_http.on(Event.PROGRESS, this, onProgress);
@@ -156,6 +167,7 @@ package laya.net {
 			function clear():void {
 				image.onload = null;
 				image.onerror = null;
+				delete imgCache[url]
 			}
 			
 			var onload:Function = function():void {
@@ -173,9 +185,13 @@ package laya.net {
 				image.onload = onload;
 				image.onerror = onerror;
 				image.src = url;
+				//增加引用，防止垃圾回收
+				imgCache[url] = image;
 			} else {
 				new HTMLImage.create(url, {onload: onload, onerror: onerror, onCreate: function(img:*):void {
 					image = img;
+					//增加引用，防止垃圾回收
+					imgCache[url] = img;
 				}});
 			}
 		}
@@ -283,6 +299,8 @@ package laya.net {
 						loadedMap[url].url = url;
 						map.push(url);
 					}
+					
+					delete _data.pics;
 					
 					/*[IF-FLASH]*/
 					map.sort();
@@ -398,6 +416,15 @@ package laya.net {
 					delete loadedMap[url];
 				}
 			}
+		}
+		
+		/**
+		 * 设置预加载的图集配置文件
+		 * @param	url 资源地址。
+		 * @param	configO 配置数据
+		 */
+		public static function setAtlasConfigs(url:String, config:Object):void {
+			preLoadedAtlasConfigMap[URL.formatURL(url)] = config;
 		}
 		
 		/**

@@ -638,6 +638,10 @@ package laya.d3.core.particleShuriKen {
 			var render:BaseRender = _ownerRender;
 			if (value) {
 				var rotation:GradientAngularVelocity = value.angularVelocity;
+				
+				if (!rotation)//TODO:兼容代码，RotationOverLifetime未支持全可能为空
+					return
+				
 				var rotationSeparate:Boolean = rotation.separateAxes;
 				var rotationType:int = rotation.type;
 				if (value.enbale) {
@@ -850,7 +854,7 @@ package laya.d3.core.particleShuriKen {
 			
 			_owner = owner;
 			_ownerRender = owner.particleRender;
-			_boundingBoxCorners = new Vector.<Vector3>(8);
+			_boundingBoxCorners = new Array(8);
 			_boundingSphere = new BoundSphere(new Vector3(), 0);
 			_boundingBox = new BoundBox(new Vector3(), new Vector3());
 			

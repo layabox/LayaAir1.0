@@ -2,8 +2,7 @@
   "type": "Material",
   "props": {
     "name": "teapotsilver",
-    "transparent": false,
-    "cullFace": true
+    "renderMode":2
   },
   "customProps": {
     "ambientColor": [
@@ -26,6 +25,12 @@
       1.0,
       1.0,
       1.0
+    ],
+    "albedoColor":[
+      0.25,
+      0,
+      0,
+      1
     ],
     "diffuseTexture": {
       "texture2D": "silver.png"

@@ -146,7 +146,7 @@ package laya.debug {
 			clickedHandler = new Handler(this, onClickSelected);
 			debug_view = Browser.window.layaair_debug_view;
 			debug_view.initLayaAirDebugView(div);
-			debug_view.tree.attachEvent("onSelect", function(id):void {
+			debug_view.tree.attachEvent("onSelect", function(id:*):void {
 					var dataO:Object;
 					dataO = getDataByID(id, _treeDataList[0]);
 					if (dataO.target)
@@ -156,7 +156,7 @@ package laya.debug {
 					}
 					
 				});
-			debug_view.setValueChangeHandler(function(data, new_value):void {
+			debug_view.setValueChangeHandler(function(data:*, new_value:*):void {
 					onValueChange(data, new_value);
 				});
 			debug_view.onRefresh(function():void {
@@ -174,23 +174,23 @@ package laya.debug {
 			debug_view.onPrintSizeChain(function():void {
 					DebugTool.traceDisSizeChain(tShowObj);
 				});
-			debug_view.onToggleVisibility(function(selectd):void {
+			debug_view.onToggleVisibility(function(selectd:*):void {
 					if (tShowObj) {
 						tShowObj.visible = debug_view.getVisibility();
 					}
 				});
-			debug_view.onToggleDebugBorder(function(selectd):void {
+			debug_view.onToggleDebugBorder(function(selectd:*):void {
 					if (!tShowObj)
 						return;
 					SpriteRenderHook.showDisplayBorder(tShowObj, debug_view.getShowDebugBorder());
 				});
-			debug_view.onToggleShowCurrentCache(function(selectd):void {
+			debug_view.onToggleShowCurrentCache(function(selectd:*):void {
 					CacheAnalyser.showRecacheSprite = debug_view.getShowCurrentCache();
 				});
-			debug_view.onToggleShowAllCache(function(selectd):void {
+			debug_view.onToggleShowAllCache(function(selectd:*):void {
 					CacheAnalyser.showCacheSprite = debug_view.getShowAllCache();
 				});
-			debug_view.onToggleShowAtlas(function(selectd):void {
+			debug_view.onToggleShowAtlas(function(selectd:*):void {
 					trace("toggle show atlas:", debug_view.getShowAtlas());
 					if (debug_view.getShowAtlas()) {
 						AtlasTools.getInstance().start();

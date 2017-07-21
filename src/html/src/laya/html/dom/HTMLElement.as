@@ -25,6 +25,7 @@ package laya.html.dom
 		
 		public function HTMLElement()
 		{
+			_childRenderMax = true;
 			setStyle(new CSSStyle(this));
 			//设置CSS默认属性
 			this._getCSSStyle().valign = "middle";

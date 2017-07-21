@@ -45,7 +45,7 @@ package laya.d3.core.material {
 		/**
 		 * 如果定义了这个宏，就不再使用深度纹理，可以提高速度，但是建模麻烦一些。
 		 */
-		public static var SHADERDEFINE_USEVERTEXHEIGHT:int = 0;	
+		public static var SHADERDEFINE_USEVERTEXHEIGHT:int = 0;
 		/**渲染状态_不透明。*/
 		public static const RENDERMODE_OPAQUE:int = 1;
 		/**渲染状态_不透明_双面。*/
@@ -60,10 +60,8 @@ package laya.d3.core.material {
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:WaterMaterial = new WaterMaterial();
 		
-		/**@private 渲染模式。*/
-		private var _renderMode:int;
-		
 		private var _useVertexDeep:Boolean = false;
+		
 		/**
 		 * 加载标准材质。
 		 * @param url 标准材质地址。
@@ -104,7 +102,7 @@ package laya.d3.core.material {
 			_setTexture(NORMALTEXTURE, value);
 		}
 		
-		public function  set underWaterTexture(value:BaseTexture):void {
+		public function set underWaterTexture(value:BaseTexture):void {
 			_setTexture(UNDERWATERTEXTURE, value);
 		}
 		
@@ -133,7 +131,7 @@ package laya.d3.core.material {
 		}
 		
 		public function set foamTexture(v:BaseTexture):void {
-			_setTexture(FOAMTEXTURE,v);
+			_setTexture(FOAMTEXTURE, v);
 		}
 		
 		/**
@@ -151,7 +149,7 @@ package laya.d3.core.material {
 			_setTexture(DETAILTEXTURE, value);
 		}
 		
-		public function get detailTexture():BaseTexture{
+		public function get detailTexture():BaseTexture {
 			return _getTexture(DETAILTEXTURE);
 		}
 		
@@ -167,31 +165,32 @@ package laya.d3.core.material {
 			return _getNumber(CURTM);
 		}
 		
-		public function  set currentTm(v:Number):void {
+		public function set currentTm(v:Number):void {
 			_setNumber(CURTM, v);
 		}
 		
-		public function get waveInfo():Float32Array{
+		public function get waveInfo():Float32Array {
 			return _getBuffer(WAVEINFO);
 		}
 		
-		public function  set waveInfo(v:Float32Array):void{
+		public function set waveInfo(v:Float32Array):void {
 			_setBuffer(WAVEINFO, v);
 		}
-		public function get waveInfoD():Float32Array{
+		
+		public function get waveInfoD():Float32Array {
 			return _getBuffer(WAVEINFOD);
 		}
 		
-		public function  set waveInfoD(v:Float32Array):void{
+		public function set waveInfoD(v:Float32Array):void {
 			_setBuffer(WAVEINFOD, v);
 		}
 		
-		public function set waveMainDir(deg:Number):void{
-			_setNumber(WAVEMAINDIR,deg*Math.PI/180);
+		public function set waveMainDir(deg:Number):void {
+			_setNumber(WAVEMAINDIR, deg * Math.PI / 180);
 		}
 		
 		public function get waveMainDir():Number {
-			return _getNumber(WAVEMAINDIR);	
+			return _getNumber(WAVEMAINDIR);
 		}
 		
 		public function set deepScale(v:Number):void {
@@ -206,15 +205,15 @@ package laya.d3.core.material {
 			return _getNumber(GEOWAVE_UV_SCALE);
 		}
 		
-		public function  set geoWaveUVScale(v:Number):void {
-			_setNumber(GEOWAVE_UV_SCALE,v);
+		public function set geoWaveUVScale(v:Number):void {
+			_setNumber(GEOWAVE_UV_SCALE, v);
 		}
 		
 		public function set scrsize(v:Float32Array):void {
 			_setBuffer(SCRSIZE, v);
 		}
 		
-		public function get seaColor():Float32Array{
+		public function get seaColor():Float32Array {
 			return _getBuffer(SEA_COLOR);
 		}
 		
@@ -224,12 +223,13 @@ package laya.d3.core.material {
 		
 		public function set useVertexDeep(v:Boolean):void {
 			_useVertexDeep = v;
-			if(v)
+			if (v)
 				_addShaderDefine(SHADERDEFINE_USEVERTEXHEIGHT);
-			else{
-				_removeShaderDefine(SHADERDEFINE_USEVERTEXHEIGHT);	
+			else {
+				_removeShaderDefine(SHADERDEFINE_USEVERTEXHEIGHT);
 			}
 		}
+		
 		public function get useVertexDeep():Boolean {
 			return _useVertexDeep;
 		}
@@ -237,8 +237,9 @@ package laya.d3.core.material {
 		public function get windDir():Number {
 			return 0;
 		}
+		
 		public function set windDir(d:Number):void {
-			
+		
 		}
 		
 		public function get windSpeed():Number {
@@ -246,13 +247,13 @@ package laya.d3.core.material {
 		}
 		
 		public function set windSpeed(s:Number):void {
-			
+		
 		}
 		
 		public function set useFoam(v:Boolean):void {
 			if (v) {
 				_addShaderDefine(SHADERDEFINE_USE_FOAM);
-			}else {
+			} else {
 				_removeShaderDefine(SHADERDEFINE_USE_FOAM);
 			}
 		}
@@ -260,7 +261,7 @@ package laya.d3.core.material {
 		public function set useRefractTexture(v:Boolean):void {
 			if (v) {
 				_addShaderDefine(SHADERDEFINE_USE_REFRACT_TEX);
-			}else {
+			} else {
 				_removeShaderDefine(SHADERDEFINE_USE_REFRACT_TEX);
 			}
 		}
@@ -278,19 +279,10 @@ package laya.d3.core.material {
 			_addDisablePublicShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
 		}
 		
-		/**
-		 * 获取渲染状态。
-		 * @return 渲染状态。
-		 */
-		public function get renderMode():int {
-			return _renderMode;
-		}
-		
 		public function set renderMode(value:int):void {
-			_renderMode = value;
 			switch (value) {
 			case RENDERMODE_OPAQUE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
@@ -298,7 +290,7 @@ package laya.d3.core.material {
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_OPAQUEDOUBLEFACE: 
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
 				cull = CULL_NONE;
 				blend = BLEND_DISABLE;
@@ -309,11 +301,11 @@ package laya.d3.core.material {
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
-				_renderQueue = RenderQueue.OPAQUE;
+				renderQueue = RenderQueue.OPAQUE;
 				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENT: 
-				_renderQueue = RenderQueue.TRANSPARENT;
+				renderQueue = RenderQueue.TRANSPARENT;
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
@@ -324,12 +316,6 @@ package laya.d3.core.material {
 			default: 
 				throw new Error("PBRMaterial:renderMode value error.");
 			}
-		}
-		
-		/**
-		 * @private
-		 */
-		override public function _setMaterialShaderParams(state:RenderState):void {
 		}
 		
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {

@@ -2,9 +2,6 @@ package laya.d3.core {
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
-	import laya.d3.graphics.StaticBatchManager;
-	import laya.d3.math.BoundBox;
-	import laya.d3.math.Vector3;
 	import laya.utils.Stat;
 	
 	/**

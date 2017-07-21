@@ -56,7 +56,6 @@ package laya.d3.terrain {
 			if (ambientColor) terrainMaterial.ambientColor = ambientColor;
 			if (specularColor) terrainMaterial.specularColor = specularColor;
 			terrainMaterial.splatAlphaTexture = Loader.getRes(alphaMapUrl);
-			terrainMaterial.splatAlphaTexture.repeat = false;
 			terrainMaterial.normalTexture = normalMap ? Loader.getRes(normalMap) : null;
 			terrainMaterial.diffuseTexture1 = detailUrl1 ? Loader.getRes(detailUrl1) : null;
 			terrainMaterial.diffuseTexture2 = detailUrl2 ? Loader.getRes(detailUrl2) : null;

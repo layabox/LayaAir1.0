@@ -27,10 +27,10 @@ package {
 	import laya.net.LoaderManager;
 	import laya.net.URL;
 	import laya.renders.Render;
+	import laya.utils.Browser;
 	import laya.utils.Byte;
 	import laya.utils.Handler;
 	import laya.utils.RunDriver;
-	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	
 	/**
@@ -173,6 +173,7 @@ package {
 		 */
 		private static function _getSprite3DHierarchyInnerUrls(node:Object, firstLevelUrls:Array, secondLevelUrls:Array, fourthLelUrls:Array, urlMap:Object, urlVersion:String, hierarchyBasePath:String):void {
 			var i:int, n:int;
+			var customProps:Object;
 			switch (node.type) {
 			case "Scene": //TODO:应该自动序列化类型
 				var lightmaps:Array = node.customProps.lightmaps;
@@ -183,21 +184,49 @@ package {
 				break;
 			case "MeshSprite3D": 
 			case "SkinnedMeshSprite3D": 
-				var meshPath:String = node.instanceParams.loadPath;
-				(meshPath) && (_addHierarchyInnerUrls(firstLevelUrls, urlMap, urlVersion, hierarchyBasePath, meshPath, Mesh));
+				var meshPath:String;
+				if (node.instanceParams) {//兼容代码
+					meshPath = node.instanceParams.loadPath;
+					(meshPath) && (_addHierarchyInnerUrls(firstLevelUrls, urlMap, urlVersion, hierarchyBasePath, meshPath, Mesh));
+				} else {
+					customProps = node.customProps;
+					meshPath = customProps.meshPath;
+					(meshPath) && (_addHierarchyInnerUrls(firstLevelUrls, urlMap, urlVersion, hierarchyBasePath, meshPath, Mesh));
+					var materials:Array = customProps.materials;
+					if (materials)
+						for (i = 0, n = materials.length; i < n; i++) {
+							var mat:Object = materials[i];
+							var clasPaths:Array = mat.type.split('.');
+							var clas:Class = Browser.window;
+							clasPaths.forEach(function(cls:*):void {
+								clas = clas[cls];
+							});
+							if (typeof(clas) == 'function') _addHierarchyInnerUrls(secondLevelUrls, urlMap, urlVersion, hierarchyBasePath, mat.path, clas);
+							else {
+								throw('_getSprite3DHierarchyInnerUrls 错误: ' + mat.type + ' 不是类');
+							}
+						}
+				}
 				break;
 			case "ShuriKenParticle3D": 
-				var customProps:Object = node.customProps;
+				customProps = node.customProps;
 				var parMeshPath:String = customProps.meshPath;
 				(parMeshPath) && (_addHierarchyInnerUrls(firstLevelUrls, urlMap, urlVersion, hierarchyBasePath, parMeshPath, Mesh));
-				var materialPath:String = customProps.materialPath;
-				if (materialPath)
-					_addHierarchyInnerUrls(secondLevelUrls, urlMap, urlVersion, hierarchyBasePath, materialPath, ShurikenParticleMaterial);
-				else//兼容代码
-					_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, customProps.texturePath, Texture2D);
+				
+				var materialData:Object = customProps.material;
+				if (materialData) {
+					_addHierarchyInnerUrls(secondLevelUrls, urlMap, urlVersion, hierarchyBasePath, materialData.path, ShurikenParticleMaterial);
+				} else {//兼容代码
+					var materialPath:String = customProps.materialPath;
+					if (materialPath)//兼容代码
+						_addHierarchyInnerUrls(secondLevelUrls, urlMap, urlVersion, hierarchyBasePath, materialPath, ShurikenParticleMaterial);
+					else//兼容代码
+						_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, customProps.texturePath, Texture2D);
+				}
+				
 				break;
 			case "Terrain": 
-				_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, node.instanceParams.loadPath, TerrainRes);
+				_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, node.customProps.dataPath, TerrainRes);
 				break;
 			}
 			
@@ -261,8 +290,8 @@ package {
 		private static function _onHierarchyInnerForthLevResouLoaded(loader:Loader, processHandler:Handler, lhData:Object, urlMap:Object, firstLevUrls:Array, secondLevUrls:Array, processOffset:Number, processCeil:Number):void {
 			(processHandler) && (processHandler.recover());
 			if (secondLevUrls.length > 0) {
-				var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, processOffset, processCeil], false);
-				_innerSecondLevelLoaderManager.create(secondLevUrls, Handler.create(null, _onHierarchyInnerSecondLevResouLoaded, [loader, processHandler, lhData, urlMap, firstLevUrls, processOffset + processCeil * secondLevUrls.length, processCeil]), processHandler);
+				var handler:Handler = Handler.create(null, _onProcessChange, [loader, processOffset, processCeil], false);
+				_innerSecondLevelLoaderManager.create(secondLevUrls, Handler.create(null, _onHierarchyInnerSecondLevResouLoaded, [loader, handler, lhData, urlMap, firstLevUrls, processOffset + processCeil * secondLevUrls.length, processCeil]), processHandler);
 				
 			} else {
 				_onHierarchyInnerSecondLevResouLoaded(loader, null, lhData, urlMap, firstLevUrls, processOffset, processCeil);
@@ -275,11 +304,11 @@ package {
 		private static function _onHierarchyInnerSecondLevResouLoaded(loader:Loader, processHandler:Handler, lhData:Object, urlMap:Object, firstLevUrls:Array, processOffset:Number, processCeil:Number):void {
 			(processHandler) && (processHandler.recover());
 			if (firstLevUrls.length > 0) {
-				var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, processOffset, processCeil], false);
-				_innerFirstLevelLoaderManager.create(firstLevUrls, Handler.create(null, _onHierarchyInnerFirstLevResouLoaded, [loader, processHandler, lhData, urlMap, /*processOffset + processCeil * firstLevUrls.length, processCeil*/]), processHandler);
+				var handler:Handler = Handler.create(null, _onProcessChange, [loader, processOffset, processCeil], false);
+				_innerFirstLevelLoaderManager.create(firstLevUrls, Handler.create(null, _onHierarchyInnerFirstLevResouLoaded, [loader, handler, lhData, urlMap, /*processOffset + processCeil * firstLevUrls.length, processCeil*/]), processHandler);
 				
 			} else {
-				_onHierarchyInnerFirstLevResouLoaded(loader, processHandler, lhData, urlMap);
+				_onHierarchyInnerFirstLevResouLoaded(loader, null, lhData, urlMap);
 			}
 		}
 		
@@ -322,26 +351,27 @@ package {
 			
 			var detailTextures:Array = ltData.detailTexture;
 			for (i = 0, n = detailTextures.length; i < n; i++) {
-				textureURLs.push(detailTextures[i].diffuse);
+				textureURLs.push({url:detailTextures[i].diffuse});
 			}
 			
 			var normalMaps:Array = ltData.normalMap;
 			for (i = 0, n = normalMaps.length; i < n; i++) {
-				textureURLs.push(normalMaps[i]);
+				textureURLs.push({url:normalMaps[i]});
 			}
 			
 			var alphaMaps:Array = ltData.alphaMap;
 			for (i = 0, n = alphaMaps.length; i < n; i++) {
-				textureURLs.push(alphaMaps[i]);
+				textureURLs.push( {url:alphaMaps[i], params:[false,false] } );
 			}
 			
 			for (i = 0, n = textureURLs.length; i < n; i++) {
-				var subUrl:String = textureURLs[i];
+				var subUrl:String = textureURLs[i].url;
 				formatUrl = URL.formatURL(subUrl, terrainBasePath);
 				(urlVersion) && (formatUrl = formatUrl + urlVersion);
-				textureURLs[i] = formatUrl;
+				textureURLs[i].url = formatUrl;
 				urlMap[subUrl] = formatUrl;
 			}
+			
 			
 			var texsUrlCount:int = textureURLs.length;
 			var totalProcessCount:int = texsUrlCount + 2;//heightMap始终为1个
@@ -405,6 +435,7 @@ package {
 			var version:String = _readData.readUTFString();
 			switch (version) {
 			case "LAYAMODEL:02": 
+			case "LAYAMODEL:03": 
 				var dataOffset:uint = _readData.getUint32();
 				_readData.pos = _readData.pos + 4;//跳过数据信息区
 				
@@ -452,7 +483,7 @@ package {
 				var lmatWeight:Number = 1 / totalProcessCount;
 				_onProcessChange(loader, 0, lmatWeight, 1.0);
 				var processHandler:Handler = Handler.create(null, _onProcessChange, [loader, lmatWeight, urlCount / totalProcessCount], false);
-				_innerSecondLevelLoaderManager.create(urls, Handler.create(null, _onMeshMateialLoaded, [loader, processHandler, lmData, urlMap]), processHandler/*, StandardMaterial*/);
+				_innerSecondLevelLoaderManager.create(urls, Handler.create(null, _onMeshMateialLoaded, [loader, processHandler, lmData, urlMap]), processHandler);
 			} else {
 				loader.endLoad([lmData, urlMap]);
 			}

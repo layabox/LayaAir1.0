@@ -1,13 +1,11 @@
 package laya.d3.core {
-	import laya.d3.core.material.StandardMaterial;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexElementFormat;
 	import laya.d3.graphics.VertexElementUsage;
-	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderCompile3D;
@@ -15,9 +13,6 @@ package laya.d3.core {
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.IndexBuffer2D;
-	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
 	 * @private
@@ -56,7 +51,7 @@ package laya.d3.core {
 		private var _hasBegun:Boolean;
 		private var _numVertsPerPrimitive:uint;
 		
-		private var _renderState:RenderState;
+		private var _camera:BaseCamera;
 		
 		private var _sharderNameID:int;
 		private var _shader:Shader3D;
@@ -67,13 +62,13 @@ package laya.d3.core {
 		
 		public function PhasorSpriter3D() {
 			super();
-			_vb = VertexBuffer3D.create(_vertexDeclaration,_defaultBufferSize/_floatSizePerVer, WebGLContext.DYNAMIC_DRAW);
+			_vb = VertexBuffer3D.create(_vertexDeclaration, _defaultBufferSize / _floatSizePerVer, WebGLContext.DYNAMIC_DRAW);
 			_ib = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, _defaultBufferSize, WebGLContext.DYNAMIC_DRAW);
 			_sharderNameID = Shader3D.nameKey.getID("LINE");
 			_shaderCompile = ShaderCompile3D._preCompileShader[_sharderNameID];
 		}
 		
-		public function line(startX:Number, startY:Number, startZ:Number, startR:Number, startG:Number, startB:Number, startA:Number, endX:Number, endY:Number, endZ:Number, endR:Number, endG:Number, endB:Number, endA:Number):PhasorSpriter3D {
+		public function line(startPosition:Vector3, startColor:Vector4, endPosition:Vector3, endColor:Vector4):PhasorSpriter3D {
 			if (!_hasBegun || _primitiveType !== WebGLContext.LINES)
 				drawLinesException();
 			
@@ -81,8 +76,8 @@ package laya.d3.core {
 				flush();
 			
 			_tempUint0 = _posInVBData / _floatSizePerVer;//_tempUint0为curVBPosVertex
-			addVertex(startX, startY, startZ, startR, startG, startB, startA); // start
-			addVertex(endX, endY, endZ, endR, endG, endB, endA); // end
+			addVertex(startPosition.x, startPosition.y, startPosition.z, startColor.x, startColor.y, startColor.z, startColor.w); // start
+			addVertex(endPosition.x, endPosition.y, endPosition.z, endColor.x, endColor.y, endColor.z, endColor.w); // end
 			addIndexes(_tempUint0, _tempUint0 + 1);
 			
 			return this;
@@ -328,7 +323,7 @@ package laya.d3.core {
 			return this;
 		}
 		
-		public function begin(primitive:Number, state:RenderState):PhasorSpriter3D {
+		public function begin(primitive:Number, camera:BaseCamera):PhasorSpriter3D {
 			if (_hasBegun)
 				beginException0();
 			
@@ -336,7 +331,7 @@ package laya.d3.core {
 				beginException1();
 			
 			_primitiveType = primitive;
-			_renderState = state;
+			_camera = camera;
 			
 			_hasBegun = true;
 			
@@ -355,18 +350,17 @@ package laya.d3.core {
 		private function flush():void {
 			if (_posInVBData === 0)
 				return;
-
+			
 			_ib.setData(_ibData);
 			_vb.setData(_vbData);
 			_vb._bind();
 			_ib._bind();
 			
-			_shader = _getShader(_renderState);
+			_shader = _shaderCompile.withCompile(0, 0, 0);
 			_shader.bind();
 			
 			_shader.uploadAttributes(_vertexDeclaration.shaderValues.data, null);
-			
-			_spriteShaderValue.setValue(Sprite3D.MVPMATRIX, _renderState._projectionViewMatrix.elements);
+			_spriteShaderValue.setValue(Sprite3D.MVPMATRIX, (_camera as Camera).projectionViewMatrix.elements);
 			_shader.uploadSpriteUniforms(_spriteShaderValue.data);
 			
 			Stat.drawCall++;
@@ -374,11 +368,6 @@ package laya.d3.core {
 			
 			_posInIBData = 0;
 			_posInVBData = 0;
-		}
-		
-		protected function _getShader(state:RenderState):Shader3D {
-			var defineValue:int = state.scene._shaderDefineValue;
-			return _shaderCompile.withCompile(_sharderNameID, defineValue,0,0);
 		}
 		
 		private function addVertexIndexException():void {

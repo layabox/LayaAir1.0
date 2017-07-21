@@ -161,6 +161,8 @@ package laya.media.webaudio {
 			this.isStopped = true;
 			SoundManager.removeChannel(this);
 			completeHandler = null;
+			if(SoundManager.autoReleaseSound)
+			Laya.timer.once(5000, null, SoundManager.disposeSoundIfNotUsed, [url], false);
 		}
 		
 		override public function pause():void 
@@ -174,6 +176,8 @@ package laya.media.webaudio {
 				gain.disconnect();
 			this.isStopped = true;
 			SoundManager.removeChannel(this);
+			if(SoundManager.autoReleaseSound)
+			Laya.timer.once(5000, null, SoundManager.disposeSoundIfNotUsed, [url], false);
 		}
 		
 		override public function resume():void 

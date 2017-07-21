@@ -1,6 +1,7 @@
 package laya.renders {
 	import laya.resource.HTMLCanvas;
 	import laya.utils.Browser;
+	import laya.utils.Stat;
 	
 	/**
 	 * @private
@@ -41,11 +42,6 @@ package laya.renders {
 			return true;
 		}
 		
-		/**
-		 * 初始化引擎。
-		 * @param	width 游戏窗口宽度。
-		 * @param	height	游戏窗口高度。
-		 */
 		public function Render(width:Number, height:Number) {
 			var style:* = _mainCanvas.source.style;
 			style.position = 'absolute';
@@ -60,16 +56,15 @@ package laya.renders {
 			Browser.container.appendChild(_mainCanvas.source);
 			_context = new RenderContext(width, height, isWebGl ? null : _mainCanvas);
 			_context.ctx.setIsMainContext();
-			
-			/*[IF-SCRIPT-BEGIN]
-			   Browser.window.requestAnimationFrame(loop);
-			   function loop():void {
-			   Laya.stage._loop();
-			   Browser.window.requestAnimationFrame(loop);
-			   }
-			   Laya.stage.on("visibilitychange", this, _onVisibilitychange);
-			   [IF-SCRIPT-END]*/
-			/*[IF-FLASH]*/
+		   /*[IF-SCRIPT-BEGIN]
+		   Browser.window.requestAnimationFrame(loop);
+		   function loop():void {
+		   Laya.stage._loop();
+		   Browser.window.requestAnimationFrame(loop);
+		   }
+		   [IF-SCRIPT-END]*/	
+			Laya.stage.on("visibilitychange", this, _onVisibilitychange);
+            /*[IF-FLASH]*/
 			Browser.window.stageIn.addEventListener("enterFrame", _enterFrame);
 		}
 		/**@private */

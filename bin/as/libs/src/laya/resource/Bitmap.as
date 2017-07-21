@@ -50,6 +50,7 @@ package laya.resource {
 		 * 彻底清理资源。
 		 */
 		override public function dispose():void {
+			if (disposed) return;
 			_resourceManager.removeResource(this);
 			super.dispose();
 		}

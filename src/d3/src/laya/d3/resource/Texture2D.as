@@ -41,8 +41,9 @@ package laya.d3.resource {
 		/**
 		 * 创建一个 <code>Texture2D</code> 实例。
 		 */
-		public function Texture2D(canRead:Boolean = false) {
+		public function Texture2D(canRead:Boolean = false, reapeat:Boolean = true) {
 			super();
+			_repeat = reapeat;
 			_canRead = canRead;
 		}
 		
@@ -165,6 +166,7 @@ package laya.d3.resource {
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			if (params) {
 				_canRead = params[0];
+				_repeat=params[1];
 			}
 			
 			_src = url;

@@ -32,9 +32,9 @@ package laya.utils {
 		public static var onIPhone:Boolean;
 		/** 表示是否在 ipad 设备。*/
 		public static var onIPad:Boolean;
-		/** 表示是否在 andriod设备。*/
+		/** 表示是否在 Android设备。*/
 		public static var onAndriod:Boolean;
-		/** 表示是否在 andriod设备。*/
+		/** 表示是否在 Android设备。*/
 		public static var onAndroid:Boolean;
 		/** 表示是否在 Windows Phone 设备。*/
 		public static var onWP:Boolean;

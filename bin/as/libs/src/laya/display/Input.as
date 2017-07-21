@@ -353,7 +353,7 @@ package laya.display {
 			// PC同步输入框外观。
 			input.setColor(_originColor);
 			input.setFontSize(fontSize);
-			input.setFontFace(font);
+			input.setFontFace(Browser.onIPhone ? (Text._fontFamilyMap[font] || font) : font);
 			if (Render.isConchApp) {
 				input.setMultiAble && input.setMultiAble(_multiline);
 			}

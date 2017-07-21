@@ -93,7 +93,7 @@ package laya.utils {
 		
 		/** @private */
 		private function _create(target:*, props:Object, duration:Number, ease:Function, offset:Number, isTo:Boolean):TimeLine {
-			var tTweenData:tweenData = new tweenData();
+			var tTweenData:tweenData = Pool.getItemByClass("tweenData",tweenData);
 			tTweenData.isTo = isTo;
 			tTweenData.type = 0;
 			tTweenData.target = target;
@@ -115,7 +115,7 @@ package laya.utils {
 		 * @param	offset	标签相对于上个动画的偏移时间(单位：毫秒)。
 		 */
 		public function addLabel(label:String, offset:Number):TimeLine {
-			var tTweenData:tweenData = new tweenData();
+			var tTweenData:tweenData = Pool.getItemByClass("tweenData",tweenData);
 			tTweenData.type = 1;
 			tTweenData.data = label;
 			tTweenData.endTime = tTweenData.startTime = _startTime + offset;
@@ -197,8 +197,10 @@ package laya.utils {
 						_index = Math.max(_index, i + 1);
 						//把经历过的属性加入到对象中
 						var props:* = tTweenData.data;
-						for (var tP:* in props) {
-							if (tTweenData.isTo) {
+						if (tTweenData.isTo)
+						{
+							for (var tP:* in props) 
+							{
 								tTweenData.target[tP] = props[tP];
 							}
 						}
@@ -343,7 +345,7 @@ package laya.utils {
 					if (tTweenData.type == 0) {
 						_gidIndex++;
 						tTween = Pool.getItemByClass("tween", Tween);
-						tTween._create(tTweenData.target, tTweenData.data, tTweenData.duration, tTweenData.ease, new Handler(this, _animComplete, [_gidIndex]), 0, false, tTweenData.isTo, true, false);
+						tTween._create(tTweenData.target, tTweenData.data, tTweenData.duration, tTweenData.ease, Handler.create(this, _animComplete, [_gidIndex]), 0, false, tTweenData.isTo, true, false);
 						tTween.setStartTime(tCurrTime);
 						tTween.gid = _gidIndex;
 						_tweenDic[_gidIndex] = tTween;
@@ -416,6 +418,16 @@ package laya.utils {
 				delete _firstTweenDic[p];
 			}
 			_endTweenDataList = null;
+			if (_tweenDataList && _tweenDataList.length)
+			{
+				var i:int, len:int;
+				len = _tweenDataList.length;
+				for (i = 0; i < len; i++)
+				{
+					if(_tweenDataList[i])
+					_tweenDataList[i].destroy();
+				}
+			}
 			_tweenDataList.length = 0;
 			_currTime = 0;
 			_lastTime = 0;
@@ -438,6 +450,7 @@ package laya.utils {
 		}
 	}
 }
+import laya.utils.Pool;
 
 class tweenData {
 	public var type:int = 0;//0代表TWEEN,1代表标签
@@ -448,4 +461,13 @@ class tweenData {
 	public var duration:Number;
 	public var ease:Function;
 	public var data:*;
+	public function destroy():void
+	{
+		target = null;
+		ease = null;
+		data = null;
+		isTo = true;
+		type = 0;
+		Pool.recover("tweenData", this);
+	}
 }

@@ -31,12 +31,12 @@ package laya.d3.math {
 		private static var _tempM1:Matrix4x4 = new Matrix4x4();
 		
 		/** @private */
-		private static var _corners:Vector.<Vector3> = new Vector.<Vector3>();
+		private static var _corners:Array = [];
 		
 		/** @private */
-		private static var _rows1:Vector.<Vector3> = new Vector.<Vector3>();
+		private static var _rows1:Array = [];
 		/** @private */
-		private static var _rows2:Vector.<Vector3> = new Vector.<Vector3>();
+		private static var _rows2:Array = [];
 		
 		/** @private */
 		private static var _ray:Ray = new Ray(new Vector3(), new Vector3());
@@ -103,7 +103,7 @@ package laya.d3.math {
 		 * 获取OBB包围盒的8个顶点。
 		 * @param	corners 返回顶点的输出队列。
 		 */
-		public function getCorners(corners:Vector.<Vector3>):void {
+		public function getCorners(corners:Array):void {
 			
 			var extentsE:Float32Array = extents.elements;
 			
@@ -288,7 +288,7 @@ package laya.d3.math {
 		 * @param	point 点
 		 * @return  返回位置关系
 		 */
-		public function containsPoints(points:Vector.<Vector3>):int {
+		public function containsPoints(points:Array):int {
 			
 			var extentse:Float32Array = extents.elements;
 			var extentsex:Number = extentse[0];
@@ -381,7 +381,7 @@ package laya.d3.math {
 			return ContainmentType.Intersects;
 		}
 		
-		private static function _getRows(mat:Matrix4x4, out:Vector.<Vector3>):void {
+		private static function _getRows(mat:Matrix4x4, out:Array):void {
 			
 			out.length = 3;
 			
@@ -681,7 +681,7 @@ package laya.d3.math {
 			return intersects;
 		}
 		
-		private function _getLocalCorners(corners:Vector.<Vector3>):void {
+		private function _getLocalCorners(corners:Array):void {
 			
 			corners.length = 8;
 			

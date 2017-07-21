@@ -259,7 +259,7 @@ package laya.d3.math {
 			e[12] = 0;
 			e[13] = 0;
 			e[14] = 0;
-			out[15] = 1;
+			e[15] = 1;
 		}
 		
 		/**
@@ -541,6 +541,29 @@ package laya.d3.math {
 			((re[8] * m31 + re[9] * m32 + re[10] * m33)/*Vector3.dot(at, Backward)*/ < 0.0) && (se[2] = -sZ);
 			
 			return true;
+		}
+		
+		/**
+		 * 分解旋转矩阵的旋转为YawPitchRoll欧拉角。
+		 * @param	out float yaw
+		 * @param	out float pitch
+		 * @param	out float roll
+		 * @return
+		 */
+		public function decomposeYawPitchRoll(yawPitchRoll:Vector3):void {//TODO:经飞仙测试,好像有BUG。
+			var yawPitchRollE:Float32Array = yawPitchRoll.elements;
+			var pitch:Number = Math.asin(-elements[9]);
+			yawPitchRollE[1] = pitch;
+			// Hardcoded constant - burn him, he's a witch
+			// double threshold = 0.001; 
+			var test:Number = Math.cos(pitch);
+			if (test > MathUtils3D.zeroTolerance) {
+				yawPitchRollE[2] = Math.atan2(elements[1], elements[5]);
+				yawPitchRollE[0] = Math.atan2(elements[8], elements[10]);
+			} else {
+				yawPitchRollE[2] = Math.atan2(-elements[4], elements[0]);
+				yawPitchRollE[0] = 0.0;
+			}
 		}
 		
 		/**归一化矩阵 */

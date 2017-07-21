@@ -1,7 +1,7 @@
 {
 	"type":"Sprite3D",
 	"props":{
-		"name":"temp"
+		"name":"LayaMonkey"
 	},
 	"customProps":{
 		"translate":[
@@ -16,39 +16,44 @@
 			-1
 		],
 		"scale":[
-			1,
-			1,
-			1
+			0.5,
+			0.5,
+			0.5
 		]
 	},
 	"child":[
-{
-  "type": "MeshSprite3D",
-    "instanceParams":{
-	"loadPath":"plane-Plane001.lm"
-	},
-  "props": {
-    "isStatic": false,
-    "name": "Plane001"
-  },
-  "customProps": {
-    "translate": [
-      0.0,
-      0.0,
-      0.0
-    ],
-    "rotation": [
-      -0.707106769,
-      0.0,
-      0.0,
-      0.707106769
-    ],
-    "scale": [
-      100.0,
-      100.0,
-      100.0
-    ]
-  },
-  "child": []
-}]
+		{
+			"type":"MeshSprite3D",
+			"props":{
+				"isStatic":false,
+				"name":"Plane"
+			},
+			"customProps":{
+				"translate":[
+					0,
+					0,
+					0
+				],
+				"rotation":[
+					0,
+					0,
+					0,
+					-1
+				],
+				"scale":[
+					1,
+					1,
+					1
+				],
+				"meshPath":"Library/unity_default_resources-Plane.lm",
+				"materials":[
+					{
+						"type":"Laya.StandardMaterial",
+						"path":"Resources/unity_builtin_extra.lmat"
+					}
+				]
+			},
+			"child":[]
+		}
+	]
 }

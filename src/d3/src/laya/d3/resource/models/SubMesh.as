@@ -1,5 +1,4 @@
 package laya.d3.resource.models {
-	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;

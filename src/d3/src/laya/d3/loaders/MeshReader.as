@@ -23,7 +23,10 @@ package laya.d3.loaders {
 				_readVersion01(readData, version, mesh, materials, subMeshes, materialMap);
 				break;
 			case "LAYAMODEL:02": 
-				_readVersion02(readData, version, mesh, materials, subMeshes, materialMap);
+				LoadModelV02.parse(readData, version, mesh, materials, subMeshes, materialMap);
+				break;
+			case "LAYAMODEL:03": 
+				LoadModelV03.parse(readData, version, mesh, subMeshes, materialMap);
 				break;
 			default: 
 				throw new Error("MeshReader: unknown mesh version.");
@@ -33,10 +36,6 @@ package laya.d3.loaders {
 		
 		private static function _readVersion01(readData:Byte, version:String, mesh:Mesh, materials:Vector.<BaseMaterial>, subMeshes:Vector.<SubMesh>, materialMap:Object):void {
 			new LoadModelV01(readData, version, mesh, materials, subMeshes, materialMap);
-		}
-		
-		private static function _readVersion02(readData:Byte, version:String, mesh:Mesh, materials:Vector.<BaseMaterial>, subMeshes:Vector.<SubMesh>, materialMap:Object):void {
-			LoadModelV02.parse(readData, version, mesh, materials, subMeshes, materialMap);
 		}
 	}
 }

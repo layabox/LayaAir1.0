@@ -2,8 +2,9 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Browser=laya.utils.Browser,Handler=laya.utils.Handler,Loader=laya.net.Loader,Point=laya.maths.Point;
-	var Rectangle=laya.maths.Rectangle,Render=laya.renders.Render,Sprite=laya.display.Sprite,Texture=laya.resource.Texture;
+	var Browser=laya.utils.Browser,HTMLCanvas=laya.resource.HTMLCanvas,Handler=laya.utils.Handler,Loader=laya.net.Loader;
+	var Point=laya.maths.Point,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render,RenderContext=laya.renders.RenderContext;
+	var Sprite=laya.display.Sprite,Texture=laya.resource.Texture;
 	/**
 	*tiledMap是整个地图的核心
 	*地图以层级来划分地图（例如：地表层，植被层，建筑层）
@@ -63,16 +64,20 @@
 			this._resPath=null;
 			this._pathArray=null;
 			this._limitRange=false;
+			this._fastDirty=true;
 			this.autoCache=true;
 			this.autoCacheType="normal";
 			this.enableMergeLayer=false;
 			this.removeCoveredTile=false;
 			this.showGridTextureCount=false;
 			this.antiCrack=true;
+			this.cacheAllAfterInit=false;
 			this._rect=new Rectangle();
 			this._paddingRect=new Rectangle();
 			this._mapRect=new GRect();
+			this._mapLogicRect=new GRect();
 			this._mapLastRect=new GRect();
+			this._mapSprite=new Sprite();
 		}
 
 		__class(TiledMap,'laya.map.TiledMap');
@@ -128,8 +133,6 @@
 		*@param e JSON数据
 		*/
 		__proto.onJsonComplete=function(e){
-			this._mapSprite=new Sprite();
-			Laya.stage.addChild(this._mapSprite);
 			var tJsonData=this._jsonData=e;
 			this._properties=tJsonData.properties;
 			this._orientation=tJsonData.orientation;
@@ -360,7 +363,11 @@
 			if (this.removeCoveredTile){
 				this.adptTiledMapData();
 			}
+			if (this.cacheAllAfterInit){
+				this.cacheAllGrid();
+			}
 			this.moveViewPort(this._rect.x,this._rect.y);
+			Laya.stage.addChild(this.mapSprite());
 			if (this._completeHandler !=null){
 				this._completeHandler.run();
 			}
@@ -495,6 +502,7 @@
 		__proto.setViewPortPivotByScale=function(scaleX,scaleY){
 			this._pivotScaleX=scaleX;
 			this._pivotScaleY=scaleY;
+			this._fastDirty=true;
 		}
 
 		/**
@@ -505,9 +513,18 @@
 		__proto.moveViewPort=function(moveX,moveY){
 			this._x=-moveX;
 			this._y=-moveY;
-			this._rect.x=moveX;
-			this._rect.y=moveY;
-			this.updateViewPort();
+			if (this._fastDirty){
+				this._rect.x=moveX;
+				this._rect.y=moveY;
+				this.updateViewPort();
+				}else{
+				var dx=NaN,dy=NaN;
+				dx=moveX-this._rect.x;
+				dy=moveY-this._rect.y;
+				this._rect.x=moveX;
+				this._rect.y=moveY;
+				this.updateViewPortFast(dx,dy);
+			}
 		}
 
 		/**
@@ -519,6 +536,11 @@
 		*/
 		__proto.changeViewPort=function(moveX,moveY,width,height){
 			if (moveX==this._rect.x && moveY==this._rect.y && width==this._rect.width && height==this._rect.height)return;
+			if (width==this._rect.width && height==this._rect.height){
+				this.moveViewPort(moveX,moveY);
+				return;
+			}
+			this._fastDirty=true;
 			this._x=-moveX;
 			this._y=-moveY;
 			this._rect.x=moveX;
@@ -552,20 +574,71 @@
 		}
 
 		/**
+		*快速更新视口 ,只有在视口大小和各种缩放信息没有改变时才可以使用这个函数更新
+		*@param dx 视口偏移x
+		*@param dy 视口偏移y
+		*/
+		__proto.updateViewPortFast=function(dx,dy){
+			this._centerX+=dx;
+			this._centerY+=dy;
+			this._viewPortX+=dx;
+			this._viewPortY+=dy;
+			var posChanged=false;
+			var dyG=dy / this._gridHeight;
+			var dxG=dx / this._gridWidth;
+			this._mapLogicRect.top+=dyG;
+			this._mapLogicRect.bottom+=dyG;
+			this._mapLogicRect.left+=dxG;
+			this._mapLogicRect.right+=dxG;
+			this._mapRect.top=0|this._mapLogicRect.top;
+			this._mapRect.bottom=0|this._mapLogicRect.bottom;
+			this._mapRect.left=0|this._mapLogicRect.left;
+			this._mapRect.right=0|this._mapLogicRect.right;
+			if (this._mapRect.top !=this._mapLastRect.top || this._mapRect.bottom !=this._mapLastRect.bottom || this._mapRect.left !=this._mapLastRect.left || this._mapRect.right !=this._mapLastRect.right){
+				this.clipViewPort();
+				this._mapLastRect.top=this._mapRect.top;
+				this._mapLastRect.bottom=this._mapRect.bottom;
+				this._mapLastRect.left=this._mapRect.left;
+				this._mapLastRect.right=this._mapRect.right;
+				posChanged=true;
+			};posChanged=posChanged|| (dx !=0 || dy !=0);
+			if (!posChanged)return;
+			this.updateMapLayersPos();
+		}
+
+		/**
+		*刷新地图层坐标
+		*/
+		__proto.updateMapLayersPos=function(){
+			var tMapLayer;
+			var len=this._renderLayerArray.length;
+			for (var i=0;i < len;i++){
+				tMapLayer=this._renderLayerArray[i];
+				if (tMapLayer._gridSpriteArray.length > 0){
+					tMapLayer.updateAloneObject();
+					tMapLayer.pos(-this._viewPortX,-this._viewPortY);
+				}
+			}
+		}
+
+		/**
 		*刷新视口
 		*/
 		__proto.updateViewPort=function(){
-			this._centerX=this._rect.x+this._rect.width *this._pivotScaleX;
-			this._centerY=this._rect.y+this._rect.height *this._pivotScaleY;
+			this._fastDirty=false;
+			var dw=this._rect.width *this._pivotScaleX;
+			var dh=this._rect.height *this._pivotScaleY;
+			this._centerX=this._rect.x+dw;
+			this._centerY=this._rect.y+dh;
 			var posChanged=false;
 			var preValue=this._viewPortX;
-			this._viewPortX=this._centerX-this._rect.width *this._pivotScaleX / this._scale;
+			this._viewPortX=this._centerX-dw / this._scale;
 			if (preValue !=this._viewPortX){
 				posChanged=true;
 				}else {
 				preValue=this._viewPortY;
 			}
-			this._viewPortY=this._centerY-this._rect.height *this._pivotScaleY / this._scale;
+			this._viewPortY=this._centerY-dh/ this._scale;
 			if (!posChanged && preValue !=this._viewPortY){
 				posChanged=true;
 			}
@@ -586,10 +659,14 @@
 				}
 			};
 			var tPaddingRect=this._paddingRect;
-			this._mapRect.top=Math.floor((this._viewPortY-tPaddingRect.y)/ this._gridHeight);
-			this._mapRect.bottom=Math.floor((this._viewPortY+this._viewPortHeight+tPaddingRect.height+tPaddingRect.y)/ this._gridHeight);
-			this._mapRect.left=Math.floor((this._viewPortX-tPaddingRect.x)/ this._gridWidth);
-			this._mapRect.right=Math.floor((this._viewPortX+this._viewPortWidth+tPaddingRect.width+tPaddingRect.x)/ this._gridWidth);
+			this._mapLogicRect.top=(this._viewPortY-tPaddingRect.y)/ this._gridHeight;
+			this._mapLogicRect.bottom=(this._viewPortY+this._viewPortHeight+tPaddingRect.height+tPaddingRect.y)/ this._gridHeight;
+			this._mapLogicRect.left=(this._viewPortX-tPaddingRect.x)/ this._gridWidth;
+			this._mapLogicRect.right=(this._viewPortX+this._viewPortWidth+tPaddingRect.width+tPaddingRect.x)/ this._gridWidth;
+			this._mapRect.top=0|this._mapLogicRect.top;
+			this._mapRect.bottom=0|this._mapLogicRect.bottom;
+			this._mapRect.left=0|this._mapLogicRect.left;
+			this._mapRect.right=0|this._mapLogicRect.right;
 			if (this._mapRect.top !=this._mapLastRect.top || this._mapRect.bottom !=this._mapLastRect.bottom || this._mapRect.left !=this._mapLastRect.left || this._mapRect.right !=this._mapLastRect.right){
 				this.clipViewPort();
 				this._mapLastRect.top=this._mapRect.top;
@@ -599,13 +676,7 @@
 				posChanged=true;
 			}
 			if (!posChanged)return;
-			var tMapLayer;
-			var len=this._renderLayerArray.length;
-			for (var i=0;i < len;i++){
-				tMapLayer=this._renderLayerArray[i];
-				if(tMapLayer._gridSpriteArray.length>0)
-					tMapLayer.updateGridPos();
-			}
+			this.updateMapLayersPos();
 		}
 
 		/**
@@ -709,6 +780,58 @@
 			if (gridX < 0 || gridX >=this._gridW || gridY < 0 || gridY >=this._gridH){
 				return;
 			};
+			var i=0,j=0;
+			var tGridSprite;
+			var tTempArray=this._gridArray[gridY][gridX];
+			if (tTempArray==null){
+				tTempArray=this.getGridArray(gridX,gridY);
+			}
+			else {
+				for (i=0;i < tTempArray.length && i < this._layerArray.length;i++){
+					var tLayerSprite=this._layerArray[i];
+					if (tLayerSprite && tTempArray[i]){
+						tGridSprite=tTempArray[i];
+						if (tGridSprite.visible==false && tGridSprite.drawImageNum > 0){
+							tGridSprite.show();
+						}
+					}
+				}
+			}
+		}
+
+		__proto.cacheAllGrid=function(){
+			var i=0,j=0;
+			var tempArr;
+			for (i=0;i < this._gridW;i++){
+				for (j=0;j < this._gridH;j++){
+					tempArr=this.getGridArray(i,j);
+					this.cacheGridsArray(tempArr);
+				}
+			}
+		}
+
+		__proto.cacheGridsArray=function(arr){
+			var canvas;
+			if (!TiledMap._tempContext){
+				TiledMap._tempContext=new RenderContext(1,1,HTMLCanvas.create(/*laya.resource.HTMLCanvas.TYPEAUTO*/"AUTO"));
+			}
+			canvas=TiledMap._tempContext.canvas;
+			canvas.context.asBitmap=false;
+			var i=0,len=0;
+			len=arr.length;
+			var tGrid;
+			for (i=0;i < len;i++){
+				tGrid=arr[i];
+				canvas.clear();
+				canvas.size(1,1);
+				tGrid.render(TiledMap._tempContext,0,0);
+				tGrid.hide();
+			}
+			canvas.clear();
+			canvas.size(1,1);
+		}
+
+		__proto.getGridArray=function(gridX,gridY){
 			var i=0,j=0;
 			var tGridSprite;
 			var tTempArray=this._gridArray[gridY][gridX];
@@ -877,6 +1000,8 @@
 					if (!this.enableMergeLayer){
 						if (tGridSprite.drawImageNum > 0){
 							tLayer.addChild(tGridSprite);
+							tGridSprite.visible=false;
+							tGridSprite.show();
 						}
 						if (this._showGridKey){
 							tGridSprite.graphics.drawRect(0,0,tGridWidth,tGridHeight,null,tColorStr);
@@ -884,6 +1009,8 @@
 						}else{
 						if (tTGridSprite && tTGridSprite.drawImageNum > 0&&tDrawMapLayer){
 							tDrawMapLayer.addChild(tTGridSprite);
+							tTGridSprite.visible=false;
+							tTGridSprite.show();
 						}
 					}
 				}
@@ -893,17 +1020,7 @@
 					}
 				}
 			}
-			else {
-				for (i=0;i < tTempArray.length && i < this._layerArray.length;i++){
-					var tLayerSprite=this._layerArray[i];
-					if (tLayerSprite && tTempArray[i]){
-						tGridSprite=tTempArray[i];
-						if (tGridSprite.visible==false && tGridSprite.drawImageNum > 0){
-							tGridSprite.show();
-						}
-					}
-				}
-			}
+			return tTempArray;
 		}
 
 		/**
@@ -1212,6 +1329,7 @@
 		TiledMap.RENDERORDER_RIGHTUP="right-up";
 		TiledMap.RENDERORDER_LEFTDOWN="left-down";
 		TiledMap.RENDERORDER_LEFTUP="left-up";
+		TiledMap._tempContext=null
 		TiledMap.__init$=function(){
 			//class GRect
 			GRect=(function(){
@@ -1455,6 +1573,25 @@
 			this.isAloneObject=objectKey;
 		}
 
+		/**@private */
+		__proto._setDisplay=function(value){
+			if (!value){
+				var cc=this._$P.cacheCanvas;
+				if (cc && cc.ctx){
+					cc.ctx.canvas.destroy();
+					cc.ctx=null;
+				};
+				var fc=this._$P._filterCache;
+				if (fc){
+					fc.destroy();
+					fc.recycle();
+					this._set$P('_filterCache',null);
+				}
+				this._$P._isHaveGlowFilter && this._set$P('_isHaveGlowFilter',false);
+			}
+			_super.prototype._setDisplay.call(this,value);
+		}
+
 		/**
 		*把一个动画对象绑定到当前GridSprite
 		*@param sprite 动画的显示对象
@@ -1472,6 +1609,16 @@
 		__proto.show=function(){
 			if (!this.visible){
 				this.visible=true;
+				if (!this.isAloneObject){
+					var tParent;
+					tParent=this.parent;
+					if (tParent){
+						tParent.showGridSprite(this);
+					}
+				}
+				if (!Render.isWebGL&&this._map.autoCache){
+					this.cacheAs=this._map.autoCacheType;
+				}
 				if (this.aniSpriteArray==null){
 					return;
 				};
@@ -1489,6 +1636,16 @@
 		__proto.hide=function(){
 			if (this.visible){
 				this.visible=false;
+				if (!this.isAloneObject){
+					var tParent;
+					tParent=this.parent;
+					if (tParent){
+						tParent.hideGridSprite(this);
+					}
+				}
+				if (!Render.isWebGL&&this._map.autoCache){
+					this.cacheAs="none";
+				}
 				if (this.aniSpriteArray==null){
 					return;
 				};
@@ -1506,8 +1663,8 @@
 		__proto.updatePos=function(){
 			if (this.isAloneObject){
 				if (this._map){
-					this.x=this.relativeX+this._map.viewPortX;
-					this.y=this.relativeY+this._map.viewPortY;
+					this.x=this.relativeX;
+					this.y=this.relativeY;
 				}
 				if (this.x < 0 || this.x > this._map.viewPortWidth || this.y < 0 || this.y > this._map.viewPortHeight){
 					this.hide();
@@ -1516,8 +1673,8 @@
 				}
 				}else {
 				if (this._map){
-					this.x=this.relativeX+this._map.viewPortX;
-					this.y=this.relativeY+this._map.viewPortY;
+					this.x=this.relativeX;
+					this.y=this.relativeY;
 				}
 			}
 		}
@@ -1570,6 +1727,8 @@
 			this._properties=null;
 			this.tarLayer=null;
 			this.layerName=null;
+			this._showGridList=[];
+			this._aloneObjs=[];
 			MapLayer.__super.call(this);
 			this._tempMapPos=new Point();
 		}
@@ -1643,6 +1802,10 @@
 								}
 							this.addChild(tSprite);
 							this._gridSpriteArray.push(tSprite);
+							if (tSprite.isAloneObject){
+								this._showGridList.push(tSprite);
+								this._aloneObjs.push(tSprite);
+							}
 							this._objDic[tObjectData.name]=tSprite;
 						}
 					}
@@ -1834,8 +1997,42 @@
 			tSprite.relativeX=gridX *this._map.gridWidth;
 			tSprite.relativeY=gridY *this._map.gridHeight;
 			tSprite.initData(this._map);
+			tSprite.updatePos();
 			this._gridSpriteArray.push(tSprite);
 			return tSprite;
+		}
+
+		/**
+		*将gridSprite设为显示状态
+		*@param gridSprite
+		*/
+		__proto.showGridSprite=function(gridSprite){
+			var gridList=this._showGridList;
+			var i=0,len=0;
+			len=gridList.length;
+			var ok_i=-1;
+			var tGridSprite;
+			for (i=0;i < len;i++){
+				tGridSprite=gridList[i];
+				if (tGridSprite==gridSprite)return;
+				if (!tGridSprite.isAloneObject && !tGridSprite.visible){
+					ok_i=i;
+				}
+			}
+			if (ok_i >=0){
+				gridList[ok_i]=gridSprite;
+				}else{
+				gridList.push(gridSprite);
+			}
+		}
+
+		/**
+		*将gridSprite设为隐藏状态
+		*@param gridSprite
+		*
+		*/
+		__proto.hideGridSprite=function(gridSprite){
+			gridSprite.visible=false;
 		}
 
 		/**
@@ -1844,12 +2041,47 @@
 		*/
 		__proto.updateGridPos=function(){
 			var tSprite;
-			for (var i=0;i < this._gridSpriteArray.length;i++){
-				tSprite=this._gridSpriteArray[i];
-				if ((tSprite.visible || tSprite.isAloneObject)&& tSprite.drawImageNum > 0){
+			var tList;
+			tList=this._showGridList;
+			var len=0;
+			len=tList.length;
+			for (var i=0;i < len;i++){
+				tSprite=tList[i];
+				if ((tSprite._style.visible || tSprite.isAloneObject)&& tSprite.drawImageNum > 0){
 					tSprite.updatePos();
 				}
 			}
+		}
+
+		/**
+		*更新此层中的活动对象
+		*/
+		__proto.updateAloneObject=function(){
+			var tSprite;
+			var tList;
+			tList=this._aloneObjs;
+			var len=0;
+			len=tList.length;
+			for (var i=0;i < len;i++){
+				tSprite=tList[i];
+				if (tSprite.drawImageNum > 0){
+					tSprite.updatePos();
+				}
+			}
+		}
+
+		/**
+		*渲染时使用需要更新的列表进行渲染，减少遍历
+		*@param context
+		*@param x
+		*@param y
+		*
+		*/
+		__proto.render=function(context,x,y){
+			var childs=this._childs;
+			this._childs=this._showGridList;
+			_super.prototype.render.call(this,context,x,y);
+			this._childs=childs;
 		}
 
 		/**

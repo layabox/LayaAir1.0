@@ -48,8 +48,8 @@ package laya.ani.bone {
 		 * @param	graphics
 		 */
 		public function apply(boneList:Vector.<Bone>, graphics:Graphics):void {
-			//if (!target.currDisplayData.bones)
-				//return;
+			if (!target)
+				return;
 			var tTranslateMix:Number = this.translateMix;
 			var tRotateMix:Number = this.translateMix;
 			var tTranslate:Boolean = tTranslateMix > 0;
@@ -207,7 +207,7 @@ package laya.ani.bone {
 					len = boneList.length;
 					for (i = 0; i < len; i++)
 					{
-						if (boneList[i].name = parentName)
+						if (boneList[i].name == parentName)
 						{
 							bone = boneList[i];
 							break;

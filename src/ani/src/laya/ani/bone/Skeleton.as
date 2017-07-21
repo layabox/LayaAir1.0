@@ -97,7 +97,7 @@ package laya.ani.bone {
 		 * 初始化动画
 		 * @param	templet		模板
 		 * @param	aniMode		动画模式
-		 * <table border=1>
+		 * <table>
 		 * 	<tr><th>模式</th><th>描述</th></tr>
 		 * 	<tr>
 		 * 		<td>0</td> <td>使用模板缓冲的数据，模板缓冲的数据，不允许修改（内存开销小，计算开销小，不支持换装）</td>

@@ -3,4 +3,4 @@ path2=/pagurusplugin/,D:/laoxiework/pagurusplugin/
 path2=/mobilegame/,D:/laoxiework/snowball/mobilegame/
 path2=,d:/laoxiework/laya/
 
-port=9999
+port=10000

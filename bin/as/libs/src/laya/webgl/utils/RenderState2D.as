@@ -20,7 +20,7 @@ package laya.webgl.utils {
 		public static var worldFilters:Array;
 		public static var worldShaderDefines:ShaderDefines2D;
 		
-		public static var worldClipRect:Rectangle =  /*[STATIC SAFE]*/ new Rectangle(0, 0, _MAXSIZE, _MAXSIZE);
+		public static var worldClipRect:Rectangle = new Rectangle(0, 0, _MAXSIZE, _MAXSIZE);
 		
 		public static var curRenderTarget:RenderTarget2D;
 		

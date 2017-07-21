@@ -9,7 +9,6 @@ package laya.d3.core.scene {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.graphics.DynamicBatchManager;
 	import laya.d3.graphics.FrustumCulling;
-	import laya.d3.graphics.StaticBatchManager;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
@@ -92,7 +91,7 @@ package laya.d3.core.scene {
 		 * @param url 模板地址。
 		 */
 		public static function load(url:String):Scene {
-			return Laya.loader.create(url, null, null, Scene, null, 1, false);
+			return Laya.loader.create(url, null, null, Scene);
 		}
 		
 		/**@private */
@@ -918,8 +917,8 @@ package laya.d3.core.scene {
 			var i:int, n:int, camera:BaseCamera;
 			if (Laya3D.debugMode || OctreeNode.debugMode) {
 				for (i = 0, n = _cameraPool.length; i < n; i++) {
-					Laya3D._debugPhasorSprite.begin(WebGLContext.LINES, renderState);
 					camera = _cameraPool[i];
+					Laya3D._debugPhasorSprite.begin(WebGLContext.LINES, camera);
 					(camera.activeInHierarchy) && (camera._renderCamera(gl, renderState, this));//TODO:
 					Laya3D._debugPhasorSprite.end();
 				}

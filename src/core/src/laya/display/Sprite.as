@@ -233,6 +233,8 @@ package laya.display {
 		/**@private */
 		private var _texture:Texture = null;
 		
+		//优化child渲染复杂度，暂时这样
+		public var _childRenderMax:Boolean = false;
 		/**
 		 * <p>鼠标事件与此对象的碰撞检测是否可穿透。碰撞检测发生在鼠标事件的捕获阶段，此阶段引擎会从stage开始递归检测stage及其子对象，直到找到命中的目标对象或者未命中任何对象。</p>
 		 * <p>穿透表示鼠标事件发生的位置处于本对象绘图区域内时，才算命中，而与对象宽高和值为Rectangle对象的hitArea属性无关。如果sprite.hitArea值是HitArea对象，表示显式声明了此对象的鼠标事件响应区域，而忽略对象的宽高、mouseThrough属性。</p>
@@ -356,7 +358,19 @@ package laya.display {
 				if (_$P["hasFilter"]) {
 					_set$P("cacheForFilters", true);
 				} else {
-					if (cacheCanvas) Pool.recover("cacheCanvas", cacheCanvas);
+					if (cacheCanvas)
+					{
+						var cc:* = cacheCanvas;
+						//如果从显示列表移除，则销毁cache缓存
+						if (cc && cc.ctx) {
+							Pool.recover("RenderContext", cc.ctx);
+							cc.ctx.canvas.size(0, 0);
+							//cc.ctx.canvas.clear();
+							cc.ctx = null;
+							
+						}
+						Pool.recover("cacheCanvas", cacheCanvas);
+					} 
 					_$P.cacheCanvas = null;
 					_renderType &= ~RenderSprite.CANVAS;
 					conchModel && conchModel.cacheAs(0);
@@ -366,7 +380,10 @@ package laya.display {
 			repaint();
 		}
 		
-		/**设置cacheAs为非空时此值才有效，staticCache=true时，子对象变化时不会自动更新缓存，只能通过调用reCache方法手动刷新。*/
+		/**
+		 * 是否静态缓存此对象的当前帧的最终属性。为 true 时，子对象变化时不会自动更新缓存，但是可以通过调用 reCache 方法手动刷新。
+		 * <b>注意：</b> 1. 设置 cacheAs 为非空和非"none"时才有效。 2. 由于渲染的时机在脚本执行之后，也就是说当前帧渲染的是对象的最终属性，所以如果在当前帧渲染之前、设置静态缓存之后改变对象属性，则最终渲染结果表现的是对象的最终属性。
+		 */
 		public function get staticCache():Boolean {
 			return _$P.staticCache;
 		}
@@ -463,7 +480,8 @@ package laya.display {
 		}
 		
 		/**
-		 * 设置对象bounds大小，如果有设置，则不再通过getBounds计算，合理使用能提高性能。
+		 * <p>设置对象在自身坐标系下的边界范围。与 <code>getSelfBounds</code> 对应。当 autoSize==true 时，会影响对象宽高。设置后，当需要获取自身边界范围时，就不再需要计算，合理使用能提高性能。比如 <code>getBounds</code> 会优先使用 <code>setBounds</code> 指定的值，如果没有指定则进行计算，此计算会对性能消耗比较大。</p>
+		 * <p><b>注意：</b> <code>setBounds</code> 与 <code>getBounds</code> 并非对应相等关系， <code>getBounds</code> 获取的是本对象在父容器坐标系下的边界范围，通过设置 <code>setBounds</code> 会影响 <code>getBounds</code> 的结果。</p>
 		 * @param	bound bounds矩形区域
 		 */
 		public function setBounds(bound:Rectangle):void {
@@ -472,7 +490,7 @@ package laya.display {
 		
 		/**
 		 * <p>获取本对象在父容器坐标系的矩形显示区域。</p>
-		 * <p><b>注意：</b>计算量较大，尽量少用。</p>
+		 * <p><b>注意：</b> 1.计算量较大，尽量少用，如果需要频繁使用，可以通过手动设置 <code>setBounds</code> 来缓存自身边界信息，从而避免比较消耗性能的计算。2. <code>setBounds</code> 与 <code>getBounds</code> 并非对应相等关系， <code>getBounds</code> 获取的是本对象在父容器坐标系下的边界范围，通过设置 <code>setBounds</code> 会影响 <code>getBounds</code> 的结果。</p>
 		 * @return 矩形区域。
 		 */
 		public function getBounds():Rectangle {
@@ -481,11 +499,12 @@ package laya.display {
 		}
 		
 		/**
-		 * 获取本对象在自己坐标系的矩形显示区域。
-		 * <p><b>注意：</b>计算量较大，尽量少用。</p>
+		 * 获取对象在自身坐标系的边界范围。与 <code>setBounds</code> 对应。
+		 * <p><b>注意：</b>计算量较大，尽量少用，如果需要频繁使用，可以提前手动设置 <code>setBounds</code> 来缓存自身边界信息，从而避免比较消耗性能的计算。</p>
 		 * @return 矩形区域。
 		 */
 		public function getSelfBounds():Rectangle {
+			if (_$P.uBounds) return _$P.uBounds;
 			if (!_$P.mBounds) _set$P("mBounds", new Rectangle());
 			return Rectangle._getWrapRec(_getBoundPointsM(false), _$P.mBounds);
 		}
@@ -581,7 +600,7 @@ package laya.display {
 		 * @return  样式 Style 。
 		 */
 		public function getStyle():Style {
-			this._style === Style.EMPTY && (this._style = new Style());
+			this._style === Style.EMPTY && (this._style = new Style(),_childRenderMax=true);
 			return this._style;
 		}
 		
@@ -664,6 +683,7 @@ package laya.display {
 			if (style._tf.skewX !== value) {
 				style.setSkewX(value);
 				_tfChanged = true;
+				conchModel && conchModel.skew(value,style._tf.skewY);
 				_renderType |= RenderSprite.TRANSFORM;
 				var p:Sprite = _parent as Sprite;
 				if (p && p._repaint === 0) {
@@ -904,7 +924,7 @@ package laya.display {
 		
 		/**
 		 * <p>设置轴心点。相当于分别设置pivotX和pivotY属性。</p>
-		 * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.pivot(...).pos(50, 100);</p>
+		 * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.pivot(...).pos(...);</p>
 		 * @param	x X轴心点。
 		 * @param	y Y轴心点。
 		 * @return	返回对象本身。
@@ -917,7 +937,7 @@ package laya.display {
 		
 		/**
 		 * <p>设置宽高。相当于分别设置width和height属性。</p>
-		 * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.size(...).pos(50, 100);</p>
+		 * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.size(...).pos(...);</p>
 		 * @param	width 宽度值。
 		 * @param	hegiht 高度值。
 		 * @return	返回对象本身。
@@ -930,7 +950,7 @@ package laya.display {
 		
 		/**
 		 * <p>设置缩放。相当于分别设置scaleX和scaleY属性。</p>
-		 * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.scale(...).pos(50, 100);</p>
+		 * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.scale(...).pos(...);</p>
 		 * @param	scaleX		X轴缩放比例。
 		 * @param	scaleY		Y轴缩放比例。
 		 * @param 	speedMode	（可选）是否极速模式，正常是调用this.scaleX=value进行赋值，极速模式直接调用内部函数处理，如果未重写scaleX,scaleY属性，建议设置为急速模式性能更高。
@@ -961,7 +981,7 @@ package laya.display {
 		
 		/**
 		 * <p>设置倾斜角度。相当于分别设置skewX和skewY属性。</p>
-		 * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.skew(...).pos(50, 100);</p>
+		 * <p>因为返回值为Sprite对象本身，所以可以使用如下语法：spr.skew(...).pos(...);</p>
 		 * @param	skewX 水平倾斜角度。
 		 * @param	skewY 垂直倾斜角度。
 		 * @return	返回对象本身
@@ -1424,6 +1444,7 @@ package laya.display {
 				if (cc && cc.ctx) {
 					Pool.recover("RenderContext", cc.ctx);
 					cc.ctx.canvas.size(0, 0);
+					//cc.ctx.canvas.clear();
 					cc.ctx = null;
 				}
 				var fc:* = _$P._filterCache;
@@ -1477,7 +1498,7 @@ package laya.display {
 			var ele:Sprite = this;
 			while (ele) {
 				if (ele === Laya.stage) break;
-				scale *= ele.scaleX;
+				scale *= ele.scaleY;
 				ele = ele.parent as Sprite;
 			}
 			return scale;
