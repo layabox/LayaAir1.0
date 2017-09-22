@@ -85,7 +85,6 @@ package laya.d3.resource.models {
 		 */
 		override protected function recreateResource():void {//TODO:通过索引改为顶点复用
 			//(this._released) || (dispose());//如果已存在，则释放资源
-			startCreate();
 			_numberVertices = 36;
 			_numberIndices = 36;
 			var indices:Uint16Array = new Uint16Array(_numberIndices);
@@ -166,7 +165,7 @@ package laya.d3.resource.models {
 			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _numberIndices, WebGLContext.STATIC_DRAW, true);
 			_vertexBuffer.setData(vertices);
 			_indexBuffer.setData(indices);
-			memorySize = (_vertexBuffer.byteLength + _indexBuffer.byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
+			memorySize = (_vertexBuffer._byteLength + _indexBuffer._byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
 			completeCreate();
 			
 			if (_conchSky) {//NATIVE

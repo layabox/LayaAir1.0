@@ -40,7 +40,6 @@ package laya.d3.core.particleShuriKen.module {
 		 */
 		public function addAlpha(key:Number, value:int):void {
 			if (_alphaCurrentLength < 8) {
-				
 				if ((_alphaCurrentLength === 6) && ((key !== 1))) {
 					key = 1;
 					console.log("GradientDataColor warning:the forth key is  be force set to 1.");

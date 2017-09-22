@@ -30,6 +30,7 @@ package laya.webgl.resource {
 		public var lineWidth:int;
 		public var UV:Array;
 		public var isSpace:Boolean;
+		public var underLine:int;
 		/***********************************************************************************/
 		/**
 		 * 创建单个文字
@@ -91,6 +92,7 @@ package laya.webgl.resource {
 			fillColor = drawValue.fillColor;
 			borderColor = drawValue.borderColor;
 			lineWidth = drawValue.lineWidth;
+			underLine = drawValue.underLine;
 			var bIsConchApp:Boolean = Render.isConchApp;
 			var pCanvas:*;
 			if (bIsConchApp) {
@@ -123,7 +125,6 @@ package laya.webgl.resource {
 		}
 		
 		override protected function recreateResource():void {
-			startCreate();
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			//var char:DrawTextChar = this.char;
 			
@@ -177,7 +178,16 @@ package laya.webgl.resource {
 						_ctx.strokeText(char, 0, 0, null, null, 0, null);
 					}
 				}
-				
+				if ( this.underLine )
+				{
+					this._ctx.lineWidth = 1;
+					this._ctx.strokeStyle = this.fillColor;
+					this._ctx.beginPath();
+					this._ctx.moveTo(0, fontSize+1);
+					var nW:int = this._ctx.measureText(char).width+1;
+					this._ctx.lineTo(nW, fontSize+1);
+					this._ctx.stroke();
+				}
 				_ctx.restore();
 			}
 			

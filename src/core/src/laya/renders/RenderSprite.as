@@ -244,7 +244,7 @@ package laya.renders {
 		}
 		
 		
-		private function _childs_max(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+		private function _childs(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			//'use strict';
 			var style:* = sprite._style;
 			var tf:*= style._tf;
@@ -264,7 +264,7 @@ package laya.renders {
 							context.fillBorderWords(words, x, y, tStyle.font, tStyle.color,tStyle.strokeColor,tStyle.stroke);
 						}else
 						{
-							context.fillWords(words, x, y, tStyle.font, tStyle.color);
+							context.fillWords(words, x, y, tStyle.font, tStyle.color,tStyle.underLine);
 						}
 					}
 					
@@ -292,17 +292,17 @@ package laya.renders {
 			}			
 		}
 		
-		public function _childs(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			if (sprite._childRenderMax)
-			{
-				_childs_max(sprite, context, x, y);
-				return;
-			}
-			var childs:Array = sprite._childs, n:int = childs.length, ele:*;
-			
-			for (var i:int = 0; i < n; ++i)			
-				(ele = (childs[i] as Sprite))._style.visible && ele.render(context, x, y);
-		}
+		//public function _childs(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+			//if (sprite._childRenderMax)
+			//{
+				//_childs_max(sprite, context, x, y);
+				//return;
+			//}
+			//var childs:Array = sprite._childs, n:int = childs.length, ele:*;
+			//
+			//for (var i:int = 0; i < n; ++i)			
+				//(ele = (childs[i] as Sprite))._style.visible && ele.render(context, x, y);
+		//}
 		
 		public function _canvas(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/

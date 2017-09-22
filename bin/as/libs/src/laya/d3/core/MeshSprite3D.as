@@ -1,4 +1,6 @@
 package laya.d3.core {
+	import laya.d3.animation.AnimationNode;
+	import laya.d3.component.Animator;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.IRenderable;
@@ -11,6 +13,7 @@ package laya.d3.core {
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
 	import laya.events.Event;
+	import laya.net.Loader;
 	import laya.renders.Render;
 	
 	/**
@@ -109,6 +112,7 @@ package laya.d3.core {
 		private function _changeRenderObjectByMaterial(index:int, material:BaseMaterial):RenderElement {
 			var renderElement:RenderElement = _render._renderElements[index];
 			
+			(material) || (material = StandardMaterial.defaultMaterial);//确保有材质,由默认材质代替。
 			var renderObj:IRenderable = (_geometryFilter as MeshFilter).sharedMesh.getRenderElement(index);
 			renderElement._mainSortID = _getSortID(renderObj, material);//根据MeshID排序，处理同材质合并处理。
 			renderElement._sprite3D = this;
@@ -163,22 +167,63 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * @private
+		 * @inheritDoc
 		 */
 		override protected function _clearSelfRenderObjects():void {
 			scene.removeFrustumCullingObject(_render);
-			if (scene.conchModel) {//NATIVE
-				//scene.conchModel.removeChild(_render._conchRenderObject);
-			}
+			//if (scene.conchModel) {//NATIVE
+			//scene.conchModel.removeChild(_render._conchRenderObject);
+			//}
 		}
 		
 		/**
-		 * @private
+		 * @inheritDoc
 		 */
 		override protected function _addSelfRenderObjects():void {
 			scene.addFrustumCullingObject(_render);
-			if (scene.conchModel) {//NATIVE
-				//scene.conchModel.addChildAt(_render._conchRenderObject);
+			//if (scene.conchModel) {//NATIVE
+			//scene.conchModel.addChildAt(_render._conchRenderObject);
+			//}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _parseCustomProps(innerResouMap:Object, customProps:Object, json:Object):void {
+			super._parseCustomProps(innerResouMap, customProps, json);
+			
+			var render:MeshRender = meshRender;
+			var lightmapIndex:* = customProps.lightmapIndex;
+			(lightmapIndex != null) && (render.lightmapIndex = lightmapIndex);
+			var lightmapScaleOffsetArray:Array = customProps.lightmapScaleOffset;
+			(lightmapScaleOffsetArray) && (render.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
+			
+			var meshPath:String, mesh:Mesh;
+			if (json.instanceParams) {//兼容代码
+				meshPath = json.instanceParams.loadPath;
+				if (meshPath) {
+					mesh = Loader.getRes(innerResouMap[meshPath]);
+					meshFilter.sharedMesh = mesh;
+					if (mesh.loaded)
+						render.sharedMaterials = mesh.materials;
+					else
+						mesh.once(Event.LOADED, this, _applyMeshMaterials);
+				}
+			} else {
+				meshPath = customProps.meshPath;
+				if (meshPath) {
+					mesh = Loader.getRes(innerResouMap[meshPath]);
+					meshFilter.sharedMesh = mesh;
+				}
+				var materials:Array = customProps.materials;
+				if (materials) {
+					var sharedMaterials:Vector.<BaseMaterial> = render.sharedMaterials;
+					var materialCount:int = materials.length;
+					sharedMaterials.length = materialCount;
+					for (var i:int = 0; i < materialCount; i++)
+						sharedMaterials[i] = Loader.getRes(innerResouMap[materials[i].path]);
+					render.sharedMaterials = sharedMaterials;
+				}
 			}
 		}
 		
@@ -223,6 +268,10 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
+			if (destroyed)
+				return;
+			var mesh:BaseMesh = meshFilter.sharedMesh;
+			(mesh.loaded) || (mesh.off(Event.LOADED, this, _applyMeshMaterials));
 			super.destroy(destroyChild);
 			(_geometryFilter as MeshFilter)._destroy();
 		}

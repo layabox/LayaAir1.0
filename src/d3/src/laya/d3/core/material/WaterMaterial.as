@@ -287,7 +287,6 @@ package laya.d3.core.material {
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
 				alphaTest = false;
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_OPAQUEDOUBLEFACE: 
 				renderQueue = RenderQueue.OPAQUE;
@@ -295,14 +294,12 @@ package laya.d3.core.material {
 				cull = CULL_NONE;
 				blend = BLEND_DISABLE;
 				alphaTest = false;
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_CUTOUT: 
 				depthWrite = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
 				renderQueue = RenderQueue.OPAQUE;
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENT: 
 				renderQueue = RenderQueue.TRANSPARENT;
@@ -311,7 +308,6 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			default: 
 				throw new Error("PBRMaterial:renderMode value error.");

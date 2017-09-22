@@ -26,13 +26,13 @@ package laya.webgl.canvas {
 		
 		public static function BlendNormal(gl:WebGLContext):void
 		{
-			//[IF-JS]gl.blendFuncSeparate( WebGLContext.SRC_ALPHA, WebGLContext.ONE_MINUS_SRC_ALPHA,WebGLContext.ONE,WebGLContext.ONE);//修复某些浏览器混合变黑问gl.blendFuncSeparate( WebGLContext.SRC_ALPHA, WebGLContext.ONE_MINUS_SRC_ALPHA,WebGLContext.ONE,WebGLContext.ONE);//修复某些浏览器混合变黑问题
-			/*[IF-FLASH]*/gl.blendFunc( WebGLContext.SRC_ALPHA, WebGLContext.ONE_MINUS_SRC_ALPHA);//修复某些浏览器混合变黑问gl.blendFuncSeparate( WebGLContext.SRC_ALPHA, WebGLContext.ONE_MINUS_SRC_ALPHA,WebGLContext.ONE,WebGLContext.ONE);//修复某些浏览器混合变黑问题
+			//为了避免黑边，和canvas作为贴图的黑边
+			gl.blendFunc( WebGLContext.ONE, WebGLContext.ONE_MINUS_SRC_ALPHA);
 		}
 
 		public static function BlendAdd(gl:WebGLContext):void
 		{
-			gl.blendFunc( WebGLContext.SRC_ALPHA, WebGLContext.DST_ALPHA);
+			gl.blendFunc( WebGLContext.ONE, WebGLContext.DST_ALPHA);
 		}
 		
 		public static function BlendMultiply(gl:WebGLContext):void
@@ -42,7 +42,7 @@ package laya.webgl.canvas {
 		
 		public static function BlendScreen(gl:WebGLContext):void
 		{
-			gl.blendFunc( WebGLContext.SRC_ALPHA, WebGLContext.ONE);
+			gl.blendFunc( WebGLContext.ONE, WebGLContext.ONE);
 		}
 		
 		public static function BlendOverlay(gl:WebGLContext):void
@@ -52,17 +52,17 @@ package laya.webgl.canvas {
 
 		public static function BlendLight(gl:WebGLContext):void
 		{
-			gl.blendFunc( WebGLContext.SRC_ALPHA, WebGLContext.ONE);
+			gl.blendFunc( WebGLContext.ONE, WebGLContext.ONE);
 		}
 
 		public static function BlendNormalTarget(gl:WebGLContext):void
 		{
-			gl.blendFuncSeparate(WebGLContext.SRC_ALPHA, WebGLContext.ONE_MINUS_SRC_ALPHA, WebGLContext.ONE, WebGLContext.ONE_MINUS_SRC_ALPHA);
+			gl.blendFunc(WebGLContext.ONE, WebGLContext.ONE_MINUS_SRC_ALPHA);
 		}
 
 		public static function BlendAddTarget(gl:WebGLContext):void
 		{
-			gl.blendFunc( WebGLContext.SRC_ALPHA, WebGLContext.DST_ALPHA);
+			gl.blendFunc( WebGLContext.ONE, WebGLContext.DST_ALPHA);
 		}
 		
 		public static function BlendMultiplyTarget(gl:WebGLContext):void
@@ -72,7 +72,7 @@ package laya.webgl.canvas {
 		
 		public static function BlendScreenTarget(gl:WebGLContext):void
 		{
-			gl.blendFunc( WebGLContext.SRC_ALPHA, WebGLContext.ONE);
+			gl.blendFunc( WebGLContext.ONE, WebGLContext.ONE);
 		}
 		
 		public static function BlendOverlayTarget(gl:WebGLContext):void
@@ -82,7 +82,7 @@ package laya.webgl.canvas {
 
 		public static function BlendLightTarget(gl:WebGLContext):void
 		{
-			gl.blendFunc( WebGLContext.SRC_ALPHA, WebGLContext.ONE);
+			gl.blendFunc( WebGLContext.ONE, WebGLContext.ONE);
 		}
 		
 		public static function BlendMask(gl:WebGLContext):void

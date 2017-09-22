@@ -119,9 +119,10 @@ package laya.display {
 		 * @param	start	（可选）指定动画播放开始的索引(int)或帧标签(String)。帧标签可以通过addLabel(...)和removeLabel(...)进行添加和删除。
 		 * @param	loop	（可选）是否循环播放。
 		 * @param	name	（可选）动画模板在动画模版缓存池中的key，也可认为是动画名称。如果name为空，则播放当前动画序列帧；如果不为空，则在动画模版缓存池中寻找key值为name的动画模版，如果存在则用此动画模版初始化当前序列帧并播放，如果不存在，则仍然播放当前动画序列帧；如果没有当前动画的帧数据，则不播放，但该实例仍然处于播放状态。
+		 * @param	showWarn（可选）是否动画不存在时打印警告
 		 */
-		override public function play(start:* = 0, loop:Boolean = true, name:String = ""):void {
-			if (name) _setFramesFromCache(name, true);
+		override public function play(start:* = 0, loop:Boolean = true, name:String = "",showWarn:Boolean=true):void {
+			if (name) _setFramesFromCache(name, showWarn);
 			this._isPlaying = true;
 			this.index = (start is String) ? _getFrameByLabel(start) : start;
 			this.loop = loop;
@@ -218,7 +219,7 @@ package laya.display {
 		 * 设置自动播放的动画名称，在LayaAir IDE中可以创建的多个动画组成的动画集合，选择其中一个动画名称进行播放。
 		 */
 		public function set autoAnimation(value:String):void {
-			play(0, true, value);
+			play(0, true, value, false);
 		}
 		
 		/**

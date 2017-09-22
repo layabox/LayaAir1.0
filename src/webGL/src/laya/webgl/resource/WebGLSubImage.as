@@ -96,7 +96,6 @@ package laya.webgl.resource {
 		}
 		
 		override protected function recreateResource():void {
-			startCreate();
 			size(_w, _h);
 			_ctx.drawImage(atlasImage, offsetX, offsetY, _w, _h, 0, 0, _w, _h);
 			//imageData = _ctx.getImageData(0, 0, _w, _h);
@@ -113,7 +112,9 @@ package laya.webgl.resource {
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTex);
+			gl.pixelStorei(WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, canvas);
+			gl.pixelStorei(WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 			
 			var minFifter:int = this.minFifter;
 			var magFifter:int = this.magFifter;
@@ -164,11 +165,6 @@ package laya.webgl.resource {
 		
 		public function clearAtlasSource():void {
 			//canvas = null;//资源恢复时问题
-		}
-		
-		override public function dispose():void {
-			resourceManager.removeResource(this);
-			super.dispose();
 		}
 	
 	}

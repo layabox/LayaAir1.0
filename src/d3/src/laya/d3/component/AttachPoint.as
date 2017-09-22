@@ -2,7 +2,6 @@ package laya.d3.component {
 	import laya.ani.AnimationPlayer;
 	import laya.ani.AnimationState;
 	import laya.ani.AnimationTemplet;
-	import laya.d3.animation.AnimationClip;
 	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.RenderState;

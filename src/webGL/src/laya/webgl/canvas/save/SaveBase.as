@@ -20,10 +20,11 @@ package laya.webgl.canvas.save {
 		public static const TYPE_TEXTALIGN:int = 0x8000;
 		public static const TYPE_GLOBALCOMPOSITEOPERATION:int = 0x10000;
 		public static const TYPE_CLIPRECT:int = 0x20000;
-		public static const TYPE_IBVB:int = 0x40000;
-		public static const TYPE_SHADER:int = 0x80000;
-		public static const TYPE_FILTERS:int = 0x100000;
-		public static const TYPE_FILTERS_TYPE:int = 0x200000;
+		public static const TYPE_CLIPRECT_STENCIL:int = 0x40000;
+		public static const TYPE_IBVB:int = 0x80000;
+		public static const TYPE_SHADER:int = 0x100000;
+		public static const TYPE_FILTERS:int = 0x200000;
+		public static const TYPE_FILTERS_TYPE:int = 0x400000;
 		/*[DISBALEOUTCONST-END]*/
 		private static var _cache:* =/*[STATIC SAFE]*/ SaveBase._createArray();
 		private static var _namemap:* =/*[STATIC SAFE]*/ _init();

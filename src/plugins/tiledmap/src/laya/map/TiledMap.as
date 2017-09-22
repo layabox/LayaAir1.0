@@ -1214,7 +1214,7 @@ package laya.map {
 				{
 					if (tTGridSprite)
 					{
-						tTGridSprite.graphics.fillText(tTGridSprite.drawImageNum + "", 20, 20, null, "#ff0000");
+						tTGridSprite.graphics.fillText(tTGridSprite.drawImageNum + "", 20, 20, null, "#ff0000","left");
 					}
 				}
 			}

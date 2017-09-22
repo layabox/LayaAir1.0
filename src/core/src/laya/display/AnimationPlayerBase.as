@@ -65,8 +65,9 @@ package laya.display {
 		 * @param	start	（可选）指定动画播放开始的索引(int)或帧标签(String)。帧标签可以通过addLabel(...)和removeLabel(...)进行添加和删除。
 		 * @param	loop	（可选）是否循环播放。
 		 * @param	name	（可选）动画名称。
+		 * @param	showWarn（可选）是否动画不存在时打印警告
 		 */
-		public function play(start:* = 0, loop:Boolean = true, name:String = ""):void {
+		public function play(start:* = 0, loop:Boolean = true, name:String = "",showWarn:Boolean=true):void {
 			this._isPlaying = true;
 			this.index = (start is String) ? _getFrameByLabel(start) : start;
 			this.loop = loop;

@@ -3,15 +3,11 @@ struct DirectionLight
 {
  vec3 Direction;
  vec3 Diffuse;
- vec3 Ambient;
- vec3 Specular;
 };
 
 struct PointLight
 {
  vec3 Diffuse;
- vec3 Ambient;
- vec3 Specular;
  vec3 Attenuation;
  vec3 Position;
  float Range;
@@ -20,8 +16,6 @@ struct PointLight
 struct SpotLight
 {
  vec3 Diffuse;
- vec3 Ambient;
- vec3 Specular;
  vec3 Attenuation;
  vec3 Position;
  vec3 Direction;
@@ -37,7 +31,7 @@ void  computeDirectionLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in Dire
 	spec=vec3(0.0);
 	vec3 lightVec=-normalize(dirLight.Direction);
 	
-	amb=matAmb*dirLight.Ambient;
+	amb=matAmb;
 	
 	float  diffuseFactor=dot(lightVec, normal);
 	
@@ -47,7 +41,7 @@ void  computeDirectionLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in Dire
 	   float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);
 	   
 	   dif = diffuseFactor * matDif * dirLight.Diffuse;
-	   spec = specFactor * matSpe.rgb * dirLight.Specular;
+	   spec = specFactor * matSpe.rgb;
 	}
 	
 }
@@ -66,7 +60,7 @@ void computePointLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in PointLigh
 		
 	lightVec /= d; 
 	
-	amb = matAmb * poiLight.Ambient;	
+	amb = matAmb;	
 
 	float diffuseFactor = dot(lightVec, normal);
 
@@ -76,7 +70,7 @@ void computePointLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in PointLigh
 		float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);
 					
 		dif = diffuseFactor * matDif * poiLight.Diffuse;
-		spec = specFactor * matSpe.rgb * poiLight.Specular;
+		spec = specFactor * matSpe.rgb;
 	}
 
 	float attenuate = 1.0 / dot(poiLight.Attenuation, vec3(1.0, d, d*d));
@@ -99,7 +93,7 @@ void ComputeSpotLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in SpotLight 
 		
 	lightVec /= d; 
 	
-	amb = matAmb * spoLight.Ambient;	
+	amb = matAmb;	
 
 	float diffuseFactor = dot(lightVec, normal);
 
@@ -109,7 +103,7 @@ void ComputeSpotLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in SpotLight 
 		float specFactor = pow(max(dot(v, toEye), 0.0), matSpe.w);
 					
 		dif = diffuseFactor * matDif * spoLight.Diffuse;
-		spec = specFactor * matSpe.rgb * spoLight.Specular;
+		spec = specFactor * matSpe.rgb;
 	}
 	
 	float spot = pow(max(dot(-lightVec, normalize(spoLight.Direction)), 0.0), spoLight.Spot);

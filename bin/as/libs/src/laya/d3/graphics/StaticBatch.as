@@ -6,11 +6,12 @@ package laya.d3.graphics {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
+	import laya.resource.IDispose;
 	
 	/**
 	 * <code>StaticBatch</code> 类用于静态合并的父类,该类为抽象类。
 	 */
-	public class StaticBatch implements IRenderable {
+	public class StaticBatch implements IRenderable, IDispose {
 		/** @private */
 		public static const maxBatchVertexCount:int = 65535;
 		
@@ -27,7 +28,7 @@ package laya.d3.graphics {
 		/** @private */
 		protected var _combineRenderElementPool:Vector.<RenderElement>;
 		/** @private */
-		protected var _initBatchRenderElements:Vector.<RenderElement>;
+		public var _initBatchRenderElements:Vector.<RenderElement>;
 		/** @private */
 		public var _batchRenderElements:Vector.<RenderElement>;
 		
@@ -35,6 +36,10 @@ package laya.d3.graphics {
 		public var _material:BaseMaterial;
 		/** @private */
 		public var _rootOwner:Sprite3D;
+		/** @private */
+		public var _key:String;
+		/** @private */
+		public var _manager:StaticBatchManager;
 		
 		//..................临时.................................
 		public function get _vertexBufferCount():int {
@@ -50,7 +55,9 @@ package laya.d3.graphics {
 		/**
 		 * 创建一个 <code>StaticBatch</code> 实例。
 		 */
-		public function StaticBatch(rootOwner:Sprite3D) {
+		public function StaticBatch(key:String, manager:StaticBatchManager, rootOwner:Sprite3D) {
+			_key = key;
+			_manager = manager;
 			_combineRenderElementPoolIndex = 0;
 			_combineRenderElementPool = new Vector.<RenderElement>();
 			
@@ -147,6 +154,13 @@ package laya.d3.graphics {
 		 */
 		public function _clearRenderElements():void {
 			_batchRenderElements.length = 0;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function dispose():void {
+		
 		}
 		
 		//..................临时.................................

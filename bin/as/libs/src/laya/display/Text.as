@@ -119,6 +119,7 @@ package laya.display {
 		public static var CharacterCache:Boolean = true;
 		/**位图字体字典。*/
 		private static var _bitmapFonts:Object;
+		
 		/** @private */
 		private var _clipPoint:Point;
 		/**当前使用的位置字体。*/
@@ -137,13 +138,13 @@ package laya.display {
 		protected var _lineWidths:Array = [];
 		/**@private 文本的内容位置 X 轴信息。*/
 		protected var _startX:Number;
-		/** @private 文本的内容位置X轴信息。 */
+		/**@private 文本的内容位置X轴信息。 */
 		protected var _startY:Number;
-		/**  @private 当前可视行索引。*/
+		/**@private 当前可视行索引。*/
 		protected var _lastVisibleLineIndex:int = -1;
-		/**  @private 当前可视行索引。*/
+		/**@private 当前可视行索引。*/
 		protected var _words:Vector.<WordText>;
-		/**  @private */
+		/**@private */
 		protected var _charSize:Object = {};
 		/**
 		 * 存在于这个映射表中的字体，在IPhone上，会变成 字体-简|繁
@@ -299,6 +300,7 @@ package laya.display {
 		
 		/**
 		 * <p>根据指定的文本，从语言包中取当前语言的文本内容。并对此文本中的{i}文本进行替换。</p>
+		 * <p>设置Text.langPacks语言包后，即可使用lang获取里面的语言</p>
 		 * <p>例如：
 		 * <li>（1）text 的值为“我的名字”，先取到这个文本对应的当前语言版本里的值“My name”，将“My name”设置为当前文本的内容。</li>
 		 * <li>（2）text 的值为“恭喜你赢得{0}个钻石，{1}经验。”，arg1 的值为100，arg2 的值为200。
@@ -1026,10 +1028,8 @@ package laya.display {
 			var customFontWidth:Number = Browser.context.measureText("abcji").width;
 			
 			console.log(defaultFontWidth, customFontWidth);
-			if (defaultFontWidth == customFontWidth)
-				return false;
-			else
-				return true;
+			if (defaultFontWidth === customFontWidth) return false;
+			else return true;
 		}
 	}
 }

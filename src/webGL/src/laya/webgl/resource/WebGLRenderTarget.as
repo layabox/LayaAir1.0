@@ -40,7 +40,6 @@ package laya.webgl.resource {
 		}
 		
 		override protected function recreateResource():void {
-			startCreate();
 			var gl:WebGLContext = WebGL.mainContext;
 			_frameBuffer || (_frameBuffer = gl.createFramebuffer());
 			_source || (_source = gl.createTexture());

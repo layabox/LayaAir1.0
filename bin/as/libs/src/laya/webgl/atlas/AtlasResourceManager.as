@@ -6,12 +6,12 @@ package laya.webgl.atlas {
 		private static var _enabled:Boolean = false;
 		private static var _atlasLimitWidth:int;
 		private static var _atlasLimitHeight:int;
-
-		public static const gridSize:int=16;
+		
+		public static const gridSize:int = 16;
 		public static var atlasTextureWidth:int;
 		public static var atlasTextureHeight:int;
 		public static var maxTextureCount:int;
-		public static var _atlasRestore:int=0;
+		public static var _atlasRestore:int = 0;
 		
 		public static var BOARDER_TYPE_NO:int = 0;
 		public static var BOARDER_TYPE_RIGHT:int = 1;
@@ -117,27 +117,42 @@ package laya.webgl.atlas {
 		
 		//添加 图片到大图集
 		public function pushData(texture:Texture):Boolean {
-			var tex:* = texture;//需要动态类型,设为弱类型
-			_setAtlasParam = false;
-			var bFound:Boolean = false;
-			var nImageGridX:int = (Math.ceil((texture.bitmap.width + 2) / _gridSize));//加2个边缘像素
-			var nImageGridY:int = (Math.ceil((texture.bitmap.height + 2) / _gridSize));//加2个边缘像素
+			var bitmap:* = texture.bitmap;
+			var nWebGLImageIndex:int = -1;
+			var curAtlas:Atlaser = null;
+			var i:int, n:int, altasIndex:int;
+			for (i = 0, n = _atlaserArray.length; i < n; i++) {
+				altasIndex = (_curAtlasIndex + i) % n;
+				curAtlas = _atlaserArray[altasIndex];
+				nWebGLImageIndex = curAtlas.findBitmapIsExist(bitmap);
+				if (nWebGLImageIndex != -1) {
+					break;
+				}
+			}
 			
-			var bSuccess:Boolean = false;
-			//这个for循环是为了 如果 贴图满了，再创建一张，继续放置
-			for (var k:int = 0; k < 2; k++) {
-				var maxAtlaserCount:int = _maxAtlaserCount;
-				for (var i:int = 0; i < maxAtlaserCount; i++) {
-					var altasIndex:int = (_curAtlasIndex + i) % maxAtlaserCount;
-					
-		
-					( _atlaserArray.length-1>=altasIndex) || (_atlaserArray.push(new Atlaser(_gridNumX, _gridNumY, _width, _height, _sid_++)));//不存在则创建大图合集
-					var atlas:Atlaser = _atlaserArray[altasIndex];
-					var bitmap:* = texture.bitmap;
-					
-					var webGLImageIndex:int = atlas.inAtlasWebGLImagesKey.indexOf(bitmap);
-					var offsetX:int, offsetY:int;
-					if (webGLImageIndex == -1) {
+			if (nWebGLImageIndex != -1) {
+				var offset:Array = curAtlas.InAtlasWebGLImagesOffsetValue[nWebGLImageIndex];
+				offsetX = offset[0];
+				offsetY = offset[1];
+				curAtlas.addToAtlas(texture, offsetX, offsetY);
+				return true;
+			} else {
+				var tex:* = texture;//需要动态类型,设为弱类型
+				_setAtlasParam = false;
+				var bFound:Boolean = false;
+				var nImageGridX:int = (Math.ceil((texture.bitmap.width + 2) / _gridSize));//加2个边缘像素
+				var nImageGridY:int = (Math.ceil((texture.bitmap.height + 2) / _gridSize));//加2个边缘像素
+				
+				var bSuccess:Boolean = false;
+				//这个for循环是为了 如果 贴图满了，再创建一张，继续放置
+				for (var k:int = 0; k < 2; k++) {
+					var maxAtlaserCount:int = _maxAtlaserCount;
+					for (i = 0; i < maxAtlaserCount; i++) {
+						altasIndex = (_curAtlasIndex + i) % maxAtlaserCount;
+						
+						(_atlaserArray.length - 1 >= altasIndex) || (_atlaserArray.push(new Atlaser(_gridNumX, _gridNumY, _width, _height, _sid_++)));//不存在则创建大图合集
+						var atlas:Atlaser = _atlaserArray[altasIndex];
+						var offsetX:int, offsetY:int;
 						var fillInfo:MergeFillInfo = atlas.addTex(1, nImageGridX, nImageGridY);
 						if (fillInfo.ret) {
 							offsetX = fillInfo.x * _gridSize + 1;//加1为排除边缘因素
@@ -149,28 +164,19 @@ package laya.webgl.atlas {
 							_curAtlasIndex = altasIndex;
 							break;
 						}
-					} else {
-						var offset:Array = atlas.InAtlasWebGLImagesOffsetValue[webGLImageIndex];
-						offsetX = offset[0];
-						offsetY = offset[1];
-						
-						atlas.addToAtlas(texture, offsetX, offsetY);
-						bSuccess = true;
-						_curAtlasIndex = altasIndex;
-						break;
 					}
+					if (bSuccess)
+						break;
+					_atlaserArray.push(new Atlaser(_gridNumX, _gridNumY, _width, _height, _sid_++));
+					_needGC = true;
+					garbageCollection();
+					_curAtlasIndex = _atlaserArray.length - 1;
 				}
-				if (bSuccess)
-					break;
-				_atlaserArray.push(new Atlaser(_gridNumX, _gridNumY, _width, _height, _sid_++));
-				_needGC = true;
-				garbageCollection();
-				_curAtlasIndex = _atlaserArray.length - 1;
+				if (!bSuccess) {
+					trace(">>>AtlasManager pushData error");
+				}
+				return bSuccess;
 			}
-			if (!bSuccess) {
-				trace(">>>AtlasManager pushData error");
-			}
-			return bSuccess;
 		}
 		
 		public function addToAtlas(tex:Texture):void {
@@ -185,9 +191,11 @@ package laya.webgl.atlas {
 			if (_needGC === true) {
 				var n:int = _atlaserArray.length - _maxAtlaserCount;
 				
-				for (var i:int = 0; i < n; i++)
+				for (var i:int = 0; i < n; i++) {
 					_atlaserArray[i].dispose();
-				
+					trace("AtlasResourceManager:Dispose the inner Atlas。");
+				}
+				trace(">>>>altas garbageCollection =" + n);
 				_atlaserArray.splice(0, n);
 				_needGC = false;
 				
@@ -203,12 +211,11 @@ package laya.webgl.atlas {
 			_curAtlasIndex = 0;
 		}
 		
-		public  function  getAtlaserCount():int
-		{
+		public function getAtlaserCount():int {
 			return _atlaserArray.length;
 		}
-		public  function  getAtlaserByIndex(index:int):Atlaser
-		{
+		
+		public function getAtlaserByIndex(index:int):Atlaser {
 			return _atlaserArray[index];
 		}
 	}

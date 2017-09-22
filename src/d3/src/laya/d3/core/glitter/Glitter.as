@@ -146,6 +146,8 @@ package laya.d3.core.glitter {
 		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
+			if (destroyed)
+				return;
 			super.destroy(destroyChild);
 			_geometryFilter._destroy();
 			_geometryFilter = null;

@@ -650,6 +650,8 @@ package laya.webgl
 		public function viewport(x:Number, y:Number, width:Number, height:Number):void { }
 		
 		public function configureBackBuffer(width:int, height:int, antiAlias:int, enableDepthAndStencil:Boolean = true, wantsBestResolution:Boolean = false):void{};
+		
+		public function compressedTexImage2D(... args):void{}
 	/*[IF-FLASH-END]*/
 	}
 

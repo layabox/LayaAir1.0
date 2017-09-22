@@ -54,7 +54,6 @@ package laya.d3.water
 		private var _refractObjStack:Vector.<RenderableSprite3D> = new Vector.<RenderableSprite3D>() ;//因为开始的时候可能还没有加载完成，不知道renderelements
 		private var _refractObjecs:Vector.<MeshSprite3D> = new Vector.<MeshSprite3D>();
 		private var _loaded:Boolean = false;
-		public var _scene:Scene;
 		private var _scrSizeInfo:Float32Array = new Float32Array(2);
 		private var _waterColor:Vector3 = new Vector3();
 		private var _waterFogStart:Number = 0;

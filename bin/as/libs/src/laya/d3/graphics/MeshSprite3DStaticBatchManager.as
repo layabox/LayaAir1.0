@@ -65,7 +65,7 @@ package laya.d3.graphics {
 				key = material.id.toString() + vertexDeclaration.id.toString() + number.toString();//TODO:效率问题
 			
 			if (!_staticBatches[key])//TODO:是否需要判断
-				_staticBatches[key] = staticBatch = new SubMeshStaticBatch(rootOwner, vertexDeclaration, material);
+				_staticBatches[key] = staticBatch = new SubMeshStaticBatch(key,this,rootOwner, vertexDeclaration, material);
 			else
 				staticBatch = _staticBatches[key];
 			

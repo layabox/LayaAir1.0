@@ -41,8 +41,8 @@ package laya.d3.graphics {
 		/**
 		 * 创建一个 <code>SubMeshStaticBatch</code> 实例。
 		 */
-		public function SubMeshStaticBatch(rootOwner:Sprite3D, vertexDeclaration:VertexDeclaration, material:BaseMaterial) {
-			super(rootOwner);
+		public function SubMeshStaticBatch(key:String, manager:StaticBatchManager, rootOwner:Sprite3D, vertexDeclaration:VertexDeclaration, material:BaseMaterial) {
+			super(key, manager, rootOwner);
 			_batchOwnerIndices = new Vector.<Vector.<int>>();
 			_batchOwners = new Vector.<MeshSprite3D>();
 			
@@ -146,9 +146,10 @@ package laya.d3.graphics {
 					var subMesh:SubMesh = renderElement.renderObj as SubMesh;
 					var subVertexDatas:Float32Array = subMesh._getStaticBatchBakedVertexs(_rootOwner ? _rootOwner._transform : null, renderElement._sprite3D as MeshSprite3D);
 					var subIndexDatas:Uint16Array = subMesh.getIndices();
+					
 					var isInvert:Boolean = renderElement._sprite3D.transform._isFrontFaceInvert;
 					
-					var indexOffset:int = curMerVerCount / (_vertexDeclaration.vertexStride / 4);
+					var indexOffset:int = curMerVerCount / (_vertexDeclaration.vertexStride / 4) - subMesh._vertexStart;
 					var indexStart:int = curIndexCount;
 					var indexEnd:int = indexStart + subIndexDatas.length;
 					
@@ -183,7 +184,6 @@ package laya.d3.graphics {
 				_vertexBuffer.setData(vertexDatas);
 				_indexBuffer.setData(indexDatas);
 				_needFinishCombine = false;
-				_initBatchRenderElements.length = 0;//TODO:是否清理
 			}
 		}
 		
@@ -269,6 +269,17 @@ package laya.d3.graphics {
 			Stat.drawCall++;
 			
 			Stat.trianglesFaces += indexCount / 3;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function dispose():void {
+			_batchOwnerIndices = null;
+			_batchOwners = null;
+			_vertexDeclaration = null;
+			_vertexBuffer.dispose();
+			_indexBuffer.dispose();
 		}
 		
 		//..................临时.................................

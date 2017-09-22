@@ -508,7 +508,7 @@ package laya.map {
 				_objDic = null;
 			}
 			if (_dataDic) {
-				for (var p:* in _dataDic) {
+				for (p in _dataDic) {
 					delete _dataDic[p];
 				}
 				_dataDic = null;

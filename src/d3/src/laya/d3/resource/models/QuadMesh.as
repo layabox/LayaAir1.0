@@ -68,8 +68,6 @@ package laya.d3.resource.models {
 		}
 		
 		override protected function recreateResource():void {
-			startCreate();
-			
 			_numberVertices = 4;
 			_numberIndices = 6;
 			//定义顶点数据结构

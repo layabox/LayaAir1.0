@@ -19,7 +19,7 @@ package laya.webgl.shader.d2.skinAnishader {
 		private var mIBData:Uint16Array;
 		private var mEleNum:int = 0;
 		private var mTexture:Texture;
-		private var _tempMat16:Array = RenderState2D.getMatrArray();
+		private var _tempMatrix:Matrix = new Matrix();
 		public var transform:Matrix;
 		
 		private var _vs:Array;
@@ -149,7 +149,7 @@ package laya.webgl.shader.d2.skinAnishader {
 
 			vb.appendEx2(_vs, Float32Array,_tVSLen,4);
 			
-			_indexStart = ib.byteLength;
+			_indexStart = ib._byteLength;
 			var tIB:Array;
 			tIB = _tempIB;
 			if (tIB.length < _ps.length)
@@ -169,7 +169,7 @@ package laya.webgl.shader.d2.skinAnishader {
 			mVBBuffer = vb;
 			mIBBuffer = ib;
 			vb.append(mVBData);
-			_indexStart = ib.byteLength;
+			_indexStart = ib._byteLength;
 			if (mIBData["start"] != start)
 			{
 				for (var i:int = 0, n:int = _ps.length; i < n; i++) {
@@ -189,13 +189,18 @@ package laya.webgl.shader.d2.skinAnishader {
 				var tempSubmit:Submit = Submit.createShape(context, mIBBuffer, mVBBuffer, mEleNum, _indexStart, Value2D.create(ShaderDefines2D.SKINMESH, 0));
 				transform || (transform = Matrix.EMPTY);
 				transform.translate(x, y);
-				Matrix.mul16(transform, context._curMat, _tempMat16);
+				Matrix.mul(transform, context._curMat, _tempMatrix);
 				transform.translate( -x, -y);
+				//此处每次都创建新的数组，应该可以改成使用对象池
+				
 				var tShaderValue:SkinSV = tempSubmit.shaderValue as SkinSV;
+				var tArray:Array = tShaderValue.u_mmat2||RenderState2D.getMatrArray();
+				RenderState2D.mat2MatArray(_tempMatrix, tArray);
+
 				tShaderValue.textureHost = mTexture;
 				tShaderValue.offsetX = 0;
 				tShaderValue.offsetY = 0;
-				tShaderValue.u_mmat2 = _tempMat16;
+				tShaderValue.u_mmat2 = tArray;
 				tShaderValue.ALPHA = context._shader2D.ALPHA;
 				context._submits[context._submits._length++] = tempSubmit;
 			}

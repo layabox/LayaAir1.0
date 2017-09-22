@@ -145,7 +145,6 @@ package laya.d3.core.material {
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
 				depthFunc = DEPTHFUNC_LESS;
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_TRANSPARENT: 
 				renderQueue = RenderQueue.OPAQUE;
@@ -156,7 +155,6 @@ package laya.d3.core.material {
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
 				depthFunc = DEPTHFUNC_LEQUAL;
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			default: 
 				throw new Error("TerrainMaterial:renderMode value error.");

@@ -2,12 +2,9 @@ package laya.d3.component.animation {
 	import laya.ani.AnimationContent;
 	import laya.ani.AnimationState;
 	import laya.ani.AnimationTemplet;
-	import laya.d3.animation.AnimationClip;
-	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
@@ -16,14 +13,11 @@ package laya.d3.component.animation {
 	import laya.d3.resource.models.SubMesh;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
-	import laya.renders.Render;
-	import laya.utils.Stat;
-	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * <code>SkinAnimations</code> 类用于创建蒙皮动画组件。
 	 */
-	public class SkinAnimations extends KeyframeAnimations {		
+	public class SkinAnimations extends KeyframeAnimations {
 		/**
 		 * @private
 		 */
@@ -72,7 +66,7 @@ package laya.d3.component.animation {
 				
 				_templet = value;
 				_player.templet = value;
-				_computeBoneIndeToMeshOnTemplet();
+				_computeBoneIndexToMeshOnTemplet();
 				
 				_curOriginalData = null;
 				_curMeshAnimationData = null;
@@ -94,17 +88,17 @@ package laya.d3.component.animation {
 		/**
 		 * @private
 		 */
-		private function _computeBoneIndeToMeshOnTemplet():void {
+		private function _computeBoneIndexToMeshOnTemplet():void {
 			if (_templet.loaded)
-				_computeBoneIndeToMeshOnMesh();
+				_computeBoneIndexToMeshOnMesh();
 			else
-				_templet.once(Event.LOADED, this, _computeBoneIndeToMeshOnMesh);
+				_templet.once(Event.LOADED, this, _computeBoneIndexToMeshOnMesh);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _computeBoneIndeToMeshOnMesh():void {
+		private function _computeBoneIndexToMeshOnMesh():void {
 			if (_templet._aniVersion === "LAYAANIMATION:02")//TODO:兼容性到代码
 				_oldVersion = false;
 			else
@@ -112,15 +106,15 @@ package laya.d3.component.animation {
 			
 			var mesh:Mesh = (_owner as MeshSprite3D).meshFilter.sharedMesh as Mesh;
 			if (mesh.loaded)
-				_computeBoneIndeToMesh(mesh);
+				_computeBoneIndexToMesh(mesh);
 			else
-				mesh.on(Event.LOADED, this, _computeBoneIndeToMesh);
+				mesh.on(Event.LOADED, this, _computeBoneIndexToMesh);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _computeBoneIndeToMesh(mesh:Mesh):void {
+		private function _computeBoneIndexToMesh(mesh:Mesh):void {
 			var meshBoneNames:Vector.<String> = mesh._boneNames;
 			if (meshBoneNames) {//TODO:兼容性判断
 				var binPoseCount:int = meshBoneNames.length;
@@ -165,11 +159,6 @@ package laya.d3.component.animation {
 		}
 		
 		/** @private */
-		private function _onMeshLoaded():void {
-			(destroyed)||(_onAnimationPlayMeshLoaded());
-		}
-		
-		/** @private */
 		private function _onAnimationPlayMeshLoaded():void {
 			var renderElements:Vector.<RenderElement> = _ownerMesh.meshRender._renderElements;//播放骨骼动画时禁止动态合并
 			for (var i:int = 0, n:int = renderElements.length; i < n; i++)
@@ -183,8 +172,8 @@ package laya.d3.component.animation {
 			if (mesh.loaded)
 				_onAnimationPlayMeshLoaded();
 			else
-				mesh.once(Event.LOADED, this, _onMeshLoaded);
-			
+				mesh.once(Event.LOADED, this, _onAnimationPlayMeshLoaded);
+		
 		}
 		
 		/** @private */
@@ -213,7 +202,7 @@ package laya.d3.component.animation {
 			_player.on(Event.PLAYED, this, _onAnimationPlay);
 			_player.on(Event.STOPPED, this, _onAnimationStop);
 			
-			(_owner as MeshSprite3D).meshFilter.on(Event.MESH_CHANGED, this, _computeBoneIndeToMeshOnTemplet);
+			(_owner as MeshSprite3D).meshFilter.on(Event.MESH_CHANGED, this, _computeBoneIndexToMeshOnTemplet);
 		}
 		
 		/**
@@ -331,10 +320,10 @@ package laya.d3.component.animation {
 			
 			_lastFrameIndex = frameIndex;
 			//if (Render.isConchNode) {//NATIVE
-				//for (i = 0, n = mesh.getSubMeshCount(); i < n; i++) {
-					//_ownerMesh.meshRender.sharedMaterials[i]._addShaderDefine(SkinnedMeshSprite3D.SHADERDEFINE_BONE);
-					//_ownerMesh.meshRender._renderElements[i]._conchSubmesh.setShaderValue(SkinnedMeshSprite3D.BONES, _curAnimationDatas[i], 0);
-				//}
+			//for (i = 0, n = mesh.getSubMeshCount(); i < n; i++) {
+			//_ownerMesh.meshRender.sharedMaterials[i]._addShaderDefine(SkinnedMeshSprite3D.SHADERDEFINE_BONE);
+			//_ownerMesh.meshRender._renderElements[i]._conchSubmesh.setShaderValue(SkinnedMeshSprite3D.BONES, _curAnimationDatas[i], 0);
+			//}
 			//}
 		}
 		
@@ -357,6 +346,9 @@ package laya.d3.component.animation {
 		 */
 		override public function _unload(owner:Sprite3D):void {
 			(player.state == AnimationState.playing) && (_ownerMesh._render._removeShaderDefine(SkinnedMeshSprite3D.SHADERDEFINE_BONE));
+			(_templet&&!_templet.loaded)&&(_templet.off(Event.LOADED, this, _computeBoneIndexToMeshOnMesh));
+			var mesh:Mesh = _ownerMesh.meshFilter.sharedMesh as Mesh;
+			(mesh.loaded) || (mesh.off(Event.LOADED, this, _onAnimationPlayMeshLoaded));
 			super._unload(owner);
 			_tempCurAnimationData = null;
 			_tempCurBonesData = null;

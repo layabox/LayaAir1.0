@@ -33,6 +33,15 @@ package laya.events {
 		 */
 		public var _event:Event = new Event();
 		
+		private var _lastClickTime:Number = 0;
+		
+		private function _clearTempArrs():void
+		{
+			_oldArr.length = 0;
+			_newArr.length = 0;
+			_tEleArr.length = 0;
+		}
+		
 		/**
 		 * 从touch表里查找对应touchID的数据
 		 * @param touchID touch ID
@@ -123,6 +132,7 @@ package laya.events {
 				
 			}
 			sendEvents(arrs, isLeft ? Event.MOUSE_DOWN : Event.RIGHT_MOUSE_DOWN, touchID);
+			_clearTempArrs();
 		
 		}
 		
@@ -244,6 +254,7 @@ package laya.events {
 			}
 			
 			sendEvents(arrs, Event.MOUSE_MOVE, touchID);
+			_clearTempArrs();
 		}
 		
 		public function getLastOvers():Array {
@@ -255,7 +266,12 @@ package laya.events {
 			return _tEleArr;
 		}
 		
-		private var _lastClickTime:Number = 0;
+		public function stageMouseOut():void
+		{
+			var lastOvers:Array;
+			lastOvers = getLastOvers();
+			sendEvents(lastOvers, Event.MOUSE_OUT, 0);
+		}
 		
 		/**
 		 * 处理TouchEnd事件
@@ -332,6 +348,7 @@ package laya.events {
 					Pool.recover("TouchData", preO);
 				}
 			}
+			_clearTempArrs();
 		}
 	}
 }

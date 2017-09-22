@@ -1,7 +1,6 @@
 package laya.display.css {
 	import laya.display.Sprite;
 	import laya.display.css.CSSStyle;
-	import laya.display.css.Style;
 	import laya.maths.Rectangle;
 	import laya.renders.RenderContext;
 	

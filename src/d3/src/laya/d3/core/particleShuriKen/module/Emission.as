@@ -26,7 +26,6 @@ package laya.d3.core.particleShuriKen.module {
 		/**是否启用。*/
 		public var enbale:Boolean;
 		
-		
 		/**
 		 * 设置粒子发射速率。
 		 * @param emissionRate 粒子发射速率 (个/秒)。
@@ -103,8 +102,7 @@ package laya.d3.core.particleShuriKen.module {
 					if (_bursts[i].time > burst.time)
 						_bursts.splice(i, 0, burst);
 				}
-			else
-				_bursts.push(burst);
+			_bursts.push(burst);
 		}
 		
 		/**

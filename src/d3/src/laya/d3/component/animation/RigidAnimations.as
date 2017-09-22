@@ -4,9 +4,6 @@ package laya.d3.component.animation {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.math.Quaternion;
-	import laya.d3.math.Vector3;
-	import laya.d3.resource.models.Mesh;
 	import laya.d3.utils.Utils3D;
 	import laya.display.Node;
 	import laya.events.Event;

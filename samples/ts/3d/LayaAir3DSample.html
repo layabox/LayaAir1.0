@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset='utf-8'/>
+    <title>wwww.layabox.com</title>
+    <meta name='apple-mobile-web-app-capable' content='yes'/>
+    <meta name='full-screen' content='true'/>
+    <meta name='screen-orientation' content='portrait'/>
+    <meta name='x5-fullscreen' content='true'/>
+    <meta name='360-fullscreen' content='true'/>
+    <meta http-equiv='expires' content='0'/>
+    <meta name='laya' logoimg='logo.png' logobkcolor='#ffffff' screenorientation='landscape' cacheid='fffffffff'/>
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+</head>
+
+<body style="background-color: #000;" onload="init()">
+    <!-- libraries -->
+    <script src="../../../bin/ts/libs/laya.core.js"></script>
+    <script src="../../../bin/ts/libs/laya.ui.js"></script>
+    <script src="../../../bin/ts/libs/laya.webgl.js"></script>
+    <script src="../../../bin/ts/libs/laya.particle.js"></script>
+    <script src="../../../bin/ts/libs/laya.ani.js"></script>
+    <script src="../../../bin/ts/libs/laya.d3.js"></script>
+    <script src="js/common/CameraMoveScript.js"></script>
+    <script src="js/common/VRCameraMoveScript.js"></script>
+    <script src="js/common/Tool.js"></script>
+    <script src="js/shaderModule/customMaterials/CustomMaterial.js"></script>
+    <script src="js/shaderModule/customMaterials/CustomTerrainMaterial.js"></script>
+    <script src='../../res/threeDimen/pbrlut.js' loader='laya'></script>
+    <!-- demos -->
+<script id="jsCtrl"></script>
+<div style="position: absolute; left: 150px; top: 0px; z-index: 999999">
+    <span style="color:#ff0000">左右箭头键切换</span>
+    <select id="select" onChange="selectChanged()">
+            <option>advancedModule/GlitterDemo</option>
+            <option>advancedModule/Laya3DCombineHtml</option>
+            <option>advancedModule/RealTimeShadow</option>
+            <option>advancedModule/RenderTextureDemo</option>
+
+            <option>animationModule/SkinAnimation_New</option>
+            <option>animationModule/SkinAnimation_Old</option>
+
+            <option>cameraModule/D3SpaceToD2Space</option>
+            <option>cameraModule/MultiCamera</option>
+            <option>cameraModule/orthographicCamera</option>
+
+            <option>lightModule/DirectionLightDemo</option>
+            <option>lightModule/PointLightDemo</option>
+            <option>lightModule/SpotLightDemo</option>
+
+            <option>materialModule/PBRMaterialDemo</option>
+            <option>materialModule/StandardMaterial_DiffuseMap</option>
+            <option>materialModule/StandardMaterial_NormalMap</option>
+            <option>materialModule/StandardMaterial_ReflectMap</option>
+            <option>materialModule/StandardMaterial_SpecularMap</option>
+            <option>materialModule/StandardMaterialLoad</option>
+
+            <option>meshModule/CustomMesh</option>
+            <option>meshModule/MeshLoad</option>
+
+            <option>particleModule/Particle_BurningGround</option>
+            <option>particleModule/Particle_EternalLight</option>
+            <option>particleModule/Particle_Scene</option>
+
+            <option>physicsModule/RayPicking01</option>
+            <option>physicsModule/RayPicking02</option>
+            <option>physicsModule/RayPicking03</option>
+            <option>physicsModule/RayPicking04</option>
+
+            <option>sceneModule/SceneLoad</option>
+            <option>sceneModule/TerrainScene</option>
+
+            <option>shaderModule/Shader_Simple</option>
+            <option>shaderModule/Shader_GlowingEdge</option>
+            <option>shaderModule/Shader_Terrain</option>
+            <option>shaderModule/ShaderPrecompile</option>
+
+            <option>skyModule/SkyBoxSample</option>
+            <option>skyModule/SkyDomeSample</option>
+
+            <option>sprite3dModule/Sprite3DLoad</option>
+            <option>sprite3dModule/Sprite3DClone</option>
+            <option>sprite3dModule/Sprite3DTransform</option>
+
+            <option>vrModule/VRScene1</option>
+            <option>vrModule/VRScene2</option>
+    </select>
+</div>
+<script>
+    var jsCtrl, select, type;
+    function init() {
+        jsCtrl = document.getElementById("jsCtrl");
+        select = document.getElementById("select");
+        type = GetQueryString("type");
+        type = type || "advancedModule/GlitterDemo";
+        select.value = type;
+        jsCtrl.src = "js/"+ type + ".js";
+        document.onkeyup = function (e) {
+            var keycode = e.which;
+            if (keycode == 37) {
+                if (select.selectedIndex > 0)
+                    select.selectedIndex--;
+                else
+                    select.selectedIndex = select.options.length - 1;
+            }
+            else if (keycode == 39) {
+                if (select.selectedIndex < select.options.length - 1)
+                    select.selectedIndex++;
+                else
+                    select.selectedIndex = 0;
+            }
+            selectChanged();
+        }
+    }
+    function selectChanged() {
+        if (type != select.value) {
+            window.location.href = window.location.pathname + "?type=" + select.value;
+        }
+    }
+    function GetQueryString(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        var r = window.location.search.substr(1).match(reg);
+        if (r != null) return unescape(r[2]);
+        return null;
+    }
+</script>
+</body>
+
+</html>

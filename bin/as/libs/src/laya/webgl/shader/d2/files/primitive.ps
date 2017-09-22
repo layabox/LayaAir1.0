@@ -6,4 +6,5 @@ void main(){
 	//vec4 a=vec4(color.r, color.g, color.b, 1);
 	//a.a*=alpha;
     gl_FragColor=vec4(color.r, color.g, color.b, alpha);
+	gl_FragColor.rgb*=alpha;
 }

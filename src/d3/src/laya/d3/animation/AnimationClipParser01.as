@@ -98,12 +98,12 @@ package laya.d3.animation {
 			var clip:AnimationClip = _animationClip;
 			clip.name = _strings[reader.getUint16()];
 			var clipDur:Number = clip._duration = reader.getFloat32();
-			clip.islooping = ! !reader.getByte();
+			clip.islooping = !!reader.getByte();
 			clip._frameRate = reader.getInt16();
 			var nodeCount:int = reader.getInt16();
 			var nodes:Vector.<KeyframeNode> = clip._nodes = new Vector.<KeyframeNode>;
 			nodes.length = nodeCount;
-			var cachePropertyToNodeIndex:int = 0;
+			var cachePropertyToNodeIndex:int = 0, unCachePropertyToNodeIndex:int = 0;
 			for (i = 0; i < nodeCount; i++) {
 				node = nodes[i] = new KeyframeNode();
 				var pathLength:int = reader.getUint16();
@@ -120,7 +120,10 @@ package laya.d3.animation {
 					var isTransformProperty:Boolean = propertyNameID < 4;
 					var cacheProperty:Boolean = !isTransformProperty || (isTransformProperty && path[0] === "");
 					node._cacheProperty = cacheProperty;
-					(cacheProperty) && (cachePropertyToNodeIndex++);
+					if (cacheProperty)
+						cachePropertyToNodeIndex++;
+					else
+						unCachePropertyToNodeIndex++;
 					node.propertyNameID = propertyNameID;
 				} else {
 					throw new Error("AnimationClipParser01:unknown property name.");
@@ -159,15 +162,17 @@ package laya.d3.animation {
 				keyFrame.duration = clipDur - startTime;
 			}
 			
-			
 			var nodeToCachePropertyMap:Int32Array = clip._nodeToCachePropertyMap = new Int32Array(nodeCount);
 			var cachePropertyToNodeMap:Int32Array = clip._cachePropertyToNodeMap = new Int32Array(cachePropertyToNodeIndex);
-			cachePropertyToNodeIndex = 0;
+			var unCachePropertyToNodeMap:Int32Array = clip._unCachePropertyToNodeMap = new Int32Array(unCachePropertyToNodeIndex);
+			cachePropertyToNodeIndex = unCachePropertyToNodeIndex = 0;
 			for (i = 0; i < nodeCount; i++) {
 				node = nodes[i];
 				if (node._cacheProperty) {
 					nodeToCachePropertyMap[i] = cachePropertyToNodeIndex;
 					cachePropertyToNodeMap[cachePropertyToNodeIndex++] = i;
+				} else {
+					unCachePropertyToNodeMap[unCachePropertyToNodeIndex++] = i;
 				}
 			}
 		}

@@ -1,33 +1,37 @@
 package laya.d3.core.particleShuriKen {
 	import laya.d3.core.RenderableSprite3D;
-	import laya.d3.core.particleShuriKen.ShurikenParticleRender;
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
+	import laya.d3.core.particleShuriKen.module.Burst;
 	import laya.d3.core.particleShuriKen.module.ColorOverLifetime;
 	import laya.d3.core.particleShuriKen.module.Emission;
+	import laya.d3.core.particleShuriKen.module.FrameOverTime;
+	import laya.d3.core.particleShuriKen.module.GradientAngularVelocity;
+	import laya.d3.core.particleShuriKen.module.GradientColor;
+	import laya.d3.core.particleShuriKen.module.GradientDataColor;
+	import laya.d3.core.particleShuriKen.module.GradientDataInt;
+	import laya.d3.core.particleShuriKen.module.GradientDataNumber;
+	import laya.d3.core.particleShuriKen.module.GradientSize;
 	import laya.d3.core.particleShuriKen.module.GradientVelocity;
 	import laya.d3.core.particleShuriKen.module.RotationOverLifetime;
 	import laya.d3.core.particleShuriKen.module.SizeOverLifetime;
+	import laya.d3.core.particleShuriKen.module.StartFrame;
 	import laya.d3.core.particleShuriKen.module.TextureSheetAnimation;
 	import laya.d3.core.particleShuriKen.module.VelocityOverLifetime;
 	import laya.d3.core.particleShuriKen.module.shape.BaseShape;
+	import laya.d3.core.particleShuriKen.module.shape.BoxShape;
+	import laya.d3.core.particleShuriKen.module.shape.CircleShape;
+	import laya.d3.core.particleShuriKen.module.shape.ConeShape;
+	import laya.d3.core.particleShuriKen.module.shape.HemisphereShape;
 	import laya.d3.core.particleShuriKen.module.shape.SphereShape;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.RenderQueue;
-	import laya.d3.core.render.RenderState;
-	import laya.d3.math.BoundBox;
-	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
+	import laya.d3.math.Vector4;
 	import laya.d3.resource.Texture2D;
-	import laya.display.Node;
+	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.net.Loader;
-	import laya.utils.Handler;
-	import laya.utils.Stat;
-	import laya.webgl.resource.WebGLImage;
 	
 	/**
 	 * <code>ShuriKenParticle3D</code> 3D粒子。
@@ -59,7 +63,7 @@ package laya.d3.core.particleShuriKen {
 		public static var SHADERDEFINE_SHAPE:int;
 		
 		public static const WORLDPOSITION:int = 0;
-		public static const WORLDROTATIONMATRIX:int = 1;
+		public static const WORLDROTATION:int = 1;
 		public static const POSITIONSCALE:int = 4;//TODO:是否可以从2开始
 		public static const SIZESCALE:int = 5;
 		public static const SCALINGMODE:int = 6;
@@ -158,7 +162,94 @@ package laya.d3.core.particleShuriKen {
 			(material) && (_render.sharedMaterial = material);
 		}
 		
-		/** @private */
+		/**
+		 * @private
+		 */
+		private static function _initStartLife(gradientData:Object):GradientDataNumber {
+			var gradient:GradientDataNumber = new GradientDataNumber();
+			var startLifetimesData:Array = gradientData.startLifetimes;
+			for (var i:int = 0, n:int = startLifetimesData.length; i < n; i++) {
+				var valueData:Object = startLifetimesData[i];
+				gradient.add(valueData.key, valueData.value);
+			}
+			return gradient
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _initParticleVelocity(gradientData:Object):GradientDataNumber {
+			var gradient:GradientDataNumber = new GradientDataNumber();
+			var velocitysData:Array = gradientData.velocitys;
+			for (var i:int = 0, n:int = velocitysData.length; i < n; i++) {
+				var valueData:Object = velocitysData[i];
+				gradient.add(valueData.key, valueData.value);
+			}
+			return gradient;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _initParticleColor(gradientColorData:Object):GradientDataColor {
+			var gradientColor:GradientDataColor = new GradientDataColor();
+			var alphasData:Array = gradientColorData.alphas;
+			var i:int, n:int;
+			for (i = 0, n = alphasData.length; i < n; i++) {
+				var alphaData:Object = alphasData[i];
+				gradientColor.addAlpha(alphaData.key, alphaData.value);
+			}
+			var rgbsData:Array = gradientColorData.rgbs;
+			for (i = 0, n = rgbsData.length; i < n; i++) {
+				var rgbData:Object = rgbsData[i];
+				var rgbValue:Array = rgbData.value;
+				gradientColor.addRGB(rgbData.key, new Vector3(rgbValue[0], rgbValue[1], rgbValue[2]));
+			}
+			return gradientColor;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _initParticleSize(gradientSizeData:Object):GradientDataNumber {
+			var gradientSize:GradientDataNumber = new GradientDataNumber();
+			var sizesData:Array = gradientSizeData.sizes;
+			for (var i:int = 0, n:int = sizesData.length; i < n; i++) {
+				var valueData:Object = sizesData[i];
+				gradientSize.add(valueData.key, valueData.value);
+			}
+			return gradientSize;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _initParticleRotation(gradientData:Object):GradientDataNumber {
+			var gradient:GradientDataNumber = new GradientDataNumber();
+			var angularVelocitysData:Array = gradientData.angularVelocitys;
+			for (var i:int = 0, n:int = angularVelocitysData.length; i < n; i++) {
+				var valueData:Object = angularVelocitysData[i];
+				gradient.add(valueData.key, valueData.value / 180.0 * Math.PI);
+			}
+			return gradient;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _initParticleFrame(overTimeFramesData:Object):GradientDataInt {
+			var overTimeFrame:GradientDataInt = new GradientDataInt();
+			var framesData:Array = overTimeFramesData.frames;
+			for (var i:int = 0, n:int = framesData.length; i < n; i++) {
+				var frameData:Object = framesData[i];
+				overTimeFrame.add(frameData.key, frameData.value);
+			}
+			return overTimeFrame;
+		}
+		
+		/**
+		 * @private
+		 */
 		private function _changeRenderObject(index:int):RenderElement {
 			var renderObjects:Vector.<RenderElement> = _render._renderElements;
 			
@@ -196,6 +287,389 @@ package laya.d3.core.particleShuriKen {
 		}
 		
 		/**
+		 * @inheritDoc
+		 */
+		override protected function _parseCustomProps(innerResouMap:Object, customProps:Object, nodeData:Object):void {
+			super._parseCustomProps(innerResouMap, customProps, nodeData);
+			
+			const anglelToRad:Number = Math.PI / 180.0;
+			var i:int, n:int;
+			
+			//Render
+			var particleRender:ShurikenParticleRender = this.particleRender;
+			var material:ShurikenParticleMaterial;
+			
+			var materialData:Object = customProps.material;
+			if (materialData) {
+				material = Loader.getRes(innerResouMap[materialData.path]);
+			} else {//TODO:兼容性代码
+				var materialPath:String = customProps.materialPath;
+				if (materialPath) {//TODO:兼容性代码
+					material = Loader.getRes(innerResouMap[materialPath]);
+				} else {//TODO:兼容性代码
+					material = new ShurikenParticleMaterial();
+					material.diffuseTexture = innerResouMap ? Loader.getRes(innerResouMap[customProps.texturePath]) : Texture2D.load(customProps.texturePath);
+				}
+			}
+			
+			particleRender.sharedMaterial = material;
+			var meshPath:String = customProps.meshPath;
+			(meshPath) && (particleRender.mesh = Loader.getRes(innerResouMap[meshPath]));
+			
+			particleRender.renderMode = customProps.renderMode;
+			particleRender.stretchedBillboardCameraSpeedScale = customProps.stretchedBillboardCameraSpeedScale;
+			particleRender.stretchedBillboardSpeedScale = customProps.stretchedBillboardSpeedScale;
+			particleRender.stretchedBillboardLengthScale = customProps.stretchedBillboardLengthScale;
+			particleRender.sortingFudge = customProps.sortingFudge ? customProps.sortingFudge : 0.0;
+			
+			//particleSystem
+			var particleSystem:ShurikenParticleSystem = this.particleSystem;
+			particleSystem.isPerformanceMode = customProps.isPerformanceMode;
+			
+			particleSystem.duration = customProps.duration;
+			particleSystem.looping = customProps.looping;
+			particleSystem.prewarm = customProps.prewarm;
+			
+			particleSystem.startDelayType = customProps.startDelayType;
+			particleSystem.startDelay = customProps.startDelay;
+			particleSystem.startDelayMin = customProps.startDelayMin;
+			particleSystem.startDelayMax = customProps.startDelayMax;
+			
+			particleSystem.startLifetimeType = customProps.startLifetimeType;
+			particleSystem.startLifetimeConstant = customProps.startLifetimeConstant;
+			particleSystem.startLifeTimeGradient = _initStartLife(customProps.startLifetimeGradient);
+			particleSystem.startLifetimeConstantMin = customProps.startLifetimeConstantMin;
+			particleSystem.startLifetimeConstantMax = customProps.startLifetimeConstantMax;
+			particleSystem.startLifeTimeGradientMin = _initStartLife(customProps.startLifetimeGradientMin);
+			particleSystem.startLifeTimeGradientMax = _initStartLife(customProps.startLifetimeGradientMax);
+			
+			particleSystem.startSpeedType = customProps.startSpeedType;
+			particleSystem.startSpeedConstant = customProps.startSpeedConstant;
+			particleSystem.startSpeedConstantMin = customProps.startSpeedConstantMin;
+			particleSystem.startSpeedConstantMax = customProps.startSpeedConstantMax;
+			
+			particleSystem.threeDStartSize = customProps.threeDStartSize;
+			particleSystem.startSizeType = customProps.startSizeType;
+			particleSystem.startSizeConstant = customProps.startSizeConstant;
+			var startSizeConstantSeparateArray:Array = customProps.startSizeConstantSeparate;
+			var startSizeConstantSeparateElement:Float32Array = particleSystem.startSizeConstantSeparate.elements;
+			startSizeConstantSeparateElement[0] = startSizeConstantSeparateArray[0];
+			startSizeConstantSeparateElement[1] = startSizeConstantSeparateArray[1];
+			startSizeConstantSeparateElement[2] = startSizeConstantSeparateArray[2];
+			particleSystem.startSizeConstantMin = customProps.startSizeConstantMin;
+			particleSystem.startSizeConstantMax = customProps.startSizeConstantMax;
+			var startSizeConstantMinSeparateArray:Array = customProps.startSizeConstantMinSeparate;
+			var startSizeConstantMinSeparateElement:Float32Array = particleSystem.startSizeConstantMinSeparate.elements;
+			startSizeConstantMinSeparateElement[0] = startSizeConstantMinSeparateArray[0];
+			startSizeConstantMinSeparateElement[1] = startSizeConstantMinSeparateArray[1];
+			startSizeConstantMinSeparateElement[2] = startSizeConstantMinSeparateArray[2];
+			var startSizeConstantMaxSeparateArray:Array = customProps.startSizeConstantMaxSeparate;
+			var startSizeConstantMaxSeparateElement:Float32Array = particleSystem.startSizeConstantMaxSeparate.elements;
+			startSizeConstantMaxSeparateElement[0] = startSizeConstantMaxSeparateArray[0];
+			startSizeConstantMaxSeparateElement[1] = startSizeConstantMaxSeparateArray[1];
+			startSizeConstantMaxSeparateElement[2] = startSizeConstantMaxSeparateArray[2];
+			
+			particleSystem.threeDStartRotation = customProps.threeDStartRotation;
+			particleSystem.startRotationType = customProps.startRotationType;
+			particleSystem.startRotationConstant = customProps.startRotationConstant * anglelToRad;
+			var startRotationConstantSeparateArray:Array = customProps.startRotationConstantSeparate;
+			var startRotationConstantSeparateElement:Float32Array = particleSystem.startRotationConstantSeparate.elements;
+			startRotationConstantSeparateElement[0] = startRotationConstantSeparateArray[0] * anglelToRad;
+			startRotationConstantSeparateElement[1] = startRotationConstantSeparateArray[1] * anglelToRad;
+			startRotationConstantSeparateElement[2] = startRotationConstantSeparateArray[2] * anglelToRad;
+			particleSystem.startRotationConstantMin = customProps.startRotationConstantMin * anglelToRad;
+			particleSystem.startRotationConstantMax = customProps.startRotationConstantMax * anglelToRad;
+			var startRotationConstantMinSeparateArray:Array = customProps.startRotationConstantMinSeparate;
+			var startRotationConstantMinSeparateElement:Float32Array = particleSystem.startRotationConstantMinSeparate.elements;
+			startRotationConstantMinSeparateElement[0] = startRotationConstantMinSeparateArray[0] * anglelToRad;
+			startRotationConstantMinSeparateElement[1] = startRotationConstantMinSeparateArray[1] * anglelToRad;
+			startRotationConstantMinSeparateElement[2] = startRotationConstantMinSeparateArray[2] * anglelToRad;
+			var startRotationConstantMaxSeparateArray:Array = customProps.startRotationConstantMaxSeparate;
+			var startRotationConstantMaxSeparateElement:Float32Array = particleSystem.startRotationConstantMaxSeparate.elements;
+			startRotationConstantMaxSeparateElement[0] = startRotationConstantMaxSeparateArray[0] * anglelToRad;
+			startRotationConstantMaxSeparateElement[1] = startRotationConstantMaxSeparateArray[1] * anglelToRad;
+			startRotationConstantMaxSeparateElement[2] = startRotationConstantMaxSeparateArray[2] * anglelToRad;
+			
+			particleSystem.randomizeRotationDirection = customProps.randomizeRotationDirection;
+			
+			particleSystem.startColorType = customProps.startColorType;
+			var startColorConstantArray:Array = customProps.startColorConstant;
+			var startColorConstantElement:Float32Array = particleSystem.startColorConstant.elements;
+			startColorConstantElement[0] = startColorConstantArray[0];
+			startColorConstantElement[1] = startColorConstantArray[1];
+			startColorConstantElement[2] = startColorConstantArray[2];
+			startColorConstantElement[3] = startColorConstantArray[3];
+			var startColorConstantMinArray:Array = customProps.startColorConstantMin;
+			var startColorConstantMinElement:Float32Array = particleSystem.startColorConstantMin.elements;
+			startColorConstantMinElement[0] = startColorConstantMinArray[0];
+			startColorConstantMinElement[1] = startColorConstantMinArray[1];
+			startColorConstantMinElement[2] = startColorConstantMinArray[2];
+			startColorConstantMinElement[3] = startColorConstantMinArray[3];
+			var startColorConstantMaxArray:Array = customProps.startColorConstantMax;
+			var startColorConstantMaxElement:Float32Array = particleSystem.startColorConstantMax.elements;
+			startColorConstantMaxElement[0] = startColorConstantMaxArray[0];
+			startColorConstantMaxElement[1] = startColorConstantMaxArray[1];
+			startColorConstantMaxElement[2] = startColorConstantMaxArray[2];
+			startColorConstantMaxElement[3] = startColorConstantMaxArray[3];
+			
+			particleSystem.gravityModifier = customProps.gravityModifier;
+			
+			particleSystem.simulationSpace = customProps.simulationSpace;
+			
+			particleSystem.scaleMode = customProps.scaleMode;
+			
+			particleSystem.playOnAwake = customProps.playOnAwake;
+			particleSystem.maxParticles = customProps.maxParticles;
+			
+			var autoRandomSeed:* = customProps.autoRandomSeed;
+			(autoRandomSeed != null) && (particleSystem.autoRandomSeed = autoRandomSeed);
+			var randomSeed:* = customProps.randomSeed;
+			(randomSeed != null) && (particleSystem.randomSeed[0] = randomSeed);
+			
+			//Emission
+			var emissionData:Object = customProps.emission;
+			var emission:Emission = new Emission();
+			emission.emissionRate = emissionData.emissionRate;
+			var burstsData:Array = emissionData.bursts;
+			if (burstsData)
+				for (i = 0, n = burstsData.length; i < n; i++) {
+					var brust:Object = burstsData[i];
+					emission.addBurst(new Burst(brust.time, brust.min, brust.max));
+				}
+			emission.enbale = emissionData.enable;
+			particleSystem.emission = emission;
+			
+			//Shape
+			var shapeData:Object = customProps.shape;
+			var shape:BaseShape;
+			switch (shapeData.shapeType) {
+			case 0: 
+				var sphereShape:SphereShape;
+				shape = sphereShape = new SphereShape();
+				sphereShape.radius = shapeData.sphereRadius;
+				sphereShape.emitFromShell = shapeData.sphereEmitFromShell;
+				sphereShape.randomDirection = shapeData.sphereRandomDirection;
+				break;
+			case 1: 
+				var hemiSphereShape:HemisphereShape;
+				shape = hemiSphereShape = new HemisphereShape();
+				hemiSphereShape.radius = shapeData.hemiSphereRadius;
+				hemiSphereShape.emitFromShell = shapeData.hemiSphereEmitFromShell;
+				hemiSphereShape.randomDirection = shapeData.hemiSphereRandomDirection;
+				break;
+			case 2: 
+				var coneShape:ConeShape;
+				shape = coneShape = new ConeShape();
+				coneShape.angle = shapeData.coneAngle * anglelToRad;
+				coneShape.radius = shapeData.coneRadius;
+				coneShape.length = shapeData.coneLength;
+				coneShape.emitType = shapeData.coneEmitType;
+				coneShape.randomDirection = shapeData.coneRandomDirection;
+				break;
+			case 3: 
+				var boxShape:BoxShape;
+				shape = boxShape = new BoxShape();
+				boxShape.x = shapeData.boxX;
+				boxShape.y = shapeData.boxY;
+				boxShape.z = shapeData.boxZ;
+				boxShape.randomDirection = shapeData.boxRandomDirection;
+				break;
+			case 7: 
+				var circleShape:CircleShape;
+				shape = circleShape = new CircleShape();
+				circleShape.radius = shapeData.circleRadius;
+				circleShape.arc = shapeData.circleArc * anglelToRad;
+				circleShape.emitFromEdge = shapeData.circleEmitFromEdge;
+				circleShape.randomDirection = shapeData.circleRandomDirection;
+				break;
+			/**
+			 * ------------------------临时调整，待日后完善-------------------------------------
+			 */
+			default: 
+				var tempShape:CircleShape;
+				shape = tempShape = new CircleShape();
+				tempShape.radius = shapeData.circleRadius;
+				tempShape.arc = shapeData.circleArc * anglelToRad;
+				tempShape.emitFromEdge = shapeData.circleEmitFromEdge;
+				tempShape.randomDirection = shapeData.circleRandomDirection;
+				break;
+			}
+			shape.enable = shapeData.enable;
+			particleSystem.shape = shape;
+			
+			//VelocityOverLifetime
+			var velocityOverLifetimeData:Object = customProps.velocityOverLifetime;
+			if (velocityOverLifetimeData) {
+				var velocityData:Object = velocityOverLifetimeData.velocity;
+				var velocity:GradientVelocity;
+				switch (velocityData.type) {
+				case 0: 
+					var constantData:Array = velocityData.constant;
+					velocity = GradientVelocity.createByConstant(new Vector3(constantData[0], constantData[1], constantData[2]));
+					break;
+				case 1: 
+					velocity = GradientVelocity.createByGradient(_initParticleVelocity(velocityData.gradientX), _initParticleVelocity(velocityData.gradientY), _initParticleVelocity(velocityData.gradientZ));
+					break;
+				case 2: 
+					var constantMinData:Array = velocityData.constantMin;
+					var constantMaxData:Array = velocityData.constantMax;
+					velocity = GradientVelocity.createByRandomTwoConstant(new Vector3(constantMinData[0], constantMinData[1], constantMinData[2]), new Vector3(constantMaxData[0], constantMaxData[1], constantMaxData[2]));
+					break;
+				case 3: 
+					velocity = GradientVelocity.createByRandomTwoGradient(_initParticleVelocity(velocityData.gradientXMin), _initParticleVelocity(velocityData.gradientXMax), _initParticleVelocity(velocityData.gradientYMin), _initParticleVelocity(velocityData.gradientYMax), _initParticleVelocity(velocityData.gradientZMin), _initParticleVelocity(velocityData.gradientZMax));
+					break;
+				}
+				var velocityOverLifetime:VelocityOverLifetime = new VelocityOverLifetime(velocity);
+				velocityOverLifetime.space = velocityOverLifetimeData.space;
+				velocityOverLifetime.enbale = velocityOverLifetimeData.enable;
+				particleSystem.velocityOverLifetime = velocityOverLifetime;
+			}
+			
+			//ColorOverLifetime
+			var colorOverLifetimeData:Object = customProps.colorOverLifetime;
+			if (colorOverLifetimeData) {
+				var colorData:Object = colorOverLifetimeData.color;
+				var color:GradientColor;
+				switch (colorData.type) {
+				case 0: 
+					var constColorData:Array = colorData.constant;
+					color = GradientColor.createByConstant(new Vector4(constColorData[0], constColorData[1], constColorData[2], constColorData[3]));
+					break;
+				case 1: 
+					color = GradientColor.createByGradient(_initParticleColor(colorData.gradient));
+					break;
+				case 2: 
+					var minConstColorData:Array = colorData.constantMin;
+					var maxConstColorData:Array = colorData.constantMax;
+					color = GradientColor.createByRandomTwoConstant(new Vector4(minConstColorData[0], minConstColorData[1], minConstColorData[2], minConstColorData[3]), new Vector4(maxConstColorData[0], maxConstColorData[1], maxConstColorData[2], maxConstColorData[3]));
+					break;
+				case 3: 
+					color = GradientColor.createByRandomTwoGradient(_initParticleColor(colorData.gradientMin), _initParticleColor(colorData.gradientMax));
+					break;
+				}
+				var colorOverLifetime:ColorOverLifetime = new ColorOverLifetime(color);
+				colorOverLifetime.enbale = colorOverLifetimeData.enable;
+				particleSystem.colorOverLifetime = colorOverLifetime;
+			}
+			
+			//SizeOverLifetime
+			var sizeOverLifetimeData:Object = customProps.sizeOverLifetime;
+			if (sizeOverLifetimeData) {
+				var sizeData:Object = sizeOverLifetimeData.size;
+				var size:GradientSize;
+				switch (sizeData.type) {
+				case 0: 
+					if (sizeData.separateAxes) {
+						size = GradientSize.createByGradientSeparate(_initParticleSize(sizeData.gradientX), _initParticleSize(sizeData.gradientY), _initParticleSize(sizeData.gradientZ));
+					} else {
+						size = GradientSize.createByGradient(_initParticleSize(sizeData.gradient));
+					}
+					break;
+				case 1: 
+					if (sizeData.separateAxes) {
+						var constantMinSeparateData:Array = sizeData.constantMinSeparate;
+						var constantMaxSeparateData:Array = sizeData.constantMaxSeparate;
+						size = GradientSize.createByRandomTwoConstantSeparate(new Vector3(constantMinSeparateData[0], constantMinSeparateData[1], constantMinSeparateData[2]), new Vector3(constantMaxSeparateData[0], constantMaxSeparateData[1], constantMaxSeparateData[2]));
+					} else {
+						size = GradientSize.createByRandomTwoConstant(sizeData.constantMin, sizeData.constantMax);
+					}
+					break;
+				case 2: 
+					if (sizeData.separateAxes) {
+						size = GradientSize.createByRandomTwoGradientSeparate(_initParticleSize(sizeData.gradientXMin), _initParticleSize(sizeData.gradientYMin), _initParticleSize(sizeData.gradientZMin), _initParticleSize(sizeData.gradientXMax), _initParticleSize(sizeData.gradientYMax), _initParticleSize(sizeData.gradientZMax));
+					} else {
+						size = GradientSize.createByRandomTwoGradient(_initParticleSize(sizeData.gradientMin), _initParticleSize(sizeData.gradientMax));
+					}
+					break;
+				}
+				var sizeOverLifetime:SizeOverLifetime = new SizeOverLifetime(size);
+				sizeOverLifetime.enbale = sizeOverLifetimeData.enable;
+				particleSystem.sizeOverLifetime = sizeOverLifetime;
+			}
+			
+			//RotationOverLifetime
+			var rotationOverLifetimeData:Object = customProps.rotationOverLifetime;
+			if (rotationOverLifetimeData) {
+				var angularVelocityData:Object = rotationOverLifetimeData.angularVelocity;
+				var angularVelocity:GradientAngularVelocity;
+				switch (angularVelocityData.type) {
+				case 0: 
+					if (angularVelocityData.separateAxes) {
+						//TODO:待补充
+					} else {
+						angularVelocity = GradientAngularVelocity.createByConstant(angularVelocityData.constant * anglelToRad);
+					}
+					break;
+				case 1: 
+					if (angularVelocityData.separateAxes) {
+						//TODO:待补充
+					} else {
+						angularVelocity = GradientAngularVelocity.createByGradient(_initParticleRotation(angularVelocityData.gradient));
+					}
+					break;
+				case 2: 
+					if (angularVelocityData.separateAxes) {
+						//TODO:待补充
+					} else {
+						angularVelocity = GradientAngularVelocity.createByRandomTwoConstant(angularVelocityData.constantMin * anglelToRad, angularVelocityData.constantMax * anglelToRad);
+					}
+					break;
+				case 3: 
+					if (angularVelocityData.separateAxes) {
+						//TODO:待补充
+					} else {
+						angularVelocity = GradientAngularVelocity.createByRandomTwoGradient(_initParticleRotation(angularVelocityData.gradientMin), _initParticleRotation(angularVelocityData.gradientMax));
+					}
+					break;
+				}
+				var rotationOverLifetime:RotationOverLifetime = new RotationOverLifetime(angularVelocity);
+				rotationOverLifetime.enbale = rotationOverLifetimeData.enable;
+				particleSystem.rotationOverLifetime = rotationOverLifetime;
+			}
+			
+			//TextureSheetAnimation
+			var textureSheetAnimationData:Object = customProps.textureSheetAnimation;
+			if (textureSheetAnimationData) {
+				var frameData:Object = textureSheetAnimationData.frame;
+				var frameOverTime:FrameOverTime;
+				switch (frameData.type) {
+				case 0: 
+					frameOverTime = FrameOverTime.createByConstant(frameData.constant);
+					break;
+				case 1: 
+					frameOverTime = FrameOverTime.createByOverTime(_initParticleFrame(frameData.overTime));
+					break;
+				case 2: 
+					frameOverTime = FrameOverTime.createByRandomTwoConstant(frameData.constantMin, frameData.constantMax);
+					break;
+				case 3: 
+					frameOverTime = FrameOverTime.createByRandomTwoOverTime(_initParticleFrame(frameData.overTimeMin), _initParticleFrame(frameData.overTimeMax));
+					break;
+				}
+				var startFrameData:Object = textureSheetAnimationData.startFrame;
+				var startFrame:StartFrame;
+				switch (startFrameData.type) {
+				case 0: 
+					startFrame = StartFrame.createByConstant(startFrameData.constant);
+					break;
+				case 1: 
+					startFrame = StartFrame.createByRandomTwoConstant(startFrameData.constantMin, startFrameData.constantMax);
+					break;
+				}
+				var textureSheetAnimation:TextureSheetAnimation = new TextureSheetAnimation(frameOverTime, startFrame);
+				textureSheetAnimation.enable = textureSheetAnimationData.enable;
+				var tilesData:Array = textureSheetAnimationData.tiles;
+				textureSheetAnimation.tiles = new Vector2(tilesData[0], tilesData[1]);
+				textureSheetAnimation.type = textureSheetAnimationData.type;
+				textureSheetAnimation.randomRow = textureSheetAnimationData.randomRow;
+				textureSheetAnimation.cycles = textureSheetAnimationData.cycles;
+				particleSystem.textureSheetAnimation = textureSheetAnimation;
+			}
+			
+			(particleSystem.playOnAwake) && (particleSystem.play());
+		}
+		
+		/**
 		 * @private
 		 */
 		override public function cloneTo(destObject:*):void {
@@ -221,6 +695,8 @@ package laya.d3.core.particleShuriKen {
 		 * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
+			if (destroyed)
+				return;
 			super.destroy(destroyChild);
 			(_geometryFilter as ShurikenParticleSystem)._destroy();
 			_geometryFilter = null;

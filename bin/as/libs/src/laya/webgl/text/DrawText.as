@@ -50,7 +50,7 @@ package laya.webgl.text {
 			return result;
 		}
 		
-		private static function _drawSlow(save:Array, ctx:WebGLContext2D, txt:String, words:Vector.<HTMLChar>, curMat:Matrix, font:FontInContext, textAlign:String, fillColor:String, borderColor:String, lineWidth:int, x:Number, y:Number, sx:Number, sy:Number):void {
+		private static function _drawSlow(save:Array, ctx:WebGLContext2D, txt:String, words:Vector.<HTMLChar>, curMat:Matrix, font:FontInContext, textAlign:String, fillColor:String, borderColor:String, lineWidth:int, x:Number, y:Number, sx:Number, sy:Number,underLine:int):void {
 			//if (_charsCacheCount > maxCacheCharsCount) {
 			//_charsCacheCount = 0;
 			//CharValue.clear();
@@ -59,7 +59,7 @@ package laya.webgl.text {
 			//_charsCache = {};
 			//}
 			
-			var drawValue:CharValue = _drawValue.value(font, fillColor, borderColor, lineWidth, sx, sy);
+			var drawValue:CharValue = _drawValue.value(font, fillColor, borderColor, lineWidth, sx, sy,underLine);
 			
 			var i:int, n:int;
 			var chars:Vector.<WebGLCharImage> = _charsTemp;
@@ -88,6 +88,7 @@ package laya.webgl.text {
 					}
 				}
 				else {
+					chars.length = 0;
 					oneChar = getChar(text, -1, drawValue);
 					oneChar.active();
 					width += oneChar.cw;
@@ -135,7 +136,7 @@ package laya.webgl.text {
 			}
 		}
 		
-		public static function drawText(ctx:WebGLContext2D, txt:*, words:Vector.<HTMLChar>, curMat:Matrix, font:FontInContext, textAlign:String, fillColor:String, borderColor:String, lineWidth:int, x:Number, y:Number):void {
+		public static function drawText(ctx:WebGLContext2D, txt:*, words:Vector.<HTMLChar>, curMat:Matrix, font:FontInContext, textAlign:String, fillColor:String, borderColor:String, lineWidth:int, x:Number, y:Number,underLine:int=0):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			if ((txt && txt.length===0) || (words && words.length === 0))
 				return;
@@ -150,14 +151,18 @@ package laya.webgl.text {
 			
 			if (scale) {
 				curMat = curMat.copyTo(WebGLContext2D._tmpMatrix);
+				var tempTx:Number = curMat.tx;
+				var tempTy:Number = curMat.ty;
 				curMat.scale(1 / sx, 1 / sy);
 				curMat._checkTransform();
 				x *= sx;
 				y *= sy;
+				x += tempTx - curMat.tx;
+				y += tempTy - curMat.ty;
 			} else sx = sy = 1;
 			
 			if (words) {
-				_drawSlow(null, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy);
+				_drawSlow(null, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy,underLine);
 			} else {
 				if (txt.toUpperCase === null) {
 					var idNum:Number = sx + sy * 100000;
@@ -167,7 +172,7 @@ package laya.webgl.text {
 					} else {
 						myCache.id = idNum;
 						myCache.changed = false;
-						_drawSlow(myCache.save, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy);
+						_drawSlow(myCache.save, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy,underLine);
 					}
 					return;
 				}
@@ -192,11 +197,11 @@ package laya.webgl.text {
 						_textsCache.__length++
 						_curPoolIndex++;
 						
-						_drawSlow(cache, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy);
+						_drawSlow(cache, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy,underLine);
 					}
 				}
 				else{
-						_drawSlow(cache, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy);
+						_drawSlow(cache, ctx, txt, words, curMat, font, textAlign, fillColor, borderColor, lineWidth, x, y, sx, sy,underLine);
 				}
 			}
 		}
@@ -216,15 +221,17 @@ class CharValue {
 	public var lineWidth:int;
 	public var scaleX:Number;
 	public var scaleY:Number;
+	public var underLine:int;
 	
-	public function value(font:*, fillColor:String, borderColor:String, lineWidth:int, scaleX:Number, scaleY:Number):CharValue {
+	public function value(font:*, fillColor:String, borderColor:String, lineWidth:int, scaleX:Number, scaleY:Number,underLine:int):CharValue {
 		this.font = font;
 		this.fillColor = fillColor;
 		this.borderColor = borderColor;
 		this.lineWidth = lineWidth;
 		this.scaleX = scaleX;
 		this.scaleY = scaleY;
-		var key:String = font.toString() + scaleX + scaleY + lineWidth + fillColor + borderColor;
+		this.underLine = underLine;
+		var key:String = font.toString() + scaleX + scaleY + lineWidth + fillColor + borderColor + underLine;
 		this.txtID = _keymap[key];
 		if (!this.txtID) {
 			this.txtID = (++_keymapCount) * 0.0000001;

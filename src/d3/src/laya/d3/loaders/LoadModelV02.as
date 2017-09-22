@@ -61,7 +61,7 @@ package laya.d3.loaders {
 		/**
 		 * @private
 		 */
-		public static function parse(readData:Byte, version:String, mesh:Mesh, materials:Vector.<BaseMaterial>,subMeshes:Vector.<SubMesh>, materialMap:Object):void {
+		public static function parse(readData:Byte, version:String, mesh:Mesh, materials:Vector.<BaseMaterial>, subMeshes:Vector.<SubMesh>, materialMap:Object):void {
 			_mesh = mesh;
 			_materials = materials;
 			_subMeshes = subMeshes;
@@ -72,7 +72,7 @@ package laya.d3.loaders {
 			READ_BLOCK();
 			READ_STRINGS();
 			for (var i:int = 0, n:int = _BLOCK.count; i < n; i++) {
-				_readData.pos = _BLOCK.blockStarts[i] ;
+				_readData.pos = _BLOCK.blockStarts[i];
 				var index:int = _readData.getUint16();
 				var blockName:String = _strings[index];
 				var fn:Function = LoadModelV02["READ_" + blockName];
@@ -186,11 +186,6 @@ package laya.d3.loaders {
 			var bindPoseStart:uint = _readData.getUint32();
 			var binPoseLength:uint = _readData.getUint32();
 			var bindPoseDatas:Float32Array = new Float32Array(arrayBuffer.slice(offset + bindPoseStart, offset + bindPoseStart + binPoseLength));
-			_mesh._bindPoses = new Vector.<Matrix4x4>();
-			for (i = 0, n = bindPoseDatas.length; i < n; i += 16) {
-				var bindPose:Matrix4x4 = new Matrix4x4(bindPoseDatas[i + 0], bindPoseDatas[i + 1], bindPoseDatas[i + 2], bindPoseDatas[i + 3], bindPoseDatas[i + 4], bindPoseDatas[i + 5], bindPoseDatas[i + 6], bindPoseDatas[i + 7], bindPoseDatas[i + 8], bindPoseDatas[i + 9], bindPoseDatas[i + 10], bindPoseDatas[i + 11], bindPoseDatas[i + 12], bindPoseDatas[i + 13], bindPoseDatas[i + 14], bindPoseDatas[i + 15]);
-				_mesh._bindPoses.push(bindPose);
-			}
 			
 			var inverseGlobalBindPoseStart:uint = _readData.getUint32();
 			var inverseGlobalBinPoseLength:uint = _readData.getUint32();
@@ -220,12 +215,14 @@ package laya.d3.loaders {
 			submesh._vertexCount = vbLength;
 			
 			var ibStart:int = _readData.getUint32();
-			var ibLength:int = _readData.getUint32();
-			submesh._indexBuffer = _mesh._indexBuffer;
+			var ibCount:int = _readData.getUint32();
+			var indexBuffer:IndexBuffer3D = _mesh._indexBuffer;
+			submesh._indexBuffer = indexBuffer;
 			submesh._indexStart = ibStart;
-			submesh._indexCount = ibLength;
-			var offset:int = _DATA.offset;
+			submesh._indexCount = ibCount;
+			submesh._indices = new Uint16Array(indexBuffer.getData().buffer, ibStart * 2, ibCount);
 			
+			var offset:int = _DATA.offset;
 			var subIndexBufferStart:Vector.<int> = submesh._subIndexBufferStart;
 			var subIndexBufferCount:Vector.<int> = submesh._subIndexBufferCount;
 			var boneIndicesList:Vector.<Uint8Array> = submesh._boneIndicesList;

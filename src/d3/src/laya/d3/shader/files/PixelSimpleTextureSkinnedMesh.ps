@@ -1,4 +1,4 @@
-#ifdef FSHIGHPRECISION
+#ifdef HIGHPRECISION
 precision highp float;
 #else
 precision mediump float;
@@ -208,7 +208,7 @@ void main_normal()
 		gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb); 
 	#else
 		#if defined(RECEIVESHADOW)
-			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb * shadowValue );
+			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb * shadowValue);
 		#else
 			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_AmbientTexture, v_LightMapUV).rgb); 
 		#endif
@@ -220,7 +220,7 @@ void main_normal()
 		gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb); 
 	#else
 		#if defined(RECEIVESHADOW)
-			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb * shadowValue );
+			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb * shadowValue);
 		#else
 			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient+texture2D(u_LightMap, v_LightMapUV).rgb); 
 		#endif

@@ -429,7 +429,7 @@ package laya.resource {
 		}
 		
 		/*** @private */
-		public function fillWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String):void {
+		public function fillWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String,underLine:int):void {
 			font && (this.font = font);
 			color && (this.fillStyle = color);
 			var _this:* = this;
@@ -438,7 +438,19 @@ package laya.resource {
 			for (var i:int = 0, n:int = words.length; i < n; i++) {
 				var a:* = words[i];
 				__JS__("this.__fillText(a.char, a.x + x, a.y + y)");
-			}
+				if (underLine === 1) {
+					var tHeight:Number = a.height;
+					var dX:Number = a.style.letterSpacing*0.5;
+					if (!dX) dX = 0;
+					//tSprite.graphics.drawLine(0-dX, tHeight, tHTMLChar.width+dX, tHeight, tHTMLChar._getCSSStyle().color);
+					this.beginPath();
+					this.strokeStyle = color;
+					this.lineWidth = 1;
+					this.moveTo(x+a.x-dX, y+a.y + tHeight);
+					this.lineTo(x+a.x+a.width+dX, y+a.y+tHeight);
+					this.stroke();
+				}
+			}			
 		}
 		
 		/*** @private */

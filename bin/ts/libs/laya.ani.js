@@ -149,8 +149,6 @@
 								}
 						}
 						keyFrame.data=new Float32Array(keyframeDataCount);
-						keyFrame.dData=new Float32Array(keyframeDataCount);
-						keyFrame.nextData=new Float32Array(keyframeDataCount);
 						for (l=0;l < keyframeDataCount;l++){
 							keyFrame.data[l]=reader.getFloat32();
 							if (keyFrame.data[l] >-0.00000001 && keyFrame.data[l] < 0.00000001)keyFrame.data[l]=0;
@@ -264,8 +262,6 @@
 						{};
 						keyFrame.startTime=reader.getFloat32();
 						(lastKeyFrame)&& (lastKeyFrame.duration=keyFrame.startTime-lastKeyFrame.startTime);
-						keyFrame.dData=new Float32Array(keyframeWidth);
-						keyFrame.nextData=new Float32Array(keyframeWidth);
 						var offset=AnimationParser02._DATA.offset;
 						var keyframeDataOffset=reader.getUint32();
 						var keyframeDataLength=keyframeWidth *4;
@@ -2591,7 +2587,6 @@
 			this.duration=NaN;
 			this.interpolationData=null;
 			this.data=null;
-			this.dData=null;
 			this.nextData=null;
 		}
 
@@ -3216,10 +3211,7 @@
 			keyFrames[keyframeCount]=keyFrames[0];
 			for (var i=0;i < keyframeCount;i++){
 				var keyFrame=keyFrames[i];
-				for (var j=0;j < keyframeDataCount;j++){
-					keyFrame.dData[j]=(keyFrame.duration===0)? 0 :(keyFrames[i+1].data[j]-keyFrame.data[j])/ keyFrame.duration;
-					keyFrame.nextData[j]=keyFrames[i+1].data[j];
-				}
+				keyFrame.nextData=(keyFrame.duration===0)? keyFrame.data :keyFrames[i+1].data;
 			}
 			keyFrames.length--;
 		}
@@ -3308,7 +3300,7 @@
 						case 0:
 						case 1:
 							for (j=0;j < node.keyframeWidth;)
-							j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
+							j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,null,key.duration,key.nextData);
 							break ;
 						case 2:;
 							var interpolationData=key.interpolationData;
@@ -3318,13 +3310,13 @@
 								var type=interpolationData[j];
 							switch (type){
 								case 6:
-									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
+									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,null,key.duration,key.nextData,interpolationData,j+1);
 									break ;
 								case 7:
-									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
+									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,null,key.duration,key.nextData,interpolationData,j+1);
 									break ;
 								default :
-									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData);
+									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,null,key.duration,key.nextData);
 								}
 							dataIndex++;
 						}
@@ -3332,7 +3324,7 @@
 					}
 					}else {
 					for (j=0;j < node.keyframeWidth;)
-					j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
+					j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,null,key.duration,key.nextData);
 				}
 				outOfs+=node.keyframeWidth;
 			}
@@ -3391,7 +3383,7 @@
 						case 0:
 						case 1:
 							for (j=0;j < node.keyframeWidth;)
-							j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
+							j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,null,key.duration,key.nextData);
 							break ;
 						case 2:;
 							var interpolationData=key.interpolationData;
@@ -3401,13 +3393,13 @@
 								var type=interpolationData[j];
 							switch (type){
 								case 6:
-									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
+									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,null,key.duration,key.nextData,interpolationData,j+1);
 									break ;
 								case 7:
-									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData,interpolationData,j+1);
+									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,null,key.duration,key.nextData,interpolationData,j+1);
 									break ;
 								default :
-									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,key.dData,key.duration,key.nextData);
+									j+=AnimationTemplet.interpolation[type](node,dataIndex,originalData,outOfs+dataIndex,key.data,dt,null,key.duration,key.nextData);
 								}
 							dataIndex++;
 						}
@@ -3415,20 +3407,15 @@
 					}
 					}else {
 					for (j=0;j < node.keyframeWidth;)
-					j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,key.dData,key.duration,key.nextData);
+					j+=node.interpolationMethod[j](node,j,originalData,outOfs+j,key.data,dt,null,key.duration,key.nextData);
 				}
 				outOfs+=node.keyframeWidth;
 			}
 		}
 
-		__proto.dispose=function(){
-			if (this.resourceManager)
-				this.resourceManager.removeResource(this);
-			_super.prototype.dispose.call(this);
-		}
-
 		AnimationTemplet._LinearInterpolation_0=function(bone,index,out,outOfs,data,dt,dData,duration,nextData,interData){
-			out[outOfs]=data[index]+dt *dData[index];
+			var amount=duration===0 ? 0 :dt / duration;
+			out[outOfs]=(1.0-amount)*data[index]+amount *nextData[index];
 			return 1;
 		}
 

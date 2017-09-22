@@ -157,6 +157,7 @@
 			function addLine (){
 				curLine.y=y;
 				y+=curLine.h+leading;
+				if (curLine.h==0)y+=lineHeight;
 				curLine.mWidth=tWordWidth;
 				tWordWidth=0;
 				curLine=new LayoutLine();
@@ -179,7 +180,6 @@
 				if ((oneLayout instanceof laya.html.dom.HTMLBrElement )){
 					addLine();
 					curLine.y=y;
-					curLine.h=lineHeight;
 					continue ;
 					}else if (oneLayout._isChar()){
 					htmlWord=oneLayout;
@@ -330,7 +330,6 @@
 			this._href=null;
 			HTMLElement.__super.call(this);
 			this._text=HTMLElement._EMPTYTEXT;
-			this._childRenderMax=true;
 			this.setStyle(new CSSStyle(this));
 			this._getCSSStyle().valign="middle";
 			this.mouseEnabled=true;
@@ -349,7 +348,7 @@
 				}
 			};
 			var word=this._getWords();
-			word&&HTMLElement.fillWords(this,word,0,0,this.style.font,this.style.color);
+			word&&HTMLElement.fillWords(this,word,0,0,this.style.font,this.style.color,this.style.underLine);
 		}
 
 		__proto.appendChild=function(c){
@@ -433,10 +432,6 @@
 						tHTMLChar=words[i];
 						tSprite=tHTMLChar.getSprite();
 						if (tSprite){
-							var tHeight=tHTMLChar.height-1;
-							var dX=tHTMLChar.style.letterSpacing*0.5;
-							if (!dX)dX=0;
-							tSprite.graphics.drawLine(0-dX,tHeight,tHTMLChar.width+dX,tHeight,tHTMLChar._getCSSStyle().color);
 							tSprite.size(tHTMLChar.width,tHTMLChar.height);
 							tSprite.on(/*laya.events.Event.CLICK*/"click",this,this.onLinkHandler);
 						}
@@ -467,6 +462,7 @@
 			},function(url){
 			this._href=url;
 			if (url !=null){
+				this._getCSSStyle().underLine=1;
 				this.updateHref();
 			}
 		});
@@ -523,11 +519,11 @@
 			this.style.attrs(HTMLDocument.document.styleSheets['.'+value]);
 		});
 
-		HTMLElement.fillWords=function(ele,words,x,y,font,color){
+		HTMLElement.fillWords=function(ele,words,x,y,font,color,underLine){
 			ele.graphics.clear();
 			for (var i=0,n=words.length;i < n;i++){
 				var a=words[i];
-				ele.graphics.fillText(a.char,a.x+x,a.y+y,font,color,'left');
+				ele.graphics.fillText(a.char,a.x+x,a.y+y,font,color,'left',underLine);
 			}
 		}
 

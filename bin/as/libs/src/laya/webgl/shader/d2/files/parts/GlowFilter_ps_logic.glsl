@@ -13,3 +13,4 @@ for(float i = 0.0;i<=c_IterationTime; ++i){
 	}
 }
 gl_FragColor = vec4(u_color.rgb,vec4Color.a * u_strength);
+gl_FragColor.rgb *= gl_FragColor.a;

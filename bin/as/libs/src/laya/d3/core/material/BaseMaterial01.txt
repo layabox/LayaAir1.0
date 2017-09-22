@@ -10,13 +10,16 @@
 			"alphaTest":
 			depthTest:
 			"renderQueue":
-			"textures":[
-				{"name":"diffuseTexture","path":"aa/bb/x.png"},
-				{"name":"xxTexture","path":"aa/bb/y.png"}
+			"textures":[//params:canRead:Boolean = false, reapeat:Boolean = true, format:int = WebGLContext.RGBA, mipmap:Boolean = true||WebGLContext.RGB:6407,WebGLContext.RGBA:6408,ETC:36196
+				{"name":"diffuseTexture","path":"aa/bb/x.png","params":[false,flase,6408,true]},   
+				{"name":"xxTexture","path":"aa/bb/y.png",params:[]}
 			],
 			"vectors":[
 				{"name":"albedo","value":[1,1,1,1]},
-				{"name":"xxColor","value":[1,1,1,1]},
+				{"name":"xxColor","value":[1,1,1,1]}
+			]
+			"defines":[
+				"ADDTIVEFOG","DIFFUSE"
 			]
 		}
 }

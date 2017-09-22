@@ -54,13 +54,28 @@ package laya.webgl {
 	 * @private
 	 */
 	public class WebGL {
+		/**@private */
+		public static var compressAstc:Object;
+		/**@private */
+		public static var compressAtc:Object;
+		/**@private */
+		public static var compressEtc:Object;
+		/**@private */
+		public static var compressEtc1:Object;
+		/**@private */
+		public static var compressPvrtc:Object;
+		/**@private */
+		public static var compressS3tc:Object;
+		/**@private */
+		public static var compressS3tc_srgb:Object;
+		
 		public static var mainCanvas:HTMLCanvas;
 		public static var mainContext:WebGLContext;
 		public static var antialias:Boolean = true;
-		public static var frameShaderHighPrecision:Boolean;
+		/**Shader是否支持高精度。 */
+		public static var shaderHighPrecision:Boolean;
 		
 		private static var _bg_null:Array =/*[STATIC SAFE]*/ [0, 0, 0, 0];
-		private static var _isExperimentalWebgl:Boolean = false;		
 		
 		private static function _uint8ArraySlice():Uint8Array {
 			var _this:* = __JS__("this");
@@ -114,7 +129,7 @@ package laya.webgl {
 				if (ib === null) {
 					this._ib = this._ib || IndexBuffer2D.QuadrangleIB;
 					ib = this._ib;
-					GlUtils.expandIBQuadrangle(ib, (vb.byteLength / (4 * 16) + 8));
+					GlUtils.expandIBQuadrangle(ib, (vb._byteLength / (4 * 16) + 8));
 				}
 				this._setIBVB(x, y, ib, vb, numElement, mat, shader, shaderValues, startIndex, offset);
 			};
@@ -129,7 +144,7 @@ package laya.webgl {
 				var vb:VertexBuffer2D = this._vb;
 				var length:int = points.length >> 4;
 				GlUtils.fillTranglesVB(vb, x, y, points, m || this._curMat, 0, 0);
-				GlUtils.expandIBQuadrangle(this._ib, (vb.byteLength / (4 * 16) + 8));
+				GlUtils.expandIBQuadrangle(this._ib, (vb._byteLength / (4 * 16) + 8));
 				var shaderValues:Value2D = new Value2D(0x01, 0);//     Value2D.create(0x01, 0);
 				shaderValues.textureHost = tex;
 				//var sd = RenderState2D.worldShaderDefines?shaderValues._withWorldShaderDefines():(Shader.sharders [shaderValues.mainID | shaderValues.defines._value] );
@@ -160,14 +175,12 @@ package laya.webgl {
 				var gl:WebGLContext;
 				var names:Array = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
 				for (var i:int = 0; i < names.length; i++) {
-					try {						
+					try {
 						gl = canvas.getContext(names[i], {stencil: Config.isStencil, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha, preserveDrawingBuffer: Config.preserveDrawingBuffer});//antialias为true,premultipliedAlpha为false,IOS和部分安卓QQ浏览器有黑屏或者白屏底色BUG
 					} catch (e:*) {
 					}
-					if (gl) {
-						(i !== 0) && (_isExperimentalWebgl = true);
+					if (gl)
 						return gl;
-					}
 				}
 				return null;
 			}
@@ -209,7 +222,7 @@ package laya.webgl {
 				return new ColorFilterActionGL()
 			}
 			
-			RunDriver.clear = function(color:String):void {				
+			RunDriver.clear = function(color:String):void {
 				RenderState2D.worldScissorTest && WebGL.mainContext.disable(WebGLContext.SCISSOR_TEST);
 				var ctx:* = Render.context.ctx;
 				//兼容浏览器
@@ -229,6 +242,11 @@ package laya.webgl {
 					bitmap.on(Event.RECOVERED, texture, texture.addTextureToAtlas);
 				}
 			}
+			
+			RunDriver.isAtlas = function(bitmap:*):Boolean{
+				return bitmap is AtlasWebGLCanvas;
+			}
+			
 			AtlasResourceManager._enable();
 			
 			RunDriver.beginFlush = function():void {
@@ -249,23 +267,23 @@ package laya.webgl {
 				sprite.render(Render.context, offsetX, RenderState2D.height - canvasHeight + offsetY);
 				Render.context.flush();
 				renderTarget.end();
-				var pixels:Uint8Array = renderTarget.getData(0, 0, renderTarget.width, renderTarget.height);	
+				var pixels:Uint8Array = renderTarget.getData(0, 0, renderTarget.width, renderTarget.height);
 				renderTarget.dispose();
 				
 				var htmlCanvas:* = new WebGLCanvas();
 				htmlCanvas._canvas = Browser.createElement("canvas");
 				htmlCanvas.size(canvasWidth, canvasHeight);
-				var context:*= htmlCanvas._canvas.getContext('2d');
+				var context:* = htmlCanvas._canvas.getContext('2d');
 				
 				Browser.canvas.size(canvasWidth, canvasHeight);
-				var tempContext:*= Browser.context;
+				var tempContext:* = Browser.context;
 				var imgData:* = tempContext.createImageData(canvasWidth, canvasHeight);
 				imgData.data.set(__JS__("new Uint8ClampedArray(pixels.buffer)"));
 				tempContext.putImageData(imgData, 0, 0);
 				
 				context.save();
 				context.translate(0, canvasHeight);
-				context.scale(1,-1);
+				context.scale(1, -1);
 				context.drawImage(Browser.canvas.source, 0, 0);
 				context.restore();
 				
@@ -532,27 +550,6 @@ package laya.webgl {
 			RenderState2D.height = height;
 		}
 		
-		public static function isExperimentalWebgl():Boolean {
-			return _isExperimentalWebgl;
-		}
-		
-		/**只有微信或QQ且是experimental-webgl模式下起作用*/
-		public static function addRenderFinish():void {
-			if (_isExperimentalWebgl || Render.isFlash) {
-				RunDriver.endFinish = function():void {
-					Render.context.ctx.finish();
-				}
-			}
-		}
-		
-		// 去掉finish的代码
-		public static function removeRenderFinish():void {
-			if (_isExperimentalWebgl) {
-				RunDriver.endFinish = function():void {
-				}
-			}
-		}
-		
 		private static function onInvalidGLRes():void {
 			AtlasResourceManager.instance.freeAll();
 			ResourceManager.releaseContentManagers(true);
@@ -578,15 +575,24 @@ package laya.webgl {
 				return new WebGLContext2D(canvas);
 			}
 			
-			_isExperimentalWebgl = (_isExperimentalWebgl && (Browser.onWeiXin || Browser.onMQQBrowser));
-			
-			frameShaderHighPrecision = false;
 			var gl:WebGLContext = WebGL.mainContext;
-			try {//某些浏览器中未实现此函数，使用try catch增强兼容性。
-				var precisionFormat:* = gl.getShaderPrecisionFormat(WebGLContext.FRAGMENT_SHADER, WebGLContext.HIGH_FLOAT);
-				precisionFormat.precision ? frameShaderHighPrecision = true : frameShaderHighPrecision = false;
-			} catch (e:*) {
+			if (gl.getShaderPrecisionFormat != null) {//某些浏览器中未实现此函数,提前判断增强兼容性。
+				var vertexPrecisionFormat:* = gl.getShaderPrecisionFormat(WebGLContext.VERTEX_SHADER, WebGLContext.HIGH_FLOAT);
+				var framePrecisionFormat:* = gl.getShaderPrecisionFormat(WebGLContext.FRAGMENT_SHADER, WebGLContext.HIGH_FLOAT);
+				shaderHighPrecision = (vertexPrecisionFormat.precision&&framePrecisionFormat.precision) ? true : false;//存在vs和ps支持精度不一致,以最低的为标准
+			} else {
+				shaderHighPrecision = false;
 			}
+			
+			compressAstc = gl.getExtension("WEBGL_compressed_texture_astc");
+			compressAtc = gl.getExtension("WEBGL_compressed_texture_atc");
+			compressEtc = gl.getExtension("WEBGL_compressed_texture_etc");
+			compressEtc1 = gl.getExtension("WEBGL_compressed_texture_etc1");
+			compressPvrtc = gl.getExtension("WEBGL_compressed_texture_pvrtc");
+			compressS3tc = gl.getExtension("WEBGL_compressed_texture_s3tc");
+			compressS3tc_srgb = gl.getExtension("WEBGL_compressed_texture_s3tc_srgb");
+			//var compresseFormat:Uint32Array = gl.getParameter(WebGLContext.COMPRESSED_TEXTURE_FORMATS);
+			//alert(compresseFormat.length);
 			
 			/*[IF-SCRIPT-BEGIN]
 			   gl.deleteTexture1 = gl.deleteTexture;

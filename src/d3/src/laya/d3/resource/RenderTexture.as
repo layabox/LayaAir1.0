@@ -80,6 +80,7 @@ package laya.d3.resource {
 		 */
 		public function RenderTexture(width:Number, height:Number, surfaceFormat:int = WebGLContext.RGBA, surfaceType:int = WebGLContext.UNSIGNED_BYTE, depthStencilFormat:int = WebGLContext.DEPTH_COMPONENT16, mipMap:Boolean = false, repeat:Boolean = false, minFifter:int = -1, magFifter:int = -1) {
 			super();
+			_type = WebGLContext.TEXTURE_2D;
 			_width = width;
 			_height = height;
 			_size = new Size(width, height);
@@ -96,15 +97,14 @@ package laya.d3.resource {
 		}
 		
 		override protected function recreateResource():void {
-			startCreate();
 			var gl:WebGLContext = WebGL.mainContext;
 			_frameBuffer = gl.createFramebuffer();
 			//var ext = gl.getExtension('OES_texture_float');
 			_source = gl.createTexture();
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
-			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, _source);
-			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _width, _height, 0, _surfaceFormat, _surfaceType, null);
+			WebGLContext.bindTexture(gl, _type, _source);
+			gl.texImage2D(_type, 0, WebGLContext.RGBA, _width, _height, 0, _surfaceFormat, _surfaceType, null);
 			//gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _width, _height, 0, WebGLContext.RGBA, WebGLContext.FLOAT, null);
 			var minFifter:int = this._minFifter;
 			var magFifter:int = this._magFifter;
@@ -119,18 +119,18 @@ package laya.d3.resource {
 				
 				(magFifter !== -1) || (magFifter = WebGLContext.LINEAR);
 				
-				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MIN_FILTER, minFifter);
-				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MAG_FILTER, magFifter);
-				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_S, repeat);
-				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, repeat);
-				this._mipmap && gl.generateMipmap(WebGLContext.TEXTURE_2D);//TODO:这里生成有问题，要渲染结束再生成
+				gl.texParameteri(_type, WebGLContext.TEXTURE_MIN_FILTER, minFifter);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_MAG_FILTER, magFifter);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_S, repeat);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_T, repeat);
+				this._mipmap && gl.generateMipmap(_type);//TODO:这里生成有问题，要渲染结束再生成
 			} else {
 				(minFifter !== -1) || (minFifter = WebGLContext.LINEAR);
 				(magFifter !== -1) || (magFifter = WebGLContext.LINEAR);
-				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MIN_FILTER, minFifter);
-				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MAG_FILTER, magFifter);
-				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_S, WebGLContext.CLAMP_TO_EDGE);
-				gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_MIN_FILTER, minFifter);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_MAG_FILTER, magFifter);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_S, WebGLContext.CLAMP_TO_EDGE);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
 			}
 			
 			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, _frameBuffer);

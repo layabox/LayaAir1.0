@@ -12,9 +12,7 @@ camera.transform.rotate(new Laya.Vector3(-15, 0, 0), true, false);
 camera.addComponent(CameraMoveScript);
 
 var directionLight = scene.addChild(new Laya.DirectionLight());
-directionLight.ambientColor = new Laya.Vector3(1, 1, 1);
-directionLight.specularColor = new Laya.Vector3(1, 1, 1);
-directionLight.diffuseColor = new Laya.Vector3(0.0, 0.3, 1.0);
+directionLight.color = new Laya.Vector3(1, 1, 1);
 directionLight.direction = new Laya.Vector3(1, -1, 0);
 
 var dude = scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/skinModel/dude/dude.lh"));
@@ -75,9 +73,7 @@ function initShader() {
         'u_texture': [CustomMaterial.DIFFUSETEXTURE, Laya.Shader3D.PERIOD_MATERIAL],
         'u_marginalColor': [CustomMaterial.MARGINALCOLOR, Laya.Shader3D.PERIOD_MATERIAL],
         'u_DirectionLight.Direction': [Laya.Scene.LIGHTDIRECTION, Laya.Shader3D.PERIOD_SCENE],
-        'u_DirectionLight.Diffuse': [Laya.Scene.LIGHTDIRDIFFUSE, Laya.Shader3D.PERIOD_SCENE],
-        'u_DirectionLight.Ambient': [Laya.Scene.LIGHTDIRAMBIENT, Laya.Shader3D.PERIOD_SCENE],
-        'u_DirectionLight.Specular': [Laya.Scene.LIGHTDIRSPECULAR, Laya.Shader3D.PERIOD_SCENE]
+        'u_DirectionLight.Diffuse': [Laya.Scene.LIGHTDIRCOLOR, Laya.Shader3D.PERIOD_SCENE]
     };
     var customShader = Laya.Shader3D.nameKey.add("CustomShader");
 
@@ -142,7 +138,7 @@ function initShader() {
         "vec3 normal=normalize(v_Normal);\n" +
         "vec3 toEyeDir = normalize(u_CameraPos-v_PositionWorld);\n" +
         "float Rim = 1.0 - max(0.0,dot(toEyeDir, normal));\n" +
-        "vec3 Emissive = 2.0 * u_DirectionLight.Ambient * u_marginalColor * pow(Rim,3.0);\n" +
+        "vec3 Emissive = 2.0 * u_DirectionLight.Diffuse * u_marginalColor * pow(Rim,3.0);\n" +
         "gl_FragColor = texture2D(u_texture, v_Texcoord) + vec4(Emissive,1.0);\n" +
         "}";
     Laya.ShaderCompile3D.add(customShader, vs, ps, attributeMap, uniformMap);

@@ -1,6 +1,9 @@
 package laya.d3.core.scene {
+	import laya.d3.component.Component3D;
+	import laya.d3.component.Script;
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Camera;
+	import laya.d3.core.ComponentNode;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.light.LightSprite;
@@ -23,7 +26,9 @@ package laya.d3.core.scene {
 	import laya.d3.utils.Utils3D;
 	import laya.display.Node;
 	import laya.display.Sprite;
+	import laya.display.css.Style;
 	import laya.events.Event;
+	import laya.net.Loader;
 	import laya.renders.Render;
 	import laya.renders.RenderContext;
 	import laya.renders.RenderSprite;
@@ -45,32 +50,26 @@ package laya.d3.core.scene {
 		public static const FOGRANGE:int = 2;
 		
 		public static const LIGHTDIRECTION:int = 3;
-		public static const LIGHTDIRDIFFUSE:int = 4;
-		public static const LIGHTDIRAMBIENT:int = 5;
-		public static const LIGHTDIRSPECULAR:int = 6;
+		public static const LIGHTDIRCOLOR:int = 4;
 		
-		public static const POINTLIGHTPOS:int = 7;
-		public static const POINTLIGHTRANGE:int = 8;
-		public static const POINTLIGHTATTENUATION:int = 9;
-		public static const POINTLIGHTDIFFUSE:int = 10;
-		public static const POINTLIGHTAMBIENT:int = 11;
-		public static const POINTLIGHTSPECULAR:int = 12;
+		public static const POINTLIGHTPOS:int = 5;
+		public static const POINTLIGHTRANGE:int = 6;
+		public static const POINTLIGHTATTENUATION:int = 7;
+		public static const POINTLIGHTCOLOR:int = 8;
 		
-		public static const SPOTLIGHTPOS:int = 13;
-		public static const SPOTLIGHTDIRECTION:int = 14;
-		public static const SPOTLIGHTSPOT:int = 15;
-		public static const SPOTLIGHTRANGE:int = 16;
-		public static const SPOTLIGHTATTENUATION:int = 17;
-		public static const SPOTLIGHTDIFFUSE:int = 18;
-		public static const SPOTLIGHTAMBIENT:int = 19;
-		public static const SPOTLIGHTSPECULAR:int = 20;
+		public static const SPOTLIGHTPOS:int = 9;
+		public static const SPOTLIGHTDIRECTION:int = 10;
+		public static const SPOTLIGHTSPOT:int = 11;
+		public static const SPOTLIGHTRANGE:int = 12;
+		public static const SPOTLIGHTATTENUATION:int = 13;
+		public static const SPOTLIGHTCOLOR:int = 14;
 		
-		public static const SHADOWDISTANCE:int = 21;
-		public static const SHADOWLIGHTVIEWPROJECT:int = 22;
-		public static const SHADOWMAPPCFOFFSET:int = 23;
-		public static const SHADOWMAPTEXTURE1:int = 24;
-		public static const SHADOWMAPTEXTURE2:int = 25;
-		public static const SHADOWMAPTEXTURE3:int = 26;
+		public static const SHADOWDISTANCE:int = 15;
+		public static const SHADOWLIGHTVIEWPROJECT:int = 16;
+		public static const SHADOWMAPPCFOFFSET:int = 17;
+		public static const SHADOWMAPTEXTURE1:int = 18;
+		public static const SHADOWMAPTEXTURE2:int = 19;
+		public static const SHADOWMAPTEXTURE3:int = 20;
 		
 		/**
 		 * @private
@@ -155,6 +154,16 @@ package laya.d3.core.scene {
 		
 		//阴影相关变量
 		public var parallelSplitShadowMaps:Vector.<ParallelSplitShadowMap>;
+		
+		//---------------------------------兼容代码---------------------------------------
+		/** @private */
+		protected var _componentsMap:Array;
+		/** @private */
+		protected var _typeComponentsIndices:Vector.<Vector.<int>>;
+		/** @private */
+		protected var _components:Vector.<Component3D>;
+		
+		//---------------------------------兼容代码---------------------------------------
 		
 		/**
 		 * @private
@@ -302,13 +311,20 @@ package laya.d3.core.scene {
 			_dynamicBatchManager = new DynamicBatchManager();
 			_cullingRenders = new Vector.<BaseRender>();
 			_cullingRendersLength = 0;
+			
 			enableFog = false;
 			fogStart = 300;
 			fogRange = 1000;
 			fogColor = new Vector3(0.7, 0.7, 0.7);
-			(WebGL.frameShaderHighPrecision) && (addShaderDefine(ShaderCompile3D.SHADERDEFINE_FSHIGHPRECISION));
+			(WebGL.shaderHighPrecision) && (addShaderDefine(ShaderCompile3D.SHADERDEFINE_HIGHPRECISION));
 			on(Event.DISPLAY, this, _onDisplay);
 			on(Event.UNDISPLAY, this, _onUnDisplay);
+			
+			//-------------------------------兼容代码--------------------------------
+			_componentsMap = [];
+			_typeComponentsIndices = new Vector.<Vector.<int>>();
+			_components = new Vector.<Component3D>();
+			//-------------------------------兼容代码--------------------------------
 		}
 		
 		/**
@@ -539,12 +555,26 @@ package laya.d3.core.scene {
 		 */
 		protected function _set2DRenderConfig(gl:WebGLContext):void {
 			WebGLContext.setBlend(gl, true);//还原2D设置，此处用WEBGL强制还原2D设置并非十分合理
-			WebGLContext.setBlendFunc(gl, WebGLContext.SRC_ALPHA, WebGLContext.ONE_MINUS_SRC_ALPHA);
+			WebGLContext.setBlendFunc(gl, WebGLContext.ONE, WebGLContext.ONE_MINUS_SRC_ALPHA);
 			WebGLContext.setDepthTest(gl, false);
 			WebGLContext.setCullFace(gl, false);
 			WebGLContext.setDepthMask(gl, true);
 			WebGLContext.setFrontFace(gl, WebGLContext.CCW);
 			gl.viewport(0, 0, RenderState2D.width, RenderState2D.height);//还原2D视口
+		}
+		
+		/**
+		 *@private
+		 */
+		protected function _parseCustomProps(innerResouMap:Object, customProps:Object, nodeData:Object):void {
+			var lightMapsData:Array = nodeData.customProps.lightmaps;
+			var lightMapCount:int = lightMapsData.length;
+			var lightmaps:Vector.<Texture2D> = _lightmaps;
+			lightmaps.length = lightMapCount;
+			for (var i:int = 0; i < lightMapCount; i++)
+				lightmaps[i] = Loader.getRes(innerResouMap[lightMapsData[i].replace("exr", "png")]);
+			
+			setlightmaps(lightmaps);
 		}
 		
 		/**
@@ -569,9 +599,9 @@ package laya.d3.core.scene {
 			var renderState:RenderState = _renderState;
 			_prepareUpdateToRenderState(WebGL.mainContext, renderState);
 			
-			beforeUpdate(renderState);//更新之前
+			_updateComponents(renderState);
 			_updateChilds(renderState);
-			lateUpdate(renderState);//更新之后
+			_lateUpdateComponents(renderState);
 		}
 		
 		/**
@@ -580,9 +610,9 @@ package laya.d3.core.scene {
 		public function _updateSceneConch():void {//NATIVE
 			var renderState:RenderState = _renderState;
 			_prepareUpdateToRenderState(WebGL.mainContext, renderState);
-			beforeUpdate(renderState);//更新之前
+			_updateComponents(renderState);
 			_updateChildsConch(renderState);
-			lateUpdate(renderState);//更新之后
+			_lateUpdateComponents(renderState);
 			
 			_prepareSceneToRender(renderState);
 			for (var i:int = 0, n:int = _cameraPool.length; i < n; i++) {
@@ -852,34 +882,6 @@ package laya.d3.core.scene {
 		}
 		
 		/**
-		 * 更新前处理,可重写此函数。
-		 * @param state 渲染相关状态。
-		 */
-		public function beforeUpdate(state:RenderState):void {
-		}
-		
-		/**
-		 * 更新后处理,可重写此函数。
-		 * @param state 渲染相关状态。
-		 */
-		public function lateUpdate(state:RenderState):void {
-		}
-		
-		/**
-		 * 渲染前处理,可重写此函数。
-		 * @param state 渲染相关状态。
-		 */
-		public function beforeRender(state:RenderState):void {
-		}
-		
-		/**
-		 * 渲染后处理,可重写此函数。
-		 * @param state 渲染相关状态。
-		 */
-		public function lateRender(state:RenderState):void {
-		}
-		
-		/**
 		 * 增加shader宏定义。
 		 * @param	define shader宏定义。
 		 */
@@ -896,13 +898,72 @@ package laya.d3.core.scene {
 		}
 		
 		/**
-		 * @inheritDoc
+		 * 添加指定类型脚本。
+		 * @param	type 脚本类型。
+		 * @return	组件。
 		 */
-		public override function render(context:RenderContext, x:Number, y:Number):void {
-			(Render._context.ctx as WebGLContext2D)._shader2D.glTexture = null;//TODO:临时清空2D合并，不然影响图层合并。
+		public function addScript(type:*):Script {
+			return _addComponent(type) as Script;
+		}
+		
+		/**
+		 * 通过指定类型和类型索引获得脚本。
+		 * @param	type 脚本类型。
+		 * @param	typeIndex 脚本索引。
+		 * @return 脚本。
+		 */
+		public function getScriptByType(type:*, typeIndex:int = 0):Script {
+			return _getComponentByType(type, typeIndex) as Script;
+		}
+		
+		/**
+		 * 通过指定类型获得所有脚本。
+		 * @param	type 脚本类型。
+		 * @param	scripts 脚本输出队列。
+		 */
+		public function getScriptsByType(type:*, scripts:Vector.<Script>):void {
+			_getComponentsByType(type, scripts as Vector.<Component3D>);
+		}
+		
+		/**
+		 * 通过指定索引获得脚本。
+		 * @param	index 索引。
+		 * @return 脚本。
+		 */
+		public function getScriptByIndex(index:int):Script {
+			return _getComponentByIndex(index) as Script;
+		}
+		
+		/**
+		 * 通过指定类型和类型索引移除脚本。
+		 * @param	type 脚本类型。
+		 * @param	typeIndex 类型索引。
+		 */
+		public function removeScriptByType(type:*, typeIndex:int = 0):void {
+			_removeComponentByType(type, typeIndex);
+		}
+		
+		/**
+		 * 通过指定类型移除所有脚本。
+		 * @param	type 组件类型。
+		 */
+		public function removeScriptsByType(type:*):void {
+			_removeComponentByType(type);
+		}
+		
+		/**
+		 * 移除全部脚本。
+		 */
+		public function removeAllScript():void {
+			_removeAllComponent();
+		}
+		
+		/**
+		 * @private
+		 */
+		override public function render(context:RenderContext, x:Number, y:Number):void {//TODO:外层应该设计为接口调用
+			(Render._context.ctx as WebGLContext2D)._renderKey = 0;//打断2D合并的renderKey
 			_childs.length > 0 && context.addRenderObject(this);
-			_renderType &= ~RenderSprite.CHILDS;
-			super.render(context, x, y);
 		}
 		
 		/**
@@ -945,7 +1006,7 @@ package laya.d3.core.scene {
 				throw new Error("Scene: the .lh file root type must be Scene,please use other function to  load  this file.");
 			
 			var innerResouMap:Object = data[1];
-			ClassUtils.createByJson(json, this, this, Handler.create(null, Utils3D._parseHierarchyProp, [innerResouMap], false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
+			Utils3D._createNodeByJson(json, this, innerResouMap);
 			event(Event.HIERARCHY_LOADED, [this]);
 			__loaded = true;
 		}
@@ -972,6 +1033,166 @@ package laya.d3.core.scene {
 			pScene.init(512, 512, 512, 4);
 			return pScene;
 		}
+		
+		//----------------------------兼容代码------------------------------------
+		/**
+		 * @private
+		 */
+		protected function _addComponent(type:*):Component3D {
+			var typeComponentIndex:Vector.<int>;
+			var index:int = _componentsMap.indexOf(type);
+			if (index === -1) {
+				typeComponentIndex = new Vector.<int>();
+				_componentsMap.push(type);
+				_typeComponentsIndices.push(typeComponentIndex);
+			} else {
+				typeComponentIndex = _typeComponentsIndices[index];
+				if (_components[typeComponentIndex[0]].isSingleton)
+					throw new Error("无法单实例创建" + type + "组件" + "，" + type + "组件已存在！");
+			}
+			
+			var component:Component3D = ClassUtils.getInstance(type);
+			typeComponentIndex.push(_components.length);
+			_components.push(component);
+			var _this:*= this;//兼容代码
+			component._initialize(_this);
+			return component;
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _removeComponent(mapIndex:int, index:int):void {
+			var componentIndices:Vector.<int> = _typeComponentsIndices[mapIndex];
+			var componentIndex:int = componentIndices[index];
+			var component:Component3D = _components[componentIndex];
+			
+			_components.splice(componentIndex, 1);
+			componentIndices.splice(index, 1);
+			(componentIndices.length === 0) && (_typeComponentsIndices.splice(mapIndex, 1), _componentsMap.splice(mapIndex, 1));
+			
+			for (var i:int = 0, n:int = _componentsMap.length; i < n; i++) {
+				componentIndices = _typeComponentsIndices[i];
+				for (var j:int = componentIndices.length - 1; j >= 0; j--) {
+					var oldComponentIndex:int = componentIndices[j];
+					if (oldComponentIndex > componentIndex)
+						componentIndices[j] = --oldComponentIndex;
+					else
+						break;
+				}
+			}
+			
+			component._destroy();
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _getComponentByType(type:*, typeIndex:int = 0):Component3D {
+			var mapIndex:int = _componentsMap.indexOf(type);
+			if (mapIndex === -1)
+				return null;
+			return _components[_typeComponentsIndices[mapIndex][typeIndex]];
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _getComponentsByType(type:*, components:Vector.<Component3D>):void {
+			var index:int = _componentsMap.indexOf(type);
+			if (index === -1) {
+				components.length = 0;
+				return;
+			}
+			
+			var typeComponents:Vector.<int> = _typeComponentsIndices[index];
+			var count:int = typeComponents.length;
+			components.length = count;
+			for (var i:int = 0; i < count; i++)
+				components[i] = _components[typeComponents[i]];
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _getComponentByIndex(index:int):Component3D {
+			return _components[index];
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _removeComponentByType(type:*, typeIndex:int = 0):void {
+			var mapIndex:int = _componentsMap.indexOf(type);
+			if (mapIndex === -1)
+				return;
+			_removeComponent(mapIndex, typeIndex);
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _removeComponentsByType(type:*):void {
+			var mapIndex:int = _componentsMap.indexOf(type);
+			if (mapIndex === -1)
+				return;
+			var componentIndices:Vector.<int> = _typeComponentsIndices[mapIndex];
+			for (var i:int = 0, n:int = componentIndices.length; i < n; componentIndices.length < n ? n-- : i++)
+				_removeComponent(mapIndex, i);
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _removeAllComponent():void {
+			for (var i:int = 0, n:int = _componentsMap.length; i < n; _componentsMap.length < n ? n-- : i++)
+				_removeComponentsByType(_componentsMap[i]);
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _updateComponents(state:RenderState):void {
+			for (var i:int = 0, n:int = _components.length; i < n; i++) {
+				var component:Component3D = _components[i];
+				(!component.started) && (component._start(state), component.started = true);
+				(component.enable) && (component._update(state));
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _lateUpdateComponents(state:RenderState):void {
+			for (var i:int = 0; i < _components.length; i++) {
+				var component:Component3D = _components[i];
+				(!component.started) && (component._start(state), component.started = true);
+				(component.enable) && (component._lateUpdate(state));
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _preRenderUpdateComponents(state:RenderState):void {
+			for (var i:int = 0; i < _components.length; i++) {
+				var component:Component3D = _components[i];
+				(!component.started) && (component._start(state), component.started = true);
+				(component.enable) && (component._preRenderUpdate(state));
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _postRenderUpdateComponents(state:RenderState):void {
+			for (var i:int = 0; i < _components.length; i++) {
+				var component:Component3D = _components[i];
+				(!component.started) && (component._start(state), component.started = true);
+				(component.enable) && (component._postRenderUpdate(state));
+			}
+		}
+		//----------------------------------------------------------------
 	
 	}
 

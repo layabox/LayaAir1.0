@@ -151,7 +151,7 @@ package laya.display.css {
 			return _text += size + "px " + family;
 		}
 		
-		public function set weight(value:*):void {
+		public function set weight(value:String):void {
 			var weight:int = 0;
 			switch (value) {
 			case 'normal': 

@@ -172,7 +172,7 @@ package laya.webgl.utils {
 			var finalX:Number, finalY:Number, offsetX:Number, offsetY:Number;
 			
 			var a:Number = m.a, b:Number = m.b, c:Number = m.c, d:Number = m.d;
-			var useClip:Boolean = clip.width < WebGLContext2D._MAXSIZE;
+			var useClip:Boolean = clip && clip.width < WebGLContext2D._MAXSIZE;
 			if (a !== 1 || b !== 0 || c !== 0 || d !== 1) {
 				m.bTransform = true;
 				if (b === 0 && c === 0) {

@@ -26,7 +26,7 @@ package laya.webgl.shader.d2.skinAnishader
 		public function addSkinMesh(skinMesh:SkinMesh):void
 		{
 			//skinMesh.getData(vb, ib, vb.byteLength / 32);
-			skinMesh.getData2(vb, ib, vb.byteLength / 32);
+			skinMesh.getData2(vb, ib, vb._byteLength / 32);
 		}
 		
 	

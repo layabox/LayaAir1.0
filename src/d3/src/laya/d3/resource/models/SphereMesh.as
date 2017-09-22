@@ -92,7 +92,6 @@ package laya.d3.resource.models {
 		}
 		
 		override protected function recreateResource():void {
-			startCreate();
 			_numberVertices = (_stacks + 1) * (_slices + 1);
 			_numberIndices = (3 * _stacks * (_slices + 1)) * 2;
 			
@@ -146,7 +145,7 @@ package laya.d3.resource.models {
 			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _numberIndices, WebGLContext.STATIC_DRAW, true);
 			_vertexBuffer.setData(vertices);
 			_indexBuffer.setData(indices);
-			memorySize = (_vertexBuffer.byteLength + _indexBuffer.byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
+			memorySize = (_vertexBuffer._byteLength + _indexBuffer._byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
 			completeCreate();
 		}
 	}

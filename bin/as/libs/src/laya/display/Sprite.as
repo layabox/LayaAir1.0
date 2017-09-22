@@ -234,7 +234,7 @@ package laya.display {
 		private var _texture:Texture = null;
 		
 		//优化child渲染复杂度，暂时这样
-		public var _childRenderMax:Boolean = false;
+		//public var _childRenderMax:Boolean = false;
 		/**
 		 * <p>鼠标事件与此对象的碰撞检测是否可穿透。碰撞检测发生在鼠标事件的捕获阶段，此阶段引擎会从stage开始递归检测stage及其子对象，直到找到命中的目标对象或者未命中任何对象。</p>
 		 * <p>穿透表示鼠标事件发生的位置处于本对象绘图区域内时，才算命中，而与对象宽高和值为Rectangle对象的hitArea属性无关。如果sprite.hitArea值是HitArea对象，表示显式声明了此对象的鼠标事件响应区域，而忽略对象的宽高、mouseThrough属性。</p>
@@ -600,7 +600,7 @@ package laya.display {
 		 * @return  样式 Style 。
 		 */
 		public function getStyle():Style {
-			this._style === Style.EMPTY && (this._style = new Style(),_childRenderMax=true);
+			this._style === Style.EMPTY && (this._style = new Style());
 			return this._style;
 		}
 		

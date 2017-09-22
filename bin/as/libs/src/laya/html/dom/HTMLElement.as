@@ -25,7 +25,7 @@ package laya.html.dom
 		
 		public function HTMLElement()
 		{
-			_childRenderMax = true;
+			//_childRenderMax = true;
 			setStyle(new CSSStyle(this));
 			//设置CSS默认属性
 			this._getCSSStyle().valign = "middle";
@@ -45,7 +45,7 @@ package laya.html.dom
 				}
 			}
 			var word:Vector.<HTMLChar> = _getWords();
-			word&&fillWords(this, word, 0, 0, style.font, style.color);
+			word&&fillWords(this, word, 0, 0, style.font, style.color,style.underLine);
 			
 		}
 		
@@ -202,6 +202,7 @@ package laya.html.dom
 			_href = url;
 			if (url != null)
 			{
+				_getCSSStyle().underLine = 1;
 				updateHref();
 			}
 		}
@@ -222,10 +223,10 @@ package laya.html.dom
 						if (tSprite)
 						{
 							//tSprite.graphics.drawRect(0, 0, tHTMLChar.width, tHTMLChar.height, null, '#ff0000');
-							var tHeight:Number = tHTMLChar.height - 1;
-							var dX:Number = tHTMLChar.style.letterSpacing*0.5;
-							if (!dX) dX = 0;
-							tSprite.graphics.drawLine(0-dX, tHeight, tHTMLChar.width+dX, tHeight, tHTMLChar._getCSSStyle().color);
+							//var tHeight:Number = tHTMLChar.height - 1;
+							//var dX:Number = tHTMLChar.style.letterSpacing*0.5;
+							//if (!dX) dX = 0;
+							//tSprite.graphics.drawLine(0-dX, tHeight, tHTMLChar.width+dX, tHeight, tHTMLChar._getCSSStyle().color);
 							tSprite.size(tHTMLChar.width, tHTMLChar.height);
 							tSprite.on(Event.CLICK, this, onLinkHandler);
 						}
@@ -270,13 +271,12 @@ package laya.html.dom
 		}
 		
 		/*** @private */
-		public static function fillWords(ele:HTMLElement, words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String):void {
+		public static function fillWords(ele:HTMLElement, words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String,underLine:int):void {
 			ele.graphics.clear();
 			for (var i:int = 0, n:int = words.length; i < n; i++) {
 				var a:* = words[i];
-				ele.graphics.fillText(a.char, a.x + x, a.y + y, font, color, 'left');
+				ele.graphics.fillText(a.char, a.x + x, a.y + y, font, color, 'left',underLine);
 			}
-			
 		}
 	}
 

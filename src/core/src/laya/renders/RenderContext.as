@@ -364,8 +364,8 @@ package laya.renders {
 			this.ctx.globalAlpha = args[0];
 		}
 		
-		public function fillWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String):void {
-			this.ctx.fillWords(words, x, y, font, color);
+		public function fillWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String,underLine:int=0):void {
+			this.ctx.fillWords(words, x, y, font, color,underLine);
 		}
 		/*** @private */
 		public function fillBorderWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, fillColor:String, borderColor:String, lineWidth:int):void {	
@@ -433,20 +433,20 @@ package laya.renders {
 			Render.isWebGL && ctx.setPathId(-1);
 			ctx.beginPath();
 			x += args[0], y += args[1];
-			
+			Render.isWebGL && ctx.movePath(x, y);
 			var paths:Array = args[2];
 			for (var i:int = 0, n:int = paths.length; i < n; i++) {
 				
 				var path:Array = paths[i];
 				switch (path[0]) {
 				case "moveTo": 
-					ctx.moveTo(x + path[1], y + path[2]);
+					Render.isWebGL ? ctx.moveTo(path[1], path[2]) : ctx.moveTo(x + path[1], y + path[2]);
 					break;
 				case "lineTo": 
-					ctx.lineTo(x + path[1], y + path[2]);
+					Render.isWebGL ? ctx.lineTo(path[1], path[2]) : ctx.lineTo(x + path[1], y + path[2]);
 					break;
 				case "arcTo": 
-					ctx.arcTo(x + path[1], y + path[2], x + path[3], y + path[4], path[5]);
+					Render.isWebGL ? ctx.arcTo(path[1], path[2], path[3], path[4], path[5]) : ctx.arcTo(x + path[1], y + path[2], x + path[3], y + path[4], path[5]);
 					break;
 				case "closePath": 
 					ctx.closePath();

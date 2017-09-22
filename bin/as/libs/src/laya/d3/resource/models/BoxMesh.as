@@ -92,7 +92,6 @@ package laya.d3.resource.models {
 		}
 		
 		override protected function recreateResource():void {
-			startCreate();
 			_numberVertices = 24;
 			_numberIndices = 36;
 			
@@ -104,64 +103,38 @@ package laya.d3.resource.models {
 			var halfWidth:Number = _width / 2;
 			
 			var vertices:Float32Array = new Float32Array([
-				//上
-				-halfLong, halfHeight,  -halfWidth, 0, 1, 0, 0, 0,
-				halfLong,  halfHeight,  -halfWidth, 0, 1, 0, 1, 0,
-				halfLong,  halfHeight,  halfWidth,  0, 1, 0, 1, 1,
-				-halfLong, halfHeight,  halfWidth,  0, 1, 0, 0, 1,
-				//下
-				-halfLong, -halfHeight, -halfWidth, 0, -1, 0, 0, 1,
-				halfLong,  -halfHeight, -halfWidth, 0, -1, 0, 1, 1,
-				halfLong,  -halfHeight, halfWidth,  0, -1, 0, 1, 0,
-				-halfLong, -halfHeight, halfWidth,  0, -1, 0, 0, 0,
-				//左
-				-halfLong, halfHeight,  -halfWidth, -1, 0, 0, 0, 0,
-				-halfLong, halfHeight,  halfWidth,  -1, 0, 0, 1, 0,
-				-halfLong, -halfHeight, halfWidth,  -1, 0, 0, 1, 1,
-				-halfLong, -halfHeight, -halfWidth, -1, 0, 0, 0, 1,
-				//右
-				halfLong,  halfHeight,  -halfWidth,  1, 0, 0, 1, 0,
-				halfLong,  halfHeight,  halfWidth,   1, 0, 0, 0, 0,
-				halfLong,  -halfHeight, halfWidth,   1, 0, 0, 0, 1,
-				halfLong,  -halfHeight, -halfWidth,  1, 0, 0, 1, 1,
-				//前
-				-halfLong, halfHeight,  halfWidth,   0, 0, 1, 0, 0,
-				halfLong,  halfHeight,  halfWidth,   0, 0, 1, 1, 0,
-				halfLong,  -halfHeight, halfWidth,   0, 0, 1, 1, 1,
-				-halfLong, -halfHeight, halfWidth,   0, 0, 1, 0, 1,
-				//后
-				-halfLong, halfHeight,  -halfWidth,  0, 0, -1, 1, 0,
-				halfLong,  halfHeight,  -halfWidth,  0, 0, -1, 0, 0,
-				halfLong,  -halfHeight, -halfWidth,  0, 0, -1, 0, 1,
-				-halfLong, -halfHeight, -halfWidth,  0, 0, -1, 1, 1
-			]);
+			//上
+			-halfLong, halfHeight, -halfWidth, 0, 1, 0, 0, 0, halfLong, halfHeight, -halfWidth, 0, 1, 0, 1, 0, halfLong, halfHeight, halfWidth, 0, 1, 0, 1, 1, -halfLong, halfHeight, halfWidth, 0, 1, 0, 0, 1, 
+			//下
+			-halfLong, -halfHeight, -halfWidth, 0, -1, 0, 0, 1, halfLong, -halfHeight, -halfWidth, 0, -1, 0, 1, 1, halfLong, -halfHeight, halfWidth, 0, -1, 0, 1, 0, -halfLong, -halfHeight, halfWidth, 0, -1, 0, 0, 0, 
+			//左
+			-halfLong, halfHeight, -halfWidth, -1, 0, 0, 0, 0, -halfLong, halfHeight, halfWidth, -1, 0, 0, 1, 0, -halfLong, -halfHeight, halfWidth, -1, 0, 0, 1, 1, -halfLong, -halfHeight, -halfWidth, -1, 0, 0, 0, 1, 
+			//右
+			halfLong, halfHeight, -halfWidth, 1, 0, 0, 1, 0, halfLong, halfHeight, halfWidth, 1, 0, 0, 0, 0, halfLong, -halfHeight, halfWidth, 1, 0, 0, 0, 1, halfLong, -halfHeight, -halfWidth, 1, 0, 0, 1, 1, 
+			//前
+			-halfLong, halfHeight, halfWidth, 0, 0, 1, 0, 0, halfLong, halfHeight, halfWidth, 0, 0, 1, 1, 0, halfLong, -halfHeight, halfWidth, 0, 0, 1, 1, 1, -halfLong, -halfHeight, halfWidth, 0, 0, 1, 0, 1, 
+			//后
+			-halfLong, halfHeight, -halfWidth, 0, 0, -1, 1, 0, halfLong, halfHeight, -halfWidth, 0, 0, -1, 0, 0, halfLong, -halfHeight, -halfWidth, 0, 0, -1, 0, 1, -halfLong, -halfHeight, -halfWidth, 0, 0, -1, 1, 1]);
 			
 			var indices:Uint16Array = new Uint16Array([
-				//上
-				0,  1,  2,
-				2,  3,  0,
-				//下
-				4,  7,  6,
-				6,  5,  4,
-				//左
-				8,  9,  10,
-				10, 11, 8,
-				//右
-				12, 15, 14,
-				14, 13, 12,
-				//前
-				16, 17, 18,
-				18, 19, 16,
-				//后
-				20, 23, 22,
-				22, 21, 20
-			]);
+			//上
+			0, 1, 2, 2, 3, 0, 
+			//下
+			4, 7, 6, 6, 5, 4, 
+			//左
+			8, 9, 10, 10, 11, 8, 
+			//右
+			12, 15, 14, 14, 13, 12, 
+			//前
+			16, 17, 18, 18, 19, 16, 
+			//后
+			20, 23, 22, 22, 21, 20]);
 			
 			_vertexBuffer = new VertexBuffer3D(vertexDeclaration, _numberVertices, WebGLContext.STATIC_DRAW, true);
 			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _numberIndices, WebGLContext.STATIC_DRAW, true);
 			_vertexBuffer.setData(vertices);
 			_indexBuffer.setData(indices);
-			memorySize = (_vertexBuffer.byteLength + _indexBuffer.byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
+			memorySize = (_vertexBuffer._byteLength + _indexBuffer._byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
 			completeCreate();
 		}
 	}

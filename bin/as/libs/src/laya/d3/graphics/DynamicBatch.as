@@ -24,7 +24,7 @@ package laya.d3.graphics {
 	public class DynamicBatch implements IRenderable {//TODO:可不继承自IRender
 		public static var maxVertexCount:int = 20000;//TODO:应该以浮点个数或者尺寸计算
 		public static var maxIndexCount:int = 40000;
-		public static const maxCombineTriangleCount:int = 20;
+		public static const maxCombineTriangleCount:int = 10;
 		
 		public var _vertexDeclaration:VertexDeclaration;
 		private var _vertexDatas:Float32Array;

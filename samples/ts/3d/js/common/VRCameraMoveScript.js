@@ -21,14 +21,6 @@ var VRCameraMoveScript = (function (_super) {
     VRCameraMoveScript.prototype._initialize = function (owner) {
         _super.prototype._initialize.call(this, owner);
         this.camera = owner;
-        this.camera.on(Laya.Event.COMPONENT_ADDED, this, function (component) {
-            if (component instanceof Laya.CameraAnimations)
-                this.mainCameraAnimation = component;
-        });
-        this.camera.on(Laya.Event.COMPONENT_REMOVED, this, function (component) {
-            if (component instanceof Laya.CameraAnimations)
-                this.mainCameraAnimation = null;
-        });
         Laya.Browser.window.addEventListener('deviceorientation', function (e) {
             orientation = (Laya.Browser.window.orientation || 0);
             if (Laya.stage.canvasRotation) {
@@ -48,15 +40,13 @@ var VRCameraMoveScript = (function (_super) {
         this.updateCamera(state.elapsedTime);
     };
     VRCameraMoveScript.prototype.updateCamera = function (elapsedTime) {
-        if ((!this.mainCameraAnimation || (this.mainCameraAnimation && this.mainCameraAnimation.player.State === Laya.AnimationState.stopped))) {
-            Laya.KeyBoardManager.hasKeyDown(87) && this.camera.moveForward(-0.002 * elapsedTime); //W
-            Laya.KeyBoardManager.hasKeyDown(83) && this.camera.moveForward(0.002 * elapsedTime); //S
-            Laya.KeyBoardManager.hasKeyDown(65) && this.camera.moveRight(-0.002 * elapsedTime); //A
-            Laya.KeyBoardManager.hasKeyDown(68) && this.camera.moveRight(0.002 * elapsedTime); //D
-            Laya.KeyBoardManager.hasKeyDown(81) && this.camera.moveVertical(0.002 * elapsedTime); //Q
-            Laya.KeyBoardManager.hasKeyDown(69) && this.camera.moveVertical(-0.002 * elapsedTime); //E
-            this.updateRotation();
-        }
+        Laya.KeyBoardManager.hasKeyDown(87) && this.camera.moveForward(-0.002 * elapsedTime); //W
+        Laya.KeyBoardManager.hasKeyDown(83) && this.camera.moveForward(0.002 * elapsedTime); //S
+        Laya.KeyBoardManager.hasKeyDown(65) && this.camera.moveRight(-0.002 * elapsedTime); //A
+        Laya.KeyBoardManager.hasKeyDown(68) && this.camera.moveRight(0.002 * elapsedTime); //D
+        Laya.KeyBoardManager.hasKeyDown(81) && this.camera.moveVertical(0.002 * elapsedTime); //Q
+        Laya.KeyBoardManager.hasKeyDown(69) && this.camera.moveVertical(-0.002 * elapsedTime); //E
+        this.updateRotation();
     };
     VRCameraMoveScript.prototype.updateRotation = function () {
         this.camera.transform.localRotation = this.camera.transform.localRotation;

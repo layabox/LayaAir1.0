@@ -2,11 +2,11 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var BlendMode=laya.webgl.canvas.BlendMode,Browser=laya.utils.Browser,Color=laya.utils.Color,ColorFilterAction=laya.filters.ColorFilterAction;
+	var Browser=laya.utils.Browser,Color=laya.utils.Color,ColorFilterAction=laya.filters.ColorFilterAction;
 	var ColorFilterActionGL=laya.filters.webgl.ColorFilterActionGL,Filter=laya.filters.Filter,FilterActionGL=laya.filters.webgl.FilterActionGL;
 	var Matrix=laya.maths.Matrix,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render,RenderContext=laya.renders.RenderContext;
 	var RenderTarget2D=laya.webgl.resource.RenderTarget2D,RunDriver=laya.utils.RunDriver,ShaderDefines2D=laya.webgl.shader.d2.ShaderDefines2D;
-	var Sprite=laya.display.Sprite,SubmitCMD=laya.webgl.submit.SubmitCMD,Texture=laya.resource.Texture,Value2D=laya.webgl.shader.d2.value.Value2D;
+	var Sprite=laya.display.Sprite,Texture=laya.resource.Texture,Value2D=laya.webgl.shader.d2.value.Value2D;
 	/**
 	*默认的FILTER,什么都不做
 	*@private
@@ -92,6 +92,7 @@
 	var BlurFilter=(function(_super){
 		function BlurFilter(strength){
 			this.strength=NaN;
+			this.strength_sig2_2sig2_gauss1=[];
 			BlurFilter.__super.call(this);
 			(strength===void 0)&& (strength=4);
 			if (Render.isWebGL)WebGLFilter.enable();
@@ -236,6 +237,13 @@
 
 		__proto.setValue=function(shader){
 			shader.strength=this.data.strength;
+			var sigma=this.data.strength/3.0;
+			var sigma2=sigma*sigma;
+			this.data.strength_sig2_2sig2_gauss1[0]=this.data.strength;
+			this.data.strength_sig2_2sig2_gauss1[1]=sigma2;
+			this.data.strength_sig2_2sig2_gauss1[2]=2.0*sigma2;
+			this.data.strength_sig2_2sig2_gauss1[3]=1.0/(2.0*Math.PI*sigma2);
+			shader.strength_sig2_2sig2_gauss1=this.data.strength_sig2_2sig2_gauss1;
 		}
 
 		__getset(0,__proto,'typeMix',function(){return /*laya.filters.Filter.BLUR*/0x10;});
@@ -266,22 +274,14 @@
 			var w=b.width,h=b.height;
 			this._textureWidth=w;
 			this._textureHeight=h;
-			var submit=SubmitCMD.create([scope,sprite,context,0,0],GlowFilterActionGL.tmpTarget);
-			context.ctx.addRenderObject(submit);
 			var shaderValue;
 			var mat=Matrix.TEMP;
 			mat.identity();
 			shaderValue=Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.TEXTURE2D*/0x01,0);
 			shaderValue.setFilters([this.data]);
-			context.ctx.drawTarget(scope,0,0,this._textureWidth,this._textureHeight,mat,"src",shaderValue,null,BlendMode.TOINT.overlay);
-			submit=SubmitCMD.create([scope,sprite,context,0,0],GlowFilterActionGL.startOut);
-			context.ctx.addRenderObject(submit);
-			shaderValue=Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.TEXTURE2D*/0x01,0);
-			context.ctx.drawTarget(scope,0,0,this._textureWidth,this._textureHeight,mat,"tmpTarget",shaderValue,Texture.INV_UV,BlendMode.TOINT.overlay);
+			context.ctx.drawTarget(scope,0,0,this._textureWidth,this._textureHeight,mat,"src",shaderValue,null);
 			shaderValue=Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.TEXTURE2D*/0x01,0);
 			context.ctx.drawTarget(scope,0,0,this._textureWidth,this._textureHeight,mat,"src",shaderValue);
-			submit=SubmitCMD.create([scope,sprite,context,0,0],GlowFilterActionGL.recycleTarget);
-			context.ctx.addRenderObject(submit);
 			return null;
 		}
 

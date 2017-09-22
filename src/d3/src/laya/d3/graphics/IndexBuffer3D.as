@@ -158,10 +158,12 @@ package laya.d3.graphics {
 				throw new Error("Can't read data from VertexBuffer with only write flag!");
 		}
 		
-		/** 彻底销毁索引缓冲。*/
-		override public function dispose():void {
+		/**
+		 * @inheritDoc
+		 */
+		override protected function detoryResource():void {
+			super.detoryResource();
 			_buffer = null;
-			super.dispose();
 			memorySize = 0;//还有release没判断
 		}
 	

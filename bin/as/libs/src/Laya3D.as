@@ -32,6 +32,8 @@ package {
 	import laya.utils.Handler;
 	import laya.utils.RunDriver;
 	import laya.webgl.WebGL;
+	import laya.webgl.WebGLContext;
+	import laya.webgl.atlas.AtlasResourceManager;
 	
 	/**
 	 * <code>Laya3D</code> 类用于初始化3D设置。
@@ -90,11 +92,7 @@ package {
 		/**
 		 *@private
 		 */
-		private static function _initResourceLoad():void {
-			//ClassUtils.regClass("Sprite3D", Sprite3D);
-			//ClassUtils.regClass("MeshSprite3D", MeshSprite3D);
-			//ClassUtils.regClass("Material", BaseMaterial);
-			
+		private static function __init__():void {
 			var createMap:Object = LoaderManager.createMap;
 			createMap["lh"] = [Sprite3D, Laya3D.HIERARCHY];
 			createMap["ls"] = [Scene, Laya3D.HIERARCHY];
@@ -105,6 +103,7 @@ package {
 			createMap["jpg"] = [Texture2D, "nativeimage"];
 			createMap["jpeg"] = [Texture2D, "nativeimage"];
 			createMap["png"] = [Texture2D, "nativeimage"];
+			createMap["pkm"] = [Texture2D, Loader.BUFFER];
 			createMap["lsani"] = [AnimationTemplet, Loader.BUFFER];
 			createMap["lrani"] = [AnimationTemplet, Loader.BUFFER];
 			createMap["raw"] = [DataTexture2D, Loader.BUFFER];
@@ -120,6 +119,11 @@ package {
 			Loader.parserMap[Laya3D.MATERIAL] = _loadMaterial;
 			Loader.parserMap[Laya3D.TEXTURECUBE] = _loadTextureCube;
 			Loader.parserMap[Laya3D.TERRAIN] = _loadTerrain;
+			
+			_innerFirstLevelLoaderManager.on(Event.ERROR, null, _eventLoadManagerError);
+			_innerSecondLevelLoaderManager.on(Event.ERROR, null, _eventLoadManagerError);
+			_innerThirdLevelLoaderManager.on(Event.ERROR, null, _eventLoadManagerError);
+			_innerFourthLevelLoaderManager.on(Event.ERROR, null, _eventLoadManagerError);
 		}
 		
 		/**
@@ -156,6 +160,13 @@ package {
 					materialUrls.push(string);
 			}
 			return materialUrls;
+		}
+		
+		/**
+		 *@private
+		 */
+		private static function _eventLoadManagerError(msg:String):void {
+			Laya.loader.event(Event.ERROR, msg);
 		}
 		
 		/**
@@ -240,7 +251,6 @@ package {
 					for (i = 0, n = clipPaths.length; i < n; i++)
 						_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, clipPaths[i], AnimationClip);
 					break;
-				default: 
 				}
 			}
 			
@@ -253,9 +263,8 @@ package {
 		 *@private
 		 */
 		private static function _loadHierarchy(loader:Loader):void {
-			var lmLoader:Loader = new Loader();
-			lmLoader.on(Event.COMPLETE, null, _onHierarchylhLoaded, [loader]);
-			lmLoader.load(loader.url, Loader.TEXT, false, null, true);
+			loader.on(Event.LOADED, null, _onHierarchylhLoaded, [loader]);
+			loader.load(loader.url, Loader.TEXT, false, null, true);
 		}
 		
 		/**
@@ -290,8 +299,8 @@ package {
 		private static function _onHierarchyInnerForthLevResouLoaded(loader:Loader, processHandler:Handler, lhData:Object, urlMap:Object, firstLevUrls:Array, secondLevUrls:Array, processOffset:Number, processCeil:Number):void {
 			(processHandler) && (processHandler.recover());
 			if (secondLevUrls.length > 0) {
-				var handler:Handler = Handler.create(null, _onProcessChange, [loader, processOffset, processCeil], false);
-				_innerSecondLevelLoaderManager.create(secondLevUrls, Handler.create(null, _onHierarchyInnerSecondLevResouLoaded, [loader, handler, lhData, urlMap, firstLevUrls, processOffset + processCeil * secondLevUrls.length, processCeil]), processHandler);
+				var process:Handler = Handler.create(null, _onProcessChange, [loader, processOffset, processCeil], false);
+				_innerSecondLevelLoaderManager.create(secondLevUrls, Handler.create(null, _onHierarchyInnerSecondLevResouLoaded, [loader, process, lhData, urlMap, firstLevUrls, processOffset + processCeil * secondLevUrls.length, processCeil]), processHandler);
 				
 			} else {
 				_onHierarchyInnerSecondLevResouLoaded(loader, null, lhData, urlMap, firstLevUrls, processOffset, processCeil);
@@ -304,8 +313,8 @@ package {
 		private static function _onHierarchyInnerSecondLevResouLoaded(loader:Loader, processHandler:Handler, lhData:Object, urlMap:Object, firstLevUrls:Array, processOffset:Number, processCeil:Number):void {
 			(processHandler) && (processHandler.recover());
 			if (firstLevUrls.length > 0) {
-				var handler:Handler = Handler.create(null, _onProcessChange, [loader, processOffset, processCeil], false);
-				_innerFirstLevelLoaderManager.create(firstLevUrls, Handler.create(null, _onHierarchyInnerFirstLevResouLoaded, [loader, handler, lhData, urlMap, /*processOffset + processCeil * firstLevUrls.length, processCeil*/]), processHandler);
+				var process:Handler = Handler.create(null, _onProcessChange, [loader, processOffset, processCeil], false);
+				_innerFirstLevelLoaderManager.create(firstLevUrls, Handler.create(null, _onHierarchyInnerFirstLevResouLoaded, [loader, process, lhData, urlMap, /*processOffset + processCeil * firstLevUrls.length, processCeil*/]), processHandler);
 				
 			} else {
 				_onHierarchyInnerFirstLevResouLoaded(loader, null, lhData, urlMap);
@@ -324,9 +333,8 @@ package {
 		 *@private
 		 */
 		private static function _loadTerrain(loader:Loader):void {
-			var ltLoader:Loader = new Loader();
-			ltLoader.on(Event.COMPLETE, null, _onTerrainLtLoaded, [loader]);
-			ltLoader.load(loader.url, Loader.JSON, false, null, true);
+			loader.on(Event.LOADED, null, _onTerrainLtLoaded, [loader]);
+			loader.load(loader.url, Loader.JSON, false, null, true);
 		}
 		
 		/**
@@ -350,19 +358,16 @@ package {
 			heightMapURL = formatUrl;
 			
 			var detailTextures:Array = ltData.detailTexture;
-			for (i = 0, n = detailTextures.length; i < n; i++) {
-				textureURLs.push({url:detailTextures[i].diffuse});
-			}
+			for (i = 0, n = detailTextures.length; i < n; i++)
+				textureURLs.push({url: detailTextures[i].diffuse});
 			
 			var normalMaps:Array = ltData.normalMap;
-			for (i = 0, n = normalMaps.length; i < n; i++) {
-				textureURLs.push({url:normalMaps[i]});
-			}
+			for (i = 0, n = normalMaps.length; i < n; i++)
+				textureURLs.push({url: normalMaps[i]});
 			
 			var alphaMaps:Array = ltData.alphaMap;
-			for (i = 0, n = alphaMaps.length; i < n; i++) {
-				textureURLs.push( {url:alphaMaps[i], params:[false,false] } );
-			}
+			for (i = 0, n = alphaMaps.length; i < n; i++)
+				textureURLs.push({url: alphaMaps[i], params: [false, false, WebGLContext.RGBA, true]});
 			
 			for (i = 0, n = textureURLs.length; i < n; i++) {
 				var subUrl:String = textureURLs[i].url;
@@ -371,7 +376,6 @@ package {
 				textureURLs[i].url = formatUrl;
 				urlMap[subUrl] = formatUrl;
 			}
-			
 			
 			var texsUrlCount:int = textureURLs.length;
 			var totalProcessCount:int = texsUrlCount + 2;//heightMap始终为1个
@@ -412,9 +416,8 @@ package {
 		 *@private
 		 */
 		private static function _loadMesh(loader:Loader):void {
-			var lmLoader:Loader = new Loader();
-			lmLoader.on(Event.COMPLETE, null, _onMeshLmLoaded, [loader]);
-			lmLoader.load(loader.url, Loader.BUFFER, false, null, true);
+			loader.on(Event.LOADED, null, _onMeshLmLoaded, [loader]);
+			loader.load(loader.url, Loader.BUFFER, false, null, true);
 		}
 		
 		/**
@@ -514,9 +517,8 @@ package {
 		 *@private
 		 */
 		private static function _loadMaterial(loader:Loader):void {
-			var lmatLoader:Loader = new Loader();
-			lmatLoader.on(Event.COMPLETE, null, _onMaterilLmatLoaded, [loader]);
-			lmatLoader.load(loader.url, Loader.JSON, false, null, true);
+			loader.on(Event.LOADED, null, _onMaterilLmatLoaded, [loader]);
+			loader.load(loader.url, Loader.JSON, false, null, true);
 		}
 		
 		/**
@@ -536,10 +538,15 @@ package {
 				case "LAYAMATERIAL:01": 
 					var textures:Array = lmatData.props.textures;
 					for (var i:int = 0, n:int = textures.length; i < n; i++) {
-						var path:String = textures[i].path;
+						var tex:Object = textures[i];
+						var path:String = tex.path;
 						if (path) {
-							formatSubUrl = _getMaterialTexturePath(path, urlVersion, materialBasePath);
-							urls.push(formatSubUrl);
+							var extenIndex:int = path.length - 4;
+							if (path.indexOf(".exr") == extenIndex || path.indexOf(".EXR") == extenIndex)
+								path = path.substr(0, extenIndex) + ".png";
+							formatSubUrl = URL.formatURL(path, materialBasePath);
+							(urlVersion) && (formatSubUrl = formatSubUrl + urlVersion);
+							urls.push({url: formatSubUrl, params: tex.params});
 							urlMap[path] = formatSubUrl;
 						}
 					}
@@ -626,9 +633,8 @@ package {
 		 *@private
 		 */
 		private static function _loadTextureCube(loader:Loader):void {
-			var ltcLoader:Loader = new Loader();
-			ltcLoader.on(Event.COMPLETE, null, _onTextureCubeLtcLoaded, [loader]);
-			ltcLoader.load(loader.url, Loader.JSON, false, null, true);
+			loader.on(Event.LOADED, null, _onTextureCubeLtcLoaded, [loader]);
+			loader.load(loader.url, Loader.JSON, false, null, true);
 		}
 		
 		/**
@@ -690,7 +696,8 @@ package {
 			ShaderInit3D.__init__();
 			MeshSprite3D.__init__();
 			AnimationNode.__init__();
-			_initResourceLoad();
+			__init__();
+			AtlasResourceManager.maxTextureCount = 2;
 			
 			if (Laya3D.debugMode || OctreeNode.debugMode)
 				_debugPhasorSprite = new PhasorSpriter3D();

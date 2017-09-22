@@ -21,6 +21,7 @@ package laya.d3.resource {
 		
 		public function SolidColorTextureCube(color:Vector4) {
 			super();
+			_type = WebGLContext.TEXTURE_CUBE_MAP;
 			_width = 1;
 			_height = 1;
 			_size = new Size(width, height);
@@ -35,7 +36,7 @@ package laya.d3.resource {
 			var h:int = _height;
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
-			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, glTex);
+			WebGLContext.bindTexture(gl, _type, glTex);
 			gl.texImage2D(WebGLContext.TEXTURE_CUBE_MAP_POSITIVE_X, 0, WebGLContext.RGBA, w, h, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _pixels);
 			gl.texImage2D(WebGLContext.TEXTURE_CUBE_MAP_NEGATIVE_X, 0, WebGLContext.RGBA, w, h, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _pixels);
 			gl.texImage2D(WebGLContext.TEXTURE_CUBE_MAP_POSITIVE_Y, 0, WebGLContext.RGBA, w, h, 0, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _pixels);
@@ -45,7 +46,7 @@ package laya.d3.resource {
 			
 			var minFifter:int = this.minFifter;
 			var magFifter:int = this.magFifter;
-			var repeat:int = this.repeat ? WebGLContext.REPEAT : WebGLContext.CLAMP_TO_EDGE
+			var repeat:int = this._repeat ? WebGLContext.REPEAT : WebGLContext.CLAMP_TO_EDGE
 			
 			var isPOT:Boolean = Arith.isPOT(w, h);
 			if (isPOT) {
@@ -56,18 +57,18 @@ package laya.d3.resource {
 				
 				(magFifter !== -1) || (magFifter = WebGLContext.LINEAR);
 				
-				gl.texParameteri(WebGLContext.TEXTURE_CUBE_MAP, WebGLContext.TEXTURE_MIN_FILTER, minFifter);
-				gl.texParameteri(WebGLContext.TEXTURE_CUBE_MAP, WebGLContext.TEXTURE_MAG_FILTER, magFifter);
-				gl.texParameteri(WebGLContext.TEXTURE_CUBE_MAP, WebGLContext.TEXTURE_WRAP_S, repeat);
-				gl.texParameteri(WebGLContext.TEXTURE_CUBE_MAP, WebGLContext.TEXTURE_WRAP_T, repeat);
-				this.mipmap && gl.generateMipmap(WebGLContext.TEXTURE_CUBE_MAP);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_MIN_FILTER, minFifter);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_MAG_FILTER, magFifter);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_S, repeat);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_T, repeat);
+				this.mipmap && gl.generateMipmap(_type);
 			} else {
 				(minFifter !== -1) || (minFifter = WebGLContext.LINEAR);
 				(magFifter !== -1) || (magFifter = WebGLContext.LINEAR);
-				gl.texParameteri(WebGLContext.TEXTURE_CUBE_MAP, WebGLContext.TEXTURE_MIN_FILTER, minFifter);
-				gl.texParameteri(WebGLContext.TEXTURE_CUBE_MAP, WebGLContext.TEXTURE_MAG_FILTER, magFifter);
-				gl.texParameteri(WebGLContext.TEXTURE_CUBE_MAP, WebGLContext.TEXTURE_WRAP_S, WebGLContext.CLAMP_TO_EDGE);
-				gl.texParameteri(WebGLContext.TEXTURE_CUBE_MAP, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_MIN_FILTER, minFifter);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_MAG_FILTER, magFifter);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_S, WebGLContext.CLAMP_TO_EDGE);
+				gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
 			}
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			
@@ -78,7 +79,6 @@ package laya.d3.resource {
 		}
 		
 		override protected function recreateResource():void {
-			startCreate();
 			_createWebGlTexture();
 			completeCreate();//处理创建完成后相关操作
 		}

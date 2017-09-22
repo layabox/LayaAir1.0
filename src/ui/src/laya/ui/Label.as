@@ -158,6 +158,7 @@ package laya.ui {
 				value=UIUtils.adptString(value+"");
 				_tf.text = value;
 				event(Event.CHANGE);
+				if (!_width || !_height) onCompResize();
 			}
 		}
 		

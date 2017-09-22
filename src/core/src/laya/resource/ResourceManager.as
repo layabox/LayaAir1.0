@@ -237,7 +237,6 @@ package laya.resource {
 				_resources.splice(index, 1);
 				resource._resourceManager = null;
 				_memorySize -= resource.memorySize;
-				//resource.off(Event.MEMORY_CHANGED, this, addSize);
 				return true;
 			}
 			return false;
@@ -329,12 +328,12 @@ package laya.resource {
 				else if (b.released)
 					return -1;
 				
-				return a.lastUseFrameCount - b.lastUseFrameCount;
+				return a._lastUseFrameCount - b._lastUseFrameCount;
 			});
 			var currentFrameCount:int = Stat.loopCount;
 			for (var i:int = 0, n:int = all.length; i < n; i++) {
 				var resou:Resource = all[i];
-				if (currentFrameCount - resou.lastUseFrameCount > 1)//差值大于1帧时可释放
+				if (currentFrameCount - resou._lastUseFrameCount > 1)//差值大于1帧时可释放
 				{
 					resou.releaseResource();
 				} else {

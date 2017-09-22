@@ -22,7 +22,6 @@ package laya.d3.core.material {
 	 * <code>BaseMaterial</code> 类用于创建材质,抽象类,不允许实例。
 	 */
 	public class BaseMaterial extends Resource implements IClone {
-		
 		/**剔除枚举_不剔除。*/
 		public static const CULL_NONE:int = 0;
 		/**剔除枚举_剔除正面。*/
@@ -92,7 +91,7 @@ package laya.d3.core.material {
 		/**深度测试函数枚举_总是通过。*/
 		public static const DEPTHFUNC_ALWAYS:int = 0x0207/*WebGLContext.ALWAYS*/;
 		
-		/**@private 材质级着色器宏定义,接收阴影。*/
+		/**@private 材质级着色器宏定义,透明测试。*/
 		public static const SHADERDEFINE_ALPHATEST:int = 0x1;
 		
 		/**@private 着色器变量,透明测试值。*/
@@ -609,6 +608,13 @@ package laya.d3.core.material {
 							(path) && (this[texture.name] = Loader.getRes(textureMap[path]));
 						}
 						break;
+					case "defines": 
+						var defineNames:Array = props[key];
+						for (i = 0, n = defineNames.length; i < n; i++) {
+							var define:int = _shaderCompile.getMaterialDefineByName(defineNames[i]);
+							_addShaderDefine(define);
+						}
+						break;
 					default: 
 						this[key] = props[key];
 					}
@@ -699,14 +705,6 @@ package laya.d3.core.material {
 			var destBaseMaterial:BaseMaterial = __JS__("new this.constructor()");
 			cloneTo(destBaseMaterial);
 			return destBaseMaterial;
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function dispose():void {
-			resourceManager.removeResource(this);
-			super.dispose();
 		}
 	}
 

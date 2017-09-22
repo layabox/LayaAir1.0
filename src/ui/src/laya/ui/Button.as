@@ -8,6 +8,7 @@ package laya.ui {
 	import laya.ui.UIUtils;
 	import laya.utils.Handler;
 	import laya.utils.Utils;
+	import laya.utils.WeakObject;
 	
 	/**
 	 * 当按钮的选中状态（ <code>selected</code> 属性）发生改变时调度。
@@ -325,6 +326,10 @@ package laya.ui {
 		}
 		
 		public function set stateNum(value:int):void {
+			if (value is String)
+			{
+				value = parseInt(value as String);
+			}
 			if (_stateNum != value) {
 				_stateNum = value < 1 ? 1 : value > 3 ? 3 : value;
 				callLater(changeClips);
@@ -345,7 +350,7 @@ package laya.ui {
 			var height:Number = img.sourceHeight / _stateNum;
 			img.$_GID || (img.$_GID = Utils.getGID());
 			var key:String = img.$_GID +"-"+ _stateNum;
-			var clips:Array = AutoBitmap.getCache(key);
+			var clips:Array = WeakObject.I.get(key);
 			if (clips) _sources = clips;
 			else {
 				_sources = [];
@@ -356,7 +361,7 @@ package laya.ui {
 						_sources.push(Texture.createFromTexture(img, 0, height * i, width, height));
 					}
 				}
-				AutoBitmap.setCache(key, _sources);
+				WeakObject.I.set(key, _sources);
 			}
 			
 			if (_autoSize) {

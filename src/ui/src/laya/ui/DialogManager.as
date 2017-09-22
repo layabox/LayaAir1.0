@@ -104,7 +104,7 @@ package laya.ui {
 		 * @param closeOther 是否关闭其它对话框，若值为ture，则关闭其它的对话框。
 		 */
 		public function open(dialog:Dialog, closeOther:Boolean = false):void {
-			if (closeOther) removeChildren();
+			if (closeOther) _closeAll();
 			if (dialog.popupCenter) _centerDialog(dialog);
 			addChild(dialog);
 			if (dialog.isModal || this._$P["hasZorder"]) timer.callLater(this, _checkMask);
@@ -159,10 +159,19 @@ package laya.ui {
 		 * 关闭所有的对话框。
 		 */
 		public function closeAll():void {
-			removeChildren();
+			_closeAll();
 			event(Event.CLOSE);
 		}
 		
+		/**@private */
+		private function _closeAll():void {
+			for (var i:int = numChildren - 1; i > -1; i--) {
+				var item:Dialog = getChildAt(i) as Dialog;
+				if (item.close!=null) {
+					doClose(item);
+				}
+			}
+		}
 		/**
 		 * 根据组获取所有对话框
 		 * @param	group 组名称

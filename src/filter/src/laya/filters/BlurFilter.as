@@ -10,6 +10,7 @@ package laya.filters {
 		
 		/**模糊滤镜的强度(值越大，越不清晰 */
 		public var strength:Number;
+		private var strength_sig2_2sig2_gauss1:Array = [];//给shader用的。避免创建对象
 		
 		/**
 		 * 模糊滤镜

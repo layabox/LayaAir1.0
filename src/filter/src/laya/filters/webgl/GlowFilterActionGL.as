@@ -76,8 +76,8 @@ package laya.filters.webgl{
 			_textureWidth = w;
 			_textureHeight = h;
 			//生成一个临时的纹理
-			var submit:SubmitCMD = SubmitCMD.create([scope, sprite, context, 0, 0], tmpTarget);
-			context.ctx.addRenderObject(submit);
+			//var submit:SubmitCMD = SubmitCMD.create([scope, sprite, context, 0, 0], tmpTarget);
+			//context.ctx.addRenderObject(submit);
 			
 			//把对象画到临时纹理上（画的时候用滤镜）
 			var shaderValue:Value2D;
@@ -85,18 +85,19 @@ package laya.filters.webgl{
 			mat.identity();
 			shaderValue = Value2D.create(ShaderDefines2D.TEXTURE2D, 0);
 			shaderValue.setFilters([data]); 
-			
-			context.ctx.drawTarget(scope, 0, 0, _textureWidth, _textureHeight, mat, "src", shaderValue,null,BlendMode.TOINT.overlay);
+			context.ctx.drawTarget(scope, 0, 0, _textureWidth, _textureHeight, mat, "src", shaderValue,null);
 			//再对生成的临时纹理跟纹理依次画到结果纹理上
-			submit = SubmitCMD.create([scope, sprite, context, 0, 0], startOut);
-			context.ctx.addRenderObject(submit);
-			shaderValue = Value2D.create(ShaderDefines2D.TEXTURE2D, 0);
-			context.ctx.drawTarget(scope, 0, 0, _textureWidth, _textureHeight, mat, "tmpTarget", shaderValue, Texture.INV_UV,BlendMode.TOINT.overlay);
+			//submit = SubmitCMD.create([scope, sprite, context, 0, 0], startOut);
+			//context.ctx.addRenderObject(submit);
+			
+			//shaderValue = Value2D.create(ShaderDefines2D.TEXTURE2D, 0);
+			//context.ctx.drawTarget(scope, 0, 0, _textureWidth, _textureHeight, mat, "tmpTarget", shaderValue, Texture.INV_UV,BlendMode.TOINT.overlay);
+			
 			shaderValue = Value2D.create(ShaderDefines2D.TEXTURE2D, 0);
 			context.ctx.drawTarget(scope, 0, 0, _textureWidth, _textureHeight, mat, "src", shaderValue);
 			//清临时纹理
-			submit = SubmitCMD.create([scope, sprite, context, 0, 0], recycleTarget);
-			context.ctx.addRenderObject(submit);
+			//submit = SubmitCMD.create([scope, sprite, context, 0, 0], recycleTarget);
+			//context.ctx.addRenderObject(submit);
 			
 			return null;
 		}

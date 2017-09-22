@@ -407,7 +407,7 @@ package laya.display {
 		 * @param color 定义文本颜色，比如"#ff0000"。
 		 * @param textAlign 文本对齐方式，可选值："left"，"center"，"right"。
 		 */
-		public function fillText(text:String, x:Number, y:Number, font:String, color:String, textAlign:String):void {
+		public function fillText(text:String, x:Number, y:Number, font:String, color:String, textAlign:String,underLine:int = 0):void {
 			_saveToCmd(Render._context._fillText, [text, x, y, font || Font.defaultFont, color, textAlign]);
 		}
 		
@@ -654,7 +654,7 @@ package laya.display {
 		 */
 		public function drawLines(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):void {
 			var tId:uint = 0;
-			if (!points || points.length < 1) return;
+			if (!points || points.length < 4) return;
 			if (Render.isWebGL) {
 				tId = VectorGraphManager.getInstance().getId();
 				if (_vectorgraphArray == null) _vectorgraphArray = [];

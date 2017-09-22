@@ -78,7 +78,6 @@ package laya.d3.core.material {
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_OPAQUEDOUBLEFACE: 
 				renderQueue = RenderQueue.OPAQUE;
@@ -86,7 +85,6 @@ package laya.d3.core.material {
 				cull = CULL_NONE;
 				blend = BLEND_DISABLE;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			//case RENDERMODE_CUTOUT: 
 			//depthWrite = true;
@@ -111,8 +109,7 @@ package laya.d3.core.material {
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
+				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);;
 				break;
 			case RENDERMODE_TRANSPARENTDOUBLEFACE: 
 				renderQueue = RenderQueue.TRANSPARENT;
@@ -122,7 +119,6 @@ package laya.d3.core.material {
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_ADDTIVE: 
 				renderQueue = RenderQueue.TRANSPARENT;
@@ -132,7 +128,6 @@ package laya.d3.core.material {
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_ADDTIVEDOUBLEFACE: 
 				renderQueue = RenderQueue.TRANSPARENT;
@@ -142,7 +137,6 @@ package laya.d3.core.material {
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_TRANSPARENT: 
 				renderQueue = RenderQueue.TRANSPARENT;
@@ -152,7 +146,6 @@ package laya.d3.core.material {
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_TRANSPARENTDOUBLEFACE: 
 				renderQueue = RenderQueue.TRANSPARENT;
@@ -162,7 +155,6 @@ package laya.d3.core.material {
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_ADDTIVE: 
 				renderQueue = RenderQueue.TRANSPARENT;
@@ -172,7 +164,6 @@ package laya.d3.core.material {
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_DEPTHREAD_ADDTIVEDOUBLEFACE: 
 				renderQueue = RenderQueue.TRANSPARENT;
@@ -182,7 +173,6 @@ package laya.d3.core.material {
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENT: 
 				renderQueue = RenderQueue.TRANSPARENT;
@@ -192,7 +182,6 @@ package laya.d3.core.material {
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENTDOUBLEFACE: 
 				renderQueue = RenderQueue.TRANSPARENT;
@@ -202,7 +191,6 @@ package laya.d3.core.material {
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVE: 
 				renderQueue = RenderQueue.TRANSPARENT;
@@ -212,7 +200,6 @@ package laya.d3.core.material {
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE: 
 				renderQueue = RenderQueue.TRANSPARENT;
@@ -222,7 +209,6 @@ package laya.d3.core.material {
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE;
 				//_removeShaderDefine(ShaderDefines3D.ALPHATEST);
-				event(Event.RENDERQUEUE_CHANGED, this);
 				break;
 			default: 
 				throw new Error("Material:renderMode value error.");

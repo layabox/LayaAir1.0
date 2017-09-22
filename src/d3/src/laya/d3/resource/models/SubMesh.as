@@ -67,6 +67,8 @@ package laya.d3.resource.models {
 		public var _indexStart:int;
 		/** @private */
 		public var _indexCount:int;
+		/** @private */
+		public var _indices:Uint16Array;
 		
 		/**
 		 * @private
@@ -262,11 +264,11 @@ package laya.d3.resource.models {
 		/**
 		 * @private
 		 */
-		public function getIndices():* {
+		public function getIndices():Uint16Array {
 			if (_indexCount > 0)
-				return _indexBuffer.getData().slice(_indexStart, _indexCount);
+				return _indices;
 			else//兼容性代码
-				return _indexBuffer.getData().slice();
+				return _indexBuffer.getData();
 		}
 		
 		/**

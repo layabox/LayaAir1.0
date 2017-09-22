@@ -12,9 +12,7 @@ vrCamera.addComponent(VRCameraMoveScript);
 
 var directionLight = scene.addChild(new Laya.DirectionLight());
 directionLight.direction = new Laya.Vector3(0, -0.8, -1);
-directionLight.ambientColor = new Laya.Vector3(0.8, 0.8, 0.8);
-directionLight.specularColor = new Laya.Vector3(0.5, 0.5, 1.0);
-directionLight.diffuseColor = new Laya.Vector3(1, 1, 1);
+directionLight.color = new Laya.Vector3(1, 1, 1);
 
 var earth = scene.addChild(Laya.Sprite3D.load("../../res/threeDimen/staticModel/earth/EarthPlanet.lh"));
 

@@ -1,6 +1,6 @@
 package laya.utils {
-	//[IF-JS]import laya.media.h5audio.AudioSound;
 	//[IF-JS]import laya.media.webaudio.WebAudioSound;
+	import laya.media.h5audio.AudioSound;
 	import laya.media.SoundManager;
 	import laya.renders.Render;
 	import laya.resource.Context;
@@ -97,7 +97,7 @@ package laya.utils {
 			onAndriod = /*[STATIC SAFE]*/ u.indexOf('Android') > -1 || u.indexOf('Adr') > -1;
 			onWP = /*[STATIC SAFE]*/ u.indexOf("Windows Phone") > -1;
 			onQQBrowser = /*[STATIC SAFE]*/ u.indexOf("QQBrowser") > -1;
-			onMQQBrowser = /*[STATIC SAFE]*/ u.indexOf("MQQBrowser") > -1;
+			onMQQBrowser = /*[STATIC SAFE]*/ u.indexOf("MQQBrowser") > -1 || (u.indexOf("Mobile") > -1 && u.indexOf("QQ") > -1);
 			onIE = /*[STATIC SAFE]*/ !!window.ActiveXObject || "ActiveXObject" in window;
 			onWeiXin = /*[STATIC SAFE]*/ u.indexOf('MicroMessenger') > -1;
 			onPC = /*[STATIC SAFE]*/ !onMobile;
@@ -109,9 +109,10 @@ package laya.utils {
 			
 			__JS__("Sound = Browser.webAudioEnabled?WebAudioSound:AudioSound;");
 			__JS__("if (Browser.webAudioEnabled) WebAudioSound.initWebAudio();");
+			AudioSound._initMusicAudio();
 			__JS__("Browser.enableTouch=(('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch)");
 			__JS__("window.focus()");
-			__JS__("SoundManager._soundClass=Sound;");
+			__JS__("SoundManager._soundClass=Sound;");			
 			
 			Render._mainCanvas = Render._mainCanvas || HTMLCanvas.create('2D');
 			if (canvas) return;

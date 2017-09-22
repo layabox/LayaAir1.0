@@ -97,7 +97,7 @@ package laya.webgl.submit {
 		/*
 		   create方法只传对submit设置的值
 		 */
-		public static function create(context:WebGLContext2D, ib:IndexBuffer2D, vb:VertexBuffer2D, pos:int, sv:Value2D):Submit {
+		public static function createSubmit(context:WebGLContext2D, ib:IndexBuffer2D, vb:VertexBuffer2D, pos:int, sv:Value2D):Submit {
 			var o:Submit = _cache._length ? _cache[--_cache._length] : new Submit();
 			
 			if (vb == null) {

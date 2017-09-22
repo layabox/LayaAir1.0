@@ -129,9 +129,6 @@ package laya.ani {
 						
 						(lastKeyFrame) && (lastKeyFrame.duration = keyFrame.startTime - lastKeyFrame.startTime);
 						
-						keyFrame.dData = new Float32Array(keyframeWidth);
-						keyFrame.nextData = new Float32Array(keyframeWidth);
-						
 						var offset:int = _DATA.offset;
 						
 						var keyframeDataOffset:int = reader.getUint32();

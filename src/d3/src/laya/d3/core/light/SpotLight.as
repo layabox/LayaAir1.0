@@ -29,12 +29,6 @@ package laya.d3.core.light {
 		 */
 		public function SpotLight() {
 			super();
-			
-			_diffuseColor = new Vector3(1.0, 1.0, 1.0);
-			_ambientColor = new Vector3(0.2, 0.2, 0.2);
-			_specularColor = new Vector3(1.0, 1.0, 1.0);
-			_reflectColor = new Vector3(1.0, 1.0, 1.0);
-			
 			transform.position = new Vector3(0.0, 1.0, 1.0);
 			_updateDirection = false;
 			direction = new Vector3(0.0, -1.0, -1.0);
@@ -138,9 +132,7 @@ package laya.d3.core.light {
 		override protected function _clearSelfRenderObjects():void {
 			var scene:Scene = this.scene;
 			var shaderValue:ValusArray = scene._shaderValues;
-			shaderValue.setValue(Scene.SPOTLIGHTDIFFUSE, null);
-			shaderValue.setValue(Scene.SPOTLIGHTAMBIENT, null);
-			shaderValue.setValue(Scene.SPOTLIGHTSPECULAR, null);
+			shaderValue.setValue(Scene.SPOTLIGHTCOLOR, null);
 			shaderValue.setValue(Scene.SPOTLIGHTPOS, null);
 			shaderValue.setValue(Scene.SPOTLIGHTDIRECTION, null);
 			shaderValue.setValue(Scene.SPOTLIGHTRANGE, null);
@@ -158,9 +150,7 @@ package laya.d3.core.light {
 			if (scene.enableLight && _activeInHierarchy) {
 				var shaderValue:ValusArray = scene._shaderValues;
 				scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_SPOTLIGHT);
-				shaderValue.setValue(Scene.SPOTLIGHTDIFFUSE, diffuseColor.elements);
-				shaderValue.setValue(Scene.SPOTLIGHTAMBIENT, ambientColor.elements);
-				shaderValue.setValue(Scene.SPOTLIGHTSPECULAR, specularColor.elements);
+				shaderValue.setValue(Scene.SPOTLIGHTCOLOR, color.elements);
 				shaderValue.setValue(Scene.SPOTLIGHTPOS, transform.position.elements);
 				shaderValue.setValue(Scene.SPOTLIGHTDIRECTION, direction.elements);
 				shaderValue.setValue(Scene.SPOTLIGHTRANGE, range);

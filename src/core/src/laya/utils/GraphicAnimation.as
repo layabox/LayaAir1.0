@@ -37,7 +37,7 @@ package laya.utils {
 		/**
 		 * @private
 		 */
-		protected static const _drawTextureCmd:Array = [["skin", null], ["x", 0], ["y", 0], ["width", 0], ["height", 0], ["pivotX", 0], ["pivotY", 0], ["scaleX", 1], ["scaleY", 1], ["rotation", 0], ["alpha", 1], ["skewX", 0], ["skewY", 0], ["anchorX", 0], ["anchorY", 0]];
+		protected static const _drawTextureCmd:Array = [["skin", null], ["x", 0], ["y", 0], ["width", -1], ["height", -1], ["pivotX", 0], ["pivotY", 0], ["scaleX", 1], ["scaleY", 1], ["rotation", 0], ["alpha", 1], ["skewX", 0], ["skewY", 0], ["anchorX", 0], ["anchorY", 0]];
 		/**
 		 * @private
 		 */
@@ -75,6 +75,14 @@ package laya.utils {
 		private function _calGraphicData(aniData:Object):void {
 			this._setUp(null, aniData);
 			_createGraphicData();
+			if (_nodeIDAniDic)
+			{
+				var key:String;
+				for (key in _nodeIDAniDic)
+				{
+					_nodeIDAniDic[key]=null;
+				}
+			}
 		}
 		
 		/**
@@ -289,8 +297,12 @@ package laya.utils {
 			var skewX:Number = params[11], skewY:Number = params[12]
 			width = params[3];
 			height = params[4];
+			if (width == 0 || height == 0) url = null;
+			if (width == -1) width = 0;
+			if (height == -1) height = 0;
 			var tex:Texture;
 			rst.skin = url;
+			
 			rst.width = width;
 			rst.height = height;
 			if (url) {

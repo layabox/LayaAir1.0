@@ -11,9 +11,7 @@ camera.addComponent(CameraMoveScript);
 
 //点光源
 var pointLight = scene.addChild(new Laya.PointLight());
-pointLight.ambientColor = new Laya.Vector3(0.0, 0.0, 0.0);
-pointLight.specularColor = new Laya.Vector3(0.3, 0.3, 0.9);
-pointLight.diffuseColor = new Laya.Vector3(0.1189446, 0.5907708, 0.7352941);
+pointLight.color = new Laya.Vector3(0.1189446, 0.5907708, 0.7352941);
 pointLight.transform.position = new Laya.Vector3(0.4, 0.4, 0.0);
 pointLight.attenuation = new Laya.Vector3(0.0, 0.0, 3.0);
 pointLight.range = 3.0;

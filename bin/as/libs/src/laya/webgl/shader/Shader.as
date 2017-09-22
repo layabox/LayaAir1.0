@@ -5,6 +5,7 @@ package laya.webgl.shader {
 	import laya.utils.StringKey;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
+	import laya.webgl.utils.Buffer;
 	import laya.webgl.utils.ShaderCompile;
 	
 	public class Shader extends BaseShader {
@@ -137,7 +138,6 @@ package laya.webgl.shader {
 		}
 		
 		override protected function recreateResource():void {
-			startCreate();
 			_compile();
 			completeCreate();
 			memorySize = 0;//忽略尺寸尺寸
@@ -261,9 +261,9 @@ package laya.webgl.shader {
 			gl.compileShader(shader);
 			/*[IF-FLASH]*/
 			return shader;
-			if (!gl.getShaderParameter(shader, WebGLContext.COMPILE_STATUS)) {
-				throw gl.getShaderInfoLog(shader);
-			}
+			//if (!gl.getShaderParameter(shader, WebGLContext.COMPILE_STATUS)) {
+				//throw gl.getShaderInfoLog(shader);
+			//}
 			return shader;
 		}
 		
@@ -278,9 +278,12 @@ package laya.webgl.shader {
 		
 		private function _attribute(one:*, value:*):int {
 			var gl:WebGLContext = WebGL.mainContext;
-			gl.enableVertexAttribArray(one.location);
-			gl.vertexAttribPointer(one.location, value[0], value[1], value[2], value[3], value[4] + this._offset);
-			return 2;
+			var enableAtributes:Array = Buffer._enableAtributes;
+			var location:int = one.location;
+			(enableAtributes[location])||(gl.enableVertexAttribArray(location));
+			gl.vertexAttribPointer(location, value[0], value[1], value[2], value[3], value[4] + this._offset);
+			enableAtributes[location] = Buffer._bindVertexBuffer;
+			return 1;
 		}
 		
 		private function _uniform1f(one:*, value:*):int {
@@ -625,11 +628,5 @@ package laya.webgl.shader {
 			i += 2;
 			return i;
 		}
-		
-		override public function dispose():void {
-			resourceManager.removeResource(this);
-			super.dispose();
-		}
-	
 	}
 }

@@ -3,8 +3,10 @@ package laya.d3.loaders {
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
+	import laya.d3.graphics.VertexPosition;
 	import laya.d3.graphics.VertexPositionNTBTexture;
 	import laya.d3.graphics.VertexPositionNTBTexture0Texture1Skin;
+	import laya.d3.graphics.VertexPositionNormal;
 	import laya.d3.graphics.VertexPositionNormalColor;
 	import laya.d3.graphics.VertexPositionNormalColorSkin;
 	import laya.d3.graphics.VertexPositionNormalColorSkinTangent;
@@ -17,6 +19,7 @@ package laya.d3.loaders {
 	import laya.d3.graphics.VertexPositionNormalColorTextureSkin;
 	import laya.d3.graphics.VertexPositionNormalColorTextureSkinTangent;
 	import laya.d3.graphics.VertexPositionNormalColorTextureTangent;
+	import laya.d3.graphics.VertexPositionNormalTangent;
 	import laya.d3.graphics.VertexPositionNormalTexture;
 	import laya.d3.graphics.VertexPositionNormalTexture0Texture1;
 	import laya.d3.graphics.VertexPositionNormalTexture0Texture1Skin;
@@ -167,14 +170,7 @@ package laya.d3.loaders {
 			for (i = 0; i < boneCount; i++)
 				boneNames[i] = _strings[_readData.getUint16()];
 			
-			var bindPoseStart:uint = _readData.getUint32();
-			var binPoseLength:uint = _readData.getUint32();
-			var bindPoseDatas:Float32Array = new Float32Array(arrayBuffer.slice(offset + bindPoseStart, offset + bindPoseStart + binPoseLength));
-			_mesh._bindPoses = new Vector.<Matrix4x4>();
-			for (i = 0, n = bindPoseDatas.length; i < n; i += 16) {
-				var bindPose:Matrix4x4 = new Matrix4x4(bindPoseDatas[i + 0], bindPoseDatas[i + 1], bindPoseDatas[i + 2], bindPoseDatas[i + 3], bindPoseDatas[i + 4], bindPoseDatas[i + 5], bindPoseDatas[i + 6], bindPoseDatas[i + 7], bindPoseDatas[i + 8], bindPoseDatas[i + 9], bindPoseDatas[i + 10], bindPoseDatas[i + 11], bindPoseDatas[i + 12], bindPoseDatas[i + 13], bindPoseDatas[i + 14], bindPoseDatas[i + 15]);
-				_mesh._bindPoses.push(bindPose);
-			}
+			_readData.pos += 8;//TODO:优化
 			
 			var inverseGlobalBindPoseStart:uint = _readData.getUint32();
 			var inverseGlobalBinPoseLength:uint = _readData.getUint32();
@@ -204,12 +200,14 @@ package laya.d3.loaders {
 			submesh._vertexCount = vbLength;
 			
 			var ibStart:int = _readData.getUint32();
-			var ibLength:int = _readData.getUint32();
-			submesh._indexBuffer = _mesh._indexBuffer;
+			var ibCount:int = _readData.getUint32();
+			var indexBuffer:IndexBuffer3D = _mesh._indexBuffer;
+			submesh._indexBuffer = indexBuffer;
 			submesh._indexStart = ibStart;
-			submesh._indexCount = ibLength;
-			var offset:int = _DATA.offset;
+			submesh._indexCount = ibCount;
+			submesh._indices = new Uint16Array(indexBuffer.getData().buffer, ibStart * 2, ibCount);
 			
+			var offset:int = _DATA.offset;
 			var subIndexBufferStart:Vector.<int> = submesh._subIndexBufferStart;
 			var subIndexBufferCount:Vector.<int> = submesh._subIndexBufferCount;
 			var boneIndicesList:Vector.<Uint8Array> = submesh._boneIndicesList;
@@ -272,7 +270,7 @@ package laya.d3.loaders {
 				vertexDeclaration = VertexPositionNormalColorTexture0Texture1SkinTangent.vertexDeclaration;
 			else if (position && normal && color && texcoord0 && texcoord1 && blendWeight && blendIndex)
 				vertexDeclaration = VertexPositionNormalColorTexture0Texture1Skin.vertexDeclaration;
-			else if (position && normal && tangent && binormal && texcoord0 && texcoord1 && blendWeight && blendIndex )
+			else if (position && normal && tangent && binormal && texcoord0 && texcoord1 && blendWeight && blendIndex)
 				vertexDeclaration = VertexPositionNTBTexture0Texture1Skin.vertexDeclaration;
 			else if (position && normal && texcoord0 && texcoord1 && blendWeight && blendIndex && tangent)
 				vertexDeclaration = VertexPositionNormalTexture0Texture1SkinTangent.vertexDeclaration;
@@ -312,6 +310,12 @@ package laya.d3.loaders {
 				vertexDeclaration = VertexPositionNormalColorTangent.vertexDeclaration;
 			else if (position && normal && color)
 				vertexDeclaration = VertexPositionNormalColor.vertexDeclaration;
+			else if (position && normal && tangent)
+				vertexDeclaration = VertexPositionNormalTangent.vertexDeclaration;
+			else if (position && normal)
+				vertexDeclaration = VertexPositionNormal.vertexDeclaration;
+			else
+				vertexDeclaration = VertexPosition.vertexDeclaration;
 			
 			return vertexDeclaration;
 		}

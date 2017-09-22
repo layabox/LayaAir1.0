@@ -1,4 +1,5 @@
 package laya.d3.component {
+	import laya.d3.core.ComponentNode;
 	import laya.d3.core.Layer;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.IUpdate;
@@ -26,14 +27,10 @@ package laya.d3.component {
 		protected static var _uniqueIDCounter:int = 1;
 		/** @private 唯一标识ID。*/
 		protected var _id:int;
-		/** @private 所属节点遮罩层。*/
-		protected var _cachedOwnerLayerMask:uint;
-		/** @private 所属节点是否启动。*/
-		protected var _cachedOwnerActiveInHierarchy:Boolean;
 		/** @private 是否启动。*/
 		protected var _enable:Boolean;
 		/** @private 所属Sprite3D节点。*/
-		protected var _owner:Sprite3D;
+		protected var _owner:ComponentNode;
 		
 		/**是否已执行start函数。*/
 		public var started:Boolean;
@@ -50,7 +47,7 @@ package laya.d3.component {
 		 * 获取所属Sprite3D节点。
 		 * @return 所属Sprite3D节点。
 		 */
-		public function get owner():Sprite3D {
+		public function get owner():ComponentNode {
 			return _owner;
 		}
 		
@@ -100,35 +97,13 @@ package laya.d3.component {
 		
 		/**
 		 * @private
-		 * owner蒙版变化事件处理。
-		 * @param	mask 蒙版值。
-		 */
-		protected function _onLayerChanged(layer:Layer):void {
-			_cachedOwnerLayerMask = layer.mask;
-		}
-		
-		/**
-		 * @private
-		 * owner启用变化事件处理。
-		 * @param	enable 是否启用。
-		 */
-		protected function _onActiveHierarchyChanged(active:Boolean):void {
-			_cachedOwnerActiveInHierarchy = active;
-		}
-		
-		/**
-		 * @private
 		 * 初始化组件。
 		 * @param	owner 所属Sprite3D节点。
 		 */
-		public function _initialize(owner:Sprite3D):void {
+		public function _initialize(owner:ComponentNode):void {
 			_owner = owner;
 			enable = true;
 			started = false;
-			_cachedOwnerLayerMask = owner.layer.mask;
-			_owner.on(Event.LAYER_CHANGED, this, _onLayerChanged);
-			_cachedOwnerActiveInHierarchy = owner.activeInHierarchy;
-			_owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onActiveHierarchyChanged);
 			_load(owner);
 		}
 		
@@ -137,7 +112,7 @@ package laya.d3.component {
 		 * 销毁组件。
 		 */
 		public function _destroy():void {
-			_unload(owner);
+			_unload(_owner);
 			_owner = null;
 			_destroyed = true;
 		}
@@ -146,7 +121,7 @@ package laya.d3.component {
 		 * @private
 		 * 载入组件时执行,可重写此函数。
 		 */
-		public function _load(owner:Sprite3D):void {
+		public function _load(owner:ComponentNode):void {
 		}
 		
 		/**
@@ -192,7 +167,7 @@ package laya.d3.component {
 		 * @private
 		 * 卸载组件时执行,可重写此函数。
 		 */
-		public function _unload(owner:Sprite3D):void {
+		public function _unload(owner:ComponentNode):void {
 			this.offAll();
 		}
 		

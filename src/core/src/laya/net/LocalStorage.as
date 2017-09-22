@@ -1,5 +1,4 @@
 package laya.net {
-	import laya.net.LocalStorage;
 	
 	/**
 	 * <p> <code>LocalStorage</code> 类用于没有时间限制的数据存储。</p>

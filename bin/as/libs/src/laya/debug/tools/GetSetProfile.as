@@ -46,11 +46,11 @@ package laya.debug.tools {
 			}
 			FunHook.hook(Node, "call", null, createFun);
 			handlerO = {};
-			handlerO["get"] = function(target, key, receiver) {
+			handlerO["get"] = function(target:*, key:*, receiver:*):* {
 				trace("get", target, key, receiver);
 				return __JS__("Reflect.get(target, key, receiver)");
 			};
-			handlerO["set"] = function(target, key, value, receiver) {
+			handlerO["set"] = function(target:*, key:*, value:*, receiver:*):* {
 				trace("set", target, key, value, receiver);
 				return __JS__("Reflect.set(target, key, value, receiver)");
 			}

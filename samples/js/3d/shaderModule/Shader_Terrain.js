@@ -71,9 +71,7 @@ function initShader() {
         'u_MaterialAmbient': [CustomTerrainMaterial.MATERIALAMBIENT, Laya.Shader3D.PERIOD_MATERIAL],
         'u_MaterialSpecular': [CustomTerrainMaterial.MATERIALSPECULAR, Laya.Shader3D.PERIOD_MATERIAL],
         'u_DirectionLight.Direction': [Laya.Scene.LIGHTDIRECTION, Laya.Shader3D.PERIOD_SCENE],
-        'u_DirectionLight.Diffuse': [Laya.Scene.LIGHTDIRDIFFUSE, Laya.Shader3D.PERIOD_SCENE],
-        'u_DirectionLight.Ambient': [Laya.Scene.LIGHTDIRAMBIENT, Laya.Shader3D.PERIOD_SCENE],
-        'u_DirectionLight.Specular': [Laya.Scene.LIGHTDIRSPECULAR, Laya.Shader3D.PERIOD_SCENE]
+        'u_DirectionLight.Diffuse': [Laya.Scene.LIGHTDIRDIFFUSE, Laya.Shader3D.PERIOD_SCENE]
     };
     var customTerrianShader = Laya.Shader3D.nameKey.add("CustomTerrainShader");
 

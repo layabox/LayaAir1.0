@@ -1,21 +1,16 @@
 package laya.d3.component.physics {
-	import laya.d3.component.Component3D;
 	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.render.IRenderable;
-	import laya.d3.core.render.RenderElement;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.BaseMesh;
-	import laya.d3.resource.models.Mesh;
 	import laya.d3.utils.Picker;
 	import laya.d3.utils.RaycastHit;
-	import laya.events.Event;
 	
 	/**
 	 * <code>MeshCollider</code> 类用于创建网格碰撞器。

@@ -31,7 +31,7 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		private function _onMeshChanged(meshFilter:MeshFilter,oldMesh:BaseMesh, mesh:BaseMesh):void {
+		private function _onMeshChanged(meshFilter:MeshFilter, oldMesh:BaseMesh, mesh:BaseMesh):void {
 			if (mesh.loaded) {
 				_boundingSphereNeedChange = _boundingBoxNeedChange = _boundingBoxCenterNeedChange = _octreeNodeNeedChange = true;
 			} else {
@@ -58,11 +58,15 @@ package laya.d3.core {
 				var meshBoundingSphere:BoundSphere = sharedMesh.boundingSphere;
 				var maxScale:Number;
 				var transform:Transform3D = _owner.transform;
-				var scale:Vector3 = transform.scale;
-				if (scale.x >= scale.y && scale.x >= scale.z)
-					maxScale = scale.x;
+				var scaleE:Float32Array = transform.scale.elements;
+				var scaleX:Number = Math.abs(scaleE[0]);
+				var scaleY:Number = Math.abs(scaleE[1]);
+				var scaleZ:Number = Math.abs(scaleE[2]);
+				
+				if (scaleX >= scaleY && scaleX >= scaleZ)
+					maxScale = scaleX;
 				else
-					maxScale = scale.y >= scale.z ? scale.y : scale.z;
+					maxScale = scaleY >= scaleZ ? scaleY : scaleZ;
 				
 				Vector3.transformCoordinate(meshBoundingSphere.center, transform.worldMatrix, _boundingSphere.center);
 				_boundingSphere.radius = meshBoundingSphere.radius * maxScale;
@@ -98,6 +102,9 @@ package laya.d3.core {
 				_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, Matrix4x4.DEFAULT);
 				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projectionView);
 			}
+			
+			//if (Laya3D.debugMode)
+				//_renderRenderableBoundBox();
 		}
 	}
 

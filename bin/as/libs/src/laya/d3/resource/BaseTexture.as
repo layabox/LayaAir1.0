@@ -1,14 +1,19 @@
 package laya.d3.resource {
 	import laya.d3.math.Vector4;
 	import laya.d3.utils.Size;
+	import laya.maths.Arith;
 	import laya.renders.Render;
 	import laya.resource.Resource;
+	import laya.webgl.WebGL;
+	import laya.webgl.WebGLContext;
 	
 	/**
 	 * <code>BaseTexture</code> 纹理的父类，抽象类，不允许实例。
 	 */
 	public class BaseTexture extends Resource {
 		
+		/** @private */
+		protected var _type:int;
 		/** @private */
 		protected var _width:int;
 		/** @private */
@@ -23,6 +28,8 @@ package laya.d3.resource {
 		protected var _minFifter:int;
 		/** @private */
 		protected var _magFifter:int;
+		/** @private */
+		protected var _format:int;
 		/** @private */
 		protected var _source:*;
 		/** @private */
@@ -60,7 +67,21 @@ package laya.d3.resource {
 		 * 是否使用重复模式纹理寻址
 		 */
 		public function set repeat(value:Boolean):void {
-			_repeat = value;
+			if (_repeat !== value) {
+				_repeat = value;
+				if (_source) {
+					var gl:WebGLContext = WebGL.mainContext;
+					WebGLContext.bindTexture(gl, _type, _source);
+					var isPot:Boolean = Arith.isPOT(_width, _height);//提前修改内存尺寸，忽悠异步影响
+					if (isPot && _repeat) {
+						gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_S, WebGLContext.REPEAT);
+						gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_T, WebGLContext.REPEAT);
+					} else {
+						gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_S, WebGLContext.CLAMP_TO_EDGE);
+						gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
+					}
+				}
+			}
 		}
 		
 		/**
@@ -115,6 +136,13 @@ package laya.d3.resource {
 		}
 		
 		/**
+		 * 纹理格式
+		 */
+		public function get format():int {
+			return _format;
+		}
+		
+		/**
 		 * 获取纹理资源。
 		 */
 		public function get source():* {
@@ -129,7 +157,6 @@ package laya.d3.resource {
 			return SolidColorTexture2D.grayTexture;
 		}
 		
-		
 		/**
 		 * 创建一个 <code>BaseTexture</code> 实例。
 		 */
@@ -142,11 +169,6 @@ package laya.d3.resource {
 			minFifter = -1;
 			magFifter = -1;
 		
-		}
-		
-		override public function dispose():void {
-			resourceManager.removeResource(this);
-			super.dispose();
 		}
 	
 	}

@@ -292,7 +292,7 @@ package laya.display {
 			if (!screenAdaptationEnabled) return;
 			var canvas:HTMLCanvas = Render._mainCanvas;
 			var canvasStyle:* = canvas.source.style;
-			//canvas.size(1, 1);
+			canvas.size(1, 1);
 			//canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "";
 			//visible = false;
 			Laya.timer.once(100, this, this._changeCanvasSize);
@@ -375,6 +375,7 @@ package laya.display {
 				}
 				break;
 			}
+			if (conchModel) conchModel.size(_width, _height);
 			
 			//根据不同尺寸缩放stage画面
 			scaleX *= this.scaleX;

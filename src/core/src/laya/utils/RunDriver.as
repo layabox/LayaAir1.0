@@ -151,6 +151,11 @@ package laya.utils {
 		};
 		
 		/** @private */
+		public static var isAtlas:Function = function(bitmap:*):Boolean {
+			return false;
+		}
+		
+		/** @private */
 		public static var addTextureToAtlas:Function = function(value:Texture):void {
 		};
 		

@@ -8,9 +8,11 @@ package laya.d3.resource.models {
 	import laya.d3.graphics.VertexElementFormat;
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.resource.DataTexture2D;
 	import laya.d3.resource.Texture2D;
 	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderCompile3D;
+	import laya.utils.Handler;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
@@ -80,7 +82,7 @@ package laya.d3.resource.models {
 		 */
 		protected function _getShader(state:RenderState):Shader3D {
 			var shaderDefineValue:int = state.scene._shaderDefineValue;
-			_shader = _shaderCompile.withCompile(shaderDefineValue, 0,0);
+			_shader = _shaderCompile.withCompile(shaderDefineValue, 0, 0);
 			return _shader;
 		}
 		
@@ -89,7 +91,6 @@ package laya.d3.resource.models {
 		 */
 		override protected function recreateResource():void {//TODO:通过索引改为顶点复用
 			//(this._released) || (dispose());//如果已存在，则释放资源
-			startCreate();
 			
 			_numberVertices = (_stacks + 1) * (_slices + 1);
 			_numberIndices = (3 * _stacks * (_slices + 1)) * 2;
@@ -118,7 +119,7 @@ package laya.d3.resource.models {
 					vertices[vertexCount + 1] = y * _radius;
 					vertices[vertexCount + 2] = z * _radius;
 					
-					vertices[vertexCount + 3] = -(slice / _slices)+0.75;//gzk 改成我喜欢的坐标系 原来是 slice/_slices
+					vertices[vertexCount + 3] = -(slice / _slices) + 0.75;//gzk 改成我喜欢的坐标系 原来是 slice/_slices
 					vertices[vertexCount + 4] = stack / _stacks;
 					vertexCount += vertexFloatStride;
 					if (stack != (_stacks - 1)) {
@@ -169,7 +170,7 @@ package laya.d3.resource.models {
 				Matrix4x4.multiply(state._projectionMatrix, _tempMatrix4x40, _tempMatrix4x41);
 				state.camera._shaderValues.setValue(BaseCamera.VPMATRIX_NO_TRANSLATE, _tempMatrix4x41.elements);
 				_shader.uploadCameraUniforms(state.camera._shaderValues.data);
-
+				
 				_shaderValue.setValue(INTENSITY, _colorIntensity);
 				_shaderValue.setValue(ALPHABLENDING, _alphaBlending);
 				_shaderValue.setValue(DIFFUSETEXTURE, texture.source);
@@ -180,6 +181,32 @@ package laya.d3.resource.models {
 				Stat.trianglesFaces += _numberIndices / 3;
 				Stat.drawCall++;
 			}
+		}
+		
+		public function onEnvDescLoaded(envInfoFile:String):void {
+			var envPath:String = '';
+			var ppos:Number = Math.max(envInfoFile.lastIndexOf('/'), envInfoFile.lastIndexOf('\\'));
+			if (ppos > 0) {
+				envPath = envInfoFile.substr(0, ppos + 1);
+			}
+			
+			var envinfoobj:* = Laya.loader.getRes(envInfoFile);
+			if (envinfoobj.ev != undefined && __ownerCamera)//TODO 如果这时候__ownerCamera 还没设置怎么办
+				__ownerCamera._shaderValues.setValue(BaseCamera.HDREXPOSURE, Math.pow(2, envinfoobj.ev));
+			else
+				__ownerCamera._shaderValues.setValue(BaseCamera.HDREXPOSURE, Math.pow(2, 0.0));
+			
+			texture = Texture2D.load(envPath + envinfoobj.skytex);//设置天空纹理。这里肯定是天空球
+			environmentSpecular = DataTexture2D.load(envPath + envinfoobj.prefiltedEnv);
+			var irrdMat:Float32Array = new Float32Array(envinfoobj.IrradianceMat);
+			
+			envDiffuseSHRed = irrdMat.slice(0, 16) as Float32Array;
+			envDiffuseSHGreen = irrdMat.slice(16, 32) as Float32Array;
+			envDiffuseSHBlue = irrdMat.slice(32, 48) as Float32Array;
+		}
+		
+		public function loadEnvInfo(envInfo:String):void {
+			Laya.loader.load(envInfo, Handler.create(this, onEnvDescLoaded, [envInfo]));
 		}
 	
 	}

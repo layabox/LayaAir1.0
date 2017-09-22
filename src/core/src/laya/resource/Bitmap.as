@@ -45,14 +45,5 @@ package laya.resource {
 			_w = 0;
 			_h = 0;
 		}
-		
-		/**
-		 * 彻底清理资源。
-		 */
-		override public function dispose():void {
-			if (disposed) return;
-			_resourceManager.removeResource(this);
-			super.dispose();
-		}
 	}
 }

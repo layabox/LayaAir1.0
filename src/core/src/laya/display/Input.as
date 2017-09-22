@@ -207,6 +207,7 @@ package laya.display {
 		 * @param	endIndex	光标结束位置。
 		 */
 		public function setSelection(startIndex:int, endIndex:int):void {
+			this.focus = true;
 			Input.inputElement.selectionStart = startIndex;
 			Input.inputElement.selectionEnd = endIndex;
 		}
@@ -251,7 +252,6 @@ package laya.display {
 			var transform:Object = Utils.getTransformRelativeToWindow(this, padding[3], padding[0]);
 			var inputWid:int = _width - padding[1] - padding[3];
 			var inputHei:int = _height - padding[0] - padding[2];
-			
 			if (Render.isConchApp) {
 				inputElement.setScale(transform.scaleX, transform.scaleY);
 				inputElement.setSize(inputWid, inputHei);

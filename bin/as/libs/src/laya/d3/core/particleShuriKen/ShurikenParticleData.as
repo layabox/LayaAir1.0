@@ -8,7 +8,6 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.particleShuriKen.module.SizeOverLifetime;
 	import laya.d3.core.particleShuriKen.module.StartFrame;
 	import laya.d3.core.particleShuriKen.module.TextureSheetAnimation;
-	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Rand;
 	import laya.d3.math.Vector2;
@@ -32,6 +31,7 @@ package laya.d3.core.particleShuriKen {
 		public static var startSpeed:Number;
 		public static var startUVInfo:Float32Array = new Float32Array(4);
 		public static var simulationWorldPostion:Float32Array = new Float32Array(3);
+		public static var simulationWorldRotation:Float32Array = new Float32Array(4);
 		
 		public function ShurikenParticleData() {
 		}
@@ -398,16 +398,24 @@ package laya.d3.core.particleShuriKen {
 				startUVInfo[3] = 0.0;
 			}
 			
-			var particleSimulationWorldPostion:Float32Array = simulationWorldPostion;
-			if (particleSystem.simulationSpace === 0) {
+			switch (particleSystem.simulationSpace) {
+			case 0: 
 				var positionE:Float32Array = transform.position.elements;
-				particleSimulationWorldPostion[0] = positionE[0];
-				particleSimulationWorldPostion[1] = positionE[1];
-				particleSimulationWorldPostion[2] = positionE[2];
-			} else {//TODO:是否可以不传
-				particleSimulationWorldPostion[0] = 0;
-				particleSimulationWorldPostion[1] = 0;
-				particleSimulationWorldPostion[2] = 0;
+				simulationWorldPostion[0] = positionE[0];
+				simulationWorldPostion[1] = positionE[1];
+				simulationWorldPostion[2] = positionE[2];
+				
+				var rotationE:Float32Array = transform.rotation.elements;
+				simulationWorldRotation[0] = rotationE[0];
+				simulationWorldRotation[1] = rotationE[1];
+				simulationWorldRotation[2] = rotationE[2];
+				simulationWorldRotation[3] = rotationE[3];
+				break;
+			case 1: 
+				break;
+			default: 
+				throw new Error("ShurikenParticleMaterial: SimulationSpace value is invalid.");
+				break;
 			}
 		}
 	

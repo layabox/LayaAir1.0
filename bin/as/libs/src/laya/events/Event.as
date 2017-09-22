@@ -117,10 +117,6 @@ package laya.events {
 		public static const LAYER_CHANGED:String = "layerchanged";
 		/** 定义 hierarchyloaded 事件对象的 type 属性值。*/
 		public static const HIERARCHY_LOADED:String = "hierarchyloaded";
-		///** 定义 memorychanged 事件对象的 type 属性值。*/
-		//public static const MEMORY_CHANGED:String = "memorychanged";
-		/** 定义 recovering 事件对象的 type 属性值。*/
-		public static const RECOVERING:String = "recovering";
 		/** 定义 recovered 事件对象的 type 属性值。*/
 		public static const RECOVERED:String = "recovered";
 		/** 定义 released 事件对象的 type 属性值。*/
@@ -137,8 +133,6 @@ package laya.events {
 		public static const MESH_CHANGED:String = "meshchanged";
 		/**材质更换时触发*/
 		public static const MATERIAL_CHANGED:String = "materialchanged";
-		/**渲染队列更换时触发*/
-		public static const RENDERQUEUE_CHANGED:String = "renderqueuechanged";
 		/**世界矩阵更新时触发。*/
 		public static const WORLDMATRIX_NEEDCHANGE:String = "worldmatrixneedchanged";
 		/**更换动作时触发。*/

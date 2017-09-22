@@ -16,7 +16,8 @@ package laya.ani {
 		 * @private
 		 */
 		private static function _LinearInterpolation_0(bone:AnimationNodeContent, index:int, out:Float32Array, outOfs:int, data:Float32Array, dt:Number, dData:Float32Array, duration:Number, nextData:Float32Array, interData:Array = null):int {
-			out[outOfs] = data[index] + dt * dData[index];
+			var amount:Number = duration === 0 ? 0 : dt / duration;
+			out[outOfs] = (1.0 - amount) * data[index] + amount * nextData[index];
 			return 1;
 		}
 		
@@ -128,10 +129,7 @@ package laya.ani {
 			keyFrames[keyframeCount] = keyFrames[0];
 			for (var i:int = 0; i < keyframeCount; i++) {
 				var keyFrame:KeyFramesContent = keyFrames[i];
-				for (var j:int = 0; j < keyframeDataCount; j++) {
-					keyFrame.dData[j] = (keyFrame.duration === 0) ? 0 : (keyFrames[i + 1].data[j] - keyFrame.data[j]) / keyFrame.duration;//末帧dData数据为0
-					keyFrame.nextData[j] = keyFrames[i + 1].data[j];
-				}
+				keyFrame.nextData =(keyFrame.duration === 0) ? keyFrame.data : keyFrames[i + 1].data;
 			}
 			keyFrames.length--;
 		}
@@ -227,7 +225,7 @@ package laya.ani {
 					case 0: 
 					case 1: 
 						for (j = 0; j < node.keyframeWidth; )
-							j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, key.dData, key.duration, key.nextData);
+							j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, null, key.duration, key.nextData);
 						break;
 					case 2: 
 						var interpolationData:Array = key.interpolationData;
@@ -237,13 +235,13 @@ package laya.ani {
 							var type:int = interpolationData[j];
 							switch (type) {
 							case 6: 
-								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData, j + 1);
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, null, key.duration, key.nextData, interpolationData, j + 1);
 								break;
 							case 7: 
-								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData, j + 1);
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, null, key.duration, key.nextData, interpolationData, j + 1);
 								break;
 							default: 
-								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, null, key.duration, key.nextData);
 								
 							}
 							//if (type === 6)
@@ -256,7 +254,7 @@ package laya.ani {
 					}
 				} else {
 					for (j = 0; j < node.keyframeWidth; )
-						j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, key.dData, key.duration, key.nextData);
+						j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, null, key.duration, key.nextData);
 				}
 				
 				outOfs += node.keyframeWidth;
@@ -328,7 +326,7 @@ package laya.ani {
 					case 0: 
 					case 1: 
 						for (j = 0; j < node.keyframeWidth; )
-							j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, key.dData, key.duration, key.nextData);
+							j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, null, key.duration, key.nextData);
 						break;
 					case 2: 
 						var interpolationData:Array = key.interpolationData;
@@ -338,13 +336,13 @@ package laya.ani {
 							var type:int = interpolationData[j];
 							switch (type) {
 							case 6: 
-								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData, j + 1);
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, null, key.duration, key.nextData, interpolationData, j + 1);
 								break;
 							case 7: 
-								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData, interpolationData, j + 1);
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, null, key.duration, key.nextData, interpolationData, j + 1);
 								break;
 							default: 
-								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, key.dData, key.duration, key.nextData);
+								j += interpolation[type](node, dataIndex, originalData, outOfs + dataIndex, key.data, dt, null, key.duration, key.nextData);
 								
 							}
 							//if (type === 6)
@@ -357,19 +355,12 @@ package laya.ani {
 					}
 				} else {
 					for (j = 0; j < node.keyframeWidth; )
-						j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, key.dData, key.duration, key.nextData);
+						j += node.interpolationMethod[j](node, j, originalData, outOfs + j, key.data, dt, null, key.duration, key.nextData);
 				}
 				
 				outOfs += node.keyframeWidth;
 			}
 		}
-		
-		override public function dispose():void {
-			if (resourceManager)
-				resourceManager.removeResource(this);
-			super.dispose();
-		}
-	
 	}
 }
 

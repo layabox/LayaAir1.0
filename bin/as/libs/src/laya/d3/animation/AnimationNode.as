@@ -153,90 +153,126 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _getMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode):Float32Array {
-			var material:StandardMaterial = ((animationNode._transform._entity.owner as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial);
-			return material.tilingOffset.elements;
+			var entity:Transform3D = animationNode._transform._entity;//以下类似处理均为防止AnimationNode无关联实体节点
+			if (entity) {
+				var material:StandardMaterial = (entity.owner as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial;
+				return material.tilingOffset.elements;
+			} else
+				return null;
 		}
 		
 		/**
 		 * @private
 		 */
 		private static function _setMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, value:Float32Array):void {
-			var material:StandardMaterial = ((animationNode._transform._entity.owner as MeshSprite3D).meshRender.material as StandardMaterial);
-			var tilingOffset:Vector4 = material.tilingOffset;
-			tilingOffset.elements = value;
-			material.tilingOffset = tilingOffset;
+			var entity:Transform3D = animationNode._transform._entity;
+			if (entity) {
+				var material:StandardMaterial = (entity.owner as MeshSprite3D).meshRender.material as StandardMaterial;
+				var tilingOffset:Vector4 = material.tilingOffset;
+				tilingOffset.elements = value;
+				material.tilingOffset = tilingOffset;
+			}
 		}
 		
 		/**
 		 * @private
 		 */
 		private static function _getMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode):Float32Array {
-			var material:StandardMaterial = ((animationNode._transform._entity.owner as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial);
-			return material.albedo.elements;
+			var entity:Transform3D = animationNode._transform._entity;
+			if (entity) {
+				var material:StandardMaterial = (entity.owner as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial;
+				return material.albedo.elements;
+			} else
+				return null;
 		}
 		
 		/**
 		 * @private
 		 */
 		private static function _setMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, value:Float32Array):void {
-			var material:StandardMaterial = ((animationNode._transform._entity.owner as MeshSprite3D).meshRender.material as StandardMaterial);
-			var albedo:Vector4 = material.albedo;
-			albedo.elements = value;
-			material.albedo = albedo;
+			var entity:Transform3D = animationNode._transform._entity;
+			if (entity) {
+				var material:StandardMaterial = (entity.owner as MeshSprite3D).meshRender.material as StandardMaterial;
+				var albedo:Vector4 = material.albedo;
+				albedo.elements = value;
+				material.albedo = albedo;
+			}
 		}
 		
 		/**
 		 * @private
 		 */
 		private static function _getSkinnedMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode):Float32Array {
-			var material:StandardMaterial = ((animationNode._transform._entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial);
-			return material.tilingOffset.elements;
+			var entity:Transform3D = animationNode._transform._entity;
+			if (entity) {
+				var material:StandardMaterial = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial;
+				return material.tilingOffset.elements;
+			} else
+				return null;
 		}
 		
 		/**
 		 * @private
 		 */
 		private static function _setSkinnedMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, value:Float32Array):void {
-			var material:StandardMaterial = ((animationNode._transform._entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial);
-			var tilingOffset:Vector4 = material.tilingOffset;
-			tilingOffset.elements = value;
-			material.tilingOffset = tilingOffset;
+			var entity:Transform3D = animationNode._transform._entity;
+			if (entity) {
+				var material:StandardMaterial = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial;
+				var tilingOffset:Vector4 = material.tilingOffset;
+				tilingOffset.elements = value;
+				material.tilingOffset = tilingOffset;
+			}
 		}
 		
 		/**
 		 * @private
 		 */
 		private static function _getSkinnedMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode):Float32Array {
-			var material:StandardMaterial = ((animationNode._transform._entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial);
-			return material.albedo.elements;
+			var entity:Transform3D = animationNode._transform._entity;
+			if (entity) {
+				var material:StandardMaterial = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial;
+				return material.albedo.elements;
+			} else {
+				return null;
+			}
 		}
 		
 		/**
 		 * @private
 		 */
 		private static function _setSkinnedMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, value:Float32Array):void {
-			var material:StandardMaterial = ((animationNode._transform._entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial);
-			var albedo:Vector4 = material.albedo;
-			albedo.elements = value;
-			material.albedo = albedo;
+			var entity:Transform3D = animationNode._transform._entity;
+			if (entity) {
+				var material:StandardMaterial = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial;
+				var albedo:Vector4 = material.albedo;
+				albedo.elements = value;
+				material.albedo = albedo;
+			}
 		}
 		
 		/**
 		 * @private
 		 */
 		private static function _getParticleRenderSharedMaterialTintColor(animationNode:AnimationNode):Float32Array {
-			var material:ShurikenParticleMaterial = ((animationNode._transform._entity.owner as ShuriKenParticle3D).particleRender.sharedMaterial as ShurikenParticleMaterial);
-			return material.tintColor.elements;
+			var entity:Transform3D = animationNode._transform._entity;
+			if (entity) {
+				var material:ShurikenParticleMaterial = (entity.owner as ShuriKenParticle3D).particleRender.sharedMaterial as ShurikenParticleMaterial;
+				return material.tintColor.elements;
+			} else
+				return null;
 		}
 		
 		/**
 		 * @private
 		 */
 		private static function _setParticleRenderSharedMaterialTintColor(animationNode:AnimationNode, value:Float32Array):void {
-			var material:ShurikenParticleMaterial = ((animationNode._transform._entity.owner as ShuriKenParticle3D).particleRender.material as ShurikenParticleMaterial);
-			var tintColor:Vector4 = material.tintColor;
-			tintColor.elements = value;
-			material.tintColor = tintColor;
+			var entity:Transform3D = animationNode._transform._entity;
+			if (entity) {
+				var material:ShurikenParticleMaterial = (entity.owner as ShuriKenParticle3D).particleRender.material as ShurikenParticleMaterial;
+				var tintColor:Vector4 = material.tintColor;
+				tintColor.elements = value;
+				material.tintColor = tintColor;
+			}
 		}
 		
 		/**

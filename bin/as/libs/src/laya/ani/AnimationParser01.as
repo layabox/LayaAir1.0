@@ -144,8 +144,6 @@ package laya.ani {
 						}
 						
 						keyFrame.data = new Float32Array(keyframeDataCount);
-						keyFrame.dData = new Float32Array(keyframeDataCount);
-						keyFrame.nextData = new Float32Array(keyframeDataCount);
 						for (l = 0; l < keyframeDataCount; l++) {
 							keyFrame.data[l] = reader.getFloat32();
 							if (keyFrame.data[l] > -0.00000001 && keyFrame.data[l] < 0.00000001) keyFrame.data[l] = 0;

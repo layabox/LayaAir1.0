@@ -97,7 +97,6 @@ package laya.webgl.utils {
 	}
 
 }
-import laya.utils.Browser;
 import laya.utils.RunDriver;
 import laya.webgl.utils.ShaderCompile;
 

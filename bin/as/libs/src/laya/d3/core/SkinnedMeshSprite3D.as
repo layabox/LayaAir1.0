@@ -1,27 +1,17 @@
 package laya.d3.core {
+	import laya.d3.animation.AnimationNode;
 	import laya.d3.component.Animator;
-	import laya.d3.component.animation.SkinAnimations;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.RenderQueue;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.core.render.SubMeshRenderElement;
-	import laya.d3.graphics.MeshSprite3DStaticBatchManager;
-	import laya.d3.graphics.StaticBatchManager;
-	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.math.BoundBox;
-	import laya.d3.math.BoundSphere;
-	import laya.d3.math.Matrix4x4;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
-	import laya.d3.resource.models.SubMesh;
-	import laya.display.Node;
 	import laya.events.Event;
-	import laya.renders.Render;
-	import laya.utils.Stat;
+	import laya.net.Loader;
 	
 	/**
 	 * <code>MeshSprite3D</code> 类用于创建网格。
@@ -113,6 +103,7 @@ package laya.d3.core {
 		private function _changeRenderObjectByMaterial(index:int, material:BaseMaterial):RenderElement {
 			var renderElement:RenderElement = _render._renderElements[index];
 			
+			(material) || (material = StandardMaterial.defaultMaterial);//确保有材质,由默认材质代替。
 			var renderObj:IRenderable = (_geometryFilter as MeshFilter).sharedMesh.getRenderElement(index);
 			renderElement._mainSortID = _getSortID(renderObj, material);//根据MeshID排序，处理同材质合并处理。
 			renderElement._sprite3D = this;
@@ -151,32 +142,92 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * @private
+		 * @inheritDoc
+		 */
+		override protected function _parseCustomProps(innerResouMap:Object, customProps:Object, json:Object):void {
+			super._parseCustomProps(innerResouMap, customProps, json);
+			
+			var render:SkinnedMeshRender = skinnedMeshRender;
+			var lightmapIndex:* = customProps.lightmapIndex;
+			(lightmapIndex != null) && (render.lightmapIndex = lightmapIndex);
+			var lightmapScaleOffsetArray:Array = customProps.lightmapScaleOffset;
+			(lightmapScaleOffsetArray) && (render.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
+			var meshPath:String, mesh:Mesh;
+			if (json.instanceParams) {//兼容代码
+				meshPath = json.instanceParams.loadPath;
+				if (meshPath) {
+					mesh = Loader.getRes(innerResouMap[meshPath]);
+					meshFilter.sharedMesh = mesh;
+					if (mesh.loaded)
+						render.sharedMaterials = mesh.materials;
+					else
+						mesh.once(Event.LOADED, this, _applyMeshMaterials);
+				}
+				
+			} else {
+				meshPath = customProps.meshPath;
+				if (meshPath) {
+					mesh = Loader.getRes(innerResouMap[meshPath]);
+					meshFilter.sharedMesh = mesh;
+				}
+				var materials:Array = customProps.materials;
+				if (materials) {
+					var sharedMaterials:Vector.<BaseMaterial> = render.sharedMaterials;
+					var materialCount:int = materials.length;
+					sharedMaterials.length = materialCount;
+					for (var i:int = 0; i < materialCount; i++)
+						sharedMaterials[i] = Loader.getRes(innerResouMap[materials[i].path]);
+					render.sharedMaterials = sharedMaterials;
+				}
+			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _setBelongAnimator(animator:Animator):void {
+			_belongAnimator = animator;
+			if (animator) {
+				var avatar:Avatar = animator.avatar;
+				var avatarNodes:Vector.<AnimationNode> = animator._avatarNodes;
+				if (avatarNodes) {//有_avatarNodes即为有avtar
+					for (var i:int = 0, n:int = avatarNodes.length; i < n; i++) {//TODO:换成字典
+						var node:AnimationNode = avatarNodes[i];
+						if (node.name === name && !_transform.dummy) //判断!sprite._transform.dummy重名节点可按顺序依次匹配。
+							_associateSpriteToAnimationNode(avatar, node);
+					}
+					skinnedMeshRender._setCacheAvatar(avatar);
+				}
+			} else {//TODO:做对应移除
+				
+			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _associateSpriteToAnimationNode(avatar:Avatar, node:AnimationNode):void {
+			_transform.dummy = node._transform;
+			var nodeIndex:int = _belongAnimator._avatarNodes.indexOf(node);
+			var cacheSpriteToNodesMap:Vector.<int> = _belongAnimator._cacheSpriteToNodesMap;
+			_belongAnimator._cacheNodesToSpriteMap[nodeIndex] = cacheSpriteToNodesMap.length;
+			cacheSpriteToNodesMap.push(nodeIndex);
+			
+			skinnedMeshRender._setCacheAvatar(avatar);
+		}
+		
+		/**
+		 * @inheritDoc
 		 */
 		override protected function _clearSelfRenderObjects():void {
 			_scene.removeFrustumCullingObject(_render);
 		}
 		
 		/**
-		 * @private
+		 * @inheritDoc
 		 */
 		override protected function _addSelfRenderObjects():void {
 			_scene.addFrustumCullingObject(_render);
-			_getAvatar(this);
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _getAvatar(sprite:Sprite3D):void {
-			var animations:Animator = sprite.getComponentByType(Animator) as Animator;
-			if (animations) {
-				skinnedMeshRender._cacheAnimator = animations;
-				return;
-			}
-			
-			if (sprite._parent)
-				_getAvatar(sprite._parent as Sprite3D);
 		}
 		
 		/**
@@ -213,6 +264,8 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
+			if (destroyed)
+				return;
 			super.destroy(destroyChild);
 			(_geometryFilter as MeshFilter)._destroy();
 		}

@@ -1,12 +1,11 @@
 package laya.d3.core.render {
-	import laya.d3.core.Layer;
 	import laya.d3.core.PhasorSpriter3D;
 	import laya.d3.core.RenderableSprite3D;
-	import laya.d3.core.scene.Scene;
-	import laya.d3.core.scene.ITreeNode;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.scene.OctreeNode;
+	import laya.d3.core.scene.ITreeNode;
+	import laya.d3.core.scene.Scene;
+	import laya.d3.graphics.StaticBatch;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
@@ -15,14 +14,10 @@ package laya.d3.core.render {
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.resource.Texture2D;
-	import laya.d3.shader.ShaderCompile3D;
-	import laya.d3.shader.ValusArray;
 	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.resource.IDestroy;
-	import laya.resource.IDispose;
-	import laya.utils.Stat;
 	
 	/**
 	 * <code>Render</code> 类用于渲染器的父类，抽象类不允许实例。
@@ -524,6 +519,9 @@ package laya.d3.core.render {
 		 */
 		public function _destroy():void {
 			offAll();
+			for (var i:int = 0, n:int = _renderElements.length; i < n; i++)
+				_renderElements[i]._destroy();
+			_renderElements = null;
 			_owner = null;
 			_materials = null;
 			_boundingBox = null;

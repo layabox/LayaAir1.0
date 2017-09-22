@@ -40,7 +40,7 @@ package laya.d3.core.light {
 			transform.worldMatrix = worldMatrix;
 			Vector3.normalize(value, value);
 			_direction = value;
-			(shadow&&_parallelSplitShadowMap) && (_parallelSplitShadowMap._setGlobalParallelLightDir(_direction));
+			(shadow && _parallelSplitShadowMap) && (_parallelSplitShadowMap._setGlobalParallelLightDir(_direction));
 		}
 		
 		/**
@@ -65,12 +65,6 @@ package laya.d3.core.light {
 		 */
 		public function DirectionLight() {
 			super();
-			
-			_diffuseColor = new Vector3(1.0, 1.0, 1.0);
-			_ambientColor = new Vector3(0.6, 0.6, 0.6);
-			_specularColor = new Vector3(1.0, 1.0, 1.0);
-			_reflectColor = new Vector3(1.0, 1.0, 1.0);
-			
 			_updateDirection = false;
 			direction = new Vector3(0.0, -0.5, -1.0);
 			
@@ -117,9 +111,7 @@ package laya.d3.core.light {
 		override protected function _clearSelfRenderObjects():void {
 			var scene:Scene = this.scene;
 			var shaderValue:ValusArray = scene._shaderValues;
-			shaderValue.setValue(Scene.LIGHTDIRDIFFUSE, null);
-			shaderValue.setValue(Scene.LIGHTDIRAMBIENT, null);
-			shaderValue.setValue(Scene.LIGHTDIRSPECULAR, null);
+			shaderValue.setValue(Scene.LIGHTDIRCOLOR, null);
 			shaderValue.setValue(Scene.LIGHTDIRECTION, null);
 			scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
 		}
@@ -133,9 +125,7 @@ package laya.d3.core.light {
 			if (scene.enableLight && _activeInHierarchy) {
 				var shaderValue:ValusArray = scene._shaderValues;
 				scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
-				shaderValue.setValue(Scene.LIGHTDIRDIFFUSE, diffuseColor.elements);
-				shaderValue.setValue(Scene.LIGHTDIRAMBIENT, ambientColor.elements);
-				shaderValue.setValue(Scene.LIGHTDIRSPECULAR, specularColor.elements);
+				shaderValue.setValue(Scene.LIGHTDIRCOLOR, color.elements);
 				shaderValue.setValue(Scene.LIGHTDIRECTION, direction.elements);
 				return true;
 			} else {

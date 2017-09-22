@@ -153,7 +153,7 @@ package laya.ui {
 			return _bitmap.source;
 		}
 		
-		public function set source(value:*):void {
+		public function set source(value:Texture):void {
 			if (!_bitmap) return;
 			_bitmap.source = value;
 			event(Event.LOADED);

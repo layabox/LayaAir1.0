@@ -9,6 +9,11 @@ package laya.media {
 	
 	/**
 	 * <code>SoundManager</code> 是一个声音管理类。提供了对背景音乐、音效的播放控制方法。
+	 * 引擎默认有两套声音方案：WebAudio和H5Audio
+	 * 播放音效，优先使用WebAudio播放声音，如果WebAudio不可用，则用H5Audio播放，H5Audio在部分机器上有兼容问题（比如不能混音，播放有延迟等）。
+	 * 播放背景音乐，则使用H5Audio播放（使用WebAudio会增加特别大的内存，并且要等加载完毕后才能播放，有延迟）
+	 * 建议背景音乐用mp3类型，音效用wav或者mp3类型（如果打包为app，音效只能用wav格式）。
+	 * 详细教程及声音格式请参考：http://ldc.layabox.com/doc/?nav=ch-as-1-7-0
 	 */
 	public class SoundManager {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
@@ -28,6 +33,11 @@ package laya.media {
 		 * @default 1
 		 */
 		public static var playbackRate:Number = 1;
+		/**
+		 * 背景音乐使用Audio标签播放。
+		 * @default true
+		 */
+		public static var useAudioMusic:Boolean = true;
 		/**@private 是否静音，默认为false。*/
 		private static var _muted:Boolean = false;
 		/**@private 是否音效静音，默认为false。*/
@@ -265,7 +275,7 @@ package laya.media {
 			url = URL.formatURL(url);
 			_tMusic = url;
 			if (_musicChannel) _musicChannel.stop();
-			return _musicChannel = playSound(url, loops, complete, AudioSound, startTime);
+			return _musicChannel = playSound(url, loops, complete, useAudioMusic?AudioSound:null, startTime);
 		}
 		
 		/**

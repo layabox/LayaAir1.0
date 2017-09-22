@@ -11,6 +11,7 @@ uniform float alpha;
 void main() {
    vec4 color= texture2D(texture, v_texcoord);
    color.a*=alpha;
+   color.rgb*=alpha;
    gl_FragColor=color;
    #include?COLOR_ADD "parts/ColorAdd_ps_logic.glsl";   
    #include?BLUR_FILTER  "parts/BlurFilter_ps_logic.glsl";

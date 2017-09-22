@@ -41,6 +41,7 @@ package laya.media.h5audio {
 			if (this.loops > 0) {
 				this.loops--;
 			}
+			this.startTime = 0;
 			this.play();
 		}
 		

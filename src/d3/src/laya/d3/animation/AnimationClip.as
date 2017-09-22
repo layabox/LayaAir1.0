@@ -39,6 +39,8 @@ package laya.d3.animation {
 		public var _cachePropertyToNodeMap:Int32Array;
 		/**@private */
 		public var _nodeToCachePropertyMap:Int32Array;
+		/**@private */
+		public var _unCachePropertyToNodeMap:Int32Array;
 		
 		/**@private */
 		public var _duration:Number;
@@ -178,16 +180,17 @@ package laya.d3.animation {
 		/**
 		 * @private
 		 */
-		public function _evaluateAnimationlDatasCacheFrame(nodesFrameIndices:Array, animator:Animator, cacheNodesOriginalValue:Vector.<Float32Array>, publicAnimationDatas:Vector.<Float32Array>, cacheAnimationDatas:Vector.<Float32Array>, nodeOwners:Vector.<AnimationNode>):void {
+		public function _evaluateAnimationlDatasCacheFrame(nodesFrameIndices:Array, animator:Animator, publicAnimationDatas:Vector.<Float32Array>, cacheAnimationDatas:Vector.<Float32Array>, nodeOwners:Vector.<AnimationNode>):void {
 			var j:int, m:int;
 			for (var i:int = 0, n:int = _nodes.length; i < n; i++) {
-				if (!nodeOwners[i])//动画节点丢失时，忽略该节点动画
+				var node:KeyframeNode = _nodes[i];
+				var cacheProperty:Boolean = node._cacheProperty;
+				if (!nodeOwners[i] || (cacheProperty && !cacheAnimationDatas))//动画节点丢失时，忽略该节点动画
 					continue;
 				
-				var node:KeyframeNode = _nodes[i];
-				var frmaeIndices:Int32Array = nodesFrameIndices[i];
-				var realFrameIndex:int = frmaeIndices[animator.currentFrameIndex];
-				var cacheProperty:Boolean = node._cacheProperty;
+				var frameIndices:Int32Array = nodesFrameIndices[i];
+				var realFrameIndex:int = frameIndices[animator.currentFrameIndex];
+				
 				var outDatas:Float32Array;
 				var lastFrameIndex:int;
 				if (realFrameIndex !== -1) {
@@ -195,8 +198,6 @@ package laya.d3.animation {
 					var nextKeyFrame:Keyframe = frame.next;
 					if (nextKeyFrame) {
 						if (cacheProperty) {
-							if (!cacheAnimationDatas)//TODO:
-								continue;
 							outDatas = new Float32Array(node.keyFrameWidth);
 							cacheAnimationDatas[_nodeToCachePropertyMap[i]] = outDatas;
 						} else {
@@ -213,11 +214,9 @@ package laya.d3.animation {
 					} else {
 						if (cacheProperty) {
 							lastFrameIndex = animator._lastFrameIndex;
-							if (lastFrameIndex !== -1 && frmaeIndices[lastFrameIndex] === realFrameIndex)//只有非公共数据可以跳过，否则公共数据会错乱
+							if (lastFrameIndex !== -1 && frameIndices[lastFrameIndex] === realFrameIndex)//只有非公共数据可以跳过，否则公共数据会错乱
 								continue;
 							
-							if (!cacheAnimationDatas)//TODO:
-								continue;
 							outDatas = new Float32Array(node.keyFrameWidth);
 							cacheAnimationDatas[_nodeToCachePropertyMap[i]] = outDatas;
 						} else {
@@ -231,11 +230,9 @@ package laya.d3.animation {
 				} else {
 					if (cacheProperty) {
 						lastFrameIndex = animator._lastFrameIndex;
-						if (lastFrameIndex !== -1 && frmaeIndices[lastFrameIndex] === realFrameIndex)//只有非公共数据可以跳过，否则公共数据会错乱
+						if (lastFrameIndex !== -1 && frameIndices[lastFrameIndex] === realFrameIndex)//只有非公共数据可以跳过，否则公共数据会错乱
 							continue;
 						
-						if (!cacheAnimationDatas)//TODO:
-							continue;
 						outDatas = new Float32Array(node.keyFrameWidth);
 						cacheAnimationDatas[_nodeToCachePropertyMap[i]] = outDatas;
 					} else {
@@ -281,7 +278,6 @@ package laya.d3.animation {
 				(nextFrameIndex === keyFramesCount) && (_realTimeCurrentFrameIndexes[i] = keyFramesCount - 1);
 				var frame:Keyframe = keyFrames[_realTimeCurrentFrameIndexes[i]];
 				if (frame) {
-					var outDatas:Float32Array = outAnimationDatas[i];
 					var nextFarme:Keyframe = frame.next;
 					if (nextFarme) {//如果nextFarme为空，不修改数据，保持上一帧
 						var d:Number = frame.duration;
@@ -291,10 +287,13 @@ package laya.d3.animation {
 						else
 							t = 0;
 						
-						_hermiteInterpolate(frame, t, d, outDatas);
+						_hermiteInterpolate(frame, t, d, outAnimationDatas[i]);
 					}
 				} else {
-					outDatas = null;//TODO:这里有问题，不能置空，导致丢失
+					var outDatas:Float32Array = outAnimationDatas[i];
+					var firstFrameDatas:Float32Array = node.keyFrames[0].data;
+					for (var j:int = 0, m:int = outDatas.length; j < m; j++)
+						outDatas[j] = firstFrameDatas[j];
 				}
 			}
 		}
@@ -312,16 +311,6 @@ package laya.d3.animation {
 			}
 			_endLoaded();
 		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function dispose():void {
-			if (resourceManager)
-				resourceManager.removeResource(this);
-			super.dispose();
-		}
-	
 	}
 }
 

@@ -10,9 +10,7 @@ camera.transform.rotate(new Laya.Vector3(-15, 0, 0), true, false);
 
 var directionLight = scene.addChild(new Laya.DirectionLight());
 directionLight.direction = new Laya.Vector3(0, -0.8, -1);
-directionLight.ambientColor = new Laya.Vector3(0.7, 0.6, 0.6);
-directionLight.specularColor = new Laya.Vector3(2.0, 2.0, 1.6);
-directionLight.diffuseColor = new Laya.Vector3(1, 1, 1);
+directionLight.color = new Laya.Vector3(0.7, 0.6, 0.6);
 
 Laya.loader.create("../../res/threeDimen/skinModel/dude/dude.lh", Laya.Handler.create(this, onComplete));
 

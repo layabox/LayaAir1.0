@@ -5,6 +5,7 @@ package laya.d3.shader {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.glitter.Glitter;
 	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.ExtendTerrainMaterial;
 	import laya.d3.core.material.GlitterMaterial;
 	import laya.d3.core.material.PBRMaterial;
 	import laya.d3.core.material.StandardMaterial;
@@ -73,23 +74,17 @@ package laya.d3.shader {
 				'u_FogRange': [Scene.FOGRANGE, Shader3D.PERIOD_SCENE], 
 				'u_FogColor': [Scene.FOGCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_DirectionLight.Direction': [Scene.LIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
-				'u_DirectionLight.Diffuse': [Scene.LIGHTDIRDIFFUSE, Shader3D.PERIOD_SCENE], 
-				'u_DirectionLight.Ambient': [Scene.LIGHTDIRAMBIENT, Shader3D.PERIOD_SCENE], 
-				'u_DirectionLight.Specular': [Scene.LIGHTDIRSPECULAR, Shader3D.PERIOD_SCENE], 
+				'u_DirectionLight.Diffuse': [Scene.LIGHTDIRCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_PointLight.Position': [Scene.POINTLIGHTPOS, Shader3D.PERIOD_SCENE], 
 				'u_PointLight.Range': [Scene.POINTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
 				'u_PointLight.Attenuation': [Scene.POINTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
-				'u_PointLight.Diffuse': [Scene.POINTLIGHTDIFFUSE, Shader3D.PERIOD_SCENE], 
-				'u_PointLight.Ambient': [Scene.POINTLIGHTAMBIENT, Shader3D.PERIOD_SCENE], 
-				'u_PointLight.Specular': [Scene.POINTLIGHTSPECULAR, Shader3D.PERIOD_SCENE], 
+				'u_PointLight.Diffuse': [Scene.POINTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Position': [Scene.SPOTLIGHTPOS, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Direction': [Scene.SPOTLIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Range': [Scene.SPOTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Spot': [Scene.SPOTLIGHTSPOT, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Attenuation': [Scene.SPOTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
-				'u_SpotLight.Diffuse': [Scene.SPOTLIGHTDIFFUSE, Shader3D.PERIOD_SCENE], 
-				'u_SpotLight.Ambient': [Scene.SPOTLIGHTAMBIENT, Shader3D.PERIOD_SCENE], 
-				'u_SpotLight.Specular': [Scene.SPOTLIGHTSPECULAR, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Diffuse': [Scene.SPOTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap1': [Scene.SHADOWMAPTEXTURE1, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap2': [Scene.SHADOWMAPTEXTURE2, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap3': [Scene.SHADOWMAPTEXTURE3, Shader3D.PERIOD_SCENE], 
@@ -160,23 +155,17 @@ package laya.d3.shader {
 				'u_FogRange': [Scene.FOGRANGE, Shader3D.PERIOD_SCENE], 
 				'u_FogColor': [Scene.FOGCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_DirectionLight.Direction': [Scene.LIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
-				'u_DirectionLight.Diffuse': [Scene.LIGHTDIRDIFFUSE, Shader3D.PERIOD_SCENE], 
-				'u_DirectionLight.Ambient': [Scene.LIGHTDIRAMBIENT, Shader3D.PERIOD_SCENE], 
-				'u_DirectionLight.Specular': [Scene.LIGHTDIRSPECULAR, Shader3D.PERIOD_SCENE], 
+				'u_DirectionLight.Diffuse': [Scene.LIGHTDIRCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_PointLight.Position': [Scene.POINTLIGHTPOS, Shader3D.PERIOD_SCENE], 
 				'u_PointLight.Range': [Scene.POINTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
 				'u_PointLight.Attenuation': [Scene.POINTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
-				'u_PointLight.Diffuse': [Scene.POINTLIGHTDIFFUSE, Shader3D.PERIOD_SCENE], 
-				'u_PointLight.Ambient': [Scene.POINTLIGHTAMBIENT, Shader3D.PERIOD_SCENE], 
-				'u_PointLight.Specular': [Scene.POINTLIGHTSPECULAR, Shader3D.PERIOD_SCENE], 
+				'u_PointLight.Diffuse': [Scene.POINTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Position': [Scene.SPOTLIGHTPOS, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Direction': [Scene.SPOTLIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Range': [Scene.SPOTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Spot': [Scene.SPOTLIGHTSPOT, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Attenuation': [Scene.SPOTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
-				'u_SpotLight.Diffuse': [Scene.SPOTLIGHTDIFFUSE, Shader3D.PERIOD_SCENE], 
-				'u_SpotLight.Ambient': [Scene.SPOTLIGHTAMBIENT, Shader3D.PERIOD_SCENE], 
-				'u_SpotLight.Specular': [Scene.SPOTLIGHTSPECULAR, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Diffuse': [Scene.SPOTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap1': [Scene.SHADOWMAPTEXTURE1, Shader3D.PERIOD_SCENE], //TODO:SM
 				'u_shadowMap2': [Scene.SHADOWMAPTEXTURE2, Shader3D.PERIOD_SCENE], //TODO:SM
 				'u_shadowMap3': [Scene.SHADOWMAPTEXTURE3, Shader3D.PERIOD_SCENE], //TODO:SM
@@ -233,23 +222,17 @@ package laya.d3.shader {
 				'u_FogRange': [Scene.FOGRANGE, Shader3D.PERIOD_SCENE], 
 				'u_FogColor': [Scene.FOGCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_DirectionLight.Direction': [Scene.LIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
-				'u_DirectionLight.Diffuse': [Scene.LIGHTDIRDIFFUSE, Shader3D.PERIOD_SCENE], 
-				'u_DirectionLight.Ambient': [Scene.LIGHTDIRAMBIENT, Shader3D.PERIOD_SCENE], 
-				'u_DirectionLight.Specular': [Scene.LIGHTDIRSPECULAR, Shader3D.PERIOD_SCENE], 
+				'u_DirectionLight.Diffuse': [Scene.LIGHTDIRCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_PointLight.Position': [Scene.POINTLIGHTPOS, Shader3D.PERIOD_SCENE], 
 				'u_PointLight.Range': [Scene.POINTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
 				'u_PointLight.Attenuation': [Scene.POINTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
-				'u_PointLight.Diffuse': [Scene.POINTLIGHTDIFFUSE, Shader3D.PERIOD_SCENE], 
-				'u_PointLight.Ambient': [Scene.POINTLIGHTAMBIENT, Shader3D.PERIOD_SCENE], 
-				'u_PointLight.Specular': [Scene.POINTLIGHTSPECULAR, Shader3D.PERIOD_SCENE], 
+				'u_PointLight.Diffuse': [Scene.POINTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Position': [Scene.SPOTLIGHTPOS, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Direction': [Scene.SPOTLIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Range': [Scene.SPOTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Spot': [Scene.SPOTLIGHTSPOT, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Attenuation': [Scene.SPOTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
-				'u_SpotLight.Diffuse': [Scene.SPOTLIGHTDIFFUSE, Shader3D.PERIOD_SCENE], 
-				'u_SpotLight.Ambient': [Scene.SPOTLIGHTAMBIENT, Shader3D.PERIOD_SCENE], 
-				'u_SpotLight.Specular': [Scene.SPOTLIGHTSPECULAR, Shader3D.PERIOD_SCENE]};
+				'u_SpotLight.Diffuse': [Scene.SPOTLIGHTCOLOR, Shader3D.PERIOD_SCENE]};
 			var Water:int = Shader3D.nameKey.add("Water");
 			vs = __INCLUDESTR__("files/water.vs");
 			ps = __INCLUDESTR__("files/water.ps");
@@ -265,7 +248,7 @@ package laya.d3.shader {
 				'a_CornerTextureCoordinate': VertexElementUsage.CORNERTEXTURECOORDINATE0, 
 				'a_MeshPosition': VertexElementUsage.POSITION0,
 				'a_MeshTextureCoordinate': VertexElementUsage.TEXTURECOORDINATE0,
-				'a_PositionStartLifeTime': VertexElementUsage.POSITIONSTARTLIFETIME, 
+				'a_ShapePositionStartLifeTime': VertexElementUsage.SHAPEPOSITIONSTARTLIFETIME, 
 				'a_DirectionTime': VertexElementUsage.DIRECTIONTIME, 
 				'a_StartColor': VertexElementUsage.STARTCOLOR0, 
 				'a_EndColor': VertexElementUsage.ENDCOLOR0, 
@@ -274,12 +257,13 @@ package laya.d3.shader {
 				'a_StartSpeed': VertexElementUsage.STARTSPEED, 
 				'a_Random0': VertexElementUsage.RANDOM0, 
 				'a_Random1': VertexElementUsage.RANDOM1, 
-				'a_SimulationWorldPostion': VertexElementUsage.SIMULATIONWORLDPOSTION};
+				'a_SimulationWorldPostion': VertexElementUsage.SIMULATIONWORLDPOSTION,
+				'a_SimulationWorldRotation': VertexElementUsage.SIMULATIONWORLDROTATION};
 			uniformMap = {
 				'u_Tintcolor': [ShurikenParticleMaterial.TINTCOLOR, Shader3D.PERIOD_MATERIAL], 
 				'u_texture': [ShurikenParticleMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL], 
 				'u_WorldPosition': [ShuriKenParticle3D.WORLDPOSITION, Shader3D.PERIOD_SPRITE], 
-				'u_WorldRotationMat': [ShuriKenParticle3D.WORLDROTATIONMATRIX, Shader3D.PERIOD_SPRITE], 
+				'u_WorldRotation': [ShuriKenParticle3D.WORLDROTATION, Shader3D.PERIOD_SPRITE], 
 				'u_PositionScale': [ShuriKenParticle3D.POSITIONSCALE, Shader3D.PERIOD_SPRITE], 
 				'u_SizeScale': [ShuriKenParticle3D.SIZESCALE, Shader3D.PERIOD_SPRITE], 
 				'u_ScalingMode': [ShuriKenParticle3D.SCALINGMODE, Shader3D.PERIOD_SPRITE], 
@@ -332,13 +316,17 @@ package laya.d3.shader {
 				'u_CameraDirection': [BaseCamera.CAMERADIRECTION, Shader3D.PERIOD_CAMERA], 
 				'u_CameraUp': [BaseCamera.CAMERAUP, Shader3D.PERIOD_CAMERA], 
 				'u_View': [BaseCamera.VIEWMATRIX, Shader3D.PERIOD_CAMERA], 
-				'u_Projection': [BaseCamera.PROJECTMATRIX, Shader3D.PERIOD_CAMERA]};
+				'u_Projection': [BaseCamera.PROJECTMATRIX, Shader3D.PERIOD_CAMERA],
+				'u_FogStart': [Scene.FOGSTART, Shader3D.PERIOD_SCENE], 
+				'u_FogRange': [Scene.FOGRANGE, Shader3D.PERIOD_SCENE], 
+				'u_FogColor': [Scene.FOGCOLOR, Shader3D.PERIOD_SCENE]};
 			var PARTICLESHURIKEN:int = Shader3D.nameKey.add("PARTICLESHURIKEN");
 			vs = __INCLUDESTR__("files/ParticleShuriKen.vs");
 			ps = __INCLUDESTR__("files/ParticleShuriKen.ps");
 			shaderCompile = ShaderCompile3D.add(PARTICLESHURIKEN, vs, ps, attributeMap, uniformMap);
 			ShurikenParticleMaterial.SHADERDEFINE_DIFFUSEMAP = shaderCompile.registerMaterialDefine("DIFFUSEMAP");
 			ShurikenParticleMaterial.SHADERDEFINE_TINTCOLOR = shaderCompile.registerMaterialDefine("TINTCOLOR");
+			ShurikenParticleMaterial.SHADERDEFINE_ADDTIVEFOG = shaderCompile.registerMaterialDefine("ADDTIVEFOG");
 			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_BILLBOARD = shaderCompile.registerSpriteDefine("SPHERHBILLBOARD");
 			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_STRETCHEDBILLBOARD = shaderCompile.registerSpriteDefine("STRETCHEDBILLBOARD");
 			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_HORIZONTALBILLBOARD = shaderCompile.registerSpriteDefine("HORIZONTALBILLBOARD");
@@ -434,23 +422,17 @@ package laya.d3.shader {
 				'u_FogRange': [Scene.FOGRANGE, Shader3D.PERIOD_SCENE], 
 				'u_FogColor': [Scene.FOGCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_DirectionLight.Direction': [Scene.LIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
-				'u_DirectionLight.Diffuse': [Scene.LIGHTDIRDIFFUSE, Shader3D.PERIOD_SCENE], 
-				'u_DirectionLight.Ambient': [Scene.LIGHTDIRAMBIENT, Shader3D.PERIOD_SCENE], 
-				'u_DirectionLight.Specular': [Scene.LIGHTDIRSPECULAR, Shader3D.PERIOD_SCENE], 
+				'u_DirectionLight.Diffuse': [Scene.LIGHTDIRCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_PointLight.Position': [Scene.POINTLIGHTPOS, Shader3D.PERIOD_SCENE], 
 				'u_PointLight.Range': [Scene.POINTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
 				'u_PointLight.Attenuation': [Scene.POINTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
-				'u_PointLight.Diffuse': [Scene.POINTLIGHTDIFFUSE, Shader3D.PERIOD_SCENE], 
-				'u_PointLight.Ambient': [Scene.POINTLIGHTAMBIENT, Shader3D.PERIOD_SCENE], 
-				'u_PointLight.Specular': [Scene.POINTLIGHTSPECULAR, Shader3D.PERIOD_SCENE], 
+				'u_PointLight.Diffuse': [Scene.POINTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Position': [Scene.SPOTLIGHTPOS, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Direction': [Scene.SPOTLIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Range': [Scene.SPOTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Spot': [Scene.SPOTLIGHTSPOT, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Attenuation': [Scene.SPOTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
-				'u_SpotLight.Diffuse': [Scene.SPOTLIGHTDIFFUSE, Shader3D.PERIOD_SCENE], 
-				'u_SpotLight.Ambient': [Scene.SPOTLIGHTAMBIENT, Shader3D.PERIOD_SCENE], 
-				'u_SpotLight.Specular': [Scene.SPOTLIGHTSPECULAR, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Diffuse': [Scene.SPOTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap1': [Scene.SHADOWMAPTEXTURE1, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap2': [Scene.SHADOWMAPTEXTURE2, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap3': [Scene.SHADOWMAPTEXTURE3, Shader3D.PERIOD_SCENE], 
@@ -466,7 +448,66 @@ package laya.d3.shader {
 			TerrainMaterial.SHADERDEFINE_DETAIL_NUM2 = terrainCompile3D.registerMaterialDefine("DETAIL_NUM2");
 			TerrainMaterial.SHADERDEFINE_DETAIL_NUM4 = terrainCompile3D.registerMaterialDefine("DETAIL_NUM4");
 			TerrainMaterial.SHADERDEFINE_DETAIL_NUM3 = terrainCompile3D.registerMaterialDefine("DETAIL_NUM3");
-		
+			
+			//extendTerrain的shader
+			 attributeMap = {
+				'a_Position': VertexElementUsage.POSITION0, 
+				'a_Normal': VertexElementUsage.NORMAL0, 
+				'a_Texcoord0': VertexElementUsage.TEXTURECOORDINATE0
+			};
+             uniformMap = {
+				'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE], 
+				'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE], 
+				'u_CameraPos': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA], 
+				'u_LightmapScaleOffset': [RenderableSprite3D.LIGHTMAPSCALEOFFSET, Shader3D.PERIOD_SPRITE], 
+				'u_LightMap': [RenderableSprite3D.LIGHTMAP, Shader3D.PERIOD_SPRITE], 
+				'u_SplatAlphaTexture': [ExtendTerrainMaterial.SPLATALPHATEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseTexture1': [ExtendTerrainMaterial.DIFFUSETEXTURE1, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseTexture2': [ExtendTerrainMaterial.DIFFUSETEXTURE2, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseTexture3': [ExtendTerrainMaterial.DIFFUSETEXTURE3, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseTexture4': [ExtendTerrainMaterial.DIFFUSETEXTURE4, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseTexture5': [ExtendTerrainMaterial.DIFFUSETEXTURE5, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseScaleOffset1': [ExtendTerrainMaterial.DIFFUSESCALEOFFSET1, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseScaleOffset2': [ExtendTerrainMaterial.DIFFUSESCALEOFFSET2, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseScaleOffset3': [ExtendTerrainMaterial.DIFFUSESCALEOFFSET3, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseScaleOffset4': [ExtendTerrainMaterial.DIFFUSESCALEOFFSET4, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseScaleOffset5': [ExtendTerrainMaterial.DIFFUSESCALEOFFSET5, Shader3D.PERIOD_MATERIAL], 
+				'u_MaterialAlbedo': [ExtendTerrainMaterial.MATERIALALBEDO, Shader3D.PERIOD_MATERIAL], 
+				'u_MaterialDiffuse': [ExtendTerrainMaterial.MATERIALDIFFUSE, Shader3D.PERIOD_MATERIAL], 
+				'u_MaterialAmbient': [ExtendTerrainMaterial.MATERIALAMBIENT, Shader3D.PERIOD_MATERIAL], 
+				'u_MaterialSpecular': [ExtendTerrainMaterial.MATERIALSPECULAR, Shader3D.PERIOD_MATERIAL], 
+				'u_FogStart': [Scene.FOGSTART, Shader3D.PERIOD_SCENE], 
+				'u_FogRange': [Scene.FOGRANGE, Shader3D.PERIOD_SCENE], 
+				'u_FogColor': [Scene.FOGCOLOR, Shader3D.PERIOD_SCENE], 
+				'u_DirectionLight.Direction': [Scene.LIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
+				'u_DirectionLight.Diffuse': [Scene.LIGHTDIRCOLOR, Shader3D.PERIOD_SCENE], 
+				'u_PointLight.Position': [Scene.POINTLIGHTPOS, Shader3D.PERIOD_SCENE], 
+				'u_PointLight.Range': [Scene.POINTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
+				'u_PointLight.Attenuation': [Scene.POINTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
+				'u_PointLight.Diffuse': [Scene.POINTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Position': [Scene.SPOTLIGHTPOS, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Direction': [Scene.SPOTLIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Range': [Scene.SPOTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Spot': [Scene.SPOTLIGHTSPOT, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Attenuation': [Scene.SPOTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Diffuse': [Scene.SPOTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
+				'u_shadowMap1': [Scene.SHADOWMAPTEXTURE1, Shader3D.PERIOD_SCENE], 
+				'u_shadowMap2': [Scene.SHADOWMAPTEXTURE2, Shader3D.PERIOD_SCENE], 
+				'u_shadowMap3': [Scene.SHADOWMAPTEXTURE3, Shader3D.PERIOD_SCENE], 
+				'u_shadowPSSMDistance': [Scene.SHADOWDISTANCE, Shader3D.PERIOD_SCENE], 
+				'u_lightShadowVP': [Scene.SHADOWLIGHTVIEWPROJECT, Shader3D.PERIOD_SCENE], 
+				'u_shadowPCFoffset': [Scene.SHADOWMAPPCFOFFSET, Shader3D.PERIOD_SCENE]
+			};
+            var extendTerrainShader:int = Shader3D.nameKey.add("ExtendTerrain");
+            vs = __INCLUDESTR__("files/extendTerrain.vs");
+            ps = __INCLUDESTR__("files/extendTerrain.ps");
+			
+            var extendTerrainCompile3D:ShaderCompile3D = ShaderCompile3D.add(extendTerrainShader, vs, ps, attributeMap, uniformMap);
+            ExtendTerrainMaterial.SHADERDEFINE_DETAIL_NUM1 = extendTerrainCompile3D.registerMaterialDefine("ExtendTerrain_DETAIL_NUM1");
+            ExtendTerrainMaterial.SHADERDEFINE_DETAIL_NUM2 = extendTerrainCompile3D.registerMaterialDefine("ExtendTerrain_DETAIL_NUM2");
+            ExtendTerrainMaterial.SHADERDEFINE_DETAIL_NUM3 = extendTerrainCompile3D.registerMaterialDefine("ExtendTerrain_DETAIL_NUM3");
+            ExtendTerrainMaterial.SHADERDEFINE_DETAIL_NUM4 = extendTerrainCompile3D.registerMaterialDefine("ExtendTerrain_DETAIL_NUM4");
+            ExtendTerrainMaterial.SHADERDEFINE_DETAIL_NUM5 = extendTerrainCompile3D.registerMaterialDefine("ExtendTerrain_DETAIL_NUM5");
 		}
 	
 	}

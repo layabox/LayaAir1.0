@@ -6,7 +6,6 @@ package laya.d3.core.render {
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.graphics.DynamicBatch;
-	import laya.d3.graphics.StaticBatch;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.math.Vector3;
@@ -87,32 +86,6 @@ package laya.d3.core.render {
 			return false;
 		}
 		
-		/**
-		 * @private
-		 * 更新组件preRenderUpdate函数
-		 * @param	state 渲染相关状态
-		 */
-		protected function _preRenderUpdateComponents(sprite3D:Sprite3D, state:RenderState):void {
-			for (var i:int = 0; i < sprite3D.componentsCount; i++) {
-				var component:Component3D = sprite3D.getComponentByIndex(i);
-				(!component.started) && (component._start(state), component.started = true);
-				(component.enable) && (component._preRenderUpdate(state));
-			}
-		}
-		
-		/**
-		 * @private
-		 * 更新组件postRenderUpdate函数
-		 * @param	state 渲染相关状态
-		 */
-		protected function _postRenderUpdateComponents(sprite3D:Sprite3D, state:RenderState):void {
-			for (var i:int = 0; i < sprite3D.componentsCount; i++) {
-				var component:Component3D = sprite3D.getComponentByIndex(i);
-				(!component.started) && (component._start(state), component.started = true);
-				(component.enable) && (component._postRenderUpdate(state));
-			}
-		}
-		
 		///**
 		//* @private
 		//*/
@@ -179,7 +152,7 @@ package laya.d3.core.render {
 				if (renderElement._type === 0) {
 					state.owner = owner = renderElement._sprite3D;
 					state.renderElement = renderElement;
-					_preRenderUpdateComponents(owner, state);//TODO:静态合并组件问题。
+					owner._preRenderUpdateComponents(state);//TODO:静态合并组件问题。
 					renderObj = renderElement.renderObj, material = renderElement._material;
 					if (_begainRenderElement(state, renderObj, material)) {
 						vertexBuffer = renderObj._getVertexBuffer(0);
@@ -229,7 +202,7 @@ package laya.d3.core.render {
 						shader._uploadLoopCount = loopCount;
 						
 					}
-					_postRenderUpdateComponents(owner, state);//TODO:静态合并组件问题。
+					owner._postRenderUpdateComponents(state);//TODO:静态合并组件问题。
 					
 				} else if (renderElement._type === 2) {//TODO:合并后组件渲染问题
 					var dynamicBatch:DynamicBatch = renderElement.renderObj as DynamicBatch;
@@ -314,7 +287,7 @@ package laya.d3.core.render {
 						owner._projectionViewWorldUpdateCamera = camera;
 					}
 					state.renderElement = renderElement;
-					_preRenderUpdateComponents(owner, state);
+					owner._preRenderUpdateComponents(state);
 					renderObj = renderElement.renderObj, material = renderElement._material;
 					if (_begainRenderElement(state, renderObj, null)) {
 						vertexBuffer = renderObj._getVertexBuffer(0);
@@ -364,7 +337,7 @@ package laya.d3.core.render {
 						renderObj._render(state);
 						shader._uploadLoopCount = loopCount;
 					}
-					_postRenderUpdateComponents(owner, state);
+					owner._postRenderUpdateComponents(state);
 				}
 			}
 		}

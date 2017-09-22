@@ -26,9 +26,9 @@ package laya.particle.particleUtils {
 				
 				for (var i:int = 0, n:int = data.length; i < n; i += 4) {
 					if (data[i + 3] == 0) continue;
-					data[i] = red;
-					data[i + 1] = green;
-					data[i + 2] = blue;
+					data[i] *= red/255;
+					data[i + 1] *= green/255;
+					data[i + 2] *= blue/255;
 				}
 				ctx.putImageData(imgdata, 0, 0);
 			}

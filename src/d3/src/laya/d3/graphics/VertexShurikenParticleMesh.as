@@ -8,10 +8,10 @@ package laya.d3.graphics {
 	 */
 	public class VertexShurikenParticleMesh implements IVertex {
 		/**@private */
-		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(140, [
+		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(156, [
 		new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.POSITION0),
 		new VertexElement(12, VertexElementFormat.Vector2, VertexElementUsage.TEXTURECOORDINATE0),
-		new VertexElement(20, VertexElementFormat.Vector4, VertexElementUsage.POSITIONSTARTLIFETIME), 
+		new VertexElement(20, VertexElementFormat.Vector4, VertexElementUsage.SHAPEPOSITIONSTARTLIFETIME), 
 		new VertexElement(36, VertexElementFormat.Vector4, VertexElementUsage.DIRECTIONTIME), 
 		new VertexElement(52, VertexElementFormat.Vector4, VertexElementUsage.STARTCOLOR0), 
 		new VertexElement(68, VertexElementFormat.Vector3, VertexElementUsage.STARTSIZE), 
@@ -19,25 +19,40 @@ package laya.d3.graphics {
 		new VertexElement(92, VertexElementFormat.Single, VertexElementUsage.STARTSPEED), 
 		new VertexElement(96, VertexElementFormat.Vector4, VertexElementUsage.RANDOM0), 
 		new VertexElement(112, VertexElementFormat.Vector4, VertexElementUsage.RANDOM1), 
-		new VertexElement(128,VertexElementFormat.Vector3, VertexElementUsage.SIMULATIONWORLDPOSTION)]);
+		new VertexElement(128, VertexElementFormat.Vector3, VertexElementUsage.SIMULATIONWORLDPOSTION),//TODO:local模式下可省去内存
+		new VertexElement(140,VertexElementFormat.Vector4, VertexElementUsage.SIMULATIONWORLDROTATION)]);
 		
 		public static function get vertexDeclaration():VertexDeclaration {
 			return _vertexDeclaration;
 		}
 		
+		/**@private */
 		private var _cornerTextureCoordinate:Vector4;
+		/**@private */
 		private var _positionStartLifeTime:Vector4;
+		/**@private */
 		private var _velocity:Vector3;
+		/**@private */
 		private var _startColor:Vector4;
+		/**@private */
 		private var _startSize:Vector3;
+		/**@private */
 		private var _startRotation0:Vector3;
+		/**@private */
 		private var _startRotation1:Vector3;
+		/**@private */
 		private var _startRotation2:Vector3;
+		/**@private */
 		private var _startLifeTime:Number;
+		/**@private */
 		private var _time:Number;
+		/**@private */
 		private var _startSpeed:Number;
+		/**@private */
 		private var _randoms0:Vector4;
+		/**@private */
 		private var _randoms1:Vector4;
+		/**@private */
 		private var _simulationWorldPostion:Vector3;
 		
 		public function get cornerTextureCoordinate():Vector4 {

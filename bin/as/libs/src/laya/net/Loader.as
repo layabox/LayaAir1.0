@@ -48,8 +48,10 @@ package laya.net {
 		/** 位图字体类型，加载完成后返回BitmapFont。*/
 		public static const FONT:String = "font";
 		
+		public static const PKM:String = "pkm";
+		
 		/** 文件后缀和类型对应表。*/
-		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "atlas": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json", "fnt": "font"};
+		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "atlas": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json", "fnt": "font", "pkm": "pkm"};
 		/**资源解析函数对应表，用来扩展更多类型的资源加载解析。*/
 		public static var parserMap:Object = /*[STATIC SAFE]*/ {};
 		/** 资源分组对应表。*/
@@ -81,6 +83,8 @@ package laya.net {
 		protected var _cache:Boolean;
 		/**@private */
 		protected var _http:HttpRequest;
+		/**@private 自定义解析不派发complete事件，但会派发loaded事件，手动调用endLoad方法再派发complete事件*/
+		public var _customParse:Boolean = false;
 		
 		/**
 		 * 加载资源。加载错误会派发 Event.ERROR 事件，参数为错误信息。
@@ -92,9 +96,11 @@ package laya.net {
 		 */
 		public function load(url:String, type:String = null, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):void {
 			this._url = url;
-			if (url.indexOf("data:image") === 0) type = IMAGE;
-			else url = URL.formatURL(url);
-			this._type = type || (type = getTypeFromUrl(url));
+			if (url.indexOf("data:image") === 0) this._type = type = IMAGE;
+			else {
+				this._type = type || (type = getTypeFromUrl(url));
+				url = URL.formatURL(url);
+			} 
 			this._cache = cache;
 			this._data = null;
 			
@@ -105,8 +111,10 @@ package laya.net {
 				return;
 			}
 			if (group) setGroup(url, group);
-			//如果自定义了解析器，则自己解析
+			
+			//如果自定义了解析器，则自己解析，自定义解析不派发complete事件，但会派发loaded事件，手动调用endLoad方法再派发complete事件
 			if (parserMap[type] != null) {
+				_customParse = true;
 				if (parserMap[type] is Handler) parserMap[type].runWith(this);
 				else parserMap[type].call(null, this);
 				return;
@@ -137,6 +145,9 @@ package laya.net {
 			case FONT: 
 				contentType = XML;
 				break;
+			case PKM: 
+				contentType = BUFFER;
+				break
 			default: 
 				contentType = type;
 			}
@@ -321,6 +332,11 @@ package laya.net {
 					_data = bFont;
 					complete(this._data);
 				}
+			} else if (type == PKM) {
+				var image:HTMLImage = HTMLImage.create(data, _url);
+				var tex1:Texture = new Texture(image);
+				tex1.url = _url;
+				complete(tex1);
 			} else {
 				complete(data);
 			}
@@ -332,8 +348,12 @@ package laya.net {
 		 */
 		protected function complete(data:*):void {
 			this._data = data;
-			_loaders.push(this);
-			if (!_isWorking) checkNext();
+			if (_customParse) {
+				event(Event.LOADED, data is Array ? [data] : data);
+			} else {
+				_loaders.push(this);
+				if (!_isWorking) checkNext();
+			}
 		}
 		
 		/** @private */
@@ -363,11 +383,12 @@ package laya.net {
 		 */
 		public function endLoad(content:* = null):void {
 			content && (this._data = content);
-			/*[IF-FLASH]*/
-			if (this._data.hasOwnProperty("atomicCompareAndSwapIntAt")) this._data = new ArrayBuffer(this._data);
 			if (this._cache) cacheRes(this._url, this._data);
+			
+			_customParse = false;
 			event(Event.PROGRESS, 1);
 			event(Event.COMPLETE, data is Array ? [data] : data);
+		
 		}
 		
 		/** 加载地址。*/
@@ -403,8 +424,9 @@ package laya.net {
 				for (var i:int = 0, n:int = arr.length; i < n; i++) {
 					var resUrl:String = arr[i];
 					var tex:Texture = getRes(resUrl);
-					if (tex) tex.destroy(forceDispose);
 					delete loadedMap[resUrl];
+					if (tex) tex.destroy(forceDispose);
+					
 				}
 				arr.length = 0;
 				delete atlasMap[url];
@@ -412,8 +434,8 @@ package laya.net {
 			} else {
 				var res:* = loadedMap[url];
 				if (res) {
-					if (res is Texture && res.bitmap) Texture(res).destroy(forceDispose);
 					delete loadedMap[url];
+					if (res is Texture && res.bitmap) Texture(res).destroy(forceDispose);				
 				}
 			}
 		}

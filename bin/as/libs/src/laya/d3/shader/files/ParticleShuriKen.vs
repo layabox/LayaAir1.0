@@ -1,3 +1,9 @@
+#ifdef HIGHPRECISION
+  precision highp float;
+#else
+  precision mediump float;
+#endif
+
 #ifdef defined(SPHERHBILLBOARD)||defined(STRETCHEDBILLBOARD)||defined(HORIZONTALBILLBOARD)||defined(VERTICALBILLBOARD)
 	attribute vec4 a_CornerTextureCoordinate;
 #endif
@@ -6,7 +12,7 @@
 	attribute vec2 a_MeshTextureCoordinate;
 #endif
 
-attribute vec4 a_PositionStartLifeTime;
+attribute vec4 a_ShapePositionStartLifeTime;
 attribute vec4 a_DirectionTime;
 attribute vec4 a_StartColor;
 attribute vec3 a_StartSize;
@@ -19,6 +25,7 @@ attribute float a_StartSpeed;
   attribute vec4 a_Random1;
 #endif
 attribute vec3 a_SimulationWorldPostion;
+attribute vec4 a_SimulationWorldRotation;
 
 varying float v_Discard;
 varying vec4 v_Color;
@@ -30,7 +37,7 @@ uniform float u_CurrentTime;
 uniform vec3 u_Gravity;
 
 uniform vec3 u_WorldPosition;
-uniform mat4 u_WorldRotationMat;
+uniform vec4 u_WorldRotation;
 uniform bool u_ThreeDStartRotation;
 uniform int u_ScalingMode;
 uniform vec3 u_PositionScale;
@@ -38,6 +45,9 @@ uniform vec3 u_SizeScale;
 uniform mat4 u_View;
 uniform mat4 u_Projection;
 
+#ifdef STRETCHEDBILLBOARD
+	uniform vec3 u_CameraPosition;
+#endif
 uniform vec3 u_CameraDirection;//TODO:只有几种广告牌模式需要用
 uniform vec3 u_CameraUp;
 
@@ -139,7 +149,9 @@ uniform int u_SimulationSpace;
   uniform  vec2 u_TSAMaxGradientUVs[4];//x为key,y为frame
 #endif
 
-
+#if FOG
+	varying vec3 v_PositionWorld;
+#endif
 
 vec3 rotationByEuler(in vec3 vector,in vec3 rot)
 {
@@ -216,13 +228,10 @@ vec3 rotationByAxis(in vec3 vector,in vec3 axis, in float angle)
 	
 }
 
-
-vec4 quaternionMultiply(in vec4 left, in vec4 right)
+vec3 rotationByQuaternions(in vec3 v,in vec4 q) 
 {
-	return vec4((left.x * right.w + right.x * left.w) + (left.y * right.z - left.z * right.y),(left.y * right.w + right.y * left.w) + (left.z * right.x - left.x * right.z),(left.z * right.w + right.z * left.w) + (left.x * right.y - left.y * right.x),left.w * right.w - (left.x * right.x + left.y * right.y + left.z * right.z));
+	return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
 }
-
-
 
  
 #ifdef defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)||defined(SIZEOVERLIFETIMECURVE)||defined(SIZEOVERLIFETIMECURVESEPERATE)||defined(SIZEOVERLIFETIMERANDOMCURVES)||defined(SIZEOVERLIFETIMERANDOMCURVESSEPERATE)
@@ -246,34 +255,6 @@ float getCurValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalize
 }
 #endif
 
-#ifdef VELOCITYOVERLIFETIME
-//float getTotalPositionFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)
-//{
-//	float totalPosition=0.0;
-//	for(int i=1;i<4;i++)
-//	{
-//		vec2 gradientNumber=gradientNumbers[i];
-//		float key=gradientNumber.x;
-//		vec2 lastGradientNumber=gradientNumbers[i-1];
-//		float lastValue=lastGradientNumber.y;
-//		
-//		if(key>=normalizedAge){
-//			float lastKey=lastGradientNumber.x;
-//			float age=(normalizedAge-lastKey)/(key-lastKey);
-//			
-//			float velocity=(lastValue+mix(lastValue,gradientNumber.y,age))/2.0;
-//			totalPosition+=velocity*a_PositionStartLifeTime.w*(normalizedAge-lastKey);//TODO:计算POSITION时可用优化，用已计算好速度
-//			break;
-//		}
-//		else{
-//			float velocity=(lastValue+gradientNumber.y)/2.0;
-//			totalPosition+=velocity*a_PositionStartLifeTime.w*(key-lastGradientNumber.x);
-//		}
-//	}
-//	return totalPosition;
-//}
-#endif
-
 #ifdef defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)||defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)
 float getTotalValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)
 {
@@ -288,11 +269,11 @@ float getTotalValueFromGradientFloat(in vec2 gradientNumbers[4],in float normali
 		if(key>=normalizedAge){
 			float lastKey=lastGradientNumber.x;
 			float age=(normalizedAge-lastKey)/(key-lastKey);
-			totalValue+=(lastValue+mix(lastValue,gradientNumber.y,age))/2.0*a_PositionStartLifeTime.w*(normalizedAge-lastKey);
+			totalValue+=(lastValue+mix(lastValue,gradientNumber.y,age))/2.0*a_ShapePositionStartLifeTime.w*(normalizedAge-lastKey);
 			break;
 		}
 		else{
-			totalValue+=(lastValue+gradientNumber.y)/2.0*a_PositionStartLifeTime.w*(key-lastGradientNumber.x);
+			totalValue+=(lastValue+gradientNumber.y)/2.0*a_ShapePositionStartLifeTime.w*(key-lastGradientNumber.x);
 		}
 	}
 	return totalValue;
@@ -379,7 +360,7 @@ vec3 computeParticleLifeVelocity(in float normalizedAge)
 } 
 #endif
 
-vec3 computeParticlePosition(in vec3 startVelocity, in vec3 lifeVelocity,in float age,in float normalizedAge)
+vec3 computeParticlePosition(in vec3 startVelocity, in vec3 lifeVelocity,in float age,in float normalizedAge,vec3 gravityVelocity,vec4 worldRotation)
 {
    vec3 startPosition;
    vec3 lifePosition;
@@ -406,23 +387,23 @@ vec3 computeParticlePosition(in vec3 startVelocity, in vec3 lifeVelocity,in floa
 	vec3 finalPosition;
 	if(u_VOLSpaceType==0){
 	  if(u_ScalingMode!=2)
-	   finalPosition =mat3(u_WorldRotationMat)*(u_PositionScale*(a_PositionStartLifeTime.xyz+startPosition+lifePosition));
+	   finalPosition =rotationByQuaternions(u_PositionScale*(a_ShapePositionStartLifeTime.xyz+startPosition+lifePosition),worldRotation);
 	  else
-	   finalPosition =mat3(u_WorldRotationMat)*(u_PositionScale*a_PositionStartLifeTime.xyz+startPosition+lifePosition);
+	   finalPosition =rotationByQuaternions(u_PositionScale*a_ShapePositionStartLifeTime.xyz+startPosition+lifePosition,worldRotation);
 	}
 	else{
 	  if(u_ScalingMode!=2)
-	    finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*(a_PositionStartLifeTime.xyz+startPosition))+lifePosition;
+	    finalPosition = rotationByQuaternions(u_PositionScale*(a_ShapePositionStartLifeTime.xyz+startPosition),worldRotation)+lifePosition;
 	  else
-	    finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*a_PositionStartLifeTime.xyz+startPosition)+lifePosition;
+	    finalPosition = rotationByQuaternions(u_PositionScale*a_ShapePositionStartLifeTime.xyz+startPosition,worldRotation)+lifePosition;
 	}
   #else
 	 startPosition=startVelocity*age;
 	 vec3 finalPosition;
 	 if(u_ScalingMode!=2)
-	   finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*(a_PositionStartLifeTime.xyz+startPosition));
+	   finalPosition = rotationByQuaternions(u_PositionScale*(a_ShapePositionStartLifeTime.xyz+startPosition),worldRotation);
 	 else
-	   finalPosition = mat3(u_WorldRotationMat)*(u_PositionScale*a_PositionStartLifeTime.xyz+startPosition);
+	   finalPosition = rotationByQuaternions(u_PositionScale*a_ShapePositionStartLifeTime.xyz+startPosition,worldRotation);
   #endif
   
   if(u_SimulationSpace==0)
@@ -430,7 +411,7 @@ vec3 computeParticlePosition(in vec3 startVelocity, in vec3 lifeVelocity,in floa
   else if(u_SimulationSpace==1) 
     finalPosition=finalPosition+u_WorldPosition;
   
-  finalPosition+=0.5*u_Gravity*pow(age,2.0);
+  finalPosition+=0.5*gravityVelocity*age;
  
   return  finalPosition;
 }
@@ -591,15 +572,23 @@ vec2 computeParticleUV(in vec2 uv,in float normalizedAge)
 void main()
 {
    float age = u_CurrentTime - a_DirectionTime.w;
-   float normalizedAge = age/a_PositionStartLifeTime.w;
+   float normalizedAge = age/a_ShapePositionStartLifeTime.w;
    vec3 lifeVelocity;
    if(normalizedAge<1.0){ 
 	  vec3 startVelocity=a_DirectionTime.xyz*a_StartSpeed;
    #ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
 	  lifeVelocity= computeParticleLifeVelocity(normalizedAge);//计算粒子生命周期速度
    #endif 
-	  
-   vec3 center=computeParticlePosition(startVelocity, lifeVelocity, age, normalizedAge);//计算粒子位置
+	vec3 gravityVelocity=u_Gravity*age;
+	
+	vec4 worldRotation;
+	if(u_SimulationSpace==0)
+		worldRotation=a_SimulationWorldRotation;
+	else
+		worldRotation=u_WorldRotation;
+	
+   vec3 center=computeParticlePosition(startVelocity, lifeVelocity, age, normalizedAge,gravityVelocity,worldRotation);//计算粒子位置
+   
    
    #ifdef SPHERHBILLBOARD
 		vec2 corner=a_CornerTextureCoordinate.xy;//Billboard模式z轴无效
@@ -626,7 +615,7 @@ void main()
 			}
 			else{
 				float c = cos(a_StartRotation0.x);
-				float s = sin(a_StartRotation0.x); 
+				float s = sin(a_StartRotation0.x);
 				mat2 rotation= mat2(c, -s, s, c);
 				corner=rotation*corner;
 				center += u_SizeScale.xzy*(corner.x*sideVector+corner.y*upVector);
@@ -639,20 +628,27 @@ void main()
 	vec3 velocity;
 	#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
 	    if(u_VOLSpaceType==0)
-		  velocity=mat3(u_WorldRotationMat)*(u_SizeScale*(startVelocity+lifeVelocity));
+		  velocity=rotationByQuaternions(u_SizeScale*(startVelocity+lifeVelocity),worldRotation)+gravityVelocity;
 	    else
-		  velocity=mat3(u_WorldRotationMat)*(u_SizeScale*startVelocity)+lifeVelocity;
+		  velocity=rotationByQuaternions(u_SizeScale*startVelocity,worldRotation)+lifeVelocity+gravityVelocity;
     #else
-	    velocity= mat3(u_WorldRotationMat)*(u_SizeScale*startVelocity);
-    #endif   
-        vec3 cameraUpVector =normalize(velocity);
-        vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));
+	    velocity= rotationByQuaternions(u_SizeScale*startVelocity,worldRotation)+gravityVelocity;
+    #endif	
+		vec3 cameraUpVector = normalize(velocity);
+		vec3 direction = normalize(center-u_CameraPosition);
+        vec3 sideVector = normalize(cross(direction,normalize(velocity)));
+		
+		sideVector=u_SizeScale.xzy*sideVector;
+		cameraUpVector=length(vec3(u_SizeScale.x,0.0,0.0))*cameraUpVector;
+		
 	    vec2 size=computeParticleSizeBillbard(a_StartSize.xy,normalizedAge);
+		
 	    const mat2 rotaionZHalfPI=mat2(0.0, -1.0, 1.0, 0.0);
 	    corner=rotaionZHalfPI*corner;
 	    corner.y=corner.y-abs(corner.y);
+		
 	    float speed=length(velocity);//TODO:
-	    center +=u_SizeScale.xzy*(size.x*corner.x*sideVector+(speed*u_StretchedBillboardSpeedScale+size.y*u_StretchedBillboardLengthScale)*corner.y*cameraUpVector);
+	    center +=sign(u_SizeScale.x)*(sign(u_StretchedBillboardLengthScale)*size.x*corner.x*sideVector+(speed*u_StretchedBillboardSpeedScale+size.y*u_StretchedBillboardLengthScale)*corner.y*cameraUpVector);
    #endif
    
    #ifdef HORIZONTALBILLBOARD
@@ -686,36 +682,35 @@ void main()
 		#ifdef defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE)
 			if(u_ThreeDStartRotation){
 				float angle=computeParticleRotationFloat(a_StartRotation0.z, age,normalizedAge);
-				center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByEuler(a_MeshPosition*size,vec3(a_StartRotation0.xy,angle)));
+				center+= u_SizeScale.xzy*(rotationByQuaternions(rotationByEuler(a_MeshPosition*size,vec3(a_StartRotation0.xy,angle)),worldRotation));
 			}
 			else{
 				float angle=computeParticleRotationFloat(a_StartRotation0.x, age,normalizedAge);
-				if(a_PositionStartLifeTime.x!=0.0||a_PositionStartLifeTime.y!=0.0)
+				if(a_ShapePositionStartLifeTime.x!=0.0||a_ShapePositionStartLifeTime.y!=0.0)
 				{
-					center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByAxis(a_MeshPosition*size,normalize(cross(vec3(0.0,0.0,1.0),vec3(a_PositionStartLifeTime.xy,0.0))),angle));
+					center+= u_SizeScale.xzy*(rotationByQuaternions(rotationByAxis(a_MeshPosition*size,normalize(cross(vec3(0.0,0.0,1.0),vec3(a_ShapePositionStartLifeTime.xy,0.0))),angle),worldRotation));
 				}
 				else
 				{
 					#ifdef SHAPE
-						center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByAxis(a_MeshPosition*size,vec3(0.0,-1.0,0.0),angle));
+						center+= u_SizeScale.xzy*(rotationByQuaternions(rotationByAxis(a_MeshPosition*size,vec3(0.0,-1.0,0.0),angle),worldRotation));
 					#else
-						center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByAxis(a_MeshPosition*size,vec3(0.0,0.0,-1.0),angle));
+						center+=rotationByQuaternions(rotationByAxis(a_MeshPosition*size,vec3(0.0,0.0,-1.0),angle)*u_SizeScale,worldRotation);//已验证
 					#endif
 				}
 					
 			}
 		#else
 			if(u_ThreeDStartRotation){
-				center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByEuler(a_MeshPosition*size,a_StartRotation0));
+				center+= u_SizeScale.xzy*(rotationByQuaternions(rotationByEuler(a_MeshPosition*size,a_StartRotation0),worldRotation));
 			}
 			else{
-				if(a_PositionStartLifeTime.x!=0.0||a_PositionStartLifeTime.y!=0.0)
+				if(a_ShapePositionStartLifeTime.x!=0.0||a_ShapePositionStartLifeTime.y!=0.0)
 				{
 					if(u_SimulationSpace==0)
-						center+= u_SizeScale.xzy*rotationByAxis(a_MeshPosition*size,normalize(cross(vec3(0.0,0.0,1.0),vec3(a_PositionStartLifeTime.xy,0.0))),a_StartRotation0.x);
+						center+= u_SizeScale.xzy*rotationByAxis(a_MeshPosition*size,normalize(cross(vec3(0.0,0.0,1.0),vec3(a_ShapePositionStartLifeTime.xy,0.0))),a_StartRotation0.x);
 					else if(u_SimulationSpace==1)
-						center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByAxis(a_MeshPosition*size,normalize(cross(vec3(0.0,0.0,1.0),vec3(a_PositionStartLifeTime.xy,0.0))),a_StartRotation0.x));
-						
+						center+= u_SizeScale.xzy*(rotationByQuaternions(rotationByAxis(a_MeshPosition*size,normalize(cross(vec3(0.0,0.0,1.0),vec3(a_ShapePositionStartLifeTime.xy,0.0))),a_StartRotation0.x),worldRotation));
 				}
 				else
 				{
@@ -723,22 +718,20 @@ void main()
 						if(u_SimulationSpace==0)
 							center+= u_SizeScale.xzy*rotationByAxis(a_MeshPosition*size,vec3(0.0,-1.0,0.0),a_StartRotation0.x);
 						else if(u_SimulationSpace==1)
-							center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByAxis(a_MeshPosition*size,vec3(0.0,-1.0,0.0),a_StartRotation0.x));
-							
+							center+= u_SizeScale.xzy*(rotationByQuaternions(rotationByAxis(a_MeshPosition*size,vec3(0.0,-1.0,0.0),a_StartRotation0.x),worldRotation));	
 					#else
 						if(u_SimulationSpace==0)
-							center+= u_SizeScale.xzy*(rotationByAxis(a_MeshPosition*size,vec3(0.0,0.0,-1.0),a_StartRotation0.x));
+							center+= rotationByAxis(u_SizeScale*a_MeshPosition*size,vec3(0.0,0.0,-1.0),a_StartRotation0.x);//已验证
 						else if(u_SimulationSpace==1)
-							center+= u_SizeScale.xzy*(mat3(u_WorldRotationMat)*rotationByAxis(a_MeshPosition*size,vec3(0.0,0.0,-1.0),a_StartRotation0.x));
+							center+= rotationByQuaternions(u_SizeScale*rotationByAxis(a_MeshPosition*size,vec3(0.0,0.0,-1.0),a_StartRotation0.x),worldRotation);//已验证
 					#endif
-					
 				}
 			}
 		#endif
    #endif
    
-      gl_Position=u_Projection*u_View*vec4(center,1.0);
-      v_Color = computeParticleColor(a_StartColor, normalizedAge);
+    gl_Position=u_Projection*u_View*vec4(center,1.0);
+    v_Color = computeParticleColor(a_StartColor, normalizedAge);
 	#ifdef DIFFUSEMAP
 		#ifdef defined(SPHERHBILLBOARD)||defined(STRETCHEDBILLBOARD)||defined(HORIZONTALBILLBOARD)||defined(VERTICALBILLBOARD)
 			v_TextureCoordinate =computeParticleUV(a_CornerTextureCoordinate.zw, normalizedAge);
@@ -748,10 +741,14 @@ void main()
 		#endif
 	#endif
       v_Discard=0.0;
+	  
+	#if FOG
+		v_PositionWorld=center;
+	#endif
    }
    else
-   {
-      v_Discard=1.0;
-   }
+	{
+		v_Discard=1.0;
+	}
 }
 

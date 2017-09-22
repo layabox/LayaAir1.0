@@ -50,7 +50,7 @@ package laya.d3.terrain {
 			_render = new TerrainRender(this);
 		}
 		
-		public function buildRenderElementAndMaterial(detailNum:int, normalMap:String, alphaMapUrl:String, detailUrl1:String, detailUrl2:String, detailUrl3:String, detailUrl4:String,ambientColor:Vector3, diffuseColor:Vector3, specularColor:Vector4, sx1:Number = 1, sy1:Number = 1, sx2:Number = 1, sy2:Number = 1, sx3:Number = 1, sy3:Number = 1, sx4:Number = 1, sy4:Number = 1):void {
+		public function buildRenderElementAndMaterial(detailNum:int, normalMap:String, alphaMapUrl:String, detailUrl1:String, detailUrl2:String, detailUrl3:String, detailUrl4:String, ambientColor:Vector3, diffuseColor:Vector3, specularColor:Vector4, sx1:Number = 1, sy1:Number = 1, sx2:Number = 1, sy2:Number = 1, sx3:Number = 1, sy3:Number = 1, sx4:Number = 1, sy4:Number = 1):void {
 			var terrainMaterial:TerrainMaterial = new TerrainMaterial();
 			if (diffuseColor) terrainMaterial.diffuseColor = diffuseColor;
 			if (ambientColor) terrainMaterial.ambientColor = ambientColor;
@@ -121,13 +121,13 @@ package laya.d3.terrain {
 			_render.sharedMaterials = shaderMaterials;
 		}
 		
-		
-		
 		override public function cloneTo(destObject:*):void {
 			trace("Terrain Chunk can't clone");
 		}
 		
 		override public function destroy(destroyChild:Boolean = true):void {
+			if (destroyed)
+				return;
 			super.destroy(destroyChild);
 			(_geometryFilter as TerrainFilter)._destroy();
 		}

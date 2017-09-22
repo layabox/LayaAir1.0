@@ -36,10 +36,20 @@ package laya.webgl.utils {
 			var m4:Array = matArray;
 			m4[0] = m.a;
 			m4[1] = m.b;
+			m4[2] = EMPTYMAT4_ARRAY[2];
+			m4[3] = EMPTYMAT4_ARRAY[3];
 			m4[4] = m.c;
 			m4[5] = m.d;
+			m4[6] = EMPTYMAT4_ARRAY[6];
+			m4[7] = EMPTYMAT4_ARRAY[7];
+			m4[8] = EMPTYMAT4_ARRAY[8];
+			m4[9] = EMPTYMAT4_ARRAY[9];
+			m4[10] = EMPTYMAT4_ARRAY[10];
+			m4[11] = EMPTYMAT4_ARRAY[11];
 			m4[12] = m.tx;
 			m4[13] = m.ty;
+			m4[14] = EMPTYMAT4_ARRAY[14];
+			m4[15] = EMPTYMAT4_ARRAY[15];
 			return matArray;
 		}
 		

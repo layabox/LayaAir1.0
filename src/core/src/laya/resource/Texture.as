@@ -55,6 +55,8 @@ package laya.resource {
 		/** @private */
 		public var _uvID:int = 0;
 		
+		public var _atlasID:int = -1;
+		
 		/**
 		 * 创建一个 <code>Texture</code> 实例。
 		 * @param	bitmap 位图资源。
@@ -126,6 +128,16 @@ package laya.resource {
 			var btex:Boolean = source is Texture;
 			var uv:Array = btex ? source.uv : DEF_UV;
 			var bitmap:* = btex ? source.bitmap : source;
+			var bIsAtlas:Boolean = RunDriver.isAtlas(bitmap);
+			if (bIsAtlas) {
+				var atlaser:* = bitmap._atlaser;
+				var nAtlasID:int = (source as Texture)._atlasID;
+				if (nAtlasID == -1) {
+					throw new Error("create texture error");
+				}
+				bitmap = atlaser._inAtlasTextureBitmapValue[nAtlasID];
+				uv = atlaser._inAtlasTextureOriUVValue[nAtlasID];
+			}
 			var tex:Texture = new Texture(bitmap, null);
 			if (bitmap.width && (x + width) > bitmap.width) width = bitmap.width - x;
 			if (bitmap.height && (y + height) > bitmap.height) height = bitmap.height - y;
@@ -147,6 +159,9 @@ package laya.resource {
 			var inAltasUVWidth:Number = (u2 - u1), inAltasUVHeight:Number = (v2 - v1);
 			var oriUV:Array = moveUV(uv[0], uv[1], [x, y, x + width, y, x + width, y + height, x, y + height]);
 			tex.uv = [u1 + oriUV[0] * inAltasUVWidth, v1 + oriUV[1] * inAltasUVHeight, u2 - (1 - oriUV[2]) * inAltasUVWidth, v1 + oriUV[3] * inAltasUVHeight, u2 - (1 - oriUV[4]) * inAltasUVWidth, v2 - (1 - oriUV[5]) * inAltasUVHeight, u1 + oriUV[6] * inAltasUVWidth, v2 - (1 - oriUV[7]) * inAltasUVHeight];
+			if (bIsAtlas) {
+				tex.addTextureToAtlas();
+			}
 			return tex;
 		}
 		
@@ -204,12 +219,20 @@ package laya.resource {
 			if (bitmap && (bitmap as Bitmap).useNum > 0) {
 				var temp:* = this.bitmap;
 				if (forceDispose) {
+					if ( Render.isConchApp && temp.source && temp.source.conchDestroy )
+					{
+						this.bitmap.source.conchDestroy();
+					}
 					this.bitmap = null;
 					temp.dispose();
 					(temp as Bitmap).useNum = 0;
 				} else {
 					(temp as Bitmap).useNum--;
 					if ((temp as Bitmap).useNum == 0) {
+						if ( Render.isConchApp && temp.source && temp.source.conchDestroy )
+						{
+							this.bitmap.source.conchDestroy();
+						}
 						this.bitmap = null;
 						temp.dispose();
 					}

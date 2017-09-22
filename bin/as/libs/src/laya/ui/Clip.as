@@ -3,6 +3,7 @@ package laya.ui {
 	import laya.net.Loader;
 	import laya.resource.Texture;
 	import laya.utils.Handler;
+	import laya.utils.WeakObject;
 	
 	/**
 	 * 图片加载完成后调度。
@@ -274,7 +275,7 @@ package laya.ui {
 				var h:Number = _clipHeight || Math.ceil(img.sourceHeight / _clipY);
 				
 				var key:String = _skin + w + h;
-				var clips:Array = AutoBitmap.getCache(key);
+				var clips:Array = WeakObject.I.get(key);
 				if (clips) _sources = clips;
 				else {
 					_sources = [];
@@ -283,7 +284,7 @@ package laya.ui {
 							_sources.push(Texture.createFromTexture(img, w * j, h * i, w, h));
 						}
 					}
-					AutoBitmap.setCache(key, _sources);
+					WeakObject.I.set(key, _sources);
 				}
 				
 				index = _index;

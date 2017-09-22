@@ -43,13 +43,13 @@ package laya.particle {
 			var i:int;
 			if (settings.disableColor)
 			{
-				for (i = 0; i < 3; i++)
+				for (i = 0; i < 4; i++)
 				{
 					particleData.startColor[i] = 1;
 					particleData.endColor[i] = 1;
 				}
-				particleData.startColor[i] = MathUtil.lerp(settings.minStartColor[i], settings.maxStartColor[i], Math.random());//R、G、B、A插值
-				particleData.endColor[i] = MathUtil.lerp(settings.minEndColor[i], settings.maxEndColor[i], Math.random());//R、G、B、A插值
+				//particleData.startColor[i] = MathUtil.lerp(settings.minStartColor[i], settings.maxStartColor[i], Math.random());//R、G、B、A插值
+				//particleData.endColor[i] = MathUtil.lerp(settings.minEndColor[i], settings.maxEndColor[i], Math.random());//R、G、B、A插值
 				
 			}
 			else

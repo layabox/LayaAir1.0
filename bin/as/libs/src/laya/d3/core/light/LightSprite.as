@@ -17,14 +17,6 @@ package laya.d3.core.light {
 		public static const TYPE_SPOTLIGHT:int = 3;
 		
 		/** @private */
-		protected var _diffuseColor:Vector3;
-		/** @private */
-		protected var _ambientColor:Vector3;
-		/** @private */
-		protected var _specularColor:Vector3;
-		/** @private */
-		protected var _reflectColor:Vector3;
-		/** @private */
 		protected var _shadow:Boolean;
 		/** @private */
 		protected var _shadowFarPlane:int;
@@ -37,12 +29,16 @@ package laya.d3.core.light {
 		/** @private */
 		protected var _parallelSplitShadowMap:ParallelSplitShadowMap;
 		
+		/** 灯光颜色。 */
+		public var color:Vector3;
+		
 		/**
 		 * 获取灯光的漫反射颜色。
 		 * @return 灯光的漫反射颜色。
 		 */
 		public function get diffuseColor():Vector3 {
-			return _diffuseColor;
+			trace("LightSprite: discard property,please use color property instead.");
+			return color;
 		}
 		
 		/**
@@ -50,55 +46,8 @@ package laya.d3.core.light {
 		 * @param value 灯光的漫反射颜色。
 		 */
 		public function set diffuseColor(value:Vector3):void {
-			_diffuseColor = value;
-		}
-		
-		/**
-		 * 获取灯光的环境光颜色。
-		 * @return 灯光的环境光颜色。
-		 */
-		public function get ambientColor():Vector3 {
-			return _ambientColor;
-		}
-		
-		/**
-		 * 设置灯光的环境光颜色。
-		 * @param value 灯光的环境光颜色。
-		 */
-		public function set ambientColor(value:Vector3):void {
-			_ambientColor = value;
-		}
-		
-		/**
-		 * 获取灯光的高光颜色。
-		 * @return 灯光的高光颜色。
-		 */
-		public function get specularColor():Vector3 {
-			return _specularColor;
-		}
-		
-		/**
-		 * 设置灯光的高光颜色。
-		 * @param value 灯光的高光颜色。
-		 */
-		public function set specularColor(value:Vector3):void {
-			_specularColor = value;
-		}
-		
-		/**
-		 * 获取灯光的反射颜色。
-		 * @return 灯光的反射颜色。
-		 */
-		public function get reflectColor():Vector3 {
-			return _reflectColor;
-		}
-		
-		/**
-		 * 设置灯光的反射颜色。
-		 * @param value 灯光的反射颜色。
-		 */
-		public function set reflectColor(value:Vector3):void {
-			_reflectColor = value;
+			trace("LightSprite: discard property,please use color property instead.");
+			color = value;
 		}
 		
 		/**
@@ -200,10 +149,7 @@ package laya.d3.core.light {
 		public function LightSprite() {
 			super();
 			
-			_diffuseColor = new Vector3(0.8, 0.8, 0.8);
-			_ambientColor = new Vector3(0.6, 0.6, 0.6);
-			_specularColor = new Vector3(1.0, 1.0, 1.0);
-			_reflectColor = new Vector3(1.0, 1.0, 1.0);
+			color = new Vector3(1.0, 1.0, 1.0);
 			_shadow = false;
 			_shadowFarPlane = 8;
 			_shadowMapSize = 512;

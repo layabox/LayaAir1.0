@@ -125,7 +125,7 @@ package laya.resource {
 		 * @param	h 高度。
 		 */
 		public function size(w:Number, h:Number):void {
-			if (_w != w || _h != h) {
+			if (_w != w || _h != h ||(_source && (_source.width!=w || _source.height!=h))) {
 				_w = w;
 				_h = h;
 				memorySize = _w * _h * 4;

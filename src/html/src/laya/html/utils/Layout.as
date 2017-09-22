@@ -150,6 +150,7 @@ package laya.html.utils {
 			function addLine():void {
 				curLine.y = y;
 				y += curLine.h + leading;
+				if (curLine.h == 0) y += lineHeight;
 				curLine.mWidth = tWordWidth;
 				tWordWidth = 0;
 				curLine = new LayoutLine();
@@ -159,7 +160,6 @@ package laya.html.utils {
 				tLineFirstKey = true;
 				newLine = false;
 			}
-			
 			//生成排版的行
 			for (i = 0; i < n; i++) {
 				oneLayout = elements[i];
@@ -174,7 +174,7 @@ package laya.html.utils {
 				if (oneLayout is HTMLBrElement) {
 					addLine();
 					curLine.y = y;
-					curLine.h = lineHeight;
+					//curLine.h = lineHeight;
 					continue;
 				} else if (oneLayout._isChar()) {
 					htmlWord = oneLayout as HTMLChar;

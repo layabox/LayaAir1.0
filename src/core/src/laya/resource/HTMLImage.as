@@ -76,7 +76,6 @@ package laya.resource {
 			_needReleaseAgain = false;
 			if (!_source) {
 				_recreateLock = true;
-				startCreate();
 				var _this:HTMLImage = this;
 				_source = new Browser.window.Image();
 				_source.crossOrigin = "";
@@ -97,7 +96,6 @@ package laya.resource {
 			} else {
 				if (_recreateLock)
 					return;
-				startCreate();
 				memorySize = _w * _h * 4;
 				_recreateLock = false;
 				completeCreate();//处理创建完成后相关操作

@@ -68,9 +68,10 @@ package laya.net {
 		 * <p>如果url为数组，返回true；否则返回指定的资源类对象，可以通过侦听此对象的 Event.LOADED 事件来判断资源是否已经加载完毕。</p>
 		 * <p><b>注意：</b>cache参数只能对文件后缀为atlas的资源进行缓存控制，其他资源会忽略缓存，强制重新加载。</p>
 		 * @param	url			资源地址或者数组。如果url和clas同时指定了资源类型，优先使用url指定的资源类型。参数形如：[{url:xx,clas:xx,priority:xx,params:xx},{url:xx,clas:xx,priority:xx,params:xx}]。
+		 * @param	complete	加载结束回调。根据url类型不同分为2种情况：1. url为String类型，也就是单个资源地址，如果加载成功，则回调参数值为加载完成的资源，否则为null；2. url为数组类型，指定了一组要加载的资源，如果全部加载成功，则回调参数值为true，否则为false。
 		 * @param	progress	资源加载进度回调，回调参数值为当前资源加载的进度信息(0-1)。
 		 * @param	clas		资源类名。如果url和clas同时指定了资源类型，优先使用url指定的资源类型。参数形如：Texture。
-		 * @param	type		资源类型。参数形如：Loader.IMAGE。
+		 * @param	params		资源构造参数。
 		 * @param	priority	(default = 1)加载的优先级，优先级高的优先加载。有0-4共5个优先级，0最高，4最低。
 		 * @param	cache		是否缓存加载的资源。
 		 * @return	如果url为数组，返回true；否则返回指定的资源类对象。
@@ -114,11 +115,15 @@ package laya.net {
 		}
 		
 		private function _create(url:String, complete:Handler = null, progress:Handler = null, clas:Class = null, params:Array = null, priority:int = 1, cache:Boolean = true):* {
-			url = URL.formatURL(url)
+			url = URL.formatURL(url);
+			
 			var item:* = getRes(url);
 			if (!item) {
 				var extension:String = Utils.getFileExtension(url);
 				var creatItem:Array = createMap[extension];
+				if (!creatItem)
+					throw new Error("LoaderManager:unknown file(" + url + ") extension with: " + extension + ".");
+				
 				if (!clas) clas = creatItem[0];
 				var type:String = creatItem[1];
 				if (extension == "atlas") {
@@ -127,10 +132,10 @@ package laya.net {
 					if (clas === Texture) type = "htmlimage";
 					item = clas ? new clas() : null;
 					if (item.hasOwnProperty("_loaded"))
-						item._loaded=false;
+						item._loaded = false;
 					load(url, Handler.create(null, onLoaded), progress, type, priority, false, null, true);
 					function onLoaded(data:*):void {
-						item && item.onAsynLoaded.call(item, url, data, params);
+						(item && !item.disposed && data) && (item.onAsynLoaded.call(item, url, data, params));//TODO:精灵如何处理
 						if (complete) complete.run();
 						Laya.loader.event(url);
 					}
@@ -167,10 +172,13 @@ package laya.net {
 			if (url is Array) return _loadAssets(url as Array, complete, progress, type, priority, cache, group);
 			var content:* = Loader.getRes(url);
 			if (content != null) {
-				progress && progress.runWith(1);
-				complete && complete.runWith(content);
-				//判断是否全部加载，如果是则抛出complete事件
-				_loaderCount || event(Event.COMPLETE);
+				//增加延迟回掉
+				Laya.timer.frameOnce(1, null, function():void {
+					progress && progress.runWith(1);
+					complete && complete.runWith(content);
+					//判断是否全部加载，如果是则抛出complete事件
+					_loaderCount || event(Event.COMPLETE);
+				});
 			} else {
 				var info:ResInfo = _resMap[url];
 				if (!info) {
@@ -198,7 +206,7 @@ package laya.net {
 			if (this._loaderCount >= this.maxLoader) return;
 			for (var i:int = 0; i < this._maxPriority; i++) {
 				var infos:Array = this._resInfos[i];
-				if (infos.length > 0) {
+				while (infos.length > 0) {
 					var info:ResInfo = infos.shift();
 					if (info) return _doLoad(info);
 				}

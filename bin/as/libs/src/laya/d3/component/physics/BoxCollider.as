@@ -1,12 +1,10 @@
 package laya.d3.component.physics {
-	import laya.d3.component.Component3D;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.OrientedBoundBox;
-	import laya.d3.math.Quaternion;
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector3;
 	import laya.d3.utils.RaycastHit;

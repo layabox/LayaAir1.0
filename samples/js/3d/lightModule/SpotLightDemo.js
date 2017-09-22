@@ -11,9 +11,7 @@ camera.addComponent(CameraMoveScript);
 
 //聚光灯
 var spotLight = scene.addChild(new Laya.SpotLight());
-spotLight.ambientColor = new Laya.Vector3(0.0, 0.0, 0.0);
-spotLight.specularColor = new Laya.Vector3(1.0, 0.0, 1.0);
-spotLight.diffuseColor = new Laya.Vector3(1, 1, 0);
+spotLight.color = new Laya.Vector3(1, 1, 0);
 spotLight.transform.position = new Laya.Vector3(0.0, 1.2, 0.0);
 spotLight.direction = new Laya.Vector3(0.15, -1.0, 0.0);
 spotLight.attenuation = new Laya.Vector3(0.0, 0.0, 0.8);

@@ -6,6 +6,7 @@ package laya.d3.core {
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
+	import laya.d3.math.Vector4;
 	import laya.d3.math.Viewport;
 	import laya.d3.resource.RenderTexture;
 	import laya.d3.utils.Picker;
@@ -194,6 +195,17 @@ package laya.d3.core {
 		/**
 		 * @inheritDoc
 		 */
+		override protected function _parseCustomProps(innerResouMap:Object, customProps:Object, json:Object):void {
+			super._parseCustomProps(innerResouMap, customProps, json);
+			var color:Array = customProps.clearColor;
+			clearColor = new Vector4(color[0], color[1], color[2], color[3]);
+			var viewport:Array = customProps.viewport;
+			normalizedViewport = new Viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
 		override protected function _calculateProjectionMatrix():void {
 			if (!_useUserProjectionMatrix) {
 				if (orthographicProjection) {
@@ -225,7 +237,7 @@ package laya.d3.core {
 			(scene.parallelSplitShadowMaps[0]) && (scene._renderShadowMap(gl, state, this));//TODO:SM
 			state.camera = this;
 			_prepareCameraToRender();
-			scene.beforeRender(state);//渲染之前
+			scene._preRenderUpdateComponents(state);
 			
 			var viewMat:Matrix4x4, projectMat:Matrix4x4;
 			viewMat = state._viewMatrix = viewMatrix;
@@ -247,7 +259,7 @@ package laya.d3.core {
 			scene._preRenderScene(gl, state);
 			scene._clear(gl, state);
 			scene._renderScene(gl, state);
-			scene.lateRender(state);//渲染之后
+			scene._postRenderUpdateComponents(state);
 			
 			(renderTar) && (renderTar.end());
 		}
@@ -289,8 +301,7 @@ package laya.d3.core {
 			if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
 			{
 				outE[0] = outE[1] = outE[2] = NaN;
-			}
-			else{
+			} else {
 				outE[0] = outE[0] / Laya.stage.clientScaleX;
 				outE[1] = outE[1] / Laya.stage.clientScaleY;
 			}
@@ -308,8 +319,7 @@ package laya.d3.core {
 			if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
 			{
 				outE[0] = outE[1] = outE[2] = NaN;
-			}
-			else{
+			} else {
 				outE[0] = outE[0] / Laya.stage.clientScaleX;
 				outE[1] = outE[1] / Laya.stage.clientScaleY;
 			}

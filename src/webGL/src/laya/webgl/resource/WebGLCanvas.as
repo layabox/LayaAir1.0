@@ -98,7 +98,6 @@ package laya.webgl.resource {
 		}
 		
 		override protected function recreateResource():void {
-			startCreate();
 			createWebGlTexture();
 			completeCreate();
 		}
@@ -121,8 +120,9 @@ package laya.webgl.resource {
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTex);
-			
+			gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);//TODO canvas? 如果是canvas应该不用设置
 			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _canvas);
+			gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 			
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MAG_FILTER, WebGLContext.LINEAR);
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MIN_FILTER, WebGLContext.LINEAR);
@@ -138,7 +138,9 @@ package laya.webgl.resource {
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, _source);
+			gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 			gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, webglCanvas._source);
+			gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 		}
 	

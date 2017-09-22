@@ -7,7 +7,6 @@ package laya.d3.core.render {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Viewport;
 	import laya.d3.shader.Shader3D;
-	import laya.webgl.WebGLContext;
 	
 	/**
 	 * <code>RenderState</code> 类用于实现渲染状态。

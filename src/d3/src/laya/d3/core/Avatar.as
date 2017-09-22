@@ -1,16 +1,12 @@
 package laya.d3.core {
-	import laya.d3.animation.AnimationClip;
+	import laya.ani.AnimationNodeContent;
 	import laya.d3.animation.AnimationNode;
 	import laya.d3.animation.AnimationTransform3D;
 	import laya.d3.component.Animator;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Vector4;
-	import laya.d3.utils.Utils3D;
-	import laya.events.Event;
 	import laya.resource.Resource;
-	import laya.utils.Stat;
 	
 	/**
 	 * <code>Avatar</code> 类用于创建Avatar。
@@ -26,29 +22,13 @@ package laya.d3.core {
 		
 		/**@private */
 		private var _rootNode:AnimationNode;
-		/**@private	*/
-		private var _nodeMap:Object;
-		/**@private	*/
-		private var _nodes:Vector.<AnimationNode>;
 		
 		/**
-		 * @private
 		 * 创建一个 <code>Avatar</code> 实例。
 		 */
 		public function Avatar() {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _initCloneAvatar(destNode:AnimationNode, destAvatar:Avatar):void {
-			destAvatar._nodeMap[destNode.name] = destNode;
-			destAvatar._nodes.push(destNode);
-			
-			for (var i:int = 0, n:int = destNode.getChildCount(); i < n; i++)
-				_initCloneAvatar(destNode.getChildByIndex(i), destAvatar);
 		}
 		
 		/**
@@ -68,9 +48,6 @@ package laya.d3.core {
 		private function _parseNode(nodaData:Object, node:AnimationNode):void {
 			var name:String = nodaData.props.name;
 			node.name = name;
-			_nodes.push(node);
-			_nodeMap[name] = node;
-			
 			var customProps:Object = nodaData.customProps;
 			var transform:AnimationTransform3D = node._transform;
 			
@@ -112,8 +89,6 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
-			_nodeMap = {};
-			_nodes = new Vector.<AnimationNode>();
 			_rootNode = new AnimationNode();
 			_parseNode(data, _rootNode);
 			_endLoaded();
@@ -125,7 +100,6 @@ package laya.d3.core {
 		 */
 		public function _cloneDatasToAnimator(destAnimator:Animator):void {
 			var destRoot:AnimationNode = _rootNode.clone();
-			var nodeCount:int = _nodes.length;
 			var avatarNodes:Vector.<AnimationNode> = new Vector.<AnimationNode>();
 			destAnimator._avatarRootNode = destRoot;
 			destAnimator._avatarNodeMap = {};
@@ -148,10 +122,6 @@ package laya.d3.core {
 			var destAvatar:Avatar = destObject as Avatar;
 			var destRoot:AnimationNode = _rootNode.clone();
 			destAvatar._rootNode = destRoot;
-			destAvatar._nodeMap = {};
-			var destNodes:Vector.<AnimationNode> = new Vector.<AnimationNode>();//TODO:预先知道长度。
-			destAvatar._nodes = destNodes;
-			_initCloneAvatar(destRoot, destAvatar);
 		}
 		
 		/**

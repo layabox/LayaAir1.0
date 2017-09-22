@@ -66,6 +66,8 @@ package laya.display.css {
 		private var _border:Object = null;
 		private var _ower:Sprite;
 		private var _rect:Object = null;
+		/**@private */
+		public var underLine:int = 0;
 		
 		/**
 		 * 是否显示为块级元素。

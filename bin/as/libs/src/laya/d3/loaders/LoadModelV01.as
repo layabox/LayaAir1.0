@@ -71,7 +71,7 @@ package laya.d3.loaders {
 		/**
 		 * 创建一个 <code>LoadModel</code> 实例。
 		 */
-		public function LoadModelV01(readData:Byte, version:String, mesh:Mesh, materials:Vector.<BaseMaterial>,subMeshes:Vector.<SubMesh>, materialMap:Object) {
+		public function LoadModelV01(readData:Byte, version:String, mesh:Mesh, materials:Vector.<BaseMaterial>, subMeshes:Vector.<SubMesh>, materialMap:Object) {
 			_mesh = mesh;
 			_materials = materials;
 			_subMeshes = subMeshes;
@@ -156,17 +156,12 @@ package laya.d3.loaders {
 				trace("Warning: The (.lm) file is converted by old fbxTools,please reConverted it use  lastest fbxTools version,later we will remove the  support of old version (.lm) support.");
 				break;
 			case "LAYASKINANI:01": 
-			case "LAYAMODEL:02":
+			case "LAYAMODEL:02": 
 				var arrayBuffer:ArrayBuffer = _readData.__getBuffer();
 				var i:int, n:int;
 				var bindPoseStart:uint = _readData.getUint32();
 				var binPoseLength:uint = _readData.getUint32();
 				var bindPoseDatas:Float32Array = new Float32Array(arrayBuffer.slice(bindPoseStart + _DATA.offset, bindPoseStart + _DATA.offset + binPoseLength));
-				mesh._bindPoses = new Vector.<Matrix4x4>();
-				for (i = 0, n = bindPoseDatas.length; i < n; i += 16) {
-					var bindPose:Matrix4x4 = new Matrix4x4(bindPoseDatas[i + 0], bindPoseDatas[i + 1], bindPoseDatas[i + 2], bindPoseDatas[i + 3], bindPoseDatas[i + 4], bindPoseDatas[i + 5], bindPoseDatas[i + 6], bindPoseDatas[i + 7], bindPoseDatas[i + 8], bindPoseDatas[i + 9], bindPoseDatas[i + 10], bindPoseDatas[i + 11], bindPoseDatas[i + 12], bindPoseDatas[i + 13], bindPoseDatas[i + 14], bindPoseDatas[i + 15]);
-					mesh._bindPoses.push(bindPose);
-				}
 				var inverseGlobalBindPoseStart:uint = _readData.getUint32();
 				var inverseGlobalBinPoseLength:uint = _readData.getUint32();
 				var invGloBindPoseDatas:Float32Array = new Float32Array(arrayBuffer.slice(inverseGlobalBindPoseStart + _DATA.offset, inverseGlobalBindPoseStart + _DATA.offset + inverseGlobalBinPoseLength));
@@ -263,7 +258,7 @@ package laya.d3.loaders {
 				case "TANGENT": 
 					tangent = true;
 					break;
-				case "BINORMAL":
+				case "BINORMAL": 
 					binormal = true;
 					break;
 				}

@@ -7,10 +7,10 @@
 	var Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Input=laya.display.Input,Loader=laya.net.Loader;
 	var Node=laya.display.Node,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render;
 	var Sprite=laya.display.Sprite,Text=laya.display.Text,Texture=laya.resource.Texture,Tween=laya.utils.Tween;
-	var Utils=laya.utils.Utils;
+	var Utils=laya.utils.Utils,WeakObject=laya.utils.WeakObject;
 	Laya.interface('laya.ui.IItem');
-	Laya.interface('laya.ui.ISelect');
 	Laya.interface('laya.ui.IRender');
+	Laya.interface('laya.ui.ISelect');
 	Laya.interface('laya.ui.IComponent');
 	Laya.interface('laya.ui.IBox','IComponent');
 	/**
@@ -176,7 +176,6 @@
 		*修改纹理资源。
 		*/
 		__proto.changeSource=function(){
-			if (AutoBitmap.cacheCount++> 50)AutoBitmap.clearCache();
 			this._isChanged=false;
 			var source=this._source;
 			if (!source || !source.bitmap)return;
@@ -190,8 +189,8 @@
 				}else {
 				source.$_GID || (source.$_GID=Utils.getGID());
 				var key=source.$_GID+"."+width+"."+height+"."+sizeGrid.join(".");
-				if (AutoBitmap.cmdCaches[key]){
-					this.cmds=AutoBitmap.cmdCaches[key];
+				if (WeakObject.I.get(key)){
+					this.cmds=WeakObject.I.get(key);
 					return;
 				}
 				this.clear();
@@ -220,7 +219,7 @@
 				right && this.drawBitmap(repeat,AutoBitmap.getTexture(source,sw-right,top,right,sh-top-bottom),width-right,top,right,height-top-bottom);
 				this.drawBitmap(repeat,AutoBitmap.getTexture(source,left,top,sw-left-right,sh-top-bottom),left,top,width-left-right,height-top-bottom);
 				if (needClip)this.restore();
-				if (this.autoCacheCmd && !Render.isConchApp)AutoBitmap.cmdCaches[key]=this.cmds;
+				if (this.autoCacheCmd && !Render.isConchApp)WeakObject.I.set(key,this.cmds);
 			}
 			this._repaint();
 		}
@@ -229,7 +228,7 @@
 			(width===void 0)&& (width=0);
 			(height===void 0)&& (height=0);
 			if (width < 0.1 || height < 0.1)return;
-			if (repeat && (tex.width!=width || tex.height !=height))this.fillTexture(tex,x,y,width,height);
+			if (repeat && (tex.width !=width || tex.height !=height))this.fillTexture(tex,x,y,width,height);
 			else this.drawTexture(tex,x,y,width,height);
 		}
 
@@ -321,31 +320,14 @@
 			if (height <=0)height=1;
 			tex.$_GID || (tex.$_GID=Utils.getGID())
 			var key=tex.$_GID+"."+x+"."+y+"."+width+"."+height;
-			var texture=AutoBitmap.textureCache[key];
+			var texture=WeakObject.I.get(key);
 			if (!texture){
-				texture=AutoBitmap.textureCache[key]=Texture.createFromTexture(tex,x,y,width,height);
+				texture=Texture.createFromTexture(tex,x,y,width,height);
+				WeakObject.I.set(key,texture);
 			}
 			return texture;
 		}
 
-		AutoBitmap.clearCache=function(){
-			AutoBitmap.cacheCount=0;
-			AutoBitmap.cmdCaches={};
-			AutoBitmap.textureCache={};
-		}
-
-		AutoBitmap.setCache=function(key,value){
-			AutoBitmap.cacheCount++;
-			AutoBitmap.textureCache[key]=value;
-		}
-
-		AutoBitmap.getCache=function(key){
-			return AutoBitmap.textureCache[key];
-		}
-
-		AutoBitmap.cmdCaches={};
-		AutoBitmap.cacheCount=0;
-		AutoBitmap.textureCache={};
 		return AutoBitmap;
 	})(Graphics)
 
@@ -928,7 +910,7 @@
 		*/
 		__proto.open=function(dialog,closeOther){
 			(closeOther===void 0)&& (closeOther=false);
-			if (closeOther)this.removeChildren();
+			if (closeOther)this._closeAll();
 			if (dialog.popupCenter)this._centerDialog(dialog);
 			this.addChild(dialog);
 			if (dialog.isModal || this._$P["hasZorder"])this.timer.callLater(this,this._checkMask);
@@ -983,8 +965,18 @@
 		*关闭所有的对话框。
 		*/
 		__proto.closeAll=function(){
-			this.removeChildren();
+			this._closeAll();
 			this.event(/*laya.events.Event.CLOSE*/"close");
+		}
+
+		/**@private */
+		__proto._closeAll=function(){
+			for (var i=this.numChildren-1;i >-1;i--){
+				var item=this.getChildAt(i);
+				if (item.close!=null){
+					this.doClose(item);
+				}
+			}
 		}
 
 		/**
@@ -1229,7 +1221,7 @@
 			var height=img.sourceHeight / this._stateNum;
 			img.$_GID || (img.$_GID=Utils.getGID());
 			var key=img.$_GID+"-"+this._stateNum;
-			var clips=AutoBitmap.getCache(key);
+			var clips=WeakObject.I.get(key);
 			if (clips)this._sources=clips;
 			else {
 				this._sources=[];
@@ -1240,7 +1232,7 @@
 						this._sources.push(Texture.createFromTexture(img,0,height *i,width,height));
 					}
 				}
-				AutoBitmap.setCache(key,this._sources);
+				WeakObject.I.set(key,this._sources);
 			}
 			if (this._autoSize){
 				this._bitmap.width=this._width || width;
@@ -1352,6 +1344,9 @@
 		__getset(0,__proto,'stateNum',function(){
 			return this._stateNum;
 			},function(value){
+			if ((typeof value=='string')){
+				value=parseInt(value);
+			}
 			if (this._stateNum !=value){
 				this._stateNum=value < 1 ? 1 :value > 3 ? 3 :value;
 				this.callLater(this.changeClips);
@@ -1733,7 +1728,7 @@
 				var w=this._clipWidth || Math.ceil(img.sourceWidth / this._clipX);
 				var h=this._clipHeight || Math.ceil(img.sourceHeight / this._clipY);
 				var key=this._skin+w+h;
-				var clips=AutoBitmap.getCache(key);
+				var clips=WeakObject.I.get(key);
 				if (clips)this._sources=clips;
 				else {
 					this._sources=[];
@@ -1742,7 +1737,7 @@
 							this._sources.push(Texture.createFromTexture(img,w *j,h *i,w,h));
 						}
 					}
-					AutoBitmap.setCache(key,this._sources);
+					WeakObject.I.set(key,this._sources);
 				}
 				this.index=this._index;
 				this.event(/*laya.events.Event.LOADED*/"loaded");
@@ -4037,6 +4032,7 @@
 					value=UIUtils.adptString(value+"");
 				this._tf.text=value;
 				this.event(/*laya.events.Event.CHANGE*/"change");
+				if (!this._width || !this._height)this.onCompResize();
 			}
 		});
 
@@ -6040,6 +6036,96 @@
 
 
 	/**
+	*使用 <code>HScrollBar</code> （水平 <code>ScrollBar</code> ）控件，可以在因数据太多而不能在显示区域完全显示时控制显示的数据部分。
+	*@example <caption>以下示例代码，创建了一个 <code>HScrollBar</code> 实例。</caption>
+	*package
+	*{
+		*import laya.ui.HScrollBar;
+		*import laya.utils.Handler;
+		*public class HScrollBar_Example
+		*{
+			*private var hScrollBar:HScrollBar;
+			*public function HScrollBar_Example()
+			*{
+				*Laya.init(640,800);//设置游戏画布宽高。
+				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+				*Laya.loader.load(["resource/ui/hscroll.png","resource/ui/hscroll$bar.png","resource/ui/hscroll$down.png","resource/ui/hscroll$up.png"],Handler.create(this,onLoadComplete));//加载资源。
+				*}
+			*private function onLoadComplete():void
+			*{
+				*hScrollBar=new HScrollBar();//创建一个 HScrollBar 类的实例对象 hScrollBar 。
+				*hScrollBar.skin="resource/ui/hscroll.png";//设置 hScrollBar 的皮肤。
+				*hScrollBar.x=100;//设置 hScrollBar 对象的属性 x 的值，用于控制 hScrollBar 对象的显示位置。
+				*hScrollBar.y=100;//设置 hScrollBar 对象的属性 y 的值，用于控制 hScrollBar 对象的显示位置。
+				*hScrollBar.changeHandler=new Handler(this,onChange);//设置 hScrollBar 的滚动变化处理器。
+				*Laya.stage.addChild(hScrollBar);//将此 hScrollBar 对象添加到显示列表。
+				*}
+			*private function onChange(value:Number):void
+			*{
+				*trace("滚动条的位置： value="+value);
+				*}
+			*}
+		*}
+	*@example
+	*Laya.init(640,800);//设置游戏画布宽高
+	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
+	*var hScrollBar;
+	*var res=["resource/ui/hscroll.png","resource/ui/hscroll$bar.png","resource/ui/hscroll$down.png","resource/ui/hscroll$up.png"];
+	*Laya.loader.load(res,laya.utils.Handler.create(this,onLoadComplete));//加载资源。
+	*function onLoadComplete(){
+		*console.log("资源加载完成！");
+		*hScrollBar=new laya.ui.HScrollBar();//创建一个 HScrollBar 类的实例对象 hScrollBar 。
+		*hScrollBar.skin="resource/ui/hscroll.png";//设置 hScrollBar 的皮肤。
+		*hScrollBar.x=100;//设置 hScrollBar 对象的属性 x 的值，用于控制 hScrollBar 对象的显示位置。
+		*hScrollBar.y=100;//设置 hScrollBar 对象的属性 y 的值，用于控制 hScrollBar 对象的显示位置。
+		*hScrollBar.changeHandler=new laya.utils.Handler(this,onChange);//设置 hScrollBar 的滚动变化处理器。
+		*Laya.stage.addChild(hScrollBar);//将此 hScrollBar 对象添加到显示列表。
+		*}
+	*function onChange(value)
+	*{
+		*console.log("滚动条的位置： value="+value);
+		*}
+	*@example
+	*import HScrollBar=laya.ui.HScrollBar;
+	*import Handler=laya.utils.Handler;
+	*class HScrollBar_Example {
+		*private hScrollBar:HScrollBar;
+		*constructor(){
+			*Laya.init(640,800);//设置游戏画布宽高。
+			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
+			*Laya.loader.load(["resource/ui/hscroll.png","resource/ui/hscroll$bar.png","resource/ui/hscroll$down.png","resource/ui/hscroll$up.png"],Handler.create(this,this.onLoadComplete));//加载资源。
+			*}
+		*private onLoadComplete():void {
+			*this.hScrollBar=new HScrollBar();//创建一个 HScrollBar 类的实例对象 hScrollBar 。
+			*this.hScrollBar.skin="resource/ui/hscroll.png";//设置 hScrollBar 的皮肤。
+			*this.hScrollBar.x=100;//设置 hScrollBar 对象的属性 x 的值，用于控制 hScrollBar 对象的显示位置。
+			*this.hScrollBar.y=100;//设置 hScrollBar 对象的属性 y 的值，用于控制 hScrollBar 对象的显示位置。
+			*this.hScrollBar.changeHandler=new Handler(this,this.onChange);//设置 hScrollBar 的滚动变化处理器。
+			*Laya.stage.addChild(this.hScrollBar);//将此 hScrollBar 对象添加到显示列表。
+			*}
+		*private onChange(value:number):void {
+			*console.log("滚动条的位置： value="+value);
+			*}
+		*}
+	*/
+	//class laya.ui.HScrollBar extends laya.ui.ScrollBar
+	var HScrollBar=(function(_super){
+		function HScrollBar(){HScrollBar.__super.call(this);;
+		};
+
+		__class(HScrollBar,'laya.ui.HScrollBar',_super);
+		var __proto=HScrollBar.prototype;
+		/**@inheritDoc */
+		__proto.initialize=function(){
+			_super.prototype.initialize.call(this);
+			this.slider.isVertical=false;
+		}
+
+		return HScrollBar;
+	})(ScrollBar)
+
+
+	/**
 	*<code>Panel</code> 是一个面板容器类。
 	*/
 	//class laya.ui.Panel extends laya.ui.Box
@@ -6354,96 +6440,6 @@
 
 		return Panel;
 	})(Box)
-
-
-	/**
-	*使用 <code>HScrollBar</code> （水平 <code>ScrollBar</code> ）控件，可以在因数据太多而不能在显示区域完全显示时控制显示的数据部分。
-	*@example <caption>以下示例代码，创建了一个 <code>HScrollBar</code> 实例。</caption>
-	*package
-	*{
-		*import laya.ui.HScrollBar;
-		*import laya.utils.Handler;
-		*public class HScrollBar_Example
-		*{
-			*private var hScrollBar:HScrollBar;
-			*public function HScrollBar_Example()
-			*{
-				*Laya.init(640,800);//设置游戏画布宽高。
-				*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-				*Laya.loader.load(["resource/ui/hscroll.png","resource/ui/hscroll$bar.png","resource/ui/hscroll$down.png","resource/ui/hscroll$up.png"],Handler.create(this,onLoadComplete));//加载资源。
-				*}
-			*private function onLoadComplete():void
-			*{
-				*hScrollBar=new HScrollBar();//创建一个 HScrollBar 类的实例对象 hScrollBar 。
-				*hScrollBar.skin="resource/ui/hscroll.png";//设置 hScrollBar 的皮肤。
-				*hScrollBar.x=100;//设置 hScrollBar 对象的属性 x 的值，用于控制 hScrollBar 对象的显示位置。
-				*hScrollBar.y=100;//设置 hScrollBar 对象的属性 y 的值，用于控制 hScrollBar 对象的显示位置。
-				*hScrollBar.changeHandler=new Handler(this,onChange);//设置 hScrollBar 的滚动变化处理器。
-				*Laya.stage.addChild(hScrollBar);//将此 hScrollBar 对象添加到显示列表。
-				*}
-			*private function onChange(value:Number):void
-			*{
-				*trace("滚动条的位置： value="+value);
-				*}
-			*}
-		*}
-	*@example
-	*Laya.init(640,800);//设置游戏画布宽高
-	*Laya.stage.bgColor="#efefef";//设置画布的背景颜色
-	*var hScrollBar;
-	*var res=["resource/ui/hscroll.png","resource/ui/hscroll$bar.png","resource/ui/hscroll$down.png","resource/ui/hscroll$up.png"];
-	*Laya.loader.load(res,laya.utils.Handler.create(this,onLoadComplete));//加载资源。
-	*function onLoadComplete(){
-		*console.log("资源加载完成！");
-		*hScrollBar=new laya.ui.HScrollBar();//创建一个 HScrollBar 类的实例对象 hScrollBar 。
-		*hScrollBar.skin="resource/ui/hscroll.png";//设置 hScrollBar 的皮肤。
-		*hScrollBar.x=100;//设置 hScrollBar 对象的属性 x 的值，用于控制 hScrollBar 对象的显示位置。
-		*hScrollBar.y=100;//设置 hScrollBar 对象的属性 y 的值，用于控制 hScrollBar 对象的显示位置。
-		*hScrollBar.changeHandler=new laya.utils.Handler(this,onChange);//设置 hScrollBar 的滚动变化处理器。
-		*Laya.stage.addChild(hScrollBar);//将此 hScrollBar 对象添加到显示列表。
-		*}
-	*function onChange(value)
-	*{
-		*console.log("滚动条的位置： value="+value);
-		*}
-	*@example
-	*import HScrollBar=laya.ui.HScrollBar;
-	*import Handler=laya.utils.Handler;
-	*class HScrollBar_Example {
-		*private hScrollBar:HScrollBar;
-		*constructor(){
-			*Laya.init(640,800);//设置游戏画布宽高。
-			*Laya.stage.bgColor="#efefef";//设置画布的背景颜色。
-			*Laya.loader.load(["resource/ui/hscroll.png","resource/ui/hscroll$bar.png","resource/ui/hscroll$down.png","resource/ui/hscroll$up.png"],Handler.create(this,this.onLoadComplete));//加载资源。
-			*}
-		*private onLoadComplete():void {
-			*this.hScrollBar=new HScrollBar();//创建一个 HScrollBar 类的实例对象 hScrollBar 。
-			*this.hScrollBar.skin="resource/ui/hscroll.png";//设置 hScrollBar 的皮肤。
-			*this.hScrollBar.x=100;//设置 hScrollBar 对象的属性 x 的值，用于控制 hScrollBar 对象的显示位置。
-			*this.hScrollBar.y=100;//设置 hScrollBar 对象的属性 y 的值，用于控制 hScrollBar 对象的显示位置。
-			*this.hScrollBar.changeHandler=new Handler(this,this.onChange);//设置 hScrollBar 的滚动变化处理器。
-			*Laya.stage.addChild(this.hScrollBar);//将此 hScrollBar 对象添加到显示列表。
-			*}
-		*private onChange(value:number):void {
-			*console.log("滚动条的位置： value="+value);
-			*}
-		*}
-	*/
-	//class laya.ui.HScrollBar extends laya.ui.ScrollBar
-	var HScrollBar=(function(_super){
-		function HScrollBar(){HScrollBar.__super.call(this);;
-		};
-
-		__class(HScrollBar,'laya.ui.HScrollBar',_super);
-		var __proto=HScrollBar.prototype;
-		/**@inheritDoc */
-		__proto.initialize=function(){
-			_super.prototype.initialize.call(this);
-			this.slider.isVertical=false;
-		}
-
-		return HScrollBar;
-	})(ScrollBar)
 
 
 	/**

@@ -72,7 +72,7 @@ package laya.d3.graphics {
 				_bind();
 				_gl.bufferData(_bufferType, _byteLength, _bufferUsage);
 			}
-			canRead && (_buffer = new Float32Array(byteLength / 4));
+			canRead && (_buffer = new Float32Array(_byteLength / 4));
 		}
 		
 		/**
@@ -126,20 +126,20 @@ package laya.d3.graphics {
 		
 		/** 销毁顶点缓冲。*/
 		override protected function detoryResource():void {
-			var elements:Array = _vertexDeclaration.getVertexElements();//TODO:应该判定当前状态是否绑定，如绑定则disableVertexAttribArray。
-			for (var i:int = 0; i < elements.length; i++)
-				WebGL.mainContext.disableVertexAttribArray(i);
+			var gl:WebGLContext = WebGL.mainContext;
+			var elements:Array = _vertexDeclaration.getVertexElements();
+			var enableAtributes:Array = Buffer._enableAtributes;
+			for (var i:int = 0, n:int = elements.length; i < n; i++) {
+				if (enableAtributes[i] === _glBuffer) {
+					gl.disableVertexAttribArray(i);
+					enableAtributes[i] = null;
+				}
+			}
 			super.detoryResource();
-		}
-		
-		/** 彻底销毁顶点缓冲。*/
-		override public function dispose():void {
-			super.dispose();
 			_buffer = null;
 			_vertexDeclaration = null;
 			memorySize = 0;
 		}
-	
 	}
 
 }

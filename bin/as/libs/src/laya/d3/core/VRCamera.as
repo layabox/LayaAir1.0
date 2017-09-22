@@ -404,7 +404,7 @@ package laya.d3.core {
 			_prepareCameraToRender();
 			state.scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_VR);
 			
-			scene.beforeRender(state);//渲染之前
+			scene._preRenderUpdateComponents(state);//渲染之前
 			var leftViewMat:Matrix4x4, leftProjectMatrix:Matrix4x4;
 			leftViewMat = state._viewMatrix = leftViewMatrix;
 			var renderTar:RenderTexture = _renderTarget;
@@ -445,7 +445,7 @@ package laya.d3.core {
 			scene._preRenderScene(gl, state);
 			scene._clear(gl, state);
 			scene._renderScene(gl, state);
-			scene.lateRender(state);//渲染之后
+			scene._postRenderUpdateComponents(state);//渲染之后
 			
 			(renderTar) && (renderTar.end());
 		}

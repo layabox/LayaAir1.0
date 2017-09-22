@@ -106,6 +106,8 @@ package laya.events {
 					if (!Input.isInputting) e.preventDefault();
 					list.push(e);
 					_this.mouseDownTime = -Browser.now();
+				}else {
+					_curTouchID = NaN;
 				}
 			}, true);
 			canvas.addEventListener("touchmove", function(e:*):void {
@@ -118,6 +120,8 @@ package laya.events {
 				if (enabled) {
 					e.preventDefault();
 					list.push(e);
+				}else {
+					_curTouchID = NaN;
 				}
 			}, true);
 			canvas.addEventListener('mousewheel', function(e:*):void {
@@ -352,7 +356,8 @@ package laya.events {
 					_this.checkMouseWheel(evt);
 					break;
 				case "mouseout": 
-					_this._stage.event(Event.MOUSE_OUT, _this._event.setTo(Event.MOUSE_OUT, _this._stage, _this._stage));
+					//_this._stage.event(Event.MOUSE_OUT, _this._event.setTo(Event.MOUSE_OUT, _this._stage, _this._stage));
+					TouchManager.I.stageMouseOut();
 					break;
 				case "mouseover": 
 					_this._stage.event(Event.MOUSE_OVER, _this._event.setTo(Event.MOUSE_OVER, _this._stage, _this._stage));

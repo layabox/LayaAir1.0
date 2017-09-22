@@ -6,6 +6,7 @@ package laya.d3.terrain {
 	import laya.d3.math.Vector4;
 	import laya.d3.terrain.unit.ChunkInfo;
 	import laya.events.Event;
+	import laya.net.Loader;
 	
 	/**
 	 * <code>Terrain</code> 类用于创建地块。
@@ -51,6 +52,24 @@ package laya.d3.terrain {
 					terrainRes.once(Event.LOADED, this, buildTerrain);
 			}
 		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _parseCustomProps(innerResouMap:Object, customProps:Object, json:Object):void {
+			super._parseCustomProps(innerResouMap,customProps,json);
+			
+			terrainRes = Loader.getRes(innerResouMap[customProps.dataPath]);
+			
+			var lightmapIndex:* = customProps.lightmapIndex;
+			if (lightmapIndex != null)
+				setLightmapIndex(lightmapIndex);
+			
+			var lightmapScaleOffsetArray:Array = customProps.lightmapScaleOffset;
+			if (lightmapScaleOffsetArray)
+				setLightmapScaleOffset(new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
+		}
+		
 		public function setLightmapIndex(value:int):void {
 			for (var i:int = 0; i < _childs.length; i++) {
 				var terrainChunk:TerrainChunk = _childs[i];

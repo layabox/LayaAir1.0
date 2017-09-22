@@ -12,9 +12,7 @@ camera.clearColor = null;
 
 //方向光
 var directionLight = scene.addChild(new Laya.DirectionLight());
-directionLight.ambientColor = new Laya.Vector3(0.6, 0.6, 0.6);
-directionLight.specularColor = new Laya.Vector3(0.6, 0.6, 0.6);
-directionLight.diffuseColor = new Laya.Vector3(0.6, 0.6, 0.6);
+directionLight.color = new Laya.Vector3(0.6, 0.6, 0.6);
 directionLight.direction = new Laya.Vector3(1, -1, -1);
 
 //平面

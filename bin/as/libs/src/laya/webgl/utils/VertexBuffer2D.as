@@ -3,6 +3,7 @@ package laya.webgl.utils {
 	import laya.renders.Render;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
+	
 	public class VertexBuffer2D extends Buffer2D {
 		public static var create:Function = function(vertexStride:int, bufferUsage:int = WebGLContext.DYNAMIC_DRAW):VertexBuffer2D {
 			return new VertexBuffer2D(vertexStride, bufferUsage);
@@ -52,10 +53,15 @@ package laya.webgl.utils {
 		override protected function detoryResource():void {
 			super.detoryResource();
 			//if (_glBuffer) {
-			for (var i:int = 0; i < 10; i++)
+			var enableAtributes:Array = Buffer._enableAtributes;
+			for (var i:int = 0; i < 10; i++) {
 				WebGL.mainContext.disableVertexAttribArray(i);//临时修复警告和闪屏
+				enableAtributes[i] = null;
+			}
+		
 			//}
 		}
+		
 		public function destory():void {
 			_byteLength = 0;
 			_upload = true;

@@ -1,4 +1,5 @@
 package laya.webgl.utils {
+	import laya.display.css.TransformInfo;
 	import laya.display.Sprite;
 	import laya.display.Sprite;
 	import laya.display.css.Style;
@@ -71,16 +72,17 @@ package laya.webgl.utils {
 				tRect.x=Math.round(tRect.x);
 				tRect.y=Math.round(tRect.y);
 				if (tRect.width > 0 && tRect.height > 0) {
+					var tf:TransformInfo=sprite._style._tf;
 					var scope:SubmitCMDScope = SubmitCMDScope.create();
 					scope.addValue("bounds", tRect);
 					submitCMD = SubmitCMD.create([scope, context], RenderSprite3D.tmpTarget);
 					context.addRenderObject(submitCMD);
-					mask.render(context, -tRect.x, -tRect.y);
+					mask.render(context, -tRect.x - tf.translateX, -tRect.y - tf.translateY);
 					submitCMD = SubmitCMD.create([scope], RenderSprite3D.endTmpTarget);
 					context.addRenderObject(submitCMD);
 					//裁剪
 					context.ctx.save();
-					context.clipRect(x + tRect.x, y + tRect.y, tRect.width, tRect.height);
+					context.clipRect(x - tf.translateX  + tRect.x, y - tf.translateX + tRect.y, tRect.width, tRect.height);
 					next._fun.call(next, sprite, context, x, y);
 					context.ctx.restore();
 					//设置混合模式

@@ -1,8 +1,24 @@
 package laya.webgl.submit {
+	import laya.maths.Matrix;
+	import laya.maths.Rectangle;
 	import laya.webgl.canvas.BlendMode;
+	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.submit.ISubmit;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
+	import laya.webgl.utils.GlUtils;
+	import laya.webgl.utils.Buffer2D;
+	import laya.webgl.utils.VertexBuffer2D;
+	import laya.resource.Texture;
+	import laya.webgl.shader.Shader;
+	import laya.webgl.shader.d2.Shader2D;
+	import laya.webgl.shader.d2.ShaderDefines2D;
+	import laya.webgl.shader.d2.skinAnishader.SkinMeshBuffer;
+	import laya.webgl.shader.d2.value.FillTextureSV;
+	import laya.webgl.shader.d2.value.PrimitiveSV;
+	import laya.webgl.shader.d2.value.TextSV;
+	import laya.webgl.shader.d2.value.Value2D;
+	import laya.webgl.shader.d2.value.Color2dSV;
 
 	public class SubmitStencil implements ISubmit
 	{
@@ -10,7 +26,7 @@ package laya.webgl.submit {
 		public static var _cache:Array =/*[STATIC SAFE]*/(_cache=[],_cache._length=0,_cache);
 		public var step:int;
 		public var blendMode:String;
-		
+		private static var _mask:Number = /*[STATIC SAFE]*/0;
 		public function SubmitStencil()
 		{
 		}
@@ -37,6 +53,12 @@ package laya.webgl.submit {
 				case 6:
 					do6();
 					break;
+				case 7:
+					do7();
+					break;
+				case 8:
+					do8();
+					break;
 			}
 			return 1;
 		}
@@ -54,7 +76,72 @@ package laya.webgl.submit {
 		
 		
 		private var level:int=0;
-		
+				
+		public static function restore(context:WebGLContext2D,clip:Rectangle, m:Matrix, _x:Number, _y:Number):void
+		{
+			var submitStencil:SubmitStencil;
+			context._renderKey = 0;
+			if (_mask > 0)
+			{
+				_mask--;
+			}
+			if (_mask == 0)
+			{
+				submitStencil = SubmitStencil.create(3);
+				context.addRenderObject(submitStencil);
+				
+				context._curSubmit = Submit.RENDERBASE;
+			}
+			else 
+			{
+				submitStencil = SubmitStencil.create(7);
+				context.addRenderObject(submitStencil);
+
+				var vb:VertexBuffer2D = context._vb;
+				var nPos:int = (vb._byteLength >> 2);
+
+				if (GlUtils.fillRectImgVb(vb, null, clip.x, clip.y, clip.width, clip.height, Texture.DEF_UV, m, _x, _y, 0, 0)) {
+					var shader:Shader2D = context._shader2D;
+					shader.glTexture = null;
+					var submit:Submit = context._curSubmit = Submit.createSubmit(context, context._ib, vb, ((vb._byteLength - WebGLContext2D._RECTVBSIZE * Buffer2D.FLOAT32) / 32) * 3, Value2D.create(ShaderDefines2D.COLOR2D, 0));
+					submit.shaderValue.ALPHA = 1.0;
+					context._submits[context._submits._length++] = submit;
+					context._curSubmit._numEle += 6;
+					context._curSubmit = Submit.RENDERBASE;
+				} else {
+					alert("clipRect calc stencil rect error");
+				}
+
+				submitStencil = SubmitStencil.create(8);
+				context.addRenderObject(submitStencil);
+			}
+		}
+		public static function restore2(context:WebGLContext2D, submit:Submit):void
+		{
+			var submitStencil:SubmitStencil;
+			context._renderKey = 0;
+			if (_mask > 0)
+			{
+				_mask--;
+			}
+			if (_mask == 0)
+			{
+				submitStencil = SubmitStencil.create(3);
+				context.addRenderObject(submitStencil);
+				
+				context._curSubmit = Submit.RENDERBASE;
+			}
+			else 
+			{
+				submitStencil = SubmitStencil.create(7);
+				context.addRenderObject(submitStencil);
+
+				context._submits[context._submits._length++] = submit;
+				
+				submitStencil = SubmitStencil.create(8);
+				context.addRenderObject(submitStencil);
+			}
+		}
 		private function do1():void
 		{
 			var gl : WebGLContext = WebGL.mainContext;
@@ -88,17 +175,20 @@ package laya.webgl.submit {
 		private function do4():void
 		{
 			var gl : WebGLContext = WebGL.mainContext;
-			gl.enable(WebGLContext.STENCIL_TEST);
-			gl.clear(WebGLContext.STENCIL_BUFFER_BIT);
+			if (level == 0)
+			{
+				gl.enable(WebGLContext.STENCIL_TEST);
+				gl.clear(WebGLContext.STENCIL_BUFFER_BIT);
+			}
 			gl.colorMask(false, false, false, false);
-			gl.stencilFunc(WebGLContext.ALWAYS,level, 0xFF);
-			gl.stencilOp(WebGLContext.KEEP,WebGLContext.KEEP,WebGLContext.INVERT);
+			gl.stencilFunc(WebGLContext.ALWAYS,0, 0xFF);
+			gl.stencilOp(WebGLContext.KEEP,WebGLContext.KEEP,WebGLContext.INCR);
 		}
 		
 		private function do5():void
 		{
-			var gl : WebGLContext = WebGL.mainContext;
-			gl.stencilFunc(WebGLContext.EQUAL,0xff, 0xFF);
+			var gl : WebGLContext = WebGL.mainContext;		
+			gl.stencilFunc(WebGLContext.EQUAL, level, 0xFF);
 			gl.colorMask(true, true, true, true);
 			gl.stencilOp(WebGLContext.KEEP,WebGLContext.KEEP,WebGLContext.KEEP);
 		}
@@ -109,10 +199,29 @@ package laya.webgl.submit {
 			BlendMode.targetFns[BlendMode.TOINT[blendMode]](gl);
 		}
 		
+		private function do7():void
+		{
+			var gl : WebGLContext = WebGL.mainContext;
+			gl.colorMask(false, false, false, false);
+			//gl.stencilFunc(WebGLContext.ALWAYS,0, 0xFF);
+			gl.stencilOp(WebGLContext.KEEP,WebGLContext.KEEP,WebGLContext.DECR);
+		}
+		
+		private function do8():void
+		{
+			var gl : WebGLContext = WebGL.mainContext;
+			gl.colorMask(true, true, true, true);
+			gl.stencilFunc(WebGLContext.EQUAL, level, 0xFF);
+			gl.stencilOp(WebGLContext.KEEP,WebGLContext.KEEP,WebGLContext.KEEP);
+		}
+		
 		public static function create(step:int):SubmitStencil
 		{
 			var o:SubmitStencil=_cache._length?_cache[--_cache._length]:new SubmitStencil();
-			o.step=step;
+			o.step = step;
+			if (step == 5)
+				++_mask;
+			o.level = _mask;
 			return o;
 		}
 	}

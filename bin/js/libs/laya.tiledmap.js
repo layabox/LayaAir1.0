@@ -1016,7 +1016,7 @@
 				}
 				if (this.enableMergeLayer&&this.showGridTextureCount){
 					if (tTGridSprite){
-						tTGridSprite.graphics.fillText(tTGridSprite.drawImageNum+"",20,20,null,"#ff0000");
+						tTGridSprite.graphics.fillText(tTGridSprite.drawImageNum+"",20,20,null,"#ff0000","left");
 					}
 				}
 			}
@@ -2161,7 +2161,7 @@
 				this._objDic=null;
 			}
 			if (this._dataDic){
-				for (var p in this._dataDic){
+				for (p in this._dataDic){
 					delete this._dataDic[p];
 				}
 				this._dataDic=null;

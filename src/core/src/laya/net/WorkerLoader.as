@@ -133,40 +133,41 @@ package laya.net
 				event(IMAGE_ERR, data.url+"\n"+data.msg);
 				return;
 			}
-			
-			var canvas:HTMLCanvas = new HTMLCanvas("2D");
-			var ctx:*;
-			ctx = canvas.source.getContext("2d");   
-			
+			var canvas:*, ctx:*;    
 			var imageData:*;
 			switch(data.dataType)
 			{
 				case "buffer":
+					canvas = new HTMLCanvas("2D");
+					ctx = canvas.source.getContext("2d");
 					 imageData = ctx.createImageData(data.width, data.height);
 			         imageData.data.set(data.buffer);
 					 canvas.size(imageData.width, imageData.height);
 			         ctx.putImageData(imageData, 0, 0);
+					 canvas.memorySize = 0; 
 					break;
 				case "imagedata":
+					canvas = new HTMLCanvas("2D");
+					ctx = canvas.source.getContext("2d");
 					imageData = data.imagedata;
 					canvas.size(imageData.width, imageData.height);
 			        ctx.putImageData(imageData, 0, 0);
 					imageData = data.imagedata;
+					canvas.memorySize = 0; 
 					break;
 				case "imageBitmap":
 					imageData = data.imageBitmap;
-					canvas.size(imageData.width, imageData.height);
-					ctx.drawImage(imageData, 0, 0);
+					if (!Render.isWebGL){
+						canvas.size(imageData.width, imageData.height);
+						ctx.drawImage(imageData, 0, 0);
+					}
+					canvas = imageData;
 					break;
-				
 			}
+			
 			if (Render.isWebGL)
-			{
-				//避免被计算两次
-				canvas.memorySize = 0;
 				__JS__("canvas=new laya.webgl.resource.WebGLImage(canvas,data.url);");
-				
-			}
+			
 			event(data.url, canvas);
 		}
 		

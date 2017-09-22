@@ -1,5 +1,6 @@
 package laya.d3.core {
 	import laya.d3.animation.AnimationNode;
+	import laya.d3.component.Animator;
 	import laya.d3.component.Component3D;
 	import laya.d3.component.physics.Collider;
 	import laya.d3.core.material.BaseMaterial;
@@ -10,19 +11,14 @@ package laya.d3.core {
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
-	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
-	import laya.d3.resource.BaseTexture;
 	import laya.d3.shader.ValusArray;
 	import laya.d3.utils.Utils3D;
 	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.events.Event;
 	import laya.net.Loader;
-	import laya.net.URL;
 	import laya.resource.ICreateResource;
-	import laya.resource.IDispose;
-	import laya.runtime.IConchNode;
 	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
@@ -30,7 +26,7 @@ package laya.d3.core {
 	/**
 	 * <code>Sprite3D</code> 类用于实现3D精灵。
 	 */
-	public class Sprite3D extends Node implements IUpdate, ICreateResource, IClone {
+	public class Sprite3D extends ComponentNode implements IUpdate, ICreateResource, IClone {
 		/**@private 着色器变量名，世界矩阵。*/
 		public static const WORLDMATRIX:int = 0;
 		/**@private 着色器变量名，世界视图投影矩阵。*/
@@ -84,16 +80,8 @@ package laya.d3.core {
 		private var _id:int;
 		/** @private */
 		private var __loaded:Boolean;
-		/** @private */
-		private var _componentsMap:Array;
-		/** @private */
-		private var _typeComponentsIndices:Vector.<Vector.<int>>;
-		/** @private */
-		private var _components:Vector.<Component3D>;
 		/**@private */
 		private var _url:String;
-		/**@private */
-		private var _belongScene:Boolean;
 		
 		/** @private */
 		protected var _active:Boolean;
@@ -107,13 +95,15 @@ package laya.d3.core {
 		/** @private */
 		public var _shaderValues:ValusArray;
 		/** @private */
+		public var _belongAnimator:Animator;
+		/** @private */
 		public var _colliders:Vector.<Collider>;
 		/**@private */
 		public var _scene:Scene;
 		/**@private */
 		public var _transform:Transform3D;
 		
-		/**是否静态,静态包含一系列的特殊处理*/
+		/**是否静态,静态包含一系列的静态处理*/
 		public var isStatic:Boolean;
 		
 		/**
@@ -132,14 +122,6 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 获取是否属于场景。
-		 * @return  是否属于场景。
-		 */
-		public function get belongScene():Boolean {
-			return _belongScene;
-		}
-		
-		/**
 		 * 获取自身是否激活。
 		 *   @return	自身是否激活。
 		 */
@@ -154,18 +136,20 @@ package laya.d3.core {
 		public function set active(value:Boolean):void {
 			if (_active !== value) {
 				_active = value;
-				if (_belongScene) {
-					if (value)
-						_activeHierarchy();
-					else
-						_inActiveHierarchy();
+				if (_scene) {
+					if (_parent === _scene || (_parent as Sprite3D)._activeInHierarchy) {//(父节点为场景||父节点为精灵)
+						if (value)
+							_activeHierarchy();
+						else
+							_inActiveHierarchy();
+					}
 				}
 			}
 		}
 		
 		/**
-		 * 获取在层级中是否激活。
-		 *   @return	在层级中是否激活。
+		 * 获取在场景中是否激活。
+		 *   @return	在场景中是否激活。
 		 */
 		public function get activeInHierarchy():Boolean {
 			return _activeInHierarchy;
@@ -215,7 +199,7 @@ package laya.d3.core {
 		 * @return	组件数量。
 		 */
 		public function get componentsCount():int {
-			return _typeComponentsIndices.length;
+			return _components.length;
 		}
 		
 		/**
@@ -251,10 +235,6 @@ package laya.d3.core {
 			_projectionViewWorldMatrix = new Matrix4x4();
 			_shaderValues = new ValusArray();
 			_colliders = new Vector.<Collider>();
-			_componentsMap = [];
-			_typeComponentsIndices = new Vector.<Vector.<int>>();
-			_components = new Vector.<Component3D>();
-			_belongScene = false;
 			
 			(name) ? (this.name = name) : (this.name = "Sprite3D-" + _nameNumberCounter++);
 			_activeInHierarchy = false;
@@ -262,6 +242,59 @@ package laya.d3.core {
 			layer = Layer.currentCreationLayer;
 			_transform = new Transform3D(this);
 			active = true;
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _setBelongAnimator(animator:Animator):void {
+			_belongAnimator = animator;
+			if (animator) {
+				var avatar:Avatar = animator.avatar;
+				var avatarNodes:Vector.<AnimationNode> = animator._avatarNodes;
+				if (avatarNodes) {//有_avatarNodes即为有avtar
+					for (var i:int = 0, n:int = avatarNodes.length; i < n; i++) {//TODO:换成字典
+						var node:AnimationNode = avatarNodes[i];
+						if (node.name === name && !_transform.dummy) //判断!sprite._transform.dummy重名节点可按顺序依次匹配。
+							_associateSpriteToAnimationNode(avatar, node);
+					}
+				}
+			} else {//TODO:做对应移除
+				
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _associateSpriteToAnimationNode(avatar:Avatar, node:AnimationNode):void {
+			_transform.dummy = node._transform;
+			var nodeIndex:int = _belongAnimator._avatarNodes.indexOf(node);
+			var cacheSpriteToNodesMap:Vector.<int> = _belongAnimator._cacheSpriteToNodesMap;
+			_belongAnimator._cacheNodesToSpriteMap[nodeIndex] = cacheSpriteToNodesMap.length;
+			cacheSpriteToNodesMap.push(nodeIndex);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setAnimator(animator:Animator, parentAnimator:Animator):void {
+			_setBelongAnimator(animator);
+			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
+				var child:Sprite3D = _childs[i];
+				(child._belongAnimator == parentAnimator) && (child._setAnimator(animator, parentAnimator));
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _clearAnimator(animator:Animator, parentAnimator:Animator):void {
+			_setBelongAnimator(parentAnimator);
+			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
+				var child:Sprite3D = _childs[i];
+				(child._belongAnimator == animator) && (child._clearAnimator(animator, parentAnimator));
+			}
 		}
 		
 		/**
@@ -276,7 +309,6 @@ package laya.d3.core {
 		 */
 		public function _setBelongScene(scene:Scene):void {
 			_scene = scene;
-			_belongScene = true;
 			for (var i:int = 0, n:int = _childs.length; i < n; i++)
 				(_childs[i] as Sprite3D)._setBelongScene(scene);
 		}
@@ -286,7 +318,6 @@ package laya.d3.core {
 		 */
 		public function _setUnBelongScene():void {
 			_scene = null;
-			_belongScene = false;
 			for (var i:int = 0, n:int = _childs.length; i < n; i++)
 				(_childs[i] as Sprite3D)._setUnBelongScene();
 		}
@@ -322,7 +353,38 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		private function _removeComponent(mapIndex:int, index:int):void {
+		override protected function _addComponent(type:*):Component3D {
+			var typeComponentIndex:Vector.<int>;
+			var index:int = _componentsMap.indexOf(type);
+			if (index === -1) {
+				typeComponentIndex = new Vector.<int>();
+				_componentsMap.push(type);
+				_typeComponentsIndices.push(typeComponentIndex);
+			} else {
+				typeComponentIndex = _typeComponentsIndices[index];
+				if (_components[typeComponentIndex[0]].isSingleton)
+					throw new Error("无法单实例创建" + type + "组件" + "，" + type + "组件已存在！");
+			}
+			
+			var component:Component3D = ClassUtils.getInstance(type);
+			typeComponentIndex.push(_components.length);
+			_components.push(component);
+			if (component is Collider) {
+				_layer._colliders.push(component);
+				_colliders.push(component);
+			} else if (component is Animator) {
+				var animator:Animator = component as Animator;
+				//animator._cacheRootSprite = this;
+				_setAnimator(animator, _parent ? (_parent as Sprite3D)._belongAnimator : null);
+			}
+			component._initialize(this);
+			return component;
+		}
+		
+		/**
+		 * @private
+		 */
+		override protected function _removeComponent(mapIndex:int, index:int):void {
 			var componentIndices:Vector.<int> = _typeComponentsIndices[mapIndex];
 			var componentIndex:int = componentIndices[index];
 			var component:Component3D = _components[componentIndex];
@@ -332,6 +394,10 @@ package laya.d3.core {
 				var colliders:Vector.<Collider> = _layer._colliders;
 				colliders.splice(colliders.indexOf(colliderComponent), 1);
 				_colliders.splice(_colliders.indexOf(colliderComponent), 1);
+			} else if (component is Animator) {
+				var animator:Animator = component as Animator;
+				//animator._cacheRootSprite = null;
+				_clearAnimator(animator, _parent ? (_parent as Sprite3D)._belongAnimator : null);
 			}
 			
 			_components.splice(componentIndex, 1);
@@ -350,7 +416,6 @@ package laya.d3.core {
 			}
 			
 			component._destroy();
-			this.event(Event.COMPONENT_REMOVED, component);
 		}
 		
 		/**
@@ -373,26 +438,51 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 更新组件update函数。
-		 * @param	state 渲染相关状态。
+		 *@private
 		 */
-		protected function _updateComponents(state:RenderState):void {
-			for (var i:int = 0, n:int = _components.length; i < n; i++) {
-				var component:Component3D = _components[i];
-				(!component.started) && (component._start(state), component.started = true);
-				(component.enable) && (component._update(state));
-			}
-		}
-		
-		/**
-		 * 更新组件lateUpdate函数。
-		 * @param	state 渲染相关状态。
-		 */
-		protected function _lateUpdateComponents(state:RenderState):void {
-			for (var i:int = 0; i < _components.length; i++) {
-				var component:Component3D = _components[i];
-				(!component.started) && (component._start(state), component.started = true);
-				(component.enable) && (component._lateUpdate(state));
+		protected function _parseCustomProps(innerResouMap:Object, customProps:Object, nodeData:Object):void {
+			var transValue:Array = customProps.translate;
+			var loccalPosition:Vector3 = transform.localPosition;
+			var loccalPositionElments:Float32Array = loccalPosition.elements;
+			loccalPositionElments[0] = transValue[0];
+			loccalPositionElments[1] = transValue[1];
+			loccalPositionElments[2] = transValue[2];
+			transform.localPosition = loccalPosition;
+			var rotValue:Array = customProps.rotation;
+			var localRotation:Quaternion = transform.localRotation;
+			var localRotationElement:Float32Array = localRotation.elements;
+			localRotationElement[0] = rotValue[0];
+			localRotationElement[1] = rotValue[1];
+			localRotationElement[2] = rotValue[2];
+			localRotationElement[3] = rotValue[3];
+			transform.localRotation = localRotation;
+			var scaleValue:Array = customProps.scale;
+			var localScale:Vector3 = transform.localScale;
+			var localSceleElement:Float32Array = localScale.elements;
+			localSceleElement[0] = scaleValue[0];
+			localSceleElement[1] = scaleValue[1];
+			localSceleElement[2] = scaleValue[2];
+			transform.localScale = localScale;
+			
+			var components:Object = nodeData.components;
+			for (var k:String in components) {
+				var component:Object = components[k];
+				switch (k) {
+				case "Animator": 
+					var animator:Animator = addComponent(Animator) as Animator;
+					animator.avatar = Loader.getRes(innerResouMap[component.avatarPath]);
+					var clipPaths:Vector.<String> = component.clipPaths;
+					var clipCount:int = clipPaths.length;
+					for (var i:int = 0; i < clipCount; i++)
+						animator.addClip(Loader.getRes(innerResouMap[clipPaths[i]]));
+					animator.clip = Loader.getRes(innerResouMap[clipPaths[0]]);//TODO:单处存储模型动画路径
+					
+					var entryPlayIndex:int = component.entryPlayIndex;
+					if (entryPlayIndex >= 0)
+						animator.play(Loader.getRes(innerResouMap[clipPaths[entryPlayIndex]]).name);
+					break;
+				default: 
+				}
 			}
 		}
 		
@@ -502,10 +592,12 @@ package laya.d3.core {
 					
 					var sprite3D:Sprite3D = node as Sprite3D;
 					sprite3D.transform.parent = transform;
-					if (_belongScene) {
+					(_belongAnimator && !sprite3D._belongAnimator) && (sprite3D._setAnimator(_belongAnimator, null));//执行条件为sprite3D._belongAnimator==parentAnimator,只有一种情况sprite3D._belongAnimator=null成立,且_belongAnimator不为空有意义
+					if (_scene) {
 						sprite3D._setBelongScene(_scene);
 						(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
 					}
+					
 				}
 				return node;
 			} else {
@@ -543,10 +635,12 @@ package laya.d3.core {
 				
 				var sprite3D:Sprite3D = node as Sprite3D;
 				sprite3D.transform.parent = transform;
-				if (_belongScene) {
+				(_belongAnimator && !sprite3D._belongAnimator) && (sprite3D._setAnimator(_belongAnimator, null));//执行条件为sprite3D._belongAnimator==parentAnimator,只有一种情况sprite3D._belongAnimator=null成立,且_belongAnimator不为空有意义
+				if (_scene) {
 					sprite3D._setBelongScene(_scene);
 					(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
 				}
+				
 			}
 			
 			return node;
@@ -560,10 +654,11 @@ package laya.d3.core {
 			if (node) {
 				var sprite3D:Sprite3D = node as Sprite3D;
 				sprite3D.transform.parent = null;
-				if (_belongScene) {
+				if (_scene) {
 					(_activeInHierarchy && sprite3D._active) && (sprite3D._inActiveHierarchy());
 					sprite3D._setUnBelongScene();
 				}
+				(_belongAnimator && (sprite3D._belongAnimator == _belongAnimator)) && (sprite3D._clearAnimator(_belongAnimator, null));//_belongAnimator不为空有意义
 				this._childs.splice(index, 1);
 				conchModel && conchModel.removeChild(node.conchModel);
 				node.parent = null;
@@ -587,10 +682,11 @@ package laya.d3.core {
 					arr[i].parent = null;
 					var sprite3D:Sprite3D = arr[i] as Sprite3D;
 					sprite3D.transform.parent = null;
-					if (_belongScene) {
+					if (_scene) {
 						(_activeInHierarchy && sprite3D._active) && (sprite3D._inActiveHierarchy());
 						sprite3D._setUnBelongScene();
 					}
+					(_belongAnimator && (sprite3D._belongAnimator == _belongAnimator)) && (sprite3D._clearAnimator(_belongAnimator, null));//_belongAnimator不为空有意义
 					conchModel && conchModel.removeChild(arr[i].conchModel);
 				}
 			}
@@ -603,28 +699,7 @@ package laya.d3.core {
 		 * @return	组件。
 		 */
 		public function addComponent(type:*):Component3D {
-			var typeComponentIndex:Vector.<int>;
-			var index:int = _componentsMap.indexOf(type);
-			if (index === -1) {
-				typeComponentIndex = new Vector.<int>();
-				_componentsMap.push(type);
-				_typeComponentsIndices.push(typeComponentIndex);
-			} else {
-				typeComponentIndex = _typeComponentsIndices[index];
-				if (_components[typeComponentIndex[0]].isSingleton)
-					throw new Error("无法单实例创建" + type + "组件" + "，" + type + "组件已存在！");
-			}
-			
-			var component:Component3D = ClassUtils.getInstance(type);
-			typeComponentIndex.push(_components.length);
-			_components.push(component);
-			if (component is Collider) {
-				_layer._colliders.push(component);
-				_colliders.push(component);
-			}
-			component._initialize(this);
-			this.event(Event.COMPONENT_ADDED, component);
-			return component;
+			return _addComponent(type);
 		}
 		
 		/**
@@ -634,10 +709,7 @@ package laya.d3.core {
 		 * @return 组件。
 		 */
 		public function getComponentByType(type:*, typeIndex:int = 0):Component3D {
-			var mapIndex:int = _componentsMap.indexOf(type);
-			if (mapIndex === -1)
-				return null;
-			return _components[_typeComponentsIndices[mapIndex][typeIndex]];
+			return _getComponentByType(type, typeIndex);
 		}
 		
 		/**
@@ -646,17 +718,7 @@ package laya.d3.core {
 		 * @param	components 组件输出队列。
 		 */
 		public function getComponentsByType(type:*, components:Vector.<Component3D>):void {
-			var index:int = _componentsMap.indexOf(type);
-			if (index === -1) {
-				components.length = 0;
-				return;
-			}
-			
-			var typeComponents:Vector.<int> = _typeComponentsIndices[index];
-			var count:int = typeComponents.length;
-			components.length = count;
-			for (var i:int = 0; i < count; i++)
-				components[i] = _components[typeComponents[i]];
+			return _getComponentsByType(type, components);
 		}
 		
 		/**
@@ -665,7 +727,7 @@ package laya.d3.core {
 		 * @return 组件。
 		 */
 		public function getComponentByIndex(index:int):Component3D {
-			return _components[index];
+			return _getComponentByIndex(index);
 		}
 		
 		/**
@@ -674,10 +736,7 @@ package laya.d3.core {
 		 * @param	typeIndex 类型索引。
 		 */
 		public function removeComponentByType(type:*, typeIndex:int = 0):void {
-			var mapIndex:int = _componentsMap.indexOf(type);
-			if (mapIndex === -1)
-				return;
-			_removeComponent(mapIndex, typeIndex);
+			_removeComponentByType(type, typeIndex);
 		}
 		
 		/**
@@ -685,20 +744,14 @@ package laya.d3.core {
 		 * @param	type 组件类型。
 		 */
 		public function removeComponentsByType(type:*):void {
-			var mapIndex:int = _componentsMap.indexOf(type);
-			if (mapIndex === -1)
-				return;
-			var componentIndices:Vector.<int> = _typeComponentsIndices[mapIndex];
-			for (var i:int = 0, n:int = componentIndices.length; i < n; componentIndices.length < n ? n-- : i++)
-				_removeComponent(mapIndex, i);
+			_removeComponentByType(type);
 		}
 		
 		/**
 		 * 移除全部组件。
 		 */
 		public function removeAllComponent():void {
-			for (var i:int = 0, n:int = _componentsMap.length; i < n; _componentsMap.length < n ? n-- : i++)
-				removeComponentsByType(_componentsMap[i]);
+			_removeAllComponent();
 		}
 		
 		/**
@@ -713,7 +766,7 @@ package laya.d3.core {
 				throw new Error("Sprite3D: The .lh file root type must be Sprite3D,please use other function to  load  this file.");
 			
 			var innerResouMap:Object = data[1];
-			ClassUtils.createByJson(json, this, this, Handler.create(null, Utils3D._parseHierarchyProp, [innerResouMap], false), Handler.create(null, Utils3D._parseHierarchyNode, null, false));
+			Utils3D._createNodeByJson(json, this, innerResouMap);
 			event(Event.HIERARCHY_LOADED, [this]);
 			__loaded = true;
 		}
@@ -749,7 +802,7 @@ package laya.d3.core {
 			
 			destSprite3D.isStatic = isStatic;
 			var i:int, n:int;
-			for (i = 0, n = _componentsMap.length; i < n; i++){
+			for (i = 0, n = _componentsMap.length; i < n; i++) {
 				var destComponent:Component3D = destSprite3D.addComponent(_componentsMap[i]);
 				_components[i]._cloneTo(destComponent);
 			}
@@ -772,6 +825,8 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override public function destroy(destroyChild:Boolean = true):void {
+			if (destroyed)
+				return;
 			super.destroy(destroyChild);
 			var i:int, n:int;
 			for (i = 0, n = _components.length; i < n; i++)

@@ -1,4 +1,4 @@
-﻿package {
+package {
 	import laya.display.Graphics;
 	import laya.display.Input;
 	import laya.display.Sprite;
@@ -20,6 +20,7 @@
 	import laya.utils.Browser;
 	import laya.utils.CacheManger;
 	import laya.utils.Timer;
+	import laya.utils.WeakObject;
 	
 	/**
 	 * <code>Laya</code> 是全局对象的引用入口集。
@@ -34,7 +35,7 @@
 		/** 加载管理器的引用。*/
 		public static var loader:LoaderManager = null;
 		/** 当前引擎版本。*/
-		public static var version:String = "1.7.8beta";
+		public static var version:String = "1.7.10";
 		/**@private Render 类的引用。*/
 		public static var render:Render;
 		/**@private */
@@ -66,6 +67,7 @@
 			width = Browser.clientWidth;
 			/*[IF-FLASH]*/
 			height = Browser.clientHeight;
+			WeakObject.__init__();
 			
 			for (var i:int = 0, n:int = plugins.length; i < n; i++) {
 				if (plugins[i].enable) plugins[i].enable();

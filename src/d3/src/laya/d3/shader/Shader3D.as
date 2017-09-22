@@ -12,6 +12,7 @@ package laya.d3.shader {
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.BaseShader;
+	import laya.webgl.utils.Buffer;
 	
 	public class Shader3D extends BaseShader {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
@@ -114,7 +115,6 @@ package laya.d3.shader {
 		}
 		
 		override protected function recreateResource():void {
-			startCreate();
 			_compile();
 			completeCreate();
 			memorySize = 0;//忽略尺寸尺寸
@@ -151,9 +151,8 @@ package laya.d3.shader {
 			gl.attachShader(_program, _vshader);
 			gl.attachShader(_program, _pshader);
 			gl.linkProgram(_program);
-			if (!customCompile && !gl.getProgramParameter(_program, WebGLContext.LINK_STATUS)) {
+			if (ShaderCompile3D.debugMode && !customCompile && !gl.getProgramParameter(_program, WebGLContext.LINK_STATUS))
 				throw gl.getProgramInfoLog(_program);
-			}
 			
 			var one:*, i:int, j:int, n:int, location:*;
 			var attribNum:int = customCompile ? result.attributes.length : gl.getProgramParameter(_program, WebGLContext.ACTIVE_ATTRIBUTES); //得到attribute的个数
@@ -164,6 +163,7 @@ package laya.d3.shader {
 				one = {vartype: "attribute", ivartype: 0, attrib: attrib, location: location, name: attrib.name, type: attrib.type, isArray: false, isSame: false, preValue: null, indexOfParams: 0};
 				_attributeParams.push(one);
 			}
+			
 			var nUniformNum:int = customCompile ? result.uniforms.length : gl.getProgramParameter(_program, WebGLContext.ACTIVE_UNIFORMS); //个数
 			
 			for (i = 0; i < nUniformNum; i++) {
@@ -267,25 +267,27 @@ package laya.d3.shader {
 					break;
 				}
 			}
+		
 		}
 		
 		private static function _createShader(gl:WebGLContext, str:String, type:*):* {
 			var shader:* = gl.createShader(type);
 			gl.shaderSource(shader, str);
 			gl.compileShader(shader);
-			/*[IF-FLASH]*/
-			return shader;
-			if (!gl.getShaderParameter(shader, WebGLContext.COMPILE_STATUS)) {
+			if (ShaderCompile3D.debugMode && !gl.getShaderParameter(shader, WebGLContext.COMPILE_STATUS))
 				throw gl.getShaderInfoLog(shader);
-			}
+			
 			return shader;
 		}
 		
 		private function _attribute(one:*, value:*):int {
 			var gl:WebGLContext = WebGL.mainContext;
-			gl.enableVertexAttribArray(one.location);
-			gl.vertexAttribPointer(one.location, value[0], value[1], value[2], value[3], value[4]);
-			return 2;
+			var enableAtributes:Array = Buffer._enableAtributes;
+			var location:int = one.location;
+			(enableAtributes[location]) || (gl.enableVertexAttribArray(location));
+			gl.vertexAttribPointer(location, value[0], value[1], value[2], value[3], value[4]);
+			enableAtributes[location] = Buffer._bindVertexBuffer;
+			return 1;
 		}
 		
 		private function _uniform1f(one:*, value:*):int {
@@ -695,11 +697,5 @@ package laya.d3.shader {
 			i += 2;
 			return i;
 		}
-		
-		override public function dispose():void {
-			resourceManager.removeResource(this);
-			super.dispose();
-		}
-	
 	}
 }

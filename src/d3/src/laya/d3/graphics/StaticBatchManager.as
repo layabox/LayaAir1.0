@@ -44,7 +44,6 @@ package laya.d3.graphics {
 			for (i = 0, n = _staticBatchManagers.length; i < n; i++) {
 				staticBatchManager = _staticBatchManagers[i];
 				staticBatchManager._initStaticBatchs(staticBatchRoot);
-				staticBatchManager._garbageCollection();
 				staticBatchManager._finshInit();
 			}
 		}
@@ -98,10 +97,15 @@ package laya.d3.graphics {
 		/**
 		 * @private
 		 */
-		public function _garbageCollection():void {
-			for (var key:String in _staticBatches)
-				if (_staticBatches[key].combineRenderElementsCount === 0)
-					delete _staticBatches[key];
+		public function _garbageCollection(renderElement:RenderElement):void {
+			var staticBatch:StaticBatch = renderElement._staticBatch;
+			var initBatchRenderElements:Vector.<RenderElement> = staticBatch._initBatchRenderElements;
+			var index:int = initBatchRenderElements.indexOf(renderElement);
+			initBatchRenderElements.splice(index, 1);
+			if (initBatchRenderElements.length === 0) {
+				staticBatch.dispose();
+				delete _staticBatches[staticBatch._key];
+			}
 		}
 		
 		/**

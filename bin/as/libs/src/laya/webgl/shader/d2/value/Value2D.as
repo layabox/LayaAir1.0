@@ -150,7 +150,7 @@ package laya.webgl.shader.d2.value {
 			alpha = ALPHA * renderstate2d.worldAlpha;
 			
 			if ( RenderState2D.worldMatrix4 !== RenderState2D.TEMPMAT4_ARRAY) defines.add(ShaderDefines2D.WORLDMAT);
-			(WebGL.frameShaderHighPrecision) && (defines.add(ShaderDefines2D.SHADERDEFINE_FSHIGHPRECISION));
+			(WebGL.shaderHighPrecision) && (defines.add(ShaderDefines2D.SHADERDEFINE_FSHIGHPRECISION));
 			var sd:Shader2X = renderstate2d.worldShaderDefines?_withWorldShaderDefines():(Shader.sharders[mainID | defines._value] as Shader2X || _ShaderWithCompile());
 			
 			var params:Array;
